@@ -25,6 +25,7 @@ host1:192.167.67.131
 host2:192.167.67.132
 ```
 #### 单机：
+![单机部署图](img/单机部署.svg)
 ##### run consul
 ```shell
 docker run --name consul01 -d -p 8300:8300 -p 8400:8400 -p 8500:8500 -p 8600:8600 consul
@@ -58,7 +59,17 @@ curl -X PUT -d '{"id": "node31","name": "node31","address": "192.168.67.131","po
 ```shell
 curl -X PUT http://127.0.0.1:8500/v1/agent/service/deregister/node29
 ```
-#### 集群：
+#### 主备：
+![主备部署01](img/主备部署_01.svg)
+![主备部署02](img/主备部署_02.svg)
+```text
+alive_check可以部署在host2上去检测prometheus01的状态
+if prometheus01 down 
+    检测host1的状态
+    if host1 up
+        尝试一定次数去把prometheus01拉起，如果恢复了->return
+    修改prometheus02配置并reload配置去启用备节点
+```
 ##### host1 & host2 run consul
 ```shell
 docker run --name consul01 -d -p 8300:8300 -p 8400:8400 -p 8500:8500 -p 8600:8600 consul
