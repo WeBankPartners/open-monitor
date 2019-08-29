@@ -30,11 +30,21 @@ host2:192.167.67.132
 docker run --name consul01 -d -p 8300:8300 -p 8400:8400 -p 8500:8500 -p 8600:8600 consul
 ```
 ##### run alertmanager
+###### 配置文件/app/docker/alertmanager/alertmanager.yml
 ```shell
 docker volume create alertmanager-data
 docker run --name alertmanager01 --volume alertmanager-data:/alertmanager --volume /app/docker/alertmanager:/etc/alertmanager -d -p 9093:9093 -p 9094:9094 prom/alertmanager --config.file=/etc/alertmanager/alertmanager.yml --web.listen-address=":9093" --cluster.listen-address=":9094"
 ```
 ##### run prometheus
+###### 配置文件/app/docker/prometheus/prometheus.yml 的scrape_configs里加入从consul拉取exporter的配置
+```yaml
+  - job_name: 'consul'
+    scheme: http
+    consul_sd_configs:
+      - server: 192.168.67.131:8500
+        scheme: http
+        services: []
+```
 ```shell
 docker volume create prometheus-tsdb
 docker run --name prometheus01 --volume prometheus-tsdb:/prometheus --volume /app/docker/prometheus:/etc/prometheus  -d -p 9090:9090  prom/prometheus --config.file=/etc/prometheus/prometheus.yml --web.enable-lifecycle
@@ -48,7 +58,7 @@ curl -X PUT -d '{"id": "node31","name": "node31","address": "192.168.67.131","po
 ```shell
 curl -X PUT http://127.0.0.1:8500/v1/agent/service/deregister/node29
 ```
-####集群：
+#### 集群：
 ##### host1 & host2 run consul
 ```shell
 docker run --name consul01 -d -p 8300:8300 -p 8400:8400 -p 8500:8500 -p 8600:8600 consul
@@ -60,7 +70,7 @@ docker run --name alertmanager01 --volume alertmanager-data:/alertmanager --volu
 ```
 ##### host2 run alertmanager
 ```shell
-# 在alertmanager.yml里配置不同的group_wait
+# 在alertmanager.yml里配置不同的group_wait，为了防止极端情况下备节点告警时还没收到主节点的相关告警信息，让备节点等待一点时间
 docker volume create alertmanager-data
 docker run --name alertmanager02 --volume alertmanager-data:/alertmanager --volume /app/docker/alertmanager:/etc/alertmanager -d -p 9093:9093 -p 9094:9094 prom/alertmanager --config.file=/etc/alertmanager/alertmanager.yml --web.listen-address=":9093" --cluster.listen-address=":9094" --cluster.peer="192.168.67.131:9094"
 ```
@@ -70,8 +80,22 @@ docker volume create prometheus-tsdb
 docker run --name prometheus01 --volume prometheus-tsdb:/prometheus --volume /app/docker/prometheus:/etc/prometheus  -d -p 9090:9090  prom/prometheus --config.file=/etc/prometheus/prometheus.yml --web.enable-lifecycle
 ```
 ##### host2 run prometheus
+###### 修改prometheus.yml，把01里的consul scrape改成去拉01节点prometheus的数据targets:'192.168.67.131:9090'，同步01的数据
+```yaml
+  - job_name: 'federate'
+    scrape_interval: 10s
+    honor_labels: true
+    metrics_path: '/federate'
+    params:
+      'match[]':
+        - '{job="prometheus"}'
+        - '{__name__=~"job:.*"}'
+        - '{__name__=~"node.*"}'
+    static_configs:
+      - targets:
+        - '192.168.67.131:9090'
+```
 ```shell
-# 修改prometheus.yml，把01里的consul scrape改成去拉01的数据targets:'192.168.67.131:9090'，同步01的数据
 docker run --name prometheus02 --volume prometheus-tsdb:/prometheus --volume /app/docker/prometheus:/etc/prometheus  -d -p 9090:9090  prom/prometheus --config.file=/etc/prometheus/prometheus.yml --web.enable-lifecycle
 ```
 
