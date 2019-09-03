@@ -78,7 +78,11 @@
 	docker run --name prometheus01 --volume prometheus-tsdb:/prometheus --volume /app/docker/prometheus:/etc/prometheus  -d -p 9090:9090  prom/prometheus --config.file=/etc/prometheus/prometheus.yml --web.enable-lifecycle
 	```
 
-	reload配置 curl -X POST http://127.0.0.1:9090/-/reload
+	reload配置 
+
+	```
+	curl -X POST http://127.0.0.1:9090/-/reload
+	```
 
 4. 注册exporter
 
