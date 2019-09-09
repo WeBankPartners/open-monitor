@@ -1,0 +1,55 @@
+{
+  "http": {
+    "port": 8088,
+    "swagger": true,
+    "cross": true,
+    "alive": 2591000,
+    "ldap": {
+      "enable": false,
+      "server": "127.0.0.1",
+      "port": 389,
+      "bindDN": "%s@test.com",
+      "baseDN": "ou=Users_Employee",
+      "filter": "(sAMAccountName=%s)",
+      "attributes": ["name", "mail", "telephoneNumber"]
+    },
+    "log": {
+      "enable": true,
+      "level": "debug",
+      "file": "/app/data/log/prometheus_monitor.log",
+      "stdout": true
+    }
+  },
+  "store": [
+    {
+      "name": "default",
+      "type": "mysql",
+      "server": "127.0.0.1",
+      "port": 3306,
+      "user": "root",
+      "pwd": "zgyzgy",
+      "database": "monitor",
+      "maxOpen": 20,
+      "maxIdle": 10,
+      "timeout": 60
+    }
+  ],
+  "rpc": {
+    "enable": false
+  },
+  "datasource" : {
+    "env" : "dev",
+    "servers": [
+      {
+        "id": 1,
+        "type": "prometheus",
+        "env": "dev",
+        "host": "192.168.67.131:9090",
+        "token": ""
+      }
+    ],
+    "divide_time": 1,
+    "wait_time": 1
+  },
+  "limitIp": ["*"]
+}
