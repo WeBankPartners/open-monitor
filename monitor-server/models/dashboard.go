@@ -188,6 +188,7 @@ type EndpointTable struct {
 	ExportType  string  `json:"export_type"`
 	OsIp  string  `json:"os_ip"`
 	OsType  string  `json:"os_type"`
+	Step  int  `json:"step"`
 }
 
 type EndpointMetricTable struct {

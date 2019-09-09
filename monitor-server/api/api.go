@@ -51,7 +51,7 @@ func InitHttpServer() {
 		{
 			dashboardApi.GET("/main", dashboard.MainDashboard)
 			dashboardApi.GET("/panels", dashboard.GetPanels)
-			dashboardApi.POST("/chart", dashboard.GetChart)
+			dashboardApi.GET("/chart", dashboard.GetChart)
 			dashboardApi.GET("/tags", dashboard.GetTags)
 			dashboardApi.GET("/search", dashboard.MainSearch)
 			dashboardApi.GET("/register", dashboard.RegisterEndpoint)

@@ -208,101 +208,90 @@ func GetTags(c *gin.Context)  {
 // @Param end query string false "结束时间"
 // @Param aggregate query string false "聚合类型 枚举 min max avg p95 none"
 // @Success 200 {string} json "{'title':'chart1','legend':['a','b'],'xaxis':{},'yaxis':{'unit':'%'},'series':[{'type':'line','name':'a','data':[[1550221207000,100],[1550221217000,200],[1550221227000,150],[1550221237000,100],[1550221247000,120],[1550221257000,210],[1550221267000,130],[1550221277000,180]]},{'type':'line','name':'b','data':[[1550221207000,110],[1550221217000,210],[1550221227000,130],[1550221237000,120],[1550221247000,100],[1550221257000,200],[1550221267000,170],[1550221277000,120]]}]}"
-// @Router /api/v1/dashboard/chart [post]
+// @Router /api/v1/dashboard/chart [get]
 func GetChart(c *gin.Context)  {
-	var param m.GetChartDto
-	if err := c.ShouldBindJSON(&param); err==nil {
-		if !mid.ValidatePost(c, param) {return}
-		//isDefault := true
-		var chart m.ChartTable
-		if param.Id <= 0 {
-			u.ReturnError(c, "chart id validate error", nil)
-			return
-		}
-		//var echartOption m.EChartOption
-		err, charts := db.GetCharts(0, param.Id, 0)
-		if err != nil {
-			u.ReturnError(c, "get chart config error", err)
-			return
-		}
-		if len(charts) > 0 {
-			chart = *charts[0]
-		}
-		var eOption m.EChartOption
-		var endpoints []string
-		var metrics []string
-		var legends []string
-		//var endpointIp map[string]string
-		//var endpointShow bool
-		eOption.Title = chart.Title
-		eOption.Id = param.Id
-		// 参数校验
-		if chart.Endpoint == "" {
-			endpoints = param.Endpoint
-		}else{
-			endpoints = strings.Split(chart.Endpoint, "^")
-		}
-		if chart.Metric == "" || strings.Contains(param.Metric[0], "/") {
-			metrics = param.Metric
-		}else{
-			metrics = strings.Split(chart.Metric, "^")
-		}
-		var query m.QueryMonitorData
-		if param.Time!="" && param.Start=="" {
-			param.Start = param.Time
-		}
-		start,err := strconv.ParseInt(param.Start, 10, 64)
-		if err==nil {
-			if start<0 {
-				start = time.Now().Unix() + start
-			}
-			query.Start = start
-		}
-		if param.End!=""{
-			end,err := strconv.ParseInt(param.End, 10, 64)
-			if err==nil {
-				if end > time.Now().Unix() {
-					end = time.Now().Unix()
-				}
-				query.End = end
-			}
-		}else{
-			query.End = time.Now().Unix()
-		}
-		query.Endpoint = endpoints
-		query.Metric = metrics
-		err,query.PromQ = db.GetPromMetric(endpoints, metrics)
-		if err!=nil {
-			u.ReturnError(c, "query promQL fail", err)
-			return
-		}
-		mid.LogInfo(fmt.Sprintf("endpoint : %v  metric : %v  start:%d  end:%d  promql:%s", query.Endpoint, query.Metric, query.Start, query.End, query.PromQ))
-		// 取数据库中的要计算rate的指标，把相应指标的rate置为true
-		query.ComputeRate = chart.Rate
-		// 取数据
-		serials := ds.PrometheusData(query)
-		//tmpTitle := ""
-		for _,s := range serials{
-			s.Name = fmt.Sprintf("%s:%s", s.Name, metrics[0])
-			legends = append(legends, s.Name)
-		}
-		//eOption.Title = tmpTitle
-		if len(legends) > 0 {
-			eOption.Legend = legends
-		}else{
-			eOption.Legend = []string{}
-		}
-		eOption.Xaxis = make(map[string]interface{})
-		eOption.Yaxis = m.YaxisModel{Unit: chart.Unit}
-		if len(serials) > 0 {
-			eOption.Series = serials
-		}else{
-			eOption.Series = []*m.SerialModel{}
-		}
-		u.ReturnData(c, eOption)
-	}else{
-		u.Return(c, u.RespJson{Msg:"param validate fail", Code:http.StatusBadRequest})
+	paramId,err := strconv.Atoi(c.Query("id"))
+	if err != nil || paramId <= 0 {
+		u.ReturnError(c, "chart id validate error", err)
+		return
 	}
+	err, charts := db.GetCharts(0, paramId, 0)
+	if err != nil || len(charts) <= 0 {
+		u.ReturnError(c, "get chart config error", err)
+		return
+	}
+	chart := *charts[0]
+	var eOption m.EChartOption
+	var query m.QueryMonitorData
+	eOption.Id = paramId
+	eOption.Title = chart.Title
+	if chart.Endpoint == "" {
+		query.Endpoint = c.QueryArray("endpoint[]")
+	}else{
+		query.Endpoint = strings.Split(chart.Endpoint, "^")
+	}
+	if len(query.Endpoint) <= 0 {
+		u.ReturnValidateFail(c ,"param endpoint validate error")
+		return
+	}
+	query.Metric = c.QueryArray("metric[]")
+	if chart.Metric != "" && len(query.Metric) > 0 {
+		if !strings.Contains(query.Metric[0], "/") {
+			query.Metric = strings.Split(chart.Metric, "^")
+		}
+	}
+	paramTime := c.Query("time")
+	paramStart := c.Query("start")
+	paramEnd := c.Query("end")
+	if paramTime != "" && paramStart == "" {
+		paramStart = paramTime
+	}
+	start,err := strconv.ParseInt(paramStart, 10, 64)
+	if err != nil {
+		u.ReturnError(c, "param start validate error", err)
+		return
+	}else{
+		if start < 0 {
+			start = time.Now().Unix() + start
+		}
+		query.Start = start
+	}
+	query.End = time.Now().Unix()
+	if paramEnd != "" {
+		end,err := strconv.ParseInt(paramEnd, 10, 64)
+		if err == nil && end <= query.End {
+			query.End = end
+		}
+	}
+	err,query.PromQ = db.GetPromMetric(query.Endpoint, query.Metric)
+	if err!=nil {
+		u.ReturnError(c, "query promQL fail", err)
+		return
+	}
+	mid.LogInfo(fmt.Sprintf("endpoint : %v  metric : %v  start:%d  end:%d  promql:%s", query.Endpoint, query.Metric, query.Start, query.End, query.PromQ))
+	serials := ds.PrometheusData(query)
+	agg := db.CheckAggregate(query.Start, query.End, query.Endpoint[0], len(serials))
+	for _, s := range serials {
+		s.Name = fmt.Sprintf("%s:%s", s.Name, query.Metric[0])
+		eOption.Legend = append(eOption.Legend, s.Name)
+		if agg > 1 {
+			aggType := chart.AggType
+			if c.Query("agg") != "" {
+				aggType = c.Query("agg")
+			}
+			if aggType != "none" && aggType != "" {
+				s.Data = db.Aggregate(s.Data, agg, aggType)
+			}
+		}
+	}
+	eOption.Xaxis = make(map[string]interface{})
+	eOption.Yaxis = m.YaxisModel{Unit: chart.Unit}
+	if len(serials) > 0 {
+		eOption.Series = serials
+	}else{
+		eOption.Series = []*m.SerialModel{}
+	}
+	u.ReturnData(c, eOption)
 }
 
 // @Summary 主页面接口 : 模糊搜索
