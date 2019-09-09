@@ -5,7 +5,6 @@ type QueryMonitorData struct{
 	End    int64  `json:"end"`
 	Endpoint  []string  `json:"endpoint"`
 	Metric  []string  `json:"metric"`
-	ComputeRate  bool  `json:"compute_rate"`
 	PromQ  string  `json:"prom_q"`
 }
 

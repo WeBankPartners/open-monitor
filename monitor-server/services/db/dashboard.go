@@ -148,7 +148,7 @@ func GetEndpoint(endpoint string) (error, m.EndpointTable) {
 	err := x.SQL("SELECT * FROM endpoint WHERE guid=?", endpoint).Find(&endpointObj)
 	if err != nil {
 		mid.LogError("get tags fail ", err)
-		return err,m.EndpointTable{}
+		return err,m.EndpointTable{Id:0}
 	}
 	if len(endpointObj) <= 0 {
 		return nil,m.EndpointTable{Id:0}
