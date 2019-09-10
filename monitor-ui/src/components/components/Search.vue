@@ -2,10 +2,10 @@
   <div class=" ">
    <ul class="search-ul">
       <li class="search-li">
-        <Searchinput @sendInputValue="obtainInputValue"></Searchinput> 
+        <Searchinput @sendInputValue="obtainInputValue" ref="searchInput" :parentConfig="searchInputConfig"></Searchinput> 
       </li>
       <li class="search-li">
-        <Button type="primary" @click="getChartsConfig" icon="ios-search">搜索</Button>
+        <Button type="primary" @click="getChartsConfig()" icon="ios-search">搜索</Button>
       </li>
       <li class="search-li">
           <Select v-model="timeTnterval" style="width:80px" @on-change="getChartsConfig">
@@ -25,6 +25,11 @@ export default {
   name: '',
   data() {
     return {
+      searchInputConfig: {
+        poptipWidth: 300,
+        placeholder: '请输入主机名或IP地址，可模糊匹配',
+        inputStyle: "width:300px;"
+      },
       ip: {},
       timeTnterval: -1800,
       dataPick: [
@@ -53,39 +58,42 @@ export default {
   },
   mounted (){
   },
-  
   methods: {
+    getMainConfig () {
+      return new Promise(resolve => {
+        let params = {
+          type: this.ip.value.split(':')[1]
+        }
+        this.$httpRequestEntrance.httpRequestEntrance('GET', '/dashboard/main', params, (responseData) => {
+            resolve(responseData)
+          })
+        })
+    },
     datePick (data) {
       this.dateRange = data
       this.getChartsConfig()
     },
     getChartsConfig (ip=this.ip) {
-      let params = {
-        group: 1,
-        time: this.timeTnterval,
-        endpoint: ip.value,
-        start: this.dateRange[0] ===''? '':Date.parse(this.dateRange[0])/1000,
-        end: this.dateRange[1] ===''? '':Date.parse(this.dateRange[1])/1000
-      }
-      this.$httpRequestEntrance.httpRequestEntrance('GET','/dashboard/panels', params, responseData => {
-        this.$parent.manageCharts(responseData, params)
-      },{isNeedloading: false})
-    },
-    request () {
-      if (!this.ip_name) {
-        return
-      }
-      let params = {
-        search: this.ip_name
-      }
-      this.$httpRequestEntrance.httpRequestEntrance('GET','/dashboard/search', params, responseData => {
-        this.searchResult = responseData
+      this.ip = ip
+      this.getMainConfig().then((res)=>{
+        let url = res.panels.url
+        let key = res.search.name
+        let params = {
+          time: this.timeTnterval,
+          endpoint: ip.value,
+          start: this.dateRange[0] ===''? '':Date.parse(this.dateRange[0])/1000,
+          end: this.dateRange[1] ===''? '':Date.parse(this.dateRange[1])/1000
+        }
+        url = url.replace(`{${key}}`,params[key].split(':')[0])
+        this.$httpRequestEntrance.httpRequestEntrance('GET',url, params, responseData => {
+          this.$parent.manageCharts(responseData, params)
+        },{isNeedloading: false})
       })
-      this.showSearchTips = true
+      
     },
     obtainInputValue (ip) {
       this.ip = ip
-      this.getChartsConfig()
+      this.getChartsConfig(this.ip)
     } 
   },
   components: {

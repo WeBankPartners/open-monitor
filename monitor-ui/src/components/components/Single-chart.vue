@@ -143,7 +143,7 @@ export default {
     getchartdata () {
         let params = {
         id: this.chartItemx.id,
-        endpoint: [this.params.endpoint],
+        endpoint: [this.params.endpoint.split(':')[0]],
         metric: [this.chartItemx.metric[0]],
         time: this.params.time.toString(),
         start: this.params.start + '',

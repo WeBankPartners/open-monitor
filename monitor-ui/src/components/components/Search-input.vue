@@ -1,22 +1,23 @@
 <template>
   <div class="search-input-content">
-        <Poptip placement="bottom" width="300">
-          <input v-model.trim="ip.label"
-          placeholder="请输入主机名或IP地址，可模糊匹配"
-          @input="userInput"
-          type="text"
-          class="search-input" />
-          <div class="api" slot="content" v-if="showSearchTips">
-            <ul>
-              <template v-for="(resItem, resIndex) in searchResult">
-                <li style="line-height: 20px;font-weight: 500;cursor:pointer" @click="choiceRes(resItem)" :key="resIndex">
-                  <span>{{resItem.option_text}}</span>
-                </li>
-              </template>  
-                
-            </ul> 
-          </div>
-        </Poptip>
+    <Poptip placement="bottom" :width="parentConfig.poptipWidth">
+      <input v-model.trim="ip.label"
+      :placeholder="parentConfig.placeholder"
+      @input="userInput"
+      type="text"
+      :style= "parentConfig.inputStyle"
+      class="search-input" />
+      <div class="poptip-content" slot="content" v-if="showSearchTips">
+        <ul>
+          <template v-for="(resItem, resIndex) in searchResult">
+            <li class="ul-option" @click="choiceRes(resItem)" :key="resIndex">
+              <span>{{resItem.option_text}}</span>
+            </li>
+          </template>  
+            
+        </ul> 
+      </div>
+    </Poptip>
   </div>
 </template>
 
@@ -32,6 +33,9 @@ export default {
       showSearchTips: false,
       searchResult: [],
     }
+  },
+  props: {
+    parentConfig: Object
   },
   methods: {
     userInput () {
@@ -61,12 +65,21 @@ export default {
 }
 </script>
 
+<style>
+  .ivu-poptip-body {
+    padding: 0;
+  }
+  .poptip-content {
+    padding: 4px 0;
+  }
+  .poptip-content {
+    max-height: 300px;
+  }
+</style>
 <style scoped lang="less">
 .search-input {
     display: inline-block;
-    width: 300px;
     height: 32px;
-    line-height: 1.5;
     padding: 4px 7px;
     font-size: 12px;
     border: 1px solid #dcdee2;
@@ -86,5 +99,17 @@ export default {
   .search-input-content {
     display: inline-block;
     vertical-align: middle; 
+  }
+
+  .ul-option {
+    font-weight: 500;
+    text-align: left;
+    padding: 7px 16px;
+    font-size: 12px;
+    white-space: nowrap;
+    cursor:pointer;
+  }
+  .ul-option:hover {
+    background: @gray-hover;
   }
 </style>

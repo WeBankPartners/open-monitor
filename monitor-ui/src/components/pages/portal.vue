@@ -2,10 +2,10 @@
   <div class=" " style="text-align: center;padding-top:15%">
       <ul class="search-ul">
         <li class="search-li">
-            <Searchinput @sendInputValue="obtainInputValue"></Searchinput> 
+            <Searchinput @sendInputValue="obtainInputValue" :parentConfig="searchInputConfig"></Searchinput> 
         </li>
         <li class="search-li">
-            <Button type="primary" @click="sss" icon="ios-search">搜索</Button>
+            <Button type="primary" @click="routerChange" icon="ios-search">搜索</Button>
         </li>
       </ul>
     <div>  
@@ -19,12 +19,23 @@ export default {
   name: '',
   data() {
     return {
-      ip: ''
+      ip: '',
+      searchInputConfig: {
+        poptipWidth: 500,
+        placeholder: '请输入主机名或IP地址，可模糊匹配',
+        inputStyle: "width:500px;"
+      }
     }
   },
+  mounted: {
+  },
   methods: {
-    sss (){
+    routerChange (){
+      if (this.ip) {
         this.$router.push({ name: 'mainView', params: { ip: this.ip }})
+      } else {
+        this.$Message.warning('请选择有效IP！')
+      }
     },  
     obtainInputValue (ip) {
       this.ip = ip
