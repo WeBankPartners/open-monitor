@@ -28,7 +28,6 @@ export default {
     this.elId =  `id_${this.guid()}`;
   },
   mounted() {
-    console.log(111111)
     this.getchartdata()
   },
   methods: {
