@@ -2,7 +2,7 @@
   <div class=" ">
    <ul class="search-ul">
       <li class="search-li">
-        <Searchinput @sendInputValue="obtainInputValue" ref="searchInput" :parentConfig="searchInputConfig"></Searchinput> 
+        <Searchinput ref="searchInput" :parentConfig="searchInputConfig"></Searchinput> 
       </li>
       <li class="search-li">
         <Button type="primary" @click="getChartsConfig()" icon="ios-search">搜索</Button>
@@ -73,14 +73,19 @@ export default {
       this.dateRange = data
       this.getChartsConfig()
     },
-    getChartsConfig (ip=this.ip) {
-      this.ip = ip
+    getChartsConfig () {
+      if (Object.keys(this.$store.state.ip).length === 0) {
+        this.$Message.warning('请选择有效IP！')
+        return
+      } else {
+        this.ip = this.$store.state.ip
+      }
       this.getMainConfig().then((res)=>{
         let url = res.panels.url
         let key = res.search.name
         let params = {
           time: this.timeTnterval,
-          endpoint: ip.value,
+          endpoint: this.ip.value,
           start: this.dateRange[0] ===''? '':Date.parse(this.dateRange[0])/1000,
           end: this.dateRange[1] ===''? '':Date.parse(this.dateRange[1])/1000
         }
@@ -91,10 +96,6 @@ export default {
       })
       
     },
-    obtainInputValue (ip) {
-      this.ip = ip
-      this.getChartsConfig(this.ip)
-    } 
   },
   components: {
     Searchinput

@@ -20,9 +20,7 @@ export default {
     }
   },
   mounted() {
-    if (this.$route.params.ip) {
-      this.$refs.search.getChartsConfig(this.$route.params.ip)
-    }
+    this.$refs.search.getChartsConfig()
   },
   methods: {
     manageCharts (chartsConfig, params) {

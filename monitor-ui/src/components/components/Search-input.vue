@@ -11,10 +11,14 @@
         <ul>
           <template v-for="(resItem, resIndex) in searchResult">
             <li class="ul-option" @click="choiceRes(resItem)" :key="resIndex">
+              <!-- <i class="fa fa-desktop" v-if="resItem.option_value.split(':')[1] == 'host'" aria-hidden="true"></i>
+              <i class="fa fa-database" v-if="resItem.option_value.split(':')[1] == 'mysql'" aria-hidden="true"></i>
+              <i class="fa " v-else aria-hidden="true"></i> -->
+              <Tag color="cyan" v-if="resItem.option_value.split(':')[1] == 'host'">host</Tag>
+              <Tag color="blue" v-if="resItem.option_value.split(':')[1] == 'mysql'">mysql</Tag>
               <span>{{resItem.option_text}}</span>
             </li>
           </template>  
-            
         </ul> 
       </div>
     </Poptip>
@@ -37,6 +41,11 @@ export default {
   props: {
     parentConfig: Object
   },
+  mounted(){
+    if (Object.keys(this.$store.state.ip).length !== 0) {
+      this.ip = this.$store.state.ip
+    }
+  },
   methods: {
     userInput () {
       this.showSearchTips = false
@@ -45,7 +54,8 @@ export default {
     choiceRes (resItem) {
       this.ip.label = resItem.option_text
       this.ip.value = resItem.option_value
-      this.$emit('sendInputValue', this.ip)
+      this.$store.commit('storeip', this.ip)
+      // this.$parent.getChartsConfig()
       this.showSearchTips = false
     },
     request () {
@@ -77,7 +87,7 @@ export default {
   }
 </style>
 <style scoped lang="less">
-.search-input {
+  .search-input {
     display: inline-block;
     height: 32px;
     padding: 4px 7px;
@@ -111,5 +121,8 @@ export default {
   }
   .ul-option:hover {
     background: @gray-hover;
+  }
+  .fa {
+    padding-right: 8px;
   }
 </style>
