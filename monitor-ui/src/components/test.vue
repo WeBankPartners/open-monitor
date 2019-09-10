@@ -10,22 +10,7 @@ export default {
   name: 'TEST',
   methods: {
     test () {
-      // let params = {
-      //   endpoint: ['192.168.0.16'],
-      //   metric: ['cpu.used.percent'],
-      //   time: '-1800'
-      // }
-      // this.$httpRequestEntrance.httpRequestEntrance('POST','/api/v1/dashboard/chart', params, responseData => {
-      //   console.log(responseData) 
-      // })
-
-      // let params = {
-      //   search: 1
-      // }
-      // this.$httpRequestEntrance.httpRequestEntrance('GET','/api/v1/dashboard/search', params, responseData => {
-      //   console.log(responseData) 
-      // })
-
+      this.$store.commit('storeip',{name:111})
     }
   }
 }
