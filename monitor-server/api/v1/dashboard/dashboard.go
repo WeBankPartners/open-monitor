@@ -3,7 +3,6 @@ package dashboard
 import (
 	m "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/models"
 	mid "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/middleware"
-	u "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/middleware/util"
 	"github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/services/db"
 	ds "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/services/datasource"
 	"github.com/gin-gonic/gin"
@@ -24,12 +23,12 @@ import (
 func MainDashboard(c *gin.Context)  {
 	dType := c.Query("type")
 	if dType == "" {
-		u.Return(c, u.RespJson{Msg:"param error", Code:http.StatusBadRequest})
+		mid.Return(c, mid.RespJson{Msg:"param error", Code:http.StatusBadRequest})
 		return
 	}
 	err,dashboard := db.GetDashboard(dType)
 	if err != nil {
-		u.ReturnError(c, "query dashboard fail", err)
+		mid.ReturnError(c, "query dashboard fail", err)
 		return
 	}
 	var dashboardDto m.Dashboard
@@ -71,7 +70,7 @@ func MainDashboard(c *gin.Context)  {
 		}
 		dashboardDto.Panels = panels
 	}
-	u.ReturnData(c, dashboardDto)
+	mid.ReturnData(c, dashboardDto)
 }
 
 // @Summary 页面通用接口 : 获取panels
@@ -79,23 +78,23 @@ func MainDashboard(c *gin.Context)  {
 // @Produce  json
 // @Param group query int true "panels url 上自带该id"
 // @Param endpoint query string true "需要在panels url上把{endpoint}替换"
-// @Success 200 {string} json "[{'title': 'panel_title','tags':{'enable': false,'url': '','option':[]},'charts':[{'id': 1,'col': 6,'endpoint':['88B525B4-43E8-4A7A-8E11-0E664B5CB8D0'],'metric':['cpu.busy'],'url': '/dashboard/chart'}]},{'title': 'disk','tags':{'enable': true,'url': '/dashboard/tags?panel_id=1&endpoint=88B525B4-43E8-4A7A-8E11-0E664B5CB8D0&tag=','option':[{'option_value': 'device=vda','option_text': 'vda'},{'option_value': 'device=vdb','option_text': 'vdb'}]},'charts':[{'id': 2,'col': 6,'endpoint':['88B525B4-43E8-4A7A-8E11-0E664B5CB8D0'],'metric':['disk.io.util/device=vda'],'url': '/dashboard/chart'},{'id': 3,'col': 6,'endpoint':['88B525B4-43E8-4A7A-8E11-0E664B5CB8D0'],'metric':['disk.io.await/device=vda'],'url': '/dashboard/chart'}]}]"
+// @Success 200 {string} json "[{'title': 'panel_title','tags':{'enable': false,'url': '','option':[]},'charts':[{'id': 1,'col': 6,'endpoint':['88B525B4-43E8-4A7A-8E11-0E664B5CB8D0'],'metric':['cpmid.busy'],'url': '/dashboard/chart'}]},{'title': 'disk','tags':{'enable': true,'url': '/dashboard/tags?panel_id=1&endpoint=88B525B4-43E8-4A7A-8E11-0E664B5CB8D0&tag=','option':[{'option_value': 'device=vda','option_text': 'vda'},{'option_value': 'device=vdb','option_text': 'vdb'}]},'charts':[{'id': 2,'col': 6,'endpoint':['88B525B4-43E8-4A7A-8E11-0E664B5CB8D0'],'metric':['disk.io.util/device=vda'],'url': '/dashboard/chart'},{'id': 3,'col': 6,'endpoint':['88B525B4-43E8-4A7A-8E11-0E664B5CB8D0'],'metric':['disk.io.await/device=vda'],'url': '/dashboard/chart'}]}]"
 // @Router /api/v1/dashboard/panels [get]
 func GetPanels(c *gin.Context)  {
 	group := c.Query("group")
 	endpoint := c.Query("endpoint")
 	if group == "" {
-		u.Return(c, u.RespJson{Msg:"param error", Code:http.StatusBadRequest})
+		mid.Return(c, mid.RespJson{Msg:"param error", Code:http.StatusBadRequest})
 		return
 	}
 	groupId,err := strconv.Atoi(group)
 	if err != nil {
-		u.Return(c, u.RespJson{Msg:"param group is not number error", Code:http.StatusBadRequest})
+		mid.Return(c, mid.RespJson{Msg:"param group is not number error", Code:http.StatusBadRequest})
 		return
 	}
 	err,panels := db.GetPanels(groupId, endpoint)
 	if err != nil {
-		u.ReturnError(c, "get panels fail", err)
+		mid.ReturnError(c, "get panels fail", err)
 		return
 	}
 	var panelsDto []*m.PanelModel
@@ -154,7 +153,7 @@ func GetPanels(c *gin.Context)  {
 		panelDto.Charts = chartsDto
 		panelsDto = append(panelsDto, &panelDto)
 	}
-	u.ReturnData(c, panelsDto)
+	mid.ReturnData(c, panelsDto)
 }
 
 // @Summary 页面通用接口 : 根据tag获取charts组
@@ -170,12 +169,12 @@ func GetTags(c *gin.Context)  {
 	endpoint := c.Query("endpoint")
 	tag := c.Query("tag")
 	if tag == "" {
-		u.Return(c, u.RespJson{Msg:"param error", Code:http.StatusBadRequest})
+		mid.Return(c, mid.RespJson{Msg:"param error", Code:http.StatusBadRequest})
 		return
 	}
 	panelId,err := strconv.Atoi(panelIdStr)
 	if err != nil {
-		u.Return(c, u.RespJson{Msg:"param panel_id is not number error", Code:http.StatusBadRequest})
+		mid.Return(c, mid.RespJson{Msg:"param panel_id is not number error", Code:http.StatusBadRequest})
 		return
 	}
 	err,charts := db.GetCharts(0, 0, panelId)
@@ -195,7 +194,7 @@ func GetTags(c *gin.Context)  {
 		chartDto.Metric = newMetricList
 		chartsDto = append(chartsDto, &chartDto)
 	}
-	u.ReturnData(c, chartsDto)
+	mid.ReturnData(c, chartsDto)
 }
 
 // @Summary 页面通用接口 : 获取chart数据
@@ -203,7 +202,7 @@ func GetTags(c *gin.Context)  {
 // @Produce  json
 // @Param id query int true "panel里的chart id"
 // @Param endpoint query []string true "endpoint数组, ['88B525B4-43E8-4A7A-8E11-0E664B5CB8D0']"
-// @Param metric query []string true "metric数组, ['cpu.busy']"
+// @Param metric query []string true "metric数组, ['cpmid.busy']"
 // @Param start query string true "开始时间"
 // @Param end query string false "结束时间"
 // @Param aggregate query string false "聚合类型 枚举 min max avg p95 none"
@@ -212,12 +211,12 @@ func GetTags(c *gin.Context)  {
 func GetChart(c *gin.Context)  {
 	paramId,err := strconv.Atoi(c.Query("id"))
 	if err != nil || paramId <= 0 {
-		u.ReturnError(c, "chart id validate error", err)
+		mid.ReturnError(c, "chart id validate error", err)
 		return
 	}
 	err, charts := db.GetCharts(0, paramId, 0)
 	if err != nil || len(charts) <= 0 {
-		u.ReturnError(c, "get chart config error", err)
+		mid.ReturnError(c, "get chart config error", err)
 		return
 	}
 	chart := *charts[0]
@@ -231,7 +230,7 @@ func GetChart(c *gin.Context)  {
 		query.Endpoint = strings.Split(chart.Endpoint, "^")
 	}
 	if len(query.Endpoint) <= 0 {
-		u.ReturnValidateFail(c ,"param endpoint validate error")
+		mid.ReturnValidateFail(c ,"param endpoint validate error")
 		return
 	}
 	query.Metric = c.QueryArray("metric[]")
@@ -248,7 +247,7 @@ func GetChart(c *gin.Context)  {
 	}
 	start,err := strconv.ParseInt(paramStart, 10, 64)
 	if err != nil {
-		u.ReturnError(c, "param start validate error", err)
+		mid.ReturnError(c, "param start validate error", err)
 		return
 	}else{
 		if start < 0 {
@@ -265,7 +264,7 @@ func GetChart(c *gin.Context)  {
 	}
 	err,query.PromQ = db.GetPromMetric(query.Endpoint, query.Metric)
 	if err!=nil {
-		u.ReturnError(c, "query promQL fail", err)
+		mid.ReturnError(c, "query promQL fail", err)
 		return
 	}
 	mid.LogInfo(fmt.Sprintf("endpoint : %v  metric : %v  start:%d  end:%d  promql:%s", query.Endpoint, query.Metric, query.Start, query.End, query.PromQ))
@@ -291,7 +290,7 @@ func GetChart(c *gin.Context)  {
 	}else{
 		eOption.Series = []*m.SerialModel{}
 	}
-	u.ReturnData(c, eOption)
+	mid.ReturnData(c, eOption)
 }
 
 // @Summary 主页面接口 : 模糊搜索
@@ -305,7 +304,7 @@ func MainSearch(c *gin.Context)  {
 	endpoint := c.Query("search")
 	//limit := c.Query("limit")
 	if endpoint == ""{
-		u.Return(c, u.RespJson{Msg:"param error", Code:http.StatusBadRequest})
+		mid.Return(c, mid.RespJson{Msg:"param error", Code:http.StatusBadRequest})
 		return
 	}
 	if strings.Contains(endpoint, `:`) {
@@ -313,22 +312,22 @@ func MainSearch(c *gin.Context)  {
 	}
 	err,result := db.SearchHost(endpoint)
 	if err != nil {
-		u.ReturnError(c, "search host fail", err)
+		mid.ReturnError(c, "search host fail", err)
 		return
 	}
-	u.ReturnData(c, result)
+	mid.ReturnData(c, result)
 }
 
 func RegisterEndpoint(c *gin.Context)  {
 	endpoint := c.Query("endpoint")
 	if endpoint == "" {
-		u.ReturnValidateFail(c, "endpoint is null")
+		mid.ReturnValidateFail(c, "endpoint is null")
 		return
 	}
 	err := cron.SyncEndpointMetric(endpoint)
 	if err != nil {
-		u.ReturnError(c, "register endpoint fail", err)
+		mid.ReturnError(c, "register endpoint fail", err)
 		return
 	}
-	u.ReturnSuccess(c, fmt.Sprintf("register endpoint %s success", endpoint))
+	mid.ReturnSuccess(c, fmt.Sprintf("register endpoint %s success", endpoint))
 }

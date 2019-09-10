@@ -138,7 +138,10 @@ func SearchHost(endpoint string) (error, []*m.OptionModel) {
 		return err,options
 	}
 	for _,host := range hosts {
-		options = append(options, &m.OptionModel{OptionText:fmt.Sprintf("%s:%s", host.Name, host.Ip), OptionValue:host.Guid})
+		if host.ExportType == "node" {
+			host.ExportType = "host"
+		}
+		options = append(options, &m.OptionModel{OptionText:fmt.Sprintf("%s:%s", host.Name, host.Ip), OptionValue:fmt.Sprintf("%s:%s", host.Guid, host.ExportType)})
 	}
 	return err,options
 }
@@ -189,7 +192,7 @@ func GetTags(endpoint string, key string, metric string) (error, []*m.OptionMode
 	return err,options
 }
 
-func RegisterEndpoint(endpointId int,endpointMetrics []string) error {
+func RegisterEndpointMetric(endpointId int,endpointMetrics []string) error {
 	maxNum  := 100
 	var sqls []string
 	delSql := fmt.Sprintf("delete FROM endpoint_metric WHERE endpoint_id=%d", endpointId)

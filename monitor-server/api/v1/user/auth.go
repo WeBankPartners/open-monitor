@@ -3,7 +3,6 @@ package user
 import (
 	"github.com/gin-gonic/gin"
 	mid "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/middleware"
-	u "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/middleware/util"
 	m "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/models"
 	"net/http"
 	"time"
@@ -30,13 +29,13 @@ func Login(c *gin.Context)  {
 			session := m.Session{User:authData.Username}
 			isOk, sId := mid.SaveSession(session)
 			if !isOk {
-				u.Return(c, u.RespJson{Msg:"fail to save session"})
+				mid.Return(c, mid.RespJson{Msg:"fail to save session"})
 			}else{
 				session.Token = sId
-				u.Return(c, u.RespJson{Msg:"login success", Data:session})
+				mid.Return(c, mid.RespJson{Msg:"login success", Data:session})
 			}
 		}else{
-			u.Return(c, u.RespJson{Msg:"auth fail", Code:http.StatusBadRequest})
+			mid.Return(c, mid.RespJson{Msg:"auth fail", Code:http.StatusBadRequest})
 		}
 	}else{
 		c.JSON(http.StatusBadRequest, gin.H{"error": "params validate fail"})
@@ -51,9 +50,9 @@ func Logout(c *gin.Context) {
 	auToken := c.GetHeader("X-Auth-Token")
 	if auToken!= ""{
 		mid.DelSession(auToken)
-		u.Return(c, u.RespJson{Msg:"successfully logout"})
+		mid.Return(c, mid.RespJson{Msg:"successfully logout"})
 	}else{
-		u.Return(c, u.RespJson{Msg:"invalid session token", Code:http.StatusUnauthorized})
+		mid.Return(c, mid.RespJson{Msg:"invalid session token", Code:http.StatusUnauthorized})
 	}
 }
 
@@ -70,11 +69,11 @@ func AuthRequired() gin.HandlerFunc {
 			if mid.IsActive(auToken) {
 				c.Next()
 			}else{
-				u.Return(c, u.RespJson{Msg:"invalid session token", Code:http.StatusUnauthorized})
+				mid.Return(c, mid.RespJson{Msg:"invalid session token", Code:http.StatusUnauthorized})
 				c.Abort()
 			}
 		}else{
-			u.Return(c, u.RespJson{Msg:"no auth token", Code:http.StatusUnauthorized})
+			mid.Return(c, mid.RespJson{Msg:"no auth token", Code:http.StatusUnauthorized})
 			c.Abort()
 		}
 	}
@@ -96,11 +95,11 @@ func AuthServer() gin.HandlerFunc  {
 				mid.LogInfo(fmt.Sprintf("server %s request %s ", realIp, c.Request.URL.Path))
 				c.Next()
 			}else{
-				u.Return(c, u.RespJson{Msg:"ip not allow", Code:http.StatusUnauthorized})
+				mid.Return(c, mid.RespJson{Msg:"ip not allow", Code:http.StatusUnauthorized})
 				c.Abort()
 			}
 		}else{
-			u.Return(c, u.RespJson{Msg:"token not allow", Code:http.StatusUnauthorized})
+			mid.Return(c, mid.RespJson{Msg:"token not allow", Code:http.StatusUnauthorized})
 			c.Abort()
 		}
 	}
@@ -114,16 +113,16 @@ func LdapLogin(c *gin.Context) {
 			session := m.Session{User:authData.Username}
 			isOk, sId := mid.SaveSession(session)
 			if !isOk {
-				u.Return(c, u.RespJson{Msg:"fail to save session"})
+				mid.Return(c, mid.RespJson{Msg:"fail to save session"})
 			}else{
 				session.Token = sId
-				u.Return(c, u.RespJson{Msg:"login success", Data:session})
+				mid.Return(c, mid.RespJson{Msg:"login success", Data:session})
 			}
 		}else{
-			u.Return(c, u.RespJson{Msg:"auth fail", Code:http.StatusUnauthorized})
+			mid.Return(c, mid.RespJson{Msg:"auth fail", Code:http.StatusUnauthorized})
 		}
 	}else{
-		u.Return(c, u.RespJson{Msg:"params validate fail", Code:http.StatusUnauthorized})
+		mid.Return(c, mid.RespJson{Msg:"params validate fail", Code:http.StatusUnauthorized})
 	}
 }
 
@@ -131,9 +130,9 @@ func UserMsg(c *gin.Context) {
 	auToken := c.GetHeader("X-Auth-Token")
 	if auToken!= "" {
 		re := mid.GetSessionData(auToken)
-		u.Return(c, u.RespJson{Data:map[string]interface{}{"user":re.User}})
+		mid.Return(c, mid.RespJson{Data:map[string]interface{}{"user":re.User}})
 	}else{
-		u.Return(c, u.RespJson{Msg:"invalid session token", Code:http.StatusBadRequest})
+		mid.Return(c, mid.RespJson{Msg:"invalid session token", Code:http.StatusBadRequest})
 	}
 }
 

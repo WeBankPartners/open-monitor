@@ -1,6 +1,5 @@
 package models
 
-
 type SearchModel struct {
 	Id  int  `json:"id"`
 	Enable  bool  `json:"enable"`
@@ -185,10 +184,13 @@ type EndpointTable struct {
 	Guid  string  `json:"guid"`
 	Name  string  `json:"name"`
 	Ip  string  `json:"ip"`
+	EndpointVersion  string  `json:"endpoint_version"`
 	ExportType  string  `json:"export_type"`
+	ExportVersion  string  `json:"export_version"`
+	Step  int  `json:"step"`
 	OsIp  string  `json:"os_ip"`
 	OsType  string  `json:"os_type"`
-	Step  int  `json:"step"`
+	CreateAt  string  `json:"create_at"`
 }
 
 type EndpointMetricTable struct {
