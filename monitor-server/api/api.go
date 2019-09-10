@@ -11,6 +11,7 @@ import (
 	"github.com/swaggo/gin-swagger/swaggerFiles"
 	"fmt"
 	"github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/api/v1/dashboard"
+	"github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/api/v1/agent"
 )
 
 func InitHttpServer() {
@@ -55,6 +56,11 @@ func InitHttpServer() {
 			dashboardApi.GET("/tags", dashboard.GetTags)
 			dashboardApi.GET("/search", dashboard.MainSearch)
 			dashboardApi.GET("/register", dashboard.RegisterEndpoint)
+		}
+		agentApi := authApi.Group("/agent")
+		{
+			agentApi.POST("/register", agent.RegisterAgent)
+			agentApi.GET("/deregister", agent.DeregisterAgent)
 		}
 		port := m.Config().Http.Port
 		r.Run(fmt.Sprintf(":%d", port))

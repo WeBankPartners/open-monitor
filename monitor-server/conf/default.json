@@ -51,5 +51,14 @@
     "divide_time": 1,
     "wait_time": 1
   },
-  "limitIp": ["*"]
+  "limitIp": ["*"],
+  "dependence": [
+    {
+      "name": "consul",
+      "server": "http://127.0.0.1:8500",
+      "username": "",
+      "password": "",
+      "expire": 0
+    }
+  ]
 }

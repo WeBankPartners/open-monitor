@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"github.com/gin-gonic/gin"
-	u "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/middleware/util"
 	"net/http"
 	"strings"
 	"reflect"
@@ -28,7 +27,7 @@ func ValidateGet(c *gin.Context)  {
 	if isOk {
 		c.Next()
 	}else{
-		u.Return(c, u.RespJson{Msg:"request validate fail", Code:http.StatusBadRequest})
+		Return(c, RespJson{Msg:"request validate fail", Code:http.StatusBadRequest})
 		c.Abort()
 		return
 	}
@@ -64,7 +63,7 @@ func ValidatePost(c *gin.Context, obj interface{}, ex ...string) bool {
 		}
 	}
 	if !isOk {
-		u.Return(c, u.RespJson{Msg:"request validate fail", Code:http.StatusBadRequest})
+		Return(c, RespJson{Msg:"request validate fail", Code:http.StatusBadRequest})
 		c.Abort()
 	}
 	return isOk

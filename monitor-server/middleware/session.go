@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"sync"
 	"github.com/gin-gonic/gin"
-	u "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/middleware/util"
 	"net/http"
 )
 
@@ -70,7 +69,7 @@ func GetOperateUser(c *gin.Context) string {
 		session := GetSessionData(auToken)
 		return fmt.Sprintf("%s", session.User)
 	}else{
-		u.Return(c, u.RespJson{Msg:"no auth token", Code:http.StatusUnauthorized})
+		Return(c, RespJson{Msg:"no auth token", Code:http.StatusUnauthorized})
 		return ""
 	}
 }

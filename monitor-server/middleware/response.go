@@ -1,4 +1,4 @@
-package util
+package middleware
 
 import (
 	"github.com/gin-gonic/gin"
@@ -31,6 +31,7 @@ func Return(c *gin.Context, j RespJson)  {
 }
 
 func ReturnError(c *gin.Context, msg string, err error) {
+	LogError(fmt.Sprintf("request %s fail", c.FullPath()), err)
 	c.JSON(http.StatusInternalServerError, gin.H{"msg": msg, "data": err})
 }
 

@@ -53,6 +53,14 @@ type DataSourceConfig struct {
 	WaitTime    int    `json:"wait_time"`
 }
 
+type DependenceConfig struct {
+	Name  string  `json:"name"`
+	Server  string  `json:"server"`
+	Username  string  `json:"username"`
+	Password  string  `json:"password"`
+	Expire    int     `json:"expire"`
+}
+
 type DatasourceServers struct {
 	Id  int  `json:"id"`
 	Type  string  `json:"type"`
@@ -66,6 +74,7 @@ type GlobalConfig struct {
 	Store  []*StoreConfig  `json:"store"`
 	Datasource  DataSourceConfig  `json:"datasource"`
 	LimitIp  []string  `json:"limitIp"`
+	Dependence  []*DependenceConfig  `json:"dependence"`
 }
 
 var (
