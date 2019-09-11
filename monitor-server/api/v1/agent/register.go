@@ -12,11 +12,12 @@ import (
 
 const hostType  = "host"
 const mysqlType  = "mysql"
+const redisType = "redis"
 
 func RegisterAgent(c *gin.Context)  {
 	var param m.RegisterParam
 	if err := c.ShouldBindJSON(&param); err==nil {
-		if param.Type != hostType && param.Type != mysqlType {
+		if param.Type != hostType && param.Type != mysqlType && param.Type != redisType {
 			mid.ReturnError(c, "type " + param.Type + " is not supported yet", nil)
 			return
 		}
@@ -24,7 +25,7 @@ func RegisterAgent(c *gin.Context)  {
 		var strList []string
 		var endpoint m.EndpointTable
 		if param.Type == hostType {
-			err,strList = cron.GetEndpointData(param.ExporterIp, param.ExporterPort, []string{"node"})
+			err,strList = cron.GetEndpointData(param.ExporterIp, param.ExporterPort, []string{"node"}, []string{})
 			if err != nil {
 				mid.ReturnError(c,"curl endpoint data fail ", err)
 				return
@@ -50,7 +51,7 @@ func RegisterAgent(c *gin.Context)  {
 			endpoint.Name = hostname
 			endpoint.Ip = param.ExporterIp
 			endpoint.ExportType = hostType
-			endpoint.OsIp = fmt.Sprintf("%s:%s", param.ExporterIp, param.ExporterPort)
+			endpoint.Address = fmt.Sprintf("%s:%s", param.ExporterIp, param.ExporterPort)
 			endpoint.OsType = sysname
 			endpoint.Step = step
 			endpoint.EndpointVersion = release
@@ -60,7 +61,7 @@ func RegisterAgent(c *gin.Context)  {
 				mid.ReturnValidateFail(c, "mysql instance name is null")
 				return
 			}
-			err,strList = cron.GetEndpointData(param.ExporterIp, param.ExporterPort, []string{"mysql", "mysqld"})
+			err,strList = cron.GetEndpointData(param.ExporterIp, param.ExporterPort, []string{"mysql", "mysqld"}, []string{})
 			if err != nil {
 				mid.ReturnError(c,"curl endpoint data fail ", err)
 				return
@@ -81,7 +82,35 @@ func RegisterAgent(c *gin.Context)  {
 			endpoint.ExportType = mysqlType
 			endpoint.ExportVersion = exportVersion
 			endpoint.Step = step
-			endpoint.OsIp = fmt.Sprintf("%s:%s", param.ExporterIp, param.ExporterPort)
+			endpoint.Address = fmt.Sprintf("%s:%s", param.ExporterIp, param.ExporterPort)
+		}else if param.Type == redisType {
+			if param.Instance == "" {
+				mid.ReturnValidateFail(c, "redis instance name is null")
+				return
+			}
+			err,strList = cron.GetEndpointData(param.ExporterIp, param.ExporterPort, []string{"redis"}, []string{"redis_version",",version"})
+			if err != nil {
+				mid.ReturnError(c,"curl endpoint data fail ", err)
+				return
+			}
+			var redisVersion,exportVersion string
+			for _,v := range strList {
+				if strings.Contains(v, "redis_version") {
+					mid.LogInfo(fmt.Sprintf("redis str list : %s", v))
+					redisVersion = strings.Split(strings.Split(v, ",redis_version=\"")[1], "\"")[0]
+				}
+				if strings.Contains(v, ",version") {
+					exportVersion = strings.Split(strings.Split(v, ",version=\"")[1], "\"")[0]
+				}
+			}
+			endpoint.Guid = fmt.Sprintf("%s_%s_%s", param.Instance, param.ExporterIp, redisType)
+			endpoint.Name = param.Instance
+			endpoint.Ip = param.ExporterIp
+			endpoint.EndpointVersion = redisVersion
+			endpoint.ExportType = redisType
+			endpoint.ExportVersion = exportVersion
+			endpoint.Step = step
+			endpoint.Address = fmt.Sprintf("%s:%s", param.ExporterIp, param.ExporterPort)
 		}
 		err = db.UpdateEndpoint(&endpoint)
 		if err != nil {

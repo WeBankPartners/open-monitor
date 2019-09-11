@@ -6,6 +6,7 @@ type QueryMonitorData struct{
 	Endpoint  []string  `json:"endpoint"`
 	Metric  []string  `json:"metric"`
 	PromQ  string  `json:"prom_q"`
+	Legend  string  `json:"legend"`
 }
 
 type PrometheusParam struct {

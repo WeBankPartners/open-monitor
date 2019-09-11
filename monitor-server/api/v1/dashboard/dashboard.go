@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 	"fmt"
-	"github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/services/cron"
 )
 
 // @Summary 页面通用接口 : 视图
@@ -267,11 +266,14 @@ func GetChart(c *gin.Context)  {
 		mid.ReturnError(c, "query promQL fail", err)
 		return
 	}
+	query.Legend = chart.Legend
 	mid.LogInfo(fmt.Sprintf("endpoint : %v  metric : %v  start:%d  end:%d  promql:%s", query.Endpoint, query.Metric, query.Start, query.End, query.PromQ))
 	serials := ds.PrometheusData(query)
 	agg := db.CheckAggregate(query.Start, query.End, query.Endpoint[0], len(serials))
 	for _, s := range serials {
-		s.Name = fmt.Sprintf("%s:%s", s.Name, query.Metric[0])
+		if strings.Contains(s.Name, "$metric") {
+			s.Name = strings.Replace(s.Name, "$metric", query.Metric[0], -1)
+		}
 		eOption.Legend = append(eOption.Legend, s.Name)
 		if agg > 1 {
 			aggType := chart.AggType
@@ -316,18 +318,4 @@ func MainSearch(c *gin.Context)  {
 		return
 	}
 	mid.ReturnData(c, result)
-}
-
-func RegisterEndpoint(c *gin.Context)  {
-	endpoint := c.Query("endpoint")
-	if endpoint == "" {
-		mid.ReturnValidateFail(c, "endpoint is null")
-		return
-	}
-	err := cron.SyncEndpointMetric(endpoint)
-	if err != nil {
-		mid.ReturnError(c, "register endpoint fail", err)
-		return
-	}
-	mid.ReturnSuccess(c, fmt.Sprintf("register endpoint %s success", endpoint))
 }

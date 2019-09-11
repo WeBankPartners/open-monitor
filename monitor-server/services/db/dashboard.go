@@ -97,7 +97,7 @@ func GetCharts(cGroup int, chartId int, panelId int) (error, []*m.ChartTable) {
 }
 
 func GetPromMetric(endpoint,metric []string) (error, string) {
-	promQL := ""
+	promQL := metric[0]
 	tmpMetric := metric[0]
 	var tmpTag string
 	if strings.Contains(tmpMetric, "/") {
@@ -111,9 +111,17 @@ func GetPromMetric(endpoint,metric []string) (error, string) {
 		mid.LogError("query prom_metric fail", err)
 	}
 	if len(query) > 0 {
+		err,host := GetEndpoint(endpoint[0])
+		if err!=nil || host.Id==0 {
+			mid.LogError("can't find endpoint "+endpoint[0], err)
+			return err,promQL
+		}
 		reg := query[0].PromQl
-		if strings.Contains(reg, `$endpoint`) {
-			reg = strings.Replace(reg, "$endpoint", endpoint[0], -1)
+		if strings.Contains(reg, `$ip`) {
+			reg = strings.Replace(reg, "$ip", host.Ip, -1)
+		}
+		if strings.Contains(reg, `$address`) {
+			reg = strings.Replace(reg, "$address", host.Address, -1)
 		}
 		if tmpTag != "" {
 			tmpList := strings.Split(tmpTag, "=")
@@ -122,8 +130,6 @@ func GetPromMetric(endpoint,metric []string) (error, string) {
 			}
 		}
 		promQL = reg
-	}else{
-		promQL = metric[0]
 	}
 	return err,promQL
 }
@@ -193,6 +199,9 @@ func GetTags(endpoint string, key string, metric string) (error, []*m.OptionMode
 }
 
 func RegisterEndpointMetric(endpointId int,endpointMetrics []string) error {
+	if endpointId <= 0 {
+		return fmt.Errorf("endpoint id is 0")
+	}
 	maxNum  := 100
 	var sqls []string
 	delSql := fmt.Sprintf("delete FROM endpoint_metric WHERE endpoint_id=%d", endpointId)
