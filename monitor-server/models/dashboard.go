@@ -188,7 +188,7 @@ type EndpointTable struct {
 	ExportType  string  `json:"export_type"`
 	ExportVersion  string  `json:"export_version"`
 	Step  int  `json:"step"`
-	OsIp  string  `json:"os_ip"`
+	Address  string  `json:"address"`
 	OsType  string  `json:"os_type"`
 	CreateAt  string  `json:"create_at"`
 }

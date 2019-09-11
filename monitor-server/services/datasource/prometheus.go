@@ -77,12 +77,13 @@ func PrometheusData(query m.QueryMonitorData) []*m.SerialModel  {
 	for _,otr := range data.Data.Result {
 		var serial m.SerialModel
 		serial.Type = "line"
-		instance := otr.Metric["instance"]
-		if instance!="" {
-			serial.Name = strings.Split(instance, ":")[0]
-		}else{
-			serial.Name = "None"
+		tmpName := query.Legend
+		for k,v := range otr.Metric {
+			if strings.Contains(query.Legend, "$"+k) {
+				tmpName = strings.Replace(tmpName, "$"+k, v, -1)
+			}
 		}
+		serial.Name = tmpName
 		var sdata m.DataSort
 		for _,v := range otr.Values {
 			tmpTime := v[0].(float64) * 1000
