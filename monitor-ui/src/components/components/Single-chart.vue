@@ -78,7 +78,7 @@ export default {
         color: ['#7EB26D', '#EAB839', '#6ED0E0', '#EF843C', '#E24D42', '#1F78C1', '#BA43A9', '#705DA0', '#508642', '#CCA300', '#447EBC', '#C15C17'],
         dataZoom: [{
           type: 'inside',
-          // throttle: 1000
+          // throttle: 1000,
           // start: 60,
           // end: 100
         }],
@@ -149,14 +149,14 @@ export default {
         end: this.params.end + ''
       }
       this.$httpRequestEntrance.httpRequestEntrance('GET', this.chartItemx.url, params, responseData => {
-        responseData.series[0].symbol = 'none'
-        responseData.series[0].smooth = true
-        responseData.series[0].lineStyle = {
-          width: 1
-        }
         var legend = []
         responseData.series.forEach((item)=>{
           legend.push(item.name)
+          item.symbol = 'none'
+          item.smooth = true
+          item.lineStyle = {
+            width: 1
+          }
         }) 
         let config = {
           title: responseData.title,
