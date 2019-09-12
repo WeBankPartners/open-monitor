@@ -1,5 +1,5 @@
 <template>
-  <div class="page">
+  <div class="page" id="mainView">
     <Title title="监控视图"></Title>
     <Search ref="search" />
     <Charts :charts='charts' ref="child1" />
@@ -20,6 +20,10 @@ export default {
     }
   },
   mounted() {
+    let DOMX = document.getElementById("mainView")
+    DOMX.addEventListener('click', ()=>{
+      this.$refs.child1.hiddenDetailChart()
+    })
     this.$refs.search.getChartsConfig()
   },
   methods: {

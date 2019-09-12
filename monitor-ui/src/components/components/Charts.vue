@@ -1,5 +1,5 @@
 <template>
-  <div class="charts">
+  <div class="charts charts-click">
     <Tabs :value="activeTab" @on-click="changeTab"> 
       <template v-for="(chartItem, chartIndex) in charts.chartsConfig">
         <TabPane :label="chartItem.tabTape.label" :name="chartItem.tabTape.name" :key="chartIndex">
@@ -13,16 +13,22 @@
             </div>
           </template>
           <template v-for="(chartItemx,chartIndexx) in activeCharts">
-              <SingleChart :chartItemx="chartItemx" :key="chartIndexx" :params="params"> </SingleChart>
+              <SingleChart @sendConfig="receiveConfig" :chartItemx="chartItemx" :key="chartIndexx" :params="params"> </SingleChart>
           </template>
         </TabPane>
       </template>  
     </Tabs>
+    <transition name="slide-fade">
+      <div v-show="showMaxChart">
+        <MaxChart ref="maxChart"></MaxChart>
+      </div>
+    </transition>
   </div>
 </template>
 
 <script>
 import SingleChart from '@/components/components/Single-chart'
+import MaxChart from '@/components/components/Max-chart'
 export default {
   name: '',
   data() {
@@ -31,7 +37,9 @@ export default {
       activeCharts: {},
       btns: [],
       tagsUrl: '',
-      params: {}
+      params: {},
+      xx: false,
+      showMaxChart: false,
     }
   },
   props: {
@@ -78,10 +86,19 @@ export default {
         })
         this.refreshCharts()
       })
+    },
+    hiddenDetailChart () {
+      // this.showMaxChart = false
+    },
+    receiveConfig (chartItem) {
+      this.showMaxChart = true
+      this.$refs.maxChart.getChartConfig(chartItem)
+      return
     }
   },
   components: {
-    SingleChart
+    SingleChart,
+    MaxChart
   }
 }
 </script>
@@ -111,4 +128,13 @@ export default {
   .btnActive {
     background: @gray-f;
   }
+
+  /* 可以设置不同的进入和离开动画 */
+/* 设置持续时间和动画函数 */
+.slide-fade-enter-active {
+  transition: all .3s ease;
+}
+.slide-fade-leave-active {
+  transition: all .3s ease;
+}
 </style>
