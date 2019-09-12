@@ -1,6 +1,9 @@
 <template>
   <div class=" ">
        <div class="max-chart">
+         <div class="hiddenBtn" @click="hideMaxChart">
+            <i class="fa fa-angle-right" aria-hidden="true"></i>
+         </div>
         <div class="condition-zone">
           <ul>
             <li>
@@ -231,6 +234,9 @@ export default {
         }
         this.draw(config)
       })
+    },
+    hideMaxChart () {
+      this.$parent.showMaxChart = false
     }
   },
   components: {},
@@ -252,6 +258,20 @@ export default {
     padding: 12px;
   }
 
+  .hiddenBtn {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 12px;
+    padding: 8px 0;
+    // height: 20px;
+    text-align: center;
+    background: @blue-lingt;
+    i {
+      font-size: 16px;
+      color: white;
+    }
+  }
   .condition {
     display: inline-block;
   }
