@@ -1,6 +1,6 @@
 <template>
     <Menu mode="horizontal" :theme="theme1" active-name="1">
-        <div class="logo">
+        <div class="logo" @click="routerChange">
             <img src="../../assets/logo.png"/>
             <span>Wecube-monitor</span>
         </div>
@@ -31,6 +31,12 @@
             return {
                 theme1: 'dark'
             }
+        },
+        methods: {
+            routerChange () {
+                if (this.$route.name === 'portal') return
+                this.$router.push({ name: 'portal'})
+            }
         }
     }
 </script>
@@ -39,6 +45,7 @@
         float: left;
         height: inherit;
         padding-left: 30px;
+        cursor: pointer;
         span {
             color: white;
             font-size: 16px;
@@ -47,7 +54,7 @@
         }
         img {
             width: 40px; 
-            margin: 10px 20px;
+            margin: 10px 20px 0;
 
         }
     }

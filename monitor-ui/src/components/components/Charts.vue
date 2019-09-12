@@ -1,5 +1,5 @@
 <template>
-  <div class="charts">
+  <div class="charts charts-click">
     <Tabs :value="activeTab" @on-click="changeTab"> 
       <template v-for="(chartItem, chartIndex) in charts.chartsConfig">
         <TabPane :label="chartItem.tabTape.label" :name="chartItem.tabTape.name" :key="chartIndex">
@@ -38,6 +38,7 @@ export default {
       btns: [],
       tagsUrl: '',
       params: {},
+      xx: false,
       showMaxChart: false,
     }
   },
@@ -86,9 +87,13 @@ export default {
         this.refreshCharts()
       })
     },
+    hiddenDetailChart () {
+      // this.showMaxChart = false
+    },
     receiveConfig (chartItem) {
       this.showMaxChart = true
       this.$refs.maxChart.getChartConfig(chartItem)
+      return
     }
   },
   components: {

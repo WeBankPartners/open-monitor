@@ -11,11 +11,10 @@
         <ul>
           <template v-for="(resItem, resIndex) in searchResult">
             <li class="ul-option" @click="choiceRes(resItem)" :key="resIndex">
-              <!-- <i class="fa fa-desktop" v-if="resItem.option_value.split(':')[1] == 'host'" aria-hidden="true"></i>
-              <i class="fa fa-database" v-if="resItem.option_value.split(':')[1] == 'mysql'" aria-hidden="true"></i>
-              <i class="fa " v-else aria-hidden="true"></i> -->
               <Tag color="cyan" v-if="resItem.option_value.split(':')[1] == 'host'">host</Tag>
               <Tag color="blue" v-if="resItem.option_value.split(':')[1] == 'mysql'">mysql</Tag>
+              <Tag color="geekblue" v-if="resItem.option_value.split(':')[1] == 'redis'">redis</Tag>
+              <!-- <Tag color="default" v-else>{{resItem.option_value.split(':')[1]}}</Tag> -->
               <span>{{resItem.option_text}}</span>
             </li>
           </template>  
@@ -114,7 +113,7 @@ export default {
   .ul-option {
     font-weight: 500;
     text-align: left;
-    padding: 7px 16px;
+    padding: 4px 16px;
     font-size: 12px;
     white-space: nowrap;
     cursor:pointer;

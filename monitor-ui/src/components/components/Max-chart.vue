@@ -248,7 +248,8 @@ export default {
 <style scoped lang="less">
   .max-chart {
     width:610px;
-    height: 100%;
+    min-height: 540px;
+    height: 123vh;
     background: white;
     position: absolute;
     border: 1px solid @blue-lingt;
