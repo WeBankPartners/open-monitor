@@ -1,1 +1,9 @@
+# IDEA
 .idea
+
+# testing
+*_test.go
+
+# node
+monitor-ui/node_modules
+monitor-ui/dist
