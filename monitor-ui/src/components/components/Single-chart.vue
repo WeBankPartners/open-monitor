@@ -14,6 +14,7 @@ require('echarts/lib/component/tooltip');
 require('echarts/lib/component/title');
 require('echarts/lib/component/legend');
 require('echarts/lib/component/toolbox');
+require('echarts/lib/component/legendScroll');
 export default {
   name: '',
   data() {
@@ -66,7 +67,7 @@ export default {
               params.forEach(item=>{
                 res = res+`<div><div style=' display: inline-block;width: 10px;
                 height: 10px;border: 1px solid transparent;border-radius:50%;
-                background-color:${item.color};'  ></div> ${item.seriesName} <br>  &nbsp; &nbsp;
+                background-color:${item.color};'  ></div> ${item.seriesName}
                 ${Math.floor(item.data[1] * 1000) / 1000}</div>`
               })
               return res
@@ -90,7 +91,10 @@ export default {
             }
           },
           legend: {
-            y: 'bottom', 
+            type: 'scroll',
+            y: 'bottom',
+            padding: 10,
+            orient: 'horizontal',
             data: config.legend
           },
           calculable: false,
