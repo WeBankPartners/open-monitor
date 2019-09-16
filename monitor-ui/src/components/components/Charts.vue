@@ -3,21 +3,24 @@
     <Tabs :value="activeTab" @on-click="changeTab"> 
       <template v-for="(chartItem, chartIndex) in charts.chartsConfig">
         <TabPane :label="chartItem.tabTape.label" :name="chartItem.tabTape.name" :key="chartIndex">
-          <template v-if="btns.length">
-            <div class="btn-content">
-              <template v-for="(btnItem,btnIndex) in btns">
-                <div class="btn-block" :class="{btnActive: btnItem.isActive}" :key='btnIndex' @click="pitchOnBtn(btnItem,btnIndex)">
-                  <span>{{btnItem.option_text}}</span>
-                </div>
-              </template>
-            </div>
-          </template>
-          <template v-for="(chartItemx,chartIndexx) in activeCharts">
-              <SingleChart @sendConfig="receiveConfig" :chartItemx="chartItemx" :key="chartIndexx" :params="params"> </SingleChart>
-          </template>
         </TabPane>
       </template>  
     </Tabs>
+    <section>
+      <template v-if="btns.length">
+        <div class="btn-content">
+          <template v-for="(btnItem,btnIndex) in btns">
+            <div class="btn-block" :class="{btnActive: btnItem.isActive}" :key='btnIndex' @click="pitchOnBtn(btnItem,btnIndex)">
+              <span>{{btnItem.option_text}}</span>
+            </div>
+          </template>
+        </div>
+      </template>
+      <template v-for="(chartItemx,chartIndexx) in activeCharts">
+          <SingleChart @sendConfig="receiveConfig" :chartItemx="chartItemx" :key="chartIndexx" :params="params"> </SingleChart>
+      </template>
+    </section>
+    
     <transition name="slide-fade">
       <div v-show="showMaxChart">
         <MaxChart ref="maxChart"></MaxChart>
@@ -38,7 +41,6 @@ export default {
       btns: [],
       tagsUrl: '',
       params: {},
-      xx: false,
       showMaxChart: false,
     }
   },
