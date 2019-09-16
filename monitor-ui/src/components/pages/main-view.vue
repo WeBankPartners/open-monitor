@@ -9,7 +9,7 @@
 <script>
 import Title from '@/components/components/Title'
 import Search from '@/components/components/Search'
-import Charts from '@/components/components/Charts'
+import Charts from '@/components/components/Charts-copy'
 export default {
   name: 'main-view',
   data() {
