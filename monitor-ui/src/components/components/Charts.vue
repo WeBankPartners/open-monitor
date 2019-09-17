@@ -9,11 +9,11 @@
     <section>
       <template v-if="btns.length">
         <div class="btn-content">
-          <template v-for="(btnItem,btnIndex) in btns">
-            <div class="btn-block" :class="{btnActive: btnItem.isActive}" :key='btnIndex' @click="pitchOnBtn(btnItem,btnIndex)">
-              <span>{{btnItem.option_text}}</span>
-            </div>
-          </template>
+          <RadioGroup v-model="activeBtn" size="small" type="button">
+            <template v-for="(btnItem,btnIndex) in btns">
+              <Radio :label="btnItem.option_value" :key="btnIndex">{{btnItem.option_text}}</Radio>
+            </template>
+          </RadioGroup>
         </div>
       </template>
       <template v-for="(chartItemx,chartIndexx) in activeCharts">
@@ -42,10 +42,17 @@ export default {
       tagsUrl: '',
       params: {},
       showMaxChart: false,
+      activeBtn: ''
     }
   },
   props: {
     charts: Object
+  },
+  watch: {
+    activeBtn: function () {
+      console.log(333)
+      this.pitchOnBtn()
+    }
   },
   mounted () {
     if (this.charts.chartsConfig.length !== 0) {
@@ -54,9 +61,11 @@ export default {
   },
   methods: {
     refreshCharts (activeTab=this.activeTab) {
+      console.log(444)
       this.changeTab(activeTab)
     },
     changeTab (name) {
+      console.log(222)
       this.params = this.charts.chartsConfig[0].params
       this.activeTab = name
       this.activeCharts = []
@@ -64,29 +73,31 @@ export default {
       this.charts.chartsConfig.forEach((item) => {
         if (item.tabTape.name === name) {
           this.btns = item.btns
-          this.tagsUrl = item.tagsUrl
-          this.btns.forEach(element => {
-            element.isActive = false
-          });      
+          if (this.btns.length !== 0) {
+            this.activeBtn = this.btns[0].option_value
+          }
+          this.tagsUrl = item.tagsUrl     
           this.$nextTick(() => {
             this.activeCharts = item.charts
           })
         }
       })
     },
-    pitchOnBtn(btnItem,btnIndex) {
-      this.btns.forEach(element => {
-        element.isActive = false
-      })
-      btnItem.isActive = true
-      this.params.tagParam = btnItem.option_value
-      this.$set(this.btns,btnIndex,btnItem)
-
-      this.$httpRequestEntrance.httpRequestEntrance('GET',this.tagsUrl +  btnItem.option_value, '', responseData => {
+    pitchOnBtn() {
+      console.log(111)
+      this.$httpRequestEntrance.httpRequestEntrance('GET',this.tagsUrl +  this.activeBtn, '', responseData => {
         this.activeCharts.forEach((element,index) => {
            element.metric = responseData[index].metric
         })
-        this.refreshCharts()
+        this.activeCharts = []
+        this.charts.chartsConfig.forEach((item) => {
+          if (item.tabTape.name === this.activeTab) {    
+            this.$nextTick(() => {
+              this.activeCharts = item.charts
+            })
+          }
+        })
+
       })
     },
     hiddenDetailChart () {
@@ -104,31 +115,13 @@ export default {
   }
 }
 </script>
-
 <style scoped lang="less">
   .charts {
     padding-top: 20px;
   }
 
-  .btn-block {
-    margin-left: -1px;
-    margin-bottom: 2px;
-    line-height: 30px;
-    min-width: 50px;
-    padding: 0 4px;
-    text-align: center;
-    display: inline-block;
-    background: white;
-    border: 1px solid @blue-2;
-    color: @blue-2;
-    cursor: pointer;
-  }
-
   .btn-content {
   padding: 2px;
-  }
-  .btnActive {
-    background: @gray-f;
   }
 
   /* 可以设置不同的进入和离开动画 */
