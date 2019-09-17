@@ -44,6 +44,7 @@
 </template>
 
 <script>
+import {generateUuid} from '@/assets/js/utils'
 // 引入 ECharts 主模块
 var echarts = require('echarts/lib/echarts');
 // 引入柱状图
@@ -76,7 +77,9 @@ export default {
     }
   },
   created (){
-    this.elId =  `id_${this.guid()}`;
+    generateUuid().then((elId)=>{
+      this.elId =  `id_${elId}`; 
+    })
   },
   methods: {
     datePick (data) {

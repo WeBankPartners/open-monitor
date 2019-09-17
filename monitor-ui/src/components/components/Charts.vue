@@ -50,7 +50,6 @@ export default {
   },
   watch: {
     activeBtn: function () {
-      console.log(333)
       this.pitchOnBtn()
     }
   },
@@ -61,11 +60,9 @@ export default {
   },
   methods: {
     refreshCharts (activeTab=this.activeTab) {
-      console.log(444)
       this.changeTab(activeTab)
     },
     changeTab (name) {
-      console.log(222)
       this.params = this.charts.chartsConfig[0].params
       this.activeTab = name
       this.activeCharts = []
@@ -84,7 +81,6 @@ export default {
       })
     },
     pitchOnBtn() {
-      console.log(111)
       this.$httpRequestEntrance.httpRequestEntrance('GET',this.tagsUrl +  this.activeBtn, '', responseData => {
         this.activeCharts.forEach((element,index) => {
            element.metric = responseData[index].metric

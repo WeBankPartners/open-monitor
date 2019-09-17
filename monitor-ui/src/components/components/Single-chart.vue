@@ -1,10 +1,14 @@
 <template>
   <div class="single-chart">
-    <div :id="elId" class="echart"></div>
+    <div v-if="!noDataTip" :id="elId" class="echart"></div>
+    <div v-if="noDataTip" class="echart echart-no-data-tip">
+    <span class="no-data-tip">~~~暂无数据~~~</span>
+    </div>
   </div>
 </template>
 
 <script>
+import {generateUuid} from '@/assets/js/utils'
 // 引入 ECharts 主模块
 var echarts = require('echarts/lib/echarts');
 // 引入柱状图
@@ -19,7 +23,8 @@ export default {
   name: '',
   data() {
     return {
-      elId: null
+      elId: null,
+      noDataTip: false
     }
   },
   props: {
@@ -27,7 +32,9 @@ export default {
     params: Object,
   },
   created (){
-    this.elId =  `id_${this.guid()}`;
+    generateUuid().then((elId)=>{
+      this.elId =  `id_${elId}`; 
+    })
   },
   mounted() {
     this.getchartdata()
@@ -171,6 +178,10 @@ export default {
       }
       this.$httpRequestEntrance.httpRequestEntrance('GET', this.chartItemx.url, params, responseData => {
         var legend = []
+        if (responseData.series.length === 0) {
+          this.noDataTip = true
+          return
+        }
         responseData.series.forEach((item)=>{
           legend.push(item.name)
           item.symbol = 'none'
@@ -201,6 +212,11 @@ export default {
        height: 300px;
        width: 580px;
        background: @gray-f;
+    }
+    .echart-no-data-tip {
+      text-align: center;
+      vertical-align: middle;
+      display: table-cell;
     }
   }
 </style>
