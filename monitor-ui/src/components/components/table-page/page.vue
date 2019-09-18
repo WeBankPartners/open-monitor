@@ -1,5 +1,17 @@
 <template>
   <div class="page-component">
+    <section class="page-header" >
+      <div class="research" v-if="pageConfig.researchConfig">
+        <research :pageConfig="pageConfig" :selectedData="selectedData" >
+          <div slot="transmitExtraSearch">
+            <slot name="extraSearch"></slot>
+          </div>
+          <div slot="transmitExtraBtn">
+            <slot name="extraBtn"></slot>
+          </div>
+        </research>
+      </div>
+    </section>
     <section class="page-table">
       <tableTemp :table="pageConfig.table" :pageConfig="pageConfig" @sendIds="receiveIds" ref="refTest">
       </tableTemp>
@@ -17,7 +29,7 @@
 <script>
   // import contentTitle from './title'
   // import Notice from './notice'
-  // import research from './research'
+  import research from './research'
   import tableTemp from './table'
   import pagination from './pagination'
 
@@ -82,7 +94,7 @@
       }
     },
     components: {
-      // research,
+      research,
       // contentTitle,
       // Notice,
       tableTemp,
@@ -93,8 +105,8 @@
 
 <style lang="less" scoped>
   .page-header {
-    margin-bottom: 20px;
-    padding-bottom: 12px;
+    // margin-bottom: 20px;
+    // padding-bottom: 12px;
     background-color: white;
     .research {
       padding-left: 10px;

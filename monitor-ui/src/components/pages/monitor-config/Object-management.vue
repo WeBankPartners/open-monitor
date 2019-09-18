@@ -19,17 +19,11 @@
       return {
         pageConfig: {
           CRUD: 'alarm/endpoint/list',
-          titleConfig: {
-            name: '租户管理',
-            backUrl: ''
-          },
           researchConfig: {
             input_conditions: [
-              {value: 'name__icontains', type: 'input', placeholder: '名称', style: ''},
-              {value: 'cmdb_tenant_id__icontains', type: 'input', placeholder: 'CMDB关联ID', style: ''}],
+              {value: 'search', type: 'input', placeholder: '请输入', style: ''}],
             btn_group: [
               {btn_name: '搜索', btn_func: 'search', class: 'btn-confirm-f', btn_icon: 'fa fa-search'},
-              {btn_name: '新增', btn_func: 'add', class: 'btn-cancle-f', btn_icon: 'fa fa-plus'},
             ],
             filters: { // [通用]-搜索条件
               name__icontains: '',
