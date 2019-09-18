@@ -10,7 +10,6 @@ export default {
   name: 'TEST',
   methods: {
     test () {
-      this.$store.commit('storeip',{name:111})
     }
   }
 }
