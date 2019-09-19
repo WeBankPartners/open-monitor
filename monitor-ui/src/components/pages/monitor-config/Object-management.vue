@@ -1,4 +1,3 @@
-<!-- 租户管理 -->
 <template>
   <div class="main-content">
     <PageTable :pageConfig="pageConfig"></PageTable>
@@ -25,7 +24,7 @@
             btn_group: [
               {btn_name: '搜索', btn_func: 'search', class: 'btn-confirm-f', btn_icon: 'fa fa-search'},
             ],
-            filters: { // [通用]-搜索条件
+            filters: {
               name__icontains: '',
               cmdb_tenant_id__icontains: ''
             }

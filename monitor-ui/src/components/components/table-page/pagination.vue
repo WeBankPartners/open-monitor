@@ -5,8 +5,6 @@
       :current="pagination.current"
       show-total show-sizer show-elevator
       placement="top"
-      :page-size="pageSize"
-      :page-size-opts="pageSizeGroup"
       @on-change="pageChange"
       @on-page-size-change="pageSizeChange"
     ></Page>
@@ -17,8 +15,6 @@
     name: 'pagination',
     data () {
       return {
-        pageSize: 2,
-        pageSizeGroup: [2,5,10]
       }
     },
     props: ['pagination', 'pageUrl', 'filters'],

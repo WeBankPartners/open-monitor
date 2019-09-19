@@ -163,7 +163,7 @@
                   <template v-if="val.hasIcon && ( value[val.hasIcon.judgeflag] ^ val.hasIcon.reverse)">
                     <Tooltip placement="bottom">
                       <i class="fa cell-icon" :class="val.hasIcon.icon"
-                        @click="goToOpe(val.hasIcon,value,tableDataIndex)" aria-hidden="true"
+                        @click="goToOpe(val.hasIcon,value)" aria-hidden="true"
                         :title="val.hasIcon.title"></i>
                       <div slot="content">
                         {{computeTooltipContent(value, val)}}
@@ -198,7 +198,7 @@
                 <span :id="btn_val.btn_func" :key="btn_i"
                       v-if="btn_val.btn_name !='more' && !btn_val.render"
                       class="btn-operation"
-                      @click="goToOpe(btn_val,value,tableDataIndex)">
+                      @click="goToOpe(btn_val,value)">
                   {{btn_val.btn_name}}
                 </span>
                 <span :id="btn_val.btn_func" :key="btn_i + '2'"
@@ -240,13 +240,13 @@
                   <span :id="btn_val.btn_func" :key="btn_i"
                         v-if="!btn_val.render"
                         class="btn-operation"
-                        @click="goToOpe(btn_val,value,tableDataIndex)">
+                        @click="goToOpe(btn_val,value)">
                     {{btn_val.btn_name}}
                   </span>
                   <span :id="btn_val.btn_func" :key="btn_i + '2'"
                         v-if="btn_val.render"
                         class="btn-operation"
-                        @click="goToOpe(btn_val,value,tableDataIndex)">
+                        @click="goToOpe(btn_val,value)">
                         {{renderValue(value, btn_val)}}
                   </span>
                   <span class="btn-pipe" :key="btn_i + '1'" v-if="btn_i != 1 & table.tableData[tableDataIndex]._operatons.length != 1">
@@ -258,13 +258,13 @@
                 <span :id="table.tableData[tableDataIndex]._operatons[0].btn_func"
                       v-if="!table.tableData[tableDataIndex]._operatons[0].render"
                       class="btn-operation"
-                      @click="goToOpe(table.tableData[tableDataIndex]._operatons[0],value,tableDataIndex)">
+                      @click="goToOpe(table.tableData[tableDataIndex]._operatons[0],value)">
                   {{table.tableData[tableDataIndex]._operatons[0].btn_name}}
                 </span>
                 <span :id="table.tableData[tableDataIndex]._operatons[0].btn_func" :key="btn_i + '2'"
                       v-if="table.tableData[tableDataIndex]._operatons[0].render"
                       class="btn-operation"
-                      @click="goToOpe(table.tableData[tableDataIndex]._operatons[0],value,tableDataIndex)">
+                      @click="goToOpe(table.tableData[tableDataIndex]._operatons[0],value)">
                       {{renderValue(value, table.tableData[tableDataIndex]._operatons[0])}}
                 </span>
                 <span class="btn-pipe">
@@ -282,7 +282,7 @@
                   <div slot="content" class="ui-ul-list" v-if="isShowMoreBtnTip">
                     <ul v-if="showMoreNumber === tableDataIndex">
                       <template v-for="(btn, moreIndex) in table.tableData[tableDataIndex]._operatons">
-                        <li class="filters-li" :key="moreIndex" v-if="moreIndex != 0" @click="goToOpe(btn,value,tableDataIndex)">{{btn.btn_name}}</li>
+                        <li class="filters-li" :key="moreIndex" v-if="moreIndex != 0" @click="goToOpe(btn,value)">{{btn.btn_name}}</li>
                       </template>
                       <li v-if="isNoActions" style="color: red" @click="noActions">无可用操作</li>
                     </ul>
@@ -588,14 +588,8 @@
         })
       },
       /* ******** 普通按钮 ***** 第一个参数是id ******** */
-      goToOpe (btn_val, value,index) {
-        if (btn_val.btn_func === 'deleteF') {
-          let delTip = this.$validate.valueFromExpression(value, btn_val.tip_field)
-          let params = btn_val.sms ? btn_val.sms :null
-          this.$parent[btn_val.btn_func](value, delTip, params) 
-        } else {
-          this.$parent.$parent[btn_val.btn_func](value[this.table.primaryKey],index)
-        }
+      goToOpe (btn_val, value) {
+        this.$parent.$parent[btn_val.btn_func](value)
       },
       // // 更多选项中按钮响应 ******** 第一个参数是对象 ********
       // getToMoreAction (btn_val, value, index) {
