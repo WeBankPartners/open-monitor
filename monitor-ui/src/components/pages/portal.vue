@@ -5,7 +5,11 @@
             <Searchinput :parentConfig="searchInputConfig"></Searchinput> 
         </li>
         <li class="search-li">
-            <Button type="primary" @click="routerChange" icon="ios-search">搜索</Button>
+          <button type="button" class="btn btn-sm btn-confirm-f"
+            @click="routerChange">
+            <i class="fa fa-search" ></i>
+            搜索
+          </button>
         </li>
       </ul>
     <div>  

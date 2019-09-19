@@ -85,6 +85,7 @@
         this.groupMsg = {}
         this.showGroupMsg = false
       } else {
+        this.$parent.activeTab = '/monitorConfigIndex/objectManagement'
         this.groupMsg = this.$route.params.group
         this.showGroupMsg = true
         this.pageConfig.table.btn.push({btn_name: '删除', btn_func: 'delF'})

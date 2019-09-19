@@ -5,7 +5,11 @@
         <Searchinput ref="searchInput" :parentConfig="searchInputConfig"></Searchinput> 
       </li>
       <li class="search-li">
-        <Button type="primary" @click="getChartsConfig()" icon="ios-search">搜索</Button>
+        <button type="button" class="btn btn-sm btn-confirm-f"
+            @click="getChartsConfig()">
+            <i class="fa fa-search" ></i>
+            搜索
+          </button>
       </li>
       <li class="search-li">
           <Select v-model="timeTnterval" style="width:80px" @on-change="getChartsConfig">

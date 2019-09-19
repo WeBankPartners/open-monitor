@@ -19,21 +19,23 @@ export default {
   name: '',
   data() {
     return {
-        activeTab: '/monitorConfigIndex/objectManagement',
-        tabs: [
-            {label: '对象管理', path:'/monitorConfigIndex/objectManagement'},
-            {label: '组管理', path:'/monitorConfigIndex/groupManagement'},
-            {label: '阀值配置', path:'/monitorConfigIndex/thresholdManagement'},
-        ]
+      activeTab: '/monitorConfigIndex/objectManagement',
+      tabs: [
+        {label: '对象管理', path:'/monitorConfigIndex/objectManagement'},
+        {label: '组管理', path:'/monitorConfigIndex/groupManagement'},
+        {label: '阀值配置', path:'/monitorConfigIndex/thresholdManagement'},
+      ]
     }
   },
   methods: {
     changeTab (path) {
+      this.activeTab = path
+      if (this.$route.path === path) return
       this.$router.push({path:path})
     }
   },
   components: {
-      Title
+    Title
   },
 }
 </script>
