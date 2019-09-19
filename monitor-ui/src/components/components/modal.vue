@@ -261,10 +261,6 @@ import {interceptParams} from '@/assets/js/utils'
             }
             
           }
-            // console.log(element.v_validate.indexOf('required') > -1)
-            
-          // })
-         
         }
       },
       isRequired (item) {

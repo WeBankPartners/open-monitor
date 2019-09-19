@@ -1,6 +1,19 @@
 <template>
   <div class="main-content">
+    <div v-if="showGroupMsg" style="padding-left:20px">
+      <Tag type="border" closable color="primary" @on-close="closeTag">当前组:{{groupMsg.name}}</Tag>
+    </div>
     <PageTable :pageConfig="pageConfig"></PageTable>
+    <ModalComponent :modelConfig="modelConfig">
+      <div slot="advancedConfig" class="extentClass">   
+        <div class="marginbottom params-each">
+          <label class="col-md-2 label-name lable-name-select">对象名:</label>
+          <Select v-model="modelConfig.slotConfig.resourceSelected" multiple style="width:260px">
+              <Option v-for="item in modelConfig.slotConfig.resourceOption" :value="item.option_value" :key="item.option_value">{{ item.option_text }}</Option>
+          </Select>
+        </div>
+      </div>
+    </ModalComponent>
   </div>
 </template>
 <script>
@@ -16,6 +29,7 @@
     name: '',
     data() {
       return {
+        model10: [],
         pageConfig: {
           CRUD: 'alarm/endpoint/list',
           researchConfig: {
@@ -38,22 +52,103 @@
             pagination: this.pagination,
             handleFloat:true,
           },
-          pagination: { // [通用]-分页组件相关配置
+          pagination: {
             __orders: '-created_date',
             total: 0,
             page: 1,
-            size: 2
+            size: 10
           }
         },
-        id: null, // [通用]-待编辑数据id
+        modelConfig: {
+          modalId: 'add_object_Modal',
+          modalTitle: '对象管理',
+          isAdd: true,
+          config: [
+            {name:'advancedConfig',type:'slot'}
+          ],
+          addRow: { // [通用]-保存用户新增、编辑时数据
+            name: null,
+            description: null,
+          },
+          slotConfig: {
+            resourceSelected: [],
+            resourceOption: []
+          }
+        },
+        id: null,
+        showGroupMsg: false,
+        groupMsg: {}
       }
     },
     mounted() {
+      if (this.$validate.isEmpty_reset(this.$route.params)) {
+        this.groupMsg = {}
+        this.showGroupMsg = false
+      } else {
+        this.groupMsg = this.$route.params.group
+        this.showGroupMsg = true
+        this.pageConfig.table.btn.push({btn_name: '删除', btn_func: 'delF'})
+        this.pageConfig.researchConfig.btn_group.push({btn_name: '新增', btn_func: 'add', class: 'btn-cancle-f', btn_icon: 'fa fa-plus'})
+        this.pageConfig.researchConfig.filters.grp = this.groupMsg.id
+      }
       this.initData(this.pageConfig.CRUD, this.pageConfig)
     },
     methods: {
       initData (url= this.pageConfig.CRUD, params) {
         this.$tableUtil.initTable(this, 'GET', url, params)
+      },
+      add () {
+        this.modelConfig.slotConfig.resourceOption = []
+        this.modelConfig.slotConfig.resourceSelected = []
+        this.$httpRequestEntrance.httpRequestEntrance('GET','/dashboard/search', {search: '.'}, responseData => {
+          this.modelConfig.slotConfig.resourceOption = responseData
+        })
+        this.JQ('#add_object_Modal').modal('show')
+      },
+      addPost() {
+        if (this.$validate.isEmpty_reset(this.modelConfig.slotConfig.resourceSelected)) {
+          this.$Message.warning('请先选择要新增的对象 !')
+        }
+        let endpoints = []
+        let temp = this.modelConfig.slotConfig.resourceSelected
+        this.pageConfig.table.tableData.forEach((item)=>{
+           temp.push(item.guid)
+        })
+        for (let i = 0;i < temp.length; i++) {
+          endpoints.push(temp[i].split(':')[0])
+        }
+        let params = {
+          grp: this.groupMsg.id,
+          endpoints: endpoints
+        }
+        this.$httpRequestEntrance.httpRequestEntrance('POST', 'alarm/endpoint/update', params, () => {
+          this.$Message.success('新增成功 !')
+          this.JQ('#add_object_Modal').modal('hide')
+          this.initData(this.pageConfig.CRUD, this.pageConfig)
+        })
+      },
+      delF (rowData) {
+        let endpoints = []
+        this.pageConfig.table.tableData.forEach((item)=>{
+           endpoints.push(item.guid.split(':')[0])
+        })
+        endpoints.splice(endpoints.findIndex(item => item.id === rowData.guid.split(':')[0])-1, 1)
+        let params = {
+          grp: this.groupMsg.id,
+          endpoints: endpoints
+        }
+        this.$httpRequestEntrance.httpRequestEntrance('POST', 'alarm/endpoint/update', params, () => {
+          this.$Message.success('删除成功 !')
+          this.initData(this.pageConfig.CRUD, this.pageConfig)
+        })
+      },
+      closeTag () {
+        this.groupMsg = {}
+        this.showGroupMsg = false
+        this.pageConfig.researchConfig.filters.grp = ''
+        this.pageConfig.table.btn.splice(this.pageConfig.table.btn.length-1, 1)
+        this.pageConfig.researchConfig.btn_group.splice(this.pageConfig.researchConfig.btn_group.length-1, 1)
+        this.initData(this.pageConfig.CRUD, this.pageConfig)
       }
     },
     components: {

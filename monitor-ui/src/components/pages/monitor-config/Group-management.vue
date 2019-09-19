@@ -1,8 +1,7 @@
 <template>
   <div class="main-content">
     <PageTable :pageConfig="pageConfig"></PageTable>
-        <ModalComponent :modelConfig="modelConfig">
-    </ModalComponent>
+    <ModalComponent :modelConfig="modelConfig"></ModalComponent>
   </div>
 </template>
 <script>
@@ -11,7 +10,7 @@
     {title: '描述', value: 'description', display: true}
   ]
   const btn = [
-    {btn_name: '成员', btn_func: 'xx'},
+    {btn_name: '成员', btn_func: 'checkMember'},
     {btn_name: '告警配置', btn_func: 'xx'},
     {btn_name: '编辑', btn_func: 'editF'},
     {btn_name: '删除', btn_func: 'delF'},
@@ -104,6 +103,9 @@
         this.modelTip.value = rowData[this.modelTip.key]
         this.id = rowData.id
         this.JQ('#add_edit_Modal').modal('show')
+      },
+      checkMember (rowData) {
+        this.$router.push({name: 'objectManagement', params: {group: rowData}})
       },
       delF (rowData) {
         let params = {id: rowData.id}
