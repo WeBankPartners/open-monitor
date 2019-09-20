@@ -85,12 +85,6 @@ export default {
     datePick (data) {
       this.chartCondition.dateRange = data
     },
-    guid() {
-      return 'xxxxxxxx_xxxx_4xxx_yxxx_xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-          var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
-          return v.toString(16);
-      })
-    },
     draw (config) {
       // 基于准备好的dom，初始化echarts实例
       var myChart = echarts.init(document.getElementById(this.elId));
