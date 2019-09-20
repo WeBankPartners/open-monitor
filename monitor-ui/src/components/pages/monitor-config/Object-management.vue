@@ -22,7 +22,7 @@
     {title: 'groups', value: 'groups', display: true, frozen: true, sortable: true}
   ]
   const btn = [
-    {btn_name: '告警配置', btn_func: 'xx'},
+    {btn_name: '阀值配置', btn_func: 'thresholdConfig'},
     {btn_name: '历史告警', btn_func: 'xx'},
   ]
   export default {
@@ -120,7 +120,8 @@
         }
         let params = {
           grp: this.groupMsg.id,
-          endpoints: endpoints
+          endpoints: endpoints,
+          operation: 'add'
         }
         this.$httpRequestEntrance.httpRequestEntrance('POST', 'alarm/endpoint/update', params, () => {
           this.$Message.success('新增成功 !')
@@ -136,12 +137,16 @@
         endpoints.splice(endpoints.findIndex(item => item.id === rowData.guid.split(':')[0])-1, 1)
         let params = {
           grp: this.groupMsg.id,
-          endpoints: endpoints
+          endpoints: endpoints,
+          operation: 'delete'
         }
         this.$httpRequestEntrance.httpRequestEntrance('POST', 'alarm/endpoint/update', params, () => {
           this.$Message.success('删除成功 !')
           this.initData(this.pageConfig.CRUD, this.pageConfig)
         })
+      },
+      thresholdConfig (rowData) {
+        this.$router.push({name: 'thresholdManagement', params: {id: rowData.id, type: 'endpoint'}})
       },
       closeTag () {
         this.groupMsg = {}
