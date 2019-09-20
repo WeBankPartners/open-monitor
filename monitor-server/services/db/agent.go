@@ -8,7 +8,7 @@ import (
 )
 
 func UpdateEndpoint(endpoint *m.EndpointTable) error {
-	err,host := GetEndpoint(endpoint.Guid)
+	err,host := GetEndpoint(0,endpoint.Guid)
 	if err != nil {
 		return err
 	}else if host.Id == 0 {
@@ -19,7 +19,7 @@ func UpdateEndpoint(endpoint *m.EndpointTable) error {
 			mid.LogError("insert endpoint fail ", err)
 			return err
 		}
-		_,host = GetEndpoint(endpoint.Guid)
+		_,host = GetEndpoint(0,endpoint.Guid)
 		endpoint.Id = host.Id
 	}else{
 		update := fmt.Sprintf("UPDATE endpoint SET name='%s',ip='%s',endpoint_version='%s',export_type='%s',export_version='%s',step=%d,address='%s',os_type='%s' WHERE id=%d",

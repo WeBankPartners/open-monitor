@@ -11,7 +11,7 @@ func CheckAggregate(start int64, end int64, endpoint string, num int) int {
 		return 0
 	}
 	step := 10
-	_,host := GetEndpoint(endpoint)
+	_,host := GetEndpoint(0,endpoint)
 	if host.Id == 0 {
 		return 0
 	}

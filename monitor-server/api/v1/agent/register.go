@@ -3,7 +3,7 @@ package agent
 import (
 	"github.com/gin-gonic/gin"
 	m "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/models"
-	"github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/services/cron"
+	"github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/services/prom"
 	mid "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/middleware"
 	"github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/services/db"
 	"strings"
@@ -25,14 +25,14 @@ func RegisterAgent(c *gin.Context)  {
 		var strList []string
 		var endpoint m.EndpointTable
 		if param.Type == hostType {
-			err,strList = cron.GetEndpointData(param.ExporterIp, param.ExporterPort, []string{"node"}, []string{})
+			err,strList = prom.GetEndpointData(param.ExporterIp, param.ExporterPort, []string{"node"}, []string{})
 			if err != nil {
 				mid.ReturnError(c,"curl endpoint data fail ", err)
 				return
 			}
 			var hostname,sysname,release,exportVersion string
 			for _,v := range strList {
-				if strings.HasPrefix(v, "node_uname_info{") {
+				if strings.Contains(v, "node_uname_info{") {
 					if strings.Contains(v, "nodename") {
 						hostname = strings.Split(strings.Split(v, "nodename=\"")[1], "\"")[0]
 					}
@@ -43,7 +43,7 @@ func RegisterAgent(c *gin.Context)  {
 						release = strings.Split(strings.Split(v, "release=\"")[1], "\"")[0]
 					}
 				}
-				if strings.HasPrefix(v, "node_exporter_build_info{") {
+				if strings.Contains(v, "node_exporter_build_info{") {
 					exportVersion = strings.Split(strings.Split(v, ",version=\"")[1], "\"")[0]
 				}
 			}
@@ -61,7 +61,7 @@ func RegisterAgent(c *gin.Context)  {
 				mid.ReturnValidateFail(c, "mysql instance name is null")
 				return
 			}
-			err,strList = cron.GetEndpointData(param.ExporterIp, param.ExporterPort, []string{"mysql", "mysqld"}, []string{})
+			err,strList = prom.GetEndpointData(param.ExporterIp, param.ExporterPort, []string{"mysql", "mysqld"}, []string{})
 			if err != nil {
 				mid.ReturnError(c,"curl endpoint data fail ", err)
 				return
@@ -88,7 +88,7 @@ func RegisterAgent(c *gin.Context)  {
 				mid.ReturnValidateFail(c, "redis instance name is null")
 				return
 			}
-			err,strList = cron.GetEndpointData(param.ExporterIp, param.ExporterPort, []string{"redis"}, []string{"redis_version",",version"})
+			err,strList = prom.GetEndpointData(param.ExporterIp, param.ExporterPort, []string{"redis"}, []string{"redis_version",",version"})
 			if err != nil {
 				mid.ReturnError(c,"curl endpoint data fail ", err)
 				return
@@ -122,7 +122,7 @@ func RegisterAgent(c *gin.Context)  {
 			mid.ReturnError(c, "update endpoint metric error ", err)
 			return
 		}
-		err = cron.RegisteConsul(endpoint.Guid, param.ExporterIp, param.ExporterPort, []string{param.Type}, step)
+		err = prom.RegisteConsul(endpoint.Guid, param.ExporterIp, param.ExporterPort, []string{param.Type}, step)
 		if err != nil {
 			mid.ReturnError(c, "register consul fail ", err)
 			return
@@ -144,7 +144,7 @@ func DeregisterAgent(c *gin.Context)  {
 		mid.ReturnError(c, fmt.Sprintf("delete endpint %s fail", guid), err)
 		return
 	}
-	err = cron.DeregisteConsul(guid)
+	err = prom.DeregisteConsul(guid)
 	if err != nil {
 		mid.ReturnError(c, fmt.Sprintf("deregister consul %s fail ", guid), err)
 		return

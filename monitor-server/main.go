@@ -6,6 +6,7 @@ import (
 	"github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/api"
 	"github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/services/db"
 	ds "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/services/datasource"
+	"github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/services/prom"
 )
 
 // @title Monitor Server API
@@ -21,5 +22,6 @@ func main() {
 	m.InitConfig(*cfgFile)
 	db.InitDbConn()
 	ds.InitPrometheusDatasource()
+	prom.InitPrometheusConfigFile()
 	api.InitHttpServer()
 }

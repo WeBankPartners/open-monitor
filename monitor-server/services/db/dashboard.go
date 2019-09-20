@@ -111,7 +111,7 @@ func GetPromMetric(endpoint,metric []string) (error, string) {
 		mid.LogError("query prom_metric fail", err)
 	}
 	if len(query) > 0 {
-		err,host := GetEndpoint(endpoint[0])
+		err,host := GetEndpoint(0,endpoint[0])
 		if err!=nil || host.Id==0 {
 			mid.LogError("can't find endpoint "+endpoint[0], err)
 			return err,promQL
@@ -134,7 +134,7 @@ func GetPromMetric(endpoint,metric []string) (error, string) {
 	return err,promQL
 }
 
-func SearchHost(endpoint string) (error, []*m.OptionModel) {
+func SearchHost(endpoint string, isId bool) (error, []*m.OptionModel) {
 	options := []*m.OptionModel{}
 	var hosts []*m.EndpointTable
 	endpoint = `%` + endpoint + `%`
@@ -147,14 +147,23 @@ func SearchHost(endpoint string) (error, []*m.OptionModel) {
 		if host.ExportType == "node" {
 			host.ExportType = "host"
 		}
-		options = append(options, &m.OptionModel{OptionText:fmt.Sprintf("%s:%s", host.Name, host.Ip), OptionValue:fmt.Sprintf("%s:%s", host.Guid, host.ExportType)})
+		if isId {
+			options = append(options, &m.OptionModel{OptionText: fmt.Sprintf("%s:%s", host.Name, host.Ip), OptionValue: fmt.Sprintf("%d", host.Id)})
+		}else {
+			options = append(options, &m.OptionModel{OptionText: fmt.Sprintf("%s:%s", host.Name, host.Ip), OptionValue: fmt.Sprintf("%s:%s", host.Guid, host.ExportType)})
+		}
 	}
 	return err,options
 }
 
-func GetEndpoint(endpoint string) (error, m.EndpointTable) {
+func GetEndpoint(id int,endpoint string) (error, m.EndpointTable) {
 	var endpointObj []*m.EndpointTable
-	err := x.SQL("SELECT * FROM endpoint WHERE guid=?", endpoint).Find(&endpointObj)
+	var err error
+	if id > 0 {
+		err = x.SQL("SELECT * FROM endpoint WHERE id=?", id).Find(&endpointObj)
+	}else{
+		err = x.SQL("SELECT * FROM endpoint WHERE guid=?", endpoint).Find(&endpointObj)
+	}
 	if err != nil {
 		mid.LogError("get tags fail ", err)
 		return err,m.EndpointTable{Id:0}

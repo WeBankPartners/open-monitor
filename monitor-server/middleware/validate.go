@@ -68,3 +68,14 @@ func ValidatePost(c *gin.Context, obj interface{}, ex ...string) bool {
 	}
 	return isOk
 }
+
+func IsIllegalName(str string) bool {
+	re := false
+	if len(str) > 50 {
+		re = true
+	}
+	if strings.TrimSpace(str)=="" {
+		re = true
+	}
+	return re
+}

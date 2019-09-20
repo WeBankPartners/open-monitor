@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/api/v1/dashboard"
 	"github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/api/v1/agent"
+	"github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/api/v1/alarm"
 )
 
 func InitHttpServer() {
@@ -60,6 +61,20 @@ func InitHttpServer() {
 		{
 			agentApi.POST("/register", agent.RegisterAgent)
 			agentApi.GET("/deregister", agent.DeregisterAgent)
+		}
+		alarmApi := authApi.Group("/alarm")
+		{
+			alarmApi.GET("/grp/list", alarm.ListGrp)
+			alarmApi.POST("/grp/add", alarm.AddGrp)
+			alarmApi.POST("/grp/update", alarm.UpdateGrp)
+			alarmApi.GET("/grp/delete", alarm.DeleteGrp)
+			alarmApi.GET("/endpoint/list", alarm.ListEndpoint)
+			alarmApi.POST("/endpoint/update", alarm.EditGrpEndpoint)
+			alarmApi.GET("/strategy/search", alarm.SearchObjOption)
+			alarmApi.GET("/strategy/list", alarm.ListTpl)
+			alarmApi.POST("/strategy/add", alarm.AddStrategy)
+			alarmApi.POST("/strategy/update", alarm.EditStrategy)
+			alarmApi.GET("/strategy/delete", alarm.DeleteStrategy)
 		}
 		port := m.Config().Http.Port
 		r.Run(fmt.Sprintf(":%d", port))
