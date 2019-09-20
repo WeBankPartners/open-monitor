@@ -44,7 +44,7 @@
         "id": 1,
         "type": "prometheus",
         "env": "dev",
-        "host": "192.168.67.131:9090",
+        "host": "127.0.0.1:9090",
         "token": ""
       }
     ],
@@ -60,5 +60,9 @@
       "password": "",
       "expire": 0
     }
-  ]
+  ],
+  "prometheus" : {
+    "config_path": "/app/docker/prometheus/rules",
+    "config_reload": "http://127.0.0.1:9090/-/reload"
+  }
 }

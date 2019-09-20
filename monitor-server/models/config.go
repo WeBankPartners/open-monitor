@@ -69,12 +69,18 @@ type DatasourceServers struct {
 	Token  string  `json:"token"`
 }
 
+type PrometheusConfig struct {
+	ConfigPath  string  `json:"config_path"`
+	ConfigReload  string  `json:"config_reload"`
+}
+
 type GlobalConfig struct {
 	Http  *HttpConfig  `json:"http"`
 	Store  []*StoreConfig  `json:"store"`
 	Datasource  DataSourceConfig  `json:"datasource"`
 	LimitIp  []string  `json:"limitIp"`
 	Dependence  []*DependenceConfig  `json:"dependence"`
+	Prometheus  PrometheusConfig  `json:"prometheus"`
 }
 
 var (

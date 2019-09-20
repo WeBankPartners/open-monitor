@@ -1,58 +1,17 @@
-package cron
+package prom
 
 import (
-	"net/http"
 	"fmt"
-	"io/ioutil"
-	"strings"
-	mid "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/middleware"
-	m "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/models"
-	"encoding/json"
-	"golang.org/x/net/context/ctxhttp"
-	"context"
 	"strconv"
+	"encoding/json"
+	"net/http"
+	"strings"
+	"context"
+	"golang.org/x/net/context/ctxhttp"
+	"io/ioutil"
+	m "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/models"
+	mid "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/middleware"
 )
-
-func GetEndpointData(ip,port string,prefix,keyword []string) (error, []string) {
-	var strList []string
-	resp,err := http.Get(fmt.Sprintf("http://%s:%s/metrics", ip, port))
-	if err != nil {
-		fmt.Printf("http get error %v \n", err)
-		return err,strList
-	}
-	body, err := ioutil.ReadAll(resp.Body)
-	defer resp.Body.Close()
-	if err != nil {
-		fmt.Printf("read body error %v \n", err)
-		return err,strList
-	}
-	if resp.StatusCode/100 != 2 {
-		fmt.Printf("response http code %v \n", resp.StatusCode)
-		return err,strList
-	}
-	tmpMap := make(map[string]int)
-	for _,v := range strings.Split(string(body), ` `) {
-		if strings.HasPrefix(v, "#") {
-			continue
-		}
-		for _,vv := range prefix {
-			if strings.HasPrefix(v, vv+"_") {
-				tmpStr := v[strings.Index(v, vv):]
-				tmpMap[tmpStr] = 1
-			}
-		}
-		for _,vv := range keyword {
-			if strings.Contains(v, vv) {
-				tmpStr := v
-				tmpMap[tmpStr] = 1
-			}
-		}
-	}
-	for k,_ := range tmpMap {
-		strList = append(strList, k)
-	}
-	return nil,strList
-}
 
 func RegisteConsul(guid,ip,port string, tags []string, interval int) error {
 	var consulUrl string
