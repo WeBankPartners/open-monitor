@@ -52,6 +52,7 @@ export default {
       this.request()
     },
     choiceRes (resItem) {
+      console.log(resItem)
       this.ip.label = resItem.option_text
       this.ip.value = resItem.option_value
       this.$store.commit('storeip', this.ip)
@@ -67,7 +68,7 @@ export default {
       }
       let params = Object.assign(searchParams, this.parentConfig.params)
       
-      this.$httpRequestEntrance.httpRequestEntrance('GET','/dashboard/search', params, responseData => {
+      this.$httpRequestEntrance.httpRequestEntrance('GET',this.parentConfig.api, params, responseData => {
         this.searchResult = responseData
       })
       this.showSearchTips = true
