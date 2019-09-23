@@ -62,9 +62,11 @@ export default {
       if (!this.ip.label) {
         return
       }
-      let params = {
+      let searchParams = {
         search: this.ip.label
       }
+      let params = Object.assign(searchParams, this.parentConfig.params)
+      
       this.$httpRequestEntrance.httpRequestEntrance('GET','/dashboard/search', params, responseData => {
         this.searchResult = responseData
       })
