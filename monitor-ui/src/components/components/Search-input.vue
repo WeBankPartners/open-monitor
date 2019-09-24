@@ -52,9 +52,9 @@ export default {
       this.request()
     },
     choiceRes (resItem) {
-      console.log(resItem)
       this.ip.label = resItem.option_text
       this.ip.value = resItem.option_value
+      this.ip.id = resItem.id
       this.$store.commit('storeip', this.ip)
       // this.$parent.getChartsConfig()
       this.showSearchTips = false

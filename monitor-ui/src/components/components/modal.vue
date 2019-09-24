@@ -275,7 +275,6 @@ import {interceptParams} from '@/assets/js/utils'
         }
       },
       isRequired (item) {
-        // console.log(typeof item)
       
         
         if (!this.$validate.isEmpty(item)) {

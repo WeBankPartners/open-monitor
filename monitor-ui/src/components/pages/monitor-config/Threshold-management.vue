@@ -165,18 +165,19 @@ export default {
     if (!this.$validate.isEmpty_reset(this.$route.params)) {
       this.$parent.activeTab = '/monitorConfigIndex/thresholdManagement'
       this.type = this.$route.params.type
-      console.log(this.type)
       this.searchInputConfig.params.type = this.$route.params.type
       this.typeValue = this.$route.params.id
       this.requestData(this.type, this.typeValue)
     } else {
       this.type = 'endpoint'
+      this.typeValue = ''
       this.searchInputConfig.params.type = 'endpoint'
     }
   },
   methods: {
     search () {
-      this.requestData(this.searchInputConfig.params.type, this.$store.state.ip.value)
+      this.typeValue = this.$store.state.ip.id
+      this.requestData(this.searchInputConfig.params.type, this.$store.state.ip.id)
     },
     requestData (type, id) {
       let params = {}
@@ -190,9 +191,7 @@ export default {
             config.btn = []
           }
           config.tableData = item.strategy
-          // this.$nextTick(() => {
           this.totalPageConfig.push({table:config, obj_name: item.obj_name, operation:item.operation})
-          // }) 
         })
       })
     },

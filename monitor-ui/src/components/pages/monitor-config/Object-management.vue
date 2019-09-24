@@ -102,7 +102,6 @@
         this.modelConfig.slotConfig.resourceOption = []
         this.modelConfig.slotConfig.resourceSelected = []
         this.$httpRequestEntrance.httpRequestEntrance('GET','/dashboard/search', {search: '.'}, responseData => {
-          console.log(responseData)
           this.modelConfig.slotConfig.resourceOption = responseData
         })
         this.JQ('#add_object_Modal').modal('show')
