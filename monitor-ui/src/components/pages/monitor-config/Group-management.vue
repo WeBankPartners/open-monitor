@@ -11,7 +11,7 @@
   ]
   const btn = [
     {btn_name: '成员', btn_func: 'checkMember'},
-    {btn_name: '告警配置', btn_func: 'xx'},
+    {btn_name: '阀值配置', btn_func: 'thresholdConfig'},
     {btn_name: '编辑', btn_func: 'editF'},
     {btn_name: '删除', btn_func: 'delF'},
   ]
@@ -113,7 +113,10 @@
           this.$Message.success('删除成功 !')
           this.initData(this.pageConfig.CRUD, this.pageConfig)
         })
-      }
+      },
+      thresholdConfig (rowData) {
+        this.$router.push({name: 'thresholdManagement', params: {id: rowData.id, type: 'grp'}})
+      },
     },
     components: {
     }

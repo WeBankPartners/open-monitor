@@ -133,36 +133,47 @@ import {interceptParams} from '@/assets/js/utils'
     },
     props: ['modelConfig'],
     mounted() {
-      // let _this = this
-      // let modalId = !this.$validate.isEmpty(this.modelConfig.modalId) ? 'add_edit_Modal':this.modelConfig.modalId
+      let _this = this
+      let modalId = !this.$validate.isEmpty(this.modelConfig.modalId) ? 'add_edit_Modal':this.modelConfig.modalId
 
-    },
-    watch:{
-      configCopy: {
-        handler(){
-          //select选择完将提示隐藏，如果日后保留'X'删除功能，如需要，再增加显示处理逻辑
-          for(let key in this.modelConfig.v_select_configs) { //slot select
-            if(key.endsWith('isError')){
-              let prefix = key.slice(0,-7)
-              let value = prefix+'selected'
-              let isMutile = Array.isArray(this.modelConfig.v_select_configs[value]) && this.modelConfig.v_select_configs[value].length>0
-              let isSingle = !Array.isArray(this.modelConfig.v_select_configs[value]) && this.modelConfig.v_select_configs[value]
-              if(this.modelConfig.v_select_configs[key] && (isMutile|| isSingle)){
+      this.JQ('#' + modalId).on('hidden.bs.modal', () => {
+        // 清理表单验证错误信息
+        _this.errors.clear()
+        // 清除表单缓存内容  下面把清空switch的数据补全
+        this.$validate.emptyJson(_this.modelConfig.addRow)
+        
+        // 清除表单缓存的selected数据
+        for (let p in _this.modelConfig.v_select_configs) {
+          if (p.endsWith('selected')) {
+            _this.modelConfig.v_select_configs[p] = null
+          }
+        }
+        // 清除表单selected
+        for(let i=0; i<this.modelConfig.config.length; i++){
+          // 这里不能清空switch绑定的数据，不然会报错
+          if(this.modelConfig.config[i].type === 'switch') {
+            this.modelConfig.addRow[this.modelConfig.config[i].value] = false
+          }
+          if(this.modelConfig.config[i].type === 'textarea' && this.modelConfig.config[i].v_validate) {
+            this.modelConfig.config[i].isError = false
+          }
+          if(this.modelConfig.config[i].type === 'select' && this.modelConfig.config[i].v_validate) {
+            this.modelConfig.config[i].isError = false
+          }
+          if(this.modelConfig.config[i].type === 'slot') {
+            let arr = this.modelConfig.config[i].v_validate ? this.modelConfig.config[i].v_validate :[]
+            for(let j =0;j<arr.length;j++){
+              let key = arr[j].isError
+              let value = arr[j].value
+              if(arr[j].type === 'select' && !this.modelConfig.v_select_configs[value]) {
                 this.modelConfig.v_select_configs[key] = false
               }
             }
           }
-          for(let i=0; i< this.modelConfig.config.length; i++){ //config select
-            if(this.modelConfig.config[i].type === 'select' && this.modelConfig.config[i].v_validate) {
-              let obj = this.modelConfig.config[i]
-              if(this.modelConfig.v_select_configs[obj.value]){
-                this.modelConfig.config[i].isError = false
-              }
-            }
-          }
-        },
-        deep:true
-      }
+        }
+      })
+    },
+    watch:{
     },
     filters: {},
     methods: {
@@ -264,7 +275,6 @@ import {interceptParams} from '@/assets/js/utils'
         }
       },
       isRequired (item) {
-        // console.log(typeof item)
       
         
         if (!this.$validate.isEmpty(item)) {

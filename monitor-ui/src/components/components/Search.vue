@@ -32,7 +32,8 @@ export default {
       searchInputConfig: {
         poptipWidth: 300,
         placeholder: '请输入主机名或IP地址，可模糊匹配',
-        inputStyle: "width:300px;"
+        inputStyle: "width:300px;",
+        api: '/dashboard/search'
       },
       ip: {},
       timeTnterval: -1800,

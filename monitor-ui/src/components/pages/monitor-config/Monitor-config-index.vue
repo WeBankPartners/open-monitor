@@ -23,7 +23,7 @@ export default {
       tabs: [
         {label: '对象管理', path:'/monitorConfigIndex/objectManagement'},
         {label: '组管理', path:'/monitorConfigIndex/groupManagement'},
-        {label: '阀值配置', path:'/monitorConfigIndex/thresholdManagement'},
+        {label: '阀值管理', path:'/monitorConfigIndex/thresholdManagement'},
       ]
     }
   },

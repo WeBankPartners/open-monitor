@@ -54,6 +54,7 @@ export default {
     choiceRes (resItem) {
       this.ip.label = resItem.option_text
       this.ip.value = resItem.option_value
+      this.ip.id = resItem.id
       this.$store.commit('storeip', this.ip)
       // this.$parent.getChartsConfig()
       this.showSearchTips = false
@@ -62,10 +63,12 @@ export default {
       if (!this.ip.label) {
         return
       }
-      let params = {
+      let searchParams = {
         search: this.ip.label
       }
-      this.$httpRequestEntrance.httpRequestEntrance('GET','/dashboard/search', params, responseData => {
+      let params = Object.assign(searchParams, this.parentConfig.params)
+      
+      this.$httpRequestEntrance.httpRequestEntrance('GET',this.parentConfig.api, params, responseData => {
         this.searchResult = responseData
       })
       this.showSearchTips = true

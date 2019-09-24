@@ -9,7 +9,7 @@
         <div class="marginbottom params-each">
           <label class="col-md-2 label-name lable-name-select">对象名:</label>
           <Select v-model="modelConfig.slotConfig.resourceSelected" multiple style="width:260px">
-              <Option v-for="item in modelConfig.slotConfig.resourceOption" :value="item.option_value" :key="item.option_value">{{ item.option_text }}</Option>
+              <Option v-for="item in modelConfig.slotConfig.resourceOption" :value="item.id" :key="item.id">{{ item.option_text }}</Option>
           </Select>
         </div>
       </div>
@@ -22,7 +22,7 @@
     {title: 'groups', value: 'groups', display: true, frozen: true, sortable: true}
   ]
   const btn = [
-    {btn_name: '告警配置', btn_func: 'xx'},
+    {btn_name: '阀值配置', btn_func: 'thresholdConfig'},
     {btn_name: '历史告警', btn_func: 'xx'},
   ]
   export default {
@@ -110,17 +110,10 @@
         if (this.$validate.isEmpty_reset(this.modelConfig.slotConfig.resourceSelected)) {
           this.$Message.warning('请先选择要新增的对象 !')
         }
-        let endpoints = []
-        let temp = this.modelConfig.slotConfig.resourceSelected
-        this.pageConfig.table.tableData.forEach((item)=>{
-           temp.push(item.guid)
-        })
-        for (let i = 0;i < temp.length; i++) {
-          endpoints.push(temp[i].split(':')[0])
-        }
         let params = {
           grp: this.groupMsg.id,
-          endpoints: endpoints
+          endpoints: this.modelConfig.slotConfig.resourceSelected,
+          operation: 'add'
         }
         this.$httpRequestEntrance.httpRequestEntrance('POST', 'alarm/endpoint/update', params, () => {
           this.$Message.success('新增成功 !')
@@ -133,15 +126,18 @@
         this.pageConfig.table.tableData.forEach((item)=>{
            endpoints.push(item.guid.split(':')[0])
         })
-        endpoints.splice(endpoints.findIndex(item => item.id === rowData.guid.split(':')[0])-1, 1)
         let params = {
           grp: this.groupMsg.id,
-          endpoints: endpoints
+          endpoints: [parseInt(rowData.id)],
+          operation: 'delete'
         }
         this.$httpRequestEntrance.httpRequestEntrance('POST', 'alarm/endpoint/update', params, () => {
           this.$Message.success('删除成功 !')
           this.initData(this.pageConfig.CRUD, this.pageConfig)
         })
+      },
+      thresholdConfig (rowData) {
+        this.$router.push({name: 'thresholdManagement', params: {id: rowData.id, type: 'endpoint'}})
       },
       closeTag () {
         this.groupMsg = {}
