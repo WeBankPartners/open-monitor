@@ -111,7 +111,8 @@ func GetPromMetric(endpoint,metric []string) (error, string) {
 		mid.LogError("query prom_metric fail", err)
 	}
 	if len(query) > 0 {
-		err,host := GetEndpoint(0,endpoint[0])
+		host := m.EndpointTable{Guid:endpoint[0]}
+		GetEndpoint(&host)
 		if err!=nil || host.Id==0 {
 			mid.LogError("can't find endpoint "+endpoint[0], err)
 			return err,promQL
@@ -134,7 +135,7 @@ func GetPromMetric(endpoint,metric []string) (error, string) {
 	return err,promQL
 }
 
-func SearchHost(endpoint string, isId bool) (error, []*m.OptionModel) {
+func SearchHost(endpoint string) (error, []*m.OptionModel) {
 	options := []*m.OptionModel{}
 	var hosts []*m.EndpointTable
 	endpoint = `%` + endpoint + `%`
@@ -147,31 +148,30 @@ func SearchHost(endpoint string, isId bool) (error, []*m.OptionModel) {
 		if host.ExportType == "node" {
 			host.ExportType = "host"
 		}
-		if isId {
-			options = append(options, &m.OptionModel{OptionText: fmt.Sprintf("%s:%s", host.Name, host.Ip), OptionValue: fmt.Sprintf("%d", host.Id)})
-		}else {
-			options = append(options, &m.OptionModel{OptionText: fmt.Sprintf("%s:%s", host.Name, host.Ip), OptionValue: fmt.Sprintf("%s:%s", host.Guid, host.ExportType)})
-		}
+		options = append(options, &m.OptionModel{OptionText: fmt.Sprintf("%s:%s", host.Name, host.Ip), OptionValue: fmt.Sprintf("%s:%s", host.Guid, host.ExportType), Id:host.Id})
 	}
 	return err,options
 }
 
-func GetEndpoint(id int,endpoint string) (error, m.EndpointTable) {
+func GetEndpoint(query *m.EndpointTable) error {
 	var endpointObj []*m.EndpointTable
 	var err error
-	if id > 0 {
-		err = x.SQL("SELECT * FROM endpoint WHERE id=?", id).Find(&endpointObj)
-	}else{
-		err = x.SQL("SELECT * FROM endpoint WHERE guid=?", endpoint).Find(&endpointObj)
+	if query.Id > 0 {
+		err = x.SQL("SELECT * FROM endpoint WHERE id=?", query.Id).Find(&endpointObj)
+	}else if query.Guid != ""{
+		err = x.SQL("SELECT * FROM endpoint WHERE guid=?", query.Guid).Find(&endpointObj)
+	}else if query.Address != "" {
+		err = x.SQL("SELECT * FROM endpoint WHERE address=?", query.Address).Find(&endpointObj)
 	}
 	if err != nil {
 		mid.LogError("get tags fail ", err)
-		return err,m.EndpointTable{Id:0}
+		return err
 	}
 	if len(endpointObj) <= 0 {
-		return nil,m.EndpointTable{Id:0}
+		return fmt.Errorf("no data")
 	}
-	return nil,*endpointObj[0]
+	query = endpointObj[0]
+	return nil
 }
 
 func GetTags(endpoint string, key string, metric string) (error, []*m.OptionModel) {

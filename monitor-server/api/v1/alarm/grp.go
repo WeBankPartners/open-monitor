@@ -7,7 +7,6 @@ import (
 	mid "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/middleware"
 	m "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/models"
 	"github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/services/db"
-	"net/http"
 )
 
 func ListGrp(c *gin.Context)  {
@@ -48,7 +47,7 @@ func AddGrp(c *gin.Context)  {
 			mid.ReturnSuccess(c, "Success")
 		}
 	}else{
-		mid.Return(c, mid.RespJson{Msg:"Param validate fail", Code:http.StatusBadRequest})
+		mid.ReturnValidateFail(c, "Param validate fail")
 	}
 }
 
@@ -78,7 +77,7 @@ func UpdateGrp(c *gin.Context)  {
 			mid.ReturnSuccess(c, "Success")
 		}
 	}else{
-		mid.Return(c, mid.RespJson{Msg:"Param validate fail", Code:http.StatusBadRequest})
+		mid.ReturnValidateFail(c, "Param validate fail")
 	}
 }
 
@@ -106,7 +105,7 @@ func ListEndpoint(c *gin.Context)  {
 		return
 	}
 	query := m.AlarmEndpointQuery{Search:search, Page:page, Size:size, Grp:grp}
-	err := db.ListEndopint(&query)
+	err := db.ListAlarmEndpoints(&query)
 	if err != nil {
 		mid.ReturnError(c, "get endpoints error", err)
 		return
@@ -128,7 +127,7 @@ func EditGrpEndpoint(c *gin.Context)  {
 			mid.ReturnSuccess(c, "Success")
 		}
 	}else{
-		mid.Return(c, mid.RespJson{Msg:"Param validate fail", Code:http.StatusBadRequest})
+		mid.ReturnValidateFail(c, "Param validate fail")
 	}
 }
 

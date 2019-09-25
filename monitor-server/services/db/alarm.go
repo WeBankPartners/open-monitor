@@ -66,12 +66,12 @@ func SearchGrp(search string) (error,[]*m.OptionModel) {
 		return err,result
 	}
 	for _,v := range grps {
-		result = append(result, &m.OptionModel{OptionValue:fmt.Sprintf("%d", v.Id), OptionText:v.Name})
+		result = append(result, &m.OptionModel{OptionValue:fmt.Sprintf("%d", v.Id), OptionText:v.Name, Id:v.Id})
 	}
 	return nil,result
 }
 
-func ListEndopint(query *m.AlarmEndpointQuery) error {
+func ListAlarmEndpoints(query *m.AlarmEndpointQuery) error {
 	whereSql := ""
 	if query.Search != "" {
 		whereSql += ` AND t1.guid LIKE '%`+query.Search+`%' `
@@ -100,6 +100,11 @@ func ListEndopint(query *m.AlarmEndpointQuery) error {
 	err := x.SQL(querySql, (query.Page-1)*query.Size, query.Size).Find(&result)
 	err = x.SQL(countSql).Find(&count)
 	if len(result) > 0 {
+		for _,v := range result {
+			if v.Groups != "" {
+				v.Groups = v.Groups[:len(v.Groups)-1]
+			}
+		}
 		query.Result = result
 		query.ResultNum = count[0]
 	}else{
@@ -336,6 +341,18 @@ func transColumn(s string) string {
 	return string(v)
 }
 
+func GetStrategy(id int) (error,m.StrategyTable) {
+	var result []*m.StrategyTable
+	err := x.SQL("SELECT * FROM strategy WHERE id=?", id).Find(&result)
+	if err == nil && len(result) == 0 {
+		err = fmt.Errorf("no data")
+	}
+	if err != nil {
+		return err,m.StrategyTable{}
+	}
+	return err,*result[0]
+}
+
 func GetStrategys(query *m.TplQuery) error {
 	var result []*m.TplObj
 	if query.SearchType == "endpoint" {
@@ -369,7 +386,9 @@ func GetStrategys(query *m.TplQuery) error {
 		for i,v := range tpls {
 			if i == 0 {
 				tmpTplId = v.TplId
-				tmpStrategys = append(tmpStrategys, &m.StrategyTable{Id:v.StrategyId, TplId:v.TplId, Metric:v.Metric, Expr:v.Expr, Cond:v.Cond, Last:v.Last, Priority:v.Priority, Content:v.Content})
+				if v.StrategyId > 0 {
+					tmpStrategys = append(tmpStrategys, &m.StrategyTable{Id: v.StrategyId, TplId: v.TplId, Metric: v.Metric, Expr: v.Expr, Cond: v.Cond, Last: v.Last, Priority: v.Priority, Content: v.Content})
+				}
 			}else{
 				if v.TplId != tmpTplId {
 					tmpTplObj := m.TplObj{TplId:tpls[i-1].TplId}
@@ -380,7 +399,8 @@ func GetStrategys(query *m.TplQuery) error {
 						tmpTplObj.Operation = false
 					}else{
 						tmpTplObj.ObjId = tpls[i-1].EndpointId
-						_,endpointObj := GetEndpoint(tpls[i-1].EndpointId, "")
+						endpointObj := m.EndpointTable{Id:tpls[i-1].EndpointId}
+						GetEndpoint(&endpointObj)
 						tmpTplObj.ObjName = endpointObj.Guid
 						tmpTplObj.ObjType = "endpoint"
 						tmpTplObj.Operation = true
@@ -390,13 +410,14 @@ func GetStrategys(query *m.TplQuery) error {
 					tmpTplId = v.TplId
 					tmpStrategys = []*m.StrategyTable{}
 				}
-				tmpStrategys = append(tmpStrategys, &m.StrategyTable{Id:v.StrategyId, TplId:v.TplId, Metric:v.Metric, Expr:v.Expr, Cond:v.Cond, Last:v.Last, Priority:v.Priority, Content:v.Content})
+				if v.StrategyId > 0 {
+					tmpStrategys = append(tmpStrategys, &m.StrategyTable{Id: v.StrategyId, TplId: v.TplId, Metric: v.Metric, Expr: v.Expr, Cond: v.Cond, Last: v.Last, Priority: v.Priority, Content: v.Content})
+				}
 			}
 		}
-		if len(tmpStrategys) > 0 {
-			_,endpointObj := GetEndpoint(tpls[len(tpls)-1].EndpointId, "")
-			result = append(result, &m.TplObj{TplId:tpls[len(tpls)-1].TplId, ObjId:tpls[len(tpls)-1].EndpointId, ObjName:endpointObj.Guid, ObjType:"endpoint", Operation:true, Strategy:tmpStrategys})
-		}
+		endpointObj := m.EndpointTable{Id:tpls[len(tpls)-1].EndpointId}
+		GetEndpoint(&endpointObj)
+		result = append(result, &m.TplObj{TplId:tpls[len(tpls)-1].TplId, ObjId:tpls[len(tpls)-1].EndpointId, ObjName:endpointObj.Guid, ObjType:"endpoint", Operation:true, Strategy:tmpStrategys})
 	}else{
 		var grps []*m.GrpTable
 		err := x.SQL("SELECT * FROM grp WHERE id=?", query.SearchId).Find(&grps)
@@ -419,7 +440,9 @@ func GetStrategys(query *m.TplQuery) error {
 		if len(tpls) > 0 {
 			tmpStrategys := []*m.StrategyTable{}
 			for _, v := range tpls {
-				tmpStrategys = append(tmpStrategys, &m.StrategyTable{Id: v.StrategyId, TplId:v.TplId, Metric: v.Metric, Expr: v.Expr, Cond: v.Cond, Last: v.Last, Priority: v.Priority, Content: v.Content})
+				if v.StrategyId > 0 {
+					tmpStrategys = append(tmpStrategys, &m.StrategyTable{Id: v.StrategyId, TplId: v.TplId, Metric: v.Metric, Expr: v.Expr, Cond: v.Cond, Last: v.Last, Priority: v.Priority, Content: v.Content})
+				}
 			}
 			result = append(result, &m.TplObj{TplId:tpls[0].TplId, ObjId:tpls[0].GrpId, ObjName:grps[0].Name, ObjType:"grp", Operation:true, Strategy:tmpStrategys})
 		}
@@ -509,4 +532,44 @@ func GetEndpointsByGrp(grpId int) (error,[]*m.EndpointTable) {
 		mid.LogError("get endpoint by grp fail", err)
 	}
 	return err,result
+}
+
+func GetAlarms(query m.AlarmTable) (error,[]*m.AlarmTable) {
+	var result []*m.AlarmTable
+	var whereSql string
+	var params []interface{}
+	if query.Id > 0 {
+		whereSql += " and id=? "
+		params = append(params, query.Id)
+	}
+	if query.StrategyId > 0 {
+		whereSql += " and strategy_id=? "
+		params = append(params, query.StrategyId)
+	}
+	if query.Endpoint != "" {
+		whereSql += " and endpoint=? "
+		params = append(params, query.Endpoint)
+	}
+	if query.Status != "" {
+		whereSql += " and status=? "
+		params = append(params, query.Status)
+	}
+	err := x.SQL("SELECT * FROM alarm WHERE 1=1 " + whereSql + " order by id desc", params...).Find(&result)
+	if err != nil {
+		mid.LogError("get alarms fail", err)
+	}
+	return err,result
+}
+
+func UpdateAlarms(alarms []*m.AlarmTable) error {
+	var sqls []string
+	for _,v := range alarms {
+		if v.Id > 0 {
+			sqls = append(sqls, fmt.Sprintf("UPDATE alarm SET status='%s',end_value=%f,end='%s' WHERE id=%d", v.Status, v.EndValue, v.End.Format(m.DatetimeFormat), v.Id))
+		}else{
+			sqls = append(sqls, fmt.Sprintf("INSERT INTO alarm(strategy_id,endpoint,status,s_metric,s_expr,s_cond,s_last,s_priority,content,start_value,start) VALUE (%d,'%s','%s','%s','%s','%s','%s','%s','%s',%f,'%s')",
+				v.StrategyId,v.Endpoint,v.Status,v.SMetric,v.SExpr,v.SCond,v.SLast,v.SPriority,v.Content,v.StartValue,v.Start.Format(m.DatetimeFormat)))
+		}
+	}
+	return ExecuteTransactionSql(sqls)
 }

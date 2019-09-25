@@ -6,7 +6,6 @@ import (
 	mid "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/middleware"
 	m "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/models"
 	"github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/services/db"
-	"net/http"
 	"github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/services/prom"
 	"fmt"
 	"strings"
@@ -67,7 +66,7 @@ func AddStrategy(c *gin.Context)  {
 		}
 		mid.ReturnSuccess(c, "Success")
 	}else{
-		mid.Return(c, mid.RespJson{Msg:"Param validate fail", Code:http.StatusBadRequest})
+		mid.ReturnValidateFail(c, "Param validate fail")
 	}
 }
 
@@ -93,7 +92,7 @@ func EditStrategy(c *gin.Context)  {
 		}
 		mid.ReturnSuccess(c, "Success")
 	}else{
-		mid.Return(c, mid.RespJson{Msg:"Param validate fail", Code:http.StatusBadRequest})
+		mid.ReturnValidateFail(c, "Param validate fail")
 	}
 }
 
@@ -132,7 +131,7 @@ func SearchObjOption(c *gin.Context)  {
 	var err error
 	var data []*m.OptionModel
 	if searchType == "endpoint" {
-		err,data = db.SearchHost(searchMsg, true)
+		err,data = db.SearchHost(searchMsg)
 	}else{
 		err,data = db.SearchGrp(searchMsg)
 	}
@@ -173,7 +172,8 @@ func saveConfigFile(tplId int) error {
 			_,grpObj := db.GetSingleGrp(tplObj.GrpId)
 			fileName = grpObj.Name
 		}else{
-			_,endpointObj := db.GetEndpoint(tplObj.EndpointId, "")
+			endpointObj := m.EndpointTable{Id:tplObj.EndpointId}
+			db.GetEndpoint(&endpointObj)
 			fileName = endpointObj.Guid
 		}
 	}
@@ -199,7 +199,7 @@ func saveConfigFile(tplId int) error {
 		for _,v := range query.Tpl[len(query.Tpl)-1].Strategy {
 			tmpRfu := m.RFRule{}
 			tmpRfu.Alert = v.Metric
-			if !strings.Contains(v.Cond, " ") {
+			if !strings.Contains(v.Cond, " ") && v.Cond != "" {
 				if strings.Contains(v.Cond, "=") {
 					v.Cond = v.Cond[:2] + " " + v.Cond[2:]
 				}else{
@@ -216,7 +216,7 @@ func saveConfigFile(tplId int) error {
 			tmpRfu.For = v.Last
 			tmpRfu.Labels = make(map[string]string)
 			tmpRfu.Labels["strategy_id"] = fmt.Sprintf("%d", v.Id)
-			tmpRfu.Annotations = m.RFAnnotation{Summary:fmt.Sprintf("{{$labels.instance}} %s %s", v.Priority, v.Metric), Description:v.Content}
+			tmpRfu.Annotations = m.RFAnnotation{Summary:fmt.Sprintf("{{$labels.instance}}__%s__%s__{{$value}}", v.Priority, v.Metric), Description:v.Content}
 			rfu = append(rfu, &tmpRfu)
 		}
 		if len(query.Tpl[len(query.Tpl)-1].Strategy) == 0 {

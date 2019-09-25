@@ -36,6 +36,7 @@ type StrategyTable struct {
 
 type AlarmTable struct {
 	Id  int  `json:"id"`
+	StrategyId  int  `json:"strategy_id"`
 	Endpoint  string  `json:"endpoint"`
 	Status  string  `json:"status"`
 	SMetric  string  `json:"s_metric"`
@@ -44,7 +45,9 @@ type AlarmTable struct {
 	SLast  string  `json:"s_last"`
 	SPriority  string  `json:"s_priority"`
 	Content  string  `json:"content"`
+	StartValue  float64  `json:"start_value"`
 	Start  time.Time  `json:"start"`
+	EndValue  float64  `json:"end_value"`
 	End  time.Time  `json:"end"`
 }
 
@@ -140,4 +143,26 @@ type UpdateStrategy struct {
 	Strategy  []*StrategyTable
 	Operation  string
 	OperateUser  string
+}
+
+type AlterManagerRespObj struct {
+	Receiver string `json:"receiver"`
+	Status   string `json:"status"`
+	Alerts   []AMRespAlert `json:"alerts"`
+	GroupLabels       map[string]string `json:"groupLabels"`
+	CommonLabels      map[string]string `json:"commonLabels"`
+	CommonAnnotations map[string]string `json:"commonAnnotations"`
+	ExternalURL string `json:"externalURL"`
+	Version  string `json:"version"`
+	GroupKey string `json:"groupKey"`
+}
+
+type AMRespAlert struct {
+	Status       string    `json:"status"`
+	Labels       map[string]string    `json:"labels"`
+	Annotations  map[string]string    `json:"annotations"`
+	StartsAt     time.Time `json:"startsAt"`
+	EndsAt       time.Time `json:"endsAt"`
+	GeneratorURL string    `json:"generatorURL"`
+	Fingerprint  string    `json:"fingerprint"`
 }
