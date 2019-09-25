@@ -978,7 +978,7 @@
       display: block;
     }
     .poplableSty{
-      max-width: 150px;
+      // max-width: 150px;
       overflow: hidden;
       text-overflow: ellipsis;
       display: block;

@@ -173,6 +173,10 @@ export default {
       this.typeValue = ''
       this.searchInputConfig.params.type = 'endpoint'
     }
+    this.JQ('#add_edit_Modal').on('hidden.bs.modal', () => {
+      this.modelConfig.thresholdValue = ''
+      this.modelConfig.lastValue = ''
+    })
   },
   methods: {
     search () {
@@ -228,7 +232,7 @@ export default {
         ss.grp_id = this.typeValue
         ss.endpoint_id = 0
       } else {
-        ss.endpoint_id = this.typeValue
+        ss.endpoint_id = parseInt(this.typeValue)
         ss.grp_id = 0
       }
       let params = Object.assign(ss, this.modelConfig.addRow)
@@ -280,7 +284,7 @@ export default {
         ss.grp_id = this.typeValue
         ss.endpoint_id = 0
       } else {
-        ss.endpoint_id = this.typeValue
+        ss.endpoint_id = parseInt(this.typeValue)
         ss.grp_id = 0
       }
       let params = Object.assign(ss, this.modelConfig.addRow)
