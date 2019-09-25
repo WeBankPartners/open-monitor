@@ -27,6 +27,9 @@ export default {
       ]
     }
   },
+  mounted() {
+    this.activeTab = this.$route.path
+  },
   methods: {
     changeTab (path) {
       this.activeTab = path
