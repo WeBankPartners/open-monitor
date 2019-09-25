@@ -173,6 +173,10 @@ export default {
       this.typeValue = ''
       this.searchInputConfig.params.type = 'endpoint'
     }
+    this.JQ('#add_edit_Modal').on('hidden.bs.modal', () => {
+      this.modelConfig.thresholdValue = ''
+      this.modelConfig.lastValue = ''
+    })
   },
   methods: {
     search () {
