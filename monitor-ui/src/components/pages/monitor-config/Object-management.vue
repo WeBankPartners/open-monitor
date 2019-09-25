@@ -24,6 +24,7 @@
   const btn = [
     {btn_name: '阀值配置', btn_func: 'thresholdConfig'},
     {btn_name: '历史告警', btn_func: 'xx'},
+    {btn_name: '删除', btn_func: 'delF'}
   ]
   export default {
     name: '',
@@ -46,7 +47,7 @@
           table: {
             tableData: [],
             tableEle: tableEle,
-            // filterMoreBtn: 'filterMoreBtn',
+            filterMoreBtn: 'filterMoreBtn',
             primaryKey: 'guid',
             btn: btn,
             pagination: this.pagination,
@@ -88,7 +89,6 @@
         this.$parent.activeTab = '/monitorConfigIndex/objectManagement'
         this.groupMsg = this.$route.params.group
         this.showGroupMsg = true
-        this.pageConfig.table.btn.push({btn_name: '删除', btn_func: 'delF'})
         this.pageConfig.researchConfig.btn_group.push({btn_name: '新增', btn_func: 'add', class: 'btn-cancle-f', btn_icon: 'fa fa-plus'})
         this.pageConfig.researchConfig.filters.grp = this.groupMsg.id
       }
@@ -97,6 +97,13 @@
     methods: {
       initData (url= this.pageConfig.CRUD, params) {
         this.$tableUtil.initTable(this, 'GET', url, params)
+      },
+      filterMoreBtn () {
+        let moreBtnGroup = ['thresholdConfig','xx']
+        if (this.showGroupMsg) {
+          moreBtnGroup.push('delF')
+        }
+        return moreBtnGroup
       },
       add () {
         this.modelConfig.slotConfig.resourceOption = []

@@ -228,7 +228,7 @@ export default {
         ss.grp_id = this.typeValue
         ss.endpoint_id = 0
       } else {
-        ss.endpoint_id = this.typeValue
+        ss.endpoint_id = parseInt(this.typeValue)
         ss.grp_id = 0
       }
       let params = Object.assign(ss, this.modelConfig.addRow)
@@ -280,7 +280,7 @@ export default {
         ss.grp_id = this.typeValue
         ss.endpoint_id = 0
       } else {
-        ss.endpoint_id = this.typeValue
+        ss.endpoint_id = parseInt(this.typeValue)
         ss.grp_id = 0
       }
       let params = Object.assign(ss, this.modelConfig.addRow)
