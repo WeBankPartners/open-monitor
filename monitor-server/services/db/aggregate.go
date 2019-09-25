@@ -4,6 +4,7 @@ import (
 	"sort"
 	"strconv"
 	"fmt"
+	"github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/models"
 )
 
 func CheckAggregate(start int64, end int64, endpoint string, num int) int {
@@ -11,7 +12,8 @@ func CheckAggregate(start int64, end int64, endpoint string, num int) int {
 		return 0
 	}
 	step := 10
-	_,host := GetEndpoint(0,endpoint)
+	host := models.EndpointTable{Guid:endpoint}
+	GetEndpoint(&host)
 	if host.Id == 0 {
 		return 0
 	}

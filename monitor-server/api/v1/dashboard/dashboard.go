@@ -312,7 +312,7 @@ func MainSearch(c *gin.Context)  {
 	if strings.Contains(endpoint, `:`) {
 		endpoint = strings.Split(endpoint, `:`)[1]
 	}
-	err,result := db.SearchHost(endpoint, false)
+	err,result := db.SearchHost(endpoint)
 	if err != nil {
 		mid.ReturnError(c, "search host fail", err)
 		return

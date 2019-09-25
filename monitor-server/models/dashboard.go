@@ -11,6 +11,7 @@ type SearchModel struct {
 }
 
 type OptionModel struct {
+	Id  int  `json:"id"`
 	OptionValue  string  `json:"option_value"`
 	OptionText   string  `json:"option_text"`
 	Active  bool  `json:"active"`
