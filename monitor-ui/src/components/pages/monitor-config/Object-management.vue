@@ -8,8 +8,13 @@
       <div slot="advancedConfig" class="extentClass">   
         <div class="marginbottom params-each">
           <label class="col-md-2 label-name lable-name-select">对象名:</label>
-          <Select v-model="modelConfig.slotConfig.resourceSelected" multiple style="width:260px">
-              <Option v-for="item in modelConfig.slotConfig.resourceOption" :value="item.id" :key="item.id">{{ item.option_text }}</Option>
+          <Select v-model="modelConfig.slotConfig.resourceSelected" multiple filterable style="width:300px">
+              <Option v-for="item in modelConfig.slotConfig.resourceOption" :value="item.id" :key="item.id">
+                <Tag color="cyan" v-if="item.option_value.split(':')[1] == 'host'">host</Tag>
+                <Tag color="blue" v-if="item.option_value.split(':')[1] == 'mysql'">mysql</Tag>
+                <Tag color="geekblue" v-if="item.option_value.split(':')[1] == 'redis'">redis</Tag>
+                <Tag color="purple" v-if="item.option_value.split(':')[1] == 'tomcat'">tomcat</Tag>
+              {{ item.option_text }}</Option>
           </Select>
         </div>
       </div>
