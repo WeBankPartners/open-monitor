@@ -76,6 +76,8 @@ func InitHttpServer() {
 			alarmApi.POST("/strategy/update", alarm.EditStrategy)
 			alarmApi.GET("/strategy/delete", alarm.DeleteStrategy)
 			alarmApi.POST("/webhook", alarm.AcceptAlertMsg)
+			alarmApi.GET("/history", alarm.GetHistoryAlarm)
+			alarmApi.GET("/problem/list", alarm.GetProblemAlarm)
 		}
 		port := m.Config().Http.Port
 		r.Run(fmt.Sprintf(":%d", port))

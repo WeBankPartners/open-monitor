@@ -170,7 +170,15 @@ func GetEndpoint(query *m.EndpointTable) error {
 	if len(endpointObj) <= 0 {
 		return fmt.Errorf("no data")
 	}
-	query = endpointObj[0]
+	query.Id = endpointObj[0].Id
+	query.Guid = endpointObj[0].Guid
+	query.Address = endpointObj[0].Address
+	query.Name = endpointObj[0].Name
+	query.Ip = endpointObj[0].Ip
+	query.Step = endpointObj[0].Step
+	query.OsType = endpointObj[0].OsType
+	query.ExportVersion = endpointObj[0].ExportVersion
+	query.ExportType = endpointObj[0].ExportType
 	return nil
 }
 

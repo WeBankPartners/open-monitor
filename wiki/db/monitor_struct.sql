@@ -134,3 +134,76 @@ CREATE TABLE `search` (
   `refresh_message` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+
+DROP TABLE IF EXISTS `alarm`;
+
+CREATE TABLE `alarm` (
+  `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `strategy_id` INT(11) NOT NULL,
+  `endpoint` VARCHAR(255) NOT NULL,
+  `status` VARCHAR(20) NOT NULL,
+  `s_metric` VARCHAR(255) NOT NULL,
+  `s_expr` VARCHAR(500) NOT NULL,
+  `s_cond` VARCHAR(50) NOT NULL,
+  `s_last` VARCHAR(50) NOT NULL,
+  `s_priority` VARCHAR(50) NOT NULL,
+  `content` VARCHAR(500) DEFAULT '',
+  `start_value` DOUBLE,
+  `start` DATETIME,
+  `end_value` DOUBLE,
+  `end` DATETIME,
+  `close_type` VARCHAR(50) DEFAULT 'auto',
+  `close_msg` VARCHAR(255),
+  `close_user` VARCHAR(50),
+  PRIMARY KEY (`id`)
+) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+
+DROP TABLE IF EXISTS `grp`;
+
+CREATE TABLE `grp` (
+  `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(255) NOT NULL,
+  `description` VARCHAR(255) DEFAULT '',
+  `create_user` VARCHAR(50) DEFAULT '',
+  `update_user` VARCHAR(50) DEFAULT '',
+  `create_at` DATETIME,
+  `update_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+
+DROP TABLE IF EXISTS `tpl`;
+
+CREATE TABLE `tpl` (
+  `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `grp_id` INT(11) DEFAULT 0,
+  `endpoint_id` INT(11) DEFAULT 0,
+  `notify_url` VARCHAR(255) DEFAULT '',
+  `create_user` VARCHAR(50) DEFAULT '',
+  `update_user` VARCHAR(50) DEFAULT '',
+  `create_at` DATETIME,
+  `update_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+
+DROP TABLE IF EXISTS `grp_endpoint`;
+
+CREATE TABLE `grp_endpoint` (
+  `grp_id` INT(11) UNSIGNED NOT NULL,
+  `endpoint_id` INT(11) UNSIGNED NOT NULL,
+  UNIQUE KEY `idx_grp_endpoint` (`grp_id`,`endpoint_id`)
+) ENGINE=INNODB DEFAULT CHARSET=utf8;
+
+DROP TABLE IF EXISTS `strategy`;
+
+CREATE TABLE `strategy` (
+  `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `tpl_id` INT(11) NOT NULL,
+  `metric` VARCHAR(255) NOT NULL,
+  `expr` VARCHAR(500) NOT NULL,
+  `cond` VARCHAR(50) NOT NULL,
+  `last` VARCHAR(50) NOT NULL,
+  `priority` VARCHAR(50) NOT NULL,
+  `content` VARCHAR(500) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_strategy_tpl_id` (`tpl_id`)
+) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;

@@ -59,7 +59,7 @@ func AddStrategy(c *gin.Context)  {
 			mid.ReturnError(c, "Insert strategy fail", err)
 			return
 		}
-		err = saveConfigFile(param.TplId)
+		err = SaveConfigFile(param.TplId)
 		if err != nil {
 			mid.ReturnError(c, "save prometheus rule file fail", err)
 			return
@@ -85,7 +85,7 @@ func EditStrategy(c *gin.Context)  {
 		}
 		_,strategy := db.GetStrategyTable(param.StrategyId)
 		db.UpdateTpl(strategy.TplId, "")
-		err = saveConfigFile(strategy.TplId)
+		err = SaveConfigFile(strategy.TplId)
 		if err != nil {
 			mid.ReturnError(c, "save prometheus rule file fail", err)
 			return
@@ -113,7 +113,7 @@ func DeleteStrategy(c *gin.Context)  {
 		return
 	}
 	db.UpdateTpl(strategy.TplId, "")
-	err = saveConfigFile(strategy.TplId)
+	err = SaveConfigFile(strategy.TplId)
 	if err != nil {
 		mid.ReturnError(c, "save prometheus rule file fail", err)
 		return
@@ -142,7 +142,7 @@ func SearchObjOption(c *gin.Context)  {
 	mid.ReturnData(c, data)
 }
 
-func saveConfigFile(tplId int) error {
+func SaveConfigFile(tplId int) error {
 	err,tplObj := db.GetTpl(tplId,0 ,0)
 	if err != nil {
 		return err
@@ -175,6 +175,7 @@ func saveConfigFile(tplId int) error {
 			endpointObj := m.EndpointTable{Id:tplObj.EndpointId}
 			db.GetEndpoint(&endpointObj)
 			fileName = endpointObj.Guid
+			endpointExpr = endpointObj.Address
 		}
 	}
 	if isGrp {
@@ -196,6 +197,11 @@ func saveConfigFile(tplId int) error {
 		cObj.Name = fileName
 	}
 	if len(query.Tpl) > 0 {
+		if !isGrp && endpointExpr == "" && query.Tpl[len(query.Tpl)-1].ObjType == "endpoint" {
+			endpointObj := m.EndpointTable{Guid:query.Tpl[len(query.Tpl)-1].ObjName}
+			db.GetEndpoint(&endpointObj)
+			endpointExpr = endpointObj.Address
+		}
 		for _,v := range query.Tpl[len(query.Tpl)-1].Strategy {
 			tmpRfu := m.RFRule{}
 			tmpRfu.Alert = v.Metric
@@ -206,11 +212,15 @@ func saveConfigFile(tplId int) error {
 					v.Cond = v.Cond[:1] + " " + v.Cond[1:]
 				}
 			}
-			if strings.Contains(v.Expr, " ") {
-				v.Expr = strings.Replace(v.Expr, " ", "", -1)
-			}
-			if isGrp && strings.Contains(v.Expr, "$address") {
-				v.Expr = strings.Replace(v.Expr, "=\"$address\"", "=~\""+endpointExpr+"\"", -1)
+			//if strings.Contains(v.Expr, " ") {
+			//	v.Expr = strings.Replace(v.Expr, " ", "", -1)
+			//}
+			if strings.Contains(v.Expr, "$address") {
+				if isGrp {
+					v.Expr = strings.Replace(v.Expr, "=\"$address\"", "=~\""+endpointExpr+"\"", -1)
+				}else{
+					v.Expr = strings.Replace(v.Expr, "=\"$address\"", "=\""+endpointExpr+"\"", -1)
+				}
 			}
 			tmpRfu.Expr = fmt.Sprintf("%s %s", v.Expr, v.Cond)
 			tmpRfu.For = v.Last

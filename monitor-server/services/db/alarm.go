@@ -131,9 +131,9 @@ func UpdateGrp(obj *m.UpdateGrp) error {
 	return err
 }
 
-func UpdateGrpEndpoint(param m.GrpEndpointParamNew) error {
+func UpdateGrpEndpoint(param m.GrpEndpointParamNew) (error,bool) {
 	if len(param.Endpoints) == 0 {
-		return nil
+		return nil,false
 	}
 	var ids string
 	for _,v := range param.Endpoints {
@@ -143,7 +143,7 @@ func UpdateGrpEndpoint(param m.GrpEndpointParamNew) error {
 		var grpEndpoints []*m.GrpEndpointTable
 		err := x.SQL(fmt.Sprintf("SELECT * FROM grp_endpoint WHERE grp_id=%d AND endpoint_id IN (%s)", param.Grp, ids[:len(ids)-1])).Find(&grpEndpoints)
 		if err != nil {
-			return err
+			return err,false
 		}
 		var needAdd = true
 		var needInsert = false
@@ -162,16 +162,16 @@ func UpdateGrpEndpoint(param m.GrpEndpointParamNew) error {
 		}
 		if needInsert {
 			_, err = x.Exec(insertSql[:len(insertSql)-1])
-			return err
+			return err,needInsert
 		}else{
-			return nil
+			return nil,needInsert
 		}
 	}
 	if param.Operation == "delete" {
 		_,err := x.Exec(fmt.Sprintf("DELETE FROM grp_endpoint WHERE grp_id=%d AND endpoint_id IN (%s)", param.Grp, ids[:len(ids)-1]))
-		return err
+		return err,true
 	}
-	return fmt.Errorf("operation is not add or delete")
+	return fmt.Errorf("operation is not add or delete"),false
 }
 
 func Classify(obj interface{}, operation string, table string, force bool) string {
@@ -381,43 +381,49 @@ func GetStrategys(query *m.TplQuery) error {
 			mid.LogError("get strategy fail", err)
 			return err
 		}
-		var tmpTplId int
-		var tmpStrategys []*m.StrategyTable
-		for i,v := range tpls {
-			if i == 0 {
-				tmpTplId = v.TplId
-				if v.StrategyId > 0 {
-					tmpStrategys = append(tmpStrategys, &m.StrategyTable{Id: v.StrategyId, TplId: v.TplId, Metric: v.Metric, Expr: v.Expr, Cond: v.Cond, Last: v.Last, Priority: v.Priority, Content: v.Content})
-				}
-			}else{
-				if v.TplId != tmpTplId {
-					tmpTplObj := m.TplObj{TplId:tpls[i-1].TplId}
-					if tpls[i-1].GrpId > 0 {
-						tmpTplObj.ObjId = tpls[i-1].GrpId
-						tmpTplObj.ObjName = grpMap[tpls[i-1].GrpId]
-						tmpTplObj.ObjType = "grp"
-						tmpTplObj.Operation = false
-					}else{
-						tmpTplObj.ObjId = tpls[i-1].EndpointId
-						endpointObj := m.EndpointTable{Id:tpls[i-1].EndpointId}
-						GetEndpoint(&endpointObj)
-						tmpTplObj.ObjName = endpointObj.Guid
-						tmpTplObj.ObjType = "endpoint"
-						tmpTplObj.Operation = true
-					}
-					tmpTplObj.Strategy = tmpStrategys
-					result = append(result, &tmpTplObj)
+		if len(tpls) == 0 {
+			endpointObj := m.EndpointTable{Id:query.SearchId}
+			GetEndpoint(&endpointObj)
+			result = append(result, &m.TplObj{TplId: 0, ObjId: query.SearchId, ObjName: endpointObj.Guid, ObjType: "endpoint", Operation: true, Strategy: []*m.StrategyTable{}})
+		}else {
+			var tmpTplId int
+			var tmpStrategys []*m.StrategyTable
+			for i, v := range tpls {
+				if i == 0 {
 					tmpTplId = v.TplId
-					tmpStrategys = []*m.StrategyTable{}
-				}
-				if v.StrategyId > 0 {
-					tmpStrategys = append(tmpStrategys, &m.StrategyTable{Id: v.StrategyId, TplId: v.TplId, Metric: v.Metric, Expr: v.Expr, Cond: v.Cond, Last: v.Last, Priority: v.Priority, Content: v.Content})
+					if v.StrategyId > 0 {
+						tmpStrategys = append(tmpStrategys, &m.StrategyTable{Id: v.StrategyId, TplId: v.TplId, Metric: v.Metric, Expr: v.Expr, Cond: v.Cond, Last: v.Last, Priority: v.Priority, Content: v.Content})
+					}
+				} else {
+					if v.TplId != tmpTplId {
+						tmpTplObj := m.TplObj{TplId: tpls[i-1].TplId}
+						if tpls[i-1].GrpId > 0 {
+							tmpTplObj.ObjId = tpls[i-1].GrpId
+							tmpTplObj.ObjName = grpMap[tpls[i-1].GrpId]
+							tmpTplObj.ObjType = "grp"
+							tmpTplObj.Operation = false
+						} else {
+							tmpTplObj.ObjId = tpls[i-1].EndpointId
+							endpointObj := m.EndpointTable{Id: tpls[i-1].EndpointId}
+							GetEndpoint(&endpointObj)
+							tmpTplObj.ObjName = endpointObj.Guid
+							tmpTplObj.ObjType = "endpoint"
+							tmpTplObj.Operation = true
+						}
+						tmpTplObj.Strategy = tmpStrategys
+						result = append(result, &tmpTplObj)
+						tmpTplId = v.TplId
+						tmpStrategys = []*m.StrategyTable{}
+					}
+					if v.StrategyId > 0 {
+						tmpStrategys = append(tmpStrategys, &m.StrategyTable{Id: v.StrategyId, TplId: v.TplId, Metric: v.Metric, Expr: v.Expr, Cond: v.Cond, Last: v.Last, Priority: v.Priority, Content: v.Content})
+					}
 				}
 			}
+			endpointObj := m.EndpointTable{Id: tpls[len(tpls)-1].EndpointId}
+			GetEndpoint(&endpointObj)
+			result = append(result, &m.TplObj{TplId: tpls[len(tpls)-1].TplId, ObjId: tpls[len(tpls)-1].EndpointId, ObjName: endpointObj.Guid, ObjType: "endpoint", Operation: true, Strategy: tmpStrategys})
 		}
-		endpointObj := m.EndpointTable{Id:tpls[len(tpls)-1].EndpointId}
-		GetEndpoint(&endpointObj)
-		result = append(result, &m.TplObj{TplId:tpls[len(tpls)-1].TplId, ObjId:tpls[len(tpls)-1].EndpointId, ObjName:endpointObj.Guid, ObjType:"endpoint", Operation:true, Strategy:tmpStrategys})
 	}else{
 		var grps []*m.GrpTable
 		err := x.SQL("SELECT * FROM grp WHERE id=?", query.SearchId).Find(&grps)
@@ -445,13 +451,11 @@ func GetStrategys(query *m.TplQuery) error {
 				}
 			}
 			result = append(result, &m.TplObj{TplId:tpls[0].TplId, ObjId:tpls[0].GrpId, ObjName:grps[0].Name, ObjType:"grp", Operation:true, Strategy:tmpStrategys})
+		}else{
+			result = append(result, &m.TplObj{TplId:0, ObjId:query.SearchId, ObjName:grps[0].Name, ObjType:"grp", Operation:true, Strategy:[]*m.StrategyTable{}})
 		}
 	}
-	if len(result) > 0 {
-		query.Tpl = result
-	}else{
-		query.Tpl = []*m.TplObj{}
-	}
+	query.Tpl = result
 	return nil
 }
 
@@ -553,6 +557,20 @@ func GetAlarms(query m.AlarmTable) (error,[]*m.AlarmTable) {
 	if query.Status != "" {
 		whereSql += " and status=? "
 		params = append(params, query.Status)
+	}
+	if query.SMetric != "" {
+		whereSql += " and s_metric=? "
+		params = append(params, query.SMetric)
+	}
+	if query.SPriority != "" {
+		whereSql += " and s_priority=? "
+		params = append(params, query.SPriority)
+	}
+	if !query.Start.IsZero() {
+		whereSql += fmt.Sprintf(" and start>='%s' ", query.Start.Format(m.DatetimeFormat))
+	}
+	if !query.End.IsZero() {
+		whereSql += fmt.Sprintf(" and end<='%s' ", query.End.Format(m.DatetimeFormat))
 	}
 	err := x.SQL("SELECT * FROM alarm WHERE 1=1 " + whereSql + " order by id desc", params...).Find(&result)
 	if err != nil {

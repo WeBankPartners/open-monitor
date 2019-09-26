@@ -20,6 +20,7 @@ func AcceptAlertMsg(c *gin.Context)  {
 		}
 		var alarms []*m.AlarmTable
 		for _,v := range param.Alerts {
+			mid.LogInfo(fmt.Sprintf("accept alert msg : %v", v))
 			tmpAlarm := m.AlarmTable{Status:v.Status}
 			tmpAlarm.StrategyId,_ = strconv.Atoi(v.Labels["strategy_id"])
 			if tmpAlarm.StrategyId <= 0 {
@@ -55,11 +56,15 @@ func AcceptAlertMsg(c *gin.Context)  {
 			_,tmpAlarms := db.GetAlarms(tmpAlarmQuery)
 			tmpOperation := "add"
 			if len(tmpAlarms) > 0 {
-				if tmpAlarms[0].Status != "ok" {
+				if tmpAlarms[0].Status == "firing" {
 					if v.Status == "firing" {
 						tmpOperation = "same"
 					}else{
 						tmpOperation = "resolve"
+					}
+				}else if tmpAlarms[0].Status == "ok" {
+					if v.Status == "resolved" {
+						tmpOperation = "same"
 					}
 				}
 			}
@@ -73,6 +78,7 @@ func AcceptAlertMsg(c *gin.Context)  {
 				tmpAlarm.StartValue = tmpValue
 				tmpAlarm.Start = time.Now()
 			}
+			mid.LogInfo(fmt.Sprintf("add alarm ,operation: %s ,value: %v", tmpOperation, tmpAlarm))
 			alarms = append(alarms, &tmpAlarm)
 		}
 		err = db.UpdateAlarms(alarms)
@@ -86,10 +92,62 @@ func AcceptAlertMsg(c *gin.Context)  {
 	}
 }
 
-func GetHistoryAlarm()  {
-	
+func GetHistoryAlarm(c *gin.Context)  {
+	endpoint := c.Query("endpoint")
+	if endpoint == "" {
+		mid.ReturnValidateFail(c, "endpoint can't be null")
+		return
+	}
+	start := c.Query("start")
+	end := c.Query("end")
+	query := m.AlarmTable{Endpoint:endpoint}
+	if start != "" {
+		startTime,err := time.Parse(m.DatetimeFormat, start)
+		if err == nil {
+			query.Start = startTime
+		}else{
+			mid.ReturnValidateFail(c, "param start should like "+m.DatetimeFormat)
+			return
+		}
+	}
+	if end != "" {
+		endTime,err := time.Parse(m.DatetimeFormat, end)
+		if err == nil {
+			query.End = endTime
+		}else{
+			mid.ReturnValidateFail(c, "param end should like "+m.DatetimeFormat)
+			return
+		}
+	}
+	err,data := db.GetAlarms(query)
+	if err != nil {
+		mid.ReturnError(c, "Get history fail", err)
+		return
+	}
+	mid.ReturnData(c, data)
 }
 
-func GetProblemAlarm()  {
-	
+func GetProblemAlarm(c *gin.Context)  {
+	filters := c.QueryArray("filter[]")
+	query := m.AlarmTable{Status:"firing"}
+	for _,v := range filters {
+		if strings.Contains(v, "=") {
+			tmpSplit := strings.Split(v, "=")
+			if tmpSplit[0] == "endpoint" {
+				query.Endpoint = strings.Replace(tmpSplit[1], "\"", "", -1)
+			}
+			if tmpSplit[0] == "metric" {
+				query.SMetric = strings.Replace(tmpSplit[1], "\"", "", -1)
+			}
+			if tmpSplit[0] == "priority" {
+				query.SPriority = strings.Replace(tmpSplit[1], "\"", "", -1)
+			}
+		}
+	}
+	err,data := db.GetAlarms(query)
+	if err != nil {
+		mid.ReturnError(c, "get problem alarm fail", err)
+		return
+	}
+	mid.ReturnData(c, data)
 }
