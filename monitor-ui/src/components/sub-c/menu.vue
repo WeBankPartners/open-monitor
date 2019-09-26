@@ -27,6 +27,10 @@
             <i class="fa fa-gears" aria-hidden="true"></i>
             监控配置
         </MenuItem>
+        <MenuItem name="alarmManagement">
+            <i class="fa fa-bell" aria-hidden="true"></i>
+            告警管理
+        </MenuItem>
     </Menu>
 </template>
 <script>
