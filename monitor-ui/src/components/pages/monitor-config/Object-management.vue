@@ -37,7 +37,7 @@
       return {
         model10: [],
         pageConfig: {
-          CRUD: this.apiCenter.groupManagement.list.api,
+          CRUD: this.apiCenter.objectManagement.list.api,
           researchConfig: {
             input_conditions: [
               {value: 'search', type: 'input', placeholder: '请输入', style: ''}],
@@ -127,7 +127,7 @@
           endpoints: this.modelConfig.slotConfig.resourceSelected,
           operation: 'add'
         }
-        this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.groupManagement.update.api, params, () => {
+        this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.objectManagement.update.api, params, () => {
           this.$Message.success('新增成功 !')
           this.JQ('#add_object_Modal').modal('hide')
           this.initData(this.pageConfig.CRUD, this.pageConfig)
@@ -143,7 +143,7 @@
           endpoints: [parseInt(rowData.id)],
           operation: 'delete'
         }
-        this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.groupManagement.update.api, params, () => {
+        this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.objectManagement.update.api, params, () => {
           this.$Message.success('删除成功 !')
           this.initData(this.pageConfig.CRUD, this.pageConfig)
         })

@@ -29,6 +29,7 @@
 </template>
 
 <script>
+import {dataPick, autoRefreshConfig} from '@/assets/config/common-config'
 import Searchinput from './Search-input'
 export default {
   name: '',
@@ -39,48 +40,13 @@ export default {
         placeholder: '请输入主机名或IP地址，可模糊匹配',
         inputStyle: "width:300px;",
         api: this.apiCenter.resourceSearch.api
-        // api: '/dashboard/search'
       },
       ip: {},
       timeTnterval: -1800,
-      dataPick: [
-        {
-            value: -1800,
-            label: '30分钟'
-        },
-        {
-            value: -3600,
-            label: '1小时'
-        },
-        {
-            value: -10800,
-            label: '3小时'
-        }
-      ],
+      dataPick: dataPick,
       dateRange: ['',''],
       autoRefresh: 0,
-      autoRefreshConfig: [
-        {
-          value: -1,
-          label: '不刷新'
-        },
-        {
-          value: 10,
-          label: '10S'
-        },
-        {
-          value: 30,
-          label: '30S'
-        },
-        {
-          value: 60,
-          label: '1分钟'
-        },
-        {
-          value: 300,
-          label: '5分钟'
-        },
-      ],
+      autoRefreshConfig: autoRefreshConfig,
       params: {
         // time: this.timeTnterval,
         // group: 1,
@@ -89,8 +55,6 @@ export default {
         // end: Date.parse(this.dateRange[1])
       }
     }
-  },
-  mounted (){
   },
   methods: {
     getMainConfig () {

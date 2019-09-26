@@ -63,6 +63,7 @@
 </template>
 
 <script>
+import {thresholdList, lastList, priorityList} from '@/assets/config/common-config.js'
 import Searchinput from '@/components/components/Search-input'
 let tableEle = [
   {title: 'ID', value: 'id', display: false},
@@ -128,28 +129,13 @@ export default {
           content: null,
         },
         threshold: '>',
-        thresholdList: [
-          {label: '>', value: '>'},
-          {label: '>=', value: '>='},
-          {label: '<', value: '<'},
-          {label: '<=', value: '<='},
-          {label: '==', value: '=='},
-          {label: '!=', value: '!='}
-        ],
+        thresholdList: thresholdList,
         thresholdValue: '',
         last: 's',
-        lastList: [
-          {label: 'sec', value: 's'},
-          {label: 'min', value: 'm'},
-          {label: 'hour', value: 'h'}
-        ],
+        lastList: lastList,
         lastValue: '',
         priority: 'low',
-        priorityList: [
-          {label: 'high', value: 'high'},
-          {label: 'medium', value: 'medium'},
-          {label: 'low', value: 'low'}
-        ],
+        priorityList: priorityList,
         slotConfig: {
           resourceSelected: [],
           resourceOption: []
