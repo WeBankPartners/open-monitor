@@ -13,6 +13,8 @@ const router = new Router({
         redirect: '/portal',
         title: '测试首页',
         children: [
+          { path: 'alarmManagement',  name: 'alarmManagement', title: '告警管理', meta: {},
+           component: () => import('@/components/pages/alarm-management') },
           { path: 'portal',  name: 'portal', title: '首页', meta: {},
            component: () => import('@/components/pages/portal') },
           { path: 'mainView',  name: 'mainView', title: '监控视图', meta: {},
@@ -28,7 +30,7 @@ const router = new Router({
               { path: 'thresholdManagement',  name: 'thresholdManagement', title: '阀值配置', meta: {},
               component: () => import('@/components/pages/monitor-config/Threshold-management') },
             ]
-          },
+          }
         ]
       },
       {
