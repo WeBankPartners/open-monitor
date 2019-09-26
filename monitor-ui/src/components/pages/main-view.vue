@@ -30,6 +30,7 @@ export default {
     manageCharts (chartsConfig, params) {
       this.charts.chartsConfig = []
       chartsConfig.forEach(item => {
+        item.autoRefresh = params.autoRefresh
         let chart = {
           tabTape: {
             label: item.title,

@@ -37,7 +37,7 @@
           </ul>
         </div>
         <div class="chart-zone" >
-          <div :id="elId" class="echart" style="height:400px;width:600px"></div>
+          <div :id="elId" class="echart" style="height:400px;width:750px"></div>
         </div>
       </div>
   </div>
@@ -248,7 +248,7 @@ export default {
 </style>
 <style scoped lang="less">
   .max-chart {
-    width:610px;
+    width:800px;
     min-height: 540px;
     height: 123vh;
     background: white;

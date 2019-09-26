@@ -386,7 +386,7 @@
       // if (this.$validate.isEmpty(this.$store.state[this.$router.history.current.name])) {
       //   this.table.tableEle = this.$store.state[this.$router.history.current.name]
       // }
-      // this.tdNumber = this.gettdsLength() 
+      this.tdNumber = this.gettdsLength() 
     },
     updated(){
       this.tdNumber = this.gettdsLength()
@@ -731,26 +731,26 @@
         })
       },
       gettdsLength(){
-        // let count = 0
-        // if(this.table.selection){
-        //   count++
-        // }
-        // if(this.table.btn){
-        //   count++
-        // }
-        // this.table.tableEle.forEach((item) => {
-        //   if (item.display === true) {
-        //     count++
-        //   }
-        // })
-        // let config = this.table.tableEle
-        // for(let i=0;i<config.length;i++){
-        //   if(config[i].display){
-        //     this.firstShow = i
-        //     break
-        //   }
-        // }
-        // return count
+        let count = 0
+        if(this.table.selection){
+          count++
+        }
+        if(this.table.btn){
+          count++
+        }
+        this.table.tableEle.forEach((item) => {
+          if (item.display === true) {
+            count++
+          }
+        })
+        let config = this.table.tableEle
+        for(let i=0;i<config.length;i++){
+          if(config[i].display){
+            this.firstShow = i
+            break
+          }
+        }
+        return count
       },
       loadDetail(item, index) {
         this.currentActive = this.currentActive === index ? -1 : index

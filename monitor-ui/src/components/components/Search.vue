@@ -19,6 +19,11 @@
       <li class="search-li">
         <DatePicker type="daterange" placement="bottom-end" @on-change="datePick" placeholder="请选择日期" style="width: 200px"></DatePicker>
       </li>
+      <li class="search-li">
+        <Select v-model="autoRefresh" style="width:100px" @on-change="getChartsConfig" placeholder="定时刷新">
+          <Option v-for="item in autoRefreshConfig" :value="item.value" :key="item.value">{{ item.label }}</Option>
+        </Select>
+      </li>
    </ul>
   </div>
 </template>
@@ -52,6 +57,29 @@ export default {
         }
       ],
       dateRange: ['',''],
+      autoRefresh: 0,
+      autoRefreshConfig: [
+        {
+          value: -1,
+          label: '不刷新'
+        },
+        {
+          value: 10,
+          label: '10S'
+        },
+        {
+          value: 30,
+          label: '30S'
+        },
+        {
+          value: 60,
+          label: '1分钟'
+        },
+        {
+          value: 300,
+          label: '5分钟'
+        },
+      ],
       params: {
         // time: this.timeTnterval,
         // group: 1,
@@ -89,6 +117,7 @@ export default {
         let url = res.panels.url
         let key = res.search.name
         let params = {
+          autoRefresh: this.autoRefresh,
           time: this.timeTnterval,
           endpoint: this.ip.value,
           start: this.dateRange[0] ===''? '':Date.parse(this.dateRange[0])/1000,
@@ -100,7 +129,7 @@ export default {
         },{isNeedloading: false})
       })
       
-    },
+    }
   },
   components: {
     Searchinput

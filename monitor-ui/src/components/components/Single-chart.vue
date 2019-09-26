@@ -24,7 +24,10 @@ export default {
   data() {
     return {
       elId: null,
-      noDataTip: false
+      noDataTip: false,
+      config: '',
+      myChart: '',
+      interval: ''
     }
   },
   props: {
@@ -38,16 +41,39 @@ export default {
   },
   mounted() {
     this.getchartdata()
+    console.log(this.params.autoRefresh)
+    if (this.params.autoRefresh > 0) {
+      this.interval = setInterval(()=>{
+        this.refreshChart()
+      },this.params.autoRefresh*1000)
+    }
+  },
+  destroyed() {
+    clearInterval(this.interval)
   },
   methods: {
-    draw (config) {
+    refreshChart() {
+      let params = {
+        id: this.chartItemx.id,
+        endpoint: [this.params.endpoint.split(':')[0]],
+        metric: [this.chartItemx.metric[0]],
+        time: this.params.time.toString(),
+        start: this.params.start + '',
+        end: this.params.end + ''
+      }
+      this.$httpRequestEntrance.httpRequestEntrance('GET', this.chartItemx.url, params, responseData => {
+        this.config.series = responseData.series
+        this.draw()
+      })
+    },
+    draw () {
       // 基于准备好的dom，初始化echarts实例
-      var myChart = echarts.init(document.getElementById(this.elId));
+      this.myChart = echarts.init(document.getElementById(this.elId))
       // 绘制图表
-      myChart.setOption(
+      this.myChart.setOption(
         {
           title: {
-            text: config.title,
+            text: this.config.title,
             left:'10%',
             top: '10px'
           },
@@ -102,7 +128,7 @@ export default {
             y: 'bottom',
             padding: 10,
             orient: 'horizontal',
-            data: config.legend
+            data: this.config.legend
           },
           calculable: false,
           color: ['#7EB26D', '#EAB839', '#6ED0E0', '#EF843C', '#E24D42', '#1F78C1', '#BA43A9', '#705DA0', '#508642', '#CCA300', '#447EBC', '#C15C17'],
@@ -148,27 +174,21 @@ export default {
                     value = value / 1024  
                     unit = 'K'
                   } else {
-                    return value + ' ' + config.yaxis.unit
+                    return value + ' ' + this.config.yaxis.unit
                   }
                   let newValue = Number.isInteger(value) ? value : value.toFixed(3)
-                  return newValue + ' ' + unit + config.yaxis.unit
+                  return newValue + ' ' + unit + this.config.yaxis.unit
                 }
               },
               show: true
             }
           ],
-          series: config.series
+          series: this.config.series
         }
       )
     },
-    guid() {
-      return 'xxxxxxxx_xxxx_4xxx_yxxx_xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-          var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
-          return v.toString(16);
-      })
-    },
     getchartdata () {
-        let params = {
+      let params = {
         id: this.chartItemx.id,
         endpoint: [this.params.endpoint.split(':')[0]],
         metric: [this.chartItemx.metric[0]],
@@ -196,7 +216,8 @@ export default {
           series: responseData.series,
           yaxis: responseData.yaxis,
         }
-        this.draw(config)
+        this.config = config
+        this.draw()
       })
     }
   },

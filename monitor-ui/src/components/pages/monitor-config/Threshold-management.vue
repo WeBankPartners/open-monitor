@@ -21,11 +21,13 @@
     </section>
     <section>
       <template v-for="(tableItem, tableIndex) in totalPageConfig">
-        <Tag color="blue" :key="tableIndex + 'a'" v-if="tableItem.obj_name">{{tableItem.obj_name}}</Tag>
-        <button @click="add()" type="button" v-if="tableItem.operation" class="btn btn-sm btn-cancle-f" :key="tableIndex + 'b'">
-          <i class="fa fa-plus"></i>
-          新增
-        </button>
+        <div :key="tableIndex + 'f'" class="section-table-tip">
+          <Tag color="blue" :key="tableIndex + 'a'" v-if="tableItem.obj_name">{{tableItem.obj_name}}</Tag>
+          <button @click="add()" type="button" v-if="tableItem.operation" class="btn btn-sm btn-cancle-f" :key="tableIndex + 'b'">
+            <i class="fa fa-plus"></i>
+            新增
+          </button>
+        </div>
         <PageTable :pageConfig="tableItem" :key="tableIndex + 'c'"></PageTable>
       </template>
       <ModalComponent :modelConfig="modelConfig">
@@ -108,7 +110,7 @@ export default {
       },
       modelTip: {
         key: '',
-        value: ''
+        value: 'metric'
       },
       modelConfig: {
         modalId: 'add_edit_Modal',
@@ -206,36 +208,45 @@ export default {
         this.requestData(this.type, this.typeValue)
       })
     },
-    add () {
-      this.modelConfig.isAdd = true
-      this.JQ('#add_edit_Modal').modal('show')
-    },
-    addPost () {
+    formValidate () {
       if (this.$validate.isEmpty_reset(this.modelConfig.thresholdValue)) {
         this.$Message.warning('阀值不能为空')
-        return
+        return false 
       }
       if (this.$validate.isEmpty_reset(this.modelConfig.lastValue)) {
         this.$Message.warning('持续时间不能为空')
-        return
+        return false 
       }
       if (this.$validate.isEmpty_reset(this.modelConfig.addRow.content)) {
         this.$Message.warning('通知内容不能为空')
-        return
+        return false
       }
-      let ss = {
+      return true
+    },
+    paramsPrepare() {
+      let modelParams = {
         cond: this.modelConfig.threshold + this.modelConfig.thresholdValue,
         last: this.modelConfig.lastValue + this.modelConfig.last,
         priority: this.modelConfig.priority,        
       }
       if (this.type === 'grp') {
-        ss.grp_id = this.typeValue
-        ss.endpoint_id = 0
+        modelParams.grp_id = this.typeValue
+        modelParams.endpoint_id = 0
       } else {
-        ss.endpoint_id = parseInt(this.typeValue)
-        ss.grp_id = 0
+        modelParams.endpoint_id = parseInt(this.typeValue)
+        modelParams.grp_id = 0
       }
-      let params = Object.assign(ss, this.modelConfig.addRow)
+      return Object.assign(modelParams, this.modelConfig.addRow)
+    },
+    add () {
+      this.modelConfig.isAdd = true
+      this.JQ('#add_edit_Modal').modal('show')
+    },
+    addPost () {
+      if (!this.formValidate()) {
+        return
+      }
+      let params = this.paramsPrepare()
       this.$httpRequestEntrance.httpRequestEntrance('POST', 'alarm/strategy/add', params, () => {
         this.$Message.success('新增成功 !')
         this.JQ('#add_edit_Modal').modal('hide')
@@ -243,7 +254,9 @@ export default {
       })
     },
     editF (rowData) {
+      this.modelConfig.isAdd = false
       this.id = rowData.id
+      this.modelTip.value = rowData.metric
       this.modelConfig.addRow = this.$tableUtil.manageEditParams(this.modelConfig.addRow, rowData)
       let cond = rowData.cond.split('')
       if (cond.indexOf('=') > 0) {
@@ -257,37 +270,14 @@ export default {
       this.modelConfig.last = last.substring(last.length-1)
       this.modelConfig.lastValue = last.substring(0,last.length-1)
       this.modelConfig.priority = rowData.priority
-      this.modelTip.value = rowData.name
-      this.modelConfig.isAdd = false
       this.JQ('#add_edit_Modal').modal('show')
     },
     editPost () {
-      if (this.$validate.isEmpty_reset(this.modelConfig.thresholdValue)) {
-        this.$Message.warning('阀值不能为空')
+      if (!this.formValidate()) {
         return
       }
-      if (this.$validate.isEmpty_reset(this.modelConfig.lastValue)) {
-        this.$Message.warning('持续时间不能为空')
-        return
-      }
-      if (this.$validate.isEmpty_reset(this.modelConfig.addRow.content)) {
-        this.$Message.warning('通知内容不能为空')
-        return
-      }
-      let ss = {
-        cond: this.modelConfig.threshold + this.modelConfig.thresholdValue,
-        last: this.modelConfig.lastValue + this.modelConfig.last,
-        priority: this.modelConfig.priority,   
-        strategy_id: this.id  
-      }
-      if (this.type === 'grp') {
-        ss.grp_id = this.typeValue
-        ss.endpoint_id = 0
-      } else {
-        ss.endpoint_id = parseInt(this.typeValue)
-        ss.grp_id = 0
-      }
-      let params = Object.assign(ss, this.modelConfig.addRow)
+      let params = this.paramsPrepare()
+      params.strategy_id = this.id
       this.$httpRequestEntrance.httpRequestEntrance('POST', 'alarm/strategy/update', params, () => {
         this.$Message.success('编辑成功 !')
         this.JQ('#add_edit_Modal').modal('hide')
@@ -323,6 +313,10 @@ export default {
     position: relative;
     cursor: text
 
+  }
+
+  .section-table-tip {
+    margin: 24px 20px 0;
   }
   .search-input:focus {
     outline: 0;
