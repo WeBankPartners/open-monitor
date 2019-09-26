@@ -49,6 +49,7 @@ export default {
   name: '',
   data() {
     return {
+      interval: null,
       timeForDataAchieve: null,
       filters: {},
       filtersForShow: [],
@@ -58,6 +59,12 @@ export default {
   },
   mounted(){
     this.getAlarm()
+    this.interval = setInterval(()=>{
+      this.getAlarm()
+    }, 10000)
+  },
+  destroyed() {
+    clearInterval(this.interval)
   },
   methods: {
     getAlarm() {
