@@ -41,7 +41,6 @@ export default {
   },
   mounted() {
     this.getchartdata()
-    console.log(this.params.autoRefresh)
     if (this.params.autoRefresh > 0) {
       this.interval = setInterval(()=>{
         this.refreshChart()
