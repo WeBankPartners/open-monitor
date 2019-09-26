@@ -7,6 +7,7 @@ import (
 	mid "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/middleware"
 	m "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/models"
 	"github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/services/db"
+	"fmt"
 )
 
 func ListGrp(c *gin.Context)  {
@@ -120,12 +121,24 @@ func EditGrpEndpoint(c *gin.Context)  {
 			mid.ReturnValidateFail(c, "operation must be add or delete")
 			return
 		}
-		err := db.UpdateGrpEndpoint(param)
+		err,isUpdate := db.UpdateGrpEndpoint(param)
 		if err != nil {
 			mid.ReturnError(c, "update grp endpoint fail", err)
-		}else{
-			mid.ReturnSuccess(c, "Success")
+			return
 		}
+		if isUpdate {
+			err,tplObj := db.GetTpl(0, param.Grp, 0)
+			if err != nil || tplObj.Id <= 0 {
+				mid.ReturnError(c, fmt.Sprintf("edit grp endpoint, get tpl fail with grp id:%d", param.Grp), err)
+				return
+			}
+			err = SaveConfigFile(tplObj.Id)
+			if err != nil {
+				mid.ReturnError(c, "edit grp endpoint, save prometheus config file fail", err)
+				return
+			}
+		}
+		mid.ReturnSuccess(c, "Success")
 	}else{
 		mid.ReturnValidateFail(c, "Param validate fail")
 	}
