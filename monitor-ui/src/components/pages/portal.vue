@@ -27,7 +27,8 @@ export default {
         poptipWidth: 500,
         placeholder: '请输入主机名或IP地址，可模糊匹配',
         inputStyle: "width:500px;",
-        api: '/dashboard/search'
+        // api: '/dashboard/search'
+        api: this.apiCenter.resourceSearch.api
       }
     }
   },

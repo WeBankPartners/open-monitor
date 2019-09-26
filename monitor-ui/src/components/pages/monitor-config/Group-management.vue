@@ -20,7 +20,7 @@
     data() {
       return {
         pageConfig: {
-          CRUD: 'alarm/grp/list',
+          CRUD: this.apiCenter.groupManagement.list.api,
           researchConfig: {
             input_conditions: [
               {value: 'search', type: 'input', placeholder: '请输入', style: ''}],
@@ -81,7 +81,7 @@
       },
       addPost () {
         let params= this.$validate.isEmptyReturn_JSON(this.modelConfig.addRow)
-        this.$httpRequestEntrance.httpRequestEntrance('POST', 'alarm/grp/add', params, () => {
+        this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.groupManagement.add.api, params, () => {
           this.$validate.emptyJson(this.modelConfig.addRow)
           this.JQ('#add_edit_Modal').modal('hide')
           this.$Message.success('新增成功 !')
@@ -91,7 +91,7 @@
       editPost () {
         let params= this.$validate.isEmptyReturn_JSON(this.modelConfig.addRow)
         params.id = this.id
-        this.$httpRequestEntrance.httpRequestEntrance('POST', 'alarm/grp/update', params, () => {
+        this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.groupManagement.update.api, params, () => {
           this.$validate.emptyJson(this.modelConfig.addRow)
           this.JQ('#add_edit_Modal').modal('hide')
           this.$Message.success('修改成功 !')
@@ -109,7 +109,7 @@
       },
       delF (rowData) {
         let params = {id: rowData.id}
-        this.$httpRequestEntrance.httpRequestEntrance('GET', 'alarm/grp/delete', params, () => {
+        this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.groupManagement.delete.api, params, () => {
           this.$Message.success('删除成功 !')
           this.initData(this.pageConfig.CRUD, this.pageConfig)
         })

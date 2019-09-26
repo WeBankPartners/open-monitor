@@ -91,7 +91,7 @@ export default {
         poptipWidth: 500,
         placeholder: '模糊匹配',
         inputStyle: "width:500px;",
-        api: '/alarm/strategy/search',
+        api: this.apiCenter.resourceSearch.strategyApi,
         params: {
           type: null
         }
@@ -118,8 +118,8 @@ export default {
         isAdd: true,
         config: [
           {label: '名称', value: 'metric', placeholder: '必填,2-60字符', v_validate: 'required:true|min:2|max:60', disabled: false, type: 'text'},
-          {label: '表达式', value: 'expr', placeholder: '必填,2-60字符', v_validate: 'required:true|min:2|max:60', disabled: false, type: 'text'},
-          {label: '通知内容', value: 'content', placeholder: '必填,2-60字符', v_validate: 'required:true|min:2|max:60', disabled: false, type: 'textarea'},
+          {label: '表达式', value: 'expr', placeholder: '必填', v_validate: 'required:true', disabled: false, type: 'textarea'},
+          {label: '通知内容', value: 'content', placeholder: '必填', v_validate: 'required:true', disabled: false, type: 'textarea'},
           {name:'thresholdConfig',type:'slot'}
         ],
         addRow: { // [通用]-保存用户新增、编辑时数据
@@ -190,7 +190,7 @@ export default {
       params.type = type
       params.id = id
       this.totalPageConfig = []
-      this.$httpRequestEntrance.httpRequestEntrance('GET', 'alarm/strategy/list', params, (responseData) => {
+      this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.thresholdManagement.list.api, params, (responseData) => {
         responseData.forEach((item)=>{
           let config = this.$validate.deepCopy(this.pageConfig.table)
           if (!item.operation) {
@@ -203,7 +203,7 @@ export default {
     },
     delF (rowData) {
       let params = {id: rowData.id}
-      this.$httpRequestEntrance.httpRequestEntrance('GET', 'alarm/strategy/delete', params, () => {
+      this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.thresholdManagement.delete.api, params, () => {
         this.$Message.success('删除成功 !')
         this.requestData(this.type, this.typeValue)
       })
@@ -247,7 +247,7 @@ export default {
         return
       }
       let params = this.paramsPrepare()
-      this.$httpRequestEntrance.httpRequestEntrance('POST', 'alarm/strategy/add', params, () => {
+      this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.thresholdManagement.add.api, params, () => {
         this.$Message.success('新增成功 !')
         this.JQ('#add_edit_Modal').modal('hide')
         this.requestData(this.type, this.typeValue)
@@ -278,7 +278,7 @@ export default {
       }
       let params = this.paramsPrepare()
       params.strategy_id = this.id
-      this.$httpRequestEntrance.httpRequestEntrance('POST', 'alarm/strategy/update', params, () => {
+      this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.thresholdManagement.update.api, params, () => {
         this.$Message.success('编辑成功 !')
         this.JQ('#add_edit_Modal').modal('hide')
         this.requestData(this.type, this.typeValue)

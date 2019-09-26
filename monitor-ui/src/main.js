@@ -11,11 +11,13 @@ import jquery from 'jquery'
 import {tableUtil} from '@/assets/js/tableUtil.js'
 import {validate} from '@/assets/js/validate.js'
 import VeeValidate from '@/assets/veeValidate/VeeValidate'
+import apiCenter from '@/assets/config/api-center.json'
 
 Vue.prototype.$httpRequestEntrance = httpRequestEntrance
 Vue.prototype.JQ = jquery
 Vue.prototype.$validate = validate
 Vue.prototype.$tableUtil = tableUtil
+Vue.prototype.apiCenter = apiCenter
 
 import PageTable from '@/components/components/table-page/page'
 import ModalComponent from '@/components/components/modal'

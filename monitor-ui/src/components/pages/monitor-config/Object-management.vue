@@ -37,7 +37,7 @@
       return {
         model10: [],
         pageConfig: {
-          CRUD: 'alarm/endpoint/list',
+          CRUD: this.apiCenter.groupManagement.list.api,
           researchConfig: {
             input_conditions: [
               {value: 'search', type: 'input', placeholder: '请输入', style: ''}],
@@ -113,7 +113,7 @@
       add () {
         this.modelConfig.slotConfig.resourceOption = []
         this.modelConfig.slotConfig.resourceSelected = []
-        this.$httpRequestEntrance.httpRequestEntrance('GET','/dashboard/search', {search: '.'}, responseData => {
+        this.$httpRequestEntrance.httpRequestEntrance('GET',this.apiCenter.resourceSearch.api, {search: '.'}, responseData => {
           this.modelConfig.slotConfig.resourceOption = responseData
         })
         this.JQ('#add_object_Modal').modal('show')
@@ -127,7 +127,7 @@
           endpoints: this.modelConfig.slotConfig.resourceSelected,
           operation: 'add'
         }
-        this.$httpRequestEntrance.httpRequestEntrance('POST', 'alarm/endpoint/update', params, () => {
+        this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.groupManagement.update.api, params, () => {
           this.$Message.success('新增成功 !')
           this.JQ('#add_object_Modal').modal('hide')
           this.initData(this.pageConfig.CRUD, this.pageConfig)
@@ -143,7 +143,7 @@
           endpoints: [parseInt(rowData.id)],
           operation: 'delete'
         }
-        this.$httpRequestEntrance.httpRequestEntrance('POST', 'alarm/endpoint/update', params, () => {
+        this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.groupManagement.update.api, params, () => {
           this.$Message.success('删除成功 !')
           this.initData(this.pageConfig.CRUD, this.pageConfig)
         })
