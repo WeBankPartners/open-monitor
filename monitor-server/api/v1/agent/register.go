@@ -13,11 +13,12 @@ import (
 const hostType  = "host"
 const mysqlType  = "mysql"
 const redisType = "redis"
+const tomcatType = "tomcat"
 
 func RegisterAgent(c *gin.Context)  {
 	var param m.RegisterParam
 	if err := c.ShouldBindJSON(&param); err==nil {
-		if param.Type != hostType && param.Type != mysqlType && param.Type != redisType {
+		if param.Type != hostType && param.Type != mysqlType && param.Type != redisType && param.Type != tomcatType {
 			mid.ReturnError(c, "type " + param.Type + " is not supported yet", nil)
 			return
 		}
@@ -108,6 +109,33 @@ func RegisterAgent(c *gin.Context)  {
 			endpoint.Ip = param.ExporterIp
 			endpoint.EndpointVersion = redisVersion
 			endpoint.ExportType = redisType
+			endpoint.ExportVersion = exportVersion
+			endpoint.Step = step
+			endpoint.Address = fmt.Sprintf("%s:%s", param.ExporterIp, param.ExporterPort)
+		}else if param.Type == tomcatType {
+			if param.Instance == "" {
+				mid.ReturnValidateFail(c, "tomcat instance name is null")
+				return
+			}
+			err,strList = prom.GetEndpointData(param.ExporterIp, param.ExporterPort, []string{"tomcat", "jvm", "jmx"}, []string{"version"})
+			if err != nil {
+				mid.ReturnError(c,"curl endpoint data fail ", err)
+				return
+			}
+			var jvmVersion,exportVersion string
+			for _,v := range strList {
+				if strings.Contains(v, "jvm_info") {
+					jvmVersion = strings.Split(strings.Split(v, "version=\"")[1], "\"")[0]
+				}
+				if strings.Contains(v, "jmx_exporter_build_info") {
+					exportVersion = strings.Split(strings.Split(v, "version=\"")[1], "\"")[0]
+				}
+			}
+			endpoint.Guid = fmt.Sprintf("%s_%s_%s", param.Instance, param.ExporterIp, tomcatType)
+			endpoint.Name = param.Instance
+			endpoint.Ip = param.ExporterIp
+			endpoint.EndpointVersion = jvmVersion
+			endpoint.ExportType = tomcatType
 			endpoint.ExportVersion = exportVersion
 			endpoint.Step = step
 			endpoint.Address = fmt.Sprintf("%s:%s", param.ExporterIp, param.ExporterPort)

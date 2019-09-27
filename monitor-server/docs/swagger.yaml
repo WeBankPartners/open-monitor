@@ -1,9 +1,15 @@
+basePath: /v1
+host: monitor.test.com
 info:
   contact: {}
+  description: 监控门户后台服务.
   license: {}
+  termsOfService: http://swagger.io/terms/
+  title: Monitor Server API
+  version: "1.0"
 paths:
   /api/v1/dashboard/chart:
-    post:
+    get:
       description: 获取chart数据
       parameters:
       - description: panel里的chart id
@@ -18,7 +24,7 @@ paths:
         name: endpoint
         required: true
         type: array
-      - description: metric数组, ['cpu.busy']
+      - description: metric数组, ['cpmid.busy']
         in: query
         items:
           type: string
@@ -90,7 +96,7 @@ paths:
       responses:
         "200":
           description: '[{''title'': ''panel_title'',''tags'':{''enable'': false,''url'':
-            '''',''option'':[]},''charts'':[{''id'': 1,''col'': 6,''endpoint'':[''88B525B4-43E8-4A7A-8E11-0E664B5CB8D0''],''metric'':[''cpu.busy''],''url'':
+            '''',''option'':[]},''charts'':[{''id'': 1,''col'': 6,''endpoint'':[''88B525B4-43E8-4A7A-8E11-0E664B5CB8D0''],''metric'':[''cpmid.busy''],''url'':
             ''/dashboard/chart''}]},{''title'': ''disk'',''tags'':{''enable'': true,''url'':
             ''/dashboard/tags?panel_id=1&endpoint=88B525B4-43E8-4A7A-8E11-0E664B5CB8D0&tag='',''option'':[{''option_value'':
             ''device=vda'',''option_text'': ''vda''},{''option_value'': ''device=vdb'',''option_text'':

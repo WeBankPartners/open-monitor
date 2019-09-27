@@ -80,7 +80,7 @@ func ListAlarmEndpoints(query *m.AlarmEndpointQuery) error {
 		whereSql += fmt.Sprintf(" AND t3.id=%d ", query.Grp)
 	}
 	querySql := `SELECT t5.* FROM (
-            SELECT t4.id,t4.guid,GROUP_CONCAT(t4.name, ',') groups FROM (
+            SELECT t4.id,t4.guid,GROUP_CONCAT(t4.name, ',') groups_name FROM (
 			SELECT t1.id,t1.guid,t3.name FROM endpoint t1 
 			LEFT JOIN grp_endpoint t2 ON t1.id=t2.endpoint_id 
 			LEFT JOIN grp t3 ON t2.grp_id=t3.id 
@@ -88,7 +88,7 @@ func ListAlarmEndpoints(query *m.AlarmEndpointQuery) error {
 			) t4 GROUP BY t4.guid
 			) t5 ORDER BY t5.guid LIMIT ?,?`
 	countSql := `SELECT COUNT(1) num FROM (
-			SELECT t4.guid,GROUP_CONCAT(t4.name, ',') groups FROM (
+			SELECT t4.guid,GROUP_CONCAT(t4.name, ',') groups_name FROM (
 			SELECT t1.guid,t3.name FROM endpoint t1 
 			LEFT JOIN grp_endpoint t2 ON t1.id=t2.endpoint_id 
 			LEFT JOIN grp t3 ON t2.grp_id=t3.id
@@ -101,8 +101,8 @@ func ListAlarmEndpoints(query *m.AlarmEndpointQuery) error {
 	err = x.SQL(countSql).Find(&count)
 	if len(result) > 0 {
 		for _,v := range result {
-			if v.Groups != "" {
-				v.Groups = v.Groups[:len(v.Groups)-1]
+			if v.GroupsName != "" {
+				v.GroupsName = v.GroupsName[:len(v.GroupsName)-1]
 			}
 		}
 		query.Result = result

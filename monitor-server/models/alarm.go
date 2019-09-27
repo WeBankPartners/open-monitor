@@ -92,7 +92,7 @@ type AlarmEndpointQuery struct {
 type AlarmEndpointObj struct {
 	Id  string  `json:"id"`
 	Guid  string  `json:"guid"`
-	Groups  string  `json:"groups"`
+	GroupsName  string  `json:"groups_name"`
 }
 
 type GrpEndpointParam struct {
