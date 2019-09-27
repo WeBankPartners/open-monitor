@@ -210,7 +210,7 @@ func GetTags(c *gin.Context)  {
 func GetChart(c *gin.Context)  {
 	paramId,err := strconv.Atoi(c.Query("id"))
 	if err != nil || paramId <= 0 {
-		mid.ReturnError(c, "chart id validate error", err)
+		mid.ReturnValidateFail(c, "chart id validate error")
 		return
 	}
 	err, charts := db.GetCharts(0, paramId, 0)

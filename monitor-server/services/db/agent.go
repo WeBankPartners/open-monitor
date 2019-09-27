@@ -9,10 +9,8 @@ import (
 
 func UpdateEndpoint(endpoint *m.EndpointTable) error {
 	host := m.EndpointTable{Guid:endpoint.Guid}
-	err := GetEndpoint(&host)
-	if err != nil {
-		return err
-	}else if host.Id == 0 {
+	GetEndpoint(&host)
+	if host.Id == 0 {
 		insert := fmt.Sprintf("INSERT INTO endpoint(guid,name,ip,endpoint_version,export_type,export_version,step,address,os_type,create_at) VALUE ('%s','%s','%s','%s','%s','%s','%d','%s','%s','%s')",
 			endpoint.Guid,endpoint.Name,endpoint.Ip,endpoint.EndpointVersion,endpoint.ExportType,endpoint.ExportVersion,endpoint.Step,endpoint.Address,endpoint.OsType,time.Now().Format(m.DatetimeFormat))
 		_,err := x.Exec(insert)

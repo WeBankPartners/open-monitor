@@ -93,14 +93,20 @@ func AcceptAlertMsg(c *gin.Context)  {
 }
 
 func GetHistoryAlarm(c *gin.Context)  {
-	endpoint := c.Query("endpoint")
-	if endpoint == "" {
-		mid.ReturnValidateFail(c, "endpoint can't be null")
+	endpointId,err := strconv.Atoi(c.Query("id"))
+	if err != nil || endpointId <= 0 {
+		mid.ReturnValidateFail(c, "endpoint id validate fail")
 		return
 	}
 	start := c.Query("start")
 	end := c.Query("end")
-	query := m.AlarmTable{Endpoint:endpoint}
+	endpointObj := m.EndpointTable{Id:endpointId}
+	db.GetEndpoint(&endpointObj)
+	if endpointObj.Guid == "" {
+		mid.ReturnError(c, "get history fail", fmt.Errorf("can't find endpoint with id: %d", endpointId))
+		return
+	}
+	query := m.AlarmTable{Endpoint:endpointObj.Guid}
 	if start != "" {
 		startTime,err := time.Parse(m.DatetimeFormat, start)
 		if err == nil {
