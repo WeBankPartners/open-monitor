@@ -68,8 +68,7 @@
               {btn_name: '搜索', btn_func: 'search', class: 'btn-confirm-f', btn_icon: 'fa fa-search'},
             ],
             filters: {
-              name__icontains: '',
-              cmdb_tenant_id__icontains: ''
+              search: ''
             }
           },
           table: {
@@ -173,10 +172,17 @@
         this.showGroupMsg = false
       } else {
         this.$parent.activeTab = '/monitorConfigIndex/objectManagement'
-        this.groupMsg = this.$route.params.group
-        this.showGroupMsg = true
-        this.pageConfig.researchConfig.btn_group.push({btn_name: '新增', btn_func: 'add', class: 'btn-cancle-f', btn_icon: 'fa fa-plus'})
-        this.pageConfig.researchConfig.filters.grp = this.groupMsg.id
+        if (this.$route.params.hasOwnProperty('group')) {
+          this.groupMsg = this.$route.params.group
+          this.showGroupMsg = true
+          this.pageConfig.researchConfig.btn_group.push({btn_name: '新增', btn_func: 'add', class: 'btn-cancle-f', btn_icon: 'fa fa-plus'})
+          this.pageConfig.researchConfig.filters.grp = this.groupMsg.id
+        }
+        if (this.$route.params.hasOwnProperty('search')) {
+          console.log(this.$route.params.search)
+          this.pageConfig.researchConfig.filters.search = this.$route.params.search
+        }
+        
       }
       this.initData(this.pageConfig.CRUD, this.pageConfig)
     },

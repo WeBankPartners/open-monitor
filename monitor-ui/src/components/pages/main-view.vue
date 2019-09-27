@@ -2,10 +2,10 @@
   <div class="page" id="mainView">
     <Title title="监控视图"></Title>
     <Search ref="search" />
+    <button type="button" @click="changeRoute" class="btn btn-sm btn-cancle-f btn-jump">对象管理</button>
     <Charts :charts='charts' ref="child1" />
   </div>
 </template>
-
 <script>
 import Title from '@/components/components/Title'
 import Search from '@/components/components/Search'
@@ -20,10 +20,6 @@ export default {
     }
   },
   mounted() {
-    let DOMX = document.getElementById("mainView")
-    DOMX.addEventListener('click', ()=>{
-      this.$refs.child1.hiddenDetailChart()
-    })
     this.$refs.search.getChartsConfig()
   },
   methods: {
@@ -44,6 +40,13 @@ export default {
         this.charts.chartsConfig.push(chart)
       })
       this.$refs.child1.refreshCharts(chartsConfig[0].title + '_')
+    },
+    changeRoute () {
+      console.log(this.$store.state.ip)
+      // if () {
+
+      // }
+      this.$router.push({name: 'objectManagement', params: {search: this.$store.state.ip.value.split(':')[0]}})
     }
   },
   components: {
@@ -56,4 +59,7 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
+.btn-jump {
+  margin-left: 10px;
+}
 </style>

@@ -1,5 +1,5 @@
 <template>
-  <div class=" ">
+  <div class="" style="display:inline-block">
    <ul class="search-ul">
       <li class="search-li">
         <Searchinput ref="searchInput" :parentConfig="searchInputConfig"></Searchinput> 
