@@ -19,16 +19,39 @@
         </div>
       </div>
     </ModalComponent>
+    <ModalComponent :modelConfig="historyAlarmModel">
+      <div slot="historyAlarm">
+         <tableTemp :table="pageConfig1.table" :pageConfig="pageConfig1"></tableTemp>
+      </div>
+    </ModalComponent>
   </div>
 </template>
 <script>
+  import tableTemp from '@/components/components/table-page/table'
   let tableEle = [
     {title: 'guid', value: 'guid', display: true, editable: 'editOnline'},
     {title: 'groups', value: 'groups', display: true, frozen: true, sortable: true}
   ]
+  let tableEle1 = [
+    {title: '状态',value: 'status', style: 'min-width:70px', display: true},
+    {title: '指标',value: 's_metric', display: true},
+    {title: '异常值',value: 'start_value', display: true},
+    {title: '阀值',value: 's_cond', style: 'min-width:70px', display: true},
+    {title: '持续时间',value: 's_last', style: 'min-width:65px', display: true},
+    {title: '级别',value: 's_priority', display: true},
+    {title: '开始时间',value: 'start', style: 'min-width:200px', display: true},
+    {title: '结束时间',value: 'end', style: 'min-width:200px',display: true,
+    'render': (item) => {
+      if (item.end.indexOf('0001')>-1) {
+        return '-'
+      } else {
+        return item.end
+      }
+    }
+    }]
   const btn = [
     {btn_name: '阀值配置', btn_func: 'thresholdConfig'},
-    {btn_name: '历史告警', btn_func: 'xx'},
+    {btn_name: '历史告警', btn_func: 'historyAlarm'},
     {btn_name: '删除', btn_func: 'delF'}
   ]
   export default {
@@ -65,6 +88,13 @@
             size: 10
           }
         },
+        pageConfig1: {
+          table: {
+            tableData: [],
+            tableEle: tableEle1,
+            btn: [],
+          },
+        },
         modelConfig: {
           modalId: 'add_object_Modal',
           modalTitle: '对象管理',
@@ -80,6 +110,57 @@
             resourceSelected: [],
             resourceOption: []
           }
+        },
+        historyAlarmModel: {
+          modalId: 'history_alarm_Modal',
+          modalTitle: '对象管理',
+          modalStyle: 'width:930px;max-width: none;',
+          noBtn: true,
+          isAdd: true,
+          config: [
+            {name:'historyAlarm',type:'slot'}
+          ],
+          columns1: [
+            {
+                title: '状态',
+                key: 'status'
+            },
+            {
+                title: '指标',
+                key: 's_metric'
+            },
+            {
+                title: '异常值',
+                key: 'start_value'
+            },
+            {
+                title: '阀值',
+                key: 's_cond'
+            },
+            {
+                title: '持续时间',
+                key: 's_last'
+            },
+            {
+                title: '级别',
+                key: 's_priority'
+            },
+            {
+                title: '开始时间',
+                key: 'start'
+            },
+            {
+                title: '结束时间',
+                key: 'end'
+            }
+          ],
+          data2: [],
+          pageConfig: {
+            table: {
+              tableData: [],
+              tableEle: tableEle
+            }
+          },
         },
         id: null,
         showGroupMsg: false,
@@ -104,7 +185,7 @@
         this.$tableUtil.initTable(this, 'GET', url, params)
       },
       filterMoreBtn () {
-        let moreBtnGroup = ['thresholdConfig','xx']
+        let moreBtnGroup = ['thresholdConfig','historyAlarm']
         if (this.showGroupMsg) {
           moreBtnGroup.push('delF')
         }
@@ -158,9 +239,17 @@
         this.pageConfig.table.btn.splice(this.pageConfig.table.btn.length-1, 1)
         this.pageConfig.researchConfig.btn_group.splice(this.pageConfig.researchConfig.btn_group.length-1, 1)
         this.initData(this.pageConfig.CRUD, this.pageConfig)
+      },
+      historyAlarm (rowData) {
+        let params = {id: rowData.id}
+        this.$httpRequestEntrance.httpRequestEntrance('GET', 'alarm/history', params, (responseData) => {
+          this.pageConfig1.table.tableData = responseData
+        })
+        this.JQ('#history_alarm_Modal').modal('show')
       }
     },
     components: {
+      tableTemp
     }
   }
 </script>
