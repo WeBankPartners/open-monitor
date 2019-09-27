@@ -2,8 +2,8 @@
   <div class="page" id="mainView">
     <Title title="监控视图"></Title>
     <Search ref="search" />
-    <button type="button" @click="changeRoute" class="btn btn-sm btn-cancle-f btn-jump">对象管理</button>
-    <Charts :charts='charts' ref="child1" />
+    <button type="button" v-if="isShow" @click="changeRoute" class="btn btn-sm btn-cancle-f btn-jump">对象管理</button>
+    <Charts :charts='charts' ref="parentCharts" />
   </div>
 </template>
 <script>
@@ -16,6 +16,15 @@ export default {
     return {
       charts: {
         chartsConfig: []
+      }
+    }
+  },
+  computed: {
+    isShow: function () {
+      if (this.$validate.isEmpty_reset(this.$store.state.ip)) {
+        return false 
+      } else {
+        return true
       }
     }
   },
@@ -39,13 +48,9 @@ export default {
         }
         this.charts.chartsConfig.push(chart)
       })
-      this.$refs.child1.refreshCharts(chartsConfig[0].title + '_')
+      this.$refs.parentCharts.refreshCharts(chartsConfig[0].title + '_')
     },
     changeRoute () {
-      console.log(this.$store.state.ip)
-      // if () {
-
-      // }
       this.$router.push({name: 'objectManagement', params: {search: this.$store.state.ip.value.split(':')[0]}})
     }
   },

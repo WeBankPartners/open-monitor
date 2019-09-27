@@ -21,7 +21,7 @@
     </ModalComponent>
     <ModalComponent :modelConfig="historyAlarmModel">
       <div slot="historyAlarm">
-         <tableTemp :table="pageConfig1.table" :pageConfig="pageConfig1"></tableTemp>
+         <tableTemp :table="historyAlarmPageConfig.table" :pageConfig="historyAlarmPageConfig"></tableTemp>
       </div>
     </ModalComponent>
   </div>
@@ -29,10 +29,10 @@
 <script>
   import tableTemp from '@/components/components/table-page/table'
   let tableEle = [
-    {title: 'guid', value: 'guid', display: true, editable: 'editOnline'},
-    {title: 'groups', value: 'groups', display: true, frozen: true, sortable: true}
+    {title: 'guid', value: 'guid', display: true},
+    {title: 'groups', value: 'groups_name', display: true, }
   ]
-  let tableEle1 = [
+  let historyAlarmEle = [
     {title: '状态',value: 'status', style: 'min-width:70px', display: true},
     {title: '指标',value: 's_metric', display: true},
     {title: '异常值',value: 'start_value', display: true},
@@ -87,10 +87,10 @@
             size: 10
           }
         },
-        pageConfig1: {
+        historyAlarmPageConfig: {
           table: {
             tableData: [],
-            tableEle: tableEle1,
+            tableEle: historyAlarmEle,
             btn: [],
           },
         },
@@ -179,10 +179,8 @@
           this.pageConfig.researchConfig.filters.grp = this.groupMsg.id
         }
         if (this.$route.params.hasOwnProperty('search')) {
-          console.log(this.$route.params.search)
           this.pageConfig.researchConfig.filters.search = this.$route.params.search
         }
-        
       }
       this.initData(this.pageConfig.CRUD, this.pageConfig)
     },
@@ -249,7 +247,7 @@
       historyAlarm (rowData) {
         let params = {id: rowData.id}
         this.$httpRequestEntrance.httpRequestEntrance('GET', 'alarm/history', params, (responseData) => {
-          this.pageConfig1.table.tableData = responseData
+          this.historyAlarmPageConfig.table.tableData = responseData
         })
         this.JQ('#history_alarm_Modal').modal('show')
       }
