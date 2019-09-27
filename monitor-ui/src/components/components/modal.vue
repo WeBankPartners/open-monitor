@@ -1,7 +1,7 @@
 <template>
   <div class="modal-component">
     <div class="modal fade" :id="modelConfig.modalId ? modelConfig.modalId: 'add_edit_Modal'"  role="dialog" aria-labelledby="myModalLabel">
-      <div class="modal-dialog" role="document">
+      <div class="modal-dialog" :style="modelConfig.modalStyle" role="document">
         <div class="modal-content">
           <div class="modal-header">
             <h4 class="modal-title" v-if="modelConfig.modalTitle">{{modelConfig.modalTitle}}
@@ -105,17 +105,20 @@
               </div>
             </form>
           </div>
-          <div class="model-footer-f" v-if="!modelConfig.modalFooter">
-            <button type="button" class="btn-cancle-f" data-dismiss="modal">取消</button>
-            <button v-if="!modelConfig.saveFunc" @click="save(modelConfig.isAdd)" type="button" class="btn-confirm-f">保存</button>
-            <button v-if="modelConfig.saveFunc" @click="customFunc(modelConfig.saveFunc)" type="button" class="btn-confirm-f">保存</button>
-          </div>
-          <div class="model-footer-f" v-if="modelConfig.modalFooter">
-            <button type="button" class="btn-cancle-f" data-dismiss="modal">取消</button>
-            <template v-for="(item, index) in modelConfig.modalFooter">
-            <button  @click="customFunc(item.Func)" type="button" class="btn-confirm-f" v-if='item.name' :key="index">{{item.name}}</button>
-            </template>
-          </div>
+          <template v-if="!modelConfig.noBtn">
+            <div class="model-footer-f" v-if="!modelConfig.modalFooter">
+              <button type="button" class="btn-cancle-f" data-dismiss="modal">取消</button>
+              <button v-if="!modelConfig.saveFunc" @click="save(modelConfig.isAdd)" type="button" class="btn-confirm-f">保存</button>
+              <button v-if="modelConfig.saveFunc" @click="customFunc(modelConfig.saveFunc)" type="button" class="btn-confirm-f">保存</button>
+            </div>
+            <div class="model-footer-f" v-if="modelConfig.modalFooter">
+              <button type="button" class="btn-cancle-f" data-dismiss="modal">取消</button>
+              <template v-for="(item, index) in modelConfig.modalFooter">
+              <button  @click="customFunc(item.Func)" type="button" class="btn-confirm-f" v-if='item.name' :key="index">{{item.name}}</button>
+              </template>
+            </div>
+          </template>
+         
         </div>
       </div>
     </div>
