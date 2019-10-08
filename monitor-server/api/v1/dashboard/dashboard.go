@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 	"fmt"
+	"encoding/json"
 )
 
 // @Summary 页面通用接口 : 视图
@@ -261,7 +262,7 @@ func GetChart(c *gin.Context)  {
 			query.End = end
 		}
 	}
-	err,query.PromQ = db.GetPromMetric(query.Endpoint, query.Metric)
+	err,query.PromQ = db.GetPromMetric(query.Endpoint, query.Metric[0])
 	if err!=nil {
 		mid.ReturnError(c, "query promQL fail", err)
 		return
@@ -269,7 +270,7 @@ func GetChart(c *gin.Context)  {
 	query.Legend = chart.Legend
 	mid.LogInfo(fmt.Sprintf("endpoint : %v  metric : %v  start:%d  end:%d  promql:%s", query.Endpoint, query.Metric, query.Start, query.End, query.PromQ))
 	serials := ds.PrometheusData(query)
-	agg := db.CheckAggregate(query.Start, query.End, query.Endpoint[0], len(serials))
+	agg := db.CheckAggregate(query.Start, query.End, query.Endpoint[0], 0, len(serials))
 	for _, s := range serials {
 		if strings.Contains(s.Name, "$metric") {
 			s.Name = strings.Replace(s.Name, "$metric", query.Metric[0], -1)
@@ -287,6 +288,140 @@ func GetChart(c *gin.Context)  {
 	}
 	eOption.Xaxis = make(map[string]interface{})
 	eOption.Yaxis = m.YaxisModel{Unit: chart.Unit}
+	if len(serials) > 0 {
+		eOption.Series = serials
+	}else{
+		eOption.Series = []*m.SerialModel{}
+	}
+	mid.ReturnData(c, eOption)
+}
+
+func GetChartNew(c *gin.Context)  {
+	// validate config json
+	paramConfigStr := c.Query("config")
+	if paramConfigStr == "" {
+		mid.ReturnValidateFail(c, "param config is null")
+		return
+	}
+	var paramConfig []m.ChartConfigObj
+	err := json.Unmarshal([]byte(paramConfigStr), &paramConfig)
+	if err != nil || len(paramConfig) == 0 {
+		mid.ReturnValidateFail(c, "param config is invalidate,please check again")
+		return
+	}
+	var eOption m.EChartOption
+	var query m.QueryMonitorData
+	// validate config time
+	if paramConfig[0].Time != "" && paramConfig[0].Start == "" {
+		paramConfig[0].Start = paramConfig[0].Time
+	}
+	start,err := strconv.ParseInt(paramConfig[0].Start, 10, 64)
+	if err != nil {
+		mid.ReturnError(c, "param start validate error", err)
+		return
+	}else{
+		if start < 0 {
+			start = time.Now().Unix() + start
+		}
+		query.Start = start
+	}
+	query.End = time.Now().Unix()
+	if paramConfig[0].End != "" {
+		end,err := strconv.ParseInt(paramConfig[0].End, 10, 64)
+		if err == nil && end <= query.End {
+			query.End = end
+		}
+	}
+	// custom or from mysql
+	var querys []m.QueryMonitorData
+	step := 0
+	var firstEndpoint,firstMetric,unit string
+	if paramConfig[0].Id > 0 {
+		// one endpoint -> metrics
+		err, charts := db.GetCharts(0, paramConfig[0].Id, 0)
+		if err != nil || len(charts) <= 0 {
+			mid.ReturnError(c, "get chart config fail", err)
+			return
+		}
+		chart := *charts[0]
+		eOption.Id = chart.Id
+		eOption.Title = chart.Title
+		unit = chart.Unit
+		if paramConfig[0].Endpoint == "" {
+			mid.ReturnValidateFail(c, "endpoint is null")
+			return
+		}
+		firstEndpoint = paramConfig[0].Endpoint
+		for i,v := range strings.Split(chart.Metric, "^") {
+			if i == 0 {
+				firstMetric = v
+			}
+			err,tmpPromQl := db.GetPromMetric([]string{paramConfig[0].Endpoint}, v)
+			if err != nil {
+				mid.LogError("get prom metric error", err)
+				continue
+			}
+			querys = append(querys, m.QueryMonitorData{Start:query.Start, End:query.End, PromQ:tmpPromQl, Legend:chart.Legend})
+		}
+	}else{
+		step = 10
+		for _,v := range paramConfig {
+			if v.PromQl == "" {
+				continue
+			}
+			if strings.Contains(v.PromQl, "$address") {
+				if v.Endpoint == "" {
+					continue
+				}
+				endpointObj := m.EndpointTable{Guid:v.Endpoint}
+				db.GetEndpoint(&endpointObj)
+				if endpointObj.Address == "" {
+					continue
+				}
+				v.PromQl = strings.Replace(v.PromQl, "$address", endpointObj.Address, -1)
+			}
+			querys = append(querys, m.QueryMonitorData{Start:query.Start, End:query.End, PromQ:v.PromQl, Legend:""})
+		}
+	}
+	if len(querys) == 0 {
+		mid.ReturnError(c, "querys is null", nil)
+		return
+	}
+	var serials []*m.SerialModel
+	for _,v := range querys {
+		mid.LogInfo(fmt.Sprintf("query : endpoint : %v  metric : %v  start:%d  end:%d  promql:%s", v.Endpoint, v.Metric, v.Start, v.End, v.PromQ))
+		tmpSerials := ds.PrometheusData(v)
+		for _,vv := range tmpSerials {
+			serials = append(serials, vv)
+		}
+	}
+	// agg
+	agg := db.CheckAggregate(query.Start, query.End, firstEndpoint, step, len(serials))
+	var firstSerialTime float64
+	for i, s := range serials {
+		if strings.Contains(s.Name, "$metric") {
+			s.Name = strings.Replace(s.Name, "$metric", firstMetric, -1)
+		}
+		eOption.Legend = append(eOption.Legend, s.Name)
+		if agg > 1 {
+			aggType := paramConfig[0].Aggregate
+			if aggType != "none" && aggType != "" {
+				s.Data = db.Aggregate(s.Data, agg, aggType)
+			}
+		}
+		if i > 0 {
+			if s.Data[0][0] != firstSerialTime {
+				tmpSub := firstSerialTime - s.Data[0][0]
+				for i,v := range s.Data {
+					s.Data[i][0] = v[0] + tmpSub
+				}
+			}
+		}else{
+			firstSerialTime = s.Data[0][0]
+		}
+	}
+	eOption.Xaxis = make(map[string]interface{})
+	eOption.Yaxis = m.YaxisModel{Unit: unit}
 	if len(serials) > 0 {
 		eOption.Series = serials
 	}else{
@@ -318,4 +453,18 @@ func MainSearch(c *gin.Context)  {
 		return
 	}
 	mid.ReturnData(c, result)
+}
+
+func GetPromMetric(c *gin.Context)  {
+	metricType := c.Query("type")
+	if metricType == "" {
+		mid.ReturnValidateFail(c, "type is null")
+		return
+	}
+	err,data := db.GetPromMetricTable(metricType)
+	if err != nil {
+		mid.ReturnError(c, "get prom metric error", err)
+		return
+	}
+	mid.ReturnData(c, data)
 }

@@ -158,18 +158,15 @@ type ChartTable struct {
 	Legend   string  `json:"legend"`
 }
 
-// POST DATA
-type GetChartDto struct {
+type ChartConfigObj struct {
 	Id   int    `form:"id" json:"id"`
-	Endpoint   []string    `form:"endpoint" json:"endpoint"`
-	Ip  []string  `form:"ip" json:"ip"`
-	Metric   []string    `form:"metric" json:"metric"`
+	Endpoint   string    `form:"endpoint" json:"endpoint"`
+	Metric   string    `form:"metric" json:"metric"`
+	PromQl  string  `form:"prom_ql" json:"prom_ql"`
 	Start  string  `form:"start" json:"start"`
 	End  string  `form:"end" json:"end"`
 	Time  string  `form:"time" json:"time"`
 	Aggregate  string  `form:"aggregate" json:"aggregate"`
-	Extend  bool  `form:"extend" json:"extend"`
-	Rate  bool  `form:"rate" json:"rate"`
 }
 
 type PromMetricTable struct {

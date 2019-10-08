@@ -96,9 +96,9 @@ func GetCharts(cGroup int, chartId int, panelId int) (error, []*m.ChartTable) {
 	return fmt.Errorf("get charts error"), charts
 }
 
-func GetPromMetric(endpoint,metric []string) (error, string) {
-	promQL := metric[0]
-	tmpMetric := metric[0]
+func GetPromMetric(endpoint []string,metric string) (error, string) {
+	promQL := metric
+	tmpMetric := metric
 	var tmpTag string
 	if strings.Contains(tmpMetric, "/") {
 		tmpList := strings.Split(tmpMetric, "/")
@@ -242,4 +242,12 @@ func RegisterEndpointMetric(endpointId int,endpointMetrics []string) error {
 	}
 	err := ExecuteTransactionSql(sqls)
 	return err
+}
+
+func GetPromMetricTable(metricType string) (err error,result []*m.PromMetricTable) {
+	err = x.SQL("SELECT * FROM prom_metric WHERE metric_type=?", metricType).Find(&result)
+	if err != nil {
+		mid.LogError("get prom metric table fail", err)
+	}
+	return err,result
 }

@@ -56,6 +56,8 @@ func InitHttpServer() {
 			dashboardApi.GET("/chart", dashboard.GetChart)
 			dashboardApi.GET("/tags", dashboard.GetTags)
 			dashboardApi.GET("/search", dashboard.MainSearch)
+			dashboardApi.GET("/config/metric", dashboard.GetPromMetric)
+			dashboardApi.GET("/newchart", dashboard.GetChartNew)
 		}
 		agentApi := authApi.Group("/agent")
 		{
