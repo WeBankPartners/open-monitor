@@ -14,8 +14,8 @@
         <button class="btn btn-sm btn-cancle-f" @click="saveConfig">保存</button>
 
     </div>
-    
-    <section class style="width: 750px;margin: 0 auto;">
+    {{noDataTip}}
+    <section class="metric-section">
       <ul>
         <template v-for="(metricItem, metricIndex) in totalMetric">
           <li :key="metricIndex" class="metric-display">
@@ -27,8 +27,13 @@
         </template>
       </ul>
     </section>
-    <section style="width: 750px;margin: 0 auto;">
-      <div :id="elId" class="echart" style="height:400px;width:750px;background: #f5f7f9;"></div>
+    <section v-if="isRequestChartData" class="metric-section">
+      <div v-if="!noDataTip">
+        <div :id="elId" class="echart"></div>
+      </div>
+      <div v-else class="echart echart-no-data-tip">
+        <span>~~~暂无数据~~~</span>
+      </div>
     </section>
   </div>
 </template>
@@ -53,6 +58,9 @@ export default {
   data() {
     return {
      elId: '',
+     isRequestChartData: false,
+     noDataTip: false,
+
      metricSelected: [],
      metricSelectedOptions: [],
      metricList: [],
@@ -116,8 +124,14 @@ export default {
           time: this.timeTnterval + ''
         })) 
       })
+      this.isRequestChartData = true
+      this.noDataTip = false
       this.$httpRequestEntrance.httpRequestEntrance('GET',this.apiCenter.metricConfigView.api, {config: `[${params.join(',')}]`}, responseData => {
-       var legend = []
+        var legend = []
+        if (responseData.series.length === 0) {
+          this.noDataTip = true
+          return
+        }
         responseData.series.forEach((item)=>{
           legend.push(item.name)
           item.symbol = 'none'
@@ -280,4 +294,21 @@ export default {
     height: 100px;
     padding: 3px;
   }
+  
+  .metric-section {
+    width: 750px;
+    margin: 0 auto;
+  }
+  .echart {
+    height:400px;
+    width:750px;
+    background: #f5f7f9;
+  }
+  .echart-no-data-tip {
+    text-align: center;
+    vertical-align: middle;
+    display: table-cell;
+  }
+
+  
 </style>
