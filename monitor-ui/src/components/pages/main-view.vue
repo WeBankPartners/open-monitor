@@ -48,6 +48,17 @@ export default {
         }
         this.charts.chartsConfig.push(chart)
       })
+      let otherTab = {
+        tabTape: {
+          label: '配置',
+          name: '配置_',
+        },
+        btns: [],
+        tagsUrl: '',
+        charts: [],
+        params: params
+      } 
+      this.charts.chartsConfig.push(otherTab)
       this.$refs.parentCharts.refreshCharts(chartsConfig[0].title + '_')
     },
     changeRoute () {

@@ -55,6 +55,7 @@ export default {
       this.ip.label = resItem.option_text
       this.ip.value = resItem.option_value
       this.ip.id = resItem.id
+      this.ip.type = resItem.option_value.split(':')[1]
       this.$store.commit('storeip', this.ip)
       // this.$parent.getChartsConfig()
       this.showSearchTips = false

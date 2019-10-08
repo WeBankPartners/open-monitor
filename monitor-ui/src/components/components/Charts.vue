@@ -6,7 +6,10 @@
         </TabPane>
       </template>  
     </Tabs>
-    <section>
+    <section v-if="showViewMetricConfig">
+      <MetricConfig></MetricConfig>  
+    </section>
+    <section v-else>
       <template v-if="btns.length">
         <div class="btn-content">
           <RadioGroup v-model="activeBtn" size="small" type="button">
@@ -30,6 +33,7 @@
 </template>
 
 <script>
+import MetricConfig from '@/components/pages/metric-config'
 import SingleChart from '@/components/components/Single-chart'
 import MaxChart from '@/components/components/Max-chart'
 export default {
@@ -42,7 +46,8 @@ export default {
       tagsUrl: '',
       params: {},
       showMaxChart: false,
-      activeBtn: ''
+      activeBtn: '',
+      showViewMetricConfig: false
     }
   },
   props: {
@@ -63,6 +68,12 @@ export default {
       this.changeTab(activeTab)
     },
     changeTab (name) {
+      if (name === '配置_') {
+        this.showViewMetricConfig = true
+        return 
+      } else {
+        this.showViewMetricConfig = false
+      }
       this.params = this.charts.chartsConfig[0].params
       this.activeTab = name
       this.activeCharts = []
@@ -106,6 +117,7 @@ export default {
     }
   },
   components: {
+    MetricConfig,
     SingleChart,
     MaxChart
   }
