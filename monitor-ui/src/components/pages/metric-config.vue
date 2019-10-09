@@ -94,7 +94,7 @@ export default {
   },
   methods: {
     addMetric() {
-     this.editMetric.push({label: `default${(new Date()).valueOf()}`, value: ''})
+     this.editMetric.push({label: `default${((new Date()).valueOf()).toString().substring(10)}`, value: ''})
     },
     delMetric (metric) {
       if (metric.label.indexOf('default') > -1) {
