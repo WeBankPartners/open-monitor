@@ -58,7 +58,7 @@
           modalTitle: '组管理',
           isAdd: true,
           config: [
-            {label: '名称', value: 'name', placeholder: '必填,2-60字符', v_validate: 'required:true|min:2|max:60', disabled: true, hide: 'edit', type: 'text'},
+            {label: '名称', value: 'name', placeholder: '必填,2-60字符', v_validate: 'required:true|min:2|max:60', disabled: false, type: 'text'},
             {label: '备注描述', value: 'description', placeholder: '', disabled: false, type: 'text'},
           ],
           addRow: { // [通用]-保存用户新增、编辑时数据
@@ -102,6 +102,7 @@
         this.modelConfig.isAdd = false
         this.modelTip.value = rowData[this.modelTip.key]
         this.id = rowData.id
+        this.modelConfig.addRow = this.$tableUtil.manageEditParams(this.modelConfig.addRow, rowData)
         this.JQ('#add_edit_Modal').modal('show')
       },
       checkMember (rowData) {

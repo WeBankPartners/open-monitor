@@ -46,5 +46,17 @@
         "delete": {
             "api": "alarm/strategy/delete"
         }
+    },
+    "metricList": {
+        "_des": "指标列表",
+        "api": "dashboard/config/metric/list"
+    },
+    "metricUpdate": {
+        "_des": "指标更新",
+        "api": "dashboard/config/metric/update"
+    },
+    "metricConfigView": {
+        "_des": "指标配置预览视图",
+        "api": "dashboard/newchart"
     }
 }
