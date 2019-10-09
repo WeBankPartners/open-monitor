@@ -1,10 +1,9 @@
 <template>
   <div class="text-align:center; ">
     <div style="margin-bottom:24px;">
-        <Select v-model="metricSelected" multiple style="width:260px" :label-in-value="true" 
+        <Select v-model="metricSelected" filterable multiple style="width:260px" :label-in-value="true" 
             @on-change="selectMetric" placeholder="请选择监控指标">
-            <Option v-for="item in metricList" :value="item.prom_ql" :key="item.metric">{{ item.metric }}
-            </Option>
+            <Option v-for="item in metricList" :value="item.id + '^^' + item.prom_ql" :key="item.metric">{{item.metric}}</Option>
         </Select>
         <Select v-model="timeTnterval" style="width:80px;margin: 0 8px;">
           <Option v-for="item in dataPick" :value="item.value" :key="item.value">{{ item.label }}</Option>
@@ -12,7 +11,7 @@
         
         <button class="btn btn-sm btn-confirm-f" @click="requestChart">查询</button>
         <button class="btn btn-sm btn-cancle-f" @click="addMetric">新增指标</button>
-        <button class="btn btn-sm btn-cancle-f" @click="saveConfig">保存</button>
+        <button class="btn btn-sm btn-cancle-f" @click="saveConfig">保存修改</button>
 
     </div>
     <section class="metric-section">
@@ -106,12 +105,19 @@ export default {
            return item.label !== metric.label
         })
         this.metricSelected = this.metricSelected.filter((item)=>{
-           return item !== metric.value
+           return item !== `${metric.id}^^${metric.value}`
         })
       }
     },
     selectMetric (option) {
-      this.metricSelectedOptions = option
+      this.metricSelectedOptions = []
+      option.forEach((item) => {
+        this.metricSelectedOptions.push({
+          id: parseInt(item.value.split('^^')[0]),
+          value: item.value.split('^^')[1],
+          label: item.label
+        })
+      })
     },
     obtainMetricList () {
       let params = {type: this.$store.state.ip.type}
@@ -161,7 +167,22 @@ export default {
 
     },
     saveConfig () {
-      this.$Message.info('尚未开放！')
+      let params = []
+      this.totalMetric.forEach((item) => {
+        if (item.value === '') {
+          this.$Message.warning('sfdsghfd！')
+          return
+        }
+        let {id:id,label:metric,value:prom_ql} = item
+        params.push({id,metric,prom_ql,metric_type: this.$store.state.ip.type})
+      })
+      this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.metricUpdate.api, params, () => {
+        this.$Message.success('新增成功 !')
+        this.metricSelected = []
+        this.editMetric = []
+        this.isRequestChartData = false
+        this.obtainMetricList()
+      })
     },
     editMetricName (metricItem,metricIndex) {
       this.editingMetric = metricIndex
