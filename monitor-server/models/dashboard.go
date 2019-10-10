@@ -171,9 +171,9 @@ type ChartConfigObj struct {
 
 type PromMetricTable struct {
 	Id  int  `json:"id"`
-	Metric  string  `json:"metric"`
+	Metric  string  `json:"metric" binding:"required"`
 	MetricType  string  `json:"metric_type"`
-	PromQl  string  `json:"prom_ql"`
+	PromQl  string  `json:"prom_ql" binding:"required"`
 	PromMain  string  `json:"prom_main"`
 }
 

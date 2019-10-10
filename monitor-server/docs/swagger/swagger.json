@@ -27,20 +27,14 @@
                         "required": true
                     },
                     {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        },
+                        "type": "[]string",
                         "description": "endpoint数组, ['88B525B4-43E8-4A7A-8E11-0E664B5CB8D0']",
                         "name": "endpoint",
                         "in": "query",
                         "required": true
                     },
                     {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        },
+                        "type": "[]string",
                         "description": "metric数组, ['cpmid.busy']",
                         "name": "metric",
                         "in": "query",

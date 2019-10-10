@@ -251,3 +251,28 @@ func GetPromMetricTable(metricType string) (err error,result []*m.PromMetricTabl
 	}
 	return err,result
 }
+
+func UpdatePromMetric(data []m.PromMetricTable) error {
+	if len(data) == 0 {
+		return fmt.Errorf("data is null")
+	}
+	var insertData,updateData []m.PromMetricTable
+	for _,v := range data {
+		if v.Id > 0 {
+			updateData = append(updateData, v)
+		}else{
+			insertData = append(insertData, v)
+		}
+	}
+	var sqls []string
+	for _,v := range insertData {
+		sqls = append(sqls, Classify(v, "insert", "prom_metric", false))
+	}
+	for _,v := range updateData {
+		sqls = append(sqls, Classify(v, "update", "prom_metric", false))
+	}
+	if len(sqls) > 0 {
+		return ExecuteTransactionSql(sqls)
+	}
+	return nil
+}

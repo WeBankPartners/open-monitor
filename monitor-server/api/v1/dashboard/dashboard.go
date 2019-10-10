@@ -441,7 +441,7 @@ func MainSearch(c *gin.Context)  {
 	endpoint := c.Query("search")
 	//limit := c.Query("limit")
 	if endpoint == ""{
-		mid.Return(c, mid.RespJson{Msg:"param error", Code:http.StatusBadRequest})
+		mid.Return(c, mid.RespJson{Msg:"Param error", Code:http.StatusBadRequest})
 		return
 	}
 	if strings.Contains(endpoint, `:`) {
@@ -449,7 +449,7 @@ func MainSearch(c *gin.Context)  {
 	}
 	err,result := db.SearchHost(endpoint)
 	if err != nil {
-		mid.ReturnError(c, "search host fail", err)
+		mid.ReturnError(c, "Search host fail", err)
 		return
 	}
 	mid.ReturnData(c, result)
@@ -458,13 +458,31 @@ func MainSearch(c *gin.Context)  {
 func GetPromMetric(c *gin.Context)  {
 	metricType := c.Query("type")
 	if metricType == "" {
-		mid.ReturnValidateFail(c, "type is null")
+		mid.ReturnValidateFail(c, "Type is null")
 		return
 	}
 	err,data := db.GetPromMetricTable(metricType)
 	if err != nil {
-		mid.ReturnError(c, "get prom metric error", err)
+		mid.ReturnError(c, "Get prom metric error", err)
 		return
 	}
 	mid.ReturnData(c, data)
+}
+
+func UpdatePromMetric(c *gin.Context)  {
+	var param []m.PromMetricTable
+	if err := c.ShouldBindJSON(&param);err == nil {
+		if len(param) == 0 {
+			mid.ReturnValidateFail(c, "List is null")
+			return
+		}
+		err := db.UpdatePromMetric(param)
+		if err != nil {
+			mid.ReturnError(c, "Update prom metric fail", err)
+			return
+		}
+		mid.ReturnSuccess(c, "Success")
+	}else{
+		mid.ReturnValidateFail(c, "Param validate fail")
+	}
 }

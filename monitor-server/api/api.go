@@ -13,6 +13,7 @@ import (
 	"github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/api/v1/dashboard"
 	"github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/api/v1/agent"
 	"github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/api/v1/alarm"
+	_ "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/docs"
 )
 
 func InitHttpServer() {
@@ -56,8 +57,9 @@ func InitHttpServer() {
 			dashboardApi.GET("/chart", dashboard.GetChart)
 			dashboardApi.GET("/tags", dashboard.GetTags)
 			dashboardApi.GET("/search", dashboard.MainSearch)
-			dashboardApi.GET("/config/metric", dashboard.GetPromMetric)
+			dashboardApi.GET("/config/metric/list", dashboard.GetPromMetric)
 			dashboardApi.GET("/newchart", dashboard.GetChartNew)
+			dashboardApi.POST("/config/metric/update", dashboard.UpdatePromMetric)
 		}
 		agentApi := authApi.Group("/agent")
 		{
