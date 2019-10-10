@@ -1,18 +1,19 @@
 <template>
   <div class="text-align:center; ">
+    <Title title="视图配置"></Title>
     <div style="margin-bottom:24px;">
-        <Select v-model="metricSelected" filterable multiple style="width:260px" :label-in-value="true" 
-            @on-change="selectMetric" placeholder="请选择监控指标">
-            <Option v-for="item in metricList" :value="item.id + '^^' + item.prom_ql" :key="item.metric">{{item.metric}}</Option>
-        </Select>
-        <Select v-model="timeTnterval" style="width:80px;margin: 0 8px;">
-          <Option v-for="item in dataPick" :value="item.value" :key="item.value">{{ item.label }}</Option>
-        </Select>
-        
-        <button class="btn btn-sm btn-confirm-f" @click="requestChart">查询</button>
-        <button class="btn btn-sm btn-cancle-f" @click="addMetric">新增指标</button>
-        <button class="btn btn-sm btn-cancle-f" @click="saveConfig">保存修改</button>
-
+      <Searchinput :parentConfig="searchInputConfig"></Searchinput> 
+      <Select v-model="metricSelected" filterable multiple style="width:260px" :label-in-value="true" 
+          @on-change="selectMetric" placeholder="请选择监控指标">
+          <Option v-for="item in metricList" :value="item.id + '^^' + item.prom_ql" :key="item.metric">{{item.metric}}</Option>
+      </Select>
+      <Select v-model="timeTnterval" style="width:80px;margin: 0 8px;">
+        <Option v-for="item in dataPick" :value="item.value" :key="item.value">{{ item.label }}</Option>
+      </Select>
+      
+      <button class="btn btn-sm btn-confirm-f" @click="requestChart">查询</button>
+      <button class="btn btn-sm btn-cancle-f" @click="addMetric">新增指标</button>
+      <button class="btn btn-sm btn-cancle-f" @click="saveConfig">保存修改</button>
     </div>
     <section class="metric-section">
       <ul>
@@ -41,6 +42,7 @@
 </template>
 
 <script>
+import Searchinput from '../components/Search-input'
 import {dataPick} from '@/assets/config/common-config'
 
 import {generateUuid} from '@/assets/js/utils'
@@ -52,20 +54,27 @@ export default {
   name: '',
   data() {
     return {
-     elId: '',
-     isRequestChartData: false,
-     noDataTip: false,
+      searchInputConfig: {
+        poptipWidth: 300,
+        placeholder: '请输入主机名或IP地址，可模糊匹配',
+        inputStyle: "width:300px;",
+        // api: '/dashboard/search'
+        api: this.apiCenter.resourceSearch.api
+      },
+      elId: '',
+      isRequestChartData: false,
+      noDataTip: false,
 
-     metricSelected: [],
-     metricSelectedOptions: [],
-     metricList: [],
+      metricSelected: [],
+      metricSelectedOptions: [],
+      metricList: [],
 
-     timeTnterval: -1800,
-     dataPick: dataPick,
+      timeTnterval: -1800,
+      dataPick: dataPick,
 
-     editMetric: [],
-     editingMetric: null,
-     modelConfig: {
+      editMetric: [],
+      editingMetric: null,
+      modelConfig: {
         modalId: 'edit_metric_Modal',
         modalTitle: '指标名称',
         isAdd: true,
@@ -75,7 +84,7 @@ export default {
         addRow: { // [通用]-保存用户新增、编辑时数据
           name: null
         }
-     }
+      }
     }
   },
   created (){
@@ -195,6 +204,7 @@ export default {
     }
   },
   components: {
+    Searchinput
   },
 }
 </script>
