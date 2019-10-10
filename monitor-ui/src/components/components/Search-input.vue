@@ -43,7 +43,7 @@ export default {
     parentConfig: Object
   },
   mounted(){
-    if (Object.keys(this.$store.state.ip).length !== 0) {
+    if (this.$store.state.ip.value !== '') {
       this.ip = this.$store.state.ip
     }
   },
@@ -64,7 +64,6 @@ export default {
       this.showSearchTips = false
     },
     request () {
-      console
       if (!this.ip.label) {
         return
       }

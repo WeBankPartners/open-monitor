@@ -51,6 +51,10 @@
         "_des": "指标列表",
         "api": "dashboard/config/metric/list"
     },
+    "originMetricList": {
+        "_des": "原始指标列表",
+        "api": "dashboard/endpoint/metric/list"
+    },
     "metricUpdate": {
         "_des": "指标更新",
         "api": "dashboard/config/metric/update"

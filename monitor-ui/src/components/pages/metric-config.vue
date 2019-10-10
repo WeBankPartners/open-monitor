@@ -12,7 +12,7 @@
         <Option v-for="item in dataPick" :value="item.value" :key="item.value">{{ item.label }}</Option>
       </Select>
       
-      <button class="btn btn-sm btn-confirm-f" @click="requestChart">查询</button>
+      <button class="btn btn-sm btn-confirm-f" :disabled="$store.state.ip.value === ''" @click="requestChart">查询</button>
       <button class="btn btn-sm btn-cancle-f" @click="addMetric">新增指标</button>
       <button class="btn btn-sm btn-cancle-f" @click="saveConfig">保存修改</button>
     </div>
@@ -23,6 +23,9 @@
             <Tag color="primary" type="border" closable @on-close="delMetric(metricItem)">指标名称：{{metricItem.label}} 
               <i class="fa fa-pencil" aria-hidden="true" @click="editMetricName(metricItem,metricIndex)"></i>
             </Tag>
+            <Select v-model="originalMetricList[metricItem.key].model" style="width:300px" size="small" @on-change="selectOriginalMetric(metricItem)">
+              <Option v-for="item in originalMetricList[metricItem.key].list" :value="item.option_value" :key="item.option_value">{{ item.option_text }}</Option>
+            </Select>
             <div>
                <textarea v-model="metricItem.value" class="textareaSty"></textarea> 
             </div>
@@ -100,7 +103,10 @@ export default {
         addRow: { // [通用]-保存用户新增、编辑时数据
           name: null
         }
-      }
+      },
+      
+      originalList: [],
+      originalMetricList: {}
     }
   },
   created (){
@@ -108,15 +114,50 @@ export default {
       this.elId =  `id_${elId}`
     })
   },
+  watch: {
+    changeIP (newCount, oldCount) {
+      this.metricSelected = []
+      this.metricSelectedOptions = []
+      this.metricList = []
+      this.noDataTip = true
+      console.log(`We have ${newCount} fruits now, yaay!`)
+    }
+  },
   computed: {
+    changeIP() {
+      console.log(12)
+      return this.$store.state.ip.value
+    },
     totalMetric: function () {
       return this.metricSelectedOptions.concat(this.editMetric)
     } 
   },
-  mounted (){},
+  mounted (){
+    this.getOriginalMetricList()
+  },
   methods: {
     addMetric() {
-     this.editMetric.push({label: `default${((new Date()).valueOf()).toString().substring(10)}`, value: ''})
+     let key = ((new Date()).valueOf()).toString().substring(10)
+     this.editMetric.push({label: `default${key}`, value: '',key: `add_${key}`})
+      let o_metric = {
+        list: '',
+        model: ''
+      }
+      o_metric.list = this.originalList
+      this.originalMetricList[`add_${key}`] = o_metric
+    },
+    selectOriginalMetric(item) {
+      if (item.key.indexOf('add_')> -1) {
+        for (let i=0; i< this.editMetric.length; i++) {
+          if (item.key === this.editMetric[i].key) 
+          this.editMetric[i].value = this.editMetric[i].value + this.originalMetricList[item.key].model
+        }
+      } else {
+        for (let i=0; i< this.metricSelectedOptions.length; i++) {
+          if (item.key === this.metricSelectedOptions[i].key) 
+          this.metricSelectedOptions[i].value = this.metricSelectedOptions[i].value + this.originalMetricList[item.key].model
+        }
+      }
     },
     delMetric (metric) {
       if (metric.label.indexOf('default') > -1) {
@@ -138,8 +179,15 @@ export default {
         this.metricSelectedOptions.push({
           id: parseInt(item.value.split('^^')[0]),
           value: item.value.split('^^')[1],
-          label: item.label
+          label: item.label,
+          key: 'origin_' + parseInt(item.value.split('^^')[0])
         })
+
+        let o_metric = {
+          list: this.originalList,
+          model: ''
+        }
+        this.originalMetricList['origin_' + parseInt(item.value.split('^^')[0])] = o_metric
       })
     },
     metricSelectOpen (flag) {
@@ -168,13 +216,22 @@ export default {
         return
       }
       let params = []
+      var requestFlag = true
       this.totalMetric.forEach((item) => {
+        if (!item.value.trim()) {
+          this.$Message.warning('指标表达式不能为空!')
+          this.noDataTip = true
+          requestFlag = false 
+        }
         params.push(JSON.stringify({
           endpoint: this.$store.state.ip.value.split(':')[0],
           prom_ql: item.value,
           time: this.timeTnterval + ''
         })) 
       })
+      if (!requestFlag) {
+        return
+      }
       this.isRequestChartData = true
       
       this.$httpRequestEntrance.httpRequestEntrance('GET',this.apiCenter.metricConfigView.api, {config: `[${params.join(',')}]`}, responseData => {
@@ -227,6 +284,11 @@ export default {
     addPost (){
       this.totalMetric[this.editingMetric].label = this.modelConfig.addRow.name
       this.JQ('#edit_metric_Modal').modal('hide')
+    },
+    getOriginalMetricList() {
+      this.$httpRequestEntrance.httpRequestEntrance('GET',this.apiCenter.originMetricList.api, {id:2}, responseData => {
+        this.originalList = responseData
+      })
     }
   },
   components: {

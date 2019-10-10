@@ -4,7 +4,10 @@ Vue.use(vuex)
 
 export default new vuex.Store({
   state:{
-    ip: {}
+    ip: {
+      label: '',
+      value: ''
+    }
   },
   mutations:{
     storeip (state, ip) {
