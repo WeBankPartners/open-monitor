@@ -32,8 +32,9 @@ export default {
     return {
       ip: {
         label: '',
-        value: '',
+        value: ''
       },
+      ipChoiced: {},
       showSearchTips: false,
       searchResult: [],
     }
@@ -48,19 +49,22 @@ export default {
   },
   methods: {
     userInput () {
+      this.ipChoiced = {}
+      this.$store.commit('storeip', {label: '',value: ''})
       this.showSearchTips = false
       this.request()
     },
     choiceRes (resItem) {
       this.ip.label = resItem.option_text
-      this.ip.value = resItem.option_value
-      this.ip.id = resItem.id
-      this.ip.type = resItem.option_value.split(':')[1]
-      this.$store.commit('storeip', this.ip)
-      // this.$parent.getChartsConfig()
+      this.ipChoiced.label = resItem.option_text
+      this.ipChoiced.value = resItem.option_value
+      this.ipChoiced.id = resItem.id
+      this.ipChoiced.type = resItem.option_value.split(':')[1]
+      this.$store.commit('storeip', this.ipChoiced)
       this.showSearchTips = false
     },
     request () {
+      console
       if (!this.ip.label) {
         return
       }

@@ -2,9 +2,10 @@
   <div class="text-align:center; ">
     <Title title="视图配置"></Title>
     <div style="margin-bottom:24px;">
-      <Searchinput :parentConfig="searchInputConfig"></Searchinput> 
+      <Notice :noticeConfig='noticeConfig'> </Notice>
+      <Searchinput :parentConfig="searchInputConfig" ref="choicedIP"></Searchinput> 
       <Select v-model="metricSelected" filterable multiple style="width:260px" :label-in-value="true" 
-          @on-change="selectMetric" placeholder="请选择监控指标">
+          @on-change="selectMetric" @on-open-change="metricSelectOpen" placeholder="请选择监控指标">
           <Option v-for="item in metricList" :value="item.id + '^^' + item.prom_ql" :key="item.metric">{{item.metric}}</Option>
       </Select>
       <Select v-model="timeTnterval" style="width:80px;margin: 0 8px;">
@@ -42,6 +43,7 @@
 </template>
 
 <script>
+import Notice from '@/components/components/notice'
 import Searchinput from '../components/Search-input'
 import {dataPick} from '@/assets/config/common-config'
 
@@ -54,6 +56,20 @@ export default {
   name: '',
   data() {
     return {
+      noticeConfig: {
+        type: 'info',
+        contents: [
+          {
+            tip: '1、请先搜索主机作为输入源并选择监控指标；'
+          },
+          {
+            tip: '2、点击查询可查看单钱对象及指标下监控视图；'
+          },
+          {
+            tip: '3、使用新增指标增减指标项，并在点击 保存修改 后面将配置保存；'
+          },
+        ]
+      },
       searchInputConfig: {
         poptipWidth: 300,
         placeholder: '请输入主机名或IP地址，可模糊匹配',
@@ -97,9 +113,7 @@ export default {
       return this.metricSelectedOptions.concat(this.editMetric)
     } 
   },
-  mounted (){
-    this.obtainMetricList()
-  },
+  mounted (){},
   methods: {
     addMetric() {
      this.editMetric.push({label: `default${((new Date()).valueOf()).toString().substring(10)}`, value: ''})
@@ -128,8 +142,20 @@ export default {
         })
       })
     },
-    obtainMetricList () {
-      let params = {type: this.$store.state.ip.type}
+    metricSelectOpen (flag) {
+      if (flag) {
+        if (this.$store.state.ip.value !== '') {
+          this.obtainMetricList(this.$store.state.ip.type)
+        } else {
+          this.metricSelected = []
+          this.metricSelectedOptions = []
+          this.metricList = []
+          this.$Message.warning('请先选择主机名或IP地址！')
+        }
+      }
+    },
+    obtainMetricList (type) {
+      let params = {type: type}
       this.$httpRequestEntrance.httpRequestEntrance('GET',this.apiCenter.metricList.api, params, responseData => {
         this.metricList = responseData
       })
@@ -204,6 +230,7 @@ export default {
     }
   },
   components: {
+    Notice,
     Searchinput
   },
 }
