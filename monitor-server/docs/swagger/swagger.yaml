@@ -19,18 +19,14 @@ paths:
         type: integer
       - description: endpoint数组, ['88B525B4-43E8-4A7A-8E11-0E664B5CB8D0']
         in: query
-        items:
-          type: string
         name: endpoint
         required: true
-        type: array
+        type: '[]string'
       - description: metric数组, ['cpmid.busy']
         in: query
-        items:
-          type: string
         name: metric
         required: true
-        type: array
+        type: '[]string'
       - description: 开始时间
         in: query
         name: start
