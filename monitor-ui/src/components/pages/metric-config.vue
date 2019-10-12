@@ -115,12 +115,11 @@ export default {
     })
   },
   watch: {
-    changeIP (newCount, oldCount) {
+    changeIP () {
       this.metricSelected = []
       this.metricSelectedOptions = []
       this.metricList = []
       this.noDataTip = true
-      console.log(`We have ${newCount} fruits now, yaay!`)
     }
   },
   computed: {

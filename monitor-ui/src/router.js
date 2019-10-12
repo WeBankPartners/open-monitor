@@ -37,6 +37,8 @@ const router = new Router({
            component: () => import('@/components/pages/DIY-view/view-config-index') },
           { path: 'viewConfig',  name: 'viewConfig', title: '自定义视图', meta: {},
            component: () => import('@/components/pages/DIY-view/view-config') },
+          { path: 'editView',  name: 'editView', title: '自定义视图编辑', meta: {},
+           component: () => import('@/components/pages/DIY-view/edit-view') },
         ]
       },
       {
