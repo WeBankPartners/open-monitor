@@ -60,6 +60,7 @@ func InitHttpServer() {
 			dashboardApi.GET("/config/metric/list", dashboard.GetPromMetric)
 			dashboardApi.GET("/newchart", dashboard.GetChartNew)
 			dashboardApi.POST("/config/metric/update", dashboard.UpdatePromMetric)
+			dashboardApi.GET("/endpoint/metric/list", dashboard.GetEndpointMetric)
 		}
 		agentApi := authApi.Group("/agent")
 		{
@@ -82,6 +83,10 @@ func InitHttpServer() {
 			alarmApi.POST("/webhook", alarm.AcceptAlertMsg)
 			alarmApi.GET("/history", alarm.GetHistoryAlarm)
 			alarmApi.GET("/problem/list", alarm.GetProblemAlarm)
+			alarmApi.GET("/log/monitor/list", alarm.ListLogTpl)
+			alarmApi.POST("/log/monitor/add", alarm.AddLogStrategy)
+			alarmApi.POST("/log/monitor/update", alarm.EditLogStrategy)
+			alarmApi.GET("/log/monitor/delete", alarm.DeleteLogStrategy)
 		}
 		port := m.Config().Http.Port
 		r.Run(fmt.Sprintf(":%d", port))
