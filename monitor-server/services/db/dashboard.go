@@ -276,3 +276,23 @@ func UpdatePromMetric(data []m.PromMetricTable) error {
 	}
 	return nil
 }
+
+func GetEndpointMetric(id int) (err error,result []*m.OptionModel) {
+	var endpointMetrics []*m.EndpointMetricTable
+	err = x.SQL("SELECT id,endpoint_id,metric FROM endpoint_metric WHERE endpoint_id=?", id).Find(&endpointMetrics)
+	if err != nil {
+		mid.LogError("get endpoint metric fail", err)
+	}
+	metricMap := make(map[string]string)
+	for _,v := range endpointMetrics {
+		tmpMetric := v.Metric
+		if strings.Contains(v.Metric, "{") {
+			tmpMetric = strings.Split(v.Metric, "{")[0]
+		}
+		metricMap[tmpMetric] = fmt.Sprintf("%s{instance=\"$address\"}", tmpMetric)
+	}
+	for k,v := range metricMap {
+		result = append(result, &m.OptionModel{OptionText:k, OptionValue:v})
+	}
+	return err,result
+}

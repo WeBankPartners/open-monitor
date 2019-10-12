@@ -27,7 +27,7 @@ func AcceptAlertMsg(c *gin.Context)  {
 				mid.LogInfo(fmt.Sprintf("Alerts strategy id is null : %v ", v))
 				continue
 			}
-			_,strategyObj := db.GetStrategy(tmpAlarm.StrategyId)
+			_,strategyObj := db.GetStrategy(m.StrategyTable{Id:tmpAlarm.StrategyId})
 			if strategyObj.Id <= 0 {
 				mid.LogInfo(fmt.Sprintf("Alerts strategy id can't fetch in table : %d ", tmpAlarm.StrategyId))
 				continue

@@ -486,3 +486,17 @@ func UpdatePromMetric(c *gin.Context)  {
 		mid.ReturnValidateFail(c, "Param validate fail")
 	}
 }
+
+func GetEndpointMetric(c *gin.Context)  {
+	id,_ := strconv.Atoi(c.Query("id"))
+	if id <= 0 {
+		mid.ReturnValidateFail(c, "Param id validate fail")
+		return
+	}
+	err,data := db.GetEndpointMetric(id)
+	if err != nil {
+		mid.ReturnError(c, "Get endpoint metric fail", err)
+		return
+	}
+	mid.ReturnData(c, data)
+}

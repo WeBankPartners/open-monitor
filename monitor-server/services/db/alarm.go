@@ -7,6 +7,7 @@ import (
 	mid "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/middleware"
 	"fmt"
 	"time"
+	"strings"
 )
 
 func ListGrp(query *m.GrpQuery) error {
@@ -341,9 +342,14 @@ func transColumn(s string) string {
 	return string(v)
 }
 
-func GetStrategy(id int) (error,m.StrategyTable) {
+func GetStrategy(param m.StrategyTable) (error,m.StrategyTable) {
 	var result []*m.StrategyTable
-	err := x.SQL("SELECT * FROM strategy WHERE id=?", id).Find(&result)
+	var err error
+	if param.Id > 0 {
+		err = x.SQL("SELECT * FROM strategy WHERE id=?", param.Id).Find(&result)
+	}else if param.Expr != "" {
+		err = x.SQL("SELECT * FROM strategy WHERE expr=? order by id desc", param.Expr).Find(&result)
+	}
 	if err == nil && len(result) == 0 {
 		err = fmt.Errorf("no data")
 	}
@@ -590,4 +596,181 @@ func UpdateAlarms(alarms []*m.AlarmTable) error {
 		}
 	}
 	return ExecuteTransactionSql(sqls)
+}
+
+func UpdateLogMonitor(obj *m.UpdateLogMonitor) error {
+	var sqls []string
+	for _,v := range obj.LogMonitor {
+		sql := Classify(*v, obj.Operation, "log_monitor", false)
+		if sql != "" {
+			sqls = append(sqls, sql)
+		}
+	}
+	err := ExecuteTransactionSql(sqls)
+	return err
+}
+
+func GetLogMonitorTable(id,strategyId,tplId int, path string) (err error,result []*m.LogMonitorTable) {
+	if id > 0 {
+		err = x.SQL("SELECT * FROM log_monitor WHERE id=?", id).Find(&result)
+	}
+	if path != "" {
+		err = x.SQL("SELECT * FROM log_monitor WHERE path=?", path).Find(&result)
+	}
+	if strategyId > 0 {
+		err = x.SQL("SELECT * FROM log_monitor WHERE strategy_id=?", strategyId).Find(&result)
+	}
+	if tplId > 0 {
+		err = x.SQL("SELECT * FROM log_monitor WHERE strategy_id IN (SELECT id FROM strategy WHERE tpl_id=?) ORDER BY path", tplId).Find(&result)
+	}
+	return err,result
+}
+
+func GetLogMonitorByEndpoint(endpointId int) (err error,result []*m.LogMonitorTable) {
+	sql := `SELECT DISTINCT t1.* FROM log_monitor t1 
+			LEFT JOIN strategy t2 ON t1.strategy_id=t2.id 
+			LEFT JOIN tpl t3 ON t2.tpl_id=t3.id 
+			WHERE t3.endpoint_id=? 
+			OR t3.grp_id IN (SELECT grp_id FROM grp_endpoint WHERE endpoint_id=?) 
+			ORDER BY t1.path`
+	err = x.SQL(sql, endpointId, endpointId).Find(&result)
+	return err,result
+}
+
+func ListLogMonitor(query *m.TplQuery) error {
+	var result []*m.TplObj
+	if query.SearchType == "endpoint" {
+		var grps []*m.GrpTable
+		err := x.SQL("SELECT id,name FROM grp where id in (select grp_id from grp_endpoint WHERE endpoint_id=?)", query.SearchId).Find(&grps)
+		if err != nil {
+			mid.LogError("get strategy fail", err)
+			return err
+		}
+		var grpIds string
+		grpMap := make(map[int]string)
+		if len(grps) > 0 {
+			grpIds = "t1.grp_id IN ("
+			for _, v := range grps {
+				grpIds += fmt.Sprintf("%d,", v.Id)
+				grpMap[v.Id] = v.Name
+			}
+			grpIds = grpIds[:len(grpIds)-1]
+			grpIds += ") OR"
+		}
+		var tpls []*m.TplStrategyLogMonitorTable
+		sql := `SELECT t1.id tpl_id,t1.grp_id,t1.endpoint_id,t2.id strategy_id,t2.expr,t2.cond,t2.last,t2.priority,t3.path,t3.keyword FROM tpl t1 
+				LEFT JOIN strategy t2 ON t1.id=t2.tpl_id 
+				LEFT JOIN log_monitor t3 ON t2.id=t3.strategy_id 
+				WHERE (`+grpIds+` t1.endpoint_id=?) and t2.config_type='log_monitor' ORDER BY t1.endpoint_id,t1.id,t3.path`
+		err = x.SQL(sql, query.SearchId).Find(&tpls)
+		if err != nil {
+			mid.LogError("get log monitor strategy fail", err)
+			return err
+		}
+		if len(tpls) == 0 {
+			endpointObj := m.EndpointTable{Id:query.SearchId}
+			GetEndpoint(&endpointObj)
+			result = append(result, &m.TplObj{TplId: 0, ObjId: query.SearchId, ObjName: endpointObj.Guid, ObjType: "endpoint", Operation: true, Strategy: []*m.StrategyTable{}, LogMonitor: []*m.LogMonitorDto{}})
+		}else {
+			var tmpTplId int
+			var tmpLogMonitor []*m.LogMonitorDto
+			keywordMap := make(map[string][]*m.LogMonitorStrategyDto)
+			for _,v := range tpls {
+				key := fmt.Sprintf("%d^%s", v.TplId, v.Path)
+				if vv,b := keywordMap[key];!b {
+					keywordMap[key] = []*m.LogMonitorStrategyDto{&m.LogMonitorStrategyDto{StrategyId:v.StrategyId, Keyword:v.Keyword, Cond:v.Cond, Last:getLastFromExpr(v.Expr), Priority:v.Priority}}
+				}else{
+					keywordMap[key] = append(vv, &m.LogMonitorStrategyDto{StrategyId:v.StrategyId, Keyword:v.Keyword, Cond:v.Cond, Last:getLastFromExpr(v.Expr), Priority:v.Priority})
+				}
+			}
+			for i, v := range tpls {
+				if i == 0 {
+					tmpTplId = v.TplId
+					if v.StrategyId > 0 {
+						tmpLogMonitor = append(tmpLogMonitor, &m.LogMonitorDto{Id:v.StrategyId, TplId:v.TplId, Path:v.Path, Strategy:keywordMap[fmt.Sprintf("%d^%s", v.TplId, v.Path)]})
+					}
+				} else {
+					if v.TplId != tmpTplId {
+						tmpTplObj := m.TplObj{TplId: tpls[i-1].TplId}
+						if tpls[i-1].GrpId > 0 {
+							tmpTplObj.ObjId = tpls[i-1].GrpId
+							tmpTplObj.ObjName = grpMap[tpls[i-1].GrpId]
+							tmpTplObj.ObjType = "grp"
+							tmpTplObj.Operation = false
+						} else {
+							tmpTplObj.ObjId = tpls[i-1].EndpointId
+							endpointObj := m.EndpointTable{Id: tpls[i-1].EndpointId}
+							GetEndpoint(&endpointObj)
+							tmpTplObj.ObjName = endpointObj.Guid
+							tmpTplObj.ObjType = "endpoint"
+							tmpTplObj.Operation = true
+						}
+						tmpTplObj.LogMonitor = tmpLogMonitor
+						result = append(result, &tmpTplObj)
+						tmpTplId = v.TplId
+						tmpLogMonitor = []*m.LogMonitorDto{}
+					}
+					if v.StrategyId > 0 {
+						tmpLogMonitor = append(tmpLogMonitor, &m.LogMonitorDto{Id:v.StrategyId, TplId:v.TplId, Path:v.Path, Strategy:keywordMap[fmt.Sprintf("%d^%s", v.TplId, v.Path)]})
+					}
+				}
+			}
+			endpointObj := m.EndpointTable{Id: tpls[len(tpls)-1].EndpointId}
+			GetEndpoint(&endpointObj)
+			result = append(result, &m.TplObj{TplId: tpls[len(tpls)-1].TplId, ObjId: tpls[len(tpls)-1].EndpointId, ObjName: endpointObj.Guid, ObjType: "endpoint", Operation: true, LogMonitor: tmpLogMonitor})
+		}
+	}else{
+		var grps []*m.GrpTable
+		err := x.SQL("SELECT * FROM grp WHERE id=?", query.SearchId).Find(&grps)
+		if err != nil {
+			mid.LogError("get grp fail", err)
+			return err
+		}
+		if len(grps) <= 0 {
+			mid.LogInfo("can't find this grp")
+			return fmt.Errorf("can't find this grp")
+		}
+		var tpls []*m.TplStrategyLogMonitorTable
+		sql := `SELECT t1.id tpl_id,t1.grp_id,t1.endpoint_id,t2.id strategy_id,t2.expr,t2.cond,t2.last,t2.priority,t3.path,t3.keyword FROM tpl t1 
+			LEFT JOIN strategy t2 ON t1.id=t2.tpl_id 
+			LEFT JOIN log_monitor t3 ON t2.id=t3.strategy_id 
+			WHERE t1.grp_id=? and t2.config_type='log_monitor' ORDER BY t1.endpoint_id,t1.id,t2.id`
+		err = x.SQL(sql, query.SearchId).Find(&tpls)
+		if err != nil {
+			mid.LogError("get log monitor strategy fail", err)
+			return err
+		}
+		if len(tpls) > 0 {
+			keywordMap := make(map[string][]*m.LogMonitorStrategyDto)
+			for _,v := range tpls {
+				key := fmt.Sprintf("%d^%s", v.TplId, v.Path)
+				if vv,b := keywordMap[key];!b {
+					keywordMap[key] = []*m.LogMonitorStrategyDto{&m.LogMonitorStrategyDto{StrategyId:v.StrategyId, Keyword:v.Keyword, Cond:v.Cond, Last:getLastFromExpr(v.Expr), Priority:v.Priority}}
+				}else{
+					keywordMap[key] = append(vv, &m.LogMonitorStrategyDto{StrategyId:v.StrategyId, Keyword:v.Keyword, Cond:v.Cond, Last:getLastFromExpr(v.Expr), Priority:v.Priority})
+				}
+			}
+			tmpLogMonitor := []*m.LogMonitorDto{}
+			for _, v := range tpls {
+				if v.StrategyId > 0 {
+					tmpLogMonitor = append(tmpLogMonitor, &m.LogMonitorDto{Id:v.StrategyId, TplId:v.TplId, Path:v.Path, Strategy:keywordMap[fmt.Sprintf("%d^%s", v.TplId, v.Path)]})
+				}
+			}
+			result = append(result, &m.TplObj{TplId:tpls[0].TplId, ObjId:tpls[0].GrpId, ObjName:grps[0].Name, ObjType:"grp", Operation:true, LogMonitor:tmpLogMonitor})
+		}else{
+			result = append(result, &m.TplObj{TplId:0, ObjId:query.SearchId, ObjName:grps[0].Name, ObjType:"grp", Operation:true, LogMonitor:[]*m.LogMonitorDto{}})
+		}
+	}
+	query.Tpl = result
+	return nil
+}
+
+func getLastFromExpr(expr string) string {
+	var last string
+	if strings.Contains(expr, "[") {
+		last = strings.Split(strings.Split(expr,"[")[1],"]")[0]
+	}else{
+		last = "10s"
+	}
+	return last
 }

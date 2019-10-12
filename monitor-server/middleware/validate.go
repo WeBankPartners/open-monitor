@@ -8,18 +8,29 @@ import (
 	"fmt"
 )
 
+var exceptUrl  = []string{"/dashboard/newchart"}
+
 func ValidateGet(c *gin.Context)  {
 	isOk := true
 	if c.Request.Method == "GET" {
 		index := strings.Index(c.Request.URL.String(), "?")
 		if index > 0 {
-			invalidData := []string{"select", "insert", "update", "alter", "delete", "drop", "truncate", "show"}
 			url := c.Request.URL.String()
-			params := strings.ToLower(url[index:])
-			for _,inv := range invalidData {
-				if strings.Contains(params, inv) {
-					isOk = false
+			isExcept := false
+			for _,v := range exceptUrl {
+				if strings.Contains(url[:index], v) {
+					isExcept = true
 					break
+				}
+			}
+			if !isExcept {
+				invalidData := []string{"select", "insert", "update", "alter", "delete", "drop", "truncate", "show"}
+				params := strings.ToLower(url[index:])
+				for _, inv := range invalidData {
+					if strings.Contains(params, inv) {
+						isOk = false
+						break
+					}
 				}
 			}
 		}

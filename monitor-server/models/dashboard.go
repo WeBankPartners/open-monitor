@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 type SearchModel struct {
 	Id  int  `json:"id"`
 	Enable  bool  `json:"enable"`
@@ -195,4 +197,12 @@ type EndpointMetricTable struct {
 	Id  int  `json:"id"`
 	EndpointId  int  `json:"endpoint_id"`
 	Metric  string  `json:"metric"`
+}
+
+type MaintainTable struct {
+	Id  int  `json:"id"`
+	EndpointId  int  `json:"endpoint_id"`
+	MaintainStart  time.Time  `json:"maintain_start"`
+	MaintainEnd  time.Time  `json:"maintain_end"`
+	MaintainUser  string  `json:"maintain_user"`
 }

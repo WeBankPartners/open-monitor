@@ -32,6 +32,7 @@ type StrategyTable struct {
 	Last  string  `json:"last" binding:"required"`
 	Priority  string  `json:"priority" binding:"required"`
 	Content  string  `json:"content" binding:"required"`
+	ConfigType  string  `json:"config_type"`
 }
 
 type AlarmTable struct {
@@ -118,6 +119,7 @@ type TplObj struct {
 	Operation  bool  `json:"operation"`
 	Accept  AcceptObj  `json:"accept"`
 	Strategy  []*StrategyTable  `json:"strategy"`
+	LogMonitor  []*LogMonitorDto  `json:"log_monitor"`
 }
 
 type TplQuery struct {
@@ -165,4 +167,52 @@ type AMRespAlert struct {
 	EndsAt       time.Time `json:"endsAt"`
 	GeneratorURL string    `json:"generatorURL"`
 	Fingerprint  string    `json:"fingerprint"`
+}
+
+type LogMonitorTable struct {
+	Id  int  `json:"id"`
+	StrategyId  int  `json:"strategy_id"`
+	Path  string  `json:"path"`
+	Keyword  string `json:"keyword"`
+}
+
+type LogMonitorDto struct {
+	Id  int  `json:"id"`
+	TplId  int  `json:"tpl_id"`
+	GrpId  int  `json:"grp_id"`
+	EndpointId  int  `json:"endpoint_id"`
+	Path  string  `json:"path" binding:"required"`
+	Strategy []*LogMonitorStrategyDto  `json:"strategy"`
+}
+
+type LogMonitorStrategyDto struct {
+	StrategyId  int  `json:"strategy_id"`
+	Keyword  string  `json:"keyword"`
+	Cond  string  `json:"cond"`
+	Last  string  `json:"last"`
+	Priority  string  `json:"priority"`
+}
+
+type UpdateLogMonitor struct {
+	LogMonitor  []*LogMonitorTable
+	Operation  string
+	OperateUser  string
+}
+
+//type LogMonitorQuery struct {
+//	Path  string  `json:"path"`
+//	Keywords  []*LogMonitorTable  `json:"keywords"`
+//}
+
+type TplStrategyLogMonitorTable struct {
+	TplId  int  `json:"tpl_id"`
+	GrpId  int  `json:"grp_id"`
+	EndpointId  int  `json:"endpoint_id"`
+	StrategyId  int  `json:"strategy_id"`
+	Expr  string  `json:"expr" binding:"required"`
+	Cond  string  `json:"cond" binding:"required"`
+	Last  string  `json:"last"`
+	Priority  string  `json:"priority" binding:"required"`
+	Path  string  `json:"path"`
+	Keyword  string  `json:"keyword"`
 }
