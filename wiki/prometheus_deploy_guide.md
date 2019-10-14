@@ -46,15 +46,42 @@
 
 ![deploy_single](images/deploy_single.png)
 
-1. run consul
+1. run consul  
+    实例运行:
 	```shell
-	docker run --name consul01 -d -p 8300:8300 -p 8400:8400 -p 8500:8500 -p 8600:8600 consul
+	docker volume create consul-data
+	docker run --name consul01 --volume consul-data:/consul/data -d -p 8300:8300 -p 8400:8400 -p 8500:8500 -p 8600:8600 consul
 	```
 
 2. run alertmanager
 
-	配置文件/app/docker/alertmanager/alertmanager.yml
-
+	配置文件/app/docker/alertmanager/alertmanager.yml  
+	example:
+	```yaml
+    global:
+      resolve_timeout: 5m
+    
+    route:
+      group_by: ['alertname']
+      group_wait: 2s
+      group_interval: 10s
+      repeat_interval: 5m
+      receiver: 'web.hook'
+    receivers:
+    - name: 'web.hook'
+      webhook_configs:
+      - url: 'http://192.168.67.131:8088/api/v1/alarm/webhook'
+        send_resolved: true
+    inhibit_rules:
+      - source_match:
+          severity: 'critical'
+        target_match:
+          severity: 'warning'
+        equal: ['alertname', 'dev', 'instance']
+    ```
+    配置文件中的url是monitor中的告警回调的接口，先把告警发给monitor，再由monitor来进一步处理展示在web上和关联配置好的接收人进行发送  
+    
+    实例运行:
 	```shell
 	docker volume create alertmanager-data
 	docker run --name alertmanager01 --volume alertmanager-data:/alertmanager --volume /app/docker/alertmanager:/etc/alertmanager -d -p 9093:9093 -p 9094:9094 prom/alertmanager --config.file=/etc/alertmanager/alertmanager.yml --web.listen-address=":9093" --cluster.listen-address=":9094"
@@ -62,23 +89,60 @@
 
 3. run prometheus
 
-	 配置文件/app/docker/prometheus/prometheus.yml 的scrape_configs里加入从consul拉取exporter的配置
-
-	```yaml
-	  - job_name: 'consul'
-	    scheme: http
-	    consul_sd_configs:
-	      - server: 192.168.67.131:8500
-	        scheme: http
-	        services: []
-	```
-	
+	 配置文件/app/docker/prometheus/prometheus.yml  
+	 example:
+	 ```yaml
+     # my global config
+     global:
+       scrape_interval:     10s 
+       evaluation_interval: 10s 
+       # scrape_timeout is set to the global default (10s).
+     
+     # Alertmanager configuration
+     alerting:
+       alertmanagers:
+       - static_configs:
+         - targets:
+            - 192.168.67.131:9093
+     
+     # Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
+     rule_files:
+       - /etc/prometheus/rules/*.yml
+       # - "first_rules.yml"
+       # - "second_rules.yml"
+     
+     # A scrape configuration containing exactly one endpoint to scrape:
+     # Here it's Prometheus itself.
+     scrape_configs:
+       # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
+       - job_name: 'prometheus'
+     
+         # metrics_path defaults to '/metrics'
+         # scheme defaults to 'http'.
+     
+         static_configs:
+         - targets: ['192.168.67.131:9090']
+     
+       - job_name: 'consul'
+         scheme: http
+         consul_sd_configs:
+           - server: 192.168.67.131:8500
+             scheme: http
+             services: []
+     ```
+     配置文件说明：  
+     global -> scrape_interval 默认采集间隔  
+     alerting -> targets  altermanager的地址  
+     rule_files 告警配置规则文件路径  
+     scrape_configs -> job:consul 从consul中获取采集的对象信息  
+       
+     实例运行:  
 	```shell
 	docker volume create prometheus-tsdb
 	docker run --name prometheus01 --volume prometheus-tsdb:/prometheus --volume /app/docker/prometheus:/etc/prometheus  -d -p 9090:9090  prom/prometheus --config.file=/etc/prometheus/prometheus.yml --web.enable-lifecycle
 	```
 
-	reload配置 
+	热加载配置接口: 
 
 	```
 	curl -X POST http://127.0.0.1:9090/-/reload

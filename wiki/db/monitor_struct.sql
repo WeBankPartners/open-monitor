@@ -204,6 +204,29 @@ CREATE TABLE `strategy` (
   `last` VARCHAR(50) NOT NULL,
   `priority` VARCHAR(50) NOT NULL,
   `content` VARCHAR(500) NOT NULL,
+  `config_type` varchar(50) default 'default',
   PRIMARY KEY (`id`),
   KEY `idx_strategy_tpl_id` (`tpl_id`)
+) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+
+DROP TABLE IF EXISTS `log_monitor`;
+
+CREATE TABLE `log_monitor` (
+  `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `strategy_id` INT(11) NOT NULL,
+  `path` VARCHAR(255) NOT NULL,
+  `keyword` VARCHAR(255) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+
+DROP TABLE IF EXISTS `maintain`;
+
+CREATE TABLE `maintain` (
+  `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `endpoint_id` INT(11) NOT NULL,
+  `maintain_start` DATETIME,
+  `maintain_end` DATETIME,
+  `maintain_user` VARCHAR(50) NOT NULL,
+  `update_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
 ) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
