@@ -30,6 +30,9 @@
         },
         "update": {
             "api": "alarm/endpoint/update"
+        },
+        "register": {
+            "api": "agent/register"
         }
     },
     "thresholdManagement": {
