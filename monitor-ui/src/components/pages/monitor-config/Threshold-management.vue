@@ -23,7 +23,7 @@
       <template v-for="(tableItem, tableIndex) in totalPageConfig">
         <div :key="tableIndex + 'f'" class="section-table-tip">
           <Tag color="blue" :key="tableIndex + 'a'" v-if="tableItem.obj_name">{{tableItem.obj_name}}</Tag>
-          <button @click="add()" type="button" v-if="tableItem.operation" class="btn btn-sm btn-cancle-f" :key="tableIndex + 'b'">
+          <button @click="add(tableItem.obj_type)" type="button" v-if="tableItem.operation" class="btn btn-sm btn-cancle-f" :key="tableIndex + 'b'">
             <i class="fa fa-plus"></i>
             新增
           </button>
@@ -31,19 +31,28 @@
         <PageTable :pageConfig="tableItem" :key="tableIndex + 'c'"></PageTable>
       </template>
       <ModalComponent :modelConfig="modelConfig">
-        <div slot="thresholdConfig" class="extentClass">   
+        <div slot="metricSelect" class="extentClass">  
+          <div class="marginbottom params-each">
+            <label class="col-md-2 label-name lable-name-select">名称:</label>
+            <Select v-model="modelConfig.addRow.expr" filterable style="width:340px"
+            :label-in-value="true" @on-change="selectMetric">
+              <Option v-for="item in modelConfig.metricList" :value="item.prom_ql" :key="item.prom_ql+item.metric">{{ item.metric }}</Option>
+            </Select>
+          </div> 
+        </div>
+        <div slot="thresholdConfig" class="extentClass">  
           <div class="marginbottom params-each">
             <label class="col-md-2 label-name lable-name-select">阀值:</label>
             <Select v-model="modelConfig.threshold" style="width:100px">
               <Option v-for="item in modelConfig.thresholdList" :value="item.value" :key="item.value">{{ item.label }}</Option>
             </Select>
-            <div class="search-input-content">
+            <div class="search-input-content" style="margin-left: 8px">
               <input v-model="modelConfig.thresholdValue" type="text" class="search-input" />
             </div>
           </div>
           <div class="marginbottom params-each">
             <label class="col-md-2 label-name lable-name-select">持续时间:</label>
-            <div class="search-input-content">
+            <div class="search-input-content" style="margin-right: 8px">
               <input v-model="modelConfig.lastValue" type="text" class="search-input" />
             </div>
             <Select v-model="modelConfig.last" style="width:100px">
@@ -118,7 +127,7 @@ export default {
         modalTitle: '阀值管理',
         isAdd: true,
         config: [
-          {label: '名称', value: 'metric', placeholder: '必填,2-60字符', v_validate: 'required:true|min:2|max:60', disabled: false, type: 'text'},
+          {name:'metricSelect',type:'slot'},
           {label: '表达式', value: 'expr', placeholder: '必填', v_validate: 'required:true', disabled: false, type: 'textarea'},
           {label: '通知内容', value: 'content', placeholder: '必填', v_validate: 'required:true', disabled: false, type: 'textarea'},
           {name:'thresholdConfig',type:'slot'}
@@ -128,6 +137,8 @@ export default {
           expr: null,
           content: null,
         },
+        metricName: '',
+        metricList: [],
         threshold: '>',
         thresholdList: thresholdList,
         thresholdValue: '',
@@ -183,7 +194,7 @@ export default {
             config.btn = []
           }
           config.tableData = item.strategy
-          this.totalPageConfig.push({table:config, obj_name: item.obj_name, operation:item.operation})
+          this.totalPageConfig.push({table:config, obj_type: item.obj_type, obj_name: item.obj_name, operation:item.operation})
         })
       })
     },
@@ -224,7 +235,14 @@ export default {
       }
       return Object.assign(modelParams, this.modelConfig.addRow)
     },
-    add () {
+    add (type) {
+      var params = {}
+      if (type === 'endpoint') {
+        params = {type: this.$store.state.ip.type}
+      } 
+      this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.metricList.api, params, (responseData) => {
+        this.modelConfig.metricList = responseData
+      })
       this.modelConfig.isAdd = true
       this.JQ('#add_edit_Modal').modal('show')
     },
@@ -269,6 +287,11 @@ export default {
         this.JQ('#add_edit_Modal').modal('hide')
         this.requestData(this.type, this.typeValue)
       })
+    },
+    selectMetric (option) {
+      if (option) {
+        this.modelConfig.addRow.metric = option.label
+      }
     }
   },
   components: {

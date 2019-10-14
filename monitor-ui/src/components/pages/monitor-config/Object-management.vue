@@ -21,7 +21,23 @@
     </ModalComponent>
     <ModalComponent :modelConfig="historyAlarmModel">
       <div slot="historyAlarm">
-         <tableTemp :table="historyAlarmPageConfig.table" :pageConfig="historyAlarmPageConfig"></tableTemp>
+        <tableTemp :table="historyAlarmPageConfig.table" :pageConfig="historyAlarmPageConfig"></tableTemp>
+      </div>
+    </ModalComponent>
+    <ModalComponent :modelConfig="entpointRejectModel">
+      <div slot="entpointReject">  
+        <div class="marginbottom params-each">
+          <label class="col-md-2 label-name lable-name-select">对象名:</label>
+          <Select v-model="entpointRejectModel.addRow.type" style="width:338px">
+              <Option v-for="item in entpointRejectModel.entpointType" :value="item.value" :key="item.value">
+              {{item.label}}</Option>
+          </Select>
+        </div>
+        <div class="marginbottom params-each" v-if="showInstance">
+          <label class="col-md-2 label-name lable-name-select">实例名:</label>
+          <input v-model="entpointRejectModel.addRow.instance" type="text" class="col-md-7 form-control model-input">
+          <label class="required-tip">*</label>
+        </div>
       </div>
     </ModalComponent>
   </div>
@@ -58,14 +74,13 @@
     name: '',
     data() {
       return {
-        model10: [],
         pageConfig: {
           CRUD: this.apiCenter.objectManagement.list.api,
           researchConfig: {
             input_conditions: [
               {value: 'search', type: 'input', placeholder: '请输入', style: ''}],
             btn_group: [
-              {btn_name: '搜索', btn_func: 'search', class: 'btn-confirm-f', btn_icon: 'fa fa-search'},
+              {btn_name: '搜索', btn_func: 'search', class: 'btn-confirm-f', btn_icon: 'fa fa-search'}
             ],
             filters: {
               search: ''
@@ -161,6 +176,29 @@
             }
           },
         },
+        entpointRejectModel: {
+          modalId: 'entpoint_reject_model',
+          modalTitle: '对象注册',
+          isAdd: true,
+          saveFunc: 'entpointRejectSave',
+          config: [
+            {name:'entpointReject',type:'slot'},
+            {label: 'IP', value: 'exporter_ip', placeholder: '必填', v_validate: 'required:true|isIP', disabled: false, type: 'text'},
+            {label: '端口', value: 'exporter_port', placeholder: '必填', v_validate: 'required:true|isNumber', disabled: false, type: 'text'},
+          ],
+          addRow: {
+            instance: '',
+            type: 'host',
+            exporter_ip: null,
+            exporter_port: null,
+          },
+          entpointType: [
+            {label:'host',value:'host'},
+            {label:'mysql',value:'mysql'},
+            {label:'redis',value:'redis'},
+            {label:'tomcat',value:'tomcat'}
+          ],
+        },
         id: null,
         showGroupMsg: false,
         groupMsg: {}
@@ -170,6 +208,7 @@
       if (this.$validate.isEmpty_reset(this.$route.params)) {
         this.groupMsg = {}
         this.showGroupMsg = false
+        this.pageConfig.researchConfig.btn_group.push({btn_name: '注册', btn_func: 'entpointReject', class: 'btn-cancle-f', btn_icon: 'fa fa-plus'})
       } else {
         this.$parent.activeTab = '/monitorConfigIndex/objectManagement'
         if (this.$route.params.hasOwnProperty('group')) {
@@ -183,6 +222,11 @@
         }
       }
       this.initData(this.pageConfig.CRUD, this.pageConfig)
+    },
+    computed:{
+      showInstance: function(){
+        return this.entpointRejectModel.addRow.type === 'host' ? false: true
+      }
     },
     methods: {
       initData (url= this.pageConfig.CRUD, params) {
@@ -242,6 +286,7 @@
         this.pageConfig.researchConfig.filters.grp = ''
         this.pageConfig.table.btn.splice(this.pageConfig.table.btn.length-1, 1)
         this.pageConfig.researchConfig.btn_group.splice(this.pageConfig.researchConfig.btn_group.length-1, 1)
+        this.pageConfig.researchConfig.btn_group.push({btn_name: '注册', btn_func: 'entpointReject', class: 'btn-cancle-f', btn_icon: 'fa fa-plus'})
         this.initData(this.pageConfig.CRUD, this.pageConfig)
       },
       historyAlarm (rowData) {
@@ -250,6 +295,20 @@
           this.historyAlarmPageConfig.table.tableData = responseData
         })
         this.JQ('#history_alarm_Modal').modal('show')
+      },
+      entpointReject () {
+        this.entpointRejectModel.addRow.type = 'host'
+        this.JQ('#entpoint_reject_model').modal('show')
+      },
+      entpointRejectSave () {
+        this.entpointRejectModel.addRow.exporter_port += ''
+        let params= this.$validate.isEmptyReturn_JSON(this.entpointRejectModel.addRow)
+        this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.objectManagement.register.api, params, () => {
+          this.$validate.emptyJson(this.entpointRejectModel.addRow)
+          this.JQ('#entpoint_reject_model').modal('hide')
+          this.$Message.success('新增成功 !')
+          this.initData(this.pageConfig.CRUD, this.pageConfig)
+        })
       }
     },
     components: {

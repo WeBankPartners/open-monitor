@@ -33,13 +33,6 @@ const config = {
   // events: 'keyup|input|blur'
 }
 
-Validator.extend('noChinese', {
-  getMessage: () => '不能包含中文',
-  validate: value => {
-    return !(/[\u4E00-\u9FA5]|[\uFE30-\uFFA0]/gi.test(value))
-  }
-})
-
 Validator.extend('noEmail', {
   getMessage: () => '格式不正确',
   validate: value => {
@@ -47,10 +40,18 @@ Validator.extend('noEmail', {
   }
 })
 
-Validator.extend('mobile', {
-  getMessage: () => '必须是11位手机号码',
+
+Validator.extend('isIP', {
+  getMessage: () => 'ip格式不正确',
   validate: value => {
-    return value.length == 11 && /^((13|14|15|17|18)[0-9]{1}\d{8})$/.test(value)
+    return (/((2(5[0-5]|[0-4]\d))|[0-1]?\d{1,2})(\.((2(5[0-5]|[0-4]\d))|[0-1]?\d{1,2})){3}/g.test(value))
+  }
+})
+
+Validator.extend('isNumber', {
+  getMessage: () => '输入必须为数字',
+  validate: value => {
+    return (/^\d{1,}$/.test(value))
   }
 })
 
