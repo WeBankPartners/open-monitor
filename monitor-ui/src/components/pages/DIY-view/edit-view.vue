@@ -12,6 +12,7 @@
         </div>
       </header>
       <div class="zone zone-chart" >
+        <div class="zone-chart-title">{{panalTitle}}</div>
         <div :id="elId" class="echart"></div>
       </div>
       <div class="zone zone-config" >
@@ -38,12 +39,17 @@
             </ul>
           </section>
           <section class="zone-config-operation">
-            <button class="btn btn-sm btn-cancle-f" >新增指标</button>
-            <button class="btn btn-sm btn-cancle-f" >保存配置</button>
             <div v-if="activeStep==='chat_query'">
+              <button class="btn btn-sm btn-cancle-f" @click="addQuery">新增指标</button>
+              <button class="btn btn-sm btn-cancle-f" >保存配置</button>
               <template v-for="(queryItem,queryIndex) in chartQueryList">
                 <div class="condition-zone" :key="queryIndex">
                   <ul>
+                     <li>
+                      <div class="condition condition-del">
+                        <i class="fa fa-trash" aria-hidden="true" @click="removeQuery(queryItem)"></i>
+                      </div>
+                    </li>
                     <li>
                       <div class="condition condition-title">对象</div>
                       <div class="condition">
@@ -68,27 +74,22 @@
                   </ul>
                 </div>
               </template>
-                <!-- <div class="condition-zone" >
-                  <ul>
-                    <li>
-                      <div class="condition condition-title">主机</div>
-                      <div class="condition">
-                        <Select
-                          style="width:300px"
-                          v-model="model"
-                          filterable
-                          remote
-                          :remote-method="entpointList">
-                          <Option v-for="(option, index) in options" :value="option.option_value" :key="index">
-                          {{option.option_text}}</Option>
-                        </Select>
-                      </div>
-                    </li>
-                  </ul>
-                </div> -->
             </div>
-            <div v-if="activeStep==='chat_general'">
-              2
+            <div v-if="activeStep==='chat_general'" class="zone-config-operation-general">
+              <ul>
+                <li>
+                  <div class="condition condition-title">标题</div>
+                  <div class="condition">
+                    <Input v-model="panalTitle" placeholder="Enter something..." style="width: 300px" />
+                  </div>
+                </li>
+                <li>
+                  <div class="condition condition-title">单位</div>
+                  <div class="condition">
+                    <Input v-model="panalUnit" placeholder="Enter something..." style="width: 300px" />
+                  </div>
+                </li>
+              </ul>
             </div>
           </section>
         </div>
@@ -117,7 +118,10 @@ export default {
       }],
       
       options: [],
-      metricList: []
+      metricList: [],
+
+      panalTitle: 'Default title',
+      panalUnit: ''
       // model: ''
     }
   },
@@ -135,7 +139,7 @@ export default {
       let params = {
         search: query,
         page: 1,
-        size: 100
+        size: 1000
       }
       this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.resourceSearch.api, params, (responseData) => {
        this.options = responseData
@@ -151,32 +155,41 @@ export default {
         })
       } 
     },
+    addQuery () {
+      this.chartQueryList.push({
+        entpointModel: '',
+        metricModel: ''
+      })
+    },
+    removeQuery (queryItem) {
+      this.chartQueryList.splice(this.chartQueryList.indexOf(queryItem),1)
+    },
     chartData () {
-        let params = {
-            agg: 'none',
-            endpoint: ['VM_0_14_centos_192.168.0.14_host'],
-            id: 1,
-            metric: ['cpu.used.percent'],
-            time: '-1800'
+      let params = {
+          agg: 'none',
+          endpoint: ['VM_0_14_centos_192.168.0.14_host'],
+          id: 1,
+          metric: ['cpu.used.percent'],
+          time: '-1800'
+      }
+      this.$httpRequestEntrance.httpRequestEntrance('GET', '/dashboard/chart', params, responseData => {
+        var legend = []
+        responseData.series.forEach((item)=>{
+        legend.push(item.name)
+        item.symbol = 'none'
+        item.smooth = true
+        item.lineStyle = {
+            width: 1
         }
-        this.$httpRequestEntrance.httpRequestEntrance('GET', '/dashboard/chart', params, responseData => {
-            var legend = []
-            responseData.series.forEach((item)=>{
-            legend.push(item.name)
-            item.symbol = 'none'
-            item.smooth = true
-            item.lineStyle = {
-                width: 1
-            }
-            }) 
-            let config = {
-            title: responseData.title,
-            legend: legend,
-            series: responseData.series,
-            yaxis: responseData.yaxis,
-            }
-            drawChart(this,config)
-        })
+        }) 
+        let config = {
+        title: responseData.title,
+        legend: legend,
+        series: responseData.series,
+        yaxis: responseData.yaxis,
+        }
+        drawChart(this, config, {title: false, eye: false,dataZoom: false})
+      })
     }
   },
   components: {},
@@ -194,6 +207,11 @@ export default {
     margin-top: 16px;
     margin-bottom: 16px;
 
+}
+.zone-chart-title {
+  padding: 20px 40%;
+  position: absolute;
+  font-size: 14px;
 }
 .zone-config {
   padding: 8px;
@@ -231,6 +249,9 @@ export default {
 .zone-config-operation {
   margin-left: 24px;
 }
+.zone-config-operation-general {
+  margin-top: 20px;
+}
 </style>
 
 <style scoped lang="less">
@@ -248,9 +269,13 @@ export default {
     padding: 6px;
   }
   .condition-zone {
+    width: 900px;
     border: 1px solid @blue-2;
     padding: 4px;
     margin: 4px;
+  }
+  .condition-del {
+    float: right;
   }
 </style>
 
