@@ -429,6 +429,10 @@ import {interceptParams} from '@/assets/js/utils'
     height: 100px;
     padding: 3px;
   }
+  .textareaSty:focus {
+    outline: none !important;
+    border-color: #719ECE; 
+  }
   textarea:disabled {
     background-color: #fff!important;
   }
