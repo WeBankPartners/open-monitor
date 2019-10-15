@@ -28,8 +28,14 @@
             新增
           </button>
         </div>
-        <PageTable :pageConfig="tableItem" :key="tableIndex + 'c'"></PageTable>
+        <PageTable :pageConfig="tableItem" :key="tableIndex + 'c'">
+          <div slot='tableExtend'>
+            <extendTable :detailConfig="pageConfig.table.isExtend.detailConfig"></extendTable>
+          </div>
+        </PageTable>
       </template>
+      <ModalComponent :modelConfig="pathModelConfig">
+      </ModalComponent>
       <ModalComponent :modelConfig="modelConfig">
         <div slot="thresholdConfig" class="extentClass">  
           <div class="marginbottom params-each">
@@ -65,6 +71,7 @@
 <script>
 import {thresholdList, lastList, priorityList} from '@/assets/config/common-config.js'
 import Searchinput from '@/components/components/Search-input'
+import extendTable from '@/components/components/table-page/extend-table'
 let tableEle = [
   {title: '路径', value: 'path', display: true}
 ]
@@ -102,23 +109,25 @@ export default {
           primaryKey: 'id',
           btn: btn,
           handleFloat:true,
-          isExtend:{
-            func:'getExtendInfo',
-            data:{},
-            slot:'tableExtend',
-            detailConfig:[{
-              isExtendF:true,
-              title: '磁盘列表',
-              config:[
-              {title: '磁盘名', value: 'name', display: true},
-              {title: '磁盘类型', value: 'volume_type', display: true},
-              {title: '设备', value: 'device', display: true},
-              {title: '大小(GB)', value: 'size_gb', display: true},
-              {title: '状态', value: 'status_state', display: true},
-              {title: '创建时间', value: 'created_date', display: true}
+          isExtend: {
+            func: 'getExtendInfo',
+            data: {},
+            slot: 'tableExtend',
+            detailConfig: [{
+              isExtendF: true,
+              title: '',
+              config: [
+                {title: '条件', value: 'cond', display: true},
+                {title: '关键字', value: 'keyword', display: true},
+                {title: '范围', value: 'last', display: true},
+                {title: '优先级', value: 'priority', display: true},
+                {title: '操作',btn:[
+                  {btn_name: '编辑', btn_func: 'editPathItem'},
+                  {btn_name: '移除', btn_func: 'delPathItem'}
+                ]}
               ],
-              data:[],
-              scales: ['25%', '20%', '10%', '15%', '10%', '20%']
+              data: [],
+              scales: ['25%', '20%', '15%', '20%', '20%']
             }]
           }
         }
@@ -127,12 +136,23 @@ export default {
         key: '',
         value: 'metric'
       },
+      pathModelConfig: {
+        modalId: 'path_Modal',
+        modalTitle: '日志编辑',
+        saveFunc: 'savePath',
+        config: [
+          {label: '路径', value: 'path', placeholder: '必填', v_validate: 'required:true', disabled: false, type: 'text'}
+        ],
+        addRow: { // [通用]-保存用户新增、编辑时数据
+          path: null,
+        }
+      },
       modelConfig: {
         modalId: 'add_edit_Modal',
-        modalTitle: '阀值管理',
+        modalTitle: '日志编辑',
         isAdd: true,
         config: [
-          {label: '路径', value: 'path', placeholder: '必填', v_validate: 'required:true', disabled: false, type: 'text'},
+          {label: '路径', value: 'path', placeholder: '必填', v_validate: 'required:true',hide: 'edit', disabled: false, type: 'text'},
           {label: '关键字', value: 'keyword', placeholder: '必填', v_validate: 'required:true', disabled: false, type: 'text'},
           {name:'thresholdConfig',type:'slot'}
         ],
@@ -156,6 +176,8 @@ export default {
         }
       },
       id: null,
+      activeData: null,
+      extendData: null,
     }
   },
   watch: {
@@ -203,7 +225,7 @@ export default {
     },
     delF (rowData) {
       let params = {id: rowData.id}
-      this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.logManagement.delete.api, params, () => {
+      this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.logManagement.delList.api, params, () => {
         this.$Message.success('删除成功 !')
         this.requestData(this.type, this.typeValue)
       })
@@ -255,17 +277,44 @@ export default {
       })
     },
     editF (rowData) {
+      this.pathModelConfig.isAdd = false
+      this.activeData = rowData
+      this.pathModelConfig.addRow.path = rowData.path
+      this.modelTip.value = rowData.path
+      this.JQ('#path_Modal').modal('show')
+    },
+    savePath () {
+      let params = {
+        id: this.activeData.id,
+        tpl_id: this.activeData.tpl_id,
+        path: this.pathModelConfig.addRow.path
+      }
+      this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.logManagement.editList.api, params, () => {
+        this.$Message.success('编辑成功 !')
+        this.JQ('#path_Modal').modal('hide')
+        this.requestData(this.type, this.typeValue)
+      })
+    },
+    getExtendInfo(item){
+      item.strategy.forEach((i)=>{
+        i.tpl_id = item.tpl_id
+        i.path = item.path
+      })
+      this.pageConfig.table.isExtend.detailConfig[0].data = item.strategy
+    },
+    editPathItem (rowData) {
       this.modelConfig.isAdd = false
       this.id = rowData.id
-      this.modelTip.value = rowData.metric
+      this.extendData = rowData
+      this.modelTip.value = rowData.strategy_id
       this.modelConfig.addRow = this.$tableUtil.manageEditParams(this.modelConfig.addRow, rowData)
       let cond = rowData.cond.split('')
       if (cond.indexOf('=') > 0) {
-        this.modelConfig.threshold = cond.slice(0,2).join('')
-        this.modelConfig.thresholdValue = cond.slice(2).join('')
+        this.modelConfig.cond = cond.slice(0,2).join('')
+        this.modelConfig.condValue = cond.slice(2).join('')
       } else {
-        this.modelConfig.threshold = cond.slice(0,1).join('')
-        this.modelConfig.thresholdValue = cond.slice(1).join('')
+        this.modelConfig.cond = cond.slice(0,1).join('')
+        this.modelConfig.condValue = cond.slice(1).join('')
       }
       let last = rowData.last
       this.modelConfig.last = last.substring(last.length-1)
@@ -273,54 +322,30 @@ export default {
       this.modelConfig.priority = rowData.priority
       this.JQ('#add_edit_Modal').modal('show')
     },
+    delPathItem (rowData) {
+      let params = {id: rowData.strategy_id}
+      this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.logManagement.delete.api, params, () => {
+        this.$Message.success('删除成功 !')
+        this.requestData(this.type, this.typeValue)
+      })
+    },
     editPost () {
       if (!this.formValidate()) {
         return
       }
       let params = this.paramsPrepare()
-      params.strategy_id = this.id
+      params.tpl_id = this.extendData.tpl_id
+      params.strategy[0].strategy_id = this.extendData.strategy_id
       this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.logManagement.update.api, params, () => {
         this.$Message.success('编辑成功 !')
         this.JQ('#add_edit_Modal').modal('hide')
         this.requestData(this.type, this.typeValue)
       })
     },
-    selectMetric (option) {
-      if (option) {
-        this.modelConfig.addRow.metric = option.label
-      }
-    },
-    getExtendInfo(item){
-        this.pageConfig.table.isExtend.detailConfig[0].data = []
-        this.pageConfig.table.isExtend.detailConfig[1].data = []
-        this.instance = item
-        this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.manage.ECS.ecs_manage.CRUD + '/' + item.id, '', res => {
-          if(res){
-            let data = res.volumes
-            let state_mapping = {available: '空闲', using: '已挂载', error: '错误'}
-            if(res.volumes.length>0){
-              for(let i = 0, len = res.volumes.length; i < len; i++){
-                let item = res.volumes[i]
-                data[i].name = item.volume.name
-                data[i].size_gb = item.volume.size_gb
-                data[i].status_state = state_mapping[item.volume.status]
-                data[i].detailId = item.volume.id
-              }
-            }
-            this.pageConfig.table.isExtend.detailConfig[0].data =  data
-            if(item.enis){
-              this.pageConfig.table.isExtend.detailConfig[1].data= item.enis.map(item =>{
-                item.subnetName = item.subnet.name
-                item.userNickname = item.user.nickname
-                return item
-              })
-            }
-          }
-        })
-      }
   },
   components: {
-    Searchinput
+    Searchinput,
+    extendTable
   },
 }
 </script>

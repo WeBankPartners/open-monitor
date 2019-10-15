@@ -55,6 +55,12 @@
         "list": {
             "api": "alarm/log/monitor/list"
         },
+        "delList": {
+            "api": "alarm/log/monitor/delete_path"
+        },
+        "editList": {
+            "api": "alarm/log/monitor/update_path"
+        },
         "add": {
             "api": "alarm/log/monitor/add"
         },
