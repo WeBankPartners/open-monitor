@@ -102,6 +102,25 @@ export default {
           primaryKey: 'id',
           btn: btn,
           handleFloat:true,
+          isExtend:{
+            func:'getExtendInfo',
+            data:{},
+            slot:'tableExtend',
+            detailConfig:[{
+              isExtendF:true,
+              title: '磁盘列表',
+              config:[
+              {title: '磁盘名', value: 'name', display: true},
+              {title: '磁盘类型', value: 'volume_type', display: true},
+              {title: '设备', value: 'device', display: true},
+              {title: '大小(GB)', value: 'size_gb', display: true},
+              {title: '状态', value: 'status_state', display: true},
+              {title: '创建时间', value: 'created_date', display: true}
+              ],
+              data:[],
+              scales: ['25%', '20%', '10%', '15%', '10%', '20%']
+            }]
+          }
         }
       },
       modelTip: {
@@ -270,7 +289,35 @@ export default {
       if (option) {
         this.modelConfig.addRow.metric = option.label
       }
-    }
+    },
+    getExtendInfo(item){
+        this.pageConfig.table.isExtend.detailConfig[0].data = []
+        this.pageConfig.table.isExtend.detailConfig[1].data = []
+        this.instance = item
+        this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.manage.ECS.ecs_manage.CRUD + '/' + item.id, '', res => {
+          if(res){
+            let data = res.volumes
+            let state_mapping = {available: '空闲', using: '已挂载', error: '错误'}
+            if(res.volumes.length>0){
+              for(let i = 0, len = res.volumes.length; i < len; i++){
+                let item = res.volumes[i]
+                data[i].name = item.volume.name
+                data[i].size_gb = item.volume.size_gb
+                data[i].status_state = state_mapping[item.volume.status]
+                data[i].detailId = item.volume.id
+              }
+            }
+            this.pageConfig.table.isExtend.detailConfig[0].data =  data
+            if(item.enis){
+              this.pageConfig.table.isExtend.detailConfig[1].data= item.enis.map(item =>{
+                item.subnetName = item.subnet.name
+                item.userNickname = item.user.nickname
+                return item
+              })
+            }
+          }
+        })
+      }
   },
   components: {
     Searchinput
