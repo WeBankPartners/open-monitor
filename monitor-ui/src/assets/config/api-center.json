@@ -50,6 +50,21 @@
             "api": "alarm/strategy/delete"
         }
     },
+    "logManagement": {
+        "_des": "阀值管理",
+        "list": {
+            "api": "alarm/log/monitor/list"
+        },
+        "add": {
+            "api": "alarm/log/monitor/add"
+        },
+        "update": {
+            "api": "alarm/log/monitor/update"
+        },
+        "delete": {
+            "api": "alarm/log/monitor/delete"
+        }
+    },
     "metricList": {
         "_des": "指标列表",
         "api": "dashboard/config/metric/list"
