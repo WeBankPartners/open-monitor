@@ -1,13 +1,13 @@
 <template>
   <div class=" ">
       <header>
-        <div style="display:flex;justify-content:space-between">
+        <div style="display:flex;justify-content:space-between; font-size:16px;padding:8px 16px">
             <div class="header-name">
-                <i class="fa fa-th-large fa-2x" aria-hidden="true"></i>
-                <span>   {{$route.params.label}}</span>
+                <i class="fa fa-th-large fa-18" aria-hidden="true"></i>
+                <span> {{$route.params.name}}</span>
             </div>
             <div class="header-tools"> 
-                <i class="fa fa-plus-square-o fa-2x" @click="addItem" aria-hidden="true"></i>
+                <i class="fa fa-plus-square-o fa-18" @click="addItem" aria-hidden="true"></i>
             </div>
         </div>
       </header>
@@ -40,16 +40,17 @@
         </div>
         </grid-item>
       </grid-layout>
-      {{layoutData}}
   </div>
 </template>
 
 <script>
+import {generateUuid} from '@/assets/js/utils'
 import VueGridLayout from 'vue-grid-layout';
 export default {
   name: '',
   data() {
     return {
+      viewData: null,
       layoutData: [
         //   {'x':0,'y':0,'w':2,'h':2,'i':'0'},
         //   {'x':1,'y':1,'w':2,'h':2,'i':'1'},
@@ -59,19 +60,35 @@ export default {
   mounted() {
     if(this.$validate.isEmpty_reset(this.$route.params)) {
       this.$router.push({path:'viewConfigIndex'})
-    } 
+    } else {
+      if (!this.$validate.isEmpty_reset(this.$route.params.cfg)) {
+        this.viewData = JSON.parse(this.$route.params.cfg)
+        this.initPanals()
+      }
+    }
   },
   methods: {
+    initPanals () {
+      this.viewData.forEach((item) => {
+        this.layoutData.push(item.viewConfig)
+      })
+    },
     addItem() {
-      const key = ((new Date()).valueOf()).toString().substring(10)
-      let item = {"x":0,"y":0,"w":6,"h":7,
-                  "i": `default${key}`,
-                  id: key
-                }
-      this.layoutData.push(item);
+      generateUuid().then((elId)=>{
+        const key = ((new Date()).valueOf()).toString().substring(10)
+        let item = {
+          x:0,
+          y:0,
+          w:6,
+          h:7,
+          i: `default${key}`,
+          id: `id_${elId}`
+        }
+        this.layoutData.push(item)
+      })
     },
     editGrid(item) {
-      this.$router.push({name: 'editView', params:item})
+      this.$router.push({name: 'editView', params:{templateData: this.$route.params, panal:item}})
     },
     removeGrid(item) {
       this.layoutData.splice(this.layoutData.indexOf(item), 1);

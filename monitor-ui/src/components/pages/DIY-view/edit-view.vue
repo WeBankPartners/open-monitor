@@ -1,13 +1,13 @@
 <template>
   <div class=" ">
-      <header>
+      <!-- <header>
         <div style="display:flex;justify-content:space-between">
             <div class="header-name">
               <i class="fa fa-th-large fa-2x" aria-hidden="true"></i>
               <span> 12123123</span>
             </div>
         </div>
-      </header>
+      </header> -->
       <div class="zone zone-chart" >
         <div class="zone-chart-title">{{panalTitle}}</div>
         <div v-if="!noDataTip">
@@ -18,9 +18,12 @@
         </div>
       </div>
       <div class="zone zone-config" >
+        <div class="tool-save" @click="saveConfig"> 
+          <i class="fa fa-floppy-o fa-16" aria-hidden="true"></i>
+        </div>
         <div style="display:flex">
           <section>
-            <ul style="margin-top:20px;">
+            <ul>
               <li>
                 <Tooltip content="指标配置" placement="right">
                   <div class="step-icon" @click="activeStep='chat_query'">
@@ -42,7 +45,7 @@
           </section>
           <section class="zone-config-operation">
             <div v-if="activeStep==='chat_query'">
-              <button class="btn btn-sm btn-cancle-f" @click="addQuery">新增指标</button>
+              <i class="fa fa-plus-square-o fa-18" @click="addQuery" aria-hidden="true"></i>
               <template v-for="(queryItem,queryIndex) in chartQueryList">
                 <div class="condition-zone" :key="queryIndex">
                   <ul>
@@ -56,10 +59,10 @@
                       <div class="condition">
                         <Select
                           style="width:300px"
-                          v-model="chartQueryList[queryIndex].entpointModel"
+                          v-model="chartQueryList[queryIndex].endpoint"
                           filterable
                           remote
-                          :remote-method="entpointList">
+                          :remote-method="endpointList">
                           <Option v-for="(option, index) in options" :value="option.option_value" :key="index">{{option.option_text}}</Option>
                         </Select>
                       </div>
@@ -67,7 +70,7 @@
                     <li>
                       <div class="condition condition-title">指标</div>
                       <div class="condition">
-                        <Select v-model="chartQueryList[queryIndex].metricModel" style="width:300px" @on-open-change="metricSelectOpen(queryItem.entpointModel)">
+                        <Select v-model="chartQueryList[queryIndex].metric" style="width:300px" @on-open-change="metricSelectOpen(queryItem.endpoint)">
                           <Option v-for="(item,index) in metricList" :value="item.prom_ql" :key="item.prom_ql+index">{{ item.metric }}</Option>
                         </Select>
                       </div>
@@ -94,9 +97,6 @@
             </div>
           </section>
         </div>
-        <div class="tool-save"> 
-          <i class="fa fa-floppy-o fa-2x" aria-hidden="true"></i>
-        </div>
       </div>
   </div>
 </template>
@@ -108,17 +108,18 @@ export default {
   name: '',
   data() {
     return {
+      panalData: null,
       elId: null,
       noDataTip: false,
       activeStep: 'chat_query',
       initQuery: {
-        entpointModel: '',
+        endpoint: '',
         metricList: [],
-        metricModel: ''
+        metric: ''
       },
       chartQueryList:[{
-        entpointModel: '',
-        metricModel: ''
+        endpoint: '',
+        metric: ''
       }],
       
       options: [],
@@ -126,8 +127,48 @@ export default {
 
       panalTitle: 'Default title',
       panalUnit: ''
-      // model: ''
     }
+  },
+  watch: {
+    chartQueryList: {
+      handler (data) {
+        let params = []
+        data.forEach((item) => {
+          console.log(item)
+          params.push(JSON.stringify({
+            endpoint: item.endpoint.split(':')[0],
+            // endpoint: item.endpoint,
+            prom_ql: item.metric,
+            time: '-1800'
+          })) 
+        })
+        console.log(params)
+        this.$httpRequestEntrance.httpRequestEntrance('GET',this.apiCenter.metricConfigView.api, {config: `[${params.join(',')}]`}, responseData => {
+          var legend = []
+          if (responseData.series.length === 0) {
+            this.noDataTip = true
+            return
+          }
+          responseData.series.forEach((item)=>{
+            legend.push(item.name)
+            item.symbol = 'none'
+            item.smooth = true
+            item.lineStyle = {
+              width: 1
+            }
+          }) 
+          let config = {
+            title: responseData.title,
+            legend: legend,
+            series: responseData.series,
+            yaxis: responseData.yaxis,
+          }
+          drawChart(this, config, {eye: false})
+        })
+      },
+      deep: true
+      // immediate: true
+    },
   },
   created (){
     generateUuid().then((elId)=>{
@@ -135,11 +176,59 @@ export default {
     })
   },
   mounted() {
-    this.chartData()
-    // this.entpointList()
+    if (this.$validate.isEmpty_reset(this.$route.params)) {
+      this.$router.push({path: 'viewConfig'})
+    } else {
+      if (!this.$validate.isEmpty_reset(this.$route.params.templateData.cfg)) {
+        let viewData = JSON.parse(this.$route.params.templateData.cfg)
+        viewData.forEach((itemx)=>{
+          if (itemx.viewConfig.id === this.$route.params.panal.id) {
+            this.panalData = itemx
+            return
+          }
+        })
+        this.initPanal()
+      }
+    }
   },
   methods: {
-    entpointList(query) {
+    initPanal() {
+      this.panalTitle = this.panalData.panalTitle
+      this.panalUnit = this.panalData.panalUnit
+      let params = []
+      this.panalData.query.forEach((item) => {
+        console.log(item)
+        params.push(JSON.stringify({
+          endpoint: item.endpoint,
+          prom_ql: item.prom_ql,
+          time: '-1800'
+        })) 
+      })
+      console.log(params)
+      this.$httpRequestEntrance.httpRequestEntrance('GET',this.apiCenter.metricConfigView.api, {config: `[${params.join(',')}]`}, responseData => {
+        var legend = []
+        if (responseData.series.length === 0) {
+          this.noDataTip = true
+          return
+        }
+        responseData.series.forEach((item)=>{
+          legend.push(item.name)
+          item.symbol = 'none'
+          item.smooth = true
+          item.lineStyle = {
+            width: 1
+          }
+        }) 
+        let config = {
+          title: responseData.title,
+          legend: legend,
+          series: responseData.series,
+          yaxis: responseData.yaxis,
+        }
+        drawChart(this, config, {eye: false})
+      })
+    },
+    endpointList(query) {
       let params = {
         search: query,
         page: 1,
@@ -149,11 +238,11 @@ export default {
        this.options = responseData
       })
     },
-    metricSelectOpen(metricModel) {
-      if (this.$validate.isEmpty_reset(metricModel)) {
+    metricSelectOpen(metric) {
+      if (this.$validate.isEmpty_reset(metric)) {
         this.$Message.warning('请先选择主机！')
       } else {
-        let params = {type: metricModel.split(':')[1]}
+        let params = {type: metric.split(':')[1]}
         this.$httpRequestEntrance.httpRequestEntrance('GET',this.apiCenter.metricList.api, params, responseData => {
           this.metricList = responseData
         })
@@ -161,8 +250,8 @@ export default {
     },
     addQuery () {
       this.chartQueryList.push({
-        entpointModel: '',
-        metricModel: ''
+        endpoint: '',
+        metric: ''
       })
     },
     removeQuery (queryItem) {
@@ -197,6 +286,29 @@ export default {
           yaxis: responseData.yaxis,
         }
         drawChart(this, config, {title: false, eye: false,dataZoom: false})
+      })
+    },
+    saveConfig () {
+      let query = []
+      this.chartQueryList.forEach((item) => {
+        query.push({
+          endpoint: item.endpoint.split(':')[0],
+          prom_ql: item.metric
+        }) 
+      })
+      const cfg = [{
+        panalTitle: this.panalTitle,
+        panalUnit: this.panalUnit,
+        query: query,
+        viewConfig: this.$route.params.panal
+      }]
+      let params = {
+        name: this.$route.params.templateData.name,
+        id: this.$route.params.templateData.id,
+        cfg: JSON.stringify(cfg)
+      }
+      this.$httpRequestEntrance.httpRequestEntrance('POST','dashboard/custom/save', params, () => {
+        this.$Message.success('保存成功！')
       })
     }
   },
@@ -256,6 +368,10 @@ export default {
 
 .zone-config-operation {
   margin: 24px;
+  margin-top: 0;
+}
+.fa-plus-square-o {
+  padding-left: 4px;
 }
 .zone-config-operation-general {
   margin-top: 24px;
@@ -268,10 +384,7 @@ export default {
 }
 .tool-save {
   text-align: right;
-  padding: 16px 32px;
-  i {
-    font-size: 16px;
-  }
+  padding: 4px 64px;
 }
 </style>
 
