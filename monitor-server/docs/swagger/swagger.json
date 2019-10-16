@@ -11,6 +11,228 @@
     "host": "monitor.test.com",
     "basePath": "/v1",
     "paths": {
+        "/api/v1/alarm/log/monitor/add": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "日志告警配置接口 : 新增",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "组Id，和对象id二选一",
+                        "name": "grp_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "对象Id，和组id二选一",
+                        "name": "endpoint_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "表单输入的日志路径",
+                        "name": "path",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "对象数组类型[{'keyword':'关键字','cond':'条件,如 \u003e1','last':'时间范围,如 5min','priority':'优先级,如 high'}]",
+                        "name": "strategy",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "{\"message\": \"Success\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/alarm/log/monitor/delete": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "日志告警配置接口 : 删除",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "strategy_id",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "{\"message\": \"Success\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/alarm/log/monitor/delete_path": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "日志告警配置接口 : 删除",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "strategy_id",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "{\"message\": \"Success\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/alarm/log/monitor/list": {
+            "get": {
+                "description": "获取配置好的对象或组的日志告警列表",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "日志告警配置接口 : 获取列表",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "类型，区分是单个对象还是组，枚举endpoint、grp",
+                        "name": "type",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "对象或组的id",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ]
+            }
+        },
+        "/api/v1/alarm/log/monitor/update": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "日志告警配置接口 : 修改",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "列表获取中的tpl_id",
+                        "name": "tpl_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "表单输入的日志路径",
+                        "name": "path",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "对象数组类型[{'strategy_id':int类型,'keyword':'关键字','cond':'条件,如 \u003e1','last':'时间范围,如 5min','priority':'优先级,如 high'}]",
+                        "name": "strategy",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "{\"message\": \"Success\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/alarm/log/monitor/update_path": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "日志告警配置接口 : 修改日志路径",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "列表获取中的id",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "列表获取中的tpl_id",
+                        "name": "tpl_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "新的日志路径",
+                        "name": "path",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "{\"message\": \"Success\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/alarm/problem/close": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "手动关闭告警接口",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "告警id",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "{\"message\": \"Success\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/dashboard/chart": {
             "get": {
                 "description": "获取chart数据",

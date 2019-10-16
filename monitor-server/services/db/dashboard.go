@@ -163,6 +163,13 @@ func GetEndpoint(query *m.EndpointTable) error {
 	}else if query.Address != "" {
 		err = x.SQL("SELECT * FROM endpoint WHERE address=?", query.Address).Find(&endpointObj)
 	}
+	if query.Ip != "" && query.ExportType != "" {
+		if query.Name == "" {
+			err = x.SQL("SELECT * FROM endpoint WHERE ip=? and export_type=?", query.Ip, query.ExportType).Find(&endpointObj)
+		}else{
+			err = x.SQL("SELECT * FROM endpoint WHERE ip=? and export_type=? and name=?", query.Ip, query.ExportType, query.Name).Find(&endpointObj)
+		}
+	}
 	if err != nil {
 		mid.LogError("get tags fail ", err)
 		return err
@@ -245,7 +252,11 @@ func RegisterEndpointMetric(endpointId int,endpointMetrics []string) error {
 }
 
 func GetPromMetricTable(metricType string) (err error,result []*m.PromMetricTable) {
-	err = x.SQL("SELECT * FROM prom_metric WHERE metric_type=?", metricType).Find(&result)
+	if metricType != "" {
+		err = x.SQL("SELECT * FROM prom_metric WHERE metric_type=?", metricType).Find(&result)
+	}else{
+		err = x.SQL("SELECT * FROM prom_metric").Find(&result)
+	}
 	if err != nil {
 		mid.LogError("get prom metric table fail", err)
 	}

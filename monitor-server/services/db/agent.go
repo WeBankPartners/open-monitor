@@ -29,6 +29,7 @@ func UpdateEndpoint(endpoint *m.EndpointTable) error {
 			mid.LogError("update endpoint fail ", err)
 			return err
 		}
+		endpoint.Id = host.Id
 	}
 	return nil
 }

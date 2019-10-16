@@ -157,3 +157,22 @@ func GetProblemAlarm(c *gin.Context)  {
 	}
 	mid.ReturnData(c, data)
 }
+
+// @Summary 手动关闭告警接口
+// @Produce  json
+// @Param id query int true "告警id"
+// @Success 200 {string} json "{"message": "Success"}"
+// @Router /api/v1/alarm/problem/close [get]
+func CloseALarm(c *gin.Context)  {
+	id,err := strconv.Atoi(c.Query("id"))
+	if err != nil || id <= 0 {
+		mid.ReturnValidateFail(c, "Param id validate fail")
+		return
+	}
+	err = db.CloseAlarm(id)
+	if err != nil {
+		mid.ReturnError(c, "close alarm fail", err)
+		return
+	}
+	mid.ReturnSuccess(c, "Success")
+}

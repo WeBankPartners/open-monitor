@@ -457,10 +457,10 @@ func MainSearch(c *gin.Context)  {
 
 func GetPromMetric(c *gin.Context)  {
 	metricType := c.Query("type")
-	if metricType == "" {
-		mid.ReturnValidateFail(c, "Type is null")
-		return
-	}
+	//if metricType == "" {
+	//	mid.ReturnValidateFail(c, "Type is null")
+	//	return
+	//}
 	err,data := db.GetPromMetricTable(metricType)
 	if err != nil {
 		mid.ReturnError(c, "Get prom metric error", err)

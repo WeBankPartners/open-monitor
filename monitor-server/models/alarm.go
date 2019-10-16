@@ -52,6 +52,24 @@ type AlarmTable struct {
 	End  time.Time  `json:"end"`
 }
 
+type AlarmProblemQuery struct {
+	Id  int  `json:"id"`
+	StrategyId  int  `json:"strategy_id"`
+	Endpoint  string  `json:"endpoint"`
+	Status  string  `json:"status"`
+	SMetric  string  `json:"s_metric"`
+	SExpr  string  `json:"s_expr"`
+	SCond  string  `json:"s_cond"`
+	SLast  string  `json:"s_last"`
+	SPriority  string  `json:"s_priority"`
+	Content  string  `json:"content"`
+	StartValue  float64  `json:"start_value"`
+	Start  time.Time  `json:"start"`
+	IsLogMonitor  bool  `json:"is_log_monitor"`
+	Path  string  `json:"path"`
+	Keyword  string  `json:"keyword"`
+}
+
 type GrpEndpointTable struct {
 	GrpId  int  `json:"grp_id"`
 	EndpointId  int  `json:"endpoint_id"`
@@ -198,11 +216,6 @@ type UpdateLogMonitor struct {
 	Operation  string
 	OperateUser  string
 }
-
-//type LogMonitorQuery struct {
-//	Path  string  `json:"path"`
-//	Keywords  []*LogMonitorTable  `json:"keywords"`
-//}
 
 type TplStrategyLogMonitorTable struct {
 	TplId  int  `json:"tpl_id"`

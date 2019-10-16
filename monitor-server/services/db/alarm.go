@@ -426,9 +426,16 @@ func GetStrategys(query *m.TplQuery) error {
 					}
 				}
 			}
-			endpointObj := m.EndpointTable{Id: tpls[len(tpls)-1].EndpointId}
-			GetEndpoint(&endpointObj)
-			result = append(result, &m.TplObj{TplId: tpls[len(tpls)-1].TplId, ObjId: tpls[len(tpls)-1].EndpointId, ObjName: endpointObj.Guid, ObjType: "endpoint", Operation: true, Strategy: tmpStrategys})
+			if tpls[len(tpls)-1].EndpointId > 0 {
+				endpointObj := m.EndpointTable{Id: tpls[len(tpls)-1].EndpointId}
+				GetEndpoint(&endpointObj)
+				result = append(result, &m.TplObj{TplId: tpls[len(tpls)-1].TplId, ObjId: tpls[len(tpls)-1].EndpointId, ObjName: endpointObj.Guid, ObjType: "endpoint", Operation: true, Strategy: tmpStrategys})
+			}else{
+				result = append(result, &m.TplObj{TplId: tpls[len(tpls)-1].TplId, ObjId:tpls[len(tpls)-1].GrpId, ObjName:grpMap[tpls[len(tpls)-1].GrpId], ObjType:"grp", Operation:false, Strategy:tmpStrategys})
+				endpointObj := m.EndpointTable{Id:query.SearchId}
+				GetEndpoint(&endpointObj)
+				result = append(result, &m.TplObj{TplId: 0, ObjId: query.SearchId, ObjName: endpointObj.Guid, ObjType: "endpoint", Operation: true, Strategy: []*m.StrategyTable{}})
+			}
 		}
 	}else{
 		var grps []*m.GrpTable
@@ -544,43 +551,57 @@ func GetEndpointsByGrp(grpId int) (error,[]*m.EndpointTable) {
 	return err,result
 }
 
-func GetAlarms(query m.AlarmTable) (error,[]*m.AlarmTable) {
-	var result []*m.AlarmTable
-	var whereSql string
+func GetAlarms(query m.AlarmTable) (error,[]*m.AlarmProblemQuery) {
+	var result []*m.AlarmProblemQuery
+	var whereSql,statusSql string
 	var params []interface{}
 	if query.Id > 0 {
-		whereSql += " and id=? "
+		whereSql += " and t1.id=? "
 		params = append(params, query.Id)
 	}
 	if query.StrategyId > 0 {
-		whereSql += " and strategy_id=? "
+		whereSql += " and t1.strategy_id=? "
 		params = append(params, query.StrategyId)
 	}
 	if query.Endpoint != "" {
-		whereSql += " and endpoint=? "
+		whereSql += " and t1.endpoint=? "
 		params = append(params, query.Endpoint)
 	}
 	if query.Status != "" {
-		whereSql += " and status=? "
+		whereSql += " and t1.status=? "
 		params = append(params, query.Status)
+		if query.Status == "firing" {
+			statusSql = "and status!='closed'"
+		}
 	}
 	if query.SMetric != "" {
-		whereSql += " and s_metric=? "
+		whereSql += " and t1.s_metric=? "
 		params = append(params, query.SMetric)
 	}
 	if query.SPriority != "" {
-		whereSql += " and s_priority=? "
+		whereSql += " and t1.s_priority=? "
 		params = append(params, query.SPriority)
 	}
 	if !query.Start.IsZero() {
-		whereSql += fmt.Sprintf(" and start>='%s' ", query.Start.Format(m.DatetimeFormat))
+		whereSql += fmt.Sprintf(" and t1.start>='%s' ", query.Start.Format(m.DatetimeFormat))
 	}
 	if !query.End.IsZero() {
-		whereSql += fmt.Sprintf(" and end<='%s' ", query.End.Format(m.DatetimeFormat))
+		whereSql += fmt.Sprintf(" and t1.end<='%s' ", query.End.Format(m.DatetimeFormat))
 	}
-	err := x.SQL("SELECT * FROM alarm WHERE 1=1 " + whereSql + " order by id desc", params...).Find(&result)
+	//err := x.SQL("SELECT t1.*,t2.path,t2.keyword FROM alarm t1 LEFT JOIN log_monitor t2 ON t1.strategy_id=t2.strategy_id where 1=1 " + whereSql + " order by t1.id desc", params...).Find(&result)
+	sql := `SELECT t3.* FROM (
+			SELECT t1.*,'' path,'' keyword FROM alarm t1 WHERE t1.s_metric<>'log_monitor' `+whereSql+`
+			UNION 
+			SELECT t1.*,t2.path,t2.keyword FROM alarm t1 LEFT JOIN log_monitor t2 ON t1.strategy_id=t2.strategy_id WHERE t1.s_metric='log_monitor' `+statusSql+`
+			) t3 ORDER BY t3.id DESC`
+	err := x.SQL(sql,params...).Find(&result)
 	if err != nil {
 		mid.LogError("get alarms fail", err)
+	}
+	for _,v := range result {
+		if v.Path != "" {
+			v.IsLogMonitor = true
+		}
 	}
 	return err,result
 }
@@ -715,9 +736,16 @@ func ListLogMonitor(query *m.TplQuery) error {
 					}
 				}
 			}
-			endpointObj := m.EndpointTable{Id: tpls[len(tpls)-1].EndpointId}
-			GetEndpoint(&endpointObj)
-			result = append(result, &m.TplObj{TplId: tpls[len(tpls)-1].TplId, ObjId: tpls[len(tpls)-1].EndpointId, ObjName: endpointObj.Guid, ObjType: "endpoint", Operation: true, LogMonitor: tmpLogMonitor})
+			if tpls[len(tpls)-1].EndpointId > 0 {
+				endpointObj := m.EndpointTable{Id: tpls[len(tpls)-1].EndpointId}
+				GetEndpoint(&endpointObj)
+				result = append(result, &m.TplObj{TplId: tpls[len(tpls)-1].TplId, ObjId: tpls[len(tpls)-1].EndpointId, ObjName: endpointObj.Guid, ObjType: "endpoint", Operation: true, LogMonitor: tmpLogMonitor})
+			}else{
+				result = append(result, &m.TplObj{TplId:tpls[len(tpls)-1].TplId, ObjId:tpls[len(tpls)-1].GrpId, ObjName:grpMap[tpls[len(tpls)-1].GrpId], ObjType:"grp", Operation:false, LogMonitor:tmpLogMonitor})
+				endpointObj := m.EndpointTable{Id:query.SearchId}
+				GetEndpoint(&endpointObj)
+				result = append(result, &m.TplObj{TplId: 0, ObjId: query.SearchId, ObjName: endpointObj.Guid, ObjType: "endpoint", Operation: true, Strategy: []*m.StrategyTable{}, LogMonitor: []*m.LogMonitorDto{}})
+			}
 		}
 	}else{
 		var grps []*m.GrpTable
@@ -773,4 +801,9 @@ func getLastFromExpr(expr string) string {
 		last = "10s"
 	}
 	return last
+}
+
+func CloseAlarm(id int) error {
+	_,err := x.Exec("UPDATE alarm SET STATUS='closed' WHERE id=?", id)
+	return err
 }
