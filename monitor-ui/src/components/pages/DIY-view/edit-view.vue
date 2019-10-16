@@ -6,21 +6,23 @@
               <i class="fa fa-th-large fa-2x" aria-hidden="true"></i>
               <span> 12123123</span>
             </div>
-            <div class="header-tools"> 
-              <i class="fa fa-floppy-o fa-2x" aria-hidden="true"></i>
-            </div>
         </div>
       </header>
       <div class="zone zone-chart" >
         <div class="zone-chart-title">{{panalTitle}}</div>
-        <div :id="elId" class="echart"></div>
+        <div v-if="!noDataTip">
+          <div :id="elId" class="echart"></div>
+        </div>
+        <div v-else class="echart echart-no-data-tip">
+          <span>~~~暂无数据~~~</span>
+        </div>
       </div>
       <div class="zone zone-config" >
         <div style="display:flex">
           <section>
-            <ul>
+            <ul style="margin-top:20px;">
               <li>
-                <Tooltip content="指标配置" placement="bottom">
+                <Tooltip content="指标配置" placement="right">
                   <div class="step-icon" @click="activeStep='chat_query'">
                     <i class="fa fa-line-chart" aria-hidden="true"></i>
                   </div>
@@ -30,7 +32,7 @@
                 <div class="step-link"></div>
               </li>
               <li>
-                <Tooltip content="全局配置" placement="bottom">
+                <Tooltip content="全局配置" placement="right">
                   <div class="step-icon" @click="activeStep='chat_general'">
                     <i class="fa fa-cog" aria-hidden="true"></i>
                   </div>
@@ -41,7 +43,6 @@
           <section class="zone-config-operation">
             <div v-if="activeStep==='chat_query'">
               <button class="btn btn-sm btn-cancle-f" @click="addQuery">新增指标</button>
-              <button class="btn btn-sm btn-cancle-f" >保存配置</button>
               <template v-for="(queryItem,queryIndex) in chartQueryList">
                 <div class="condition-zone" :key="queryIndex">
                   <ul>
@@ -93,7 +94,9 @@
             </div>
           </section>
         </div>
-        
+        <div class="tool-save"> 
+          <i class="fa fa-floppy-o fa-2x" aria-hidden="true"></i>
+        </div>
       </div>
   </div>
 </template>
@@ -106,6 +109,7 @@ export default {
   data() {
     return {
       elId: null,
+      noDataTip: false,
       activeStep: 'chat_query',
       initQuery: {
         entpointModel: '',
@@ -167,26 +171,30 @@ export default {
     chartData () {
       let params = {
           agg: 'none',
-          endpoint: ['VM_0_14_centos_192.168.0.14_host'],
+          endpoint: ['VM_0_16_centos_192.168.0.16_host'],
           id: 1,
           metric: ['cpu.used.percent'],
           time: '-1800'
       }
       this.$httpRequestEntrance.httpRequestEntrance('GET', '/dashboard/chart', params, responseData => {
         var legend = []
-        responseData.series.forEach((item)=>{
-        legend.push(item.name)
-        item.symbol = 'none'
-        item.smooth = true
-        item.lineStyle = {
-            width: 1
+        if (responseData.series.length === 0) {
+          this.noDataTip = true
+          return
         }
+        responseData.series.forEach((item)=>{
+          legend.push(item.name)
+          item.symbol = 'none'
+          item.smooth = true
+          item.lineStyle = {
+              width: 1
+          }
         }) 
         let config = {
-        title: responseData.title,
-        legend: legend,
-        series: responseData.series,
-        yaxis: responseData.yaxis,
+          title: responseData.title,
+          legend: legend,
+          series: responseData.series,
+          yaxis: responseData.yaxis,
         }
         drawChart(this, config, {title: false, eye: false,dataZoom: false})
       })
@@ -217,7 +225,7 @@ export default {
   padding: 8px;
 }
 .echart {
-    height:400px;
+    height:300px;
     width:1100px;
 }
 
@@ -241,16 +249,29 @@ export default {
     cursor: pointer;
 }
 .step-link {
-    height:36px;
+    height:64px;
     border-left:2px solid @blue-lingt;
     margin-left:16px;
 }
 
 .zone-config-operation {
-  margin-left: 24px;
+  margin: 24px;
 }
 .zone-config-operation-general {
-  margin-top: 20px;
+  margin-top: 24px;
+}
+
+.echart-no-data-tip {
+  text-align: center;
+  vertical-align: middle;
+  display: table-cell;
+}
+.tool-save {
+  text-align: right;
+  padding: 16px 32px;
+  i {
+    font-size: 16px;
+  }
 }
 </style>
 
