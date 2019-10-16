@@ -215,3 +215,14 @@ type MaintainDto struct {
 	EndpointType  string  `json:"endpoint_type"`
 	ClearMaintain  bool  `json:"clear_maintain"`
 }
+
+type CustomDashboardTable struct {
+	Id  int  `json:"id"`
+	Name  string  `json:"name"`
+	PanelsGroup  int  `json:"panels_group"`
+	Cfg  string  `json:"cfg"`
+	CreateUser  string  `json:"create_user"`
+	UpdateUser  string  `json:"update_user"`
+	CreateAt  time.Time  `json:"create_at"`
+	UpdateAt  time.Time  `json:"update_at"`
+}

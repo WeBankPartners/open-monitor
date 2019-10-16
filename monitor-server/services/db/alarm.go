@@ -599,6 +599,7 @@ func GetAlarms(query m.AlarmTable) (error,[]*m.AlarmProblemQuery) {
 		mid.LogError("get alarms fail", err)
 	}
 	for _,v := range result {
+		v.StartString = v.Start.Format(m.DatetimeFormat)
 		if v.Path != "" {
 			v.IsLogMonitor = true
 		}
