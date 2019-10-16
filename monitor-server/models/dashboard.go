@@ -206,3 +206,12 @@ type MaintainTable struct {
 	MaintainEnd  time.Time  `json:"maintain_end"`
 	MaintainUser  string  `json:"maintain_user"`
 }
+
+type MaintainDto struct {
+	Start  int64  `json:"start"`
+	End  int64  `json:"end"`
+	Endpoint  string  `json:"endpoint"`
+	Ip  string  `json:"ip"`
+	EndpointType  string  `json:"endpoint_type"`
+	ClearMaintain  bool  `json:"clear_maintain"`
+}

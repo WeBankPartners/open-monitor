@@ -66,6 +66,14 @@ func InitHttpServer() {
 		{
 			agentApi.POST("/register", agent.RegisterAgent)
 			agentApi.GET("/deregister", agent.DeregisterAgent)
+			agentApi.GET("/host/start", agent.StartHostAgent)
+			agentApi.GET("/host/stop", agent.StopHostAgent)
+			agentApi.GET("/mysql/start", agent.StartMysqlAgent)
+			agentApi.GET("/mysql/stop", agent.StopMysqlAgent)
+			agentApi.GET("/redis/start", agent.StartRedisAgent)
+			agentApi.GET("/redis/stop", agent.StopRedisAgent)
+			agentApi.GET("/tomcat/start", agent.StartTomcatAgent)
+			agentApi.GET("/tomcat/stop", agent.StopTomcatAgent)
 		}
 		alarmApi := authApi.Group("/alarm")
 		{
@@ -83,10 +91,13 @@ func InitHttpServer() {
 			alarmApi.POST("/webhook", alarm.AcceptAlertMsg)
 			alarmApi.GET("/history", alarm.GetHistoryAlarm)
 			alarmApi.GET("/problem/list", alarm.GetProblemAlarm)
+			alarmApi.GET("/problem/close", alarm.CloseALarm)
 			alarmApi.GET("/log/monitor/list", alarm.ListLogTpl)
 			alarmApi.POST("/log/monitor/add", alarm.AddLogStrategy)
 			alarmApi.POST("/log/monitor/update", alarm.EditLogStrategy)
+			alarmApi.POST("/log/monitor/update_path", alarm.EditLogPath)
 			alarmApi.GET("/log/monitor/delete", alarm.DeleteLogStrategy)
+			alarmApi.GET("/log/monitor/delete_path", alarm.DeleteLogPath)
 		}
 		port := m.Config().Http.Port
 		r.Run(fmt.Sprintf(":%d", port))
