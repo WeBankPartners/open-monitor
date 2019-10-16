@@ -1,6 +1,6 @@
 {
   "http": {
-    "port": "8088",
+    "port": "{{MONITOR_SERVER_PORT}}",
     "swagger": true,
     "cross": true,
     "alive": 2591000,
@@ -16,7 +16,7 @@
     "log": {
       "enable": true,
       "level": "debug",
-      "file": "/app/data/log/prometheus_monitor.log",
+      "file": "prometheus_monitor.log",
       "stdout": true
     }
   },
@@ -24,10 +24,10 @@
     {
       "name": "default",
       "type": "mysql",
-      "server": "127.0.0.1",
+      "server": "monitor-db",
       "port": 3306,
       "user": "root",
-      "pwd": "zgyzgy",
+      "pwd": "{{MYSQL_ROOT_PASSWORD}}",
       "database": "monitor",
       "maxOpen": 20,
       "maxIdle": 10,
@@ -44,7 +44,7 @@
         "id": 1,
         "type": "prometheus",
         "env": "dev",
-        "host": "127.0.0.1:9090",
+        "host": "prometheus:9090",
         "token": ""
       }
     ],
@@ -55,14 +55,14 @@
   "dependence": [
     {
       "name": "consul",
-      "server": "http://127.0.0.1:8500",
+      "server": "http://consul:8500",
       "username": "",
       "password": "",
       "expire": 0
     }
   ],
   "prometheus" : {
-    "config_path": "/app/docker/prometheus/rules",
-    "config_reload": "http://127.0.0.1:9090/-/reload"
+    "config_path": "conf/rules",
+    "config_reload": "http://prometheus:9090/-/reload"
   }
 }

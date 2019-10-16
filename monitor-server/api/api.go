@@ -61,6 +61,10 @@ func InitHttpServer() {
 			dashboardApi.GET("/newchart", dashboard.GetChartNew)
 			dashboardApi.POST("/config/metric/update", dashboard.UpdatePromMetric)
 			dashboardApi.GET("/endpoint/metric/list", dashboard.GetEndpointMetric)
+			dashboardApi.GET("/custom/list", dashboard.ListCustomDashboard)
+			dashboardApi.GET("/custom/get", dashboard.GetCustomDashboard)
+			dashboardApi.POST("/custom/save", dashboard.SaveCustomDashboard)
+			dashboardApi.GET("/custom/delete", dashboard.DeleteCustomDashboard)
 		}
 		agentApi := authApi.Group("/agent")
 		{
@@ -100,6 +104,6 @@ func InitHttpServer() {
 			alarmApi.GET("/log/monitor/delete_path", alarm.DeleteLogPath)
 		}
 		port := m.Config().Http.Port
-		r.Run(fmt.Sprintf(":%d", port))
+		r.Run(fmt.Sprintf(":%s", port))
 	}
 }

@@ -65,6 +65,7 @@ type AlarmProblemQuery struct {
 	Content  string  `json:"content"`
 	StartValue  float64  `json:"start_value"`
 	Start  time.Time  `json:"start"`
+	StartString  string  `json:"start_string"`
 	IsLogMonitor  bool  `json:"is_log_monitor"`
 	Path  string  `json:"path"`
 	Keyword  string  `json:"keyword"`

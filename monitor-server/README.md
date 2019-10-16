@@ -30,8 +30,8 @@ go build
 - Mysql 配置数据持久化  
 
 Mysql脚本  
-- [表结构monitor_struct.sql](../wiki/db/monitor_struct.sql)  
-- [表基础数据monitor_portal_base_data.sql](../wiki/db/monitor_portal_base_data.sql)
+- [表结构monitor_struct.sql](../wiki/db/monitor_sql_01_struct.sql)  
+- [表基础数据monitor_portal_base_data.sql](../wiki/db/monitor_sql_02_base_data_cn.sql)
 
 修改配置文件conf/default.json里的依赖地址，直接运行  
 后续会提供shell脚本管理程序的启停...

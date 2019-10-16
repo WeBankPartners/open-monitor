@@ -25,7 +25,7 @@ type LdapConfig struct {
 }
 
 type HttpConfig struct {
-	Port    int   `json:"port"`
+	Port    string   `json:"port"`
 	Swagger  bool  `json:"swagger"`
 	Cross  bool  `json:"cross"`
 	Alive   int64    `json:"alive"`
