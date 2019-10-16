@@ -68,7 +68,8 @@
   const btn = [
     {btn_name: '阀值配置', btn_func: 'thresholdConfig'},
     {btn_name: '历史告警', btn_func: 'historyAlarm'},
-    {btn_name: '删除', btn_func: 'delF'}
+    {btn_name: '删除', btn_func: 'delF'},
+    {btn_name: '日志配置', btn_func: 'logManagement'}
   ]
   export default {
     name: '',
@@ -233,7 +234,7 @@
         this.$tableUtil.initTable(this, 'GET', url, params)
       },
       filterMoreBtn () {
-        let moreBtnGroup = ['thresholdConfig','historyAlarm']
+        let moreBtnGroup = ['thresholdConfig','historyAlarm','logManagement']
         if (this.showGroupMsg) {
           moreBtnGroup.push('delF')
         }
@@ -279,6 +280,9 @@
       },
       thresholdConfig (rowData) {
         this.$router.push({name: 'thresholdManagement', params: {id: rowData.id, type: 'endpoint'}})
+      },
+      logManagement (rowData) {
+        this.$router.push({name: 'logManagement', params: {id: rowData.id, type: 'endpoint'}})
       },
       closeTag () {
         this.groupMsg = {}

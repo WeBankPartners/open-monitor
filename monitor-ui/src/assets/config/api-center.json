@@ -50,6 +50,27 @@
             "api": "alarm/strategy/delete"
         }
     },
+    "logManagement": {
+        "_des": "阀值管理",
+        "list": {
+            "api": "alarm/log/monitor/list"
+        },
+        "delList": {
+            "api": "alarm/log/monitor/delete_path"
+        },
+        "editList": {
+            "api": "alarm/log/monitor/update_path"
+        },
+        "add": {
+            "api": "alarm/log/monitor/add"
+        },
+        "update": {
+            "api": "alarm/log/monitor/update"
+        },
+        "delete": {
+            "api": "alarm/log/monitor/delete"
+        }
+    },
     "metricList": {
         "_des": "指标列表",
         "api": "dashboard/config/metric/list"
@@ -61,5 +82,14 @@
     "metricConfigView": {
         "_des": "指标配置预览视图",
         "api": "dashboard/newchart"
+    },
+    "alarmManagement": {
+        "_des": "告警管理",
+        "list": {
+            "api": "alarm/problem/list"
+        },
+        "close": {
+            "api": "alarm/problem/close"
+        }
     }
 }

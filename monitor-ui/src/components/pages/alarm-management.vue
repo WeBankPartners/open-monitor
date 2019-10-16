@@ -5,9 +5,14 @@
       <template v-for="(filterItem, filterIndex) in filtersForShow">
         <Tag color="success" type="border" closable @on-close="exclude(filterItem.key)" :key="filterIndex">{{filterItem.key}}：{{filterItem.value}}</Tag>
       </template>
+      <template v-if="!resultData.length">
+        <Tag color="primary">暂无告警！</Tag>
+      </template>
     </section>
+
     <template v-for="(alarmItem, alarmIndex) in resultData">
       <section :key="alarmIndex" class="alarm-item" :class="'alarm-item-border-'+ alarmItem.s_priority">
+        <i class="fa fa-times" @click="removeAlarm(alarmItem)" aria-hidden="true"></i>
         <ul>
            <li>
               <label class="col-md-1">对象:</label>
@@ -22,21 +27,34 @@
               <Tag type="border" closable @on-close="addParams('priority',alarmItem.s_priority)" color="primary">{{alarmItem.s_priority}}</Tag>
             </li>
             <li>
-              <label class="col-md-1">开始时间:</label><span>{{alarmItem.start}}</span>
+              <label class="col-md-1">开始时间:</label><span>{{alarmItem.start_string}}</span>
             </li>
             <li v-if="alarmIndex != actveAlarmIndex">
               <label class="col-md-1"></label><span><Icon @click="actveAlarmIndex = alarmIndex" type="ios-arrow-dropdown" size=16 /></span>
             </li>
           <template v-if="alarmIndex === actveAlarmIndex">
-            <li>
-              <label class="col-md-1">告警值:</label><span>{{alarmItem.start_value}}</span>
-            </li>
-            <li>
-              <label class="col-md-1">阀值:</label><span>{{alarmItem.s_cond}}</span>
-            </li>
-            <li>
-              <label class="col-md-1">持续时间:</label><span>{{alarmItem.s_last}}</span>
-            </li>
+            <template v-if="alarmItem.is_log_monitor">
+               <li>
+                <label class="col-md-1">路径:</label><span>{{alarmItem.path}}</span>
+              </li>
+              <li>
+                <label class="col-md-1">关键字:</label><span>{{alarmItem.keyword}}</span>
+              </li>
+              <li>
+                <label class="col-md-1">描述:</label><span>{{alarmItem.content}}</span>
+              </li>
+            </template>
+            <template v-else>
+               <li>
+                <label class="col-md-1">告警值:</label><span>{{alarmItem.start_value}}</span>
+              </li>
+              <li>
+                <label class="col-md-1">阀值:</label><span>{{alarmItem.s_cond}}</span>
+              </li>
+              <li>
+                <label class="col-md-1">持续时间:</label><span>{{alarmItem.s_last}}</span>
+              </li>
+            </template>
           </template>
         </ul>
       </section>
@@ -77,13 +95,21 @@ export default {
       }
       let params = {filter:temp}
       this.timeForDataAchieve = new Date().toLocaleString()
-      this.$httpRequestEntrance.httpRequestEntrance('GET', 'alarm/problem/list', params, (responseData) => {
+      this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.alarmManagement.list.api, params, (responseData) => {
         this.resultData = responseData
       })
     },
     addParams (key, value) {
       this.filters[key] = value
       this.getAlarm()
+    },
+    removeAlarm(alarmItem) {
+      let params = {
+        id: alarmItem.id
+      }
+      this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.alarmManagement.close.api, params, () => {
+        this.getAlarm()
+      })
     },
     exclude (key) {
       delete this.filters[key]
@@ -109,22 +135,30 @@ label {
   }
 }
 .alarm-item-border-high {
-  border: 1px solid @color-orange-F;
+  // border: 1px solid @color-orange-F;
   color: @color-orange-F;
 }
 .alarm-item-border-medium {
-  border: 1px solid @blue-2;
+  // border: 1px solid @blue-2;
   color: @blue-2;
 }
-.alarm-item-border-low {
-  border: 1px solid @gray-d;
-}
+// .alarm-item-border-low {
+//   // border: 1px solid @gray-d;
+// }
 
 .alarm-item:hover {
   box-shadow: 0 0 12px @gray-d;
 }
 
 .alarm-item /deep/.ivu-icon-ios-close:before {
-    content: "\F102";
+  content: "\F102";
 }
+
+.fa-times {
+  margin: 8px;
+  float: right;
+  font-size: 16px;
+  cursor: pointer;
+}
+
 </style>
