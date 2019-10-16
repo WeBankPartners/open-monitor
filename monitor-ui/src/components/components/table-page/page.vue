@@ -14,6 +14,7 @@
     </section>
     <section class="page-table">
       <tableTemp :table="pageConfig.table" :pageConfig="pageConfig" @sendIds="receiveIds" ref="refTest">
+        <slot :name='pageConfig.table.isExtend.slot' v-if="pageConfig.table.isExtend"></slot>
       </tableTemp>
     </section>
     <div class="paging" v-if='pageConfig.pagination'>

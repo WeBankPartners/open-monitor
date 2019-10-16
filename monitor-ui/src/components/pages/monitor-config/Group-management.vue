@@ -14,6 +14,7 @@
     {btn_name: '阀值配置', btn_func: 'thresholdConfig'},
     {btn_name: '编辑', btn_func: 'editF'},
     {btn_name: '删除', btn_func: 'delF'},
+    {btn_name: '日志配置', btn_func: 'logManagement'}
   ]
   export default {
     name: '',
@@ -117,6 +118,9 @@
       },
       thresholdConfig (rowData) {
         this.$router.push({name: 'thresholdManagement', params: {id: rowData.id, type: 'grp'}})
+      },
+      logManagement (rowData) {
+        this.$router.push({name: 'logManagement', params: {id: rowData.id, type: 'endpoint'}})
       },
     },
     components: {

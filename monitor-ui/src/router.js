@@ -29,6 +29,8 @@ const router = new Router({
               component: () => import('@/components/pages/monitor-config/Group-management') },
               { path: 'thresholdManagement',  name: 'thresholdManagement', title: '阀值配置', meta: {},
               component: () => import('@/components/pages/monitor-config/Threshold-management') },
+              { path: 'logManagement',  name: 'logManagement', title: '阀值配置', meta: {},
+              component: () => import('@/components/pages/monitor-config/Log-management') },
             ]
           }
         ]
