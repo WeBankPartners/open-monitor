@@ -34,7 +34,7 @@ export default {
   },
   methods: {
     routerChange (){
-      if (Object.keys(this.$store.state.ip).length === 0) {
+      if (this.$store.state.ip.value !== '') {
         this.$Message.warning('请选择有效IP！')
       } else {
         this.$router.push({ name: 'mainView'})
