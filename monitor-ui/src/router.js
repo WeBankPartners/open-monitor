@@ -17,9 +17,9 @@ const router = new Router({
            component: () => import('@/components/pages/alarm-management') },
           { path: 'portal',  name: 'portal', title: '首页', meta: {},
            component: () => import('@/components/pages/portal') },
-          { path: 'mainView',  name: 'mainView', title: '监控视图', meta: {},
+          { path: 'mainView',  name: 'mainView', title: '对象监控', meta: {},
            component: () => import('@/components/pages/main-view') },
-          { path: 'monitorConfigIndex',  name: 'monitorConfigIndex', title: '监控配置', meta: {},
+          { path: 'monitorConfigIndex',  name: 'monitorConfigIndex', title: '', meta: {},
             component: () => import('@/components/pages/monitor-config/Monitor-config-index'),
             redirect: '/monitorConfigIndex/objectManagement', 
             children: [
@@ -32,7 +32,15 @@ const router = new Router({
               { path: 'logManagement',  name: 'logManagement', title: '阀值配置', meta: {},
               component: () => import('@/components/pages/monitor-config/Log-management') },
             ]
-          }
+          },
+          { path: 'metricConfig',  name: 'metricConfig', title: '视图配置', meta: {},
+           component: () => import('@/components/pages/metric-config') },
+          { path: 'viewConfigIndex',  name: 'viewConfigIndex', title: '自定义视图主页', meta: {},
+           component: () => import('@/components/pages/DIY-view/view-config-index') },
+          { path: 'viewConfig',  name: 'viewConfig', title: '自定义视图', meta: {},
+           component: () => import('@/components/pages/DIY-view/view-config') },
+          { path: 'editView',  name: 'editView', title: '自定义视图编辑', meta: {},
+           component: () => import('@/components/pages/DIY-view/edit-view') },
         ]
       },
       {

@@ -72,7 +72,7 @@ export default {
       this.getChartsConfig()
     },
     getChartsConfig () {
-      if (Object.keys(this.$store.state.ip).length === 0) {
+      if ((this.$store.state.ip).length === 0) {
         this.$Message.warning('请选择有效IP！')
         return
       } else {

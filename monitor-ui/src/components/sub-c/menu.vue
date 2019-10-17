@@ -4,10 +4,19 @@
             <img src="../../assets/logo.png"/>
             <span>Wecube-monitor</span>
         </div>
-        <MenuItem name="mainView">
+        <!-- <MenuItem name="mainView">
             <i class="fa fa-line-chart" aria-hidden="true"></i>
             监控视图
-        </MenuItem>
+        </MenuItem> -->
+        <Submenu name="">
+            <template slot="title">
+                <i class="fa fa-line-chart" aria-hidden="true"></i>
+                监控视图
+            </template>
+            <MenuItem name="mainView">对象视图</MenuItem>
+            <MenuItem name="metricConfig">视图配置</MenuItem>
+            <MenuItem name="viewConfigIndex">自定义视图</MenuItem>
+        </Submenu>
         <!-- <Submenu name="2">
             <template slot="title">
                 <i class="fa fa-television" aria-hidden="true"></i>

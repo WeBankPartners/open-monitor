@@ -1,0 +1,409 @@
+<template>
+  <div class=" ">
+      <!-- <header>
+        <div style="display:flex;justify-content:space-between">
+            <div class="header-name">
+              <i class="fa fa-th-large fa-2x" aria-hidden="true"></i>
+              <span> 12123123</span>
+            </div>
+        </div>
+      </header> -->
+      <div class="zone zone-chart" >
+        <div class="zone-chart-title">{{panalTitle}}</div>
+        <div v-if="!noDataTip">
+          <div :id="elId" class="echart"></div>
+        </div>
+        <div v-else class="echart echart-no-data-tip">
+          <span>~~~暂无数据~~~</span>
+        </div>
+      </div>
+      <div class="zone zone-config" >
+        <div class="tool-save" @click="saveConfig"> 
+          <i class="fa fa-floppy-o fa-16" aria-hidden="true"></i>
+        </div>
+        <div style="display:flex">
+          <section>
+            <ul>
+              <li>
+                <Tooltip content="指标配置" placement="right">
+                  <div class="step-icon" @click="activeStep='chat_query'">
+                    <i class="fa fa-line-chart" aria-hidden="true"></i>
+                  </div>
+                </Tooltip>
+              </li>
+              <li>
+                <div class="step-link"></div>
+              </li>
+              <li>
+                <Tooltip content="全局配置" placement="right">
+                  <div class="step-icon" @click="activeStep='chat_general'">
+                    <i class="fa fa-cog" aria-hidden="true"></i>
+                  </div>
+                </Tooltip>
+              </li>
+            </ul>
+          </section>
+          <section class="zone-config-operation">
+            <div v-if="activeStep==='chat_query'">
+              <i class="fa fa-plus-square-o fa-18" @click="addQuery" aria-hidden="true"></i>
+              <template v-for="(queryItem,queryIndex) in chartQueryList">
+                <div class="condition-zone" :key="queryIndex">
+                  <ul>
+                     <li>
+                      <div class="condition condition-del">
+                        <i class="fa fa-trash" aria-hidden="true" @click="removeQuery(queryItem)"></i>
+                      </div>
+                    </li>
+                    <li>
+                      <div class="condition condition-title">对象</div>
+                      <div class="condition">
+                        <Select
+                          style="width:300px"
+                          v-model="chartQueryList[queryIndex].endpoint"
+                          filterable
+                          remote
+                          :remote-method="endpointList"
+                          :label-in-value="true" 
+                          >
+                          <Option v-for="(option, index) in options" :value="option.option_value" :key="index">{{option.option_text}}</Option>
+                        </Select>
+                      </div>
+                    </li>
+                    <li>
+                      <div class="condition condition-title">指标</div>
+                      <div class="condition">
+                        <Select v-model="chartQueryList[queryIndex].metric" style="width:300px" @on-open-change="metricSelectOpen(queryItem.endpoint)">
+                          <Option v-for="(item,index) in metricList" :value="item.prom_ql" :key="item.prom_ql+index">{{ item.metric }}</Option>
+                        </Select>
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+              </template>
+            </div>
+            <div v-if="activeStep==='chat_general'" class="zone-config-operation-general">
+              <ul>
+                <li>
+                  <div class="condition condition-title">标题</div>
+                  <div class="condition">
+                    <Input v-model="panalTitle" placeholder="Enter something..." style="width: 300px" />
+                  </div>
+                </li>
+                <li>
+                  <div class="condition condition-title">单位</div>
+                  <div class="condition">
+                    <Input v-model="panalUnit" placeholder="Enter something..." style="width: 300px" />
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </section>
+        </div>
+      </div>
+  </div>
+</template>
+
+<script>
+import {generateUuid} from '@/assets/js/utils'
+import {drawChart} from  '@/assets/config/chart-rely'
+export default {
+  name: '',
+  data() {
+    return {
+      viewData: null,
+      panalIndex: null,
+      panalData: null,
+
+      elId: null,
+      noDataTip: false,
+      activeStep: 'chat_query',
+      initQuery: {
+        endpoint: '',
+        metricList: [],
+        metric: ''
+      },
+      chartQueryList:[{
+        endpoint: '',
+        metric: '',
+      }],
+      
+      options: [],
+      metricList: [],
+
+      panalTitle: 'Default title',
+      panalUnit: ''
+    }
+  },
+  watch: {
+    chartQueryList: {
+      handler (data) {
+        let params = []
+        var requestFlag = true
+        data.forEach((item) => {
+          if (item.endpoint === '' || item.metric === '') {
+            requestFlag = false
+            return
+          }
+          params.push(JSON.stringify({
+            endpoint: item.endpoint.split(':')[0],
+            prom_ql: item.metric,
+            time: '-1800'
+          })) 
+        })
+        if (!requestFlag) {
+          return
+        }
+        this.$httpRequestEntrance.httpRequestEntrance('GET',this.apiCenter.metricConfigView.api, {config: `[${params.join(',')}]`}, responseData => {
+          var legend = []
+          if (responseData.series.length === 0) {
+            this.noDataTip = true
+            return
+          }
+          responseData.series.forEach((item)=>{
+            legend.push(item.name)
+            item.symbol = 'none'
+            item.smooth = true
+            item.lineStyle = {
+              width: 1
+            }
+          }) 
+          let config = {
+            title: responseData.title,
+            legend: legend,
+            series: responseData.series,
+            yaxis: responseData.yaxis,
+          }
+          drawChart(this, config, {eye: false})
+        })
+      },
+      deep: true
+      // immediate: true
+    },
+  },
+  created (){
+    generateUuid().then((elId)=>{
+      this.elId =  `id_${elId}`; 
+    })
+  },
+  mounted() {
+    if (this.$validate.isEmpty_reset(this.$route.params)) {
+      this.$router.push({path: 'viewConfig'})
+    } else {
+      if (!this.$validate.isEmpty_reset(this.$route.params.templateData.cfg)) {
+        this.viewData = JSON.parse(this.$route.params.templateData.cfg)
+        this.viewData.forEach((itemx,index)=>{
+          if (itemx.viewConfig.id === this.$route.params.panal.id) {
+            this.panalIndex = index
+            this.panalData = itemx
+            this.initPanal()
+            return
+          }
+        })
+      }
+    }
+  },
+  methods: {
+    initPanal() {
+      this.panalTitle = this.panalData.panalTitle
+      this.panalUnit = this.panalData.panalUnit
+      let params = []
+      if (this.$validate.isEmpty_reset(this.panalData.query)) {
+        return
+      }
+      this.panalData.query.forEach((item) => {
+        params.push(JSON.stringify({
+          endpoint: item.endpoint,
+          prom_ql: item.prom_ql,
+          time: '-1800'
+        })) 
+      })
+      if (params !== []) {
+        this.$httpRequestEntrance.httpRequestEntrance('GET',this.apiCenter.metricConfigView.api, {config: `[${params.join(',')}]`}, responseData => {
+          var legend = []
+          if (responseData.series.length === 0) {
+            this.noDataTip = true
+            return
+          }
+          responseData.series.forEach((item)=>{
+            legend.push(item.name)
+            item.symbol = 'none'
+            item.smooth = true
+            item.lineStyle = {
+              width: 1
+            }
+          }) 
+          let config = {
+            title: responseData.title,
+            legend: legend,
+            series: responseData.series,
+            yaxis: responseData.yaxis,
+          }
+          drawChart(this, config, {eye: false})
+        })
+      }
+    },
+    endpointList(query) {
+      let params = {
+        search: query,
+        page: 1,
+        size: 1000
+      }
+      this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.resourceSearch.api, params, (responseData) => {
+       this.options = responseData
+      })
+    },
+    metricSelectOpen(metric) {
+      if (this.$validate.isEmpty_reset(metric)) {
+        this.$Message.warning('请先选择主机！')
+      } else {
+        let params = {type: metric.split(':')[1]}
+        this.$httpRequestEntrance.httpRequestEntrance('GET',this.apiCenter.metricList.api, params, responseData => {
+          this.metricList = responseData
+        })
+      } 
+    },
+    addQuery () {
+      this.chartQueryList.push({
+        endpoint: '',
+        options: [],
+        metric: '',
+        metricList: [],
+      })
+    },
+    removeQuery (queryItem) {
+      this.chartQueryList.splice(this.chartQueryList.indexOf(queryItem),1)
+    },
+    saveConfig () {
+      let query = []
+      this.chartQueryList.forEach((item) => {
+        query.push({
+          endpoint: item.endpoint.split(':')[0],
+          prom_ql: item.metric
+        }) 
+      })
+      let panal = this.$route.params.panal
+      panal.i = this.panalTitle
+      const temp = {
+        panalTitle: this.panalTitle,
+        panalUnit: this.panalUnit,
+        query: query,
+        viewConfig: panal
+      }
+
+      if (this.panalIndex !== null) {
+        this.viewData[this.panalIndex] = temp
+      } else {
+        this.viewData.push(temp)
+      }
+      let params = {
+        name: this.$route.params.templateData.name,
+        id: this.$route.params.templateData.id,
+        cfg: JSON.stringify(this.viewData)
+      }
+
+      this.$httpRequestEntrance.httpRequestEntrance('POST','dashboard/custom/save', params, () => {
+        this.$Message.success('保存成功！')
+      })
+    }
+  },
+  components: {},
+}
+</script>
+
+<style scoped lang="less">
+.zone {
+    width:1100px;
+    margin: 0 auto;
+    background: @gray-f;
+    border-radius: 4px;
+}
+.zone-chart {
+    margin-top: 16px;
+    margin-bottom: 16px;
+
+}
+.zone-chart-title {
+  padding: 20px 40%;
+  position: absolute;
+  font-size: 14px;
+}
+.zone-config {
+  padding: 8px;
+}
+.echart {
+    height:300px;
+    width:1100px;
+}
+
+.step-icon {
+    i {
+        height: 24px;
+        width: 24px;
+        font-size: 18px;
+        color: @blue-lingt;
+    }
+    .fa-line-chart {
+        margin: 7px 6px;
+    }
+    .fa-cog {
+        margin: 8px;
+    }
+    width: 36px;
+    height: 36px;
+    border: 2px solid @blue-lingt;
+    border-radius: 18px;
+    cursor: pointer;
+}
+.step-link {
+    height:64px;
+    border-left:2px solid @blue-lingt;
+    margin-left:16px;
+}
+
+.zone-config-operation {
+  margin: 24px;
+  margin-top: 0;
+}
+.fa-plus-square-o {
+  padding-left: 4px;
+}
+.zone-config-operation-general {
+  margin-top: 24px;
+}
+
+.echart-no-data-tip {
+  text-align: center;
+  vertical-align: middle;
+  display: table-cell;
+}
+.tool-save {
+  text-align: right;
+  padding: 4px 64px;
+}
+</style>
+
+<style scoped lang="less">
+
+  .condition {
+    margin: 2px;
+    display: inline-block;
+  }
+  .condition-title {
+    background: @gray-d;
+    width: 100px;
+    text-align: center;
+    vertical-align: middle;
+    margin-right: 8px;
+    padding: 6px;
+  }
+  .condition-zone {
+    width: 900px;
+    border: 1px solid @blue-2;
+    padding: 4px;
+    margin: 4px;
+  }
+  .condition-del {
+    float: right;
+  }
+</style>
+

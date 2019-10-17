@@ -31,7 +31,8 @@ export default {
     min-height: 560px;
     height: 100%;
     margin: 0 auto;
-    padding: 0 10px;
+    // padding: 0 10px;
+    padding: 10px;
     background:white;
   }
 </style>
