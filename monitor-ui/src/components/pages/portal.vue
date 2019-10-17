@@ -34,11 +34,7 @@ export default {
   },
   methods: {
     routerChange (){
-      if (this.$store.state.ip.value !== '') {
-        this.$Message.warning('请选择有效IP！')
-      } else {
-        this.$router.push({ name: 'mainView'})
-      }
+      this.$validate.isEmpty_reset(this.$store.state.ip) ? this.$Message.warning('请选择有效IP！') : this.$router.push({ name: 'mainView'})
     },  
   },
   components: {
