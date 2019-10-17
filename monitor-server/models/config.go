@@ -25,7 +25,7 @@ type LdapConfig struct {
 }
 
 type HttpConfig struct {
-	Port    int   `json:"port"`
+	Port    string   `json:"port"`
 	Swagger  bool  `json:"swagger"`
 	Cross  bool  `json:"cross"`
 	Alive   int64    `json:"alive"`
@@ -69,12 +69,18 @@ type DatasourceServers struct {
 	Token  string  `json:"token"`
 }
 
+type PrometheusConfig struct {
+	ConfigPath  string  `json:"config_path"`
+	ConfigReload  string  `json:"config_reload"`
+}
+
 type GlobalConfig struct {
 	Http  *HttpConfig  `json:"http"`
 	Store  []*StoreConfig  `json:"store"`
 	Datasource  DataSourceConfig  `json:"datasource"`
 	LimitIp  []string  `json:"limitIp"`
 	Dependence  []*DependenceConfig  `json:"dependence"`
+	Prometheus  PrometheusConfig  `json:"prometheus"`
 }
 
 var (

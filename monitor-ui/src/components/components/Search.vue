@@ -1,11 +1,15 @@
 <template>
-  <div class=" ">
+  <div class="" style="display:inline-block">
    <ul class="search-ul">
       <li class="search-li">
         <Searchinput ref="searchInput" :parentConfig="searchInputConfig"></Searchinput> 
       </li>
       <li class="search-li">
-        <Button type="primary" @click="getChartsConfig()" icon="ios-search">搜索</Button>
+        <button type="button" class="btn btn-sm btn-confirm-f"
+            @click="getChartsConfig()">
+            <i class="fa fa-search" ></i>
+            搜索
+          </button>
       </li>
       <li class="search-li">
           <Select v-model="timeTnterval" style="width:80px" @on-change="getChartsConfig">
@@ -15,11 +19,17 @@
       <li class="search-li">
         <DatePicker type="daterange" placement="bottom-end" @on-change="datePick" placeholder="请选择日期" style="width: 200px"></DatePicker>
       </li>
+      <li class="search-li">
+        <Select v-model="autoRefresh" style="width:100px" @on-change="getChartsConfig" placeholder="定时刷新">
+          <Option v-for="item in autoRefreshConfig" :value="item.value" :key="item.value">{{ item.label }}</Option>
+        </Select>
+      </li>
    </ul>
   </div>
 </template>
 
 <script>
+import {dataPick, autoRefreshConfig} from '@/assets/config/common-config'
 import Searchinput from './Search-input'
 export default {
   name: '',
@@ -28,25 +38,15 @@ export default {
       searchInputConfig: {
         poptipWidth: 300,
         placeholder: '请输入主机名或IP地址，可模糊匹配',
-        inputStyle: "width:300px;"
+        inputStyle: "width:300px;",
+        api: this.apiCenter.resourceSearch.api
       },
       ip: {},
       timeTnterval: -1800,
-      dataPick: [
-        {
-            value: -1800,
-            label: '30分钟'
-        },
-        {
-            value: -3600,
-            label: '1小时'
-        },
-        {
-            value: -10800,
-            label: '3小时'
-        }
-      ],
+      dataPick: dataPick,
       dateRange: ['',''],
+      autoRefresh: 0,
+      autoRefreshConfig: autoRefreshConfig,
       params: {
         // time: this.timeTnterval,
         // group: 1,
@@ -56,15 +56,13 @@ export default {
       }
     }
   },
-  mounted (){
-  },
   methods: {
     getMainConfig () {
       return new Promise(resolve => {
         let params = {
           type: this.ip.value.split(':')[1]
         }
-        this.$httpRequestEntrance.httpRequestEntrance('GET', '/dashboard/main', params, (responseData) => {
+        this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.mainConfig.api, params, (responseData) => {
             resolve(responseData)
           })
         })
@@ -84,6 +82,7 @@ export default {
         let url = res.panels.url
         let key = res.search.name
         let params = {
+          autoRefresh: this.autoRefresh,
           time: this.timeTnterval,
           endpoint: this.ip.value,
           start: this.dateRange[0] ===''? '':Date.parse(this.dateRange[0])/1000,
@@ -95,7 +94,7 @@ export default {
         },{isNeedloading: false})
       })
       
-    },
+    }
   },
   components: {
     Searchinput

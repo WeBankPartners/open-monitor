@@ -4,18 +4,21 @@ import (
 	"sort"
 	"strconv"
 	"fmt"
+	"github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/models"
 )
 
-func CheckAggregate(start int64, end int64, endpoint string, num int) int {
+func CheckAggregate(start int64, end int64, endpoint string, step,num int) int {
 	if num == 0 {
 		return 0
 	}
-	step := 10
-	_,host := GetEndpoint(endpoint)
-	if host.Id == 0 {
-		return 0
+	if step <= 0 {
+		host := models.EndpointTable{Guid: endpoint}
+		GetEndpoint(&host)
+		if host.Id == 0 {
+			return 0
+		}
+		step = host.Step
 	}
-	step = host.Step
 	var agg int
 	limit := 5
 	subtime := end - start

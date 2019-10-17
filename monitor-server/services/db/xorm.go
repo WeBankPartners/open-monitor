@@ -86,6 +86,9 @@ func ExecuteTransactionSql(sqls []string) error {
 		actions = append(actions, &action)
 	}
 	err := Transaction(actions)
+	if err != nil {
+		mid.LogError(fmt.Sprintf("exec sqls fail : %v ", sqls), err)
+	}
 	return err
 }
 
