@@ -18,10 +18,6 @@ WeCube通过监控插件来对资源以及应用的监控及告警。
 - 告警管理：提供阈值配置、告警触发等功能；
 - 视图管理：提供图形配置功能；
 
-## 设计文档
-
-[Prometheus安装文档](wiki/prometheus_deploy_guide.md)
-
 ## 快速入门
 Wecube-plugins-prometheus采用容器化部署。
 
