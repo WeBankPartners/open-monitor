@@ -108,7 +108,10 @@ export default {
   name: '',
   data() {
     return {
+      viewData: null,
+      panalIndex: null,
       panalData: null,
+
       elId: null,
       noDataTip: false,
       activeStep: 'chat_query',
@@ -134,7 +137,6 @@ export default {
       handler (data) {
         let params = []
         data.forEach((item) => {
-          console.log(item)
           params.push(JSON.stringify({
             endpoint: item.endpoint.split(':')[0],
             // endpoint: item.endpoint,
@@ -142,7 +144,6 @@ export default {
             time: '-1800'
           })) 
         })
-        console.log(params)
         this.$httpRequestEntrance.httpRequestEntrance('GET',this.apiCenter.metricConfigView.api, {config: `[${params.join(',')}]`}, responseData => {
           var legend = []
           if (responseData.series.length === 0) {
@@ -180,53 +181,55 @@ export default {
       this.$router.push({path: 'viewConfig'})
     } else {
       if (!this.$validate.isEmpty_reset(this.$route.params.templateData.cfg)) {
-        let viewData = JSON.parse(this.$route.params.templateData.cfg)
-        viewData.forEach((itemx)=>{
+        this.viewData = JSON.parse(this.$route.params.templateData.cfg)
+        this.viewData.forEach((itemx,index)=>{
           if (itemx.viewConfig.id === this.$route.params.panal.id) {
+            this.panalIndex = index
             this.panalData = itemx
+            this.initPanal()
             return
           }
         })
-        this.initPanal()
       }
     }
   },
   methods: {
     initPanal() {
+      console.log(this.panalData)
       this.panalTitle = this.panalData.panalTitle
       this.panalUnit = this.panalData.panalUnit
       let params = []
       this.panalData.query.forEach((item) => {
-        console.log(item)
         params.push(JSON.stringify({
           endpoint: item.endpoint,
           prom_ql: item.prom_ql,
           time: '-1800'
         })) 
       })
-      console.log(params)
-      this.$httpRequestEntrance.httpRequestEntrance('GET',this.apiCenter.metricConfigView.api, {config: `[${params.join(',')}]`}, responseData => {
-        var legend = []
-        if (responseData.series.length === 0) {
-          this.noDataTip = true
-          return
-        }
-        responseData.series.forEach((item)=>{
-          legend.push(item.name)
-          item.symbol = 'none'
-          item.smooth = true
-          item.lineStyle = {
-            width: 1
+      if (!params) {
+        this.$httpRequestEntrance.httpRequestEntrance('GET',this.apiCenter.metricConfigView.api, {config: `[${params.join(',')}]`}, responseData => {
+          var legend = []
+          if (responseData.series.length === 0) {
+            this.noDataTip = true
+            return
           }
-        }) 
-        let config = {
-          title: responseData.title,
-          legend: legend,
-          series: responseData.series,
-          yaxis: responseData.yaxis,
-        }
-        drawChart(this, config, {eye: false})
-      })
+          responseData.series.forEach((item)=>{
+            legend.push(item.name)
+            item.symbol = 'none'
+            item.smooth = true
+            item.lineStyle = {
+              width: 1
+            }
+          }) 
+          let config = {
+            title: responseData.title,
+            legend: legend,
+            series: responseData.series,
+            yaxis: responseData.yaxis,
+          }
+          drawChart(this, config, {eye: false})
+        })
+      }
     },
     endpointList(query) {
       let params = {
@@ -296,17 +299,27 @@ export default {
           prom_ql: item.metric
         }) 
       })
-      const cfg = [{
+      let panal = this.$route.params.panal
+      panal.i = this.panalTitle
+      const temp = {
         panalTitle: this.panalTitle,
         panalUnit: this.panalUnit,
         query: query,
-        viewConfig: this.$route.params.panal
-      }]
+        viewConfig: panal
+      }
+
+      if (this.panalIndex !== null) {
+        this.viewData[this.panalIndex] = temp
+      } else {
+        this.viewData.push(temp)
+      }
+      console.log(temp.panalUnit)
       let params = {
         name: this.$route.params.templateData.name,
         id: this.$route.params.templateData.id,
-        cfg: JSON.stringify(cfg)
+        cfg: JSON.stringify(this.viewData)
       }
+
       this.$httpRequestEntrance.httpRequestEntrance('POST','dashboard/custom/save', params, () => {
         this.$Message.success('保存成功！')
       })

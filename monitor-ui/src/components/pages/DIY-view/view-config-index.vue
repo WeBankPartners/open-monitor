@@ -91,7 +91,6 @@ export default {
     },
     viewList () {
       this.$httpRequestEntrance.httpRequestEntrance('GET','dashboard/custom/list', '', responseData => {
-        console.log(responseData)
         this.dataList = responseData
       })
     },

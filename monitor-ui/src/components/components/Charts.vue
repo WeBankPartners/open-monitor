@@ -68,12 +68,6 @@ export default {
       this.changeTab(activeTab)
     },
     changeTab (name) {
-      // if (name === '配置_') {
-      //   this.showViewMetricConfig = true
-      //   return 
-      // } else {
-      //   this.showViewMetricConfig = false
-      // }
       this.params = this.charts.chartsConfig[0].params
       this.activeTab = name
       this.activeCharts = []
@@ -117,7 +111,6 @@ export default {
     }
   },
   components: {
-    // MetricConfig,
     SingleChart,
     MaxChart
   }

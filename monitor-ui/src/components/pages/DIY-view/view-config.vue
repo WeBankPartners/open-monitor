@@ -8,6 +8,7 @@
             </div>
             <div class="header-tools"> 
                 <i class="fa fa-plus-square-o fa-18" @click="addItem" aria-hidden="true"></i>
+                <i class="fa fa-plus fa-18" @click="modifyLayoutData" aria-hidden="true"></i>
             </div>
         </div>
       </header>
@@ -37,6 +38,9 @@
             <i class="fa fa-cog" @click="editGrid(item)" aria-hidden="true"></i>
             <i class="fa fa-trash" @click="removeGrid(item)" aria-hidden="true"></i>
           </div>
+          <div>
+            <SingleChart :chartItemx="chartItemx" :params="params"> </SingleChart>
+          </div>
         </div>
         </grid-item>
       </grid-layout>
@@ -45,12 +49,13 @@
 
 <script>
 import {generateUuid} from '@/assets/js/utils'
+import SingleChart from '@/components/components/Single-chart'
 import VueGridLayout from 'vue-grid-layout';
 export default {
   name: '',
   data() {
     return {
-      viewData: null,
+      viewData: [],
       layoutData: [
         //   {'x':0,'y':0,'w':2,'h':2,'i':'0'},
         //   {'x':1,'y':1,'w':2,'h':2,'i':'1'},
@@ -88,15 +93,41 @@ export default {
       })
     },
     editGrid(item) {
-      this.$router.push({name: 'editView', params:{templateData: this.$route.params, panal:item}})
+      this.modifyLayoutData().then((resViewData)=>{
+        let parentRouteData = this.$route.params
+        parentRouteData.cfg = JSON.stringify(resViewData) 
+        this.$router.push({name: 'editView', params:{templateData: parentRouteData, panal:item}}) 
+      })
     },
     removeGrid(item) {
       this.layoutData.splice(this.layoutData.indexOf(item), 1);
     },
+    modifyLayoutData() {
+      return new Promise(resolve => {
+        var resViewData = []
+        this.layoutData.forEach((layoutDataItem) =>{
+          let temp = {
+            panalTitle: layoutDataItem.i,
+            panalUnit: '',
+            query: [],
+            viewConfig: layoutDataItem
+          }
+          this.viewData.forEach((i) =>{
+            if (layoutDataItem.id === i.viewConfig.id) {
+              temp.panalUnit = i.panalUnit
+              temp.query = i.query
+            }
+          })
+          resViewData.push(temp)
+        })
+        resolve(resViewData)
+      })
+    }
   },
   components: {
     GridLayout: VueGridLayout.GridLayout,
     GridItem: VueGridLayout.GridItem,
+    SingleChart
   },
 }
 </script>
