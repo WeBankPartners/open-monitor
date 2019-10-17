@@ -1,7 +1,7 @@
 export GOPATH=$(PWD)
 
 current_dir=$(shell pwd)
-version="0.9"
+version=$(shell bash ./build/version.sh)
 project_name=$(shell basename "${current_dir}" )
 
 
@@ -26,5 +26,5 @@ build-ui: clean-ui
 	docker run --rm -v $(current_dir):/go/src/github.com/WeBankPartners/$(project_name) --name build_$(project_name)_ui node:12.10.0 /bin/bash /go/src/github.com/WeBankPartners/$(project_name)/build/build-ui.sh
 
 image: build-server build-ui
-	docker build -t $(project_name):$(version) .
+	docker build -t monitor:$(version) .
 
