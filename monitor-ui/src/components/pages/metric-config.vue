@@ -1,18 +1,20 @@
 <template>
   <div class="text-align:center; ">
+    <Title title="视图配置"></Title>
     <div style="margin-bottom:24px;">
-        <Select v-model="metricSelected" filterable multiple style="width:260px" :label-in-value="true" 
-            @on-change="selectMetric" placeholder="请选择监控指标">
-            <Option v-for="item in metricList" :value="item.id + '^^' + item.prom_ql" :key="item.metric">{{item.metric}}</Option>
-        </Select>
-        <Select v-model="timeTnterval" style="width:80px;margin: 0 8px;">
-          <Option v-for="item in dataPick" :value="item.value" :key="item.value">{{ item.label }}</Option>
-        </Select>
-        
-        <button class="btn btn-sm btn-confirm-f" @click="requestChart">查询</button>
-        <button class="btn btn-sm btn-cancle-f" @click="addMetric">新增指标</button>
-        <button class="btn btn-sm btn-cancle-f" @click="saveConfig">保存修改</button>
-
+      <Notice :noticeConfig='noticeConfig'> </Notice>
+      <Searchinput :parentConfig="searchInputConfig" ref="choicedIP"></Searchinput> 
+      <Select v-model="metricSelected" filterable multiple style="width:260px" :label-in-value="true" 
+          @on-change="selectMetric" @on-open-change="metricSelectOpen" placeholder="请选择监控指标">
+          <Option v-for="item in metricList" :value="item.id + '^^' + item.prom_ql" :key="item.metric">{{item.metric}}</Option>
+      </Select>
+      <Select v-model="timeTnterval" style="width:80px;margin: 0 8px;">
+        <Option v-for="item in dataPick" :value="item.value" :key="item.value">{{ item.label }}</Option>
+      </Select>
+      
+      <button class="btn btn-sm btn-confirm-f" :disabled="$store.state.ip.value === ''" @click="requestChart">查询</button>
+      <button class="btn btn-sm btn-cancle-f" @click="addMetric">新增指标</button>
+      <button class="btn btn-sm btn-cancle-f" @click="saveConfig">保存修改</button>
     </div>
     <section class="metric-section">
       <ul>
@@ -21,6 +23,9 @@
             <Tag color="primary" type="border" closable @on-close="delMetric(metricItem)">指标名称：{{metricItem.label}} 
               <i class="fa fa-pencil" aria-hidden="true" @click="editMetricName(metricItem,metricIndex)"></i>
             </Tag>
+            <Select v-model="originalMetricList[metricItem.key].model" style="width:300px" size="small" @on-change="selectOriginalMetric(metricItem)">
+              <Option v-for="item in originalMetricList[metricItem.key].list" :value="item.option_value" :key="item.option_value">{{ item.option_text }}</Option>
+            </Select>
             <div>
                <textarea v-model="metricItem.value" class="textareaSty"></textarea> 
             </div>
@@ -41,6 +46,8 @@
 </template>
 
 <script>
+import Notice from '@/components/components/notice'
+import Searchinput from '../components/Search-input'
 import {dataPick} from '@/assets/config/common-config'
 
 import {generateUuid} from '@/assets/js/utils'
@@ -52,20 +59,41 @@ export default {
   name: '',
   data() {
     return {
-     elId: '',
-     isRequestChartData: false,
-     noDataTip: false,
+      noticeConfig: {
+        type: 'info',
+        contents: [
+          {
+            tip: '1、请先搜索主机作为输入源并选择监控指标；'
+          },
+          {
+            tip: '2、点击查询可查看单钱对象及指标下监控视图；'
+          },
+          {
+            tip: '3、使用新增指标增减指标项，并在点击 保存修改 后面将配置保存；'
+          },
+        ]
+      },
+      searchInputConfig: {
+        poptipWidth: 300,
+        placeholder: '请输入主机名或IP地址，可模糊匹配',
+        inputStyle: "width:300px;",
+        // api: '/dashboard/search'
+        api: this.apiCenter.resourceSearch.api
+      },
+      elId: '',
+      isRequestChartData: false,
+      noDataTip: false,
 
-     metricSelected: [],
-     metricSelectedOptions: [],
-     metricList: [],
+      metricSelected: [],
+      metricSelectedOptions: [],
+      metricList: [],
 
-     timeTnterval: -1800,
-     dataPick: dataPick,
+      timeTnterval: -1800,
+      dataPick: dataPick,
 
-     editMetric: [],
-     editingMetric: null,
-     modelConfig: {
+      editMetric: [],
+      editingMetric: null,
+      modelConfig: {
         modalId: 'edit_metric_Modal',
         modalTitle: '指标名称',
         isAdd: true,
@@ -75,7 +103,10 @@ export default {
         addRow: { // [通用]-保存用户新增、编辑时数据
           name: null
         }
-     }
+      },
+      
+      originalList: [],
+      originalMetricList: {}
     }
   },
   created (){
@@ -83,17 +114,48 @@ export default {
       this.elId =  `id_${elId}`
     })
   },
+  watch: {
+    changeIP () {
+      this.metricSelected = []
+      this.metricSelectedOptions = []
+      this.metricList = []
+      this.noDataTip = true
+    }
+  },
   computed: {
+    changeIP() {
+      return this.$store.state.ip.value
+    },
     totalMetric: function () {
       return this.metricSelectedOptions.concat(this.editMetric)
     } 
   },
   mounted (){
-    this.obtainMetricList()
+    this.getOriginalMetricList()
   },
   methods: {
     addMetric() {
-     this.editMetric.push({label: `default${((new Date()).valueOf()).toString().substring(10)}`, value: ''})
+     let key = ((new Date()).valueOf()).toString().substring(10)
+     this.editMetric.push({label: `default${key}`, value: '',key: `add_${key}`})
+      let o_metric = {
+        list: '',
+        model: ''
+      }
+      o_metric.list = this.originalList
+      this.originalMetricList[`add_${key}`] = o_metric
+    },
+    selectOriginalMetric(item) {
+      if (item.key.indexOf('add_')> -1) {
+        for (let i=0; i< this.editMetric.length; i++) {
+          if (item.key === this.editMetric[i].key) 
+          this.editMetric[i].value = this.editMetric[i].value + this.originalMetricList[item.key].model
+        }
+      } else {
+        for (let i=0; i< this.metricSelectedOptions.length; i++) {
+          if (item.key === this.metricSelectedOptions[i].key) 
+          this.metricSelectedOptions[i].value = this.metricSelectedOptions[i].value + this.originalMetricList[item.key].model
+        }
+      }
     },
     delMetric (metric) {
       if (metric.label.indexOf('default') > -1) {
@@ -115,12 +177,31 @@ export default {
         this.metricSelectedOptions.push({
           id: parseInt(item.value.split('^^')[0]),
           value: item.value.split('^^')[1],
-          label: item.label
+          label: item.label,
+          key: 'origin_' + parseInt(item.value.split('^^')[0])
         })
+
+        let o_metric = {
+          list: this.originalList,
+          model: ''
+        }
+        this.originalMetricList['origin_' + parseInt(item.value.split('^^')[0])] = o_metric
       })
     },
-    obtainMetricList () {
-      let params = {type: this.$store.state.ip.type}
+    metricSelectOpen (flag) {
+      if (flag) {
+        if (this.$store.state.ip.value !== '') {
+          this.obtainMetricList(this.$store.state.ip.type)
+        } else {
+          this.metricSelected = []
+          this.metricSelectedOptions = []
+          this.metricList = []
+          this.$Message.warning('请先选择主机名或IP地址！')
+        }
+      }
+    },
+    obtainMetricList (type) {
+      let params = {type: type}
       this.$httpRequestEntrance.httpRequestEntrance('GET',this.apiCenter.metricList.api, params, responseData => {
         this.metricList = responseData
       })
@@ -133,13 +214,22 @@ export default {
         return
       }
       let params = []
+      var requestFlag = true
       this.totalMetric.forEach((item) => {
+        if (!item.value.trim()) {
+          this.$Message.warning('指标表达式不能为空!')
+          this.noDataTip = true
+          requestFlag = false 
+        }
         params.push(JSON.stringify({
           endpoint: this.$store.state.ip.value.split(':')[0],
           prom_ql: item.value,
           time: this.timeTnterval + ''
         })) 
       })
+      if (!requestFlag) {
+        return
+      }
       this.isRequestChartData = true
       
       this.$httpRequestEntrance.httpRequestEntrance('GET',this.apiCenter.metricConfigView.api, {config: `[${params.join(',')}]`}, responseData => {
@@ -192,9 +282,16 @@ export default {
     addPost (){
       this.totalMetric[this.editingMetric].label = this.modelConfig.addRow.name
       this.JQ('#edit_metric_Modal').modal('hide')
+    },
+    getOriginalMetricList() {
+      this.$httpRequestEntrance.httpRequestEntrance('GET',this.apiCenter.originMetricList.api, {id:2}, responseData => {
+        this.originalList = responseData
+      })
     }
   },
   components: {
+    Notice,
+    Searchinput
   },
 }
 </script>
