@@ -16,7 +16,7 @@
     "log": {
       "enable": true,
       "level": "debug",
-      "file": "prometheus_monitor.log",
+      "file": "logs/prometheus_monitor.log",
       "stdout": true
     }
   },
