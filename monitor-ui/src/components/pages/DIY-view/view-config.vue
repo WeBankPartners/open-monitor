@@ -8,7 +8,6 @@
             </div>
             <div class="header-tools"> 
                 <i class="fa fa-plus-square-o fa-18" @click="addItem" aria-hidden="true"></i>
-                <i class="fa fa-plus fa-18" @click="modifyLayoutData" aria-hidden="true"></i>
             </div>
         </div>
       </header>
@@ -29,7 +28,7 @@
                    :h="item.h"
                    :i="item.i"
                    :key="index">
-        <div style="display:flex;justify-content:flex-end">
+        <div style="display:flex;justify-content:flex-end;padding:0 32px;">
           <div class="header-grid header-grid-name">
             {{item.i}}
           </div>
@@ -38,9 +37,16 @@
             <i class="fa fa-cog" @click="editGrid(item)" aria-hidden="true"></i>
             <i class="fa fa-trash" @click="removeGrid(item)" aria-hidden="true"></i>
           </div>
-          <div>
-            <SingleChart :chartItemx="chartItemx" :params="params"> </SingleChart>
-          </div>
+        </div>
+        <div class="">
+          <section class="metric-section">
+            <div v-if="!noDataTip">
+              <div :id="item.id" class="echart" style="height:230px;width:560px"></div>
+            </div>
+             <div v-else class="echart echart-no-data-tip">
+              <span>~~~暂无数据~~~</span>
+            </div>
+          </section>
         </div>
         </grid-item>
       </grid-layout>
@@ -49,17 +55,19 @@
 
 <script>
 import {generateUuid} from '@/assets/js/utils'
-import SingleChart from '@/components/components/Single-chart'
-import VueGridLayout from 'vue-grid-layout';
+import VueGridLayout from 'vue-grid-layout'
+import {drawChart} from  '@/assets/config/chart-rely'
 export default {
   name: '',
   data() {
     return {
-      viewData: [],
+      viewData: null,
       layoutData: [
         //   {'x':0,'y':0,'w':2,'h':2,'i':'0'},
         //   {'x':1,'y':1,'w':2,'h':2,'i':'1'},
-      ]
+      ],
+      layoutDataSize: {},
+      noDataTip: false
     }
   },
   mounted() {
@@ -72,10 +80,48 @@ export default {
       }
     }
   },
+  destroyed() {
+    // console.log(this.viewData)
+    // console.log(this.layoutData)
+  },
   methods: {
     initPanals () {
       this.viewData.forEach((item) => {
         this.layoutData.push(item.viewConfig)
+        this.requestChart(item.viewConfig.id, item.query)
+      })
+    },
+    requestChart (id, query) {
+      let params = []
+      query.forEach((item) => {
+        params.push(JSON.stringify({
+          ...item,
+          time: '-1800'
+        })) 
+      })
+      // this.isRequestChartData = true
+      this.$httpRequestEntrance.httpRequestEntrance('GET',this.apiCenter.metricConfigView.api, {config: `[${params.join(',')}]`}, responseData => {
+        var legend = []
+        if (responseData.series.length === 0) {
+          this.noDataTip = true
+          return
+        }
+        responseData.series.forEach((item)=>{
+          legend.push(item.name)
+          item.symbol = 'none'
+          item.smooth = true
+          item.lineStyle = {
+            width: 1
+          }
+        }) 
+        let config = {
+          title: responseData.title,
+          legend: legend,
+          series: responseData.series,
+          yaxis: responseData.yaxis,
+        }
+        this.elId = id
+        drawChart(this, config, {eye: false,dataZoom:false})
       })
     },
     addItem() {
@@ -127,7 +173,6 @@ export default {
   components: {
     GridLayout: VueGridLayout.GridLayout,
     GridItem: VueGridLayout.GridItem,
-    SingleChart
   },
 }
 </script>

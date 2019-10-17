@@ -16,7 +16,7 @@
                 模板名称：{{panalItem.name}}
               </p>
               <a slot="extra">
-                <button class="btn btn-sm btn-confirm-f" @click="goToPanal(panalItem)">编辑</button>
+                <button class="btn btn-sm btn-confirm-f" @click="goToPanal(panalItem)">查看</button>
                 <button class="btn btn-sm btn-cancle-f" @click="removeTemplate(panalItem)">删除</button>
               </a>
               <ul class="panal-content">

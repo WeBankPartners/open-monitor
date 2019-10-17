@@ -124,7 +124,6 @@ export default {
   },
   computed: {
     changeIP() {
-      console.log(12)
       return this.$store.state.ip.value
     },
     totalMetric: function () {

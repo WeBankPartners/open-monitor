@@ -195,7 +195,6 @@ export default {
   },
   methods: {
     initPanal() {
-      console.log(this.panalData)
       this.panalTitle = this.panalData.panalTitle
       this.panalUnit = this.panalData.panalUnit
       let params = []
@@ -313,7 +312,6 @@ export default {
       } else {
         this.viewData.push(temp)
       }
-      console.log(temp.panalUnit)
       let params = {
         name: this.$route.params.templateData.name,
         id: this.$route.params.templateData.id,
