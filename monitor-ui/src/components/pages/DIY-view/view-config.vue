@@ -33,7 +33,7 @@
             {{item.i}}
           </div>
           <div class="header-grid header-grid-tools"> 
-            <i class="fa fa-eye" aria-hidden="true"></i>
+            <i class="fa fa-eye" aria-hidden="true" @click="gridPlus(item)"></i>
             <i class="fa fa-cog" @click="editGrid(item)" aria-hidden="true"></i>
             <i class="fa fa-trash" @click="removeGrid(item)" aria-hidden="true"></i>
           </div>
@@ -61,7 +61,7 @@ export default {
   name: '',
   data() {
     return {
-      viewData: null,
+      viewData: [],
       layoutData: [
         //   {'x':0,'y':0,'w':2,'h':2,'i':'0'},
         //   {'x':1,'y':1,'w':2,'h':2,'i':'1'},
@@ -145,8 +145,12 @@ export default {
         this.$router.push({name: 'editView', params:{templateData: parentRouteData, panal:item}}) 
       })
     },
-    removeGrid(item) {
-      this.layoutData.splice(this.layoutData.indexOf(item), 1);
+    removeGrid() {
+      this.$Message.info('暂未启用！')
+      // this.layoutData.splice(this.layoutData.indexOf(item), 1)
+    },
+    gridPlus() {
+      this.$Message.info('暂未启用！')
     },
     modifyLayoutData() {
       return new Promise(resolve => {

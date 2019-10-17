@@ -62,7 +62,9 @@
                           v-model="chartQueryList[queryIndex].endpoint"
                           filterable
                           remote
-                          :remote-method="endpointList">
+                          :remote-method="endpointList"
+                          :label-in-value="true" 
+                          >
                           <Option v-for="(option, index) in options" :value="option.option_value" :key="index">{{option.option_text}}</Option>
                         </Select>
                       </div>
@@ -122,7 +124,7 @@ export default {
       },
       chartQueryList:[{
         endpoint: '',
-        metric: ''
+        metric: '',
       }],
       
       options: [],
@@ -136,14 +138,21 @@ export default {
     chartQueryList: {
       handler (data) {
         let params = []
+        var requestFlag = true
         data.forEach((item) => {
+          if (item.endpoint === '' || item.metric === '') {
+            requestFlag = false
+            return
+          }
           params.push(JSON.stringify({
             endpoint: item.endpoint.split(':')[0],
-            // endpoint: item.endpoint,
             prom_ql: item.metric,
             time: '-1800'
           })) 
         })
+        if (!requestFlag) {
+          return
+        }
         this.$httpRequestEntrance.httpRequestEntrance('GET',this.apiCenter.metricConfigView.api, {config: `[${params.join(',')}]`}, responseData => {
           var legend = []
           if (responseData.series.length === 0) {
@@ -198,6 +207,9 @@ export default {
       this.panalTitle = this.panalData.panalTitle
       this.panalUnit = this.panalData.panalUnit
       let params = []
+      if (this.$validate.isEmpty_reset(this.panalData.query)) {
+        return
+      }
       this.panalData.query.forEach((item) => {
         params.push(JSON.stringify({
           endpoint: item.endpoint,
@@ -205,7 +217,7 @@ export default {
           time: '-1800'
         })) 
       })
-      if (!params) {
+      if (params !== []) {
         this.$httpRequestEntrance.httpRequestEntrance('GET',this.apiCenter.metricConfigView.api, {config: `[${params.join(',')}]`}, responseData => {
           var legend = []
           if (responseData.series.length === 0) {
@@ -253,42 +265,13 @@ export default {
     addQuery () {
       this.chartQueryList.push({
         endpoint: '',
-        metric: ''
+        options: [],
+        metric: '',
+        metricList: [],
       })
     },
     removeQuery (queryItem) {
       this.chartQueryList.splice(this.chartQueryList.indexOf(queryItem),1)
-    },
-    chartData () {
-      let params = {
-          agg: 'none',
-          endpoint: ['VM_0_16_centos_192.168.0.16_host'],
-          id: 1,
-          metric: ['cpu.used.percent'],
-          time: '-1800'
-      }
-      this.$httpRequestEntrance.httpRequestEntrance('GET', '/dashboard/chart', params, responseData => {
-        var legend = []
-        if (responseData.series.length === 0) {
-          this.noDataTip = true
-          return
-        }
-        responseData.series.forEach((item)=>{
-          legend.push(item.name)
-          item.symbol = 'none'
-          item.smooth = true
-          item.lineStyle = {
-              width: 1
-          }
-        }) 
-        let config = {
-          title: responseData.title,
-          legend: legend,
-          series: responseData.series,
-          yaxis: responseData.yaxis,
-        }
-        drawChart(this, config, {title: false, eye: false,dataZoom: false})
-      })
     },
     saveConfig () {
       let query = []
