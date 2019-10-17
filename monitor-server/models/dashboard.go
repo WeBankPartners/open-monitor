@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 type SearchModel struct {
 	Id  int  `json:"id"`
 	Enable  bool  `json:"enable"`
@@ -11,6 +13,7 @@ type SearchModel struct {
 }
 
 type OptionModel struct {
+	Id  int  `json:"id"`
 	OptionValue  string  `json:"option_value"`
 	OptionText   string  `json:"option_text"`
 	Active  bool  `json:"active"`
@@ -157,25 +160,22 @@ type ChartTable struct {
 	Legend   string  `json:"legend"`
 }
 
-// POST DATA
-type GetChartDto struct {
+type ChartConfigObj struct {
 	Id   int    `form:"id" json:"id"`
-	Endpoint   []string    `form:"endpoint" json:"endpoint"`
-	Ip  []string  `form:"ip" json:"ip"`
-	Metric   []string    `form:"metric" json:"metric"`
+	Endpoint   string    `form:"endpoint" json:"endpoint"`
+	Metric   string    `form:"metric" json:"metric"`
+	PromQl  string  `form:"prom_ql" json:"prom_ql"`
 	Start  string  `form:"start" json:"start"`
 	End  string  `form:"end" json:"end"`
 	Time  string  `form:"time" json:"time"`
 	Aggregate  string  `form:"aggregate" json:"aggregate"`
-	Extend  bool  `form:"extend" json:"extend"`
-	Rate  bool  `form:"rate" json:"rate"`
 }
 
 type PromMetricTable struct {
 	Id  int  `json:"id"`
-	Metric  string  `json:"metric"`
+	Metric  string  `json:"metric" binding:"required"`
 	MetricType  string  `json:"metric_type"`
-	PromQl  string  `json:"prom_ql"`
+	PromQl  string  `json:"prom_ql" binding:"required"`
 	PromMain  string  `json:"prom_main"`
 }
 
@@ -197,4 +197,32 @@ type EndpointMetricTable struct {
 	Id  int  `json:"id"`
 	EndpointId  int  `json:"endpoint_id"`
 	Metric  string  `json:"metric"`
+}
+
+type MaintainTable struct {
+	Id  int  `json:"id"`
+	EndpointId  int  `json:"endpoint_id"`
+	MaintainStart  time.Time  `json:"maintain_start"`
+	MaintainEnd  time.Time  `json:"maintain_end"`
+	MaintainUser  string  `json:"maintain_user"`
+}
+
+type MaintainDto struct {
+	Start  int64  `json:"start"`
+	End  int64  `json:"end"`
+	Endpoint  string  `json:"endpoint"`
+	Ip  string  `json:"ip"`
+	EndpointType  string  `json:"endpoint_type"`
+	ClearMaintain  bool  `json:"clear_maintain"`
+}
+
+type CustomDashboardTable struct {
+	Id  int  `json:"id"`
+	Name  string  `json:"name"`
+	PanelsGroup  int  `json:"panels_group"`
+	Cfg  string  `json:"cfg"`
+	CreateUser  string  `json:"create_user"`
+	UpdateUser  string  `json:"update_user"`
+	CreateAt  time.Time  `json:"create_at"`
+	UpdateAt  time.Time  `json:"update_at"`
 }

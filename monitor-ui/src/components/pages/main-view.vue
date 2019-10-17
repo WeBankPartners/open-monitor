@@ -1,11 +1,11 @@
 <template>
-  <div class="page">
+  <div class="page" id="mainView">
     <Title title="监控视图"></Title>
     <Search ref="search" />
-    <Charts :charts='charts' ref="child1" />
+    <button type="button" v-if="isShow" @click="changeRoute" class="btn btn-sm btn-cancle-f btn-jump">对象管理</button>
+    <Charts :charts='charts' ref="parentCharts" />
   </div>
 </template>
-
 <script>
 import Title from '@/components/components/Title'
 import Search from '@/components/components/Search'
@@ -19,6 +19,15 @@ export default {
       }
     }
   },
+  computed: {
+    isShow: function () {
+      if (this.$validate.isEmpty_reset(this.$store.state.ip)) {
+        return false 
+      } else {
+        return true
+      }
+    }
+  },
   mounted() {
     this.$refs.search.getChartsConfig()
   },
@@ -26,6 +35,7 @@ export default {
     manageCharts (chartsConfig, params) {
       this.charts.chartsConfig = []
       chartsConfig.forEach(item => {
+        item.autoRefresh = params.autoRefresh
         let chart = {
           tabTape: {
             label: item.title,
@@ -38,7 +48,21 @@ export default {
         }
         this.charts.chartsConfig.push(chart)
       })
-      this.$refs.child1.refreshCharts(chartsConfig[0].title + '_')
+      let otherTab = {
+        tabTape: {
+          label: '配置',
+          name: '配置_',
+        },
+        btns: [],
+        tagsUrl: '',
+        charts: [],
+        params: params
+      } 
+      this.charts.chartsConfig.push(otherTab)
+      this.$refs.parentCharts.refreshCharts(chartsConfig[0].title + '_')
+    },
+    changeRoute () {
+      this.$router.push({name: 'objectManagement', params: {search: this.$store.state.ip.value.split(':')[0]}})
     }
   },
   components: {
@@ -51,4 +75,7 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
+.btn-jump {
+  margin-left: 10px;
+}
 </style>

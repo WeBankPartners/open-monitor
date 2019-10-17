@@ -1,14 +1,14 @@
 <template>
-    <Menu mode="horizontal" :theme="theme1" active-name="1">
-        <div class="logo">
+    <Menu mode="horizontal" :theme="theme1" :active-name="activeName" @on-select="menuChange">
+        <div class="logo" @click="routerChange">
             <img src="../../assets/logo.png"/>
             <span>Wecube-monitor</span>
         </div>
-        <MenuItem name="1">
-            <i class="fa fa-area-chart" aria-hidden="true"></i>
+        <MenuItem name="mainView">
+            <i class="fa fa-line-chart" aria-hidden="true"></i>
             监控视图
         </MenuItem>
-        <Submenu name="2">
+        <!-- <Submenu name="2">
             <template slot="title">
                 <i class="fa fa-television" aria-hidden="true"></i>
                 监控告警
@@ -22,14 +22,34 @@
                 <MenuItem name="2-4">用户留存</MenuItem>
                 <MenuItem name="2-5">流失用户</MenuItem>
             </MenuGroup>
-        </Submenu>
+        </Submenu> -->
+        <MenuItem name="monitorConfigIndex">
+            <i class="fa fa-gears" aria-hidden="true"></i>
+            监控配置
+        </MenuItem>
+        <MenuItem name="alarmManagement">
+            <i class="fa fa-bell" aria-hidden="true"></i>
+            告警管理
+        </MenuItem>
     </Menu>
 </template>
 <script>
     export default {
         data () {
             return {
-                theme1: 'dark'
+                theme1: 'dark',
+                activeName: ''
+            }
+        },
+        methods: {
+            routerChange () {
+                if (this.$route.name === 'portal') return
+                this.$router.push({ name: 'portal'})
+            },
+            menuChange (name) {
+                this.activeName = name
+                if (this.$route.name === name) return
+                this.$router.push({ name: name})
             }
         }
     }
@@ -39,6 +59,7 @@
         float: left;
         height: inherit;
         padding-left: 30px;
+        cursor: pointer;
         span {
             color: white;
             font-size: 16px;
@@ -47,7 +68,7 @@
         }
         img {
             width: 40px; 
-            margin: 10px 20px;
+            margin: 10px 20px 0;
 
         }
     }

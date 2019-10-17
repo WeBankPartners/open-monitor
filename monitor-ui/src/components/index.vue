@@ -28,7 +28,8 @@ export default {
   }
   .content {
     width:1200px;
-    min-height: 600px;
+    min-height: 560px;
+    height: 100%;
     margin: 0 auto;
     padding: 0 10px;
     background:white;

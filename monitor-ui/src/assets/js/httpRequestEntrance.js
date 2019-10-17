@@ -1,19 +1,14 @@
 /*
 * @author: 冯经宇
-* @CreateDate: 2018-03-16
-* @version: V0.0.1
+* @CreateDate: 2019-09-04
+* @version: V0.1.1
 * @describe:
 * 统一http请求入口，统一处理http请求响应
 *
  */
-// import router from '../router'
 import httpRequest from '@/assets/js/axiosHttp'
-// import store from '@/store/index.js'
-// import {cookies} from '@/common/cookieUtils'
 import $ from 'jquery'
-// import Vue from 'vue'
 import {Message} from 'iview'
-// Vue.prototype.$Message = Message
 import loadingImg from '@/assets/img/loading.gif'
 
 let loadingCount = 0
@@ -74,8 +69,6 @@ function httpRequestEntrance (method, url, data, callback, customHttpConfig) {
       return callback(response.data)
     }
   }).catch(function (error) {
-    // console.log('请求失败',error,error.request)
-    // store.commit('changeFlag',true) //弹窗提交按钮接口异常的话，恢复按钮可用
     if (config.isNeedloading) {
       setTimeout(() => {
         loadingCount--

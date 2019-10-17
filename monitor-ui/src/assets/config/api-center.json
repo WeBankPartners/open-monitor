@@ -1,0 +1,95 @@
+{
+    "resourceSearch": {
+        "_des": "资源搜索接口",
+        "api": "/dashboard/search",
+        "strategyApi": "/alarm/strategy/search"
+    },
+    "mainConfig": {
+        "_des": "主视图配置获取",
+        "api": "/dashboard/main"
+    },
+    "groupManagement": {
+        "_des": "组管理",
+        "list": {
+            "api": "alarm/grp/list"
+        },
+        "add": {
+            "api": "alarm/grp/add"
+        },
+        "update": {
+            "api": "alarm/grp/update"
+        },
+        "delete": {
+            "api": "alarm/grp/delete"
+        }
+    },
+    "objectManagement": {
+        "_des": "对象管理",
+        "list": {
+            "api": "alarm/endpoint/list"
+        },
+        "update": {
+            "api": "alarm/endpoint/update"
+        },
+        "register": {
+            "api": "agent/register"
+        }
+    },
+    "thresholdManagement": {
+        "_des": "阀值管理",
+        "list": {
+            "api": "alarm/strategy/list"
+        },
+        "add": {
+            "api": "alarm/strategy/add"
+        },
+        "update": {
+            "api": "alarm/strategy/update"
+        },
+        "delete": {
+            "api": "alarm/strategy/delete"
+        }
+    },
+    "logManagement": {
+        "_des": "阀值管理",
+        "list": {
+            "api": "alarm/log/monitor/list"
+        },
+        "delList": {
+            "api": "alarm/log/monitor/delete_path"
+        },
+        "editList": {
+            "api": "alarm/log/monitor/update_path"
+        },
+        "add": {
+            "api": "alarm/log/monitor/add"
+        },
+        "update": {
+            "api": "alarm/log/monitor/update"
+        },
+        "delete": {
+            "api": "alarm/log/monitor/delete"
+        }
+    },
+    "metricList": {
+        "_des": "指标列表",
+        "api": "dashboard/config/metric/list"
+    },
+    "metricUpdate": {
+        "_des": "指标更新",
+        "api": "dashboard/config/metric/update"
+    },
+    "metricConfigView": {
+        "_des": "指标配置预览视图",
+        "api": "dashboard/newchart"
+    },
+    "alarmManagement": {
+        "_des": "告警管理",
+        "list": {
+            "api": "alarm/problem/list"
+        },
+        "close": {
+            "api": "alarm/problem/close"
+        }
+    }
+}

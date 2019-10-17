@@ -96,9 +96,9 @@ func GetCharts(cGroup int, chartId int, panelId int) (error, []*m.ChartTable) {
 	return fmt.Errorf("get charts error"), charts
 }
 
-func GetPromMetric(endpoint,metric []string) (error, string) {
-	promQL := metric[0]
-	tmpMetric := metric[0]
+func GetPromMetric(endpoint []string,metric string) (error, string) {
+	promQL := metric
+	tmpMetric := metric
 	var tmpTag string
 	if strings.Contains(tmpMetric, "/") {
 		tmpList := strings.Split(tmpMetric, "/")
@@ -111,7 +111,8 @@ func GetPromMetric(endpoint,metric []string) (error, string) {
 		mid.LogError("query prom_metric fail", err)
 	}
 	if len(query) > 0 {
-		err,host := GetEndpoint(endpoint[0])
+		host := m.EndpointTable{Guid:endpoint[0]}
+		GetEndpoint(&host)
 		if err!=nil || host.Id==0 {
 			mid.LogError("can't find endpoint "+endpoint[0], err)
 			return err,promQL
@@ -147,22 +148,45 @@ func SearchHost(endpoint string) (error, []*m.OptionModel) {
 		if host.ExportType == "node" {
 			host.ExportType = "host"
 		}
-		options = append(options, &m.OptionModel{OptionText:fmt.Sprintf("%s:%s", host.Name, host.Ip), OptionValue:fmt.Sprintf("%s:%s", host.Guid, host.ExportType)})
+		options = append(options, &m.OptionModel{OptionText: fmt.Sprintf("%s:%s", host.Name, host.Ip), OptionValue: fmt.Sprintf("%s:%s", host.Guid, host.ExportType), Id:host.Id})
 	}
 	return err,options
 }
 
-func GetEndpoint(endpoint string) (error, m.EndpointTable) {
+func GetEndpoint(query *m.EndpointTable) error {
 	var endpointObj []*m.EndpointTable
-	err := x.SQL("SELECT * FROM endpoint WHERE guid=?", endpoint).Find(&endpointObj)
+	var err error
+	if query.Id > 0 {
+		err = x.SQL("SELECT * FROM endpoint WHERE id=?", query.Id).Find(&endpointObj)
+	}else if query.Guid != ""{
+		err = x.SQL("SELECT * FROM endpoint WHERE guid=?", query.Guid).Find(&endpointObj)
+	}else if query.Address != "" {
+		err = x.SQL("SELECT * FROM endpoint WHERE address=?", query.Address).Find(&endpointObj)
+	}
+	if query.Ip != "" && query.ExportType != "" {
+		if query.Name == "" {
+			err = x.SQL("SELECT * FROM endpoint WHERE ip=? and export_type=?", query.Ip, query.ExportType).Find(&endpointObj)
+		}else{
+			err = x.SQL("SELECT * FROM endpoint WHERE ip=? and export_type=? and name=?", query.Ip, query.ExportType, query.Name).Find(&endpointObj)
+		}
+	}
 	if err != nil {
 		mid.LogError("get tags fail ", err)
-		return err,m.EndpointTable{Id:0}
+		return err
 	}
 	if len(endpointObj) <= 0 {
-		return nil,m.EndpointTable{Id:0}
+		return fmt.Errorf("no data")
 	}
-	return nil,*endpointObj[0]
+	query.Id = endpointObj[0].Id
+	query.Guid = endpointObj[0].Guid
+	query.Address = endpointObj[0].Address
+	query.Name = endpointObj[0].Name
+	query.Ip = endpointObj[0].Ip
+	query.Step = endpointObj[0].Step
+	query.OsType = endpointObj[0].OsType
+	query.ExportVersion = endpointObj[0].ExportVersion
+	query.ExportType = endpointObj[0].ExportType
+	return nil
 }
 
 func GetTags(endpoint string, key string, metric string) (error, []*m.OptionModel) {
@@ -225,4 +249,61 @@ func RegisterEndpointMetric(endpointId int,endpointMetrics []string) error {
 	}
 	err := ExecuteTransactionSql(sqls)
 	return err
+}
+
+func GetPromMetricTable(metricType string) (err error,result []*m.PromMetricTable) {
+	if metricType != "" {
+		err = x.SQL("SELECT * FROM prom_metric WHERE metric_type=?", metricType).Find(&result)
+	}else{
+		err = x.SQL("SELECT * FROM prom_metric").Find(&result)
+	}
+	if err != nil {
+		mid.LogError("get prom metric table fail", err)
+	}
+	return err,result
+}
+
+func UpdatePromMetric(data []m.PromMetricTable) error {
+	if len(data) == 0 {
+		return fmt.Errorf("data is null")
+	}
+	var insertData,updateData []m.PromMetricTable
+	for _,v := range data {
+		if v.Id > 0 {
+			updateData = append(updateData, v)
+		}else{
+			insertData = append(insertData, v)
+		}
+	}
+	var sqls []string
+	for _,v := range insertData {
+		sqls = append(sqls, Classify(v, "insert", "prom_metric", false))
+	}
+	for _,v := range updateData {
+		sqls = append(sqls, Classify(v, "update", "prom_metric", false))
+	}
+	if len(sqls) > 0 {
+		return ExecuteTransactionSql(sqls)
+	}
+	return nil
+}
+
+func GetEndpointMetric(id int) (err error,result []*m.OptionModel) {
+	var endpointMetrics []*m.EndpointMetricTable
+	err = x.SQL("SELECT id,endpoint_id,metric FROM endpoint_metric WHERE endpoint_id=?", id).Find(&endpointMetrics)
+	if err != nil {
+		mid.LogError("get endpoint metric fail", err)
+	}
+	metricMap := make(map[string]string)
+	for _,v := range endpointMetrics {
+		tmpMetric := v.Metric
+		if strings.Contains(v.Metric, "{") {
+			tmpMetric = strings.Split(v.Metric, "{")[0]
+		}
+		metricMap[tmpMetric] = fmt.Sprintf("%s{instance=\"$address\"}", tmpMetric)
+	}
+	for k,v := range metricMap {
+		result = append(result, &m.OptionModel{OptionText:k, OptionValue:v})
+	}
+	return err,result
 }

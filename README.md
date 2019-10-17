@@ -7,7 +7,7 @@ Prometheus 监控插件包括几个组成部分： Prometheus Server、Consul、
 ## 技术实现
 WeCube通过监控插件来对资源以及应用的监控及告警。
 
-此插件后端技术选型为Java + Spring boot, 前端技术选型为ECharts。
+此插件后端技术选型为Go + Gin + Xorm, 前端技术选型为Vue + ECharts。
 
 
 ## 主要功能
@@ -22,8 +22,14 @@ WeCube通过监控插件来对资源以及应用的监控及告警。
 
 [Prometheus安装文档](wiki/prometheus_deploy_guide.md)
 
-## 编译打包
-插件开发进行中...
+## 快速入门
+Wecube-plugins-prometheus采用容器化部署。
+
+如何编译，请查看以下文档
+[Wecube-plugins-prometheus编译文档](wiki/compile_guide.md)
+
+如何安装， 请查看以下文档
+[Wecube-plugins-prometheus部署文档](wiki/install_guide.md)
 
 
 ## 插件运行

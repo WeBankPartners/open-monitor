@@ -8,10 +8,9 @@ import (
 )
 
 func UpdateEndpoint(endpoint *m.EndpointTable) error {
-	err,host := GetEndpoint(endpoint.Guid)
-	if err != nil {
-		return err
-	}else if host.Id == 0 {
+	host := m.EndpointTable{Guid:endpoint.Guid}
+	GetEndpoint(&host)
+	if host.Id == 0 {
 		insert := fmt.Sprintf("INSERT INTO endpoint(guid,name,ip,endpoint_version,export_type,export_version,step,address,os_type,create_at) VALUE ('%s','%s','%s','%s','%s','%s','%d','%s','%s','%s')",
 			endpoint.Guid,endpoint.Name,endpoint.Ip,endpoint.EndpointVersion,endpoint.ExportType,endpoint.ExportVersion,endpoint.Step,endpoint.Address,endpoint.OsType,time.Now().Format(m.DatetimeFormat))
 		_,err := x.Exec(insert)
@@ -19,7 +18,8 @@ func UpdateEndpoint(endpoint *m.EndpointTable) error {
 			mid.LogError("insert endpoint fail ", err)
 			return err
 		}
-		_,host = GetEndpoint(endpoint.Guid)
+		host := m.EndpointTable{Guid:endpoint.Guid}
+		GetEndpoint(&host)
 		endpoint.Id = host.Id
 	}else{
 		update := fmt.Sprintf("UPDATE endpoint SET name='%s',ip='%s',endpoint_version='%s',export_type='%s',export_version='%s',step=%d,address='%s',os_type='%s' WHERE id=%d",
@@ -29,6 +29,7 @@ func UpdateEndpoint(endpoint *m.EndpointTable) error {
 			mid.LogError("update endpoint fail ", err)
 			return err
 		}
+		endpoint.Id = host.Id
 	}
 	return nil
 }

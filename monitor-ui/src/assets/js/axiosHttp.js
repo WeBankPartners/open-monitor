@@ -1,9 +1,8 @@
 import axios from 'axios'
+import {baseURL_config} from './baseURL'
 // import {cookies} from '@/common/cookieUtils'
-
 // const baseURL =  require('../../config/APIs').API
-const baseURL =  'http://129.204.99.160:38080/api/v1'
-
+const baseURL = `${baseURL_config}/api/v1`
 export default function ajax (options) {
   const ajaxObj = {
     method: options.method,
