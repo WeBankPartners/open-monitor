@@ -1,13 +1,12 @@
 <template>
   <div class="page" id="mainView">
-    <Title title="监控视图"></Title>
+    <Title title="对象视图"></Title>
     <Search ref="search" />
     <button type="button" v-if="isShow" @click="changeRoute" class="btn btn-sm btn-cancle-f btn-jump">对象管理</button>
     <Charts :charts='charts' ref="parentCharts" />
   </div>
 </template>
 <script>
-import Title from '@/components/components/Title'
 import Search from '@/components/components/Search'
 import Charts from '@/components/components/Charts'
 export default {
@@ -48,17 +47,17 @@ export default {
         }
         this.charts.chartsConfig.push(chart)
       })
-      let otherTab = {
-        tabTape: {
-          label: '配置',
-          name: '配置_',
-        },
-        btns: [],
-        tagsUrl: '',
-        charts: [],
-        params: params
-      } 
-      this.charts.chartsConfig.push(otherTab)
+      // let otherTab = {
+      //   tabTape: {
+      //     label: '配置',
+      //     name: '配置_',
+      //   },
+      //   btns: [],
+      //   tagsUrl: '',
+      //   charts: [],
+      //   params: params
+      // } 
+      // this.charts.chartsConfig.push(otherTab)
       this.$refs.parentCharts.refreshCharts(chartsConfig[0].title + '_')
     },
     changeRoute () {
@@ -66,7 +65,6 @@ export default {
     }
   },
   components: {
-    Title,
     Search,
     Charts
   }

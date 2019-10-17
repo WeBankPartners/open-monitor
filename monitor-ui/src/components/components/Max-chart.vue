@@ -117,9 +117,7 @@ export default {
   components: {},
 }
 </script>
-<style>
- 
-</style>
+
 <style scoped lang="less">
   .max-chart {
     width:800px;

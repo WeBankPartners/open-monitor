@@ -613,11 +613,23 @@ func UpdateAlarms(alarms []*m.AlarmTable) error {
 		if v.Id > 0 {
 			sqls = append(sqls, fmt.Sprintf("UPDATE alarm SET status='%s',end_value=%f,end='%s' WHERE id=%d", v.Status, v.EndValue, v.End.Format(m.DatetimeFormat), v.Id))
 		}else{
-			sqls = append(sqls, fmt.Sprintf("INSERT INTO alarm(strategy_id,endpoint,status,s_metric,s_expr,s_cond,s_last,s_priority,content,start_value,start) VALUE (%d,'%s','%s','%s','%s','%s','%s','%s','%s',%f,'%s')",
-				v.StrategyId,v.Endpoint,v.Status,v.SMetric,v.SExpr,v.SCond,v.SLast,v.SPriority,v.Content,v.StartValue,v.Start.Format(m.DatetimeFormat)))
+			if !judgeExist(*v) {
+				sqls = append(sqls, fmt.Sprintf("INSERT INTO alarm(strategy_id,endpoint,status,s_metric,s_expr,s_cond,s_last,s_priority,content,start_value,start) VALUE (%d,'%s','%s','%s','%s','%s','%s','%s','%s',%f,'%s')",
+					v.StrategyId, v.Endpoint, v.Status, v.SMetric, v.SExpr, v.SCond, v.SLast, v.SPriority, v.Content, v.StartValue, v.Start.Format(m.DatetimeFormat)))
+			}
 		}
 	}
 	return ExecuteTransactionSql(sqls)
+}
+
+func judgeExist(alarm m.AlarmTable) bool {
+	var result []*m.AlarmTable
+	x.SQL("SELECT * FROM alarm WHERE strategy_id=? AND endpoint=? AND status=? AND s_metric=? AND s_expr=? AND s_cond=? AND s_last=? AND s_priority=?",
+		alarm.StrategyId, alarm.Endpoint, alarm.Status, alarm.SMetric, alarm.SExpr, alarm.SCond, alarm.SLast, alarm.SPriority).Find(&result)
+	if len(result) > 0 {
+		return true
+	}
+	return false
 }
 
 func UpdateLogMonitor(obj *m.UpdateLogMonitor) error {

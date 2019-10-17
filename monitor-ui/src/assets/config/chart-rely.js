@@ -11,7 +11,9 @@ const echarts = require('echarts/lib/echarts');
 
 export const drawChart = function(that,config,userConfig) {
     let originConfig = {
-      eye: true
+      title: true,
+      eye: true,
+      dataZoom: true
     }
     let finalConfig = Object.assign(originConfig, userConfig)
 
@@ -19,7 +21,7 @@ export const drawChart = function(that,config,userConfig) {
     var myChart = echarts.init(document.getElementById(that.elId));
     let option = {
       title: {
-        text: config.title,
+        // text: config.title,
         left:'10%',
         top: '10px'
       },
@@ -56,9 +58,9 @@ export const drawChart = function(that,config,userConfig) {
         right: '4%',
         top: '10px',
         feature: {
-          dataZoom: {
-              yAxisIndex: 'none'
-          },
+          // dataZoom: {
+          //     yAxisIndex: 'none'
+          // },
           // myTool:{
           //   show:true,
           //   title:'查看全部',
@@ -129,6 +131,10 @@ export const drawChart = function(that,config,userConfig) {
       series: config.series
     }
 
+    if (finalConfig.title) {
+      option.title.text = config.title
+    }
+
     if (finalConfig.eye) {
       option.toolbox.feature.myTool = {
         show:true,
@@ -137,6 +143,11 @@ export const drawChart = function(that,config,userConfig) {
         onclick: () => {
           that.$emit('sendConfig', that.chartItemx)
         }
+      }
+    }
+    if (finalConfig.dataZoom) {
+      option.toolbox.feature.dataZoom = {
+        yAxisIndex: 'none'
       }
     }
     
