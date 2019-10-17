@@ -128,9 +128,16 @@ func EditGrpEndpoint(c *gin.Context)  {
 		}
 		if isUpdate {
 			err,tplObj := db.GetTpl(0, param.Grp, 0)
-			if err != nil || tplObj.Id <= 0 {
+			if err != nil {
 				mid.ReturnError(c, fmt.Sprintf("edit grp endpoint, get tpl fail with grp id:%d", param.Grp), err)
 				return
+			}
+			if tplObj.Id <= 0 {
+				err,tplObj = db.AddTpl(param.Grp, 0, "")
+				if err != nil {
+					mid.ReturnError(c, "Add tpl fail", err)
+					return
+				}
 			}
 			err = SaveConfigFile(tplObj.Id)
 			if err != nil {

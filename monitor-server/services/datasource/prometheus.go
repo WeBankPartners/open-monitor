@@ -33,9 +33,15 @@ func PrometheusData(query m.QueryMonitorData) []*m.SerialModel  {
 		mid.LogError("make url fail", err)
 		return serials
 	}
+	var tmpStep int64
+	tmpStep = 10
+	subSec := query.End - query.Start
+	if subSec > 100000 {
+		tmpStep = tmpStep * (subSec/86400 + 1)
+	}
 	urlParams.Set("start", strconv.FormatInt(query.Start, 10))
 	urlParams.Set("end", strconv.FormatInt(query.End, 10))
-	urlParams.Set("step", "10")
+	urlParams.Set("step", fmt.Sprintf("%d", tmpStep))
 	urlParams.Set("query", query.PromQ)
 	requestUrl.RawQuery = urlParams.Encode()
 	req, err := http.NewRequest(http.MethodGet, requestUrl.String(), strings.NewReader(""))
