@@ -4,7 +4,6 @@ services:
     image: consul
     container_name: consul
     restart: always
-    dns_search: .
     volumes:
       - consul-data:/consul/data
     ports:
@@ -17,7 +16,6 @@ services:
     image: prom/alertmanager
     container_name: alertmanager
     restart: always
-    dns_search: .
     volumes:
       - alertmanager-data:/alertmanager
       - ~/app/docker/alertmanager:/etc/alertmanager
@@ -33,7 +31,6 @@ services:
     image: prom/prometheus
     container_name: prometheus
     restart: always
-    dns_search: .
     volumes:
       - prometheus-tsdb:/prometheus
       - ~/app/docker/prometheus:/etc/prometheus
@@ -61,6 +58,8 @@ services:
       - 3306:3306
     volumes:
       - monitor-db-data:/var/lib/mysql
+    networks:
+      - monitor
   monitor-server:
     image: {{MONITOR_IMAGE_NAME}}
     restart: always
@@ -70,6 +69,8 @@ services:
       - ~/app/docker/prometheus/rules:/app/monitor/conf/rules
     ports:
       - {{MONITOR_SERVER_PORT}}:{{MONITOR_SERVER_PORT}}
+    networks:
+      - monitor
 
 networks:
   monitor:
