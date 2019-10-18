@@ -5,7 +5,7 @@ services:
     container_name: consul
     restart: always
     volumes:
-      - consul-data:/consul/data
+      - ~/data/docker/consul:/consul/data
     ports:
       - "8300:8300"
       - "8400:8400"
@@ -17,7 +17,7 @@ services:
     container_name: alertmanager
     restart: always
     volumes:
-      - alertmanager-data:/alertmanager
+      - ~/data/docker/alertmanager:/alertmanager
       - ~/app/docker/alertmanager:/etc/alertmanager
     ports:
       - "9093:9093"
@@ -32,7 +32,7 @@ services:
     container_name: prometheus
     restart: always
     volumes:
-      - prometheus-tsdb:/prometheus
+      - ~/data/docker/prometheus:/prometheus
       - ~/app/docker/prometheus:/etc/prometheus
     ports:
       - "9090:9090"
@@ -51,13 +51,12 @@ services:
             '--max_allowed_packet=4M'
     ]
     volumes:
-      - /etc/localtime:/etc/localtimell
+      - /etc/localtime:/etc/localtime
+      - ~/data/docker/monitor-db:/var/lib/mysql
     environment:
       - MYSQL_ROOT_PASSWORD={{MYSQL_ROOT_PASSWORD}}
     ports:
       - 3306:3306
-    volumes:
-      - monitor-db-data:/var/lib/mysql
     networks:
       - monitor
   monitor-server:
@@ -65,7 +64,8 @@ services:
     restart: always
     volumes:
       - /etc/localtime:/etc/localtime
-      - ~/app/docker/monitor:/app/monitor/conf
+      - ~/app/docker/monitor/conf:/app/monitor/conf
+      - ~/app/docker/monitor/logs:/app/monitor/logs
       - ~/app/docker/prometheus/rules:/app/monitor/conf/rules
     ports:
       - {{MONITOR_SERVER_PORT}}:{{MONITOR_SERVER_PORT}}
@@ -76,8 +76,3 @@ networks:
   monitor:
     driver: bridge
 
-volumes:
-  consul-data:
-  alertmanager-data:
-  prometheus-tsdb:
-  monitor-db-data:

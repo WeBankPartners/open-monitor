@@ -43,6 +43,9 @@ func RegisterJob(param m.RegisterParam) error {
 			mid.LogError("curl endpoint data fail ", err)
 			return err
 		}
+		if len(strList) == 0 {
+			return fmt.Errorf("Can't get anything from this address:port/metric ")
+		}
 		var hostname,sysname,release,exportVersion string
 		for _,v := range strList {
 			if strings.Contains(v, "node_uname_info{") {
@@ -78,6 +81,9 @@ func RegisterJob(param m.RegisterParam) error {
 			mid.LogError("curl endpoint data fail ", err)
 			return err
 		}
+		if len(strList) == 0 {
+			return fmt.Errorf("Can't get anything from this address:port/metric ")
+		}
 		var mysqlVersion,exportVersion string
 		for _,v := range strList {
 			if strings.HasPrefix(v, "mysql_version_info{") {
@@ -103,6 +109,9 @@ func RegisterJob(param m.RegisterParam) error {
 		if err != nil {
 			mid.LogError("curl endpoint data fail ", err)
 			return err
+		}
+		if len(strList) == 0 {
+			return fmt.Errorf("Can't get anything from this address:port/metric ")
 		}
 		var redisVersion,exportVersion string
 		for _,v := range strList {
@@ -130,6 +139,9 @@ func RegisterJob(param m.RegisterParam) error {
 		if err != nil {
 			mid.LogError("curl endpoint data fail ", err)
 			return err
+		}
+		if len(strList) == 0 {
+			return fmt.Errorf("Can't get anything from this address:port/metric ")
 		}
 		var jvmVersion,exportVersion string
 		for _,v := range strList {
