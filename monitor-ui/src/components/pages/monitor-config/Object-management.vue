@@ -57,13 +57,13 @@
     {title: '级别',value: 's_priority', display: true},
     {title: '开始时间',value: 'start', style: 'min-width:200px', display: true},
     {title: '结束时间',value: 'end', style: 'min-width:200px',display: true,
-    'render': (item) => {
-      if (item.end.indexOf('0001')>-1) {
-        return '-'
-      } else {
-        return item.end
+      'render': (item) => {
+        if (item.end === undefined) {
+          return '-'
+        } else {
+          return item.end
+        }
       }
-    }
     }]
   const btn = [
     {btn_name: '阀值配置', btn_func: 'thresholdConfig'},

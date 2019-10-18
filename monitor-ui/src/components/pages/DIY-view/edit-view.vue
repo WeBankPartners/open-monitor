@@ -45,41 +45,42 @@
           </section>
           <section class="zone-config-operation">
             <div v-if="activeStep==='chat_query'">
-              <i class="fa fa-plus-square-o fa-18" @click="addQuery" aria-hidden="true"></i>
-              <template v-for="(queryItem,queryIndex) in chartQueryList">
-                <div class="condition-zone" :key="queryIndex">
-                  <ul>
-                     <li>
-                      <div class="condition condition-del">
-                        <i class="fa fa-trash" aria-hidden="true" @click="removeQuery(queryItem)"></i>
-                      </div>
-                    </li>
+              <div class="tag-display">
+                <Tag v-for="(query, queryIndex) in chartQueryList"  color="primary" 
+               type="border" :key="queryIndex" :name="queryIndex" closable
+               @on-close="removeQuery(query)">对象：{{query.endpoint}};  指标：{{query.metricLabel}}</Tag>
+              </div>
+              <div class="condition-zone">
+                <ul>
                     <li>
-                      <div class="condition condition-title">对象</div>
-                      <div class="condition">
-                        <Select
-                          style="width:300px"
-                          v-model="chartQueryList[queryIndex].endpoint"
-                          filterable
-                          remote
-                          :remote-method="endpointList"
-                          :label-in-value="true" 
-                          >
-                          <Option v-for="(option, index) in options" :value="option.option_value" :key="index">{{option.option_text}}</Option>
-                        </Select>
-                      </div>
-                    </li>
-                    <li>
-                      <div class="condition condition-title">指标</div>
-                      <div class="condition">
-                        <Select v-model="chartQueryList[queryIndex].metric" style="width:300px" @on-open-change="metricSelectOpen(queryItem.endpoint)">
-                          <Option v-for="(item,index) in metricList" :value="item.prom_ql" :key="item.prom_ql+index">{{ item.metric }}</Option>
-                        </Select>
-                      </div>
-                    </li>
-                  </ul>
-                </div>
-              </template>
+                    <div class="condition condition-del" @click="addQuery">
+                      <i class="fa fa-floppy-o fa-14" aria-hidden="true"></i>
+                    </div>
+                  </li>
+                  <li>
+                    <div class="condition condition-title">对象</div>
+                    <div class="condition">
+                      <Select
+                        style="width:300px"
+                        v-model="templateQuery.endpoint"
+                        filterable
+                        remote
+                        :remote-method="endpointList"
+                        >
+                        <Option v-for="(option, index) in options" :value="option.option_value" :key="index">{{option.option_text}}</Option>
+                      </Select>
+                    </div>
+                  </li>
+                  <li>
+                    <div class="condition condition-title">指标</div>
+                    <div class="condition">
+                      <Select v-model="templateQuery.metric" style="width:300px" :label-in-value="true" @on-change="v=>{ setMetric(v)}" @on-open-change="metricSelectOpen(templateQuery.endpoint)">
+                        <Option v-for="(item,index) in metricList" :value="item.prom_ql" :key="item.prom_ql+index">{{ item.metric }}</Option>
+                      </Select>
+                    </div>
+                  </li>
+                </ul>
+              </div>
             </div>
             <div v-if="activeStep==='chat_general'" class="zone-config-operation-general">
               <ul>
@@ -117,15 +118,20 @@ export default {
       elId: null,
       noDataTip: false,
       activeStep: 'chat_query',
-      initQuery: {
+      templateQuery: {
+        endpointType: '', 
         endpoint: '',
-        metricList: [],
+        metricLabel: '',
         metric: ''
       },
-      chartQueryList:[{
-        endpoint: '',
-        metric: '',
-      }],
+      chartQueryList:[
+        // {
+        //   endpointType: '', 
+        //   endpoint: '',
+        //   metricLabel: '',
+        //   metric: ''
+        // }
+      ],
       
       options: [],
       metricList: [],
@@ -137,22 +143,19 @@ export default {
   watch: {
     chartQueryList: {
       handler (data) {
+        this.noDataTip = false
         let params = []
-        var requestFlag = true
+        if (this.$validate.isEmpty_reset(data)) {
+          this.noDataTip = true
+          return
+        }
         data.forEach((item) => {
-          if (item.endpoint === '' || item.metric === '') {
-            requestFlag = false
-            return
-          }
           params.push(JSON.stringify({
             endpoint: item.endpoint.split(':')[0],
             prom_ql: item.metric,
             time: '-1800'
           })) 
         })
-        if (!requestFlag) {
-          return
-        }
         this.$httpRequestEntrance.httpRequestEntrance('GET',this.apiCenter.metricConfigView.api, {config: `[${params.join(',')}]`}, responseData => {
           var legend = []
           if (responseData.series.length === 0) {
@@ -207,13 +210,15 @@ export default {
       this.panalTitle = this.panalData.panalTitle
       this.panalUnit = this.panalData.panalUnit
       let params = []
+      this.noDataTip = false
       if (this.$validate.isEmpty_reset(this.panalData.query)) {
         return
       }
+      this.initQueryList(this.panalData.query)
       this.panalData.query.forEach((item) => {
         params.push(JSON.stringify({
           endpoint: item.endpoint,
-          prom_ql: item.prom_ql,
+          prom_ql: item.metric,
           time: '-1800'
         })) 
       })
@@ -242,6 +247,9 @@ export default {
         })
       }
     },
+    initQueryList(query) {
+      this.chartQueryList = query
+    },
     endpointList(query) {
       let params = {
         search: query,
@@ -263,22 +271,29 @@ export default {
       } 
     },
     addQuery () {
-      this.chartQueryList.push({
+      if (this.templateQuery.endpoint === '' || this.templateQuery.metricLabel === '' ) {
+        this.$Message.warning('配置完整方可保存！')
+        return
+      }
+      this.chartQueryList.push(this.templateQuery)
+      this.templateQuery = { 
         endpoint: '',
-        options: [],
-        metric: '',
-        metricList: [],
-      })
+        metricLabel: '',
+        metric: ''
+      }
+      this.options = []
+      this.metricList = []
     },
-    removeQuery (queryItem) {
-      this.chartQueryList.splice(this.chartQueryList.indexOf(queryItem),1)
+    removeQuery (query) {
+      this.chartQueryList.splice(query,1)
     },
     saveConfig () {
       let query = []
       this.chartQueryList.forEach((item) => {
         query.push({
           endpoint: item.endpoint.split(':')[0],
-          prom_ql: item.metric
+          metricLabel: item.metricLabel,
+          metric: item.metric
         }) 
       })
       let panal = this.$route.params.panal
@@ -304,6 +319,11 @@ export default {
       this.$httpRequestEntrance.httpRequestEntrance('POST','dashboard/custom/save', params, () => {
         this.$Message.success('保存成功！')
       })
+    },
+    setMetric(value) {
+      if (!this.$validate.isEmpty_reset(value)) {
+        this.templateQuery.metricLabel = value.label
+      }
     }
   },
   components: {},
@@ -379,6 +399,13 @@ export default {
 .tool-save {
   text-align: right;
   padding: 4px 64px;
+}
+
+.tag-display {
+  margin: 4px;
+}
+.tag-display /deep/ .ivu-tag-primary {
+  display: table;
 }
 </style>
 

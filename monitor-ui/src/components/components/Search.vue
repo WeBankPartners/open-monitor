@@ -69,6 +69,8 @@ export default {
     },
     datePick (data) {
       this.dateRange = data
+      this.dateRange[0] = this.dateRange[0] + ' 00:00:01'
+      this.dateRange[1] = this.dateRange[1] + ' 23:59:59'
       this.getChartsConfig()
     },
     getChartsConfig () {
@@ -93,7 +95,6 @@ export default {
           this.$parent.manageCharts(responseData, params)
         },{isNeedloading: false})
       })
-      
     }
   },
   components: {
