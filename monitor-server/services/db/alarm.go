@@ -553,25 +553,32 @@ func GetEndpointsByGrp(grpId int) (error,[]*m.EndpointTable) {
 
 func GetAlarms(query m.AlarmTable) (error,[]*m.AlarmProblemQuery) {
 	var result []*m.AlarmProblemQuery
-	var whereSql,statusSql string
+	var whereSql,extWhereSql string
 	var params []interface{}
+	var extParams []interface{}
 	if query.Id > 0 {
 		whereSql += " and t1.id=? "
+		extWhereSql += " and t1.id=? "
 		params = append(params, query.Id)
+		extParams = append(extParams, query.Id)
 	}
 	if query.StrategyId > 0 {
 		whereSql += " and t1.strategy_id=? "
+		extWhereSql += " and t1.strategy_id=? "
 		params = append(params, query.StrategyId)
+		extParams = append(extParams, query.StrategyId)
 	}
 	if query.Endpoint != "" {
 		whereSql += " and t1.endpoint=? "
+		extWhereSql += " and t1.endpoint=? "
 		params = append(params, query.Endpoint)
+		extParams = append(extParams, query.Endpoint)
 	}
 	if query.Status != "" {
 		whereSql += " and t1.status=? "
 		params = append(params, query.Status)
 		if query.Status == "firing" {
-			statusSql = "and status!='closed'"
+			extWhereSql += "and t1.status!='closed' "
 		}
 	}
 	if query.SMetric != "" {
@@ -580,7 +587,9 @@ func GetAlarms(query m.AlarmTable) (error,[]*m.AlarmProblemQuery) {
 	}
 	if query.SPriority != "" {
 		whereSql += " and t1.s_priority=? "
+		extWhereSql += " and t1.s_priority=? "
 		params = append(params, query.SPriority)
+		extParams = append(extParams, query.SPriority)
 	}
 	if !query.Start.IsZero() {
 		whereSql += fmt.Sprintf(" and t1.start>='%s' ", query.Start.Format(m.DatetimeFormat))
@@ -588,12 +597,17 @@ func GetAlarms(query m.AlarmTable) (error,[]*m.AlarmProblemQuery) {
 	if !query.End.IsZero() {
 		whereSql += fmt.Sprintf(" and t1.end<='%s' ", query.End.Format(m.DatetimeFormat))
 	}
+	for _,v := range extParams {
+		params = append(params, v)
+	}
 	//err := x.SQL("SELECT t1.*,t2.path,t2.keyword FROM alarm t1 LEFT JOIN log_monitor t2 ON t1.strategy_id=t2.strategy_id where 1=1 " + whereSql + " order by t1.id desc", params...).Find(&result)
 	sql := `SELECT t3.* FROM (
 			SELECT t1.*,'' path,'' keyword FROM alarm t1 WHERE t1.s_metric<>'log_monitor' `+whereSql+`
 			UNION 
-			SELECT t1.*,t2.path,t2.keyword FROM alarm t1 LEFT JOIN log_monitor t2 ON t1.strategy_id=t2.strategy_id WHERE t1.s_metric='log_monitor' `+statusSql+`
+			SELECT t1.*,t2.path,t2.keyword FROM alarm t1 LEFT JOIN log_monitor t2 ON t1.strategy_id=t2.strategy_id WHERE t1.s_metric='log_monitor' `+extWhereSql+`
 			) t3 ORDER BY t3.id DESC`
+	fmt.Println(sql)
+	fmt.Println(params)
 	err := x.SQL(sql,params...).Find(&result)
 	if err != nil {
 		mid.LogError("get alarms fail", err)
