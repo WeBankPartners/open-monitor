@@ -75,6 +75,15 @@ func AddLogStrategy(c *gin.Context)  {
 			}
 			param.TplId = tplObj.Id
 		}
+		_,lms := db.GetLogMonitorTable(0,0, param.TplId, "")
+		if len(lms) > 0 {
+			for _,v := range lms {
+				if v.Path == param.Path {
+					mid.ReturnValidateFail(c, "Path already exist!")
+					return
+				}
+			}
+		}
 		tmpMetric,tmpExpr,tmpContent := makeStrategyMsg(param.Path, param.Strategy[0].Keyword, param.Strategy[0].Cond, param.Strategy[0].Last)
 		strategyObj := m.StrategyTable{TplId:param.TplId,Metric:tmpMetric,Expr:tmpExpr,Cond:param.Strategy[0].Cond,Last:"10s",Priority:param.Strategy[0].Priority,Content:tmpContent}
 		strategyObj.ConfigType = "log_monitor"
