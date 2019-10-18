@@ -94,12 +94,12 @@ export default {
     requestChart (id, query) {
       let params = []
       query.forEach((item) => {
+        item.prom_ql = item.metric
         params.push(JSON.stringify({
           ...item,
           time: '-1800'
         })) 
       })
-      // this.isRequestChartData = true
       this.$httpRequestEntrance.httpRequestEntrance('GET',this.apiCenter.metricConfigView.api, {config: `[${params.join(',')}]`}, responseData => {
         var legend = []
         if (responseData.series.length === 0) {
