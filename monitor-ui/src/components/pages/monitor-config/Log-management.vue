@@ -199,6 +199,9 @@ export default {
   },
   methods: {
     search () {
+      if (this.endpointID === null) {
+        return
+      }
       this.typeValue = this.endpointID
       this.requestData(this.type, this.endpointID)
     },
