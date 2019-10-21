@@ -64,8 +64,11 @@ export default {
     }
   },
   methods: {
-    refreshCharts (activeTab=this.activeTab) {
-      this.changeTab(activeTab)
+    refreshCharts (activeTab) {
+      if (this.activeTab === '') {
+        this.activeTab = activeTab
+      }
+      this.changeTab(this.activeTab)
     },
     changeTab (name) {
       this.params = this.charts.chartsConfig[0].params
