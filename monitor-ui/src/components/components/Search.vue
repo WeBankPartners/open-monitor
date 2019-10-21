@@ -69,13 +69,17 @@ export default {
     },
     datePick (data) {
       this.dateRange = data
-      this.dateRange[0] = this.dateRange[0] + ' 00:00:01'
-      this.dateRange[1] = this.dateRange[1] + ' 23:59:59'
+      if (this.dateRange[0] !== '') {
+        this.dateRange[0] = this.dateRange[0] + ' 00:00:01'
+      }
+      if (this.dateRange[1] !== '') {
+        this.dateRange[1] = this.dateRange[1] + ' 23:59:59'
+      }
+  
       this.getChartsConfig()
     },
     getChartsConfig () {
-      if ((this.$store.state.ip).length === 0) {
-        this.$Message.warning('请选择有效IP！')
+      if (this.$validate.isEmpty_reset(this.$store.state.ip.value)) {
         return
       } else {
         this.ip = this.$store.state.ip
