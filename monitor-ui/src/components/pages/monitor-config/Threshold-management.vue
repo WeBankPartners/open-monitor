@@ -193,6 +193,9 @@ export default {
           if (!item.operation) {
             config.btn = []
           }
+          item.strategy.forEach(rowData => {
+            rowData.type = item.obj_type
+          })
           config.tableData = item.strategy
           this.totalPageConfig.push({table:config, obj_type: item.obj_type, obj_name: item.obj_name, operation:item.operation})
         })
@@ -238,7 +241,7 @@ export default {
     add (type) {
       var params = {}
       if (type === 'endpoint') {
-        params = {type: this.$store.state.ip.type}
+        params = {type: 'host'}
       } 
       this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.metricList.api, params, (responseData) => {
         this.modelConfig.metricList = responseData
@@ -258,6 +261,14 @@ export default {
       })
     },
     editF (rowData) {
+      let params = {}
+      if (rowData.type === 'endpoint') {
+        params = {type: 'host'}
+      } 
+      this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.metricList.api, params, (responseData) => {
+        this.modelConfig.metricList = responseData
+      })
+
       this.modelConfig.isAdd = false
       this.id = rowData.id
       this.modelTip.value = rowData.metric
