@@ -3,12 +3,20 @@
     <section>
       <ul class="search-ul">
         <li class="search-li">
-          <Select v-model="type" style="width:100px">
+          <Select v-model="type" style="width:100px" @on-change="endpointOptions=[]">
             <Option v-for="item in typeList" :value="item.value" :key="item.value">{{ item.label }}</Option>
           </Select>
         </li>
         <li class="search-li">
-          <Searchinput :parentConfig="searchInputConfig"></Searchinput> 
+          <Select
+            style="width:300px"
+            v-model="endpointID"
+            filterable
+            remote
+            :remote-method="endpointList"
+            >
+            <Option v-for="(option, index) in endpointOptions" :value="option.id" :key="index">{{option.option_text}}</Option>
+          </Select>
         </li>
         <li class="search-li">
           <button type="button" class="btn btn-sm btn-confirm-f"
@@ -73,7 +81,6 @@
 
 <script>
 import {thresholdList, lastList, priorityList} from '@/assets/config/common-config.js'
-import Searchinput from '@/components/components/Search-input'
 let tableEle = [
   {title: 'ID', value: 'id', display: false},
   {title: '名称', value: 'metric', display: true},
@@ -97,16 +104,10 @@ export default {
         {label: '主机', value: 'endpoint'},
         {label: '组', value: 'grp'}
       ],
-      searchInputConfig: {
-        poptipWidth: 500,
-        placeholder: '模糊匹配',
-        inputStyle: "width:500px;",
-        api: this.apiCenter.resourceSearch.strategyApi,
-        params: {
-          type: null
-        }
-      },
-      inputValue: '',
+
+      endpointID: null,
+      endpointOptions: [],
+
       totalPageConfig: [],
       pageConfig: {
         table: {
@@ -155,22 +156,15 @@ export default {
       id: null,
     }
   },
-  watch: {
-    type: function (val) {
-      this.searchInputConfig.params.type = val
-    }
-  },
   mounted () {
     if (!this.$validate.isEmpty_reset(this.$route.params)) {
       this.$parent.activeTab = '/monitorConfigIndex/thresholdManagement'
       this.type = this.$route.params.type
-      this.searchInputConfig.params.type = this.$route.params.type
       this.typeValue = this.$route.params.id
       this.requestData(this.type, this.typeValue)
     } else {
       this.type = 'endpoint'
       this.typeValue = ''
-      this.searchInputConfig.params.type = 'endpoint'
     }
     this.JQ('#add_edit_Modal').on('hidden.bs.modal', () => {
       this.modelConfig.thresholdValue = ''
@@ -179,8 +173,14 @@ export default {
   },
   methods: {
     search () {
-      this.typeValue = this.$store.state.ip.id
-      this.requestData(this.searchInputConfig.params.type, this.$store.state.ip.id)
+      this.typeValue = this.endpointID
+      this.requestData(this.type, this.endpointID)
+    },
+    endpointList (query) {
+      const params = {type: this.type,search: query}
+      this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.resourceSearch.strategyApi, params, (responseData) => {
+        this.endpointOptions = responseData
+      })
     },
     requestData (type, id) {
       let params = {}
@@ -295,7 +295,6 @@ export default {
     }
   },
   components: {
-    Searchinput
   },
 }
 </script>
