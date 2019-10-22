@@ -18,7 +18,7 @@ import (
 // @Description 获取主视图，有主机、网络等
 // @Produce  json
 // @Param type query string true "页面类型，主机页面type=host"
-// @Success 200 {string} json "{'search':{'id': 0,'enable': false,'name': '','search_url': '','search_col': '','refresh_panels': false,'refresh_message': false},'buttons':[{'id': 1,'group_id': 1,'name': 'time','b_type': 'select','b_text': '时间段','refresh_panels': false,'refresh_charts': true,'option_group': 1,'option':[{'option_value': '-3600', 'option_text': '1小时'},{'option_value': '-10800', 'option_text': '3小时'},{'option_value': '-21600', 'option_text': '6小时'},{'option_value': '-43200', 'option_text': '12小时'}]}],'message':{'enable': true,'url': '/dashboard/message?group=1&endpoint={endpoint}'},'panels':{'enable': true,'type': 'tabs','url': '/dashboard/panels?group=1'}}"
+// @Success 200
 // @Router /api/v1/dashboard/main [get]
 func MainDashboard(c *gin.Context)  {
 	dType := c.Query("type")
@@ -78,7 +78,7 @@ func MainDashboard(c *gin.Context)  {
 // @Produce  json
 // @Param group query int true "panels url 上自带该id"
 // @Param endpoint query string true "需要在panels url上把{endpoint}替换"
-// @Success 200 {string} json "[{'title': 'panel_title','tags':{'enable': false,'url': '','option':[]},'charts':[{'id': 1,'col': 6,'endpoint':['88B525B4-43E8-4A7A-8E11-0E664B5CB8D0'],'metric':['cpmid.busy'],'url': '/dashboard/chart'}]},{'title': 'disk','tags':{'enable': true,'url': '/dashboard/tags?panel_id=1&endpoint=88B525B4-43E8-4A7A-8E11-0E664B5CB8D0&tag=','option':[{'option_value': 'device=vda','option_text': 'vda'},{'option_value': 'device=vdb','option_text': 'vdb'}]},'charts':[{'id': 2,'col': 6,'endpoint':['88B525B4-43E8-4A7A-8E11-0E664B5CB8D0'],'metric':['disk.io.util/device=vda'],'url': '/dashboard/chart'},{'id': 3,'col': 6,'endpoint':['88B525B4-43E8-4A7A-8E11-0E664B5CB8D0'],'metric':['disk.io.await/device=vda'],'url': '/dashboard/chart'}]}]"
+// @Success 200
 // @Router /api/v1/dashboard/panels [get]
 func GetPanels(c *gin.Context)  {
 	group := c.Query("group")
@@ -162,7 +162,7 @@ func GetPanels(c *gin.Context)  {
 // @Param panel_id query int true "url上自带该id"
 // @Param endpoint query string true "url上自带该endpoint"
 // @Param tag query string true "tag button里面的option_value"
-// @Success 200 {string} json "[{'id': 2,'col': 6,'endpoint':['88B525B4-43E8-4A7A-8E11-0E664B5CB8D0'],'metric':['disk.io.util/device=vdb'],'url': '/dashboard/chart'},{'id': 3,'col': 6,'endpoint':['88B525B4-43E8-4A7A-8E11-0E664B5CB8D0'],'metric':['disk.io.await/device=vdb'],'url': '/dashboard/chart'}]"
+// @Success 200
 // @Router /api/v1/dashboard/tags [get]
 func GetTags(c *gin.Context)  {
 	panelIdStr := c.Query("panel_id")
@@ -206,7 +206,7 @@ func GetTags(c *gin.Context)  {
 // @Param start query string true "开始时间"
 // @Param end query string false "结束时间"
 // @Param aggregate query string false "聚合类型 枚举 min max avg p95 none"
-// @Success 200 {string} json "{'title':'chart1','legend':['a','b'],'xaxis':{},'yaxis':{'unit':'%'},'series':[{'type':'line','name':'a','data':[[1550221207000,100],[1550221217000,200],[1550221227000,150],[1550221237000,100],[1550221247000,120],[1550221257000,210],[1550221267000,130],[1550221277000,180]]},{'type':'line','name':'b','data':[[1550221207000,110],[1550221217000,210],[1550221227000,130],[1550221237000,120],[1550221247000,100],[1550221257000,200],[1550221267000,170],[1550221277000,120]]}]}"
+// @Success 200
 // @Router /api/v1/dashboard/chart [get]
 func GetChart(c *gin.Context)  {
 	paramId,err := strconv.Atoi(c.Query("id"))
@@ -435,7 +435,7 @@ func GetChartNew(c *gin.Context)  {
 // @Produce  json
 // @Param search query string true "放弃search_col,直接把用户输入拼到url后面请求"
 // @Param limit query string false "数量限制"
-// @Success 200 {string} json "[{'option_value': 'E7196678-F696-4AE3-8D5A-83CFC80B0801','option_text': 'cnsz92vl00311:100.69.12.10'},{'option_value': '5DE6A2DE-B506-4385-82EB-B2533D751E7F','option_text': 'cnsz92vl00312.cmftdc.cn:100.69.12.11'}]"  说明: 放弃search_col，统一以option的格式来返回
+// @Success 200
 // @Router /api/v1/dashboard/search [get]
 func MainSearch(c *gin.Context)  {
 	endpoint := c.Query("search")
@@ -499,4 +499,76 @@ func GetEndpointMetric(c *gin.Context)  {
 		return
 	}
 	mid.ReturnData(c, data)
+}
+
+func GetChartsByEndpoint(c *gin.Context)  {
+	// Validate ip and metric
+	ip := c.Query("ip")
+	metric := c.Query("metric")
+	if ip == "" || metric == "" {
+		mid.ReturnValidateFail(c, "ip and metric can't be null")
+		return
+	}
+	endpointObj := m.EndpointTable{Ip:ip, ExportType:"host"}
+	db.GetEndpoint(&endpointObj)
+	if endpointObj.Id <= 0 {
+		mid.ReturnValidateFail(c, fmt.Sprintf("can't find the host register message with ip %s", ip))
+		return
+	}
+	err,promQL := db.GetPromMetric([]string{endpointObj.Guid}, metric)
+	if err != nil || promQL == "" {
+		mid.ReturnError(c, fmt.Sprintf("get promQL fail with endpoint : %s metric : %s", endpointObj.Guid, metric), err)
+		return
+	}
+	var eOption m.EChartOption
+	var query m.QueryMonitorData
+	query.Endpoint = []string{endpointObj.Guid}
+	query.Metric = []string{metric}
+	query.PromQ = promQL
+	query.Legend = "$metric"
+	// Validate time start end
+	paramTime := c.Query("time")
+	paramStart := c.Query("start")
+	paramEnd := c.Query("end")
+	if paramTime != "" && paramStart == "" {
+		paramStart = paramTime
+	}
+	start,err := strconv.ParseInt(paramStart, 10, 64)
+	if err != nil {
+		mid.ReturnError(c, "param start validate error", err)
+		return
+	}else{
+		if start < 0 {
+			start = time.Now().Unix() + start
+		}
+		query.Start = start
+	}
+	query.End = time.Now().Unix()
+	if paramEnd != "" {
+		end,err := strconv.ParseInt(paramEnd, 10, 64)
+		if err == nil && end <= query.End {
+			query.End = end
+		}
+	}
+	// Query data
+	mid.LogInfo(fmt.Sprintf("endpoint : %v  metric : %v  start:%d  end:%d  promql:%s", query.Endpoint, query.Metric, query.Start, query.End, query.PromQ))
+	serials := ds.PrometheusData(query)
+	for _, s := range serials {
+		if strings.Contains(s.Name, "$metric") {
+			s.Name = strings.Replace(s.Name, "$metric", metric, -1)
+		}
+		eOption.Legend = append(eOption.Legend, s.Name)
+	}
+	eOption.Xaxis = make(map[string]interface{})
+	var unit string
+	if strings.Contains(metric, "percent") {
+		unit = "%"
+	}
+	eOption.Yaxis = m.YaxisModel{Unit: unit}
+	if len(serials) > 0 {
+		eOption.Series = serials
+	}else{
+		eOption.Series = []*m.SerialModel{}
+	}
+	mid.ReturnData(c, eOption)
 }
