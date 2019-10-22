@@ -2,7 +2,7 @@
   <div class="search-input-content">
     <Poptip placement="bottom" :width="parentConfig.poptipWidth">
       <input v-model.trim="ip.label"
-      :placeholder="parentConfig.placeholder"
+      :placeholder="$t(parentConfig.placeholder)"
       @input="userInput"
       type="text"
       :style= "parentConfig.inputStyle"
@@ -15,7 +15,6 @@
               <Tag color="blue" v-if="resItem.option_value.split(':')[1] == 'mysql'">mysql</Tag>
               <Tag color="geekblue" v-if="resItem.option_value.split(':')[1] == 'redis'">redis</Tag>
               <Tag color="purple" v-if="resItem.option_value.split(':')[1] == 'tomcat'">tomcat</Tag>
-              <!-- <Tag color="default" v-else>{{resItem.option_value.split(':')[1]}}</Tag> -->
               <span>{{resItem.option_text}}</span>
             </li>
           </template>  

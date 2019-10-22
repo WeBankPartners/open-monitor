@@ -37,7 +37,7 @@ export default {
     return {
       searchInputConfig: {
         poptipWidth: 300,
-        placeholder: '请输入主机名或IP地址，可模糊匹配',
+        placeholder: 'placeholder.endpointSearch',
         inputStyle: "width:300px;",
         api: this.apiCenter.resourceSearch.api
       },
