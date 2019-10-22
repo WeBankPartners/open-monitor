@@ -381,7 +381,7 @@ func GetStrategys(query *m.TplQuery) error {
 		}
 		var tpls []*m.TplStrategyTable
 		sql := `SELECT t1.id tpl_id,t1.grp_id,t1.endpoint_id,t2.id strategy_id,t2.metric,t2.expr,t2.cond,t2.last,t2.priority,t2.content 
-				FROM tpl t1 LEFT JOIN strategy t2 ON t1.id=t2.tpl_id WHERE `+grpIds+` endpoint_id=? order by t1.endpoint_id,t1.id,t2.id`
+				FROM tpl t1 LEFT JOIN strategy t2 ON t1.id=t2.tpl_id WHERE (`+grpIds+` endpoint_id=?) and t2.metric<>'log_monitor' order by t1.endpoint_id,t1.id,t2.id`
 		err = x.SQL(sql, query.SearchId).Find(&tpls)
 		if err != nil {
 			mid.LogError("get strategy fail", err)

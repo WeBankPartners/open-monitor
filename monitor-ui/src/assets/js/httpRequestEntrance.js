@@ -1,5 +1,5 @@
 /*
-* @author: 冯经宇
+* @author: pobu168
 * @CreateDate: 2019-09-04
 * @version: V0.1.1
 * @describe:
@@ -75,49 +75,39 @@ function httpRequestEntrance (method, url, data, callback, customHttpConfig) {
         loading.end()
       },0)
     }
-    if (error.response) {
-      // The request was made and the server responded with a status code
-      // that falls out of the range of 2xx
-      // console.log(error.response.data)
-      // console.log(error.response.headers)
-      let status = error.response.status
-      let errorData = error.response.data
 
-      if (status === 400) {
-        errorMessage(errorData.description)
-      }
-      if (status === 401) {
-        // cookies.deleteAuthorization()
-        localStorage.username = ''
-        // router.push({name: 'login'})
-      }
-      if (status === 403) {
-        errorMessage(errorData.description ? errorData.description:'权限不足！')
-      }
-      if (status === 404) {
-        errorMessage(errorData.description ? errorData.description:'404资源不存在！')
-      }
-      if (status === 409) {
-        errorMessage(errorData.description ? errorData.description:'资源冲突！')
-      }
-      if (status === 429) {
-        errorMessage(errorData.description ? errorData.description:'请求频率过高！')
-      }
-      if (status === 405) {
-        errorMessage(errorData.description ? errorData.description:'请求方法不允许！')
-      }
-      if (status === 500) {
-        errorMessage(errorData.description ? errorData.description:'500服务器内部错误！')
-      }
-    } else if (error.request) {
-      errorMessage('请求超时！'+ error.request)
-      // The request was made but no response was received
-      // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
-      // http.ClientRequest in node.js
-    } else {
-      // Something happened in setting up the request that triggered an Error
-    }
-    // console.log(error.config)
+    errorMessage(error.response.data.msg)
+    // if (error.response) {
+    //   let status = error.response.status
+    //   let errorData = error.response.data
+
+    //   if (status === 400) {
+    //     errorMessage(errorData.description)
+    //   }
+    //   if (status === 401) {
+    //     localStorage.username = ''
+    //   }
+    //   if (status === 403) {
+    //     errorMessage(errorData.description ? errorData.description:'权限不足！')
+    //   }
+    //   if (status === 404) {
+    //     errorMessage(errorData.description ? errorData.description:'404资源不存在！')
+    //   }
+    //   if (status === 409) {
+    //     errorMessage(errorData.description ? errorData.description:'资源冲突！')
+    //   }
+    //   if (status === 429) {
+    //     errorMessage(errorData.description ? errorData.description:'请求频率过高！')
+    //   }
+    //   if (status === 405) {
+    //     errorMessage(errorData.description ? errorData.description:'请求方法不允许！')
+    //   }
+    //   if (status === 500) {
+    //     errorMessage(errorData.description ? errorData.description:'500服务器内部错误！')
+    //   }
+    // } else if (error.request) {
+    //   errorMessage('请求超时！'+ error.request)
+    // }
   })
 }
 
