@@ -4,6 +4,8 @@
 ![](https://img.shields.io/badge/language-go-orange.svg)
 ![](https://img.shields.io/badge/language-vue-green.svg)
 
+中文 / [English](README_EN.md)
+
 ## 试用链接
 [点此试用WeCube-plugins-prometheus](http://134.175.254.251)
 

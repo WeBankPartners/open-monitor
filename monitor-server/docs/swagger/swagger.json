@@ -283,12 +283,7 @@
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "{'title':'chart1','legend':['a','b'],'xaxis':{},'yaxis':{'unit':'%'},'series':[{'type':'line','name':'a','data':[[1550221207000,100],[1550221217000,200],[1550221227000,150],[1550221237000,100],[1550221247000,120],[1550221257000,210],[1550221267000,130],[1550221277000,180]]},{'type':'line','name':'b','data':[[1550221207000,110],[1550221217000,210],[1550221227000,130],[1550221237000,120],[1550221247000,100],[1550221257000,200],[1550221267000,170],[1550221277000,120]]}]}",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
+                    "200": {}
                 }
             }
         },
@@ -309,12 +304,7 @@
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "{'search':{'id': 0,'enable': false,'name': '','search_url': '','search_col': '','refresh_panels': false,'refresh_message': false},'buttons':[{'id': 1,'group_id': 1,'name': 'time','b_type': 'select','b_text': '时间段','refresh_panels': false,'refresh_charts': true,'option_group': 1,'option':[{'option_value': '-3600', 'option_text': '1小时'},{'option_value': '-10800', 'option_text': '3小时'},{'option_value': '-21600', 'option_text': '6小时'},{'option_value': '-43200', 'option_text': '12小时'}]}],'message':{'enable': true,'url': '/dashboard/message?group=1\u0026endpoint={endpoint}'},'panels':{'enable': true,'type': 'tabs','url': '/dashboard/panels?group=1'}}",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
+                    "200": {}
                 }
             }
         },
@@ -342,12 +332,7 @@
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "[{'title': 'panel_title','tags':{'enable': false,'url': '','option':[]},'charts':[{'id': 1,'col': 6,'endpoint':['88B525B4-43E8-4A7A-8E11-0E664B5CB8D0'],'metric':['cpmid.busy'],'url': '/dashboard/chart'}]},{'title': 'disk','tags':{'enable': true,'url': '/dashboard/tags?panel_id=1\u0026endpoint=88B525B4-43E8-4A7A-8E11-0E664B5CB8D0\u0026tag=','option':[{'option_value': 'device=vda','option_text': 'vda'},{'option_value': 'device=vdb','option_text': 'vdb'}]},'charts':[{'id': 2,'col': 6,'endpoint':['88B525B4-43E8-4A7A-8E11-0E664B5CB8D0'],'metric':['disk.io.util/device=vda'],'url': '/dashboard/chart'},{'id': 3,'col': 6,'endpoint':['88B525B4-43E8-4A7A-8E11-0E664B5CB8D0'],'metric':['disk.io.await/device=vda'],'url': '/dashboard/chart'}]}]",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
+                    "200": {}
                 }
             }
         },
@@ -374,12 +359,7 @@
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "[{'option_value': 'E7196678-F696-4AE3-8D5A-83CFC80B0801','option_text': 'cnsz92vl00311:100.69.12.10'},{'option_value': '5DE6A2DE-B506-4385-82EB-B2533D751E7F','option_text': 'cnsz92vl00312.cmftdc.cn:100.69.12.11'}]\"  说明: 放弃search_col，统一以option的格式来返回",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
+                    "200": {}
                 }
             }
         },
@@ -414,12 +394,7 @@
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "[{'id': 2,'col': 6,'endpoint':['88B525B4-43E8-4A7A-8E11-0E664B5CB8D0'],'metric':['disk.io.util/device=vdb'],'url': '/dashboard/chart'},{'id': 3,'col': 6,'endpoint':['88B525B4-43E8-4A7A-8E11-0E664B5CB8D0'],'metric':['disk.io.await/device=vdb'],'url': '/dashboard/chart'}]",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
+                    "200": {}
                 }
             }
         },
