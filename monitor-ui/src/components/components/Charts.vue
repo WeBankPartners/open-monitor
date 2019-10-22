@@ -65,9 +65,7 @@ export default {
   },
   methods: {
     refreshCharts (activeTab) {
-      if (this.activeTab === '') {
-        this.activeTab = activeTab
-      }
+      this.activeTab = activeTab
       this.changeTab(this.activeTab)
     },
     changeTab (name) {
