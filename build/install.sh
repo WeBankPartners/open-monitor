@@ -37,7 +37,12 @@ sed -i "s~{{MONITOR_SERVER_PORT}}~$monitor_server_port~g" /app/docker/monitor/co
 
 sed -i "s~{{MONITOR_SERVER_PORT}}~$monitor_server_port~g" /app/docker/alertmanager/alertmanager.yml
 
-docker-compose  -f docker-compose.yml  up -d
+if [ $# -ge 1 ]
+then
+  docker-compose -f docker-compose.yml -H $1 up -d
+else
+  docker-compose  -f docker-compose.yml  up -d
+fi
 
  
 
