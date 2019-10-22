@@ -1,6 +1,6 @@
 <template>
   <div class="page" id="mainView">
-    <Title title="对象视图"></Title>
+    <Title :title="$t('menu.endpointView')"></Title>
     <Search ref="search" />
     <button type="button" v-if="isShow" @click="changeRoute" class="btn btn-sm btn-cancle-f btn-jump">对象管理</button>
     <Charts :charts='charts' ref="parentCharts" />

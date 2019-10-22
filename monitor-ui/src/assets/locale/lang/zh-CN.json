@@ -1,0 +1,21 @@
+{
+  "common": {
+    "changeLanguage": "English"
+  },
+  "menu": {
+    "view": "视图",
+    "endpointView": "对象视图",
+    "metricConfiguration": "指标配置",
+    "customViews": "自定义视图",
+    "configuration": "配置",
+    "alert": "告警"
+  },
+  "placeholder": {
+    "endpointSearch": "请输入后选择对象"
+  },
+  "button": {
+    "search": "搜索",
+    "save": "保存",
+    "cancle": "取消"
+  }
+}

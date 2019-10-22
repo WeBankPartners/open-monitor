@@ -1,0 +1,21 @@
+{
+  "common": {
+    "changeLanguage": "简体中文"
+  },
+  "menu": {
+    "view": "View",
+    "endpointView": "Endpoint View",
+    "metricConfiguration": "Metric Configuration",
+    "customViews": "Custom Views",
+    "configuration": "Configuration",
+    "alert": "Alert"
+  },
+  "placeholder": {
+    "endpointSearch": "Enter something"
+  },
+  "button": {
+    "search": "Search",
+    "save": "OK",
+    "cancle": "Cancle"
+  }
+}
