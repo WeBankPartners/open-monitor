@@ -80,10 +80,6 @@ export default {
       }
     }
   },
-  destroyed() {
-    // console.log(this.viewData)
-    // console.log(this.layoutData)
-  },
   methods: {
     initPanals () {
       this.viewData.forEach((item) => {
