@@ -18,7 +18,8 @@ export const drawChart = function(that,config,userConfig) {
     let finalConfig = Object.assign(originConfig, userConfig)
 
     // 基于准备好的dom，初始化echarts实例
-    var myChart = echarts.init(document.getElementById(that.elId));
+    var myChart = echarts.init(document.getElementById(that.elId))
+    myChart.clear()
     let option = {
       title: {
         // text: config.title,
@@ -79,7 +80,8 @@ export const drawChart = function(that,config,userConfig) {
         data: config.legend
       },
       calculable: false,
-      color: ['#7EB26D', '#EAB839', '#6ED0E0', '#EF843C', '#E24D42', '#1F78C1', '#BA43A9', '#705DA0', '#508642', '#CCA300', '#447EBC', '#C15C17'],
+      // color: ['#7EB26D', '#EAB839', '#6ED0E0', '#EF843C', '#E24D42', '#1F78C1', '#BA43A9', '#705DA0', '#508642', '#CCA300', '#447EBC', '#C15C17'],
+      color: ['#61a0a8', '#2f4554', '#c23531', '#d48265', '#91c7ae', '#749f83', '#ca8622', '#bda29a', '#6e7074', '#546570', '#c4ccd3'],
       grid: {
         left: '3%',
         right: '5%',

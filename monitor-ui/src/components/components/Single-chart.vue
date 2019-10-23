@@ -81,6 +81,7 @@ export default {
           item.lineStyle = {
             width: 1
           }
+          item.areaStyle = {}
         }) 
         let config = {
           title: responseData.title,
