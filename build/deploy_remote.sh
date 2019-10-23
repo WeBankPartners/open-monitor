@@ -30,11 +30,6 @@ sed -i "s~{{MYSQL_ROOT_PASSWORD}}~$database_init_password~g" docker-compose.yml
 sed -i "s~{{MONITOR_IMAGE_NAME}}~$monitor_image_name~g" docker-compose.yml
 sed -i "s~{{MONITOR_SERVER_PORT}}~$monitor_server_port~g" docker-compose.yml
 
-sed -i "s~{{MYSQL_ROOT_PASSWORD}}~$database_init_password~g" /app/docker/monitor/conf/default.json
-sed -i "s~{{MONITOR_SERVER_PORT}}~$monitor_server_port~g" /app/docker/monitor/conf/default.json
-
-sed -i "s~{{MONITOR_SERVER_PORT}}~$monitor_server_port~g" /app/docker/alertmanager/alertmanager.yml
-
 docker-compose -f docker-compose.yml -H ${remote_host} up -d
 
  
