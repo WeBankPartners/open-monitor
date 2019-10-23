@@ -96,9 +96,9 @@ prometheus、alertmanager、consul、monitor、monitor-db（mysql）
     mkdir -p /data/docker/prometheus
     mkdir -p /data/docker/consul
     mkdir -p /data/docker/alertmanager
-    cp ../monitor-server/conf/docker/prometheus.yml /app/docker/prometheus
-    cp ../monitor-server/conf/docker/alertmanager.yml /app/docker/alertmanager
-    cp ../monitor-server/conf/docker/monitor.json /app/docker/monitor/conf/default.json
+    cp conf/prometheus.yml /app/docker/prometheus
+    cp conf/alertmanager.yml /app/docker/alertmanager
+    cp conf/monitor.json /app/docker/monitor/conf/default.json
     
     source monitor.cfg
     
@@ -125,7 +125,7 @@ prometheus、alertmanager、consul、monitor、monitor-db（mysql）
 5. docker-compose.tpl文件
 	
 	此文件中配置了要安装的服务：prometheus、alertmanager、consul、monitor、monitor-db。
-	如果已有mysql，在文件中将monitor-db这两段内容注释掉，在monitor-server/conf/docker/monitor.json配置中，手动修改里面的store-mysql项配置即可。
+	如果已有mysql，在文件中将monitor-db这两段内容注释掉，在build/conf/monitor.json配置中，手动修改里面的store-mysql项配置即可。
 	
 	详细代码如下：
 
