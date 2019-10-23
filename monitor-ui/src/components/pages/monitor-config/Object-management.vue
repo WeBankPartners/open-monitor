@@ -1,7 +1,7 @@
 <template>
   <div class="main-content">
     <div v-if="showGroupMsg" style="padding-left:20px">
-      <Tag type="border" closable color="primary" @on-close="closeTag">当前组:{{groupMsg.name}}</Tag>
+      <Tag type="border" closable color="primary" @on-close="closeTag">{{$t('field.group')}}:{{groupMsg.name}}</Tag>
     </div>
     <PageTable :pageConfig="pageConfig"></PageTable>
     <ModalComponent :modelConfig="modelConfig">
@@ -49,14 +49,14 @@
     {title: 'groups', value: 'groups_name', display: true, }
   ]
   let historyAlarmEle = [
-    {title: '状态',value: 'status', style: 'min-width:70px', display: true},
-    {title: '指标',value: 's_metric', display: true},
-    {title: '异常值',value: 'start_value', display: true},
-    {title: '阀值',value: 's_cond', style: 'min-width:70px', display: true},
-    {title: '持续时间',value: 's_last', style: 'min-width:65px', display: true},
-    {title: '级别',value: 's_priority', display: true},
-    {title: '开始时间',value: 'start', style: 'min-width:200px', display: true},
-    {title: '结束时间',value: 'end', style: 'min-width:200px',display: true,
+    {title: 'tableKey.status',value: 'status', style: 'min-width:70px', display: true},
+    {title: 'tableKey.s_metric',value: 's_metric', display: true},
+    {title: 'tableKey.start_value',value: 'start_value', display: true},
+    {title: 'tableKey.s_cond',value: 's_cond', style: 'min-width:70px', display: true},
+    {title: 'tableKey.s_last',value: 's_last', style: 'min-width:65px', display: true},
+    {title: 'tableKey.s_priority',value: 's_priority', display: true},
+    {title: 'tableKey.start',value: 'start', style: 'min-width:200px', display: true},
+    {title: 'tableKey.end',value: 'end', style: 'min-width:200px',display: true,
       'render': (item) => {
         if (item.end === undefined) {
           return '-'
@@ -66,10 +66,10 @@
       }
     }]
   const btn = [
-    {btn_name: '阀值配置', btn_func: 'thresholdConfig'},
-    {btn_name: '历史告警', btn_func: 'historyAlarm'},
-    {btn_name: '删除', btn_func: 'delF'},
-    {btn_name: '日志配置', btn_func: 'logManagement'}
+    {btn_name: 'button.thresholdManagement', btn_func: 'thresholdConfig'},
+    {btn_name: 'button.historicalAlert', btn_func: 'historyAlarm'},
+    {btn_name: 'button.remove', btn_func: 'delF'},
+    {btn_name: 'button.logConfiguration', btn_func: 'logManagement'}
   ]
   export default {
     name: '',
@@ -112,7 +112,7 @@
         },
         modelConfig: {
           modalId: 'add_object_Modal',
-          modalTitle: '对象管理',
+          modalTitle: 'button.historicalAlert',
           isAdd: true,
           config: [
             {name:'advancedConfig',type:'slot'}
@@ -128,7 +128,7 @@
         },
         historyAlarmModel: {
           modalId: 'history_alarm_Modal',
-          modalTitle: '对象管理',
+          modalTitle: 'button.historicalAlert',
           modalStyle: 'width:930px;max-width: none;',
           noBtn: true,
           isAdd: true,
@@ -153,15 +153,15 @@
                 key: 's_cond'
             },
             {
-                title: '持续时间',
+                title: 'tableKey.s_last',
                 key: 's_last'
             },
             {
-                title: '级别',
+                title: 'tableKey.s_priority',
                 key: 's_priority'
             },
             {
-                title: '开始时间',
+                title: 'tableKey.start',
                 key: 'start'
             },
             {
@@ -179,13 +179,13 @@
         },
         entpointRejectModel: {
           modalId: 'entpoint_reject_model',
-          modalTitle: '对象注册',
+          modalTitle: 'title.entpointAdd',
           isAdd: true,
           saveFunc: 'entpointRejectSave',
           config: [
             {name:'entpointReject',type:'slot'},
-            {label: 'IP', value: 'exporter_ip', placeholder: '必填', v_validate: 'required:true|isIP', disabled: false, type: 'text'},
-            {label: '端口', value: 'exporter_port', placeholder: '必填', v_validate: 'required:true|isNumber', disabled: false, type: 'text'},
+            {label: 'IP', value: 'exporter_ip', placeholder: 'tips.required', v_validate: 'required:true|isIP', disabled: false, type: 'text'},
+            {label: 'field.port', value: 'exporter_port', placeholder: 'tips.required', v_validate: 'required:true|isNumber', disabled: false, type: 'text'},
           ],
           addRow: {
             instance: '',
@@ -290,7 +290,7 @@
         this.pageConfig.researchConfig.filters.grp = ''
         this.pageConfig.table.btn.splice(this.pageConfig.table.btn.length-1, 1)
         this.pageConfig.researchConfig.btn_group.splice(this.pageConfig.researchConfig.btn_group.length-1, 1)
-        this.pageConfig.researchConfig.btn_group.push({btn_name: '注册', btn_func: 'entpointReject', class: 'btn-cancle-f', btn_icon: 'fa fa-plus'})
+        this.pageConfig.researchConfig.btn_group.push({btn_name: 'button.add', btn_func: 'entpointReject', class: 'btn-cancle-f', btn_icon: 'fa fa-plus'})
         this.initData(this.pageConfig.CRUD, this.pageConfig)
       },
       historyAlarm (rowData) {

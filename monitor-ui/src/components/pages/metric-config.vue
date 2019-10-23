@@ -20,7 +20,7 @@
       <ul>
         <template v-for="(metricItem, metricIndex) in totalMetric">
           <li :key="metricIndex" class="metric-display">
-            <Tag color="primary" type="border" closable @on-close="delMetric(metricItem)">指标名称：{{metricItem.label}} 
+            <Tag color="primary" type="border" closable @on-close="delMetric(metricItem)">{{$t('tableKey.s_metric')}}：{{metricItem.label}} 
               <i class="fa fa-pencil" aria-hidden="true" @click="editMetricName(metricItem,metricIndex)"></i>
             </Tag>
             <Select v-model="originalMetricList[metricItem.key].model" style="width:300px" filterable size="small" @on-change="selectOriginalMetric(metricItem)">
@@ -95,10 +95,10 @@ export default {
       editingMetric: null,
       modelConfig: {
         modalId: 'edit_metric_Modal',
-        modalTitle: '指标名称',
+        modalTitle: 'tableKey.s_metric',
         isAdd: true,
         config: [
-          {label: '名称', value: 'name', placeholder: '必填,2-60字符', v_validate: 'required:true|min:2|max:60', disabled: false, type: 'text'},
+          {label: 'table.name', value: 'name', placeholder: 'tips.inputRequired', v_validate: 'required:true|min:2|max:60', disabled: false, type: 'text'},
         ],
         addRow: { // [通用]-保存用户新增、编辑时数据
           name: null

@@ -1,12 +1,12 @@
 <template>
   <div class=" " style="padding-top:20px;">
     <section style="margin-left:8px">
-      <Tag color="warning">数据获取时间：{{timeForDataAchieve}}</Tag>
+      <Tag color="warning">{{$t('title.updateTime')}}：{{timeForDataAchieve}}</Tag>
       <template v-for="(filterItem, filterIndex) in filtersForShow">
         <Tag color="success" type="border" closable @on-close="exclude(filterItem.key)" :key="filterIndex">{{filterItem.key}}：{{filterItem.value}}</Tag>
       </template>
       <template v-if="!resultData.length">
-        <Tag color="primary">暂无告警！</Tag>
+        <Tag color="primary">{{$t('tip.noDataTip')}}！</Tag>
       </template>
     </section>
 
@@ -23,11 +23,11 @@
               <Tag type="border" closable @on-close="addParams('metric',alarmItem.s_metric)" color="primary">{{alarmItem.s_metric}}</Tag>
             </li>
             <li>
-              <label class="col-md-1">级别:</label>
+              <label class="col-md-1">{{$t('tableKey.s_priority')}}:</label>
               <Tag type="border" closable @on-close="addParams('priority',alarmItem.s_priority)" color="primary">{{alarmItem.s_priority}}</Tag>
             </li>
             <li>
-              <label class="col-md-1">开始时间:</label><span>{{alarmItem.start_string}}</span>
+              <label class="col-md-1">{{$t('tableKey.start')}}:</label><span>{{alarmItem.start_string}}</span>
             </li>
             <li v-if="alarmIndex != actveAlarmIndex">
               <label class="col-md-1"></label><span><Icon @click="actveAlarmIndex = alarmIndex" type="ios-arrow-dropdown" size=16 /></span>
@@ -35,24 +35,24 @@
           <template v-if="alarmIndex === actveAlarmIndex">
             <template v-if="alarmItem.is_log_monitor">
                <li>
-                <label class="col-md-1">路径:</label><span>{{alarmItem.path}}</span>
+                <label class="col-md-1">{{$t('tableKey.path')}}:</label><span>{{alarmItem.path}}</span>
               </li>
               <li>
-                <label class="col-md-1">关键字:</label><span>{{alarmItem.keyword}}</span>
+                <label class="col-md-1">{{$t('tableKey.keyword')}}:</label><span>{{alarmItem.keyword}}</span>
               </li>
               <li>
-                <label class="col-md-1">描述:</label><span>{{alarmItem.content}}</span>
+                <label class="col-md-1">{{$t('tableKey.description')}}:</label><span>{{alarmItem.content}}</span>
               </li>
             </template>
             <template v-else>
                <li>
-                <label class="col-md-1">告警值:</label><span>{{alarmItem.start_value}}</span>
+                <label class="col-md-1">{{$t('tableKey.start_value')}}:</label><span>{{alarmItem.start_value}}</span>
               </li>
               <li>
-                <label class="col-md-1">阀值:</label><span>{{alarmItem.s_cond}}</span>
+                <label class="col-md-1">{{$t('field.threshold')}}:</label><span>{{alarmItem.s_cond}}</span>
               </li>
               <li>
-                <label class="col-md-1">持续时间:</label><span>{{alarmItem.s_last}}</span>
+                <label class="col-md-1">{{$t('tableKey.s_last')}}:</label><span>{{alarmItem.s_last}}</span>
               </li>
             </template>
           </template>

@@ -56,7 +56,7 @@ export default {
         modalTitle: '视图组',
         isAdd: true,
         config: [
-          {label: '名称', value: 'name', placeholder: '必填,2-60字符', v_validate: 'required:true|min:2|max:60', disabled: false, type: 'text'}
+          {label: 'tableKey.name', value: 'name', placeholder: 'tips.required', v_validate: 'required:true|min:2|max:60', disabled: false, type: 'text'}
         ],
         addRow: { // [通用]-保存用户新增、编辑时数据
           name: null,
