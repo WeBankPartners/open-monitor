@@ -6,7 +6,6 @@ ENV APP_CONF=$APP_HOME/conf
 ENV LOG_PATH=$APP_HOME/logs
 ENV PUBLIC_PATH=$APP_HOME/public
 
-RUN apk add ca-certificates
 RUN mkdir -p $APP_HOME $APP_CONF $LOG_PATH $PUBLIC_PATH
 
 ADD monitor-server/monitor-server $APP_HOME/
