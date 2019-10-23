@@ -70,8 +70,8 @@ WeCube-plugins-prometheus is licensed under the Apache License Version 2.0 , ple
 
 - For quick response, please [raise_an_issue](https://github.com/WeBankPartners/wecube-plugins-prometheus/issues/new/choose) to us, or you can also scan the following QR code to join our community, we will provide feedback as quickly as we can.
 
-      	<div align="left">
-      	<img src="wiki/images/wecube_qr_code.png"  height="200" width="200">
-      	</div>
+	<div align="left">
+	<img src="wiki/images/wecube_qr_code.png"  height="200" width="200">
+	</div>
 
 * Contact us: fintech@webank.com
