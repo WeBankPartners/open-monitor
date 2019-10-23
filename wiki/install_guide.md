@@ -40,7 +40,7 @@ prometheus、alertmanager、consul、monitor、monitor-db（mysql）
 ## 配置
 1. 建立执行目录和相关文件
 	
-	在部署机器上建立安装目录，新建以下4个文件：
+	在部署机器上建立安装目录，新建以下7个文件：
 
 	[monitor.cfg](../build/monitor.cfg)
 
@@ -49,8 +49,14 @@ prometheus、alertmanager、consul、monitor、monitor-db（mysql）
 	[uninstall.sh](../build/uninstall.sh)
 
 	[docker-compose.tpl](../build/docker-compose.tpl)
+	
+	[conf/alertmanager.yml](../build/conf/alertmanager.yml)
+	
+	[conf/prometheus.yml](../build/conf/prometheus.yml)
+	
+	[conf/monitor.json](../build/conf/monitor.json)
 
-2. build/monitor.cfg配置文件，该文件包含如下配置项，用户根据各自的部署环境替换掉相关值。
+2. monitor.cfg配置文件，该文件包含如下配置项，用户根据各自的部署环境替换掉相关值。
 
 	```	
     #monitor-server
@@ -222,6 +228,12 @@ prometheus、alertmanager、consul、monitor、monitor-db（mysql）
           type: none
           device: /data/docker/alertmanager
 	```
+
+6. conf/alertmanager.yml , conf/prometheus.yml , conf/monitor.json  
+   
+   [prometheus.yml](../build/conf/prometheus.yml) 是prometheus服务的配置文件  
+   [alertmanager.yml](../build/conf/alertmanager.yml) 是alertmanager服务的配置文件  
+   [monitor.json](../build/conf/monitor.json) 是monitor的配置文件  
 
 ## 执行安装
 1. 执行如下命令，通过docker-compose拉起WeCube-plugins-prometheus服务。

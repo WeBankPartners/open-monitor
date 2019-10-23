@@ -253,7 +253,7 @@ export default {
           series: responseData.series,
           yaxis: responseData.yaxis,
         }
-        drawChart(this, config, {eye: false})
+        drawChart(this, config, {eye: false,clear:true})
       })
 
     },
