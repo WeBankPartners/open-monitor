@@ -4,7 +4,7 @@
       <ul class="search-ul">
         <li class="search-li">
           <Select v-model="type" style="width:100px" @on-change="endpointOptions=[]">
-            <Option v-for="item in typeList" :value="item.value" :key="item.value">{{ item.label }}</Option>
+            <Option v-for="item in typeList" :value="item.value" :key="item.value">{{ $t(item.label) }}</Option>
           </Select>
         </li>
         <li class="search-li">
@@ -41,7 +41,7 @@
       <ModalComponent :modelConfig="modelConfig">
         <div slot="metricSelect" class="extentClass">  
           <div class="marginbottom params-each">
-            <label class="col-md-2 label-name lable-name-select">名称:</label>
+            <label class="col-md-2 label-name lable-name-select">{{$t('tableKey.name')}}:</label>
             <Select v-model="modelConfig.addRow.expr" filterable style="width:340px"
             :label-in-value="true" @on-change="selectMetric">
               <Option v-for="item in modelConfig.metricList" :value="item.prom_ql" :key="item.prom_ql+item.metric">{{ item.metric }}</Option>
@@ -50,7 +50,7 @@
         </div>
         <div slot="thresholdConfig" class="extentClass">  
           <div class="marginbottom params-each">
-            <label class="col-md-2 label-name lable-name-select">阀值:</label>
+            <label class="col-md-2 label-name lable-name-select">{{$t('field.threshold')}}:</label>
             <Select v-model="modelConfig.threshold" style="width:100px">
               <Option v-for="item in modelConfig.thresholdList" :value="item.value" :key="item.value">{{ item.label }}</Option>
             </Select>
@@ -59,7 +59,7 @@
             </div>
           </div>
           <div class="marginbottom params-each">
-            <label class="col-md-2 label-name lable-name-select">持续时间:</label>
+            <label class="col-md-2 label-name lable-name-select">{{$t('tableKey.s_last')}}:</label>
             <div class="search-input-content" style="margin-right: 8px">
               <input v-model="modelConfig.lastValue" type="text" class="search-input" />
             </div>
@@ -68,7 +68,7 @@
             </Select>
           </div>
           <div class="marginbottom params-each">
-            <label class="col-md-2 label-name lable-name-select">优先级:</label>
+            <label class="col-md-2 label-name lable-name-select">{{$t('tableKey.s_priority')}}:</label>
             <Select v-model="modelConfig.priority" style="width:100px">
               <Option v-for="item in modelConfig.priorityList" :value="item.value" :key="item.value">{{ item.label }}</Option>
             </Select>
@@ -83,15 +83,15 @@
 import {thresholdList, lastList, priorityList} from '@/assets/config/common-config.js'
 let tableEle = [
   {title: 'ID', value: 'id', display: false},
-  {title: '名称', value: 'metric', display: true},
-  {title: '表达式', value: 'expr', display: true},
-  {title: '阀值', value: 'cond', display: true},
-  {title: '持续时长', value: 'last', display: true},
-  {title: '优先级', value: 'priority', display: true}
+  {title: 'tableKey.name', value: 'metric', display: true},
+  {title: 'tableKey.expr', value: 'expr', display: true},
+  {title: 'tableKey.s_cond', value: 'cond', display: true},
+  {title: 'tableKey.s_last', value: 'last', display: true},
+  {title: 'tableKey.s_priority', value: 'priority', display: true}
 ]
 const btn = [
-  {btn_name: '编辑', btn_func: 'editF'},
-  {btn_name: '删除', btn_func: 'delF'},
+  {btn_name: 'button.edit', btn_func: 'editF'},
+  {btn_name: 'button.remove', btn_func: 'delF'},
 ]
 
 export default {
@@ -101,8 +101,8 @@ export default {
       type: '',
       typeValue: 'endpoint',
       typeList: [
-        {label: '主机', value: 'endpoint'},
-        {label: '组', value: 'grp'}
+        {label: 'field.endpoint', value: 'endpoint'},
+        {label: 'field.group', value: 'grp'}
       ],
 
       endpointID: null,
@@ -125,12 +125,12 @@ export default {
       },
       modelConfig: {
         modalId: 'add_edit_Modal',
-        modalTitle: '阀值管理',
+        modalTitle: 'field.threshold',
         isAdd: true,
         config: [
           {name:'metricSelect',type:'slot'},
-          {label: '表达式', value: 'expr', placeholder: '必填', v_validate: 'required:true', disabled: false, type: 'textarea'},
-          {label: '通知内容', value: 'content', placeholder: '必填', v_validate: 'required:true', disabled: false, type: 'textarea'},
+          {label: 'tableKey.expr', value: 'expr', placeholder: 'tips.required', v_validate: 'required:true', disabled: false, type: 'textarea'},
+          {label: 'tableKey.content', value: 'content', placeholder: 'tips.required', v_validate: 'required:true', disabled: false, type: 'textarea'},
           {name:'thresholdConfig',type:'slot'}
         ],
         addRow: { // [通用]-保存用户新增、编辑时数据

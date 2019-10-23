@@ -4,7 +4,7 @@
       <ul class="search-ul">
         <li class="search-li">
           <Select v-model="type" style="width:100px">
-            <Option v-for="item in typeList" :value="item.value" :key="item.value">{{ item.label }}</Option>
+            <Option v-for="item in typeList" :value="item.value" :key="item.value">{{ $t(item.label) }}</Option>
           </Select>
         </li>
         <li class="search-li">
@@ -47,7 +47,7 @@
       <ModalComponent :modelConfig="modelConfig">
         <div slot="thresholdConfig" class="extentClass">  
           <div class="marginbottom params-each">
-            <label class="col-md-2 label-name lable-name-select">条件:</label>
+            <label class="col-md-2 label-name lable-name-select">{{$t('tableKey.condition')}}:</label>
             <Select v-model="modelConfig.cond" style="width:100px">
               <Option v-for="item in modelConfig.condList" :value="item.value" :key="item.value">{{ item.label }}</Option>
             </Select>
@@ -56,7 +56,7 @@
             </div>
           </div>
           <div class="marginbottom params-each">
-            <label class="col-md-2 label-name lable-name-select">时间范围:</label>
+            <label class="col-md-2 label-name lable-name-select">{{$t('tableKey.s_last')}}:</label>
             <div class="search-input-content" style="margin-right: 8px">
               <input v-model="modelConfig.lastValue" type="text" class="search-input" />
             </div>
@@ -65,7 +65,7 @@
             </Select>
           </div>
           <div class="marginbottom params-each">
-            <label class="col-md-2 label-name lable-name-select">优先级:</label>
+            <label class="col-md-2 label-name lable-name-select">{{$t('tableKey.s_priority')}}:</label>
             <Select v-model="modelConfig.priority" style="width:100px">
               <Option v-for="item in modelConfig.priorityList" :value="item.value" :key="item.value">{{ item.label }}</Option>
             </Select>
@@ -80,11 +80,11 @@
 import {thresholdList, lastList, priorityList} from '@/assets/config/common-config.js'
 import extendTable from '@/components/components/table-page/extend-table'
 let tableEle = [
-  {title: '路径', value: 'path', display: true}
+  {title: 'tableKey.path', value: 'path', display: true}
 ]
 const btn = [
-  {btn_name: '编辑', btn_func: 'editF'},
-  {btn_name: '删除', btn_func: 'delF'},
+  {btn_name: 'button.edit', btn_func: 'editF'},
+  {btn_name: 'button.remove', btn_func: 'delF'},
 ]
 
 export default {
@@ -94,8 +94,8 @@ export default {
       type: '',
       typeValue: 'endpoint',
       typeList: [
-        {label: '主机', value: 'endpoint'},
-        {label: '组', value: 'grp'}
+        {label: 'field.endpoint', value: 'endpoint'},
+        {label: 'field.group', value: 'grp'}
       ],
 
       endpointID: null,
@@ -118,13 +118,13 @@ export default {
               isExtendF: true,
               title: '',
               config: [
-                {title: '条件', value: 'cond', display: true},
-                {title: '关键字', value: 'keyword', display: true},
-                {title: '范围', value: 'last', display: true},
-                {title: '优先级', value: 'priority', display: true},
-                {title: '操作',btn:[
-                  {btn_name: '编辑', btn_func: 'editPathItem'},
-                  {btn_name: '移除', btn_func: 'delPathItem'}
+                {title: 'tableKey.condition', value: 'cond', display: true},
+                {title: 'tableKey.keyword', value: 'keyword', display: true},
+                {title: 'tableKey.s_last', value: 'last', display: true},
+                {title: 'tableKey.s_priority', value: 'priority', display: true},
+                {title: 'table.action',btn:[
+                  {btn_name: 'button.edit', btn_func: 'editPathItem'},
+                  {btn_name: 'button.remove', btn_func: 'delPathItem'}
                 ]}
               ],
               data: [],
@@ -139,10 +139,10 @@ export default {
       },
       pathModelConfig: {
         modalId: 'path_Modal',
-        modalTitle: '日志编辑',
+        modalTitle: 'title.logAdd',
         saveFunc: 'savePath',
         config: [
-          {label: '路径', value: 'path', placeholder: '必填', v_validate: 'required:true', disabled: false, type: 'text'}
+          {label: 'tableKey.path', value: 'path', placeholder: 'tips.required', v_validate: 'required:true', disabled: false, type: 'text'}
         ],
         addRow: { // [通用]-保存用户新增、编辑时数据
           path: null,
@@ -150,11 +150,11 @@ export default {
       },
       modelConfig: {
         modalId: 'add_edit_Modal',
-        modalTitle: '日志编辑',
+        modalTitle: 'title.logAdd',
         isAdd: true,
         config: [
-          {label: '路径', value: 'path', placeholder: '必填', v_validate: 'required:true',hide: 'edit', disabled: false, type: 'text'},
-          {label: '关键字', value: 'keyword', placeholder: '必填', v_validate: 'required:true', disabled: false, type: 'text'},
+          {label: 'tableKey.path', value: 'path', placeholder: 'tips.required', v_validate: 'required:true',hide: 'edit', disabled: false, type: 'text'},
+          {label: 'tableKey.keyword', value: 'keyword', placeholder: 'tips.required', v_validate: 'required:true', disabled: false, type: 'text'},
           {name:'thresholdConfig',type:'slot'}
         ],
         addRow: { // [通用]-保存用户新增、编辑时数据

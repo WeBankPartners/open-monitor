@@ -26,24 +26,26 @@
     "endpoint": "Endpoint",
     "metric": "Metric",
     "timeInterval": "Time interval",
+    "port": "Port",
     "aggType": "Aggregation type",
     "title": "Title",
     "unit": "Unit"
   },
   "title": {
-    "endpoint": "Endpoint",
-    "metric": "Metric",
     "viewConfiguration": "View Configuration",
     "templateName": "Template Name",
     "addViewTemplate": "Add View Template",
-    "updateTime": "Update Time"
+    "updateTime": "Update Time",
+    "entpointAdd": "Endpoint Add",
+    "groupAdd": "Group",
+    "logAdd": "Log"
   },
   "button": {
     "search": "Search",
     "add": "Add",
     "edit": "Edit",
     "remove": "Remove",
-    "thresholdManagement": "Threshold Management",
+    "thresholdManagement": "Threshold",
     "historicalAlert": "Historical Alert",
     "logConfiguration": "Log Configuration",
     "addMetric": "Add metric",
@@ -57,5 +59,31 @@
       "back": "restore area zooming",
       "dataView": "data view"
     }
+  },
+  "table": {
+    "more": "More",
+    "action": "Action",
+    "noDataTip": "No Data"
+  },
+  "tableKey": {
+    "status": "Status",
+    "s_metric": "Metric",
+    "start_value": "Alarm value",
+    "s_cond": "Cond",
+    "s_last": "Last",
+    "s_priority": "Priority",
+    "start": "Start time",
+    "end": "End time",
+    "name": "Name",
+    "description": "Description",
+    "expr": "Expression",
+    "content": "Content",
+    "path": "Path",
+    "keyword": "Keyword",
+    "condition": "Condition"
+  },
+  "tips": {
+    "required": "Required",
+    "inputRequired": "Required,2-60"
   }
 }
