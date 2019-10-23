@@ -2,7 +2,7 @@ export GOPATH=$(PWD)
 
 current_dir=$(shell pwd)
 version=$(shell bash ./build/version.sh)
-project_name=$(shell basename "${current_dir}" )
+project_name=wecube-plugins-prometheus
 
 
 APP_HOME=src/github.com/WeBankPartners/wecube-plugins-prometheus
