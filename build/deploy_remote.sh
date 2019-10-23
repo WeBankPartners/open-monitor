@@ -12,20 +12,16 @@ then
     exit 1
 fi
 
-mkdir -p /app/docker/prometheus
-mkdir -p /app/docker/prometheus/rules
-mkdir -p /app/docker/alertmanager
-mkdir -p /app/docker/monitor/conf
-mkdir -p /app/docker/monitor/logs
-mkdir -p /data/docker/monitor-db
-mkdir -p /data/docker/prometheus
-mkdir -p /data/docker/consul
-mkdir -p /data/docker/alertmanager
-cp ../monitor-server/conf/docker/prometheus.yml /app/docker/prometheus
-cp ../monitor-server/conf/docker/alertmanager.yml /app/docker/alertmanager
-cp ../monitor-server/conf/docker/monitor.json /app/docker/monitor/conf/default.json
+if [ $# -nq 2 ]
+then
+  echo "usage: deploy_remote.sh config remote_host"
+  exit 1 
+else
+  export config=$1
+  export remote_host=$2
+fi
 
-source monitor.cfg
+source ${config}
 
 sed "s~{{MONITOR_DATABASE_IMAGE_NAME}}~$database_image_name~g" docker-compose.tpl > docker-compose.yml
 sed -i "s~{{MYSQL_ROOT_PASSWORD}}~$database_init_password~g" docker-compose.yml
@@ -37,7 +33,7 @@ sed -i "s~{{MONITOR_SERVER_PORT}}~$monitor_server_port~g" /app/docker/monitor/co
 
 sed -i "s~{{MONITOR_SERVER_PORT}}~$monitor_server_port~g" /app/docker/alertmanager/alertmanager.yml
 
-docker-compose  -f docker-compose.yml  up -d
+docker-compose -f docker-compose.yml -H ${remote_host} up -d
 
  
 
