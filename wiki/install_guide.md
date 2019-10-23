@@ -54,7 +54,7 @@ prometheus、alertmanager、consul、monitor、monitor-db（mysql）
 
 	```	
     #monitor-server
-    monitor_image_name=wecube-plugins-prometheus:0.9
+    monitor_image_name=monitor:0.9
     monitor_server_port=8080
     
     #database
@@ -87,13 +87,18 @@ prometheus、alertmanager、consul、monitor、monitor-db（mysql）
         exit 1
     fi
     
-    mkdir -p ~/app/docker/prometheus
-    mkdir -p ~/app/docker/prometheus/rules
-    mkdir -p ~/app/docker/alertmanager
-    mkdir -p ~/app/docker/monitor
-    cp ../monitor-server/conf/docker/prometheus.yml ~/app/docker/prometheus
-    cp ../monitor-server/conf/docker/alertmanager.yml ~/app/docker/alertmanager
-    cp ../monitor-server/conf/docker/monitor.json ~/app/docker/monitor/default.json
+    mkdir -p /app/docker/prometheus
+    mkdir -p /app/docker/prometheus/rules
+    mkdir -p /app/docker/alertmanager
+    mkdir -p /app/docker/monitor/conf
+    mkdir -p /app/docker/monitor/logs
+    mkdir -p /data/docker/monitor-db
+    mkdir -p /data/docker/prometheus
+    mkdir -p /data/docker/consul
+    mkdir -p /data/docker/alertmanager
+    cp ../monitor-server/conf/docker/prometheus.yml /app/docker/prometheus
+    cp ../monitor-server/conf/docker/alertmanager.yml /app/docker/alertmanager
+    cp ../monitor-server/conf/docker/monitor.json /app/docker/monitor/conf/default.json
     
     source monitor.cfg
     
@@ -102,8 +107,10 @@ prometheus、alertmanager、consul、monitor、monitor-db（mysql）
     sed -i "s~{{MONITOR_IMAGE_NAME}}~$monitor_image_name~g" docker-compose.yml
     sed -i "s~{{MONITOR_SERVER_PORT}}~$monitor_server_port~g" docker-compose.yml
     
-    sed -i "s~{{MYSQL_ROOT_PASSWORD}}~$database_init_password~g" ~/app/docker/monitor/default.json
-    sed -i "s~{{MONITOR_SERVER_PORT}}~$monitor_server_port~g" ~/app/docker/monitor/default.json
+    sed -i "s~{{MYSQL_ROOT_PASSWORD}}~$database_init_password~g" /app/docker/monitor/conf/default.json
+    sed -i "s~{{MONITOR_SERVER_PORT}}~$monitor_server_port~g" /app/docker/monitor/conf/default.json
+    
+    sed -i "s~{{MONITOR_SERVER_PORT}}~$monitor_server_port~g" /app/docker/alertmanager/alertmanager.yml
     
     docker-compose  -f docker-compose.yml  up -d
 	```
@@ -129,9 +136,8 @@ prometheus、alertmanager、consul、monitor、monitor-db（mysql）
         image: consul
         container_name: consul
         restart: always
-        dns_search: .
         volumes:
-          - consul-data:/consul/data
+          - /data/docker/consul:/consul/data
         ports:
           - "8300:8300"
           - "8400:8400"
@@ -142,10 +148,9 @@ prometheus、alertmanager、consul、monitor、monitor-db（mysql）
         image: prom/alertmanager
         container_name: alertmanager
         restart: always
-        dns_search: .
         volumes:
           - alertmanager-data:/alertmanager
-          - ~/app/docker/alertmanager:/etc/alertmanager
+          - /app/docker/alertmanager:/etc/alertmanager
         ports:
           - "9093:9093"
         networks:
@@ -158,10 +163,9 @@ prometheus、alertmanager、consul、monitor、monitor-db（mysql）
         image: prom/prometheus
         container_name: prometheus
         restart: always
-        dns_search: .
         volumes:
-          - prometheus-tsdb:/prometheus
-          - ~/app/docker/prometheus:/etc/prometheus
+          - prometheus-data:/prometheus
+          - /app/docker/prometheus:/etc/prometheus
         ports:
           - "9090:9090"
         networks:
@@ -179,32 +183,44 @@ prometheus、alertmanager、consul、monitor、monitor-db（mysql）
                 '--max_allowed_packet=4M'
         ]
         volumes:
-          - /etc/localtime:/etc/localtimell
+          - /etc/localtime:/etc/localtime
+          - /data/docker/monitor-db:/var/lib/mysql
         environment:
           - MYSQL_ROOT_PASSWORD={{MYSQL_ROOT_PASSWORD}}
         ports:
           - 3306:3306
-        volumes:
-          - monitor-db-data:/var/lib/mysql
+        networks:
+          - monitor
       monitor-server:
         image: {{MONITOR_IMAGE_NAME}}
         restart: always
         volumes:
           - /etc/localtime:/etc/localtime
-          - ~/app/docker/monitor:/app/monitor/conf
-          - ~/app/docker/prometheus/rules:/app/monitor/conf/rules
+          - /app/docker/monitor/conf:/app/monitor/conf
+          - /app/docker/monitor/logs:/app/monitor/logs
+          - /app/docker/prometheus/rules:/app/monitor/conf/rules
         ports:
           - {{MONITOR_SERVER_PORT}}:{{MONITOR_SERVER_PORT}}
+        networks:
+          - monitor
     
     networks:
       monitor:
         driver: bridge
     
     volumes:
-      consul-data:
+      prometheus-data:
+        driver: local
+        driver_opts:
+          o: bind
+          type: none
+          device: /data/docker/prometheus
       alertmanager-data:
-      prometheus-tsdb:
-      monitor-db-data:
+        driver: local
+        driver_opts:
+          o: bind
+          type: none
+          device: /data/docker/alertmanager
 	```
 
 ## 执行安装
