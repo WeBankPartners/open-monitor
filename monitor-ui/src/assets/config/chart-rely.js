@@ -13,13 +13,16 @@ export const drawChart = function(that,config,userConfig) {
     let originConfig = {
       title: true,
       eye: true,
-      dataZoom: true
+      dataZoom: true,
+      clear: false
     }
     let finalConfig = Object.assign(originConfig, userConfig)
 
     // 基于准备好的dom，初始化echarts实例
     var myChart = echarts.init(document.getElementById(that.elId))
-    myChart.clear()
+    if (originConfig.clear) {
+      myChart.clear()
+    }
     let option = {
       title: {
         // text: config.title,
