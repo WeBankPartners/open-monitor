@@ -11,11 +11,49 @@
     "alert": "告警"
   },
   "placeholder": {
-    "endpointSearch": "请输入后选择对象"
+    "input": "请输入",
+    "endpointSearch": "请输入后选择对象",
+    "metric": "请选择监控指标",
+    "datePicker": "请选择日期",
+    "refresh": "定时刷新",
+    "metricConfiguration": "指标配置",
+    "globalConfiguration": "全局配置"
+  },
+  "field": {
+    "endpoint": "对象",
+    "group": "组",
+    "threshold": "阀值",
+    "log": "日志",
+    "metric": "指标",
+    "relativeTime": "时间段",
+    "timeInterval": "时间区间",
+    "aggType": "聚合类型",
+    "title": "标题",
+    "unit": "单位"
+  },
+  "title": {
+    "viewConfiguration": "视图配置",
+    "templateName": "模板名称",
+    "updateTime": "更新时间"
   },
   "button": {
     "search": "搜索",
+    "add": "新增",
+    "edit": "编辑",
+    "remove": "删除",
+    "thresholdManagement": "阀值管理",
+    "historicalAlert": "历史告警",
+    "logConfiguration": "日志配置",
+    "addMetric": "新增指标",
+    "addViewTemplate": "新增视图模板",
+    "saveEdit": "保存修改",
     "save": "保存",
-    "cancle": "取消"
+    "view": "保存",
+    "endpointManagement": "对象管理",
+    "chart": {
+      "zoom": "数据区域缩放",
+      "back": "恢复",
+      "dataView": "放大"
+    }
   }
 }

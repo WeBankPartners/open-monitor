@@ -8,7 +8,7 @@
           <button type="button" class="btn btn-sm btn-confirm-f"
             @click="routerChange">
             <i class="fa fa-search" ></i>
-            搜索
+            {{$t('button.search')}}
           </button>
         </li>
       </ul>

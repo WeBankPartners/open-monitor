@@ -11,7 +11,7 @@
             </h4>
             <h4 class="modal-title" v-if="!modelConfig.modalTitle">{{modelConfig.title + '--'}}
               <label v-if="modelConfig.isAdd">
-                <span>新增</span>
+                <span>{{$t('button.add')}}</span>
               </label>
               <label v-else>
                 <span>编辑【</span>

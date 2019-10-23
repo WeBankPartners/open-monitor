@@ -7,7 +7,7 @@
     <ModalComponent :modelConfig="modelConfig">
       <div slot="advancedConfig" class="extentClass">   
         <div class="marginbottom params-each">
-          <label class="col-md-2 label-name lable-name-select">对象名:</label>
+          <label class="col-md-2 label-name lable-name-select">{{$t('field.endpoint')}}:</label>
           <Select v-model="modelConfig.slotConfig.resourceSelected" multiple filterable style="width:300px">
               <Option v-for="item in modelConfig.slotConfig.resourceOption" :value="item.id" :key="item.id">
                 <Tag color="cyan" v-if="item.option_value.split(':')[1] == 'host'">host</Tag>
@@ -27,7 +27,7 @@
     <ModalComponent :modelConfig="entpointRejectModel">
       <div slot="entpointReject">  
         <div class="marginbottom params-each">
-          <label class="col-md-2 label-name lable-name-select">对象名:</label>
+          <label class="col-md-2 label-name lable-name-select">{{$t('field.endpoint')}}:</label>
           <Select v-model="entpointRejectModel.addRow.type" style="width:338px">
               <Option v-for="item in entpointRejectModel.entpointType" :value="item.value" :key="item.value">
               {{item.label}}</Option>
@@ -79,9 +79,9 @@
           CRUD: this.apiCenter.objectManagement.list.api,
           researchConfig: {
             input_conditions: [
-              {value: 'search', type: 'input', placeholder: '请输入', style: ''}],
+              {value: 'search', type: 'input', placeholder: 'placeholder.input', style: ''}],
             btn_group: [
-              {btn_name: '搜索', btn_func: 'search', class: 'btn-confirm-f', btn_icon: 'fa fa-search'}
+              {btn_name: 'button.search', btn_func: 'search', class: 'btn-confirm-f', btn_icon: 'fa fa-search'}
             ],
             filters: {
               search: ''
@@ -209,13 +209,13 @@
       if (this.$validate.isEmpty_reset(this.$route.params)) {
         this.groupMsg = {}
         this.showGroupMsg = false
-        this.pageConfig.researchConfig.btn_group.push({btn_name: '注册', btn_func: 'entpointReject', class: 'btn-cancle-f', btn_icon: 'fa fa-plus'})
+        this.pageConfig.researchConfig.btn_group.push({btn_name: 'button.add', btn_func: 'entpointReject', class: 'btn-cancle-f', btn_icon: 'fa fa-plus'})
       } else {
         this.$parent.activeTab = '/monitorConfigIndex/objectManagement'
         if (this.$route.params.hasOwnProperty('group')) {
           this.groupMsg = this.$route.params.group
           this.showGroupMsg = true
-          this.pageConfig.researchConfig.btn_group.push({btn_name: '新增', btn_func: 'add', class: 'btn-cancle-f', btn_icon: 'fa fa-plus'})
+          this.pageConfig.researchConfig.btn_group.push({btn_name: 'button.add', btn_func: 'add', class: 'btn-cancle-f', btn_icon: 'fa fa-plus'})
           this.pageConfig.researchConfig.filters.grp = this.groupMsg.id
         }
         if (this.$route.params.hasOwnProperty('search')) {

@@ -20,7 +20,6 @@
         <MenuItem name="alarmManagement">
             <i class="fa fa-bell" aria-hidden="true"></i>
             {{$t("menu.alert")}}
-            <!-- 告警管理 -->
         </MenuItem>
         <div style="float:right;padding-right:80px">
             <Dropdown @on-click="changeLang">

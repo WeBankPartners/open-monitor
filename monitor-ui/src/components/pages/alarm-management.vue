@@ -15,11 +15,11 @@
         <i class="fa fa-times" @click="removeAlarm(alarmItem)" aria-hidden="true"></i>
         <ul>
            <li>
-              <label class="col-md-1">对象:</label>
+              <label class="col-md-1">{{$t('field.endpoint')}}:</label>
               <Tag type="border" closable @on-close="addParams('endpoint',alarmItem.endpoint)" color="primary">{{alarmItem.endpoint}}</Tag>
             </li>
             <li>
-              <label class="col-md-1">指标:</label>
+              <label class="col-md-1">{{$t('field.metric')}}:</label>
               <Tag type="border" closable @on-close="addParams('metric',alarmItem.s_metric)" color="primary">{{alarmItem.s_metric}}</Tag>
             </li>
             <li>
