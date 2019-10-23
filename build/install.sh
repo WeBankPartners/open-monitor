@@ -21,9 +21,9 @@ mkdir -p /data/docker/monitor-db
 mkdir -p /data/docker/prometheus
 mkdir -p /data/docker/consul
 mkdir -p /data/docker/alertmanager
-cp ../monitor-server/conf/docker/prometheus.yml /app/docker/prometheus
-cp ../monitor-server/conf/docker/alertmanager.yml /app/docker/alertmanager
-cp ../monitor-server/conf/docker/monitor.json /app/docker/monitor/conf/default.json
+cp conf/prometheus.yml /app/docker/prometheus
+cp conf/alertmanager.yml /app/docker/alertmanager
+cp conf/monitor.json /app/docker/monitor/conf/default.json
 
 source monitor.cfg
 
