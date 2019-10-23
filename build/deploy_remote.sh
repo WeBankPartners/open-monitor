@@ -33,13 +33,3 @@ sed -i "s~{{MONITOR_SERVER_PORT}}~$monitor_server_port~g" docker-compose.yml
 docker-compose -f docker-compose.yml -H ${remote_host} up -d
 
  
-
-
-
-
-
-
-
-
-
-
