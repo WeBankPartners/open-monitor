@@ -606,8 +606,6 @@ func GetAlarms(query m.AlarmTable) (error,[]*m.AlarmProblemQuery) {
 			UNION 
 			SELECT t1.*,t2.path,t2.keyword FROM alarm t1 LEFT JOIN log_monitor t2 ON t1.strategy_id=t2.strategy_id WHERE t1.s_metric='log_monitor' `+extWhereSql+`
 			) t3 ORDER BY t3.id DESC`
-	fmt.Println(sql)
-	fmt.Println(params)
 	err := x.SQL(sql,params...).Find(&result)
 	if err != nil {
 		mid.LogError("get alarms fail", err)
