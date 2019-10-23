@@ -8,7 +8,7 @@
         <button type="button" class="btn btn-sm btn-confirm-f"
             @click="getChartsConfig()">
             <i class="fa fa-search" ></i>
-            搜索
+            {{$t('button.search')}}
           </button>
       </li>
       <li class="search-li">
@@ -17,10 +17,10 @@
           </Select>
       </li>
       <li class="search-li">
-        <DatePicker type="daterange" placement="bottom-end" @on-change="datePick" placeholder="请选择日期" style="width: 200px"></DatePicker>
+        <DatePicker type="daterange" placement="bottom-end" @on-change="datePick" :placeholder="$t('placeholder.datePicker')" style="width: 200px"></DatePicker>
       </li>
       <li class="search-li">
-        <Select v-model="autoRefresh" style="width:100px" @on-change="getChartsConfig" placeholder="定时刷新">
+        <Select v-model="autoRefresh" style="width:100px" @on-change="getChartsConfig" :placeholder="$t('placeholder.refresh')">
           <Option v-for="item in autoRefreshConfig" :value="item.value" :key="item.value">{{ item.label }}</Option>
         </Select>
       </li>

@@ -22,7 +22,7 @@
           <button type="button" class="btn btn-sm btn-confirm-f"
           @click="search">
             <i class="fa fa-search" ></i>
-            搜索
+            {{$t('button.search')}}
           </button>
         </li>
       </ul> 
@@ -33,7 +33,7 @@
           <Tag color="blue" :key="tableIndex + 'a'" v-if="tableItem.obj_name">{{tableItem.obj_name}}</Tag>
           <button @click="add(tableItem.obj_type)" type="button" v-if="tableItem.operation" class="btn btn-sm btn-cancle-f" :key="tableIndex + 'b'">
             <i class="fa fa-plus"></i>
-            新增
+            {{$t('button.add')}}
           </button>
         </div>
         <PageTable :pageConfig="tableItem" :key="tableIndex + 'c'"></PageTable>

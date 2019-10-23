@@ -7,30 +7,30 @@
         <div class="condition-zone">
           <ul>
             <li>
-              <div class="condition condition-title">时间段</div>
+              <div class="condition condition-title">{{$t('field.relativeTime')}}</div>
               <div class="condition">
                 <RadioGroup v-model="chartCondition.timeTnterval" size="small" type="button">
-                  <Radio label="-1800">30分钟</Radio>
-                  <Radio label="-3600">1小时</Radio>
-                  <Radio label="-10800">3小时</Radio>
+                  <Radio label="-1800">30m</Radio>
+                  <Radio label="-3600">1h</Radio>
+                  <Radio label="-10800">3h</Radio>
                 </RadioGroup>
               </div>
             </li>
             <li>
-              <div class="condition condition-title">时间区间</div>
+              <div class="condition condition-title">{{$t('field.timeInterval')}}</div>
               <div class="condition">
-                <DatePicker type="daterange" placement="bottom-end" @on-change="datePick" placeholder="请选择日期" style="width: 200px"></DatePicker>
+                <DatePicker type="daterange" placement="bottom-end" @on-change="datePick" :placeholder="$t('placeholder.datePicker')" style="width: 200px"></DatePicker>
               </div>
             </li>
             <li>
-              <div class="condition condition-title">聚合类型</div>
+              <div class="condition condition-title">{{$t('field.aggType')}}</div>
               <div class="condition">
                 <RadioGroup v-model="chartCondition.agg" size="small" type="button">
-                  <Radio label="min">最小值</Radio>
-                  <Radio label="max">最大值</Radio>
-                  <Radio label="avg">平均值</Radio>
-                  <Radio label="p95">P95值</Radio>
-                  <Radio label="none">原始值</Radio>
+                  <Radio label="min">Min</Radio>
+                  <Radio label="max">Max</Radio>
+                  <Radio label="avg">Average </Radio>
+                  <Radio label="p95">P95</Radio>
+                  <Radio label="none">Original</Radio>
                 </RadioGroup>
               </div>
             </li>
@@ -157,7 +157,7 @@ export default {
   }
   .condition-title {
     background: @gray-d;
-    width: 100px;
+    width: 110px;
     text-align: center;
     vertical-align: middle;
     margin: 4px 8px 4px 0;

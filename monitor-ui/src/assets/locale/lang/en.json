@@ -11,11 +11,51 @@
     "alert": "Alert"
   },
   "placeholder": {
-    "endpointSearch": "Enter something"
+    "input": "Enter something",
+    "endpointSearch": "Enter something",
+    "metric": "Select metric",
+    "datePicker": "Select date",
+    "refresh": "Refresh",
+    "metricConfiguration": "Metric configuration",
+    "globalConfiguration": "Global configuration"
+  },
+  "field": {
+    "group": "Group",
+    "threshold": "Threshold",
+    "log": "Log",
+    "endpoint": "Endpoint",
+    "metric": "Metric",
+    "timeInterval": "Time interval",
+    "aggType": "Aggregation type",
+    "title": "Title",
+    "unit": "Unit"
+  },
+  "title": {
+    "endpoint": "Endpoint",
+    "metric": "Metric",
+    "viewConfiguration": "View Configuration",
+    "templateName": "Template Name",
+    "addViewTemplate": "Add View Template",
+    "updateTime": "Update Time"
   },
   "button": {
     "search": "Search",
+    "add": "Add",
+    "edit": "Edit",
+    "remove": "Remove",
+    "thresholdManagement": "Threshold Management",
+    "historicalAlert": "Historical Alert",
+    "logConfiguration": "Log Configuration",
+    "addMetric": "Add metric",
+    "saveEdit": "Save edit",
     "save": "OK",
-    "cancle": "Cancle"
+    "view": "View",
+    "cancle": "Cancle",
+    "endpointManagement": "Endpoint Management",
+    "chart": {
+      "zoom": "area zooming",
+      "back": "restore area zooming",
+      "dataView": "data view"
+    }
   }
 }

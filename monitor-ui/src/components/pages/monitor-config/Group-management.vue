@@ -24,10 +24,10 @@
           CRUD: this.apiCenter.groupManagement.list.api,
           researchConfig: {
             input_conditions: [
-              {value: 'search', type: 'input', placeholder: '请输入', style: ''}],
+              {value: 'search', type: 'input', placeholder: 'placeholder.input', style: ''}],
             btn_group: [
-              {btn_name: '搜索', btn_func: 'search', class: 'btn-confirm-f', btn_icon: 'fa fa-search'},
-              {btn_name: '新增', btn_func: 'add', class: 'btn-cancle-f', btn_icon: 'fa fa-plus'},
+              {btn_name: 'button.search', btn_func: 'search', class: 'btn-confirm-f', btn_icon: 'fa fa-search'},
+              {btn_name: 'button.add', btn_func: 'add', class: 'btn-cancle-f', btn_icon: 'fa fa-plus'},
             ],
             filters: {
               name__icontains: '',

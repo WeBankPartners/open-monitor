@@ -1,20 +1,20 @@
 <template>
   <div class="text-align:center; ">
-    <Title title="视图配置"></Title>
+    <Title :title="$t('title.viewConfiguration')"></Title>
     <div style="margin-bottom:24px;">
-      <Notice :noticeConfig='noticeConfig'> </Notice>
+      <Notice :noticeConfig='noticeConfig' v-if="$i18n.locale!='en'"> </Notice>
       <Searchinput :parentConfig="searchInputConfig" ref="choicedIP"></Searchinput> 
       <Select v-model="metricSelected" filterable multiple style="width:260px" :label-in-value="true" 
-          @on-change="selectMetric" @on-open-change="metricSelectOpen" placeholder="请选择监控指标">
+          @on-change="selectMetric" @on-open-change="metricSelectOpen" :placeholder="$t('placeholder.metric')">
           <Option v-for="item in metricList" :value="item.id + '^^' + item.prom_ql" :key="item.metric">{{item.metric}}</Option>
       </Select>
       <Select v-model="timeTnterval" style="width:80px;margin: 0 8px;">
         <Option v-for="item in dataPick" :value="item.value" :key="item.value">{{ item.label }}</Option>
       </Select>
       
-      <button class="btn btn-sm btn-confirm-f" :disabled="$store.state.ip.value === ''" @click="requestChart">查询</button>
-      <button class="btn btn-sm btn-cancle-f" @click="addMetric">新增指标</button>
-      <button class="btn btn-sm btn-cancle-f" @click="saveConfig">保存修改</button>
+      <button class="btn btn-sm btn-confirm-f" :disabled="$store.state.ip.value === ''" @click="requestChart">{{$t('button.search')}}</button>
+      <button class="btn btn-sm btn-cancle-f" @click="addMetric">{{$t('button.addMetric')}}</button>
+      <button class="btn btn-sm btn-cancle-f" @click="saveConfig">{{$t('button.saveEdit')}}</button>
     </div>
     <section class="metric-section">
       <ul>

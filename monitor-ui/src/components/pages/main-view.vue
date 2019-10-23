@@ -2,7 +2,7 @@
   <div class="page" id="mainView">
     <Title :title="$t('menu.endpointView')"></Title>
     <Search ref="search" />
-    <button type="button" v-if="isShow" @click="changeRoute" class="btn btn-sm btn-cancle-f btn-jump">对象管理</button>
+    <button type="button" v-if="isShow" @click="changeRoute" class="btn btn-sm btn-cancle-f btn-jump">{{$t('button.endpointManagement')}}</button>
     <Charts :charts='charts' ref="parentCharts" />
   </div>
 </template>
