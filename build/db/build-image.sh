@@ -2,15 +2,16 @@
 
 rm -rf database
 mkdir database
-cp -r ../../wiki/db/monitor_sql_01_struct.sql  database/
+cur_dir=`dirname $0`
+cp -r ${cur_dir}/../../wiki/db/monitor_sql_01_struct.sql  database/
 
 if [ $1 == 'en' ]
 then
-cp -r ../../wiki/db/monitor_sql_02_base_data_en.sql  database/
+cp -r ${cur_dir}/../../wiki/db/monitor_sql_02_base_data_en.sql  database/
 else
-cp -r ../../wiki/db/monitor_sql_02_base_data_cn.sql  database/
+cp -r ${cur_dir}/../../wiki/db/monitor_sql_02_base_data_cn.sql  database/
 fi
-
+：q:q
 cd database
 for i in `ls -1 ./*.sql`; do
 	sed -i '1 i\use monitor;SET NAMES utf8;' $i
@@ -21,4 +22,5 @@ echo -e "SET NAMES utf8;\n" > ./database/000000_create_database.sql
 echo -e "create database monitor charset = utf8;\n" >> ./database/000000_create_database.sql
 
 
-docker build -t monitor-db:dev .
+docker build -t monitor-db:dev -f ${cur_dir}/Dockerfile .
+
