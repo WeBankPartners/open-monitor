@@ -6,7 +6,7 @@
       <table :class="[itemConfig.isExtendF ? 'table styleEX' : 'table table-bordered']" v-if="itemConfig.data.length">
         <thead>
           <tr>
-            <th :width='itemConfig.scales[i]' v-for="(item,i) in itemConfig.config" :key="i">{{item.title}}</th>
+            <th :width='itemConfig.scales[i]' v-for="(item,i) in itemConfig.config" :key="i">{{$t(item.title)}}</th>
           </tr>
         </thead>
         <tbody>
@@ -61,13 +61,13 @@
                       v-if="!item.hide && btn_val.btn_name !='more' && !btn_val.render"
                       class="btn-operation"
                       @click="goToOpe(btn_val,item,index,indexx)">
-                    {{btn_val.btn_name}}
+                    {{$t(btn_val.btn_name)}}
                   </span>
                   <span :id="btn_val.btn_func"
                       v-if="item.hide && btn_val.btn_name !='more' && !btn_val.render && !item.hide[btn_i]"
                       class="btn-operation"
                       @click="goToOpe(btn_val,item,index,indexx)">
-                    {{btn_val.btn_name}}
+                    {{$t(btn_val.btn_name)}}
                   </span>
                 <span :id="btn_val.btn_func"
                       v-if="btn_val.btn_name !='more' && btn_val.render"
@@ -85,7 +85,7 @@
                   <div class="batch-operation" v-if="btn_val.btn_name ==='more'">
                     <div class="btn-group" role="group" @mouseover="btnMore(index)">
                     <span class="btn-operation">
-                      更多
+                      {{$t('table.more')}}
                       <Icon type="chevron-down"></Icon>
                     </span>
                     </div>
@@ -93,7 +93,7 @@
                   <div slot="content" class="ui-ul-list">
                     <ul v-if="showMoreNumber === index">
                       <template v-for="(btn, moreIndex) in btn_val.more" >
-                        <li @click="goToOpe(btn,item,index,indexx)" :key="moreIndex">{{btn.btn_name}}</li>
+                        <li @click="goToOpe(btn,item,index,indexx)" :key="moreIndex">{{$t(btn_val.btn_name)}}</li>
                       </template>
                     </ul>
                   </div>

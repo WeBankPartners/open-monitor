@@ -6,9 +6,6 @@
         </TabPane>
       </template>  
     </Tabs>
-    <!-- <section v-if="showViewMetricConfig">
-      <MetricConfig></MetricConfig>  
-    </section> -->
     <section>
       <template v-if="btns.length">
         <div class="btn-content">
@@ -33,7 +30,6 @@
 </template>
 
 <script>
-// import MetricConfig from '@/components/pages/metric-config'
 import SingleChart from '@/components/components/Single-chart'
 import MaxChart from '@/components/components/Max-chart'
 export default {
@@ -47,7 +43,6 @@ export default {
       params: {},
       showMaxChart: false,
       activeBtn: '',
-      // showViewMetricConfig: false
     }
   },
   props: {

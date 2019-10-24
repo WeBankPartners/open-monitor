@@ -25,7 +25,7 @@
           <section>
             <ul>
               <li>
-                <Tooltip content="指标配置" placement="right">
+                <Tooltip :content="$t('placeholder.metricConfiguration')" placement="right">
                   <div class="step-icon" @click="activeStep='chat_query'">
                     <i class="fa fa-line-chart" aria-hidden="true"></i>
                   </div>
@@ -35,7 +35,7 @@
                 <div class="step-link"></div>
               </li>
               <li>
-                <Tooltip content="全局配置" placement="right">
+                <Tooltip :content="$t('placeholder.globalConfiguration')" placement="right">
                   <div class="step-icon" @click="activeStep='chat_general'">
                     <i class="fa fa-cog" aria-hidden="true"></i>
                   </div>
@@ -48,7 +48,7 @@
               <div class="tag-display">
                 <Tag v-for="(query, queryIndex) in chartQueryList"  color="primary" 
                type="border" :key="queryIndex" :name="queryIndex" closable
-               @on-close="removeQuery(query)">对象：{{query.endpoint}};  指标：{{query.metricLabel}}</Tag>
+               @on-close="removeQuery(query)">{{$t('field.endpoint')}}：{{query.endpoint}};  {{$t('field.metric')}}：{{query.metricLabel}}</Tag>
               </div>
               <div class="condition-zone">
                 <ul>
@@ -58,7 +58,7 @@
                     </div>
                   </li>
                   <li>
-                    <div class="condition condition-title">对象</div>
+                    <div class="condition condition-title">{{$t('field.endpoint')}}</div>
                     <div class="condition">
                       <Select
                         style="width:300px"
@@ -72,7 +72,7 @@
                     </div>
                   </li>
                   <li>
-                    <div class="condition condition-title">指标</div>
+                    <div class="condition condition-title">{{$t('field.metric')}}</div>
                     <div class="condition">
                       <Select v-model="templateQuery.metric" style="width:300px" :label-in-value="true" @on-change="v=>{ setMetric(v)}" @on-open-change="metricSelectOpen(templateQuery.endpoint)">
                         <Option v-for="(item,index) in metricList" :value="item.prom_ql" :key="item.prom_ql+index">{{ item.metric }}</Option>
@@ -85,13 +85,13 @@
             <div v-if="activeStep==='chat_general'" class="zone-config-operation-general">
               <ul>
                 <li>
-                  <div class="condition condition-title">标题</div>
+                  <div class="condition condition-title">{{$t('field.title')}}</div>
                   <div class="condition">
                     <Input v-model="panalTitle" placeholder="Enter something..." style="width: 300px" />
                   </div>
                 </li>
                 <li>
-                  <div class="condition condition-title">单位</div>
+                  <div class="condition condition-title">{{$t('field.unit')}}</div>
                   <div class="condition">
                     <Input v-model="panalUnit" placeholder="Enter something..." style="width: 300px" />
                   </div>
@@ -262,7 +262,7 @@ export default {
     },
     metricSelectOpen(metric) {
       if (this.$validate.isEmpty_reset(metric)) {
-        this.$Message.warning('请先选择主机！')
+        this.$Message.warning(this.$t('tableKey.s_metric')+this.$t('tips.required'))
       } else {
         let params = {type: metric.split(':')[1]}
         this.$httpRequestEntrance.httpRequestEntrance('GET',this.apiCenter.metricList.api, params, responseData => {
@@ -317,7 +317,7 @@ export default {
       }
 
       this.$httpRequestEntrance.httpRequestEntrance('POST','dashboard/custom/save', params, () => {
-        this.$Message.success('保存成功！')
+        this.$Message.success(this.$t('tips.success'))
       })
     },
     setMetric(value) {
@@ -417,7 +417,7 @@ export default {
   }
   .condition-title {
     background: @gray-d;
-    width: 100px;
+    width: 110px;
     text-align: center;
     vertical-align: middle;
     margin-right: 8px;
