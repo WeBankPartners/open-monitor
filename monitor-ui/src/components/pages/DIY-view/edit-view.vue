@@ -262,7 +262,7 @@ export default {
     },
     metricSelectOpen(metric) {
       if (this.$validate.isEmpty_reset(metric)) {
-        this.$Message.warning('请先选择主机！')
+        this.$Message.warning(this.$t('tableKey.s_metric')+this.$t('tips.required'))
       } else {
         let params = {type: metric.split(':')[1]}
         this.$httpRequestEntrance.httpRequestEntrance('GET',this.apiCenter.metricList.api, params, responseData => {
@@ -317,7 +317,7 @@ export default {
       }
 
       this.$httpRequestEntrance.httpRequestEntrance('POST','dashboard/custom/save', params, () => {
-        this.$Message.success('保存成功！')
+        this.$Message.success(this.$t('tips.success'))
       })
     },
     setMetric(value) {

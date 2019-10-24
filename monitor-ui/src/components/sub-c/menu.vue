@@ -63,6 +63,7 @@
                 name === 'English' ? lang='en': lang='zh'
                 localStorage.setItem('lang', lang)
                 this.$i18n.locale = lang
+                this.$validator.locale = lang
             },
             routerChange () {
                 if (this.$route.name === 'portal') return

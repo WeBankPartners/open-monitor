@@ -28,6 +28,7 @@
     "relativeTime": "时间段",
     "timeInterval": "时间区间",
     "port": "端口",
+    "ip": "IP",
     "aggType": "聚合类型",
     "title": "标题",
     "unit": "单位"
@@ -53,6 +54,7 @@
     "saveEdit": "保存修改",
     "save": "保存",
     "view": "保存",
+    "cancle": "取消",
     "endpointManagement": "对象管理",
     "chart": {
       "zoom": "数据区域缩放",
@@ -66,10 +68,13 @@
     "noDataTip": "当前查询条件尚无数据"
   },
   "tableKey": {
+    "endpoint": "对象",
+    "group": "组",
     "status": "状态",
     "s_metric": "指标",
     "start_value": "异常值",
     "s_cond": "阀值",
+    "threshold": "阀值",
     "s_last": "持续时间",
     "s_priority": "级别",
     "start": "开始时间",
@@ -83,7 +88,8 @@
     "condition": "条件"
   },
   "tips": {
-    "required": "必填",
-    "inputRequired": "必填,2-60字符"
+    "required": " 必填",
+    "inputRequired": "必填,2-60字符",
+    "success": " 成功!"
   }
 }

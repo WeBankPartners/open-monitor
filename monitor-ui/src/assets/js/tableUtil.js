@@ -33,16 +33,6 @@ const initTable = (that, method, url, pageConfig) =>{
   })
 }
 
-
-const deleteF = (that, method, url) =>{
-  let requestParams = adapterParamsForTabledata(that, that.pageConfig.pagination)
-  that.$httpRequestEntrance.httpRequestEntrance(method, url, requestParams, () => {
-    that.$Message.success('数据删除成功 !')
-    that.pageConfig.pagination.current = 1
-    initTable(that, 'GET', that.pageConfig.CRUD, that.pageConfig)
-  })
-}
-
 /*
  * Func: 剔除无需传入后台的请求字段
  *
@@ -114,7 +104,6 @@ const initDetailTable = (_this, indexx) =>{
 
 export const tableUtil = {
   initTable,
-  deleteF,
   manageEditParams,
   initDetailTable
 }

@@ -230,17 +230,17 @@ export default {
     delF (rowData) {
       let params = {id: rowData.id}
       this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.logManagement.delList.api, params, () => {
-        this.$Message.success('删除成功 !')
+        this.$Message.success(this.$t('button.remove')+this.$t('tips.success'))
         this.requestData(this.type, this.typeValue)
       })
     },
     formValidate () {
       if (this.$validate.isEmpty_reset(this.modelConfig.condValue)) {
-        this.$Message.warning('条件不能为空！')
+        this.$Message.warning(this.$t('tableKey.condition')+this.$t('tips.required'))
         return false 
       }
       if (this.$validate.isEmpty_reset(this.modelConfig.lastValue)) {
-        this.$Message.warning('持续时间不能为空！')
+        this.$Message.warning(this.$t('tableKey.s_last')+this.$t('tips.required'))
         return false 
       }
       return true
@@ -275,7 +275,7 @@ export default {
       }
       let params = this.paramsPrepare()
       this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.logManagement.add.api, params, () => {
-        this.$Message.success('新增成功 !')
+        this.$Message.success(this.$t('button.add')+this.$t('tips.success'))
         this.JQ('#add_edit_Modal').modal('hide')
         this.requestData(this.type, this.typeValue)
       })
@@ -294,7 +294,7 @@ export default {
         path: this.pathModelConfig.addRow.path
       }
       this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.logManagement.editList.api, params, () => {
-        this.$Message.success('编辑成功 !')
+        this.$Message.success(this.$t('button.edit')+this.$t('tips.success'))
         this.JQ('#path_Modal').modal('hide')
         this.requestData(this.type, this.typeValue)
       })
@@ -329,7 +329,7 @@ export default {
     delPathItem (rowData) {
       let params = {id: rowData.strategy_id}
       this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.logManagement.delete.api, params, () => {
-        this.$Message.success('删除成功 !')
+        this.$Message.success(this.$t('button.remove')+this.$t('tips.success'))
         this.requestData(this.type, this.typeValue)
       })
     },
@@ -341,7 +341,7 @@ export default {
       params.tpl_id = this.extendData.tpl_id
       params.strategy[0].strategy_id = this.extendData.strategy_id
       this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.logManagement.update.api, params, () => {
-        this.$Message.success('编辑成功 !')
+        this.$Message.success(this.$t('button.edit')+this.$t('tips.success'))
         this.JQ('#add_edit_Modal').modal('hide')
         this.requestData(this.type, this.typeValue)
       })

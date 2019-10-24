@@ -12,11 +12,12 @@
         <Option v-for="item in dataPick" :value="item.value" :key="item.value">{{ item.label }}</Option>
       </Select>
       
-      <button class="btn btn-sm btn-confirm-f" :disabled="$store.state.ip.value === ''" @click="requestChart">{{$t('button.search')}}</button>
-      <button class="btn btn-sm btn-cancle-f" @click="addMetric">{{$t('button.addMetric')}}</button>
-      <button class="btn btn-sm btn-cancle-f" @click="saveConfig">{{$t('button.saveEdit')}}</button>
+      <button class="btn btn-sm btn-confirm-f" :disabled="btnDisable" @click="requestChart">{{$t('button.search')}}</button>
+      <button class="btn btn-sm btn-cancle-f" :disabled="btnDisable" @click="addMetric">{{$t('button.addMetric')}}</button>
+      <button class="btn btn-sm btn-cancle-f" :disabled="btnDisable" @click="saveConfig">{{$t('button.saveEdit')}}</button>
     </div>
     <section class="metric-section">
+      {{btnDisable}}
       <ul>
         <template v-for="(metricItem, metricIndex) in totalMetric">
           <li :key="metricIndex" class="metric-display">
@@ -98,7 +99,7 @@ export default {
         modalTitle: 'tableKey.s_metric',
         isAdd: true,
         config: [
-          {label: 'table.name', value: 'name', placeholder: 'tips.inputRequired', v_validate: 'required:true|min:2|max:60', disabled: false, type: 'text'},
+          {label: 'tableKey.name', value: 'name', placeholder: 'tips.inputRequired', v_validate: 'required:true|min:2|max:60', disabled: false, type: 'text'},
         ],
         addRow: { // [通用]-保存用户新增、编辑时数据
           name: null
@@ -123,6 +124,9 @@ export default {
     }
   },
   computed: {
+    btnDisable: function() {
+      return this.$validate.isEmpty_reset(this.$store.state.ip)
+    },
     changeIP() {
       return this.$store.state.ip.value
     },
@@ -196,7 +200,7 @@ export default {
           this.metricSelected = []
           this.metricSelectedOptions = []
           this.metricList = []
-          this.$Message.warning('请先选择主机名或IP地址！')
+          this.$Message.warning(this.$t('tableKey.endpoint')+this.$t('tips.required'))
         }
       }
     },
@@ -209,7 +213,7 @@ export default {
     requestChart () {
       this.noDataTip = false
       if (this.$validate.isEmpty_reset(this.totalMetric)) {
-        this.$Message.warning('请先设置监控指标!')
+        this.$Message.warning(this.$t('tableKey.s_metric')+this.$t('tips.required'))
         this.noDataTip = true
         return
       }
@@ -217,7 +221,7 @@ export default {
       var requestFlag = true
       this.totalMetric.forEach((item) => {
         if (!item.value.trim()) {
-          this.$Message.warning('指标表达式不能为空!')
+          this.$Message.warning(this.$t('tableKey.expr')+this.$t('tips.required'))
           this.noDataTip = true
           requestFlag = false 
         }
@@ -268,7 +272,7 @@ export default {
         params.push({id,metric,prom_ql,metric_type: this.$store.state.ip.type})
       })
       this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.metricUpdate.api, params, () => {
-        this.$Message.success('新增成功 !')
+        this.$Message.success(this.$t('button.add')+this.$t('tips.success'))
         this.metricSelected = []
         this.editMetric = []
         this.isRequestChartData = false

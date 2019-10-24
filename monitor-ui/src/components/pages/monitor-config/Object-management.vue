@@ -45,8 +45,8 @@
 <script>
   import tableTemp from '@/components/components/table-page/table'
   let tableEle = [
-    {title: 'guid', value: 'guid', display: true},
-    {title: 'groups', value: 'groups_name', display: true, }
+    {title: 'tableKey.endpoint', value: 'guid', display: true},
+    {title: 'tableKey.group', value: 'groups_name', display: true, }
   ]
   let historyAlarmEle = [
     {title: 'tableKey.status',value: 'status', style: 'min-width:70px', display: true},
@@ -55,8 +55,8 @@
     {title: 'tableKey.s_cond',value: 's_cond', style: 'min-width:70px', display: true},
     {title: 'tableKey.s_last',value: 's_last', style: 'min-width:65px', display: true},
     {title: 'tableKey.s_priority',value: 's_priority', display: true},
-    {title: 'tableKey.start',value: 'start', style: 'min-width:200px', display: true},
-    {title: 'tableKey.end',value: 'end', style: 'min-width:200px',display: true,
+    {title: 'tableKey.start',value: 'start_string', style: 'min-width:200px', display: true},
+    {title: 'tableKey.end',value: 'end_string', style: 'min-width:200px',display: true,
       'render': (item) => {
         if (item.end === undefined) {
           return '-'
@@ -135,41 +135,6 @@
           config: [
             {name:'historyAlarm',type:'slot'}
           ],
-          columns1: [
-            {
-                title: '状态',
-                key: 'status'
-            },
-            {
-                title: '指标',
-                key: 's_metric'
-            },
-            {
-                title: '异常值',
-                key: 'start_value'
-            },
-            {
-                title: '阀值',
-                key: 's_cond'
-            },
-            {
-                title: 'tableKey.s_last',
-                key: 's_last'
-            },
-            {
-                title: 'tableKey.s_priority',
-                key: 's_priority'
-            },
-            {
-                title: 'tableKey.start',
-                key: 'start'
-            },
-            {
-                title: '结束时间',
-                key: 'end'
-            }
-          ],
-          data2: [],
           pageConfig: {
             table: {
               tableData: [],
@@ -184,7 +149,7 @@
           saveFunc: 'entpointRejectSave',
           config: [
             {name:'entpointReject',type:'slot'},
-            {label: 'IP', value: 'exporter_ip', placeholder: 'tips.required', v_validate: 'required:true|isIP', disabled: false, type: 'text'},
+            {label: 'field.ip', value: 'exporter_ip', placeholder: 'tips.required', v_validate: 'required:true|isIP', disabled: false, type: 'text'},
             {label: 'field.port', value: 'exporter_port', placeholder: 'tips.required', v_validate: 'required:true|isNumber', disabled: false, type: 'text'},
           ],
           addRow: {
@@ -249,16 +214,13 @@
         this.JQ('#add_object_Modal').modal('show')
       },
       addPost() {
-        if (this.$validate.isEmpty_reset(this.modelConfig.slotConfig.resourceSelected)) {
-          this.$Message.warning('请先选择要新增的对象 !')
-        }
         let params = {
           grp: this.groupMsg.id,
           endpoints: this.modelConfig.slotConfig.resourceSelected,
           operation: 'add'
         }
         this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.objectManagement.update.api, params, () => {
-          this.$Message.success('新增成功 !')
+          this.$Message.success(this.$t('button.add')+this.$t('tips.success'))
           this.JQ('#add_object_Modal').modal('hide')
           this.initData(this.pageConfig.CRUD, this.pageConfig)
         })
@@ -274,7 +236,7 @@
           operation: 'delete'
         }
         this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.objectManagement.update.api, params, () => {
-          this.$Message.success('删除成功 !')
+          this.$Message.success(this.$t('button.add')+this.$t('tips.success'))
           this.initData(this.pageConfig.CRUD, this.pageConfig)
         })
       },
@@ -310,7 +272,7 @@
         this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.objectManagement.register.api, params, () => {
           this.$validate.emptyJson(this.entpointRejectModel.addRow)
           this.JQ('#entpoint_reject_model').modal('hide')
-          this.$Message.success('新增成功 !')
+          this.$Message.success(this.$t('button.add')+this.$t('tips.success'))
           this.initData(this.pageConfig.CRUD, this.pageConfig)
         })
       }
