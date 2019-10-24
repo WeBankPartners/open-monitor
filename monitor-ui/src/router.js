@@ -21,10 +21,10 @@ const router = new Router({
            component: () => import('@/components/pages/main-view') },
           { path: 'monitorConfigIndex',  name: 'monitorConfigIndex', title: '', meta: {},
             component: () => import('@/components/pages/monitor-config/Monitor-config-index'),
-            redirect: '/monitorConfigIndex/objectManagement', 
+            redirect: '/monitorConfigIndex/endpointManagement', 
             children: [
-              { path: 'objectManagement',  name: 'objectManagement', title: '对象管理', meta: {},
-              component: () => import('@/components/pages/monitor-config/Object-management') },
+              { path: 'endpointManagement',  name: 'endpointManagement', title: '对象管理', meta: {},
+              component: () => import('@/components/pages/monitor-config/Endpoint-management') },
               { path: 'groupManagement',  name: 'groupManagement', title: '组管理', meta: {},
               component: () => import('@/components/pages/monitor-config/Group-management') },
               { path: 'thresholdManagement',  name: 'thresholdManagement', title: '阀值配置', meta: {},

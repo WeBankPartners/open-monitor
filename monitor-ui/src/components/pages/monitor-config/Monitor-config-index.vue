@@ -19,9 +19,9 @@ export default {
   name: '',
   data() {
     return {
-      activeTab: '/monitorConfigIndex/objectManagement',
+      activeTab: '/monitorConfigIndex/endpointManagement',
       tabs: [
-        {label: 'field.endpoint', path:'/monitorConfigIndex/objectManagement'},
+        {label: 'field.endpoint', path:'/monitorConfigIndex/endpointManagement'},
         {label: 'field.group', path:'/monitorConfigIndex/groupManagement'},
         {label: 'field.threshold', path:'/monitorConfigIndex/thresholdManagement'},
         {label: 'field.log', path:'/monitorConfigIndex/logManagement'}
