@@ -31,7 +31,8 @@
     "ip": "IP",
     "aggType": "聚合类型",
     "title": "标题",
-    "unit": "单位"
+    "unit": "单位",
+    "instance": "实例名"
   },
   "title": {
     "viewConfiguration": "视图配置",
