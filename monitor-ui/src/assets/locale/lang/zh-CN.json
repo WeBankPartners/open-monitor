@@ -1,0 +1,95 @@
+{
+  "common": {
+    "changeLanguage": "English"
+  },
+  "menu": {
+    "view": "视图",
+    "endpointView": "对象视图",
+    "metricConfiguration": "指标配置",
+    "customViews": "自定义视图",
+    "configuration": "配置",
+    "alert": "告警"
+  },
+  "placeholder": {
+    "input": "请输入",
+    "endpointSearch": "请输入后选择对象",
+    "metric": "请选择监控指标",
+    "datePicker": "请选择日期",
+    "refresh": "定时刷新",
+    "metricConfiguration": "指标配置",
+    "globalConfiguration": "全局配置"
+  },
+  "field": {
+    "endpoint": "对象",
+    "group": "组",
+    "threshold": "阀值",
+    "log": "日志",
+    "metric": "指标",
+    "relativeTime": "时间段",
+    "timeInterval": "时间区间",
+    "port": "端口",
+    "ip": "IP",
+    "aggType": "聚合类型",
+    "title": "标题",
+    "unit": "单位"
+  },
+  "title": {
+    "viewConfiguration": "视图配置",
+    "templateName": "模板名称",
+    "updateTime": "更新时间",
+    "entpointAdd": "对象新增",
+    "groupAdd": "组新增",
+    "logAdd": "日志新增"
+  },
+  "button": {
+    "search": "搜索",
+    "add": "新增",
+    "edit": "编辑",
+    "remove": "删除",
+    "thresholdManagement": "阀值管理",
+    "historicalAlert": "历史告警",
+    "logConfiguration": "日志配置",
+    "addMetric": "新增指标",
+    "addViewTemplate": "新增视图模板",
+    "saveEdit": "保存修改",
+    "save": "保存",
+    "view": "保存",
+    "cancle": "取消",
+    "endpointManagement": "对象管理",
+    "chart": {
+      "zoom": "数据区域缩放",
+      "back": "恢复",
+      "dataView": "放大"
+    }
+  },
+  "table": {
+    "more": "更多",
+    "action": "操作",
+    "noDataTip": "当前查询条件尚无数据"
+  },
+  "tableKey": {
+    "endpoint": "对象",
+    "group": "组",
+    "status": "状态",
+    "s_metric": "指标",
+    "start_value": "异常值",
+    "s_cond": "阀值",
+    "threshold": "阀值",
+    "s_last": "持续时间",
+    "s_priority": "级别",
+    "start": "开始时间",
+    "end": "结束时间",
+    "name": "名称",
+    "descriptipn": "描述",
+    "expr": "表达式",
+    "content": "通知内容",
+    "path": "路径",
+    "keyword": "关键字",
+    "condition": "条件"
+  },
+  "tips": {
+    "required": " 必填",
+    "inputRequired": "必填,2-60字符",
+    "success": " 成功!"
+  }
+}

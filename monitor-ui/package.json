@@ -19,6 +19,7 @@
     "vee-validate": "^2.0.6",
     "vue": "^2.6.10",
     "vue-grid-layout": "^2.3.6",
+    "vue-i18n": "^8.15.0",
     "vue-router": "^3.1.3",
     "vuex": "^3.1.1"
   },
