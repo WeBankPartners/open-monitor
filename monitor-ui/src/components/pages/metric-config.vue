@@ -17,7 +17,6 @@
       <button class="btn btn-sm btn-cancle-f" :disabled="btnDisable" @click="saveConfig">{{$t('button.saveEdit')}}</button>
     </div>
     <section class="metric-section">
-      {{btnDisable}}
       <ul>
         <template v-for="(metricItem, metricIndex) in totalMetric">
           <li :key="metricIndex" class="metric-display">
