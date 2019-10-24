@@ -24,18 +24,18 @@
         <tableTemp :table="historyAlarmPageConfig.table" :pageConfig="historyAlarmPageConfig"></tableTemp>
       </div>
     </ModalComponent>
-    <ModalComponent :modelConfig="entpointRejectModel">
-      <div slot="entpointReject">  
+    <ModalComponent :modelConfig="endpointRejectModel">
+      <div slot="endpointReject">  
         <div class="marginbottom params-each">
           <label class="col-md-2 label-name lable-name-select">{{$t('field.endpoint')}}:</label>
-          <Select v-model="entpointRejectModel.addRow.type" style="width:338px">
-              <Option v-for="item in entpointRejectModel.entpointType" :value="item.value" :key="item.value">
+          <Select v-model="endpointRejectModel.addRow.type" style="width:338px">
+              <Option v-for="item in endpointRejectModel.endpointType" :value="item.value" :key="item.value">
               {{item.label}}</Option>
           </Select>
         </div>
         <div class="marginbottom params-each" v-if="showInstance">
           <label class="col-md-2 label-name lable-name-select">实例名:</label>
-          <input v-model="entpointRejectModel.addRow.instance" type="text" class="col-md-7 form-control model-input">
+          <input v-model="endpointRejectModel.addRow.instance" type="text" class="col-md-7 form-control model-input">
           <label class="required-tip">*</label>
         </div>
       </div>
@@ -76,7 +76,7 @@
     data() {
       return {
         pageConfig: {
-          CRUD: this.apiCenter.objectManagement.list.api,
+          CRUD: this.apiCenter.endpointManagement.list.api,
           researchConfig: {
             input_conditions: [
               {value: 'search', type: 'input', placeholder: 'placeholder.input', style: ''}],
@@ -142,13 +142,13 @@
             }
           },
         },
-        entpointRejectModel: {
-          modalId: 'entpoint_reject_model',
-          modalTitle: 'title.entpointAdd',
+        endpointRejectModel: {
+          modalId: 'endpoint_reject_model',
+          modalTitle: 'title.endpointAdd',
           isAdd: true,
-          saveFunc: 'entpointRejectSave',
+          saveFunc: 'endpointRejectSave',
           config: [
-            {name:'entpointReject',type:'slot'},
+            {name:'endpointReject',type:'slot'},
             {label: 'field.ip', value: 'exporter_ip', placeholder: 'tips.required', v_validate: 'required:true|isIP', disabled: false, type: 'text'},
             {label: 'field.port', value: 'exporter_port', placeholder: 'tips.required', v_validate: 'required:true|isNumber', disabled: false, type: 'text'},
           ],
@@ -158,7 +158,7 @@
             exporter_ip: null,
             exporter_port: null,
           },
-          entpointType: [
+          endpointType: [
             {label:'host',value:'host'},
             {label:'mysql',value:'mysql'},
             {label:'redis',value:'redis'},
@@ -174,9 +174,9 @@
       if (this.$validate.isEmpty_reset(this.$route.params)) {
         this.groupMsg = {}
         this.showGroupMsg = false
-        this.pageConfig.researchConfig.btn_group.push({btn_name: 'button.add', btn_func: 'entpointReject', class: 'btn-cancle-f', btn_icon: 'fa fa-plus'})
+        this.pageConfig.researchConfig.btn_group.push({btn_name: 'button.add', btn_func: 'endpointReject', class: 'btn-cancle-f', btn_icon: 'fa fa-plus'})
       } else {
-        this.$parent.activeTab = '/monitorConfigIndex/objectManagement'
+        this.$parent.activeTab = '/monitorConfigIndex/endpointManagement'
         if (this.$route.params.hasOwnProperty('group')) {
           this.groupMsg = this.$route.params.group
           this.showGroupMsg = true
@@ -191,7 +191,7 @@
     },
     computed:{
       showInstance: function(){
-        return this.entpointRejectModel.addRow.type === 'host' ? false: true
+        return this.endpointRejectModel.addRow.type === 'host' ? false: true
       }
     },
     methods: {
@@ -219,7 +219,7 @@
           endpoints: this.modelConfig.slotConfig.resourceSelected,
           operation: 'add'
         }
-        this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.objectManagement.update.api, params, () => {
+        this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.endpointManagement.update.api, params, () => {
           this.$Message.success(this.$t('button.add')+this.$t('tips.success'))
           this.JQ('#add_object_Modal').modal('hide')
           this.initData(this.pageConfig.CRUD, this.pageConfig)
@@ -235,7 +235,7 @@
           endpoints: [parseInt(rowData.id)],
           operation: 'delete'
         }
-        this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.objectManagement.update.api, params, () => {
+        this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.endpointManagement.update.api, params, () => {
           this.$Message.success(this.$t('button.add')+this.$t('tips.success'))
           this.initData(this.pageConfig.CRUD, this.pageConfig)
         })
@@ -252,7 +252,7 @@
         this.pageConfig.researchConfig.filters.grp = ''
         this.pageConfig.table.btn.splice(this.pageConfig.table.btn.length-1, 1)
         this.pageConfig.researchConfig.btn_group.splice(this.pageConfig.researchConfig.btn_group.length-1, 1)
-        this.pageConfig.researchConfig.btn_group.push({btn_name: 'button.add', btn_func: 'entpointReject', class: 'btn-cancle-f', btn_icon: 'fa fa-plus'})
+        this.pageConfig.researchConfig.btn_group.push({btn_name: 'button.add', btn_func: 'endpointReject', class: 'btn-cancle-f', btn_icon: 'fa fa-plus'})
         this.initData(this.pageConfig.CRUD, this.pageConfig)
       },
       historyAlarm (rowData) {
@@ -262,16 +262,16 @@
         })
         this.JQ('#history_alarm_Modal').modal('show')
       },
-      entpointReject () {
-        this.entpointRejectModel.addRow.type = 'host'
-        this.JQ('#entpoint_reject_model').modal('show')
+      endpointReject () {
+        this.endpointRejectModel.addRow.type = 'host'
+        this.JQ('#endpoint_reject_model').modal('show')
       },
-      entpointRejectSave () {
-        this.entpointRejectModel.addRow.exporter_port += ''
-        let params= this.$validate.isEmptyReturn_JSON(this.entpointRejectModel.addRow)
-        this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.objectManagement.register.api, params, () => {
-          this.$validate.emptyJson(this.entpointRejectModel.addRow)
-          this.JQ('#entpoint_reject_model').modal('hide')
+      endpointRejectSave () {
+        this.endpointRejectModel.addRow.exporter_port += ''
+        let params= this.$validate.isEmptyReturn_JSON(this.endpointRejectModel.addRow)
+        this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.endpointManagement.register.api, params, () => {
+          this.$validate.emptyJson(this.endpointRejectModel.addRow)
+          this.JQ('#endpoint_reject_model').modal('hide')
           this.$Message.success(this.$t('button.add')+this.$t('tips.success'))
           this.initData(this.pageConfig.CRUD, this.pageConfig)
         })

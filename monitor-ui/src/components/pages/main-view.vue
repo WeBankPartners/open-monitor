@@ -50,7 +50,7 @@ export default {
       this.$refs.parentCharts.refreshCharts(chartsConfig[0].title + '_')
     },
     changeRoute () {
-      this.$router.push({name: 'objectManagement', params: {search: this.$store.state.ip.value.split(':')[0]}})
+      this.$router.push({name: 'endpointManagement', params: {search: this.$store.state.ip.value.split(':')[0]}})
     }
   },
   components: {

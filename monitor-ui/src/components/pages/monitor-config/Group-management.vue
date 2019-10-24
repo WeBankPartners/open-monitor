@@ -107,7 +107,7 @@
         this.JQ('#add_edit_Modal').modal('show')
       },
       checkMember (rowData) {
-        this.$router.push({name: 'objectManagement', params: {group: rowData}})
+        this.$router.push({name: 'endpointManagement', params: {group: rowData}})
       },
       delF (rowData) {
         let params = {id: rowData.id}
