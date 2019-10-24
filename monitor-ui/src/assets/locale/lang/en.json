@@ -25,8 +25,10 @@
     "log": "Log",
     "endpoint": "Endpoint",
     "metric": "Metric",
+    "relativeTime": "Relative Time",
     "timeInterval": "Time interval",
     "port": "Port",
+    "ip": "IP",
     "aggType": "Aggregation type",
     "title": "Title",
     "unit": "Unit"
@@ -66,10 +68,13 @@
     "noDataTip": "No Data"
   },
   "tableKey": {
+    "endpoint": "Endpoint",
+    "group": "Group",
     "status": "Status",
     "s_metric": "Metric",
     "start_value": "Alarm value",
     "s_cond": "Cond",
+    "threshold": "Threshold",
     "s_last": "Last",
     "s_priority": "Priority",
     "start": "Start time",
@@ -83,7 +88,8 @@
     "condition": "Condition"
   },
   "tips": {
-    "required": "Required",
-    "inputRequired": "Required,2-60"
+    "required": " Required!",
+    "inputRequired": "Required,2-60",
+    "success": " Success!"
   }
 }

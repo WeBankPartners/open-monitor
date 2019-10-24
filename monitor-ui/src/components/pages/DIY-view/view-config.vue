@@ -142,11 +142,9 @@ export default {
       })
     },
     removeGrid() {
-      this.$Message.info('暂未启用！')
-      // this.layoutData.splice(this.layoutData.indexOf(item), 1)
     },
     gridPlus() {
-      this.$Message.info('暂未启用！')
+
     },
     modifyLayoutData() {
       return new Promise(resolve => {

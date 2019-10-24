@@ -85,7 +85,7 @@ export default {
     removeTemplate (item) {
       let params = {id: item.id}
       this.$httpRequestEntrance.httpRequestEntrance('GET','dashboard/custom/delete', params, () => {
-        this.$Message.success('移除成功！')
+        this.$Message.success(this.$t('button.remove')+this.$t('tips.success'))
         this.viewList()
       })
     },

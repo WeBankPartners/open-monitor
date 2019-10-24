@@ -207,21 +207,21 @@ export default {
     delF (rowData) {
       let params = {id: rowData.id}
       this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.thresholdManagement.delete.api, params, () => {
-        this.$Message.success('删除成功 !')
+        this.$Message.success(this.$t('button.remove')+this.$t('tips.success'))
         this.requestData(this.type, this.typeValue)
       })
     },
     formValidate () {
       if (this.$validate.isEmpty_reset(this.modelConfig.thresholdValue)) {
-        this.$Message.warning('阀值不能为空')
+        this.$Message.warning(this.$t('tableKey.threshold')+this.$t('tips.required'))
         return false 
       }
       if (this.$validate.isEmpty_reset(this.modelConfig.lastValue)) {
-        this.$Message.warning('持续时间不能为空')
+        this.$Message.warning(this.$t('tableKey.s_last')+this.$t('tips.required'))
         return false 
       }
       if (this.$validate.isEmpty_reset(this.modelConfig.addRow.content)) {
-        this.$Message.warning('通知内容不能为空')
+        this.$Message.warning(this.$t('tableKey.content')+this.$t('tips.required'))
         return false
       }
       return true
@@ -258,7 +258,7 @@ export default {
       }
       let params = this.paramsPrepare()
       this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.thresholdManagement.add.api, params, () => {
-        this.$Message.success('新增成功 !')
+        this.$Message.success(this.$t('button.add')+this.$t('tips.success'))
         this.JQ('#add_edit_Modal').modal('hide')
         this.requestData(this.type, this.typeValue)
       })
@@ -297,7 +297,7 @@ export default {
       let params = this.paramsPrepare()
       params.strategy_id = this.id
       this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.thresholdManagement.update.api, params, () => {
-        this.$Message.success('编辑成功 !')
+        this.$Message.success(this.$t('button.edit')+this.$t('tips.success'))
         this.JQ('#add_edit_Modal').modal('hide')
         this.requestData(this.type, this.typeValue)
       })

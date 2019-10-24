@@ -100,8 +100,8 @@
                   </div>
                 </Poptip>
 
-                <label v-show="errors.has(item.value) && isHide(item.hide)" class="col-md-7 help is-danger">{{item.label}} {{errors.first(item.value)}}</label>
-                <label v-if="(item.type === 'select' || item.type === 'textarea') && item.isError" class="col-md-7 help is-danger">{{item.label}} 不能为空</label>
+                <label v-show="errors.has(item.value) && isHide(item.hide)" class="col-md-7 help is-danger">{{$t(item.label)}} {{errors.first(item.value)}}</label>
+                <label v-if="(item.type === 'select' || item.type === 'textarea') && item.isError" class="col-md-7 help is-danger">{{$t(item.label)}} {{$t('tips.required')}}</label>
               </div>
             </form>
           </div>
