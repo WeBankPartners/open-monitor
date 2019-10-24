@@ -612,6 +612,7 @@ func GetAlarms(query m.AlarmTable) (error,[]*m.AlarmProblemQuery) {
 	}
 	for _,v := range result {
 		v.StartString = v.Start.Format(m.DatetimeFormat)
+		v.EndString = v.End.Format(m.DatetimeFormat)
 		if v.Path != "" {
 			v.IsLogMonitor = true
 		}
@@ -829,6 +830,6 @@ func getLastFromExpr(expr string) string {
 }
 
 func CloseAlarm(id int) error {
-	_,err := x.Exec("UPDATE alarm SET STATUS='closed' WHERE id=?", id)
+	_,err := x.Exec("UPDATE alarm SET STATUS='closed',end=NOW() WHERE id=?", id)
 	return err
 }
