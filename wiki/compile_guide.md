@@ -58,9 +58,8 @@
 	如果还需要制作monitor-db的数据库镜像，执行以下命令：
 
 	```
-	cd build/db
-	chmod +x build-image.sh
-	./build-image.sh
+	chmod +x build/db/build-image.sh
+	./build/db/build-image.sh
 	```
 
 	镜像制作完成后， 执行命令：
