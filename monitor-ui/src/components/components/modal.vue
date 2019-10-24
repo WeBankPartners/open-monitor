@@ -4,17 +4,17 @@
       <div class="modal-dialog" :style="modelConfig.modalStyle" role="document">
         <div class="modal-content">
           <div class="modal-header">
-            <h4 class="modal-title" v-if="modelConfig.modalTitle">{{modelConfig.modalTitle}}
+            <h4 class="modal-title" v-if="modelConfig.modalTitle">{{$t(modelConfig.modalTitle)}}
               <template v-if="!modelConfig.isAdd">--
               【<span style="color: red">{{interceptParams()}}</span>】
               </template>
             </h4>
-            <h4 class="modal-title" v-if="!modelConfig.modalTitle">{{modelConfig.title + '--'}}
+            <h4 class="modal-title" v-if="!modelConfig.modalTitle">{{$t(modelConfig.modalTitle) + '--'}}
               <label v-if="modelConfig.isAdd">
-                <span>新增</span>
+                <span>{{$t('button.add')}}</span>
               </label>
               <label v-else>
-                <span>编辑【</span>
+                <span>{{$t('button.edit')}}</span>
                 <span style="color: red;">
                   {{interceptParams()}}
                 </span>】
@@ -26,12 +26,12 @@
             <form class="">
               <div v-for="(item, index) in modelConfig.config"  class="params-each" :key="index">
                 <label class="col-md-2 label-name" v-if="item.type != 'slot' && isHide(item.hide)" :class="item.type === 'select'? 'lable-name-select': ''">
-                  {{item.label}}:</label>
+                  {{$t(item.label)}}:</label>
                 <input v-if="item.type === 'text' && isHide(item.hide)"
                        v-model="modelConfig.addRow[item.value]"
                        autocomplete="off"
                        :disabled="modelConfig.isAdd ? false : item.disabled"
-                       :placeholder="item.placeholder"
+                       :placeholder="$t(item.placeholder)"
                        type="text"
                        v-validate="item.v_validate"
                        :name="item.value"
@@ -41,7 +41,7 @@
                        v-model.number="modelConfig.addRow[item.value]"
                        autocomplete="off"
                        :disabled="modelConfig.isAdd ? false : item.disabled"
-                       :placeholder="item.placeholder"
+                       :placeholder="$t(item.placeholder)"
                        type="text"
                        :name="item.value"
                        v-validate="item.v_validate"
@@ -51,7 +51,7 @@
                        autocomplete="new-password"
                        :disabled="modelConfig.isAdd ? false : item.disabled"
                        type="password"
-                       :placeholder="item.placeholder"
+                       :placeholder="$t(item.placeholder)"
                        :name="item.value"
                        v-validate="item.v_validate"
                        class="col-md-7 form-control model-input">
@@ -65,7 +65,7 @@
                       v-model="modelConfig.addRow[item.value]" />
                 <textarea v-if="item.type === 'textarea' && isHide(item.hide)"
                   v-model="modelConfig.addRow[item.value]"
-                  :placeholder="item.placeholder"
+                  :placeholder="$t(item.placeholder)"
                    v-validate="item.v_validate"
                   :class="item.isError?'red-border textareaSty':'textareaSty'"
                   :disabled="item.disabled"
@@ -100,19 +100,19 @@
                   </div>
                 </Poptip>
 
-                <label v-show="errors.has(item.value) && isHide(item.hide)" class="col-md-7 help is-danger">{{item.label}} {{errors.first(item.value)}}</label>
-                <label v-if="(item.type === 'select' || item.type === 'textarea') && item.isError" class="col-md-7 help is-danger">{{item.label}} 不能为空</label>
+                <label v-show="errors.has(item.value) && isHide(item.hide)" class="col-md-7 help is-danger">{{$t(item.label)}} {{errors.first(item.value)}}</label>
+                <label v-if="(item.type === 'select' || item.type === 'textarea') && item.isError" class="col-md-7 help is-danger">{{$t(item.label)}} {{$t('tips.required')}}</label>
               </div>
             </form>
           </div>
           <template v-if="!modelConfig.noBtn">
             <div class="model-footer-f" v-if="!modelConfig.modalFooter">
-              <button type="button" class="btn-cancle-f" data-dismiss="modal">取消</button>
-              <button v-if="!modelConfig.saveFunc" @click="save(modelConfig.isAdd)" type="button" class="btn-confirm-f">保存</button>
-              <button v-if="modelConfig.saveFunc" @click="customFunc(modelConfig.saveFunc)" type="button" class="btn-confirm-f">保存</button>
+              <button type="button" class="btn-cancle-f" data-dismiss="modal">{{$t('button.cancle')}}</button>
+              <button v-if="!modelConfig.saveFunc" @click="save(modelConfig.isAdd)" type="button" class="btn-confirm-f">{{$t('button.save')}}</button>
+              <button v-if="modelConfig.saveFunc" @click="customFunc(modelConfig.saveFunc)" type="button" class="btn-confirm-f">{{$t('button.save')}}</button>
             </div>
             <div class="model-footer-f" v-if="modelConfig.modalFooter">
-              <button type="button" class="btn-cancle-f" data-dismiss="modal">取消</button>
+              <button type="button" class="btn-cancle-f" data-dismiss="modal">{{$t('button.cancle')}}</button>
               <template v-for="(item, index) in modelConfig.modalFooter">
               <button  @click="customFunc(item.Func)" type="button" class="btn-confirm-f" v-if='item.name' :key="index">{{item.name}}</button>
               </template>

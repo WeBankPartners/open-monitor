@@ -23,7 +23,7 @@
             "api": "alarm/grp/delete"
         }
     },
-    "objectManagement": {
+    "endpointManagement": {
         "_des": "对象管理",
         "list": {
             "api": "alarm/endpoint/list"

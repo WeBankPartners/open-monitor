@@ -32,10 +32,10 @@
           </th> -->
           <template v-for="(item,tableEleIndex) in table.tableEle">
             <th style='min-width:100px;' :style="item.style" class="th-border-bottom" v-if="item.display" :key='tableEleIndex' >
-              <span v-if="!item.copyable">{{item.title}}</span>
+              <span v-if="!item.copyable">{{$t(item.title)}}</span>
               <span v-if="item.copyable" :style="item.copyable?'cursor: pointer;position: relative;':''">
                 <Tooltip placement="bottom" :delay="500">
-                  {{item.title}}
+                  {{$t(item.title)}}
                   <div slot="content" class="tooltip-clipboard" @click="doCopy(tableEleIndex,item)">
                     <Icon type="clipboard"></Icon>
                     <span>
@@ -94,8 +94,8 @@
             </th>
           </template>
           
-          <th style="width: 140px;font-size: 13px;" class="th-border-bottom" v-if="table.btn.length != 0"><div style="width:130px">操作</div></th>
-          <th style="width: 151px;font-size: 13px;" class="th-border-bottom handleSty" v-if="table.btn.length != 0 && table.handleFloat">操作</th>
+          <th style="width: 140px;font-size: 13px;" class="th-border-bottom" v-if="table.btn.length != 0"><div style="width:130px">{{$t('table.action')}}</div></th>
+          <th style="width: 151px;font-size: 13px;" class="th-border-bottom handleSty" v-if="table.btn.length != 0 && table.handleFloat">{{$t('table.action')}}</th>
         </tr>
         </thead>
         <tbody>
@@ -241,7 +241,7 @@
                         v-if="!btn_val.render"
                         class="btn-operation"
                         @click="goToOpe(btn_val,value)">
-                    {{btn_val.btn_name}}
+                    {{$t(btn_val.btn_name)}}
                   </span>
                   <span :id="btn_val.btn_func" :key="btn_i + '2'"
                         v-if="btn_val.render"
@@ -259,7 +259,7 @@
                       v-if="!table.tableData[tableDataIndex]._operatons[0].render"
                       class="btn-operation"
                       @click="goToOpe(table.tableData[tableDataIndex]._operatons[0],value)">
-                  {{table.tableData[tableDataIndex]._operatons[0].btn_name}}
+                  {{$t(table.tableData[tableDataIndex]._operatons[0].btn_name)}}
                 </span>
                 <span :id="table.tableData[tableDataIndex]._operatons[0].btn_func" :key="btn_i + '2'"
                       v-if="table.tableData[tableDataIndex]._operatons[0].render"
@@ -274,7 +274,7 @@
                   <div class="batch-operation">
                     <div class="btn-group" role="group" @mouseover="btnMore(tableDataIndex)">
                     <span class="btn-operation">
-                      更多
+                      {{$t('table.more')}}
                       <Icon type="chevron-down"></Icon>
                     </span>
                     </div>
@@ -282,7 +282,7 @@
                   <div slot="content" class="ui-ul-list" v-if="isShowMoreBtnTip">
                     <ul v-if="showMoreNumber === tableDataIndex">
                       <template v-for="(btn, moreIndex) in table.tableData[tableDataIndex]._operatons">
-                        <li class="filters-li" :key="moreIndex" v-if="moreIndex != 0" @click="goToOpe(btn,value)">{{btn.btn_name}}</li>
+                        <li class="filters-li" :key="moreIndex" v-if="moreIndex != 0" @click="goToOpe(btn,value)">{{$t(btn.btn_name)}}</li>
                       </template>
                       <li v-if="isNoActions" style="color: red" @click="noActions">无可用操作</li>
                     </ul>
@@ -304,13 +304,13 @@
             </tr>
         </template>
          <tr v-if="table.tableData.length<1" class='nodataSty'>
-           <td :colspan='tdNumber' v-if='!table.noDataTip'>当前查询条件尚无数据</td>
+           <td :colspan='tdNumber' v-if='!table.noDataTip'>{{$t('table.noDataTip')}}</td>
            <td :colspan='tdNumber' v-if='table.noDataTip'>
              <template v-if='typeof table.noDataTip === "string"'>
-              <span>当前查询条件尚无数据,您可以</span><span v-html="table.noDataTip">{{table.noDataTip}}</span>
+              <span>{{$t('table.noDataTip')}},您可以</span><span v-html="table.noDataTip">{{table.noDataTip}}</span>
              </template>
              <template v-if='typeof table.noDataTip === "object"'>
-               <span>当前查询条件尚无数据,您可以</span><a @click="goToConfig(table.noDataTip)">{{table.noDataTip.linkword}}</a>{{table.noDataTip.name}}
+               <span>{{$t('table.noDataTip')}},您可以</span><a @click="goToConfig(table.noDataTip)">{{table.noDataTip.linkword}}</a>{{table.noDataTip.name}}
              </template>
            </td>
         </tr>
