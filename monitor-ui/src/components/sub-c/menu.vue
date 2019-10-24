@@ -2,44 +2,38 @@
     <Menu mode="horizontal" :theme="theme1" :active-name="activeName" @on-select="menuChange">
         <div class="logo" @click="routerChange">
             <img src="../../assets/logo.png"/>
-            <span>Wecube-monitor</span>
+            <span>WeCube-Monitor</span>
         </div>
-        <!-- <MenuItem name="mainView">
-            <i class="fa fa-line-chart" aria-hidden="true"></i>
-            监控视图
-        </MenuItem> -->
         <Submenu name="">
             <template slot="title">
                 <i class="fa fa-line-chart" aria-hidden="true"></i>
-                监控视图
+                {{$t("menu.view")}}
             </template>
-            <MenuItem name="mainView">对象视图</MenuItem>
-            <MenuItem name="metricConfig">视图配置</MenuItem>
-            <MenuItem name="viewConfigIndex">自定义视图</MenuItem>
+            <MenuItem name="mainView">{{$t("menu.endpointView")}}</MenuItem>
+            <MenuItem name="metricConfig">{{$t("menu.metricConfiguration")}}</MenuItem>
+            <MenuItem name="viewConfigIndex">{{$t("menu.customViews")}}</MenuItem>
         </Submenu>
-        <!-- <Submenu name="2">
-            <template slot="title">
-                <i class="fa fa-television" aria-hidden="true"></i>
-                监控告警
-            </template>
-            <MenuGroup title="使用">
-                <MenuItem name="2-1">新增和启动</MenuItem>
-                <MenuItem name="2-2">活跃分析</MenuItem>
-                <MenuItem name="2-3">时段分析</MenuItem>
-            </MenuGroup>
-            <MenuGroup title="留存">
-                <MenuItem name="2-4">用户留存</MenuItem>
-                <MenuItem name="2-5">流失用户</MenuItem>
-            </MenuGroup>
-        </Submenu> -->
         <MenuItem name="monitorConfigIndex">
             <i class="fa fa-gears" aria-hidden="true"></i>
-            监控配置
+            {{$t("menu.configuration")}}
         </MenuItem>
         <MenuItem name="alarmManagement">
             <i class="fa fa-bell" aria-hidden="true"></i>
-            告警管理
+            {{$t("menu.alert")}}
         </MenuItem>
+        <div style="float:right;padding-right:80px">
+            <Dropdown @on-click="changeLang">
+                <a href="javascript:void(0)">
+                    {{activeLang}}
+                    <Icon type="ios-arrow-down"></Icon>
+                </a>
+                <DropdownMenu slot="list">
+                     <template v-for="(langItem, langIndex) in lang">
+                        <DropdownItem :selected="langItem.label===activeLang" :name="langItem.label" :key="langIndex">{{langItem.label}}</DropdownItem>
+                    </template>
+                </DropdownMenu>
+            </Dropdown>
+        </div>
     </Menu>
 </template>
 <script>
@@ -47,10 +41,30 @@
         data () {
             return {
                 theme1: 'dark',
-                activeName: ''
+                activeName: '',
+                activeLang: '中文',
+                langConfig: {
+                   zh: '中文',
+                   en: 'English'
+                },
+                lang: [
+                    {label: '中文', value: 'zh'},
+                    {label: 'English', value: 'en'}
+                ]
             }
+        }, 
+        mounted(){
+            this.activeLang = this.langConfig[localStorage.getItem('lang')]
         },
         methods: {
+            changeLang(name) {
+                this.activeLang = name
+                let lang = 'en'
+                name === 'English' ? lang='en': lang='zh'
+                localStorage.setItem('lang', lang)
+                this.$i18n.locale = lang
+                this.$validator.locale = lang
+            },
             routerChange () {
                 if (this.$route.name === 'portal') return
                 this.$router.push({ name: 'portal'})

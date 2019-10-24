@@ -1,10 +1,10 @@
 <template>
   <div class="monitor-config-index">
-    <Title title="监控管理主页"></Title>
+    <Title :title="$t('menu.configuration')"></Title>
     <section>
       <Tabs :value="activeTab" @on-click="changeTab"> 
         <template v-for="(tabItem, tabIndex) in tabs">
-            <TabPane :label="tabItem.label" :name="tabItem.path" :key="tabIndex">
+            <TabPane :label="$t(tabItem.label)" :name="tabItem.path" :key="tabIndex">
             </TabPane>
         </template>  
       </Tabs>
@@ -21,10 +21,10 @@ export default {
     return {
       activeTab: '/monitorConfigIndex/objectManagement',
       tabs: [
-        {label: '对象管理', path:'/monitorConfigIndex/objectManagement'},
-        {label: '组管理', path:'/monitorConfigIndex/groupManagement'},
-        {label: '阀值管理', path:'/monitorConfigIndex/thresholdManagement'},
-        {label: '日志管理', path:'/monitorConfigIndex/logManagement'}
+        {label: 'field.endpoint', path:'/monitorConfigIndex/objectManagement'},
+        {label: 'field.group', path:'/monitorConfigIndex/groupManagement'},
+        {label: 'field.threshold', path:'/monitorConfigIndex/thresholdManagement'},
+        {label: 'field.log', path:'/monitorConfigIndex/logManagement'}
       ]
     }
   },

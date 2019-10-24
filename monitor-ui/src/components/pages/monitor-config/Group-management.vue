@@ -6,15 +6,15 @@
 </template>
 <script>
   let tableEle = [
-    {title: '名称', value: 'name', display: true},
-    {title: '描述', value: 'description', display: true}
+    {title: 'tableKey.name', value: 'name', display: true},
+    {title: 'tableKey.description', value: 'description', display: true}
   ]
   const btn = [
-    {btn_name: '成员', btn_func: 'checkMember'},
-    {btn_name: '阀值配置', btn_func: 'thresholdConfig'},
-    {btn_name: '编辑', btn_func: 'editF'},
-    {btn_name: '删除', btn_func: 'delF'},
-    {btn_name: '日志配置', btn_func: 'logManagement'}
+    {btn_name: 'field.endpoint', btn_func: 'checkMember'},
+    {btn_name: 'field.threshold', btn_func: 'thresholdConfig'},
+    {btn_name: 'button.edit', btn_func: 'editF'},
+    {btn_name: 'button.remove', btn_func: 'delF'},
+    {btn_name: 'field.log', btn_func: 'logManagement'}
   ]
   export default {
     name: '',
@@ -24,10 +24,10 @@
           CRUD: this.apiCenter.groupManagement.list.api,
           researchConfig: {
             input_conditions: [
-              {value: 'search', type: 'input', placeholder: '请输入', style: ''}],
+              {value: 'search', type: 'input', placeholder: 'placeholder.input', style: ''}],
             btn_group: [
-              {btn_name: '搜索', btn_func: 'search', class: 'btn-confirm-f', btn_icon: 'fa fa-search'},
-              {btn_name: '新增', btn_func: 'add', class: 'btn-cancle-f', btn_icon: 'fa fa-plus'},
+              {btn_name: 'button.search', btn_func: 'search', class: 'btn-confirm-f', btn_icon: 'fa fa-search'},
+              {btn_name: 'button.add', btn_func: 'add', class: 'btn-cancle-f', btn_icon: 'fa fa-plus'},
             ],
             filters: {
               name__icontains: '',
@@ -56,11 +56,11 @@
         },
         modelConfig: {
           modalId: 'add_edit_Modal',
-          modalTitle: '组管理',
+          modalTitle: 'title.groupAdd',
           isAdd: true,
           config: [
-            {label: '名称', value: 'name', placeholder: '必填,2-60字符', v_validate: 'required:true|min:2|max:60', disabled: false, type: 'text'},
-            {label: '备注描述', value: 'description', placeholder: '', disabled: false, type: 'text'},
+            {label: 'tableKey.name', value: 'name', placeholder: 'tips.inputRequired', v_validate: 'required:true|min:2|max:60', disabled: false, type: 'text'},
+            {label: 'tableKey.description', value: 'description', placeholder: '', disabled: false, type: 'text'},
           ],
           addRow: { // [通用]-保存用户新增、编辑时数据
             name: null,
@@ -85,7 +85,7 @@
         this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.groupManagement.add.api, params, () => {
           this.$validate.emptyJson(this.modelConfig.addRow)
           this.JQ('#add_edit_Modal').modal('hide')
-          this.$Message.success('新增成功 !')
+          this.$Message.success(this.$t('button.add')+this.$t('tips.success'))
           this.initData(this.pageConfig.CRUD, this.pageConfig)
         })
       },
@@ -95,7 +95,7 @@
         this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.groupManagement.update.api, params, () => {
           this.$validate.emptyJson(this.modelConfig.addRow)
           this.JQ('#add_edit_Modal').modal('hide')
-          this.$Message.success('修改成功 !')
+          this.$Message.success(this.$t('button.edit')+this.$t('tips.success'))
           this.initData(this.pageConfig.CRUD, this.pageConfig)
         })
       },
@@ -112,7 +112,7 @@
       delF (rowData) {
         let params = {id: rowData.id}
         this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.groupManagement.delete.api, params, () => {
-          this.$Message.success('删除成功 !')
+          this.$Message.success(this.$t('button.remove')+this.$t('tips.success'))
           this.initData(this.pageConfig.CRUD, this.pageConfig)
         })
       },
