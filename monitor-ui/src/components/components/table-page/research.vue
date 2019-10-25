@@ -18,7 +18,7 @@
         <template v-for="(input_condition, index_input_condition) in pageConfig.researchConfig.input_conditions" >
           <div :key="index_input_condition" class="research-div" >
             <input v-if="input_condition.type === 'input'" v-model.trim="pageConfig.researchConfig.filters[input_condition.value]"
-                  @keyup.enter="goToAction('search', pageConfig.researchConfig.filters)" :placeholder="input_condition.placeholder"
+                  @keyup.enter="goToAction('search', pageConfig.researchConfig.filters)" :placeholder="$t(input_condition.placeholder)"
                   type="text"
                   class="form-control research-input"
                   @mouseover="activeInput(input_condition, index_input_condition)">
@@ -34,7 +34,7 @@
               <button :key='index' type="button" class="btn btn-sm"
                     @click="goToAction(btn.btn_func, pageConfig.researchConfig.filters)" :class="btn.class">
               <i :class="btn.btn_icon" ></i>
-              {{btn.btn_name}}
+              {{$t(btn.btn_name)}}
             </button>
             </template>
           <div class="research-div" style="font-size:12px;">

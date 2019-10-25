@@ -1,0 +1,95 @@
+{
+  "common": {
+    "changeLanguage": "简体中文"
+  },
+  "menu": {
+    "view": "View",
+    "endpointView": "Endpoint View",
+    "metricConfiguration": "Metric Configuration",
+    "customViews": "Custom Views",
+    "configuration": "Configuration",
+    "alert": "Alert"
+  },
+  "placeholder": {
+    "input": "Enter something",
+    "endpointSearch": "Enter something",
+    "metric": "Select metric",
+    "datePicker": "Select date",
+    "refresh": "Refresh",
+    "metricConfiguration": "Metric configuration",
+    "globalConfiguration": "Global configuration"
+  },
+  "field": {
+    "group": "Group",
+    "threshold": "Threshold",
+    "log": "Log",
+    "endpoint": "Endpoint",
+    "metric": "Metric",
+    "relativeTime": "Relative Time",
+    "timeInterval": "Time interval",
+    "port": "Port",
+    "ip": "IP",
+    "aggType": "Aggregation type",
+    "title": "Title",
+    "unit": "Unit"
+  },
+  "title": {
+    "viewConfiguration": "View Configuration",
+    "templateName": "Template Name",
+    "addViewTemplate": "Add View Template",
+    "updateTime": "Update Time",
+    "endpointAdd": "Endpoint Add",
+    "groupAdd": "Group",
+    "logAdd": "Log"
+  },
+  "button": {
+    "search": "Search",
+    "add": "Add",
+    "edit": "Edit",
+    "remove": "Remove",
+    "thresholdManagement": "Threshold",
+    "historicalAlert": "Historical Alert",
+    "logConfiguration": "Log Configuration",
+    "addMetric": "Add metric",
+    "saveEdit": "Save edit",
+    "save": "OK",
+    "view": "View",
+    "cancle": "Cancle",
+    "endpointManagement": "Endpoint Management",
+    "chart": {
+      "zoom": "area zooming",
+      "back": "restore area zooming",
+      "dataView": "data view"
+    }
+  },
+  "table": {
+    "more": "More",
+    "action": "Action",
+    "noDataTip": "No Data"
+  },
+  "tableKey": {
+    "endpoint": "Endpoint",
+    "group": "Group",
+    "status": "Status",
+    "s_metric": "Metric",
+    "start_value": "Alarm value",
+    "s_cond": "Cond",
+    "threshold": "Threshold",
+    "s_last": "Last",
+    "s_priority": "Priority",
+    "start": "Start time",
+    "end": "End time",
+    "name": "Name",
+    "description": "Description",
+    "expr": "Expression",
+    "content": "Content",
+    "path": "Path",
+    "keyword": "Keyword",
+    "condition": "Condition"
+  },
+  "tips": {
+    "required": " Required!",
+    "inputRequired": "Required,2-60",
+    "success": " Success!"
+  }
+}

@@ -1,8 +1,10 @@
 import Vue from 'vue'
 import VeeValidate, {Validator} from 'vee-validate'
-import CN from 'vee-validate/dist/locale/zh_CN'
+import zh from 'vee-validate/dist/locale/zh_CN'
+import en from 'vee-validate/dist/locale/en'
 
-Validator.localize('zh_CN', CN)
+Validator.localize('en', en)
+Validator.localize('zh', zh)
 Validator.localize({
   'zh_CN': {
     messages: {
@@ -22,11 +24,10 @@ Validator.localize({
     }
   }
 })
-
 const config = {
   errorBagName: 'errors', // change if property conflicts.
   delay: 0,
-  locale: 'zh_CN',
+  locale: localStorage.getItem('lang') || 'zh',
   messages: null,
   strict: true,
   events: 'blur'
