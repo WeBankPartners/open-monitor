@@ -34,7 +34,7 @@
           </Select>
         </div>
         <div class="marginbottom params-each" v-if="showInstance">
-          <label class="col-md-2 label-name lable-name-select">实例名:</label>
+          <label class="col-md-2 label-name lable-name-select">{{$t('field.instance')}}:</label>
           <input v-model="endpointRejectModel.addRow.instance" type="text" class="col-md-7 form-control model-input">
           <label class="required-tip">*</label>
         </div>
@@ -156,7 +156,7 @@
             instance: '',
             type: 'host',
             exporter_ip: null,
-            exporter_port: null,
+            exporter_port: 9100,
           },
           endpointType: [
             {label:'host',value:'host'},
@@ -188,6 +188,17 @@
         }
       }
       this.initData(this.pageConfig.CRUD, this.pageConfig)
+    },
+    watch: {
+      'endpointRejectModel.addRow.type':function(val){
+        const typeToPort = {
+          host: 9100,
+          mysql: 9104,
+          redis: 9121,
+          tomcat: 9151,
+        }
+        this.endpointRejectModel.addRow.exporter_port = typeToPort[val]
+      }
     },
     computed:{
       showInstance: function(){

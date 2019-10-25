@@ -153,6 +153,7 @@ export default {
           params.push(JSON.stringify({
             endpoint: item.endpoint.split(':')[0],
             prom_ql: item.metric,
+            metric: item.metricLabel,
             time: '-1800'
           })) 
         })
@@ -219,6 +220,7 @@ export default {
         params.push(JSON.stringify({
           endpoint: item.endpoint,
           prom_ql: item.metric,
+          metric: item.metricLabel,
           time: '-1800'
         })) 
       })
