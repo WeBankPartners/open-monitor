@@ -89,6 +89,19 @@ func PrometheusData(query m.QueryMonitorData) []*m.SerialModel  {
 				tmpName = strings.Replace(tmpName, "$"+k, v, -1)
 			}
 		}
+		if query.Metric[0] == "$custom_metric" {
+			tmpName = query.Metric[0]
+			if len(otr.Metric) > 0 {
+				tmpName += "{"
+			}
+			for k,v := range otr.Metric {
+				tmpName += fmt.Sprintf("%s=%s,", k, v)
+			}
+			if len(otr.Metric) > 0 {
+				tmpName = tmpName[:len(tmpName)-1]
+				tmpName += "}"
+			}
+		}
 		serial.Name = tmpName
 		var sdata m.DataSort
 		for _,v := range otr.Values {
