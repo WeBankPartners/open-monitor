@@ -2,6 +2,7 @@ const path = require('path')
 const webpack = require('webpack')
 
 module.exports = {
+	assetsDir: 'wecube-monitor',
 	chainWebpack: config => {
 		const types = ['vue-modules', 'vue', 'normal-modules', 'normal']
 		types.forEach(type => addStyleResource(config.module.rule('less').oneOf(type)))
@@ -15,13 +16,13 @@ module.exports = {
 	},
 	configureWebpack: {
 		plugins: [
-		new webpack.ProvidePlugin({
-			$:"jquery",
-			jQuery:"jquery",
-			"windows.jQuery":"jquery"
-		})
+			new webpack.ProvidePlugin({
+				$:"jquery",
+				jQuery:"jquery",
+				"windows.jQuery":"jquery"
+			})
 		]
-    }
+  }
 }
 function addStyleResource(rule) {
 	rule.use('style-resource')
