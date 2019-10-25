@@ -53,7 +53,7 @@ export default {
       ],
       modelConfig: {
         modalId: 'add_edit_Modal',
-        modalTitle: '视图组',
+        modalTitle: 'title.viewTemplate',
         isAdd: true,
         config: [
           {label: 'tableKey.name', value: 'name', placeholder: 'tips.required', v_validate: 'required:true|min:2|max:60', disabled: false, type: 'text'}
