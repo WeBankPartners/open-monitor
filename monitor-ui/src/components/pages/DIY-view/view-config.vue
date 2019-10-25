@@ -22,20 +22,21 @@
         :use-css-transforms="true"
         >
       <grid-item v-for="(item,index) in layoutData"
-                   :x="item.x"
-                   :y="item.y"
-                   :w="item.w"
-                   :h="item.h"
-                   :i="item.id"
-                   :key="index"
-                   @resize="resizeEvent"
-                   @resized="resizedEvent">
+        :x="item.x"
+        :y="item.y"
+        :w="item.w"
+        :h="item.h"
+        :i="item.i"
+        :key="index"
+        @resize="resizeEvent"
+        @resized="resizedEvent">
+                 
         <div style="display:flex;justify-content:flex-end;padding:0 32px;">
           <div class="header-grid header-grid-name">
             {{item.i}}
           </div>
           <div class="header-grid header-grid-tools"> 
-            <i class="fa fa-eye" aria-hidden="true" @click="gridPlus(item)"></i>
+            <!-- <i class="fa fa-eye" aria-hidden="true" @click="gridPlus(item)"></i> -->
             <i class="fa fa-cog" @click="editGrid(item)" aria-hidden="true"></i>
             <i class="fa fa-trash" @click="removeGrid(item)" aria-hidden="true"></i>
           </div>
@@ -92,10 +93,10 @@ export default {
     requestChart (id, query) {
       let params = []
       query.forEach((item) => {
-        item.prom_ql = item.metric
-        item.metric = item.metricLabel
         params.push(JSON.stringify({
-          ...item,
+          endpoint: item.endpoint,
+          metric: item.metricLabel,
+          prom_ql: item.metric,
           time: '-1800'
         })) 
       })
@@ -105,16 +106,28 @@ export default {
           this.noDataTip = true
           return
         }
-        responseData.series.forEach((item)=>{
+        const colorSet = ['#487e89', '#153863', '#395b79',  '#153250']
+        responseData.series.forEach((item, index)=>{
           legend.push(item.name)
           item.symbol = 'none'
           item.smooth = true
           item.lineStyle = {
             width: 1
           }
+          item.itemStyle = {
+            normal:{
+              color: colorSet[index]
+            }
+          }
           item.areaStyle = {
             normal: {
-             
+              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+                  offset: 0,
+                  color: colorSet[index]
+              }, {
+                  offset: 1,
+                  color: colorSet[index]
+              }])
             }
           }
         }) 
@@ -122,7 +135,7 @@ export default {
           title: responseData.title,
           legend: legend,
           series: responseData.series,
-          yaxis: responseData.yaxis,
+          yaxis: responseData.yaxis
         }
         this.elId = id
         drawChart(this, config, {eye: false,dataZoom:false})
@@ -149,7 +162,13 @@ export default {
         this.$router.push({name: 'editView', params:{templateData: parentRouteData, panal:item}}) 
       })
     },
-    removeGrid() {
+    removeGrid(itemxxx) {
+      this.layoutData.forEach((item,index) => {
+        if (item.id === itemxxx.id) {
+         this.layoutData.splice(index,1)
+         return
+        }
+      })
     },
     gridPlus() {
 
@@ -177,13 +196,14 @@ export default {
     },
     resizeEvent: function(i, newH, newW, newHPx, newWPx){
       this.layoutData.forEach((item,index) => {
-        if (item.id === i) {
+        if (item.i === i) {
           this.layoutData[index].h = newH
           this.layoutData[index].w = newW
+          var myChart = echarts.init(document.getElementById(item.id))
+          myChart.resize({height:newHPx-64+'px',width:newWPx+'px'})
+          return
         }
       })
-      var myChart = echarts.init(document.getElementById(i))
-      myChart.resize({height:newHPx-64+'px',width:newWPx+'px'}) 
     },
     resizedEvent: function(i, newH, newW, newHPx, newWPx){
       this.resizeEvent(i, newH, newW, newHPx, newWPx)

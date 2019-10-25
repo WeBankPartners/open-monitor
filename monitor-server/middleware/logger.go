@@ -15,7 +15,7 @@ var (
 	HttpLogEnable  bool
 )
 
-func InitHttpLog()  {
+func InitMonitorLog()  {
 	HttpLogEnable = m.Config().Http.Log.Enable
 	//enable := true
 	if !HttpLogEnable {
