@@ -18,7 +18,7 @@ jobs:
 
     - name: Get dependencies
       run: |
-        cd monitor-server
+        cd monitor-server && go get ./...
 
     - name: Build
       run: cd monitor-server && go build -v .
