@@ -361,7 +361,7 @@ func GetChartNew(c *gin.Context)  {
 				mid.LogError("get prom metric error", err)
 				continue
 			}
-			querys = append(querys, m.QueryMonitorData{Start:query.Start, End:query.End, PromQ:tmpPromQl, Legend:chart.Legend})
+			querys = append(querys, m.QueryMonitorData{Start:query.Start, End:query.End, PromQ:tmpPromQl, Legend:chart.Legend, Metric:[]string{v}})
 		}
 	}else{
 		step = 10
@@ -380,7 +380,7 @@ func GetChartNew(c *gin.Context)  {
 				}
 				v.PromQl = strings.Replace(v.PromQl, "$address", endpointObj.Address, -1)
 			}
-			querys = append(querys, m.QueryMonitorData{Start:query.Start, End:query.End, PromQ:v.PromQl, Legend:""})
+			querys = append(querys, m.QueryMonitorData{Start:query.Start, End:query.End, PromQ:v.PromQl, Legend:"$custom_metric", Metric:[]string{v.Metric}})
 		}
 	}
 	if len(querys) == 0 {
