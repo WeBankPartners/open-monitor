@@ -31,7 +31,8 @@
     "ip": "IP",
     "aggType": "Aggregation type",
     "title": "Title",
-    "unit": "Unit"
+    "unit": "Unit",
+    "instance": "Instance"
   },
   "title": {
     "viewConfiguration": "View Configuration",
