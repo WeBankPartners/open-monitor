@@ -92,8 +92,8 @@ export default {
     requestChart (id, query) {
       let params = []
       query.forEach((item) => {
-        console.log(item)
-        // item.prom_ql = item.prom_ql
+        item.prom_ql = item.metric
+        item.metric = item.metricLabel
         params.push(JSON.stringify({
           ...item,
           time: '-1800'
@@ -112,7 +112,11 @@ export default {
           item.lineStyle = {
             width: 1
           }
-          item.areaStyle = {}
+          item.areaStyle = {
+            normal: {
+             
+            }
+          }
         }) 
         let config = {
           title: responseData.title,
@@ -267,5 +271,4 @@ export default {
     box-sizing: border-box;
     cursor: pointer;
 }
-
 </style>

@@ -153,6 +153,7 @@ export default {
           params.push(JSON.stringify({
             endpoint: item.endpoint.split(':')[0],
             prom_ql: item.metric,
+            metric: item.metricLabel,
             time: '-1800'
           })) 
         })
@@ -219,6 +220,7 @@ export default {
         params.push(JSON.stringify({
           endpoint: item.endpoint,
           prom_ql: item.metric,
+          metric: item.metricLabel,
           time: '-1800'
         })) 
       })
@@ -292,8 +294,8 @@ export default {
       this.chartQueryList.forEach((item) => {
         query.push({
           endpoint: item.endpoint.split(':')[0],
-          metric: item.metricLabel,
-          prom_ql: item.metric
+          metricLabel: item.metricLabel,
+          metric: item.metric
         }) 
       })
       let panal = this.$route.params.panal
