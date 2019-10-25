@@ -171,7 +171,6 @@ export default {
       })
     },
     resizeEvent: function(i, newH, newW, newHPx, newWPx){
-      var msg = "RESIZE i=" + i + ", H=" + newH + ", W=" + newW + ", H(px)=" + newHPx + ", W(px)=" + newWPx;
       this.layoutData.forEach((item,index) => {
         if (item.id === i) {
           this.layoutData[index].h = newH
@@ -182,7 +181,6 @@ export default {
       myChart.resize({height:newHPx-64+'px',width:newWPx+'px'}) 
     },
     resizedEvent: function(i, newH, newW, newHPx, newWPx){
-      var msg = "RESIZED i=" + i + ", H=" + newH + ", W=" + newW + ", H(px)=" + newHPx + ", W(px)=" + newWPx;
       this.resizeEvent(i, newH, newW, newHPx, newWPx)
     },
   },
