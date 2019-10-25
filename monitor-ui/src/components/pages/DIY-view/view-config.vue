@@ -19,15 +19,17 @@
         :is-resizable="true"
         :is-mirrored="false"
         :vertical-compact="true"
-
-        :use-css-transforms="true">
+        :use-css-transforms="true"
+        >
       <grid-item v-for="(item,index) in layoutData"
                    :x="item.x"
                    :y="item.y"
                    :w="item.w"
                    :h="item.h"
-                   :i="item.i"
-                   :key="index">
+                   :i="item.id"
+                   :key="index"
+                   @resize="resizeEvent"
+                   @resized="resizedEvent">
         <div style="display:flex;justify-content:flex-end;padding:0 32px;">
           <div class="header-grid header-grid-name">
             {{item.i}}
@@ -57,6 +59,7 @@
 import {generateUuid} from '@/assets/js/utils'
 import VueGridLayout from 'vue-grid-layout'
 import {drawChart} from  '@/assets/config/chart-rely'
+const echarts = require('echarts/lib/echarts');
 export default {
   name: '',
   data() {
@@ -66,7 +69,6 @@ export default {
         //   {'x':0,'y':0,'w':2,'h':2,'i':'0'},
         //   {'x':1,'y':1,'w':2,'h':2,'i':'1'},
       ],
-      layoutDataSize: {},
       noDataTip: false
     }
   },
@@ -109,6 +111,7 @@ export default {
           item.lineStyle = {
             width: 1
           }
+          
         }) 
         let config = {
           title: responseData.title,
@@ -166,7 +169,22 @@ export default {
         })
         resolve(resViewData)
       })
-    }
+    },
+    resizeEvent: function(i, newH, newW, newHPx, newWPx){
+      var msg = "RESIZE i=" + i + ", H=" + newH + ", W=" + newW + ", H(px)=" + newHPx + ", W(px)=" + newWPx;
+      this.layoutData.forEach((item,index) => {
+        if (item.id === i) {
+          this.layoutData[index].h = newH
+          this.layoutData[index].w = newW
+        }
+      })
+      var myChart = echarts.init(document.getElementById(i))
+      myChart.resize({height:newHPx-64+'px',width:newWPx+'px'}) 
+    },
+    resizedEvent: function(i, newH, newW, newHPx, newWPx){
+      var msg = "RESIZED i=" + i + ", H=" + newH + ", W=" + newW + ", H(px)=" + newHPx + ", W(px)=" + newWPx;
+      this.resizeEvent(i, newH, newW, newHPx, newWPx)
+    },
   },
   components: {
     GridLayout: VueGridLayout.GridLayout,
