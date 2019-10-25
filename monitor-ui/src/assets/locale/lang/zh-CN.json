@@ -31,11 +31,14 @@
     "ip": "IP",
     "aggType": "聚合类型",
     "title": "标题",
-    "unit": "单位"
+    "unit": "单位",
+    "instance": "实例名"
   },
   "title": {
     "viewConfiguration": "视图配置",
     "templateName": "模板名称",
+    "addViewTemplate": "视图模板",
+    "viewTemplate": "视图模板",
     "updateTime": "更新时间",
     "endpointAdd": "对象新增",
     "groupAdd": "组新增",
@@ -53,7 +56,7 @@
     "addViewTemplate": "新增视图模板",
     "saveEdit": "保存修改",
     "save": "保存",
-    "view": "保存",
+    "view": "查看",
     "cancle": "取消",
     "endpointManagement": "对象管理",
     "chart": {
@@ -80,7 +83,7 @@
     "start": "开始时间",
     "end": "结束时间",
     "name": "名称",
-    "descriptipn": "描述",
+    "description": "描述",
     "expr": "表达式",
     "content": "通知内容",
     "path": "路径",

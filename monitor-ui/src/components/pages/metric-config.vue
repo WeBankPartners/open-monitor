@@ -227,6 +227,7 @@ export default {
         params.push(JSON.stringify({
           endpoint: this.$store.state.ip.value.split(':')[0],
           prom_ql: item.value,
+          metric: item.label,
           time: this.timeTnterval + ''
         })) 
       })

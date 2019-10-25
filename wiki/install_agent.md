@@ -16,14 +16,14 @@ Prometheus官方 [mysqld_exporter](https://github.com/prometheus/mysqld_exporter
 - 下载对应操作系统的最新release版本
 - 需要在被监控数据库中新建监控用户并授权
 ```bash
-CREATE USER 'exporter'@'localhost' IDENTIFIED BY 'XXXXXXXX';
+CREATE USER 'exporter'@'localhost' IDENTIFIED BY 'your_password';
 GRANT PROCESS, REPLICATION CLIENT, SELECT ON *.* TO 'exporter'@'localhost';
 ```
 - 新建my.cnf配置文件
 ```bash
 [client]
 user=exporter
-password=prom_pwd
+password=your_password
 host=127.0.0.1
 ```
 - 运行exporter

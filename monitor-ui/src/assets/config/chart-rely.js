@@ -86,9 +86,10 @@ export const drawChart = function(that,config,userConfig) {
       // color: ['#7EB26D', '#EAB839', '#6ED0E0', '#EF843C', '#E24D42', '#1F78C1', '#BA43A9', '#705DA0', '#508642', '#CCA300', '#447EBC', '#C15C17'],
       color: ['#61a0a8', '#2f4554', '#c23531', '#d48265', '#91c7ae', '#749f83', '#ca8622', '#bda29a', '#6e7074', '#546570', '#c4ccd3'],
       grid: {
+        top: '40',
         left: '3%',
         right: '5%',
-        bottom: '8%' ,
+        bottom: '40' ,
         containLabel: true
       },
       xAxis: {
