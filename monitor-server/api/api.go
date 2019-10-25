@@ -17,38 +17,60 @@ import (
 )
 
 func InitHttpServer() {
+	urlPrefix := "/wecube-monitor"
 	r := gin.Default()
 	r.LoadHTMLGlob("public/*.html")
-	r.Static("/js", "public/js")
-	r.Static("/css", "public/css")
-	r.Static("/img", "public/img")
-	r.Static("/fonts", "public/fonts")
+	r.Static(fmt.Sprintf("%s/js", urlPrefix), fmt.Sprintf("public%s/js", urlPrefix))
+	r.Static(fmt.Sprintf("%s/css", urlPrefix), fmt.Sprintf("public%s/css", urlPrefix))
+	r.Static(fmt.Sprintf("%s/img", urlPrefix), fmt.Sprintf("public%s/img", urlPrefix))
+	r.Static(fmt.Sprintf("%s/fonts", urlPrefix), fmt.Sprintf("public%s/fonts", urlPrefix))
+	r.Use(func(c *gin.Context) {
+		// Deal with options request
+		if c.Request.Method == "OPTIONS" {
+			c.Header("Access-Control-Allow-Credentials", "true")
+			c.Header("Access-Control-Allow-Headers", "Origin, Content-Length, Content-Type, Authorization, authorization, Token, X-Auth-Token")
+			c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS")
+			if c.GetHeader("Origin") != "" {
+				c.Header("Access-Control-Allow-Origin", c.GetHeader("Origin"))
+			}else{
+				c.Header("Access-Control-Allow-Origin", "*")
+			}
+			c.AbortWithStatus(http.StatusNoContent)
+		}else{
+			c.Next()
+		}
+	})
 	if m.Config().Http.Cross {
 		corsConfig := cors.DefaultConfig()
 		corsConfig.AllowAllOrigins = true
-		corsConfig.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization", "Token", "X-Auth-Token"}
+		corsConfig.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization", "authorization", "Token", "X-Auth-Token"}
 		corsConfig.AllowMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}
 		corsConfig.ExposeHeaders = []string{"Content-Length", "Access-Control-Allow-Origin", "Access-Control-Allow-Headers", "Content-Type"}
 		corsConfig.AllowCredentials = true
 		r.Use(cors.New(corsConfig))
+		r.Use(func(c *gin.Context) {
+			if c.GetHeader("Origin") != "" {
+				c.Header("Access-Control-Allow-Origin", c.GetHeader("Origin"))
+			}
+		})
 	}
 	// public api
-	r.GET("/", func(c *gin.Context) {
+	r.GET(fmt.Sprintf("%s/", urlPrefix), func(c *gin.Context) {
 		c.HTML(http.StatusOK, "index.html", gin.H{})
 	})
 	r.Use(mid.ValidateGet)
 	if m.Config().Http.Ldap.Enable {
-		r.POST("/login", user.LdapLogin)
+		r.POST(fmt.Sprintf("%s/login", urlPrefix), user.LdapLogin)
 	}else{
-		r.POST("/login", user.Login)
+		r.POST(fmt.Sprintf("%s/login", urlPrefix), user.Login)
 	}
-	r.GET("/logout", user.Logout)
-	r.GET("/check", user.HealthCheck)
+	r.GET(fmt.Sprintf("%s/logout", urlPrefix), user.Logout)
+	r.GET(fmt.Sprintf("%s/check", urlPrefix), user.HealthCheck)
 	if m.Config().Http.Swagger {
-		r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+		r.GET(fmt.Sprintf("%s/swagger/*any", urlPrefix), ginSwagger.WrapHandler(swaggerFiles.Handler))
 	}
 	// auth api
-	authApi := r.Group("/api/v1", user.AuthRequired())
+	authApi := r.Group(fmt.Sprintf("%s/api/v1", urlPrefix), user.AuthRequired())
 	{
 		dashboardApi := authApi.Group("/dashboard")
 		{

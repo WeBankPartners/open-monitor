@@ -65,6 +65,9 @@ WeCube-plugins-prometheus采用容器化部署。
 如何安装， 请查看以下文档
 [WeCube-plugins-prometheus部署文档](wiki/install_guide.md)
 
+agent安装文档
+[Prometheus-agent安装文档](wiki/install_agent.md)
+
 ## 版权声明
 WeCMDB是基于 Apache License 2.0 协议， 详情请参考
 [LICENSE](LICENSE)
