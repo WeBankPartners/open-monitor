@@ -7,7 +7,7 @@
 中文 / [English](README_EN.md)
 
 ## 试用链接
-[点此试用WeCube-plugins-prometheus](http://134.175.254.251)
+[点此试用WeCube-plugins-prometheus](http://134.175.254.251/wecube-monitor)
 
 ## 引言
 Prometheus是由SoundCloud开发的开源监控报警系统和时序列数据库(TSDB)。Prometheus使用Go语言开发，是Google BorgMon监控系统的开源版本。
