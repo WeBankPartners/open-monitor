@@ -292,8 +292,8 @@ export default {
       this.chartQueryList.forEach((item) => {
         query.push({
           endpoint: item.endpoint.split(':')[0],
-          metricLabel: item.metricLabel,
-          metric: item.metric
+          metric: item.metricLabel,
+          prom_ql: item.metric
         }) 
       })
       let panal = this.$route.params.panal
