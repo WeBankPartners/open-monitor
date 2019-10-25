@@ -18,8 +18,8 @@
         </div>
       </div>
       <div class="zone zone-config" >
-        <div class="tool-save" @click="saveConfig"> 
-          <i class="fa fa-floppy-o fa-16" aria-hidden="true"></i>
+        <div class="tool-save" > 
+          <i class="fa fa-floppy-o fa-16" @click="saveConfig" aria-hidden="true"></i>
         </div>
         <div style="display:flex">
           <section>
@@ -119,14 +119,12 @@ export default {
       noDataTip: false,
       activeStep: 'chat_query',
       templateQuery: {
-        endpointType: '', 
         endpoint: '',
         metricLabel: '',
         metric: ''
       },
       chartQueryList:[
         // {
-        //   endpointType: '', 
         //   endpoint: '',
         //   metricLabel: '',
         //   metric: ''
@@ -219,7 +217,7 @@ export default {
       this.panalData.query.forEach((item) => {
         params.push(JSON.stringify({
           endpoint: item.endpoint,
-          prom_ql: item.metric,
+          prom_ql: item.prom_ql,
           metric: item.metricLabel,
           time: '-1800'
         })) 
@@ -317,7 +315,6 @@ export default {
         id: this.$route.params.templateData.id,
         cfg: JSON.stringify(this.viewData)
       }
-
       this.$httpRequestEntrance.httpRequestEntrance('POST','dashboard/custom/save', params, () => {
         this.$Message.success(this.$t('tips.success'))
       })
