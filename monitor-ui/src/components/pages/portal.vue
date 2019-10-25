@@ -8,7 +8,7 @@
           <button type="button" class="btn btn-sm btn-confirm-f"
             @click="routerChange">
             <i class="fa fa-search" ></i>
-            搜索
+            {{$t('button.search')}}
           </button>
         </li>
       </ul>
@@ -25,7 +25,7 @@ export default {
     return {
       searchInputConfig: {
         poptipWidth: 500,
-        placeholder: '请输入主机名或IP地址，可模糊匹配',
+        placeholder: 'placeholder.endpointSearch',
         inputStyle: "width:500px;",
         // api: '/dashboard/search'
         api: this.apiCenter.resourceSearch.api
@@ -34,7 +34,7 @@ export default {
   },
   methods: {
     routerChange (){
-      this.$validate.isEmpty_reset(this.$store.state.ip) ? this.$Message.warning('请选择有效IP！') : this.$router.push({ name: 'mainView'})
+      this.$validate.isEmpty_reset(this.$store.state.ip) ? '' : this.$router.push({ name: 'mainView'})
     }, 
   },
   components: {
