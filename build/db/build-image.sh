@@ -5,13 +5,13 @@ mkdir database
 cur_dir=`dirname $0`
 cp -r ${cur_dir}/../../wiki/db/monitor_sql_01_struct.sql  database/
 
-if [ $1 == 'en' ]
+if [ $1 == 'cn' ]
 then
-cp -r ${cur_dir}/../../wiki/db/monitor_sql_02_base_data_en.sql  database/
-else
 cp -r ${cur_dir}/../../wiki/db/monitor_sql_02_base_data_cn.sql  database/
+else
+cp -r ${cur_dir}/../../wiki/db/monitor_sql_02_base_data_en.sql  database/
 fi
-：q:q
+
 cd database
 for i in `ls -1 ./*.sql`; do
 	sed -i '1 i\use monitor;SET NAMES utf8;' $i
