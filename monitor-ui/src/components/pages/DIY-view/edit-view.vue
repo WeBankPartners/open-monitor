@@ -19,7 +19,9 @@
       </div>
       <div class="zone zone-config" >
         <div class="tool-save" > 
-          <i class="fa fa-floppy-o fa-16" @click="saveConfig" aria-hidden="true"></i>
+          <button class="btn btn-sm btn-confirm-f" @click="saveConfig">保存</button>
+          <button class="btn btn-sm btn-cancle-f" @click="goback()">返回</button>
+          <!-- <i class="fa fa-floppy-o fa-16"  aria-hidden="true"></i> -->
         </div>
         <div style="display:flex">
           <section>
@@ -323,7 +325,10 @@ export default {
       if (!this.$validate.isEmpty_reset(value)) {
         this.templateQuery.metricLabel = value.label
       }
-    }
+    },
+    goback () {
+      this.$router.push({name:'viewConfig',params:this.$route.params.parentData})
+    },
   },
   components: {},
 }
