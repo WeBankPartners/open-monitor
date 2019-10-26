@@ -1,1 +1,1 @@
-export const baseURL_config = '/wecube-monitor'
+export const baseURL_config = 'http://134.175.254.251/wecube-monitor'
