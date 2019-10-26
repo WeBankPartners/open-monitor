@@ -106,8 +106,8 @@ export default {
           this.noDataTip = true
           return
         }
-        const colorSet = ['#487e89', '#153863', '#395b79',  '#153250']
-        responseData.series.forEach((item, index)=>{
+        // const colorSet = ['#487e89', '#153863', '#395b79',  '#153250']
+        responseData.series.forEach((item)=>{
           legend.push(item.name)
           item.symbol = 'none'
           item.smooth = true
@@ -116,18 +116,18 @@ export default {
           }
           item.itemStyle = {
             normal:{
-              color: colorSet[index]
+              // color: colorSet[index]
             }
           }
           item.areaStyle = {
             normal: {
-              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
-                  offset: 0,
-                  color: colorSet[index]
-              }, {
-                  offset: 1,
-                  color: colorSet[index]
-              }])
+              // color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+              //     offset: 0,
+              //     color: colorSet[index]
+              // }, {
+              //     offset: 1,
+              //     color: colorSet[index]
+              // }])
             }
           }
         }) 
@@ -159,7 +159,7 @@ export default {
       this.modifyLayoutData().then((resViewData)=>{
         let parentRouteData = this.$route.params
         parentRouteData.cfg = JSON.stringify(resViewData) 
-        this.$router.push({name: 'editView', params:{templateData: parentRouteData, panal:item}}) 
+        this.$router.push({name: 'editView', params:{templateData: parentRouteData, panal:item, parentData: this.$route.params}}) 
       })
     },
     removeGrid(itemxxx) {
