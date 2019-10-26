@@ -5,9 +5,12 @@
             <div class="header-name">
                 <i class="fa fa-th-large fa-18" aria-hidden="true"></i>
                 <span> {{$route.params.name}}</span>
+                <!-- <i class="fa fa-backward fa-18" @click="goBack" aria-hidden="true"></i> -->
             </div>
             <div class="header-tools"> 
-                <i class="fa fa-plus-square-o fa-18" @click="addItem" aria-hidden="true"></i>
+              <button class="btn btn-sm btn-confirm-f" @click="addItem">{{$t('button.add')}}</button>
+              <button class="btn btn-sm btn-cancle-f" @click="goBack()">{{$t('button.back')}}</button>
+                <!-- <i class="fa fa-plus-square-o fa-18"  aria-hidden="true"></i> -->
             </div>
         </div>
       </header>
@@ -208,6 +211,9 @@ export default {
     resizedEvent: function(i, newH, newW, newHPx, newWPx){
       this.resizeEvent(i, newH, newW, newHPx, newWPx)
     },
+    goBack () {
+      this.$router.push({name:'viewConfigIndex'})
+    },
   },
   components: {
     GridLayout: VueGridLayout.GridLayout,
@@ -230,7 +236,6 @@ export default {
   }
 </style>
 <style scoped lang="less">
-
 
 .columns {
     -moz-columns: 120px;
