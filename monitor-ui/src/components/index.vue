@@ -27,7 +27,7 @@ export default {
     background: @gray-f;
   }
   .content {
-    width:1200px;
+    // width:1200px;
     min-height: 95vh;
     height: 100%;
     margin: 0 auto;
