@@ -19,8 +19,8 @@
       </div>
       <div class="zone zone-config" >
         <div class="tool-save" > 
-          <button class="btn btn-sm btn-confirm-f" @click="saveConfig">保存</button>
-          <button class="btn btn-sm btn-cancle-f" @click="goback()">返回</button>
+          <button class="btn btn-sm btn-confirm-f" @click="saveConfig">{{$t('button.save')}}</button>
+          <button class="btn btn-sm btn-cancle-f" @click="goback()">{{$t('button.back')}}</button>
           <!-- <i class="fa fa-floppy-o fa-16"  aria-hidden="true"></i> -->
         </div>
         <div style="display:flex">
