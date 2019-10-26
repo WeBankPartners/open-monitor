@@ -19,7 +19,9 @@
       </div>
       <div class="zone zone-config" >
         <div class="tool-save" > 
-          <i class="fa fa-floppy-o fa-16" @click="saveConfig" aria-hidden="true"></i>
+          <button class="btn btn-sm btn-confirm-f" @click="saveConfig">{{$t('button.save')}}</button>
+          <button class="btn btn-sm btn-cancle-f" @click="goback()">{{$t('button.back')}}</button>
+          <!-- <i class="fa fa-floppy-o fa-16"  aria-hidden="true"></i> -->
         </div>
         <div style="display:flex">
           <section>
@@ -215,13 +217,16 @@ export default {
       }
       this.initQueryList(this.panalData.query)
       this.panalData.query.forEach((item) => {
+        console.log(item)
         params.push(JSON.stringify({
           endpoint: item.endpoint,
-          prom_ql: item.prom_ql,
+          prom_ql: item.metric,
           metric: item.metricLabel,
           time: '-1800'
         })) 
       })
+      console.log(1)
+      console.log(params)
       if (params !== []) {
         this.$httpRequestEntrance.httpRequestEntrance('GET',this.apiCenter.metricConfigView.api, {config: `[${params.join(',')}]`}, responseData => {
           var legend = []
@@ -323,7 +328,10 @@ export default {
       if (!this.$validate.isEmpty_reset(value)) {
         this.templateQuery.metricLabel = value.label
       }
-    }
+    },
+    goback () {
+      this.$router.push({name:'viewConfig',params:this.$route.params.parentData})
+    },
   },
   components: {},
 }
