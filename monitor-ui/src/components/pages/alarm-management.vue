@@ -6,7 +6,7 @@
         <Tag color="success" type="border" closable @on-close="exclude(filterItem.key)" :key="filterIndex">{{filterItem.key}}：{{filterItem.value}}</Tag>
       </template>
       <template v-if="!resultData.length">
-        <Tag color="primary">{{$t('tip.noDataTip')}}！</Tag>
+        <Tag color="primary">{{$t('table.noDataTip')}}！</Tag>
       </template>
     </section>
 
