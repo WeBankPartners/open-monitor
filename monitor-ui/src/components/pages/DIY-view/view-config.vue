@@ -5,12 +5,11 @@
             <div class="header-name">
                 <i class="fa fa-th-large fa-18" aria-hidden="true"></i>
                 <span> {{$route.params.name}}</span>
-                <!-- <i class="fa fa-backward fa-18" @click="goBack" aria-hidden="true"></i> -->
             </div>
             <div class="header-tools"> 
-              <button class="btn btn-sm btn-confirm-f" @click="addItem">{{$t('button.add')}}</button>
+              <button class="btn btn-sm btn-cancle-f" @click="addItem">{{$t('button.add')}}</button>
+              <button class="btn btn-sm btn-confirm-f" @click="saveEdit">{{$t('button.saveEdit')}}</button>
               <button class="btn btn-sm btn-cancle-f" @click="goBack()">{{$t('button.back')}}</button>
-                <!-- <i class="fa fa-plus-square-o fa-18"  aria-hidden="true"></i> -->
             </div>
         </div>
       </header>
@@ -210,6 +209,23 @@ export default {
     },
     resizedEvent: function(i, newH, newW, newHPx, newWPx){
       this.resizeEvent(i, newH, newW, newHPx, newWPx)
+    },
+    saveEdit() {
+      this.layoutData.forEach((layoutDataItem) =>{
+        this.viewData.forEach((i) =>{
+          if (layoutDataItem.id === i.viewConfig.id) {
+            i.viewConfig = layoutDataItem
+          }
+        })
+      })
+      let params = {
+        name: this.$route.params.name,
+        id: this.$route.params.id,
+        cfg: JSON.stringify(this.viewData)
+      }
+      this.$httpRequestEntrance.httpRequestEntrance('POST','dashboard/custom/save', params, () => {
+        this.$Message.success(this.$t('tips.success'))
+      })
     },
     goBack () {
       this.$router.push({name:'viewConfigIndex'})

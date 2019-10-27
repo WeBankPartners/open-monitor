@@ -95,7 +95,6 @@ export default {
       })
     },
     goToPanal(panalItem) {
-      console.log(panalItem.cfg)
       this.$router.push({name:'viewConfig',params:panalItem})
     }
   },
