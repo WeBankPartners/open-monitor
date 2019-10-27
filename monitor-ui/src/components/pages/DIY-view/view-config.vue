@@ -7,7 +7,9 @@
                 <span> {{$route.params.name}}</span>
             </div>
             <div class="header-tools"> 
-                <i class="fa fa-plus-square-o fa-18" @click="addItem" aria-hidden="true"></i>
+              <button class="btn btn-sm btn-cancle-f" @click="addItem">{{$t('button.add')}}</button>
+              <button class="btn btn-sm btn-confirm-f" @click="saveEdit">{{$t('button.saveEdit')}}</button>
+              <button class="btn btn-sm btn-cancle-f" @click="goBack()">{{$t('button.back')}}</button>
             </div>
         </div>
       </header>
@@ -106,8 +108,8 @@ export default {
           this.noDataTip = true
           return
         }
-        const colorSet = ['#487e89', '#153863', '#395b79',  '#153250']
-        responseData.series.forEach((item, index)=>{
+        // const colorSet = ['#487e89', '#153863', '#395b79',  '#153250']
+        responseData.series.forEach((item)=>{
           legend.push(item.name)
           item.symbol = 'none'
           item.smooth = true
@@ -116,18 +118,18 @@ export default {
           }
           item.itemStyle = {
             normal:{
-              color: colorSet[index]
+              // color: colorSet[index]
             }
           }
           item.areaStyle = {
             normal: {
-              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
-                  offset: 0,
-                  color: colorSet[index]
-              }, {
-                  offset: 1,
-                  color: colorSet[index]
-              }])
+              // color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+              //     offset: 0,
+              //     color: colorSet[index]
+              // }, {
+              //     offset: 1,
+              //     color: colorSet[index]
+              // }])
             }
           }
         }) 
@@ -159,7 +161,7 @@ export default {
       this.modifyLayoutData().then((resViewData)=>{
         let parentRouteData = this.$route.params
         parentRouteData.cfg = JSON.stringify(resViewData) 
-        this.$router.push({name: 'editView', params:{templateData: parentRouteData, panal:item}}) 
+        this.$router.push({name: 'editView', params:{templateData: parentRouteData, panal:item, parentData: this.$route.params}}) 
       })
     },
     removeGrid(itemxxx) {
@@ -208,6 +210,26 @@ export default {
     resizedEvent: function(i, newH, newW, newHPx, newWPx){
       this.resizeEvent(i, newH, newW, newHPx, newWPx)
     },
+    saveEdit() {
+      this.layoutData.forEach((layoutDataItem) =>{
+        this.viewData.forEach((i) =>{
+          if (layoutDataItem.id === i.viewConfig.id) {
+            i.viewConfig = layoutDataItem
+          }
+        })
+      })
+      let params = {
+        name: this.$route.params.name,
+        id: this.$route.params.id,
+        cfg: JSON.stringify(this.viewData)
+      }
+      this.$httpRequestEntrance.httpRequestEntrance('POST','dashboard/custom/save', params, () => {
+        this.$Message.success(this.$t('tips.success'))
+      })
+    },
+    goBack () {
+      this.$router.push({name:'viewConfigIndex'})
+    },
   },
   components: {
     GridLayout: VueGridLayout.GridLayout,
@@ -230,7 +252,6 @@ export default {
   }
 </style>
 <style scoped lang="less">
-
 
 .columns {
     -moz-columns: 120px;
