@@ -217,7 +217,6 @@ export default {
       }
       this.initQueryList(this.panalData.query)
       this.panalData.query.forEach((item) => {
-        console.log(item)
         params.push(JSON.stringify({
           endpoint: item.endpoint,
           prom_ql: item.metric,
@@ -225,8 +224,6 @@ export default {
           time: '-1800'
         })) 
       })
-      console.log(1)
-      console.log(params)
       if (params !== []) {
         this.$httpRequestEntrance.httpRequestEntrance('GET',this.apiCenter.metricConfigView.api, {config: `[${params.join(',')}]`}, responseData => {
           var legend = []
