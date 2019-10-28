@@ -41,6 +41,8 @@ const router = new Router({
            component: () => import('@/components/pages/DIY-view/view-config') },
           { path: 'editView',  name: 'editView', title: '自定义视图编辑', meta: {},
            component: () => import('@/components/pages/DIY-view/edit-view') },
+           { path: 'searchHomepage',  name: 'searchHomepage', title: '搜索主页', meta: {},
+           component: () => import('@/components/pages/Search-homepage') }
         ]
       },
       {

@@ -88,6 +88,8 @@ func InitHttpServer() {
 			dashboardApi.POST("/custom/save", dashboard.SaveCustomDashboard)
 			dashboardApi.GET("/custom/delete", dashboard.DeleteCustomDashboard)
 			dashboardApi.GET("/server/chart", dashboard.GetChartsByEndpoint)
+			dashboardApi.GET("/custom/main/get", dashboard.GetMainPage)
+			dashboardApi.GET("/custom/main/set", dashboard.SetMainPage)
 		}
 		agentApi := authApi.Group("/agent")
 		{

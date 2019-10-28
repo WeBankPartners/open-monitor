@@ -307,3 +307,27 @@ func GetEndpointMetric(id int) (err error,result []*m.OptionModel) {
 	}
 	return err,result
 }
+
+func GetMainCustomDashboard() (error, m.CustomDashboardTable) {
+	var result []*m.CustomDashboardTable
+	err := x.SQL("SELECT * FROM custom_dashboard WHERE main=1").Find(&result)
+	if len(result) > 0 {
+		return nil,*result[0]
+	}else{
+		return err,m.CustomDashboardTable{Id:0}
+	}
+}
+
+func SetMainCustomDashboard(id int) error {
+	var sqls []string
+	err,cdt := GetMainCustomDashboard()
+	if cdt.Id > 0 {
+		if cdt.Id == id {
+			return nil
+		}
+		sqls = append(sqls, fmt.Sprintf("UPDATE custom_dashboard SET main=0 WHERE id=%d", cdt.Id))
+	}
+	sqls = append(sqls, fmt.Sprintf("UPDATE custom_dashboard SET main=1 WHERE id=%d", id))
+	err = ExecuteTransactionSql(sqls)
+	return err
+}
