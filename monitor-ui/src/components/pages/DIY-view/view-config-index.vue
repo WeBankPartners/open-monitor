@@ -102,7 +102,7 @@ export default {
         name: this.modelConfig.addRow.name,
         cfg: ''
       }
-      this.$httpRequestEntrance.httpRequestEntrance('POST','dashboard/custom/save', params, () => {
+      this.$httpRequestEntrance.httpRequestEntrance('POST',this.apiCenter.template.save, params, () => {
         this.viewList()
       })
     },
@@ -112,13 +112,13 @@ export default {
     },
     removeTemplate (item) {
       let params = {id: item.id}
-      this.$httpRequestEntrance.httpRequestEntrance('GET','dashboard/custom/delete', params, () => {
+      this.$httpRequestEntrance.httpRequestEntrance('GET',this.apiCenter.template.delete, params, () => {
         this.$Message.success(this.$t('button.remove')+this.$t('tips.success'))
         this.viewList()
       })
     },
     viewList () {
-      this.$httpRequestEntrance.httpRequestEntrance('GET','dashboard/custom/list', '', responseData => {
+      this.$httpRequestEntrance.httpRequestEntrance('GET',this.apiCenter.template.list, '', responseData => {
         this.setDashboardModel.templateList = []
         this.setDashboardModel.addRow.templateSelect = null
         this.dataList = responseData
@@ -138,7 +138,7 @@ export default {
     },
     setDashboardSave () {
       let params = {id: this.setDashboardModel.addRow.templateSelect}
-      this.$httpRequestEntrance.httpRequestEntrance('GET','dashboard/custom/main/set', params, () => {
+      this.$httpRequestEntrance.httpRequestEntrance('GET',this.apiCenter.template.delete, params, () => {
         this.JQ('#set_dashboard_modal').modal('hide')
         this.$Message.success(this.$t('tips.success'))
         this.viewList()

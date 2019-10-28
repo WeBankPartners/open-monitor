@@ -87,12 +87,12 @@ export default {
   },
   methods: {
     initPanals () {
-      this.viewData.forEach((item) => {
+      this.viewData.forEach((item,viewIndex) => {
         this.layoutData.push(item.viewConfig)
-        this.requestChart(item.viewConfig.id, item.query)
+        this.requestChart(item.viewConfig.id, item.query,viewIndex)
       })
     },
-    requestChart (id, query) {
+    requestChart (id, query,viewIndex) {
       let params = []
       query.forEach((item) => {
         params.push(JSON.stringify({
@@ -108,8 +108,10 @@ export default {
           this.noDataTip = true
           return
         }
-        // const colorSet = ['#487e89', '#153863', '#395b79',  '#153250']
-        responseData.series.forEach((item)=>{
+        const colorx = ['#61a0a8', '#2f4554', '#c23531', '#d48265', '#91c7ae', '#749f83', '#ca8622', '#bda29a', '#6e7074', '#546570', '#c4ccd3']
+        const colorSet = colorx.concat(colorx,colorx,colorx,colorx).splice(viewIndex+4)
+        responseData.series.forEach((item,index)=>{
+          var index = Math.floor((Math.random()*colorSet.length));
           legend.push(item.name)
           item.symbol = 'none'
           item.smooth = true
@@ -118,18 +120,18 @@ export default {
           }
           item.itemStyle = {
             normal:{
-              // color: colorSet[index]
+              color: colorSet[index]
             }
           }
           item.areaStyle = {
             normal: {
-              // color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
-              //     offset: 0,
-              //     color: colorSet[index]
-              // }, {
-              //     offset: 1,
-              //     color: colorSet[index]
-              // }])
+              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+                  offset: 0,
+                  color: colorSet[index]
+              }, {
+                  offset: 1,
+                  color: 'white'
+              }])
             }
           }
         }) 
@@ -223,7 +225,7 @@ export default {
         id: this.$route.params.id,
         cfg: JSON.stringify(this.viewData)
       }
-      this.$httpRequestEntrance.httpRequestEntrance('POST','dashboard/custom/save', params, () => {
+      this.$httpRequestEntrance.httpRequestEntrance('POST',this.apiCenter.template.save, params, () => {
         this.$Message.success(this.$t('tips.success'))
       })
     },

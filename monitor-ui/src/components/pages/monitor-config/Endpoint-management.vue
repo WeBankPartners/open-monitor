@@ -268,7 +268,7 @@
       },
       historyAlarm (rowData) {
         let params = {id: rowData.id}
-        this.$httpRequestEntrance.httpRequestEntrance('GET', 'alarm/history', params, (responseData) => {
+        this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.alarm.history, params, (responseData) => {
           this.historyAlarmPageConfig.table.tableData = responseData
         })
         this.JQ('#history_alarm_Modal').modal('show')
