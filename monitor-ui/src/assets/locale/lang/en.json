@@ -36,8 +36,7 @@
   },
   "title": {
     "viewConfiguration": "View Configuration",
-    "templateName": "Template Name",
-    "addViewTemplate": "Add View Template",
+    "templateName": "Template",
     "viewTemplate": "View Template",
     "updateTime": "Update Time",
     "endpointAdd": "Endpoint Add",
@@ -54,6 +53,7 @@
     "logConfiguration": "Log Configuration",
     "addMetric": "Add metric",
     "addViewTemplate": "Add View Template",
+    "setDashboard": "Set Dashboard",
     "saveEdit": "Save edit",
     "save": "OK",
     "back": "Back",
