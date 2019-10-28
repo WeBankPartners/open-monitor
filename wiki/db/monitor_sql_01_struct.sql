@@ -236,6 +236,7 @@ CREATE TABLE `custom_dashboard` (
   `name` VARCHAR(50) DEFAULT NULL,
   `panels_group` INT(11) DEFAULT NULL,
   `cfg` MEDIUMTEXT,
+  `main` tinyint(4) default 0,
   `create_user` VARCHAR(50) DEFAULT '',
   `update_user` VARCHAR(50) DEFAULT '',
   `create_at` DATETIME DEFAULT NULL,
