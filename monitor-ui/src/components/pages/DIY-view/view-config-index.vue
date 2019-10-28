@@ -1,11 +1,14 @@
 <template>
   <div class="">
     <div class="operational-zone">
-      <Select v-model="model1" style="width:200px">
+      <!-- <Select v-model="model1" style="width:200px">
         <Option v-for="item in cityList" :value="item.value" :key="item.value">{{ item.label }}</Option>
-      </Select>
+      </Select> -->
       <button class="btn btn-sm btn-confirm-f" @click="addView">
-        <i class="fa fa-plus"></i>{{$t('title.addViewTemplate')}}
+        <i class="fa fa-plus"></i>{{$t('button.addViewTemplate')}}
+      </button>
+      <button class="btn btn-sm btn-cancle-f" @click="setDashboard">
+        {{$t('button.setDashboard')}}
       </button>
     </div>
     <section>
@@ -14,6 +17,7 @@
             <Card>
               <p slot="title" class="panal-title">
                 {{$t('title.templateName')}}:{{panalItem.name}}
+                  <i class="fa fa-star" v-if="panalItem.main === 1" aria-hidden="true"></i>
               </p>
               <a slot="extra">
                 <button class="btn btn-sm btn-confirm-f" @click="goToPanal(panalItem)">{{$t('button.view')}}</button>
@@ -30,6 +34,17 @@
       <!-- </ul> -->
     </section>
     <ModalComponent :modelConfig="modelConfig"></ModalComponent>
+    <ModalComponent :modelConfig="setDashboardModel">
+      <div slot="setDashboard">  
+        <div class="marginbottom params-each">
+          <label class="col-md-2 label-name lable-name-select">{{$t('title.templateName')}}:</label>
+          <Select v-model="setDashboardModel.addRow.templateSelect" style="width:338px">
+              <Option v-for="item in setDashboardModel.templateList" :value="item.value" :key="item.value">
+              {{item.label}}</Option>
+          </Select>
+        </div>
+      </div>
+    </ModalComponent>
   </div>
 </template>
 
@@ -62,6 +77,19 @@ export default {
           name: null,
         },
       },
+      setDashboardModel: {
+        modalId: 'set_dashboard_modal',
+        modalTitle: 'button.setDashboard',
+        isAdd: true,
+        saveFunc: 'setDashboardSave',
+        config: [
+          {name:'setDashboard',type:'slot'}
+        ],
+        addRow: {
+          templateSelect: null
+        },
+        templateList: []
+      }
     }
   },
   mounted(){
@@ -91,7 +119,29 @@ export default {
     },
     viewList () {
       this.$httpRequestEntrance.httpRequestEntrance('GET','dashboard/custom/list', '', responseData => {
+        this.setDashboardModel.templateList = []
+        this.setDashboardModel.addRow.templateSelect = null
         this.dataList = responseData
+        responseData.forEach((item) => {
+          this.setDashboardModel.templateList.push({
+            label: item.name,
+            value: item.id
+          })
+          if (item.main === 1) {
+            this.setDashboardModel.addRow.templateSelect = item.id
+          }
+        }) 
+      })
+    },
+    setDashboard () {
+      this.JQ('#set_dashboard_modal').modal('show')
+    },
+    setDashboardSave () {
+      let params = {id: this.setDashboardModel.addRow.templateSelect}
+      this.$httpRequestEntrance.httpRequestEntrance('GET','dashboard/custom/main/set', params, () => {
+        this.JQ('#set_dashboard_modal').modal('hide')
+        this.$Message.success(this.$t('tips.success'))
+        this.viewList()
       })
     },
     goToPanal(panalItem) {
@@ -114,5 +164,8 @@ export default {
 }
 .panal-content {
   font-size: 12px;
+}
+.fa-star {
+  color: @color-orange-F;
 }
 </style>
