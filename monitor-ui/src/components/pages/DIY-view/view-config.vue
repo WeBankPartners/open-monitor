@@ -223,7 +223,7 @@ export default {
         id: this.$route.params.id,
         cfg: JSON.stringify(this.viewData)
       }
-      this.$httpRequestEntrance.httpRequestEntrance('POST','dashboard/custom/save', params, () => {
+      this.$httpRequestEntrance.httpRequestEntrance('POST',this.apiCenter.template.save, params, () => {
         this.$Message.success(this.$t('tips.success'))
       })
     },

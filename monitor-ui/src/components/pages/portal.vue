@@ -60,7 +60,7 @@ export default {
   },
   methods: {
     getDashboardData () {
-      this.$httpRequestEntrance.httpRequestEntrance('GET','dashboard/custom/main/get', '', responseData => {
+      this.$httpRequestEntrance.httpRequestEntrance('GET',this.apiCenter.template.get, '', responseData => {
         if (responseData.cfg === '') {
           this.$router.push({path: 'searchHomepage'}) 
         }else {
