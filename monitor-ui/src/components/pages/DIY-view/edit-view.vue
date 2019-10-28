@@ -290,6 +290,17 @@ export default {
       this.chartQueryList.splice(query,1)
     },
     saveConfig () {
+      const params = this.pp()
+      this.$httpRequestEntrance.httpRequestEntrance('POST','dashboard/custom/save', params, () => {
+        this.$Message.success(this.$t('tips.success'))
+      })
+    },
+    setMetric(value) {
+      if (!this.$validate.isEmpty_reset(value)) {
+        this.templateQuery.metricLabel = value.label
+      }
+    },
+    pp() {
       let query = []
       this.chartQueryList.forEach((item) => {
         query.push({
@@ -317,17 +328,11 @@ export default {
         id: this.$route.params.templateData.id,
         cfg: JSON.stringify(this.viewData)
       }
-      this.$httpRequestEntrance.httpRequestEntrance('POST','dashboard/custom/save', params, () => {
-        this.$Message.success(this.$t('tips.success'))
-      })
-    },
-    setMetric(value) {
-      if (!this.$validate.isEmpty_reset(value)) {
-        this.templateQuery.metricLabel = value.label
-      }
+      return params
     },
     goback () {
-      this.$router.push({name:'viewConfig',params:this.$route.params.parentData})
+      const params = this.pp()
+      this.$router.push({name:'viewConfig',params:params})
     },
   },
   components: {},
