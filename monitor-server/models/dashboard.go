@@ -221,6 +221,7 @@ type CustomDashboardTable struct {
 	Name  string  `json:"name"`
 	PanelsGroup  int  `json:"panels_group"`
 	Cfg  string  `json:"cfg"`
+	Main  int  `json:"main"`
 	CreateUser  string  `json:"create_user"`
 	UpdateUser  string  `json:"update_user"`
 	CreateAt  time.Time  `json:"create_at"`
