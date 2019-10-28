@@ -1,6 +1,7 @@
 <template>
   <div class="single-chart">
-    <div v-if="!noDataTip" :id="elId" class="echart"></div>
+    <div v-if="!noDataTip" :id="elId" class="echart">
+    </div>
     <div v-if="noDataTip" class="echart echart-no-data-tip">
       <span>~~~暂无数据~~~</span>
     </div>
@@ -12,6 +13,7 @@ import {generateUuid} from '@/assets/js/utils'
 
 // 引入 ECharts 主模块
 import {drawChart} from  '@/assets/config/chart-rely'
+const echarts = require('echarts/lib/echarts');
 
 export default {
   name: '',
@@ -27,6 +29,7 @@ export default {
   props: {
     chartItemx: Object,
     params: Object,
+    chartIndex: String
   },
   created (){
     generateUuid().then((elId)=>{
@@ -37,7 +40,7 @@ export default {
     this.getchartdata()
     if (this.params.autoRefresh > 0) {
       this.interval = setInterval(()=>{
-        this.refreshChart()
+        this.getchartdata()
       },this.params.autoRefresh*1000)
     }
   },
@@ -45,20 +48,6 @@ export default {
     clearInterval(this.interval)
   },
   methods: {
-    refreshChart() {
-      let params = {
-        id: this.chartItemx.id,
-        endpoint: [this.params.endpoint.split(':')[0]],
-        metric: [this.chartItemx.metric[0]],
-        time: this.params.time.toString(),
-        start: this.params.start + '',
-        end: this.params.end + ''
-      }
-      this.$httpRequestEntrance.httpRequestEntrance('GET', this.chartItemx.url, params, responseData => {
-        this.config.series = responseData.series
-         drawChart(this, this.config)
-      })
-    },
     getchartdata () {
       let params = {
         id: this.chartItemx.id,
@@ -70,18 +59,35 @@ export default {
       }
       this.$httpRequestEntrance.httpRequestEntrance('GET', this.chartItemx.url, params, responseData => {
         var legend = []
+        const colorx = ['#61a0a8', '#2f4554', '#c23531', '#d48265', '#91c7ae', '#749f83', '#ca8622', '#bda29a', '#6e7074', '#546570', '#c4ccd3']
+        const colorSet = colorx.concat(colorx,colorx,colorx,colorx).splice(this.chartIndex + 4)
         if (responseData.series.length === 0) {
           this.noDataTip = true
           return
         }
-        responseData.series.forEach((item)=>{
+        responseData.series.forEach((item,index)=>{
           legend.push(item.name)
           item.symbol = 'none'
           item.smooth = true
           item.lineStyle = {
             width: 1
           }
-          item.areaStyle = {}
+          item.itemStyle = {
+            normal:{
+              color: colorSet[index]
+            }
+          }
+          item.areaStyle = {
+            normal: {
+              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+                  offset: 0,
+                  color: colorSet[index]
+              }, {
+                  offset: 1,
+                  color: 'white'
+              }])
+            }
+          }
         }) 
         let config = {
           title: responseData.title,
