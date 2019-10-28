@@ -572,3 +572,25 @@ func GetChartsByEndpoint(c *gin.Context)  {
 	}
 	mid.ReturnData(c, eOption)
 }
+
+func GetMainPage(c *gin.Context)  {
+	err,result := db.GetMainCustomDashboard()
+	if err != nil {
+		mid.LogError("get main page fail ", err)
+	}
+	mid.ReturnData(c, result)
+}
+
+func SetMainPage(c *gin.Context)  {
+	id,err := strconv.Atoi(c.Query("id"))
+	if err != nil || id <= 0 {
+		mid.ReturnValidateFail(c, "Id validate fail")
+		return
+	}
+	err = db.SetMainCustomDashboard(id)
+	if err != nil {
+		mid.ReturnError(c, "Set main dashboard fail", err)
+		return
+	}
+	mid.ReturnSuccess(c, "Success")
+}
