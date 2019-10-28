@@ -17,7 +17,7 @@
         </div>
       </template>
       <template v-for="(chartItemx,chartIndexx) in activeCharts">
-          <SingleChart @sendConfig="receiveConfig" :chartItemx="chartItemx" :key="chartIndexx" :params="params"> </SingleChart>
+          <SingleChart @sendConfig="receiveConfig" :chartItemx="chartItemx" :chartIndex="chartIndexx" :key="chartIndexx" :params="params"> </SingleChart>
       </template>
     </section>
     
