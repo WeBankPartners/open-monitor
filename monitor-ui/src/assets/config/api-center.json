@@ -102,6 +102,7 @@
     "template": {
         "list": "dashboard/custom/list",
         "get": "dashboard/custom/main/get",
+        "templateSet": "dashboard/custom/main/set",
         "save": "dashboard/custom/save",
         "delete": "dashboard/custom/delete"
     }
