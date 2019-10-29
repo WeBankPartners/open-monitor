@@ -111,7 +111,6 @@ export default {
         const colorx = ['#61a0a8', '#2f4554', '#c23531', '#d48265', '#91c7ae', '#749f83', '#ca8622', '#bda29a', '#6e7074', '#546570', '#c4ccd3']
         const colorSet = colorx.concat(colorx,colorx,colorx,colorx).splice(viewIndex+4)
         responseData.series.forEach((item,index)=>{
-          var index = Math.floor((Math.random()*colorSet.length));
           legend.push(item.name)
           item.symbol = 'none'
           item.smooth = true
@@ -213,17 +212,23 @@ export default {
       this.resizeEvent(i, newH, newW, newHPx, newWPx)
     },
     saveEdit() {
+      let res = []
       this.layoutData.forEach((layoutDataItem) =>{
         this.viewData.forEach((i) =>{
           if (layoutDataItem.id === i.viewConfig.id) {
-            i.viewConfig = layoutDataItem
+            res.push({
+              panalTitle: i.panalTitle,
+              panalUnit: i.panalUnit,
+              query: i.query,
+              viewConfig: layoutDataItem
+            })
           }
         })
       })
       let params = {
         name: this.$route.params.name,
         id: this.$route.params.id,
-        cfg: JSON.stringify(this.viewData)
+        cfg: JSON.stringify(res)
       }
       this.$httpRequestEntrance.httpRequestEntrance('POST',this.apiCenter.template.save, params, () => {
         this.$Message.success(this.$t('tips.success'))
@@ -256,5 +261,8 @@ export default {
 .vue-grid-item:not(.vue-grid-placeholder) {
     background: @gray-f;
     border: 1px solid @gray-f;
+}
+.echart-no-data-tip {
+  text-align: center;
 }
 </style>
