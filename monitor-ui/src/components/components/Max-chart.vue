@@ -37,7 +37,7 @@
           </ul>
         </div>
         <div class="chart-zone" >
-          <div :id="elId" class="echart" style="height:400px;width:750px"></div>
+          <div :id="elId" class="echart" :style="chartStyle"></div>
         </div>
       </div>
   </div>
@@ -59,6 +59,10 @@ export default {
         dateRange: '',
         agg: 'none' // 聚合类型
       },
+      chartStyle: {
+        minHeight: '400px',
+        minWidth: '700px'
+      }
     }
   },
   watch: {
@@ -72,7 +76,10 @@ export default {
   created (){
     generateUuid().then((elId)=>{
       this.elId =  `id_${elId}`; 
+      this.chartStyle.width = window.screen.width * 0.6 + 'px'
+      this.chartStyle.height = window.screen.height * 0.4 + 'px'
     })
+
   },
   methods: {
     datePick (data) {
@@ -121,7 +128,7 @@ export default {
 
 <style scoped lang="less">
   .max-chart {
-    width:800px;
+    // width:800px;
     min-height: 540px;
     height: 123vh;
     background: white;

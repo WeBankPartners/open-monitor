@@ -8,6 +8,9 @@
         "_des": "主视图配置获取",
         "api": "/dashboard/main"
     },
+    "alarm": {
+        "history": "alarm/history"
+    },
     "groupManagement": {
         "_des": "组管理",
         "list": {
@@ -95,5 +98,11 @@
         "close": {
             "api": "alarm/problem/close"
         }
+    },
+    "template": {
+        "list": "dashboard/custom/list",
+        "get": "dashboard/custom/main/get",
+        "save": "dashboard/custom/save",
+        "delete": "dashboard/custom/delete"
     }
 }
