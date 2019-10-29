@@ -138,7 +138,7 @@ export default {
     },
     setDashboardSave () {
       let params = {id: this.setDashboardModel.addRow.templateSelect}
-      this.$httpRequestEntrance.httpRequestEntrance('GET',this.apiCenter.template.delete, params, () => {
+      this.$httpRequestEntrance.httpRequestEntrance('GET',this.apiCenter.template.templateSet, params, () => {
         this.JQ('#set_dashboard_modal').modal('hide')
         this.$Message.success(this.$t('tips.success'))
         this.viewList()
