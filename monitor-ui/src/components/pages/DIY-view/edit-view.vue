@@ -291,7 +291,7 @@ export default {
     },
     saveConfig () {
       const params = this.pp()
-      this.$httpRequestEntrance.httpRequestEntrance('POST','dashboard/custom/save', params, () => {
+      this.$httpRequestEntrance.httpRequestEntrance('POST',this.apiCenter.template.save, params, () => {
         this.$Message.success(this.$t('tips.success'))
       })
     },

@@ -7,9 +7,6 @@
 *
  */
 import $ from 'jquery'
-// import './animate.css'
-import httpRequestEntrance from './httpRequestEntrance.js'
-import Promise from 'promise'
 
 /*
  * Func:单一验证字段是否为空并提示功能
@@ -233,147 +230,6 @@ const returnObjByValue = (val, key, options) =>{
   }
 }
 
-/*
- *Func: 后台获取select数据赋值公共方法
- * @param {Object} that (调用页面当前对象)
- * @param {String} API (匹配字段)
- * @param {Object} params (接口所需参数)
- * @param {String} receiveParams (接收数据字段层级关系)
- *
- */
-const getSelectOptions = (that, API, params, receiveParams) => {
-  return that.$httpRequestEntrance.httpRequestEntrance('GET', API, params, (responseData) => {
-    let res = responseData.data
-    if (res.length > 0) {
-      let arr = receiveParams.split('.')
-      let temp = that
-      for(let i=0;i<arr.length ;i++){
-        temp = temp[arr[i]]
-      }
-      res.forEach((item) => {
-        let desc =  (item.desc === null)? '-':item.desc
-        temp.push({
-          name: item.name + '(' + desc + ')',
-          id: item.id
-        })
-      })
-    }
-  })
-}
-
-const upgradePrice = (that, Api, params) => {
-  // 初始化价格显示
-  that.$httpRequestEntrance.httpRequestEntrance('POST', Api,
-  params, (responseData) => {
-    that.price.isInquiryPriceOK_else_isAllNull = false
-    that.price.price = responseData.sum_price // 升级后价格
-    that.price.beforeUpgradePrice = responseData.sum_before_upgrade_price // 升级前价格
-    that.price.productDetails = []
-    that.price.discounts = []
-    for (let item of responseData.data) {
-      if (item.price !== null) {
-        that.price.productDetails.push({
-          productName: item.product.name,
-          price:item.price_display,
-          priceUnit: item.charging_pkg.measurement_display
-        })
-        for (let discountInfo of item.discounts) {
-          that.price.discounts.push({
-            started_date: discountInfo.started_date,
-            ended_date: discountInfo.ended_date,
-            discount_name: discountInfo.discount_config.name
-          })
-        }
-      }
-    }
-    if (that.price.productDetails.length > 0) {
-      that.price.isInquiryPriceOK = true
-      that.price.isInquiryPriceOK_else_isAllNull = false
-    } else {
-      that.price.isInquiryPriceOK = false
-      that.price.isInquiryPriceOK_else_isAllNull = true
-    }
-  }, {isNeedloading: false})
-}
-
-const inquiryPrice = (that, Api, params) => {
-  // 初始化价格显示
-  that.price.isInquiryPriceOK = false
-  return new Promise(function(resolve) {
-    let resultPrice = managePrice(that, Api, params)
-    resultPrice.then((result) => {
-      resolve(result)
-    })
-  })  
-}
-
-
-const managePrice = (that, Api, params) => {
-  return new Promise(function(resolve) {
-    let xxPrice = {
-      isInquiryPriceOK: false, // 是否获取价格成功
-      isInquiryPriceOK_else_isAllNull: false,
-      discounts: [], // 优惠活动信息
-      cheapPrice: 0, // 节省价格
-      totalPrice: 0, // 缓存优惠后价格
-      productDetails: [], // 缓存产品价格详细信息
-      wholeYearPrice: 0
-    }
-    that.$httpRequestEntrance.httpRequestEntrance('POST', Api,
-      params, (responseData) => {
-        xxPrice.isInquiryPriceOK_else_isAllNull = false
-        xxPrice.totalPrice = responseData.sum_price
-        xxPrice.cheapPrice = responseData.cheap_price
-        xxPrice.productDetails = []
-        xxPrice.discounts = []
-        xxPrice.wholeYearPrice = (responseData.whole_year_price === null ? 0: responseData.whole_year_price)
-        for (let item of responseData.data) {
-          if (item.price !== null) {
-            xxPrice.productDetails.push({
-              productName: item.product.name,
-              price: item.price_display,
-              priceUnit: item.charging_pkg.measurement_display
-            })
-            for (let discountInfo of item.discounts) {
-              xxPrice.discounts.push({
-                started_date: discountInfo.started_date,
-                ended_date: discountInfo.ended_date,
-                discount_name: discountInfo.discount_config.name
-              })
-            }
-          }
-        }
-        if (xxPrice.productDetails.length > 0) {
-          xxPrice.isInquiryPriceOK = true
-          xxPrice.isInquiryPriceOK_else_isAllNull = false
-        } else {
-          xxPrice.isInquiryPriceOK = false
-          xxPrice.isInquiryPriceOK_else_isAllNull = true
-        }
-        resolve(xxPrice)
-      }, {isNeedloading: false})
-  })
-}
-
-//订单产品可用区是否在该产品类型下可用
-const  azIsAvailable = (productCode,azid,tip,global) =>{
-  return httpRequestEntrance.httpRequestEntrance('GET', 'v1/azs',
-  {enabled: true, product_code: productCode}, (responseData) => {
-    let res = responseData.data
-    let flag = false
-    if (res.length > 0) {
-      res.forEach((item) => {
-        if(item.id === azid){
-          flag = true
-        }
-      })
-    }
-    if(!flag&&tip){
-      global.$Message.warning(tip)
-    }
-    return flag
-  })
-}
 //对象数组转对象
 const switchFormat=(arr,key,value)=>{
   let obj = {}
@@ -381,19 +237,6 @@ const switchFormat=(arr,key,value)=>{
     obj[item[key]] = item[value]
   })
   return obj
-}
-
-//隐藏手机号码
-const coverPhone=(area,phone)=>{
-  let funcs={
-    '86':()=>{
-      return phone.slice(0,3)+'****'+phone.slice(7)
-    },
-    '852':()=>{
-      return '****'+phone.slice(4)
-    }
-  }
-  return funcs[area]()
 }
 /*
  *Func: 精确格式化数字
@@ -430,12 +273,7 @@ export const validate = {
   isContainChina, //是否包含中文字符
   modal_confirm_custom,
   valueFromExpression, //多级表达式取值
-  azIsAvailable,//该订单产品可用区是否在该产品类型下可用
   returnObjByValue, // 根据选中值返回选中对象
-  getSelectOptions, // 获取租户
-  inquiryPrice, // 产品询价
-  upgradePrice, // 产品询价升级
   // formatNumber, // 精确格式化数字
-  switchFormat,//对象数组转对象
-  coverPhone,//隐藏手机号码
+  switchFormat//对象数组转对象
 }
