@@ -75,7 +75,6 @@ export default {
       if (this.dateRange[1] !== '') {
         this.dateRange[1] = this.dateRange[1] + ' 23:59:59'
       }
-  
       this.getChartsConfig()
     },
     getChartsConfig () {
