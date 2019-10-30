@@ -36,6 +36,7 @@
   },
   "title": {
     "viewConfiguration": "View Configuration",
+    "metricConfiguration": "Metric Configuration",
     "templateName": "Template",
     "viewTemplate": "View Template",
     "updateTime": "Update Time",

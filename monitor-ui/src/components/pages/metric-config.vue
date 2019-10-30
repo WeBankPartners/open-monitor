@@ -1,6 +1,6 @@
 <template>
   <div class="text-align:center; ">
-    <Title :title="$t('title.viewConfiguration')"></Title>
+    <Title :title="$t('title.metricConfiguration')"></Title>
     <div style="margin-bottom:24px;">
       <Notice :noticeConfig='noticeConfig' v-if="$i18n.locale!='en'"> </Notice>
       <Searchinput :parentConfig="searchInputConfig" ref="choicedIP"></Searchinput> 
@@ -272,7 +272,7 @@ export default {
         params.push({id,metric,prom_ql,metric_type: this.$store.state.ip.type})
       })
       this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.metricUpdate.api, params, () => {
-        this.$Message.success(this.$t('button.add')+this.$t('tips.success'))
+        this.$Message.success(this.$t('tips.success'))
         this.metricSelected = []
         this.editMetric = []
         this.isRequestChartData = false
