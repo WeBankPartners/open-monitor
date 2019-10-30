@@ -48,9 +48,16 @@
           <section class="zone-config-operation">
             <div v-if="activeStep==='chat_query'">
               <div class="tag-display">
-                <Tag v-for="(query, queryIndex) in chartQueryList"  color="primary" 
-               type="border" :key="queryIndex" :name="queryIndex" closable
-               @on-close="removeQuery(query)">{{$t('field.endpoint')}}：{{query.endpoint}};  {{$t('field.metric')}}：{{query.metricLabel}}</Tag>
+                <Tag 
+                  v-for="(query, queryIndex) in chartQueryList"
+                  color="primary" 
+                  type="border"
+                  :key="queryIndex"
+                  :name="queryIndex" 
+                  closable
+                  @on-close="removeQuery(queryIndex)">
+                  {{$t('field.endpoint')}}：{{query.endpoint}};  {{$t('field.metric')}}：{{query.metricLabel}}
+                </Tag>
               </div>
               <div class="condition-zone">
                 <ul>
@@ -286,8 +293,8 @@ export default {
       this.options = []
       this.metricList = []
     },
-    removeQuery (query) {
-      this.chartQueryList.splice(query,1)
+    removeQuery (queryIndex) {
+      this.chartQueryList.splice(queryIndex,1)
     },
     saveConfig () {
       const params = this.pp()
