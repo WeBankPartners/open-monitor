@@ -89,15 +89,24 @@ func PrometheusData(query m.QueryMonitorData) []*m.SerialModel  {
 				tmpName = strings.Replace(tmpName, "$"+k, v, -1)
 			}
 		}
-		if query.Legend == "$custom_metric" {
-			tmpName = query.Metric[0]
-			if len(data.Data.Result) > 1 {
-				tmpName += "{"
-				for k,v := range otr.Metric {
-					tmpName += fmt.Sprintf("%s=%s,", k, v)
+		if strings.Contains(query.Legend, "$custom") {
+			if query.Legend == "$custom" {
+				tmpName = fmt.Sprintf("%s:%s", query.Endpoint[0], query.Metric[0])
+				if len(data.Data.Result) > 1 {
+					tmpName += "{"
+					for k,v := range otr.Metric {
+						if k == "job" && v == "consul" {
+							continue
+						}
+						tmpName += fmt.Sprintf("%s=%s,", k, v)
+					}
+					tmpName = tmpName[:len(tmpName)-1]
+					tmpName += "}"
 				}
-				tmpName = tmpName[:len(tmpName)-1]
-				tmpName += "}"
+			}else if query.Legend == "$custom_metric" {
+				tmpName = query.Metric[0]
+			}else if query.Legend == "$custom_endpoint" {
+				tmpName = query.Endpoint[0]
 			}
 		}
 		serial.Name = tmpName
