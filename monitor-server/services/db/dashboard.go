@@ -139,7 +139,7 @@ func SearchHost(endpoint string) (error, []*m.OptionModel) {
 	options := []*m.OptionModel{}
 	var hosts []*m.EndpointTable
 	endpoint = `%` + endpoint + `%`
-	err := x.SQL("SELECT * FROM endpoint WHERE ip LIKE ? OR NAME LIKE ? order by ip limit 10", endpoint, endpoint).Find(&hosts)
+	err := x.SQL("SELECT * FROM endpoint WHERE ip LIKE ? OR NAME LIKE ? order by export_type,ip limit 10", endpoint, endpoint).Find(&hosts)
 	if err != nil {
 		mid.LogError("search host fail", err)
 		return err,options
@@ -217,6 +217,16 @@ func GetTags(endpoint string, key string, metric string) (error, []*m.OptionMode
 		metricStr := strings.Replace(c.Metric, `'`, `"`, -1)
 		tmpStr := strings.Split(metricStr, key+`"`)[1]
 		tagStr := strings.Split(tmpStr, `"`)[0]
+		inBlacklist := false
+		for _,v := range m.Config().TagBlacklist {
+			if strings.Contains(tagStr, v) {
+				inBlacklist = true
+				break
+			}
+		}
+		if inBlacklist {
+			continue
+		}
 		options = append(options, &m.OptionModel{OptionText:tagStr, OptionValue:key+tagStr})
 	}
 	return err,options

@@ -34,9 +34,6 @@
       "timeout": 60
     }
   ],
-  "rpc": {
-    "enable": false
-  },
   "datasource" : {
     "env" : "dev",
     "servers": [
@@ -64,5 +61,6 @@
   "prometheus" : {
     "config_path": "conf/rules",
     "config_reload": "http://prometheus:9090/-/reload"
-  }
+  },
+  "tag_blacklist" : ["veth"]
 }
