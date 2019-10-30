@@ -61,11 +61,6 @@
               </div>
               <div class="condition-zone">
                 <ul>
-                    <li>
-                    <div class="condition condition-del" @click="addQuery">
-                      <i class="fa fa-floppy-o fa-14" aria-hidden="true"></i>
-                    </div>
-                  </li>
                   <li>
                     <div class="condition condition-title">{{$t('field.endpoint')}}</div>
                     <div class="condition">
@@ -86,6 +81,7 @@
                       <Select v-model="templateQuery.metric" style="width:300px" :label-in-value="true" @on-change="v=>{ setMetric(v)}" @on-open-change="metricSelectOpen(templateQuery.endpoint)">
                         <Option v-for="(item,index) in metricList" :value="item.prom_ql" :key="item.prom_ql+index">{{ item.metric }}</Option>
                       </Select>
+                      <button class="btn btn-cancle-f" @click="addQuery()">{{$t('button.confirm')}}</button>
                     </div>
                   </li>
                 </ul>
@@ -444,9 +440,6 @@ export default {
     border: 1px solid @blue-2;
     padding: 4px;
     margin: 4px;
-  }
-  .condition-del {
-    float: right;
   }
 </style>
 
