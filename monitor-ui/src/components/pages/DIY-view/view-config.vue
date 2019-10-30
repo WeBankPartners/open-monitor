@@ -35,7 +35,9 @@
                  
         <div style="display:flex;justify-content:flex-end;padding:0 32px;">
           <div class="header-grid header-grid-name">
-            {{item.i}}
+            <span v-if="editChartId !== item.id">{{item.i}}</span>
+            <Input v-else v-model="item.i" class="editChartId" style="width:100px" @on-blur="editChartId = null" size="small" placeholder="small size" />
+            <i class="fa fa-pencil-square" @click="editChartId = item.id" aria-hidden="true"></i>
           </div>
           <div class="header-grid header-grid-tools"> 
             <!-- <i class="fa fa-eye" aria-hidden="true" @click="gridPlus(item)"></i> -->
@@ -72,7 +74,8 @@ export default {
         //   {'x':0,'y':0,'w':2,'h':2,'i':'0'},
         //   {'x':1,'y':1,'w':2,'h':2,'i':'1'},
       ],
-      noDataTip: false
+      noDataTip: false,
+      editChartId: null
     }
   },
   mounted() {
