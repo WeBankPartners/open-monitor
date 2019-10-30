@@ -12,6 +12,7 @@ import (
 	"time"
 	"fmt"
 	"encoding/json"
+	"regexp"
 )
 
 // @Summary 页面通用接口 : 视图
@@ -365,6 +366,33 @@ func GetChartNew(c *gin.Context)  {
 		}
 	}else{
 		step = 10
+		var customLegend,tmpEndpointParam,tmpMetricParam string
+		var diffEndpoint,diffMetric bool
+		for i,v := range paramConfig {
+			if v.PromQl == "" {
+				continue
+			}
+			if i == 0 {
+				tmpEndpointParam = v.Endpoint
+				tmpMetricParam = v.Metric
+			}else{
+				if tmpEndpointParam != v.Endpoint {
+					diffEndpoint = true
+				}
+				if tmpMetricParam != v.Metric {
+					diffMetric = true
+				}
+			}
+		}
+		if diffEndpoint && !diffMetric {
+			customLegend = "$custom_endpoint"
+		}
+		if !diffEndpoint && diffMetric {
+			customLegend = "$custom_metric"
+		}
+		if diffEndpoint == diffMetric {
+			customLegend = "$custom"
+		}
 		for _,v := range paramConfig {
 			if v.PromQl == "" {
 				continue
@@ -380,7 +408,14 @@ func GetChartNew(c *gin.Context)  {
 				}
 				v.PromQl = strings.Replace(v.PromQl, "$address", endpointObj.Address, -1)
 			}
-			querys = append(querys, m.QueryMonitorData{Start:query.Start, End:query.End, PromQ:v.PromQl, Legend:"$custom_metric", Metric:[]string{v.Metric}})
+			if strings.Contains(v.PromQl, "$") {
+				re, _ := regexp.Compile("=\"[\\$]+[^\"]+\"")
+				fetchTag := re.FindAll([]byte(v.PromQl), -1)
+				for _,vv := range fetchTag {
+					v.PromQl = strings.Replace(v.PromQl, string(vv), "=~\".*\"", -1)
+				}
+			}
+			querys = append(querys, m.QueryMonitorData{Start:query.Start, End:query.End, PromQ:v.PromQl, Legend:customLegend, Metric:[]string{v.Metric}, Endpoint:[]string{v.Endpoint}})
 		}
 	}
 	if len(querys) == 0 {
