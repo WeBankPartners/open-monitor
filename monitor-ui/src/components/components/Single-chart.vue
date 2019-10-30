@@ -29,7 +29,7 @@ export default {
   props: {
     chartItemx: Object,
     params: Object,
-    chartIndex: String
+    chartIndex: Number
   },
   created (){
     generateUuid().then((elId)=>{
@@ -60,7 +60,7 @@ export default {
       this.$httpRequestEntrance.httpRequestEntrance('GET', this.chartItemx.url, params, responseData => {
         var legend = []
         const colorx = ['#61a0a8', '#2f4554', '#c23531', '#d48265', '#91c7ae', '#749f83', '#ca8622', '#bda29a', '#6e7074', '#546570', '#c4ccd3']
-        const colorSet = colorx.concat(colorx,colorx,colorx,colorx).splice(this.chartIndex + 4)
+        const colorSet = colorx.concat(colorx,colorx,colorx,colorx).splice(this.chartIndex*3 + 4)
         if (responseData.series.length === 0) {
           this.noDataTip = true
           return
