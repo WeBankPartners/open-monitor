@@ -81,6 +81,7 @@ type GlobalConfig struct {
 	LimitIp  []string  `json:"limitIp"`
 	Dependence  []*DependenceConfig  `json:"dependence"`
 	Prometheus  PrometheusConfig  `json:"prometheus"`
+	TagBlacklist  []string  `json:"tag_blacklist"`
 }
 
 var (
