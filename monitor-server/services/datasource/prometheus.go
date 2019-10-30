@@ -93,20 +93,18 @@ func PrometheusData(query m.QueryMonitorData) []*m.SerialModel  {
 			if query.Legend == "$custom" {
 				tmpName = fmt.Sprintf("%s:%s", query.Endpoint[0], query.Metric[0])
 				if len(data.Data.Result) > 1 {
-					tmpName += "{"
-					for k,v := range otr.Metric {
-						if k == "job" && v == "consul" {
-							continue
-						}
-						tmpName += fmt.Sprintf("%s=%s,", k, v)
-					}
-					tmpName = tmpName[:len(tmpName)-1]
-					tmpName += "}"
+					tmpName = appendTagString(tmpName, otr.Metric)
 				}
 			}else if query.Legend == "$custom_metric" {
 				tmpName = query.Metric[0]
+				if len(data.Data.Result) > 1 {
+					tmpName = appendTagString(tmpName, otr.Metric)
+				}
 			}else if query.Legend == "$custom_endpoint" {
 				tmpName = query.Endpoint[0]
+				if len(data.Data.Result) > 1 {
+					tmpName = appendTagString(tmpName, otr.Metric)
+				}
 			}
 		}
 		serial.Name = tmpName
@@ -121,4 +119,17 @@ func PrometheusData(query m.QueryMonitorData) []*m.SerialModel  {
 		serials = append(serials, &serial)
 	}
 	return serials
+}
+
+func appendTagString(name string, metricMap map[string]string) string {
+	tmpName := name + "{"
+	for k,v := range metricMap {
+		if k == "job" && v == "consul" {
+			continue
+		}
+		tmpName += fmt.Sprintf("%s=%s,", k, v)
+	}
+	tmpName = tmpName[:len(tmpName)-1]
+	tmpName += "}"
+	return tmpName
 }
