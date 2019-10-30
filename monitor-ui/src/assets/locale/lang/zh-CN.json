@@ -36,6 +36,7 @@
   },
   "title": {
     "viewConfiguration": "视图配置",
+    "metricConfiguration": "指标配置",
     "templateName": "模板名称",
     "viewTemplate": "视图模板",
     "updateTime": "更新时间",
@@ -48,6 +49,7 @@
     "add": "新增",
     "edit": "编辑",
     "remove": "删除",
+    "confirm": "确定",
     "thresholdManagement": "阀值管理",
     "historicalAlert": "历史告警",
     "logConfiguration": "日志配置",

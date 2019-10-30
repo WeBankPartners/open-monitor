@@ -59,8 +59,11 @@ export default {
     }
   },
   methods: {
-    refreshCharts (activeTab) {
-      this.activeTab = activeTab
+    refreshCharts () {
+      if (this.$validate.isEmpty_reset(this.activeTab) || 
+      this.charts.chartsConfig.findIndex((element)=>(element.tabTape.name == this.activeTab)) === -1) {
+        this.activeTab = this.charts.chartsConfig[0].tabTape.name
+      } 
       this.changeTab(this.activeTab)
     },
     changeTab (name) {

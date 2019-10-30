@@ -56,7 +56,7 @@ export default {
       elId: null,
       chartCondition: {
         timeTnterval: "-1800",
-        dateRange: '',
+        dateRange: ['',''],
         agg: 'none' // 聚合类型
       },
       chartStyle: {
@@ -84,6 +84,13 @@ export default {
   methods: {
     datePick (data) {
       this.chartCondition.dateRange = data
+      if (this.chartCondition.dateRange[0] !== '') {
+        this.chartCondition.dateRange[0] = this.chartCondition.dateRange[0] + ' 00:00:01'
+      }
+      if (this.chartCondition.dateRange[1] !== '') {
+        this.chartCondition.dateRange[1] = this.chartCondition.dateRange[1] + ' 23:59:59'
+      }
+      this.getChartConfig()
     },
     getChartConfig (chartItem=this.chartItem) {
       this.chartItem = chartItem
