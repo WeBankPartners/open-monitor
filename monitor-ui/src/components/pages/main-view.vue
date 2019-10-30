@@ -47,7 +47,7 @@ export default {
         }
         this.charts.chartsConfig.push(chart)
       })
-      this.$refs.parentCharts.refreshCharts(chartsConfig[0].title + '_')
+      this.$refs.parentCharts.refreshCharts()
     },
     changeRoute () {
       this.$router.push({name: 'endpointManagement', params: {search: this.$store.state.ip.value.split(':')[0]}})
