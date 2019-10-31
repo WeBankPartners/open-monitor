@@ -19,7 +19,7 @@ func StartHostAgent(c *gin.Context)  {
 	hostIp := c.Query("host_ip")
 	osType := strings.ToLower(c.Query("osType"))
 	if !isLinuxType(osType) {
-		mid.ReturnValidateFail(c, "os_type is not a linux type")
+		mid.ReturnValidateFail(c, "Illegal OS type")
 		return
 	}
 	param := m.RegisterParam{Type:hostType, ExporterIp:hostIp, ExporterPort:"9100"}
@@ -51,7 +51,7 @@ func StartMysqlAgent(c *gin.Context)  {
 	hostIp := c.Query("host_ip")
 	instance := c.Query("instance")
 	if instance == "" {
-		mid.ReturnValidateFail(c, "instance is null")
+		mid.ReturnValidateFail(c, "Instance can not be empty")
 		return
 	}
 	param := m.RegisterParam{Type:mysqlType, ExporterIp:hostIp, ExporterPort:"9104", Instance:instance}

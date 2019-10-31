@@ -24,12 +24,12 @@ import (
 func MainDashboard(c *gin.Context)  {
 	dType := c.Query("type")
 	if dType == "" {
-		mid.Return(c, mid.RespJson{Msg:"param error", Code:http.StatusBadRequest})
+		mid.Return(c, mid.RespJson{Msg:"Parameter error", Code:http.StatusBadRequest})
 		return
 	}
 	err,dashboard := db.GetDashboard(dType)
 	if err != nil {
-		mid.ReturnError(c, "query dashboard fail", err)
+		mid.ReturnError(c, "Query dashboard failed", err)
 		return
 	}
 	var dashboardDto m.Dashboard
@@ -90,12 +90,12 @@ func GetPanels(c *gin.Context)  {
 	}
 	groupId,err := strconv.Atoi(group)
 	if err != nil {
-		mid.Return(c, mid.RespJson{Msg:"param group is not number error", Code:http.StatusBadRequest})
+		mid.Return(c, mid.RespJson{Msg:"Parameter \"group\" is not number", Code:http.StatusBadRequest})
 		return
 	}
 	err,panels := db.GetPanels(groupId, endpoint)
 	if err != nil {
-		mid.ReturnError(c, "get panels fail", err)
+		mid.ReturnError(c, "Get panels failed", err)
 		return
 	}
 	var panelsDto []*m.PanelModel
@@ -175,7 +175,7 @@ func GetTags(c *gin.Context)  {
 	}
 	panelId,err := strconv.Atoi(panelIdStr)
 	if err != nil {
-		mid.Return(c, mid.RespJson{Msg:"param panel_id is not number error", Code:http.StatusBadRequest})
+		mid.Return(c, mid.RespJson{Msg:"Parameter \"panel_id\" is not number", Code:http.StatusBadRequest})
 		return
 	}
 	err,charts := db.GetCharts(0, 0, panelId)
@@ -212,12 +212,12 @@ func GetTags(c *gin.Context)  {
 func GetChart(c *gin.Context)  {
 	paramId,err := strconv.Atoi(c.Query("id"))
 	if err != nil || paramId <= 0 {
-		mid.ReturnValidateFail(c, "chart id validate error")
+		mid.ReturnValidateFail(c, "Chart id validation failed")
 		return
 	}
 	err, charts := db.GetCharts(0, paramId, 0)
 	if err != nil || len(charts) <= 0 {
-		mid.ReturnError(c, "get chart config error", err)
+		mid.ReturnError(c, "Get chart config failed", err)
 		return
 	}
 	chart := *charts[0]
@@ -231,7 +231,7 @@ func GetChart(c *gin.Context)  {
 		query.Endpoint = strings.Split(chart.Endpoint, "^")
 	}
 	if len(query.Endpoint) <= 0 {
-		mid.ReturnValidateFail(c ,"param endpoint validate error")
+		mid.ReturnValidateFail(c ,"Parameter \"endpoint\" validation failed")
 		return
 	}
 	query.Metric = c.QueryArray("metric[]")
@@ -248,7 +248,7 @@ func GetChart(c *gin.Context)  {
 	}
 	start,err := strconv.ParseInt(paramStart, 10, 64)
 	if err != nil {
-		mid.ReturnError(c, "param start validate error", err)
+		mid.ReturnError(c, "Parameter \"start\" validation failed", err)
 		return
 	}else{
 		if start < 0 {
@@ -265,7 +265,7 @@ func GetChart(c *gin.Context)  {
 	}
 	err,query.PromQ = db.GetPromMetric(query.Endpoint, query.Metric[0])
 	if err!=nil {
-		mid.ReturnError(c, "query promQL fail", err)
+		mid.ReturnError(c, "Query promQL failed", err)
 		return
 	}
 	query.Legend = chart.Legend
@@ -301,13 +301,13 @@ func GetChartNew(c *gin.Context)  {
 	// validate config json
 	paramConfigStr := c.Query("config")
 	if paramConfigStr == "" {
-		mid.ReturnValidateFail(c, "param config is null")
+		mid.ReturnValidateFail(c, "Parameter config can not be empty")
 		return
 	}
 	var paramConfig []m.ChartConfigObj
 	err := json.Unmarshal([]byte(paramConfigStr), &paramConfig)
 	if err != nil || len(paramConfig) == 0 {
-		mid.ReturnValidateFail(c, "param config is invalidate,please check again")
+		mid.ReturnValidateFail(c, "Illegal parameter")
 		return
 	}
 	var eOption m.EChartOption
@@ -318,7 +318,7 @@ func GetChartNew(c *gin.Context)  {
 	}
 	start,err := strconv.ParseInt(paramConfig[0].Start, 10, 64)
 	if err != nil {
-		mid.ReturnError(c, "param start validate error", err)
+		mid.ReturnError(c, "Param start validate error", err)
 		return
 	}else{
 		if start < 0 {
@@ -341,7 +341,7 @@ func GetChartNew(c *gin.Context)  {
 		// one endpoint -> metrics
 		err, charts := db.GetCharts(0, paramConfig[0].Id, 0)
 		if err != nil || len(charts) <= 0 {
-			mid.ReturnError(c, "get chart config fail", err)
+			mid.ReturnError(c, "Get chart config failed", err)
 			return
 		}
 		chart := *charts[0]
@@ -349,7 +349,7 @@ func GetChartNew(c *gin.Context)  {
 		eOption.Title = chart.Title
 		unit = chart.Unit
 		if paramConfig[0].Endpoint == "" {
-			mid.ReturnValidateFail(c, "endpoint is null")
+			mid.ReturnValidateFail(c, "Endpoint can not be empty")
 			return
 		}
 		firstEndpoint = paramConfig[0].Endpoint
@@ -359,7 +359,7 @@ func GetChartNew(c *gin.Context)  {
 			}
 			err,tmpPromQl := db.GetPromMetric([]string{paramConfig[0].Endpoint}, v)
 			if err != nil {
-				mid.LogError("get prom metric error", err)
+				mid.LogError("Get prometheus metric failed", err)
 				continue
 			}
 			querys = append(querys, m.QueryMonitorData{Start:query.Start, End:query.End, PromQ:tmpPromQl, Legend:chart.Legend, Metric:[]string{v}})
@@ -484,7 +484,7 @@ func MainSearch(c *gin.Context)  {
 	}
 	err,result := db.SearchHost(endpoint)
 	if err != nil {
-		mid.ReturnError(c, "Search host fail", err)
+		mid.ReturnError(c, "Search hosts failed", err)
 		return
 	}
 	mid.ReturnData(c, result)
@@ -498,7 +498,7 @@ func GetPromMetric(c *gin.Context)  {
 	//}
 	err,data := db.GetPromMetricTable(metricType)
 	if err != nil {
-		mid.ReturnError(c, "Get prom metric error", err)
+		mid.ReturnError(c, "Get prometheus metric error", err)
 		return
 	}
 	mid.ReturnData(c, data)
@@ -513,12 +513,12 @@ func UpdatePromMetric(c *gin.Context)  {
 		}
 		err := db.UpdatePromMetric(param)
 		if err != nil {
-			mid.ReturnError(c, "Update prom metric fail", err)
+			mid.ReturnError(c, "Update prometheus metric failed", err)
 			return
 		}
 		mid.ReturnSuccess(c, "Success")
 	}else{
-		mid.ReturnValidateFail(c, "Param validate fail")
+		mid.ReturnValidateFail(c, fmt.Sprintf("Parameter validation failed %v", err))
 	}
 }
 
@@ -530,7 +530,7 @@ func GetEndpointMetric(c *gin.Context)  {
 	}
 	err,data := db.GetEndpointMetric(id)
 	if err != nil {
-		mid.ReturnError(c, "Get endpoint metric fail", err)
+		mid.ReturnError(c, "Get endpoint metric failed", err)
 		return
 	}
 	mid.ReturnData(c, data)
@@ -541,18 +541,18 @@ func GetChartsByEndpoint(c *gin.Context)  {
 	ip := c.Query("ip")
 	metric := c.Query("metric")
 	if ip == "" || metric == "" {
-		mid.ReturnValidateFail(c, "ip and metric can't be null")
+		mid.ReturnValidateFail(c, "Ip or metric can not be empty")
 		return
 	}
 	endpointObj := m.EndpointTable{Ip:ip, ExportType:"host"}
 	db.GetEndpoint(&endpointObj)
 	if endpointObj.Id <= 0 {
-		mid.ReturnValidateFail(c, fmt.Sprintf("can't find the host register message with ip %s", ip))
+		mid.ReturnValidateFail(c, fmt.Sprintf("Can not find the host register message with ip %s", ip))
 		return
 	}
 	err,promQL := db.GetPromMetric([]string{endpointObj.Guid}, metric)
 	if err != nil || promQL == "" {
-		mid.ReturnError(c, fmt.Sprintf("get promQL fail with endpoint : %s metric : %s", endpointObj.Guid, metric), err)
+		mid.ReturnError(c, fmt.Sprintf("Get promQL failed with endpoint : %s metric : %s", endpointObj.Guid, metric), err)
 		return
 	}
 	var eOption m.EChartOption
@@ -611,7 +611,7 @@ func GetChartsByEndpoint(c *gin.Context)  {
 func GetMainPage(c *gin.Context)  {
 	err,result := db.GetMainCustomDashboard()
 	if err != nil {
-		mid.LogError("get main page fail ", err)
+		mid.LogError("Get main page failed ", err)
 	}
 	mid.ReturnData(c, result)
 }
@@ -619,12 +619,12 @@ func GetMainPage(c *gin.Context)  {
 func SetMainPage(c *gin.Context)  {
 	id,err := strconv.Atoi(c.Query("id"))
 	if err != nil || id <= 0 {
-		mid.ReturnValidateFail(c, "Id validate fail")
+		mid.ReturnValidateFail(c, "Id validation failed")
 		return
 	}
 	err = db.SetMainCustomDashboard(id)
 	if err != nil {
-		mid.ReturnError(c, "Set main dashboard fail", err)
+		mid.ReturnError(c, "Set main dashboard failed", err)
 		return
 	}
 	mid.ReturnSuccess(c, "Success")
