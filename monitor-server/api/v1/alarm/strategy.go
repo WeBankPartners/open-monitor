@@ -25,7 +25,7 @@ func ListTpl(c *gin.Context)  {
 	var query m.TplQuery
 	query.SearchType = searchType
 	query.SearchId = id
-	err := db.GetStrategys(&query)
+	err := db.GetStrategys(&query, true)
 	if err != nil {
 		mid.ReturnError(c, "Query strategy failed", err)
 		return
@@ -158,7 +158,7 @@ func SaveConfigFile(tplId int) error {
 		query.SearchType = "endpoint"
 		query.SearchId = tplObj.EndpointId
 	}
-	err = db.GetStrategys(&query)
+	err = db.GetStrategys(&query, false)
 	if err != nil {
 		return err
 	}
