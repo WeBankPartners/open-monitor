@@ -20,19 +20,19 @@ func RegisterAgent(c *gin.Context)  {
 	if err := c.ShouldBindJSON(&param); err==nil {
 		err = RegisterJob(param)
 		if err != nil {
-			mid.ReturnError(c, "register error", err)
+			mid.ReturnError(c, "Register failed", err)
 			return
 		}
-		mid.ReturnSuccess(c, "register success")
+		mid.ReturnSuccess(c, "Register successfully")
 	}else{
-		mid.ReturnValidateFail(c, "param validate fail")
+		mid.ReturnValidateFail(c, fmt.Sprintf("Parameter validation failed %v", err))
 	}
 }
 
 func RegisterJob(param m.RegisterParam) error {
 	var err error
 	if param.Type != hostType && param.Type != mysqlType && param.Type != redisType && param.Type != tomcatType {
-		return fmt.Errorf("type " + param.Type + " is not supported yet")
+		return fmt.Errorf("Type " + param.Type + " is not supported yet")
 	}
 	step := 10
 	var strList []string
@@ -40,7 +40,7 @@ func RegisterJob(param m.RegisterParam) error {
 	if param.Type == hostType {
 		err,strList = prom.GetEndpointData(param.ExporterIp, param.ExporterPort, []string{"node"}, []string{})
 		if err != nil {
-			mid.LogError("curl endpoint data fail ", err)
+			mid.LogError("Get endpoint data failed ", err)
 			return err
 		}
 		if len(strList) == 0 {
@@ -74,7 +74,7 @@ func RegisterJob(param m.RegisterParam) error {
 		endpoint.ExportVersion = exportVersion
 	}else if param.Type == mysqlType{
 		if param.Instance == "" {
-			return fmt.Errorf("mysql instance name is null")
+			return fmt.Errorf("Mysql instance name can not be empty")
 		}
 		err,strList = prom.GetEndpointData(param.ExporterIp, param.ExporterPort, []string{"mysql", "mysqld"}, []string{})
 		if err != nil {
@@ -103,7 +103,7 @@ func RegisterJob(param m.RegisterParam) error {
 		endpoint.Address = fmt.Sprintf("%s:%s", param.ExporterIp, param.ExporterPort)
 	}else if param.Type == redisType {
 		if param.Instance == "" {
-			return fmt.Errorf("redis instance name is null")
+			return fmt.Errorf("Redis instance name can not be empty")
 		}
 		err,strList = prom.GetEndpointData(param.ExporterIp, param.ExporterPort, []string{"redis"}, []string{"redis_version",",version"})
 		if err != nil {
@@ -133,7 +133,7 @@ func RegisterJob(param m.RegisterParam) error {
 		endpoint.Address = fmt.Sprintf("%s:%s", param.ExporterIp, param.ExporterPort)
 	}else if param.Type == tomcatType {
 		if param.Instance == "" {
-			return fmt.Errorf("tomcat instance name is null")
+			return fmt.Errorf("Tomcat instance name can not be empty")
 		}
 		err,strList = prom.GetEndpointData(param.ExporterIp, param.ExporterPort, []string{"tomcat", "jvm", "jmx"}, []string{"version"})
 		if err != nil {
@@ -163,17 +163,17 @@ func RegisterJob(param m.RegisterParam) error {
 	}
 	err = db.UpdateEndpoint(&endpoint)
 	if err != nil {
-		mid.LogError( "update endpoint error ", err)
+		mid.LogError( "Update endpoint failed ", err)
 		return err
 	}
 	err = db.RegisterEndpointMetric(endpoint.Id, strList)
 	if err != nil {
-		mid.LogError( "update endpoint metric error ", err)
+		mid.LogError( "Update endpoint metric failed ", err)
 		return err
 	}
 	err = prom.RegisteConsul(endpoint.Guid, param.ExporterIp, param.ExporterPort, []string{param.Type}, step)
 	if err != nil {
-		mid.LogError( "register consul fail ", err)
+		mid.LogError( "Register consul failed ", err)
 		return err
 	}
 	return nil
@@ -182,26 +182,26 @@ func RegisterJob(param m.RegisterParam) error {
 func DeregisterAgent(c *gin.Context)  {
 	guid := c.Query("guid")
 	if guid == "" {
-		mid.ReturnValidateFail(c, "guid can't be null")
+		mid.ReturnValidateFail(c, "Guid can not be empty")
 		return
 	}
 	err := DeregisterJob(guid)
 	if err != nil {
-		mid.ReturnError(c, fmt.Sprintf("delete endpint %s fail", guid),err)
+		mid.ReturnError(c, fmt.Sprintf("Delete endpint %s failed", guid),err)
 		return
 	}
-	mid.ReturnSuccess(c, fmt.Sprintf("deregister %s success", guid))
+	mid.ReturnSuccess(c, fmt.Sprintf("Deregister %s successfully", guid))
 }
 
 func DeregisterJob(guid string) error {
 	err := db.DeleteEndpoint(guid)
 	if err != nil {
-		mid.LogError(fmt.Sprintf("delete endpint %s fail", guid), err)
+		mid.LogError(fmt.Sprintf("Delete endpint %s failed", guid), err)
 		return err
 	}
 	err = prom.DeregisteConsul(guid)
 	if err != nil {
-		mid.LogError(fmt.Sprintf("deregister consul %s fail ", guid), err)
+		mid.LogError(fmt.Sprintf("Deregister consul %s failed ", guid), err)
 		return err
 	}
 	return err

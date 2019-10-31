@@ -12,7 +12,7 @@ import (
 func ListCustomDashboard(c *gin.Context)  {
 	err,result := db.ListCustomDashboard()
 	if err != nil {
-		mid.ReturnError(c, "List custom dashboard fail", err)
+		mid.ReturnError(c, "List customized dashboard failed", err)
 		return
 	}
 	mid.ReturnData(c, result)
@@ -21,13 +21,13 @@ func ListCustomDashboard(c *gin.Context)  {
 func GetCustomDashboard(c *gin.Context)  {
 	id,err := strconv.Atoi(c.Query("id"))
 	if err != nil || id <= 0 {
-		mid.ReturnValidateFail(c, "Param id validate fail")
+		mid.ReturnValidateFail(c, "Parameter \"id\" validation failed")
 		return
 	}
 	query := m.CustomDashboardTable{Id:id}
 	err = db.GetCustomDashboard(&query)
 	if err != nil {
-		mid.ReturnError(c, "Get custom dashboard fail", err)
+		mid.ReturnError(c, "Get customized dashboard failed", err)
 		return
 	}
 	mid.ReturnData(c, query)
@@ -38,25 +38,25 @@ func SaveCustomDashboard(c *gin.Context)  {
 	if err := c.ShouldBindJSON(&param);err==nil {
 		err = db.SaveCustomDashboard(&param)
 		if err != nil {
-			mid.ReturnError(c, "Save custom dashboard fail", err)
+			mid.ReturnError(c, "Save customized dashboard failed", err)
 			return
 		}
 		mid.ReturnSuccess(c, "Success")
 	}else{
-		mid.ReturnValidateFail(c, fmt.Sprintf("Param validate fail : %v", err))
+		mid.ReturnValidateFail(c, fmt.Sprintf("Parameter validation failed %v", err))
 	}
 }
 
 func DeleteCustomDashboard(c *gin.Context)  {
 	id,err := strconv.Atoi(c.Query("id"))
 	if err != nil || id <= 0 {
-		mid.ReturnValidateFail(c, "Param id validate fail")
+		mid.ReturnValidateFail(c, "Parameter \"id\" validation failed")
 		return
 	}
 	query := m.CustomDashboardTable{Id:id}
 	err = db.DeleteCustomDashboard(&query)
 	if err != nil {
-		mid.ReturnError(c, "Delete custom dashboard fail", err)
+		mid.ReturnError(c, "Delete customized dashboard failed", err)
 		return
 	}
 	mid.ReturnSuccess(c, "Success")
