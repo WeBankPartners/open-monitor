@@ -15,11 +15,11 @@ func ListTpl(c *gin.Context)  {
 	searchType := c.Query("type")
 	id,_ := strconv.Atoi(c.Query("id"))
 	if searchType == "" || id <= 0 {
-		mid.ReturnValidateFail(c, "type or id is null")
+		mid.ReturnValidateFail(c, "Type or id can not be empty")
 		return
 	}
 	if !(searchType == "endpoint" || searchType == "grp") {
-		mid.ReturnValidateFail(c, "type mast be endpoint or grp")
+		mid.ReturnValidateFail(c, "Type must be \"endpoint\" or \"grp\"")
 		return
 	}
 	var query m.TplQuery
@@ -27,7 +27,7 @@ func ListTpl(c *gin.Context)  {
 	query.SearchId = id
 	err := db.GetStrategys(&query)
 	if err != nil {
-		mid.ReturnError(c, "query strategy error", err)
+		mid.ReturnError(c, "Query strategy failed", err)
 		return
 	}
 	mid.ReturnData(c, query.Tpl)
@@ -39,16 +39,16 @@ func AddStrategy(c *gin.Context)  {
 		// check tpl
 		if param.TplId <= 0 {
 			if param.GrpId + param.EndpointId <= 0 {
-				mid.ReturnValidateFail(c, "endpoint and group id is null")
+				mid.ReturnValidateFail(c, "Both endpoint and group id are missing")
 				return
 			}
 			if param.GrpId > 0 && param.EndpointId > 0 {
-				mid.ReturnValidateFail(c, "endpoint and group id is both not null")
+				mid.ReturnValidateFail(c, "Endpoint and group id can not be provided at the same time")
 				return
 			}
 			err,tplObj := db.AddTpl(param.GrpId, param.EndpointId, "")
 			if err != nil {
-				mid.ReturnError(c, "add strategy fail", err)
+				mid.ReturnError(c, "Add strategy failed", err)
 				return
 			}
 			param.TplId = tplObj.Id
@@ -56,17 +56,17 @@ func AddStrategy(c *gin.Context)  {
 		strategyObj := m.StrategyTable{TplId:param.TplId,Metric:param.Metric,Expr:param.Expr,Cond:param.Cond,Last:param.Last,Priority:param.Priority,Content:param.Content}
 		err = db.UpdateStrategy(&m.UpdateStrategy{Strategy:[]*m.StrategyTable{&strategyObj}, Operation:"insert"})
 		if err != nil {
-			mid.ReturnError(c, "Insert strategy fail", err)
+			mid.ReturnError(c, "Insert strategy failed", err)
 			return
 		}
 		err = SaveConfigFile(param.TplId)
 		if err != nil {
-			mid.ReturnError(c, "save prometheus rule file fail", err)
+			mid.ReturnError(c, "Save alert rules file failed", err)
 			return
 		}
 		mid.ReturnSuccess(c, "Success")
 	}else{
-		mid.ReturnValidateFail(c, "Param validate fail")
+		mid.ReturnValidateFail(c, fmt.Sprintf("Parameter validation failed %v", err))
 	}
 }
 
@@ -74,42 +74,42 @@ func EditStrategy(c *gin.Context)  {
 	var param m.TplStrategyTable
 	if err := c.ShouldBindJSON(&param); err==nil {
 		if param.StrategyId <= 0 {
-			mid.ReturnValidateFail(c, "strategyId must not null")
+			mid.ReturnValidateFail(c, "Strategy id can not be empty")
 			return
 		}
 		strategyObj := m.StrategyTable{Id:param.StrategyId,Metric:param.Metric,Expr:param.Expr,Cond:param.Cond,Last:param.Last,Priority:param.Priority,Content:param.Content}
 		err = db.UpdateStrategy(&m.UpdateStrategy{Strategy:[]*m.StrategyTable{&strategyObj}, Operation:"update"})
 		if err != nil {
-			mid.ReturnError(c, "Update strategy fail", err)
+			mid.ReturnError(c, "Update strategy failed", err)
 			return
 		}
 		_,strategy := db.GetStrategyTable(param.StrategyId)
 		db.UpdateTpl(strategy.TplId, "")
 		err = SaveConfigFile(strategy.TplId)
 		if err != nil {
-			mid.ReturnError(c, "save prometheus rule file fail", err)
+			mid.ReturnError(c, "Save alert rules file failed", err)
 			return
 		}
 		mid.ReturnSuccess(c, "Success")
 	}else{
-		mid.ReturnValidateFail(c, "Param validate fail")
+		mid.ReturnValidateFail(c, fmt.Sprintf("Parameter validation failed %v", err))
 	}
 }
 
 func DeleteStrategy(c *gin.Context)  {
 	strategyId,_ := strconv.Atoi(c.Query("id"))
 	if strategyId <= 0 {
-		mid.ReturnValidateFail(c, "id is null")
+		mid.ReturnValidateFail(c, "Id can not be empty")
 		return
 	}
 	_,strategy := db.GetStrategyTable(strategyId)
 	if strategy.Id <= 0 {
-		mid.ReturnValidateFail(c, "this id is not in used")
+		mid.ReturnValidateFail(c, "The strategy id is not in use")
 		return
 	}
 	err := db.UpdateStrategy(&m.UpdateStrategy{Strategy:[]*m.StrategyTable{&m.StrategyTable{Id:strategyId}}, Operation:"delete"})
 	if err != nil {
-		mid.ReturnError(c, "Delete strategy fail", err)
+		mid.ReturnError(c, "Delete strategy failed", err)
 		return
 	}
 	db.UpdateTpl(strategy.TplId, "")
@@ -125,7 +125,7 @@ func SearchObjOption(c *gin.Context)  {
 	searchType := c.Query("type")
 	searchMsg := c.Query("search")
 	if searchType == "" || searchMsg == "" {
-		mid.ReturnValidateFail(c, "type or search is null")
+		mid.ReturnValidateFail(c, "Type or search content is null")
 		return
 	}
 	var err error
@@ -136,7 +136,7 @@ func SearchObjOption(c *gin.Context)  {
 		err,data = db.SearchGrp(searchMsg)
 	}
 	if err != nil {
-		mid.ReturnError(c, "search fail", err)
+		mid.ReturnError(c, "Search failed", err)
 		return
 	}
 	mid.ReturnData(c, data)

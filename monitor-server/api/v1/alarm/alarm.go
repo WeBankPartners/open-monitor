@@ -24,12 +24,12 @@ func AcceptAlertMsg(c *gin.Context)  {
 			tmpAlarm := m.AlarmTable{Status:v.Status}
 			tmpAlarm.StrategyId,_ = strconv.Atoi(v.Labels["strategy_id"])
 			if tmpAlarm.StrategyId <= 0 {
-				mid.LogInfo(fmt.Sprintf("Alerts strategy id is null : %v ", v))
+				mid.LogInfo(fmt.Sprintf("Alert's strategy id is null : %v ", v))
 				continue
 			}
 			_,strategyObj := db.GetStrategy(m.StrategyTable{Id:tmpAlarm.StrategyId})
 			if strategyObj.Id <= 0 {
-				mid.LogInfo(fmt.Sprintf("Alerts strategy id can't fetch in table : %d ", tmpAlarm.StrategyId))
+				mid.LogInfo(fmt.Sprintf("Alert's strategy id can not found : %d ", tmpAlarm.StrategyId))
 				continue
 			}
 			tmpAlarm.SMetric = strategyObj.Metric
@@ -83,19 +83,19 @@ func AcceptAlertMsg(c *gin.Context)  {
 		}
 		err = db.UpdateAlarms(alarms)
 		if err != nil {
-			mid.ReturnError(c, "Accept alert msg fail", err)
+			mid.ReturnError(c, "Failed to accept alert msg", err)
 			return
 		}
 		mid.ReturnSuccess(c, "Success")
 	}else{
-		mid.ReturnValidateFail(c, "Param validate fail")
+		mid.ReturnValidateFail(c, fmt.Sprintf("Parameter validation failed %v", err))
 	}
 }
 
 func GetHistoryAlarm(c *gin.Context)  {
 	endpointId,err := strconv.Atoi(c.Query("id"))
 	if err != nil || endpointId <= 0 {
-		mid.ReturnValidateFail(c, "endpoint id validate fail")
+		mid.ReturnValidateFail(c, "Endpoint id validation failed")
 		return
 	}
 	start := c.Query("start")
@@ -103,7 +103,7 @@ func GetHistoryAlarm(c *gin.Context)  {
 	endpointObj := m.EndpointTable{Id:endpointId}
 	db.GetEndpoint(&endpointObj)
 	if endpointObj.Guid == "" {
-		mid.ReturnError(c, "get history fail", fmt.Errorf("can't find endpoint with id: %d", endpointId))
+		mid.ReturnError(c, "Get historicl alerts failed", fmt.Errorf("can't find endpoint with id: %d", endpointId))
 		return
 	}
 	query := m.AlarmTable{Endpoint:endpointObj.Guid}
@@ -112,7 +112,7 @@ func GetHistoryAlarm(c *gin.Context)  {
 		if err == nil {
 			query.Start = startTime
 		}else{
-			mid.ReturnValidateFail(c, "param start should like "+m.DatetimeFormat)
+			mid.ReturnValidateFail(c, "Date and time format should be "+m.DatetimeFormat)
 			return
 		}
 	}
@@ -121,13 +121,13 @@ func GetHistoryAlarm(c *gin.Context)  {
 		if err == nil {
 			query.End = endTime
 		}else{
-			mid.ReturnValidateFail(c, "param end should like "+m.DatetimeFormat)
+			mid.ReturnValidateFail(c, "Date and time format should be "+m.DatetimeFormat)
 			return
 		}
 	}
 	err,data := db.GetAlarms(query)
 	if err != nil {
-		mid.ReturnError(c, "Get history fail", err)
+		mid.ReturnError(c, "Get historical alerts failed", err)
 		return
 	}
 	mid.ReturnData(c, data)
@@ -152,7 +152,7 @@ func GetProblemAlarm(c *gin.Context)  {
 	}
 	err,data := db.GetAlarms(query)
 	if err != nil {
-		mid.ReturnError(c, "get problem alarm fail", err)
+		mid.ReturnError(c, "Get alerts failed", err)
 		return
 	}
 	mid.ReturnData(c, data)
@@ -166,12 +166,12 @@ func GetProblemAlarm(c *gin.Context)  {
 func CloseALarm(c *gin.Context)  {
 	id,err := strconv.Atoi(c.Query("id"))
 	if err != nil || id <= 0 {
-		mid.ReturnValidateFail(c, "Param id validate fail")
+		mid.ReturnValidateFail(c, "Parameter id validation failed")
 		return
 	}
 	err = db.CloseAlarm(id)
 	if err != nil {
-		mid.ReturnError(c, "close alarm fail", err)
+		mid.ReturnError(c, "Close alert failed", err)
 		return
 	}
 	mid.ReturnSuccess(c, "Success")
