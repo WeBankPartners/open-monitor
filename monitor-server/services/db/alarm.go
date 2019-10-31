@@ -359,8 +359,12 @@ func GetStrategy(param m.StrategyTable) (error,m.StrategyTable) {
 	return err,*result[0]
 }
 
-func GetStrategys(query *m.TplQuery) error {
+func GetStrategys(query *m.TplQuery, ignoreLogMonitor bool) error {
 	var result []*m.TplObj
+	ignoreLogMonitorSql := "and t2.metric<>'log_monitor'"
+	if !ignoreLogMonitor {
+		ignoreLogMonitorSql = ""
+	}
 	if query.SearchType == "endpoint" {
 		var grps []*m.GrpTable
 		err := x.SQL("SELECT id,name FROM grp where id in (select grp_id from grp_endpoint WHERE endpoint_id=?)", query.SearchId).Find(&grps)
@@ -381,7 +385,7 @@ func GetStrategys(query *m.TplQuery) error {
 		}
 		var tpls []*m.TplStrategyTable
 		sql := `SELECT t1.id tpl_id,t1.grp_id,t1.endpoint_id,t2.id strategy_id,t2.metric,t2.expr,t2.cond,t2.last,t2.priority,t2.content 
-				FROM tpl t1 LEFT JOIN strategy t2 ON t1.id=t2.tpl_id WHERE (`+grpIds+` endpoint_id=?) and t2.metric<>'log_monitor' order by t1.endpoint_id,t1.id,t2.id`
+				FROM tpl t1 LEFT JOIN strategy t2 ON t1.id=t2.tpl_id WHERE (`+grpIds+` endpoint_id=?) `+ignoreLogMonitorSql+` order by t1.endpoint_id,t1.id,t2.id`
 		err = x.SQL(sql, query.SearchId).Find(&tpls)
 		if err != nil {
 			mid.LogError("get strategy fail", err)
@@ -450,7 +454,7 @@ func GetStrategys(query *m.TplQuery) error {
 		}
 		var tpls []*m.TplStrategyTable
 		sql := `SELECT t1.id tpl_id,t1.grp_id,t1.endpoint_id,t2.id strategy_id,t2.metric,t2.expr,t2.cond,t2.last,t2.priority,t2.content 
-				FROM tpl t1 LEFT JOIN strategy t2 ON t1.id=t2.tpl_id WHERE t1.grp_id=? ORDER BY t2.id`
+				FROM tpl t1 LEFT JOIN strategy t2 ON t1.id=t2.tpl_id WHERE t1.grp_id=? `+ignoreLogMonitorSql+` ORDER BY t2.id`
 		err = x.SQL(sql, query.SearchId).Find(&tpls)
 		if err != nil {
 			mid.LogError("get strategy fail", err)

@@ -29,16 +29,16 @@ func Login(c *gin.Context)  {
 			session := m.Session{User:authData.Username}
 			isOk, sId := mid.SaveSession(session)
 			if !isOk {
-				mid.Return(c, mid.RespJson{Msg:"fail to save session"})
+				mid.Return(c, mid.RespJson{Msg:"Save session failed"})
 			}else{
 				session.Token = sId
-				mid.Return(c, mid.RespJson{Msg:"login success", Data:session})
+				mid.Return(c, mid.RespJson{Msg:"Login successfully", Data:session})
 			}
 		}else{
-			mid.Return(c, mid.RespJson{Msg:"auth fail", Code:http.StatusBadRequest})
+			mid.Return(c, mid.RespJson{Msg:"Authorization failed", Code:http.StatusBadRequest})
 		}
 	}else{
-		c.JSON(http.StatusBadRequest, gin.H{"error": "params validate fail"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Parameter validation failed"})
 	}
 }
 
@@ -50,9 +50,9 @@ func Logout(c *gin.Context) {
 	auToken := c.GetHeader("X-Auth-Token")
 	if auToken!= ""{
 		mid.DelSession(auToken)
-		mid.Return(c, mid.RespJson{Msg:"successfully logout"})
+		mid.Return(c, mid.RespJson{Msg:"Logout successfully"})
 	}else{
-		mid.Return(c, mid.RespJson{Msg:"invalid session token", Code:http.StatusUnauthorized})
+		mid.Return(c, mid.RespJson{Msg:"Invalid session token", Code:http.StatusUnauthorized})
 	}
 }
 
@@ -69,11 +69,11 @@ func AuthRequired() gin.HandlerFunc {
 			if mid.IsActive(auToken) {
 				c.Next()
 			}else{
-				mid.Return(c, mid.RespJson{Msg:"invalid session token", Code:http.StatusUnauthorized})
+				mid.Return(c, mid.RespJson{Msg:"Invalid session token", Code:http.StatusUnauthorized})
 				c.Abort()
 			}
 		}else{
-			mid.Return(c, mid.RespJson{Msg:"no auth token", Code:http.StatusUnauthorized})
+			mid.Return(c, mid.RespJson{Msg:"Token is not authorized", Code:http.StatusUnauthorized})
 			c.Abort()
 		}
 	}
@@ -95,11 +95,11 @@ func AuthServer() gin.HandlerFunc  {
 				mid.LogInfo(fmt.Sprintf("server %s request %s ", realIp, c.Request.URL.Path))
 				c.Next()
 			}else{
-				mid.Return(c, mid.RespJson{Msg:"ip not allow", Code:http.StatusUnauthorized})
+				mid.Return(c, mid.RespJson{Msg:"Ip not allowed", Code:http.StatusUnauthorized})
 				c.Abort()
 			}
 		}else{
-			mid.Return(c, mid.RespJson{Msg:"token not allow", Code:http.StatusUnauthorized})
+			mid.Return(c, mid.RespJson{Msg:"Token not allowed", Code:http.StatusUnauthorized})
 			c.Abort()
 		}
 	}
@@ -113,16 +113,16 @@ func LdapLogin(c *gin.Context) {
 			session := m.Session{User:authData.Username}
 			isOk, sId := mid.SaveSession(session)
 			if !isOk {
-				mid.Return(c, mid.RespJson{Msg:"fail to save session"})
+				mid.Return(c, mid.RespJson{Msg:"Save session failed"})
 			}else{
 				session.Token = sId
-				mid.Return(c, mid.RespJson{Msg:"login success", Data:session})
+				mid.Return(c, mid.RespJson{Msg:"Login successfully", Data:session})
 			}
 		}else{
-			mid.Return(c, mid.RespJson{Msg:"auth fail", Code:http.StatusUnauthorized})
+			mid.Return(c, mid.RespJson{Msg:"Auth fail", Code:http.StatusUnauthorized})
 		}
 	}else{
-		mid.Return(c, mid.RespJson{Msg:"params validate fail", Code:http.StatusUnauthorized})
+		mid.Return(c, mid.RespJson{Msg:"Params validation fail", Code:http.StatusUnauthorized})
 	}
 }
 
@@ -132,7 +132,7 @@ func UserMsg(c *gin.Context) {
 		re := mid.GetSessionData(auToken)
 		mid.Return(c, mid.RespJson{Data:map[string]interface{}{"user":re.User}})
 	}else{
-		mid.Return(c, mid.RespJson{Msg:"invalid session token", Code:http.StatusBadRequest})
+		mid.Return(c, mid.RespJson{Msg:"Illegal session token", Code:http.StatusBadRequest})
 	}
 }
 

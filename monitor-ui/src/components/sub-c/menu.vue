@@ -2,7 +2,7 @@
     <Menu mode="horizontal" :theme="theme1" :active-name="activeName" @on-select="menuChange">
         <div class="logo" @click="routerChange">
             <img src="../../assets/logo.png"/>
-            <span>WeCube-Monitor</span>
+            <span>{{$t('menu.systemName')}}</span>
         </div>
         <Submenu name="">
             <template slot="title">
