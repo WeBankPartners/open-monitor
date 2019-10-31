@@ -3,7 +3,7 @@
     "changeLanguage": "简体中文"
   },
   "menu": {
-    "systemName": "WeCube-Monitor (trial version)",
+    "systemName": "WeCube-Monitor (Demo Version)",
     "view": "View",
     "endpointView": "Endpoint View",
     "metricConfiguration": "Metric Configuration",
