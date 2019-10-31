@@ -5,9 +5,9 @@
   "menu": {
     "systemName": "WeCube-Monitor (Demo Version)",
     "view": "View",
-    "endpointView": "Endpoint View",
-    "metricConfiguration": "Metric Configuration",
-    "customViews": "Custom Views",
+    "endpointView": "Endpoint Views",
+    "metricConfiguration": "Metrics Configuration",
+    "customViews": "Customize Views",
     "configuration": "Configuration",
     "alert": "Alert"
   },
@@ -17,7 +17,7 @@
     "metric": "Select metric",
     "datePicker": "Select date",
     "refresh": "Refresh",
-    "metricConfiguration": "Metric configuration",
+    "metricConfiguration": "Metrics configuration",
     "globalConfiguration": "Global configuration"
   },
   "field": {
@@ -37,10 +37,10 @@
   },
   "title": {
     "viewConfiguration": "View Configuration",
-    "metricConfiguration": "Metric Configuration",
+    "metricConfiguration": "Metrics Configuration",
     "templateName": "Template",
     "viewTemplate": "View Template",
-    "updateTime": "Update Time",
+    "updateTime": "Updated Time",
     "endpointAdd": "Endpoint Add",
     "groupAdd": "Group",
     "logAdd": "Log"
@@ -57,16 +57,16 @@
     "addMetric": "Add metric",
     "addViewTemplate": "Add View Template",
     "setDashboard": "Set Dashboard",
-    "saveEdit": "Save edit",
+    "saveEdit": "Save",
     "save": "Save",
     "back": "Back",
     "view": "View",
     "cancle": "Cancle",
     "endpointManagement": "Endpoint Management",
     "chart": {
-      "zoom": "area zooming",
-      "back": "restore area zooming",
-      "dataView": "data view"
+      "zoom": "Zoom in",
+      "back": "Reset",
+      "dataView": "Enlarged View"
     }
   },
   "table": {
