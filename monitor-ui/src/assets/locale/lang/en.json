@@ -12,13 +12,16 @@
     "alert": "Alert"
   },
   "placeholder": {
-    "input": "Enter something",
-    "endpointSearch": "Enter something",
+    "input": "Please input",
+    "endpointSearch": "Please input",
     "metric": "Select metric",
-    "datePicker": "Select date",
+    "datePicker": "Please select",
     "refresh": "Refresh",
     "metricConfiguration": "Metrics configuration",
-    "globalConfiguration": "Global configuration"
+    "globalConfiguration": "Global configuration",
+    "editTitle": "Edit title",
+    "chartConfiguration": "Chart configuration",
+    "deleteChart": "Delete chart"
   },
   "field": {
     "group": "Group",
