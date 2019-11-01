@@ -28,7 +28,7 @@ func StartHostAgent(c *gin.Context)  {
 		c.JSON(http.StatusInternalServerError, resultObj{ResultCode:2, ResultMessage:fmt.Sprintf("register %s:%s fail,error %v",hostType, hostIp, err)})
 		return
 	}
-	mid.ReturnData(c, resultObj{ResultCode:1, ResultMessage:"success"})
+	mid.ReturnData(c, resultObj{ResultCode:1, ResultMessage:"Success"})
 }
 
 func StopHostAgent(c *gin.Context)  {
@@ -44,7 +44,7 @@ func StopHostAgent(c *gin.Context)  {
 		c.JSON(http.StatusInternalServerError, resultObj{ResultCode:2, ResultMessage:fmt.Sprintf("deregister %s:%s fail,error %v",hostType, hostIp, err)})
 		return
 	}
-	mid.ReturnData(c, resultObj{ResultCode:1, ResultMessage:"success"})
+	mid.ReturnData(c, resultObj{ResultCode:1, ResultMessage:"Success"})
 }
 
 func StartMysqlAgent(c *gin.Context)  {
@@ -60,14 +60,14 @@ func StartMysqlAgent(c *gin.Context)  {
 		c.JSON(http.StatusInternalServerError, resultObj{ResultCode:2, ResultMessage:fmt.Sprintf("register %s:%s fail,error %v",mysqlType, hostIp, err)})
 		return
 	}
-	mid.ReturnData(c, resultObj{ResultCode:1, ResultMessage:"success"})
+	mid.ReturnData(c, resultObj{ResultCode:1, ResultMessage:"Success"})
 }
 
 func StopMysqlAgent(c *gin.Context)  {
 	hostIp := c.Query("host_ip")
 	instance := c.Query("instance")
 	if instance == "" {
-		mid.ReturnValidateFail(c, "instance is null")
+		mid.ReturnValidateFail(c, "Instance can not be empty")
 		return
 	}
 	endpointObj := m.EndpointTable{Ip:hostIp, ExportType:mysqlType, Name:instance}
@@ -81,14 +81,14 @@ func StopMysqlAgent(c *gin.Context)  {
 		c.JSON(http.StatusInternalServerError, resultObj{ResultCode:2, ResultMessage:fmt.Sprintf("deregister %s:%s fail,error %v",mysqlType, hostIp, err)})
 		return
 	}
-	mid.ReturnData(c, resultObj{ResultCode:1, ResultMessage:"success"})
+	mid.ReturnData(c, resultObj{ResultCode:1, ResultMessage:"Success"})
 }
 
 func StartRedisAgent(c *gin.Context)  {
 	hostIp := c.Query("host_ip")
 	instance := c.Query("instance")
 	if instance == "" {
-		mid.ReturnValidateFail(c, "instance is null")
+		mid.ReturnValidateFail(c, "Instance can not be empty")
 		return
 	}
 	param := m.RegisterParam{Type:redisType, ExporterIp:hostIp, ExporterPort:"9121", Instance:instance}
@@ -97,14 +97,14 @@ func StartRedisAgent(c *gin.Context)  {
 		c.JSON(http.StatusInternalServerError, resultObj{ResultCode:2, ResultMessage:fmt.Sprintf("register %s:%s fail,error %v",redisType, hostIp, err)})
 		return
 	}
-	mid.ReturnData(c, resultObj{ResultCode:1, ResultMessage:"success"})
+	mid.ReturnData(c, resultObj{ResultCode:1, ResultMessage:"Success"})
 }
 
 func StopRedisAgent(c *gin.Context)  {
 	hostIp := c.Query("host_ip")
 	instance := c.Query("instance")
 	if instance == "" {
-		mid.ReturnValidateFail(c, "instance is null")
+		mid.ReturnValidateFail(c, "Instance can not be empty")
 		return
 	}
 	endpointObj := m.EndpointTable{Ip:hostIp, ExportType:redisType, Name:instance}
@@ -118,14 +118,14 @@ func StopRedisAgent(c *gin.Context)  {
 		c.JSON(http.StatusInternalServerError, resultObj{ResultCode:2, ResultMessage:fmt.Sprintf("deregister %s:%s fail,error %v",redisType, hostIp, err)})
 		return
 	}
-	mid.ReturnData(c, resultObj{ResultCode:1, ResultMessage:"success"})
+	mid.ReturnData(c, resultObj{ResultCode:1, ResultMessage:"Success"})
 }
 
 func StartTomcatAgent(c *gin.Context)  {
 	hostIp := c.Query("host_ip")
 	instance := c.Query("instance")
 	if instance == "" {
-		mid.ReturnValidateFail(c, "instance is null")
+		mid.ReturnValidateFail(c, "Instance can not be empty")
 		return
 	}
 	param := m.RegisterParam{Type:tomcatType, ExporterIp:hostIp, ExporterPort:"9151", Instance:instance}
@@ -134,14 +134,14 @@ func StartTomcatAgent(c *gin.Context)  {
 		c.JSON(http.StatusInternalServerError, resultObj{ResultCode:2, ResultMessage:fmt.Sprintf("register %s:%s fail,error %v",tomcatType, hostIp, err)})
 		return
 	}
-	mid.ReturnData(c, resultObj{ResultCode:1, ResultMessage:"success"})
+	mid.ReturnData(c, resultObj{ResultCode:1, ResultMessage:"Success"})
 }
 
 func StopTomcatAgent(c *gin.Context)  {
 	hostIp := c.Query("host_ip")
 	instance := c.Query("instance")
 	if instance == "" {
-		mid.ReturnValidateFail(c, "instance is null")
+		mid.ReturnValidateFail(c, "Instance can not be empty")
 		return
 	}
 	endpointObj := m.EndpointTable{Ip:hostIp, ExportType:tomcatType, Name:instance}
@@ -155,7 +155,7 @@ func StopTomcatAgent(c *gin.Context)  {
 		c.JSON(http.StatusInternalServerError, resultObj{ResultCode:2, ResultMessage:fmt.Sprintf("deregister %s:%s fail,error %v",tomcatType, hostIp, err)})
 		return
 	}
-	mid.ReturnData(c, resultObj{ResultCode:1, ResultMessage:"success"})
+	mid.ReturnData(c, resultObj{ResultCode:1, ResultMessage:"Success"})
 }
 
 func isLinuxType(osType string) bool {
