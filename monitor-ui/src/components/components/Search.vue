@@ -2,7 +2,19 @@
   <div class="" style="display:inline-block">
    <ul class="search-ul">
       <li class="search-li">
-        <Searchinput ref="searchInput" :parentConfig="searchInputConfig"></Searchinput> 
+        <Select
+          style="width:300px;"
+          v-model="endpoint"
+          filterable
+          clearable
+          remote
+          :placeholder="$t('placeholder.input')"
+          :remote-method="getEndpointList"
+          @on-clear="endpointList=[]"
+          >
+          <Option v-for="(option, index) in endpointList" :value="option.option_value" :key="index">{{option.option_text}}</Option>
+        </Select>
+        <!-- <Searchinput ref="searchInput" :parentConfig="searchInputConfig"></Searchinput>  -->
       </li>
       <li class="search-li">
         <button type="button" class="btn btn-sm btn-confirm-f"
@@ -30,11 +42,13 @@
 
 <script>
 import {dataPick, autoRefreshConfig} from '@/assets/config/common-config'
-import Searchinput from './Search-input'
+// import Searchinput from './Search-input'
 export default {
   name: '',
   data() {
     return {
+      endpoint: '',
+      endpointList: [],
       searchInputConfig: {
         poptipWidth: 300,
         placeholder: 'placeholder.endpointSearch',
@@ -60,12 +74,12 @@ export default {
     getMainConfig () {
       return new Promise(resolve => {
         let params = {
-          type: this.ip.value.split(':')[1]
+          type: this.endpoint.split(':')[1]
         }
         this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.mainConfig.api, params, (responseData) => {
-            resolve(responseData)
-          })
+          resolve(responseData)
         })
+      })
     },
     datePick (data) {
       this.dateRange = data
@@ -77,11 +91,19 @@ export default {
       }
       this.getChartsConfig()
     },
+    getEndpointList(query) {
+      let params = {
+        search: query,
+        page: 1,
+        size: 1000
+      }
+      this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.resourceSearch.api, params, (responseData) => {
+       this.endpointList = responseData
+      })
+    },
     getChartsConfig () {
-      if (this.$validate.isEmpty_reset(this.$store.state.ip.value)) {
+      if (this.$validate.isEmpty_reset(this.endpoint)) {
         return
-      } else {
-        this.ip = this.$store.state.ip
       }
       this.getMainConfig().then((res)=>{
         let url = res.panels.url
@@ -89,7 +111,7 @@ export default {
         let params = {
           autoRefresh: this.autoRefresh,
           time: this.timeTnterval,
-          endpoint: this.ip.value,
+          endpoint: this.endpoint.split(':')[0],
           start: this.dateRange[0] ===''? '':Date.parse(this.dateRange[0])/1000,
           end: this.dateRange[1] ===''? '':Date.parse(this.dateRange[1])/1000
         }
@@ -101,7 +123,7 @@ export default {
     }
   },
   components: {
-    Searchinput
+    // Searchinput
   }
 }
 </script>

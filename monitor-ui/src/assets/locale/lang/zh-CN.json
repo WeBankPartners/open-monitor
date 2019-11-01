@@ -18,7 +18,10 @@
     "datePicker": "请选择日期",
     "refresh": "定时刷新",
     "metricConfiguration": "指标配置",
-    "globalConfiguration": "全局配置"
+    "globalConfiguration": "全局配置",
+    "editTitle": "编辑标题",
+    "chartConfiguration": "监控图配置",
+    "deleteChart": "删除监控图"
   },
   "field": {
     "endpoint": "对象",
