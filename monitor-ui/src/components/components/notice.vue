@@ -1,7 +1,7 @@
 <template>
     <div class="page-notice" :class="'page-notice-'+noticeConfig.type">
         <template v-for="(noticeItem, noticeIndex) in noticeConfig.contents">
-          <p :key="noticeIndex">{{noticeItem.tip}}</p>
+          <p :key="noticeIndex">{{$t(noticeItem.tip)}}</p>
         </template>      
       </div>
 </template>
