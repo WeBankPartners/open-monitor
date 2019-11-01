@@ -21,7 +21,7 @@ func UpdateEndpointMaintain(c *gin.Context) {
 			endpointObj.ExportType = param.EndpointType
 			err = db.GetEndpoint(&endpointObj)
 			if err != nil || endpointObj.Id <= 0 {
-				mid.ReturnError(c, fmt.Sprintf("t endpoint failed with ip :%s type:%s", param.Ip, param.EndpointType), err)
+				mid.ReturnError(c, fmt.Sprintf("Get endpoint failed with ip :%s type:%s", param.Ip, param.EndpointType), err)
 				return
 			}
 		}else{

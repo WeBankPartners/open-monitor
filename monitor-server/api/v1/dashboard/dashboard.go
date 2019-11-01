@@ -24,7 +24,7 @@ import (
 func MainDashboard(c *gin.Context)  {
 	dType := c.Query("type")
 	if dType == "" {
-		mid.Return(c, mid.RespJson{Msg:"Parameter error", Code:http.StatusBadRequest})
+		mid.ReturnValidateFail(c, "Parameter error")
 		return
 	}
 	err,dashboard := db.GetDashboard(dType)
@@ -85,12 +85,12 @@ func GetPanels(c *gin.Context)  {
 	group := c.Query("group")
 	endpoint := c.Query("endpoint")
 	if group == "" {
-		mid.Return(c, mid.RespJson{Msg:"param error", Code:http.StatusBadRequest})
+		mid.ReturnValidateFail(c, "Param error")
 		return
 	}
 	groupId,err := strconv.Atoi(group)
 	if err != nil {
-		mid.Return(c, mid.RespJson{Msg:"Parameter \"group\" is not number", Code:http.StatusBadRequest})
+		mid.ReturnValidateFail(c, "Parameter \"group\" is not number")
 		return
 	}
 	err,panels := db.GetPanels(groupId, endpoint)
@@ -318,7 +318,7 @@ func GetChartNew(c *gin.Context)  {
 	}
 	start,err := strconv.ParseInt(paramConfig[0].Start, 10, 64)
 	if err != nil {
-		mid.ReturnError(c, "Param start validate error", err)
+		mid.ReturnError(c, "Param start validation failed", err)
 		return
 	}else{
 		if start < 0 {
@@ -419,7 +419,7 @@ func GetChartNew(c *gin.Context)  {
 		}
 	}
 	if len(querys) == 0 {
-		mid.ReturnError(c, "querys is null", nil)
+		mid.ReturnError(c, "Query list is empty", nil)
 		return
 	}
 	var serials []*m.SerialModel
@@ -525,7 +525,7 @@ func UpdatePromMetric(c *gin.Context)  {
 func GetEndpointMetric(c *gin.Context)  {
 	id,_ := strconv.Atoi(c.Query("id"))
 	if id <= 0 {
-		mid.ReturnValidateFail(c, "Param id validate fail")
+		mid.ReturnValidateFail(c, "Param id validate failed")
 		return
 	}
 	err,data := db.GetEndpointMetric(id)
@@ -570,7 +570,7 @@ func GetChartsByEndpoint(c *gin.Context)  {
 	}
 	start,err := strconv.ParseInt(paramStart, 10, 64)
 	if err != nil {
-		mid.ReturnError(c, "param start validate error", err)
+		mid.ReturnError(c, "Param start validation failed", err)
 		return
 	}else{
 		if start < 0 {
