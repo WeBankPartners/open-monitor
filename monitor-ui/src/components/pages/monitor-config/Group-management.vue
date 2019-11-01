@@ -120,7 +120,7 @@
         this.$router.push({name: 'thresholdManagement', params: {id: rowData.id, type: 'grp'}})
       },
       logManagement (rowData) {
-        this.$router.push({name: 'logManagement', params: {id: rowData.id, type: 'endpoint'}})
+        this.$router.push({name: 'logManagement', params: {id: rowData.id, type: 'grp'}})
       },
     },
     components: {
