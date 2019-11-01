@@ -4,12 +4,12 @@
   },
   "menu": {
     "systemName": "WeCube-Monitor (Demo Version)",
-    "view": "View",
+    "view": "Views",
     "endpointView": "Endpoint Views",
     "metricConfiguration": "Metrics Configuration",
     "customViews": "Customize Views",
     "configuration": "Configuration",
-    "alert": "Alert"
+    "alert": "Alerting"
   },
   "placeholder": {
     "input": "Please input",
