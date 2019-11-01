@@ -56,14 +56,14 @@ func UpdateGrp(c *gin.Context)  {
 	var param m.GrpTable
 	if err := c.ShouldBindJSON(&param); err==nil || param.Id <= 0 {
 		if mid.IsIllegalName(param.Name) {
-			mid.ReturnValidateFail(c, "Name illegal")
+			mid.ReturnValidateFail(c, "Illegal name")
 			return
 		}
 		query := m.GrpQuery{Name:param.Name}
 		db.ListGrp(&query)
 		if len(query.Result) > 0 {
 			if query.Result[0].Id == param.Id && query.Result[0].Description == param.Description {
-				mid.ReturnSuccess(c, "same content")
+				mid.ReturnSuccess(c, "Same content")
 				return
 			}
 			if query.Result[0].Id != param.Id {
@@ -73,7 +73,7 @@ func UpdateGrp(c *gin.Context)  {
 		}
 		err := db.UpdateGrp(&m.UpdateGrp{Groups:[]*m.GrpTable{&param}, Operation:"update", OperateUser:""})
 		if err != nil {
-			mid.ReturnError(c, "Fail", err)
+			mid.ReturnError(c, "Failure", err)
 		}else{
 			mid.ReturnSuccess(c, "Success")
 		}
@@ -90,7 +90,7 @@ func DeleteGrp(c *gin.Context)  {
 	}
 	err := db.UpdateGrp(&m.UpdateGrp{Groups:[]*m.GrpTable{&m.GrpTable{Id:id}}, Operation:"delete", OperateUser:""})
 	if err != nil {
-		mid.ReturnError(c, "Fail", err)
+		mid.ReturnError(c, "Failure", err)
 	}else{
 		mid.ReturnSuccess(c, "Success")
 	}
@@ -102,7 +102,7 @@ func ListEndpoint(c *gin.Context)  {
 	size,_ := strconv.Atoi(c.Query("size"))
 	grp,_ := strconv.Atoi(c.Query("grp"))
 	if page <= 0 || size <= 0 {
-		mid.ReturnValidateFail(c, "page and size can't be none")
+		mid.ReturnValidateFail(c, "Page and size can't be empty")
 		return
 	}
 	query := m.AlarmEndpointQuery{Search:search, Page:page, Size:size, Grp:grp}

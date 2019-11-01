@@ -28,7 +28,11 @@ func InitPrometheusConfigFile()  {
 	if err != nil {
 		PathEnbale = false
 	}
-	if !s.IsDir() {
+	if s != nil {
+		if !s.IsDir() {
+			PathEnbale = false
+		}
+	}else{
 		PathEnbale = false
 	}
 	if !PathEnbale {

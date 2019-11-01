@@ -77,11 +77,16 @@ func AddLogStrategy(c *gin.Context)  {
 		}
 		_,lms := db.GetLogMonitorTable(0,0, param.TplId, "")
 		if len(lms) > 0 {
-			for _,v := range lms {
-				if v.Path == param.Path {
-					mid.ReturnValidateFail(c, "Path already exists")
-					return
+			if param.Path != "" {
+				for _, v := range lms {
+					if v.Path == param.Path {
+						mid.ReturnValidateFail(c, "Path already exists")
+						return
+					}
 				}
+			}else{
+				param.Path = lms[0].Path
+				logMonitorObj.Path = param.Path
 			}
 		}
 		tmpMetric,tmpExpr,tmpContent := makeStrategyMsg(param.Path, param.Strategy[0].Keyword, param.Strategy[0].Cond, param.Strategy[0].Last)
@@ -199,15 +204,15 @@ func EditLogStrategy(c *gin.Context)  {
 	var param m.LogMonitorDto
 	if err := c.ShouldBindJSON(&param);err == nil {
 		if len(param.Strategy) == 0 {
-			mid.ReturnValidateFail(c, "Param strategy must contain a strategy at lest")
+			mid.ReturnValidateFail(c, "Param strategy must contain a strategy at least")
 			return
 		}
 		if param.Strategy[0].StrategyId <= 0 {
-			mid.ReturnValidateFail(c, "Param strategyId cat't be null")
+			mid.ReturnValidateFail(c, "Param strategyId cat not be empty")
 			return
 		}
 		if param.TplId <= 0 {
-			mid.ReturnValidateFail(c, "Param tplId cat't be null")
+			mid.ReturnValidateFail(c, "Param tplId cat not be empty")
 			return
 		}
 		// Update strategy
@@ -215,38 +220,38 @@ func EditLogStrategy(c *gin.Context)  {
 		strategyObj := m.StrategyTable{Id:param.Strategy[0].StrategyId,TplId:param.TplId,Metric:tmpMetric,Expr:tmpExpr,Cond:param.Strategy[0].Cond,Priority:param.Strategy[0].Priority,Content:tmpContent}
 		err = db.UpdateStrategy(&m.UpdateStrategy{Strategy:[]*m.StrategyTable{&strategyObj}, Operation:"update"})
 		if err != nil {
-			mid.ReturnError(c, "Update strategy fail", err)
+			mid.ReturnError(c, "Update strategy failed", err)
 			return
 		}
 		// Update log_monitor
 		err,lms := db.GetLogMonitorTable(0, param.Strategy[0].StrategyId,0,"")
 		if err != nil || len(lms) == 0 {
-			mid.ReturnError(c, "Update strategy fail, get log monitor by strategy error", err)
+			mid.ReturnError(c, "Update strategy failed for getting log monitor by strategy error", err)
 			return
 		}
 		logMonitorObj := m.LogMonitorTable{Id:lms[0].Id, StrategyId:param.Strategy[0].StrategyId, Path:param.Path, Keyword:param.Strategy[0].Keyword}
 		err = db.UpdateLogMonitor(&m.UpdateLogMonitor{LogMonitor:[]*m.LogMonitorTable{&logMonitorObj}, Operation:"update"})
 		if err != nil {
-			mid.ReturnError(c, "Update log monitor fail", err)
+			mid.ReturnError(c, "Update log monitor failed", err)
 			return
 		}
 		// Call endpoint node exporter
 		err,tplObj := db.GetTpl(param.TplId, 0, 0)
 		if err != nil {
-			mid.ReturnError(c, "Update log monitor,get tpl fail", err)
+			mid.ReturnError(c, "Update log monitor failed for getting tpl error", err)
 			return
 		}
 		param.EndpointId = tplObj.EndpointId
 		param.GrpId = tplObj.GrpId
 		err = sendLogConfig(param.EndpointId, param.GrpId, param.TplId)
 		if err != nil {
-			mid.ReturnError(c, "Send log config to endpoint fail", err)
+			mid.ReturnError(c, "Send log config to endpoint failed", err)
 			return
 		}
 		// Save Prometheus rule file
 		err = SaveConfigFile(param.TplId)
 		if err != nil {
-			mid.ReturnError(c, "save prometheus rule file fail", err)
+			mid.ReturnError(c, "Save prometheus rule file failed", err)
 			return
 		}
 		mid.ReturnSuccess(c, "Success")
@@ -263,7 +268,7 @@ func EditLogStrategy(c *gin.Context)  {
 func DeleteLogPath(c *gin.Context)  {
 	strategyId,err := strconv.Atoi(c.Query("id"))
 	if err != nil || strategyId <= 0 {
-		mid.ReturnValidateFail(c, fmt.Sprintf("Param validate fail:%v", err))
+		mid.ReturnValidateFail(c, fmt.Sprintf("Param validate failed:%v", err))
 		return
 	}
 	err,strategyObj := db.GetStrategy(m.StrategyTable{Id:strategyId})
@@ -302,13 +307,13 @@ func DeleteLogPath(c *gin.Context)  {
 	}
 	err = sendLogConfig(tplObj.EndpointId, tplObj.GrpId, tplObj.Id)
 	if err != nil {
-		mid.ReturnError(c, "Send log config to endpoint fail", err)
+		mid.ReturnError(c, "Send log config to endpoint failed", err)
 		return
 	}
 	// Save Prometheus rule file
 	err = SaveConfigFile(tplObj.Id)
 	if err != nil {
-		mid.ReturnError(c, "Save prometheus rule file fail", err)
+		mid.ReturnError(c, "Save prometheus rule file failed", err)
 		return
 	}
 	mid.ReturnSuccess(c, "Success")
@@ -322,7 +327,7 @@ func DeleteLogPath(c *gin.Context)  {
 func DeleteLogStrategy(c *gin.Context)  {
 	strategyId,err := strconv.Atoi(c.Query("id"))
 	if err != nil || strategyId <= 0 {
-		mid.ReturnValidateFail(c, fmt.Sprintf("Param validate fail:%v", err))
+		mid.ReturnValidateFail(c, fmt.Sprintf("Param validate failed:%v", err))
 		return
 	}
 	err,strategyObj := db.GetStrategy(m.StrategyTable{Id:strategyId})
@@ -333,7 +338,7 @@ func DeleteLogStrategy(c *gin.Context)  {
 	// Delete log monitor
 	err,lms := db.GetLogMonitorTable(0, strategyId,0,"")
 	if err != nil || len(lms) == 0 {
-		mid.ReturnError(c, "Delete strategy failed for getting log monitor alert by", err)
+		mid.ReturnError(c, "Delete strategy failed for getting log monitor alert error", err)
 		return
 	}
 	err = db.UpdateLogMonitor(&m.UpdateLogMonitor{LogMonitor:[]*m.LogMonitorTable{&m.LogMonitorTable{Id:lms[0].Id}}, Operation:"delete"})
@@ -355,13 +360,13 @@ func DeleteLogStrategy(c *gin.Context)  {
 	}
 	err = sendLogConfig(tplObj.EndpointId, tplObj.GrpId, tplObj.Id)
 	if err != nil {
-		mid.ReturnError(c, "Send log config to endpoint fail", err)
+		mid.ReturnError(c, "Send log config to endpoint failed", err)
 		return
 	}
 	// Save Prometheus rule file
 	err = SaveConfigFile(tplObj.Id)
 	if err != nil {
-		mid.ReturnError(c, "save prometheus rule file fail", err)
+		mid.ReturnError(c, "Save prometheus rule file failed", err)
 		return
 	}
 	mid.ReturnSuccess(c, "Success")
@@ -395,7 +400,7 @@ func sendLogConfig(endpointId,grpId,tplId int) error {
 	for _,v := range endpoints {
 		err,logMonitors := db.GetLogMonitorByEndpoint(v.Id)
 		if err != nil {
-			mid.LogError(fmt.Sprintf("send log config with endpoint : %s fail", v.Guid),err)
+			mid.LogError(fmt.Sprintf("Send log config with endpoint : %s failed", v.Guid),err)
 			continue
 		}
 		if len(logMonitors) == 0 {

@@ -103,7 +103,7 @@ func GetHistoryAlarm(c *gin.Context)  {
 	endpointObj := m.EndpointTable{Id:endpointId}
 	db.GetEndpoint(&endpointObj)
 	if endpointObj.Guid == "" {
-		mid.ReturnError(c, "Get historicl alerts failed", fmt.Errorf("can't find endpoint with id: %d", endpointId))
+		mid.ReturnError(c, "Get historical alerts failed", fmt.Errorf("can't find endpoint with id: %d", endpointId))
 		return
 	}
 	query := m.AlarmTable{Endpoint:endpointObj.Guid}
@@ -166,7 +166,7 @@ func GetProblemAlarm(c *gin.Context)  {
 func CloseALarm(c *gin.Context)  {
 	id,err := strconv.Atoi(c.Query("id"))
 	if err != nil || id <= 0 {
-		mid.ReturnValidateFail(c, "Parameter id validation failed")
+		mid.ReturnValidateFail(c, "Parameter \"id\" validation failed")
 		return
 	}
 	err = db.CloseAlarm(id)

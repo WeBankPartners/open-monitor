@@ -8,7 +8,7 @@ English / [中文](README.md)
 
 ## Link for Trial
 
-[Click_To_Try_WeCube-plugins-prometheus](http://119.28.38.23:38082/wecube-monitor)
+[Click_To_Try_WeCube-plugins-prometheus](https://sandbox.webank.com/wecube-monitor)
 
 ## Introduction
 
