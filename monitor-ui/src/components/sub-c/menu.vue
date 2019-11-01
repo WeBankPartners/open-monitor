@@ -42,25 +42,32 @@
             return {
                 theme1: 'dark',
                 activeName: '',
-                activeLang: '中文',
+                activeLang: '',
                 langConfig: {
-                   zh: '中文',
-                   en: 'English'
+                   'zh-CN': '中文',
+                    en: 'En'
                 },
                 lang: [
-                    {label: '中文', value: 'zh'},
-                    {label: 'English', value: 'en'}
+                    {label: '中文', value: 'zh-CN'},
+                    {label: 'En', value: 'en'}
                 ]
             }
         }, 
         mounted(){
-            this.activeLang = this.langConfig[localStorage.getItem('lang')]
+            if (this.langConfig[localStorage.getItem('lang')] === undefined) {
+                this.activeLang = this.langConfig[navigator.language || navigator.userLanguage]
+                this.setLocale(navigator.language || navigator.userLanguage)
+            } else {
+                this.activeLang = this.langConfig[localStorage.getItem('lang')]
+            }
         },
         methods: {
             changeLang(name) {
                 this.activeLang = name
-                let lang = 'en'
-                name === 'English' ? lang='en': lang='zh'
+                let lang = (name === 'En' ? 'en': 'zh-CN')
+                this.setLocale(lang)
+            },
+            setLocale(lang) {
                 localStorage.setItem('lang', lang)
                 this.$i18n.locale = lang
                 this.$validator.locale = lang
