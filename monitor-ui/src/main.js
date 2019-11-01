@@ -40,10 +40,10 @@ Vue.use(VueI18n)
 Vue.locale = () => {};
 const messages = {
   en: Object.assign(en_local, en),
-  zh: Object.assign(zh_local, zh)
+  'zh-CN': Object.assign(zh_local, zh)
 };
 const i18n = new VueI18n({
-  locale: localStorage.getItem('lang') || 'zh',
+  locale: localStorage.getItem('lang') || navigator.language || navigator.userLanguage,
   messages
 })
 

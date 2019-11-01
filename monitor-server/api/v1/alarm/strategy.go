@@ -115,7 +115,7 @@ func DeleteStrategy(c *gin.Context)  {
 	db.UpdateTpl(strategy.TplId, "")
 	err = SaveConfigFile(strategy.TplId)
 	if err != nil {
-		mid.ReturnError(c, "save prometheus rule file fail", err)
+		mid.ReturnError(c, "Save prometheus rule file failed", err)
 		return
 	}
 	mid.ReturnSuccess(c, "Success")
@@ -125,7 +125,7 @@ func SearchObjOption(c *gin.Context)  {
 	searchType := c.Query("type")
 	searchMsg := c.Query("search")
 	if searchType == "" || searchMsg == "" {
-		mid.ReturnValidateFail(c, "Type or search content is null")
+		mid.ReturnValidateFail(c, "Type or search content can not be empty")
 		return
 	}
 	var err error
