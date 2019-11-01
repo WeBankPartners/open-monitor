@@ -3,10 +3,10 @@ import VeeValidate, {Validator} from 'vee-validate'
 import zh from 'vee-validate/dist/locale/zh_CN'
 import en from 'vee-validate/dist/locale/en'
 
-Validator.localize('en', en)
-Validator.localize('zh', zh)
+Validator.localize('en-US', en)
+Validator.localize('zh-CN', zh)
 Validator.localize({
-  'zh_CN': {
+  'zh-CN': {
     messages: {
       required: '不能为空',
       numeric: '仅允许数字',
@@ -27,7 +27,7 @@ Validator.localize({
 const config = {
   errorBagName: 'errors', // change if property conflicts.
   delay: 0,
-  locale: localStorage.getItem('lang') || 'zh',
+  locale: localStorage.getItem('lang') || navigator.language || navigator.userLanguage,
   messages: null,
   strict: true,
   events: 'blur'

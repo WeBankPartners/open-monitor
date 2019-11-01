@@ -39,7 +39,7 @@ import zh_local from '@/assets/locale/lang/zh-CN.json';
 Vue.use(VueI18n)
 Vue.locale = () => {};
 const messages = {
-  en: Object.assign(en_local, en),
+  'en-US': Object.assign(en_local, en),
   'zh-CN': Object.assign(zh_local, zh)
 };
 const i18n = new VueI18n({
