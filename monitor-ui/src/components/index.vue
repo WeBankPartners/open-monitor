@@ -24,14 +24,15 @@ export default {
   @import '../assets/css/common.less';
   .index {
     min-width: 1200px;
-    background: @gray-f;
+    background: white;
   }
   .content {
+    background-image: url('../assets/img/watermark_wecube_monitor.png');
     // width:1200px;
     min-height: 95vh;
     height: 100%;
     margin: 0 auto;
     padding: 10px;
-    background:white;
+    // background:white;
   }
 </style>
