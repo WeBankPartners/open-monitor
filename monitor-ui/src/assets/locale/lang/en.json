@@ -1,24 +1,27 @@
 {
   "common": {
-    "changeLanguage": "简体中文"
+    "changeLanguage": "English"
   },
   "menu": {
     "systemName": "WeCube-Monitor (Demo Version)",
-    "view": "View",
+    "view": "Views",
     "endpointView": "Endpoint Views",
     "metricConfiguration": "Metrics Configuration",
     "customViews": "Customize Views",
     "configuration": "Configuration",
-    "alert": "Alert"
+    "alert": "Alerting"
   },
   "placeholder": {
-    "input": "Enter something",
-    "endpointSearch": "Enter something",
+    "input": "Please input",
+    "endpointSearch": "Please input",
     "metric": "Select metric",
-    "datePicker": "Select date",
+    "datePicker": "Please select",
     "refresh": "Refresh",
     "metricConfiguration": "Metrics configuration",
-    "globalConfiguration": "Global configuration"
+    "globalConfiguration": "Global configuration",
+    "editTitle": "Edit title",
+    "chartConfiguration": "Chart configuration",
+    "deleteChart": "Delete chart"
   },
   "field": {
     "group": "Group",

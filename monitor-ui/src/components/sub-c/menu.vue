@@ -45,11 +45,11 @@
                 activeLang: '',
                 langConfig: {
                    'zh-CN': '中文',
-                    en: 'En'
+                   'en-US': 'En'
                 },
                 lang: [
                     {label: '中文', value: 'zh-CN'},
-                    {label: 'En', value: 'en'}
+                    {label: 'En', value: 'en-US'}
                 ]
             }
         }, 
@@ -64,7 +64,7 @@
         methods: {
             changeLang(name) {
                 this.activeLang = name
-                let lang = (name === 'En' ? 'en': 'zh-CN')
+                let lang = (name === 'En' ? 'en-US': 'zh-CN')
                 this.setLocale(lang)
             },
             setLocale(lang) {

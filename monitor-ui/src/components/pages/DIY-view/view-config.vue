@@ -37,12 +37,18 @@
           <div class="header-grid header-grid-name">
             <span v-if="editChartId !== item.id">{{item.i}}</span>
             <Input v-else v-model="item.i" class="editChartId" style="width:100px" @on-blur="editChartId = null" size="small" placeholder="small size" />
-            <i class="fa fa-pencil-square" @click="editChartId = item.id" aria-hidden="true"></i>
+            <Tooltip :content="$t('placeholder.editTitle')" placement="top">
+              <i class="fa fa-pencil-square" @click="editChartId = item.id" aria-hidden="true"></i>
+            </Tooltip>
           </div>
           <div class="header-grid header-grid-tools"> 
             <!-- <i class="fa fa-eye" aria-hidden="true" @click="gridPlus(item)"></i> -->
-            <i class="fa fa-cog" @click="editGrid(item)" aria-hidden="true"></i>
-            <i class="fa fa-trash" @click="removeGrid(item)" aria-hidden="true"></i>
+            <Tooltip :content="$t('placeholder.chartConfiguration')" placement="top">
+              <i class="fa fa-cog" @click="editGrid(item)" title="111" aria-hidden="true"></i>
+            </Tooltip>
+            <Tooltip :content="$t('placeholder.deleteChart')" placement="top">
+              <i class="fa fa-trash" @click="removeGrid(item)" title="111" aria-hidden="true"></i>
+            </Tooltip>
           </div>
         </div>
         <div class="">
