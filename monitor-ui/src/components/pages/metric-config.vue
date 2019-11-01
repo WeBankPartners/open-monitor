@@ -2,7 +2,7 @@
   <div class="text-align:center; ">
     <Title :title="$t('title.metricConfiguration')"></Title>
     <div style="margin-bottom:24px;">
-      <Notice :noticeConfig='noticeConfig' v-if="$i18n.locale!='en'"> </Notice>
+      <Notice :noticeConfig='noticeConfig'> </Notice>
       <Searchinput :parentConfig="searchInputConfig" ref="choicedIP"></Searchinput> 
       <Select v-model="metricSelected" filterable multiple style="width:260px" :label-in-value="true" 
           @on-change="selectMetric" @on-open-change="metricSelectOpen" :placeholder="$t('placeholder.metric')">
@@ -63,13 +63,13 @@ export default {
         type: 'info',
         contents: [
           {
-            tip: '1、请先搜索主机作为输入源并选择监控指标；'
+            tip: 'tips.metricConfigTips.one'
           },
           {
-            tip: '2、点击查询可查看当前对象及指标下监控视图；'
+            tip: 'tips.metricConfigTips.two'
           },
           {
-            tip: '3、使用新增指标增减指标项，并在点击 保存修改 后将配置保存；'
+            tip: 'tips.metricConfigTips.three'
           },
         ]
       },
