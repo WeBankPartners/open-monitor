@@ -97,6 +97,11 @@
   "tips": {
     "required": " Required!",
     "inputRequired": "Required,2-60",
-    "success": " Success!"
+    "success": " Success!",
+    "metricConfigTips": {
+      "one": "1. Input endpoint as data source and select the metric from the dropdown list.",
+      "two": "2. Click 'Search' button to view the monitor graph based on the selected metric.",
+      "three": "3. Click 'Add metric' button to config the metric, then click Save button to save the configuration."
+    }
   }
 }
