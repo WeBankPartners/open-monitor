@@ -30,7 +30,7 @@
               <div :id="item.id" class="echart" style="height:230px;width:560px"></div>
             </div>
              <div v-else class="echart echart-no-data-tip">
-              <span>~~~暂无数据~~~</span>
+              <span>~~~No Data!~~~</span>
             </div>
           </section>
         </div>
@@ -91,8 +91,13 @@ export default {
           this.noDataTip = true
           return
         }
-         const colorx = ['#61a0a8', '#2f4554', '#c23531', '#d48265', '#91c7ae', '#749f83', '#ca8622', '#bda29a', '#6e7074', '#546570', '#c4ccd3']
-        const colorSet = colorx.concat(colorx,colorx,colorx,colorx).splice(viewIndex+4)
+        const colorX = ['#66CC99','#9999CC','#9999FF','#99FF99','#CC9999','#CCCCFF','#FF66FF','#FFCCCC','#66CCCC','#996699','#99CC66','#FFCC99','#CC99CC','#FF9999','#FF9966','#FFCCFF']
+        let colorSet = []
+        for (let i=0;i<colorX.length;i++) {
+          let tmpIndex = viewIndex*3 + i
+          tmpIndex = tmpIndex%colorX.length
+          colorSet.push(colorX[tmpIndex])
+        }
         responseData.series.forEach((item,index)=>{
           legend.push(item.name)
           item.symbol = 'none'

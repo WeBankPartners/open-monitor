@@ -83,6 +83,7 @@ let tableEle = [
   {title: 'tableKey.path', value: 'path', display: true}
 ]
 const btn = [
+  {btn_name: 'button.add', btn_func: 'singeAddF'},
   {btn_name: 'button.edit', btn_func: 'editF'},
   {btn_name: 'button.remove', btn_func: 'delF'},
 ]
@@ -177,6 +178,7 @@ export default {
         }
       },
       id: null,
+      singeAddId: '',
       activeData: null,
       extendData: null,
     }
@@ -195,6 +197,7 @@ export default {
       this.modelConfig.thresholdValue = ''
       this.modelConfig.lastValue = ''
       this.modelConfig.condValue = ''
+      this.singeAddId = ''
     })
   },
   methods: {
@@ -230,7 +233,7 @@ export default {
     delF (rowData) {
       let params = {id: rowData.id}
       this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.logManagement.delList.api, params, () => {
-        this.$Message.success(this.$t('button.remove')+this.$t('tips.success'))
+        this.$Message.success(this.$t('tips.success'))
         this.requestData(this.type, this.typeValue)
       })
     },
@@ -265,6 +268,12 @@ export default {
               
       return modelParams
     },
+    singeAddF (rowData) {
+      this.modelConfig.addRow.path = rowData.path
+      this.singeAddId = rowData.id
+      this.modelConfig.isAdd = false
+      this.JQ('#add_edit_Modal').modal('show')
+    },
     add () {
       this.modelConfig.isAdd = true
       this.JQ('#add_edit_Modal').modal('show')
@@ -275,7 +284,7 @@ export default {
       }
       let params = this.paramsPrepare()
       this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.logManagement.add.api, params, () => {
-        this.$Message.success(this.$t('button.add')+this.$t('tips.success'))
+        this.$Message.success(this.$t('tips.success'))
         this.JQ('#add_edit_Modal').modal('hide')
         this.requestData(this.type, this.typeValue)
       })
@@ -294,7 +303,7 @@ export default {
         path: this.pathModelConfig.addRow.path
       }
       this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.logManagement.editList.api, params, () => {
-        this.$Message.success(this.$t('button.edit')+this.$t('tips.success'))
+        this.$Message.success(this.$t('tips.success'))
         this.JQ('#path_Modal').modal('hide')
         this.requestData(this.type, this.typeValue)
       })
@@ -329,7 +338,7 @@ export default {
     delPathItem (rowData) {
       let params = {id: rowData.strategy_id}
       this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.logManagement.delete.api, params, () => {
-        this.$Message.success(this.$t('button.remove')+this.$t('tips.success'))
+        this.$Message.success(this.$t('tips.success'))
         this.requestData(this.type, this.typeValue)
       })
     },
@@ -338,12 +347,21 @@ export default {
         return
       }
       let params = this.paramsPrepare()
-      params.tpl_id = this.extendData.tpl_id
-      params.strategy[0].strategy_id = this.extendData.strategy_id
-      this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.logManagement.update.api, params, () => {
-        this.$Message.success(this.$t('button.edit')+this.$t('tips.success'))
+      let url = ''
+      if (!this.$validate.isEmpty_reset(this.singeAddId)) {
+        params.id = this.singeAddId
+        url = this.apiCenter.logManagement.add.api
+      } else {
+        params.tpl_id = this.extendData.tpl_id
+        params.strategy[0].strategy_id = this.extendData.strategy_id
+        url = this.apiCenter.logManagement.update.api
+      }
+     
+      this.$httpRequestEntrance.httpRequestEntrance('POST', url, params, () => {
+        this.$Message.success(this.$t('tips.success'))
         this.JQ('#add_edit_Modal').modal('hide')
         this.requestData(this.type, this.typeValue)
+        this.$store.commit('changeTableExtendActive', -1)
       })
     },
   },

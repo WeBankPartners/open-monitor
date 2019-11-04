@@ -122,7 +122,7 @@ export default {
           series: responseData.series,
           yaxis: responseData.yaxis,
         }
-        drawChart(this,config)
+        drawChart(this,config,{eye:false})
       })
     },
     hideMaxChart () {
