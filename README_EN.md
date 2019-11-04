@@ -10,6 +10,9 @@ English / [中文](README.md)
 
 [Click_To_Try_WeCube-plugins-prometheus](https://sandbox.webank.com/wecube-monitor)
 
+## Demo
+<img src="./wiki/images/wecube-monitor01.gif" />
+
 ## Introduction
 
 Prometheus is an open-source monitor-alarm system and time series database (TSDB) developed by SoundCloud. It is an open-source version of the Google BorgMon monitoring system in Go language.

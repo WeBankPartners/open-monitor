@@ -113,7 +113,7 @@ export default {
     removeTemplate (item) {
       let params = {id: item.id}
       this.$httpRequestEntrance.httpRequestEntrance('GET',this.apiCenter.template.delete, params, () => {
-        this.$Message.success(this.$t('button.remove')+this.$t('tips.success'))
+        this.$Message.success(this.$t('tips.success'))
         this.viewList()
       })
     },
