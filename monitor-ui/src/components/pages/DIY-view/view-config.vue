@@ -57,7 +57,7 @@
               <div :id="item.id" class="echart" style="height:230px;width:560px"></div>
             </div>
              <div v-else class="echart echart-no-data-tip">
-              <span>~~~暂无数据~~~</span>
+              <span>~~~No Data!~~~</span>
             </div>
           </section>
         </div>
