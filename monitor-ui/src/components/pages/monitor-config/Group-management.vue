@@ -85,7 +85,7 @@
         this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.groupManagement.add.api, params, () => {
           this.$validate.emptyJson(this.modelConfig.addRow)
           this.JQ('#add_edit_Modal').modal('hide')
-          this.$Message.success(this.$t('button.add')+this.$t('tips.success'))
+          this.$Message.success(this.$t('tips.success'))
           this.initData(this.pageConfig.CRUD, this.pageConfig)
         })
       },
@@ -95,7 +95,7 @@
         this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.groupManagement.update.api, params, () => {
           this.$validate.emptyJson(this.modelConfig.addRow)
           this.JQ('#add_edit_Modal').modal('hide')
-          this.$Message.success(this.$t('button.edit')+this.$t('tips.success'))
+          this.$Message.success(this.$t('tips.success'))
           this.initData(this.pageConfig.CRUD, this.pageConfig)
         })
       },
@@ -112,7 +112,7 @@
       delF (rowData) {
         let params = {id: rowData.id}
         this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.groupManagement.delete.api, params, () => {
-          this.$Message.success(this.$t('button.remove')+this.$t('tips.success'))
+          this.$Message.success(this.$t('tips.success'))
           this.initData(this.pageConfig.CRUD, this.pageConfig)
         })
       },

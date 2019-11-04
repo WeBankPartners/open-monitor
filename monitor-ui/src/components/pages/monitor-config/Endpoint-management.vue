@@ -231,7 +231,7 @@
           operation: 'add'
         }
         this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.endpointManagement.update.api, params, () => {
-          this.$Message.success(this.$t('button.add')+this.$t('tips.success'))
+          this.$Message.success(this.$t('tips.success'))
           this.JQ('#add_object_Modal').modal('hide')
           this.initData(this.pageConfig.CRUD, this.pageConfig)
         })
@@ -247,7 +247,7 @@
           operation: 'delete'
         }
         this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.endpointManagement.update.api, params, () => {
-          this.$Message.success(this.$t('button.add')+this.$t('tips.success'))
+          this.$Message.success(this.$t('tips.success'))
           this.initData(this.pageConfig.CRUD, this.pageConfig)
         })
       },
@@ -283,7 +283,7 @@
         this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.endpointManagement.register.api, params, () => {
           this.$validate.emptyJson(this.endpointRejectModel.addRow)
           this.JQ('#endpoint_reject_model').modal('hide')
-          this.$Message.success(this.$t('button.add')+this.$t('tips.success'))
+          this.$Message.success(this.$t('tips.success'))
           this.initData(this.pageConfig.CRUD, this.pageConfig)
         })
       }

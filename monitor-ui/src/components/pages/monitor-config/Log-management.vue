@@ -233,7 +233,7 @@ export default {
     delF (rowData) {
       let params = {id: rowData.id}
       this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.logManagement.delList.api, params, () => {
-        this.$Message.success(this.$t('button.remove')+this.$t('tips.success'))
+        this.$Message.success(this.$t('tips.success'))
         this.requestData(this.type, this.typeValue)
       })
     },
@@ -284,7 +284,7 @@ export default {
       }
       let params = this.paramsPrepare()
       this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.logManagement.add.api, params, () => {
-        this.$Message.success(this.$t('button.add')+this.$t('tips.success'))
+        this.$Message.success(this.$t('tips.success'))
         this.JQ('#add_edit_Modal').modal('hide')
         this.requestData(this.type, this.typeValue)
       })
@@ -303,7 +303,7 @@ export default {
         path: this.pathModelConfig.addRow.path
       }
       this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.logManagement.editList.api, params, () => {
-        this.$Message.success(this.$t('button.edit')+this.$t('tips.success'))
+        this.$Message.success(this.$t('tips.success'))
         this.JQ('#path_Modal').modal('hide')
         this.requestData(this.type, this.typeValue)
       })
@@ -338,7 +338,7 @@ export default {
     delPathItem (rowData) {
       let params = {id: rowData.strategy_id}
       this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.logManagement.delete.api, params, () => {
-        this.$Message.success(this.$t('button.remove')+this.$t('tips.success'))
+        this.$Message.success(this.$t('tips.success'))
         this.requestData(this.type, this.typeValue)
       })
     },
@@ -358,7 +358,7 @@ export default {
       }
      
       this.$httpRequestEntrance.httpRequestEntrance('POST', url, params, () => {
-        this.$Message.success(this.$t('button.edit')+this.$t('tips.success'))
+        this.$Message.success(this.$t('tips.success'))
         this.JQ('#add_edit_Modal').modal('hide')
         this.requestData(this.type, this.typeValue)
         this.$store.commit('changeTableExtendActive', -1)
