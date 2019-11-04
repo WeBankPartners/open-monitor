@@ -3,7 +3,7 @@
     <div v-if="!noDataTip" :id="elId" class="echart">
     </div>
     <div v-if="noDataTip" class="echart echart-no-data-tip">
-      <span>~~~暂无数据~~~</span>
+      <span>~~~No Data!~~~</span>
     </div>
   </div>
 </template>
