@@ -14,7 +14,7 @@
           <div :id="elId" class="echart"></div>
         </div>
         <div v-else class="echart echart-no-data-tip">
-          <span>~~~暂无数据~~~</span>
+          <span>~~~No Data!~~~</span>
         </div>
       </div>
       <div class="zone zone-config" >

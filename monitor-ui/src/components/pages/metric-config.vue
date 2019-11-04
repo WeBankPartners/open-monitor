@@ -38,7 +38,7 @@
         <div :id="elId" class="echart"></div>
       </div>
       <div v-else class="echart echart-no-data-tip">
-        <span>~~~暂无数据~~~</span>
+        <span>~~~No Data!~~~</span>
       </div>
     </section>
     <ModalComponent :modelConfig="modelConfig"></ModalComponent>
@@ -265,7 +265,6 @@ export default {
       let params = []
       this.totalMetric.forEach((item) => {
         if (item.value === '') {
-          this.$Message.warning('sfdsghfd！')
           return
         }
         let {id:id,label:metric,value:prom_ql} = item
