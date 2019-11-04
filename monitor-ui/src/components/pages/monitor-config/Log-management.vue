@@ -361,6 +361,7 @@ export default {
         this.$Message.success(this.$t('button.edit')+this.$t('tips.success'))
         this.JQ('#add_edit_Modal').modal('hide')
         this.requestData(this.type, this.typeValue)
+        this.$store.commit('changeTableExtendActive', -1)
       })
     },
   },
