@@ -207,7 +207,7 @@ export default {
     delF (rowData) {
       let params = {id: rowData.id}
       this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.thresholdManagement.delete.api, params, () => {
-        this.$Message.success(this.$t('button.remove')+this.$t('tips.success'))
+        this.$Message.success(this.$t('tips.success'))
         this.requestData(this.type, this.typeValue)
       })
     },
@@ -258,7 +258,7 @@ export default {
       }
       let params = this.paramsPrepare()
       this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.thresholdManagement.add.api, params, () => {
-        this.$Message.success(this.$t('button.add')+this.$t('tips.success'))
+        this.$Message.success(this.$t('tips.success'))
         this.JQ('#add_edit_Modal').modal('hide')
         this.requestData(this.type, this.typeValue)
       })
@@ -297,7 +297,7 @@ export default {
       let params = this.paramsPrepare()
       params.strategy_id = this.id
       this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.thresholdManagement.update.api, params, () => {
-        this.$Message.success(this.$t('button.edit')+this.$t('tips.success'))
+        this.$Message.success(this.$t('tips.success'))
         this.JQ('#add_edit_Modal').modal('hide')
         this.requestData(this.type, this.typeValue)
       })

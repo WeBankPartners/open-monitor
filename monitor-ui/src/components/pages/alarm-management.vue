@@ -95,6 +95,8 @@ export default {
       }
       let params = {filter:temp}
       this.timeForDataAchieve = new Date().toLocaleString()
+      this.timeForDataAchieve = this.timeForDataAchieve.replace('上午', 'AM ')
+      this.timeForDataAchieve = this.timeForDataAchieve.replace('下午', 'PM ')
       this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.alarmManagement.list.api, params, (responseData) => {
         this.resultData = responseData
       })
