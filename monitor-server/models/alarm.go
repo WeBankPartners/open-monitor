@@ -207,6 +207,7 @@ type LogMonitorDto struct {
 }
 
 type LogMonitorStrategyDto struct {
+	Id  int  `json:"id"`
 	StrategyId  int  `json:"strategy_id"`
 	Keyword  string  `json:"keyword"`
 	Cond  string  `json:"cond"`
@@ -223,6 +224,7 @@ type UpdateLogMonitor struct {
 type TplStrategyLogMonitorTable struct {
 	TplId  int  `json:"tpl_id"`
 	GrpId  int  `json:"grp_id"`
+	LogMonitorId  int  `json:"log_monitor_id"`
 	EndpointId  int  `json:"endpoint_id"`
 	StrategyId  int  `json:"strategy_id"`
 	Expr  string  `json:"expr" binding:"required"`
