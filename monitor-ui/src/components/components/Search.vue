@@ -81,10 +81,10 @@ export default {
     }
   },
   mounted() {
-    // if (!this.$validate.isEmpty_reset(this.$route.params)) {
-    //   this.getEndpointList('.')
-    //   this.endpoint = this.$route.params.value
-    // }
+    if (!this.$validate.isEmpty_reset(this.$route.params)) {
+      this.getEndpointList('.')
+      this.endpoint = this.$route.params.value
+    }
   },
   methods: {
     getMainConfig () {
