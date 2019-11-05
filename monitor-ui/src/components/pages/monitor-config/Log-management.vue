@@ -15,7 +15,11 @@
             remote
             :remote-method="endpointList"
             >
-            <Option v-for="(option, index) in endpointOptions" :value="option.id" :key="index">{{option.option_text}}</Option>
+            <Option v-for="(option, index) in endpointOptions" :value="option.id" :key="index">
+            <Tag color="cyan" class="tag-width" v-if="option.option_value.split(':')[1] == 'host'">host</Tag>
+            <Tag color="blue" class="tag-width" v-if="option.option_value.split(':')[1] == 'mysql'">mysql </Tag>
+            <Tag color="geekblue" class="tag-width" v-if="option.option_value.split(':')[1] == 'redis'">redis </Tag>
+            <Tag color="purple" class="tag-width" v-if="option.option_value.split(':')[1] == 'tomcat'">tomcat</Tag>{{option.option_text}}</Option>
           </Select>
         </li>
         <li class="search-li">
@@ -407,4 +411,8 @@ export default {
     display: inline-block;
     vertical-align: middle; 
   }
+  .tag-width {
+    width: 55px;
+    text-align: center;
+  } 
 </style>
