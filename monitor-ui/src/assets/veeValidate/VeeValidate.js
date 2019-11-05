@@ -27,7 +27,9 @@ Validator.localize({
 const config = {
   errorBagName: 'errors', // change if property conflicts.
   delay: 0,
-  locale: localStorage.getItem('lang') || navigator.language || navigator.userLanguage,
+  locale: localStorage.getItem('lang') || ( navigator.language || navigator.userLanguage === "zh-CN"
+  ? "zh-CN"
+  : "en-US"),
   messages: null,
   strict: true,
   events: 'blur'

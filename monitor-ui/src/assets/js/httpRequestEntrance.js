@@ -75,7 +75,6 @@ function httpRequestEntrance (method, url, data, callback, customHttpConfig) {
         loading.end()
       },0)
     }
-
     errorMessage(error.response.data.msg)
     // if (error.response) {
     //   let status = error.response.status
