@@ -60,7 +60,7 @@ func AddLogStrategy(c *gin.Context)  {
 		logMonitorObj.Keyword = param.Strategy[0].Keyword
 		// Add strategy
 		if param.TplId <= 0 {
-			if param.GrpId + param.EndpointId <= 0 {
+			if param.GrpId+param.EndpointId <= 0 {
 				mid.ReturnValidateFail(c, "Both endpoint and group id are missing")
 				return
 			}
@@ -68,25 +68,30 @@ func AddLogStrategy(c *gin.Context)  {
 				mid.ReturnValidateFail(c, "Endpoint and group id can not be provided at the same time")
 				return
 			}
-			err,tplObj := db.AddTpl(param.GrpId, param.EndpointId, "")
-			if err != nil {
-				mid.ReturnError(c, "Add strategy failed", err)
-				return
-			}
-			param.TplId = tplObj.Id
-		}
-		_,lms := db.GetLogMonitorTable(0,0, param.TplId, "")
-		if len(lms) > 0 {
-			if param.Path != "" {
-				for _, v := range lms {
-					if v.Path == param.Path {
-						mid.ReturnValidateFail(c, "Path already exists")
-						return
-					}
+			needAdd := true
+			if param.Id > 0 {
+				_,strategyObj := db.GetStrategy(m.StrategyTable{Id:param.Id})
+				if strategyObj.TplId > 0 {
+					needAdd = false
+					param.TplId = strategyObj.TplId
 				}
-			}else{
-				param.Path = lms[0].Path
-				logMonitorObj.Path = param.Path
+			}
+			if needAdd {
+				err, tplObj := db.AddTpl(param.GrpId, param.EndpointId, "")
+				if err != nil {
+					mid.ReturnError(c, "Add strategy failed", err)
+					return
+				}
+				param.TplId = tplObj.Id
+			}
+		}
+		if param.Id <= 0 {
+			_,lms := db.GetLogMonitorTable(0,0, param.TplId, "")
+			for _, v := range lms {
+				if v.Path == param.Path {
+					mid.ReturnValidateFail(c, "Path already exists")
+					return
+				}
 			}
 		}
 		tmpMetric,tmpExpr,tmpContent := makeStrategyMsg(param.Path, param.Strategy[0].Keyword, param.Strategy[0].Cond, param.Strategy[0].Last)
@@ -197,7 +202,7 @@ func EditLogPath(c *gin.Context)  {
 // @Produce  json
 // @Param tpl_id query int true "列表获取中的tpl_id"
 // @Param path query string true "表单输入的日志路径"
-// @Param strategy query string true "对象数组类型[{'strategy_id':int类型,'keyword':'关键字','cond':'条件,如 >1','last':'时间范围,如 5min','priority':'优先级,如 high'}]"
+// @Param strategy query string true "对象数组类型[{'id':int类型, 'strategy_id':int类型,'keyword':'关键字','cond':'条件,如 >1','last':'时间范围,如 5min','priority':'优先级,如 high'}]"
 // @Success 200 {string} json "{"message": "Success"}"
 // @Router /api/v1/alarm/log/monitor/update [post]
 func EditLogStrategy(c *gin.Context)  {
@@ -207,29 +212,29 @@ func EditLogStrategy(c *gin.Context)  {
 			mid.ReturnValidateFail(c, "Param strategy must contain a strategy at least")
 			return
 		}
-		if param.Strategy[0].StrategyId <= 0 {
-			mid.ReturnValidateFail(c, "Param strategyId cat not be empty")
+		if param.Strategy[0].Id <= 0 {
+			mid.ReturnValidateFail(c, "Param id in strategy can not be empty")
 			return
 		}
 		if param.TplId <= 0 {
-			mid.ReturnValidateFail(c, "Param tplId cat not be empty")
+			mid.ReturnValidateFail(c, "Param tplId can not be empty")
 			return
 		}
 		// Update strategy
+		err,lms := db.GetLogMonitorTable(param.Strategy[0].Id,0,0,"")
+		if err != nil || len(lms) == 0 {
+			mid.ReturnError(c, "Update strategy failed for getting log monitor by strategy error", err)
+			return
+		}
 		tmpMetric,tmpExpr,tmpContent := makeStrategyMsg(param.Path, param.Strategy[0].Keyword, param.Strategy[0].Cond, param.Strategy[0].Last)
-		strategyObj := m.StrategyTable{Id:param.Strategy[0].StrategyId,TplId:param.TplId,Metric:tmpMetric,Expr:tmpExpr,Cond:param.Strategy[0].Cond,Priority:param.Strategy[0].Priority,Content:tmpContent}
+		strategyObj := m.StrategyTable{Id:lms[0].StrategyId,TplId:param.TplId,Metric:tmpMetric,Expr:tmpExpr,Cond:param.Strategy[0].Cond,Priority:param.Strategy[0].Priority,Content:tmpContent}
 		err = db.UpdateStrategy(&m.UpdateStrategy{Strategy:[]*m.StrategyTable{&strategyObj}, Operation:"update"})
 		if err != nil {
 			mid.ReturnError(c, "Update strategy failed", err)
 			return
 		}
 		// Update log_monitor
-		err,lms := db.GetLogMonitorTable(0, param.Strategy[0].StrategyId,0,"")
-		if err != nil || len(lms) == 0 {
-			mid.ReturnError(c, "Update strategy failed for getting log monitor by strategy error", err)
-			return
-		}
-		logMonitorObj := m.LogMonitorTable{Id:lms[0].Id, StrategyId:param.Strategy[0].StrategyId, Path:param.Path, Keyword:param.Strategy[0].Keyword}
+		logMonitorObj := m.LogMonitorTable{Id:param.Strategy[0].Id, StrategyId:lms[0].StrategyId, Path:param.Path, Keyword:param.Strategy[0].Keyword}
 		err = db.UpdateLogMonitor(&m.UpdateLogMonitor{LogMonitor:[]*m.LogMonitorTable{&logMonitorObj}, Operation:"update"})
 		if err != nil {
 			mid.ReturnError(c, "Update log monitor failed", err)
@@ -321,33 +326,33 @@ func DeleteLogPath(c *gin.Context)  {
 
 // @Summary 日志告警配置接口 : 删除
 // @Produce  json
-// @Param id query int true "strategy_id"
+// @Param id query int true "id"
 // @Success 200 {string} json "{"message": "Success"}"
 // @Router /api/v1/alarm/log/monitor/delete [get]
 func DeleteLogStrategy(c *gin.Context)  {
-	strategyId,err := strconv.Atoi(c.Query("id"))
-	if err != nil || strategyId <= 0 {
+	logMonitorId,err := strconv.Atoi(c.Query("id"))
+	if err != nil || logMonitorId <= 0 {
 		mid.ReturnValidateFail(c, fmt.Sprintf("Param validate failed:%v", err))
 		return
 	}
-	err,strategyObj := db.GetStrategy(m.StrategyTable{Id:strategyId})
+	err,lms := db.GetLogMonitorTable(logMonitorId,0,0,"")
+	if err != nil || len(lms) == 0 {
+		mid.ReturnError(c, "Update strategy failed for getting log monitor by strategy error", err)
+		return
+	}
+	err,strategyObj := db.GetStrategy(m.StrategyTable{Id:lms[0].StrategyId})
 	if err != nil || strategyObj.TplId <= 0 {
 		mid.ReturnError(c, "Delete strategy failed for getting strategy by id error", err)
 		return
 	}
 	// Delete log monitor
-	err,lms := db.GetLogMonitorTable(0, strategyId,0,"")
-	if err != nil || len(lms) == 0 {
-		mid.ReturnError(c, "Delete strategy failed for getting log monitor alert error", err)
-		return
-	}
-	err = db.UpdateLogMonitor(&m.UpdateLogMonitor{LogMonitor:[]*m.LogMonitorTable{&m.LogMonitorTable{Id:lms[0].Id}}, Operation:"delete"})
+	err = db.UpdateLogMonitor(&m.UpdateLogMonitor{LogMonitor:[]*m.LogMonitorTable{&m.LogMonitorTable{Id:logMonitorId}}, Operation:"delete"})
 	if err != nil {
 		mid.ReturnError(c, "Delete log monitor alert failed", err)
 		return
 	}
 	// Delete strategy
-	err = db.UpdateStrategy(&m.UpdateStrategy{Strategy:[]*m.StrategyTable{&m.StrategyTable{Id:strategyId}}, Operation:"delete"})
+	err = db.UpdateStrategy(&m.UpdateStrategy{Strategy:[]*m.StrategyTable{&m.StrategyTable{Id:strategyObj.Id}}, Operation:"delete"})
 	if err != nil {
 		mid.ReturnError(c, "Delete strategy failed", err)
 		return

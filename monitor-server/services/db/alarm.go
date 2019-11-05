@@ -709,7 +709,7 @@ func ListLogMonitor(query *m.TplQuery) error {
 			grpIds += ") OR"
 		}
 		var tpls []*m.TplStrategyLogMonitorTable
-		sql := `SELECT t1.id tpl_id,t1.grp_id,t1.endpoint_id,t2.id strategy_id,t2.expr,t2.cond,t2.last,t2.priority,t3.path,t3.keyword FROM tpl t1 
+		sql := `SELECT t1.id tpl_id,t1.grp_id,t1.endpoint_id,t2.id strategy_id,t2.expr,t2.cond,t2.last,t2.priority,t3.id log_monitor_id,t3.path,t3.keyword FROM tpl t1 
 				LEFT JOIN strategy t2 ON t1.id=t2.tpl_id 
 				LEFT JOIN log_monitor t3 ON t2.id=t3.strategy_id 
 				WHERE (`+grpIds+` t1.endpoint_id=?) and t2.config_type='log_monitor' ORDER BY t1.endpoint_id,t1.id,t3.path`
@@ -729,16 +729,21 @@ func ListLogMonitor(query *m.TplQuery) error {
 			for _,v := range tpls {
 				key := fmt.Sprintf("%d^%s", v.TplId, v.Path)
 				if vv,b := keywordMap[key];!b {
-					keywordMap[key] = []*m.LogMonitorStrategyDto{&m.LogMonitorStrategyDto{StrategyId:v.StrategyId, Keyword:v.Keyword, Cond:v.Cond, Last:getLastFromExpr(v.Expr), Priority:v.Priority}}
+					keywordMap[key] = []*m.LogMonitorStrategyDto{&m.LogMonitorStrategyDto{Id:v.LogMonitorId, StrategyId:v.StrategyId, Keyword:v.Keyword, Cond:v.Cond, Last:getLastFromExpr(v.Expr), Priority:v.Priority}}
 				}else{
-					keywordMap[key] = append(vv, &m.LogMonitorStrategyDto{StrategyId:v.StrategyId, Keyword:v.Keyword, Cond:v.Cond, Last:getLastFromExpr(v.Expr), Priority:v.Priority})
+					keywordMap[key] = append(vv, &m.LogMonitorStrategyDto{Id:v.LogMonitorId, StrategyId:v.StrategyId, Keyword:v.Keyword, Cond:v.Cond, Last:getLastFromExpr(v.Expr), Priority:v.Priority})
 				}
 			}
+			existFlag := make(map[string]int)
 			for i, v := range tpls {
+				tmpMapKey := fmt.Sprintf("%d^%s", v.TplId, v.Path)
 				if i == 0 {
 					tmpTplId = v.TplId
 					if v.StrategyId > 0 {
-						tmpLogMonitor = append(tmpLogMonitor, &m.LogMonitorDto{Id:v.StrategyId, TplId:v.TplId, Path:v.Path, Strategy:keywordMap[fmt.Sprintf("%d^%s", v.TplId, v.Path)]})
+						if _,b := existFlag[tmpMapKey];!b {
+							tmpLogMonitor = append(tmpLogMonitor, &m.LogMonitorDto{Id:v.StrategyId, TplId:v.TplId, Path:v.Path, Strategy:keywordMap[tmpMapKey]})
+							existFlag[tmpMapKey] = 1
+						}
 					}
 				} else {
 					if v.TplId != tmpTplId {
@@ -762,7 +767,10 @@ func ListLogMonitor(query *m.TplQuery) error {
 						tmpLogMonitor = []*m.LogMonitorDto{}
 					}
 					if v.StrategyId > 0 {
-						tmpLogMonitor = append(tmpLogMonitor, &m.LogMonitorDto{Id:v.StrategyId, TplId:v.TplId, Path:v.Path, Strategy:keywordMap[fmt.Sprintf("%d^%s", v.TplId, v.Path)]})
+						if _,b := existFlag[tmpMapKey];!b {
+							tmpLogMonitor = append(tmpLogMonitor, &m.LogMonitorDto{Id: v.StrategyId, TplId: v.TplId, Path: v.Path, Strategy: keywordMap[tmpMapKey]})
+							existFlag[tmpMapKey] = 1
+						}
 					}
 				}
 			}
@@ -789,7 +797,7 @@ func ListLogMonitor(query *m.TplQuery) error {
 			return fmt.Errorf("can't find this grp")
 		}
 		var tpls []*m.TplStrategyLogMonitorTable
-		sql := `SELECT t1.id tpl_id,t1.grp_id,t1.endpoint_id,t2.id strategy_id,t2.expr,t2.cond,t2.last,t2.priority,t3.path,t3.keyword FROM tpl t1 
+		sql := `SELECT t1.id tpl_id,t1.grp_id,t1.endpoint_id,t2.id strategy_id,t2.expr,t2.cond,t2.last,t2.priority,t3.id log_monitor_id,t3.path,t3.keyword FROM tpl t1 
 			LEFT JOIN strategy t2 ON t1.id=t2.tpl_id 
 			LEFT JOIN log_monitor t3 ON t2.id=t3.strategy_id 
 			WHERE t1.grp_id=? and t2.config_type='log_monitor' ORDER BY t1.endpoint_id,t1.id,t2.id`
@@ -801,17 +809,22 @@ func ListLogMonitor(query *m.TplQuery) error {
 		if len(tpls) > 0 {
 			keywordMap := make(map[string][]*m.LogMonitorStrategyDto)
 			for _,v := range tpls {
-				key := fmt.Sprintf("%d^%s", v.TplId, v.Path)
-				if vv,b := keywordMap[key];!b {
-					keywordMap[key] = []*m.LogMonitorStrategyDto{&m.LogMonitorStrategyDto{StrategyId:v.StrategyId, Keyword:v.Keyword, Cond:v.Cond, Last:getLastFromExpr(v.Expr), Priority:v.Priority}}
+				tmpMapKey := fmt.Sprintf("%d^%s", v.TplId, v.Path)
+				if vv,b := keywordMap[tmpMapKey];!b {
+					keywordMap[tmpMapKey] = []*m.LogMonitorStrategyDto{&m.LogMonitorStrategyDto{StrategyId:v.StrategyId, Keyword:v.Keyword, Cond:v.Cond, Last:getLastFromExpr(v.Expr), Priority:v.Priority}}
 				}else{
-					keywordMap[key] = append(vv, &m.LogMonitorStrategyDto{StrategyId:v.StrategyId, Keyword:v.Keyword, Cond:v.Cond, Last:getLastFromExpr(v.Expr), Priority:v.Priority})
+					keywordMap[tmpMapKey] = append(vv, &m.LogMonitorStrategyDto{StrategyId:v.StrategyId, Keyword:v.Keyword, Cond:v.Cond, Last:getLastFromExpr(v.Expr), Priority:v.Priority})
 				}
 			}
 			tmpLogMonitor := []*m.LogMonitorDto{}
+			existFlag := make(map[string]int)
 			for _, v := range tpls {
+				tmpMapKey := fmt.Sprintf("%d^%s", v.TplId, v.Path)
 				if v.StrategyId > 0 {
-					tmpLogMonitor = append(tmpLogMonitor, &m.LogMonitorDto{Id:v.StrategyId, TplId:v.TplId, Path:v.Path, Strategy:keywordMap[fmt.Sprintf("%d^%s", v.TplId, v.Path)]})
+					if _,b := existFlag[tmpMapKey];!b {
+						tmpLogMonitor = append(tmpLogMonitor, &m.LogMonitorDto{Id: v.StrategyId, TplId: v.TplId, Path: v.Path, Strategy: keywordMap[fmt.Sprintf("%d^%s", v.TplId, v.Path)]})
+						existFlag[tmpMapKey] = 1
+					}
 				}
 			}
 			result = append(result, &m.TplObj{TplId:tpls[0].TplId, ObjId:tpls[0].GrpId, ObjName:grps[0].Name, ObjType:"grp", Operation:true, LogMonitor:tmpLogMonitor})
