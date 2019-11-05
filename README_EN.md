@@ -11,7 +11,7 @@ English / [中文](README.md)
 [Click_To_Try_WeCube-plugins-prometheus](https://sandbox.webank.com/wecube-monitor)
 
 ## Demo
-<img src="./wiki/images/wecube-monitor01.gif" />
+<img src="./wiki/images/wecube-monitor02.gif" />
 
 ## Introduction
 
