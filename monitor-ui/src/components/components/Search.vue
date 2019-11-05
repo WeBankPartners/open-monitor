@@ -12,7 +12,11 @@
           :remote-method="getEndpointList"
           @on-clear="clearEndpoint"
           >
-          <Option v-for="(option, index) in endpointList" :value="option.option_value" :key="index">{{option.option_text}}</Option>
+          <Option v-for="(option, index) in endpointList" :value="option.option_value" :key="index">
+            <Tag color="cyan" class="tag-width" v-if="option.option_value.split(':')[1] == 'host'">host</Tag>
+            <Tag color="blue" class="tag-width" v-if="option.option_value.split(':')[1] == 'mysql'">mysql </Tag>
+            <Tag color="geekblue" class="tag-width" v-if="option.option_value.split(':')[1] == 'redis'">redis </Tag>
+            <Tag color="purple" class="tag-width" v-if="option.option_value.split(':')[1] == 'tomcat'">tomcat</Tag>{{option.option_text}}</Option>
         </Select>
       </li>
       <li class="search-li">
@@ -77,10 +81,10 @@ export default {
     }
   },
   mounted() {
-    if (!this.$validate.isEmpty_reset(this.$route.params)) {
-      this.getEndpointList('.')
-      this.endpoint = this.$route.params.value
-    }
+    // if (!this.$validate.isEmpty_reset(this.$route.params)) {
+    //   this.getEndpointList('.')
+    //   this.endpoint = this.$route.params.value
+    // }
   },
   methods: {
     getMainConfig () {
@@ -152,5 +156,9 @@ export default {
   }
   .search-ul>li:not(:first-child) {
     padding-left: 10px;
+  }
+  .tag-width {
+    width: 55px;
+    text-align: center;
   }
 </style>
