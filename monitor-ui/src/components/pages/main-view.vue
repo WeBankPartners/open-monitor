@@ -3,7 +3,7 @@
     <Title :title="$t('menu.endpointView')"></Title>
     <Search ref="search" />
     <button type="button" v-if="isShow" @click="changeRoute" class="btn btn-sm btn-cancle-f btn-jump">{{$t('button.endpointManagement')}}</button>
-    <Charts :charts='charts' ref="parentCharts" />
+    <Charts v-if="showCharts" :charts='charts' ref="parentCharts" />
   </div>
 </template>
 <script>
@@ -13,6 +13,7 @@ export default {
   name: 'main-view',
   data() {
     return {
+      showCharts: false,
       charts: {
         chartsConfig: []
       }
@@ -47,6 +48,7 @@ export default {
         }
         this.charts.chartsConfig.push(chart)
       })
+      this.showCharts = true
       this.$refs.parentCharts.refreshCharts()
     },
     changeRoute () {

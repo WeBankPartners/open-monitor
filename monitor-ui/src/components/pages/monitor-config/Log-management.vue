@@ -319,7 +319,7 @@ export default {
       this.modelConfig.isAdd = false
       this.id = rowData.id
       this.extendData = rowData
-      this.modelTip.value = rowData.strategy_id
+      this.modelTip.value = rowData.id
       this.modelConfig.addRow = this.$tableUtil.manageEditParams(this.modelConfig.addRow, rowData)
       let cond = rowData.cond.split('')
       if (cond.indexOf('=') > 0) {
@@ -336,7 +336,7 @@ export default {
       this.JQ('#add_edit_Modal').modal('show')
     },
     delPathItem (rowData) {
-      let params = {id: rowData.strategy_id}
+      let params = {id: rowData.id}
       this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.logManagement.delete.api, params, () => {
         this.$Message.success(this.$t('tips.success'))
         this.requestData(this.type, this.typeValue)
@@ -353,7 +353,7 @@ export default {
         url = this.apiCenter.logManagement.add.api
       } else {
         params.tpl_id = this.extendData.tpl_id
-        params.strategy[0].strategy_id = this.extendData.strategy_id
+        params.strategy[0].id = this.extendData.id
         url = this.apiCenter.logManagement.update.api
       }
      

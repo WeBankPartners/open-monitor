@@ -10,7 +10,7 @@
           remote
           :placeholder="$t('placeholder.input')"
           :remote-method="getEndpointList"
-          @on-clear="endpointList=[]"
+          @on-clear="clearEndpoint"
           >
           <Option v-for="(option, index) in endpointList" :value="option.option_value" :key="index">{{option.option_text}}</Option>
         </Select>
@@ -120,6 +120,10 @@ export default {
           this.$parent.manageCharts(responseData, params)
         },{isNeedloading: false})
       })
+    },
+    clearEndpoint () {
+      this.clearEndpoint = []
+      this.$parent.showCharts = false
     }
   },
   components: {
