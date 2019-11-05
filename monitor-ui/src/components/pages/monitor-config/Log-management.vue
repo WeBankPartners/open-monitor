@@ -211,7 +211,7 @@ export default {
     endpointList (query) {
       const params = {type: this.type,search: query}
       this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.resourceSearch.strategyApi, params, (responseData) => {
-        this.endpointOptions = responseData
+        this.endpointOptions = responseData.filter(item => item.option_value.split(':')[1] === 'host')
       })
     },
     requestData (type, id) {
