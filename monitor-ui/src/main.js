@@ -43,7 +43,7 @@ const messages = {
   'zh-CN': Object.assign(zh_local, zh)
 };
 const i18n = new VueI18n({
-  locale: localStorage.getItem('lang') || navigator.language || navigator.userLanguage,
+  locale: localStorage.getItem('lang') || (navigator.language || navigator.userLanguage === 'zh-CN'? 'zh-CN':'en-US'),
   messages
 })
 

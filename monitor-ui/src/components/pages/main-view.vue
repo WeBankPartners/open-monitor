@@ -2,7 +2,6 @@
   <div class="page" id="mainView">
     <Title :title="$t('menu.endpointView')"></Title>
     <Search ref="search" />
-    <button type="button" v-if="isShow" @click="changeRoute" class="btn btn-sm btn-cancle-f btn-jump">{{$t('button.endpointManagement')}}</button>
     <Charts v-if="showCharts" :charts='charts' ref="parentCharts" />
   </div>
 </template>
@@ -16,15 +15,6 @@ export default {
       showCharts: false,
       charts: {
         chartsConfig: []
-      }
-    }
-  },
-  computed: {
-    isShow: function () {
-      if (this.$validate.isEmpty_reset(this.$store.state.ip)) {
-        return false 
-      } else {
-        return true
       }
     }
   },
@@ -50,9 +40,6 @@ export default {
       })
       this.showCharts = true
       this.$refs.parentCharts.refreshCharts()
-    },
-    changeRoute () {
-      this.$router.push({name: 'endpointManagement', params: {search: this.$store.state.ip.value.split(':')[0]}})
     }
   },
   components: {
