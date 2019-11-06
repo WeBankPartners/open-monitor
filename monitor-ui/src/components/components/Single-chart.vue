@@ -57,6 +57,7 @@ export default {
         start: this.params.start + '',
         end: this.params.end + ''
       }
+
       this.$httpRequestEntrance.httpRequestEntrance('GET', this.chartItemx.url, params, responseData => {
         var legend = []
         const colorx = ['#61a0a8', '#2f4554', '#c23531', '#d48265', '#91c7ae', '#749f83', '#ca8622', '#bda29a', '#6e7074', '#546570', '#c4ccd3']
