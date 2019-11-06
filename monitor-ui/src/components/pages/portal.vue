@@ -91,7 +91,7 @@ export default {
           this.noDataTip = true
           return
         }
-        const colorX = ['#66CC99','#9999CC','#9999FF','#99FF99','#CC9999','#CCCCFF','#FF66FF','#FFCCCC','#66CCCC','#996699','#99CC66','#FFCC99','#CC99CC','#FF9999','#FF9966','#FFCCFF']
+        const colorX = ['#339933','#33CCCC','#666699','#66CC66','#996633','#9999CC','#339966','#663333','#6666CC','#336699','#3399CC','#33CC66','#CC3333','#CC6666','#996699','#CC9933']
         let colorSet = []
         for (let i=0;i<colorX.length;i++) {
           let tmpIndex = viewIndex*3 + i
