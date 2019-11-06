@@ -61,7 +61,7 @@ export default {
   methods: {
     getDashboardData () {
       this.$httpRequestEntrance.httpRequestEntrance('GET',this.apiCenter.template.get, '', responseData => {
-        if (responseData.cfg === '') {
+        if (responseData.cfg === '' || responseData.cfg === '[]' ) {
           this.$router.push({path: 'searchHomepage'}) 
         }else {
           this.viewData = JSON.parse(responseData.cfg) 
