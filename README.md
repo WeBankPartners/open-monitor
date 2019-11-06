@@ -65,6 +65,10 @@ Please refer to the [WeCube-plugins-prometheus_Compiling_Guide](wiki/compile_gui
 
 Please refer to the [WeCube-plugins-prometheus_Deployment_Guide](wiki/install_guide.md) on how to install WeCube-plugins-prometheus.
 
+## Developer Guide
+Develop WeCube-plugins-prometheus in Normal Mode  
+Please refer to the [WeCube-plugins-prometheus Develop Doc](wiki/develop_local_guide.md) for setting up local environment quickly.
+
 ## License
 
 WeCube-plugins-prometheus is licensed under the Apache License Version 2.0 , please refer to the [license](LICENSE) for details.
