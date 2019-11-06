@@ -10,11 +10,14 @@
           remote
           :placeholder="$t('placeholder.input')"
           :remote-method="getEndpointList"
-          @on-clear="endpointList=[]"
+          @on-clear="clearEndpoint"
           >
-          <Option v-for="(option, index) in endpointList" :value="option.option_value" :key="index">{{option.option_text}}</Option>
+          <Option v-for="(option, index) in endpointList" :value="option.option_value" :key="index">
+            <Tag color="cyan" class="tag-width" v-if="option.option_value.split(':')[1] == 'host'">host</Tag>
+            <Tag color="blue" class="tag-width" v-if="option.option_value.split(':')[1] == 'mysql'">mysql </Tag>
+            <Tag color="geekblue" class="tag-width" v-if="option.option_value.split(':')[1] == 'redis'">redis </Tag>
+            <Tag color="purple" class="tag-width" v-if="option.option_value.split(':')[1] == 'tomcat'">tomcat</Tag>{{option.option_text}}</Option>
         </Select>
-        <!-- <Searchinput ref="searchInput" :parentConfig="searchInputConfig"></Searchinput>  -->
       </li>
       <li class="search-li">
         <button type="button" class="btn btn-sm btn-confirm-f"
@@ -36,13 +39,15 @@
           <Option v-for="item in autoRefreshConfig" :value="item.value" :key="item.value">{{ item.label }}</Option>
         </Select>
       </li>
+      <li class="search-li">
+        <button type="button" v-if="isShow" @click="changeRoute" class="btn btn-sm btn-cancle-f btn-jump">{{$t('button.endpointManagement')}}</button>
+      </li>
    </ul>
   </div>
 </template>
 
 <script>
 import {dataPick, autoRefreshConfig} from '@/assets/config/common-config'
-// import Searchinput from './Search-input'
 export default {
   name: '',
   data() {
@@ -68,6 +73,17 @@ export default {
         // start: Date.parse(this.dateRange[0]),
         // end: Date.parse(this.dateRange[1])
       }
+    }
+  },
+  computed: {
+    isShow: function () {
+      return !this.$validate.isEmpty_reset(this.endpoint)
+    }
+  },
+  mounted() {
+    if (!this.$validate.isEmpty_reset(this.$route.params)) {
+      this.getEndpointList('.')
+      this.endpoint = this.$route.params.value
     }
   },
   methods: {
@@ -120,10 +136,16 @@ export default {
           this.$parent.manageCharts(responseData, params)
         },{isNeedloading: false})
       })
+    },
+    clearEndpoint () {
+      this.clearEndpoint = []
+      this.$parent.showCharts = false
+    },
+    changeRoute () {
+      this.$router.push({name: 'endpointManagement', params: {search: this.endpoint.split(':')[0]}})
     }
   },
   components: {
-    // Searchinput
   }
 }
 </script>
@@ -134,5 +156,9 @@ export default {
   }
   .search-ul>li:not(:first-child) {
     padding-left: 10px;
+  }
+  .tag-width {
+    width: 55px;
+    text-align: center;
   }
 </style>

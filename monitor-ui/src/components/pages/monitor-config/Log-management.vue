@@ -15,7 +15,11 @@
             remote
             :remote-method="endpointList"
             >
-            <Option v-for="(option, index) in endpointOptions" :value="option.id" :key="index">{{option.option_text}}</Option>
+            <Option v-for="(option, index) in endpointOptions" :value="option.id" :key="index">
+            <Tag color="cyan" class="tag-width" v-if="option.option_value.split(':')[1] == 'host'">host</Tag>
+            <Tag color="blue" class="tag-width" v-if="option.option_value.split(':')[1] == 'mysql'">mysql </Tag>
+            <Tag color="geekblue" class="tag-width" v-if="option.option_value.split(':')[1] == 'redis'">redis </Tag>
+            <Tag color="purple" class="tag-width" v-if="option.option_value.split(':')[1] == 'tomcat'">tomcat</Tag>{{option.option_text}}</Option>
           </Select>
         </li>
         <li class="search-li">
@@ -211,7 +215,7 @@ export default {
     endpointList (query) {
       const params = {type: this.type,search: query}
       this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.resourceSearch.strategyApi, params, (responseData) => {
-        this.endpointOptions = responseData
+        this.endpointOptions = responseData.filter(item => item.option_value.split(':')[1] === 'host')
       })
     },
     requestData (type, id) {
@@ -319,7 +323,7 @@ export default {
       this.modelConfig.isAdd = false
       this.id = rowData.id
       this.extendData = rowData
-      this.modelTip.value = rowData.strategy_id
+      this.modelTip.value = rowData.id
       this.modelConfig.addRow = this.$tableUtil.manageEditParams(this.modelConfig.addRow, rowData)
       let cond = rowData.cond.split('')
       if (cond.indexOf('=') > 0) {
@@ -336,7 +340,7 @@ export default {
       this.JQ('#add_edit_Modal').modal('show')
     },
     delPathItem (rowData) {
-      let params = {id: rowData.strategy_id}
+      let params = {id: rowData.id}
       this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.logManagement.delete.api, params, () => {
         this.$Message.success(this.$t('tips.success'))
         this.requestData(this.type, this.typeValue)
@@ -353,7 +357,7 @@ export default {
         url = this.apiCenter.logManagement.add.api
       } else {
         params.tpl_id = this.extendData.tpl_id
-        params.strategy[0].strategy_id = this.extendData.strategy_id
+        params.strategy[0].id = this.extendData.id
         url = this.apiCenter.logManagement.update.api
       }
      
@@ -407,4 +411,8 @@ export default {
     display: inline-block;
     vertical-align: middle; 
   }
+  .tag-width {
+    width: 55px;
+    text-align: center;
+  } 
 </style>
