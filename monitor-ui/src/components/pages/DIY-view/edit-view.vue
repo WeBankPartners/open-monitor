@@ -71,7 +71,12 @@
                         remote
                         :remote-method="endpointList"
                         >
-                        <Option v-for="(option, index) in options" :value="option.option_value" :key="index">{{option.option_text}}</Option>
+                        <Option v-for="(option, index) in options" :value="option.option_value" :key="index">
+                          <Tag color="cyan" class="tag-width" v-if="option.option_value.split(':')[1] == 'host'">host</Tag>
+                          <Tag color="blue" class="tag-width" v-if="option.option_value.split(':')[1] == 'mysql'">mysql </Tag>
+                          <Tag color="geekblue" class="tag-width" v-if="option.option_value.split(':')[1] == 'redis'">redis </Tag>
+                          <Tag color="purple" class="tag-width" v-if="option.option_value.split(':')[1] == 'tomcat'">tomcat</Tag>{{option.option_text}}</Option>
+                        <!-- <Option v-for="(option, index) in options" :value="option.option_value" :key="index">{{option.option_text}}</Option> -->
                       </Select>
                     </div>
                   </li>
@@ -352,7 +357,6 @@ export default {
 .zone-chart {
     margin-top: 16px;
     margin-bottom: 16px;
-
 }
 .zone-chart-title {
   padding: 20px 40%;
@@ -441,5 +445,9 @@ export default {
     padding: 4px;
     margin: 4px;
   }
+  .tag-width {
+    width: 55px;
+    text-align: center;
+  } 
 </style>
 

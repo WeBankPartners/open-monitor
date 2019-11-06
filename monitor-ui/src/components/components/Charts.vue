@@ -56,6 +56,7 @@ export default {
   mounted () {
     if (this.charts.chartsConfig.length !== 0) {
       this.activeCharts = this.charts.chartsConfig[0].charts
+      this.refreshCharts()
     }
   },
   methods: {
