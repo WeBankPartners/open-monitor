@@ -1,6 +1,6 @@
 import Vue from 'vue'
 import App from './App.vue'
-import router from './router'
+import router from './router-plugin'
 import store from './store'
 import '@/assets/css/local.bootstrap.css'
 import 'bootstrap/dist/js/bootstrap.min.js'
@@ -13,20 +13,24 @@ import {tableUtil} from '@/assets/js/tableUtil.js'
 import {validate} from '@/assets/js/validate.js'
 import VeeValidate from '@/assets/veeValidate/VeeValidate'
 import apiCenter from '@/assets/config/api-center.json'
-
-Vue.prototype.$httpRequestEntrance = httpRequestEntrance
-Vue.prototype.JQ = jquery
-Vue.prototype.$validate = validate
-Vue.prototype.$tableUtil = tableUtil
-Vue.prototype.apiCenter = apiCenter
+import vuex from 'vuex'
+window.use(vuex)
+window.addOptions({
+  $httpRequestEntrance: httpRequestEntrance,
+  JQ: jquery,
+  $store: store,
+  $validate: validate,
+  $tableUtil: tableUtil,
+  $apiCenter: apiCenter
+})
 
 import Title from '@/components/components/Title'
 import PageTable from '@/components/components/table-page/page'
 import ModalComponent from '@/components/components/modal'
-Vue.component('Title', Title)
-Vue.component('PageTable', PageTable)
-Vue.component('ModalComponent', ModalComponent)
-Vue.use(VeeValidate)
+window.component('Title', Title)
+window.component('PageTable', PageTable)
+window.component('ModalComponent', ModalComponent)
+window.use(VeeValidate)
 
 Vue.config.productionTip = false
 
@@ -47,7 +51,7 @@ const i18n = new VueI18n({
   messages
 })
 
-Vue.component('tdSlot', {
+window.component('tdSlot', {
   render(createElement) {
     function deepClone(vnodes, createElement) {
 
@@ -91,4 +95,4 @@ new Vue({
   store,
   router,
   i18n
-}).$mount('#app')
+}).$mount('#monitor')
