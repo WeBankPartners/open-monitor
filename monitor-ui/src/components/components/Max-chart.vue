@@ -47,7 +47,7 @@
 import {generateUuid} from '@/assets/js/utils'
 // 引入 ECharts 主模块
 import {drawChart} from  '@/assets/config/chart-rely'
-
+const echarts = require('echarts/lib/echarts');
 export default {
   name: '',
   data() {
@@ -107,14 +107,30 @@ export default {
       }
       this.$httpRequestEntrance.httpRequestEntrance('GET', chartItem.url, params, responseData => {
         var legend = []
-        responseData.series.forEach((item)=>{
+        const colorSet = ['#CC9999','#CCCCFF','#FF66FF','#FFCCCC','#66CCCC','#996699','#99CC66','#FFCC99','#CC99CC','#FF9999','#FF9966','#FFCCFF']
+        responseData.series.forEach((item,index)=>{
           legend.push(item.name)
           item.symbol = 'none'
           item.smooth = true
           item.lineStyle = {
             width: 1
           }
-          item.areaStyle = {}
+          item.itemStyle = {
+            normal:{
+              color: colorSet[index]
+            }
+          }
+          item.areaStyle = {
+            normal: {
+              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+                  offset: 0,
+                  color: colorSet[index]
+              }, {
+                  offset: 1,
+                  color: 'white'
+              }])
+            }
+          }
         }) 
         let config = {
           title: responseData.title,
