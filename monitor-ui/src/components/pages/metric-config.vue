@@ -3,7 +3,24 @@
     <Title :title="$t('title.metricConfiguration')"></Title>
     <div style="margin-bottom:24px;">
       <Notice :noticeConfig='noticeConfig'> </Notice>
-      <Searchinput :parentConfig="searchInputConfig" ref="choicedIP"></Searchinput> 
+      <Select
+        style="width:300px;"
+        v-model="endpoint"
+        filterable
+        clearable
+        remote
+        :label-in-value="true" 
+        @on-change="getOriginalMetricList"
+        :placeholder="$t('placeholder.input')"
+        :remote-method="getEndpointList"
+        @on-clear="clearEndpoint"
+        >
+        <Option v-for="(option, index) in endpointList" :value="option.option_value+ ':' + option.id" :key="index">
+          <Tag color="cyan" class="tag-width" v-if="option.option_value.split(':')[1] == 'host'">host</Tag>
+          <Tag color="blue" class="tag-width" v-if="option.option_value.split(':')[1] == 'mysql'">mysql</Tag>
+          <Tag color="geekblue" class="tag-width" v-if="option.option_value.split(':')[1] == 'redis'">redis</Tag>
+          <Tag color="purple" class="tag-width" v-if="option.option_value.split(':')[1] == 'tomcat'">tomcat</Tag>{{option.option_text}}</Option>
+      </Select>
       <Select v-model="metricSelected" filterable multiple style="width:260px" :label-in-value="true" 
           @on-change="selectMetric" @on-open-change="metricSelectOpen" :placeholder="$t('placeholder.metric')">
           <Option v-for="item in metricList" :value="item.id + '^^' + item.prom_ql" :key="item.metric">{{item.metric}}</Option>
@@ -47,9 +64,7 @@
 
 <script>
 import Notice from '@/components/components/notice'
-import Searchinput from '../components/Search-input'
 import {dataPick} from '@/assets/config/common-config'
-
 import {generateUuid} from '@/assets/js/utils'
 
 // 引入 ECharts 主模块
@@ -59,6 +74,9 @@ export default {
   name: '',
   data() {
     return {
+      endpoint: '',
+      endpointId: '',
+      endpointList: [],
       noticeConfig: {
         type: 'info',
         contents: [
@@ -72,13 +90,6 @@ export default {
             tip: 'tips.metricConfigTips.three'
           },
         ]
-      },
-      searchInputConfig: {
-        poptipWidth: 300,
-        placeholder: 'placeholder.endpointSearch',
-        inputStyle: "width:300px;",
-        // api: '/dashboard/search'
-        api: this.apiCenter.resourceSearch.api
       },
       elId: '',
       isRequestChartData: false,
@@ -124,19 +135,34 @@ export default {
   },
   computed: {
     btnDisable: function() {
-      return this.$validate.isEmpty_reset(this.$store.state.ip)
+      return this.$validate.isEmpty_reset(this.endpoint)
     },
     changeIP() {
-      return this.$store.state.ip.value
+      return this.endpoint
     },
     totalMetric: function () {
       return this.metricSelectedOptions.concat(this.editMetric)
     } 
   },
-  mounted (){
-    this.getOriginalMetricList()
-  },
   methods: {
+    getEndpointList(query) {
+      let params = {
+        search: query,
+        page: 1,
+        size: 1000
+      }
+      this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.resourceSearch.api, params, (responseData) => {
+       this.endpointList = responseData
+      })
+    },
+    clearEndpoint () {
+      this.clearEndpoint = []
+      this.originalList = []
+      this.metricSelected = []
+      this.editMetric = []
+      this.endpoint = ''
+      this.isRequestChartData = false
+    },
     addMetric() {
      let key = ((new Date()).valueOf()).toString().substring(10)
      this.editMetric.push({label: `default${key}`, value: '',key: `add_${key}`})
@@ -193,8 +219,8 @@ export default {
     },
     metricSelectOpen (flag) {
       if (flag) {
-        if (this.$store.state.ip.value !== '') {
-          this.obtainMetricList(this.$store.state.ip.type)
+        if (!this.$validate.isEmpty_reset(this.endpoint)) {
+          this.obtainMetricList(this.endpoint.split(':')[1])
         } else {
           this.metricSelected = []
           this.metricSelectedOptions = []
@@ -225,7 +251,7 @@ export default {
           requestFlag = false 
         }
         params.push(JSON.stringify({
-          endpoint: this.$store.state.ip.value.split(':')[0],
+          endpoint: this.endpoint.split(':')[0],
           prom_ql: item.value,
           metric: item.label,
           time: this.timeTnterval + ''
@@ -268,12 +294,13 @@ export default {
           return
         }
         let {id:id,label:metric,value:prom_ql} = item
-        params.push({id,metric,prom_ql,metric_type: this.$store.state.ip.type})
+        params.push({id,metric,prom_ql,metric_type: this.endpoint.split(':')[1]})
       })
       this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.metricUpdate.api, params, () => {
         this.$Message.success(this.$t('tips.success'))
         this.metricSelected = []
         this.editMetric = []
+        this.endpoint = ''
         this.isRequestChartData = false
         this.obtainMetricList()
       })
@@ -288,14 +315,17 @@ export default {
       this.JQ('#edit_metric_Modal').modal('hide')
     },
     getOriginalMetricList() {
-      this.$httpRequestEntrance.httpRequestEntrance('GET',this.apiCenter.originMetricList.api, {id:2}, responseData => {
+      if (this.$validate.isEmpty_reset(this.endpoint)) {
+        return
+      }
+      this.originalList = []
+      this.$httpRequestEntrance.httpRequestEntrance('GET',this.apiCenter.originMetricList.api, {id:this.endpoint.split(':')[2]}, responseData => {
         this.originalList = responseData
       })
     }
   },
   components: {
-    Notice,
-    Searchinput
+    Notice
   },
 }
 </script>
