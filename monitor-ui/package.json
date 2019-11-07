@@ -13,7 +13,7 @@
     "colresizable": "^1.6.0",
     "core-js": "^2.6.5",
     "echarts": "^4.2.1",
-    "iview": "^3.0.1",
+    "iview": "3.0.1",
     "jquery": "^3.4.1",
     "style-resources-loader": "^1.2.1",
     "vee-validate": "^2.0.6",
