@@ -1,5 +1,6 @@
 import Vue from 'vue'
 import store from './store'
+import router from './router-plugin'
 import '@/assets/css/local.bootstrap.css'
 import 'bootstrap/dist/js/bootstrap.min.js'
 import 'font-awesome/css/font-awesome.css'
@@ -21,6 +22,8 @@ window.addOptions({
   $tableUtil: tableUtil,
   $apiCenter: apiCenter
 })
+
+window.addRoutes(router)
 
 import Title from '@/components/components/Title'
 import PageTable from '@/components/components/table-page/page'
