@@ -91,4 +91,4 @@ new Vue({
   store,
   router,
   i18n
-}).$mount('#app')
+}).$mount('#monitor')
