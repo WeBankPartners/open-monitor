@@ -54,12 +54,6 @@ export default {
     return {
       endpoint: '',
       endpointList: [],
-      searchInputConfig: {
-        poptipWidth: 300,
-        placeholder: 'placeholder.endpointSearch',
-        inputStyle: "width:300px;",
-        api: this.apiCenter.resourceSearch.api
-      },
       ip: {},
       timeTnterval: -1800,
       dataPick: dataPick,
