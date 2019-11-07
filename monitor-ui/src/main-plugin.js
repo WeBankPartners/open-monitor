@@ -1,6 +1,4 @@
 import Vue from 'vue'
-import App from './App.vue'
-import router from './router-plugin'
 import store from './store'
 import '@/assets/css/local.bootstrap.css'
 import 'bootstrap/dist/js/bootstrap.min.js'
@@ -35,21 +33,8 @@ window.use(VeeValidate)
 Vue.config.productionTip = false
 
 import VueI18n from 'vue-i18n'
-import en from 'iview/dist/locale/en-US';
-import zh from 'iview/dist/locale/zh-CN';
-
-import en_local from '@/assets/locale/lang/en.json';
-import zh_local from '@/assets/locale/lang/zh-CN.json';
 Vue.use(VueI18n)
 Vue.locale = () => {};
-const messages = {
-  'en-US': Object.assign(en_local, en),
-  'zh-CN': Object.assign(zh_local, zh)
-};
-const i18n = new VueI18n({
-  locale: localStorage.getItem('lang') || (navigator.language || navigator.userLanguage === 'zh-CN'? 'zh-CN':'en-US'),
-  messages
-})
 
 window.component('tdSlot', {
   render(createElement) {
@@ -90,9 +75,3 @@ window.component('tdSlot', {
   }
 })
 
-new Vue({
-  render: h => h(App),
-  store,
-  router,
-  i18n
-}).$mount('#monitor')
