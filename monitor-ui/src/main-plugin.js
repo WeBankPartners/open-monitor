@@ -1,4 +1,3 @@
-import Vue from 'vue'
 import store from './store'
 import router from './router-plugin'
 import '@/assets/css/local.bootstrap.css'
@@ -32,12 +31,6 @@ window.component('Title', Title)
 window.component('PageTable', PageTable)
 window.component('ModalComponent', ModalComponent)
 window.use(VeeValidate)
-
-Vue.config.productionTip = false
-
-import VueI18n from 'vue-i18n'
-Vue.use(VueI18n)
-Vue.locale = () => {};
 
 window.component('tdSlot', {
   render(createElement) {
