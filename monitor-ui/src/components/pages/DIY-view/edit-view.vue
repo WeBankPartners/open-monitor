@@ -179,6 +179,7 @@ export default {
               width: 1
             }
           }) 
+          responseData.yaxis.unit = this.panalUnit
           let config = {
             title: responseData.title,
             legend: legend,
@@ -247,12 +248,14 @@ export default {
               width: 1
             }
           }) 
+          responseData.yaxis.unit = this.panalUnit
           let config = {
             title: responseData.title,
             legend: legend,
             series: responseData.series,
             yaxis: responseData.yaxis,
           }
+          console.log(config.yaxis)
           drawChart(this, config, {eye: false})
         })
       }
