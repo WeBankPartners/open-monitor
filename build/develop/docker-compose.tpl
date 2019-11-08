@@ -41,14 +41,6 @@ services:
     command:
       - --config.file=/etc/prometheus/prometheus.yml
       - --web.enable-lifecycle
-  node_exporter:
-    image: prom/node-exporter
-    container_name: node_exporter
-    restart: always
-    ports:
-      - "9100:9100"
-    networks:
-      - monitor
   monitor-db:
     image: monitor-db:dev
     restart: always
