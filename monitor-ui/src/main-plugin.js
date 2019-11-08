@@ -19,7 +19,7 @@ window.addOptions({
   $store: store,
   $validate: validate,
   $tableUtil: tableUtil,
-  $apiCenter: apiCenter
+  apiCenter: apiCenter
 })
 
 window.addRoutes(router)
@@ -71,3 +71,8 @@ window.component('tdSlot', {
   }
 })
 
+
+import en_local from '@/assets/locale/lang/en.json';
+import zh_local from '@/assets/locale/lang/zh-CN.json';
+window.locale('en-US',en_local)
+window.locale('zh-CN',zh_local)

@@ -97,7 +97,7 @@ export default {
       this.timeForDataAchieve = new Date().toLocaleString()
       this.timeForDataAchieve = this.timeForDataAchieve.replace('上午', 'AM ')
       this.timeForDataAchieve = this.timeForDataAchieve.replace('下午', 'PM ')
-      this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.alarmManagement.list.api, params, (responseData) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.alarmManagement.list.api, params, (responseData) => {
         this.resultData = responseData
       })
     },
@@ -109,7 +109,7 @@ export default {
       let params = {
         id: alarmItem.id
       }
-      this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.alarmManagement.close.api, params, () => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.alarmManagement.close.api, params, () => {
         this.getAlarm()
       })
     },

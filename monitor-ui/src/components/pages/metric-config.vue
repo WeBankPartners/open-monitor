@@ -135,7 +135,7 @@ export default {
   },
   computed: {
     btnDisable: function() {
-      return this.$validate.isEmpty_reset(this.endpoint)
+      return this.$root.$validate.isEmpty_reset(this.endpoint)
     },
     changeIP() {
       return this.endpoint
@@ -151,7 +151,7 @@ export default {
         page: 1,
         size: 1000
       }
-      this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.resourceSearch.api, params, (responseData) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.resourceSearch.api, params, (responseData) => {
        this.endpointList = responseData
       })
     },
@@ -219,7 +219,7 @@ export default {
     },
     metricSelectOpen (flag) {
       if (flag) {
-        if (!this.$validate.isEmpty_reset(this.endpoint)) {
+        if (!this.$root.$validate.isEmpty_reset(this.endpoint)) {
           this.obtainMetricList(this.endpoint.split(':')[1])
         } else {
           this.metricSelected = []
@@ -231,13 +231,13 @@ export default {
     },
     obtainMetricList (type) {
       let params = {type: type}
-      this.$httpRequestEntrance.httpRequestEntrance('GET',this.apiCenter.metricList.api, params, responseData => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.metricList.api, params, responseData => {
         this.metricList = responseData
       })
     },
     requestChart () {
       this.noDataTip = false
-      if (this.$validate.isEmpty_reset(this.totalMetric)) {
+      if (this.$root.$validate.isEmpty_reset(this.totalMetric)) {
         this.$Message.warning(this.$t('tableKey.s_metric')+this.$t('tips.required'))
         this.noDataTip = true
         return
@@ -262,7 +262,7 @@ export default {
       }
       this.isRequestChartData = true
       
-      this.$httpRequestEntrance.httpRequestEntrance('GET',this.apiCenter.metricConfigView.api, {config: `[${params.join(',')}]`}, responseData => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.metricConfigView.api, {config: `[${params.join(',')}]`}, responseData => {
         var legend = []
         if (responseData.series.length === 0) {
           this.noDataTip = true
@@ -296,7 +296,7 @@ export default {
         let {id:id,label:metric,value:prom_ql} = item
         params.push({id,metric,prom_ql,metric_type: this.endpoint.split(':')[1]})
       })
-      this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.metricUpdate.api, params, () => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.metricUpdate.api, params, () => {
         this.$Message.success(this.$t('tips.success'))
         this.metricSelected = []
         this.editMetric = []
@@ -308,18 +308,18 @@ export default {
     editMetricName (metricItem,metricIndex) {
       this.editingMetric = metricIndex
       this.modelConfig.addRow.name = metricItem.label
-      this.JQ('#edit_metric_Modal').modal('show')
+      this.$root.JQ('#edit_metric_Modal').modal('show')
     },
     addPost (){
       this.totalMetric[this.editingMetric].label = this.modelConfig.addRow.name
-      this.JQ('#edit_metric_Modal').modal('hide')
+      this.$root.JQ('#edit_metric_Modal').modal('hide')
     },
     getOriginalMetricList() {
-      if (this.$validate.isEmpty_reset(this.endpoint)) {
+      if (this.$root.$validate.isEmpty_reset(this.endpoint)) {
         return
       }
       this.originalList = []
-      this.$httpRequestEntrance.httpRequestEntrance('GET',this.apiCenter.originMetricList.api, {id:this.endpoint.split(':')[2]}, responseData => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.originMetricList.api, {id:this.endpoint.split(':')[2]}, responseData => {
         this.originalList = responseData
       })
     }

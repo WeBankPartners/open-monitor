@@ -42,14 +42,14 @@ export default {
     parentConfig: Object
   },
   mounted(){
-    if (this.$store.state.ip.value !== '') {
-      this.ip = this.$store.state.ip
+    if (this.$root.$store.state.ip.value !== '') {
+      this.ip = this.$root.$store.state.ip
     }
   },
   methods: {
     userInput () {
       this.ipChoiced = {}
-      this.$store.commit('storeip', {label: '',value: ''})
+      this.$root.$store.commit('storeip', {label: '',value: ''})
       this.showSearchTips = false
       this.request()
     },
@@ -59,7 +59,7 @@ export default {
       this.ipChoiced.value = resItem.option_value
       this.ipChoiced.id = resItem.id
       this.ipChoiced.type = resItem.option_value.split(':')[1]
-      this.$store.commit('storeip', this.ipChoiced)
+      this.$root.$store.commit('storeip', this.ipChoiced)
       this.showSearchTips = false
     },
     request () {
@@ -71,7 +71,7 @@ export default {
       }
       let params = Object.assign(searchParams, this.parentConfig.params)
       
-      this.$httpRequestEntrance.httpRequestEntrance('GET',this.parentConfig.api, params, responseData => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.parentConfig.api, params, responseData => {
         this.searchResult = responseData
       })
       this.showSearchTips = true
