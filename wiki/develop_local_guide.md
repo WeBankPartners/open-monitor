@@ -7,7 +7,6 @@
     ```bash
     docker pull prom/prometheus
     docker pull prom/alertmanager
-    docker pull prom/node-exporter
     docker pull consul
     docker pull mysql:5.6
     ```
@@ -87,6 +86,10 @@
    go run main.go -c ../build/develop/monitor.json
    ```
    程序启动后访问 http://127.0.0.1:8088/wecube-monitor
+    
+9. 安装agent并注册监控对象查看视图  
+    安装agent说明文档: [agent安装说明](install_agent.md)  
+    安装完agent后在页面上的 配置 --> 对象 上新增，选择对应的对象类型和填入Ip端口，保存成功后可在 视图 --> 对象视图 里通过Ip搜索到对象并查看视图
     
     
     
