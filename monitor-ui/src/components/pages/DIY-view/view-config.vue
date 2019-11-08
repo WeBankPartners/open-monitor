@@ -98,10 +98,11 @@ export default {
     initPanals () {
       this.viewData.forEach((item,viewIndex) => {
         this.layoutData.push(item.viewConfig)
-        this.requestChart(item.viewConfig.id, item.query,viewIndex)
+        console.log(item)
+        this.requestChart(item.viewConfig.id,item.panalUnit, item.query,viewIndex)
       })
     },
-    requestChart (id, query,viewIndex) {
+    requestChart (id, panalUnit, query,viewIndex) {
       let params = []
       query.forEach((item) => {
         params.push(JSON.stringify({
@@ -148,6 +149,7 @@ export default {
             }
           }
         }) 
+        responseData.yaxis.unit =  panalUnit  
         let config = {
           title: responseData.title,
           legend: legend,
