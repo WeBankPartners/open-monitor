@@ -17,7 +17,7 @@ type resultObj struct {
 
 func StartHostAgent(c *gin.Context)  {
 	hostIp := c.Query("host_ip")
-	osType := strings.ToLower(c.Query("osType"))
+	osType := strings.ToLower(c.Query("os_type"))
 	if !isLinuxType(osType) {
 		mid.ReturnValidateFail(c, "Illegal OS type")
 		return

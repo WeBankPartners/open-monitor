@@ -144,6 +144,9 @@ export default {
       return this.metricSelectedOptions.concat(this.editMetric)
     } 
   },
+  mounted() {
+    this.getEndpointList('.')
+  },
   methods: {
     getEndpointList(query) {
       let params = {
