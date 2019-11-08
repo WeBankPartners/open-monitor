@@ -1,23 +1,21 @@
 <template>
   <div id="app">
-    <router-view/> 
+    <router-view />
   </div>
 </template>
 
 <script>
-
 export default {
-  name: 'app'
-}
+  name: "app"
+};
 </script>
 
 <style>
-@import './assets/css/global.css';
+@import "./assets/css/global.css";
 #app {
-  font-family: 'Avenir', Helvetica, Arial, sans-serif;
+  font-family: "Avenir", Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
   line-height: inherit;
 }
 </style>
