@@ -71,11 +71,11 @@ export default {
   },
   computed: {
     isShow: function () {
-      return !this.$validate.isEmpty_reset(this.endpoint)
+      return !this.$root.$validate.isEmpty_reset(this.endpoint)
     }
   },
   mounted() {
-    if (!this.$validate.isEmpty_reset(this.$route.params)) {
+    if (!this.$root.$validate.isEmpty_reset(this.$route.params)) {
       this.getEndpointList('.')
       this.endpoint = this.$route.params.value
     }
@@ -86,7 +86,7 @@ export default {
         let params = {
           type: this.endpoint.split(':')[1]
         }
-        this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.mainConfig.api, params, (responseData) => {
+        this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.mainConfig.api, params, (responseData) => {
           resolve(responseData)
         })
       })
@@ -107,12 +107,12 @@ export default {
         page: 1,
         size: 1000
       }
-      this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.resourceSearch.api, params, (responseData) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.resourceSearch.api, params, (responseData) => {
        this.endpointList = responseData
       })
     },
     getChartsConfig () {
-      if (this.$validate.isEmpty_reset(this.endpoint)) {
+      if (this.$root.$validate.isEmpty_reset(this.endpoint)) {
         return
       }
       this.getMainConfig().then((res)=>{
@@ -126,7 +126,7 @@ export default {
           end: this.dateRange[1] ===''? '':Date.parse(this.dateRange[1])/1000
         }
         url = url.replace(`{${key}}`,params[key].split(':')[0])
-        this.$httpRequestEntrance.httpRequestEntrance('GET',url, params, responseData => {
+        this.$root.$httpRequestEntrance.httpRequestEntrance('GET',url, params, responseData => {
           this.$parent.manageCharts(responseData, params)
         },{isNeedloading: false})
       })

@@ -60,7 +60,7 @@ export default {
   },
   methods: {
     getDashboardData () {
-      this.$httpRequestEntrance.httpRequestEntrance('GET',this.apiCenter.template.get, '', responseData => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.template.get, '', responseData => {
         if (responseData.cfg === '') {
           this.$router.push({path: 'searchHomepage'}) 
         }else {
@@ -85,7 +85,7 @@ export default {
           time: '-1800'
         })) 
       })
-      this.$httpRequestEntrance.httpRequestEntrance('GET',this.apiCenter.metricConfigView.api, {config: `[${params.join(',')}]`}, responseData => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.metricConfigView.api, {config: `[${params.join(',')}]`}, responseData => {
         var legend = []
         if (responseData.series.length === 0) {
           this.noDataTip = true

@@ -105,7 +105,7 @@ export default {
         params.start = this.chartCondition.dateRange[0] ===''? '':Date.parse(this.chartCondition.dateRange[0])/1000 + '',
         params.end = this.chartCondition.dateRange[1] ===''? '':Date.parse(this.chartCondition.dateRange[1])/1000 + ''
       }
-      this.$httpRequestEntrance.httpRequestEntrance('GET', chartItem.url, params, responseData => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', chartItem.url, params, responseData => {
         var legend = []
         const colorSet = ['#CC9999','#CCCCFF','#FF66FF','#FFCCCC','#66CCCC','#996699','#99CC66','#FFCC99','#CC99CC','#FF9999','#FF9966','#FFCCFF']
         responseData.series.forEach((item,index)=>{

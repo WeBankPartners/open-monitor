@@ -85,10 +85,10 @@ export default {
     }
   },
   mounted() {
-    if(this.$validate.isEmpty_reset(this.$route.params)) {
+    if(this.$root.$validate.isEmpty_reset(this.$route.params)) {
       this.$router.push({path:'viewConfigIndex'})
     } else {
-      if (!this.$validate.isEmpty_reset(this.$route.params.cfg)) {
+      if (!this.$root.$validate.isEmpty_reset(this.$route.params.cfg)) {
         this.viewData = JSON.parse(this.$route.params.cfg)
         this.initPanals()
       }
@@ -111,7 +111,7 @@ export default {
           time: '-1800'
         })) 
       })
-      this.$httpRequestEntrance.httpRequestEntrance('GET',this.apiCenter.metricConfigView.api, {config: `[${params.join(',')}]`}, responseData => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.metricConfigView.api, {config: `[${params.join(',')}]`}, responseData => {
         var legend = []
         if (responseData.series.length === 0) {
           this.noDataTip = true
@@ -244,7 +244,7 @@ export default {
         id: this.$route.params.id,
         cfg: JSON.stringify(res)
       }
-      this.$httpRequestEntrance.httpRequestEntrance('POST',this.apiCenter.template.save, params, () => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.template.save, params, () => {
         this.$Message.success(this.$t('tips.success'))
       })
     },

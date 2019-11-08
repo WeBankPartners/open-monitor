@@ -145,11 +145,11 @@
         let item_tmp = item
         let attrs=expr.split('.')
         let n=0
-        if (!this.$validate.isEmpty(item)){
+        if (!this.$root.$validate.isEmpty(item)){
           return ''
         }
         for (n in attrs){
-          if (this.$validate.isEmpty(item_tmp) && attrs[n] in item_tmp){
+          if (this.$root.$validate.isEmpty(item_tmp) && attrs[n] in item_tmp){
             item_tmp = item_tmp[attrs[n]]
           }else{
             return ''

@@ -60,7 +60,7 @@
     methods: {
       initData (url, params) {
         if(this.pageConfig.researchConfig){
-          this.$tableUtil.initTable(this, 'GET', url, params)
+          this.$root.$tableUtil.initTable(this, 'GET', url, params)
         }else{
           this.$parent.initData(this.pageConfig.CRUD, this.pageConfig)
         }
@@ -84,7 +84,7 @@
       },
       //原始确认删除
       ok () {
-        this.$tableUtil.deleteF(this, 'DELETE', this.url)
+        this.$root.$tableUtil.deleteF(this, 'DELETE', this.url)
       },
       receiveIds (ids) {
         this.$parent.selectedData = ids
