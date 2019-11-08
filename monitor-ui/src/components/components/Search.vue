@@ -75,8 +75,8 @@ export default {
     }
   },
   mounted() {
+    this.getEndpointList('.')
     if (!this.$validate.isEmpty_reset(this.$route.params)) {
-      this.getEndpointList('.')
       this.endpoint = this.$route.params.value
     }
   },
@@ -102,6 +102,7 @@ export default {
       this.getChartsConfig()
     },
     getEndpointList(query) {
+      console.log(11)
       let params = {
         search: query,
         page: 1,

@@ -3,7 +3,7 @@
     <section>
       <ul class="search-ul">
         <li class="search-li">
-          <Select v-model="type" style="width:100px">
+          <Select v-model="type" style="width:100px" @on-change="endpointOptions = []">
             <Option v-for="item in typeList" :value="item.value" :key="item.value">{{ $t(item.label) }}</Option>
           </Select>
         </li>
@@ -13,7 +13,7 @@
             v-model="endpointID"
             filterable
             remote
-            :remote-method="endpointList"
+            :remote-method="getEndpointList"
             >
             <Option v-for="(option, index) in endpointOptions" :value="option.id" :key="index">
             <Tag color="cyan" class="tag-width" v-if="option.option_value.split(':')[1] == 'host'">host</Tag>
@@ -197,6 +197,7 @@ export default {
       this.type = 'endpoint'
       this.typeValue = ''
     }
+    this.getEndpointList('.')
     this.JQ('#add_edit_Modal').on('hidden.bs.modal', () => {
       this.modelConfig.thresholdValue = ''
       this.modelConfig.lastValue = ''
@@ -212,8 +213,9 @@ export default {
       this.typeValue = this.endpointID
       this.requestData(this.type, this.endpointID)
     },
-    endpointList (query) {
+    getEndpointList (query) {
       const params = {type: this.type,search: query}
+      this.endpointOptions = []
       this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.resourceSearch.strategyApi, params, (responseData) => {
         this.endpointOptions = responseData.filter(item => item.option_value.split(':')[1] === 'host')
       })

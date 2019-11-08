@@ -58,10 +58,10 @@
     {title: 'tableKey.start',value: 'start_string', style: 'min-width:200px', display: true},
     {title: 'tableKey.end',value: 'end_string', style: 'min-width:200px',display: true,
       'render': (item) => {
-        if (item.end === undefined) {
+        if (item.end_string === '0001-01-01 00:00:00') {
           return '-'
         } else {
-          return item.end
+          return item.end_string
         }
       }
     }]
