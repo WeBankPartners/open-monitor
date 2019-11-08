@@ -95,14 +95,14 @@ func InitHttpServer() {
 		{
 			agentApi.POST("/register", agent.RegisterAgent)
 			agentApi.GET("/deregister", agent.DeregisterAgent)
-			agentApi.GET("/host/start", agent.StartHostAgent)
-			agentApi.GET("/host/stop", agent.StopHostAgent)
-			agentApi.GET("/mysql/start", agent.StartMysqlAgent)
-			agentApi.GET("/mysql/stop", agent.StopMysqlAgent)
-			agentApi.GET("/redis/start", agent.StartRedisAgent)
-			agentApi.GET("/redis/stop", agent.StopRedisAgent)
-			agentApi.GET("/tomcat/start", agent.StartTomcatAgent)
-			agentApi.GET("/tomcat/stop", agent.StopTomcatAgent)
+			agentApi.GET("/host/register", agent.StartHostAgent)
+			agentApi.GET("/host/deregister", agent.StopHostAgent)
+			agentApi.GET("/mysql/register", agent.StartMysqlAgent)
+			agentApi.GET("/mysql/deregister", agent.StopMysqlAgent)
+			agentApi.GET("/redis/register", agent.StartRedisAgent)
+			agentApi.GET("/redis/deregister", agent.StopRedisAgent)
+			agentApi.GET("/tomcat/register", agent.StartTomcatAgent)
+			agentApi.GET("/tomcat/deregister", agent.StopTomcatAgent)
 		}
 		alarmApi := authApi.Group("/alarm")
 		{
