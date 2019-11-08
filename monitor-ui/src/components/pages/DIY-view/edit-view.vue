@@ -68,7 +68,7 @@
                       v-model="templateQuery.endpoint"
                       filterable
                       remote
-                      :remote-method="endpointList"
+                      :remote-method="getEndpointList"
                     >
                       <Option
                         v-for="(option, index) in options"
@@ -245,6 +245,7 @@ export default {
       this.$router.push({ path: "viewConfig" });
     } else {
       if (!this.$validate.isEmpty_reset(this.$route.params.templateData.cfg)) {
+        this.getEndpointList('.')
         this.viewData = JSON.parse(this.$route.params.templateData.cfg);
         this.viewData.forEach((itemx, index) => {
           if (itemx.viewConfig.id === this.$route.params.panal.id) {
@@ -312,7 +313,7 @@ export default {
     initQueryList(query) {
       this.chartQueryList = query;
     },
-    endpointList(query) {
+    getEndpointList(query) {
       let params = {
         search: query,
         page: 1,
