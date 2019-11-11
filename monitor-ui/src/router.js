@@ -106,6 +106,13 @@ const router = new Router({
           component: () => import("@/components/pages/DIY-view/edit-view")
         },
         {
+          path: "viewChart",
+          name: "viewChart",
+          title: "视图查看",
+          meta: {},
+          component: () => import("@/components/pages/DIY-view/view-chart")
+        },
+        {
           path: "searchHomepage",
           name: "searchHomepage",
           title: "搜索主页",
