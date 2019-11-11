@@ -1,0 +1,139 @@
+<template>
+  <div class>
+    <header>
+      <div style="display:flex;justify-content:space-between; font-size:16px;padding:8px 16px">
+        <div class="header-name">
+        </div>
+        <div class="header-tools"> 
+          <button class="btn btn-sm btn-confirm-f" @click="goBack()">{{$t('button.back')}}</button>
+        </div>
+      </div>
+    </header>
+    <div class="zone zone-chart">
+      <div class="col-md-12">
+        <div class="zone-chart-title">{{panalTitle}}</div>
+        <div v-if="!noDataTip">
+          <div :id="elId" class="echart"  style="height:80vh"></div>
+        </div>
+        <div v-else class="echart echart-no-data-tip">
+          <span>~~~No Data!~~~</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import { generateUuid } from "@/assets/js/utils";
+import { drawChart } from "@/assets/config/chart-rely";
+export default {
+  name: "",
+  data() {
+    return {
+      viewData: null,
+      panalData: null,
+
+      elId: null,
+      noDataTip: false,
+      panalTitle: '',
+      panalUnit: ''
+    };
+  },
+  created() {
+    generateUuid().then(elId => {
+      this.elId = `id_${elId}`;
+    });
+  },
+  mounted() {
+    if (this.$validate.isEmpty_reset(this.$route.params)) {
+      this.$router.push({ path: "viewConfig" });
+    } else {
+      if (!this.$validate.isEmpty_reset(this.$route.params.templateData.cfg)) {
+        this.viewData = JSON.parse(this.$route.params.templateData.cfg);
+        this.viewData.forEach((itemx) => {
+          if (itemx.viewConfig.id === this.$route.params.panal.id) {
+            this.panalData = itemx;
+            this.initPanal();
+            return;
+          }
+        });
+      }
+    }
+  },
+  methods: {
+    initPanal() {
+      this.panalTitle = this.panalData.panalTitle;
+      this.panalUnit = this.panalData.panalUnit;
+      let params = [];
+      this.noDataTip = false;
+      if (this.$validate.isEmpty_reset(this.panalData.query)) {
+        return;
+      }
+      this.panalData.query.forEach(item => {
+        params.push(
+          JSON.stringify({
+            endpoint: item.endpoint,
+            prom_ql: item.metric,
+            metric: item.metricLabel,
+            time: "-1800"
+          })
+        );
+      });
+      if (params !== []) {
+        this.$httpRequestEntrance.httpRequestEntrance(
+          "GET",
+          this.apiCenter.metricConfigView.api,
+          { config: `[${params.join(",")}]` },
+          responseData => {
+            var legend = [];
+            if (responseData.series.length === 0) {
+              this.noDataTip = true;
+              return;
+            }
+            responseData.series.forEach(item => {
+              legend.push(item.name);
+              item.symbol = "none";
+              item.smooth = true;
+              item.lineStyle = {
+                width: 1
+              };
+            });
+            responseData.yaxis.unit = this.panalUnit;
+            let config = {
+              title: responseData.title,
+              legend: legend,
+              series: responseData.series,
+              yaxis: responseData.yaxis
+            };
+            drawChart(this, config, { eye: false });
+          }
+        );
+      }
+    },
+    goBack() {
+      this.$router.push({ name: "viewConfig", params: this.$route.params.parentData });
+    }
+  },
+  components: {}
+};
+</script>
+
+<style scoped lang="less">
+.zone {
+  margin: 0 auto;
+  background: @gray-f;
+  border-radius: 4px;
+}
+.zone-chart-title {
+  padding: 20px 40%;
+  position: absolute;
+  font-size: 14px;
+}
+
+.echart-no-data-tip {
+  text-align: center;
+  vertical-align: middle;
+  display: table-cell;
+}
+</style>
+
