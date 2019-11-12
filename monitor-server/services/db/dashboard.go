@@ -341,3 +341,9 @@ func SetMainCustomDashboard(id int) error {
 	err = ExecuteTransactionSql(sqls)
 	return err
 }
+
+func GetEndpointsByIp(ipList []string, exportType string) (err error,endpoints []m.EndpointTable) {
+	sql := fmt.Sprintf("SELECT * FROM endpoint WHERE export_type='%s' AND ip IN ('%s')", exportType, strings.Join(ipList, "','"))
+	err = x.SQL(sql).Find(&endpoints)
+	return err,endpoints
+}
