@@ -629,3 +629,17 @@ func SetMainPage(c *gin.Context)  {
 	}
 	mid.ReturnSuccess(c, "Success")
 }
+
+func GetEndpointsByIp(c *gin.Context)  {
+	ipList := c.QueryArray("ip")
+	if len(ipList) <= 0 {
+		mid.ReturnValidateFail(c, "Parameter validation failed")
+		return
+	}
+	err,endpoints := db.GetEndpointsByIp(ipList, "host")
+	if err != nil {
+		mid.ReturnError(c, fmt.Sprintf("Get endpoints by ipList : %s fail ", ipList), err)
+		return
+	}
+	mid.ReturnData(c, endpoints)
+}

@@ -90,6 +90,7 @@ func InitHttpServer() {
 			dashboardApi.GET("/server/chart", dashboard.GetChartsByEndpoint)
 			dashboardApi.GET("/custom/main/get", dashboard.GetMainPage)
 			dashboardApi.GET("/custom/main/set", dashboard.SetMainPage)
+			dashboardApi.GET("/custom/endpoint/get", dashboard.GetEndpointsByIp)
 		}
 		agentApi := authApi.Group("/agent")
 		{
