@@ -42,7 +42,7 @@
             </Tooltip>
           </div>
           <div class="header-grid header-grid-tools"> 
-            <!-- <i class="fa fa-eye" aria-hidden="true" @click="gridPlus(item)"></i> -->
+            <i class="fa fa-eye" aria-hidden="true" @click="gridPlus(item)"></i>
             <Tooltip :content="$t('placeholder.chartConfiguration')" placement="top">
               <i class="fa fa-cog" @click="editGrid(item)" title="111" aria-hidden="true"></i>
             </Tooltip>
@@ -98,7 +98,6 @@ export default {
     initPanals () {
       this.viewData.forEach((item,viewIndex) => {
         this.layoutData.push(item.viewConfig)
-        console.log(item)
         this.requestChart(item.viewConfig.id,item.panalUnit, item.query,viewIndex)
       })
     },
@@ -178,7 +177,7 @@ export default {
       this.modifyLayoutData().then((resViewData)=>{
         let parentRouteData = this.$route.params
         parentRouteData.cfg = JSON.stringify(resViewData) 
-        this.$router.push({name: 'editView', params:{templateData: parentRouteData, panal:item, parentData: this.$route.params}}) 
+        this.$router.push({name: 'editView', params:{templateData: parentRouteData, panal:item}}) 
       })
     },
     removeGrid(itemxxx) {
@@ -189,8 +188,12 @@ export default {
         }
       })
     },
-    gridPlus() {
-
+    gridPlus(item) {
+      this.modifyLayoutData().then((resViewData)=>{
+        let parentRouteData = this.$route.params
+        parentRouteData.cfg = JSON.stringify(resViewData) 
+        this.$router.push({name: 'viewChart', params:{templateData: parentRouteData, panal:item, parentData: this.$route.params}}) 
+      })
     },
     modifyLayoutData() {
       return new Promise(resolve => {
