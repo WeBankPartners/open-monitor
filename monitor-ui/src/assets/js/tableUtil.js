@@ -80,9 +80,9 @@ const initDetailTable = (_this, indexx) =>{
   let methods = _this.detailPageConfig.detailConfig[indexx].pagination.getData.methods
   let url = _this.detailPageConfig.detailConfig[indexx].pagination.getData.url
   // 将搜索组件和分页组件中条件合并
-  let filters = _this.detailPageConfig.detailConfig[indexx].researchConfig ? _this.$validate.isEmptyReturn_JSON(_this.$validate.deepCopy(_this.detailPageConfig.detailConfig[indexx].researchConfig.filters)) : null
+  let filters = _this.detailPageConfig.detailConfig[indexx].researchConfig ? _this.$root.$validate.isEmptyReturn_JSON(_this.$root.$validate.deepCopy(_this.detailPageConfig.detailConfig[indexx].researchConfig.filters)) : null
   let params = Object.assign({}, _this.detailPageConfig.detailConfig[indexx].pagination)
-  // let params = _this.$validate.deepCopy(_this.detailPageConfig.detailConfig[indexx].pagination)
+  // let params = _this.$root.$validate.deepCopy(_this.detailPageConfig.detailConfig[indexx].pagination)
   for (let k in filters) {
     params[k] = filters[k]
   }
@@ -96,7 +96,7 @@ const initDetailTable = (_this, indexx) =>{
       }
     }
   }
-  _this.$httpRequestEntrance.httpRequestEntrance(methods, url, params, (responseData) => {
+  _this.$root.$httpRequestEntrance.httpRequestEntrance(methods, url, params, (responseData) => {
     _this.detailPageConfig.detailConfig[indexx].table.tableData = responseData[_this.detailPageConfig.detailConfig[indexx].pagination.getData.data]
     _this.detailPageConfig.detailConfig[indexx].pagination.total = responseData[_this.detailPageConfig.detailConfig[indexx].pagination.getData.count]
   })

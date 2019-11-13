@@ -97,28 +97,28 @@ export default {
   },
   methods: {
     addPost () {
-      this.JQ('#add_edit_Modal').modal('hide')
+      this.$root.JQ('#add_edit_Modal').modal('hide')
       let params = {
         name: this.modelConfig.addRow.name,
         cfg: ''
       }
-      this.$httpRequestEntrance.httpRequestEntrance('POST',this.apiCenter.template.save, params, () => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.template.save, params, () => {
         this.viewList()
       })
     },
     addView () {
       this.modelConfig.isAdd = true
-      this.JQ('#add_edit_Modal').modal('show')
+      this.$root.JQ('#add_edit_Modal').modal('show')
     },
     removeTemplate (item) {
       let params = {id: item.id}
-      this.$httpRequestEntrance.httpRequestEntrance('GET',this.apiCenter.template.delete, params, () => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.template.delete, params, () => {
         this.$Message.success(this.$t('tips.success'))
         this.viewList()
       })
     },
     viewList () {
-      this.$httpRequestEntrance.httpRequestEntrance('GET',this.apiCenter.template.list, '', responseData => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.template.list, '', responseData => {
         this.setDashboardModel.templateList = []
         this.setDashboardModel.addRow.templateSelect = null
         this.dataList = responseData
@@ -134,12 +134,12 @@ export default {
       })
     },
     setDashboard () {
-      this.JQ('#set_dashboard_modal').modal('show')
+      this.$root.JQ('#set_dashboard_modal').modal('show')
     },
     setDashboardSave () {
       let params = {id: this.setDashboardModel.addRow.templateSelect}
-      this.$httpRequestEntrance.httpRequestEntrance('GET',this.apiCenter.template.templateSet, params, () => {
-        this.JQ('#set_dashboard_modal').modal('hide')
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.template.templateSet, params, () => {
+        this.$root.JQ('#set_dashboard_modal').modal('hide')
         this.$Message.success(this.$t('tips.success'))
         this.viewList()
       })

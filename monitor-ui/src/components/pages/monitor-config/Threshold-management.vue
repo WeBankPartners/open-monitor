@@ -162,7 +162,7 @@ export default {
     }
   },
   mounted () {
-    if (!this.$validate.isEmpty_reset(this.$route.params)) {
+    if (!this.$root.$validate.isEmpty_reset(this.$route.params)) {
       this.$parent.activeTab = '/monitorConfigIndex/thresholdManagement'
       this.type = this.$route.params.type
       this.typeValue = this.$route.params.id
@@ -172,7 +172,7 @@ export default {
       this.typeValue = ''
     }
     this.getEndpointList('.')
-    this.JQ('#add_edit_Modal').on('hidden.bs.modal', () => {
+    this.$root.JQ('#add_edit_Modal').on('hidden.bs.modal', () => {
       this.modelConfig.thresholdValue = ''
       this.modelConfig.lastValue = ''
     })
@@ -188,7 +188,7 @@ export default {
     getEndpointList (query) {
       const params = {type: this.type,search: query}
       this.endpointOptions = []
-      this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.resourceSearch.strategyApi, params, (responseData) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.resourceSearch.strategyApi, params, (responseData) => {
         this.endpointOptions = responseData
       })
     },
@@ -197,9 +197,9 @@ export default {
       params.type = type
       params.id = id
       this.totalPageConfig = []
-      this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.thresholdManagement.list.api, params, (responseData) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.thresholdManagement.list.api, params, (responseData) => {
         responseData.forEach((item)=>{
-          let config = this.$validate.deepCopy(this.pageConfig.table)
+          let config = this.$root.$validate.deepCopy(this.pageConfig.table)
           if (!item.operation) {
             config.btn = []
           }
@@ -213,21 +213,21 @@ export default {
     },
     delF (rowData) {
       let params = {id: rowData.id}
-      this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.thresholdManagement.delete.api, params, () => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.thresholdManagement.delete.api, params, () => {
         this.$Message.success(this.$t('tips.success'))
         this.requestData(this.type, this.typeValue)
       })
     },
     formValidate () {
-      if (this.$validate.isEmpty_reset(this.modelConfig.thresholdValue)) {
+      if (this.$root.$validate.isEmpty_reset(this.modelConfig.thresholdValue)) {
         this.$Message.warning(this.$t('tableKey.threshold')+this.$t('tips.required'))
         return false 
       }
-      if (this.$validate.isEmpty_reset(this.modelConfig.lastValue)) {
+      if (this.$root.$validate.isEmpty_reset(this.modelConfig.lastValue)) {
         this.$Message.warning(this.$t('tableKey.s_last')+this.$t('tips.required'))
         return false 
       }
-      if (this.$validate.isEmpty_reset(this.modelConfig.addRow.content)) {
+      if (this.$root.$validate.isEmpty_reset(this.modelConfig.addRow.content)) {
         this.$Message.warning(this.$t('tableKey.content')+this.$t('tips.required'))
         return false
       }
@@ -253,20 +253,20 @@ export default {
       if (type === 'endpoint') {
         params = {type: 'host'}
       } 
-      this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.metricList.api, params, (responseData) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.metricList.api, params, (responseData) => {
         this.modelConfig.metricList = responseData
       })
       this.modelConfig.isAdd = true
-      this.JQ('#add_edit_Modal').modal('show')
+      this.$root.JQ('#add_edit_Modal').modal('show')
     },
     addPost () {
       if (!this.formValidate()) {
         return
       }
       let params = this.paramsPrepare()
-      this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.thresholdManagement.add.api, params, () => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.thresholdManagement.add.api, params, () => {
         this.$Message.success(this.$t('tips.success'))
-        this.JQ('#add_edit_Modal').modal('hide')
+        this.$root.JQ('#add_edit_Modal').modal('hide')
         this.requestData(this.type, this.typeValue)
       })
     },
@@ -275,14 +275,14 @@ export default {
       if (rowData.type === 'endpoint') {
         params = {type: 'host'}
       } 
-      this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.metricList.api, params, (responseData) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.metricList.api, params, (responseData) => {
         this.modelConfig.metricList = responseData
       })
 
       this.modelConfig.isAdd = false
       this.id = rowData.id
       this.modelTip.value = rowData.metric
-      this.modelConfig.addRow = this.$tableUtil.manageEditParams(this.modelConfig.addRow, rowData)
+      this.modelConfig.addRow = this.$root.$tableUtil.manageEditParams(this.modelConfig.addRow, rowData)
       let cond = rowData.cond.split('')
       if (cond.indexOf('=') > 0) {
         this.modelConfig.threshold = cond.slice(0,2).join('')
@@ -295,7 +295,7 @@ export default {
       this.modelConfig.last = last.substring(last.length-1)
       this.modelConfig.lastValue = last.substring(0,last.length-1)
       this.modelConfig.priority = rowData.priority
-      this.JQ('#add_edit_Modal').modal('show')
+      this.$root.JQ('#add_edit_Modal').modal('show')
     },
     editPost () {
       if (!this.formValidate()) {
@@ -303,9 +303,9 @@ export default {
       }
       let params = this.paramsPrepare()
       params.strategy_id = this.id
-      this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.thresholdManagement.update.api, params, () => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.thresholdManagement.update.api, params, () => {
         this.$Message.success(this.$t('tips.success'))
-        this.JQ('#add_edit_Modal').modal('hide')
+        this.$root.JQ('#add_edit_Modal').modal('hide')
         this.requestData(this.type, this.typeValue)
       })
     },
