@@ -8,7 +8,7 @@
  */
 import httpRequest from '@/assets/js/axiosHttp'
 import $ from 'jquery'
-import {Message} from 'iview'
+import {Message} from 'view-design'
 import loadingImg from '@/assets/img/loading.gif'
 
 let loadingCount = 0

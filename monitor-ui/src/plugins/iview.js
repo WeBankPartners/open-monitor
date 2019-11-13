@@ -1,6 +1,5 @@
 import Vue from 'vue'
-import iView from 'iview'
+import ViewUI from 'view-design'
 
-Vue.use(iView)
-
-import '../iview-variables.less'
+Vue.use(ViewUI)
+import 'view-design/dist/styles/iview.css';
