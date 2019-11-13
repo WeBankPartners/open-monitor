@@ -195,7 +195,7 @@ const modal_confirm_custom = (leader,title,fun) =>{
       fun()
     },
     onCancel: () => {
-      leader.$store.commit('changeFlag',true)
+      leader.$root.$store.commit('changeFlag',true)
     }
   })
 }
