@@ -21,19 +21,18 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style lang="less" scoped>
-  @import '../assets/css/common.less';
-  .index {
-    min-width: 1200px;
-    background: white;
-  }
-  .content {
-    // background-image: url('../assets/img/watermark_wecube_monitor.png');
-    background-image: url('../assets/img/watermark-3.png');
-    // width:1200px;
-    min-height: 95vh;
-    height: 100%;
-    margin: 0 auto;
-    padding: 10px;
-    // background:white;
-  }
+@import "../assets/css/common.less";
+.index {
+  min-width: 1200px;
+  background: white;
+}
+.content {
+  background-image: url("../assets/img/watermark_wecube_monitor.png");
+  // width:1200px;
+  min-height: 95vh;
+  height: 100%;
+  margin: 0 auto;
+  padding: 10px;
+  // background:white;
+}
 </style>
