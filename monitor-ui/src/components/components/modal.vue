@@ -35,7 +35,7 @@
                        type="text"
                        v-validate="item.v_validate"
                        :name="item.value"
-                       :class="{ 'red-border': errors.has(item.value) }"
+                       :class="{ 'red-border': veeErrors.has(item.value) }"
                        class="col-md-7 form-control model-input">
                 <input v-if="item.type === 'number' && isHide(item.hide)"
                        v-model.number="modelConfig.addRow[item.value]"
@@ -100,7 +100,7 @@
                   </div>
                 </Poptip>
 
-                <label v-show="errors.has(item.value) && isHide(item.hide)" class="col-md-7 help is-danger">{{$t(item.label)}} {{errors.first(item.value)}}</label>
+                <label v-show="veeErrors.has(item.value) && isHide(item.hide)" class="col-md-7 help is-danger">{{$t(item.label)}} {{veeErrors.first(item.value)}}</label>
                 <label v-if="(item.type === 'select' || item.type === 'textarea') && item.isError" class="col-md-7 help is-danger">{{$t(item.label)}} {{$t('tips.required')}}</label>
               </div>
             </form>
@@ -141,7 +141,7 @@ import {interceptParams} from '@/assets/js/utils'
 
       this.$root.JQ('#' + modalId).on('hidden.bs.modal', () => {
         // 清理表单验证错误信息
-        _this.errors.clear()
+        _this.veeErrors.clear()
         // 清除表单缓存内容  下面把清空switch的数据补全
         this.$root.$validate.emptyJson(_this.modelConfig.addRow)
         
