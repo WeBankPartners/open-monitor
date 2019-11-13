@@ -27,15 +27,20 @@ module.exports = {
 			}
 		}
 	},
-	configureWebpack: {
-		plugins: [
-			new webpack.ProvidePlugin({
-				$:"jquery",
-				jQuery:"jquery",
-				"windows.jQuery":"jquery"
-			})
-		]
-	},
+	// configureWebpack: {
+	// 	plugins: [
+	// 		new webpack.ProvidePlugin({
+	// 			$:"jquery",
+	// 			jQuery:"jquery",
+	// 			"windows.jQuery":"jquery"
+	// 		})
+	// 	]
+	// },
+	configureWebpack: config => {
+    if (process.env.PLUGIN === "plugin") {
+      config.optimization.splitChunks = {}
+    }
+  },
 	pluginOptions: {
     pwa: {
       iconPaths: {
