@@ -3,12 +3,10 @@
       <header>
         <div style="display:flex;justify-content:space-between; font-size:16px;padding:8px 16px">
             <div class="header-name">
-                <i class="fa fa-th-large fa-18" aria-hidden="true"></i>
-                <span> {{$route.params.name}}</span>
+                <span>系统名称：</span>
+                <span> 双子星系统</span>
             </div>
             <div class="header-tools"> 
-              <button class="btn btn-sm btn-cancle-f" @click="addItem">{{$t('button.add')}}</button>
-              <button class="btn btn-sm btn-confirm-f" @click="saveEdit">{{$t('button.saveEdit')}}</button>
               <button class="btn btn-sm btn-cancle-f" @click="goBack()">{{$t('button.back')}}</button>
             </div>
         </div>
@@ -35,19 +33,12 @@
                  
         <div style="display:flex;justify-content:flex-end;padding:0 32px;">
           <div class="header-grid header-grid-name">
-            <span v-if="editChartId !== item.id">{{item.i}}</span>
-            <Input v-else v-model="item.i" class="editChartId" style="width:100px" @on-blur="editChartId = null" size="small" placeholder="small size" />
-            <Tooltip :content="$t('placeholder.editTitle')" placement="top">
-              <i class="fa fa-pencil-square" @click="editChartId = item.id" aria-hidden="true"></i>
-            </Tooltip>
+            <span>{{item.i}}</span>
           </div>
           <div class="header-grid header-grid-tools"> 
-            <i class="fa fa-eye" aria-hidden="true" @click="gridPlus(item)"></i>
-            <Tooltip :content="$t('placeholder.chartConfiguration')" placement="top">
-              <i class="fa fa-cog" @click="editGrid(item)" title="111" aria-hidden="true"></i>
-            </Tooltip>
-            <Tooltip :content="$t('placeholder.deleteChart')" placement="top">
-              <i class="fa fa-trash" @click="removeGrid(item)" title="111" aria-hidden="true"></i>
+            <Tooltip :content="$t('placeholder.viewChart')" placement="top">
+              <!-- <i class="fa fa-eye" aria-hidden="true" @click="gridPlus(item)"></i> -->
+              <i class="fa fa-eye" aria-hidden="true"></i>
             </Tooltip>
           </div>
         </div>
@@ -81,28 +72,141 @@ export default {
         //   {'x':1,'y':1,'w':2,'h':2,'i':'1'},
       ],
       noDataTip: false,
-      editChartId: null
+      sysConfig: {
+        systemName: '双子星系统',
+        ip: ['192.168.0.16','192.168.0.5'],
+        endpointList: ['VM_0_16_centos_192.168.0.16_host','VM_0_5_centos_192.168.0.5_host'],
+      },
+      metricLabelList: ['mem.used.percent','load.1min','cpu.used.percent'],
+      array1: []
     }
   },
   mounted() {
-    if(this.$validate.isEmpty_reset(this.$route.params)) {
-      this.$router.push({path:'viewConfigIndex'})
-    } else {
-      if (!this.$validate.isEmpty_reset(this.$route.params.cfg)) {
-        console.log(this.$route.params.cfg)
-        this.viewData = JSON.parse(this.$route.params.cfg)
-        this.initPanals()
-      }
+    let res = []
+    const num = this.metricLabelList.length
+    for (let i=0;i<num; i++) {
+      generateUuid().then((elId)=>{
+        const key = ((new Date()).valueOf()).toString().substring(10)
+        this.array1.push({
+          x: i%2*6,
+          y:Math.ceil((i/2+0.000001)-1)*7,
+          w:6,
+          h:7,
+          i: `default${key}`,
+          id: `id_${elId}`,
+          "moved": false
+        })
+      })
     }
+    console.log(this.array1)
+    this.metricLabelList.forEach((metric, index)=> {
+      let singleChart = {}
+      singleChart.panalTitle = metric
+      singleChart.query = []
+      for (let endpoint of this.sysConfig.endpointList) {
+        let condition = {}
+        condition.endpoint = endpoint
+        condition.metricLabel = metric
+        singleChart.query.push(condition)
+      }
+      singleChart.viewConfig = this.array1[index]
+      res.push(singleChart)
+    })
+
+    console.log(res)
+    this.viewData = [{
+        "panalTitle": "default824",
+        "query": [{
+            "endpoint": 'VM_0_16_centos_192.168.0.16_host',
+            "metricLabel": "mem.used.percent",
+        },
+        {
+            "endpoint": 'VM_0_5_centos_192.168.0.5_host',
+            "metricLabel": "mem.used.percent",
+        }],
+        "viewConfig": {
+            "x": 0,
+            "y": -0,
+            "w": 6,
+            "h": 7,
+            "i": "default824",
+            "id": "id_9244fc70_79b8_4c95_876d_f1d27aec9283",
+            "moved": false
+        }
+    },
+    {
+        "panalTitle": "default740",
+        "query": [
+          {
+            "endpoint": 'VM_0_16_centos_192.168.0.16_host',
+            "metricLabel": "load.1min",
+        },
+        {
+            "endpoint": 'VM_0_5_centos_192.168.0.5_host',
+            "metricLabel": "load.1min",
+        }],
+        "viewConfig": {
+            "x": 6,
+            "y": 0,
+            "w": 6,
+            "h": 7,
+            "i": "default740",
+            "id": "id_5bf38763_afdd_41d4_ae66_339304821870",
+            "moved": false
+        }
+    },
+    {
+        "panalTitle": "default653",
+        "query": [
+          {
+            "endpoint": 'VM_0_16_centos_192.168.0.16_host',
+            "metricLabel": "cpu.used.percent",
+        },
+        {
+            "endpoint": 'VM_0_5_centos_192.168.0.5_host',
+            "metricLabel": "cpu.used.percent",
+        }],
+        "viewConfig": {
+            "x": 0,
+            "y": 7,
+            "w": 6,
+            "h": 7,
+            "i": "default653",
+            "id": "id_5ab4bdb7_aaf8_47da_8cbe_cd5e65e7aa34",
+            "moved": false
+        }
+    },
+    {
+      "panalTitle": "default6531111",
+      "query": [
+        {
+          "endpoint": 'VM_0_16_centos_192.168.0.16_host',
+          "metricLabel": "cpu.used.percent",
+      },
+      {
+          "endpoint": 'VM_0_5_centos_192.168.0.5_host',
+          "metricLabel": "cpu.used.percent",
+      }],
+      "viewConfig": {
+          "x": 6,
+          "y": 7,
+          "w": 6,
+          "h": 7,
+          "i": "default6531111",
+          "id": "id_5ab4bdb7_aaf8_47da_8cbe_cd5e65e7aasfd34",
+          "moved": false
+      }
+    }]
+    this.initPanals()
   },
   methods: {
     initPanals () {
       this.viewData.forEach((item,viewIndex) => {
         this.layoutData.push(item.viewConfig)
-        this.requestChart(item.viewConfig.id,item.panalUnit, item.query,viewIndex)
+        this.requestChart(item.viewConfig.id, item.query,viewIndex)
       })
     },
-    requestChart (id, panalUnit, query,viewIndex) {
+    requestChart (id, query,viewIndex) {
       let params = []
       query.forEach((item) => {
         params.push(JSON.stringify({
@@ -149,7 +253,6 @@ export default {
             }
           }
         }) 
-        responseData.yaxis.unit =  panalUnit  
         let config = {
           title: responseData.title,
           legend: legend,
@@ -174,49 +277,6 @@ export default {
         this.layoutData.push(item)
       })
     },
-    editGrid(item) {
-      this.modifyLayoutData().then((resViewData)=>{
-        let parentRouteData = this.$route.params
-        parentRouteData.cfg = JSON.stringify(resViewData) 
-        this.$router.push({name: 'editView', params:{templateData: parentRouteData, panal:item}}) 
-      })
-    },
-    removeGrid(itemxxx) {
-      this.layoutData.forEach((item,index) => {
-        if (item.id === itemxxx.id) {
-         this.layoutData.splice(index,1)
-         return
-        }
-      })
-    },
-    gridPlus(item) {
-      this.modifyLayoutData().then((resViewData)=>{
-        let parentRouteData = this.$route.params
-        parentRouteData.cfg = JSON.stringify(resViewData) 
-        this.$router.push({name: 'viewChart', params:{templateData: parentRouteData, panal:item, parentData: this.$route.params}}) 
-      })
-    },
-    modifyLayoutData() {
-      return new Promise(resolve => {
-        var resViewData = []
-        this.layoutData.forEach((layoutDataItem) =>{
-          let temp = {
-            panalTitle: layoutDataItem.i,
-            panalUnit: '',
-            query: [],
-            viewConfig: layoutDataItem
-          }
-          this.viewData.forEach((i) =>{
-            if (layoutDataItem.id === i.viewConfig.id) {
-              temp.panalUnit = i.panalUnit
-              temp.query = i.query
-            }
-          })
-          resViewData.push(temp)
-        })
-        resolve(resViewData)
-      })
-    },
     resizeEvent: function(i, newH, newW, newHPx, newWPx){
       this.layoutData.forEach((item,index) => {
         if (item.i === i) {
@@ -230,29 +290,6 @@ export default {
     },
     resizedEvent: function(i, newH, newW, newHPx, newWPx){
       this.resizeEvent(i, newH, newW, newHPx, newWPx)
-    },
-    saveEdit() {
-      let res = []
-      this.layoutData.forEach((layoutDataItem) =>{
-        this.viewData.forEach((i) =>{
-          if (layoutDataItem.id === i.viewConfig.id) {
-            res.push({
-              panalTitle: i.panalTitle,
-              panalUnit: i.panalUnit,
-              query: i.query,
-              viewConfig: layoutDataItem
-            })
-          }
-        })
-      })
-      let params = {
-        name: this.$route.params.name,
-        id: this.$route.params.id,
-        cfg: JSON.stringify(res)
-      }
-      this.$httpRequestEntrance.httpRequestEntrance('POST',this.apiCenter.template.save, params, () => {
-        this.$Message.success(this.$t('tips.success'))
-      })
     },
     goBack () {
       this.$router.push({name:'viewConfigIndex'})
