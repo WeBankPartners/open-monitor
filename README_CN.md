@@ -71,6 +71,9 @@ WeCube-plugins-prometheus采用容器化部署。
 agent安装文档
 [Prometheus-agent安装文档](wiki/install_agent.md)
 
+## 用户手册
+关于WeCube-plugins-prometheus的使用和操作说明，请查看文档[WeCube-plugins-prometheus用户手册](wiki/user_guide.md)
+
 ## 开发者文档
 **WeCube-plugins-prometheus本地环境搭建与开发**  
 请参考本地开发环境配置文档 [WeCube-plugins-prometheus本地环境配置文档](wiki/develop_local_guide.md)
