@@ -21,7 +21,7 @@
     data() {
       return {
         pageConfig: {
-          CRUD: this.apiCenter.groupManagement.list.api,
+          CRUD: this.$root.apiCenter.groupManagement.list.api,
           researchConfig: {
             input_conditions: [
               {value: 'search', type: 'input', placeholder: 'placeholder.input', style: ''}],
@@ -75,26 +75,26 @@
     },
     methods: {
       initData (url= this.pageConfig.CRUD, params) {
-        this.$tableUtil.initTable(this, 'GET', url, params)
+        this.$root.$tableUtil.initTable(this, 'GET', url, params)
       },
       add () {
-        this.JQ('#add_edit_Modal').modal('show')
+        this.$root.JQ('#add_edit_Modal').modal('show')
       },
       addPost () {
-        let params= this.$validate.isEmptyReturn_JSON(this.modelConfig.addRow)
-        this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.groupManagement.add.api, params, () => {
-          this.$validate.emptyJson(this.modelConfig.addRow)
-          this.JQ('#add_edit_Modal').modal('hide')
+        let params= this.$root.$validate.isEmptyReturn_JSON(this.modelConfig.addRow)
+        this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.groupManagement.add.api, params, () => {
+          this.$root.$validate.emptyJson(this.modelConfig.addRow)
+          this.$root.JQ('#add_edit_Modal').modal('hide')
           this.$Message.success(this.$t('tips.success'))
           this.initData(this.pageConfig.CRUD, this.pageConfig)
         })
       },
       editPost () {
-        let params= this.$validate.isEmptyReturn_JSON(this.modelConfig.addRow)
+        let params= this.$root.$validate.isEmptyReturn_JSON(this.modelConfig.addRow)
         params.id = this.id
-        this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.groupManagement.update.api, params, () => {
-          this.$validate.emptyJson(this.modelConfig.addRow)
-          this.JQ('#add_edit_Modal').modal('hide')
+        this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.groupManagement.update.api, params, () => {
+          this.$root.$validate.emptyJson(this.modelConfig.addRow)
+          this.$root.JQ('#add_edit_Modal').modal('hide')
           this.$Message.success(this.$t('tips.success'))
           this.initData(this.pageConfig.CRUD, this.pageConfig)
         })
@@ -103,15 +103,15 @@
         this.modelConfig.isAdd = false
         this.modelTip.value = rowData[this.modelTip.key]
         this.id = rowData.id
-        this.modelConfig.addRow = this.$tableUtil.manageEditParams(this.modelConfig.addRow, rowData)
-        this.JQ('#add_edit_Modal').modal('show')
+        this.modelConfig.addRow = this.$root.$tableUtil.manageEditParams(this.modelConfig.addRow, rowData)
+        this.$root.JQ('#add_edit_Modal').modal('show')
       },
       checkMember (rowData) {
         this.$router.push({name: 'endpointManagement', params: {group: rowData}})
       },
       delF (rowData) {
         let params = {id: rowData.id}
-        this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.groupManagement.delete.api, params, () => {
+        this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.groupManagement.delete.api, params, () => {
           this.$Message.success(this.$t('tips.success'))
           this.initData(this.pageConfig.CRUD, this.pageConfig)
         })

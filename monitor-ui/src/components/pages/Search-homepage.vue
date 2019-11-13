@@ -28,13 +28,13 @@ export default {
         placeholder: 'placeholder.endpointSearch',
         inputStyle: "width:500px;",
         // api: '/dashboard/search'
-        api: this.apiCenter.resourceSearch.api
+        api: this.$root.apiCenter.resourceSearch.api
       }
     }
   },
   methods: {
     routerChange (){
-      this.$validate.isEmpty_reset(this.$store.state.ip) ? '' : this.$router.push({ name: 'mainView',params: this.$store.state.ip})
+      this.$root.$validate.isEmpty_reset(this.$store.state.ip) ? '' : this.$router.push({ name: 'mainView',params: this.$store.state.ip})
     }, 
   },
   components: {

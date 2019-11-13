@@ -61,7 +61,7 @@ export default {
   },
   methods: {
     refreshCharts () {
-      if (this.$validate.isEmpty_reset(this.activeTab) || 
+      if (this.$root.$validate.isEmpty_reset(this.activeTab) || 
       this.charts.chartsConfig.findIndex((element)=>(element.tabTape.name == this.activeTab)) === -1) {
         this.activeTab = this.charts.chartsConfig[0].tabTape.name
       } 
@@ -86,7 +86,7 @@ export default {
       })
     },
     pitchOnBtn() {
-      this.$httpRequestEntrance.httpRequestEntrance('GET',this.tagsUrl +  this.activeBtn, '', responseData => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.tagsUrl +  this.activeBtn, '', responseData => {
         this.activeCharts.forEach((element,index) => {
            element.metric = responseData[index].metric
         })

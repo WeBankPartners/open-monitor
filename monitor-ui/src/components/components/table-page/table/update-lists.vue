@@ -75,7 +75,7 @@
           }
           this.optionsTable.push(obj)
         })
-        this.JQ('#custom_th_Modal').modal('show')
+        this.$root.JQ('#custom_th_Modal').modal('show')
       },
       changeTableTr () {
         this.table.tableEle = this.optionsTable
@@ -87,7 +87,7 @@
         this.$parent.changeTdNumber()
         // this.tdNumber = this.gettdsLength()
         this.$store.commit('catchColumn', column)
-        this.JQ('#custom_th_Modal').modal('hide')
+        this.$root.JQ('#custom_th_Modal').modal('hide')
       },
     },
     components: {}

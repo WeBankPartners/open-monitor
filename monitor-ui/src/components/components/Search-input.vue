@@ -71,7 +71,7 @@ export default {
       }
       let params = Object.assign(searchParams, this.parentConfig.params)
       
-      this.$httpRequestEntrance.httpRequestEntrance('GET',this.parentConfig.api, params, responseData => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.parentConfig.api, params, responseData => {
         this.searchResult = responseData
       })
       this.showSearchTips = true
