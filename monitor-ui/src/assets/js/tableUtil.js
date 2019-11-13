@@ -18,8 +18,8 @@
  */
 const initTable = (that, method, url, pageConfig) =>{
   // 将搜索组件和分页组件中条件合并
-  let filters = pageConfig.researchConfig?that.$validate.isEmptyReturn_JSON(that.$validate.deepCopy(pageConfig.researchConfig.filters)):{}
-  let params = that.$validate.deepCopy(pageConfig.pagination)
+  let filters = pageConfig.researchConfig?that.$root.$validate.isEmptyReturn_JSON(that.$root.$validate.deepCopy(pageConfig.researchConfig.filters)):{}
+  let params = that.$root.$validate.deepCopy(pageConfig.pagination)
   for (let k in filters) {
     params[k] = filters[k]
   }
@@ -27,7 +27,7 @@ const initTable = (that, method, url, pageConfig) =>{
   return that.$httpRequestEntrance.httpRequestEntrance(method, url, requestParams, (responseData) => {
     that.pageConfig.pagination.total = responseData.num
     that.pageConfig.pagination.current = parseInt(params.page)
-    let res = that.$validate.isEmpty_reset(responseData.data) ? [] : responseData.data
+    let res = that.$root.$validate.isEmpty_reset(responseData.data) ? [] : responseData.data
     that.pageConfig.table.tableData = res
     return that.pageConfig.pagination
   })
@@ -41,7 +41,7 @@ const initTable = (that, method, url, pageConfig) =>{
  * return {Object} requestParams (处理后数据)
  */
 const adapterParamsForTabledata = (that, oriParams) =>{
-  let requestParams = that.$validate.deepCopy(oriParams)
+  let requestParams = that.$root.$validate.deepCopy(oriParams)
   let deleteparams = ['current', 'pageSize', 'total', 'pageCount']
   for (let k in requestParams) {
     for (let i = 0; i < deleteparams.length; i++){

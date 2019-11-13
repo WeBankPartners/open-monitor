@@ -1,6 +1,6 @@
 <template>
   <div class="hello">
-    <h1>TEST</h1>
+    <h1 id="xx">TEST</h1>
     <Button type="primary" @click="test">Primary</Button>
   </div>
 </template>
@@ -8,6 +8,9 @@
 <script>
 export default {
   name: 'TEST',
+  mounted() {
+    console.log(this.$root.JQ('xx'))
+  },
   methods: {
     test () {
     }

@@ -25,7 +25,8 @@ Validator.localize({
   }
 })
 const config = {
-  errorBagName: 'errors', // change if property conflicts.
+  errorBagName: 'veeErrors', // change if property conflicts.
+  fieldsBagName: 'veeFields',
   delay: 0,
   locale: localStorage.getItem('lang') || ( navigator.language || navigator.userLanguage === "zh-CN"
   ? "zh-CN"
