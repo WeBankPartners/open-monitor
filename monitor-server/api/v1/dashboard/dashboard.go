@@ -370,7 +370,12 @@ func GetChartNew(c *gin.Context)  {
 		var diffEndpoint,diffMetric bool
 		for i,v := range paramConfig {
 			if v.PromQl == "" {
-				continue
+				_,tmpPromQL := db.GetPromMetric([]string{v.Endpoint}, v.Metric)
+				if tmpPromQL == "" {
+					continue
+				}else{
+					paramConfig[i].PromQl = tmpPromQL
+				}
 			}
 			if i == 0 {
 				tmpEndpointParam = v.Endpoint
