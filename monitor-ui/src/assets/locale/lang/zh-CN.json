@@ -6,6 +6,7 @@
     "systemName": "WeCube-Monitor (功能演示版)",
     "view": "视图",
     "endpointView": "对象视图",
+    "systemMonitoring": "系统监控",
     "metricConfiguration": "指标配置",
     "customViews": "自定义视图",
     "configuration": "配置",
@@ -21,6 +22,7 @@
     "globalConfiguration": "全局配置",
     "editTitle": "编辑标题",
     "chartConfiguration": "监控图配置",
+    "viewChart": "查看视图",
     "deleteChart": "删除监控图"
   },
   "field": {
@@ -95,7 +97,8 @@
     "content": "通知内容",
     "path": "路径",
     "keyword": "关键字",
-    "condition": "条件"
+    "condition": "条件",
+    "systemName": "系统名称"
   },
   "tips": {
     "required": " 必填",
