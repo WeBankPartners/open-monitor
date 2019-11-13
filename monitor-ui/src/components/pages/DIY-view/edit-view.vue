@@ -159,6 +159,7 @@ export default {
       viewData: null,
       panalIndex: null,
       panalData: null,
+
       elId: null,
       noDataTip: false,
       activeStep: "chat_query",
@@ -174,8 +175,10 @@ export default {
         //   metric: ''
         // }
       ],
+
       options: [],
       metricList: [],
+
       panalTitle: "Default title",
       panalUnit: ""
     };
@@ -395,6 +398,7 @@ export default {
         query: query,
         viewConfig: panal
       };
+
       if (this.panalIndex !== null) {
         this.viewData[this.panalIndex] = temp;
       } else {
@@ -439,6 +443,7 @@ export default {
   height: 300px;
   width: 1100px;
 }
+
 .step-icon {
   i {
     height: 24px;
@@ -463,6 +468,7 @@ export default {
   border-left: 2px solid @blue-lingt;
   margin-left: 16px;
 }
+
 .zone-config-operation {
   margin: 24px;
   margin-top: 0;
@@ -473,6 +479,7 @@ export default {
 .zone-config-operation-general {
   margin-top: 24px;
 }
+
 .echart-no-data-tip {
   text-align: center;
   vertical-align: middle;
@@ -482,6 +489,7 @@ export default {
   text-align: right;
   padding: 4px 64px;
 }
+
 .tag-display {
   margin: 4px;
 }
@@ -514,3 +522,4 @@ export default {
   text-align: center;
 }
 </style>
+
