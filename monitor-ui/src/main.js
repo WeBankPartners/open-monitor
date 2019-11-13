@@ -31,8 +31,8 @@ Vue.use(VeeValidate);
 Vue.config.productionTip = false;
 
 import VueI18n from "vue-i18n";
-import en from "iview/dist/locale/en-US";
-import zh from "iview/dist/locale/zh-CN";
+import en from 'view-design/dist/locale/en-US';
+import zh from 'view-design/dist/locale/zh-CN';
 
 import en_local from "@/assets/locale/lang/en.json";
 import zh_local from "@/assets/locale/lang/zh-CN.json";
