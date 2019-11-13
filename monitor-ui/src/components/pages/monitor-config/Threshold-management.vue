@@ -13,7 +13,7 @@
             v-model="endpointID"
             filterable
             remote
-            :remote-method="endpointList"
+            :remote-method="getEndpointList"
             >
             <Option v-for="(option, index) in endpointOptions" :value="option.id" :key="index">
             <Tag color="cyan" class="tag-width" v-if="option.option_value.split(':')[1] == 'host'">host</Tag>
@@ -171,6 +171,7 @@ export default {
       this.type = 'endpoint'
       this.typeValue = ''
     }
+    this.getEndpointList('.')
     this.$root.JQ('#add_edit_Modal').on('hidden.bs.modal', () => {
       this.modelConfig.thresholdValue = ''
       this.modelConfig.lastValue = ''
@@ -184,8 +185,9 @@ export default {
       this.typeValue = this.endpointID
       this.requestData(this.type, this.endpointID)
     },
-    endpointList (query) {
+    getEndpointList (query) {
       const params = {type: this.type,search: query}
+      this.endpointOptions = []
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.resourceSearch.strategyApi, params, (responseData) => {
         this.endpointOptions = responseData
       })
@@ -359,4 +361,3 @@ export default {
     text-align: center;
   }
 </style>
-

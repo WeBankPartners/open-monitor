@@ -75,8 +75,8 @@ export default {
     }
   },
   mounted() {
+    this.getEndpointList('.')
     if (!this.$root.$validate.isEmpty_reset(this.$route.params)) {
-      this.getEndpointList('.')
       this.endpoint = this.$route.params.value
     }
   },
