@@ -34,7 +34,7 @@ export default {
   },
   methods: {
     routerChange (){
-      this.$root.$validate.isEmpty_reset(this.$store.state.ip) ? '' : this.$router.push({ name: 'mainView',params: this.$store.state.ip})
+      this.$root.$validate.isEmpty_reset(this.$root.$store.state.ip) ? '' : this.$router.push({ name: 'mainView',params: this.$root.$store.state.ip})
     }, 
   },
   components: {

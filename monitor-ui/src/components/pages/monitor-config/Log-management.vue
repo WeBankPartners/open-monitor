@@ -367,7 +367,7 @@ export default {
         this.$Message.success(this.$t('tips.success'))
         this.$root.JQ('#add_edit_Modal').modal('hide')
         this.requestData(this.type, this.typeValue)
-        this.$store.commit('changeTableExtendActive', -1)
+        this.$root.$store.commit('changeTableExtendActive', -1)
       })
     },
   },
