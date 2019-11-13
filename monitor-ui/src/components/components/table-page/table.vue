@@ -383,14 +383,14 @@
     },
     created () {
       // 判断vuex是否包含自定义列表信息，获取相关信息赋给table
-      // if (this.$root.$validate.isEmpty(this.$store.state[this.$router.history.current.name])) {
-      //   this.table.tableEle = this.$store.state[this.$router.history.current.name]
+      // if (this.$root.$validate.isEmpty(this.$root.$store.state[this.$router.history.current.name])) {
+      //   this.table.tableEle = this.$root.$store.state[this.$router.history.current.name]
       // }
       this.tdNumber = this.gettdsLength() 
     },
     updated(){
       this.tdNumber = this.gettdsLength()
-      this.currentActive = this.$store.state.tableExtendActive
+      this.currentActive = this.$root.$store.state.tableExtendActive
       this.$root.JQ('.ivu-tooltip-popper').css('display','none') //详情跳转回table页面,禁止tooltip显示完整字段
     },
     methods: {
@@ -683,7 +683,7 @@
       // table内跳转
       shadow (item, val) {
         this.currentActive = -1
-        this.$store.commit('changeTableExtendActive',this.currentActive)
+        this.$root.$store.commit('changeTableExtendActive',this.currentActive)
         let id = this.$root.$validate.valueFromExpression(item, val.shadow.key)
         let router = {
           name: val.shadow.path,
@@ -754,7 +754,7 @@
       },
       loadDetail(item, index) {
         this.currentActive = this.currentActive === index ? -1 : index
-        this.$store.commit('changeTableExtendActive',this.currentActive)
+        this.$root.$store.commit('changeTableExtendActive',this.currentActive)
         if(this.currentActive === -1){
           return
         }
