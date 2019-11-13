@@ -3,20 +3,20 @@
       <header>
         <div style="display:flex;justify-content:space-between; font-size:16px;padding:8px 16px">
             <div class="header-name">
-                <span>系统名称：</span>
-                <span> 双子星系统</span>
+                <span>{{$t('tableKey.systemName')}}:</span>
+                <span> Wecube-monitor</span>
             </div>
-            <div class="header-tools"> 
+            <!-- <div class="header-tools"> 
               <button class="btn btn-sm btn-cancle-f" @click="goBack()">{{$t('button.back')}}</button>
-            </div>
+            </div> -->
         </div>
       </header>
       <grid-layout
         :layout.sync="layoutData"
         :col-num="12"
         :row-height="30"
-        :is-draggable="true"
-        :is-resizable="true"
+        :is-draggable="false"
+        :is-resizable="false"
         :is-mirrored="false"
         :vertical-compact="true"
         :use-css-transforms="true"
@@ -27,9 +27,7 @@
         :w="item.w"
         :h="item.h"
         :i="item.i"
-        :key="index"
-        @resize="resizeEvent"
-        @resized="resizedEvent">
+        :key="index">
                  
         <div style="display:flex;justify-content:flex-end;padding:0 32px;">
           <div class="header-grid header-grid-name">
@@ -38,7 +36,7 @@
           <div class="header-grid header-grid-tools"> 
             <Tooltip :content="$t('placeholder.viewChart')" placement="top">
               <!-- <i class="fa fa-eye" aria-hidden="true" @click="gridPlus(item)"></i> -->
-              <i class="fa fa-eye" aria-hidden="true"></i>
+              <!-- <i class="fa fa-eye" aria-hidden="true"></i> -->
             </Tooltip>
           </div>
         </div>
@@ -58,7 +56,6 @@
 </template>
 
 <script>
-import {generateUuid} from '@/assets/js/utils'
 import VueGridLayout from 'vue-grid-layout'
 import {drawChart} from  '@/assets/config/chart-rely'
 const echarts = require('echarts/lib/echarts');
@@ -68,8 +65,6 @@ export default {
     return {
       viewData: [],
       layoutData: [
-        //   {'x':0,'y':0,'w':2,'h':2,'i':'0'},
-        //   {'x':1,'y':1,'w':2,'h':2,'i':'1'},
       ],
       noDataTip: false,
       sysConfig: {
@@ -77,7 +72,7 @@ export default {
         ip: ['192.168.0.16','192.168.0.5'],
         endpointList: ['VM_0_16_centos_192.168.0.16_host','VM_0_5_centos_192.168.0.5_host'],
       },
-      metricLabelList: ['mem.used.percent','load.1min','cpu.used.percent'],
+      metricLabelList: ['mem.used.percent','load.1min','cpu.used.percent','disk.write.bytes'],
       array1: []
     }
   },
@@ -85,20 +80,18 @@ export default {
     let res = []
     const num = this.metricLabelList.length
     for (let i=0;i<num; i++) {
-      generateUuid().then((elId)=>{
-        const key = ((new Date()).valueOf()).toString().substring(10)
-        this.array1.push({
-          x: i%2*6,
-          y:Math.ceil((i/2+0.000001)-1)*7,
-          w:6,
-          h:7,
-          i: `default${key}`,
-          id: `id_${elId}`,
-          "moved": false
-        })
-      })
+      const key = ((new Date()).valueOf()).toString().substring(10)
+      let xx = {
+        x: i%2*6,
+        y:Math.ceil((i/2+0.000001)-1)*7,
+        w:6,
+        h:7,
+        i: '',
+        id: `id_${key}${i}`,
+        "moved": false
+      }
+      this.array1.push(xx)
     }
-    console.log(this.array1)
     this.metricLabelList.forEach((metric, index)=> {
       let singleChart = {}
       singleChart.panalTitle = metric
@@ -109,94 +102,11 @@ export default {
         condition.metricLabel = metric
         singleChart.query.push(condition)
       }
+      this.array1[index].i = metric
       singleChart.viewConfig = this.array1[index]
       res.push(singleChart)
     })
-
-    console.log(res)
-    this.viewData = [{
-        "panalTitle": "default824",
-        "query": [{
-            "endpoint": 'VM_0_16_centos_192.168.0.16_host',
-            "metricLabel": "mem.used.percent",
-        },
-        {
-            "endpoint": 'VM_0_5_centos_192.168.0.5_host',
-            "metricLabel": "mem.used.percent",
-        }],
-        "viewConfig": {
-            "x": 0,
-            "y": -0,
-            "w": 6,
-            "h": 7,
-            "i": "default824",
-            "id": "id_9244fc70_79b8_4c95_876d_f1d27aec9283",
-            "moved": false
-        }
-    },
-    {
-        "panalTitle": "default740",
-        "query": [
-          {
-            "endpoint": 'VM_0_16_centos_192.168.0.16_host',
-            "metricLabel": "load.1min",
-        },
-        {
-            "endpoint": 'VM_0_5_centos_192.168.0.5_host',
-            "metricLabel": "load.1min",
-        }],
-        "viewConfig": {
-            "x": 6,
-            "y": 0,
-            "w": 6,
-            "h": 7,
-            "i": "default740",
-            "id": "id_5bf38763_afdd_41d4_ae66_339304821870",
-            "moved": false
-        }
-    },
-    {
-        "panalTitle": "default653",
-        "query": [
-          {
-            "endpoint": 'VM_0_16_centos_192.168.0.16_host',
-            "metricLabel": "cpu.used.percent",
-        },
-        {
-            "endpoint": 'VM_0_5_centos_192.168.0.5_host',
-            "metricLabel": "cpu.used.percent",
-        }],
-        "viewConfig": {
-            "x": 0,
-            "y": 7,
-            "w": 6,
-            "h": 7,
-            "i": "default653",
-            "id": "id_5ab4bdb7_aaf8_47da_8cbe_cd5e65e7aa34",
-            "moved": false
-        }
-    },
-    {
-      "panalTitle": "default6531111",
-      "query": [
-        {
-          "endpoint": 'VM_0_16_centos_192.168.0.16_host',
-          "metricLabel": "cpu.used.percent",
-      },
-      {
-          "endpoint": 'VM_0_5_centos_192.168.0.5_host',
-          "metricLabel": "cpu.used.percent",
-      }],
-      "viewConfig": {
-          "x": 6,
-          "y": 7,
-          "w": 6,
-          "h": 7,
-          "i": "default6531111",
-          "id": "id_5ab4bdb7_aaf8_47da_8cbe_cd5e65e7aasfd34",
-          "moved": false
-      }
-    }]
+    this.viewData = res
     this.initPanals()
   },
   methods: {
@@ -262,38 +172,7 @@ export default {
         this.elId = id
         drawChart(this, config, {eye: false,dataZoom:false})
       })
-    },
-    addItem() {
-      generateUuid().then((elId)=>{
-        const key = ((new Date()).valueOf()).toString().substring(10)
-        let item = {
-          x:0,
-          y:0,
-          w:6,
-          h:7,
-          i: `default${key}`,
-          id: `id_${elId}`
-        }
-        this.layoutData.push(item)
-      })
-    },
-    resizeEvent: function(i, newH, newW, newHPx, newWPx){
-      this.layoutData.forEach((item,index) => {
-        if (item.i === i) {
-          this.layoutData[index].h = newH
-          this.layoutData[index].w = newW
-          var myChart = echarts.init(document.getElementById(item.id))
-          myChart.resize({height:newHPx-64+'px',width:newWPx+'px'})
-          return
-        }
-      })
-    },
-    resizedEvent: function(i, newH, newW, newHPx, newWPx){
-      this.resizeEvent(i, newH, newW, newHPx, newWPx)
-    },
-    goBack () {
-      this.$router.push({name:'viewConfigIndex'})
-    },
+    }
   },
   components: {
     GridLayout: VueGridLayout.GridLayout,

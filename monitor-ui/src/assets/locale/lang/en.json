@@ -97,7 +97,8 @@
     "content": "Content",
     "path": "Path",
     "keyword": "Keyword",
-    "condition": "Condition"
+    "condition": "Condition",
+    "systemName": "System Name"
   },
   "tips": {
     "required": " Required!",

@@ -97,7 +97,8 @@
     "content": "通知内容",
     "path": "路径",
     "keyword": "关键字",
-    "condition": "条件"
+    "condition": "条件",
+    "systemName": "系统名称"
   },
   "tips": {
     "required": " 必填",
