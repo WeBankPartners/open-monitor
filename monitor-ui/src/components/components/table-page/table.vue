@@ -379,24 +379,24 @@
       this.initSelected()
     },
     mounted () {
-      // this.JQ('[data-toggle="tooltip"]').tooltip()
+      // this.$root.JQ('[data-toggle="tooltip"]').tooltip()
     },
     created () {
       // 判断vuex是否包含自定义列表信息，获取相关信息赋给table
-      // if (this.$validate.isEmpty(this.$store.state[this.$router.history.current.name])) {
-      //   this.table.tableEle = this.$store.state[this.$router.history.current.name]
+      // if (this.$root.$validate.isEmpty(this.$root.$store.state[this.$router.history.current.name])) {
+      //   this.table.tableEle = this.$root.$store.state[this.$router.history.current.name]
       // }
       this.tdNumber = this.gettdsLength() 
     },
     updated(){
       this.tdNumber = this.gettdsLength()
-      this.currentActive = this.$store.state.tableExtendActive
-      this.JQ('.ivu-tooltip-popper').css('display','none') //详情跳转回table页面,禁止tooltip显示完整字段
+      this.currentActive = this.$root.$store.state.tableExtendActive
+      this.$root.JQ('.ivu-tooltip-popper').css('display','none') //详情跳转回table页面,禁止tooltip显示完整字段
     },
     methods: {
       // 依据数据处理可用操作，需优化
       operationsFormat (value, tableDataIndex) {
-        if (this.$validate.isEmpty_reset(this.table.filterMoreBtn)) {
+        if (this.$root.$validate.isEmpty_reset(this.table.filterMoreBtn)) {
           this.table.tableData[tableDataIndex]._operatons = this.table.btn
         } else {
           let moreBtnGroup_show = this.$parent.$parent.filterMoreBtn(value)
@@ -411,7 +411,7 @@
       },
       filterMoreBtn (value) {
         // 初次进入获取更多按钮组信息
-        if (!this.$validate.isEmpty(this.moreBtnGroup)) {
+        if (!this.$root.$validate.isEmpty(this.moreBtnGroup)) {
           for (let moreBtn of this.table.btn) {
             if (moreBtn.btn_name === 'more') {
               this.moreBtnGroup = moreBtn.more
@@ -423,7 +423,7 @@
           this.moreBtnGroup[index].isShowBtn = true
         }
         // 判断是否需控制按钮时
-        if (this.$validate.isEmpty(this.table.filterMoreBtn)) {
+        if (this.$root.$validate.isEmpty(this.table.filterMoreBtn)) {
           // 按钮组isShowBtn属性置为true
           for (let index in this.moreBtnGroup) {
             this.moreBtnGroup[index].isShowBtn = false
@@ -450,7 +450,7 @@
       },
         // TODO 计算icon Tooltips中内容，直接取值会报错
       computeTooltipContent (value, val) {
-        if (this.$validate.isEmpty(val.hasIcon)) {
+        if (this.$root.$validate.isEmpty(val.hasIcon)) {
           if (val.hasIcon.tip.includes('.')) {
             let arr = val.hasIcon.tip.split('.')
             let res = value
@@ -497,15 +497,15 @@
         console.log(columnNo)
         // this.filterLists = []
         // let filterAPI_string = this.pageConfig.table.tableEle[columnNo].filterable.filterAPI
-        // let filterAPI = this.$validate.valueFromExpression(this.apiCenter, filterAPI_string)
+        // let filterAPI = this.$root.$validate.valueFromExpression(this.$root.apiCenter, filterAPI_string)
         // let params = ''
-        // if (!this.$validate.isEmpty_reset(this.pageConfig.table.tableEle[columnNo].filterable.params)) {
+        // if (!this.$root.$validate.isEmpty_reset(this.pageConfig.table.tableEle[columnNo].filterable.params)) {
         //   params = this.pageConfig.table.tableEle[columnNo].filterable.params
         // }
-        // this.$httpRequestEntrance.httpRequestEntrance('GET', filterAPI, params , (responseData) => {
+        // this.$root.$httpRequestEntrance.httpRequestEntrance('GET', filterAPI, params , (responseData) => {
         //   for (let item of responseData.data) {
         //     let label = ''
-        //     if (!this.$validate.isEmpty_reset(this.pageConfig.table.tableEle[columnNo].filterable.displayFormat)) {
+        //     if (!this.$root.$validate.isEmpty_reset(this.pageConfig.table.tableEle[columnNo].filterable.displayFormat)) {
         //       let str = this.pageConfig.table.tableEle[columnNo].filterable.displayFormat
         //       let reg = /\$\{[^(\$\{)]*\}/g
         //       let arr = str.match(reg).map(it => {
@@ -515,7 +515,7 @@
         //       label = str.replace(reg,'`').split('').map((it) => {
         //         if (it === '`') {
         //           i++
-        //           return this.$validate.valueFromExpression(item, arr[i])
+        //           return this.$root.$validate.valueFromExpression(item, arr[i])
         //         } else {
         //           return it
         //         }
@@ -523,7 +523,7 @@
         //     } else {
         //       label = item[this.pageConfig.table.tableEle[columnNo].filterable.displayName]
         //     }
-        //     if (this.$validate.isEmpty(label)) {
+        //     if (this.$root.$validate.isEmpty(label)) {
         //       this.filterLists.push({label: label,
         //         value: item[this.pageConfig.table.tableEle[columnNo].filterable.filterValue]})
         //     }
@@ -650,7 +650,7 @@
       },
       confirmSelected (item) {
         let id = item[this.table.primaryKey]
-        if (this.JQ.inArray(id, this.selectedData) === -1) {
+        if (this.$root.JQ.inArray(id, this.selectedData) === -1) {
           this.selectedData.push(id)
         } else {
           this.removeByValue(this.selectedData, id)
@@ -668,11 +668,11 @@
         let item_tmp = item
         let attrs=expr.split('.')
         let n=0
-        if (!this.$validate.isEmpty(item)){
+        if (!this.$root.$validate.isEmpty(item)){
           return ''
         }
         for (n in attrs){
-          if (this.$validate.isEmpty(item_tmp) && attrs[n] in item_tmp){
+          if (this.$root.$validate.isEmpty(item_tmp) && attrs[n] in item_tmp){
             item_tmp = item_tmp[attrs[n]]
           }else{
             return ''
@@ -683,8 +683,8 @@
       // table内跳转
       shadow (item, val) {
         this.currentActive = -1
-        this.$store.commit('changeTableExtendActive',this.currentActive)
-        let id = this.$validate.valueFromExpression(item, val.shadow.key)
+        this.$root.$store.commit('changeTableExtendActive',this.currentActive)
+        let id = this.$root.$validate.valueFromExpression(item, val.shadow.key)
         let router = {
           name: val.shadow.path,
           params: {
@@ -694,7 +694,7 @@
           }
         }
         if(val.shadow.query){//根据key值组装传参对象
-          router.query = val.shadow.query.map(key=>{return {[key]:this.$validate.valueFromExpression(item, key)}}).reduce((result,item)=>{return Object.assign(result,item)},{})
+          router.query = val.shadow.query.map(key=>{return {[key]:this.$root.$validate.valueFromExpression(item, key)}}).reduce((result,item)=>{return Object.assign(result,item)},{})
         }
         this.$router.push(router)
       },
@@ -754,7 +754,7 @@
       },
       loadDetail(item, index) {
         this.currentActive = this.currentActive === index ? -1 : index
-        this.$store.commit('changeTableExtendActive',this.currentActive)
+        this.$root.$store.commit('changeTableExtendActive',this.currentActive)
         if(this.currentActive === -1){
           return
         }
@@ -763,16 +763,16 @@
       },
       // 控制编辑按钮是否显示
       isShowEdit(rowNumber, columnNumber) {
-        if (this.$validate.isEmpty(this.activeEditInputNo)) {
+        if (this.$root.$validate.isEmpty(this.activeEditInputNo)) {
           return
         }
         // 在设置可编辑字段(editable),并存在内容时显示编辑按钮
-        // if (this.$validate.isEmpty(val.editable) && this.$validate.isEmpty(value[val.value])) {
+        // if (this.$root.$validate.isEmpty(val.editable) && this.$root.$validate.isEmpty(value[val.value])) {
         this.showEditRowNumber = rowNumber
         this.showEditColumnNumber = columnNumber
       },
       isShowEditXX (tableEle, rowNumber, columnNumber) {
-        if (this.$validate.isEmpty(tableEle.editable) && this.showEditRowNumber === rowNumber && this.showEditColumnNumber === columnNumber) {
+        if (this.$root.$validate.isEmpty(tableEle.editable) && this.showEditRowNumber === rowNumber && this.showEditColumnNumber === columnNumber) {
           return true
         }
         return false

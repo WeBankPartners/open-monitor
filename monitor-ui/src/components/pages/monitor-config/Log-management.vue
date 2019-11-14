@@ -188,7 +188,7 @@ export default {
     }
   },
   mounted () {
-    if (!this.$validate.isEmpty_reset(this.$route.params)) {
+    if (!this.$root.$validate.isEmpty_reset(this.$route.params)) {
       this.$parent.activeTab = '/monitorConfigIndex/logManagement'
       this.type = this.$route.params.type
       this.typeValue = this.$route.params.id
@@ -198,7 +198,7 @@ export default {
       this.typeValue = ''
     }
     this.getEndpointList('.')
-    this.JQ('#add_edit_Modal').on('hidden.bs.modal', () => {
+    this.$root.JQ('#add_edit_Modal').on('hidden.bs.modal', () => {
       this.modelConfig.thresholdValue = ''
       this.modelConfig.lastValue = ''
       this.modelConfig.condValue = ''
@@ -216,7 +216,7 @@ export default {
     getEndpointList (query) {
       const params = {type: this.type,search: query}
       this.endpointOptions = []
-      this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.resourceSearch.strategyApi, params, (responseData) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.resourceSearch.strategyApi, params, (responseData) => {
         this.endpointOptions = responseData.filter(item => item.option_value.split(':')[1] === 'host')
       })
     },
@@ -225,9 +225,9 @@ export default {
       params.type = type
       params.id = id
       this.totalPageConfig = []
-      this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.logManagement.list.api, params, (responseData) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.logManagement.list.api, params, (responseData) => {
         responseData.forEach((item)=>{
-          let config = this.$validate.deepCopy(this.pageConfig.table)
+          let config = this.$root.$validate.deepCopy(this.pageConfig.table)
           if (!item.operation) {
             config.btn = []
           }
@@ -238,17 +238,17 @@ export default {
     },
     delF (rowData) {
       let params = {id: rowData.id}
-      this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.logManagement.delList.api, params, () => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.logManagement.delList.api, params, () => {
         this.$Message.success(this.$t('tips.success'))
         this.requestData(this.type, this.typeValue)
       })
     },
     formValidate () {
-      if (this.$validate.isEmpty_reset(this.modelConfig.condValue)) {
+      if (this.$root.$validate.isEmpty_reset(this.modelConfig.condValue)) {
         this.$Message.warning(this.$t('tableKey.condition')+this.$t('tips.required'))
         return false 
       }
-      if (this.$validate.isEmpty_reset(this.modelConfig.lastValue)) {
+      if (this.$root.$validate.isEmpty_reset(this.modelConfig.lastValue)) {
         this.$Message.warning(this.$t('tableKey.s_last')+this.$t('tips.required'))
         return false 
       }
@@ -278,20 +278,20 @@ export default {
       this.modelConfig.addRow.path = rowData.path
       this.singeAddId = rowData.id
       this.modelConfig.isAdd = false
-      this.JQ('#add_edit_Modal').modal('show')
+      this.$root.JQ('#add_edit_Modal').modal('show')
     },
     add () {
       this.modelConfig.isAdd = true
-      this.JQ('#add_edit_Modal').modal('show')
+      this.$root.JQ('#add_edit_Modal').modal('show')
     },
     addPost () {
       if (!this.formValidate()) {
         return
       }
       let params = this.paramsPrepare()
-      this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.logManagement.add.api, params, () => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.logManagement.add.api, params, () => {
         this.$Message.success(this.$t('tips.success'))
-        this.JQ('#add_edit_Modal').modal('hide')
+        this.$root.JQ('#add_edit_Modal').modal('hide')
         this.requestData(this.type, this.typeValue)
       })
     },
@@ -300,7 +300,7 @@ export default {
       this.activeData = rowData
       this.pathModelConfig.addRow.path = rowData.path
       this.modelTip.value = rowData.path
-      this.JQ('#path_Modal').modal('show')
+      this.$root.JQ('#path_Modal').modal('show')
     },
     savePath () {
       let params = {
@@ -308,9 +308,9 @@ export default {
         tpl_id: this.activeData.tpl_id,
         path: this.pathModelConfig.addRow.path
       }
-      this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.logManagement.editList.api, params, () => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.logManagement.editList.api, params, () => {
         this.$Message.success(this.$t('tips.success'))
-        this.JQ('#path_Modal').modal('hide')
+        this.$root.JQ('#path_Modal').modal('hide')
         this.requestData(this.type, this.typeValue)
       })
     },
@@ -326,7 +326,7 @@ export default {
       this.id = rowData.id
       this.extendData = rowData
       this.modelTip.value = rowData.id
-      this.modelConfig.addRow = this.$tableUtil.manageEditParams(this.modelConfig.addRow, rowData)
+      this.modelConfig.addRow = this.$root.$tableUtil.manageEditParams(this.modelConfig.addRow, rowData)
       let cond = rowData.cond.split('')
       if (cond.indexOf('=') > 0) {
         this.modelConfig.cond = cond.slice(0,2).join('')
@@ -339,11 +339,11 @@ export default {
       this.modelConfig.last = last.substring(last.length-1)
       this.modelConfig.lastValue = last.substring(0,last.length-1)
       this.modelConfig.priority = rowData.priority
-      this.JQ('#add_edit_Modal').modal('show')
+      this.$root.JQ('#add_edit_Modal').modal('show')
     },
     delPathItem (rowData) {
       let params = {id: rowData.id}
-      this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.logManagement.delete.api, params, () => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.logManagement.delete.api, params, () => {
         this.$Message.success(this.$t('tips.success'))
         this.requestData(this.type, this.typeValue)
       })
@@ -354,20 +354,20 @@ export default {
       }
       let params = this.paramsPrepare()
       let url = ''
-      if (!this.$validate.isEmpty_reset(this.singeAddId)) {
+      if (!this.$root.$validate.isEmpty_reset(this.singeAddId)) {
         params.id = this.singeAddId
-        url = this.apiCenter.logManagement.add.api
+        url = this.$root.apiCenter.logManagement.add.api
       } else {
         params.tpl_id = this.extendData.tpl_id
         params.strategy[0].id = this.extendData.id
-        url = this.apiCenter.logManagement.update.api
+        url = this.$root.apiCenter.logManagement.update.api
       }
      
-      this.$httpRequestEntrance.httpRequestEntrance('POST', url, params, () => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', url, params, () => {
         this.$Message.success(this.$t('tips.success'))
-        this.JQ('#add_edit_Modal').modal('hide')
+        this.$root.JQ('#add_edit_Modal').modal('hide')
         this.requestData(this.type, this.typeValue)
-        this.$store.commit('changeTableExtendActive', -1)
+        this.$root.$store.commit('changeTableExtendActive', -1)
       })
     },
   },

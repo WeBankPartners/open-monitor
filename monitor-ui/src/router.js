@@ -27,6 +27,13 @@ const router = new Router({
           component: () => import("@/components/pages/portal")
         },
         {
+          path: "systemMonitoring",
+          name: "systemMonitoring",
+          title: "对象监控",
+          meta: {},
+          component: () => import("@/components/pages/system-monitoring")
+        },
+        {
           path: "mainView",
           name: "mainView",
           title: "对象监控",

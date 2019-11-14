@@ -2,8 +2,21 @@ const path = require('path')
 const webpack = require('webpack')
 
 module.exports = {
-	assetsDir: 'wecube-monitor',
+	assetsDir: process.env.PLUGIN === 'plugin'? '':'wecube-monitor',
+	productionSourceMap: process.env.PLUGIN !== 'plugin',
 	chainWebpack: config => {
+		config.when(process.env.PLUGIN === "plugin", config => {
+      config
+        .entry("app")
+        .clear()
+        .add("./src/main-plugin.js"); //作为插件时
+    });
+    config.when(!process.env.PLUGIN, config => {
+      config
+        .entry("app")
+        .clear()
+        .add("./src/main.js"); //独立运行时
+    })
 		const types = ['vue-modules', 'vue', 'normal-modules', 'normal']
 		types.forEach(type => addStyleResource(config.module.rule('less').oneOf(type)))
 	},
@@ -14,15 +27,20 @@ module.exports = {
 			}
 		}
 	},
-	configureWebpack: {
-		plugins: [
-			new webpack.ProvidePlugin({
-				$:"jquery",
-				jQuery:"jquery",
-				"windows.jQuery":"jquery"
-			})
-		]
-	},
+	// configureWebpack: {
+	// 	plugins: [
+	// 		new webpack.ProvidePlugin({
+	// 			$:"jquery",
+	// 			jQuery:"jquery",
+	// 			"windows.jQuery":"jquery"
+	// 		})
+	// 	]
+	// },
+	configureWebpack: config => {
+    if (process.env.PLUGIN === "plugin") {
+      config.optimization.splitChunks = {}
+    }
+  },
 	pluginOptions: {
     pwa: {
       iconPaths: {
