@@ -26,7 +26,7 @@ export default {
   background: white;
 }
 .content {
-  background-image: url("../assets/img/watermark_wecube_monitor.png");
+  background-image: url("../assets/img/watermark-3.png");
   // width:1200px;
   min-height: 95vh;
   height: 100%;
