@@ -12,3 +12,4 @@ build/develop/docker-compose.yml
 build/develop/monitor.json
 monitor-server/*.log
 monitor-server/public/*
+monitor-server/monitor-server

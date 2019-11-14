@@ -18,8 +18,8 @@
  */
 const initTable = (that, method, url, pageConfig) =>{
   // 将搜索组件和分页组件中条件合并
-  let filters = pageConfig.researchConfig?that.$validate.isEmptyReturn_JSON(that.$validate.deepCopy(pageConfig.researchConfig.filters)):{}
-  let params = that.$validate.deepCopy(pageConfig.pagination)
+  let filters = pageConfig.researchConfig?that.$root.$validate.isEmptyReturn_JSON(that.$root.$validate.deepCopy(pageConfig.researchConfig.filters)):{}
+  let params = that.$root.$validate.deepCopy(pageConfig.pagination)
   for (let k in filters) {
     params[k] = filters[k]
   }
@@ -27,7 +27,7 @@ const initTable = (that, method, url, pageConfig) =>{
   return that.$httpRequestEntrance.httpRequestEntrance(method, url, requestParams, (responseData) => {
     that.pageConfig.pagination.total = responseData.num
     that.pageConfig.pagination.current = parseInt(params.page)
-    let res = that.$validate.isEmpty_reset(responseData.data) ? [] : responseData.data
+    let res = that.$root.$validate.isEmpty_reset(responseData.data) ? [] : responseData.data
     that.pageConfig.table.tableData = res
     return that.pageConfig.pagination
   })
@@ -41,7 +41,7 @@ const initTable = (that, method, url, pageConfig) =>{
  * return {Object} requestParams (处理后数据)
  */
 const adapterParamsForTabledata = (that, oriParams) =>{
-  let requestParams = that.$validate.deepCopy(oriParams)
+  let requestParams = that.$root.$validate.deepCopy(oriParams)
   let deleteparams = ['current', 'pageSize', 'total', 'pageCount']
   for (let k in requestParams) {
     for (let i = 0; i < deleteparams.length; i++){
@@ -80,9 +80,9 @@ const initDetailTable = (_this, indexx) =>{
   let methods = _this.detailPageConfig.detailConfig[indexx].pagination.getData.methods
   let url = _this.detailPageConfig.detailConfig[indexx].pagination.getData.url
   // 将搜索组件和分页组件中条件合并
-  let filters = _this.detailPageConfig.detailConfig[indexx].researchConfig ? _this.$validate.isEmptyReturn_JSON(_this.$validate.deepCopy(_this.detailPageConfig.detailConfig[indexx].researchConfig.filters)) : null
+  let filters = _this.detailPageConfig.detailConfig[indexx].researchConfig ? _this.$root.$validate.isEmptyReturn_JSON(_this.$root.$validate.deepCopy(_this.detailPageConfig.detailConfig[indexx].researchConfig.filters)) : null
   let params = Object.assign({}, _this.detailPageConfig.detailConfig[indexx].pagination)
-  // let params = _this.$validate.deepCopy(_this.detailPageConfig.detailConfig[indexx].pagination)
+  // let params = _this.$root.$validate.deepCopy(_this.detailPageConfig.detailConfig[indexx].pagination)
   for (let k in filters) {
     params[k] = filters[k]
   }
@@ -96,7 +96,7 @@ const initDetailTable = (_this, indexx) =>{
       }
     }
   }
-  _this.$httpRequestEntrance.httpRequestEntrance(methods, url, params, (responseData) => {
+  _this.$root.$httpRequestEntrance.httpRequestEntrance(methods, url, params, (responseData) => {
     _this.detailPageConfig.detailConfig[indexx].table.tableData = responseData[_this.detailPageConfig.detailConfig[indexx].pagination.getData.data]
     _this.detailPageConfig.detailConfig[indexx].pagination.total = responseData[_this.detailPageConfig.detailConfig[indexx].pagination.getData.count]
   })

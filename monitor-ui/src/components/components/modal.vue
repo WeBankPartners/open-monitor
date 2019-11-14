@@ -35,7 +35,7 @@
                        type="text"
                        v-validate="item.v_validate"
                        :name="item.value"
-                       :class="{ 'red-border': errors.has(item.value) }"
+                       :class="{ 'red-border': veeErrors.has(item.value) }"
                        class="col-md-7 form-control model-input">
                 <input v-if="item.type === 'number' && isHide(item.hide)"
                        v-model.number="modelConfig.addRow[item.value]"
@@ -100,7 +100,7 @@
                   </div>
                 </Poptip>
 
-                <label v-show="errors.has(item.value) && isHide(item.hide)" class="col-md-7 help is-danger">{{$t(item.label)}} {{errors.first(item.value)}}</label>
+                <label v-show="veeErrors.has(item.value) && isHide(item.hide)" class="col-md-7 help is-danger">{{$t(item.label)}} {{veeErrors.first(item.value)}}</label>
                 <label v-if="(item.type === 'select' || item.type === 'textarea') && item.isError" class="col-md-7 help is-danger">{{$t(item.label)}} {{$t('tips.required')}}</label>
               </div>
             </form>
@@ -137,13 +137,13 @@ import {interceptParams} from '@/assets/js/utils'
     props: ['modelConfig'],
     mounted() {
       let _this = this
-      let modalId = !this.$validate.isEmpty(this.modelConfig.modalId) ? 'add_edit_Modal':this.modelConfig.modalId
+      let modalId = !this.$root.$validate.isEmpty(this.modelConfig.modalId) ? 'add_edit_Modal':this.modelConfig.modalId
 
-      this.JQ('#' + modalId).on('hidden.bs.modal', () => {
+      this.$root.JQ('#' + modalId).on('hidden.bs.modal', () => {
         // 清理表单验证错误信息
-        _this.errors.clear()
+        _this.veeErrors.clear()
         // 清除表单缓存内容  下面把清空switch的数据补全
-        this.$validate.emptyJson(_this.modelConfig.addRow)
+        this.$root.$validate.emptyJson(_this.modelConfig.addRow)
         
         // 清除表单缓存的selected数据
         for (let p in _this.modelConfig.v_select_configs) {
@@ -280,7 +280,7 @@ import {interceptParams} from '@/assets/js/utils'
       isRequired (item) {
       
         
-        if (!this.$validate.isEmpty(item)) {
+        if (!this.$root.$validate.isEmpty(item)) {
           return false
         } else {
           if (item.indexOf('required') > -1) {
