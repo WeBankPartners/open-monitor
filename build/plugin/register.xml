@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<package name="wecube-monitor" version="1.0">
+
+    <!-- 1.依赖分析 - 描述运行本插件包需要的其他插件包 -->
+
+    <!-- 2.菜单注入 - 描述运行本插件包需要注入的菜单 -->
+    <menus>
+        <menu code='MONITOR_MAIN_DASHBOARD' cat='MONITORING' displayName="Monitor Dashboard">/mainView</menu>
+        <menu code='MONITOR_METRIC_CONFIG' cat='MONITORING' displayName="Metric Config">/metricConfig</menu>
+        <menu code='MONITOR_CUSTOM_DASHBOARD' cat='MONITORING' displayName="Custom Dashboard">/viewConfigIndex</menu>
+        <menu code='MONITOR_ALARM_CONFIG' cat='MONITORING' displayName="Alarm Config">/monitorConfigIndex</menu>
+        <menu code='MONITOR_ALARM_MANAGEMENT' cat='MONITORING' displayName="Alarm Management">/alarmManagement</menu>
+    </menus>
+
+    <!-- 3.数据模型 - 描述本插件包的数据模型,并且描述和Framework数据模型的关系 -->
+
+    <!-- 4.系统参数 - 描述运行本插件包需要的系统参数 -->
+
+    <!-- 5.权限设定 -->
+    <authorities>
+        <authority systemRoleName="admin" >
+            <menu code="MONITOR_MAIN_DASHBOARD" />
+            <menu code="MONITOR_METRIC_CONFIG" />
+            <menu code="MONITOR_CUSTOM_DASHBOARD" />
+            <menu code="MONITOR_ALARM_CONFIG" />
+            <menu code="MONITOR_ALARM_MANAGEMENT" />
+        </authority >
+    </authorities>
+
+    <!-- 6.运行资源 - 描述部署运行本插件包需要的基础资源(如主机、虚拟机、容器、数据库等) -->
+    <resourceDependencies>
+        <docker imageName="wecube-monitor:1.0" containerName="wecube-monitor-1.0" portBindings="{{host_port}}:8080" volumeBindings="{{base_mount_path}}/prometheus/logs:/app/monitor/prometheus/logs,{{base_mount_path}}/prometheus/data:/app/monitor/prometheus/data,{{base_mount_path}}/alertmanager/logs:/app/monitor/alertmanager/logs,{{base_mount_path}}/consul/logs:/app/monitor/consul/logs,{{base_mount_path}}/monitor/logs:/app/monitor/monitor/logs" envVariables="MONITOR_DB_HOST='{{db_host}}',MONITOR_DB_PORT='{{db_port}}',MONITOR_DB_SCHEMA='{{db_schema}}',MONITOR_DB_USER='{{db_user}}',MONITOR_DB_PWD='{{db_password}}'"/>
+        <mysql schema="monitor" initFileName="init.sql" upgradeFileName="upgrade.sql"/>
+    </resourceDependencies>
+
+    <!-- 7.插件列表 - 描述插件包中单个插件的输入和输出 -->
+    <plugins>
+        <plugin name="host-register">
+            <interface action="register" path="/wecube-monitor/api/v1/agent/host/register" httpMethod='GET'>
+                <inputParameters>
+                    <parameter datatype="string" mappingType='context' required='Y'>host_ip</parameter>
+                    <parameter datatype="string" mappingType='context' required='Y'>os_type</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string">result_code</parameter>
+                    <parameter datatype="string">result_message</parameter>
+                </outputParameters>
+            </interface>
+        </plugin>
+        <plugin name="host-deregister">
+            <interface action="register" path="/wecube-monitor/api/v1/agent/host/deregister" httpMethod='GET'>
+                <inputParameters>
+                    <parameter datatype="string" mappingType='context' required='Y'>host_ip</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string">result_code</parameter>
+                    <parameter datatype="string">result_message</parameter>
+                </outputParameters>
+            </interface>
+        </plugin>
+        <plugin name="mysql-register">
+            <interface action="register" path="/wecube-monitor/api/v1/agent/mysql/register" httpMethod='GET'>
+                <inputParameters>
+                    <parameter datatype="string" mappingType='context' required='Y'>host_ip</parameter>
+                    <parameter datatype="string" mappingType='context' required='Y'>instance</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string">result_code</parameter>
+                    <parameter datatype="string">result_message</parameter>
+                </outputParameters>
+            </interface>
+        </plugin>
+        <plugin name="mysql-deregister">
+            <interface action="register" path="/wecube-monitor/api/v1/agent/mysql/deregister" httpMethod='GET'>
+                <inputParameters>
+                    <parameter datatype="string" mappingType='context' required='Y'>host_ip</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string">result_code</parameter>
+                    <parameter datatype="string">result_message</parameter>
+                </outputParameters>
+            </interface>
+        </plugin>
+        <plugin name="redis-register">
+            <interface action="register" path="/wecube-monitor/api/v1/agent/redis/register" httpMethod='GET'>
+                <inputParameters>
+                    <parameter datatype="string" mappingType='context' required='Y'>host_ip</parameter>
+                    <parameter datatype="string" mappingType='context' required='Y'>instance</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string">result_code</parameter>
+                    <parameter datatype="string">result_message</parameter>
+                </outputParameters>
+            </interface>
+        </plugin>
+        <plugin name="redis-deregister">
+            <interface action="register" path="/wecube-monitor/api/v1/agent/redis/deregister" httpMethod='GET'>
+                <inputParameters>
+                    <parameter datatype="string" mappingType='context' required='Y'>host_ip</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string">result_code</parameter>
+                    <parameter datatype="string">result_message</parameter>
+                </outputParameters>
+            </interface>
+        </plugin>
+        <plugin name="tomcat-register">
+            <interface action="register" path="/wecube-monitor/api/v1/agent/tomcat/register" httpMethod='GET'>
+                <inputParameters>
+                    <parameter datatype="string" mappingType='context' required='Y'>host_ip</parameter>
+                    <parameter datatype="string" mappingType='context' required='Y'>instance</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string">result_code</parameter>
+                    <parameter datatype="string">result_message</parameter>
+                </outputParameters>
+            </interface>
+        </plugin>
+        <plugin name="tomcat-deregister">
+            <interface action="register" path="/wecube-monitor/api/v1/agent/tomcat/deregister" httpMethod='GET'>
+                <inputParameters>
+                    <parameter datatype="string" mappingType='context' required='Y'>host_ip</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string">result_code</parameter>
+                    <parameter datatype="string">result_message</parameter>
+                </outputParameters>
+            </interface>
+        </plugin>
+    </plugins>
+</package>
