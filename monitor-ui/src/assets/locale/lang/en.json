@@ -6,6 +6,7 @@
     "systemName": "WeCube-Monitor (Demo Version)",
     "view": "Views",
     "endpointView": "Endpoint Views",
+    "systemMonitoring": "System Monitoring",
     "metricConfiguration": "Metrics Configuration",
     "customViews": "Customize Views",
     "configuration": "Configuration",
@@ -21,6 +22,7 @@
     "globalConfiguration": "Global configuration",
     "editTitle": "Edit title",
     "chartConfiguration": "Chart configuration",
+    "viewChart": "View chart",
     "deleteChart": "Delete chart"
   },
   "field": {
@@ -95,7 +97,8 @@
     "content": "Content",
     "path": "Path",
     "keyword": "Keyword",
-    "condition": "Condition"
+    "condition": "Condition",
+    "systemName": "System Name"
   },
   "tips": {
     "required": " Required!",

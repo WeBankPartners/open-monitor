@@ -188,7 +188,7 @@ export default {
       handler(data) {
         this.noDataTip = false;
         let params = [];
-        if (this.$validate.isEmpty_reset(data)) {
+        if (this.$root.$validate.isEmpty_reset(data)) {
           this.noDataTip = true;
           return;
         }
@@ -202,9 +202,9 @@ export default {
             })
           );
         });
-        this.$httpRequestEntrance.httpRequestEntrance(
+        this.$root.$httpRequestEntrance.httpRequestEntrance(
           "GET",
-          this.apiCenter.metricConfigView.api,
+          this.$root.apiCenter.metricConfigView.api,
           { config: `[${params.join(",")}]` },
           responseData => {
             var legend = [];
@@ -241,10 +241,10 @@ export default {
     });
   },
   mounted() {
-    if (this.$validate.isEmpty_reset(this.$route.params)) {
+    if (this.$root.$validate.isEmpty_reset(this.$route.params)) {
       this.$router.push({ path: "viewConfig" });
     } else {
-      if (!this.$validate.isEmpty_reset(this.$route.params.templateData.cfg)) {
+      if (!this.$root.$validate.isEmpty_reset(this.$route.params.templateData.cfg)) {
         this.getEndpointList('.')
         this.viewData = JSON.parse(this.$route.params.templateData.cfg);
         this.viewData.forEach((itemx, index) => {
@@ -264,7 +264,7 @@ export default {
       this.panalUnit = this.panalData.panalUnit;
       let params = [];
       this.noDataTip = false;
-      if (this.$validate.isEmpty_reset(this.panalData.query)) {
+      if (this.$root.$validate.isEmpty_reset(this.panalData.query)) {
         return;
       }
       this.initQueryList(this.panalData.query);
@@ -279,9 +279,9 @@ export default {
         );
       });
       if (params !== []) {
-        this.$httpRequestEntrance.httpRequestEntrance(
+        this.$root.$httpRequestEntrance.httpRequestEntrance(
           "GET",
-          this.apiCenter.metricConfigView.api,
+          this.$root.apiCenter.metricConfigView.api,
           { config: `[${params.join(",")}]` },
           responseData => {
             var legend = [];
@@ -319,9 +319,9 @@ export default {
         page: 1,
         size: 1000
       };
-      this.$httpRequestEntrance.httpRequestEntrance(
+      this.$root.$httpRequestEntrance.httpRequestEntrance(
         "GET",
-        this.apiCenter.resourceSearch.api,
+        this.$root.apiCenter.resourceSearch.api,
         params,
         responseData => {
           this.options = responseData;
@@ -329,15 +329,15 @@ export default {
       );
     },
     metricSelectOpen(metric) {
-      if (this.$validate.isEmpty_reset(metric)) {
+      if (this.$root.$validate.isEmpty_reset(metric)) {
         this.$Message.warning(
           this.$t("tableKey.s_metric") + this.$t("tips.required")
         );
       } else {
         let params = { type: metric.split(":")[1] };
-        this.$httpRequestEntrance.httpRequestEntrance(
+        this.$root.$httpRequestEntrance.httpRequestEntrance(
           "GET",
-          this.apiCenter.metricList.api,
+          this.$root.apiCenter.metricList.api,
           params,
           responseData => {
             this.metricList = responseData;
@@ -367,9 +367,9 @@ export default {
     },
     saveConfig() {
       const params = this.pp();
-      this.$httpRequestEntrance.httpRequestEntrance(
+      this.$root.$httpRequestEntrance.httpRequestEntrance(
         "POST",
-        this.apiCenter.template.save,
+        this.$root.apiCenter.template.save,
         params,
         () => {
           this.$Message.success(this.$t("tips.success"));
@@ -377,7 +377,7 @@ export default {
       );
     },
     setMetric(value) {
-      if (!this.$validate.isEmpty_reset(value)) {
+      if (!this.$root.$validate.isEmpty_reset(value)) {
         this.templateQuery.metricLabel = value.label;
       }
     },

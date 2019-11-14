@@ -92,7 +92,7 @@
       },
       // 判断是否显示搜索框清除按钮
       showClearIcon (input_condition, index_input_condition) {
-        let isInputEmpty = !this.$validate.isEmpty_reset(this.pageConfig.researchConfig.filters[input_condition.value])
+        let isInputEmpty = !this.$root.$validate.isEmpty_reset(this.pageConfig.researchConfig.filters[input_condition.value])
         return (index_input_condition === this.activeClearIconNo && isInputEmpty) ? true : false
       },
       // 搜索框清除按钮响应函数

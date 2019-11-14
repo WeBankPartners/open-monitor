@@ -76,7 +76,7 @@
     data() {
       return {
         pageConfig: {
-          CRUD: this.apiCenter.endpointManagement.list.api,
+          CRUD: this.$root.apiCenter.endpointManagement.list.api,
           researchConfig: {
             input_conditions: [
               {value: 'search', type: 'input', placeholder: 'placeholder.input', style: ''}],
@@ -171,7 +171,7 @@
       }
     },
     mounted() {
-      if (this.$validate.isEmpty_reset(this.$route.params)) {
+      if (this.$root.$validate.isEmpty_reset(this.$route.params)) {
         this.groupMsg = {}
         this.showGroupMsg = false
         this.pageConfig.researchConfig.btn_group.push({btn_name: 'button.add', btn_func: 'endpointReject', class: 'btn-cancle-f', btn_icon: 'fa fa-plus'})
@@ -207,7 +207,7 @@
     },
     methods: {
       initData (url= this.pageConfig.CRUD, params) {
-        this.$tableUtil.initTable(this, 'GET', url, params)
+        this.$root.$tableUtil.initTable(this, 'GET', url, params)
       },
       filterMoreBtn () {
         let moreBtnGroup = ['thresholdConfig','historyAlarm','logManagement']
@@ -219,10 +219,10 @@
       add () {
         this.modelConfig.slotConfig.resourceOption = []
         this.modelConfig.slotConfig.resourceSelected = []
-        this.$httpRequestEntrance.httpRequestEntrance('GET',this.apiCenter.resourceSearch.api, {search: '.'}, responseData => {
+        this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.resourceSearch.api, {search: '.'}, responseData => {
           this.modelConfig.slotConfig.resourceOption = responseData
         })
-        this.JQ('#add_object_Modal').modal('show')
+        this.$root.JQ('#add_object_Modal').modal('show')
       },
       addPost() {
         let params = {
@@ -230,9 +230,9 @@
           endpoints: this.modelConfig.slotConfig.resourceSelected,
           operation: 'add'
         }
-        this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.endpointManagement.update.api, params, () => {
+        this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.endpointManagement.update.api, params, () => {
           this.$Message.success(this.$t('tips.success'))
-          this.JQ('#add_object_Modal').modal('hide')
+          this.$root.JQ('#add_object_Modal').modal('hide')
           this.initData(this.pageConfig.CRUD, this.pageConfig)
         })
       },
@@ -246,7 +246,7 @@
           endpoints: [parseInt(rowData.id)],
           operation: 'delete'
         }
-        this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.endpointManagement.update.api, params, () => {
+        this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.endpointManagement.update.api, params, () => {
           this.$Message.success(this.$t('tips.success'))
           this.initData(this.pageConfig.CRUD, this.pageConfig)
         })
@@ -268,21 +268,21 @@
       },
       historyAlarm (rowData) {
         let params = {id: rowData.id}
-        this.$httpRequestEntrance.httpRequestEntrance('GET', this.apiCenter.alarm.history, params, (responseData) => {
+        this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.alarm.history, params, (responseData) => {
           this.historyAlarmPageConfig.table.tableData = responseData
         })
-        this.JQ('#history_alarm_Modal').modal('show')
+        this.$root.JQ('#history_alarm_Modal').modal('show')
       },
       endpointReject () {
         this.endpointRejectModel.addRow.type = 'host'
-        this.JQ('#endpoint_reject_model').modal('show')
+        this.$root.JQ('#endpoint_reject_model').modal('show')
       },
       endpointRejectSave () {
         this.endpointRejectModel.addRow.exporter_port += ''
-        let params= this.$validate.isEmptyReturn_JSON(this.endpointRejectModel.addRow)
-        this.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.endpointManagement.register.api, params, () => {
-          this.$validate.emptyJson(this.endpointRejectModel.addRow)
-          this.JQ('#endpoint_reject_model').modal('hide')
+        let params= this.$root.$validate.isEmptyReturn_JSON(this.endpointRejectModel.addRow)
+        this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.endpointManagement.register.api, params, () => {
+          this.$root.$validate.emptyJson(this.endpointRejectModel.addRow)
+          this.$root.JQ('#endpoint_reject_model').modal('hide')
           this.$Message.success(this.$t('tips.success'))
           this.initData(this.pageConfig.CRUD, this.pageConfig)
         })

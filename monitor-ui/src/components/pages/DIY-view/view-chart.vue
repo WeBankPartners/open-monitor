@@ -45,10 +45,10 @@ export default {
     });
   },
   mounted() {
-    if (this.$validate.isEmpty_reset(this.$route.params)) {
+    if (this.$root.$validate.isEmpty_reset(this.$route.params)) {
       this.$router.push({ path: "viewConfig" });
     } else {
-      if (!this.$validate.isEmpty_reset(this.$route.params.templateData.cfg)) {
+      if (!this.$root.$validate.isEmpty_reset(this.$route.params.templateData.cfg)) {
         this.viewData = JSON.parse(this.$route.params.templateData.cfg);
         this.viewData.forEach((itemx) => {
           if (itemx.viewConfig.id === this.$route.params.panal.id) {
@@ -66,7 +66,7 @@ export default {
       this.panalUnit = this.panalData.panalUnit;
       let params = [];
       this.noDataTip = false;
-      if (this.$validate.isEmpty_reset(this.panalData.query)) {
+      if (this.$root.$validate.isEmpty_reset(this.panalData.query)) {
         return;
       }
       this.panalData.query.forEach(item => {
@@ -80,9 +80,9 @@ export default {
         );
       });
       if (params !== []) {
-        this.$httpRequestEntrance.httpRequestEntrance(
+        this.$root.$httpRequestEntrance.httpRequestEntrance(
           "GET",
-          this.apiCenter.metricConfigView.api,
+          this.$root.apiCenter.metricConfigView.api,
           { config: `[${params.join(",")}]` },
           responseData => {
             var legend = [];
