@@ -31,7 +31,14 @@ const router = new Router({
           name: "systemMonitoring",
           title: "对象监控",
           meta: {},
-          component: () => import("@/components/pages/system-monitoring")
+          component: () => import("@/components/pages/system-monitoring/system-monitoring")
+        },
+        {
+          path: "sysViewChart",
+          name: "sysViewChart",
+          title: "视图查看",
+          meta: {},
+          component: () => import("@/components/pages/system-monitoring/sys-view-chart")
         },
         {
           path: "mainView",
