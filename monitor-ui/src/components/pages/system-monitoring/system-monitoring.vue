@@ -6,18 +6,18 @@
                 <span>{{$t('tableKey.systemName')}}:</span>
                 <span> {{sysConfig.systemName}}</span>
             </div>
-            <!-- <div class="header-tools"> 
-              <Select v-model="metricMulti" multiple style="width:200px">
+            <div class="header-tools"> 
+              <Select v-model="sysConfig.metricMulti" multiple style="width:200px" @on-change="getMetric">
                 <Option v-for="item in metricLabelList" :value="item.value" :key="item.value">{{ item.label }}</Option>
               </Select>
-            </div> -->
+            </div>
         </div>
       </header>
       <grid-layout
         :layout.sync="layoutData"
         :col-num="12"
         :row-height="30"
-        :is-draggable="true"
+        :is-draggable="false"
         :is-resizable="false"
         :is-mirrored="false"
         :vertical-compact="true"
@@ -73,9 +73,9 @@ export default {
       sysConfig: {
         systemName: 'test',
         ips: ['192.168.0.16','192.168.0.5'],
+        metricMulti:['cpu.used.percent','mem.used.percent','load.1min'],
         endpointList: [],
       },
-      metricMulti:['cpu.used.percent','mem.used.percent','load.1min'],
       metricLabelList: [
         {
           value: 'cpu.used.percent',
@@ -118,10 +118,10 @@ export default {
   methods: {
     getMetric () {
       let url = '/dashboard/custom/endpoint/get?'
-      let xx = this.sysConfig.ips.map((item) => {
+      let ipManage = this.sysConfig.ips.map((item) => {
         return 'ip=' + item
       })
-      url += xx.join('&')
+      url += ipManage.join('&')
       this.$httpRequestEntrance.httpRequestEntrance('GET',url, '', responseData => {
         responseData.forEach((i)=>{
           this.sysConfig.endpointList.push(i.guid)
@@ -131,8 +131,10 @@ export default {
     },
     initData () {
       this.viewData = []
+      this.layoutData = []
       let res = []
-      const num = this.metricMulti.length
+      const num = this.sysConfig.metricMulti.length
+      this.array1 = []
       for (let i=0;i<num; i++) {
         const key = ((new Date()).valueOf()).toString().substring(10)
         let xx = {
@@ -146,7 +148,7 @@ export default {
         }
         this.array1.push(xx)
       }
-      this.metricMulti.forEach((metric, index)=> {
+      this.sysConfig.metricMulti.forEach((metric, index)=> {
         let singleChart = {}
         singleChart.panalTitle = metric
         singleChart.query = []
@@ -224,7 +226,7 @@ export default {
           yaxis: responseData.yaxis
         }
         this.elId = id
-        drawChart(this, config, {eye: false,dataZoom:false})
+        drawChart(this, config, {eye: false,dataZoom:false,clear:true})
       })
     },
     resizeEvent: function(i, newH, newW, newHPx, newWPx){
@@ -247,9 +249,6 @@ export default {
           this.$router.push({name: 'sysViewChart', params:{templateData: vd, parentData: this.sysConfig}}) 
         }
       })
-      // this.modifyLayoutData().then((resViewData)=>{
-      //   this.$router.push({name: 'sysViewChart', params:{templateData: parentRouteData, panal:item, parentData: this.sysConfig}}) 
-      // })
     },
   },
   components: {
