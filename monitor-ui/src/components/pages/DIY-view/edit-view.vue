@@ -304,7 +304,6 @@ export default {
               series: responseData.series,
               yaxis: responseData.yaxis
             };
-            console.log(config.yaxis);
             drawChart(this, config, { eye: false });
           }
         );

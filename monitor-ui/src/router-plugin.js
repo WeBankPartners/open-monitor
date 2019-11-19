@@ -46,7 +46,7 @@ const router = [
     title: "",
     meta: {},
     component: monitorConfigIndex,
-    redirect: "monitorConfigIndex/endpointManagement",
+    redirect: "/monitorConfigIndex/endpointManagement",
     children: [
       {
         path: "/endpointManagement",
