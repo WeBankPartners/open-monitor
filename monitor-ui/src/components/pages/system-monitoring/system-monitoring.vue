@@ -4,10 +4,12 @@
         <div style="display:flex;justify-content:space-between; font-size:16px;padding:8px 16px">
             <div class="header-name">
                 <span>{{$t('tableKey.systemName')}}:</span>
-                <span> Wecube-monitor</span>
+                <span> {{sysConfig.systemName}}</span>
             </div>
             <!-- <div class="header-tools"> 
-              <button class="btn btn-sm btn-cancle-f" @click="goBack()">{{$t('button.back')}}</button>
+              <Select v-model="metricMulti" multiple style="width:200px">
+                <Option v-for="item in metricLabelList" :value="item.value" :key="item.value">{{ item.label }}</Option>
+              </Select>
             </div> -->
         </div>
       </header>
@@ -15,7 +17,7 @@
         :layout.sync="layoutData"
         :col-num="12"
         :row-height="30"
-        :is-draggable="false"
+        :is-draggable="true"
         :is-resizable="false"
         :is-mirrored="false"
         :vertical-compact="true"
@@ -27,7 +29,9 @@
         :w="item.w"
         :h="item.h"
         :i="item.i"
-        :key="index">
+        :key="index"
+        @resize="resizeEvent"
+        @resized="resizedEvent">
                  
         <div style="display:flex;justify-content:flex-end;padding:0 32px;">
           <div class="header-grid header-grid-name">
@@ -35,8 +39,7 @@
           </div>
           <div class="header-grid header-grid-tools"> 
             <Tooltip :content="$t('placeholder.viewChart')" placement="top">
-              <!-- <i class="fa fa-eye" aria-hidden="true" @click="gridPlus(item)"></i> -->
-              <!-- <i class="fa fa-eye" aria-hidden="true"></i> -->
+              <i class="fa fa-eye" aria-hidden="true" @click="gridPlus(item)"></i>
             </Tooltip>
           </div>
         </div>
@@ -68,48 +71,98 @@ export default {
       ],
       noDataTip: false,
       sysConfig: {
-        systemName: '双子星系统',
-        ip: ['192.168.0.16','192.168.0.5'],
-        endpointList: ['VM_0_16_centos_192.168.0.16_host','VM_0_5_centos_192.168.0.5_host'],
+        systemName: 'test',
+        ips: ['192.168.0.16','192.168.0.5'],
+        endpointList: [],
       },
-      metricLabelList: ['mem.used.percent','load.1min','cpu.used.percent','disk.write.bytes'],
+      metricMulti:['cpu.used.percent','mem.used.percent','load.1min'],
+      metricLabelList: [
+        {
+          value: 'cpu.used.percent',
+          label: 'cpu.used.percent'
+        },
+        {
+          value: 'mem.used.percent',
+          label: 'mem.used.percent'
+        },
+        {
+          value: 'load.1min',
+          label: 'load.1min'
+        },
+        {
+          value: 'disk.read.bytes',
+          label: 'disk.read.bytes'
+        },
+        {
+          value: 'disk.write.bytes',
+          label: 'disk.write.bytes'
+        },
+        {
+          value: 'disk.iops',
+          label: 'disk.iops'
+        },
+        {
+          value: 'net.if.out.bytes',
+          label: 'net.if.out.bytes'
+        }
+      ],
       array1: []
     }
   },
   mounted() {
-    let res = []
-    const num = this.metricLabelList.length
-    for (let i=0;i<num; i++) {
-      const key = ((new Date()).valueOf()).toString().substring(10)
-      let xx = {
-        x: i%2*6,
-        y:Math.ceil((i/2+0.000001)-1)*7,
-        w:6,
-        h:7,
-        i: '',
-        id: `id_${key}${i}`,
-        "moved": false
-      }
-      this.array1.push(xx)
-    }
-    this.metricLabelList.forEach((metric, index)=> {
-      let singleChart = {}
-      singleChart.panalTitle = metric
-      singleChart.query = []
-      for (let endpoint of this.sysConfig.endpointList) {
-        let condition = {}
-        condition.endpoint = endpoint
-        condition.metricLabel = metric
-        singleChart.query.push(condition)
-      }
-      this.array1[index].i = metric
-      singleChart.viewConfig = this.array1[index]
-      res.push(singleChart)
-    })
-    this.viewData = res
-    this.initPanals()
+    // systemMonitoring?systemName=test&ips=192.168.0.16,192.168.0.5
+    // this.sysConfig.systemName = this.$route.query.systemName
+    // this.sysConfig.ips = this.$route.query.ips.split(',')
+    this.getMetric()
   },
   methods: {
+    getMetric () {
+      let url = '/dashboard/custom/endpoint/get?'
+      let xx = this.sysConfig.ips.map((item) => {
+        return 'ip=' + item
+      })
+      url += xx.join('&')
+      this.$httpRequestEntrance.httpRequestEntrance('GET',url, '', responseData => {
+        responseData.forEach((i)=>{
+          this.sysConfig.endpointList.push(i.guid)
+        })
+        this.initData()
+      })
+    },
+    initData () {
+      this.viewData = []
+      let res = []
+      const num = this.metricMulti.length
+      for (let i=0;i<num; i++) {
+        const key = ((new Date()).valueOf()).toString().substring(10)
+        let xx = {
+          x: i%2*6,
+          y:Math.ceil((i/2+0.000001)-1)*7,
+          w:6,
+          h:7,
+          i: '',
+          id: `id_${key}${i}`,
+          "moved": false
+        }
+        this.array1.push(xx)
+      }
+      this.metricMulti.forEach((metric, index)=> {
+        let singleChart = {}
+        singleChart.panalTitle = metric
+        singleChart.query = []
+        for (let endpoint of this.sysConfig.endpointList) {
+          let condition = {}
+          condition.endpoint = endpoint
+          condition.metricLabel = metric
+          singleChart.query.push(condition)
+        }
+        this.array1[index].i = metric
+        singleChart.viewConfig = this.array1[index]
+        res.push(singleChart)
+      })
+      this.viewData = res
+      this.initPanals()
+    },
     initPanals () {
       this.viewData.forEach((item,viewIndex) => {
         this.layoutData.push(item.viewConfig)
@@ -162,8 +215,9 @@ export default {
               }])
             }
           }
-        }) 
-        let config = {
+        })
+        let config = {}
+        config = {
           title: responseData.title,
           legend: legend,
           series: responseData.series,
@@ -172,7 +226,31 @@ export default {
         this.elId = id
         drawChart(this, config, {eye: false,dataZoom:false})
       })
-    }
+    },
+    resizeEvent: function(i, newH, newW, newHPx, newWPx){
+      this.layoutData.forEach((item,index) => {
+        if (item.i === i) {
+          this.layoutData[index].h = newH
+          this.layoutData[index].w = newW
+          var myChart = echarts.init(document.getElementById(item.id))
+          myChart.resize({height:newHPx-64+'px',width:newWPx+'px'})
+          return
+        }
+      })
+    },
+    resizedEvent: function(i, newH, newW, newHPx, newWPx){
+      this.resizeEvent(i, newH, newW, newHPx, newWPx)
+    },
+    gridPlus(item) {
+      this.viewData.forEach((vd) => {
+        if (item.id === vd.viewConfig.id) {
+          this.$router.push({name: 'sysViewChart', params:{templateData: vd, parentData: this.sysConfig}}) 
+        }
+      })
+      // this.modifyLayoutData().then((resViewData)=>{
+      //   this.$router.push({name: 'sysViewChart', params:{templateData: parentRouteData, panal:item, parentData: this.sysConfig}}) 
+      // })
+    },
   },
   components: {
     GridLayout: VueGridLayout.GridLayout,
