@@ -240,7 +240,17 @@ export default {
     },
     resizedEvent: function(i, newH, newW, newHPx, newWPx){
       this.resizeEvent(i, newH, newW, newHPx, newWPx)
-    }
+    },
+    gridPlus(item) {
+      this.viewData.forEach((vd) => {
+        if (item.id === vd.viewConfig.id) {
+          this.$router.push({name: 'sysViewChart', params:{templateData: vd, parentData: this.sysConfig}}) 
+        }
+      })
+      // this.modifyLayoutData().then((resViewData)=>{
+      //   this.$router.push({name: 'sysViewChart', params:{templateData: parentRouteData, panal:item, parentData: this.sysConfig}}) 
+      // })
+    },
   },
   components: {
     GridLayout: VueGridLayout.GridLayout,
