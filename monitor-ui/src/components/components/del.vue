@@ -28,7 +28,6 @@
     methods: {
       del () {
         this.DelConfig.callback()
-        this.$Message.success(this.$t('tips.success'))
         this.DelConfig.isDisplay = false;
       }
     }
