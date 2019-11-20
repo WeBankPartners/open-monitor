@@ -110,10 +110,11 @@
         this.$router.push({name: 'endpointManagement', params: {group: rowData}})
       },
       delF (rowData) {
-        let params = {id: rowData.id}
-        this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.groupManagement.delete.api, params, () => {
-          this.$Message.success(this.$t('tips.success'))
-          this.initData(this.pageConfig.CRUD, this.pageConfig)
+        this.$parent.$parent.delConfirm({name: rowData.name}, () => {
+          let params = {id: rowData.id}
+          this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.groupManagement.delete.api, params, () => {
+            this.initData(this.pageConfig.CRUD, this.pageConfig)
+          })
         })
       },
       thresholdConfig (rowData) {
