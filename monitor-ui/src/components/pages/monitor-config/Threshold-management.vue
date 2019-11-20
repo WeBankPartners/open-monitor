@@ -211,10 +211,12 @@ export default {
       })
     },
     delF (rowData) {
-      let params = {id: rowData.id}
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.thresholdManagement.delete.api, params, () => {
-        this.$Message.success(this.$t('tips.success'))
-        this.requestData(this.type, this.typeValue)
+      this.$parent.$parent.delConfirm({name: rowData.metric}, () => {
+        let params = {id: rowData.id}
+        this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.thresholdManagement.delete.api, params, () => {
+          this.$Message.success(this.$t('tips.success'))
+          this.requestData(this.type, this.typeValue)
+        })
       })
     },
     formValidate () {
