@@ -17,5 +17,6 @@ export default {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: inherit;
+  font-size: 12px;
 }
 </style>
