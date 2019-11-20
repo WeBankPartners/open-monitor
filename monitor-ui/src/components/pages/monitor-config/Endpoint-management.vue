@@ -237,18 +237,20 @@
         })
       },
       delF (rowData) {
-        let endpoints = []
-        this.pageConfig.table.tableData.forEach((item)=>{
-           endpoints.push(item.guid.split(':')[0])
-        })
-        let params = {
-          grp: this.groupMsg.id,
-          endpoints: [parseInt(rowData.id)],
-          operation: 'delete'
-        }
-        this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.endpointManagement.update.api, params, () => {
-          this.$Message.success(this.$t('tips.success'))
-          this.initData(this.pageConfig.CRUD, this.pageConfig)
+        this.$parent.$parent.delConfirm({name: rowData.guid}, () => {
+          let endpoints = []
+          this.pageConfig.table.tableData.forEach((item)=>{
+            endpoints.push(item.guid.split(':')[0])
+          })
+          let params = {
+            grp: this.groupMsg.id,
+            endpoints: [parseInt(rowData.id)],
+            operation: 'delete'
+          }
+          this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.endpointManagement.update.api, params, () => {
+            this.$Message.success(this.$t('tips.success'))
+            this.initData(this.pageConfig.CRUD, this.pageConfig)
+          })
         })
       },
       thresholdConfig (rowData) {
