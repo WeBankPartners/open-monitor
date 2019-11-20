@@ -187,7 +187,6 @@ export default {
     },
     getEndpointList (query) {
       const params = {type: this.type,search: query}
-      this.endpointOptions = []
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.resourceSearch.strategyApi, params, (responseData) => {
         this.endpointOptions = responseData
       })
