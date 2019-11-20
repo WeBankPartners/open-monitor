@@ -113,6 +113,7 @@
         this.$parent.$parent.delConfirm({name: rowData.name}, () => {
           let params = {id: rowData.id}
           this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.groupManagement.delete.api, params, () => {
+            this.$Message.success(this.$t('tips.success'))
             this.initData(this.pageConfig.CRUD, this.pageConfig)
           })
         })
