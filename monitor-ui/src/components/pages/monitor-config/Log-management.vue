@@ -13,6 +13,7 @@
             v-model="endpointID"
             filterable
             remote
+            clearable
             :remote-method="getEndpointList"
             >
             <Option v-for="(option, index) in endpointOptions" :value="option.id" :key="index">
@@ -216,7 +217,7 @@ export default {
     getEndpointList (query) {
       const params = {type: this.type,search: query}
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.resourceSearch.strategyApi, params, (responseData) => {
-        this.endpointOptions = responseData.filter(item => item.option_value.split(':')[1] === 'host')
+        this.endpointOptions = this.type === 'endpoint'? responseData.filter(item => item.option_value.split(':')[1] === 'host'):responseData
       })
     },
     requestData (type, id) {

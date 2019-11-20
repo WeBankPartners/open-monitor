@@ -49,28 +49,28 @@ const router = [
     redirect: "/monitorConfigIndex/endpointManagement",
     children: [
       {
-        path: "/endpointManagement",
+        path: "endpointManagement",
         name: "endpointManagement",
         title: "对象管理",
         meta: {},
         component: endpointManagement
       },
       {
-        path: "/groupManagement",
+        path: "groupManagement",
         name: "groupManagement",
         title: "组管理",
         meta: {},
         component: groupManagement
       },
       {
-        path: "/thresholdManagement",
+        path: "thresholdManagement",
         name: "thresholdManagement",
         title: "阀值配置",
         meta: {},
         component: thresholdManagement
       },
       {
-        path: "/logManagement",
+        path: "logManagement",
         name: "logManagement",
         title: "阀值配置",
         meta: {},
