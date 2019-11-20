@@ -237,10 +237,12 @@ export default {
       })
     },
     delF (rowData) {
-      let params = {id: rowData.id}
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.logManagement.delList.api, params, () => {
-        this.$Message.success(this.$t('tips.success'))
-        this.requestData(this.type, this.typeValue)
+      this.$parent.$parent.delConfirm({name: rowData.path}, () => {
+        let params = {id: rowData.id}
+        this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.logManagement.delList.api, params, () => {
+          this.$Message.success(this.$t('tips.success'))
+          this.requestData(this.type, this.typeValue)
+        })
       })
     },
     formValidate () {
@@ -342,10 +344,12 @@ export default {
       this.$root.JQ('#add_edit_Modal').modal('show')
     },
     delPathItem (rowData) {
-      let params = {id: rowData.id}
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.logManagement.delete.api, params, () => {
-        this.$Message.success(this.$t('tips.success'))
-        this.requestData(this.type, this.typeValue)
+      this.$parent.$parent.delConfirm({name: rowData.keyword}, () => {
+        let params = {id: rowData.id}
+        this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.logManagement.delete.api, params, () => {
+          this.$Message.success(this.$t('tips.success'))
+          this.requestData(this.type, this.typeValue)
+        })
       })
     },
     editPost () {
