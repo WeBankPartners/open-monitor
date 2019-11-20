@@ -9,7 +9,7 @@
         <menu code='MONITOR_MAIN_DASHBOARD' cat='MONITORING' displayName="Monitor Dashboard">/mainView</menu>
         <menu code='MONITOR_METRIC_CONFIG' cat='MONITORING' displayName="Metric Config">/metricConfig</menu>
         <menu code='MONITOR_CUSTOM_DASHBOARD' cat='MONITORING' displayName="Custom Dashboard">/viewConfigIndex</menu>
-        <menu code='MONITOR_ALARM_CONFIG' cat='MONITORING' displayName="Alarm Config">/monitorConfigIndex</menu>
+        <menu code='MONITOR_ALARM_CONFIG' cat='MONITORING' displayName="Alarm Config">/monitorConfigIndex/endpointManagement</menu>
         <menu code='MONITOR_ALARM_MANAGEMENT' cat='MONITORING' displayName="Alarm Management">/alarmManagement</menu>
     </menus>
 
