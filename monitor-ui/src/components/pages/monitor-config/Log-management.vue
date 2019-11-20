@@ -13,6 +13,7 @@
             v-model="endpointID"
             filterable
             remote
+            clearable
             :remote-method="getEndpointList"
             >
             <Option v-for="(option, index) in endpointOptions" :value="option.id" :key="index">
