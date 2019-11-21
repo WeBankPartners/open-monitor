@@ -1,68 +1,69 @@
 <template>
   <div class=" ">
-      <header>
-        <div style="display:flex;justify-content:space-between; font-size:16px;padding:8px 16px">
-            <div class="header-name">
-                <i class="fa fa-th-large fa-18" aria-hidden="true"></i>
-                <span> {{$route.params.name}}</span>
-            </div>
-            <div class="header-tools"> 
-              <button class="btn btn-sm btn-cancle-f" @click="addItem">{{$t('button.add')}}</button>
-              <button class="btn btn-sm btn-confirm-f" @click="saveEdit">{{$t('button.saveEdit')}}</button>
-              <button class="btn btn-sm btn-cancle-f" @click="goBack()">{{$t('button.back')}}</button>
-            </div>
-        </div>
-      </header>
-      <grid-layout
-        :layout.sync="layoutData"
-        :col-num="12"
-        :row-height="30"
-        :is-draggable="true"
-        :is-resizable="true"
-        :is-mirrored="false"
-        :vertical-compact="true"
-        :use-css-transforms="true"
-        >
-      <grid-item v-for="(item,index) in layoutData"
-        :x="item.x"
-        :y="item.y"
-        :w="item.w"
-        :h="item.h"
-        :i="item.i"
-        :key="index"
-        @resize="resizeEvent"
-        @resized="resizedEvent">
-                 
-        <div style="display:flex;justify-content:flex-end;padding:0 32px;">
-          <div class="header-grid header-grid-name">
-            <span v-if="editChartId !== item.id">{{item.i}}</span>
-            <Input v-else v-model="item.i" class="editChartId" style="width:100px" @on-blur="editChartId = null" size="small" placeholder="small size" />
-            <Tooltip :content="$t('placeholder.editTitle')" placement="top">
-              <i class="fa fa-pencil-square" @click="editChartId = item.id" aria-hidden="true"></i>
-            </Tooltip>
+    <Title :title="$t('menu.templateManagement')"></Title>
+    <header>
+      <div style="display:flex;justify-content:space-between; font-size:16px;padding:0 10px">
+          <div class="header-name">
+              <i class="fa fa-th-large fa-18" aria-hidden="true"></i>
+              <span> {{$route.params.name}}</span>
           </div>
-          <div class="header-grid header-grid-tools"> 
-            <i class="fa fa-eye" aria-hidden="true" @click="gridPlus(item)"></i>
-            <Tooltip :content="$t('placeholder.chartConfiguration')" placement="top">
-              <i class="fa fa-cog" @click="editGrid(item)" title="111" aria-hidden="true"></i>
-            </Tooltip>
-            <Tooltip :content="$t('placeholder.deleteChart')" placement="top">
-              <i class="fa fa-trash" @click="removeGrid(item)" title="111" aria-hidden="true"></i>
-            </Tooltip>
+          <div class="header-tools"> 
+            <button class="btn btn-sm btn-cancle-f" @click="addItem">{{$t('button.add')}}</button>
+            <button class="btn btn-sm btn-confirm-f" @click="saveEdit">{{$t('button.saveEdit')}}</button>
+            <button class="btn btn-sm btn-cancle-f" @click="goBack()">{{$t('button.back')}}</button>
           </div>
+      </div>
+    </header>
+    <grid-layout
+      :layout.sync="layoutData"
+      :col-num="12"
+      :row-height="30"
+      :is-draggable="true"
+      :is-resizable="true"
+      :is-mirrored="false"
+      :vertical-compact="true"
+      :use-css-transforms="true"
+      >
+    <grid-item v-for="(item,index) in layoutData"
+      :x="item.x"
+      :y="item.y"
+      :w="item.w"
+      :h="item.h"
+      :i="item.i"
+      :key="index"
+      @resize="resizeEvent"
+      @resized="resizedEvent">
+                
+      <div style="display:flex;justify-content:flex-end;padding:0 32px;">
+        <div class="header-grid header-grid-name">
+          <span v-if="editChartId !== item.id">{{item.i}}</span>
+          <Input v-else v-model="item.i" class="editChartId" style="width:100px" @on-blur="editChartId = null" size="small" placeholder="small size" />
+          <Tooltip :content="$t('placeholder.editTitle')" placement="top">
+            <i class="fa fa-pencil-square" @click="editChartId = item.id" aria-hidden="true"></i>
+          </Tooltip>
         </div>
-        <div class="">
-          <section class="metric-section">
-            <div v-if="!noDataTip">
-              <div :id="item.id" class="echart" style="height:230px;width:560px"></div>
-            </div>
-             <div v-else class="echart echart-no-data-tip">
-              <span>~~~No Data!~~~</span>
-            </div>
-          </section>
+        <div class="header-grid header-grid-tools"> 
+          <i class="fa fa-eye" aria-hidden="true" @click="gridPlus(item)"></i>
+          <Tooltip :content="$t('placeholder.chartConfiguration')" placement="top">
+            <i class="fa fa-cog" @click="editGrid(item)" title="111" aria-hidden="true"></i>
+          </Tooltip>
+          <Tooltip :content="$t('placeholder.deleteChart')" placement="top">
+            <i class="fa fa-trash" @click="removeGrid(item)" title="111" aria-hidden="true"></i>
+          </Tooltip>
         </div>
-        </grid-item>
-      </grid-layout>
+      </div>
+      <div class="">
+        <section class="metric-section">
+          <div v-if="!noDataTip">
+            <div :id="item.id" class="echart" style="height:230px;width:560px"></div>
+          </div>
+            <div v-else class="echart echart-no-data-tip">
+            <span>~~~No Data!~~~</span>
+          </div>
+        </section>
+      </div>
+      </grid-item>
+    </grid-layout>
   </div>
 </template>
 
@@ -133,14 +134,14 @@ export default {
           }
           item.itemStyle = {
             normal:{
-              color: colorSet[index]
+              color: colorSet[index] === undefined ? '#666699': colorSet[index]
             }
           }
           item.areaStyle = {
             normal: {
               color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
                   offset: 0,
-                  color: colorSet[index]
+                  color: colorSet[index] === undefined ? '#666699': colorSet[index]
               }, {
                   offset: 1,
                   color: 'white'
