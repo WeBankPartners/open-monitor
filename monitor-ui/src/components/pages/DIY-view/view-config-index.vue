@@ -1,5 +1,6 @@
 <template>
   <div class="">
+    <Title :title="$t('menu.customViews')"></Title>
     <div class="operational-zone">
       <!-- <Select v-model="model1" style="width:200px">
         <Option v-for="item in cityList" :value="item.value" :key="item.value">{{ item.label }}</Option>
@@ -154,10 +155,10 @@ export default {
 
 <style scoped lang="less">
 .operational-zone {
-  margin: 16px;
+  margin-bottom: 16px;
 }
 .panal-list {
- margin: 16px;
+ margin-bottom: 16px;
 }
 .panal-title {
   color: @blue-2;

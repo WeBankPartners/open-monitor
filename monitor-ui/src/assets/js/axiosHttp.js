@@ -22,5 +22,5 @@ export default function ajax (options) {
   if (options.url.includes('/export/')) {
     ajaxObj.responseType = 'blob'
   }
-  return window.request === undefined ? axios(ajaxObj) : window.request(ajaxObj)
+  return window.request ? window.request(ajaxObj) : axios(ajaxObj)
 }
