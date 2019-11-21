@@ -134,14 +134,14 @@ export default {
           }
           item.itemStyle = {
             normal:{
-              color: colorSet[index]
+              color: colorSet[index] === undefined ? '#666699': colorSet[index]
             }
           }
           item.areaStyle = {
             normal: {
               color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
                   offset: 0,
-                  color: colorSet[index]
+                  color: colorSet[index] === undefined ? '#666699': colorSet[index]
               }, {
                   offset: 1,
                   color: 'white'
