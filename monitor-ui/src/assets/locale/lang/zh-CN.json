@@ -9,6 +9,7 @@
     "systemMonitoring": "系统监控",
     "metricConfiguration": "指标配置",
     "customViews": "自定义视图",
+    "templateManagement": "模板管理",
     "configuration": "配置",
     "alert": "告警"
   },

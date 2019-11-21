@@ -9,6 +9,7 @@
     "systemMonitoring": "System Monitoring",
     "metricConfiguration": "Metrics Configuration",
     "customViews": "Customize Views",
+    "templateManagement": "Template Management",
     "configuration": "Configuration",
     "alert": "Alerting"
   },
