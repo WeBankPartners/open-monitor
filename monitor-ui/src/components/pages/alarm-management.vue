@@ -1,5 +1,6 @@
 <template>
-  <div class=" " style="padding-top:20px;">
+  <div class=" ">
+    <Title :title="$t('menu.alert')"></Title>
     <section style="margin-left:8px">
       <Tag color="warning">{{$t('title.updateTime')}}：{{timeForDataAchieve}}</Tag>
       <template v-for="(filterItem, filterIndex) in filtersForShow">
