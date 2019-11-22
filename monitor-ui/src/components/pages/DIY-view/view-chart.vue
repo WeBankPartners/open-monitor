@@ -25,7 +25,7 @@
 
 <script>
 import { generateUuid } from "@/assets/js/utils";
-import { drawChart } from "@/assets/config/chart-rely";
+import { readyToDraw } from "@/assets/config/chart-rely";
 export default {
   name: "",
   data() {
@@ -85,27 +85,34 @@ export default {
           this.$root.apiCenter.metricConfigView.api,
           { config: `[${params.join(",")}]` },
           responseData => {
-            var legend = [];
-            if (responseData.series.length === 0) {
-              this.noDataTip = true;
-              return;
-            }
-            responseData.series.forEach(item => {
-              legend.push(item.name);
-              item.symbol = "none";
-              item.smooth = true;
-              item.lineStyle = {
-                width: 1
-              };
-            });
-            responseData.yaxis.unit = this.panalUnit;
-            let config = {
-              title: responseData.title,
-              legend: legend,
-              series: responseData.series,
-              yaxis: responseData.yaxis
-            };
-            drawChart(this, config, { eye: false });
+            // var legend = [];
+            // if (responseData.series.length === 0) {
+            //   this.noDataTip = true;
+            //   return;
+            // }
+            // responseData.series.forEach(item => {
+            //   legend.push(item.name);
+            //   item.symbol = "none";
+            //   item.smooth = true;
+            //   item.lineStyle = {
+            //     width: 1
+            //   };
+            // });
+            // responseData.yaxis.unit = this.panalUnit;
+            // let config = {
+            //   title: responseData.title,
+            //   legend: legend,
+            //   series: responseData.series,
+            //   yaxis: responseData.yaxis
+            // };
+            // drawChart(this, config, { eye: false });
+
+            responseData.yaxis.unit =  this.panalUnit  
+            // this.elId = id
+            const chartConfig = {eye: false}
+
+            readyToDraw(this,responseData, 1, chartConfig)
+
           }
         );
       }
