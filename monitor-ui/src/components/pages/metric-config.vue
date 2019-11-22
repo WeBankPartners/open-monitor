@@ -68,7 +68,7 @@ import {dataPick} from '@/assets/config/common-config'
 import {generateUuid} from '@/assets/js/utils'
 
 // 引入 ECharts 主模块
-import {drawChart} from  '@/assets/config/chart-rely'
+import {readyToDraw} from  '@/assets/config/chart-rely'
 
 export default {
   name: '',
@@ -266,27 +266,32 @@ export default {
       this.isRequestChartData = true
       
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.metricConfigView.api, {config: `[${params.join(',')}]`}, responseData => {
-        var legend = []
-        if (responseData.series.length === 0) {
-          this.noDataTip = true
-          return
-        }
-        responseData.series.forEach((item)=>{
-          legend.push(item.name)
-          item.symbol = 'none'
-          item.smooth = true
-          item.lineStyle = {
-            width: 1
-          }
-          item.areaStyle = {}
-        }) 
-        let config = {
-          title: responseData.title,
-          legend: legend,
-          series: responseData.series,
-          yaxis: responseData.yaxis,
-        }
-        drawChart(this, config, {eye: false,clear:true})
+        // var legend = []
+        // if (responseData.series.length === 0) {
+        //   this.noDataTip = true
+        //   return
+        // }
+        // responseData.series.forEach((item)=>{
+        //   legend.push(item.name)
+        //   item.symbol = 'none'
+        //   item.smooth = true
+        //   item.lineStyle = {
+        //     width: 1
+        //   }
+        //   item.areaStyle = {}
+        // }) 
+        // let config = {
+        //   title: responseData.title,
+        //   legend: legend,
+        //   series: responseData.series,
+        //   yaxis: responseData.yaxis,
+        // }
+        // drawChart(this, config, {eye: false,clear:true})
+
+      
+        const chartConfig = {eye: false,clear:true}
+        readyToDraw(this,responseData, 1, chartConfig)
+
       })
 
     },
