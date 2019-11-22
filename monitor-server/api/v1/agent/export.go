@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"fmt"
 	"github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/services/db"
+	"net/url"
 )
 
 type resultObj struct {
@@ -156,6 +157,17 @@ func StopTomcatAgent(c *gin.Context)  {
 		return
 	}
 	mid.ReturnData(c, resultObj{ResultCode:1, ResultMessage:"Success"})
+}
+
+func GetSystemDashboardUrl(c *gin.Context)  {
+	name := c.Query("system_name")
+	ips := c.Query("ips")
+	urlParms := url.Values{}
+	urlParms.Set("systemName", name)
+	urlParms.Set("ips", ips)
+	urlPath := fmt.Sprintf("http://%s/wecube-monitor/#/systemMonitoring?%s", c.Request.Host, urlParms.Encode())
+	mid.LogInfo(fmt.Sprintf("url : %s", urlPath))
+	mid.ReturnData(c, resultObj{ResultCode:1, ResultMessage:urlPath})
 }
 
 func isLinuxType(osType string) bool {
