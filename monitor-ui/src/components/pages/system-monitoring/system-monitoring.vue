@@ -111,8 +111,8 @@ export default {
   },
   mounted() {
     // systemMonitoring?systemName=test&ips=192.168.0.16,192.168.0.5
-    // this.sysConfig.systemName = this.$route.query.systemName
-    // this.sysConfig.ips = this.$route.query.ips.split(',')
+    this.sysConfig.systemName = this.$route.query.systemName
+    this.sysConfig.ips = this.$route.query.ips.split(',')
     this.getMetric()
   },
   methods: {
