@@ -12,8 +12,8 @@
 import {generateUuid} from '@/assets/js/utils'
 
 // 引入 ECharts 主模块
-import {drawChart} from  '@/assets/config/chart-rely'
-const echarts = require('echarts/lib/echarts');
+import {readyToDraw} from  '@/assets/config/chart-rely'
+// const echarts = require('echarts/lib/echarts');
 
 export default {
   name: '',
@@ -58,46 +58,52 @@ export default {
         end: this.params.end + ''
       }
 
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.chartItemx.url, params, responseData => {
-        var legend = []
-        const colorx = ['#61a0a8', '#2f4554', '#c23531', '#d48265', '#91c7ae', '#749f83', '#ca8622', '#bda29a', '#6e7074', '#546570', '#c4ccd3']
-        const colorSet = colorx.concat(colorx,colorx,colorx,colorx).splice(this.chartIndex*3 + 4)
-        if (responseData.series.length === 0) {
-          this.noDataTip = true
-          return
-        }
-        responseData.series.forEach((item,index)=>{
-          legend.push(item.name)
-          item.symbol = 'none'
-          item.smooth = true
-          item.lineStyle = {
-            width: 1
-          }
-          item.itemStyle = {
-            normal:{
-              color: colorSet[index]
-            }
-          }
-          item.areaStyle = {
-            normal: {
-              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
-                  offset: 0,
-                  color: colorSet[index]
-              }, {
-                  offset: 1,
-                  color: 'white'
-              }])
-            }
-          }
-        }) 
-        let config = {
-          title: responseData.title,
-          legend: legend,
-          series: responseData.series,
-          yaxis: responseData.yaxis,
-        }
-        this.config = config
-        drawChart(this, config)
+      this.$httpRequestEntrance.httpRequestEntrance('GET', this.chartItemx.url, params, responseData => {
+        // var legend = []
+        // const colorx = ['#61a0a8', '#2f4554', '#c23531', '#d48265', '#91c7ae', '#749f83', '#ca8622', '#bda29a', '#6e7074', '#546570', '#c4ccd3']
+        // const colorSet = colorx.concat(colorx,colorx,colorx,colorx).splice(this.chartIndex*3 + 4)
+        // if (responseData.series.length === 0) {
+        //   this.noDataTip = true
+        //   return
+        // }
+        // responseData.series.forEach((item,index)=>{
+        //   legend.push(item.name)
+        //   item.symbol = 'none'
+        //   item.smooth = true
+        //   item.lineStyle = {
+        //     width: 1
+        //   }
+        //   item.itemStyle = {
+        //     normal:{
+        //       color: colorSet[index]
+        //     }
+        //   }
+        //   item.areaStyle = {
+        //     normal: {
+        //       color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+        //           offset: 0,
+        //           color: colorSet[index]
+        //       }, {
+        //           offset: 1,
+        //           color: 'white'
+        //       }])
+        //     }
+        //   }
+        // }) 
+        // let config = {
+        //   title: responseData.title,
+        //   legend: legend,
+        //   series: responseData.series,
+        //   yaxis: responseData.yaxis,
+        // }
+        // this.config = config
+        // drawChart(this, config)
+
+        // responseData.yaxis.unit =  panalUnit  
+        // this.elId = id
+        // const chartConfig = {eye: false,dataZoom:false}
+
+        readyToDraw(this,responseData, this.chartIndex)
       })
     }
   },
