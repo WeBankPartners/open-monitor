@@ -131,9 +131,9 @@
             </interface>
         </plugin>
         <plugin name="system-dashboard">
-            <interface action="register" path="/wecube-monitor/systemMonitoring" httpMethod='GET'>
+            <interface action="register" path="/wecube-monitor/api/v1/dashboard/system" httpMethod='GET'>
                 <inputParameters>
-                    <parameter datatype="string" mappingType='context' required='Y'>systemName</parameter>
+                    <parameter datatype="string" mappingType='context' required='Y'>system_name</parameter>
                     <parameter datatype="string" mappingType='context' required='Y'>ips</parameter>
                 </inputParameters>
                 <outputParameters>
