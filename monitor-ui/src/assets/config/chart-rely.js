@@ -9,6 +9,52 @@ require('echarts/lib/component/legendScroll');
 
 const echarts = require('echarts/lib/echarts');
 
+export const readyToDraw = function(that, responseData, viewIndex, chartConfig) {
+  var legend = []
+  if (responseData.series.length === 0) {
+    that.noDataTip = true
+    return
+  }
+  const colorX = ['#33CCCC','#666699','#66CC66','#996633','#9999CC','#339933','#339966','#663333','#6666CC','#336699','#3399CC','#33CC66','#CC3333','#CC6666','#996699','#CC9933']
+  let colorSet = []
+  for (let i=0;i<colorX.length;i++) {
+    let tmpIndex = viewIndex*3 + i
+    tmpIndex = tmpIndex%colorX.length
+    colorSet.push(colorX[tmpIndex])
+  }
+  responseData.series.forEach((item,index)=>{
+    legend.push(item.name)
+    item.symbol = 'none'
+    item.smooth = true
+    item.lineStyle = {
+      width: 1
+    }
+    item.itemStyle = {
+      normal:{
+        color: colorSet[index] ? colorSet[index] : '#666699' 
+      }
+    }
+    item.areaStyle = {
+      normal: {
+        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+            offset: 0,
+            color: colorSet[index] ? colorSet[index] : '#666699' 
+        }, {
+            offset: 1,
+            color: 'white'
+        }])
+      }
+    }
+  }) 
+  let config = {
+    title: responseData.title,
+    legend: legend,
+    series: responseData.series,
+    yaxis: responseData.yaxis
+  }
+  drawChart(that, config, chartConfig)
+}
+
 export const drawChart = function(that,config,userConfig) {
   let originConfig = {
     title: true,
