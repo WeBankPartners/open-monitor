@@ -1,7 +1,13 @@
 const path = require('path')
-const webpack = require('webpack')
 
 module.exports = {
+	// devServer: {
+	// 	proxy: {
+  //     "wecube-monitor": {
+  //       target: "http://111.230.161.237:19090"
+  //     },
+  //   }
+	// },
 	assetsDir: process.env.PLUGIN === 'plugin'? '':'wecube-monitor',
 	productionSourceMap: process.env.PLUGIN !== 'plugin',
 	chainWebpack: config => {
