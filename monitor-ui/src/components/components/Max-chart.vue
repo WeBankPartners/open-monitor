@@ -106,46 +106,9 @@ export default {
         params.end = this.chartCondition.dateRange[1] ===''? '':Date.parse(this.chartCondition.dateRange[1])/1000 + ''
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', chartItem.url, params, responseData => {
-        // var legend = []
-        // const colorSet = ['#CC9999','#CCCCFF','#FF66FF','#FFCCCC','#66CCCC','#996699','#99CC66','#FFCC99','#CC99CC','#FF9999','#FF9966','#FFCCFF']
-        // responseData.series.forEach((item,index)=>{
-        //   legend.push(item.name)
-        //   item.symbol = 'none'
-        //   item.smooth = true
-        //   item.lineStyle = {
-        //     width: 1
-        //   }
-        //   item.itemStyle = {
-        //     normal:{
-        //       color: colorSet[index]
-        //     }
-        //   }
-        //   item.areaStyle = {
-        //     normal: {
-        //       color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
-        //           offset: 0,
-        //           color: colorSet[index]
-        //       }, {
-        //           offset: 1,
-        //           color: 'white'
-        //       }])
-        //     }
-        //   }
-        // }) 
-        // let config = {
-        //   title: responseData.title,
-        //   legend: legend,
-        //   series: responseData.series,
-        //   yaxis: responseData.yaxis,
-        // }
-        // drawChart(this,config,{eye:false})
-
-        // responseData.yaxis.unit =  panalUnit  
-        // this.elId = id
+      
         const chartConfig = {eye: false}
-
         readyToDraw(this,responseData, 1, chartConfig)
-
       })
     },
     hideMaxChart () {
