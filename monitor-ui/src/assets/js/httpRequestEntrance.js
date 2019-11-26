@@ -65,9 +65,12 @@ function httpRequestEntrance (method, url, data, callback, customHttpConfig) {
         loading.end()
       },0)
     }
-    if (response.status < 400 && callback !== undefined) {
-      const res = window.request ? response : response.data
-      return callback(res,response.msg)
+    if (window.request) {
+      return callback(response,response.msg)
+    } else {
+      if (response.status < 400 && callback !== undefined) {
+        return callback(response.data,response.msg)
+      }
     }
   }).catch(function (error) {
     if (config.isNeedloading) {
