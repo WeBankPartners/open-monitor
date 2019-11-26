@@ -26,11 +26,8 @@
         </div>
         <div class="">
           <section class="metric-section">
-            <div v-if="!noDataTip">
+            <div>
               <div :id="item.id" class="echart" style="height:230px;width:560px"></div>
-            </div>
-             <div v-else class="echart echart-no-data-tip">
-              <span>~~~No Data!~~~</span>
             </div>
           </section>
         </div>
@@ -51,8 +48,7 @@ export default {
       layoutData: [
         //   {'x':0,'y':0,'w':2,'h':2,'i':'0'},
         //   {'x':1,'y':1,'w':2,'h':2,'i':'1'},
-      ],
-      noDataTip: false
+      ]
     }
   },
   mounted() {
@@ -86,57 +82,11 @@ export default {
         })) 
       })
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.metricConfigView.api, {config: `[${params.join(',')}]`}, responseData => {
-        // var legend = []
-        // if (responseData.series.length === 0) {
-        //   this.noDataTip = true
-        //   return
-        // }
-        // const colorX = ['#339933','#33CCCC','#666699','#66CC66','#996633','#9999CC','#339966','#663333','#6666CC','#336699','#3399CC','#33CC66','#CC3333','#CC6666','#996699','#CC9933']
-        // let colorSet = []
-        // for (let i=0;i<colorX.length;i++) {
-        //   let tmpIndex = viewIndex*3 + i
-        //   tmpIndex = tmpIndex%colorX.length
-        //   colorSet.push(colorX[tmpIndex])
-        // }
-        // responseData.series.forEach((item,index)=>{
-        //   legend.push(item.name)
-        //   item.symbol = 'none'
-        //   item.smooth = true
-        //   item.lineStyle = {
-        //     width: 1
-        //   }
-        //   item.itemStyle = {
-        //     normal:{
-        //       color: colorSet[index]
-        //     }
-        //   }
-        //   item.areaStyle = {
-        //     normal: {
-        //       color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
-        //           offset: 0,
-        //           color: colorSet[index]
-        //       }, {
-        //           offset: 1,
-        //           color: 'white'
-        //       }])
-        //     }
-        //   }
-        // }) 
-        // responseData.yaxis.unit =  panalUnit
-        // let config = {
-        //   title: responseData.title,
-        //   legend: legend,
-        //   series: responseData.series,
-        //   yaxis: responseData.yaxis
-        // }
-        // this.elId = id
-        // drawChart(this, config, {eye: false,dataZoom:false})
-
+        
         responseData.yaxis.unit =  panalUnit  
         this.elId = id
         const chartConfig = {eye: false,dataZoom:false}
         readyToDraw(this,responseData, viewIndex, chartConfig)
-
       })
     },
     resizeEvent: function(i, newH, newW, newHPx, newWPx){
