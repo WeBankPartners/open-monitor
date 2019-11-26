@@ -26,11 +26,8 @@
         </div>
         <div class="">
           <section class="metric-section">
-            <div v-if="!noDataTip">
+            <div>
               <div :id="item.id" class="echart" style="height:230px;width:560px"></div>
-            </div>
-             <div v-else class="echart echart-no-data-tip">
-              <span>~~~No Data!~~~</span>
             </div>
           </section>
         </div>
@@ -51,8 +48,7 @@ export default {
       layoutData: [
         //   {'x':0,'y':0,'w':2,'h':2,'i':'0'},
         //   {'x':1,'y':1,'w':2,'h':2,'i':'1'},
-      ],
-      noDataTip: false
+      ]
     }
   },
   mounted() {
