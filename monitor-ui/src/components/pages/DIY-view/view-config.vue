@@ -150,15 +150,19 @@ export default {
         }
       })
     },
-    gridPlus(item) {
-      this.modifyLayoutData().then((resViewData)=>{
-        let parentRouteData = this.$route.params
+    async gridPlus(item) {
+      const resViewData = await this.modifyLayoutData()
+      let parentRouteData = this.$route.params
         parentRouteData.cfg = JSON.stringify(resViewData) 
         this.$router.push({name: 'viewChart', params:{templateData: parentRouteData, panal:item, parentData: this.$route.params}}) 
-      })
+      // this.modifyLayoutData().then((resViewData)=>{
+      //   let parentRouteData = this.$route.params
+      //   parentRouteData.cfg = JSON.stringify(resViewData) 
+      //   this.$router.push({name: 'viewChart', params:{templateData: parentRouteData, panal:item, parentData: this.$route.params}}) 
+      // })
     },
-    modifyLayoutData() {
-      return new Promise(resolve => {
+    async modifyLayoutData() {
+      // return new Promise(resolve => {
         var resViewData = []
         this.layoutData.forEach((layoutDataItem) =>{
           let temp = {
@@ -174,9 +178,10 @@ export default {
             }
           })
           resViewData.push(temp)
-        })
-        resolve(resViewData)
+        // })
+        // resolve(resViewData)
       })
+      return resViewData
     },
     resizeEvent: function(i, newH, newW, newHPx, newWPx){
       this.layoutData.forEach((item,index) => {
