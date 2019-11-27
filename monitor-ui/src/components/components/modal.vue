@@ -315,9 +315,9 @@ import {interceptParams} from '@/assets/js/utils'
   .ui-select {
     width: 70%;
   }
-  .modal{
-    z-index: 2050;
-  }
+  // .modal{
+  //   z-index: 2050;
+  // }
   .modal-dialog {
     top:15%;
     font-family: MicrosoftYaHei;
