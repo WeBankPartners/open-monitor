@@ -9,7 +9,6 @@
 export default {
   name: 'TEST',
   mounted() {
-    console.log(this.$root.JQ('xx'))
   },
   methods: {
     test () {
