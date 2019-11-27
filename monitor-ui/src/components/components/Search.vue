@@ -111,25 +111,24 @@ export default {
        this.endpointList = responseData
       })
     },
-    getChartsConfig () {
+    async getChartsConfig () {
       if (this.$root.$validate.isEmpty_reset(this.endpoint)) {
         return
       }
-      this.getMainConfig().then((res)=>{
-        let url = res.panels.url
-        let key = res.search.name
-        let params = {
-          autoRefresh: this.autoRefresh,
-          time: this.timeTnterval,
-          endpoint: this.endpoint.split(':')[0],
-          start: this.dateRange[0] ===''? '':Date.parse(this.dateRange[0])/1000,
-          end: this.dateRange[1] ===''? '':Date.parse(this.dateRange[1])/1000
-        }
-        url = url.replace(`{${key}}`,params[key].split(':')[0])
-        this.$root.$httpRequestEntrance.httpRequestEntrance('GET',url, params, responseData => {
-          this.$parent.manageCharts(responseData, params)
-        },{isNeedloading: false})
-      })
+      const res = await this.getMainConfig()
+      let url = res.panels.url
+      let key = res.search.name
+      let params = {
+        autoRefresh: this.autoRefresh,
+        time: this.timeTnterval,
+        endpoint: this.endpoint.split(':')[0],
+        start: this.dateRange[0] ===''? '':Date.parse(this.dateRange[0])/1000,
+        end: this.dateRange[1] ===''? '':Date.parse(this.dateRange[1])/1000
+      }
+      url = url.replace(`{${key}}`,params[key].split(':')[0])
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET',url, params, responseData => {
+        this.$parent.manageCharts(responseData, params)
+      },{isNeedloading: false})
     },
     clearEndpoint () {
       this.clearEndpoint = []
