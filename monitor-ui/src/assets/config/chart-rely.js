@@ -22,13 +22,17 @@ export const readyToDraw = function(that, responseData, viewIndex, chartConfig) 
     tmpIndex = tmpIndex%colorX.length
     colorSet.push(colorX[tmpIndex])
   }
-  responseData.series.forEach((item,index)=>{
+  responseData.series.forEach((item, index)=>{
     legend.push(item.name)
     item.symbol = 'none'
     item.smooth = true
     item.lineStyle = {
       width: 1
     }
+    // 堆叠区域图开启
+    // item.areaStyle = {}
+
+    // 渐变图像开启
     item.itemStyle = {
       normal:{
         color: colorSet[index] ? colorSet[index] : '#666699' 
