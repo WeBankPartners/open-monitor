@@ -1,19 +1,19 @@
 import Vue from "vue";
 import Router from "vue-router";
 
-import alarmManagement from "@/components/pages/alarm-management";
-import portal from "@/components/pages/portal";
-import mainView from "@/components/pages/main-view";
-import monitorConfigIndex from "@/components/pages/monitor-config/Monitor-config-index";
-import endpointManagement from "@/components/pages/monitor-config/Endpoint-management";
-import groupManagement from "@/components/pages/monitor-config/Group-management";
-import thresholdManagement from "@/components/pages/monitor-config/Threshold-management";
-import logManagement from "@/components/pages/monitor-config/Log-management";
-import metricConfig from "@/components/pages/metric-config";
-import viewConfigIndex from "@/components/pages/DIY-view/view-config-index";
-import viewConfig from "@/components/pages/DIY-view/view-config";
-import editView from "@/components/pages/DIY-view/edit-view";
-import searchHomepage from "@/components/pages/Search-homepage";
+import alarmManagement from "@/views/alarm-management";
+import portal from "@/views/portal";
+import mainView from "@/views/main-view";
+import monitorConfigIndex from "@/views/monitor-config/Monitor-config-index";
+import endpointManagement from "@/views/monitor-config/Endpoint-management";
+import groupManagement from "@/views/monitor-config/Group-management";
+import thresholdManagement from "@/views/monitor-config/Threshold-management";
+import logManagement from "@/views/monitor-config/Log-management";
+import metricConfig from "@/views/metric-config";
+import viewConfigIndex from "@/views/DIY-view/view-config-index";
+import viewConfig from "@/views/DIY-view/view-config";
+import editView from "@/views/DIY-view/edit-view";
+import searchHomepage from "@/views/Search-homepage";
 import index from "@/components/index";
 
 Vue.use(Router);
