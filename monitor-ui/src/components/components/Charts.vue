@@ -30,8 +30,8 @@
 </template>
 
 <script>
-import SingleChart from '@/components/components/Single-chart'
-import MaxChart from '@/components/components/Max-chart'
+import SingleChart from '@/components/components/single-chart'
+import MaxChart from '@/components/components/max-chart'
 export default {
   name: '',
   data() {

@@ -53,7 +53,7 @@ const router = new Router({
           title: "",
           meta: {},
           component: () =>
-            import("@/views/monitor-config/Monitor-config-index"),
+            import("@/views/monitor-config/monitor-config-index"),
           redirect: "/monitorConfigIndex/endpointManagement",
           children: [
             {
@@ -62,7 +62,7 @@ const router = new Router({
               title: "对象管理",
               meta: {},
               component: () =>
-                import("@/views/monitor-config/Endpoint-management")
+                import("@/views/monitor-config/endpoint-management")
             },
             {
               path: "groupManagement",
@@ -70,7 +70,7 @@ const router = new Router({
               title: "组管理",
               meta: {},
               component: () =>
-                import("@/views/monitor-config/Group-management")
+                import("@/views/monitor-config/group-management")
             },
             {
               path: "thresholdManagement",
@@ -78,7 +78,7 @@ const router = new Router({
               title: "阀值配置",
               meta: {},
               component: () =>
-                import("@/views/monitor-config/Threshold-management")
+                import("@/views/monitor-config/threshold-management")
             },
             {
               path: "logManagement",
@@ -86,7 +86,7 @@ const router = new Router({
               title: "阀值配置",
               meta: {},
               component: () =>
-                import("@/views/monitor-config/Log-management")
+                import("@/views/monitor-config/log-management")
             }
           ]
         },
@@ -131,7 +131,7 @@ const router = new Router({
           name: "searchHomepage",
           title: "搜索主页",
           meta: {},
-          component: () => import("@/views/Search-homepage")
+          component: () => import("@/views/search-homepage")
         }
       ]
     },
