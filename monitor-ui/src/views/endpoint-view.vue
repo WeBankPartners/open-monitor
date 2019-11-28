@@ -1,15 +1,15 @@
 <template>
-  <div class="page" id="mainView">
+  <div class="page" id="endpointView">
     <Title :title="$t('menu.endpointView')"></Title>
     <Search ref="search" />
     <Charts v-if="showCharts" :charts='charts' ref="parentCharts" />
   </div>
 </template>
 <script>
-import Search from '@/components/components/Search'
-import Charts from '@/components/components/Charts'
+import Search from '@/components/search'
+import Charts from '@/components/charts'
 export default {
-  name: 'main-view',
+  name: 'endpoint-view',
   data() {
     return {
       showCharts: false,

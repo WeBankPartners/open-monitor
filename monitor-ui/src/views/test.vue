@@ -1,6 +1,6 @@
 <template>
   <div class="hello">
-    <h1 id="xx">TEST1</h1>
+    <h1 id="xx">TEST2</h1>
     <Button type="primary" @click="test">Primary</Button>
   </div>
 </template>

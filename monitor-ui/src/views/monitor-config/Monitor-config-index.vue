@@ -14,7 +14,6 @@
 </template>
 
 <script>
-import Title from '@/components/components/Title'
 export default {
   name: '',
   data() {
@@ -39,7 +38,6 @@ export default {
     }
   },
   components: {
-    Title
   },
 }
 </script>

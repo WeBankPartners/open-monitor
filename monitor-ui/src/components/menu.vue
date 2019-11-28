@@ -1,7 +1,7 @@
 <template>
   <Menu mode="horizontal" :theme="theme1" :active-name="activeName" @on-select="menuChange">
     <div class="logo" @click="routerChange">
-      <img src="../../assets/logo.png" />
+      <img src="../assets/logo.png" />
       <span>{{$t('menu.systemName')}}</span>
     </div>
     <Submenu name>
@@ -9,7 +9,7 @@
         <i class="fa fa-line-chart" aria-hidden="true"></i>
         {{$t("menu.view")}}
       </template>
-      <MenuItem name="mainView">{{$t("menu.endpointView")}}</MenuItem>
+      <MenuItem name="endpointView">{{$t("menu.endpointView")}}</MenuItem>
       <!-- <MenuItem name="systemMonitoring">{{$t("menu.systemMonitoring")}}</MenuItem> -->
       <MenuItem name="metricConfig">{{$t("menu.metricConfiguration")}}</MenuItem>
       <MenuItem name="viewConfigIndex">{{$t("menu.customViews")}}</MenuItem>
@@ -81,8 +81,8 @@ export default {
       this.$validator.locale = lang;
     },
     routerChange() {
-      if (this.$route.name === "portal") return;
-      this.$router.push({ name: "portal" });
+      if (this.$route.name === "dashboard") return;
+      this.$router.push({ name: "dashboard" });
     },
     menuChange(name) {
       this.activeName = name;
