@@ -20,7 +20,7 @@ Vue.prototype.$validate = validate;
 Vue.prototype.$tableUtil = tableUtil;
 Vue.prototype.apiCenter = apiCenter;
 
-import Title from "@/components/components/Title";
+import Title from "@/components/components/title";
 import PageTable from "@/components/components/table-page/page";
 import ModalComponent from "@/components/components/modal";
 Vue.component("Title", Title);
