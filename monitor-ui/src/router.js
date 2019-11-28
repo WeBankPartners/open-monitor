@@ -17,35 +17,35 @@ const router = new Router({
           name: "alarmManagement",
           title: "告警管理",
           meta: {},
-          component: () => import("@/components/pages/alarm-management")
+          component: () => import("@/views/alarm-management")
         },
         {
           path: "portal",
           name: "portal",
           title: "首页",
           meta: {},
-          component: () => import("@/components/pages/portal")
+          component: () => import("@/views/portal")
         },
         {
           path: "systemMonitoring",
           name: "systemMonitoring",
           title: "对象监控",
           meta: {},
-          component: () => import("@/components/pages/system-monitoring/system-monitoring")
+          component: () => import("@/views/system-monitoring/system-monitoring")
         },
         {
           path: "sysViewChart",
           name: "sysViewChart",
           title: "视图查看",
           meta: {},
-          component: () => import("@/components/pages/system-monitoring/sys-view-chart")
+          component: () => import("@/views/system-monitoring/sys-view-chart")
         },
         {
           path: "mainView",
           name: "mainView",
           title: "对象监控",
           meta: {},
-          component: () => import("@/components/pages/main-view")
+          component: () => import("@/views/main-view")
         },
         {
           path: "monitorConfigIndex",
@@ -53,7 +53,7 @@ const router = new Router({
           title: "",
           meta: {},
           component: () =>
-            import("@/components/pages/monitor-config/Monitor-config-index"),
+            import("@/views/monitor-config/Monitor-config-index"),
           redirect: "/monitorConfigIndex/endpointManagement",
           children: [
             {
@@ -62,7 +62,7 @@ const router = new Router({
               title: "对象管理",
               meta: {},
               component: () =>
-                import("@/components/pages/monitor-config/Endpoint-management")
+                import("@/views/monitor-config/Endpoint-management")
             },
             {
               path: "groupManagement",
@@ -70,7 +70,7 @@ const router = new Router({
               title: "组管理",
               meta: {},
               component: () =>
-                import("@/components/pages/monitor-config/Group-management")
+                import("@/views/monitor-config/Group-management")
             },
             {
               path: "thresholdManagement",
@@ -78,7 +78,7 @@ const router = new Router({
               title: "阀值配置",
               meta: {},
               component: () =>
-                import("@/components/pages/monitor-config/Threshold-management")
+                import("@/views/monitor-config/Threshold-management")
             },
             {
               path: "logManagement",
@@ -86,7 +86,7 @@ const router = new Router({
               title: "阀值配置",
               meta: {},
               component: () =>
-                import("@/components/pages/monitor-config/Log-management")
+                import("@/views/monitor-config/Log-management")
             }
           ]
         },
@@ -95,7 +95,7 @@ const router = new Router({
           name: "metricConfig",
           title: "视图配置",
           meta: {},
-          component: () => import("@/components/pages/metric-config")
+          component: () => import("@/views/metric-config")
         },
         {
           path: "viewConfigIndex",
@@ -103,35 +103,35 @@ const router = new Router({
           title: "自定义视图主页",
           meta: {},
           component: () =>
-            import("@/components/pages/DIY-view/view-config-index")
+            import("@/views/DIY-view/view-config-index")
         },
         {
           path: "viewConfig",
           name: "viewConfig",
           title: "自定义视图",
           meta: {},
-          component: () => import("@/components/pages/DIY-view/view-config")
+          component: () => import("@/views/DIY-view/view-config")
         },
         {
           path: "editView",
           name: "editView",
           title: "自定义视图编辑",
           meta: {},
-          component: () => import("@/components/pages/DIY-view/edit-view")
+          component: () => import("@/views/DIY-view/edit-view")
         },
         {
           path: "viewChart",
           name: "viewChart",
           title: "视图查看",
           meta: {},
-          component: () => import("@/components/pages/DIY-view/view-chart")
+          component: () => import("@/views/DIY-view/view-chart")
         },
         {
           path: "searchHomepage",
           name: "searchHomepage",
           title: "搜索主页",
           meta: {},
-          component: () => import("@/components/pages/Search-homepage")
+          component: () => import("@/views/Search-homepage")
         }
       ]
     },
