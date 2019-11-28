@@ -8,7 +8,7 @@ const router = new Router({
     {
       path: "/",
       name: "index",
-      component: () => import("@/components/index"),
+      component: () => import("@/views/index"),
       redirect: "/portal",
       title: "测试首页",
       children: [
@@ -138,7 +138,7 @@ const router = new Router({
     {
       path: "/test",
       name: "test",
-      component: () => import("@/components/test"),
+      component: () => import("@/views/test"),
       title: "test"
     }
   ]

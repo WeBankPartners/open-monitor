@@ -6,8 +6,8 @@
   </div>
 </template>
 <script>
-import Search from '@/components/components/search'
-import Charts from '@/components/components/charts'
+import Search from '@/components/search'
+import Charts from '@/components/charts'
 export default {
   name: 'main-view',
   data() {

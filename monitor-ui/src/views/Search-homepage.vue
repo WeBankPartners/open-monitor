@@ -18,7 +18,7 @@
 </template>
 
 <script>
-import Searchinput from '@/components/components/search-input'
+import Searchinput from '@/components/search-input'
 export default {
   name: '',
   data() {
