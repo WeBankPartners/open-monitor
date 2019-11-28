@@ -9,8 +9,8 @@
 </template>
 
 <script>
-import Del from '@/components/components/del'
-import Menu from "./sub-c/menu";
+import Del from '@/components/del'
+import Menu from "@/components/menu";
 export default {
   name: "index",
   data() {
