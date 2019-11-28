@@ -63,7 +63,7 @@
 </template>
 
 <script>
-import Notice from '@/components/components/notice'
+import Notice from '@/components/notice'
 import {dataPick} from '@/assets/config/common-config'
 import {generateUuid} from '@/assets/js/utils'
 

@@ -6,7 +6,6 @@ import "@/assets/css/local.bootstrap.css";
 import "bootstrap/dist/js/bootstrap.min.js";
 import "font-awesome/css/font-awesome.css";
 import "./plugins/iview.js";
-// import '@/assets/locale/language'
 import httpRequestEntrance from "@/assets/js/httpRequestEntrance.js";
 import jquery from "jquery";
 import { tableUtil } from "@/assets/js/tableUtil.js";
@@ -20,9 +19,9 @@ Vue.prototype.$validate = validate;
 Vue.prototype.$tableUtil = tableUtil;
 Vue.prototype.apiCenter = apiCenter;
 
-import Title from "@/components/components/Title";
-import PageTable from "@/components/components/table-page/page";
-import ModalComponent from "@/components/components/modal";
+import Title from "@/components/title";
+import PageTable from "@/components/table-page/page";
+import ModalComponent from "@/components/modal";
 Vue.component("Title", Title);
 Vue.component("PageTable", PageTable);
 Vue.component("ModalComponent", ModalComponent);
