@@ -9,7 +9,7 @@
         <i class="fa fa-line-chart" aria-hidden="true"></i>
         {{$t("menu.view")}}
       </template>
-      <MenuItem name="mainView">{{$t("menu.endpointView")}}</MenuItem>
+      <MenuItem name="endpointView">{{$t("menu.endpointView")}}</MenuItem>
       <!-- <MenuItem name="systemMonitoring">{{$t("menu.systemMonitoring")}}</MenuItem> -->
       <MenuItem name="metricConfig">{{$t("menu.metricConfiguration")}}</MenuItem>
       <MenuItem name="viewConfigIndex">{{$t("menu.customViews")}}</MenuItem>
