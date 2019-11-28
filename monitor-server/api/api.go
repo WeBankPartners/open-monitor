@@ -97,7 +97,7 @@ func InitHttpServer() {
 		{
 			agentApi.POST("/register", agent.RegisterAgent)
 			agentApi.GET("/deregister", agent.DeregisterAgent)
-			agentApi.GET("/host/register", agent.StartHostAgent)
+			agentApi.POST("/host/register", agent.StartHostAgentNew)
 			agentApi.GET("/host/deregister", agent.StopHostAgent)
 			agentApi.GET("/mysql/register", agent.StartMysqlAgent)
 			agentApi.GET("/mysql/deregister", agent.StopMysqlAgent)
