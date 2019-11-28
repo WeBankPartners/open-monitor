@@ -14,7 +14,7 @@ import viewConfigIndex from "@/views/custom-view/view-config-index";
 import viewConfig from "@/views/custom-view/view-config";
 import editView from "@/views/custom-view/edit-view";
 import portal from "@/views/portal";
-import index from "@/view/index";
+import index from "@/views/index";
 
 Vue.use(Router);
 const router = [
