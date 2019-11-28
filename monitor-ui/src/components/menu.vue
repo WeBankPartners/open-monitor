@@ -1,7 +1,7 @@
 <template>
   <Menu mode="horizontal" :theme="theme1" :active-name="activeName" @on-select="menuChange">
     <div class="logo" @click="routerChange">
-      <img src="../../assets/logo.png" />
+      <img src="../assets/logo.png" />
       <span>{{$t('menu.systemName')}}</span>
     </div>
     <Submenu name>

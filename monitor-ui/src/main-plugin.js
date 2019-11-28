@@ -24,9 +24,9 @@ window.addOptions({
 
 window.addRoutes(router)
 
-import Title from '@/components/components/title'
-import PageTable from '@/components/components/table-page/page'
-import ModalComponent from '@/components/components/modal'
+import Title from '@/components/title'
+import PageTable from '@/components/table-page/page'
+import ModalComponent from '@/components/modal'
 window.component('Title', Title)
 window.component('PageTable', PageTable)
 window.component('ModalComponent', ModalComponent)
