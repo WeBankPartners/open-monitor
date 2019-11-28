@@ -3,16 +3,16 @@ import Router from "vue-router";
 
 import alarmManagement from "@/views/alarm-management";
 import portal from "@/views/portal";
-import mainView from "@/views/main-view";
+import endpointView from "@/views/endpoint-view";
 import monitorConfigIndex from "@/views/monitor-config/monitor-config-index";
 import endpointManagement from "@/views/monitor-config/endpoint-management";
 import groupManagement from "@/views/monitor-config/group-management";
 import thresholdManagement from "@/views/monitor-config/threshold-management";
 import logManagement from "@/views/monitor-config/log-management";
 import metricConfig from "@/views/metric-config";
-import viewConfigIndex from "@/views/DIY-view/view-config-index";
-import viewConfig from "@/views/DIY-view/view-config";
-import editView from "@/views/DIY-view/edit-view";
+import viewConfigIndex from "@/views/custom-view/view-config-index";
+import viewConfig from "@/views/custom-view/view-config";
+import editView from "@/views/custom-view/edit-view";
 import searchHomepage from "@/views/search-homepage";
 import index from "@/view/index";
 
@@ -34,11 +34,11 @@ const router = [
     component: portal
   },
   {
-    path: "/mainView",
-    name: "mainView",
+    path: "/endpointView",
+    name: "endpointView",
     title: "对象监控",
     meta: {},
-    component: mainView
+    component: endpointView
   },
   {
     path: "/monitorConfigIndex",

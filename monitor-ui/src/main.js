@@ -6,7 +6,6 @@ import "@/assets/css/local.bootstrap.css";
 import "bootstrap/dist/js/bootstrap.min.js";
 import "font-awesome/css/font-awesome.css";
 import "./plugins/iview.js";
-// import '@/assets/locale/language'
 import httpRequestEntrance from "@/assets/js/httpRequestEntrance.js";
 import jquery from "jquery";
 import { tableUtil } from "@/assets/js/tableUtil.js";

@@ -41,11 +41,11 @@ const router = new Router({
           component: () => import("@/views/system-monitoring/sys-view-chart")
         },
         {
-          path: "mainView",
-          name: "mainView",
+          path: "endpointView",
+          name: "endpointView",
           title: "对象监控",
           meta: {},
-          component: () => import("@/views/main-view")
+          component: () => import("@/views/endpoint-view")
         },
         {
           path: "monitorConfigIndex",
@@ -103,28 +103,28 @@ const router = new Router({
           title: "自定义视图主页",
           meta: {},
           component: () =>
-            import("@/views/DIY-view/view-config-index")
+            import("@/views/custom-view/view-config-index")
         },
         {
           path: "viewConfig",
           name: "viewConfig",
           title: "自定义视图",
           meta: {},
-          component: () => import("@/views/DIY-view/view-config")
+          component: () => import("@/views/custom-view/view-config")
         },
         {
           path: "editView",
           name: "editView",
           title: "自定义视图编辑",
           meta: {},
-          component: () => import("@/views/DIY-view/edit-view")
+          component: () => import("@/views/custom-view/edit-view")
         },
         {
           path: "viewChart",
           name: "viewChart",
           title: "视图查看",
           meta: {},
-          component: () => import("@/views/DIY-view/view-chart")
+          component: () => import("@/views/custom-view/view-chart")
         },
         {
           path: "searchHomepage",
