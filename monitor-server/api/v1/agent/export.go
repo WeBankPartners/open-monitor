@@ -18,11 +18,11 @@ type resultObj struct {
 
 func StartHostAgent(c *gin.Context)  {
 	hostIp := c.Query("host_ip")
-	osType := strings.ToLower(c.Query("os_type"))
-	if !isLinuxType(osType) {
-		mid.ReturnValidateFail(c, "Illegal OS type")
-		return
-	}
+	//osType := strings.ToLower(c.Query("os_type"))
+	//if !isLinuxType(osType) {
+	//	mid.ReturnValidateFail(c, "Illegal OS type")
+	//	return
+	//}
 	param := m.RegisterParam{Type:hostType, ExporterIp:hostIp, ExporterPort:"9100"}
 	err := RegisterJob(param)
 	if err != nil {
