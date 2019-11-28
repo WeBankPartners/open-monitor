@@ -32,7 +32,7 @@
 
     <!-- 6.运行资源 - 描述部署运行本插件包需要的基础资源(如主机、虚拟机、容器、数据库等) -->
     <resourceDependencies>
-        <docker imageName="wecube-monitor:v1.0" containerName="wecube-monitor-v1.0" portBindings="{{ALLOCATE_PORT}}:8080" volumeBindings="{{BASE_MOUNT_PATH}}/prometheus/logs:/app/monitor/prometheus/logs,{{BASE_MOUNT_PATH}}/prometheus/data:/app/monitor/prometheus/data,{{BASE_MOUNT_PATH}}/alertmanager/logs:/app/monitor/alertmanager/logs,{{BASE_MOUNT_PATH}}/consul/logs:/app/monitor/consul/logs,{{BASE_MOUNT_PATH}}/monitor/logs:/app/monitor/monitor/logs" envVariables="MONITOR_DB_HOST={{DB_HOST}},MONITOR_DB_PORT={{DB_PORT}},MONITOR_DB_SCHEMA={{DB_SCHEMA}},MONITOR_DB_USER={{DB_USER}},MONITOR_DB_PWD={{DB_PWD}}"/>
+        <docker imageName="wecube-monitor:v1.0" containerName="wecube-monitor-v1.0" portBindings="{{host_port}}:8080" volumeBindings="{{base_mount_path}}/prometheus/logs:/app/monitor/prometheus/logs,{{base_mount_path}}/prometheus/data:/app/monitor/prometheus/data,{{base_mount_path}}/alertmanager/logs:/app/monitor/alertmanager/logs,{{base_mount_path}}/consul/logs:/app/monitor/consul/logs,{{base_mount_path}}/monitor/logs:/app/monitor/monitor/logs" envVariables="MONITOR_DB_HOST={{db_host}},MONITOR_DB_PORT={{db_port}},MONITOR_DB_SCHEMA={{db_schema}},MONITOR_DB_USER={{db_user}},MONITOR_DB_PWD={{db_password}}"/>
         <mysql schema="monitor" initFileName="init.sql" upgradeFileName="upgrade.sql"/>
     </resourceDependencies>
 
@@ -42,7 +42,6 @@
             <interface action="register" path="/wecube-monitor/api/v1/agent/host/register" httpMethod='GET'>
                 <inputParameters>
                     <parameter datatype="string" mappingType='context' required='Y'>host_ip</parameter>
-                    <parameter datatype="string" mappingType='context' required='Y'>os_type</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string">result_code</parameter>
