@@ -1,20 +1,20 @@
 import Vue from "vue";
 import Router from "vue-router";
 
-import alarmManagement from "@/components/pages/alarm-management";
-import portal from "@/components/pages/portal";
-import mainView from "@/components/pages/main-view";
-import monitorConfigIndex from "@/components/pages/monitor-config/Monitor-config-index";
-import endpointManagement from "@/components/pages/monitor-config/Endpoint-management";
-import groupManagement from "@/components/pages/monitor-config/Group-management";
-import thresholdManagement from "@/components/pages/monitor-config/Threshold-management";
-import logManagement from "@/components/pages/monitor-config/Log-management";
-import metricConfig from "@/components/pages/metric-config";
-import viewConfigIndex from "@/components/pages/DIY-view/view-config-index";
-import viewConfig from "@/components/pages/DIY-view/view-config";
-import editView from "@/components/pages/DIY-view/edit-view";
-import searchHomepage from "@/components/pages/Search-homepage";
-import index from "@/components/index";
+import alarmManagement from "@/views/alarm-management";
+import dashboard from "@/views/dashboard";
+import endpointView from "@/views/endpoint-view";
+import monitorConfigIndex from "@/views/monitor-config/monitor-config-index";
+import endpointManagement from "@/views/monitor-config/endpoint-management";
+import groupManagement from "@/views/monitor-config/group-management";
+import thresholdManagement from "@/views/monitor-config/threshold-management";
+import logManagement from "@/views/monitor-config/log-management";
+import metricConfig from "@/views/metric-config";
+import viewConfigIndex from "@/views/custom-view/view-config-index";
+import viewConfig from "@/views/custom-view/view-config";
+import editView from "@/views/custom-view/edit-view";
+import portal from "@/views/portal";
+import index from "@/view/index";
 
 Vue.use(Router);
 const router = [
@@ -27,18 +27,18 @@ const router = [
     component: alarmManagement
   },
   {
-    path: "/portal",
-    name: "portal",
+    path: "/dashboard",
+    name: "dashboard",
     title: "首页",
     meta: {},
-    component: portal
+    component: dashboard
   },
   {
-    path: "/mainView",
-    name: "mainView",
+    path: "/endpointView",
+    name: "endpointView",
     title: "对象监控",
     meta: {},
-    component: mainView
+    component: endpointView
   },
   {
     path: "/monitorConfigIndex",
@@ -107,11 +107,11 @@ const router = [
     component: editView
   },
   {
-    path: "/searchHomepage",
-    name: "searchHomepage",
+    path: "/portal",
+    name: "portal",
     title: "搜索主页",
     meta: {},
-    component: searchHomepage
+    component: portal
   }
 ];
 
