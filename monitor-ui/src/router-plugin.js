@@ -2,7 +2,7 @@ import Vue from "vue";
 import Router from "vue-router";
 
 import alarmManagement from "@/views/alarm-management";
-import portal from "@/views/portal";
+import dashboard from "@/views/dashboard";
 import endpointView from "@/views/endpoint-view";
 import monitorConfigIndex from "@/views/monitor-config/monitor-config-index";
 import endpointManagement from "@/views/monitor-config/endpoint-management";
@@ -13,7 +13,7 @@ import metricConfig from "@/views/metric-config";
 import viewConfigIndex from "@/views/custom-view/view-config-index";
 import viewConfig from "@/views/custom-view/view-config";
 import editView from "@/views/custom-view/edit-view";
-import searchHomepage from "@/views/search-homepage";
+import portal from "@/views/portal";
 import index from "@/view/index";
 
 Vue.use(Router);
@@ -27,11 +27,11 @@ const router = [
     component: alarmManagement
   },
   {
-    path: "/portal",
-    name: "portal",
+    path: "/dashboard",
+    name: "dashboard",
     title: "首页",
     meta: {},
-    component: portal
+    component: dashboard
   },
   {
     path: "/endpointView",
@@ -107,11 +107,11 @@ const router = [
     component: editView
   },
   {
-    path: "/searchHomepage",
-    name: "searchHomepage",
+    path: "/portal",
+    name: "portal",
     title: "搜索主页",
     meta: {},
-    component: searchHomepage
+    component: portal
   }
 ];
 

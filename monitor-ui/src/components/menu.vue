@@ -81,8 +81,8 @@ export default {
       this.$validator.locale = lang;
     },
     routerChange() {
-      if (this.$route.name === "portal") return;
-      this.$router.push({ name: "portal" });
+      if (this.$route.name === "dashboard") return;
+      this.$router.push({ name: "dashboard" });
     },
     menuChange(name) {
       this.activeName = name;

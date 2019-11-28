@@ -9,7 +9,7 @@ const router = new Router({
       path: "/",
       name: "index",
       component: () => import("@/views/index"),
-      redirect: "/portal",
+      redirect: "/dashboard",
       title: "测试首页",
       children: [
         {
@@ -20,11 +20,11 @@ const router = new Router({
           component: () => import("@/views/alarm-management")
         },
         {
-          path: "portal",
-          name: "portal",
+          path: "dashboard",
+          name: "dashboard",
           title: "首页",
           meta: {},
-          component: () => import("@/views/portal")
+          component: () => import("@/views/dashboard")
         },
         {
           path: "systemMonitoring",
@@ -127,11 +127,11 @@ const router = new Router({
           component: () => import("@/views/custom-view/view-chart")
         },
         {
-          path: "searchHomepage",
-          name: "searchHomepage",
+          path: "portal",
+          name: "portal",
           title: "搜索主页",
           meta: {},
-          component: () => import("@/views/search-homepage")
+          component: () => import("@/views/portal")
         }
       ]
     },
