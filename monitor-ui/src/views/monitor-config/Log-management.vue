@@ -83,7 +83,7 @@
 
 <script>
 import {thresholdList, lastList, priorityList} from '@/assets/config/common-config.js'
-import extendTable from '@/components/components/table-page/extend-table'
+import extendTable from '@/components/table-page/extend-table'
 let tableEle = [
   {title: 'tableKey.path', value: 'path', display: true}
 ]

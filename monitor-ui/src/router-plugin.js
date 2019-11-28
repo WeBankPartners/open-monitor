@@ -14,7 +14,7 @@ import viewConfigIndex from "@/views/DIY-view/view-config-index";
 import viewConfig from "@/views/DIY-view/view-config";
 import editView from "@/views/DIY-view/edit-view";
 import searchHomepage from "@/views/search-homepage";
-import index from "@/components/index";
+import index from "@/view/index";
 
 Vue.use(Router);
 const router = [
