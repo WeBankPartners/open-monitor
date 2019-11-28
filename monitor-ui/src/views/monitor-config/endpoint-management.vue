@@ -2,7 +2,7 @@
   <div class="main-content">
     <div v-if="showGroupMsg" style="padding-left:20px">
       <Tag type="border" closable color="primary" @on-close="closeTag">{{$t('field.group')}}:{{groupMsg.name}}</Tag>
-    </div>
+    </div> 
     <PageTable :pageConfig="pageConfig"></PageTable>
     <ModalComponent :modelConfig="modelConfig">
       <div slot="advancedConfig" class="extentClass">   
