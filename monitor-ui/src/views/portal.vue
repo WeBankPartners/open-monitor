@@ -18,7 +18,7 @@
 </template>
 
 <script>
-import Searchinput from '../components/Search-input'
+import Searchinput from '@/components/search-input'
 export default {
   name: '',
   data() {
@@ -34,7 +34,7 @@ export default {
   },
   methods: {
     routerChange (){
-      this.$root.$validate.isEmpty_reset(this.$root.$store.state.ip) ? '' : this.$router.push({ name: 'mainView',params: this.$root.$store.state.ip})
+      this.$root.$validate.isEmpty_reset(this.$root.$store.state.ip) ? '' : this.$router.push({ name: 'endpointView',params: this.$root.$store.state.ip})
     }, 
   },
   components: {

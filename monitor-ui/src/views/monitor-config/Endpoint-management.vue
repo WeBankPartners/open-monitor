@@ -43,7 +43,7 @@
   </div>
 </template>
 <script>
-  import tableTemp from '@/components/components/table-page/table'
+  import tableTemp from '@/components/table-page/table'
   let tableEle = [
     {title: 'tableKey.endpoint', value: 'guid', display: true},
     {title: 'tableKey.group', value: 'groups_name', display: true, }
