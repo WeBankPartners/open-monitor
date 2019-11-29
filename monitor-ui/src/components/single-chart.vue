@@ -75,7 +75,8 @@ export default {
     .echart {
        height: 300px;
        width: 580px;
-       background: @gray-f;
+       border-radius: 4px;
+      //  background: @gray-f;
     }
     .echart-no-data-tip {
       text-align: center;
