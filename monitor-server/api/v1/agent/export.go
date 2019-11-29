@@ -19,7 +19,13 @@ type resultObj struct {
 }
 
 type requestObj struct {
-	Inputs  []map[string]string  `json:"inputs"`
+	RequestId  string  	`json:"requestId"`
+	Inputs  []hostRequestObj  `json:"inputs"`
+}
+
+type hostRequestObj struct {
+	CallbackParameter  string  `json:"callbackParameter"`
+	HostIp  map[string]string  `json:"host_ip"`
 }
 
 func StartHostAgentNew(c *gin.Context)  {
@@ -35,7 +41,7 @@ func StartHostAgentNew(c *gin.Context)  {
 			c.JSON(http.StatusBadRequest, result)
 			return
 		}
-		if hostIp,b := param.Inputs[0]["host_ip"]; b {
+		if hostIp,b := param.Inputs[0].HostIp["code"]; b {
 			param := m.RegisterParam{Type:hostType, ExporterIp:hostIp, ExporterPort:"9100"}
 			err := RegisterJob(param)
 			if err != nil {
