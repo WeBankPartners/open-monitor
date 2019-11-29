@@ -60,6 +60,7 @@ export const readyToDraw = function(that, responseData, viewIndex, chartConfig) 
 }
 
 export const drawChart = function(that,config,userConfig) {
+  const chartTextColor = localStorage.getItem('theme') ? '#cccccc': ''
   let originConfig = {
     title: true,
     eye: true,
@@ -75,6 +76,11 @@ export const drawChart = function(that,config,userConfig) {
   }
   let option = {
     title: {
+      textStyle: {
+        fontSize: 18,
+        fontWeight: 'bolder',
+        color: chartTextColor          // 主标题文字颜色
+      },
       // text: config.title,
       left:'10%',
       top: '10px'
@@ -147,9 +153,12 @@ export const drawChart = function(that,config,userConfig) {
     xAxis: {
       type: 'time',
       axisLabel: {
-      formatter: function (value) {
-        return echarts.format.formatTime('MM-dd\nhh:mm:ss', value)
-      }
+        textStyle: {
+          color: chartTextColor
+        },
+        formatter: function (value) {
+          return echarts.format.formatTime('MM-dd\nhh:mm:ss', value)
+        }
       },
       boundaryGap : false,
       splitLine: {
@@ -160,6 +169,9 @@ export const drawChart = function(that,config,userConfig) {
       {
         type: 'value',
         axisLabel: {
+          textStyle: {
+            color: chartTextColor
+          },
           show: true,
           interval: 'auto',
           formatter: (value) => {
