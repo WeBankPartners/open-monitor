@@ -25,7 +25,7 @@ type requestObj struct {
 
 type hostRequestObj struct {
 	CallbackParameter  string  `json:"callbackParameter"`
-	HostIp  map[string]string  `json:"host_ip"`
+	HostIp  string  `json:"host_ip"`
 }
 
 func StartHostAgentNew(c *gin.Context)  {
@@ -41,7 +41,16 @@ func StartHostAgentNew(c *gin.Context)  {
 			c.JSON(http.StatusBadRequest, result)
 			return
 		}
-		if hostIp,b := param.Inputs[0].HostIp["code"]; b {
+		var ipList []string
+		var tmpHostIp string
+		if strings.Contains(param.Inputs[0].HostIp, "[") || strings.Contains(param.Inputs[0].HostIp, ",") {
+			tmpHostIp = strings.ReplaceAll(param.Inputs[0].HostIp, "[", "")
+			tmpHostIp = strings.ReplaceAll(param.Inputs[0].HostIp, "]", "")
+			ipList = strings.Split(tmpHostIp, ",")
+		}else{
+			ipList = append(ipList, param.Inputs[0].HostIp)
+		}
+		for _,hostIp := range ipList {
 			param := m.RegisterParam{Type:hostType, ExporterIp:hostIp, ExporterPort:"9100"}
 			err := RegisterJob(param)
 			if err != nil {
@@ -50,14 +59,10 @@ func StartHostAgentNew(c *gin.Context)  {
 				c.JSON(http.StatusInternalServerError, result)
 				return
 			}
-			result = resultObj{ResultCode:"0", ResultMessage:"Success"}
-			mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
-			mid.ReturnData(c, result)
-		}else{
-			result = resultObj{ResultCode:"1", ResultMessage:"Param validate fail : inputs don't have host_ip"}
-			mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
-			c.JSON(http.StatusBadRequest, result)
 		}
+		result = resultObj{ResultCode:"0", ResultMessage:"Success"}
+		mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
+		mid.ReturnData(c, result)
 	}else{
 		result = resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("Param validate fail : %v", err)}
 		mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
