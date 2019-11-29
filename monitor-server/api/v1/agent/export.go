@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/services/db"
 	"net/url"
+	"io/ioutil"
+	"encoding/json"
 )
 
 type resultObj struct {
@@ -21,25 +23,39 @@ type requestObj struct {
 }
 
 func StartHostAgentNew(c *gin.Context)  {
+	data,_ := ioutil.ReadAll(c.Request.Body)
+	mid.LogInfo(fmt.Sprintf("param : %v", string(data)))
 	var param requestObj
-	if err := c.ShouldBindJSON(&param); err == nil {
+	var result resultObj
+	err := json.Unmarshal(data, &param)
+	if err == nil {
 		if len(param.Inputs) == 0 {
-			c.JSON(http.StatusBadRequest, resultObj{ResultCode:"1", ResultMessage:"Param validate fail : inputs length is zero"})
+			result = resultObj{ResultCode:"1", ResultMessage:"Param validate fail : inputs length is zero"}
+			mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
+			c.JSON(http.StatusBadRequest, result)
 			return
 		}
 		if hostIp,b := param.Inputs[0]["host_ip"]; b {
 			param := m.RegisterParam{Type:hostType, ExporterIp:hostIp, ExporterPort:"9100"}
 			err := RegisterJob(param)
 			if err != nil {
-				c.JSON(http.StatusInternalServerError, resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("register %s:%s fail,error %v",hostType, hostIp, err)})
+				result = resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("register %s:%s fail,error %v",hostType, hostIp, err)}
+				mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
+				c.JSON(http.StatusInternalServerError, result)
 				return
 			}
-			mid.ReturnData(c, resultObj{ResultCode:"0", ResultMessage:"Success"})
+			result = resultObj{ResultCode:"0", ResultMessage:"Success"}
+			mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
+			mid.ReturnData(c, result)
 		}else{
-			c.JSON(http.StatusBadRequest, resultObj{ResultCode:"1", ResultMessage:"Param validate fail : inputs don't have host_ip"})
+			result = resultObj{ResultCode:"1", ResultMessage:"Param validate fail : inputs don't have host_ip"}
+			mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
+			c.JSON(http.StatusBadRequest, result)
 		}
 	}else{
-		c.JSON(http.StatusBadRequest, resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("Param validate fail : %v", err)})
+		result = resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("Param validate fail : %v", err)}
+		mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
+		c.JSON(http.StatusBadRequest, result)
 	}
 }
 
