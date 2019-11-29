@@ -1,5 +1,5 @@
 <template>
-  <div class="index">
+  <div class="index c-index">
     <Menu></Menu>
     <div class="content">
       <router-view></router-view>
@@ -40,10 +40,9 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style lang="less" scoped>
-@import "../assets/css/common.less";
 .index {
   min-width: 1200px;
-  background: white;
+  // background: white;
 }
 .content {
   background-image: url("../assets/img/watermark-3.png");
@@ -52,6 +51,5 @@ export default {
   height: 100%;
   margin: 0 auto;
   padding: 10px;
-  // background:white;
 }
 </style>

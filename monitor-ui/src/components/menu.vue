@@ -39,9 +39,13 @@
         </DropdownMenu>
       </Dropdown>
     </div>
+
+    <Button @click="changeTheme">主题切换</Button>
   </Menu>
 </template>
 <script>
+import '@/assets/theme/dark/styls.less';
+import '@/assets/theme/default/styls.less';
 export default {
   data() {
     return {
@@ -54,6 +58,9 @@ export default {
       },
       lang: [{ label: "中文", value: "zh-CN" }, { label: "En", value: "en-US" }]
     };
+  },
+  created(){
+    document.body.className = localStorage.getItem('theme') ? localStorage.getItem('theme'): ''
   },
   mounted() {
     if (this.langConfig[localStorage.getItem("lang")] === undefined) {
@@ -88,6 +95,11 @@ export default {
       this.activeName = name;
       if (this.$route.name === name) return;
       this.$router.push({ name: name });
+    },
+    changeTheme () {
+      const theme = localStorage.getItem('theme') ? '' : 'dark'
+      localStorage.setItem('theme', theme)
+      document.body.className = theme
     }
   }
 };

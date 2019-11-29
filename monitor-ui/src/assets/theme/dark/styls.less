@@ -1,0 +1,19 @@
+// 深色主题的特殊样式
+
+body.dark {
+  @import './element-variables';
+  .c-test {
+    color: @test;
+  }
+
+  @color-black-deep: #161719;
+  @color-black-neutral: '';
+  @color-black-light: '';
+  
+  .c-index {
+    color: #d8d9da;
+    background: @color-black-deep;
+  }
+
+
+}
