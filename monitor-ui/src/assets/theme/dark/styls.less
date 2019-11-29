@@ -5,6 +5,7 @@ body.dark {
   .c-test {
     color: @test;
   }
+  @c-white-background: #ebeef1;
 
   @color-black-deep: #161719;
   @color-black-neutral: '';
@@ -14,6 +15,22 @@ body.dark {
     color: #d8d9da;
     background: @color-black-deep;
   }
+  .echart {
+    background: #212124;
+  }
 
-
+  .ivu-select-single .ivu-select-input {
+    background: @c-white-background;
+    height: 30px;
+  }
+  .ivu-select-selection .ivu-select-selected-value {
+    background: @c-white-background;
+    height: 30px;
+  }
+  .ivu-input {
+    background: @c-white-background;
+  }
+  .ivu-select-single .ivu-select-selection {
+    background: @c-white-background;
+  }
 }
