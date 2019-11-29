@@ -47,7 +47,7 @@ func GetEndpointData(ip,port string,prefix,keyword []string) (error, []string) {
 	}
 	for k,_ := range tmpMap {
 		strList = append(strList, k)
-		fmt.Println(k)
 	}
+	fmt.Printf("metric num : %d \n", len(tmpMap))
 	return nil,strList
 }
