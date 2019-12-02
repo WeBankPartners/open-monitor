@@ -5,7 +5,8 @@ body.dark {
   .c-test {
     color: @test;
   }
-  @c-white-background: #ebeef1;
+  @c-white-background: #09090b;
+  @c-white-border: #262628;
 
   @color-black-deep: #161719;
   @color-black-neutral: '';
@@ -19,10 +20,19 @@ body.dark {
     background: #212124;
   }
 
+  .btn-cancle-f {
+    background-color: #2a2a2c;
+    color: #8e8e8e;
+    border: 1px solid @c-white-background;
+  }
   .ivu-select-single .ivu-select-input {
     background: @c-white-background;
     height: 30px;
   }
+  .ivu-select-selection, .ivu-input {
+    border: 1px solid @c-white-border;
+  }
+
   .ivu-select-selection .ivu-select-selected-value {
     background: @c-white-background;
     height: 30px;
