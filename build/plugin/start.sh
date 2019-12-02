@@ -10,7 +10,8 @@ sed -i "s~{{MONITOR_DB_PWD}}~$MONITOR_DB_PWD~g" monitor/conf/default.json
 
 cd consul
 mkdir -p logs
-nohup ./consul agent -dev > logs/consul.log 2>&1 &
+mkdir -p data
+nohup ./consul agent -server -ui -http-port 8500 -client 0.0.0.0 -bind 127.0.0.1 -data-dir data -bootstrap-expect 1 > logs/consul.log 2>&1 &
 cd ../alertmanager/
 mkdir -p logs
 nohup ./alertmanager --config.file=alertmanager.yml > logs/alertmanager.log 2>&1 &
