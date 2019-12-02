@@ -39,7 +39,7 @@
     <!-- 7.插件列表 - 描述插件包中单个插件的输入和输出 -->
     <plugins>
         <plugin name="host-register">
-            <interface action="register" path="/wecube-monitor/api/v1/agent/host/register" httpMethod='GET'>
+            <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/host" httpMethod='GET'>
                 <inputParameters>
                     <parameter datatype="string" mappingType='context' required='Y'>host_ip</parameter>
                 </inputParameters>
@@ -50,7 +50,7 @@
             </interface>
         </plugin>
         <plugin name="host-deregister">
-            <interface action="register" path="/wecube-monitor/api/v1/agent/host/deregister" httpMethod='GET'>
+            <interface action="register" path="/wecube-monitor/api/v1/agent/export/deregister/host" httpMethod='GET'>
                 <inputParameters>
                     <parameter datatype="string" mappingType='context' required='Y'>host_ip</parameter>
                 </inputParameters>
@@ -61,7 +61,7 @@
             </interface>
         </plugin>
         <plugin name="mysql-register">
-            <interface action="register" path="/wecube-monitor/api/v1/agent/mysql/register" httpMethod='GET'>
+            <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/mysql" httpMethod='GET'>
                 <inputParameters>
                     <parameter datatype="string" mappingType='context' required='Y'>host_ip</parameter>
                     <parameter datatype="string" mappingType='context' required='Y'>instance</parameter>
@@ -73,9 +73,10 @@
             </interface>
         </plugin>
         <plugin name="mysql-deregister">
-            <interface action="register" path="/wecube-monitor/api/v1/agent/mysql/deregister" httpMethod='GET'>
+            <interface action="register" path="/wecube-monitor/api/v1/agent/export/deregister/mysql" httpMethod='GET'>
                 <inputParameters>
                     <parameter datatype="string" mappingType='context' required='Y'>host_ip</parameter>
+                    <parameter datatype="string" mappingType='context' required='Y'>instance</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string">result_code</parameter>
@@ -84,7 +85,7 @@
             </interface>
         </plugin>
         <plugin name="redis-register">
-            <interface action="register" path="/wecube-monitor/api/v1/agent/redis/register" httpMethod='GET'>
+            <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/redis" httpMethod='GET'>
                 <inputParameters>
                     <parameter datatype="string" mappingType='context' required='Y'>host_ip</parameter>
                     <parameter datatype="string" mappingType='context' required='Y'>instance</parameter>
@@ -96,9 +97,10 @@
             </interface>
         </plugin>
         <plugin name="redis-deregister">
-            <interface action="register" path="/wecube-monitor/api/v1/agent/redis/deregister" httpMethod='GET'>
+            <interface action="register" path="/wecube-monitor/api/v1/agent/export/deregister/redis" httpMethod='GET'>
                 <inputParameters>
                     <parameter datatype="string" mappingType='context' required='Y'>host_ip</parameter>
+                    <parameter datatype="string" mappingType='context' required='Y'>instance</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string">result_code</parameter>
@@ -107,7 +109,7 @@
             </interface>
         </plugin>
         <plugin name="tomcat-register">
-            <interface action="register" path="/wecube-monitor/api/v1/agent/tomcat/register" httpMethod='GET'>
+            <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/tomcat" httpMethod='GET'>
                 <inputParameters>
                     <parameter datatype="string" mappingType='context' required='Y'>host_ip</parameter>
                     <parameter datatype="string" mappingType='context' required='Y'>instance</parameter>
@@ -119,9 +121,10 @@
             </interface>
         </plugin>
         <plugin name="tomcat-deregister">
-            <interface action="register" path="/wecube-monitor/api/v1/agent/tomcat/deregister" httpMethod='GET'>
+            <interface action="register" path="/wecube-monitor/api/v1/agent/export/deregister/tomcat" httpMethod='GET'>
                 <inputParameters>
                     <parameter datatype="string" mappingType='context' required='Y'>host_ip</parameter>
+                    <parameter datatype="string" mappingType='context' required='Y'>instance</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string">result_code</parameter>

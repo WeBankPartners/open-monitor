@@ -26,13 +26,40 @@ type requestObj struct {
 type hostRequestObj struct {
 	CallbackParameter  string  `json:"callbackParameter"`
 	HostIp  string  `json:"host_ip"`
+	Instance  string  `json:"instance"`
 }
 
-func StartHostAgentNew(c *gin.Context)  {
+func ExportAgent(c *gin.Context)  {
+	agentType := c.Param("name")
+	action := "register"
+	if strings.Contains(c.Request.URL.String(), "deregister") {
+		action = "deregister"
+	}
+	var agentPort string
+	var result resultObj
+	illegal := true
+	for _,v := range m.Config().Agent {
+		if v.AgentType == agentType {
+			illegal = false
+			agentPort = v.Port
+			break
+		}
+	}
+	if illegal {
+		result = resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("No such monitor type like %s", agentType)}
+		mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
+		c.JSON(http.StatusBadRequest, result)
+		return
+	}
+	if action != "register" && action != "deregister" {
+		result = resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("No such action like %s", action)}
+		mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
+		c.JSON(http.StatusBadRequest, result)
+		return
+	}
 	data,_ := ioutil.ReadAll(c.Request.Body)
 	mid.LogInfo(fmt.Sprintf("param : %v", string(data)))
 	var param requestObj
-	var result resultObj
 	err := json.Unmarshal(data, &param)
 	if err == nil {
 		if len(param.Inputs) == 0 {
@@ -41,20 +68,50 @@ func StartHostAgentNew(c *gin.Context)  {
 			c.JSON(http.StatusBadRequest, result)
 			return
 		}
-		var ipList []string
-		var tmpHostIp string
+		var ipList,instanceList []string
+		var tmpHostIp,tmpInstance string
 		if strings.Contains(param.Inputs[0].HostIp, "[") || strings.Contains(param.Inputs[0].HostIp, ",") {
 			tmpHostIp = strings.ReplaceAll(param.Inputs[0].HostIp, "[", "")
-			tmpHostIp = strings.ReplaceAll(param.Inputs[0].HostIp, "]", "")
+			tmpHostIp = strings.ReplaceAll(tmpHostIp, "]", "")
 			ipList = strings.Split(tmpHostIp, ",")
+			if agentType != "host" {
+				tmpInstance = strings.ReplaceAll(param.Inputs[0].Instance, "]", "")
+				tmpInstance = strings.ReplaceAll(tmpInstance, "]", "")
+				instanceList = strings.Split(tmpInstance, ",")
+			}
 		}else{
 			ipList = append(ipList, param.Inputs[0].HostIp)
+			if agentType != "host" {
+				instanceList = append(instanceList, param.Inputs[0].Instance)
+			}
 		}
-		for _,hostIp := range ipList {
-			param := m.RegisterParam{Type:hostType, ExporterIp:hostIp, ExporterPort:"9100"}
-			err := RegisterJob(param)
+		for i,hostIp := range ipList {
+			var param m.RegisterParam
+			if agentType == "host" {
+				param = m.RegisterParam{Type: agentType, ExporterIp: hostIp, ExporterPort: agentPort}
+			}else{
+				if len(instanceList) > i {
+					param = m.RegisterParam{Type: agentType, ExporterIp: hostIp, ExporterPort:agentPort, Instance:instanceList[i]}
+				}else{
+					param = m.RegisterParam{Type: agentType, ExporterIp: hostIp, ExporterPort:agentPort, Instance:instanceList[0]}
+				}
+			}
+			if action == "register" {
+				err = RegisterJob(param)
+			}else{
+				var endpointObj m.EndpointTable
+				if agentType == "host" {
+					endpointObj = m.EndpointTable{Ip: param.ExporterIp, ExportType: param.Type}
+				}else{
+					endpointObj = m.EndpointTable{Ip: param.ExporterIp, ExportType: param.Type, Name: param.Instance}
+				}
+				db.GetEndpoint(&endpointObj)
+				if endpointObj.Id > 0 {
+					err = DeregisterJob(endpointObj.Guid)
+				}
+			}
 			if err != nil {
-				result = resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("register %s:%s fail,error %v",hostType, hostIp, err)}
+				result = resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("%s %s:%s fail,error %v",action, agentType, hostIp, err)}
 				mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
 				c.JSON(http.StatusInternalServerError, result)
 				return
@@ -68,149 +125,6 @@ func StartHostAgentNew(c *gin.Context)  {
 		mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
 		c.JSON(http.StatusBadRequest, result)
 	}
-}
-
-func StartHostAgent(c *gin.Context)  {
-	hostIp := c.Query("host_ip")
-	//osType := strings.ToLower(c.Query("os_type"))
-	//if !isLinuxType(osType) {
-	//	mid.ReturnValidateFail(c, "Illegal OS type")
-	//	return
-	//}
-	param := m.RegisterParam{Type:hostType, ExporterIp:hostIp, ExporterPort:"9100"}
-	err := RegisterJob(param)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("register %s:%s fail,error %v",hostType, hostIp, err)})
-		return
-	}
-	mid.ReturnData(c, resultObj{ResultCode:"0", ResultMessage:"Success"})
-}
-
-func StopHostAgent(c *gin.Context)  {
-	hostIp := c.Query("host_ip")
-	endpointObj := m.EndpointTable{Ip:hostIp, ExportType:hostType}
-	db.GetEndpoint(&endpointObj)
-	if endpointObj.Id <= 0 {
-		c.JSON(http.StatusInternalServerError, resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("deregister %s:%s fail,can't find this host",hostType, hostIp)})
-		return
-	}
-	err := DeregisterJob(endpointObj.Guid)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("deregister %s:%s fail,error %v",hostType, hostIp, err)})
-		return
-	}
-	mid.ReturnData(c, resultObj{ResultCode:"0", ResultMessage:"Success"})
-}
-
-func StartMysqlAgent(c *gin.Context)  {
-	hostIp := c.Query("host_ip")
-	instance := c.Query("instance")
-	if instance == "" {
-		mid.ReturnValidateFail(c, "Instance can not be empty")
-		return
-	}
-	param := m.RegisterParam{Type:mysqlType, ExporterIp:hostIp, ExporterPort:"9104", Instance:instance}
-	err := RegisterJob(param)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("register %s:%s fail,error %v",mysqlType, hostIp, err)})
-		return
-	}
-	mid.ReturnData(c, resultObj{ResultCode:"0", ResultMessage:"Success"})
-}
-
-func StopMysqlAgent(c *gin.Context)  {
-	hostIp := c.Query("host_ip")
-	instance := c.Query("instance")
-	if instance == "" {
-		mid.ReturnValidateFail(c, "Instance can not be empty")
-		return
-	}
-	endpointObj := m.EndpointTable{Ip:hostIp, ExportType:mysqlType, Name:instance}
-	db.GetEndpoint(&endpointObj)
-	if endpointObj.Id <= 0 {
-		c.JSON(http.StatusInternalServerError, resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("deregister %s:%s fail,can't find this host",mysqlType, hostIp)})
-		return
-	}
-	err := DeregisterJob(endpointObj.Guid)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("deregister %s:%s fail,error %v",mysqlType, hostIp, err)})
-		return
-	}
-	mid.ReturnData(c, resultObj{ResultCode:"0", ResultMessage:"Success"})
-}
-
-func StartRedisAgent(c *gin.Context)  {
-	hostIp := c.Query("host_ip")
-	instance := c.Query("instance")
-	if instance == "" {
-		mid.ReturnValidateFail(c, "Instance can not be empty")
-		return
-	}
-	param := m.RegisterParam{Type:redisType, ExporterIp:hostIp, ExporterPort:"9121", Instance:instance}
-	err := RegisterJob(param)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("register %s:%s fail,error %v",redisType, hostIp, err)})
-		return
-	}
-	mid.ReturnData(c, resultObj{ResultCode:"0", ResultMessage:"Success"})
-}
-
-func StopRedisAgent(c *gin.Context)  {
-	hostIp := c.Query("host_ip")
-	instance := c.Query("instance")
-	if instance == "" {
-		mid.ReturnValidateFail(c, "Instance can not be empty")
-		return
-	}
-	endpointObj := m.EndpointTable{Ip:hostIp, ExportType:redisType, Name:instance}
-	db.GetEndpoint(&endpointObj)
-	if endpointObj.Id <= 0 {
-		c.JSON(http.StatusInternalServerError, resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("deregister %s:%s fail,can't find this host",redisType, hostIp)})
-		return
-	}
-	err := DeregisterJob(endpointObj.Guid)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("deregister %s:%s fail,error %v",redisType, hostIp, err)})
-		return
-	}
-	mid.ReturnData(c, resultObj{ResultCode:"0", ResultMessage:"Success"})
-}
-
-func StartTomcatAgent(c *gin.Context)  {
-	hostIp := c.Query("host_ip")
-	instance := c.Query("instance")
-	if instance == "" {
-		mid.ReturnValidateFail(c, "Instance can not be empty")
-		return
-	}
-	param := m.RegisterParam{Type:tomcatType, ExporterIp:hostIp, ExporterPort:"9151", Instance:instance}
-	err := RegisterJob(param)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("register %s:%s fail,error %v",tomcatType, hostIp, err)})
-		return
-	}
-	mid.ReturnData(c, resultObj{ResultCode:"0", ResultMessage:"Success"})
-}
-
-func StopTomcatAgent(c *gin.Context)  {
-	hostIp := c.Query("host_ip")
-	instance := c.Query("instance")
-	if instance == "" {
-		mid.ReturnValidateFail(c, "Instance can not be empty")
-		return
-	}
-	endpointObj := m.EndpointTable{Ip:hostIp, ExportType:tomcatType, Name:instance}
-	db.GetEndpoint(&endpointObj)
-	if endpointObj.Id <= 0 {
-		c.JSON(http.StatusInternalServerError, resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("deregister %s:%s fail,can't find this host",tomcatType, hostIp)})
-		return
-	}
-	err := DeregisterJob(endpointObj.Guid)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("deregister %s:%s fail,error %v",tomcatType, hostIp, err)})
-		return
-	}
-	mid.ReturnData(c, resultObj{ResultCode:"0", ResultMessage:"Success"})
 }
 
 func GetSystemDashboardUrl(c *gin.Context)  {
