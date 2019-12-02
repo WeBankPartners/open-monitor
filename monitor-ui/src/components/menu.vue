@@ -22,7 +22,10 @@
       <i class="fa fa-bell" aria-hidden="true"></i>
       {{$t("menu.alert")}}
     </MenuItem>
-    <div style="float:right;padding-right:80px">
+    <div>
+    </div>
+    <div class="set-theme" :style="{background: !defaultTheme? 'white':'black'}" @click="changeTheme"></div>
+    <div style="float:right;">
       <Dropdown @on-click="changeLang">
         <a href="javascript:void(0)">
           {{activeLang}}
@@ -37,10 +40,8 @@
             >{{langItem.label}}</DropdownItem>
           </template>
         </DropdownMenu>
-      </Dropdown>
+      </Dropdown> 
     </div>
-
-    <Button @click="changeTheme">主题切换</Button>
   </Menu>
 </template>
 <script>
@@ -50,6 +51,7 @@ export default {
   data() {
     return {
       theme1: "dark",
+      defaultTheme: false,
       activeName: "",
       activeLang: "",
       langConfig: {
@@ -60,7 +62,14 @@ export default {
     };
   },
   created(){
-    document.body.className = localStorage.getItem('theme') ? localStorage.getItem('theme'): ''
+    if (localStorage.getItem('theme')) {
+      document.body.className = localStorage.getItem('theme')
+      this.defaultTheme = false
+    } else {
+      document.body.className = ''
+      this.defaultTheme = true
+    }
+    // document.body.className = localStorage.getItem('theme') ? localStorage.getItem('theme'): ''
   },
   mounted() {
     if (this.langConfig[localStorage.getItem("lang")] === undefined) {
@@ -100,6 +109,7 @@ export default {
       const theme = localStorage.getItem('theme') ? '' : 'dark'
       localStorage.setItem('theme', theme)
       document.body.className = theme
+      this.defaultTheme = !this.defaultTheme
     }
   }
 };
@@ -120,5 +130,14 @@ export default {
     width: 40px;
     margin: 10px 20px 0;
   }
+}
+.set-theme {
+  float: right;
+  width: 28px;
+  height: 28px;
+  background: black;
+  border-radius: 50%;
+  cursor: pointer;
+  margin: 16px;
 }
 </style>
