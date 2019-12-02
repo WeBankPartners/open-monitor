@@ -26,11 +26,22 @@ body.dark {
     background: @c-black-gray;
   }
   .btn-cancle-f {
-    background-color: @c-black-gray;
+    background: @c-black-gray;
     color: #8e8e8e;
     border: 1px solid @c-black-background;
   }
   
+  .page-notice-info {
+    background: @c-black-gray;
+    color: #8e8e8e;
+    border: 1px solid @c-black-background;
+    border-radius: 4px;
+  }
+  .textareaSty {
+    background: @c-black-background;
+    border: 1px solid @c-black-font;
+    color: @c-black-font;
+  }
   input {
     &::placeholder {
       color:@c-black-font;
@@ -45,18 +56,26 @@ body.dark {
   }  
   .ivu-select-single .ivu-select-input {
     background: @c-black-background;
-    height: 30px;
+    // height: 30px;
+  }
+  .ivu-select-selection {
+    background: @c-black-background;
   }
   .ivu-select-selection, .ivu-input {
     border: 1px solid @c-black-border;
   }
 
-  .ivu-select-selection .ivu-select-selected-value {
+  .ivu-input, .ivu-tag {
+    border-color: @c-black-gray;
     background: @c-black-background;
-    height: 30px;
   }
-  .ivu-input {
-    background: @c-black-background;
+  .ivu-tag-border, ivu-tag-color-primary {
+    color: @c-black-font !important;
+    background: @c-black-background !important;
+    border-color: @c-black-gray !important;
+  }
+  .ivu-tag-color-primary {
+    color: @c-black-font !important;
   }
   .ivu-select-single .ivu-select-selection {
     background: @c-black-background;
@@ -64,12 +83,14 @@ body.dark {
   .ivu-radio-group-button .ivu-radio-wrapper {
     background: @c-black-gray;
     border: 1px solid @c-black-background;
-    // margin: 2px;
   }
   .ivu-radio-group-button .ivu-radio-wrapper-checked.ivu-radio-focus {
     box-shadow: none;
   }
   .ivu-radio-group-button .ivu-radio-wrapper:before {
     width: 0;
+  }
+  .ivu-tag-border:after {
+    background: @c-black-gray;
   }
 }
