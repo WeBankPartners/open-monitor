@@ -19,11 +19,12 @@ import (
 // @BasePath /v1
 func main() {
 	cfgFile := flag.String("c", "conf/default.json", "config file")
+	exportAgent := flag.Bool("export_agent", false, "true or false to choice export agent")
 	flag.Parse()
 	m.InitConfig(*cfgFile)
 	middleware.InitMonitorLog()
 	db.InitDbConn()
 	ds.InitPrometheusDatasource()
 	prom.InitPrometheusConfigFile()
-	api.InitHttpServer()
+	api.InitHttpServer(*exportAgent)
 }
