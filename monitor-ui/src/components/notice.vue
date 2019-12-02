@@ -21,6 +21,7 @@ export default {
     color: #5db558;
     background: #f4fbf5;
     border:1px solid #35b34a;
+    border-radius: 4px;
   }
   .page-notice-warn {
     color: #b43537;
