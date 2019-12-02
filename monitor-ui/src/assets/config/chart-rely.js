@@ -60,7 +60,7 @@ export const readyToDraw = function(that, responseData, viewIndex, chartConfig) 
 }
 
 export const drawChart = function(that,config,userConfig) {
-  const chartTextColor = localStorage.getItem('theme') ? '#cccccc': ''
+  const chartTextColor = '#a1a1a2'
   let originConfig = {
     title: true,
     eye: true,
@@ -77,7 +77,7 @@ export const drawChart = function(that,config,userConfig) {
   let option = {
     title: {
       textStyle: {
-        fontSize: 18,
+        fontSize: 16,
         fontWeight: 'bolder',
         color: chartTextColor          // 主标题文字颜色
       },
@@ -134,6 +134,9 @@ export const drawChart = function(that,config,userConfig) {
       }
     },
     legend: {
+      textStyle: {
+        color: chartTextColor          // 图例文字颜色
+      },
       type: 'scroll',
       y: 'bottom',
       padding: 10,
@@ -161,8 +164,18 @@ export const drawChart = function(that,config,userConfig) {
         }
       },
       boundaryGap : false,
+      axisLine:{
+        lineStyle:{
+          color:'#a1a1a2'
+        }
+      }, 
       splitLine: {
-        show: true
+        show: true,
+        lineStyle:{
+          color: ['#a1a1a2'],
+          width: 1,
+         type: 'solid'
+        }
       }
     },
     yAxis: [
@@ -195,8 +208,21 @@ export const drawChart = function(that,config,userConfig) {
             return newValue + ' ' + unit + config.yaxis.unit
           }
         },
-        show: true
-      }
+        show: true,
+        axisLine:{
+          lineStyle:{
+            color:'#a1a1a2'
+          }
+        }, 
+        splitLine: {
+          show: true,
+          lineStyle:{
+            color: ['#a1a1a2'],
+            width: 1,
+           type: 'solid'
+          }
+        }
+      },
     ],
     series: config.series
   }
