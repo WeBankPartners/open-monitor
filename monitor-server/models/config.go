@@ -61,6 +61,12 @@ type DependenceConfig struct {
 	Expire    int     `json:"expire"`
 }
 
+type AgentConfig struct {
+	AgentType  string  `json:"agent_type"`
+	AgentBin   string  `json:"agent_bin"`
+	Port  string  `json:"port"`
+}
+
 type DatasourceServers struct {
 	Id  int  `json:"id"`
 	Type  string  `json:"type"`
@@ -82,6 +88,7 @@ type GlobalConfig struct {
 	Dependence  []*DependenceConfig  `json:"dependence"`
 	Prometheus  PrometheusConfig  `json:"prometheus"`
 	TagBlacklist  []string  `json:"tag_blacklist"`
+	Agent  []*AgentConfig  `json:"agent"`
 }
 
 var (
