@@ -16,7 +16,7 @@ import (
 	_ "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/docs"
 )
 
-func InitHttpServer() {
+func InitHttpServer(exportAgent bool) {
 	urlPrefix := "/wecube-monitor"
 	r := gin.Default()
 	r.LoadHTMLGlob("public/*.html")
@@ -24,6 +24,9 @@ func InitHttpServer() {
 	r.Static(fmt.Sprintf("%s/css", urlPrefix), fmt.Sprintf("public%s/css", urlPrefix))
 	r.Static(fmt.Sprintf("%s/img", urlPrefix), fmt.Sprintf("public%s/img", urlPrefix))
 	r.Static(fmt.Sprintf("%s/fonts", urlPrefix), fmt.Sprintf("public%s/fonts", urlPrefix))
+	if exportAgent {
+		r.Static(fmt.Sprintf("%s/exporter", urlPrefix), "exporter")
+	}
 	r.Use(func(c *gin.Context) {
 		// Deal with options request
 		if c.Request.Method == "OPTIONS" {
@@ -97,14 +100,9 @@ func InitHttpServer() {
 		{
 			agentApi.POST("/register", agent.RegisterAgent)
 			agentApi.GET("/deregister", agent.DeregisterAgent)
-			agentApi.POST("/host/register", agent.StartHostAgentNew)
-			agentApi.GET("/host/deregister", agent.StopHostAgent)
-			agentApi.GET("/mysql/register", agent.StartMysqlAgent)
-			agentApi.GET("/mysql/deregister", agent.StopMysqlAgent)
-			agentApi.GET("/redis/register", agent.StartRedisAgent)
-			agentApi.GET("/redis/deregister", agent.StopRedisAgent)
-			agentApi.GET("/tomcat/register", agent.StartTomcatAgent)
-			agentApi.GET("/tomcat/deregister", agent.StopTomcatAgent)
+			agentApi.POST("/export/register/:name", agent.ExportAgent)
+			agentApi.POST("/export/deregister/:name", agent.ExportAgent)
+			agentApi.GET("/install/:name", agent.InstallAgent)
 		}
 		alarmApi := authApi.Group("/alarm")
 		{
