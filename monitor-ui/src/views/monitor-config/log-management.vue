@@ -57,13 +57,13 @@
               <Option v-for="item in modelConfig.condList" :value="item.value" :key="item.value">{{ item.label }}</Option>
             </Select>
             <div class="search-input-content" style="margin-left: 8px">
-              <input v-model="modelConfig.condValue" type="text" class="search-input" />
+              <input v-model="modelConfig.condValue" type="text" class="search-input c-dark" />
             </div>
           </div>
           <div class="marginbottom params-each">
             <label class="col-md-2 label-name lable-name-select">{{$t('tableKey.s_last')}}:</label>
             <div class="search-input-content" style="margin-right: 8px">
-              <input v-model="modelConfig.lastValue" type="text" class="search-input" />
+              <input v-model="modelConfig.lastValue" type="text" class="search-input c-dark" />
             </div>
             <Select v-model="modelConfig.last" style="width:100px">
               <Option v-for="item in modelConfig.lastList" :value="item.value" :key="item.value">{{ item.label }}</Option>

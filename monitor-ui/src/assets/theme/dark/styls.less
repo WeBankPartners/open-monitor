@@ -14,7 +14,7 @@ body.dark {
   @color-black-neutral: '';
   @color-black-light: '';
   
-  .c-dark, .c-index, .ivu-tag-text {
+  .c-dark, .c-index, .ivu-tag-text, .model-input {
     color: @c-black-font !important;
     background: @color-black-deep;
     border-color: @c-black-font !important;
@@ -47,12 +47,15 @@ body.dark {
     border: 1px solid @c-black-font;
     color: @c-black-font;
   }
+  .filters-li:hover {
+    background: @c-black-gray;
+  }
   input {
     &::placeholder {
       color:@c-black-font;
     }
   }
-  .ivu-select-single .ivu-select-selection .ivu-select-placeholder {
+  .ivu-select-single .ivu-select-selection .ivu-select-placeholder, .ivu-page-disabled a {
     color:@c-black-font;
   }
 
@@ -74,12 +77,12 @@ body.dark {
     border-color: @c-black-gray;
     background: @c-black-background;
   }
-  .ivu-tag-border, ivu-tag-color-primary {
+  .ivu-tag-border, ivu-tag-color-primary, .ivu-poptip-body {
     color: @c-black-font !important;
     background: @c-black-background !important;
     border-color: @c-black-gray !important;
   }
-  .ivu-tag-color-primary {
+  .ivu-tag-color-primary{
     color: @c-black-font !important;
   }
   .ivu-select-single .ivu-select-selection {
@@ -97,5 +100,16 @@ body.dark {
   }
   .ivu-tag-border:after {
     background: @c-black-gray;
+  }
+  .ivu-page-prev, .ivu-page-item, .ivu-page-next,.ivu-page-options-elevator input {
+    color: @c-black-font !important;
+    background: @color-black-deep;
+    border-color: @c-black-font !important;
+  }
+  .ivu-select-dropdown {
+    background: @c-black-gray;
+  }
+  .ivu-select-dropdown:hover {
+    background: @c-black-background;
   }
 }
