@@ -1,7 +1,7 @@
 <template>
   <div class="page-component">
     <section class="page-header" >
-      <div class="research" v-if="pageConfig.researchConfig">
+      <div class="research c-dark" v-if="pageConfig.researchConfig">
         <research :pageConfig="pageConfig" :selectedData="selectedData" >
           <div slot="transmitExtraSearch">
             <slot name="extraSearch"></slot>

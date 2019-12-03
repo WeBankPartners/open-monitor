@@ -14,9 +14,14 @@ body.dark {
   @color-black-neutral: '';
   @color-black-light: '';
   
-  .c-index,.c-max-chart {
-    color: @c-black-font;
+  .c-dark, .c-index, .ivu-tag-text {
+    color: @c-black-font !important;
     background: @color-black-deep;
+    border-color: @c-black-font !important;
+  }
+  .c-dark-exclude-color {
+    background: @color-black-deep;
+    border-color: @c-black-font !important;
   }
 
   .echart {
@@ -51,7 +56,7 @@ body.dark {
     color:@c-black-font;
   }
 
-  .ivu-tabs-bar {
+  .ivu-tabs-bar,.ivu-card-head {
     border-bottom: 1px solid @c-black-font;
   }  
   .ivu-select-single .ivu-select-input {

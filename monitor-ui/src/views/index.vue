@@ -1,5 +1,5 @@
 <template>
-  <div class="index c-index">
+  <div class="index c-dark">
     <Menu></Menu>
     <div class="content">
       <router-view></router-view>
