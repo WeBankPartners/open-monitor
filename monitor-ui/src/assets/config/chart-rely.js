@@ -174,7 +174,7 @@ export const drawChart = function(that,config,userConfig) {
         lineStyle:{
           color: ['#a1a1a2'],
           width: 1,
-         type: 'solid'
+          type: 'solid'
         }
       }
     },

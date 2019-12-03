@@ -1,6 +1,6 @@
 <template>
   <div class="">
-       <div class="c-max-chart max-chart">
+       <div class="c-dark max-chart">
          <div class="hiddenBtn" @click="hideMaxChart">
             <i class="fa fa-angle-right" aria-hidden="true"></i>
          </div>
