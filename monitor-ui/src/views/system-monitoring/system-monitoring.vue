@@ -176,14 +176,14 @@ export default {
     requestChart (id, query,viewIndex) {
       let params = []
       query.forEach((item) => {
-        params.push(JSON.stringify({
+        params.push({
           endpoint: item.endpoint,
           metric: item.metricLabel,
           prom_ql: item.metric,
           time: '-1800'
-        })) 
+        })
       })
-      this.$httpRequestEntrance.httpRequestEntrance('GET',this.apiCenter.metricConfigView.api, {config: `[${params.join(',')}]`}, responseData => {
+      this.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.metricConfigView.api, params, responseData => {
        
         this.elId = id
         const chartConfig = {eye: false,dataZoom:false,clear:true}
