@@ -51,15 +51,13 @@ export default {
     getchartdata () {
       let params = {
         id: this.chartItemx.id,
-        endpoint: [this.params.endpoint.split(':')[0]],
-        metric: [this.chartItemx.metric[0]],
+        endpoint: this.params.endpoint.split(':')[0],
+        metric: this.chartItemx.metric[0],
         time: this.params.time.toString(),
         start: this.params.start + '',
         end: this.params.end + ''
       }
-
-      this.$httpRequestEntrance.httpRequestEntrance('GET', this.chartItemx.url, params, responseData => {
-      
+      this.$httpRequestEntrance.httpRequestEntrance('POST', 'dashboard/newchart', [params], responseData => {
         readyToDraw(this,responseData, this.chartIndex)
       })
     }
