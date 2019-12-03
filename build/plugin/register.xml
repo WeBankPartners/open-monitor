@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<package name="wecube-monitor" version="v1.0">
+<package name="wecube-monitor" version="v1.1">
 
     <!-- 1.依赖分析 - 描述运行本插件包需要的其他插件包 -->
     <packageDependencies></packageDependencies>
@@ -32,14 +32,14 @@
 
     <!-- 6.运行资源 - 描述部署运行本插件包需要的基础资源(如主机、虚拟机、容器、数据库等) -->
     <resourceDependencies>
-        <docker imageName="wecube-monitor:v1.0" containerName="wecube-monitor-v1.0" portBindings="{{ALLOCATE_PORT}}:8080" volumeBindings="{{BASE_MOUNT_PATH}}/prometheus/logs:/app/monitor/prometheus/logs,{{BASE_MOUNT_PATH}}/prometheus/data:/app/monitor/prometheus/data,{{BASE_MOUNT_PATH}}/alertmanager/logs:/app/monitor/alertmanager/logs,{{BASE_MOUNT_PATH}}/consul/logs:/app/monitor/consul/logs,{{BASE_MOUNT_PATH}}/monitor/logs:/app/monitor/monitor/logs" envVariables="MONITOR_DB_HOST={{DB_HOST}},MONITOR_DB_PORT={{DB_PORT}},MONITOR_DB_SCHEMA={{DB_SCHEMA}},MONITOR_DB_USER={{DB_USER}},MONITOR_DB_PWD={{DB_PWD}}"/>
+        <docker imageName="wecube-monitor:v1.1" containerName="wecube-monitor-v1.1" portBindings="{{ALLOCATE_PORT}}:8080" volumeBindings="{{BASE_MOUNT_PATH}}/prometheus/logs:/app/monitor/prometheus/logs,{{BASE_MOUNT_PATH}}/prometheus/data:/app/monitor/prometheus/data,{{BASE_MOUNT_PATH}}/alertmanager/logs:/app/monitor/alertmanager/logs,{{BASE_MOUNT_PATH}}/consul/logs:/app/monitor/consul/logs,{{BASE_MOUNT_PATH}}/monitor/logs:/app/monitor/monitor/logs" envVariables="MONITOR_DB_HOST={{DB_HOST}},MONITOR_DB_PORT={{DB_PORT}},MONITOR_DB_SCHEMA={{DB_SCHEMA}},MONITOR_DB_USER={{DB_USER}},MONITOR_DB_PWD={{DB_PWD}}"/>
         <mysql schema="monitor" initFileName="init.sql" upgradeFileName="upgrade.sql"/>
     </resourceDependencies>
 
     <!-- 7.插件列表 - 描述插件包中单个插件的输入和输出 -->
     <plugins>
         <plugin name="host-register">
-            <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/host" httpMethod='GET'>
+            <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/host" httpMethod='POST'>
                 <inputParameters>
                     <parameter datatype="string" mappingType='context' required='Y'>host_ip</parameter>
                 </inputParameters>
@@ -50,7 +50,7 @@
             </interface>
         </plugin>
         <plugin name="host-deregister">
-            <interface action="register" path="/wecube-monitor/api/v1/agent/export/deregister/host" httpMethod='GET'>
+            <interface action="register" path="/wecube-monitor/api/v1/agent/export/deregister/host" httpMethod='POST'>
                 <inputParameters>
                     <parameter datatype="string" mappingType='context' required='Y'>host_ip</parameter>
                 </inputParameters>
@@ -61,7 +61,7 @@
             </interface>
         </plugin>
         <plugin name="mysql-register">
-            <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/mysql" httpMethod='GET'>
+            <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/mysql" httpMethod='POST'>
                 <inputParameters>
                     <parameter datatype="string" mappingType='context' required='Y'>host_ip</parameter>
                     <parameter datatype="string" mappingType='context' required='Y'>instance</parameter>
@@ -73,7 +73,7 @@
             </interface>
         </plugin>
         <plugin name="mysql-deregister">
-            <interface action="register" path="/wecube-monitor/api/v1/agent/export/deregister/mysql" httpMethod='GET'>
+            <interface action="register" path="/wecube-monitor/api/v1/agent/export/deregister/mysql" httpMethod='POST'>
                 <inputParameters>
                     <parameter datatype="string" mappingType='context' required='Y'>host_ip</parameter>
                     <parameter datatype="string" mappingType='context' required='Y'>instance</parameter>
@@ -85,7 +85,7 @@
             </interface>
         </plugin>
         <plugin name="redis-register">
-            <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/redis" httpMethod='GET'>
+            <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/redis" httpMethod='POST'>
                 <inputParameters>
                     <parameter datatype="string" mappingType='context' required='Y'>host_ip</parameter>
                     <parameter datatype="string" mappingType='context' required='Y'>instance</parameter>
@@ -97,7 +97,7 @@
             </interface>
         </plugin>
         <plugin name="redis-deregister">
-            <interface action="register" path="/wecube-monitor/api/v1/agent/export/deregister/redis" httpMethod='GET'>
+            <interface action="register" path="/wecube-monitor/api/v1/agent/export/deregister/redis" httpMethod='POST'>
                 <inputParameters>
                     <parameter datatype="string" mappingType='context' required='Y'>host_ip</parameter>
                     <parameter datatype="string" mappingType='context' required='Y'>instance</parameter>
@@ -109,7 +109,7 @@
             </interface>
         </plugin>
         <plugin name="tomcat-register">
-            <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/tomcat" httpMethod='GET'>
+            <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/tomcat" httpMethod='POST'>
                 <inputParameters>
                     <parameter datatype="string" mappingType='context' required='Y'>host_ip</parameter>
                     <parameter datatype="string" mappingType='context' required='Y'>instance</parameter>
