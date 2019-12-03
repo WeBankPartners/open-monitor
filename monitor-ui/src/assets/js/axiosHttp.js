@@ -9,8 +9,8 @@ export default function ajax (options) {
     baseURL: baseURL,
     url: options.url,
     timeout: 30000,
-    params: options.params,
-    // params: options.params || '',
+    // params: encodeURIComponent(JSON.stringify(options.params)),
+    params: options.params || '',
     headers: {
       'Content-type': 'application/json;charset=UTF-8',
       // 'X-Auth-Token': cookies.getAuthorization() || null
