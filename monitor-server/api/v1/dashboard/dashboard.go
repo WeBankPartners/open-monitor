@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"encoding/json"
 	"regexp"
+	"io/ioutil"
 )
 
 // @Summary 页面通用接口 : 视图
@@ -298,14 +299,20 @@ func GetChart(c *gin.Context)  {
 }
 
 func GetChartNew(c *gin.Context)  {
-	// validate config json
-	paramConfigStr := c.Query("config")
-	if paramConfigStr == "" {
-		mid.ReturnValidateFail(c, "Parameter config can not be empty")
+	//var postParam []m.ChartConfigObj
+	//// validate config json
+	//paramConfigStr := c.Query("config")
+	//if paramConfigStr == "" {
+	//	mid.ReturnValidateFail(c, "Parameter config can not be empty")
+	//	return
+	//}
+	requestBody,err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {
+		mid.ReturnValidateFail(c, "Read request body data fail")
 		return
 	}
 	var paramConfig []m.ChartConfigObj
-	err := json.Unmarshal([]byte(paramConfigStr), &paramConfig)
+	err = json.Unmarshal(requestBody, &paramConfig)
 	if err != nil || len(paramConfig) == 0 {
 		mid.ReturnValidateFail(c, "Illegal parameter")
 		return
