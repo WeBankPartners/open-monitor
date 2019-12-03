@@ -71,19 +71,17 @@ export default {
       }
       this.panalData.query.forEach(item => {
         params.push(
-          JSON.stringify({
+          {
             endpoint: item.endpoint,
             prom_ql: item.metric,
             metric: item.metricLabel,
             time: "-1800"
-          })
+          }
         );
       });
       if (params !== []) {
         this.$root.$httpRequestEntrance.httpRequestEntrance(
-          "GET",
-          this.$root.apiCenter.metricConfigView.api,
-          { config: `[${params.join(",")}]` },
+          'POST',this.$root.apiCenter.metricConfigView.api, params,
           responseData => {
           
             responseData.yaxis.unit =  this.panalUnit  
