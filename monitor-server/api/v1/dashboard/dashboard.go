@@ -360,6 +360,9 @@ func GetChartNew(c *gin.Context)  {
 			return
 		}
 		firstEndpoint = paramConfig[0].Endpoint
+		if strings.Contains(paramConfig[0].Metric, "/") {
+			chart.Metric = paramConfig[0].Metric
+		}
 		for i,v := range strings.Split(chart.Metric, "^") {
 			if i == 0 {
 				firstMetric = v
