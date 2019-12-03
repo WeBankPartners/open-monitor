@@ -57,18 +57,16 @@ export default {
       this.noDataTip = false;
       this.$route.params.templateData.query.forEach(item => {
         params.push(
-          JSON.stringify({
+          {
             endpoint: item.endpoint,
             metric: item.metricLabel,
             time: "-1800"
-          })
+          }
         );
       });
       if (params !== []) {
         this.$root.$httpRequestEntrance.httpRequestEntrance(
-          "GET",
-          this.$root.apiCenter.metricConfigView.api,
-          { config: `[${params.join(",")}]` },
+          'POST',this.$root.apiCenter.metricConfigView.api, params,
           responseData => {
 
             responseData.yaxis.unit =  this.panalUnit  
