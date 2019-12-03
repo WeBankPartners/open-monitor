@@ -20,6 +20,6 @@ mkdir -p logs
 nohup ./prometheus --config.file=prometheus.yml --web.enable-lifecycle > logs/prometheus.log 2>&1 &
 cd ../monitor/
 mkdir -p logs
-./monitor-server
+./monitor-server --export_agent=true
 
 
