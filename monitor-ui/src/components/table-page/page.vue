@@ -12,7 +12,7 @@
         </research>
       </div>
     </section>
-    <section class="page-table">
+    <section class="page-table c-dark">
       <tableTemp :table="pageConfig.table" :pageConfig="pageConfig" @sendIds="receiveIds" ref="refTest">
         <slot :name='pageConfig.table.isExtend.slot' v-if="pageConfig.table.isExtend"></slot>
       </tableTemp>
