@@ -192,18 +192,16 @@ export default {
         }
         data.forEach(item => {
           params.push(
-            JSON.stringify({
+            {
               endpoint: item.endpoint.split(":")[0],
               prom_ql: item.metric,
               metric: item.metricLabel,
               time: "-1800"
-            })
+            }
           );
         });
         this.$root.$httpRequestEntrance.httpRequestEntrance(
-          "GET",
-          this.$root.apiCenter.metricConfigView.api,
-          { config: `[${params.join(",")}]` },
+          'POST',this.$root.apiCenter.metricConfigView.api, params,
           responseData => {
       
             responseData.yaxis.unit = this.panalUnit;
@@ -250,21 +248,18 @@ export default {
       this.initQueryList(this.panalData.query);
       this.panalData.query.forEach(item => {
         params.push(
-          JSON.stringify({
+          {
             endpoint: item.endpoint,
             prom_ql: item.metric,
             metric: item.metricLabel,
             time: "-1800"
-          })
+          }
         );
       });
       if (params !== []) {
         this.$root.$httpRequestEntrance.httpRequestEntrance(
-          "GET",
-          this.$root.apiCenter.metricConfigView.api,
-          { config: `[${params.join(",")}]` },
+          'POST',this.$root.apiCenter.metricConfigView.api, params,
           responseData => {
-
             responseData.yaxis.unit = this.panalUnit;
             readyToDraw(this,responseData, 1, { eye: false })
           }

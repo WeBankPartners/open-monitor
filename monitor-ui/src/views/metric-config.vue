@@ -253,19 +253,19 @@ export default {
           this.noDataTip = true
           requestFlag = false 
         }
-        params.push(JSON.stringify({
+        params.push({
           endpoint: this.endpoint.split(':')[0],
           prom_ql: item.value,
           metric: item.label,
           time: this.timeTnterval + ''
-        })) 
+        })
       })
       if (!requestFlag) {
         return
       }
       this.isRequestChartData = true
       
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.metricConfigView.api, {config: `[${params.join(',')}]`}, responseData => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.metricConfigView.api, params, responseData => {
     
         const chartConfig = {eye: false,clear:true}
         readyToDraw(this,responseData, 1, chartConfig)

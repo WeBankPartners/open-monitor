@@ -107,14 +107,14 @@ export default {
     requestChart (id, panalUnit, query,viewIndex) {
       let params = []
       query.forEach((item) => {
-        params.push(JSON.stringify({
+        params.push({
           endpoint: item.endpoint,
           metric: item.metricLabel,
           prom_ql: item.metric,
           time: '-1800'
-        })) 
+        })
       })
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.metricConfigView.api, {config: `[${params.join(',')}]`}, responseData => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.metricConfigView.api, params, responseData => {
         
         responseData.yaxis.unit =  panalUnit  
         this.elId = id
