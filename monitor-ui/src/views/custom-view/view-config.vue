@@ -244,7 +244,9 @@ export default {
   }
 </style>
 <style scoped lang="less">
-
+.vue-grid-item {
+  border-radius: 4px;
+}
 .vue-grid-item:not(.vue-grid-placeholder) {
     background: @gray-f;
     border: 1px solid @gray-f;
