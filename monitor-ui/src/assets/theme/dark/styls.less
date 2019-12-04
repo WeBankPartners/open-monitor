@@ -1,0 +1,145 @@
+// 深色主题的特殊样式
+
+body.dark {
+  @import './element-variables';
+  .c-test {
+    color: @test;
+  }
+  @c-black-background: #09090b;
+  @c-black-border: #262628;
+  @c-black-font: #515a5e;
+  @c-black-gray: #2a2a2c;
+
+  @color-black-deep: #161719;
+  @color-black-neutral: '';
+  @color-black-light: '';
+  
+  .c-dark, .c-index, .ivu-tag-text, .model-input {
+    color: @c-black-font !important;
+    background: @color-black-deep;
+    border-color: @c-black-font !important;
+  }
+  .c-dark-exclude-color {
+    background: @color-black-deep;
+    border-color: @c-black-font !important;
+  }
+
+  .echart {
+    background: #212124;
+  }
+  .c-black-gray {
+    background: @c-black-gray;
+  }
+  .btn-cancle-f {
+    background: @c-black-gray;
+    color: #8e8e8e;
+    border: 1px solid @c-black-background;
+  }
+  .btn-confirm-f {
+    background-color: #2b88e8;
+    border: 1px solid #2b88e8;
+  }
+  .page-notice-info {
+    background: @c-black-gray;
+    color: #8e8e8e;
+    border: 1px solid @c-black-background;
+    border-radius: 4px;
+  }
+  .textareaSty {
+    background: @c-black-background;
+    border: 1px solid @c-black-font;
+    color: @c-black-font;
+  }
+  .filters-li:hover {
+    background: @c-black-gray;
+  }
+  .c-dark-gray, .ivu-modal-content {
+    color: @c-black-background;
+    background: @c-black-font;
+    border-color: @c-black-font;
+  }
+  .ivu-modal-header, .ivu-modal-footer {
+    border-color: #999;
+  }
+  input {
+    &::placeholder {
+      color:@c-black-font;
+    }
+  }
+  .ivu-select-single .ivu-select-selection .ivu-select-placeholder, .ivu-page-disabled a {
+    color:@c-black-font;
+  }
+
+  .ivu-tabs-bar,.ivu-card-head {
+    border-bottom: 1px solid @c-black-font;
+  }  
+  .ivu-select-single .ivu-select-input {
+    background: @c-black-background;
+    // height: 30px;
+  }
+  .ivu-select-selection {
+    background: @c-black-background;
+  }
+  .ivu-select-selection, .ivu-input {
+    border: 1px solid @c-black-border;
+  }
+
+  .ivu-input, .ivu-tag {
+    border-color: @c-black-gray;
+    background: @c-black-background;
+  }
+  .ivu-tag-border, ivu-tag-color-primary, .ivu-poptip-body {
+    color: @c-black-font !important;
+    background: @c-black-background !important;
+    border-color: @c-black-gray !important;
+  }
+  .ivu-tag-color-primary{
+    color: @c-black-font !important;
+  }
+  .ivu-select-single .ivu-select-selection {
+    background: @c-black-background;
+  }
+  .ivu-radio-group-button .ivu-radio-wrapper {
+    background: @c-black-gray;
+    border: 1px solid @c-black-background;
+  }
+  .ivu-radio-group-button .ivu-radio-wrapper-checked.ivu-radio-focus {
+    box-shadow: none;
+  }
+  .ivu-radio-group-button .ivu-radio-wrapper:before {
+    width: 0;
+  }
+  .ivu-tag-border:after {
+    background: @c-black-gray;
+  }
+  .ivu-page-prev, .ivu-page-item, .ivu-page-next,.ivu-page-options-elevator input {
+    color: @c-black-font !important;
+    background: @color-black-deep;
+    border-color: @c-black-font !important;
+  }
+  .ivu-select-dropdown {
+    background: @c-black-gray;
+  }
+  // select组件
+  .ivu-select-item:hover,.ivu-select-item-focus {
+    background: @c-black-background;
+  }
+  .ivu-menu-submenu .ivu-select-dropdown .ivu-menu-item:hover {
+    background: #999;
+  }
+
+  /*定义滚动条高宽及背景 高宽分别对应横竖滚动条的尺寸*/ 
+  ::-webkit-scrollbar 
+  { 
+    width: 12px; 
+    height: 12px; 
+    background-color:  @c-black-font; 
+  }
+
+  /*定义滑块 内阴影+圆角*/ 
+  ::-webkit-scrollbar-thumb 
+  { 
+    border-radius: 8px; 
+    background-color: #464647; 
+  }
+}

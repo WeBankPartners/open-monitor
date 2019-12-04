@@ -2,8 +2,8 @@
   <div class="modal-component">
     <div class="modal fade" :id="modelConfig.modalId ? modelConfig.modalId: 'add_edit_Modal'"  role="dialog" aria-labelledby="myModalLabel">
       <div class="modal-dialog" :style="modelConfig.modalStyle" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
+        <div class="modal-content c-dark">
+          <div class="modal-header c-dark">
             <h4 class="modal-title" v-if="modelConfig.modalTitle">{{$t(modelConfig.modalTitle)}}
               <template v-if="!modelConfig.isAdd">--
               【<span style="color: red">{{interceptParams()}}</span>】
@@ -106,12 +106,12 @@
             </form>
           </div>
           <template v-if="!modelConfig.noBtn">
-            <div class="model-footer-f" v-if="!modelConfig.modalFooter">
+            <div class="model-footer-f c-dark" v-if="!modelConfig.modalFooter">
               <button type="button" class="btn-cancle-f" data-dismiss="modal">{{$t('button.cancle')}}</button>
               <button v-if="!modelConfig.saveFunc" @click="save(modelConfig.isAdd)" type="button" class="btn-confirm-f">{{$t('button.save')}}</button>
               <button v-if="modelConfig.saveFunc" @click="customFunc(modelConfig.saveFunc)" type="button" class="btn-confirm-f">{{$t('button.save')}}</button>
             </div>
-            <div class="model-footer-f" v-if="modelConfig.modalFooter">
+            <div class="model-footer-f c-dark" v-if="modelConfig.modalFooter">
               <button type="button" class="btn-cancle-f" data-dismiss="modal">{{$t('button.cancle')}}</button>
               <template v-for="(item, index) in modelConfig.modalFooter">
               <button  @click="customFunc(item.Func)" type="button" class="btn-confirm-f" v-if='item.name' :key="index">{{item.name}}</button>
@@ -345,7 +345,7 @@ import {interceptParams} from '@/assets/js/utils'
     align-items: center;
     .modal-title{
       font-size: 16px;
-      color: rgba(0,0,0,0.85);
+      // color: rgba(0,0,0,0.85);
     }
     i{
       font-size: 8px;

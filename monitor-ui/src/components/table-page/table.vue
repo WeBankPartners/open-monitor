@@ -23,7 +23,7 @@
         <!-- table-striped -->
         <thead>
         <tr>
-          <!-- <th v-if="table.selection" class="th-border-bottom">
+          <!-- <th v-if="table.selection" class="th-border-bottom c-dark">
             <a href="javascript:void 0" @click="allSelect()">
                     <span class="item-check-btn" :class="{'check':allSelectBtn}">
                       <svg class="icon icon-ok"><use xlink:href="#icon-ok"></use></svg>
@@ -31,7 +31,7 @@
             </a>
           </th> -->
           <template v-for="(item,tableEleIndex) in table.tableEle">
-            <th style='min-width:100px;' :style="item.style" class="th-border-bottom" v-if="item.display" :key='tableEleIndex' >
+            <th style='min-width:100px;' :style="item.style" class="th-border-bottom c-dark" v-if="item.display" :key='tableEleIndex' >
               <span v-if="!item.copyable">{{$t(item.title)}}</span>
               <span v-if="item.copyable" :style="item.copyable?'cursor: pointer;position: relative;':''">
                 <Tooltip placement="bottom" :delay="500">
@@ -94,8 +94,8 @@
             </th>
           </template>
           
-          <th style="width: 140px;font-size: 13px;" class="th-border-bottom" v-if="table.btn.length != 0"><div style="width:130px">{{$t('table.action')}}</div></th>
-          <th style="width: 151px;font-size: 13px;" class="th-border-bottom handleSty" v-if="table.btn.length != 0 && table.handleFloat">{{$t('table.action')}}</th>
+          <th style="width: 140px;font-size: 13px;" class="th-border-bottom c-dark" v-if="table.btn.length != 0"><div style="width:130px">{{$t('table.action')}}</div></th>
+          <th style="width: 151px;font-size: 13px;" class="th-border-bottom c-dark handleSty" v-if="table.btn.length != 0 && table.handleFloat">{{$t('table.action')}}</th>
         </tr>
         </thead>
         <tbody>
@@ -115,7 +115,7 @@
             <!--列表是否显示勾选框--结束-->
             
             <template  v-for="(val,i) in table.tableEle">
-              <td  v-if="val.display" :key="i" :class="ellipsis(value, val)?'tdoverflow':''"><!--ellipsis是否显示省略-->
+              <td class="c-dark" v-if="val.display" :key="i" :class="ellipsis(value, val)?'tdoverflow':''"><!--ellipsis是否显示省略-->
                 <div class="extendStyle" v-if='table.isExtend && i==firstShow'>
                     <a v-show="tableDataIndex != currentActive" @click="loadDetail(value,tableDataIndex)"><i class="ivu-icon ivu-icon-ios-arrow-forward"></i></a>
                     <a v-show="tableDataIndex === currentActive" @click="loadDetail(value,tableDataIndex)" class="active"><i class="ivu-icon ivu-icon-ios-arrow-forward"></i></a>
@@ -192,7 +192,7 @@
             
 
             <!--操作区--开始-->
-            <td class="td-center td-operation" v-if="table.btn.length != 0">
+            <td class="td-center td-operation c-dark" v-if="table.btn.length != 0">
               <div style="width:140px">
               <!-- <template v-for="(btn_val,btn_i) in table.btn">
                 <span :id="btn_val.btn_func" :key="btn_i"
@@ -231,7 +231,7 @@
               </template> -->
               </div>
             </td>
-            <td class="td-center td-operation handleSty" v-if="table.btn.length != 0 && table.handleFloat" style="padding:10px 0px">
+            <td class="td-center td-operation handleSty c-dark" v-if="table.btn.length != 0 && table.handleFloat" style="padding:10px 0px">
               <div style="width: 151px;padding-left: 8px;height: 21px;">
               <template v-if="operationsFormat(value, tableDataIndex)">   
               </template>
@@ -297,13 +297,13 @@
             <!--操作区--结束-->
           </tr>
           <tr v-if="tableDataIndex === currentActive" :key="tableDataIndex+0.5" class='bgc'>
-            <td :colspan='tdNumber' id='extend1'>
+            <td :colspan='tdNumber' id='extend1' class="c-dark-gray">
               <tdSlot :name='table.isExtend.slot'> <slot :name='table.isExtend.slot'></slot> </tdSlot>
               <!-- tdslot在main.js中定义 -->
             </td>
             </tr>
         </template>
-         <tr v-if="table.tableData.length<1" class='nodataSty'>
+         <tr v-if="table.tableData.length<1" class='nodataSty c-dark'>
            <td :colspan='tdNumber' v-if='!table.noDataTip'>{{$t('table.noDataTip')}}</td>
            <td :colspan='tdNumber' v-if='table.noDataTip'>
              <template v-if='typeof table.noDataTip === "string"'>
@@ -1090,16 +1090,16 @@
   button:focus {
     box-shadow: none;
   }
-  .table tbody tr:nth-child(odd) {
-    // background-color:  #F6F9FB;
-    background-color: #FFF;
-  }
-  .table tbody tr:nth-child(odd):hover{
-    background-color: rgb(235, 237, 238);
-  }
-  .table tbody tr:nth-child(even):hover{
-    background-color: rgb(235, 237, 238);
-  }
+  // .table tbody tr:nth-child(odd) {
+  //   // background-color:  #F6F9FB;
+  //   // background-color: #FFF;
+  // }
+  // .table tbody tr:nth-child(odd):hover{
+  //   background-color: rgb(235, 237, 238);
+  // }
+  // .table tbody tr:nth-child(even):hover{
+  //   background-color: rgb(235, 237, 238);
+  // }
   .btn-operation {
     font-size: 14px;
     color: @color-blue;
@@ -1127,7 +1127,7 @@
   }
   .active {
     color: @color-blue;
-    background-color: @color-gray-F;
+    // background-color: @color-gray-F;
   }
   // 表头筛选内容样式-结束
 
