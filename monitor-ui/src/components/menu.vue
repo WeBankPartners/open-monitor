@@ -56,9 +56,9 @@ export default {
       activeLang: "",
       langConfig: {
         "zh-CN": "中文",
-        "en-US": "En"
+        "en-US": "English"
       },
-      lang: [{ label: "中文", value: "zh-CN" }, { label: "En", value: "en-US" }]
+      lang: [{ label: "中文", value: "zh-CN" }, { label: "English", value: "en-US" }]
     };
   },
   created(){
