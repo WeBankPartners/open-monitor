@@ -50,6 +50,10 @@ body.dark {
   .filters-li:hover {
     background: @c-black-gray;
   }
+  .c-dark-gray {
+    background: @c-black-font;
+    border-color: @c-black-font;
+  }
   input {
     &::placeholder {
       color:@c-black-font;
@@ -109,7 +113,23 @@ body.dark {
   .ivu-select-dropdown {
     background: @c-black-gray;
   }
-  .ivu-select-dropdown:hover {
+  // select组件
+  .ivu-select-item:hover,.ivu-select-item-focus {
     background: @c-black-background;
+  }
+
+  /*定义滚动条高宽及背景 高宽分别对应横竖滚动条的尺寸*/ 
+  ::-webkit-scrollbar 
+  { 
+    width: 12px; 
+    height: 12px; 
+    background-color:  @c-black-font; 
+  }
+
+  /*定义滑块 内阴影+圆角*/ 
+  ::-webkit-scrollbar-thumb 
+  { 
+    border-radius: 8px; 
+    background-color: #464647; 
   }
 }

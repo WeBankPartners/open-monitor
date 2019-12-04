@@ -297,7 +297,7 @@
             <!--操作区--结束-->
           </tr>
           <tr v-if="tableDataIndex === currentActive" :key="tableDataIndex+0.5" class='bgc'>
-            <td :colspan='tdNumber' id='extend1'>
+            <td :colspan='tdNumber' id='extend1' class="c-dark-gray">
               <tdSlot :name='table.isExtend.slot'> <slot :name='table.isExtend.slot'></slot> </tdSlot>
               <!-- tdslot在main.js中定义 -->
             </td>
@@ -1127,7 +1127,7 @@
   }
   .active {
     color: @color-blue;
-    background-color: @color-gray-F;
+    // background-color: @color-gray-F;
   }
   // 表头筛选内容样式-结束
 
