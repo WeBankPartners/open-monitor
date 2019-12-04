@@ -17,11 +17,10 @@
         <span>~~~No Data!~~~</span>
       </div>
     </div>
-    <div class="zone zone-config">
+    <div class="zone zone-config c-dark">
       <div class="tool-save">
         <button class="btn btn-sm btn-confirm-f" @click="saveConfig">{{$t('button.save')}}</button>
         <button class="btn btn-sm btn-cancle-f" @click="goback()">{{$t('button.back')}}</button>
-        <!-- <i class="fa fa-floppy-o fa-16"  aria-hidden="true"></i> -->
       </div>
       <div style="display:flex">
         <section>
@@ -61,7 +60,7 @@
             <div class="condition-zone">
               <ul>
                 <li>
-                  <div class="condition condition-title">{{$t('field.endpoint')}}</div>
+                  <div class="condition condition-title c-black-gray">{{$t('field.endpoint')}}</div>
                   <div class="condition">
                     <Select
                       style="width:300px"
@@ -101,7 +100,7 @@
                   </div>
                 </li>
                 <li>
-                  <div class="condition condition-title">{{$t('field.metric')}}</div>
+                  <div class="condition condition-title c-black-gray">{{$t('field.metric')}}</div>
                   <div class="condition">
                     <Select
                       v-model="templateQuery.metric"

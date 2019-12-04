@@ -9,7 +9,7 @@
         </div>
       </div>
     </header>
-    <div class="zone zone-chart">
+    <div class="zone zone-chart c-dark">
       <div class="col-md-12">
         <div class="zone-chart-title">{{panalTitle}}</div>
         <div v-if="!noDataTip">

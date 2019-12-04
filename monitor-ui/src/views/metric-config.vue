@@ -1,5 +1,5 @@
 <template>
-  <div class="text-align:center; ">
+  <div class="">
     <Title :title="$t('title.metricConfiguration')"></Title>
     <div style="margin-bottom:24px;">
       <Notice :noticeConfig='noticeConfig'> </Notice>
