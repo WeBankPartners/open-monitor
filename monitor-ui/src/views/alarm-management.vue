@@ -1,7 +1,7 @@
 <template>
   <div class=" ">
     <Title :title="$t('menu.alert')"></Title>
-    <section style="margin-left:8px">
+    <section style="margin-left:8px" class="c-dark-exclude-color">
       <Tag color="warning">{{$t('title.updateTime')}}：{{timeForDataAchieve}}</Tag>
       <template v-for="(filterItem, filterIndex) in filtersForShow">
         <Tag color="success" type="border" closable @on-close="exclude(filterItem.key)" :key="filterIndex">{{filterItem.key}}：{{filterItem.value}}</Tag>
@@ -12,7 +12,7 @@
     </section>
 
     <template v-for="(alarmItem, alarmIndex) in resultData">
-      <section :key="alarmIndex" class="alarm-item" :class="'alarm-item-border-'+ alarmItem.s_priority">
+      <section :key="alarmIndex" class="alarm-item c-dark-exclude-color" :class="'alarm-item-border-'+ alarmItem.s_priority">
         <i class="fa fa-times" @click="removeAlarm(alarmItem)" aria-hidden="true"></i>
         <ul>
            <li>
