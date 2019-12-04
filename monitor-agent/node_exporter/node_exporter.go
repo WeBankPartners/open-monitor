@@ -168,8 +168,10 @@ func main() {
 			</html>`))
 	})
 
-	// Add log monitor accept http config
+	// Add log monitor handle http config
 	http.HandleFunc("/log/config", collector.LogMonitorHttpHandle)
+	// Add process monitor handle http config
+	http.HandleFunc("/process/config", collector.ProcessMonitorHttpHandle)
 
 	log.Infoln("Listening on", *listenAddress)
 	if err := http.ListenAndServe(*listenAddress, nil); err != nil {
