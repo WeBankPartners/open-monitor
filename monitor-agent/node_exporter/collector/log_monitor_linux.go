@@ -10,6 +10,9 @@ import (
 	"io/ioutil"
 	"github.com/prometheus/common/log"
 	"encoding/json"
+	"bytes"
+	"encoding/gob"
+	"os"
 )
 
 type logMonitorCollector struct {
@@ -18,10 +21,12 @@ type logMonitorCollector struct {
 
 const (
 	logMonitorCollectorName = "log_monitor"
+	logMonitorFilePath = "data/log_monitor_cache.data"
 )
 
 func init() {
 	registerCollector("log_monitor", defaultEnabled, NewLogMonitorCollector)
+	LogCollectorStore.Load()
 }
 
 func NewLogMonitorCollector() (Collector, error) {
@@ -115,6 +120,65 @@ func (c *logCollectorObj) get() []logMetricObj {
 	c.Lock.RUnlock()
 	return data
 }
+
+type logCollectorStrore struct {
+	Data  []*logCollectorStoreObj
+}
+
+type logCollectorStoreObj struct {
+	Path  string
+	Rule  []*logKeywordObj
+}
+
+func (c *logCollectorStrore) Save()  {
+	c.Data = []*logCollectorStoreObj{}
+	for _,v := range logCollectorJobs {
+		lmo := v.get()
+		if len(lmo) == 0 {
+			continue
+		}
+		tmpLogStoreObj := logCollectorStoreObj{Path:lmo[0].Path}
+		tmpRule := []*logKeywordObj{}
+		for _,vv := range lmo {
+			tmpRule = append(tmpRule, &logKeywordObj{Keyword:vv.Keyword, Count:vv.Value})
+		}
+		tmpLogStoreObj.Rule = tmpRule
+		c.Data = append(c.Data, &tmpLogStoreObj)
+	}
+	var tmpBuffer bytes.Buffer
+	enc := gob.NewEncoder(&tmpBuffer)
+	err := enc.Encode(c.Data)
+	if err != nil {
+		log.Errorf("gob encode log monitor error : %v \n", err)
+	}else{
+		ioutil.WriteFile(logMonitorFilePath, tmpBuffer.Bytes(), 0644)
+		log.Infof("write %s succeed \n", logMonitorFilePath)
+	}
+}
+
+func (c *logCollectorStrore) Load()  {
+	file,err := os.Open(logMonitorFilePath)
+	if err != nil {
+		log.Errorf("read %s file error %v \n", logMonitorFilePath, err)
+	}else{
+		dec := gob.NewDecoder(file)
+		err = dec.Decode(&c.Data)
+		if err != nil {
+			log.Errorf("gob decode %s error %v \n", logMonitorFilePath, err)
+		}else{
+			log.Infof("load %s file succeed \n", logMonitorFilePath)
+		}
+	}
+	for _,v := range c.Data {
+		lco := logCollectorObj{Path:v.Path}
+		lco.Lock = new(sync.RWMutex)
+		lco.Rule = v.Rule
+		logCollectorJobs = append(logCollectorJobs, &lco)
+		go lco.start()
+	}
+}
+
+var LogCollectorStore logCollectorStrore
 
 func LogMonitorHttpHandle(w http.ResponseWriter, r *http.Request)  {
 	buff,err := ioutil.ReadAll(r.Body)

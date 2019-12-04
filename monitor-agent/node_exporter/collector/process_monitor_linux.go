@@ -10,6 +10,13 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"fmt"
+	"bytes"
+	"encoding/gob"
+	"os"
+)
+
+const (
+	processFilePath = "data/process_cache.data"
 )
 
 type processMonitorCollector struct {
@@ -17,7 +24,7 @@ type processMonitorCollector struct {
 }
 
 func (c *processMonitorCollector) Update(ch chan<- prometheus.Metric) error {
-	for _,v := range processCacheObj.get() {
+	for _,v := range ProcessCacheObj.get() {
 		ch <- prometheus.MustNewConstMetric(c.processMonitor,
 			prometheus.GaugeValue,
 			v.Value, v.Name, v.Command)
@@ -27,7 +34,7 @@ func (c *processMonitorCollector) Update(ch chan<- prometheus.Metric) error {
 
 func init() {
 	registerCollector("process_num", defaultEnabled, NewProcessMonitorCollector)
-	processCacheObj.init()
+	ProcessCacheObj.init()
 }
 
 func NewProcessMonitorCollector() (Collector, error) {
@@ -56,6 +63,10 @@ func (c *processCache) init()  {
 	c.Running = false
 	c.Lock = new(sync.RWMutex)
 	c.ProcessMonitor = []*processMonitorObj{}
+	c.Load()
+	if len(c.ProcessMonitor) > 0 {
+		go c.start()
+	}
 }
 
 func (c *processCache) start()  {
@@ -117,13 +128,44 @@ func (c *processCache) update(names []string)  {
 	c.Lock.Unlock()
 }
 
+func (c *processCache) Save()  {
+	c.Lock.Lock()
+	defer c.Lock.Unlock()
+	var tmpBuffer bytes.Buffer
+	enc := gob.NewEncoder(&tmpBuffer)
+	err := enc.Encode(c.ProcessMonitor)
+	if err != nil {
+		log.Errorf("gob encode process monitor error : %v \n", err)
+	}else{
+		ioutil.WriteFile(processFilePath, tmpBuffer.Bytes(), 0644)
+		log.Infof("write %s succeed \n", processFilePath)
+	}
+}
+
+func (c *processCache) Load()  {
+	c.Lock.Lock()
+	defer c.Lock.Unlock()
+	file,err := os.Open(processFilePath)
+	if err != nil {
+		log.Errorf("read %s file error %v \n", processFilePath, err)
+	}else{
+		dec := gob.NewDecoder(file)
+		err = dec.Decode(&c.ProcessMonitor)
+		if err != nil {
+			log.Errorf("gob decode %s error %v \n", processFilePath, err)
+		}else{
+			log.Infof("load %s file succeed \n", processFilePath)
+		}
+	}
+}
+
 func (c *processCache) get() []*processMonitorObj {
 	c.Lock.RLock()
 	defer c.Lock.RUnlock()
 	return c.ProcessMonitor
 }
 
-var processCacheObj processCache
+var ProcessCacheObj processCache
 
 type processHttpDto struct {
 	Process  []string  `json:"process"`
@@ -147,13 +189,13 @@ func ProcessMonitorHttpHandle(w http.ResponseWriter, r *http.Request)  {
 		return
 	}
 	if len(param.Process) == 0 {
-		processCacheObj.stop()
+		ProcessCacheObj.stop()
 		w.Write([]byte("Success"))
 		return
 	}
-	processCacheObj.update(param.Process)
-	if !processCacheObj.isRunning() {
-		go processCacheObj.start()
+	ProcessCacheObj.update(param.Process)
+	if !ProcessCacheObj.isRunning() {
+		go ProcessCacheObj.start()
 	}
 	w.Write([]byte("Success"))
 }
