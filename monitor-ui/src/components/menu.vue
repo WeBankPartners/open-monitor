@@ -115,6 +115,9 @@ export default {
 };
 </script>
 <style lang="less" scoped>
+.ivu-menu-dark {
+  background: #454a52;
+}
 .logo {
   float: left;
   height: inherit;
