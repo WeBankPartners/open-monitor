@@ -1,13 +1,13 @@
 <template>
-  <div class=" ">
-       <div class="max-chart">
+  <div class="">
+       <div class="c-dark max-chart">
          <div class="hiddenBtn" @click="hideMaxChart">
             <i class="fa fa-angle-right" aria-hidden="true"></i>
          </div>
         <div class="condition-zone">
           <ul>
             <li>
-              <div class="condition condition-title">{{$t('field.relativeTime')}}</div>
+              <div class="condition condition-title c-black-gray">{{$t('field.relativeTime')}}</div>
               <div class="condition">
                 <RadioGroup v-model="chartCondition.timeTnterval" size="small" type="button">
                   <Radio label="-1800">30m</Radio>
@@ -17,13 +17,13 @@
               </div>
             </li>
             <li>
-              <div class="condition condition-title">{{$t('field.timeInterval')}}</div>
+              <div class="condition condition-title c-black-gray">{{$t('field.timeInterval')}}</div>
               <div class="condition">
                 <DatePicker type="daterange" placement="bottom-end" @on-change="datePick" :placeholder="$t('placeholder.datePicker')" style="width: 200px"></DatePicker>
               </div>
             </li>
             <li>
-              <div class="condition condition-title">{{$t('field.aggType')}}</div>
+              <div class="condition condition-title c-black-gray">{{$t('field.aggType')}}</div>
               <div class="condition">
                 <RadioGroup v-model="chartCondition.agg" size="small" type="button">
                   <Radio label="min">Min</Radio>

@@ -25,6 +25,9 @@ import (
 	"github.com/prometheus/common/version"
 	"github.com/WeBankPartners/wecube-plugins-prometheus/monitor-agent/node_exporter/collector"
 	"gopkg.in/alecthomas/kingpin.v2"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 // handler wraps an unfiltered http.Handler but uses a filtered handler,
@@ -168,11 +171,36 @@ func main() {
 			</html>`))
 	})
 
-	// Add log monitor accept http config
+	// Add log monitor handle http config
 	http.HandleFunc("/log/config", collector.LogMonitorHttpHandle)
+	// Add process monitor handle http config
+	http.HandleFunc("/process/config", collector.ProcessMonitorHttpHandle)
 
 	log.Infoln("Listening on", *listenAddress)
-	if err := http.ListenAndServe(*listenAddress, nil); err != nil {
-		log.Fatal(err)
+	go func(address string) {
+		if err := http.ListenAndServe(address, nil); err != nil {
+			log.Fatal(err)
+		}
+	}(*listenAddress)
+	startSignal(os.Getpid())
+}
+
+func startSignal(pid int) {
+	sigs := make(chan os.Signal, 1)
+	log.Infoln(pid, "register signal notify")
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	for {
+		s := <-sigs
+		log.Infoln("receive signal ", s)
+		switch s {
+		case syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT:
+			log.Infoln("shutdown , start save file")
+			// do something
+			collector.ProcessCacheObj.Save()
+			collector.LogCollectorStore.Save()
+			log.Infoln("shutdown , done")
+			log.Infoln(pid, "exit")
+			os.Exit(0)
+		}
 	}
 }
