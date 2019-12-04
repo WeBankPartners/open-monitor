@@ -15,7 +15,7 @@
     <section>
         <template v-for="(panalItem,panalIndex) in dataList">
           <div :key="panalIndex" class="panal-list">
-            <Card>
+            <Card class="c-dark">
               <p slot="title" class="panal-title">
                 {{$t('title.templateName')}}:{{panalItem.name}}
                   <i class="fa fa-star" v-if="panalItem.main === 1" aria-hidden="true"></i>

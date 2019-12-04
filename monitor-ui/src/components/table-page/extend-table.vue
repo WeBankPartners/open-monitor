@@ -6,10 +6,10 @@
       <table :class="[itemConfig.isExtendF ? 'table styleEX' : 'table table-bordered']" v-if="itemConfig.data.length">
         <thead>
           <tr>
-            <th :width='itemConfig.scales[i]' v-for="(item,i) in itemConfig.config" :key="i">{{$t(item.title)}}</th>
+            <th class="c-dark-gray" :width='itemConfig.scales[i]' v-for="(item,i) in itemConfig.config" :key="i">{{$t(item.title)}}</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody class="c-dark-gray">
           <template v-for="(item,index) in itemConfig.data">
             <tr :key="index">
               <td v-for="(key,i) in itemConfig.config" :key="i">
@@ -397,7 +397,7 @@ h4 {
       display: table;
       width: 100%;
       table-layout: fixed;
-      border-bottom: 1px solid #e9edf2;
+      // border-bottom: 1px solid #e9edf2;
       td{
         border-right-color: #fafafa;
       }

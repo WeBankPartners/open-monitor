@@ -20,7 +20,7 @@
             <input v-if="input_condition.type === 'input'" v-model.trim="pageConfig.researchConfig.filters[input_condition.value]"
                   @keyup.enter="goToAction('search', pageConfig.researchConfig.filters)" :placeholder="$t(input_condition.placeholder)"
                   type="text"
-                  class="form-control research-input"
+                  class="form-control research-input c-dark"
                   @mouseover="activeInput(input_condition, index_input_condition)">
             <i class="fa fa-plus-circle clearIcon" style="font-size:12px;"
               v-if="showClearIcon(input_condition, index_input_condition)" @click="clearInputCondition(input_condition)"></i>
