@@ -14,6 +14,7 @@
         </div>
       </header>
       <grid-layout
+      
         :layout.sync="layoutData"
         :col-num="12"
         :row-height="30"
@@ -24,6 +25,7 @@
         :use-css-transforms="true"
         >
       <grid-item v-for="(item,index) in layoutData"
+        class="c-dark"
         :x="item.x"
         :y="item.y"
         :w="item.w"
@@ -33,7 +35,7 @@
         @resize="resizeEvent"
         @resized="resizedEvent">
                  
-        <div style="display:flex;justify-content:flex-end;padding:0 32px;">
+        <div class="c-dark" style="display:flex;justify-content:flex-end;padding:0 32px;">
           <div class="header-grid header-grid-name">
             <span>{{item.i}}</span>
           </div>
@@ -46,7 +48,7 @@
         <div class="">
           <section class="metric-section">
             <div v-if="!noDataTip">
-              <div :id="item.id" class="echart" style="height:230px;width:560px"></div>
+              <div :id="item.id" class="echart"></div>
             </div>
              <div v-else class="echart echart-no-data-tip">
               <span>~~~No Data!~~~</span>
@@ -196,7 +198,7 @@ export default {
           this.layoutData[index].h = newH
           this.layoutData[index].w = newW
           var myChart = echarts.init(document.getElementById(item.id))
-          myChart.resize({height:newHPx-64+'px',width:newWPx+'px'})
+          myChart.resize({height:newHPx-34+'px',width:newWPx+'px'})
           return
         }
       })
@@ -231,7 +233,9 @@ export default {
   }
 </style>
 <style scoped lang="less">
-
+.vue-grid-item {
+  border-radius: 4px;
+}
 .vue-grid-item:not(.vue-grid-placeholder) {
     background: @gray-f;
     border: 1px solid @gray-f;

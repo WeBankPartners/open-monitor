@@ -1,7 +1,7 @@
 <template>
   <div class="page-component">
     <section class="page-header" >
-      <div class="research" v-if="pageConfig.researchConfig">
+      <div class="research c-dark" v-if="pageConfig.researchConfig">
         <research :pageConfig="pageConfig" :selectedData="selectedData" >
           <div slot="transmitExtraSearch">
             <slot name="extraSearch"></slot>
@@ -12,7 +12,7 @@
         </research>
       </div>
     </section>
-    <section class="page-table">
+    <section class="page-table c-dark">
       <tableTemp :table="pageConfig.table" :pageConfig="pageConfig" @sendIds="receiveIds" ref="refTest">
         <slot :name='pageConfig.table.isExtend.slot' v-if="pageConfig.table.isExtend"></slot>
       </tableTemp>
