@@ -1,6 +1,7 @@
 <template>
   <div class="pagination">
     <Page
+      class-name="c-dark"
       :total="pagination.total"
       :current="pagination.current"
       show-total show-sizer show-elevator
