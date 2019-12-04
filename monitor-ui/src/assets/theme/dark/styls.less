@@ -35,7 +35,10 @@ body.dark {
     color: #8e8e8e;
     border: 1px solid @c-black-background;
   }
-  
+  .btn-confirm-f {
+    background-color: #2b88e8;
+    border: 1px solid #2b88e8;
+  }
   .page-notice-info {
     background: @c-black-gray;
     color: #8e8e8e;
@@ -50,9 +53,13 @@ body.dark {
   .filters-li:hover {
     background: @c-black-gray;
   }
-  .c-dark-gray {
+  .c-dark-gray, .ivu-modal-content {
+    color: @c-black-background;
     background: @c-black-font;
     border-color: @c-black-font;
+  }
+  .ivu-modal-header, .ivu-modal-footer {
+    border-color: #999;
   }
   input {
     &::placeholder {
@@ -116,6 +123,9 @@ body.dark {
   // select组件
   .ivu-select-item:hover,.ivu-select-item-focus {
     background: @c-black-background;
+  }
+  .ivu-menu-submenu .ivu-select-dropdown .ivu-menu-item:hover {
+    background: #999;
   }
 
   /*定义滚动条高宽及背景 高宽分别对应横竖滚动条的尺寸*/ 
