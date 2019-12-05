@@ -35,8 +35,34 @@
         </div>
         <div class="marginbottom params-each" v-if="showInstance">
           <label class="col-md-2 label-name lable-name-select">{{$t('field.instance')}}:</label>
-          <input v-model="endpointRejectModel.addRow.instance" type="text" class="col-md-7 form-control model-input">
+          <input v-model="endpointRejectModel.addRow.instance" type="text" class="col-md-7 form-control model-input  c-dark">
           <label class="required-tip">*</label>
+        </div>
+      </div>
+    </ModalComponent>
+    <ModalComponent :modelConfig="processConfigModel">
+      <div slot="processConfig">
+        <div class="marginbottom params-each">
+          <label class="col-md-1 label-name">{{$t('tableKey.condition')}}:</label>
+          <div class="search-input-content">
+            <input type="text" v-model="processConfigModel.processName" class="search-input c-dark" />
+          </div>
+          <button type="button" @click="addProcess" class="btn-cancle-f" style="vertical-align:middle">{{$t('button.confirm')}}</button>
+        </div>
+        <div class="marginbottom params-each row" style="">
+          <div class="offset-md-1">
+            <Tag
+            v-for="(process, processIndex) in processConfigModel.addRow.processSet"
+            color="primary"
+            type="border"
+            :key="processIndex"
+            :name="processIndex"
+            closable
+            @on-close="delProcess(process)"
+            >{{process|interceptParams}}
+              <i class="fa fa-pencil" @click="editProcess(process)" aria-hidden="true"></i>
+            </Tag>  
+          </div>     
         </div>
       </div>
     </ModalComponent>
@@ -44,6 +70,7 @@
 </template>
 <script>
   import tableTemp from '@/components/table-page/table'
+  import {interceptParams} from '@/assets/js/utils'
   let tableEle = [
     {title: 'tableKey.endpoint', value: 'guid', display: true},
     {title: 'tableKey.group', value: 'groups_name', display: true, }
@@ -69,7 +96,8 @@
     {btn_name: 'button.thresholdManagement', btn_func: 'thresholdConfig'},
     {btn_name: 'button.historicalAlert', btn_func: 'historyAlarm'},
     {btn_name: 'button.remove', btn_func: 'delF'},
-    {btn_name: 'button.logConfiguration', btn_func: 'logManagement'}
+    {btn_name: 'button.logConfiguration', btn_func: 'logManagement'},
+    {btn_name: 'button.processConfiguration', btn_func: 'processManagement'},
   ]
   export default {
     name: '',
@@ -164,6 +192,19 @@
             {label:'redis',value:'redis'},
             {label:'tomcat',value:'tomcat'}
           ],
+        }, 
+        processConfigModel: {
+          modalId: 'process_config_model',
+          modalTitle: 'button.processConfiguration',
+          isAdd: true,
+          saveFunc: 'processConfigSave',
+          config: [
+            {name:'processConfig',type:'slot'}
+          ],
+          addRow:{
+            processSet: [],
+          },
+          processName: ''
         },
         id: null,
         showGroupMsg: false,
@@ -205,12 +246,20 @@
         return this.endpointRejectModel.addRow.type === 'host' ? false: true
       }
     },
+    filters: {
+      interceptParams (val) {
+        return interceptParams(val,55)
+      }
+    },
     methods: {
       initData (url= this.pageConfig.CRUD, params) {
         this.$root.$tableUtil.initTable(this, 'GET', url, params)
       },
-      filterMoreBtn () {
+      filterMoreBtn (rowData) {
         let moreBtnGroup = ['thresholdConfig','historyAlarm','logManagement']
+        if (rowData.type === 'host') {
+          moreBtnGroup.push('processManagement')
+        }
         if (this.showGroupMsg) {
           moreBtnGroup.push('delF')
         }
@@ -288,6 +337,42 @@
           this.$Message.success(this.$t('tips.success'))
           this.initData(this.pageConfig.CRUD, this.pageConfig)
         })
+      },
+      processManagement (rowData) {
+        this.id = rowData.id
+        this.processConfigModel.addRow.processSet = []
+        this.$root.$httpRequestEntrance.httpRequestEntrance('GET','alarm/process/list', {id:this.id}, responseData=> {
+          responseData.forEach((item)=>{
+            this.processConfigModel.addRow.processSet.push(item.name)
+          })
+          this.$root.JQ('#process_config_model').modal('show')
+        })
+      },
+      processConfigSave () {
+        const params = {
+          endpoint_id: +this.id,
+          process_list: this.processConfigModel.addRow.processSet
+        }
+        this.$root.$httpRequestEntrance.httpRequestEntrance('POST','alarm/process/update', params, ()=> {
+          this.$Message.success(this.$t('tips.success'))
+          this.$root.JQ('#process_config_model').modal('hide')
+        })
+      },
+      addProcess () {
+        if (!this.$root.$validate.isEmpty_reset(this.processConfigModel.processName.trim())) {
+          this.processConfigModel.addRow.processSet.push(this.processConfigModel.processName.trim())
+          this.processConfigModel.processName = ''
+        }
+      },
+      delProcess (process) {
+        const i = this.processConfigModel.addRow.processSet.findIndex((val)=>{
+          return val === process
+        })
+        this.processConfigModel.addRow.processSet.splice(i,1)
+      },
+      editProcess (process) {
+        this.delProcess(process)
+        this.processConfigModel.processName = process
       }
     },
     components: {
@@ -297,4 +382,30 @@
 </script>
 
 <style lang="less" scoped>
+  .search-input {
+    display: inline-block;
+    height: 32px;
+    padding: 4px 7px;
+    font-size: 12px;
+    border: 1px solid #dcdee2;
+    border-radius: 4px;
+    color: #515a6e;
+    background-color: #fff;
+    background-image: none;
+    position: relative;
+    cursor: text;
+    
+    width: 310px;
+  }
+
+  .search-input:focus {
+    outline: 0;
+    border-color: #57a3f3;
+  }
+
+  .search-input-content {
+    display: inline-block;
+    vertical-align: middle; 
+  }
 </style>
+
