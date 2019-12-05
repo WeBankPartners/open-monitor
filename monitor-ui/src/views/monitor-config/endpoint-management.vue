@@ -255,8 +255,11 @@
       initData (url= this.pageConfig.CRUD, params) {
         this.$root.$tableUtil.initTable(this, 'GET', url, params)
       },
-      filterMoreBtn () {
-        let moreBtnGroup = ['thresholdConfig','historyAlarm','logManagement','processManagement']
+      filterMoreBtn (rowData) {
+        let moreBtnGroup = ['thresholdConfig','historyAlarm','logManagement']
+        if (rowData.type === 'host') {
+          moreBtnGroup.push('processManagement')
+        }
         if (this.showGroupMsg) {
           moreBtnGroup.push('delF')
         }
@@ -335,8 +338,25 @@
           this.initData(this.pageConfig.CRUD, this.pageConfig)
         })
       },
-      processManagement () {
-        this.$root.JQ('#process_config_model').modal('show')
+      processManagement (rowData) {
+        this.id = rowData.id
+        this.processConfigModel.addRow.processSet = []
+        this.$root.$httpRequestEntrance.httpRequestEntrance('GET','alarm/process/list', {id:this.id}, responseData=> {
+          responseData.forEach((item)=>{
+            this.processConfigModel.addRow.processSet.push(item.name)
+          })
+          this.$root.JQ('#process_config_model').modal('show')
+        })
+      },
+      processConfigSave () {
+        const params = {
+          endpoint_id: +this.id,
+          process_list: this.processConfigModel.addRow.processSet
+        }
+        this.$root.$httpRequestEntrance.httpRequestEntrance('POST','alarm/process/update', params, ()=> {
+          this.$Message.success(this.$t('tips.success'))
+          this.$root.JQ('#process_config_model').modal('hide')
+        })
       },
       addProcess () {
         if (!this.$root.$validate.isEmpty_reset(this.processConfigModel.processName.trim())) {
@@ -346,8 +366,8 @@
       },
       delProcess (process) {
         const i = this.processConfigModel.addRow.processSet.findIndex((val)=>{
-                    return val === process
-                  })
+          return val === process
+        })
         this.processConfigModel.addRow.processSet.splice(i,1)
       },
       editProcess (process) {
