@@ -71,7 +71,7 @@ func InstallAgent(c *gin.Context)  {
 		}
 		dataString = strings.Replace(dataString, "{{mysql_host}}", param.Inputs[0].Host, -1)
 		dataString = strings.Replace(dataString, "{{mysql_port}}", param.Inputs[0].Port, -1)
-		dataString = strings.Replace(dataString, "{{redis_port}}", param.Inputs[0].Host, -1)
+		dataString = strings.Replace(dataString, "{{redis_host}}", param.Inputs[0].Host, -1)
 		dataString = strings.Replace(dataString, "{{redis_port}}", param.Inputs[0].Port, -1)
 		dataString = strings.Replace(dataString, "{{redis_pwd}}", param.Inputs[0].Password, -1)
 	}
