@@ -147,7 +147,7 @@ func (c *processCache) Load()  {
 	defer c.Lock.Unlock()
 	file,err := os.Open(processFilePath)
 	if err != nil {
-		log.Errorf("read %s file error %v \n", processFilePath, err)
+		log.Infof("read %s file error %v \n", processFilePath, err)
 	}else{
 		dec := gob.NewDecoder(file)
 		err = dec.Decode(&c.ProcessMonitor)
