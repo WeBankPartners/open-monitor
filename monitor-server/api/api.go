@@ -102,7 +102,7 @@ func InitHttpServer(exportAgent bool) {
 			agentApi.GET("/deregister", agent.DeregisterAgent)
 			agentApi.POST("/export/register/:name", agent.ExportAgent)
 			agentApi.POST("/export/deregister/:name", agent.ExportAgent)
-			agentApi.GET("/install/:name", agent.InstallAgent)
+			agentApi.POST("/install/:name", agent.InstallAgent)
 		}
 		alarmApi := authApi.Group("/alarm")
 		{
@@ -127,6 +127,8 @@ func InitHttpServer(exportAgent bool) {
 			alarmApi.POST("/log/monitor/update_path", alarm.EditLogPath)
 			alarmApi.GET("/log/monitor/delete", alarm.DeleteLogStrategy)
 			alarmApi.GET("/log/monitor/delete_path", alarm.DeleteLogPath)
+			alarmApi.GET("/process/list", alarm.GetEndpointProcessConfig)
+			alarmApi.POST("/process/update", alarm.UpdateEndpointProcessConfig)
 		}
 		port := m.Config().Http.Port
 		r.Run(fmt.Sprintf(":%s", port))
