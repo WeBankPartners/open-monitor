@@ -159,7 +159,7 @@ func (c *logCollectorStrore) Save()  {
 func (c *logCollectorStrore) Load()  {
 	file,err := os.Open(logMonitorFilePath)
 	if err != nil {
-		log.Errorf("read %s file error %v \n", logMonitorFilePath, err)
+		log.Infof("read %s file error %v \n", logMonitorFilePath, err)
 	}else{
 		dec := gob.NewDecoder(file)
 		err = dec.Decode(&c.Data)
