@@ -13,3 +13,7 @@ build/develop/monitor.json
 monitor-server/*.log
 monitor-server/public/*
 monitor-server/monitor-server
+
+#agent
+monitor-agent/node_exporter/node_exporter
+monitor-agent/node_exporter/node_exporter_new

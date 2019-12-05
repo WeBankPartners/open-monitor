@@ -114,6 +114,7 @@ type AlarmEndpointQuery struct {
 type AlarmEndpointObj struct {
 	Id  string  `json:"id"`
 	Guid  string  `json:"guid"`
+	Type  string  `json:"type"`
 	GroupsName  string  `json:"groups_name"`
 }
 
