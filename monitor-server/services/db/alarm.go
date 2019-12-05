@@ -81,8 +81,8 @@ func ListAlarmEndpoints(query *m.AlarmEndpointQuery) error {
 		whereSql += fmt.Sprintf(" AND t3.id=%d ", query.Grp)
 	}
 	querySql := `SELECT t5.* FROM (
-            SELECT t4.id,t4.guid,GROUP_CONCAT(t4.name, ',') groups_name FROM (
-			SELECT t1.id,t1.guid,t3.name FROM endpoint t1 
+            SELECT t4.id,t4.guid,GROUP_CONCAT(t4.name, ',') groups_name,t4.type FROM (
+			SELECT t1.id,t1.guid,t3.name,t1.export_type as type FROM endpoint t1 
 			LEFT JOIN grp_endpoint t2 ON t1.id=t2.endpoint_id 
 			LEFT JOIN grp t3 ON t2.grp_id=t3.id 
 			WHERE 1=1 `+whereSql+`
