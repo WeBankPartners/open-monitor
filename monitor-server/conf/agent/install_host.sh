@@ -27,6 +27,8 @@ mkdir -p data
 if [[ -f data/app.pid ]]
 then
     kill -9 `cat data/app.pid`
+else
+    kill `pidof node_exporter_new`
 fi
 if [[ -f data/app.log.old ]]
 then
