@@ -18,7 +18,7 @@
         :h="item.h"
         :i="item.i"
         :key="index"
-        @resized="resizedEvent">
+        @resized="resizeEvent">
                  
         <div class="c-dark" style="display:flex;justify-content:flex-end;padding:0 32px;">
           <div class="header-grid header-grid-name">
@@ -40,7 +40,7 @@
 <script>
 import VueGridLayout from 'vue-grid-layout'
 import {readyToDraw} from  '@/assets/config/chart-rely'
-const echarts = require('echarts/lib/echarts');
+import {resizeEvent} from '@/assets/js/gridUtils'
 export default {
   name: '',
   data() {
@@ -91,18 +91,7 @@ export default {
       })
     },
     resizeEvent: function(i, newH, newW, newHPx, newWPx){
-      this.layoutData.forEach((item,index) => {
-        if (item.i === i) {
-          this.layoutData[index].h = newH
-          this.layoutData[index].w = newW
-          var myChart = echarts.init(document.getElementById(item.id))
-          myChart.resize({height:newHPx-34+'px',width:newWPx+'px'})
-          return
-        }
-      })
-    },
-    resizedEvent: function(i, newH, newW, newHPx, newWPx){
-      this.resizeEvent(i, newH, newW, newHPx, newWPx)
+      resizeEvent(this, i, newH, newW, newHPx, newWPx)
     }
   },
   components: {
