@@ -79,11 +79,11 @@ func InitHttpServer(exportAgent bool) {
 		{
 			dashboardApi.GET("/main", dashboard.MainDashboard)
 			dashboardApi.GET("/panels", dashboard.GetPanels)
-			dashboardApi.GET("/chart", dashboard.GetChart)
+			dashboardApi.GET("/chart", dashboard.GetChartOld)
 			dashboardApi.GET("/tags", dashboard.GetTags)
 			dashboardApi.GET("/search", dashboard.MainSearch)
 			dashboardApi.GET("/config/metric/list", dashboard.GetPromMetric)
-			dashboardApi.POST("/newchart", dashboard.GetChartNew)
+			dashboardApi.POST("/newchart", dashboard.GetChart)
 			dashboardApi.POST("/config/metric/update", dashboard.UpdatePromMetric)
 			dashboardApi.GET("/endpoint/metric/list", dashboard.GetEndpointMetric)
 			dashboardApi.GET("/custom/list", dashboard.ListCustomDashboard)
