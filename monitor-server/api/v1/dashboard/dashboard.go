@@ -210,7 +210,7 @@ func GetTags(c *gin.Context)  {
 // @Param aggregate query string false "聚合类型 枚举 min max avg p95 none"
 // @Success 200
 // @Router /api/v1/dashboard/chart [get]
-func GetChart(c *gin.Context)  {
+func GetChartOld(c *gin.Context)  {
 	paramId,err := strconv.Atoi(c.Query("id"))
 	if err != nil || paramId <= 0 {
 		mid.ReturnValidateFail(c, "Chart id validation failed")
@@ -298,14 +298,7 @@ func GetChart(c *gin.Context)  {
 	mid.ReturnData(c, eOption)
 }
 
-func GetChartNew(c *gin.Context)  {
-	//var postParam []m.ChartConfigObj
-	//// validate config json
-	//paramConfigStr := c.Query("config")
-	//if paramConfigStr == "" {
-	//	mid.ReturnValidateFail(c, "Parameter config can not be empty")
-	//	return
-	//}
+func GetChart(c *gin.Context)  {
 	requestBody,err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
 		mid.ReturnValidateFail(c, "Read request body data fail")
