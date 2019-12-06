@@ -33,7 +33,7 @@
       :i="item.i"
       :key="index"
       @resize="resizeEvent"
-      @resized="resizedEvent">
+      @resized="resizeEvent">
                 
       <div class="c-dark" style="display:flex;justify-content:flex-end;padding:0 32px;">
         <div class="header-grid header-grid-name">
@@ -72,9 +72,10 @@
 
 <script>
 import {generateUuid} from '@/assets/js/utils'
+import {resizeEvent} from '@/assets/js/gridUtils'
 import VueGridLayout from 'vue-grid-layout'
 import {readyToDraw} from  '@/assets/config/chart-rely'
-const echarts = require('echarts/lib/echarts');
+// const echarts = require('echarts/lib/echarts');
 export default {
   name: '',
   data() {
@@ -154,49 +155,30 @@ export default {
     async gridPlus(item) {
       const resViewData = await this.modifyLayoutData()
       let parentRouteData = this.$route.params
-        parentRouteData.cfg = JSON.stringify(resViewData) 
-        this.$router.push({name: 'viewChart', params:{templateData: parentRouteData, panal:item, parentData: this.$route.params}}) 
-      // this.modifyLayoutData().then((resViewData)=>{
-      //   let parentRouteData = this.$route.params
-      //   parentRouteData.cfg = JSON.stringify(resViewData) 
-      //   this.$router.push({name: 'viewChart', params:{templateData: parentRouteData, panal:item, parentData: this.$route.params}}) 
-      // })
+      parentRouteData.cfg = JSON.stringify(resViewData) 
+      this.$router.push({name: 'viewChart', params:{templateData: parentRouteData, panal:item, parentData: this.$route.params}}) 
     },
     async modifyLayoutData() {
-      // return new Promise(resolve => {
-        var resViewData = []
-        this.layoutData.forEach((layoutDataItem) =>{
-          let temp = {
-            panalTitle: layoutDataItem.i,
-            panalUnit: '',
-            query: [],
-            viewConfig: layoutDataItem
+      var resViewData = []
+      this.layoutData.forEach((layoutDataItem) =>{
+        let temp = {
+          panalTitle: layoutDataItem.i,
+          panalUnit: '',
+          query: [],
+          viewConfig: layoutDataItem
+        }
+        this.viewData.forEach((i) =>{
+          if (layoutDataItem.id === i.viewConfig.id) {
+            temp.panalUnit = i.panalUnit
+            temp.query = i.query
           }
-          this.viewData.forEach((i) =>{
-            if (layoutDataItem.id === i.viewConfig.id) {
-              temp.panalUnit = i.panalUnit
-              temp.query = i.query
-            }
-          })
-          resViewData.push(temp)
-        // })
-        // resolve(resViewData)
+        })
+        resViewData.push(temp)
       })
       return resViewData
     },
     resizeEvent: function(i, newH, newW, newHPx, newWPx){
-      this.layoutData.forEach((item,index) => {
-        if (item.i === i) {
-          this.layoutData[index].h = newH
-          this.layoutData[index].w = newW
-          var myChart = echarts.init(document.getElementById(item.id))
-          myChart.resize({height:newHPx-34+'px',width:newWPx+'px'})
-          return
-        }
-      })
-    },
-    resizedEvent: function(i, newH, newW, newHPx, newWPx){
-      this.resizeEvent(i, newH, newW, newHPx, newWPx)
+      resizeEvent(this, i, newH, newW, newHPx, newWPx)
     },
     saveEdit() {
       let res = []
