@@ -4,9 +4,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"strconv"
 
-	mid "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/middleware"
-	m "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/models"
-	"github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/services/db"
+	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
+	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"fmt"
 )
 

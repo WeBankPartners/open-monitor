@@ -9,8 +9,8 @@ import (
 	"context"
 	"golang.org/x/net/context/ctxhttp"
 	"io/ioutil"
-	m "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/models"
-	mid "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/middleware"
+	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
+	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 )
 
 func RegisteConsul(guid,ip,port string, tags []string, interval int) error {

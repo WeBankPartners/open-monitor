@@ -1,4 +1,4 @@
-# WeCube-plugins-prometheus 监控插件
+# Open-Monitor 监控插件
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 ![](https://img.shields.io/badge/language-go-orange.svg)
@@ -7,7 +7,7 @@
 中文 / [English](README.md)
 
 ## 试用链接
-[点此试用WeCube-plugins-prometheus](https://sandbox.webank.com/wecube-monitor)
+[点此试用Open-Monitor](https://sandbox.webank.com/wecube-monitor)
 
 ## 功能演示
 <img src="./wiki/images/wecube-monitor01.gif" />
@@ -17,12 +17,12 @@ Prometheus是由SoundCloud开发的开源监控报警系统和时序列数据库
 
 Prometheus 监控插件包括几个组成部分： Prometheus Server、Consul、Alert Manager、监控应用程序。
 
-WeCube-plugins-prometheus 无侵入式地封装了Prometheus的功能，并提供更好的告警管理和图表展示，以及与其它系统的交互等
+Open-Monitor 无侵入式地封装了Prometheus的功能，并提供更好的告警管理和图表展示，以及与其它系统的交互等
 
 ## 系统架构
 整体架构图如下:  
 
-![WeCube-plugins-prometheus架构图](wiki/images/Architecture.svg)
+![Open-Monitor架构图](wiki/images/Architecture.svg)
 
 
 ## 简介
@@ -60,30 +60,30 @@ WeCube通过监控插件来对资源以及应用的监控及告警。
 - 视图管理: 提供图形配置和自定义视图功能；
 
 ## 快速入门
-WeCube-plugins-prometheus采用容器化部署。
+Open-Monitor采用容器化部署。
 
 如何编译，请查看以下文档
-[WeCube-plugins-prometheus编译文档](wiki/compile_guide.md)
+[Open-Monitor编译文档](wiki/compile_guide.md)
 
 如何安装， 请查看以下文档
-[WeCube-plugins-prometheus部署文档](wiki/install_guide.md)
+[Open-Monitor部署文档](wiki/install_guide.md)
 
 agent安装文档
 [Prometheus-agent安装文档](wiki/install_agent.md)
 
 ## 用户手册
-关于WeCube-plugins-prometheus的使用和操作说明，请查看文档[WeCube-plugins-prometheus用户手册](wiki/user_guide.md)
+关于Open-Monitor的使用和操作说明，请查看文档[Open-Monitor用户手册](wiki/user_guide.md)
 
 ## 开发者文档
-**WeCube-plugins-prometheus本地环境搭建与开发**  
-请参考本地开发环境配置文档 [WeCube-plugins-prometheus本地环境配置文档](wiki/develop_local_guide.md)
+**Open-Monitor本地环境搭建与开发**  
+请参考本地开发环境配置文档 [Open-Monitor本地环境配置文档](wiki/develop_local_guide.md)
 
 ## 版权声明
 WeCMDB是基于 Apache License 2.0 协议， 详情请参考
 [LICENSE](LICENSE)
 
 ## 社区
-- 如果您想得到最快的响应，请给我们提[Issue](https://github.com/WeBankPartners/wecube-plugins-prometheus/issues/new/choose)或扫描下面的二维码，我们会第一时间反馈。
+- 如果您想得到最快的响应，请给我们提[Issue](https://github.com/WeBankPartners/open-monitor/issues/new/choose)或扫描下面的二维码，我们会第一时间反馈。
 
 	<div align="left">
 	<img src="wiki/images/wecube_qr_code.png"  height="200" width="200">

@@ -4,7 +4,7 @@ import (
 	"sort"
 	"strconv"
 	"fmt"
-	"github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/models"
+	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 )
 
 func CheckAggregate(start int64, end int64, endpoint string, step,num int) int {

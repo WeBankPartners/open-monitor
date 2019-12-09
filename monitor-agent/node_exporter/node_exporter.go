@@ -23,7 +23,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/common/log"
 	"github.com/prometheus/common/version"
-	"github.com/WeBankPartners/wecube-plugins-prometheus/monitor-agent/node_exporter/collector"
+	"github.com/WeBankPartners/open-monitor/monitor-agent/node_exporter/collector"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"os"
 	"os/signal"
