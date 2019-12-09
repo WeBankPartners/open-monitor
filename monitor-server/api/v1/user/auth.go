@@ -2,8 +2,8 @@ package user
 
 import (
 	"github.com/gin-gonic/gin"
-	mid "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/middleware"
-	m "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/models"
+	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
+	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"net/http"
 	"time"
 	"strings"

@@ -70,5 +70,5 @@
 			"revisionTime": "2018-05-14T19:44:41Z"
 		}
 	],
-	"rootPath": "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-agent/node_exporter"
+	"rootPath": "github.com/WeBankPartners/open-monitor/monitor-agent/node_exporter"
 }
