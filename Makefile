@@ -2,10 +2,10 @@ export GOPATH=$(PWD)
 
 current_dir=$(shell pwd)
 version=$(shell bash ./build/version.sh)
-project_name=wecube-plugins-prometheus
+project_name=open-monitor
 
 
-APP_HOME=src/github.com/WeBankPartners/wecube-plugins-prometheus
+APP_HOME=src/github.com/WeBankPartners/open-monitor
 
 ifndef RUN_MODE
   RUN_MODE=dev
