@@ -2,10 +2,10 @@ package agent
 
 import (
 	"github.com/gin-gonic/gin"
-	m "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/models"
-	"github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/services/prom"
-	mid "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/middleware"
-	"github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/services/db"
+	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
+	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"strings"
 	"fmt"
 )

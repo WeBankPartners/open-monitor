@@ -4,7 +4,7 @@ import (
 	"go.uber.org/zap"
 	"fmt"
 	"go.uber.org/zap/zapcore"
-	m "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/models"
+	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"strings"
 	"log"
 )

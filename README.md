@@ -1,4 +1,4 @@
-# WeCube-plugins-prometheus
+# Open-Monitor
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 ![](https://img.shields.io/badge/language-go-orange.svg)
@@ -8,7 +8,7 @@ English / [中文](README_CN.md)
 
 ## Link for Trial
 
-[Click_To_Try_WeCube-plugins-prometheus](https://sandbox.webank.com/wecube-monitor)
+[Click_To_Try_Open-Monitor](https://sandbox.webank.com/wecube-monitor)
 
 ## Demo
 <img src="./wiki/images/wecube-monitor02.gif" />
@@ -19,13 +19,13 @@ Prometheus is an open-source monitor-alarm system and time series database (TSDB
 
 The Prometheus Monitoring Plugin consists of several components: `Prometheus Server`, `Consul`, `Alert Manager`, and `Monitoring Applications`.
 
-WeCube-plugins-prometheus encapsulates the functionality of Prometheus without intrusion and provides better alarm management and graphic dashboard, as well as interaction with other systems.
+Open-Monitor encapsulates the functionality of Prometheus without intrusion and provides better alarm management and graphic dashboard, as well as interaction with other systems.
 
 ## System Architecture
 
 The overall architecture diagram is as follows:
 
-![WeCube-plugins-prometheus_Architecture](wiki/images/Architecture.svg)
+![Open-Monitor_Architecture](wiki/images/Architecture.svg)
 
 ## Summary
 
@@ -59,27 +59,27 @@ The plugin is based on Prometheus. The upper layer `Monitor` encapsulates the co
 
 ## Quick Start
 
-WeCube-plugins-prometheus is deployed in a docker container.
+Open-Monitor is deployed in a docker container.
 
-Please refer to the [WeCube-plugins-prometheus_Compiling_Guide](wiki/compile_guide.md) on how to compile WeCube-plugins-prometheus.
+Please refer to the [Open-Monitor_Compiling_Guide](wiki/compile_guide.md) on how to compile Open-Monitor.
 
-Please refer to the [WeCube-plugins-prometheus_Deployment_Guide](wiki/install_guide.md) on how to install WeCube-plugins-prometheus.
+Please refer to the [Open-Monitor_Deployment_Guide](wiki/install_guide.md) on how to install Open-Monitor.
 
 ## User Manuals
 
-Please refer to [WeCube-plugins-prometheus User Guide](wiki/user_guide.md) for usage and operations
+Please refer to [Open-Monitor User Guide](wiki/user_guide.md) for usage and operations
 
 ## Developer Guide
-Develop WeCube-plugins-prometheus in Normal Mode  
-Please refer to the [WeCube-plugins-prometheus Develop Doc](wiki/develop_local_guide.md) for setting up local environment quickly.
+Develop Open-Monitor in Normal Mode  
+Please refer to the [Open-Monitor Develop Doc](wiki/develop_local_guide.md) for setting up local environment quickly.
 
 ## License
 
-WeCube-plugins-prometheus is licensed under the Apache License Version 2.0 , please refer to the [license](LICENSE) for details.
+Open-Monitor is licensed under the Apache License Version 2.0 , please refer to the [license](LICENSE) for details.
 
 ## Community
 
-- For quick response, please [raise_an_issue](https://github.com/WeBankPartners/wecube-plugins-prometheus/issues/new/choose) to us, or you can also scan the following QR code to join our community, we will provide feedback as quickly as we can.
+- For quick response, please [raise_an_issue](https://github.com/WeBankPartners/open-monitor/issues/new/choose) to us, or you can also scan the following QR code to join our community, we will provide feedback as quickly as we can.
 
 	<div align="left">
 	<img src="wiki/images/wecube_qr_code.png"  height="200" width="200">

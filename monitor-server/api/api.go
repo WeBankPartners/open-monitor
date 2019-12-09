@@ -2,18 +2,18 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
-	m "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/models"
-	mid "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/middleware"
+	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
+	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"github.com/gin-contrib/cors"
-	"github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/api/v1/user"
+	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/user"
 	"net/http"
 	"github.com/swaggo/gin-swagger"
 	"github.com/swaggo/gin-swagger/swaggerFiles"
 	"fmt"
-	"github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/api/v1/dashboard"
-	"github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/api/v1/agent"
-	"github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/api/v1/alarm"
-	_ "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/docs"
+	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/dashboard"
+	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/agent"
+	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/alarm"
+	_ "github.com/WeBankPartners/open-monitor/monitor-server/docs"
 )
 
 func InitHttpServer(exportAgent bool) {

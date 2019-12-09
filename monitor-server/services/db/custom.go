@@ -1,7 +1,7 @@
 package db
 
 import (
-	m "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/models"
+	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"fmt"
 )
 

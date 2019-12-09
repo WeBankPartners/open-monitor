@@ -5,8 +5,8 @@ import (
 	"io/ioutil"
 	"fmt"
 	"net/http"
-	mid "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/middleware"
-	m "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/models"
+	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
+	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"strings"
 	"encoding/json"
 )

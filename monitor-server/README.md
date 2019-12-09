@@ -19,8 +19,8 @@ HTTP路由引用Gin，数据库连接引用Xorm，日志引用Zap，DB使用Mysq
 
 ## 编译打包
 ```shell
-go get https://github.com/WeBankPartners/wecube-plugins-prometheus
-cd $GOPATH/src/github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server
+go get https://github.com/WeBankPartners/open-monitor
+cd $GOPATH/src/github.com/WeBankPartners/open-monitor/monitor-server
 go build
 ```
 ## 运行
