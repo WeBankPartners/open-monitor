@@ -1,4 +1,4 @@
-# WeCube-Plugins-Prometheus Compile Guide
+# Open-Monitor Compile Guide
 
 ## 编译前准备
 1. 准备一台linux主机，为加快编译速度， 资源配置建议4核8GB或以上；
@@ -22,11 +22,11 @@
 	
 	```
 	cd /data	
-	git clone https://github.com/WeBankPartners/wecube-plugins-prometheus.git
+	git clone https://github.com/WeBankPartners/open-monitor.git
 	```
 
 	根据提示输入github账号密码， 即可拉取代码到本地。
-	拉取完成后， 可以在本地目录上看到wecube-plugins-prometheus目录， 进入目录，结构如下：
+	拉取完成后， 可以在本地目录上看到open-monitor目录， 进入目录，结构如下：
 
 	![we_prometheus_dir](images/we_prometheus_dir.png)
 	

@@ -2,10 +2,10 @@ package dashboard
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/services/db"
-	mid "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/middleware"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
+	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"strconv"
-	m "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/models"
+	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"fmt"
 )
 
