@@ -1,4 +1,4 @@
-# WeCube-plugins-prometheus 用户手册
+# Open-Monitor 用户手册
 
 ## <span id="menu_introdution"></span>主菜单介绍
 ![主页面](images/user_guide/user_guide_01.png)  

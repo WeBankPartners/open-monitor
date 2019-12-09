@@ -2,12 +2,12 @@ package main
 
 import (
 	"flag"
-	m "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/models"
-	"github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/api"
-	"github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/services/db"
-	ds "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/services/datasource"
-	"github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/services/prom"
-	"github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/middleware"
+	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"github.com/WeBankPartners/open-monitor/monitor-server/api"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
+	ds "github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 )
 
 // @title Monitor Server API

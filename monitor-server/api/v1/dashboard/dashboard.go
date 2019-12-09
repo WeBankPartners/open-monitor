@@ -1,10 +1,10 @@
 package dashboard
 
 import (
-	m "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/models"
-	mid "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/middleware"
-	"github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/services/db"
-	ds "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/services/datasource"
+	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
+	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
+	ds "github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
