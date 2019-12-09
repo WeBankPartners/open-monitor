@@ -30,7 +30,7 @@
     "endpoint": "对象",
     "group": "组",
     "threshold": "阀值",
-    "log": "日志",
+    "log": "关键字",
     "metric": "指标",
     "relativeTime": "时间段",
     "timeInterval": "时间区间",
@@ -49,7 +49,7 @@
     "updateTime": "更新时间",
     "endpointAdd": "对象新增",
     "groupAdd": "组新增",
-    "logAdd": "日志新增"
+    "logAdd": "关键字新增"
   },
   "button": {
     "search": "搜索",
@@ -59,7 +59,7 @@
     "confirm": "确定",
     "thresholdManagement": "阀值管理",
     "historicalAlert": "历史告警",
-    "logConfiguration": "日志配置",
+    "logConfiguration": "关键字配置",
     "processConfiguration": "进程配置",
     "addMetric": "新增指标",
     "addViewTemplate": "视图模板",
