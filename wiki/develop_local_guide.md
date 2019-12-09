@@ -1,4 +1,4 @@
-# WeCube-plugins-prometheus 本地开发环境配置
+# Open-Monitor 本地开发环境配置
 
 ## 步骤
 (暂不支持windows，后续会持续更新windows版) 
@@ -33,8 +33,8 @@
     ```bash
     mkdir -p $GOPATH/src/github.com/WeBankPartners
     cd $GOPATH/src/github.com/WeBankPartners
-    git clone https://github.com/WeBankPartners/wecube-plugins-prometheus.git
-    cd wecube-plugins-prometheus
+    git clone https://github.com/WeBankPartners/open-monitor.git
+    cd open-monitor
     ls -l
     ```
     项目文件详情  

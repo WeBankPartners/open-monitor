@@ -3,10 +3,10 @@ package alarm
 import (
 	"github.com/gin-gonic/gin"
 	"strconv"
-	mid "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/middleware"
+	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"fmt"
-	"github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/services/db"
-	m "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/models"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
+	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"net/http"
 	"encoding/json"
 	"strings"

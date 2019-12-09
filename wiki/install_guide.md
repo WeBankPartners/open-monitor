@@ -1,6 +1,6 @@
-# WeCube-Plugins-Prometheus安装指引
+# Open-Monitor安装指引
 
-WeCube-plugins-prometheus运行环境需要5个组件：  
+Open-Monitor运行环境需要5个组件：  
 prometheus、alertmanager、consul、monitor、monitor-db（mysql） 
 这5个组件都已做成docker镜像，本安装指引通过docker-compose的方式启动这3个容器，不需要再单独安装mysql服务。用户也可以自行安装mysql，修改部分配置文件即可。
 
@@ -236,7 +236,7 @@ prometheus、alertmanager、consul、monitor、monitor-db（mysql）
    [monitor.json](../build/conf/monitor.json) 是monitor的配置文件  
 
 ## 执行安装
-1. 执行如下命令，通过docker-compose拉起WeCube-plugins-prometheus服务。
+1. 执行如下命令，通过docker-compose拉起Open-Monitor服务。
 	
 	```
 	/bin/bash ./install.sh
@@ -246,14 +246,14 @@ prometheus、alertmanager、consul、monitor、monitor-db（mysql）
 	http://monitor_server_ip:monitor_server_port
 
 ## 卸载
-执行如下命令，通过docker-compose停止WeCube-plugins-prometheus服务。
+执行如下命令，通过docker-compose停止Open-Monitor服务。
 
 ```
 /bin/bash ./uninstall.sh
 ```
 
 ## 重启
-执行如下命令，通过docker-compose停止WeCube-plugins-prometheus服务。
+执行如下命令，通过docker-compose停止Open-Monitor服务。
 
 ```
 /bin/bash ./uninstall.sh

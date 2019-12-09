@@ -2,11 +2,11 @@ package prom
 
 import (
 	"sync"
-	m "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/models"
+	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"os"
 	"fmt"
 	"io/ioutil"
-	mid "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/middleware"
+	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"gopkg.in/yaml.v2"
 	"strings"
 	"net/http"

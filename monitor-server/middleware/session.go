@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"time"
-	m "github.com/WeBankPartners/wecube-plugins-prometheus/monitor-server/models"
+	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
