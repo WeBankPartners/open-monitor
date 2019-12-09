@@ -17,9 +17,9 @@ jobs:
       uses: actions/checkout@v1
       with:
         fetch-depth: 1
-        path: go/src/github.com/WeBankPartners/wecube-plugins-prometheus
+        path: go/src/github.com/WeBankPartners/open-monitor
 
     - name: Build
       run: cd monitor-server && go build -v .
       env:
-        GOPATH: /home/runner/work/wecube-plugins-prometheus/go
+        GOPATH: /home/runner/work/open-monitor/go
