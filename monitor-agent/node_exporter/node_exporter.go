@@ -175,6 +175,8 @@ func main() {
 	http.HandleFunc("/log/config", collector.LogMonitorHttpHandle)
 	// Add process monitor handle http config
 	http.HandleFunc("/process/config", collector.ProcessMonitorHttpHandle)
+	// Add business monitor handle http config
+	http.HandleFunc("/business/config", collector.BusinessMonitorHttpHandle)
 
 	log.Infoln("Listening on", *listenAddress)
 	go func(address string) {

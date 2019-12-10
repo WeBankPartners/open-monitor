@@ -29,7 +29,7 @@
   "field": {
     "group": "Group",
     "threshold": "Threshold",
-    "log": "Log",
+    "log": "Keyword",
     "endpoint": "Endpoint",
     "metric": "Metric",
     "relativeTime": "Relative Time",
@@ -49,7 +49,7 @@
     "updateTime": "Updated Time",
     "endpointAdd": "Endpoint Add",
     "groupAdd": "Group",
-    "logAdd": "Log"
+    "logAdd": "Keyword"
   },
   "button": {
     "search": "Search",
@@ -59,7 +59,7 @@
     "confirm": "Confirm",
     "thresholdManagement": "Threshold",
     "historicalAlert": "Historical Alert",
-    "logConfiguration": "Log Configuration",
+    "logConfiguration": "Keyword Configuration",
     "processConfiguration": "process Configuration",
     "addMetric": "Add metric",
     "addViewTemplate": "Add View Template",
