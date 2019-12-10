@@ -39,7 +39,7 @@
         }
     },
     "thresholdManagement": {
-        "_des": "阀值管理",
+        "_des": "阈值管理",
         "list": {
             "api": "alarm/strategy/list"
         },
@@ -54,7 +54,7 @@
         }
     },
     "logManagement": {
-        "_des": "阀值管理",
+        "_des": "阈值管理",
         "list": {
             "api": "alarm/log/monitor/list"
         },
