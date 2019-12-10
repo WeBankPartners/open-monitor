@@ -160,6 +160,7 @@ export default {
     },
     clearEndpoint () {
       this.clearEndpoint = []
+      this.getEndpointList('.')
       this.originalList = []
       this.metricSelected = []
       this.editMetric = []

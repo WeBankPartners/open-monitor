@@ -132,6 +132,7 @@ export default {
     },
     clearEndpoint () {
       this.clearEndpoint = []
+      this.getEndpointList('.')
       this.$parent.showCharts = false
     },
     changeRoute () {
