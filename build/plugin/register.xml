@@ -44,8 +44,8 @@
                     <parameter datatype="string" mappingType='context' required='Y'>host_ip</parameter>
                 </inputParameters>
                 <outputParameters>
-                    <parameter datatype="string">resultCode</parameter>
-                    <parameter datatype="string">resultMessage</parameter>
+                    <parameter datatype="string">errorCode</parameter>
+                    <parameter datatype="string">errorMessage</parameter>
                 </outputParameters>
             </interface>
         </plugin>
@@ -55,8 +55,8 @@
                     <parameter datatype="string" mappingType='context' required='Y'>host_ip</parameter>
                 </inputParameters>
                 <outputParameters>
-                    <parameter datatype="string">resultCode</parameter>
-                    <parameter datatype="string">resultMessage</parameter>
+                    <parameter datatype="string">errorCode</parameter>
+                    <parameter datatype="string">errorMessage</parameter>
                 </outputParameters>
             </interface>
         </plugin>
@@ -67,8 +67,8 @@
                     <parameter datatype="string" mappingType='context' required='Y'>instance</parameter>
                 </inputParameters>
                 <outputParameters>
-                    <parameter datatype="string">resultCode</parameter>
-                    <parameter datatype="string">resultMessage</parameter>
+                    <parameter datatype="string">errorCode</parameter>
+                    <parameter datatype="string">errorMessage</parameter>
                 </outputParameters>
             </interface>
         </plugin>
@@ -79,8 +79,8 @@
                     <parameter datatype="string" mappingType='context' required='Y'>instance</parameter>
                 </inputParameters>
                 <outputParameters>
-                    <parameter datatype="string">resultCode</parameter>
-                    <parameter datatype="string">resultMessage</parameter>
+                    <parameter datatype="string">errorCode</parameter>
+                    <parameter datatype="string">errorMessage</parameter>
                 </outputParameters>
             </interface>
         </plugin>
@@ -91,8 +91,8 @@
                     <parameter datatype="string" mappingType='context' required='Y'>instance</parameter>
                 </inputParameters>
                 <outputParameters>
-                    <parameter datatype="string">resultCode</parameter>
-                    <parameter datatype="string">resultMessage</parameter>
+                    <parameter datatype="string">errorCode</parameter>
+                    <parameter datatype="string">errorMessage</parameter>
                 </outputParameters>
             </interface>
         </plugin>
@@ -103,8 +103,8 @@
                     <parameter datatype="string" mappingType='context' required='Y'>instance</parameter>
                 </inputParameters>
                 <outputParameters>
-                    <parameter datatype="string">resultCode</parameter>
-                    <parameter datatype="string">resultMessage</parameter>
+                    <parameter datatype="string">errorCode</parameter>
+                    <parameter datatype="string">errorMessage</parameter>
                 </outputParameters>
             </interface>
         </plugin>
@@ -115,8 +115,8 @@
                     <parameter datatype="string" mappingType='context' required='Y'>instance</parameter>
                 </inputParameters>
                 <outputParameters>
-                    <parameter datatype="string">resultCode</parameter>
-                    <parameter datatype="string">resultMessage</parameter>
+                    <parameter datatype="string">errorCode</parameter>
+                    <parameter datatype="string">errorMessage</parameter>
                 </outputParameters>
             </interface>
         </plugin>
@@ -127,8 +127,8 @@
                     <parameter datatype="string" mappingType='context' required='Y'>instance</parameter>
                 </inputParameters>
                 <outputParameters>
-                    <parameter datatype="string">resultCode</parameter>
-                    <parameter datatype="string">resultMessage</parameter>
+                    <parameter datatype="string">errorCode</parameter>
+                    <parameter datatype="string">errorMessage</parameter>
                 </outputParameters>
             </interface>
         </plugin>
@@ -138,8 +138,8 @@
                     <parameter datatype="string" mappingType='context' required='Y'>host</parameter>
                 </inputParameters>
                 <outputParameters>
-                    <parameter datatype="string">resultCode</parameter>
-                    <parameter datatype="string">resultMessage</parameter>
+                    <parameter datatype="string">errorCode</parameter>
+                    <parameter datatype="string">errorMessage</parameter>
                 </outputParameters>
             </interface>
         </plugin>
@@ -150,8 +150,8 @@
                     <parameter datatype="string" mappingType='context' required='Y'>port</parameter>
                 </inputParameters>
                 <outputParameters>
-                    <parameter datatype="string">resultCode</parameter>
-                    <parameter datatype="string">resultMessage</parameter>
+                    <parameter datatype="string">errorCode</parameter>
+                    <parameter datatype="string">errorMessage</parameter>
                 </outputParameters>
             </interface>
         </plugin>
@@ -163,8 +163,8 @@
                     <parameter datatype="string" mappingType='context' required='Y'>password</parameter>
                 </inputParameters>
                 <outputParameters>
-                    <parameter datatype="string">resultCode</parameter>
-                    <parameter datatype="string">resultMessage</parameter>
+                    <parameter datatype="string">errorCode</parameter>
+                    <parameter datatype="string">errorMessage</parameter>
                 </outputParameters>
             </interface>
         </plugin>
@@ -175,8 +175,8 @@
                     <parameter datatype="string" mappingType='context' required='Y'>ips</parameter>
                 </inputParameters>
                 <outputParameters>
-                    <parameter datatype="string">resultCode</parameter>
-                    <parameter datatype="string">resultMessage</parameter>
+                    <parameter datatype="string">errorCode</parameter>
+                    <parameter datatype="string">errorMessage</parameter>
                 </outputParameters>
             </interface>
         </plugin>
