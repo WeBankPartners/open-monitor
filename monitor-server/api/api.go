@@ -129,6 +129,8 @@ func InitHttpServer(exportAgent bool) {
 			alarmApi.GET("/log/monitor/delete_path", alarm.DeleteLogPath)
 			alarmApi.GET("/process/list", alarm.GetEndpointProcessConfig)
 			alarmApi.POST("/process/update", alarm.UpdateEndpointProcessConfig)
+			alarmApi.GET("/business/list", alarm.GetEndpointBusinessConfig)
+			alarmApi.POST("/business/update", alarm.UpdateEndpointBusinessConfig)
 		}
 		port := m.Config().Http.Port
 		r.Run(fmt.Sprintf(":%s", port))
