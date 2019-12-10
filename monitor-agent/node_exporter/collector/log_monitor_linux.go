@@ -107,7 +107,7 @@ func (c *logCollectorObj) start() {
 }
 
 func (c *logCollectorObj) destroy()  {
-	c.TailSession.Dead()
+	c.TailSession.Stop()
 	c.Rule = []*logKeywordObj{}
 }
 
