@@ -60,8 +60,9 @@
     "thresholdManagement": "Threshold",
     "historicalAlert": "Historical Alert",
     "logConfiguration": "Keyword Configuration",
-    "processConfiguration": "process Configuration",
-    "addMetric": "Add metric",
+    "processConfiguration": "Process Configuration",
+    "businessConfiguration": "Business Monitor",
+    "addMetric": "Add Metric",
     "addViewTemplate": "Add View Template",
     "setDashboard": "Set Dashboard",
     "saveEdit": "Save",
@@ -100,7 +101,8 @@
     "path": "Path",
     "keyword": "Keyword",
     "condition": "Condition",
-    "systemName": "System Name"
+    "systemName": "System Name",
+    "logPath": "Log Path"
   },
   "tips": {
     "required": " Required!",

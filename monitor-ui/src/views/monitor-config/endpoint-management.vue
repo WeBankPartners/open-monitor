@@ -66,6 +66,32 @@
         </div>
       </div>
     </ModalComponent>
+    <ModalComponent :modelConfig="businessConfigModel">
+      <div slot="businessConfig">
+        <div class="marginbottom params-each">
+          <label class="col-md-2 label-name">{{$t('tableKey.logPath')}}:</label>
+          <div class="search-input-content">
+            <input type="text" v-model="businessConfigModel.businessName" class="search-input c-dark" />
+          </div>
+          <button type="button" @click="addBusiness" class="btn-cancle-f" style="vertical-align:middle">{{$t('button.confirm')}}</button>
+        </div>
+        <div class="marginbottom params-each row" style="">
+          <div class="offset-md-1">
+            <Tag
+            v-for="(business, businessIndex) in businessConfigModel.addRow.businessSet"
+            color="primary"
+            type="border"
+            :key="businessIndex"
+            :name="businessIndex"
+            closable
+            @on-close="delBusiness(business)"
+            >{{business|interceptParams}}
+              <i class="fa fa-pencil" @click="editBusiness(business)" aria-hidden="true"></i>
+            </Tag>  
+          </div>     
+        </div>
+      </div>
+    </ModalComponent>
   </div>
 </template>
 <script>
@@ -98,6 +124,7 @@
     {btn_name: 'button.remove', btn_func: 'delF'},
     {btn_name: 'button.logConfiguration', btn_func: 'logManagement'},
     {btn_name: 'button.processConfiguration', btn_func: 'processManagement'},
+    {btn_name: 'button.businessConfiguration', btn_func: 'businessManagement'},
   ]
   export default {
     name: '',
@@ -206,6 +233,19 @@
           },
           processName: ''
         },
+        businessConfigModel: {
+          modalId: 'business_config_model',
+          modalTitle: 'button.businessConfiguration',
+          isAdd: true,
+          saveFunc: 'businessConfigSave',
+          config: [
+            {name:'businessConfig',type:'slot'}
+          ],
+          addRow:{
+            businessSet: [],
+          },
+          businessName: ''
+        },
         id: null,
         showGroupMsg: false,
         groupMsg: {}
@@ -258,7 +298,7 @@
       filterMoreBtn (rowData) {
         let moreBtnGroup = ['thresholdConfig','historyAlarm','logManagement']
         if (rowData.type === 'host') {
-          moreBtnGroup.push('processManagement')
+          moreBtnGroup.push('processManagement', 'businessManagement')
         }
         if (this.showGroupMsg) {
           moreBtnGroup.push('delF')
@@ -373,7 +413,45 @@
       editProcess (process) {
         this.delProcess(process)
         this.processConfigModel.processName = process
+      },
+
+      businessManagement (rowData) {
+        this.id = rowData.id
+        this.businessConfigModel.addRow.businessSet = []
+        this.$root.$httpRequestEntrance.httpRequestEntrance('GET','alarm/process/list', {id:this.id}, responseData=> {
+          responseData.forEach((item)=>{
+            this.businessConfigModel.addRow.businessSet.push(item.name)
+          })
+          this.$root.JQ('#business_config_model').modal('show')
+        })
+      },
+      businessConfigSave () {
+        const params = {
+          endpoint_id: +this.id,
+          process_list: this.businessConfigModel.addRow.businessSet
+        }
+        this.$root.$httpRequestEntrance.httpRequestEntrance('POST','alarm/process/update', params, ()=> {
+          this.$Message.success(this.$t('tips.success'))
+          this.$root.JQ('#business_config_model').modal('hide')
+        })
+      },
+      addBusiness () {
+        if (!this.$root.$validate.isEmpty_reset(this.businessConfigModel.businessName.trim())) {
+          this.businessConfigModel.addRow.businessSet.push(this.businessConfigModel.businessName.trim())
+          this.businessConfigModel.businessName = ''
+        }
+      },
+      delBusiness (business) {
+        const i = this.businessConfigModel.addRow.businessSet.findIndex((val)=>{
+          return val === business
+        })
+        this.businessConfigModel.addRow.businessSet.splice(i,1)
+      },
+      editBusiness (business) {
+        this.delBusiness(business)
+        this.businessConfigModel.businessName = business
       }
+
     },
     components: {
       tableTemp
