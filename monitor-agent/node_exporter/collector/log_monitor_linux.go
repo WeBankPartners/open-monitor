@@ -92,7 +92,7 @@ func (c *logCollectorObj) start() {
 	var err error
 	c.TailSession,err = tail.TailFile(c.Path, tail.Config{Follow:true})
 	if err != nil {
-		fmt.Printf("start log collector fail, path: %s, error: %v", c.Path, err)
+		log.Errorf("start log collector fail, path: %s, error: %v", c.Path, err)
 		return
 	}
 	for line := range c.TailSession.Lines {
