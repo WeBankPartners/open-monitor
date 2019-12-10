@@ -14,8 +14,19 @@ import (
 )
 
 type resultObj struct {
-	ResultCode  string  `json:"result_code"`
-	ResultMessage  string  `json:"result_message"`
+	ResultCode  string  `json:"resultCode"`
+	ResultMessage  string  `json:"resultMessage"`
+	Results  resultOutput  `json:"results"`
+}
+
+type resultOutput struct {
+	Outputs  []resultOutputObj  `json:"outputs"`
+}
+
+type resultOutputObj struct {
+	CallbackParameter  string  `json:"callbackParameter"`
+	ErrorCode  string  `json:"errorCode"`
+	ErrorMessage  string  `json:"errorMessage"`
 }
 
 type requestObj struct {
@@ -63,38 +74,18 @@ func ExportAgent(c *gin.Context)  {
 	err := json.Unmarshal(data, &param)
 	if err == nil {
 		if len(param.Inputs) == 0 {
-			result = resultObj{ResultCode:"1", ResultMessage:"Param validate fail : inputs length is zero"}
+			result = resultObj{ResultCode:"0", ResultMessage:"inputs length is zero,do nothing"}
 			mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
-			c.JSON(http.StatusBadRequest, result)
+			c.JSON(http.StatusOK, result)
 			return
 		}
-		var ipList,instanceList []string
-		var tmpHostIp,tmpInstance string
-		if strings.Contains(param.Inputs[0].HostIp, "[") || strings.Contains(param.Inputs[0].HostIp, ",") {
-			tmpHostIp = strings.ReplaceAll(param.Inputs[0].HostIp, "[", "")
-			tmpHostIp = strings.ReplaceAll(tmpHostIp, "]", "")
-			ipList = strings.Split(tmpHostIp, ",")
-			if agentType != "host" {
-				tmpInstance = strings.ReplaceAll(param.Inputs[0].Instance, "]", "")
-				tmpInstance = strings.ReplaceAll(tmpInstance, "]", "")
-				instanceList = strings.Split(tmpInstance, ",")
-			}
-		}else{
-			ipList = append(ipList, param.Inputs[0].HostIp)
-			if agentType != "host" {
-				instanceList = append(instanceList, param.Inputs[0].Instance)
-			}
-		}
-		for i,hostIp := range ipList {
+		var tmpResult []resultOutputObj
+		for _,v := range param.Inputs {
 			var param m.RegisterParam
 			if agentType == "host" {
-				param = m.RegisterParam{Type: agentType, ExporterIp: hostIp, ExporterPort: agentPort}
+				param = m.RegisterParam{Type: agentType, ExporterIp: v.HostIp, ExporterPort: agentPort}
 			}else{
-				if len(instanceList) > i {
-					param = m.RegisterParam{Type: agentType, ExporterIp: hostIp, ExporterPort:agentPort, Instance:instanceList[i]}
-				}else{
-					param = m.RegisterParam{Type: agentType, ExporterIp: hostIp, ExporterPort:agentPort, Instance:instanceList[0]}
-				}
+				param = m.RegisterParam{Type: agentType, ExporterIp: v.HostIp, ExporterPort:agentPort, Instance:v.Instance}
 			}
 			if action == "register" {
 				err = RegisterJob(param)
@@ -110,15 +101,17 @@ func ExportAgent(c *gin.Context)  {
 					err = DeregisterJob(endpointObj.Guid)
 				}
 			}
+			var msg string
 			if err != nil {
-				result = resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("%s %s:%s fail,error %v",action, agentType, hostIp, err)}
-				mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
-				c.JSON(http.StatusInternalServerError, result)
-				return
+				msg = fmt.Sprintf("%s %s:%s %s fail,error %v",action, agentType, v.HostIp, v.Instance, err)
+				tmpResult = append(tmpResult, resultOutputObj{CallbackParameter:v.CallbackParameter, ErrorCode:"1", ErrorMessage:msg})
+			}else{
+				msg = fmt.Sprintf("%s %s:%s %s succeed", action, agentType, v.HostIp, v.Instance)
+				tmpResult = append(tmpResult, resultOutputObj{CallbackParameter:v.CallbackParameter, ErrorCode:"0", ErrorMessage:""})
 			}
+			mid.LogInfo(msg)
 		}
-		result = resultObj{ResultCode:"0", ResultMessage:"Success"}
-		mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
+		result = resultObj{ResultCode:"0", ResultMessage:"Done", Results:resultOutput{Outputs:tmpResult}}
 		mid.ReturnData(c, result)
 	}else{
 		result = resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("Param validate fail : %v", err)}
