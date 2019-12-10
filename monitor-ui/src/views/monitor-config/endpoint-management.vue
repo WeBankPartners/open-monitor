@@ -418,9 +418,9 @@
       businessManagement (rowData) {
         this.id = rowData.id
         this.businessConfigModel.addRow.businessSet = []
-        this.$root.$httpRequestEntrance.httpRequestEntrance('GET','alarm/process/list', {id:this.id}, responseData=> {
+        this.$root.$httpRequestEntrance.httpRequestEntrance('GET','alarm/business/list', {id:this.id}, responseData=> {
           responseData.forEach((item)=>{
-            this.businessConfigModel.addRow.businessSet.push(item.name)
+            this.businessConfigModel.addRow.businessSet.push(item.path)
           })
           this.$root.JQ('#business_config_model').modal('show')
         })
@@ -428,9 +428,9 @@
       businessConfigSave () {
         const params = {
           endpoint_id: +this.id,
-          process_list: this.businessConfigModel.addRow.businessSet
+          path_list: this.businessConfigModel.addRow.businessSet
         }
-        this.$root.$httpRequestEntrance.httpRequestEntrance('POST','alarm/process/update', params, ()=> {
+        this.$root.$httpRequestEntrance.httpRequestEntrance('POST','alarm/business/update', params, ()=> {
           this.$Message.success(this.$t('tips.success'))
           this.$root.JQ('#business_config_model').modal('hide')
         })
