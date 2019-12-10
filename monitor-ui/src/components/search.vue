@@ -101,6 +101,9 @@ export default {
       }
       this.getChartsConfig()
     },
+    test(query) {
+      console.log(query)
+    }, 
     getEndpointList(query) {
       let params = {
         search: query,
@@ -132,6 +135,7 @@ export default {
     },
     clearEndpoint () {
       this.clearEndpoint = []
+      this.getEndpointList('.')
       this.$parent.showCharts = false
     },
     changeRoute () {
