@@ -50,14 +50,14 @@
         </template>
       </ul>
     </section>
-    <section v-if="isRequestChartData" class="metric-section">
+    <div v-if="isRequestChartData" class="metric-section">
       <div v-if="!noDataTip">
         <div :id="elId" class="echart"></div>
       </div>
       <div v-else class="echart echart-no-data-tip">
         <span>~~~No Data!~~~</span>
       </div>
-    </section>
+    </div>
     <ModalComponent :modelConfig="modelConfig"></ModalComponent>
   </div>
 </template>
@@ -159,13 +159,13 @@ export default {
       })
     },
     clearEndpoint () {
+      this.isRequestChartData = false
       this.clearEndpoint = []
       this.getEndpointList('.')
       this.originalList = []
       this.metricSelected = []
       this.editMetric = []
       this.endpoint = ''
-      this.isRequestChartData = false
     },
     addMetric() {
      let key = ((new Date()).valueOf()).toString().substring(10)
@@ -191,20 +191,19 @@ export default {
       }
     },
     delMetric (metric) {
-      if (metric.label.indexOf('default') > -1) {
-       this.editMetric =  this.editMetric.filter((item)=>{
-           return item.label !== metric.label
-        })
-      } else {
-        this.metricSelectedOptions = this.metricSelectedOptions.filter((item)=>{
-           return item.label !== metric.label
-        })
-        this.metricSelected = this.metricSelected.filter((item)=>{
-           return item !== `${metric.id}^^${metric.value}`
-        })
-      }
+      this.isRequestChartData = false
+      this.editMetric =  this.editMetric.filter((item)=>{
+        return item.label !== metric.label
+      })
+      this.metricSelectedOptions = this.metricSelectedOptions.filter((item)=>{
+        return item.label !== metric.label
+      })
+      this.metricSelected = this.metricSelected.filter((item)=>{
+        return item !== `${metric.id}^^${metric.value}`
+      })
     },
     selectMetric (option) {
+      this.isRequestChartData = false
       this.metricSelectedOptions = []
       option.forEach((item) => {
         this.metricSelectedOptions.push({
