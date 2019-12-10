@@ -28,7 +28,7 @@ func init() {
 func BusinessMonitorCollector() (Collector, error) {
 	return &businessMonitorCollector{
 		businessMonitor: prometheus.NewDesc(
-			prometheus.BuildFQName(namespace, businessCollectorName, ""),
+			prometheus.BuildFQName(namespace, businessCollectorName, "value"),
 			"Show business data from log file.",
 			[]string{"sys", "msg", "key"}, nil,
 		),
@@ -87,13 +87,13 @@ func (c *businessMonitorObj) start()  {
 	for line := range c.TailSession.Lines {
 		c.Lock.Lock()
 		textList := strings.Split(line.Text, "][")
-		log.Infof("Get a new line : %v \n", textList)
+		//log.Infof("Get a new line : %v \n", textList)
 		if len(textList) > 8 {
 			c.LastDate = textList[1]
 			mapData := make(map[string]string)
 			err := json.Unmarshal([]byte(textList[7]), &mapData)
 			if err == nil {
-				log.Infof("Update new data : %v \n", mapData)
+				//log.Infof("Update new data : %v \n", mapData)
 				c.Data = mapData
 			}
 		}
@@ -115,11 +115,11 @@ func (c *businessMonitorObj) get() []businessMetricObj {
 }
 
 func (c *businessMonitorObj) destroy()  {
-	c.TailSession.Dead()
+	c.TailSession.Stop()
 	c.Data = make(map[string]string)
 }
 
-var businessMonitorJobs map[string]*businessMonitorObj
+var businessMonitorJobs = make(map[string]*businessMonitorObj)
 
 func BusinessMonitorHttpHandle(w http.ResponseWriter, r *http.Request)  {
 	buff,err := ioutil.ReadAll(r.Body)
