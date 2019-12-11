@@ -24,6 +24,12 @@
         },
         "delete": {
             "api": "alarm/grp/delete"
+        },
+        "upload": {
+            "api": "/api/v1/alarm/grp/import"
+        },
+        "export": {
+            "api": "/api/v1/alarm/grp/export"
         }
     },
     "endpointManagement": {
@@ -39,7 +45,7 @@
         }
     },
     "thresholdManagement": {
-        "_des": "阀值管理",
+        "_des": "阈值管理",
         "list": {
             "api": "alarm/strategy/list"
         },
@@ -54,7 +60,7 @@
         }
     },
     "logManagement": {
-        "_des": "阀值管理",
+        "_des": "阈值管理",
         "list": {
             "api": "alarm/log/monitor/list"
         },
