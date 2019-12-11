@@ -92,6 +92,17 @@ func DeleteGrp(c *gin.Context)  {
 		mid.ReturnValidateFail(c,"Id can not be empty")
 		return
 	}
+	_,tplObj := db.GetTpl(0, id, 0)
+	if tplObj.Id > 0 {
+		db.DeleteStrategyByGrp(0, tplObj.Id)
+		err := SaveConfigFile(tplObj.Id)
+		if err != nil {
+			mid.ReturnError(c, "Update prometheus config file fail", err)
+			return
+		}
+		db.DeleteTpl(tplObj.Id)
+	}
+	db.DeleteStrategyByGrp(id, 0)
 	err := db.UpdateGrp(&m.UpdateGrp{Groups:[]*m.GrpTable{&m.GrpTable{Id:id}}, Operation:"delete", OperateUser:""})
 	if err != nil {
 		mid.ReturnError(c, "Failure", err)
