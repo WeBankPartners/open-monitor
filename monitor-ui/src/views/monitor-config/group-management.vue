@@ -1,6 +1,6 @@
 <template>
   <div class="main-content">
-    <PageTable :pageConfig="pageConfig">
+    <PageTable :pageConfig="pageConfig" ref="child">
       <div slot="extraBtn">
         <button  class="btn-cancle-f" @click="exportThreshold">{{$t("button.export")}}</Button>
         <div style="display: inline-block;margin-bottom: 3px;vertical-align: bottom;"> 
@@ -13,7 +13,6 @@
             <Button icon="ios-cloud-upload-outline">{{$t('button.upload')}}</Button>
           </Upload>
         </div>
-       
       </div>
     </PageTable>
     <ModalComponent :modelConfig="modelConfig"></ModalComponent>
@@ -52,6 +51,7 @@
             }
           },
           table: {
+            selection: true,
             tableData: [],
             tableEle: tableEle,
             // filterMoreBtn: 'filterMoreBtn',
@@ -85,11 +85,13 @@
           },
         },
         id: null, // [通用]-待编辑数据id
+        selectedData: '', // 存放选中数据
       }
     },
     mounted() {
       this.initData(this.pageConfig.CRUD, this.pageConfig)
-      this.uploadUrl =  baseURL_config + this.$root.apiCenter.groupManagement.import.api
+      this.uploadUrl =  baseURL_config + this.$root.apiCenter.groupManagement.upload.api
+      this.$refs.child.clearSelectedData()
     },
     methods: {
       initData (url= this.pageConfig.CRUD, params) {
@@ -143,7 +145,11 @@
         this.$router.push({name: 'logManagement', params: {id: rowData.id, type: 'grp'}})
       },
       exportThreshold () {
-        window.location.href= baseURL_config + this.$root.apiCenter.groupManagement.export.api + '?id=14,41'
+        if (!this.$validate.isEmpty(this.selectedData.checkedIds)) {
+          this.$Message.warning(this.$t('tips.selectData'))
+          return
+        }
+        window.location.href= baseURL_config + this.$root.apiCenter.groupManagement.export.api + '?id=' + this.selectedData.checkedIds.join(',')
       },
       uploadSucess () {
         this.$Message.success(this.$t('tips.success'))
