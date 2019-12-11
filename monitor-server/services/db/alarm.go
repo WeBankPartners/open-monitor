@@ -20,6 +20,9 @@ func ListGrp(query *m.GrpQuery) error {
 		qParams = append(qParams, query.Id)
 	}
 	if query.Search != "" {
+		if query.Search == "." {
+			query.Search = ""
+		}
 		whereSql += ` AND (name like '%`+query.Search+`%' or description like '%`+query.Search+`%') `
 	}
 	if query.Name != "" {
@@ -48,9 +51,9 @@ func ListGrp(query *m.GrpQuery) error {
 	return err
 }
 
-func GetSingleGrp(id int) (error,m.GrpTable) {
+func GetSingleGrp(id int,name string) (error,m.GrpTable) {
 	var result []*m.GrpTable
-	err := x.SQL("SELECT * FROM grp WHERE id=?", id).Find(&result)
+	err := x.SQL("SELECT * FROM grp WHERE id=? or name=?", id, name).Find(&result)
 	if err != nil || len(result) <= 0 {
 		mid.LogError("get single grp fail", err)
 		return err,m.GrpTable{}
@@ -61,6 +64,9 @@ func GetSingleGrp(id int) (error,m.GrpTable) {
 func SearchGrp(search string) (error,[]*m.OptionModel) {
 	var result []*m.OptionModel
 	var grps []*m.GrpTable
+	if search == "." {
+		search = ""
+	}
 	err := x.SQL(`SELECT * FROM grp WHERE name LIKE '%`+search+`%'`).Find(&grps)
 	if err != nil {
 		mid.LogError("search grp fail", err)
@@ -849,4 +855,90 @@ func getLastFromExpr(expr string) string {
 func CloseAlarm(id int) error {
 	_,err := x.Exec("UPDATE alarm SET STATUS='closed',end=NOW() WHERE id=?", id)
 	return err
+}
+
+func GetGrpStrategy(idList []string) (err error,result []*m.GrpStrategyExportObj) {
+	sql := `SELECT t1.name,t1.description,t3.metric,t3.expr,t3.cond,t3.last,t3.priority,t3.content,t3.config_type 
+		FROM grp t1 
+		LEFT JOIN tpl t2 ON t1.id=t2.grp_id 
+		LEFT JOIN strategy t3 ON t2.id=t3.tpl_id 
+		WHERE t1.id IN `
+	sql = sql + fmt.Sprintf("(%s)", strings.Join(idList, ",")) + " ORDER BY t1.name"
+	var queryResult []*m.GrpStrategyQuery
+	err = x.SQL(sql).Find(&queryResult)
+	if err != nil {
+		return err,result
+	}
+	if len(queryResult) == 0 {
+		return nil,result
+	}
+	var tmpStrategyList []m.StrategyTable
+	tmpName := queryResult[0].Name
+	for i,v := range queryResult {
+		if v.Name != tmpName {
+			tmpObj := m.GrpStrategyExportObj{GrpName:tmpName, Description:queryResult[i-1].Description, Strategy:tmpStrategyList}
+			result = append(result, &tmpObj)
+			tmpStrategyList = []m.StrategyTable{}
+			tmpName = v.Name
+		}
+		tmpStrategyList = append(tmpStrategyList, m.StrategyTable{Metric:v.Metric,Expr:v.Expr,Cond:v.Cond,Last:v.Last,Priority:v.Priority,Content:v.Content,ConfigType:v.ConfigType})
+	}
+	tmpObj := m.GrpStrategyExportObj{GrpName:tmpName, Description:queryResult[len(queryResult)-1].Description, Strategy:tmpStrategyList}
+	result = append(result, &tmpObj)
+	return nil,result
+}
+
+func SetGrpStrategy(paramObj []*m.GrpStrategyExportObj) error {
+	if len(paramObj) == 0 {
+		return nil
+	}
+	var existGrp []*m.GrpTable
+	err := x.SQL("SELECT * FROM grp order by name").Find(&existGrp)
+	if err != nil {
+		return err
+	}
+	for _,v := range paramObj {
+		tmpName := takeGrpName(v.GrpName, existGrp)
+		err := UpdateGrp(&m.UpdateGrp{Operation:"insert", Groups:[]*m.GrpTable{&m.GrpTable{Name:tmpName, Description:v.Description}}})
+		if err != nil {
+			mid.LogError("Set group strategy, insert group fail", err)
+			return err
+		}
+		_,grpObj := GetSingleGrp(0, tmpName)
+		err,tplObj := AddTpl(grpObj.Id, 0, "")
+		if err != nil {
+			mid.LogError("Set group strategy, insert tpl fail", err)
+			return err
+		}
+		for _,vv := range v.Strategy {
+			strategyObj := m.StrategyTable{TplId:tplObj.Id,Metric:vv.Metric,Expr:vv.Expr,Cond:vv.Cond,Last:vv.Last,Priority:vv.Priority,Content:vv.Content,ConfigType:vv.ConfigType}
+			UpdateStrategy(&m.UpdateStrategy{Strategy:[]*m.StrategyTable{&strategyObj}, Operation:"insert"})
+		}
+	}
+	return nil
+}
+
+func takeGrpName(name string,grpList []*m.GrpTable) string {
+	exist := false
+	tmpIndex := 0
+	for _,v := range grpList {
+		if v.Name == name {
+			exist = true
+		}
+		if strings.HasPrefix(v.Name, name) && strings.Contains(v.Name, "_") {
+			tmpList := strings.Split(v.Name, "_")
+			ii,_ := strconv.Atoi(tmpList[len(tmpList)-1])
+			if ii > tmpIndex {
+				tmpIndex = ii
+			}
+		}
+	}
+	if !exist {
+		return name
+	}else{
+		if tmpIndex > 0 {
+			name = strings.Replace(name, fmt.Sprintf("_%d", tmpIndex), "", -1)
+		}
+		return fmt.Sprintf("%s_%d", name, tmpIndex+1)
+	}
 }
