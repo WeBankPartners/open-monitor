@@ -71,6 +71,8 @@
     "view": "查看",
     "cancle": "取消",
     "endpointManagement": "对象管理",
+    "upload": "导入阈值",
+    "export": "导出阈值",
     "chart": {
       "zoom": "数据区域缩放",
       "back": "恢复",
@@ -108,6 +110,7 @@
     "required": " 必填",
     "inputRequired": "必填,2-60字符",
     "success": " 成功!",
+    "failed": " 失败!",
     "metricConfigTips": {
       "one": "1、请先搜索主机作为输入源并选择监控指标",
       "two": "2、点击 '查询' 可查看当前对象及指标下监控视图；",
