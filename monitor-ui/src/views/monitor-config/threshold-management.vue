@@ -3,7 +3,7 @@
     <section>
       <ul class="search-ul">
         <li class="search-li">
-          <Select v-model="type" style="width:100px" @on-change="endpointOptions=[]">
+          <Select v-model="type" style="width:100px" @on-change="typeChange">
             <Option v-for="item in typeList" :value="item.value" :key="item.value">{{ $t(item.label) }}</Option>
           </Select>
         </li>
@@ -13,7 +13,9 @@
             v-model="endpointID"
             filterable
             remote
+            clearable
             :remote-method="getEndpointList"
+            @on-clear="clearEndpoint"
             >
             <Option v-for="(option, index) in endpointOptions" :value="option.id" :key="index">
             <Tag color="cyan" class="tag-width" v-if="option.option_value.split(':')[1] == 'host'">host</Tag>
@@ -184,6 +186,14 @@ export default {
       }
       this.typeValue = this.endpointID
       this.requestData(this.type, this.endpointID)
+    },
+    typeChange() {
+      this.totalPageConfig = []
+      this.getEndpointList('.')
+    },
+    clearEndpoint () {
+      this.totalPageConfig = []
+      this.getEndpointList('.')
     },
     getEndpointList (query) {
       const params = {type: this.type,search: query}
