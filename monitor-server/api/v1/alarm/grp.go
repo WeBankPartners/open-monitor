@@ -8,6 +8,10 @@ import (
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"fmt"
+	"strings"
+	"go.uber.org/zap/buffer"
+	"encoding/gob"
+	"net/http"
 )
 
 func ListGrp(c *gin.Context)  {
@@ -151,3 +155,57 @@ func EditGrpEndpoint(c *gin.Context)  {
 	}
 }
 
+func ExportGrpStrategy(c *gin.Context)  {
+	idStringList := strings.Split(c.Query("id"), ",")
+	var idList []string
+	for _,v := range idStringList {
+		tmpId,_ := strconv.Atoi(v)
+		if tmpId > 0 {
+			idList = append(idList, v)
+		}
+	}
+	if len(idList) == 0 {
+		mid.ReturnValidateFail(c, "Parameter validation fail")
+		return
+	}
+	err,result := db.GetGrpStrategy(idList)
+	if err != nil {
+		mid.ReturnError(c, "Export group strategy fail, get db strategy error ", err)
+		return
+	}
+	var tmpBuf buffer.Buffer
+	enc := gob.NewEncoder(&tmpBuf)
+	err = enc.Encode(result)
+	if err != nil {
+		mid.ReturnError(c, "Export group strategy fail, gob encode object error ", err)
+		return
+	}
+	c.Writer.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=%s", "grp_strategy_tpl.data"))
+	c.Data(http.StatusOK, "application/octet-stream", tmpBuf.Bytes())
+}
+
+func ImportGrpStrategy(c *gin.Context)  {
+	file,err := c.FormFile("file")
+	if err != nil {
+		mid.ReturnValidateFail(c, fmt.Sprintf("Validate error : %v ", err))
+		return
+	}
+	f,err := file.Open()
+	if err != nil {
+		mid.ReturnError(c, "File open error ", err)
+		return
+	}
+	var paramObj []*m.GrpStrategyExportObj
+	dec := gob.NewDecoder(f)
+	err = dec.Decode(&paramObj)
+	if err != nil {
+		mid.ReturnError(c, "Gob decode error", err)
+		return
+	}
+	err = db.SetGrpStrategy(paramObj)
+	if err != nil {
+		mid.ReturnError(c, "Save group strategy error", err)
+		return
+	}
+	mid.ReturnSuccess(c, "Success")
+}
