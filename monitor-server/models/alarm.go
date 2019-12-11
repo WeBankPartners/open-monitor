@@ -235,3 +235,21 @@ type TplStrategyLogMonitorTable struct {
 	Path  string  `json:"path"`
 	Keyword  string  `json:"keyword"`
 }
+
+type GrpStrategyExportObj struct {
+	GrpName  string  `json:"grp_name"`
+	Description  string  `json:"description"`
+	Strategy  []StrategyTable  `json:"strategy"`
+}
+
+type GrpStrategyQuery struct {
+	Name  string
+	Description  string
+	Metric  string
+	Expr  string
+	Cond  string
+	Last  string
+	Priority  string
+	Content  string
+	ConfigType  string
+}

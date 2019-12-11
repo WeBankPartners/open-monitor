@@ -169,7 +169,7 @@ func SaveConfigFile(tplId int) error {
 	}else{
 		fmt.Printf("is grp : %b \n", isGrp)
 		if isGrp {
-			_,grpObj := db.GetSingleGrp(tplObj.GrpId)
+			_,grpObj := db.GetSingleGrp(tplObj.GrpId, "")
 			fileName = grpObj.Name
 		}else{
 			endpointObj := m.EndpointTable{Id:tplObj.EndpointId}
