@@ -65,14 +65,14 @@ const router = [
       {
         path: "thresholdManagement",
         name: "thresholdManagement",
-        title: "阀值配置",
+        title: "阈值配置",
         meta: {},
         component: thresholdManagement
       },
       {
         path: "logManagement",
         name: "logManagement",
-        title: "阀值配置",
+        title: "阈值配置",
         meta: {},
         component: logManagement
       }

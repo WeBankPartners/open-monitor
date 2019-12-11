@@ -101,9 +101,6 @@ export default {
       }
       this.getChartsConfig()
     },
-    test(query) {
-      console.log(query)
-    }, 
     getEndpointList(query) {
       let params = {
         search: query,

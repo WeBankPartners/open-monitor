@@ -75,7 +75,7 @@ const router = new Router({
             {
               path: "thresholdManagement",
               name: "thresholdManagement",
-              title: "阀值配置",
+              title: "阈值配置",
               meta: {},
               component: () =>
                 import("@/views/monitor-config/threshold-management")
@@ -83,7 +83,7 @@ const router = new Router({
             {
               path: "logManagement",
               name: "logManagement",
-              title: "阀值配置",
+              title: "阈值配置",
               meta: {},
               component: () =>
                 import("@/views/monitor-config/log-management")
