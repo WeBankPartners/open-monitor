@@ -542,6 +542,14 @@ func UpdateTpl(tplId int, operateUser string) error {
 	return err
 }
 
+func DeleteTpl(tplId int) error {
+	_,err := x.Exec("DELETE from tpl where id=?", tplId)
+	if err != nil {
+		mid.LogError("delete tpl fail", err)
+	}
+	return err
+}
+
 func GetStrategyTable(id int) (error,m.StrategyTable) {
 	var result []*m.StrategyTable
 	err := x.SQL("SELECT * FROM strategy WHERE id=?", id).Find(&result)
@@ -941,4 +949,18 @@ func takeGrpName(name string,grpList []*m.GrpTable) string {
 		}
 		return fmt.Sprintf("%s_%d", name, tmpIndex+1)
 	}
+}
+
+func DeleteStrategyByGrp(grpId int,tplId int) error {
+	var sqls []string
+	if grpId > 0 {
+		sqls = append(sqls, fmt.Sprintf("DELETE FROM grp_endpoint WHERE grp_id=%d", grpId))
+	}
+	if tplId > 0 {
+		sqls = append(sqls, fmt.Sprintf("DELETE FROM strategy WHERE tpl_id=%d", tplId))
+	}
+	if len(sqls) == 0 {
+		return nil
+	}
+	return ExecuteTransactionSql(sqls)
 }
