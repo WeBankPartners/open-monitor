@@ -1,10 +1,25 @@
 <template>
   <div class="main-content">
-    <PageTable :pageConfig="pageConfig"></PageTable>
+    <PageTable :pageConfig="pageConfig" ref="child">
+      <div slot="extraBtn">
+        <button  class="btn-cancle-f" @click="exportThreshold">{{$t("button.export")}}</Button>
+        <div style="display: inline-block;margin-bottom: 3px;vertical-align: bottom;"> 
+          <Upload 
+          :action="uploadUrl" 
+          :show-upload-list="false"
+          :max-size="1000"
+          :on-success="uploadSucess"
+          :on-error="uploadFailed">
+            <Button icon="ios-cloud-upload-outline">{{$t('button.upload')}}</Button>
+          </Upload>
+        </div>
+      </div>
+    </PageTable>
     <ModalComponent :modelConfig="modelConfig"></ModalComponent>
   </div>
 </template>
 <script>
+  import {baseURL_config} from '@/assets/js/baseURL'
   let tableEle = [
     {title: 'tableKey.name', value: 'name', display: true},
     {title: 'tableKey.description', value: 'description', display: true}
@@ -20,6 +35,7 @@
     name: '',
     data() {
       return {
+        uploadUrl: '',
         pageConfig: {
           CRUD: this.$root.apiCenter.groupManagement.list.api,
           researchConfig: {
@@ -27,7 +43,7 @@
               {value: 'search', type: 'input', placeholder: 'placeholder.input', style: ''}],
             btn_group: [
               {btn_name: 'button.search', btn_func: 'search', class: 'btn-confirm-f', btn_icon: 'fa fa-search'},
-              {btn_name: 'button.add', btn_func: 'add', class: 'btn-cancle-f', btn_icon: 'fa fa-plus'},
+              {btn_name: 'button.add', btn_func: 'add', class: 'btn-cancle-f', btn_icon: 'fa fa-plus'}
             ],
             filters: {
               name__icontains: '',
@@ -35,6 +51,7 @@
             }
           },
           table: {
+            selection: true,
             tableData: [],
             tableEle: tableEle,
             // filterMoreBtn: 'filterMoreBtn',
@@ -68,10 +85,13 @@
           },
         },
         id: null, // [通用]-待编辑数据id
+        selectedData: '', // 存放选中数据
       }
     },
     mounted() {
       this.initData(this.pageConfig.CRUD, this.pageConfig)
+      this.uploadUrl =  baseURL_config + this.$root.apiCenter.groupManagement.upload.api
+      this.$refs.child.clearSelectedData()
     },
     methods: {
       initData (url= this.pageConfig.CRUD, params) {
@@ -124,6 +144,20 @@
       logManagement (rowData) {
         this.$router.push({name: 'logManagement', params: {id: rowData.id, type: 'grp'}})
       },
+      exportThreshold () {
+        if (!this.$validate.isEmpty(this.selectedData.checkedIds)) {
+          this.$Message.warning(this.$t('tips.selectData'))
+          return
+        }
+        window.location.href= baseURL_config + this.$root.apiCenter.groupManagement.export.api + '?id=' + this.selectedData.checkedIds.join(',')
+      },
+      uploadSucess () {
+        this.$Message.success(this.$t('tips.success'))
+        this.initData(this.pageConfig.CRUD, this.pageConfig)
+      },
+      uploadFailed () {
+        this.$Message.warning(this.$t('tips.failed'))
+      }
     },
     components: {
     }

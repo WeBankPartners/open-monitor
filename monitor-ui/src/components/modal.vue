@@ -194,15 +194,15 @@ import {interceptParams} from '@/assets/js/utils'
             if(!this.isHide (this.modelConfig.config[i].hide)){
               continue
             }
-            // if(this.modelConfig.config[i].type === 'textarea' && this.modelConfig.config[i].v_validate){
-            //   let obj = this.modelConfig.config[i]
-            //   if(!this.modelConfig.addRow[obj.value]){
-            //     obj.isError = true
-            //     flag = false
-            //   }else{
-            //     obj.isError = false
-            //   }
-            // }
+            if(this.modelConfig.config[i].type === 'textarea' && this.modelConfig.config[i].v_validate){
+              let obj = this.modelConfig.config[i]
+              if(!this.modelConfig.addRow[obj.value]){
+                obj.isError = true
+                flag = false
+              }else{
+                obj.isError = false
+              }
+            }
             /* ****** 配置里面的select ***** */
             //配置规则为：在配置type:selcet时，如需校验则添加v_validate: 'required:true',isError: false==>控制错误提示label显示
             //如果无需校验，则不添加
