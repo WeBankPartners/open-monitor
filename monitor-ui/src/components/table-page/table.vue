@@ -23,13 +23,13 @@
         <!-- table-striped -->
         <thead>
         <tr>
-          <!-- <th v-if="table.selection" class="th-border-bottom c-dark">
+          <th v-if="table.selection" class="th-border-bottom c-dark">
             <a href="javascript:void 0" @click="allSelect()">
                     <span class="item-check-btn" :class="{'check':allSelectBtn}">
                       <svg class="icon icon-ok"><use xlink:href="#icon-ok"></use></svg>
                     </span>
             </a>
-          </th> -->
+          </th>
           <template v-for="(item,tableEleIndex) in table.tableEle">
             <th style='min-width:100px;' :style="item.style" class="th-border-bottom c-dark" v-if="item.display" :key='tableEleIndex' >
               <span v-if="!item.copyable">{{$t(item.title)}}</span>
