@@ -24,6 +24,12 @@
         },
         "delete": {
             "api": "alarm/grp/delete"
+        },
+        "upload": {
+            "api": "/api/v1/alarm/grp/import"
+        },
+        "export": {
+            "api": "/api/v1/alarm/grp/export"
         }
     },
     "endpointManagement": {
