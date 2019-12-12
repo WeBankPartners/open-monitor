@@ -253,3 +253,23 @@ type GrpStrategyQuery struct {
 	Content  string
 	ConfigType  string
 }
+
+type OpenAlarmObj struct {
+	AlertInfo  string  `json:"alert_info"`
+	AlertIp  string  `json:"alert_ip"`
+	AlertLevel  int  `json:"alert_level"`
+	AlertObj  string  `json:"alert_obj"`
+	AlertTitle  string  `json:"alert_title"`
+	AlertReciver  string  `json:"alert_reciver"`
+	RemarkInfo  string  `json:"remark_info"`
+	SubSystemId  int  `json:"sub_system_id"`
+}
+
+type OpenAlarmRequest struct {
+	AlertList  []OpenAlarmObj  `json:"alertList"`
+}
+
+type OpenAlarmResponse struct {
+	ResultCode  int  `json:"resultCode"`
+	ResultMsg  string  `json:"resultMsg"`
+}
