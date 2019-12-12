@@ -964,3 +964,14 @@ func DeleteStrategyByGrp(grpId int,tplId int) error {
 	}
 	return ExecuteTransactionSql(sqls)
 }
+
+func SaveOpenAlarm(param m.OpenAlarmRequest) error {
+	var err error
+	for _, v := range param.AlertList {
+		_,err = x.Exec("INSERT INTO alarm_custom(alert_info,alert_ip,alert_level,alert_obj,alert_title,alert_reciver,remark_info,sub_system_id) VALUE (?,?,?,?,?,?,?,?)", v.AlertInfo, v.AlertIp,v.AlertLevel,v.AlertObj,v.AlertTitle,v.AlertReciver,v.RemarkInfo,v.SubSystemId)
+		if err != nil {
+			mid.LogError("save open alarm error", err)
+		}
+	}
+	return err
+}

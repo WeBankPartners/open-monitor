@@ -176,3 +176,17 @@ func CloseALarm(c *gin.Context)  {
 	}
 	mid.ReturnSuccess(c, "Success")
 }
+
+func OpenAlarmApi(c *gin.Context)  {
+	var param m.OpenAlarmRequest
+	if err := c.ShouldBindJSON(&param); err==nil {
+		err = db.SaveOpenAlarm(param)
+		if err != nil {
+			mid.ReturnError(c, "Send alarm api fail", err)
+		}else{
+			mid.ReturnSuccess(c, "Success")
+		}
+	}else{
+		mid.ReturnValidateFail(c, fmt.Sprintf("Parameter validation failed %v", err))
+	}
+}
