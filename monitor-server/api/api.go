@@ -133,6 +133,7 @@ func InitHttpServer(exportAgent bool) {
 			alarmApi.POST("/business/update", alarm.UpdateEndpointBusinessConfig)
 			alarmApi.GET("/grp/export", alarm.ExportGrpStrategy)
 			alarmApi.POST("/grp/import", alarm.ImportGrpStrategy)
+			alarmApi.POST("/send", alarm.OpenAlarmApi)
 		}
 		port := m.Config().Http.Port
 		r.Run(fmt.Sprintf(":%s", port))
