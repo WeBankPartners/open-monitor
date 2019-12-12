@@ -38,7 +38,7 @@
 
     <!-- 7.插件列表 - 描述插件包中单个插件的输入和输出 -->
     <plugins>
-        <plugin name="host-register">
+        <plugin name="host">
             <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/host" httpMethod='POST'>
                 <inputParameters>
                     <parameter datatype="string" mappingType='context' required='Y'>host_ip</parameter>
@@ -48,11 +48,18 @@
                     <parameter datatype="string">errorMessage</parameter>
                 </outputParameters>
             </interface>
-        </plugin>
-        <plugin name="host-deregister">
-            <interface action="register" path="/wecube-monitor/api/v1/agent/export/deregister/host" httpMethod='POST'>
+            <interface action="deregister" path="/wecube-monitor/api/v1/agent/export/deregister/host" httpMethod='POST'>
                 <inputParameters>
                     <parameter datatype="string" mappingType='context' required='Y'>host_ip</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string">errorCode</parameter>
+                    <parameter datatype="string">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+            <interface action="install" path="/wecube-monitor/api/v1/agent/install/host" httpMethod='POST'>
+                <inputParameters>
+                    <parameter datatype="string" mappingType='context' required='Y'>host</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string">errorCode</parameter>
@@ -71,12 +78,20 @@
                     <parameter datatype="string">errorMessage</parameter>
                 </outputParameters>
             </interface>
-        </plugin>
-        <plugin name="mysql-deregister">
-            <interface action="register" path="/wecube-monitor/api/v1/agent/export/deregister/mysql" httpMethod='POST'>
+            <interface action="deregister" path="/wecube-monitor/api/v1/agent/export/deregister/mysql" httpMethod='POST'>
                 <inputParameters>
                     <parameter datatype="string" mappingType='context' required='Y'>host_ip</parameter>
                     <parameter datatype="string" mappingType='context' required='Y'>instance</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string">errorCode</parameter>
+                    <parameter datatype="string">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+            <interface action="install" path="/wecube-monitor/api/v1/agent/install/mysql" httpMethod='POST'>
+                <inputParameters>
+                    <parameter datatype="string" mappingType='context' required='Y'>host</parameter>
+                    <parameter datatype="string" mappingType='context' required='Y'>port</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string">errorCode</parameter>
@@ -95,12 +110,21 @@
                     <parameter datatype="string">errorMessage</parameter>
                 </outputParameters>
             </interface>
-        </plugin>
-        <plugin name="redis-deregister">
-            <interface action="register" path="/wecube-monitor/api/v1/agent/export/deregister/redis" httpMethod='POST'>
+            <interface action="deregister" path="/wecube-monitor/api/v1/agent/export/deregister/redis" httpMethod='POST'>
                 <inputParameters>
                     <parameter datatype="string" mappingType='context' required='Y'>host_ip</parameter>
                     <parameter datatype="string" mappingType='context' required='Y'>instance</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string">errorCode</parameter>
+                    <parameter datatype="string">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+            <interface action="install" path="/wecube-monitor/api/v1/agent/install/redis" httpMethod='POST'>
+                <inputParameters>
+                    <parameter datatype="string" mappingType='context' required='Y'>host</parameter>
+                    <parameter datatype="string" mappingType='context' required='Y'>port</parameter>
+                    <parameter datatype="string" mappingType='context' required='Y'>password</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string">errorCode</parameter>
@@ -119,9 +143,7 @@
                     <parameter datatype="string">errorMessage</parameter>
                 </outputParameters>
             </interface>
-        </plugin>
-        <plugin name="tomcat-deregister">
-            <interface action="register" path="/wecube-monitor/api/v1/agent/export/deregister/tomcat" httpMethod='GET'>
+            <interface action="deregister" path="/wecube-monitor/api/v1/agent/export/deregister/tomcat" httpMethod='GET'>
                 <inputParameters>
                     <parameter datatype="string" mappingType='context' required='Y'>host_ip</parameter>
                     <parameter datatype="string" mappingType='context' required='Y'>instance</parameter>
@@ -132,44 +154,8 @@
                 </outputParameters>
             </interface>
         </plugin>
-        <plugin name="host-agent-install">
-            <interface action="register" path="/wecube-monitor/api/v1/agent/install/host" httpMethod='POST'>
-                <inputParameters>
-                    <parameter datatype="string" mappingType='context' required='Y'>host</parameter>
-                </inputParameters>
-                <outputParameters>
-                    <parameter datatype="string">errorCode</parameter>
-                    <parameter datatype="string">errorMessage</parameter>
-                </outputParameters>
-            </interface>
-        </plugin>
-        <plugin name="mysql-agent-install">
-            <interface action="register" path="/wecube-monitor/api/v1/agent/install/mysql" httpMethod='POST'>
-                <inputParameters>
-                    <parameter datatype="string" mappingType='context' required='Y'>host</parameter>
-                    <parameter datatype="string" mappingType='context' required='Y'>port</parameter>
-                </inputParameters>
-                <outputParameters>
-                    <parameter datatype="string">errorCode</parameter>
-                    <parameter datatype="string">errorMessage</parameter>
-                </outputParameters>
-            </interface>
-        </plugin>
-        <plugin name="redis-agent-install">
-            <interface action="register" path="/wecube-monitor/api/v1/agent/install/redis" httpMethod='POST'>
-                <inputParameters>
-                    <parameter datatype="string" mappingType='context' required='Y'>host</parameter>
-                    <parameter datatype="string" mappingType='context' required='Y'>port</parameter>
-                    <parameter datatype="string" mappingType='context' required='Y'>password</parameter>
-                </inputParameters>
-                <outputParameters>
-                    <parameter datatype="string">errorCode</parameter>
-                    <parameter datatype="string">errorMessage</parameter>
-                </outputParameters>
-            </interface>
-        </plugin>
         <plugin name="system-dashboard">
-            <interface action="register" path="/wecube-monitor/api/v1/dashboard/system" httpMethod='GET'>
+            <interface action="display" path="/wecube-monitor/api/v1/dashboard/system" httpMethod='GET'>
                 <inputParameters>
                     <parameter datatype="string" mappingType='context' required='Y'>system_name</parameter>
                     <parameter datatype="string" mappingType='context' required='Y'>ips</parameter>
