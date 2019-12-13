@@ -96,7 +96,10 @@ func SetConfig(name string, isGrp bool, config m.RFGroup, exist bool) error {
 	}
 	path := fmt.Sprintf("%s/%s.yml", m.Config().Prometheus.ConfigPath, name)
 	if len(config.Rules) == 0 {
-		return os.Remove(path)
+		err := os.Remove(path)
+		if err == nil {
+			return nil
+		}
 	}
 	rf := m.RuleFile{Groups:[]*m.RFGroup{&config}}
 	data,err := yaml.Marshal(&rf)
