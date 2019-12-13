@@ -17,7 +17,7 @@ mkdir -p logs
 nohup ./alertmanager --config.file=alertmanager.yml > logs/alertmanager.log 2>&1 &
 cd ../prometheus/
 mkdir -p logs
-nohup ./prometheus --config.file=prometheus.yml --web.enable-lifecycle > logs/prometheus.log 2>&1 &
+nohup ./prometheus --config.file=prometheus.yml --web.enable-lifecycle --storage.tsdb.retention.time=30d > logs/prometheus.log 2>&1 &
 cd ../monitor/
 mkdir -p logs
 ./monitor-server --export_agent=true
