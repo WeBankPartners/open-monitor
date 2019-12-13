@@ -112,6 +112,8 @@ func ExportAgent(c *gin.Context)  {
 			mid.LogInfo(msg)
 		}
 		result = resultObj{ResultCode:"0", ResultMessage:"Done", Results:resultOutput{Outputs:tmpResult}}
+		resultString,_ := json.Marshal(result)
+		mid.LogInfo(string(resultString))
 		mid.ReturnData(c, result)
 	}else{
 		result = resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("Param validate fail : %v", err)}
