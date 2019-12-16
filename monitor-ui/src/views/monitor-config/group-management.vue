@@ -2,7 +2,7 @@
   <div class="main-content">
     <PageTable :pageConfig="pageConfig" ref="child">
       <div slot="extraBtn">
-        <button  class="btn-cancle-f" @click="exportThreshold">{{$t("button.export")}}</Button>
+        <button type="button" class="btn-cancle-f" @click="exportThreshold">{{$t("button.export")}}</button>
         <div style="display: inline-block;margin-bottom: 3px;vertical-align: bottom;"> 
           <Upload 
           :action="uploadUrl" 
