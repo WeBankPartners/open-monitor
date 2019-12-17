@@ -19,7 +19,7 @@
               <label class="col-md-1">{{$t('field.endpoint')}}:</label>
               <Tag type="border" closable @on-close="addParams('endpoint',alarmItem.endpoint)" color="primary">{{alarmItem.endpoint}}</Tag>
             </li>
-            <li>
+            <li v-if="!alarmItem.is_custom">
               <label class="col-md-1">{{$t('field.metric')}}:</label>
               <Tag type="border" closable @on-close="addParams('metric',alarmItem.s_metric)" color="primary">{{alarmItem.s_metric}}</Tag>
             </li>
@@ -43,6 +43,12 @@
               </li>
               <li>
                 <label class="col-md-1">{{$t('tableKey.description')}}:</label><span>{{alarmItem.content}}</span>
+              </li>
+            </template>
+            <template v-else-if="alarmItem.is_custom">
+              <li>
+                <label class="col-md-1">Log:</label>
+                <div class="col-md-10" style="display: inline-flex;padding: 0px;font-size: 15px;" v-html="alarmItem.content"></div>
               </li>
             </template>
             <template v-else>
