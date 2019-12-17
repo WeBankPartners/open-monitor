@@ -165,11 +165,16 @@ func GetProblemAlarm(c *gin.Context)  {
 // @Router /api/v1/alarm/problem/close [get]
 func CloseALarm(c *gin.Context)  {
 	id,err := strconv.Atoi(c.Query("id"))
+	isCustom := strings.ToLower(c.Query("custom"))
 	if err != nil || id <= 0 {
 		mid.ReturnValidateFail(c, "Parameter \"id\" validation failed")
 		return
 	}
-	err = db.CloseAlarm(id)
+	if isCustom == "true" {
+		err = db.CloseOpenAlarm(id)
+	}else {
+		err = db.CloseAlarm(id)
+	}
 	if err != nil {
 		mid.ReturnError(c, "Close alert failed", err)
 		return
