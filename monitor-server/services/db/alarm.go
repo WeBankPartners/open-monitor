@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"time"
 	"strings"
+	"sort"
 )
 
 func ListGrp(query *m.GrpQuery) error {
@@ -569,7 +570,7 @@ func GetEndpointsByGrp(grpId int) (error,[]*m.EndpointTable) {
 	return err,result
 }
 
-func GetAlarms(query m.AlarmTable) (error,[]*m.AlarmProblemQuery) {
+func GetAlarms(query m.AlarmTable) (error,m.AlarmProblemList) {
 	var result []*m.AlarmProblemQuery
 	var whereSql,extWhereSql string
 	var params []interface{}
@@ -635,7 +636,13 @@ func GetAlarms(query m.AlarmTable) (error,[]*m.AlarmProblemQuery) {
 			v.IsLogMonitor = true
 		}
 	}
-	return err,result
+	for _,v := range GetOpenAlarm() {
+		result = append(result, v)
+	}
+	var sortResult m.AlarmProblemList
+	sortResult = result
+	sort.Sort(sortResult)
+	return err,sortResult
 }
 
 func UpdateAlarms(alarms []*m.AlarmTable) error {
@@ -973,5 +980,41 @@ func SaveOpenAlarm(param m.OpenAlarmRequest) error {
 			mid.LogError("save open alarm error", err)
 		}
 	}
+	return err
+}
+
+func GetOpenAlarm() []*m.AlarmProblemQuery {
+	var query []*m.OpenAlarmObj
+	result := []*m.AlarmProblemQuery{}
+	sql := fmt.Sprintf("SELECT * FROM alarm_custom WHERE closed<>1 and update_at>'%s' ORDER BY id ASC", time.Unix(time.Now().Unix()-300,0).Format(m.DatetimeFormat))
+	x.SQL(sql).Find(&query)
+	if len(query) == 0 {
+		return result
+	}
+	tmpFlag := fmt.Sprintf("%d_%s_%s_%d", query[0].SubSystemId,query[0].AlertTitle,query[0].AlertIp,query[0].AlertLevel)
+	for i,v := range query {
+		if tmpFlag != fmt.Sprintf("%d_%s_%s_%d", v.SubSystemId,v.AlertTitle,v.AlertIp,v.AlertLevel) {
+			priority := "high"
+			if query[i-1].AlertLevel > 4 {
+				priority = "low"
+			}else if query[i-1].AlertLevel > 2 {
+				priority = "medium"
+			}
+			result = append(result, &m.AlarmProblemQuery{IsCustom:true,Id:query[i-1].Id,Endpoint:query[i-1].AlertIp,Status:"firing",Content:fmt.Sprintf("system_id:%d <br/> title:%s <br/> %s <br/> info:%s ",query[i-1].SubSystemId,query[i-1].AlertTitle,query[i-1].AlertObj,query[i-1].AlertInfo),Start:query[i-1].UpdateAt,StartString:query[i-1].UpdateAt.Format(m.DatetimeFormat),SPriority:priority})
+		}
+	}
+	priority := "high"
+	lastIndex := len(query)-1
+	if query[lastIndex].AlertLevel > 4 {
+		priority = "low"
+	}else if query[lastIndex].AlertLevel > 2 {
+		priority = "medium"
+	}
+	result = append(result, &m.AlarmProblemQuery{IsCustom:true,Id:query[lastIndex].Id,Endpoint:query[lastIndex].AlertIp,Status:"firing",IsLogMonitor:false,Content:fmt.Sprintf("system_id:%d <br/> title:%s <br/> %s <br/> info:%s ",query[lastIndex].SubSystemId,query[lastIndex].AlertTitle,query[lastIndex].AlertObj,query[lastIndex].AlertInfo),Start:query[lastIndex].UpdateAt,StartString:query[lastIndex].UpdateAt.Format(m.DatetimeFormat),SPriority:priority})
+	return result
+}
+
+func CloseOpenAlarm(id int) error {
+	_,err := x.Exec("UPDATE alarm_custom SET closed=1,closed_at=NOW() WHERE id=?", id)
 	return err
 }

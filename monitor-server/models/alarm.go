@@ -71,6 +71,21 @@ type AlarmProblemQuery struct {
 	IsLogMonitor  bool  `json:"is_log_monitor"`
 	Path  string  `json:"path"`
 	Keyword  string  `json:"keyword"`
+	IsCustom  bool  `json:"is_custom"`
+}
+
+type AlarmProblemList []*AlarmProblemQuery
+
+func (s AlarmProblemList) Len() int {
+	return len(s)
+}
+
+func (s AlarmProblemList) Swap(i,j int) {
+	s[i],s[j] = s[j],s[i]
+}
+
+func (s AlarmProblemList) Less(i,j int) bool {
+	return s[i].Start.Unix() > s[j].Start.Unix()
 }
 
 type GrpEndpointTable struct {
@@ -255,6 +270,7 @@ type GrpStrategyQuery struct {
 }
 
 type OpenAlarmObj struct {
+	Id  int  `json:"id"`
 	AlertInfo  string  `json:"alert_info"`
 	AlertIp  string  `json:"alert_ip"`
 	AlertLevel  int  `json:"alert_level"`
@@ -263,6 +279,7 @@ type OpenAlarmObj struct {
 	AlertReciver  string  `json:"alert_reciver"`
 	RemarkInfo  string  `json:"remark_info"`
 	SubSystemId  int  `json:"sub_system_id"`
+	UpdateAt  time.Time  `json:"update_at"`
 }
 
 type OpenAlarmRequest struct {
