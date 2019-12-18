@@ -8,7 +8,7 @@ import (
 	"fmt"
 )
 
-var exceptUrl  = []string{"/dashboard/newchart"}
+var invalidData = []string{"select", "insert", "update", "alter", "delete", "drop", "truncate", "show"}
 
 func ValidateGet(c *gin.Context)  {
 	isOk := true
@@ -16,21 +16,11 @@ func ValidateGet(c *gin.Context)  {
 		index := strings.Index(c.Request.URL.String(), "?")
 		if index > 0 {
 			url := c.Request.URL.String()
-			isExcept := false
-			for _,v := range exceptUrl {
-				if strings.Contains(url[:index], v) {
-					isExcept = true
+			params := strings.ToLower(url[index:])
+			for _, inv := range invalidData {
+				if strings.Contains(params, inv) {
+					isOk = false
 					break
-				}
-			}
-			if !isExcept {
-				invalidData := []string{"select", "insert", "update", "alter", "delete", "drop", "truncate", "show"}
-				params := strings.ToLower(url[index:])
-				for _, inv := range invalidData {
-					if strings.Contains(params, inv) {
-						isOk = false
-						break
-					}
 				}
 			}
 		}
@@ -46,7 +36,6 @@ func ValidateGet(c *gin.Context)  {
 
 func ValidatePost(c *gin.Context, obj interface{}, ex ...string) bool {
 	isOk := true
-	invalidData := []string{"select", "insert", "update", "alter", "delete", "drop", "truncate", "show"}
 	t := reflect.TypeOf(obj)
 	v := reflect.ValueOf(obj)
 	for k:=0;k < t.NumField();k++ {

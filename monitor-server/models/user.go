@@ -8,6 +8,14 @@ type User struct {
 	Password  string  `json:"pwd" xorm:"pwd"`
 }
 
+type UpdateUserDto struct {
+	NewPassword  string  `form:"new_password" json:"new_password"`
+	ReNewPassword  string  `form:"re_new_password" json:"re_new_password"`
+	DisplayName  string  `form:"display_name" json:"display_name"`
+	Email  string  `form:"email" json:"email"`
+	Phone  string  `form:"phone" json:"phone"`
+}
+
 type Session struct {
 	User  string  `json:"user"`
 	Token  string  `json:"token"`
@@ -18,42 +26,19 @@ type UserTable struct {
 	Id  int  `json:"id"`
 	Name  string  `json:"name"`
 	Passwd  string  `json:"passwd"`
-	Cnname  string  `json:"cnname"`
+	DisplayName  string  `json:"display_name"`
 	Email  string  `json:"email"`
 	Phone  string  `json:"phone"`
-}
-
-type UserInfo struct {
-	Id  int  `json:"id"`
-	Name  string  `json:"name"`
-	CnName  string  `json:"cn_name"`
-}
-
-type TeamTable struct {
-	Id  int  `json:"id"`
-	Name  string  `json:"name"`
-	Creator  int  `json:"creator"`
+	ExtContactOne  string  `json:"ext_contact_one"`
+	ExtContactTwo  string  `json:"ext_contact_two"`
+	Creator  string  `json:"creator"`
 	Created  time.Time  `json:"created"`
 }
 
-type TeamUserDto struct {
+type RoleTable struct {
 	Id  int  `json:"id"`
 	Name  string  `json:"name"`
+	DisplayName  string  `json:"display_name"`
+	Creator  string  `json:"creator"`
 	Created  time.Time  `json:"created"`
-	Member  []*UserInfo  `json:"member"`
-}
-
-type TeamUserQuery struct {
-	TId  int  `json:"t_id"`
-	TName  string  `json:"t_name"`
-	Created  time.Time  `json:"created"`
-	UId  int  `json:"u_id"`
-	UName  string  `json:"u_name"`
-	Cnname  string  `json:"cnname"`
-}
-
-type TeamUpdateDto struct {
-	Id  int  `form:"id" json:"id"`
-	Name  string  `form:"name" json:"name"`
-	Member  []int  `form:"member" json:"member"`
 }
