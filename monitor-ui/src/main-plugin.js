@@ -22,7 +22,7 @@ window.addOptions({
   apiCenter: apiCenter
 })
 
-window.addRoutes(router)
+window.addRoutes(router, 'open-monitor')
 
 import Title from '@/components/title'
 import PageTable from '@/components/table-page/page'
