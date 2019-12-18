@@ -99,6 +99,11 @@
 			"revisionTime": "2019-08-19T22:43:24Z"
 		},
 		{
+			"checksumSHA1": "9tqQ5p9XJNtQUpu0iDmDLtydx0c=",
+			"path": "github.com/go-redis/redis",
+			"revision": ""
+		},
+		{
 			"path": "github.com/go-redis/redis/internal",
 			"revision": ""
 		},

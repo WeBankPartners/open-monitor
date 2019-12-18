@@ -47,7 +47,7 @@
 
     <!-- 7.插件列表 - 描述插件包中单个插件的输入和输出 -->
     <plugins>
-        <plugin name="host" entity="resource_instance">
+        <plugin name="host" targetPackage="wecube-monitor" targetEntity="resource_instance">
             <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/host" httpMethod='POST'>
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">host_ip</parameter>
@@ -95,7 +95,7 @@
                 </outputParameters>
             </interface>
         </plugin>
-        <plugin name="mysql-register" entity="resource_instance">
+        <plugin name="mysql-register" targetPackage="wecube-monitor" targetEntity="resource_instance">
             <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/mysql" httpMethod='POST'>
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">instance_ip</parameter>
@@ -144,7 +144,7 @@
                 </outputParameters>
             </interface>
         </plugin>
-        <plugin name="redis-register" entity="resource_instance">
+        <plugin name="redis-register" targetPackage="wecube-monitor" targetEntity="resource_instance">
             <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/redis" httpMethod='POST'>
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">instance_ip</parameter>
@@ -193,7 +193,7 @@
                 </outputParameters>
             </interface>
         </plugin>
-        <plugin name="tomcat-register" entity="business_app_instance">
+        <plugin name="tomcat-register" targetPackage="wecube-monitor" targetEntity="business_app_instance">
             <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/tomcat" httpMethod='POST'>
                 <inputParameters>
                     <parameter datatype="string" mappingType="context" mappingEntityExpression="wecmdb:business_app_instance.resource_instance>wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">host_ip</parameter>
@@ -240,7 +240,7 @@
                 </outputParameters>
             </interface>
         </plugin>
-        <plugin name="system-dashboard" entity="system">
+        <plugin name="system-dashboard" targetPackage="wecube-monitor" targetEntity="system">
             <interface action="display" path="/wecube-monitor/api/v1/dashboard/system" httpMethod='GET'>
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:system.key_name" required='Y'>system_name</parameter>

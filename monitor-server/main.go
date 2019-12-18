@@ -24,6 +24,9 @@ func main() {
 	m.InitConfig(*cfgFile)
 	middleware.InitMonitorLog()
 	db.InitDbConn()
+	if m.Config().Http.Session.Enable {
+		middleware.InitSession()
+	}
 	ds.InitPrometheusDatasource()
 	prom.InitPrometheusConfigFile()
 	api.InitHttpServer(*exportAgent)
