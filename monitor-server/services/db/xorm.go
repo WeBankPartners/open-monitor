@@ -44,21 +44,9 @@ func (d *DBObj) InitXorm()  {
 }
 
 func InitDbConn() {
-	dbCfgList := m.Config().Store
-	if len(dbCfgList) <= 0{
-		mid.LogInfo("db config list is none")
-		return
-	}
-	for _,v := range dbCfgList {
-		if v.Name == "default" && v.Type == "mysql" {
-			initDefaultMysql(*v)
-		}
-		//if v.Type == "redis" {
-		//	initDefaultRedis(*v)
-		//}
-		//if v.Type == "mongodb" {
-		//	InitMongodb(*v)
-		//}
+	dbCfg := m.Config().Store
+	if dbCfg.Type == "mysql" {
+		initDefaultMysql(dbCfg)
 	}
 }
 
