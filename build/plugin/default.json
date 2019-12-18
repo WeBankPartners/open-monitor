@@ -18,10 +18,23 @@
       "level": "debug",
       "file": "logs/prometheus_monitor.log",
       "stdout": true
+    },
+    "session": {
+      "enable": false,
+      "expire": 3600,
+      "server_enable": false,
+      "server_token": "default-token-used-in-server-side",
+      "redis": {
+        "enable": false,
+        "server": "127.0.0.1",
+        "port": 6379,
+        "pwd": "wecube",
+        "db": 0,
+        "maxIdle": 10
+      }
     }
   },
-  "store": [
-    {
+  "store": {
       "name": "default",
       "type": "mysql",
       "server": "{{MONITOR_DB_HOST}}",
@@ -32,8 +45,7 @@
       "maxOpen": 20,
       "maxIdle": 10,
       "timeout": 60
-    }
-  ],
+  },
   "datasource" : {
     "env" : "dev",
     "servers": [
