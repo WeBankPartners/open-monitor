@@ -24,6 +24,23 @@ type LdapConfig struct {
 	Attributes  []string  `json:"attributes"`
 }
 
+type SessionRedisConfig struct {
+	Enable  bool  `json:"enable"`
+	Server  string  `json:"server"`
+	Port    int   `json:"port"`
+	Pwd     string  `json:"pwd"`
+	Db      int   `json:"db"`
+	MaxIdle  int  `json:"max_idle"`
+}
+
+type SessionConfig struct {
+	Enable  bool  `json:"enable"`
+	Expire  int64  `json:"expire"`
+	ServerEnable  bool  `json:"server_enable"`
+	ServerToken  string  `json:"server_token"`
+	Redis  SessionRedisConfig  `json:"redis"`
+}
+
 type HttpConfig struct {
 	Port    string   `json:"port"`
 	Swagger  bool  `json:"swagger"`
@@ -31,6 +48,7 @@ type HttpConfig struct {
 	Alive   int64    `json:"alive"`
 	Ldap   *LdapConfig  `json:"ldap"`
 	Log    *LogConfig   `json:"log"`
+	Session  *SessionConfig  `json:"session"`
 }
 
 type StoreConfig struct {
@@ -82,7 +100,7 @@ type PrometheusConfig struct {
 
 type GlobalConfig struct {
 	Http  *HttpConfig  `json:"http"`
-	Store  []*StoreConfig  `json:"store"`
+	Store  StoreConfig  `json:"store"`
 	Datasource  DataSourceConfig  `json:"datasource"`
 	LimitIp  []string  `json:"limitIp"`
 	Dependence  []*DependenceConfig  `json:"dependence"`

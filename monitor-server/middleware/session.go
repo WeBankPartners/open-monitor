@@ -11,37 +11,41 @@ import (
 	"sync"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"github.com/go-redis/redis"
+	"strings"
 )
 
-//var RedisClient *redis.Client
-var LocalMem map[string]m.Session
+var RedisClient *redis.Client
+var LocalMem = make(map[string]m.Session)
 var onlyLocalStore bool
 var localStoreLock = new(sync.RWMutex)
+var expireTime = int64(3600)
 
-//func InitRedisPool(host string, pwd string, db int) (bool, error) {
-//	client := redis.NewClient(&redis.Options{
-//		Addr:     host,
-//		Password: pwd, // no password set
-//		DB:       db,  // use default DB
-//	})
-//	_, err := client.Ping().Result()
-//	if err!=nil {
-//		onlyLocalStore = true
-//	}else{
-//		onlyLocalStore = false
-//		RedisClient = client
-//	}
-//	return !onlyLocalStore, err
-//}
-
-func InitLocalSession()  {
+func InitSession()  {
+	sessionConfig := m.Config().Http.Session
+	expireTime = m.Config().Http.Session.Expire
 	onlyLocalStore = true
-	LocalMem = make(map[string]m.Session)
+	if sessionConfig.Redis.Enable {
+		client := redis.NewClient(&redis.Options{
+			Addr:     fmt.Sprintf("%s:%d", sessionConfig.Redis.Server, sessionConfig.Redis.Port),
+			Password: sessionConfig.Redis.Pwd, // no password set
+			DB:       sessionConfig.Redis.Db,  // use default DB
+		})
+		_, err := client.Ping().Result()
+		if err!=nil {
+			LogError("init session redis fail ", err)
+			onlyLocalStore = true
+		}else{
+			LogInfo("init session redis success")
+			onlyLocalStore = false
+			RedisClient = client
+		}
+	}
 }
 
 func SaveSession(session m.Session) (isOk bool,sId string) {
 	isOk = true
-	session.Expire = time.Now().Unix() + m.Config().Http.Alive
+	session.Expire = time.Now().Unix() + expireTime
 	serializeData,err := serialize(session)
 	if err != nil {
 		LogError("serialize session error", err)
@@ -50,13 +54,13 @@ func SaveSession(session m.Session) (isOk bool,sId string) {
 	md := md5.New()
 	md.Write(serializeData)
 	sId = hex.EncodeToString(md.Sum(nil))
-	//if !onlyLocalStore {
-	//	backCmd := RedisClient.Set(fmt.Sprintf("session_%s", sId), serializeData, time.Duration(m.Config().Http.Alive) * time.Second)
-	//	if !strings.Contains(backCmd.Val(), "OK") {
-	//		LogError(fmt.Sprintf("save session to redis fail : %v ", err), nil)
-	//		return false, sId
-	//	}
-	//}
+	if !onlyLocalStore {
+		backCmd := RedisClient.Set(fmt.Sprintf("session_%s", sId), serializeData, time.Duration(expireTime) * time.Second)
+		if !strings.Contains(backCmd.Val(), "OK") {
+			LogError(fmt.Sprintf("save session to redis fail : %v ", err), nil)
+			return false, sId
+		}
+	}
 	localStoreLock.Lock()
 	LocalMem[sId] = session
 	localStoreLock.Unlock()
@@ -66,6 +70,11 @@ func SaveSession(session m.Session) (isOk bool,sId string) {
 func GetOperateUser(c *gin.Context) string {
 	auToken := c.GetHeader("X-Auth-Token")
 	if auToken!= "" {
+		if m.Config().Http.Session.ServerEnable {
+			if auToken == m.Config().Http.Session.ServerToken {
+				return "auth_server"
+			}
+		}
 		session := GetSessionData(auToken)
 		return fmt.Sprintf("%s", session.User)
 	}else{
@@ -76,39 +85,48 @@ func GetOperateUser(c *gin.Context) string {
 
 func GetSessionData(sId string) m.Session {
 	var result m.Session
-	//localContain := false
+	localContain := false
 	localStoreLock.RLock()
 	if v,i := LocalMem[sId];i {
 		result = v
-		//localContain = true
+		localContain = true
 	}
 	localStoreLock.RUnlock()
-	//if !localContain && !onlyLocalStore {
-	//	re := RedisClient.Get(fmt.Sprintf("session_%s", sId))
-	//	if len(re.Val()) > 0 {
-	//		deserialize([]byte(re.Val()), &result)
-	//		LocalMem[sId] = result
-	//	}
-	//}
+	if !localContain && !onlyLocalStore {
+		re := RedisClient.Get(fmt.Sprintf("session_%s", sId))
+		if len(re.Val()) > 0 {
+			deserialize([]byte(re.Val()), &result)
+			LocalMem[sId] = result
+		}
+	}
 	return result
 }
 
 func IsActive(sId string) bool {
+	if m.Config().Http.Session.ServerEnable {
+		if sId == m.Config().Http.Session.ServerToken {
+			return true
+		}
+	}
 	localContain := false
 	localStoreLock.RLock()
-	if _,i := LocalMem[sId];i {
+	defer localStoreLock.RUnlock()
+	if v,i := LocalMem[sId];i {
+		if time.Now().Unix() > v.Expire {
+			delete(LocalMem, sId)
+			return false
+		}
 		localContain = true
 	}
-	localStoreLock.RUnlock()
-	//if !localContain && !onlyLocalStore {
-	//	var result m.Session
-	//	re := RedisClient.Get(fmt.Sprintf("session_%s", sId))
-	//	if len(re.Val()) > 0 {
-	//		deserialize([]byte(re.Val()), &result)
-	//		LocalMem[sId] = result
-	//		localContain = true
-	//	}
-	//}
+	if !localContain && !onlyLocalStore {
+		var result m.Session
+		re := RedisClient.Get(fmt.Sprintf("session_%s", sId))
+		if len(re.Val()) > 0 {
+			deserialize([]byte(re.Val()), &result)
+			LocalMem[sId] = result
+			localContain = true
+		}
+	}
 	return localContain
 }
 
@@ -118,12 +136,10 @@ func DelSession(sId string) {
 		delete(LocalMem, sId)
 	}
 	localStoreLock.Unlock()
-	//if !onlyLocalStore {
-	//	RedisClient.Del(sId)
-	//}
+	if !onlyLocalStore {
+		RedisClient.Del(sId)
+	}
 }
-
-// Serialization --------------------------------------------------------------
 
 // Serialize encodes a value using gob.
 func serialize(src interface{}) ([]byte, error) {
