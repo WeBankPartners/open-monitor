@@ -18,22 +18,34 @@
       "level": "debug",
       "file": "/app/monitor/logs/monitor.log",
       "stdout": true
+    },
+    "session": {
+      "enable": false,
+      "expire": 3600,
+      "server_enable": false,
+      "server_token": "default-token-used-in-server-side",
+      "redis": {
+        "enable": false,
+        "server": "127.0.0.1",
+        "port": 6379,
+        "pwd": "wecube",
+        "db": 0,
+        "maxIdle": 10
+      }
     }
   },
-  "store": [
-    {
-      "name": "default",
-      "type": "mysql",
-      "server": "monitor-db",
-      "port": 3306,
-      "user": "root",
-      "pwd": "{{MYSQL_ROOT_PASSWORD}}",
-      "database": "monitor",
-      "maxOpen": 20,
-      "maxIdle": 10,
-      "timeout": 60
-    }
-  ],
+  "store": {
+    "name": "default",
+    "type": "mysql",
+    "server": "monitor-db",
+    "port": 3306,
+    "user": "root",
+    "pwd": "{{MYSQL_ROOT_PASSWORD}}",
+    "database": "monitor",
+    "maxOpen": 20,
+    "maxIdle": 10,
+    "timeout": 60
+  },
   "datasource" : {
     "env" : "dev",
     "servers": [
@@ -62,5 +74,27 @@
     "config_path": "conf/rules",
     "config_reload": "http://prometheus:9090/-/reload"
   },
-  "tag_blacklist" : ["veth"]
+  "tag_blacklist" : ["veth"],
+  "agent" : [
+    {
+      "agent_type" : "host",
+      "agent_bin" : "node_exporter_new",
+      "port" : "9100"
+    },
+    {
+      "agent_type" : "mysql",
+      "agent_bin" : "mysqld_exporter",
+      "port" : "9104"
+    },
+    {
+      "agent_type" : "redis",
+      "agent_bin" : "redis_exporter",
+      "port" : "9121"
+    },
+    {
+      "agent_type" : "tomcat",
+      "agent_bin" : "jmx_prometheus_javaagent-0.12.0.jar",
+      "port" : "9151"
+    }
+  ]
 }
