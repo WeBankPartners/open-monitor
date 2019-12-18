@@ -43,3 +43,27 @@ func DeleteEndpoint(guid string) error {
 	}
 	return nil
 }
+
+func UpdateEndpointAlarmFlag(isStop bool,exportType,instance,ip,port string) error {
+	var endpoints []*m.EndpointTable
+	if exportType == "host" {
+		x.SQL("SELECT id FROM endpoint WHERE export_type=? AND ip=?", exportType, ip).Find(&endpoints)
+	}else {
+		if exportType == "tomcat" {
+			x.SQL("SELECT id FROM endpoint WHERE export_type=? AND address=? AND name=?", exportType, fmt.Sprintf("%s:%s", ip, port), instance).Find(&endpoints)
+		} else {
+			x.SQL("SELECT id FROM endpoint WHERE export_type=? AND ip=? AND name=?", exportType, ip, instance).Find(&endpoints)
+		}
+	}
+	mid.LogInfo(fmt.Sprintf("update endpoint alarm flag : query endpoints -> %v ", endpoints))
+	if len(endpoints) > 0 {
+		stopAlarm := "0"
+		if isStop {
+			stopAlarm = "1"
+		}
+		_,err := x.Exec(fmt.Sprintf("UPDATE endpoint SET stop_alarm=%s WHERE id=%d", stopAlarm, endpoints[0].Id))
+		return err
+	}else{
+		return fmt.Errorf("Can not find this monitor object with %s %s %s %s \n", exportType,instance,ip,port)
+	}
+}

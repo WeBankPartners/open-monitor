@@ -71,6 +71,7 @@ CREATE TABLE `endpoint` (
   `address` varchar(50) NOT NULL DEFAULT '',
   `os_type` varchar(50) NOT NULL DEFAULT 'linux',
   `create_at` varchar(50) NOT NULL DEFAULT '',
+  `stop_alarm` tinyint(4) DEFAULT '0',
   `update_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `monitor_endpoint_guid` (`guid`)

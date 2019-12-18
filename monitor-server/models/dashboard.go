@@ -191,6 +191,7 @@ type EndpointTable struct {
 	Address  string  `json:"address"`
 	OsType  string  `json:"os_type"`
 	CreateAt  string  `json:"create_at"`
+	StopAlarm  int  `json:"stop_alarm"`
 }
 
 type EndpointMetricTable struct {

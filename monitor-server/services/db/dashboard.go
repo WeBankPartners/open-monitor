@@ -186,6 +186,7 @@ func GetEndpoint(query *m.EndpointTable) error {
 	query.OsType = endpointObj[0].OsType
 	query.ExportVersion = endpointObj[0].ExportVersion
 	query.ExportType = endpointObj[0].ExportType
+	query.StopAlarm = endpointObj[0].StopAlarm
 	return nil
 }
 
