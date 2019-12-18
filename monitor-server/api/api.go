@@ -102,6 +102,8 @@ func InitHttpServer(exportAgent bool) {
 			agentApi.GET("/deregister", agent.DeregisterAgent)
 			agentApi.POST("/export/register/:name", agent.ExportAgent)
 			agentApi.POST("/export/deregister/:name", agent.ExportAgent)
+			agentApi.POST("/export/start/:name", agent.AlarmControl)
+			agentApi.POST("/export/stop/:name", agent.AlarmControl)
 			agentApi.POST("/install/:name", agent.InstallAgent)
 		}
 		alarmApi := authApi.Group("/alarm")

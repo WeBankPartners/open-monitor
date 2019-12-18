@@ -37,6 +37,7 @@ type requestObj struct {
 type hostRequestObj struct {
 	CallbackParameter  string  `json:"callbackParameter"`
 	HostIp  string  `json:"host_ip"`
+	Port  string  `json:"port"`
 	Instance  string  `json:"instance"`
 }
 
@@ -85,7 +86,11 @@ func ExportAgent(c *gin.Context)  {
 			if agentType == "host" {
 				param = m.RegisterParam{Type: agentType, ExporterIp: v.HostIp, ExporterPort: agentPort}
 			}else{
-				param = m.RegisterParam{Type: agentType, ExporterIp: v.HostIp, ExporterPort:agentPort, Instance:v.Instance}
+				if agentType == "tomcat" && v.Port != "" {
+						param = m.RegisterParam{Type: agentType, ExporterIp: v.HostIp, ExporterPort: v.Port, Instance: v.Instance}
+				}else {
+					param = m.RegisterParam{Type: agentType, ExporterIp: v.HostIp, ExporterPort: agentPort, Instance: v.Instance}
+				}
 			}
 			if action == "register" {
 				err = RegisterJob(param)
@@ -133,14 +138,64 @@ func GetSystemDashboardUrl(c *gin.Context)  {
 	mid.ReturnData(c, resultObj{ResultCode:"0", ResultMessage:urlPath})
 }
 
-func isLinuxType(osType string) bool {
-	linuxType := []string{"linux", "redhat", "centos", "ubuntu", "unix"}
-	result := false
-	for _,v := range linuxType {
-		if strings.Contains(osType, v) {
-			result = true
+func AlarmControl(c *gin.Context)  {
+	agentType := c.Param("name")
+	isStop := false
+	action := "start"
+	if strings.Contains(c.Request.URL.String(), "stop") {
+		isStop = true
+		action = "stop"
+	}
+	var result resultObj
+	var agentPort string
+	illegal := true
+	for _,v := range m.Config().Agent {
+		if v.AgentType == agentType {
+			illegal = false
+			agentPort = v.Port
 			break
 		}
 	}
-	return result
+	if illegal {
+		result = resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("No such monitor type like %s", agentType)}
+		mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
+		c.JSON(http.StatusBadRequest, result)
+		return
+	}
+	data,_ := ioutil.ReadAll(c.Request.Body)
+	mid.LogInfo(fmt.Sprintf("param : %v", string(data)))
+	var param requestObj
+	err := json.Unmarshal(data, &param)
+	if err == nil {
+		if len(param.Inputs) == 0 {
+			result = resultObj{ResultCode:"0", ResultMessage:"inputs length is zero,do nothing"}
+			mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
+			c.JSON(http.StatusOK, result)
+			return
+		}
+		var tmpResult []resultOutputObj
+		for _,v := range param.Inputs {
+			if agentType == "tomcat" && v.Port != "" {
+				agentPort = v.Port
+			}
+			err := db.UpdateEndpointAlarmFlag(isStop,agentType,v.Instance,v.HostIp,agentPort)
+			var msg string
+			if err != nil {
+				msg = fmt.Sprintf("%s %s:%s %s fail,error %v",action, agentType, v.HostIp, v.Instance, err)
+				tmpResult = append(tmpResult, resultOutputObj{CallbackParameter:v.CallbackParameter, ErrorCode:"1", ErrorMessage:msg})
+			}else{
+				msg = fmt.Sprintf("%s %s:%s %s succeed", action, agentType, v.HostIp, v.Instance)
+				tmpResult = append(tmpResult, resultOutputObj{CallbackParameter:v.CallbackParameter, ErrorCode:"0", ErrorMessage:""})
+			}
+			mid.LogInfo(msg)
+		}
+		result = resultObj{ResultCode:"0", ResultMessage:"Done", Results:resultOutput{Outputs:tmpResult}}
+		resultString,_ := json.Marshal(result)
+		mid.LogInfo(string(resultString))
+		mid.ReturnData(c, result)
+	}else{
+		result = resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("Param validate fail : %v", err)}
+		mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
+		c.JSON(http.StatusBadRequest, result)
+	}
 }
