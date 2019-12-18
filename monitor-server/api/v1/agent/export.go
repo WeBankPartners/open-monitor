@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"io/ioutil"
 	"encoding/json"
+	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/alarm"
 )
 
 type resultObj struct {
@@ -37,8 +38,12 @@ type requestObj struct {
 type hostRequestObj struct {
 	CallbackParameter  string  `json:"callbackParameter"`
 	HostIp  string  `json:"host_ip"`
+	InstanceIp  string  `json:"instance_ip"`
+	Group  string  `json:"group"`
 	Port  string  `json:"port"`
 	Instance  string  `json:"instance"`
+	User  string  `json:"user"`
+	Password  string  `json:"password"`
 }
 
 func ExportAgent(c *gin.Context)  {
@@ -81,6 +86,7 @@ func ExportAgent(c *gin.Context)  {
 			return
 		}
 		var tmpResult []resultOutputObj
+		// update table and register to consul
 		for _,v := range param.Inputs {
 			var param m.RegisterParam
 			if agentType == "host" {
@@ -97,9 +103,9 @@ func ExportAgent(c *gin.Context)  {
 			}else{
 				var endpointObj m.EndpointTable
 				if agentType == "host" {
-					endpointObj = m.EndpointTable{Ip: param.ExporterIp, ExportType: param.Type}
+					endpointObj = m.EndpointTable{Ip: v.HostIp, ExportType: agentType}
 				}else{
-					endpointObj = m.EndpointTable{Ip: param.ExporterIp, ExportType: param.Type, Name: param.Instance}
+					endpointObj = m.EndpointTable{Ip: v.HostIp, ExportType: agentType, Name: v.Instance}
 				}
 				db.GetEndpoint(&endpointObj)
 				if endpointObj.Id > 0 {
@@ -115,6 +121,37 @@ func ExportAgent(c *gin.Context)  {
 				tmpResult = append(tmpResult, resultOutputObj{CallbackParameter:v.CallbackParameter, ErrorCode:"0", ErrorMessage:""})
 			}
 			mid.LogInfo(msg)
+		}
+		// update group and sync prometheus config
+		var groupTplMap = make(map[string]int)
+		for _,v := range param.Inputs {
+			if v.Group == "" {
+				continue
+			}
+			_,grpObj := db.GetSingleGrp(0, v.Group)
+			if grpObj.Id > 0 {
+				_,tplObj := db.GetTpl(0,grpObj.Id,0)
+				groupTplMap[grpObj.Name] = tplObj.Id
+				var endpointObj m.EndpointTable
+				if agentType == "host" {
+					endpointObj = m.EndpointTable{Ip: v.HostIp, ExportType: agentType}
+				}else{
+					endpointObj = m.EndpointTable{Ip: v.HostIp, ExportType: agentType, Name: v.Instance}
+				}
+				db.GetEndpoint(&endpointObj)
+				if endpointObj.Id > 0 {
+					err,_ := db.UpdateGrpEndpoint(m.GrpEndpointParamNew{Grp:grpObj.Id, Endpoints:[]int{endpointObj.Id}, Operation:"add"})
+					if err != nil {
+						mid.LogError("register interface update group_endpoint fail ", err)
+					}
+				}
+			}
+		}
+		for k,v := range groupTplMap {
+			err := alarm.SaveConfigFile(v)
+			if err != nil {
+				mid.LogError(fmt.Sprintf("register interface update prometheus config fail , group : %s  error ", k), err)
+			}
 		}
 		result = resultObj{ResultCode:"0", ResultMessage:"Done", Results:resultOutput{Outputs:tmpResult}}
 		resultString,_ := json.Marshal(result)
