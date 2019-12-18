@@ -45,6 +45,9 @@ func AcceptAlertMsg(c *gin.Context)  {
 				db.GetEndpoint(&endpointObj)
 				if endpointObj.Id > 0 {
 					tmpAlarm.Endpoint = endpointObj.Guid
+					if endpointObj.StopAlarm == 1 {
+						continue
+					}
 				}
 				tmpValue,_ = strconv.ParseFloat(tmpSummaryMsg[3], 10)
 			}
