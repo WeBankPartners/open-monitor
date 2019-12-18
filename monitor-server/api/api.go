@@ -67,6 +67,7 @@ func InitHttpServer(exportAgent bool) {
 	}else{
 		r.POST(fmt.Sprintf("%s/login", urlPrefix), user.Login)
 	}
+	r.POST(fmt.Sprintf("%s/register", urlPrefix), user.Register)
 	r.GET(fmt.Sprintf("%s/logout", urlPrefix), user.Logout)
 	r.GET(fmt.Sprintf("%s/check", urlPrefix), user.HealthCheck)
 	if m.Config().Http.Swagger {
@@ -136,6 +137,11 @@ func InitHttpServer(exportAgent bool) {
 			alarmApi.GET("/grp/export", alarm.ExportGrpStrategy)
 			alarmApi.POST("/grp/import", alarm.ImportGrpStrategy)
 			alarmApi.POST("/send", alarm.OpenAlarmApi)
+		}
+		userApi := authApi.Group("/user")
+		{
+			userApi.GET("/message/get", user.GetUserMsg)
+			userApi.POST("/message/update", user.UpdateUserMsg)
 		}
 		port := m.Config().Http.Port
 		r.Run(fmt.Sprintf(":%s", port))
