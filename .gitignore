@@ -20,3 +20,4 @@ monitor-agent/node_exporter/node_exporter_new
 
 #tmp
 monitor-agent/ping_exporter/*
+monitor-agent/agent_manager/*
