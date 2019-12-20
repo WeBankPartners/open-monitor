@@ -1,0 +1,47 @@
+{
+  "debug": false,
+  "timeout": 2,
+  "interval": 60,
+  "open-falcon" : {
+    "enabled": false,
+    "transfer": {
+      "address": [
+        "192.168.0.1:8080"
+      ],
+      "timeout": 1000,
+      "sn": 500
+    }
+  },
+  "prometheus" : {
+    "enabled" : true,
+    "port": "9191",
+    "path": "/metrics"
+  },
+  "ip_source": {
+    "const": {
+      "enabled" : true,
+      "ips": ["192.168.67.129","192.168.67.130"]
+    },
+    "file": {
+      "enabled" : true,
+      "path": "ip.txt"
+    },
+    "remote": {
+      "enabled" : true,
+      "group_tag" : "group=g1",
+      "url": "http://192.168.67.129:8088",
+      "interval": 120
+    },
+    "listen": {
+      "enabled" : true,
+      "port": "9191",
+      "path": "/config/ip"
+    }
+  },
+  "metrics": {
+    "default": "ping_alive",
+    "count_num": "ping_count",
+    "count_success": "ping_success",
+    "count_fail": "ping_fail"
+  }
+}
