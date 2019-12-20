@@ -15,6 +15,7 @@
     "core-js": "^2.6.5",
     "echarts": "^4.2.1",
     "jquery": "^3.4.1",
+    "js-base64": "^2.5.1",
     "style-resources-loader": "^1.2.1",
     "vee-validate": "^2.0.6",
     "view-design": "^4.0.2",
