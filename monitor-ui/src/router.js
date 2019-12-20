@@ -1,5 +1,6 @@
 import Vue from "vue";
 import Router from "vue-router";
+import {cookies} from '@/assets/js/cookieUtils';
 
 Vue.use(Router);
 
@@ -136,6 +137,12 @@ const router = new Router({
       ]
     },
     {
+      path: "/login",
+      name: "login",
+      component: () => import("@/views/login"),
+      title: "login"
+    },
+    {
       path: "/test",
       name: "test",
       component: () => import("@/views/test"),
@@ -143,5 +150,11 @@ const router = new Router({
     }
   ]
 });
-
+router.beforeEach((to, from, next) => {
+  if (cookies.getCookie('Authorization') && to.name === 'login'){
+    next({name:from.name})
+  } else {
+    next()
+  }
+})
 export default router;
