@@ -4,14 +4,19 @@ import (
 	"strings"
 	"fmt"
 	"os/exec"
+	"log"
+	"net"
 )
 
 var deployNumMap map[string]int
 var deployPathMap map[string]string
+var deployGuidStatus map[string]string
+var LocalIp string
 
 func InitDeploy()  {
 	deployNumMap = make(map[string]int)
 	deployPathMap = make(map[string]string)
+	deployGuidStatus = make(map[string]string)
 	if !Config().Deploy.Enable || len(Config().Deploy.PackagePath) == 0 {
 		return
 	}
@@ -22,29 +27,79 @@ func InitDeploy()  {
 	}
 }
 
-func AddDeploy(name,configFile string, param map[string]string) error {
-	for k,v := range param {
-		fmt.Printf("add deploy param k:%s v:%s \n", k, v)
+func AddDeploy(name,configFile,guid string, param map[string]string) (port int,err error) {
+	if v,b := deployGuidStatus[guid]; b {
+		if v == "running" {
+			return 0,nil
+		}
+		if v == "stop" {
+			err := GlobalProcessMap[guid].start("","","",0,nil)
+			return GlobalProcessMap[guid].Port,err
+		}
 	}
+	port = 0
 	if _,b := deployNumMap[name]; !b {
-		return fmt.Errorf("%s can not find in the config file", name)
+		return port,fmt.Errorf("%s can not find in the config file", name)
 	}
 	var p ProcessObj
 	tmpName := fmt.Sprintf("%s_%d", name, deployNumMap[name]+1)
 	deployPath := fmt.Sprintf("%s/%s", Config().Deploy.DeployDir, tmpName)
-	err := exec.Command("bash", "-c", fmt.Sprintf("mkdir -p %s && cp -r %s/* %s/", deployPath, deployPathMap[name], deployPath)).Run()
+	err = exec.Command("bash", "-c", fmt.Sprintf("mkdir -p %s && cp -r %s/* %s/", deployPath, deployPathMap[name], deployPath)).Run()
 	if err != nil {
-		return err
+		return port,err
 	}
 	configFile = deployPath + "/" + configFile
 	startFile := deployPath + "/start.sh"
 	p.init(tmpName, deployPath, "./start.sh")
 	ProcessMapLock.Lock()
-	GlobalProcessMap[tmpName] = &p
+	GlobalProcessMap[guid] = &p
 	ProcessMapLock.Unlock()
 	deployNumMap[name] = deployNumMap[name] + 1
-	port := GetPort()
+	port = GetPort()
 	param["port"] = fmt.Sprintf("%d", port)
-	err = p.start(configFile, startFile, param)
-	return err
+	err = p.start(configFile, startFile, guid, port, param)
+	deployGuidStatus[guid] = p.Status
+	for k,v := range deployGuidStatus {
+		log.Printf("deploy guid status ---> k:%s  v:%s \n", k, v)
+	}
+	return port,err
+}
+
+func DeleteDeploy(guid string) error {
+	if v,b := GlobalProcessMap[guid]; b {
+		err := v.stop()
+		if err == nil {
+			deployGuidStatus[guid] = "stop"
+			for k,v := range deployGuidStatus {
+				log.Printf("deploy guid status ---> k:%s  v:%s \n", k, v)
+			}
+		}
+		return err
+	}else{
+		return fmt.Errorf("guid:%s not exist", guid)
+	}
+}
+
+func InitLocalIp() bool {
+	addrs, err := net.InterfaceAddrs()
+	re := []string{}
+	if err != nil {
+		log.Println(err)
+		return false
+	}
+	for _, address := range addrs {
+		// 检查ip地址判断是否回环地址
+		if ipNet, ok := address.(*net.IPNet); ok && !ipNet.IP.IsLoopback() {
+			if ipNet.IP.To4() != nil {
+				re = append(re, ipNet.IP.String())
+			}
+		}
+	}
+	if len(re) == 0 {
+		return false
+	}else{
+		LocalIp = re[0]
+		log.Printf("local ip : %s \n", LocalIp)
+		return true
+	}
 }

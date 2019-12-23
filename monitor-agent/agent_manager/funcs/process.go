@@ -14,7 +14,9 @@ import (
 
 type ProcessObj  struct {
 	Pid  int  `json:"pid"`
+	Guid  string  `json:"guid"`
 	Name  string  `json:"name"`
+	Port  int  `json:"port"`
 	Cmd  string  `json:"cmd"`
 	RunCmd  string  `json:"run_cmd"`
 	StartTime  time.Time  `json:"start_time"`
@@ -22,6 +24,7 @@ type ProcessObj  struct {
 	Retry  int  `json:"retry"`
 	Path  string  `json:"path"`
 	Status  string  `json:"status"`
+	Deploy  bool  `json:"deploy"`
 	Lock  *sync.RWMutex
 	Process  *os.Process
 }
@@ -40,12 +43,22 @@ func (p *ProcessObj)init(name,path,cmd string)  {
 	p.Pid = 0
 }
 
-func (p *ProcessObj)start(configFile,startFile string,param map[string]string) error {
+func (p *ProcessObj)start(configFile,startFile,guid string,port int,param map[string]string) error {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
-	for k,v := range param {
-		fmt.Printf("start param k:%s v:%s \n", k, v)
+	if guid != "" {
+		p.Guid = guid
 	}
+	if p.Guid != "" {
+		p.Deploy = true
+	}
+	if port > 0 {
+		p.Port = port
+	}
+	if param == nil {
+		param = make(map[string]string)
+	}
+	param["abs_path"] = p.Path
 	if configFile != "" {
 		err := replaceParam(configFile, param)
 		if err != nil {
@@ -76,28 +89,25 @@ func (p *ProcessObj)start(configFile,startFile string,param map[string]string) e
 	if len(pids) > 0 {
 		p.Pid = pids[0]
 	}else {
-		pids = getSystemProcessPid(p.RunCmd)
-		if len(pids) > 0 {
-			p.Pid = pids[0]
-		}else {
-			p.Pid = p.Process.Pid
-		}
+		p.Pid = p.Process.Pid
 	}
 	p.Status = "running"
+	p.StartTime = time.Now()
 	return nil
 }
 
 func (p *ProcessObj)stop() error {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
-	if p.Pid > 0 && p.Process != nil {
-		err := p.Process.Kill()
+	if p.Pid > 0 {
+		err := exec.Command("bash", "-c", fmt.Sprintf("kill -9 %d", p.Pid)).Run()
 		if err != nil {
 			return err
 		}
 		p.Pid = 0
 		p.Process = nil
 		p.Status = "stop"
+		p.StopTime = time.Now()
 	}
 	return nil
 }
@@ -107,13 +117,13 @@ func (p *ProcessObj)restart() error {
 	if err != nil {
 		return err
 	}
-	err = p.start("","", make(map[string]string))
+	err = p.start("","", "", 0, make(map[string]string))
 	return err
 }
 
 func (p *ProcessObj)print() string {
 	p.Lock.RLock()
-	result := fmt.Sprintf("{\"pid\":%d,\"name\":\"%s\",\"cmd\":\"%s\",\"run_cmd\":\"%s\",\"start_time\":%d,\"stop_time\":%d,\"path\":\"%s\",\"status\":\"%s\"}", p.Pid,p.Name,p.Cmd,p.RunCmd,p.StartTime.Unix(),p.StopTime.Unix(),p.Path,p.Status)
+	result := fmt.Sprintf("{\"pid\":%d,\"guid\":\"%s\",\"port\":%d,\"name\":\"%s\",\"cmd\":\"%s\",\"run_cmd\":\"%s\",\"path\":\"%s\",\"status\":\"%s\"}", p.Pid,p.Guid,p.Port,p.Name,p.Cmd,p.RunCmd,p.Path,p.Status)
 	p.Lock.RUnlock()
 	return result
 }
@@ -132,9 +142,6 @@ func (p *ProcessObj)update(signal int) {
 	p.Lock.Lock()
 	if signal == 1 {
 		pids := getSystemProcessPid(p.Name)
-		if len(pids) == 0 {
-			pids = getSystemProcessPid(p.RunCmd)
-		}
 		if len(pids) > 0 {
 			p.Pid = pids[0]
 		}
@@ -155,6 +162,7 @@ func (p *ProcessObj)destroy() error {
 		}
 	}
 	p.Pid = 0
+	p.Guid = ""
 	p.Name = ""
 	p.Status = ""
 	p.Cmd = ""
@@ -169,11 +177,11 @@ func getSystemProcessPid(name string) []int {
 	result := []int{}
 	cmdString := "ps aux|grep -v '\\['|awk '{print $2}'"
 	if name != "" {
-		cmdString = fmt.Sprintf("ps aux|grep %s|grep -v 'bash'|grep -v 'grep'|awk '{print $2}'", name)
+		cmdString = fmt.Sprintf("ps a|grep %s|grep -v 'bash'|grep -v 'grep'|awk '{print $1}'", name)
 	}
 	b,err := exec.Command("bash", "-c", cmdString).Output()
 	if err != nil {
-		log.Printf("get system process pid fail : %v \n", err)
+		log.Printf("get system process pid fail with command %s : %v \n", cmdString, err)
 		return result
 	}
 	for _,v := range strings.Split(string(b), "\n") {
@@ -199,7 +207,6 @@ func replaceParam(filePath string,paramMap map[string]string) error {
 	}
 	configString := string(b)
 	for k,v := range paramMap {
-		fmt.Printf("param k:%s  v:%s \n", k ,v)
 		if strings.Contains(configString, fmt.Sprintf("{{%s}}", k)) {
 			configString = strings.Replace(configString, fmt.Sprintf("{{%s}}", k), v, -1)
 		}
