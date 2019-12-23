@@ -14,6 +14,7 @@ const hostType  = "host"
 const mysqlType  = "mysql"
 const redisType = "redis"
 const tomcatType = "tomcat"
+var agentManagerUrl string
 
 func RegisterAgent(c *gin.Context)  {
 	var param m.RegisterParam
@@ -37,6 +38,14 @@ func RegisterJob(param m.RegisterParam) error {
 	step := 10
 	var strList []string
 	var endpoint m.EndpointTable
+	if agentManagerUrl == "" {
+		for _, v := range m.Config().Dependence {
+			if v.Name == "agent_manager" {
+				agentManagerUrl = v.Server
+				break
+			}
+		}
+	}
 	if param.Type == hostType {
 		err,strList = prom.GetEndpointData(param.ExporterIp, param.ExporterPort, []string{"node"}, []string{})
 		if err != nil {
@@ -76,7 +85,45 @@ func RegisterJob(param m.RegisterParam) error {
 		if param.Instance == "" {
 			return fmt.Errorf("Mysql instance name can not be empty")
 		}
-		err,strList = prom.GetEndpointData(param.ExporterIp, param.ExporterPort, []string{"mysql", "mysqld"}, []string{})
+		var binPath,address string
+		if agentManagerUrl != "" {
+			if param.User == "" || param.Password == "" {
+				for _,v := range m.Config().Agent {
+					if v.AgentType == mysqlType {
+						param.User = v.User
+						param.Password = v.Password
+						binPath = v.AgentBin
+						break
+					}
+				}
+			}
+			if param.User == "" || param.Password == "" {
+				return fmt.Errorf("mysql monitor must have user and password to connect")
+			}
+			if binPath == "" {
+				for _,v := range m.Config().Agent {
+					if v.AgentType == mysqlType {
+						binPath = v.AgentBin
+						break
+					}
+				}
+			}
+			address,err = prom.DeployAgent(mysqlType,param.Instance,binPath,param.ExporterIp,param.ExporterPort,param.User,param.Password,agentManagerUrl)
+			if err != nil {
+				return err
+			}
+		}
+		if address == "" {
+			err, strList = prom.GetEndpointData(param.ExporterIp, param.ExporterPort, []string{"mysql", "mysqld"}, []string{})
+		}else{
+			if strings.Contains(address, ":") {
+				tmpAddressList := strings.Split(address, ":")
+				err, strList = prom.GetEndpointData(tmpAddressList[0], tmpAddressList[1], []string{"mysql", "mysqld"}, []string{})
+			}else{
+				mid.LogInfo(fmt.Sprintf("address : %s is bad", address))
+				return fmt.Errorf("address : %s is bad", address)
+			}
+		}
 		if err != nil {
 			mid.LogError("curl endpoint data fail ", err)
 			return err
@@ -101,6 +148,7 @@ func RegisterJob(param m.RegisterParam) error {
 		endpoint.ExportVersion = exportVersion
 		endpoint.Step = step
 		endpoint.Address = fmt.Sprintf("%s:%s", param.ExporterIp, param.ExporterPort)
+		endpoint.AddressAgent = address
 	}else if param.Type == redisType {
 		if param.Instance == "" {
 			return fmt.Errorf("Redis instance name can not be empty")

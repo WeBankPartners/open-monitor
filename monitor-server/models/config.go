@@ -83,6 +83,8 @@ type AgentConfig struct {
 	AgentType  string  `json:"agent_type"`
 	AgentBin   string  `json:"agent_bin"`
 	Port  string  `json:"port"`
+	User  string  `json:"user"`
+	Password  string  `json:"password"`
 }
 
 type DatasourceServers struct {
