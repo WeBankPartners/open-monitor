@@ -5,6 +5,8 @@ type RegisterParam struct {
 	ExporterIp  string  `json:"exporter_ip" form:"exporter_ip" binding:"required"`
 	ExporterPort  string  `json:"exporter_port" form:"exporter_port" binding:"required"`
 	Instance  string  `json:"instance" form:"instance"`
+	User  string  `json:"user"`
+	Password  string  `json:"password"`
 }
 
 type RegisterConsulParam struct {
