@@ -167,11 +167,13 @@ func LoadDeployProcess()  {
 				p.Lock = new(sync.RWMutex)
 				p.Pid = 0
 				p.Deploy = true
-				err = p.start("","","",0, nil)
-				if err != nil {
-					log.Printf("process start error : %v \n", err)
-				}else{
-					GlobalProcessMap[p.Guid] = &p
+				if p.Status == "running" {
+					err = p.start("", "", "", 0, nil)
+					if err != nil {
+						log.Printf("process start error : %v \n", err)
+					} else {
+						GlobalProcessMap[p.Guid] = &p
+					}
 				}
 			}
 		}
