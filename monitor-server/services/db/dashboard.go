@@ -122,7 +122,11 @@ func GetPromMetric(endpoint []string,metric string) (error, string) {
 			reg = strings.Replace(reg, "$ip", host.Ip, -1)
 		}
 		if strings.Contains(reg, `$address`) {
-			reg = strings.Replace(reg, "$address", host.Address, -1)
+			if host.AddressAgent != "" {
+				reg = strings.Replace(reg, "$address", host.AddressAgent, -1)
+			}else {
+				reg = strings.Replace(reg, "$address", host.Address, -1)
+			}
 		}
 		if tmpTag != "" {
 			tmpList := strings.Split(tmpTag, "=")
@@ -187,6 +191,7 @@ func GetEndpoint(query *m.EndpointTable) error {
 	query.ExportVersion = endpointObj[0].ExportVersion
 	query.ExportType = endpointObj[0].ExportType
 	query.StopAlarm = endpointObj[0].StopAlarm
+	query.AddressAgent = endpointObj[0].AddressAgent
 	return nil
 }
 
