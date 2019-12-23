@@ -23,7 +23,12 @@ func AddDeploy(w http.ResponseWriter,r *http.Request)  {
 			resp.Code = 500
 			resp.Message = fmt.Sprintf("error:%v",err)
 		}else{
-			var exporter,configFile string
+			var exporter,configFile,guid string
+			if _,b := tmpParamMap["guid"]; !b {
+				resp.Code = 400
+				resp.Message = "param guid can not find!"
+			}
+			guid = tmpParamMap["guid"]
 			if v,b := tmpParamMap["exporter"]; !b {
 				resp.Code = 400
 				resp.Message = "param exporter can not find!"
@@ -32,13 +37,17 @@ func AddDeploy(w http.ResponseWriter,r *http.Request)  {
 				if v, b := tmpParamMap["config"]; b {
 					configFile = v
 				}
-				err = funcs.AddDeploy(exporter, configFile, tmpParamMap)
+				port,err := funcs.AddDeploy(exporter, configFile, guid, tmpParamMap)
 				if err != nil {
 					resp.Code = 500
 					resp.Message = fmt.Sprintf("error:%v", err)
 				}else{
 					resp.Code = 200
-					resp.Message = "success"
+					if port > 0 {
+						resp.Message = fmt.Sprintf("%s:%d", funcs.LocalIp, port)
+					}else{
+						resp.Message = "exist"
+					}
 				}
 			}
 		}
@@ -47,7 +56,35 @@ func AddDeploy(w http.ResponseWriter,r *http.Request)  {
 }
 
 func DelDeploy(w http.ResponseWriter,r *http.Request)  {
-
+	var resp httpResponse
+	b,err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Printf("error : %v \n", err)
+		resp.Code = 500
+		resp.Message = fmt.Sprintf("error:%v",err)
+	}else {
+		var tmpParamMap map[string]string
+		err = json.Unmarshal(b, &tmpParamMap)
+		if err != nil {
+			resp.Code = 500
+			resp.Message = fmt.Sprintf("error:%v", err)
+		} else {
+			if v,b := tmpParamMap["guid"];b {
+				err = funcs.DeleteDeploy(v)
+				if err != nil {
+					resp.Code = 500
+					resp.Message = fmt.Sprintf("error:%v", err)
+				}else{
+					resp.Code = 200
+					resp.Message = "success"
+				}
+			}else{
+				resp.Code = 400
+				resp.Message = "Param guid not exist"
+			}
+		}
+	}
+	w.Write(resp.byte())
 }
 
 func DisplayProcess(w http.ResponseWriter,r *http.Request)  {
