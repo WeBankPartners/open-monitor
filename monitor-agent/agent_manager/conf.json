@@ -20,5 +20,6 @@
       "cmd": ""
     }],
     "http_register_enable": false
-  }
+  },
+  "os_bash" : ["bash", "/bin/sh"]
 }
