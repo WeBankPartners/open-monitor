@@ -79,7 +79,7 @@ func (p *ProcessObj)start(configFile,startFile,guid string,port int,param map[st
 			}
 		}
 	}
-	cmd := exec.Command("bash", "-c", p.RunCmd)
+	cmd := exec.Command(osBashCommand, "-c", p.RunCmd)
 	err := cmd.Run()
 	if err != nil {
 		return err
@@ -100,7 +100,7 @@ func (p *ProcessObj)stop() error {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
 	if p.Pid > 0 {
-		err := exec.Command("bash", "-c", fmt.Sprintf("kill -9 %d", p.Pid)).Run()
+		err := exec.Command(osBashCommand, "-c", fmt.Sprintf("kill -9 %d", p.Pid)).Run()
 		if err != nil {
 			return err
 		}
@@ -175,11 +175,11 @@ func (p *ProcessObj)destroy() error {
 
 func getSystemProcessPid(name string) []int {
 	result := []int{}
-	cmdString := "ps aux|grep -v '\\['|awk '{print $2}'"
+	cmdString := "ps aux|grep -v '\\['|awk '{print "+ osPsPidIndex +"}'"
 	if name != "" {
 		cmdString = fmt.Sprintf("ps a|grep %s|grep -v 'bash'|grep -v 'grep'|awk '{print $1}'", name)
 	}
-	b,err := exec.Command("bash", "-c", cmdString).Output()
+	b,err := exec.Command(osBashCommand, "-c", cmdString).Output()
 	if err != nil {
 		log.Printf("get system process pid fail with command %s : %v \n", cmdString, err)
 		return result

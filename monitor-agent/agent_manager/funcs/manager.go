@@ -75,7 +75,7 @@ func GetPort() int {
 		maxNum = portList[len(portList)-1]
 		tmpPort = maxNum+1
 	}
-	b,err := exec.Command("bash", "-c", "netstat -ltn | awk '{print $4}'").Output()
+	b,err := exec.Command(osBashCommand, "-c", "netstat -ltn | awk '{print $4}'").Output()
 	if err != nil {
 		portList = append(portList, tmpPort)
 		return tmpPort
