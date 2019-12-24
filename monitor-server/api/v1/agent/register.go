@@ -38,6 +38,7 @@ func RegisterJob(param m.RegisterParam) error {
 	step := 10
 	var strList []string
 	var endpoint m.EndpointTable
+	var tmpAgentIp,tmpAgentPort string
 	if agentManagerUrl == "" {
 		for _, v := range m.Config().Dependence {
 			if v.Name == "agent_manager" {
@@ -118,6 +119,8 @@ func RegisterJob(param m.RegisterParam) error {
 		}else{
 			if strings.Contains(address, ":") {
 				tmpAddressList := strings.Split(address, ":")
+				tmpAgentIp = tmpAddressList[0]
+				tmpAgentPort = tmpAddressList[1]
 				err, strList = prom.GetEndpointData(tmpAddressList[0], tmpAddressList[1], []string{"mysql", "mysqld"}, []string{})
 			}else{
 				mid.LogInfo(fmt.Sprintf("address : %s is bad", address))
@@ -218,6 +221,10 @@ func RegisterJob(param m.RegisterParam) error {
 	if err != nil {
 		mid.LogError( "Update endpoint metric failed ", err)
 		return err
+	}
+	if tmpAgentIp != "" && tmpAgentPort != "" {
+		param.ExporterIp = tmpAgentIp
+		param.ExporterPort = tmpAgentPort
 	}
 	err = prom.RegisteConsul(endpoint.Guid, param.ExporterIp, param.ExporterPort, []string{param.Type}, step)
 	if err != nil {
