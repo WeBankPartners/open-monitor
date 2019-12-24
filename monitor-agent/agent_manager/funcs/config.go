@@ -42,6 +42,7 @@ type GlobalConfig struct {
 	Deploy  *DeployConfig  `json:"deploy"`
 	Manager  *ManagerConfig  `json:"manager"`
 	Agents  *AgentsConfig  `json:"agents"`
+	OsBash  []string  `json:"os_bash"`
 }
 
 var (
