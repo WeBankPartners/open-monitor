@@ -13,11 +13,15 @@ import (
 	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 )
 
+var consulUrl string
+
 func RegisteConsul(guid,ip,port string, tags []string, interval int) error {
-	var consulUrl string
-	for _,v := range m.Config().Dependence {
-		if v.Name == "consul" {
-			consulUrl = v.Server
+	if consulUrl == "" {
+		for _, v := range m.Config().Dependence {
+			if v.Name == "consul" {
+				consulUrl = v.Server
+				break
+			}
 		}
 	}
 	if consulUrl == "" {
@@ -57,10 +61,12 @@ func RegisteConsul(guid,ip,port string, tags []string, interval int) error {
 }
 
 func DeregisteConsul(guid string) error {
-	var consulUrl string
-	for _,v := range m.Config().Dependence {
-		if v.Name == "consul" {
-			consulUrl = v.Server
+	if consulUrl == "" {
+		for _, v := range m.Config().Dependence {
+			if v.Name == "consul" {
+				consulUrl = v.Server
+				break
+			}
 		}
 	}
 	if consulUrl == "" {
