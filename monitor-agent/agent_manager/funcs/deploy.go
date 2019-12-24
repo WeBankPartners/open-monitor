@@ -12,11 +12,14 @@ var deployNumMap map[string]int
 var deployPathMap map[string]string
 var deployGuidStatus map[string]string
 var LocalIp string
+var osBashCommand string
+var osPsPidIndex string
 
 func InitDeploy()  {
 	deployNumMap = make(map[string]int)
 	deployPathMap = make(map[string]string)
 	deployGuidStatus = make(map[string]string)
+	initOsCommand()
 	if !Config().Deploy.Enable || len(Config().Deploy.PackagePath) == 0 {
 		return
 	}
@@ -44,7 +47,7 @@ func AddDeploy(name,configFile,guid string, param map[string]string) (port int,e
 	var p ProcessObj
 	tmpName := fmt.Sprintf("%s_%d", name, deployNumMap[name]+1)
 	deployPath := fmt.Sprintf("%s/%s", Config().Deploy.DeployDir, tmpName)
-	err = exec.Command("bash", "-c", fmt.Sprintf("mkdir -p %s && cp -r %s/* %s/", deployPath, deployPathMap[name], deployPath)).Run()
+	err = exec.Command(osBashCommand, "-c", fmt.Sprintf("mkdir -p %s && cp -r %s/* %s/", deployPath, deployPathMap[name], deployPath)).Run()
 	if err != nil {
 		return port,err
 	}
@@ -102,4 +105,33 @@ func InitLocalIp() bool {
 		log.Printf("local ip : %s \n", LocalIp)
 		return true
 	}
+}
+
+func initOsCommand()  {
+	for _,v := range Config().OsBash {
+		_,err := exec.Command(v, "-c", "date").Output()
+		if err==nil {
+			osBashCommand = v
+			break
+		}
+	}
+	if osBashCommand == "" {
+		osBashCommand = "bash"
+	}
+	b,err := exec.Command(osBashCommand, "-c", "ps aux|grep PID|grep -v grep").Output()
+	if err == nil {
+		index := 0
+		for _,v := range strings.Split(string(b), " ") {
+			if v != "" {
+				index += 1
+				if v == "PID" {
+					break
+				}
+			}
+		}
+		osPsPidIndex = fmt.Sprintf("$%d", index)
+	}else{
+		osPsPidIndex = "$2"
+	}
+	log.Printf("init os command done, bash: %s  index:%s \n", osBashCommand, osPsPidIndex)
 }
