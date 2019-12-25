@@ -107,5 +107,17 @@
       "agent_bin" : "jmx_prometheus_javaagent-0.12.0.jar",
       "port" : "9151"
     }
-  ]
+  ],
+  "alert": {
+    "enable": false,
+    "mail": {
+      "enable": true,
+      "protocol": "smtp",
+      "sender": "open-monitor",
+      "user": "",
+      "password": "",
+      "server": "",
+      "token": ""
+    }
+  }
 }
