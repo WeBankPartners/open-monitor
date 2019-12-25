@@ -8,6 +8,7 @@ import (
 	ds "github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/other"
 )
 
 // @title Monitor Server API
@@ -29,5 +30,8 @@ func main() {
 	}
 	ds.InitPrometheusDatasource()
 	prom.InitPrometheusConfigFile()
+	if m.Config().Alert.Enable {
+		other.InitSmtpMail()
+	}
 	api.InitHttpServer(*exportAgent)
 }

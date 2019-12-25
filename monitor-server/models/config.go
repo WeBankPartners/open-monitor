@@ -100,6 +100,21 @@ type PrometheusConfig struct {
 	ConfigReload  string  `json:"config_reload"`
 }
 
+type AlertMailConfig struct {
+	Enable  bool  `json:"enable"`
+	Protocol  string  `json:"protocol"`
+	Sender  string  `json:"sender"`
+	User  string  `json:"user"`
+	Password  string  `json:"password"`
+	Server  string  `json:"server"`
+	Token  string  `json:"token"`
+}
+
+type AlertConfig struct {
+	Enable  bool  `json:"enable"`
+	Mail  AlertMailConfig  `json:"mail"`
+}
+
 type GlobalConfig struct {
 	Http  *HttpConfig  `json:"http"`
 	Store  StoreConfig  `json:"store"`
@@ -109,6 +124,7 @@ type GlobalConfig struct {
 	Prometheus  PrometheusConfig  `json:"prometheus"`
 	TagBlacklist  []string  `json:"tag_blacklist"`
 	Agent  []*AgentConfig  `json:"agent"`
+	Alert  AlertConfig  `json:"alert"`
 }
 
 var (

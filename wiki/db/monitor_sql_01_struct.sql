@@ -181,6 +181,8 @@ CREATE TABLE `tpl` (
   `notify_url` VARCHAR(255) DEFAULT '',
   `create_user` VARCHAR(50) DEFAULT '',
   `update_user` VARCHAR(50) DEFAULT '',
+  `action_user` VARCHAR(255) DEFAULT '',
+  `action_role` VARCHAR(255) DEFAULT '',
   `create_at` DATETIME,
   `update_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
@@ -299,7 +301,7 @@ CREATE TABLE `role` (
   PRIMARY KEY (`id`)
 ) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
-CREATE TABLE `rel_team_user` (
+CREATE TABLE `rel_role_user` (
   `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
   `role_id` INT(10) UNSIGNED NOT NULL,
   `user_id` INT(10) UNSIGNED NOT NULL,
