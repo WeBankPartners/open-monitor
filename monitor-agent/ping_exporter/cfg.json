@@ -1,6 +1,5 @@
 {
   "debug": false,
-  "timeout": 2,
   "interval": 60,
   "open-falcon" : {
     "enabled": false,
@@ -20,22 +19,26 @@
   "ip_source": {
     "const": {
       "enabled" : true,
-      "ips": ["192.168.67.129","192.168.67.130"]
+      "ips": ["192.168.67.129","192.168.67.130","192.168.67.131","192.168.67.132"],
+      "weight": 1
     },
     "file": {
-      "enabled" : true,
-      "path": "ip.txt"
+      "enabled" : false,
+      "path": "ip.txt",
+      "weight": 2
     },
     "remote": {
-      "enabled" : true,
+      "enabled" : false,
       "group_tag" : "group=g1",
       "url": "http://192.168.67.129:8088",
-      "interval": 120
+      "interval": 120,
+      "weight": 3
     },
     "listen": {
-      "enabled" : true,
+      "enabled" : false,
       "port": "9191",
-      "path": "/config/ip"
+      "path": "/config/ip",
+      "weight": 4
     }
   },
   "metrics": {
