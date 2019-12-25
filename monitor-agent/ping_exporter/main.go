@@ -16,5 +16,8 @@ func main() {
 		log.Println("parse config fail,stop now...")
 		return
 	}
-	icmpping.Start(*isTest)
+	icmpping.TestModel = *isTest
+	icmpping.InitIpList()
+	go icmpping.StartHttpServer()
+	icmpping.StartTask()
 }
