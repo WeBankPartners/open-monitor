@@ -1,0 +1,175 @@
+package icmpping
+
+import (
+	"log"
+	"time"
+	"sync"
+	"github.com/WeBankPartners/open-monitor/monitor-agent/ping_exporter/funcs"
+	"net"
+)
+
+func StartTask() {
+	timeout = 2
+	interval := funcs.Config().Interval
+	if interval < 30 {
+		log.Println("interval refresh to 30s")
+		interval = 30
+	}
+	if timeout > interval/12 {
+		log.Printf("timeout %d > interval/12,max 3 try and 4 packages,reset to interval/12=%d \n",timeout,interval/12)
+		timeout = interval/12
+	}
+	InitIcmpBytes()  // 初始化ICMP数据包的bytes
+	localIp = getIntranetIp()  // 初始化本机IP列表
+
+	if funcs.Config().OpenFalcon.Enabled {
+		funcs.InitTransfer()
+	}
+
+	if TestModel {
+		doTask()
+		return
+	}
+	t := time.NewTicker(time.Second*time.Duration(interval)).C
+	for {
+		go doTask()
+		<- t
+	}
+}
+
+func doTask()  {
+	// 清空上次数据，把resultMap数据保存到lastResultMap
+	ClearRetryIp()
+	ClearSuccessIp()
+	ClearRetryMap()
+	for k,v := range readResultMap(){
+		lastResultMap[k] = v
+	}
+	log.Println("start")
+	startTime := time.Now()
+	wg := sync.WaitGroup{}
+	var successCounter int
+	ipList := getIpList()
+	// first check
+	for _,ip := range ipList {
+		if containString(ip, localIp) {
+			DebugLog("%s is local ip", ip)
+			writeResultMap(ip, 0)
+			successCounter += 1
+			continue
+		}
+		wg.Add(1)
+		go func(ip string,timeout int) {
+			defer wg.Done()
+			d := StartPing(ip, timeout)
+			if d < 2 {
+				writeResultMap(ip ,d)
+			}
+			DebugLog("ping %s result %d ", ip, d)
+		}(ip,timeout)
+	}
+	wg.Wait()
+
+	// 对第一次执行有异常的IP执行第二次检测
+	retryIp := GetRetryIp()
+	retryLength := len(retryIp) // 重试IP的数量,如果第二次检测成功则数量减1,如果第二次检测完数量还大于0,则进行第三次检测
+	if len(retryIp) > 0 {
+		DebugLog("start second round, retry ip num : %d ", len(retryIp))
+		wgs := sync.WaitGroup{}
+		for _,v:= range retryIp{
+			wgs.Add(1)
+			go func(ip string,timeout int) {
+				defer wgs.Done()
+				DebugLog("second round , retry ip %s ", ip)
+				d := StartPing(ip, timeout)
+				if d==0{
+					retryLength = retryLength - 1
+				}
+				writeResultMap(ip, d)
+			}(v,timeout)
+		}
+		wgs.Wait()
+		DebugLog("end second round ")
+	}
+
+	// 第三次,最后一次检测,如果前面两次检测都还有需要重试的IP,说明此时的网络环境不稳定,需要对比上次检测的结果进行一次最后的重试
+	if retryLength>0 {
+		DebugLog("start third round, retry ip num : %d ", retryLength)
+		ClearRetryIp()
+		tmpRMap := readResultMap()
+		for _,v := range ipList{
+			if lv,ok := lastResultMap[v]; ok {
+				if lv!=tmpRMap[v]{  // 上次结果和这次的不一致，最后再检查一次，一般这种IP比较少
+					addRetryIp(v)
+					DebugLog("%s last result is different this : %d, last %d ", v, tmpRMap[v], lv)
+					if tmpRMap[v]==0{
+						successCounter = successCounter - 1
+					}
+					continue
+				}
+			}
+			if tmpRMap[v] >= 2{
+				DebugLog("%s retry is still not work ", v)
+				addRetryIp(v)
+			}
+		}
+		finalRetryIp := GetRetryIp()
+		if len(finalRetryIp) > 0 {
+			DebugLog("final retry ip num : %d ", len(finalRetryIp))
+			wgt := sync.WaitGroup{}
+			for _,v := range finalRetryIp{
+				wgt.Add(1)
+				go func(ip string,timeout int) {
+					defer wgt.Done()
+					d := StartPing(ip, timeout)
+					writeResultMap(ip, d)
+					DebugLog("ping %s result %d ", ip ,d)
+				}(v,timeout)
+			}
+			wgt.Wait()
+		}
+	}
+	endTime := time.Now()
+	useTime := float64(endTime.Sub(startTime).Nanoseconds()) / 1e6
+	successIp := GetSuccessIp()
+	successCounter = successCounter + len(successIp)
+	log.Printf("end ping, success num %d, fail num %d, use time %.3f ms \n", successCounter, len(ipList)-successCounter, useTime)
+	dealResult(successCounter)
+}
+
+func dealResult(successCounter int)  {
+	result := readResultMap()
+	if funcs.Config().Prometheus.Enabled {
+		go funcs.UpdateExportMetric(result, successCounter)
+	}
+	if funcs.Config().OpenFalcon.Enabled {
+		go funcs.HandleTransferResult(result, successCounter)
+	}
+	if TestModel{
+		successOutput := "alive ip : \n"
+		for k,v := range result {
+			if v == 0 {
+				successOutput = successOutput  + k + ","
+			}
+		}
+		log.Println(successOutput)
+	}
+}
+
+func getIntranetIp() []string {
+	addrs, err := net.InterfaceAddrs()
+	re := []string{}
+	if err != nil {
+		log.Println(err)
+		return re
+	}
+	for _, address := range addrs {
+		// 检查ip地址判断是否回环地址
+		if ipNet, ok := address.(*net.IPNet); ok && !ipNet.IP.IsLoopback() {
+			if ipNet.IP.To4() != nil {
+				re = append(re, ipNet.IP.String())
+			}
+		}
+	}
+	return re
+}
