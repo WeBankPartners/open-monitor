@@ -27,7 +27,7 @@ type OpenFalconConfig struct {
 type PrometheusCOnfig struct {
 	Enabled  bool     `json:"enabled"`
 	Port  string  `json:"port"`
-	Metric  string  `json:"metric"`
+	Path  string  `json:"path"`
 }
 
 type IpSourceConfig struct {
@@ -40,11 +40,13 @@ type IpSourceConfig struct {
 type SourceConstConfig struct {
 	Enabled  bool     `json:"enabled"`
 	Ips  []string  `json:"ips"`
+	Weight  int  `json:"weight"`
 }
 
 type SourceFileConfig struct {
 	Enabled  bool     `json:"enabled"`
 	Path  string  `json:"path"`
+	Weight  int  `json:"weight"`
 }
 
 type SourceRemoteConfig  struct {
@@ -52,12 +54,14 @@ type SourceRemoteConfig  struct {
 	GroupTag  string  `json:"group_tag"`
 	Url  string  `json:"url"`
 	Interval  int  `json:"interval"`
+	Weight  int  `json:"weight"`
 }
 
 type SourceListenConfig  struct {
 	Enabled  bool     `json:"enabled"`
 	Port  string  `json:"port"`
 	Path  string  `json:"path"`
+	Weight  int  `json:"weight"`
 }
 
 type MetricConfig  struct {
@@ -69,7 +73,6 @@ type MetricConfig  struct {
 
 type GlobalConfig struct {
 	Debug         bool              `json:"debug"`
-	Timeout       int               `json:"timeout"`
 	Interval      int               `json:"interval"`
 	OpenFalcon    OpenFalconConfig  `json:"open-falcon"`
 	Prometheus    PrometheusCOnfig  `json:"prometheus"`
@@ -94,7 +97,7 @@ func ParseConfig(cfg string) error {
 		log.Fatalln("use -c to specify configuration file")
 	}
 	_, err := os.Stat(cfg)
-	if !os.IsExist(err) {
+	if os.IsExist(err) {
 		log.Fatalln("config file not found")
 		return err
 	}

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net"
 	"time"
-	"sync"
 )
 
 // icmp报头,8byte
@@ -22,13 +21,9 @@ var (
 	icmpData  ICMP
 	icmpBytes  []byte
 	localAddress net.IPAddr = net.IPAddr{IP: net.ParseIP("0.0.0.0")}
-	lock       = new(sync.RWMutex)
-	doneLock      = new(sync.RWMutex)
-	retryIpList  []string
-	doneIpList  []string
 )
 
-func CheckSum(data []byte) uint16 {
+func checkSum(data []byte) uint16 {
 	var (
 		sum    uint32
 		length int = len(data)
@@ -57,7 +52,7 @@ func InitIcmpBytes() {
 	var	buffer bytes.Buffer
 	// 先在buffer中写入icmp数据报求去校验和
 	binary.Write(&buffer, binary.BigEndian, icmpData)
-	icmpData.Checksum = CheckSum(buffer.Bytes())
+	icmpData.Checksum = checkSum(buffer.Bytes())
 	// 然后清空buffer并把求完校验和的icmp数据报写入其中准备发送
 	buffer.Reset()
 	binary.Write(&buffer, binary.BigEndian, icmpData)
@@ -87,18 +82,18 @@ func StartPing(distIp string, timeout int) int {
 	endTime := time.Now()
 	useTime := float64(endTime.Sub(startTime).Nanoseconds()) / 1e6
 	if re >= 3 {  // 发4个ICMP包,如果有3个回复成功则算ping通
-		addDoneIp(distIp)
+		addSuccessIp(distIp)
 		return 0
 	}else{
 		if re==2 && tq==2{  // 如果有2个回复成功和2个太快回复(下面把这当做了一种异常,有时候主机不通也会出现这种情况),也算主机是通的
-			addDoneIp(distIp)
+			addSuccessIp(distIp)
 			return 0
 		}
 		if useTime < 6100 {  // 如果4个包不是全部2秒超时,则算异常需要重试
 			DebugLog("%s ping retry,%.3f ms, renum : %d ## ", distIp, useTime, re)
 			t := GetRetryMap(distIp, re)
 			if t>=4{  // 如果这几次检测中有总数超过4个成功的包返回,也算是成功,经测试在网络流量高的时候会有大概5%-10%的测试IP会只返回2个响应成功的包
-				addDoneIp(distIp)
+				addSuccessIp(distIp)
 				return 0
 			}
 			addRetryIp(distIp)
@@ -157,40 +152,4 @@ func doping(conn net.IPConn, distIp string, timeout int) int {
 		}
 	}
 	return isOk
-}
-
-func addRetryIp(ip string) {
-	lock.Lock()
-	defer lock.Unlock()
-	retryIpList = append(retryIpList, ip)
-}
-
-func addDoneIp(ip string) {
-	doneLock.Lock()
-	defer doneLock.Unlock()
-	doneIpList = append(doneIpList, ip)
-}
-
-func GetRetryIp() []string {
-	lock.RLock()
-	defer lock.RUnlock()
-	return retryIpList
-}
-
-func GetDoneIp() []string {
-	doneLock.RLock()
-	defer doneLock.RUnlock()
-	return doneIpList
-}
-
-func ClearRetryIp(){
-	lock.Lock()
-	retryIpList = []string{}
-	lock.Unlock()
-}
-
-func ClearDoneIp() {
-	doneLock.Lock()
-	doneIpList = []string{}
-	doneLock.Unlock()
 }
