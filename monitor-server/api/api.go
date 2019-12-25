@@ -137,6 +137,8 @@ func InitHttpServer(exportAgent bool) {
 			alarmApi.GET("/grp/export", alarm.ExportGrpStrategy)
 			alarmApi.POST("/grp/import", alarm.ImportGrpStrategy)
 			alarmApi.POST("/send", alarm.OpenAlarmApi)
+			alarmApi.GET("/action/search", alarm.SearchUserRole)
+			alarmApi.POST("/action/update", alarm.UpdateTplAction)
 		}
 		userApi := authApi.Group("/user")
 		{

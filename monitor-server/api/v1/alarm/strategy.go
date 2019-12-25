@@ -237,3 +237,53 @@ func SaveConfigFile(tplId int) error {
 	err = prom.SetConfig(fileName, isGrp, cObj, isExist)
 	return err
 }
+
+func SearchUserRole(c *gin.Context)  {
+	search := c.Query("search")
+	err,roles := db.SearchUserRole(search, "role")
+	if err != nil {
+		mid.LogError("search role error", err)
+	}
+	if len(roles) < 15 {
+		err,users := db.SearchUserRole(search, "user")
+		if err != nil {
+			mid.LogError("search user error", err)
+		}
+		for _,v := range users {
+			if len(roles) >= 15 {
+				break
+			}
+			roles = append(roles, v)
+		}
+	}
+	mid.ReturnData(c, roles)
+}
+
+func UpdateTplAction(c *gin.Context)  {
+	var param m.UpdateActionDto
+	if err := c.ShouldBindJSON(&param); err==nil {
+		var userIds,roleIds []int
+		for _,v := range param.Accept {
+			if strings.Contains(v, "user_") {
+				tmpId,_ := strconv.Atoi(strings.Split(v, "user_")[1])
+				if tmpId > 0 {
+					userIds = append(userIds, tmpId)
+				}
+			}
+			if strings.Contains(v, "role_") {
+				tmpId,_ := strconv.Atoi(strings.Split(v, "role_")[1])
+				if tmpId > 0 {
+					roleIds = append(roleIds, tmpId)
+				}
+			}
+		}
+		err = db.UpdateTplAction(param.TplId, userIds, roleIds)
+		if err != nil {
+			mid.ReturnError(c, "Update tpl action fail ", err)
+		}else{
+			mid.ReturnSuccess(c, "Success")
+		}
+	}else{
+		mid.ReturnValidateFail(c, fmt.Sprintf("Parameter validation failed %v", err))
+	}
+}

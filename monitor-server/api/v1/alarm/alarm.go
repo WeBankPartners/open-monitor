@@ -9,6 +9,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"strings"
 	"time"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/other"
 )
 
 func AcceptAlertMsg(c *gin.Context)  {
@@ -83,6 +84,19 @@ func AcceptAlertMsg(c *gin.Context)  {
 			}
 			mid.LogInfo(fmt.Sprintf("add alarm ,operation: %s ,value: %v", tmpOperation, tmpAlarm))
 			alarms = append(alarms, &tmpAlarm)
+		}
+		if m.Config().Alert.Enable {
+			for _,v := range alarms {
+				var sao m.SendAlertObj
+				accept := db.GetMailByStrategy(v.StrategyId)
+				if len(accept) == 0 {
+					continue
+				}
+				sao.Accept = accept
+				sao.Subject = fmt.Sprintf("[%s][%s] Endpoint:%s Metric:%s", v.Status, v.SPriority, v.Endpoint, v.SMetric)
+				sao.Content = fmt.Sprintf("Endpoint:%s \r\nStatus:%s\r\nMetric:%s\r\nEvent:%.3f%s\r\nLast:%s\r\nPriority:%s\r\nNote:%s\r\nTime:%s",v.Endpoint,v.Status,v.SMetric,v.StartValue,v.SCond,v.SLast,v.SPriority,v.Content,v.Start.Format(m.DatetimeFormat))
+				other.SendSmtpMail(sao)
+			}
 		}
 		err = db.UpdateAlarms(alarms)
 		if err != nil {
