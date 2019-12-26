@@ -156,7 +156,47 @@ func RegisterJob(param m.RegisterParam) error {
 		if param.Instance == "" {
 			return fmt.Errorf("Redis instance name can not be empty")
 		}
-		err,strList = prom.GetEndpointData(param.ExporterIp, param.ExporterPort, []string{"redis"}, []string{"redis_version",",version"})
+		var binPath,address string
+		if agentManagerUrl != "" {
+			if param.User == "" || param.Password == "" {
+				for _,v := range m.Config().Agent {
+					if v.AgentType == redisType {
+						param.User = v.User
+						param.Password = v.Password
+						binPath = v.AgentBin
+						break
+					}
+				}
+			}
+			if param.User == "" || param.Password == "" {
+				return fmt.Errorf("mysql monitor must have user and password to connect")
+			}
+			if binPath == "" {
+				for _,v := range m.Config().Agent {
+					if v.AgentType == redisType {
+						binPath = v.AgentBin
+						break
+					}
+				}
+			}
+			address,err = prom.DeployAgent(redisType,param.Instance,binPath,param.ExporterIp,param.ExporterPort,param.User,param.Password,agentManagerUrl)
+			if err != nil {
+				return err
+			}
+		}
+		if address == "" {
+			err, strList = prom.GetEndpointData(param.ExporterIp, param.ExporterPort, []string{"redis"}, []string{"redis_version", ",version"})
+		}else{
+			if strings.Contains(address, ":") {
+				tmpAddressList := strings.Split(address, ":")
+				tmpAgentIp = tmpAddressList[0]
+				tmpAgentPort = tmpAddressList[1]
+				err, strList = prom.GetEndpointData(tmpAddressList[0], tmpAddressList[1], []string{"redis"}, []string{"redis_version", ",version"})
+			}else{
+				mid.LogInfo(fmt.Sprintf("address : %s is bad", address))
+				return fmt.Errorf("address : %s is bad", address)
+			}
+		}
 		if err != nil {
 			mid.LogError("curl endpoint data fail ", err)
 			return err
@@ -182,6 +222,7 @@ func RegisterJob(param m.RegisterParam) error {
 		endpoint.ExportVersion = exportVersion
 		endpoint.Step = step
 		endpoint.Address = fmt.Sprintf("%s:%s", param.ExporterIp, param.ExporterPort)
+		endpoint.AddressAgent = address
 	}else if param.Type == tomcatType {
 		if param.Instance == "" {
 			return fmt.Errorf("Tomcat instance name can not be empty")
