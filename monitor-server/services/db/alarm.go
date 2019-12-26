@@ -576,32 +576,18 @@ func GetEndpointsByGrp(grpId int) (error,[]*m.EndpointTable) {
 func GetAlarms(query m.AlarmTable) (error,m.AlarmProblemList) {
 	var result []*m.AlarmProblemQuery
 	var whereSql,extWhereSql string
-	var params []interface{}
-	var extParams []interface{}
+	var params,extParams []interface{}
 	if query.Id > 0 {
 		whereSql += " and t1.id=? "
-		extWhereSql += " and t1.id=? "
 		params = append(params, query.Id)
-		extParams = append(extParams, query.Id)
 	}
 	if query.StrategyId > 0 {
 		whereSql += " and t1.strategy_id=? "
-		extWhereSql += " and t1.strategy_id=? "
 		params = append(params, query.StrategyId)
-		extParams = append(extParams, query.StrategyId)
 	}
 	if query.Endpoint != "" {
 		whereSql += " and t1.endpoint=? "
-		extWhereSql += " and t1.endpoint=? "
 		params = append(params, query.Endpoint)
-		extParams = append(extParams, query.Endpoint)
-	}
-	if query.Status != "" {
-		whereSql += " and t1.status=? "
-		params = append(params, query.Status)
-		if query.Status == "firing" {
-			extWhereSql += "and t1.status!='closed' "
-		}
 	}
 	if query.SMetric != "" {
 		whereSql += " and t1.s_metric=? "
@@ -609,9 +595,16 @@ func GetAlarms(query m.AlarmTable) (error,m.AlarmProblemList) {
 	}
 	if query.SPriority != "" {
 		whereSql += " and t1.s_priority=? "
-		extWhereSql += " and t1.s_priority=? "
 		params = append(params, query.SPriority)
-		extParams = append(extParams, query.SPriority)
+	}
+	extWhereSql = whereSql
+	extParams = params
+	if query.Status != "" {
+		whereSql += " and t1.status=? "
+		params = append(params, query.Status)
+		if query.Status == "firing" {
+			extWhereSql += "and t1.status!='closed' "
+		}
 	}
 	if !query.Start.IsZero() {
 		whereSql += fmt.Sprintf(" and t1.start>='%s' ", query.Start.Format(m.DatetimeFormat))

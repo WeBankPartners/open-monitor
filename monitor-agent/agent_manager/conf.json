@@ -4,8 +4,8 @@
   },
   "deploy": {
     "enable": true,
-    "start_port": 14000,
-    "package_path": ["./exporters/mysqld_exporter","./exporters/redis-exporter"],
+    "start_port": 20000,
+    "package_path": ["./exporters/mysqld_exporter","./exporters/redis_exporter"],
     "deploy_dir": "/app/deploy",
     "each_max_process": 50
   },

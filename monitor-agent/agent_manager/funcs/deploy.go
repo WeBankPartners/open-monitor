@@ -51,7 +51,9 @@ func AddDeploy(name,configFile,guid string, param map[string]string) (port int,e
 	if err != nil {
 		return port,err
 	}
-	configFile = deployPath + "/" + configFile
+	if configFile != "" {
+		configFile = deployPath + "/" + configFile
+	}
 	startFile := deployPath + "/start.sh"
 	p.init(tmpName, deployPath, "./start.sh")
 	ProcessMapLock.Lock()
