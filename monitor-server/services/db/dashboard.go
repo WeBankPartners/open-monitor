@@ -165,7 +165,11 @@ func GetEndpoint(query *m.EndpointTable) error {
 	}else if query.Guid != ""{
 		err = x.SQL("SELECT * FROM endpoint WHERE guid=?", query.Guid).Find(&endpointObj)
 	}else if query.Address != "" {
-		err = x.SQL("SELECT * FROM endpoint WHERE address=?", query.Address).Find(&endpointObj)
+		if query.AddressAgent != "" {
+			err = x.SQL("SELECT * FROM endpoint WHERE address=? or address_agent=?", query.Address, query.AddressAgent).Find(&endpointObj)
+		}else {
+			err = x.SQL("SELECT * FROM endpoint WHERE address=?", query.Address).Find(&endpointObj)
+		}
 	}
 	if query.Ip != "" && query.ExportType != "" {
 		if query.Name == "" {
