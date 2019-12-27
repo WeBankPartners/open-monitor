@@ -26,6 +26,7 @@
         <systemParameter name="MONITOR_MYSQL_GROUP" scopeType="plugin-package" defaultValue="default_mysql_group"/>
         <systemParameter name="MONITOR_REDIS_GROUP" scopeType="plugin-package" defaultValue="default_redis_group"/>
         <systemParameter name="MONITOR_TOMCAT_GROUP" scopeType="plugin-package" defaultValue="default_tomcat_group"/>
+        <systemParameter name="HOST_EXPORTER_INSTALL" scopeType="plugin-package" defaultValue="/wecube-agent/host_exporter_install_v1.1.sh"/>
     </systemParameters>
 
     <!-- 5.权限设定 -->
