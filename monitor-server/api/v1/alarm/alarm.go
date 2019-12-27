@@ -9,6 +9,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"strings"
 	"time"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/other"
 )
 
 func AcceptAlertMsg(c *gin.Context)  {
@@ -21,42 +22,68 @@ func AcceptAlertMsg(c *gin.Context)  {
 		var alarms []*m.AlarmTable
 		for _,v := range param.Alerts {
 			mid.LogInfo(fmt.Sprintf("accept alert msg : %v", v))
-			tmpAlarm := m.AlarmTable{Status:v.Status}
-			tmpAlarm.StrategyId,_ = strconv.Atoi(v.Labels["strategy_id"])
-			if tmpAlarm.StrategyId <= 0 {
-				mid.LogInfo(fmt.Sprintf("Alert's strategy id is null : %v ", v))
-				continue
-			}
-			_,strategyObj := db.GetStrategy(m.StrategyTable{Id:tmpAlarm.StrategyId})
-			if strategyObj.Id <= 0 {
-				mid.LogInfo(fmt.Sprintf("Alert's strategy id can not found : %d ", tmpAlarm.StrategyId))
-				continue
-			}
-			tmpAlarm.SMetric = strategyObj.Metric
-			tmpAlarm.SExpr = strategyObj.Expr
-			tmpAlarm.SCond = strategyObj.Cond
-			tmpAlarm.SLast = strategyObj.Last
-			tmpAlarm.SPriority = strategyObj.Priority
-			tmpAlarm.Content = v.Annotations["description"]
-			tmpSummaryMsg := strings.Split(v.Annotations["summary"], "__")
 			var tmpValue float64
-			if len(tmpSummaryMsg) == 4 {
-				endpointObj := m.EndpointTable{Address:tmpSummaryMsg[0]}
-				db.GetEndpoint(&endpointObj)
-				if endpointObj.Id > 0 {
-					tmpAlarm.Endpoint = endpointObj.Guid
-					if endpointObj.StopAlarm == 1 {
-						continue
-					}
+			var tmpAlarms m.AlarmProblemList
+			tmpAlarm := m.AlarmTable{Status: v.Status}
+			if v.Labels["strategy_id"] == "up" {
+				// base strategy
+				tmpAlarm.SMetric = "up"
+				tmpAlarm.SExpr = "up"
+				tmpAlarm.SCond = "<1"
+				tmpAlarm.SLast = "30s"
+				tmpAlarm.SPriority = "high"
+				tmpAlarm.Content = v.Annotations["description"]
+				tmpSummaryMsg := strings.Split(v.Annotations["summary"], "__")
+				if len(tmpSummaryMsg) != 3 {
+					mid.LogInfo(fmt.Sprintf("summary illegal %s", v.Annotations["summary"]))
+					continue
 				}
-				tmpValue,_ = strconv.ParseFloat(tmpSummaryMsg[3], 10)
+				endpointObj := m.EndpointTable{Address: tmpSummaryMsg[0], AddressAgent: tmpSummaryMsg[0]}
+				db.GetEndpoint(&endpointObj)
+				if endpointObj.Id <= 0 || endpointObj.StopAlarm == 1 {
+					continue
+				}
+				tmpAlarm.Endpoint = endpointObj.Guid
+				tmpValue, _ = strconv.ParseFloat(tmpSummaryMsg[2], 10)
+				tmpAlarmQuery := m.AlarmTable{Endpoint: tmpAlarm.Endpoint, SMetric: tmpAlarm.SMetric}
+				_, tmpAlarms = db.GetAlarms(tmpAlarmQuery)
+			}else {
+				// config strategy
+				tmpAlarm.StrategyId, _ = strconv.Atoi(v.Labels["strategy_id"])
+				if tmpAlarm.StrategyId <= 0 {
+					mid.LogInfo(fmt.Sprintf("Alert's strategy id is null : %v ", v))
+					continue
+				}
+				_, strategyObj := db.GetStrategy(m.StrategyTable{Id: tmpAlarm.StrategyId})
+				if strategyObj.Id <= 0 {
+					mid.LogInfo(fmt.Sprintf("Alert's strategy id can not found : %d ", tmpAlarm.StrategyId))
+					continue
+				}
+				tmpAlarm.SMetric = strategyObj.Metric
+				tmpAlarm.SExpr = strategyObj.Expr
+				tmpAlarm.SCond = strategyObj.Cond
+				tmpAlarm.SLast = strategyObj.Last
+				tmpAlarm.SPriority = strategyObj.Priority
+				tmpAlarm.Content = v.Annotations["description"]
+				tmpSummaryMsg := strings.Split(v.Annotations["summary"], "__")
+				if len(tmpSummaryMsg) == 4 {
+					endpointObj := m.EndpointTable{Address: tmpSummaryMsg[0]}
+					db.GetEndpoint(&endpointObj)
+					if endpointObj.Id > 0 {
+						tmpAlarm.Endpoint = endpointObj.Guid
+						if endpointObj.StopAlarm == 1 {
+							continue
+						}
+					}
+					tmpValue, _ = strconv.ParseFloat(tmpSummaryMsg[3], 10)
+				}
+				if tmpAlarm.Endpoint == "" {
+					mid.LogInfo(fmt.Sprintf("Can't find the endpoint %v", v))
+					continue
+				}
+				tmpAlarmQuery := m.AlarmTable{Endpoint: tmpAlarm.Endpoint, StrategyId: tmpAlarm.StrategyId}
+				_, tmpAlarms = db.GetAlarms(tmpAlarmQuery)
 			}
-			if tmpAlarm.Endpoint == "" {
-				mid.LogInfo(fmt.Sprintf("Can't find the endpoint %v", v))
-				continue
-			}
-			tmpAlarmQuery := m.AlarmTable{Endpoint:tmpAlarm.Endpoint, StrategyId:tmpAlarm.StrategyId}
-			_,tmpAlarms := db.GetAlarms(tmpAlarmQuery)
 			tmpOperation := "add"
 			if len(tmpAlarms) > 0 {
 				if tmpAlarms[0].Status == "firing" {
@@ -88,6 +115,19 @@ func AcceptAlertMsg(c *gin.Context)  {
 		if err != nil {
 			mid.ReturnError(c, "Failed to accept alert msg", err)
 			return
+		}
+		if m.Config().Alert.Enable {
+			for _,v := range alarms {
+				var sao m.SendAlertObj
+				accept := db.GetMailByStrategy(v.StrategyId)
+				if len(accept) == 0 {
+					continue
+				}
+				sao.Accept = accept
+				sao.Subject = fmt.Sprintf("[%s][%s] Endpoint:%s Metric:%s", v.Status, v.SPriority, v.Endpoint, v.SMetric)
+				sao.Content = fmt.Sprintf("Endpoint:%s \r\nStatus:%s\r\nMetric:%s\r\nEvent:%.3f%s\r\nLast:%s\r\nPriority:%s\r\nNote:%s\r\nTime:%s",v.Endpoint,v.Status,v.SMetric,v.StartValue,v.SCond,v.SLast,v.SPriority,v.Content,v.Start.Format(m.DatetimeFormat))
+				other.SendSmtpMail(sao)
+			}
 		}
 		mid.ReturnSuccess(c, "Success")
 	}else{

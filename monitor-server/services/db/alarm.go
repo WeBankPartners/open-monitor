@@ -479,6 +479,9 @@ func GetStrategys(query *m.TplQuery, ignoreLogMonitor bool) error {
 			result = append(result, &m.TplObj{TplId:0, ObjId:query.SearchId, ObjName:grps[0].Name, ObjType:"grp", Operation:true, Strategy:[]*m.StrategyTable{}})
 		}
 	}
+	for i,v := range result {
+		result[i].Accept = getActionOptions(v.TplId)
+	}
 	query.Tpl = result
 	return nil
 }
@@ -573,32 +576,18 @@ func GetEndpointsByGrp(grpId int) (error,[]*m.EndpointTable) {
 func GetAlarms(query m.AlarmTable) (error,m.AlarmProblemList) {
 	var result []*m.AlarmProblemQuery
 	var whereSql,extWhereSql string
-	var params []interface{}
-	var extParams []interface{}
+	var params,extParams []interface{}
 	if query.Id > 0 {
 		whereSql += " and t1.id=? "
-		extWhereSql += " and t1.id=? "
 		params = append(params, query.Id)
-		extParams = append(extParams, query.Id)
 	}
 	if query.StrategyId > 0 {
 		whereSql += " and t1.strategy_id=? "
-		extWhereSql += " and t1.strategy_id=? "
 		params = append(params, query.StrategyId)
-		extParams = append(extParams, query.StrategyId)
 	}
 	if query.Endpoint != "" {
 		whereSql += " and t1.endpoint=? "
-		extWhereSql += " and t1.endpoint=? "
 		params = append(params, query.Endpoint)
-		extParams = append(extParams, query.Endpoint)
-	}
-	if query.Status != "" {
-		whereSql += " and t1.status=? "
-		params = append(params, query.Status)
-		if query.Status == "firing" {
-			extWhereSql += "and t1.status!='closed' "
-		}
 	}
 	if query.SMetric != "" {
 		whereSql += " and t1.s_metric=? "
@@ -606,9 +595,16 @@ func GetAlarms(query m.AlarmTable) (error,m.AlarmProblemList) {
 	}
 	if query.SPriority != "" {
 		whereSql += " and t1.s_priority=? "
-		extWhereSql += " and t1.s_priority=? "
 		params = append(params, query.SPriority)
-		extParams = append(extParams, query.SPriority)
+	}
+	extWhereSql = whereSql
+	extParams = params
+	if query.Status != "" {
+		whereSql += " and t1.status=? "
+		params = append(params, query.Status)
+		if query.Status == "firing" {
+			extWhereSql += "and t1.status!='closed' "
+		}
 	}
 	if !query.Start.IsZero() {
 		whereSql += fmt.Sprintf(" and t1.start>='%s' ", query.Start.Format(m.DatetimeFormat))
@@ -1017,4 +1013,57 @@ func GetOpenAlarm() []*m.AlarmProblemQuery {
 func CloseOpenAlarm(id int) error {
 	_,err := x.Exec("UPDATE alarm_custom SET closed=1,closed_at=NOW() WHERE id=?", id)
 	return err
+}
+
+func UpdateTplAction(tplId int,user,role []int) error {
+	var userString,roleString string
+	if len(user) > 0 {
+		for _,v := range user {
+			userString += fmt.Sprintf("%d,", v)
+		}
+		userString = userString[:len(userString)-1]
+	}
+	if len(role) > 0 {
+		for _,v := range role {
+			roleString += fmt.Sprintf("%d,", v)
+		}
+		roleString = roleString[:len(roleString)-1]
+	}
+	_,err := x.Exec(fmt.Sprintf("UPDATE tpl SET action_user='%s',action_role='%s' WHERE id=%d", userString, roleString, tplId))
+	if err != nil {
+		mid.LogError("Update tpl action error", err)
+	}
+	return err
+}
+
+func getActionOptions(tplId int) []*m.OptionModel {
+	var tpls []*m.TplTable
+	result := []*m.OptionModel{}
+	x.SQL("SELECT action_user,action_role FROM tpl WHERE id=?", tplId).Find(&tpls)
+	if len(tpls) == 0 {
+		return result
+	}
+	if tpls[0].ActionRole != "" {
+		var roles []*m.RoleTable
+		x.SQL(fmt.Sprintf("SELECT id,name,display_name FROM role WHERE id IN (%s)", tpls[0].ActionRole)).Find(&roles)
+		for _,v := range roles {
+			tmpText := v.Name
+			if v.DisplayName != "" {
+				tmpText = tmpText + "(" + v.DisplayName + ")"
+			}
+			result = append(result, &m.OptionModel{Id:v.Id, OptionText:tmpText, OptionValue:fmt.Sprintf("role_%d", v.Id), Active:true})
+		}
+	}
+	if tpls[0].ActionUser != "" {
+		var users []*m.UserTable
+		x.SQL(fmt.Sprintf("SELECT id,NAME,display_name FROM user WHERE id IN (%s)", tpls[0].ActionUser)).Find(&users)
+		for _,v := range users {
+			tmpText := v.Name
+			if v.DisplayName != "" {
+				tmpText = tmpText + "(" + v.DisplayName + ")"
+			}
+			result = append(result, &m.OptionModel{Id:v.Id, OptionText:tmpText, OptionValue:fmt.Sprintf("user_%d", v.Id), Active:false})
+		}
+	}
+	return result
 }
