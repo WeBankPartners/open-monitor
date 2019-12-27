@@ -38,7 +38,7 @@ func AcceptAlertMsg(c *gin.Context)  {
 					mid.LogInfo(fmt.Sprintf("summary illegal %s", v.Annotations["summary"]))
 					continue
 				}
-				endpointObj := m.EndpointTable{Address: tmpSummaryMsg[0]}
+				endpointObj := m.EndpointTable{Address: tmpSummaryMsg[0], AddressAgent: tmpSummaryMsg[0]}
 				db.GetEndpoint(&endpointObj)
 				if endpointObj.Id <= 0 || endpointObj.StopAlarm == 1 {
 					continue
