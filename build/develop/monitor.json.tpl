@@ -20,8 +20,7 @@
       "stdout": true
     }
   },
-  "store": [
-    {
+  "store": {
       "name": "default",
       "type": "mysql",
       "server": "127.0.0.1",
@@ -32,8 +31,7 @@
       "maxOpen": 20,
       "maxIdle": 10,
       "timeout": 60
-    }
-  ],
+  },
   "datasource" : {
     "env" : "dev",
     "servers": [
@@ -56,11 +54,56 @@
       "username": "",
       "password": "",
       "expire": 0
+    },
+    {
+      "name": "agent_manager",
+      "server": "http://127.0.0.1:19999",
+      "username": "",
+      "password": "",
+      "expire": 0
     }
   ],
   "prometheus" : {
     "config_path": "{{MONITOR_BASE_PATH}}/prometheus/rules",
     "config_reload": "http://127.0.0.1:9090/-/reload"
   },
-  "tag_blacklist" : ["veth"]
+  "tag_blacklist" : ["veth"],
+    "agent" : [
+      {
+        "agent_type" : "host",
+        "agent_bin" : "node_exporter_new",
+        "port" : "9100"
+      },
+      {
+        "agent_type" : "mysql",
+        "agent_bin" : "mysqld_exporter",
+        "port" : "9104",
+        "user" : "exporter",
+        "password" : "prom_pwd"
+      },
+      {
+        "agent_type" : "redis",
+        "agent_bin" : "redis_exporter",
+        "port" : "9121",
+        "user" : "exporter",
+        "password" : "prom_pwd"
+      },
+      {
+        "agent_type" : "tomcat",
+        "agent_bin" : "jmx_prometheus_javaagent-0.12.0.jar",
+        "port" : "9151"
+      }
+    ],
+    "alert": {
+      "enable": false,
+      "mail": {
+        "enable": true,
+        "protocol": "smtp",
+        "sender": "open-monitor",
+        "user": "",
+        "password": "",
+        "server": "",
+        "token": ""
+      }
+    }
 }
