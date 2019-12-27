@@ -42,3 +42,15 @@ type RoleTable struct {
 	Creator  string  `json:"creator"`
 	Created  time.Time  `json:"created"`
 }
+
+type SendAlertObj struct {
+	Accept  []string
+	Subject  string
+	Content  string
+}
+
+type RelRoleUserTable struct {
+	Id  int  `json:"id"`
+	RoleId  int  `json:"role_id"`
+	UserId  int  `json:"user_id"`
+}

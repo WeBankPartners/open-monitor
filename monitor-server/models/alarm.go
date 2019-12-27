@@ -19,6 +19,8 @@ type TplTable struct {
 	NotifyUrl  string  `json:"notify_url"`
 	CreateUser  string  `json:"create_user"`
 	UpdateUser  string  `json:"update_user"`
+	ActionUser  string  `json:"action_user"`
+	ActionRole  string  `json:"action_role"`
 	CreateAt  time.Time  `json:"create_at"`
 	UpdateAt  time.Time  `json:"update_at"`
 }
@@ -154,7 +156,7 @@ type TplObj struct {
 	ObjName  string  `json:"obj_name"`
 	ObjType  string  `json:"obj_type"`
 	Operation  bool  `json:"operation"`
-	Accept  AcceptObj  `json:"accept"`
+	Accept  []*OptionModel  `json:"accept"`
 	Strategy  []*StrategyTable  `json:"strategy"`
 	LogMonitor  []*LogMonitorDto  `json:"log_monitor"`
 }
@@ -289,4 +291,9 @@ type OpenAlarmRequest struct {
 type OpenAlarmResponse struct {
 	ResultCode  int  `json:"resultCode"`
 	ResultMsg  string  `json:"resultMsg"`
+}
+
+type UpdateActionDto struct {
+	TplId  int  `json:"tpl_id" binding:"required"`
+	Accept  []string  `json:"accept"`
 }
