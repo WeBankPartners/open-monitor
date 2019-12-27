@@ -38,15 +38,12 @@ func AcceptAlertMsg(c *gin.Context)  {
 					mid.LogInfo(fmt.Sprintf("summary illegal %s", v.Annotations["summary"]))
 					continue
 				}
-				//if tmpSummaryMsg[1] != "consul" {
-				//	continue
-				//}
-				tmpAlarm.Endpoint = tmpSummaryMsg[0]
 				endpointObj := m.EndpointTable{Address: tmpSummaryMsg[0]}
 				db.GetEndpoint(&endpointObj)
 				if endpointObj.Id <= 0 || endpointObj.StopAlarm == 1 {
 					continue
 				}
+				tmpAlarm.Endpoint = endpointObj.Guid
 				tmpValue, _ = strconv.ParseFloat(tmpSummaryMsg[2], 10)
 				tmpAlarmQuery := m.AlarmTable{Endpoint: tmpAlarm.Endpoint, SMetric: tmpAlarm.SMetric}
 				_, tmpAlarms = db.GetAlarms(tmpAlarmQuery)
