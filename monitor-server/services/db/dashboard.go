@@ -246,28 +246,36 @@ func RegisterEndpointMetric(endpointId int,endpointMetrics []string) error {
 	if endpointId <= 0 {
 		return fmt.Errorf("endpoint id is 0")
 	}
-	maxNum  := 100
-	var sqls []string
-	delSql := fmt.Sprintf("delete FROM endpoint_metric WHERE endpoint_id=%d", endpointId)
-	sqls = append(sqls, delSql)
+	maxNum  := 50
+	var actions []*Action
+	actions = append(actions, &Action{Sql:"delete FROM endpoint_metric WHERE endpoint_id=?", Param:[]interface{}{endpointId}})
 	i := 0
 	var insertSql string
+	params := make([]interface{}, 0)
 	for _,v := range endpointMetrics {
 		i = i + 1
 		if i == 1 {
 			insertSql = "INSERT INTO endpoint_metric(endpoint_id,metric) VALUES "
 		}
-		insertSql = insertSql + fmt.Sprintf("(%d,'%s'),", endpointId, v)
+		insertSql = insertSql + "(?,?),"
+		params = append(params, endpointId)
+		params = append(params, v)
 		if i == maxNum {
-			tmpSql := insertSql[:len(insertSql)-1]
-			sqls = append(sqls, tmpSql)
+			var action Action
+			action.Sql = insertSql[:len(insertSql)-1]
+			action.Param = params
+			actions = append(actions, &action)
 			i = 0
+			params = make([]interface{}, 0)
 		}
 	}
 	if i > 0 {
-		sqls = append(sqls, insertSql[:len(insertSql)-1])
+		var action Action
+		action.Sql = insertSql[:len(insertSql)-1]
+		action.Param = params
+		actions = append(actions, &action)
 	}
-	err := ExecuteTransactionSql(sqls)
+	err := Transaction(actions)
 	return err
 }
 
@@ -295,15 +303,21 @@ func UpdatePromMetric(data []m.PromMetricTable) error {
 			insertData = append(insertData, v)
 		}
 	}
-	var sqls []string
+	var actions []*Action
 	for _,v := range insertData {
-		sqls = append(sqls, Classify(v, "insert", "prom_metric", false))
+		action := Classify(v, "insert", "prom_metric", false)
+		if action.Sql != "" {
+			actions = append(actions, &action)
+		}
 	}
 	for _,v := range updateData {
-		sqls = append(sqls, Classify(v, "update", "prom_metric", false))
+		action := Classify(v, "update", "prom_metric", false)
+		if action.Sql != "" {
+			actions = append(actions, &action)
+		}
 	}
-	if len(sqls) > 0 {
-		return ExecuteTransactionSql(sqls)
+	if len(actions) > 0 {
+		return Transaction(actions)
 	}
 	return nil
 }
@@ -339,16 +353,16 @@ func GetMainCustomDashboard() (error, m.CustomDashboardTable) {
 }
 
 func SetMainCustomDashboard(id int) error {
-	var sqls []string
+	var actions []*Action
 	err,cdt := GetMainCustomDashboard()
 	if cdt.Id > 0 {
 		if cdt.Id == id {
 			return nil
 		}
-		sqls = append(sqls, fmt.Sprintf("UPDATE custom_dashboard SET main=0 WHERE id=%d", cdt.Id))
+		actions = append(actions, &Action{Sql:"UPDATE custom_dashboard SET main=0 WHERE id=?", Param:[]interface{}{cdt.Id}})
 	}
-	sqls = append(sqls, fmt.Sprintf("UPDATE custom_dashboard SET main=1 WHERE id=%d", id))
-	err = ExecuteTransactionSql(sqls)
+	actions = append(actions, &Action{Sql:"UPDATE custom_dashboard SET main=1 WHERE id=?", Param:[]interface{}{id}})
+	err = Transaction(actions)
 	return err
 }
 

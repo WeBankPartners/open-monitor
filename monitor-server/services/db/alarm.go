@@ -1,7 +1,6 @@
 package db
 
 import (
-	"reflect"
 	"strconv"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
@@ -123,19 +122,20 @@ func ListAlarmEndpoints(query *m.AlarmEndpointQuery) error {
 }
 
 func UpdateGrp(obj *m.UpdateGrp) error {
-	var sqls []string
+	var actions []*Action
 	for _,grp := range obj.Groups {
 		grp.UpdateUser = obj.OperateUser
 		if obj.Operation == "insert" {
 			grp.CreateUser = obj.OperateUser
-			//grp.CreateAt = time.Now()
+			grp.CreateAt = time.Now()
 		}
-		sql := Classify(*grp, obj.Operation, "grp", true)
-		if sql != "" {
-			sqls = append(sqls, sql)
+		action := Classify(*grp, obj.Operation, "grp", true)
+		mid.LogInfo(fmt.Sprintf("action: sql-> %s params->%v", action.Sql, action.Param))
+		if action.Sql != "" {
+			actions = append(actions, &action)
 		}
 	}
-	err := ExecuteTransactionSql(sqls)
+	err := Transaction(actions)
 	return err
 }
 
@@ -182,172 +182,7 @@ func UpdateGrpEndpoint(param m.GrpEndpointParamNew) (error,bool) {
 	return fmt.Errorf("operation is not add or delete"),false
 }
 
-func Classify(obj interface{}, operation string, table string, force bool) string {
-	sql := ``
-	if operation == "insert" {
-		sql = insert(obj, table)
-	}else if operation == "update" {
-		sql = update(obj, table, force)
-	}else if operation == "delete" {
-		sql = delete(obj, table)
-	}
-	return sql
-}
 
-func insert(obj interface{}, table string) string {
-	column := `(`
-	value := ` value (`
-	t := reflect.TypeOf(obj)
-	v := reflect.ValueOf(obj)
-	length := t.NumField()
-	for i := 0; i < length; i++ {
-		if t.Field(i).Name == "Id" {
-			if v.Field(i).Int() == 0 {
-				continue
-			}
-		}
-		f := v.Field(i).Type().String()
-		switch f {
-		case "string":
-			if i == length-1 {
-				column = column + transColumn(t.Field(i).Name) + `)`
-				value = value + `'` + v.Field(i).String() + `')`
-			} else {
-				column = column + transColumn(t.Field(i).Name) + `,`
-				value = value + `'` + v.Field(i).String() + `',`
-			}
-		case "int":
-			if i == length-1 {
-				column = column + transColumn(t.Field(i).Name) + `)`
-				value = value + `'` + strconv.FormatInt(v.Field(i).Int(), 10) + `')`
-			} else {
-				column = column + transColumn(t.Field(i).Name) + `,`
-				value = value + `'` + strconv.FormatInt(v.Field(i).Int(), 10) + `',`
-			}
-		case "int64":
-			if i == length-1 {
-				column = column + transColumn(t.Field(i).Name) + `)`
-				value = value + `'` + strconv.FormatInt(v.Field(i).Int(), 10) + `')`
-			} else {
-				column = column + transColumn(t.Field(i).Name) + `,`
-				value = value + `'` + strconv.FormatInt(v.Field(i).Int(), 10) + `',`
-			}
-		case "time.Time":
-			if i == length-1 {
-				column = column + transColumn(t.Field(i).Name) + `)`
-				value = value + `'` + time.Now().Format(m.DatetimeFormat) + `')`
-			} else {
-				column = column + transColumn(t.Field(i).Name) + `,`
-				value = value + `'` + time.Now().Format(m.DatetimeFormat) + `',`
-			}
-		default:
-			if i == length-1 {
-				column = column + transColumn(t.Field(i).Name) + `)`
-				value = value + `'` + v.Field(i).String() + `')`
-			} else {
-				column = column + transColumn(t.Field(i).Name) + `,`
-				value = value + `'` + v.Field(i).String() + `',`
-			}
-		}
-	}
-	sql := `insert into ` + table + column + value
-	return sql
-}
-
-func update(obj interface{}, table string, force bool) string {
-	value := ``
-	where := ` where id=`
-	t := reflect.TypeOf(obj)
-	v := reflect.ValueOf(obj)
-	length := t.NumField()
-	flag := false
-	for i := 0; i < length; i++ {
-		if t.Field(i).Name == "Id" {
-			where = where + strconv.FormatInt(v.Field(i).Int(), 10)
-		}else {
-			f := v.Field(i).Kind()
-			switch f {
-			case reflect.String:
-				if v.Field(i).String() != "" || force {
-					value = value + transColumn(t.Field(i).Name) + `='` + v.Field(i).String() + `',`
-					flag = true
-				}
-			case reflect.Int:
-				if v.Field(i).Int() > 0 || force {
-					value = value + transColumn(t.Field(i).Name) + `=` + strconv.FormatInt(v.Field(i).Int(), 10) + `,`
-					flag = true
-				}
-			}
-		}
-	}
-	if flag==true{
-		value = value[0:len(value)-1]
-		sql := `update ` + table + ` set ` + value + where
-		return sql
-	}else{
-		return ``
-	}
-}
-
-func delete(obj interface{}, table string) string {
-	where := ` where id=`
-	where_sec := ` where `
-	t := reflect.TypeOf(obj)
-	v := reflect.ValueOf(obj)
-	length := t.NumField()
-	flag := 0
-	for i := 0; i < length; i++ {
-		if t.Field(i).Name == "Id" {
-			where = where + strconv.FormatInt(v.Field(i).Int(), 10)
-			flag = 1
-			break
-		}
-		f := v.Field(i).Kind()
-		switch f {
-		case reflect.String:
-			if v.Field(i).String() != "" {
-				if flag == 2 {
-					where_sec = where_sec + ` and `
-				}
-				where_sec = where_sec + transColumn(t.Field(i).Name) + `='` + v.Field(i).String() + `'`
-				flag = 2
-			}
-		case reflect.Int:
-			if v.Field(i).Int() > 0 {
-				if flag == 2 {
-					where_sec = where_sec + ` and `
-				}
-				where_sec = where_sec + transColumn(t.Field(i).Name) + `=` + strconv.FormatInt(v.Field(i).Int(), 10)
-				flag = 2
-			}
-		}
-	}
-	if flag == 1 {
-		sql := `delete from ` + table + where
-		return sql
-	}else if flag == 2 {
-		sql := `delete from ` + table + where_sec
-		return sql
-	}else{
-		return ``
-	}
-}
-
-func transColumn(s string) string {
-	r := []byte(s)
-	var v []byte
-	for i := 0; i < len(r); i++ {
-		rr := r[i]
-		if 'A' <= rr && rr <= 'Z' {
-			rr += 'a' - 'A'
-			if i != 0 {
-				v = append(v, '_')
-			}
-		}
-		v = append(v, rr)
-	}
-	return string(v)
-}
 
 func GetStrategy(param m.StrategyTable) (error,m.StrategyTable) {
 	var result []*m.StrategyTable
@@ -487,14 +322,14 @@ func GetStrategys(query *m.TplQuery, ignoreLogMonitor bool) error {
 }
 
 func UpdateStrategy(obj *m.UpdateStrategy) error {
-	var sqls []string
+	var actions []*Action
 	for _,v := range obj.Strategy {
-		sql := Classify(*v, obj.Operation, "strategy", false)
-		if sql != "" {
-			sqls = append(sqls, sql)
+		action := Classify(*v, obj.Operation, "strategy", false)
+		if action.Sql != "" {
+			actions = append(actions, &action)
 		}
 	}
-	err := ExecuteTransactionSql(sqls)
+	err := Transaction(actions)
 	return err
 }
 
@@ -642,18 +477,37 @@ func GetAlarms(query m.AlarmTable) (error,m.AlarmProblemList) {
 }
 
 func UpdateAlarms(alarms []*m.AlarmTable) error {
-	var sqls []string
+	var actions []*Action
 	for _,v := range alarms {
+		var action Action
+		params := make([]interface{}, 0)
 		if v.Id > 0 {
-			sqls = append(sqls, fmt.Sprintf("UPDATE alarm SET status='%s',end_value=%f,end='%s' WHERE id=%d", v.Status, v.EndValue, v.End.Format(m.DatetimeFormat), v.Id))
+			action.Sql = "UPDATE alarm SET status=?,end_value=?,end=? WHERE id=?"
+			params = append(params, v.Status)
+			params = append(params, v.EndValue)
+			params = append(params, v.End.Format(m.DatetimeFormat))
+			params = append(params, v.Id)
 		}else{
 			if !judgeExist(*v) {
-				sqls = append(sqls, fmt.Sprintf("INSERT INTO alarm(strategy_id,endpoint,status,s_metric,s_expr,s_cond,s_last,s_priority,content,start_value,start) VALUE (%d,'%s','%s','%s','%s','%s','%s','%s','%s',%f,'%s')",
-					v.StrategyId, v.Endpoint, v.Status, v.SMetric, v.SExpr, v.SCond, v.SLast, v.SPriority, v.Content, v.StartValue, v.Start.Format(m.DatetimeFormat)))
+				action.Sql = "INSERT INTO alarm(strategy_id,endpoint,status,s_metric,s_expr,s_cond,s_last,s_priority,content,start_value,start) VALUE (?,?,?,?,?,?,?,?,?,?,?)"
+				params = append(params, v.StrategyId)
+				params = append(params, v.Endpoint)
+				params = append(params, v.Status)
+				params = append(params, v.SMetric)
+				params = append(params, v.SExpr)
+				params = append(params, v.SCond)
+				params = append(params, v.SLast)
+				params = append(params, v.SPriority)
+				params = append(params, v.Content)
+				params = append(params, v.StartValue)
+				params = append(params, v.Start.Format(m.DatetimeFormat))
 			}
 		}
+		if action.Sql != "" {
+			actions = append(actions, &action)
+		}
 	}
-	return ExecuteTransactionSql(sqls)
+	return Transaction(actions)
 }
 
 func judgeExist(alarm m.AlarmTable) bool {
@@ -667,14 +521,14 @@ func judgeExist(alarm m.AlarmTable) bool {
 }
 
 func UpdateLogMonitor(obj *m.UpdateLogMonitor) error {
-	var sqls []string
+	var actions []*Action
 	for _,v := range obj.LogMonitor {
-		sql := Classify(*v, obj.Operation, "log_monitor", false)
-		if sql != "" {
-			sqls = append(sqls, sql)
+		action := Classify(*v, obj.Operation, "log_monitor", false)
+		if action.Sql != "" {
+			actions = append(actions, &action)
 		}
 	}
-	err := ExecuteTransactionSql(sqls)
+	err := Transaction(actions)
 	return err
 }
 
@@ -955,17 +809,20 @@ func takeGrpName(name string,grpList []*m.GrpTable) string {
 }
 
 func DeleteStrategyByGrp(grpId int,tplId int) error {
-	var sqls []string
+	var action Action
+	params := make([]interface{}, 0)
 	if grpId > 0 {
-		sqls = append(sqls, fmt.Sprintf("DELETE FROM grp_endpoint WHERE grp_id=%d", grpId))
+		action.Sql = "DELETE FROM grp_endpoint WHERE grp_id=?"
+		params = append(params, grpId)
 	}
 	if tplId > 0 {
-		sqls = append(sqls, fmt.Sprintf("DELETE FROM strategy WHERE tpl_id=%d", tplId))
+		action.Sql = "DELETE FROM strategy WHERE tpl_id=?"
+		params = append(params, tplId)
 	}
-	if len(sqls) == 0 {
+	if action.Sql == "" {
 		return nil
 	}
-	return ExecuteTransactionSql(sqls)
+	return Transaction([]*Action{&action})
 }
 
 func SaveOpenAlarm(param m.OpenAlarmRequest) error {
