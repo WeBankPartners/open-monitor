@@ -45,6 +45,7 @@ type HttpConfig struct {
 	Port    string   `json:"port"`
 	Swagger  bool  `json:"swagger"`
 	Cross  bool  `json:"cross"`
+	ReturnError  bool  `json:"return_error"`
 	Alive   int64    `json:"alive"`
 	Ldap   *LdapConfig  `json:"ldap"`
 	Log    *LogConfig   `json:"log"`
