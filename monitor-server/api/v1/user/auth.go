@@ -208,3 +208,4 @@ func HealthCheck(c *gin.Context)  {
 	mid.LogInfo(fmt.Sprintf("healthcheck request ip : %s , date : %s", ip, date))
 	c.JSON(http.StatusOK, gin.H{"status": "ok", "request_ip": ip, "date": date})
 }
+
