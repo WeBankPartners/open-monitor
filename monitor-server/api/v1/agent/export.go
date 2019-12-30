@@ -86,6 +86,7 @@ func ExportAgent(c *gin.Context)  {
 			return
 		}
 		var tmpResult []resultOutputObj
+		successFlag := "0"
 		// update table and register to consul
 		for _,v := range param.Inputs {
 			var param m.RegisterParam
@@ -116,6 +117,7 @@ func ExportAgent(c *gin.Context)  {
 			if err != nil {
 				msg = fmt.Sprintf("%s %s:%s %s fail,error %v",action, agentType, v.HostIp, v.Instance, err)
 				tmpResult = append(tmpResult, resultOutputObj{CallbackParameter:v.CallbackParameter, ErrorCode:"1", ErrorMessage:msg})
+				successFlag = "1"
 			}else{
 				msg = fmt.Sprintf("%s %s:%s %s succeed", action, agentType, v.HostIp, v.Instance)
 				tmpResult = append(tmpResult, resultOutputObj{CallbackParameter:v.CallbackParameter, ErrorCode:"0", ErrorMessage:""})
@@ -153,7 +155,7 @@ func ExportAgent(c *gin.Context)  {
 				mid.LogError(fmt.Sprintf("register interface update prometheus config fail , group : %s  error ", k), err)
 			}
 		}
-		result = resultObj{ResultCode:"0", ResultMessage:"Done", Results:resultOutput{Outputs:tmpResult}}
+		result = resultObj{ResultCode: successFlag, ResultMessage: "Done", Results: resultOutput{Outputs: tmpResult}}
 		resultString,_ := json.Marshal(result)
 		mid.LogInfo(string(resultString))
 		mid.ReturnData(c, result)
