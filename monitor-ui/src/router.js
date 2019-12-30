@@ -5,6 +5,9 @@ import {cookies} from '@/assets/js/cookieUtils';
 Vue.use(Router);
 
 const router = new Router({
+  scrollBehavior: () => ({ // 滚动条滚动的行为，不加这个默认就会记忆原来滚动条的位置
+    y: 0
+  }),
   routes: [
     {
       path: "/",
@@ -143,6 +146,12 @@ const router = new Router({
       title: "login"
     },
     {
+      path: "/register",
+      name: "register",
+      component: () => import("@/views/register"),
+      title: "register"
+    },
+    {
       path: "/test",
       name: "test",
       component: () => import("@/views/test"),
@@ -150,9 +159,10 @@ const router = new Router({
     }
   ]
 });
+
 router.beforeEach((to, from, next) => {
-  if (cookies.getCookie('Authorization') && to.name === 'login'){
-    next({name:from.name})
+  if (!cookies.getCookie('Authorization')&& to.name != 'login') {
+    next({name:'login'})
   } else {
     next()
   }
