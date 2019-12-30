@@ -36,6 +36,10 @@ func ListTpl(c *gin.Context)  {
 func AddStrategy(c *gin.Context)  {
 	var param m.TplStrategyTable
 	if err := c.ShouldBindJSON(&param); err==nil {
+		// check param
+		param.Expr = strings.Replace(param.Expr, "'", "", -1)
+		param.Content = strings.Replace(param.Content, "'", "", -1)
+		param.Content = strings.Replace(param.Content, "\"", "", -1)
 		// check tpl
 		if param.TplId <= 0 {
 			if param.GrpId + param.EndpointId <= 0 {
