@@ -6,9 +6,12 @@ import (
 	"strings"
 	"reflect"
 	"fmt"
+	"regexp"
 )
 
 var invalidData = []string{"select", "insert", "update", "alter", "delete", "drop", "truncate", "show"}
+var regCond = regexp.MustCompile(`^([<=|>=|!=|==|<|>]*)-?\d+(\.\d+)?$`)
+var regLast = regexp.MustCompile(`^\d+[s|m|h]$`)
 
 func ValidateGet(c *gin.Context)  {
 	isOk := true
@@ -78,4 +81,12 @@ func IsIllegalName(str string) bool {
 		re = true
 	}
 	return re
+}
+
+func IsIllegalCond(str string) bool {
+	return regCond.MatchString(str)
+}
+
+func IsIllegalLast(str string) bool {
+	return regLast.MatchString(str)
 }
