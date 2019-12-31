@@ -5,6 +5,7 @@ import (
 	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"fmt"
 	"strings"
+	"time"
 )
 
 func AddUser(user m.UserTable, creator string) error {
@@ -91,4 +92,96 @@ func GetMailByStrategy(strategyId int) []string {
 		}
 	}
 	return result
+}
+
+func ListUser(search string,role,page,size int) (err error,users []*m.UserTable) {
+	var whereSql string
+	if role > 0 {
+		whereSql = fmt.Sprintf(" WHERE id IN (SELECT user_id FROM rel_role_user WHERE role_id=%d) ", role)
+	}
+	if search != "" {
+		whereSql = " WHERE name LIKE '%"+search+"%' OR display_name LIKE '%"+search+"%'"
+	}
+	err = x.SQL("SELECT id,name,display_name,email,phone FROM user "+whereSql+fmt.Sprintf(" ORDER BY id LIMIT %d,%d", (page-1)*size, size)).Find(&users)
+	return err,users
+}
+
+func ListRole(search string,page,size int) (err error,roles []*m.RoleTable) {
+	var whereSql string
+	if search != "" {
+		whereSql = "name LIKE '%"+search+"%' OR display_name LIKE '%"+search+"%'"
+	}
+	err = x.SQL("SELECT * FROM role "+whereSql+fmt.Sprintf(" ORDER BY id LIMIT %d,%d", (page-1)*size, size)).Find(&roles)
+	return err,roles
+}
+
+func UpdateRoleUser(param m.UpdateRoleUserDto) error {
+	var roleUserTable []*m.RelRoleUserTable
+	err := x.SQL("SELECT user_id FROM rel_role_user WHERE role_id=?", param.RoleId).Find(&roleUserTable)
+	if err != nil {
+		return err
+	}
+	isSame := true
+	if len(roleUserTable) != len(param.UserId) {
+		isSame = false
+	}else{
+		for _,v := range roleUserTable {
+			tmp := false
+			for _,vv := range param.UserId {
+				if v.UserId == vv {
+					tmp = true
+					break
+				}
+			}
+			if !tmp {
+				isSame = false
+				break
+			}
+		}
+	}
+	if isSame {
+		return nil
+	}
+	var actions []*Action
+	actions = append(actions, &Action{Sql:"DELETE FROM rel_role_user WHERE role_id=?", Param:[]interface{}{param.RoleId}})
+	for _,v := range param.UserId {
+		actions = append(actions, &Action{Sql:"INSERT INTO rel_role_user(role_id,user_id) VALUE (?,?)", Param:[]interface{}{param.RoleId, v}})
+	}
+	err = Transaction(actions)
+	return err
+}
+
+func UpdateRole(param m.UpdateRoleDto) error {
+	var role m.RoleTable
+	force := false
+	if param.Operation == "add" {
+		if param.Name == "" {
+			return fmt.Errorf("role name is null")
+		}
+		role.Name = param.Name
+		role.DisplayName = param.DisplayName
+		role.Creator = param.Operator
+		role.Created = time.Now()
+		param.Operation = "insert"
+	}
+	if param.Operation == "update" {
+		if param.RoleId <= 0 {
+			return fmt.Errorf("role id is null")
+		}
+		if param.Name == "" {
+			return fmt.Errorf("role name is null")
+		}
+		role.Id = param.RoleId
+		role.Name = param.Name
+		role.DisplayName = param.DisplayName
+		force = true
+	}
+	if param.Operation == "delete" {
+		if param.RoleId <= 0 {
+			return fmt.Errorf("role id is null")
+		}
+		role.Id = param.RoleId
+	}
+	action := Classify(role, param.Operation, "role", force)
+	return Transaction([]*Action{&action})
 }
