@@ -477,6 +477,9 @@ func GetAlarms(query m.AlarmTable) (error,m.AlarmProblemList) {
 }
 
 func UpdateAlarms(alarms []*m.AlarmTable) error {
+	if len(alarms) == 0 {
+		return nil
+	}
 	var actions []*Action
 	for _,v := range alarms {
 		var action Action
@@ -503,6 +506,7 @@ func UpdateAlarms(alarms []*m.AlarmTable) error {
 				params = append(params, v.Start.Format(m.DatetimeFormat))
 			}
 		}
+		action.Param = params
 		if action.Sql != "" {
 			actions = append(actions, &action)
 		}
