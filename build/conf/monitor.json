@@ -3,6 +3,7 @@
     "port": "{{MONITOR_SERVER_PORT}}",
     "swagger": true,
     "cross": true,
+    "return_error": false,
     "alive": 2591000,
     "ldap": {
       "enable": false,
