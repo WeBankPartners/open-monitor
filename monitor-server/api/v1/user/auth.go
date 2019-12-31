@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"encoding/base64"
+	"strconv"
 )
 
 type auth struct {
@@ -98,7 +99,14 @@ func Register(c *gin.Context)  {
 		if err != nil {
 			mid.ReturnError(c, "Register user fail", err)
 		}else{
-			mid.ReturnSuccess(c, "Success")
+			session := m.Session{User:param.Username}
+			isOk, sId := mid.SaveSession(session)
+			if !isOk {
+				mid.Return(c, mid.RespJson{Msg:"Register success,but login with save session failed,please login"})
+			}else{
+				session.Token = sId
+				mid.Return(c, mid.RespJson{Msg:"Success", Data:session})
+			}
 		}
 	}else{
 		mid.ReturnValidateFail(c, fmt.Sprintf("Parameter validate failed %v", err))
@@ -209,3 +217,72 @@ func HealthCheck(c *gin.Context)  {
 	c.JSON(http.StatusOK, gin.H{"status": "ok", "request_ip": ip, "date": date})
 }
 
+func ListUser(c *gin.Context)  {
+	search := c.Query("search")
+	page,_ := strconv.Atoi(c.Query("page"))
+	size,_ := strconv.Atoi(c.Query("size"))
+	role,_ := strconv.Atoi(c.Query("role"))
+	if page == 0 {
+		page = 1
+	}
+	if size == 0 {
+		size = 10
+	}
+	err,users := db.ListUser(search, role, page, size)
+	if err != nil {
+		mid.ReturnError(c, "Get user list fail", err)
+	}else{
+		mid.ReturnData(c, users)
+	}
+}
+
+func UpdateRole(c *gin.Context)  {
+	var param m.UpdateRoleDto
+	if err := c.ShouldBindJSON(&param); err==nil {
+		if param.Operation != "add" && param.Operation != "update" && param.Operation != "delete" {
+			mid.ReturnValidateFail(c, "Param operation should be add,update,delete")
+			return
+		}
+		param.Operator = mid.GetOperateUser(c)
+		err = db.UpdateRole(param)
+		if err != nil {
+			mid.ReturnError(c, fmt.Sprintf("%s role fail", param.Operation), err)
+		}else{
+			mid.ReturnSuccess(c, "Success")
+		}
+	}else{
+		mid.ReturnValidateFail(c, fmt.Sprintf("Param validate fail : %v", err))
+	}
+}
+
+func ListRole(c *gin.Context)  {
+	search := c.Query("search")
+	page,_ := strconv.Atoi(c.Query("page"))
+	size,_ := strconv.Atoi(c.Query("size"))
+	if page == 0 {
+		page = 1
+	}
+	if size == 0 {
+		size = 10
+	}
+	err,roles := db.ListRole(search, page, size)
+	if err != nil {
+		mid.ReturnError(c, "Get role list fail", err)
+	}else{
+		mid.ReturnData(c, roles)
+	}
+}
+
+func UpdateRoleUser(c *gin.Context)  {
+	var param m.UpdateRoleUserDto
+	if err := c.ShouldBindJSON(&param); err==nil {
+		err = db.UpdateRoleUser(param)
+		if err != nil {
+			mid.ReturnError(c, "Update role user fail", err)
+		}else{
+			mid.ReturnSuccess(c, "Success")
+		}
+	}else{
+		mid.ReturnValidateFail(c, fmt.Sprintf("Param validate fail : %v", err))
+	}
+}
