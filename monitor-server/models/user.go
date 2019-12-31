@@ -49,8 +49,21 @@ type SendAlertObj struct {
 	Content  string
 }
 
+type UpdateRoleDto struct {
+	RoleId  int  `json:"role_id"`
+	Name  string  `json:"name"`
+	DisplayName  string  `json:"display_name"`
+	Operator  string  `json:"operator"`
+	Operation  string  `json:"operation" binding:"required"`
+}
+
 type RelRoleUserTable struct {
 	Id  int  `json:"id"`
 	RoleId  int  `json:"role_id"`
 	UserId  int  `json:"user_id"`
+}
+
+type UpdateRoleUserDto struct {
+	RoleId  int  `json:"role_id" binding:"required"`
+	UserId  []int  `json:"user_id"`
 }
