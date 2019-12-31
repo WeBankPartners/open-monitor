@@ -144,6 +144,10 @@ func InitHttpServer(exportAgent bool) {
 		{
 			userApi.GET("/message/get", user.GetUserMsg)
 			userApi.POST("/message/update", user.UpdateUserMsg)
+			userApi.GET("/list", user.ListUser)
+			userApi.POST("/role/update", user.UpdateRole)
+			userApi.GET("/role/list", user.ListRole)
+			userApi.POST("/role/user/update", user.UpdateRoleUser)
 		}
 		port := m.Config().Http.Port
 		r.Run(fmt.Sprintf(":%s", port))
