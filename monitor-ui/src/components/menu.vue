@@ -24,8 +24,22 @@
     </MenuItem>
     <div>
     </div>
-    <div class="set-theme" :style="{background: !defaultTheme? 'white':'black'}" @click="changeTheme"></div>
-    <div style="float:right;">
+    <!-- <div class="set-theme" :style="{background: !defaultTheme? 'white':'black'}" @click="changeTheme"></div> -->
+    <div class="menu-right">
+      <Dropdown trigger="click">
+        <a href="javascript:void(0)">
+          {{username}}
+          <Icon type="ios-arrow-down"></Icon>
+        </a>
+        <DropdownMenu slot="list">
+          <DropdownItem>
+            <span>主题：</span>
+            <div class="set-theme" :style="{background: !defaultTheme? 'white':'black'}" @click="changeTheme"></div>
+          </DropdownItem>
+        </DropdownMenu>
+      </Dropdown> 
+    </div>
+    <div class="menu-right">
       <Dropdown @on-click="changeLang">
         <a href="javascript:void(0)">
           {{activeLang}}
@@ -58,7 +72,8 @@ export default {
         "zh-CN": "中文",
         "en-US": "English"
       },
-      lang: [{ label: "中文", value: "zh-CN" }, { label: "English", value: "en-US" }]
+      lang: [{ label: "中文", value: "zh-CN" }, { label: "English", value: "en-US" }],
+      username: localStorage.getItem('username')
     };
   },
   created(){
@@ -136,11 +151,15 @@ export default {
 }
 .set-theme {
   float: right;
-  width: 28px;
-  height: 28px;
+  width: 22px;
+  height: 22px;
   background: black;
-  border-radius: 50%;
+  border-radius: 4px;
   cursor: pointer;
-  margin: 16px;
+  // margin: 16px;
+}
+.menu-right {
+  float: right;
+  margin-right: 30px;
 }
 </style>
