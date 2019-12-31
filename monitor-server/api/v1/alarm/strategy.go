@@ -40,6 +40,10 @@ func AddStrategy(c *gin.Context)  {
 		param.Expr = strings.Replace(param.Expr, "'", "", -1)
 		param.Content = strings.Replace(param.Content, "'", "", -1)
 		param.Content = strings.Replace(param.Content, "\"", "", -1)
+		if !mid.IsIllegalCond(param.Cond) || !mid.IsIllegalLast(param.Last) {
+			mid.ReturnValidateFail(c, "cond or last param validate fail")
+			return
+		}
 		// check tpl
 		if param.TplId <= 0 {
 			if param.GrpId + param.EndpointId <= 0 {
@@ -79,6 +83,14 @@ func EditStrategy(c *gin.Context)  {
 	if err := c.ShouldBindJSON(&param); err==nil {
 		if param.StrategyId <= 0 {
 			mid.ReturnValidateFail(c, "Strategy id can not be empty")
+			return
+		}
+		// check param
+		param.Expr = strings.Replace(param.Expr, "'", "", -1)
+		param.Content = strings.Replace(param.Content, "'", "", -1)
+		param.Content = strings.Replace(param.Content, "\"", "", -1)
+		if !mid.IsIllegalCond(param.Cond) || !mid.IsIllegalLast(param.Last) {
+			mid.ReturnValidateFail(c, "cond or last param validate fail")
 			return
 		}
 		strategyObj := m.StrategyTable{Id:param.StrategyId,Metric:param.Metric,Expr:param.Expr,Cond:param.Cond,Last:param.Last,Priority:param.Priority,Content:param.Content}
