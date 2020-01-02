@@ -242,12 +242,12 @@ func delete(obj interface{}, table string) Action {
 	v := reflect.ValueOf(obj)
 	for i := 0; i < t.NumField(); i++ {
 		if t.Field(i).Name == "Id" {
-			where = ` id=?`
+			where = ` where id=?`
 			params = append(params, v.Field(i).Int())
 			break
 		}
 		if t.Field(i).Name == "Guid" {
-			where = ` guid=?`
+			where = ` where guid=?`
 			params = append(params, v.Field(i).String())
 			break
 		}
@@ -268,7 +268,7 @@ func delete(obj interface{}, table string) Action {
 		if !fetchType {
 			continue
 		}
-		where = where + transColumn(t.Field(i).Name) + `=? and `
+		where = ` where ` + transColumn(t.Field(i).Name) + `=? and `
 	}
 	if strings.Contains(where, " and ") {
 		where = where[:len(where)-4]
