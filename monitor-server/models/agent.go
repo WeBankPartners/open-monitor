@@ -22,3 +22,11 @@ type RegisterConsulCheck struct {
 	Http  string  `json:"http"`
 	Interval  string  `json:"interval"`
 }
+
+type PanelRecursiveTable struct {
+	Guid  string  `json:"guid"`
+	DisplayName  string  `json:"display_name"`
+	Children  string  `json:"children"`
+	Endpoint  string  `json:"endpoint"`
+	EndpointType  string  `json:"endpoint_type"`
+}
