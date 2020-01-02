@@ -21,6 +21,9 @@ func AcceptAlertMsg(c *gin.Context)  {
 		}
 		var alarms []*m.AlarmTable
 		for _,v := range param.Alerts {
+			if v.Labels["instance"] == "127.0.0.1:8300" {
+				continue
+			}
 			mid.LogInfo(fmt.Sprintf("accept alert msg : %v", v))
 			var tmpValue float64
 			var tmpAlarms m.AlarmProblemList
