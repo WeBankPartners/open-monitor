@@ -33,7 +33,7 @@ func InitDeploy()  {
 func AddDeploy(name,configFile,guid string, param map[string]string) (port int,err error) {
 	if v,b := deployGuidStatus[guid]; b {
 		if v == "running" {
-			return 0,nil
+			return GlobalProcessMap[guid].Port,nil
 		}
 		if v == "stop" {
 			err := GlobalProcessMap[guid].start("","","",0,nil)
