@@ -67,3 +67,7 @@ func UpdateEndpointAlarmFlag(isStop bool,exportType,instance,ip,port string) err
 		return fmt.Errorf("Can not find this monitor object with %s %s %s %s \n", exportType,instance,ip,port)
 	}
 }
+
+//func UpdateRecursivePanel(param m.PanelRecursiveTable) error {
+//
+//}
