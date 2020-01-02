@@ -85,7 +85,14 @@ func (p *ProcessObj)start(configFile,startFile,guid string,port int,param map[st
 		return err
 	}
 	p.Process = cmd.Process
-	pids := getSystemProcessPid(p.Name)
+	var pids []int
+	for i:=0;i<5;i++ {
+		pids = getSystemProcessPid(p.Name)
+		if len(pids) > 0 {
+			break
+		}
+		time.Sleep(time.Second*time.Duration(1))
+	}
 	if len(pids) > 0 {
 		p.Pid = pids[0]
 	}else {
@@ -93,6 +100,7 @@ func (p *ProcessObj)start(configFile,startFile,guid string,port int,param map[st
 	}
 	p.Status = "running"
 	p.StartTime = time.Now()
+	log.Printf("run: %s done\n", p.RunCmd)
 	return nil
 }
 

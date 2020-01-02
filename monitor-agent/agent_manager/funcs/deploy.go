@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"log"
 	"net"
+	"time"
 )
 
 var deployNumMap map[string]int
@@ -67,6 +68,7 @@ func AddDeploy(name,configFile,guid string, param map[string]string) (port int,e
 	for k,v := range deployGuidStatus {
 		log.Printf("deploy guid status ---> k:%s  v:%s \n", k, v)
 	}
+	time.Sleep(time.Second*time.Duration(1))
 	return port,err
 }
 
