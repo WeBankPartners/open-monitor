@@ -68,6 +68,16 @@ func UpdateEndpointAlarmFlag(isStop bool,exportType,instance,ip,port string) err
 	}
 }
 
-//func UpdateRecursivePanel(param m.PanelRecursiveTable) error {
-//
-//}
+func UpdateRecursivePanel(param m.PanelRecursiveTable) error {
+	var prt []*m.PanelRecursiveTable
+	err := x.SQL("SELECT * FROM panel_recursive WHERE guid=?", param.Guid).Find(&prt)
+	if err != nil {
+		return err
+	}
+	if len(prt) > 0 {
+		_,err = x.Exec("UPDATE panel_recursive SET display_name=?,children=?,endpoint=?,endpoint_type=? WHERE guid=?", param.DisplayName,param.Children,param.Endpoint,param.EndpointType,param.Guid)
+	}else{
+		_,err = x.Exec("INSERT INTO panel_recursive(guid,display_name,children,endpoint,endpoint_type) VALUE (?,?,?,?,?)", param.Guid,param.DisplayName,param.Children,param.Endpoint,param.EndpointType)
+	}
+	return err
+}

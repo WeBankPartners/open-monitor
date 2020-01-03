@@ -95,7 +95,7 @@ func InitHttpServer(exportAgent bool) {
 			dashboardApi.GET("/custom/main/get", dashboard.GetMainPage)
 			dashboardApi.GET("/custom/main/set", dashboard.SetMainPage)
 			dashboardApi.GET("/custom/endpoint/get", dashboard.GetEndpointsByIp)
-			dashboardApi.GET("/system", agent.GetSystemDashboardUrl)
+			dashboardApi.GET("/system", agent.ExportPanel)
 		}
 		agentApi := authApi.Group("/agent")
 		{
