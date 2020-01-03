@@ -102,7 +102,6 @@ func GetPanels(c *gin.Context)  {
 	var panelsDto []*m.PanelModel
 	for _,panel := range panels {
 		var panelDto m.PanelModel
-
 		panelDto.Title = panel.Title
 		if panel.ChartGroup < 0 {
 			panelDto.Other = true
@@ -116,7 +115,6 @@ func GetPanels(c *gin.Context)  {
 		}
 		tagsDto := m.TagsModel{Enable:false, Option:[]*m.OptionModel{}}
 		tagsValue := ""
-		var chartEndpoints []string
 		if panel.TagsEnable && endpoint!="" {
 			var options []*m.OptionModel
 			tagsDto.Enable = true
@@ -134,11 +132,7 @@ func GetPanels(c *gin.Context)  {
 		for _,chart := range charts {
 			chartDto := m.ChartModel{Id:chart.Id, Col:chart.Col}
 			chartDto.Url = `/dashboard/chart`
-			if panel.ExIsPhy {
-				chartDto.Endpoint = chartEndpoints
-			}else{
-				chartDto.Endpoint = []string{endpoint}
-			}
+			chartDto.Endpoint = []string{endpoint}
 			metricList := strings.Split(chart.Metric, "^")
 			if panel.TagsEnable && tagsValue != ""{
 				var newMetricList []string
