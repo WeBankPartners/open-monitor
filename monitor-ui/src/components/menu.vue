@@ -43,7 +43,7 @@
             </div>
           </DropdownItem>
           <DropdownItem style="width:110px;text-aglin:right;">
-            <a>{{$t('button.logOut')}}</a>
+            <a @click="logout">{{$t('button.logOut')}}</a>
           </DropdownItem>
         </DropdownMenu>
       </Dropdown> 
@@ -68,6 +68,8 @@
   </Menu>
 </template>
 <script>
+import {cookies} from '@/assets/js/cookieUtils'
+import axios from 'axios'
 import '@/assets/theme/dark/styls.less';
 import '@/assets/theme/default/styls.less';
 export default {
@@ -137,6 +139,19 @@ export default {
     },
     setUp () {
       console.log(123)
+    },
+    logout () {
+      axios({
+        method: 'GET',
+        url: 'http://129.204.99.160:38080/wecube-monitor/logout',
+        headers: {
+          'X-Auth-Token': cookies.getAuthorization() || null
+        }
+      }).then(() => {
+          cookies.deleteAuthorization()
+          localStorage.removeItem('username')
+          this.$router.push({path: 'login'})
+      })
     }
   }
 };

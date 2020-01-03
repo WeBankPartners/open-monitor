@@ -24,7 +24,7 @@
                   <Button @click="handleSubmit" type="primary" long>登录</Button>
                 </FormItem>
                 <FormItem class="formItem-set">
-                  <div class="register">注册</div>
+                  <div class="register" @click="register">注册</div>
                 </FormItem>
               </Form>
 
@@ -79,6 +79,9 @@ export default {
       .catch(() => {
         this.$Message.warning(this.$t('tips.failed'))
       });
+    },
+    register() {
+      this.$router.push({path: 'register'})
     }
   }
 }
@@ -98,7 +101,7 @@ export default {
     padding: 10px 0 0;
   }
   .formItem-set {
-    margin-bottom: 6px;
+    margin-bottom: 12px;
   }
   .register {
     float: right;

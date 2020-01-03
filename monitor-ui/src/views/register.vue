@@ -1,7 +1,7 @@
 <template>
       <div class="login">
         <Row>
-          <Col span="6" offset="9">
+          <Col span="7" offset="9">
             <div class="login-con">
               <Card icon="log-in" title="注册" :bordered="false">
                 <div class="form-con">
@@ -93,13 +93,12 @@ export default {
               ...this.form
             }
           }).then((response) => {
-              if (response.status < 400) {
-                console.log(response)
-                // cookies.setAuthorization(`${response.data.data.token}`)
-                // localStorage.username = response.data.data.user
-                // this.$Message.success(response.data.msg)
-                // this.$router.push({path: '/'})
-              }
+            if (response.status < 400) {
+              cookies.setAuthorization(`${response.data.data.token}`)
+              localStorage.username = response.data.data.user
+              this.$Message.success(response.data.msg)
+              this.$router.push({path: '/'})
+            }
           })
           .catch(() => {
             this.$Message.warning(this.$t('tips.failed'))
