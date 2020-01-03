@@ -122,16 +122,14 @@ func GetPromMetric(endpoint []string,metric string) (error, string) {
 			reg = strings.Replace(reg, "$ip", host.Ip, -1)
 		}
 		if strings.Contains(reg, `$address`) {
+			if strings.Contains(tmpTag, "=") {
+				tmpList := strings.Split(tmpTag, "=")
+				reg = strings.Replace(reg, "$address\"", fmt.Sprintf("$address\",%s=\"%s\"", tmpList[0], tmpList[1]), -1)
+			}
 			if host.AddressAgent != "" {
 				reg = strings.Replace(reg, "$address", host.AddressAgent, -1)
 			}else {
 				reg = strings.Replace(reg, "$address", host.Address, -1)
-			}
-		}
-		if tmpTag != "" {
-			tmpList := strings.Split(tmpTag, "=")
-			if strings.Contains(reg, `$`+tmpList[0]) {
-				reg = strings.Replace(reg, `$`+tmpList[0], tmpList[1], -1)
 			}
 		}
 		promQL = reg
