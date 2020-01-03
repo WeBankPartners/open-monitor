@@ -20,10 +20,14 @@
                     </span>
                   </Input>
                 </FormItem>
-                <FormItem>
+                <FormItem class="formItem-set">
                   <Button @click="handleSubmit" type="primary" long>登录</Button>
                 </FormItem>
+                <FormItem class="formItem-set">
+                  <div class="register">注册</div>
+                </FormItem>
               </Form>
+
             </div>
           </Card>
         </div>
@@ -92,6 +96,16 @@ export default {
   }
   .form-con{
     padding: 10px 0 0;
+  }
+  .formItem-set {
+    margin-bottom: 6px;
+  }
+  .register {
+    float: right;
+    cursor: pointer;
+  }
+  .register:hover {
+    color: @blue-2;
   }
 }
 </style>
