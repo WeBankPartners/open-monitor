@@ -49,9 +49,12 @@
     "updateTime": "Updated Time",
     "endpointAdd": "Endpoint Add",
     "groupAdd": "Group",
-    "logAdd": "Keyword"
+    "logAdd": "Keyword",
+    "theme": "Theme",
+    "setUp": "Set up"
   },
   "button": {
+    "logOut": "Log out",
     "search": "Search",
     "add": "Add",
     "edit": "Edit",

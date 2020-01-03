@@ -32,9 +32,18 @@
           <Icon type="ios-arrow-down"></Icon>
         </a>
         <DropdownMenu slot="list">
-          <DropdownItem>
-            <span>主题：</span>
+          <DropdownItem style="width:110px">
+            <span>{{$t('title.theme')}}:</span>
             <div class="set-theme" :style="{background: !defaultTheme? 'white':'black'}" @click="changeTheme"></div>
+          </DropdownItem>
+          <DropdownItem style="width:110px">
+            <span>{{$t('title.setUp')}}:</span>
+            <div @click="setUp" class="set-theme">
+              <i class="fa fa-cog" aria-hidden="true"></i>
+            </div>
+          </DropdownItem>
+          <DropdownItem style="width:110px;text-aglin:right;">
+            <a>{{$t('button.logOut')}}</a>
           </DropdownItem>
         </DropdownMenu>
       </Dropdown> 
@@ -125,6 +134,9 @@ export default {
       localStorage.setItem('theme', theme)
       document.body.className = theme
       this.defaultTheme = !this.defaultTheme
+    },
+    setUp () {
+      console.log(123)
     }
   }
 };
@@ -153,10 +165,11 @@ export default {
   float: right;
   width: 22px;
   height: 22px;
-  background: black;
   border-radius: 4px;
   cursor: pointer;
-  // margin: 16px;
+  i {
+    font-size: 18px;
+  }
 }
 .menu-right {
   float: right;
