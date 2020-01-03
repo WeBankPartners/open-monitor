@@ -186,14 +186,16 @@ func update(obj interface{}, table string, force bool) Action {
 	var where,value string
 	t := reflect.TypeOf(obj)
 	v := reflect.ValueOf(obj)
+	var tmpId int64
+	var tmpGuid string
 	for i := 0; i < t.NumField(); i++ {
 		if t.Field(i).Name == "Id" {
-			params = append(params, v.Field(i).Int())
+			tmpId = v.Field(i).Int()
 			where = ` where id=?`
 			continue
 		}
 		if where == "" && t.Field(i).Name == "Guid" {
-			params = append(params, v.Field(i).String())
+			tmpGuid = v.Field(i).String()
 			where = ` where guid=?`
 			continue
 		}
@@ -223,10 +225,18 @@ func update(obj interface{}, table string, force bool) Action {
 		}
 		value = value + transColumn(t.Field(i).Name) + `=?,`
 	}
+	if tmpGuid != "" {
+		params = append(params, tmpGuid)
+	}else{
+		if tmpId > 0 {
+			params = append(params, tmpId)
+		}
+	}
 	if len(params) > 0 {
 		value = value[0:len(value)-1]
 		action.Sql = `update ` + table + ` set ` + value + where
 		action.Param = params
+		mid.LogInfo(fmt.Sprintf("sql:%s param:%v", action.Sql, action.Param))
 	}else{
 		action.Sql = ""
 		action.Param = params
