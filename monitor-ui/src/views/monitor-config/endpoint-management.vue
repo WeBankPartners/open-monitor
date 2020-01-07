@@ -167,7 +167,7 @@
         },
         modelConfig: {
           modalId: 'add_object_Modal',
-          modalTitle: 'button.historicalAlert',
+          modalTitle: 'button.add',
           isAdd: true,
           config: [
             {name:'advancedConfig',type:'slot'}
