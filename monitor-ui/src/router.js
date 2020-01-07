@@ -87,7 +87,50 @@ const router = new Router({
             {
               path: "logManagement",
               name: "logManagement",
-              title: "阈值配置",
+              title: "关键字配置",
+              meta: {},
+              component: () =>
+                import("@/views/monitor-config/log-management")
+            }
+          ]
+        },
+        {
+          path: "userConfigIndex",
+          name: "userConfigIndex",
+          title: "",
+          meta: {},
+          component: () =>
+            import("@/views/user-management/user-config-index"),
+          redirect: "/userConfigIndex/userInformationModify",
+          children: [
+            {
+              path: "userInformationModify",
+              name: "userInformationModify",
+              title: "用户信息修改",
+              meta: {},
+              component: () =>
+                import("@/views/user-management/user-information-modify")
+            },
+            {
+              path: "userManagement",
+              name: "userManagement",
+              title: "用户管理",
+              meta: {},
+              component: () =>
+                import("@/views/user-management/user-management")
+            },
+            {
+              path: "roleManagement",
+              name: "roleManagement",
+              title: "角色管理",
+              meta: {},
+              component: () =>
+                import("@/views/user-management/role-management")
+            },
+            {
+              path: "logManagement",
+              name: "logManagement",
+              title: "关键字配置",
               meta: {},
               component: () =>
                 import("@/views/monitor-config/log-management")
