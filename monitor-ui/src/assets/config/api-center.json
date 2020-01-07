@@ -121,7 +121,8 @@
             "get": "user/list"
         },
         "role": {
-            "get": "user/role/update"
+            "get": "user/role/list",
+            "update":"user/role/update"
         }
     }
 }

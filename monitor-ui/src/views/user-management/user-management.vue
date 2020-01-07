@@ -31,14 +31,14 @@ export default {
         table: {
           tableData: [],
           tableEle: tableEle,
-          filterMoreBtn: 'filterMoreBtn',
-          primaryKey: 'guid',
+          // filterMoreBtn: 'filterMoreBtn',
+          // primaryKey: 'guid',
           btn: '',
           pagination: this.pagination,
           handleFloat:true,
         },
         pagination: {
-          __orders: '-created_date',
+          __orders: '',
           total: 0,
           page: 1,
           size: 10
