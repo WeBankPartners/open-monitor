@@ -107,6 +107,7 @@
     "nickname": "昵称",
     "email": "邮箱",
     "phone": "电话",
+    "password": "密码",
     "description": "描述",
     "expr": "表达式",
     "content": "通知内容",

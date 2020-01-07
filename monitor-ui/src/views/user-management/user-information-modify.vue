@@ -26,7 +26,8 @@ export default {
       infoConfig: [
         { label: 'tableKey.nickname', key: 'display_name' },
         { label: 'tableKey.email', key: 'email' },
-        { label: 'tableKey.phone', key: 'phone' }
+        { label: 'tableKey.phone', key: 'phone' },
+        { label: 'tableKey.password', key: 'new_password' },
       ],
       activeKey: null,
       userInfo: {}
@@ -39,13 +40,26 @@ export default {
     userInformation () {
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.setup.userInformation.get, {}, (responseData) => {
         this.userInfo = responseData
+        this.userInfo.new_password = '**********'
       })
     },
     saveInfo (key) {
       this.activeKey = null
-      const params = {
-        [key]: this.userInfo[key]
+      let params = null
+      if (key === 'new_password') {
+        let Base64 = require('js-base64').Base64
+        // eslint-disable-next-line no-const-assign
+        params = {
+          [key]: Base64.encode(this.userInfo[key]),
+          're_new_password': Base64.encode(this.userInfo[key])
+        }
+      } else {
+        // eslint-disable-next-line no-const-assign
+        params = {
+          [key]: this.userInfo[key]
+        }
       }
+      this.userInfo.new_password = '**********'
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.setup.userInformation.update, params, () => {
         this.$Message.success(this.$t('tips.success'))
         this.userInformation()
