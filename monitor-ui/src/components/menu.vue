@@ -138,7 +138,7 @@ export default {
       this.defaultTheme = !this.defaultTheme
     },
     setUp () {
-      console.log(123)
+      this.$router.push({path: 'userConfigIndex'})
     },
     logout () {
       axios({
