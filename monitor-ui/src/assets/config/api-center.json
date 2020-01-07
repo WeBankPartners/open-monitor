@@ -116,6 +116,12 @@
         "userInformation": {
             "get": "user/message/get",
             "update":"user/message/update"
+        },
+        "userManagement": {
+            "get": "user/list"
+        },
+        "role": {
+            "get": "user/role/update"
         }
     }
 }
