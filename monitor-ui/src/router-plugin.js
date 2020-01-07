@@ -1,5 +1,3 @@
-import Vue from "vue";
-import Router from "vue-router";
 
 import alarmManagement from "@/views/alarm-management";
 import dashboard from "@/views/dashboard";
@@ -16,7 +14,6 @@ import editView from "@/views/custom-view/edit-view";
 import portal from "@/views/portal";
 import index from "@/views/index";
 
-Vue.use(Router);
 const router = [
   { path: "/index", name: "index", title: "首页", meta: {}, component: index },
   {
