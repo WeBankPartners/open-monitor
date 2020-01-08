@@ -155,7 +155,7 @@ func GetUserMsg(c *gin.Context)  {
 		mid.ReturnError(c, "Get user message fail ", err)
 		return
 	}
-	userObj.Passwd = "********"
+	userObj.Passwd = ""
 	mid.ReturnData(c, userObj)
 }
 

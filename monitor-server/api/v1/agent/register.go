@@ -256,13 +256,13 @@ func RegisterJob(param m.RegisterParam) error {
 			}
 		}
 		if address == "" {
-			err, strList = prom.GetEndpointData(param.ExporterIp, param.ExporterPort, []string{"tomcat", "jvm", "jmx"}, []string{"version"})
+			err, strList = prom.GetEndpointData(param.ExporterIp, param.ExporterPort, []string{"Catalina", "catalina", "jvm", "java"}, []string{"version"})
 		}else{
 			if strings.Contains(address, ":") {
 				tmpAddressList := strings.Split(address, ":")
 				tmpAgentIp = tmpAddressList[0]
 				tmpAgentPort = tmpAddressList[1]
-				err, strList = prom.GetEndpointData(tmpAddressList[0], tmpAddressList[1], []string{"tomcat", "jvm", "jmx"}, []string{"version"})
+				err, strList = prom.GetEndpointData(tmpAddressList[0], tmpAddressList[1], []string{"Catalina", "catalina", "jvm", "java"}, []string{"version"})
 			}else{
 				mid.LogInfo(fmt.Sprintf("address : %s is bad", address))
 				return fmt.Errorf("address : %s is bad", address)
