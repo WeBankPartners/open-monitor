@@ -114,7 +114,7 @@ func ExportAgent(c *gin.Context)  {
 				if agentType == "host" {
 					endpointObj = m.EndpointTable{Ip: v.HostIp, ExportType: agentType}
 				}else{
-					endpointObj = m.EndpointTable{Ip: v.HostIp, ExportType: agentType, Name: v.Instance}
+					endpointObj = m.EndpointTable{Ip: v.InstanceIp, ExportType: agentType, Name: v.Instance}
 				}
 				db.GetEndpoint(&endpointObj)
 				if endpointObj.Id > 0 {
@@ -148,7 +148,7 @@ func ExportAgent(c *gin.Context)  {
 					if agentType == "host" {
 						endpointObj = m.EndpointTable{Ip: v.HostIp, ExportType: agentType}
 					} else {
-						endpointObj = m.EndpointTable{Ip: v.HostIp, ExportType: agentType, Name: v.Instance}
+						endpointObj = m.EndpointTable{Ip: v.InstanceIp, ExportType: agentType, Name: v.Instance}
 					}
 					db.GetEndpoint(&endpointObj)
 					if endpointObj.Id > 0 {
