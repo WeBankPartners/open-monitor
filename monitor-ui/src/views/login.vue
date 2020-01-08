@@ -42,8 +42,8 @@ export default {
   data () {
     return {
       form: {
-        userName: 'test',
-        password: 'default'
+        userName: '',
+        password: ''
       },
       userNameRules: [{ required: true, message: '账号不能为空', trigger: 'blur' }],
       passwordRules: [{ required: true, message: '密码不能为空', trigger: 'blur' }],
@@ -60,9 +60,10 @@ export default {
   methods: {
     handleSubmit () {
       let Base64 = require('js-base64').Base64
+      const url =  require('../../src/assets/js/baseURL').baseURL_config + '/login'
       axios({
         method: 'POST',
-        url: 'http://129.204.99.160:38080/wecube-monitor/login',
+        url: url,
         data: {
             userName: this.form.userName,
             password: Base64.encode(this.form.password)

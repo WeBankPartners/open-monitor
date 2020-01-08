@@ -108,6 +108,7 @@
     "nickname": "Nickname",
     "email": "Email",
     "phone": "Phone",
+    "role": "Role",
     "password": "Password",
     "description": "Description",
     "expr": "Expression",

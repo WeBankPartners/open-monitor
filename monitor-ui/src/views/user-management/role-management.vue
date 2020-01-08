@@ -21,7 +21,7 @@ let tableEle = [
   {title: 'tableKey.name', value: 'name', display: true},
   {title: 'tableKey.nickname', value: 'display_name', display: true},
   {title: 'tableKey.email', value: 'email', display: true},
-  {title: 'tableKey.activeDate', value: 'created', display: true}
+  {title: 'tableKey.activeDate', value: 'created_string', display: true}
 ]
 const btn = [
     {btn_name: 'button.edit', btn_func: 'editF'},
