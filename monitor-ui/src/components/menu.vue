@@ -24,8 +24,31 @@
     </MenuItem>
     <div>
     </div>
-    <div class="set-theme" :style="{background: !defaultTheme? 'white':'black'}" @click="changeTheme"></div>
-    <div style="float:right;">
+    <!-- <div class="set-theme" :style="{background: !defaultTheme? 'white':'black'}" @click="changeTheme"></div> -->
+    <div class="menu-right">
+      <Dropdown trigger="click">
+        <a href="javascript:void(0)">
+          {{username}}
+          <Icon type="ios-arrow-down"></Icon>
+        </a>
+        <DropdownMenu slot="list">
+          <DropdownItem style="width:110px">
+            <span>{{$t('title.theme')}}:</span>
+            <div class="set-theme" :style="{background: !defaultTheme? 'white':'black'}" @click="changeTheme"></div>
+          </DropdownItem>
+          <DropdownItem style="width:110px">
+            <span>{{$t('title.setUp')}}:</span>
+            <div @click="setUp" class="set-theme">
+              <i class="fa fa-cog" aria-hidden="true"></i>
+            </div>
+          </DropdownItem>
+          <DropdownItem style="width:110px;text-aglin:right;">
+            <a @click="logout">{{$t('button.logOut')}}</a>
+          </DropdownItem>
+        </DropdownMenu>
+      </Dropdown> 
+    </div>
+    <div class="menu-right">
       <Dropdown @on-click="changeLang">
         <a href="javascript:void(0)">
           {{activeLang}}
@@ -45,6 +68,8 @@
   </Menu>
 </template>
 <script>
+import {cookies} from '@/assets/js/cookieUtils'
+import axios from 'axios'
 import '@/assets/theme/dark/styls.less';
 import '@/assets/theme/default/styls.less';
 export default {
@@ -58,7 +83,8 @@ export default {
         "zh-CN": "中文",
         "en-US": "English"
       },
-      lang: [{ label: "中文", value: "zh-CN" }, { label: "English", value: "en-US" }]
+      lang: [{ label: "中文", value: "zh-CN" }, { label: "English", value: "en-US" }],
+      username: localStorage.getItem('username')
     };
   },
   created(){
@@ -110,6 +136,22 @@ export default {
       localStorage.setItem('theme', theme)
       document.body.className = theme
       this.defaultTheme = !this.defaultTheme
+    },
+    setUp () {
+      this.$router.push({path: '/userConfigIndex/userInformationModify'})
+    },
+    logout () {
+      axios({
+        method: 'GET',
+        url: 'http://129.204.99.160:38080/wecube-monitor/logout',
+        headers: {
+          'X-Auth-Token': cookies.getAuthorization() || null
+        }
+      }).then(() => {
+          cookies.deleteAuthorization()
+          localStorage.removeItem('username')
+          this.$router.push({path: 'login'})
+      })
     }
   }
 };
@@ -136,11 +178,16 @@ export default {
 }
 .set-theme {
   float: right;
-  width: 28px;
-  height: 28px;
-  background: black;
-  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
   cursor: pointer;
-  margin: 16px;
+  i {
+    font-size: 18px;
+  }
+}
+.menu-right {
+  float: right;
+  margin-right: 30px;
 }
 </style>
