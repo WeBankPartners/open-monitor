@@ -80,6 +80,7 @@ function httpRequestEntrance (method, url, data, callback, customHttpConfig) {
       },0)
     }
     errorMessage(error.response.data.msg)
+    // errorMessage(error.response)
     // if (error.response) {
     //   let status = error.response.status
     //   let errorData = error.response.data

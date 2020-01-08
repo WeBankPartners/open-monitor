@@ -141,7 +141,6 @@ type PanelTable struct {
 	TagsUrl  string  `json:"tags_url"`
 	TagsKey  string  `json:"tags_key"`
 	ChartGroup  int  `json:"chart_group"`
-	ExIsPhy  bool
 }
 
 type ChartTable struct {

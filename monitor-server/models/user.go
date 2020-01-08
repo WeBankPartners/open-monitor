@@ -35,12 +35,37 @@ type UserTable struct {
 	Created  time.Time  `json:"created"`
 }
 
+type UserQuery struct {
+	Id  int  `json:"id"`
+	Name  string  `json:"name"`
+	Passwd  string  `json:"passwd"`
+	DisplayName  string  `json:"display_name"`
+	Role  string  `json:"role"`
+	Email  string  `json:"email"`
+	Phone  string  `json:"phone"`
+	Creator  string  `json:"creator"`
+	Created  time.Time  `json:"created"`
+	CreatedString  string  `json:"created_string"`
+}
+
 type RoleTable struct {
 	Id  int  `json:"id"`
 	Name  string  `json:"name"`
 	DisplayName  string  `json:"display_name"`
+	Email  string  `json:"email"`
+	Parent  int  `json:"parent"`
 	Creator  string  `json:"creator"`
 	Created  time.Time  `json:"created"`
+}
+
+type RoleQuery struct {
+	Id  int  `json:"id"`
+	Name  string  `json:"name"`
+	DisplayName  string  `json:"display_name"`
+	Email  string  `json:"email"`
+	Creator  string  `json:"creator"`
+	Created  time.Time  `json:"created"`
+	CreatedString  string  `json:"created_string"`
 }
 
 type SendAlertObj struct {
@@ -53,6 +78,8 @@ type UpdateRoleDto struct {
 	RoleId  int  `json:"role_id"`
 	Name  string  `json:"name"`
 	DisplayName  string  `json:"display_name"`
+	Email  string  `json:"email"`
+	Parent  int  `json:"parent"`
 	Operator  string  `json:"operator"`
 	Operation  string  `json:"operation" binding:"required"`
 }
