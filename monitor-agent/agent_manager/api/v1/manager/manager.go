@@ -52,6 +52,7 @@ func AddDeploy(w http.ResponseWriter,r *http.Request)  {
 			}
 		}
 	}
+	funcs.SaveDeployProcess()
 	w.Write(resp.byte())
 }
 
@@ -84,6 +85,7 @@ func DelDeploy(w http.ResponseWriter,r *http.Request)  {
 			}
 		}
 	}
+	funcs.SaveDeployProcess()
 	w.Write(resp.byte())
 }
 

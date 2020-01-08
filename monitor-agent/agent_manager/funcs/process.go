@@ -87,12 +87,13 @@ func (p *ProcessObj)start(configFile,startFile,guid string,port int,param map[st
 	p.Process = cmd.Process
 	var pids []int
 	for i:=0;i<5;i++ {
-		pids = getSystemProcessPid(p.Name)
+		pids = getSystemProcessPid("", p.Path)
 		if len(pids) > 0 {
 			break
 		}
 		time.Sleep(time.Second*time.Duration(1))
 	}
+	time.Sleep(time.Second*time.Duration(1))
 	if len(pids) > 0 {
 		p.Pid = pids[0]
 	}else {
@@ -149,7 +150,7 @@ func (p *ProcessObj)message() (pid int,n string,status string,retry int) {
 func (p *ProcessObj)update(signal int) {
 	p.Lock.Lock()
 	if signal == 1 {
-		pids := getSystemProcessPid(p.Name)
+		pids := getSystemProcessPid(p.Name, "")
 		if len(pids) > 0 {
 			p.Pid = pids[0]
 		}
@@ -181,11 +182,14 @@ func (p *ProcessObj)destroy() error {
 	return nil
 }
 
-func getSystemProcessPid(name string) []int {
+func getSystemProcessPid(name,path string) []int {
 	result := []int{}
 	cmdString := "ps aux|grep -v '\\['|awk '{print "+ osPsPidIndex +"}'"
 	if name != "" {
-		cmdString = fmt.Sprintf("ps a|grep %s|grep -v 'bash'|grep -v 'grep'|awk '{print $1}'", name)
+		cmdString = fmt.Sprintf("ps a|grep %s|grep -v 'bash'|grep -v 'grep'|grep -v 'nohup'|grep -v 'start.sh'|awk '{print $1}'", name)
+	}
+	if path != "" {
+		cmdString = fmt.Sprintf("ps aux|grep %s|grep -v 'bash'|grep -v 'grep'|grep -v 'nohup'|grep -v 'start.sh'|awk '{print $1}'", path)
 	}
 	b,err := exec.Command(osBashCommand, "-c", cmdString).Output()
 	if err != nil {
