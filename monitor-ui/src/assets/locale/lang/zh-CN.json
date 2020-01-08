@@ -39,7 +39,10 @@
     "aggType": "聚合类型",
     "title": "标题",
     "unit": "单位",
-    "instance": "实例名"
+    "instance": "实例名",
+    "personalInformation":"个人信息",
+    "userManagement":"用户管理",
+    "roleManagement":"角色管理"
   },
   "title": {
     "viewConfiguration": "视图配置",
@@ -49,9 +52,12 @@
     "updateTime": "更新时间",
     "endpointAdd": "对象新增",
     "groupAdd": "组新增",
-    "logAdd": "关键字新增"
+    "logAdd": "关键字新增",
+    "theme": "主题",
+    "setUp": "设置"
   },
   "button": {
+    "logOut": "注销",
     "search": "搜索",
     "add": "新增",
     "edit": "编辑",
@@ -69,6 +75,7 @@
     "save": "保存",
     "back": "返回",
     "view": "查看",
+    "authorization": "授权",
     "cancle": "取消",
     "endpointManagement": "对象管理",
     "upload": "导入阈值",
@@ -96,7 +103,13 @@
     "s_priority": "级别",
     "start": "开始时间",
     "end": "结束时间",
+    "activeDate": "生效时间",
     "name": "名称",
+    "nickname": "昵称",
+    "email": "邮箱",
+    "phone": "电话",
+    "role": "角色",
+    "password": "密码",
     "description": "描述",
     "expr": "表达式",
     "content": "通知内容",

@@ -111,5 +111,19 @@
         "templateSet": "dashboard/custom/main/set",
         "save": "dashboard/custom/save",
         "delete": "dashboard/custom/delete"
+    },
+    "setup": {
+        "userInformation": {
+            "get": "user/message/get",
+            "update":"user/message/update"
+        },
+        "userManagement": {
+            "get": "user/list"
+        },
+        "role": {
+            "get": "user/role/list",
+            "update":"user/role/update",
+            "authorization":"user/role/user/update"
+        }
     }
 }
