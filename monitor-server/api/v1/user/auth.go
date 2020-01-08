@@ -132,14 +132,9 @@ func UpdateUserMsg(c *gin.Context)  {
 			}
 			newPassword,err := mid.Encrypt(tmpPassword)
 			userObj.Passwd = newPassword
-		}
-		if param.Phone != "" {
+		}else{
 			userObj.Phone = param.Phone
-		}
-		if param.Email != "" {
 			userObj.Email = param.Email
-		}
-		if param.DisplayName != "" {
 			userObj.DisplayName = param.DisplayName
 		}
 		err = db.UpdateUser(userObj)
@@ -228,11 +223,11 @@ func ListUser(c *gin.Context)  {
 	if size == 0 {
 		size = 10
 	}
-	err,users := db.ListUser(search, role, page, size)
+	err,data := db.ListUser(search, role, page, size)
 	if err != nil {
 		mid.ReturnError(c, "Get user list fail", err)
 	}else{
-		mid.ReturnData(c, users)
+		mid.ReturnData(c, data)
 	}
 }
 
@@ -265,11 +260,11 @@ func ListRole(c *gin.Context)  {
 	if size == 0 {
 		size = 10
 	}
-	err,roles := db.ListRole(search, page, size)
+	err,data := db.ListRole(search, page, size)
 	if err != nil {
 		mid.ReturnError(c, "Get role list fail", err)
 	}else{
-		mid.ReturnData(c, roles)
+		mid.ReturnData(c, data)
 	}
 }
 

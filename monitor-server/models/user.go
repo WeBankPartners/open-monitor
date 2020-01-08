@@ -39,6 +39,8 @@ type RoleTable struct {
 	Id  int  `json:"id"`
 	Name  string  `json:"name"`
 	DisplayName  string  `json:"display_name"`
+	Email  string  `json:"email"`
+	Parent  int  `json:"parent"`
 	Creator  string  `json:"creator"`
 	Created  time.Time  `json:"created"`
 }
@@ -53,6 +55,8 @@ type UpdateRoleDto struct {
 	RoleId  int  `json:"role_id"`
 	Name  string  `json:"name"`
 	DisplayName  string  `json:"display_name"`
+	Email  string  `json:"email"`
+	Parent  int  `json:"parent"`
 	Operator  string  `json:"operator"`
 	Operation  string  `json:"operation" binding:"required"`
 }
