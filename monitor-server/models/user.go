@@ -35,6 +35,17 @@ type UserTable struct {
 	Created  time.Time  `json:"created"`
 }
 
+type UserQuery struct {
+	Id  int  `json:"id"`
+	Name  string  `json:"name"`
+	Role  string  `json:"role"`
+	Email  string  `json:"email"`
+	Phone  string  `json:"phone"`
+	Creator  string  `json:"creator"`
+	Created  time.Time  `json:"created"`
+	CreatedString  string  `json:"created_string"`
+}
+
 type RoleTable struct {
 	Id  int  `json:"id"`
 	Name  string  `json:"name"`
