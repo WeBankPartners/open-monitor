@@ -10,7 +10,8 @@ let tableEle = [
   {title: 'tableKey.nickname', value: 'display_name', display: true},
   {title: 'tableKey.email', value: 'email', display: true},
   {title: 'tableKey.phone', value: 'phone', display: true}, 
-  {title: 'tableKey.activeDate', value: 'created', display: true}
+  {title: 'tableKey.role', value: 'role', display: true},
+  {title: 'tableKey.activeDate', value: 'created_string', display: true}
 ]
 export default {
   name: '',
