@@ -34,7 +34,7 @@ func StartManager()  {
 	t := time.NewTicker(time.Second*time.Duration(interval)).C
 	for {
 		<- t
-		pids := getSystemProcessPid("")
+		pids := getSystemProcessPid("", "")
 		if len(pids) == 0 {
 			continue
 		}
@@ -130,6 +130,10 @@ func StopDeployProcess()  {
 
 func SaveDeployProcess()  {
 	var processList []string
+	filePath := "process.data"
+	if Config().Manager.SaveFile != "" {
+		filePath = Config().Manager.SaveFile
+	}
 	ProcessMapLock.RLock()
 	for _,v := range GlobalProcessMap {
 		if v.Deploy {
@@ -142,7 +146,7 @@ func SaveDeployProcess()  {
 	if err != nil {
 		log.Printf("save deploy process error : %v \n", err)
 	}else{
-		ioutil.WriteFile("process.data", tmpBuffer.Bytes(), 0644)
+		ioutil.WriteFile(filePath, tmpBuffer.Bytes(), 0644)
 		log.Println("save deploy process success")
 	}
 	ProcessMapLock.RUnlock()
@@ -150,7 +154,11 @@ func SaveDeployProcess()  {
 
 func LoadDeployProcess()  {
 	var processList []string
-	file,err := os.Open("process.data")
+	filePath := "process.data"
+	if Config().Manager.SaveFile != "" {
+		filePath = Config().Manager.SaveFile
+	}
+	file,err := os.Open(filePath)
 	if err == nil {
 		dec := gob.NewDecoder(file)
 		err = dec.Decode(&processList)
