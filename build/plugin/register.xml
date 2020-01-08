@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<package name="wecube-monitor" version="v1.2.5">
+<package name="wecube-monitor" version="v1.2.6">
 
     <!-- 1.依赖分析 - 描述运行本插件包需要的其他插件包 -->
     <packageDependencies></packageDependencies>
@@ -18,15 +18,17 @@
 
     <!-- 4.系统参数 - 描述运行本插件包需要的系统参数 -->
     <systemParameters>
-        <systemParameter name="MYSQL_MONITOR_USER" scopeType="wecube-monitor" defaultValue="exporter"/>
-        <systemParameter name="MYSQL_MONITOR_PWD" scopeType="wecube-monitor" defaultValue="prom_pwd"/>
-        <systemParameter name="REDIS_MONITOR_USER" scopeType="wecube-monitor" defaultValue="exporter"/>
-        <systemParameter name="REDIS_MONITOR_PWD" scopeType="wecube-monitor" defaultValue="prom_pwd"/>
-        <systemParameter name="MONITOR_HOST_GROUP" scopeType="wecube-monitor" defaultValue="default_host_group"/>
-        <systemParameter name="MONITOR_MYSQL_GROUP" scopeType="wecube-monitor" defaultValue="default_mysql_group"/>
-        <systemParameter name="MONITOR_REDIS_GROUP" scopeType="wecube-monitor" defaultValue="default_redis_group"/>
-        <systemParameter name="MONITOR_TOMCAT_GROUP" scopeType="wecube-monitor" defaultValue="default_tomcat_group"/>
-        <systemParameter name="HOST_EXPORTER_INSTALL" scopeType="wecube-monitor" defaultValue="/wecube-agent/host_exporter_install_v1.sh"/>
+        <systemParameter name="MYSQL_MONITOR_USER" scopeType="plugin-package" defaultValue="exporter"/>
+        <systemParameter name="MYSQL_MONITOR_PWD" scopeType="plugin-package" defaultValue="prom_pwd"/>
+        <systemParameter name="REDIS_MONITOR_USER" scopeType="plugin-package" defaultValue="exporter"/>
+        <systemParameter name="REDIS_MONITOR_PWD" scopeType="plugin-package" defaultValue="prom_pwd"/>
+        <systemParameter name="JMX_MONITOR_USER" scopeType="plugin-package" defaultValue="exporter"/>
+        <systemParameter name="JMX_MONITOR_PWD" scopeType="plugin-package" defaultValue="prom_pwd"/>
+        <systemParameter name="MONITOR_HOST_GROUP" scopeType="plugin-package" defaultValue="default_host_group"/>
+        <systemParameter name="MONITOR_MYSQL_GROUP" scopeType="plugin-package" defaultValue="default_mysql_group"/>
+        <systemParameter name="MONITOR_REDIS_GROUP" scopeType="plugin-package" defaultValue="default_redis_group"/>
+        <systemParameter name="MONITOR_TOMCAT_GROUP" scopeType="plugin-package" defaultValue="default_tomcat_group"/>
+        <systemParameter name="HOST_EXPORTER_S3_PATH" scopeType="plugin-package" defaultValue="/node_exporter_v1.tar.gz"/>
     </systemParameters>
 
     <!-- 5.权限设定 -->
@@ -42,8 +44,9 @@
 
     <!-- 6.运行资源 - 描述部署运行本插件包需要的基础资源(如主机、虚拟机、容器、数据库等) -->
     <resourceDependencies>
-        <docker imageName="wecube-monitor:v1.2.5" containerName="wecube-monitor-v1.2.5" portBindings="{{ALLOCATE_PORT}}:8080" volumeBindings="{{BASE_MOUNT_PATH}}/prometheus/logs:/app/monitor/prometheus/logs,{{BASE_MOUNT_PATH}}/prometheus/data:/app/monitor/prometheus/data,{{BASE_MOUNT_PATH}}/alertmanager/logs:/app/monitor/alertmanager/logs,{{BASE_MOUNT_PATH}}/consul/logs:/app/monitor/consul/logs,{{BASE_MOUNT_PATH}}/consul/data:/app/monitor/consul/data,{{BASE_MOUNT_PATH}}/monitor/logs:/app/monitor/monitor/logs" envVariables="MONITOR_DB_HOST={{DB_HOST}},MONITOR_DB_PORT={{DB_PORT}},MONITOR_DB_SCHEMA={{DB_SCHEMA}},MONITOR_DB_USER={{DB_USER}},MONITOR_DB_PWD={{DB_PWD}}"/>
+        <docker imageName="wecube-monitor:v1.2.6" containerName="wecube-monitor-v1.2.6" portBindings="{{ALLOCATE_PORT}}:8080" volumeBindings="{{BASE_MOUNT_PATH}}/prometheus/logs:/app/monitor/prometheus/logs,{{BASE_MOUNT_PATH}}/prometheus/data:/app/monitor/prometheus/data,{{BASE_MOUNT_PATH}}/alertmanager/logs:/app/monitor/alertmanager/logs,{{BASE_MOUNT_PATH}}/alertmanager/data:/app/monitor/alertmanager/data,{{BASE_MOUNT_PATH}}/consul/logs:/app/monitor/consul/logs,{{BASE_MOUNT_PATH}}/consul/data:/app/monitor/consul/data,{{BASE_MOUNT_PATH}}/monitor/logs:/app/monitor/monitor/logs,{{BASE_MOUNT_PATH}}/agent_deploy:/app/deploy" envVariables="MONITOR_DB_HOST={{DB_HOST}},MONITOR_DB_PORT={{DB_PORT}},MONITOR_DB_SCHEMA={{DB_SCHEMA}},MONITOR_DB_USER={{DB_USER}},MONITOR_DB_PWD={{DB_PWD}}"/>
         <mysql schema="monitor" initFileName="init.sql" upgradeFileName="upgrade.sql"/>
+        <s3 bucketName="wecube-agent"/>
     </resourceDependencies>
 
     <!-- 7.插件列表 - 描述插件包中单个插件的输入和输出 -->
@@ -197,10 +200,12 @@
         <plugin name="tomcat-register" targetPackage="wecmdb" targetEntity="business_app_instance">
             <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/tomcat" httpMethod='POST'>
                 <inputParameters>
-                    <parameter datatype="string" mappingType="context" mappingEntityExpression="wecmdb:business_app_instance.resource_instance>wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">host_ip</parameter>
+                    <parameter datatype="string" mappingType="context" mappingEntityExpression="wecmdb:business_app_instance.resource_instance>wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">instance_ip</parameter>
                     <parameter datatype="string" mappingType="context" mappingEntityExpression="wecmdb:business_app_instance.monitor_port" required="Y">port</parameter>
                     <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MONITOR_TOMCAT_GROUP" required="Y">group</parameter>
                     <parameter datatype="string" mappingType="context" mappingEntityExpression="wecmdb:business_app_instance.key_name" required="Y">instance</parameter>
+                    <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="JMX_MONITOR_USER" required="Y">user</parameter>
+                    <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="JMX_MONITOR_PWD" required="Y">password</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -209,7 +214,7 @@
             </interface>
             <interface action="deregister" path="/wecube-monitor/api/v1/agent/export/deregister/tomcat" httpMethod='GET'>
                 <inputParameters>
-                    <parameter datatype="string" mappingType="context" mappingEntityExpression="wecmdb:business_app_instance.resource_instance>wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">host_ip</parameter>
+                    <parameter datatype="string" mappingType="context" mappingEntityExpression="wecmdb:business_app_instance.resource_instance>wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">instance_ip</parameter>
                     <parameter datatype="string" mappingType="context" mappingEntityExpression="wecmdb:business_app_instance.monitor_port" required="Y">port</parameter>
                     <parameter datatype="string" mappingType="context" mappingEntityExpression="wecmdb:business_app_instance.key_name" required="Y">instance</parameter>
                 </inputParameters>
@@ -220,7 +225,7 @@
             </interface>
             <interface action="start_alarm" path="/wecube-monitor/api/v1/agent/export/start/tomcat" httpMethod='POST'>
                 <inputParameters>
-                    <parameter datatype="string" mappingType="context" mappingEntityExpression="wecmdb:business_app_instance.resource_instance>wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">host_ip</parameter>
+                    <parameter datatype="string" mappingType="context" mappingEntityExpression="wecmdb:business_app_instance.resource_instance>wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">instance_ip</parameter>
                     <parameter datatype="string" mappingType="context" mappingEntityExpression="wecmdb:business_app_instance.monitor_port" required="Y">port</parameter>
                     <parameter datatype="string" mappingType="context" mappingEntityExpression="wecmdb:business_app_instance.key_name" required="Y">instance</parameter>
                 </inputParameters>
@@ -231,7 +236,7 @@
             </interface>
             <interface action="stop_alarm" path="/wecube-monitor/api/v1/agent/export/stop/tomcat" httpMethod='POST'>
                 <inputParameters>
-                    <parameter datatype="string" mappingType="context" mappingEntityExpression="wecmdb:business_app_instance.resource_instance>wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">host_ip</parameter>
+                    <parameter datatype="string" mappingType="context" mappingEntityExpression="wecmdb:business_app_instance.resource_instance>wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">instance_ip</parameter>
                     <parameter datatype="string" mappingType="context" mappingEntityExpression="wecmdb:business_app_instance.monitor_port" required="Y">port</parameter>
                     <parameter datatype="string" mappingType="context" mappingEntityExpression="wecmdb:business_app_instance.key_name" required="Y">instance</parameter>
                 </inputParameters>

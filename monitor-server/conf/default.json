@@ -105,8 +105,10 @@
     },
     {
       "agent_type" : "tomcat",
-      "agent_bin" : "jmx_prometheus_javaagent-0.12.0.jar",
-      "port" : "9151"
+      "agent_bin" : "tomcat_exporter",
+      "port" : "9151",
+      "user" : "exporter",
+      "password" : "prom_pwd"
     }
   ],
   "alert": {

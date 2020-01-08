@@ -16,31 +16,47 @@ func AddUser(user m.UserTable, creator string) error {
 	return err
 }
 
-func GetUser(username string) (err error,user m.UserTable) {
-	var users []*m.UserTable
+func GetUser(username string) (err error,user m.UserQuery) {
+	var users []*m.UserQuery
 	err = x.SQL("SELECT * FROM user WHERE name=?", username).Find(&users)
 	if len(users) == 0 {
-		return err,m.UserTable{}
+		return err,m.UserQuery{}
+	}else{
+		users[0].CreatedString = users[0].Created.Format(m.DatetimeFormat)
 	}
 	return nil,*users[0]
 }
 
 func UpdateUser(user m.UserTable) error {
+	param := make([]interface{}, 0)
 	sql := "UPDATE user SET "
 	if user.Passwd != "" {
-		sql += fmt.Sprintf("passwd='%s',", user.Passwd)
+		sql += "passwd=?,"
+		param = append(param, user.Passwd)
 	}
 	if user.DisplayName != "" {
-		sql += fmt.Sprintf("display_name='%s',", user.DisplayName)
+		sql += "display_name=?,"
+		param = append(param, user.DisplayName)
 	}
 	if user.Email != "" {
-		sql += fmt.Sprintf("email='%s',", user.Email)
+		sql += "email=?,"
+		param = append(param, user.Email)
 	}
 	if user.Phone != "" {
-		sql += fmt.Sprintf("phone='%s'", user.Phone)
+		sql += "phone=?,"
+		param = append(param, user.Phone)
 	}
-	updateSql := sql[:len(sql)-1] + fmt.Sprintf(" WHERE name='%s'", user.Name)
-	_,err := x.Exec(updateSql)
+	updateSql := sql[:len(sql)-1] + " WHERE name=?"
+	param = append(param, user.Name)
+	newParam := make([]interface{}, 0)
+	newParam = append(newParam, updateSql)
+	for _,v := range param {
+		newParam = append(newParam, v)
+	}
+	_,err := x.Exec(newParam...)
+	if err != nil {
+		mid.LogError("update user error ",err)
+	}
 	return err
 }
 
@@ -94,25 +110,69 @@ func GetMailByStrategy(strategyId int) []string {
 	return result
 }
 
-func ListUser(search string,role,page,size int) (err error,users []*m.UserTable) {
+func ListUser(search string,role,page,size int) (err error,data m.TableData) {
+	var users []*m.UserQuery
+	var count []int
 	var whereSql string
 	if role > 0 {
-		whereSql = fmt.Sprintf(" WHERE id IN (SELECT user_id FROM rel_role_user WHERE role_id=%d) ", role)
+		whereSql = fmt.Sprintf(" AND t1.id IN (SELECT user_id FROM rel_role_user WHERE role_id=%d) ", role)
 	}
 	if search != "" {
-		whereSql = " WHERE name LIKE '%"+search+"%' OR display_name LIKE '%"+search+"%'"
+		whereSql = " AND t1.name LIKE '%"+search+"%' OR display_name LIKE '%"+search+"%'"
 	}
-	err = x.SQL("SELECT id,name,display_name,email,phone FROM user "+whereSql+fmt.Sprintf(" ORDER BY id LIMIT %d,%d", (page-1)*size, size)).Find(&users)
-	return err,users
+	sql := `SELECT t5.* FROM (
+	SELECT t4.id,t4.name,t4.display_name,t4.email,t4.phone,t4.created,GROUP_CONCAT(role) role FROM (
+	SELECT t1.id,t1.name,t1.display_name,t1.email,t1.phone,t1.created,CONCAT(t3.name,':',t3.display_name) role FROM user t1
+	LEFT JOIN rel_role_user t2 ON t1.id=t2.user_id
+	LEFT JOIN role t3 ON t2.role_id=t3.id
+	WHERE 1=1 ` + whereSql + `
+	) t4 GROUP BY t4.id
+	) t5`
+	err = x.SQL(sql+fmt.Sprintf(" ORDER BY t5.id LIMIT %d,%d", (page-1)*size, size)).Find(&users)
+	x.SQL(sql).Find(&count)
+	if len(users) > 0 {
+		for _,v := range users {
+			v.CreatedString = v.Created.Format(m.DatetimeFormat)
+		}
+		data.Data = users
+	}else{
+		data.Data = []*m.UserQuery{}
+	}
+	data.Size = size
+	data.Page = page
+	if len(count) > 0 {
+		data.Num = count[0]
+	}else{
+		data.Num = len(users)
+	}
+	return err,data
 }
 
-func ListRole(search string,page,size int) (err error,roles []*m.RoleTable) {
+func ListRole(search string,page,size int) (err error,data m.TableData) {
+	var roles []*m.RoleQuery
+	var count []int
 	var whereSql string
 	if search != "" {
-		whereSql = "name LIKE '%"+search+"%' OR display_name LIKE '%"+search+"%'"
+		whereSql = "where name LIKE '%"+search+"%' OR display_name LIKE '%"+search+"%'"
 	}
 	err = x.SQL("SELECT * FROM role "+whereSql+fmt.Sprintf(" ORDER BY id LIMIT %d,%d", (page-1)*size, size)).Find(&roles)
-	return err,roles
+	x.SQL("SELECT count(1) num FROM role " + whereSql).Find(&count)
+	if len(roles) > 0 {
+		for _,v := range roles {
+			v.CreatedString = v.Created.Format(m.DatetimeFormat)
+		}
+		data.Data = roles
+	}else{
+		data.Data = []*m.RoleQuery{}
+	}
+	data.Size = size
+	data.Page = page
+	if len(count) > 0 {
+		data.Num = count[0]
+	}else{
+		data.Num = len(roles)
+	}
+	return err,data
 }
 
 func UpdateRoleUser(param m.UpdateRoleUserDto) error {
@@ -160,6 +220,7 @@ func UpdateRole(param m.UpdateRoleDto) error {
 		}
 		role.Name = param.Name
 		role.DisplayName = param.DisplayName
+		role.Email = param.Email
 		role.Creator = param.Operator
 		role.Created = time.Now()
 		param.Operation = "insert"
@@ -174,6 +235,7 @@ func UpdateRole(param m.UpdateRoleDto) error {
 		role.Id = param.RoleId
 		role.Name = param.Name
 		role.DisplayName = param.DisplayName
+		role.Email = param.Email
 		force = true
 	}
 	if param.Operation == "delete" {
@@ -183,5 +245,6 @@ func UpdateRole(param m.UpdateRoleDto) error {
 		role.Id = param.RoleId
 	}
 	action := Classify(role, param.Operation, "role", force)
+	mid.LogInfo(fmt.Sprintf("action sql : %s  param : %v ", action.Sql, action.Param))
 	return Transaction([]*Action{&action})
 }

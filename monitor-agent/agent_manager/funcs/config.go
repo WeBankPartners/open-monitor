@@ -25,6 +25,7 @@ type ManagerConfig struct {
 	AliveCheck  int  `json:"alive_check"`
 	AutoRestart  bool  `json:"auto_restart"`
 	Retry  int  `json:"retry"`
+	SaveFile  string  `json:"save_file"`
 }
 
 type ProcessConfig  struct {

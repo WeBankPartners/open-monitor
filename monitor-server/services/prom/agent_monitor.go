@@ -34,6 +34,9 @@ func DeployAgent(agentType,instance,bin,ip,port,user,pwd,url string) (address st
 	if agentType == "mysql" {
 		param.Config = "my.cnf"
 	}
+	if agentType == "tomcat" {
+		param.Config = "config.yaml"
+	}
 	param.InstanceServer = ip
 	param.InstancePort = port
 	param.AuthUser = user
