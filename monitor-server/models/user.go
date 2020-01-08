@@ -38,6 +38,7 @@ type UserTable struct {
 type UserQuery struct {
 	Id  int  `json:"id"`
 	Name  string  `json:"name"`
+	Passwd  string  `json:"passwd"`
 	Role  string  `json:"role"`
 	Email  string  `json:"email"`
 	Phone  string  `json:"phone"`
@@ -54,6 +55,16 @@ type RoleTable struct {
 	Parent  int  `json:"parent"`
 	Creator  string  `json:"creator"`
 	Created  time.Time  `json:"created"`
+}
+
+type RoleQuery struct {
+	Id  int  `json:"id"`
+	Name  string  `json:"name"`
+	DisplayName  string  `json:"display_name"`
+	Email  string  `json:"email"`
+	Creator  string  `json:"creator"`
+	Created  time.Time  `json:"created"`
+	CreatedString  string  `json:"created_string"`
 }
 
 type SendAlertObj struct {
