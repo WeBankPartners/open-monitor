@@ -28,8 +28,12 @@
         this.pagination.page = current
         this.requestData()
       },
-      pageSizeChange () {
+      pageSizeChange (pageSize) {
         this.$parent.clearSelectedData()
+        if (this.pagination.size === pageSize) {
+          return
+        }
+        this.pagination.size = pageSize
         this.pagination.page = 1
         this.requestData()
       },
