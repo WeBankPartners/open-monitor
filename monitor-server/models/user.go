@@ -39,6 +39,7 @@ type UserQuery struct {
 	Id  int  `json:"id"`
 	Name  string  `json:"name"`
 	Passwd  string  `json:"passwd"`
+	DisplayName  string  `json:"display_name"`
 	Role  string  `json:"role"`
 	Email  string  `json:"email"`
 	Phone  string  `json:"phone"`
