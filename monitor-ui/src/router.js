@@ -126,14 +126,6 @@ const router = new Router({
               meta: {},
               component: () =>
                 import("@/views/user-management/role-management")
-            },
-            {
-              path: "logManagement",
-              name: "logManagement",
-              title: "关键字配置",
-              meta: {},
-              component: () =>
-                import("@/views/monitor-config/log-management")
             }
           ]
         },
@@ -204,7 +196,7 @@ const router = new Router({
 });
 
 router.beforeEach((to, from, next) => {
-  if (!cookies.getCookie('Authorization')&& to.name != 'login') {
+  if (!cookies.getCookie('Authorization')&& to.name != 'login'&& to.name != 'register') {
     next({name:'login'})
   } else {
     next()

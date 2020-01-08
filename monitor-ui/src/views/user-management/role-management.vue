@@ -2,6 +2,17 @@
   <div class=" ">
     <PageTable :pageConfig="pageConfig"></PageTable>
     <ModalComponent :modelConfig="modelConfig"></ModalComponent>
+    <ModalComponent :modelConfig="authorizationModel">
+      <div slot="authorization">  
+        <div class="marginbottom params-each">
+          <label class="col-md-2 label-name lable-name-select">{{$t('field.endpoint')}}:</label>
+          <Select v-model="authorizationModel.addRow.user" multiple filterable style="width:338px">
+              <Option v-for="item in authorizationModel.userList" :value="item.id" :key="item.name">
+              {{item.display_name}}({{item.name}})</Option>
+          </Select>
+        </div>
+      </div>
+    </ModalComponent>
   </div>
 </template>
 
@@ -14,6 +25,7 @@ let tableEle = [
 ]
 const btn = [
     {btn_name: 'button.edit', btn_func: 'editF'},
+    {btn_name: 'button.authorization', btn_func: 'authorizationF'},
     {btn_name: 'button.remove', btn_func: 'delF'}
   ]
 export default {
@@ -68,6 +80,19 @@ export default {
           email: null
         }
       },
+      authorizationModel: {
+        modalId: 'authorization_model',
+        modalTitle: 'button.authorization',
+        isAdd: true,
+        saveFunc: 'authorizationSave',
+        config: [
+          {name:'authorization',type:'slot'}
+        ],
+        addRow: {
+          user: []
+        },
+        userList: []
+      }, 
       id: null
     }
   },
@@ -117,6 +142,23 @@ export default {
         })
       })
     },
+    authorizationF (rowData) {
+      this.id = rowData.id
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.setup.userManagement.get, "", (responseData) => {
+        this.authorizationModel.userList = responseData.data
+        this.$root.JQ('#authorization_model').modal('show')
+      })
+    },
+    authorizationSave () {
+      let params = {
+        role_id: this.id,
+        user_id: this.authorizationModel.addRow.user
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.setup.role.authorization, params, () => {
+        this.$Message.success(this.$t('tips.success'))
+        this.$root.JQ('#authorization_model').modal('hide')
+      })
+    } 
   },
   components: {},
 }
