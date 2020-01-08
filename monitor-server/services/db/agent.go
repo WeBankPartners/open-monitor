@@ -35,8 +35,20 @@ func UpdateEndpoint(endpoint *m.EndpointTable) error {
 }
 
 func DeleteEndpoint(guid string) error {
-	_,err := x.Exec(fmt.Sprintf("DELETE FROM endpoint_metric WHERE endpoint_id IN (SELECT id FROM endpoint WHERE guid='%s')", guid))
-	_,err = x.Exec(fmt.Sprintf("DELETE FROM endpoint WHERE guid='%s'", guid))
+	var actions []*Action
+	actions = append(actions, &Action{Sql:"DELETE FROM endpoint_metric WHERE endpoint_id IN (SELECT id FROM endpoint WHERE guid=?)", Param:[]interface{}{guid}})
+	actions = append(actions, &Action{Sql:"DELETE FROM endpoint WHERE guid=?", Param:[]interface{}{guid}})
+	var alarms []*m.AlarmTable
+	x.SQL("SELECT id FROM alarm WHERE endpoint=? AND status='firing'", guid).Find(&alarms)
+	if len(alarms) > 0 {
+		var ids string
+		for _,v := range alarms {
+			ids += fmt.Sprintf("%d,", v.Id)
+		}
+		ids = ids[:len(ids)-1]
+		actions = append(actions, &Action{Sql:fmt.Sprintf("UPDATE alarm SET STATUS='closed' WHERE id IN (%s)", ids), Param:[]interface{}{}})
+	}
+	err := Transaction(actions)
 	if err != nil {
 		mid.LogError("delete endpoint fail", err)
 		return err

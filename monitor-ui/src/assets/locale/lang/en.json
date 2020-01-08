@@ -39,7 +39,10 @@
     "aggType": "Aggregation type",
     "title": "Title",
     "unit": "Unit",
-    "instance": "Instance"
+    "instance": "Instance",
+    "personalInformation":"personal Information",
+    "userManagement":"user Management",
+    "roleManagement":"role Management"
   },
   "title": {
     "viewConfiguration": "View Configuration",
@@ -49,9 +52,12 @@
     "updateTime": "Updated Time",
     "endpointAdd": "Endpoint Add",
     "groupAdd": "Group",
-    "logAdd": "Keyword"
+    "logAdd": "Keyword",
+    "theme": "Theme",
+    "setUp": "Set up"
   },
   "button": {
+    "logOut": "Log out",
     "search": "Search",
     "add": "Add",
     "edit": "Edit",
@@ -69,6 +75,7 @@
     "save": "Save",
     "back": "Back",
     "view": "View",
+    "authorization": "Authorization",
     "cancle": "Cancle",
     "endpointManagement": "Endpoint Management",
     "upload": "Upload Threshold",
@@ -96,7 +103,13 @@
     "s_priority": "Priority",
     "start": "Start time",
     "end": "End time",
+    "activeDate": "Active date",
     "name": "Name",
+    "nickname": "Nickname",
+    "email": "Email",
+    "phone": "Phone",
+    "role": "Role",
+    "password": "Password",
     "description": "Description",
     "expr": "Expression",
     "content": "Content",

@@ -94,11 +94,18 @@ func ExportAgent(c *gin.Context)  {
 			if agentType == "host" {
 				param = m.RegisterParam{Type: agentType, ExporterIp: v.HostIp, ExporterPort: agentPort}
 			}else{
-				if agentType == "mysql" || agentType == "redis" {
-						param = m.RegisterParam{Type: agentType, ExporterIp: v.InstanceIp, ExporterPort: v.Port, Instance: v.Instance, User:v.User, Password:v.Password}
-				}else {
-					param = m.RegisterParam{Type: agentType, ExporterIp: v.HostIp, ExporterPort: agentPort, Instance: v.Instance}
-				}
+				param = m.RegisterParam{Type: agentType, ExporterIp: v.InstanceIp, ExporterPort: v.Port, Instance: v.Instance, User:v.User, Password:v.Password}
+				//if agentType == "mysql" || agentType == "redis" {
+				//		param = m.RegisterParam{Type: agentType, ExporterIp: v.InstanceIp, ExporterPort: v.Port, Instance: v.Instance, User:v.User, Password:v.Password}
+				//}else {
+				//	if agentType == "tomcat" {
+				//		tmpPort,_ := strconv.Atoi(v.Port)
+				//		if tmpPort > 0 {
+				//			agentPort = v.Port
+				//		}
+				//	}
+				//	param = m.RegisterParam{Type: agentType, ExporterIp: v.HostIp, ExporterPort: agentPort, Instance: v.Instance}
+				//}
 			}
 			if action == "register" {
 				err = RegisterJob(param)
@@ -107,7 +114,7 @@ func ExportAgent(c *gin.Context)  {
 				if agentType == "host" {
 					endpointObj = m.EndpointTable{Ip: v.HostIp, ExportType: agentType}
 				}else{
-					endpointObj = m.EndpointTable{Ip: v.HostIp, ExportType: agentType, Name: v.Instance}
+					endpointObj = m.EndpointTable{Ip: v.InstanceIp, ExportType: agentType, Name: v.Instance}
 				}
 				db.GetEndpoint(&endpointObj)
 				if endpointObj.Id > 0 {
@@ -127,34 +134,36 @@ func ExportAgent(c *gin.Context)  {
 			mid.LogInfo(msg)
 		}
 		// update group and sync prometheus config
-		var groupTplMap = make(map[string]int)
-		for _,v := range param.Inputs {
-			if v.Group == "" {
-				continue
-			}
-			_,grpObj := db.GetSingleGrp(0, v.Group)
-			if grpObj.Id > 0 {
-				_,tplObj := db.GetTpl(0,grpObj.Id,0)
-				groupTplMap[grpObj.Name] = tplObj.Id
-				var endpointObj m.EndpointTable
-				if agentType == "host" {
-					endpointObj = m.EndpointTable{Ip: v.HostIp, ExportType: agentType}
-				}else{
-					endpointObj = m.EndpointTable{Ip: v.HostIp, ExportType: agentType, Name: v.Instance}
+		if action == "register" {
+			var groupTplMap= make(map[string]int)
+			for _, v := range param.Inputs {
+				if v.Group == "" {
+					continue
 				}
-				db.GetEndpoint(&endpointObj)
-				if endpointObj.Id > 0 {
-					err,_ := db.UpdateGrpEndpoint(m.GrpEndpointParamNew{Grp:grpObj.Id, Endpoints:[]int{endpointObj.Id}, Operation:"add"})
-					if err != nil {
-						mid.LogError("register interface update group_endpoint fail ", err)
+				_, grpObj := db.GetSingleGrp(0, v.Group)
+				if grpObj.Id > 0 {
+					_, tplObj := db.GetTpl(0, grpObj.Id, 0)
+					groupTplMap[grpObj.Name] = tplObj.Id
+					var endpointObj m.EndpointTable
+					if agentType == "host" {
+						endpointObj = m.EndpointTable{Ip: v.HostIp, ExportType: agentType}
+					} else {
+						endpointObj = m.EndpointTable{Ip: v.InstanceIp, ExportType: agentType, Name: v.Instance}
+					}
+					db.GetEndpoint(&endpointObj)
+					if endpointObj.Id > 0 {
+						err, _ := db.UpdateGrpEndpoint(m.GrpEndpointParamNew{Grp: grpObj.Id, Endpoints: []int{endpointObj.Id}, Operation: "add"})
+						if err != nil {
+							mid.LogError("register interface update group_endpoint fail ", err)
+						}
 					}
 				}
 			}
-		}
-		for k,v := range groupTplMap {
-			err := alarm.SaveConfigFile(v)
-			if err != nil {
-				mid.LogError(fmt.Sprintf("register interface update prometheus config fail , group : %s  error ", k), err)
+			for k, v := range groupTplMap {
+				err := alarm.SaveConfigFile(v)
+				if err != nil {
+					mid.LogError(fmt.Sprintf("register interface update prometheus config fail , group : %s  error ", k), err)
+				}
 			}
 		}
 		result = resultObj{ResultCode: successFlag, ResultMessage: errMessage, Results: resultOutput{Outputs: tmpResult}}

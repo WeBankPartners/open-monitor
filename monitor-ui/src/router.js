@@ -1,9 +1,13 @@
 import Vue from "vue";
 import Router from "vue-router";
+import {cookies} from '@/assets/js/cookieUtils';
 
 Vue.use(Router);
 
 const router = new Router({
+  scrollBehavior: () => ({ // 滚动条滚动的行为，不加这个默认就会记忆原来滚动条的位置
+    y: 0
+  }),
   routes: [
     {
       path: "/",
@@ -83,10 +87,45 @@ const router = new Router({
             {
               path: "logManagement",
               name: "logManagement",
-              title: "阈值配置",
+              title: "关键字配置",
               meta: {},
               component: () =>
                 import("@/views/monitor-config/log-management")
+            }
+          ]
+        },
+        {
+          path: "userConfigIndex",
+          name: "userConfigIndex",
+          title: "",
+          meta: {},
+          component: () =>
+            import("@/views/user-management/user-config-index"),
+          redirect: "/userConfigIndex/userInformationModify",
+          children: [
+            {
+              path: "userInformationModify",
+              name: "userInformationModify",
+              title: "用户信息修改",
+              meta: {},
+              component: () =>
+                import("@/views/user-management/user-information-modify")
+            },
+            {
+              path: "userManagement",
+              name: "userManagement",
+              title: "用户管理",
+              meta: {},
+              component: () =>
+                import("@/views/user-management/user-management")
+            },
+            {
+              path: "roleManagement",
+              name: "roleManagement",
+              title: "角色管理",
+              meta: {},
+              component: () =>
+                import("@/views/user-management/role-management")
             }
           ]
         },
@@ -136,6 +175,18 @@ const router = new Router({
       ]
     },
     {
+      path: "/login",
+      name: "login",
+      component: () => import("@/views/login"),
+      title: "login"
+    },
+    {
+      path: "/register",
+      name: "register",
+      component: () => import("@/views/register"),
+      title: "register"
+    },
+    {
       path: "/test",
       name: "test",
       component: () => import("@/views/test"),
@@ -144,4 +195,11 @@ const router = new Router({
   ]
 });
 
+router.beforeEach((to, from, next) => {
+  if (!cookies.getCookie('Authorization')&& to.name != 'login'&& to.name != 'register') {
+    next({name:'login'})
+  } else {
+    next()
+  }
+})
 export default router;
