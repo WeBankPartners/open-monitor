@@ -109,21 +109,32 @@ func GetMailByStrategy(strategyId int) []string {
 }
 
 func ListUser(search string,role,page,size int) (err error,data m.TableData) {
-	var users []*m.UserTable
+	var users []*m.UserQuery
 	var count []int
 	var whereSql string
 	if role > 0 {
-		whereSql = fmt.Sprintf(" WHERE id IN (SELECT user_id FROM rel_role_user WHERE role_id=%d) ", role)
+		whereSql = fmt.Sprintf(" AND t1.id IN (SELECT user_id FROM rel_role_user WHERE role_id=%d) ", role)
 	}
 	if search != "" {
-		whereSql = " WHERE name LIKE '%"+search+"%' OR display_name LIKE '%"+search+"%'"
+		whereSql = " AND t1.name LIKE '%"+search+"%' OR display_name LIKE '%"+search+"%'"
 	}
-	err = x.SQL("SELECT id,name,display_name,email,phone FROM user "+whereSql+fmt.Sprintf(" ORDER BY id LIMIT %d,%d", (page-1)*size, size)).Find(&users)
-	x.SQL("SELECT count(1) num FROM user " + whereSql).Find(&count)
+	sql := `SELECT t5.* FROM (
+	SELECT t4.id,t4.name,t4.display_name,t4.email,t4.phone,t4.created,GROUP_CONCAT(role) role FROM (
+	SELECT t1.id,t1.name,t1.display_name,t1.email,t1.phone,t1.created,CONCAT(t3.name,':',t3.display_name) role FROM user t1
+	LEFT JOIN rel_role_user t2 ON t1.id=t2.user_id
+	LEFT JOIN role t3 ON t2.role_id=t3.id
+	WHERE 1=1 ` + whereSql + `
+	) t4 GROUP BY t4.id
+	) t5`
+	err = x.SQL(sql+fmt.Sprintf(" ORDER BY t5.id LIMIT %d,%d", (page-1)*size, size)).Find(&users)
+	x.SQL(sql).Find(&count)
 	if len(users) > 0 {
+		for _,v := range users {
+			v.CreatedString = v.Created.Format(m.DatetimeFormat)
+		}
 		data.Data = users
 	}else{
-		data.Data = []*m.UserTable{}
+		data.Data = []*m.UserQuery{}
 	}
 	data.Size = size
 	data.Page = page
