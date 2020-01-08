@@ -58,7 +58,6 @@ function httpRequestEntrance (method, url, data, callback, customHttpConfig) {
   }
   option.timeout = config.timeout
   return httpRequest(option).then(response => {
-    console.log(response)
     // store.commit('changeFlag',true)
     if (config.isNeedloading) {
       setTimeout(() => {

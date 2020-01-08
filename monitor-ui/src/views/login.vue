@@ -27,7 +27,6 @@
                   <div class="register" @click="register">注册</div>
                 </FormItem>
               </Form>
-
             </div>
           </Card>
         </div>
@@ -81,7 +80,7 @@ export default {
       });
     },
     register() {
-      this.$router.push({path: 'register'})
+      this.$router.push({path: '/register'})
     }
   }
 }
