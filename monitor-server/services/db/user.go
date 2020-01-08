@@ -16,11 +16,13 @@ func AddUser(user m.UserTable, creator string) error {
 	return err
 }
 
-func GetUser(username string) (err error,user m.UserTable) {
-	var users []*m.UserTable
+func GetUser(username string) (err error,user m.UserQuery) {
+	var users []*m.UserQuery
 	err = x.SQL("SELECT * FROM user WHERE name=?", username).Find(&users)
 	if len(users) == 0 {
-		return err,m.UserTable{}
+		return err,m.UserQuery{}
+	}else{
+		users[0].CreatedString = users[0].Created.Format(m.DatetimeFormat)
 	}
 	return nil,*users[0]
 }
@@ -147,7 +149,7 @@ func ListUser(search string,role,page,size int) (err error,data m.TableData) {
 }
 
 func ListRole(search string,page,size int) (err error,data m.TableData) {
-	var roles []*m.RoleTable
+	var roles []*m.RoleQuery
 	var count []int
 	var whereSql string
 	if search != "" {
@@ -156,9 +158,12 @@ func ListRole(search string,page,size int) (err error,data m.TableData) {
 	err = x.SQL("SELECT * FROM role "+whereSql+fmt.Sprintf(" ORDER BY id LIMIT %d,%d", (page-1)*size, size)).Find(&roles)
 	x.SQL("SELECT count(1) num FROM role " + whereSql).Find(&count)
 	if len(roles) > 0 {
+		for _,v := range roles {
+			v.CreatedString = v.Created.Format(m.DatetimeFormat)
+		}
 		data.Data = roles
 	}else{
-		data.Data = []*m.RoleTable{}
+		data.Data = []*m.RoleQuery{}
 	}
 	data.Size = size
 	data.Page = page
