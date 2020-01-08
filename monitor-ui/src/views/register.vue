@@ -80,6 +80,7 @@ export default {
   },
   methods: {
     handleSubmit () {
+      const url =  require('../../src/assets/js/baseURL').baseURL_config + '/register'
       this.$refs['loginForm'].validate((valid) => {
         if (valid) {
           let Base64 = require('js-base64').Base64
@@ -87,7 +88,7 @@ export default {
           this.form.re_password = Base64.encode(this.form.re_password)
           axios({
             method: 'POST',
-            url: 'http://129.204.99.160:38080/wecube-monitor/register',
+            url: url,
             data: {
               ...this.form
             }
@@ -110,9 +111,6 @@ export default {
 </script>
 
 <style lang="less" scope>
-.ivu-form-item {
-  margin-bottom: 6px;
-}
 .login{
   width: 100%;
   height: 100%;
@@ -120,7 +118,7 @@ export default {
   background-size: cover;
   background-position: center;
   &-con {
-    margin-top: 15%;
+    margin-top: 10%;
   }
   .form-con{
     padding: 10px 0 0;
