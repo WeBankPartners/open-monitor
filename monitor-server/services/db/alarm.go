@@ -54,9 +54,12 @@ func ListGrp(query *m.GrpQuery) error {
 func GetSingleGrp(id int,name string) (error,m.GrpTable) {
 	var result []*m.GrpTable
 	err := x.SQL("SELECT * FROM grp WHERE id=? or name=?", id, name).Find(&result)
-	if err != nil || len(result) <= 0 {
+	if err != nil {
 		mid.LogError("get single grp fail", err)
 		return err,m.GrpTable{}
+	}
+	if len(result) == 0 {
+		return nil,m.GrpTable{}
 	}
 	return nil,*result[0]
 }
