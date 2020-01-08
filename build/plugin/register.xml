@@ -200,7 +200,7 @@
         <plugin name="tomcat-register" targetPackage="wecmdb" targetEntity="business_app_instance">
             <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/tomcat" httpMethod='POST'>
                 <inputParameters>
-                    <parameter datatype="string" mappingType="context" mappingEntityExpression="wecmdb:business_app_instance.resource_instance>wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">host_ip</parameter>
+                    <parameter datatype="string" mappingType="context" mappingEntityExpression="wecmdb:business_app_instance.resource_instance>wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">instance_ip</parameter>
                     <parameter datatype="string" mappingType="context" mappingEntityExpression="wecmdb:business_app_instance.monitor_port" required="Y">port</parameter>
                     <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MONITOR_TOMCAT_GROUP" required="Y">group</parameter>
                     <parameter datatype="string" mappingType="context" mappingEntityExpression="wecmdb:business_app_instance.key_name" required="Y">instance</parameter>
@@ -214,7 +214,7 @@
             </interface>
             <interface action="deregister" path="/wecube-monitor/api/v1/agent/export/deregister/tomcat" httpMethod='GET'>
                 <inputParameters>
-                    <parameter datatype="string" mappingType="context" mappingEntityExpression="wecmdb:business_app_instance.resource_instance>wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">host_ip</parameter>
+                    <parameter datatype="string" mappingType="context" mappingEntityExpression="wecmdb:business_app_instance.resource_instance>wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">instance_ip</parameter>
                     <parameter datatype="string" mappingType="context" mappingEntityExpression="wecmdb:business_app_instance.monitor_port" required="Y">port</parameter>
                     <parameter datatype="string" mappingType="context" mappingEntityExpression="wecmdb:business_app_instance.key_name" required="Y">instance</parameter>
                 </inputParameters>
@@ -225,7 +225,7 @@
             </interface>
             <interface action="start_alarm" path="/wecube-monitor/api/v1/agent/export/start/tomcat" httpMethod='POST'>
                 <inputParameters>
-                    <parameter datatype="string" mappingType="context" mappingEntityExpression="wecmdb:business_app_instance.resource_instance>wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">host_ip</parameter>
+                    <parameter datatype="string" mappingType="context" mappingEntityExpression="wecmdb:business_app_instance.resource_instance>wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">instance_ip</parameter>
                     <parameter datatype="string" mappingType="context" mappingEntityExpression="wecmdb:business_app_instance.monitor_port" required="Y">port</parameter>
                     <parameter datatype="string" mappingType="context" mappingEntityExpression="wecmdb:business_app_instance.key_name" required="Y">instance</parameter>
                 </inputParameters>
@@ -236,7 +236,7 @@
             </interface>
             <interface action="stop_alarm" path="/wecube-monitor/api/v1/agent/export/stop/tomcat" httpMethod='POST'>
                 <inputParameters>
-                    <parameter datatype="string" mappingType="context" mappingEntityExpression="wecmdb:business_app_instance.resource_instance>wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">host_ip</parameter>
+                    <parameter datatype="string" mappingType="context" mappingEntityExpression="wecmdb:business_app_instance.resource_instance>wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">instance_ip</parameter>
                     <parameter datatype="string" mappingType="context" mappingEntityExpression="wecmdb:business_app_instance.monitor_port" required="Y">port</parameter>
                     <parameter datatype="string" mappingType="context" mappingEntityExpression="wecmdb:business_app_instance.key_name" required="Y">instance</parameter>
                 </inputParameters>
