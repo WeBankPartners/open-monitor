@@ -75,6 +75,7 @@
     "save": "保存",
     "back": "返回",
     "view": "查看",
+    "authorization": "授权",
     "cancle": "取消",
     "endpointManagement": "对象管理",
     "upload": "导入阈值",

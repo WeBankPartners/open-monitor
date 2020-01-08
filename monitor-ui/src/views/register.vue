@@ -80,7 +80,6 @@ export default {
   },
   methods: {
     handleSubmit () {
-      console.log(this.form)
       this.$refs['loginForm'].validate((valid) => {
         if (valid) {
           let Base64 = require('js-base64').Base64
