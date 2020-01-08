@@ -108,6 +108,7 @@
     "nickname": "昵称",
     "email": "邮箱",
     "phone": "电话",
+    "role": "角色",
     "password": "密码",
     "description": "描述",
     "expr": "表达式",
