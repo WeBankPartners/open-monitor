@@ -141,9 +141,10 @@ export default {
       this.$router.push({path: '/userConfigIndex/userInformationModify'})
     },
     logout () {
+      const url =  require('../../src/assets/js/baseURL').baseURL_config + '/logout'
       axios({
         method: 'GET',
-        url: 'http://129.204.99.160:38080/wecube-monitor/logout',
+        url: url,
         headers: {
           'X-Auth-Token': cookies.getAuthorization() || null
         }

@@ -6,6 +6,8 @@
 * 统一http请求入口，统一处理http请求响应
 *
  */
+import router from '@/router'
+import {cookies} from '@/assets/js/cookieUtils'
 import httpRequest from '@/assets/js/axiosHttp'
 import $ from 'jquery'
 import {Message} from 'view-design'
@@ -79,7 +81,16 @@ function httpRequestEntrance (method, url, data, callback, customHttpConfig) {
         loading.end()
       },0)
     }
+
     errorMessage(error.response.data.msg)
+
+    let status = error.response.data.code
+    if (status === 401) {
+      cookies.deleteAuthorization()
+      localStorage.username = ''
+      router.push({name: 'login'})
+    }
+
     // errorMessage(error.response)
     // if (error.response) {
     //   let status = error.response.status
