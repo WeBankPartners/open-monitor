@@ -24,7 +24,8 @@
                   <Button @click="handleSubmit" type="primary" long>登录</Button>
                 </FormItem>
                 <FormItem class="formItem-set">
-                  <div class="register" @click="register">注册</div>
+                  <div class="footer-style">测试账号:admin/admin</div>
+                  <div class="register footer-style" @click="register">注册</div>
                 </FormItem>
               </Form>
             </div>
@@ -101,7 +102,7 @@ export default {
     padding: 10px 0 0;
   }
   .formItem-set {
-    margin-bottom: 12px;
+    margin-bottom: 6px;
   }
   .register {
     float: right;
@@ -109,6 +110,9 @@ export default {
   }
   .register:hover {
     color: @blue-2;
+  }
+  .footer-style {
+    line-height: 22px;
   }
 }
 </style>
