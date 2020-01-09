@@ -48,6 +48,7 @@ type AlarmTable struct {
 	SLast  string  `json:"s_last"`
 	SPriority  string  `json:"s_priority"`
 	Content  string  `json:"content"`
+	Tags  string  `json:"tags"`
 	StartValue  float64  `json:"start_value"`
 	Start  time.Time  `json:"start"`
 	EndValue  float64  `json:"end_value"`
@@ -65,6 +66,7 @@ type AlarmProblemQuery struct {
 	SLast  string  `json:"s_last"`
 	SPriority  string  `json:"s_priority"`
 	Content  string  `json:"content"`
+	Tags  string  `json:"tags"`
 	StartValue  float64  `json:"start_value"`
 	Start  time.Time  `json:"start"`
 	StartString  string  `json:"start_string"`

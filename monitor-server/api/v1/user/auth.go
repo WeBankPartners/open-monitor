@@ -116,6 +116,10 @@ func Register(c *gin.Context)  {
 func UpdateUserMsg(c *gin.Context)  {
 	var param m.UpdateUserDto
 	if err := c.ShouldBindJSON(&param); err==nil {
+		if mid.GetOperateUser(c) == "admin" {
+			mid.ReturnError(c, "admin message can not change", nil)
+			return
+		}
 		if !mid.ValidatePost(c, param, "NewPassword", "ReNewPassword") {return}
 		operator := mid.GetOperateUser(c)
 		var userObj m.UserTable
