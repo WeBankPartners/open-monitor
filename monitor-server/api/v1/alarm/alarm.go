@@ -27,7 +27,18 @@ func AcceptAlertMsg(c *gin.Context)  {
 			mid.LogInfo(fmt.Sprintf("accept alert msg : %v", v))
 			var tmpValue float64
 			var tmpAlarms m.AlarmProblemList
+			var tmpTags  string
 			tmpAlarm := m.AlarmTable{Status: v.Status}
+			for labelKey,labelValue := range v.Labels {
+				if labelKey == "strategy_id" || labelKey == "job" || labelKey == "instance" || labelKey == "alertname" {
+					continue
+				}
+				tmpTags += fmt.Sprintf("%s:%s^", labelKey, labelValue)
+			}
+			if tmpTags != "" {
+				tmpTags = tmpTags[:len(tmpTags)-1]
+			}
+			tmpAlarm.Tags = tmpTags
 			if v.Labels["strategy_id"] == "up" {
 				// base strategy
 				tmpAlarm.SMetric = "up"
@@ -96,6 +107,10 @@ func AcceptAlertMsg(c *gin.Context)  {
 						tmpOperation = "resolve"
 					}
 				}else if tmpAlarms[0].Status == "ok" {
+					if v.Status == "resolved" {
+						tmpOperation = "same"
+					}
+				}else if tmpAlarms[0].Status == "closed" {
 					if v.Status == "resolved" {
 						tmpOperation = "same"
 					}
