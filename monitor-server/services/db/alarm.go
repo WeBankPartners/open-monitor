@@ -495,7 +495,7 @@ func UpdateAlarms(alarms []*m.AlarmTable) error {
 			params = append(params, v.Id)
 		}else{
 			if !judgeExist(*v) {
-				action.Sql = "INSERT INTO alarm(strategy_id,endpoint,status,s_metric,s_expr,s_cond,s_last,s_priority,content,start_value,start) VALUE (?,?,?,?,?,?,?,?,?,?,?)"
+				action.Sql = "INSERT INTO alarm(strategy_id,endpoint,status,s_metric,s_expr,s_cond,s_last,s_priority,content,start_value,start,tags) VALUE (?,?,?,?,?,?,?,?,?,?,?,?)"
 				params = append(params, v.StrategyId)
 				params = append(params, v.Endpoint)
 				params = append(params, v.Status)
@@ -507,6 +507,7 @@ func UpdateAlarms(alarms []*m.AlarmTable) error {
 				params = append(params, v.Content)
 				params = append(params, v.StartValue)
 				params = append(params, v.Start.Format(m.DatetimeFormat))
+				params = append(params, v.Tags)
 			}
 		}
 		action.Param = params
