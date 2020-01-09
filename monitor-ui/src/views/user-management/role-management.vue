@@ -146,6 +146,14 @@ export default {
       this.id = rowData.id
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.setup.userManagement.get, "", (responseData) => {
         this.authorizationModel.userList = responseData.data
+        this.existUser()
+      })
+    },
+    existUser () {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.setup.userManagement.get, {role: this.id}, (responseData) => {
+        responseData.data.forEach((item) => {
+          this.authorizationModel.addRow.user.push(item.id)
+        })
         this.$root.JQ('#authorization_model').modal('show')
       })
     },
