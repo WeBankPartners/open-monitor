@@ -310,3 +310,12 @@ CREATE TABLE `rel_role_user` (
   `user_id` INT(10) UNSIGNED NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+
+CREATE TABLE `panel_recursive` (
+  `guid` VARCHAR(50) NOT NULL,
+  `display_name` VARCHAR(50) NOT NULL DEFAULT '',
+  `parent` TEXT,
+  `endpoint` TEXT,
+  `update_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`guid`)
+) ENGINE=INNODB DEFAULT CHARSET=utf8;
