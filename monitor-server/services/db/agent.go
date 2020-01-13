@@ -87,9 +87,9 @@ func UpdateRecursivePanel(param m.PanelRecursiveTable) error {
 		return err
 	}
 	if len(prt) > 0 {
-		_,err = x.Exec("UPDATE panel_recursive SET display_name=?,children=?,endpoint=?,endpoint_type=? WHERE guid=?", param.DisplayName,param.Children,param.Endpoint,param.EndpointType,param.Guid)
+		_,err = x.Exec("UPDATE panel_recursive SET display_name=?,parent=?,endpoint=? WHERE guid=?", param.DisplayName,param.Parent,param.Endpoint,param.Guid)
 	}else{
-		_,err = x.Exec("INSERT INTO panel_recursive(guid,display_name,children,endpoint,endpoint_type) VALUE (?,?,?,?,?)", param.Guid,param.DisplayName,param.Children,param.Endpoint,param.EndpointType)
+		_,err = x.Exec("INSERT INTO panel_recursive(guid,display_name,parent,endpoint) VALUE (?,?,?,?,?)", param.Guid,param.DisplayName,param.Parent,param.Endpoint)
 	}
 	return err
 }

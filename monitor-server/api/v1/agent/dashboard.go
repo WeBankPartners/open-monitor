@@ -20,9 +20,8 @@ type panelRequestObj struct {
 	CallbackParameter  string  `json:"callbackParameter"`
 	Guid  string  `json:"guid"`
 	DisplayName  string  `json:"display_name"`
-	Children  []string  `json:"children"`
+	Parent  []string  `json:"parent"`
 	Endpoint  string  `json:"endpoint"`
-	EndpointType  string  `json:"endpointType"`
 }
 
 func ExportPanel(c *gin.Context)  {
@@ -43,7 +42,7 @@ func ExportPanel(c *gin.Context)  {
 			if v.Guid == "" {
 				tmpMessage = fmt.Sprintf("Index:%s guid is null", v.CallbackParameter)
 			}
-			if len(v.Children) == 0 && v.Endpoint == "" {
+			if len(v.Parent) == 0 && v.Endpoint == "" {
 				tmpMessage = fmt.Sprintf("Index:%s children and endpoint both null", v.CallbackParameter)
 			}
 			if tmpMessage != "" {
@@ -52,7 +51,7 @@ func ExportPanel(c *gin.Context)  {
 				successFlag = "1"
 				continue
 			}
-			err := db.UpdateRecursivePanel(m.PanelRecursiveTable{Guid:v.Guid,DisplayName:v.DisplayName,Children:strings.Join(v.Children, "^"),Endpoint:v.Endpoint,EndpointType:v.EndpointType})
+			err := db.UpdateRecursivePanel(m.PanelRecursiveTable{Guid:v.Guid,DisplayName:v.DisplayName,Parent:strings.Join(v.Parent, "^"),Endpoint:v.Endpoint})
 			if err != nil {
 				tmpMessage = fmt.Sprintf("Index:%s update database error:%v", v.CallbackParameter, err)
 				errorMessage = tmpMessage
