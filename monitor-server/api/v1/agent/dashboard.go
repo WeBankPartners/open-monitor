@@ -21,7 +21,7 @@ type panelRequestObj struct {
 	Guid  string  `json:"guid"`
 	DisplayName  string  `json:"display_name"`
 	Parent  []string  `json:"parent"`
-	Endpoint  string  `json:"endpoint"`
+	Endpoint  []string  `json:"endpoint"`
 }
 
 func ExportPanel(c *gin.Context)  {
@@ -42,8 +42,34 @@ func ExportPanel(c *gin.Context)  {
 			if v.Guid == "" {
 				tmpMessage = fmt.Sprintf("Index:%s guid is null", v.CallbackParameter)
 			}
-			if len(v.Parent) == 0 && v.Endpoint == "" {
-				tmpMessage = fmt.Sprintf("Index:%s children and endpoint both null", v.CallbackParameter)
+			//if len(v.Parent) == 0 && v.Endpoint == "" {
+			//	tmpMessage = fmt.Sprintf("Index:%s children and endpoint both null", v.CallbackParameter)
+			//}
+			if tmpMessage != "" {
+				errorMessage = tmpMessage
+				tmpResult = append(tmpResult, resultOutputObj{CallbackParameter:v.CallbackParameter, ErrorCode:"1", ErrorMessage:tmpMessage})
+				successFlag = "1"
+				continue
+			}
+			var endpointString []string
+			for _,v := range v.Endpoint {
+				var tmpAddress string
+				tmpList := strings.Split(v, ":")
+				if len(tmpList) == 1 {
+					tmpAddress = fmt.Sprintf("%s:9100", tmpList[0])
+				}else if len(tmpList) == 2 {
+					tmpAddress = fmt.Sprintf("%s:%s", tmpList[0], tmpList[1])
+				}else{
+					tmpMessage += fmt.Sprintf(" endpoint %s validate fail, ", v)
+					continue
+				}
+				endpointObj := m.EndpointTable{Address:tmpAddress}
+				db.GetEndpoint(&endpointObj)
+				if endpointObj.Id > 0 {
+					endpointString = append(endpointString, endpointObj.Guid)
+				}else{
+					tmpMessage += fmt.Sprintf(" endpoint with address %s can not find, ", tmpAddress)
+				}
 			}
 			if tmpMessage != "" {
 				errorMessage = tmpMessage
@@ -51,7 +77,7 @@ func ExportPanel(c *gin.Context)  {
 				successFlag = "1"
 				continue
 			}
-			err := db.UpdateRecursivePanel(m.PanelRecursiveTable{Guid:v.Guid,DisplayName:v.DisplayName,Parent:strings.Join(v.Parent, "^"),Endpoint:v.Endpoint})
+			err := db.UpdateRecursivePanel(m.PanelRecursiveTable{Guid:v.Guid,DisplayName:v.DisplayName,Parent:strings.Join(v.Parent, "^"),Endpoint:strings.Join(endpointString, "^")})
 			if err != nil {
 				tmpMessage = fmt.Sprintf("Index:%s update database error:%v", v.CallbackParameter, err)
 				errorMessage = tmpMessage
@@ -69,5 +95,19 @@ func ExportPanel(c *gin.Context)  {
 		result = resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("Param validate fail : %v", err)}
 		mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
 		c.JSON(http.StatusBadRequest, result)
+	}
+}
+
+func GetPanelRecursive(c *gin.Context)  {
+	guid := c.Query("guid")
+	if guid == "" {
+		mid.ReturnValidateFail(c, "Guid is null")
+		return
+	}
+	err,result := db.GetRecursivePanel(guid)
+	if err != nil {
+		mid.ReturnError(c, "Get recursive panel error", err)
+	}else{
+		mid.ReturnData(c, result)
 	}
 }

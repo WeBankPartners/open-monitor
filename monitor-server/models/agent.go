@@ -29,3 +29,9 @@ type PanelRecursiveTable struct {
 	Parent  string  `json:"parent"`
 	Endpoint  string  `json:"endpoint"`
 }
+
+type RecursivePanelObj struct {
+	DisplayName  string  `json:"display_name"`
+	Charts  []*ChartModel  `json:"charts"`
+	Children  []*RecursivePanelObj  `json:"children"`
+}
