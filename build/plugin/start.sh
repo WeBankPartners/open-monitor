@@ -24,7 +24,7 @@ nohup ./agent_manager > logs/app.log 2>&1 &
 cd ../transgateway/
 mkdir -p logs
 mkdir -p data
-nohup ./transgateway > logs/app.log 2>&1 &
+nohup ./transgateway -d data -m http://127.0.0.1:8080 > logs/app.log 2>&1 &
 cd ../monitor/
 mkdir -p logs
 ./monitor-server --export_agent=true
