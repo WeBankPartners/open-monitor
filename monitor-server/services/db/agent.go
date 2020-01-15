@@ -5,6 +5,7 @@ import (
 	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"fmt"
 	"time"
+	"strings"
 )
 
 func UpdateEndpoint(endpoint *m.EndpointTable) error {
@@ -87,9 +88,113 @@ func UpdateRecursivePanel(param m.PanelRecursiveTable) error {
 		return err
 	}
 	if len(prt) > 0 {
-		_,err = x.Exec("UPDATE panel_recursive SET display_name=?,parent=?,endpoint=? WHERE guid=?", param.DisplayName,param.Parent,param.Endpoint,param.Guid)
+		tmpParent := unionList(param.Parent, prt[0].Parent)
+		tmpEndpoint := unionList(param.Endpoint, prt[0].Endpoint)
+		_,err = x.Exec("UPDATE panel_recursive SET display_name=?,parent=?,endpoint=? WHERE guid=?", param.DisplayName,tmpParent,tmpEndpoint,param.Guid)
 	}else{
-		_,err = x.Exec("INSERT INTO panel_recursive(guid,display_name,parent,endpoint) VALUE (?,?,?,?,?)", param.Guid,param.DisplayName,param.Parent,param.Endpoint)
+		_,err = x.Exec("INSERT INTO panel_recursive(guid,display_name,parent,endpoint) VALUE (?,?,?,?)", param.Guid,param.DisplayName,param.Parent,param.Endpoint)
 	}
 	return err
+}
+
+func unionList(param,exist string) string {
+	paramList := strings.Split(param, "^")
+	existList := strings.Split(exist, "^")
+	for _,v := range paramList {
+		tmpExist := false
+		for _,vv := range existList {
+			if vv == v {
+				tmpExist = true
+				break
+			}
+		}
+		if !tmpExist {
+			existList = append(existList, v)
+		}
+	}
+	return strings.Join(existList, "^")
+}
+
+func SearchRecursivePanel(search string) []*m.OptionModel {
+	options := []*m.OptionModel{}
+	var prt []*m.PanelRecursiveTable
+	sql := `SELECT * FROM panel_recursive WHERE display_name LIKE  '%` + search + `%'`
+	x.SQL(sql).Find(&prt)
+	for _,v := range prt {
+		options = append(options, &m.OptionModel{Id:-1, OptionValue:fmt.Sprintf("%s:sys", v.Guid), OptionText:v.DisplayName})
+	}
+	return options
+}
+
+func GetRecursivePanel(guid string) (err error, result m.RecursivePanelObj) {
+	var prt []*m.PanelRecursiveTable
+	err = x.SQL("SELECT guid,display_name,CONCAT(parent,'^') parent,endpoint FROM panel_recursive").Find(&prt)
+	if err != nil {
+		return err,result
+	}
+	for i,v := range prt {
+		mid.LogInfo(fmt.Sprintf("prt data %d -> %v", i ,v))
+	}
+	result = recursiveData(guid, prt, len(prt), 1)
+	return nil,result
+}
+
+func recursiveData(guid string, prt []*m.PanelRecursiveTable, length,depth int) m.RecursivePanelObj {
+	mid.LogInfo(fmt.Sprintf("recursive : guid->%s length->%d depth->%d", guid, length, depth))
+	var obj m.RecursivePanelObj
+	if length < depth {
+		return obj
+	}
+	tmp := guid + "^"
+	for _,v := range prt {
+		if v.Guid == guid {
+			obj.DisplayName = v.DisplayName
+			if v.Endpoint != "" {
+				endpointList := strings.Split(v.Endpoint, "^")
+				tmpMap := make(map[string][]string)
+				for _,vv := range endpointList {
+					tmpEndpointObj := m.EndpointTable{Guid:vv}
+					GetEndpoint(&tmpEndpointObj)
+					if tmpEndpointObj.ExportType == "" {
+						continue
+					}
+					tmpType := tmpEndpointObj.ExportType
+					if _,b := tmpMap[tmpType]; b {
+						tmpMap[tmpType] = append(tmpMap[tmpType], vv)
+					}else{
+						tmpMap[tmpType] = []string{vv}
+					}
+				}
+				for mk,mv := range tmpMap {
+					chartTables := getChartsByEndpointType(mk)
+					for _,cv := range chartTables {
+						obj.Charts = append(obj.Charts, &m.ChartModel{Endpoint:mv, Metric:strings.Split(cv.Metric, "^"), Aggregate:cv.AggType})
+					}
+				}
+				break
+			}
+			continue
+		}
+		if strings.Contains(v.Parent, tmp) {
+			tmpObj := recursiveData(v.Guid, prt, length, depth+1)
+			obj.Children = append(obj.Children, &tmpObj)
+		}
+	}
+	return obj
+}
+
+func getChartsByEndpointType(endpointType string) []*m.ChartTable {
+	var result []*m.ChartTable
+	x.SQL("SELECT t3.group_id,t3.metric,t3.unit,t3.title,t3.agg_type FROM dashboard t1 LEFT JOIN panel t2 ON t1.panels_group=t2.group_id LEFT JOIN chart t3 ON t2.chart_group=t3.group_id WHERE t1.dashboard_type=? ORDER BY t3.group_id", endpointType).Find(&result)
+	if len(result) == 0 {
+		return result
+	}
+	tmpGroupId := result[0].GroupId
+	var ct []*m.ChartTable
+	for _,v := range result {
+		if v.GroupId == tmpGroupId {
+			ct = append(ct, v)
+		}
+	}
+	return ct
 }

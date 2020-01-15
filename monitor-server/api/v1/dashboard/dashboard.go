@@ -481,13 +481,19 @@ func MainSearch(c *gin.Context)  {
 		mid.Return(c, mid.RespJson{Msg:"Param error", Code:http.StatusBadRequest})
 		return
 	}
+	//tmpFlag := true
 	if strings.Contains(endpoint, `:`) {
 		endpoint = strings.Split(endpoint, `:`)[1]
+		//tmpFlag = false
 	}
 	err,result := db.SearchHost(endpoint)
 	if err != nil {
 		mid.ReturnError(c, "Search hosts failed", err)
 		return
+	}
+	sysResult := db.SearchRecursivePanel(endpoint)
+	for _,v := range sysResult {
+		result = append(result, v)
 	}
 	mid.ReturnData(c, result)
 }
