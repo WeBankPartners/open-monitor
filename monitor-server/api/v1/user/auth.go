@@ -175,6 +175,13 @@ func AuthRequired() gin.HandlerFunc {
 		}
 		auToken := c.GetHeader("X-Auth-Token")
 		if auToken != ""{
+			if m.Config().Http.Session.ServerEnable {
+				if strings.Contains(c.Request.URL.Path, "agent/export/") || strings.Contains(c.Request.URL.Path, "alarm/send") {
+					if auToken == m.Config().Http.Session.ServerToken {
+						c.Next()
+					}
+				}
+			}
 			if mid.IsActive(auToken) {
 				c.Next()
 			}else{
