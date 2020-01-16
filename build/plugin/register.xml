@@ -250,10 +250,10 @@
         <plugin name="system-dashboard" targetPackage="wecmdb" targetEntity="system">
             <interface action="display" path="/wecube-monitor/api/v1/dashboard/system" httpMethod='POST'>
                 <inputParameters>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:system.key_name" required='Y'>system_name</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:system~(system)wecmdb:subsys~(subsys)wecmdb:unit~(unit)wecmdb:business_app_instance.resource_instance>wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required='Y'>ips</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:system~(system)wecmdb:subsys~(subsys)wecmdb:unit~(unit)wecmdb:business_app_instance.key_name" required='Y'>instances</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:system~(system)wecmdb:subsys~(subsys)wecmdb:unit~(unit)wecmdb:business_app_instance.monitor_port" required='Y'>ports</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:system.key_name" required='Y'>guid</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:system~(system)wecmdb:subsys~(subsys)wecmdb:unit~(unit)wecmdb:business_app_instance.resource_instance>wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required='Y'>display_name</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:system~(system)wecmdb:subsys~(subsys)wecmdb:unit~(unit)wecmdb:business_app_instance.key_name" required='Y'>parent</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:system~(system)wecmdb:subsys~(subsys)wecmdb:unit~(unit)wecmdb:business_app_instance.monitor_port" required='Y'>endpoint</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>

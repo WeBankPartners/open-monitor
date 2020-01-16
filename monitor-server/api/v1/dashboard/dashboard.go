@@ -408,7 +408,11 @@ func GetChart(c *gin.Context)  {
 				if endpointObj.Address == "" {
 					continue
 				}
-				v.PromQl = strings.Replace(v.PromQl, "$address", endpointObj.Address, -1)
+				if endpointObj.AddressAgent != "" {
+					v.PromQl = strings.Replace(v.PromQl, "$address", endpointObj.AddressAgent, -1)
+				}else {
+					v.PromQl = strings.Replace(v.PromQl, "$address", endpointObj.Address, -1)
+				}
 			}
 			if strings.Contains(v.PromQl, "$") {
 				re, _ := regexp.Compile("=\"[\\$]+[^\"]+\"")
