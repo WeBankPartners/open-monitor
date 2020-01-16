@@ -494,28 +494,29 @@ func UpdateAlarms(alarms []*m.AlarmTable) error {
 			params = append(params, v.End.Format(m.DatetimeFormat))
 			params = append(params, v.Id)
 		}else{
-			if !judgeExist(*v) {
-				action.Sql = "INSERT INTO alarm(strategy_id,endpoint,status,s_metric,s_expr,s_cond,s_last,s_priority,content,start_value,start,tags) VALUE (?,?,?,?,?,?,?,?,?,?,?,?)"
-				params = append(params, v.StrategyId)
-				params = append(params, v.Endpoint)
-				params = append(params, v.Status)
-				params = append(params, v.SMetric)
-				params = append(params, v.SExpr)
-				params = append(params, v.SCond)
-				params = append(params, v.SLast)
-				params = append(params, v.SPriority)
-				params = append(params, v.Content)
-				params = append(params, v.StartValue)
-				params = append(params, v.Start.Format(m.DatetimeFormat))
-				params = append(params, v.Tags)
-			}
+			action.Sql = "INSERT INTO alarm(strategy_id,endpoint,status,s_metric,s_expr,s_cond,s_last,s_priority,content,start_value,start,tags) VALUE (?,?,?,?,?,?,?,?,?,?,?,?)"
+			params = append(params, v.StrategyId)
+			params = append(params, v.Endpoint)
+			params = append(params, v.Status)
+			params = append(params, v.SMetric)
+			params = append(params, v.SExpr)
+			params = append(params, v.SCond)
+			params = append(params, v.SLast)
+			params = append(params, v.SPriority)
+			params = append(params, v.Content)
+			params = append(params, v.StartValue)
+			params = append(params, v.Start.Format(m.DatetimeFormat))
+			params = append(params, v.Tags)
 		}
 		action.Param = params
 		if action.Sql != "" {
 			actions = append(actions, &action)
 		}
 	}
-	return Transaction(actions)
+	if len(actions) > 0 {
+		return Transaction(actions)
+	}
+	return nil
 }
 
 func judgeExist(alarm m.AlarmTable) bool {

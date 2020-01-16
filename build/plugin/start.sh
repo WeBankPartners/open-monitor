@@ -21,6 +21,10 @@ nohup ./prometheus --config.file=prometheus.yml --web.enable-lifecycle --storage
 cd ../agent_manager/
 mkdir -p logs
 nohup ./agent_manager > logs/app.log 2>&1 &
+cd ../transgateway/
+mkdir -p logs
+mkdir -p data
+nohup ./transgateway -d data -m http://127.0.0.1:8080 > logs/app.log 2>&1 &
 cd ../monitor/
 mkdir -p logs
 ./monitor-server --export_agent=true
