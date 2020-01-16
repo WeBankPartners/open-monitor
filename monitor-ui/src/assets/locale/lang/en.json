@@ -40,9 +40,9 @@
     "title": "Title",
     "unit": "Unit",
     "instance": "Instance",
-    "personalInformation":"personal Information",
-    "userManagement":"user Management",
-    "roleManagement":"role Management"
+    "personalInformation":"Personal Information",
+    "userManagement":"User Management",
+    "roleManagement":"Role Management"
   },
   "title": {
     "viewConfiguration": "View Configuration",
@@ -63,6 +63,8 @@
     "edit": "Edit",
     "remove": "Remove",
     "confirm": "Confirm",
+    "password": "Password",
+    "rePassword": "Confirm password",
     "thresholdManagement": "Threshold",
     "historicalAlert": "Historical Alert",
     "logConfiguration": "Keyword Configuration",
@@ -109,7 +111,6 @@
     "email": "Email",
     "phone": "Phone",
     "role": "Role",
-    "password": "Password",
     "description": "Description",
     "expr": "Expression",
     "content": "Content",

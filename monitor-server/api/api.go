@@ -86,6 +86,7 @@ func InitHttpServer(exportAgent bool) {
 			dashboardApi.GET("/config/metric/list", dashboard.GetPromMetric)
 			dashboardApi.POST("/newchart", dashboard.GetChart)
 			dashboardApi.POST("/config/metric/update", dashboard.UpdatePromMetric)
+			dashboardApi.GET("/config/metric/reload", agent.ReloadEndpointMetric)
 			dashboardApi.GET("/endpoint/metric/list", dashboard.GetEndpointMetric)
 			dashboardApi.GET("/custom/list", dashboard.ListCustomDashboard)
 			dashboardApi.GET("/custom/get", dashboard.GetCustomDashboard)
@@ -95,7 +96,8 @@ func InitHttpServer(exportAgent bool) {
 			dashboardApi.GET("/custom/main/get", dashboard.GetMainPage)
 			dashboardApi.GET("/custom/main/set", dashboard.SetMainPage)
 			dashboardApi.GET("/custom/endpoint/get", dashboard.GetEndpointsByIp)
-			dashboardApi.GET("/system", agent.ExportPanel)
+			dashboardApi.POST("/system", agent.ExportPanel)
+			dashboardApi.GET("/recursive/get", agent.GetPanelRecursive)
 		}
 		agentApi := authApi.Group("/agent")
 		{
@@ -105,7 +107,8 @@ func InitHttpServer(exportAgent bool) {
 			agentApi.POST("/export/deregister/:name", agent.ExportAgent)
 			agentApi.POST("/export/start/:name", agent.AlarmControl)
 			agentApi.POST("/export/stop/:name", agent.AlarmControl)
-			agentApi.POST("/install/:name", agent.InstallAgent)
+			agentApi.POST("/export/install/:name", agent.InstallAgent)
+			agentApi.POST("/export/custom/endpoint/add", agent.CustomRegister)
 		}
 		alarmApi := authApi.Group("/alarm")
 		{

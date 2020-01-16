@@ -10,9 +10,34 @@
         <input v-if="activeKey === info.key" @blur="saveInfo(info.key)" v-model="userInfo[info.key]" type="text" class="form-control model-input">
         <span v-else>{{userInfo[info.key]}} <i @click="activeKey = info.key" class="fa fa-pencil-square-o" aria-hidden="true"></i></span>
       </li>
+      <!-- <li>
+        <label for="">{{$t('tableKey.password')}}：</label>
+        <template v-if="activeKey === 'new_password'">
+          <input v-model="userInfo.new_password" type="text" class="form-control model-input">
+          <input v-model="userInfo.re_new_password" type="text" class="form-control model-input">
+          <button type="button" class="btn-confirm-f">{{$t('button.confirm')}}</button>
+        </template>
+        <span v-else>{{userInfo.new_password}} <i @click="activeKey = 'new_password'" class="fa fa-pencil-square-o" aria-hidden="true"></i></span>
+      </li> -->
+      <template v-if="activeKey === 'new_password'">
+        <li>
+          <label for="">{{$t('button.password')}}：</label>
+          <input v-model="userInfo.new_password" type="text" class="form-control model-input">
+        </li>
+        <li>
+          <label for="">{{$t('button.rePassword')}}：</label>
+          <input v-model="userInfo.re_new_password" type="text" class="form-control model-input">
+          <button type="button" class="btn-confirm-f" @click="confirmPassword">{{$t('button.rePassword')}}</button>
+          <button type="button" class="btn-cancle-f" @click="abandonModify">{{$t('button.cancle')}}</button>
+        </li> 
+      </template>
+      <li v-else>
+        <label for="">{{$t('button.password')}}：</label>
+        <span>{{userInfo.new_password}} <i @click="activeKey = 'new_password';userInfo.new_password=''" class="fa fa-pencil-square-o" aria-hidden="true"></i></span>
+      </li>
       <li>
         <label for="">{{$t('tableKey.activeDate')}}：</label>
-        <span>{{userInfo.created}}</span>
+        <span>{{userInfo.created_string}}</span>
       </li>
     </ul>
   </div>
@@ -27,7 +52,7 @@ export default {
         { label: 'tableKey.nickname', key: 'display_name' },
         { label: 'tableKey.email', key: 'email' },
         { label: 'tableKey.phone', key: 'phone' },
-        { label: 'tableKey.password', key: 'new_password' },
+        // { label: 'tableKey.password', key: 'new_password' },
       ],
       activeKey: null,
       userInfo: {}
@@ -41,6 +66,7 @@ export default {
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.setup.userInformation.get, {}, (responseData) => {
         this.userInfo = responseData
         this.userInfo.new_password = '**********'
+        this.userInfo.re_new_password = ''
       })
     },
     saveInfo (key) {
@@ -64,6 +90,18 @@ export default {
         this.$Message.success(this.$t('tips.success'))
         this.userInformation()
       })
+    },
+    confirmPassword () {
+      if (this.userInfo.new_password.trim() === this.userInfo.re_new_password.trim()) {
+        this.saveInfo('new_password')
+      } else {
+        this.$Message.success(this.$t('tips.failed'))
+      }
+    },
+    abandonModify () {
+      this.activeKey = ''
+      this.userInfo.re_new_password = ''
+      this.userInfo.new_password = '******'
     }
   },
   components: {},
@@ -77,7 +115,7 @@ export default {
   font-weight: 400;
   margin-top:20px;
   label {
-    width:100px;
+    width:150px;
     text-align: right;
     margin-bottom: 0;
   }
@@ -90,7 +128,7 @@ export default {
   }
 }
 .form-control {
-  width: 20%;
+  width: 15%;
 }
 .form-control:focus {
   box-shadow: none;

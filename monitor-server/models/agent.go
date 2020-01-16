@@ -26,7 +26,12 @@ type RegisterConsulCheck struct {
 type PanelRecursiveTable struct {
 	Guid  string  `json:"guid"`
 	DisplayName  string  `json:"display_name"`
-	Children  string  `json:"children"`
+	Parent  string  `json:"parent"`
 	Endpoint  string  `json:"endpoint"`
-	EndpointType  string  `json:"endpoint_type"`
+}
+
+type RecursivePanelObj struct {
+	DisplayName  string  `json:"display_name"`
+	Charts  []*ChartModel  `json:"charts"`
+	Children  []*RecursivePanelObj  `json:"children"`
 }
