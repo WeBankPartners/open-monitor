@@ -8,6 +8,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"strings"
 	"fmt"
+	"strconv"
 )
 
 const hostType  = "host"
@@ -342,4 +343,71 @@ func DeregisterJob(guid string) error {
 		return err
 	}
 	return err
+}
+
+type transGatewayRequestDto struct {
+	Name  string  `json:"name"`
+	HostIp  string  `json:"host_ip"`
+	Address  string  `json:"address"`
+}
+
+func CustomRegister(c *gin.Context)  {
+	var param transGatewayRequestDto
+	if err:=c.ShouldBindJSON(&param); err==nil {
+		var endpointObj m.EndpointTable
+		endpointObj.Guid = fmt.Sprintf("%s_%s_custom", param.Name, param.HostIp)
+		endpointObj.Address = param.Address
+		endpointObj.Name = param.Name
+		endpointObj.Ip = param.HostIp
+		endpointObj.ExportType = "custom"
+		endpointObj.Step = 10
+		err := db.UpdateEndpoint(&endpointObj)
+		if err != nil {
+			mid.ReturnError(c, fmt.Sprintf("Update endpoint %s_%s_custom fail", param.Name, param.HostIp), err)
+		}else{
+			mid.ReturnSuccess(c, "Success")
+		}
+	}else{
+		mid.ReturnValidateFail(c, fmt.Sprintf("Parameter validate fail %v", err))
+	}
+}
+
+func ReloadEndpointMetric(c *gin.Context)  {
+	id,_ := strconv.Atoi(c.Query("id"))
+	if id <= 0 {
+		mid.ReturnValidateFail(c, "Param id validate fail")
+		return
+	}
+	endpointObj := m.EndpointTable{Id:id}
+	db.GetEndpoint(&endpointObj)
+	var address string
+	if endpointObj.Address == "" {
+		if endpointObj.AddressAgent == "" {
+			mid.ReturnError(c, fmt.Sprintf("Endpoint id %d have no address", id), nil)
+			return
+		}
+		address = endpointObj.AddressAgent
+	}else{
+		address = endpointObj.Address
+	}
+	tmpExporterIp := strings.Split(address, ":")[0]
+	tmpExporterPort := strings.Split(address, ":")[1]
+	var strList []string
+	if endpointObj.ExportType == hostType {
+		_, strList = prom.GetEndpointData(tmpExporterIp, tmpExporterPort, []string{"node"}, []string{})
+	}else if endpointObj.ExportType == mysqlType {
+		_, strList = prom.GetEndpointData(tmpExporterIp, tmpExporterPort, []string{"mysql", "mysqld"}, []string{})
+	}else if endpointObj.ExportType == redisType {
+		_, strList = prom.GetEndpointData(tmpExporterIp, tmpExporterPort, []string{"redis"}, []string{"redis_version", ",version"})
+	}else if endpointObj.ExportType == tomcatType {
+		_, strList = prom.GetEndpointData(tmpExporterIp, tmpExporterPort, []string{"Catalina", "catalina", "jvm", "java"}, []string{"version"})
+	}else{
+		_, strList = prom.GetEndpointData(tmpExporterIp, tmpExporterPort, []string{}, []string{""})
+	}
+	err := db.RegisterEndpointMetric(id, strList)
+	if err != nil {
+		mid.ReturnError(c, "Update endpoint metric db fail", err)
+	}else{
+		mid.ReturnSuccess(c, "Success")
+	}
 }

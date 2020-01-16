@@ -408,7 +408,11 @@ func GetChart(c *gin.Context)  {
 				if endpointObj.Address == "" {
 					continue
 				}
-				v.PromQl = strings.Replace(v.PromQl, "$address", endpointObj.Address, -1)
+				if endpointObj.AddressAgent != "" {
+					v.PromQl = strings.Replace(v.PromQl, "$address", endpointObj.AddressAgent, -1)
+				}else {
+					v.PromQl = strings.Replace(v.PromQl, "$address", endpointObj.Address, -1)
+				}
 			}
 			if strings.Contains(v.PromQl, "$") {
 				re, _ := regexp.Compile("=\"[\\$]+[^\"]+\"")
@@ -481,13 +485,19 @@ func MainSearch(c *gin.Context)  {
 		mid.Return(c, mid.RespJson{Msg:"Param error", Code:http.StatusBadRequest})
 		return
 	}
+	//tmpFlag := true
 	if strings.Contains(endpoint, `:`) {
 		endpoint = strings.Split(endpoint, `:`)[1]
+		//tmpFlag = false
 	}
 	err,result := db.SearchHost(endpoint)
 	if err != nil {
 		mid.ReturnError(c, "Search hosts failed", err)
 		return
+	}
+	sysResult := db.SearchRecursivePanel(endpoint)
+	for _,v := range sysResult {
+		result = append(result, v)
 	}
 	mid.ReturnData(c, result)
 }
