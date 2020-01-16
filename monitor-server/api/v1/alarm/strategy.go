@@ -191,14 +191,22 @@ func SaveConfigFile(tplId int) error {
 			endpointObj := m.EndpointTable{Id:tplObj.EndpointId}
 			db.GetEndpoint(&endpointObj)
 			fileName = endpointObj.Guid
-			endpointExpr = endpointObj.Address
+			if endpointObj.AddressAgent != "" {
+				endpointExpr = endpointObj.AddressAgent
+			}else {
+				endpointExpr = endpointObj.Address
+			}
 		}
 	}
 	if isGrp {
 		_,endpointObjs := db.GetEndpointsByGrp(tplObj.GrpId)
 		if len(endpointObjs) > 0 {
 			for _, v := range endpointObjs {
-				endpointExpr += fmt.Sprintf("%s|", v.Address)
+				if v.AddressAgent != "" {
+					endpointExpr += fmt.Sprintf("%s|", v.AddressAgent)
+				}else {
+					endpointExpr += fmt.Sprintf("%s|", v.Address)
+				}
 			}
 			endpointExpr = endpointExpr[:len(endpointExpr)-1]
 		}
@@ -216,7 +224,11 @@ func SaveConfigFile(tplId int) error {
 		if !isGrp && endpointExpr == "" && query.Tpl[len(query.Tpl)-1].ObjType == "endpoint" {
 			endpointObj := m.EndpointTable{Guid:query.Tpl[len(query.Tpl)-1].ObjName}
 			db.GetEndpoint(&endpointObj)
-			endpointExpr = endpointObj.Address
+			if endpointObj.AddressAgent != "" {
+				endpointExpr = endpointObj.AddressAgent
+			}else {
+				endpointExpr = endpointObj.Address
+			}
 		}
 		for _,v := range query.Tpl[len(query.Tpl)-1].Strategy {
 			tmpRfu := m.RFRule{}
