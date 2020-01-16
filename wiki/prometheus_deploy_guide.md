@@ -35,8 +35,8 @@
 	
 	```shell
 	OS:CentOS-7.5.1804
-	host1:192.168.1.1  
-	host2:192.168.1.2
+	host1:127.0.0.1  
+	host2:127.0.0.2
 	```
 
 
@@ -103,7 +103,7 @@
        alertmanagers:
        - static_configs:
          - targets:
-            - 192.168.67.131:9093
+            - 127.0.0.1:9093
      
      # Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
      rule_files:
@@ -121,12 +121,12 @@
          # scheme defaults to 'http'.
      
          static_configs:
-         - targets: ['192.168.67.131:9090']
+         - targets: ['127.0.0.1:9090']
      
        - job_name: 'consul'
          scheme: http
          consul_sd_configs:
-           - server: 192.168.67.131:8500
+           - server: 127.0.0.1:8500
              scheme: http
              services: []
      ```
@@ -151,7 +151,7 @@
 4. 注册exporter
 
 	```shell
-	curl -X PUT -d '{"id": "node31","name": "node31","address": "192.168.67.131","port": 9100,"tags": ["host"],"checks": [{"http": "http://192.168.67.131:9100/","interval": "10s"}]}' http://127.0.0.1:8500/v1/agent/service/register
+	curl -X PUT -d '{"id": "node31","name": "node31","address": "127.0.0.1","port": 9100,"tags": ["host"],"checks": [{"http": "http://127.0.0.1:9100/","interval": "10s"}]}' http://127.0.0.1:8500/v1/agent/service/register
 	```
 5. 注销exporter
 
@@ -194,7 +194,7 @@ if prometheus01 down
 
 	```shell
 	docker volume create alertmanager-data
-	docker run --name alertmanager02 --volume alertmanager-data:/alertmanager --volume /app/docker/alertmanager:/etc/alertmanager -d -p 9093:9093 -p 9094:9094 prom/alertmanager --config.file=/etc/alertmanager/alertmanager.yml --web.listen-address=":9093" --cluster.listen-address=":9094" --cluster.peer="192.168.67.131:9094"
+	docker run --name alertmanager02 --volume alertmanager-data:/alertmanager --volume /app/docker/alertmanager:/etc/alertmanager -d -p 9093:9093 -p 9094:9094 prom/alertmanager --config.file=/etc/alertmanager/alertmanager.yml --web.listen-address=":9093" --cluster.listen-address=":9094" --cluster.peer="127.0.0.1:9094"
 	```
 
 4. host1 run prometheus
@@ -205,7 +205,7 @@ if prometheus01 down
 	```
 
 5. host2 run prometheus
-	修改prometheus.yml，把01里的consul scrape改成去拉01节点prometheus的数据targets:'192.168.67.131:9090'，同步01的数据
+	修改prometheus.yml，把01里的consul scrape改成去拉01节点prometheus的数据targets:'127.0.0.1:9090'，同步01的数据
 
 	```yaml
 	  - job_name: 'federate'
@@ -219,7 +219,7 @@ if prometheus01 down
 	        - '{__name__=~"node.*"}'
 	    static_configs:
 	      - targets:
-	        - '192.168.67.131:9090'
+	        - '127.0.0.1:9090'
 	```
 
 	```shell
