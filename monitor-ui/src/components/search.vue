@@ -109,10 +109,24 @@ export default {
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.resourceSearch.api, params, (responseData) => {
        this.endpointList = responseData
+       this.endpointList.unshift({
+          id: -1,
+          option_value: 'guid_test_6:sys',
+          option_text: 'name1',
+          active: false
+        })
       })
     },
     async getChartsConfig () {
       if (this.$root.$validate.isEmpty_reset(this.endpoint)) {
+        return
+      }
+      if (this.endpoint.split(':')[1] === 'sys') {
+        const params = {
+          sys: true,
+          guid: this.endpoint.split(':')[0]
+        }
+        this.$parent.manageCharts({}, params)
         return
       }
       const res = await this.getMainConfig()
@@ -123,7 +137,8 @@ export default {
         time: this.timeTnterval,
         endpoint: this.endpoint.split(':')[0],
         start: this.dateRange[0] ===''? '':Date.parse(this.dateRange[0])/1000,
-        end: this.dateRange[1] ===''? '':Date.parse(this.dateRange[1])/1000
+        end: this.dateRange[1] ===''? '':Date.parse(this.dateRange[1])/1000,
+        sys: false
       }
       url = url.replace(`{${key}}`,params[key].split(':')[0])
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET',url, params, responseData => {
