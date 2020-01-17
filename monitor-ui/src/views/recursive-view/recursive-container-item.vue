@@ -11,18 +11,32 @@
         :increment="count"
         v-if="item.children"
         :data="item.children"></recursiveContainerItem>
-        <div>{{item.charts}}</div>
+        <div style="text-align:center">
+          <!-- {{item.charts}} -->
+          <template v-for="(chartItemx,chartIndexx) in item.charts">
+            <!-- {{chartItemx}}-{{chartIndexx}} -->
+            <SingleChart :chartItemx="chartItemx" :chartIndex="chartIndexx" :key="chartIndexx" :params="sortOutParams(chartItemx)"> </SingleChart>
+          </template>
+        </div>
       </li>
     </ul>
   </div>
 </template>
 
 <script>
+import SingleChart from '@/components/single-chart'
 export default {
   name: 'recursiveContainerItem',
   data() {
     return {
-
+      params: {
+        autoRefresh: 0,
+        time: -1800,
+        endpoint: '',
+        start: '',
+        end: '',
+        sys: true,
+      }
     }
   },
   props:{
@@ -45,8 +59,16 @@ export default {
       }
     }
   },
-  methods: {},
-  components: {},
+  methods: {
+    sortOutParams (chartItemx) {
+      this.params.endpoint = chartItemx.endpoint
+      this.params.metric = chartItemx.metric
+      return this.params
+    }
+  },
+  components: {
+    SingleChart
+  }
 }
 </script>
 
@@ -86,7 +108,7 @@ export default {
   }
   .tree-border {
     border: 1px solid #9966;
-    padding: 8px;
-    margin: 8px;;
+    padding: 4px;
+    margin: 4px;
   }
 </style>

@@ -49,15 +49,31 @@ export default {
   },
   methods: {
     getchartdata () {
-      let params = {
-        id: this.chartItemx.id,
-        endpoint: this.params.endpoint.split(':')[0],
-        metric: this.chartItemx.metric[0],
-        time: this.params.time.toString(),
-        start: this.params.start + '',
-        end: this.params.end + ''
+      let params = []
+      if (this.params.sys) {
+        this.params.endpoint.forEach((ep) => {
+          this.params.metric.forEach((me) => {
+            params.push({
+              id: this.chartItemx.id,
+              endpoint: ep,
+              metric: me,
+              time: this.params.time.toString(),
+              start: this.params.start + '',
+              end: this.params.end + ''
+            })
+          })
+        })
+      } else {
+        params.push({
+          id: this.chartItemx.id,
+          endpoint: this.params.endpoint,
+          metric: this.chartItemx.metric[0],
+          time: this.params.time.toString(),
+          start: this.params.start + '',
+          end: this.params.end + ''
+        })
       }
-      this.$httpRequestEntrance.httpRequestEntrance('POST', 'dashboard/newchart', [params], responseData => {
+      this.$httpRequestEntrance.httpRequestEntrance('POST', 'dashboard/newchart', params, responseData => {
         readyToDraw(this,responseData, this.chartIndex)
       })
     }
@@ -72,7 +88,7 @@ export default {
     padding: 5px;
     .echart {
        height: 300px;
-       width: 580px;
+       width: 500px;
        border-radius: 4px;
       //  background: @gray-f;
     }
