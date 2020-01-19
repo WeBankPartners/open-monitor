@@ -149,6 +149,7 @@ CREATE TABLE `alarm` (
   `s_last` VARCHAR(50) NOT NULL,
   `s_priority` VARCHAR(50) NOT NULL,
   `content` VARCHAR(500) DEFAULT '',
+  `tags` varchar(255) DEFAULT '',
   `start_value` DOUBLE,
   `start` DATETIME,
   `end_value` DOUBLE,
