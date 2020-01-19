@@ -16,7 +16,9 @@ cd ../alertmanager/
 mkdir -p logs
 nohup ./alertmanager --config.file=alertmanager.yml --web.listen-address=":9093"  --cluster.listen-address=":9094" > logs/alertmanager.log 2>&1 &
 cd ../prometheus/
+mkdir -p rules
 mkdir -p logs
+/bin/cp -f base.yml rules/
 nohup ./prometheus --config.file=prometheus.yml --web.enable-lifecycle --storage.tsdb.retention.time=30d > logs/prometheus.log 2>&1 &
 cd ../agent_manager/
 mkdir -p logs
