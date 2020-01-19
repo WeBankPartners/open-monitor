@@ -14,7 +14,7 @@ mkdir -p data
 nohup ./consul agent -server -ui -http-port 8500 -client 0.0.0.0 -bind 127.0.0.1 -data-dir data -bootstrap-expect 1 > logs/consul.log 2>&1 &
 cd ../alertmanager/
 mkdir -p logs
-nohup ./alertmanager --config.file=alertmanager.yml > logs/alertmanager.log 2>&1 &
+nohup ./alertmanager --config.file=alertmanager.yml --web.listen-address=":9093"  --cluster.listen-address=":9094" > logs/alertmanager.log 2>&1 &
 cd ../prometheus/
 mkdir -p logs
 nohup ./prometheus --config.file=prometheus.yml --web.enable-lifecycle --storage.tsdb.retention.time=30d > logs/prometheus.log 2>&1 &
