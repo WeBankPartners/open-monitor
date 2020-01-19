@@ -118,7 +118,10 @@ func unionList(param,exist string) string {
 func SearchRecursivePanel(search string) []*m.OptionModel {
 	options := []*m.OptionModel{}
 	var prt []*m.PanelRecursiveTable
-	sql := `SELECT * FROM panel_recursive WHERE display_name LIKE  '%` + search + `%'`
+	if search == "." {
+		search = ""
+	}
+	sql := `SELECT * FROM panel_recursive WHERE display_name LIKE  '%` + search + `%' limit 10`
 	x.SQL(sql).Find(&prt)
 	for _,v := range prt {
 		options = append(options, &m.OptionModel{Id:-1, OptionValue:fmt.Sprintf("%s:sys", v.Guid), OptionText:v.DisplayName})
