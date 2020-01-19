@@ -8,6 +8,7 @@
           filterable
           clearable
           remote
+          ref="select"
           :placeholder="$t('placeholder.input')"
           :remote-method="getEndpointList"
           @on-clear="clearEndpoint"
@@ -110,12 +111,6 @@ export default {
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.resourceSearch.api, params, (responseData) => {
        this.endpointList = responseData
-       this.endpointList.unshift({
-          id: -1,
-          option_value: 'guid_test_6:sys',
-          option_text: 'name1',
-          active: false
-        })
       })
     },
     async getChartsConfig () {
@@ -147,6 +142,7 @@ export default {
       },{isNeedloading: false})
     },
     clearEndpoint () {
+      this.$refs.select.setQuery(null)
       this.clearEndpoint = []
       this.getEndpointList('.')
       this.$parent.showCharts = false

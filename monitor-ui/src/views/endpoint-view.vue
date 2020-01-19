@@ -4,14 +4,14 @@
     <Search ref="search" />
     <Charts v-if="showCharts" :charts='charts' ref="parentCharts" />
     <div v-if="recursiveViewConfig.length">
-      <recursiveContainer></recursiveContainer>
+      <recursive :recursiveViewConfig="recursiveViewConfig"></recursive>
     </div>
   </div>
 </template>
 <script>
 import Search from '@/components/search'
 import Charts from '@/components/charts'
-import recursiveContainer from '@/views/recursive-view/recursive-container'
+import recursive from '@/views/recursive-view/recursive'
 export default {
   name: 'endpoint-view',
   data() {
@@ -60,7 +60,7 @@ export default {
   components: {
     Search,
     Charts,
-    recursiveContainer
+    recursive
   }
 }
 </script>
