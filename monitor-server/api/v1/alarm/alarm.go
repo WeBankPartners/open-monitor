@@ -81,7 +81,7 @@ func AcceptAlertMsg(c *gin.Context)  {
 				tmpAlarm.Content = v.Annotations["description"]
 				tmpSummaryMsg := strings.Split(v.Annotations["summary"], "__")
 				if len(tmpSummaryMsg) == 4 {
-					endpointObj := m.EndpointTable{Address: tmpSummaryMsg[0]}
+					endpointObj := m.EndpointTable{Address: tmpSummaryMsg[0], AddressAgent: tmpSummaryMsg[0]}
 					db.GetEndpoint(&endpointObj)
 					if endpointObj.Id > 0 {
 						tmpAlarm.Endpoint = endpointObj.Guid
