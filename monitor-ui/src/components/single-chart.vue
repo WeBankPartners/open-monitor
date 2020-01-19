@@ -88,7 +88,7 @@ export default {
     padding: 5px;
     .echart {
        height: 300px;
-       width: 500px;
+       width: 580px;
        border-radius: 4px;
       //  background: @gray-f;
     }
