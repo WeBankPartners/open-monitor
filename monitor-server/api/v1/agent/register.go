@@ -163,7 +163,9 @@ func RegisterJob(param m.RegisterParam) error {
 				for _,v := range m.Config().Agent {
 					if v.AgentType == redisType {
 						param.User = v.User
-						param.Password = v.Password
+						if param.Password == "" {
+							param.Password = v.Password
+						}
 						binPath = v.AgentBin
 						break
 					}

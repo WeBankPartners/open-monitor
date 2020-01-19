@@ -330,7 +330,7 @@ func GetChart(c *gin.Context)  {
 	// custom or from mysql
 	var querys []m.QueryMonitorData
 	step := 0
-	var firstEndpoint,firstMetric,unit string
+	var firstEndpoint,unit string
 	if paramConfig[0].Id > 0 {
 		// one endpoint -> metrics
 		err, charts := db.GetCharts(0, paramConfig[0].Id, 0)
@@ -350,10 +350,10 @@ func GetChart(c *gin.Context)  {
 		if strings.Contains(paramConfig[0].Metric, "/") {
 			chart.Metric = paramConfig[0].Metric
 		}
-		for i,v := range strings.Split(chart.Metric, "^") {
-			if i == 0 {
-				firstMetric = v
-			}
+		for _,v := range strings.Split(chart.Metric, "^") {
+			//if i == 0 {
+			//	firstMetric = v
+			//}
 			err,tmpPromQl := db.GetPromMetric([]string{paramConfig[0].Endpoint}, v)
 			if err != nil {
 				mid.LogError("Get prometheus metric failed", err)
@@ -441,7 +441,7 @@ func GetChart(c *gin.Context)  {
 	var firstSerialTime float64
 	for i, s := range serials {
 		if strings.Contains(s.Name, "$metric") {
-			s.Name = strings.Replace(s.Name, "$metric", firstMetric, -1)
+			s.Name = strings.Replace(s.Name, "$metric", querys[i].Metric[0], -1)
 		}
 		eOption.Legend = append(eOption.Legend, s.Name)
 		if agg > 1 {
@@ -495,9 +495,14 @@ func MainSearch(c *gin.Context)  {
 		mid.ReturnError(c, "Search hosts failed", err)
 		return
 	}
-	sysResult := db.SearchRecursivePanel(endpoint)
-	for _,v := range sysResult {
-		result = append(result, v)
+	if len(result) < 10 {
+		sysResult := db.SearchRecursivePanel(endpoint)
+		for _, v := range sysResult {
+			if len(result) >= 10 {
+				break
+			}
+			result = append(result, v)
+		}
 	}
 	mid.ReturnData(c, result)
 }
