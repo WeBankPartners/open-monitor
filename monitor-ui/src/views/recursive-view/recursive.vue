@@ -1,20 +1,19 @@
 <template>
   <div class=" ">
     <ul>
-      <li v-for="(item, itemIndex) in data" class="tree-border" :key="itemIndex">
+      <li v-for="(item, itemIndex) in recursiveViewConfig" class="tree-border" :key="itemIndex">
         <div class="tree-title" :style="stylePadding">
         <span>
-          <strong>{{item.display_name}}</strong>
+          <strong>{{item.display_name}}-{{count}}</strong>
         </span>
         </div>
-        <recursiveContainerItem
+        <recursive
         :increment="count"
         v-if="item.children"
-        :data="item.children"></recursiveContainerItem>
-        <div style="text-align:center">
-          <!-- {{item.charts}} -->
+        :recursiveViewConfig="item.children"></recursive>
+        <div>
           <template v-for="(chartItemx,chartIndexx) in item.charts">
-            <!-- {{chartItemx}}-{{chartIndexx}} -->
+            {{count}}
             <SingleChart :chartItemx="chartItemx" :chartIndex="chartIndexx" :key="chartIndexx" :params="sortOutParams(chartItemx)"> </SingleChart>
           </template>
         </div>
@@ -26,7 +25,7 @@
 <script>
 import SingleChart from '@/components/single-chart'
 export default {
-  name: 'recursiveContainerItem',
+  name: 'recursive',
   data() {
     return {
       params: {
@@ -40,7 +39,7 @@ export default {
     }
   },
   props:{
-    data:{
+    recursiveViewConfig:{
       type:Array
     },
     increment:{
@@ -59,6 +58,7 @@ export default {
       }
     }
   },
+  mounted () {},
   methods: {
     sortOutParams (chartItemx) {
       this.params.endpoint = chartItemx.endpoint
