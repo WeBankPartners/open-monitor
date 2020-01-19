@@ -17,5 +17,6 @@ monitor-server/monitor-server
 #agent
 monitor-agent/node_exporter/node_exporter
 monitor-agent/node_exporter/node_exporter_new
+monitor-agent/agent_manager/agent_manager
 
 #tmp
