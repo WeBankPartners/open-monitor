@@ -16,6 +16,7 @@
         @on-clear="clearEndpoint"
         >
         <Option v-for="(option, index) in endpointList" :value="option.option_value+ ':' + option.id" :key="index">
+          <Tag color="green" class="tag-width" v-if="option.option_value.split(':')[1] == 'sys'">system</Tag>
           <Tag color="cyan" class="tag-width" v-if="option.option_value.split(':')[1] == 'host'">host</Tag>
           <Tag color="blue" class="tag-width" v-if="option.option_value.split(':')[1] == 'mysql'">mysql</Tag>
           <Tag color="geekblue" class="tag-width" v-if="option.option_value.split(':')[1] == 'redis'">redis</Tag>

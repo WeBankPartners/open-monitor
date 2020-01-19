@@ -108,7 +108,8 @@ export default {
   }
   .tree-border {
     border: 1px solid #9966;
-    padding: 4px;
-    margin: 4px;
+    border-right: none;
+    padding: 4px 0 4px 4px;
+    margin: 4px 0 4px 4px;
   }
 </style>
