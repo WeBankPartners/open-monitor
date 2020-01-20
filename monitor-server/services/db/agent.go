@@ -97,6 +97,11 @@ func UpdateRecursivePanel(param m.PanelRecursiveTable) error {
 	return err
 }
 
+func DeleteRecursivePanel(guid string) error {
+	_,err := x.Exec("DELETE FROM panel_recursive WHERE guid=?", guid)
+	return err
+}
+
 func unionList(param,exist string) string {
 	paramList := strings.Split(param, "^")
 	existList := strings.Split(exist, "^")
