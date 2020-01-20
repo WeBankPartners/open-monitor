@@ -24,7 +24,7 @@ type panelRequestObj struct {
 	Endpoint  []string  `json:"endpoint"`
 }
 
-func ExportPanel(c *gin.Context)  {
+func ExportPanelAdd(c *gin.Context)  {
 	var param requestPanelObj
 	var result resultObj
 	if err := c.ShouldBindJSON(&param); err==nil {
@@ -109,5 +109,44 @@ func GetPanelRecursive(c *gin.Context)  {
 		mid.ReturnError(c, "Get recursive panel error", err)
 	}else{
 		mid.ReturnData(c, result)
+	}
+}
+
+func ExportPanelDelete(c *gin.Context)  {
+	var param requestPanelObj
+	var result resultObj
+	if err := c.ShouldBindJSON(&param); err==nil {
+		var tmpResult []resultOutputObj
+		successFlag := "0"
+		errorMessage := "Done"
+		for _,v := range param.Inputs {
+			var tmpMessage string
+			if v.Guid == "" {
+				tmpMessage = fmt.Sprintf("Index:%s guid is null", v.CallbackParameter)
+			}
+			if tmpMessage != "" {
+				errorMessage = tmpMessage
+				tmpResult = append(tmpResult, resultOutputObj{CallbackParameter:v.CallbackParameter, ErrorCode:"1", ErrorMessage:tmpMessage})
+				successFlag = "1"
+				continue
+			}
+			err := db.DeleteRecursivePanel(v.Guid)
+			if err != nil {
+				tmpMessage = fmt.Sprintf("Index:%s update database error:%v", v.CallbackParameter, err)
+				errorMessage = tmpMessage
+				tmpResult = append(tmpResult, resultOutputObj{CallbackParameter:v.CallbackParameter, ErrorCode:"1", ErrorMessage:tmpMessage})
+				successFlag = "1"
+			}else{
+				tmpResult = append(tmpResult, resultOutputObj{CallbackParameter:v.CallbackParameter, ErrorCode:"0", ErrorMessage:""})
+			}
+		}
+		result = resultObj{ResultCode: successFlag, ResultMessage: errorMessage, Results: resultOutput{Outputs: tmpResult}}
+		resultString,_ := json.Marshal(result)
+		mid.LogInfo(string(resultString))
+		mid.ReturnData(c, result)
+	}else{
+		result = resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("Param validate fail : %v", err)}
+		mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
+		c.JSON(http.StatusBadRequest, result)
 	}
 }
