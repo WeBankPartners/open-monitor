@@ -4,7 +4,7 @@ module.exports = {
 	// devServer: {
 	// 	proxy: {
   //     "wecube-monitor": {
-  //       target: "http://111.230.161.237:19090"
+  //       target: ""
   //     },
   //   }
 	// },
