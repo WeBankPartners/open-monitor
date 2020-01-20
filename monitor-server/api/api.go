@@ -96,7 +96,8 @@ func InitHttpServer(exportAgent bool) {
 			dashboardApi.GET("/custom/main/get", dashboard.GetMainPage)
 			dashboardApi.GET("/custom/main/set", dashboard.SetMainPage)
 			dashboardApi.GET("/custom/endpoint/get", dashboard.GetEndpointsByIp)
-			dashboardApi.POST("/system", agent.ExportPanel)
+			dashboardApi.POST("/system/add", agent.ExportPanelAdd)
+			dashboardApi.POST("/system/delete", agent.ExportPanelDelete)
 			dashboardApi.GET("/recursive/get", agent.GetPanelRecursive)
 		}
 		agentApi := authApi.Group("/agent")
