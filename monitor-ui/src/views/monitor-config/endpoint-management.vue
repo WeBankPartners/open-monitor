@@ -10,6 +10,7 @@
           <label class="col-md-2 label-name lable-name-select">{{$t('field.endpoint')}}:</label>
           <Select v-model="modelConfig.slotConfig.resourceSelected" multiple filterable style="width:300px">
               <Option v-for="item in modelConfig.slotConfig.resourceOption" :value="item.id" :key="item.id">
+                <Tag color="green" class="tag-width" v-if="option.option_value.split(':')[1] == 'sys'">system</Tag>
                 <Tag color="cyan" v-if="item.option_value.split(':')[1] == 'host'">host</Tag>
                 <Tag color="blue" v-if="item.option_value.split(':')[1] == 'mysql'">mysql</Tag>
                 <Tag color="geekblue" v-if="item.option_value.split(':')[1] == 'redis'">redis</Tag>

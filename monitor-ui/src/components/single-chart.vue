@@ -3,6 +3,7 @@
     <div v-if="!noDataTip" :id="elId" class="echart">
     </div>
     <div v-if="noDataTip" class="echart echart-no-data-tip">
+      {{chartTitle}}:
       <span>~~~No Data!~~~</span>
     </div>
   </div>
@@ -20,6 +21,7 @@ export default {
   data() {
     return {
       elId: null,
+      chartTitle: null,
       noDataTip: false,
       config: '',
       myChart: '',
@@ -36,6 +38,16 @@ export default {
       this.elId =  `id_${elId}`; 
     })
   },
+  watch: {
+    params: function () {
+      this.getchartdata()
+      if (this.params.autoRefresh > 0) {
+        this.interval = setInterval(()=>{
+          this.getchartdata()
+        },this.params.autoRefresh*1000)
+      }
+    }
+  },
   mounted() {
     this.getchartdata()
     if (this.params.autoRefresh > 0) {
@@ -49,15 +61,31 @@ export default {
   },
   methods: {
     getchartdata () {
-      let params = {
-        id: this.chartItemx.id,
-        endpoint: this.params.endpoint.split(':')[0],
-        metric: this.chartItemx.metric[0],
-        time: this.params.time.toString(),
-        start: this.params.start + '',
-        end: this.params.end + ''
+      let params = []
+      if (this.params.sys) {
+        this.params.endpoint.forEach((ep) => {
+          this.params.metric.forEach((me) => {
+            params.push({
+              id: this.chartItemx.id,
+              endpoint: ep,
+              metric: me,
+              time: this.params.time.toString(),
+              start: this.params.start + '',
+              end: this.params.end + ''
+            })
+          })
+        })
+      } else {
+        params.push({
+          id: this.chartItemx.id,
+          endpoint: this.params.endpoint,
+          metric: this.chartItemx.metric[0],
+          time: this.params.time.toString(),
+          start: this.params.start + '',
+          end: this.params.end + ''
+        })
       }
-      this.$httpRequestEntrance.httpRequestEntrance('POST', 'dashboard/newchart', [params], responseData => {
+      this.$httpRequestEntrance.httpRequestEntrance('POST', 'dashboard/newchart', params, responseData => {
         readyToDraw(this,responseData, this.chartIndex)
       })
     }
