@@ -2,20 +2,21 @@
   <div class=" ">
     <ul>
       <li v-for="(item, itemIndex) in recursiveViewConfig" class="tree-border" :key="itemIndex">
-        <div class="tree-title" :style="stylePadding">
-        <span>
-          <strong>{{item.display_name}}-{{count}}</strong>
-        </span>
+        <div @click="hide(count)" class="tree-title" :style="stylePadding">
+          <span>
+            <strong>{{item.display_name}}</strong>
+          </span>
         </div>
-        <recursive
-        :increment="count"
-        v-if="item.children"
-        :recursiveViewConfig="item.children"></recursive>
-        <div>
-          <template v-for="(chartItemx,chartIndexx) in item.charts">
-            {{count}}
-            <SingleChart :chartItemx="chartItemx" :chartIndex="chartIndexx" :key="chartIndexx" :params="sortOutParams(chartItemx)"> </SingleChart>
-          </template>
+        <div v-show="isShow(count)">
+          <recursive
+          :increment="count"
+          v-if="item.children"
+          :recursiveViewConfig="item.children"></recursive>
+          <div>
+            <template v-for="(chartItemx,chartIndexx) in item.charts">
+              <SingleChart :chartItemx="chartItemx" :chartIndex="chartIndexx" :key="chartIndexx" :params="sortOutParams(chartItemx)"> </SingleChart>
+            </template>
+          </div>
         </div>
       </li>
     </ul>
@@ -35,7 +36,8 @@ export default {
         start: '',
         end: '',
         sys: true,
-      }
+      },
+      hideCount: []
     }
   },
   props:{
@@ -60,6 +62,17 @@ export default {
   },
   mounted () {},
   methods: {
+    hide (count) {
+      const index = this.hideCount.indexOf(count)
+      if (index > -1) { 
+        this.hideCount.splice(index, 1)
+      } else {
+        this.hideCount.push(count)
+      }
+    },
+    isShow (count) {
+      return !this.hideCount.includes(count)
+    },
     sortOutParams (chartItemx) {
       this.params.endpoint = chartItemx.endpoint
       this.params.metric = chartItemx.metric
@@ -103,8 +116,9 @@ export default {
   }
 
   .tree-title {
-    border: 1px solid #fff;
     margin-top: 1px;
+    cursor: pointer;
+    color: @blue-2;
   }
   .tree-border {
     border: 1px solid #9966;
