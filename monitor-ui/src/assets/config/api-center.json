@@ -125,5 +125,9 @@
             "update":"user/role/update",
             "authorization":"user/role/user/update"
         }
+    },
+    "recursive": {
+        "_des": "递归视图配置",
+        "api": "dashboard/recursive/get"
     }
 }
