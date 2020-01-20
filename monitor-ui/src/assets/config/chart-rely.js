@@ -12,6 +12,7 @@ const echarts = require('echarts/lib/echarts');
 export const readyToDraw = function(that, responseData, viewIndex, chartConfig) {
   var legend = []
   if (responseData.series.length === 0) {
+    that.chartTitle = responseData.title
     that.noDataTip = true
     return
   }
