@@ -4,7 +4,7 @@
     <Search ref="search" />
     <Charts v-if="showCharts" :charts='charts' ref="parentCharts" />
     <div v-if="recursiveViewConfig.length">
-      <recursive :recursiveViewConfig="recursiveViewConfig"></recursive>
+      <recursive :recursiveViewConfig="recursiveViewConfig" :params="params"></recursive>
     </div>
   </div>
 </template>
@@ -17,6 +17,7 @@ export default {
   data() {
     return {
       showCharts: false,
+      params: null,
       charts: {
         chartsConfig: []
       },
@@ -29,6 +30,7 @@ export default {
   methods: {
     manageCharts (chartsConfig, params) {
       if (params.sys) {
+        this.params = params
         this.showCharts = false
         this.recursiveView(params)
         return
