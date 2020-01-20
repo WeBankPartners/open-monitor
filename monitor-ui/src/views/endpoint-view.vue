@@ -3,8 +3,8 @@
     <Title :title="$t('menu.endpointView')"></Title>
     <Search ref="search" />
     <Charts v-if="showCharts" :charts='charts' ref="parentCharts" />
-    <div v-if="recursiveViewConfig.length">
-      <recursive :recursiveViewConfig="recursiveViewConfig" :params="params"></recursive>
+    <div v-if="recursiveViewConfig.length && showRecursive">
+      <recursive :recursiveViewConfig="recursiveViewConfig"></recursive>
     </div>
   </div>
 </template>
@@ -17,7 +17,7 @@ export default {
   data() {
     return {
       showCharts: false,
-      params: null,
+      showRecursive: false,
       charts: {
         chartsConfig: []
       },
@@ -30,8 +30,9 @@ export default {
   methods: {
     manageCharts (chartsConfig, params) {
       if (params.sys) {
-        this.params = params
         this.showCharts = false
+        this.showRecursive = true
+        this.$root.$store.commit('setRecursiveChartconfig',params)
         this.recursiveView(params)
         return
       }
@@ -51,6 +52,7 @@ export default {
         this.charts.chartsConfig.push(chart)
       })
       this.showCharts = true
+      this.showRecursive = false
       this.$refs.parentCharts.refreshCharts()
     },
     recursiveView (params) {

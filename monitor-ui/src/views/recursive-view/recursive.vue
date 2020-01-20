@@ -14,7 +14,7 @@
           :recursiveViewConfig="item.children"></recursive>
           <div>
             <template v-for="(chartItemx,chartIndexx) in item.charts">
-              <SingleChart :chartItemx="chartItemx" :chartIndex="chartIndexx" :key="chartIndexx" :params="sortOutParams(chartItemx)"> </SingleChart>
+              <SingleChart :chartItemx="chartItemx" :chartIndex="chartIndexx" :key="chartIndexx" :params="sortOutParams(chartItemx,item.display_name)"> </SingleChart>
             </template>
           </div>
         </div>
@@ -37,13 +37,11 @@ export default {
       //   end: '',
       //   sys: true,
       // },
+      // params: null,
       hideCount: []
     }
   },
   props:{
-    params: {
-      type: Object
-    },
     recursiveViewConfig:{
       type:Array
     },
@@ -64,7 +62,7 @@ export default {
     }
   },
   mounted () {
-    
+    this.hideCount = []
   },
   methods: {
     hide (count) {
@@ -78,10 +76,12 @@ export default {
     isShow (count) {
       return !this.hideCount.includes(count)
     },
-    sortOutParams (chartItemx) {
-      this.params.endpoint = chartItemx.endpoint
-      this.params.metric = chartItemx.metric
-      return this.params
+    sortOutParams (chartItemx,display_name) {
+      let params = this.$root.$store.state.recursiveChartconfig
+      params.endpoint = chartItemx.endpoint
+      params.display_name = display_name
+      params.metric = chartItemx.metric
+      return params
     }
   },
   components: {
