@@ -359,7 +359,7 @@ func GetChart(c *gin.Context)  {
 				mid.LogError("Get prometheus metric failed", err)
 				continue
 			}
-			querys = append(querys, m.QueryMonitorData{Start:query.Start, End:query.End, PromQ:tmpPromQl, Legend:chart.Legend, Metric:[]string{v}})
+			querys = append(querys, m.QueryMonitorData{Start:query.Start, End:query.End, PromQ:tmpPromQl, Legend:chart.Legend, Metric:[]string{v}, Endpoint:[]string{firstEndpoint}})
 		}
 	}else{
 		step = 10
