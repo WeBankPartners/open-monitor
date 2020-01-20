@@ -29,18 +29,21 @@ export default {
   name: 'recursive',
   data() {
     return {
-      params: {
-        autoRefresh: 0,
-        time: -1800,
-        endpoint: '',
-        start: '',
-        end: '',
-        sys: true,
-      },
+      // params: {
+      //   autoRefresh: 0,
+      //   time: -1800,
+      //   endpoint: '',
+      //   start: '',
+      //   end: '',
+      //   sys: true,
+      // },
       hideCount: []
     }
   },
   props:{
+    params: {
+      type: Object
+    },
     recursiveViewConfig:{
       type:Array
     },
@@ -60,7 +63,9 @@ export default {
       }
     }
   },
-  mounted () {},
+  mounted () {
+    
+  },
   methods: {
     hide (count) {
       const index = this.hideCount.indexOf(count)

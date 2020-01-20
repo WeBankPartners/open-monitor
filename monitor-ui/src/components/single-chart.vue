@@ -38,6 +38,16 @@ export default {
       this.elId =  `id_${elId}`; 
     })
   },
+  watch: {
+    params: function () {
+      this.getchartdata()
+      if (this.params.autoRefresh > 0) {
+        this.interval = setInterval(()=>{
+          this.getchartdata()
+        },this.params.autoRefresh*1000)
+      }
+    }
+  },
   mounted() {
     this.getchartdata()
     if (this.params.autoRefresh > 0) {
