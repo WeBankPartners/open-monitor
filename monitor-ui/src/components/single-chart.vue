@@ -3,6 +3,7 @@
     <div v-if="!noDataTip" :id="elId" class="echart">
     </div>
     <div v-if="noDataTip" class="echart echart-no-data-tip">
+      {{chartTitle}}:
       <span>~~~No Data!~~~</span>
     </div>
   </div>
@@ -20,6 +21,7 @@ export default {
   data() {
     return {
       elId: null,
+      chartTitle: null,
       noDataTip: false,
       config: '',
       myChart: '',
