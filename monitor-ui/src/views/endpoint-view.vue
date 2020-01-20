@@ -3,19 +3,25 @@
     <Title :title="$t('menu.endpointView')"></Title>
     <Search ref="search" />
     <Charts v-if="showCharts" :charts='charts' ref="parentCharts" />
+    <div v-if="recursiveViewConfig.length && showRecursive">
+      <recursive :recursiveViewConfig="recursiveViewConfig"></recursive>
+    </div>
   </div>
 </template>
 <script>
 import Search from '@/components/search'
 import Charts from '@/components/charts'
+import recursive from '@/views/recursive-view/recursive'
 export default {
   name: 'endpoint-view',
   data() {
     return {
       showCharts: false,
+      showRecursive: false,
       charts: {
         chartsConfig: []
-      }
+      },
+      recursiveViewConfig: []
     }
   },
   mounted() {
@@ -23,6 +29,13 @@ export default {
   },
   methods: {
     manageCharts (chartsConfig, params) {
+      if (params.sys) {
+        this.showCharts = false
+        this.showRecursive = true
+        this.$root.$store.commit('setRecursiveChartconfig',params)
+        this.recursiveView(params)
+        return
+      }
       this.charts.chartsConfig = []
       chartsConfig.forEach(item => {
         item.autoRefresh = params.autoRefresh
@@ -39,12 +52,19 @@ export default {
         this.charts.chartsConfig.push(chart)
       })
       this.showCharts = true
+      this.showRecursive = false
       this.$refs.parentCharts.refreshCharts()
+    },
+    recursiveView (params) {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.recursive.api, params, responseData => {
+        this.recursiveViewConfig = [responseData]
+      })
     }
   },
   components: {
     Search,
-    Charts
+    Charts,
+    recursive
   }
 }
 </script>
