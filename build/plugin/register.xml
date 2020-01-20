@@ -248,12 +248,21 @@
             </interface>
         </plugin>
         <plugin name="system-dashboard" targetPackage="wecmdb" targetEntity="system">
-            <interface action="display" path="/wecube-monitor/api/v1/dashboard/system" httpMethod='POST'>
+            <interface action="add" path="/wecube-monitor/api/v1/dashboard/system/add" httpMethod='POST'>
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:system.key_name" required='Y'>guid</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:system~(system)wecmdb:subsys~(subsys)wecmdb:unit~(unit)wecmdb:business_app_instance.resource_instance>wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required='Y'>display_name</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:system~(system)wecmdb:subsys~(subsys)wecmdb:unit~(unit)wecmdb:business_app_instance.key_name" required='Y'>parent</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:system~(system)wecmdb:subsys~(subsys)wecmdb:unit~(unit)wecmdb:business_app_instance.monitor_port" required='Y'>endpoint</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+            <interface action="delete" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod='POST'>
+                <inputParameters>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:system.key_name" required='Y'>guid</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
