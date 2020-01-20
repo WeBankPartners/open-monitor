@@ -96,8 +96,8 @@ export default {
       this.chartItem = chartItem
       let params = {
         id: chartItem.id,
-        endpoint: [chartItem.endpoint[0]],
-        metric: [chartItem.metric[0]],
+        endpoint: chartItem.endpoint[0],
+        metric: chartItem.metric[0],
         time: this.chartCondition.timeTnterval,
         agg: this.chartCondition.agg,
       }
@@ -105,7 +105,8 @@ export default {
         params.start = this.chartCondition.dateRange[0] ===''? '':Date.parse(this.chartCondition.dateRange[0])/1000 + '',
         params.end = this.chartCondition.dateRange[1] ===''? '':Date.parse(this.chartCondition.dateRange[1])/1000 + ''
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', chartItem.url, params, responseData => {
+      console.log(chartItem)
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/dashboard/newchart', [params], responseData => {
       
         const chartConfig = {eye: false}
         readyToDraw(this,responseData, 1, chartConfig)
