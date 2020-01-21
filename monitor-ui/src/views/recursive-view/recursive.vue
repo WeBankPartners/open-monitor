@@ -10,6 +10,7 @@
         <div v-show="isShow(count)">
           <recursive
           :increment="count"
+          :params="params"
           v-if="item.children"
           :recursiveViewConfig="item.children"></recursive>
           <div>
@@ -42,6 +43,9 @@ export default {
     }
   },
   props:{
+    params: {
+      type: Object
+    },
     recursiveViewConfig:{
       type:Array
     },
@@ -77,11 +81,10 @@ export default {
       return !this.hideCount.includes(count)
     },
     sortOutParams (chartItemx,display_name) {
-      let params = this.$root.$store.state.recursiveChartconfig
-      params.endpoint = chartItemx.endpoint
-      params.display_name = display_name
-      params.metric = chartItemx.metric
-      return params
+      this.params.endpoint = chartItemx.endpoint
+      this.params.display_name = display_name
+      this.params.metric = chartItemx.metric
+      return this.params
     }
   },
   components: {
