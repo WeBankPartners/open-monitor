@@ -6,7 +6,6 @@
           style="width:300px;"
           v-model="endpoint"
           filterable
-          clearable
           remote
           ref="select"
           :placeholder="$t('placeholder.input')"
