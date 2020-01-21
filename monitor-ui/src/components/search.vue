@@ -8,11 +8,13 @@
           filterable
           clearable
           remote
+          ref="select"
           :placeholder="$t('placeholder.input')"
           :remote-method="getEndpointList"
           @on-clear="clearEndpoint"
           >
           <Option v-for="(option, index) in endpointList" :value="option.option_value" :key="index">
+            <Tag color="green" class="tag-width" v-if="option.option_value.split(':')[1] == 'sys'">system</Tag>
             <Tag color="cyan" class="tag-width" v-if="option.option_value.split(':')[1] == 'host'">host</Tag>
             <Tag color="blue" class="tag-width" v-if="option.option_value.split(':')[1] == 'mysql'">mysql </Tag>
             <Tag color="geekblue" class="tag-width" v-if="option.option_value.split(':')[1] == 'redis'">redis </Tag>
@@ -115,15 +117,45 @@ export default {
       if (this.$root.$validate.isEmpty_reset(this.endpoint)) {
         return
       }
+      // let params = {
+      //   autoRefresh: this.autoRefresh,
+      //   time: this.timeTnterval,
+      //   endpoint: [this.endpoint.split(':')[0]],
+      //   start: this.dateRange[0] ===''? '':Date.parse(this.dateRange[0])/1000,
+      //   end: this.dateRange[1] ===''? '':Date.parse(this.dateRange[1])/1000,
+      //   sys: false
+      // }
+      let params = {}
+      if (this.endpoint.split(':')[1] === 'sys') {
+        params = {
+          autoRefresh: this.autoRefresh,
+          time: this.timeTnterval,
+          endpoint: this.endpoint.split(':')[0],
+          start: this.dateRange[0] ===''? '':Date.parse(this.dateRange[0])/1000,
+          end: this.dateRange[1] ===''? '':Date.parse(this.dateRange[1])/1000,
+          guid: this.endpoint.split(':')[0],
+          sys: true
+        }  
+
+        // params.sys = true
+        // params.guid = this.endpoint.split(':')[0]
+        // const params = {
+        //   sys: true,
+        //   guid: this.endpoint.split(':')[0]
+        // }
+        this.$parent.manageCharts({}, params)
+        return
+      }
       const res = await this.getMainConfig()
       let url = res.panels.url
       let key = res.search.name
-      let params = {
+      params = {
         autoRefresh: this.autoRefresh,
         time: this.timeTnterval,
         endpoint: this.endpoint.split(':')[0],
         start: this.dateRange[0] ===''? '':Date.parse(this.dateRange[0])/1000,
-        end: this.dateRange[1] ===''? '':Date.parse(this.dateRange[1])/1000
+        end: this.dateRange[1] ===''? '':Date.parse(this.dateRange[1])/1000,
+        sys: false
       }
       url = url.replace(`{${key}}`,params[key].split(':')[0])
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET',url, params, responseData => {
@@ -131,6 +163,7 @@ export default {
       },{isNeedloading: false})
     },
     clearEndpoint () {
+      this.$refs.select.setQuery(null)
       this.clearEndpoint = []
       this.getEndpointList('.')
       this.$parent.showCharts = false
