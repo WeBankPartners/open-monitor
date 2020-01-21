@@ -63,8 +63,8 @@ export default {
     getchartdata () {
       let params = []
       if (this.params.sys) {
-        this.params.endpoint.forEach((ep) => {
-          this.params.metric.forEach((me) => {
+        this.chartItemx.endpoint.forEach((ep) => {
+          this.chartItemx.metric.forEach((me) => {
             params.push({
               id: this.chartItemx.id,
               endpoint: ep,
