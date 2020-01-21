@@ -11,6 +11,7 @@
         <ul>
           <template v-for="(resItem, resIndex) in searchResult">
             <li class="ul-option" @click="choiceRes(resItem)" :key="resIndex">
+              <Tag color="green" class="tag-width" v-if="option.option_value.split(':')[1] == 'sys'">system</Tag>
               <Tag color="cyan" v-if="resItem.option_value.split(':')[1] == 'host'">host</Tag>
               <Tag color="blue" v-if="resItem.option_value.split(':')[1] == 'mysql'">mysql</Tag>
               <Tag color="geekblue" v-if="resItem.option_value.split(':')[1] == 'redis'">redis</Tag>
