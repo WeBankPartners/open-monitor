@@ -10,11 +10,12 @@
         <div v-show="isShow(count)">
           <recursive
           :increment="count"
+          :params="params"
           v-if="item.children"
           :recursiveViewConfig="item.children"></recursive>
           <div>
             <template v-for="(chartItemx,chartIndexx) in item.charts">
-              <SingleChart :chartItemx="chartItemx" :chartIndex="chartIndexx" :key="chartIndexx" :params="sortOutParams(chartItemx,item.display_name)"> </SingleChart>
+              <SingleChart :chartItemx="chartItemx" :chartIndex="chartIndexx" :key="chartIndexx" :params="params"> </SingleChart>
             </template>
           </div>
         </div>
@@ -29,19 +30,13 @@ export default {
   name: 'recursive',
   data() {
     return {
-      // params: {
-      //   autoRefresh: 0,
-      //   time: -1800,
-      //   endpoint: '',
-      //   start: '',
-      //   end: '',
-      //   sys: true,
-      // },
-      // params: null,
       hideCount: []
     }
   },
   props:{
+    params: {
+      type: Object
+    },
     recursiveViewConfig:{
       type:Array
     },
@@ -75,13 +70,6 @@ export default {
     },
     isShow (count) {
       return !this.hideCount.includes(count)
-    },
-    sortOutParams (chartItemx,display_name) {
-      let params = this.$root.$store.state.recursiveChartconfig
-      params.endpoint = chartItemx.endpoint
-      params.display_name = display_name
-      params.metric = chartItemx.metric
-      return params
     }
   },
   components: {
