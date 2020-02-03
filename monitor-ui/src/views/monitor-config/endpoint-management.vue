@@ -100,7 +100,17 @@
   import {interceptParams} from '@/assets/js/utils'
   let tableEle = [
     {title: 'tableKey.endpoint', value: 'guid', display: true},
-    {title: 'tableKey.group', value: 'groups_name', display: true, }
+    {
+      title: 'tableKey.group',
+      display: true,
+      tags: {style: 'width: 300px;'},
+      'render': (item) => {
+        let res = item.groups_name.split(',').map((i) => {
+          return {label: i, value: i}
+        })
+        return res
+      }
+    }
   ]
   let historyAlarmEle = [
     {title: 'tableKey.status',value: 'status', style: 'min-width:70px', display: true},
