@@ -109,21 +109,13 @@ export default {
         size: 1000
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.resourceSearch.api, params, (responseData) => {
-       this.endpointList = responseData
+        this.endpointList = responseData
       })
     },
     async getChartsConfig () {
       if (this.$root.$validate.isEmpty_reset(this.endpoint)) {
         return
       }
-      // let params = {
-      //   autoRefresh: this.autoRefresh,
-      //   time: this.timeTnterval,
-      //   endpoint: [this.endpoint.split(':')[0]],
-      //   start: this.dateRange[0] ===''? '':Date.parse(this.dateRange[0])/1000,
-      //   end: this.dateRange[1] ===''? '':Date.parse(this.dateRange[1])/1000,
-      //   sys: false
-      // }
       let params = {}
       if (this.endpoint.split(':')[1] === 'sys') {
         params = {
