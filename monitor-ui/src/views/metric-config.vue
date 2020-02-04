@@ -156,7 +156,11 @@ export default {
         size: 1000
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.resourceSearch.api, params, (responseData) => {
-       this.endpointList = responseData
+        responseData.forEach((item) => {
+          if (item.id !== -1) {
+            this.endpointList.push(item)
+          }
+        })
       })
     },
     clearEndpoint () {

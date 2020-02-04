@@ -285,7 +285,11 @@ export default {
         this.$root.apiCenter.resourceSearch.api,
         params,
         responseData => {
-          this.options = responseData;
+          responseData.forEach((item) => {
+            if (item.id !== -1) {
+              this.options.push(item)
+            }
+          })
         }
       );
     },
