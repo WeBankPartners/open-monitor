@@ -8,9 +8,9 @@
           filterable
           remote
           ref="select"
+          clearable
           :placeholder="$t('placeholder.input')"
           :remote-method="getEndpointList"
-          @on-clear="clearEndpoint"
           >
           <Option v-for="(option, index) in endpointList" :value="option.option_value" :key="index">
             <Tag color="green" class="tag-width" v-if="option.option_value.split(':')[1] == 'sys'">system</Tag>
@@ -73,6 +73,14 @@ export default {
   computed: {
     isShow: function () {
       return !this.$root.$validate.isEmpty_reset(this.endpoint)
+    }
+  },
+  watch: {
+    isShow: function () {
+      this.clearEndpoint = []
+      this.getEndpointList('.')
+      this.$parent.showCharts = false 
+      this.$parent.showRecursive = false
     }
   },
   mounted() {
@@ -152,12 +160,6 @@ export default {
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET',url, params, responseData => {
         this.$parent.manageCharts(responseData, params)
       },{isNeedloading: false})
-    },
-    clearEndpoint () {
-      this.$refs.select.setQuery(null)
-      this.clearEndpoint = []
-      this.getEndpointList('.')
-      this.$parent.showCharts = false
     },
     changeRoute () {
       this.$router.push({name: 'endpointManagement', params: {search: this.endpoint.split(':')[0]}})
