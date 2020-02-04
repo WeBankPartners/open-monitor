@@ -8,6 +8,8 @@
           :action="uploadUrl" 
           :show-upload-list="false"
           :max-size="1000"
+          with-credentials
+          :headers="{'X-Auth-Token': token}"
           :on-success="uploadSucess"
           :on-error="uploadFailed">
             <Button icon="ios-cloud-upload-outline">{{$t('button.upload')}}</Button>
@@ -19,6 +21,7 @@
   </div>
 </template>
 <script>
+  import {cookies} from '@/assets/js/cookieUtils'
   import {baseURL_config} from '@/assets/js/baseURL'
   let tableEle = [
     {title: 'tableKey.name', value: 'name', display: true},
@@ -35,6 +38,7 @@
     name: '',
     data() {
       return {
+        token: null,
         uploadUrl: '',
         pageConfig: {
           CRUD: this.$root.apiCenter.groupManagement.list.api,
@@ -89,6 +93,7 @@
       }
     },
     mounted() {
+      this.token = cookies.getAuthorization()
       this.initData(this.pageConfig.CRUD, this.pageConfig)
       this.uploadUrl =  baseURL_config + this.$root.apiCenter.groupManagement.upload.api
       this.$refs.child.clearSelectedData()
@@ -149,7 +154,30 @@
           this.$Message.warning(this.$t('tips.selectData'))
           return
         }
-        window.location.href= baseURL_config + this.$root.apiCenter.groupManagement.export.api + '?id=' + this.selectedData.checkedIds.join(',')
+        const api = baseURL_config + this.$root.apiCenter.groupManagement.export.api + '?id=' + this.selectedData.checkedIds.join(',')
+        this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, {}, (responseData) => {
+          let content = responseData
+          let fileName = 'grp_strategy_tpl.data'
+          let blob = new Blob([content])
+
+          if('msSaveOrOpenBlob' in navigator){
+            // Microsoft Edge and Microsoft Internet Explorer 10-11
+            window.navigator.msSaveOrOpenBlob(blob, fileName)
+          } else {
+            if ('download' in document.createElement('a')) { // 非IE下载
+              let elink = document.createElement('a')
+              elink.download = fileName
+              elink.style.display = 'none'
+              elink.href = URL.createObjectURL(blob)  
+              document.body.appendChild(elink)
+              elink.click()
+              URL.revokeObjectURL(elink.href) // 释放URL 对象
+              document.body.removeChild(elink)
+            } else { // IE10+下载
+              navigator.msSaveOrOpenBlob(blob, fileName)
+            }
+          }
+        })
       },
       uploadSucess () {
         this.$Message.success(this.$t('tips.success'))
