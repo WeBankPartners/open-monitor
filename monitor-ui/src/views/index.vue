@@ -46,9 +46,7 @@ export default {
 }
 .content {
   background-image: url("../assets/img/watermark-3.png");
-  // width:1200px;
-  min-height: 95vh;
-  height: 100%;
+  height: calc(100vh - 210px);
   margin: 0 auto;
   padding: 10px;
 }
