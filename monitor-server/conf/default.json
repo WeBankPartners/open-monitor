@@ -17,11 +17,11 @@
     "log": {
       "enable": true,
       "level": "debug",
-      "file": "/app/data/log/prometheus_monitor.log",
+      "file": "prometheus_monitor.log",
       "stdout": true
     },
     "session": {
-      "enable": false,
+      "enable": true,
       "expire": 3600,
       "server_enable": false,
       "server_token": "default-token-used-in-server-side",
