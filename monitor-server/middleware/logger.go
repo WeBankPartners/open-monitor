@@ -1,21 +1,21 @@
 package middleware
 
 import (
-	"go.uber.org/zap"
 	"fmt"
-	"go.uber.org/zap/zapcore"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
-	"strings"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"log"
+	"time"
 )
 
 var (
 	LogHttp *zap.Logger
 	//LogCron *zap.Logger
-	HttpLogEnable  bool
+	HttpLogEnable bool
 )
 
-func InitMonitorLog()  {
+func InitMonitorLog() {
 	HttpLogEnable = m.Config().Http.Log.Enable
 	//enable := true
 	if !HttpLogEnable {
@@ -29,17 +29,17 @@ func InitMonitorLog()  {
 	zCfg.ErrorOutputPaths = []string{}
 	if m.Config().Http.Log.Stdout {
 		zCfg.OutputPaths = append(zCfg.OutputPaths, "stdout")
-		zCfg.ErrorOutputPaths = append(zCfg.ErrorOutputPaths, "stderr")
+		//zCfg.ErrorOutputPaths = append(zCfg.ErrorOutputPaths, "stderr")
 	}
 	cfgFile := m.Config().Http.Log.File
 	//cfgFile := "/app/data/log/monitor.log"
-	if cfgFile!="" {
+	if cfgFile != "" {
 		zCfg.OutputPaths = append(zCfg.OutputPaths, cfgFile)
-		cfgErrorFile := cfgFile + `_err`
-		if strings.Contains(cfgFile, ".log") {
-			cfgErrorFile = strings.TrimRight(cfgFile, ".log") + `_err.log`
-		}
-		zCfg.ErrorOutputPaths = append(zCfg.ErrorOutputPaths, cfgErrorFile)
+		//cfgErrorFile := cfgFile + `_err`
+		//if strings.Contains(cfgFile, ".log") {
+		//	cfgErrorFile = strings.TrimRight(cfgFile, ".log") + `_err.log`
+		//}
+		//zCfg.ErrorOutputPaths = append(zCfg.ErrorOutputPaths, cfgErrorFile)
 	}
 	//initialFieldsMap := make(map[string]interface{})
 	//initialFieldsMap["const_key"] = "const_val"
@@ -49,10 +49,11 @@ func InitMonitorLog()  {
 	encoderMap.LevelKey = "level"
 	zCfg.EncoderConfig = encoderMap
 	zCfg.EncoderConfig = zap.NewProductionEncoderConfig()
-	zCfg.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	//zCfg.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	zCfg.EncoderConfig.EncodeTime = customTimeEncoder
 	var err error
 	LogHttp, err = zCfg.Build()
-	if err!=nil {
+	if err != nil {
 		fmt.Println("error init logger!! logger build fail ")
 		return
 	}
@@ -63,7 +64,7 @@ func InitMonitorLog()  {
 func LogError(s string, e error) {
 	if HttpLogEnable {
 		LogHttp.Error(s, zap.Error(e))
-	}else{
+	} else {
 		log.Printf("%s  :  %v \n", s, e)
 	}
 }
@@ -71,7 +72,11 @@ func LogError(s string, e error) {
 func LogInfo(s string) {
 	if HttpLogEnable {
 		LogHttp.Info(s)
-	}else{
+	} else {
 		log.Println(s)
 	}
+}
+
+func customTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
+	enc.AppendString(t.Format("2006-01-02 15:04:05"))
 }
