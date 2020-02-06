@@ -154,7 +154,7 @@
           this.$Message.warning(this.$t('tips.selectData'))
           return
         }
-        const api = baseURL_config + this.$root.apiCenter.groupManagement.export.api + '?id=' + this.selectedData.checkedIds.join(',')
+        const api = this.$root.apiCenter.groupManagement.export.api + '?id=' + this.selectedData.checkedIds.join(',')
         this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, {}, (responseData) => {
           let content = responseData
           let fileName = 'grp_strategy_tpl.data'
