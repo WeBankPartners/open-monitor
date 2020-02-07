@@ -8,9 +8,9 @@
           filterable
           remote
           ref="select"
+          clearable
           :placeholder="$t('placeholder.input')"
           :remote-method="getEndpointList"
-          @on-clear="clearEndpoint"
           >
           <Option v-for="(option, index) in endpointList" :value="option.option_value" :key="index">
             <Tag color="green" class="tag-width" v-if="option.option_value.split(':')[1] == 'sys'">system</Tag>
@@ -75,6 +75,14 @@ export default {
       return !this.$root.$validate.isEmpty_reset(this.endpoint)
     }
   },
+  watch: {
+    isShow: function () {
+      this.clearEndpoint = []
+      this.getEndpointList('.')
+      this.$parent.showCharts = false 
+      this.$parent.showRecursive = false
+    }
+  },
   mounted() {
     this.getEndpointList('.')
     if (!this.$root.$validate.isEmpty_reset(this.$route.params)) {
@@ -109,21 +117,13 @@ export default {
         size: 1000
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.resourceSearch.api, params, (responseData) => {
-       this.endpointList = responseData
+        this.endpointList = responseData
       })
     },
     async getChartsConfig () {
       if (this.$root.$validate.isEmpty_reset(this.endpoint)) {
         return
       }
-      // let params = {
-      //   autoRefresh: this.autoRefresh,
-      //   time: this.timeTnterval,
-      //   endpoint: [this.endpoint.split(':')[0]],
-      //   start: this.dateRange[0] ===''? '':Date.parse(this.dateRange[0])/1000,
-      //   end: this.dateRange[1] ===''? '':Date.parse(this.dateRange[1])/1000,
-      //   sys: false
-      // }
       let params = {}
       if (this.endpoint.split(':')[1] === 'sys') {
         params = {
@@ -160,12 +160,6 @@ export default {
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET',url, params, responseData => {
         this.$parent.manageCharts(responseData, params)
       },{isNeedloading: false})
-    },
-    clearEndpoint () {
-      this.$refs.select.setQuery(null)
-      this.clearEndpoint = []
-      this.getEndpointList('.')
-      this.$parent.showCharts = false
     },
     changeRoute () {
       this.$router.push({name: 'endpointManagement', params: {search: this.endpoint.split(':')[0]}})
