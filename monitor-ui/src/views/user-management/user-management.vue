@@ -10,7 +10,19 @@ let tableEle = [
   {title: 'tableKey.nickname', value: 'display_name', display: true},
   {title: 'tableKey.email', value: 'email', display: true},
   {title: 'tableKey.phone', value: 'phone', display: true}, 
-  {title: 'tableKey.role', value: 'role', display: true},
+  {
+    title: 'tableKey.role',
+    display: true,
+    tags: {style: 'width: 300px;'},
+    'render': (item) => {
+      if (item.role) {
+        let res = item.role.split(',').map((i) => {
+          return {label: i, value: i}
+        })
+        return res
+      }
+    }
+  },
   {title: 'tableKey.activeDate', value: 'created_string', display: true}
 ]
 export default {

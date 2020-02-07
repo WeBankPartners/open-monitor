@@ -7,18 +7,20 @@
             <strong>{{item.display_name}}</strong>
           </span>
         </div>
-        <div v-show="isShow(count)">
-          <recursive
-          :increment="count"
-          :params="params"
-          v-if="item.children"
-          :recursiveViewConfig="item.children"></recursive>
-          <div>
-            <template v-for="(chartItemx,chartIndexx) in item.charts">
-              <SingleChart :chartItemx="chartItemx" :chartIndex="chartIndexx" :key="chartIndexx" :params="params"> </SingleChart>
-            </template>
+        <transition name="fade">
+          <div v-show="isShow(count)">
+            <recursive
+            :increment="count"
+            :params="params"
+            v-if="item.children"
+            :recursiveViewConfig="item.children"></recursive>
+            <div>
+              <template v-for="(chartItemx,chartIndexx) in item.charts">
+                <SingleChart :chartItemx="chartItemx" :chartIndex="chartIndexx" :key="chartIndexx" :params="params"> </SingleChart>
+              </template>
+            </div>
           </div>
-        </div>
+        </transition>
       </li>
     </ul>
   </div>
@@ -30,7 +32,6 @@ export default {
   name: 'recursive',
   data() {
     return {
-      hideCount: []
     }
   },
   props:{
@@ -46,9 +47,9 @@ export default {
     }
   },
   computed:{
-    count(){
-      var c = this.increment;
-      return ++c;
+    count () {
+      var c = this.increment
+      return ++c
     },
     stylePadding(){
       return {
@@ -56,20 +57,19 @@ export default {
       }
     }
   },
-  mounted () {
-    this.hideCount = []
-  },
   methods: {
     hide (count) {
-      const index = this.hideCount.indexOf(count)
+      let recursiveNum = this.$root.$store.state.recursiveNum
+      const index = recursiveNum.indexOf(count)
       if (index > -1) { 
-        this.hideCount.splice(index, 1)
+        this.$root.$store.commit('removeRecursiveNum', index)
       } else {
-        this.hideCount.push(count)
+        this.$root.$store.commit('addRecursiveNum', count)
       }
     },
     isShow (count) {
-      return !this.hideCount.includes(count)
+      const recursiveNum = this.$root.$store.state.recursiveNum
+      return !recursiveNum.includes(count)
     }
   },
   components: {

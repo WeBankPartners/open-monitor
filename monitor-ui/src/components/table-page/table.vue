@@ -175,7 +175,7 @@
                   <template v-if="val.tags">
                     <div style="display: flex;flex-direction: row;flex-wrap: wrap;" :style="val.tags.style">
                       <template v-for="(tagsData, tagsIndex) in renderValue(value, val)">
-                        <span class="tag-f" :key="tagsIndex">{{tagsData.label}}:{{tagsData.value}}</span>
+                        <span class="tag-f" :key="tagsIndex">{{tagsData.label}}</span>
                       </template>
                     </div>
                   </template>
