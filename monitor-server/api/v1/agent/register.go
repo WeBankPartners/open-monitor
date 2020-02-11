@@ -135,6 +135,9 @@ func RegisterJob(param m.RegisterParam) error {
 		if len(strList) == 0 {
 			return fmt.Errorf("Can't get anything from this address:port/metric ")
 		}
+		if len(strList) <= 30 {
+			return fmt.Errorf("Connect to instance fail,please check param ")
+		}
 		var mysqlVersion,exportVersion string
 		for _,v := range strList {
 			if strings.HasPrefix(v, "mysql_version_info{") {
@@ -207,6 +210,9 @@ func RegisterJob(param m.RegisterParam) error {
 		if len(strList) == 0 {
 			return fmt.Errorf("Can't get anything from this address:port/metric ")
 		}
+		if len(strList) <= 30 {
+			return fmt.Errorf("Connect to instance fail,please check param ")
+		}
 		var redisVersion,exportVersion string
 		for _,v := range strList {
 			if strings.Contains(v, "redis_version") {
@@ -277,6 +283,9 @@ func RegisterJob(param m.RegisterParam) error {
 		}
 		if len(strList) == 0 {
 			return fmt.Errorf("Can't get anything from this address:port/metric ")
+		}
+		if len(strList) <= 60 {
+			return fmt.Errorf("Connect to instance fail,please check param ")
 		}
 		var jvmVersion,exportVersion string
 		for _,v := range strList {
