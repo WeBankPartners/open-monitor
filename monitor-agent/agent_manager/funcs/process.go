@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"log"
 	"strconv"
+	"net/http"
 )
 
 type ProcessObj  struct {
@@ -97,7 +98,15 @@ func (p *ProcessObj)start(configFile,startFile,guid string,port int,param map[st
 	if len(pids) > 0 {
 		p.Pid = pids[0]
 	}else {
-		p.Pid = p.Process.Pid
+		//p.Pid = p.Process.Pid
+		p.Status = "stop"
+		return fmt.Errorf("start timeout")
+	}
+	cErr := checkExporterAlive(p.Name, p.Port)
+	if cErr != nil {
+		log.Printf("%s is broken \n", p.Name)
+		p.Status = "broken"
+		return cErr
 	}
 	p.Status = "running"
 	p.StartTime = time.Now()
@@ -106,9 +115,11 @@ func (p *ProcessObj)start(configFile,startFile,guid string,port int,param map[st
 }
 
 func (p *ProcessObj)stop() error {
+	log.Println("start stop")
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
 	if p.Pid > 0 {
+		log.Printf("stop pid %d \n", p.Pid)
 		err := exec.Command(osBashCommand, "-c", fmt.Sprintf("kill -9 %d", p.Pid)).Run()
 		if err != nil {
 			return err
@@ -118,6 +129,7 @@ func (p *ProcessObj)stop() error {
 		p.Status = "stop"
 		p.StopTime = time.Now()
 	}
+	log.Println("stop done")
 	return nil
 }
 
@@ -164,7 +176,7 @@ func (p *ProcessObj)update(signal int) {
 
 func (p *ProcessObj)destroy() error {
 	var err error
-	if p.Status == "running" {
+	if p.Status == "running" || p.Status == "broken" {
 		err = p.stop()
 		if err != nil {
 			return err
@@ -183,14 +195,16 @@ func (p *ProcessObj)destroy() error {
 }
 
 func getSystemProcessPid(name,path string) []int {
+	log.Printf("name : %s \n", name)
 	result := []int{}
 	cmdString := "ps aux|grep -v '\\['|awk '{print "+ osPsPidIndex +"}'"
 	if name != "" {
 		cmdString = fmt.Sprintf("ps a|grep %s|grep -v 'bash'|grep -v 'grep'|grep -v 'nohup'|grep -v 'start.sh'|awk '{print $1}'", name)
 	}
 	if path != "" {
-		cmdString = fmt.Sprintf("ps aux|grep %s|grep -v 'bash'|grep -v 'grep'|grep -v 'nohup'|grep -v 'start.sh'|awk '{print $1}'", path)
+		cmdString = fmt.Sprintf("ps aux|grep %s|grep -v 'bash'|grep -v 'grep'|grep -v 'nohup'|grep -v 'start.sh'|awk '{print "+ osPsPidIndex +"}'", path)
 	}
+	log.Println(cmdString)
 	b,err := exec.Command(osBashCommand, "-c", cmdString).Output()
 	if err != nil {
 		log.Printf("get system process pid fail with command %s : %v \n", cmdString, err)
@@ -226,6 +240,48 @@ func replaceParam(filePath string,paramMap map[string]string) error {
 	err = ioutil.WriteFile(filePath, []byte(configString), 0644)
 	if err != nil {
 		return err
+	}
+	return nil
+}
+
+func checkExporterAlive(name string, port int) error {
+	scrapeKey := ""
+	if strings.Contains(name, "mysql") {
+		scrapeKey = "mysql_exporter_last_scrape_error"
+	}
+	if strings.Contains(name, "redis") {
+		scrapeKey = "redis_exporter_last_scrape_error"
+	}
+	if strings.Contains(name, "tomcat") {
+		scrapeKey = "jmx_scrape_error"
+	}
+	if scrapeKey == "" {
+		return nil
+	}
+	resp,err := http.Get(fmt.Sprintf("http://127.0.0.1:%d/metrics", port))
+	if err != nil {
+		fmt.Printf("http get error %v \n", err)
+		return err
+	}
+	body, err := ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+	if err != nil {
+		fmt.Printf("read body error %v \n", err)
+		return err
+	}
+	if resp.StatusCode/100 != 2 {
+		fmt.Printf("response http code %v \n", resp.StatusCode)
+		return err
+	}
+	for _,v := range strings.Split(string(body), "\n") {
+		if strings.Contains(v, scrapeKey) {
+			if strings.Contains(v, "1") {
+				if !strings.Contains(v, "#") {
+					log.Printf("scrape : %s \n", v)
+					return fmt.Errorf("scrape error,please check connect param")
+				}
+			}
+		}
 	}
 	return nil
 }
