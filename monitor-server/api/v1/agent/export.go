@@ -95,17 +95,6 @@ func ExportAgent(c *gin.Context)  {
 				param = m.RegisterParam{Type: agentType, ExporterIp: v.HostIp, ExporterPort: agentPort}
 			}else{
 				param = m.RegisterParam{Type: agentType, ExporterIp: v.InstanceIp, ExporterPort: v.Port, Instance: v.Instance, User:v.User, Password:v.Password}
-				//if agentType == "mysql" || agentType == "redis" {
-				//		param = m.RegisterParam{Type: agentType, ExporterIp: v.InstanceIp, ExporterPort: v.Port, Instance: v.Instance, User:v.User, Password:v.Password}
-				//}else {
-				//	if agentType == "tomcat" {
-				//		tmpPort,_ := strconv.Atoi(v.Port)
-				//		if tmpPort > 0 {
-				//			agentPort = v.Port
-				//		}
-				//	}
-				//	param = m.RegisterParam{Type: agentType, ExporterIp: v.HostIp, ExporterPort: agentPort, Instance: v.Instance}
-				//}
 			}
 			if action == "register" {
 				err = RegisterJob(param)

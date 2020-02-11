@@ -32,18 +32,18 @@ func InitDeploy()  {
 
 func AddDeploy(name,configFile,guid string, param map[string]string) (port int,err error) {
 	if v,b := deployGuidStatus[guid]; b {
-		if v == "running" {
-			return GlobalProcessMap[guid].Port,nil
-		}
+		//if v == "running" {
+		//	return GlobalProcessMap[guid].Port,nil
+		//}
 		if v == "stop" {
 			err := GlobalProcessMap[guid].start("","","",0,nil)
 			return GlobalProcessMap[guid].Port,err
 		}
 	}
 	port = 0
-	if _,b := deployNumMap[name]; !b {
-		return port,fmt.Errorf("%s can not find in the config file", name)
-	}
+	//if _,b := deployNumMap[name]; !b {
+	//	return port,fmt.Errorf("%s can not find in the config file", name)
+	//}
 	var p ProcessObj
 	tmpName := fmt.Sprintf("%s_%d", name, deployNumMap[name]+1)
 	deployPath := fmt.Sprintf("%s/%s", Config().Deploy.DeployDir, tmpName)
