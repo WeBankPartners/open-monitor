@@ -5,7 +5,7 @@
 monitor-ui/node_modules
 monitor-ui/dist
 monitor-ui/src/assets/js/baseURL.js
-# monitor-ui/package-lock.json
+monitor-ui/package-lock.json
 
 #develop
 build/develop/docker-compose.yml
