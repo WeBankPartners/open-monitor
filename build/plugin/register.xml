@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<package name="wecube-monitor" version="v1.3.0.3">
+<package name="wecube-monitor" version="v1.3.0.4">
 
     <!-- 1.依赖分析 - 描述运行本插件包需要的其他插件包 -->
     <packageDependencies>
@@ -48,7 +48,7 @@
 
     <!-- 6.运行资源 - 描述部署运行本插件包需要的基础资源(如主机、虚拟机、容器、数据库等) -->
     <resourceDependencies>
-        <docker imageName="wecube-monitor:v1.3.0.3" containerName="wecube-monitor-v1.3.0.3" portBindings="{{ALLOCATE_PORT}}:8080" volumeBindings="{{BASE_MOUNT_PATH}}/prometheus/logs:/app/monitor/prometheus/logs,{{BASE_MOUNT_PATH}}/prometheus/data:/app/monitor/prometheus/data,{{BASE_MOUNT_PATH}}/prometheus/rules:/app/monitor/prometheus/rules,{{BASE_MOUNT_PATH}}/alertmanager/logs:/app/monitor/alertmanager/logs,{{BASE_MOUNT_PATH}}/alertmanager/data:/app/monitor/alertmanager/data,{{BASE_MOUNT_PATH}}/consul/logs:/app/monitor/consul/logs,{{BASE_MOUNT_PATH}}/consul/data:/app/monitor/consul/data,{{BASE_MOUNT_PATH}}/monitor/logs:/app/monitor/monitor/logs,{{BASE_MOUNT_PATH}}/agent_deploy:/app/deploy,{{BASE_MOUNT_PATH}}/transgateway/logs:/app/monitor/transgateway/logs,{{BASE_MOUNT_PATH}}/transgateway/data:/app/monitor/transgateway/data" envVariables="MONITOR_DB_HOST={{DB_HOST}},MONITOR_DB_PORT={{DB_PORT}},MONITOR_DB_SCHEMA={{DB_SCHEMA}},MONITOR_DB_USER={{DB_USER}},MONITOR_DB_PWD={{DB_PWD}}"/>
+        <docker imageName="wecube-monitor:v1.3.0.4" containerName="wecube-monitor-v1.3.0.4" portBindings="{{ALLOCATE_PORT}}:8080" volumeBindings="{{BASE_MOUNT_PATH}}/prometheus/logs:/app/monitor/prometheus/logs,{{BASE_MOUNT_PATH}}/prometheus/data:/app/monitor/prometheus/data,{{BASE_MOUNT_PATH}}/prometheus/rules:/app/monitor/prometheus/rules,{{BASE_MOUNT_PATH}}/alertmanager/logs:/app/monitor/alertmanager/logs,{{BASE_MOUNT_PATH}}/alertmanager/data:/app/monitor/alertmanager/data,{{BASE_MOUNT_PATH}}/consul/logs:/app/monitor/consul/logs,{{BASE_MOUNT_PATH}}/consul/data:/app/monitor/consul/data,{{BASE_MOUNT_PATH}}/monitor/logs:/app/monitor/monitor/logs,{{BASE_MOUNT_PATH}}/agent_deploy:/app/deploy,{{BASE_MOUNT_PATH}}/transgateway/logs:/app/monitor/transgateway/logs,{{BASE_MOUNT_PATH}}/transgateway/data:/app/monitor/transgateway/data" envVariables="MONITOR_DB_HOST={{DB_HOST}},MONITOR_DB_PORT={{DB_PORT}},MONITOR_DB_SCHEMA={{DB_SCHEMA}},MONITOR_DB_USER={{DB_USER}},MONITOR_DB_PWD={{DB_PWD}}"/>
         <mysql schema="monitor" initFileName="init.sql" upgradeFileName="upgrade.sql"/>
         <s3 bucketName="wecube-agent"/>
     </resourceDependencies>
@@ -56,7 +56,7 @@
     <!-- 7.插件列表 - 描述插件包中单个插件的输入和输出 -->
     <plugins>
         <plugin name="host" targetPackage="wecmdb" targetEntity="resource_instance">
-            <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/host" httpMethod='POST'>
+            <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/host" httpMethod="POST">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">host_ip</parameter>
                     <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MONITOR_HOST_GROUP" required="Y">group</parameter>
@@ -66,7 +66,7 @@
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="deregister" path="/wecube-monitor/api/v1/agent/export/deregister/host" httpMethod='POST'>
+            <interface action="deregister" path="/wecube-monitor/api/v1/agent/export/deregister/host" httpMethod="POST">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">host_ip</parameter>
                 </inputParameters>
@@ -75,7 +75,7 @@
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="install" path="/wecube-monitor/api/v1/agent/install/host" httpMethod='POST'>
+            <interface action="install" path="/wecube-monitor/api/v1/agent/install/host" httpMethod="POST">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">host_ip</parameter>
                 </inputParameters>
@@ -84,7 +84,7 @@
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="start_alarm" path="/wecube-monitor/api/v1/agent/export/start/host" httpMethod='POST'>
+            <interface action="start_alarm" path="/wecube-monitor/api/v1/agent/export/start/host" httpMethod="POST">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">host_ip</parameter>
                 </inputParameters>
@@ -93,7 +93,7 @@
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="stop_alarm" path="/wecube-monitor/api/v1/agent/export/stop/host" httpMethod='POST'>
+            <interface action="stop_alarm" path="/wecube-monitor/api/v1/agent/export/stop/host" httpMethod="POST">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">host_ip</parameter>
                 </inputParameters>
@@ -104,7 +104,7 @@
             </interface>
         </plugin>
         <plugin name="mysql-register" targetPackage="wecmdb" targetEntity="resource_instance">
-            <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/mysql" httpMethod='POST'>
+            <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/mysql" httpMethod="POST">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">instance_ip</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.port" required="Y">port</parameter>
@@ -118,7 +118,7 @@
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="deregister" path="/wecube-monitor/api/v1/agent/export/deregister/mysql" httpMethod='POST'>
+            <interface action="deregister" path="/wecube-monitor/api/v1/agent/export/deregister/mysql" httpMethod="POST">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">instance_ip</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.port" required="Y">port</parameter>
@@ -129,7 +129,7 @@
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="start_alarm" path="/wecube-monitor/api/v1/agent/export/start/mysql" httpMethod='POST'>
+            <interface action="start_alarm" path="/wecube-monitor/api/v1/agent/export/start/mysql" httpMethod="POST">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">instance_ip</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">port</parameter>
@@ -140,7 +140,7 @@
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="stop_alarm" path="/wecube-monitor/api/v1/agent/export/stop/mysql" httpMethod='POST'>
+            <interface action="stop_alarm" path="/wecube-monitor/api/v1/agent/export/stop/mysql" httpMethod="POST">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">instance_ip</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">port</parameter>
@@ -153,7 +153,7 @@
             </interface>
         </plugin>
         <plugin name="redis-register" targetPackage="wecmdb" targetEntity="resource_instance">
-            <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/redis" httpMethod='POST'>
+            <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/redis" httpMethod="POST">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">instance_ip</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">port</parameter>
@@ -167,7 +167,7 @@
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="deregister" path="/wecube-monitor/api/v1/agent/export/deregister/redis" httpMethod='POST'>
+            <interface action="deregister" path="/wecube-monitor/api/v1/agent/export/deregister/redis" httpMethod="POST">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">instance_ip</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">port</parameter>
@@ -178,7 +178,7 @@
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="start_alarm" path="/wecube-monitor/api/v1/agent/export/start/redis" httpMethod='POST'>
+            <interface action="start_alarm" path="/wecube-monitor/api/v1/agent/export/start/redis" httpMethod="POST">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">instance_ip</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">port</parameter>
@@ -189,7 +189,7 @@
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="stop_alarm" path="/wecube-monitor/api/v1/agent/export/stop/redis" httpMethod='POST'>
+            <interface action="stop_alarm" path="/wecube-monitor/api/v1/agent/export/stop/redis" httpMethod="POST">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">instance_ip</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">port</parameter>
@@ -202,7 +202,7 @@
             </interface>
         </plugin>
         <plugin name="tomcat-register" targetPackage="wecmdb" targetEntity="business_app_instance">
-            <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/tomcat" httpMethod='POST'>
+            <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/tomcat" httpMethod="POST">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:business_app_instance.resource_instance>wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">instance_ip</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:business_app_instance.monitor_port" required="Y">port</parameter>
@@ -227,7 +227,7 @@
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="start_alarm" path="/wecube-monitor/api/v1/agent/export/start/tomcat" httpMethod='POST'>
+            <interface action="start_alarm" path="/wecube-monitor/api/v1/agent/export/start/tomcat" httpMethod="POST">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:business_app_instance.resource_instance>wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">instance_ip</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:business_app_instance.monitor_port" required="Y">port</parameter>
@@ -238,7 +238,7 @@
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="stop_alarm" path="/wecube-monitor/api/v1/agent/export/stop/tomcat" httpMethod='POST'>
+            <interface action="stop_alarm" path="/wecube-monitor/api/v1/agent/export/stop/tomcat" httpMethod="POST">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:business_app_instance.resource_instance>wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">instance_ip</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:business_app_instance.monitor_port" required="Y">port</parameter>
@@ -250,22 +250,229 @@
                 </outputParameters>
             </interface>
         </plugin>
-        <plugin name="system-dashboard" targetPackage="wecmdb" targetEntity="system">
-            <interface action="add" path="/wecube-monitor/api/v1/dashboard/system/add" httpMethod='POST'>
+        <plugin name="system-dashboard" targetPackage="wecmdb" targetEntity="system" registerName="system">
+            <interface action="add" path="/wecube-monitor/api/v1/dashboard/system/add" httpMethod="POST">
                 <inputParameters>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:system.key_name" required='Y'>guid</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:system~(system)wecmdb:subsys~(subsys)wecmdb:unit~(unit)wecmdb:business_app_instance.resource_instance>wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required='Y'>display_name</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:system~(system)wecmdb:subsys~(subsys)wecmdb:unit~(unit)wecmdb:business_app_instance.key_name" required='Y'>parent</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:system~(system)wecmdb:subsys~(subsys)wecmdb:unit~(unit)wecmdb:business_app_instance.monitor_port" required='Y'>endpoint</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:system.guid" required="Y">guid</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:system.key_name" required="Y">display_name</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:system.NONE" required="N">parent</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:system.NONE" required="N">endpoint</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="delete" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod='POST'>
+            <interface action="delete" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST">
                 <inputParameters>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:system.key_name" required='Y'>guid</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:system.guid" required="Y">guid</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+        </plugin>
+        <plugin name="system-dashboard" targetPackage="wecmdb" targetEntity="subsys" registerName="subsys">
+            <interface action="add" path="/wecube-monitor/api/v1/dashboard/system/add" httpMethod="POST">
+                <inputParameters>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:subsys.guid" required="Y">guid</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:subsys.key_name" required="Y">display_name</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:subsys.wecmdb:subsys.system>wecmdb:system.guid" required="Y">parent</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:subsys.NONE" required="N">endpoint</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+            <interface action="delete" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST">
+                <inputParameters>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:subsys.guid" required="Y">guid</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+        </plugin>
+        <plugin name="system-dashboard" targetPackage="wecmdb" targetEntity="unit" registerName="app_unit">
+            <interface action="add" path="/wecube-monitor/api/v1/dashboard/system/add" httpMethod="POST">
+                <inputParameters>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.guid" required="Y">guid</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.key_name" required="Y">display_name</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.subsys>wecmdb:subsys.guid" required="Y">parent</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit~(unit)wecmdb:business_app_instance.monitor_key_name" required="Y">endpoint</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+            <interface action="delete" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST">
+                <inputParameters>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.guid" required="Y">guid</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+        </plugin>
+        <plugin name="system-dashboard" targetPackage="wecmdb" targetEntity="unit" registerName="mysql_unit">
+            <interface action="add" path="/wecube-monitor/api/v1/dashboard/system/add" httpMethod="POST">
+                <inputParameters>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.guid" required="Y">guid</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.key_name" required="Y">display_name</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.subsys>wecmdb:subsys.guid" required="Y">parent</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit~(unit)wecmdb:business_app_instance.resource_instance>wecmdb:resource_instance.monitor_key_name" required="Y">endpoint</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+            <interface action="delete" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST">
+                <inputParameters>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.guid" required="Y">guid</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+        </plugin>
+        <plugin name="system-dashboard" targetPackage="wecmdb" targetEntity="unit" registerName="redis_unit">
+            <interface action="add" path="/wecube-monitor/api/v1/dashboard/system/add" httpMethod="POST">
+                <inputParameters>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.guid" required="Y">guid</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.key_name" required="Y">display_name</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.subsys>wecmdb:subsys.guid" required="Y">parent</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit~(unit)wecmdb:business_app_instance.resource_instance>wecmdb:resource_instance.monitor_key_name" required="Y">endpoint</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+            <interface action="delete" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST">
+                <inputParameters>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.guid" required="Y">guid</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+        </plugin>
+        <plugin name="system-dashboard" targetPackage="wecmdb" targetEntity="unit" registerName="host_unit">
+            <interface action="add" path="/wecube-monitor/api/v1/dashboard/system/add" httpMethod="POST">
+                <inputParameters>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.guid" required="Y">guid</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.key_name" required="Y">display_name</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.subsys>wecmdb:subsys.guid" required="Y">parent</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit~(unit)wecmdb:business_app_instance.resource_instance>wecmdb:resource_instance.monitor_key_name" required="Y">endpoint</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+            <interface action="delete" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST">
+                <inputParameters>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.guid" required="Y">guid</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+        </plugin>
+        <plugin name="data-center-dashboard" targetPackage="wecmdb" targetEntity="resource_set" registerName="resource_set">
+            <interface action="add" path="/wecube-monitor/api/v1/dashboard/system/add" httpMethod="POST">
+                <inputParameters>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.guid" required="Y">guid</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.key_name" required="Y">display_name</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.business_zone>wecmdb:business_zone.guid" required="Y">parent</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_set~(resource_set)wecmdb:resource_instance.monitor_key_name" required="Y">endpoint</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+            <interface action="delete" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST">
+                <inputParameters>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.guid" required="Y">guid</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+        </plugin>
+        <plugin name="data-center-dashboard" targetPackage="wecmdb" targetEntity="business_zone" registerName="business_zone">
+            <interface action="add" path="/wecube-monitor/api/v1/dashboard/system/add" httpMethod="POST">
+                <inputParameters>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:business_zone.guid" required="Y">guid</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:business_zone.key_name" required="Y">display_name</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:business_zone.network_zone>wecmdb:network_zone.guid" required="Y">parent</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:business_zone.NONE" required="N">endpoint</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+            <interface action="delete" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST">
+                <inputParameters>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:business_zone.guid" required="Y">guid</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+        </plugin>
+        <plugin name="data-center-dashboard" targetPackage="wecmdb" targetEntity="network_zone" registerName="network_zone">
+            <interface action="add" path="/wecube-monitor/api/v1/dashboard/system/add" httpMethod="POST">
+                <inputParameters>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:network_zone.guid" required="Y">guid</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:network_zone.key_name" required="Y">display_name</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:network_zone.data_center>wecmdb:data_center.guid" required="Y">parent</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:network_zone.NONE" required="N">endpoint</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+            <interface action="delete" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST">
+                <inputParameters>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:network_zone.guid" required="Y">guid</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+        </plugin>
+        <plugin name="data-center-dashboard" targetPackage="wecmdb" targetEntity="data_center" registerName="data_center">
+            <interface action="add" path="/wecube-monitor/api/v1/dashboard/system/add" httpMethod="POST">
+                <inputParameters>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:data_center.guid" required="Y">guid</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:data_center.key_name" required="Y">display_name</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:data_center.NONE" required="N">parent</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:data_center.NONE" required="N">endpoint</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+            <interface action="delete" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST">
+                <inputParameters>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:data_center.guid" required="Y">guid</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
