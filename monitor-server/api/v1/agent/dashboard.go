@@ -20,8 +20,8 @@ type panelRequestObj struct {
 	CallbackParameter  string  `json:"callbackParameter"`
 	Guid  string  `json:"guid"`
 	DisplayName  string  `json:"display_name"`
-	Parent  []string  `json:"parent"`
-	Endpoint  []string  `json:"endpoint"`
+	Parent  string  `json:"parent"`
+	Endpoint  string  `json:"endpoint"`
 }
 
 func ExportPanelAdd(c *gin.Context)  {
@@ -38,6 +38,8 @@ func ExportPanelAdd(c *gin.Context)  {
 		successFlag := "0"
 		errorMessage := "Done"
 		for _,v := range param.Inputs {
+			tmpEndpoint := strings.Split(v.Endpoint, ",")
+			tmpParent := strings.Split(v.Parent, ",")
 			var tmpMessage string
 			if v.Guid == "" {
 				tmpMessage = fmt.Sprintf("Index:%s guid is null", v.CallbackParameter)
@@ -52,15 +54,18 @@ func ExportPanelAdd(c *gin.Context)  {
 				continue
 			}
 			var endpointString []string
-			for _,v := range v.Endpoint {
+			for _,vv := range tmpEndpoint {
+				if vv == "" {
+					continue
+				}
 				var tmpAddress string
-				tmpList := strings.Split(v, ":")
+				tmpList := strings.Split(vv, ":")
 				if len(tmpList) == 1 {
 					tmpAddress = fmt.Sprintf("%s:9100", tmpList[0])
 				}else if len(tmpList) == 2 {
 					tmpAddress = fmt.Sprintf("%s:%s", tmpList[0], tmpList[1])
 				}else{
-					tmpMessage += fmt.Sprintf(" endpoint %s validate fail, ", v)
+					tmpMessage += fmt.Sprintf(" endpoint %s validate fail, ", vv)
 					continue
 				}
 				endpointObj := m.EndpointTable{Address:tmpAddress}
@@ -77,7 +82,7 @@ func ExportPanelAdd(c *gin.Context)  {
 				successFlag = "1"
 				continue
 			}
-			err := db.UpdateRecursivePanel(m.PanelRecursiveTable{Guid:v.Guid,DisplayName:v.DisplayName,Parent:strings.Join(v.Parent, "^"),Endpoint:strings.Join(endpointString, "^")})
+			err := db.UpdateRecursivePanel(m.PanelRecursiveTable{Guid:v.Guid,DisplayName:v.DisplayName,Parent:strings.Join(tmpParent, "^"),Endpoint:strings.Join(endpointString, "^")})
 			if err != nil {
 				tmpMessage = fmt.Sprintf("Index:%s update database error:%v", v.CallbackParameter, err)
 				errorMessage = tmpMessage
