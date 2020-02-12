@@ -1,5 +1,6 @@
 import store from './store'
 import router from './router-plugin'
+import routerP from './router-plugin-p'
 import '@/assets/css/local.bootstrap.css'
 import 'bootstrap/dist/js/bootstrap.min.js'
 import 'font-awesome/css/font-awesome.css'
@@ -21,7 +22,7 @@ window.addOptions({
   $tableUtil: tableUtil,
   apiCenter: apiCenter
 })
-
+window.addRoutersWithoutPermission(routerP, 'open-monitor')
 window.addRoutes(router, 'open-monitor')
 
 import Title from '@/components/title'
