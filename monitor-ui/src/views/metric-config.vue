@@ -13,7 +13,6 @@
         @on-change="getOriginalMetricList"
         :placeholder="$t('placeholder.input')"
         :remote-method="getEndpointList"
-        @on-clear="clearEndpoint"
         >
         <Option v-for="(option, index) in endpointList" :value="option.option_value+ ':' + option.id" :key="index">
           <Tag color="green" class="tag-width" v-if="option.option_value.split(':')[1] == 'sys'">system</Tag>
@@ -132,6 +131,9 @@ export default {
       this.metricSelectedOptions = []
       this.metricList = []
       this.noDataTip = true
+    },
+    isShow: function () {
+      this.getEndpointList('.')
     }
   },
   computed: {
@@ -143,7 +145,10 @@ export default {
     },
     totalMetric: function () {
       return this.metricSelectedOptions.concat(this.editMetric)
-    } 
+    },
+    isShow: function () {
+      return !this.$root.$validate.isEmpty_reset(this.endpoint)
+    }
   },
   mounted() {
     this.getEndpointList('.')
@@ -156,21 +161,13 @@ export default {
         size: 1000
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.resourceSearch.api, params, (responseData) => {
+        this.endpointList = []
         responseData.forEach((item) => {
           if (item.id !== -1) {
             this.endpointList.push(item)
           }
         })
       })
-    },
-    clearEndpoint () {
-      this.isRequestChartData = false
-      this.clearEndpoint = []
-      this.getEndpointList('.')
-      this.originalList = []
-      this.metricSelected = []
-      this.editMetric = []
-      this.endpoint = ''
     },
     addMetric() {
      let key = ((new Date()).valueOf()).toString().substring(10)
