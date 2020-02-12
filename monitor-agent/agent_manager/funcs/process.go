@@ -102,12 +102,12 @@ func (p *ProcessObj)start(configFile,startFile,guid string,port int,param map[st
 		p.Status = "stop"
 		return fmt.Errorf("start timeout")
 	}
-	cErr := checkExporterAlive(p.Name, p.Port)
-	if cErr != nil {
-		log.Printf("%s is broken \n", p.Name)
-		p.Status = "broken"
-		return cErr
-	}
+	//cErr := checkExporterAlive(p.Name, p.Port)
+	//if cErr != nil {
+	//	log.Printf("%s is broken \n", p.Name)
+	//	p.Status = "broken"
+	//	return cErr
+	//}
 	p.Status = "running"
 	p.StartTime = time.Now()
 	log.Printf("run: %s done\n", p.RunCmd)
