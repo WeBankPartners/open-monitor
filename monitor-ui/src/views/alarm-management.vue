@@ -130,6 +130,10 @@ export default {
 </script>
 
 <style scoped lang="less">
+li {
+  list-style: none;
+} 
+
 label {
   margin-bottom: 0;
   text-align: right;
