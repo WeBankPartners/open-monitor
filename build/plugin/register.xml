@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<package name="wecube-monitor" version="v1.3.0.6">
+<package name="wecube-monitor" version="v1.3.0.7">
 
     <!-- 1.依赖分析 - 描述运行本插件包需要的其他插件包 -->
     <packageDependencies>
@@ -48,7 +48,7 @@
 
     <!-- 6.运行资源 - 描述部署运行本插件包需要的基础资源(如主机、虚拟机、容器、数据库等) -->
     <resourceDependencies>
-        <docker imageName="wecube-monitor:v1.3.0.6" containerName="wecube-monitor-v1.3.0.6" portBindings="{{ALLOCATE_PORT}}:8080" volumeBindings="{{BASE_MOUNT_PATH}}/prometheus/logs:/app/monitor/prometheus/logs,{{BASE_MOUNT_PATH}}/prometheus/data:/app/monitor/prometheus/data,{{BASE_MOUNT_PATH}}/prometheus/rules:/app/monitor/prometheus/rules,{{BASE_MOUNT_PATH}}/alertmanager/logs:/app/monitor/alertmanager/logs,{{BASE_MOUNT_PATH}}/alertmanager/data:/app/monitor/alertmanager/data,{{BASE_MOUNT_PATH}}/consul/logs:/app/monitor/consul/logs,{{BASE_MOUNT_PATH}}/consul/data:/app/monitor/consul/data,{{BASE_MOUNT_PATH}}/monitor/logs:/app/monitor/monitor/logs,{{BASE_MOUNT_PATH}}/agent_deploy:/app/deploy,{{BASE_MOUNT_PATH}}/transgateway/logs:/app/monitor/transgateway/logs,{{BASE_MOUNT_PATH}}/transgateway/data:/app/monitor/transgateway/data" envVariables="MONITOR_DB_HOST={{DB_HOST}},MONITOR_DB_PORT={{DB_PORT}},MONITOR_DB_SCHEMA={{DB_SCHEMA}},MONITOR_DB_USER={{DB_USER}},MONITOR_DB_PWD={{DB_PWD}}"/>
+        <docker imageName="wecube-monitor:v1.3.0.7" containerName="wecube-monitor-v1.3.0.7" portBindings="{{ALLOCATE_PORT}}:8080" volumeBindings="{{BASE_MOUNT_PATH}}/prometheus/logs:/app/monitor/prometheus/logs,{{BASE_MOUNT_PATH}}/prometheus/data:/app/monitor/prometheus/data,{{BASE_MOUNT_PATH}}/prometheus/rules:/app/monitor/prometheus/rules,{{BASE_MOUNT_PATH}}/alertmanager/logs:/app/monitor/alertmanager/logs,{{BASE_MOUNT_PATH}}/alertmanager/data:/app/monitor/alertmanager/data,{{BASE_MOUNT_PATH}}/consul/logs:/app/monitor/consul/logs,{{BASE_MOUNT_PATH}}/consul/data:/app/monitor/consul/data,{{BASE_MOUNT_PATH}}/monitor/logs:/app/monitor/monitor/logs,{{BASE_MOUNT_PATH}}/agent_deploy:/app/deploy,{{BASE_MOUNT_PATH}}/transgateway/logs:/app/monitor/transgateway/logs,{{BASE_MOUNT_PATH}}/transgateway/data:/app/monitor/transgateway/data" envVariables="MONITOR_DB_HOST={{DB_HOST}},MONITOR_DB_PORT={{DB_PORT}},MONITOR_DB_SCHEMA={{DB_SCHEMA}},MONITOR_DB_USER={{DB_USER}},MONITOR_DB_PWD={{DB_PWD}}"/>
         <mysql schema="monitor" initFileName="init.sql" upgradeFileName="upgrade.sql"/>
         <s3 bucketName="wecube-agent"/>
     </resourceDependencies>
@@ -107,7 +107,7 @@
             <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/mysql" httpMethod="POST">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">instance_ip</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.port" required="Y">port</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.monitor_port" required="Y">port</parameter>
                     <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MONITOR_MYSQL_GROUP" required="Y">group</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.code" required="Y">instance</parameter>
                     <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MYSQL_MONITOR_USER" required="Y">user</parameter>
@@ -121,7 +121,7 @@
             <interface action="deregister" path="/wecube-monitor/api/v1/agent/export/deregister/mysql" httpMethod="POST">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">instance_ip</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.port" required="Y">port</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.monitor_port" required="Y">port</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.code" required="Y">instance</parameter>
                 </inputParameters>
                 <outputParameters>
@@ -132,7 +132,7 @@
             <interface action="start_alarm" path="/wecube-monitor/api/v1/agent/export/start/mysql" httpMethod="POST">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">instance_ip</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">port</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.monitor_port" required="Y">port</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.code" required="Y">instance</parameter>
                 </inputParameters>
                 <outputParameters>
@@ -143,7 +143,7 @@
             <interface action="stop_alarm" path="/wecube-monitor/api/v1/agent/export/stop/mysql" httpMethod="POST">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">instance_ip</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">port</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.monitor_port" required="Y">port</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.code" required="Y">instance</parameter>
                 </inputParameters>
                 <outputParameters>
@@ -156,7 +156,7 @@
             <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/redis" httpMethod="POST">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">instance_ip</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">port</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.monitor_port" required="Y">port</parameter>
                     <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MONITOR_REDIS_GROUP" required="Y">group</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.code" required="Y">instance</parameter>
                     <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="REDIS_MONITOR_USER" required="Y">user</parameter>
@@ -170,7 +170,7 @@
             <interface action="deregister" path="/wecube-monitor/api/v1/agent/export/deregister/redis" httpMethod="POST">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">instance_ip</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">port</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.monitor_port" required="Y">port</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.code" required="Y">instance</parameter>
                 </inputParameters>
                 <outputParameters>
@@ -181,7 +181,7 @@
             <interface action="start_alarm" path="/wecube-monitor/api/v1/agent/export/start/redis" httpMethod="POST">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">instance_ip</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">port</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.monitor_port" required="Y">port</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.code" required="Y">instance</parameter>
                 </inputParameters>
                 <outputParameters>
@@ -192,7 +192,7 @@
             <interface action="stop_alarm" path="/wecube-monitor/api/v1/agent/export/stop/redis" httpMethod="POST">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">instance_ip</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">port</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.monitor_port" required="Y">port</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_instance.code" required="Y">instance</parameter>
                 </inputParameters>
                 <outputParameters>
@@ -278,7 +278,7 @@
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:subsys.guid" required="Y">guid</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:subsys.key_name" required="Y">display_name</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:subsys.wecmdb:subsys.system>wecmdb:system.guid" required="Y">parent</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:subsys.system>wecmdb:system.guid" required="Y">parent</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:subsys.NONE" required="N">endpoint</parameter>
                 </inputParameters>
                 <outputParameters>

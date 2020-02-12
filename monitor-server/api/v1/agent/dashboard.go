@@ -38,6 +38,10 @@ func ExportPanelAdd(c *gin.Context)  {
 		successFlag := "0"
 		errorMessage := "Done"
 		for _,v := range param.Inputs {
+			v.Endpoint = strings.Replace(v.Endpoint, "[", "", -1)
+			v.Endpoint = strings.Replace(v.Endpoint, "]", "", -1)
+			v.Parent = strings.Replace(v.Parent, "[", "", -1)
+			v.Parent = strings.Replace(v.Parent, "]", "", -1)
 			tmpEndpoint := strings.Split(v.Endpoint, ",")
 			tmpParent := strings.Split(v.Parent, ",")
 			var tmpMessage string
