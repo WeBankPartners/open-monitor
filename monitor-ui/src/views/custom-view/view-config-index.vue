@@ -154,6 +154,9 @@ export default {
 </script>
 
 <style scoped lang="less">
+li {
+  list-style: none;
+} 
 .operational-zone {
   margin-bottom: 16px;
 }
