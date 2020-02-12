@@ -265,7 +265,7 @@ func RegisterJob(param m.RegisterParam) error {
 			}
 		}
 		if address == "" {
-			err, strList = prom.GetEndpointData(param.ExporterIp, param.ExporterPort, []string{"Catalina", "catalina", "jvm", "java"}, []string{"version"})
+			err, strList = prom.GetEndpointData(param.ExporterIp, param.ExporterPort, []string{"Catalina", "catalina", "jvm", "java", "Tomcat", "tomcat", "process", "com"}, []string{"version"})
 		}else{
 			if strings.Contains(address, ":") {
 				tmpAddressList := strings.Split(address, ":")
