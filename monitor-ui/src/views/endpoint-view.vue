@@ -34,7 +34,6 @@ export default {
         this.params = params
         this.showCharts = false
         this.showRecursive = true
-        this.$root.$store.commit('emptyRecursiveNum')
         this.recursiveView(params)
         return
       }
