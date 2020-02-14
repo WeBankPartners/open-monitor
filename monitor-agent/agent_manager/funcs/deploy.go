@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"log"
 	"net"
+	"time"
 )
 
 var deployNumMap map[string]int
@@ -31,22 +32,26 @@ func InitDeploy()  {
 }
 
 func AddDeploy(name,configFile,guid string, param map[string]string) (port int,err error) {
-	if v,b := deployGuidStatus[guid]; b {
-		log.Println("enter exist action")
-		if v == "running" {
-			return GlobalProcessMap[guid].Port,nil
-		}
-		if v == "stop" {
-			err := GlobalProcessMap[guid].start("","","",0,nil)
-			return GlobalProcessMap[guid].Port,err
-		}
-	}
 	port = 0
+	if _,b := deployGuidStatus[guid]; b {
+		log.Println("enter exist action")
+		port = GlobalProcessMap[guid].Port
+		DeleteDeploy(guid)
+		//if v == "running" {
+		//	DeleteDeploy(guid)
+		//	return GlobalProcessMap[guid].Port,nil
+		//}
+		//if v == "stop" {
+		//	err := GlobalProcessMap[guid].start("","","",0,nil)
+		//	return GlobalProcessMap[guid].Port,err
+		//}
+	}
 	if _,b := deployNumMap[name]; !b {
 		return port,fmt.Errorf("%s can not find in the config file", name)
 	}
 	var p ProcessObj
 	tmpName := fmt.Sprintf("%s_%d", name, deployNumMap[name]+1)
+	deployNumMap[name] = deployNumMap[name] + 1
 	deployPath := fmt.Sprintf("%s/%s", Config().Deploy.DeployDir, tmpName)
 	err = exec.Command(osBashCommand, "-c", fmt.Sprintf("mkdir -p %s && cp -r %s/* %s/", deployPath, deployPathMap[name], deployPath)).Run()
 	if err != nil {
@@ -60,8 +65,9 @@ func AddDeploy(name,configFile,guid string, param map[string]string) (port int,e
 	ProcessMapLock.Lock()
 	GlobalProcessMap[guid] = &p
 	ProcessMapLock.Unlock()
-	deployNumMap[name] = deployNumMap[name] + 1
-	port = GetPort()
+	if port == 0 {
+		port = GetPort()
+	}
 	param["port"] = fmt.Sprintf("%d", port)
 	err = p.start(configFile, startFile, guid, port, param)
 	if err != nil && p.Status == "broken" {
@@ -83,6 +89,10 @@ func DeleteDeploy(guid string) error {
 			deployGuidStatus[guid] = "stop"
 			for k,v := range deployGuidStatus {
 				log.Printf("deploy guid status ---> k:%s  v:%s \n", k, v)
+			}
+			err = exec.Command(osBashCommand, "-c", fmt.Sprintf("mv -f %s /tmp/%s_%s", v.Path, v.Name, time.Now().Format("2006_01_02_15_04_05"))).Run()
+			if err != nil {
+				log.Printf("remove dir %s fail : %v \n", v.Path, err)
 			}
 		}
 		return err

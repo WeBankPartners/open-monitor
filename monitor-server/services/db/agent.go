@@ -23,8 +23,8 @@ func UpdateEndpoint(endpoint *m.EndpointTable) error {
 		GetEndpoint(&host)
 		endpoint.Id = host.Id
 	}else{
-		update := fmt.Sprintf("UPDATE endpoint SET name='%s',ip='%s',endpoint_version='%s',export_type='%s',export_version='%s',step=%d,address='%s',os_type='%s' WHERE id=%d",
-			endpoint.Name,endpoint.Ip,endpoint.EndpointVersion,endpoint.ExportType,endpoint.ExportVersion,endpoint.Step,endpoint.Address,endpoint.OsType,endpoint.Id)
+		update := fmt.Sprintf("UPDATE endpoint SET name='%s',ip='%s',endpoint_version='%s',export_type='%s',export_version='%s',step=%d,address='%s',os_type='%s',address_agent='%s' WHERE id=%d",
+			endpoint.Name,endpoint.Ip,endpoint.EndpointVersion,endpoint.ExportType,endpoint.ExportVersion,endpoint.Step,endpoint.Address,endpoint.OsType,endpoint.AddressAgent,endpoint.Id)
 		_,err := x.Exec(update)
 		if err != nil {
 			mid.LogError("update endpoint fail ", err)
