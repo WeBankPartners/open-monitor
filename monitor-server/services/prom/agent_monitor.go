@@ -84,7 +84,7 @@ func requestAgentMonitor(param agentManagerRequest,url,method string) (resp agen
 	}
 	defer res.Body.Close()
 	body,_ := ioutil.ReadAll(res.Body)
-	mid.LogInfo(fmt.Sprintf("guid: %s, curl register agent_monitor response : %s ", param.Guid, string(body)))
+	mid.LogInfo(fmt.Sprintf("guid: %s, curl %s agent_monitor response : %s ", param.Guid, method, string(body)))
 	err = json.Unmarshal(body, &resp)
 	if err != nil {
 		mid.LogError("curl agent_monitor unmarshal error ", err)

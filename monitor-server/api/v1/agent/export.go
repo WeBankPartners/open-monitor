@@ -12,6 +12,7 @@ import (
 	"io/ioutil"
 	"encoding/json"
 	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/alarm"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
 )
 
 type resultObj struct {
@@ -106,6 +107,18 @@ func ExportAgent(c *gin.Context)  {
 					endpointObj = m.EndpointTable{Ip: v.InstanceIp, ExportType: agentType, Name: v.Instance}
 				}
 				db.GetEndpoint(&endpointObj)
+				if endpointObj.AddressAgent != "" {
+					agentManagerUrl := ""
+					for _, v := range m.Config().Dependence {
+						if v.Name == "agent_manager" {
+							agentManagerUrl = v.Server
+							break
+						}
+					}
+					if agentManagerUrl != "" {
+						err = prom.StopAgent(endpointObj.ExportType, endpointObj.Name, endpointObj.Ip, agentManagerUrl)
+					}
+				}
 				if endpointObj.Id > 0 {
 					err = DeregisterJob(endpointObj.Guid)
 				}

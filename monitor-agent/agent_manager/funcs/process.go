@@ -119,11 +119,12 @@ func (p *ProcessObj)stop() error {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
 	if p.Pid > 0 {
-		log.Printf("stop pid %d \n", p.Pid)
+		log.Printf("try to stop pid %d... \n", p.Pid)
 		err := exec.Command(osBashCommand, "-c", fmt.Sprintf("kill -9 %d", p.Pid)).Run()
 		if err != nil {
 			return err
 		}
+		log.Printf("stop pid %d done \n", p.Pid)
 		p.Pid = 0
 		p.Process = nil
 		p.Status = "stop"
