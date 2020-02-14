@@ -5,8 +5,7 @@ Vue.use(vuex);
 export default new vuex.Store({
   state: {
     ip: {},
-    tableExtendActive: -1, //table组件扩展状态
-    recursiveNum: []
+    tableExtendActive: -1 //table组件扩展状态
   },
   mutations: {
     storeip(state, ip) {
@@ -14,15 +13,6 @@ export default new vuex.Store({
     },
     changeTableExtendActive(state, index) {
       state.tableExtendActive = index
-    },
-    addRecursiveNum(state, index) {
-      state.recursiveNum.push(index)
-    },
-    removeRecursiveNum(state, index) {
-      state.recursiveNum.splice(index, 1)
-    },
-    emptyRecursiveNum(state) {
-      state.recursiveNum = []
-    },
+    }
   }
 });
