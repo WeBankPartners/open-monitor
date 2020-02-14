@@ -2,13 +2,13 @@
   <div class=" ">
     <ul>
       <li v-for="(item, itemIndex) in recursiveViewConfig" class="tree-border" :key="itemIndex">
-        <div @click="hide(count)" class="tree-title" :style="stylePadding">
+        <div @click="hide" class="tree-title" :style="stylePadding">
           <span>
             <strong>{{item.display_name}}</strong>
           </span>
         </div>
         <transition name="fade">
-          <div v-show="isShow(count)">
+          <div v-show="isShow">
             <recursive
             :increment="count"
             :params="params"
@@ -32,6 +32,7 @@ export default {
   name: 'recursive',
   data() {
     return {
+      isShow: true
     }
   },
   props:{
@@ -58,18 +59,8 @@ export default {
     }
   },
   methods: {
-    hide (count) {
-      let recursiveNum = this.$root.$store.state.recursiveNum
-      const index = recursiveNum.indexOf(count)
-      if (index > -1) { 
-        this.$root.$store.commit('removeRecursiveNum', index)
-      } else {
-        this.$root.$store.commit('addRecursiveNum', count)
-      }
-    },
-    isShow (count) {
-      const recursiveNum = this.$root.$store.state.recursiveNum
-      return !recursiveNum.includes(count)
+    hide () {
+      this.isShow = !this.isShow
     }
   },
   components: {
