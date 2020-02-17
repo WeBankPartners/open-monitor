@@ -57,6 +57,7 @@ export default {
       this.$refs.parentCharts.refreshCharts()
     },
     recursiveView (params) {
+      this.recursiveViewConfig = []
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.recursive.api, params, responseData => {
         this.recursiveViewConfig = [responseData]
       })
