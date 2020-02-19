@@ -848,7 +848,8 @@ func SaveOpenAlarm(param m.OpenAlarmRequest) error {
 func GetOpenAlarm() []*m.AlarmProblemQuery {
 	var query []*m.OpenAlarmObj
 	result := []*m.AlarmProblemQuery{}
-	sql := fmt.Sprintf("SELECT * FROM alarm_custom WHERE closed<>1 and update_at>'%s' ORDER BY id ASC", time.Unix(time.Now().Unix()-300,0).Format(m.DatetimeFormat))
+	//sql := fmt.Sprintf("SELECT * FROM alarm_custom WHERE closed<>1 and update_at>'%s' ORDER BY id ASC", time.Unix(time.Now().Unix()-300,0).Format(m.DatetimeFormat))
+	sql := fmt.Sprintf("SELECT * FROM alarm_custom WHERE closed<>1 ORDER BY id ASC")
 	x.SQL(sql).Find(&query)
 	if len(query) == 0 {
 		return result
