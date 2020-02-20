@@ -174,7 +174,7 @@ export default {
   }
   img {
     width: 40px;
-    margin: 10px 20px 0;
+    margin: 0 10px;
   }
 }
 .set-theme {
