@@ -9,6 +9,7 @@ module.exports = {
   //   }
 	// },
 	assetsDir: process.env.PLUGIN === 'plugin'? '':'wecube-monitor',
+	outputDir: process.env.PLUGIN === 'plugin'? 'plugin':'dist',
 	productionSourceMap: process.env.PLUGIN !== 'plugin',
 	chainWebpack: config => {
 		config.when(process.env.PLUGIN === "plugin", config => {
