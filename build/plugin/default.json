@@ -21,9 +21,9 @@
       "stdout": true
     },
     "session": {
-      "enable": false,
+      "enable": {{MONITOR_SESSION_ENABLE}},
       "expire": 3600,
-      "server_enable": false,
+      "server_enable": true,
       "server_token": "default-token-used-in-server-side",
       "redis": {
         "enable": false,
