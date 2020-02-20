@@ -1,10 +1,46 @@
 # Open-Monitor安装指引
 
+## 简单方式：
+
+下载release上最新的open-monitor.zip压缩包，装好所依赖docker和mysql
+#### 1. 解压open-monitor.zip压缩包，里面会有image.tar镜像和init.sql
+#### 2. 在mysql上导入init.sql初始化数据库
+#### 3. 导入docker镜像
+```
+docker load --input image.tar
+```
+#### 4. 创建本地目录，例如/app/test(如果是其它目录请替换下面命令中的/app/test)，替换如下命令的mysql连接参数
+```
+MONITOR_DB_HOST=127.0.0.1 -> 把127.0.0.1替换成mysql地址
+MONITOR_DB_USER=root -> 把root替换成mysql用户
+MONITOR_DB_PWD=wecube -> 把wecube替换成mysql用户密码
+wecube-monitor:v1.3.1.1 -> 把后面的版本号改成所导入镜像的版本号
+```
+```
+mkdir -p /app/test
+docker run --name open-monitor --volume /app/test/prometheus/logs:/app/monitor/prometheus/logs --volume /app/test/prometheus/data:/app/monitor/prometheus/data --volume /app/test/prometheus/rules:/app/monitor/prometheus/rules  --volume /app/test/alertmanager/logs:/app/monitor/alertmanager/logs --volume /app/test/alertmanager/data:/app/monitor/alertmanager/data --volume /app/test/consul/data:/app/monitor/consul/data --volume /app/test/consul/logs:/app/monitor/consul/logs --volume /app/test/monitor/logs:/app/monitor/monitor/logs --volume /app/test/deploy:/app/deploy --volume /app/test/transgateway/logs:/app/monitor/transgateway/logs --volume /app/test/transgateway/data:/app/monitor/transgateway/data -d -p 8080:8080 -p 8500:8500 -p 8300:8300 -p 9090:9090 -p 19091:19091 -e MONITOR_SERVER_PORT=8080 -e MONITOR_DB_HOST=127.0.0.1 -e MONITOR_DB_USER=root -e MONITOR_DB_PWD=wecube -e MONITOR_SESSION_ENABLE=true wecube-monitor:v1.3.1.1
+```
+容器运行起来后打开 http://127.0.0.1:8080/wecube-monitor/ 登录界面
+
+#### 5. 注册agent
+open-monitor.zip解压后里面有exporter_host.tar.gz文件，执行如下安装命令
+```
+tar zxf exporter_host.tar.gz
+cd exporter_host
+chmod +x start.sh
+./start.sh
+```
+最后在界面里的 配置->对象->新增 把刚才agent的主机ip地址填入并保存，提示成功后可在 视图->对象视图中搜索查看该主机的性能图表
+
+
+
+## 高级方式：
+
 Open-Monitor运行环境需要5个组件：  
 prometheus、alertmanager、consul、monitor、monitor-db（mysql） 
 这5个组件都已做成docker镜像，本安装指引通过docker-compose的方式启动这3个容器，不需要再单独安装mysql服务。用户也可以自行安装mysql，修改部分配置文件即可。
 
-## 安装前准备
+### 安装前准备
 1. 准备一台linux主机，资源配置建议为4核8GB或以上。
 2. 操作系统版本建议为ubuntu16.04以上或centos7.3以上。
 3. 建议网络可通外网(需从外网下载部分软件)。
@@ -13,7 +49,7 @@ prometheus、alertmanager、consul、monitor、monitor-db（mysql）
 	- docker-compose安装请参考[docker-compose安装文档](docker-compose_install_guide.md)
 
 
-## 加载镜像
+### 加载镜像
 
    通过文件方式加载镜像，执行以下命令：
 
@@ -37,7 +73,7 @@ prometheus、alertmanager、consul、monitor、monitor-db（mysql）
 
    记下镜像列表中的镜像名称以及TAG， 在下面的配置中需要用到。
 
-## 配置
+### 配置
 1. 建立执行目录和相关文件
 	
 	在部署机器上建立安装目录，新建以下7个文件：
@@ -235,7 +271,7 @@ prometheus、alertmanager、consul、monitor、monitor-db（mysql）
    [alertmanager.yml](../build/conf/alertmanager.yml) 是alertmanager服务的配置文件  
    [monitor.json](../build/conf/monitor.json) 是monitor的配置文件  
 
-## 执行安装
+### 执行安装
 1. 执行如下命令，通过docker-compose拉起Open-Monitor服务。
 	
 	```
@@ -245,14 +281,14 @@ prometheus、alertmanager、consul、monitor、monitor-db（mysql）
 2. 安装完成后，访问monitor的url，确认页面访问正常。
 	http://monitor_server_ip:monitor_server_port
 
-## 卸载
+### 卸载
 执行如下命令，通过docker-compose停止Open-Monitor服务。
 
 ```
 /bin/bash ./uninstall.sh
 ```
 
-## 重启
+### 重启
 执行如下命令，通过docker-compose停止Open-Monitor服务。
 
 ```
