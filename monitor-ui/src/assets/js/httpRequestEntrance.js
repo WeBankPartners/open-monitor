@@ -81,16 +81,19 @@ function httpRequestEntrance (method, url, data, callback, customHttpConfig) {
         loading.end()
       },0)
     }
-    console.log(error)
-    errorMessage(error.response)
 
-    let status = error.response.data.code
-    if (status === 401) {
-      cookies.deleteAuthorization()
-      localStorage.username = ''
-      router.push({name: 'login'})
+    if (error.response) {
+      const status = error.response.status
+      const errorData = error.response.data
+      if (status === 400) {
+        errorMessage(errorData.msg)
+      }
+      if (status === 401) {
+        cookies.deleteAuthorization()
+        localStorage.username = ''
+        router.push({name: 'login'})
+      }
     }
-
     // errorMessage(error.response)
     // if (error.response) {
     //   let status = error.response.status
