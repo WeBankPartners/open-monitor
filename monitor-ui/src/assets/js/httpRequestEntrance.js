@@ -6,11 +6,11 @@
 * 统一http请求入口，统一处理http请求响应
 *
  */
-// import router from '@/router'
-// import {cookies} from '@/assets/js/cookieUtils'
+import router from '@/router'
+import {cookies} from '@/assets/js/cookieUtils'
 import httpRequest from '@/assets/js/axiosHttp'
 import $ from 'jquery'
-// import {Message} from 'view-design'
+import {Message} from 'view-design'
 import loadingImg from '@/assets/img/loading.gif'
 
 let loadingCount = 0
@@ -31,13 +31,13 @@ export const loading = {
   }
 }
 // 错误消息提醒统一组件
-// function errorMessage(content) {
-//   Message.error({
-//     content: content,
-//     duration: 5,
-//     closable: true
-//   })
-// }
+function errorMessage(content) {
+  Message.error({
+    content: content,
+    duration: 5,
+    closable: true
+  })
+}
 
 /*
  * Func: http统一处理
@@ -74,7 +74,7 @@ function httpRequestEntrance (method, url, data, callback, customHttpConfig) {
         return callback(response.data,response.msg)
       }
     }
-  }).catch(function () {
+  }).catch(function (error) {
     if (config.isNeedloading) {
       setTimeout(() => {
         loadingCount--
@@ -82,15 +82,18 @@ function httpRequestEntrance (method, url, data, callback, customHttpConfig) {
       },0)
     }
 
-    // errorMessage(error.response.data.msg)
-
-    // let status = error.response.data.code
-    // if (status === 401) {
-    //   cookies.deleteAuthorization()
-    //   localStorage.username = ''
-    //   router.push({name: 'login'})
-    // }
-
+    if (error.response) {
+      const status = error.response.status
+      const errorData = error.response.data
+      if (status === 400) {
+        errorMessage(errorData.msg)
+      }
+      if (status === 401) {
+        cookies.deleteAuthorization()
+        localStorage.username = ''
+        router.push({name: 'login'})
+      }
+    }
     // errorMessage(error.response)
     // if (error.response) {
     //   let status = error.response.status
