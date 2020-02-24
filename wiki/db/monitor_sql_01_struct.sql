@@ -168,6 +168,7 @@ CREATE TABLE `grp` (
   `description` VARCHAR(255) DEFAULT '',
   `create_user` VARCHAR(50) DEFAULT '',
   `update_user` VARCHAR(50) DEFAULT '',
+  `parent` int(11) DEFAULT '0',
   `create_at` DATETIME,
   `update_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
