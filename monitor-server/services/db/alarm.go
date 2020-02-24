@@ -131,6 +131,7 @@ func UpdateGrp(obj *m.UpdateGrp) error {
 		if obj.Operation == "insert" {
 			grp.CreateUser = obj.OperateUser
 			grp.CreateAt = time.Now()
+			grp.UpdateAt = time.Now()
 		}
 		action := Classify(*grp, obj.Operation, "grp", true)
 		mid.LogInfo(fmt.Sprintf("action: sql-> %s params->%v", action.Sql, action.Param))
@@ -204,15 +205,24 @@ func GetStrategy(param m.StrategyTable) (error,m.StrategyTable) {
 	return err,*result[0]
 }
 
+func getGrpParent(grpId int) m.GrpTable {
+	var grp []*m.GrpTable
+	x.SQL("SELECT id,name,parent FROM grp WHERE id=?", grpId).Find(&grp)
+	if len(grp) > 0 {
+		return *grp[0]
+	}
+	return m.GrpTable{}
+}
+
 func GetStrategys(query *m.TplQuery, ignoreLogMonitor bool) error {
 	var result []*m.TplObj
-	ignoreLogMonitorSql := "and t2.metric<>'log_monitor'"
-	if !ignoreLogMonitor {
-		ignoreLogMonitorSql = ""
-	}
+	//ignoreLogMonitorSql := "and t2.metric<>'log_monitor'"
+	//if !ignoreLogMonitor {
+	//	ignoreLogMonitorSql = ""
+	//}
 	if query.SearchType == "endpoint" {
 		var grps []*m.GrpTable
-		err := x.SQL("SELECT id,name FROM grp where id in (select grp_id from grp_endpoint WHERE endpoint_id=?)", query.SearchId).Find(&grps)
+		err := x.SQL("SELECT * FROM grp where id in (select grp_id from grp_endpoint WHERE endpoint_id=?)", query.SearchId).Find(&grps)
 		if err != nil {
 			mid.LogError("get strategy fail", err)
 			return err
@@ -224,13 +234,38 @@ func GetStrategys(query *m.TplQuery, ignoreLogMonitor bool) error {
 			for _, v := range grps {
 				grpIds += fmt.Sprintf("%d,", v.Id)
 				grpMap[v.Id] = v.Name
+				if v.Parent > 0 {
+					tmpGrpId := v.Id
+					tmpParentId := v.Parent
+					tmpGrpName := v.Name
+					// 查找父模板,最多递归10级
+					for i:=0;i<10;i++ {
+						parentGrp := getGrpParent(tmpParentId)
+						if parentGrp.Id > 0 {
+							grpIds += fmt.Sprintf("%d,", parentGrp.Id)
+							grpMap[tmpGrpId] = fmt.Sprintf("%s [%s]", tmpGrpName, parentGrp.Name)
+							if parentGrp.Parent <= 0 {
+								grpMap[parentGrp.Id] = parentGrp.Name
+								break
+							} else {
+								tmpGrpId = parentGrp.Id
+								tmpParentId = parentGrp.Parent
+								tmpGrpName = parentGrp.Name
+							}
+						}else{
+							grpMap[tmpGrpId] = tmpGrpName
+							break
+						}
+					}
+				}
 			}
 			grpIds = grpIds[:len(grpIds)-1]
 			grpIds += ") OR"
 		}
 		var tpls []*m.TplStrategyTable
 		sql := `SELECT t1.id tpl_id,t1.grp_id,t1.endpoint_id,t2.id strategy_id,t2.metric,t2.expr,t2.cond,t2.last,t2.priority,t2.content 
-				FROM tpl t1 LEFT JOIN strategy t2 ON t1.id=t2.tpl_id WHERE (`+grpIds+` endpoint_id=?) `+ignoreLogMonitorSql+` order by t1.endpoint_id,t1.id,t2.id`
+				FROM tpl t1 LEFT JOIN strategy t2 ON t1.id=t2.tpl_id WHERE (`+grpIds+` endpoint_id=?)  order by t1.endpoint_id,t1.id,t2.id`
+		fmt.Printf("sql: %s id:%d \n", sql, query.SearchId)
 		err = x.SQL(sql, query.SearchId).Find(&tpls)
 		if err != nil {
 			mid.LogError("get strategy fail", err)
@@ -244,6 +279,9 @@ func GetStrategys(query *m.TplQuery, ignoreLogMonitor bool) error {
 			var tmpTplId int
 			var tmpStrategys []*m.StrategyTable
 			for i, v := range tpls {
+				if ignoreLogMonitor && v.Metric == "log_monitor" {
+					continue
+				}
 				if i == 0 {
 					tmpTplId = v.TplId
 					if v.StrategyId > 0 {
@@ -297,9 +335,50 @@ func GetStrategys(query *m.TplQuery, ignoreLogMonitor bool) error {
 			mid.LogInfo("can't find this grp")
 			return fmt.Errorf("can't find this grp")
 		}
+		var parentTpls []*m.TplStrategyTable
 		var tpls []*m.TplStrategyTable
+		if grps[0].Parent > 0 {
+			tmpParentId := grps[0].Parent
+			for i:=0;i<10;i++ {
+				parentGrp := getGrpParent(tmpParentId)
+				sql := `SELECT t1.id tpl_id,t1.grp_id,t1.endpoint_id,t2.id strategy_id,t2.metric,t2.expr,t2.cond,t2.last,t2.priority,t2.content 
+				FROM tpl t1 LEFT JOIN strategy t2 ON t1.id=t2.tpl_id WHERE t1.grp_id=?  ORDER BY t2.id`
+				parentTpls = []*m.TplStrategyTable{}
+				x.SQL(sql, parentGrp.Id).Find(&parentTpls)
+				if len(parentTpls) > 0 {
+					tmpStrategys := []*m.StrategyTable{}
+					for _, v := range parentTpls {
+						if v.StrategyId > 0 {
+							if ignoreLogMonitor && v.Metric == "log_monitor" {
+								continue
+							}
+							tmpStrategys = append(tmpStrategys, &m.StrategyTable{Id: v.StrategyId, TplId: v.TplId, Metric: v.Metric, Expr: v.Expr, Cond: v.Cond, Last: v.Last, Priority: v.Priority, Content: v.Content})
+						}
+					}
+					result = append(result, &m.TplObj{TplId:parentTpls[0].TplId, ObjId:parentGrp.Id, ObjName:parentGrp.Name, ObjType:"grp", Operation:false, Strategy:tmpStrategys})
+				}else{
+					result = append(result, &m.TplObj{TplId:0, ObjId:parentGrp.Id, ObjName:parentGrp.Name, ObjType:"grp", Operation:false, Strategy:[]*m.StrategyTable{}})
+				}
+				if parentGrp.Parent <= 0 {
+					break
+				}else{
+					tmpParentId = parentGrp.Parent
+				}
+			}
+			var newResult []*m.TplObj
+			var tmpParentName,tmpObjName string
+			for i:=len(result);i>0;i-- {
+				tmpObjName = result[i-1].ObjName
+				if tmpParentName != "" {
+					result[i-1].ObjName = fmt.Sprintf("%s [%s]", tmpObjName, tmpParentName)
+				}
+				tmpParentName = tmpObjName
+				newResult = append(newResult, result[i-1])
+			}
+			result = newResult
+		}
 		sql := `SELECT t1.id tpl_id,t1.grp_id,t1.endpoint_id,t2.id strategy_id,t2.metric,t2.expr,t2.cond,t2.last,t2.priority,t2.content 
-				FROM tpl t1 LEFT JOIN strategy t2 ON t1.id=t2.tpl_id WHERE t1.grp_id=? `+ignoreLogMonitorSql+` ORDER BY t2.id`
+				FROM tpl t1 LEFT JOIN strategy t2 ON t1.id=t2.tpl_id WHERE t1.grp_id=?  ORDER BY t2.id`
 		err = x.SQL(sql, query.SearchId).Find(&tpls)
 		if err != nil {
 			mid.LogError("get strategy fail", err)
@@ -309,6 +388,9 @@ func GetStrategys(query *m.TplQuery, ignoreLogMonitor bool) error {
 			tmpStrategys := []*m.StrategyTable{}
 			for _, v := range tpls {
 				if v.StrategyId > 0 {
+					if ignoreLogMonitor && v.Metric == "log_monitor" {
+						continue
+					}
 					tmpStrategys = append(tmpStrategys, &m.StrategyTable{Id: v.StrategyId, TplId: v.TplId, Metric: v.Metric, Expr: v.Expr, Cond: v.Cond, Last: v.Last, Priority: v.Priority, Content: v.Content})
 				}
 			}
@@ -356,12 +438,62 @@ func GetTpl(tplId,grpId,endpointId int) (error,m.TplTable) {
 	return nil,*result[0]
 }
 
+func GetParentTpl(tplId int) []int {
+	type tplGrpParent struct {
+		Id  int
+		GrpId  int
+		Parent  int
+	}
+	var result []*tplGrpParent
+	x.SQL("SELECT t1.id,t1.grp_id,t2.parent FROM tpl t1 LEFT JOIN grp t2 ON t1.grp_id=t2.id").Find(&result)
+	if len(result) == 0 {
+		return []int{}
+	}
+	tmpGrptId := 0
+	for _,v := range result {
+		if v.Id == tplId {
+			tmpGrptId = v.GrpId
+			break
+		}
+	}
+	var tplIdList []int
+	tmpGrpMap := make(map[int]int)
+	for i:=0;i<10;i++ {
+		endFlag := true
+		for _,v := range result {
+			for kk,vv := range tmpGrpMap {
+				if vv == 2 {
+					continue
+				}
+				if v.Parent == kk {
+					endFlag = false
+					tmpGrpMap[v.GrpId] = 1
+					tplIdList = append(tplIdList, v.Id)
+					tmpGrpMap[kk] = 2
+				}
+			}
+			if v.Parent == tmpGrptId {
+				if _,b := tmpGrpMap[v.GrpId];!b {
+					endFlag = false
+					tmpGrpMap[v.GrpId] = 1
+					tplIdList = append(tplIdList, v.Id)
+				}
+			}
+		}
+		if endFlag {
+			break
+		}
+	}
+	mid.LogInfo(fmt.Sprintf("tpl parent ids : %v ", tplIdList))
+	return tplIdList
+}
+
 func AddTpl(grpId,endpointId int, operateUser string) (error,m.TplTable) {
 	_,tpl := GetTpl(0, grpId, endpointId)
 	if tpl.Id > 0 {
 		return nil,tpl
 	}
-	insertSql := fmt.Sprintf("INSERT INTO tpl(grp_id,endpoint_id,create_user,update_user,create_at) VALUE (%d,%d,'%s','%s',NOW())", grpId, endpointId, operateUser, operateUser)
+	insertSql := fmt.Sprintf("INSERT INTO tpl(grp_id,endpoint_id,create_user,update_user,create_at,update_at) VALUE (%d,%d,'%s','%s',NOW(),NOW())", grpId, endpointId, operateUser, operateUser)
 	_,err := x.Exec(insertSql)
 	if err != nil {
 		mid.LogError("add tpl fail", err)
