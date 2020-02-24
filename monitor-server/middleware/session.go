@@ -68,6 +68,9 @@ func SaveSession(session m.Session) (isOk bool,sId string) {
 }
 
 func GetOperateUser(c *gin.Context) string {
+	if !m.Config().Http.Session.Enable {
+		return ""
+	}
 	auToken := c.GetHeader("X-Auth-Token")
 	if auToken!= "" {
 		if m.Config().Http.Session.ServerEnable {
