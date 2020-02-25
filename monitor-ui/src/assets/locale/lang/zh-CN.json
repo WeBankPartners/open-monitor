@@ -42,7 +42,8 @@
     "instance": "实例名",
     "personalInformation":"个人信息",
     "userManagement":"用户管理",
-    "roleManagement":"角色管理"
+    "roleManagement":"角色管理",
+    "role": "角色"
   },
   "title": {
     "viewConfiguration": "视图配置",
@@ -82,6 +83,7 @@
     "endpointManagement": "对象管理",
     "upload": "导入阈值",
     "export": "导出阈值",
+    "authorize": "角色授权",
     "chart": {
       "zoom": "数据区域缩放",
       "back": "恢复",

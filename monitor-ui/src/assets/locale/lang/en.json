@@ -42,7 +42,8 @@
     "instance": "Instance",
     "personalInformation":"Personal Information",
     "userManagement":"User Management",
-    "roleManagement":"Role Management"
+    "roleManagement":"Role Management",
+    "role": "Role"
   },
   "title": {
     "viewConfiguration": "View Configuration",
@@ -82,6 +83,7 @@
     "endpointManagement": "Endpoint Management",
     "upload": "Upload Threshold",
     "export": "Export Threshold",
+    "authorize": "Role Authorization",
     "chart": {
       "zoom": "Zoom in",
       "back": "Reset",
