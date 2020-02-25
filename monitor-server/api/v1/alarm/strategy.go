@@ -158,9 +158,37 @@ func SearchObjOption(c *gin.Context)  {
 	mid.ReturnData(c, data)
 }
 
-func SaveConfigFile(tplId int) error {
+func SaveConfigFile(tplId int) error  {
+	var err error
+	idList := db.GetParentTpl(tplId)
+	err = updateConfigFile(tplId)
+	if err != nil {
+		mid.LogError("update prometheus rule file error", err)
+		return err
+	}
+	if len(idList) > 0 {
+		for _,v := range idList {
+			err = updateConfigFile(v)
+			if err != nil {
+				mid.LogError(fmt.Sprintf("update prometheus rule tpl id %d error", v), err)
+			}
+		}
+	}
+	if err != nil {
+		return err
+	}
+	err = prom.ReloadConfig()
+	if err != nil {
+		mid.LogError("reload prometheus config error", err)
+		return err
+	}
+	return nil
+}
+
+func updateConfigFile(tplId int) error {
 	err,tplObj := db.GetTpl(tplId,0 ,0)
 	if err != nil {
+		mid.LogError("get tpl error", err)
 		return err
 	}
 	var query m.TplQuery
@@ -176,14 +204,27 @@ func SaveConfigFile(tplId int) error {
 	}
 	err = db.GetStrategys(&query, false)
 	if err != nil {
+		mid.LogError("get strategy error", err)
 		return err
 	}
 	var fileName string
 	var endpointExpr string
 	if len(query.Tpl) > 0 {
 		fileName = query.Tpl[len(query.Tpl)-1].ObjName
+		if isGrp {
+			tmpStrategy := []*m.StrategyTable{}
+			tmpStrategyMap := make(map[string]*m.StrategyTable)
+			for _,v := range query.Tpl {
+				for _,vv := range v.Strategy {
+					tmpStrategyMap[vv.Metric] = vv
+				}
+			}
+			for _,v := range tmpStrategyMap {
+				tmpStrategy = append(tmpStrategy, v)
+			}
+			query.Tpl[len(query.Tpl)-1].Strategy = tmpStrategy
+		}
 	}else{
-		fmt.Printf("is grp : %b \n", isGrp)
 		if isGrp {
 			_,grpObj := db.GetSingleGrp(tplObj.GrpId, "")
 			fileName = grpObj.Name
@@ -214,6 +255,7 @@ func SaveConfigFile(tplId int) error {
 	}
 	err,isExist,cObj := prom.GetConfig(fileName, isGrp)
 	if err != nil {
+		mid.LogError("get prom get config error", err)
 		return err
 	}
 	rfu := []*m.RFRule{}
@@ -263,6 +305,9 @@ func SaveConfigFile(tplId int) error {
 	}
 	cObj.Rules = rfu
 	err = prom.SetConfig(fileName, isGrp, cObj, isExist)
+	if err != nil {
+		mid.LogError("prom set config error", err)
+	}
 	return err
 }
 

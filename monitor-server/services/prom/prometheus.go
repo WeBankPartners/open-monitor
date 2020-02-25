@@ -116,15 +116,15 @@ func SetConfig(name string, isGrp bool, config m.RFGroup, exist bool) error {
 		mid.LogError("set prometheus rule,write file fail", err)
 		return err
 	}
-	err = reloadConfig()
-	if err != nil {
-		mid.LogError("set prometheus rule,reload config fail", err)
-		return err
-	}
+	//err = reloadConfig()
+	//if err != nil {
+	//	mid.LogError("set prometheus rule,reload config fail", err)
+	//	return err
+	//}
 	return nil
 }
 
-func reloadConfig() error {
+func ReloadConfig() error {
 	resp,err := http.Post(m.Config().Prometheus.ConfigReload, "application/json", strings.NewReader(""))
 	mid.LogInfo(fmt.Sprintf("reload config resp : %v", resp.Body))
 	defer resp.Body.Close()
