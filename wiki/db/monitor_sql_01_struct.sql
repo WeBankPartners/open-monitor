@@ -323,3 +323,10 @@ CREATE TABLE `panel_recursive` (
   `update_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`guid`)
 ) ENGINE=INNODB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `rel_role_grp` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `role_id` int(10) unsigned NOT NULL,
+  `grp_id` int(10) unsigned NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
