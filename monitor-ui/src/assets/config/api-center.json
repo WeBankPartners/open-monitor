@@ -30,6 +30,15 @@
         },
         "export": {
             "api": "alarm/grp/export"
+        },
+        "exitRoles": {
+            "api": "alarm/grp/role/get"
+        },
+        "allRoles": {
+            "api": "user/role/list?page=1&size=1000&search"
+        },
+        "updateRoles": {
+            "api": "alarm/grp/role/update"
         }
     },
     "endpointManagement": {
