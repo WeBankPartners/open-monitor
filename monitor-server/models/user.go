@@ -94,3 +94,14 @@ type UpdateRoleUserDto struct {
 	RoleId  int  `json:"role_id" binding:"required"`
 	UserId  []int  `json:"user_id"`
 }
+
+type RelRoleGrpTable struct {
+	Id  int  `json:"id"`
+	RoleId  int  `json:"role_id"`
+	GrpId  int  `json:"grp_id"`
+}
+
+type RoleGrpDto struct {
+	GrpId  int  `json:"grp_id"`
+	RoleId  []int  `json:"role_id"`
+}

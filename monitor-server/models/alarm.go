@@ -5,6 +5,7 @@ import "time"
 type GrpTable struct {
 	Id  int  `json:"id"`
 	Name  string  `json:"name"`
+	Parent  int  `json:"parent"`
 	Description  string  `json:"description"`
 	CreateUser  string  `json:"create_user"`
 	UpdateUser  string  `json:"update_user"`
