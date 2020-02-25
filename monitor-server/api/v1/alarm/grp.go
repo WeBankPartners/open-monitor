@@ -223,3 +223,31 @@ func ImportGrpStrategy(c *gin.Context)  {
 	}
 	mid.ReturnSuccess(c, "Success")
 }
+
+func UpdateGrpRole(c *gin.Context)  {
+	var param m.RoleGrpDto
+	if err := c.ShouldBindJSON(&param); err==nil {
+		err = db.UpdateGrpRole(param)
+		if err != nil {
+			mid.ReturnError(c, "Update grp role fail", err)
+		}else{
+			mid.ReturnSuccess(c, "Success")
+		}
+	}else{
+		mid.ReturnValidateFail(c, fmt.Sprintf("Parameter validation failed %v", err))
+	}
+}
+
+func GetGrpRole(c *gin.Context)  {
+	grpId,_ := strconv.Atoi(c.Query("grp_id"))
+	if grpId <= 0 {
+		mid.ReturnValidateFail(c, "Parameter grp_id validation failed")
+		return
+	}
+	err,result := db.GetGrpRole(grpId)
+	if err != nil {
+		mid.ReturnError(c, "Get grp role fail", err)
+	}else{
+		mid.ReturnData(c, result)
+	}
+}
