@@ -110,6 +110,7 @@ func InitHttpServer(exportAgent bool) {
 			agentApi.POST("/export/stop/:name", agent.AlarmControl)
 			agentApi.POST("/export/install/:name", agent.InstallAgent)
 			agentApi.POST("/export/custom/endpoint/add", agent.CustomRegister)
+			agentApi.POST("/export/custom/metric/add", agent.CustomMetricPush)
 		}
 		alarmApi := authApi.Group("/alarm")
 		{
@@ -117,6 +118,8 @@ func InitHttpServer(exportAgent bool) {
 			alarmApi.POST("/grp/add", alarm.AddGrp)
 			alarmApi.POST("/grp/update", alarm.UpdateGrp)
 			alarmApi.GET("/grp/delete", alarm.DeleteGrp)
+			alarmApi.POST("/grp/role/update", alarm.UpdateGrpRole)
+			alarmApi.GET("/grp/role/get", alarm.GetGrpRole)
 			alarmApi.GET("/endpoint/list", alarm.ListEndpoint)
 			alarmApi.POST("/endpoint/update", alarm.EditGrpEndpoint)
 			alarmApi.GET("/strategy/search", alarm.SearchObjOption)

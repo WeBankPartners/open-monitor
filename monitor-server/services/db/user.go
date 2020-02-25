@@ -211,6 +211,42 @@ func UpdateRoleUser(param m.UpdateRoleUserDto) error {
 	return err
 }
 
+func UpdateGrpRole(param m.RoleGrpDto) error {
+	var roleGrpTable []*m.RelRoleGrpTable
+	err := x.SQL("SELECT role_id FROM rel_role_grp WHERE grp_id=?", param.GrpId).Find(&roleGrpTable)
+	if err != nil {
+		return err
+	}
+	isSame := true
+	if len(roleGrpTable) != len(param.RoleId) {
+		isSame = false
+	}else{
+		for _,v := range roleGrpTable {
+			tmp := false
+			for _,vv := range param.RoleId {
+				if v.RoleId == vv {
+					tmp = true
+					break
+				}
+			}
+			if !tmp {
+				isSame = false
+				break
+			}
+		}
+	}
+	if isSame {
+		return nil
+	}
+	var actions []*Action
+	actions = append(actions, &Action{Sql:"DELETE FROM rel_role_grp WHERE grp_id=?", Param:[]interface{}{param.GrpId}})
+	for _,v := range param.RoleId {
+		actions = append(actions, &Action{Sql:"INSERT INTO rel_role_grp(role_id,grp_id) VALUE (?,?)", Param:[]interface{}{v, param.GrpId}})
+	}
+	err = Transaction(actions)
+	return err
+}
+
 func UpdateRole(param m.UpdateRoleDto) error {
 	var role m.RoleTable
 	force := false
@@ -247,4 +283,21 @@ func UpdateRole(param m.UpdateRoleDto) error {
 	action := Classify(role, param.Operation, "role", force)
 	mid.LogInfo(fmt.Sprintf("action sql : %s  param : %v ", action.Sql, action.Param))
 	return Transaction([]*Action{&action})
+}
+
+func GetGrpRole(grpId int) (err error, result []*m.OptionModel) {
+	var queryData []*m.RoleTable
+	err = x.SQL("SELECT t2.id,t2.name,t2.display_name FROM rel_role_grp t1 LEFT JOIN role t2 ON t1.role_id=t2.id WHERE t1.grp_id=?", grpId).Find(&queryData)
+	if err != nil {
+		mid.LogError("get grp role fail", err)
+		return err,result
+	}
+	for _,v := range queryData {
+		tmpName := v.DisplayName
+		if tmpName == "" {
+			tmpName = v.Name
+		}
+		result = append(result, &m.OptionModel{Id:v.Id, OptionValue:fmt.Sprintf("%d", v.Id), OptionText:tmpName})
+	}
+	return nil,result
 }

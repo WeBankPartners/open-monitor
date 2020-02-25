@@ -35,3 +35,14 @@ type RecursivePanelObj struct {
 	Charts  []*ChartModel  `json:"charts"`
 	Children  []*RecursivePanelObj  `json:"children"`
 }
+
+type TransGatewayRequestDto struct {
+	Name  string  `json:"name"`
+	HostIp  string  `json:"host_ip"`
+	Address  string  `json:"address"`
+	Metrics  []string  `json:"metrics"`
+}
+
+type TransGatewayMetricDto struct {
+	Params  []*TransGatewayRequestDto  `json:"params"`
+}
