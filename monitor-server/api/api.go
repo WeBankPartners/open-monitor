@@ -110,6 +110,7 @@ func InitHttpServer(exportAgent bool) {
 			agentApi.POST("/export/stop/:name", agent.AlarmControl)
 			agentApi.POST("/export/install/:name", agent.InstallAgent)
 			agentApi.POST("/export/custom/endpoint/add", agent.CustomRegister)
+			agentApi.POST("/export/custom/metric/add", agent.CustomMetricPush)
 		}
 		alarmApi := authApi.Group("/alarm")
 		{
