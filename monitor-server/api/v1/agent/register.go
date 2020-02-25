@@ -356,14 +356,8 @@ func DeregisterJob(guid string) error {
 	return err
 }
 
-type transGatewayRequestDto struct {
-	Name  string  `json:"name"`
-	HostIp  string  `json:"host_ip"`
-	Address  string  `json:"address"`
-}
-
 func CustomRegister(c *gin.Context)  {
-	var param transGatewayRequestDto
+	var param m.TransGatewayRequestDto
 	if err:=c.ShouldBindJSON(&param); err==nil {
 		var endpointObj m.EndpointTable
 		endpointObj.Guid = fmt.Sprintf("%s_%s_custom", param.Name, param.HostIp)
@@ -375,6 +369,21 @@ func CustomRegister(c *gin.Context)  {
 		err := db.UpdateEndpoint(&endpointObj)
 		if err != nil {
 			mid.ReturnError(c, fmt.Sprintf("Update endpoint %s_%s_custom fail", param.Name, param.HostIp), err)
+		}else{
+			mid.ReturnSuccess(c, "Success")
+		}
+	}else{
+		mid.ReturnValidateFail(c, fmt.Sprintf("Parameter validate fail %v", err))
+	}
+}
+
+func CustomMetricPush(c *gin.Context)  {
+	var param m.TransGatewayMetricDto
+	if err:=c.ShouldBindJSON(&param); err==nil {
+		err = db.AddCustomMetric(param)
+		if err != nil {
+			mid.LogError("Add custom metric fail", err)
+			mid.ReturnError(c, "Add custom metric fail", err)
 		}else{
 			mid.ReturnSuccess(c, "Success")
 		}

@@ -45,10 +45,13 @@ func AddGrp(c *gin.Context)  {
 			mid.ReturnError(c, "Name exists", nil)
 			return
 		}
-		err := db.UpdateGrp(&m.UpdateGrp{Groups:[]*m.GrpTable{&param}, Operation:"insert", OperateUser:""})
-		if err != nil {
+		operateUser := mid.GetOperateUser(c)
+		err := db.UpdateGrp(&m.UpdateGrp{Groups:[]*m.GrpTable{&param}, Operation:"insert", OperateUser:operateUser})
+		_,grpObj := db.GetSingleGrp(0, param.Name)
+		if err != nil || grpObj.Id <= 0 {
 			mid.ReturnError(c, "Fail", err)
 		}else{
+			db.AddTpl(grpObj.Id,0, operateUser)
 			mid.ReturnSuccess(c, "Success")
 		}
 	}else{
@@ -75,7 +78,7 @@ func UpdateGrp(c *gin.Context)  {
 				return
 			}
 		}
-		err := db.UpdateGrp(&m.UpdateGrp{Groups:[]*m.GrpTable{&param}, Operation:"update", OperateUser:""})
+		err := db.UpdateGrp(&m.UpdateGrp{Groups:[]*m.GrpTable{&param}, Operation:"update", OperateUser:mid.GetOperateUser(c)})
 		if err != nil {
 			mid.ReturnError(c, "Failure", err)
 		}else{
@@ -103,7 +106,7 @@ func DeleteGrp(c *gin.Context)  {
 		db.DeleteTpl(tplObj.Id)
 	}
 	db.DeleteStrategyByGrp(id, 0)
-	err := db.UpdateGrp(&m.UpdateGrp{Groups:[]*m.GrpTable{&m.GrpTable{Id:id}}, Operation:"delete", OperateUser:""})
+	err := db.UpdateGrp(&m.UpdateGrp{Groups:[]*m.GrpTable{&m.GrpTable{Id:id}}, Operation:"delete", OperateUser:mid.GetOperateUser(c)})
 	if err != nil {
 		mid.ReturnError(c, "Failure", err)
 	}else{
@@ -148,7 +151,7 @@ func EditGrpEndpoint(c *gin.Context)  {
 				return
 			}
 			if tplObj.Id <= 0 {
-				err,tplObj = db.AddTpl(param.Grp, 0, "")
+				err,tplObj = db.AddTpl(param.Grp, 0, mid.GetOperateUser(c))
 				if err != nil {
 					mid.ReturnError(c, "Add template failed", err)
 					return
@@ -219,4 +222,32 @@ func ImportGrpStrategy(c *gin.Context)  {
 		return
 	}
 	mid.ReturnSuccess(c, "Success")
+}
+
+func UpdateGrpRole(c *gin.Context)  {
+	var param m.RoleGrpDto
+	if err := c.ShouldBindJSON(&param); err==nil {
+		err = db.UpdateGrpRole(param)
+		if err != nil {
+			mid.ReturnError(c, "Update grp role fail", err)
+		}else{
+			mid.ReturnSuccess(c, "Success")
+		}
+	}else{
+		mid.ReturnValidateFail(c, fmt.Sprintf("Parameter validation failed %v", err))
+	}
+}
+
+func GetGrpRole(c *gin.Context)  {
+	grpId,_ := strconv.Atoi(c.Query("grp_id"))
+	if grpId <= 0 {
+		mid.ReturnValidateFail(c, "Parameter grp_id validation failed")
+		return
+	}
+	err,result := db.GetGrpRole(grpId)
+	if err != nil {
+		mid.ReturnError(c, "Get grp role fail", err)
+	}else{
+		mid.ReturnData(c, result)
+	}
 }

@@ -168,6 +168,7 @@ CREATE TABLE `grp` (
   `description` VARCHAR(255) DEFAULT '',
   `create_user` VARCHAR(50) DEFAULT '',
   `update_user` VARCHAR(50) DEFAULT '',
+  `parent` int(11) DEFAULT '0',
   `create_at` DATETIME,
   `update_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
@@ -322,3 +323,10 @@ CREATE TABLE `panel_recursive` (
   `update_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`guid`)
 ) ENGINE=INNODB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `rel_role_grp` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `role_id` int(10) unsigned NOT NULL,
+  `grp_id` int(10) unsigned NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;

@@ -18,6 +18,17 @@
       </div>
     </PageTable>
     <ModalComponent :modelConfig="modelConfig"></ModalComponent>
+    <ModalComponent :modelConfig="authorizationModel">
+      <div slot="authorization">  
+        <div class="marginbottom params-each">
+          <label class="col-md-2 label-name lable-name-select">{{$t('field.role')}}:</label>
+          <Select v-model="authorizationModel.addRow.role" multiple filterable style="width:338px">
+              <Option v-for="item in authorizationModel.roleList" :value="item.id" :key="item.id">
+              {{item.display_name}}</Option>
+          </Select>
+        </div>
+      </div>
+    </ModalComponent>
   </div>
 </template>
 <script>
@@ -32,7 +43,8 @@
     {btn_name: 'field.threshold', btn_func: 'thresholdConfig'},
     {btn_name: 'button.edit', btn_func: 'editF'},
     {btn_name: 'button.remove', btn_func: 'delF'},
-    {btn_name: 'field.log', btn_func: 'logManagement'}
+    {btn_name: 'field.log', btn_func: 'logManagement'},
+    {btn_name: 'button.authorize', btn_func: 'authorizeF'},
   ]
   export default {
     name: '',
@@ -88,6 +100,19 @@
             description: null,
           },
         },
+        authorizationModel: {
+          modalId: 'authorization_model',
+          modalTitle: 'button.authorization',
+          isAdd: true,
+          saveFunc: 'authorizationSave',
+          config: [
+            {name:'authorization',type:'slot'}
+          ],
+          addRow: {
+            role: []
+          },
+          roleList: []
+        }, 
         id: null, // [通用]-待编辑数据id
         selectedData: '', // 存放选中数据
       }
@@ -185,7 +210,32 @@
       },
       uploadFailed () {
         this.$Message.warning(this.$t('tips.failed'))
-      }
+      },
+      authorizeF (rowData) {
+        this.id = rowData.id
+        this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.groupManagement.allRoles.api, '', (responseData) => {
+          this.authorizationModel.roleList = responseData.data
+          this.existRole()
+        })
+      },
+      existRole () {
+        this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.groupManagement.exitRoles.api, {grp_id: this.id}, (responseData) => {
+          responseData.forEach((item) => {
+            this.authorizationModel.addRow.role.push(item.id)
+          })
+          this.$root.JQ('#authorization_model').modal('show')
+        })
+      },
+      authorizationSave () {
+        let params = {
+          grp_id: this.id,
+          role_id: this.authorizationModel.addRow.role
+        }
+        this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.groupManagement.updateRoles.api, params, () => {
+          this.$Message.success(this.$t('tips.success'))
+          this.$root.JQ('#authorization_model').modal('hide')
+        })
+      } 
     },
     components: {
     }

@@ -35,6 +35,80 @@ func UpdateEndpoint(endpoint *m.EndpointTable) error {
 	return nil
 }
 
+func AddCustomMetric(param m.TransGatewayMetricDto) error {
+	distinctMetricMap := make(map[string]bool)
+	var err error
+	for _,v := range param.Params {
+		var endpointObjs []*m.EndpointTable
+		x.SQL("SELECT id FROM endpoint WHERE export_type='custom' AND name=?", v.Name).Find(&endpointObjs)
+		if len(endpointObjs) == 0 {
+			continue
+		}
+		tmpEndpointId := endpointObjs[0].Id
+		var endpointMetricObjs []*m.EndpointMetricTable
+		x.SQL("SELECT * FROM endpoint_metric WHERE endpoint_id=?", tmpEndpointId).Find(&endpointMetricObjs)
+		var tmpMetricList []string
+		for _,vv := range v.Metrics {
+			distinctMetricMap[vv] = true
+			existFlag := false
+			for _,vvv := range endpointMetricObjs {
+				if vvv.Metric == vv {
+					existFlag = true
+					break
+				}
+			}
+			if !existFlag {
+				tmpMetricList = append(tmpMetricList, vv)
+			}
+		}
+		if len(tmpMetricList) == 0 {
+			continue
+		}
+		var insertSql string
+		for _,vv := range tmpMetricList {
+			insertSql = insertSql + fmt.Sprintf("(%d,'%s'),", tmpEndpointId, vv)
+		}
+		insertSql = insertSql[:len(insertSql)-1]
+		_,err = x.Exec("INSERT INTO endpoint_metric(endpoint_id,metric) VALUES " + insertSql)
+		if err != nil {
+			mid.LogError("update custom endpoint_metric fail", err)
+		}
+	}
+	if err != nil {
+		return err
+	}
+	if len(distinctMetricMap) == 0 {
+		return nil
+	}
+	var promMetricObjs []*m.PromMetricTable
+	var whereSql,insertSql string
+	for k,_ := range distinctMetricMap {
+		whereSql = whereSql + fmt.Sprintf("'%s',", k)
+	}
+	whereSql = whereSql[:len(whereSql)-1]
+	x.SQL("SELECT * FROM prom_metric WHERE metric_type='custom' AND metric IN (" + whereSql + ")").Find(&promMetricObjs)
+	for k,_ := range distinctMetricMap {
+		existFlag := false
+		for _,v := range promMetricObjs {
+			if k == v.Metric {
+				existFlag = true
+			}
+		}
+		if !existFlag {
+			insertSql = insertSql + fmt.Sprintf("('%s','custom','%s{instance=\"$address\"}'),", k, k)
+		}
+	}
+	if insertSql != "" {
+		insertSql = insertSql[:len(insertSql)-1]
+		_,err = x.Exec("INSERT INTO prom_metric(metric,metric_type,prom_ql) VALUES " + insertSql)
+		if err != nil {
+			mid.LogError("update custom prom_metric fail", err)
+			return err
+		}
+	}
+	return nil
+}
+
 func DeleteEndpoint(guid string) error {
 	var actions []*Action
 	actions = append(actions, &Action{Sql:"DELETE FROM endpoint_metric WHERE endpoint_id IN (SELECT id FROM endpoint WHERE guid=?)", Param:[]interface{}{guid}})
