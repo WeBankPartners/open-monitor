@@ -105,6 +105,9 @@ func PrometheusData(query m.QueryMonitorData) []*m.SerialModel  {
 				if len(data.Data.Result) > 1 {
 					tmpName = appendTagString(tmpName, otr.Metric)
 				}
+			}else if query.Legend == "$custom_all" {
+				tmpName = fmt.Sprintf("%s:%s", query.Endpoint[0], query.Metric[0])
+				tmpName = appendTagString(tmpName, otr.Metric)
 			}
 		}
 		serial.Name = tmpName
