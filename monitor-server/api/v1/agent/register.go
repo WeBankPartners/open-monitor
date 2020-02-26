@@ -9,6 +9,8 @@ import (
 	"strings"
 	"fmt"
 	"strconv"
+	"time"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
 )
 
 const hostType  = "host"
@@ -356,12 +358,24 @@ func DeregisterJob(guid string) error {
 	return err
 }
 
+var TransGateWayAddress string
+
 func CustomRegister(c *gin.Context)  {
 	var param m.TransGatewayRequestDto
 	if err:=c.ShouldBindJSON(&param); err==nil {
+		if TransGateWayAddress == "" {
+			query := m.QueryMonitorData{Start:time.Now().Unix()-60, End:time.Now().Unix(), Endpoint:[]string{"endpoint"}, Metric:[]string{"metric"}, PromQ:"up{job=\"transgateway\"}", Legend:"$custom_all"}
+			sm := datasource.PrometheusData(query)
+			mid.LogInfo(fmt.Sprintf("sm length : %d ", len(sm)))
+			if len(sm) > 0 {
+				mid.LogInfo(fmt.Sprintf("sm0 -> %s  %s  %v", sm[0].Name, sm[0].Type, sm[0].Data))
+				TransGateWayAddress = strings.Split(strings.Split(sm[0].Name, "instance=")[1], ",job")[0]
+				mid.LogInfo(fmt.Sprintf("TransGateWayAddress : %s", TransGateWayAddress))
+			}
+		}
 		var endpointObj m.EndpointTable
 		endpointObj.Guid = fmt.Sprintf("%s_%s_custom", param.Name, param.HostIp)
-		endpointObj.Address = param.Address
+		endpointObj.Address = TransGateWayAddress
 		endpointObj.Name = param.Name
 		endpointObj.Ip = param.HostIp
 		endpointObj.ExportType = "custom"
