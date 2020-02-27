@@ -113,17 +113,15 @@ export default {
       this.getAlarm()
     },
     removeAlarm(alarmItem) {
-      this.$parent.delConfirm({name: ''}, () => {
-        let params = {
-          id: alarmItem.id,
-          custom: true
-        }
-        if (!alarmItem.is_custom) {
-          params.custom = false
-        }
-        this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.alarmManagement.close.api, params, () => {
-          this.getAlarm()
-        })
+      let params = {
+        id: alarmItem.id,
+        custom: true
+      }
+      if (!alarmItem.is_custom) {
+        params.custom = false
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.alarmManagement.close.api, params, () => {
+        this.getAlarm()
       })
     },
     exclude (key) {
