@@ -968,8 +968,27 @@ func DeleteStrategyByGrp(grpId int,tplId int) error {
 
 func SaveOpenAlarm(param m.OpenAlarmRequest) error {
 	var err error
+	var alertLevel,subSystemId int
 	for _, v := range param.AlertList {
-		_,err = x.Exec("INSERT INTO alarm_custom(alert_info,alert_ip,alert_level,alert_obj,alert_title,alert_reciver,remark_info,sub_system_id) VALUE (?,?,?,?,?,?,?,?)", v.AlertInfo, v.AlertIp,v.AlertLevel,v.AlertObj,v.AlertTitle,v.AlertReciver,v.RemarkInfo,v.SubSystemId)
+		if v.AlertLevel == "0" {
+			var query []*m.OpenAlarmObj
+			x.SQL("SELECT id FROM alarm_custom WHERE alert_ip=? AND alert_title=? AND alert_obj=?", v.AlertIp, v.AlertTitle, v.AlertObj).Find(&query)
+			if len(query) > 0 {
+				tmpIds := ""
+				for _,vv := range query {
+					tmpIds += fmt.Sprintf("%d,", vv.Id)
+				}
+				tmpIds = tmpIds[:len(tmpIds)-1]
+				_,cErr := x.Exec(fmt.Sprintf("UPDATE alarm_custom SET closed=1,closed_at=NOW() WHERE id in (%s)", tmpIds))
+				if cErr != nil {
+					mid.LogError(fmt.Sprintf("update custom alarm %s close fail", tmpIds), cErr)
+				}
+			}
+			continue
+		}
+		alertLevel,_ = strconv.Atoi(v.AlertLevel)
+		subSystemId,_ = strconv.Atoi(v.SubSystemId)
+		_,err = x.Exec("INSERT INTO alarm_custom(alert_info,alert_ip,alert_level,alert_obj,alert_title,alert_reciver,remark_info,sub_system_id) VALUE (?,?,?,?,?,?,?,?)", v.AlertInfo, v.AlertIp, alertLevel,v.AlertObj,v.AlertTitle,v.AlertReciver,v.RemarkInfo, subSystemId)
 		if err != nil {
 			mid.LogError("save open alarm error", err)
 		}
@@ -990,27 +1009,47 @@ func GetOpenAlarm() []*m.AlarmProblemQuery {
 	for i,v := range query {
 		if tmpFlag != fmt.Sprintf("%d_%s_%s_%d", v.SubSystemId,v.AlertTitle,v.AlertIp,v.AlertLevel) {
 			priority := "high"
-			if query[i-1].AlertLevel > 4 {
+			tmpAlertLevel,_ := strconv.Atoi(query[i-1].AlertLevel)
+			if tmpAlertLevel > 4 {
 				priority = "low"
-			}else if query[i-1].AlertLevel > 2 {
+			}else if tmpAlertLevel > 2 {
 				priority = "medium"
 			}
-			result = append(result, &m.AlarmProblemQuery{IsCustom:true,Id:query[i-1].Id,Endpoint:query[i-1].AlertIp,Status:"firing",Content:fmt.Sprintf("system_id:%d <br/> title:%s <br/> %s <br/> info:%s ",query[i-1].SubSystemId,query[i-1].AlertTitle,query[i-1].AlertObj,query[i-1].AlertInfo),Start:query[i-1].UpdateAt,StartString:query[i-1].UpdateAt.Format(m.DatetimeFormat),SPriority:priority})
+			query[i-1].AlertInfo = strings.Replace(query[i-1].AlertInfo, "\n", " <br/> ", -1)
+			result = append(result, &m.AlarmProblemQuery{IsCustom:true,Id:query[i-1].Id,Endpoint:query[i-1].AlertIp,Status:"firing",Content:fmt.Sprintf("system_id:%s <br/> title:%s <br/> %s info: <br/> %s ",query[i-1].SubSystemId,query[i-1].AlertTitle,query[i-1].AlertObj,query[i-1].AlertInfo),Start:query[i-1].UpdateAt,StartString:query[i-1].UpdateAt.Format(m.DatetimeFormat),SPriority:priority})
 		}
 	}
 	priority := "high"
 	lastIndex := len(query)-1
-	if query[lastIndex].AlertLevel > 4 {
+	tmpAlertLevel,_ := strconv.Atoi(query[lastIndex].AlertLevel)
+	if tmpAlertLevel > 4 {
 		priority = "low"
-	}else if query[lastIndex].AlertLevel > 2 {
+	}else if tmpAlertLevel > 2 {
 		priority = "medium"
 	}
-	result = append(result, &m.AlarmProblemQuery{IsCustom:true,Id:query[lastIndex].Id,Endpoint:query[lastIndex].AlertIp,Status:"firing",IsLogMonitor:false,Content:fmt.Sprintf("system_id:%d <br/> title:%s <br/> %s <br/> info:%s ",query[lastIndex].SubSystemId,query[lastIndex].AlertTitle,query[lastIndex].AlertObj,query[lastIndex].AlertInfo),Start:query[lastIndex].UpdateAt,StartString:query[lastIndex].UpdateAt.Format(m.DatetimeFormat),SPriority:priority})
+	query[lastIndex].AlertInfo = strings.Replace(query[lastIndex].AlertInfo, "\n", " <br/> ", -1)
+	result = append(result, &m.AlarmProblemQuery{IsCustom:true,Id:query[lastIndex].Id,Endpoint:query[lastIndex].AlertIp,Status:"firing",IsLogMonitor:false,Content:fmt.Sprintf("system_id:%s <br/> title:%s <br/> %s info: <br/> %s ",query[lastIndex].SubSystemId,query[lastIndex].AlertTitle,query[lastIndex].AlertObj,query[lastIndex].AlertInfo),Start:query[lastIndex].UpdateAt,StartString:query[lastIndex].UpdateAt.Format(m.DatetimeFormat),SPriority:priority})
 	return result
 }
 
 func CloseOpenAlarm(id int) error {
-	_,err := x.Exec("UPDATE alarm_custom SET closed=1,closed_at=NOW() WHERE id=?", id)
+	var query,secQuery []*m.OpenAlarmObj
+	x.SQL("SELECT * FROM alarm_custom WHERE id=?", id).Find(&query)
+	if len(query) == 0 {
+		return fmt.Errorf("alarm id %d cat not find", id)
+	}
+	err := x.SQL(fmt.Sprintf("SELECT id FROM alarm_custom WHERE alert_ip='%s' AND alert_title='%s' AND alert_obj='%s'", query[0].AlertIp, query[0].AlertTitle, query[0].AlertObj)).Find(&secQuery)
+	if len(secQuery) > 0 {
+		tmpIds := ""
+		for _,vv := range secQuery {
+			tmpIds += fmt.Sprintf("%d,", vv.Id)
+		}
+		tmpIds = tmpIds[:len(tmpIds)-1]
+		_,err = x.Exec(fmt.Sprintf("UPDATE alarm_custom SET closed=1,closed_at=NOW() WHERE id in (%s)", tmpIds))
+		if err != nil {
+			mid.LogError(fmt.Sprintf("update custom alarm %s close fail", tmpIds), err)
+		}
+	}
 	return err
 }
 
