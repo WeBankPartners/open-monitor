@@ -10,7 +10,7 @@
 // import {cookies} from '@/assets/js/cookieUtils'
 import httpRequest from '@/assets/js/axiosHttp'
 import $ from 'jquery'
-import {Message} from 'view-design'
+// import {Message} from 'view-design'
 import loadingImg from '@/assets/img/loading.gif'
 
 let loadingCount = 0
