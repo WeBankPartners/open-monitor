@@ -278,12 +278,12 @@ type OpenAlarmObj struct {
 	Id  int  `json:"id"`
 	AlertInfo  string  `json:"alert_info"`
 	AlertIp  string  `json:"alert_ip"`
-	AlertLevel  int  `json:"alert_level"`
+	AlertLevel  string  `json:"alert_level"`
 	AlertObj  string  `json:"alert_obj"`
 	AlertTitle  string  `json:"alert_title"`
 	AlertReciver  string  `json:"alert_reciver"`
 	RemarkInfo  string  `json:"remark_info"`
-	SubSystemId  int  `json:"sub_system_id"`
+	SubSystemId  string  `json:"sub_system_id"`
 	UpdateAt  time.Time  `json:"update_at"`
 }
 
