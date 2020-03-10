@@ -132,6 +132,7 @@ var (
 	ConfigFile string
 	config     *GlobalConfig
 	lock       = new(sync.RWMutex)
+	CoreUrl string
 )
 
 func Config() *GlobalConfig {
@@ -166,6 +167,11 @@ func InitConfig(cfg string) {
 	defer lock.Unlock()
 
 	config = &c
-
+	for _,v :=range config.Dependence {
+		if v.Name == "core" {
+			CoreUrl = v.Server
+			break
+		}
+	}
 	log.Println("read config file:", cfg, "successfully")
 }
