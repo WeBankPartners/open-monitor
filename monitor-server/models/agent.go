@@ -28,6 +28,8 @@ type PanelRecursiveTable struct {
 	DisplayName  string  `json:"display_name"`
 	Parent  string  `json:"parent"`
 	Endpoint  string  `json:"endpoint"`
+	Email  string  `json:"email"`
+	Phone  string  `json:"phone"`
 }
 
 type RecursivePanelObj struct {
