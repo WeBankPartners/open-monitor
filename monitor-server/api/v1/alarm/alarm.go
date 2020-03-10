@@ -147,6 +147,14 @@ func AcceptAlertMsg(c *gin.Context)  {
 				other.SendSmtpMail(sao)
 			}
 		}
+		if m.CoreUrl != "" {
+			for _, v := range alarms {
+				notifyErr := db.NotifyCoreEvent(v.Endpoint, v.StrategyId)
+				if notifyErr != nil {
+					mid.LogError("notify core event fail", notifyErr)
+				}
+			}
+		}
 		mid.ReturnSuccess(c, "Success")
 	}else{
 		mid.ReturnValidateFail(c, fmt.Sprintf("Parameter validation failed %v", err))
@@ -254,5 +262,46 @@ func OpenAlarmApi(c *gin.Context)  {
 		}
 	}else{
 		mid.ReturnValidateFail(c, fmt.Sprintf("Parameter validation failed %v", err))
+	}
+}
+
+func GetEntityAlarm(c *gin.Context)  {
+	var result m.AlarmEntity
+	result.Data = []*m.AlarmEntityObj{}
+	idSplit := strings.Split(c.Query("id"), "_")
+	if len(idSplit) < 2 || (idSplit[0] != "alarm" && idSplit[0] != "custom") {
+		result.Status = "ERROR"
+		result.Message = "Parameter id validation failed"
+		mid.ReturnData(c, result)
+		return
+	}
+	id,_ := strconv.Atoi(idSplit[1])
+	if id <= 0 {
+		result.Status = "ERROR"
+		result.Message = "Parameter id validation failed"
+		mid.ReturnData(c, result)
+		return
+	}
+	alarmObj,err := db.GetAlarmEvent(idSplit[0], id)
+	if err != nil {
+		result.Status = "ERROR"
+		result.Message = fmt.Sprintf("error: %v", err)
+		mid.ReturnData(c, result)
+		return
+	}
+	result.Data = append(result.Data, &alarmObj)
+	result.Status = "OK"
+	result.Message = "Success"
+	mid.ReturnData(c, result)
+}
+
+func TestNotifyAlarm(c *gin.Context)  {
+	endpoint := c.Query("endpoint")
+	strategyId,_ := strconv.Atoi(c.Query("id"))
+	err := db.NotifyCoreEvent(endpoint, strategyId)
+	if err != nil {
+		mid.ReturnError(c, "", err)
+	}else{
+		mid.ReturnSuccess(c, "Success")
 	}
 }
