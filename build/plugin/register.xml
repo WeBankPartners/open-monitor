@@ -17,7 +17,15 @@
     </menus>
 
     <!-- 3.数据模型 - 描述本插件包的数据模型,并且描述和Framework数据模型的关系 -->
-    <dataModel></dataModel>
+    <dataModel>
+        <entity name="alarm" displayName="告警列表" description="告警列表模型">
+            <attribute name="id" datatype="str" description="唯一ID"/>
+            <attribute name="status" datatype="str" description="状态"/>
+            <attribute name="subject" datatype="str" description="主题"/>
+            <attribute name="content" datatype="str" description="内容"/>
+            <attribute name="to" datatype="str" description="接收人"/>
+        </entity>
+    </dataModel>
 
     <!-- 4.系统参数 - 描述运行本插件包需要的系统参数 -->
     <systemParameters>
@@ -48,7 +56,7 @@
 
     <!-- 6.运行资源 - 描述部署运行本插件包需要的基础资源(如主机、虚拟机、容器、数据库等) -->
     <resourceDependencies>
-        <docker imageName="wecube-monitor:v1.3.1" containerName="wecube-monitor-v1.3.1" portBindings="19091:19091,{{ALLOCATE_PORT}}:8080" volumeBindings="{{BASE_MOUNT_PATH}}/prometheus/logs:/app/monitor/prometheus/logs,{{BASE_MOUNT_PATH}}/prometheus/data:/app/monitor/prometheus/data,{{BASE_MOUNT_PATH}}/prometheus/rules:/app/monitor/prometheus/rules,{{BASE_MOUNT_PATH}}/alertmanager/logs:/app/monitor/alertmanager/logs,{{BASE_MOUNT_PATH}}/alertmanager/data:/app/monitor/alertmanager/data,{{BASE_MOUNT_PATH}}/consul/logs:/app/monitor/consul/logs,{{BASE_MOUNT_PATH}}/consul/data:/app/monitor/consul/data,{{BASE_MOUNT_PATH}}/monitor/logs:/app/monitor/monitor/logs,{{BASE_MOUNT_PATH}}/agent_deploy:/app/deploy,{{BASE_MOUNT_PATH}}/transgateway/logs:/app/monitor/transgateway/logs,{{BASE_MOUNT_PATH}}/transgateway/data:/app/monitor/transgateway/data" envVariables="MONITOR_DB_HOST={{DB_HOST}},MONITOR_DB_PORT={{DB_PORT}},MONITOR_DB_SCHEMA={{DB_SCHEMA}},MONITOR_DB_USER={{DB_USER}},MONITOR_DB_PWD={{DB_PWD}}"/>
+        <docker imageName="wecube-monitor:v1.3.1" containerName="wecube-monitor-v1.3.1" portBindings="19091:19091,{{ALLOCATE_PORT}}:8080" volumeBindings="{{BASE_MOUNT_PATH}}/prometheus/logs:/app/monitor/prometheus/logs,{{BASE_MOUNT_PATH}}/prometheus/data:/app/monitor/prometheus/data,{{BASE_MOUNT_PATH}}/prometheus/rules:/app/monitor/prometheus/rules,{{BASE_MOUNT_PATH}}/alertmanager/logs:/app/monitor/alertmanager/logs,{{BASE_MOUNT_PATH}}/alertmanager/data:/app/monitor/alertmanager/data,{{BASE_MOUNT_PATH}}/consul/logs:/app/monitor/consul/logs,{{BASE_MOUNT_PATH}}/consul/data:/app/monitor/consul/data,{{BASE_MOUNT_PATH}}/monitor/logs:/app/monitor/monitor/logs,{{BASE_MOUNT_PATH}}/agent_deploy:/app/deploy,{{BASE_MOUNT_PATH}}/transgateway/logs:/app/monitor/transgateway/logs,{{BASE_MOUNT_PATH}}/transgateway/data:/app/monitor/transgateway/data" envVariables="MONITOR_DB_HOST={{DB_HOST}},MONITOR_DB_PORT={{DB_PORT}},MONITOR_DB_SCHEMA={{DB_SCHEMA}},MONITOR_DB_USER={{DB_USER}},MONITOR_DB_PWD={{DB_PWD}},CORE_ADDR={{CORE_ADDR}}"/>
         <mysql schema="monitor" initFileName="init.sql" upgradeFileName="upgrade.sql"/>
         <s3 bucketName="wecube-agent"/>
     </resourceDependencies>
@@ -257,6 +265,8 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:system.key_name" required="Y">display_name</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:system.NONE" required="N">parent</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:system.NONE" required="N">endpoint</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">email</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">phone</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -280,6 +290,8 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:subsys.key_name" required="Y">display_name</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:subsys.system>wecmdb:system.guid" required="Y">parent</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:subsys.NONE" required="N">endpoint</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">email</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">phone</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -303,6 +315,8 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.key_name" required="Y">display_name</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.subsys>wecmdb:subsys.guid" required="Y">parent</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit~(unit)wecmdb:business_app_instance.monitor_key_name" required="Y">endpoint</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">email</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">phone</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -326,6 +340,8 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.key_name" required="Y">display_name</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.subsys>wecmdb:subsys.guid" required="Y">parent</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit~(unit)wecmdb:business_app_instance.resource_instance>wecmdb:resource_instance.monitor_key_name" required="Y">endpoint</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">email</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">phone</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -349,6 +365,8 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.key_name" required="Y">display_name</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.subsys>wecmdb:subsys.guid" required="Y">parent</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit~(unit)wecmdb:business_app_instance.resource_instance>wecmdb:resource_instance.monitor_key_name" required="Y">endpoint</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">email</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">phone</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -372,6 +390,8 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.key_name" required="Y">display_name</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.subsys>wecmdb:subsys.guid" required="Y">parent</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit~(unit)wecmdb:business_app_instance.resource_instance>wecmdb:resource_instance.monitor_key_name" required="Y">endpoint</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">email</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">phone</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -395,6 +415,8 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.key_name" required="Y">display_name</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.business_zone>wecmdb:business_zone.guid" required="Y">parent</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_set~(resource_set)wecmdb:resource_instance.monitor_key_name" required="Y">endpoint</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">email</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">phone</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -418,6 +440,8 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:business_zone.key_name" required="Y">display_name</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:business_zone.network_zone>wecmdb:network_zone.guid" required="Y">parent</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:business_zone.NONE" required="N">endpoint</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">email</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">phone</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -441,6 +465,8 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:network_zone.key_name" required="Y">display_name</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:network_zone.data_center>wecmdb:data_center.guid" required="Y">parent</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:network_zone.NONE" required="N">endpoint</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">email</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">phone</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -464,6 +490,8 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:data_center.key_name" required="Y">display_name</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:data_center.NONE" required="N">parent</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:data_center.NONE" required="N">endpoint</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">email</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">phone</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
