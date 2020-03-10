@@ -73,6 +73,11 @@ func InitHttpServer(exportAgent bool) {
 	if m.Config().Http.Swagger {
 		r.GET(fmt.Sprintf("%s/swagger/*any", urlPrefix), ginSwagger.WrapHandler(swaggerFiles.Handler))
 	}
+	entityApi := r.Group(fmt.Sprintf("%s/entities", urlPrefix), user.AuthRequired())
+	{
+		entityApi.GET("/alarm", alarm.GetEntityAlarm)
+		entityApi.GET("/test", alarm.TestNotifyAlarm)
+	}
 	// auth api
 	authApi := r.Group(fmt.Sprintf("%s/api/v1", urlPrefix), user.AuthRequired())
 	{
