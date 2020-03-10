@@ -76,6 +76,13 @@
     "username": "",
     "password": "",
     "expire": 0
+    },
+    {
+    "name": "core",
+    "server": "{{CORE_ADDR}}",
+    "username": "",
+    "password": "",
+    "expire": 0
     }
   ],
   "prometheus" : {
