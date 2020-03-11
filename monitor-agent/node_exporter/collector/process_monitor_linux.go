@@ -13,6 +13,9 @@ import (
 	"bytes"
 	"encoding/gob"
 	"os"
+	"os/exec"
+	"strings"
+	"strconv"
 )
 
 const (
@@ -21,6 +24,8 @@ const (
 
 type processMonitorCollector struct {
 	processMonitor  *prometheus.Desc
+	processCpuMonitor  *prometheus.Desc
+	processMemMonitor  *prometheus.Desc
 }
 
 func (c *processMonitorCollector) Update(ch chan<- prometheus.Metric) error {
@@ -28,6 +33,12 @@ func (c *processMonitorCollector) Update(ch chan<- prometheus.Metric) error {
 		ch <- prometheus.MustNewConstMetric(c.processMonitor,
 			prometheus.GaugeValue,
 			v.Value, v.Name, v.Command)
+		ch <- prometheus.MustNewConstMetric(c.processCpuMonitor,
+			prometheus.GaugeValue,
+			v.CpuUsedPercent, v.Name, v.Command)
+		ch <- prometheus.MustNewConstMetric(c.processMemMonitor,
+			prometheus.GaugeValue,
+			v.MemUsedByte, v.Name, v.Command)
 	}
 	return nil
 }
@@ -44,6 +55,16 @@ func NewProcessMonitorCollector() (Collector, error) {
 			"Count the process num with assign name.",
 			[]string{"name", "command"}, nil,
 		),
+		processCpuMonitor: prometheus.NewDesc(
+			prometheus.BuildFQName(namespace, "process_monitor", "cpu"),
+			"Process cpu used percent",
+			[]string{"name", "command"}, nil,
+		),
+		processMemMonitor: prometheus.NewDesc(
+			prometheus.BuildFQName(namespace, "process_monitor", "mem"),
+			"Process memory used byte",
+			[]string{"name", "command"}, nil,
+		),
 	}, nil
 }
 
@@ -51,6 +72,14 @@ type processMonitorObj struct {
 	Name  string
 	Value   float64
 	Command  string
+	CpuUsedPercent  float64
+	MemUsedByte  float64
+}
+
+type processUsedResource struct {
+	Name  string
+	Cpu  float64
+	Mem  float64
 }
 
 type processCache struct {
@@ -82,6 +111,7 @@ func (c *processCache) start()  {
 		}
 		c.Lock.Lock()
 		processList,err := nux.AllProcs()
+		processUsedMap := getProcessUsedResource()
 		if err != nil {
 			log.Errorf("Get nux process list fail : %v \n", err)
 		}else{
@@ -100,6 +130,12 @@ func (c *processCache) start()  {
 						}
 					}
 				}
+			}
+		}
+		if len(processUsedMap) > 0 {
+			for _,v := range c.ProcessMonitor {
+				v.CpuUsedPercent = processUsedMap[v.Name].Cpu
+				v.MemUsedByte = processUsedMap[v.Name].Mem
 			}
 		}
 		c.Lock.Unlock()
@@ -198,4 +234,36 @@ func ProcessMonitorHttpHandle(w http.ResponseWriter, r *http.Request)  {
 		go ProcessCacheObj.start()
 	}
 	w.Write([]byte("Success"))
+}
+
+func getProcessUsedResource() map[string]processUsedResource {
+	result := make(map[string]processUsedResource)
+	cmd := exec.Command("bash", "-c", "ps -eo 'comm,pcpu,rsz'")
+	b,err := cmd.Output()
+	if err != nil {
+		log.Errorf("get process used resource error : %v \n", err)
+	}else{
+		outputList := strings.Split(string(b), "\n")
+		for _,v := range outputList {
+			tmpList := strings.Split(v, " ")
+			tmpIndex := 1
+			var tmpProcessObj processUsedResource
+			for _,vv := range tmpList {
+				if vv != "" {
+					if tmpIndex == 1 {
+						tmpProcessObj.Name = vv
+					}else if tmpIndex == 2 {
+						tmpCpu,_ := strconv.ParseFloat(vv, 64)
+						tmpProcessObj.Cpu = tmpCpu
+					}else if tmpIndex == 3 {
+						tmpMem,_ := strconv.ParseFloat(vv, 64)
+						tmpProcessObj.Mem = tmpMem
+					}
+					tmpIndex++
+				}
+			}
+			result[tmpProcessObj.Name] = tmpProcessObj
+		}
+	}
+	return result
 }
