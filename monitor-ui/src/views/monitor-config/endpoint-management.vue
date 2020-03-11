@@ -364,7 +364,7 @@
         })
       },
       thresholdConfig (rowData) {
-        this.$router.push({name: 'thresholdManagement', params: {id: rowData.id, type: 'endpoint'}})
+        this.$router.push({name: 'thresholdManagement', params: {id: rowData.id, type: 'endpoint', paramsType: rowData.type}})
       },
       logManagement (rowData) {
         this.$router.push({name: 'logManagement', params: {id: rowData.id, type: 'endpoint'}})
