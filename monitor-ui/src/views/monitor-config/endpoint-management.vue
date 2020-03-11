@@ -42,6 +42,13 @@
     </ModalComponent>
     <ModalComponent :modelConfig="processConfigModel">
       <div slot="processConfig">
+        
+        <div class="marginbottom params-each">
+          <label class="col-md-1 label-name"></label>
+          <div class="search-input-content">
+            <span style="color:#2d8cf0">{{$t('button.processConfiguration_tip')}}</span>
+          </div>
+        </div>
         <div class="marginbottom params-each">
           <label class="col-md-1 label-name">{{$t('tableKey.condition')}}:</label>
           <div class="search-input-content">

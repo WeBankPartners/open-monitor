@@ -70,6 +70,7 @@
     "historicalAlert": "Historical Alert",
     "logConfiguration": "Keyword Configuration",
     "processConfiguration": "Process Configuration",
+    "processConfiguration_tip": "Reference /proc/{pid}/status Name",
     "businessConfiguration": "Business Monitor",
     "addMetric": "Add Metric",
     "addViewTemplate": "Add View Template",
