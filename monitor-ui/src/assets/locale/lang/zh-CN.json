@@ -70,6 +70,7 @@
     "historicalAlert": "历史告警",
     "logConfiguration": "关键字配置",
     "processConfiguration": "进程配置",
+    "processConfiguration_tip": "参阅 /proc/{pid}/status 文件中的 Name",
     "businessConfiguration": "业务日志监控",
     "addMetric": "新增指标",
     "addViewTemplate": "视图模板",
