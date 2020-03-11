@@ -320,6 +320,8 @@ CREATE TABLE `panel_recursive` (
   `display_name` VARCHAR(50) NOT NULL DEFAULT '',
   `parent` TEXT,
   `endpoint` TEXT,
+  `email` TEXT,
+  `phone` TEXT,
   `update_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`guid`)
 ) ENGINE=INNODB DEFAULT CHARSET=utf8;

@@ -22,6 +22,8 @@ type panelRequestObj struct {
 	DisplayName  string  `json:"display_name"`
 	Parent  string  `json:"parent"`
 	Endpoint  string  `json:"endpoint"`
+	Email  string  `json:"email"`
+	Phone  string  `json:"phone"`
 }
 
 func ExportPanelAdd(c *gin.Context)  {
@@ -42,6 +44,10 @@ func ExportPanelAdd(c *gin.Context)  {
 			v.Endpoint = strings.Replace(v.Endpoint, "]", "", -1)
 			v.Parent = strings.Replace(v.Parent, "[", "", -1)
 			v.Parent = strings.Replace(v.Parent, "]", "", -1)
+			v.Email = strings.Replace(v.Email, "[", "", -1)
+			v.Email = strings.Replace(v.Email, "]", "", -1)
+			v.Phone = strings.Replace(v.Phone, "[", "", -1)
+			v.Phone = strings.Replace(v.Phone, "]", "", -1)
 			tmpEndpoint := strings.Split(v.Endpoint, ",")
 			tmpParent := strings.Split(v.Parent, ",")
 			var tmpMessage string
@@ -86,7 +92,7 @@ func ExportPanelAdd(c *gin.Context)  {
 				successFlag = "1"
 				continue
 			}
-			err := db.UpdateRecursivePanel(m.PanelRecursiveTable{Guid:v.Guid,DisplayName:v.DisplayName,Parent:strings.Join(tmpParent, "^"),Endpoint:strings.Join(endpointString, "^")})
+			err := db.UpdateRecursivePanel(m.PanelRecursiveTable{Guid:v.Guid,DisplayName:v.DisplayName,Parent:strings.Join(tmpParent, "^"),Endpoint:strings.Join(endpointString, "^"),Email:v.Email,Phone:v.Phone})
 			if err != nil {
 				tmpMessage = fmt.Sprintf("Index:%s update database error:%v", v.CallbackParameter, err)
 				errorMessage = tmpMessage
