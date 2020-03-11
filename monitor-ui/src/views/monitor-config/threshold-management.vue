@@ -38,7 +38,7 @@
       <template v-for="(tableItem, tableIndex) in totalPageConfig">
         <div :key="tableIndex + 'f'" class="section-table-tip">
           <Tag color="blue" :key="tableIndex + 'a'" v-if="tableItem.obj_name">{{tableItem.obj_name}}</Tag>
-          <button @click="add(tableItem.obj_type)" type="button" v-if="tableItem.operation" class="btn btn-sm btn-cancle-f" :key="tableIndex + 'b'">
+          <button @click="add" type="button" v-if="tableItem.operation" class="btn btn-sm btn-cancle-f" :key="tableIndex + 'b'">
             <i class="fa fa-plus"></i>
             {{$t('button.add')}}
           </button>
@@ -111,7 +111,7 @@ export default {
         {label: 'field.endpoint', value: 'endpoint'},
         {label: 'field.group', value: 'grp'}
       ],
-
+      paramsType: null, // For get thresholdList
       endpointID: null,
       endpointOptions: [],
 
@@ -163,11 +163,23 @@ export default {
       id: null,
     }
   },
+  watch: {
+    endpointID: function (id) {
+      this.paramsType = null
+      if (this.type === 'endpoint' && id) {
+        const selectedEndpoint = this.endpointOptions.find((endpoint) => {
+          return endpoint.id === id
+        })
+        this.paramsType = selectedEndpoint.option_value.split(':')[1]
+      }
+    }
+  },
   mounted () {
     if (!this.$root.$validate.isEmpty_reset(this.$route.params)) {
       this.$parent.activeTab = '/monitorConfigIndex/thresholdManagement'
       this.type = this.$route.params.type
       this.typeValue = this.$route.params.id
+      this.paramsType = this.$route.params.paramsType
       this.requestData(this.type, this.typeValue)
     } else {
       this.type = 'endpoint'
@@ -259,10 +271,10 @@ export default {
       }
       return Object.assign(modelParams, this.modelConfig.addRow)
     },
-    add (type) {
+    add () {
       var params = {}
-      if (type === 'endpoint') {
-        params = {type: 'host'}
+      if (this.type === 'endpoint') {
+        params = {type: this.paramsType}
       } 
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.metricList.api, params, (responseData) => {
         this.modelConfig.metricList = responseData
@@ -283,8 +295,8 @@ export default {
     },
     editF (rowData) {
       let params = {}
-      if (rowData.type === 'endpoint') {
-        params = {type: 'host'}
+      if (this.type === 'endpoint') {
+        params = {type: this.paramsType}
       } 
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.metricList.api, params, (responseData) => {
         this.modelConfig.metricList = responseData
