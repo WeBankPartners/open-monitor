@@ -268,21 +268,21 @@ func OpenAlarmApi(c *gin.Context)  {
 func GetEntityAlarm(c *gin.Context)  {
 	var result m.AlarmEntity
 	result.Data = []*m.AlarmEntityObj{}
-	idSplit := strings.Split(c.Query("id"), "_")
-	if len(idSplit) < 2 || (idSplit[0] != "alarm" && idSplit[0] != "custom") {
+	idSplit := strings.Split(c.Query("filter"), ",")
+	if len(idSplit) < 2 {
 		result.Status = "ERROR"
-		result.Message = "Parameter id validation failed"
+		result.Message = fmt.Sprintf("Parameter %s -> filter validation failed", c.Query("filter"))
 		mid.ReturnData(c, result)
 		return
 	}
 	id,_ := strconv.Atoi(idSplit[1])
 	if id <= 0 {
 		result.Status = "ERROR"
-		result.Message = "Parameter id validation failed"
+		result.Message = fmt.Sprintf("Parameter %s -> filter validation failed", c.Query("filter"))
 		mid.ReturnData(c, result)
 		return
 	}
-	alarmObj,err := db.GetAlarmEvent(idSplit[0], id)
+	alarmObj,err := db.GetAlarmEvent("alarm", id)
 	if err != nil {
 		result.Status = "ERROR"
 		result.Message = fmt.Sprintf("error: %v", err)
