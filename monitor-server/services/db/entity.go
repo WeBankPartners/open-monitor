@@ -69,7 +69,7 @@ func NotifyCoreEvent(endpoint string,strategyId int) error {
 	requestParam.EventType = "alarm"
 	requestParam.SourceSubSystem = "monitor"
 	requestParam.OperationKey = coreKey
-	requestParam.OperationData = fmt.Sprintf("alarm_%d", alarms[0].Id)
+	requestParam.OperationData = fmt.Sprintf("%d", alarms[0].Id)
 	requestParam.OperationUser = "wds_system"
 	mid.LogInfo(fmt.Sprintf("notify request data --> eventSeqNo:%s operationKey:%s operationData:%s", requestParam.EventSeqNo, coreKey, requestParam.OperationData))
 	b,_ := json.Marshal(requestParam)
