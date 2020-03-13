@@ -5,7 +5,6 @@ import (
 	"sync"
 	"github.com/prometheus/client_golang/prometheus"
 	"time"
-	"github.com/toolkits/nux"
 	"github.com/prometheus/common/log"
 	"encoding/json"
 	"io/ioutil"
@@ -77,7 +76,9 @@ type processMonitorObj struct {
 }
 
 type processUsedResource struct {
+	Pid  int
 	Name  string
+	Cmd  string
 	Cpu  float64
 	Mem  float64
 }
@@ -110,32 +111,30 @@ func (c *processCache) start()  {
 			break
 		}
 		c.Lock.Lock()
-		processList,err := nux.AllProcs()
-		processUsedMap := getProcessUsedResource()
-		if err != nil {
-			log.Errorf("Get nux process list fail : %v \n", err)
-		}else{
-			//log.Infof("Get process list success,num : %d \n", len(processList))
+		processUsedList := getProcessUsedResource()
+		if len(processUsedList) > 0 {
 			for _,v := range c.ProcessMonitor {
-				v.Value = 0
-			}
-			for _,v := range processList {
-				for _,vv := range c.ProcessMonitor {
-					if v.Name == vv.Name {
-						vv.Value = vv.Value + 1
-						if len(v.Cmdline) > 100 {
-							vv.Command = v.Cmdline[:100]
-						}else {
-							vv.Command = v.Cmdline
+				tmpName := v.Name
+				tmpTag := ""
+				var tmpCount float64 = 0
+				if strings.Contains(v.Name, "(") {
+					tmpNameList := strings.Split(v.Name, "(")
+					tmpName = tmpNameList[0]
+					tmpTag = strings.Replace(tmpNameList[1], ")", "", -1)
+				}
+				for _,vv := range processUsedList {
+					if vv.Name == tmpName && strings.Contains(vv.Cmd, tmpTag) {
+						tmpCount = tmpCount + 1
+						if len(vv.Cmd) > 100 {
+							v.Command = vv.Cmd[:100]
+						}else{
+							v.Command = vv.Cmd
 						}
+						v.CpuUsedPercent = vv.Cpu
+						v.MemUsedByte = vv.Mem
 					}
 				}
-			}
-		}
-		if len(processUsedMap) > 0 {
-			for _,v := range c.ProcessMonitor {
-				v.CpuUsedPercent = processUsedMap[v.Name].Cpu
-				v.MemUsedByte = processUsedMap[v.Name].Mem
+				v.Value = tmpCount
 			}
 		}
 		c.Lock.Unlock()
@@ -236,9 +235,9 @@ func ProcessMonitorHttpHandle(w http.ResponseWriter, r *http.Request)  {
 	w.Write([]byte("Success"))
 }
 
-func getProcessUsedResource() map[string]processUsedResource {
-	result := make(map[string]processUsedResource)
-	cmd := exec.Command("bash", "-c", "ps -eo 'comm,pcpu,rsz'")
+func getProcessUsedResource() []processUsedResource {
+	var result []processUsedResource
+	cmd := exec.Command("bash", "-c", "ps -eo 'pid,comm,pcpu,rsz,args'")
 	b,err := cmd.Output()
 	if err != nil {
 		log.Errorf("get process used resource error : %v \n", err)
@@ -247,22 +246,35 @@ func getProcessUsedResource() map[string]processUsedResource {
 		for _,v := range outputList {
 			tmpList := strings.Split(v, " ")
 			tmpIndex := 1
+			strIndex := 0
 			var tmpProcessObj processUsedResource
 			for _,vv := range tmpList {
+				strIndex += len(vv)+1
 				if vv != "" {
 					if tmpIndex == 1 {
-						tmpProcessObj.Name = vv
+						tmpPid,_ := strconv.Atoi(vv)
+						if tmpPid > 0 {
+							tmpProcessObj.Pid = tmpPid
+						}
 					}else if tmpIndex == 2 {
+						tmpProcessObj.Name = vv
+					}else if tmpIndex == 3 {
 						tmpCpu,_ := strconv.ParseFloat(vv, 64)
 						tmpProcessObj.Cpu = tmpCpu
-					}else if tmpIndex == 3 {
+					}else if tmpIndex == 4 {
 						tmpMem,_ := strconv.ParseFloat(vv, 64)
 						tmpProcessObj.Mem = tmpMem
+						break
 					}
 					tmpIndex++
 				}
 			}
-			result[tmpProcessObj.Name] = tmpProcessObj
+			if len(v) > strIndex {
+				tmpProcessObj.Cmd = v[strIndex:]
+			}
+			if tmpProcessObj.Pid > 0 {
+				result = append(result, tmpProcessObj)
+			}
 		}
 	}
 	return result
