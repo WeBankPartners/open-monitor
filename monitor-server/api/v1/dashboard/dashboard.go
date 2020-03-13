@@ -485,10 +485,10 @@ func MainSearch(c *gin.Context)  {
 		mid.Return(c, mid.RespJson{Msg:"Param error", Code:http.StatusBadRequest})
 		return
 	}
-	//tmpFlag := true
+	tmpFlag := false
 	if strings.Contains(endpoint, `:`) {
 		endpoint = strings.Split(endpoint, `:`)[1]
-		//tmpFlag = false
+		tmpFlag = true
 	}
 	err,result := db.SearchHost(endpoint)
 	if err != nil {
@@ -502,6 +502,18 @@ func MainSearch(c *gin.Context)  {
 				break
 			}
 			result = append(result, v)
+		}
+	}
+	if tmpFlag {
+		var tmpResult []*m.OptionModel
+		for _,v := range result {
+			if v.OptionText == c.Query("search") {
+				tmpResult = append(tmpResult, v)
+				break
+			}
+		}
+		if len(tmpResult) > 0 {
+			result = tmpResult
 		}
 	}
 	mid.ReturnData(c, result)
