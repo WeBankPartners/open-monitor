@@ -79,28 +79,7 @@
                         <Tag color="blue" class="tag-width" v-if="option.option_value.split(':')[1] == 'mysql'">mysql </Tag>
                         <Tag color="geekblue" class="tag-width" v-if="option.option_value.split(':')[1] == 'redis'">redis </Tag>
                         <Tag color="purple" class="tag-width" v-if="option.option_value.split(':')[1] == 'tomcat'">tomcat</Tag>{{option.option_text}}</Option>
-                        <!-- <Tag
-                          color="cyan"
-                          class="tag-width"
-                          v-if="option.option_value.split(':')[1] == 'host'"
-                        >host</Tag>
-                        <Tag
-                          color="blue"
-                          class="tag-width"
-                          v-if="option.option_value.split(':')[1] == 'mysql'"
-                        >mysql</Tag>
-                        <Tag
-                          color="geekblue"
-                          class="tag-width"
-                          v-if="option.option_value.split(':')[1] == 'redis'"
-                        >redis</Tag>
-                        <Tag
-                          color="purple"
-                          class="tag-width"
-                          v-if="option.option_value.split(':')[1] == 'tomcat'"
-                        >tomcat</Tag>{{option.option_text}}
-                      </Option> -->
-                      <!-- <Option v-for="(option, index) in options" :value="option.option_value" :key="index">{{option.option_text}}</Option> -->
+
                     </Select>
                   </div>
                 </li>
@@ -198,7 +177,7 @@ export default {
         data.forEach(item => {
           params.push(
             {
-              endpoint: item.endpoint.split(":")[0],
+              endpoint: item.endpoint,
               prom_ql: item.metric,
               metric: item.metricLabel,
               time: "-1800"
@@ -350,7 +329,7 @@ export default {
       let query = [];
       this.chartQueryList.forEach(item => {
         query.push({
-          endpoint: item.endpoint.split(":")[0],
+          endpoint: item.endpoint,
           metricLabel: item.metricLabel,
           metric: item.metric
         });
