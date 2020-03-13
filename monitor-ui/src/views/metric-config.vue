@@ -75,6 +75,7 @@ export default {
   data() {
     return {
       endpoint: '',
+      endpointObject: {},
       endpointId: '',
       endpointList: [],
       noticeConfig: {
@@ -126,6 +127,15 @@ export default {
     })
   },
   watch: {
+    endpoint: function (val) {
+      if (val) {
+        this.endpointObject = this.endpointList.find(ep => {
+          return ep.option_value === val.split(':')[0]
+        })
+      } else {
+        this.endpointObject = {}
+      }
+    },
     changeIP () {
       this.metricSelected = []
       this.metricSelectedOptions = []
@@ -225,7 +235,7 @@ export default {
     metricSelectOpen (flag) {
       if (flag) {
         if (!this.$root.$validate.isEmpty_reset(this.endpoint)) {
-          this.obtainMetricList(this.endpoint.split(':')[1])
+          this.obtainMetricList(this.endpointObject.type)
         } else {
           this.metricSelected = []
           this.metricSelectedOptions = []
@@ -256,7 +266,7 @@ export default {
           requestFlag = false 
         }
         params.push({
-          endpoint: this.endpoint.split(':')[0],
+          endpoint: this.endpointObject.option_value,
           prom_ql: item.value,
           metric: item.label,
           time: this.timeTnterval + ''
@@ -306,7 +316,7 @@ export default {
         return
       }
       this.originalList = []
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.originMetricList.api, {id:this.endpoint.split(':')[2]}, responseData => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.originMetricList.api, {id:this.endpoint.split(':')[1]}, responseData => {
         this.originalList = responseData
       })
     }
