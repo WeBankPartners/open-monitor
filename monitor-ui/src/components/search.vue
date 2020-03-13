@@ -54,6 +54,7 @@ export default {
   data() {
     return {
       endpoint: '',
+      endpointObject: {},
       endpointList: [],
       ip: {},
       timeTnterval: -1800,
@@ -76,6 +77,15 @@ export default {
     }
   },
   watch: {
+    endpoint: function (val) {
+      if (val) {
+        this.endpointObject = this.endpointList.find(ep => {
+          return ep.option_value === val
+        })
+      } else {
+        this.endpointObject = {}
+      }
+    },
     isShow: function () {
       this.clearEndpoint = []
       this.getEndpointList('.')
@@ -93,7 +103,7 @@ export default {
     getMainConfig () {
       return new Promise(resolve => {
         let params = {
-          type: this.endpoint.split(':')[1]
+          type: this.endpointObject.type
         }
         this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.mainConfig.api, params, (responseData) => {
           resolve(responseData)
@@ -125,23 +135,16 @@ export default {
         return
       }
       let params = {}
-      if (this.endpoint.split(':')[1] === 'sys') {
+      if (this.endpointObject.type === 'sys') {
         params = {
           autoRefresh: this.autoRefresh,
           time: this.timeTnterval,
-          endpoint: this.endpoint.split(':')[0],
+          endpoint: this.endpointObject.option_value,
           start: this.dateRange[0] ===''? '':Date.parse(this.dateRange[0])/1000,
           end: this.dateRange[1] ===''? '':Date.parse(this.dateRange[1])/1000,
-          guid: this.endpoint.split(':')[0],
+          guid: this.endpointObject.option_value,
           sys: true
         }  
-
-        // params.sys = true
-        // params.guid = this.endpoint.split(':')[0]
-        // const params = {
-        //   sys: true,
-        //   guid: this.endpoint.split(':')[0]
-        // }
         this.$parent.manageCharts({}, params)
         return
       }
@@ -151,18 +154,18 @@ export default {
       params = {
         autoRefresh: this.autoRefresh,
         time: this.timeTnterval,
-        endpoint: this.endpoint.split(':')[0],
+        endpoint: this.endpointObject.option_value,
         start: this.dateRange[0] ===''? '':Date.parse(this.dateRange[0])/1000,
         end: this.dateRange[1] ===''? '':Date.parse(this.dateRange[1])/1000,
         sys: false
       }
-      url = url.replace(`{${key}}`,params[key].split(':')[0])
+      url = url.replace(`{${key}}`,params[key])
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET',url, params, responseData => {
         this.$parent.manageCharts(responseData, params)
       },{isNeedloading: false})
     },
     changeRoute () {
-      this.$router.push({name: 'endpointManagement', params: {search: this.endpoint.split(':')[0]}})
+      this.$router.push({name: 'endpointManagement', params: {search: this.endpointObject.option_value}})
     }
   },
   components: {
