@@ -42,22 +42,22 @@
     </ModalComponent>
     <ModalComponent :modelConfig="processConfigModel">
       <div slot="processConfig">
-        
         <div class="marginbottom params-each">
-          <label class="col-md-1 label-name"></label>
-          <div class="search-input-content">
-            <span style="color:#2d8cf0">{{$t('button.processConfiguration_tip')}}</span>
+          <div class="offset-md-2" style="color:#fa7821">
+            <span>{{$t('button.processConfiguration_tip1')}}</span>
+            <br />
+            <span>{{$t('button.processConfiguration_tip2')}}</span>
           </div>
         </div>
         <div class="marginbottom params-each">
-          <label class="col-md-1 label-name">{{$t('tableKey.condition')}}:</label>
+          <label class="col-md-2 label-name">{{$t('tableKey.condition')}}:</label>
           <div class="search-input-content">
             <input type="text" v-model="processConfigModel.processName" class="search-input c-dark" />
           </div>
           <button type="button" @click="addProcess" class="btn-cancle-f" style="vertical-align:middle">{{$t('button.confirm')}}</button>
         </div>
         <div class="marginbottom params-each row" style="">
-          <div class="offset-md-1">
+          <div class="offset-md-2">
             <Tag
             v-for="(process, processIndex) in processConfigModel.addRow.processSet"
             color="primary"
