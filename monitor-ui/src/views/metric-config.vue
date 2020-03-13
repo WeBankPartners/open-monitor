@@ -15,11 +15,11 @@
         :remote-method="getEndpointList"
         >
         <Option v-for="(option, index) in endpointList" :value="option.option_value+ ':' + option.id" :key="index">
-          <Tag color="green" class="tag-width" v-if="option.option_value.split(':')[1] == 'sys'">system</Tag>
-          <Tag color="cyan" class="tag-width" v-if="option.option_value.split(':')[1] == 'host'">host</Tag>
-          <Tag color="blue" class="tag-width" v-if="option.option_value.split(':')[1] == 'mysql'">mysql</Tag>
-          <Tag color="geekblue" class="tag-width" v-if="option.option_value.split(':')[1] == 'redis'">redis</Tag>
-          <Tag color="purple" class="tag-width" v-if="option.option_value.split(':')[1] == 'tomcat'">tomcat</Tag>{{option.option_text}}</Option>
+          <Tag color="green" class="tag-width" v-if="option.type == 'sys'">system</Tag>
+          <Tag color="cyan" class="tag-width" v-if="option.type == 'host'">host</Tag>
+          <Tag color="blue" class="tag-width" v-if="option.type == 'mysql'">mysql</Tag>
+          <Tag color="geekblue" class="tag-width" v-if="option.type == 'redis'">redis</Tag>
+          <Tag color="purple" class="tag-width" v-if="option.type == 'tomcat'">tomcat</Tag>{{option.option_text}}</Option>
       </Select>
       <Select v-model="metricSelected" filterable multiple style="width:260px" :label-in-value="true" 
           @on-change="selectMetric" @on-open-change="metricSelectOpen" :placeholder="$t('placeholder.metric')">
