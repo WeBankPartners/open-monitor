@@ -9,8 +9,9 @@ import (
 	"fmt"
 	"os/exec"
 	"log"
-	"strconv"
 	"net/http"
+	"regexp"
+	"strconv"
 )
 
 type ProcessObj  struct {
@@ -213,9 +214,12 @@ func getSystemProcessPid(name,path string) []int {
 	}
 	for _,v := range strings.Split(string(b), "\n") {
 		if v != "" {
-			tmpPid,_ := strconv.Atoi(v)
-			if tmpPid > 0 {
-				result = append(result, tmpPid)
+			findList := regexp.MustCompile(`(\d+)`).FindAllString(v, -1)
+			if len(findList) > 0 {
+				tmpPid,_ := strconv.Atoi(findList[0])
+				if tmpPid > 0 {
+					result = append(result, tmpPid)
+				}
 			}
 		}
 	}

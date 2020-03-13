@@ -121,7 +121,7 @@ func AcceptAlertMsg(c *gin.Context)  {
 				continue
 			}
 			if tmpOperation == "resolve" {
-				tmpAlarm = m.AlarmTable{Id:tmpAlarms[0].Id, Status:"ok", EndValue:tmpValue, End:time.Now()}
+				tmpAlarm = m.AlarmTable{Id:tmpAlarms[0].Id, Endpoint:tmpAlarms[0].Endpoint, StrategyId:tmpAlarms[0].StrategyId, Status:"ok", EndValue:tmpValue, End:time.Now()}
 			}else if tmpOperation == "add" {
 				tmpAlarm.StartValue = tmpValue
 				tmpAlarm.Start = time.Now()
