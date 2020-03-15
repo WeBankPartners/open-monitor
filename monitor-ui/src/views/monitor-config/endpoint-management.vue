@@ -275,13 +275,13 @@
         this.pageConfig.researchConfig.btn_group.push({btn_name: 'button.add', btn_func: 'endpointReject', class: 'btn-cancle-f', btn_icon: 'fa fa-plus'})
       } else {
         this.$parent.activeTab = '/monitorConfigIndex/endpointManagement'
-        if (this.$route.params.hasOwnProperty('group')) {
+        if (Object.prototype.hasOwnProperty.call(this.$route.params, 'group')) {
           this.groupMsg = this.$route.params.group
           this.showGroupMsg = true
           this.pageConfig.researchConfig.btn_group.push({btn_name: 'button.add', btn_func: 'add', class: 'btn-cancle-f', btn_icon: 'fa fa-plus'})
           this.pageConfig.researchConfig.filters.grp = this.groupMsg.id
         }
-        if (this.$route.params.hasOwnProperty('search')) {
+        if (Object.prototype.hasOwnProperty.call(this.$route.params, 'search')) {
           this.pageConfig.researchConfig.filters.search = this.$route.params.search
         }
       }
