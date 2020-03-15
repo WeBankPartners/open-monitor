@@ -26,14 +26,13 @@ export default {
     }
   },
   mounted() {
-    this.$refs.search.getChartsConfig()
+    this.$refs.search.getChartsConfig() 
   },
   methods: {
     manageCharts (chartsConfig, params) {
       if (params.sys) {
         this.params = params
         this.showCharts = false
-        this.showRecursive = true
         this.recursiveView(params)
         return
       }
@@ -59,6 +58,7 @@ export default {
     recursiveView (params) {
       this.recursiveViewConfig = []
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.recursive.api, params, responseData => {
+        this.showRecursive = true
         this.recursiveViewConfig = [responseData]
       })
     }
