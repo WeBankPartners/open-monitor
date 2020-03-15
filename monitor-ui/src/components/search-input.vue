@@ -11,11 +11,11 @@
         <ul>
           <template v-for="(resItem, resIndex) in searchResult">
             <li class="ul-option" @click="choiceRes(resItem)" :key="resIndex">
-              <Tag color="green" class="tag-width" v-if="resItem.option_value.split(':')[1] == 'sys'">system</Tag>
-              <Tag color="cyan" v-if="resItem.option_value.split(':')[1] == 'host'">host</Tag>
-              <Tag color="blue" v-if="resItem.option_value.split(':')[1] == 'mysql'">mysql</Tag>
-              <Tag color="geekblue" v-if="resItem.option_value.split(':')[1] == 'redis'">redis</Tag>
-              <Tag color="purple" v-if="resItem.option_value.split(':')[1] == 'tomcat'">tomcat</Tag>
+              <Tag color="green" class="tag-width" v-if="resItem.type == 'sys'">system</Tag>
+              <Tag color="cyan" v-if="resItem.type == 'host'">host</Tag>
+              <Tag color="blue" v-if="resItem.type == 'mysql'">mysql</Tag>
+              <Tag color="geekblue" v-if="resItem.type == 'redis'">redis</Tag>
+              <Tag color="purple" v-if="resItem.type == 'tomcat'">tomcat</Tag>
               <span>{{resItem.option_text}}</span>
             </li>
           </template>  
@@ -56,10 +56,7 @@ export default {
     },
     choiceRes (resItem) {
       this.ip.label = resItem.option_text
-      this.ipChoiced.label = resItem.option_text
-      this.ipChoiced.value = resItem.option_value
-      this.ipChoiced.id = resItem.id
-      this.ipChoiced.type = resItem.option_value.split(':')[1]
+      this.ipChoiced = resItem
       this.$root.$store.commit('storeip', this.ipChoiced)
       this.showSearchTips = false
     },
