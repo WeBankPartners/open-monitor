@@ -40,7 +40,10 @@
         <systemParameter name="MONITOR_MYSQL_GROUP" scopeType="global" defaultValue="default_mysql_group"/>
         <systemParameter name="MONITOR_REDIS_GROUP" scopeType="global" defaultValue="default_redis_group"/>
         <systemParameter name="MONITOR_TOMCAT_GROUP" scopeType="global" defaultValue="default_tomcat_group"/>
-        <systemParameter name="HOST_EXPORTER_S3_PATH" scopeType="global" defaultValue="http://127.0.0.1:9000/wecube-agent/node_exporter_v1.tar.gz"/>
+        <systemParameter name="HOST_EXPORTER_S3_PATH" scopeType="global" defaultValue="http://127.0.0.1:9000/wecube-agent/node_exporter_v2.tar.gz"/>
+        <systemParameter name="MONITOR_MAIL_SENDER_USER" scopeType="global" defaultValue="default_user"/>
+        <systemParameter name="MONITOR_MAIL_SENDER_SERVER" scopeType="global" defaultValue="default_server"/>
+        <systemParameter name="MONITOR_MAIL_SENDER_PASSWORD" scopeType="global" defaultValue="default_password"/>
     </systemParameters>
 
     <!-- 5.权限设定 -->
