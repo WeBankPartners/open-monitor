@@ -15,7 +15,7 @@
 
 ### 趋势
 cpu:  
-<img src="./wiki/images/performance-cpu.png" />
+<img src="./images/performance-cpu.png" />
 
 mem:  
-<img src="./wiki/images/performance-mem.png" />
+<img src="./images/performance-mem.png" />
