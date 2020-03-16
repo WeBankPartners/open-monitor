@@ -536,7 +536,7 @@
         if (valx === 'All') {
           this.pageConfig.table.tableEle[i]._isFilter = 'N'
           delete this.pageConfig.pagination[ele.filterable.filterParam]
-          if (this.pageConfig.pagination.hasOwnProperty(ele.value)) {
+          if (Object.prototype.hasOwnProperty.call(this.pageConfig.pagination, ele.value)) {
             delete this.pageConfig.pagination[ele.value]
 
           }
