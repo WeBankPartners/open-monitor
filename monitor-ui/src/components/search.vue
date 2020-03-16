@@ -96,14 +96,19 @@ export default {
   mounted() {
     this.getEndpointList('.')
     if (!this.$root.$validate.isEmpty_reset(this.$route.params)) {
-      this.endpoint = this.$route.params.value
+      this.endpoint = this.$route.params.option_value
     }
   },
   methods: {
     getMainConfig () {
+      if (this.$root.$validate.isEmpty_reset(this.endpointObject) && !this.$root.$validate.isEmpty_reset(this.$root.$store.state.ip)) {
+        this.endpointObject = this.$root.$store.state.ip
+        this.$root.$store.commit('storeip', {})
+      }
+      const type = this.endpointObject.type
       return new Promise(resolve => {
         let params = {
-          type: this.endpointObject.type
+          type: type
         }
         this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.mainConfig.api, params, (responseData) => {
           resolve(responseData)
@@ -134,8 +139,12 @@ export default {
       if (this.$root.$validate.isEmpty_reset(this.endpoint)) {
         return
       }
+      if (this.$root.$validate.isEmpty_reset(this.endpointObject) && !this.$root.$validate.isEmpty_reset(this.$root.$store.state.ip)) {
+        this.endpointObject = this.$root.$store.state.ip
+        this.$root.$store.commit('storeip', {})
+      }
       let params = {}
-      if (this.endpointObject.type === 'sys') {
+      if (this.endpointObject.type === 'sys' ) {
         params = {
           autoRefresh: this.autoRefresh,
           time: this.timeTnterval,
@@ -154,7 +163,7 @@ export default {
       params = {
         autoRefresh: this.autoRefresh,
         time: this.timeTnterval,
-        endpoint: this.endpointObject.option_value,
+        endpoint: this.endpoint,
         start: this.dateRange[0] ===''? '':Date.parse(this.dateRange[0])/1000,
         end: this.dateRange[1] ===''? '':Date.parse(this.dateRange[1])/1000,
         sys: false
