@@ -24,6 +24,7 @@ type panelRequestObj struct {
 	Endpoint  string  `json:"endpoint"`
 	Email  string  `json:"email"`
 	Phone  string  `json:"phone"`
+	Role  string  `json:"role"`
 }
 
 func ExportPanelAdd(c *gin.Context)  {
@@ -40,16 +41,14 @@ func ExportPanelAdd(c *gin.Context)  {
 		successFlag := "0"
 		errorMessage := "Done"
 		for _,v := range param.Inputs {
-			v.Endpoint = strings.Replace(v.Endpoint, "[", "", -1)
-			v.Endpoint = strings.Replace(v.Endpoint, "]", "", -1)
-			v.Parent = strings.Replace(v.Parent, "[", "", -1)
-			v.Parent = strings.Replace(v.Parent, "]", "", -1)
-			v.Email = strings.Replace(v.Email, "[", "", -1)
-			v.Email = strings.Replace(v.Email, "]", "", -1)
-			v.Phone = strings.Replace(v.Phone, "[", "", -1)
-			v.Phone = strings.Replace(v.Phone, "]", "", -1)
+			v.Endpoint = trimListString(v.Endpoint)
+			v.Parent = trimListString(v.Parent)
+			v.Email = trimListString(v.Email)
+			v.Phone = trimListString(v.Phone)
+			v.Role = trimListString(v.Role)
 			tmpEndpoint := strings.Split(v.Endpoint, ",")
 			tmpParent := strings.Split(v.Parent, ",")
+			tmpRole := db.CheckRoleList(v.Role)
 			var tmpMessage string
 			if v.Guid == "" {
 				tmpMessage = fmt.Sprintf("Index:%s guid is null", v.CallbackParameter)
@@ -92,7 +91,7 @@ func ExportPanelAdd(c *gin.Context)  {
 				successFlag = "1"
 				continue
 			}
-			err := db.UpdateRecursivePanel(m.PanelRecursiveTable{Guid:v.Guid,DisplayName:v.DisplayName,Parent:strings.Join(tmpParent, "^"),Endpoint:strings.Join(endpointString, "^"),Email:v.Email,Phone:v.Phone})
+			err := db.UpdateRecursivePanel(m.PanelRecursiveTable{Guid:v.Guid,DisplayName:v.DisplayName,Parent:strings.Join(tmpParent, "^"),Endpoint:strings.Join(endpointString, "^"),Email:v.Email,Phone:v.Phone,Role:tmpRole})
 			if err != nil {
 				tmpMessage = fmt.Sprintf("Index:%s update database error:%v", v.CallbackParameter, err)
 				errorMessage = tmpMessage
@@ -111,6 +110,12 @@ func ExportPanelAdd(c *gin.Context)  {
 		mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
 		c.JSON(http.StatusBadRequest, result)
 	}
+}
+
+func trimListString(input string) string {
+	input = strings.Replace(input, "[", "", -1)
+	input = strings.Replace(input, "]", "", -1)
+	return input
 }
 
 func GetPanelRecursive(c *gin.Context)  {
