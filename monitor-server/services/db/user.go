@@ -301,3 +301,38 @@ func GetGrpRole(grpId int) (err error, result []*m.OptionModel) {
 	}
 	return nil,result
 }
+
+func CheckRoleList(param string) string {
+	if param == "" {
+		return ""
+	}
+	tmpMap := make(map[string]int)
+	for _,v := range strings.Split(param, ",") {
+		tmpMap[v] = 0
+	}
+	for k,_ := range tmpMap {
+		var tableData []*m.RoleTable
+		x.SQL("SELECT id FROM role WHERE display_name=?", k).Find(&tableData)
+		if len(tableData) > 0 {
+			tmpMap[k] = tableData[0].Id
+		}else{
+			_,err := x.Exec("INSERT INTO role(name,display_name) VALUE (?,?)", k, k)
+			if err != nil {
+				mid.LogError(fmt.Sprintf("check role list,insert table with name:%s error", k), err)
+			}else{
+				x.SQL("SELECT id FROM role WHERE display_name=?", k).Find(&tableData)
+				if len(tableData) > 0 {
+					tmpMap[k] = tableData[0].Id
+				}
+			}
+		}
+	}
+	var result string
+	for _,v := range tmpMap {
+		result += fmt.Sprintf("%d,", v)
+	}
+	if result != "" {
+		result = result[:len(result)-1]
+	}
+	return result
+}
