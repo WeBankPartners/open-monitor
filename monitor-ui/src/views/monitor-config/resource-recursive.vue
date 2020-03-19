@@ -5,7 +5,7 @@
         <div @click="hide(itemIndex)" class="tree-title" :style="stylePadding">
           <div style="display:flex;justify-content: space-between;">
             <div>
-              <strong>{{item.display_name}}</strong>
+              <h5>{{item.display_name}}</h5>
             </div>
             <div>
               <button class="btn-cancle-f btn-small" @click="associatedRole(item)">配置关联角色</button>
@@ -16,27 +16,16 @@
               <i class="fa fa-trash-o" @click="deletePanal(item)" aria-hidden="true"></i>
             </div>
           </div>
-          <!-- <span>
-            <strong>{{item.display_name}}</strong>
-          </span> -->
-          <!-- <div style="width:200px;"> -->
-            <!-- <button class="btn-cancle-f btn-small" @click="associatedRole(item)">配置关联角色</button>
-            <button class="btn-cancle-f btn-small" @click="associatedObject(item)">配置关联对象</button>
-            <button class="btn-cancle-f btn-small" @click="alarmCallback(item)">告警回调</button>
-            <i class="fa fa-plus" aria-hidden="true" @click="addPanel(item)"> </i>
-            <i class="fa fa-pencil" @click="editPanal(item)" aria-hidden="true"></i>
-            <i class="fa fa-trash-o" @click="deletePanal(item)" aria-hidden="true"></i> -->
-          <!-- </div> -->
         </div>
         <transition name="fade">
+          
           <!-- v-show="item._isShow" -->
-          <div >
+          <div>
             <recursive
             :increment="count"
             v-if="item.children"
             :recursiveViewConfig="item.children"></recursive>
             <div>
-              <!-- {{item.display_name}} -->
             </div>
           </div>
         </transition>
@@ -121,6 +110,7 @@
 </template>
 
 <script>
+import { EventBus } from "@/assets/js/event-bus.js"
 export default {
   name: 'recursive',
   data() {
@@ -170,6 +160,9 @@ export default {
     }
   },
   created () {
+    // if (!this.recursiveViewConfig) {
+    //   return
+    // }
     // this.recursiveViewConfig.map((_) =>{
     //   _._isShow = true
     // }) 
@@ -199,6 +192,7 @@ export default {
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', 'alarm/org/panel/delete', params, () => {
         this.$Message.success(this.$t('tips.success'))
+        EventBus.$emit("updateResource", '')
       })
     },
     editPanal (panalData) {
@@ -216,6 +210,7 @@ export default {
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', api, params, () => {
         this.$Message.success(this.$t('tips.success'))
         this.isEditPanal = false
+        EventBus.$emit("updateResource", '')
       })
     },
     associatedRole (panalData) {
@@ -374,7 +369,7 @@ export default {
 
   .tree-title {
     margin-top: 1px;
-    cursor: pointer;
+    // cursor: pointer;
     color: @blue-2;
   }
   .tree-border {
