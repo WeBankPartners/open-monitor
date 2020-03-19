@@ -5,38 +5,27 @@
         <div @click="hide(itemIndex)" class="tree-title" :style="stylePadding">
           <div style="display:flex;justify-content: space-between;">
             <div>
-              <strong>{{item.display_name}}</strong>
+              <h5>{{item.display_name}}</h5>
             </div>
             <div>
-              <button class="btn-cancle-f btn-small" @click="associatedRole(item)">配置关联角色</button>
-              <button class="btn-cancle-f btn-small" @click="associatedObject(item)">配置关联对象</button>
-              <button class="btn-cancle-f btn-small" @click="alarmCallback(item)">告警回调</button>
+              <button class="btn-cancle-f btn-small" @click="associatedRole(item)">{{$t('resourceLevel.addAssociatedRole')}}</button>
+              <button class="btn-cancle-f btn-small" @click="associatedObject(item)">{{$t('resourceLevel.addAssociatedObject')}}</button>
+              <button class="btn-cancle-f btn-small" @click="alarmCallback(item)">{{$t('resourceLevel.alarmCallback')}}</button>
               <i class="fa fa-plus" aria-hidden="true" @click="addPanel(item)"> </i>
               <i class="fa fa-pencil" @click="editPanal(item)" aria-hidden="true"></i>
-              <i class="fa fa-trash-o" @click="deletePanal(item)" aria-hidden="true"></i>
+              <i class="fa fa-trash-o" @click="deletePanalConfirm(item)" aria-hidden="true"></i>
             </div>
           </div>
-          <!-- <span>
-            <strong>{{item.display_name}}</strong>
-          </span> -->
-          <!-- <div style="width:200px;"> -->
-            <!-- <button class="btn-cancle-f btn-small" @click="associatedRole(item)">配置关联角色</button>
-            <button class="btn-cancle-f btn-small" @click="associatedObject(item)">配置关联对象</button>
-            <button class="btn-cancle-f btn-small" @click="alarmCallback(item)">告警回调</button>
-            <i class="fa fa-plus" aria-hidden="true" @click="addPanel(item)"> </i>
-            <i class="fa fa-pencil" @click="editPanal(item)" aria-hidden="true"></i>
-            <i class="fa fa-trash-o" @click="deletePanal(item)" aria-hidden="true"></i> -->
-          <!-- </div> -->
         </div>
         <transition name="fade">
+          
           <!-- v-show="item._isShow" -->
-          <div >
+          <div>
             <recursive
             :increment="count"
             v-if="item.children"
             :recursiveViewConfig="item.children"></recursive>
             <div>
-              <!-- {{item.display_name}} -->
             </div>
           </div>
         </transition>
@@ -46,7 +35,7 @@
     <Modal
       label-colon
       v-model="isEditPanal"
-      title="节点信息">
+      :title="$t('resourceLevel.levelMsg')">
       <Form :model="currentData" label-position="left" :label-width="60">
         <FormItem :label="$t('field.guid')">
             <Input v-model="currentData.guid" :disabled="!isAdd"></Input>
@@ -56,25 +45,25 @@
         </FormItem>
       </Form>
       <div slot="footer">
-        <button class="btn-cancle-f" @click="isEditPanal = false">取消</button>
-        <button class="btn-confirm-f" @click="savePanal">保存</button>
+        <button class="btn-cancle-f" @click="isEditPanal = false">{{$t('button.cancle')}}</button>
+        <button class="btn-confirm-f" @click="savePanal">{{$t('button.save')}}</button>
       </div>
     </Modal>
     <!-- 关联角色 -->
     <Modal
       label-colon
       v-model="isAssociatedRole"
-      title="关联角色">
+      :title="$t('resourceLevel.associatedRole')">
       <Form :model="currentData" label-position="left" :label-width="60">
-        <FormItem label="角色">
+        <FormItem :label="$t('resourceLevel.role')">
           <Select v-model="selectedRole" multiple>
             <Option v-for="item in allRole" :value="item.value" :key="item.value">{{ item.name }}</Option>
           </Select>
         </FormItem>
       </Form>
       <div slot="footer">
-        <button class="btn-cancle-f" @click="isAssociatedRole = false">取消</button>
-        <button class="btn-confirm-f" @click="saveAssociatedRole">保存</button>
+        <button class="btn-cancle-f" @click="isAssociatedRole = false">{{$t('button.cancle')}}</button>
+        <button class="btn-confirm-f" @click="saveAssociatedRole">{{$t('button.save')}}</button>
       </div>
     </Modal>
 
@@ -82,49 +71,65 @@
     <Modal
       label-colon
       v-model="isAssociatedObject"
-      title="关联对象">
+      :title="$t('resourceLevel.associatedObject')">
       <Form :model="currentData" label-position="left" :label-width="60">
-        <FormItem label="对象">
+        <FormItem :label="$t('resourceLevel.endpoint')">
           <Select v-model="selectedObject" multiple>
             <Option v-for="item in allObject" :value="item.option_value" :key="item.option_value">{{ item.option_text }}</Option>
           </Select>
         </FormItem>
       </Form>
       <div slot="footer">
-        <button class="btn-cancle-f" @click="isAssociatedObject = false">取消</button>
-        <button class="btn-confirm-f" @click="saveAssociatedObject">保存</button>
+        <button class="btn-cancle-f" @click="isAssociatedObject = false">{{$t('button.cancle')}}</button>
+        <button class="btn-confirm-f" @click="saveAssociatedObject">{{$t('button.save')}}</button>
       </div>
     </Modal>
     <!-- 告警回调 -->
     <Modal
       label-colon
       v-model="isAlarmCallback"
-      title="告警回调">
+      :title="$t('resourceLevel.alarmCallback')">
       <Form label-position="left" :label-width="80">
-        <FormItem label="告警异常">
+        <FormItem :label="$t('resourceLevel.alarmFiring')">
           <Select v-model="selectedFiring">
             <Option v-for="item in allFiring" :value="item.option_text" :key="item.option_text+'ab'">{{ item.option_text }}</Option>
           </Select>
         </FormItem>
-        <FormItem label="告警恢复">
+        <FormItem :label="$t('resourceLevel.alarmRecover')">
           <Select v-model="selectedRecover">
             <Option v-for="item in allRecover" :value="item.option_text" :key="item.option_text+'cd'">{{ item.option_text }}</Option>
           </Select>
         </FormItem>
       </Form>
       <div slot="footer">
-        <button class="btn-cancle-f" @click="isAlarmCallback = false">取消</button>
-        <button class="btn-confirm-f" @click="saveAlarmCallback">保存</button>
+        <button class="btn-cancle-f" @click="isAlarmCallback = false">{{$t('button.cancle')}}</button>
+        <button class="btn-confirm-f" @click="saveAlarmCallback">{{$t('button.save')}}</button>
       </div>
+    </Modal>
+
+    <Modal v-model="deleteWarning" width="360">
+        <p slot="header" style="color:#f60;text-align:center">
+            <Icon type="ios-information-circle"></Icon>
+            <span>Delete confirmation ({{parentPanal}})</span>
+        </p>
+        <div style="text-align:center">
+            <p>Will you delete it?</p>
+        </div>
+        <div slot="footer">
+          <button class="btn-delete-f" @click="deletePanal">Delete</button>
+        </div>
     </Modal>
   </div>
 </template>
 
 <script>
+import { EventBus } from "@/assets/js/event-bus.js"
 export default {
   name: 'recursive',
   data() {
     return {
+      deleteWarning: false,
+
       isEditPanal: false,
       isAdd: true,
       parentPanal: null,
@@ -170,6 +175,9 @@ export default {
     }
   },
   created () {
+    // if (!this.recursiveViewConfig) {
+    //   return
+    // }
     // this.recursiveViewConfig.map((_) =>{
     //   _._isShow = true
     // }) 
@@ -193,12 +201,18 @@ export default {
       this.isAdd = true
       this.isEditPanal = true
     },
-    deletePanal (panalData) {
+    deletePanalConfirm (panalData) {
+      this.parentPanal = panalData.guid
+      this.deleteWarning = true
+    },
+    deletePanal () {
       const params = {
-        guid: panalData.guid
+        guid: this.parentPanal
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', 'alarm/org/panel/delete', params, () => {
         this.$Message.success(this.$t('tips.success'))
+        this.deleteWarning = false
+        EventBus.$emit("updateResource", '')
       })
     },
     editPanal (panalData) {
@@ -216,6 +230,7 @@ export default {
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', api, params, () => {
         this.$Message.success(this.$t('tips.success'))
         this.isEditPanal = false
+        EventBus.$emit("updateResource", '')
       })
     },
     associatedRole (panalData) {
@@ -374,7 +389,7 @@ export default {
 
   .tree-title {
     margin-top: 1px;
-    cursor: pointer;
+    // cursor: pointer;
     color: @blue-2;
   }
   .tree-border {
