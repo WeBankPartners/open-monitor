@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/other"
+	"io/ioutil"
+	"encoding/json"
 )
 
 func AcceptAlertMsg(c *gin.Context)  {
@@ -279,6 +281,39 @@ func GetEntityAlarm(c *gin.Context)  {
 	if id <= 0 {
 		result.Status = "ERROR"
 		result.Message = fmt.Sprintf("Parameter %s -> filter validation failed", c.Query("filter"))
+		mid.ReturnData(c, result)
+		return
+	}
+	alarmObj,err := db.GetAlarmEvent("alarm", id)
+	if err != nil {
+		result.Status = "ERROR"
+		result.Message = fmt.Sprintf("error: %v", err)
+		mid.ReturnData(c, result)
+		return
+	}
+	result.Data = append(result.Data, &alarmObj)
+	result.Status = "OK"
+	result.Message = "Success"
+	mid.ReturnData(c, result)
+}
+
+func QueryEntityAlarm(c *gin.Context)  {
+	var param m.EntityQueryParam
+	var result m.AlarmEntity
+	result.Data = []*m.AlarmEntityObj{}
+	data,_ := ioutil.ReadAll(c.Request.Body)
+	defer c.Request.Body.Close()
+	err := json.Unmarshal(data, &param)
+	if err != nil {
+		result.Status = "ERROR"
+		result.Message = fmt.Sprintf("Request body json unmarshal failed: %v", err)
+		mid.ReturnData(c, result)
+		return
+	}
+	id,_ := strconv.Atoi(param.Criteria.Condition)
+	if id <= 0 {
+		result.Status = "ERROR"
+		result.Message = fmt.Sprintf("Query criteria condition: %s -> filter validation failed", param.Criteria.Condition)
 		mid.ReturnData(c, result)
 		return
 	}
