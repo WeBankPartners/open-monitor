@@ -334,5 +334,6 @@ func CheckRoleList(param string) string {
 	if result != "" {
 		result = result[:len(result)-1]
 	}
+	mid.LogInfo(fmt.Sprintf("check role list : %s", result))
 	return result
 }

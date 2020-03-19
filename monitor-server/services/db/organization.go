@@ -91,13 +91,45 @@ func UpdateOrganization(operation string,param m.UpdateOrgPanelParam) error {
 		if param.Guid == "" {
 			return fmt.Errorf("param guid cat not be empty")
 		}
-		x.SQL("SELECT guid,display_name,parent FROM panel_recursive WHERE guid=?", param.Guid).Find(&tableData)
+		x.SQL("SELECT guid,display_name,parent FROM panel_recursive").Find(&tableData)
 		if len(tableData) == 0 {
-			return fmt.Errorf("guid: %s can not find any record", param.Guid)
+			return fmt.Errorf("guid:%s can not find any record", param.Guid)
 		}
-		_,err = x.Exec("DELETE FROM panel_recursive WHERE guid=?", param.Guid)
+		guidList := getNodeFromParent(tableData, []string{param.Guid}, param.Guid)
+		tmpMap := make(map[string]bool)
+		for _,v := range guidList {
+			tmpMap[v] = true
+		}
+		guidList = []string{}
+		for k,_ := range tmpMap {
+			if k != "" {
+				guidList = append(guidList, k)
+			}
+		}
+		_,err = x.Exec(fmt.Sprintf("DELETE FROM panel_recursive WHERE guid in ('%s')", strings.Join(guidList, "','")))
 	}
 	return err
+}
+
+func getNodeFromParent(data []*m.PanelRecursiveTable, input []string, guid string) []string {
+	tmpInput := input
+	for _,v := range data {
+		tmpFlag := false
+		for _,vv := range strings.Split(v.Parent, "^") {
+			if vv == guid {
+				tmpFlag = true
+				break
+			}
+		}
+		if tmpFlag {
+			tmpInput = append(tmpInput, v.Guid)
+			tmpResult := getNodeFromParent(data, tmpInput, v.Guid)
+			for _,vv := range tmpResult {
+				tmpInput = append(tmpInput, vv)
+			}
+		}
+	}
+	return tmpInput
 }
 
 func GetOrgRole(guid string) (result []*m.OptionModel,err error) {
