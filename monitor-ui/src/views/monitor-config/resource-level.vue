@@ -2,6 +2,7 @@
   <div class="">
     <!-- <i class="fa fa-plus" aria-hidden="true" @click="addPanel"> </i> -->
     <button class="btn-confirm-f btn-small" @click="addPanel">新增资源层级</button>
+    <i class="fa fa-refresh" aria-hidden="true" @click="getAllResource"></i>
     <recursive :recursiveViewConfig="resourceRecursive"></recursive>
     <ModalComponent :modelConfig="modelConfig"></ModalComponent>
   </div>
@@ -63,7 +64,10 @@ export default {
 
 <style scoped lang="less">
  .fa {
-   font-size: 16px;
-    padding: 6px;
+   margin-left: 4px;
+   font-size: 14px;
+   padding: 4px 6px;
+   border: 1px solid #2d8cf0;
+   border-radius: 4px;
  }
 </style>

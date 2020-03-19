@@ -7,6 +7,7 @@ import endpointManagement from "@/views/monitor-config/endpoint-management";
 import groupManagement from "@/views/monitor-config/group-management";
 import thresholdManagement from "@/views/monitor-config/threshold-management";
 import logManagement from "@/views/monitor-config/log-management";
+import resourceLevel from "@/views/monitor-config/resource-level";
 import metricConfig from "@/views/metric-config";
 import viewConfigIndex from "@/views/custom-view/view-config-index";
 import viewConfig from "@/views/custom-view/view-config";
@@ -69,9 +70,16 @@ const router = [
       {
         path: "logManagement",
         name: "logManagement",
-        title: "阈值配置",
+        title: "关键字配置",
         meta: {},
         component: logManagement
+      },
+      {
+        path: "resourceLevel",
+        name: "resourceLevel",
+        title: "资源层级",
+        meta: {},
+        component: resourceLevel
       }
     ]
   },
