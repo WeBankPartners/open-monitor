@@ -1,7 +1,7 @@
 <template>
   <div class="">
     <!-- <i class="fa fa-plus" aria-hidden="true" @click="addPanel"> </i> -->
-    <button class="btn-confirm-f btn-small" @click="addPanel">新增资源层级</button>
+    <button class="btn-confirm-f btn-small" @click="addPanel">{{$t('resourceLevel.addPanel')}}</button>
     <i class="fa fa-refresh" aria-hidden="true" @click="getAllResource"></i>
     <recursive :recursiveViewConfig="resourceRecursive"></recursive>
     <ModalComponent :modelConfig="modelConfig"></ModalComponent>

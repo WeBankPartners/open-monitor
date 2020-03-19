@@ -143,5 +143,18 @@
     "title": "Delete confirmation",
     "tip": "will be deleted soon",
     "button": "Delete"
+  },
+  "resourceLevel": {
+    "addPanel": "Add Panel",
+    "addAssociatedRole": "Add Associated Role",
+    "addAssociatedObject": "Add Associated Endpoint",
+    "alarmCallback": "Alarm Callback",
+    "levelMsg": "Node Information",
+    "associatedRole": "Associated Role",
+    "role": "Role",
+    "associatedObject": "Associated Endpoint",
+    "endpoint": "Endpoint",
+    "alarmFiring": "Alarm Firing",
+    "alarmRecover": "Alarm Recover"
   }
 }
