@@ -30,6 +30,7 @@
     "group": "Group",
     "threshold": "Threshold",
     "log": "Keyword",
+    "resourceLevel": "Resource Level",
     "endpoint": "Endpoint",
     "metric": "Metric",
     "relativeTime": "Relative Time",
@@ -43,7 +44,9 @@
     "personalInformation":"Personal Information",
     "userManagement":"User Management",
     "roleManagement":"Role Management",
-    "role": "Role"
+    "role": "Role",
+    "guid": "GUID",
+    "displayName": "Display Name"
   },
   "title": {
     "viewConfiguration": "View Configuration",
