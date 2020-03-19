@@ -23,7 +23,8 @@ export default {
         {label: 'field.endpoint', path:'/monitorConfigIndex/endpointManagement'},
         {label: 'field.group', path:'/monitorConfigIndex/groupManagement'},
         {label: 'field.threshold', path:'/monitorConfigIndex/thresholdManagement'},
-        {label: 'field.log', path:'/monitorConfigIndex/logManagement'}
+        {label: 'field.log', path:'/monitorConfigIndex/logManagement'},
+        {label: 'field.resourceLevel', path:'/monitorConfigIndex/resourceLevel'}
       ]
     }
   },
