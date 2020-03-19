@@ -77,6 +77,7 @@ func InitHttpServer(exportAgent bool) {
 	{
 		entityApi.GET("/alarm", alarm.GetEntityAlarm)
 		entityApi.GET("/test", alarm.TestNotifyAlarm)
+		entityApi.POST("/alarm/query", alarm.QueryEntityAlarm)
 	}
 	// auth api
 	authApi := r.Group(fmt.Sprintf("%s/api/v1", urlPrefix), user.AuthRequired())
@@ -151,6 +152,15 @@ func InitHttpServer(exportAgent bool) {
 			alarmApi.POST("/send", alarm.OpenAlarmApi)
 			alarmApi.GET("/action/search", alarm.SearchUserRole)
 			alarmApi.POST("/action/update", alarm.UpdateTplAction)
+			alarmApi.GET("/org/panel/get", alarm.GetOrganizaionList)
+			alarmApi.POST("/org/panel/:name", alarm.UpdateOrgPanel)
+			alarmApi.GET("/org/role/get", alarm.GetOrgPanelRole)
+			alarmApi.POST("/org/role/update", alarm.UpdateOrgPanelRole)
+			alarmApi.GET("/org/endpoint/get", alarm.GetOrgPanelEndpoint)
+			alarmApi.POST("/org/endpoint/update", alarm.UpdateOrgPanelEndpoint)
+			alarmApi.GET("/org/plugin", alarm.IsPluginMode)
+			alarmApi.GET("/org/callback/get", alarm.GetOrgPanelEventList)
+			alarmApi.POST("/org/callback/update", alarm.UpdateOrgPanelCallback)
 		}
 		userApi := authApi.Group("/user")
 		{
