@@ -273,6 +273,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:system.NONE" required="N">endpoint</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">email</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">phone</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">role</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -298,6 +299,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:subsys.NONE" required="N">endpoint</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">email</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">phone</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">role</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -323,6 +325,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit~(unit)wecmdb:business_app_instance.monitor_key_name" required="Y">endpoint</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">email</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">phone</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">role</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -348,6 +351,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit~(unit)wecmdb:business_app_instance.resource_instance>wecmdb:resource_instance.monitor_key_name" required="Y">endpoint</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">email</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">phone</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">role</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -373,6 +377,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit~(unit)wecmdb:business_app_instance.resource_instance>wecmdb:resource_instance.monitor_key_name" required="Y">endpoint</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">email</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">phone</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">role</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -398,6 +403,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit~(unit)wecmdb:business_app_instance.resource_instance>wecmdb:resource_instance.monitor_key_name" required="Y">endpoint</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">email</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">phone</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">role</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -423,6 +429,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_set~(resource_set)wecmdb:resource_instance.monitor_key_name" required="Y">endpoint</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">email</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">phone</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">role</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -448,6 +455,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:business_zone.NONE" required="N">endpoint</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">email</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">phone</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">role</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -473,6 +481,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:network_zone.NONE" required="N">endpoint</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">email</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">phone</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">role</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -498,6 +507,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:data_center.NONE" required="N">endpoint</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">email</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">phone</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">role</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
