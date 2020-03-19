@@ -137,7 +137,6 @@ import {interceptParams} from '@/assets/js/utils'
     },
     props: ['modelConfig'],
     mounted() {
-      console.log(this.modelConfig)
       let _this = this
       let modalId = !this.$root.$validate.isEmpty(this.modelConfig.modalId) ? 'add_edit_Modal':this.modelConfig.modalId
 
