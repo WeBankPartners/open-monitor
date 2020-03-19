@@ -1,5 +1,9 @@
 package models
 
+import (
+	"time"
+)
+
 type CoreNotifyRequest struct{
 	EventSeqNo  string  `json:"eventSeqNo"`
 	EventType  string  `json:"eventType"`
@@ -14,7 +18,7 @@ type CoreNotifyRequest struct{
 type CoreProcessResult struct {
 	Status  string  `json:"status"`
 	Message  string  `json:"message"`
-	Data  []*CoreProcessDataObj  `json:"data"`
+	Data  CoreProcessResultData  `json:"data"`
 }
 
 type CoreProcessDataObj struct {
@@ -25,6 +29,38 @@ type CoreProcessDataObj struct {
 	ProcDefData  string  `json:"procDefData"`
 	RootEntity  string  `json:"rootEntity"`
 	Status  string  `json:"status"`
+	CreatedTime  string  `json:"createdTime"`
+}
+
+type CoreProcessResultData []*CoreProcessDataObj
+
+func (s CoreProcessResultData) Len() int {
+	return len(s)
+}
+
+func (s CoreProcessResultData) Swap(i,j int)  {
+	s[i], s[j] = s[j], s[i]
+}
+
+func (s CoreProcessResultData) Less(i,j int) bool {
+	tmpBool := false
+	//iVersion,_ := strconv.Atoi(s[i].ProcDefVersion)
+	//jVersion,_ := strconv.Atoi(s[j].ProcDefVersion)
+	//if iVersion > jVersion {
+	//	tmpBool = true
+	//}else if iVersion == jVersion {
+	//	iTime,_ := time.Parse(DatetimeFormat, s[i].CreatedTime)
+	//	jTime,_ := time.Parse(DatetimeFormat, s[j].CreatedTime)
+	//	if iTime.Unix() > jTime.Unix() {
+	//		tmpBool = true
+	//	}
+	//}
+	iTime,_ := time.Parse(DatetimeFormat, s[i].CreatedTime)
+	jTime,_ := time.Parse(DatetimeFormat, s[j].CreatedTime)
+	if iTime.Unix() > jTime.Unix() {
+		tmpBool = true
+	}
+	return tmpBool
 }
 
 type CoreNotifyResult struct {
@@ -44,4 +80,7 @@ type AlarmEntityObj struct {
 	Subject  string  `json:"subject"`
 	Content  string  `json:"content"`
 	To  string  `json:"to"`
+	ToMail  string  `json:"toMail"`
+	ToPhone  string  `json:"toPhone"`
+	ToRole  string  `json:"toRole"`
 }
