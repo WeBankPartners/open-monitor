@@ -138,5 +138,9 @@
     "recursive": {
         "_des": "递归视图配置",
         "api": "dashboard/recursive/get"
+    },
+    "resourceLevel": {
+        "_des": "资源层级",
+        "getAll": "alarm/org/panel/get"
     }
 }

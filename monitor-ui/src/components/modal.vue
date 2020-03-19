@@ -24,6 +24,7 @@
           </div>
           <div class="modal-body">
             <form class="">
+              
               <div v-for="(item, index) in modelConfig.config"  class="params-each" :key="index">
                 <label class="col-md-2 label-name" v-if="item.type != 'slot' && isHide(item.hide)" :class="item.type === 'select'? 'lable-name-select': ''">
                   {{$t(item.label)}}:</label>
@@ -136,6 +137,7 @@ import {interceptParams} from '@/assets/js/utils'
     },
     props: ['modelConfig'],
     mounted() {
+      console.log(this.modelConfig)
       let _this = this
       let modalId = !this.$root.$validate.isEmpty(this.modelConfig.modalId) ? 'add_edit_Modal':this.modelConfig.modalId
 

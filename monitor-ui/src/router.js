@@ -91,6 +91,14 @@ const router = new Router({
               meta: {},
               component: () =>
                 import("@/views/monitor-config/log-management")
+            },
+            {
+              path: "resourceLevel",
+              name: "resourceLevel",
+              title: "资源层级",
+              meta: {},
+              component: () =>
+                import("@/views/monitor-config/resource-level")
             }
           ]
         },
