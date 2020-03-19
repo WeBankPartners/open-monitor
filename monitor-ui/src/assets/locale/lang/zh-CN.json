@@ -31,6 +31,7 @@
     "group": "组",
     "threshold": "阈值",
     "log": "关键字",
+    "resourceLevel": "资源层级",
     "metric": "指标",
     "relativeTime": "时间段",
     "timeInterval": "时间区间",
@@ -43,7 +44,9 @@
     "personalInformation":"个人信息",
     "userManagement":"用户管理",
     "roleManagement":"角色管理",
-    "role": "角色"
+    "role": "角色",
+    "guid": "GUID",
+    "displayName": "显示名"
   },
   "title": {
     "viewConfiguration": "视图配置",
