@@ -113,8 +113,8 @@ func GetOrgPanelEventList(c *gin.Context)  {
 		return
 	}
 	var result m.GetOrgPanelCallbackData
-	result.FiringCallback = append(result.FiringCallback, &m.OptionModel{OptionText:"",OptionValue:""})
-	result.RecoverCallback = append(result.RecoverCallback, &m.OptionModel{OptionText:"",OptionValue:""})
+	result.FiringCallback = append(result.FiringCallback, &m.OptionModel{OptionText:"default null",OptionValue:""})
+	result.RecoverCallback = append(result.RecoverCallback, &m.OptionModel{OptionText:"default null",OptionValue:""})
 	var firingFlag,recoverFlag bool
 	for _,v := range eventList.Data {
 		firingOption := m.OptionModel{OptionText:fmt.Sprintf("%s %s", v.ProcDefName, v.CreatedTime), OptionValue:v.ProcDefKey}
