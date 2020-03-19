@@ -18,10 +18,10 @@
             @on-clear="clearEndpoint"
             >
             <Option v-for="(option, index) in endpointOptions" :value="option.id" :key="index">
-            <Tag color="cyan" class="tag-width" v-if="option.option_value.split(':')[1] == 'host'">host</Tag>
-            <Tag color="blue" class="tag-width" v-if="option.option_value.split(':')[1] == 'mysql'">mysql </Tag>
-            <Tag color="geekblue" class="tag-width" v-if="option.option_value.split(':')[1] == 'redis'">redis </Tag>
-            <Tag color="purple" class="tag-width" v-if="option.option_value.split(':')[1] == 'tomcat'">tomcat</Tag>{{option.option_text}}</Option>
+            <Tag color="cyan" class="tag-width" v-if="option.type == 'host'">host</Tag>
+            <Tag color="blue" class="tag-width" v-if="option.type == 'mysql'">mysql </Tag>
+            <Tag color="geekblue" class="tag-width" v-if="option.type == 'redis'">redis </Tag>
+            <Tag color="purple" class="tag-width" v-if="option.type == 'tomcat'">tomcat</Tag>{{option.option_text}}</Option>
           </Select>
         </li>
         <li class="search-li">
@@ -226,7 +226,7 @@ export default {
     getEndpointList (query) {
       const params = {type: this.type,search: query}
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.resourceSearch.strategyApi, params, (responseData) => {
-        this.endpointOptions = this.type === 'endpoint'? responseData.filter(item => item.option_value.split(':')[1] === 'host'):responseData
+        this.endpointOptions = this.type === 'endpoint'? responseData.filter(item => item.type === 'host'):responseData
       })
     },
     requestData (type, id) {
