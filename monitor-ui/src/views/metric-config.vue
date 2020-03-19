@@ -14,7 +14,7 @@
         :placeholder="$t('placeholder.input')"
         :remote-method="getEndpointList"
         >
-        <Option v-for="(option, index) in endpointList" :value="option.option_value+ ':' + option.id" :key="index">
+        <Option v-for="(option, index) in endpointList" :value="option.option_value" :key="index">
           <Tag color="green" class="tag-width" v-if="option.type == 'sys'">system</Tag>
           <Tag color="cyan" class="tag-width" v-if="option.type == 'host'">host</Tag>
           <Tag color="blue" class="tag-width" v-if="option.type == 'mysql'">mysql</Tag>
@@ -130,7 +130,7 @@ export default {
     endpoint: function (val) {
       if (val) {
         this.endpointObject = this.endpointList.find(ep => {
-          return ep.option_value === val.split(':')[0]
+          return ep.option_value === val
         })
       } else {
         this.endpointObject = {}
@@ -291,7 +291,7 @@ export default {
           return
         }
         let {id:id,label:metric,value:prom_ql} = item
-        params.push({id,metric,prom_ql,metric_type: this.endpoint.split(':')[1]})
+        params.push({id,metric,prom_ql,metric_type: this.endpointObject.type})
       })
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.metricUpdate.api, params, () => {
         this.$Message.success(this.$t('tips.success'))
@@ -312,11 +312,11 @@ export default {
       this.$root.JQ('#edit_metric_Modal').modal('hide')
     },
     getOriginalMetricList() {
-      if (this.$root.$validate.isEmpty_reset(this.endpoint)) {
+      if (this.$root.$validate.isEmpty_reset(this.endpointObject)) {
         return
       }
       this.originalList = []
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.originMetricList.api, {id:this.endpoint.split(':')[1]}, responseData => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.originMetricList.api, {id:this.endpointObject.id}, responseData => {
         this.originalList = responseData
       })
     }
