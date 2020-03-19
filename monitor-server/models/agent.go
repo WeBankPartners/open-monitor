@@ -30,6 +30,11 @@ type PanelRecursiveTable struct {
 	Endpoint  string  `json:"endpoint"`
 	Email  string  `json:"email"`
 	Phone  string  `json:"phone"`
+	Role  string  `json:"role"`
+	FiringCallbackName  string  `json:"firing_callback_name"`
+	FiringCallbackKey  string  `json:"firing_callback_key"`
+	RecoverCallbackName  string  `json:"recover_callback_name"`
+	RecoverCallbackKey  string  `json:"recover_callback_key"`
 }
 
 type RecursivePanelObj struct {

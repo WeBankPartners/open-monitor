@@ -24,6 +24,9 @@
             <attribute name="subject" datatype="str" description="主题"/>
             <attribute name="content" datatype="str" description="内容"/>
             <attribute name="to" datatype="str" description="接收人"/>
+            <attribute name="toMail" datatype="str" description="接收邮箱"/>
+            <attribute name="toPhone" datatype="str" description="接收手机号"/>
+            <attribute name="toRole" datatype="str" description="接收角色"/>
         </entity>
     </dataModel>
 
