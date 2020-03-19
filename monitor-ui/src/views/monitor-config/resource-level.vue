@@ -9,6 +9,7 @@
 </template>
 
 <script>
+import { EventBus } from "@/assets/js/event-bus.js"
 import recursive from '@/views/monitor-config/resource-recursive'
 export default {
   name: '',
@@ -32,12 +33,12 @@ export default {
     }
   },
   mounted () {
+    EventBus.$on("updateResource", () => {
+      this.getAllResource()
+    });
     this.getAllResource()
   },
   methods: {
-    updateDate () {
-      console.log(222)
-    },
     getAllResource () {
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.resourceLevel.getAll, '', (responseData) => {
         this.resourceRecursive = responseData
