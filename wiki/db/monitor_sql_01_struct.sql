@@ -322,6 +322,11 @@ CREATE TABLE `panel_recursive` (
   `endpoint` TEXT,
   `email` TEXT,
   `phone` TEXT,
+  `role` TEXT,
+  `firing_callback_name` VARCHAR(100) DEFAULT '',
+  `firing_callback_key` VARCHAR(50) DEFAULT '',
+  `recover_callback_name` VARCHAR(100) DEFAULT '',
+  `recover_callback_key` VARCHAR(50) DEFAULT '',
   `update_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`guid`)
 ) ENGINE=INNODB DEFAULT CHARSET=utf8;

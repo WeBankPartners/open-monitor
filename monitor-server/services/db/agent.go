@@ -162,11 +162,14 @@ func UpdateRecursivePanel(param m.PanelRecursiveTable) error {
 		return err
 	}
 	if len(prt) > 0 {
-		tmpParent := unionList(param.Parent, prt[0].Parent)
-		tmpEndpoint := unionList(param.Endpoint, prt[0].Endpoint)
-		_,err = x.Exec("UPDATE panel_recursive SET display_name=?,parent=?,endpoint=?,email=?,phone=? WHERE guid=?", param.DisplayName,tmpParent,tmpEndpoint,param.Email,param.Phone,param.Guid)
+		tmpParent := unionList(param.Parent, prt[0].Parent, "^")
+		//tmpEndpoint := unionList(param.Endpoint, prt[0].Endpoint, "^")
+		//tmpEmail := unionList(param.Email, prt[0].Email, ",")
+		//tmpPhone := unionList(param.Phone, prt[0].Phone, ",")
+		//tmpRole := unionList(param.Role, prt[0].Role, ",")
+		_,err = x.Exec("UPDATE panel_recursive SET display_name=?,parent=?,endpoint=?,email=?,phone=?,role=? WHERE guid=?", param.DisplayName,tmpParent,param.Endpoint,param.Email,param.Phone,param.Role,param.Guid)
 	}else{
-		_,err = x.Exec("INSERT INTO panel_recursive(guid,display_name,parent,endpoint,email,phone) VALUE (?,?,?,?,?,?)", param.Guid,param.DisplayName,param.Parent,param.Endpoint,param.Email,param.Phone)
+		_,err = x.Exec("INSERT INTO panel_recursive(guid,display_name,parent,endpoint,email,phone,role) VALUE (?,?,?,?,?,?,?)", param.Guid,param.DisplayName,param.Parent,param.Endpoint,param.Email,param.Phone,param.Role)
 	}
 	return err
 }
@@ -176,9 +179,9 @@ func DeleteRecursivePanel(guid string) error {
 	return err
 }
 
-func unionList(param,exist string) string {
-	paramList := strings.Split(param, "^")
-	existList := strings.Split(exist, "^")
+func unionList(param,exist,split string) string {
+	paramList := strings.Split(param, split)
+	existList := strings.Split(exist, split)
 	for _,v := range paramList {
 		tmpExist := false
 		for _,vv := range existList {
@@ -191,7 +194,7 @@ func unionList(param,exist string) string {
 			existList = append(existList, v)
 		}
 	}
-	return strings.Join(existList, "^")
+	return strings.Join(existList, split)
 }
 
 func SearchRecursivePanel(search string) []*m.OptionModel {
