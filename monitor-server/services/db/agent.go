@@ -167,9 +167,9 @@ func UpdateRecursivePanel(param m.PanelRecursiveTable) error {
 		//tmpEmail := unionList(param.Email, prt[0].Email, ",")
 		//tmpPhone := unionList(param.Phone, prt[0].Phone, ",")
 		//tmpRole := unionList(param.Role, prt[0].Role, ",")
-		_,err = x.Exec("UPDATE panel_recursive SET display_name=?,parent=?,endpoint=?,email=?,phone=?,role=? WHERE guid=?", param.DisplayName,tmpParent,param.Endpoint,param.Email,param.Phone,param.Role,param.Guid)
+		_,err = x.Exec("UPDATE panel_recursive SET display_name=?,parent=?,endpoint=?,email=?,phone=?,role=?,firing_callback_key=?,recover_callback_key=? WHERE guid=?", param.DisplayName,tmpParent,param.Endpoint,param.Email,param.Phone,param.Role,param.FiringCallbackKey,param.RecoverCallbackKey,param.Guid)
 	}else{
-		_,err = x.Exec("INSERT INTO panel_recursive(guid,display_name,parent,endpoint,email,phone,role) VALUE (?,?,?,?,?,?,?)", param.Guid,param.DisplayName,param.Parent,param.Endpoint,param.Email,param.Phone,param.Role)
+		_,err = x.Exec("INSERT INTO panel_recursive(guid,display_name,parent,endpoint,email,phone,role,firing_callback_key,recover_callback_key) VALUE (?,?,?,?,?,?,?,?,?)", param.Guid,param.DisplayName,param.Parent,param.Endpoint,param.Email,param.Phone,param.Role,param.FiringCallbackKey,param.RecoverCallbackKey)
 	}
 	return err
 }
