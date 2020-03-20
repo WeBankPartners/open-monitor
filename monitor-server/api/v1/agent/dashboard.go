@@ -25,6 +25,8 @@ type panelRequestObj struct {
 	Email  string  `json:"email"`
 	Phone  string  `json:"phone"`
 	Role  string  `json:"role"`
+	FiringCallback  string  `json:"firing_callback"`
+	RecoverCallback  string  `json:"recover_callback"`
 }
 
 func ExportPanelAdd(c *gin.Context)  {
@@ -91,7 +93,7 @@ func ExportPanelAdd(c *gin.Context)  {
 				successFlag = "1"
 				continue
 			}
-			err := db.UpdateRecursivePanel(m.PanelRecursiveTable{Guid:v.Guid,DisplayName:v.DisplayName,Parent:strings.Join(tmpParent, "^"),Endpoint:strings.Join(endpointString, "^"),Email:v.Email,Phone:v.Phone,Role:tmpRole})
+			err := db.UpdateRecursivePanel(m.PanelRecursiveTable{Guid:v.Guid,DisplayName:v.DisplayName,Parent:strings.Join(tmpParent, "^"),Endpoint:strings.Join(endpointString, "^"),Email:v.Email,Phone:v.Phone,Role:tmpRole,FiringCallbackKey:v.FiringCallback,RecoverCallbackKey:v.RecoverCallback})
 			if err != nil {
 				tmpMessage = fmt.Sprintf("Index:%s update database error:%v", v.CallbackParameter, err)
 				errorMessage = tmpMessage
