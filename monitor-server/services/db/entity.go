@@ -86,26 +86,26 @@ func GetCoreEventList() (result m.CoreProcessResult,err error) {
 
 func getCoreEventKey(status,endpoint string) []string {
 	var result []string
-	firingMap := make(map[string]bool)
-	recoverMap := make(map[string]bool)
+	var firingList,recoverList []string
 	var recursiveData []*m.PanelRecursiveTable
 	x.SQL("SELECT * FROM panel_recursive").Find(&recursiveData)
 	if len(recursiveData) > 0 {
 		for _,v := range recursiveData {
 			if strings.Contains(v.Endpoint, endpoint) {
 				if v.FiringCallbackKey != "" {
-					firingMap[v.FiringCallbackKey] = true
+					firingList = append(firingList, fmt.Sprintf("%s^%s", v.Guid, v.FiringCallbackKey))
 				}
 				if v.RecoverCallbackKey != "" {
-					recoverMap[v.RecoverCallbackKey] = true
+					recoverList = append(recoverList, fmt.Sprintf("%s^%s", v.Guid, v.RecoverCallbackKey))
 				}
 				for _,vv := range strings.Split(v.Parent, "^") {
 					_, _, _, tmpFiring, tmpRecover := searchRecursiveParent(recursiveData, []string{}, []string{}, []string{}, []string{}, []string{}, vv)
+					mid.LogInfo(fmt.Sprintf("tmpFiring: %v \n tmpRecover: %v \n", tmpFiring, tmpRecover))
 					for _,vvv := range tmpFiring {
-						firingMap[vvv] = true
+						firingList = append(firingList, vvv)
 					}
 					for _,vvv := range tmpRecover {
-						recoverMap[vvv] = true
+						recoverList = append(recoverList, vvv)
 					}
 				}
 			}
@@ -114,19 +114,9 @@ func getCoreEventKey(status,endpoint string) []string {
 		return result
 	}
 	if status == "firing" {
-		for k,_ := range firingMap {
-			if k == "" {
-				continue
-			}
-			result = append(result, k)
-		}
+		result = firingList
 	}else{
-		for k,_ := range recoverMap {
-			if k == "" {
-				continue
-			}
-			result = append(result, k)
-		}
+		result = recoverList
 	}
 	return result
 }
@@ -142,14 +132,15 @@ func NotifyCoreEvent(endpoint string,strategyId int) error {
 		return fmt.Errorf("notify core event fail, event key is null")
 	}
 	for i,coreKey := range eventKeys {
+		keySplit := strings.Split(coreKey, "^")
 		var requestParam m.CoreNotifyRequest
 		requestParam.EventSeqNo = fmt.Sprintf("%d-%s-%d-%d", alarms[0].Id, alarms[0].Status, time.Now().Unix(), i)
 		requestParam.EventType = "alarm"
 		requestParam.SourceSubSystem = "monitor"
-		requestParam.OperationKey = coreKey
-		requestParam.OperationData = fmt.Sprintf("%d", alarms[0].Id)
+		requestParam.OperationKey = keySplit[1]
+		requestParam.OperationData = fmt.Sprintf("%d-%s", alarms[0].Id, keySplit[0])
 		requestParam.OperationUser = "wds_system"
-		mid.LogInfo(fmt.Sprintf("notify request data --> eventSeqNo:%s operationKey:%s operationData:%s", requestParam.EventSeqNo, coreKey, requestParam.OperationData))
+		mid.LogInfo(fmt.Sprintf("notify request data --> eventSeqNo:%s operationKey:%s operationData:%s", requestParam.EventSeqNo, requestParam.OperationKey, requestParam.OperationData))
 		b, _ := json.Marshal(requestParam)
 		request, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/platform/v1/operation-events", m.CoreUrl), strings.NewReader(string(b)))
 		request.Header.Set("Authorization", tmpCoreToken)
@@ -176,8 +167,8 @@ func NotifyCoreEvent(endpoint string,strategyId int) error {
 	return nil
 }
 
-func GetAlarmEvent(alarmType string,id int) (result m.AlarmEntityObj,err error) {
-	result.Id = fmt.Sprintf("%s_%d", alarmType, id)
+func GetAlarmEvent(alarmType,inputGuid string,id int) (result m.AlarmEntityObj,err error) {
+	result.Id = fmt.Sprintf("%s-%d-%s", alarmType, id, inputGuid)
 	if alarmType == "alarm" {
 		var alarms []*m.AlarmTable
 		err = x.SQL("SELECT * FROM alarm WHERE id=?", id).Find(&alarms)
@@ -200,13 +191,13 @@ func GetAlarmEvent(alarmType string,id int) (result m.AlarmEntityObj,err error) 
 			for _,v := range recursiveData {
 				if strings.Contains(v.Endpoint, alarms[0].Endpoint) {
 					for _,vv := range strings.Split(v.Email, ",") {
-						mailMap[vv] = true
+						mailMap[fmt.Sprintf("%s^%s", v.Guid, vv)] = true
 					}
 					for _,vv := range strings.Split(v.Phone, ",") {
-						phoneMap[vv] = true
+						phoneMap[fmt.Sprintf("%s^%s", v.Guid, vv)] = true
 					}
 					for _,vv := range strings.Split(v.Role, ",") {
-						roleMap[vv] = true
+						roleMap[fmt.Sprintf("%s^%s", v.Guid, vv)] = true
 					}
 					for _,vv := range strings.Split(v.Parent, "^") {
 						tmpToRecursiveMail,tmpToRecursivePhone,tmpToRecursiveRole,_,_ := searchRecursiveParent(recursiveData,[]string{},[]string{},[]string{},[]string{},[]string{},vv)
@@ -224,24 +215,22 @@ func GetAlarmEvent(alarmType string,id int) (result m.AlarmEntityObj,err error) 
 				}
 			}
 		}
+		inputGuid = inputGuid + "^"
 		var toMail,toPhone,toRole []string
 		for k,_ := range mailMap {
-			if k == "" {
-				continue
+			if strings.Contains(k, inputGuid) {
+				toMail = append(toMail, k[len(inputGuid):])
 			}
-			toMail = append(toMail, k)
 		}
 		for k,_ := range phoneMap {
-			if k == "" {
-				continue
+			if strings.Contains(k, inputGuid) {
+				toPhone = append(toPhone, k[len(inputGuid):])
 			}
-			toPhone = append(toPhone, k)
 		}
 		for k,_ := range roleMap {
-			if k == "" {
-				continue
+			if strings.Contains(k, inputGuid) {
+				toRole = append(toRole, k[len(inputGuid):])
 			}
-			toRole = append(toRole, k)
 		}
 		if len(toRole) > 0 {
 			var roleTable []*m.RoleTable
@@ -273,22 +262,32 @@ func searchRecursiveParent(data []*m.PanelRecursiveTable,tmpEmail,tmpPhone,tmpRo
 		if v.Guid == tmpParent {
 			parent = strings.Split(v.Parent, "^")
 			for _,vv := range strings.Split(v.Email, ",") {
-				email = append(email, vv)
+				if vv != "" {
+					email = append(email, fmt.Sprintf("%s^%s", v.Guid, vv))
+				}
 			}
 			for _,vv := range strings.Split(v.Phone, ",") {
-				phone = append(phone, vv)
+				if vv != "" {
+					phone = append(phone, fmt.Sprintf("%s^%s", v.Guid, vv))
+				}
 			}
 			for _,vv := range strings.Split(v.Role, ",") {
-				role = append(role, vv)
+				if vv != "" {
+					role = append(role, fmt.Sprintf("%s^%s", v.Guid, vv))
+				}
 			}
-			firing = append(firing, v.FiringCallbackKey)
-			recover = append(recover, v.RecoverCallbackKey)
+			if v.FiringCallbackKey != "" {
+				firing = append(firing, fmt.Sprintf("%s^%s", v.Guid, v.FiringCallbackKey))
+			}
+			if v.RecoverCallbackKey != "" {
+				recover = append(recover, fmt.Sprintf("%s^%s", v.Guid, v.RecoverCallbackKey))
+			}
 			break
 		}
 	}
 	if len(parent) > 0 {
 		for _,v := range parent {
-			tEmail,tPhone,tRole,tFiring,tRecover := searchRecursiveParent(data,email,phone,role,firing,recover,v)
+			tEmail,tPhone,tRole,tFiring,tRecover := searchRecursiveParent(data,[]string{},[]string{},[]string{},[]string{},[]string{},v)
 			for _,vv := range tEmail {
 				email = append(email, vv)
 			}

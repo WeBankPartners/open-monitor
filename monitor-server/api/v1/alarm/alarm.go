@@ -277,14 +277,23 @@ func GetEntityAlarm(c *gin.Context)  {
 		mid.ReturnData(c, result)
 		return
 	}
-	id,_ := strconv.Atoi(idSplit[1])
+	var id int
+	var guid string
+	value := idSplit[1]
+	if strings.Contains(value, "-") {
+		tmpSplit := strings.Split(value, "-")
+		id, _ = strconv.Atoi(tmpSplit[0])
+		guid = value[len(tmpSplit[0])+1:]
+	}else{
+		id, _ = strconv.Atoi(value)
+	}
 	if id <= 0 {
 		result.Status = "ERROR"
 		result.Message = fmt.Sprintf("Parameter %s -> filter validation failed", c.Query("filter"))
 		mid.ReturnData(c, result)
 		return
 	}
-	alarmObj,err := db.GetAlarmEvent("alarm", id)
+	alarmObj,err := db.GetAlarmEvent("alarm", guid, id)
 	if err != nil {
 		result.Status = "ERROR"
 		result.Message = fmt.Sprintf("error: %v", err)
@@ -310,14 +319,23 @@ func QueryEntityAlarm(c *gin.Context)  {
 		mid.ReturnData(c, result)
 		return
 	}
-	id,_ := strconv.Atoi(param.Criteria.Condition)
+	var id int
+	var guid string
+	value := param.Criteria.Condition
+	if strings.Contains(value, "-") {
+		tmpSplit := strings.Split(value, "-")
+		id, _ = strconv.Atoi(tmpSplit[0])
+		guid = value[len(tmpSplit[0])+1:]
+	}else{
+		id, _ = strconv.Atoi(value)
+	}
 	if id <= 0 {
 		result.Status = "ERROR"
 		result.Message = fmt.Sprintf("Query criteria condition: %s -> filter validation failed", param.Criteria.Condition)
 		mid.ReturnData(c, result)
 		return
 	}
-	alarmObj,err := db.GetAlarmEvent("alarm", id)
+	alarmObj,err := db.GetAlarmEvent("alarm", guid, id)
 	if err != nil {
 		result.Status = "ERROR"
 		result.Message = fmt.Sprintf("error: %v", err)
