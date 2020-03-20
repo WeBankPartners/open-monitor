@@ -274,6 +274,8 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">email</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">phone</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">role</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">firing_callback</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">recover_callback</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -300,6 +302,8 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">email</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">phone</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">role</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">firing_callback</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">recover_callback</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -326,6 +330,8 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">email</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">phone</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">role</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">firing_callback</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">recover_callback</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -352,6 +358,8 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">email</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">phone</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">role</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">firing_callback</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">recover_callback</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -378,6 +386,8 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">email</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">phone</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">role</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">firing_callback</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">recover_callback</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -404,6 +414,8 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">email</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">phone</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">role</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">firing_callback</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">recover_callback</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -430,6 +442,8 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">email</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">phone</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">role</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">firing_callback</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">recover_callback</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -456,6 +470,8 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">email</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">phone</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">role</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">firing_callback</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">recover_callback</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -482,6 +498,8 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">email</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">phone</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">role</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">firing_callback</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">recover_callback</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -508,6 +526,8 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">email</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">phone</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">role</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">firing_callback</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">recover_callback</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
