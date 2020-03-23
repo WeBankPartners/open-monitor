@@ -126,6 +126,7 @@ type GlobalConfig struct {
 	TagBlacklist  []string  `json:"tag_blacklist"`
 	Agent  []*AgentConfig  `json:"agent"`
 	Alert  AlertConfig  `json:"alert"`
+	Cluster  []string  `json:"cluster"`
 }
 
 var (

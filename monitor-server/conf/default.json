@@ -23,7 +23,7 @@
     "session": {
       "enable": true,
       "expire": 3600,
-      "server_enable": false,
+      "server_enable": true,
       "server_token": "default-token-used-in-server-side",
       "redis": {
         "enable": false,
@@ -129,5 +129,6 @@
       "server": "",
       "token": ""
     }
-  }
+  },
+  "cluster": []
 }
