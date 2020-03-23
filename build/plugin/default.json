@@ -129,5 +129,6 @@
       "server": "",
       "token": ""
     }
-  }
+  },
+  "cluster": ["{{MONITOR_SERVER_PEER}}"]
 }
