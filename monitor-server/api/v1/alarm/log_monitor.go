@@ -117,7 +117,7 @@ func AddLogStrategy(c *gin.Context)  {
 			return
 		}
 		// Save Prometheus rule file
-		err = SaveConfigFile(param.TplId)
+		err = SaveConfigFile(param.TplId, false)
 		if err != nil {
 			mid.ReturnError(c, "Save alert rules file failed", err)
 			return
@@ -187,7 +187,7 @@ func EditLogPath(c *gin.Context)  {
 			return
 		}
 		// Save Prometheus rule file
-		err = SaveConfigFile(param.TplId)
+		err = SaveConfigFile(param.TplId, false)
 		if err != nil {
 			mid.ReturnError(c, "Save prometheus rule file fail", err)
 			return
@@ -254,7 +254,7 @@ func EditLogStrategy(c *gin.Context)  {
 			return
 		}
 		// Save Prometheus rule file
-		err = SaveConfigFile(param.TplId)
+		err = SaveConfigFile(param.TplId, false)
 		if err != nil {
 			mid.ReturnError(c, "Save prometheus rule file failed", err)
 			return
@@ -316,7 +316,7 @@ func DeleteLogPath(c *gin.Context)  {
 		return
 	}
 	// Save Prometheus rule file
-	err = SaveConfigFile(tplObj.Id)
+	err = SaveConfigFile(tplObj.Id, false)
 	if err != nil {
 		mid.ReturnError(c, "Save prometheus rule file failed", err)
 		return
@@ -369,7 +369,7 @@ func DeleteLogStrategy(c *gin.Context)  {
 		return
 	}
 	// Save Prometheus rule file
-	err = SaveConfigFile(tplObj.Id)
+	err = SaveConfigFile(tplObj.Id, false)
 	if err != nil {
 		mid.ReturnError(c, "Save prometheus rule file failed", err)
 		return

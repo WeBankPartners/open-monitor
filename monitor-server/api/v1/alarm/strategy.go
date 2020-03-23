@@ -9,6 +9,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
 	"fmt"
 	"strings"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/other"
 )
 
 func ListTpl(c *gin.Context)  {
@@ -67,7 +68,7 @@ func AddStrategy(c *gin.Context)  {
 			mid.ReturnError(c, "Insert strategy failed", err)
 			return
 		}
-		err = SaveConfigFile(param.TplId)
+		err = SaveConfigFile(param.TplId, false)
 		if err != nil {
 			mid.ReturnError(c, "Save alert rules file failed", err)
 			return
@@ -101,7 +102,7 @@ func EditStrategy(c *gin.Context)  {
 		}
 		_,strategy := db.GetStrategyTable(param.StrategyId)
 		db.UpdateTpl(strategy.TplId, "")
-		err = SaveConfigFile(strategy.TplId)
+		err = SaveConfigFile(strategy.TplId, false)
 		if err != nil {
 			mid.ReturnError(c, "Save alert rules file failed", err)
 			return
@@ -129,7 +130,7 @@ func DeleteStrategy(c *gin.Context)  {
 		return
 	}
 	db.UpdateTpl(strategy.TplId, "")
-	err = SaveConfigFile(strategy.TplId)
+	err = SaveConfigFile(strategy.TplId, false)
 	if err != nil {
 		mid.ReturnError(c, "Save prometheus rule file failed", err)
 		return
@@ -158,7 +159,7 @@ func SearchObjOption(c *gin.Context)  {
 	mid.ReturnData(c, data)
 }
 
-func SaveConfigFile(tplId int) error  {
+func SaveConfigFile(tplId int, fromCluster bool) error  {
 	var err error
 	idList := db.GetParentTpl(tplId)
 	err = updateConfigFile(tplId)
@@ -181,6 +182,9 @@ func SaveConfigFile(tplId int) error  {
 	if err != nil {
 		mid.LogError("reload prometheus config error", err)
 		return err
+	}
+	if !fromCluster {
+		go other.SyncConfig(tplId)
 	}
 	return nil
 }
@@ -359,4 +363,18 @@ func UpdateTplAction(c *gin.Context)  {
 	}else{
 		mid.ReturnValidateFail(c, fmt.Sprintf("Parameter validation failed %v", err))
 	}
+}
+
+func AcceptSync(c *gin.Context)  {
+	tplId,_ := strconv.Atoi(c.Query("id"))
+	if tplId <= 0 {
+		mid.ReturnError(c, "Parameter id is empty", nil)
+		return
+	}
+	err := SaveConfigFile(tplId, true)
+	if err != nil {
+		mid.ReturnError(c, "Sync save config file fail", err)
+		return
+	}
+	mid.ReturnSuccess(c, "Success")
 }
