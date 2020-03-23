@@ -11,11 +11,12 @@ import (
 	"io/ioutil"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/other"
 )
 
 var consulUrl string
 
-func RegisteConsul(guid,ip,port string, tags []string, interval int) error {
+func RegisteConsul(guid,ip,port string, tags []string, interval int, fromCluster bool) error {
 	if consulUrl == "" {
 		for _, v := range m.Config().Dependence {
 			if v.Name == "consul" {
@@ -57,10 +58,13 @@ func RegisteConsul(guid,ip,port string, tags []string, interval int) error {
 	if string(body) != "" {
 		return fmt.Errorf("consul response %s", string(body))
 	}
+	if !fromCluster {
+		go other.SyncConfig(0, m.SyncConsulDto{Guid:guid, Ip:ip, Port:port, Tags:tags, Interval:interval, IsRegister:true})
+	}
 	return nil
 }
 
-func DeregisteConsul(guid string) error {
+func DeregisteConsul(guid string, fromCluster bool) error {
 	if consulUrl == "" {
 		for _, v := range m.Config().Dependence {
 			if v.Name == "consul" {
@@ -79,6 +83,9 @@ func DeregisteConsul(guid string) error {
 	mid.LogInfo(fmt.Sprintf("guid: %s, curl deregister consul response : %s ", guid, string(body)))
 	if string(body) != "" {
 		return fmt.Errorf("consul response %s", string(body))
+	}
+	if !fromCluster {
+		go other.SyncConfig(0, m.SyncConsulDto{Guid:guid, IsRegister:false})
 	}
 	return nil
 }

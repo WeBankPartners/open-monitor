@@ -161,7 +161,6 @@ func InitHttpServer(exportAgent bool) {
 			alarmApi.GET("/org/plugin", alarm.IsPluginMode)
 			alarmApi.GET("/org/callback/get", alarm.GetOrgPanelEventList)
 			alarmApi.POST("/org/callback/update", alarm.UpdateOrgPanelCallback)
-			alarmApi.GET("/sync/config", alarm.AcceptSync)
 		}
 		userApi := authApi.Group("/user")
 		{
@@ -175,4 +174,13 @@ func InitHttpServer(exportAgent bool) {
 		port := m.Config().Http.Port
 		r.Run(fmt.Sprintf(":%s", port))
 	}
+}
+
+func InitClusterApi()  {
+	if !m.Config().Cluster.Enable {
+		return
+	}
+	http.Handle("/sync/config", http.HandlerFunc(alarm.SyncConfigHandle))
+	http.Handle("/sync/consul", http.HandlerFunc(alarm.SyncConsulHandle))
+	http.ListenAndServe(fmt.Sprintf(":%s", m.Config().Cluster.HttpPort), nil)
 }
