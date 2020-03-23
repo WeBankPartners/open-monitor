@@ -322,7 +322,7 @@ func RegisterJob(param m.RegisterParam) error {
 		param.ExporterIp = tmpAgentIp
 		param.ExporterPort = tmpAgentPort
 	}
-	err = prom.RegisteConsul(endpoint.Guid, param.ExporterIp, param.ExporterPort, []string{param.Type}, step)
+	err = prom.RegisteConsul(endpoint.Guid, param.ExporterIp, param.ExporterPort, []string{param.Type}, step, false)
 	if err != nil {
 		mid.LogError( "Register consul failed ", err)
 		return err
@@ -350,7 +350,7 @@ func DeregisterJob(guid string) error {
 		mid.LogError(fmt.Sprintf("Delete endpint %s failed", guid), err)
 		return err
 	}
-	err = prom.DeregisteConsul(guid)
+	err = prom.DeregisteConsul(guid, false)
 	if err != nil {
 		mid.LogError(fmt.Sprintf("Deregister consul %s failed ", guid), err)
 		return err
