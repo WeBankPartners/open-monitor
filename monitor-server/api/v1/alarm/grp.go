@@ -98,7 +98,7 @@ func DeleteGrp(c *gin.Context)  {
 	_,tplObj := db.GetTpl(0, id, 0)
 	if tplObj.Id > 0 {
 		db.DeleteStrategyByGrp(0, tplObj.Id)
-		err := SaveConfigFile(tplObj.Id)
+		err := SaveConfigFile(tplObj.Id, false)
 		if err != nil {
 			mid.ReturnError(c, "Update prometheus config file fail", err)
 			return
@@ -157,7 +157,7 @@ func EditGrpEndpoint(c *gin.Context)  {
 					return
 				}
 			}
-			err = SaveConfigFile(tplObj.Id)
+			err = SaveConfigFile(tplObj.Id, false)
 			if err != nil {
 				mid.ReturnError(c, "Save configuration file failed", err)
 				return
