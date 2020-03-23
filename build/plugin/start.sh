@@ -8,6 +8,7 @@ sed -i "s~{{MONITOR_DB_PORT}}~$MONITOR_DB_PORT~g" monitor/conf/default.json
 sed -i "s~{{MONITOR_DB_USER}}~$MONITOR_DB_USER~g" monitor/conf/default.json
 sed -i "s~{{MONITOR_DB_PWD}}~$MONITOR_DB_PWD~g" monitor/conf/default.json
 sed -i "s~{{CORE_ADDR}}~$CORE_ADDR~g" monitor/conf/default.json
+sed -i "s~{{MONITOR_SERVER_PEER}}~$MONITOR_SERVER_PEER~g" monitor/conf/default.json
 if [ $MONITOR_SESSION_ENABLE ]
 then
 sed -i "s~{{MONITOR_SESSION_ENABLE}}~true~g" monitor/conf/default.json
