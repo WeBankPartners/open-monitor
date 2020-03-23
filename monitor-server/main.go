@@ -33,5 +33,6 @@ func main() {
 	if m.Config().Alert.Enable {
 		other.InitSmtpMail()
 	}
+	go api.InitClusterApi()
 	api.InitHttpServer(*exportAgent)
 }
