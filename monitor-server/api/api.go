@@ -161,6 +161,7 @@ func InitHttpServer(exportAgent bool) {
 			alarmApi.GET("/org/plugin", alarm.IsPluginMode)
 			alarmApi.GET("/org/callback/get", alarm.GetOrgPanelEventList)
 			alarmApi.POST("/org/callback/update", alarm.UpdateOrgPanelCallback)
+			alarmApi.GET("/sync/config", alarm.AcceptSync)
 		}
 		userApi := authApi.Group("/user")
 		{
