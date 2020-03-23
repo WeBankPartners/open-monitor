@@ -162,7 +162,7 @@ func ExportAgent(c *gin.Context)  {
 				}
 			}
 			for k, v := range groupTplMap {
-				err := alarm.SaveConfigFile(v)
+				err := alarm.SaveConfigFile(v, false)
 				if err != nil {
 					mid.LogError(fmt.Sprintf("register interface update prometheus config fail , group : %s  error ", k), err)
 				}
