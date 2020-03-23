@@ -130,5 +130,9 @@
       "token": ""
     }
   },
-  "cluster": []
+  "cluster": {
+    "enable": true,
+    "http_port": "14241",
+    "server_list": []
+  }
 }
