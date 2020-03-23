@@ -14,6 +14,7 @@ import (
 )
 
 func SyncConfig(tplId int, param m.SyncConsulDto) {
+	mid.LogInfo(fmt.Sprintf("start sync config: id->%d param.guid->%s param.is_register->%v", tplId, param.Guid, param.IsRegister))
 	if !m.Config().Cluster.Enable {
 		return
 	}
@@ -45,13 +46,14 @@ func SyncConfig(tplId int, param m.SyncConsulDto) {
 }
 
 func requestClusterSync(tplId int,address string,param m.SyncConsulDto) bool {
-	url := fmt.Sprintf("http://%s/wecube-monitor/api/v1/alarm/sync/config", address)
+	mid.LogInfo(fmt.Sprintf("request sync: tplid->%d address->%s", tplId, address))
+	url := fmt.Sprintf("http://%s", address)
 	var req *http.Request
 	if tplId > 0 {
-		req, _ = http.NewRequest(http.MethodGet, fmt.Sprintf("%s?id=%d", url, tplId), strings.NewReader(""))
+		req, _ = http.NewRequest(http.MethodGet, fmt.Sprintf("%s/sync/config?id=%d", url, tplId), strings.NewReader(""))
 	}else{
 		postData,_ := json.Marshal(param)
-		req,_ = http.NewRequest(http.MethodPost, url, strings.NewReader(string(postData)))
+		req,_ = http.NewRequest(http.MethodPost, fmt.Sprintf("%s/sync/consul", url), strings.NewReader(string(postData)))
 	}
 	req.Header.Set("X-Auth-Token", "default-token-used-in-server-side")
 	resp,err := ctxhttp.Do(context.Background(), http.DefaultClient, req)
