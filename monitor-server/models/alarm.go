@@ -300,3 +300,12 @@ type UpdateActionDto struct {
 	TplId  int  `json:"tpl_id" binding:"required"`
 	Accept  []string  `json:"accept"`
 }
+
+type SyncConsulDto struct {
+	IsRegister  bool  `json:"is_register"`
+	Guid  string  `json:"guid"`
+	Ip  string  `json:"ip"`
+	Port  string  `json:"port"`
+	Tags  []string  `json:"tags"`
+	Interval  int  `json:"interval"`
+}
