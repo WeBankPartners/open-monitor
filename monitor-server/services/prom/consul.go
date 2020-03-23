@@ -17,6 +17,7 @@ import (
 var consulUrl string
 
 func RegisteConsul(guid,ip,port string, tags []string, interval int, fromCluster bool) error {
+	mid.LogInfo("start register consul")
 	if consulUrl == "" {
 		for _, v := range m.Config().Dependence {
 			if v.Name == "consul" {
@@ -65,6 +66,7 @@ func RegisteConsul(guid,ip,port string, tags []string, interval int, fromCluster
 }
 
 func DeregisteConsul(guid string, fromCluster bool) error {
+	mid.LogInfo("start deregister consul")
 	if consulUrl == "" {
 		for _, v := range m.Config().Dependence {
 			if v.Name == "consul" {
