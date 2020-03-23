@@ -10,6 +10,9 @@ import (
 	"fmt"
 	"strings"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/other"
+	"net/http"
+	"io/ioutil"
+	"encoding/json"
 )
 
 func ListTpl(c *gin.Context)  {
@@ -184,7 +187,7 @@ func SaveConfigFile(tplId int, fromCluster bool) error  {
 		return err
 	}
 	if !fromCluster {
-		go other.SyncConfig(tplId)
+		go other.SyncConfig(tplId, m.SyncConsulDto{})
 	}
 	return nil
 }
@@ -365,16 +368,56 @@ func UpdateTplAction(c *gin.Context)  {
 	}
 }
 
-func AcceptSync(c *gin.Context)  {
-	tplId,_ := strconv.Atoi(c.Query("id"))
+func SyncConfigHandle(w http.ResponseWriter,r *http.Request)  {
+	var response mid.RespJson
+	w.Header().Set("Content-Type", "application/json")
+	defer w.Write([]byte(fmt.Sprintf("{\"code\":%d,\"msg\":\"%s\",\"data\":\"%v\"}", response.Code,response.Msg,response.Data)))
+	tplId,_ := strconv.Atoi(r.FormValue("id"))
 	if tplId <= 0 {
-		mid.ReturnError(c, "Parameter id is empty", nil)
+		response.Code = 401
+		response.Msg = "Parameter id is empty"
 		return
 	}
 	err := SaveConfigFile(tplId, true)
 	if err != nil {
-		mid.ReturnError(c, "Sync save config file fail", err)
+		response.Code = 500
+		response.Msg = "Sync save config file fail"
+		response.Data = err
 		return
 	}
-	mid.ReturnSuccess(c, "Success")
+	response.Code = 200
+	response.Msg = "Success"
+}
+
+func SyncConsulHandle(w http.ResponseWriter,r *http.Request)  {
+	var response mid.RespJson
+	w.Header().Set("Content-Type", "application/json")
+	defer w.Write([]byte(fmt.Sprintf("{\"code\":%d,\"msg\":\"%s\",\"data\":\"%v\"}", response.Code,response.Msg,response.Data)))
+	var param m.SyncConsulDto
+	b,_ := ioutil.ReadAll(r.Body)
+	err := json.Unmarshal(b, &param)
+	if err != nil {
+		response.Code = 401
+		response.Msg = "Param json format fail"
+		response.Data = err
+		return
+	}
+	if param.Guid == "" {
+		response.Code = 401
+		response.Msg = "Guid is empty"
+		return
+	}
+	if param.IsRegister {
+		err = prom.RegisteConsul(param.Guid,param.Ip,param.Port,param.Tags,param.Interval,true)
+	}else{
+		err = prom.DeregisteConsul(param.Guid,true)
+	}
+	if err != nil {
+		response.Code = 500
+		response.Msg = "Sync consul fail"
+		response.Data = err
+		return
+	}
+	response.Code = 200
+	response.Msg = "Success"
 }
