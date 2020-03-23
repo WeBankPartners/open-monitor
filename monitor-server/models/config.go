@@ -116,6 +116,12 @@ type AlertConfig struct {
 	Mail  AlertMailConfig  `json:"mail"`
 }
 
+type ClusterConfig struct {
+	Enable  bool  `json:"enable"`
+	HttpPort  string  `json:"http_port"`
+	ServerList  []string  `json:"server_list"`
+}
+
 type GlobalConfig struct {
 	Http  *HttpConfig  `json:"http"`
 	Store  StoreConfig  `json:"store"`
@@ -126,7 +132,7 @@ type GlobalConfig struct {
 	TagBlacklist  []string  `json:"tag_blacklist"`
 	Agent  []*AgentConfig  `json:"agent"`
 	Alert  AlertConfig  `json:"alert"`
-	Cluster  []string  `json:"cluster"`
+	Cluster  ClusterConfig  `json:"cluster"`
 }
 
 var (
