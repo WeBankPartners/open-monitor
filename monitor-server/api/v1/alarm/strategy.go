@@ -369,6 +369,7 @@ func UpdateTplAction(c *gin.Context)  {
 }
 
 func SyncConfigHandle(w http.ResponseWriter,r *http.Request)  {
+	mid.LogInfo("start sync config")
 	var response mid.RespJson
 	w.Header().Set("Content-Type", "application/json")
 	defer w.Write([]byte(fmt.Sprintf("{\"code\":%d,\"msg\":\"%s\",\"data\":\"%v\"}", response.Code,response.Msg,response.Data)))
@@ -390,6 +391,7 @@ func SyncConfigHandle(w http.ResponseWriter,r *http.Request)  {
 }
 
 func SyncConsulHandle(w http.ResponseWriter,r *http.Request)  {
+	mid.LogInfo("start sync consul")
 	var response mid.RespJson
 	w.Header().Set("Content-Type", "application/json")
 	defer w.Write([]byte(fmt.Sprintf("{\"code\":%d,\"msg\":\"%s\",\"data\":\"%v\"}", response.Code,response.Msg,response.Data)))
