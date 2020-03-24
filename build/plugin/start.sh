@@ -1,7 +1,14 @@
 #!/bin/bash
 
 echo "start run"
+laststr=`echo ${MONITOR_SERVER_PEER}|awk -F '' '{print $NF}'`
+subnum='3'
+if [ $laststr ]
+then
+subnum=`expr $laststr % 5`
+fi
 sed -i "s~{{MONITOR_SERVER_PORT}}~$MONITOR_SERVER_PORT~g" alertmanager/alertmanager.yml
+sed -i "s~{{MONITOR_ALERT_WAIT}}~${subnum}~g" alertmanager/alertmanager.yml
 sed -i "s~{{MONITOR_SERVER_PORT}}~$MONITOR_SERVER_PORT~g" monitor/conf/default.json
 sed -i "s~{{MONITOR_DB_HOST}}~$MONITOR_DB_HOST~g" monitor/conf/default.json
 sed -i "s~{{MONITOR_DB_PORT}}~$MONITOR_DB_PORT~g" monitor/conf/default.json
