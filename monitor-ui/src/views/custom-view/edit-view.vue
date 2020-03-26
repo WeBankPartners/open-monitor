@@ -364,6 +364,9 @@ export default {
 </script>
 
 <style scoped lang="less">
+li {
+    list-style: none;
+}
 .zone {
   width: 1100px;
   margin: 0 auto;
