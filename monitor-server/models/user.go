@@ -105,3 +105,16 @@ type RoleGrpDto struct {
 	GrpId  int  `json:"grp_id"`
 	RoleId  []int  `json:"role_id"`
 }
+
+type CoreRoleDto struct {
+	Status  string  `json:"status"`
+	Message  string  `json:"message"`
+	Data  []CoreRoleDataObj  `json:"data"`
+}
+
+type CoreRoleDataObj struct {
+	Id  string  `json:"id"`
+	Name  string  `json:"name"`
+	Email  string  `json:"email"`
+	DisplayName  string  `json:"displayName"`
+}
