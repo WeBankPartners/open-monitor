@@ -44,6 +44,7 @@ mkdir -p data
 nohup ./transgateway -d data -m http://127.0.0.1:8080 > logs/app.log 2>&1 &
 cd ../monitor/
 mkdir -p logs
+sleep 3
 ./monitor-server --export_agent=true
 
 
