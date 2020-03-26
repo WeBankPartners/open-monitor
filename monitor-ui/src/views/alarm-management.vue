@@ -10,10 +10,11 @@
         <Tag color="primary">{{$t('table.noDataTip')}}！</Tag>
       </template>
     </section>
+    <ModalDel :ModelDelConfig="ModelDelConfig"></ModalDel>
 
     <template v-for="(alarmItem, alarmIndex) in resultData">
       <section :key="alarmIndex" class="alarm-item c-dark-exclude-color" :class="'alarm-item-border-'+ alarmItem.s_priority">
-        <i class="fa fa-times" @click="removeAlarm(alarmItem)" aria-hidden="true"></i>
+        <i class="fa fa-times" @click="removeConfirm(alarmItem)" aria-hidden="true"></i>
         <ul>
            <li>
               <label class="col-md-1">{{$t('field.endpoint')}}:</label>
@@ -74,6 +75,12 @@ export default {
   name: '',
   data() {
     return {
+      ModelDelConfig: {
+        deleteWarning: false,
+        msg: '',
+        callback: null
+      },
+
       interval: null,
       timeForDataAchieve: null,
       filters: {},
@@ -111,6 +118,15 @@ export default {
     addParams (key, value) {
       this.filters[key] = value
       this.getAlarm()
+    },
+    removeConfirm (alarmItem) {
+      this.ModelDelConfig =  {
+        deleteWarning: true,
+        msg: alarmItem.endpoint,
+        callback: () => {
+          this.removeAlarm(alarmItem)
+        }
+      }
     },
     removeAlarm(alarmItem) {
       let params = {
