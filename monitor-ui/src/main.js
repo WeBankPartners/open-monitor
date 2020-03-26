@@ -5,7 +5,10 @@ import store from "./store";
 import "@/assets/css/local.bootstrap.css";
 import "bootstrap/dist/js/bootstrap.min.js";
 import "font-awesome/css/font-awesome.css";
-import "./plugins/iview.js";
+// import "./plugins/iview.js";
+import ViewUI from 'view-design';
+import 'view-design/dist/styles/iview.css'
+Vue.use(ViewUI)
 import httpRequestEntrance from "@/assets/js/httpRequestEntrance.js";
 import jquery from "jquery";
 import { tableUtil } from "@/assets/js/tableUtil.js";
@@ -22,9 +25,11 @@ Vue.prototype.apiCenter = apiCenter;
 import Title from "@/components/title";
 import PageTable from "@/components/table-page/page";
 import ModalComponent from "@/components/modal";
+import ModalDel from "@/components/modal-del";
 Vue.component("Title", Title);
 Vue.component("PageTable", PageTable);
 Vue.component("ModalComponent", ModalComponent);
+Vue.component("ModalDel", ModalDel);
 Vue.use(VeeValidate);
 
 Vue.config.productionTip = false;
