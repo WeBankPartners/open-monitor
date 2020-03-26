@@ -271,6 +271,7 @@ func ListRole(c *gin.Context)  {
 	if size == 0 {
 		size = 10
 	}
+	db.SyncCoreRole()
 	err,data := db.ListRole(search, page, size)
 	if err != nil {
 		mid.ReturnError(c, "Get role list fail", err)

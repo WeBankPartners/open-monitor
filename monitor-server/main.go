@@ -9,6 +9,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/other"
+	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/alarm"
 )
 
 // @title Monitor Server API
@@ -34,5 +35,7 @@ func main() {
 		other.InitSmtpMail()
 	}
 	go api.InitClusterApi()
+	alarm.SyncInitConfigFile()
+	alarm.SyncInitConsul()
 	api.InitHttpServer(*exportAgent)
 }
