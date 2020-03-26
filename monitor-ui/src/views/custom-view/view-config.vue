@@ -55,16 +55,9 @@
           </Tooltip>
         </div>
       </div>
-      <div class="">
-        <section class="metric-section">
-          <div>
-            <div :id="item.id" class="echart" style=""></div>
-          </div>
-          <!-- <div v-else class="echart echart-no-data-tip">
-            <span>~~~No Data!~~~</span>
-          </div> -->
-        </section>
-      </div>
+      <section class="metric-section" >
+        <div :id="item.id" class="echart" :style="{height: ((item.h +1)*30)+'px'}"></div>
+      </section>
       </grid-item>
     </grid-layout>
   </div>
@@ -75,7 +68,6 @@ import {generateUuid} from '@/assets/js/utils'
 import {resizeEvent} from '@/assets/js/gridUtils'
 import VueGridLayout from 'vue-grid-layout'
 import {readyToDraw} from  '@/assets/config/chart-rely'
-// const echarts = require('echarts/lib/echarts');
 export default {
   name: '',
   data() {
