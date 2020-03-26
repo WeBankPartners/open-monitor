@@ -258,7 +258,6 @@ func updateConfigFile(tplId int) error {
 			}
 			endpointExpr = endpointExpr[:len(endpointExpr)-1]
 		}
-		fmt.Printf("expr : %s , objs : %v \n", endpointExpr, endpointObjs)
 	}
 	err,isExist,cObj := prom.GetConfig(fileName, isGrp)
 	if err != nil {
