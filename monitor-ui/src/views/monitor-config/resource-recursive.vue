@@ -13,7 +13,7 @@
               <button class="btn-cancle-f btn-small" @click="alarmCallback(item)">{{$t('resourceLevel.alarmCallback')}}</button>
               <i class="fa fa-plus" aria-hidden="true" @click="addPanel(item)"> </i>
               <i class="fa fa-pencil" @click="editPanal(item)" aria-hidden="true"></i>
-              <i class="fa fa-trash-o" @click="deletePanalConfirm(item)" aria-hidden="true"></i>
+              <i class="fa fa-trash-o" @click="deleteConfirm(item)" aria-hidden="true"></i>
             </div>
           </div>
         </div>
@@ -208,9 +208,8 @@ export default {
       this.isAdd = true
       this.isEditPanal = true
     },
-    deletePanalConfirm (panalData) {
+    deleteConfirm (panalData) {
       this.parentPanal =  panalData.guid
-      console.log(111)
       this.ModelDelConfig =  {
         deleteWarning: true,
         msg: panalData.guid,
