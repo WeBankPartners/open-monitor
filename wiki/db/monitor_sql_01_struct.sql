@@ -157,7 +157,8 @@ CREATE TABLE `alarm` (
   `close_type` VARCHAR(50) DEFAULT 'auto',
   `close_msg` VARCHAR(255),
   `close_user` VARCHAR(50),
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `alarm_unique_index` (`strategy_id`,`endpoint`,`status`,`start`)
 ) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
 DROP TABLE IF EXISTS `grp`;
