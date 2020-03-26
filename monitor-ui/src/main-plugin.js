@@ -5,7 +5,10 @@ import '@/assets/css/local.bootstrap.css'
 import '@/assets/css/global.css'
 import 'bootstrap/dist/js/bootstrap.min.js'
 import 'font-awesome/css/font-awesome.css'
-import './plugins/iview.js'
+// import "./plugins/iview.js";
+import ViewUI from 'view-design';
+import 'view-design/dist/styles/iview.css'
+window.use(ViewUI)
 // import '@/assets/locale/language'
 import httpRequestEntrance from '@/assets/js/httpRequestEntrance.js'
 import jquery from 'jquery'
