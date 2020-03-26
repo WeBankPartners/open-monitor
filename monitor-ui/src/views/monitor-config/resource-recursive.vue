@@ -119,6 +119,8 @@
           <button class="btn-delete-f" @click="deletePanal">Delete</button>
         </div>
     </Modal>
+
+    <ModalDel :ModelDelConfig="ModelDelConfig"></ModalDel>
   </div>
 </template>
 
@@ -128,6 +130,11 @@ export default {
   name: 'recursive',
   data() {
     return {
+      ModelDelConfig: {
+        deleteWarning: false,
+        msg: '',
+        callback: null
+      },
       deleteWarning: false,
 
       isEditPanal: false,
@@ -202,8 +209,15 @@ export default {
       this.isEditPanal = true
     },
     deletePanalConfirm (panalData) {
-      this.parentPanal = panalData.guid
-      this.deleteWarning = true
+      this.parentPanal =  panalData.guid
+      console.log(111)
+      this.ModelDelConfig =  {
+        deleteWarning: true,
+        msg: panalData.guid,
+        callback: () => {
+          this.deletePanal(panalData)
+        }
+      }
     },
     deletePanal () {
       const params = {
