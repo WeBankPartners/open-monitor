@@ -125,8 +125,8 @@ func SetConfig(name string, isGrp bool, config m.RFGroup, exist bool) error {
 }
 
 func ReloadConfig() error {
-	resp,err := http.Post(m.Config().Prometheus.ConfigReload, "application/json", strings.NewReader(""))
-	mid.LogInfo(fmt.Sprintf("reload config resp : %v", resp.Body))
-	defer resp.Body.Close()
+	_,err := http.Post(m.Config().Prometheus.ConfigReload, "application/json", strings.NewReader(""))
+	//mid.LogInfo(fmt.Sprintf("reload config resp : %v", resp.Body))
+	//defer resp.Body.Close()
 	return err
 }
