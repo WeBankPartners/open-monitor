@@ -6,6 +6,11 @@ import (
 	"fmt"
 	"strings"
 	"time"
+	"net/http"
+	"golang.org/x/net/context/ctxhttp"
+	"io/ioutil"
+	"encoding/json"
+	"context"
 )
 
 func AddUser(user m.UserTable, creator string) error {
@@ -175,6 +180,80 @@ func ListRole(search string,page,size int) (err error,data m.TableData) {
 	return err,data
 }
 
+func SyncCoreRole()  {
+	if m.CoreUrl == "" {
+		return
+	}
+	request,err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/platform/v1/roles/retrieve", m.CoreUrl), strings.NewReader(""))
+	if err != nil {
+		mid.LogError("get core role key new request fail", err)
+		return
+	}
+	request.Header.Set("Authorization", m.TmpCoreToken)
+	res,err := ctxhttp.Do(context.Background(), http.DefaultClient, request)
+	if err != nil {
+		mid.LogError("get core role key ctxhttp request fail", err)
+		return
+	}
+	defer res.Body.Close()
+	b,_ := ioutil.ReadAll(res.Body)
+	var result m.CoreRoleDto
+	err = json.Unmarshal(b, &result)
+	if err != nil {
+		mid.LogError("get core role key json unmarshal result ", err)
+		return
+	}
+	var tableData,insertData,updateData,deleteData []*m.RoleTable
+	x.SQL("SELECT id,name,display_name FROM role").Find(&tableData)
+	for _,v := range result.Data {
+		var existFlag bool
+		var updateName string
+		for _,vv := range tableData {
+			if vv.Name == v.Name {
+				existFlag = true
+				if vv.DisplayName != v.DisplayName {
+					updateName = v.DisplayName
+				}
+				break
+			}
+		}
+		if !existFlag {
+			insertData = append(insertData, &m.RoleTable{Name:v.Name, DisplayName:v.DisplayName})
+		}
+		if updateName != "" {
+			updateData = append(updateData, &m.RoleTable{Name:v.Name, DisplayName:v.DisplayName})
+		}
+	}
+	for _,v := range tableData {
+		var existFlag bool
+		for _,vv := range result.Data {
+			if vv.Name == v.Name {
+				existFlag = true
+				break
+			}
+		}
+		if !existFlag {
+			deleteData = append(deleteData, &m.RoleTable{Name:v.Name})
+		}
+	}
+	var actions []*Action
+	for _,v := range insertData {
+		actions = append(actions, &Action{Sql:fmt.Sprintf("INSERT INTO role(name,display_name) VALUE ('%s','%s')", v.Name, v.DisplayName)})
+	}
+	for _,v := range updateData {
+		actions = append(actions, &Action{Sql:fmt.Sprintf("UPDATE role SET display_name='%s' WHERE name='%s'", v.DisplayName, v.Name)})
+	}
+	for _,v := range deleteData {
+		actions = append(actions, &Action{Sql:fmt.Sprintf("DELETE FROM role WHERE name='%s'", v.Name)})
+	}
+	if len(actions) > 0 {
+		err = Transaction(actions)
+		if err != nil {
+			mid.LogError("sync core role fail ", err)
+		}
+	}
+}
+
 func UpdateRoleUser(param m.UpdateRoleUserDto) error {
 	var roleUserTable []*m.RelRoleUserTable
 	err := x.SQL("SELECT user_id FROM rel_role_user WHERE role_id=?", param.RoleId).Find(&roleUserTable)
@@ -312,7 +391,7 @@ func CheckRoleList(param string) string {
 	}
 	for k,_ := range tmpMap {
 		var tableData []*m.RoleTable
-		x.SQL("SELECT id FROM role WHERE display_name=?", k).Find(&tableData)
+		x.SQL("SELECT id FROM role WHERE name=?", k).Find(&tableData)
 		if len(tableData) > 0 {
 			tmpMap[k] = tableData[0].Id
 		}else{
@@ -320,7 +399,7 @@ func CheckRoleList(param string) string {
 			if err != nil {
 				mid.LogError(fmt.Sprintf("check role list,insert table with name:%s error", k), err)
 			}else{
-				x.SQL("SELECT id FROM role WHERE display_name=?", k).Find(&tableData)
+				x.SQL("SELECT id FROM role WHERE name=?", k).Find(&tableData)
 				if len(tableData) > 0 {
 					tmpMap[k] = tableData[0].Id
 				}

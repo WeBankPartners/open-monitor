@@ -1,14 +1,21 @@
 #!/bin/bash
 
 echo "start run"
+laststr=`echo ${MONITOR_HOST_IP}|awk -F '' '{print $NF}'`
+subnum='3'
+if [ $laststr ]
+then
+subnum=`expr $laststr % 5`
+fi
 sed -i "s~{{MONITOR_SERVER_PORT}}~$MONITOR_SERVER_PORT~g" alertmanager/alertmanager.yml
+sed -i "s~{{MONITOR_ALERT_WAIT}}~${subnum}~g" alertmanager/alertmanager.yml
 sed -i "s~{{MONITOR_SERVER_PORT}}~$MONITOR_SERVER_PORT~g" monitor/conf/default.json
 sed -i "s~{{MONITOR_DB_HOST}}~$MONITOR_DB_HOST~g" monitor/conf/default.json
 sed -i "s~{{MONITOR_DB_PORT}}~$MONITOR_DB_PORT~g" monitor/conf/default.json
 sed -i "s~{{MONITOR_DB_USER}}~$MONITOR_DB_USER~g" monitor/conf/default.json
 sed -i "s~{{MONITOR_DB_PWD}}~$MONITOR_DB_PWD~g" monitor/conf/default.json
 sed -i "s~{{CORE_ADDR}}~$CORE_ADDR~g" monitor/conf/default.json
-sed -i "s~{{MONITOR_SERVER_PEER}}~$MONITOR_SERVER_PEER~g" monitor/conf/default.json
+sed -i "s~{{MONITOR_SERVER_PEER}}~$MONITOR_HOST_IP~g" monitor/conf/default.json
 if [ $MONITOR_SESSION_ENABLE ]
 then
 sed -i "s~{{MONITOR_SESSION_ENABLE}}~true~g" monitor/conf/default.json

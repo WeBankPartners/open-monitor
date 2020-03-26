@@ -15,7 +15,6 @@ import (
 )
 
 var coreProcessKey string
-const tmpCoreToken = ***REMOVED***
 
 func getCoreProcessKey() string {
 	if coreProcessKey != "" {
@@ -30,7 +29,7 @@ func getCoreProcessKey() string {
 		mid.LogError("get core process key new request fail", err)
 		return ""
 	}
-	request.Header.Set("Authorization", tmpCoreToken)
+	request.Header.Set("Authorization", m.TmpCoreToken)
 	res,err := ctxhttp.Do(context.Background(), http.DefaultClient, request)
 	if err != nil {
 		mid.LogError("get core process key ctxhttp request fail", err)
@@ -64,7 +63,7 @@ func GetCoreEventList() (result m.CoreProcessResult,err error) {
 		mid.LogError("get core process key new request fail", err)
 		return result,err
 	}
-	request.Header.Set("Authorization", tmpCoreToken)
+	request.Header.Set("Authorization", m.TmpCoreToken)
 	res,err := ctxhttp.Do(context.Background(), http.DefaultClient, request)
 	if err != nil {
 		mid.LogError("get core process key ctxhttp request fail", err)
@@ -143,7 +142,7 @@ func NotifyCoreEvent(endpoint string,strategyId int) error {
 		mid.LogInfo(fmt.Sprintf("notify request data --> eventSeqNo:%s operationKey:%s operationData:%s", requestParam.EventSeqNo, requestParam.OperationKey, requestParam.OperationData))
 		b, _ := json.Marshal(requestParam)
 		request, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/platform/v1/operation-events", m.CoreUrl), strings.NewReader(string(b)))
-		request.Header.Set("Authorization", tmpCoreToken)
+		request.Header.Set("Authorization", m.TmpCoreToken)
 		request.Header.Set("Content-Type", "application/json")
 		if err != nil {
 			mid.LogError("notify core event new request fail", err)
@@ -237,7 +236,7 @@ func GetAlarmEvent(alarmType,inputGuid string,id int) (result m.AlarmEntityObj,e
 			x.SQL(fmt.Sprintf("SELECT * FROM role WHERE id IN (%s)", strings.Join(toRole, ","))).Find(&roleTable)
 			toRole = []string{}
 			for _,v := range roleTable {
-				toRole = append(toRole, v.DisplayName)
+				toRole = append(toRole, v.Name)
 			}
 		}
 		result.To = strings.Join(toMail, ",")

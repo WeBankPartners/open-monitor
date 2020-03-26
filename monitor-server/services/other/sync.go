@@ -13,14 +13,41 @@ import (
 	"time"
 )
 
+var clusterList []string
+var selfIp string
+var timeoutCheck int64
+
 func SyncConfig(tplId int, param m.SyncConsulDto) {
 	mid.LogInfo(fmt.Sprintf("start sync config: id->%d param.guid->%s param.is_register->%v", tplId, param.Guid, param.IsRegister))
 	if !m.Config().Cluster.Enable {
 		return
 	}
-	clusterList := m.Config().Cluster.ServerList
-	if len(clusterList) == 0 {
-		return
+	if m.CoreUrl == "" {
+		clusterList = m.Config().Cluster.ServerList
+		if len(clusterList) == 0 {
+			return
+		}
+	}else{
+		if len(m.Config().Cluster.ServerList) == 0 {
+			mid.LogInfo("config cluster server list is empty, return")
+			return
+		}
+		if selfIp == "" {
+			selfIp = m.Config().Cluster.ServerList[0]
+		}
+		if timeoutCheck < time.Now().Unix() {
+			chd,err := getCoreContainerHost()
+			if err != nil {
+				return
+			}
+			clusterList = []string{}
+			for _,v := range chd.Data {
+				if v != selfIp {
+					clusterList = append(clusterList, v)
+				}
+			}
+			timeoutCheck = time.Now().Unix() + 300
+		}
 	}
 	for _,v := range clusterList {
 		if v == "" || strings.Contains(v, "127.0.0.1") || strings.Contains(v, "localhost") {
@@ -70,4 +97,37 @@ func requestClusterSync(tplId int,address string,param m.SyncConsulDto) bool {
 		return false
 	}
 	return true
+}
+
+type coreHostDto struct {
+	Status  string  `json:"status"`
+	Message  string  `json:"message"`
+	Data  []string  `json:"data"`
+}
+
+func getCoreContainerHost() (result coreHostDto,err error) {
+	if m.CoreUrl == "" {
+		mid.LogInfo("get core hosts key fail, core url is null")
+		return result,fmt.Errorf("get core hosts key fail, core url is null")
+	}
+	request,err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/platform/v1/available-container-hosts", m.CoreUrl), strings.NewReader(""))
+	if err != nil {
+		mid.LogError("get core hosts key new request fail", err)
+		return result,err
+	}
+	request.Header.Set("Authorization", m.TmpCoreToken)
+	res,err := ctxhttp.Do(context.Background(), http.DefaultClient, request)
+	if err != nil {
+		mid.LogError("get core hosts key ctxhttp request fail", err)
+		return result,err
+	}
+	defer res.Body.Close()
+	b,_ := ioutil.ReadAll(res.Body)
+	err = json.Unmarshal(b, &result)
+	if err != nil {
+		mid.LogError("get core hosts key json unmarshal result ", err)
+		return result,err
+	}
+	mid.LogInfo(fmt.Sprintf("get core hosts, resultObj status:%s  message:%s  data:%v", result.Status, result.Message, result.Data))
+	return result,nil
 }
