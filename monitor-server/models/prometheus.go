@@ -22,3 +22,7 @@ type RFAnnotation struct {
 	Summary  string  `yaml:"summary"`
 	Description  string  `yaml:"description"`
 }
+
+type ConsulServicesDto struct {
+	Name  string  `json:"name"`
+}
