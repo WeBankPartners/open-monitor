@@ -265,7 +265,6 @@ func GetStrategys(query *m.TplQuery, ignoreLogMonitor bool) error {
 		var tpls []*m.TplStrategyTable
 		sql := `SELECT t1.id tpl_id,t1.grp_id,t1.endpoint_id,t2.id strategy_id,t2.metric,t2.expr,t2.cond,t2.last,t2.priority,t2.content 
 				FROM tpl t1 LEFT JOIN strategy t2 ON t1.id=t2.tpl_id WHERE (`+grpIds+` endpoint_id=?)  order by t1.endpoint_id,t1.id,t2.id`
-		fmt.Printf("sql: %s id:%d \n", sql, query.SearchId)
 		err = x.SQL(sql, query.SearchId).Find(&tpls)
 		if err != nil {
 			mid.LogError("get strategy fail", err)
@@ -438,6 +437,12 @@ func GetTpl(tplId,grpId,endpointId int) (error,m.TplTable) {
 	return nil,*result[0]
 }
 
+func ListTpl() []*m.TplTable {
+	var result []*m.TplTable
+	x.SQL("SELECT * FROM tpl").Find(&result)
+	return result
+}
+
 func GetParentTpl(tplId int) []int {
 	type tplGrpParent struct {
 		Id  int
@@ -484,7 +489,6 @@ func GetParentTpl(tplId int) []int {
 			break
 		}
 	}
-	mid.LogInfo(fmt.Sprintf("tpl parent ids : %v ", tplIdList))
 	return tplIdList
 }
 
@@ -618,6 +622,7 @@ func UpdateAlarms(alarms []*m.AlarmTable) error {
 	var actions []*Action
 	for _,v := range alarms {
 		var action Action
+		var cErr error
 		params := make([]interface{}, 0)
 		if v.Id > 0 {
 			action.Sql = "UPDATE alarm SET status=?,end_value=?,end=? WHERE id=?"
@@ -625,8 +630,9 @@ func UpdateAlarms(alarms []*m.AlarmTable) error {
 			params = append(params, v.EndValue)
 			params = append(params, v.End.Format(m.DatetimeFormat))
 			params = append(params, v.Id)
+			_,cErr = x.Exec(action.Sql, v.Status, v.EndValue, v.End.Format(m.DatetimeFormat), v.Id)
 		}else{
-			action.Sql = "INSERT INTO alarm(strategy_id,endpoint,status,s_metric,s_expr,s_cond,s_last,s_priority,content,start_value,start,tags) VALUE (?,?,?,?,?,?,?,?,?,?,?,?)"
+			action.Sql = "INSERT INTO alarm(strategy_id,endpoint,status,s_metric,s_expr,s_cond,s_last,s_priority,content,start_value,start,tags) VALUE (?,?,?,?,?,?,?,?,?,?,NOW(),?)"
 			params = append(params, v.StrategyId)
 			params = append(params, v.Endpoint)
 			params = append(params, v.Status)
@@ -637,17 +643,21 @@ func UpdateAlarms(alarms []*m.AlarmTable) error {
 			params = append(params, v.SPriority)
 			params = append(params, v.Content)
 			params = append(params, v.StartValue)
-			params = append(params, v.Start.Format(m.DatetimeFormat))
+			//params = append(params, v.Start.Format(m.DatetimeFormat))
 			params = append(params, v.Tags)
+			_,cErr = x.Exec(action.Sql, v.StrategyId, v.Endpoint, v.Status, v.SMetric, v.SExpr, v.SCond, v.SLast, v.SPriority, v.Content, v.StartValue, v.Tags)
 		}
 		action.Param = params
 		if action.Sql != "" {
 			actions = append(actions, &action)
 		}
+		if cErr != nil {
+			mid.LogInfo(fmt.Sprintf("update alarm:%s param:%v fail with:%v", action.Sql, action.Param, cErr))
+		}
 	}
-	if len(actions) > 0 {
-		return Transaction(actions)
-	}
+	//if len(actions) > 0 {
+	//	return Transaction(actions)
+	//}
 	return nil
 }
 
