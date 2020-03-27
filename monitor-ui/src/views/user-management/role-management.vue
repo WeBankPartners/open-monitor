@@ -13,6 +13,7 @@
         </div>
       </div>
     </ModalComponent>
+    <ModalDel :ModelDelConfig="ModelDelConfig"></ModalDel>
   </div>
 </template>
 
@@ -26,12 +27,17 @@ let tableEle = [
 const btn = [
     {btn_name: 'button.edit', btn_func: 'editF'},
     {btn_name: 'button.authorization', btn_func: 'authorizationF'},
-    {btn_name: 'button.remove', btn_func: 'delF'}
+    {btn_name: 'button.remove', btn_func: 'deleteConfirm'}
   ]
 export default {
   name: '',
   data() {
     return {
+      ModelDelConfig: {
+        deleteWarning: false,
+        msg: '',
+        callback: null
+      },
       pageConfig: {
         CRUD: this.$root.apiCenter.setup.role.get,
         researchConfig: {
@@ -133,13 +139,20 @@ export default {
         this.initData(this.pageConfig.CRUD, this.pageConfig)
       })
     },
+    deleteConfirm (rowData) {
+      this.ModelDelConfig =  {
+        deleteWarning: true,
+        msg: rowData.name,
+        callback: () => {
+          this.delF(rowData)
+        }
+      }
+    },
     delF (rowData) {
-      this.$parent.$parent.delConfirm({name: rowData.name}, () => {
-        let params = {role_id: rowData.id, operation: 'delete' }
-        this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.setup.role.update, params, () => {
-          this.$Message.success(this.$t('tips.success'))
-          this.initData(this.pageConfig.CRUD, this.pageConfig)
-        })
+      let params = {role_id: rowData.id, operation: 'delete' }
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.setup.role.update, params, () => {
+        this.$Message.success(this.$t('tips.success'))
+        this.initData(this.pageConfig.CRUD, this.pageConfig)
       })
     },
     authorizationF (rowData) {

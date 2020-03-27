@@ -13,7 +13,7 @@
               <button class="btn-cancle-f btn-small" @click="alarmCallback(item)">{{$t('resourceLevel.alarmCallback')}}</button>
               <i class="fa fa-plus" aria-hidden="true" @click="addPanel(item)"> </i>
               <i class="fa fa-pencil" @click="editPanal(item)" aria-hidden="true"></i>
-              <i class="fa fa-trash-o" @click="deletePanalConfirm(item)" aria-hidden="true"></i>
+              <i class="fa fa-trash-o" @click="deleteConfirm(item)" aria-hidden="true"></i>
             </div>
           </div>
         </div>
@@ -119,6 +119,8 @@
           <button class="btn-delete-f" @click="deletePanal">Delete</button>
         </div>
     </Modal>
+
+    <ModalDel :ModelDelConfig="ModelDelConfig"></ModalDel>
   </div>
 </template>
 
@@ -128,6 +130,11 @@ export default {
   name: 'recursive',
   data() {
     return {
+      ModelDelConfig: {
+        deleteWarning: false,
+        msg: '',
+        callback: null
+      },
       deleteWarning: false,
 
       isEditPanal: false,
@@ -201,9 +208,15 @@ export default {
       this.isAdd = true
       this.isEditPanal = true
     },
-    deletePanalConfirm (panalData) {
-      this.parentPanal = panalData.guid
-      this.deleteWarning = true
+    deleteConfirm (panalData) {
+      this.parentPanal =  panalData.guid
+      this.ModelDelConfig =  {
+        deleteWarning: true,
+        msg: panalData.guid,
+        callback: () => {
+          this.deletePanal(panalData)
+        }
+      }
     },
     deletePanal () {
       const params = {
