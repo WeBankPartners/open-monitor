@@ -5,10 +5,10 @@ import store from "./store";
 import "@/assets/css/local.bootstrap.css";
 import "bootstrap/dist/js/bootstrap.min.js";
 import "font-awesome/css/font-awesome.css";
-// import "./plugins/iview.js";
-import ViewUI from 'view-design';
-import 'view-design/dist/styles/iview.css'
-Vue.use(ViewUI)
+import "./plugins/iview.js";
+// import ViewUI from 'view-design';
+// import 'view-design/dist/styles/iview.css'
+// Vue.use(ViewUI)
 import httpRequestEntrance from "@/assets/js/httpRequestEntrance.js";
 import jquery from "jquery";
 import { tableUtil } from "@/assets/js/tableUtil.js";
