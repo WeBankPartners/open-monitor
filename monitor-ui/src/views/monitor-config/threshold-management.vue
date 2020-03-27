@@ -82,6 +82,7 @@
           </div>
         </div>
       </ModalComponent>
+      <ModalDel :ModelDelConfig="ModelDelConfig"></ModalDel>
     </section>
   </div>
 </template>
@@ -98,13 +99,18 @@ let tableEle = [
 ]
 const btn = [
   {btn_name: 'button.edit', btn_func: 'editF'},
-  {btn_name: 'button.remove', btn_func: 'delF'},
+  {btn_name: 'button.remove', btn_func: 'deleteConfirm'},
 ]
 
 export default {
   name: '',
   data() {
     return {
+      ModelDelConfig: {
+        deleteWarning: false,
+        msg: '',
+        callback: null
+      },
       type: '',
       typeValue: 'endpoint',
       typeList: [
@@ -232,13 +238,20 @@ export default {
         })
       })
     },
+    deleteConfirm (rowData) {
+      this.ModelDelConfig =  {
+        deleteWarning: true,
+        msg: rowData.name,
+        callback: () => {
+          this.delF(rowData)
+        }
+      }
+    },
     delF (rowData) {
-      this.$parent.$parent.delConfirm({name: rowData.metric}, () => {
-        let params = {id: rowData.id}
-        this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.thresholdManagement.delete.api, params, () => {
-          this.$Message.success(this.$t('tips.success'))
-          this.requestData(this.type, this.typeValue)
-        })
+      let params = {id: rowData.id}
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.thresholdManagement.delete.api, params, () => {
+        this.$Message.success(this.$t('tips.success'))
+        this.requestData(this.type, this.typeValue)
       })
     },
     formValidate () {
