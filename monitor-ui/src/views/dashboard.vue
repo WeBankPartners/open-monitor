@@ -1,5 +1,5 @@
 <template>
-  <div class=" ">
+  <div>
       <grid-layout
         :layout.sync="layoutData"
         :col-num="12"
@@ -25,13 +25,9 @@
             {{item.i}}
           </div>
         </div>
-        <div class="">
-          <section class="metric-section">
-            <div>
-              <div :id="item.id" class="echart" style=""></div>
-            </div>
-          </section>
-        </div>
+        <section class="metric-section">
+            <div :id="item.id" class="echart" :style="{height: ((item.h +1)*30)+'px'}"></div>
+        </section>
         </grid-item>
       </grid-layout>
   </div>

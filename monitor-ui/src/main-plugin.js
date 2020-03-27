@@ -2,9 +2,13 @@ import store from './store'
 import router from './router-plugin'
 import routerP from './router-plugin-p'
 import '@/assets/css/local.bootstrap.css'
+// import '@/assets/css/global.css'
 import 'bootstrap/dist/js/bootstrap.min.js'
 import 'font-awesome/css/font-awesome.css'
-import './plugins/iview.js'
+import "./plugins/iview.js";
+// import ViewUI from 'view-design';
+// import 'view-design/dist/styles/iview.css'
+// window.use(ViewUI)
 // import '@/assets/locale/language'
 import httpRequestEntrance from '@/assets/js/httpRequestEntrance.js'
 import jquery from 'jquery'
@@ -28,9 +32,11 @@ window.addRoutes(router, 'open-monitor')
 import Title from '@/components/title'
 import PageTable from '@/components/table-page/page'
 import ModalComponent from '@/components/modal'
+import ModalDel from "@/components/modal-del";
 window.component('Title', Title)
 window.component('PageTable', PageTable)
 window.component('ModalComponent', ModalComponent)
+window.component("ModalDel", ModalDel);
 window.use(VeeValidate)
 
 window.component('tdSlot', {

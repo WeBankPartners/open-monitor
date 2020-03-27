@@ -29,6 +29,7 @@
         </div>
       </div>
     </ModalComponent>
+    <ModalDel :ModelDelConfig="ModelDelConfig"></ModalDel>
   </div>
 </template>
 <script>
@@ -42,7 +43,7 @@
     {btn_name: 'field.endpoint', btn_func: 'checkMember'},
     {btn_name: 'field.threshold', btn_func: 'thresholdConfig'},
     {btn_name: 'button.edit', btn_func: 'editF'},
-    {btn_name: 'button.remove', btn_func: 'delF'},
+    {btn_name: 'button.remove', btn_func: 'deleteConfirm'},
     {btn_name: 'field.log', btn_func: 'logManagement'},
     {btn_name: 'button.authorize', btn_func: 'authorizeF'},
   ]
@@ -50,6 +51,11 @@
     name: '',
     data() {
       return {
+        ModelDelConfig: {
+          deleteWarning: false,
+          msg: '',
+          callback: null
+        },
         token: null,
         uploadUrl: '',
         pageConfig: {
@@ -159,13 +165,20 @@
       checkMember (rowData) {
         this.$router.push({name: 'endpointManagement', params: {group: rowData}})
       },
+      deleteConfirm (rowData) {
+        this.ModelDelConfig =  {
+          deleteWarning: true,
+          msg: rowData.name,
+          callback: () => {
+            this.delF(rowData)
+          }
+        }
+      },
       delF (rowData) {
-        this.$parent.$parent.delConfirm({name: rowData.name}, () => {
-          let params = {id: rowData.id}
-          this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.groupManagement.delete.api, params, () => {
-            this.$Message.success(this.$t('tips.success'))
-            this.initData(this.pageConfig.CRUD, this.pageConfig)
-          })
+        let params = {id: rowData.id}
+        this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.groupManagement.delete.api, params, () => {
+          this.$Message.success(this.$t('tips.success'))
+          this.initData(this.pageConfig.CRUD, this.pageConfig)
         })
       },
       thresholdConfig (rowData) {

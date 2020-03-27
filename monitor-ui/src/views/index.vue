@@ -4,12 +4,10 @@
     <div class="content">
       <router-view></router-view>
     </div>
-    <Del :DelConfig="DelConfig"></Del>
   </div>
 </template>
 
 <script>
-import Del from '@/components/del'
 import Menu from "@/components/menu";
 export default {
   name: "index",
@@ -24,16 +22,9 @@ export default {
       }
     }
   },
-  methods: {
-    delConfirm(config,callback){
-      this.DelConfig.isDisplay = true
-      this.DelConfig.displayConfig = config
-      this.DelConfig.callback = callback
-    }
-  },
+  methods: {},
   components: {
-    Menu,
-    Del
+    Menu
   }
 };
 </script>
