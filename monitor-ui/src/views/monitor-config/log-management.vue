@@ -79,6 +79,7 @@
         </div>
       </ModalComponent>
     </section>
+    <ModalDel :ModelDelConfig="ModelDelConfig"></ModalDel>
   </div>
 </template>
 
@@ -91,13 +92,18 @@ let tableEle = [
 const btn = [
   {btn_name: 'button.add', btn_func: 'singeAddF'},
   {btn_name: 'button.edit', btn_func: 'editF'},
-  {btn_name: 'button.remove', btn_func: 'delF'},
+  {btn_name: 'button.remove', btn_func: 'deleteConfirm'},
 ]
 
 export default {
   name: '',
   data() {
     return {
+      ModelDelConfig: {
+        deleteWarning: false,
+        msg: '',
+        callback: null
+      },
       type: '',
       typeValue: 'endpoint',
       typeList: [
@@ -131,7 +137,7 @@ export default {
                 {title: 'tableKey.s_priority', value: 'priority', display: true},
                 {title: 'table.action',btn:[
                   {btn_name: 'button.edit', btn_func: 'editPathItem'},
-                  {btn_name: 'button.remove', btn_func: 'delPathItem'}
+                  {btn_name: 'button.remove', btn_func: 'delPathconfirm'}
                 ]}
               ],
               data: [],
@@ -245,13 +251,20 @@ export default {
         })
       })
     },
+    deleteConfirm (rowData) {
+      this.ModelDelConfig =  {
+        deleteWarning: true,
+        msg: rowData.path,
+        callback: () => {
+          this.delF(rowData)
+        }
+      }
+    },
     delF (rowData) {
-      this.$parent.$parent.delConfirm({name: rowData.path}, () => {
-        let params = {id: rowData.id}
-        this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.logManagement.delList.api, params, () => {
-          this.$Message.success(this.$t('tips.success'))
-          this.requestData(this.type, this.typeValue)
-        })
+      let params = {id: rowData.id}
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.logManagement.delList.api, params, () => {
+        this.$Message.success(this.$t('tips.success'))
+        this.requestData(this.type, this.typeValue)
       })
     },
     formValidate () {
@@ -352,13 +365,20 @@ export default {
       this.modelConfig.priority = rowData.priority
       this.$root.JQ('#add_edit_Modal').modal('show')
     },
+    delPathconfirm (rowData) {
+      this.ModelDelConfig =  {
+        deleteWarning: true,
+        msg: rowData.keyword,
+        callback: () => {
+          this.delPathItem(rowData)
+        }
+      }
+    },
     delPathItem (rowData) {
-      this.$parent.$parent.delConfirm({name: rowData.keyword}, () => {
-        let params = {id: rowData.id}
-        this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.logManagement.delete.api, params, () => {
-          this.$Message.success(this.$t('tips.success'))
-          this.requestData(this.type, this.typeValue)
-        })
+      let params = {id: rowData.id}
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.logManagement.delete.api, params, () => {
+        this.$Message.success(this.$t('tips.success'))
+        this.requestData(this.type, this.typeValue)
       })
     },
     editPost () {
