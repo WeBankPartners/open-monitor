@@ -98,6 +98,14 @@ export default {
     if (!this.$root.$validate.isEmpty_reset(this.$route.params)) {
       this.endpoint = this.$route.params.option_value
     }
+    if (this.$root.$validate.isEmpty_reset(this.$route.params) && !this.$root.$validate.isEmpty_reset(this.$route.query)) {
+      this.endpoint = this.$route.query.endpoint
+      this.$root.$store.commit('storeip', {
+        id: '',
+        option_value: this.$route.query.endpoint,
+        type: this.$route.query.type
+      })
+    }
   },
   methods: {
     getMainConfig () {

@@ -99,6 +99,7 @@
         </div>
       </div>
     </ModalComponent>
+    <ModalDel :ModelDelConfig="ModelDelConfig"></ModalDel>
   </div>
 </template>
 <script>
@@ -138,7 +139,7 @@
   const btn = [
     {btn_name: 'button.thresholdManagement', btn_func: 'thresholdConfig'},
     {btn_name: 'button.historicalAlert', btn_func: 'historyAlarm'},
-    {btn_name: 'button.remove', btn_func: 'delF'},
+    {btn_name: 'button.remove', btn_func: 'deleteConfirm'},
     {btn_name: 'button.logConfiguration', btn_func: 'logManagement'},
     {btn_name: 'button.processConfiguration', btn_func: 'processManagement'},
     {btn_name: 'button.businessConfiguration', btn_func: 'businessManagement'},
@@ -147,6 +148,11 @@
     name: '',
     data() {
       return {
+        ModelDelConfig: {
+          deleteWarning: false,
+          msg: '',
+          callback: null
+        },
         pageConfig: {
           CRUD: this.$root.apiCenter.endpointManagement.list.api,
           researchConfig: {
@@ -318,7 +324,7 @@
           moreBtnGroup.push('processManagement', 'businessManagement')
         }
         if (this.showGroupMsg) {
-          moreBtnGroup.push('delF')
+          moreBtnGroup.push('deleteConfirm')
         }
         return moreBtnGroup
       },
@@ -346,21 +352,28 @@
           this.initData(this.pageConfig.CRUD, this.pageConfig)
         })
       },
-      delF (rowData) {
-        this.$parent.$parent.delConfirm({name: rowData.guid}, () => {
-          let endpoints = []
-          this.pageConfig.table.tableData.forEach((item)=>{
-            endpoints.push(item.guid.split(':')[0])
-          })
-          let params = {
-            grp: this.groupMsg.id,
-            endpoints: [parseInt(rowData.id)],
-            operation: 'delete'
+      deleteConfirm (rowData) {
+        this.ModelDelConfig =  {
+          deleteWarning: true,
+          msg: rowData.guid,
+          callback: () => {
+            this.delF(rowData)
           }
-          this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.endpointManagement.update.api, params, () => {
-            this.$Message.success(this.$t('tips.success'))
-            this.initData(this.pageConfig.CRUD, this.pageConfig)
-          })
+        }
+      },
+      delF (rowData) {
+        let endpoints = []
+        this.pageConfig.table.tableData.forEach((item)=>{
+          endpoints.push(item.guid.split(':')[0])
+        })
+        let params = {
+          grp: this.groupMsg.id,
+          endpoints: [parseInt(rowData.id)],
+          operation: 'delete'
+        }
+        this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.endpointManagement.update.api, params, () => {
+          this.$Message.success(this.$t('tips.success'))
+          this.initData(this.pageConfig.CRUD, this.pageConfig)
         })
       },
       thresholdConfig (rowData) {
