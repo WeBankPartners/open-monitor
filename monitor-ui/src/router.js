@@ -195,6 +195,13 @@ const router = new Router({
       title: "register"
     },
     {
+      path: "/endpointViewExternalCall",
+      name: "endpointViewExternalCall",
+      title: "对象监控外链调用",
+      meta: {},
+      component: () => import("@/views/endpoint-view-external-call")
+    },
+    {
       path: "/test",
       name: "test",
       component: () => import("@/views/test"),
@@ -204,7 +211,7 @@ const router = new Router({
 });
 
 router.beforeEach((to, from, next) => {
-  if (!cookies.getCookie('Authorization')&& to.name != 'login'&& to.name != 'register') {
+  if (!cookies.getCookie('Authorization')&& to.name != 'login'&& to.name != 'register'&& to.name != 'endpointViewExternalCall') {
     next({name:'login'})
   } else {
     next()
