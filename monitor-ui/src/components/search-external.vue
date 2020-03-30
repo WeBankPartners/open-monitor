@@ -2,21 +2,21 @@
   <div class="" style="display:inline-block">
    <ul class="search-ul">
       <li class="search-li">
-        <span class="params-title">监控对象：</span>
+        <span class="params-title">{{$t('field.endpoint')}}：</span>
         <Tag color="blue">VM_0_16_centos_192.168.0.16_host</Tag>
       </li>
       <li class="search-li">
-        <span class="params-title">时间段：</span>
+        <span class="params-title">{{$t('field.relativeTime')}}：</span>
         <Select v-model="timeTnterval" style="width:80px" @on-change="getChartsConfig">
           <Option v-for="item in dataPick" :value="item.value" :key="item.value">{{ item.label }}</Option>
         </Select>
       </li>
       <li class="search-li">
-        <span class="params-title">日期：</span>
+        <span class="params-title">{{$t('field.timeInterval')}}：</span>
         <DatePicker type="daterange" placement="bottom-end" @on-change="datePick" :placeholder="$t('placeholder.datePicker')" style="width: 200px"></DatePicker>
       </li>
       <li class="search-li">
-        <span class="params-title">刷新频率：</span>
+        <span class="params-title">{{$t('placeholder.refresh')}}：</span>
         <Select v-model="autoRefresh" style="width:100px" @on-change="getChartsConfig" :placeholder="$t('placeholder.refresh')">
           <Option v-for="item in autoRefreshConfig" :value="item.value" :key="item.value">{{ item.label }}</Option>
         </Select>
@@ -65,6 +65,7 @@ export default {
     if (this.$root.$validate.isEmpty_reset(this.$route.params) && !this.$root.$validate.isEmpty_reset(this.$route.query)) {
       this.endpoint = this.$route.query.endpoint
       cookies.setAuthorization(`${this.$route.query.token}`)
+      this.setLocale(this.$route.query.lang)
       this.endpointObject = {
         id: '',
         option_value: this.$route.query.endpoint,
@@ -137,7 +138,12 @@ export default {
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET',url, params, responseData => {
         this.$parent.manageCharts(responseData, params)
       },{isNeedloading: false})
-    }
+    },
+    setLocale(lang) {
+      localStorage.setItem('lang', lang)
+      this.$i18n.locale = lang
+      this.$validator.locale = lang
+    },
   },
   components: {
   }
