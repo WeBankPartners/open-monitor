@@ -2,13 +2,9 @@ import store from './store'
 import router from './router-plugin'
 import routerP from './router-plugin-p'
 import '@/assets/css/local.bootstrap.css'
-// import '@/assets/css/global.css'
 import 'bootstrap/dist/js/bootstrap.min.js'
 import 'font-awesome/css/font-awesome.css'
 import "./plugins/iview.js";
-// import ViewUI from 'view-design';
-// import 'view-design/dist/styles/iview.css'
-// window.use(ViewUI)
 // import '@/assets/locale/language'
 import httpRequestEntrance from '@/assets/js/httpRequestEntrance.js'
 import jquery from 'jquery'
@@ -17,6 +13,7 @@ import {validate} from '@/assets/js/validate.js'
 import VeeValidate from '@/assets/veeValidate/VeeValidate'
 import apiCenter from '@/assets/config/api-center.json'
 import vuex from 'vuex'
+
 window.use(vuex)
 window.addOptions({
   $httpRequestEntrance: httpRequestEntrance,
@@ -26,6 +23,17 @@ window.addOptions({
   $tableUtil: tableUtil,
   apiCenter: apiCenter
 })
+
+const implicitRoute = {
+  'monitorConfigIndex/groupManagement': {'zh-CN': '监控', 'en-US': 'Monitor'},
+  'monitorConfigIndex/thresholdManagement': {'zh-CN': '监控', 'en-US': 'Monitor'},
+  'monitorConfigIndex/logManagement': {'zh-CN': '监控', 'en-US': 'Monitor'},
+  'monitorConfigIndex/resourceLevel': {'zh-CN': '监控', 'en-US': 'Monitor'},
+  'viewConfig': {'zh-CN': '监控', 'en-US': 'Monitor'},
+  'editView': {'zh-CN': '监控', 'en-US': 'Monitor'},
+
+}
+window.addImplicitRoute(implicitRoute)
 window.addRoutersWithoutPermission(routerP, 'open-monitor')
 window.addRoutes(router, 'open-monitor')
 
