@@ -43,6 +43,13 @@ const routerP = [
     // component: editView
   },
   {
+    path: "/viewChart",
+    name: "viewChart",
+    // title: "自定义视图放大",
+    // meta: {},
+    // component: viewChart
+  },
+  {
     path: "/portal",
     name: "portal",
     // title: "搜索主页",
