@@ -97,6 +97,7 @@ export default {
     this.getEndpointList('.')
     if (!this.$root.$validate.isEmpty_reset(this.$route.params)) {
       this.endpoint = this.$route.params.option_value
+      this.endpointObject = this.$route.params
     }
     if (this.$root.$validate.isEmpty_reset(this.$route.params) && !this.$root.$validate.isEmpty_reset(this.$route.query)) {
       this.endpoint = this.$route.query.endpoint
