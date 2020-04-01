@@ -93,8 +93,6 @@ export default {
       this.getChartConfig()
     },
     getChartConfig (chartItem) {
-      console.log(chartItem)
-      console.log(333333)
       this.chartItem = chartItem
       let params = {
         id: chartItem.id,
@@ -109,7 +107,7 @@ export default {
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/dashboard/newchart', [params], responseData => {
       
-        const chartConfig = {eye: false}
+        const chartConfig = {eye: false,clear:true}
         readyToDraw(this,responseData, 1, chartConfig)
       })
     },
