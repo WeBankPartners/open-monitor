@@ -254,7 +254,7 @@ func recursiveData(guid string, prt []*m.PanelRecursiveTable, length,depth int) 
 				for mk,mv := range tmpMap {
 					chartTables := getChartsByEndpointType(mk)
 					for _,cv := range chartTables {
-						obj.Charts = append(obj.Charts, &m.ChartModel{Endpoint:mv, Metric:strings.Split(cv.Metric, "^"), Aggregate:cv.AggType})
+						obj.Charts = append(obj.Charts, &m.ChartModel{Id:cv.Id, Endpoint:mv, Metric:strings.Split(cv.Metric, "^"), Aggregate:cv.AggType})
 					}
 				}
 				break
@@ -271,7 +271,7 @@ func recursiveData(guid string, prt []*m.PanelRecursiveTable, length,depth int) 
 
 func getChartsByEndpointType(endpointType string) []*m.ChartTable {
 	var result []*m.ChartTable
-	x.SQL("SELECT t3.group_id,t3.metric,t3.unit,t3.title,t3.agg_type FROM dashboard t1 LEFT JOIN panel t2 ON t1.panels_group=t2.group_id LEFT JOIN chart t3 ON t2.chart_group=t3.group_id WHERE t1.dashboard_type=? ORDER BY t3.group_id,t3.id", endpointType).Find(&result)
+	x.SQL("SELECT t3.id,t3.group_id,t3.metric,t3.unit,t3.title,t3.agg_type FROM dashboard t1 LEFT JOIN panel t2 ON t1.panels_group=t2.group_id LEFT JOIN chart t3 ON t2.chart_group=t3.group_id WHERE t1.dashboard_type=? ORDER BY t3.group_id,t3.id", endpointType).Find(&result)
 	if len(result) == 0 {
 		return result
 	}
