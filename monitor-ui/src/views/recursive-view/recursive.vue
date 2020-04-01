@@ -71,7 +71,7 @@ export default {
   },
   methods: {
     receiveConfig (chartItem) {
-      EventBus.$emit("aaa", chartItem)
+      EventBus.$emit("callMaxChart", chartItem)
     },
     hide (index) {
       this.recursiveViewConfig[index]._isShow = !this.recursiveViewConfig[index]._isShow
