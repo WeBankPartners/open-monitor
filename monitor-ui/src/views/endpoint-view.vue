@@ -34,10 +34,8 @@ export default {
     }
   },
   created () {
-    EventBus.$on("aaa", data => {
-      console.log(111)
-      console.log(data)
-      this.hello(data)
+    EventBus.$on("callMaxChart", data => {
+      this.zoomChart(data)
     })
   },
   mounted() {
@@ -77,10 +75,9 @@ export default {
         this.recursiveViewConfig = [responseData]
       })
     },
-    hello (data) {
+    zoomChart (data) {
       this.showMaxChart = true
       this.$refs.maxChart.getChartConfig(data)
-      return
     }
       
   },
