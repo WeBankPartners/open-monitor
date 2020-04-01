@@ -92,7 +92,9 @@ export default {
       }
       this.getChartConfig()
     },
-    getChartConfig (chartItem=this.chartItem) {
+    getChartConfig (chartItem) {
+      console.log(chartItem)
+      console.log(333333)
       this.chartItem = chartItem
       let params = {
         id: chartItem.id,
