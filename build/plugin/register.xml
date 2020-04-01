@@ -540,7 +540,7 @@
             </interface>
             <interface action="delete" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST">
                 <inputParameters>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:system.guid" required="Y">guid</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:app_system.guid" required="Y">guid</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -553,7 +553,7 @@
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:subsys.guid" required="Y">guid</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:subsys.key_name" required="Y">display_name</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:subsys.system>wecmdb:system.guid" required="Y">parent</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:subsys.app_system>wecmdb:app_system.guid" required="Y">parent</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:subsys.NONE" required="N">endpoint</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:subsys.manage_role>wecmdb:manage_role.email>" required="N">email</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:subsys.manage_role>wecmdb:manage_role.phone" required="N">phone</parameter>
