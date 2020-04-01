@@ -16,7 +16,13 @@
             :recursiveViewConfig="item.children"></recursive>
             <div>
               <template v-for="(chartItemx,chartIndexx) in item.charts">
-                <SingleChart :chartItemx="chartItemx" :chartIndex="chartIndexx" :key="chartIndexx" :params="params"> </SingleChart>
+                <SingleChart 
+                  :chartItemx="chartItemx" 
+                  :chartIndex="chartIndexx" 
+                  :key="chartIndexx" 
+                  :params="params"
+                  @sendConfig="receiveConfig"
+                  > </SingleChart>
               </template>
             </div>
           </div>
@@ -27,6 +33,7 @@
 </template>
 
 <script>
+import { EventBus } from "@/assets/js/event-bus.js"
 import SingleChart from '@/components/single-chart'
 export default {
   name: 'recursive',
@@ -63,6 +70,9 @@ export default {
     }) 
   },
   methods: {
+    receiveConfig (chartItem) {
+      EventBus.$emit("aaa", chartItem)
+    },
     hide (index) {
       this.recursiveViewConfig[index]._isShow = !this.recursiveViewConfig[index]._isShow
       this.$set(this.recursiveViewConfig, index, this.recursiveViewConfig[index])
