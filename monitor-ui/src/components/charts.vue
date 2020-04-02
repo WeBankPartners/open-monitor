@@ -21,17 +21,17 @@
       </template>
     </section>
     
-    <transition name="slide-fade">
+    <!-- <transition name="slide-fade">
       <div v-show="showMaxChart">
         <MaxChart ref="maxChart"></MaxChart>
       </div>
-    </transition>
+    </transition> -->
   </div>
 </template>
 
 <script>
 import SingleChart from '@/components/single-chart'
-import MaxChart from '@/components/max-chart'
+// import MaxChart from '@/components/max-chart'
 export default {
   name: '',
   data() {
@@ -101,18 +101,15 @@ export default {
 
       })
     },
-    hiddenDetailChart () {
-      // this.showMaxChart = false
-    },
     receiveConfig (chartItem) {
-      this.showMaxChart = true
-      this.$refs.maxChart.getChartConfig(chartItem)
+      this.$parent.showMaxChart = true
+      this.$parent.$refs.maxChart.getChartConfig(chartItem)
       return
     }
   },
   components: {
     SingleChart,
-    MaxChart
+    // MaxChart
   }
 }
 </script>

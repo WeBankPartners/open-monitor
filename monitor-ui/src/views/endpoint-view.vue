@@ -6,12 +6,17 @@
     <div v-if="recursiveViewConfig.length && showRecursive">
       <recursive :recursiveViewConfig="recursiveViewConfig" :params="params"></recursive>
     </div>
+    <Drawer title="View details" :width="800" :closable="false" v-model="showMaxChart">
+        <MaxChart ref="maxChart"></MaxChart>
+    </Drawer>
   </div>
 </template>
 <script>
+import { EventBus } from "@/assets/js/event-bus.js"
 import Search from '@/components/search'
 import Charts from '@/components/charts'
 import recursive from '@/views/recursive-view/recursive'
+import MaxChart from '@/components/max-chart'
 export default {
   name: 'endpoint-view',
   data() {
@@ -22,8 +27,14 @@ export default {
       charts: {
         chartsConfig: []
       },
-      recursiveViewConfig: []
+      recursiveViewConfig: [],
+      showMaxChart: false
     }
+  },
+  created () {
+    EventBus.$on("callMaxChart", data => {
+      this.zoomChart(data)
+    })
   },
   mounted() {
     this.$refs.search.getChartsConfig() 
@@ -61,12 +72,18 @@ export default {
         this.showRecursive = true
         this.recursiveViewConfig = [responseData]
       })
+    },
+    zoomChart (data) {
+      this.showMaxChart = true
+      this.$refs.maxChart.getChartConfig(data)
     }
+      
   },
   components: {
     Search,
     Charts,
-    recursive
+    recursive,
+    MaxChart
   }
 }
 </script>
