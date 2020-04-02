@@ -8,7 +8,6 @@
 </template>
 
 <script>
-import { EventBus } from "@/assets/js/event-bus.js"
 import recursive from '@/views/monitor-config/resource-recursive'
 export default {
   name: '',
@@ -32,7 +31,7 @@ export default {
     }
   },
   mounted () {
-    EventBus.$on("updateResource", () => {
+    this.$root.$eventBus.$on('updateResource', () => {
       this.getAllResource()
     });
     this.getAllResource()
