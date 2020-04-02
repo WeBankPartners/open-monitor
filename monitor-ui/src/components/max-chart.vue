@@ -120,6 +120,9 @@ export default {
     z-index: 2;
     padding: 12px;
   }
+  li {
+    list-style: none;
+  }
   .condition {
     display: inline-block;
   }
