@@ -117,8 +117,6 @@ export default {
   .max-chart {
     min-height: 540px;
     background: white;
-    position: absolute;
-    right: 0;
     z-index: 2;
     padding: 12px;
   }
