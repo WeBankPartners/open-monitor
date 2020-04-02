@@ -6,11 +6,9 @@
     <div v-if="recursiveViewConfig.length && showRecursive">
       <recursive :recursiveViewConfig="recursiveViewConfig" :params="params"></recursive>
     </div>
-    <transition name="slide-fade">
-      <div v-show="showMaxChart">
+    <Drawer title="View details" :width="800" :closable="false" v-model="showMaxChart">
         <MaxChart ref="maxChart"></MaxChart>
-      </div>
-    </transition>
+    </Drawer>
   </div>
 </template>
 <script>
