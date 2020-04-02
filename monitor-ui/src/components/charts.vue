@@ -20,18 +20,11 @@
           <SingleChart @sendConfig="receiveConfig" :chartItemx="chartItemx" :chartIndex="chartIndexx" :key="chartIndexx" :params="params"> </SingleChart>
       </template>
     </section>
-    
-    <!-- <transition name="slide-fade">
-      <div v-show="showMaxChart">
-        <MaxChart ref="maxChart"></MaxChart>
-      </div>
-    </transition> -->
   </div>
 </template>
 
 <script>
 import SingleChart from '@/components/single-chart'
-// import MaxChart from '@/components/max-chart'
 export default {
   name: '',
   data() {
@@ -40,9 +33,7 @@ export default {
       activeCharts: {},
       btns: [],
       tagsUrl: '',
-      params: {},
-      showMaxChart: false,
-      activeBtn: '',
+      params: {}
     }
   },
   props: {
@@ -121,13 +112,4 @@ export default {
   .btn-content {
   padding: 2px;
   }
-
-  /* 可以设置不同的进入和离开动画 */
-/* 设置持续时间和动画函数 */
-.slide-fade-enter-active {
-  transition: all .3s ease;
-}
-.slide-fade-leave-active {
-  transition: all .3s ease;
-}
 </style>
