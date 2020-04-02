@@ -6,7 +6,7 @@
     <div v-if="recursiveViewConfig.length && showRecursive">
       <recursive :recursiveViewConfig="recursiveViewConfig" :params="params"></recursive>
     </div>
-    <Drawer title="View details" :width="800" :closable="false" v-model="showMaxChart">
+    <Drawer title="View details" :width="zoneWidth" :closable="false" v-model="showMaxChart">
         <MaxChart ref="maxChart"></MaxChart>
     </Drawer>
   </div>
@@ -28,13 +28,15 @@ export default {
         chartsConfig: []
       },
       recursiveViewConfig: [],
-      showMaxChart: false
+      showMaxChart: false,
+      zoneWidth: '800'
     }
   },
   created () {
     EventBus.$on("callMaxChart", data => {
       this.zoomChart(data)
     })
+    this.zoneWidth = window.screen.width * 0.65
   },
   mounted() {
     this.$refs.search.getChartsConfig() 
