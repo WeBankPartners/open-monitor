@@ -28,7 +28,6 @@
         </button>
       </li>
     </ul>
-    {{endpointObject}}
   </div>
 </template>
 
