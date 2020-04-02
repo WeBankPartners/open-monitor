@@ -61,7 +61,7 @@
     "setUp": "设置"
   },
   "button": {
-    "logOut": "注销",
+    "Logout": "注销",
     "search": "搜索",
     "add": "新增",
     "edit": "编辑",
