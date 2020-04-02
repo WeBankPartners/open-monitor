@@ -33,17 +33,26 @@
         </a>
         <DropdownMenu slot="list">
           <DropdownItem style="width:110px">
-            <span>{{$t('title.theme')}}:</span>
-            <div class="set-theme" :style="{background: !defaultTheme? 'white':'black'}" @click="changeTheme"></div>
+            <span @click="changeTheme">
+              <a>{{$t('title.theme')}}:</a>
+              <div class="set-theme" :style="{background: !defaultTheme? 'white':'black'}" ></div>
+            </span>
           </DropdownItem>
           <DropdownItem style="width:110px">
-            <span>{{$t('title.setUp')}}:</span>
-            <div @click="setUp" class="set-theme">
-              <i class="fa fa-cog" aria-hidden="true"></i>
-            </div>
+            <span @click="setUp">
+              <a>{{$t('title.setUp')}}:</a>
+              <div class="set-theme">
+                <i class="fa fa-cog" aria-hidden="true"></i>
+              </div>
+            </span>
           </DropdownItem>
-          <DropdownItem style="width:110px;text-aglin:right;">
-            <a @click="logout">{{$t('button.logOut')}}</a>
+          <DropdownItem style="width:110px;">
+            <span @click="logout">
+              <a>{{$t('button.Logout')}}:</a>
+              <div class="set-theme">
+                <i class="fa fa-sign-out" aria-hidden="true"></i>
+              </div>
+            </span>
           </DropdownItem>
         </DropdownMenu>
       </Dropdown> 
