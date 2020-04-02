@@ -12,7 +12,6 @@
   </div>
 </template>
 <script>
-import { EventBus } from "@/assets/js/event-bus.js"
 import Search from '@/components/search'
 import Charts from '@/components/charts'
 import recursive from '@/views/recursive-view/recursive'
@@ -33,7 +32,7 @@ export default {
     }
   },
   created () {
-    EventBus.$on("callMaxChart", data => {
+    this.$root.$eventBus.$on('callMaxChart', data => {
       this.zoomChart(data)
     })
     this.zoneWidth = window.screen.width * 0.65
