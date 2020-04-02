@@ -33,7 +33,6 @@
 </template>
 
 <script>
-import { EventBus } from "@/assets/js/event-bus.js"
 import SingleChart from '@/components/single-chart'
 export default {
   name: 'recursive',
@@ -71,7 +70,7 @@ export default {
   },
   methods: {
     receiveConfig (chartItem) {
-      EventBus.$emit("callMaxChart", chartItem)
+      this.$root.$eventBus.$emit('callMaxChart', chartItem)
     },
     hide (index) {
       this.recursiveViewConfig[index]._isShow = !this.recursiveViewConfig[index]._isShow
