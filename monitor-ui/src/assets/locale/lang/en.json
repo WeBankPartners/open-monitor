@@ -92,7 +92,8 @@
     "chart": {
       "zoom": "Zoom in",
       "back": "Reset",
-      "dataView": "Enlarged View"
+      "dataView": "Enlarged View",
+      "editTitle": "Edit Title"
     }
   },
   "table": {
