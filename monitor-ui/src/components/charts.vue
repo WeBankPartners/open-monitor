@@ -18,6 +18,7 @@
           <SingleChart @sendConfig="receiveConfig" @editTitle="editTitle" :chartItemx="chartItemx" :chartIndex="chartIndexx" :key="chartIndexx" :params="params"> </SingleChart>
       </template>
     </section>
+     <ModalComponent :modelConfig="modelConfig"></ModalComponent>
   </div>
 </template>
 
@@ -32,7 +33,20 @@ export default {
       btns: [],
       tagsUrl: '',
       params: {},
-      currentParameter: null
+      currentParameter: null,
+      chartId: null,
+      modelConfig: {
+        modalId: 'edit_Modal',
+        modalTitle: 'button.chart.editTitle',
+        saveFunc: 'titleSave',
+        isAdd: true,
+        config: [
+          {label: 'tableKey.name', value: 'name', placeholder: 'tips.inputRequired', v_validate: 'required:true|min:2|max:60', disabled: false, type: 'text'}
+        ],
+        addRow: { // [通用]-保存用户新增、编辑时数据
+          name: null
+        },
+      },
     }
   },
   props: {
@@ -96,13 +110,19 @@ export default {
       this.$parent.$refs.maxChart.getChartConfig(chartItem)
       return
     },
-    editTitle (title) {
-      console.log(title)
+    editTitle (config) {
+      this.modelConfig.addRow.name = config.title
+      this.chartId = config.id
+      this.$root.JQ('#edit_Modal').modal('show')
+    },
+    titleSave () {
+      console.log(this.modelConfig.addRow.name)
+      this.$root.JQ('#edit_Modal').modal('hide')
+      this.refreshCharts()
     }
   },
   components: {
     SingleChart,
-    // MaxChart
   }
 }
 </script>
