@@ -92,7 +92,8 @@
     "chart": {
       "zoom": "数据区域缩放",
       "back": "恢复",
-      "dataView": "放大"
+      "dataView": "放大",
+      "editTitle": "编辑标题"
     }
   },
   "table": {
