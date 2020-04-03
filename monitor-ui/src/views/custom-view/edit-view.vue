@@ -1,13 +1,5 @@
 <template>
   <div class>
-    <!-- <header>
-        <div style="display:flex;justify-content:space-between">
-            <div class="header-name">
-              <i class="fa fa-th-large fa-2x" aria-hidden="true"></i>
-              <span> 12123123</span>
-            </div>
-        </div>
-    </header>-->
     <div class="zone zone-chart">
       <div class="zone-chart-title">{{panalTitle}}</div>
       <div v-if="!noDataTip">
@@ -67,6 +59,7 @@
                       v-model="templateQuery.endpoint"
                       filterable
                       remote
+                      @on-open-change="getEndpointList('.')"
                       :remote-method="getEndpointList"
                     >
                       <Option
@@ -206,7 +199,7 @@ export default {
       this.$router.push({ path: "viewConfig" });
     } else {
       if (!this.$root.$validate.isEmpty_reset(this.$route.params.templateData.cfg)) {
-        this.getEndpointList('.')
+        this.getEndpointList()
         this.viewData = JSON.parse(this.$route.params.templateData.cfg);
         this.viewData.forEach((itemx, index) => {
           if (itemx.viewConfig.id === this.$route.params.panal.id) {
@@ -252,7 +245,7 @@ export default {
     initQueryList(query) {
       this.chartQueryList = query;
     },
-    getEndpointList(query) {
+    getEndpointList(query='.') {
       let params = {
         search: query,
         page: 1,
@@ -263,6 +256,7 @@ export default {
         this.$root.apiCenter.resourceSearch.api,
         params,
         responseData => {
+          this.options = []
           responseData.forEach((item) => {
             if (item.id !== -1) {
               this.options.push(item)
