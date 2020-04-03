@@ -9,10 +9,8 @@
     <section>
       <template v-if="btns.length">
         <div class="btn-content">
-          <RadioGroup v-model="activeBtn" size="small" type="button">
-            <template v-for="(btnItem,btnIndex) in btns">
-              <Radio :label="btnItem.option_value" :key="btnIndex">{{btnItem.option_text}}</Radio>
-            </template>
+          <RadioGroup v-model="currentParameter" size="small" type="button">
+              <Radio v-for="(btnItem,btnIndex) in btns" :label="btnItem.option_value" :key="btnIndex" >{{btnItem.option_text}}</Radio>
           </RadioGroup>
         </div>
       </template>
@@ -33,14 +31,15 @@ export default {
       activeCharts: {},
       btns: [],
       tagsUrl: '',
-      params: {}
+      params: {},
+      currentParameter: null
     }
   },
   props: {
     charts: Object
   },
   watch: {
-    activeBtn: function () {
+    currentParameter: function () {
       this.pitchOnBtn()
     }
   },
@@ -67,7 +66,7 @@ export default {
         if (item.tabTape.name === name) {
           this.btns = item.btns
           if (this.btns.length !== 0) {
-            this.activeBtn = this.btns[0].option_value
+            this.currentParameter = this.btns[0].option_value
           }
           this.tagsUrl = item.tagsUrl     
           this.$nextTick(() => {
@@ -77,7 +76,7 @@ export default {
       })
     },
     pitchOnBtn() {
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.tagsUrl +  this.activeBtn, '', responseData => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.tagsUrl +  this.currentParameter, '', responseData => {
         this.activeCharts.forEach((element,index) => {
            element.metric = responseData[index].metric
         })

@@ -10,6 +10,7 @@
           ref="select"
           clearable
           :placeholder="$t('placeholder.input')"
+          @on-open-change="getEndpointList('.')"
           :remote-method="getEndpointList"
           >
           <Option v-for="(option, index) in endpointList" :value="option.option_value" :key="index">
@@ -53,10 +54,10 @@ export default {
     },
   },
   mounted () {
-    this.getEndpointList('.')
+    this.getEndpointList()
   },
   methods: {
-    getEndpointList(query) {
+    getEndpointList(query='.') {
       let params = {
         search: query,
         page: 1,
