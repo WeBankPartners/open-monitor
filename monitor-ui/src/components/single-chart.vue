@@ -86,7 +86,8 @@ export default {
         })
       }
       this.$httpRequestEntrance.httpRequestEntrance('POST', 'dashboard/newchart', params, responseData => {
-        readyToDraw(this,responseData, this.chartIndex)
+        const chartConfig = {editTitle: true}
+        readyToDraw(this,responseData, this.chartIndex, chartConfig)
       })
     }
   },
