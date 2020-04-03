@@ -15,7 +15,7 @@
         </div>
       </template>
       <template v-for="(chartItemx,chartIndexx) in activeCharts">
-          <SingleChart @sendConfig="receiveConfig" :chartItemx="chartItemx" :chartIndex="chartIndexx" :key="chartIndexx" :params="params"> </SingleChart>
+          <SingleChart @sendConfig="receiveConfig" @editTitle="editTitle" :chartItemx="chartItemx" :chartIndex="chartIndexx" :key="chartIndexx" :params="params"> </SingleChart>
       </template>
     </section>
   </div>
@@ -95,6 +95,9 @@ export default {
       this.$parent.showMaxChart = true
       this.$parent.$refs.maxChart.getChartConfig(chartItem)
       return
+    },
+    editTitle (title) {
+      console.log(title)
     }
   },
   components: {
