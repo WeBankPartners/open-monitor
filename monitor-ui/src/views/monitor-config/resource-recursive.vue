@@ -5,7 +5,8 @@
         <div @click="hide(itemIndex)" class="tree-title" :style="stylePadding">
           <div style="display:flex;justify-content: space-between;">
             <div>
-              <h5>{{item.display_name}}</h5>
+              <span class="title-style">{{item.display_name}}</span>
+              <Tag class="tag-width">{{item.type}}</Tag>
             </div>
             <div>
               <button class="btn-cancle-f btn-small" @click="associatedRole(item)">{{$t('resourceLevel.addAssociatedRole')}}</button>
@@ -129,6 +130,7 @@ export default {
   name: 'recursive',
   data() {
     return {
+      cacheColor: {},
       ModelDelConfig: {
         deleteWarning: false,
         msg: '',
@@ -412,5 +414,11 @@ export default {
     border-right: none;
     padding: 4px 0 4px 4px;
     margin: 4px 0 4px 4px;
+  }
+  .title-style {
+    font-size: 14px;
+    font-weight: 500;
+    padding-right: 8px;
+    vertical-align: middle;
   }
 </style>
