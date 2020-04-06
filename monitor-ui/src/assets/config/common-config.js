@@ -56,3 +56,28 @@ export const priorityList = [
   {label: 'medium', value: 'medium'},
   {label: 'low', value: 'low'}
 ]
+
+export const endpointTag = {
+  host: 'cyan',
+  mysql: 'blue',
+  redis: 'geekblue',
+  tomcat: 'purple'
+}
+
+export const randomColor = [
+  'primary', 
+  'success', 
+  'warning', 
+  'blue', 
+  'green', 
+  'red', 
+  'yellow', 
+  'pink', 
+  'magenta', 
+  'volcano', 
+  'orange', 
+  'gold', 
+  'lime', 
+  'cyan', 
+  'geekblue', 
+  'purple']

@@ -109,6 +109,7 @@ CREATE TABLE `panel` (
   `tags_url` varchar(200) NOT NULL DEFAULT '',
   `tags_key` varchar(50) DEFAULT '',
   `chart_group` int(11) DEFAULT '0',
+  `auto_display` int(11) DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `dashboard_panel_index` (`group_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
@@ -328,6 +329,7 @@ CREATE TABLE `panel_recursive` (
   `firing_callback_key` VARCHAR(50) DEFAULT '',
   `recover_callback_name` VARCHAR(100) DEFAULT '',
   `recover_callback_key` VARCHAR(50) DEFAULT '',
+  `obj_type` varchar(50) DEFAULT 'object',
   `update_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`guid`)
 ) ENGINE=INNODB DEFAULT CHARSET=utf8;
