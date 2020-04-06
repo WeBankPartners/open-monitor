@@ -10,7 +10,7 @@ import (
 
 func GetOrganizationList() (result []*m.OrganizationPanel,err error) {
 	var data []*m.PanelRecursiveTable
-	err = x.SQL("SELECT guid,display_name,parent FROM panel_recursive").Find(&data)
+	err = x.SQL("SELECT * FROM panel_recursive").Find(&data)
 	if err != nil {
 		mid.LogError("get panel_recursive table error", err)
 		return result,err
@@ -19,8 +19,10 @@ func GetOrganizationList() (result []*m.OrganizationPanel,err error) {
 		return result,err
 	}
 	tmpMap := make(map[string]string)
+	objTypeMap := make(map[string]string)
 	for _,v := range data {
 		tmpMap[v.Guid] = v.DisplayName
+		objTypeMap[v.Guid] = v.ObjType
 	}
 	var headers []string
 	for _,v := range data {
@@ -40,7 +42,7 @@ func GetOrganizationList() (result []*m.OrganizationPanel,err error) {
 		}
 	}
 	for _,v := range headers {
-		tmpNodeList := recursiveOrganization(data, v, m.OrganizationPanel{Guid:v, DisplayName:tmpMap[v]})
+		tmpNodeList := recursiveOrganization(data, v, m.OrganizationPanel{Guid:v, DisplayName:tmpMap[v], Type:objTypeMap[v]})
 		result = append(result, &tmpNodeList)
 	}
 	return result,nil
@@ -59,7 +61,7 @@ func recursiveOrganization(data []*m.PanelRecursiveTable, parent string, tmpNode
 			}
 		}
 		if tmpFlag {
-			tn := recursiveOrganization(data, v.Guid, m.OrganizationPanel{Guid:v.Guid, DisplayName:v.DisplayName})
+			tn := recursiveOrganization(data, v.Guid, m.OrganizationPanel{Guid:v.Guid, DisplayName:v.DisplayName, Type:v.ObjType})
 			tmpNode.Children = append(tmpNode.Children, &tn)
 		}
 	}
@@ -77,7 +79,7 @@ func UpdateOrganization(operation string,param m.UpdateOrgPanelParam) error {
 		if len(tableData) > 0 {
 			return fmt.Errorf("guid already exist")
 		}
-		_,err = x.Exec("INSERT INTO panel_recursive(guid,display_name,parent) VALUE (?,?,?)", param.Guid, param.DisplayName, param.Parent)
+		_,err = x.Exec("INSERT INTO panel_recursive(guid,display_name,parent,obj_type) VALUE (?,?,?,?)", param.Guid, param.DisplayName, param.Parent, param.Type)
 	}else if operation == "edit" {
 		if param.Guid == "" || param.DisplayName == "" {
 			return fmt.Errorf("param guid and display_name cat not be empty")
@@ -86,7 +88,7 @@ func UpdateOrganization(operation string,param m.UpdateOrgPanelParam) error {
 		if len(tableData) == 0 {
 			return fmt.Errorf("guid: %s can not find any record", param.Guid)
 		}
-		_,err = x.Exec("UPDATE panel_recursive SET display_name=? WHERE guid=?", param.DisplayName, param.Guid)
+		_,err = x.Exec("UPDATE panel_recursive SET display_name=?,obj_type=? WHERE guid=?", param.DisplayName, param.Type, param.Guid)
 	}else if operation == "delete" {
 		if param.Guid == "" {
 			return fmt.Errorf("param guid cat not be empty")

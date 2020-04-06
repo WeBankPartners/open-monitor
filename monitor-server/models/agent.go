@@ -35,6 +35,7 @@ type PanelRecursiveTable struct {
 	FiringCallbackKey  string  `json:"firing_callback_key"`
 	RecoverCallbackName  string  `json:"recover_callback_name"`
 	RecoverCallbackKey  string  `json:"recover_callback_key"`
+	ObjType  string  `json:"obj_type"`
 }
 
 type RecursivePanelObj struct {
