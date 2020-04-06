@@ -89,7 +89,7 @@ func ExportPanelAdd(c *gin.Context)  {
 			}
 			if tmpMessage != "" {
 				errorMessage = tmpMessage
-				tmpResult = append(tmpResult, resultOutputObj{CallbackParameter:v.CallbackParameter, ErrorCode:"1", ErrorMessage:tmpMessage})
+				tmpResult = append(tmpResult, resultOutputObj{Guid:v.Guid, CallbackParameter:v.CallbackParameter, ErrorCode:"1", ErrorMessage:tmpMessage})
 				successFlag = "1"
 				continue
 			}
@@ -97,10 +97,10 @@ func ExportPanelAdd(c *gin.Context)  {
 			if err != nil {
 				tmpMessage = fmt.Sprintf("Index:%s update database error:%v", v.CallbackParameter, err)
 				errorMessage = tmpMessage
-				tmpResult = append(tmpResult, resultOutputObj{CallbackParameter:v.CallbackParameter, ErrorCode:"1", ErrorMessage:tmpMessage})
+				tmpResult = append(tmpResult, resultOutputObj{Guid:v.Guid, CallbackParameter:v.CallbackParameter, ErrorCode:"1", ErrorMessage:tmpMessage})
 				successFlag = "1"
 			}else{
-				tmpResult = append(tmpResult, resultOutputObj{CallbackParameter:v.CallbackParameter, ErrorCode:"0", ErrorMessage:""})
+				tmpResult = append(tmpResult, resultOutputObj{Guid:v.Guid, CallbackParameter:v.CallbackParameter, ErrorCode:"0", ErrorMessage:""})
 			}
 		}
 		result = resultObj{ResultCode: successFlag, ResultMessage: errorMessage, Results: resultOutput{Outputs: tmpResult}}

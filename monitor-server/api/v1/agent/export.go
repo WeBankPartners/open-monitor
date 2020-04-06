@@ -27,6 +27,7 @@ type resultOutput struct {
 
 type resultOutputObj struct {
 	CallbackParameter  string  `json:"callbackParameter"`
+	Guid  string  `json:"guid"`
 	ErrorCode  string  `json:"errorCode"`
 	ErrorMessage  string  `json:"errorMessage"`
 }
