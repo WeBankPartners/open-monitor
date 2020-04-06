@@ -46,7 +46,8 @@
     "roleManagement":"角色管理",
     "role": "角色",
     "guid": "GUID",
-    "displayName": "显示名"
+    "displayName": "显示名",
+    "type": "类型"
   },
   "title": {
     "viewConfiguration": "视图配置",
