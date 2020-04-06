@@ -94,7 +94,7 @@ func GetPanels(c *gin.Context)  {
 		mid.ReturnValidateFail(c, "Parameter \"group\" is not number")
 		return
 	}
-	err,panels := db.GetPanels(groupId, endpoint)
+	err,panels := db.GetPanels(groupId)
 	if err != nil {
 		mid.ReturnError(c, "Get panels failed", err)
 		return
@@ -129,19 +129,19 @@ func GetPanels(c *gin.Context)  {
 		}
 		panelDto.Tags = tagsDto
 		var chartsDto []*m.ChartModel
-		for _,chart := range charts {
-			chartDto := m.ChartModel{Id:chart.Id, Col:chart.Col}
+		for _, chart := range charts {
+			chartDto := m.ChartModel{Id: chart.Id, Col: chart.Col}
 			chartDto.Url = `/dashboard/chart`
 			chartDto.Endpoint = []string{endpoint}
 			metricList := strings.Split(chart.Metric, "^")
-			if panel.TagsEnable && tagsValue != ""{
+			if panel.TagsEnable && tagsValue != "" {
 				var newMetricList []string
-				for _,m := range metricList {
-					newMetric := m+`/`+panel.TagsKey+`=`+tagsValue
+				for _, m := range metricList {
+					newMetric := m + `/` + panel.TagsKey + `=` + tagsValue
 					newMetricList = append(newMetricList, newMetric)
 				}
 				chartDto.Metric = newMetricList
-			}else{
+			} else {
 				chartDto.Metric = metricList
 			}
 			chartsDto = append(chartsDto, &chartDto)
@@ -494,6 +494,9 @@ func MainSearch(c *gin.Context)  {
 	if err != nil {
 		mid.ReturnError(c, "Search hosts failed", err)
 		return
+	}
+	for _,v := range result {
+		v.OptionTypeName = v.OptionType
 	}
 	if len(result) < 10 {
 		sysResult := db.SearchRecursivePanel(endpoint)
