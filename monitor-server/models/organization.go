@@ -3,6 +3,7 @@ package models
 type OrganizationPanel struct {
 	Guid  string  `json:"guid"`
 	DisplayName  string  `json:"display_name"`
+	Type  string  `json:"type"`
 	Children  []*OrganizationPanel  `json:"children"`
 }
 
@@ -10,6 +11,7 @@ type UpdateOrgPanelParam struct {
 	Guid  string  `json:"guid"`
 	DisplayName  string  `json:"display_name"`
 	Parent  string  `json:"parent"`
+	Type  string  `json:"type"`
 }
 
 type UpdateOrgPanelRoleParam struct {

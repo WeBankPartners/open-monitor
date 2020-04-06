@@ -57,20 +57,20 @@ func GetButton(bGroup int) (error, []*m.ButtonModel)  {
 	}
 }
 
-func GetPanels(pGroup int,endpoint string) (error, []*m.PanelTable) {
+func GetPanels(pGroup int) (error, []*m.PanelTable) {
 	var panels []*m.PanelTable
 	sql := `select * from panel where group_id=?`
 	err := x.SQL(sql, pGroup).Find(&panels)
 	if err!=nil {
 		mid.LogError("query panels fail", err)
 	}
-	if len(panels) > 0 {
-		var dashboards []*m.DashboardTable
-		sqlSec := `select dashboard_type from dashboard where panels_group=?`
-		err := x.SQL(sqlSec, pGroup).Find(&dashboards)
-		return err,panels
-	}
-	return fmt.Errorf("get panels error"), panels
+	//if len(panels) > 0 {
+	//	var dashboards []*m.DashboardTable
+	//	sqlSec := `select dashboard_type from dashboard where panels_group=?`
+	//	err := x.SQL(sqlSec, pGroup).Find(&dashboards)
+	//	return err,panels
+	//}
+	return err, panels
 }
 
 func GetCharts(cGroup int, chartId int, panelId int) (error, []*m.ChartTable) {
