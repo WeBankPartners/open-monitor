@@ -31,7 +31,7 @@
     "group": "组",
     "threshold": "阈值",
     "log": "关键字",
-    "resourceLevel": "资源层级",
+    "resourceLevel": "层级对象",
     "metric": "指标",
     "relativeTime": "时间段",
     "timeInterval": "时间区间",
@@ -46,7 +46,8 @@
     "roleManagement":"角色管理",
     "role": "角色",
     "guid": "GUID",
-    "displayName": "显示名"
+    "displayName": "显示名",
+    "type": "类型"
   },
   "title": {
     "viewConfiguration": "视图配置",
@@ -145,7 +146,7 @@
     "button": "删除"
   },
   "resourceLevel": {
-    "addPanel": "新增资源层级",
+    "addPanel": "新增层级对象",
     "addAssociatedRole": "配置关联角色",
     "addAssociatedObject": "配置关联对象",
     "alarmCallback": "告警回调",
