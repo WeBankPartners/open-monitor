@@ -76,6 +76,7 @@ export const drawChart = function(that,config,userConfig) {
     myChart.clear()
   }
   let option = {
+    backgroundColor: '#f5f7f9',
     title: {
       textStyle: {
         fontSize: 16,
