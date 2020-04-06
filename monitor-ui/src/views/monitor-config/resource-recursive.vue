@@ -44,6 +44,9 @@
         <FormItem :label="$t('field.displayName')">
             <Input v-model="currentData.display_name"></Input>
         </FormItem>
+        <FormItem :label="$t('field.type')">
+            <Input v-model="currentData.type"></Input>
+        </FormItem>
       </Form>
       <div slot="footer">
         <button class="btn-cancle-f" @click="isEditPanal = false">{{$t('button.cancle')}}</button>
@@ -143,7 +146,8 @@ export default {
       parentPanal: null,
       currentData: {
         guid: null,
-        display_name: null
+        display_name: null,
+        type: null
       },
 
       isAssociatedRole: false,
@@ -207,7 +211,8 @@ export default {
       this.parentPanal = panalData.guid
       this.currentData = {
         guid: null,
-        display_name: null
+        display_name: null,
+        type: null
       }
       this.isAdd = true
       this.isEditPanal = true
