@@ -46,6 +46,7 @@ type hostRequestObj struct {
 	Instance  string  `json:"instance"`
 	User  string  `json:"user"`
 	Password  string  `json:"password"`
+	JavaType  string  `json:"java_type"`
 }
 
 func ExportAgent(c *gin.Context)  {
@@ -58,7 +59,11 @@ func ExportAgent(c *gin.Context)  {
 	var result resultObj
 	illegal := true
 	for _,v := range m.Config().Agent {
-		if v.AgentType == agentType {
+		tmpAgentType := agentType
+		if tmpAgentType == "java" {
+			tmpAgentType = "tomcat"
+		}
+		if v.AgentType == tmpAgentType {
 			illegal = false
 			agentPort = v.Port
 			break
@@ -92,20 +97,24 @@ func ExportAgent(c *gin.Context)  {
 		errMessage := "Done"
 		// update table and register to consul
 		for _,v := range param.Inputs {
+			tmpAgentType := agentType
+			if v.JavaType == "tomcat" || v.Group == "default_tomcat_group" {
+				tmpAgentType = "tomcat"
+			}
 			var param m.RegisterParam
-			if agentType == "host" {
-				param = m.RegisterParam{Type: agentType, ExporterIp: v.HostIp, ExporterPort: agentPort}
+			if tmpAgentType == "host" {
+				param = m.RegisterParam{Type: tmpAgentType, ExporterIp: v.HostIp, ExporterPort: agentPort}
 			}else{
-				param = m.RegisterParam{Type: agentType, ExporterIp: v.InstanceIp, ExporterPort: v.Port, Instance: v.Instance, User:v.User, Password:v.Password}
+				param = m.RegisterParam{Type: tmpAgentType, ExporterIp: v.InstanceIp, ExporterPort: v.Port, Instance: v.Instance, User:v.User, Password:v.Password}
 			}
 			if action == "register" {
 				err = RegisterJob(param)
 			}else{
 				var endpointObj m.EndpointTable
-				if agentType == "host" {
-					endpointObj = m.EndpointTable{Ip: v.HostIp, ExportType: agentType}
+				if tmpAgentType == "host" {
+					endpointObj = m.EndpointTable{Ip: v.HostIp, ExportType: tmpAgentType}
 				}else{
-					endpointObj = m.EndpointTable{Ip: v.InstanceIp, ExportType: agentType, Name: v.Instance}
+					endpointObj = m.EndpointTable{Ip: v.InstanceIp, ExportType: tmpAgentType, Name: v.Instance}
 				}
 				db.GetEndpoint(&endpointObj)
 				if endpointObj.AddressAgent != "" {
@@ -126,12 +135,12 @@ func ExportAgent(c *gin.Context)  {
 			}
 			var msg string
 			if err != nil {
-				msg = fmt.Sprintf("%s %s:%s %s fail,error %v",action, agentType, v.HostIp, v.Instance, err)
+				msg = fmt.Sprintf("%s %s:%s %s fail,error %v",action, tmpAgentType, v.HostIp, v.Instance, err)
 				errMessage = msg
 				tmpResult = append(tmpResult, resultOutputObj{CallbackParameter:v.CallbackParameter, ErrorCode:"1", ErrorMessage:msg})
 				successFlag = "1"
 			}else{
-				msg = fmt.Sprintf("%s %s:%s %s succeed", action, agentType, v.HostIp, v.Instance)
+				msg = fmt.Sprintf("%s %s:%s %s succeed", action, tmpAgentType, v.HostIp, v.Instance)
 				tmpResult = append(tmpResult, resultOutputObj{CallbackParameter:v.CallbackParameter, ErrorCode:"0", ErrorMessage:""})
 			}
 			mid.LogInfo(msg)
@@ -193,6 +202,9 @@ func GetSystemDashboardUrl(c *gin.Context)  {
 
 func AlarmControl(c *gin.Context)  {
 	agentType := c.Param("name")
+	if agentType == "java" {
+		agentType = "tomcat"
+	}
 	isStop := false
 	action := "start"
 	if strings.Contains(c.Request.URL.String(), "stop") {
