@@ -282,6 +282,7 @@
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
             <interface action="delete" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST">
@@ -310,6 +311,7 @@
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
             <interface action="delete" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST">
@@ -536,6 +538,7 @@
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
             <interface action="delete" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST">
@@ -564,6 +567,7 @@
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
             <interface action="delete" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST">
@@ -592,6 +596,7 @@
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
             <interface action="delete" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST">
@@ -620,6 +625,7 @@
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
             <interface action="delete" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST">
@@ -648,6 +654,7 @@
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
             <interface action="delete" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST">
@@ -676,6 +683,7 @@
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
             <interface action="delete" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST">
@@ -704,6 +712,7 @@
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
             <interface action="delete" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST">
@@ -732,6 +741,7 @@
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
             <interface action="delete" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST">
@@ -760,6 +770,7 @@
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
             <interface action="delete" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST">
@@ -788,6 +799,7 @@
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
             <interface action="delete" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST">
