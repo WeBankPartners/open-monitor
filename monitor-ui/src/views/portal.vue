@@ -14,11 +14,7 @@
           :remote-method="getEndpointList"
           >
           <Option v-for="(option, index) in endpointList" :value="option.option_value" :key="index">
-            <Tag color="green" class="tag-width" v-if="option.type == 'sys'">system</Tag>
-            <Tag color="cyan" class="tag-width" v-if="option.type == 'host'">host</Tag>
-            <Tag color="blue" class="tag-width" v-if="option.type == 'mysql'">mysql </Tag>
-            <Tag color="geekblue" class="tag-width" v-if="option.type == 'redis'">redis </Tag>
-            <Tag color="purple" class="tag-width" v-if="option.type == 'tomcat'">tomcat</Tag>{{option.option_text}}</Option>
+            <Tag :color="endpointTag[option.option_type_name] || choiceColor(option.option_type_name, index)" class="tag-width">{{option.option_type_name}}</Tag>{{option.option_text}}</Option>
         </Select>
       </li>
       <li class="search-li">
@@ -33,6 +29,7 @@
 </template>
 
 <script>
+import {endpointTag, randomColor} from '@/assets/config/common-config'
 export default {
   name: '',
   data() {
@@ -40,6 +37,9 @@ export default {
       endpoint: '',
       endpointObject: {},
       endpointList: [],
+      endpointTag: endpointTag,
+      randomColor: randomColor,
+      cacheColor: {}
     }
   },
   watch: {
@@ -57,6 +57,17 @@ export default {
     this.getEndpointList()
   },
   methods: {
+    choiceColor (type,index) {
+      let color = ''
+      // eslint-disable-next-line no-prototype-builtins
+      if (Object.keys(this.cacheColor).includes(type)) {
+        color = this.cacheColor[type]
+      } else {
+        color = randomColor[this.count]
+        this.cacheColor[type] = randomColor[index]
+      }
+      return color
+    },
     getEndpointList(query='.') {
       let params = {
         search: query,
