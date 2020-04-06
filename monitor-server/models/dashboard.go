@@ -18,6 +18,7 @@ type OptionModel struct {
 	OptionText   string  `json:"option_text"`
 	Active  bool  `json:"active"`
 	OptionType  string  `json:"type"`
+	OptionTypeName  string  `json:"option_type_name"`
 }
 
 type ButtonModel struct {
@@ -142,6 +143,7 @@ type PanelTable struct {
 	TagsUrl  string  `json:"tags_url"`
 	TagsKey  string  `json:"tags_key"`
 	ChartGroup  int  `json:"chart_group"`
+	AutoDisplay  int  `json:"auto_display"`
 }
 
 type ChartTable struct {
