@@ -43,12 +43,15 @@
         <systemParameter name="MONITOR_MYSQL_GROUP" scopeType="global" defaultValue="default_mysql_group"/>
         <systemParameter name="MONITOR_REDIS_GROUP" scopeType="global" defaultValue="default_redis_group"/>
         <systemParameter name="MONITOR_TOMCAT_GROUP" scopeType="global" defaultValue="default_tomcat_group"/>
+        <systemParameter name="MONITOR_JAVA_GROUP" scopeType="global" defaultValue="default_java_group"/>
         <systemParameter name="HOST_EXPORTER_S3_PATH" scopeType="global" defaultValue="http://127.0.0.1:9000/wecube-agent/node_exporter_v2.tar.gz"/>
         <systemParameter name="MONITOR_MAIL_SENDER_USER" scopeType="global" defaultValue="default_user"/>
         <systemParameter name="MONITOR_MAIL_SENDER_SERVER" scopeType="global" defaultValue="default_server"/>
         <systemParameter name="MONITOR_MAIL_SENDER_PASSWORD" scopeType="global" defaultValue="default_password"/>
         <systemParameter name="MONITOR_ALARM_FIRING_CALLBACK" scopeType="global" defaultValue="default_firing_callback"/>
         <systemParameter name="MONITOR_ALARM_RECOVER_CALLBACK" scopeType="global" defaultValue="default_recover_callback"/>
+        <systemParameter name="MONITOR_JAVA_TYPE" scopeType="global" defaultValue="java"/>
+        <systemParameter name="MONITOR_TOMCAT_TYPE" scopeType="global" defaultValue="tomcat"/>
     </systemParameters>
 
     <!-- 5.权限设定 -->
@@ -217,22 +220,23 @@
                 </outputParameters>
             </interface>
         </plugin>
-        <plugin name="tomcat">
-            <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/tomcat" httpMethod="POST">
+        <plugin name="java">
+            <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/java" httpMethod="POST">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">instance_ip</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">port</parameter>
-                    <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MONITOR_TOMCAT_GROUP" required="Y">group</parameter>
+                    <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MONITOR_JAVA_GROUP" required="Y">group</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">instance</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">user</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">password</parameter>
+                    <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MONITOR_JAVA_TYPE" required="N">java_type</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="deregister" path="/wecube-monitor/api/v1/agent/export/deregister/tomcat" httpMethod='GET'>
+            <interface action="deregister" path="/wecube-monitor/api/v1/agent/export/deregister/java" httpMethod='GET'>
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">instance_ip</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">port</parameter>
@@ -243,7 +247,7 @@
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="start_alarm" path="/wecube-monitor/api/v1/agent/export/start/tomcat" httpMethod="POST">
+            <interface action="start_alarm" path="/wecube-monitor/api/v1/agent/export/start/java" httpMethod="POST">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">instance_ip</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">port</parameter>
@@ -254,7 +258,7 @@
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="stop_alarm" path="/wecube-monitor/api/v1/agent/export/stop/tomcat" httpMethod="POST">
+            <interface action="stop_alarm" path="/wecube-monitor/api/v1/agent/export/stop/java" httpMethod="POST">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">instance_ip</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">port</parameter>
@@ -475,12 +479,12 @@
                 </outputParameters>
             </interface>
         </plugin>
-        <plugin name="tomcat" targetPackage="wecmdb" targetEntity="app_instance" registerName="app">
-            <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/tomcat" httpMethod="POST" filterRule="{state_code eq 'created'}{fixed_date eq ''}">
+        <plugin name="java" targetPackage="wecmdb" targetEntity="app_instance" registerName="app">
+            <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/java" httpMethod="POST" filterRule="{state_code eq 'created'}{fixed_date eq ''}">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.resource_instance>wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">instance_ip</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.monitor_port" required="Y">port</parameter>
-                    <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MONITOR_TOMCAT_GROUP" required="Y">group</parameter>
+                    <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MONITOR_JAVA_GROUP" required="Y">group</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.key_name" required="Y">instance</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.monitor_user" required="Y">user</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.monitor_password" required="Y">password</parameter>
@@ -490,7 +494,7 @@
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="deregister" path="/wecube-monitor/api/v1/agent/export/deregister/tomcat" httpMethod="POST" filterRule="{state_code eq 'destroyed'}{fixed_date eq ''}">
+            <interface action="deregister" path="/wecube-monitor/api/v1/agent/export/deregister/java" httpMethod="POST" filterRule="{state_code eq 'destroyed'}{fixed_date eq ''}">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.resource_instance>wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">instance_ip</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.monitor_port" required="Y">port</parameter>
@@ -501,7 +505,7 @@
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="start_alarm" path="/wecube-monitor/api/v1/agent/export/start/tomcat" httpMethod="POST">
+            <interface action="start_alarm" path="/wecube-monitor/api/v1/agent/export/start/java" httpMethod="POST">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.resource_instance>wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">instance_ip</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.monitor_port" required="Y">port</parameter>
@@ -512,7 +516,7 @@
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="stop_alarm" path="/wecube-monitor/api/v1/agent/export/stop/tomcat" httpMethod="POST">
+            <interface action="stop_alarm" path="/wecube-monitor/api/v1/agent/export/stop/java" httpMethod="POST">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.resource_instance>wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">instance_ip</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.monitor_port" required="Y">port</parameter>

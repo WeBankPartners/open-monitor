@@ -259,6 +259,9 @@ func updateConfigFile(tplId int) error {
 			endpointExpr = endpointExpr[:len(endpointExpr)-1]
 		}
 	}
+	if fileName == "" {
+		return nil
+	}
 	err,isExist,cObj := prom.GetConfig(fileName, isGrp)
 	if err != nil {
 		mid.LogError("get prom get config error", err)
