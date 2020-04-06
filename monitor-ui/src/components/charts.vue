@@ -9,10 +9,8 @@
     <section>
       <template v-if="btns.length">
         <div class="btn-content">
-          <RadioGroup v-model="activeBtn" size="small" type="button">
-            <template v-for="(btnItem,btnIndex) in btns">
-              <Radio :label="btnItem.option_value" :key="btnIndex">{{btnItem.option_text}}</Radio>
-            </template>
+          <RadioGroup v-model="currentParameter" size="small" type="button">
+              <Radio v-for="(btnItem,btnIndex) in btns" :label="btnItem.option_value" :key="btnIndex" >{{btnItem.option_text}}</Radio>
           </RadioGroup>
         </div>
       </template>
@@ -20,18 +18,11 @@
           <SingleChart @sendConfig="receiveConfig" :chartItemx="chartItemx" :chartIndex="chartIndexx" :key="chartIndexx" :params="params"> </SingleChart>
       </template>
     </section>
-    
-    <transition name="slide-fade">
-      <div v-show="showMaxChart">
-        <MaxChart ref="maxChart"></MaxChart>
-      </div>
-    </transition>
   </div>
 </template>
 
 <script>
 import SingleChart from '@/components/single-chart'
-import MaxChart from '@/components/max-chart'
 export default {
   name: '',
   data() {
@@ -41,15 +32,14 @@ export default {
       btns: [],
       tagsUrl: '',
       params: {},
-      showMaxChart: false,
-      activeBtn: '',
+      currentParameter: null
     }
   },
   props: {
     charts: Object
   },
   watch: {
-    activeBtn: function () {
+    currentParameter: function () {
       this.pitchOnBtn()
     }
   },
@@ -76,7 +66,7 @@ export default {
         if (item.tabTape.name === name) {
           this.btns = item.btns
           if (this.btns.length !== 0) {
-            this.activeBtn = this.btns[0].option_value
+            this.currentParameter = this.btns[0].option_value
           }
           this.tagsUrl = item.tagsUrl     
           this.$nextTick(() => {
@@ -86,7 +76,7 @@ export default {
       })
     },
     pitchOnBtn() {
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.tagsUrl +  this.activeBtn, '', responseData => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.tagsUrl +  this.currentParameter, '', responseData => {
         this.activeCharts.forEach((element,index) => {
            element.metric = responseData[index].metric
         })
@@ -101,18 +91,15 @@ export default {
 
       })
     },
-    hiddenDetailChart () {
-      // this.showMaxChart = false
-    },
     receiveConfig (chartItem) {
-      this.showMaxChart = true
-      this.$refs.maxChart.getChartConfig(chartItem)
+      this.$parent.showMaxChart = true
+      this.$parent.$refs.maxChart.getChartConfig(chartItem)
       return
     }
   },
   components: {
     SingleChart,
-    MaxChart
+    // MaxChart
   }
 }
 </script>
@@ -124,13 +111,4 @@ export default {
   .btn-content {
   padding: 2px;
   }
-
-  /* 可以设置不同的进入和离开动画 */
-/* 设置持续时间和动画函数 */
-.slide-fade-enter-active {
-  transition: all .3s ease;
-}
-.slide-fade-leave-active {
-  transition: all .3s ease;
-}
 </style>
