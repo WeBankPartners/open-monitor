@@ -1,15 +1,11 @@
+import Vue from 'vue'
 import store from './store'
 import router from './router-plugin'
 import routerP from './router-plugin-p'
 import '@/assets/css/local.bootstrap.css'
-// import '@/assets/css/global.css'
 import 'bootstrap/dist/js/bootstrap.min.js'
 import 'font-awesome/css/font-awesome.css'
-import "./plugins/iview.js";
-// import ViewUI from 'view-design';
-// import 'view-design/dist/styles/iview.css'
-// window.use(ViewUI)
-// import '@/assets/locale/language'
+import './plugins/iview.js'
 import httpRequestEntrance from '@/assets/js/httpRequestEntrance.js'
 import jquery from 'jquery'
 import {tableUtil} from '@/assets/js/tableUtil.js'
@@ -17,6 +13,8 @@ import {validate} from '@/assets/js/validate.js'
 import VeeValidate from '@/assets/veeValidate/VeeValidate'
 import apiCenter from '@/assets/config/api-center.json'
 import vuex from 'vuex'
+const eventBus = new Vue()
+
 window.use(vuex)
 window.addOptions({
   $httpRequestEntrance: httpRequestEntrance,
@@ -24,19 +22,31 @@ window.addOptions({
   $store: store,
   $validate: validate,
   $tableUtil: tableUtil,
-  apiCenter: apiCenter
+  apiCenter: apiCenter,
+  $eventBus: eventBus
 })
+
+const implicitRoute = {
+  'monitorConfigIndex/groupManagement': {'zh-CN': '监控', 'en-US': 'Monitor'},
+  'monitorConfigIndex/thresholdManagement': {'zh-CN': '监控', 'en-US': 'Monitor'},
+  'monitorConfigIndex/logManagement': {'zh-CN': '监控', 'en-US': 'Monitor'},
+  'monitorConfigIndex/resourceLevel': {'zh-CN': '监控', 'en-US': 'Monitor'},
+  'viewConfig': {'zh-CN': '监控', 'en-US': 'Monitor'},
+  'editView': {'zh-CN': '监控', 'en-US': 'Monitor'},
+  'viewChart': {'zh-CN': '监控', 'en-US': 'Monitor'}
+}
+window.addImplicitRoute(implicitRoute)
 window.addRoutersWithoutPermission(routerP, 'open-monitor')
 window.addRoutes(router, 'open-monitor')
 
 import Title from '@/components/title'
 import PageTable from '@/components/table-page/page'
 import ModalComponent from '@/components/modal'
-import ModalDel from "@/components/modal-del";
+import ModalDel from '@/components/modal-del'
 window.component('Title', Title)
 window.component('PageTable', PageTable)
 window.component('ModalComponent', ModalComponent)
-window.component("ModalDel", ModalDel);
+window.component('ModalDel', ModalDel)
 window.use(VeeValidate)
 
 window.component('tdSlot', {
@@ -62,7 +72,7 @@ window.component('tdSlot', {
     }
     var slots = this.$parent.$slots.default
     var slot = null
-    for(let i=0;i<slots.length;i++){
+    for(let i=0; i<slots.length; i++){
       if(slots[i].data && this.name === slots[i].data.slot){
         slot = slots[i]
         break
@@ -79,7 +89,7 @@ window.component('tdSlot', {
 })
 
 
-import en_local from '@/assets/locale/lang/en.json';
-import zh_local from '@/assets/locale/lang/zh-CN.json';
+import en_local from '@/assets/locale/lang/en.json'
+import zh_local from '@/assets/locale/lang/zh-CN.json'
 window.locale('en-US',en_local)
 window.locale('zh-CN',zh_local)

@@ -1,21 +1,17 @@
 <template>
   <div class="page" id="endpointView">
     <Title :title="$t('menu.endpointView')"></Title>
-    <Search ref="search" />
+    <SearchExternal ref="search" />
     <Charts v-if="showCharts" :charts='charts' ref="parentCharts" />
     <div v-if="recursiveViewConfig.length && showRecursive">
       <recursive :recursiveViewConfig="recursiveViewConfig" :params="params"></recursive>
     </div>
-    <Drawer title="View details" :width="zoneWidth" :closable="false" v-model="showMaxChart">
-        <MaxChart ref="maxChart"></MaxChart>
-    </Drawer>
   </div>
 </template>
 <script>
-import Search from '@/components/search'
+import SearchExternal from '@/components/search-external'
 import Charts from '@/components/charts'
 import recursive from '@/views/recursive-view/recursive'
-import MaxChart from '@/components/max-chart'
 export default {
   name: 'endpoint-view',
   data() {
@@ -26,16 +22,8 @@ export default {
       charts: {
         chartsConfig: []
       },
-      recursiveViewConfig: [],
-      showMaxChart: false,
-      zoneWidth: '800'
+      recursiveViewConfig: []
     }
-  },
-  created () {
-    this.$root.$eventBus.$on('callMaxChart', data => {
-      this.zoomChart(data)
-    })
-    this.zoneWidth = window.screen.width * 0.65
   },
   mounted() {
     this.$refs.search.getChartsConfig() 
@@ -73,25 +61,19 @@ export default {
         this.showRecursive = true
         this.recursiveViewConfig = [responseData]
       })
-    },
-    zoomChart (data) {
-      this.showMaxChart = true
-      this.$refs.maxChart.getChartConfig(data)
     }
-      
   },
   components: {
-    Search,
+    SearchExternal,
     Charts,
-    recursive,
-    MaxChart
+    recursive
   }
 }
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-.btn-jump {
-  margin-left: 10px;
+.page {
+  margin: 16px;
 }
 </style>

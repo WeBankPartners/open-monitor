@@ -1,6 +1,5 @@
 <template>
   <div class="">
-    <!-- <i class="fa fa-plus" aria-hidden="true" @click="addPanel"> </i> -->
     <button class="btn-confirm-f btn-small" @click="addPanel">{{$t('resourceLevel.addPanel')}}</button>
     <i class="fa fa-refresh" aria-hidden="true" @click="getAllResource"></i>
     <recursive :recursiveViewConfig="resourceRecursive"></recursive>
@@ -9,7 +8,6 @@
 </template>
 
 <script>
-import { EventBus } from "@/assets/js/event-bus.js"
 import recursive from '@/views/monitor-config/resource-recursive'
 export default {
   name: '',
@@ -33,7 +31,7 @@ export default {
     }
   },
   mounted () {
-    EventBus.$on("updateResource", () => {
+    this.$root.$eventBus.$on('updateResource', () => {
       this.getAllResource()
     });
     this.getAllResource()
