@@ -12,6 +12,7 @@ import metricConfig from "@/views/metric-config";
 import viewConfigIndex from "@/views/custom-view/view-config-index";
 import viewConfig from "@/views/custom-view/view-config";
 import editView from "@/views/custom-view/edit-view";
+import viewChart from "@/views/custom-view/view-chart";
 import portal from "@/views/portal";
 import index from "@/views/index";
 
@@ -110,6 +111,13 @@ const router = [
     title: "自定义视图编辑",
     meta: {},
     component: editView
+  },
+  {
+    path: "/viewChart",
+    name: "viewChart",
+    title: "自定义视图放大",
+    meta: {},
+    component: viewChart
   },
   {
     path: "/portal",

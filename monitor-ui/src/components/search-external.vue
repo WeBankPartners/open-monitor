@@ -2,52 +2,31 @@
   <div class="" style="display:inline-block">
    <ul class="search-ul">
       <li class="search-li">
-        <Select
-          style="width:300px;"
-          v-model="endpoint"
-          filterable
-          remote
-          ref="select"
-          clearable
-          :placeholder="$t('placeholder.input')"
-          :remote-method="getEndpointList"
-          >
-          <Option v-for="(option, index) in endpointList" :value="option.option_value" :key="index">
-            <Tag color="green" class="tag-width" v-if="option.type == 'sys'">system</Tag>
-            <Tag color="cyan" class="tag-width" v-if="option.type == 'host'">host</Tag>
-            <Tag color="blue" class="tag-width" v-if="option.type == 'mysql'">mysql </Tag>
-            <Tag color="geekblue" class="tag-width" v-if="option.type == 'redis'">redis </Tag>
-            <Tag color="purple" class="tag-width" v-if="option.type == 'tomcat'">tomcat</Tag>{{option.option_text}}</Option>
+        <span class="params-title">{{$t('field.endpoint')}}：</span>
+        <Tag color="blue">VM_0_16_centos_192.168.0.16_host</Tag>
+      </li>
+      <li class="search-li">
+        <span class="params-title">{{$t('field.relativeTime')}}：</span>
+        <Select v-model="timeTnterval" style="width:80px" @on-change="getChartsConfig">
+          <Option v-for="item in dataPick" :value="item.value" :key="item.value">{{ item.label }}</Option>
         </Select>
       </li>
       <li class="search-li">
-        <button type="button" class="btn btn-sm btn-confirm-f"
-            @click="getChartsConfig()">
-            <i class="fa fa-search" ></i>
-            {{$t('button.search')}}
-          </button>
-      </li>
-      <li class="search-li">
-          <Select v-model="timeTnterval" style="width:80px" @on-change="getChartsConfig">
-            <Option v-for="item in dataPick" :value="item.value" :key="item.value">{{ item.label }}</Option>
-          </Select>
-      </li>
-      <li class="search-li">
+        <span class="params-title">{{$t('field.timeInterval')}}：</span>
         <DatePicker type="daterange" placement="bottom-end" @on-change="datePick" :placeholder="$t('placeholder.datePicker')" style="width: 200px"></DatePicker>
       </li>
       <li class="search-li">
+        <span class="params-title">{{$t('placeholder.refresh')}}：</span>
         <Select v-model="autoRefresh" style="width:100px" @on-change="getChartsConfig" :placeholder="$t('placeholder.refresh')">
           <Option v-for="item in autoRefreshConfig" :value="item.value" :key="item.value">{{ item.label }}</Option>
         </Select>
-      </li>
-      <li class="search-li">
-        <button type="button" v-if="isShow" @click="changeRoute" class="btn btn-sm btn-cancle-f btn-jump">{{$t('button.endpointManagement')}}</button>
       </li>
    </ul>
   </div>
 </template>
 
 <script>
+import {cookies} from '@/assets/js/cookieUtils'
 import {dataPick, autoRefreshConfig} from '@/assets/config/common-config'
 export default {
   name: '',
@@ -71,11 +50,6 @@ export default {
       }
     }
   },
-  computed: {
-    isShow: function () {
-      return !this.$root.$validate.isEmpty_reset(this.endpoint)
-    }
-  },
   watch: {
     endpoint: function (val) {
       if (val) {
@@ -85,27 +59,20 @@ export default {
       } else {
         this.endpointObject = {}
       }
-    },
-    isShow: function () {
-      this.clearEndpoint = []
-      this.getEndpointList('.')
-      this.$parent.showCharts = false 
-      this.$parent.showRecursive = false
     }
   },
   mounted() {
-    this.getEndpointList('.')
-    if (!this.$root.$validate.isEmpty_reset(this.$route.params)) {
-      this.endpoint = this.$route.params.option_value
-      this.endpointObject = this.$route.params
-    }
     if (this.$root.$validate.isEmpty_reset(this.$route.params) && !this.$root.$validate.isEmpty_reset(this.$route.query)) {
       this.endpoint = this.$route.query.endpoint
-      this.$root.$store.commit('storeip', {
+      cookies.setAuthorization(`${this.$route.query.token}`)
+      this.setLocale(this.$route.query.lang)
+      this.endpointObject = {
         id: '',
         option_value: this.$route.query.endpoint,
         type: this.$route.query.type
-      })
+      }
+      this.$root.$store.commit('storeip', this.endpointObject)
+      this.getMainConfig()
     }
   },
   methods: {
@@ -133,16 +100,6 @@ export default {
         this.dateRange[1] = this.dateRange[1] + ' 23:59:59'
       }
       this.getChartsConfig()
-    },
-    getEndpointList(query) {
-      let params = {
-        search: query,
-        page: 1,
-        size: 1000
-      }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.resourceSearch.api, params, (responseData) => {
-        this.endpointList = responseData
-      })
     },
     async getChartsConfig () {
       if (this.$root.$validate.isEmpty_reset(this.endpoint)) {
@@ -182,9 +139,11 @@ export default {
         this.$parent.manageCharts(responseData, params)
       },{isNeedloading: false})
     },
-    changeRoute () {
-      this.$router.push({name: 'endpointManagement', params: {search: this.endpointObject.option_value}})
-    }
+    setLocale(lang) {
+      localStorage.setItem('lang', lang)
+      this.$i18n.locale = lang
+      this.$validator.locale = lang
+    },
   },
   components: {
   }
@@ -198,8 +157,7 @@ export default {
   .search-ul>li:not(:first-child) {
     padding-left: 10px;
   }
-  .tag-width {
-    width: 55px;
-    text-align: center;
+  .params-title {
+    font-size: 13px;
   }
 </style>
