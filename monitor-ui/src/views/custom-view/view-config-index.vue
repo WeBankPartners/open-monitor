@@ -2,9 +2,6 @@
   <div class="">
     <Title :title="$t('menu.customViews')"></Title>
     <div class="operational-zone">
-      <!-- <Select v-model="model1" style="width:200px">
-        <Option v-for="item in cityList" :value="item.value" :key="item.value">{{ item.label }}</Option>
-      </Select> -->
       <button class="btn btn-sm btn-confirm-f" @click="addView">
         <i class="fa fa-plus"></i>{{$t('button.addViewTemplate')}}
       </button>
@@ -22,7 +19,7 @@
               </p>
               <a slot="extra">
                 <button class="btn btn-sm btn-confirm-f" @click="goToPanal(panalItem)">{{$t('button.view')}}</button>
-                <button class="btn btn-sm btn-cancle-f" @click="removeTemplate(panalItem)">{{$t('button.remove')}}</button>
+                <button class="btn btn-sm btn-cancle-f" @click="deleteConfirm(panalItem)">{{$t('button.remove')}}</button>
               </a>
               <ul class="panal-content">
                 <li>
@@ -46,6 +43,7 @@
         </div>
       </div>
     </ModalComponent>
+    <ModalDel :ModelDelConfig="ModelDelConfig"></ModalDel>
   </div>
 </template>
 
@@ -54,17 +52,11 @@ export default {
   name: '',
   data() {
     return {
-      cityList: [
-        {
-          value: 'New York',
-          label: 'New York'
-        },
-        {
-          value: 'Paris',
-          label: 'Paris'
-        }
-      ],
-      model1: '',
+      ModelDelConfig: {
+        deleteWarning: false,
+        msg: '',
+        callback: null
+      },
       dataList: [
       ],
       modelConfig: {
@@ -110,6 +102,15 @@ export default {
     addView () {
       this.modelConfig.isAdd = true
       this.$root.JQ('#add_edit_Modal').modal('show')
+    },
+    deleteConfirm (item) {
+      this.ModelDelConfig =  {
+        deleteWarning: true,
+        msg: item.name,
+        callback: () => {
+          this.removeTemplate(item)
+        }
+      }
     },
     removeTemplate (item) {
       let params = {id: item.id}
