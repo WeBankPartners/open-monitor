@@ -46,7 +46,8 @@
     "roleManagement":"Role Management",
     "role": "Role",
     "guid": "GUID",
-    "displayName": "Display Name"
+    "displayName": "Display Name",
+    "type": "Type"
   },
   "title": {
     "viewConfiguration": "View Configuration",
