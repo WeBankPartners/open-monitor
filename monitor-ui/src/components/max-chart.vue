@@ -1,9 +1,6 @@
 <template>
   <div class="">
        <div class="c-dark max-chart">
-         <div class="hiddenBtn" @click="hideMaxChart">
-            <i class="fa fa-angle-right" aria-hidden="true"></i>
-         </div>
         <div class="condition-zone">
           <ul>
             <li>
@@ -107,12 +104,9 @@ export default {
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/dashboard/newchart', [params], responseData => {
       
-        const chartConfig = {eye: false}
+        const chartConfig = {eye: false,clear:true}
         readyToDraw(this,responseData, 1, chartConfig)
       })
-    },
-    hideMaxChart () {
-      this.$parent.showMaxChart = false
     }
   },
   components: {},
@@ -121,31 +115,13 @@ export default {
 
 <style scoped lang="less">
   .max-chart {
-    // width:800px;
     min-height: 540px;
-    height: 123vh;
     background: white;
-    position: absolute;
-    border: 1px solid @blue-lingt;
-    right: 0;
-    top: 60px;
     z-index: 2;
     padding: 12px;
   }
-
-  .hiddenBtn {
-    position: absolute;
-    top: 50%;
-    left: 0;
-    width: 12px;
-    padding: 8px 0;
-    // height: 20px;
-    text-align: center;
-    background: @blue-lingt;
-    i {
-      font-size: 16px;
-      color: white;
-    }
+  li {
+    list-style: none;
   }
   .condition {
     display: inline-block;
