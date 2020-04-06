@@ -167,9 +167,9 @@ func UpdateRecursivePanel(param m.PanelRecursiveTable) error {
 		//tmpEmail := unionList(param.Email, prt[0].Email, ",")
 		//tmpPhone := unionList(param.Phone, prt[0].Phone, ",")
 		//tmpRole := unionList(param.Role, prt[0].Role, ",")
-		_,err = x.Exec("UPDATE panel_recursive SET display_name=?,parent=?,endpoint=?,email=?,phone=?,role=?,firing_callback_key=?,recover_callback_key=? WHERE guid=?", param.DisplayName,tmpParent,param.Endpoint,param.Email,param.Phone,param.Role,param.FiringCallbackKey,param.RecoverCallbackKey,param.Guid)
+		_,err = x.Exec("UPDATE panel_recursive SET display_name=?,parent=?,endpoint=?,email=?,phone=?,role=?,firing_callback_key=?,recover_callback_key=?,obj_type=? WHERE guid=?", param.DisplayName,tmpParent,param.Endpoint,param.Email,param.Phone,param.Role,param.FiringCallbackKey,param.RecoverCallbackKey,param.ObjType,param.Guid)
 	}else{
-		_,err = x.Exec("INSERT INTO panel_recursive(guid,display_name,parent,endpoint,email,phone,role,firing_callback_key,recover_callback_key) VALUE (?,?,?,?,?,?,?,?,?)", param.Guid,param.DisplayName,param.Parent,param.Endpoint,param.Email,param.Phone,param.Role,param.FiringCallbackKey,param.RecoverCallbackKey)
+		_,err = x.Exec("INSERT INTO panel_recursive(guid,display_name,parent,endpoint,email,phone,role,firing_callback_key,recover_callback_key,obj_type) VALUE (?,?,?,?,?,?,?,?,?,?)", param.Guid,param.DisplayName,param.Parent,param.Endpoint,param.Email,param.Phone,param.Role,param.FiringCallbackKey,param.RecoverCallbackKey,param.ObjType)
 	}
 	return err
 }
@@ -207,7 +207,7 @@ func SearchRecursivePanel(search string) []*m.OptionModel {
 	x.SQL(sql).Find(&prt)
 	for _,v := range prt {
 		//options = append(options, &m.OptionModel{Id:-1, OptionValue:fmt.Sprintf("%s:sys", v.Guid), OptionText:v.DisplayName})
-		options = append(options, &m.OptionModel{Id:-1, OptionValue:v.Guid, OptionText:v.DisplayName, OptionType:"sys"})
+		options = append(options, &m.OptionModel{Id:-1, OptionValue:v.Guid, OptionText:v.DisplayName, OptionType:"sys", OptionTypeName:v.ObjType})
 	}
 	return options
 }
