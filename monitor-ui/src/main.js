@@ -1,106 +1,104 @@
-import Vue from "vue";
-import App from "./App.vue";
-import router from "./router";
-import store from "./store";
-import "@/assets/css/local.bootstrap.css";
-import "bootstrap/dist/js/bootstrap.min.js";
-import "font-awesome/css/font-awesome.css";
-import "./plugins/iview.js";
-// import ViewUI from 'view-design';
-// import 'view-design/dist/styles/iview.css'
-// Vue.use(ViewUI)
-import httpRequestEntrance from "@/assets/js/httpRequestEntrance.js";
-import jquery from "jquery";
-import { tableUtil } from "@/assets/js/tableUtil.js";
-import { validate } from "@/assets/js/validate.js";
-import VeeValidate from "@/assets/veeValidate/VeeValidate";
-import apiCenter from "@/assets/config/api-center.json";
+import Vue from 'vue'
+import App from './App.vue'
+import router from './router'
+import store from './store'
+import '@/assets/css/local.bootstrap.css'
+import 'bootstrap/dist/js/bootstrap.min.js'
+import 'font-awesome/css/font-awesome.css'
+import './plugins/iview.js'
+import httpRequestEntrance from '@/assets/js/httpRequestEntrance.js'
+import jquery from 'jquery'
+import { tableUtil } from '@/assets/js/tableUtil.js'
+import { validate } from '@/assets/js/validate.js'
+import VeeValidate from '@/assets/veeValidate/VeeValidate'
+import apiCenter from '@/assets/config/api-center.json'
+const eventBus = new Vue()
+Vue.prototype.$eventBus = eventBus
+Vue.prototype.$httpRequestEntrance = httpRequestEntrance
+Vue.prototype.JQ = jquery
+Vue.prototype.$validate = validate
+Vue.prototype.$tableUtil = tableUtil
+Vue.prototype.apiCenter = apiCenter
 
-Vue.prototype.$httpRequestEntrance = httpRequestEntrance;
-Vue.prototype.JQ = jquery;
-Vue.prototype.$validate = validate;
-Vue.prototype.$tableUtil = tableUtil;
-Vue.prototype.apiCenter = apiCenter;
+import Title from '@/components/title'
+import PageTable from '@/components/table-page/page'
+import ModalComponent from '@/components/modal'
+import ModalDel from '@/components/modal-del'
+Vue.component('Title', Title)
+Vue.component('PageTable', PageTable)
+Vue.component('ModalComponent', ModalComponent)
+Vue.component('ModalDel', ModalDel)
+Vue.use(VeeValidate)
 
-import Title from "@/components/title";
-import PageTable from "@/components/table-page/page";
-import ModalComponent from "@/components/modal";
-import ModalDel from "@/components/modal-del";
-Vue.component("Title", Title);
-Vue.component("PageTable", PageTable);
-Vue.component("ModalComponent", ModalComponent);
-Vue.component("ModalDel", ModalDel);
-Vue.use(VeeValidate);
+Vue.config.productionTip = false
 
-Vue.config.productionTip = false;
+import VueI18n from 'vue-i18n'
+import en from 'view-design/dist/locale/en-US'
+import zh from 'view-design/dist/locale/zh-CN'
 
-import VueI18n from "vue-i18n";
-import en from 'view-design/dist/locale/en-US';
-import zh from 'view-design/dist/locale/zh-CN';
-
-import en_local from "@/assets/locale/lang/en.json";
-import zh_local from "@/assets/locale/lang/zh-CN.json";
-Vue.use(VueI18n);
-Vue.locale = () => {};
+import en_local from '@/assets/locale/lang/en.json'
+import zh_local from '@/assets/locale/lang/zh-CN.json'
+Vue.use(VueI18n)
+Vue.locale = () => {}
 const messages = {
-  "en-US": Object.assign(en_local, en),
-  "zh-CN": Object.assign(zh_local, zh)
-};
+  'en-US': Object.assign(en_local, en),
+  'zh-CN': Object.assign(zh_local, zh)
+}
 const i18n = new VueI18n({
   locale:
-    localStorage.getItem("lang") ||
-    (navigator.language || navigator.userLanguage === "zh-CN"
-      ? "zh-CN"
-      : "en-US"),
+    localStorage.getItem('lang') ||
+    (navigator.language || navigator.userLanguage === 'zh-CN'
+      ? 'zh-CN'
+      : 'en-US'),
   messages
-});
+})
 
-Vue.component("tdSlot", {
+Vue.component('tdSlot', {
   render(createElement) {
     function deepClone(vnodes, createElement) {
       function cloneVNode(vnode) {
         const clonedChildren =
-          vnode.children && vnode.children.map(vnode => cloneVNode(vnode));
-        const cloned = createElement(vnode.tag, vnode.data, clonedChildren);
-        cloned.text = vnode.text;
-        cloned.isComment = vnode.isComment;
-        cloned.componentOptions = vnode.componentOptions;
-        cloned.elm = vnode.elm;
-        cloned.context = vnode.context;
-        cloned.ns = vnode.ns;
-        cloned.isStatic = vnode.isStatic;
-        cloned.key = vnode.key;
+          vnode.children && vnode.children.map(vnode => cloneVNode(vnode))
+        const cloned = createElement(vnode.tag, vnode.data, clonedChildren)
+        cloned.text = vnode.text
+        cloned.isComment = vnode.isComment
+        cloned.componentOptions = vnode.componentOptions
+        cloned.elm = vnode.elm
+        cloned.context = vnode.context
+        cloned.ns = vnode.ns
+        cloned.isStatic = vnode.isStatic
+        cloned.key = vnode.key
 
-        return cloned;
+        return cloned
       }
-      const clonedVNodes = vnodes.map(vnode => cloneVNode(vnode));
-      return clonedVNodes;
+      const clonedVNodes = vnodes.map(vnode => cloneVNode(vnode))
+      return clonedVNodes
     }
-    var slots = this.$parent.$slots.default;
-    var slot = null;
+    var slots = this.$parent.$slots.default
+    var slot = null
     for (let i = 0; i < slots.length; i++) {
       if (slots[i].data && this.name === slots[i].data.slot) {
-        slot = slots[i];
-        break;
+        slot = slots[i]
+        break
       }
     }
     return createElement(
-      "div",
-      { class: "tdslot" },
+      'div',
+      { class: 'tdslot' },
       deepClone([slot], createElement)
-    );
+    )
   },
   props: {
     name: {
       type: String,
-      default: ""
+      default: ''
     }
   }
-});
+})
 
 new Vue({
   render: h => h(App),
   store,
   router,
   i18n
-}).$mount("#app");
+}).$mount('#app')

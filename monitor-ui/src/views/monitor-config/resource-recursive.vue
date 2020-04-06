@@ -10,7 +10,7 @@
             <div>
               <button class="btn-cancle-f btn-small" @click="associatedRole(item)">{{$t('resourceLevel.addAssociatedRole')}}</button>
               <button class="btn-cancle-f btn-small" @click="associatedObject(item)">{{$t('resourceLevel.addAssociatedObject')}}</button>
-              <button class="btn-cancle-f btn-small" @click="alarmCallback(item)">{{$t('resourceLevel.alarmCallback')}}</button>
+              <button class="btn-cancle-f btn-small" v-if="isPlugin" @click="alarmCallback(item)">{{$t('resourceLevel.alarmCallback')}}</button>
               <i class="fa fa-plus" aria-hidden="true" @click="addPanel(item)"> </i>
               <i class="fa fa-pencil" @click="editPanal(item)" aria-hidden="true"></i>
               <i class="fa fa-trash-o" @click="deleteConfirm(item)" aria-hidden="true"></i>
@@ -125,7 +125,6 @@
 </template>
 
 <script>
-import { EventBus } from "@/assets/js/event-bus.js"
 export default {
   name: 'recursive',
   data() {
@@ -179,6 +178,9 @@ export default {
       return {
         'padding-left':this.count * 16 + 'px'
       }
+    },
+    isPlugin () {
+      return window.request ? true: false
     }
   },
   created () {
@@ -225,7 +227,7 @@ export default {
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', 'alarm/org/panel/delete', params, () => {
         this.$Message.success(this.$t('tips.success'))
         this.deleteWarning = false
-        EventBus.$emit("updateResource", '')
+        this.$root.$eventBus.$emit('updateResource', '')
       })
     },
     editPanal (panalData) {
@@ -243,7 +245,7 @@ export default {
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', api, params, () => {
         this.$Message.success(this.$t('tips.success'))
         this.isEditPanal = false
-        EventBus.$emit("updateResource", '')
+        this.$root.$eventBus.$emit('updateResource', '')
       })
     },
     associatedRole (panalData) {
