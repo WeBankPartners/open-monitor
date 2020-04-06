@@ -278,6 +278,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">role</parameter>
                     <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_FIRING_CALLBACK" required="N">firing_callback</parameter>
                     <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_RECOVER_CALLBACK" required="N">recover_callback</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">type</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -307,6 +308,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">role</parameter>
                     <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_FIRING_CALLBACK" required="N">firing_callback</parameter>
                     <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_RECOVER_CALLBACK" required="N">recover_callback</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">type</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -534,6 +536,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:app_system.NONE" required="N">role</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:app_system.NONE" required="N">firing_callback</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:app_system.NONE" required="N">recover_callback</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">type</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -563,6 +566,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:subsys.manage_role>wecmdb:manage_role.code" required="N">role</parameter>
                     <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_FIRING_CALLBACK" required="N">firing_callback</parameter>
                     <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_RECOVER_CALLBACK" required="N">recover_callback</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">type</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -592,6 +596,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.manage_role>wecmdb:manage_role.code" required="N">role</parameter>
                     <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_FIRING_CALLBACK" required="N">firing_callback</parameter>
                     <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_RECOVER_CALLBACK" required="N">recover_callback</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">type</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -621,6 +626,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.manage_role>wecmdb:manage_role.code" required="N">role</parameter>
                     <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_FIRING_CALLBACK" required="N">firing_callback</parameter>
                     <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_RECOVER_CALLBACK" required="N">recover_callback</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">type</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -650,6 +656,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.manage_role>wecmdb:manage_role.code" required="N">role</parameter>
                     <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_FIRING_CALLBACK" required="N">firing_callback</parameter>
                     <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_RECOVER_CALLBACK" required="N">recover_callback</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">type</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -679,6 +686,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.manage_role>wecmdb:manage_role.code" required="N">role</parameter>
                     <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_FIRING_CALLBACK" required="N">firing_callback</parameter>
                     <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_RECOVER_CALLBACK" required="N">recover_callback</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">type</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -708,6 +716,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.manage_role>wecmdb:manage_role.code" required="N">role</parameter>
                     <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_FIRING_CALLBACK" required="N">firing_callback</parameter>
                     <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_RECOVER_CALLBACK" required="N">recover_callback</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">type</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -737,6 +746,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:business_zone.NONE" required="N">role</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:business_zone.NONE" required="N">firing_callback</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:business_zone.NONE" required="N">recover_callback</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">type</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -766,6 +776,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:network_zone.NONE" required="N">role</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:network_zone.NONE" required="N">firing_callback</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:network_zone.NONE" required="N">recover_callback</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">type</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -795,6 +806,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:data_center.NONE" required="N">role</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:data_center.NONE" required="N">firing_callback</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:data_center.NONE" required="N">recover_callback</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">type</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
