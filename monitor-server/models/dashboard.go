@@ -231,3 +231,9 @@ type CustomDashboardTable struct {
 	CreateAt  time.Time  `json:"create_at"`
 	UpdateAt  time.Time  `json:"update_at"`
 }
+
+type UpdateChartTitleParam struct {
+	ChartId  int  `json:"chart_id" binding:"required"`
+	Metric  string  `json:"metric"`
+	Name  string  `json:"name" binding:"required"`
+}
