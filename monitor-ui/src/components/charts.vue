@@ -15,9 +15,10 @@
         </div>
       </template>
       <template v-for="(chartItemx,chartIndexx) in activeCharts">
-          <SingleChart @sendConfig="receiveConfig" :chartItemx="chartItemx" :chartIndex="chartIndexx" :key="chartIndexx" :params="params"> </SingleChart>
+          <SingleChart @sendConfig="receiveConfig" @editTitle="editTitle" :chartItemx="chartItemx" :chartIndex="chartIndexx" :key="chartIndexx" :params="params"> </SingleChart>
       </template>
     </section>
+     <ModalComponent :modelConfig="modelConfig"></ModalComponent>
   </div>
 </template>
 
@@ -32,7 +33,20 @@ export default {
       btns: [],
       tagsUrl: '',
       params: {},
-      currentParameter: null
+      currentParameter: null,
+      editChartConfig: null,
+      modelConfig: {
+        modalId: 'edit_Modal',
+        modalTitle: 'button.chart.editTitle',
+        saveFunc: 'titleSave',
+        isAdd: true,
+        config: [
+          {label: 'tableKey.name', value: 'name', placeholder: 'tips.inputRequired', v_validate: 'required:true|min:2|max:60', disabled: false, type: 'text'}
+        ],
+        addRow: { // [通用]-保存用户新增、编辑时数据
+          name: null
+        },
+      },
     }
   },
   props: {
@@ -95,11 +109,27 @@ export default {
       this.$parent.showMaxChart = true
       this.$parent.$refs.maxChart.getChartConfig(chartItem)
       return
-    }
+    },
+    editTitle (config) {
+      this.modelConfig.addRow.name = config.title
+      this.editChartConfig = config
+      this.$root.JQ('#edit_Modal').modal('show')
+    },
+    titleSave () {
+      const params = {
+        chart_id: this.editChartConfig.id,
+        metric: this.editChartConfig.metric,
+        name: this.modelConfig.addRow.name
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.editTitle.api, params, () => {
+        this.$root.JQ('#edit_Modal').modal('hide')
+        this.refreshCharts()
+      })
+    },
+
   },
   components: {
     SingleChart,
-    // MaxChart
   }
 }
 </script>
