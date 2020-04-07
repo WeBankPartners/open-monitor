@@ -118,7 +118,7 @@ export default {
     titleSave () {
       const params = {
         chart_id: this.editChartConfig.id,
-        metric: this.editChartConfig.legend[0],
+        metric: this.editChartConfig.metric,
         name: this.modelConfig.addRow.name
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.editTitle.api, params, () => {
