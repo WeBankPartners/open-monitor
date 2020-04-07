@@ -17,6 +17,7 @@ const hostType  = "host"
 const mysqlType  = "mysql"
 const redisType = "redis"
 const tomcatType = "tomcat"
+const javaType = "java"
 var agentManagerUrl string
 
 func RegisterAgent(c *gin.Context)  {
@@ -35,7 +36,7 @@ func RegisterAgent(c *gin.Context)  {
 
 func RegisterJob(param m.RegisterParam) error {
 	var err error
-	if param.Type != hostType && param.Type != mysqlType && param.Type != redisType && param.Type != tomcatType {
+	if param.Type != hostType && param.Type != mysqlType && param.Type != redisType && param.Type != tomcatType && param.Type != javaType {
 		return fmt.Errorf("Type " + param.Type + " is not supported yet")
 	}
 	step := 10
@@ -234,7 +235,7 @@ func RegisterJob(param m.RegisterParam) error {
 		endpoint.Step = step
 		endpoint.Address = fmt.Sprintf("%s:%s", param.ExporterIp, param.ExporterPort)
 		endpoint.AddressAgent = address
-	}else if param.Type == tomcatType {
+	}else if param.Type == tomcatType || param.Type == javaType {
 		if param.Instance == "" {
 			return fmt.Errorf("Tomcat instance name can not be empty")
 		}
@@ -298,11 +299,11 @@ func RegisterJob(param m.RegisterParam) error {
 				exportVersion = strings.Split(strings.Split(v, "version=\"")[1], "\"")[0]
 			}
 		}
-		endpoint.Guid = fmt.Sprintf("%s_%s_%s", param.Instance, param.ExporterIp, tomcatType)
+		endpoint.Guid = fmt.Sprintf("%s_%s_%s", param.Instance, param.ExporterIp, param.Type)
 		endpoint.Name = param.Instance
 		endpoint.Ip = param.ExporterIp
 		endpoint.EndpointVersion = jvmVersion
-		endpoint.ExportType = tomcatType
+		endpoint.ExportType = param.Type
 		endpoint.ExportVersion = exportVersion
 		endpoint.Step = step
 		endpoint.Address = fmt.Sprintf("%s:%s", param.ExporterIp, param.ExporterPort)
