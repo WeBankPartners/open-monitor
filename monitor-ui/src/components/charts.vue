@@ -34,7 +34,7 @@ export default {
       tagsUrl: '',
       params: {},
       currentParameter: null,
-      chartId: null,
+      editChartConfig: null,
       modelConfig: {
         modalId: 'edit_Modal',
         modalTitle: 'button.chart.editTitle',
@@ -112,14 +112,21 @@ export default {
     },
     editTitle (config) {
       this.modelConfig.addRow.name = config.title
-      this.chartId = config.id
+      this.editChartConfig = config
       this.$root.JQ('#edit_Modal').modal('show')
     },
     titleSave () {
-      console.log(this.modelConfig.addRow.name)
-      this.$root.JQ('#edit_Modal').modal('hide')
-      this.refreshCharts()
-    }
+      const params = {
+        chart_id: this.editChartConfig.id,
+        metric: this.editChartConfig.metric,
+        name: this.modelConfig.addRow.name
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.editTitle.api, params, () => {
+        this.$root.JQ('#edit_Modal').modal('hide')
+        this.refreshCharts()
+      })
+    },
+
   },
   components: {
     SingleChart,
