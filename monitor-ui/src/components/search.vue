@@ -209,7 +209,7 @@ export default {
     padding-left: 10px;
   }
   .tag-width {
-    width: 55px;
+    width: 80px;
     text-align: center;
   }
 </style>
