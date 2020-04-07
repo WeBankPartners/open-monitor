@@ -53,6 +53,9 @@ func DeployAgent(agentType,instance,bin,ip,port,user,pwd,url string) (address st
 }
 
 func StopAgent(agentType,instance,ip,url string) error {
+	if agentType == "java" {
+		agentType = "tomcat"
+	}
 	var param agentManagerRequest
 	param.Guid = fmt.Sprintf("%s_%s_%s", instance, ip, agentType)
 	resp,err := requestAgentMonitor(param,url,"delete")
