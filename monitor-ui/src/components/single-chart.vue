@@ -87,6 +87,7 @@ export default {
       }
       this.$httpRequestEntrance.httpRequestEntrance('POST', 'dashboard/newchart', params, responseData => {
         const chartConfig = {editTitle: true}
+        responseData.metric = this.chartItemx.metric[0]
         readyToDraw(this,responseData, this.chartIndex, chartConfig)
       })
     }
