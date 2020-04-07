@@ -31,10 +31,12 @@ export default {
       id: null
     }
   },
-  mounted () {
+  created () {
     this.$root.$eventBus.$on('updateResource', () => {
       this.getAllResource()
-    });
+    })
+  },
+  mounted () {
     this.getAllResource()
   },
   methods: {

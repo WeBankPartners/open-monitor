@@ -38,6 +38,7 @@ export default {
   name: 'recursive',
   data() {
     return {
+      inject:['cacheColor']
     }
   },
   props:{
