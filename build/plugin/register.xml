@@ -50,8 +50,9 @@
         <systemParameter name="MONITOR_MAIL_SENDER_PASSWORD" scopeType="global" defaultValue="default_password"/>
         <systemParameter name="MONITOR_ALARM_FIRING_CALLBACK" scopeType="global" defaultValue="default_firing_callback"/>
         <systemParameter name="MONITOR_ALARM_RECOVER_CALLBACK" scopeType="global" defaultValue="default_recover_callback"/>
-        <systemParameter name="MONITOR_JAVA_TYPE" scopeType="global" defaultValue="java"/>
-        <systemParameter name="MONITOR_TOMCAT_TYPE" scopeType="global" defaultValue="tomcat"/>
+        <systemParameter name="HOST_EXPORTER_INSTALL_SCRIPT" scopeType="global" defaultValue="/tmp/monitor/node_exporter_v2/start.sh"/>
+        <systemParameter name="HOST_EXPORTER_UNPACK" scopeType="global" defaultValue="true"/>
+        <systemParameter name="HOST_EXPORTER_UPLOAD_PATH" scopeType="global" defaultValue="/tmp/monitor/"/>
     </systemParameters>
 
     <!-- 5.权限设定 -->
@@ -229,7 +230,6 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">instance</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">user</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">password</parameter>
-                    <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MONITOR_JAVA_TYPE" required="N">java_type</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -297,6 +297,7 @@
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
         </plugin>
@@ -327,12 +328,12 @@
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
         </plugin>
 
         <!--最佳实践-->
-
         <plugin name="host" targetPackage="wecmdb" targetEntity="host_resource_instance" registerName="resource" >
             <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/host" httpMethod="POST" filterRule="{state_code eq 'created'}{fixed_date eq ''}">
                 <inputParameters>
@@ -437,8 +438,8 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:cache_resource_instance.monitor_port" required="Y">port</parameter>
                     <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MONITOR_REDIS_GROUP" required="Y">group</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:cache_resource_instance.code" required="Y">instance</parameter>
-                    <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="REDIS_MONITOR_USER" required="Y">user</parameter>
-                    <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="REDIS_MONITOR_PASSWARD" required="Y">password</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:cache_resource_instance.user_name" required="Y">user</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:cache_resource_instance.user_password" required="Y">password</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -480,9 +481,23 @@
             </interface>
         </plugin>
         <plugin name="java" targetPackage="wecmdb" targetEntity="app_instance" registerName="app">
+            <interface action="registerTomcat" path="/wecube-monitor/api/v1/agent/export/register/java" httpMethod="POST" filterRule="{state_code eq 'created'}{fixed_date eq ''}">
+                <inputParameters>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.host_resource_instance>wecmdb:host_resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">instance_ip</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.monitor_port" required="Y">port</parameter>
+                    <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MONITOR_TOMCAT_GROUP" required="Y">group</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.key_name" required="Y">instance</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.monitor_user" required="Y">user</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.monitor_password" required="Y">password</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                </outputParameters>
+            </interface>
             <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/java" httpMethod="POST" filterRule="{state_code eq 'created'}{fixed_date eq ''}">
                 <inputParameters>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.resource_instance>wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">instance_ip</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.host_resource_instance>wecmdb:host_resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">instance_ip</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.monitor_port" required="Y">port</parameter>
                     <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MONITOR_JAVA_GROUP" required="Y">group</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.key_name" required="Y">instance</parameter>
@@ -496,7 +511,7 @@
             </interface>
             <interface action="deregister" path="/wecube-monitor/api/v1/agent/export/deregister/java" httpMethod="POST" filterRule="{state_code eq 'destroyed'}{fixed_date eq ''}">
                 <inputParameters>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.resource_instance>wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">instance_ip</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.host_resource_instance>wecmdb:host_resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">instance_ip</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.monitor_port" required="Y">port</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.key_name" required="Y">instance</parameter>
                 </inputParameters>
@@ -507,7 +522,7 @@
             </interface>
             <interface action="start_alarm" path="/wecube-monitor/api/v1/agent/export/start/java" httpMethod="POST">
                 <inputParameters>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.resource_instance>wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">instance_ip</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.host_resource_instance>wecmdb:host_resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">instance_ip</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.monitor_port" required="Y">port</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.key_name" required="Y">instance</parameter>
                 </inputParameters>
@@ -518,7 +533,7 @@
             </interface>
             <interface action="stop_alarm" path="/wecube-monitor/api/v1/agent/export/stop/java" httpMethod="POST">
                 <inputParameters>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.resource_instance>wecmdb:resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">instance_ip</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.host_resource_instance>wecmdb:host_resource_instance.intranet_ip>wecmdb:ip_address.code" required="Y">instance_ip</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.monitor_port" required="Y">port</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.key_name" required="Y">instance</parameter>
                 </inputParameters>
@@ -540,7 +555,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:app_system.NONE" required="N">role</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:app_system.NONE" required="N">firing_callback</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:app_system.NONE" required="N">recover_callback</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">type</parameter>
+                    <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="WECMDB_APP_SYSTEM" required="N">type</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -555,6 +570,7 @@
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
         </plugin>
@@ -565,12 +581,12 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:subsys.key_name" required="Y">display_name</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:subsys.app_system>wecmdb:app_system.guid" required="Y">parent</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:subsys.NONE" required="N">endpoint</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:subsys.manage_role>wecmdb:manage_role.email>" required="N">email</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:subsys.manage_role>wecmdb:manage_role.email" required="N">email</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:subsys.manage_role>wecmdb:manage_role.phone" required="N">phone</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:subsys.manage_role>wecmdb:manage_role.code" required="N">role</parameter>
                     <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_FIRING_CALLBACK" required="N">firing_callback</parameter>
                     <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_RECOVER_CALLBACK" required="N">recover_callback</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">type</parameter>
+                    <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="WECMDB_SUBSYS" required="N">type</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -585,11 +601,12 @@
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
         </plugin>
-        <plugin name="system-dashboard" targetPackage="wecmdb" targetEntity="unit" registerName="app_unit">
-            <interface action="add" path="/wecube-monitor/api/v1/dashboard/system/add" httpMethod="POST">
+        <plugin name="system-dashboard" targetPackage="wecmdb" targetEntity="unit" registerName="unit">
+            <interface action="add-app-unit" path="/wecube-monitor/api/v1/dashboard/system/add" httpMethod="POST"  filterRule="{unit_type in ['@@0002_0000000001@@TOMCAT应用']}">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.guid" required="Y">guid</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.key_name" required="Y">display_name</parameter>
@@ -600,7 +617,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.manage_role>wecmdb:manage_role.code" required="N">role</parameter>
                     <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_FIRING_CALLBACK" required="N">firing_callback</parameter>
                     <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_RECOVER_CALLBACK" required="N">recover_callback</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">type</parameter>
+                    <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="WECMDB_UNIT" required="N">type</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -608,18 +625,17 @@
                     <parameter datatype="string" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
-            <interface action="delete" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST">
+            <interface action="delete-app-unit" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST" filterRule="{unit_type in ['@@0002_0000000001@@TOMCAT应用']}">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.guid" required="Y">guid</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
-        </plugin>
-        <plugin name="system-dashboard" targetPackage="wecmdb" targetEntity="unit" registerName="unit_rdb_resource">
-            <interface action="add" path="/wecube-monitor/api/v1/dashboard/system/add" httpMethod="POST">
+            <interface action="add-rdb-unit" path="/wecube-monitor/api/v1/dashboard/system/add" httpMethod="POST" filterRule="{unit_type in ['@@0002_0000000002@@MYSQL数据库']}">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.guid" required="Y">guid</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.key_name" required="Y">display_name</parameter>
@@ -630,7 +646,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.manage_role>wecmdb:manage_role.code" required="N">role</parameter>
                     <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_FIRING_CALLBACK" required="N">firing_callback</parameter>
                     <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_RECOVER_CALLBACK" required="N">recover_callback</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">type</parameter>
+                    <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="WECMDB_UNIT" required="N">type</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -638,18 +654,17 @@
                     <parameter datatype="string" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
-            <interface action="delete" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST">
+            <interface action="delete-rdb-unit" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST" filterRule="{unit_type in ['@@0002_0000000002@@MYSQL数据库']}">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.guid" required="Y">guid</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
-        </plugin>
-        <plugin name="system-dashboard" targetPackage="wecmdb" targetEntity="unit" registerName="unit_cache_resource">
-            <interface action="add" path="/wecube-monitor/api/v1/dashboard/system/add" httpMethod="POST">
+            <interface action="add-cache-unit" path="/wecube-monitor/api/v1/dashboard/system/add" httpMethod="POST" filterRule="{unit_type in ['@@0002_0000000003@@REDIS缓存']}">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.guid" required="Y">guid</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.key_name" required="Y">display_name</parameter>
@@ -660,7 +675,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.manage_role>wecmdb:manage_role.code" required="N">role</parameter>
                     <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_FIRING_CALLBACK" required="N">firing_callback</parameter>
                     <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_RECOVER_CALLBACK" required="N">recover_callback</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">type</parameter>
+                    <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="WECMDB_UNIT" required="N">type</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -668,59 +683,30 @@
                     <parameter datatype="string" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
-            <interface action="delete" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST">
+            <interface action="delete-cache-unit" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST" filterRule="{unit_type in ['@@0002_0000000003@@REDIS缓存']}">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.guid" required="Y">guid</parameter>
-                </inputParameters>
-                <outputParameters>
-                    <parameter datatype="string" mappingType="context">errorCode</parameter>
-                    <parameter datatype="string" mappingType="context">errorMessage</parameter>
-                </outputParameters>
-            </interface>
-        </plugin>
-        <plugin name="system-dashboard" targetPackage="wecmdb" targetEntity="unit" registerName="unit_host_resource">
-            <interface action="add" path="/wecube-monitor/api/v1/dashboard/system/add" httpMethod="POST">
-                <inputParameters>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.guid" required="Y">guid</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.key_name" required="Y">display_name</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.subsys>wecmdb:subsys.guid" required="Y">parent</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit~(unit)wecmdb:app_instance.host_resource_instance>wecmdb:host_resource_instance.monitor_key_name" required="Y">endpoint</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.manage_role>wecmdb:manage_role.email" required="N">email</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.manage_role>wecmdb:manage_role.phone" required="N">phone</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.manage_role>wecmdb:manage_role.code" required="N">role</parameter>
-                    <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_FIRING_CALLBACK" required="N">firing_callback</parameter>
-                    <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_RECOVER_CALLBACK" required="N">recover_callback</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">type</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
                     <parameter datatype="string" mappingType="context">guid</parameter>
-                </outputParameters>
-            </interface>
-            <interface action="delete" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST">
-                <inputParameters>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.guid" required="Y">guid</parameter>
-                </inputParameters>
-                <outputParameters>
-                    <parameter datatype="string" mappingType="context">errorCode</parameter>
-                    <parameter datatype="string" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
         </plugin>
         <plugin name="resource-dashboard" targetPackage="wecmdb" targetEntity="resource_set" registerName="resource_set">
-            <interface action="add" path="/wecube-monitor/api/v1/dashboard/system/add" httpMethod="POST">
+            <interface action="add-host-set" path="/wecube-monitor/api/v1/dashboard/system/add" httpMethod="POST" filterRule="{resource_type eq 'HOST'}">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.guid" required="Y">guid</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.key_name" required="Y">display_name</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.business_zone>wecmdb:business_zone.guid" required="Y">parent</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_set~(resource_set)wecmdb:resource_instance.monitor_key_name" required="Y">endpoint</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_set~(resource_set)wecmdb:host_resource_instance.monitor_key_name" required="Y">endpoint</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.manage_role>wecmdb:manage_role.email" required="N">email</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.manage_role>wecmdb:manage_role.phone" required="N">phone</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.manage_role>wecmdb:manage_role.code" required="N">role</parameter>
                     <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_FIRING_CALLBACK" required="N">firing_callback</parameter>
                     <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_RECOVER_CALLBACK" required="N">recover_callback</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">type</parameter>
+                    <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="WECMDB_RESOURCE_SET" required="N">type</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -728,18 +714,77 @@
                     <parameter datatype="string" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
-            <interface action="delete" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST">
+            <interface action="add-rdb-set" path="/wecube-monitor/api/v1/dashboard/system/add" httpMethod="POST" filterRule="{resource_type eq 'RDB'}">
+                <inputParameters>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.guid" required="Y">guid</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.key_name" required="Y">display_name</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.business_zone>wecmdb:business_zone.guid" required="Y">parent</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_set~(resource_set)wecmdb:rdb_resource_instance.monitor_key_name" required="Y">endpoint</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.manage_role>wecmdb:manage_role.email" required="N">email</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.manage_role>wecmdb:manage_role.phone" required="N">phone</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.manage_role>wecmdb:manage_role.code" required="N">role</parameter>
+                    <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_FIRING_CALLBACK" required="N">firing_callback</parameter>
+                    <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_RECOVER_CALLBACK" required="N">recover_callback</parameter>
+                    <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="WECMDB_RESOURCE_SET" required="N">type</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" mappingType="context">guid</parameter>
+                </outputParameters>
+            </interface>
+            <interface action="add-cache-set" path="/wecube-monitor/api/v1/dashboard/system/add" httpMethod="POST" filterRule="{resource_type eq 'CACHE'}">
+                <inputParameters>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.guid" required="Y">guid</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.key_name" required="Y">display_name</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.business_zone>wecmdb:business_zone.guid" required="Y">parent</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_set~(resource_set)wecmdb:cache_resource_instance.monitor_key_name" required="Y">endpoint</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.manage_role>wecmdb:manage_role.email" required="N">email</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.manage_role>wecmdb:manage_role.phone" required="N">phone</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.manage_role>wecmdb:manage_role.code" required="N">role</parameter>
+                    <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_FIRING_CALLBACK" required="N">firing_callback</parameter>
+                    <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_RECOVER_CALLBACK" required="N">recover_callback</parameter>
+                    <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="WECMDB_RESOURCE_SET" required="N">type</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" mappingType="context">guid</parameter>
+                </outputParameters>
+            </interface>
+            <interface action="delete-host-set" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST" filterRule="{resource_type eq 'HOST'}">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.guid" required="Y">guid</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" mappingType="context">guid</parameter>
+                </outputParameters>
+            </interface>
+            <interface action="delete-rdb-set" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST" filterRule="{resource_type eq 'RDB'}">
+                <inputParameters>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.guid" required="Y">guid</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" mappingType="context">guid</parameter>
+                </outputParameters>
+            </interface>
+            <interface action="delete-cache-set" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST" filterRule="{resource_type eq 'CACHE'}">
+                <inputParameters>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.guid" required="Y">guid</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
         </plugin>
         <plugin name="resource-dashboard" targetPackage="wecmdb" targetEntity="business_zone" registerName="business_zone">
-            <interface action="add" path="/wecube-monitor/api/v1/dashboard/system/add" httpMethod="POST">
+            <interface action="add" path="/wecube-monitor/api/v1/dashboard/system/add" httpMethod="POST" filterRule="{resource_set_type eq 'NODE'}">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:business_zone.guid" required="Y">guid</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:business_zone.key_name" required="Y">display_name</parameter>
@@ -750,7 +795,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:business_zone.NONE" required="N">role</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:business_zone.NONE" required="N">firing_callback</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:business_zone.NONE" required="N">recover_callback</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">type</parameter>
+                    <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="WECMDB_BUSINESS_ZONE" required="N">type</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -758,13 +803,14 @@
                     <parameter datatype="string" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
-            <interface action="delete" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST">
+            <interface action="delete" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST" filterRule="{resource_set_type eq 'NODE'}">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:business_zone.guid" required="Y">guid</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
         </plugin>
@@ -780,7 +826,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:network_zone.NONE" required="N">role</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:network_zone.NONE" required="N">firing_callback</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:network_zone.NONE" required="N">recover_callback</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">type</parameter>
+                    <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="WECMDB_NETWORK_ZONE" required="N">type</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -795,6 +841,7 @@
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
         </plugin>
@@ -810,7 +857,7 @@
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:data_center.NONE" required="N">role</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:data_center.NONE" required="N">firing_callback</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:data_center.NONE" required="N">recover_callback</parameter>
-                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">type</parameter>
+                    <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="WECMDB_DATA_CENTER" required="N">type</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -825,6 +872,7 @@
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
         </plugin>
