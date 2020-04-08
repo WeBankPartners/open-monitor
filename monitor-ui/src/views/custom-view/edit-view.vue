@@ -11,33 +11,11 @@
     </div>
     <div class="zone zone-config c-dark">
       <div class="tool-save">
-        <button class="btn btn-sm btn-confirm-f" @click="saveConfig">{{$t('button.save')}}</button>
+        <button class="btn btn-sm btn-confirm-f" @click="saveConfig">{{$t('button.saveConfig')}}</button>
         <button class="btn btn-sm btn-cancle-f" @click="goback()">{{$t('button.back')}}</button>
       </div>
-      <div style="display:flex">
-        <section>
-          <ul>
-            <li>
-              <Tooltip :content="$t('placeholder.metricConfiguration')" placement="right">
-                <div class="step-icon" @click="activeStep='chat_query'">
-                  <i class="fa fa-line-chart" aria-hidden="true"></i>
-                </div>
-              </Tooltip>
-            </li>
-            <li>
-              <div class="step-link"></div>
-            </li>
-            <li>
-              <Tooltip :content="$t('placeholder.globalConfiguration')" placement="right">
-                <div class="step-icon" @click="activeStep='chat_general'">
-                  <i class="fa fa-cog" aria-hidden="true"></i>
-                </div>
-              </Tooltip>
-            </li>
-          </ul>
-        </section>
+      <div>
         <section class="zone-config-operation">
-          <div v-if="activeStep==='chat_query'">
             <div class="tag-display">
               <Tag
                 v-for="(query, queryIndex) in chartQueryList"
@@ -91,32 +69,27 @@
                         :key="item.prom_ql+index"
                       >{{ item.metric }}</Option>
                     </Select>
-                    <button class="btn btn-cancle-f" @click="addQuery()">{{$t('button.confirm')}}</button>
                   </div>
                 </li>
-              </ul>
-            </div>
-          </div>
-          <div v-if="activeStep==='chat_general'" class="zone-config-operation-general">
-            <ul>
-              <li>
-                <div class="condition condition-title">{{$t('field.title')}}</div>
-                <div class="condition">
-                  <Input
-                    v-model="panalTitle"
-                    placeholder="Enter something..."
-                    style="width: 300px"
-                  />
-                </div>
-              </li>
+                <li>
+                  <div class="condition condition-title">{{$t('field.title')}}</div>
+                  <div class="condition">
+                    <Input
+                      v-model="panalTitle"
+                      placeholder="Enter something..."
+                      style="width: 300px"
+                    />
+                  </div>
+                </li>
               <li>
                 <div class="condition condition-title">{{$t('field.unit')}}</div>
                 <div class="condition">
                   <Input v-model="panalUnit" placeholder="Enter something..." style="width: 300px" />
                 </div>
+                <button class="btn btn-cancle-f" @click="addQuery()">{{$t('button.addConfig')}}</button>
               </li>
-            </ul>
-          </div>
+              </ul>
+            </div>
         </section>
       </div>
     </div>
@@ -359,7 +332,7 @@ export default {
 
 <style scoped lang="less">
 li {
-    list-style: none;
+  list-style: none;
 }
 .zone {
   width: 1100px;
@@ -382,31 +355,6 @@ li {
 .echart {
   height: 300px;
   width: 1100px;
-}
-
-.step-icon {
-  i {
-    height: 24px;
-    width: 24px;
-    font-size: 18px;
-    color: @blue-lingt;
-  }
-  .fa-line-chart {
-    margin: 7px 6px;
-  }
-  .fa-cog {
-    margin: 8px;
-  }
-  width: 36px;
-  height: 36px;
-  border: 2px solid @blue-lingt;
-  border-radius: 18px;
-  cursor: pointer;
-}
-.step-link {
-  height: 64px;
-  border-left: 2px solid @blue-lingt;
-  margin-left: 16px;
 }
 
 .zone-config-operation {
@@ -452,7 +400,6 @@ li {
   padding: 6px;
 }
 .condition-zone {
-  width: 900px;
   border: 1px solid @blue-2;
   padding: 4px;
   margin: 4px;

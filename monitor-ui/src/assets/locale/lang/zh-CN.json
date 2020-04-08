@@ -78,6 +78,8 @@
     "processConfiguration_tip2": "支持Name(tag)的格式,tag是进程command中的关键字",
     "businessConfiguration": "业务日志监控",
     "addMetric": "新增指标",
+    "addConfig": "生成配置",
+    "saveConfig": "保存配置",
     "addViewTemplate": "视图模板",
     "setDashboard": "设置首页",
     "saveEdit": "保存修改",
