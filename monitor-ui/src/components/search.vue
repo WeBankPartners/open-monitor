@@ -59,7 +59,7 @@ export default {
       timeTnterval: -1800,
       dataPick: dataPick,
       dateRange: ['',''],
-      autoRefresh: 0,
+      autoRefresh: 10,
       autoRefreshConfig: autoRefreshConfig,
       params: {
         // time: this.timeTnterval,
