@@ -2,8 +2,6 @@ package icmpping
 
 import (
 	"sync"
-	"log"
-	"github.com/WeBankPartners/open-monitor/monitor-agent/ping_exporter/funcs"
 )
 
 var (
@@ -90,13 +88,6 @@ func ClearRetryMap() {
 	defer retryMapLock.Unlock()
 	for k,_ := range retryMap{
 		retryMap[k] = 0
-	}
-}
-
-func DebugLog(msg string, v ...interface{}){
-	if funcs.Config().Debug {
-		msg = msg + " \n"
-		log.Printf(msg, v...)
 	}
 }
 

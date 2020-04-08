@@ -16,10 +16,10 @@
     "port": "9191",
     "path": "/metrics"
   },
-  "ip_source": {
+  "source": {
     "const": {
       "enabled" : true,
-      "ips": ["192.168.67.129","192.168.67.130","192.168.67.131","192.168.67.132"],
+      "ips": ["192.168.67.133"],
       "weight": 1
     },
     "file": {
@@ -42,9 +42,13 @@
     }
   },
   "metrics": {
-    "default": "ping_alive",
-    "count_num": "ping_count",
-    "count_success": "ping_success",
-    "count_fail": "ping_fail"
+    "ping": "ping_alive",
+    "ping_count_num": "ping_count",
+    "ping_count_success": "ping_success",
+    "ping_count_fail": "ping_fail",
+    "telnet": "telnet_alive",
+    "telnet_count_num": "telnet_count",
+    "telnet_count_success": "telnet_success",
+    "telnet_count_fail": "telnet_fail"
   }
 }
