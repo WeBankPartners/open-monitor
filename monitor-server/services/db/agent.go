@@ -163,14 +163,44 @@ func UpdateRecursivePanel(param m.PanelRecursiveTable) error {
 	}
 	if len(prt) > 0 {
 		tmpParent := unionList(param.Parent, prt[0].Parent, "^")
-		//tmpEndpoint := unionList(param.Endpoint, prt[0].Endpoint, "^")
+		tmpEndpoint := unionList(param.Endpoint, prt[0].Endpoint, "^")
 		//tmpEmail := unionList(param.Email, prt[0].Email, ",")
 		//tmpPhone := unionList(param.Phone, prt[0].Phone, ",")
 		//tmpRole := unionList(param.Role, prt[0].Role, ",")
-		_,err = x.Exec("UPDATE panel_recursive SET display_name=?,parent=?,endpoint=?,email=?,phone=?,role=?,firing_callback_key=?,recover_callback_key=?,obj_type=? WHERE guid=?", param.DisplayName,tmpParent,param.Endpoint,param.Email,param.Phone,param.Role,param.FiringCallbackKey,param.RecoverCallbackKey,param.ObjType,param.Guid)
+		_,err = x.Exec("UPDATE panel_recursive SET display_name=?,parent=?,endpoint=?,email=?,phone=?,role=?,firing_callback_key=?,recover_callback_key=?,obj_type=? WHERE guid=?", param.DisplayName,tmpParent,tmpEndpoint,param.Email,param.Phone,param.Role,param.FiringCallbackKey,param.RecoverCallbackKey,param.ObjType,param.Guid)
 	}else{
 		_,err = x.Exec("INSERT INTO panel_recursive(guid,display_name,parent,endpoint,email,phone,role,firing_callback_key,recover_callback_key,obj_type) VALUE (?,?,?,?,?,?,?,?,?,?)", param.Guid,param.DisplayName,param.Parent,param.Endpoint,param.Email,param.Phone,param.Role,param.FiringCallbackKey,param.RecoverCallbackKey,param.ObjType)
 	}
+	return err
+}
+
+func UpdateRecursiveEndpoint(guid string,endpoint []string) error {
+	var prt []*m.PanelRecursiveTable
+	err := x.SQL("SELECT * FROM panel_recursive WHERE guid=?", guid).Find(&prt)
+	if err != nil {
+		return err
+	}
+	if len(prt) == 0 {
+		return fmt.Errorf("update recursive endpoint error,no recored find with guid:%s", guid)
+	}
+	tmpEndpoint := strings.Split(prt[0].Endpoint, "^")
+	if len(tmpEndpoint) == 0 {
+		return nil
+	}
+	var newEndpoint []string
+	for _,v := range tmpEndpoint {
+		tmpFlag := false
+		for _,vv := range endpoint {
+			if vv == v {
+				tmpFlag = true
+				break
+			}
+		}
+		if !tmpFlag {
+			newEndpoint = append(newEndpoint, v)
+		}
+	}
+	_,err = x.Exec("UPDATE panel_recursive SET endpoint=? WHERE guid=?", strings.Join(newEndpoint, "^"), guid)
 	return err
 }
 

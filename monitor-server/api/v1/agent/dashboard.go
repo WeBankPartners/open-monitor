@@ -28,6 +28,7 @@ type panelRequestObj struct {
 	FiringCallback  string  `json:"firing_callback"`
 	RecoverCallback  string  `json:"recover_callback"`
 	Type  string  `json:"type"`
+	DeleteAll  string  `json:"delete_all"`
 }
 
 func ExportPanelAdd(c *gin.Context)  {
@@ -153,9 +154,47 @@ func ExportPanelDelete(c *gin.Context)  {
 				successFlag = "1"
 				continue
 			}
-			err := db.DeleteRecursivePanel(v.Guid)
-			if err != nil {
-				tmpMessage = fmt.Sprintf("Index:%s update database error:%v", v.CallbackParameter, err)
+			var cErr error
+			if strings.ToLower(v.DeleteAll) == "y" || strings.ToLower(v.DeleteAll) == "yes" {
+				cErr = db.DeleteRecursivePanel(v.Guid)
+			}else {
+				v.Endpoint = trimListString(v.Endpoint)
+				tmpEndpoint := strings.Split(v.Endpoint, ",")
+				var endpointString []string
+				for _,vv := range tmpEndpoint {
+					if vv == "" {
+						continue
+					}
+					var tmpAddress string
+					tmpList := strings.Split(vv, ":")
+					if len(tmpList) == 1 {
+						tmpAddress = fmt.Sprintf("%s:9100", tmpList[0])
+					}else if len(tmpList) == 2 {
+						tmpAddress = fmt.Sprintf("%s:%s", tmpList[0], tmpList[1])
+					}else{
+						tmpMessage += fmt.Sprintf(" endpoint %s validate fail, ", vv)
+						continue
+					}
+					endpointObj := m.EndpointTable{Address:tmpAddress}
+					db.GetEndpoint(&endpointObj)
+					if endpointObj.Id > 0 {
+						endpointString = append(endpointString, endpointObj.Guid)
+					}else{
+						tmpMessage += fmt.Sprintf(" endpoint with address %s can not find, ", tmpAddress)
+					}
+				}
+				if tmpMessage != "" {
+					errorMessage = tmpMessage
+					tmpResult = append(tmpResult, resultOutputObj{Guid:v.Guid, CallbackParameter:v.CallbackParameter, ErrorCode:"1", ErrorMessage:tmpMessage})
+					successFlag = "1"
+					continue
+				}
+				if len(endpointString) > 0 {
+					cErr = db.UpdateRecursiveEndpoint(v.Guid, endpointString)
+				}
+			}
+			if cErr != nil {
+				tmpMessage = fmt.Sprintf("Index:%s update database error:%v", v.CallbackParameter, cErr)
 				errorMessage = tmpMessage
 				tmpResult = append(tmpResult, resultOutputObj{Guid:v.Guid, CallbackParameter:v.CallbackParameter, ErrorCode:"1", ErrorMessage:tmpMessage})
 				successFlag = "1"

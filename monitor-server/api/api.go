@@ -24,6 +24,7 @@ func InitHttpServer(exportAgent bool) {
 	r.Static(fmt.Sprintf("%s/css", urlPrefix), fmt.Sprintf("public%s/css", urlPrefix))
 	r.Static(fmt.Sprintf("%s/img", urlPrefix), fmt.Sprintf("public%s/img", urlPrefix))
 	r.Static(fmt.Sprintf("%s/fonts", urlPrefix), fmt.Sprintf("public%s/fonts", urlPrefix))
+	r.StaticFile("/favicon.ico", "public/favicon.ico")
 	if exportAgent {
 		r.Static(fmt.Sprintf("%s/exporter", urlPrefix), "exporter")
 	}
