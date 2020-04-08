@@ -78,6 +78,8 @@
     "processConfiguration_tip2": "Support Name (tag) format, tag is the keyword in the progress command",
     "businessConfiguration": "Business Monitor",
     "addMetric": "Add Metric",
+    "addConfig": "Add Config",
+    "saveConfig": "Save Config",
     "addViewTemplate": "Add View Template",
     "setDashboard": "Set Dashboard",
     "saveEdit": "Save",
