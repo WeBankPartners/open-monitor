@@ -10,14 +10,14 @@ import (
 )
 
 func StartHttpServer() {
-	if funcs.Config().Prometheus.Enabled || funcs.Config().IpSource.Listen.Enabled {
-		port := funcs.Config().IpSource.Listen.Port
+	if funcs.Config().Prometheus.Enabled || funcs.Config().Source.Listen.Enabled {
+		port := funcs.Config().Source.Listen.Port
 		if funcs.Config().Prometheus.Enabled {
 			port = funcs.Config().Prometheus.Port
 			http.Handle(funcs.Config().Prometheus.Path, http.HandlerFunc(handlePrometheus))
 		}
-		if funcs.Config().IpSource.Listen.Enabled {
-			http.Handle(funcs.Config().IpSource.Listen.Path, http.HandlerFunc(handleIpSource))
+		if funcs.Config().Source.Listen.Enabled {
+			http.Handle(funcs.Config().Source.Listen.Path, http.HandlerFunc(handleIpSource))
 		}
 		http.ListenAndServe(":"+port, nil)
 	}
@@ -49,6 +49,6 @@ func handleIpSource(w http.ResponseWriter,r *http.Request)  {
 		w.Write([]byte(respMessage))
 		return
 	}
-	UpdateIpList(param.Ip, funcs.Config().IpSource.Listen.Weight)
+	funcs.UpdateIpList(param.Ip, funcs.Config().Source.Listen.Weight)
 	w.Write([]byte("success"))
 }

@@ -17,7 +17,7 @@ func main() {
 		return
 	}
 	icmpping.TestModel = *isTest
-	icmpping.InitIpList()
+	funcs.InitIpList()
 	go icmpping.StartHttpServer()
 	icmpping.StartTask()
 }
