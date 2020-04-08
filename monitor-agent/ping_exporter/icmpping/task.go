@@ -49,11 +49,11 @@ func doTask()  {
 	startTime := time.Now()
 	wg := sync.WaitGroup{}
 	var successCounter int
-	ipList := getIpList()
+	ipList := funcs.GetIpList()
 	// first check
 	for _,ip := range ipList {
 		if containString(ip, localIp) {
-			DebugLog("%s is local ip", ip)
+			funcs.DebugLog("%s is local ip", ip)
 			writeResultMap(ip, 0)
 			successCounter += 1
 			continue
@@ -65,7 +65,7 @@ func doTask()  {
 			if d < 2 {
 				writeResultMap(ip ,d)
 			}
-			DebugLog("ping %s result %d ", ip, d)
+			funcs.DebugLog("ping %s result %d ", ip, d)
 		}(ip,timeout)
 	}
 	wg.Wait()
@@ -74,13 +74,13 @@ func doTask()  {
 	retryIp := GetRetryIp()
 	retryLength := len(retryIp) // 重试IP的数量,如果第二次检测成功则数量减1,如果第二次检测完数量还大于0,则进行第三次检测
 	if len(retryIp) > 0 {
-		DebugLog("start second round, retry ip num : %d ", len(retryIp))
+		funcs.DebugLog("start second round, retry ip num : %d ", len(retryIp))
 		wgs := sync.WaitGroup{}
 		for _,v:= range retryIp{
 			wgs.Add(1)
 			go func(ip string,timeout int) {
 				defer wgs.Done()
-				DebugLog("second round , retry ip %s ", ip)
+				funcs.DebugLog("second round , retry ip %s ", ip)
 				d := StartPing(ip, timeout)
 				if d==0{
 					retryLength = retryLength - 1
@@ -89,19 +89,19 @@ func doTask()  {
 			}(v,timeout)
 		}
 		wgs.Wait()
-		DebugLog("end second round ")
+		funcs.DebugLog("end second round ")
 	}
 
 	// 第三次,最后一次检测,如果前面两次检测都还有需要重试的IP,说明此时的网络环境不稳定,需要对比上次检测的结果进行一次最后的重试
 	if retryLength>0 {
-		DebugLog("start third round, retry ip num : %d ", retryLength)
+		funcs.DebugLog("start third round, retry ip num : %d ", retryLength)
 		ClearRetryIp()
 		tmpRMap := readResultMap()
 		for _,v := range ipList{
 			if lv,ok := lastResultMap[v]; ok {
 				if lv!=tmpRMap[v]{  // 上次结果和这次的不一致，最后再检查一次，一般这种IP比较少
 					addRetryIp(v)
-					DebugLog("%s last result is different this : %d, last %d ", v, tmpRMap[v], lv)
+					funcs.DebugLog("%s last result is different this : %d, last %d ", v, tmpRMap[v], lv)
 					if tmpRMap[v]==0{
 						successCounter = successCounter - 1
 					}
@@ -109,13 +109,13 @@ func doTask()  {
 				}
 			}
 			if tmpRMap[v] >= 2{
-				DebugLog("%s retry is still not work ", v)
+				funcs.DebugLog("%s retry is still not work ", v)
 				addRetryIp(v)
 			}
 		}
 		finalRetryIp := GetRetryIp()
 		if len(finalRetryIp) > 0 {
-			DebugLog("final retry ip num : %d ", len(finalRetryIp))
+			funcs.DebugLog("final retry ip num : %d ", len(finalRetryIp))
 			wgt := sync.WaitGroup{}
 			for _,v := range finalRetryIp{
 				wgt.Add(1)
@@ -123,7 +123,7 @@ func doTask()  {
 					defer wgt.Done()
 					d := StartPing(ip, timeout)
 					writeResultMap(ip, d)
-					DebugLog("ping %s result %d ", ip ,d)
+					funcs.DebugLog("ping %s result %d ", ip ,d)
 				}(v,timeout)
 			}
 			wgt.Wait()
@@ -140,7 +140,7 @@ func doTask()  {
 func dealResult(successCounter int)  {
 	result := readResultMap()
 	if funcs.Config().Prometheus.Enabled {
-		go funcs.UpdateExportMetric(result, successCounter)
+		go funcs.UpdatePingExportMetric(result, successCounter)
 	}
 	if funcs.Config().OpenFalcon.Enabled {
 		go funcs.HandleTransferResult(result, successCounter)
