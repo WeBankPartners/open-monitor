@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"time"
+	"github.com/WeBankPartners/open-monitor/monitor-agent/ping_exporter/funcs"
 )
 
 // icmp报头,8byte
@@ -90,7 +91,7 @@ func StartPing(distIp string, timeout int) int {
 			return 0
 		}
 		if useTime < 6100 {  // 如果4个包不是全部2秒超时,则算异常需要重试
-			DebugLog("%s ping retry,%.3f ms, renum : %d ## ", distIp, useTime, re)
+			funcs.DebugLog("%s ping retry,%.3f ms, renum : %d ## ", distIp, useTime, re)
 			t := GetRetryMap(distIp, re)
 			if t>=4{  // 如果这几次检测中有总数超过4个成功的包返回,也算是成功,经测试在网络流量高的时候会有大概5%-10%的测试IP会只返回2个响应成功的包
 				addSuccessIp(distIp)
@@ -99,7 +100,7 @@ func StartPing(distIp string, timeout int) int {
 			addRetryIp(distIp)
 			return 2
 		}else {
-			DebugLog("%s ping fail,%.3f ms, renum : %d ## ", distIp, useTime, re)
+			funcs.DebugLog("%s ping fail,%.3f ms, renum : %d ## ", distIp, useTime, re)
 			return 1
 		}
 	}
@@ -125,7 +126,7 @@ func doping(conn net.IPConn, distIp string, timeout int) int {
 		isOk = 0
 	}else{
 		if len(receiveByte) < 23 {
-			DebugLog("icmp响应报文格式错误,无法解析")
+			funcs.DebugLog("icmp响应报文格式错误,无法解析")
 			isOk = 0
 		}else {
 			var typeint uint8
@@ -135,10 +136,10 @@ func doping(conn net.IPConn, distIp string, timeout int) int {
 			if typeint == 0 {
 				if useTime < 0.1 {
 					// 返回太快了,无效
-					DebugLog("%s ping fail,%.3f ms, to quick !! ", distIp, useTime)
+					funcs.DebugLog("%s ping fail,%.3f ms, to quick !! ", distIp, useTime)
 					isOk = 2
 				}else {
-					DebugLog("%s ping success,%.3f ms, ok !! ", distIp, useTime)
+					funcs.DebugLog("%s ping success,%.3f ms, ok !! ", distIp, useTime)
 				}
 			} else {
 				var codeint uint8
@@ -146,7 +147,7 @@ func doping(conn net.IPConn, distIp string, timeout int) int {
 				responseBuffer = bytes.NewBuffer(receiveByte[21:22])
 				binary.Read(responseBuffer, binary.BigEndian, &codeint)
 				msg := IcmpType(typeint, codeint)
-				DebugLog("%s ping fail, error : %s ", distIp, msg)
+				funcs.DebugLog("%s ping fail, error : %s ", distIp, msg)
 				isOk = 0
 			}
 		}
