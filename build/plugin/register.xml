@@ -293,6 +293,8 @@
             <interface action="delete" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">guid</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">endpoint</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">delete_all</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -324,6 +326,8 @@
             <interface action="delete" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">guid</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">endpoint</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">delete_all</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -566,6 +570,8 @@
             <interface action="delete" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:app_system.guid" required="Y">guid</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">endpoint</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">delete_all</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -597,6 +603,8 @@
             <interface action="delete" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:subsys.guid" required="Y">guid</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">endpoint</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">delete_all</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -628,6 +636,8 @@
             <interface action="delete-app-unit" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST" filterRule="{unit_type in ['@@0002_0000000001@@TOMCAT应用']}">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.guid" required="Y">guid</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">endpoint</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">delete_all</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -657,6 +667,8 @@
             <interface action="delete-rdb-unit" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST" filterRule="{unit_type in ['@@0002_0000000002@@MYSQL数据库']}">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.guid" required="Y">guid</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">endpoint</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">delete_all</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -686,6 +698,8 @@
             <interface action="delete-cache-unit" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST" filterRule="{unit_type in ['@@0002_0000000003@@REDIS缓存']}">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:unit.guid" required="Y">guid</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">endpoint</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">delete_all</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -755,6 +769,8 @@
             <interface action="delete-host-set" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST" filterRule="{resource_type eq 'HOST'}">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.guid" required="Y">guid</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">endpoint</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">delete_all</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -765,6 +781,8 @@
             <interface action="delete-rdb-set" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST" filterRule="{resource_type eq 'RDB'}">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.guid" required="Y">guid</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">endpoint</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">delete_all</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -775,6 +793,8 @@
             <interface action="delete-cache-set" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST" filterRule="{resource_type eq 'CACHE'}">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.guid" required="Y">guid</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">endpoint</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">delete_all</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -806,6 +826,8 @@
             <interface action="delete" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST" filterRule="{resource_set_type eq 'NODE'}">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:business_zone.guid" required="Y">guid</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">endpoint</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">delete_all</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -837,6 +859,8 @@
             <interface action="delete" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:network_zone.guid" required="Y">guid</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">endpoint</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">delete_all</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
@@ -868,6 +892,8 @@
             <interface action="delete" path="/wecube-monitor/api/v1/dashboard/system/delete" httpMethod="POST">
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="wecmdb:data_center.guid" required="Y">guid</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">endpoint</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">delete_all</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" mappingType="context">errorCode</parameter>
