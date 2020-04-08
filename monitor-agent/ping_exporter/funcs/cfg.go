@@ -30,7 +30,7 @@ type PrometheusCOnfig struct {
 	Path  string  `json:"path"`
 }
 
-type IpSourceConfig struct {
+type SourceConfig struct {
 	Const  SourceConstConfig  `json:"const"`
 	File  SourceFileConfig  `json:"file"`
 	Remote  SourceRemoteConfig  `json:"remote"`
@@ -65,10 +65,10 @@ type SourceListenConfig  struct {
 }
 
 type MetricConfig  struct {
-	Default  string  `json:"default"`
-	CountNum  string  `json:"count_num"`
-	CountSuccess  string  `json:"count_success"`
-	CountFail  string  `json:"count_fail"`
+	Ping  string  `json:"ping"`
+	PingCountNum  string  `json:"ping_count_num"`
+	PingCountSuccess  string  `json:"ping_count_success"`
+	PingCountFail  string  `json:"ping_count_fail"`
 }
 
 type GlobalConfig struct {
@@ -76,7 +76,7 @@ type GlobalConfig struct {
 	Interval      int               `json:"interval"`
 	OpenFalcon    OpenFalconConfig  `json:"open-falcon"`
 	Prometheus    PrometheusCOnfig  `json:"prometheus"`
-	IpSource      IpSourceConfig    `json:"ip_source"`
+	Source      SourceConfig    `json:"ping_source"`
 	Metrics       MetricConfig      `json:"metrics"`
 }
 
