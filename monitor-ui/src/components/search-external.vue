@@ -3,7 +3,7 @@
    <ul class="search-ul">
       <li class="search-li">
         <span class="params-title">{{$t('field.endpoint')}}：</span>
-        <Tag color="blue">VM_0_16_centos_192.168.0.16_host</Tag>
+        <Tag color="blue">{{endpointObject.option_value}}</Tag>
       </li>
       <li class="search-li">
         <span class="params-title">{{$t('field.relativeTime')}}：</span>
