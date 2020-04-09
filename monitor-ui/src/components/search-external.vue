@@ -12,15 +12,16 @@
         </Select>
       </li>
       <li class="search-li">
-        <span class="params-title">{{$t('field.timeInterval')}}：</span>
-        <DatePicker type="daterange" placement="bottom-end" @on-change="datePick" :placeholder="$t('placeholder.datePicker')" style="width: 200px"></DatePicker>
-      </li>
-      <li class="search-li">
         <span class="params-title">{{$t('placeholder.refresh')}}：</span>
         <Select v-model="autoRefresh" style="width:100px" @on-change="getChartsConfig" :placeholder="$t('placeholder.refresh')">
           <Option v-for="item in autoRefreshConfig" :value="item.value" :key="item.value">{{ item.label }}</Option>
         </Select>
       </li>
+      <li class="search-li"  style="margin-left:20px">
+        <span class="params-title">{{$t('field.timeInterval')}}：</span>
+        <DatePicker type="datetimerange" format="yyyy-MM-dd HH:mm:ss" placement="bottom-end" @on-change="datePick" :placeholder="$t('placeholder.datePicker')" style="width: 320px"></DatePicker>
+      </li>
+      
    </ul>
   </div>
 </template>
@@ -66,6 +67,7 @@ export default {
       this.endpoint = this.$route.query.endpoint
       cookies.setAuthorization(`${this.$route.query.token}`)
       this.setLocale(this.$route.query.lang)
+      this.dateRange[this.$route.query.startTime, this.$route.query.endTime]
       this.endpointObject = {
         id: '',
         option_value: this.$route.query.endpoint,
@@ -93,11 +95,12 @@ export default {
     },
     datePick (data) {
       this.dateRange = data
-      if (this.dateRange[0] !== '') {
-        this.dateRange[0] = this.dateRange[0] + ' 00:00:01'
-      }
-      if (this.dateRange[1] !== '') {
-        this.dateRange[1] = this.dateRange[1] + ' 23:59:59'
+      if (this.dateRange[0] && this.dateRange[1]) {
+        this.disableTime = true
+        this.autoRefresh = 0
+        this.timeTnterval = -1
+      } else {
+        this.disableTime = false
       }
       this.getChartsConfig()
     },
