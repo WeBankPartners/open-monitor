@@ -54,3 +54,35 @@ type TransGatewayRequestDto struct {
 type TransGatewayMetricDto struct {
 	Params  []*TransGatewayRequestDto  `json:"params"`
 }
+
+type UpdateEndpointTelnetParam struct {
+	Guid  string  `json:"guid" binding:"required"`
+	Config  []*EndpointTelnetObj  `json:"config"`
+}
+
+type EndpointTelnetObj struct {
+	Note  string  `json:"note"`
+	Port  string  `json:"port"`
+}
+
+type EndpointTelnetTable  struct {
+	Id  int  `json:"id"`
+	EndpointGuid  string  `json:"endpoint_guid"`
+	Port  int  `json:"port"`
+	Note  string  `json:"note"`
+}
+
+type PingExporterSourceDto struct {
+	Config  []*PingExportSourceObj  `json:"config"`
+}
+
+type PingExportSourceObj struct {
+	Ip  string  `json:"ip"`
+	Guid  string  `json:"guid"`
+}
+
+type TelnetSourceQuery struct {
+	Guid  string  `json:"guid"`
+	Ip  string  `json:"ip"`
+	Port  int  `json:"port"`
+}
