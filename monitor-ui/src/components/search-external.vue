@@ -64,6 +64,8 @@ export default {
   },
   mounted() {
     if (this.$root.$validate.isEmpty_reset(this.$route.params) && !this.$root.$validate.isEmpty_reset(this.$route.query)) {
+      console.log(this.$route.query)
+      console.log(this.$route.query.startTime, this.$route.query.endTime)
       this.endpoint = this.$route.query.endpoint
       cookies.setAuthorization(`${this.$route.query.token}`)
       this.setLocale(this.$route.query.lang)
