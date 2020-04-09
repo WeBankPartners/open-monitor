@@ -64,21 +64,17 @@ export default {
   },
   mounted() {
     if (this.$root.$validate.isEmpty_reset(this.$route.params) && !this.$root.$validate.isEmpty_reset(this.$route.query)) {
-      console.log(this.$route.query)
-      console.log(this.$route.query.startTime, this.$route.query.endTime)
       this.endpoint = this.$route.query.endpoint
       cookies.setAuthorization(`${this.$route.query.token}`)
       this.setLocale(this.$route.query.lang)
       this.dateRange[0] = this.$route.query.startTime
       this.dateRange[1] = this.$route.query.endTime
-      console.log(this.dateRange)
 
       this.endpointObject = {
         id: '',
         option_value: this.$route.query.endpoint,
         type: this.$route.query.type
       }
-      console.log(this.endpointObject)
       this.$root.$store.commit('storeip', this.endpointObject)
       this.getMainConfig()
     }
@@ -101,7 +97,6 @@ export default {
       // })
     },
     datePick (data) {
-      console.log(data)
       this.dateRange = data
       if (this.dateRange[0] && this.dateRange[1]) {
         this.disableTime = true
