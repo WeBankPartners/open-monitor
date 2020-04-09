@@ -3,7 +3,7 @@
    <ul class="search-ul">
       <li class="search-li">
         <span class="params-title">{{$t('field.endpoint')}}：</span>
-        <Tag color="blue">{{endpointObject}}</Tag>
+        <Tag color="blue">{{endpointObject.option_value}}</Tag>
       </li>
       <li class="search-li">
         <span class="params-title">{{$t('field.relativeTime')}}：</span>
@@ -69,7 +69,10 @@ export default {
       this.endpoint = this.$route.query.endpoint
       cookies.setAuthorization(`${this.$route.query.token}`)
       this.setLocale(this.$route.query.lang)
-      this.dateRange[this.$route.query.startTime, this.$route.query.endTime]
+      this.dateRange[0] = this.$route.query.startTime
+      this.dateRange[1] = this.$route.query.endTime
+      console.log(this.dateRange)
+
       this.endpointObject = {
         id: '',
         option_value: this.$route.query.endpoint,
