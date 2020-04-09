@@ -52,15 +52,15 @@ export default {
     }
   },
   watch: {
-    endpoint: function (val) {
-      if (val) {
-        this.endpointObject = this.endpointList.find(ep => {
-          return ep.option_value === val
-        })
-      } else {
-        this.endpointObject = {}
-      }
-    }
+    // endpoint: function (val) {
+    //   if (val) {
+    //     this.endpointObject = this.endpointList.find(ep => {
+    //       return ep.option_value === val
+    //     })
+    //   } else {
+    //     this.endpointObject = {}
+    //   }
+    // }
   },
   mounted() {
     if (this.$root.$validate.isEmpty_reset(this.$route.params) && !this.$root.$validate.isEmpty_reset(this.$route.query)) {
@@ -86,15 +86,16 @@ export default {
         this.endpointObject = this.$root.$store.state.ip
         this.$root.$store.commit('storeip', {})
       }
-      const type = this.endpointObject.type
-      return new Promise(resolve => {
-        let params = {
-          type: type
-        }
-        this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.mainConfig.api, params, (responseData) => {
-          resolve(responseData)
-        })
-      })
+      this.getChartsConfig()
+      // const type = this.endpointObject.type
+      // return new Promise(resolve => {
+      //   let params = {
+      //     type: type
+      //   }
+      //   this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.mainConfig.api, params, (responseData) => {
+      //     resolve(responseData)
+      //   })
+      // })
     },
     datePick (data) {
       console.log(data)
