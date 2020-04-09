@@ -16,25 +16,26 @@
             <Tag :color="endpointTag[option.option_type_name] || choiceColor(option.option_type_name, index)" class="tag-width">{{option.option_type_name}}</Tag>{{option.option_text}}</Option>
         </Select>
       </li>
-      <li class="search-li">
-        <button type="button" class="btn btn-sm btn-confirm-f"
-            @click="getChartsConfig()">
-            <i class="fa fa-search" ></i>
-            {{$t('button.search')}}
-          </button>
-      </li>
-      <li class="search-li">
-          <Select v-model="timeTnterval" style="width:80px" @on-change="getChartsConfig">
+      <li class="search-li" style="margin-left:20px">
+          <Select v-model="timeTnterval" :disabled="disableTime" style="width:80px" @on-change="getChartsConfig">
             <Option v-for="item in dataPick" :value="item.value" :key="item.value">{{ item.label }}</Option>
           </Select>
       </li>
       <li class="search-li">
-        <DatePicker type="daterange" placement="bottom-end" @on-change="datePick" :placeholder="$t('placeholder.datePicker')" style="width: 200px"></DatePicker>
-      </li>
-      <li class="search-li">
-        <Select v-model="autoRefresh" style="width:100px" @on-change="getChartsConfig" :placeholder="$t('placeholder.refresh')">
+        <Select v-model="autoRefresh" :disabled="disableTime" style="width:100px" @on-change="getChartsConfig" :placeholder="$t('placeholder.refresh')">
           <Option v-for="item in autoRefreshConfig" :value="item.value" :key="item.value">{{ item.label }}</Option>
         </Select>
+      </li>
+
+      <li class="search-li" style="margin-left:20px">
+        <DatePicker type="datetimerange" format="yyyy-MM-dd HH:mm:ss" placement="bottom-end" @on-change="datePick" :placeholder="$t('placeholder.datePicker')" style="width: 320px"></DatePicker>
+      </li>
+      <li class="search-li">
+        <button type="button" class="btn btn-sm btn-confirm-f"
+          @click="getChartsConfig()">
+          <i class="fa fa-search" ></i>
+          {{$t('button.search')}}
+        </button>
       </li>
       <li class="search-li">
         <button type="button" v-if="isShow" @click="changeRoute" class="btn btn-sm btn-cancle-f btn-jump">{{$t('button.endpointManagement')}}</button>
@@ -58,8 +59,9 @@ export default {
       ip: {},
       timeTnterval: -1800,
       dataPick: dataPick,
-      dateRange: ['',''],
+      dateRange: ['', ''],
       autoRefresh: 10,
+      disableTime: false,
       autoRefreshConfig: autoRefreshConfig,
       params: {
         // time: this.timeTnterval,
@@ -136,11 +138,12 @@ export default {
     },
     datePick (data) {
       this.dateRange = data
-      if (this.dateRange[0] !== '') {
-        this.dateRange[0] = this.dateRange[0] + ' 00:00:01'
-      }
-      if (this.dateRange[1] !== '') {
-        this.dateRange[1] = this.dateRange[1] + ' 23:59:59'
+      if (this.dateRange[0] && this.dateRange[1]) {
+        this.disableTime = true
+        this.autoRefresh = 0
+        this.timeTnterval = -1
+      } else {
+        this.disableTime = false
       }
       this.getChartsConfig()
     },
