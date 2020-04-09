@@ -26,7 +26,7 @@ export default {
     }
   },
   mounted() {
-    this.$refs.search.getChartsConfig() 
+    // this.$refs.search.getChartsConfig() 
   },
   methods: {
     manageCharts (chartsConfig, params) {
@@ -60,6 +60,7 @@ export default {
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.recursive.api, params, responseData => {
         this.showRecursive = true
         this.recursiveViewConfig = [responseData]
+        console.log(this.recursiveViewConfig)
       })
     }
   },
