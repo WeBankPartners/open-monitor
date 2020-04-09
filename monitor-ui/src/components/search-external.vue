@@ -3,7 +3,7 @@
    <ul class="search-ul">
       <li class="search-li">
         <span class="params-title">{{$t('field.endpoint')}}：</span>
-        <Tag color="blue">{{endpointObject.option_value}}</Tag>
+        <Tag color="blue">{{endpointObject}}</Tag>
       </li>
       <li class="search-li">
         <span class="params-title">{{$t('field.relativeTime')}}：</span>
@@ -75,6 +75,7 @@ export default {
         option_value: this.$route.query.endpoint,
         type: this.$route.query.type
       }
+      console.log(this.endpointObject)
       this.$root.$store.commit('storeip', this.endpointObject)
       this.getMainConfig()
     }
@@ -96,6 +97,7 @@ export default {
       })
     },
     datePick (data) {
+      console.log(data)
       this.dateRange = data
       if (this.dateRange[0] && this.dateRange[1]) {
         this.disableTime = true
