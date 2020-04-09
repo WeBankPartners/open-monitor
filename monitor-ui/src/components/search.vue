@@ -59,7 +59,7 @@ export default {
       ip: {},
       timeTnterval: -1800,
       dataPick: dataPick,
-      dateRange: ['', ''],
+      dateRange: ["2020-04-07 00:00:00", "2020-04-08 00:00:00"],
       autoRefresh: 10,
       disableTime: false,
       autoRefreshConfig: autoRefreshConfig,
@@ -137,6 +137,7 @@ export default {
       })
     },
     datePick (data) {
+      console.log(data)
       this.dateRange = data
       if (this.dateRange[0] && this.dateRange[1]) {
         this.disableTime = true
