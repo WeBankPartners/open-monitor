@@ -1,5 +1,9 @@
 export const dataPick = [
   {
+    value: -1,
+    label: "off"
+  },
+  {
     value: -1800,
     label: '30m'
   },
