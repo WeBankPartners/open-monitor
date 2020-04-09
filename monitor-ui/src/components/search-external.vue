@@ -90,15 +90,15 @@ export default {
         this.$root.$store.commit('storeip', {})
       }
       this.getChartsConfig()
-      const type = this.endpointObject.type
-      return new Promise(resolve => {
-        let params = {
-          type: type
-        }
-        this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.mainConfig.api, params, (responseData) => {
-          resolve(responseData)
-        })
-      })
+      // const type = this.endpointObject.type
+      // return new Promise(resolve => {
+      //   let params = {
+      //     type: type
+      //   }
+      //   this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.mainConfig.api, params, (responseData) => {
+      //     resolve(responseData)
+      //   })
+      // })
     },
     datePick (data) {
       console.log(data)
