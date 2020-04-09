@@ -18,6 +18,7 @@ const mysqlType  = "mysql"
 const redisType = "redis"
 const tomcatType = "tomcat"
 const javaType = "java"
+const otherType = "other"
 var agentManagerUrl string
 
 func RegisterAgent(c *gin.Context)  {
@@ -36,7 +37,7 @@ func RegisterAgent(c *gin.Context)  {
 
 func RegisterJob(param m.RegisterParam) error {
 	var err error
-	if param.Type != hostType && param.Type != mysqlType && param.Type != redisType && param.Type != tomcatType && param.Type != javaType {
+	if param.Type != hostType && param.Type != mysqlType && param.Type != redisType && param.Type != tomcatType && param.Type != javaType && param.Type != otherType {
 		return fmt.Errorf("Type " + param.Type + " is not supported yet")
 	}
 	step := 10
@@ -309,24 +310,36 @@ func RegisterJob(param m.RegisterParam) error {
 		endpoint.Address = fmt.Sprintf("%s:%s", param.ExporterIp, param.ExporterPort)
 		endpoint.AddressAgent = address
 	}
+	if param.Type == otherType {
+		if param.Instance == "" {
+			return fmt.Errorf("Monitor endpoint name can not be empty")
+		}
+		endpoint.Guid = fmt.Sprintf("%s_%s_%s", param.Instance, param.ExporterIp, param.Type)
+		endpoint.Name = param.Instance
+		endpoint.Ip = param.ExporterIp
+		endpoint.ExportType = param.Type
+		endpoint.Step = step
+	}
 	err = db.UpdateEndpoint(&endpoint)
 	if err != nil {
 		mid.LogError( "Update endpoint failed ", err)
 		return err
 	}
-	err = db.RegisterEndpointMetric(endpoint.Id, strList)
-	if err != nil {
-		mid.LogError( "Update endpoint metric failed ", err)
-		return err
-	}
-	if tmpAgentIp != "" && tmpAgentPort != "" {
-		param.ExporterIp = tmpAgentIp
-		param.ExporterPort = tmpAgentPort
-	}
-	err = prom.RegisteConsul(endpoint.Guid, param.ExporterIp, param.ExporterPort, []string{param.Type}, step, false)
-	if err != nil {
-		mid.LogError( "Register consul failed ", err)
-		return err
+	if param.Type != otherType {
+		err = db.RegisterEndpointMetric(endpoint.Id, strList)
+		if err != nil {
+			mid.LogError("Update endpoint metric failed ", err)
+			return err
+		}
+		if tmpAgentIp != "" && tmpAgentPort != "" {
+			param.ExporterIp = tmpAgentIp
+			param.ExporterPort = tmpAgentPort
+		}
+		err = prom.RegisteConsul(endpoint.Guid, param.ExporterIp, param.ExporterPort, []string{param.Type}, step, false)
+		if err != nil {
+			mid.LogError("Register consul failed ", err)
+			return err
+		}
 	}
 	return nil
 }

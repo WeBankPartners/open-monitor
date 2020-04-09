@@ -69,6 +69,9 @@ func ExportAgent(c *gin.Context)  {
 			break
 		}
 	}
+	if agentType == "other" {
+		illegal = false
+	}
 	if illegal {
 		result = resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("No such monitor type like %s", agentType)}
 		mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
@@ -146,7 +149,7 @@ func ExportAgent(c *gin.Context)  {
 			mid.LogInfo(msg)
 		}
 		// update group and sync prometheus config
-		if action == "register" {
+		if action == "register" && agentType != "other" {
 			var groupTplMap= make(map[string]int)
 			for _, v := range param.Inputs {
 				if v.Group == "" {
@@ -262,5 +265,24 @@ func AlarmControl(c *gin.Context)  {
 		result = resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("Param validate fail : %v", err)}
 		mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
 		c.JSON(http.StatusBadRequest, result)
+	}
+}
+
+func ExportPingSource(c *gin.Context)  {
+	ips := db.GetPingExporterSource()
+	mid.ReturnData(c, m.PingExporterSourceDto{Config:ips})
+}
+
+func UpdateEndpointTelnet(c *gin.Context)  {
+	var param m.UpdateEndpointTelnetParam
+	if err := c.ShouldBindJSON(&param); err == nil {
+		err = db.UpdateEndpointTelnet(param)
+		if err != nil {
+			mid.ReturnError(c, "Update endpoint telnet config fail", err)
+		}else{
+			mid.ReturnSuccess(c, "Success")
+		}
+	}else{
+		mid.ReturnValidateFail(c, fmt.Sprintf("Parameter validate fail %v", err))
 	}
 }
