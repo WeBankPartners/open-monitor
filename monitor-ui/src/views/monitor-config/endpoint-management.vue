@@ -100,6 +100,18 @@
       </div>
     </ModalComponent>
     <ModalDel :ModelDelConfig="ModelDelConfig"></ModalDel>
+    <ModalComponent :modelConfig="portModel">
+      <div slot="port">
+        <div style="display: flex;justify:">
+          <div style="background:red">
+            123
+          </div>
+          <div style="background:black">
+            456
+          </div>
+        </div>
+      </div>
+    </ModalComponent>
   </div>
 </template>
 <script>
@@ -141,6 +153,7 @@
     {btn_name: 'button.historicalAlert', btn_func: 'historyAlarm'},
     {btn_name: 'button.remove', btn_func: 'deleteConfirm'},
     {btn_name: 'button.logConfiguration', btn_func: 'logManagement'},
+    {btn_name: 'button.portConfiguration', btn_func: 'portManagement'},
     {btn_name: 'button.processConfiguration', btn_func: 'processManagement'},
     {btn_name: 'button.businessConfiguration', btn_func: 'businessManagement'},
   ]
@@ -219,6 +232,15 @@
               tableEle: tableEle
             }
           },
+        },
+        portModel: {
+          modalId: 'port_Modal',
+          modalTitle: 'button.portConfiguration',
+          isAdd: true,
+          config: [
+            {name:'port',type:'slot'}
+          ],
+          
         },
         endpointRejectModel: {
           modalId: 'endpoint_reject_model',
@@ -319,7 +341,7 @@
         this.$root.$tableUtil.initTable(this, 'GET', url, params)
       },
       filterMoreBtn (rowData) {
-        let moreBtnGroup = ['thresholdConfig','historyAlarm','logManagement']
+        let moreBtnGroup = ['thresholdConfig','historyAlarm','logManagement', 'portManagement']
         if (rowData.type === 'host') {
           moreBtnGroup.push('processManagement', 'businessManagement')
         }
@@ -484,7 +506,15 @@
       editBusiness (business) {
         this.delBusiness(business)
         this.businessConfigModel.businessName = business
-      }
+      },
+      portManagement (rowData) {
+        console.log(rowData)
+        // let params = {id: rowData.id}
+        // this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.alarm.history, params, (responseData) => {
+        //   this.historyAlarmPageConfig.table.tableData = responseData
+        // })
+        this.$root.JQ('#port_Modal').modal('show')
+      },
 
     },
     components: {
