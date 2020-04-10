@@ -68,7 +68,7 @@ type EndpointTelnetObj struct {
 type EndpointTelnetTable  struct {
 	Id  int  `json:"id"`
 	EndpointGuid  string  `json:"endpoint_guid"`
-	Port  int  `json:"port"`
+	Port  string  `json:"port"`
 	Note  string  `json:"note"`
 }
 
@@ -85,4 +85,23 @@ type TelnetSourceQuery struct {
 	Guid  string  `json:"guid"`
 	Ip  string  `json:"ip"`
 	Port  int  `json:"port"`
+}
+
+type DefaultSortObj struct {
+	Key  string
+	Value  string
+}
+
+type DefaultSortList []*DefaultSortObj
+
+func (s DefaultSortList) Len() int {
+	return len(s)
+}
+
+func (s DefaultSortList) Swap(i,j int)  {
+	s[i], s[j] = s[j], s[i]
+}
+
+func (s DefaultSortList) Less(i,j int) bool {
+	return s[i].Key < s[j].Key
 }

@@ -159,7 +159,7 @@ CREATE TABLE `alarm` (
   `close_msg` VARCHAR(255),
   `close_user` VARCHAR(50),
   PRIMARY KEY (`id`),
-  UNIQUE KEY `alarm_unique_index` (`strategy_id`,`endpoint`,`status`,`start`)
+  UNIQUE KEY `alarm_unique_index` (`strategy_id`,`endpoint`,`status`,`tags`,`start`)
 ) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
 DROP TABLE IF EXISTS `grp`;
@@ -340,3 +340,12 @@ CREATE TABLE `rel_role_grp` (
   `grp_id` int(10) unsigned NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `endpoint_telnet` (
+  `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `endpoint_guid` VARCHAR(255) NOT NULL,
+  `port` VARCHAR(255) DEFAULT '',
+  `note` VARCHAR(255) DEFAULT '',
+  `update_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
