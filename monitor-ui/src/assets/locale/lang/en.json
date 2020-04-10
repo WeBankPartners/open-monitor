@@ -73,6 +73,7 @@
     "thresholdManagement": "Threshold",
     "historicalAlert": "Historical Alert",
     "logConfiguration": "Keyword Configuration",
+    "portConfiguration": "Port Configuration",
     "processConfiguration": "Process Configuration",
     "processConfiguration_tip1": "Reference /proc/{pid}/status Name",
     "processConfiguration_tip2": "Support Name (tag) format, tag is the keyword in the progress command",
