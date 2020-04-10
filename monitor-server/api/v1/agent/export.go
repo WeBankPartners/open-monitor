@@ -221,20 +221,18 @@ func AlarmControl(c *gin.Context)  {
 	}
 	var result resultObj
 	var agentPort string
-	illegal := true
 	for _,v := range m.Config().Agent {
 		if v.AgentType == agentType {
-			illegal = false
 			agentPort = v.Port
 			break
 		}
 	}
-	if illegal {
-		result = resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("No such monitor type like %s", agentType)}
-		mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
-		c.JSON(http.StatusBadRequest, result)
-		return
-	}
+	//if illegal {
+	//	result = resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("No such monitor type like %s", agentType)}
+	//	mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
+	//	c.JSON(http.StatusBadRequest, result)
+	//	return
+	//}
 	data,_ := ioutil.ReadAll(c.Request.Body)
 	mid.LogInfo(fmt.Sprintf("param : %v", string(data)))
 	var param requestObj
@@ -251,7 +249,11 @@ func AlarmControl(c *gin.Context)  {
 			if agentType == "tomcat" && v.Port != "" {
 				agentPort = v.Port
 			}
-			err := db.UpdateEndpointAlarmFlag(isStop,agentType,v.Instance,v.HostIp,agentPort)
+			tmpIp := v.HostIp
+			if agentType != "host" {
+				tmpIp = v.InstanceIp
+			}
+			err := db.UpdateEndpointAlarmFlag(isStop,agentType,v.Instance,tmpIp,agentPort)
 			var msg string
 			if err != nil {
 				msg = fmt.Sprintf("%s %s:%s %s fail,error %v",action, agentType, v.HostIp, v.Instance, err)
