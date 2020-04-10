@@ -1,4 +1,4 @@
-FROM alpine
+FROM platten/alpine-oracle-jre8-docker
 LABEL maintainer = "Webank CTB Team"
 
 ENV BASE_HOME=/app/monitor
