@@ -53,6 +53,8 @@
         <systemParameter name="HOST_EXPORTER_INSTALL_SCRIPT" scopeType="global" defaultValue="/tmp/monitor/node_exporter_v2/start.sh"/>
         <systemParameter name="HOST_EXPORTER_UNPACK" scopeType="global" defaultValue="true"/>
         <systemParameter name="HOST_EXPORTER_UPLOAD_PATH" scopeType="global" defaultValue="/tmp/monitor/"/>
+        <systemParameter name="MONITOR_PING_GROUP" scopeType="global" defaultValue="default_ping_group"/>
+        <systemParameter name="MONITOR_TELNET_GROUP" scopeType="global" defaultValue="default_telnet_group"/>
     </systemParameters>
 
     <!-- 5.权限设定 -->
@@ -262,6 +264,96 @@
                 <inputParameters>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">instance_ip</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">port</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">instance</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+        </plugin>
+        <plugin name="ping">
+            <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/ping" httpMethod="POST">
+                <inputParameters>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">instance_ip</parameter>
+                    <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MONITOR_PING_GROUP" required="Y">group</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">instance</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+            <interface action="deregister" path="/wecube-monitor/api/v1/agent/export/deregister/ping" httpMethod='GET'>
+                <inputParameters>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">instance_ip</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">instance</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+            <interface action="start_alarm" path="/wecube-monitor/api/v1/agent/export/start/ping" httpMethod="POST">
+                <inputParameters>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">instance_ip</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">instance</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+            <interface action="stop_alarm" path="/wecube-monitor/api/v1/agent/export/stop/ping" httpMethod="POST">
+                <inputParameters>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">instance_ip</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">instance</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+        </plugin>
+        <plugin name="telnet">
+            <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/telnet" httpMethod="POST">
+                <inputParameters>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">instance_ip</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">port</parameter>
+                    <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="MONITOR_TELNET_GROUP" required="Y">group</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">instance</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+            <interface action="deregister" path="/wecube-monitor/api/v1/agent/export/deregister/telnet" httpMethod='GET'>
+                <inputParameters>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">instance_ip</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">port</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">instance</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+            <interface action="start_alarm" path="/wecube-monitor/api/v1/agent/export/start/telnet" httpMethod="POST">
+                <inputParameters>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">instance_ip</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">port</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">instance</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" mappingType="context">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+            <interface action="stop_alarm" path="/wecube-monitor/api/v1/agent/export/stop/telnet" httpMethod="POST">
+                <inputParameters>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">instance_ip</parameter>
+                    <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="N">port</parameter>
                     <parameter datatype="string" mappingType="entity" mappingEntityExpression="" required="Y">instance</parameter>
                 </inputParameters>
                 <outputParameters>
