@@ -12,6 +12,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/other"
 	"io/ioutil"
 	"encoding/json"
+	"sort"
 )
 
 func AcceptAlertMsg(c *gin.Context)  {
@@ -30,12 +31,17 @@ func AcceptAlertMsg(c *gin.Context)  {
 			var tmpValue float64
 			var tmpAlarms m.AlarmProblemList
 			var tmpTags  string
+			var sortTagList m.DefaultSortList
 			tmpAlarm := m.AlarmTable{Status: v.Status}
 			for labelKey,labelValue := range v.Labels {
-				if labelKey == "strategy_id" || labelKey == "job" || labelKey == "instance" || labelKey == "alertname" {
+				sortTagList = append(sortTagList, &m.DefaultSortObj{Key:labelKey, Value:labelValue})
+			}
+			sort.Sort(sortTagList)
+			for _,label := range sortTagList {
+				if label.Key == "strategy_id" || label.Key == "job" || label.Key == "instance" || label.Key == "alertname" {
 					continue
 				}
-				tmpTags += fmt.Sprintf("%s:%s^", labelKey, labelValue)
+				tmpTags += fmt.Sprintf("%s:%s^", label.Key, label.Value)
 			}
 			if tmpTags != "" {
 				tmpTags = tmpTags[:len(tmpTags)-1]
