@@ -28,7 +28,7 @@
       </li>
 
       <li class="search-li" style="margin-left:20px">
-        <DatePicker type="datetimerange" format="yyyy-MM-dd HH:mm:ss" placement="bottom-end" @on-change="datePick" :placeholder="$t('placeholder.datePicker')" style="width: 320px"></DatePicker>
+        <DatePicker type="datetimerange" :value="dateRange" format="yyyy-MM-dd HH:mm:ss" placement="bottom-end" @on-change="datePick" :placeholder="$t('placeholder.datePicker')" style="width: 320px"></DatePicker>
       </li>
       <li class="search-li">
         <button type="button" class="btn btn-sm btn-confirm-f"
@@ -59,7 +59,7 @@ export default {
       ip: {},
       timeTnterval: -1800,
       dataPick: dataPick,
-      dateRange: ["2020-04-07 00:00:00", "2020-04-08 00:00:00"],
+      dateRange: ['', ''],
       autoRefresh: 10,
       disableTime: false,
       autoRefreshConfig: autoRefreshConfig,
@@ -137,7 +137,6 @@ export default {
       })
     },
     datePick (data) {
-      console.log(data)
       this.dateRange = data
       if (this.dateRange[0] && this.dateRange[1]) {
         this.disableTime = true
