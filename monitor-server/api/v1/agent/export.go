@@ -57,27 +57,27 @@ func ExportAgent(c *gin.Context)  {
 	}
 	var agentPort string
 	var result resultObj
-	illegal := true
+	//illegal := true
 	for _,v := range m.Config().Agent {
 		tmpAgentType := agentType
 		if tmpAgentType == "java" {
 			tmpAgentType = "tomcat"
 		}
 		if v.AgentType == tmpAgentType {
-			illegal = false
+			//illegal = false
 			agentPort = v.Port
 			break
 		}
 	}
-	if agentType == "other" {
-		illegal = false
-	}
-	if illegal {
-		result = resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("No such monitor type like %s", agentType)}
-		mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
-		c.JSON(http.StatusBadRequest, result)
-		return
-	}
+	//if agentType == "other" {
+	//	illegal = false
+	//}
+	//if illegal {
+	//	result = resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("No such monitor type like %s", agentType)}
+	//	mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
+	//	c.JSON(http.StatusBadRequest, result)
+	//	return
+	//}
 	if action != "register" && action != "deregister" {
 		result = resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("No such action like %s", action)}
 		mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
@@ -149,7 +149,7 @@ func ExportAgent(c *gin.Context)  {
 			mid.LogInfo(msg)
 		}
 		// update group and sync prometheus config
-		if action == "register" && agentType != "other" {
+		if action == "register" {
 			var groupTplMap= make(map[string]int)
 			for _, v := range param.Inputs {
 				if v.Group == "" {
@@ -170,6 +170,11 @@ func ExportAgent(c *gin.Context)  {
 						err, _ := db.UpdateGrpEndpoint(m.GrpEndpointParamNew{Grp: grpObj.Id, Endpoints: []int{endpointObj.Id}, Operation: "add"})
 						if err != nil {
 							mid.LogError("register interface update group_endpoint fail ", err)
+						}
+						if agentType == "telnet" {
+							var eto []*m.EndpointTelnetObj
+							eto = append(eto, &m.EndpointTelnetObj{Port:v.Port, Note:""})
+							db.UpdateEndpointTelnet(m.UpdateEndpointTelnetParam{Guid:endpointObj.Guid, Config:eto})
 						}
 					}
 				}
@@ -284,5 +289,19 @@ func UpdateEndpointTelnet(c *gin.Context)  {
 		}
 	}else{
 		mid.ReturnValidateFail(c, fmt.Sprintf("Parameter validate fail %v", err))
+	}
+}
+
+func GetEndpointTelnet(c *gin.Context)  {
+	guid := c.Query("guid")
+	if guid == "" {
+		mid.ReturnValidateFail(c, "Guid can not empty")
+		return
+	}
+	result,err := db.GetEndpointTelnet(guid)
+	if err != nil {
+		mid.ReturnError(c, "Get endpoint telnet config fail", err)
+	}else{
+		mid.ReturnData(c, result)
 	}
 }
