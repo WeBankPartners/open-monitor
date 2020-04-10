@@ -83,7 +83,12 @@ func AcceptAlertMsg(c *gin.Context)  {
 				tmpAlarm.Content = v.Annotations["description"]
 				tmpSummaryMsg := strings.Split(v.Annotations["summary"], "__")
 				if len(tmpSummaryMsg) == 4 {
-					endpointObj := m.EndpointTable{Address: tmpSummaryMsg[0], AddressAgent: tmpSummaryMsg[0]}
+					var endpointObj m.EndpointTable
+					if v.Labels["guid"] != "" {
+						endpointObj = m.EndpointTable{Guid:v.Labels["guid"]}
+					}else {
+						endpointObj = m.EndpointTable{Address: tmpSummaryMsg[0], AddressAgent: tmpSummaryMsg[0]}
+					}
 					db.GetEndpoint(&endpointObj)
 					if endpointObj.Id > 0 {
 						tmpAlarm.Endpoint = endpointObj.Guid
@@ -97,7 +102,7 @@ func AcceptAlertMsg(c *gin.Context)  {
 					mid.LogInfo(fmt.Sprintf("Can't find the endpoint %v", v))
 					continue
 				}
-				tmpAlarmQuery := m.AlarmTable{Endpoint: tmpAlarm.Endpoint, StrategyId: tmpAlarm.StrategyId}
+				tmpAlarmQuery := m.AlarmTable{Endpoint: tmpAlarm.Endpoint, StrategyId: tmpAlarm.StrategyId, Tags:tmpAlarm.Tags}
 				_, tmpAlarms = db.GetAlarms(tmpAlarmQuery)
 			}
 			tmpOperation := "add"

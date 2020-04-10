@@ -51,6 +51,7 @@ type SourceFileConfig struct {
 
 type SourceRemoteConfig  struct {
 	Enabled  bool     `json:"enabled"`
+	Header  []string  `json:"header"`
 	GroupTag  string  `json:"group_tag"`
 	Url  string  `json:"url"`
 	Interval  int  `json:"interval"`
@@ -69,14 +70,20 @@ type MetricConfig  struct {
 	PingCountNum  string  `json:"ping_count_num"`
 	PingCountSuccess  string  `json:"ping_count_success"`
 	PingCountFail  string  `json:"ping_count_fail"`
+	Telnet  string  `json:"telnet"`
+	TelnetCountNum  string  `json:"telnet_count_num"`
+	TelnetCountSuccess  string  `json:"telnet_count_success"`
+	TelnetCountFail  string  `json:"telnet_count_fail"`
 }
 
 type GlobalConfig struct {
 	Debug         bool              `json:"debug"`
 	Interval      int               `json:"interval"`
+	PingEnable    bool              `json:"ping_enable"`
+	TelnetEnable  bool              `json:"telnet_enable"`
 	OpenFalcon    OpenFalconConfig  `json:"open-falcon"`
 	Prometheus    PrometheusCOnfig  `json:"prometheus"`
-	Source      SourceConfig    `json:"ping_source"`
+	Source      SourceConfig    `json:"source"`
 	Metrics       MetricConfig      `json:"metrics"`
 }
 

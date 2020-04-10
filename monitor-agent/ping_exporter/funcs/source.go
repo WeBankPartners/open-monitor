@@ -9,22 +9,32 @@ import (
 	"net/http"
 	"encoding/json"
 	"strconv"
+	"golang.org/x/net/context/ctxhttp"
+	"context"
 )
 
 var (
 	sourceMap map[string]int
 	sourceLock sync.RWMutex
+	sourceRemoteData  []*PingExportSourceObj
+	sourceGuidLock sync.RWMutex
 )
 
 type remoteResponse struct {
-	Ip  []string  `json:"ip"`
+	Config  []*PingExportSourceObj  `json:"config"`
+}
+
+type PingExportSourceObj struct {
+	Ip  string  `json:"ip"`
+	Guid  string  `json:"guid"`
 }
 
 //Note: weight参数是为了在众多数据源中识别当前数据源的数据并更新,weight越小权重越高,各数据源之间的关系是并集
 //Note: 比如说remote的weight是3,file的weight是2,remote数据更新后不会覆盖file的数据
-func InitIpList()  {
+func InitSourceList()  {
 	sourceLock = *new(sync.RWMutex)
 	sourceMap = make(map[string]int)
+	sourceGuidLock = *new(sync.RWMutex)
 	var weight int
 	if Config().Source.Const.Enabled {
 		weight = 1
@@ -70,7 +80,16 @@ func startRemoteCurl()  {
 	t := time.NewTicker(time.Second*time.Duration(interval)).C
 	for {
 		<- t
-		resp,err := http.Get(url)
+		req,_ := http.NewRequest(http.MethodGet, url, strings.NewReader(""))
+		for _,v := range Config().Source.Remote.Header {
+			if strings.Contains(v, "=") {
+				tmpSplit := strings.Split(v, "=")
+				if len(tmpSplit) > 1 {
+					req.Header.Set(tmpSplit[0], tmpSplit[1])
+				}
+			}
+		}
+		resp,err := ctxhttp.Do(context.Background(), http.DefaultClient, req)
 		if err != nil {
 			log.Printf("curl %s fail,error: %v \n", url, err)
 		}else{
@@ -83,9 +102,17 @@ func startRemoteCurl()  {
 				if err != nil {
 					log.Printf("curl %s fail,body unmarshal fail: %s", url, err)
 				}else{
-					UpdateIpList(responseData.Ip, weight)
+					var tmpIps []string
+					sourceGuidLock.Lock()
+					sourceRemoteData = responseData.Config
+					sourceGuidLock.Unlock()
+					for _,vv := range responseData.Config {
+						tmpIps = append(tmpIps, vv.Ip)
+					}
+					UpdateIpList(tmpIps, weight)
 				}
 			}
+			resp.Body.Close()
 		}
 	}
 }
@@ -153,4 +180,18 @@ func GetTelnetList() []*TelnetObj {
 	}
 	sourceLock.RUnlock()
 	return tmpList
+}
+
+func GetSourceGuidMap() map[string][]string {
+	tmpMap := make(map[string][]string)
+	sourceGuidLock.RLock()
+	for _,v := range sourceRemoteData {
+		if _,b := tmpMap[v.Ip];b {
+			tmpMap[v.Ip] = []string{v.Guid}
+		}else{
+			tmpMap[v.Ip] = append(tmpMap[v.Ip], v.Guid)
+		}
+	}
+	sourceGuidLock.RUnlock()
+	return tmpMap
 }
