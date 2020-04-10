@@ -1,6 +1,8 @@
 {
   "debug": false,
-  "interval": 60,
+  "interval": 30,
+  "ping_enable": true,
+  "telnet_enable": true,
   "open-falcon" : {
     "enabled": false,
     "transfer": {
@@ -19,19 +21,20 @@
   "source": {
     "const": {
       "enabled" : true,
-      "ips": ["192.168.67.133"],
+      "ips": [],
       "weight": 1
     },
     "file": {
-      "enabled" : false,
+      "enabled" : true,
       "path": "ip.txt",
       "weight": 2
     },
     "remote": {
-      "enabled" : false,
+      "enabled" : true,
+      "header": ["X-Auth-Token=default-token-used-in-server-side"],
       "group_tag" : "group=g1",
-      "url": "http://192.168.67.129:8088",
-      "interval": 120,
+      "url": "http://192.168.67.133:8088/wecube-monitor/api/v1/agent/export/ping/source",
+      "interval": 60,
       "weight": 3
     },
     "listen": {
