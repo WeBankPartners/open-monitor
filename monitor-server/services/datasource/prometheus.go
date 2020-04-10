@@ -87,6 +87,7 @@ func PrometheusData(query m.QueryMonitorData) []*m.SerialModel  {
 		for k,v := range otr.Metric {
 			if strings.Contains(query.Legend, "$"+k) {
 				tmpName = strings.Replace(tmpName, "$"+k, v, -1)
+				tmpName = fmt.Sprintf("%s:%s", query.Endpoint[0], tmpName)
 			}
 		}
 		if strings.Contains(query.Legend, "$custom") {
