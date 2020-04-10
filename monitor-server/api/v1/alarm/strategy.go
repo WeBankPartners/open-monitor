@@ -215,7 +215,7 @@ func updateConfigFile(tplId int) error {
 		return err
 	}
 	var fileName string
-	var endpointExpr string
+	var endpointExpr,guidExpr string
 	if len(query.Tpl) > 0 {
 		fileName = query.Tpl[len(query.Tpl)-1].ObjName
 		if isGrp {
@@ -244,6 +244,7 @@ func updateConfigFile(tplId int) error {
 			}else {
 				endpointExpr = endpointObj.Address
 			}
+			guidExpr = endpointObj.Guid
 		}
 	}
 	if isGrp {
@@ -255,8 +256,10 @@ func updateConfigFile(tplId int) error {
 				}else {
 					endpointExpr += fmt.Sprintf("%s|", v.Address)
 				}
+				guidExpr += fmt.Sprintf("%s|", v.Guid)
 			}
 			endpointExpr = endpointExpr[:len(endpointExpr)-1]
+			guidExpr = guidExpr[:len(guidExpr)-1]
 		}
 	}
 	if fileName == "" {
@@ -280,6 +283,7 @@ func updateConfigFile(tplId int) error {
 			}else {
 				endpointExpr = endpointObj.Address
 			}
+			guidExpr = endpointObj.Guid
 		}
 		for _,v := range query.Tpl[len(query.Tpl)-1].Strategy {
 			tmpRfu := m.RFRule{}
@@ -299,6 +303,13 @@ func updateConfigFile(tplId int) error {
 					v.Expr = strings.Replace(v.Expr, "=\"$address\"", "=~\""+endpointExpr+"\"", -1)
 				}else{
 					v.Expr = strings.Replace(v.Expr, "=\"$address\"", "=\""+endpointExpr+"\"", -1)
+				}
+			}
+			if strings.Contains(v.Expr, "$guid") {
+				if isGrp {
+					v.Expr = strings.Replace(v.Expr, "=\"$guid\"", "=~\""+guidExpr+"\"", -1)
+				}else{
+					v.Expr = strings.Replace(v.Expr, "=\"$guid\"", "=\""+guidExpr+"\"", -1)
 				}
 			}
 			tmpRfu.Expr = fmt.Sprintf("%s %s", v.Expr, v.Cond)
