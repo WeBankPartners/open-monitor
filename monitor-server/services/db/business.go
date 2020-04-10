@@ -15,9 +15,10 @@ func UpdateBusiness(param m.BusinessUpdateDto) error {
 	for _,v := range param.PathList {
 		var action Action
 		params := make([]interface{}, 0)
-		action.Sql = "INSERT INTO business_monitor(endpoint_id,path) VALUE (?,?)"
+		action.Sql = "INSERT INTO business_monitor(endpoint_id,path,owner_endpoint) VALUE (?,?,?)"
 		params = append(params, param.EndpointId)
-		params = append(params, v)
+		params = append(params, v.Path)
+		params = append(params, v.OwnerEndpoint)
 		action.Param = params
 		actions = append(actions, &action)
 	}
