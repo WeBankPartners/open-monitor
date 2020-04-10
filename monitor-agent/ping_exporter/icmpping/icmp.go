@@ -86,7 +86,15 @@ func StartPing(distIp string, timeout int) int {
 		addSuccessIp(distIp)
 		return 0
 	}else{
-		if re==2 && tq==2{  // 如果有2个回复成功和2个太快回复(下面把这当做了一种异常,有时候主机不通也会出现这种情况),也算主机是通的
+		if tq == 4 {
+			addSuccessIp(distIp)
+			return 0
+		}
+		if re == 1 && tq == 3 {
+			addSuccessIp(distIp)
+			return 0
+		}
+		if re == 2 && tq == 2{  // 如果有2个回复成功和2个太快回复(下面把这当做了一种异常,有时候主机不通也会出现这种情况),也算主机是通的
 			addSuccessIp(distIp)
 			return 0
 		}
