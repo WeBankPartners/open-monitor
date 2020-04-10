@@ -328,6 +328,11 @@ func UpdateEndpointTelnet(param m.UpdateEndpointTelnetParam) error {
 	return err
 }
 
+func GetEndpointTelnet(guid string) (result []*m.EndpointTelnetTable,err error) {
+	err = x.SQL("SELECT port,note FROM endpoint_telnet WHERE endpoint_guid=?", guid).Find(&result)
+	return result,err
+}
+
 func GetPingExporterSource() []*m.PingExportSourceObj {
 	result := []*m.PingExportSourceObj{}
 	pingMetric := "ping_alive"
