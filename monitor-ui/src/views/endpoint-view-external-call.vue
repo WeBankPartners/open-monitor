@@ -60,7 +60,6 @@ export default {
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.recursive.api, params, responseData => {
         this.showRecursive = true
         this.recursiveViewConfig = [responseData]
-        console.log(this.recursiveViewConfig)
       })
     }
   },
