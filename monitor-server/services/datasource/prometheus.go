@@ -111,6 +111,9 @@ func PrometheusData(query m.QueryMonitorData) []*m.SerialModel  {
 				tmpName = appendTagString(tmpName, otr.Metric)
 			}
 		}
+		if query.Legend == "$metric" {
+			tmpName = fmt.Sprintf("%s:%s", query.Endpoint[0], tmpName)
+		}
 		serial.Name = tmpName
 		var sdata m.DataSort
 		for _,v := range otr.Values {
