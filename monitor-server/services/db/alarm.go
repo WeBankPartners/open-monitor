@@ -571,6 +571,10 @@ func GetAlarms(query m.AlarmTable) (error,m.AlarmProblemList) {
 		whereSql += " and t1.s_priority=? "
 		params = append(params, query.SPriority)
 	}
+	if query.Tags != "" {
+		whereSql += " and t1.tags=? "
+		params = append(params, query.Tags)
+	}
 	extWhereSql = whereSql
 	extParams = params
 	if query.Status != "" {
