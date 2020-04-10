@@ -175,7 +175,11 @@ func getAutoDisplay(endpoint,tagKey string,charts []*m.ChartTable) (result []*m.
 		chartDto := m.ChartModel{Id: charts[0].Id, Col: charts[0].Col}
 		chartDto.Url = `/dashboard/chart`
 		chartDto.Endpoint = []string{endpoint}
-		chartDto.Metric = []string{fmt.Sprintf("%s/%s=%s", charts[0].Metric, tagKey, v.Name)}
+		tmpName := v.Name
+		if strings.Contains(tmpName, ":") {
+			tmpName = strings.Split(tmpName, ":")[1]
+		}
+		chartDto.Metric = []string{fmt.Sprintf("%s/%s=%s", charts[0].Metric, tagKey, tmpName)}
 		result = append(result, &chartDto)
 	}
 	return result,true
