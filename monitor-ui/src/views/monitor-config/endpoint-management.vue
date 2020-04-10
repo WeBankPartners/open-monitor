@@ -102,14 +102,29 @@
     <ModalDel :ModelDelConfig="ModelDelConfig"></ModalDel>
     <ModalComponent :modelConfig="portModel">
       <div slot="port">
-        <div style="display: flex;justify:">
-          <div style="background:red">
-            123
+        <section>
+          <div style="display: flex;">
+            <div class="port-title">
+              <span>{{$t('field.port')}}:</span>
+            </div>
+            <div class="port-title">
+              <span>{{$t('tableKey.description')}}:</span>
+            </div>
           </div>
-          <div style="background:black">
-            456
+        </section>
+        
+        <section v-for="(pm, pmIndex) in portModel.portMsg" :key="pmIndex">
+          <div class="port-config">
+            <div style="width: 48%">
+              <Input v-model.number="pm.port" type="number" style="width: 100%" placeholder="Required, type: Number" />
+            </div>
+            <div style="width: 48%">
+              <input type="text" v-model="pm.note" class="search-input" style="width: 100%"/>
+            </div>
+            <i class="fa fa-trash-o port-config-icon" @click="removePort(pmIndex)" aria-hidden="true"></i>
+            <i class="fa fa-plus-square-o port-config-icon" @click="addPort" :style="{'visibility': pmIndex+1===portModel.portMsg.length?  'unset' : 'hidden'}" aria-hidden="true"></i>
           </div>
-        </div>
+        </section>
       </div>
     </ModalComponent>
   </div>
@@ -161,6 +176,7 @@
     name: '',
     data() {
       return {
+        value9: null,
         ModelDelConfig: {
           deleteWarning: false,
           msg: '',
@@ -236,11 +252,12 @@
         portModel: {
           modalId: 'port_Modal',
           modalTitle: 'button.portConfiguration',
+          saveFunc: 'portSave',
           isAdd: true,
           config: [
             {name:'port',type:'slot'}
           ],
-          
+          portMsg: []
         },
         endpointRejectModel: {
           modalId: 'endpoint_reject_model',
@@ -508,14 +525,44 @@
         this.businessConfigModel.businessName = business
       },
       portManagement (rowData) {
-        console.log(rowData)
-        // let params = {id: rowData.id}
-        // this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.alarm.history, params, (responseData) => {
-        //   this.historyAlarmPageConfig.table.tableData = responseData
-        // })
+        this.id = rowData.guid
+        let params = {guid: rowData.guid}
+        this.$root.$httpRequestEntrance.httpRequestEntrance('GET', 'agent/export/endpoint/telnet/get', params, (responseData) => {
+          this.portModel.portMsg = responseData
+        })
         this.$root.JQ('#port_Modal').modal('show')
       },
-
+      addPort () {
+        const emptyPort = this.portModel.portMsg.some(t=> {
+          return !t.port === true
+        })
+        if (emptyPort) {
+          this.$Message.warning(this.$t('field.port') + this.$t('tips.required'))
+          return
+        }
+        this.portModel.portMsg.push({
+          port: null,
+          note: '',
+        })
+      },
+      removePort(pmIndex) {
+        this.portModel.portMsg.splice(pmIndex,1)
+      },
+      portSave () {
+        let temp = JSON.parse(JSON.stringify(this.portModel.portMsg))
+        temp.map(t=> {
+          t.port += ''
+          return t
+        })
+        const params = {
+          guid: this.id,
+          config: temp
+        }
+        this.$root.$httpRequestEntrance.httpRequestEntrance('POST', 'agent/export/endpoint/telnet/update', params, () => {
+          this.$Message.success(this.$t('tips.success'))
+          this.$root.JQ('#port_Modal').modal('hide')
+        })
+      }
     },
     components: {
       tableTemp
@@ -548,6 +595,27 @@
   .search-input-content {
     display: inline-block;
     vertical-align: middle; 
+  }
+
+  .port-title {
+    width: 48%;
+    font-size: 14px;
+    padding: 2px 0 2px 4px;
+    // border: 1px solid @blue-2;
+  }
+  .port-config {
+    display: flex;
+    margin-top: 4px;
+  }
+  .port-config-icon { 
+    font-size: 16px;
+    margin:7px 2px;
+  }
+  .fa-trash-o {
+    color: @color-red;
+  }
+  .fa-plus-square-o {
+    color: @color-blue;
   }
 </style>
 
