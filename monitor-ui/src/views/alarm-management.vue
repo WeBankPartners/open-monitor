@@ -16,27 +16,31 @@
       <section :key="alarmIndex" class="alarm-item c-dark-exclude-color" :class="'alarm-item-border-'+ alarmItem.s_priority">
         <i class="fa fa-times" @click="removeConfirm(alarmItem)" aria-hidden="true"></i>
         <ul>
-           <li>
-              <label class="col-md-1">{{$t('field.endpoint')}}:</label>
-              <Tag type="border" closable @on-close="addParams('endpoint',alarmItem.endpoint)" color="primary">{{alarmItem.endpoint}}</Tag>
-            </li>
-            <li v-if="!alarmItem.is_custom">
-              <label class="col-md-1">{{$t('field.metric')}}:</label>
-              <Tag type="border" closable @on-close="addParams('metric',alarmItem.s_metric)" color="primary">{{alarmItem.s_metric}}</Tag>
-            </li>
-            <li>
-              <label class="col-md-1">{{$t('tableKey.s_priority')}}:</label>
-              <Tag type="border" closable @on-close="addParams('priority',alarmItem.s_priority)" color="primary">{{alarmItem.s_priority}}</Tag>
-            </li>
-            <li>
-              <label class="col-md-1">{{$t('tableKey.start')}}:</label><span>{{alarmItem.start_string}}</span>
-            </li>
-            <li v-if="alarmIndex != actveAlarmIndex">
-              <label class="col-md-1"></label><span><Icon @click="actveAlarmIndex = alarmIndex" type="ios-arrow-dropdown" size=16 /></span>
-            </li>
+          <li>
+            <label class="col-md-1">{{$t('field.endpoint')}}:</label>
+            <Tag type="border" closable @on-close="addParams('endpoint',alarmItem.endpoint)" color="primary">{{alarmItem.endpoint}}</Tag>
+          </li>
+          <li v-if="!alarmItem.is_custom">
+            <label class="col-md-1">{{$t('field.metric')}}:</label>
+            <Tag type="border" closable @on-close="addParams('metric',alarmItem.s_metric)" color="primary">{{alarmItem.s_metric}}</Tag>
+          </li>
+          <li>
+            <label class="col-md-1">{{$t('tableKey.s_priority')}}:</label>
+            <Tag type="border" closable @on-close="addParams('priority',alarmItem.s_priority)" color="primary">{{alarmItem.s_priority}}</Tag>
+          </li>
+          <li v-if="!alarmItem.is_custom && alarmItem.tags">
+            <label class="col-md-1">Tags:</label>
+            <Tag type="border" v-for="(t,tIndex) in alarmItem.tags.split('^')" :key="tIndex" color="cyan">{{t}}</Tag>
+          </li>
+          <li>
+            <label class="col-md-1">{{$t('tableKey.start')}}:</label><span>{{alarmItem.start_string}}</span>
+          </li>
+          <li v-if="alarmIndex != actveAlarmIndex">
+            <label class="col-md-1"></label><span><Icon @click="actveAlarmIndex = alarmIndex" type="ios-arrow-dropdown" size=16 /></span>
+          </li>
           <template v-if="alarmIndex === actveAlarmIndex">
             <template v-if="alarmItem.is_log_monitor">
-               <li>
+              <li>
                 <label class="col-md-1">{{$t('tableKey.path')}}:</label><span>{{alarmItem.path}}</span>
               </li>
               <li>
