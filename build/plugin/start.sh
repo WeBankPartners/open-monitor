@@ -38,6 +38,9 @@ nohup ./prometheus --config.file=prometheus.yml --web.enable-lifecycle --storage
 cd ../agent_manager/
 mkdir -p logs
 nohup ./agent_manager > logs/app.log 2>&1 &
+cd ../ping_exporter/
+mkdir -p logs
+nohup ./ping_exporter > logs/app.log 2>&1 &
 cd ../transgateway/
 mkdir -p logs
 mkdir -p data
