@@ -37,9 +37,9 @@ func RegisterAgent(c *gin.Context)  {
 
 func RegisterJob(param m.RegisterParam) error {
 	var err error
-	if param.Type != hostType && param.Type != mysqlType && param.Type != redisType && param.Type != tomcatType && param.Type != javaType && param.Type != otherType {
-		return fmt.Errorf("Type " + param.Type + " is not supported yet")
-	}
+	//if param.Type != hostType && param.Type != mysqlType && param.Type != redisType && param.Type != tomcatType && param.Type != javaType && param.Type != otherType {
+	//	return fmt.Errorf("Type " + param.Type + " is not supported yet")
+	//}
 	step := 10
 	var strList []string
 	var endpoint m.EndpointTable
@@ -309,14 +309,14 @@ func RegisterJob(param m.RegisterParam) error {
 		endpoint.Step = step
 		endpoint.Address = fmt.Sprintf("%s:%s", param.ExporterIp, param.ExporterPort)
 		endpoint.AddressAgent = address
-	}
-	if param.Type == otherType {
+	}else {
 		if param.Instance == "" {
 			return fmt.Errorf("Monitor endpoint name can not be empty")
 		}
 		endpoint.Guid = fmt.Sprintf("%s_%s_%s", param.Instance, param.ExporterIp, param.Type)
 		endpoint.Name = param.Instance
 		endpoint.Ip = param.ExporterIp
+		endpoint.Address = fmt.Sprintf("%s:%s", param.ExporterIp, param.ExporterPort)
 		endpoint.ExportType = param.Type
 		endpoint.Step = step
 	}
@@ -325,7 +325,7 @@ func RegisterJob(param m.RegisterParam) error {
 		mid.LogError( "Update endpoint failed ", err)
 		return err
 	}
-	if param.Type != otherType {
+	if param.Type == hostType || param.Type == mysqlType || param.Type == redisType || param.Type == tomcatType || param.Type == javaType {
 		err = db.RegisterEndpointMetric(endpoint.Id, strList)
 		if err != nil {
 			mid.LogError("Update endpoint metric failed ", err)
