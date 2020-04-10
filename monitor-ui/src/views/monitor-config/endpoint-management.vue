@@ -121,7 +121,7 @@
             <div style="width: 48%">
               <input type="text" v-model="pm.note" class="search-input" style="width: 100%"/>
             </div>
-            <i class="fa fa-trash-o port-config-icon" @click="removePort(pmIndex)" aria-hidden="true"></i>
+            <i class="fa fa-trash-o port-config-icon" v-if="portModel.portMsg.length > 1" @click="removePort(pmIndex)" aria-hidden="true"></i>
             <i class="fa fa-plus-square-o port-config-icon" @click="addPort" :style="{'visibility': pmIndex+1===portModel.portMsg.length?  'unset' : 'hidden'}" aria-hidden="true"></i>
           </div>
         </section>
@@ -528,6 +528,10 @@
         this.id = rowData.guid
         let params = {guid: rowData.guid}
         this.$root.$httpRequestEntrance.httpRequestEntrance('GET', 'agent/export/endpoint/telnet/get', params, (responseData) => {
+          responseData.push({
+          port: null,
+          note: '',
+        })
           this.portModel.portMsg = responseData
         })
         this.$root.JQ('#port_Modal').modal('show')
@@ -549,7 +553,11 @@
         this.portModel.portMsg.splice(pmIndex,1)
       },
       portSave () {
-        let temp = JSON.parse(JSON.stringify(this.portModel.portMsg))
+        let temp = JSON.parse(JSON.stringify(this.portModel.portMsg.filter(t=>{
+          if (!t.port === false) {
+            return t
+          }
+        })))
         temp.map(t=> {
           t.port += ''
           return t
