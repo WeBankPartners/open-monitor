@@ -1,6 +1,5 @@
 <template>
   <div class=" ">
-    ***{{recursiveViewConfig}}
     <ul>
       <li v-for="(item, itemIndex) in recursiveViewConfig" class="tree-border" :key="itemIndex">
         <div @click="hide(itemIndex)" class="tree-title" :style="stylePadding">
