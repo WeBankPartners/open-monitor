@@ -264,6 +264,7 @@ CREATE TABLE `business_monitor` (
   `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
   `endpoint_id` INT(11) NOT NULL,
   `path` VARCHAR(100) NOT NULL,
+  `owner_endpoint` varchar(255) DEFAULT '',
   PRIMARY KEY (`id`)
 ) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
