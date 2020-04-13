@@ -74,30 +74,6 @@
       </div>
     </ModalComponent>
     <ModalComponent :modelConfig="businessConfigModel">
-      <!-- <div slot="businessConfig">
-        <div class="marginbottom params-each">
-          <label class="col-md-2 label-name">{{$t('tableKey.logPath')}}:</label>
-          <div class="search-input-content">
-            <input type="text" v-model="businessConfigModel.businessName" class="search-input c-dark" />
-          </div>
-          <button type="button" @click="addBusiness" class="btn-cancle-f" style="vertical-align:middle">{{$t('button.confirm')}}</button>
-        </div>
-        <div class="marginbottom params-each row" style="">
-          <div class="offset-md-1">
-            <Tag
-            v-for="(business, businessIndex) in businessConfigModel.addRow.businessSet"
-            color="primary"
-            type="border"
-            :key="businessIndex"
-            :name="businessIndex"
-            closable
-            @on-close="delBusiness(business)"
-            >{{business|interceptParams}}
-              <i class="fa fa-pencil" @click="editBusiness(business)" aria-hidden="true"></i>
-            </Tag>  
-          </div>     
-        </div>
-      </div> -->
       <div slot="businessConfig">
         <section>
           <div style="display: flex;">
