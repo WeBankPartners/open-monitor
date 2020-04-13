@@ -210,7 +210,7 @@ export default {
           'POST',this.$root.apiCenter.metricConfigView.api, params,
           responseData => {
             responseData.yaxis.unit = this.panalUnit;
-            readyToDraw(this,responseData, 1, { eye: false })
+            readyToDraw(this,responseData, 1, { eye: false, lineBarSwitch: true})
           }
         );
       }
