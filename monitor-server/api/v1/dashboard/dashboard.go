@@ -99,7 +99,7 @@ func GetPanels(c *gin.Context)  {
 		mid.ReturnError(c, "Get panels failed", err)
 		return
 	}
-	endpointBusinessShow := false
+	endpointBusinessShow := true
 	for _,panel := range panels {
 		if panel.AutoDisplay > 0 {
 			endpointBusinessShow = db.CheckEndpointBusiness(endpoint)
