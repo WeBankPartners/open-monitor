@@ -120,7 +120,6 @@
                 <Option v-for="item in businessConfigModel.allPath" :value="item.guid" :key="item.guid">
                 {{item.guid}}</Option>
               </Select>
-              <label class="required-tip">*</label>
             </div>
             <i class="fa fa-trash-o port-config-icon" v-if="businessConfigModel.pathMsg.length > 1" @click="delBusiness(pmIndex)" aria-hidden="true"></i>
             <i class="fa fa-plus-square-o port-config-icon" @click="addBusiness" :style="{'visibility': pmIndex+1===businessConfigModel.pathMsg.length?  'unset' : 'hidden'}" aria-hidden="true"></i>
@@ -541,10 +540,10 @@
       },
       businessConfigSave () {
         const emptyBusindess = this.businessConfigModel.pathMsg.some(t=> {
-          return !t.owner_endpoint || !t.path 
+          return !t.path 
         })
         if (emptyBusindess) {
-          this.$Message.warning(this.$t('tableKey.path') + 'or' + this.$t('field.endpoint') + this.$t('tips.required'))
+          this.$Message.warning(this.$t('tableKey.path') + this.$t('tips.required'))
           return
         }
         const params = {
@@ -558,10 +557,10 @@
       },
       addBusiness () {
         const emptyPath = this.businessConfigModel.pathMsg.some(t=> {
-          return !t.owner_endpoint === true || !t.path === true
+          return !t.path
         })
         if (emptyPath) {
-          this.$Message.warning(this.$t('tableKey.path') + '&&' + this.$t('tableKey.endpoint')  + this.$t('tips.required'))
+          this.$Message.warning(this.$t('tableKey.path')+ this.$t('tips.required'))
           return
         }
         this.businessConfigModel.pathMsg.push({

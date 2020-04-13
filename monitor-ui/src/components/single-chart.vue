@@ -78,7 +78,7 @@ export default {
       } else {
         params.push({
           id: this.chartItemx.id,
-          endpoint: this.params.endpoint,
+          endpoint: this.chartItemx.endpoint[0],
           metric: this.chartItemx.metric[0],
           time: this.params.time.toString(),
           start: this.params.start + '',
