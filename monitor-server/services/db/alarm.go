@@ -636,7 +636,7 @@ func UpdateAlarms(alarms []*m.AlarmTable) error {
 			params = append(params, v.Id)
 			_,cErr = x.Exec(action.Sql, v.Status, v.EndValue, v.End.Format(m.DatetimeFormat), v.Id)
 		}else{
-			action.Sql = "INSERT INTO alarm(strategy_id,endpoint,status,s_metric,s_expr,s_cond,s_last,s_priority,content,start_value,start,tags) VALUE (?,?,?,?,?,?,?,?,?,?,NOW(),?)"
+			action.Sql = "INSERT INTO alarm(strategy_id,endpoint,status,s_metric,s_expr,s_cond,s_last,s_priority,content,start_value,start,tags) VALUE (?,?,?,?,?,?,?,?,?,?,?,?)"
 			params = append(params, v.StrategyId)
 			params = append(params, v.Endpoint)
 			params = append(params, v.Status)
@@ -648,6 +648,7 @@ func UpdateAlarms(alarms []*m.AlarmTable) error {
 			params = append(params, v.Content)
 			params = append(params, v.StartValue)
 			//params = append(params, v.Start.Format(m.DatetimeFormat))
+			params = append(params, time.Now().Format(m.DatetimeFormat))
 			params = append(params, v.Tags)
 			_,cErr = x.Exec(action.Sql, v.StrategyId, v.Endpoint, v.Status, v.SMetric, v.SExpr, v.SCond, v.SLast, v.SPriority, v.Content, v.StartValue, v.Tags)
 		}
