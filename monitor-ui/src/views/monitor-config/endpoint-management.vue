@@ -74,7 +74,7 @@
       </div>
     </ModalComponent>
     <ModalComponent :modelConfig="businessConfigModel">
-      <div slot="businessConfig">
+      <!-- <div slot="businessConfig">
         <div class="marginbottom params-each">
           <label class="col-md-2 label-name">{{$t('tableKey.logPath')}}:</label>
           <div class="search-input-content">
@@ -97,6 +97,34 @@
             </Tag>  
           </div>     
         </div>
+      </div> -->
+      <div slot="businessConfig">
+        <section>
+          <div style="display: flex;">
+            <div class="port-title">
+              <span>{{$t('tableKey.logPath')}}:</span>
+            </div>
+            <div class="port-title">
+              <span>{{$t('field.endpoint')}}:</span>
+            </div>
+          </div>
+        </section>
+        <section v-for="(pm, pmIndex) in businessConfigModel.pathMsg" :key="pmIndex">
+          <div class="port-config">
+            <div style="width: 48%">
+              <input type="text" v-model.trim="pm.path" class="search-input" style="width: 95%"/>
+              <label class="required-tip">*</label>
+            </div>
+            <div style="width: 48%">
+              <Select v-model="pm.owner_endpoint" style="width: 95%">
+                <Option v-for="item in businessConfigModel.allPath" :value="item.guid" :key="item.guid">
+                {{item.guid}}</Option>
+              </Select>
+            </div>
+            <i class="fa fa-trash-o port-config-icon" v-if="businessConfigModel.pathMsg.length > 1" @click="delBusiness(pmIndex)" aria-hidden="true"></i>
+            <i class="fa fa-plus-square-o port-config-icon" @click="addBusiness" :style="{'visibility': pmIndex+1===businessConfigModel.pathMsg.length?  'unset' : 'hidden'}" aria-hidden="true"></i>
+          </div>
+        </section>
       </div>
     </ModalComponent>
     <ModalDel :ModelDelConfig="ModelDelConfig"></ModalDel>
@@ -306,6 +334,8 @@
           addRow:{
             businessSet: [],
           },
+          allPath: [],
+          pathMsg: [],
           businessName: ''
         },
         id: null,
@@ -489,19 +519,36 @@
       },
 
       businessManagement (rowData) {
+        this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.pageConfig.CRUD+'?page=1&size=1000', '', responseData => {
+          this.businessConfigModel.allPath = responseData.data.map(t=> {
+            t.id = Number(t.id)
+            return t
+          })
+        })
         this.id = rowData.id
         this.businessConfigModel.addRow.businessSet = []
         this.$root.$httpRequestEntrance.httpRequestEntrance('GET','alarm/business/list', {id:this.id}, responseData=> {
-          responseData.forEach((item)=>{
-            this.businessConfigModel.addRow.businessSet.push(item.path)
-          })
+          if (!responseData.length) {
+            responseData.push({
+              owner_endpoint: null,
+              path: null
+            })
+          }
+          this.businessConfigModel.pathMsg = responseData
           this.$root.JQ('#business_config_model').modal('show')
         })
       },
       businessConfigSave () {
+        const emptyBusindess = this.businessConfigModel.pathMsg.some(t=> {
+          return !t.path 
+        })
+        if (emptyBusindess) {
+          this.$Message.warning(this.$t('tableKey.path') + this.$t('tips.required'))
+          return
+        }
         const params = {
           endpoint_id: +this.id,
-          path_list: this.businessConfigModel.addRow.businessSet
+          path_list: this.businessConfigModel.pathMsg
         }
         this.$root.$httpRequestEntrance.httpRequestEntrance('POST','alarm/business/update', params, ()=> {
           this.$Message.success(this.$t('tips.success'))
@@ -509,29 +556,31 @@
         })
       },
       addBusiness () {
-        if (!this.$root.$validate.isEmpty_reset(this.businessConfigModel.businessName.trim())) {
-          this.businessConfigModel.addRow.businessSet.push(this.businessConfigModel.businessName.trim())
-          this.businessConfigModel.businessName = ''
-        }
-      },
-      delBusiness (business) {
-        const i = this.businessConfigModel.addRow.businessSet.findIndex((val)=>{
-          return val === business
+        const emptyPath = this.businessConfigModel.pathMsg.some(t=> {
+          return !t.path
         })
-        this.businessConfigModel.addRow.businessSet.splice(i,1)
+        if (emptyPath) {
+          this.$Message.warning(this.$t('tableKey.path')+ this.$t('tips.required'))
+          return
+        }
+        this.businessConfigModel.pathMsg.push({
+          owner_endpoint: null,
+          path: null
+        })
       },
-      editBusiness (business) {
-        this.delBusiness(business)
-        this.businessConfigModel.businessName = business
+      delBusiness (pmIndex) {
+        this.businessConfigModel.pathMsg.splice(pmIndex,1)
       },
       portManagement (rowData) {
         this.id = rowData.guid
         let params = {guid: rowData.guid}
         this.$root.$httpRequestEntrance.httpRequestEntrance('GET', 'agent/export/endpoint/telnet/get', params, (responseData) => {
-          responseData.push({
-          port: null,
-          note: '',
-        })
+          if (!responseData.length) {
+            responseData.push({
+              port: null,
+              note: '',
+            })
+          }
           this.portModel.portMsg = responseData
         })
         this.$root.JQ('#port_Modal').modal('show')
