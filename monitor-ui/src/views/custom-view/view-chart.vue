@@ -85,7 +85,7 @@ export default {
           responseData => {
           
             responseData.yaxis.unit =  this.panalUnit  
-            const chartConfig = {eye: false}
+            const chartConfig = {eye: false, lineBarSwitch: true}
             readyToDraw(this,responseData, 1, chartConfig)
 
           }
