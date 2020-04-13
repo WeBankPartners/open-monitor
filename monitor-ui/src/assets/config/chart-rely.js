@@ -1,5 +1,6 @@
 // 引入柱状图
 require('echarts/lib/chart/line');
+require('echarts/lib/chart/bar');
 // 引入提示框和标题组件
 require('echarts/lib/component/tooltip');
 require('echarts/lib/component/title');
@@ -65,7 +66,8 @@ export const drawChart = function(that,config,userConfig) {
     eye: true,
     dataZoom: true,
     clear: false,
-    editTitle: false
+    editTitle: false,
+    lineBarSwitch: false
   }
   let finalConfig = Object.assign(originConfig, userConfig)
 
@@ -230,6 +232,13 @@ export const drawChart = function(that,config,userConfig) {
     option.title.text = config.title
   }
   
+  //切换为折线图，切换为柱状图
+  if (finalConfig.lineBarSwitch) {
+    option.toolbox.feature.magicType = {
+      type: ['line', 'bar']
+    }
+  }
+
   if (finalConfig.eye) {
     option.toolbox.feature.myTool = {
       show:true,
