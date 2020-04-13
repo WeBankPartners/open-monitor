@@ -45,11 +45,7 @@
                         :value="option.option_value"
                         :key="index"
                       >
-                        <Tag color="green" class="tag-width" v-if="option.type == 'sys'">system</Tag>
-                        <Tag color="cyan" class="tag-width" v-if="option.type == 'host'">host</Tag>
-                        <Tag color="blue" class="tag-width" v-if="option.type == 'mysql'">mysql </Tag>
-                        <Tag color="geekblue" class="tag-width" v-if="option.type == 'redis'">redis </Tag>
-                        <Tag color="purple" class="tag-width" v-if="option.type == 'tomcat'">tomcat</Tag>{{option.option_text}}</Option>
+                      <Tag :color="endpointTag[option.option_type_name] || choiceColor(option.option_type_name, index)" class="tag-width">{{option.option_type_name}}</Tag>{{option.option_text}}</Option>
                     </Select>
                   </div>
                 </li>
@@ -97,12 +93,16 @@
 </template>
 
 <script>
-import { generateUuid } from "@/assets/js/utils";
-import { readyToDraw } from "@/assets/config/chart-rely";
+import { generateUuid } from "@/assets/js/utils"
+import { readyToDraw } from "@/assets/config/chart-rely"
+import {endpointTag, randomColor} from '@/assets/config/common-config'
 export default {
   name: "",
   data() {
     return {
+      endpointTag: endpointTag,
+      randomColor: randomColor,
+      cacheColor: {},
       viewData: null,
       panalIndex: null,
       panalData: null,
@@ -186,6 +186,17 @@ export default {
     }
   },
   methods: {
+    choiceColor (type,index) {
+      let color = ''
+      // eslint-disable-next-line no-prototype-builtins
+      if (Object.keys(this.cacheColor).includes(type)) {
+        color = this.cacheColor[type]
+      } else {
+        color = randomColor[index]
+        this.cacheColor[type] = randomColor[index]
+      }
+      return color
+    },
     initPanal() {
       this.panalTitle = this.panalData.panalTitle;
       this.panalUnit = this.panalData.panalUnit;
