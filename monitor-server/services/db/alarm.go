@@ -112,7 +112,7 @@ func ListAlarmEndpoints(query *m.AlarmEndpointQuery) error {
 	if len(result) > 0 {
 		for _,v := range result {
 			if v.GroupsName != "" {
-				v.GroupsName = v.GroupsName[:len(v.GroupsName)-1]
+				v.GroupsName = v.GroupsName[:len(v.GroupsName)]
 			}
 		}
 		query.Result = result
