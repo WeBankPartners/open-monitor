@@ -623,39 +623,39 @@ func UpdateAlarms(alarms []*m.AlarmTable) error {
 	if len(alarms) == 0 {
 		return nil
 	}
-	var actions []*Action
+	//var actions []*Action
 	for _,v := range alarms {
 		var action Action
 		var cErr error
-		params := make([]interface{}, 0)
+		//params := make([]interface{}, 0)
 		if v.Id > 0 {
 			action.Sql = "UPDATE alarm SET status=?,end_value=?,end=? WHERE id=?"
-			params = append(params, v.Status)
-			params = append(params, v.EndValue)
-			params = append(params, v.End.Format(m.DatetimeFormat))
-			params = append(params, v.Id)
+			//params = append(params, v.Status)
+			//params = append(params, v.EndValue)
+			//params = append(params, v.End.Format(m.DatetimeFormat))
+			//params = append(params, v.Id)
 			_,cErr = x.Exec(action.Sql, v.Status, v.EndValue, v.End.Format(m.DatetimeFormat), v.Id)
 		}else{
 			action.Sql = "INSERT INTO alarm(strategy_id,endpoint,status,s_metric,s_expr,s_cond,s_last,s_priority,content,start_value,start,tags) VALUE (?,?,?,?,?,?,?,?,?,?,?,?)"
-			params = append(params, v.StrategyId)
-			params = append(params, v.Endpoint)
-			params = append(params, v.Status)
-			params = append(params, v.SMetric)
-			params = append(params, v.SExpr)
-			params = append(params, v.SCond)
-			params = append(params, v.SLast)
-			params = append(params, v.SPriority)
-			params = append(params, v.Content)
-			params = append(params, v.StartValue)
+			//params = append(params, v.StrategyId)
+			//params = append(params, v.Endpoint)
+			//params = append(params, v.Status)
+			//params = append(params, v.SMetric)
+			//params = append(params, v.SExpr)
+			//params = append(params, v.SCond)
+			//params = append(params, v.SLast)
+			//params = append(params, v.SPriority)
+			//params = append(params, v.Content)
+			//params = append(params, v.StartValue)
 			//params = append(params, v.Start.Format(m.DatetimeFormat))
-			params = append(params, time.Now().Format(m.DatetimeFormat))
-			params = append(params, v.Tags)
-			_,cErr = x.Exec(action.Sql, v.StrategyId, v.Endpoint, v.Status, v.SMetric, v.SExpr, v.SCond, v.SLast, v.SPriority, v.Content, v.StartValue, v.Tags)
+			//params = append(params, time.Now().Format(m.DatetimeFormat))
+			//params = append(params, v.Tags)
+			_,cErr = x.Exec(action.Sql, v.StrategyId, v.Endpoint, v.Status, v.SMetric, v.SExpr, v.SCond, v.SLast, v.SPriority, v.Content, v.StartValue, time.Now().Format(m.DatetimeFormat), v.Tags)
 		}
-		action.Param = params
-		if action.Sql != "" {
-			actions = append(actions, &action)
-		}
+		//action.Param = params
+		//if action.Sql != "" {
+		//	actions = append(actions, &action)
+		//}
 		if cErr != nil {
 			mid.LogInfo(fmt.Sprintf("update alarm:%s param:%v fail with:%v", action.Sql, action.Param, cErr))
 		}
