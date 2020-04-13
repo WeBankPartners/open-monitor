@@ -109,16 +109,15 @@
             </div>
           </div>
         </section>
-        {{businessConfigModel.pathMsg}}
         <section v-for="(pm, pmIndex) in businessConfigModel.pathMsg" :key="pmIndex">
           <div class="port-config">
             <div style="width: 48%">
-              <input type="text" v-model="pm.path" class="search-input" style="width: 95%"/>
+              <input type="text" v-model.trim="pm.path" class="search-input" style="width: 95%"/>
               <label class="required-tip">*</label>
             </div>
             <div style="width: 48%">
-              <Select v-model="pm.endpoint_id" style="width: 95%">
-                <Option v-for="item in businessConfigModel.allPath" :value="item.id" :key="item.guid">
+              <Select v-model="pm.owner_endpoint" style="width: 95%">
+                <Option v-for="item in businessConfigModel.allPath" :value="item.guid" :key="item.guid">
                 {{item.guid}}</Option>
               </Select>
               <label class="required-tip">*</label>
@@ -532,7 +531,7 @@
         this.$root.$httpRequestEntrance.httpRequestEntrance('GET','alarm/business/list', {id:this.id}, responseData=> {
           if (!responseData.length) {
             responseData.push({
-              endpoint_id: null,
+              owner_endpoint: null,
               path: null
             })
           }
@@ -541,20 +540,13 @@
         })
       },
       businessConfigSave () {
-        let temp = JSON.parse(JSON.stringify(this.portModel.portMsg.filter(t=>{
-          if (!t.port === false) {
-            return t
-          }
-        })))
-        temp.map(t=> {
-          t.port += ''
-          return t
+        const emptyBusindess = this.businessConfigModel.pathMsg.some(t=> {
+          return !t.owner_endpoint || !t.path 
         })
-        const params = {
-          guid: this.id,
-          config: temp
+        if (emptyBusindess) {
+          this.$Message.warning(this.$t('tableKey.path') + 'or' + this.$t('field.endpoint') + this.$t('tips.required'))
+          return
         }
-        
         const params = {
           endpoint_id: +this.id,
           path_list: this.businessConfigModel.pathMsg
@@ -566,14 +558,14 @@
       },
       addBusiness () {
         const emptyPath = this.businessConfigModel.pathMsg.some(t=> {
-          return !t.endpoint_id === true || !t.path === true
+          return !t.owner_endpoint === true || !t.path === true
         })
         if (emptyPath) {
           this.$Message.warning(this.$t('tableKey.path') + '&&' + this.$t('tableKey.endpoint')  + this.$t('tips.required'))
           return
         }
         this.businessConfigModel.pathMsg.push({
-          endpoint_id: null,
+          owner_endpoint: null,
           path: null
         })
       },
