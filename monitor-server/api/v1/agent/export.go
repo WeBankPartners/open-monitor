@@ -47,6 +47,8 @@ type hostRequestObj struct {
 	User  string  `json:"user"`
 	Password  string  `json:"password"`
 	JavaType  string  `json:"java_type"`
+	PasswordGuid  string  `json:"password_guid"`
+	PasswordSeed  string  `json:"password_seed"`
 }
 
 func ExportAgent(c *gin.Context)  {
@@ -103,6 +105,12 @@ func ExportAgent(c *gin.Context)  {
 			tmpAgentType := agentType
 			if v.JavaType == "tomcat" || v.Group == "default_tomcat_group" {
 				tmpAgentType = "tomcat"
+			}
+			if v.Password != "" {
+				tmpPassword,tmpErr := mid.AesDePassword(v.PasswordGuid,v.PasswordSeed,v.Password)
+				if tmpErr == nil {
+					v.Password = tmpPassword
+				}
 			}
 			var param m.RegisterParam
 			if tmpAgentType == "host" {
