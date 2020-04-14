@@ -166,21 +166,6 @@ func RegisterJob(param m.RegisterParam) error {
 		}
 		var binPath,address string
 		if agentManagerUrl != "" {
-			if param.User == "" || param.Password == "" {
-				for _,v := range m.Config().Agent {
-					if v.AgentType == redisType {
-						param.User = v.User
-						if param.Password == "" {
-							param.Password = v.Password
-						}
-						binPath = v.AgentBin
-						break
-					}
-				}
-			}
-			if param.User == "" || param.Password == "" {
-				return fmt.Errorf("mysql monitor must have user and password to connect")
-			}
 			if binPath == "" {
 				for _,v := range m.Config().Agent {
 					if v.AgentType == redisType {
