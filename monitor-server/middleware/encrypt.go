@@ -14,13 +14,13 @@ import (
 const defaultKey = `jOodddDu6xwFNIE3rGL6b5mIcPldU7d8`
 
 //使用PKCS7进行填充，IOS也是7
-func PKCS7Padding(ciphertext []byte, blockSize int) []byte {
+func pKCS7Padding(ciphertext []byte, blockSize int) []byte {
 	padding := blockSize - len(ciphertext) % blockSize
 	padtext := bytes.Repeat([]byte{byte(padding)}, padding)
 	return append(ciphertext, padtext...)
 }
 
-func PKCS7UnPadding(origData []byte) []byte {
+func pKCS7UnPadding(origData []byte) []byte {
 	length := len(origData)
 	unpadding := int(origData[length-1])
 	return origData[:(length - unpadding)]
@@ -35,7 +35,7 @@ func AesCBCEncrypt(rawData,key []byte) ([]byte, error) {
 
 	//填充原文
 	blockSize := block.BlockSize()
-	rawData = PKCS7Padding(rawData, blockSize)
+	rawData = pKCS7Padding(rawData, blockSize)
 	//初始向量IV必须是唯一，但不需要保密
 	cipherText := make([]byte,blockSize+len(rawData))
 	//block大小 16
@@ -75,7 +75,7 @@ func AesCBCDncrypt(encryptData, key []byte) ([]byte,error) {
 	// CryptBlocks can work in-place if the two arguments are the same.
 	mode.CryptBlocks(encryptData, encryptData)
 	//解填充
-	encryptData = PKCS7UnPadding(encryptData)
+	encryptData = pKCS7UnPadding(encryptData)
 	return encryptData,nil
 }
 
