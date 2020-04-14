@@ -108,7 +108,7 @@
       "agent_bin" : "redis_exporter",
       "port" : "9121",
       "user" : "exporter",
-      "password" : "prom_pwd"
+      "password" : ""
     },
     {
       "agent_type" : "tomcat",
