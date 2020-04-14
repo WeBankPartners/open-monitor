@@ -65,7 +65,7 @@ export default {
       })
       this.showCharts = true
       this.showRecursive = false
-      this.$refs.parentCharts.refreshCharts()
+      // this.$refs.parentCharts.refreshCharts()
     },
     recursiveView (params) {
       this.recursiveViewConfig = []
