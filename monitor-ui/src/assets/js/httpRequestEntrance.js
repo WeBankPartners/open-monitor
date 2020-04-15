@@ -11,14 +11,14 @@
 import httpRequest from '@/assets/js/axiosHttp'
 import $ from 'jquery'
 // import {Message} from 'view-design'
-import loadingImg from '@/assets/img/loading.gif'
+import loadingImg from '@/assets/img/loading3.gif'
 
 let loadingCount = 0
 // 页面loading配置
 export const loading = {
   start: ()=>{
     let htmlLevel1 ='<div id="loadingContainer" class="loadingContainer" style="width: 100%;height: 100%;position: fixed;bottom: 0;text-align: center;opacity: 0.5;z-index:9000">'
-    let hmtlLevel2='<img src='+ loadingImg +' class="loadingImg" style="display: inline-block;width: 2rem; height: 2rem;position: absolute;top: 50%; left: 50%; margin-top: -62px; margin-left: -62px;"></div>'
+    let hmtlLevel2='<img src='+ loadingImg +' class="loadingImg" style="display: inline-block;width: 4rem; height: 4rem;position: absolute;top: 50%; left: 50%; margin-top: -62px; margin-left: -62px;"></div>'
     if ($('#loadingContainer')) {
       $('#loadingContainer').remove()
       $('body').append(htmlLevel1 + hmtlLevel2)
@@ -53,14 +53,14 @@ function httpRequestEntrance (method, url, data, callback, customHttpConfig) {
   }
   let option = {method: method, url: url}
   if (method.toUpperCase() === 'GET' || method.toUpperCase() === 'DELETE' ) {
-  // if (method.toUpperCase() === 'GET'  ) {
     option.params = data
   } else {
     option.data = data
   }
   option.timeout = config.timeout
+  console.log(1)
+  console.log(option)
   return httpRequest(option).then(response => {
-    // store.commit('changeFlag',true)
     if (config.isNeedloading) {
       setTimeout(() => {
         loadingCount--
@@ -81,51 +81,6 @@ function httpRequestEntrance (method, url, data, callback, customHttpConfig) {
         loading.end()
       },0)
     }
-
-    // if (error.response) {
-    //   const status = error.response.status
-    //   const errorData = error.response.data
-    //   if (status === 400) {
-    //     errorMessage(errorData.msg)
-    //   }
-    //   if (status === 401) {
-    //     cookies.deleteAuthorization()
-    //     localStorage.username = ''
-    //     router.push({name: 'login'})
-    //   }
-    // }
-    // errorMessage(error.response)
-    // if (error.response) {
-    //   let status = error.response.status
-    //   let errorData = error.response.data
-
-    //   if (status === 400) {
-    //     errorMessage(errorData.description)
-    //   }
-    //   if (status === 401) {
-    //     localStorage.username = ''
-    //   }
-    //   if (status === 403) {
-    //     errorMessage(errorData.description ? errorData.description:'权限不足！')
-    //   }
-    //   if (status === 404) {
-    //     errorMessage(errorData.description ? errorData.description:'404资源不存在！')
-    //   }
-    //   if (status === 409) {
-    //     errorMessage(errorData.description ? errorData.description:'资源冲突！')
-    //   }
-    //   if (status === 429) {
-    //     errorMessage(errorData.description ? errorData.description:'请求频率过高！')
-    //   }
-    //   if (status === 405) {
-    //     errorMessage(errorData.description ? errorData.description:'请求方法不允许！')
-    //   }
-    //   if (status === 500) {
-    //     errorMessage(errorData.description ? errorData.description:'500服务器内部错误！')
-    //   }
-    // } else if (error.request) {
-    //   errorMessage('请求超时！'+ error.request)
-    // }
   })
 }
 
