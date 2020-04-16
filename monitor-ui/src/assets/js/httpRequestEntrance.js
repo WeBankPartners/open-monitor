@@ -58,8 +58,6 @@ function httpRequestEntrance (method, url, data, callback, customHttpConfig) {
     option.data = data
   }
   option.timeout = config.timeout
-  console.log(1)
-  console.log(option)
   return httpRequest(option).then(response => {
     if (config.isNeedloading) {
       setTimeout(() => {
