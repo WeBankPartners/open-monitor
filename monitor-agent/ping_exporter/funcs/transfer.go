@@ -20,7 +20,7 @@ func InitTransfer()  {
 
 func HandleTransferResult(result map[string]int,successCount int)  {
 	sendData := []*MetricValue{}
-	metric := Config().Metrics.Default
+	metric := Config().Metrics.Ping
 	interval := Config().Interval
 	now := time.Now().Unix()
 	for k,v := range result{

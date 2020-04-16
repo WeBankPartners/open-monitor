@@ -73,11 +73,14 @@
     "thresholdManagement": "Threshold",
     "historicalAlert": "Historical Alert",
     "logConfiguration": "Keyword Configuration",
+    "portConfiguration": "Port Configuration",
     "processConfiguration": "Process Configuration",
     "processConfiguration_tip1": "Reference /proc/{pid}/status Name",
     "processConfiguration_tip2": "Support Name (tag) format, tag is the keyword in the progress command",
     "businessConfiguration": "Business Monitor",
     "addMetric": "Add Metric",
+    "addConfig": "Add Config",
+    "saveConfig": "Save Config",
     "addViewTemplate": "Add View Template",
     "setDashboard": "Set Dashboard",
     "saveEdit": "Save",
@@ -93,7 +96,8 @@
     "chart": {
       "zoom": "Zoom in",
       "back": "Reset",
-      "dataView": "Enlarged View"
+      "dataView": "Enlarged View",
+      "editTitle": "Edit Title"
     }
   },
   "table": {

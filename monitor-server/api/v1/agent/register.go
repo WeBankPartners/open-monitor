@@ -17,6 +17,8 @@ const hostType  = "host"
 const mysqlType  = "mysql"
 const redisType = "redis"
 const tomcatType = "tomcat"
+const javaType = "java"
+const otherType = "other"
 var agentManagerUrl string
 
 func RegisterAgent(c *gin.Context)  {
@@ -35,9 +37,9 @@ func RegisterAgent(c *gin.Context)  {
 
 func RegisterJob(param m.RegisterParam) error {
 	var err error
-	if param.Type != hostType && param.Type != mysqlType && param.Type != redisType && param.Type != tomcatType {
-		return fmt.Errorf("Type " + param.Type + " is not supported yet")
-	}
+	//if param.Type != hostType && param.Type != mysqlType && param.Type != redisType && param.Type != tomcatType && param.Type != javaType && param.Type != otherType {
+	//	return fmt.Errorf("Type " + param.Type + " is not supported yet")
+	//}
 	step := 10
 	var strList []string
 	var endpoint m.EndpointTable
@@ -164,21 +166,6 @@ func RegisterJob(param m.RegisterParam) error {
 		}
 		var binPath,address string
 		if agentManagerUrl != "" {
-			if param.User == "" || param.Password == "" {
-				for _,v := range m.Config().Agent {
-					if v.AgentType == redisType {
-						param.User = v.User
-						if param.Password == "" {
-							param.Password = v.Password
-						}
-						binPath = v.AgentBin
-						break
-					}
-				}
-			}
-			if param.User == "" || param.Password == "" {
-				return fmt.Errorf("mysql monitor must have user and password to connect")
-			}
 			if binPath == "" {
 				for _,v := range m.Config().Agent {
 					if v.AgentType == redisType {
@@ -234,7 +221,7 @@ func RegisterJob(param m.RegisterParam) error {
 		endpoint.Step = step
 		endpoint.Address = fmt.Sprintf("%s:%s", param.ExporterIp, param.ExporterPort)
 		endpoint.AddressAgent = address
-	}else if param.Type == tomcatType {
+	}else if param.Type == tomcatType || param.Type == javaType {
 		if param.Instance == "" {
 			return fmt.Errorf("Tomcat instance name can not be empty")
 		}
@@ -298,34 +285,46 @@ func RegisterJob(param m.RegisterParam) error {
 				exportVersion = strings.Split(strings.Split(v, "version=\"")[1], "\"")[0]
 			}
 		}
-		endpoint.Guid = fmt.Sprintf("%s_%s_%s", param.Instance, param.ExporterIp, tomcatType)
+		endpoint.Guid = fmt.Sprintf("%s_%s_%s", param.Instance, param.ExporterIp, param.Type)
 		endpoint.Name = param.Instance
 		endpoint.Ip = param.ExporterIp
 		endpoint.EndpointVersion = jvmVersion
-		endpoint.ExportType = tomcatType
+		endpoint.ExportType = param.Type
 		endpoint.ExportVersion = exportVersion
 		endpoint.Step = step
 		endpoint.Address = fmt.Sprintf("%s:%s", param.ExporterIp, param.ExporterPort)
 		endpoint.AddressAgent = address
+	}else {
+		if param.Instance == "" {
+			return fmt.Errorf("Monitor endpoint name can not be empty")
+		}
+		endpoint.Guid = fmt.Sprintf("%s_%s_%s", param.Instance, param.ExporterIp, param.Type)
+		endpoint.Name = param.Instance
+		endpoint.Ip = param.ExporterIp
+		endpoint.Address = fmt.Sprintf("%s:%s", param.ExporterIp, param.ExporterPort)
+		endpoint.ExportType = param.Type
+		endpoint.Step = step
 	}
 	err = db.UpdateEndpoint(&endpoint)
 	if err != nil {
 		mid.LogError( "Update endpoint failed ", err)
 		return err
 	}
-	err = db.RegisterEndpointMetric(endpoint.Id, strList)
-	if err != nil {
-		mid.LogError( "Update endpoint metric failed ", err)
-		return err
-	}
-	if tmpAgentIp != "" && tmpAgentPort != "" {
-		param.ExporterIp = tmpAgentIp
-		param.ExporterPort = tmpAgentPort
-	}
-	err = prom.RegisteConsul(endpoint.Guid, param.ExporterIp, param.ExporterPort, []string{param.Type}, step, false)
-	if err != nil {
-		mid.LogError( "Register consul failed ", err)
-		return err
+	if param.Type == hostType || param.Type == mysqlType || param.Type == redisType || param.Type == tomcatType || param.Type == javaType {
+		err = db.RegisterEndpointMetric(endpoint.Id, strList)
+		if err != nil {
+			mid.LogError("Update endpoint metric failed ", err)
+			return err
+		}
+		if tmpAgentIp != "" && tmpAgentPort != "" {
+			param.ExporterIp = tmpAgentIp
+			param.ExporterPort = tmpAgentPort
+		}
+		err = prom.RegisteConsul(endpoint.Guid, param.ExporterIp, param.ExporterPort, []string{param.Type}, step, false)
+		if err != nil {
+			mid.LogError("Register consul failed ", err)
+			return err
+		}
 	}
 	return nil
 }
