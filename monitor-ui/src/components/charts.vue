@@ -14,9 +14,12 @@
           </RadioGroup>
         </div>
       </template>
-      <template v-for="(chartItemx,chartIndexx) in activeCharts">
+      <div class="box">
+        <div v-for="(chartItemx,chartIndexx) in activeCharts" :key="chartIndexx" class="list">
           <SingleChart @sendConfig="receiveConfig" @editTitle="editTitle" :chartItemx="chartItemx" :chartIndex="chartIndexx" :key="chartIndexx" :params="params"> </SingleChart>
-      </template>
+        </div>
+        <div v-for="(ph) in phZone" class="list" :key="ph"></div>
+      </div>
     </section>
      <ModalComponent :modelConfig="modelConfig"></ModalComponent>
   </div>
@@ -29,7 +32,8 @@ export default {
   data() {
     return {
       activeTab:  '',
-      activeCharts: {},
+      activeCharts: [],
+      phZone: [], // 占位数据
       btns: [],
       tagsUrl: '',
       params: {},
@@ -55,6 +59,19 @@ export default {
   watch: {
     currentParameter: function () {
       this.pitchOnBtn()
+    },
+    activeCharts: function (val) {
+      this.phZone = []
+      const len = val.length
+      if (!len) {
+        return
+      }
+      const remainder = 6 - len%6
+      if (remainder) {
+        for (let i = 0; i < remainder; i++) {
+          this.phZone.push(Math.random())
+        }
+      }
     }
   },
   mounted () {
@@ -102,7 +119,6 @@ export default {
             })
           }
         })
-
       })
     },
     receiveConfig (chartItem) {
@@ -139,6 +155,22 @@ export default {
   }
 
   .btn-content {
-  padding: 2px;
+    padding: 2px;
   }
+
+ .box {
+	display:flex;
+	flex-wrap: wrap;
+	justify-content: space-around;
+}
+.box .list{
+	width: 580px;
+}
+
+
+
+  .zone-placeholder {
+    width: 570px;
+  }
+
 </style>
