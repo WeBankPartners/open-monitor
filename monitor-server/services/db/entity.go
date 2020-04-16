@@ -178,6 +178,10 @@ func GetAlarmEvent(alarmType,inputGuid string,id int) (result m.AlarmEntityObj,e
 			return result,fmt.Errorf("%s %d can not fetch any data", alarmType, id)
 		}
 		result.Status = alarms[0].Status
+		var tagsContent string
+		for _,v := range strings.Split(alarms[0].Tags, "^") {
+			tagsContent += fmt.Sprintf("\r\n%s", v)
+		}
 		mailMap := make(map[string]bool)
 		phoneMap := make(map[string]bool)
 		roleMap := make(map[string]bool)
@@ -244,7 +248,7 @@ func GetAlarmEvent(alarmType,inputGuid string,id int) (result m.AlarmEntityObj,e
 		result.ToPhone = strings.Join(toPhone, ",")
 		result.ToRole = strings.Join(toRole, ",")
 		result.Subject = fmt.Sprintf("[%s][%s] Endpoint:%s Metric:%s", alarms[0].Status, alarms[0].SPriority, alarms[0].Endpoint, alarms[0].SMetric)
-		result.Content = fmt.Sprintf("Endpoint:%s \r\nStatus:%s\r\nMetric:%s\r\nEvent:%.3f%s\r\nLast:%s\r\nPriority:%s\r\nNote:%s\r\nTime:%s",alarms[0].Endpoint,alarms[0].Status,alarms[0].SMetric,alarms[0].StartValue,alarms[0].SCond,alarms[0].SLast,alarms[0].SPriority,alarms[0].Content,alarms[0].Start.Format(m.DatetimeFormat))
+		result.Content = fmt.Sprintf("Endpoint:%s \r\nStatus:%s\r\nMetric:%s\r\nEvent:%.3f%s\r\nLast:%s\r\nPriority:%s\r\nNote:%s\r\nTime:%s %s",alarms[0].Endpoint,alarms[0].Status,alarms[0].SMetric,alarms[0].StartValue,alarms[0].SCond,alarms[0].SLast,alarms[0].SPriority,alarms[0].Content,alarms[0].Start.Format(m.DatetimeFormat),tagsContent)
 		mid.LogInfo(fmt.Sprintf("alarm event --> id:%s status:%s to:%s subejct:%s content:%s", result.Id, result.Status, result.To, result.Subject, result.Content))
 	}
 	return result,err

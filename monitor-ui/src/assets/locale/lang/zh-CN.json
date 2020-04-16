@@ -73,11 +73,14 @@
     "thresholdManagement": "阈值管理",
     "historicalAlert": "历史告警",
     "logConfiguration": "关键字配置",
+    "portConfiguration": "端口配置",
     "processConfiguration": "进程配置",
     "processConfiguration_tip1": "参阅 /proc/{pid}/status 文件中的 Name",
     "processConfiguration_tip2": "支持Name(tag)的格式,tag是进程command中的关键字",
     "businessConfiguration": "业务日志监控",
     "addMetric": "新增指标",
+    "addConfig": "生成配置",
+    "saveConfig": "保存配置",
     "addViewTemplate": "视图模板",
     "setDashboard": "设置首页",
     "saveEdit": "保存修改",
@@ -93,7 +96,8 @@
     "chart": {
       "zoom": "数据区域缩放",
       "back": "恢复",
-      "dataView": "放大"
+      "dataView": "放大",
+      "editTitle": "编辑标题"
     }
   },
   "table": {

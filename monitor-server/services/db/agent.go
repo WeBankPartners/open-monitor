@@ -163,14 +163,44 @@ func UpdateRecursivePanel(param m.PanelRecursiveTable) error {
 	}
 	if len(prt) > 0 {
 		tmpParent := unionList(param.Parent, prt[0].Parent, "^")
-		//tmpEndpoint := unionList(param.Endpoint, prt[0].Endpoint, "^")
+		tmpEndpoint := unionList(param.Endpoint, prt[0].Endpoint, "^")
 		//tmpEmail := unionList(param.Email, prt[0].Email, ",")
 		//tmpPhone := unionList(param.Phone, prt[0].Phone, ",")
 		//tmpRole := unionList(param.Role, prt[0].Role, ",")
-		_,err = x.Exec("UPDATE panel_recursive SET display_name=?,parent=?,endpoint=?,email=?,phone=?,role=?,firing_callback_key=?,recover_callback_key=?,obj_type=? WHERE guid=?", param.DisplayName,tmpParent,param.Endpoint,param.Email,param.Phone,param.Role,param.FiringCallbackKey,param.RecoverCallbackKey,param.ObjType,param.Guid)
+		_,err = x.Exec("UPDATE panel_recursive SET display_name=?,parent=?,endpoint=?,email=?,phone=?,role=?,firing_callback_key=?,recover_callback_key=?,obj_type=? WHERE guid=?", param.DisplayName,tmpParent,tmpEndpoint,param.Email,param.Phone,param.Role,param.FiringCallbackKey,param.RecoverCallbackKey,param.ObjType,param.Guid)
 	}else{
 		_,err = x.Exec("INSERT INTO panel_recursive(guid,display_name,parent,endpoint,email,phone,role,firing_callback_key,recover_callback_key,obj_type) VALUE (?,?,?,?,?,?,?,?,?,?)", param.Guid,param.DisplayName,param.Parent,param.Endpoint,param.Email,param.Phone,param.Role,param.FiringCallbackKey,param.RecoverCallbackKey,param.ObjType)
 	}
+	return err
+}
+
+func UpdateRecursiveEndpoint(guid string,endpoint []string) error {
+	var prt []*m.PanelRecursiveTable
+	err := x.SQL("SELECT * FROM panel_recursive WHERE guid=?", guid).Find(&prt)
+	if err != nil {
+		return err
+	}
+	if len(prt) == 0 {
+		return fmt.Errorf("update recursive endpoint error,no recored find with guid:%s", guid)
+	}
+	tmpEndpoint := strings.Split(prt[0].Endpoint, "^")
+	if len(tmpEndpoint) == 0 {
+		return nil
+	}
+	var newEndpoint []string
+	for _,v := range tmpEndpoint {
+		tmpFlag := false
+		for _,vv := range endpoint {
+			if vv == v {
+				tmpFlag = true
+				break
+			}
+		}
+		if !tmpFlag {
+			newEndpoint = append(newEndpoint, v)
+		}
+	}
+	_,err = x.Exec("UPDATE panel_recursive SET endpoint=? WHERE guid=?", strings.Join(newEndpoint, "^"), guid)
 	return err
 }
 
@@ -283,4 +313,66 @@ func getChartsByEndpointType(endpointType string) []*m.ChartTable {
 		}
 	}
 	return ct
+}
+
+func UpdateEndpointTelnet(param m.UpdateEndpointTelnetParam) error {
+	var actions []*Action
+	actions = append(actions, &Action{Sql:"DELETE FROM endpoint_telnet WHERE endpoint_guid=?", Param:[]interface{}{param.Guid}})
+	for _,v := range param.Config {
+		actions = append(actions, &Action{Sql:"INSERT INTO endpoint_telnet(`endpoint_guid`,`port`,`note`) VALUE (?,?,?)", Param:[]interface{}{param.Guid,v.Port,v.Note}})
+	}
+	err := Transaction(actions)
+	if err != nil {
+		mid.LogError("update endpoint table fail", err)
+	}
+	return err
+}
+
+func GetEndpointTelnet(guid string) (result []*m.EndpointTelnetTable,err error) {
+	err = x.SQL("SELECT port,note FROM endpoint_telnet WHERE endpoint_guid=?", guid).Find(&result)
+	return result,err
+}
+
+func GetPingExporterSource() []*m.PingExportSourceObj {
+	result := []*m.PingExportSourceObj{}
+	pingMetric := "ping_alive"
+	var tplTables []*m.TplTable
+	x.SQL(fmt.Sprintf("SELECT t2.id,t2.grp_id,t2.endpoint_id FROM strategy t1 LEFT JOIN tpl t2 ON t1.tpl_id=t2.id WHERE t1.metric='%s'", pingMetric)).Find(&tplTables)
+	if len(tplTables) > 0 {
+		var grpIds,endpointIds string
+		var endpointTable []*m.EndpointTable
+		for _,v := range tplTables {
+			if v.GrpId > 0 {
+				grpIds += fmt.Sprintf("%d,", v.GrpId)
+			}
+			if v.EndpointId > 0 {
+				endpointIds += fmt.Sprintf("%d,", v.EndpointId)
+			}
+		}
+		if grpIds != "" {
+			grpIds = grpIds[:len(grpIds)-1]
+			x.SQL(fmt.Sprintf("SELECT t2.guid,t2.ip FROM grp_endpoint t1 LEFT JOIN endpoint t2 ON t1.endpoint_id=t2.id WHERE t1.grp_id IN (%s)", grpIds)).Find(&endpointTable)
+			for _,v := range endpointTable {
+				result = append(result, &m.PingExportSourceObj{Ip:v.Ip, Guid:v.Guid})
+			}
+		}
+		if endpointIds != "" {
+			endpointTable = []*m.EndpointTable{}
+			endpointIds = endpointIds[:len(endpointIds)-1]
+			x.SQL(fmt.Sprintf("SELECT guid,ip FROM endpoint WHERE id IN (%s)", endpointIds)).Find(&endpointTable)
+			for _,v := range endpointTable {
+				result = append(result, &m.PingExportSourceObj{Ip:v.Ip, Guid:v.Guid})
+			}
+		}
+	}
+	var telnetQuery []*m.TelnetSourceQuery
+	x.SQL("SELECT t2.guid,t1.port,t2.ip FROM endpoint_telnet t1 JOIN endpoint t2 ON t1.endpoint_guid=t2.guid").Find(&telnetQuery)
+	if len(telnetQuery) > 0 {
+		for _,v := range telnetQuery {
+			if v.Ip != "" && v.Port > 0 {
+				result = append(result, &m.PingExportSourceObj{Ip:fmt.Sprintf("%s:%d", v.Ip, v.Port), Guid:v.Guid})
+			}
+		}
+	}
+	return result
 }
