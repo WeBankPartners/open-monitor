@@ -88,6 +88,7 @@ func AcceptAlertMsg(c *gin.Context)  {
 				tmpAlarm.SPriority = strategyObj.Priority
 				tmpAlarm.Content = v.Annotations["description"]
 				tmpSummaryMsg := strings.Split(v.Annotations["summary"], "__")
+				var tmpEndpointIp string
 				if len(tmpSummaryMsg) == 4 {
 					var endpointObj m.EndpointTable
 					if v.Labels["guid"] != "" {
@@ -98,6 +99,7 @@ func AcceptAlertMsg(c *gin.Context)  {
 					db.GetEndpoint(&endpointObj)
 					if endpointObj.Id > 0 {
 						tmpAlarm.Endpoint = endpointObj.Guid
+						tmpEndpointIp = endpointObj.Ip
 						if endpointObj.StopAlarm == 1 {
 							continue
 						}
@@ -107,6 +109,13 @@ func AcceptAlertMsg(c *gin.Context)  {
 				if tmpAlarm.Endpoint == "" {
 					mid.LogInfo(fmt.Sprintf("Can't find the endpoint %v", v))
 					continue
+				}
+				if strings.Contains(tmpAlarm.SMetric, "ping_alive") {
+					if len(m.Config().Cluster.ServerList) > 0 {
+						if m.Config().Cluster.ServerList[0] == tmpEndpointIp {
+							continue
+						}
+					}
 				}
 				tmpAlarmQuery := m.AlarmTable{Endpoint: tmpAlarm.Endpoint, StrategyId: tmpAlarm.StrategyId, Tags:tmpAlarm.Tags}
 				_, tmpAlarms = db.GetAlarms(tmpAlarmQuery)

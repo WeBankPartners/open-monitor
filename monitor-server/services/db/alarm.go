@@ -276,7 +276,7 @@ func GetStrategys(query *m.TplQuery, ignoreLogMonitor bool) error {
 			result = append(result, &m.TplObj{TplId: 0, ObjId: query.SearchId, ObjName: endpointObj.Guid, ObjType: "endpoint", Operation: true, Strategy: []*m.StrategyTable{}})
 		}else {
 			var tmpTplId int
-			var tmpStrategys []*m.StrategyTable
+			tmpStrategys := []*m.StrategyTable{}
 			for i, v := range tpls {
 				if ignoreLogMonitor && v.Metric == "log_monitor" {
 					continue
