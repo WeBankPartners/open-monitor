@@ -12,6 +12,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/other"
 	"io/ioutil"
 	"encoding/json"
+	"sort"
 )
 
 func AcceptAlertMsg(c *gin.Context)  {
@@ -30,12 +31,17 @@ func AcceptAlertMsg(c *gin.Context)  {
 			var tmpValue float64
 			var tmpAlarms m.AlarmProblemList
 			var tmpTags  string
+			var sortTagList m.DefaultSortList
 			tmpAlarm := m.AlarmTable{Status: v.Status}
 			for labelKey,labelValue := range v.Labels {
-				if labelKey == "strategy_id" || labelKey == "job" || labelKey == "instance" || labelKey == "alertname" {
+				sortTagList = append(sortTagList, &m.DefaultSortObj{Key:labelKey, Value:labelValue})
+			}
+			sort.Sort(sortTagList)
+			for _,label := range sortTagList {
+				if label.Key == "strategy_id" || label.Key == "job" || label.Key == "instance" || label.Key == "alertname" {
 					continue
 				}
-				tmpTags += fmt.Sprintf("%s:%s^", labelKey, labelValue)
+				tmpTags += fmt.Sprintf("%s:%s^", label.Key, label.Value)
 			}
 			if tmpTags != "" {
 				tmpTags = tmpTags[:len(tmpTags)-1]
@@ -82,11 +88,18 @@ func AcceptAlertMsg(c *gin.Context)  {
 				tmpAlarm.SPriority = strategyObj.Priority
 				tmpAlarm.Content = v.Annotations["description"]
 				tmpSummaryMsg := strings.Split(v.Annotations["summary"], "__")
+				var tmpEndpointIp string
 				if len(tmpSummaryMsg) == 4 {
-					endpointObj := m.EndpointTable{Address: tmpSummaryMsg[0], AddressAgent: tmpSummaryMsg[0]}
+					var endpointObj m.EndpointTable
+					if v.Labels["guid"] != "" {
+						endpointObj = m.EndpointTable{Guid:v.Labels["guid"]}
+					}else {
+						endpointObj = m.EndpointTable{Address: tmpSummaryMsg[0], AddressAgent: tmpSummaryMsg[0]}
+					}
 					db.GetEndpoint(&endpointObj)
 					if endpointObj.Id > 0 {
 						tmpAlarm.Endpoint = endpointObj.Guid
+						tmpEndpointIp = endpointObj.Ip
 						if endpointObj.StopAlarm == 1 {
 							continue
 						}
@@ -97,7 +110,14 @@ func AcceptAlertMsg(c *gin.Context)  {
 					mid.LogInfo(fmt.Sprintf("Can't find the endpoint %v", v))
 					continue
 				}
-				tmpAlarmQuery := m.AlarmTable{Endpoint: tmpAlarm.Endpoint, StrategyId: tmpAlarm.StrategyId}
+				if strings.Contains(tmpAlarm.SMetric, "ping_alive") {
+					if len(m.Config().Cluster.ServerList) > 0 {
+						if m.Config().Cluster.ServerList[0] == tmpEndpointIp {
+							continue
+						}
+					}
+				}
+				tmpAlarmQuery := m.AlarmTable{Endpoint: tmpAlarm.Endpoint, StrategyId: tmpAlarm.StrategyId, Tags:tmpAlarm.Tags}
 				_, tmpAlarms = db.GetAlarms(tmpAlarmQuery)
 			}
 			tmpOperation := "add"

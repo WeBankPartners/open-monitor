@@ -99,8 +99,18 @@ func GetPanels(c *gin.Context)  {
 		mid.ReturnError(c, "Get panels failed", err)
 		return
 	}
+	endpointBusinessShow := true
+	for _,panel := range panels {
+		if panel.AutoDisplay > 0 {
+			endpointBusinessShow = db.CheckEndpointBusiness(endpoint)
+			break
+		}
+	}
 	var panelsDto []*m.PanelModel
 	for _,panel := range panels {
+		if panel.AutoDisplay > 0 && !endpointBusinessShow {
+			continue
+		}
 		var panelDto m.PanelModel
 		panelDto.Title = panel.Title
 		if panel.ChartGroup < 0 {
@@ -129,27 +139,106 @@ func GetPanels(c *gin.Context)  {
 		}
 		panelDto.Tags = tagsDto
 		var chartsDto []*m.ChartModel
-		for _, chart := range charts {
-			chartDto := m.ChartModel{Id: chart.Id, Col: chart.Col}
-			chartDto.Url = `/dashboard/chart`
-			chartDto.Endpoint = []string{endpoint}
-			metricList := strings.Split(chart.Metric, "^")
-			if panel.TagsEnable && tagsValue != "" {
-				var newMetricList []string
-				for _, m := range metricList {
-					newMetric := m + `/` + panel.TagsKey + `=` + tagsValue
-					newMetricList = append(newMetricList, newMetric)
+		fetch := false
+		if panel.AutoDisplay > 0 {
+			chartsDto,fetch = getAutoDisplay(endpoint, panel.TagsKey, "", charts)
+		}
+		if !fetch {
+			for _, chart := range charts {
+				chartDto := m.ChartModel{Id: chart.Id, Col: chart.Col}
+				chartDto.Url = `/dashboard/chart`
+				chartDto.Endpoint = []string{endpoint}
+				metricList := strings.Split(chart.Metric, "^")
+				if panel.TagsEnable && tagsValue != "" {
+					var newMetricList []string
+					for _, m := range metricList {
+						newMetric := m + `/` + panel.TagsKey + `=` + tagsValue
+						newMetricList = append(newMetricList, newMetric)
+					}
+					chartDto.Metric = newMetricList
+				} else {
+					chartDto.Metric = metricList
 				}
-				chartDto.Metric = newMetricList
-			} else {
-				chartDto.Metric = metricList
+				chartsDto = append(chartsDto, &chartDto)
 			}
-			chartsDto = append(chartsDto, &chartDto)
 		}
 		panelDto.Charts = chartsDto
 		panelsDto = append(panelsDto, &panelDto)
 	}
+	_,businessMonitor := db.GetBusinessList(0, endpoint)
+	if len(businessMonitor) > 0 {
+		businessCharts,businessPanels := db.GetBusinessPanelChart()
+		if len(businessCharts) > 0 {
+			endpointObj := m.EndpointTable{Id:businessMonitor[0].EndpointId}
+			db.GetEndpoint(&endpointObj)
+			chartsDto,_ := getAutoDisplay(endpointObj.Guid, businessPanels[0].TagsKey, businessMonitor[0].Path, businessCharts)
+			var panelDto m.PanelModel
+			panelDto.Title = businessPanels[0].Title
+			panelDto.Other = false
+			panelDto.Tags = m.TagsModel{Enable:false, Option:[]*m.OptionModel{}}
+			panelDto.Charts = chartsDto
+			panelsDto = append(panelsDto, &panelDto)
+		}
+	}
 	mid.ReturnData(c, panelsDto)
+}
+
+func getAutoDisplay(endpoint,tagKey,path string,charts []*m.ChartTable) (result []*m.ChartModel,fetch bool) {
+	result = []*m.ChartModel{}
+	if len(charts) == 0 {
+		return result,false
+	}
+	if tagKey == "" {
+		return result,false
+	}
+	_,promQl := db.GetPromMetric([]string{endpoint}, charts[0].Metric)
+	if promQl == "" {
+		return result,false
+	}
+	tmpLegend := charts[0].Legend
+	if path != "" {
+		tmpLegend = "$custom_all"
+	}
+	sm := ds.PrometheusData(m.QueryMonitorData{Start:time.Now().Unix()-300, End:time.Now().Unix(), PromQ:promQl, Legend:tmpLegend, Metric:[]string{charts[0].Metric}, Endpoint:[]string{endpoint}})
+	for _,v := range sm {
+		if path != "" {
+			if !strings.Contains(v.Name, path) {
+				continue
+			}
+		}
+		chartDto := m.ChartModel{Id: charts[0].Id, Col: charts[0].Col}
+		chartDto.Url = `/dashboard/chart`
+		chartDto.Endpoint = []string{endpoint}
+		tmpName := v.Name
+		if strings.Contains(tmpName, ":") {
+			tmpName = tmpName[strings.Index(tmpName,":")+1:]
+		}
+		if path != "" && strings.Contains(tmpName, tagKey+"=") {
+			tmpName = strings.Split(tmpName, tagKey+"=")[1]
+			if strings.Contains(tmpName, ",") {
+				tmpName = strings.Split(tmpName, ",")[0]
+			}else{
+				tmpName = strings.Split(tmpName, "}")[0]
+			}
+		}
+		chartDto.Metric = []string{fmt.Sprintf("%s/%s=%s", charts[0].Metric, tagKey, tmpName)}
+		result = append(result, &chartDto)
+	}
+	return result,true
+}
+
+func UpdateChartsTitle(c *gin.Context)  {
+	var param m.UpdateChartTitleParam
+	if err := c.ShouldBindJSON(&param);err == nil {
+		err = db.UpdateChartTitle(param)
+		if err != nil {
+			mid.ReturnError(c, "Update chart title fail ", err)
+		}else{
+			mid.ReturnSuccess(c, "Success")
+		}
+	}else{
+		mid.ReturnValidateFail(c, fmt.Sprintf("Parameter validate fail %v", err))
+	}
 }
 
 // @Summary 页面通用接口 : 根据tag获取charts组
@@ -332,34 +421,51 @@ func GetChart(c *gin.Context)  {
 	step := 0
 	var firstEndpoint,unit string
 	if paramConfig[0].Id > 0 {
+		recordMap := make(map[string]bool)
 		// one endpoint -> metrics
-		err, charts := db.GetCharts(0, paramConfig[0].Id, 0)
-		if err != nil || len(charts) <= 0 {
-			mid.ReturnError(c, "Get chart config failed", err)
-			return
-		}
-		chart := *charts[0]
-		eOption.Id = chart.Id
-		eOption.Title = chart.Title
-		unit = chart.Unit
-		if paramConfig[0].Endpoint == "" {
-			mid.ReturnValidateFail(c, "Endpoint can not be empty")
-			return
-		}
-		firstEndpoint = paramConfig[0].Endpoint
-		if strings.Contains(paramConfig[0].Metric, "/") {
-			chart.Metric = paramConfig[0].Metric
-		}
-		for _,v := range strings.Split(chart.Metric, "^") {
-			//if i == 0 {
-			//	firstMetric = v
-			//}
-			err,tmpPromQl := db.GetPromMetric([]string{paramConfig[0].Endpoint}, v)
-			if err != nil {
-				mid.LogError("Get prometheus metric failed", err)
+		for _,tmpParamConfig := range paramConfig {
+			tmpIndex := fmt.Sprintf("%d^%s", tmpParamConfig.Id, tmpParamConfig.Endpoint)
+			if _,b := recordMap[tmpIndex];b {
 				continue
 			}
-			querys = append(querys, m.QueryMonitorData{Start:query.Start, End:query.End, PromQ:tmpPromQl, Legend:chart.Legend, Metric:[]string{v}, Endpoint:[]string{firstEndpoint}})
+			recordMap[tmpIndex] = true
+			err, charts := db.GetCharts(0, tmpParamConfig.Id, 0)
+			if err != nil || len(charts) <= 0 {
+				mid.ReturnError(c, "Get chart config failed", err)
+				return
+			}
+			chart := *charts[0]
+			eOption.Id = chart.Id
+			if chart.Title == "${auto}" {
+				if strings.Contains(tmpParamConfig.Metric, "=") {
+					eOption.Title = db.GetChartTitle(strings.Split(tmpParamConfig.Metric, "=")[1], tmpParamConfig.Id)
+				}
+				if eOption.Title == "" {
+					eOption.Title = "${auto}"
+				}
+			} else {
+				eOption.Title = chart.Title
+			}
+			unit = chart.Unit
+			if tmpParamConfig.Endpoint == "" {
+				mid.ReturnValidateFail(c, "Endpoint can not be empty")
+				return
+			}
+			if strings.Contains(tmpParamConfig.Metric, "/") {
+				chart.Metric = tmpParamConfig.Metric
+			}
+			for _, v := range strings.Split(chart.Metric, "^") {
+				err, tmpPromQl := db.GetPromMetric([]string{tmpParamConfig.Endpoint}, v)
+				if err != nil {
+					mid.LogError("Get prometheus metric failed", err)
+					continue
+				}
+				tmpLegend := chart.Legend
+				if len(paramConfig) > 1 && strings.Contains(chart.Legend, "metric") {
+					tmpLegend = "$custom"
+				}
+				querys = append(querys, m.QueryMonitorData{Start: query.Start, End: query.End, PromQ: tmpPromQl, Legend: tmpLegend, Metric: []string{v}, Endpoint: []string{tmpParamConfig.Endpoint}})
+			}
 		}
 	}else{
 		step = 10
@@ -444,6 +550,9 @@ func GetChart(c *gin.Context)  {
 			s.Name = strings.Replace(s.Name, "$metric", querys[i].Metric[0], -1)
 		}
 		eOption.Legend = append(eOption.Legend, s.Name)
+		if eOption.Title == "${auto}" {
+			eOption.Title = s.Name
+		}
 		if agg > 1 {
 			aggType := paramConfig[0].Aggregate
 			if aggType != "none" && aggType != "" {
