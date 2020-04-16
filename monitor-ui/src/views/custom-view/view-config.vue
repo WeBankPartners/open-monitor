@@ -111,7 +111,7 @@ export default {
         
         responseData.yaxis.unit =  panalUnit  
         this.elId = id
-        const chartConfig = {eye: false,dataZoom:false}
+        const chartConfig = {eye: false,dataZoom:false, lineBarSwitch: true}
         readyToDraw(this,responseData, viewIndex, chartConfig)
       })
     },

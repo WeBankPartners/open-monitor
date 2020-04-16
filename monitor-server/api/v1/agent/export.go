@@ -46,6 +46,9 @@ type hostRequestObj struct {
 	Instance  string  `json:"instance"`
 	User  string  `json:"user"`
 	Password  string  `json:"password"`
+	JavaType  string  `json:"java_type"`
+	PasswordGuid  string  `json:"password_guid"`
+	PasswordSeed  string  `json:"password_seed"`
 }
 
 func ExportAgent(c *gin.Context)  {
@@ -56,20 +59,27 @@ func ExportAgent(c *gin.Context)  {
 	}
 	var agentPort string
 	var result resultObj
-	illegal := true
+	//illegal := true
 	for _,v := range m.Config().Agent {
-		if v.AgentType == agentType {
-			illegal = false
+		tmpAgentType := agentType
+		if tmpAgentType == "java" {
+			tmpAgentType = "tomcat"
+		}
+		if v.AgentType == tmpAgentType {
+			//illegal = false
 			agentPort = v.Port
 			break
 		}
 	}
-	if illegal {
-		result = resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("No such monitor type like %s", agentType)}
-		mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
-		c.JSON(http.StatusBadRequest, result)
-		return
-	}
+	//if agentType == "other" {
+	//	illegal = false
+	//}
+	//if illegal {
+	//	result = resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("No such monitor type like %s", agentType)}
+	//	mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
+	//	c.JSON(http.StatusBadRequest, result)
+	//	return
+	//}
 	if action != "register" && action != "deregister" {
 		result = resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("No such action like %s", action)}
 		mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
@@ -92,20 +102,30 @@ func ExportAgent(c *gin.Context)  {
 		errMessage := "Done"
 		// update table and register to consul
 		for _,v := range param.Inputs {
+			tmpAgentType := agentType
+			if v.JavaType == "tomcat" || v.Group == "default_tomcat_group" {
+				tmpAgentType = "tomcat"
+			}
+			if v.Password != "" {
+				tmpPassword,tmpErr := mid.AesDePassword(v.PasswordGuid,v.PasswordSeed,v.Password)
+				if tmpErr == nil {
+					v.Password = tmpPassword
+				}
+			}
 			var param m.RegisterParam
-			if agentType == "host" {
-				param = m.RegisterParam{Type: agentType, ExporterIp: v.HostIp, ExporterPort: agentPort}
+			if tmpAgentType == "host" {
+				param = m.RegisterParam{Type: tmpAgentType, ExporterIp: v.HostIp, ExporterPort: agentPort}
 			}else{
-				param = m.RegisterParam{Type: agentType, ExporterIp: v.InstanceIp, ExporterPort: v.Port, Instance: v.Instance, User:v.User, Password:v.Password}
+				param = m.RegisterParam{Type: tmpAgentType, ExporterIp: v.InstanceIp, ExporterPort: v.Port, Instance: v.Instance, User:v.User, Password:v.Password}
 			}
 			if action == "register" {
 				err = RegisterJob(param)
 			}else{
 				var endpointObj m.EndpointTable
-				if agentType == "host" {
-					endpointObj = m.EndpointTable{Ip: v.HostIp, ExportType: agentType}
+				if tmpAgentType == "host" {
+					endpointObj = m.EndpointTable{Ip: v.HostIp, ExportType: tmpAgentType}
 				}else{
-					endpointObj = m.EndpointTable{Ip: v.InstanceIp, ExportType: agentType, Name: v.Instance}
+					endpointObj = m.EndpointTable{Ip: v.InstanceIp, ExportType: tmpAgentType, Name: v.Instance}
 				}
 				db.GetEndpoint(&endpointObj)
 				if endpointObj.AddressAgent != "" {
@@ -126,12 +146,12 @@ func ExportAgent(c *gin.Context)  {
 			}
 			var msg string
 			if err != nil {
-				msg = fmt.Sprintf("%s %s:%s %s fail,error %v",action, agentType, v.HostIp, v.Instance, err)
+				msg = fmt.Sprintf("%s %s:%s %s fail,error %v",action, tmpAgentType, v.HostIp, v.Instance, err)
 				errMessage = msg
 				tmpResult = append(tmpResult, resultOutputObj{CallbackParameter:v.CallbackParameter, ErrorCode:"1", ErrorMessage:msg})
 				successFlag = "1"
 			}else{
-				msg = fmt.Sprintf("%s %s:%s %s succeed", action, agentType, v.HostIp, v.Instance)
+				msg = fmt.Sprintf("%s %s:%s %s succeed", action, tmpAgentType, v.HostIp, v.Instance)
 				tmpResult = append(tmpResult, resultOutputObj{CallbackParameter:v.CallbackParameter, ErrorCode:"0", ErrorMessage:""})
 			}
 			mid.LogInfo(msg)
@@ -158,6 +178,11 @@ func ExportAgent(c *gin.Context)  {
 						err, _ := db.UpdateGrpEndpoint(m.GrpEndpointParamNew{Grp: grpObj.Id, Endpoints: []int{endpointObj.Id}, Operation: "add"})
 						if err != nil {
 							mid.LogError("register interface update group_endpoint fail ", err)
+						}
+						if agentType == "telnet" {
+							var eto []*m.EndpointTelnetObj
+							eto = append(eto, &m.EndpointTelnetObj{Port:v.Port, Note:""})
+							db.UpdateEndpointTelnet(m.UpdateEndpointTelnetParam{Guid:endpointObj.Guid, Config:eto})
 						}
 					}
 				}
@@ -193,6 +218,9 @@ func GetSystemDashboardUrl(c *gin.Context)  {
 
 func AlarmControl(c *gin.Context)  {
 	agentType := c.Param("name")
+	if agentType == "java" {
+		agentType = "tomcat"
+	}
 	isStop := false
 	action := "start"
 	if strings.Contains(c.Request.URL.String(), "stop") {
@@ -201,20 +229,18 @@ func AlarmControl(c *gin.Context)  {
 	}
 	var result resultObj
 	var agentPort string
-	illegal := true
 	for _,v := range m.Config().Agent {
 		if v.AgentType == agentType {
-			illegal = false
 			agentPort = v.Port
 			break
 		}
 	}
-	if illegal {
-		result = resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("No such monitor type like %s", agentType)}
-		mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
-		c.JSON(http.StatusBadRequest, result)
-		return
-	}
+	//if illegal {
+	//	result = resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("No such monitor type like %s", agentType)}
+	//	mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
+	//	c.JSON(http.StatusBadRequest, result)
+	//	return
+	//}
 	data,_ := ioutil.ReadAll(c.Request.Body)
 	mid.LogInfo(fmt.Sprintf("param : %v", string(data)))
 	var param requestObj
@@ -231,7 +257,11 @@ func AlarmControl(c *gin.Context)  {
 			if agentType == "tomcat" && v.Port != "" {
 				agentPort = v.Port
 			}
-			err := db.UpdateEndpointAlarmFlag(isStop,agentType,v.Instance,v.HostIp,agentPort)
+			tmpIp := v.HostIp
+			if agentType != "host" {
+				tmpIp = v.InstanceIp
+			}
+			err := db.UpdateEndpointAlarmFlag(isStop,agentType,v.Instance,tmpIp,agentPort)
 			var msg string
 			if err != nil {
 				msg = fmt.Sprintf("%s %s:%s %s fail,error %v",action, agentType, v.HostIp, v.Instance, err)
@@ -250,5 +280,38 @@ func AlarmControl(c *gin.Context)  {
 		result = resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("Param validate fail : %v", err)}
 		mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
 		c.JSON(http.StatusBadRequest, result)
+	}
+}
+
+func ExportPingSource(c *gin.Context)  {
+	ips := db.GetPingExporterSource()
+	mid.ReturnData(c, m.PingExporterSourceDto{Config:ips})
+}
+
+func UpdateEndpointTelnet(c *gin.Context)  {
+	var param m.UpdateEndpointTelnetParam
+	if err := c.ShouldBindJSON(&param); err == nil {
+		err = db.UpdateEndpointTelnet(param)
+		if err != nil {
+			mid.ReturnError(c, "Update endpoint telnet config fail", err)
+		}else{
+			mid.ReturnSuccess(c, "Success")
+		}
+	}else{
+		mid.ReturnValidateFail(c, fmt.Sprintf("Parameter validate fail %v", err))
+	}
+}
+
+func GetEndpointTelnet(c *gin.Context)  {
+	guid := c.Query("guid")
+	if guid == "" {
+		mid.ReturnValidateFail(c, "Guid can not empty")
+		return
+	}
+	result,err := db.GetEndpointTelnet(guid)
+	if err != nil {
+		mid.ReturnError(c, "Get endpoint telnet config fail", err)
+	}else{
+		mid.ReturnData(c, result)
 	}
 }

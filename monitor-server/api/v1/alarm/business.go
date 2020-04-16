@@ -18,7 +18,7 @@ func GetEndpointBusinessConfig(c *gin.Context)  {
 		mid.ReturnValidateFail(c, fmt.Sprintf("Param id validate fail %v", err))
 		return
 	}
-	err,data := db.GetBusinessList(endpointId)
+	err,data := db.GetBusinessList(endpointId, "")
 	if err != nil {
 		mid.ReturnError(c, "Get business list fail", err)
 	}else{
@@ -50,7 +50,7 @@ type businessHttpDto struct {
 }
 
 func updateNodeExporterBusinessConfig(endpointId int) error {
-	err,data := db.GetBusinessList(endpointId)
+	err,data := db.GetBusinessList(endpointId, "")
 	if err != nil {
 		mid.LogError("Update node_exporter fail ", err)
 		return err
