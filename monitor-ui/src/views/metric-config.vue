@@ -15,11 +15,7 @@
         :remote-method="getEndpointList"
         >
         <Option v-for="(option, index) in endpointList" :value="option.option_value" :key="index">
-          <Tag color="green" class="tag-width" v-if="option.type == 'sys'">system</Tag>
-          <Tag color="cyan" class="tag-width" v-if="option.type == 'host'">host</Tag>
-          <Tag color="blue" class="tag-width" v-if="option.type == 'mysql'">mysql</Tag>
-          <Tag color="geekblue" class="tag-width" v-if="option.type == 'redis'">redis</Tag>
-          <Tag color="purple" class="tag-width" v-if="option.type == 'tomcat'">tomcat</Tag>{{option.option_text}}</Option>
+          <Tag :color="endpointTag[option.option_type_name] || choiceColor(option.option_type_name, index)" class="tag-width">{{option.option_type_name}}</Tag>{{option.option_text}}</Option>
       </Select>
       <Select v-model="metricSelected" filterable multiple style="width:260px" :label-in-value="true" 
           @on-change="selectMetric" @on-open-change="metricSelectOpen" :placeholder="$t('placeholder.metric')">
@@ -64,7 +60,7 @@
 
 <script>
 import Notice from '@/components/notice'
-import {dataPick} from '@/assets/config/common-config'
+import {dataPick, endpointTag, randomColor} from '@/assets/config/common-config'
 import {generateUuid} from '@/assets/js/utils'
 
 // 引入 ECharts 主模块
@@ -78,6 +74,9 @@ export default {
       endpointObject: {},
       endpointId: '',
       endpointList: [],
+      endpointTag: endpointTag,
+      randomColor: randomColor,
+      cacheColor: {},
       noticeConfig: {
         type: 'info',
         contents: [
@@ -164,6 +163,17 @@ export default {
     this.getEndpointList('.')
   },
   methods: {
+    choiceColor (type,index) {
+      let color = ''
+      // eslint-disable-next-line no-prototype-builtins
+      if (Object.keys(this.cacheColor).includes(type)) {
+        color = this.cacheColor[type]
+      } else {
+        color = randomColor[index]
+        this.cacheColor[type] = randomColor[index]
+      }
+      return color
+    },
     getEndpointList(query) {
       let params = {
         search: query,

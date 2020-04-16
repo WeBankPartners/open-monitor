@@ -78,7 +78,7 @@ export default {
       } else {
         params.push({
           id: this.chartItemx.id,
-          endpoint: this.params.endpoint,
+          endpoint: this.chartItemx.endpoint[0],
           metric: this.chartItemx.metric[0],
           time: this.params.time.toString(),
           start: this.params.start + '',
@@ -86,7 +86,9 @@ export default {
         })
       }
       this.$httpRequestEntrance.httpRequestEntrance('POST', 'dashboard/newchart', params, responseData => {
-        readyToDraw(this,responseData, this.chartIndex)
+        const chartConfig = {editTitle: true}
+        responseData.metric = this.chartItemx.metric[0]
+        readyToDraw(this,responseData, this.chartIndex, chartConfig)
       })
     }
   },
