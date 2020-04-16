@@ -75,31 +75,62 @@
     </ModalComponent>
     <ModalComponent :modelConfig="businessConfigModel">
       <div slot="businessConfig">
-        <div class="marginbottom params-each">
-          <label class="col-md-2 label-name">{{$t('tableKey.logPath')}}:</label>
-          <div class="search-input-content">
-            <input type="text" v-model="businessConfigModel.businessName" class="search-input c-dark" />
+        <section>
+          <div style="display: flex;">
+            <div class="port-title">
+              <span>{{$t('tableKey.logPath')}}:</span>
+            </div>
+            <div class="port-title">
+              <span>{{$t('field.endpoint')}}:</span>
+            </div>
           </div>
-          <button type="button" @click="addBusiness" class="btn-cancle-f" style="vertical-align:middle">{{$t('button.confirm')}}</button>
-        </div>
-        <div class="marginbottom params-each row" style="">
-          <div class="offset-md-1">
-            <Tag
-            v-for="(business, businessIndex) in businessConfigModel.addRow.businessSet"
-            color="primary"
-            type="border"
-            :key="businessIndex"
-            :name="businessIndex"
-            closable
-            @on-close="delBusiness(business)"
-            >{{business|interceptParams}}
-              <i class="fa fa-pencil" @click="editBusiness(business)" aria-hidden="true"></i>
-            </Tag>  
-          </div>     
-        </div>
+        </section>
+        <section v-for="(pm, pmIndex) in businessConfigModel.pathMsg" :key="pmIndex">
+          <div class="port-config">
+            <div style="width: 48%">
+              <input type="text" v-model.trim="pm.path" class="search-input" style="width: 95%"/>
+              <label class="required-tip">*</label>
+            </div>
+            <div style="width: 48%">
+              <Select v-model="pm.owner_endpoint" style="width: 95%">
+                <Option v-for="item in businessConfigModel.allPath" :value="item.guid" :key="item.guid">
+                {{item.guid}}</Option>
+              </Select>
+            </div>
+            <i class="fa fa-trash-o port-config-icon" v-if="businessConfigModel.pathMsg.length > 1" @click="delBusiness(pmIndex)" aria-hidden="true"></i>
+            <i class="fa fa-plus-square-o port-config-icon" @click="addBusiness" :style="{'visibility': pmIndex+1===businessConfigModel.pathMsg.length?  'unset' : 'hidden'}" aria-hidden="true"></i>
+          </div>
+        </section>
       </div>
     </ModalComponent>
     <ModalDel :ModelDelConfig="ModelDelConfig"></ModalDel>
+    <ModalComponent :modelConfig="portModel">
+      <div slot="port">
+        <section>
+          <div style="display: flex;">
+            <div class="port-title">
+              <span>{{$t('field.port')}}:</span>
+            </div>
+            <div class="port-title">
+              <span>{{$t('tableKey.description')}}:</span>
+            </div>
+          </div>
+        </section>
+        
+        <section v-for="(pm, pmIndex) in portModel.portMsg" :key="pmIndex">
+          <div class="port-config">
+            <div style="width: 48%">
+              <Input v-model.number="pm.port" type="number" style="width: 100%" placeholder="Required, type: Number" />
+            </div>
+            <div style="width: 48%">
+              <input type="text" v-model="pm.note" class="search-input" style="width: 100%"/>
+            </div>
+            <i class="fa fa-trash-o port-config-icon" v-if="portModel.portMsg.length > 1" @click="removePort(pmIndex)" aria-hidden="true"></i>
+            <i class="fa fa-plus-square-o port-config-icon" @click="addPort" :style="{'visibility': pmIndex+1===portModel.portMsg.length?  'unset' : 'hidden'}" aria-hidden="true"></i>
+          </div>
+        </section>
+      </div>
+    </ModalComponent>
   </div>
 </template>
 <script>
@@ -141,6 +172,7 @@
     {btn_name: 'button.historicalAlert', btn_func: 'historyAlarm'},
     {btn_name: 'button.remove', btn_func: 'deleteConfirm'},
     {btn_name: 'button.logConfiguration', btn_func: 'logManagement'},
+    {btn_name: 'button.portConfiguration', btn_func: 'portManagement'},
     {btn_name: 'button.processConfiguration', btn_func: 'processManagement'},
     {btn_name: 'button.businessConfiguration', btn_func: 'businessManagement'},
   ]
@@ -148,6 +180,7 @@
     name: '',
     data() {
       return {
+        value9: null,
         ModelDelConfig: {
           deleteWarning: false,
           msg: '',
@@ -220,6 +253,16 @@
             }
           },
         },
+        portModel: {
+          modalId: 'port_Modal',
+          modalTitle: 'button.portConfiguration',
+          saveFunc: 'portSave',
+          isAdd: true,
+          config: [
+            {name:'port',type:'slot'}
+          ],
+          portMsg: []
+        },
         endpointRejectModel: {
           modalId: 'endpoint_reject_model',
           modalTitle: 'title.endpointAdd',
@@ -267,6 +310,8 @@
           addRow:{
             businessSet: [],
           },
+          allPath: [],
+          pathMsg: [],
           businessName: ''
         },
         id: null,
@@ -319,7 +364,7 @@
         this.$root.$tableUtil.initTable(this, 'GET', url, params)
       },
       filterMoreBtn (rowData) {
-        let moreBtnGroup = ['thresholdConfig','historyAlarm','logManagement']
+        let moreBtnGroup = ['thresholdConfig','historyAlarm','logManagement', 'portManagement']
         if (rowData.type === 'host') {
           moreBtnGroup.push('processManagement', 'businessManagement')
         }
@@ -450,19 +495,36 @@
       },
 
       businessManagement (rowData) {
+        this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.pageConfig.CRUD+'?page=1&size=1000', '', responseData => {
+          this.businessConfigModel.allPath = responseData.data.map(t=> {
+            t.id = Number(t.id)
+            return t
+          })
+        })
         this.id = rowData.id
         this.businessConfigModel.addRow.businessSet = []
         this.$root.$httpRequestEntrance.httpRequestEntrance('GET','alarm/business/list', {id:this.id}, responseData=> {
-          responseData.forEach((item)=>{
-            this.businessConfigModel.addRow.businessSet.push(item.path)
-          })
+          if (!responseData.length) {
+            responseData.push({
+              owner_endpoint: null,
+              path: null
+            })
+          }
+          this.businessConfigModel.pathMsg = responseData
           this.$root.JQ('#business_config_model').modal('show')
         })
       },
       businessConfigSave () {
+        const emptyBusindess = this.businessConfigModel.pathMsg.some(t=> {
+          return !t.path 
+        })
+        if (emptyBusindess) {
+          this.$Message.warning(this.$t('tableKey.path') + this.$t('tips.required'))
+          return
+        }
         const params = {
           endpoint_id: +this.id,
-          path_list: this.businessConfigModel.addRow.businessSet
+          path_list: this.businessConfigModel.pathMsg
         }
         this.$root.$httpRequestEntrance.httpRequestEntrance('POST','alarm/business/update', params, ()=> {
           this.$Message.success(this.$t('tips.success'))
@@ -470,22 +532,70 @@
         })
       },
       addBusiness () {
-        if (!this.$root.$validate.isEmpty_reset(this.businessConfigModel.businessName.trim())) {
-          this.businessConfigModel.addRow.businessSet.push(this.businessConfigModel.businessName.trim())
-          this.businessConfigModel.businessName = ''
-        }
-      },
-      delBusiness (business) {
-        const i = this.businessConfigModel.addRow.businessSet.findIndex((val)=>{
-          return val === business
+        const emptyPath = this.businessConfigModel.pathMsg.some(t=> {
+          return !t.path
         })
-        this.businessConfigModel.addRow.businessSet.splice(i,1)
+        if (emptyPath) {
+          this.$Message.warning(this.$t('tableKey.path')+ this.$t('tips.required'))
+          return
+        }
+        this.businessConfigModel.pathMsg.push({
+          owner_endpoint: null,
+          path: null
+        })
       },
-      editBusiness (business) {
-        this.delBusiness(business)
-        this.businessConfigModel.businessName = business
+      delBusiness (pmIndex) {
+        this.businessConfigModel.pathMsg.splice(pmIndex,1)
+      },
+      portManagement (rowData) {
+        this.id = rowData.guid
+        let params = {guid: rowData.guid}
+        this.$root.$httpRequestEntrance.httpRequestEntrance('GET', 'agent/export/endpoint/telnet/get', params, (responseData) => {
+          if (!responseData.length) {
+            responseData.push({
+              port: null,
+              note: '',
+            })
+          }
+          this.portModel.portMsg = responseData
+        })
+        this.$root.JQ('#port_Modal').modal('show')
+      },
+      addPort () {
+        const emptyPort = this.portModel.portMsg.some(t=> {
+          return !t.port === true
+        })
+        if (emptyPort) {
+          this.$Message.warning(this.$t('field.port') + this.$t('tips.required'))
+          return
+        }
+        this.portModel.portMsg.push({
+          port: null,
+          note: '',
+        })
+      },
+      removePort(pmIndex) {
+        this.portModel.portMsg.splice(pmIndex,1)
+      },
+      portSave () {
+        let temp = JSON.parse(JSON.stringify(this.portModel.portMsg.filter(t=>{
+          if (!t.port === false) {
+            return t
+          }
+        })))
+        temp.map(t=> {
+          t.port += ''
+          return t
+        })
+        const params = {
+          guid: this.id,
+          config: temp
+        }
+        this.$root.$httpRequestEntrance.httpRequestEntrance('POST', 'agent/export/endpoint/telnet/update', params, () => {
+          this.$Message.success(this.$t('tips.success'))
+          this.$root.JQ('#port_Modal').modal('hide')
+        })
       }
-
     },
     components: {
       tableTemp
@@ -518,6 +628,27 @@
   .search-input-content {
     display: inline-block;
     vertical-align: middle; 
+  }
+
+  .port-title {
+    width: 48%;
+    font-size: 14px;
+    padding: 2px 0 2px 4px;
+    // border: 1px solid @blue-2;
+  }
+  .port-config {
+    display: flex;
+    margin-top: 4px;
+  }
+  .port-config-icon { 
+    font-size: 16px;
+    margin:7px 2px;
+  }
+  .fa-trash-o {
+    color: @color-red;
+  }
+  .fa-plus-square-o {
+    color: @color-blue;
   }
 </style>
 

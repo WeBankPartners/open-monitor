@@ -376,3 +376,60 @@ func GetEndpointsByIp(ipList []string, exportType string) (err error,endpoints [
 	err = x.SQL(sql).Find(&endpoints)
 	return err,endpoints
 }
+
+func UpdateChartTitle(param m.UpdateChartTitleParam) error {
+	var chartTables []*m.ChartTable
+	x.SQL("SELECT id,group_id,metric,title FROM chart").Find(&chartTables)
+	if len(chartTables) == 0 {
+		return fmt.Errorf("chart table can not find any data")
+	}
+	var chartExist,titleAuto bool
+	var groupId int
+	for _,v := range chartTables {
+		if v.Id == param.ChartId {
+			chartExist = true
+			groupId = v.GroupId
+			if v.Title == "${auto}" {
+				titleAuto = true
+			}
+			break
+		}
+	}
+	if !chartExist {
+		return fmt.Errorf("chart id %d can not find any record", param.ChartId)
+	}
+	var err error
+	if titleAuto {
+		if !strings.Contains(param.Metric, "=") {
+			return fmt.Errorf("Parameter metric is illegal ")
+		}
+		tmpMetric := strings.Split(param.Metric, "=")[1]
+		tmpExistId := 0
+		for _,v := range chartTables {
+			if v.GroupId == groupId && v.Metric == tmpMetric {
+				tmpExistId = v.Id
+				break
+			}
+		}
+		if tmpExistId > 0 {
+			_,err = x.Exec("UPDATE chart SET title=? WHERE id=?", param.Name, tmpExistId)
+		}else{
+			_,err = x.Exec("INSERT INTO chart(group_id,metric,title,legend) VALUE (?,?,?,?)", groupId, tmpMetric, param.Name, "$metric")
+		}
+	}else{
+		_,err = x.Exec("UPDATE chart SET title=? WHERE id=?", param.Name, param.ChartId)
+	}
+	return err
+}
+
+func GetChartTitle(metric string,id int) string {
+	if metric == "" {
+		return ""
+	}
+	var chartTables []*m.ChartTable
+	x.SQL("SELECT id,metric,title FROM chart WHERE metric=? AND group_id IN (SELECT group_id FROM chart WHERE id=?)", metric, id).Find(&chartTables)
+	if len(chartTables) == 0 {
+		return ""
+	}
+	return chartTables[0].Title
+}

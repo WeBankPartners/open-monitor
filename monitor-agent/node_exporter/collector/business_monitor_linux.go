@@ -30,7 +30,7 @@ func BusinessMonitorCollector() (Collector, error) {
 		businessMonitor: prometheus.NewDesc(
 			prometheus.BuildFQName(namespace, businessCollectorName, "value"),
 			"Show business data from log file.",
-			[]string{"sys", "msg", "key"}, nil,
+			[]string{"sys", "msg", "key", "path"}, nil,
 		),
 	}, nil
 }
@@ -40,7 +40,7 @@ func (c *businessMonitorCollector) Update(ch chan<- prometheus.Metric) error {
 		for _,vv := range v.get() {
 			ch <- prometheus.MustNewConstMetric(c.businessMonitor,
 				prometheus.GaugeValue,
-				vv.Value, vv.SystemNum, vv.Name, vv.Key)
+				vv.Value, vv.SystemNum, vv.Name, vv.Key, vv.Path)
 		}
 	}
 	return nil
@@ -49,6 +49,7 @@ func (c *businessMonitorCollector) Update(ch chan<- prometheus.Metric) error {
 type businessMetricObj struct {
 	SystemNum  string
 	Name  string
+	Path  string
 	Key  string
 	Value  float64
 }
@@ -108,7 +109,7 @@ func (c *businessMonitorObj) get() []businessMetricObj {
 	for k,v := range c.Data {
 		value,err := strconv.ParseFloat(v, 64)
 		if err == nil {
-			data = append(data, businessMetricObj{SystemNum:c.SystemNum, Name:c.Name, Key:k, Value:value})
+			data = append(data, businessMetricObj{SystemNum:c.SystemNum, Name:c.Name, Path:c.Path, Key:k, Value:value})
 		}
 	}
 	c.Lock.RUnlock()
