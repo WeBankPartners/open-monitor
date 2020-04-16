@@ -159,6 +159,9 @@ func SearchObjOption(c *gin.Context)  {
 		mid.ReturnError(c, "Search failed", err)
 		return
 	}
+	for _,v := range data {
+		v.OptionTypeName = v.OptionType
+	}
 	mid.ReturnData(c, data)
 }
 
