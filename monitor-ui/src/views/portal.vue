@@ -63,7 +63,7 @@ export default {
       if (Object.keys(this.cacheColor).includes(type)) {
         color = this.cacheColor[type]
       } else {
-        color = randomColor[this.count]
+        color = randomColor[index]
         this.cacheColor[type] = randomColor[index]
       }
       return color

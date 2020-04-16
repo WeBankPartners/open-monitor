@@ -26,7 +26,7 @@ export default {
     }
   },
   mounted() {
-    this.$refs.search.getChartsConfig() 
+    // this.$refs.search.getChartsConfig() 
   },
   methods: {
     manageCharts (chartsConfig, params) {

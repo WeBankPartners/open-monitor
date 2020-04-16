@@ -6,7 +6,7 @@
           <div style="display:flex;justify-content: space-between;">
             <div>
               <span class="title-style">{{item.display_name}}</span>
-              <Tag class="tag-width">{{item.type}}</Tag>
+              <Tag :color="choiceColor(item.type)" class="tag-width">{{item.type}}</Tag>
             </div>
             <div>
               <button class="btn-cancle-f btn-small" @click="associatedRole(item)">{{$t('resourceLevel.addAssociatedRole')}}</button>
@@ -129,11 +129,11 @@
 </template>
 
 <script>
+import {randomColor} from '@/assets/config/common-config'
 export default {
   name: 'recursive',
   data() {
     return {
-      cacheColor: {},
       ModelDelConfig: {
         deleteWarning: false,
         msg: '',
@@ -198,6 +198,19 @@ export default {
     // }) 
   },
   methods: {
+    choiceColor (type) {
+      let cacheColor = this.$root.$store.state.cacheTagColor
+      let color = ''
+      // eslint-disable-next-line no-prototype-builtins
+      if (Object.keys(cacheColor).includes(type)) {
+        color = cacheColor[type]
+      } else {
+        color = randomColor[this.count]
+        cacheColor[type] = randomColor[this.count]
+        this.$root.$store.commit('cacheTagColor', cacheColor)
+      }
+      return color
+    },
     hide (index) {
       this.recursiveViewConfig[index]._isShow = !this.recursiveViewConfig[index]._isShow
       this.$set(this.recursiveViewConfig, index, this.recursiveViewConfig[index])
@@ -425,5 +438,8 @@ export default {
     font-weight: 500;
     padding-right: 8px;
     vertical-align: middle;
+  }
+  .ivu-form-item {
+    margin-bottom: 0;
   }
 </style>

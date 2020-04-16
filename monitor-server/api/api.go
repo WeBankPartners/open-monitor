@@ -24,6 +24,7 @@ func InitHttpServer(exportAgent bool) {
 	r.Static(fmt.Sprintf("%s/css", urlPrefix), fmt.Sprintf("public%s/css", urlPrefix))
 	r.Static(fmt.Sprintf("%s/img", urlPrefix), fmt.Sprintf("public%s/img", urlPrefix))
 	r.Static(fmt.Sprintf("%s/fonts", urlPrefix), fmt.Sprintf("public%s/fonts", urlPrefix))
+	r.StaticFile("/favicon.ico", "public/favicon.ico")
 	if exportAgent {
 		r.Static(fmt.Sprintf("%s/exporter", urlPrefix), "exporter")
 	}
@@ -105,6 +106,7 @@ func InitHttpServer(exportAgent bool) {
 			dashboardApi.POST("/system/add", agent.ExportPanelAdd)
 			dashboardApi.POST("/system/delete", agent.ExportPanelDelete)
 			dashboardApi.GET("/recursive/get", agent.GetPanelRecursive)
+			dashboardApi.POST("/config/chart/title", dashboard.UpdateChartsTitle)
 		}
 		agentApi := authApi.Group("/agent")
 		{
@@ -117,6 +119,9 @@ func InitHttpServer(exportAgent bool) {
 			agentApi.POST("/export/install/:name", agent.InstallAgent)
 			agentApi.POST("/export/custom/endpoint/add", agent.CustomRegister)
 			agentApi.POST("/export/custom/metric/add", agent.CustomMetricPush)
+			agentApi.POST("/export/endpoint/telnet/update", agent.UpdateEndpointTelnet)
+			agentApi.GET("/export/ping/source", agent.ExportPingSource)
+			agentApi.GET("/export/endpoint/telnet/get", agent.GetEndpointTelnet)
 		}
 		alarmApi := authApi.Group("/alarm")
 		{

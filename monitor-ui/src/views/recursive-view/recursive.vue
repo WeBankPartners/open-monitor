@@ -4,7 +4,7 @@
       <li v-for="(item, itemIndex) in recursiveViewConfig" class="tree-border" :key="itemIndex">
         <div @click="hide(itemIndex)" class="tree-title" :style="stylePadding">
           <span >
-            <strong>{{item.display_name}}</strong>
+            <strong>| {{item.display_name}}</strong>
           </span>
         </div>
         <transition name="fade">
@@ -38,6 +38,7 @@ export default {
   name: 'recursive',
   data() {
     return {
+      inject:['cacheColor']
     }
   },
   props:{
@@ -119,9 +120,11 @@ export default {
     color: @blue-2;
   }
   .tree-border {
-    border: 1px solid #9966;
-    border-right: none;
-    padding: 4px 0 4px 4px;
-    margin: 4px 0 4px 4px;
+    border-top: 1px solid #9966;
+    // border-right: none;
+    // border-left: none;
+    // border-top: none;
+    padding: 4px 0;
+    margin: 4px 0;
   }
 </style>
