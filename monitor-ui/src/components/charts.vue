@@ -167,10 +167,4 @@ export default {
 	width: 580px;
 }
 
-
-
-  .zone-placeholder {
-    width: 570px;
-  }
-
 </style>
