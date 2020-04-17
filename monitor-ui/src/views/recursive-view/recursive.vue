@@ -151,8 +151,4 @@ export default {
   .box .list{
     width: 580px;
   }
-
-  .zone-placeholder {
-    width: 580px;
-  }
 </style>
