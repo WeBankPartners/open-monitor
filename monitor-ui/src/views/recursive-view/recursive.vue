@@ -14,8 +14,8 @@
             :params="params"
             v-if="item.children"
             :recursiveViewConfig="item.children"></recursive>
-            <div>
-              <template v-for="(chartItemx,chartIndexx) in item.charts">
+            <div class="box">
+              <div v-for="(chartItemx,chartIndexx) in item.charts" :key="chartIndexx" class="list">
                 <SingleChart 
                   :chartItemx="chartItemx" 
                   :chartIndex="chartIndexx" 
@@ -23,7 +23,8 @@
                   :params="params"
                   @sendConfig="receiveConfig"
                   > </SingleChart>
-              </template>
+              </div>
+              <div v-for="(ph, phIndex) in item.phZone" class="list" :key="ph+phIndex"></div>
             </div>
           </div>
         </transition>
@@ -67,6 +68,20 @@ export default {
   created () {
     this.recursiveViewConfig.map((_) =>{
       _._isShow = true
+      if (_.charts) {
+        const len = _.charts.length
+        if (!len) {
+          return
+        }
+        const remainder = 6 - len%6
+        if (remainder) {
+          let phZone = []
+          for (let i = 0; i < remainder; i++) {
+            phZone.push(Math.random())
+          }
+          _.phZone = phZone
+        }
+      }
     }) 
   },
   methods: {
@@ -126,5 +141,14 @@ export default {
     // border-top: none;
     padding: 4px 0;
     margin: 4px 0;
+  }
+  
+  .box {
+    display:flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+  }
+  .box .list{
+    width: 580px;
   }
 </style>
