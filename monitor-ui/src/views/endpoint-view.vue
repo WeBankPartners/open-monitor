@@ -35,6 +35,9 @@ export default {
     this.$root.$eventBus.$on('callMaxChart', data => {
       this.zoomChart(data)
     })
+    this.$root.$eventBus.$on('refreshRecursive', () => {
+      this.$refs.search.getChartsConfig() 
+    })
     this.zoneWidth = window.screen.width * 0.65
   },
   mounted() {
@@ -65,7 +68,7 @@ export default {
       })
       this.showCharts = true
       this.showRecursive = false
-      // this.$refs.parentCharts.refreshCharts()
+      this.$refs.parentCharts.refreshCharts()
     },
     recursiveView (params) {
       this.recursiveViewConfig = []
