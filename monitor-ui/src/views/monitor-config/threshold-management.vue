@@ -18,11 +18,7 @@
             @on-clear="clearEndpoint"
             >
             <Option v-for="(option, index) in endpointOptions" :value="option.id" :key="index">
-            <Tag color="cyan" class="tag-width" v-if="option.option_value.split(':')[1] == 'host'">host</Tag>
-            <Tag color="blue" class="tag-width" v-if="option.option_value.split(':')[1] == 'mysql'">mysql </Tag>
-            <Tag color="geekblue" class="tag-width" v-if="option.option_value.split(':')[1] == 'redis'">redis </Tag>
-            <Tag color="purple" class="tag-width" v-if="option.option_value.split(':')[1] == 'tomcat'">tomcat</Tag>{{option.option_text}}</Option>
-            <!-- <Option v-for="(option, index) in endpointOptions" :value="option.id" :key="index">{{option.option_text}}</Option> -->
+            <Tag :color="endpointTag[option.option_type_name] || choiceColor(option.option_type_name, index)" class="tag-width">{{option.option_type_name}}</Tag>{{option.option_text}}</Option>
           </Select>
         </li>
         <li class="search-li">
@@ -88,7 +84,7 @@
 </template>
 
 <script>
-import {thresholdList, lastList, priorityList} from '@/assets/config/common-config.js'
+import {thresholdList, lastList, priorityList, endpointTag, randomColor} from '@/assets/config/common-config.js'
 let tableEle = [
   {title: 'ID', value: 'id', display: false},
   {title: 'tableKey.name', value: 'metric', display: true},
@@ -120,6 +116,9 @@ export default {
       paramsType: null, // For get thresholdList
       endpointID: null,
       endpointOptions: [],
+      endpointTag: endpointTag,
+      randomColor: randomColor,
+      cacheColor: {},
 
       totalPageConfig: [],
       pageConfig: {
@@ -198,6 +197,17 @@ export default {
     })
   },
   methods: {
+    choiceColor (type,index) {
+      let color = ''
+      // eslint-disable-next-line no-prototype-builtins
+      if (Object.keys(this.cacheColor).includes(type)) {
+        color = this.cacheColor[type]
+      } else {
+        color = randomColor[index]
+        this.cacheColor[type] = randomColor[index]
+      }
+      return color
+    },
     search () {
       if (this.endpointID === null) {
         return
