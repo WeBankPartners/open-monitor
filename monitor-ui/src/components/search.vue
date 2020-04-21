@@ -141,7 +141,6 @@ export default {
       if (this.dateRange[0] && this.dateRange[1]) {
         this.disableTime = true
         this.autoRefresh = 0
-        this.timeTnterval = -1
       } else {
         this.disableTime = false
       }
