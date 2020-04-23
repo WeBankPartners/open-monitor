@@ -1,6 +1,6 @@
 <template>
   <div class="single-chart">
-    <div v-if="!noDataTip" :id="elId" class="echart" :style="chartItemx.style">
+    <div v-if="!noDataTip" :id="elId" class="echart" :style="chartInfo.style">
     </div>
     <div v-if="noDataTip" class="echart echart-no-data-tip">
       {{chartTitle}}:
@@ -26,7 +26,7 @@ export default {
     }
   },
   props: {
-    chartItemx: Object,
+    chartInfo: Object,
     params: Object,
     chartIndex: Number
   },
@@ -56,7 +56,7 @@ export default {
     getchartdata () {
       this.isAutoRefresh()
       let params = []
-      this.chartItemx.chartParams.forEach((item) => {
+      this.chartInfo.chartParams.forEach((item) => {
         params.push({
           ...item,
           time: this.params.timeTnterval + '',
@@ -66,8 +66,8 @@ export default {
       })
 
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.metricConfigView.api, params, responseData => {
-        responseData.yaxis.unit =  this.chartItemx.panalUnit  
-        this.elId = this.chartItemx.elId
+        responseData.yaxis.unit =  this.chartInfo.panalUnit  
+        this.elId = this.chartInfo.elId
         const chartConfig = {eye: false,dataZoom:false, lineBarSwitch: true}
         this.$nextTick( () => {
           readyToDraw(this,responseData, this.chartIndex, chartConfig)
