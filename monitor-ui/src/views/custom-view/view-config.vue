@@ -258,33 +258,31 @@ export default {
 </script>
 
 <style scoped lang="less">
-  .header-name {
-    font-size: 16px; 
-  }
-  .search-container {
-    display: flex;
-    justify-content: space-between;
-    font-size: 16px;
-    padding: 0 10px;
-  }
-  .search-zone {
-    display: inline-block;
-  }
-  .params-title {
-    margin-left: 4px;
-    font-size: 13px;
-  }
-  .header-grid {
-    flex-grow: 1;
-    text-align: end;
-    line-height: 32px;
-    i {
-      margin: 0 4px;
-      cursor: pointer;
-    } 
-  }
-</style>
-<style scoped lang="less">
+.header-name {
+  font-size: 16px; 
+}
+.search-container {
+  display: flex;
+  justify-content: space-between;
+  margin: 8px;
+  font-size: 16px;
+}
+.search-zone {
+  display: inline-block;
+}
+.params-title {
+  margin-left: 4px;
+  font-size: 13px;
+}
+.header-grid {
+  flex-grow: 1;
+  text-align: end;
+  line-height: 32px;
+  i {
+    margin: 0 4px;
+    cursor: pointer;
+  } 
+}
 .vue-grid-item {
   border-radius: 4px;
 }
