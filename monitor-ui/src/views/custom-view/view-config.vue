@@ -163,7 +163,7 @@ export default {
         item.viewConfig.activeCharts = activeCharts
         tmp.push(item.viewConfig)
       })
-      this.layoutData = this.layoutData.concat(tmp)
+      this.layoutData = tmp
     },
     addItem() {
       generateUuid().then((elId)=>{
@@ -236,6 +236,7 @@ export default {
           }
         })
       })
+      console.log(res)
       let params = {
         name: this.$route.params.name,
         id: this.$route.params.id,
