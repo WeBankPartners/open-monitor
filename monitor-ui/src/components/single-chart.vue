@@ -29,7 +29,7 @@ export default {
     }
   },
   props: {
-    chartItemx: Object,
+    chartInfo: Object,
     params: Object,
     chartIndex: Number
   },
@@ -63,10 +63,10 @@ export default {
     getchartdata () {
       let params = []
       if (this.params.sys) {
-        this.chartItemx.endpoint.forEach((ep) => {
-          this.chartItemx.metric.forEach((me) => {
+        this.chartInfo.endpoint.forEach((ep) => {
+          this.chartInfo.metric.forEach((me) => {
             params.push({
-              id: this.chartItemx.id,
+              id: this.chartInfo.id,
               endpoint: ep,
               metric: me,
               time: this.params.time.toString(),
@@ -77,9 +77,9 @@ export default {
         })
       } else {
         params.push({
-          id: this.chartItemx.id,
-          endpoint: this.chartItemx.endpoint[0],
-          metric: this.chartItemx.metric[0],
+          id: this.chartInfo.id,
+          endpoint: this.chartInfo.endpoint[0],
+          metric: this.chartInfo.metric[0],
           time: this.params.time.toString(),
           start: this.params.start + '',
           end: this.params.end + ''
@@ -87,7 +87,7 @@ export default {
       }
       this.$httpRequestEntrance.httpRequestEntrance('POST', 'dashboard/newchart', params, responseData => {
         const chartConfig = {editTitle: true}
-        responseData.metric = this.chartItemx.metric[0]
+        responseData.metric = this.chartInfo.metric[0]
         readyToDraw(this,responseData, this.chartIndex, chartConfig)
       })
     }
