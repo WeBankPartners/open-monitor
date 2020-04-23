@@ -6,7 +6,7 @@ export const resizeEvent = function(that, i, newH, newW, newHPx, newWPx){
       that.layoutData[index].h = newH
       that.layoutData[index].w = newW
       var myChart = echarts.init(document.getElementById(item.id))
-      myChart.resize({height:newHPx-34+'px',width:newWPx+'px'})
+      myChart.resize({height:newHPx - 34+'px',width:newWPx - 6 +'px'})
       return
     }
   })
