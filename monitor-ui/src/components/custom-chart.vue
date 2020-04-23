@@ -39,7 +39,6 @@ export default {
     }
   },
   mounted() {
-    this.elId = this.chartItemx.elId
     this.getchartdata()
   },
   destroyed() {
@@ -68,7 +67,7 @@ export default {
 
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.metricConfigView.api, params, responseData => {
         responseData.yaxis.unit =  this.chartItemx.panalUnit  
-        this.elId = this.chartItemx.elId + ((new Date()).valueOf()).toString().substring(10) 
+        this.elId = this.chartItemx.elId
         const chartConfig = {eye: false,dataZoom:false, lineBarSwitch: true}
         this.$nextTick( () => {
           readyToDraw(this,responseData, this.chartIndex, chartConfig)
