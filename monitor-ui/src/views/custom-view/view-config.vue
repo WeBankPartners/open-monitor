@@ -16,7 +16,7 @@
             </div>
             <div class="search-zone">
               <span class="params-title">{{$t('placeholder.refresh')}}：</span>
-              <Select v-model="viewCondition.autoRefresh" :disabled="disableTime" style="width:100px" :placeholder="$t('placeholder.refresh')">
+              <Select v-model="viewCondition.autoRefresh" :disabled="disableTime" style="width:100px" @on-change="initPanals" :placeholder="$t('placeholder.refresh')">
                 <Option v-for="item in autoRefreshConfig" :value="item.value" :key="item.value">{{ item.label }}</Option>
               </Select>
             </div>
@@ -142,6 +142,7 @@ export default {
       this.initPanals()
     },
     initPanals () {
+      let tmp = []
       this.viewData.forEach((item) => {
         let params = []
         item.query.forEach( _ => {
@@ -160,8 +161,9 @@ export default {
           chartParams: params                                                      
         })
         item.viewConfig.activeCharts = activeCharts
-        this.layoutData.push(item.viewConfig)
+        tmp.push(item.viewConfig)
       })
+      this.layoutData = this.layoutData.concat(tmp)
     },
     addItem() {
       generateUuid().then((elId)=>{
