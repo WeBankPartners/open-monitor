@@ -52,8 +52,8 @@
             </div>
           </div>
           <section>
-            <div v-for="(chartItemx,chartIndexx) in item.activeCharts" :key="chartIndexx">
-              <CustomChart :chartItemx="chartItemx" :chartIndex="index" :key="chartIndexx" :params="viewCondition"></CustomChart>
+            <div v-for="(chartInfo,chartIndex) in item.activeCharts" :key="chartIndex">
+              <CustomChart :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomChart>
             </div>
           </section>
         </grid-item>
