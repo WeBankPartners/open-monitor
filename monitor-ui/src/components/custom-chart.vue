@@ -31,30 +31,24 @@ export default {
     params: Object,
     chartIndex: Number
   },
-  // watch: {
-  //   params: function () {
-  //     this.getchartdata()
-  //     if (this.params.autoRefresh > 0) {
-  //       this.interval = setInterval(()=>{
-  //         this.getchartdata()
-  //       },this.params.autoRefresh*1000)
-  //     }
-  //   }
-  // },
   mounted() {
     this.elId = this.chartItemx.elId
     this.getchartdata()
-    if (this.params.autoRefresh > 0) {
-      this.interval = setInterval(()=>{
-        this.getchartdata()
-      },this.params.autoRefresh*1000)
-    }
   },
   destroyed() {
     clearInterval(this.interval)
   },
   methods: {
+    isAutoRefresh () {
+      clearInterval(this.interval)
+      if (this.params.autoRefresh > 0 && this.params.dateRange[0] === '') {
+        this.interval = setInterval(()=>{
+          this.getchartdata()
+        },this.params.autoRefresh*1000)
+      }
+    },
     getchartdata () {
+      this.isAutoRefresh()
       let params = []
       this.chartItemx.chartParams.forEach((item) => {
         params.push({
