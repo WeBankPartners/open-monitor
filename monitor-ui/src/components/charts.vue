@@ -15,8 +15,8 @@
         </div>
       </template>
       <div class="box">
-        <div v-for="(chartItemx,chartIndexx) in activeCharts" :key="chartIndexx" class="list">
-          <SingleChart @sendConfig="receiveConfig" @editTitle="editTitle" :chartItemx="chartItemx" :chartIndex="chartIndexx" :key="chartIndexx" :params="params"> </SingleChart>
+        <div v-for="(chartInfo,chartIndex) in activeCharts" :key="chartIndex" class="list">
+          <SingleChart @sendConfig="receiveConfig" @editTitle="editTitle" :chartInfo="chartInfo" :chartIndex="chartIndex" :params="params"> </SingleChart>
         </div>
         <div v-for="(ph) in phZone" class="list" :key="ph"></div>
       </div>
