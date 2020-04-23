@@ -1,6 +1,5 @@
 <template>
   <div class="single-chart">
-    {{interval}}
     <div v-if="!noDataTip" :id="elId" class="echart" :style="chartItemx.style">
     </div>
     <div v-if="noDataTip" class="echart echart-no-data-tip">
@@ -30,6 +29,14 @@ export default {
     chartItemx: Object,
     params: Object,
     chartIndex: Number
+  },
+  watch: {
+    params: {
+      handler () {
+        this.getchartdata()
+      },
+      deep: true
+    }
   },
   mounted() {
     this.elId = this.chartItemx.elId

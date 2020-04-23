@@ -236,7 +236,6 @@ export default {
           }
         })
       })
-      console.log(res)
       let params = {
         name: this.$route.params.name,
         id: this.$route.params.id,
