@@ -152,7 +152,7 @@ export default {
             prom_ql: _.metric,
           })
         })
-        let height = (item.viewConfig.h) * 30
+        let height = (item.viewConfig.h+1) * 30
         let activeCharts = []
         activeCharts.push({
           style: `height:${height}px;`,
@@ -189,8 +189,7 @@ export default {
     removeGrid(itemxxx) {
       this.layoutData.forEach((item,index) => {
         if (item.id === itemxxx.id) {
-         this.layoutData.splice(index,1)
-         return
+          this.layoutData.splice(index,1)
         }
       })
     },
