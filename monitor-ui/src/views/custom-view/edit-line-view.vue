@@ -317,7 +317,8 @@ export default {
         panalTitle: this.panalTitle,
         panalUnit: this.panalUnit,
         query: query,
-        viewConfig: panal
+        viewConfig: panal,
+        type: 'line'
       };
 
       if (this.panalIndex !== null) {
