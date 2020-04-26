@@ -32,7 +32,8 @@ const implicitRoute = {
   'monitorConfigIndex/logManagement': {'zh-CN': '监控', 'en-US': 'Monitor'},
   'monitorConfigIndex/resourceLevel': {'zh-CN': '监控', 'en-US': 'Monitor'},
   'viewConfig': {'zh-CN': '监控', 'en-US': 'Monitor'},
-  'editView': {'zh-CN': '监控', 'en-US': 'Monitor'},
+  'editLineView': {'zh-CN': '监控', 'en-US': 'Monitor'},
+  'editPieView': {'zh-CN': '监控', 'en-US': 'Monitor'},
   'viewChart': {'zh-CN': '监控', 'en-US': 'Monitor'}
 }
 window.addImplicitRoute(implicitRoute)
