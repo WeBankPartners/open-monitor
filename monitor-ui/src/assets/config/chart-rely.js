@@ -1,5 +1,6 @@
 // 引入柱状图
 require('echarts/lib/chart/line');
+require('echarts/lib/chart/pie');
 require('echarts/lib/chart/bar');
 // 引入提示框和标题组件
 require('echarts/lib/component/tooltip');
@@ -275,4 +276,42 @@ export const drawChart = function(that,config,userConfig) {
   
   // 绘制图表
   myChart.setOption(option) 
-  }
+}
+
+export const drawPieChart = function(panalUnit, responseData) {
+  let option = option = {
+    title: {
+        text: panalUnit,
+        left: 'center'
+    },
+    tooltip: {
+        trigger: 'item',
+        formatter: '{b} : {c} ({d}%)'
+    },
+    legend: {
+        // orient: 'vertical',
+        // top: 'middle',
+        bottom: 10,
+        left: 'center',
+        data: responseData.legend
+    },
+    series: [
+        {
+            type: 'pie',
+            radius: '65%',
+            center: ['50%', '50%'],
+            selectedMode: 'single',
+            data: responseData.data,
+            emphasis: {
+                itemStyle: {
+                    shadowBlur: 10,
+                    shadowOffsetX: 0,
+                    shadowColor: 'rgba(0, 0, 0, 0.5)'
+                }
+            }
+        }
+    ]
+};
+  var myChart = echarts.init(document.getElementById('id_265a84f1_1207_4b41_adbf_09c9e8a7f7d7'))
+  myChart.setOption(option)
+}

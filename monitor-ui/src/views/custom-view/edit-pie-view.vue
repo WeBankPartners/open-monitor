@@ -4,7 +4,7 @@
     <div class="zone zone-chart">
       <div class="zone-chart-title">{{panalTitle}}</div>
       <div v-if="!noDataTip">
-        <div :id="elId" class="echart"></div>
+        <div id="id_265a84f1_1207_4b41_adbf_09c9e8a7f7d7" class="echart"></div>
       </div>
       <div v-else class="echart echart-no-data-tip">
         <span>~~~No Data!~~~</span>
@@ -17,17 +17,6 @@
       </div>
       <div>
         <section class="zone-config-operation">
-            <div class="tag-display">
-              <Tag
-                v-for="(query, queryIndex) in chartQueryList"
-                color="primary"
-                type="border"
-                :key="queryIndex"
-                :name="queryIndex"
-                closable
-                @on-close="removeQuery(queryIndex)"
-              >{{$t('field.endpoint')}}：{{query.endpoint}}; {{$t('field.metric')}}：{{query.metricLabel}}</Tag>
-            </div>
             <div class="condition-zone">
               <ul>
                 <li>
@@ -80,9 +69,6 @@
                 </li>
               <li>
                 <div class="condition condition-title">{{$t('field.unit')}}</div>
-                <div class="condition">
-                  <Input v-model="panalUnit" placeholder="Enter something..." style="width: 300px" />
-                </div>
                 <button class="btn btn-cancle-f" @click="addQuery()">{{$t('button.addConfig')}}</button>
               </li>
               </ul>
@@ -94,8 +80,8 @@
 </template>
 
 <script>
-import { generateUuid } from "@/assets/js/utils"
-import { readyToDraw } from "@/assets/config/chart-rely"
+// import { generateUuid } from "@/assets/js/utils"
+import { drawPieChart} from "@/assets/config/chart-rely"
 import {endpointTag, randomColor} from '@/assets/config/common-config'
 export default {
   name: "",
@@ -116,75 +102,39 @@ export default {
         metricLabel: "",
         metric: ""
       },
-      chartQueryList: [
-        // {
-        //   endpoint: '',
-        //   metricLabel: '',
-        //   metric: ''
-        // }
-      ],
 
       options: [],
       metricList: [],
 
       panalTitle: "Default title",
-      panalUnit: ""
     };
   },
-  watch: {
-    chartQueryList: {
-      handler(data) {
-        this.noDataTip = false;
-        let params = [];
-        if (this.$root.$validate.isEmpty_reset(data)) {
-          this.noDataTip = true;
-          return;
-        }
-        data.forEach(item => {
-          params.push(
-            {
-              endpoint: item.endpoint,
-              prom_ql: item.metric,
-              metric: item.metricLabel,
-              time: "-1800"
-            }
-          );
-        });
-        this.$root.$httpRequestEntrance.httpRequestEntrance(
-          'POST',this.$root.apiCenter.metricConfigView.api, params,
-          responseData => {
-      
-            responseData.yaxis.unit = this.panalUnit;
-            readyToDraw(this,responseData, 1, { eye: false })
-          }
-        );
-      },
-      deep: true
-      // immediate: true
-    }
-  },
   created() {
-    generateUuid().then(elId => {
-      this.elId = `id_${elId}`;
-    });
+
   },
   mounted() {
-    if (this.$root.$validate.isEmpty_reset(this.$route.params)) {
-      this.$router.push({ path: "viewConfig" });
-    } else {
-      if (!this.$root.$validate.isEmpty_reset(this.$route.params.templateData.cfg)) {
-        this.getEndpointList()
-        this.viewData = JSON.parse(this.$route.params.templateData.cfg);
-        this.viewData.forEach((itemx, index) => {
-          if (itemx.viewConfig.id === this.$route.params.panal.id) {
-            this.panalIndex = index;
-            this.panalData = itemx;
-            this.initPanal();
-            return;
-          }
-        });
-      }
-    }
+    // drawPieChart(this)
+    // generateUuid().then(elId => {
+    //   this.elId = `id_${elId}`;
+    //   drawPieChart(this)
+    // });
+    // drawPieChart(this)
+    // if (this.$root.$validate.isEmpty_reset(this.$route.params)) {
+    //   this.$router.push({ path: "viewConfig" });
+    // } else {
+    //   if (!this.$root.$validate.isEmpty_reset(this.$route.params.templateData.cfg)) {
+    //     this.getEndpointList()
+    //     this.viewData = JSON.parse(this.$route.params.templateData.cfg);
+    //     this.viewData.forEach((itemx, index) => {
+    //       if (itemx.viewConfig.id === this.$route.params.panal.id) {
+    //         this.panalIndex = index;
+    //         this.panalData = itemx;
+    //         this.initPanal();
+    //         return;
+    //       }
+    //     });
+    //   }
+    // }
   },
   methods: {
     choiceColor (type,index) {
@@ -199,36 +149,33 @@ export default {
       return color
     },
     initPanal() {
-      this.panalTitle = this.panalData.panalTitle;
-      this.panalUnit = this.panalData.panalUnit;
-      let params = [];
-      this.noDataTip = false;
-      if (this.$root.$validate.isEmpty_reset(this.panalData.query)) {
-        return;
-      }
-      this.initQueryList(this.panalData.query);
-      this.panalData.query.forEach(item => {
-        params.push(
-          {
-            endpoint: item.endpoint,
-            prom_ql: item.metric,
-            metric: item.metricLabel,
-            time: "-1800"
-          }
-        );
-      });
-      if (params !== []) {
-        this.$root.$httpRequestEntrance.httpRequestEntrance(
-          'POST',this.$root.apiCenter.metricConfigView.api, params,
-          responseData => {
-            responseData.yaxis.unit = this.panalUnit;
-            readyToDraw(this,responseData, 1, { eye: false, lineBarSwitch: true})
-          }
-        );
-      }
-    },
-    initQueryList(query) {
-      this.chartQueryList = query;
+      drawPieChart(this)
+      // this.panalTitle = this.panalData.panalTitle;
+      // this.panalUnit = this.panalData.panalUnit;
+      // let params = [];
+      // this.noDataTip = false;
+      // if (this.$root.$validate.isEmpty_reset(this.panalData.query)) {
+      //   return;
+      // }
+      // this.panalData.query.forEach(item => {
+      //   params.push(
+      //     {
+      //       endpoint: item.endpoint,
+      //       prom_ql: item.metric,
+      //       metric: item.metricLabel,
+      //       time: "-1800"
+      //     }
+      //   );
+      // });
+      // if (params !== []) {
+      //   this.$root.$httpRequestEntrance.httpRequestEntrance(
+      //     'POST',this.$root.apiCenter.metricConfigView.api, params,
+      //     responseData => {
+      //       responseData.yaxis.unit = this.panalUnit;
+      //       drawPieChart(this,responseData, 1, { eye: false, lineBarSwitch: true})
+      //     }
+      //   );
+      // }
     },
     getEndpointList(query='.') {
       let params = {
@@ -275,17 +222,13 @@ export default {
         this.$Message.warning("配置完整方可保存！");
         return;
       }
-      this.chartQueryList.push(this.templateQuery);
-      this.templateQuery = {
-        endpoint: "",
-        metricLabel: "",
-        metric: ""
-      };
-      this.options = [];
-      this.metricList = [];
-    },
-    removeQuery(queryIndex) {
-      this.chartQueryList.splice(queryIndex, 1);
+      this.$root.$httpRequestEntrance.httpRequestEntrance(
+        'POST','dashboard/pie/chart', {...this.templateQuery},
+        responseData => {
+          drawPieChart(this.panalTitle, responseData)
+        }
+      );
+
     },
     saveConfig() {
       const params = this.pp();
@@ -305,13 +248,6 @@ export default {
     },
     pp() {
       let query = [];
-      this.chartQueryList.forEach(item => {
-        query.push({
-          endpoint: item.endpoint,
-          metricLabel: item.metricLabel,
-          metric: item.metric
-        });
-      });
       let panal = this.$route.params.panal;
       panal.i = this.panalTitle;
       const temp = {
