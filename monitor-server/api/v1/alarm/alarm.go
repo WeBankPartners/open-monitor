@@ -110,7 +110,7 @@ func AcceptAlertMsg(c *gin.Context)  {
 					mid.LogInfo(fmt.Sprintf("Can't find the endpoint %v", v))
 					continue
 				}
-				if strings.Contains(tmpAlarm.SMetric, "ping_alive") {
+				if strings.Contains(tmpAlarm.SMetric, "ping_alive") || strings.Contains(tmpAlarm.SMetric, "telnet_alive") {
 					if len(m.Config().Cluster.ServerList) > 0 {
 						if m.Config().Cluster.ServerList[0] == tmpEndpointIp {
 							continue
