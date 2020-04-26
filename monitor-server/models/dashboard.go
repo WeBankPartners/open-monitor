@@ -101,6 +101,17 @@ type EChartOption struct {
 	Series []*SerialModel  `json:"series"`
 }
 
+type EChartPie struct {
+	Titile  string  `json:"titile"`
+	Legend  []string  `json:"legend"`
+	Data  []*EChartPieObj  `json:"data"`
+}
+
+type EChartPieObj struct {
+	Name  string  `json:"name"`
+	Value  float64  `json:"value"`
+}
+
 type Chart struct {
 	Endpoint  []string  `json:"endpoint"`
 	Metric  []string  `json:"metric"`
