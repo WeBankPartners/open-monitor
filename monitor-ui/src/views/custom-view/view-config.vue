@@ -85,7 +85,7 @@
         </div>
       </div>
       <section>
-        <div v-for="(chartInfo,chartIndex) in item.activeCharts" :key="chartIndex">
+        <div v-for="(chartInfo,chartIndex) in item._activeCharts" :key="chartIndex">
           <CustomChart :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomChart>
         </div>
       </section>
@@ -198,14 +198,15 @@ export default {
           })
         })
         let height = (item.viewConfig.h+1) * 30
-        let activeCharts = []
-        activeCharts.push({
+        let _activeCharts = []
+        _activeCharts.push({
           style: `height:${height}px;`,
           panalUnit: item.panalUnit,
           elId: item.viewConfig.id,
-          chartParams: params                                                      
+          chartParams: params,
+          type: item.type                                                    
         })
-        item.viewConfig.activeCharts = activeCharts
+        item.viewConfig._activeCharts = _activeCharts
         tmp.push(item.viewConfig)
       })
       this.layoutData = tmp
@@ -225,10 +226,14 @@ export default {
       })
     },
     setChartType (item) {
-      console.log(item)
       this.activeGridConfig = item
-      this.activeChartType = null
-      this.$root.JQ('#set_chart_type_Modal').modal('show')
+      if (!item._activeCharts) {
+        this.activeChartType = null
+        this.$root.JQ('#set_chart_type_Modal').modal('show')
+      } else {
+        this.activeChartType = item._activeCharts[0].type
+        this.editGrid()
+      }
     },
     choiceChartType (activeChartType) {
       this.activeChartType = activeChartType
