@@ -13,7 +13,9 @@
           :remote-method="getEndpointList"
           >
           <Option v-for="(option, index) in endpointList" :value="option.option_value" :key="index">
-            <Tag :color="endpointTag[option.option_type_name] || choiceColor(option.option_type_name, index)" class="tag-width">{{option.option_type_name}}</Tag>{{option.option_text}}</Option>
+            <Tag :color="endpointTag[option.option_type_name] || choiceColor(option.option_type_name, index)" class="tag-width">
+              {{option.option_type_name}}</Tag>{{option.option_text}}
+            </Option>
         </Select>
       </li>
       <li class="search-li" style="margin-left:20px">
@@ -213,6 +215,7 @@ export default {
     padding-left: 10px;
   }
   .tag-width {
+    cursor: auto;
     width: 80px;
     text-align: center;
   }
