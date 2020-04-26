@@ -368,6 +368,10 @@ export default {
     vertical-align: middle;
     display: table-cell;
   }
-
+  .tag-width {
+    cursor: auto;
+    width: 80px;
+    text-align: center;
+  }
   
 </style>

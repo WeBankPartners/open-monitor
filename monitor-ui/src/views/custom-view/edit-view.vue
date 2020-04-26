@@ -416,6 +416,7 @@ li {
   margin: 4px;
 }
 .tag-width {
+  cursor: auto;
   width: 55px;
   text-align: center;
 }
