@@ -364,7 +364,7 @@ func CustomRegister(c *gin.Context)  {
 	if err:=c.ShouldBindJSON(&param); err==nil {
 		if TransGateWayAddress == "" {
 			query := m.QueryMonitorData{Start:time.Now().Unix()-60, End:time.Now().Unix(), Endpoint:[]string{"endpoint"}, Metric:[]string{"metric"}, PromQ:"up{job=\"transgateway\"}", Legend:"$custom_all"}
-			sm := datasource.PrometheusData(query)
+			sm := datasource.PrometheusData(&query)
 			mid.LogInfo(fmt.Sprintf("sm length : %d ", len(sm)))
 			if len(sm) > 0 {
 				mid.LogInfo(fmt.Sprintf("sm0 -> %s  %s  %v", sm[0].Name, sm[0].Type, sm[0].Data))
