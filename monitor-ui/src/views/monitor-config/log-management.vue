@@ -447,6 +447,7 @@ export default {
     vertical-align: middle; 
   }
   .tag-width {
+    cursor: auto;
     width: 55px;
     text-align: center;
   } 
