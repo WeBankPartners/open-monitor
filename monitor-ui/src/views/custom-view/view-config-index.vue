@@ -124,7 +124,6 @@ export default {
         this.setDashboardModel.templateList = []
         this.setDashboardModel.addRow.templateSelect = null
         this.dataList = responseData
-        console.log(this.dataList)
         responseData.forEach((item) => {
           this.setDashboardModel.templateList.push({
             label: item.name,
