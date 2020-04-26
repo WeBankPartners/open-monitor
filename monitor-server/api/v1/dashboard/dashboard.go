@@ -199,7 +199,7 @@ func getAutoDisplay(endpoint,tagKey,path string,charts []*m.ChartTable) (result 
 	if path != "" {
 		tmpLegend = "$custom_all"
 	}
-	sm := ds.PrometheusData(m.QueryMonitorData{Start:time.Now().Unix()-300, End:time.Now().Unix(), PromQ:promQl, Legend:tmpLegend, Metric:[]string{charts[0].Metric}, Endpoint:[]string{endpoint}})
+	sm := ds.PrometheusData(&m.QueryMonitorData{Start:time.Now().Unix()-300, End:time.Now().Unix(), PromQ:promQl, Legend:tmpLegend, Metric:[]string{charts[0].Metric}, Endpoint:[]string{endpoint}})
 	for _,v := range sm {
 		if path != "" {
 			if !strings.Contains(v.Name, path) {
@@ -354,7 +354,7 @@ func GetChartOld(c *gin.Context)  {
 	}
 	query.Legend = chart.Legend
 	mid.LogInfo(fmt.Sprintf("endpoint : %v  metric : %v  start:%d  end:%d  promql:%s", query.Endpoint, query.Metric, query.Start, query.End, query.PromQ))
-	serials := ds.PrometheusData(query)
+	serials := ds.PrometheusData(&query)
 	agg := db.CheckAggregate(query.Start, query.End, query.Endpoint[0], 0, len(serials))
 	for _, s := range serials {
 		if strings.Contains(s.Name, "$metric") {
@@ -537,7 +537,7 @@ func GetChart(c *gin.Context)  {
 	var serials []*m.SerialModel
 	for _,v := range querys {
 		mid.LogInfo(fmt.Sprintf("query : endpoint : %v  metric : %v  start:%d  end:%d  promql:%s", v.Endpoint, v.Metric, v.Start, v.End, v.PromQ))
-		tmpSerials := ds.PrometheusData(v)
+		tmpSerials := ds.PrometheusData(&v)
 		for _,vv := range tmpSerials {
 			serials = append(serials, vv)
 		}
@@ -578,6 +578,75 @@ func GetChart(c *gin.Context)  {
 		eOption.Series = []*m.SerialModel{}
 	}
 	mid.ReturnData(c, eOption)
+}
+
+func GetPidChart(c *gin.Context)  {
+	requestBody,err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {
+		mid.ReturnValidateFail(c, "Read request body data fail")
+		return
+	}
+	var paramConfig m.ChartConfigObj
+	err = json.Unmarshal(requestBody, &paramConfig)
+	if err != nil {
+		mid.ReturnValidateFail(c, fmt.Sprintf("Illegal parameter %v", err))
+		return
+	}
+	var query m.QueryMonitorData
+	if paramConfig.Endpoint == "" || paramConfig.Metric == "" {
+		mid.ReturnValidateFail(c, "Parameter validate fail,endpoint and metric cat not empty")
+		return
+	}
+	endpointObj := m.EndpointTable{Guid:paramConfig.Endpoint}
+	db.GetEndpoint(&endpointObj)
+	if endpointObj.Id <= 0 {
+		mid.ReturnValidateFail(c, fmt.Sprintf("Endpoint:%s can not find", paramConfig.Endpoint))
+		return
+	}
+	// validate config time
+	//if paramConfig.Time != "" && paramConfig.Start == "" {
+	//	paramConfig.Start = paramConfig.Time
+	//}
+	//start,err := strconv.ParseInt(paramConfig.Start, 10, 64)
+	//if err != nil {
+	//	mid.ReturnError(c, "Param start validation failed", err)
+	//	return
+	//}else{
+	//	if start < 0 {
+	//		start = time.Now().Unix() + start
+	//	}
+	//	query.Start = start
+	//}
+	//query.End = time.Now().Unix()
+	//if paramConfig.End != "" {
+	//	end,err := strconv.ParseInt(paramConfig.End, 10, 64)
+	//	if err == nil && end <= query.End {
+	//		query.End = end
+	//	}
+	//}
+	query.Start = time.Now().Unix()-120
+	query.End = time.Now().Unix()
+	// fetch promQL
+	if paramConfig.PromQl == "" {
+		_,tmpPromQL := db.GetPromMetric([]string{paramConfig.Endpoint}, paramConfig.Metric)
+		if tmpPromQL == "" {
+			mid.ReturnError(c, fmt.Sprintf("promQL fetch fail with endpoint:%s metric:%s", paramConfig.Endpoint, paramConfig.Metric), nil)
+			return
+		}else{
+			paramConfig.PromQl = tmpPromQL
+		}
+	}
+	if strings.Contains(paramConfig.PromQl, "$address") {
+		tmpAddress := endpointObj.Address
+		if endpointObj.AddressAgent != "" {
+			tmpAddress = endpointObj.AddressAgent
+		}
+		paramConfig.PromQl = strings.Replace(paramConfig.PromQl, "$address", tmpAddress, -1)
+	}
+	queryResult := m.QueryMonitorData{Start:query.Start, End:query.End, PromQ:paramConfig.PromQl, Metric:[]string{paramConfig.Metric}, Endpoint:[]string{paramConfig.Endpoint}, ChartType: "pie"}
+	ds.PrometheusData(&queryResult)
+	mid.LogInfo(fmt.Sprintf("pie data --> legend: %s", queryResult.PieData.Legend))
+	mid.ReturnData(c, queryResult.PieData)
 }
 
 // @Summary 主页面接口 : 模糊搜索
@@ -728,7 +797,7 @@ func GetChartsByEndpoint(c *gin.Context)  {
 	}
 	// Query data
 	mid.LogInfo(fmt.Sprintf("endpoint : %v  metric : %v  start:%d  end:%d  promql:%s", query.Endpoint, query.Metric, query.Start, query.End, query.PromQ))
-	serials := ds.PrometheusData(query)
+	serials := ds.PrometheusData(&query)
 	for _, s := range serials {
 		if strings.Contains(s.Name, "$metric") {
 			s.Name = strings.Replace(s.Name, "$metric", metric, -1)
