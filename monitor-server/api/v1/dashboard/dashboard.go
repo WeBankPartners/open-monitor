@@ -580,7 +580,7 @@ func GetChart(c *gin.Context)  {
 	mid.ReturnData(c, eOption)
 }
 
-func GetPidChart(c *gin.Context)  {
+func GetPieChart(c *gin.Context)  {
 	requestBody,err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
 		mid.ReturnValidateFail(c, "Read request body data fail")
@@ -603,27 +603,6 @@ func GetPidChart(c *gin.Context)  {
 		mid.ReturnValidateFail(c, fmt.Sprintf("Endpoint:%s can not find", paramConfig.Endpoint))
 		return
 	}
-	// validate config time
-	//if paramConfig.Time != "" && paramConfig.Start == "" {
-	//	paramConfig.Start = paramConfig.Time
-	//}
-	//start,err := strconv.ParseInt(paramConfig.Start, 10, 64)
-	//if err != nil {
-	//	mid.ReturnError(c, "Param start validation failed", err)
-	//	return
-	//}else{
-	//	if start < 0 {
-	//		start = time.Now().Unix() + start
-	//	}
-	//	query.Start = start
-	//}
-	//query.End = time.Now().Unix()
-	//if paramConfig.End != "" {
-	//	end,err := strconv.ParseInt(paramConfig.End, 10, 64)
-	//	if err == nil && end <= query.End {
-	//		query.End = end
-	//	}
-	//}
 	query.Start = time.Now().Unix()-120
 	query.End = time.Now().Unix()
 	// fetch promQL

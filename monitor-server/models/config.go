@@ -104,6 +104,7 @@ type PrometheusConfig struct {
 type AlertMailConfig struct {
 	Enable  bool  `json:"enable"`
 	Protocol  string  `json:"protocol"`
+	Tls     bool  `json:"tls"`
 	Sender  string  `json:"sender"`
 	User  string  `json:"user"`
 	Password  string  `json:"password"`
@@ -122,6 +123,11 @@ type ClusterConfig struct {
 	ServerList  []string  `json:"server_list"`
 }
 
+type CronJobConfig struct {
+	Enable  bool  `json:"enable"`
+	Interval  int  `json:"interval"`
+}
+
 type GlobalConfig struct {
 	Http  *HttpConfig  `json:"http"`
 	Store  StoreConfig  `json:"store"`
@@ -133,6 +139,7 @@ type GlobalConfig struct {
 	Agent  []*AgentConfig  `json:"agent"`
 	Alert  AlertConfig  `json:"alert"`
 	Cluster  ClusterConfig  `json:"cluster"`
+	CronJob  CronJobConfig  `json:"cron_job"`
 }
 
 var (

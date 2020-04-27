@@ -359,21 +359,36 @@ func UpdateTplAction(c *gin.Context)  {
 	var param m.UpdateActionDto
 	if err := c.ShouldBindJSON(&param); err==nil {
 		var userIds,roleIds []int
+		var extraMail,extraPhone []string
 		for _,v := range param.Accept {
-			if strings.Contains(v, "user_") {
-				tmpId,_ := strconv.Atoi(strings.Split(v, "user_")[1])
-				if tmpId > 0 {
-					userIds = append(userIds, tmpId)
-				}
+			//if strings.Contains(v, "user_") {
+			//	tmpId,_ := strconv.Atoi(strings.Split(v, "user_")[1])
+			//	if tmpId > 0 {
+			//		userIds = append(userIds, tmpId)
+			//	}
+			//}
+			//if strings.Contains(v, "role_") {
+			//	tmpId,_ := strconv.Atoi(strings.Split(v, "role_")[1])
+			//	if tmpId > 0 {
+			//		roleIds = append(roleIds, tmpId)
+			//	}
+			//}
+			if v.OptionType == "user" {
+				tmpId,_ := strconv.Atoi(v.OptionValue)
+				userIds = append(userIds, tmpId)
 			}
-			if strings.Contains(v, "role_") {
-				tmpId,_ := strconv.Atoi(strings.Split(v, "role_")[1])
-				if tmpId > 0 {
-					roleIds = append(roleIds, tmpId)
-				}
+			if v.OptionType == "role" {
+				tmpId,_ := strconv.Atoi(v.OptionValue)
+				roleIds = append(roleIds, tmpId)
+			}
+			if v.OptionType == "mail" {
+				extraMail = append(extraMail, v.OptionValue)
+			}
+			if v.OptionType == "phone" {
+				extraPhone = append(extraPhone, v.OptionValue)
 			}
 		}
-		err = db.UpdateTplAction(param.TplId, userIds, roleIds)
+		err = db.UpdateTplAction(param.TplId, userIds, roleIds, extraMail, extraPhone)
 		if err != nil {
 			mid.ReturnError(c, "Update tpl action fail ", err)
 		}else{
