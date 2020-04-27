@@ -291,7 +291,7 @@ export const drawPieChart = function(that, responseData) {
     legend: {
         // orient: 'vertical',
         // top: 'middle',
-        bottom: 0,
+        bottom: 5,
         left: 'center',
         data: responseData.legend
     },
