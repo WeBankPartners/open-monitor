@@ -279,7 +279,6 @@ export const drawChart = function(that,config,userConfig) {
 }
 
 export const drawPieChart = function(that, responseData) {
-  that.noDataTip = true
   let option = option = {
     title: {
         // text: panalUnit,
