@@ -1042,8 +1042,8 @@ func CloseOpenAlarm(id int) error {
 	return err
 }
 
-func UpdateTplAction(tplId int,user,role []int) error {
-	var userString,roleString string
+func UpdateTplAction(tplId int,user,role []int,extraMail,extraPhone []string) error {
+	var userString,roleString,mailString,phoneString string
 	if len(user) > 0 {
 		for _,v := range user {
 			userString += fmt.Sprintf("%d,", v)
@@ -1056,7 +1056,13 @@ func UpdateTplAction(tplId int,user,role []int) error {
 		}
 		roleString = roleString[:len(roleString)-1]
 	}
-	_,err := x.Exec(fmt.Sprintf("UPDATE tpl SET action_user='%s',action_role='%s' WHERE id=%d", userString, roleString, tplId))
+	if len(extraMail) > 0 {
+		mailString = strings.Join(extraMail, ",")
+	}
+	if len(extraPhone) > 0 {
+		phoneString = strings.Join(extraPhone, ",")
+	}
+	_,err := x.Exec(fmt.Sprintf("UPDATE tpl SET action_user='%s',action_role='%s',extra_mail='%s',extra_phone='%s' WHERE id=%d", userString, roleString, mailString, phoneString, tplId))
 	if err != nil {
 		mid.LogError("Update tpl action error", err)
 	}
@@ -1066,7 +1072,7 @@ func UpdateTplAction(tplId int,user,role []int) error {
 func getActionOptions(tplId int) []*m.OptionModel {
 	var tpls []*m.TplTable
 	result := []*m.OptionModel{}
-	x.SQL("SELECT action_user,action_role FROM tpl WHERE id=?", tplId).Find(&tpls)
+	x.SQL("SELECT * FROM tpl WHERE id=?", tplId).Find(&tpls)
 	if len(tpls) == 0 {
 		return result
 	}
@@ -1078,7 +1084,7 @@ func getActionOptions(tplId int) []*m.OptionModel {
 			if v.DisplayName != "" {
 				tmpText = tmpText + "(" + v.DisplayName + ")"
 			}
-			result = append(result, &m.OptionModel{Id:v.Id, OptionText:tmpText, OptionValue:fmt.Sprintf("role_%d", v.Id), Active:true})
+			result = append(result, &m.OptionModel{Id:v.Id, OptionText:tmpText, OptionValue:fmt.Sprintf("%d", v.Id), Active:false, OptionType:"role"})
 		}
 	}
 	if tpls[0].ActionUser != "" {
@@ -1089,7 +1095,17 @@ func getActionOptions(tplId int) []*m.OptionModel {
 			if v.DisplayName != "" {
 				tmpText = tmpText + "(" + v.DisplayName + ")"
 			}
-			result = append(result, &m.OptionModel{Id:v.Id, OptionText:tmpText, OptionValue:fmt.Sprintf("user_%d", v.Id), Active:false})
+			result = append(result, &m.OptionModel{Id:v.Id, OptionText:tmpText, OptionValue:fmt.Sprintf("%d", v.Id), Active:false, OptionType:"user"})
+		}
+	}
+	if tpls[0].ExtraMail != "" {
+		for _,v := range strings.Split(tpls[0].ExtraMail, ",") {
+			result = append(result, &m.OptionModel{Id:0, OptionText:v, OptionValue:v, Active:false, OptionType:"mail"})
+		}
+	}
+	if tpls[0].ExtraPhone != "" {
+		for _,v := range strings.Split(tpls[0].ExtraPhone, ",") {
+			result = append(result, &m.OptionModel{Id:0, OptionText:v, OptionValue:v, Active:false, OptionType:"phone"})
 		}
 	}
 	return result
