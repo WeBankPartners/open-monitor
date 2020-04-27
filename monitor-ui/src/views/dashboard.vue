@@ -52,8 +52,9 @@
             </div>
           </div>
           <section>
-            <div v-for="(chartInfo,chartIndex) in item.activeCharts" :key="chartIndex">
-              <CustomChart :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomChart>
+            <div v-for="(chartInfo,chartIndex) in item._activeCharts" :key="chartIndex">
+              <CustomChart v-if="chartInfo.type === 'line'" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomChart>
+              <CustomPieChart v-if="chartInfo.type === 'pie'" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomPieChart>
             </div>
           </section>
         </grid-item>
@@ -68,6 +69,7 @@ import VueGridLayout from 'vue-grid-layout'
 import {dataPick, autoRefreshConfig} from '@/assets/config/common-config'
 import {resizeEvent} from '@/assets/js/gridUtils'
 import CustomChart from '@/components/custom-chart'
+import CustomPieChart from '@/components/custom-pie-chart'
 export default {
   name: '',
   data() {
@@ -125,14 +127,15 @@ export default {
           })
         })
         let height = (item.viewConfig.h) * 30
-        let activeCharts = []
-        activeCharts.push({
+        let _activeCharts = []
+        _activeCharts.push({
           style: `height:${height}px;`,
           panalUnit: item.panalUnit,
           elId: item.viewConfig.id,
-          chartParams: params                                                      
+          chartParams: params,
+          type: item.query[0].type                                                      
         })
-        item.viewConfig.activeCharts = activeCharts
+        item.viewConfig._activeCharts = _activeCharts
         tmp.push(item.viewConfig)
       })
       this.layoutData = tmp
@@ -144,7 +147,8 @@ export default {
   components: {
     GridLayout: VueGridLayout.GridLayout,
     GridItem: VueGridLayout.GridItem,
-    CustomChart
+    CustomChart,
+    CustomPieChart
   },
 }
 </script>
