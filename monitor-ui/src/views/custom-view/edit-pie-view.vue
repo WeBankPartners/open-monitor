@@ -66,10 +66,6 @@
                     />
                   </div>
                 </li>
-              <li>
-                <div class="condition condition-title">{{$t('field.unit')}}</div>
-                <button class="btn btn-cancle-f" @click="addQuery()">{{$t('button.addConfig')}}</button>
-              </li>
               </ul>
             </div>
         </section>
@@ -110,6 +106,30 @@ export default {
       params: '' // 保存增加及返回时参数，返回时直接取该值
     };
   },
+  watch: {
+    templateQuery: {
+      handler (val) {
+        if (
+          val.endpoint === "" ||
+          val.metricLabel === ""
+        ) {
+          return
+        }
+        const params = {
+          endpoint: val.endpoint,
+          metric: val.metricLabel, 
+        }
+        // this.elId = this.$route.params.panal.id
+        this.$root.$httpRequestEntrance.httpRequestEntrance(
+          'POST','dashboard/pie/chart', params,
+          responseData => {
+            drawPieChart(this, responseData)
+          }
+        );
+      },
+      deep: true
+    }
+  },
   created() {
 
   },
@@ -118,13 +138,12 @@ export default {
       this.$router.push({ path: "viewConfig" });
     } else {
       if (!this.$root.$validate.isEmpty_reset(this.$route.params.templateData.cfg)) {
+        this.elId = this.$route.params.panal.id
         this.getEndpointList()
         this.viewData = JSON.parse(this.$route.params.templateData.cfg);
         this.viewData.forEach((itemx, index) => {
           if (itemx.viewConfig.id === this.$route.params.panal.id) {
-            console.log(itemx)
             this.panalIndex = index;
-            console.log(this.panalIndex)
             this.panalData = itemx;
             this.initPanal();
             return;
@@ -157,12 +176,13 @@ export default {
       let {endpoint, metric} =  this.panalData.query[0]
       this.templateQuery.endpoint = endpoint
       this.templateQuery.metric = metric
+      this.templateQuery.metricLabel = metric
       this.metricSelectOpen(metric)
       let params = {
         endpoint,
         metric
       }
-      this.elId = this.$route.params.panal.id
+      // this.elId = this.$route.params.panal.id
       if (params !== {}) {
         this.$root.$httpRequestEntrance.httpRequestEntrance(
         'POST','dashboard/pie/chart', params,
@@ -198,7 +218,6 @@ export default {
           this.$t("tableKey.s_metric") + this.$t("tips.required")
         );
       } else {
-        // let params = { type: metric.split(":")[1] };
         this.$root.$httpRequestEntrance.httpRequestEntrance(
           "GET",
           this.$root.apiCenter.metricList.api,
@@ -209,30 +228,8 @@ export default {
         );
       }
     },
-    addQuery() {
-      if (
-        this.templateQuery.endpoint === "" ||
-        this.templateQuery.metricLabel === ""
-      ) {
-        this.$Message.warning("配置完整方可保存！");
-        return;
-      }
-      const params = {
-        endpoint: this.templateQuery.endpoint,
-        metric: this.templateQuery.metricLabel, 
-      }
-      this.elId = this.$route.params.panal.id
-      this.$root.$httpRequestEntrance.httpRequestEntrance(
-        'POST','dashboard/pie/chart', params,
-        responseData => {
-          drawPieChart(this, responseData)
-        }
-      );
-
-    },
     saveConfig() {
       this.pp()
-      console.log(this.params)
       this.$root.$httpRequestEntrance.httpRequestEntrance(
         "POST",
         this.$root.apiCenter.template.save,
@@ -261,13 +258,7 @@ export default {
         viewConfig: panal,
         type: 'pie'
       };
-      console.log(this.panalIndex)
-      // if (this.panalIndex !== null) {
       this.viewData[this.panalIndex] = temp
-      // } 
-      // else {
-      //   this.viewData.push(temp)
-      // }
       console.log(temp)
       let params = {
         name: this.$route.params.templateData.name,
@@ -279,7 +270,10 @@ export default {
     },
     goback() {
       console.log(this.params)
-      this.$router.push({ name: "viewConfig", params: this.params });
+      if (!this.params) {
+        this.pp()
+      }
+      this.$router.push({ name: "viewConfig", params: this.params })
     }
   },
   components: {}
