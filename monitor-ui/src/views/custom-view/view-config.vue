@@ -213,6 +213,7 @@ export default {
       this.layoutData = tmp
     },
     isShowGridPlus (item) {
+      // 新增及饼图时屏蔽放大功能
       if (!item._activeCharts || item._activeCharts[0].type === 'pie') {
         return false
       }
