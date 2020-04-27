@@ -278,10 +278,10 @@ export const drawChart = function(that,config,userConfig) {
   myChart.setOption(option) 
 }
 
-export const drawPieChart = function(panalUnit, responseData) {
+export const drawPieChart = function(that, responseData) {
   let option = option = {
     title: {
-        text: panalUnit,
+        // text: panalUnit,
         left: 'center'
     },
     tooltip: {
@@ -312,6 +312,6 @@ export const drawPieChart = function(panalUnit, responseData) {
         }
     ]
 };
-  var myChart = echarts.init(document.getElementById('id_265a84f1_1207_4b41_adbf_09c9e8a7f7d7'))
+  var myChart = echarts.init(document.getElementById(that.elId))
   myChart.setOption(option)
 }
