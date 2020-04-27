@@ -127,7 +127,9 @@ export default {
       metricList: [],
 
       panalTitle: "Default title",
-      panalUnit: ""
+      panalUnit: "",
+
+      params: '' // 保存增加及返回时参数，返回时直接取该值
     };
   },
   watch: {
@@ -288,11 +290,11 @@ export default {
       this.chartQueryList.splice(queryIndex, 1);
     },
     saveConfig() {
-      const params = this.pp();
+      this.pp();
       this.$root.$httpRequestEntrance.httpRequestEntrance(
         "POST",
         this.$root.apiCenter.template.save,
-        params,
+        this.params,
         () => {
           this.$Message.success(this.$t("tips.success"));
         }
@@ -307,6 +309,7 @@ export default {
       let query = [];
       this.chartQueryList.forEach(item => {
         query.push({
+          type: 'line',
           endpoint: item.endpoint,
           metricLabel: item.metricLabel,
           metric: item.metric
@@ -332,11 +335,10 @@ export default {
         id: this.$route.params.templateData.id,
         cfg: JSON.stringify(this.viewData)
       };
-      return params;
+      this.params = params;
     },
     goback() {
-      const params = this.pp();
-      this.$router.push({ name: "viewConfig", params: params });
+      this.$router.push({ name: "viewConfig", params: this.params });
     }
   },
   components: {}
