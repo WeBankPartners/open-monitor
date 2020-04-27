@@ -255,21 +255,17 @@ export default {
           endpoint: this.templateQuery.endpoint,
           metric: this.templateQuery.metricLabel,  
         }],
-        viewConfig: panal,
-        type: 'pie'
+        viewConfig: panal
       };
       this.viewData[this.panalIndex] = temp
-      console.log(temp)
       let params = {
         name: this.$route.params.templateData.name,
         id: this.$route.params.templateData.id,
         cfg: JSON.stringify(this.viewData)
       };
       this.params = params;
-      console.log(this.params)
     },
     goback() {
-      console.log(this.params)
       if (!this.params) {
         this.pp()
       }
