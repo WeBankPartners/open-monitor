@@ -86,6 +86,7 @@
       </div>
       <section>
         <div v-for="(chartInfo,chartIndex) in item._activeCharts" :key="chartIndex">
+          {{chartInfo.type}}
           <CustomChart :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomChart>
         </div>
       </section>
@@ -160,7 +161,7 @@ export default {
         ]
       },
       activeGridConfig: null,
-      activeChartType: null
+      activeChartType: 'line'
     }
   },
   mounted() {
@@ -210,6 +211,7 @@ export default {
         tmp.push(item.viewConfig)
       })
       this.layoutData = tmp
+      console.log(this.layoutData)
     },
     addItem() {
       generateUuid().then((elId)=>{
@@ -227,8 +229,9 @@ export default {
     },
     setChartType (item) {
       this.activeGridConfig = item
+      console.log(item._activeCharts)
       if (!item._activeCharts) {
-        this.activeChartType = null
+        // this.activeChartType = 'line'
         this.$root.JQ('#set_chart_type_Modal').modal('show')
       } else {
         this.activeChartType = item._activeCharts[0].type
