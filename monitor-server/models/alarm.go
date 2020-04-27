@@ -22,6 +22,8 @@ type TplTable struct {
 	UpdateUser  string  `json:"update_user"`
 	ActionUser  string  `json:"action_user"`
 	ActionRole  string  `json:"action_role"`
+	ExtraMail   string  `json:"extra_mail"`
+	ExtraPhone  string  `json:"extra_phone"`
 	CreateAt  time.Time  `json:"create_at"`
 	UpdateAt  time.Time  `json:"update_at"`
 }
@@ -298,7 +300,7 @@ type OpenAlarmResponse struct {
 
 type UpdateActionDto struct {
 	TplId  int  `json:"tpl_id" binding:"required"`
-	Accept  []string  `json:"accept"`
+	Accept  []OptionModel  `json:"accept"`
 }
 
 type SyncConsulDto struct {
