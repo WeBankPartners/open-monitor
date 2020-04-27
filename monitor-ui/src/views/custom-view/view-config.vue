@@ -198,7 +198,7 @@ export default {
             prom_ql: _.metric,
           })
         })
-        let height = (item.viewConfig.h+1) * 30
+        let height = (item.viewConfig.h+1) * 30-8
         let _activeCharts = []
         _activeCharts.push({
           style: `height:${height}px;`,
