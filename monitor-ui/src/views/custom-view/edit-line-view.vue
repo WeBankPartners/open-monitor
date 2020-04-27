@@ -320,8 +320,7 @@ export default {
         panalTitle: this.panalTitle,
         panalUnit: this.panalUnit,
         query: query,
-        viewConfig: panal,
-        type: 'line'
+        viewConfig: panal
       };
 
       if (this.panalIndex !== null) {
