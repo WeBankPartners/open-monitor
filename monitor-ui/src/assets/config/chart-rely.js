@@ -279,6 +279,7 @@ export const drawChart = function(that,config,userConfig) {
 }
 
 export const drawPieChart = function(that, responseData) {
+  that.noDataTip = true
   let option = option = {
     title: {
         // text: panalUnit,
@@ -291,7 +292,7 @@ export const drawPieChart = function(that, responseData) {
     legend: {
         // orient: 'vertical',
         // top: 'middle',
-        bottom: 10,
+        bottom: 0,
         left: 'center',
         data: responseData.legend
     },
