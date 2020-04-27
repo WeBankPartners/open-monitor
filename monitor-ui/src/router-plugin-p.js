@@ -36,8 +36,15 @@ const routerP = [
     // component: viewConfig
   },
   {
-    path: "/editView",
-    name: "editView",
+    path: "/editPieView",
+    name: "editPieView",
+    // title: "自定义视图编辑",
+    // meta: {},
+    // component: editView
+  },
+  {
+    path: "/editLineView",
+    name: "editLineView",
     // title: "自定义视图编辑",
     // meta: {},
     // component: editView
