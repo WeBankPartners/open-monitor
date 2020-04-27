@@ -102,7 +102,7 @@ type EChartOption struct {
 }
 
 type EChartPie struct {
-	Titile  string  `json:"titile"`
+	Title  string  `json:"title"`
 	Legend  []string  `json:"legend"`
 	Data  []*EChartPieObj  `json:"data"`
 }
