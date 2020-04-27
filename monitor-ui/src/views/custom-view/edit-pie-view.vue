@@ -51,7 +51,7 @@
                     >
                       <Option
                         v-for="(item,index) in metricList"
-                        :value="item.prom_ql"
+                        :value="item.metric"
                         :key="item.prom_ql+index"
                       >{{ item.metric }}</Option>
                     </Select>
@@ -90,7 +90,7 @@ export default {
       endpointTag: endpointTag,
       randomColor: randomColor,
       cacheColor: {},
-      viewData: null,
+      viewData: [],
       panalIndex: null,
       panalData: null,
 
@@ -107,34 +107,30 @@ export default {
       metricList: [],
 
       panalTitle: "Default title",
+
+      params: '' // 保存增加及返回时参数，返回时直接取该值
     };
   },
   created() {
 
   },
   mounted() {
-    // drawPieChart(this)
-    // generateUuid().then(elId => {
-    //   this.elId = `id_${elId}`;
-    //   drawPieChart(this)
-    // });
-    // drawPieChart(this)
-    // if (this.$root.$validate.isEmpty_reset(this.$route.params)) {
-    //   this.$router.push({ path: "viewConfig" });
-    // } else {
-    //   if (!this.$root.$validate.isEmpty_reset(this.$route.params.templateData.cfg)) {
-    //     this.getEndpointList()
-    //     this.viewData = JSON.parse(this.$route.params.templateData.cfg);
-    //     this.viewData.forEach((itemx, index) => {
-    //       if (itemx.viewConfig.id === this.$route.params.panal.id) {
-    //         this.panalIndex = index;
-    //         this.panalData = itemx;
-    //         this.initPanal();
-    //         return;
-    //       }
-    //     });
-    //   }
-    // }
+    if (this.$root.$validate.isEmpty_reset(this.$route.params)) {
+      this.$router.push({ path: "viewConfig" });
+    } else {
+      if (!this.$root.$validate.isEmpty_reset(this.$route.params.templateData.cfg)) {
+        this.getEndpointList()
+        this.viewData = JSON.parse(this.$route.params.templateData.cfg);
+        this.viewData.forEach((itemx, index) => {
+          if (itemx.viewConfig.id === this.$route.params.panal.id) {
+            this.panalIndex = index;
+            this.panalData = itemx;
+            this.initPanal();
+            return;
+          }
+        });
+      }
+    }
   },
   methods: {
     choiceColor (type,index) {
@@ -149,33 +145,30 @@ export default {
       return color
     },
     initPanal() {
-      drawPieChart(this)
-      // this.panalTitle = this.panalData.panalTitle;
-      // this.panalUnit = this.panalData.panalUnit;
-      // let params = [];
-      // this.noDataTip = false;
-      // if (this.$root.$validate.isEmpty_reset(this.panalData.query)) {
-      //   return;
-      // }
-      // this.panalData.query.forEach(item => {
-      //   params.push(
-      //     {
-      //       endpoint: item.endpoint,
-      //       prom_ql: item.metric,
-      //       metric: item.metricLabel,
-      //       time: "-1800"
-      //     }
-      //   );
-      // });
-      // if (params !== []) {
-      //   this.$root.$httpRequestEntrance.httpRequestEntrance(
-      //     'POST',this.$root.apiCenter.metricConfigView.api, params,
-      //     responseData => {
-      //       responseData.yaxis.unit = this.panalUnit;
-      //       drawPieChart(this,responseData, 1, { eye: false, lineBarSwitch: true})
-      //     }
-      //   );
-      // }
+      this.panalTitle = this.panalData.panalTitle;
+      this.panalUnit = this.panalData.panalUnit;
+      
+      this.noDataTip = false;
+      if (this.$root.$validate.isEmpty_reset(this.panalData.query)) {
+        return;
+      }
+
+      let {endpoint, metric} =  this.panalData.query[0]
+      this.templateQuery.endpoint = endpoint
+      this.templateQuery.metric = metric
+      this.metricSelectOpen(metric)
+      let params = {
+        endpoint,
+        metric
+      }
+      if (params !== {}) {
+        this.$root.$httpRequestEntrance.httpRequestEntrance(
+        'POST','dashboard/pie/chart', params,
+        responseData => {
+          drawPieChart(this.panalTitle, responseData)
+        }
+      );
+      }
     },
     getEndpointList(query='.') {
       let params = {
@@ -203,11 +196,11 @@ export default {
           this.$t("tableKey.s_metric") + this.$t("tips.required")
         );
       } else {
-        let params = { type: metric.split(":")[1] };
+        // let params = { type: metric.split(":")[1] };
         this.$root.$httpRequestEntrance.httpRequestEntrance(
           "GET",
           this.$root.apiCenter.metricList.api,
-          params,
+          '',
           responseData => {
             this.metricList = responseData;
           }
@@ -222,8 +215,12 @@ export default {
         this.$Message.warning("配置完整方可保存！");
         return;
       }
+      const params = {
+        endpoint: this.templateQuery.endpoint,
+        metric: this.templateQuery.metricLabel, 
+      }
       this.$root.$httpRequestEntrance.httpRequestEntrance(
-        'POST','dashboard/pie/chart', {...this.templateQuery},
+        'POST','dashboard/pie/chart', params,
         responseData => {
           drawPieChart(this.panalTitle, responseData)
         }
@@ -231,11 +228,11 @@ export default {
 
     },
     saveConfig() {
-      const params = this.pp();
+      this.pp()
       this.$root.$httpRequestEntrance.httpRequestEntrance(
         "POST",
         this.$root.apiCenter.template.save,
-        params,
+        this.params,
         () => {
           this.$Message.success(this.$t("tips.success"));
         }
@@ -247,31 +244,34 @@ export default {
       }
     },
     pp() {
-      let query = [];
       let panal = this.$route.params.panal;
       panal.i = this.panalTitle;
       const temp = {
         panalTitle: this.panalTitle,
         panalUnit: this.panalUnit,
-        query: query,
-        viewConfig: panal
+        query: [{
+          endpoint: this.templateQuery.endpoint,
+          metric: this.templateQuery.metricLabel,  
+        }],
+        viewConfig: panal,
+        type: 'pie'
       };
-
+      console.log(this.viewData)
       if (this.panalIndex !== null) {
-        this.viewData[this.panalIndex] = temp;
+        this.viewData[this.panalIndex] = temp
       } else {
-        this.viewData.push(temp);
+        this.viewData.push(temp)
       }
+      console.log(this.viewData)
       let params = {
         name: this.$route.params.templateData.name,
         id: this.$route.params.templateData.id,
         cfg: JSON.stringify(this.viewData)
       };
-      return params;
+      this.params = params;
     },
     goback() {
-      const params = this.pp();
-      this.$router.push({ name: "viewConfig", params: params });
+      this.$router.push({ name: "viewConfig", params: this.params });
     }
   },
   components: {}
