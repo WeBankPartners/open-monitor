@@ -1,10 +1,9 @@
 <template>
   <div class>
-    123123123123
     <div class="zone zone-chart">
       <div class="zone-chart-title">{{panalTitle}}</div>
       <div v-if="!noDataTip">
-        <div id="id_265a84f1_1207_4b41_adbf_09c9e8a7f7d7" class="echart"></div>
+        <div :id="elId" class="echart"></div>
       </div>
       <div v-else class="echart echart-no-data-tip">
         <span>~~~No Data!~~~</span>
@@ -123,7 +122,9 @@ export default {
         this.viewData = JSON.parse(this.$route.params.templateData.cfg);
         this.viewData.forEach((itemx, index) => {
           if (itemx.viewConfig.id === this.$route.params.panal.id) {
+            console.log(itemx)
             this.panalIndex = index;
+            console.log(this.panalIndex)
             this.panalData = itemx;
             this.initPanal();
             return;
@@ -161,11 +162,12 @@ export default {
         endpoint,
         metric
       }
+      this.elId = this.$route.params.panal.id
       if (params !== {}) {
         this.$root.$httpRequestEntrance.httpRequestEntrance(
         'POST','dashboard/pie/chart', params,
         responseData => {
-          drawPieChart(this.panalTitle, responseData)
+          drawPieChart(this, responseData)
         }
       );
       }
@@ -219,16 +221,18 @@ export default {
         endpoint: this.templateQuery.endpoint,
         metric: this.templateQuery.metricLabel, 
       }
+      this.elId = this.$route.params.panal.id
       this.$root.$httpRequestEntrance.httpRequestEntrance(
         'POST','dashboard/pie/chart', params,
         responseData => {
-          drawPieChart(this.panalTitle, responseData)
+          drawPieChart(this, responseData)
         }
       );
 
     },
     saveConfig() {
       this.pp()
+      console.log(this.params)
       this.$root.$httpRequestEntrance.httpRequestEntrance(
         "POST",
         this.$root.apiCenter.template.save,
@@ -250,27 +254,31 @@ export default {
         panalTitle: this.panalTitle,
         panalUnit: this.panalUnit,
         query: [{
+          type: 'pie',
           endpoint: this.templateQuery.endpoint,
           metric: this.templateQuery.metricLabel,  
         }],
         viewConfig: panal,
         type: 'pie'
       };
-      console.log(this.viewData)
-      if (this.panalIndex !== null) {
-        this.viewData[this.panalIndex] = temp
-      } else {
-        this.viewData.push(temp)
-      }
-      console.log(this.viewData)
+      console.log(this.panalIndex)
+      // if (this.panalIndex !== null) {
+      this.viewData[this.panalIndex] = temp
+      // } 
+      // else {
+      //   this.viewData.push(temp)
+      // }
+      console.log(temp)
       let params = {
         name: this.$route.params.templateData.name,
         id: this.$route.params.templateData.id,
         cfg: JSON.stringify(this.viewData)
       };
       this.params = params;
+      console.log(this.params)
     },
     goback() {
+      console.log(this.params)
       this.$router.push({ name: "viewConfig", params: this.params });
     }
   },
