@@ -1,4 +1,5 @@
 <template>
+<div>
   <div class=" ">
     <Title :title="$t('menu.templateManagement')"></Title>
     <header>
@@ -75,7 +76,7 @@
             <i class="fa fa-eye" aria-hidden="true" @click="gridPlus(item)"></i>
           </Tooltip>
           <Tooltip :content="$t('placeholder.chartConfiguration')" theme="light" transfer placement="top">
-            <i class="fa fa-cog" @click="editGrid(item)" aria-hidden="true"></i>
+            <i class="fa fa-cog" @click="setChartType(item)" aria-hidden="true"></i>
           </Tooltip>
           <Tooltip :content="$t('placeholder.deleteChart')" theme="light" transfer placement="top">
             <i class="fa fa-trash" @click="removeGrid(item)" aria-hidden="true"></i>
@@ -83,21 +84,50 @@
         </div>
       </div>
       <section>
-        <div v-for="(chartInfo,chartIndex) in item.activeCharts" :key="chartIndex">
-          <CustomChart :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomChart>
+        <div v-for="(chartInfo,chartIndex) in item._activeCharts" :key="chartIndex">
+          <CustomChart v-if="chartInfo.type === 'line'" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomChart>
+          <CustomPieChart v-if="chartInfo.type === 'pie'" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomPieChart>
         </div>
       </section>
       </grid-item>
     </grid-layout>
   </div>
-</template>
+  <ModalComponent :modelConfig="setChartTypeModel">
+    <div slot="setChartType">
+      <div style="display:flex;justify-content:center">
+        <i @click="choiceChartType('line')" :class="['fa', 'fa-line-chart', activeChartType==='line' ? 'aa': '']" aria-hidden="true"></i>
+        <i @click="choiceChartType('pie')" :class="['fa', 'fa-pie-chart', activeChartType==='pie' ? 'aa': '']" aria-hidden="true"></i>
+      </div>
+    </div>
+  </ModalComponent>
+</div>
 
+</template>
+<style lang="less" scoped>
+  .fa-line-chart, .fa-pie-chart {
+    cursor: pointer;
+    font-size: 36px;
+    padding: 24px 48px;
+    border: 1px solid @gray-d;
+    margin: 8px;
+    border-radius: 4px;
+  }
+  .fa-line-chart:hover, .fa-pie-chart:hover {
+    box-shadow: 0 1px 8px @gray-d;
+    border-color: @blue-2;
+  }
+  .aa {
+    color: @blue-2;
+    border-color: @blue-2;
+  } 
+</style>
 <script>
 import {generateUuid} from '@/assets/js/utils'
 import {dataPick, autoRefreshConfig} from '@/assets/config/common-config'
 import {resizeEvent} from '@/assets/js/gridUtils'
 import VueGridLayout from 'vue-grid-layout'
 import CustomChart from '@/components/custom-chart'
+import CustomPieChart from '@/components/custom-pie-chart'
 export default {
   name: '',
   data() {
@@ -115,7 +145,23 @@ export default {
         //   {'x':0,'y':0,'w':2,'h':2,'i':'0'},
         //   {'x':1,'y':1,'w':2,'h':2,'i':'1'},
       ],
-      editChartId: null
+      editChartId: null,
+      setChartTypeModel: {
+        modalId: 'set_chart_type_Modal',
+        modalTitle: 'button.add',
+        isAdd: true,
+        config: [
+          {name:'setChartType',type:'slot'}
+        ],
+        addRow: {
+          type: null
+        },
+        modalFooter: [
+          {name: '确定', Func: 'confirmChartType'}
+        ]
+      },
+      activeGridConfig: null,
+      activeChartType: 'line'
     }
   },
   mounted() {
@@ -152,15 +198,16 @@ export default {
             prom_ql: _.metric,
           })
         })
-        let height = (item.viewConfig.h+1) * 30
-        let activeCharts = []
-        activeCharts.push({
+        let height = (item.viewConfig.h+1) * 30-8
+        let _activeCharts = []
+        _activeCharts.push({
           style: `height:${height}px;`,
           panalUnit: item.panalUnit,
           elId: item.viewConfig.id,
-          chartParams: params                                                      
+          chartParams: params,
+          type: item.query[0].type                                                    
         })
-        item.viewConfig.activeCharts = activeCharts
+        item.viewConfig._activeCharts = _activeCharts
         tmp.push(item.viewConfig)
       })
       this.layoutData = tmp
@@ -179,11 +226,36 @@ export default {
         this.layoutData.push(item)
       })
     },
-    editGrid(item) {
+    setChartType (item) {
+      this.activeGridConfig = item
+      if (!item._activeCharts) {
+        // this.activeChartType = 'line'
+        this.$root.JQ('#set_chart_type_Modal').modal('show')
+      } else {
+        this.activeChartType = item._activeCharts[0].type
+        this.editGrid()
+      }
+    },
+    choiceChartType (activeChartType) {
+      this.activeChartType = activeChartType
+    },
+    confirmChartType () {
+      if (!this.activeChartType) {
+        this.$Message.warning('请先设置图标类型！')
+        return
+      }
+      this.$root.JQ('#set_chart_type_Modal').modal('hide')
+      this.editGrid()
+    },
+    editGrid() {
       this.modifyLayoutData().then((resViewData)=>{
         let parentRouteData = this.$route.params
         parentRouteData.cfg = JSON.stringify(resViewData) 
-        this.$router.push({name: 'editView', params:{templateData: parentRouteData, panal:item}}) 
+        if (this.activeChartType === 'line') {
+          this.$router.push({name: 'editLineView', params:{templateData: parentRouteData, panal:this.activeGridConfig}})
+        } else {
+          this.$router.push({name: 'editPieView', params:{templateData: parentRouteData, panal:this.activeGridConfig}})
+        }
       })
     },
     removeGrid(itemxxx) {
@@ -251,7 +323,8 @@ export default {
   components: {
     GridLayout: VueGridLayout.GridLayout,
     GridItem: VueGridLayout.GridItem,
-    CustomChart
+    CustomChart,
+    CustomPieChart
   },
 }
 </script>

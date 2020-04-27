@@ -160,11 +160,18 @@ const router = new Router({
           component: () => import("@/views/custom-view/view-config")
         },
         {
-          path: "editView",
-          name: "editView",
+          path: "editLineView",
+          name: "editLineView",
           title: "自定义视图编辑",
           meta: {},
-          component: () => import("@/views/custom-view/edit-view")
+          component: () => import("@/views/custom-view/edit-line-view")
+        },
+        {
+          path: "editPieView",
+          name: "editPieView",
+          title: "自定义视图编辑",
+          meta: {},
+          component: () => import("@/views/custom-view/edit-pie-view")
         },
         {
           path: "viewChart",
