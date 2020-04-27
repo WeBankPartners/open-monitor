@@ -73,7 +73,7 @@
         </div>
         <div class="header-grid header-grid-tools"> 
           <Tooltip :content="$t('button.chart.dataView')" theme="light" transfer placement="top">
-            <i class="fa fa-eye" aria-hidden="true" @click="gridPlus(item)"></i>
+            <i class="fa fa-eye" v-if="isShowGridPlus(item)" aria-hidden="true" @click="gridPlus(item)"></i>
           </Tooltip>
           <Tooltip :content="$t('placeholder.chartConfiguration')" theme="light" transfer placement="top">
             <i class="fa fa-cog" @click="setChartType(item)" aria-hidden="true"></i>
@@ -211,6 +211,12 @@ export default {
         tmp.push(item.viewConfig)
       })
       this.layoutData = tmp
+    },
+    isShowGridPlus (item) {
+      if (!item._activeCharts || item._activeCharts[0].type === 'pie') {
+        return false
+      }
+      return true
     },
     addItem() {
       generateUuid().then((elId)=>{
