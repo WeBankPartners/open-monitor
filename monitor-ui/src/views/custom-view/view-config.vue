@@ -73,9 +73,8 @@
         </div>
         <div class="header-grid header-grid-tools"> 
           <Tooltip :content="$t('button.chart.dataView')" theme="light" transfer placement="top">
-            <i class="fa fa-eye" aria-hidden="true" @click="gridPlus(item)"></i>
+            <i class="fa fa-eye" v-if="item._activeCharts[0].type === 'line'" aria-hidden="true" @click="gridPlus(item)"></i>
           </Tooltip>
-          <!-- @click="editGrid(item)" -->
           <Tooltip :content="$t('placeholder.chartConfiguration')" theme="light" transfer placement="top">
             <i class="fa fa-cog" @click="setChartType(item)" aria-hidden="true"></i>
           </Tooltip>
@@ -86,8 +85,8 @@
       </div>
       <section>
         <div v-for="(chartInfo,chartIndex) in item._activeCharts" :key="chartIndex">
-          {{chartInfo.type}}
-          <CustomChart :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomChart>
+          <CustomChart v-if="chartInfo.type === 'line'" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomChart>
+          <CustomPieChart v-if="chartInfo.type === 'pie'" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomPieChart>
         </div>
       </section>
       </grid-item>
@@ -128,6 +127,7 @@ import {dataPick, autoRefreshConfig} from '@/assets/config/common-config'
 import {resizeEvent} from '@/assets/js/gridUtils'
 import VueGridLayout from 'vue-grid-layout'
 import CustomChart from '@/components/custom-chart'
+import CustomPieChart from '@/components/custom-pie-chart'
 export default {
   name: '',
   data() {
@@ -205,13 +205,12 @@ export default {
           panalUnit: item.panalUnit,
           elId: item.viewConfig.id,
           chartParams: params,
-          type: item.type                                                    
+          type: item.query[0].type                                                    
         })
         item.viewConfig._activeCharts = _activeCharts
         tmp.push(item.viewConfig)
       })
       this.layoutData = tmp
-      console.log(this.layoutData)
     },
     addItem() {
       generateUuid().then((elId)=>{
@@ -229,7 +228,6 @@ export default {
     },
     setChartType (item) {
       this.activeGridConfig = item
-      console.log(item._activeCharts)
       if (!item._activeCharts) {
         // this.activeChartType = 'line'
         this.$root.JQ('#set_chart_type_Modal').modal('show')
@@ -325,7 +323,8 @@ export default {
   components: {
     GridLayout: VueGridLayout.GridLayout,
     GridItem: VueGridLayout.GridItem,
-    CustomChart
+    CustomChart,
+    CustomPieChart
   },
 }
 </script>
