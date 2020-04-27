@@ -176,7 +176,6 @@ export default {
       if (!this.$root.$validate.isEmpty_reset(this.$route.params.templateData.cfg)) {
         this.getEndpointList()
         this.viewData = JSON.parse(this.$route.params.templateData.cfg);
-        console.log(this.viewData)
         this.viewData.forEach((itemx, index) => {
           if (itemx.viewConfig.id === this.$route.params.panal.id) {
             this.panalIndex = index;

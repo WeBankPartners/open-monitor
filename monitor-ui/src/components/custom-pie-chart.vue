@@ -3,8 +3,8 @@
     <div v-if="!noDataTip" :id="elId" class="echart" :style="chartInfo.style">
     </div>
     <div v-if="noDataTip" class="echart echart-no-data-tip">
-      {{chartTitle}}:
-      <span>~~~No Data!~~~</span>
+      <!-- {{chartTitle}}:
+      <span>~~~No Data!~~~</span> -->
     </div>
   </div>
 </template>
@@ -63,18 +63,9 @@ export default {
       this.$root.$httpRequestEntrance.httpRequestEntrance(
         'POST','dashboard/pie/chart', params,
         responseData => {
-          // drawPieChart(this.panalTitle, responseData)
           drawPieChart(this, responseData)
         }
       )
-      // this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.metricConfigView.api, params, responseData => {
-      //   responseData.yaxis.unit =  this.chartInfo.panalUnit  
-      //   this.elId = this.chartInfo.elId
-      //   const chartConfig = {eye: false,dataZoom:false, lineBarSwitch: true}
-      //   this.$nextTick( () => {
-      //     drawPieChart(this,responseData, this.chartIndex, chartConfig)
-      //   })
-      // })
     }
   },
   components: {},
