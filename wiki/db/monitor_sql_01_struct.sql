@@ -187,6 +187,8 @@ CREATE TABLE `tpl` (
   `update_user` VARCHAR(50) DEFAULT '',
   `action_user` VARCHAR(255) DEFAULT '',
   `action_role` VARCHAR(255) DEFAULT '',
+  `extra_mail` text,
+  `extra_phone` text,
   `create_at` DATETIME,
   `update_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
