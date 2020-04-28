@@ -29,6 +29,12 @@ func GetEndpointBusinessConfig(c *gin.Context)  {
 func UpdateEndpointBusinessConfig(c *gin.Context)  {
 	var param m.BusinessUpdateDto
 	if err := c.ShouldBindJSON(&param); err==nil {
+		for _,v := range param.PathList {
+			if !mid.IsIllegalPath(v.Path) {
+				mid.ReturnValidateFail(c, "Parameter validate fail, path illegal")
+				return
+			}
+		}
 		err = db.UpdateBusiness(param)
 		if err != nil {
 			mid.ReturnError(c, "Update business fail ", err)
