@@ -68,10 +68,10 @@ export const drawChart = function(that,config,userConfig) {
     dataZoom: true,
     clear: false,
     editTitle: false,
-    lineBarSwitch: false
+    lineBarSwitch: false,
+    chartType: 'line'
   }
   let finalConfig = Object.assign(originConfig, userConfig)
-
   // 基于准备好的dom，初始化echarts实例
   var myChart = echarts.init(document.getElementById(that.elId))
   if (originConfig.clear) {
@@ -228,7 +228,13 @@ export const drawChart = function(that,config,userConfig) {
     ],
     series: config.series
   }
-
+  console.log(finalConfig.chartType)
+  console.log(config.series[0])
+  if (finalConfig.chartType !== config.series[0]) {
+    config.series.forEach(se => {
+      se.type = finalConfig.chartType
+    })
+  }
   if (finalConfig.title) {
     option.title.text = config.title
   }
