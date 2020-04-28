@@ -137,7 +137,7 @@
     "server_list": []
   },
   "cron_job": {
-    "enable": true,
-    "interval": 120
+    "enable": false,
+    "interval": 60
   }
 }
