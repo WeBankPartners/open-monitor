@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"encoding/json"
 	"context"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
 )
 
 func AddUser(user m.UserTable, creator string) error {
@@ -203,7 +204,6 @@ func ListRole(search string,page,size int) (err error,data m.TableData) {
 }
 
 func StartCronJob()  {
-	// Sync core role
 	if !m.Config().CronJob.Enable {
 		return
 	}
@@ -211,7 +211,13 @@ func StartCronJob()  {
 	if m.Config().CronJob.Interval > 30 {
 		intervalSec = m.Config().CronJob.Interval
 	}
-	t := time.NewTicker(time.Second*time.Duration(intervalSec)).C
+	go StartSyncCoreRoleJob(intervalSec)
+	go prom.StartCheckPrometheusJob(intervalSec)
+}
+
+func StartSyncCoreRoleJob(interval int)  {
+	// Sync core role
+	t := time.NewTicker(time.Second*time.Duration(interval)).C
 	for {
 		go SyncCoreRole()
 		<- t

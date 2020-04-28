@@ -10,6 +10,8 @@ import (
 	"gopkg.in/yaml.v2"
 	"strings"
 	"net/http"
+	"time"
+	"os/exec"
 )
 
 type fileObj struct {
@@ -129,4 +131,67 @@ func ReloadConfig() error {
 	//mid.LogInfo(fmt.Sprintf("reload config resp : %v", resp.Body))
 	//defer resp.Body.Close()
 	return err
+}
+
+func StartCheckPrometheusJob(interval int)  {
+	// Check prometheus
+	prometheusAddress := m.Config().Prometheus.ConfigPath
+	if prometheusAddress == "" {
+		return
+	}
+	t := time.NewTicker(time.Second*time.Duration(interval)).C
+	for {
+		go checkPrometheusAlive(prometheusAddress)
+		<- t
+	}
+}
+
+func checkPrometheusAlive(address string)  {
+	_,err := http.Get(fmt.Sprintf("http://%s", address))
+	if err != nil {
+		mid.LogError("prometheus alive check: error ", err)
+		restartPrometheus()
+	}else{
+		mid.LogInfo("prometheus alive check: alive")
+	}
+}
+
+func restartPrometheus()  {
+	mid.LogInfo("try to start prometheus . . . . . .")
+	lastLog,_ := execCommand("tail -n 30 /app/monitor/prometheus/logs/prometheus.log")
+	if lastLog != "" {
+		for _,v := range strings.Split(lastLog, "\n") {
+			if strings.Contains(v, "err=\"/app/monitor/prometheus/rules/") {
+				errorFile := strings.Split(strings.Split(v, "err=\"/app/monitor/prometheus/rules/")[1], ":")[0]
+				err := os.Remove(fmt.Sprintf("/app/monitor/prometheus/rules/%s", errorFile))
+				if err != nil {
+					mid.LogError(fmt.Sprintf("remove problem file %s error ", errorFile), err)
+				}else{
+					mid.LogInfo(fmt.Sprintf("remove problem file %s success", errorFile))
+				}
+			}
+		}
+	}else{
+		mid.LogInfo("prometheus last log is empty ??")
+	}
+	startCommand,_ := execCommand("cat /app/monitor/start.sh |grep prometheus")
+	if startCommand != "" {
+		startCommand = strings.Replace(startCommand, "\n", " && ", -1)
+		_,err := execCommand(startCommand)
+		if err != nil {
+			mid.LogError("start prometheus fail,error ", err)
+		}else{
+			mid.LogInfo("start prometheus success ")
+		}
+	}else{
+		mid.LogError("start prometheus fail, the start command is empty!!", nil)
+	}
+}
+
+func execCommand(str string) (string,error) {
+	b,err := exec.Command("/bin/sh", "-c", str).Output()
+	if err != nil {
+		mid.LogError(fmt.Sprintf("exec command %s fail,error", str), err)
+	}
+	return string(b),err
 }
