@@ -138,6 +138,6 @@
   },
   "cron_job": {
     "enable": true,
-    "interval": 120
+    "interval": 60
   }
 }
