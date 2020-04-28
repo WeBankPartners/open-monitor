@@ -85,7 +85,8 @@
       </div>
       <section>
         <div v-for="(chartInfo,chartIndex) in item._activeCharts" :key="chartIndex">
-          <CustomChart v-if="chartInfo.type === 'line'" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomChart>
+          {{chartInfo}}
+          <CustomChart v-if="['line','bar'].includes(chartInfo.type)" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomChart>
           <CustomPieChart v-if="chartInfo.type === 'pie'" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomPieChart>
         </div>
       </section>
@@ -205,7 +206,7 @@ export default {
           panalUnit: item.panalUnit,
           elId: item.viewConfig.id,
           chartParams: params,
-          type: item.query[0].type                                                    
+          type: item.chartType                                              
         })
         item.viewConfig._activeCharts = _activeCharts
         tmp.push(item.viewConfig)
@@ -236,7 +237,6 @@ export default {
     setChartType (item) {
       this.activeGridConfig = item
       if (!item._activeCharts) {
-        // this.activeChartType = 'line'
         this.$root.JQ('#set_chart_type_Modal').modal('show')
       } else {
         this.activeChartType = item._activeCharts[0].type
@@ -258,7 +258,8 @@ export default {
       this.modifyLayoutData().then((resViewData)=>{
         let parentRouteData = this.$route.params
         parentRouteData.cfg = JSON.stringify(resViewData) 
-        if (this.activeChartType === 'line') {
+        console.log(this.activeChartType)
+        if (['line','bar'].includes(this.activeChartType)) {
           this.$router.push({name: 'editLineView', params:{templateData: parentRouteData, panal:this.activeGridConfig}})
         } else {
           this.$router.push({name: 'editPieView', params:{templateData: parentRouteData, panal:this.activeGridConfig}})

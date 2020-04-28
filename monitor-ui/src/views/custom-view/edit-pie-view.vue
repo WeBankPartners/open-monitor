@@ -289,7 +289,6 @@ li {
 }
 .zone-chart-title {
   padding: 20px 40%;
-  position: absolute;
   font-size: 14px;
 }
 .zone-config {

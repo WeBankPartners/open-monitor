@@ -68,7 +68,7 @@ export default {
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.metricConfigView.api, params, responseData => {
         responseData.yaxis.unit =  this.chartInfo.panalUnit  
         this.elId = this.chartInfo.elId
-        const chartConfig = {eye: false,dataZoom:false, lineBarSwitch: true}
+        const chartConfig = {eye: false,dataZoom:false, lineBarSwitch: true, chartType: this.chartInfo.type}
         this.$nextTick( () => {
           readyToDraw(this,responseData, this.chartIndex, chartConfig)
         })
