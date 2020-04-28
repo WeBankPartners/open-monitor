@@ -183,6 +183,7 @@ func restartPrometheus()  {
 	startCommand,_ := execCommand("cat /app/monitor/start.sh |grep prometheus")
 	if startCommand != "" {
 		startCommand = strings.Replace(startCommand, "\n", " && ", -1)
+		startCommand = startCommand[:len(startCommand)-3]
 		_,err := execCommand(startCommand)
 		if err != nil {
 			mid.LogError("start prometheus fail,error ", err)
