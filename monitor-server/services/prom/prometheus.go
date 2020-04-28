@@ -135,7 +135,13 @@ func ReloadConfig() error {
 
 func StartCheckPrometheusJob(interval int)  {
 	// Check prometheus
-	prometheusAddress := m.Config().Prometheus.ConfigPath
+	var prometheusAddress string
+	for _,v := range m.Config().Datasource.Servers {
+		if v.Type == "prometheus" {
+			prometheusAddress = v.Host
+			break
+		}
+	}
 	if prometheusAddress == "" {
 		return
 	}
