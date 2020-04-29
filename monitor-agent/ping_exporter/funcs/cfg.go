@@ -74,6 +74,10 @@ type MetricConfig  struct {
 	TelnetCountNum  string  `json:"telnet_count_num"`
 	TelnetCountSuccess  string  `json:"telnet_count_success"`
 	TelnetCountFail  string  `json:"telnet_count_fail"`
+	HttpCheck  string  `json:"http_check"`
+	HttpCheckCountNum  string  `json:"http_check_count_num"`
+	HttpCheckCountSuccess  string  `json:"http_check_count_success"`
+	HttpCheckCountFail  string  `json:"http_check_count_fail"`
 }
 
 type GlobalConfig struct {
@@ -81,6 +85,7 @@ type GlobalConfig struct {
 	Interval      int               `json:"interval"`
 	PingEnable    bool              `json:"ping_enable"`
 	TelnetEnable  bool              `json:"telnet_enable"`
+	HttpCheckEnable  bool           `json:"http_check_enable"`
 	OpenFalcon    OpenFalconConfig  `json:"open-falcon"`
 	Prometheus    PrometheusCOnfig  `json:"prometheus"`
 	Source      SourceConfig    `json:"source"`
