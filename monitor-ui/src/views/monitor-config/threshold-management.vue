@@ -18,7 +18,7 @@
             @on-clear="clearEndpoint"
             >
             <Option v-for="(option, index) in endpointOptions" :value="option.id" :key="index">
-            <Tag :color="endpointTag[option.option_type_name] || choiceColor(option.option_type_name, index)" class="tag-width">{{option.option_type_name}}</Tag>{{option.option_text}}</Option>
+            <Tag v-if="option.type" :color="endpointTag[option.option_type_name] || choiceColor(option.option_type_name, index)" class="tag-width">{{option.option_type_name}}</Tag>{{option.option_text}}</Option>
           </Select>
         </li>
         <li class="search-li">
@@ -32,14 +32,68 @@
     </section>
     <section>
       <template v-for="(tableItem, tableIndex) in totalPageConfig">
-        <div :key="tableIndex + 'f'" class="section-table-tip">
-          <Tag color="blue" :key="tableIndex + 'a'" v-if="tableItem.obj_name">{{tableItem.obj_name}}</Tag>
-          <button @click="add" type="button" v-if="tableItem.operation" class="btn btn-sm btn-cancle-f" :key="tableIndex + 'b'">
-            <i class="fa fa-plus"></i>
-            {{$t('button.add')}}
-          </button>
-        </div>
-        <PageTable :pageConfig="tableItem" :key="tableIndex + 'c'"></PageTable>
+        <section :key="tableIndex + 'f'">
+          <div class="section-table-tip">
+            <Tag color="blue" :key="tableIndex + 'a'" v-if="tableItem.obj_name">{{tableItem.obj_name}}</Tag>
+            <button @click="add" type="button" v-if="tableItem.operation" class="btn btn-sm btn-cancle-f" :key="tableIndex + 'b'">
+              <i class="fa fa-plus"></i>
+              {{$t('button.add')}}
+            </button>
+          </div>
+          <PageTable :pageConfig="tableItem"></PageTable>
+          <section class="receiver-config">
+            <section :key="tableIndex + 'a'" v-if="tableItem.showReceiver" style="margin: 16px 0">
+              <span class="receiver-header">{{$t('button.receivers')}}:</span>
+              <Tag 
+                v-for="(receiver, receiverIdex) in tableItem.accept" 
+                type="border" 
+                :key="receiverIdex" 
+                color="primary">
+                {{receiver.option_text}}
+              </Tag>
+              <button @click="tableItem.showReceiver = !tableItem.showReceiver" class="btn btn-small btn-cancle-f">{{$t('button.edit')}}</button>
+            </section>
+            <div v-else  style="margin: 16px 0">
+              <h5>{{$t('button.receiversConfiguration')}}:</h5>
+              <div class="receiver-config-set" style="margin: 8px 0">
+                <div>
+                  <span style="margin: 0 16px">{{$t('button.receiversSelect')}}:</span>
+                    <Select
+                    style="width:200px"
+                    v-model="tableItem.selectedReceiver"
+                    @on-open-change="getSelectReceivers('r')"
+                    filterable
+                    multiple
+                    remote
+                    :remote-method="getSelectReceivers"
+                    >
+                    <Option v-for="(option, index) in selectReceiversOptions" :value="option.type" :key="index">
+                    {{option.option_text}}</Option>
+                  </Select>
+                </div>
+                <div>
+                  <span style="margin: 0 8px">{{$t('button.receiversInput')}}:</span>
+                  <input type="text" v-model.trim="tableItem.inputReceiver" class="form-control research-input c-dark">
+                </div>
+                <div>
+                  <button @click="saveReceivers(tableItem)" class="btn btn-confirm-f">{{$t('button.save')}}</button>
+                </div>
+              </div>
+              <div class="receiver-config-set"  style="margin: 8px 0">
+                <Tag 
+                  v-for="(receiver, receiverIdex) in tableItem.accept" 
+                  type="border" :key="receiverIdex" 
+                  closable
+                  @on-close="removeReceiver(tableItem,receiver,receiverIdex)"
+                  color="primary">
+                  {{receiver.option_text}}
+                </Tag>
+              </div>
+            </div>
+            <div class="partition"></div>
+          </section>
+          
+        </section>
       </template>
       <ModalComponent :modelConfig="modelConfig">
         <div slot="metricSelect" class="extentClass">  
@@ -166,6 +220,8 @@ export default {
         }
       },
       id: null,
+
+      selectReceiversOptions: [] // 待选择接收人
     }
   },
   watch: {
@@ -197,6 +253,58 @@ export default {
     })
   },
   methods: {
+    getSelectReceivers (query='r') {
+      const params = {search: query}
+      this.$root.apiCenter.thresholdManagement.recevier.api
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.thresholdManagement.recevier.getReceivers, params, (responseData) => {
+        this.selectReceiversOptions = responseData
+      }, {isNeedloading:false})
+    },
+    saveReceivers (tableItem) {
+      if (tableItem.selectedReceiver.length===0&&tableItem.inputReceiver===null) {
+        return
+      }
+      let accept = []
+      const regx_email = /^[a-zA-Z0-9_.-]+@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.[a-zA-Z0-9]{2,6}$/gi
+      const regs_phone = /^1[345678]\d{9}$/
+      const regx_email_res = regx_email.test(tableItem.inputReceiver)
+      const regs_phone_res = regs_phone.test(tableItem.inputReceiver)
+      if (regx_email_res) {
+        accept.push({option_value: tableItem.inputReceiver,option_text: '',type: "mail"})
+      }
+      if (regs_phone_res) {
+        accept.push({option_value: tableItem.inputReceiver,option_text: '',type: "phone"})
+      }
+      tableItem.selectedReceiver.forEach(sr => {
+        accept.push({type: sr})
+      })
+      accept = tableItem.accept.concat(accept)
+      let params = {
+        tpl_id: tableItem.tpl_id,
+        accept
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.thresholdManagement.recevier.api, params, () => {
+        this.$Message.success(this.$t('tips.success'))
+        this.requestData(this.type, this.typeValue)
+      }, {isNeedloading:false})
+    },
+    removeReceiver (tableItem, receiver, index) {
+      this.ModelDelConfig =  {
+        deleteWarning: true,
+        msg: receiver.option_text,
+        callback: () => {
+          tableItem.accept.splice(index,1)
+          const params = {
+            tpl_id: tableItem.tpl_id,
+            accept: tableItem.accept
+          }
+          this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.thresholdManagement.recevier.api, params, () => {
+            this.$Message.success(this.$t('tips.success'))
+            this.requestData(this.type, this.typeValue)
+          }, {isNeedloading:false})
+        }
+      }
+    },
     choiceColor (type,index) {
       let color = ''
       // eslint-disable-next-line no-prototype-builtins
@@ -244,7 +352,18 @@ export default {
             rowData.type = item.obj_type
           })
           config.tableData = item.strategy
-          this.totalPageConfig.push({table:config, obj_type: item.obj_type, obj_name: item.obj_name, operation:item.operation})
+          this.totalPageConfig.push({
+            table:config, 
+            tpl_id: item.tpl_id, 
+            accept: item.accept,
+            showReceiver: true,
+            selectedReceiver: [], // 选择的接收人
+            inputReceiver: null,  // 输入的接收人
+            choicedReceiver: [],  // 选中待展示的接收人
+            obj_type: item.obj_type, 
+            obj_name: item.obj_name, 
+            operation:item.operation
+          })
         })
       })
     },
@@ -367,11 +486,8 @@ export default {
 </script>
 
 <style scoped lang="less">
-.search-li {
+  .search-li {
     display: inline-block;
-  }
-  .search-ul>li:not(:first-child) {
-    padding-left: 10px;
   }
 </style>
 <style scoped lang="less">
@@ -406,5 +522,36 @@ export default {
     cursor: auto;
     width: 55px;
     text-align: center;
+  }
+  .receiver-config {
+    margin: 8px 20px;
+  }
+  .receiver-config-set {
+    display: flex;
+  }
+  .receiver-header {
+    font-weight: 500;
+    margin-right: 8px;
+  }
+  .form-control {
+    // 解决IE11 输入框无法与按钮同行问题
+    display: inline-block;
+    padding: 4px 18px 4px 7px;
+  }
+  /*取消选中样式*/
+  .form-control:focus {
+    box-shadow: none;
+  }
+    /*input框样式*/
+  .research-input {
+    width: 200px;
+    height: 32px;
+    font-size: 12px;
+    margin-left: 8px;
+    margin-right: 8px;
+  }
+  .partition {
+    height: 2px;
+    background: @blue-lingt;
   }
 </style>
