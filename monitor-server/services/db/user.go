@@ -82,7 +82,7 @@ func SearchUserRole(search string,searchType string) (err error,options []*m.Opt
 		if v.DisplayName != "" {
 			tmpText = tmpText + "(" + v.DisplayName + ")"
 		}
-		options = append(options, &m.OptionModel{Id:v.Id, OptionText:tmpText, OptionValue:fmt.Sprintf("%d", v.Id), Active:tmpActive, OptionType:searchType})
+		options = append(options, &m.OptionModel{Id:v.Id, OptionText:tmpText, OptionValue:fmt.Sprintf("%d", v.Id), Active:tmpActive, OptionType:fmt.Sprintf("%s_%d", searchType, v.Id)})
 	}
 	return nil,options
 }

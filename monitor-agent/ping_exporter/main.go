@@ -6,6 +6,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-agent/ping_exporter/icmpping"
 	"log"
 	"github.com/WeBankPartners/open-monitor/monitor-agent/ping_exporter/telnet"
+	"github.com/WeBankPartners/open-monitor/monitor-agent/ping_exporter/http_check"
 )
 
 func main() {
@@ -23,16 +24,14 @@ func main() {
 	icmpping.TestModel = *isTest
 	funcs.InitSourceList()
 	go icmpping.StartHttpServer()
-	if !funcs.Config().PingEnable {
-		telnet.StartTelnetTask()
-		return
-	}
-	if !funcs.Config().TelnetEnable {
-		icmpping.StartTask()
-		return
-	}
-	if funcs.Config().PingEnable && funcs.Config().TelnetEnable {
+	if funcs.Config().PingEnable {
 		go icmpping.StartTask()
-		telnet.StartTelnetTask()
 	}
+	if funcs.Config().TelnetEnable {
+		go telnet.StartTelnetTask()
+	}
+	if funcs.Config().HttpCheckEnable {
+		go http_check.StartHttpCheckTask()
+	}
+	select {}
 }
