@@ -35,6 +35,15 @@ func RegisterAgent(c *gin.Context)  {
 	}
 }
 
+func RegisterAgentNew(c *gin.Context)  {
+	var param m.RegisterParamNew
+	if err := c.ShouldBindJSON(&param); err==nil {
+
+	}else{
+		mid.ReturnValidateFail(c, fmt.Sprintf("Parameter validation failed %v", err))
+	}
+}
+
 func RegisterJob(param m.RegisterParam) error {
 	var err error
 	//if param.Type != hostType && param.Type != mysqlType && param.Type != redisType && param.Type != tomcatType && param.Type != javaType && param.Type != otherType {
