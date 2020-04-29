@@ -311,3 +311,10 @@ type SyncConsulDto struct {
 	Tags  []string  `json:"tags"`
 	Interval  int  `json:"interval"`
 }
+
+type EndpointHttpTable struct {
+	Id  int  `json:"id"`
+	EndpointGuid  string  `json:"endpoint_guid"`
+	Method  string  `json:"method"`
+	Url  string  `json:"url"`
+}

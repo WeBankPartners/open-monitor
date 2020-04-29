@@ -374,5 +374,16 @@ func GetPingExporterSource() []*m.PingExportSourceObj {
 			}
 		}
 	}
+	var endpointHttpTable []*m.EndpointHttpTable
+	x.SQL("SELECT * FROM endpoint_http").Find(&endpointHttpTable)
+	if len(endpointHttpTable) > 0 {
+		for _,v := range endpointHttpTable {
+			tmpUrl := v.Url
+			if v.Method == "post" {
+				tmpUrl = fmt.Sprintf("%s:%s", v.Method, v.Url)
+			}
+			result = append(result, &m.PingExportSourceObj{Ip:tmpUrl, Guid:v.EndpointGuid})
+		}
+	}
 	return result
 }
