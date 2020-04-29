@@ -66,7 +66,8 @@ func AcceptAlertMsg(c *gin.Context)  {
 					continue
 				}
 				tmpAlarm.Endpoint = endpointObj.Guid
-				tmpValue, _ = strconv.ParseFloat(tmpSummaryMsg[2], 10)
+				tmpValue, _ = strconv.ParseFloat(tmpSummaryMsg[2], 64)
+				tmpValue, _ = strconv.ParseFloat(fmt.Sprintf("%.3f", tmpValue), 64)
 				tmpAlarmQuery := m.AlarmTable{Endpoint: tmpAlarm.Endpoint, SMetric: tmpAlarm.SMetric}
 				_, tmpAlarms = db.GetAlarms(tmpAlarmQuery)
 			}else {
@@ -104,7 +105,8 @@ func AcceptAlertMsg(c *gin.Context)  {
 							continue
 						}
 					}
-					tmpValue, _ = strconv.ParseFloat(tmpSummaryMsg[3], 10)
+					tmpValue, _ = strconv.ParseFloat(tmpSummaryMsg[3], 64)
+					tmpValue, _ = strconv.ParseFloat(fmt.Sprintf("%.3f", tmpValue), 64)
 				}
 				if tmpAlarm.Endpoint == "" {
 					mid.LogInfo(fmt.Sprintf("Can't find the endpoint %v", v))

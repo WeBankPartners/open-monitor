@@ -9,6 +9,18 @@ type RegisterParam struct {
 	Password  string  `json:"password"`
 }
 
+type RegisterParamNew struct {
+	Type  string  `json:"type" binding:"required"`
+	Name  string  `json:"name"`
+	Ip  string  `json:"ip"`
+	Port  string  `json:"port"`
+	User  string  `json:"user"`
+	Password  string  `json:"password"`
+	Method  string  `json:"method"`
+	Url  string  `json:"url"`
+	AddDefaultGroup  bool  `json:"add_default_group"`
+}
+
 type RegisterConsulParam struct {
 	Id  string  `json:"id"`
 	Name  string  `json:"name"`

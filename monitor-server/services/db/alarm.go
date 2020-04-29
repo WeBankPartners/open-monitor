@@ -1084,7 +1084,7 @@ func getActionOptions(tplId int) []*m.OptionModel {
 			if v.DisplayName != "" {
 				tmpText = tmpText + "(" + v.DisplayName + ")"
 			}
-			result = append(result, &m.OptionModel{Id:v.Id, OptionText:tmpText, OptionValue:fmt.Sprintf("%d", v.Id), Active:false, OptionType:"role"})
+			result = append(result, &m.OptionModel{Id:v.Id, OptionText:tmpText, OptionValue:fmt.Sprintf("%d", v.Id), Active:false, OptionType:fmt.Sprintf("role_%d", v.Id)})
 		}
 	}
 	if tpls[0].ActionUser != "" {
@@ -1095,7 +1095,7 @@ func getActionOptions(tplId int) []*m.OptionModel {
 			if v.DisplayName != "" {
 				tmpText = tmpText + "(" + v.DisplayName + ")"
 			}
-			result = append(result, &m.OptionModel{Id:v.Id, OptionText:tmpText, OptionValue:fmt.Sprintf("%d", v.Id), Active:false, OptionType:"user"})
+			result = append(result, &m.OptionModel{Id:v.Id, OptionText:tmpText, OptionValue:fmt.Sprintf("%d", v.Id), Active:false, OptionType:fmt.Sprintf("user_%d", v.Id)})
 		}
 	}
 	if tpls[0].ExtraMail != "" {
