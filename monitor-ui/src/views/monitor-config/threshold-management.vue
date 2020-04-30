@@ -73,7 +73,7 @@
                 </div>
                 <div>
                   <span style="margin: 0 8px">{{$t('button.receiversInput')}}:</span>
-                  <input type="text" v-model.trim="tableItem.inputReceiver" class="form-control research-input c-dark">
+                  <input type="text" v-model.trim="tableItem.inputReceiver" :placeholder="$t('button.receiversInputTip')" class="form-control research-input c-dark">
                 </div>
                 <div>
                   <button @click="saveReceivers(tableItem)" class="btn btn-confirm-f">{{$t('button.save')}}</button>
