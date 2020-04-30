@@ -85,7 +85,6 @@
       </div>
       <section>
         <div v-for="(chartInfo,chartIndex) in item._activeCharts" :key="chartIndex">
-          {{chartInfo}}
           <CustomChart v-if="['line','bar'].includes(chartInfo.type)" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomChart>
           <CustomPieChart v-if="chartInfo.type === 'pie'" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomPieChart>
         </div>
@@ -215,7 +214,7 @@ export default {
     },
     isShowGridPlus (item) {
       // 新增及饼图时屏蔽放大功能
-      if (!item._activeCharts || item._activeCharts[0].type === 'pie') {
+      if (!item._activeCharts || item._activeCharts[0].chartType === 'pie') {
         return false
       }
       return true
@@ -235,11 +234,14 @@ export default {
       })
     },
     setChartType (item) {
+      console.log(1)
       this.activeGridConfig = item
       if (!item._activeCharts) {
+        console.log(2)
         this.$root.JQ('#set_chart_type_Modal').modal('show')
       } else {
-        this.activeChartType = item._activeCharts[0].type
+        console.log(3)
+        this.activeChartType = item.chartType
         this.editGrid()
       }
     },
@@ -247,6 +249,7 @@ export default {
       this.activeChartType = activeChartType
     },
     confirmChartType () {
+      console.log(4)
       if (!this.activeChartType) {
         this.$Message.warning('请先设置图标类型！')
         return
@@ -255,6 +258,7 @@ export default {
       this.editGrid()
     },
     editGrid() {
+      console.log(5)
       this.modifyLayoutData().then((resViewData)=>{
         let parentRouteData = this.$route.params
         parentRouteData.cfg = JSON.stringify(resViewData) 
@@ -280,22 +284,35 @@ export default {
       this.$router.push({name: 'viewChart', params:{templateData: parentRouteData, panal:item, parentData: this.$route.params}}) 
     },
     async modifyLayoutData() {
+      console.log(6)
       var resViewData = []
+      console.log(this.layoutData)
+      console.log(this.viewData)
       this.layoutData.forEach((layoutDataItem) =>{
         let temp = {
           panalTitle: layoutDataItem.i,
           panalUnit: '',
+          chartType: '',
           query: [],
           viewConfig: layoutDataItem
         }
         this.viewData.forEach((i) =>{
           if (layoutDataItem.id === i.viewConfig.id) {
+            
+            console.log(7)
+
+            console.log(i)
+            console.log(this.activeChartType)
+            this.activeChartType =  i.chartType === '' ? this.activeChartType : i.chartType
+            console.log(this.activeChartType)
             temp.panalUnit = i.panalUnit
             temp.query = i.query
+            temp.chartType = this.activeChartType
           }
         })
         resViewData.push(temp)
       })
+      console.log(resViewData)
       return resViewData
     },
     resizeEvent: function(i, newH, newW, newHPx, newWPx){

@@ -190,10 +190,11 @@ export default {
       if (!this.$root.$validate.isEmpty_reset(this.$route.params.templateData.cfg)) {
         this.getEndpointList()
         this.viewData = JSON.parse(this.$route.params.templateData.cfg)
+        console.log(this.viewData)
         this.viewData.forEach((itemx, index) => {
           if (itemx.viewConfig.id === this.$route.params.panal.id) {
             if (itemx.viewConfig._activeCharts) {
-              this.templateQuery.chartType = itemx.viewConfig._activeCharts[0].type
+              this.templateQuery.chartType = itemx.chartType
             } else {
               this.templateQuery.chartType = 'line'
             }
@@ -369,6 +370,7 @@ export default {
       } else {
         this.viewData.push(temp)
       }
+      console.log(this.viewData)
       let params = {
         name: this.$route.params.templateData.name,
         id: this.$route.params.templateData.id,
@@ -380,6 +382,7 @@ export default {
       if (!this.params) {
         this.pp()
       }
+      console.log(this.params)
       this.$router.push({ name: "viewConfig", params: this.params })
     }
   },
