@@ -75,7 +75,7 @@
     "receiversConfiguration": "接收人设置",
     "receiversSelect": "选择接收人",
     "receiversInput": "自定义接收人",
-    "receiversInputTip": "邮箱或电话",
+    "receiversInputTip": "邮箱或手机号码",
     "historicalAlert": "历史告警",
     "logConfiguration": "关键字配置",
     "portConfiguration": "端口配置",
