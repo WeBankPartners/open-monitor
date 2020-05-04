@@ -19,6 +19,9 @@ type RegisterParamNew struct {
 	Method  string  `json:"method"`
 	Url  string  `json:"url"`
 	AddDefaultGroup  bool  `json:"add_default_group"`
+	DefaultGroupName  string  `json:"default_group_name"`
+	AgentManager  bool  `json:"agent_manager"`
+	FetchMetric  bool  `json:"fetch_metric"`
 }
 
 type RegisterConsulParam struct {
