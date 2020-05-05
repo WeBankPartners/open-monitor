@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"strings"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
+	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
+	"github.com/gin-gonic/gin"
 )
 
 const prometheusStep = 10
@@ -18,6 +20,24 @@ type returnData struct {
 	defaultGroup  string
 	validateMessage  string
 	err  error
+}
+
+func RegisterAgentNew(c *gin.Context)  {
+	var param m.RegisterParamNew
+	if err := c.ShouldBindJSON(&param); err==nil {
+		validateMessage,err := AgentRegister(param)
+		if validateMessage != "" {
+			mid.ReturnValidateFail(c, validateMessage)
+			return
+		}
+		if err != nil {
+			mid.ReturnError(c, "Register agent error ", err)
+			return
+		}
+		mid.ReturnSuccess(c, "Success")
+	}else{
+		mid.ReturnValidateFail(c, fmt.Sprintf("Parameter validation failed %v", err))
+	}
 }
 
 func InitAgentManager()  {
@@ -39,7 +59,11 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage string,err error) 
 		case "mysql": rData = mysqlRegister(param)
 		case "redis": rData = redisRegister(param)
 		case "jmx": rData = jmxRegister(param)
-		default: rData.validateMessage = fmt.Sprintf("Type : %s not supported yet ", param.Type)
+		case "ping": rData = pingRegister(param)
+		case "telnet": rData = telnetRegister(param)
+		case "http": rData = httpRegister(param)
+		case "windows": rData = windowsRegister(param)
+		default: rData = otherExporterRegister(param)
 	}
 	if rData.validateMessage != "" || rData.err != nil {
 		return rData.validateMessage,rData.err
@@ -152,7 +176,7 @@ func mysqlRegister(param m.RegisterParamNew) returnData {
 			result.err = fmt.Errorf("Mysql agnet bin can not found in config ")
 			return result
 		}
-		address,err = prom.DeployAgent(param.Type,param.Name,binPath,param.Ip,param.Port,param.User,param.Password,agentManagerUrl)
+		address,err = prom.DeployAgent(param.Type,param.Name,binPath,param.Ip,param.Port,param.User,param.Password,agentManagerServer)
 		if err != nil {
 			result.err = err
 			return result
@@ -193,6 +217,7 @@ func mysqlRegister(param m.RegisterParamNew) returnData {
 	result.endpoint.Step = prometheusStep
 	result.endpoint.Address = fmt.Sprintf("%s:%s", param.Ip, param.Port)
 	result.endpoint.AddressAgent = address
+	result.defaultGroup = "default_mysql_group"
 	return result
 }
 
@@ -219,7 +244,7 @@ func redisRegister(param m.RegisterParamNew) returnData {
 			result.err = fmt.Errorf("Redis agnet bin can not found in config ")
 			return result
 		}
-		address,err = prom.DeployAgent(param.Type,param.Name,binPath,param.Ip,param.Port,param.User,param.Password,agentManagerUrl)
+		address,err = prom.DeployAgent(param.Type,param.Name,binPath,param.Ip,param.Port,param.User,param.Password,agentManagerServer)
 		if err != nil {
 			result.err = err
 			return result
@@ -260,6 +285,7 @@ func redisRegister(param m.RegisterParamNew) returnData {
 	result.endpoint.Step = prometheusStep
 	result.endpoint.Address = fmt.Sprintf("%s:%s", param.Ip, param.Port)
 	result.endpoint.AddressAgent = address
+	result.defaultGroup = "default_redis_group"
 	return result
 }
 
@@ -286,7 +312,7 @@ func jmxRegister(param m.RegisterParamNew) returnData {
 			result.err = fmt.Errorf("Jmx agnet bin can not found in config ")
 			return result
 		}
-		address,err = prom.DeployAgent(param.Type,param.Name,binPath,param.Ip,param.Port,param.User,param.Password,agentManagerUrl)
+		address,err = prom.DeployAgent(param.Type,param.Name,binPath,param.Ip,param.Port,param.User,param.Password,agentManagerServer)
 		if err != nil {
 			result.err = err
 			return result
@@ -327,29 +353,142 @@ func jmxRegister(param m.RegisterParamNew) returnData {
 	result.endpoint.Step = prometheusStep
 	result.endpoint.Address = fmt.Sprintf("%s:%s", param.Ip, param.Port)
 	result.endpoint.AddressAgent = address
+	result.defaultGroup = "default_jmx_group"
 	return result
 }
 
-func pingRegister()  {
+func pingRegister(param m.RegisterParamNew) returnData {
+	var result returnData
+	if param.Name == "" || param.Ip == "" {
+		result.validateMessage = "Ping instance name and ip can not empty "
+		return result
+	}
+	result.endpoint.Guid = fmt.Sprintf("%s_%s_%s", param.Name, param.Ip, param.Type)
+	result.endpoint.Name = param.Name
+	result.endpoint.Ip = param.Ip
+	result.endpoint.Address = fmt.Sprintf("%s:%s", param.Ip, param.Port)
+	result.endpoint.ExportType = param.Type
+	result.endpoint.Step = prometheusStep
+	result.defaultGroup = "default_ping_group"
+	return result
+}
+
+func telnetRegister(param m.RegisterParamNew) returnData {
+	var result returnData
+	if param.Name == "" || param.Ip == "" {
+		result.validateMessage = "Telnet instance name and ip can not empty "
+		return result
+	}
+	result.endpoint.Guid = fmt.Sprintf("%s_%s_%s", param.Name, param.Ip, param.Type)
+	result.endpoint.Name = param.Name
+	result.endpoint.Ip = param.Ip
+	result.endpoint.Address = fmt.Sprintf("%s:%s", param.Ip, param.Port)
+	result.endpoint.ExportType = param.Type
+	result.endpoint.Step = prometheusStep
+	result.defaultGroup = "default_telnet_group"
+	// store to db -> endpoint_telnet
+	var eto []*m.EndpointTelnetObj
+	eto = append(eto, &m.EndpointTelnetObj{Port:param.Port, Note:""})
+	err := db.UpdateEndpointTelnet(m.UpdateEndpointTelnetParam{Guid:result.endpoint.Guid, Config:eto})
+	if err != nil {
+		result.err = err
+	}
+	return result
+}
+
+func httpRegister(param m.RegisterParamNew) returnData {
+	var result returnData
+	if param.Name == "" || param.Ip == "" || param.Url == "" || param.Method == "" {
+		result.validateMessage = "Http check name/ip/url/method can not empty "
+		return result
+	}
+	result.endpoint.Guid = fmt.Sprint("%s_%s_%s", param.Name, param.Ip, param.Type)
+	result.endpoint.Name = param.Name
+	result.endpoint.Ip = param.Ip
+	result.endpoint.Address = fmt.Sprintf("%s:%s", param.Ip, param.Port)
+	result.endpoint.ExportType = param.Type
+	result.endpoint.Step = prometheusStep
+	result.defaultGroup = "default_http_group"
+	var eho []*m.EndpointHttpTable
+	eho = append(eho, &m.EndpointHttpTable{EndpointGuid:result.endpoint.Guid, Url:param.Url, Method:param.Method})
+	err := db.UpdateEndpointHttp(eho)
+	if err != nil {
+		result.err = err
+	}
+	return result
+}
+
+func windowsRegister(param m.RegisterParamNew) returnData {
+	var result returnData
+	if param.Ip == "" || param.Port == "" {
+		result.validateMessage = "Windows exporter ip and port can not empty"
+		return result
+	}
+	var hostname,sysname,release string
+	if param.FetchMetric {
+		err,strList := prom.GetEndpointData(param.Ip, param.Port, []string{"wmi"}, []string{})
+		if err != nil {
+			result.err = err
+			return result
+		}
+		if len(strList) == 0 {
+			result.err = fmt.Errorf("Can't get anything from http://%s:%d/metrics ", param.Ip, &param.Port)
+			return result
+		}
+		for _,v := range strList {
+			if strings.Contains(v, "wmi_cs_hostname{") {
+				hostname = strings.Split(strings.Split(v, "hostname=\"")[1], "\"")[0]
+			}
+			if strings.Contains(v, "wmi_os_info") {
+				sysname = strings.Split(strings.Split(v, "product=\"")[1], "\"")[0]
+				release = strings.Split(strings.Split(v, "version=\"")[1], "\"")[0]
+			}
+		}
+		result.metricList = strList
+	}
+	result.endpoint.Guid = fmt.Sprintf("%s_%s_%s", hostname, param.Ip, param.Type)
+	result.endpoint.Name = hostname
+	result.endpoint.Ip = param.Ip
+	result.endpoint.ExportType = param.Type
+	result.endpoint.Address = fmt.Sprintf("%s:%s", param.Ip, param.Port)
+	result.endpoint.OsType = sysname
+	result.endpoint.Step = prometheusStep
+	result.endpoint.EndpointVersion = release
+	result.defaultGroup = "default_windows_group"
+	return result
+}
+
+func nginxRegister(param m.RegisterParamNew)  {
 
 }
 
-func telnetRegister()  {
-
-}
-
-func httpRegister()  {
-
-}
-
-func windowsRegister()  {
-
-}
-
-func nginxRegister()  {
-
-}
-
-func otherExporterRegister()  {
-
+func otherExporterRegister(param m.RegisterParamNew) returnData {
+	var result returnData
+	if param.Name == "" || param.Ip == "" {
+		result.validateMessage = "Default endpoint name and ip can not empty "
+		return result
+	}
+	if param.FetchMetric {
+		if param.Port == "" {
+			result.validateMessage = "Default endpoint port can not empty if you want to get exporter metric "
+			return result
+		}
+		err,strList := prom.GetEndpointData(param.Ip, param.Port, []string{}, []string{})
+		if err != nil {
+			result.err = err
+			return result
+		}
+		if len(strList) == 0 {
+			result.err = fmt.Errorf("Can't get anything from http://%s:%d/metrics ", param.Ip, &param.Port)
+			return result
+		}
+		result.metricList = strList
+	}
+	result.endpoint.Guid = fmt.Sprintf("%s_%s_%s", param.Name, param.Ip, param.Type)
+	result.endpoint.Name = param.Name
+	result.endpoint.Ip = param.Ip
+	result.endpoint.ExportType = param.Type
+	result.endpoint.Address = fmt.Sprintf("%s:%s", param.Ip, param.Port)
+	result.endpoint.Step = prometheusStep
+	return result
 }
