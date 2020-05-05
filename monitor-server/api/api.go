@@ -190,3 +190,7 @@ func InitClusterApi()  {
 	http.Handle("/sync/consul", http.HandlerFunc(alarm.SyncConsulHandle))
 	http.ListenAndServe(fmt.Sprintf(":%s", m.Config().Cluster.HttpPort), nil)
 }
+
+func InitDependenceParam()  {
+	agent.InitAgentManager()
+}

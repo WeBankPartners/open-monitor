@@ -38,5 +38,6 @@ func main() {
 	go db.StartCronJob()
 	alarm.SyncInitConfigFile()
 	alarm.SyncInitConsul()
+	api.InitDependenceParam()
 	api.InitHttpServer(*exportAgent)
 }
