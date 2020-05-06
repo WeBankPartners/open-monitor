@@ -234,13 +234,10 @@ export default {
       })
     },
     setChartType (item) {
-      console.log(1)
       this.activeGridConfig = item
       if (!item._activeCharts) {
-        console.log(2)
         this.$root.JQ('#set_chart_type_Modal').modal('show')
       } else {
-        console.log(3)
         this.activeChartType = item.chartType
         this.editGrid()
       }
@@ -249,7 +246,6 @@ export default {
       this.activeChartType = activeChartType
     },
     confirmChartType () {
-      console.log(4)
       if (!this.activeChartType) {
         this.$Message.warning('请先设置图标类型！')
         return
@@ -258,11 +254,9 @@ export default {
       this.editGrid()
     },
     editGrid() {
-      console.log(5)
       this.modifyLayoutData().then((resViewData)=>{
         let parentRouteData = this.$route.params
         parentRouteData.cfg = JSON.stringify(resViewData) 
-        console.log(this.activeChartType)
         if (['line','bar'].includes(this.activeChartType)) {
           this.$router.push({name: 'editLineView', params:{templateData: parentRouteData, panal:this.activeGridConfig}})
         } else {
@@ -284,10 +278,7 @@ export default {
       this.$router.push({name: 'viewChart', params:{templateData: parentRouteData, panal:item, parentData: this.$route.params}}) 
     },
     async modifyLayoutData() {
-      console.log(6)
       var resViewData = []
-      console.log(this.layoutData)
-      console.log(this.viewData)
       this.layoutData.forEach((layoutDataItem) =>{
         let temp = {
           panalTitle: layoutDataItem.i,
@@ -298,13 +289,7 @@ export default {
         }
         this.viewData.forEach((i) =>{
           if (layoutDataItem.id === i.viewConfig.id) {
-            
-            console.log(7)
-
-            console.log(i)
-            console.log(this.activeChartType)
             this.activeChartType =  i.chartType === '' ? this.activeChartType : i.chartType
-            console.log(this.activeChartType)
             temp.panalUnit = i.panalUnit
             temp.query = i.query
             temp.chartType = this.activeChartType
@@ -312,7 +297,6 @@ export default {
         })
         resViewData.push(temp)
       })
-      console.log(resViewData)
       return resViewData
     },
     resizeEvent: function(i, newH, newW, newHPx, newWPx){
