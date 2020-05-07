@@ -33,87 +33,97 @@
               {{item.label}}</Option>
           </Select>
         </div>
-        <div class="marginbottom params-each" v-if="showInstance">
+        <div class="marginbottom params-each" v-if="!(['host','windows'].includes(endpointRejectModel.addRow.type))">
           <label class="col-md-2 label-name lable-name-select">{{$t('field.instance')}}:</label>
-          <input v-model="endpointRejectModel.addRow.instance" type="text" class="col-md-7 form-control model-input  c-dark">
+          <input 
+            v-validate="'required'"
+            v-model="endpointRejectModel.addRow.name" 
+            name="name"
+            :class="{ 'red-border': veeErrors.has('name') }"
+            type="text" 
+            class="col-md-7 form-control model-input c-dark"/>
           <label class="required-tip">*</label>
+          <label v-show="veeErrors.has('name')" class="is-danger">{{ veeErrors.first('name')}}</label>
         </div>
-        <div class="marginbottom params-each" v-if="['mysql','redis','jmx'].includes(endpointRejectModel.addRow.type)">
-          <label class="col-md-2 label-name lable-name-select">是否托管:</label>
-          <Checkbox v-model="endpointRejectModel.addRow.isEscrow"></Checkbox>
+        <div class="marginbottom params-each" v-if="['mysql','redis','java'].includes(endpointRejectModel.addRow.type)">
+          <label class="col-md-2 label-name lable-name-select">Agent Manager:</label>
+          <Checkbox v-model="endpointRejectModel.addRow.agent_manager"></Checkbox>
         </div>
-        <section v-if="['mysql','redis','jmx'].includes(endpointRejectModel.addRow.type) && endpointRejectModel.addRow.isEscrow">
-          <section v-if="endpointRejectModel.addRow.type === 'mysql'">
-            <div class="marginbottom params-each">
-              <label class="col-md-2 label-name lable-name-select">mysql_user:</label>
-              <input v-model="endpointRejectModel.addRow.mysql_user" type="text" class="col-md-7 form-control model-input  c-dark">
-              <label class="required-tip">*</label>
-            </div>
-            <div class="marginbottom params-each">
-              <label class="col-md-2 label-name lable-name-select">mysql_passwd:</label>
-              <input v-model="endpointRejectModel.addRow.mysql_passwd" type="text" class="col-md-7 form-control model-input  c-dark">
-              <label class="required-tip">*</label>
-            </div>
-          </section>
-          <section v-if="endpointRejectModel.addRow.type === 'redis'">
-            <div class="marginbottom params-each">
-              <label class="col-md-2 label-name lable-name-select">redis_passwd:</label>
-              <input v-model="endpointRejectModel.addRow.redis_passwd" type="text" class="col-md-7 form-control model-input  c-dark">
-              <label class="required-tip">*</label>
-            </div>
-          </section>
-          <section v-if="endpointRejectModel.addRow.type === 'jmx'">
-            <div class="marginbottom params-each">
-              <label class="col-md-2 label-name lable-name-select">jmx_user:</label>
-              <input v-model="endpointRejectModel.addRow.jmx_user" type="text" class="col-md-7 form-control model-input  c-dark">
-              <label class="required-tip">*</label>
-            </div>
-            <div class="marginbottom params-each">
-              <label class="col-md-2 label-name lable-name-select">jmx_passwd:</label>
-              <input v-model="endpointRejectModel.addRow.jmx_passwd" type="text" class="col-md-7 form-control model-input  c-dark">
-              <label class="required-tip">*</label>
-            </div>
-          </section>
+        <section v-if="['mysql','redis','java'].includes(endpointRejectModel.addRow.type) && endpointRejectModel.addRow.agent_manager">
+          <div v-if="['mysql','java'].includes(endpointRejectModel.addRow.type)" class="marginbottom params-each">
+            <label class="col-md-2 label-name lable-name-select">用户名:</label>
+            <input 
+              v-validate="'required'"
+              v-model="endpointRejectModel.addRow.user" 
+              name="user"
+              :class="{ 'red-border': veeErrors.has('user') }"
+              type="text" 
+              class="col-md-7 form-control model-input c-dark"/>
+            <label class="required-tip">*</label>
+            <label v-show="veeErrors.has('user')" class="is-danger">{{ veeErrors.first('user')}}</label>
+          </div>
+          <div class="marginbottom params-each">
+            <label class="col-md-2 label-name lable-name-select">密码:</label>
+            <input 
+              v-validate="'required'"
+              v-model="endpointRejectModel.addRow.password" 
+              name="password"
+              :class="{ 'red-border': veeErrors.has('password') }"
+              type="text" 
+              class="col-md-7 form-control model-input c-dark"/>
+            <label class="required-tip">*</label>
+            <label v-show="veeErrors.has('password')" class="is-danger">{{ veeErrors.first('password')}}</label>
+          </div>
         </section>
-        <div class="marginbottom params-each" v-if="endpointRejectModel.addRow.type === 'ping'">
-          <label class="col-md-2 label-name lable-name-select">defalut_ping:</label>
-          <Checkbox v-model="endpointRejectModel.addRow.defalut_ping"></Checkbox>
-        </div>
-        <div class="marginbottom params-each" v-if="endpointRejectModel.addRow.type === 'telnet'">
-          <label class="col-md-2 label-name lable-name-select">defalut_telnet:</label>
-          <Checkbox v-model="endpointRejectModel.addRow.defalut_telnet"></Checkbox>
-        </div>
         <section v-if="endpointRejectModel.addRow.type === 'http'">
           <div class="marginbottom params-each">
             <label class="col-md-2 label-name lable-name-select">Method:</label>
-            <input v-model="endpointRejectModel.addRow.instance" type="text" class="col-md-7 form-control model-input  c-dark">
+            <input 
+              v-validate="'required'"
+              v-model="endpointRejectModel.addRow.method" 
+              name="method"
+              :class="{ 'red-border': veeErrors.has('method') }"
+              type="text" 
+              class="col-md-7 form-control model-input c-dark"/>
             <label class="required-tip">*</label>
+            <label v-show="veeErrors.has('method')" class="is-danger">{{ veeErrors.first('method')}}</label>
           </div>
           <div class="marginbottom params-each">
             <label class="col-md-2 label-name lable-name-select">URL:</label>
-            <input v-model="endpointRejectModel.addRow.instance" type="text" class="col-md-7 form-control model-input  c-dark">
+            <input 
+              v-validate="'required'"
+              v-model="endpointRejectModel.addRow.url" 
+              name="url"
+              :class="{ 'red-border': veeErrors.has('url') }"
+              type="text" 
+              class="col-md-7 form-control model-input c-dark"/>
             <label class="required-tip">*</label>
-          </div>
-          <div class="marginbottom params-each">
-            <label class="col-md-2 label-name lable-name-select">defalut_http:</label>
-            <Checkbox v-model="endpointRejectModel.addRow.defalut_http"></Checkbox>
+            <label v-show="veeErrors.has('url')" class="is-danger">{{ veeErrors.first('url')}}</label>
           </div>
         </section>
         <div class="marginbottom params-each" v-if="endpointRejectModel.addRow.type === 'other'">
           <label class="col-md-2 label-name lable-name-select">exporter_type:</label>
-          <Checkbox v-model="endpointRejectModel.addRow.exporter_type"></Checkbox>
+          <input 
+            v-validate="'required'"
+            v-model="endpointRejectModel.addRow.exporter_type" 
+            name="exporter_type"
+            :class="{ 'red-border': veeErrors.has('exporter_type') }"
+            type="text" 
+            class="col-md-7 form-control model-input c-dark"/>
+          <label class="required-tip">*</label>
+          <label v-show="veeErrors.has('exporter_type')" class="is-danger">{{ veeErrors.first('exporter_type')}}</label>
         </div>
         <div class="marginbottom params-each" v-if="!(['ping','http'].includes(endpointRejectModel.addRow.type))">
           <label class="col-md-2 label-name lable-name-select">端口:</label>
           <input 
             v-validate="'required|isNumber'" 
-            v-model="endpointRejectModel.addRow.exporter_port" 
-            name="exporter_port"
-            :class="{ 'red-border': veeErrors.has('exporter_port') }"
+            v-model="endpointRejectModel.addRow.port" 
+            name="port"
+            :class="{ 'red-border': veeErrors.has('port') }"
             type="text" 
             class="col-md-7 form-control model-input  c-dark"/>
           <label class="required-tip">*</label>
-          <label v-show="veeErrors.has('exporter_port')" class="is-danger">{{ veeErrors.first('exporter_port')}}</label>
+          <label v-show="veeErrors.has('port')" class="is-danger">{{ veeErrors.first('port')}}</label>
         </div>
       </div>
     </ModalComponent>
@@ -347,30 +357,26 @@
           saveFunc: 'endpointRejectSave',
           config: [
             {name:'endpointReject',type:'slot'},
-            {label: 'field.ip', value: 'exporter_ip', placeholder: 'tips.required', v_validate: 'required:true|isIP', disabled: false, type: 'text'},
-            // {label: 'field.port', value: 'exporter_port', placeholder: 'tips.required', v_validate: 'required:true|isNumber', disabled: false, type: 'text'},
+            {label: 'field.ip', value: 'ip', placeholder: 'tips.required', v_validate: 'required:true|isIP', disabled: false, type: 'text'}
           ],
           addRow: {
-            instance: '',
+            name: '',
             type: 'host',
-            exporter_ip: null,
-            exporter_port: 9100,
-            isEscrow: false,
-            mysql_user: '',
-            mysql_passwd: '',
-            redis_passwd: '',
-            jmx_user: '',
-            jmx_passwd: '',
-            defalut_ping: false,
-            defalut_telnet: false,
-            defalut_http: false,
-            exporter_type: false
+            ip: null,
+            port: 9100,
+            agent_manager: false,
+            user: '',
+            password: '',
+            method: '',
+            url: '',
+            exporter_type: ''
           },
           endpointType: [
             {label:'host',value:'host'},
             {label:'mysql',value:'mysql'},
             {label:'redis',value:'redis'},
-            {label:'jmx',value:'jmx'},
+            {label:'java',value:'java'},
+            {label:'windows',value:'windows'},
             {label:'ping',value:'ping'},
             {label:'telnet',value:'telnet'},
             {label:'http',value:'http'},
@@ -429,11 +435,6 @@
       }
       this.initData(this.pageConfig.CRUD, this.pageConfig)
     },
-    computed:{
-      showInstance: function(){
-        return this.endpointRejectModel.addRow.type === 'host' ? false: true
-      }
-    },
     filters: {
       interceptParams (val) {
         return interceptParams(val,55)
@@ -442,26 +443,25 @@
     methods: {
       typeChange (type) {
         this.endpointRejectModel.addRow = Object.assign(this.endpointRejectModel.addRow, {
-          instance: '',
-          exporter_ip: null,
-          exporter_port: 9100,
-          isEscrow: false,
-          mysql_user: '',
-          mysql_passwd: '',
-          redis_passwd: '',
-          jmx_user: '',
-          jmx_passwd: '',
-          defalut_ping: false,
-          defalut_telnet: false,
-          defalut_http: false,
-          exporter_type: false
+          name: '',
+          type,
+          ip: null,
+          port: 9100,
+          agent_manager: false,
+          user: '',
+          password: '',
+          method: '',
+          url: '',
+          exporter_type: ''
         })
         const typeToPort = {
           host: 9100,
           mysql: 9104,
-          redis: 9121
+          redis: 9121,
+          java: 9151,
+          windows: 9182
         }
-        this.endpointRejectModel.addRow.exporter_port = typeToPort[type]
+        this.endpointRejectModel.addRow.port = typeToPort[type]
       },
       initData (url= this.pageConfig.CRUD, params) {
         this.$root.$tableUtil.initTable(this, 'GET', url, params)
@@ -551,13 +551,18 @@
         this.$root.JQ('#endpoint_reject_model').modal('show')
       },
       endpointRejectSave () {
-        this.endpointRejectModel.addRow.exporter_port += ''
+        this.endpointRejectModel.addRow.port += ''
         let params= this.$root.$validate.isEmptyReturn_JSON(this.endpointRejectModel.addRow)
-        this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.endpointManagement.register.api, params, () => {
-          this.$root.$validate.emptyJson(this.endpointRejectModel.addRow)
-          this.$root.JQ('#endpoint_reject_model').modal('hide')
-          this.$Message.success(this.$t('tips.success'))
-          this.initData(this.pageConfig.CRUD, this.pageConfig)
+        console.log(params)
+        this.$validator.validate().then(result => {
+          console.log(result)
+          // if (!result) return
+          // this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.endpointManagement.register.api, params, () => {
+          //   this.$root.$validate.emptyJson(this.endpointRejectModel.addRow)
+          //   this.$root.JQ('#endpoint_reject_model').modal('hide')
+          //   this.$Message.success(this.$t('tips.success'))
+          //   this.initData(this.pageConfig.CRUD, this.pageConfig)
+          // })
         })
       },
       processManagement (rowData) {
