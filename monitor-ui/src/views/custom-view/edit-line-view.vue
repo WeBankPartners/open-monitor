@@ -192,11 +192,7 @@ export default {
         this.viewData = JSON.parse(this.$route.params.templateData.cfg)
         this.viewData.forEach((itemx, index) => {
           if (itemx.viewConfig.id === this.$route.params.panal.id) {
-            if (itemx.viewConfig._activeCharts) {
-              this.templateQuery.chartType = itemx.chartType
-            } else {
-              this.templateQuery.chartType = 'line'
-            }
+            this.templateQuery.chartType = itemx.chartType
             this.panalIndex = index
             this.panalData = itemx
             this.initPanal()
