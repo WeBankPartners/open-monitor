@@ -46,12 +46,12 @@
           <label v-show="veeErrors.has('name')" class="is-danger">{{ veeErrors.first('name')}}</label>
         </div>
         <div class="marginbottom params-each" v-if="['mysql','redis','java'].includes(endpointRejectModel.addRow.type)">
-          <label class="col-md-2 label-name lable-name-select">Agent Manager:</label>
+          <label class="col-md-2 label-name lable-name-select">{{$t('button.trusteeship')}}:</label>
           <Checkbox v-model="endpointRejectModel.addRow.agent_manager"></Checkbox>
         </div>
         <section v-if="['mysql','redis','java'].includes(endpointRejectModel.addRow.type) && endpointRejectModel.addRow.agent_manager">
           <div v-if="['mysql','java'].includes(endpointRejectModel.addRow.type)" class="marginbottom params-each">
-            <label class="col-md-2 label-name lable-name-select">用户名:</label>
+            <label class="col-md-2 label-name lable-name-select">{{$t('button.username')}}:</label>
             <input 
               v-validate="'required'"
               v-model="endpointRejectModel.addRow.user" 
@@ -63,7 +63,7 @@
             <label v-show="veeErrors.has('user')" class="is-danger">{{ veeErrors.first('user')}}</label>
           </div>
           <div class="marginbottom params-each">
-            <label class="col-md-2 label-name lable-name-select">密码:</label>
+            <label class="col-md-2 label-name lable-name-select">{{$t('button.password')}}:</label>
             <input 
               v-validate="'required'"
               v-model="endpointRejectModel.addRow.password" 
@@ -102,7 +102,7 @@
           </div>
         </section>
         <div class="marginbottom params-each" v-if="endpointRejectModel.addRow.type === 'other'">
-          <label class="col-md-2 label-name lable-name-select">exporter_type:</label>
+          <label class="col-md-2 label-name lable-name-select">exporter_type: </label>
           <input 
             v-validate="'required'"
             v-model="endpointRejectModel.addRow.exporter_type" 
@@ -114,7 +114,7 @@
           <label v-show="veeErrors.has('exporter_type')" class="is-danger">{{ veeErrors.first('exporter_type')}}</label>
         </div>
         <div class="marginbottom params-each" v-if="!(['ping','http'].includes(endpointRejectModel.addRow.type))">
-          <label class="col-md-2 label-name lable-name-select">端口:</label>
+          <label class="col-md-2 label-name lable-name-select">{{$t('button.port')}}:</label>
           <input 
             v-validate="'required|isNumber'" 
             v-model="endpointRejectModel.addRow.port" 
@@ -548,21 +548,29 @@
       },
       endpointReject () {
         this.endpointRejectModel.addRow.type = 'host'
+        this.endpointRejectModel.addRow.port = 9100
         this.$root.JQ('#endpoint_reject_model').modal('show')
       },
       endpointRejectSave () {
         this.endpointRejectModel.addRow.port += ''
         let params= this.$root.$validate.isEmptyReturn_JSON(this.endpointRejectModel.addRow)
-        console.log(params)
         this.$validator.validate().then(result => {
-          console.log(result)
-          // if (!result) return
-          // this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.endpointManagement.register.api, params, () => {
-          //   this.$root.$validate.emptyJson(this.endpointRejectModel.addRow)
-          //   this.$root.JQ('#endpoint_reject_model').modal('hide')
-          //   this.$Message.success(this.$t('tips.success'))
-          //   this.initData(this.pageConfig.CRUD, this.pageConfig)
-          // })
+          if (!result) return
+          if (this.endpointRejectModel.addRow.exporter_type && 
+             ['host','mysql','redis','java','windows','ping','telnet','http'].includes(this.endpointRejectModel.addRow.exporter_type)) {
+            this.$Message.warning('Export port existed!')
+            return
+          } else {
+            if (this.endpointRejectModel.addRow.exporter_type) {
+              params.type = this.endpointRejectModel.addRow.exporter_type
+            }
+          }
+          this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.endpointManagement.register.api, params, () => {
+            this.$root.$validate.emptyJson(this.endpointRejectModel.addRow)
+            this.$root.JQ('#endpoint_reject_model').modal('hide')
+            this.$Message.success(this.$t('tips.success'))
+            this.initData(this.pageConfig.CRUD, this.pageConfig)
+          })
         })
       },
       processManagement (rowData) {
