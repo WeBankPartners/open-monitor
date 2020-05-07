@@ -19,6 +19,8 @@ type returnData struct {
 	metricList  []string
 	defaultGroup  string
 	validateMessage  string
+	fetchMetric bool
+	addDefaultGroup bool
 	err  error
 }
 
@@ -31,6 +33,7 @@ func RegisterAgentNew(c *gin.Context)  {
 			return
 		}
 		if err != nil {
+			mid.LogError("Register agent fail ", err)
 			mid.ReturnError(c, "Register agent error ", err)
 			return
 		}
@@ -58,7 +61,7 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage string,err error) 
 		case "host": rData = hostRegister(param)
 		case "mysql": rData = mysqlRegister(param)
 		case "redis": rData = redisRegister(param)
-		case "jmx": rData = jmxRegister(param)
+		case "java": rData = javaRegister(param)
 		case "ping": rData = pingRegister(param)
 		case "telnet": rData = telnetRegister(param)
 		case "http": rData = httpRegister(param)
@@ -150,6 +153,7 @@ func hostRegister(param m.RegisterParamNew) returnData {
 	result.endpoint.EndpointVersion = release
 	result.endpoint.ExportVersion = exportVersion
 	result.defaultGroup = "default_host_group"
+	result.fetchMetric = true
 	return result
 }
 
@@ -218,6 +222,7 @@ func mysqlRegister(param m.RegisterParamNew) returnData {
 	result.endpoint.Address = fmt.Sprintf("%s:%s", param.Ip, param.Port)
 	result.endpoint.AddressAgent = address
 	result.defaultGroup = "default_mysql_group"
+	result.fetchMetric = param.FetchMetric
 	return result
 }
 
@@ -289,27 +294,27 @@ func redisRegister(param m.RegisterParamNew) returnData {
 	return result
 }
 
-func jmxRegister(param m.RegisterParamNew) returnData {
+func javaRegister(param m.RegisterParamNew) returnData {
 	var result returnData
 	var err error
 	if param.Name == "" || param.Ip == "" || param.Port == "" {
-		result.validateMessage = "Jmx instance name and ip and post can not empty "
+		result.validateMessage = "Java instance name and ip and post can not empty "
 		return result
 	}
 	var binPath,address string
 	if param.AgentManager {
 		if param.User == "" || param.Password == "" {
-			result.validateMessage = "Jmx user and password can not empty"
+			result.validateMessage = "Java user and password can not empty"
 			return result
 		}
 		for _,v := range m.Config().Agent {
-			if v.AgentType == param.Type {
+			if v.AgentType == "tomcat" {
 				binPath = v.AgentBin
 				break
 			}
 		}
 		if binPath == "" {
-			result.err = fmt.Errorf("Jmx agnet bin can not found in config ")
+			result.err = fmt.Errorf("Java agnet bin can not found in config ")
 			return result
 		}
 		address,err = prom.DeployAgent(param.Type,param.Name,binPath,param.Ip,param.Port,param.User,param.Password,agentManagerServer)
@@ -353,7 +358,7 @@ func jmxRegister(param m.RegisterParamNew) returnData {
 	result.endpoint.Step = prometheusStep
 	result.endpoint.Address = fmt.Sprintf("%s:%s", param.Ip, param.Port)
 	result.endpoint.AddressAgent = address
-	result.defaultGroup = "default_jmx_group"
+	result.defaultGroup = "default_java_group"
 	return result
 }
 
@@ -402,7 +407,7 @@ func httpRegister(param m.RegisterParamNew) returnData {
 		result.validateMessage = "Http check name/ip/url/method can not empty "
 		return result
 	}
-	result.endpoint.Guid = fmt.Sprint("%s_%s_%s", param.Name, param.Ip, param.Type)
+	result.endpoint.Guid = fmt.Sprintf("%s_%s_%s", param.Name, param.Ip, param.Type)
 	result.endpoint.Name = param.Name
 	result.endpoint.Ip = param.Ip
 	result.endpoint.Address = fmt.Sprintf("%s:%s", param.Ip, param.Port)
