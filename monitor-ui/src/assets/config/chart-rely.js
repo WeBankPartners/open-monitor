@@ -68,7 +68,8 @@ export const drawChart = function(that,config,userConfig) {
     dataZoom: true,
     clear: false,
     editTitle: false,
-    lineBarSwitch: false
+    lineBarSwitch: false,
+    chartType: 'line'
   }
   let finalConfig = Object.assign(originConfig, userConfig)
   // 基于准备好的dom，初始化echarts实例
@@ -227,7 +228,11 @@ export const drawChart = function(that,config,userConfig) {
     ],
     series: config.series
   }
-
+  if (finalConfig.chartType !== config.series[0]) {
+    config.series.forEach(se => {
+      se.type = finalConfig.chartType
+    })
+  }
   if (finalConfig.title) {
     option.title.text = config.title
   }
