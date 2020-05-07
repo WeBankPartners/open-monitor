@@ -20,6 +20,7 @@ type returnData struct {
 	defaultGroup  string
 	validateMessage  string
 	storeMetric bool
+	fetchMetric bool
 	addDefaultGroup bool
 	err  error
 }
@@ -75,7 +76,7 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage string,err error) 
 	if err != nil {
 		return validateMessage,err
 	}
-	if param.FetchMetric {
+	if rData.fetchMetric {
 		if rData.storeMetric {
 			err = db.RegisterEndpointMetric(rData.endpoint.Id, rData.metricList)
 			if err != nil {
@@ -92,7 +93,7 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage string,err error) 
 			return validateMessage,err
 		}
 	}
-	if param.AddDefaultGroup {
+	if rData.addDefaultGroup {
 		if param.DefaultGroupName != "" {
 			rData.defaultGroup = param.DefaultGroupName
 		}
@@ -117,34 +118,32 @@ func hostRegister(param m.RegisterParamNew) returnData {
 		return result
 	}
 	var hostname,sysname,release,exportVersion string
-	if param.FetchMetric {
-		err,strList := prom.GetEndpointData(param.Ip, param.Port, []string{"node"}, []string{})
-		if err != nil {
-			result.err = err
-			return result
-		}
-		if len(strList) == 0 {
-			result.err = fmt.Errorf("Can't get anything from http://%s:%d/metrics ", param.Ip, &param.Port)
-			return result
-		}
-		for _,v := range strList {
-			if strings.Contains(v, "node_uname_info{") {
-				if strings.Contains(v, "nodename") {
-					hostname = strings.Split(strings.Split(v, "nodename=\"")[1], "\"")[0]
-				}
-				if strings.Contains(v, "sysname") {
-					sysname = strings.Split(strings.Split(v, "sysname=\"")[1], "\"")[0]
-				}
-				if strings.Contains(v, "release") {
-					release = strings.Split(strings.Split(v, "release=\"")[1], "\"")[0]
-				}
-			}
-			if strings.Contains(v, "node_exporter_build_info{") {
-				exportVersion = strings.Split(strings.Split(v, ",version=\"")[1], "\"")[0]
-			}
-		}
-		result.metricList = strList
+	err,strList := prom.GetEndpointData(param.Ip, param.Port, []string{"node"}, []string{})
+	if err != nil {
+		result.err = err
+		return result
 	}
+	if len(strList) == 0 {
+		result.err = fmt.Errorf("Can't get anything from http://%s:%d/metrics ", param.Ip, &param.Port)
+		return result
+	}
+	for _,v := range strList {
+		if strings.Contains(v, "node_uname_info{") {
+			if strings.Contains(v, "nodename") {
+				hostname = strings.Split(strings.Split(v, "nodename=\"")[1], "\"")[0]
+			}
+			if strings.Contains(v, "sysname") {
+				sysname = strings.Split(strings.Split(v, "sysname=\"")[1], "\"")[0]
+			}
+			if strings.Contains(v, "release") {
+				release = strings.Split(strings.Split(v, "release=\"")[1], "\"")[0]
+			}
+		}
+		if strings.Contains(v, "node_exporter_build_info{") {
+			exportVersion = strings.Split(strings.Split(v, ",version=\"")[1], "\"")[0]
+		}
+	}
+	result.metricList = strList
 	result.endpoint.Guid = fmt.Sprintf("%s_%s_%s", hostname, param.Ip, param.Type)
 	result.endpoint.Name = hostname
 	result.endpoint.Ip = param.Ip
@@ -155,7 +154,9 @@ func hostRegister(param m.RegisterParamNew) returnData {
 	result.endpoint.EndpointVersion = release
 	result.endpoint.ExportVersion = exportVersion
 	result.defaultGroup = "default_host_group"
+	result.addDefaultGroup = true
 	result.storeMetric = true
+	result.fetchMetric = true
 	return result
 }
 
@@ -224,6 +225,8 @@ func mysqlRegister(param m.RegisterParamNew) returnData {
 	result.endpoint.Address = fmt.Sprintf("%s:%s", param.Ip, param.Port)
 	result.endpoint.AddressAgent = address
 	result.defaultGroup = "default_mysql_group"
+	result.addDefaultGroup = true
+	result.fetchMetric = true
 	return result
 }
 
@@ -292,6 +295,8 @@ func redisRegister(param m.RegisterParamNew) returnData {
 	result.endpoint.Address = fmt.Sprintf("%s:%s", param.Ip, param.Port)
 	result.endpoint.AddressAgent = address
 	result.defaultGroup = "default_redis_group"
+	result.addDefaultGroup = true
+	result.fetchMetric = true
 	return result
 }
 
@@ -360,6 +365,8 @@ func javaRegister(param m.RegisterParamNew) returnData {
 	result.endpoint.Address = fmt.Sprintf("%s:%s", param.Ip, param.Port)
 	result.endpoint.AddressAgent = address
 	result.defaultGroup = "default_java_group"
+	result.addDefaultGroup = true
+	result.fetchMetric = true
 	return result
 }
 
@@ -376,6 +383,7 @@ func pingRegister(param m.RegisterParamNew) returnData {
 	result.endpoint.ExportType = param.Type
 	result.endpoint.Step = prometheusStep
 	result.defaultGroup = "default_ping_group"
+	result.addDefaultGroup = true
 	return result
 }
 
@@ -392,6 +400,7 @@ func telnetRegister(param m.RegisterParamNew) returnData {
 	result.endpoint.ExportType = param.Type
 	result.endpoint.Step = prometheusStep
 	result.defaultGroup = "default_telnet_group"
+	result.addDefaultGroup = true
 	// store to db -> endpoint_telnet
 	var eto []*m.EndpointTelnetObj
 	eto = append(eto, &m.EndpointTelnetObj{Port:param.Port, Note:""})
@@ -415,6 +424,7 @@ func httpRegister(param m.RegisterParamNew) returnData {
 	result.endpoint.ExportType = param.Type
 	result.endpoint.Step = prometheusStep
 	result.defaultGroup = "default_http_group"
+	result.addDefaultGroup = true
 	var eho []*m.EndpointHttpTable
 	eho = append(eho, &m.EndpointHttpTable{EndpointGuid:result.endpoint.Guid, Url:param.Url, Method:param.Method})
 	err := db.UpdateEndpointHttp(eho)
@@ -461,6 +471,8 @@ func windowsRegister(param m.RegisterParamNew) returnData {
 	result.endpoint.Step = prometheusStep
 	result.endpoint.EndpointVersion = release
 	result.defaultGroup = "default_windows_group"
+	result.addDefaultGroup = true
+	result.fetchMetric = true
 	return result
 }
 
@@ -496,5 +508,6 @@ func otherExporterRegister(param m.RegisterParamNew) returnData {
 	result.endpoint.ExportType = param.Type
 	result.endpoint.Address = fmt.Sprintf("%s:%s", param.Ip, param.Port)
 	result.endpoint.Step = prometheusStep
+	result.fetchMetric = true
 	return result
 }
