@@ -11,6 +11,17 @@
     </div>
     <div class="zone zone-config c-dark">
       <div class="tool-save">
+        <div class="condition">
+          <Select v-model="templateQuery.chartType" @on-change="switchChartType">
+            <Option
+              v-for="(option, index) in chartTypeOption"
+              :value="option.value"
+              :key="index"
+            >
+              {{option.label}}
+            </Option>
+          </Select>
+        </div>
         <button class="btn btn-sm btn-confirm-f" @click="saveConfig">{{$t('button.saveConfig')}}</button>
         <button class="btn btn-sm btn-cancle-f" @click="goback()">{{$t('button.back')}}</button>
       </div>
@@ -77,13 +88,13 @@
                     />
                   </div>
                 </li>
-              <li>
-                <div class="condition condition-title">{{$t('field.unit')}}</div>
-                <div class="condition">
-                  <Input v-model="panalUnit" placeholder="Enter something..." style="width: 300px" />
-                </div>
-                <button class="btn btn-cancle-f" @click="addQuery()">{{$t('button.addConfig')}}</button>
-              </li>
+                <li>
+                  <div class="condition condition-title">{{$t('field.unit')}}</div>
+                  <div class="condition">
+                    <Input v-model="panalUnit" placeholder="Enter something..." style="width: 300px" />
+                  </div>
+                  <button class="btn btn-cancle-f" @click="addQuery()">{{$t('button.addConfig')}}</button>
+                </li>
               </ul>
             </div>
         </section>
@@ -110,10 +121,15 @@ export default {
       elId: null,
       noDataTip: false,
       templateQuery: {
-        endpoint: "",
-        metricLabel: "",
-        metric: ""
+        endpoint: '',
+        metricLabel: '',
+        metric: '',
+        chartType: '',
       },
+      chartTypeOption: [
+        {label: '线性图', value: 'line'},
+        {label: '柱状图', value: 'bar'}
+      ],
       chartQueryList: [
         // {
         //   endpoint: '',
@@ -154,7 +170,7 @@ export default {
           'POST',this.$root.apiCenter.metricConfigView.api, params,
           responseData => {
             responseData.yaxis.unit = this.panalUnit
-            readyToDraw(this,responseData, 1, { eye: false })
+            readyToDraw(this,responseData, 1, { eye: false, chartType: this.templateQuery.chartType})
           }
         )
       },
@@ -176,6 +192,7 @@ export default {
         this.viewData = JSON.parse(this.$route.params.templateData.cfg)
         this.viewData.forEach((itemx, index) => {
           if (itemx.viewConfig.id === this.$route.params.panal.id) {
+            this.templateQuery.chartType = itemx.chartType
             this.panalIndex = index
             this.panalData = itemx
             this.initPanal()
@@ -186,6 +203,26 @@ export default {
     }
   },
   methods: {
+    switchChartType () {
+      let params = []
+      this.chartQueryList.forEach(item => {
+        params.push(
+          {
+            endpoint: item.endpoint,
+            prom_ql: item.metric,
+            metric: item.metricLabel,
+            time: "-1800"
+          }
+        )
+      })
+      this.$root.$httpRequestEntrance.httpRequestEntrance(
+        'POST',this.$root.apiCenter.metricConfigView.api, params,
+        responseData => {
+          responseData.yaxis.unit = this.panalUnit
+          readyToDraw(this,responseData, 1, { eye: false, chartType: this.templateQuery.chartType})
+        }
+      )
+    },
     choiceColor (type,index) {
       let color = ''
       // eslint-disable-next-line no-prototype-builtins
@@ -221,7 +258,7 @@ export default {
           'POST',this.$root.apiCenter.metricConfigView.api, params,
           responseData => {
             responseData.yaxis.unit = this.panalUnit
-            readyToDraw(this,responseData, 1, { eye: false, lineBarSwitch: true})
+            readyToDraw(this,responseData, 1, { eye: false, lineBarSwitch: true, chartType: this.templateQuery.chartType})
           }
         )
       }
@@ -278,7 +315,8 @@ export default {
       this.templateQuery = {
         endpoint: "",
         metricLabel: "",
-        metric: ""
+        metric: "",
+        chartType: this.templateQuery.chartType
       }
       this.options = []
       this.metricList = []
@@ -306,7 +344,6 @@ export default {
       let query = []
       this.chartQueryList.forEach(item => {
         query.push({
-          type: 'line',
           endpoint: item.endpoint,
           metricLabel: item.metricLabel,
           metric: item.metric
@@ -317,6 +354,7 @@ export default {
       const temp = {
         panalTitle: this.panalTitle,
         panalUnit: this.panalUnit,
+        chartType: this.templateQuery.chartType,
         query: query,
         viewConfig: panal
       }
@@ -360,7 +398,6 @@ li {
 }
 .zone-chart-title {
   padding: 20px 40%;
-  position: absolute;
   font-size: 14px;
 }
 .zone-config {

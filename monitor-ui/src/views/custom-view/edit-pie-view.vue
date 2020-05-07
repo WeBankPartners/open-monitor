@@ -247,8 +247,9 @@ export default {
       const temp = {
         panalTitle: this.panalTitle,
         panalUnit: this.panalUnit,
+        chartType: 'pie',
         query: [{
-          type: 'pie',
+          chartType: 'pie',
           endpoint: this.templateQuery.endpoint,
           metric: this.templateQuery.metricLabel,  
         }],
@@ -289,7 +290,6 @@ li {
 }
 .zone-chart-title {
   padding: 20px 40%;
-  position: absolute;
   font-size: 14px;
 }
 .zone-config {
