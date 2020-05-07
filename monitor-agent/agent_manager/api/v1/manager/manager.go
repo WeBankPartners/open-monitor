@@ -124,16 +124,25 @@ func (h *httpResponse) byte() []byte {
 }
 
 func illegalPath(input string) bool {
+	if input == "" {
+		return true
+	}
 	var regPath = regexp.MustCompile(`^\/?([\w|\.|\-]+\/?)+$`)
 	return regPath.MatchString(input)
 }
 
 func illegalName(input string) bool {
+	if input == "" {
+		return true
+	}
 	var regPath = regexp.MustCompile(`^\w+$`)
 	return regPath.MatchString(input)
 }
 
 func illegalGuid(input string) bool {
+	if input == "" {
+		return true
+	}
 	var regPath = regexp.MustCompile(`^[\w|\.|\-]+$`)
 	return regPath.MatchString(input)
 }
