@@ -53,8 +53,8 @@
           </div>
           <section>
             <div v-for="(chartInfo,chartIndex) in item._activeCharts" :key="chartIndex">
-              <CustomChart v-if="chartInfo.type === 'line'" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomChart>
-              <CustomPieChart v-if="chartInfo.type === 'pie'" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomPieChart>
+              <CustomChart v-if="['line','bar'].includes(chartInfo.chartType)" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomChart>
+              <CustomPieChart v-if="chartInfo.chartType === 'pie'" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomPieChart>
             </div>
           </section>
         </grid-item>
@@ -133,7 +133,7 @@ export default {
           panalUnit: item.panalUnit,
           elId: item.viewConfig.id,
           chartParams: params,
-          type: item.query[0].type                                                      
+          chartType: item.chartType                                                     
         })
         item.viewConfig._activeCharts = _activeCharts
         tmp.push(item.viewConfig)
