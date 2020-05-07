@@ -83,11 +83,9 @@ export default {
         this.$root.$httpRequestEntrance.httpRequestEntrance(
           'POST',this.$root.apiCenter.metricConfigView.api, params,
           responseData => {
-          
             responseData.yaxis.unit =  this.panalUnit  
-            const chartConfig = {eye: false, lineBarSwitch: true}
+            const chartConfig = {eye: false, lineBarSwitch: true, chartType: this.panalData.chartType}
             readyToDraw(this,responseData, 1, chartConfig)
-
           }
         );
       }
@@ -108,7 +106,6 @@ export default {
 }
 .zone-chart-title {
   padding: 20px 40%;
-  position: absolute;
   font-size: 14px;
 }
 
