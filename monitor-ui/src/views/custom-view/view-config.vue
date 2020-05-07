@@ -238,7 +238,7 @@ export default {
       if (!item._activeCharts) {
         this.$root.JQ('#set_chart_type_Modal').modal('show')
       } else {
-        this.activeChartType = item.chartType
+        this.activeChartType = item._activeCharts[0].type
         this.editGrid()
       }
     },
@@ -256,7 +256,7 @@ export default {
     editGrid() {
       this.modifyLayoutData().then((resViewData)=>{
         let parentRouteData = this.$route.params
-        parentRouteData.cfg = JSON.stringify(resViewData) 
+        parentRouteData.cfg = JSON.stringify(resViewData)
         if (['line','bar'].includes(this.activeChartType)) {
           this.$router.push({name: 'editLineView', params:{templateData: parentRouteData, panal:this.activeGridConfig}})
         } else {
@@ -283,16 +283,16 @@ export default {
         let temp = {
           panalTitle: layoutDataItem.i,
           panalUnit: '',
-          chartType: '',
+          chartType: this.activeChartType,
           query: [],
           viewConfig: layoutDataItem
         }
+
         this.viewData.forEach((i) =>{
           if (layoutDataItem.id === i.viewConfig.id) {
-            this.activeChartType =  i.chartType === '' ? this.activeChartType : i.chartType
             temp.panalUnit = i.panalUnit
             temp.query = i.query
-            temp.chartType = this.activeChartType
+            temp.chartType = i.chartType
           }
         })
         resViewData.push(temp)
@@ -311,6 +311,7 @@ export default {
               panalTitle: i.panalTitle,
               panalUnit: i.panalUnit,
               query: i.query,
+              chartType: i.chartType,
               viewConfig: layoutDataItem
             })
           }
