@@ -717,7 +717,7 @@ func GetEndpointMetric(c *gin.Context)  {
 		mid.ReturnValidateFail(c, "Param id validate failed")
 		return
 	}
-	err,data := db.GetEndpointMetric(id)
+	err,data := db.GetEndpointMetricNew(id)
 	if err != nil {
 		mid.ReturnError(c, "Get endpoint metric failed", err)
 		return
