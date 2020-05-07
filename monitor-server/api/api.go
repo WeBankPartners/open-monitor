@@ -112,6 +112,7 @@ func InitHttpServer(exportAgent bool) {
 		agentApi := authApi.Group("/agent")
 		{
 			agentApi.POST("/register", agent.RegisterAgent)
+			agentApi.POST("/register_new", agent.RegisterAgentNew)
 			agentApi.GET("/deregister", agent.DeregisterAgent)
 			agentApi.POST("/export/register/:name", agent.ExportAgent)
 			agentApi.POST("/export/deregister/:name", agent.ExportAgent)
