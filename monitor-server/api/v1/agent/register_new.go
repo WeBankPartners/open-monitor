@@ -19,7 +19,7 @@ type returnData struct {
 	metricList  []string
 	defaultGroup  string
 	validateMessage  string
-	fetchMetric bool
+	storeMetric bool
 	addDefaultGroup bool
 	err  error
 }
@@ -76,9 +76,11 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage string,err error) 
 		return validateMessage,err
 	}
 	if param.FetchMetric {
-		err = db.RegisterEndpointMetric(rData.endpoint.Id, rData.metricList)
-		if err != nil {
-			return validateMessage,err
+		if rData.storeMetric {
+			err = db.RegisterEndpointMetric(rData.endpoint.Id, rData.metricList)
+			if err != nil {
+				return validateMessage, err
+			}
 		}
 		tmpIp,tmpPort := param.Ip,param.Port
 		if strings.Contains(rData.endpoint.AddressAgent, ":") {
@@ -153,7 +155,7 @@ func hostRegister(param m.RegisterParamNew) returnData {
 	result.endpoint.EndpointVersion = release
 	result.endpoint.ExportVersion = exportVersion
 	result.defaultGroup = "default_host_group"
-	result.fetchMetric = true
+	result.storeMetric = true
 	return result
 }
 
@@ -222,7 +224,6 @@ func mysqlRegister(param m.RegisterParamNew) returnData {
 	result.endpoint.Address = fmt.Sprintf("%s:%s", param.Ip, param.Port)
 	result.endpoint.AddressAgent = address
 	result.defaultGroup = "default_mysql_group"
-	result.fetchMetric = param.FetchMetric
 	return result
 }
 
