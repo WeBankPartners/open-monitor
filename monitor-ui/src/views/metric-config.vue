@@ -10,10 +10,10 @@
         clearable
         remote
         :label-in-value="true" 
-        @on-change="getOriginalMetricList"
         :placeholder="$t('placeholder.input')"
         :remote-method="getEndpointList"
         >
+                <!-- @on-change="getOriginalMetricList" -->
         <Option v-for="(option, index) in endpointList" :value="option.option_value" :key="index">
           <Tag :color="endpointTag[option.option_type_name] || choiceColor(option.option_type_name, index)" class="tag-width">{{option.option_type_name}}</Tag>{{option.option_text}}</Option>
       </Select>
@@ -134,6 +134,7 @@ export default {
       } else {
         this.endpointObject = {}
       }
+      this.getOriginalMetricList()
     },
     changeIP () {
       this.metricSelected = []
