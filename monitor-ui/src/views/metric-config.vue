@@ -209,13 +209,18 @@ export default {
     selectOriginalMetric(item) {
       if (item.key.indexOf('add_')> -1) {
         for (let i=0; i< this.editMetric.length; i++) {
-          if (item.key === this.editMetric[i].key) 
-          this.editMetric[i].value = this.editMetric[i].value + this.originalMetricList[item.key].model
+          if (item.key === this.editMetric[i].key)
+          if (this.originalMetricList[item.key].model) {
+            this.editMetric[i].value = this.editMetric[i].value + this.originalMetricList[item.key].model
+          }
+          
         }
       } else {
         for (let i=0; i< this.metricSelectedOptions.length; i++) {
           if (item.key === this.metricSelectedOptions[i].key) 
-          this.metricSelectedOptions[i].value = this.metricSelectedOptions[i].value + this.originalMetricList[item.key].model
+          if (this.originalMetricList[item.key].model) {
+            this.metricSelectedOptions[i].value = this.metricSelectedOptions[i].value + this.originalMetricList[item.key].model
+          }
         }
       }
     },
