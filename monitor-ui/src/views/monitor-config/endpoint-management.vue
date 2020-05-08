@@ -121,7 +121,7 @@
             name="port"
             :class="{ 'red-border': veeErrors.has('port') }"
             type="text" 
-            class="col-md-7 form-control model-input  c-dark"/>
+            class="col-md-7 form-control model-input c-dark"/>
           <label class="required-tip">*</label>
           <label v-show="veeErrors.has('port')" class="is-danger">{{ veeErrors.first('port')}}</label>
         </div>

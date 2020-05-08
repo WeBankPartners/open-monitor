@@ -112,17 +112,37 @@
               <Option v-for="item in modelConfig.thresholdList" :value="item.value" :key="item.value">{{ item.label }}</Option>
             </Select>
             <div class="search-input-content" style="margin-left: 8px">
-              <input v-model="modelConfig.thresholdValue" type="text" class="search-input" />
+              <input 
+                v-validate="'required|isNumber'" 
+                v-model="modelConfig.thresholdValue" 
+                name="thresholdValue"
+                :class="{ 'red-border': veeErrors.has('thresholdValue') }"
+                type="text" 
+                class="form-control model-input search-input c-dark"/>
+              <label class="required-tip">*</label>
+            </div>
+            <div style="margin-left:120px">
+              <label v-show="veeErrors.has('thresholdValue')" class="is-danger">{{ veeErrors.first('thresholdValue')}}</label>
             </div>
           </div>
           <div class="marginbottom params-each">
             <label class="col-md-2 label-name lable-name-select">{{$t('tableKey.s_last')}}:</label>
             <div class="search-input-content" style="margin-right: 8px">
-              <input v-model="modelConfig.lastValue" type="text" class="search-input" />
+              <input 
+                v-validate="'required|isNumber'" 
+                v-model="modelConfig.lastValue" 
+                name="lastValue"
+                :class="{ 'red-border': veeErrors.has('lastValue') }"
+                type="text" 
+                class="form-control model-input search-input c-dark"/>
+              <label class="required-tip">*</label>
             </div>
             <Select v-model="modelConfig.last" style="width:100px">
               <Option v-for="item in modelConfig.lastList" :value="item.value" :key="item.value">{{ item.label }}</Option>
             </Select>
+            <div style="margin-left:10px">
+              <label v-show="veeErrors.has('lastValue')" class="is-danger">{{ veeErrors.first('lastValue')}}</label>
+            </div>
           </div>
           <div class="marginbottom params-each">
             <label class="col-md-2 label-name lable-name-select">{{$t('tableKey.s_priority')}}:</label>
@@ -384,14 +404,14 @@ export default {
       })
     },
     formValidate () {
-      if (this.$root.$validate.isEmpty_reset(this.modelConfig.thresholdValue)) {
-        this.$Message.warning(this.$t('tableKey.threshold')+this.$t('tips.required'))
-        return false 
-      }
-      if (this.$root.$validate.isEmpty_reset(this.modelConfig.lastValue)) {
-        this.$Message.warning(this.$t('tableKey.s_last')+this.$t('tips.required'))
-        return false 
-      }
+      // if (this.$root.$validate.isEmpty_reset(this.modelConfig.thresholdValue)) {
+      //   this.$Message.warning(this.$t('tableKey.threshold')+this.$t('tips.required'))
+      //   return false 
+      // }
+      // if (this.$root.$validate.isEmpty_reset(this.modelConfig.lastValue)) {
+      //   this.$Message.warning(this.$t('tableKey.s_last')+this.$t('tips.required'))
+      //   return false 
+      // }
       if (this.$root.$validate.isEmpty_reset(this.modelConfig.addRow.content)) {
         this.$Message.warning(this.$t('tableKey.content')+this.$t('tips.required'))
         return false
@@ -425,14 +445,22 @@ export default {
       this.$root.JQ('#add_edit_Modal').modal('show')
     },
     addPost () {
-      if (!this.formValidate()) {
-        return
-      }
-      let params = this.paramsPrepare()
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.thresholdManagement.add.api, params, () => {
-        this.$Message.success(this.$t('tips.success'))
-        this.$root.JQ('#add_edit_Modal').modal('hide')
-        this.requestData(this.type, this.typeValue)
+      // if (!this.formValidate()) {
+      //   return
+      // }
+      this.$validator.validate().then(result => {
+        if (!result) return
+        if (this.$root.$validate.isEmpty_reset(this.modelConfig.addRow.content)) {
+          this.$Message.warning(this.$t('tableKey.content')+this.$t('tips.required'))
+          return
+        }
+        let params = this.paramsPrepare()
+        console.log(params)
+        this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.thresholdManagement.add.api, params, () => {
+          this.$Message.success(this.$t('tips.success'))
+          this.$root.JQ('#add_edit_Modal').modal('hide')
+          this.requestData(this.type, this.typeValue)
+        })
       })
     },
     editF (rowData) {
@@ -463,15 +491,19 @@ export default {
       this.$root.JQ('#add_edit_Modal').modal('show')
     },
     editPost () {
-      if (!this.formValidate()) {
-        return
-      }
-      let params = this.paramsPrepare()
-      params.strategy_id = this.id
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.thresholdManagement.update.api, params, () => {
-        this.$Message.success(this.$t('tips.success'))
-        this.$root.JQ('#add_edit_Modal').modal('hide')
-        this.requestData(this.type, this.typeValue)
+      this.$validator.validate().then(result => {
+        if (!result) return
+        if (this.$root.$validate.isEmpty_reset(this.modelConfig.addRow.content)) {
+          this.$Message.warning(this.$t('tableKey.content')+this.$t('tips.required'))
+          return
+        }
+        let params = this.paramsPrepare()
+        params.strategy_id = this.id
+        this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.thresholdManagement.update.api, params, () => {
+          this.$Message.success(this.$t('tips.success'))
+          this.$root.JQ('#add_edit_Modal').modal('hide')
+          this.requestData(this.type, this.typeValue)
+        })
       })
     },
     selectMetric (option) {
@@ -492,18 +524,12 @@ export default {
 </style>
 <style scoped lang="less">
   .search-input {
-    display: inline-block;
     height: 32px;
     padding: 4px 7px;
     font-size: 12px;
     border: 1px solid #dcdee2;
     border-radius: 4px;
-    color: #515a6e;
-    background-color: #fff;
-    background-image: none;
-    position: relative;
-    cursor: text
-
+    width: 230px;
   }
 
   .section-table-tip {
