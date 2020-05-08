@@ -37,7 +37,13 @@
               <i class="fa fa-pencil" aria-hidden="true" @click="editMetricName(metricItem,metricIndex)"></i>
             </Tag>
             <Select v-model="originalMetricList[metricItem.key].model" style="width:300px" filterable size="small" @on-change="selectOriginalMetric(metricItem)">
-              <Option v-for="item in originalMetricList[metricItem.key].list" :value="item.option_value" :key="item.option_value">{{ item.option_text }}</Option>
+              <Option 
+                style="width:300px;"
+                v-for="item in originalMetricList[metricItem.key].list" 
+                :value="item.option_value" 
+                :key="item.option_value">
+                {{ item.option_text }}
+              </Option>
             </Select>
             <div>
                <textarea v-model="metricItem.value" class="textareaSty"></textarea> 
