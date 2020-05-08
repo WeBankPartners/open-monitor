@@ -78,7 +78,11 @@ func DeregisteConsul(guid string, fromCluster bool) error {
 	if consulUrl == "" {
 		return fmt.Errorf("cat't find consul url")
 	}
-	req,_ := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/v1/agent/service/deregister/%s", consulUrl, guid), strings.NewReader(""))
+	req,err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/v1/agent/service/deregister/%s", consulUrl, guid), strings.NewReader(""))
+	if err != nil {
+		mid.LogError(fmt.Sprintf("deregister %s consul error", guid), err)
+		return err
+	}
 	res,_ := http.DefaultClient.Do(req)
 	defer res.Body.Close()
 	body,_ := ioutil.ReadAll(res.Body)
