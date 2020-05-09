@@ -60,8 +60,8 @@ export default {
         params.push({
           ...item,
           time: this.params.timeTnterval + '',
-          start: this.params.dateRange[0] ===''? '':Date.parse(this.params.dateRange[0])/1000+'',
-          end: this.params.dateRange[1] ===''? '':Date.parse(this.params.dateRange[1])/1000+'',
+          start: this.params.dateRange[0] ===''? '':Date.parse(this.params.dateRange[0].replace(/-/g, '/'))/1000+'',
+          end: this.params.dateRange[1] ===''? '':Date.parse(this.params.dateRange[1].replace(/-/g, '/'))/1000+'',
         })
       })
 
