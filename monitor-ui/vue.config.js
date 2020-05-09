@@ -19,10 +19,12 @@ module.exports = {
         .add("./src/main-plugin.js"); //作为插件时
     });
     config.when(!process.env.PLUGIN, config => {
-      config
-        .entry("app")
-        .clear()
-        .add("./src/main.js"); //独立运行时
+      // config
+      //   .entry("app")
+			// 	.clear()
+			// 	.add("babel-polyfill")
+			//   .add("./src/main.js"); //独立运行时
+			config.entry('main').add('babel-polyfill')
     })
 		const types = ['vue-modules', 'vue', 'normal-modules', 'normal']
 		types.forEach(type => addStyleResource(config.module.rule('less').oneOf(type)))
@@ -44,9 +46,10 @@ module.exports = {
 	// 	]
 	// },
 	configureWebpack: config => {
-    if (process.env.PLUGIN === "plugin") {
+    if (process.env.PLUGIN === "plugin") {	
       config.optimization.splitChunks = {}
-    }
+		}
+		
   },
 	pluginOptions: {
     pwa: {
