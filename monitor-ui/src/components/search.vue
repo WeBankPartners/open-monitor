@@ -174,8 +174,8 @@ export default {
           autoRefresh: this.autoRefresh,
           time: this.timeTnterval,
           endpoint: this.endpointObject.option_value,
-          start: this.dateRange[0] ===''? '':Date.parse(this.dateRange[0])/1000,
-          end: this.dateRange[1] ===''? '':Date.parse(this.dateRange[1])/1000,
+          start: this.dateRange[0] ===''? '':Date.parse(this.dateRange[0].replace(/-/g, '/'))/1000,
+          end: this.dateRange[1] ===''? '':Date.parse(this.dateRange[1].replace(/-/g, '/'))/1000,
           guid: this.endpointObject.option_value,
           sys: true
         }  
@@ -189,8 +189,8 @@ export default {
         autoRefresh: this.autoRefresh,
         time: this.timeTnterval,
         endpoint: this.endpoint,
-        start: this.dateRange[0] ===''? '':Date.parse(this.dateRange[0])/1000,
-        end: this.dateRange[1] ===''? '':Date.parse(this.dateRange[1])/1000,
+        start: this.dateRange[0] ===''? '':Date.parse(this.dateRange[0].replace(/-/g, '/'))/1000,
+        end: this.dateRange[1] ===''? '':Date.parse(this.dateRange[1].replace(/-/g, '/'))/1000,
         sys: false
       }
       url = url.replace(`{${key}}`,params[key])
