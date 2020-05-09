@@ -63,7 +63,7 @@
       @resize="resizeEvent"
       @resized="resizeEvent">
                 
-      <div class="c-dark" style="display:flex;justify-content:flex-end;padding:0 32px;">
+      <div class="c-dark" style="display:flex;padding:0 32px;">
         <div class="header-grid header-grid-name">
           <span v-if="editChartId !== item.id">{{item.i}}</span>
           <Input v-else v-model="item.i" class="editChartId" style="width:100px" @on-blur="editChartId = null" size="small" placeholder="small size" />
