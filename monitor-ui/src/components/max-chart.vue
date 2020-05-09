@@ -99,8 +99,12 @@ export default {
         agg: this.chartCondition.agg,
       }
       if (this.chartCondition.dateRange.length !==0) {
-        params.start = this.chartCondition.dateRange[0] ===''? '':Date.parse(this.chartCondition.dateRange[0])/1000 + '',
-        params.end = this.chartCondition.dateRange[1] ===''? '':Date.parse(this.chartCondition.dateRange[1])/1000 + ''
+        // params.start = this.chartCondition.dateRange[0] ===''? '':Date.parse(this.chartCondition.dateRange[0])/1000 + '',
+        // params.end = this.chartCondition.dateRange[1] ===''? '':Date.parse(this.chartCondition.dateRange[1])/1000 + ''
+        params.start = this.chartCondition.dateRange[0] ===''? 
+          '':Date.parse(this.chartCondition.dateRange[0].replace(/-/g, '/'))/1000 + '',
+        params.end = this.chartCondition.dateRange[1] ===''? 
+          '':Date.parse(this.chartCondition.dateRange[1].replace(/-/g, '/'))/1000 + ''
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/dashboard/newchart', [params], responseData => {
       
