@@ -55,6 +55,18 @@ func AddLogStrategy(c *gin.Context)  {
 			mid.ReturnValidateFail(c, "Parameter must contain a strategy at least")
 			return
 		}
+		if !mid.IsIllegalCond(param.Strategy[0].Cond) || !mid.IsIllegalLast(param.Strategy[0].Last) {
+			mid.ReturnValidateFail(c, "Parameter validate fail, cond or last illegal")
+			return
+		}
+		if !mid.IsIllegalPath(param.Path) {
+			mid.ReturnValidateFail(c, "Parameter validate fail, path is illegal")
+			return
+		}
+		if !mid.IsIllegalNormalInput(param.Strategy[0].Keyword) {
+			mid.ReturnValidateFail(c, "Parameter validate fail, keyword is illegal")
+			return
+		}
 		var logMonitorObj m.LogMonitorTable
 		logMonitorObj.Path = param.Path
 		logMonitorObj.Keyword = param.Strategy[0].Keyword
@@ -142,6 +154,10 @@ func EditLogPath(c *gin.Context)  {
 			mid.ReturnValidateFail(c, "Parameter id or template id can not be empty")
 			return
 		}
+		if !mid.IsIllegalPath(param.Path) {
+			mid.ReturnValidateFail(c, "Parameter validate fail, path is illegal")
+			return
+		}
 		err,lms := db.GetLogMonitorTable(0, param.Id, 0, "")
 		if err != nil || len(lms) == 0 {
 			mid.ReturnError(c, "Get log monitor alert failed", err)
@@ -218,6 +234,14 @@ func EditLogStrategy(c *gin.Context)  {
 		}
 		if param.TplId <= 0 {
 			mid.ReturnValidateFail(c, "Param tplId can not be empty")
+			return
+		}
+		if !mid.IsIllegalCond(param.Strategy[0].Cond) || !mid.IsIllegalLast(param.Strategy[0].Last) {
+			mid.ReturnValidateFail(c, "Parameter validate fail, cond or last illegal")
+			return
+		}
+		if !mid.IsIllegalNormalInput(param.Strategy[0].Keyword) {
+			mid.ReturnValidateFail(c, "Parameter validate fail, keyword is illegal")
 			return
 		}
 		// Update strategy

@@ -15,11 +15,10 @@
             v-if="item.children"
             :recursiveViewConfig="item.children"></recursive>
             <div class="box">
-              <div v-for="(chartItemx,chartIndexx) in item.charts" :key="chartIndexx" class="list">
+              <div v-for="(chartInfo,chartIndex) in item.charts" :key="chartIndex" class="list">
                 <SingleChart 
-                  :chartItemx="chartItemx" 
-                  :chartIndex="chartIndexx" 
-                  :key="chartIndexx" 
+                  :chartInfo="chartInfo" 
+                  :chartIndex="chartIndex" 
                   :params="params"
                   @editTitle="editTitle"
                   @sendConfig="receiveConfig"
