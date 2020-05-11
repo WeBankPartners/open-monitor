@@ -133,6 +133,9 @@ func GetPromMetric(endpoint []string,metric string) (error, string) {
 				reg = strings.Replace(reg, "$address", host.Address, -1)
 			}
 		}
+		if strings.Contains(reg, `$guid`) {
+			reg = strings.Replace(reg, "$guid", host.Guid, -1)
+		}
 		promQL = reg
 	}
 	return err,promQL
