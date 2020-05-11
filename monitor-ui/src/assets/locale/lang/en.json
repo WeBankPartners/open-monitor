@@ -18,6 +18,7 @@
     "endpointSearch": "Please input",
     "metric": "Select metric",
     "datePicker": "Please select",
+    "comparedDatePicker": "Please select",
     "refresh": "Refresh",
     "metricConfiguration": "Metrics configuration",
     "globalConfiguration": "Global configuration",
