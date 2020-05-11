@@ -1,5 +1,7 @@
 package models
 
+import "encoding/json"
+
 type RuleFile struct {
 	Groups  []*RFGroup  `yaml:"groups"`
 }
@@ -25,4 +27,34 @@ type RFAnnotation struct {
 
 type ConsulServicesDto struct {
 	Name  string  `json:"name"`
+}
+
+type FileSdConfig []*FileSdObj
+
+type ServiceDiscoverFileList []*ServiceDiscoverFileObj
+
+type ServiceDiscoverFileObj struct {
+	Guid  string `json:"guid"`
+	Address  string  `json:"address"`
+	Step  int  `json:"step"`
+}
+
+func (s ServiceDiscoverFileList) TurnToFileSdConfigByte(step int) []byte {
+	var result []*FileSdObj
+	for _,v := range s {
+		if v.Step == step {
+			result = append(result, &FileSdObj{Targets: []string{v.Address}, Labels: FileSdLabel{EGuid: v.Guid}})
+		}
+	}
+	b,_ := json.Marshal(result)
+	return b
+}
+
+type FileSdObj struct {
+	Targets  []string  `json:"targets"`
+	Labels  FileSdLabel  `json:"labels"`
+}
+
+type FileSdLabel struct {
+	EGuid  string  `json:"e_guid"`
 }
