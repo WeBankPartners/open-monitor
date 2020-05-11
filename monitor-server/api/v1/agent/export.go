@@ -71,15 +71,6 @@ func ExportAgent(c *gin.Context)  {
 			break
 		}
 	}
-	//if agentType == "other" {
-	//	illegal = false
-	//}
-	//if illegal {
-	//	result = resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("No such monitor type like %s", agentType)}
-	//	mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
-	//	c.JSON(http.StatusBadRequest, result)
-	//	return
-	//}
 	if action != "register" && action != "deregister" {
 		result = resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("No such action like %s", action)}
 		mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
