@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"encoding/json"
 	"context"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
 )
 
 func AddUser(user m.UserTable, creator string) error {
@@ -81,15 +82,16 @@ func SearchUserRole(search string,searchType string) (err error,options []*m.Opt
 		if v.DisplayName != "" {
 			tmpText = tmpText + "(" + v.DisplayName + ")"
 		}
-		options = append(options, &m.OptionModel{Id:v.Id, OptionText:tmpText, OptionValue:fmt.Sprintf("%s_%d", searchType, v.Id), Active:tmpActive})
+		options = append(options, &m.OptionModel{Id:v.Id, OptionText:tmpText, OptionValue:fmt.Sprintf("%d", v.Id), Active:tmpActive, OptionType:fmt.Sprintf("%s_%d", searchType, v.Id)})
 	}
 	return nil,options
 }
 
 func GetMailByStrategy(strategyId int) []string {
 	result := []string{}
+	resultMap := make(map[string]int)
 	var tpls []*m.TplTable
-	x.SQL("SELECT DISTINCT t2.action_user,t2.action_role FROM strategy t1 LEFT JOIN tpl t2 ON t1.tpl_id=t2.id WHERE t1.id=?", strategyId).Find(&tpls)
+	x.SQL("SELECT DISTINCT t2.* FROM strategy t1 LEFT JOIN tpl t2 ON t1.tpl_id=t2.id WHERE t1.id=?", strategyId).Find(&tpls)
 	if len(tpls) == 0 {
 		mid.LogInfo(fmt.Sprintf("can not find tpl with strategy %d",strategyId))
 		return result
@@ -104,12 +106,33 @@ func GetMailByStrategy(strategyId int) []string {
 		if strings.HasPrefix(userIds, ",") {
 			userIds = userIds[1:]
 		}
+		var roleTable []*m.RoleTable
+		x.SQL(fmt.Sprintf("SELECT * FROM role WHERE id IN (%s)", tpls[0].ActionRole)).Find(&roleTable)
+		for _,v := range roleTable {
+			if v.Email != "" {
+				if _,b := resultMap[v.Email]; !b {
+					result = append(result, v.Email)
+					resultMap[v.Email] = 1
+				}
+			}
+		}
 	}
 	if userIds != "" {
 		var users []*m.UserTable
 		x.SQL(fmt.Sprintf("SELECT DISTINCT email FROM user WHERE id IN (%s)", userIds)).Find(&users)
 		for _,v := range users {
-			result = append(result, v.Email)
+			if _,b := resultMap[v.Email]; !b {
+				result = append(result, v.Email)
+				resultMap[v.Email] = 1
+			}
+		}
+	}
+	if tpls[0].ExtraMail != "" {
+		for _,v := range strings.Split(tpls[0].ExtraMail, ",") {
+			if _,b := resultMap[v]; !b {
+				result = append(result, v)
+				resultMap[v] = 1
+			}
 		}
 	}
 	return result
@@ -180,6 +203,27 @@ func ListRole(search string,page,size int) (err error,data m.TableData) {
 	return err,data
 }
 
+func StartCronJob()  {
+	if !m.Config().CronJob.Enable {
+		return
+	}
+	intervalSec := 60
+	if m.Config().CronJob.Interval > 30 {
+		intervalSec = m.Config().CronJob.Interval
+	}
+	go StartSyncCoreRoleJob(intervalSec)
+	go prom.StartCheckPrometheusJob(intervalSec)
+}
+
+func StartSyncCoreRoleJob(interval int)  {
+	// Sync core role
+	t := time.NewTicker(time.Second*time.Duration(interval)).C
+	for {
+		go SyncCoreRole()
+		<- t
+	}
+}
+
 func SyncCoreRole()  {
 	if m.CoreUrl == "" {
 		return
@@ -218,10 +262,10 @@ func SyncCoreRole()  {
 			}
 		}
 		if !existFlag {
-			insertData = append(insertData, &m.RoleTable{Name:v.Name, DisplayName:v.DisplayName})
+			insertData = append(insertData, &m.RoleTable{Name:v.Name, DisplayName:v.DisplayName, Email:v.Email})
 		}
 		if updateName != "" {
-			updateData = append(updateData, &m.RoleTable{Name:v.Name, DisplayName:v.DisplayName})
+			updateData = append(updateData, &m.RoleTable{Name:v.Name, DisplayName:v.DisplayName, Email:v.Email})
 		}
 	}
 	for _,v := range tableData {

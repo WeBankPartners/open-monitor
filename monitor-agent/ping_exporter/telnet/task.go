@@ -10,7 +10,6 @@ import (
 )
 
 var (
-	telnetTaskMap = make(map[string][]int)
 	telnetResultList []*funcs.TelnetObj
 	resultLock = new(sync.RWMutex)
 )
@@ -79,8 +78,8 @@ func getTelnetResult() (result []*funcs.TelnetObj,successCount int) {
 		if v.Success {
 			successCount += 1
 		}
+		result = append(result, &funcs.TelnetObj{Ip:v.Ip, Port:v.Port, Success:v.Success})
 	}
-	result = telnetResultList
 	resultLock.RUnlock()
 	return result,successCount
 }

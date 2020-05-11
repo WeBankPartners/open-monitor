@@ -10,10 +10,10 @@
         clearable
         remote
         :label-in-value="true" 
-        @on-change="getOriginalMetricList"
         :placeholder="$t('placeholder.input')"
         :remote-method="getEndpointList"
         >
+                <!-- @on-change="getOriginalMetricList" -->
         <Option v-for="(option, index) in endpointList" :value="option.option_value" :key="index">
           <Tag :color="endpointTag[option.option_type_name] || choiceColor(option.option_type_name, index)" class="tag-width">{{option.option_type_name}}</Tag>{{option.option_text}}</Option>
       </Select>
@@ -37,7 +37,13 @@
               <i class="fa fa-pencil" aria-hidden="true" @click="editMetricName(metricItem,metricIndex)"></i>
             </Tag>
             <Select v-model="originalMetricList[metricItem.key].model" style="width:300px" filterable size="small" @on-change="selectOriginalMetric(metricItem)">
-              <Option v-for="item in originalMetricList[metricItem.key].list" :value="item.option_value" :key="item.option_value">{{ item.option_text }}</Option>
+              <Option 
+                style="width:300px;"
+                v-for="item in originalMetricList[metricItem.key].list" 
+                :value="item.option_value" 
+                :key="item.option_value">
+                {{ item.option_text }}
+              </Option>
             </Select>
             <div>
                <textarea v-model="metricItem.value" class="textareaSty"></textarea> 
@@ -134,6 +140,7 @@ export default {
       } else {
         this.endpointObject = {}
       }
+      this.getOriginalMetricList()
     },
     changeIP () {
       this.metricSelected = []
@@ -202,13 +209,18 @@ export default {
     selectOriginalMetric(item) {
       if (item.key.indexOf('add_')> -1) {
         for (let i=0; i< this.editMetric.length; i++) {
-          if (item.key === this.editMetric[i].key) 
-          this.editMetric[i].value = this.editMetric[i].value + this.originalMetricList[item.key].model
+          if (item.key === this.editMetric[i].key)
+          if (this.originalMetricList[item.key].model) {
+            this.editMetric[i].value = this.editMetric[i].value + this.originalMetricList[item.key].model
+          }
+          
         }
       } else {
         for (let i=0; i< this.metricSelectedOptions.length; i++) {
           if (item.key === this.metricSelectedOptions[i].key) 
-          this.metricSelectedOptions[i].value = this.metricSelectedOptions[i].value + this.originalMetricList[item.key].model
+          if (this.originalMetricList[item.key].model) {
+            this.metricSelectedOptions[i].value = this.metricSelectedOptions[i].value + this.originalMetricList[item.key].model
+          }
         }
       }
     },
@@ -368,6 +380,10 @@ export default {
     vertical-align: middle;
     display: table-cell;
   }
-
+  .tag-width {
+    cursor: auto;
+    width: 80px;
+    text-align: center;
+  }
   
 </style>
