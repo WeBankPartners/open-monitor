@@ -143,6 +143,6 @@ func illegalGuid(input string) bool {
 	if input == "" {
 		return true
 	}
-	var regPath = regexp.MustCompile(`^[\w|\.|\-]+$`)
+	var regPath = regexp.MustCompile(`^[\w|\.|\-:\*@!~(){}\[\]=,]+$`)
 	return regPath.MatchString(input)
 }
