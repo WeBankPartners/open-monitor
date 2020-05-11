@@ -95,9 +95,14 @@ export default {
   margin: 0 auto;
 }
 .search-li {
-    display: inline-block;
-  }
-  .search-ul>li:not(:first-child) {
-    padding-left: 10px;
-  }
+  display: inline-block;
+}
+.search-ul>li:not(:first-child) {
+  padding-left: 10px;
+}
+.tag-width {
+  cursor: auto;
+  width: 80px;
+  text-align: center;
+}
 </style>

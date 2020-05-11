@@ -132,7 +132,7 @@ export default {
           if (item.main === 1) {
             this.setDashboardModel.addRow.templateSelect = item.id
           }
-        }) 
+        })
       })
     },
     setDashboard () {

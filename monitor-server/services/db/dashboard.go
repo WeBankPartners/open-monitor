@@ -5,6 +5,7 @@ import (
 	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"fmt"
 	"strings"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
 )
 
 func GetDashboard(dType string) (error, m.DashboardTable) {
@@ -345,6 +346,36 @@ func GetEndpointMetric(id int) (err error,result []*m.OptionModel) {
 		result = append(result, &m.OptionModel{OptionText:k, OptionValue:v})
 	}
 	return err,result
+}
+
+func GetEndpointMetricNew(id int) (err error,result []*m.OptionModel) {
+	endpointObj := m.EndpointTable{Id:id}
+	GetEndpoint(&endpointObj)
+	if endpointObj.Guid == "" {
+		return fmt.Errorf("endpoint id: %d can not find ", id),result
+	}
+	if endpointObj.ExportType == "ping" || endpointObj.ExportType == "telnet" || endpointObj.ExportType == "http" {
+		return nil,result
+	}
+	var ip,port string
+	if endpointObj.AddressAgent != "" {
+		ip = endpointObj.AddressAgent[:strings.Index(endpointObj.AddressAgent, ":")]
+		port = endpointObj.AddressAgent[strings.Index(endpointObj.AddressAgent, ":")+1:]
+	}else{
+		ip = endpointObj.Address[:strings.Index(endpointObj.Address, ":")]
+		port = endpointObj.Address[strings.Index(endpointObj.Address, ":")+1:]
+	}
+	if ip == "" || port == "" {
+		return fmt.Errorf("endpoint: %s address illegal ", endpointObj.Guid),result
+	}
+	err, strList := prom.GetEndpointData(ip, port, []string{}, []string{})
+	if err != nil {
+		return err,result
+	}
+	for _,v := range strList {
+		result = append(result, &m.OptionModel{OptionText:v, OptionValue:fmt.Sprintf("%s{instance=\"$address\"}", v)})
+	}
+	return nil,result
 }
 
 func GetMainCustomDashboard() (error, m.CustomDashboardTable) {
