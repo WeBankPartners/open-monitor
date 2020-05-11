@@ -16,17 +16,6 @@
       </div>
       <div>
         <section class="zone-config-operation">
-            <div class="tag-display">
-              <Tag
-                v-for="(query, queryIndex) in chartQueryList"
-                color="primary"
-                type="border"
-                :key="queryIndex"
-                :name="queryIndex"
-                closable
-                @on-close="removeQuery(queryIndex)"
-              >{{$t('field.endpoint')}}：{{query.endpoint}}; {{$t('field.metric')}}：{{query.metricLabel}}</Tag>
-            </div>
             <div class="condition-zone">
               <ul>
                 <li>
@@ -61,7 +50,7 @@
                     >
                       <Option
                         v-for="(item,index) in metricList"
-                        :value="item.prom_ql"
+                        :value="item.metric"
                         :key="item.prom_ql+index"
                       >{{ item.metric }}</Option>
                     </Select>
@@ -77,13 +66,6 @@
                     />
                   </div>
                 </li>
-              <li>
-                <div class="condition condition-title">{{$t('field.unit')}}</div>
-                <div class="condition">
-                  <Input v-model="panalUnit" placeholder="Enter something..." style="width: 300px" />
-                </div>
-                <button class="btn btn-cancle-f" @click="addQuery()">{{$t('button.addConfig')}}</button>
-              </li>
               </ul>
             </div>
         </section>
@@ -93,8 +75,8 @@
 </template>
 
 <script>
-import { generateUuid } from "@/assets/js/utils"
-import { readyToDraw } from "@/assets/config/chart-rely"
+// import { generateUuid } from "@/assets/js/utils"
+import { drawPieChart} from "@/assets/config/chart-rely"
 import {endpointTag, randomColor} from '@/assets/config/common-config'
 export default {
   name: "",
@@ -103,85 +85,68 @@ export default {
       endpointTag: endpointTag,
       randomColor: randomColor,
       cacheColor: {},
-      viewData: null,
+      viewData: [],
       panalIndex: null,
       panalData: null,
 
       elId: null,
       noDataTip: false,
-      activeStep: "chat_query",
       templateQuery: {
         endpoint: "",
         metricLabel: "",
         metric: ""
       },
-      chartQueryList: [
-        // {
-        //   endpoint: '',
-        //   metricLabel: '',
-        //   metric: ''
-        // }
-      ],
 
       options: [],
       metricList: [],
 
       panalTitle: "Default title",
-      panalUnit: ""
-    };
+
+      params: '' // 保存增加及返回时参数，返回时直接取该值
+    }
   },
   watch: {
-    chartQueryList: {
-      handler(data) {
-        this.noDataTip = false;
-        let params = [];
-        if (this.$root.$validate.isEmpty_reset(data)) {
-          this.noDataTip = true;
-          return;
+    templateQuery: {
+      handler (val) {
+        if (
+          val.endpoint === "" ||
+          val.metricLabel === ""
+        ) {
+          return
         }
-        data.forEach(item => {
-          params.push(
-            {
-              endpoint: item.endpoint,
-              prom_ql: item.metric,
-              metric: item.metricLabel,
-              time: "-1800"
-            }
-          );
-        });
+        const params = {
+          endpoint: val.endpoint,
+          metric: val.metricLabel, 
+        }
         this.$root.$httpRequestEntrance.httpRequestEntrance(
-          'POST',this.$root.apiCenter.metricConfigView.api, params,
+          'POST',this.$root.apiCenter.metricConfigPieView.api, params,
           responseData => {
-      
-            responseData.yaxis.unit = this.panalUnit;
-            readyToDraw(this,responseData, 1, { eye: false })
+            drawPieChart(this, responseData)
           }
-        );
+        )
       },
       deep: true
-      // immediate: true
     }
   },
   created() {
-    generateUuid().then(elId => {
-      this.elId = `id_${elId}`;
-    });
+
   },
   mounted() {
     if (this.$root.$validate.isEmpty_reset(this.$route.params)) {
-      this.$router.push({ path: "viewConfig" });
+      this.$router.push({ path: "viewConfig" })
     } else {
       if (!this.$root.$validate.isEmpty_reset(this.$route.params.templateData.cfg)) {
+        this.elId = this.$route.params.panal.id
         this.getEndpointList()
-        this.viewData = JSON.parse(this.$route.params.templateData.cfg);
+        this.viewData = JSON.parse(this.$route.params.templateData.cfg)
         this.viewData.forEach((itemx, index) => {
           if (itemx.viewConfig.id === this.$route.params.panal.id) {
-            this.panalIndex = index;
-            this.panalData = itemx;
-            this.initPanal();
-            return;
+            this.panalIndex = index
+            this.panalData = itemx
+            this.initPanal()
+            return
           }
-        });
+        })
       }
     }
   },
@@ -198,45 +163,40 @@ export default {
       return color
     },
     initPanal() {
-      this.panalTitle = this.panalData.panalTitle;
-      this.panalUnit = this.panalData.panalUnit;
-      let params = [];
-      this.noDataTip = false;
+      this.panalTitle = this.panalData.panalTitle
+      this.panalUnit = this.panalData.panalUnit
+      
+      this.noDataTip = false
       if (this.$root.$validate.isEmpty_reset(this.panalData.query)) {
-        return;
+        return
       }
-      this.initQueryList(this.panalData.query);
-      this.panalData.query.forEach(item => {
-        params.push(
-          {
-            endpoint: item.endpoint,
-            prom_ql: item.metric,
-            metric: item.metricLabel,
-            time: "-1800"
-          }
-        );
-      });
-      if (params !== []) {
+
+      let {endpoint, metric} =  this.panalData.query[0]
+      this.templateQuery.endpoint = endpoint
+      this.templateQuery.metric = metric
+      this.templateQuery.metricLabel = metric
+      this.metricSelectOpen(metric)
+      let params = {
+        endpoint,
+        metric
+      }
+      if (params !== {}) {
         this.$root.$httpRequestEntrance.httpRequestEntrance(
-          'POST',this.$root.apiCenter.metricConfigView.api, params,
-          responseData => {
-            responseData.yaxis.unit = this.panalUnit;
-            readyToDraw(this,responseData, 1, { eye: false, lineBarSwitch: true})
-          }
-        );
+        'POST',this.$root.apiCenter.metricConfigPieView.api, params,
+        responseData => {
+          drawPieChart(this, responseData)
+        }
+      )
       }
-    },
-    initQueryList(query) {
-      this.chartQueryList = query;
     },
     getEndpointList(query='.') {
       let params = {
         search: query,
         page: 1,
         size: 1000
-      };
+      }
       this.$root.$httpRequestEntrance.httpRequestEntrance(
-        "GET",
+        'GET',
         this.$root.apiCenter.resourceSearch.api,
         params,
         responseData => {
@@ -247,98 +207,71 @@ export default {
             }
           })
         }
-      );
+      )
     },
     metricSelectOpen(metric) {
       if (this.$root.$validate.isEmpty_reset(metric)) {
         this.$Message.warning(
           this.$t("tableKey.s_metric") + this.$t("tips.required")
-        );
+        )
       } else {
-        let params = { type: metric.split(":")[1] };
         this.$root.$httpRequestEntrance.httpRequestEntrance(
-          "GET",
+          'GET',
           this.$root.apiCenter.metricList.api,
-          params,
+          '',
           responseData => {
-            this.metricList = responseData;
+            this.metricList = responseData
           }
-        );
+        )
       }
-    },
-    addQuery() {
-      if (
-        this.templateQuery.endpoint === "" ||
-        this.templateQuery.metricLabel === ""
-      ) {
-        this.$Message.warning("配置完整方可保存！");
-        return;
-      }
-      this.chartQueryList.push(this.templateQuery);
-      this.templateQuery = {
-        endpoint: "",
-        metricLabel: "",
-        metric: ""
-      };
-      this.options = [];
-      this.metricList = [];
-    },
-    removeQuery(queryIndex) {
-      this.chartQueryList.splice(queryIndex, 1);
     },
     saveConfig() {
-      const params = this.pp();
+      this.pp()
       this.$root.$httpRequestEntrance.httpRequestEntrance(
-        "POST",
+        'POST',
         this.$root.apiCenter.template.save,
-        params,
+        this.params,
         () => {
-          this.$Message.success(this.$t("tips.success"));
+          this.$Message.success(this.$t("tips.success"))
         }
-      );
+      )
     },
     setMetric(value) {
       if (!this.$root.$validate.isEmpty_reset(value)) {
-        this.templateQuery.metricLabel = value.label;
+        this.templateQuery.metricLabel = value.label
       }
     },
     pp() {
-      let query = [];
-      this.chartQueryList.forEach(item => {
-        query.push({
-          endpoint: item.endpoint,
-          metricLabel: item.metricLabel,
-          metric: item.metric
-        });
-      });
-      let panal = this.$route.params.panal;
-      panal.i = this.panalTitle;
+      let panal = this.$route.params.panal
+      panal.i = this.panalTitle
       const temp = {
         panalTitle: this.panalTitle,
         panalUnit: this.panalUnit,
-        query: query,
+        chartType: 'pie',
+        query: [{
+          chartType: 'pie',
+          endpoint: this.templateQuery.endpoint,
+          metric: this.templateQuery.metricLabel,  
+        }],
         viewConfig: panal
-      };
-
-      if (this.panalIndex !== null) {
-        this.viewData[this.panalIndex] = temp;
-      } else {
-        this.viewData.push(temp);
       }
+      this.viewData[this.panalIndex] = temp
       let params = {
         name: this.$route.params.templateData.name,
         id: this.$route.params.templateData.id,
         cfg: JSON.stringify(this.viewData)
-      };
-      return params;
+      }
+      this.params = params
     },
     goback() {
-      const params = this.pp();
-      this.$router.push({ name: "viewConfig", params: params });
+      if (!this.params) {
+        this.pp()
+      }
+      this.$router.push({ name: "viewConfig", params: this.params })
     }
   },
   components: {}
-};
+}
 </script>
 
 <style scoped lang="less">
@@ -357,7 +290,6 @@ li {
 }
 .zone-chart-title {
   padding: 20px 40%;
-  position: absolute;
   font-size: 14px;
 }
 .zone-config {
@@ -416,6 +348,7 @@ li {
   margin: 4px;
 }
 .tag-width {
+  cursor: auto;
   width: 55px;
   text-align: center;
 }
