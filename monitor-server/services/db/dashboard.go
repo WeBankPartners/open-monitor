@@ -201,7 +201,7 @@ func GetEndpoint(query *m.EndpointTable) error {
 
 func ListEndpoint() []*m.EndpointTable {
 	var result []*m.EndpointTable
-	x.SQL("SELECT guid,name,ip,export_type,address,address_agent FROM endpoint").Find(&result)
+	x.SQL("SELECT * FROM endpoint").Find(&result)
 	return result
 }
 

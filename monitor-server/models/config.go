@@ -128,6 +128,12 @@ type CronJobConfig struct {
 	Interval  int  `json:"interval"`
 }
 
+type SdFileConfig struct {
+	Enable  bool  `json:"enable"`
+	TenSecFile  string  `json:"ten_sec_file"`
+	OneMinFile  string  `json:"one_min_file"`
+}
+
 type GlobalConfig struct {
 	Http  *HttpConfig  `json:"http"`
 	Store  StoreConfig  `json:"store"`
@@ -140,6 +146,7 @@ type GlobalConfig struct {
 	Alert  AlertConfig  `json:"alert"`
 	Cluster  ClusterConfig  `json:"cluster"`
 	CronJob  CronJobConfig  `json:"cron_job"`
+	SdFile  SdFileConfig  `json:"sd_file"`
 }
 
 var (
