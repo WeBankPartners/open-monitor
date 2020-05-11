@@ -25,7 +25,9 @@ func InitPrometheusDatasource()  {
 	promDS = DataSourceParam{DataSource:opentsdbDS, Host:cfg.Host, Token:cfg.Token}
 }
 
-func PrometheusData(query m.QueryMonitorData) []*m.SerialModel  {
+var PieLegendBlackName = []string{"job", "instance"}
+
+func PrometheusData(query *m.QueryMonitorData) []*m.SerialModel  {
 	serials := []*m.SerialModel{}
 	urlParams := url.Values{}
 	requestUrl,err := url.Parse(fmt.Sprintf("http://%s/api/v1/query_range", promDS.Host))
@@ -80,6 +82,37 @@ func PrometheusData(query m.QueryMonitorData) []*m.SerialModel  {
 		mid.LogError(fmt.Sprintf("query prometheus data fail : %s", data.Status), nil)
 		return serials
 	}
+	if query.ChartType == "pie" {
+		var pieData m.EChartPie
+		for _,otr := range data.Data.Result {
+			var tmpNameList []string
+			for k,v := range otr.Metric {
+				isBlack := false
+				for _,vv := range PieLegendBlackName {
+					if k == vv {
+						isBlack = true
+						break
+					}
+				}
+				if isBlack {
+					continue
+				}
+				tmpNameList = append(tmpNameList, fmt.Sprintf("%s=%s", k, v))
+			}
+			tmpName := strings.Join(tmpNameList, ",")
+			if tmpName == "" {
+				tmpName = query.Metric[0]
+			}
+			pieData.Legend = append(pieData.Legend, tmpName)
+			if len(otr.Values) > 0 {
+				tmpValue,_ := strconv.ParseFloat(otr.Values[len(otr.Values)-1][1].(string), 64)
+				tmpValue,_ = strconv.ParseFloat(fmt.Sprintf("%.3f", tmpValue), 64)
+				pieData.Data = append(pieData.Data, &m.EChartPieObj{Name:tmpName, Value:tmpValue})
+			}
+		}
+		query.PieData = pieData
+		return serials
+	}
 	for _,otr := range data.Data.Result {
 		var serial m.SerialModel
 		serial.Type = "line"
@@ -121,6 +154,7 @@ func PrometheusData(query m.QueryMonitorData) []*m.SerialModel  {
 		for _,v := range otr.Values {
 			tmpTime := v[0].(float64) * 1000
 			tmpValue,_ := strconv.ParseFloat(v[1].(string), 64)
+			//tmpValue,_ = strconv.ParseFloat(fmt.Sprintf("%.3f", tmpValue), 64)
 			sdata = append(sdata, []float64{tmpTime, tmpValue})
 		}
 		sort.Sort(sdata)

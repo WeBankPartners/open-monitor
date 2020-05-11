@@ -12,6 +12,8 @@ import (
 var invalidData = []string{"select", "insert", "update", "alter", "delete", "drop", "truncate", "show"}
 var regCond = regexp.MustCompile(`^([<=|>=|!=|==|<|>]*)-?\d+(\.\d+)?$`)
 var regLast = regexp.MustCompile(`^\d+[s|m|h]$`)
+var regPath = regexp.MustCompile(`^\/([\w|\.|\-]+\/?)+$`)
+var regNormal = regexp.MustCompile(`^[\w|\.|\-|\~|\!|\@|\#|\$|\%|\^|\[|\]|\{|\}|\(|\)]+$`)
 
 func ValidateGet(c *gin.Context)  {
 	isOk := true
@@ -89,4 +91,12 @@ func IsIllegalCond(str string) bool {
 
 func IsIllegalLast(str string) bool {
 	return regLast.MatchString(str)
+}
+
+func IsIllegalPath(str string) bool  {
+	return regPath.MatchString(str)
+}
+
+func IsIllegalNormalInput(str string) bool {
+	return regNormal.MatchString(str)
 }

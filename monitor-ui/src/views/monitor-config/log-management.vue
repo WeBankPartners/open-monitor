@@ -58,17 +58,37 @@
               <Option v-for="item in modelConfig.condList" :value="item.value" :key="item.value">{{ item.label }}</Option>
             </Select>
             <div class="search-input-content" style="margin-left: 8px">
-              <input v-model="modelConfig.condValue" type="text" class="search-input c-dark" />
+              <input 
+                v-validate="'required|isNumber'" 
+                v-model="modelConfig.condValue" 
+                name="condValue"
+                :class="{ 'red-border': veeErrors.has('condValue') }"
+                type="text" 
+                class="form-control model-input search-input c-dark"/>
+              <label class="required-tip">*</label>
+            </div>
+            <div style="margin-left:120px">
+              <label v-show="veeErrors.has('condValue')" class="is-danger">{{ veeErrors.first('condValue')}}</label>
             </div>
           </div>
           <div class="marginbottom params-each">
             <label class="col-md-2 label-name lable-name-select">{{$t('tableKey.s_last')}}:</label>
             <div class="search-input-content" style="margin-right: 8px">
-              <input v-model="modelConfig.lastValue" type="text" class="search-input c-dark" />
+              <input 
+                v-validate="'required|isNumber'" 
+                v-model="modelConfig.lastValue" 
+                name="lastValue"
+                :class="{ 'red-border': veeErrors.has('lastValue') }"
+                type="text" 
+                class="form-control model-input search-input c-dark"/>
+              <label class="required-tip">*</label>
             </div>
             <Select v-model="modelConfig.last" style="width:100px">
               <Option v-for="item in modelConfig.lastList" :value="item.value" :key="item.value">{{ item.label }}</Option>
             </Select>
+            <div style="margin-left:10px">
+              <label v-show="veeErrors.has('lastValue')" class="is-danger">{{ veeErrors.first('lastValue')}}</label>
+            </div>
           </div>
           <div class="marginbottom params-each">
             <label class="col-md-2 label-name lable-name-select">{{$t('tableKey.s_priority')}}:</label>
@@ -267,17 +287,6 @@ export default {
         this.requestData(this.type, this.typeValue)
       })
     },
-    formValidate () {
-      if (this.$root.$validate.isEmpty_reset(this.modelConfig.condValue)) {
-        this.$Message.warning(this.$t('tableKey.condition')+this.$t('tips.required'))
-        return false 
-      }
-      if (this.$root.$validate.isEmpty_reset(this.modelConfig.lastValue)) {
-        this.$Message.warning(this.$t('tableKey.s_last')+this.$t('tips.required'))
-        return false 
-      }
-      return true
-    },
     paramsPrepare() {
       let modelParams = {
         path: this.modelConfig.addRow.path,
@@ -309,14 +318,14 @@ export default {
       this.$root.JQ('#add_edit_Modal').modal('show')
     },
     addPost () {
-      if (!this.formValidate()) {
-        return
-      }
-      let params = this.paramsPrepare()
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.logManagement.add.api, params, () => {
-        this.$Message.success(this.$t('tips.success'))
-        this.$root.JQ('#add_edit_Modal').modal('hide')
-        this.requestData(this.type, this.typeValue)
+      this.$validator.validate().then(result => {
+        if (!result) return
+        let params = this.paramsPrepare()
+        this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.logManagement.add.api, params, () => {
+          this.$Message.success(this.$t('tips.success'))
+          this.$root.JQ('#add_edit_Modal').modal('hide')
+          this.requestData(this.type, this.typeValue)
+        })
       })
     },
     editF (rowData) {
@@ -382,25 +391,25 @@ export default {
       })
     },
     editPost () {
-      if (!this.formValidate()) {
-        return
-      }
-      let params = this.paramsPrepare()
-      let url = ''
-      if (!this.$root.$validate.isEmpty_reset(this.singeAddId)) {
-        params.id = this.singeAddId
-        url = this.$root.apiCenter.logManagement.add.api
-      } else {
-        params.tpl_id = this.extendData.tpl_id
-        params.strategy[0].id = this.extendData.id
-        url = this.$root.apiCenter.logManagement.update.api
-      }
-     
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', url, params, () => {
-        this.$Message.success(this.$t('tips.success'))
-        this.$root.JQ('#add_edit_Modal').modal('hide')
-        this.requestData(this.type, this.typeValue)
-        this.$root.$store.commit('changeTableExtendActive', -1)
+      this.$validator.validate().then(result => {
+        if (!result) return
+        let params = this.paramsPrepare()
+        let url = ''
+        if (!this.$root.$validate.isEmpty_reset(this.singeAddId)) {
+          params.id = this.singeAddId
+          url = this.$root.apiCenter.logManagement.add.api
+        } else {
+          params.tpl_id = this.extendData.tpl_id
+          params.strategy[0].id = this.extendData.id
+          url = this.$root.apiCenter.logManagement.update.api
+        }
+
+        this.$root.$httpRequestEntrance.httpRequestEntrance('POST', url, params, () => {
+          this.$Message.success(this.$t('tips.success'))
+          this.$root.JQ('#add_edit_Modal').modal('hide')
+          this.requestData(this.type, this.typeValue)
+          this.$root.$store.commit('changeTableExtendActive', -1)
+        })
       })
     },
   },
@@ -419,19 +428,17 @@ export default {
   }
 </style>
 <style scoped lang="less">
+  .is-danger {
+    color: red;
+    margin-bottom: 0px;
+  }
   .search-input {
-    display: inline-block;
     height: 32px;
     padding: 4px 7px;
     font-size: 12px;
     border: 1px solid #dcdee2;
     border-radius: 4px;
-    color: #515a6e;
-    background-color: #fff;
-    background-image: none;
-    position: relative;
-    cursor: text
-
+    width: 230px;
   }
 
   .section-table-tip {
@@ -447,6 +454,7 @@ export default {
     vertical-align: middle; 
   }
   .tag-width {
+    cursor: auto;
     width: 55px;
     text-align: center;
   } 
