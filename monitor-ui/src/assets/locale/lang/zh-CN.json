@@ -18,6 +18,7 @@
     "endpointSearch": "请输入后选择对象",
     "metric": "请选择监控指标",
     "datePicker": "请选择日期",
+    "comparedDatePicker": "请选择对比日期",
     "refresh": "定时刷新",
     "metricConfiguration": "指标配置",
     "globalConfiguration": "全局配置",

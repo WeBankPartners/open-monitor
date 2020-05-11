@@ -243,7 +243,6 @@ export const drawChart = function(that,config,userConfig) {
       type: ['line', 'bar']
     }
   }
-
   if (finalConfig.eye) {
     option.toolbox.feature.myTool = {
       show:true,
