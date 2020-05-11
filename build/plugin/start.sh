@@ -14,7 +14,12 @@ sed -i "s~{{MONITOR_DB_HOST}}~$MONITOR_DB_HOST~g" monitor/conf/default.json
 sed -i "s~{{MONITOR_DB_PORT}}~$MONITOR_DB_PORT~g" monitor/conf/default.json
 sed -i "s~{{MONITOR_DB_USER}}~$MONITOR_DB_USER~g" monitor/conf/default.json
 sed -i "s~{{MONITOR_DB_PWD}}~$MONITOR_DB_PWD~g" monitor/conf/default.json
+if [ $GATEWAY_URL ]
+then
+sed -i "s~{{CORE_ADDR}}~$GATEWAY_URL~g" monitor/conf/default.json
+else
 sed -i "s~{{CORE_ADDR}}~$CORE_ADDR~g" monitor/conf/default.json
+fi
 sed -i "s~{{MONITOR_SERVER_PEER}}~$MONITOR_HOST_IP~g" monitor/conf/default.json
 if [ $MONITOR_SESSION_ENABLE ]
 then

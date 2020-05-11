@@ -50,7 +50,7 @@
             "api": "alarm/endpoint/update"
         },
         "register": {
-            "api": "agent/register"
+            "api": "agent/register_new"
         }
     },
     "thresholdManagement": {
@@ -66,6 +66,11 @@
         },
         "delete": {
             "api": "alarm/strategy/delete"
+        },
+        "recevier": {
+            "_des": "接收人管理",
+            "getReceivers": "alarm/action/search",
+            "api": "alarm/action/update"
         }
     },
     "logManagement": {
@@ -104,6 +109,10 @@
     "metricConfigView": {
         "_des": "指标配置预览视图",
         "api": "dashboard/newchart"
+    },
+    "metricConfigPieView": {
+        "_des": "指标配置饼图",
+        "api": "dashboard/pie/chart"
     },
     "alarmManagement": {
         "_des": "告警管理",

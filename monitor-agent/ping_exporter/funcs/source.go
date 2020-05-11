@@ -155,7 +155,7 @@ func GetIpList() []string {
 	var tmpList []string
 	sourceLock.RLock()
 	for k,_ := range sourceMap {
-		if k == "" || strings.Contains(k, ":") {
+		if k == "" || strings.Contains(k, ":") || strings.Contains(k, "http") {
 			continue
 		}
 		tmpList = append(tmpList, k)
@@ -168,7 +168,7 @@ func GetTelnetList() []*TelnetObj {
 	var tmpList []*TelnetObj
 	sourceLock.RLock()
 	for k,_ := range sourceMap {
-		if strings.Contains(k, ":") {
+		if strings.Contains(k, ":") && !strings.Contains(k, "http") {
 			tmpSplit := strings.Split(k, ":")
 			if len(tmpSplit) > 1 {
 				i,_ := strconv.Atoi(tmpSplit[1])
@@ -180,6 +180,28 @@ func GetTelnetList() []*TelnetObj {
 	}
 	sourceLock.RUnlock()
 	return tmpList
+}
+
+func GetHttpCheckList() []*HttpCheckObj {
+	var tmpHttpCheckList []*HttpCheckObj
+	sourceLock.RLock()
+	for k,_ := range sourceMap {
+		if strings.Contains(k, "http") {
+			tmpMethod := "get"
+			tmpUrl := k
+			if strings.HasPrefix(k, "post") {
+				tmpMethod = "post"
+				tmpUrl = k[strings.Index(k, "http"):]
+			}
+			if !strings.HasPrefix(tmpUrl, "http") {
+				log.Printf("get http check list,url:%s is illegal", tmpUrl)
+				continue
+			}
+			tmpHttpCheckList = append(tmpHttpCheckList, &HttpCheckObj{Method:tmpMethod, Url:tmpUrl})
+		}
+	}
+	sourceLock.RUnlock()
+	return tmpHttpCheckList
 }
 
 func GetSourceGuidMap() map[string][]string {
