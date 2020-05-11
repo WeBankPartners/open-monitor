@@ -18,19 +18,31 @@
             </Option>
         </Select>
       </li>
-      <li class="search-li" style="margin-left:20px">
+      <template v-if="!is_mom_yoy">
+        <li class="search-li" style="margin-left:20px">
           <Select v-model="timeTnterval" :disabled="disableTime" style="width:80px" @on-change="getChartsConfig">
             <Option v-for="item in dataPick" :value="item.value" :key="item.value">{{ item.label }}</Option>
           </Select>
-      </li>
+        </li>
+        <li class="search-li">
+          <Select v-model="autoRefresh" :disabled="disableTime" style="width:100px" @on-change="getChartsConfig" :placeholder="$t('placeholder.refresh')">
+            <Option v-for="item in autoRefreshConfig" :value="item.value" :key="item.value">{{ item.label }}</Option>
+          </Select>
+        </li>
+        <li class="search-li">
+          <DatePicker type="datetimerange" :value="dateRange" @on-change="datePick" format="yyyy-MM-dd HH:mm:ss" placement="bottom-end"  :placeholder="$t('placeholder.datePicker')" style="width: 320px"></DatePicker>
+        </li>
+      </template>
+      <template v-else>
+        <li class="search-li">
+          <DatePicker type="datetimerange" :value="compareFirstDate" @on-change="pickFirstDate" format="yyyy-MM-dd" placement="bottom-end" :placeholder="$t('placeholder.datePicker')" style="width: 320px"></DatePicker>
+        </li>
+        <li class="search-li">
+          <DatePicker type="datetimerange" :value="compareSecondDate" @on-change="pickSecondDate" format="yyyy-MM-dd" placement="bottom-end" :placeholder="$t('placeholder.comparedDatePicker')" style="width: 320px"></DatePicker>
+        </li>
+      </template>
       <li class="search-li">
-        <Select v-model="autoRefresh" :disabled="disableTime" style="width:100px" @on-change="getChartsConfig" :placeholder="$t('placeholder.refresh')">
-          <Option v-for="item in autoRefreshConfig" :value="item.value" :key="item.value">{{ item.label }}</Option>
-        </Select>
-      </li>
-
-      <li class="search-li" style="margin-left:20px">
-        <DatePicker type="datetimerange" :value="dateRange" format="yyyy-MM-dd HH:mm:ss" placement="bottom-end" @on-change="datePick" :placeholder="$t('placeholder.datePicker')" style="width: 320px"></DatePicker>
+        <Checkbox v-model="is_mom_yoy" @on-change="YoY">同环比</Checkbox>
       </li>
       <li class="search-li">
         <button type="button" class="btn btn-sm btn-confirm-f"
@@ -62,16 +74,13 @@ export default {
       timeTnterval: -1800,
       dataPick: dataPick,
       dateRange: ['', ''],
+      compareFirstDate: ['', ''],
+      compareSecondDate: ['', ''],
       autoRefresh: 10,
       disableTime: false,
       autoRefreshConfig: autoRefreshConfig,
-      params: {
-        // time: this.timeTnterval,
-        // group: 1,
-        // endpoint: '192.168.0.16',
-        // start: Date.parse(this.dateRange[0]),
-        // end: Date.parse(this.dateRange[1])
-      }
+      is_mom_yoy: false,
+      params: {}
     }
   },
   computed: {
@@ -150,6 +159,12 @@ export default {
       }
       this.getChartsConfig()
     },
+    pickFirstDate(data) {
+      this.compareFirstDate = data
+    },
+    pickSecondDate(data) {
+      this.compareSecondDate = data
+    },
     getEndpointList(query) {
       let params = {
         search: query,
@@ -191,12 +206,25 @@ export default {
         endpoint: this.endpoint,
         start: this.dateRange[0] ===''? '':Date.parse(this.dateRange[0].replace(/-/g, '/'))/1000,
         end: this.dateRange[1] ===''? '':Date.parse(this.dateRange[1].replace(/-/g, '/'))/1000,
+        compare_first_start: this.compareFirstDate[0],
+        compare_first_end: this.compareFirstDate[1],
+        compare_second_start: this.compareSecondDate[0],
+        compare_second_end: this.compareSecondDate[1],
         sys: false
       }
       url = url.replace(`{${key}}`,params[key])
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET',url, params, responseData => {
         this.$parent.manageCharts(responseData, params)
       },{isNeedloading: false})
+    },
+    YoY(status) {
+      if (status) {
+        this.disableTime = true
+        this.$parent.showCharts = false 
+        this.$parent.showRecursive = false
+      } else {
+        this.disableTime = false
+      }
     },
     changeRoute () {
       this.$router.push({name: 'endpointManagement', params: {search: this.endpointObject.option_value}})
