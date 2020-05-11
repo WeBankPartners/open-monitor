@@ -11,7 +11,8 @@ import resourceLevel from "@/views/monitor-config/resource-level";
 import metricConfig from "@/views/metric-config";
 import viewConfigIndex from "@/views/custom-view/view-config-index";
 import viewConfig from "@/views/custom-view/view-config";
-import editView from "@/views/custom-view/edit-view";
+import editLineView from "@/views/custom-view/edit-line-view";
+import editPieView from "@/views/custom-view/edit-pie-view";
 import viewChart from "@/views/custom-view/view-chart";
 import portal from "@/views/portal";
 import index from "@/views/index";
@@ -106,11 +107,18 @@ const router = [
     component: viewConfig
   },
   {
-    path: "/editView",
-    name: "editView",
+    path: "/editLineView",
+    name: "editLineView",
     title: "自定义视图编辑",
     meta: {},
-    component: editView
+    component: editLineView
+  },
+  {
+    path: "/editPieView",
+    name: "editPieView",
+    title: "自定义视图编辑",
+    meta: {},
+    component: editPieView
   },
   {
     path: "/viewChart",

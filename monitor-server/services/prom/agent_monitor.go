@@ -34,7 +34,7 @@ func DeployAgent(agentType,instance,bin,ip,port,user,pwd,url string) (address st
 	if agentType == "mysql" {
 		param.Config = "my.cnf"
 	}
-	if agentType == "tomcat" {
+	if agentType == "tomcat" || agentType == "java" || agentType == "jmx" {
 		param.Config = "config.yaml"
 	}
 	param.InstanceServer = ip

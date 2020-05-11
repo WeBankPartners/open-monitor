@@ -13,7 +13,9 @@
           :remote-method="getEndpointList"
           >
           <Option v-for="(option, index) in endpointList" :value="option.option_value" :key="index">
-            <Tag :color="endpointTag[option.option_type_name] || choiceColor(option.option_type_name, index)" class="tag-width">{{option.option_type_name}}</Tag>{{option.option_text}}</Option>
+            <Tag :color="endpointTag[option.option_type_name] || choiceColor(option.option_type_name, index)" class="tag-width">
+              {{option.option_type_name}}</Tag>{{option.option_text}}
+            </Option>
         </Select>
       </li>
       <li class="search-li" style="margin-left:20px">
@@ -172,8 +174,8 @@ export default {
           autoRefresh: this.autoRefresh,
           time: this.timeTnterval,
           endpoint: this.endpointObject.option_value,
-          start: this.dateRange[0] ===''? '':Date.parse(this.dateRange[0])/1000,
-          end: this.dateRange[1] ===''? '':Date.parse(this.dateRange[1])/1000,
+          start: this.dateRange[0] ===''? '':Date.parse(this.dateRange[0].replace(/-/g, '/'))/1000,
+          end: this.dateRange[1] ===''? '':Date.parse(this.dateRange[1].replace(/-/g, '/'))/1000,
           guid: this.endpointObject.option_value,
           sys: true
         }  
@@ -187,8 +189,8 @@ export default {
         autoRefresh: this.autoRefresh,
         time: this.timeTnterval,
         endpoint: this.endpoint,
-        start: this.dateRange[0] ===''? '':Date.parse(this.dateRange[0])/1000,
-        end: this.dateRange[1] ===''? '':Date.parse(this.dateRange[1])/1000,
+        start: this.dateRange[0] ===''? '':Date.parse(this.dateRange[0].replace(/-/g, '/'))/1000,
+        end: this.dateRange[1] ===''? '':Date.parse(this.dateRange[1].replace(/-/g, '/'))/1000,
         sys: false
       }
       url = url.replace(`{${key}}`,params[key])
@@ -213,6 +215,7 @@ export default {
     padding-left: 10px;
   }
   .tag-width {
+    cursor: auto;
     width: 80px;
     text-align: center;
   }

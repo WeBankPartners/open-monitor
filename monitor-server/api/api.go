@@ -92,6 +92,7 @@ func InitHttpServer(exportAgent bool) {
 			dashboardApi.GET("/search", dashboard.MainSearch)
 			dashboardApi.GET("/config/metric/list", dashboard.GetPromMetric)
 			dashboardApi.POST("/newchart", dashboard.GetChart)
+			dashboardApi.POST("/pie/chart", dashboard.GetPieChart)
 			dashboardApi.POST("/config/metric/update", dashboard.UpdatePromMetric)
 			dashboardApi.GET("/config/metric/reload", agent.ReloadEndpointMetric)
 			dashboardApi.GET("/endpoint/metric/list", dashboard.GetEndpointMetric)
@@ -111,6 +112,7 @@ func InitHttpServer(exportAgent bool) {
 		agentApi := authApi.Group("/agent")
 		{
 			agentApi.POST("/register", agent.RegisterAgent)
+			agentApi.POST("/register_new", agent.RegisterAgentNew)
 			agentApi.GET("/deregister", agent.DeregisterAgent)
 			agentApi.POST("/export/register/:name", agent.ExportAgent)
 			agentApi.POST("/export/deregister/:name", agent.ExportAgent)
@@ -188,4 +190,8 @@ func InitClusterApi()  {
 	http.Handle("/sync/config", http.HandlerFunc(alarm.SyncConfigHandle))
 	http.Handle("/sync/consul", http.HandlerFunc(alarm.SyncConsulHandle))
 	http.ListenAndServe(fmt.Sprintf(":%s", m.Config().Cluster.HttpPort), nil)
+}
+
+func InitDependenceParam()  {
+	agent.InitAgentManager()
 }
