@@ -395,32 +395,52 @@ func GetChart(c *gin.Context)  {
 	}
 	var eOption m.EChartOption
 	var query m.QueryMonitorData
+	var compareLegend string
+	var sameEndpoint bool
+	var aggType string
 	// validate config time
-	if paramConfig[0].Time != "" && paramConfig[0].Start == "" {
-		paramConfig[0].Start = paramConfig[0].Time
-	}
-	start,err := strconv.ParseInt(paramConfig[0].Start, 10, 64)
-	if err != nil {
-		mid.ReturnError(c, "Param start validation failed", err)
-		return
-	}else{
-		if start < 0 {
-			start = time.Now().Unix() + start
+	if paramConfig[0].CompareFirstStart != "" && paramConfig[0].CompareFirstEnd != "" {
+		st,err := time.Parse(m.DatetimeFormat, fmt.Sprintf("%s 00:00:00", paramConfig[0].CompareFirstStart))
+		if err != nil {
+			mid.ReturnValidateFail(c, "Param compare first start validation failed")
+			return
 		}
-		query.Start = start
-	}
-	query.End = time.Now().Unix()
-	if paramConfig[0].End != "" {
-		end,err := strconv.ParseInt(paramConfig[0].End, 10, 64)
-		if err == nil && end <= query.End {
-			query.End = end
+		et,err := time.Parse(m.DatetimeFormat, fmt.Sprintf("%s 23:59:59", paramConfig[0].CompareFirstEnd))
+		if err != nil {
+			mid.ReturnValidateFail(c, "Param compare first end validation failed")
+			return
+		}
+		query.Start = st.Unix()
+		query.End = et.Unix()
+		compareLegend = fmt.Sprintf("%s_%s", paramConfig[0].CompareFirstStart, paramConfig[0].CompareFirstEnd)
+	}else {
+		if paramConfig[0].Time != "" && paramConfig[0].Start == "" {
+			paramConfig[0].Start = paramConfig[0].Time
+		}
+		start, err := strconv.ParseInt(paramConfig[0].Start, 10, 64)
+		if err != nil {
+			mid.ReturnError(c, "Param start validation failed", err)
+			return
+		} else {
+			if start < 0 {
+				start = time.Now().Unix() + start
+			}
+			query.Start = start
+		}
+		query.End = time.Now().Unix()
+		if paramConfig[0].End != "" {
+			end, err := strconv.ParseInt(paramConfig[0].End, 10, 64)
+			if err == nil && end <= query.End {
+				query.End = end
+			}
 		}
 	}
 	// custom or from mysql
 	var querys []m.QueryMonitorData
-	step := 0
+	step := 10
 	var firstEndpoint,unit string
 	if paramConfig[0].Id > 0 {
+		sameEndpoint = true
 		recordMap := make(map[string]bool)
 		// one endpoint -> metrics
 		for _,tmpParamConfig := range paramConfig {
@@ -435,6 +455,7 @@ func GetChart(c *gin.Context)  {
 				return
 			}
 			chart := *charts[0]
+			aggType = chart.AggType
 			eOption.Id = chart.Id
 			if chart.Title == "${auto}" {
 				if strings.Contains(tmpParamConfig.Metric, "=") {
@@ -464,7 +485,19 @@ func GetChart(c *gin.Context)  {
 				if len(paramConfig) > 1 && strings.Contains(chart.Legend, "metric") {
 					tmpLegend = "$custom"
 				}
-				querys = append(querys, m.QueryMonitorData{Start: query.Start, End: query.End, PromQ: tmpPromQl, Legend: tmpLegend, Metric: []string{v}, Endpoint: []string{tmpParamConfig.Endpoint}})
+				querys = append(querys, m.QueryMonitorData{Start: query.Start, End: query.End, PromQ: tmpPromQl, Legend: tmpLegend, Metric: []string{v}, Endpoint: []string{tmpParamConfig.Endpoint}, CompareLegend:compareLegend, SameEndpoint:sameEndpoint})
+				if paramConfig[0].CompareSecondStart != "" && paramConfig[0].CompareSecondEnd != "" {
+					st,sErr := time.Parse(m.DatetimeFormat, fmt.Sprintf("%s 00:00:00", paramConfig[0].CompareSecondStart))
+					et,eErr := time.Parse(m.DatetimeFormat, fmt.Sprintf("%s 23:59:59", paramConfig[0].CompareSecondEnd))
+					if sErr == nil && eErr == nil {
+						if (et.Unix()-st.Unix()) != (query.End-query.Start) {
+							mid.ReturnValidateFail(c, "Param compare fist and second do not fetch ")
+							return
+						}
+						compareLegend = fmt.Sprintf("%s_%s", paramConfig[0].CompareSecondStart, paramConfig[0].CompareSecondEnd)
+						querys = append(querys, m.QueryMonitorData{Start: st.Unix(), End: et.Unix(), PromQ: tmpPromQl, Legend: tmpLegend, Metric: []string{v}, Endpoint: []string{tmpParamConfig.Endpoint}, CompareLegend:compareLegend, SameEndpoint:sameEndpoint})
+					}
+				}
 			}
 		}
 	}else{
@@ -554,10 +587,10 @@ func GetChart(c *gin.Context)  {
 			eOption.Title = s.Name
 		}
 		if agg > 1 {
-			aggType := paramConfig[0].Aggregate
-			if aggType != "none" && aggType != "" {
-				s.Data = db.Aggregate(s.Data, agg, aggType)
+			if paramConfig[0].Aggregate != "" {
+				aggType = paramConfig[0].Aggregate
 			}
+			s.Data = db.Aggregate(s.Data, agg, aggType)
 		}
 		if i > 0 {
 			if s.Data[0][0] != firstSerialTime {
