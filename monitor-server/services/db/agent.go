@@ -333,6 +333,22 @@ func GetEndpointTelnet(guid string) (result []*m.EndpointTelnetTable,err error) 
 	return result,err
 }
 
+func UpdateEndpointHttp(param []*m.EndpointHttpTable) error {
+	if len(param) == 0 {
+		return nil
+	}
+	var actions []*Action
+	actions = append(actions, &Action{Sql:"DELETE FROM endpoint_http WHERE endpoint_guid=?", Param:[]interface{}{param[0].EndpointGuid}})
+	for _,v := range param {
+		actions = append(actions, &Action{Sql:"INSERT INTO endpoint_http(`endpoint_guid`,`method`,`url`) VALUE (?,?,?)", Param:[]interface{}{v.EndpointGuid,v.Method,v.Url}})
+	}
+	err := Transaction(actions)
+	if err != nil {
+		mid.LogError("update endpoint http fail", err)
+	}
+	return err
+}
+
 func GetPingExporterSource() []*m.PingExportSourceObj {
 	result := []*m.PingExportSourceObj{}
 	pingMetric := "ping_alive"
@@ -372,6 +388,17 @@ func GetPingExporterSource() []*m.PingExportSourceObj {
 			if v.Ip != "" && v.Port > 0 {
 				result = append(result, &m.PingExportSourceObj{Ip:fmt.Sprintf("%s:%d", v.Ip, v.Port), Guid:v.Guid})
 			}
+		}
+	}
+	var endpointHttpTable []*m.EndpointHttpTable
+	x.SQL("SELECT * FROM endpoint_http").Find(&endpointHttpTable)
+	if len(endpointHttpTable) > 0 {
+		for _,v := range endpointHttpTable {
+			tmpUrl := v.Url
+			if v.Method == "post" {
+				tmpUrl = fmt.Sprintf("%s:%s", v.Method, v.Url)
+			}
+			result = append(result, &m.PingExportSourceObj{Ip:tmpUrl, Guid:v.EndpointGuid})
 		}
 	}
 	return result

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"bytes"
 	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
+	"crypto/tls"
 )
 
 var (
@@ -39,9 +40,66 @@ func SendSmtpMail(smo m.SendAlertObj) {
 	if !mailEnable {
 		return
 	}
+	if m.Config().Alert.Mail.Tls {
+		sendSMTPMailTLS(smo)
+		return
+	}
 	err := smtp.SendMail(fmt.Sprintf("%s:25", smtpServer), smtpAuth, sendFrom, smo.Accept, mailQQMessage(smo.Accept,smo.Subject,smo.Content))
 	if err != nil {
 		mid.LogError("send mail error", err)
+	}
+}
+
+func sendSMTPMailTLS(smo m.SendAlertObj)  {
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify:true,
+		ServerName: smtpServer,
+	}
+	address := fmt.Sprintf("%s:465", smtpServer)
+	conn,err := tls.Dial("tcp", address, tlsConfig)
+	if err != nil {
+		mid.LogError("tls dial error ", err)
+		return
+	}
+	client,err := smtp.NewClient(conn, smtpServer)
+	if err != nil {
+		mid.LogError("smtp new client error ", err)
+		return
+	}
+	defer client.Close()
+	if b,_ := client.Extension("AUTH"); b {
+		err = client.Auth(smtpAuth)
+		if err != nil {
+			mid.LogError("client auth error ", err)
+			return
+		}
+	}
+	err = client.Mail(sendFrom)
+	if err != nil {
+		mid.LogError("client mail set from error ", err)
+		return
+	}
+	for _,to := range smo.Accept {
+		if err = client.Rcpt(to); err != nil {
+			mid.LogError(fmt.Sprintf("client rcpt %s error ", to), err)
+			return
+		}
+	}
+	w,err := client.Data()
+	if err != nil {
+		mid.LogError("client data init error ", err)
+		return
+	}
+	_,err = w.Write(mailQQMessage(smo.Accept, smo.Subject, smo.Content))
+	if err != nil {
+		mid.LogError("write message error ", err)
+		return
+	}
+	w.Close()
+	err = client.Quit()
+	if err != nil {
+		mid.LogError("client quit error ", err)
+		return
 	}
 }
 

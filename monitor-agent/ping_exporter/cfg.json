@@ -3,6 +3,7 @@
   "interval": 30,
   "ping_enable": true,
   "telnet_enable": true,
+  "http_check_enable": true,
   "open-falcon" : {
     "enabled": false,
     "transfer": {
@@ -52,6 +53,10 @@
     "telnet": "telnet_alive",
     "telnet_count_num": "telnet_count",
     "telnet_count_success": "telnet_success",
-    "telnet_count_fail": "telnet_fail"
+    "telnet_count_fail": "telnet_fail",
+    "http_check": "http_status",
+    "http_check_count_num": "http_count",
+    "http_check_count_success": "http_success",
+    "http_check_count_fail": "http_fail"
   }
 }

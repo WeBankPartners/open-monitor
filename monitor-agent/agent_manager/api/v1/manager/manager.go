@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-agent/agent_manager/funcs"
+	"regexp"
 )
 
 func AddDeploy(w http.ResponseWriter,r *http.Request)  {
@@ -36,17 +37,31 @@ func AddDeploy(w http.ResponseWriter,r *http.Request)  {
 				exporter = v
 				if v, b := tmpParamMap["config"]; b {
 					configFile = v
+					if !illegalPath(configFile) {
+						resp.Code = 400
+						resp.Message = "param config illegal "
+					}
 				}
-				port,err := funcs.AddDeploy(exporter, configFile, guid, tmpParamMap)
-				if err != nil {
-					resp.Code = 500
-					resp.Message = fmt.Sprintf("error:%v", err)
-				}else{
-					resp.Code = 200
-					if port > 0 {
-						resp.Message = fmt.Sprintf("%s:%d", funcs.LocalIp, port)
-					}else{
-						resp.Message = "exist"
+				if !illegalName(exporter) {
+					resp.Code = 400
+					resp.Message = "param exporter illegal "
+				}
+				if !illegalGuid(guid) {
+					resp.Code = 400
+					resp.Message = "param guid illegal "
+				}
+				if resp.Code < 200 {
+					port, err := funcs.AddDeploy(exporter, configFile, guid, tmpParamMap)
+					if err != nil {
+						resp.Code = 500
+						resp.Message = fmt.Sprintf("error:%v", err)
+					} else {
+						resp.Code = 200
+						if port > 0 {
+							resp.Message = fmt.Sprintf("%s:%d", funcs.LocalIp, port)
+						} else {
+							resp.Message = "exist"
+						}
 					}
 				}
 			}
@@ -106,4 +121,28 @@ func (h *httpResponse) byte() []byte {
 	}else{
 		return []byte(fmt.Sprintf("{\"code\":%d,\"message\":\"%s\",\"data\":%v}", h.Code, h.Message, h.Data))
 	}
+}
+
+func illegalPath(input string) bool {
+	if input == "" {
+		return true
+	}
+	var regPath = regexp.MustCompile(`^\/?([\w|\.|\-]+\/?)+$`)
+	return regPath.MatchString(input)
+}
+
+func illegalName(input string) bool {
+	if input == "" {
+		return true
+	}
+	var regPath = regexp.MustCompile(`^\w+$`)
+	return regPath.MatchString(input)
+}
+
+func illegalGuid(input string) bool {
+	if input == "" {
+		return true
+	}
+	var regPath = regexp.MustCompile(`^[\w|\.|\-]+$`)
+	return regPath.MatchString(input)
 }
