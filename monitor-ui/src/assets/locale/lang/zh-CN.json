@@ -36,6 +36,7 @@
     "metric": "指标",
     "relativeTime": "时间段",
     "timeInterval": "时间区间",
+    "comparedTimeInterval": "对比时间",
     "port": "端口",
     "ip": "IP",
     "aggType": "聚合类型",
