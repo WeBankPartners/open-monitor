@@ -403,21 +403,6 @@ export default {
         this.requestData(this.type, this.typeValue)
       })
     },
-    formValidate () {
-      // if (this.$root.$validate.isEmpty_reset(this.modelConfig.thresholdValue)) {
-      //   this.$Message.warning(this.$t('tableKey.threshold')+this.$t('tips.required'))
-      //   return false 
-      // }
-      // if (this.$root.$validate.isEmpty_reset(this.modelConfig.lastValue)) {
-      //   this.$Message.warning(this.$t('tableKey.s_last')+this.$t('tips.required'))
-      //   return false 
-      // }
-      if (this.$root.$validate.isEmpty_reset(this.modelConfig.addRow.content)) {
-        this.$Message.warning(this.$t('tableKey.content')+this.$t('tips.required'))
-        return false
-      }
-      return true
-    },
     paramsPrepare() {
       let modelParams = {
         cond: this.modelConfig.threshold + this.modelConfig.thresholdValue,
@@ -445,9 +430,6 @@ export default {
       this.$root.JQ('#add_edit_Modal').modal('show')
     },
     addPost () {
-      // if (!this.formValidate()) {
-      //   return
-      // }
       this.$validator.validate().then(result => {
         if (!result) return
         if (this.$root.$validate.isEmpty_reset(this.modelConfig.addRow.content)) {
@@ -455,7 +437,6 @@ export default {
           return
         }
         let params = this.paramsPrepare()
-        console.log(params)
         this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.thresholdManagement.add.api, params, () => {
           this.$Message.success(this.$t('tips.success'))
           this.$root.JQ('#add_edit_Modal').modal('hide')
