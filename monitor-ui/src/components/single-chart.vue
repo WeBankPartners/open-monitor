@@ -34,6 +34,10 @@ export default {
     chartIndex: Number
   },
   created (){
+    // 外部触发清除刷新
+    this.$root.$eventBus.$on('clearSingleChartInterval', () => {
+      clearInterval(this.interval)
+    })
     generateUuid().then((elId)=>{
       this.elId =  `id_${elId}`; 
     })

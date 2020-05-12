@@ -220,6 +220,8 @@ export default {
     YoY(status) {
       if (status) {
         this.disableTime = true
+        this.$root.$eventBus.$emit('clearSingleChartInterval')
+        this.autoRefresh = 0
         this.$parent.showCharts = false 
         this.$parent.showRecursive = false
       } else {
