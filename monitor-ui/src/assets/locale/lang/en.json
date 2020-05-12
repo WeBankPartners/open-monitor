@@ -63,6 +63,7 @@
     "setUp": "Set up"
   },
   "button": {
+    "MoM": "MoM",
     "Logout": "Logout",
     "search": "Search",
     "add": "Add",
@@ -147,6 +148,7 @@
     "success": " Success!",
     "failed": " Failed!",
     "selectData": " Please select data first!",
+    "selectDate": "Please select date!",
     "metricConfigTips": {
       "one": "1. Input endpoint as data source and select the metric from the dropdown list.",
       "two": "2. Click 'Search' button to view the monitor graph based on the selected metric.",
