@@ -63,6 +63,7 @@
     "setUp": "设置"
   },
   "button": {
+    "MoM": "同环比",
     "Logout": "注销",
     "search": "搜索",
     "add": "新增",
@@ -147,6 +148,7 @@
     "success": " 成功!",
     "failed": " 失败!",
     "selectData": " 请先选择数据!",
+    "selectDate": "请选择时间区间!",
     "metricConfigTips": {
       "one": "1、请先搜索主机作为输入源并选择监控指标",
       "two": "2、点击 '查询' 可查看当前对象及指标下监控视图；",
