@@ -98,9 +98,9 @@ export default {
     this.interval = setInterval(()=>{
       this.getAlarm()
     }, 10000)
-  },
-  destroyed() {
-    clearInterval(this.interval)
+    this.$once('hook:beforeDestroy', () => {
+      clearInterval(this.interval)
+    })
   },
   methods: {
     getAlarm() {
