@@ -19,7 +19,7 @@
           type="datetimerange" 
           :value="viewCondition.dateRange" 
           format="yyyy-MM-dd HH:mm:ss" 
-          placement="bottom-end" 
+          placement="bottom-start" 
           @on-change="datePick" 
           :placeholder="$t('placeholder.datePicker')" 
           style="width: 320px">

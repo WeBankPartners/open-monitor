@@ -99,6 +99,7 @@ export default {
   },
   methods: {
     receiveConfig (chartItem) {
+      this.$root.$eventBus.$emit('clearSingleChartInterval')
       this.$root.$eventBus.$emit('callMaxChart', chartItem)
     },
     hide (index) {
