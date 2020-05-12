@@ -18,6 +18,7 @@
     "endpointSearch": "请输入后选择对象",
     "metric": "请选择监控指标",
     "datePicker": "请选择日期",
+    "comparedDatePicker": "请选择对比日期",
     "refresh": "定时刷新",
     "metricConfiguration": "指标配置",
     "globalConfiguration": "全局配置",
@@ -35,6 +36,7 @@
     "metric": "指标",
     "relativeTime": "时间段",
     "timeInterval": "时间区间",
+    "comparedTimeInterval": "对比时间",
     "port": "端口",
     "ip": "IP",
     "aggType": "聚合类型",
@@ -62,6 +64,7 @@
     "setUp": "设置"
   },
   "button": {
+    "MoM": "同环比",
     "Logout": "注销",
     "search": "搜索",
     "add": "新增",
@@ -146,6 +149,7 @@
     "success": " 成功!",
     "failed": " 失败!",
     "selectData": " 请先选择数据!",
+    "selectDate": "请选择时间区间!",
     "metricConfigTips": {
       "one": "1、请先搜索主机作为输入源并选择监控指标",
       "two": "2、点击 '查询' 可查看当前对象及指标下监控视图；",
