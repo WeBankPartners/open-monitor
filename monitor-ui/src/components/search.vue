@@ -19,7 +19,7 @@
         </Select>
       </li>
       <template v-if="!is_mom_yoy">
-        <li class="search-li" style="margin-left:20px">
+        <li class="search-li">
           <Select v-model="timeTnterval" :disabled="disableTime" style="width:80px" @on-change="getChartsConfig">
             <Option v-for="item in dataPick" :value="item.value" :key="item.value">{{ item.label }}</Option>
           </Select>
@@ -35,14 +35,14 @@
       </template>
       <template v-else>
         <li class="search-li">
-          <DatePicker type="datetimerange" :value="compareFirstDate" @on-change="pickFirstDate" format="yyyy-MM-dd" placement="bottom-end" :placeholder="$t('placeholder.datePicker')" style="width: 320px"></DatePicker>
+          <DatePicker type="datetimerange" :value="compareFirstDate" @on-change="pickFirstDate" format="yyyy-MM-dd" placement="bottom-end" :placeholder="$t('placeholder.datePicker')" style="width: 250px"></DatePicker>
         </li>
         <li class="search-li">
-          <DatePicker type="datetimerange" :value="compareSecondDate" @on-change="pickSecondDate" format="yyyy-MM-dd" placement="bottom-end" :placeholder="$t('placeholder.comparedDatePicker')" style="width: 320px"></DatePicker>
+          <DatePicker type="datetimerange" :value="compareSecondDate" @on-change="pickSecondDate" format="yyyy-MM-dd" placement="bottom-end" :placeholder="$t('placeholder.comparedDatePicker')" style="width: 250px"></DatePicker>
         </li>
       </template>
       <li class="search-li">
-        <Checkbox v-model="is_mom_yoy" @on-change="YoY">同环比</Checkbox>
+        <Checkbox v-model="is_mom_yoy" @on-change="YoY">{{$t('button.MoM')}}</Checkbox>
       </li>
       <li class="search-li">
         <button type="button" class="btn btn-sm btn-confirm-f"
@@ -182,6 +182,12 @@ export default {
       if (this.$root.$validate.isEmpty_reset(this.endpointObject) && !this.$root.$validate.isEmpty_reset(this.$root.$store.state.ip)) {
         this.endpointObject = this.$root.$store.state.ip
         this.$root.$store.commit('storeip', {})
+      }
+      if (this.is_mom_yoy) {
+        if (this.compareFirstDate[0] === '' || this.compareSecondDate[0] === '') {
+          this.$Message.warning(this.$t('tips.selectDate'))
+          return
+        }
       }
       let params = {}
       if (this.endpointObject.type === 'sys' ) {
