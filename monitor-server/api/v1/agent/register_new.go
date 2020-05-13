@@ -53,11 +53,25 @@ func InitAgentManager()  {
 			break
 		}
 	}
+	if agentManagerServer != "" {
+		param,err := db.GetAgentManager()
+		if err != nil {
+			mid.LogError("Get agent manager table fail ", err)
+			return
+		}
+		err = prom.InitAgentManager(param, agentManagerServer)
+		if err != nil {
+			mid.LogError("Init agent manager fail ", err)
+		}
+	}
 }
 
 func AgentRegister(param m.RegisterParamNew) (validateMessage string,err error) {
 	if agentManagerServer == "" && param.AgentManager {
 		return validateMessage,fmt.Errorf("agent manager server not found,can not enable agent manager ")
+	}
+	if param.Type == "tomcat" {
+		param.Type = "java"
 	}
 	var rData returnData
 	switch param.Type {
@@ -116,6 +130,19 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage string,err error) 
 			if err != nil {
 				return validateMessage,err
 			}
+		}
+	}
+	if param.AgentManager {
+		var binPath,configFile string
+		for _,v := range m.Config().Agent {
+			if v.AgentType == param.Type {
+				binPath = v.AgentBin
+				configFile = v.ConfigFile
+			}
+		}
+		err = db.UpdateAgentManagerTable(rData.endpoint, param.User, param.Password, configFile, binPath, true)
+		if err != nil {
+			mid.LogError("Update agent manager table fail ", err)
 		}
 	}
 	return validateMessage,err
@@ -188,7 +215,7 @@ func mysqlRegister(param m.RegisterParamNew) returnData {
 		result.validateMessage = "Mysql instance name and ip and post can not empty "
 		return result
 	}
-	var binPath,address string
+	var binPath,address,configFile string
 	if param.AgentManager {
 		if param.User == "" || param.Password == "" {
 			result.validateMessage = "Mysql user and password can not empty"
@@ -197,6 +224,7 @@ func mysqlRegister(param m.RegisterParamNew) returnData {
 		for _,v := range m.Config().Agent {
 			if v.AgentType == param.Type {
 				binPath = v.AgentBin
+				configFile = v.ConfigFile
 				break
 			}
 		}
@@ -204,7 +232,7 @@ func mysqlRegister(param m.RegisterParamNew) returnData {
 			result.err = fmt.Errorf("Mysql agnet bin can not found in config ")
 			return result
 		}
-		address,err = prom.DeployAgent(param.Type,param.Name,binPath,param.Ip,param.Port,param.User,param.Password,agentManagerServer)
+		address,err = prom.DeployAgent(param.Type,param.Name,binPath,param.Ip,param.Port,param.User,param.Password,agentManagerServer,configFile)
 		if err != nil {
 			result.err = err
 			return result
@@ -284,7 +312,7 @@ func redisRegister(param m.RegisterParamNew) returnData {
 			result.err = fmt.Errorf("Redis agnet bin can not found in config ")
 			return result
 		}
-		address,err = prom.DeployAgent(param.Type,param.Name,binPath,param.Ip,param.Port,param.User,param.Password,agentManagerServer)
+		address,err = prom.DeployAgent(param.Type,param.Name,binPath,param.Ip,param.Port,param.User,param.Password,agentManagerServer,"")
 		if err != nil {
 			result.err = err
 			return result
@@ -348,15 +376,12 @@ func javaRegister(param m.RegisterParamNew) returnData {
 		result.validateMessage = "Java instance name and ip and post can not empty "
 		return result
 	}
-	var binPath,address string
+	var binPath,address,configFile string
 	if param.AgentManager {
-		if param.User == "" || param.Password == "" {
-			result.validateMessage = "Java user and password can not empty"
-			return result
-		}
 		for _,v := range m.Config().Agent {
-			if v.AgentType == "tomcat" {
+			if v.AgentType == param.Type {
 				binPath = v.AgentBin
+				configFile = v.ConfigFile
 				break
 			}
 		}
@@ -364,7 +389,7 @@ func javaRegister(param m.RegisterParamNew) returnData {
 			result.err = fmt.Errorf("Java agnet bin can not found in config ")
 			return result
 		}
-		address,err = prom.DeployAgent(param.Type,param.Name,binPath,param.Ip,param.Port,param.User,param.Password,agentManagerServer)
+		address,err = prom.DeployAgent(param.Type,param.Name,binPath,param.Ip,param.Port,param.User,param.Password,agentManagerServer,configFile)
 		if err != nil {
 			result.err = err
 			return result
