@@ -13,13 +13,6 @@ export default {
   name: "index",
   data() {
     return {
-      DelConfig: {
-        isDisplay:false,
-        displayConfig: {
-          name: ''
-        },
-        callback: null
-      }
     }
   },
   methods: {},
