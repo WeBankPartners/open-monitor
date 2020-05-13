@@ -5,10 +5,9 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
-	"golang.org/x/net/context/ctxhttp"
 	"io/ioutil"
 	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
-	"context"
+	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 )
 
 type agentManagerRequest struct {
@@ -27,16 +26,11 @@ type agentManagerResponse struct {
 	Data  interface{}  `json:"data"`
 }
 
-func DeployAgent(agentType,instance,bin,ip,port,user,pwd,url string) (address string,err error) {
+func DeployAgent(agentType,instance,bin,ip,port,user,pwd,url,configFile string) (address string,err error) {
 	var param agentManagerRequest
 	param.Guid = fmt.Sprintf("%s_%s_%s", instance, ip, agentType)
 	param.Exporter = bin
-	if agentType == "mysql" {
-		param.Config = "my.cnf"
-	}
-	if agentType == "tomcat" || agentType == "java" || agentType == "jmx" {
-		param.Config = "config.yaml"
-	}
+	param.Config = configFile
 	param.InstanceServer = ip
 	param.InstancePort = port
 	param.AuthUser = user
@@ -46,16 +40,21 @@ func DeployAgent(agentType,instance,bin,ip,port,user,pwd,url string) (address st
 		return address,err
 	}
 	if resp.Code == 200 {
-		return resp.Message,nil
+		if strings.Contains(resp.Message, ":") {
+			tmpAddress := resp.Message
+			if strings.Contains(url, "127.0.0.1") {
+				tmpAddress = "127.0.0.1" + tmpAddress[strings.Index(tmpAddress, ":"):]
+			}
+			return tmpAddress,nil
+		}else{
+			return "", fmt.Errorf("agent manager response message is illegal address: %s ", resp.Message)
+		}
 	}else{
 		return address,fmt.Errorf(resp.Message)
 	}
 }
 
 func StopAgent(agentType,instance,ip,url string) error {
-	if agentType == "java" {
-		agentType = "tomcat"
-	}
 	var param agentManagerRequest
 	param.Guid = fmt.Sprintf("%s_%s_%s", instance, ip, agentType)
 	resp,err := requestAgentMonitor(param,url,"delete")
@@ -69,7 +68,19 @@ func StopAgent(agentType,instance,ip,url string) error {
 	}
 }
 
-func requestAgentMonitor(param agentManagerRequest,url,method string) (resp agentManagerResponse,err error) {
+func InitAgentManager(param []*m.AgentManagerTable, url string) error {
+	resp,err := requestAgentMonitor(param,url,"init")
+	if err != nil {
+		return err
+	}
+	if resp.Code == 200 {
+		return nil
+	}else{
+		return fmt.Errorf(resp.Message)
+	}
+}
+
+func requestAgentMonitor(param interface{},url,method string) (resp agentManagerResponse,err error) {
 	postData,err := json.Marshal(param)
 	if err != nil {
 		mid.LogError("Failed marshalling data", err)
@@ -80,14 +91,14 @@ func requestAgentMonitor(param agentManagerRequest,url,method string) (resp agen
 		mid.LogError("curl agent_monitor http request error ", err)
 		return resp,err
 	}
-	res,err := ctxhttp.Do(context.Background(), http.DefaultClient, req)
+	res,err := http.DefaultClient.Do(req)
 	if err != nil {
 		mid.LogError("curl agent_monitor http response error ", err)
 		return resp,err
 	}
 	defer res.Body.Close()
 	body,_ := ioutil.ReadAll(res.Body)
-	mid.LogInfo(fmt.Sprintf("guid: %s, curl %s agent_monitor response : %s ", param.Guid, method, string(body)))
+	mid.LogInfo(fmt.Sprintf("curl %s agent_monitor response : %s ", method, string(body)))
 	err = json.Unmarshal(body, &resp)
 	if err != nil {
 		mid.LogError("curl agent_monitor unmarshal error ", err)
