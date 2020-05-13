@@ -91,7 +91,7 @@ func RegisterJob(param m.RegisterParam) error {
 		if param.Instance == "" {
 			return fmt.Errorf("Mysql instance name can not be empty")
 		}
-		var binPath,address string
+		var binPath,address,configFile string
 		if agentManagerUrl != "" {
 			if param.User == "" || param.Password == "" {
 				for _,v := range m.Config().Agent {
@@ -110,11 +110,12 @@ func RegisterJob(param m.RegisterParam) error {
 				for _,v := range m.Config().Agent {
 					if v.AgentType == mysqlType {
 						binPath = v.AgentBin
+						configFile = v.ConfigFile
 						break
 					}
 				}
 			}
-			address,err = prom.DeployAgent(mysqlType,param.Instance,binPath,param.ExporterIp,param.ExporterPort,param.User,param.Password,agentManagerUrl)
+			address,err = prom.DeployAgent(mysqlType,param.Instance,binPath,param.ExporterIp,param.ExporterPort,param.User,param.Password,agentManagerUrl,configFile)
 			if err != nil {
 				return err
 			}
@@ -164,17 +165,18 @@ func RegisterJob(param m.RegisterParam) error {
 		if param.Instance == "" {
 			return fmt.Errorf("Redis instance name can not be empty")
 		}
-		var binPath,address string
+		var binPath,address,configFile string
 		if agentManagerUrl != "" {
 			if binPath == "" {
 				for _,v := range m.Config().Agent {
 					if v.AgentType == redisType {
 						binPath = v.AgentBin
+						configFile = v.ConfigFile
 						break
 					}
 				}
 			}
-			address,err = prom.DeployAgent(redisType,param.Instance,binPath,param.ExporterIp,param.ExporterPort,param.User,param.Password,agentManagerUrl)
+			address,err = prom.DeployAgent(redisType,param.Instance,binPath,param.ExporterIp,param.ExporterPort,param.User,param.Password,agentManagerUrl,configFile)
 			if err != nil {
 				return err
 			}
@@ -225,7 +227,7 @@ func RegisterJob(param m.RegisterParam) error {
 		if param.Instance == "" {
 			return fmt.Errorf("Tomcat instance name can not be empty")
 		}
-		var binPath,address string
+		var binPath,address,configFile string
 		if agentManagerUrl != "" {
 			if param.User == "" || param.Password == "" {
 				for _,v := range m.Config().Agent {
@@ -244,11 +246,12 @@ func RegisterJob(param m.RegisterParam) error {
 				for _,v := range m.Config().Agent {
 					if v.AgentType == tomcatType {
 						binPath = v.AgentBin
+						configFile = v.ConfigFile
 						break
 					}
 				}
 			}
-			address,err = prom.DeployAgent(tomcatType,param.Instance,binPath,param.ExporterIp,param.ExporterPort,param.User,param.Password,agentManagerUrl)
+			address,err = prom.DeployAgent(tomcatType,param.Instance,binPath,param.ExporterIp,param.ExporterPort,param.User,param.Password,agentManagerUrl,configFile)
 			if err != nil {
 				return err
 			}
@@ -354,6 +357,7 @@ func DeregisterJob(guid string) error {
 		mid.LogError(fmt.Sprintf("Deregister consul %s failed ", guid), err)
 		return err
 	}
+	db.UpdateAgentManagerTable(m.EndpointTable{Guid:guid}, "", "", "", "", false)
 	return err
 }
 

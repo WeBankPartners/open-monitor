@@ -6,10 +6,10 @@ import (
 	"os/exec"
 	"log"
 	"net"
-	"time"
+	"strconv"
+	"io/ioutil"
 )
 
-var deployNumMap map[string]int
 var deployPathMap map[string]string
 var deployGuidStatus map[string]string
 var LocalIp string
@@ -17,7 +17,7 @@ var osBashCommand string
 var osPsPidIndex string
 
 func InitDeploy()  {
-	deployNumMap = make(map[string]int)
+	log.Println("init deploy")
 	deployPathMap = make(map[string]string)
 	deployGuidStatus = make(map[string]string)
 	initOsCommand()
@@ -26,7 +26,6 @@ func InitDeploy()  {
 	}
 	for _,v := range Config().Deploy.PackagePath {
 		tmpName := strings.Split(v, "/")[strings.Count(v, "/")]
-		deployNumMap[tmpName] = 0
 		deployPathMap[tmpName] = v
 	}
 }
@@ -37,21 +36,9 @@ func AddDeploy(name,configFile,guid string, param map[string]string) (port int,e
 		log.Println("enter exist action")
 		port = GlobalProcessMap[guid].Port
 		DeleteDeploy(guid)
-		//if v == "running" {
-		//	DeleteDeploy(guid)
-		//	return GlobalProcessMap[guid].Port,nil
-		//}
-		//if v == "stop" {
-		//	err := GlobalProcessMap[guid].start("","","",0,nil)
-		//	return GlobalProcessMap[guid].Port,err
-		//}
-	}
-	if _,b := deployNumMap[name]; !b {
-		return port,fmt.Errorf("%s can not find in the config file", name)
 	}
 	var p ProcessObj
-	tmpName := fmt.Sprintf("%s_%d", name, deployNumMap[name]+1)
-	deployNumMap[name] = deployNumMap[name] + 1
+	tmpName := fmt.Sprintf("%s_%d", name, getNextDirIndex(name))
 	deployPath := fmt.Sprintf("%s/%s", Config().Deploy.DeployDir, tmpName)
 	err = exec.Command(osBashCommand, "-c", fmt.Sprintf("mkdir -p %s && cp -r %s/* %s/", deployPath, deployPathMap[name], deployPath)).Run()
 	if err != nil {
@@ -65,10 +52,14 @@ func AddDeploy(name,configFile,guid string, param map[string]string) (port int,e
 	ProcessMapLock.Lock()
 	GlobalProcessMap[guid] = &p
 	ProcessMapLock.Unlock()
-	if port == 0 {
-		port = GetPort()
+	if _,b := param["port"]; !b {
+		if port == 0 {
+			port = GetPort()
+		}
+		param["port"] = fmt.Sprintf("%d", port)
+	}else{
+		port,_ = strconv.Atoi(param["port"])
 	}
-	param["port"] = fmt.Sprintf("%d", port)
 	err = p.start(configFile, startFile, guid, port, param)
 	if err != nil && p.Status == "broken" {
 		p.destroy()
@@ -83,19 +74,13 @@ func AddDeploy(name,configFile,guid string, param map[string]string) (port int,e
 }
 
 func DeleteDeploy(guid string) error {
+	log.Printf("try to delete %s \n", guid)
 	if v,b := GlobalProcessMap[guid]; b {
-		err := v.stop()
-		if err == nil {
-			deployGuidStatus[guid] = "stop"
-			for k,v := range deployGuidStatus {
-				log.Printf("deploy guid status ---> k:%s  v:%s \n", k, v)
-			}
-			err = exec.Command(osBashCommand, "-c", fmt.Sprintf("mv -f %s /tmp/%s_%s", v.Path, v.Name, time.Now().Format("2006_01_02_15_04_05"))).Run()
-			if err != nil {
-				log.Printf("remove dir %s fail : %v \n", v.Path, err)
-			}
-		}
-		return err
+		v.stop()
+		clearUselessDir(v.Path)
+		delete(GlobalProcessMap, guid)
+		delete(deployGuidStatus, guid)
+		return nil
 	}else{
 		return fmt.Errorf("guid:%s not exist", guid)
 	}
@@ -152,4 +137,24 @@ func initOsCommand()  {
 		osPsPidIndex = "$2"
 	}
 	log.Printf("init os command done, bash: %s  index:%s \n", osBashCommand, osPsPidIndex)
+}
+
+func getNextDirIndex(name string) int {
+	log.Printf("start get next dir index for %s \n", name)
+	index := 0
+	files,err := ioutil.ReadDir(Config().Deploy.DeployDir)
+	if err != nil {
+		log.Printf("read dir %s error %v \n", Config().Deploy.DeployDir, err)
+	}else{
+		for _,v := range files {
+			if strings.Contains(v.Name(), name) {
+				tmpList := strings.Split(v.Name(), "_")
+				tmpIndex,_ := strconv.Atoi(tmpList[len(tmpList)-1])
+				if tmpIndex > index {
+					index = tmpIndex
+				}
+			}
+		}
+	}
+	return index+1
 }
