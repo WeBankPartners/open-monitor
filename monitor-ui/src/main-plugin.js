@@ -43,12 +43,12 @@ window.addRoutes(router, 'open-monitor')
 import Title from '@/components/title'
 import PageTable from '@/components/table-page/page'
 import ModalComponent from '@/components/modal'
-import ModalDel from '@/components/modal-del'
 window.component('Title', Title)
 window.component('PageTable', PageTable)
 window.component('ModalComponent', ModalComponent)
-window.component('ModalDel', ModalDel)
 window.use(VeeValidate)
+import DelConfirm from '@/components/del-confirm/index.js'
+window.use(DelConfirm)
 
 window.component('tdSlot', {
   render(createElement) {
