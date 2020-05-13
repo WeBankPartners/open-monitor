@@ -1,19 +1,22 @@
 <template>
-  <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal fade" id="deleteConfirm"  tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
+        <div class="modal-header-f">
+          <Icon style="font-size:16px;color:#ff6600;" type="ios-information-circle"></Icon>
+          <span class="modal-title-">Delete confirmation ({{confirmInfo.msg}})</span>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
+            <Icon style="font-size: 26px" type="ios-close" />
           </button>
         </div>
-        <div class="modal-body">
-          ...
+        <div class="modal-body" style="padding:30px">
+          <div style="text-align:center">
+            <p>Will you delete it?</p>
+          </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-primary">Save changes</button>
+          <button class="btn-cancle-f" @click="cancle">Cancle</button>
+          <button class="btn-delete-f" @click="exect">Delete</button>
         </div>
       </div>
     </div>
@@ -24,7 +27,10 @@ export default {
     data() {
         return {
           isDisplay: false,
-          notice: null
+          confirmInfo: {
+            msg: '',
+            callback: null
+          }
         }
     },
     created() {
@@ -33,63 +39,43 @@ export default {
       })
     },
     methods: {
-      add(notice = {}) {
-        this.JQ('#exampleModal').modal('show')
-        this.notice = notice
+      add(confirmInfo = {}) {
+        this.JQ('#deleteConfirm').modal('show')
+        this.confirmInfo = confirmInfo
       },
       cancle() {
-        this.JQ('#exampleModal').modal('hide')
+        this.JQ('#deleteConfirm').modal('hide')
       },
       exect() {
-        this.notice.callback()
+        this.confirmInfo.callback()
       }
     }
 }
 
 </script>
 <style lang="less">
-.wrap {
-    position: fixed;
-    top: 50px;
-    left: 50%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    transform: translateX(-50%);
+.ivu-icon:focus {
+  outline: none;
 }
-
-.message {
-    --borderWidth: 3px;
-    min-width: 240px;
-    max-width: 500px;
-    margin-bottom: 10px;
-    border-radius: 3px;
-    box-shadow: 0 0 8px #ddd;
+.modal-dialog {
+  top: 15%;
+  width: 400px;
+  border-radius: 8px;
+}
+.modal-content {
+  border-radius: 0.5rem;
+}
+.modal-header-f {
+  padding: 12px;
+  border-bottom: 1px solid #e8eaec;
+  text-align: center;
+  span {
+    font-size: 16px;
+    color: #ff6600;
+    font-weight: 500;
     overflow: hidden;
-}
-
-.content {
-    padding: 8px;
-    line-height: 1.3;
-}
-
-.message.info {
-    border-left: var(--borderWidth) solid #909399;
-    background: #F4F4F5;
-}
-
-.message.success {
-    border-left: var(--borderWidth) solid #67C23A;
-    background: #F0F9EB;
-}
-
-.message.error {
-    border-left: var(--borderWidth) solid #F56C6C;
-    background: #FEF0F0;
-}
-
-.message.warning {
-    border-left: var(--borderWidth) solid #E6A23C;
-    background: #FDF6EC;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 </style>

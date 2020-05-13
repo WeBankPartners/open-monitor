@@ -29,7 +29,6 @@
         </div>
       </div>
     </ModalComponent>
-    <ModalDel :ModelDelConfig="ModelDelConfig"></ModalDel>
   </div>
 </template>
 <script>
@@ -51,11 +50,6 @@
     name: '',
     data() {
       return {
-        ModelDelConfig: {
-          deleteWarning: false,
-          msg: '',
-          callback: null
-        },
         token: null,
         uploadUrl: '',
         pageConfig: {
@@ -172,13 +166,6 @@
             this.delF(rowData)
           }
         })
-        // this.ModelDelConfig =  {
-        //   deleteWarning: true,
-        //   msg: rowData.name,
-        //   callback: () => {
-        //     this.delF(rowData)
-        //   }
-        // }
       },
       delF (rowData) {
         let params = {id: rowData.id}
