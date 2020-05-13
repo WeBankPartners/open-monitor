@@ -33,6 +33,9 @@ Vue.use(VeeValidate)
 
 Vue.config.productionTip = false
 
+import DelConfirm from '@/components/message/index.js'
+Vue.use(DelConfirm)
+
 import VueI18n from 'vue-i18n'
 import en from 'view-design/dist/locale/en-US'
 import zh from 'view-design/dist/locale/zh-CN'
