@@ -225,7 +225,7 @@ func ExportAgent(c *gin.Context)  {
 					}
 				}
 				if endpointObj.Id > 0 {
-					err = DeregisterJob(endpointObj.Guid)
+					err = DeregisterJob(endpointObj.Guid, endpointObj.Step)
 				}
 			}
 			var msg string
