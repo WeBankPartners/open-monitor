@@ -99,7 +99,6 @@
         </div>
       </ModalComponent>
     </section>
-    <ModalDel :ModelDelConfig="ModelDelConfig"></ModalDel>
   </div>
 </template>
 
@@ -119,11 +118,6 @@ export default {
   name: '',
   data() {
     return {
-      ModelDelConfig: {
-        deleteWarning: false,
-        msg: '',
-        callback: null
-      },
       type: '',
       typeValue: 'endpoint',
       typeList: [
@@ -272,17 +266,17 @@ export default {
       })
     },
     deleteConfirm (rowData) {
-      this.ModelDelConfig =  {
-        deleteWarning: true,
+      this.$delConfirm({
         msg: rowData.path,
         callback: () => {
           this.delF(rowData)
         }
-      }
+      })
     },
     delF (rowData) {
       let params = {id: rowData.id}
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.logManagement.delList.api, params, () => {
+        this.$root.$eventBus.$emit('hideConfirmModal')
         this.$Message.success(this.$t('tips.success'))
         this.requestData(this.type, this.typeValue)
       })
@@ -375,17 +369,17 @@ export default {
       this.$root.JQ('#add_edit_Modal').modal('show')
     },
     delPathconfirm (rowData) {
-      this.ModelDelConfig =  {
-        deleteWarning: true,
+      this.$delConfirm({
         msg: rowData.keyword,
         callback: () => {
           this.delPathItem(rowData)
         }
-      }
+      })
     },
     delPathItem (rowData) {
       let params = {id: rowData.id}
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.logManagement.delete.api, params, () => {
+        this.$root.$eventBus.$emit('hideConfirmModal')
         this.$Message.success(this.$t('tips.success'))
         this.requestData(this.type, this.typeValue)
       })
