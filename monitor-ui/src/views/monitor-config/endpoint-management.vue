@@ -190,7 +190,6 @@
         </section>
       </div>
     </ModalComponent>
-    <ModalDel :ModelDelConfig="ModelDelConfig"></ModalDel>
     <ModalComponent :modelConfig="portModel">
       <div slot="port">
         <section>
@@ -267,12 +266,6 @@
     name: '',
     data() {
       return {
-        value9: null,
-        ModelDelConfig: {
-          deleteWarning: false,
-          msg: '',
-          callback: null
-        },
         pageConfig: {
           CRUD: this.$root.apiCenter.endpointManagement.list.api,
           researchConfig: {
@@ -501,13 +494,12 @@
         })
       },
       deleteConfirm (rowData) {
-        this.ModelDelConfig =  {
-          deleteWarning: true,
+        this.$delConfirm({
           msg: rowData.guid,
           callback: () => {
             this.delF(rowData)
           }
-        }
+        })
       },
       delF (rowData) {
         let endpoints = []
@@ -520,6 +512,7 @@
           operation: 'delete'
         }
         this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.endpointManagement.update.api, params, () => {
+          this.$root.$eventBus.$emit('hideConfirmModal')
           this.$Message.success(this.$t('tips.success'))
           this.initData(this.pageConfig.CRUD, this.pageConfig)
         })
