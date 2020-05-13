@@ -577,7 +577,7 @@ func GetChart(c *gin.Context)  {
 	}
 	// agg
 	agg := db.CheckAggregate(query.Start, query.End, firstEndpoint, step, len(serials))
-	var firstSerialTime float64
+	//var firstSerialTime float64
 	for i, s := range serials {
 		if strings.Contains(s.Name, "$metric") {
 			s.Name = strings.Replace(s.Name, "$metric", querys[i].Metric[0], -1)
@@ -592,16 +592,16 @@ func GetChart(c *gin.Context)  {
 			}
 			s.Data = db.Aggregate(s.Data, agg, aggType)
 		}
-		if i > 0 {
-			if s.Data[0][0] != firstSerialTime {
-				tmpSub := firstSerialTime - s.Data[0][0]
-				for i,v := range s.Data {
-					s.Data[i][0] = v[0] + tmpSub
-				}
-			}
-		}else{
-			firstSerialTime = s.Data[0][0]
-		}
+		//if i > 0 {
+		//	if s.Data[0][0] != firstSerialTime {
+		//		tmpSub := firstSerialTime - s.Data[0][0]
+		//		for i,v := range s.Data {
+		//			s.Data[i][0] = v[0] + tmpSub
+		//		}
+		//	}
+		//}else{
+		//	firstSerialTime = s.Data[0][0]
+		//}
 	}
 	eOption.Xaxis = make(map[string]interface{})
 	eOption.Yaxis = m.YaxisModel{Unit: unit}

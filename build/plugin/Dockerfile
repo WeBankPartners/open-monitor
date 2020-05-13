@@ -20,7 +20,6 @@ RUN mkdir -p $BASE_HOME $PROMETHEUS_HOME $PROMETHEUS_HOME/rules $ALERTMANAGER_HO
 
 ADD monitor/prometheus $PROMETHEUS_HOME/
 ADD monitor/alertmanager $ALERTMANAGER_HOME/
-ADD monitor/consul $CONSUL_HOME/
 ADD monitor/monitor $MONITOR_HOME/
 ADD monitor/start.sh $BASE_HOME/
 ADD monitor/stop.sh $BASE_HOME/
@@ -32,7 +31,6 @@ RUN chmod +x $PROMETHEUS_HOME/prometheus
 RUN chmod +x $PROMETHEUS_HOME/promtool
 RUN chmod +x $PROMETHEUS_HOME/tsdb
 RUN chmod +x $ALERTMANAGER_HOME/alertmanager
-RUN chmod +x $CONSUL_HOME/consul
 RUN chmod +x $AGENT_MONITOR_HOME/agent_manager
 RUN chmod +x $TRANS_GATEWAY/transgateway
 RUN chmod +x $AGENT_MONITOR_HOME/exporters/*/*
