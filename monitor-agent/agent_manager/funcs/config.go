@@ -84,3 +84,14 @@ func InitConfig(cfg string) error {
 	log.Println("read config file:", cfg, "successfully")
 	return nil
 }
+
+type AgentManagerTable struct {
+	EndpointGuid  string  `json:"endpoint_guid"`
+	Name  string  `json:"name"`
+	User  string  `json:"user"`
+	Password  string  `json:"password"`
+	InstanceAddress  string  `json:"instance_address"`
+	AgentAddress  string  `json:"agent_address"`
+	ConfigFile  string  `json:"config_file"`
+	BinPath  string  `json:"bin_path"`
+}
