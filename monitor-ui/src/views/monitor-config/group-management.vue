@@ -170,8 +170,8 @@
       delF (rowData) {
         let params = {id: rowData.id}
         this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.groupManagement.delete.api, params, () => {
-          this.$Message.success(this.$t('tips.success'))
           this.$root.$eventBus.$emit('hideConfirmModal')
+          this.$Message.success(this.$t('tips.success'))
           this.initData(this.pageConfig.CRUD, this.pageConfig)
         })
       },
