@@ -120,3 +120,14 @@ func (s DefaultSortList) Swap(i,j int)  {
 func (s DefaultSortList) Less(i,j int) bool {
 	return s[i].Key < s[j].Key
 }
+
+type AgentManagerTable struct {
+	EndpointGuid  string  `json:"endpoint_guid"`
+	Name  string  `json:"name"`
+	User  string  `json:"user"`
+	Password  string  `json:"password"`
+	InstanceAddress  string  `json:"instance_address"`
+	AgentAddress  string  `json:"agent_address"`
+	ConfigFile  string  `json:"config_file"`
+	BinPath  string  `json:"bin_path"`
+}

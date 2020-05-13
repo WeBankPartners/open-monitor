@@ -141,7 +141,7 @@
     "interval": 60
   },
   "sd_file": {
-    "enable": false,
+    "enable": true,
     "ten_sec_file": "/app/monitor/prometheus/sd_file/10_second_sd_file.json",
     "one_min_file": "/app/monitor/prometheus/sd_file/60_second_sd_file.json"
   }

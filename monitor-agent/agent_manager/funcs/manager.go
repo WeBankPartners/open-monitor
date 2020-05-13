@@ -24,6 +24,7 @@ var (
 )
 
 func StartManager()  {
+	log.Println("start manager")
 	interval := 30
 	if Config().Manager.AliveCheck > 0 {
 		interval = Config().Manager.AliveCheck
@@ -153,6 +154,7 @@ func SaveDeployProcess()  {
 }
 
 func LoadDeployProcess()  {
+	log.Println("load deploy process")
 	var processList []string
 	filePath := "process.data"
 	if Config().Manager.SaveFile != "" {
@@ -186,4 +188,103 @@ func LoadDeployProcess()  {
 			}
 		}
 	}
+}
+
+func clearUselessDir(path string) {
+	if !strings.HasPrefix(path, Config().Deploy.DeployDir) || Config().Deploy.DeployDir == "" {
+		return
+	}
+	_, err := os.Stat(path)
+	if os.IsExist(err) {
+		return
+	}
+	err = exec.Command(osBashCommand, "-c", fmt.Sprintf("rm -rf %s", path)).Run()
+	if err != nil {
+		log.Printf("clear useless dir error %v \n", err)
+	}
+}
+
+func CleanDeployDir()  {
+	log.Println("start clean deploy dir")
+	var dirList []string
+	files,err := ioutil.ReadDir(Config().Deploy.DeployDir)
+	if err != nil {
+		log.Printf("read dir %s error %v \n", Config().Deploy.DeployDir, err)
+	}else{
+		for _,v := range files {
+			if v.Name() == "process.data" {
+				continue
+			}
+			dirList = append(dirList, v.Name())
+		}
+	}
+	for _,v := range dirList {
+		alive := false
+		for _,vv := range GlobalProcessMap {
+			if strings.Contains(vv.Path, v) {
+				alive = true
+				break
+			}
+		}
+		if !alive {
+			clearUselessDir(fmt.Sprintf("%s/%s", Config().Deploy.DeployDir, v))
+		}
+	}
+}
+
+func InitDeployDir(param []*AgentManagerTable) error {
+	var tmpDeleteList []string
+	for k,v := range GlobalProcessMap {
+		alive := false
+		for _,vv := range param {
+			if vv.EndpointGuid == v.Guid {
+				if strings.Contains(vv.AgentAddress, fmt.Sprintf(":%d", v.Port)) {
+					alive = true
+					break
+				}
+			}
+		}
+		if !alive {
+			tmpDeleteList = append(tmpDeleteList, k)
+		}
+	}
+	for _,v := range tmpDeleteList {
+		DeleteDeploy(v)
+	}
+	for _,v := range param {
+		isExist := false
+		for _,vv := range GlobalProcessMap {
+			if vv.Guid == v.EndpointGuid {
+				isExist = true
+				break
+			}
+		}
+		if !isExist {
+			tmpParam := make(map[string]string)
+			tmpParam["guid"] = v.EndpointGuid
+			tmpParam["exporter"] = v.BinPath
+			if v.ConfigFile != "" {
+				tmpParam["config"] = v.ConfigFile
+			}
+			if strings.Contains(v.InstanceAddress, ":") {
+				tmpParam["instance_server"] = v.InstanceAddress[:strings.Index(v.InstanceAddress, ":")]
+				tmpParam["instance_port"] = v.InstanceAddress[strings.Index(v.InstanceAddress, ":")+1:]
+			}else{
+				return fmt.Errorf("guid: %s instance address illegal: %s ", v.EndpointGuid, v.InstanceAddress)
+			}
+			if strings.Contains(v.AgentAddress, ":") {
+				tmpParam["port"] = v.AgentAddress[strings.Index(v.AgentAddress, ":")+1:]
+			}else{
+				return fmt.Errorf("guid: %s agent address illegal: %s ", v.EndpointGuid, v.AgentAddress)
+			}
+			tmpParam["auth_user"] = v.User
+			tmpParam["auth_password"] = v.Password
+			_,err := AddDeploy(v.BinPath, v.ConfigFile, v.EndpointGuid, tmpParam)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	SaveDeployProcess()
+	return nil
 }

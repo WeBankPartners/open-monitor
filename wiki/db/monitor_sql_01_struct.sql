@@ -361,3 +361,15 @@ CREATE TABLE `endpoint_http` (
   `update_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 ) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+
+CREATE TABLE `agent_manager` (
+  `endpoint_guid` VARCHAR(255) NOT NULL,
+  `name` VARCHAR(255) DEFAULT '',
+  `user` VARCHAR(255) DEFAULT '',
+  `password` VARCHAR(255) DEFAULT '',
+  `instance_address` VARCHAR(255) DEFAULT '',
+  `agent_address` VARCHAR(255) DEFAULT '',
+  `config_file` VARCHAR(255) DEFAULT '',
+  `bin_path` VARCHAR(255) DEFAULT '',
+  PRIMARY KEY (`endpoint_guid`)
+) ENGINE=INNODB DEFAULT CHARSET=utf8;
