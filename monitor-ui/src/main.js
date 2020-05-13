@@ -24,16 +24,14 @@ Vue.prototype.apiCenter = apiCenter
 import Title from '@/components/title'
 import PageTable from '@/components/table-page/page'
 import ModalComponent from '@/components/modal'
-import ModalDel from '@/components/modal-del'
 Vue.component('Title', Title)
 Vue.component('PageTable', PageTable)
 Vue.component('ModalComponent', ModalComponent)
-Vue.component('ModalDel', ModalDel)
 Vue.use(VeeValidate)
 
 Vue.config.productionTip = false
 
-import DelConfirm from '@/components/message/index.js'
+import DelConfirm from '@/components/del-confirm/index.js'
 Vue.use(DelConfirm)
 
 import VueI18n from 'vue-i18n'

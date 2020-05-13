@@ -43,7 +43,6 @@
         </div>
       </div>
     </ModalComponent>
-    <ModalDel :ModelDelConfig="ModelDelConfig"></ModalDel>
   </div>
 </template>
 
@@ -52,11 +51,6 @@ export default {
   name: '',
   data() {
     return {
-      ModelDelConfig: {
-        deleteWarning: false,
-        msg: '',
-        callback: null
-      },
       dataList: [
       ],
       modelConfig: {
@@ -104,17 +98,17 @@ export default {
       this.$root.JQ('#add_edit_Modal').modal('show')
     },
     deleteConfirm (item) {
-      this.ModelDelConfig =  {
-        deleteWarning: true,
+      this.$delConfirm({
         msg: item.name,
         callback: () => {
           this.removeTemplate(item)
         }
-      }
+      })
     },
     removeTemplate (item) {
       let params = {id: item.id}
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.template.delete, params, () => {
+        this.$root.$eventBus.$emit('hideConfirmModal')
         this.$Message.success(this.$t('tips.success'))
         this.viewList()
       })
