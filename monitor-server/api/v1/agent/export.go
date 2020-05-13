@@ -127,8 +127,8 @@ func ExportAgentNew(c *gin.Context)  {
 					inputErr = prom.StopAgent(endpointObj.ExportType, endpointObj.Name, endpointObj.Ip, agentManagerUrl)
 				}
 			}
-			if endpointObj.Id > 0 && inputErr == nil && !m.Config().SdFile.Enable {
-				inputErr = DeregisterJob(endpointObj.Guid)
+			if endpointObj.Id > 0 && inputErr == nil {
+				inputErr = DeregisterJob(endpointObj.Guid, endpointObj.Step)
 			}
 		}
 		if validateMessage != "" || inputErr != nil {
