@@ -1,5 +1,5 @@
 <template>
-  <div class="modal fade" id="deleteConfirm"  tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal fade" id="deleteConfirmId" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header-f">
@@ -39,11 +39,11 @@ export default {
     },
     methods: {
       add(confirmInfo = {}) {
-        this.JQ('#deleteConfirm').modal('show')
+        this.$root.JQ('#deleteConfirmId').modal('show')
         this.confirmInfo = confirmInfo
       },
       cancle() {
-        this.JQ('#deleteConfirm').modal('hide')
+        this.$root.JQ('#deleteConfirmId').modal('hide')
       },
       exect() {
         this.confirmInfo.callback()
