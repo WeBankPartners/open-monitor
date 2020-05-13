@@ -152,7 +152,7 @@
           </div>
         </div>
       </ModalComponent>
-      <ModalDel :ModelDelConfig="ModelDelConfig"></ModalDel>
+      <!-- <ModalDel :ModelDelConfig="ModelDelConfig"></ModalDel> -->
     </section>
   </div>
 </template>
@@ -176,11 +176,11 @@ export default {
   name: '',
   data() {
     return {
-      ModelDelConfig: {
-        deleteWarning: false,
-        msg: '',
-        callback: null
-      },
+      // ModelDelConfig: {
+      //   deleteWarning: false,
+      //   msg: '',
+      //   callback: null
+      // },
       type: '',
       typeValue: 'endpoint',
       typeList: [
@@ -309,8 +309,7 @@ export default {
       }, {isNeedloading:false})
     },
     removeReceiver (tableItem, receiver, index) {
-      this.ModelDelConfig =  {
-        deleteWarning: true,
+      this.$delConfirm({
         msg: receiver.option_text,
         callback: () => {
           tableItem.accept.splice(index,1)
@@ -319,11 +318,12 @@ export default {
             accept: tableItem.accept
           }
           this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.thresholdManagement.recevier.api, params, () => {
+            this.$root.$eventBus.$emit('hideConfirmModal')
             this.$Message.success(this.$t('tips.success'))
             this.requestData(this.type, this.typeValue)
           }, {isNeedloading:false})
         }
-      }
+      })
     },
     choiceColor (type,index) {
       let color = ''
@@ -388,17 +388,17 @@ export default {
       })
     },
     deleteConfirm (rowData) {
-      this.ModelDelConfig =  {
-        deleteWarning: true,
+      this.$delConfirm({
         msg: rowData.name,
         callback: () => {
           this.delF(rowData)
         }
-      }
+      })
     },
     delF (rowData) {
       let params = {id: rowData.id}
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.thresholdManagement.delete.api, params, () => {
+        this.$root.$eventBus.$emit('hideConfirmModal')
         this.$Message.success(this.$t('tips.success'))
         this.requestData(this.type, this.typeValue)
       })

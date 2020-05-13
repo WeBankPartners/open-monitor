@@ -29,7 +29,6 @@
         </div>
       </div>
     </ModalComponent>
-    <ModalDel :ModelDelConfig="ModelDelConfig"></ModalDel>
   </div>
 </template>
 <script>
@@ -51,11 +50,6 @@
     name: '',
     data() {
       return {
-        ModelDelConfig: {
-          deleteWarning: false,
-          msg: '',
-          callback: null
-        },
         token: null,
         uploadUrl: '',
         pageConfig: {
@@ -166,17 +160,17 @@
         this.$router.push({name: 'endpointManagement', params: {group: rowData}})
       },
       deleteConfirm (rowData) {
-        this.ModelDelConfig =  {
-          deleteWarning: true,
+        this.$delConfirm({
           msg: rowData.name,
           callback: () => {
             this.delF(rowData)
           }
-        }
+        })
       },
       delF (rowData) {
         let params = {id: rowData.id}
         this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.groupManagement.delete.api, params, () => {
+          this.$root.$eventBus.$emit('hideConfirmModal')
           this.$Message.success(this.$t('tips.success'))
           this.initData(this.pageConfig.CRUD, this.pageConfig)
         })
