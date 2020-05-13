@@ -110,21 +110,6 @@
         <button class="btn-confirm-f" @click="saveAlarmCallback">{{$t('button.save')}}</button>
       </div>
     </Modal>
-
-    <Modal v-model="deleteWarning" width="360">
-        <p slot="header" style="color:#f60;text-align:center">
-            <Icon type="ios-information-circle"></Icon>
-            <span>Delete confirmation ({{parentPanal}})</span>
-        </p>
-        <div style="text-align:center">
-            <p>Will you delete it?</p>
-        </div>
-        <div slot="footer">
-          <button class="btn-delete-f" @click="deletePanal">Delete</button>
-        </div>
-    </Modal>
-
-    <ModalDel :ModelDelConfig="ModelDelConfig"></ModalDel>
   </div>
 </template>
 
@@ -134,13 +119,6 @@ export default {
   name: 'recursive',
   data() {
     return {
-      ModelDelConfig: {
-        deleteWarning: false,
-        msg: '',
-        callback: null
-      },
-      deleteWarning: false,
-
       isEditPanal: false,
       isAdd: true,
       parentPanal: null,
@@ -232,21 +210,20 @@ export default {
     },
     deleteConfirm (panalData) {
       this.parentPanal =  panalData.guid
-      this.ModelDelConfig =  {
-        deleteWarning: true,
+      this.$delConfirm({
         msg: panalData.guid,
         callback: () => {
           this.deletePanal(panalData)
         }
-      }
+      })
     },
     deletePanal () {
       const params = {
         guid: this.parentPanal
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', 'alarm/org/panel/delete', params, () => {
+        this.$root.$eventBus.$emit('hideConfirmModal')
         this.$Message.success(this.$t('tips.success'))
-        this.deleteWarning = false
         this.$root.$eventBus.$emit('updateResource', '')
       })
     },

@@ -13,7 +13,6 @@
         </div>
       </div>
     </ModalComponent>
-    <ModalDel :ModelDelConfig="ModelDelConfig"></ModalDel>
   </div>
 </template>
 
@@ -33,11 +32,6 @@ export default {
   name: '',
   data() {
     return {
-      ModelDelConfig: {
-        deleteWarning: false,
-        msg: '',
-        callback: null
-      },
       pageConfig: {
         CRUD: this.$root.apiCenter.setup.role.get,
         researchConfig: {
@@ -140,17 +134,17 @@ export default {
       })
     },
     deleteConfirm (rowData) {
-      this.ModelDelConfig =  {
-        deleteWarning: true,
+      this.$delConfirm({
         msg: rowData.name,
         callback: () => {
           this.delF(rowData)
         }
-      }
+      })
     },
     delF (rowData) {
       let params = {role_id: rowData.id, operation: 'delete' }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.setup.role.update, params, () => {
+        this.$root.$eventBus.$emit('hideConfirmModal')
         this.$Message.success(this.$t('tips.success'))
         this.initData(this.pageConfig.CRUD, this.pageConfig)
       })
