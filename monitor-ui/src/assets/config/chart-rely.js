@@ -28,7 +28,7 @@ export const readyToDraw = function(that, responseData, viewIndex, chartConfig) 
   responseData.series.forEach((item, index)=>{
     legend.push(item.name)
     item.symbol = 'none'
-    item.smooth = true
+    item.smooth = false
     item.lineStyle = {
       width: 1
     }
