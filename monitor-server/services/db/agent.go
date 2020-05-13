@@ -403,3 +403,17 @@ func GetPingExporterSource() []*m.PingExportSourceObj {
 	}
 	return result
 }
+
+func UpdateAgentManagerTable(endpoint m.EndpointTable, user,password,configFile,binPath string, isAdd bool) error {
+	var actions []*Action
+	actions = append(actions, &Action{Sql: fmt.Sprintf("DELETE FROM agent_manager WHERE endpoint_guid='%s'", endpoint.Guid)})
+	if isAdd {
+		actions = append(actions, &Action{Sql: fmt.Sprintf("INSERT INTO agent_manager(endpoint_guid,name,user,password,instance_address,agent_address,config_file,bin_path) VALUE ('%s','%s','%s','%s','%s','%s','%s','%s')", endpoint.Guid, endpoint.Name, user, password, endpoint.Address, endpoint.AddressAgent, configFile, binPath)})
+	}
+	return Transaction(actions)
+}
+
+func GetAgentManager() (result []*m.AgentManagerTable, err error) {
+	err = x.SQL("SELECT * FROM agent_manager").Find(&result)
+	return result,err
+}
