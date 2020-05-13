@@ -25,13 +25,12 @@
 <script>
 export default {
     data() {
-        return {
-          isDisplay: false,
-          confirmInfo: {
-            msg: '',
-            callback: null
-          }
+      return {
+        confirmInfo: {
+          msg: '',
+          callback: null
         }
+      }
     },
     created() {
       this.$root.$eventBus.$on('hideConfirmModal', () => {
@@ -59,7 +58,7 @@ export default {
 }
 .modal-dialog {
   top: 15%;
-  width: 400px;
+  // width: 400px;
   border-radius: 8px;
 }
 .modal-content {
