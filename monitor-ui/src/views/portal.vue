@@ -14,7 +14,9 @@
           :remote-method="getEndpointList"
           >
           <Option v-for="(option, index) in endpointList" :value="option.option_value" :key="index">
-            <Tag :color="endpointTag[option.option_type_name] || choiceColor(option.option_type_name, index)" class="tag-width">{{option.option_type_name}}</Tag>{{option.option_text}}</Option>
+            <TagShow :tagName="option.option_type_name" :index="index"></TagShow> 
+            {{option.option_text}}
+          </Option>
         </Select>
       </li>
       <li class="search-li">
@@ -29,17 +31,14 @@
 </template>
 
 <script>
-import {endpointTag, randomColor} from '@/assets/config/common-config'
+import TagShow from '@/components/Tag-show.vue'
 export default {
   name: '',
   data() {
     return {
       endpoint: '',
       endpointObject: {},
-      endpointList: [],
-      endpointTag: endpointTag,
-      randomColor: randomColor,
-      cacheColor: {}
+      endpointList: []
     }
   },
   watch: {
@@ -57,17 +56,6 @@ export default {
     this.getEndpointList()
   },
   methods: {
-    choiceColor (type,index) {
-      let color = ''
-      // eslint-disable-next-line no-prototype-builtins
-      if (Object.keys(this.cacheColor).includes(type)) {
-        color = this.cacheColor[type]
-      } else {
-        color = randomColor[index]
-        this.cacheColor[type] = randomColor[index]
-      }
-      return color
-    },
     getEndpointList(query='.') {
       let params = {
         search: query,
@@ -84,6 +72,9 @@ export default {
       }
       this.$router.push({ name: 'endpointView',params: this.endpointObject})
     }, 
+  },
+  components: {
+    TagShow
   }
 }
 </script>
@@ -99,10 +90,5 @@ export default {
 }
 .search-ul>li:not(:first-child) {
   padding-left: 10px;
-}
-.tag-width {
-  cursor: auto;
-  width: 80px;
-  text-align: center;
 }
 </style>
