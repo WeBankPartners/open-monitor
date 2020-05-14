@@ -233,6 +233,8 @@ func CleanDeployDir()  {
 }
 
 func InitDeployDir(param []*AgentManagerTable) error {
+	paramByte,_ := json.Marshal(param)
+	log.Printf("init deploy dir : param -> %s \n",string(paramByte))
 	var tmpDeleteList []string
 	for k,v := range GlobalProcessMap {
 		alive := false
