@@ -76,8 +76,23 @@ export const randomColor = [
   'magenta', 
   'volcano', 
   'orange', 
-  'gold', 
-  'lime', 
   'cyan', 
   'geekblue', 
   'purple']
+
+export const colorList = {
+  'cyan': '#13c2c2',
+  'blue': '#1890ff',
+  'geekblue': '#2f54eb',
+  'purple': '#722ed1',
+  'primary': '#2d8cf0',
+  'success': '#19be6b',
+  'warning': '#f90',
+  'green': '#f6ffed',
+  'red': '#52c41a',
+  'yellow': '#fadb14',
+  'pink': '#ffadd2',
+  'magenta': '#eb2f96',
+  'volcano': '#fa541c',
+  'orange': '#fff7e6'
+}
