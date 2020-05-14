@@ -18,7 +18,9 @@
             @on-clear="clearEndpoint"
             >
             <Option v-for="(option, index) in endpointOptions" :value="option.id" :key="index">
-            <Tag v-if="option.type" :color="endpointTag[option.option_type_name] || choiceColor(option.option_type_name, index)" class="tag-width">{{option.option_type_name}}</Tag>{{option.option_text}}</Option>
+            <TagShow :tagName="option.option_type_name" :index="index"></TagShow> 
+            {{option.option_text}}
+            </Option>
           </Select>
         </li>
         <li class="search-li">
@@ -152,13 +154,13 @@
           </div>
         </div>
       </ModalComponent>
-      <!-- <ModalDel :ModelDelConfig="ModelDelConfig"></ModalDel> -->
     </section>
   </div>
 </template>
 
 <script>
-import {thresholdList, lastList, priorityList, endpointTag, randomColor} from '@/assets/config/common-config.js'
+import {thresholdList, lastList, priorityList} from '@/assets/config/common-config.js'
+import TagShow from '@/components/Tag-show.vue'
 let tableEle = [
   {title: 'ID', value: 'id', display: false},
   {title: 'tableKey.name', value: 'metric', display: true},
@@ -176,11 +178,6 @@ export default {
   name: '',
   data() {
     return {
-      // ModelDelConfig: {
-      //   deleteWarning: false,
-      //   msg: '',
-      //   callback: null
-      // },
       type: '',
       typeValue: 'endpoint',
       typeList: [
@@ -190,9 +187,6 @@ export default {
       paramsType: null, // For get thresholdList
       endpointID: null,
       endpointOptions: [],
-      endpointTag: endpointTag,
-      randomColor: randomColor,
-      cacheColor: {},
 
       totalPageConfig: [],
       pageConfig: {
@@ -324,17 +318,6 @@ export default {
           }, {isNeedloading:false})
         }
       })
-    },
-    choiceColor (type,index) {
-      let color = ''
-      // eslint-disable-next-line no-prototype-builtins
-      if (Object.keys(this.cacheColor).includes(type)) {
-        color = this.cacheColor[type]
-      } else {
-        color = randomColor[index]
-        this.cacheColor[type] = randomColor[index]
-      }
-      return color
     },
     search () {
       if (this.endpointID === null) {
@@ -494,6 +477,7 @@ export default {
     }
   },
   components: {
+    TagShow
   },
 }
 </script>
@@ -524,11 +508,6 @@ export default {
   .search-input-content {
     display: inline-block;
     vertical-align: middle; 
-  }
-  .tag-width {
-    cursor: auto;
-    width: 55px;
-    text-align: center;
   }
   .receiver-config {
     margin: 8px 20px;
