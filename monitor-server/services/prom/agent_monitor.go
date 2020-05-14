@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"time"
 )
 
 type agentManagerRequest struct {
@@ -68,15 +69,25 @@ func StopAgent(agentType,instance,ip,url string) error {
 	}
 }
 
-func InitAgentManager(param []*m.AgentManagerTable, url string) error {
-	resp,err := requestAgentMonitor(param,url,"init")
-	if err != nil {
-		return err
-	}
-	if resp.Code == 200 {
-		return nil
-	}else{
-		return fmt.Errorf(resp.Message)
+func InitAgentManager(param []*m.AgentManagerTable, url string) {
+	count := 0
+	for {
+		time.Sleep(3*time.Second)
+		resp, err := requestAgentMonitor(param, url, "init")
+		if err != nil {
+			mid.LogError("init agent manager, request error -> ", err)
+		}
+		if resp.Code == 200 {
+			mid.LogInfo("init agent manager success")
+			break
+		}else{
+			mid.LogError("init agent manager, response error -> ", fmt.Errorf(resp.Message))
+		}
+		count++
+		if count >= 10 {
+			mid.LogError("init agent manager fail, retry max time ", nil)
+			break
+		}
 	}
 }
 
