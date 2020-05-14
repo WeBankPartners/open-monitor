@@ -13,9 +13,9 @@
           :remote-method="getEndpointList"
           >
           <Option v-for="(option, index) in endpointList" :value="option.option_value" :key="index">
-            <Tag :color="endpointTag[option.option_type_name] || choiceColor(option.option_type_name, index)" class="tag-width">
-              {{option.option_type_name}}</Tag>{{option.option_text}}
-            </Option>
+            <TagShow :tagName="option.option_type_name" :index="index"></TagShow> 
+            {{option.option_text}}
+          </Option>
         </Select>
       </li>
       <template v-if="!is_mom_yoy">
@@ -59,7 +59,8 @@
 </template>
 
 <script>
-import {dataPick, autoRefreshConfig, endpointTag, randomColor} from '@/assets/config/common-config'
+import {dataPick, autoRefreshConfig} from '@/assets/config/common-config'
+import TagShow from '@/components/Tag-show.vue'
 export default {
   name: '',
   data() {
@@ -67,9 +68,6 @@ export default {
       endpoint: '',
       endpointObject: {},
       endpointList: [],
-      endpointTag: endpointTag,
-      randomColor: randomColor,
-      cacheColor: {},
       ip: {},
       timeTnterval: -1800,
       dataPick: dataPick,
@@ -121,17 +119,6 @@ export default {
     }
   },
   methods: {
-    choiceColor (type,index) {
-      let color = ''
-      // eslint-disable-next-line no-prototype-builtins
-      if (Object.keys(this.cacheColor).includes(type)) {
-        color = this.cacheColor[type]
-      } else {
-        color = randomColor[index]
-        this.cacheColor[type] = randomColor[index]
-      }
-      return color
-    },
     getMainConfig () {
       if (this.$root.$validate.isEmpty_reset(this.endpointObject) && !this.$root.$validate.isEmpty_reset(this.$root.$store.state.ip)) {
         this.endpointObject = this.$root.$store.state.ip
@@ -239,6 +226,7 @@ export default {
     }
   },
   components: {
+    TagShow
   }
 }
 </script>
@@ -249,10 +237,5 @@ export default {
   }
   .search-ul>li:not(:first-child) {
     padding-left: 10px;
-  }
-  .tag-width {
-    cursor: auto;
-    width: 80px;
-    text-align: center;
   }
 </style>
