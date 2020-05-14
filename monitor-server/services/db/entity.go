@@ -186,7 +186,7 @@ func GetAlarmEvent(alarmType,inputGuid string,id int) (result m.AlarmEntityObj,e
 		phoneMap := make(map[string]bool)
 		roleMap := make(map[string]bool)
 		for _,v := range GetMailByStrategy(alarms[0].StrategyId) {
-			mailMap[v] = true
+			mailMap[fmt.Sprintf("%s^%s", inputGuid, v)] = true
 		}
 		var recursiveData []*m.PanelRecursiveTable
 		x.SQL("SELECT * FROM panel_recursive").Find(&recursiveData)
