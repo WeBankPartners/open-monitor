@@ -59,10 +59,7 @@ func InitAgentManager()  {
 			mid.LogError("Get agent manager table fail ", err)
 			return
 		}
-		err = prom.InitAgentManager(param, agentManagerServer)
-		if err != nil {
-			mid.LogError("Init agent manager fail ", err)
-		}
+		go prom.InitAgentManager(param, agentManagerServer)
 	}
 }
 
