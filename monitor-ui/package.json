@@ -9,6 +9,8 @@
     "plugin": "vue-cli-service build --mode plugin"
   },
   "dependencies": {
+    "@types/js-cookie": "^2.2.6",
+    "@vue/cli-plugin-typescript": "^4.3.1",
     "axios": "^0.19.0",
     "bootstrap": "^4.3.1",
     "colresizable": "^1.6.0",
@@ -18,8 +20,10 @@
     "hoek": "^4.2.1",
     "jquery": "^3.4.1",
     "js-base64": "^2.5.1",
+    "js-cookie": "^2.2.1",
     "serialize-javascript": "^2.1.1",
     "style-resources-loader": "^1.2.1",
+    "typescript": "^3.9.2",
     "vee-validate": "^2.0.6",
     "view-design": "^4.0.2",
     "vue": "^2.6.10",
