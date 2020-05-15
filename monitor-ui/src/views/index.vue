@@ -40,7 +40,6 @@ export default {
   // background: white;
 }
 .content {
-  background-image: url("../assets/img/watermark-3.png");
   height: calc(100vh - 210px);
   margin: 0 auto;
   padding: 10px;
