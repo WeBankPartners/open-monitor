@@ -88,6 +88,34 @@ func UpdateOrgPanelEndpoint(c *gin.Context)  {
 	}
 }
 
+func UpdateOrgConnect(c *gin.Context)  {
+	var param m.UpdateOrgConnectParam
+	if err := c.ShouldBindJSON(&param); err==nil {
+		err = db.UpdateOrgConnect(param)
+		if err != nil {
+			mid.ReturnError(c, "Update organization connection fail", err)
+			return
+		}
+		mid.ReturnSuccess(c, "Success")
+	}else{
+		mid.ReturnValidateFail(c, fmt.Sprintf("Parameter validation failed %v", err))
+	}
+}
+
+func GetOrgConnect(c *gin.Context)  {
+	guid := c.Query("guid")
+	if guid == "" {
+		mid.ReturnValidateFail(c, "Parameter guid can not be empty")
+		return
+	}
+	data,err := db.GetOrgConnect(guid)
+	if err != nil {
+		mid.ReturnError(c, "Get organization endpoint fail", err)
+		return
+	}
+	mid.ReturnData(c, data)
+}
+
 func IsPluginMode(c *gin.Context)  {
 	result := m.IsPluginModeResult{IsPlugin:true}
 	if m.CoreUrl == "" {
