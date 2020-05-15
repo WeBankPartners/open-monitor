@@ -26,7 +26,7 @@
 </template>
 
 <script>
-import {cookies} from '@/assets/js/cookieUtils'
+import { setToken} from '@/assets/js/cookies.ts'
 import {dataPick, autoRefreshConfig} from '@/assets/config/common-config'
 export default {
   name: '',
@@ -65,7 +65,7 @@ export default {
   mounted() {
     if (this.$root.$validate.isEmpty_reset(this.$route.params) && !this.$root.$validate.isEmpty_reset(this.$route.query)) {
       this.endpoint = this.$route.query.endpoint
-      cookies.setAuthorization(`${this.$route.query.token}`)
+      setToken(`${this.$route.query.token}`)
       this.setLocale(this.$route.query.lang)
       this.dateRange = [this.$route.query.startTime,this.$route.query.endTime]
       this.disableTime = true
