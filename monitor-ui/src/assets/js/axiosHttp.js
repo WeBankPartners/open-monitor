@@ -1,7 +1,6 @@
 import axios from 'axios'
 import {baseURL_config} from './baseURL'
-import {cookies} from '@/assets/js/cookieUtils'
-// const baseURL =  require('../../config/APIs').API
+import { getToken } from '@/assets/js/cookies.ts'
 const baseURL = `${baseURL_config}/api/v1`
 export default function ajax (options) {
   const ajaxObj = {
@@ -13,7 +12,7 @@ export default function ajax (options) {
     // params: options.params || '',
     headers: {
       'Content-type': 'application/json;charset=UTF-8',
-      'X-Auth-Token': cookies.getAuthorization() || null
+      'X-Auth-Token': getToken() || null
     },
     // data: JSON.stringify(options.data || '')
     data: JSON.stringify(options.data)

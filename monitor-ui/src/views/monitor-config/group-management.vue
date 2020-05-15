@@ -32,7 +32,7 @@
   </div>
 </template>
 <script>
-  import {cookies} from '@/assets/js/cookieUtils'
+  import { getToken} from '@/assets/js/cookies.ts'
   import {baseURL_config} from '@/assets/js/baseURL'
   let tableEle = [
     {title: 'tableKey.name', value: 'name', display: true},
@@ -118,7 +118,7 @@
       }
     },
     mounted() {
-      this.token = cookies.getAuthorization()
+      this.token = getToken()
       this.initData(this.pageConfig.CRUD, this.pageConfig)
       this.uploadUrl =  baseURL_config + this.$root.apiCenter.groupManagement.upload.api
       this.$refs.child.clearSelectedData()
