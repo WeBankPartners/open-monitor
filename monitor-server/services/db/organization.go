@@ -243,3 +243,27 @@ func UpdateOrgCallback(param m.UpdateOrgPanelEventParam) error {
 	}
 	return err
 }
+
+func UpdateOrgConnect(param m.UpdateOrgConnectParam) error {
+	_,err := x.Exec("UPDATE panel_recursive SET email=?,phone=? WHERE guid=?", strings.Join(param.Mail, ","), strings.Join(param.Phone, ","), param.Guid)
+	if err != nil {
+		mid.LogError("update organization connection error ", err)
+	}
+	return err
+}
+
+func GetOrgConnect(guid string) (result m.UpdateOrgConnectParam, err error) {
+	result.Mail = []string{}
+	result.Phone = []string{}
+	var tableData []*m.PanelRecursiveTable
+	err = x.SQL("SELECT email,phone FROM panel_recursive WHERE guid=?", guid).Find(&tableData)
+	if err != nil {
+		return result,err
+	}
+	if len(tableData) == 0 {
+		return result,fmt.Errorf("guid:%s can not find any record", guid)
+	}
+	result.Mail = strings.Split(tableData[0].Email, ",")
+	result.Phone = strings.Split(tableData[0].Phone, ",")
+	return result,nil
+}
