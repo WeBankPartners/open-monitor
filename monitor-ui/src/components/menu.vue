@@ -77,7 +77,7 @@
   </Menu>
 </template>
 <script>
-import {cookies} from '@/assets/js/cookieUtils'
+import { getToken, removeToken} from '@/assets/js/cookies.ts'
 import axios from 'axios'
 import '@/assets/theme/dark/styls.less';
 import '@/assets/theme/default/styls.less';
@@ -155,10 +155,10 @@ export default {
         method: 'GET',
         url: url,
         headers: {
-          'X-Auth-Token': cookies.getAuthorization() || null
+          'X-Auth-Token': getToken() || null
         }
       }).then(() => {
-          cookies.deleteAuthorization()
+          removeToken()
           localStorage.removeItem('username')
           this.$router.push({path: 'login'})
       })
