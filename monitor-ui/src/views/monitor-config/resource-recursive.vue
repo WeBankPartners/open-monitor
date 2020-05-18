@@ -144,9 +144,8 @@
           color="primary"
           @on-close="closeTag(receiverIndex)"
           closable>
-            {{receiver.dispalyName}}
+          {{receiver.value}}
         </Tag>
-        {{tagInfo}}
       </template>
     </Modal>
   </div>
@@ -226,9 +225,29 @@ export default {
       this.currentRecursive = item.guid
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.groupManagement.allRoles.api, '', (responseData) => {
         this.roleList = responseData.data
+        this.getReceivers(item)
       })
-      console.log(item)
-      this.isAlarmReceivers = true
+    },
+    getReceivers(item) {
+      this.tagInfo = []
+      const params ={
+        guid: item.guid
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', 'alarm/org/connect/get', params, (responseData) => {
+        ['mail', 'phone'].forEach( type => {
+          responseData[type].forEach( item => {
+            if (!item) return
+            this.tagInfo.push({
+              id: this.guid(),
+              type: type,
+              dispalyName: item,
+              value: item
+            })
+          })
+        })
+        this.isAlarmReceivers = true
+      })
+
     },
     addSelectReceivers () {
       this.selectRole.forEach(r => {
@@ -241,7 +260,7 @@ export default {
         })
         this.tagInfo.push({
           id: role.id,
-          type: 'email',
+          type: 'mail',
           dispalyName: role.name,
           value: role.email
         })
@@ -256,7 +275,7 @@ export default {
       if (regx_email_res) {
         this.tagInfo.push({
           id: this.guid(),
-          type: 'email',
+          type: 'mail',
           dispalyName: this.inputRole,
           value: this.inputRole
         })
@@ -281,15 +300,11 @@ export default {
     saveAlarmReceivers () {
       let params = {
         guid: this.currentRecursive,
-        email: [],
+        mail: [],
         phone: []
       }
       for (let tag of this.tagInfo) {
-        if (tag.type === 'email') {
-          params.email.push(tag.value)
-        } else {
-          params.phone.push(tag.value)
-        }
+        params[tag.type].push(tag.value)
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', 'alarm/org/connect/update', params, () => {
         this.isAlarmReceivers = false
