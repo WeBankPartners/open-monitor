@@ -62,7 +62,7 @@
 
 <script>
 import VueGridLayout from 'vue-grid-layout'
-import {resizeEvent} from '@/assets/js/gridUtils'
+import {resizeEvent} from '@/assets/js/gridUtils.ts'
 import {readyToDraw} from  '@/assets/config/chart-rely'
 export default {
   name: '',
