@@ -9,6 +9,7 @@
               <Tag :color="choiceColor(item.type)" class="tag-width">{{item.type}}</Tag>
             </div>
             <div>
+              <button class="btn-cancle-f btn-small" @click="alarmReceivers(item)">{{$t('button.receiversConfiguration')}}</button>
               <button class="btn-cancle-f btn-small" @click="associatedRole(item)">{{$t('resourceLevel.addAssociatedRole')}}</button>
               <button class="btn-cancle-f btn-small" @click="associatedObject(item)">{{$t('resourceLevel.addAssociatedObject')}}</button>
               <button class="btn-cancle-f btn-small" v-if="isPlugin" @click="alarmCallback(item)">{{$t('resourceLevel.alarmCallback')}}</button>
@@ -110,6 +111,44 @@
         <button class="btn-confirm-f" @click="saveAlarmCallback">{{$t('button.save')}}</button>
       </div>
     </Modal>
+    <!-- 告警接收人 -->
+    <Modal
+      label-colon
+      v-model="isAlarmReceivers"
+      :title="$t('button.receivers')">
+        <div>
+          <label style="width:110px">{{$t('button.receiversSelect')}}:</label>
+          <Select v-model="selectRole" multiple filterable style="width:280px">
+              <Option v-for="item in roleList" :value="item.id" :key="item.id">
+              {{item.display_name}}</Option>
+          </Select>
+          <button class="btn-cancle-f" @click="addSelectReceivers">{{$t('button.add')}}</button>
+        </div>
+        <div style="margin: 8px 0">
+          <label style="width:110px">{{$t('button.receiversInput')}}:</label>
+          <input 
+            v-model="inputRole" 
+            type="text" 
+            :placeholder="$t('button.receiversInputTip')"
+            class="form-control search-input c-dark"/>
+          <button class="btn-cancle-f" @click="addInputReceivers">{{$t('button.add')}}</button>
+        </div>
+      <div slot="footer">
+        <button class="btn-cancle-f" @click="isAlarmReceivers = false">{{$t('button.cancle')}}</button>
+        <button class="btn-confirm-f" @click="saveAlarmReceivers">{{$t('button.save')}}</button>
+      </div>
+      <template>
+        <Tag 
+          v-for="(receiver, receiverIndex) in tagInfo" 
+          :key="receiverIndex"
+          type="border" 
+          color="primary"
+          @on-close="closeTag(receiverIndex)"
+          closable>
+          {{receiver.value}}
+        </Tag>
+      </template>
+    </Modal>
   </div>
 </template>
 
@@ -141,7 +180,14 @@ export default {
       allFiring: [],
       selectedRecover: '',
       allRecover: [],
-      alarmCallbackata: null
+      alarmCallbackata: null,
+
+      isAlarmReceivers: false,
+      currentRecursive: null,
+      inputRole: '',
+      selectRole: [],
+      roleList: [],
+      tagInfo: []
     }
   },
   props:{
@@ -176,6 +222,102 @@ export default {
     // }) 
   },
   methods: {
+    alarmReceivers (item) {
+      this.currentRecursive = item.guid
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.groupManagement.allRoles.api, '', (responseData) => {
+        this.roleList = responseData.data
+        this.getReceivers(item)
+      })
+    },
+    getReceivers(item) {
+      this.tagInfo = []
+      const params ={
+        guid: item.guid
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.resourceLevel.getReceivers, params, (responseData) => {
+        ['mail', 'phone'].forEach( type => {
+          responseData[type].forEach( item => {
+            if (!item) return
+            this.tagInfo.push({
+              id: this.guid(),
+              type: type,
+              dispalyName: item,
+              value: item
+            })
+          })
+        })
+        this.isAlarmReceivers = true
+      })
+
+    },
+    addSelectReceivers () {
+      this.selectRole.forEach(r => {
+        let isSelected = this.tagInfo.findIndex((tag)=> {
+          return tag.id === r
+        })
+        if (isSelected > -1) return
+        const role = this.roleList.find((rl) => {
+          return r === rl.id
+        })
+        this.tagInfo.push({
+          id: role.id,
+          type: 'mail',
+          dispalyName: role.name,
+          value: role.email
+        })
+      })
+      this.selectRole = []
+    },
+    addInputReceivers () {
+      const regx_email = /^[a-zA-Z0-9_.-]+@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.[a-zA-Z0-9]{2,6}$/gi
+      const regs_phone = /^1[345678]\d{9}$/
+      const regx_email_res = regx_email.test(this.inputRole)
+      const regs_phone_res = regs_phone.test(this.inputRole)
+      if (regx_email_res) {
+        this.tagInfo.push({
+          id: this.guid(),
+          type: 'mail',
+          dispalyName: this.inputRole,
+          value: this.inputRole
+        })
+        this.inputRole = ''
+        return
+      }
+      if (regs_phone_res) {
+        this.tagInfo.push({
+          id: this.guid(),
+          type: 'phone',
+          dispalyName: this.inputRole,
+          value: this.inputRole
+        })
+        this.inputRole = ''
+        return
+      }
+      this.$Message.warning('Wrong Format !')
+    },
+    closeTag(index) {
+      this.tagInfo.splice(index, 1)
+    },
+    saveAlarmReceivers () {
+      let params = {
+        guid: this.currentRecursive,
+        mail: [],
+        phone: []
+      }
+      for (let tag of this.tagInfo) {
+        params[tag.type].push(tag.value)
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.resourceLevel.updateReceivers, params, () => {
+        this.isAlarmReceivers = false
+        this.$Message.success(this.$t('tips.success'))
+      })
+    },
+    guid() {
+      return 'xxxxxxxx_xxxx_4xxx_yxxx_xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+        return v.toString(16);
+      })
+    },
     choiceColor (type) {
       let cacheColor = this.$root.$store.state.cacheTagColor
       let color = ''
@@ -279,7 +421,6 @@ export default {
         this.isAssociatedRole = false
       })
     },
-
     associatedObject (panalData) {
       this.parentPanal = panalData.guid
       const params = {
@@ -317,7 +458,6 @@ export default {
         this.isAssociatedObject = false
       })
     },
-
     alarmCallback (panalData) {
       this.parentPanal = panalData.guid
       const params = {
@@ -364,7 +504,6 @@ export default {
 </script>
 
 <style scoped lang="less">
-
   .fa {
    font-size: 16px;
     padding: 6px;
@@ -418,5 +557,24 @@ export default {
   }
   .ivu-form-item {
     margin-bottom: 0;
+  }
+
+  .search-input {
+    height: 32px;
+    padding: 4px 7px;
+    font-size: 12px;
+    border: 1px solid #dcdee2;
+    display: inline-block;
+    border-radius: 4px;
+    width: 280px;
+  }
+
+  .search-input:focus {
+    outline: 0;
+    // border-color: #57a3f3;
+  }
+  .is-danger {
+    color: red;
+    margin-bottom: 0px;
   }
 </style>
