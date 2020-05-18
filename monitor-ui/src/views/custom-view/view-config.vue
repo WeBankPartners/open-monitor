@@ -124,7 +124,7 @@
 <script>
 import {generateUuid} from '@/assets/js/utils'
 import {dataPick, autoRefreshConfig} from '@/assets/config/common-config'
-import {resizeEvent} from '@/assets/js/gridUtils'
+import {resizeEvent} from '@/assets/js/gridUtils.ts'
 import VueGridLayout from 'vue-grid-layout'
 import CustomChart from '@/components/custom-chart'
 import CustomPieChart from '@/components/custom-pie-chart'
