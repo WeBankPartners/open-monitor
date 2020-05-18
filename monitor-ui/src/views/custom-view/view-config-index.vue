@@ -35,7 +35,7 @@
     <ModalComponent :modelConfig="setDashboardModel">
       <div slot="setDashboard">  
         <div class="marginbottom params-each">
-          <label class="col-md-2 label-name lable-name-select">{{$t('title.templateName')}}:</label>
+          <label class="col-md-2 label-name">{{$t('title.templateName')}}:</label>
           <Select v-model="setDashboardModel.addRow.templateSelect" style="width:338px">
               <Option v-for="item in setDashboardModel.templateList" :value="item.value" :key="item.value">
               {{item.label}}</Option>
