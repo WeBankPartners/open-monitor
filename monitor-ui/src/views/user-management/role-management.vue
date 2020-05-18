@@ -5,7 +5,7 @@
     <ModalComponent :modelConfig="authorizationModel">
       <div slot="authorization">  
         <div class="marginbottom params-each">
-          <label class="col-md-2 label-name lable-name-select">{{$t('field.endpoint')}}:</label>
+          <label class="col-md-2 label-name">{{$t('field.endpoint')}}:</label>
           <Select v-model="authorizationModel.addRow.user" multiple filterable style="width:338px">
               <Option v-for="item in authorizationModel.userList" :value="item.id" :key="item.name">
               {{item.display_name}}({{item.name}})</Option>
