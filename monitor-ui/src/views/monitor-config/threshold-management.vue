@@ -100,7 +100,7 @@
       <ModalComponent :modelConfig="modelConfig">
         <div slot="metricSelect" class="extentClass">  
           <div class="marginbottom params-each">
-            <label class="col-md-2 label-name lable-name-select">{{$t('tableKey.name')}}:</label>
+            <label class="col-md-2 label-name">{{$t('tableKey.name')}}:</label>
             <Select v-model="modelConfig.addRow.expr" filterable style="width:340px"
             :label-in-value="true" @on-change="selectMetric">
               <Option v-for="item in modelConfig.metricList" :value="item.prom_ql" :key="item.prom_ql+item.metric">{{ item.metric }}</Option>
@@ -109,7 +109,7 @@
         </div>
         <div slot="thresholdConfig" class="extentClass">  
           <div class="marginbottom params-each">
-            <label class="col-md-2 label-name lable-name-select">{{$t('field.threshold')}}:</label>
+            <label class="col-md-2 label-name">{{$t('field.threshold')}}:</label>
             <Select v-model="modelConfig.threshold" style="width:100px">
               <Option v-for="item in modelConfig.thresholdList" :value="item.value" :key="item.value">{{ item.label }}</Option>
             </Select>
@@ -128,7 +128,7 @@
             </div>
           </div>
           <div class="marginbottom params-each">
-            <label class="col-md-2 label-name lable-name-select">{{$t('tableKey.s_last')}}:</label>
+            <label class="col-md-2 label-name">{{$t('tableKey.s_last')}}:</label>
             <div class="search-input-content" style="margin-right: 8px">
               <input 
                 v-validate="'required|isNumber'" 
@@ -147,7 +147,7 @@
             </div>
           </div>
           <div class="marginbottom params-each">
-            <label class="col-md-2 label-name lable-name-select">{{$t('tableKey.s_priority')}}:</label>
+            <label class="col-md-2 label-name">{{$t('tableKey.s_priority')}}:</label>
             <Select v-model="modelConfig.priority" style="width:100px">
               <Option v-for="item in modelConfig.priorityList" :value="item.value" :key="item.value">{{ item.label }}</Option>
             </Select>
