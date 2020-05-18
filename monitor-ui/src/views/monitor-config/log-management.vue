@@ -53,7 +53,7 @@
       <ModalComponent :modelConfig="modelConfig">
         <div slot="thresholdConfig" class="extentClass">  
           <div class="marginbottom params-each">
-            <label class="col-md-2 label-name lable-name-select">{{$t('tableKey.condition')}}:</label>
+            <label class="col-md-2 label-name">{{$t('tableKey.condition')}}:</label>
             <Select v-model="modelConfig.cond" style="width:100px">
               <Option v-for="item in modelConfig.condList" :value="item.value" :key="item.value">{{ item.label }}</Option>
             </Select>
@@ -72,7 +72,7 @@
             </div>
           </div>
           <div class="marginbottom params-each">
-            <label class="col-md-2 label-name lable-name-select">{{$t('tableKey.s_last')}}:</label>
+            <label class="col-md-2 label-name">{{$t('tableKey.s_last')}}:</label>
             <div class="search-input-content" style="margin-right: 8px">
               <input 
                 v-validate="'required|isNumber'" 
@@ -91,7 +91,7 @@
             </div>
           </div>
           <div class="marginbottom params-each">
-            <label class="col-md-2 label-name lable-name-select">{{$t('tableKey.s_priority')}}:</label>
+            <label class="col-md-2 label-name">{{$t('tableKey.s_priority')}}:</label>
             <Select v-model="modelConfig.priority" style="width:100px">
               <Option v-for="item in modelConfig.priorityList" :value="item.value" :key="item.value">{{ item.label }}</Option>
             </Select>
