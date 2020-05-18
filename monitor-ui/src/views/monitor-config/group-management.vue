@@ -21,7 +21,7 @@
     <ModalComponent :modelConfig="authorizationModel">
       <div slot="authorization">  
         <div>
-          <label class="col-md-2 label-name lable-name-select">{{$t('field.role')}}:</label>
+          <label class="col-md-2 label-name">{{$t('field.role')}}:</label>
           <Select v-model="authorizationModel.addRow.role" multiple filterable style="width:338px">
               <Option v-for="item in authorizationModel.roleList" :value="item.id" :key="item.id">
               {{item.display_name}}</Option>
