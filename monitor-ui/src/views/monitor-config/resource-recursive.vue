@@ -9,7 +9,7 @@
               <Tag :color="choiceColor(item.type)" class="tag-width">{{item.type}}</Tag>
             </div>
             <div>
-              <button class="btn-cancle-f btn-small" @click="alarmReceivers(item)">告警接收人</button>
+              <button class="btn-cancle-f btn-small" @click="alarmReceivers(item)">{{$t('button.receiversConfiguration')}}</button>
               <button class="btn-cancle-f btn-small" @click="associatedRole(item)">{{$t('resourceLevel.addAssociatedRole')}}</button>
               <button class="btn-cancle-f btn-small" @click="associatedObject(item)">{{$t('resourceLevel.addAssociatedObject')}}</button>
               <button class="btn-cancle-f btn-small" v-if="isPlugin" @click="alarmCallback(item)">{{$t('resourceLevel.alarmCallback')}}</button>
@@ -115,22 +115,23 @@
     <Modal
       label-colon
       v-model="isAlarmReceivers"
-      title="接收人">
+      :title="$t('button.receivers')">
         <div>
-          <label class="col-md-3">选择接收人:</label>
+          <label style="width:110px">{{$t('button.receiversSelect')}}:</label>
           <Select v-model="selectRole" multiple filterable style="width:280px">
               <Option v-for="item in roleList" :value="item.id" :key="item.id">
               {{item.display_name}}</Option>
           </Select>
-          <button class="btn-cancle-f" @click="addSelectReceivers">添加</button>
+          <button class="btn-cancle-f" @click="addSelectReceivers">{{$t('button.add')}}</button>
         </div>
         <div style="margin: 8px 0">
-          <label class="col-md-3">自定义接收人:</label>
+          <label style="width:110px">{{$t('button.receiversInput')}}:</label>
           <input 
             v-model="inputRole" 
             type="text" 
+            :placeholder="$t('button.receiversInputTip')"
             class="form-control search-input c-dark"/>
-          <button class="btn-cancle-f" @click="addInputReceivers">添加</button>
+          <button class="btn-cancle-f" @click="addInputReceivers">{{$t('button.add')}}</button>
         </div>
       <div slot="footer">
         <button class="btn-cancle-f" @click="isAlarmReceivers = false">{{$t('button.cancle')}}</button>
@@ -233,7 +234,7 @@ export default {
       const params ={
         guid: item.guid
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', 'alarm/org/connect/get', params, (responseData) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.resourceLevel.getReceivers, params, (responseData) => {
         ['mail', 'phone'].forEach( type => {
           responseData[type].forEach( item => {
             if (!item) return
@@ -292,7 +293,7 @@ export default {
         this.inputRole = ''
         return
       }
-      this.$Message.warning('输入格式不正确！')
+      this.$Message.warning('Wrong Format !')
     },
     closeTag(index) {
       this.tagInfo.splice(index, 1)
@@ -306,7 +307,7 @@ export default {
       for (let tag of this.tagInfo) {
         params[tag.type].push(tag.value)
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', 'alarm/org/connect/update', params, () => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.resourceLevel.updateReceivers, params, () => {
         this.isAlarmReceivers = false
         this.$Message.success(this.$t('tips.success'))
       })
