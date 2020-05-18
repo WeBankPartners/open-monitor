@@ -150,7 +150,9 @@
     },
     "resourceLevel": {
         "_des": "资源层级",
-        "getAll": "alarm/org/panel/get"
+        "getAll": "alarm/org/panel/get",
+        "getReceivers": "alarm/org/connect/get",
+        "updateReceivers": "alarm/org/connect/update"
     },
     "editTitle": {
         "_des": "对象视图标题编辑",
