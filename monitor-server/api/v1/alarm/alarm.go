@@ -65,6 +65,9 @@ func AcceptAlertMsg(c *gin.Context)  {
 				if endpointObj.Id <= 0 || endpointObj.StopAlarm == 1 {
 					continue
 				}
+				if endpointObj.ExportType == "telnet" || endpointObj.ExportType == "http" || endpointObj.ExportType == "ping" {
+					continue
+				}
 				tmpAlarm.Endpoint = endpointObj.Guid
 				tmpValue, _ = strconv.ParseFloat(tmpSummaryMsg[2], 64)
 				tmpValue, _ = strconv.ParseFloat(fmt.Sprintf("%.3f", tmpValue), 64)
