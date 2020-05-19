@@ -24,6 +24,7 @@ type returnData struct {
 	storeMetric bool
 	fetchMetric bool
 	addDefaultGroup bool
+	agentManager bool
 	err  error
 }
 
@@ -129,7 +130,7 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage string,err error) 
 			}
 		}
 	}
-	if param.AgentManager {
+	if rData.agentManager {
 		var binPath,configFile string
 		for _,v := range m.Config().Agent {
 			if v.AgentType == param.Type {
@@ -201,6 +202,7 @@ func hostRegister(param m.RegisterParamNew) returnData {
 	result.addDefaultGroup = true
 	result.storeMetric = true
 	result.fetchMetric = true
+	result.agentManager = false
 	return result
 }
 
@@ -282,6 +284,7 @@ func mysqlRegister(param m.RegisterParamNew) returnData {
 	result.defaultGroup = "default_mysql_group"
 	result.addDefaultGroup = true
 	result.fetchMetric = true
+	result.agentManager = true
 	return result
 }
 
@@ -362,6 +365,7 @@ func redisRegister(param m.RegisterParamNew) returnData {
 	result.defaultGroup = "default_redis_group"
 	result.addDefaultGroup = true
 	result.fetchMetric = true
+	result.agentManager = true
 	return result
 }
 
@@ -439,6 +443,7 @@ func javaRegister(param m.RegisterParamNew) returnData {
 	result.defaultGroup = "default_java_group"
 	result.addDefaultGroup = true
 	result.fetchMetric = true
+	result.agentManager = true
 	return result
 }
 
@@ -456,6 +461,7 @@ func pingRegister(param m.RegisterParamNew) returnData {
 	result.endpoint.Step = prometheusStep
 	result.defaultGroup = "default_ping_group"
 	result.addDefaultGroup = true
+	result.agentManager = false
 	return result
 }
 
@@ -473,6 +479,8 @@ func telnetRegister(param m.RegisterParamNew) returnData {
 	result.endpoint.Step = prometheusStep
 	result.defaultGroup = "default_telnet_group"
 	result.addDefaultGroup = true
+	result.fetchMetric = false
+	result.agentManager = false
 	// store to db -> endpoint_telnet
 	var eto []*m.EndpointTelnetObj
 	eto = append(eto, &m.EndpointTelnetObj{Port:param.Port, Note:""})
@@ -497,6 +505,7 @@ func httpRegister(param m.RegisterParamNew) returnData {
 	result.endpoint.Step = prometheusStep
 	result.defaultGroup = "default_http_group"
 	result.addDefaultGroup = true
+	result.agentManager = false
 	var eho []*m.EndpointHttpTable
 	eho = append(eho, &m.EndpointHttpTable{EndpointGuid:result.endpoint.Guid, Url:param.Url, Method:param.Method})
 	err := db.UpdateEndpointHttp(eho)
@@ -556,6 +565,7 @@ func windowsRegister(param m.RegisterParamNew) returnData {
 	result.defaultGroup = "default_windows_group"
 	result.addDefaultGroup = true
 	result.fetchMetric = true
+	result.agentManager = false
 	return result
 }
 
@@ -602,5 +612,6 @@ func otherExporterRegister(param m.RegisterParamNew) returnData {
 	result.endpoint.ExportType = param.Type
 	result.endpoint.Address = fmt.Sprintf("%s:%s", param.Ip, param.Port)
 	result.fetchMetric = true
+	result.agentManager = false
 	return result
 }
