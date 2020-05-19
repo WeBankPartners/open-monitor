@@ -88,7 +88,7 @@ export const colorList = {
   'primary': '#2d8cf0',
   'success': '#19be6b',
   'warning': '#f90',
-  'green': '#f6ffed',
+  'green': '#b7eb8f',
   'red': '#52c41a',
   'yellow': '#fadb14',
   'pink': '#ffadd2',
