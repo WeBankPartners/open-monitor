@@ -577,9 +577,11 @@ func GetChart(c *gin.Context)  {
 	}
 	// agg
 	agg := db.CheckAggregate(query.Start, query.End, firstEndpoint, step, len(serials))
+	mid.LogInfo(fmt.Sprintf("serials length: %d query length: %d", len(serials), len(querys)))
 	//var firstSerialTime float64
 	for i, s := range serials {
 		if strings.Contains(s.Name, "$metric") {
+			mid.LogInfo(fmt.Sprintf("sname: %s, query %d metric : %s ", s.Name, i, querys[i].Metric))
 			s.Name = strings.Replace(s.Name, "$metric", querys[i].Metric[0], -1)
 		}
 		eOption.Legend = append(eOption.Legend, s.Name)
