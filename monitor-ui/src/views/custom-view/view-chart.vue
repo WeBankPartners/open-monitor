@@ -1,9 +1,34 @@
 <template>
   <div class>
     <header>
-      <div style="display:flex;justify-content:space-between; font-size:16px;padding:8px 16px">
-        <div class="header-name">
+      <div class="search-container">
+        <div>
+          <div class="search-zone">
+            <span class="params-title">{{$t('field.relativeTime')}}：</span>
+            <Select v-model="viewCondition.timeTnterval" :disabled="disableTime" style="width:80px"  @on-change="initPanal">
+              <Option v-for="item in dataPick" :value="item.value" :key="item.value">{{ item.label }}</Option>
+            </Select>
+          </div>
+          <div class="search-zone">
+            <span class="params-title">{{$t('placeholder.refresh')}}：</span>
+            <Select v-model="viewCondition.autoRefresh" :disabled="disableTime" style="width:100px" @on-change="initPanal" :placeholder="$t('placeholder.refresh')">
+              <Option v-for="item in autoRefreshConfig" :value="item.value" :key="item.value">{{ item.label }}</Option>
+            </Select>
+          </div>
+          <div class="search-zone">
+            <span class="params-title">{{$t('field.timeInterval')}}：</span>
+            <DatePicker 
+              type="datetimerange" 
+              :value="viewCondition.dateRange" 
+              format="yyyy-MM-dd HH:mm:ss" 
+              placement="bottom-start" 
+              @on-change="datePick" 
+              :placeholder="$t('placeholder.datePicker')" 
+              style="width: 320px">
+            </DatePicker>
+          </div>
         </div>
+
         <div class="header-tools"> 
           <button class="btn btn-sm btn-confirm-f" @click="goBack()">{{$t('button.back')}}</button>
         </div>
@@ -25,11 +50,21 @@
 
 <script>
 import { generateUuid } from "@/assets/js/utils";
-import { readyToDraw } from "@/assets/config/chart-rely";
+import { readyToDraw } from "@/assets/config/chart-rely"
+import {dataPick, autoRefreshConfig} from '@/assets/config/common-config'
 export default {
   name: "",
   data() {
     return {
+      viewCondition: {
+        timeTnterval: -1800,
+        dateRange: ['', ''],
+        autoRefresh: 10,
+      },
+      disableTime: false,
+      dataPick: dataPick,
+      autoRefreshConfig: autoRefreshConfig,
+
       viewData: null,
       panalData: null,
 
@@ -52,8 +87,13 @@ export default {
         this.viewData = JSON.parse(this.$route.params.templateData.cfg);
         this.viewData.forEach((itemx) => {
           if (itemx.viewConfig.id === this.$route.params.panal.id) {
-            this.panalData = itemx;
-            this.initPanal();
+            this.panalData = itemx
+            this.initPanal()
+            if (this.viewCondition.autoRefresh > 0) {
+              this.interval = setInterval(()=>{
+                this.initPanal()
+              },this.viewCondition.autoRefresh*1000)
+            }
             return;
           }
         });
@@ -61,6 +101,19 @@ export default {
     }
   },
   methods: {
+    datePick (data) {
+      this.viewCondition.dateRange = data
+      this.disableTime = false
+      if (this.viewCondition.dateRange[0] && this.viewCondition.dateRange[1]) {
+        if (this.viewCondition.dateRange[0] === this.viewCondition.dateRange[1]) {
+          this.viewCondition.dateRange[1] = this.viewCondition.dateRange[1].replace('00:00:00', '23:59:59')
+        }
+        this.disableTime = true
+        this.viewCondition.autoRefresh = 0
+        clearInterval(this.interval)
+      }
+      this.initPanal()
+    },
     initPanal() {
       this.panalTitle = this.panalData.panalTitle;
       this.panalUnit = this.panalData.panalUnit;
@@ -75,7 +128,11 @@ export default {
             endpoint: item.endpoint,
             prom_ql: item.metric,
             metric: item.metricLabel,
-            time: "-1800"
+            start: this.viewCondition.dateRange[0] ===''? 
+              '':Date.parse(this.viewCondition.dateRange[0].replace(/-/g, '/'))/1000 + '',
+            end: this.viewCondition.dateRange[1] ===''? 
+              '':Date.parse(this.viewCondition.dateRange[1].replace(/-/g, '/'))/1000 + '',
+            time: '' + this.viewCondition.timeTnterval
           }
         );
       });
@@ -116,3 +173,18 @@ export default {
 }
 </style>
 
+<style scoped lang="less">
+.search-container {
+  display: flex;
+  justify-content: space-between;
+  margin: 8px;
+  font-size: 16px;
+}
+.search-zone {
+  display: inline-block;
+}
+.params-title {
+  margin-left: 4px;
+  font-size: 13px;
+}
+</style>
