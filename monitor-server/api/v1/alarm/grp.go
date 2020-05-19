@@ -9,9 +9,10 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"fmt"
 	"strings"
-	"go.uber.org/zap/buffer"
-	"encoding/gob"
 	"net/http"
+	"encoding/json"
+	"io/ioutil"
+	"time"
 )
 
 func ListGrp(c *gin.Context)  {
@@ -187,15 +188,21 @@ func ExportGrpStrategy(c *gin.Context)  {
 		mid.ReturnError(c, "Export group strategy fail, get db strategy error ", err)
 		return
 	}
-	var tmpBuf buffer.Buffer
-	enc := gob.NewEncoder(&tmpBuf)
-	err = enc.Encode(result)
+	for _,v := range result {
+		mid.LogInfo(fmt.Sprintf("grp name: %s ", v.GrpName))
+		for _,vv := range v.Strategy {
+			mid.LogInfo(fmt.Sprintf("strategy metric: %s ", vv.Metric))
+		}
+	}
+
+	b,err := json.Marshal(result)
 	if err != nil {
-		mid.ReturnError(c, "Export group strategy fail, gob encode object error ", err)
+		mid.ReturnError(c, "Export group strategy fail, json marshal object error ", err)
 		return
 	}
-	c.Writer.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=%s", "grp_strategy_tpl.data"))
-	c.Data(http.StatusOK, "application/octet-stream", tmpBuf.Bytes())
+	mid.LogInfo(fmt.Sprintf("result ----> %s", string(b)))
+	c.Writer.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=%s_%s.json", "monitor_group_", time.Now().Format("20060102150405")))
+	c.Data(http.StatusOK, "application/octet-stream", b)
 }
 
 func ImportGrpStrategy(c *gin.Context)  {
@@ -210,10 +217,15 @@ func ImportGrpStrategy(c *gin.Context)  {
 		return
 	}
 	var paramObj []*m.GrpStrategyExportObj
-	dec := gob.NewDecoder(f)
-	err = dec.Decode(&paramObj)
+	b,err := ioutil.ReadAll(f)
+	defer f.Close()
 	if err != nil {
-		mid.ReturnError(c, "Gob decode error", err)
+		mid.ReturnError(c, "read content fail error ", err)
+		return
+	}
+	err = json.Unmarshal(b, &paramObj)
+	if err != nil {
+		mid.ReturnError(c, "json unmarshal fail error ", err)
 		return
 	}
 	err = db.SetGrpStrategy(paramObj)
