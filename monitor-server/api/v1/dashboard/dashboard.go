@@ -592,18 +592,11 @@ func GetChart(c *gin.Context)  {
 			if paramConfig[0].Aggregate != "" {
 				aggType = paramConfig[0].Aggregate
 			}
+			if aggType == "" {
+				aggType = "avg"
+			}
 			s.Data = db.Aggregate(s.Data, agg, aggType)
 		}
-		//if i > 0 {
-		//	if s.Data[0][0] != firstSerialTime {
-		//		tmpSub := firstSerialTime - s.Data[0][0]
-		//		for i,v := range s.Data {
-		//			s.Data[i][0] = v[0] + tmpSub
-		//		}
-		//	}
-		//}else{
-		//	firstSerialTime = s.Data[0][0]
-		//}
 	}
 	eOption.Xaxis = make(map[string]interface{})
 	eOption.Yaxis = m.YaxisModel{Unit: unit}
