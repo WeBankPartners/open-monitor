@@ -376,7 +376,14 @@ func GetEndpointMetricNew(id int) (err error,result []*m.OptionModel) {
 		return err,result
 	}
 	for _,v := range strList {
-		result = append(result, &m.OptionModel{OptionText:v, OptionValue:fmt.Sprintf("%s{instance=\"$address\"}", v)})
+		if strings.HasPrefix(v, "go_") || v == "" {
+			continue
+		}
+		if v[len(v)-1:] == "}" {
+			result = append(result, &m.OptionModel{OptionText: v, OptionValue: fmt.Sprintf("%s,instance=\"$address\"}", v[:len(v)-1])})
+		}else {
+			result = append(result, &m.OptionModel{OptionText: v, OptionValue: fmt.Sprintf("%s{instance=\"$address\"}", v)})
+		}
 	}
 	return nil,result
 }
