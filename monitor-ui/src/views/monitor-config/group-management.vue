@@ -188,10 +188,9 @@
         }
         const api = this.$root.apiCenter.groupManagement.export.api + '?id=' + this.selectedData.checkedIds.join(',')
         this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, {}, (responseData) => {
-          let content = responseData
-          let fileName = 'grp_strategy_tpl.data'
+          let content = JSON.stringify(responseData)
+          let fileName = `grp_strategy_tpl_${new Date().format('yyyyMMddhhmmss')}.json`
           let blob = new Blob([content])
-
           if('msSaveOrOpenBlob' in navigator){
             // Microsoft Edge and Microsoft Internet Explorer 10-11
             window.navigator.msSaveOrOpenBlob(blob, fileName)
