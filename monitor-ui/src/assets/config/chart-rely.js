@@ -28,7 +28,7 @@ export const readyToDraw = function(that, responseData, viewIndex, chartConfig) 
   responseData.series.forEach((item, index)=>{
     legend.push(item.name)
     item.symbol = 'none'
-    item.smooth = true
+    item.smooth = false
     item.lineStyle = {
       width: 1
     }
@@ -243,7 +243,6 @@ export const drawChart = function(that,config,userConfig) {
       type: ['line', 'bar']
     }
   }
-
   if (finalConfig.eye) {
     option.toolbox.feature.myTool = {
       show:true,

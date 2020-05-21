@@ -19,7 +19,7 @@
           type="datetimerange" 
           :value="viewCondition.dateRange" 
           format="yyyy-MM-dd HH:mm:ss" 
-          placement="bottom-end" 
+          placement="bottom-start" 
           @on-change="datePick" 
           :placeholder="$t('placeholder.datePicker')" 
           style="width: 320px">
@@ -67,7 +67,7 @@
 <script>
 import VueGridLayout from 'vue-grid-layout'
 import {dataPick, autoRefreshConfig} from '@/assets/config/common-config'
-import {resizeEvent} from '@/assets/js/gridUtils'
+import {resizeEvent} from '@/assets/js/gridUtils.ts'
 import CustomChart from '@/components/custom-chart'
 import CustomPieChart from '@/components/custom-pie-chart'
 export default {

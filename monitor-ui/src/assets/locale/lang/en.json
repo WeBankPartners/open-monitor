@@ -18,6 +18,7 @@
     "endpointSearch": "Please input",
     "metric": "Select metric",
     "datePicker": "Please select",
+    "comparedDatePicker": "Please select",
     "refresh": "Refresh",
     "metricConfiguration": "Metrics configuration",
     "globalConfiguration": "Global configuration",
@@ -34,7 +35,8 @@
     "endpoint": "Endpoint",
     "metric": "Metric",
     "relativeTime": "Relative Time",
-    "timeInterval": "Time interval",
+    "timeInterval": "Time Interval",
+    "comparedTimeInterval": "Time Interval",
     "port": "Port",
     "ip": "IP",
     "aggType": "Aggregation type",
@@ -62,6 +64,7 @@
     "setUp": "Set up"
   },
   "button": {
+    "MoM": "MoM",
     "Logout": "Logout",
     "search": "Search",
     "add": "Add",
@@ -146,6 +149,7 @@
     "success": " Success!",
     "failed": " Failed!",
     "selectData": " Please select data first!",
+    "selectDate": "Please select date!",
     "metricConfigTips": {
       "one": "1. Input endpoint as data source and select the metric from the dropdown list.",
       "two": "2. Click 'Search' button to view the monitor graph based on the selected metric.",
