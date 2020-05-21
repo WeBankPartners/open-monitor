@@ -24,6 +24,12 @@ type UpdateOrgPanelEndpointParam struct {
 	Endpoint  []string  `json:"endpoint"`
 }
 
+type UpdateOrgConnectParam struct {
+	Guid  string  `json:"guid" binding:"required"`
+	Mail  []string  `json:"mail"`
+	Phone  []string  `json:"phone"`
+}
+
 type GetOrgPanelCallbackData struct {
 	FiringCallback  []*OptionModel  `json:"firing_callback"`
 	RecoverCallback  []*OptionModel  `json:"recover_callback"`

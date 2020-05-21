@@ -7,11 +7,10 @@
 *
  */
 // import router from '@/router'
-// import {cookies} from '@/assets/js/cookieUtils'
 import httpRequest from '@/assets/js/axiosHttp'
 import $ from 'jquery'
 // import {Message} from 'view-design'
-import loadingImg from '@/assets/img/loading3.gif'
+import loadingImg from '@/assets/img/loading.gif'
 
 let loadingCount = 0
 // 页面loading配置
