@@ -197,7 +197,7 @@ func (p *ProcessObj)destroy() error {
 }
 
 func getSystemProcessPid(name,path string) []int {
-	log.Printf("name : %s \n", name)
+	//log.Printf("name : %s \n", name)
 	result := []int{}
 	cmdString := "ps aux|grep -v '\\['|awk '{print "+ osPsPidIndex +"}'"
 	if name != "" {
@@ -206,7 +206,7 @@ func getSystemProcessPid(name,path string) []int {
 	if path != "" {
 		cmdString = fmt.Sprintf("ps aux|grep %s|grep -v 'bash'|grep -v 'grep'|grep -v 'nohup'|grep -v 'start.sh'|awk '{print "+ osPsPidIndex +"}'", path)
 	}
-	log.Println(cmdString)
+	//log.Println(cmdString)
 	b,err := exec.Command(osBashCommand, "-c", cmdString).Output()
 	if err != nil {
 		log.Printf("get system process pid fail with command %s : %v \n", cmdString, err)

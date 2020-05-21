@@ -20,8 +20,8 @@
     <ModalComponent :modelConfig="modelConfig"></ModalComponent>
     <ModalComponent :modelConfig="authorizationModel">
       <div slot="authorization">  
-        <div class="marginbottom params-each">
-          <label class="col-md-2 label-name lable-name-select">{{$t('field.role')}}:</label>
+        <div>
+          <label class="col-md-2 label-name">{{$t('field.role')}}:</label>
           <Select v-model="authorizationModel.addRow.role" multiple filterable style="width:338px">
               <Option v-for="item in authorizationModel.roleList" :value="item.id" :key="item.id">
               {{item.display_name}}</Option>
@@ -29,11 +29,10 @@
         </div>
       </div>
     </ModalComponent>
-    <ModalDel :ModelDelConfig="ModelDelConfig"></ModalDel>
   </div>
 </template>
 <script>
-  import {cookies} from '@/assets/js/cookieUtils'
+  import { getToken} from '@/assets/js/cookies.ts'
   import {baseURL_config} from '@/assets/js/baseURL'
   let tableEle = [
     {title: 'tableKey.name', value: 'name', display: true},
@@ -51,11 +50,6 @@
     name: '',
     data() {
       return {
-        ModelDelConfig: {
-          deleteWarning: false,
-          msg: '',
-          callback: null
-        },
         token: null,
         uploadUrl: '',
         pageConfig: {
@@ -124,7 +118,7 @@
       }
     },
     mounted() {
-      this.token = cookies.getAuthorization()
+      this.token = getToken()
       this.initData(this.pageConfig.CRUD, this.pageConfig)
       this.uploadUrl =  baseURL_config + this.$root.apiCenter.groupManagement.upload.api
       this.$refs.child.clearSelectedData()
@@ -166,17 +160,17 @@
         this.$router.push({name: 'endpointManagement', params: {group: rowData}})
       },
       deleteConfirm (rowData) {
-        this.ModelDelConfig =  {
-          deleteWarning: true,
+        this.$delConfirm({
           msg: rowData.name,
           callback: () => {
             this.delF(rowData)
           }
-        }
+        })
       },
       delF (rowData) {
         let params = {id: rowData.id}
         this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.groupManagement.delete.api, params, () => {
+          this.$root.$eventBus.$emit('hideConfirmModal')
           this.$Message.success(this.$t('tips.success'))
           this.initData(this.pageConfig.CRUD, this.pageConfig)
         })
@@ -194,10 +188,9 @@
         }
         const api = this.$root.apiCenter.groupManagement.export.api + '?id=' + this.selectedData.checkedIds.join(',')
         this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, {}, (responseData) => {
-          let content = responseData
-          let fileName = 'grp_strategy_tpl.data'
+          let content = JSON.stringify(responseData)
+          let fileName = `grp_strategy_tpl_${new Date().format('yyyyMMddhhmmss')}.json`
           let blob = new Blob([content])
-
           if('msSaveOrOpenBlob' in navigator){
             // Microsoft Edge and Microsoft Internet Explorer 10-11
             window.navigator.msSaveOrOpenBlob(blob, fileName)

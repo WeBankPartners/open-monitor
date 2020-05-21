@@ -34,7 +34,9 @@
                         :value="option.option_value"
                         :key="index"
                       >
-                      <Tag :color="endpointTag[option.option_type_name] || choiceColor(option.option_type_name, index)" class="tag-width">{{option.option_type_name}}</Tag>{{option.option_text}}</Option>
+                        <TagShow :tagName="option.option_type_name" :index="index"></TagShow> 
+                        {{option.option_text}}
+                      </Option>
                     </Select>
                   </div>
                 </li>
@@ -77,14 +79,11 @@
 <script>
 // import { generateUuid } from "@/assets/js/utils"
 import { drawPieChart} from "@/assets/config/chart-rely"
-import {endpointTag, randomColor} from '@/assets/config/common-config'
+import TagShow from '@/components/Tag-show.vue'
 export default {
   name: "",
   data() {
     return {
-      endpointTag: endpointTag,
-      randomColor: randomColor,
-      cacheColor: {},
       viewData: [],
       panalIndex: null,
       panalData: null,
@@ -151,17 +150,6 @@ export default {
     }
   },
   methods: {
-    choiceColor (type,index) {
-      let color = ''
-      // eslint-disable-next-line no-prototype-builtins
-      if (Object.keys(this.cacheColor).includes(type)) {
-        color = this.cacheColor[type]
-      } else {
-        color = randomColor[index]
-        this.cacheColor[type] = randomColor[index]
-      }
-      return color
-    },
     initPanal() {
       this.panalTitle = this.panalData.panalTitle
       this.panalUnit = this.panalData.panalUnit
@@ -270,7 +258,9 @@ export default {
       this.$router.push({ name: "viewConfig", params: this.params })
     }
   },
-  components: {}
+  components: {
+    TagShow
+  }
 }
 </script>
 
@@ -346,11 +336,6 @@ li {
   border: 1px solid @blue-2;
   padding: 4px;
   margin: 4px;
-}
-.tag-width {
-  cursor: auto;
-  width: 55px;
-  text-align: center;
 }
 </style>
 
