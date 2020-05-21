@@ -133,6 +133,9 @@ func GetPromMetric(endpoint []string,metric string) (error, string) {
 				reg = strings.Replace(reg, "$address", host.Address, -1)
 			}
 		}
+		if strings.Contains(reg, `$guid`) {
+			reg = strings.Replace(reg, "$guid", host.Guid, -1)
+		}
 		promQL = reg
 	}
 	return err,promQL
@@ -201,7 +204,7 @@ func GetEndpoint(query *m.EndpointTable) error {
 
 func ListEndpoint() []*m.EndpointTable {
 	var result []*m.EndpointTable
-	x.SQL("SELECT guid,name,ip,export_type,address,address_agent FROM endpoint").Find(&result)
+	x.SQL("SELECT * FROM endpoint").Find(&result)
 	return result
 }
 
@@ -373,7 +376,14 @@ func GetEndpointMetricNew(id int) (err error,result []*m.OptionModel) {
 		return err,result
 	}
 	for _,v := range strList {
-		result = append(result, &m.OptionModel{OptionText:v, OptionValue:fmt.Sprintf("%s{instance=\"$address\"}", v)})
+		if strings.HasPrefix(v, "go_") || v == "" {
+			continue
+		}
+		if v[len(v)-1:] == "}" {
+			result = append(result, &m.OptionModel{OptionText: v, OptionValue: fmt.Sprintf("%s,instance=\"$address\"}", v[:len(v)-1])})
+		}else {
+			result = append(result, &m.OptionModel{OptionText: v, OptionValue: fmt.Sprintf("%s{instance=\"$address\"}", v)})
+		}
 	}
 	return nil,result
 }

@@ -34,6 +34,10 @@ export default {
     chartIndex: Number
   },
   created (){
+    // 外部触发清除刷新
+    this.$root.$eventBus.$on('clearSingleChartInterval', () => {
+      clearInterval(this.interval)
+    })
     generateUuid().then((elId)=>{
       this.elId =  `id_${elId}`; 
     })
@@ -82,7 +86,11 @@ export default {
           metric: this.chartInfo.metric[0],
           time: this.params.time.toString(),
           start: this.params.start + '',
-          end: this.params.end + ''
+          end: this.params.end + '',
+          compare_first_start: this.params.compare_first_start,
+          compare_first_end: this.params.compare_first_end,
+          compare_second_start: this.params.compare_second_start,
+          compare_second_end: this.params.compare_second_end
         })
       }
       this.$httpRequestEntrance.httpRequestEntrance('POST', 'dashboard/newchart', params, responseData => {

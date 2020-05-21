@@ -67,6 +67,7 @@ func AddDeploy(w http.ResponseWriter,r *http.Request)  {
 			}
 		}
 	}
+	log.Printf("response code:%d message:%s \n", resp.Code, resp.Message)
 	funcs.SaveDeployProcess()
 	w.Write(resp.byte())
 }
@@ -101,6 +102,34 @@ func DelDeploy(w http.ResponseWriter,r *http.Request)  {
 		}
 	}
 	funcs.SaveDeployProcess()
+	w.Write(resp.byte())
+}
+
+func InitDeploy(w http.ResponseWriter,r *http.Request)  {
+	log.Println("start init deploy")
+	var resp httpResponse
+	b,err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Printf("error : %v \n", err)
+		resp.Code = 500
+		resp.Message = fmt.Sprintf("error:%v",err)
+	}else {
+		var param []*funcs.AgentManagerTable
+		err = json.Unmarshal(b, &param)
+		if err != nil {
+			resp.Code = 500
+			resp.Message = fmt.Sprintf("error:%v", err)
+		} else {
+			err = funcs.InitDeployDir(param)
+			if err != nil {
+				resp.Code = 500
+				resp.Message = fmt.Sprintf("error:%v", err)
+			}else{
+				resp.Code = 200
+				resp.Message = "success"
+			}
+		}
+	}
 	w.Write(resp.byte())
 }
 
@@ -143,6 +172,6 @@ func illegalGuid(input string) bool {
 	if input == "" {
 		return true
 	}
-	var regPath = regexp.MustCompile(`^[\w|\.|\-]+$`)
+	var regPath = regexp.MustCompile(`^[\w|\.|\-:\*@!~(){}\[\]=,]+$`)
 	return regPath.MatchString(input)
 }

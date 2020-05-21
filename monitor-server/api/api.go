@@ -114,8 +114,8 @@ func InitHttpServer(exportAgent bool) {
 			agentApi.POST("/register", agent.RegisterAgent)
 			agentApi.POST("/register_new", agent.RegisterAgentNew)
 			agentApi.GET("/deregister", agent.DeregisterAgent)
-			agentApi.POST("/export/register/:name", agent.ExportAgent)
-			agentApi.POST("/export/deregister/:name", agent.ExportAgent)
+			agentApi.POST("/export/register/:name", agent.ExportAgentNew)
+			agentApi.POST("/export/deregister/:name", agent.ExportAgentNew)
 			agentApi.POST("/export/start/:name", agent.AlarmControl)
 			agentApi.POST("/export/stop/:name", agent.AlarmControl)
 			agentApi.POST("/export/install/:name", agent.InstallAgent)
@@ -168,6 +168,8 @@ func InitHttpServer(exportAgent bool) {
 			alarmApi.GET("/org/plugin", alarm.IsPluginMode)
 			alarmApi.GET("/org/callback/get", alarm.GetOrgPanelEventList)
 			alarmApi.POST("/org/callback/update", alarm.UpdateOrgPanelCallback)
+			alarmApi.GET("/org/connect/get", alarm.GetOrgConnect)
+			alarmApi.POST("/org/connect/update", alarm.UpdateOrgConnect)
 		}
 		userApi := authApi.Group("/user")
 		{
