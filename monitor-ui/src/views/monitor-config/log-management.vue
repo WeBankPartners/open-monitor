@@ -53,7 +53,7 @@
       <ModalComponent :modelConfig="modelConfig">
         <div slot="thresholdConfig" class="extentClass">  
           <div class="marginbottom params-each">
-            <label class="col-md-2 label-name lable-name-select">{{$t('tableKey.condition')}}:</label>
+            <label class="col-md-2 label-name">{{$t('tableKey.condition')}}:</label>
             <Select v-model="modelConfig.cond" style="width:100px">
               <Option v-for="item in modelConfig.condList" :value="item.value" :key="item.value">{{ item.label }}</Option>
             </Select>
@@ -72,7 +72,7 @@
             </div>
           </div>
           <div class="marginbottom params-each">
-            <label class="col-md-2 label-name lable-name-select">{{$t('tableKey.s_last')}}:</label>
+            <label class="col-md-2 label-name">{{$t('tableKey.s_last')}}:</label>
             <div class="search-input-content" style="margin-right: 8px">
               <input 
                 v-validate="'required|isNumber'" 
@@ -91,7 +91,7 @@
             </div>
           </div>
           <div class="marginbottom params-each">
-            <label class="col-md-2 label-name lable-name-select">{{$t('tableKey.s_priority')}}:</label>
+            <label class="col-md-2 label-name">{{$t('tableKey.s_priority')}}:</label>
             <Select v-model="modelConfig.priority" style="width:100px">
               <Option v-for="item in modelConfig.priorityList" :value="item.value" :key="item.value">{{ item.label }}</Option>
             </Select>
@@ -99,7 +99,6 @@
         </div>
       </ModalComponent>
     </section>
-    <ModalDel :ModelDelConfig="ModelDelConfig"></ModalDel>
   </div>
 </template>
 
@@ -119,11 +118,6 @@ export default {
   name: '',
   data() {
     return {
-      ModelDelConfig: {
-        deleteWarning: false,
-        msg: '',
-        callback: null
-      },
       type: '',
       typeValue: 'endpoint',
       typeList: [
@@ -272,17 +266,17 @@ export default {
       })
     },
     deleteConfirm (rowData) {
-      this.ModelDelConfig =  {
-        deleteWarning: true,
+      this.$delConfirm({
         msg: rowData.path,
         callback: () => {
           this.delF(rowData)
         }
-      }
+      })
     },
     delF (rowData) {
       let params = {id: rowData.id}
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.logManagement.delList.api, params, () => {
+        this.$root.$eventBus.$emit('hideConfirmModal')
         this.$Message.success(this.$t('tips.success'))
         this.requestData(this.type, this.typeValue)
       })
@@ -375,17 +369,17 @@ export default {
       this.$root.JQ('#add_edit_Modal').modal('show')
     },
     delPathconfirm (rowData) {
-      this.ModelDelConfig =  {
-        deleteWarning: true,
+      this.$delConfirm({
         msg: rowData.keyword,
         callback: () => {
           this.delPathItem(rowData)
         }
-      }
+      })
     },
     delPathItem (rowData) {
       let params = {id: rowData.id}
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.logManagement.delete.api, params, () => {
+        this.$root.$eventBus.$emit('hideConfirmModal')
         this.$Message.success(this.$t('tips.success'))
         this.requestData(this.type, this.typeValue)
       })
