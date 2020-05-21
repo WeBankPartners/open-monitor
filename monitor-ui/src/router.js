@@ -1,6 +1,6 @@
 import Vue from "vue";
 import Router from "vue-router";
-import {cookies} from '@/assets/js/cookieUtils';
+import { getToken } from '@/assets/js/cookies.ts'
 
 Vue.use(Router);
 
@@ -218,7 +218,7 @@ const router = new Router({
 });
 
 router.beforeEach((to, from, next) => {
-  if (!cookies.getCookie('Authorization')&& to.name != 'login'&& to.name != 'register'&& to.name != 'endpointViewExternalCall') {
+  if (!getToken()&& to.name != 'login'&& to.name != 'register'&& to.name != 'endpointViewExternalCall') {
     next({name:'login'})
   } else {
     next()

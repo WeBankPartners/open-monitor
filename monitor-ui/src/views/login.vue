@@ -38,7 +38,7 @@
 
 <script>
 import axios from 'axios'
-import {cookies} from '@/assets/js/cookieUtils'
+import { setToken } from '@/assets/js/cookies.ts'
 export default {
   data () {
     return {
@@ -71,7 +71,7 @@ export default {
         }
       }).then((response) => {
           if (response.status < 400) {
-            cookies.setAuthorization(`${response.data.data.token}`)
+            setToken(`${response.data.data.token}`)
             localStorage.username = response.data.data.user
             this.$Message.success(response.data.msg)
             this.$router.push({path: '/'})

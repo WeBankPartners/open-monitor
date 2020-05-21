@@ -18,7 +18,9 @@
             @on-clear="clearEndpoint"
             >
             <Option v-for="(option, index) in endpointOptions" :value="option.id" :key="index">
-            <Tag v-if="option.type" :color="endpointTag[option.option_type_name] || choiceColor(option.option_type_name, index)" class="tag-width">{{option.option_type_name}}</Tag>{{option.option_text}}</Option>
+            <TagShow :tagName="option.option_type_name" :index="index"></TagShow> 
+            {{option.option_text}}
+            </Option>
           </Select>
         </li>
         <li class="search-li">
@@ -98,7 +100,7 @@
       <ModalComponent :modelConfig="modelConfig">
         <div slot="metricSelect" class="extentClass">  
           <div class="marginbottom params-each">
-            <label class="col-md-2 label-name lable-name-select">{{$t('tableKey.name')}}:</label>
+            <label class="col-md-2 label-name">{{$t('tableKey.name')}}:</label>
             <Select v-model="modelConfig.addRow.expr" filterable style="width:340px"
             :label-in-value="true" @on-change="selectMetric">
               <Option v-for="item in modelConfig.metricList" :value="item.prom_ql" :key="item.prom_ql+item.metric">{{ item.metric }}</Option>
@@ -107,7 +109,7 @@
         </div>
         <div slot="thresholdConfig" class="extentClass">  
           <div class="marginbottom params-each">
-            <label class="col-md-2 label-name lable-name-select">{{$t('field.threshold')}}:</label>
+            <label class="col-md-2 label-name">{{$t('field.threshold')}}:</label>
             <Select v-model="modelConfig.threshold" style="width:100px">
               <Option v-for="item in modelConfig.thresholdList" :value="item.value" :key="item.value">{{ item.label }}</Option>
             </Select>
@@ -126,7 +128,7 @@
             </div>
           </div>
           <div class="marginbottom params-each">
-            <label class="col-md-2 label-name lable-name-select">{{$t('tableKey.s_last')}}:</label>
+            <label class="col-md-2 label-name">{{$t('tableKey.s_last')}}:</label>
             <div class="search-input-content" style="margin-right: 8px">
               <input 
                 v-validate="'required|isNumber'" 
@@ -145,20 +147,20 @@
             </div>
           </div>
           <div class="marginbottom params-each">
-            <label class="col-md-2 label-name lable-name-select">{{$t('tableKey.s_priority')}}:</label>
+            <label class="col-md-2 label-name">{{$t('tableKey.s_priority')}}:</label>
             <Select v-model="modelConfig.priority" style="width:100px">
               <Option v-for="item in modelConfig.priorityList" :value="item.value" :key="item.value">{{ item.label }}</Option>
             </Select>
           </div>
         </div>
       </ModalComponent>
-      <ModalDel :ModelDelConfig="ModelDelConfig"></ModalDel>
     </section>
   </div>
 </template>
 
 <script>
-import {thresholdList, lastList, priorityList, endpointTag, randomColor} from '@/assets/config/common-config.js'
+import {thresholdList, lastList, priorityList} from '@/assets/config/common-config.js'
+import TagShow from '@/components/Tag-show.vue'
 let tableEle = [
   {title: 'ID', value: 'id', display: false},
   {title: 'tableKey.name', value: 'metric', display: true},
@@ -176,11 +178,6 @@ export default {
   name: '',
   data() {
     return {
-      ModelDelConfig: {
-        deleteWarning: false,
-        msg: '',
-        callback: null
-      },
       type: '',
       typeValue: 'endpoint',
       typeList: [
@@ -190,9 +187,6 @@ export default {
       paramsType: null, // For get thresholdList
       endpointID: null,
       endpointOptions: [],
-      endpointTag: endpointTag,
-      randomColor: randomColor,
-      cacheColor: {},
 
       totalPageConfig: [],
       pageConfig: {
@@ -309,8 +303,7 @@ export default {
       }, {isNeedloading:false})
     },
     removeReceiver (tableItem, receiver, index) {
-      this.ModelDelConfig =  {
-        deleteWarning: true,
+      this.$delConfirm({
         msg: receiver.option_text,
         callback: () => {
           tableItem.accept.splice(index,1)
@@ -319,22 +312,12 @@ export default {
             accept: tableItem.accept
           }
           this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.thresholdManagement.recevier.api, params, () => {
+            this.$root.$eventBus.$emit('hideConfirmModal')
             this.$Message.success(this.$t('tips.success'))
             this.requestData(this.type, this.typeValue)
           }, {isNeedloading:false})
         }
-      }
-    },
-    choiceColor (type,index) {
-      let color = ''
-      // eslint-disable-next-line no-prototype-builtins
-      if (Object.keys(this.cacheColor).includes(type)) {
-        color = this.cacheColor[type]
-      } else {
-        color = randomColor[index]
-        this.cacheColor[type] = randomColor[index]
-      }
-      return color
+      })
     },
     search () {
       if (this.endpointID === null) {
@@ -388,35 +371,20 @@ export default {
       })
     },
     deleteConfirm (rowData) {
-      this.ModelDelConfig =  {
-        deleteWarning: true,
+      this.$delConfirm({
         msg: rowData.name,
         callback: () => {
           this.delF(rowData)
         }
-      }
+      })
     },
     delF (rowData) {
       let params = {id: rowData.id}
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.thresholdManagement.delete.api, params, () => {
+        this.$root.$eventBus.$emit('hideConfirmModal')
         this.$Message.success(this.$t('tips.success'))
         this.requestData(this.type, this.typeValue)
       })
-    },
-    formValidate () {
-      // if (this.$root.$validate.isEmpty_reset(this.modelConfig.thresholdValue)) {
-      //   this.$Message.warning(this.$t('tableKey.threshold')+this.$t('tips.required'))
-      //   return false 
-      // }
-      // if (this.$root.$validate.isEmpty_reset(this.modelConfig.lastValue)) {
-      //   this.$Message.warning(this.$t('tableKey.s_last')+this.$t('tips.required'))
-      //   return false 
-      // }
-      if (this.$root.$validate.isEmpty_reset(this.modelConfig.addRow.content)) {
-        this.$Message.warning(this.$t('tableKey.content')+this.$t('tips.required'))
-        return false
-      }
-      return true
     },
     paramsPrepare() {
       let modelParams = {
@@ -445,9 +413,6 @@ export default {
       this.$root.JQ('#add_edit_Modal').modal('show')
     },
     addPost () {
-      // if (!this.formValidate()) {
-      //   return
-      // }
       this.$validator.validate().then(result => {
         if (!result) return
         if (this.$root.$validate.isEmpty_reset(this.modelConfig.addRow.content)) {
@@ -455,7 +420,6 @@ export default {
           return
         }
         let params = this.paramsPrepare()
-        console.log(params)
         this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.thresholdManagement.add.api, params, () => {
           this.$Message.success(this.$t('tips.success'))
           this.$root.JQ('#add_edit_Modal').modal('hide')
@@ -513,6 +477,7 @@ export default {
     }
   },
   components: {
+    TagShow
   },
 }
 </script>
@@ -543,11 +508,6 @@ export default {
   .search-input-content {
     display: inline-block;
     vertical-align: middle; 
-  }
-  .tag-width {
-    cursor: auto;
-    width: 55px;
-    text-align: center;
   }
   .receiver-config {
     margin: 8px 20px;

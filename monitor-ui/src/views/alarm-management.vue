@@ -10,7 +10,6 @@
         <Tag color="primary">{{$t('table.noDataTip')}}！</Tag>
       </template>
     </section>
-    <ModalDel :ModelDelConfig="ModelDelConfig"></ModalDel>
 
     <template v-for="(alarmItem, alarmIndex) in resultData">
       <section :key="alarmIndex" class="alarm-item c-dark-exclude-color" :class="'alarm-item-border-'+ alarmItem.s_priority">
@@ -79,12 +78,6 @@ export default {
   name: '',
   data() {
     return {
-      ModelDelConfig: {
-        deleteWarning: false,
-        msg: '',
-        callback: null
-      },
-
       interval: null,
       timeForDataAchieve: null,
       filters: {},
@@ -98,9 +91,9 @@ export default {
     this.interval = setInterval(()=>{
       this.getAlarm()
     }, 10000)
-  },
-  destroyed() {
-    clearInterval(this.interval)
+    this.$once('hook:beforeDestroy', () => {
+      clearInterval(this.interval)
+    })
   },
   methods: {
     getAlarm() {
@@ -124,13 +117,12 @@ export default {
       this.getAlarm()
     },
     removeConfirm (alarmItem) {
-      this.ModelDelConfig =  {
-        deleteWarning: true,
+      this.$delConfirm({
         msg: alarmItem.endpoint,
         callback: () => {
           this.removeAlarm(alarmItem)
         }
-      }
+      })
     },
     removeAlarm(alarmItem) {
       let params = {
@@ -141,6 +133,7 @@ export default {
         params.custom = false
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.alarmManagement.close.api, params, () => {
+        this.$root.$eventBus.$emit('hideConfirmModal')
         this.getAlarm()
       })
     },
