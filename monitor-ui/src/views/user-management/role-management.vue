@@ -5,7 +5,7 @@
     <ModalComponent :modelConfig="authorizationModel">
       <div slot="authorization">  
         <div class="marginbottom params-each">
-          <label class="col-md-2 label-name lable-name-select">{{$t('field.endpoint')}}:</label>
+          <label class="col-md-2 label-name">{{$t('field.endpoint')}}:</label>
           <Select v-model="authorizationModel.addRow.user" multiple filterable style="width:338px">
               <Option v-for="item in authorizationModel.userList" :value="item.id" :key="item.name">
               {{item.display_name}}({{item.name}})</Option>
@@ -13,7 +13,6 @@
         </div>
       </div>
     </ModalComponent>
-    <ModalDel :ModelDelConfig="ModelDelConfig"></ModalDel>
   </div>
 </template>
 
@@ -33,11 +32,6 @@ export default {
   name: '',
   data() {
     return {
-      ModelDelConfig: {
-        deleteWarning: false,
-        msg: '',
-        callback: null
-      },
       pageConfig: {
         CRUD: this.$root.apiCenter.setup.role.get,
         researchConfig: {
@@ -140,17 +134,17 @@ export default {
       })
     },
     deleteConfirm (rowData) {
-      this.ModelDelConfig =  {
-        deleteWarning: true,
+      this.$delConfirm({
         msg: rowData.name,
         callback: () => {
           this.delF(rowData)
         }
-      }
+      })
     },
     delF (rowData) {
       let params = {role_id: rowData.id, operation: 'delete' }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.setup.role.update, params, () => {
+        this.$root.$eventBus.$emit('hideConfirmModal')
         this.$Message.success(this.$t('tips.success'))
         this.initData(this.pageConfig.CRUD, this.pageConfig)
       })

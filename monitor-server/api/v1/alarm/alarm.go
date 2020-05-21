@@ -65,6 +65,9 @@ func AcceptAlertMsg(c *gin.Context)  {
 				if endpointObj.Id <= 0 || endpointObj.StopAlarm == 1 {
 					continue
 				}
+				if endpointObj.ExportType == "telnet" || endpointObj.ExportType == "http" || endpointObj.ExportType == "ping" {
+					continue
+				}
 				tmpAlarm.Endpoint = endpointObj.Guid
 				tmpValue, _ = strconv.ParseFloat(tmpSummaryMsg[2], 64)
 				tmpValue, _ = strconv.ParseFloat(fmt.Sprintf("%.3f", tmpValue), 64)
@@ -112,11 +115,14 @@ func AcceptAlertMsg(c *gin.Context)  {
 					mid.LogInfo(fmt.Sprintf("Can't find the endpoint %v", v))
 					continue
 				}
-				if strings.Contains(tmpAlarm.SMetric, "ping_alive") || strings.Contains(tmpAlarm.SMetric, "telnet_alive") {
+				if strings.Contains(tmpAlarm.SMetric, "ping_alive") || strings.Contains(tmpAlarm.SMetric, "telnet_alive") || strings.Contains(tmpAlarm.SMetric, "http_alive") {
 					if len(m.Config().Cluster.ServerList) > 0 {
 						if m.Config().Cluster.ServerList[0] == tmpEndpointIp {
 							continue
 						}
+					}
+					if tmpValue != 0 && tmpValue != 1 && tmpValue != 2 {
+						continue
 					}
 				}
 				tmpAlarmQuery := m.AlarmTable{Endpoint: tmpAlarm.Endpoint, StrategyId: tmpAlarm.StrategyId, Tags:tmpAlarm.Tags}

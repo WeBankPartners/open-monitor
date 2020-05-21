@@ -51,6 +51,99 @@ type hostRequestObj struct {
 	PasswordSeed  string  `json:"password_seed"`
 }
 
+func ExportAgentNew(c *gin.Context)  {
+	agentType := c.Param("name")
+	action := "register"
+	if strings.Contains(c.Request.URL.String(), "deregister") {
+		action = "deregister"
+	}
+	var resultCode,resultMessage string
+	resultCode = "0"
+	resultData := resultOutput{}
+	defer func() {
+		b,_ := json.Marshal(resultData)
+		mid.LogInfo(fmt.Sprintf("plugin result -> code: %s ,message: %s ,data: %s", resultCode, resultMessage, string(b)))
+		if strings.Contains(resultMessage, "validate") {
+			c.JSON(http.StatusBadRequest, resultObj{ResultCode:resultCode, ResultMessage:resultMessage})
+		}else{
+			c.JSON(http.StatusOK, resultObj{ResultCode:resultCode, ResultMessage:resultMessage, Results:resultData})
+		}
+	}()
+	data,_ := ioutil.ReadAll(c.Request.Body)
+	mid.LogInfo(fmt.Sprintf("plugin request -> agent %s, type %s, param : %v", action, agentType, string(data)))
+	var param requestObj
+	err := json.Unmarshal(data, &param)
+	if err != nil {
+		resultCode = "1"
+		resultMessage = fmt.Sprintf("Param validate fail : %v", err)
+		return
+	}
+	if len(param.Inputs) == 0 {
+		resultCode = "0"
+		resultMessage = "inputs length is zero,do nothing"
+		return
+	}
+	for i,v := range param.Inputs {
+		tmpAgentType := agentType
+		if v.JavaType == "tomcat" || v.Group == "default_tomcat_group" {
+			tmpAgentType = "tomcat"
+		}
+		if v.Password != "" {
+			tmpPassword, tmpErr := mid.AesDePassword(v.PasswordGuid, v.PasswordSeed, v.Password)
+			if tmpErr == nil {
+				v.Password = tmpPassword
+			}
+		}
+		var param m.RegisterParamNew
+		var validateMessage string
+		var inputErr error
+		if tmpAgentType == "host" {
+			param = m.RegisterParamNew{Type: tmpAgentType, Ip: v.HostIp, Port: "9100", AddDefaultGroup:true, AgentManager:false, FetchMetric:true, DefaultGroupName:v.Group}
+		} else {
+			param = m.RegisterParamNew{Type: tmpAgentType, Ip: v.InstanceIp, Port: v.Port, Name: v.Instance, User: v.User, Password: v.Password, AgentManager:true, AddDefaultGroup:true, FetchMetric:true, DefaultGroupName:v.Group}
+		}
+		if action == "register" {
+			validateMessage,inputErr = AgentRegister(param)
+			if validateMessage != "" {
+				validateMessage = fmt.Sprintf("input index:%d validate fail -> ", i) + validateMessage
+			}
+		} else {
+			var endpointObj m.EndpointTable
+			if tmpAgentType == "host" {
+				endpointObj = m.EndpointTable{Ip: v.HostIp, ExportType: tmpAgentType}
+			} else {
+				endpointObj = m.EndpointTable{Ip: v.InstanceIp, ExportType: tmpAgentType, Name: v.Instance}
+			}
+			db.GetEndpoint(&endpointObj)
+			if endpointObj.AddressAgent != "" {
+				agentManagerUrl := ""
+				for _, v := range m.Config().Dependence {
+					if v.Name == "agent_manager" {
+						agentManagerUrl = v.Server
+						break
+					}
+				}
+				if agentManagerUrl != "" {
+					inputErr = prom.StopAgent(endpointObj.ExportType, endpointObj.Name, endpointObj.Ip, agentManagerUrl)
+				}
+			}
+			if endpointObj.Id > 0 && inputErr == nil {
+				inputErr = DeregisterJob(endpointObj.Guid, endpointObj.Step)
+			}
+		}
+		if validateMessage != "" || inputErr != nil {
+			errorMessage := validateMessage
+			if inputErr != nil {
+				errorMessage = fmt.Sprintf("input index:%d %s [agentType:%s, name:%s, hostIp:%s, instanceIp:%s] error -> %v ", i, action, agentType, v.Instance, v.HostIp, v.InstanceIp, inputErr)
+			}
+			resultData.Outputs = append(resultData.Outputs, resultOutputObj{CallbackParameter:v.CallbackParameter, ErrorCode:"1", ErrorMessage:errorMessage})
+			resultCode = "1"
+		}else{
+			resultData.Outputs = append(resultData.Outputs, resultOutputObj{CallbackParameter:v.CallbackParameter, ErrorCode:"0", ErrorMessage:""})
+		}
+	}
+}
+
 func ExportAgent(c *gin.Context)  {
 	agentType := c.Param("name")
 	action := "register"
@@ -71,15 +164,6 @@ func ExportAgent(c *gin.Context)  {
 			break
 		}
 	}
-	//if agentType == "other" {
-	//	illegal = false
-	//}
-	//if illegal {
-	//	result = resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("No such monitor type like %s", agentType)}
-	//	mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
-	//	c.JSON(http.StatusBadRequest, result)
-	//	return
-	//}
 	if action != "register" && action != "deregister" {
 		result = resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("No such action like %s", action)}
 		mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
@@ -141,7 +225,7 @@ func ExportAgent(c *gin.Context)  {
 					}
 				}
 				if endpointObj.Id > 0 {
-					err = DeregisterJob(endpointObj.Guid)
+					err = DeregisterJob(endpointObj.Guid, endpointObj.Step)
 				}
 			}
 			var msg string

@@ -8,19 +8,23 @@
 </template>
 
 <script>
-import Menu from "@/components/menu";
+import Menu from "@/components/menu"
+import { watermark } from '@/assets/js/waterMark'
 export default {
   name: "index",
   data() {
     return {
-      DelConfig: {
-        isDisplay:false,
-        displayConfig: {
-          name: ''
-        },
-        callback: null
-      }
     }
+  },
+  mounted() {
+    watermark({
+      watermark_txt: 'Open-Monitor ' + localStorage.getItem('username'),
+      watermark_fontsize: '14px',
+      watermark_x_space: 300,
+      watermark_y_space: 100,
+      watermark_y: 100,
+      watermark_alpha: 0.2
+    })
   },
   methods: {},
   components: {
@@ -36,7 +40,6 @@ export default {
   // background: white;
 }
 .content {
-  background-image: url("../assets/img/watermark-3.png");
   height: calc(100vh - 210px);
   margin: 0 auto;
   padding: 10px;
