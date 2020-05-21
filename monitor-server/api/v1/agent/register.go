@@ -91,7 +91,7 @@ func RegisterJob(param m.RegisterParam) error {
 		if param.Instance == "" {
 			return fmt.Errorf("Mysql instance name can not be empty")
 		}
-		var binPath,address string
+		var binPath,address,configFile string
 		if agentManagerUrl != "" {
 			if param.User == "" || param.Password == "" {
 				for _,v := range m.Config().Agent {
@@ -110,11 +110,12 @@ func RegisterJob(param m.RegisterParam) error {
 				for _,v := range m.Config().Agent {
 					if v.AgentType == mysqlType {
 						binPath = v.AgentBin
+						configFile = v.ConfigFile
 						break
 					}
 				}
 			}
-			address,err = prom.DeployAgent(mysqlType,param.Instance,binPath,param.ExporterIp,param.ExporterPort,param.User,param.Password,agentManagerUrl)
+			address,err = prom.DeployAgent(mysqlType,param.Instance,binPath,param.ExporterIp,param.ExporterPort,param.User,param.Password,agentManagerUrl,configFile)
 			if err != nil {
 				return err
 			}
@@ -164,17 +165,18 @@ func RegisterJob(param m.RegisterParam) error {
 		if param.Instance == "" {
 			return fmt.Errorf("Redis instance name can not be empty")
 		}
-		var binPath,address string
+		var binPath,address,configFile string
 		if agentManagerUrl != "" {
 			if binPath == "" {
 				for _,v := range m.Config().Agent {
 					if v.AgentType == redisType {
 						binPath = v.AgentBin
+						configFile = v.ConfigFile
 						break
 					}
 				}
 			}
-			address,err = prom.DeployAgent(redisType,param.Instance,binPath,param.ExporterIp,param.ExporterPort,param.User,param.Password,agentManagerUrl)
+			address,err = prom.DeployAgent(redisType,param.Instance,binPath,param.ExporterIp,param.ExporterPort,param.User,param.Password,agentManagerUrl,configFile)
 			if err != nil {
 				return err
 			}
@@ -225,7 +227,7 @@ func RegisterJob(param m.RegisterParam) error {
 		if param.Instance == "" {
 			return fmt.Errorf("Tomcat instance name can not be empty")
 		}
-		var binPath,address string
+		var binPath,address,configFile string
 		if agentManagerUrl != "" {
 			if param.User == "" || param.Password == "" {
 				for _,v := range m.Config().Agent {
@@ -244,11 +246,12 @@ func RegisterJob(param m.RegisterParam) error {
 				for _,v := range m.Config().Agent {
 					if v.AgentType == tomcatType {
 						binPath = v.AgentBin
+						configFile = v.ConfigFile
 						break
 					}
 				}
 			}
-			address,err = prom.DeployAgent(tomcatType,param.Instance,binPath,param.ExporterIp,param.ExporterPort,param.User,param.Password,agentManagerUrl)
+			address,err = prom.DeployAgent(tomcatType,param.Instance,binPath,param.ExporterIp,param.ExporterPort,param.User,param.Password,agentManagerUrl,configFile)
 			if err != nil {
 				return err
 			}
@@ -335,7 +338,13 @@ func DeregisterAgent(c *gin.Context)  {
 		mid.ReturnValidateFail(c, "Guid can not be empty")
 		return
 	}
-	err := DeregisterJob(guid)
+	endpointObj := m.EndpointTable{Guid:guid}
+	db.GetEndpoint(&endpointObj)
+	if endpointObj.Id <= 0 {
+		mid.ReturnError(c, fmt.Sprintf("Guid:%s can not find in table ", guid), nil)
+		return
+	}
+	err := DeregisterJob(guid, endpointObj.Step)
 	if err != nil {
 		mid.ReturnError(c, fmt.Sprintf("Delete endpint %s failed", guid),err)
 		return
@@ -343,17 +352,27 @@ func DeregisterAgent(c *gin.Context)  {
 	mid.ReturnSuccess(c, fmt.Sprintf("Deregister %s successfully", guid))
 }
 
-func DeregisterJob(guid string) error {
+func DeregisterJob(guid string,step int) error {
 	err := db.DeleteEndpoint(guid)
 	if err != nil {
 		mid.LogError(fmt.Sprintf("Delete endpint %s failed", guid), err)
 		return err
 	}
-	err = prom.DeregisteConsul(guid, false)
-	if err != nil {
-		mid.LogError(fmt.Sprintf("Deregister consul %s failed ", guid), err)
-		return err
+	if m.Config().SdFile.Enable {
+		prom.DeleteSdEndpoint(guid)
+		err = prom.SyncSdConfigFile(step)
+		if err != nil {
+			mid.LogError("sync service discover file error: ", err)
+			return err
+		}
+	}else {
+		err = prom.DeregisteConsul(guid, false)
+		if err != nil {
+			mid.LogError(fmt.Sprintf("Deregister consul %s failed ", guid), err)
+			return err
+		}
 	}
+	db.UpdateAgentManagerTable(m.EndpointTable{Guid:guid}, "", "", "", "", false)
 	return err
 }
 

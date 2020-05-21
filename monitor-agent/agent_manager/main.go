@@ -26,6 +26,7 @@ func main() {
 	funcs.LoadDeployProcess()
 	go funcs.StartManager()
 	go api.InitHttpServer()
+	go funcs.CleanDeployDir()
 	startSignal(os.Getpid())
 }
 

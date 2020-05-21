@@ -4,36 +4,58 @@
         <div class="condition-zone">
           <ul>
             <li>
-              <div class="condition condition-title c-black-gray">{{$t('field.relativeTime')}}</div>
+              <div class="condition condition-title c-black-gray">{{$t('button.MoM')}}</div>
               <div class="condition">
-                <RadioGroup v-model="chartCondition.timeTnterval" size="small" type="button">
-                  <Radio label="-1800">30m</Radio>
-                  <Radio label="-3600">1h</Radio>
-                  <Radio label="-10800">3h</Radio>
-                </RadioGroup>
+                <Checkbox v-model="is_mom_yoy" @on-change="YoY">{{$t('button.MoM')}}</Checkbox>
               </div>
             </li>
-            <li>
-              <div class="condition condition-title c-black-gray">{{$t('field.timeInterval')}}</div>
-              <div class="condition">
-                <DatePicker type="daterange" placement="bottom-end" @on-change="datePick" :placeholder="$t('placeholder.datePicker')" style="width: 200px"></DatePicker>
-              </div>
-            </li>
-            <li>
-              <div class="condition condition-title c-black-gray">{{$t('field.aggType')}}</div>
-              <div class="condition">
-                <RadioGroup v-model="chartCondition.agg" size="small" type="button">
-                  <Radio label="min">Min</Radio>
-                  <Radio label="max">Max</Radio>
-                  <Radio label="avg">Average </Radio>
-                  <Radio label="p95">P95</Radio>
-                  <Radio label="none">Original</Radio>
-                </RadioGroup>
-              </div>
-            </li>
+            <template v-if="is_mom_yoy">
+              <li>
+                <div class="condition condition-title c-black-gray">{{$t('field.timeInterval')}}</div>
+                <div class="condition">
+                  <DatePicker type="daterange" :value="chartCondition.compareFirstDate" placement="bottom-start" @on-change="pickFirstDate" :placeholder="$t('placeholder.datePicker')" style="width: 200px"></DatePicker>
+                </div>
+              </li>
+              <li>
+                <div class="condition condition-title c-black-gray">{{$t('field.comparedTimeInterval')}}</div>
+                <div class="condition">
+                  <DatePicker type="daterange" :value="chartCondition.compareSecondDate" placement="bottom-start" @on-change="pickSecondDate" :placeholder="$t('placeholder.comparedDatePicker')" style="width: 200px"></DatePicker>
+                </div>
+              </li>
+            </template>
+            <template v-else>
+              <li>
+                <div class="condition condition-title c-black-gray">{{$t('field.relativeTime')}}</div>
+                <div class="condition">
+                  <RadioGroup v-model="chartCondition.timeTnterval" size="small" type="button">
+                    <Radio label="-1800">30m</Radio>
+                    <Radio label="-3600">1h</Radio>
+                    <Radio label="-10800">3h</Radio>
+                  </RadioGroup>
+                </div>
+              </li>
+              <li>
+                <div class="condition condition-title c-black-gray">{{$t('field.timeInterval')}}</div>
+                <div class="condition">
+                  <DatePicker type="daterange" :value="chartCondition.dateRange" placement="bottom-start" @on-change="datePick" :placeholder="$t('placeholder.datePicker')" style="width: 200px"></DatePicker>
+                </div>
+              </li>
+              <li>
+                <div class="condition condition-title c-black-gray">{{$t('field.aggType')}}</div>
+                <div class="condition">
+                  <RadioGroup v-model="chartCondition.agg" size="small" type="button">
+                    <Radio label="min">Min</Radio>
+                    <Radio label="max">Max</Radio>
+                    <Radio label="avg">Average </Radio>
+                    <Radio label="p95">P95</Radio>
+                    <Radio label="none">Original</Radio>
+                  </RadioGroup>
+                </div>
+              </li>
+            </template>
           </ul>
         </div>
-        <div class="chart-zone" >
+        <div class="chart-zone" v-if="isShowChart">
           <div :id="elId" class="echart" :style="chartStyle"></div>
         </div>
       </div>
@@ -49,11 +71,15 @@ export default {
   name: '',
   data() {
     return {
+      isShowChart: true,
       chartItem: {},
       elId: null,
+      is_mom_yoy: false,
       chartCondition: {
         timeTnterval: "-1800",
         dateRange: ['',''],
+        compareFirstDate: ['', ''],
+        compareSecondDate: ['', ''],
         agg: 'none' // 聚合类型
       },
       chartStyle: {
@@ -64,7 +90,12 @@ export default {
   },
   watch: {
     chartCondition: {
-      handler: function () {
+      handler: function (val) {
+        this.isShowChart = true
+        if (this.is_mom_yoy && (val.compareFirstDate[0] === '' || val.compareSecondDate[0] === '')) {
+          this.isShowChart = false
+          return
+        }
         this.getChartConfig()
       },
       deep: true
@@ -89,6 +120,12 @@ export default {
       }
       this.getChartConfig()
     },
+    pickFirstDate(data) {
+      this.chartCondition.compareFirstDate = data
+    },
+    pickSecondDate(data) {
+      this.chartCondition.compareSecondDate = data
+    },
     getChartConfig (chartItem=this.chartItem) {
       this.chartItem = chartItem
       let params = {
@@ -97,6 +134,10 @@ export default {
         metric: chartItem.metric[0],
         time: this.chartCondition.timeTnterval,
         agg: this.chartCondition.agg,
+        compare_first_start: this.chartCondition.compareFirstDate[0],
+        compare_first_end: this.chartCondition.compareFirstDate[1],
+        compare_second_start: this.chartCondition.compareSecondDate[0],
+        compare_second_end: this.chartCondition.compareSecondDate[1]
       }
       if (this.chartCondition.dateRange.length !==0) {
         params.start = this.chartCondition.dateRange[0] ===''? 
@@ -109,7 +150,16 @@ export default {
         const chartConfig = {eye: false,clear:true}
         readyToDraw(this,responseData, 1, chartConfig)
       })
-    }
+    },
+    YoY(status) {
+      this.chartCondition.dateRange = ['', '']
+      this.chartCondition.compareFirstDate = ['', '']
+      this.chartCondition.compareSecondDate = ['', '']
+      this.isShowChart = false
+      if (!status) {
+        this.isShowChart = true
+      }
+    },
   },
   components: {},
 }

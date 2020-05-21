@@ -19,14 +19,14 @@
       </li>
       <li class="search-li"  style="margin-left:20px">
         <span class="params-title">{{$t('field.timeInterval')}}：</span>
-        <DatePicker type="datetimerange" :value="dateRange" format="yyyy-MM-dd HH:mm:ss" placement="bottom-end" @on-change="datePick" :placeholder="$t('placeholder.datePicker')" style="width: 320px"></DatePicker>
+        <DatePicker type="datetimerange" :value="dateRange" format="yyyy-MM-dd HH:mm:ss" placement="bottom-start" @on-change="datePick" :placeholder="$t('placeholder.datePicker')" style="width: 320px"></DatePicker>
       </li> 
    </ul>
   </div>
 </template>
 
 <script>
-import {cookies} from '@/assets/js/cookieUtils'
+import { setToken} from '@/assets/js/cookies.ts'
 import {dataPick, autoRefreshConfig} from '@/assets/config/common-config'
 export default {
   name: '',
@@ -65,7 +65,7 @@ export default {
   mounted() {
     if (this.$root.$validate.isEmpty_reset(this.$route.params) && !this.$root.$validate.isEmpty_reset(this.$route.query)) {
       this.endpoint = this.$route.query.endpoint
-      cookies.setAuthorization(`${this.$route.query.token}`)
+      setToken(`${this.$route.query.token}`)
       this.setLocale(this.$route.query.lang)
       this.dateRange = [this.$route.query.startTime,this.$route.query.endTime]
       this.disableTime = true

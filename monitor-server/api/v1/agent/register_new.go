@@ -8,9 +8,11 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
+	"time"
 )
 
 const prometheusStep = 10
+const longStep = 60
 
 var agentManagerServer string
 
@@ -22,6 +24,7 @@ type returnData struct {
 	storeMetric bool
 	fetchMetric bool
 	addDefaultGroup bool
+	agentManager bool
 	err  error
 }
 
@@ -51,11 +54,22 @@ func InitAgentManager()  {
 			break
 		}
 	}
+	if agentManagerServer != "" {
+		param,err := db.GetAgentManager()
+		if err != nil {
+			mid.LogError("Get agent manager table fail ", err)
+			return
+		}
+		go prom.InitAgentManager(param, agentManagerServer)
+	}
 }
 
 func AgentRegister(param m.RegisterParamNew) (validateMessage string,err error) {
 	if agentManagerServer == "" && param.AgentManager {
 		return validateMessage,fmt.Errorf("agent manager server not found,can not enable agent manager ")
+	}
+	if param.Type == "tomcat" {
+		param.Type = "java"
 	}
 	var rData returnData
 	switch param.Type {
@@ -88,9 +102,17 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage string,err error) 
 			tmpIp = rData.endpoint.AddressAgent[:strings.Index(rData.endpoint.AddressAgent, ":")]
 			tmpPort = rData.endpoint.AddressAgent[strings.Index(rData.endpoint.AddressAgent, ":")+1:]
 		}
-		err = prom.RegisteConsul(rData.endpoint.Guid, tmpIp, tmpPort, []string{param.Type}, prometheusStep, false)
-		if err != nil {
-			return validateMessage,err
+		if m.Config().SdFile.Enable {
+			prom.AddSdEndpoint(m.ServiceDiscoverFileObj{Guid: rData.endpoint.Guid, Address: fmt.Sprintf("%s:%s", tmpIp, tmpPort), Step: rData.endpoint.Step})
+			err = prom.SyncSdConfigFile(rData.endpoint.Step)
+			if err != nil {
+				mid.LogError("sync service discover file error: ", err)
+			}
+		}else{
+			err = prom.RegisteConsul(rData.endpoint.Guid, tmpIp, tmpPort, []string{param.Type}, rData.endpoint.Step, false)
+			if err != nil {
+				return validateMessage,err
+			}
 		}
 	}
 	if rData.addDefaultGroup {
@@ -108,16 +130,31 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage string,err error) 
 			}
 		}
 	}
+	if rData.agentManager {
+		var binPath,configFile string
+		for _,v := range m.Config().Agent {
+			if v.AgentType == param.Type {
+				binPath = v.AgentBin
+				configFile = v.ConfigFile
+			}
+		}
+		err = db.UpdateAgentManagerTable(rData.endpoint, param.User, param.Password, configFile, binPath, true)
+		if err != nil {
+			mid.LogError("Update agent manager table fail ", err)
+		}
+	}
 	return validateMessage,err
 }
 
 func hostRegister(param m.RegisterParamNew) returnData {
 	var result returnData
+	result.endpoint.Step = prometheusStep
 	if param.Ip == "" || param.Port == "" {
 		result.validateMessage = "Host ip and port can not empty"
 		return result
 	}
 	var hostname,sysname,release,exportVersion string
+	startTime := time.Now().Unix()
 	err,strList := prom.GetEndpointData(param.Ip, param.Port, []string{"node"}, []string{})
 	if err != nil {
 		result.err = err
@@ -126,6 +163,15 @@ func hostRegister(param m.RegisterParamNew) returnData {
 	if len(strList) == 0 {
 		result.err = fmt.Errorf("Can't get anything from http://%s:%d/metrics ", param.Ip, &param.Port)
 		return result
+	}
+	subTime := time.Now().Unix() - startTime
+	if subTime > prometheusStep {
+		if subTime < longStep {
+			result.endpoint.Step = longStep
+		}else{
+			result.err = fmt.Errorf("get exporter data use too many time:%d seconds", subTime)
+			return result
+		}
 	}
 	for _,v := range strList {
 		if strings.Contains(v, "node_uname_info{") {
@@ -150,24 +196,25 @@ func hostRegister(param m.RegisterParamNew) returnData {
 	result.endpoint.ExportType = param.Type
 	result.endpoint.Address = fmt.Sprintf("%s:%s", param.Ip, param.Port)
 	result.endpoint.OsType = sysname
-	result.endpoint.Step = prometheusStep
 	result.endpoint.EndpointVersion = release
 	result.endpoint.ExportVersion = exportVersion
 	result.defaultGroup = "default_host_group"
 	result.addDefaultGroup = true
 	result.storeMetric = true
 	result.fetchMetric = true
+	result.agentManager = false
 	return result
 }
 
 func mysqlRegister(param m.RegisterParamNew) returnData {
 	var result returnData
+	result.endpoint.Step = prometheusStep
 	var err error
 	if param.Name == "" || param.Ip == "" || param.Port == "" {
 		result.validateMessage = "Mysql instance name and ip and post can not empty "
 		return result
 	}
-	var binPath,address string
+	var binPath,address,configFile string
 	if param.AgentManager {
 		if param.User == "" || param.Password == "" {
 			result.validateMessage = "Mysql user and password can not empty"
@@ -176,6 +223,7 @@ func mysqlRegister(param m.RegisterParamNew) returnData {
 		for _,v := range m.Config().Agent {
 			if v.AgentType == param.Type {
 				binPath = v.AgentBin
+				configFile = v.ConfigFile
 				break
 			}
 		}
@@ -183,7 +231,7 @@ func mysqlRegister(param m.RegisterParamNew) returnData {
 			result.err = fmt.Errorf("Mysql agnet bin can not found in config ")
 			return result
 		}
-		address,err = prom.DeployAgent(param.Type,param.Name,binPath,param.Ip,param.Port,param.User,param.Password,agentManagerServer)
+		address,err = prom.DeployAgent(param.Type,param.Name,binPath,param.Ip,param.Port,param.User,param.Password,agentManagerServer,configFile)
 		if err != nil {
 			result.err = err
 			return result
@@ -196,6 +244,7 @@ func mysqlRegister(param m.RegisterParamNew) returnData {
 			tmpIp = address[:strings.Index(address, ":")]
 			tmpPort = address[strings.Index(address, ":")+1:]
 		}
+		startTime := time.Now().Unix()
 		err, strList := prom.GetEndpointData(tmpIp, tmpPort, []string{"mysql", "mysqld"}, []string{})
 		if err != nil {
 			result.err = err
@@ -204,6 +253,15 @@ func mysqlRegister(param m.RegisterParamNew) returnData {
 		if len(strList) <= 30 {
 			result.err = fmt.Errorf("Connect to instance get metric error, please check param ")
 			return result
+		}
+		subTime := time.Now().Unix() - startTime
+		if subTime > prometheusStep {
+			if subTime < longStep {
+				result.endpoint.Step = longStep
+			}else{
+				result.err = fmt.Errorf("get exporter data use too many time:%d seconds", subTime)
+				return result
+			}
 		}
 		for _,v := range strList {
 			if strings.HasPrefix(v, "mysql_version_info{") {
@@ -221,17 +279,18 @@ func mysqlRegister(param m.RegisterParamNew) returnData {
 	result.endpoint.EndpointVersion = mysqlVersion
 	result.endpoint.ExportType = param.Type
 	result.endpoint.ExportVersion = exportVersion
-	result.endpoint.Step = prometheusStep
 	result.endpoint.Address = fmt.Sprintf("%s:%s", param.Ip, param.Port)
 	result.endpoint.AddressAgent = address
 	result.defaultGroup = "default_mysql_group"
 	result.addDefaultGroup = true
 	result.fetchMetric = true
+	result.agentManager = true
 	return result
 }
 
 func redisRegister(param m.RegisterParamNew) returnData {
 	var result returnData
+	result.endpoint.Step = prometheusStep
 	var err error
 	if param.Name == "" || param.Ip == "" || param.Port == "" {
 		result.validateMessage = "Redis instance name and ip and post can not empty "
@@ -253,7 +312,7 @@ func redisRegister(param m.RegisterParamNew) returnData {
 			result.err = fmt.Errorf("Redis agnet bin can not found in config ")
 			return result
 		}
-		address,err = prom.DeployAgent(param.Type,param.Name,binPath,param.Ip,param.Port,param.User,param.Password,agentManagerServer)
+		address,err = prom.DeployAgent(param.Type,param.Name,binPath,param.Ip,param.Port,param.User,param.Password,agentManagerServer,"")
 		if err != nil {
 			result.err = err
 			return result
@@ -266,6 +325,7 @@ func redisRegister(param m.RegisterParamNew) returnData {
 			tmpIp = address[:strings.Index(address, ":")]
 			tmpPort = address[strings.Index(address, ":")+1:]
 		}
+		startTime := time.Now().Unix()
 		err, strList := prom.GetEndpointData(tmpIp, tmpPort, []string{"redis"}, []string{"redis_version", ",version"})
 		if err != nil {
 			result.err = err
@@ -274,6 +334,15 @@ func redisRegister(param m.RegisterParamNew) returnData {
 		if len(strList) <= 30 {
 			result.err = fmt.Errorf("Connect to instance get metric error, please check param ")
 			return result
+		}
+		subTime := time.Now().Unix() - startTime
+		if subTime > prometheusStep {
+			if subTime < longStep {
+				result.endpoint.Step = longStep
+			}else{
+				result.err = fmt.Errorf("get exporter data use too many time:%d seconds", subTime)
+				return result
+			}
 		}
 		for _,v := range strList {
 			if strings.Contains(v, "redis_version") {
@@ -291,31 +360,29 @@ func redisRegister(param m.RegisterParamNew) returnData {
 	result.endpoint.EndpointVersion = redisVersion
 	result.endpoint.ExportType = param.Type
 	result.endpoint.ExportVersion = exportVersion
-	result.endpoint.Step = prometheusStep
 	result.endpoint.Address = fmt.Sprintf("%s:%s", param.Ip, param.Port)
 	result.endpoint.AddressAgent = address
 	result.defaultGroup = "default_redis_group"
 	result.addDefaultGroup = true
 	result.fetchMetric = true
+	result.agentManager = true
 	return result
 }
 
 func javaRegister(param m.RegisterParamNew) returnData {
 	var result returnData
+	result.endpoint.Step = prometheusStep
 	var err error
 	if param.Name == "" || param.Ip == "" || param.Port == "" {
 		result.validateMessage = "Java instance name and ip and post can not empty "
 		return result
 	}
-	var binPath,address string
+	var binPath,address,configFile string
 	if param.AgentManager {
-		if param.User == "" || param.Password == "" {
-			result.validateMessage = "Java user and password can not empty"
-			return result
-		}
 		for _,v := range m.Config().Agent {
-			if v.AgentType == "tomcat" {
+			if v.AgentType == param.Type {
 				binPath = v.AgentBin
+				configFile = v.ConfigFile
 				break
 			}
 		}
@@ -323,7 +390,7 @@ func javaRegister(param m.RegisterParamNew) returnData {
 			result.err = fmt.Errorf("Java agnet bin can not found in config ")
 			return result
 		}
-		address,err = prom.DeployAgent(param.Type,param.Name,binPath,param.Ip,param.Port,param.User,param.Password,agentManagerServer)
+		address,err = prom.DeployAgent(param.Type,param.Name,binPath,param.Ip,param.Port,param.User,param.Password,agentManagerServer,configFile)
 		if err != nil {
 			result.err = err
 			return result
@@ -336,6 +403,7 @@ func javaRegister(param m.RegisterParamNew) returnData {
 			tmpIp = address[:strings.Index(address, ":")]
 			tmpPort = address[strings.Index(address, ":")+1:]
 		}
+		startTime := time.Now().Unix()
 		err, strList := prom.GetEndpointData(tmpIp, tmpPort, []string{"catalina", "jvm", "java", "tomcat", "process", "com"}, []string{"version"})
 		if err != nil {
 			result.err = err
@@ -344,6 +412,15 @@ func javaRegister(param m.RegisterParamNew) returnData {
 		if len(strList) <= 60 {
 			result.err = fmt.Errorf("Connect to instance get metric error, please check param ")
 			return result
+		}
+		subTime := time.Now().Unix() - startTime
+		if subTime > prometheusStep {
+			if subTime < longStep {
+				result.endpoint.Step = longStep
+			}else{
+				result.err = fmt.Errorf("get exporter data use too many time:%d seconds", subTime)
+				return result
+			}
 		}
 		for _,v := range strList {
 			if strings.Contains(v, "jvm_info") {
@@ -361,12 +438,12 @@ func javaRegister(param m.RegisterParamNew) returnData {
 	result.endpoint.EndpointVersion = jvmVersion
 	result.endpoint.ExportType = param.Type
 	result.endpoint.ExportVersion = exportVersion
-	result.endpoint.Step = prometheusStep
 	result.endpoint.Address = fmt.Sprintf("%s:%s", param.Ip, param.Port)
 	result.endpoint.AddressAgent = address
 	result.defaultGroup = "default_java_group"
 	result.addDefaultGroup = true
 	result.fetchMetric = true
+	result.agentManager = true
 	return result
 }
 
@@ -384,6 +461,7 @@ func pingRegister(param m.RegisterParamNew) returnData {
 	result.endpoint.Step = prometheusStep
 	result.defaultGroup = "default_ping_group"
 	result.addDefaultGroup = true
+	result.agentManager = false
 	return result
 }
 
@@ -401,6 +479,8 @@ func telnetRegister(param m.RegisterParamNew) returnData {
 	result.endpoint.Step = prometheusStep
 	result.defaultGroup = "default_telnet_group"
 	result.addDefaultGroup = true
+	result.fetchMetric = false
+	result.agentManager = false
 	// store to db -> endpoint_telnet
 	var eto []*m.EndpointTelnetObj
 	eto = append(eto, &m.EndpointTelnetObj{Port:param.Port, Note:""})
@@ -425,6 +505,7 @@ func httpRegister(param m.RegisterParamNew) returnData {
 	result.endpoint.Step = prometheusStep
 	result.defaultGroup = "default_http_group"
 	result.addDefaultGroup = true
+	result.agentManager = false
 	var eho []*m.EndpointHttpTable
 	eho = append(eho, &m.EndpointHttpTable{EndpointGuid:result.endpoint.Guid, Url:param.Url, Method:param.Method})
 	err := db.UpdateEndpointHttp(eho)
@@ -436,12 +517,14 @@ func httpRegister(param m.RegisterParamNew) returnData {
 
 func windowsRegister(param m.RegisterParamNew) returnData {
 	var result returnData
+	result.endpoint.Step = prometheusStep
 	if param.Ip == "" || param.Port == "" {
 		result.validateMessage = "Windows exporter ip and port can not empty"
 		return result
 	}
 	var hostname,sysname,release string
 	if param.FetchMetric {
+		startTime := time.Now().Unix()
 		err,strList := prom.GetEndpointData(param.Ip, param.Port, []string{"wmi"}, []string{})
 		if err != nil {
 			result.err = err
@@ -450,6 +533,15 @@ func windowsRegister(param m.RegisterParamNew) returnData {
 		if len(strList) == 0 {
 			result.err = fmt.Errorf("Can't get anything from http://%s:%d/metrics ", param.Ip, &param.Port)
 			return result
+		}
+		subTime := time.Now().Unix() - startTime
+		if subTime > prometheusStep {
+			if subTime < longStep {
+				result.endpoint.Step = longStep
+			}else{
+				result.err = fmt.Errorf("get exporter data use too many time:%d seconds", subTime)
+				return result
+			}
 		}
 		for _,v := range strList {
 			if strings.Contains(v, "wmi_cs_hostname{") {
@@ -473,6 +565,7 @@ func windowsRegister(param m.RegisterParamNew) returnData {
 	result.defaultGroup = "default_windows_group"
 	result.addDefaultGroup = true
 	result.fetchMetric = true
+	result.agentManager = false
 	return result
 }
 
@@ -482,6 +575,7 @@ func nginxRegister(param m.RegisterParamNew)  {
 
 func otherExporterRegister(param m.RegisterParamNew) returnData {
 	var result returnData
+	result.endpoint.Step = prometheusStep
 	if param.Name == "" || param.Ip == "" {
 		result.validateMessage = "Default endpoint name and ip can not empty "
 		return result
@@ -491,6 +585,7 @@ func otherExporterRegister(param m.RegisterParamNew) returnData {
 			result.validateMessage = "Default endpoint port can not empty if you want to get exporter metric "
 			return result
 		}
+		startTime := time.Now().Unix()
 		err,strList := prom.GetEndpointData(param.Ip, param.Port, []string{}, []string{})
 		if err != nil {
 			result.err = err
@@ -500,6 +595,15 @@ func otherExporterRegister(param m.RegisterParamNew) returnData {
 			result.err = fmt.Errorf("Can't get anything from http://%s:%d/metrics ", param.Ip, &param.Port)
 			return result
 		}
+		subTime := time.Now().Unix() - startTime
+		if subTime > prometheusStep {
+			if subTime < longStep {
+				result.endpoint.Step = longStep
+			}else{
+				result.err = fmt.Errorf("get exporter data use too many time:%d seconds", subTime)
+				return result
+			}
+		}
 		result.metricList = strList
 	}
 	result.endpoint.Guid = fmt.Sprintf("%s_%s_%s", param.Name, param.Ip, param.Type)
@@ -507,7 +611,7 @@ func otherExporterRegister(param m.RegisterParamNew) returnData {
 	result.endpoint.Ip = param.Ip
 	result.endpoint.ExportType = param.Type
 	result.endpoint.Address = fmt.Sprintf("%s:%s", param.Ip, param.Port)
-	result.endpoint.Step = prometheusStep
 	result.fetchMetric = true
+	result.agentManager = false
 	return result
 }
