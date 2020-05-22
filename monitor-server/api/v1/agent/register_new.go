@@ -7,6 +7,7 @@ import (
 	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
+	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/alarm"
 	"github.com/gin-gonic/gin"
 	"time"
 )
@@ -127,6 +128,14 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage string,err error) 
 			err, _ = db.UpdateGrpEndpoint(m.GrpEndpointParamNew{Grp: grpObj.Id, Endpoints: []int{rData.endpoint.Id}, Operation: "add"})
 			if err != nil {
 				return validateMessage,err
+			}
+			_, tplObj := db.GetTpl(0, grpObj.Id, 0)
+			if tplObj.Id > 0 {
+				err := alarm.SaveConfigFile(tplObj.Id, false)
+				if err != nil {
+					mid.LogError(fmt.Sprintf("register interface update prometheus config fail , group : %s  error ", rData.defaultGroup), err)
+					return validateMessage,err
+				}
 			}
 		}
 	}
