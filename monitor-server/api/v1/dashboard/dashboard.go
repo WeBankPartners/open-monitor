@@ -141,7 +141,7 @@ func GetPanels(c *gin.Context)  {
 		var chartsDto []*m.ChartModel
 		fetch := false
 		if panel.AutoDisplay > 0 {
-			chartsDto,fetch = getAutoDisplay(endpoint, panel.TagsKey, "", charts)
+			//chartsDto,fetch = getAutoDisplay(endpoint, panel.TagsKey, "", charts)
 		}
 		if !fetch {
 			for _, chart := range charts {
@@ -167,15 +167,30 @@ func GetPanels(c *gin.Context)  {
 	}
 	_,businessMonitor := db.GetBusinessList(0, endpoint)
 	if len(businessMonitor) > 0 {
+		businessMonitorMap := make(map[int][]string)
+		for _,v := range businessMonitor {
+			if _,b := businessMonitorMap[v.EndpointId];b {
+				exist := false
+				for _,vv := range businessMonitorMap[v.EndpointId] {
+					if vv == v.Path {
+						exist = true
+						break
+					}
+				}
+				if !exist {
+					businessMonitorMap[v.EndpointId] = append(businessMonitorMap[v.EndpointId], v.Path)
+				}
+			}else{
+				businessMonitorMap[v.EndpointId] = []string{v.Path}
+			}
+		}
 		businessCharts,businessPanels := db.GetBusinessPanelChart()
 		if len(businessCharts) > 0 {
-			endpointObj := m.EndpointTable{Id:businessMonitor[0].EndpointId}
-			db.GetEndpoint(&endpointObj)
-			chartsDto,_ := getAutoDisplay(endpointObj.Guid, businessPanels[0].TagsKey, businessMonitor[0].Path, businessCharts)
+			chartsDto, _ := getAutoDisplay(businessMonitorMap, businessPanels[0].TagsKey, businessCharts)
 			var panelDto m.PanelModel
 			panelDto.Title = businessPanels[0].Title
 			panelDto.Other = false
-			panelDto.Tags = m.TagsModel{Enable:false, Option:[]*m.OptionModel{}}
+			panelDto.Tags = m.TagsModel{Enable: false, Option: []*m.OptionModel{}}
 			panelDto.Charts = chartsDto
 			panelsDto = append(panelsDto, &panelDto)
 		}
@@ -183,7 +198,7 @@ func GetPanels(c *gin.Context)  {
 	mid.ReturnData(c, panelsDto)
 }
 
-func getAutoDisplay(endpoint,tagKey,path string,charts []*m.ChartTable) (result []*m.ChartModel,fetch bool) {
+func getAutoDisplay(businessMonitorMap map[int][]string,tagKey string,charts []*m.ChartTable) (result []*m.ChartModel,fetch bool) {
 	result = []*m.ChartModel{}
 	if len(charts) == 0 {
 		return result,false
@@ -191,39 +206,52 @@ func getAutoDisplay(endpoint,tagKey,path string,charts []*m.ChartTable) (result 
 	if tagKey == "" {
 		return result,false
 	}
-	_,promQl := db.GetPromMetric([]string{endpoint}, charts[0].Metric)
-	if promQl == "" {
-		return result,false
-	}
-	tmpLegend := charts[0].Legend
-	if path != "" {
-		tmpLegend = "$custom_all"
-	}
-	sm := ds.PrometheusData(&m.QueryMonitorData{Start:time.Now().Unix()-300, End:time.Now().Unix(), PromQ:promQl, Legend:tmpLegend, Metric:[]string{charts[0].Metric}, Endpoint:[]string{endpoint}})
-	for _,v := range sm {
-		if path != "" {
-			if !strings.Contains(v.Name, path) {
-				continue
+	for endpointId,paths := range businessMonitorMap {
+		if len(paths) == 0 {
+			continue
+		}
+		endpointObj := m.EndpointTable{Id:endpointId}
+		db.GetEndpoint(&endpointObj)
+		if endpointObj.Guid == "" {
+			continue
+		}
+		_,promQl := db.GetPromMetric([]string{endpointObj.Guid}, charts[0].Metric)
+		if promQl == "" {
+			continue
+		}
+		tmpLegend := charts[0].Legend
+		if paths[0] != "" {
+			tmpLegend = "$custom_all"
+		}
+		sm := ds.PrometheusData(&m.QueryMonitorData{Start:time.Now().Unix()-300, End:time.Now().Unix(), PromQ:promQl, Legend:tmpLegend, Metric:[]string{charts[0].Metric}, Endpoint:[]string{endpointObj.Guid}})
+		for _,v := range sm {
+			for _, path := range paths {
+				if path != "" {
+					if !strings.Contains(v.Name, path) {
+						continue
+					}
+				}
+				chartDto := m.ChartModel{Id: charts[0].Id, Col: charts[0].Col}
+				chartDto.Url = `/dashboard/chart`
+				chartDto.Endpoint = []string{endpointObj.Guid}
+				tmpName := v.Name
+				if strings.Contains(tmpName, ":") {
+					tmpName = tmpName[strings.Index(tmpName,":")+1:]
+				}
+				if path != "" && strings.Contains(tmpName, tagKey+"=") {
+					tmpName = strings.Split(tmpName, tagKey+"=")[1]
+					if strings.Contains(tmpName, ",") {
+						tmpName = strings.Split(tmpName, ",")[0]
+					}else{
+						tmpName = strings.Split(tmpName, "}")[0]
+					}
+				}
+				chartDto.Metric = []string{fmt.Sprintf("%s/%s=%s", charts[0].Metric, tagKey, tmpName)}
+				result = append(result, &chartDto)
 			}
 		}
-		chartDto := m.ChartModel{Id: charts[0].Id, Col: charts[0].Col}
-		chartDto.Url = `/dashboard/chart`
-		chartDto.Endpoint = []string{endpoint}
-		tmpName := v.Name
-		if strings.Contains(tmpName, ":") {
-			tmpName = tmpName[strings.Index(tmpName,":")+1:]
-		}
-		if path != "" && strings.Contains(tmpName, tagKey+"=") {
-			tmpName = strings.Split(tmpName, tagKey+"=")[1]
-			if strings.Contains(tmpName, ",") {
-				tmpName = strings.Split(tmpName, ",")[0]
-			}else{
-				tmpName = strings.Split(tmpName, "}")[0]
-			}
-		}
-		chartDto.Metric = []string{fmt.Sprintf("%s/%s=%s", charts[0].Metric, tagKey, tmpName)}
-		result = append(result, &chartDto)
 	}
+
 	return result,true
 }
 

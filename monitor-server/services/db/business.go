@@ -15,7 +15,22 @@ func GetBusinessList(endpointId int,ownerEndpoint string) (err error, pathList [
 
 func UpdateBusiness(param m.BusinessUpdateDto) error {
 	var actions []*Action
-	actions = append(actions, &Action{Sql:"DELETE FROM business_monitor WHERE endpoint_id=?", Param:[]interface{}{param.EndpointId}})
+	var tmpOwnerList []string
+	for _,v := range param.PathList {
+		exist := false
+		for _,vv := range tmpOwnerList {
+			if v.OwnerEndpoint == vv {
+				exist = true
+				break
+			}
+		}
+		if !exist {
+			tmpOwnerList = append(tmpOwnerList, v.OwnerEndpoint)
+		}
+	}
+	for _,v := range tmpOwnerList {
+		actions = append(actions, &Action{Sql:"DELETE FROM business_monitor WHERE endpoint_id=? and owner_endpoint=?", Param:[]interface{}{param.EndpointId, v}})
+	}
 	for _,v := range param.PathList {
 		var action Action
 		params := make([]interface{}, 0)
