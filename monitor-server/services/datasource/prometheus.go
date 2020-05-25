@@ -170,12 +170,17 @@ func PrometheusData(query *m.QueryMonitorData) []*m.SerialModel  {
 }
 
 func appendTagString(name string, metricMap map[string]string) string {
-	tmpName := name + "{"
+	var tmpList m.DefaultSortList
 	for k,v := range metricMap {
-		if k == "job" && v == "consul" {
+		tmpList = append(tmpList, &m.DefaultSortObj{Key:k, Value:v})
+	}
+	sort.Sort(tmpList)
+	tmpName := name + "{"
+	for _,v := range tmpList {
+		if v.Key == "job" && v.Value == "consul" {
 			continue
 		}
-		tmpName += fmt.Sprintf("%s=%s,", k, v)
+		tmpName += fmt.Sprintf("%s=%s,", v.Key, v.Value)
 	}
 	tmpName = tmpName[:len(tmpName)-1]
 	tmpName += "}"
