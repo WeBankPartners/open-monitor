@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"io/ioutil"
 	"fmt"
+	"time"
 )
 
 const (
@@ -104,10 +105,17 @@ func (c *businessMonitorObj) start()  {
 }
 
 func (c *businessMonitorObj) get() []businessMetricObj {
-	var data []businessMetricObj
+	data := []businessMetricObj{}
 	c.Lock.RLock()
+	zeroFlag := true
+	if checkIllegalDate(c.LastDate) {
+		zeroFlag = false
+	}
 	for k,v := range c.Data {
 		value,err := strconv.ParseFloat(v, 64)
+		if !zeroFlag {
+			value = 0
+		}
 		if err == nil {
 			data = append(data, businessMetricObj{SystemNum:c.SystemNum, Name:c.Name, Path:c.Path, Key:k, Value:value})
 		}
@@ -162,4 +170,20 @@ func BusinessMonitorHttpHandle(w http.ResponseWriter, r *http.Request)  {
 	}
 	log.Infoln("success")
 	w.Write([]byte("success"))
+}
+
+func checkIllegalDate(input string) bool {
+	tmpList := strings.Split(input, " ")
+	if len(tmpList) < 2 {
+		return true
+	}
+	t,err := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s %s CST", tmpList[0], tmpList[1]))
+	if err != nil {
+		return true
+	}
+	sub := time.Now().Unix()-t.Unix()
+	if sub >= 10 {
+		return true
+	}
+	return false
 }
