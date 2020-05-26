@@ -428,12 +428,12 @@ func GetChart(c *gin.Context)  {
 	var aggType string
 	// validate config time
 	if paramConfig[0].CompareFirstStart != "" && paramConfig[0].CompareFirstEnd != "" {
-		st,err := time.Parse(m.DatetimeFormat, fmt.Sprintf("%s 00:00:00", paramConfig[0].CompareFirstStart))
+		st,err := time.Parse(m.DateFormatWithZone, fmt.Sprintf("%s 00:00:00 CST", paramConfig[0].CompareFirstStart))
 		if err != nil {
 			mid.ReturnValidateFail(c, "Param compare first start validation failed")
 			return
 		}
-		et,err := time.Parse(m.DatetimeFormat, fmt.Sprintf("%s 23:59:59", paramConfig[0].CompareFirstEnd))
+		et,err := time.Parse(m.DateFormatWithZone, fmt.Sprintf("%s 23:59:59 CST", paramConfig[0].CompareFirstEnd))
 		if err != nil {
 			mid.ReturnValidateFail(c, "Param compare first end validation failed")
 			return
@@ -467,6 +467,8 @@ func GetChart(c *gin.Context)  {
 	var querys []m.QueryMonitorData
 	step := 10
 	var firstEndpoint,unit string
+	var compareSubTime int64
+	var compareSecondLegend string
 	if paramConfig[0].Id > 0 {
 		sameEndpoint = true
 		recordMap := make(map[string]bool)
@@ -515,15 +517,18 @@ func GetChart(c *gin.Context)  {
 				}
 				querys = append(querys, m.QueryMonitorData{Start: query.Start, End: query.End, PromQ: tmpPromQl, Legend: tmpLegend, Metric: []string{v}, Endpoint: []string{tmpParamConfig.Endpoint}, CompareLegend:compareLegend, SameEndpoint:sameEndpoint})
 				if paramConfig[0].CompareSecondStart != "" && paramConfig[0].CompareSecondEnd != "" {
-					st,sErr := time.Parse(m.DatetimeFormat, fmt.Sprintf("%s 00:00:00", paramConfig[0].CompareSecondStart))
-					et,eErr := time.Parse(m.DatetimeFormat, fmt.Sprintf("%s 23:59:59", paramConfig[0].CompareSecondEnd))
+					st,sErr := time.Parse(m.DateFormatWithZone, fmt.Sprintf("%s 00:00:00 CST", paramConfig[0].CompareSecondStart))
+					et,eErr := time.Parse(m.DateFormatWithZone, fmt.Sprintf("%s 23:59:59 CST", paramConfig[0].CompareSecondEnd))
+					etTimestamp := et.Unix()
 					if sErr == nil && eErr == nil {
 						if (et.Unix()-st.Unix()) != (query.End-query.Start) {
-							mid.ReturnValidateFail(c, "Param compare fist and second do not fetch ")
-							return
+							//mid.ReturnValidateFail(c, "Param compare fist and second do not fetch ")
+							//return
+							etTimestamp = st.Unix() + (query.End-query.Start)
 						}
-						compareLegend = fmt.Sprintf("%s_%s", paramConfig[0].CompareSecondStart, paramConfig[0].CompareSecondEnd)
-						querys = append(querys, m.QueryMonitorData{Start: st.Unix(), End: et.Unix(), PromQ: tmpPromQl, Legend: tmpLegend, Metric: []string{v}, Endpoint: []string{tmpParamConfig.Endpoint}, CompareLegend:compareLegend, SameEndpoint:sameEndpoint})
+						compareSubTime = st.Unix()-query.Start
+						compareSecondLegend = fmt.Sprintf("%s_%s", paramConfig[0].CompareSecondStart, paramConfig[0].CompareSecondEnd)
+						querys = append(querys, m.QueryMonitorData{Start: st.Unix(), End: etTimestamp, PromQ: tmpPromQl, Legend: tmpLegend, Metric: []string{v}, Endpoint: []string{tmpParamConfig.Endpoint}, CompareLegend:compareSecondLegend, SameEndpoint:sameEndpoint})
 					}
 				}
 			}
@@ -624,6 +629,11 @@ func GetChart(c *gin.Context)  {
 				aggType = "avg"
 			}
 			s.Data = db.Aggregate(s.Data, agg, aggType)
+		}
+		if compareSubTime > 0 {
+			if strings.Contains(s.Name, compareSecondLegend) {
+				s.Data = db.CompareSubData(s.Data, float64(compareSubTime)*1000)
+			}
 		}
 	}
 	eOption.Xaxis = make(map[string]interface{})
