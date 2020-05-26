@@ -728,7 +728,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
-            <interface action="add-app-unit-resource" path="/wecube-monitor/api/v1/dashboard/system/add"  filterRule="{state_code eq 'created'}{fixed_date is NULL}{unit_type in ['@@0002_0000000001@@JAVA','0002_0000000011@@NGINX']}">
+            <interface action="add-app-unit-resource" path="/wecube-monitor/api/v1/dashboard/system/add"  filterRule="{state_code eq 'created'}{fixed_date is NULL}{unit_type in ['@@0002_0000000001@@JAVA','@@0002_0000000011@@NGINX']}">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.guid">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.key_name">display_name</parameter>
@@ -747,7 +747,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
-            <interface action="delete-app-unit-resource" path="/wecube-monitor/api/v1/dashboard/system/delete" filterRule="{state_code eq 'destroyed'}{fixed_date is NULL}{unit_type in ['@@0002_0000000001@@JAVA','0002_0000000011@@NGINX']}">
+            <interface action="delete-app-unit-resource" path="/wecube-monitor/api/v1/dashboard/system/delete" filterRule="{state_code eq 'destroyed'}{fixed_date is NULL}{unit_type in ['@@0002_0000000001@@JAVA','@@0002_0000000011@@NGINX']}">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.guid">guid</parameter>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.NONE">endpoint</parameter>
@@ -826,7 +826,7 @@
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.guid">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.key_name">display_name</parameter>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.subsys>wecmdb:subsys.guid">parent</parameter>
-                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit~(unit)wecmdb:cache_instance.cache.resource_instance>wecmdb:cache.resource_instance.monitor_key_name">endpoint</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit~(unit)wecmdb:cache_instance.cache_resource_instance>wecmdb:cache_resource_instance.monitor_key_name">endpoint</parameter>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.manage_role>wecmdb:manage_role.email">email</parameter>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.manage_role>wecmdb:manage_role.phone">phone</parameter>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.manage_role>wecmdb:manage_role.code">role</parameter>
