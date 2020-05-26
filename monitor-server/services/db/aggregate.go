@@ -135,3 +135,11 @@ func calc(data []float64, method string) float64 {
 	result,_ = strconv.ParseFloat(fmt.Sprintf("%.3f", result), 64)
 	return result
 }
+
+func CompareSubData(data [][]float64, sub float64) [][]float64 {
+	var result [][]float64
+	for _,v := range data {
+		result = append(result, []float64{v[0] - sub, v[1]})
+	}
+	return result
+}
