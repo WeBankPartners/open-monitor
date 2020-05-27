@@ -759,7 +759,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
-            <interface action="add-lb-unit" path="/wecube-monitor/api/v1/dashboard/system/add"  filterRule="{state_code eq 'created'}{fixed_date is NULL}{unit_type in ['@@0002_0000000004@@LB']">
+            <interface action="add-lb-unit" path="/wecube-monitor/api/v1/dashboard/system/add"  filterRule="{state_code eq 'created'}{fixed_date is NULL}{unit_type in ['@@0002_0000000004@@LB']}">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.guid">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.key_name">display_name</parameter>
@@ -778,7 +778,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
-            <interface action="delete-lb-unit" path="/wecube-monitor/api/v1/dashboard/system/delete" filterRule="{state_code eq 'destroyed'}{fixed_date is NULL}{unit_type in ['@@0002_0000000004@@LB']">
+            <interface action="delete-lb-unit" path="/wecube-monitor/api/v1/dashboard/system/delete" filterRule="{state_code eq 'destroyed'}{fixed_date is NULL}{unit_type in ['@@0002_0000000004@@LB']}">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.guid">guid</parameter>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.NONE">endpoint</parameter>
