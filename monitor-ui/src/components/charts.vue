@@ -124,7 +124,7 @@ export default {
     receiveConfig (chartItem) {
       this.$root.$eventBus.$emit('clearSingleChartInterval')
       this.$parent.showMaxChart = true
-      this.$parent.$refs.maxChart.getChartConfig(chartItem)
+      this.$parent.$refs.maxChart.getChartData(chartItem)
       return
     },
     editTitle (config) {
