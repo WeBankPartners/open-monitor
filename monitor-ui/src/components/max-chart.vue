@@ -151,7 +151,7 @@ export default {
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/dashboard/newchart', [params], responseData => {
       
-        const chartConfig = {eye: false,clear:true}
+        const chartConfig = {eye: false,clear:true, zoomCallback: true}
         readyToDraw(this,responseData, 1, chartConfig)
       })
     },
