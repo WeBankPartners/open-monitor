@@ -278,7 +278,14 @@ export const drawChart = function(that,config,userConfig) {
   }
   
   // 绘制图表
-  myChart.setOption(option) 
+  myChart.setOption(option)
+  // 清空所有事件重新绑定
+  myChart.off()
+  myChart.on('datazoom', function () {
+    let startValue = parseInt(myChart.getModel().option.dataZoom[0].startValue/1000)+''
+    let endValue = parseInt(myChart.getModel().option.dataZoom[0].endValue/1000)+''
+    that.getChartData(null,startValue, endValue)
+  })
 }
 
 export const drawPieChart = function(that, responseData) {
