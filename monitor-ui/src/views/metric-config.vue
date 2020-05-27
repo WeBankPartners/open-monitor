@@ -27,7 +27,7 @@
         <Option v-for="item in dataPick" :value="item.value" :key="item.value">{{ item.label }}</Option>
       </Select>
       
-      <button class="btn btn-sm btn-confirm-f" :disabled="btnDisable" @click="requestChart">{{$t('button.search')}}</button>
+      <button class="btn btn-sm btn-confirm-f" :disabled="btnDisable" @click="getChartData">{{$t('button.search')}}</button>
       <button class="btn btn-sm btn-cancle-f" :disabled="btnDisable" @click="addMetric">{{$t('button.addMetric')}}</button>
       <button class="btn btn-sm btn-cancle-f" :disabled="btnDisable" @click="saveConfig">{{$t('button.saveEdit')}}</button>
     </div>
@@ -260,7 +260,7 @@ export default {
         this.metricList = responseData
       })
     },
-    requestChart () {
+    getChartData (tmp, start, end) {
       this.noDataTip = false
       if (this.$root.$validate.isEmpty_reset(this.totalMetric)) {
         this.$Message.warning(this.$t('tableKey.s_metric')+this.$t('tips.required'))
@@ -279,7 +279,9 @@ export default {
           endpoint: this.endpointObject.option_value,
           prom_ql: item.value,
           metric: item.label,
-          time: this.timeTnterval + ''
+          time: this.timeTnterval + '',
+          start: start,
+          end: end
         })
       })
       if (!requestFlag) {
@@ -288,8 +290,7 @@ export default {
       this.isRequestChartData = true
       
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.metricConfigView.api, params, responseData => {
-    
-        const chartConfig = {eye: false,clear:true}
+        const chartConfig = {eye: false,clear:true, zoomCallback: true}
         readyToDraw(this,responseData, 1, chartConfig)
       })
 
