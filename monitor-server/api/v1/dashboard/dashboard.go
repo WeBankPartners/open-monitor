@@ -426,6 +426,7 @@ func GetChart(c *gin.Context)  {
 	var compareLegend string
 	var sameEndpoint bool
 	var aggType string
+	var subStartSecond,subEndSecond int64
 	// validate config time
 	if paramConfig[0].CompareFirstStart != "" && paramConfig[0].CompareFirstEnd != "" {
 		st,err := time.Parse(m.DateFormatWithZone, fmt.Sprintf("%s 00:00:00 CST", paramConfig[0].CompareFirstStart))
@@ -438,8 +439,15 @@ func GetChart(c *gin.Context)  {
 			mid.ReturnValidateFail(c, "Param compare first end validation failed")
 			return
 		}
-		query.Start = st.Unix()
-		query.End = et.Unix()
+		if paramConfig[0].Start != "" && paramConfig[0].End != "" {
+			query.Start,_ = strconv.ParseInt(paramConfig[0].Start, 10, 64)
+			query.End,_ = strconv.ParseInt(paramConfig[0].End, 10, 64)
+			subStartSecond = query.Start - st.Unix()
+			subEndSecond = query.End - st.Unix()
+		}else {
+			query.Start = st.Unix()
+			query.End = et.Unix()
+		}
 		compareLegend = fmt.Sprintf("%s_%s", paramConfig[0].CompareFirstStart, paramConfig[0].CompareFirstEnd)
 	}else {
 		if paramConfig[0].Time != "" && paramConfig[0].Start == "" {
@@ -519,16 +527,20 @@ func GetChart(c *gin.Context)  {
 				if paramConfig[0].CompareSecondStart != "" && paramConfig[0].CompareSecondEnd != "" {
 					st,sErr := time.Parse(m.DateFormatWithZone, fmt.Sprintf("%s 00:00:00 CST", paramConfig[0].CompareSecondStart))
 					et,eErr := time.Parse(m.DateFormatWithZone, fmt.Sprintf("%s 23:59:59 CST", paramConfig[0].CompareSecondEnd))
+					stTimestamp := st.Unix()
 					etTimestamp := et.Unix()
 					if sErr == nil && eErr == nil {
-						if (et.Unix()-st.Unix()) != (query.End-query.Start) {
-							//mid.ReturnValidateFail(c, "Param compare fist and second do not fetch ")
-							//return
-							etTimestamp = st.Unix() + (query.End-query.Start)
+						if subStartSecond > 0 && subEndSecond > 0 {
+							stTimestamp = st.Unix() + subStartSecond
+							etTimestamp = st.Unix() + subEndSecond
+						}else{
+							if (et.Unix() - st.Unix()) != (query.End - query.Start) {
+								etTimestamp = stTimestamp + (query.End - query.Start)
+							}
 						}
-						compareSubTime = st.Unix()-query.Start
+						compareSubTime = stTimestamp-query.Start
 						compareSecondLegend = fmt.Sprintf("%s_%s", paramConfig[0].CompareSecondStart, paramConfig[0].CompareSecondEnd)
-						querys = append(querys, m.QueryMonitorData{Start: st.Unix(), End: etTimestamp, PromQ: tmpPromQl, Legend: tmpLegend, Metric: []string{v}, Endpoint: []string{tmpParamConfig.Endpoint}, CompareLegend:compareSecondLegend, SameEndpoint:sameEndpoint})
+						querys = append(querys, m.QueryMonitorData{Start: stTimestamp, End: etTimestamp, PromQ: tmpPromQl, Legend: tmpLegend, Metric: []string{v}, Endpoint: []string{tmpParamConfig.Endpoint}, CompareLegend:compareSecondLegend, SameEndpoint:sameEndpoint})
 					}
 				}
 			}
