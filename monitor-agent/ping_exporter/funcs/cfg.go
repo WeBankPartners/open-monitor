@@ -67,6 +67,7 @@ type SourceListenConfig  struct {
 
 type MetricConfig  struct {
 	Ping  string  `json:"ping"`
+	PingUseTime  string  `json:"ping_use_time"`
 	PingCountNum  string  `json:"ping_count_num"`
 	PingCountSuccess  string  `json:"ping_count_success"`
 	PingCountFail  string  `json:"ping_count_fail"`
