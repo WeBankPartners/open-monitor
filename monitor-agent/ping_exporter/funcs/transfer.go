@@ -18,7 +18,7 @@ func InitTransfer()  {
 	localUuid = Uuid()
 }
 
-func HandleTransferResult(result map[string]int,successCount int)  {
+func HandleTransferResult(result map[string]PingResultObj,successCount int)  {
 	sendData := []*MetricValue{}
 	metric := Config().Metrics.Ping
 	interval := Config().Interval
@@ -26,10 +26,10 @@ func HandleTransferResult(result map[string]int,successCount int)  {
 	for k,v := range result{
 		endpoint := Hosts[k]
 		if endpoint!="" {
-			metricData := MetricValue{Endpoint: endpoint, Metric: metric, Value: v, Step: int64(interval), Type: "GAUGE", Tags: "", Timestamp: now}
+			metricData := MetricValue{Endpoint: endpoint, Metric: metric, Value: v.UpDown, Step: int64(interval), Type: "GAUGE", Tags: "", Timestamp: now}
 			sendData = append(sendData, &metricData)
 		}else{
-			metricData := MetricValue{Endpoint: localUuid, Metric: metric, Value: v, Step: int64(interval), Type: "GAUGE", Tags: fmt.Sprintf("ip=%s",k), Timestamp: now}
+			metricData := MetricValue{Endpoint: localUuid, Metric: metric, Value: v.UpDown, Step: int64(interval), Type: "GAUGE", Tags: fmt.Sprintf("ip=%s",k), Timestamp: now}
 			sendData = append(sendData, &metricData)
 		}
 	}

@@ -14,6 +14,7 @@ type exportMetricObj struct {
 	Method string
 	Value  int
 	Note  string
+	UseTime  float64
 }
 
 var (
@@ -25,11 +26,11 @@ var (
 	exportHttpCheckLock = new(sync.RWMutex)
 )
 
-func UpdatePingExportMetric(result map[string]int,successCount int)  {
+func UpdatePingExportMetric(result map[string]PingResultObj,successCount int)  {
 	exportPingLock.Lock()
 	exportPingMetrics = make(map[string]*exportMetricObj)
 	for k,v := range result {
-		exportPingMetrics[k] = &exportMetricObj{Value:v, Note:fmt.Sprintf("# HELP ping target ip %s \n", k)}
+		exportPingMetrics[k] = &exportMetricObj{Value:v.UpDown, UseTime:v.UseTime, Note:fmt.Sprintf("# HELP ping target ip %s \n", k)}
 	}
 	exportPingMetrics[Config().Metrics.PingCountNum] = &exportMetricObj{Value:len(result), Note:"# HELP ping task ip num \n"}
 	exportPingMetrics[Config().Metrics.PingCountSuccess] = &exportMetricObj{Value:successCount, Note:"# HELP ping success ip num \n"}
@@ -87,10 +88,11 @@ func getPingExportMetric(guidMap map[string][]string) []byte {
 	var buff bytes.Buffer
 	buff.WriteString("# HELP ping check 0 -> alive, 1 -> dead, 2 -> problem. \n")
 	metricString := Config().Metrics.Ping
+	metricTimeString := Config().Metrics.PingUseTime
 	var tmpExportMetric exportMetricList
 	exportPingLock.RLock()
 	for k,v := range exportPingMetrics {
-		tmpExportMetric = append(tmpExportMetric, &exportMetricObj{Ip:k, Value:v.Value, Note:v.Note})
+		tmpExportMetric = append(tmpExportMetric, &exportMetricObj{Ip:k, Value:v.Value, Note:v.Note, UseTime:v.UseTime})
 	}
 	exportPingLock.RUnlock()
 	sort.Sort(tmpExportMetric)
@@ -103,9 +105,11 @@ func getPingExportMetric(guidMap map[string][]string) []byte {
 		if len(guidMap[v.Ip]) > 0 {
 			for _,vv := range guidMap[v.Ip] {
 				buff.WriteString(fmt.Sprintf("%s{target=\"%s\",guid=\"%s\"} %d \n", metricString, v.Ip, vv, v.Value))
+				buff.WriteString(fmt.Sprintf("%s{target=\"%s\",guid=\"%s\"} %.3f \n", metricTimeString, v.Ip, vv, v.UseTime))
 			}
 		}else {
 			buff.WriteString(fmt.Sprintf("%s{target=\"%s\"} %d \n", metricString, v.Ip, v.Value))
+			buff.WriteString(fmt.Sprintf("%s{target=\"%s\"} %.3f \n", metricTimeString, v.Ip, v.UseTime))
 		}
 	}
 	return buff.Bytes()
