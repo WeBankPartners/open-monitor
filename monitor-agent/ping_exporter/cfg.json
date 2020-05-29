@@ -8,7 +8,7 @@
     "enabled": false,
     "transfer": {
       "address": [
-        "192.168.0.1:8080"
+        "127.0.0.1:8080"
       ],
       "timeout": 1000,
       "sn": 500
@@ -34,7 +34,7 @@
       "enabled" : true,
       "header": ["X-Auth-Token=default-token-used-in-server-side"],
       "group_tag" : "group=g1",
-      "url": "http://192.168.67.133:8088/wecube-monitor/api/v1/agent/export/ping/source",
+      "url": "http://127.0.0.1:8088/wecube-monitor/api/v1/agent/export/ping/source",
       "interval": 60,
       "weight": 3
     },
@@ -47,6 +47,7 @@
   },
   "metrics": {
     "ping": "ping_alive",
+    "ping_use_time": "ping_time",
     "ping_count_num": "ping_count",
     "ping_count_success": "ping_success",
     "ping_count_fail": "ping_fail",
