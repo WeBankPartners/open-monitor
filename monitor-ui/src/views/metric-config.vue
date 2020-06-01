@@ -10,14 +10,14 @@
         clearable
         remote
         :label-in-value="true" 
-        :placeholder="$t('placeholder.input')"
+        :placeholder="$t('placeholder.requestMoreData')"
         :remote-method="getEndpointList"
         >
-                <!-- @on-change="getOriginalMetricList" -->
         <Option v-for="(option, index) in endpointList" :value="option.option_value" :key="index">
           <TagShow :tagName="option.option_type_name" :index="index"></TagShow> 
           {{option.option_text}}
         </Option>
+        <Option value="moreTips" disabled>{{$t('tips.requestMoreData')}}</Option>
       </Select>
       <Select v-model="metricSelected" filterable multiple style="width:260px" :label-in-value="true" 
           @on-change="selectMetric" @on-open-change="metricSelectOpen" :placeholder="$t('placeholder.metric')">
