@@ -9,7 +9,7 @@
           remote
           ref="select"
           clearable
-          :placeholder="$t('placeholder.input')"
+          :placeholder="$t('placeholder.requestMoreData')"
           @on-open-change="getEndpointList('.')"
           :remote-method="getEndpointList"
           >
@@ -17,6 +17,7 @@
             <TagShow :tagName="option.option_type_name" :index="index"></TagShow> 
             {{option.option_text}}
           </Option>
+          <Option value="moreTips" disabled>{{$t('tips.requestMoreData')}}</Option>
         </Select>
       </li>
       <li class="search-li">
