@@ -131,8 +131,7 @@ type CronJobConfig struct {
 
 type SdFileConfig struct {
 	Enable  bool  `json:"enable"`
-	TenSecFile  string  `json:"ten_sec_file"`
-	OneMinFile  string  `json:"one_min_file"`
+	Path  string  `json:"path"`
 }
 
 type GlobalConfig struct {
