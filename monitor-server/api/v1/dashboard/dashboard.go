@@ -626,8 +626,12 @@ func GetChart(c *gin.Context)  {
 	//var firstSerialTime float64
 	for i, s := range serials {
 		if strings.Contains(s.Name, "$metric") {
-			mid.LogInfo(fmt.Sprintf("sname: %s, query %d metric : %s ", s.Name, i, querys[i].Metric))
-			s.Name = strings.Replace(s.Name, "$metric", querys[i].Metric[0], -1)
+			queryIndex := i
+			if i >= len(querys) {
+				queryIndex = len(querys)-1
+			}
+			mid.LogInfo(fmt.Sprintf("sname: %s, query %d metric : %s ", s.Name, i, querys[queryIndex].Metric))
+			s.Name = strings.Replace(s.Name, "$metric", querys[queryIndex].Metric[0], -1)
 		}
 		eOption.Legend = append(eOption.Legend, s.Name)
 		if eOption.Title == "${auto}" {
