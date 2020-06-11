@@ -14,6 +14,7 @@ import (
 	"encoding/json"
 	"regexp"
 	"io/ioutil"
+	"os"
 )
 
 // @Summary 页面通用接口 : 视图
@@ -480,6 +481,9 @@ func GetChart(c *gin.Context)  {
 	if paramConfig[0].Id > 0 {
 		sameEndpoint = true
 		recordMap := make(map[string]bool)
+		firstEndpointObj := m.EndpointTable{Guid:paramConfig[0].Endpoint}
+		db.GetEndpoint(&firstEndpointObj)
+		step = firstEndpointObj.Step
 		// one endpoint -> metrics
 		for _,tmpParamConfig := range paramConfig {
 			tmpIndex := fmt.Sprintf("%d^%s", tmpParamConfig.Id, tmpParamConfig.Endpoint)
@@ -523,7 +527,7 @@ func GetChart(c *gin.Context)  {
 				if len(paramConfig) > 1 && strings.Contains(chart.Legend, "metric") {
 					tmpLegend = "$custom"
 				}
-				querys = append(querys, m.QueryMonitorData{Start: query.Start, End: query.End, PromQ: tmpPromQl, Legend: tmpLegend, Metric: []string{v}, Endpoint: []string{tmpParamConfig.Endpoint}, CompareLegend:compareLegend, SameEndpoint:sameEndpoint})
+				querys = append(querys, m.QueryMonitorData{Start: query.Start, End: query.End, PromQ: tmpPromQl, Legend: tmpLegend, Metric: []string{v}, Endpoint: []string{tmpParamConfig.Endpoint}, CompareLegend:compareLegend, SameEndpoint:sameEndpoint, Step:step})
 				if paramConfig[0].CompareSecondStart != "" && paramConfig[0].CompareSecondEnd != "" {
 					st,sErr := time.Parse(m.DateFormatWithZone, fmt.Sprintf("%s 00:00:00 CST", paramConfig[0].CompareSecondStart))
 					et,eErr := time.Parse(m.DateFormatWithZone, fmt.Sprintf("%s 23:59:59 CST", paramConfig[0].CompareSecondEnd))
@@ -540,7 +544,7 @@ func GetChart(c *gin.Context)  {
 						}
 						compareSubTime = stTimestamp-query.Start
 						compareSecondLegend = fmt.Sprintf("%s_%s", paramConfig[0].CompareSecondStart, paramConfig[0].CompareSecondEnd)
-						querys = append(querys, m.QueryMonitorData{Start: stTimestamp, End: etTimestamp, PromQ: tmpPromQl, Legend: tmpLegend, Metric: []string{v}, Endpoint: []string{tmpParamConfig.Endpoint}, CompareLegend:compareSecondLegend, SameEndpoint:sameEndpoint})
+						querys = append(querys, m.QueryMonitorData{Start: stTimestamp, End: etTimestamp, PromQ: tmpPromQl, Legend: tmpLegend, Metric: []string{v}, Endpoint: []string{tmpParamConfig.Endpoint}, CompareLegend:compareSecondLegend, SameEndpoint:sameEndpoint, Step:step})
 					}
 				}
 			}
@@ -597,6 +601,7 @@ func GetChart(c *gin.Context)  {
 				}else {
 					v.PromQl = strings.Replace(v.PromQl, "$address", endpointObj.Address, -1)
 				}
+				step = endpointObj.Step
 			}
 			if strings.Contains(v.PromQl, "$") {
 				re, _ := regexp.Compile("=\"[\\$]+[^\"]+\"")
@@ -605,7 +610,7 @@ func GetChart(c *gin.Context)  {
 					v.PromQl = strings.Replace(v.PromQl, string(vv), "=~\".*\"", -1)
 				}
 			}
-			querys = append(querys, m.QueryMonitorData{Start:query.Start, End:query.End, PromQ:v.PromQl, Legend:customLegend, Metric:[]string{v.Metric}, Endpoint:[]string{v.Endpoint}})
+			querys = append(querys, m.QueryMonitorData{Start:query.Start, End:query.End, PromQ:v.PromQl, Legend:customLegend, Metric:[]string{v.Metric}, Endpoint:[]string{v.Endpoint}, Step:step})
 		}
 	}
 	if len(querys) == 0 {
@@ -913,4 +918,13 @@ func GetEndpointsByIp(c *gin.Context)  {
 		return
 	}
 	mid.ReturnData(c, endpoints)
+}
+
+func DisplayWatermark(c *gin.Context)  {
+	result := m.DisplayDemoFlagDto{Display:true}
+	isDisplay := strings.ToLower(os.Getenv("DEMO_FLAG"))
+	if isDisplay == "n" || isDisplay == "no" || isDisplay == "false" {
+		result.Display = false
+	}
+	mid.ReturnData(c, result)
 }

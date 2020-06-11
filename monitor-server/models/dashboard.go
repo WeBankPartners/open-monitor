@@ -252,3 +252,7 @@ type UpdateChartTitleParam struct {
 	Metric  string  `json:"metric"`
 	Name  string  `json:"name" binding:"required"`
 }
+
+type DisplayDemoFlagDto struct {
+	Display  bool  `json:"display"`
+}
