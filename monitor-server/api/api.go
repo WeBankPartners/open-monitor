@@ -71,6 +71,7 @@ func InitHttpServer(exportAgent bool) {
 	r.POST(fmt.Sprintf("%s/register", urlPrefix), user.Register)
 	r.GET(fmt.Sprintf("%s/logout", urlPrefix), user.Logout)
 	r.GET(fmt.Sprintf("%s/check", urlPrefix), user.HealthCheck)
+	r.GET(fmt.Sprintf("%s/demo", urlPrefix), dashboard.DisplayWatermark)
 	if m.Config().Http.Swagger {
 		r.GET(fmt.Sprintf("%s/swagger/*any", urlPrefix), ginSwagger.WrapHandler(swaggerFiles.Handler))
 	}
@@ -108,7 +109,6 @@ func InitHttpServer(exportAgent bool) {
 			dashboardApi.POST("/system/delete", agent.ExportPanelDelete)
 			dashboardApi.GET("/recursive/get", agent.GetPanelRecursive)
 			dashboardApi.POST("/config/chart/title", dashboard.UpdateChartsTitle)
-			dashboardApi.GET("/demo/flag", dashboard.DisplayWatermark)
 		}
 		agentApi := authApi.Group("/agent")
 		{
