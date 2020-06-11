@@ -57,6 +57,11 @@
         <systemParameter name="MONITOR_TELNET_GROUP" scopeType="global" defaultValue="default_telnet_group"/>
         <systemParameter name="MONITOR_DASHBOARD_DELETE_ALL" scopeType="global" defaultValue="Y"/>
         <systemParameter name="MONITOR_DASHBOARD_NOT_DELETE_ALL" scopeType="global" defaultValue="N"/>
+        <systemParameter name="MONITOR_SCRAPE_STEP_1" scopeType="global" defaultValue="1"/>
+        <systemParameter name="MONITOR_SCRAPE_STEP_5" scopeType="global" defaultValue="5"/>
+        <systemParameter name="MONITOR_SCRAPE_STEP_10" scopeType="global" defaultValue="10"/>
+        <systemParameter name="MONITOR_SCRAPE_STEP_30" scopeType="global" defaultValue="30"/>
+        <systemParameter name="MONITOR_SCRAPE_STEP_60" scopeType="global" defaultValue="60"/>
     </systemParameters>
 
 
@@ -85,6 +90,7 @@
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">host_ip</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_HOST_GROUP">group</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_SCRAPE_STEP_10">step</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
@@ -128,6 +134,7 @@
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MYSQL_MONITOR_USER">user</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="Y" mappingType="system_variable" mappingSystemVariableName="MYSQL_MONITOR_PWD">password</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_SCRAPE_STEP_10">step</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
@@ -179,6 +186,7 @@
                     <parameter datatype="string" required="N" sensitiveData="Y" mappingType="system_variable" mappingSystemVariableName="REDIS_MONITOR_PASSWARD">password</parameter>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="">password_guid</parameter>
                     <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="ENCRYPT_SEED" required="N" sensitiveData="N">password_seed</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_SCRAPE_STEP_10">step</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
@@ -229,6 +237,7 @@
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">user</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="Y" mappingType="entity" mappingEntityExpression="">password</parameter>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="">app_log_paths</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_SCRAPE_STEP_10">step</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
