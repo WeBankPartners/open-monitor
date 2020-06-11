@@ -37,8 +37,14 @@ func PrometheusData(query *m.QueryMonitorData) []*m.SerialModel  {
 	}
 	var tmpStep int64
 	tmpStep = 10
+	if query.Step > 0 && query.Step != 10 {
+		tmpStep = int64(query.Step)
+		if strings.Contains(query.PromQ, "20s") {
+			query.PromQ = strings.Replace(query.PromQ, "20s", fmt.Sprintf("%ds", tmpStep*2), -1)
+		}
+	}
 	subSec := query.End - query.Start
-	if subSec > 100000 {
+	if subSec > 86400 {
 		tmpStep = tmpStep * (subSec/86400 + 1)
 	}
 	urlParams.Set("start", strconv.FormatInt(query.Start, 10))
