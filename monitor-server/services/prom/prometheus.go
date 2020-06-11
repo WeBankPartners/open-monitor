@@ -157,8 +157,6 @@ func checkPrometheusAlive(address string)  {
 	if err != nil {
 		mid.LogError("prometheus alive check: error ", err)
 		restartPrometheus()
-	}else{
-		mid.LogInfo("prometheus alive check: alive")
 	}
 }
 
