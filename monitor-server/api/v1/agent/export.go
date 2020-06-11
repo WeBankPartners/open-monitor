@@ -11,8 +11,8 @@ import (
 	"net/url"
 	"io/ioutil"
 	"encoding/json"
-	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
 	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/alarm"
+	"strconv"
 )
 
 type resultObj struct {
@@ -34,10 +34,10 @@ type resultOutputObj struct {
 
 type requestObj struct {
 	RequestId  string  	`json:"requestId"`
-	Inputs  []hostRequestObj  `json:"inputs"`
+	Inputs  []endpointRequestObj  `json:"inputs"`
 }
 
-type hostRequestObj struct {
+type endpointRequestObj struct {
 	CallbackParameter  string  `json:"callbackParameter"`
 	HostIp  string  `json:"host_ip"`
 	InstanceIp  string  `json:"instance_ip"`
@@ -50,6 +50,7 @@ type hostRequestObj struct {
 	PasswordGuid  string  `json:"password_guid"`
 	PasswordSeed  string  `json:"password_seed"`
 	AppLogPaths   string  `json:"app_log_paths"`
+	Step  string  `json:"step"`
 }
 
 func ExportAgentNew(c *gin.Context)  {
@@ -98,10 +99,17 @@ func ExportAgentNew(c *gin.Context)  {
 		var param m.RegisterParamNew
 		var validateMessage string
 		var inputErr error
+		tmpStep := 10
+		if v.Step != "" {
+			tmpStep,_ = strconv.Atoi(v.Step)
+			if tmpStep <= 0 {
+				tmpStep = 10
+			}
+		}
 		if tmpAgentType == "host" {
-			param = m.RegisterParamNew{Type: tmpAgentType, Ip: v.HostIp, Port: "9100", AddDefaultGroup:true, AgentManager:false, FetchMetric:true, DefaultGroupName:v.Group}
+			param = m.RegisterParamNew{Type: tmpAgentType, Ip: v.HostIp, Port: "9100", AddDefaultGroup:true, AgentManager:false, FetchMetric:true, DefaultGroupName:v.Group, Step:tmpStep}
 		} else {
-			param = m.RegisterParamNew{Type: tmpAgentType, Ip: v.InstanceIp, Port: v.Port, Name: v.Instance, User: v.User, Password: v.Password, AgentManager:true, AddDefaultGroup:true, FetchMetric:true, DefaultGroupName:v.Group}
+			param = m.RegisterParamNew{Type: tmpAgentType, Ip: v.InstanceIp, Port: v.Port, Name: v.Instance, User: v.User, Password: v.Password, AgentManager:true, AddDefaultGroup:true, FetchMetric:true, DefaultGroupName:v.Group, Step:tmpStep}
 		}
 		if action == "register" {
 			validateMessage,inputErr = AgentRegister(param)
@@ -119,20 +127,9 @@ func ExportAgentNew(c *gin.Context)  {
 				endpointObj = m.EndpointTable{Ip: v.InstanceIp, ExportType: tmpAgentType, Name: v.Instance}
 			}
 			db.GetEndpoint(&endpointObj)
-			if endpointObj.AddressAgent != "" {
-				agentManagerUrl := ""
-				for _, v := range m.Config().Dependence {
-					if v.Name == "agent_manager" {
-						agentManagerUrl = v.Server
-						break
-					}
-				}
-				if agentManagerUrl != "" {
-					inputErr = prom.StopAgent(endpointObj.ExportType, endpointObj.Name, endpointObj.Ip, agentManagerUrl)
-				}
-			}
-			if endpointObj.Id > 0 && inputErr == nil {
-				inputErr = DeregisterJob(endpointObj.Guid, endpointObj.Step)
+			mid.LogInfo(fmt.Sprintf("Export deregister endpoint id:%d guid:%s ", endpointObj.Id, endpointObj.Guid))
+			if endpointObj.Id > 0 {
+				inputErr = DeregisterJob(endpointObj.Guid)
 			}
 		}
 		if validateMessage != "" || inputErr != nil {
