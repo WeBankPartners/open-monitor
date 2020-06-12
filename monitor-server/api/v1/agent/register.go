@@ -103,17 +103,10 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage string,err error) 
 			tmpIp = rData.endpoint.AddressAgent[:strings.Index(rData.endpoint.AddressAgent, ":")]
 			tmpPort = rData.endpoint.AddressAgent[strings.Index(rData.endpoint.AddressAgent, ":")+1:]
 		}
-		if m.Config().SdFile.Enable {
-			prom.AddSdEndpoint(m.ServiceDiscoverFileObj{Guid: rData.endpoint.Guid, Address: fmt.Sprintf("%s:%s", tmpIp, tmpPort), Step: rData.endpoint.Step})
-			err = prom.SyncSdConfigFile(rData.endpoint.Step)
-			if err != nil {
-				mid.LogError("sync service discover file error: ", err)
-			}
-		}else{
-			err = prom.RegisteConsul(rData.endpoint.Guid, tmpIp, tmpPort, []string{param.Type}, rData.endpoint.Step, false)
-			if err != nil {
-				return validateMessage,err
-			}
+		prom.AddSdEndpoint(m.ServiceDiscoverFileObj{Guid: rData.endpoint.Guid, Address: fmt.Sprintf("%s:%s", tmpIp, tmpPort), Step: rData.endpoint.Step})
+		err = prom.SyncSdConfigFile(rData.endpoint.Step)
+		if err != nil {
+			mid.LogError("sync service discover file error: ", err)
 		}
 	}
 	if rData.addDefaultGroup {
