@@ -62,21 +62,15 @@ func DeregisterJob(guid string) error {
 		mid.LogError(fmt.Sprintf("Delete endpint %s failed", guid), err)
 		return err
 	}
-	if m.Config().SdFile.Enable {
-		mid.LogInfo(fmt.Sprintf("delete endpoint:%s step:%d", guid, endpointObj.Step))
-		prom.DeleteSdEndpoint(guid)
-		err = prom.SyncSdConfigFile(endpointObj.Step)
-		if err != nil {
-			mid.LogError("sync service discover file error: ", err)
-			return err
-		}
-	}else {
-		err = prom.DeregisteConsul(guid, false)
-		if err != nil {
-			mid.LogError(fmt.Sprintf("Deregister consul %s failed ", guid), err)
-			return err
-		}
+
+	mid.LogInfo(fmt.Sprintf("delete endpoint:%s step:%d", guid, endpointObj.Step))
+	prom.DeleteSdEndpoint(guid)
+	err = prom.SyncSdConfigFile(endpointObj.Step)
+	if err != nil {
+		mid.LogError("sync service discover file error: ", err)
+		return err
 	}
+
 	db.UpdateAgentManagerTable(m.EndpointTable{Guid:guid}, "", "", "", "", false)
 	return err
 }
