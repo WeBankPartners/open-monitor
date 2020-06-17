@@ -119,6 +119,14 @@
       "user" : "exporter",
       "password" : "prom_pwd",
       "config_file": "config.yaml"
+    },
+    {
+      "agent_type" : "nginx",
+      "agent_bin" : "nginx_exporter",
+      "port" : "9113",
+      "user" : "exporter",
+      "password" : "prom_pwd",
+      "config_file": ""
     }
   ],
   "alert": {
