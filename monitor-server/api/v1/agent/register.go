@@ -78,6 +78,7 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage string,err error) 
 		case "mysql": rData = mysqlRegister(param)
 		case "redis": rData = redisRegister(param)
 		case "java": rData = javaRegister(param)
+		case "nginx": rData = nginxRegister(param)
 		case "ping": rData = pingRegister(param)
 		case "telnet": rData = telnetRegister(param)
 		case "http": rData = httpRegister(param)
@@ -433,6 +434,66 @@ func javaRegister(param m.RegisterParamNew) returnData {
 	return result
 }
 
+func nginxRegister(param m.RegisterParamNew) returnData {
+	var result returnData
+	result.endpoint.Step = defaultStep
+	var err error
+	if param.Name == "" || param.Ip == "" || param.Port == "" {
+		result.validateMessage = "Nginx instance name and ip and post can not empty "
+		return result
+	}
+	var binPath,address string
+	if param.AgentManager {
+		for _,v := range m.Config().Agent {
+			if v.AgentType == param.Type {
+				binPath = v.AgentBin
+				break
+			}
+		}
+		if binPath == "" {
+			result.err = fmt.Errorf("Nginx agnet bin can not found in config ")
+			return result
+		}
+		address,err = prom.DeployAgent(param.Type,param.Name,binPath,param.Ip,param.Port,param.User,param.Password,agentManagerServer,"")
+		if err != nil {
+			result.err = err
+			return result
+		}
+	}
+	if param.FetchMetric {
+		tmpIp,tmpPort := param.Ip,param.Port
+		if strings.Contains(address, ":") {
+			tmpIp = address[:strings.Index(address, ":")]
+			tmpPort = address[strings.Index(address, ":")+1:]
+		}
+		startTime := time.Now().Unix()
+		err, strList := prom.GetEndpointData(tmpIp, tmpPort, []string{}, []string{})
+		if err != nil {
+			result.err = err
+			return result
+		}
+		result.endpoint.Step,err = calcStep(startTime, param.Step)
+		if err != nil {
+			result.err = err
+			return result
+		}
+		result.metricList = strList
+	}
+	result.endpoint.Guid = fmt.Sprintf("%s_%s_%s", param.Name, param.Ip, param.Type)
+	result.endpoint.Name = param.Name
+	result.endpoint.Ip = param.Ip
+	result.endpoint.EndpointVersion = ""
+	result.endpoint.ExportType = param.Type
+	result.endpoint.ExportVersion = ""
+	result.endpoint.Address = fmt.Sprintf("%s:%s", param.Ip, param.Port)
+	result.endpoint.AddressAgent = address
+	result.defaultGroup = "default_nginx_group"
+	result.addDefaultGroup = true
+	result.fetchMetric = true
+	result.agentManager = true
+	return result
+}
+
 func pingRegister(param m.RegisterParamNew) returnData {
 	var result returnData
 	if param.Name == "" || param.Ip == "" {
@@ -549,10 +610,6 @@ func windowsRegister(param m.RegisterParamNew) returnData {
 	result.fetchMetric = true
 	result.agentManager = false
 	return result
-}
-
-func nginxRegister(param m.RegisterParamNew)  {
-
 }
 
 func otherExporterRegister(param m.RegisterParamNew) returnData {
