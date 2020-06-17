@@ -123,7 +123,7 @@
     {
       "agent_type" : "nginx",
       "agent_bin" : "nginx_exporter",
-      "port" : "9113",
+      "port" : "80",
       "user" : "exporter",
       "password" : "prom_pwd",
       "config_file": ""
