@@ -54,16 +54,16 @@ func doTask()  {
 	for _,ip := range ipList {
 		if containString(ip, localIp) {
 			funcs.DebugLog("%s is local ip", ip)
-			writeResultMap(ip, 0)
+			writeResultMap(ip, 0, 0)
 			successCounter += 1
 			continue
 		}
 		wg.Add(1)
 		go func(ip string,timeout int) {
 			defer wg.Done()
-			d := StartPing(ip, timeout)
+			d,ut := StartPing(ip, timeout)
 			if d < 2 {
-				writeResultMap(ip ,d)
+				writeResultMap(ip ,d, ut)
 			}
 			funcs.DebugLog("ping %s result %d ", ip, d)
 		}(ip,timeout)
@@ -81,11 +81,11 @@ func doTask()  {
 			go func(ip string,timeout int) {
 				defer wgs.Done()
 				funcs.DebugLog("second round , retry ip %s ", ip)
-				d := StartPing(ip, timeout)
+				d,ut := StartPing(ip, timeout)
 				if d==0{
 					retryLength = retryLength - 1
 				}
-				writeResultMap(ip, d)
+				writeResultMap(ip, d, ut)
 			}(v,timeout)
 		}
 		wgs.Wait()
@@ -102,13 +102,13 @@ func doTask()  {
 				if lv!=tmpRMap[v]{  // 上次结果和这次的不一致，最后再检查一次，一般这种IP比较少
 					addRetryIp(v)
 					funcs.DebugLog("%s last result is different this : %d, last %d ", v, tmpRMap[v], lv)
-					if tmpRMap[v]==0{
+					if tmpRMap[v].UpDown==0{
 						successCounter = successCounter - 1
 					}
 					continue
 				}
 			}
-			if tmpRMap[v] >= 2{
+			if tmpRMap[v].UpDown >= 2{
 				funcs.DebugLog("%s retry is still not work ", v)
 				addRetryIp(v)
 			}
@@ -121,8 +121,8 @@ func doTask()  {
 				wgt.Add(1)
 				go func(ip string,timeout int) {
 					defer wgt.Done()
-					d := StartPing(ip, timeout)
-					writeResultMap(ip, d)
+					d,ut := StartPing(ip, timeout)
+					writeResultMap(ip, d, ut)
 					funcs.DebugLog("ping %s result %d ", ip ,d)
 				}(v,timeout)
 			}
@@ -148,7 +148,7 @@ func dealResult(successCounter int)  {
 	if TestModel{
 		successOutput := "alive ip : \n"
 		for k,v := range result {
-			if v == 0 {
+			if v.UpDown == 0 {
 				successOutput = successOutput  + k + ","
 			}
 		}
