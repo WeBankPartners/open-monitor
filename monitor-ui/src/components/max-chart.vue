@@ -96,7 +96,7 @@ export default {
           this.isShowChart = false
           return
         }
-        this.getChartConfig()
+        this.getChartData(this.chartItem)
       },
       deep: true
     }
@@ -118,7 +118,7 @@ export default {
       if (this.chartCondition.dateRange[1] !== '') {
         this.chartCondition.dateRange[1] = this.chartCondition.dateRange[1] + ' 23:59:59'
       }
-      this.getChartConfig()
+      this.getChartData(this.chartItem)
     },
     pickFirstDate(data) {
       this.chartCondition.compareFirstDate = data
@@ -126,12 +126,15 @@ export default {
     pickSecondDate(data) {
       this.chartCondition.compareSecondDate = data
     },
-    getChartConfig (chartItem=this.chartItem) {
-      this.chartItem = chartItem
+    getChartData (chartItem, start, end) {
+      // 为兼容放大区域调用
+      if (chartItem) {
+        this.chartItem = chartItem
+      }
       let params = {
-        id: chartItem.id,
-        endpoint: chartItem.endpoint[0],
-        metric: chartItem.metric[0],
+        id: this.chartItem.id,
+        endpoint: this.chartItem.endpoint[0],
+        metric: this.chartItem.metric[0],
         time: this.chartCondition.timeTnterval,
         agg: this.chartCondition.agg,
         compare_first_start: this.chartCondition.compareFirstDate[0],
@@ -139,15 +142,16 @@ export default {
         compare_second_start: this.chartCondition.compareSecondDate[0],
         compare_second_end: this.chartCondition.compareSecondDate[1]
       }
+      // 外部有时间传入(放大)，以传入时间为准
       if (this.chartCondition.dateRange.length !==0) {
-        params.start = this.chartCondition.dateRange[0] ===''? 
-          '':Date.parse(this.chartCondition.dateRange[0].replace(/-/g, '/'))/1000 + '',
-        params.end = this.chartCondition.dateRange[1] ===''? 
-          '':Date.parse(this.chartCondition.dateRange[1].replace(/-/g, '/'))/1000 + ''
+        params.start = start ? start : (this.chartCondition.dateRange[0] ===''? 
+          '':Date.parse(this.chartCondition.dateRange[0].replace(/-/g, '/'))/1000 + ''),
+        params.end = end ? end : (this.chartCondition.dateRange[1] ===''? 
+          '':Date.parse(this.chartCondition.dateRange[1].replace(/-/g, '/'))/1000 + '')
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/dashboard/newchart', [params], responseData => {
       
-        const chartConfig = {eye: false,clear:true}
+        const chartConfig = {eye: false,clear:true, zoomCallback: true}
         readyToDraw(this,responseData, 1, chartConfig)
       })
     },

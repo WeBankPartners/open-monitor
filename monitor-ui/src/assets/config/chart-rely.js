@@ -69,7 +69,8 @@ export const drawChart = function(that,config,userConfig) {
     clear: false,
     editTitle: false,
     lineBarSwitch: false,
-    chartType: 'line'
+    chartType: 'line',
+    zoomCallback: false // 选择区域后是否需要重新请求数据
   }
   let finalConfig = Object.assign(originConfig, userConfig)
   // 基于准备好的dom，初始化echarts实例
@@ -278,7 +279,22 @@ export const drawChart = function(that,config,userConfig) {
   }
   
   // 绘制图表
-  myChart.setOption(option) 
+  myChart.setOption(option)
+  // 清空所有事件重新绑定
+  myChart.off()
+  if (finalConfig.zoomCallback) {
+    myChart.on('datazoom', function (params) {
+      let startValue = null
+      let endValue = null
+      // TODO 多次放大后缩小无法恢复到最初状态，单次放大可以
+      // 尚不知如何判断为放大还是缩小
+      if (params.batch[0].endValue > 110) {
+        startValue = parseInt(myChart.getModel().option.dataZoom[0].startValue/1000)+''
+        endValue = parseInt(myChart.getModel().option.dataZoom[0].endValue/1000)+''
+      }
+      that.getChartData(null,startValue, endValue)
+    })
+  }
 }
 
 export const drawPieChart = function(that, responseData) {
