@@ -71,6 +71,7 @@ func InitHttpServer(exportAgent bool) {
 	r.POST(fmt.Sprintf("%s/register", urlPrefix), user.Register)
 	r.GET(fmt.Sprintf("%s/logout", urlPrefix), user.Logout)
 	r.GET(fmt.Sprintf("%s/check", urlPrefix), user.HealthCheck)
+	r.GET(fmt.Sprintf("%s/demo", urlPrefix), dashboard.DisplayWatermark)
 	if m.Config().Http.Swagger {
 		r.GET(fmt.Sprintf("%s/swagger/*any", urlPrefix), ginSwagger.WrapHandler(swaggerFiles.Handler))
 	}
@@ -111,8 +112,7 @@ func InitHttpServer(exportAgent bool) {
 		}
 		agentApi := authApi.Group("/agent")
 		{
-			agentApi.POST("/register", agent.RegisterAgent)
-			agentApi.POST("/register_new", agent.RegisterAgentNew)
+			agentApi.POST("/register", agent.RegisterAgentNew)
 			agentApi.GET("/deregister", agent.DeregisterAgent)
 			agentApi.POST("/export/register/:name", agent.ExportAgentNew)
 			agentApi.POST("/export/deregister/:name", agent.ExportAgentNew)

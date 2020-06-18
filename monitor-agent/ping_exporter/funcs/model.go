@@ -20,3 +20,8 @@ func DebugLog(msg string, v ...interface{}){
 		log.Printf(msg, v...)
 	}
 }
+
+type PingResultObj struct {
+	UpDown  int
+	UseTime float64
+}
