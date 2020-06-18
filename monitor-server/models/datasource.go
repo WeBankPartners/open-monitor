@@ -11,6 +11,7 @@ type QueryMonitorData struct{
 	ChartType  string  `json:"chart_type"`
 	PieData  EChartPie  `json:"pie_data"`
 	SameEndpoint bool `json:"same_endpoint"`
+	Step  int  `json:"step"`
 }
 
 type PrometheusParam struct {

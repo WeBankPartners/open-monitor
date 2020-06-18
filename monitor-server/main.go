@@ -36,11 +36,7 @@ func main() {
 	}
 	go api.InitClusterApi()
 	go db.StartCronJob()
-	if m.Config().SdFile.Enable {
-		alarm.SyncInitSdFile()
-	}else {
-		alarm.SyncInitConsul()
-	}
+	alarm.SyncInitSdFile()
 	alarm.SyncInitConfigFile()
 	api.InitDependenceParam()
 	api.InitHttpServer(*exportAgent)

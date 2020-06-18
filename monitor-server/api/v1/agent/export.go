@@ -12,7 +12,7 @@ import (
 	"io/ioutil"
 	"encoding/json"
 	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/alarm"
-	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
+	"strconv"
 )
 
 type resultObj struct {
@@ -34,10 +34,10 @@ type resultOutputObj struct {
 
 type requestObj struct {
 	RequestId  string  	`json:"requestId"`
-	Inputs  []hostRequestObj  `json:"inputs"`
+	Inputs  []endpointRequestObj  `json:"inputs"`
 }
 
-type hostRequestObj struct {
+type endpointRequestObj struct {
 	CallbackParameter  string  `json:"callbackParameter"`
 	HostIp  string  `json:"host_ip"`
 	InstanceIp  string  `json:"instance_ip"`
@@ -49,6 +49,8 @@ type hostRequestObj struct {
 	JavaType  string  `json:"java_type"`
 	PasswordGuid  string  `json:"password_guid"`
 	PasswordSeed  string  `json:"password_seed"`
+	AppLogPaths   string  `json:"app_log_paths"`
+	Step  string  `json:"step"`
 }
 
 func ExportAgentNew(c *gin.Context)  {
@@ -97,15 +99,25 @@ func ExportAgentNew(c *gin.Context)  {
 		var param m.RegisterParamNew
 		var validateMessage string
 		var inputErr error
+		tmpStep := 10
+		if v.Step != "" {
+			tmpStep,_ = strconv.Atoi(v.Step)
+			if tmpStep <= 0 {
+				tmpStep = 10
+			}
+		}
 		if tmpAgentType == "host" {
-			param = m.RegisterParamNew{Type: tmpAgentType, Ip: v.HostIp, Port: "9100", AddDefaultGroup:true, AgentManager:false, FetchMetric:true, DefaultGroupName:v.Group}
+			param = m.RegisterParamNew{Type: tmpAgentType, Ip: v.HostIp, Port: "9100", AddDefaultGroup:true, AgentManager:false, FetchMetric:true, DefaultGroupName:v.Group, Step:tmpStep}
 		} else {
-			param = m.RegisterParamNew{Type: tmpAgentType, Ip: v.InstanceIp, Port: v.Port, Name: v.Instance, User: v.User, Password: v.Password, AgentManager:true, AddDefaultGroup:true, FetchMetric:true, DefaultGroupName:v.Group}
+			param = m.RegisterParamNew{Type: tmpAgentType, Ip: v.InstanceIp, Port: v.Port, Name: v.Instance, User: v.User, Password: v.Password, AgentManager:true, AddDefaultGroup:true, FetchMetric:true, DefaultGroupName:v.Group, Step:tmpStep}
 		}
 		if action == "register" {
 			validateMessage,inputErr = AgentRegister(param)
 			if validateMessage != "" {
 				validateMessage = fmt.Sprintf("input index:%d validate fail -> ", i) + validateMessage
+			}
+			if validateMessage == "" && inputErr == nil && v.AppLogPaths != "" {
+				inputErr = autoAddAppPathConfig(param, v.AppLogPaths)
 			}
 		} else {
 			var endpointObj m.EndpointTable
@@ -115,20 +127,9 @@ func ExportAgentNew(c *gin.Context)  {
 				endpointObj = m.EndpointTable{Ip: v.InstanceIp, ExportType: tmpAgentType, Name: v.Instance}
 			}
 			db.GetEndpoint(&endpointObj)
-			if endpointObj.AddressAgent != "" {
-				agentManagerUrl := ""
-				for _, v := range m.Config().Dependence {
-					if v.Name == "agent_manager" {
-						agentManagerUrl = v.Server
-						break
-					}
-				}
-				if agentManagerUrl != "" {
-					inputErr = prom.StopAgent(endpointObj.ExportType, endpointObj.Name, endpointObj.Ip, agentManagerUrl)
-				}
-			}
-			if endpointObj.Id > 0 && inputErr == nil {
-				inputErr = DeregisterJob(endpointObj.Guid, endpointObj.Step)
+			mid.LogInfo(fmt.Sprintf("Export deregister endpoint id:%d guid:%s ", endpointObj.Id, endpointObj.Guid))
+			if endpointObj.Id > 0 {
+				inputErr = DeregisterJob(endpointObj.Guid)
 			}
 		}
 		if validateMessage != "" || inputErr != nil {
@@ -141,151 +142,6 @@ func ExportAgentNew(c *gin.Context)  {
 		}else{
 			resultData.Outputs = append(resultData.Outputs, resultOutputObj{CallbackParameter:v.CallbackParameter, ErrorCode:"0", ErrorMessage:""})
 		}
-	}
-}
-
-func ExportAgent(c *gin.Context)  {
-	agentType := c.Param("name")
-	action := "register"
-	if strings.Contains(c.Request.URL.String(), "deregister") {
-		action = "deregister"
-	}
-	var agentPort string
-	var result resultObj
-	//illegal := true
-	for _,v := range m.Config().Agent {
-		tmpAgentType := agentType
-		if tmpAgentType == "java" {
-			tmpAgentType = "tomcat"
-		}
-		if v.AgentType == tmpAgentType {
-			//illegal = false
-			agentPort = v.Port
-			break
-		}
-	}
-	if action != "register" && action != "deregister" {
-		result = resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("No such action like %s", action)}
-		mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
-		c.JSON(http.StatusBadRequest, result)
-		return
-	}
-	data,_ := ioutil.ReadAll(c.Request.Body)
-	mid.LogInfo(fmt.Sprintf("param : %v", string(data)))
-	var param requestObj
-	err := json.Unmarshal(data, &param)
-	if err == nil {
-		if len(param.Inputs) == 0 {
-			result = resultObj{ResultCode:"0", ResultMessage:"inputs length is zero,do nothing"}
-			mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
-			c.JSON(http.StatusOK, result)
-			return
-		}
-		var tmpResult []resultOutputObj
-		successFlag := "0"
-		errMessage := "Done"
-		// update table and register to consul
-		for _,v := range param.Inputs {
-			tmpAgentType := agentType
-			if v.JavaType == "tomcat" || v.Group == "default_tomcat_group" {
-				tmpAgentType = "tomcat"
-			}
-			if v.Password != "" {
-				tmpPassword,tmpErr := mid.AesDePassword(v.PasswordGuid,v.PasswordSeed,v.Password)
-				if tmpErr == nil {
-					v.Password = tmpPassword
-				}
-			}
-			var param m.RegisterParam
-			if tmpAgentType == "host" {
-				param = m.RegisterParam{Type: tmpAgentType, ExporterIp: v.HostIp, ExporterPort: agentPort}
-			}else{
-				param = m.RegisterParam{Type: tmpAgentType, ExporterIp: v.InstanceIp, ExporterPort: v.Port, Instance: v.Instance, User:v.User, Password:v.Password}
-			}
-			if action == "register" {
-				err = RegisterJob(param)
-			}else{
-				var endpointObj m.EndpointTable
-				if tmpAgentType == "host" {
-					endpointObj = m.EndpointTable{Ip: v.HostIp, ExportType: tmpAgentType}
-				}else{
-					endpointObj = m.EndpointTable{Ip: v.InstanceIp, ExportType: tmpAgentType, Name: v.Instance}
-				}
-				db.GetEndpoint(&endpointObj)
-				if endpointObj.AddressAgent != "" {
-					agentManagerUrl := ""
-					for _, v := range m.Config().Dependence {
-						if v.Name == "agent_manager" {
-							agentManagerUrl = v.Server
-							break
-						}
-					}
-					if agentManagerUrl != "" {
-						err = prom.StopAgent(endpointObj.ExportType, endpointObj.Name, endpointObj.Ip, agentManagerUrl)
-					}
-				}
-				if endpointObj.Id > 0 {
-					err = DeregisterJob(endpointObj.Guid, endpointObj.Step)
-				}
-			}
-			var msg string
-			if err != nil {
-				msg = fmt.Sprintf("%s %s:%s %s fail,error %v",action, tmpAgentType, v.HostIp, v.Instance, err)
-				errMessage = msg
-				tmpResult = append(tmpResult, resultOutputObj{CallbackParameter:v.CallbackParameter, ErrorCode:"1", ErrorMessage:msg})
-				successFlag = "1"
-			}else{
-				msg = fmt.Sprintf("%s %s:%s %s succeed", action, tmpAgentType, v.HostIp, v.Instance)
-				tmpResult = append(tmpResult, resultOutputObj{CallbackParameter:v.CallbackParameter, ErrorCode:"0", ErrorMessage:""})
-			}
-			mid.LogInfo(msg)
-		}
-		// update group and sync prometheus config
-		if action == "register" {
-			var groupTplMap= make(map[string]int)
-			for _, v := range param.Inputs {
-				if v.Group == "" {
-					continue
-				}
-				_, grpObj := db.GetSingleGrp(0, v.Group)
-				if grpObj.Id > 0 {
-					_, tplObj := db.GetTpl(0, grpObj.Id, 0)
-					groupTplMap[grpObj.Name] = tplObj.Id
-					var endpointObj m.EndpointTable
-					if agentType == "host" {
-						endpointObj = m.EndpointTable{Ip: v.HostIp, ExportType: agentType}
-					} else {
-						endpointObj = m.EndpointTable{Ip: v.InstanceIp, ExportType: agentType, Name: v.Instance}
-					}
-					db.GetEndpoint(&endpointObj)
-					if endpointObj.Id > 0 {
-						err, _ := db.UpdateGrpEndpoint(m.GrpEndpointParamNew{Grp: grpObj.Id, Endpoints: []int{endpointObj.Id}, Operation: "add"})
-						if err != nil {
-							mid.LogError("register interface update group_endpoint fail ", err)
-						}
-						if agentType == "telnet" {
-							var eto []*m.EndpointTelnetObj
-							eto = append(eto, &m.EndpointTelnetObj{Port:v.Port, Note:""})
-							db.UpdateEndpointTelnet(m.UpdateEndpointTelnetParam{Guid:endpointObj.Guid, Config:eto})
-						}
-					}
-				}
-			}
-			for k, v := range groupTplMap {
-				err := alarm.SaveConfigFile(v, false)
-				if err != nil {
-					mid.LogError(fmt.Sprintf("register interface update prometheus config fail , group : %s  error ", k), err)
-				}
-			}
-		}
-		result = resultObj{ResultCode: successFlag, ResultMessage: errMessage, Results: resultOutput{Outputs: tmpResult}}
-		resultString,_ := json.Marshal(result)
-		mid.LogInfo(string(resultString))
-		mid.ReturnData(c, result)
-	}else{
-		result = resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("Param validate fail : %v", err)}
-		mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
-		c.JSON(http.StatusBadRequest, result)
 	}
 }
 
@@ -398,4 +254,30 @@ func GetEndpointTelnet(c *gin.Context)  {
 	}else{
 		mid.ReturnData(c, result)
 	}
+}
+
+func autoAddAppPathConfig(param m.RegisterParamNew, paths string) error {
+	tmpPathList := strings.Split(trimListString(paths), ",")
+	if len(tmpPathList) == 0 {
+		return nil
+	}
+	hostEndpoint := m.EndpointTable{Ip:param.Ip, ExportType:"host"}
+	db.GetEndpoint(&hostEndpoint)
+	if hostEndpoint.Id <= 0 {
+		return fmt.Errorf("Host endpoint with ip:%s can not find,please register this host first ", param.Ip)
+	}
+	var businessTables []*m.BusinessMonitorTable
+	for _,v := range tmpPathList {
+		businessTables = append(businessTables, &m.BusinessMonitorTable{EndpointId:hostEndpoint.Id, Path:v, OwnerEndpoint:fmt.Sprintf("%s_%s_%s", param.Name, param.Ip, param.Type)})
+	}
+	err := db.UpdateBusiness(m.BusinessUpdateDto{EndpointId:hostEndpoint.Id, PathList:businessTables})
+	if err != nil {
+		mid.LogError("Update endpoint business table error ", err)
+		return err
+	}
+	err = alarm.UpdateNodeExporterBusinessConfig(hostEndpoint.Id)
+	if err != nil {
+		mid.LogError("Update business config error ", err)
+	}
+	return err
 }
