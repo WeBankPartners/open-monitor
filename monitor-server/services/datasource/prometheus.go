@@ -37,8 +37,14 @@ func PrometheusData(query *m.QueryMonitorData) []*m.SerialModel  {
 	}
 	var tmpStep int64
 	tmpStep = 10
+	if query.Step > 0 && query.Step != 10 {
+		tmpStep = int64(query.Step)
+		if strings.Contains(query.PromQ, "20s") {
+			query.PromQ = strings.Replace(query.PromQ, "20s", fmt.Sprintf("%ds", tmpStep*2), -1)
+		}
+	}
 	subSec := query.End - query.Start
-	if subSec > 100000 {
+	if subSec > 86400 {
 		tmpStep = tmpStep * (subSec/86400 + 1)
 	}
 	urlParams.Set("start", strconv.FormatInt(query.Start, 10))
@@ -170,12 +176,17 @@ func PrometheusData(query *m.QueryMonitorData) []*m.SerialModel  {
 }
 
 func appendTagString(name string, metricMap map[string]string) string {
-	tmpName := name + "{"
+	var tmpList m.DefaultSortList
 	for k,v := range metricMap {
-		if k == "job" && v == "consul" {
+		tmpList = append(tmpList, &m.DefaultSortObj{Key:k, Value:v})
+	}
+	sort.Sort(tmpList)
+	tmpName := name + "{"
+	for _,v := range tmpList {
+		if v.Key == "job" && v.Value == "consul" {
 			continue
 		}
-		tmpName += fmt.Sprintf("%s=%s,", k, v)
+		tmpName += fmt.Sprintf("%s=%s,", v.Key, v.Value)
 	}
 	tmpName = tmpName[:len(tmpName)-1]
 	tmpName += "}"

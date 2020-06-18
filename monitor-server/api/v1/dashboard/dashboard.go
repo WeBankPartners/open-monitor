@@ -14,6 +14,7 @@ import (
 	"encoding/json"
 	"regexp"
 	"io/ioutil"
+	"os"
 )
 
 // @Summary 页面通用接口 : 视图
@@ -141,7 +142,7 @@ func GetPanels(c *gin.Context)  {
 		var chartsDto []*m.ChartModel
 		fetch := false
 		if panel.AutoDisplay > 0 {
-			chartsDto,fetch = getAutoDisplay(endpoint, panel.TagsKey, "", charts)
+			//chartsDto,fetch = getAutoDisplay(endpoint, panel.TagsKey, "", charts)
 		}
 		if !fetch {
 			for _, chart := range charts {
@@ -167,15 +168,30 @@ func GetPanels(c *gin.Context)  {
 	}
 	_,businessMonitor := db.GetBusinessList(0, endpoint)
 	if len(businessMonitor) > 0 {
+		businessMonitorMap := make(map[int][]string)
+		for _,v := range businessMonitor {
+			if _,b := businessMonitorMap[v.EndpointId];b {
+				exist := false
+				for _,vv := range businessMonitorMap[v.EndpointId] {
+					if vv == v.Path {
+						exist = true
+						break
+					}
+				}
+				if !exist {
+					businessMonitorMap[v.EndpointId] = append(businessMonitorMap[v.EndpointId], v.Path)
+				}
+			}else{
+				businessMonitorMap[v.EndpointId] = []string{v.Path}
+			}
+		}
 		businessCharts,businessPanels := db.GetBusinessPanelChart()
 		if len(businessCharts) > 0 {
-			endpointObj := m.EndpointTable{Id:businessMonitor[0].EndpointId}
-			db.GetEndpoint(&endpointObj)
-			chartsDto,_ := getAutoDisplay(endpointObj.Guid, businessPanels[0].TagsKey, businessMonitor[0].Path, businessCharts)
+			chartsDto, _ := getAutoDisplay(businessMonitorMap, businessPanels[0].TagsKey, businessCharts)
 			var panelDto m.PanelModel
 			panelDto.Title = businessPanels[0].Title
 			panelDto.Other = false
-			panelDto.Tags = m.TagsModel{Enable:false, Option:[]*m.OptionModel{}}
+			panelDto.Tags = m.TagsModel{Enable: false, Option: []*m.OptionModel{}}
 			panelDto.Charts = chartsDto
 			panelsDto = append(panelsDto, &panelDto)
 		}
@@ -183,7 +199,7 @@ func GetPanels(c *gin.Context)  {
 	mid.ReturnData(c, panelsDto)
 }
 
-func getAutoDisplay(endpoint,tagKey,path string,charts []*m.ChartTable) (result []*m.ChartModel,fetch bool) {
+func getAutoDisplay(businessMonitorMap map[int][]string,tagKey string,charts []*m.ChartTable) (result []*m.ChartModel,fetch bool) {
 	result = []*m.ChartModel{}
 	if len(charts) == 0 {
 		return result,false
@@ -191,39 +207,52 @@ func getAutoDisplay(endpoint,tagKey,path string,charts []*m.ChartTable) (result 
 	if tagKey == "" {
 		return result,false
 	}
-	_,promQl := db.GetPromMetric([]string{endpoint}, charts[0].Metric)
-	if promQl == "" {
-		return result,false
-	}
-	tmpLegend := charts[0].Legend
-	if path != "" {
-		tmpLegend = "$custom_all"
-	}
-	sm := ds.PrometheusData(&m.QueryMonitorData{Start:time.Now().Unix()-300, End:time.Now().Unix(), PromQ:promQl, Legend:tmpLegend, Metric:[]string{charts[0].Metric}, Endpoint:[]string{endpoint}})
-	for _,v := range sm {
-		if path != "" {
-			if !strings.Contains(v.Name, path) {
-				continue
+	for endpointId,paths := range businessMonitorMap {
+		if len(paths) == 0 {
+			continue
+		}
+		endpointObj := m.EndpointTable{Id:endpointId}
+		db.GetEndpoint(&endpointObj)
+		if endpointObj.Guid == "" {
+			continue
+		}
+		_,promQl := db.GetPromMetric([]string{endpointObj.Guid}, charts[0].Metric)
+		if promQl == "" {
+			continue
+		}
+		tmpLegend := charts[0].Legend
+		if paths[0] != "" {
+			tmpLegend = "$custom_all"
+		}
+		sm := ds.PrometheusData(&m.QueryMonitorData{Start:time.Now().Unix()-300, End:time.Now().Unix(), PromQ:promQl, Legend:tmpLegend, Metric:[]string{charts[0].Metric}, Endpoint:[]string{endpointObj.Guid}})
+		for _,v := range sm {
+			for _, path := range paths {
+				if path != "" {
+					if !strings.Contains(v.Name, path) {
+						continue
+					}
+				}
+				chartDto := m.ChartModel{Id: charts[0].Id, Col: charts[0].Col}
+				chartDto.Url = `/dashboard/chart`
+				chartDto.Endpoint = []string{endpointObj.Guid}
+				tmpName := v.Name
+				if strings.Contains(tmpName, ":") {
+					tmpName = tmpName[strings.Index(tmpName,":")+1:]
+				}
+				if path != "" && strings.Contains(tmpName, tagKey+"=") {
+					tmpName = strings.Split(tmpName, tagKey+"=")[1]
+					if strings.Contains(tmpName, ",") {
+						tmpName = strings.Split(tmpName, ",")[0]
+					}else{
+						tmpName = strings.Split(tmpName, "}")[0]
+					}
+				}
+				chartDto.Metric = []string{fmt.Sprintf("%s/%s=%s", charts[0].Metric, tagKey, tmpName)}
+				result = append(result, &chartDto)
 			}
 		}
-		chartDto := m.ChartModel{Id: charts[0].Id, Col: charts[0].Col}
-		chartDto.Url = `/dashboard/chart`
-		chartDto.Endpoint = []string{endpoint}
-		tmpName := v.Name
-		if strings.Contains(tmpName, ":") {
-			tmpName = tmpName[strings.Index(tmpName,":")+1:]
-		}
-		if path != "" && strings.Contains(tmpName, tagKey+"=") {
-			tmpName = strings.Split(tmpName, tagKey+"=")[1]
-			if strings.Contains(tmpName, ",") {
-				tmpName = strings.Split(tmpName, ",")[0]
-			}else{
-				tmpName = strings.Split(tmpName, "}")[0]
-			}
-		}
-		chartDto.Metric = []string{fmt.Sprintf("%s/%s=%s", charts[0].Metric, tagKey, tmpName)}
-		result = append(result, &chartDto)
 	}
+
 	return result,true
 }
 
@@ -398,20 +427,28 @@ func GetChart(c *gin.Context)  {
 	var compareLegend string
 	var sameEndpoint bool
 	var aggType string
+	var subStartSecond,subEndSecond int64
 	// validate config time
 	if paramConfig[0].CompareFirstStart != "" && paramConfig[0].CompareFirstEnd != "" {
-		st,err := time.Parse(m.DatetimeFormat, fmt.Sprintf("%s 00:00:00", paramConfig[0].CompareFirstStart))
+		st,err := time.Parse(m.DateFormatWithZone, fmt.Sprintf("%s 00:00:00 CST", paramConfig[0].CompareFirstStart))
 		if err != nil {
 			mid.ReturnValidateFail(c, "Param compare first start validation failed")
 			return
 		}
-		et,err := time.Parse(m.DatetimeFormat, fmt.Sprintf("%s 23:59:59", paramConfig[0].CompareFirstEnd))
+		et,err := time.Parse(m.DateFormatWithZone, fmt.Sprintf("%s 23:59:59 CST", paramConfig[0].CompareFirstEnd))
 		if err != nil {
 			mid.ReturnValidateFail(c, "Param compare first end validation failed")
 			return
 		}
-		query.Start = st.Unix()
-		query.End = et.Unix()
+		if paramConfig[0].Start != "" && paramConfig[0].End != "" {
+			query.Start,_ = strconv.ParseInt(paramConfig[0].Start, 10, 64)
+			query.End,_ = strconv.ParseInt(paramConfig[0].End, 10, 64)
+			subStartSecond = query.Start - st.Unix()
+			subEndSecond = query.End - st.Unix()
+		}else {
+			query.Start = st.Unix()
+			query.End = et.Unix()
+		}
 		compareLegend = fmt.Sprintf("%s_%s", paramConfig[0].CompareFirstStart, paramConfig[0].CompareFirstEnd)
 	}else {
 		if paramConfig[0].Time != "" && paramConfig[0].Start == "" {
@@ -439,9 +476,14 @@ func GetChart(c *gin.Context)  {
 	var querys []m.QueryMonitorData
 	step := 10
 	var firstEndpoint,unit string
+	var compareSubTime int64
+	var compareSecondLegend string
 	if paramConfig[0].Id > 0 {
 		sameEndpoint = true
 		recordMap := make(map[string]bool)
+		firstEndpointObj := m.EndpointTable{Guid:paramConfig[0].Endpoint}
+		db.GetEndpoint(&firstEndpointObj)
+		step = firstEndpointObj.Step
 		// one endpoint -> metrics
 		for _,tmpParamConfig := range paramConfig {
 			tmpIndex := fmt.Sprintf("%d^%s", tmpParamConfig.Id, tmpParamConfig.Endpoint)
@@ -485,17 +527,24 @@ func GetChart(c *gin.Context)  {
 				if len(paramConfig) > 1 && strings.Contains(chart.Legend, "metric") {
 					tmpLegend = "$custom"
 				}
-				querys = append(querys, m.QueryMonitorData{Start: query.Start, End: query.End, PromQ: tmpPromQl, Legend: tmpLegend, Metric: []string{v}, Endpoint: []string{tmpParamConfig.Endpoint}, CompareLegend:compareLegend, SameEndpoint:sameEndpoint})
+				querys = append(querys, m.QueryMonitorData{Start: query.Start, End: query.End, PromQ: tmpPromQl, Legend: tmpLegend, Metric: []string{v}, Endpoint: []string{tmpParamConfig.Endpoint}, CompareLegend:compareLegend, SameEndpoint:sameEndpoint, Step:step})
 				if paramConfig[0].CompareSecondStart != "" && paramConfig[0].CompareSecondEnd != "" {
-					st,sErr := time.Parse(m.DatetimeFormat, fmt.Sprintf("%s 00:00:00", paramConfig[0].CompareSecondStart))
-					et,eErr := time.Parse(m.DatetimeFormat, fmt.Sprintf("%s 23:59:59", paramConfig[0].CompareSecondEnd))
+					st,sErr := time.Parse(m.DateFormatWithZone, fmt.Sprintf("%s 00:00:00 CST", paramConfig[0].CompareSecondStart))
+					et,eErr := time.Parse(m.DateFormatWithZone, fmt.Sprintf("%s 23:59:59 CST", paramConfig[0].CompareSecondEnd))
+					stTimestamp := st.Unix()
+					etTimestamp := et.Unix()
 					if sErr == nil && eErr == nil {
-						if (et.Unix()-st.Unix()) != (query.End-query.Start) {
-							mid.ReturnValidateFail(c, "Param compare fist and second do not fetch ")
-							return
+						if subStartSecond > 0 && subEndSecond > 0 {
+							stTimestamp = st.Unix() + subStartSecond
+							etTimestamp = st.Unix() + subEndSecond
+						}else{
+							if (et.Unix() - st.Unix()) != (query.End - query.Start) {
+								etTimestamp = stTimestamp + (query.End - query.Start)
+							}
 						}
-						compareLegend = fmt.Sprintf("%s_%s", paramConfig[0].CompareSecondStart, paramConfig[0].CompareSecondEnd)
-						querys = append(querys, m.QueryMonitorData{Start: st.Unix(), End: et.Unix(), PromQ: tmpPromQl, Legend: tmpLegend, Metric: []string{v}, Endpoint: []string{tmpParamConfig.Endpoint}, CompareLegend:compareLegend, SameEndpoint:sameEndpoint})
+						compareSubTime = stTimestamp-query.Start
+						compareSecondLegend = fmt.Sprintf("%s_%s", paramConfig[0].CompareSecondStart, paramConfig[0].CompareSecondEnd)
+						querys = append(querys, m.QueryMonitorData{Start: stTimestamp, End: etTimestamp, PromQ: tmpPromQl, Legend: tmpLegend, Metric: []string{v}, Endpoint: []string{tmpParamConfig.Endpoint}, CompareLegend:compareSecondLegend, SameEndpoint:sameEndpoint, Step:step})
 					}
 				}
 			}
@@ -552,6 +601,7 @@ func GetChart(c *gin.Context)  {
 				}else {
 					v.PromQl = strings.Replace(v.PromQl, "$address", endpointObj.Address, -1)
 				}
+				step = endpointObj.Step
 			}
 			if strings.Contains(v.PromQl, "$") {
 				re, _ := regexp.Compile("=\"[\\$]+[^\"]+\"")
@@ -560,7 +610,7 @@ func GetChart(c *gin.Context)  {
 					v.PromQl = strings.Replace(v.PromQl, string(vv), "=~\".*\"", -1)
 				}
 			}
-			querys = append(querys, m.QueryMonitorData{Start:query.Start, End:query.End, PromQ:v.PromQl, Legend:customLegend, Metric:[]string{v.Metric}, Endpoint:[]string{v.Endpoint}})
+			querys = append(querys, m.QueryMonitorData{Start:query.Start, End:query.End, PromQ:v.PromQl, Legend:customLegend, Metric:[]string{v.Metric}, Endpoint:[]string{v.Endpoint}, Step:step})
 		}
 	}
 	if len(querys) == 0 {
@@ -581,8 +631,12 @@ func GetChart(c *gin.Context)  {
 	//var firstSerialTime float64
 	for i, s := range serials {
 		if strings.Contains(s.Name, "$metric") {
-			mid.LogInfo(fmt.Sprintf("sname: %s, query %d metric : %s ", s.Name, i, querys[i].Metric))
-			s.Name = strings.Replace(s.Name, "$metric", querys[i].Metric[0], -1)
+			queryIndex := i
+			if i >= len(querys) {
+				queryIndex = len(querys)-1
+			}
+			mid.LogInfo(fmt.Sprintf("sname: %s, query %d metric : %s ", s.Name, i, querys[queryIndex].Metric))
+			s.Name = strings.Replace(s.Name, "$metric", querys[queryIndex].Metric[0], -1)
 		}
 		eOption.Legend = append(eOption.Legend, s.Name)
 		if eOption.Title == "${auto}" {
@@ -596,6 +650,11 @@ func GetChart(c *gin.Context)  {
 				aggType = "avg"
 			}
 			s.Data = db.Aggregate(s.Data, agg, aggType)
+		}
+		if compareSubTime > 0 {
+			if strings.Contains(s.Name, compareSecondLegend) {
+				s.Data = db.CompareSubData(s.Data, float64(compareSubTime)*1000)
+			}
 		}
 	}
 	eOption.Xaxis = make(map[string]interface{})
@@ -859,4 +918,13 @@ func GetEndpointsByIp(c *gin.Context)  {
 		return
 	}
 	mid.ReturnData(c, endpoints)
+}
+
+func DisplayWatermark(c *gin.Context)  {
+	result := m.DisplayDemoFlagDto{Display:true}
+	isDisplay := strings.ToLower(os.Getenv("DEMO_FLAG"))
+	if isDisplay == "n" || isDisplay == "no" || isDisplay == "false" {
+		result.Display = false
+	}
+	mid.ReturnData(c, result)
 }

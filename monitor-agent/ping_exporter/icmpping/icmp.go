@@ -60,13 +60,13 @@ func InitIcmpBytes() {
 	icmpBytes = buffer.Bytes()
 }
 
-func StartPing(distIp string, timeout int) int {
+func StartPing(distIp string, timeout int) (int,float64) {
 	var raddr net.IPAddr = net.IPAddr{IP: net.ParseIP(distIp)}
 	//如果你要使用网络层的其他协议还可以设置成 ip:ospf、ip:arp 等
 	conn, err := net.DialIP("ip4:icmp", &localAddress, &raddr)
 	if err != nil {
 		fmt.Println(err.Error())
-		return 3
+		return 3,0
 	}
 	defer conn.Close()
 	re := 0
@@ -80,40 +80,40 @@ func StartPing(distIp string, timeout int) int {
 		}
 		re += r
 	}
-	endTime := time.Now()
-	useTime := float64(endTime.Sub(startTime).Nanoseconds()) / 1e6
+	useTime := float64(time.Now().Sub(startTime).Nanoseconds()) / 1e6
 	if re >= 3 {  // 发4个ICMP包,如果有3个回复成功则算ping通
 		addSuccessIp(distIp)
-		return 0
+		return 0,useTime/float64(re)
 	}else{
 		if tq == 4 {
 			addSuccessIp(distIp)
-			return 0
+			return 0,useTime
 		}
 		if re == 1 && tq == 3 {
 			addSuccessIp(distIp)
-			return 0
+			return 0,useTime
 		}
 		if re == 2 && tq == 2{  // 如果有2个回复成功和2个太快回复(下面把这当做了一种异常,有时候主机不通也会出现这种情况),也算主机是通的
 			addSuccessIp(distIp)
-			return 0
+			return 0,useTime/2
 		}
 		if useTime < 6100 {  // 如果4个包不是全部2秒超时,则算异常需要重试
 			funcs.DebugLog("%s ping retry,%.3f ms, renum : %d ## ", distIp, useTime, re)
 			t := GetRetryMap(distIp, re)
 			if t>=4{  // 如果这几次检测中有总数超过4个成功的包返回,也算是成功,经测试在网络流量高的时候会有大概5%-10%的测试IP会只返回2个响应成功的包
 				addSuccessIp(distIp)
-				return 0
+				return 0,useTime/float64(re)
 			}
 			addRetryIp(distIp)
-			return 2
+			return 2,0
 		}else {
 			funcs.DebugLog("%s ping fail,%.3f ms, renum : %d ## ", distIp, useTime, re)
-			return 1
+			return 1,useTime
 		}
 	}
 }
 
+// return 0->down 1->up 2->too quick(maybe get the result from system cache)
 func doping(conn net.IPConn, distIp string, timeout int) int {
 	// 发送请求
 	if _, err := conn.Write(icmpBytes); err != nil {
@@ -127,8 +127,7 @@ func doping(conn net.IPConn, distIp string, timeout int) int {
 	conn.SetReadDeadline(time.Now().Add(time.Second * time.Duration(timeout)))
 	// 读取返回报文
 	_,err := conn.Read(receiveByte)
-	endTime := time.Now()
-	useTime := float64(endTime.Sub(startTime).Nanoseconds()) / 1e6
+	useTime := float64(time.Now().Sub(startTime).Nanoseconds()) / 1e6
 	if err != nil {
 		//fmt.Printf("%s ping time out, use time %.3f \n", distIp, use_time)
 		isOk = 0

@@ -39,7 +39,7 @@ func UpdateEndpointBusinessConfig(c *gin.Context)  {
 		if err != nil {
 			mid.ReturnError(c, "Update business fail ", err)
 		}else{
-			err = updateNodeExporterBusinessConfig(param.EndpointId)
+			err = UpdateNodeExporterBusinessConfig(param.EndpointId)
 			if err != nil {
 				mid.ReturnError(c, "Update node exporter config fail ", err)
 				return
@@ -55,7 +55,7 @@ type businessHttpDto struct {
 	Paths  []string  `json:"paths"`
 }
 
-func updateNodeExporterBusinessConfig(endpointId int) error {
+func UpdateNodeExporterBusinessConfig(endpointId int) error {
 	err,data := db.GetBusinessList(endpointId, "")
 	if err != nil {
 		mid.LogError("Update node_exporter fail ", err)
