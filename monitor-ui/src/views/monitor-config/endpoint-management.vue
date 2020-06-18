@@ -460,13 +460,13 @@
         this.$root.$tableUtil.initTable(this, 'GET', url, params)
       },
       filterMoreBtn (rowData) {
-        let moreBtnGroup = ['thresholdConfig','historyAlarm','logManagement', 'portManagement']
+        let moreBtnGroup = ['thresholdConfig','historyAlarm','logManagement', 'portManagement', 'deleteConfirm']
         if (rowData.type === 'host') {
           moreBtnGroup.push('processManagement', 'businessManagement')
         }
-        if (this.showGroupMsg) {
-          moreBtnGroup.push('deleteConfirm')
-        }
+        // if (this.showGroupMsg) {
+        //   moreBtnGroup.push('deleteConfirm')
+        // }
         return moreBtnGroup
       },
       add () {
@@ -506,12 +506,16 @@
         this.pageConfig.table.tableData.forEach((item)=>{
           endpoints.push(item.guid.split(':')[0])
         })
-        let params = {
-          grp: this.groupMsg.id,
-          endpoints: [parseInt(rowData.id)],
-          operation: 'delete'
+        let params = {guid: rowData.guid, endpoints: [parseInt(rowData.id)]}
+        let url = this.$root.apiCenter.endpointManagement.deregister.api
+        let methodType = 'GET'
+        if (this.groupMsg.id) {
+          url = this.$root.apiCenter.endpointManagement.update.api
+          params.grp = this.groupMsg.id
+          params.operation = 'delete'
+          methodType = 'POST'
         }
-        this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.endpointManagement.update.api, params, () => {
+        this.$root.$httpRequestEntrance.httpRequestEntrance(methodType, url, params, () => {
           this.$root.$eventBus.$emit('hideConfirmModal')
           this.$Message.success(this.$t('tips.success'))
           this.initData(this.pageConfig.CRUD, this.pageConfig)

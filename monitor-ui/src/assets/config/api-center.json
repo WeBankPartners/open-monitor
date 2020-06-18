@@ -49,8 +49,11 @@
         "update": {
             "api": "alarm/endpoint/update"
         },
+        "deregister": {
+            "api": "agent/deregister"
+        },
         "register": {
-            "api": "agent/register_new"
+            "api": "agent/register"
         }
     },
     "thresholdManagement": {

@@ -2,15 +2,16 @@ package icmpping
 
 import (
 	"sync"
+	"github.com/WeBankPartners/open-monitor/monitor-agent/ping_exporter/funcs"
 )
 
 var (
 	TestModel bool
 	localIp    []string   // 存储本机IP
 	timeout int
-	lastResultMap = make(map[string]int)  // 保存上次结果，和本次进行对比
+	lastResultMap = make(map[string]funcs.PingResultObj)  // 保存上次结果，和本次进行对比
 
-	resultMap = make(map[string]int)   // 保存本次结果
+	resultMap = make(map[string]funcs.PingResultObj)   // 保存本次结果
 	resultMapLock = new(sync.RWMutex)
 
 	retryMap = make(map[string]int)   // 保存需要重试的IP
@@ -59,13 +60,13 @@ func ClearRetryIp(){
 	retryListLock.Unlock()
 }
 
-func writeResultMap(ip string, re int) {
+func writeResultMap(ip string, re int, useTime float64) {
 	resultMapLock.Lock()
 	defer resultMapLock.Unlock()
-	resultMap[ip] = re
+	resultMap[ip] = funcs.PingResultObj{UpDown:re, UseTime:useTime}
 }
 
-func readResultMap() map[string]int {
+func readResultMap() map[string]funcs.PingResultObj {
 	resultMapLock.RLock()
 	defer resultMapLock.RUnlock()
 	return resultMap
