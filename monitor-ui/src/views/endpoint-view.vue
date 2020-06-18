@@ -79,7 +79,7 @@ export default {
     },
     zoomChart (data) {
       this.showMaxChart = true
-      this.$refs.maxChart.getChartConfig(data)
+      this.$refs.maxChart.getChartData(data)
     }
       
   },

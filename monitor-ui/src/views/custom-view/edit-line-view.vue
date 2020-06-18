@@ -48,6 +48,7 @@
                       v-model="templateQuery.endpoint"
                       filterable
                       remote
+                      :placeholder="$t('placeholder.requestMoreData')"
                       @on-open-change="getEndpointList('.')"
                       :remote-method="getEndpointList"
                     >
@@ -59,6 +60,7 @@
                         <TagShow :tagName="option.option_type_name" :index="index"></TagShow> 
                         {{option.option_text}}
                       </Option>
+                      <Option value="moreTips" disabled>{{$t('tips.requestMoreData')}}</Option>
                     </Select>
                   </div>
                 </li>

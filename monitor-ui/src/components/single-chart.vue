@@ -44,19 +44,19 @@ export default {
   },
   watch: {
     params: function () {
-      this.getchartdata()
+      this.getChartData()
       if (this.params.autoRefresh > 0) {
         this.interval = setInterval(()=>{
-          this.getchartdata()
+          this.getChartData()
         },this.params.autoRefresh*1000)
       }
     }
   },
   mounted() {
-    this.getchartdata()
+    this.getChartData()
     if (this.params.autoRefresh > 0) {
       this.interval = setInterval(()=>{
-        this.getchartdata()
+        this.getChartData()
       },this.params.autoRefresh*1000)
     }
   },
@@ -64,7 +64,7 @@ export default {
     clearInterval(this.interval)
   },
   methods: {
-    getchartdata () {
+    getChartData (tmp, start, end) {
       let params = []
       if (this.params.sys) {
         this.chartInfo.endpoint.forEach((ep) => {
@@ -74,8 +74,8 @@ export default {
               endpoint: ep,
               metric: me,
               time: this.params.time.toString(),
-              start: this.params.start + '',
-              end: this.params.end + ''
+              start: start ? start : this.params.start + '',
+              end: end ? end : this.params.end + ''
             })
           })
         })
@@ -85,8 +85,8 @@ export default {
           endpoint: this.chartInfo.endpoint[0],
           metric: this.chartInfo.metric[0],
           time: this.params.time.toString(),
-          start: this.params.start + '',
-          end: this.params.end + '',
+          start: start ? start : this.params.start + '',
+          end: end ? end : this.params.end + '',
           compare_first_start: this.params.compare_first_start,
           compare_first_end: this.params.compare_first_end,
           compare_second_start: this.params.compare_second_start,
@@ -94,7 +94,7 @@ export default {
         })
       }
       this.$httpRequestEntrance.httpRequestEntrance('POST', 'dashboard/newchart', params, responseData => {
-        const chartConfig = {editTitle: true}
+        const chartConfig = {editTitle: true, zoomCallback: true}
         responseData.metric = this.chartInfo.metric[0]
         readyToDraw(this,responseData, this.chartIndex, chartConfig)
       })

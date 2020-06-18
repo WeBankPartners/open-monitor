@@ -5,7 +5,7 @@
   "deploy": {
     "enable": true,
     "start_port": 20000,
-    "package_path": ["./exporters/mysqld_exporter","./exporters/redis_exporter","./exporters/tomcat_exporter"],
+    "package_path": ["./exporters/mysqld_exporter","./exporters/redis_exporter","./exporters/tomcat_exporter","./exporters/nginx_exporter"],
     "deploy_dir": "/app/deploy",
     "each_max_process": 50
   },
