@@ -290,7 +290,7 @@ func updateConfigFile(tplId int) error {
 		}
 		for _,v := range query.Tpl[len(query.Tpl)-1].Strategy {
 			tmpRfu := m.RFRule{}
-			tmpRfu.Alert = v.Metric
+			tmpRfu.Alert = fmt.Sprintf("%s_%d", v.Metric, v.Id)
 			if !strings.Contains(v.Cond, " ") && v.Cond != "" {
 				if strings.Contains(v.Cond, "=") {
 					v.Cond = v.Cond[:2] + " " + v.Cond[2:]
