@@ -44,6 +44,7 @@
         <systemParameter name="MONITOR_REDIS_GROUP" scopeType="global" defaultValue="default_redis_group"/>
         <systemParameter name="MONITOR_TOMCAT_GROUP" scopeType="global" defaultValue="default_tomcat_group"/>
         <systemParameter name="MONITOR_NGINX_GROUP" scopeType="global" defaultValue="default_nginx_group"/>
+        <systemParameter name="MONITOR_HTTP_GROUP" scopeType="global" defaultValue="default_http_group"/>
         <systemParameter name="MONITOR_JAVA_GROUP" scopeType="global" defaultValue="default_java_group"/>
         <systemParameter name="HOST_EXPORTER_S3_PATH" scopeType="global" defaultValue="http://127.0.0.1:9000/wecube-agent/node_exporter_v2.1.tar.gz"/>
         <systemParameter name="MONITOR_MAIL_SENDER_USER" scopeType="global" defaultValue="default_user"/>
@@ -63,6 +64,8 @@
         <systemParameter name="MONITOR_SCRAPE_STEP_10" scopeType="global" defaultValue="10"/>
         <systemParameter name="MONITOR_SCRAPE_STEP_30" scopeType="global" defaultValue="30"/>
         <systemParameter name="MONITOR_SCRAPE_STEP_60" scopeType="global" defaultValue="60"/>
+        <systemParameter name="MONITOR_HTTP_METHOD_GET" scopeType="global" defaultValue="get"/>
+        <systemParameter name="MONITOR_HTTP_METHOD_POST" scopeType="global" defaultValue="post"/>
     </systemParameters>
 
 
@@ -439,6 +442,56 @@
                 </outputParameters>
             </interface>
             <interface action="stop-alarm" path="/wecube-monitor/api/v1/agent/export/stop/nginx" filterRule="">
+                <inputParameters>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance_ip</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">port</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+        </plugin>
+        <plugin name="http" targetPackage="" targetEntity="" registerName="" targetEntityFilterRule="">
+            <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/http" filterRule="">
+                <inputParameters>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance_ip</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">url</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_HTTP_METHOD_GET">method</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_HTTP_GROUP">group</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+            <interface action="deregister" path="/wecube-monitor/api/v1/agent/export/deregister/http" filterRule="">
+                <inputParameters>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance_ip</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">url</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_HTTP_METHOD_GET">method</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_HTTP_GROUP">group</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+            <interface action="start-alarm" path="/wecube-monitor/api/v1/agent/export/start/http" filterRule="">
+                <inputParameters>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance_ip</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">port</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+            <interface action="stop-alarm" path="/wecube-monitor/api/v1/agent/export/stop/http" filterRule="">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance_ip</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">port</parameter>
