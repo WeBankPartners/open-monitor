@@ -51,6 +51,8 @@ type endpointRequestObj struct {
 	PasswordSeed  string  `json:"password_seed"`
 	AppLogPaths   string  `json:"app_log_paths"`
 	Step  string  `json:"step"`
+	Url   string  `json:"url"`
+	Method  string  `json:"method"`
 }
 
 func ExportAgentNew(c *gin.Context)  {
@@ -110,6 +112,8 @@ func ExportAgentNew(c *gin.Context)  {
 			param = m.RegisterParamNew{Type: tmpAgentType, Ip: v.HostIp, Port: "9100", AddDefaultGroup:true, AgentManager:false, FetchMetric:true, DefaultGroupName:v.Group, Step:tmpStep}
 		} else {
 			param = m.RegisterParamNew{Type: tmpAgentType, Ip: v.InstanceIp, Port: v.Port, Name: v.Instance, User: v.User, Password: v.Password, AgentManager:true, AddDefaultGroup:true, FetchMetric:true, DefaultGroupName:v.Group, Step:tmpStep}
+			param.Url = v.Url
+			param.Method = v.Method
 		}
 		if action == "register" {
 			validateMessage,inputErr = AgentRegister(param)
