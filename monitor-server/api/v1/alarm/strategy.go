@@ -223,15 +223,16 @@ func updateConfigFile(tplId int) error {
 		fileName = query.Tpl[len(query.Tpl)-1].ObjName
 		if isGrp {
 			tmpStrategy := []*m.StrategyTable{}
-			tmpStrategyMap := make(map[string]*m.StrategyTable)
+			//tmpStrategyMap := make(map[string]*m.StrategyTable)
 			for _,v := range query.Tpl {
 				for _,vv := range v.Strategy {
-					tmpStrategyMap[vv.Metric] = vv
+					//tmpStrategyMap[vv.Metric] = vv
+					tmpStrategy = append(tmpStrategy, vv)
 				}
 			}
-			for _,v := range tmpStrategyMap {
-				tmpStrategy = append(tmpStrategy, v)
-			}
+			//for _,v := range tmpStrategyMap {
+			//	tmpStrategy = append(tmpStrategy, v)
+			//}
 			query.Tpl[len(query.Tpl)-1].Strategy = tmpStrategy
 		}
 	}else{
