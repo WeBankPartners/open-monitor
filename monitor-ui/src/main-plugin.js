@@ -50,6 +50,9 @@ window.use(VeeValidate)
 import DelConfirm from '@/components/del-confirm/index.js'
 window.use(DelConfirm)
 
+import Dashboard from '@/views/dashboard'
+window.addHomepageComponent && window.addHomepageComponent({name:()=>{return window.vm.$t('menu.systemName')},component: Dashboard})
+
 window.component('tdSlot', {
   render(createElement) {
     function deepClone(vnodes, createElement) {
