@@ -156,7 +156,8 @@
       "two": "2. Click 'Search' button to view the monitor graph based on the selected metric.",
       "three": "3. Click 'Add metric' button to config the metric, then click Save button to save the configuration."
     },
-    "requestMoreData": "For more objects, please enter a query ..."
+    "requestMoreData": "For more objects, please enter a query ...",
+    "dashboardEmpty": "The homepage has not been set, please go to the monitoring custom view to set"
   },
   "delConfirm": {
     "title": "Delete confirmation",
