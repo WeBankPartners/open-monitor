@@ -75,6 +75,7 @@ export const drawChart = function(that,config,userConfig) {
   let finalConfig = Object.assign(originConfig, userConfig)
   // 基于准备好的dom，初始化echarts实例
   var myChart = echarts.init(document.getElementById(that.elId))
+  myChart.resize()
   if (originConfig.clear) {
     myChart.clear()
   }
@@ -332,5 +333,6 @@ export const drawPieChart = function(that, responseData) {
     ]
 };
   var myChart = echarts.init(document.getElementById(that.elId))
+  myChart.resize()
   myChart.setOption(option)
 }
