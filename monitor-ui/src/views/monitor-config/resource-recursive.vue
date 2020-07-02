@@ -15,7 +15,7 @@
               <button class="btn-cancle-f btn-small" v-if="isPlugin" @click="alarmCallback(item)">{{$t('resourceLevel.alarmCallback')}}</button>
               <i class="fa fa-plus" aria-hidden="true" @click="addPanel(item)"> </i>
               <i class="fa fa-pencil" @click="editPanal(item)" aria-hidden="true"></i>
-              <i class="fa fa-trash-o" @click="deleteConfirm(item)" aria-hidden="true"></i>
+              <i class="fa fa-trash-o" @click="deleteConfirmModal(item)" aria-hidden="true"></i>
             </div>
           </div>
         </div>
@@ -149,6 +149,17 @@
         </Tag>
       </template>
     </Modal>
+    <Modal
+      v-model="isShowWarning"
+      title="Delete confirmation"
+      @on-ok="ok"
+      @on-cancel="cancle">
+      <div class="modal-body" style="padding:30px">
+        <div style="text-align:center">
+          <p style="color: red">Will you delete it?</p>
+        </div>
+      </div>
+    </Modal>
   </div>
 </template>
 
@@ -158,6 +169,7 @@ export default {
   name: 'recursive',
   data() {
     return {
+      isShowWarning: false,
       isEditPanal: false,
       isAdd: true,
       parentPanal: null,
@@ -350,21 +362,31 @@ export default {
       this.isAdd = true
       this.isEditPanal = true
     },
-    deleteConfirm (panalData) {
-      this.parentPanal =  panalData.guid
-      this.$delConfirm({
-        msg: panalData.guid,
-        callback: () => {
-          this.deletePanal(panalData)
-        }
-      })
+    deleteConfirmModal (rowData) {
+      this.selectedData = rowData
+      this.isShowWarning = true
     },
+    ok () {
+      this.deletePanal(this.selectedData)
+    },
+    cancle () {
+      this.isShowWarning = false
+    },
+    // deleteConfirm (panalData) {
+    //   this.parentPanal =  panalData.guid
+    //   this.$delConfirm({
+    //     msg: panalData.guid,
+    //     callback: () => {
+    //       this.deletePanal(panalData)
+    //     }
+    //   })
+    // },
     deletePanal () {
       const params = {
-        guid: this.parentPanal
+        guid: this.selectedData.guid
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', 'alarm/org/panel/delete', params, () => {
-        this.$root.$eventBus.$emit('hideConfirmModal')
+        // this.$root.$eventBus.$emit('hideConfirmModal')
         this.$Message.success(this.$t('tips.success'))
         this.$root.$eventBus.$emit('updateResource', '')
       })

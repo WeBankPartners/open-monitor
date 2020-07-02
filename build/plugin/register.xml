@@ -3,8 +3,8 @@
 
     <!-- 1.依赖分析 - 描述运行本插件包需要的其他插件包 -->
     <packageDependencies>
-        <packageDependency name="wecmdb" version="v1.4.0"/>
-        <packageDependency name="saltstack" version="v1.8.0"/>
+        <packageDependency name="wecmdb" version="v1.5.0"/>
+        <packageDependency name="saltstack" version="v1.9.0"/>
     </packageDependencies>
 
     <!-- 2.菜单注入 - 描述运行本插件包需要注入的菜单 -->
@@ -39,30 +39,32 @@
         <systemParameter name="REDIS_MONITOR_PWD" scopeType="global" defaultValue="prom_pwd"/>
         <systemParameter name="JMX_MONITOR_USER" scopeType="global" defaultValue="exporter"/>
         <systemParameter name="JMX_MONITOR_PWD" scopeType="global" defaultValue="prom_pwd"/>
-        <systemParameter name="MONITOR_HOST_GROUP" scopeType="global" defaultValue="default_host_group"/>
-        <systemParameter name="MONITOR_MYSQL_GROUP" scopeType="global" defaultValue="default_mysql_group"/>
-        <systemParameter name="MONITOR_REDIS_GROUP" scopeType="global" defaultValue="default_redis_group"/>
-        <systemParameter name="MONITOR_TOMCAT_GROUP" scopeType="global" defaultValue="default_tomcat_group"/>
-        <systemParameter name="MONITOR_NGINX_GROUP" scopeType="global" defaultValue="default_nginx_group"/>
-        <systemParameter name="MONITOR_JAVA_GROUP" scopeType="global" defaultValue="default_java_group"/>
+        <systemParameter name="MONITOR_HOST_GROUP" scopeType="plugins" defaultValue="default_host_group"/>
+        <systemParameter name="MONITOR_MYSQL_GROUP" scopeType="plugins" defaultValue="default_mysql_group"/>
+        <systemParameter name="MONITOR_REDIS_GROUP" scopeType="plugins" defaultValue="default_redis_group"/>
+        <systemParameter name="MONITOR_TOMCAT_GROUP" scopeType="plugins" defaultValue="default_tomcat_group"/>
+        <systemParameter name="MONITOR_NGINX_GROUP" scopeType="plugins" defaultValue="default_nginx_group"/>
+        <systemParameter name="MONITOR_JAVA_GROUP" scopeType="plugins" defaultValue="default_java_group"/>
         <systemParameter name="HOST_EXPORTER_S3_PATH" scopeType="global" defaultValue="http://127.0.0.1:9000/wecube-agent/node_exporter_v2.1.tar.gz"/>
         <systemParameter name="MONITOR_MAIL_SENDER_USER" scopeType="global" defaultValue="default_user"/>
         <systemParameter name="MONITOR_MAIL_SENDER_SERVER" scopeType="global" defaultValue="default_server"/>
         <systemParameter name="MONITOR_MAIL_SENDER_PASSWORD" scopeType="global" defaultValue="default_password"/>
-        <systemParameter name="MONITOR_ALARM_FIRING_CALLBACK" scopeType="global" defaultValue="default_firing_callback"/>
-        <systemParameter name="MONITOR_ALARM_RECOVER_CALLBACK" scopeType="global" defaultValue="default_recover_callback"/>
+        <systemParameter name="MONITOR_ALARM_FIRING_CALLBACK" scopeType="plugins" defaultValue="default_firing_callback"/>
+        <systemParameter name="MONITOR_ALARM_RECOVER_CALLBACK" scopeType="plugins" defaultValue="default_recover_callback"/>
         <systemParameter name="HOST_EXPORTER_INSTALL_SCRIPT" scopeType="global" defaultValue="/tmp/monitor/node_exporter_v2.1/start.sh"/>
         <systemParameter name="HOST_EXPORTER_UNPACK" scopeType="global" defaultValue="true"/>
         <systemParameter name="HOST_EXPORTER_UPLOAD_PATH" scopeType="global" defaultValue="/tmp/monitor/"/>
-        <systemParameter name="MONITOR_PING_GROUP" scopeType="global" defaultValue="default_ping_group"/>
-        <systemParameter name="MONITOR_TELNET_GROUP" scopeType="global" defaultValue="default_telnet_group"/>
-        <systemParameter name="MONITOR_DASHBOARD_DELETE_ALL" scopeType="global" defaultValue="Y"/>
-        <systemParameter name="MONITOR_DASHBOARD_NOT_DELETE_ALL" scopeType="global" defaultValue="N"/>
-        <systemParameter name="MONITOR_SCRAPE_STEP_1" scopeType="global" defaultValue="1"/>
-        <systemParameter name="MONITOR_SCRAPE_STEP_5" scopeType="global" defaultValue="5"/>
-        <systemParameter name="MONITOR_SCRAPE_STEP_10" scopeType="global" defaultValue="10"/>
-        <systemParameter name="MONITOR_SCRAPE_STEP_30" scopeType="global" defaultValue="30"/>
-        <systemParameter name="MONITOR_SCRAPE_STEP_60" scopeType="global" defaultValue="60"/>
+        <systemParameter name="MONITOR_PING_GROUP" scopeType="plugins" defaultValue="default_ping_group"/>
+        <systemParameter name="MONITOR_TELNET_GROUP" scopeType="plugins" defaultValue="default_telnet_group"/>
+        <systemParameter name="MONITOR_DASHBOARD_DELETE_ALL" scopeType="plugins" defaultValue="Y"/>
+        <systemParameter name="MONITOR_DASHBOARD_NOT_DELETE_ALL" scopeType="plugins" defaultValue="N"/>
+        <systemParameter name="MONITOR_SCRAPE_STEP_1" scopeType="plugins" defaultValue="1"/>
+        <systemParameter name="MONITOR_SCRAPE_STEP_5" scopeType="plugins" defaultValue="5"/>
+        <systemParameter name="MONITOR_SCRAPE_STEP_10" scopeType="plugins" defaultValue="10"/>
+        <systemParameter name="MONITOR_SCRAPE_STEP_30" scopeType="plugins" defaultValue="30"/>
+        <systemParameter name="MONITOR_SCRAPE_STEP_60" scopeType="plugins" defaultValue="60"/>
+        <systemParameter name="MONITOR_HTTP_METHOD_GET" scopeType="global" defaultValue="get"/>
+        <systemParameter name="MONITOR_HTTP_METHOD_POST" scopeType="global" defaultValue="post"/>
     </systemParameters>
 
 
@@ -450,6 +452,56 @@
                 </outputParameters>
             </interface>
         </plugin>
+        <plugin name="http" targetPackage="" targetEntity="" registerName="" targetEntityFilterRule="">
+            <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/http" filterRule="">
+                <inputParameters>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance_ip</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">url</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_HTTP_METHOD_GET">method</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_HTTP_GROUP">group</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+            <interface action="deregister" path="/wecube-monitor/api/v1/agent/export/deregister/http" filterRule="">
+                <inputParameters>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance_ip</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">url</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_HTTP_METHOD_GET">method</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_HTTP_GROUP">group</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+            <interface action="start-alarm" path="/wecube-monitor/api/v1/agent/export/start/http" filterRule="">
+                <inputParameters>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance_ip</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">port</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+            <interface action="stop-alarm" path="/wecube-monitor/api/v1/agent/export/stop/http" filterRule="">
+                <inputParameters>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance_ip</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">port</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+        </plugin>
 
         <!--最佳实践-->
         <plugin name="host" targetPackage="wecmdb" targetEntity="host_resource_instance" registerName="resource" targetEntityFilterRule="">
@@ -457,6 +509,7 @@
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:host_resource_instance.ip_address">host_ip</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_HOST_GROUP">group</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_SCRAPE_STEP_10">step</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
@@ -500,6 +553,7 @@
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:rdb_resource_instance.code">instance</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MYSQL_MONITOR_USER">user</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MYSQL_MONITOR_PWD">password</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_SCRAPE_STEP_10">step</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
@@ -550,7 +604,8 @@
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:cache_resource_instance.user_name">user</parameter>
                     <parameter datatype="string" required="N" sensitiveData="Y" mappingType="entity" mappingEntityExpression="wecmdb:cache_resource_instance.user_password">password</parameter>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:cache_resource_instance.guid">password_guid</parameter>
-                    <parameter datatype="string" mappingType="system_variable" mappingSystemVariableName="ENCRYPT_SEED" required="N" sensitiveData="N">password_seed</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="ENCRYPT_SEED">password_seed</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_SCRAPE_STEP_10">step</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
@@ -592,7 +647,7 @@
             </interface>
         </plugin>
         <plugin name="java" targetPackage="wecmdb" targetEntity="app_instance" registerName="app" targetEntityFilterRule="">
-            <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/java" filterRule="{state_code eq 'created'}{fixed_date is NULL}{deploy_user eq 'javadeploy'}">
+            <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/java" filterRule="{state_code eq 'created'}{fixed_date is NULL}">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.host_resource_instance>wecmdb:host_resource_instance.ip_address">instance_ip</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.monitor_port">port</parameter>
@@ -601,13 +656,14 @@
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.monitor_user">user</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="Y" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.monitor_password">password</parameter>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.app_log_files">app_log_paths</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_SCRAPE_STEP_10">step</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="deregister" path="/wecube-monitor/api/v1/agent/export/deregister/java" filterRule="{state_code eq 'destroyed'}{fixed_date is NULL}{deploy_user eq 'javadeploy'}">
+            <interface action="deregister" path="/wecube-monitor/api/v1/agent/export/deregister/java" filterRule="{state_code eq 'destroyed'}{fixed_date is NULL}">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.host_resource_instance>wecmdb:host_resource_instance.ip_address">instance_ip</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.monitor_port">port</parameter>
@@ -618,7 +674,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="start-alarm" path="/wecube-monitor/api/v1/agent/export/start/java" filterRule="{state_code eq 'changed'}{fixed_date is NULL}{deploy_user eq 'javadeploy'}">
+            <interface action="start-alarm" path="/wecube-monitor/api/v1/agent/export/start/java" filterRule="{state_code eq 'changed'}{fixed_date is NULL}">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.host_resource_instance>wecmdb:host_resource_instance.ip_address">instance_ip</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.monitor_port">port</parameter>
@@ -629,7 +685,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="stop-alarm" path="/wecube-monitor/api/v1/agent/export/stop/java" filterRule="{state_code eq 'changed'}{fixed_date is NULL}{deploy_user eq 'javadeploy'}">
+            <interface action="stop-alarm" path="/wecube-monitor/api/v1/agent/export/stop/java" filterRule="{state_code eq 'changed'}{fixed_date is NULL}">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.host_resource_instance>wecmdb:host_resource_instance.ip_address">instance_ip</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.monitor_port">port</parameter>
@@ -681,6 +737,54 @@
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:lb_instance.lb_resource_instance>wecmdb:lb_resource_instance.ip_address">instance_ip</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:lb_instance.port">port</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:lb_instance.name">instance</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+        </plugin>
+        <plugin name="nginx" targetPackage="wecmdb" targetEntity="app_instance" registerName="nginx" targetEntityFilterRule="">
+            <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/nginx" filterRule="{state_code eq 'created'}{fixed_date is NULL}">
+                <inputParameters>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.host_resource_instance>wecmdb:host_resource_instance.ip_address">instance_ip</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.monitor_port">port</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_NGINX_GROUP">group</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.key_name">instance</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_SCRAPE_STEP_10">step</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+            <interface action="deregister" path="/wecube-monitor/api/v1/agent/export/deregister/nginx" filterRule="{state_code eq 'destroyed'}{fixed_date is NULL}">
+                <inputParameters>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.host_resource_instance>wecmdb:host_resource_instance.ip_address">instance_ip</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.monitor_port">port</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.key_name">instance</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+            <interface action="start-alarm" path="/wecube-monitor/api/v1/agent/export/start/nginx" filterRule="{state_code eq 'changed'}{fixed_date is NULL}">
+                <inputParameters>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.host_resource_instance>wecmdb:host_resource_instance.ip_address">instance_ip</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.monitor_port">port</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.key_name">instance</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+            <interface action="stop-alarm" path="/wecube-monitor/api/v1/agent/export/stop/nginx" filterRule="{state_code eq 'changed'}{fixed_date is NULL}">
+                <inputParameters>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.host_resource_instance>wecmdb:host_resource_instance.ip_address">instance_ip</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.monitor_port">port</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.key_name">instance</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
@@ -755,7 +859,7 @@
             </interface>
         </plugin>
         <plugin name="dashboard" targetPackage="wecmdb" targetEntity="unit" registerName="unit" targetEntityFilterRule="">
-            <interface action="add-app-unit" path="/wecube-monitor/api/v1/dashboard/system/add"  filterRule="{state_code eq 'created'}{fixed_date is NULL}{unit_type in ['@@0002_0000000001@@JAVA']}">
+            <interface action="add-app-unit" path="/wecube-monitor/api/v1/dashboard/system/add"  filterRule="{state_code eq 'created'}{fixed_date is NULL}{unit_type in ['@@0002_0000000001@@JAVA','@@0002_0000000011@@NGINX']}">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.guid">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.key_name">display_name</parameter>
@@ -774,7 +878,26 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
-            <interface action="delete-app-unit" path="/wecube-monitor/api/v1/dashboard/system/delete" filterRule="{state_code eq 'destroyed'}{fixed_date is NULL}{unit_type in ['@@0002_0000000001@@JAVA']}">
+            <interface action="update-app-unit" path="/wecube-monitor/api/v1/dashboard/system/add"  filterRule="{unit_type in ['@@0002_0000000001@@JAVA','@@0002_0000000011@@NGINX']}">
+                <inputParameters>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.guid">guid</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.key_name">display_name</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.subsys>wecmdb:subsys.guid">parent</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit~(unit)wecmdb:app_instance{state_code neq 'destroyed'}.monitor_key_name">endpoint</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.manage_role>wecmdb:manage_role.email">email</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.manage_role>wecmdb:manage_role.phone">phone</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.manage_role>wecmdb:manage_role.code">role</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_FIRING_CALLBACK">firing_callback</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_RECOVER_CALLBACK">recover_callback</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="WECMDB_UNIT">type</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
+                </outputParameters>
+            </interface>
+            <interface action="delete-app-unit" path="/wecube-monitor/api/v1/dashboard/system/delete" filterRule="{state_code eq 'destroyed'}{fixed_date is NULL}{unit_type in ['@@0002_0000000001@@JAVA','@@0002_0000000011@@NGINX']}">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.guid">guid</parameter>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.NONE">endpoint</parameter>
@@ -792,6 +915,25 @@
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.key_name">display_name</parameter>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.subsys>wecmdb:subsys.guid">parent</parameter>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit~(unit)wecmdb:app_instance.host_resource_instance>wecmdb:host_resource_instance.monitor_key_name">endpoint</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.manage_role>wecmdb:manage_role.email">email</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.manage_role>wecmdb:manage_role.phone">phone</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.manage_role>wecmdb:manage_role.code">role</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_FIRING_CALLBACK">firing_callback</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_RECOVER_CALLBACK">recover_callback</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="WECMDB_UNIT">type</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
+                </outputParameters>
+            </interface>
+            <interface action="update-app-unit-resource" path="/wecube-monitor/api/v1/dashboard/system/add"  filterRule="{unit_type in ['@@0002_0000000001@@JAVA','@@0002_0000000011@@NGINX']}">
+                <inputParameters>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.guid">guid</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.key_name">display_name</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.subsys>wecmdb:subsys.guid">parent</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit~(unit)wecmdb:app_instance{state_code neq 'destroyed'}.host_resource_instance>wecmdb:host_resource_instance.monitor_key_name">endpoint</parameter>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.manage_role>wecmdb:manage_role.email">email</parameter>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.manage_role>wecmdb:manage_role.phone">phone</parameter>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.manage_role>wecmdb:manage_role.code">role</parameter>
@@ -836,6 +978,25 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
+            <interface action="update-lb-unit" path="/wecube-monitor/api/v1/dashboard/system/add"  filterRule="{unit_type in ['@@0002_0000000004@@LB']}">
+                <inputParameters>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.guid">guid</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.key_name">display_name</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.subsys>wecmdb:subsys.guid">parent</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit~(unit)wecmdb:lb_instance{state_code neq 'destroyed'}.monitor_key_name">endpoint</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.manage_role>wecmdb:manage_role.email">email</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.manage_role>wecmdb:manage_role.phone">phone</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.manage_role>wecmdb:manage_role.code">role</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_FIRING_CALLBACK">firing_callback</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_RECOVER_CALLBACK">recover_callback</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="WECMDB_UNIT">type</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
+                </outputParameters>
+            </interface>
             <interface action="delete-lb-unit" path="/wecube-monitor/api/v1/dashboard/system/delete" filterRule="{state_code eq 'destroyed'}{fixed_date is NULL}{unit_type in ['@@0002_0000000004@@LB']}">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.guid">guid</parameter>
@@ -854,6 +1015,25 @@
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.key_name">display_name</parameter>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.subsys>wecmdb:subsys.guid">parent</parameter>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit~(unit)wecmdb:rdb_instance.rdb_resource_instance>wecmdb:rdb_resource_instance.monitor_key_name">endpoint</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.manage_role>wecmdb:manage_role.email">email</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.manage_role>wecmdb:manage_role.phone">phone</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.manage_role>wecmdb:manage_role.code">role</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_FIRING_CALLBACK">firing_callback</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_RECOVER_CALLBACK">recover_callback</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="WECMDB_UNIT">type</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
+                </outputParameters>
+            </interface>
+            <interface action="update-rdb-unit-resource" path="/wecube-monitor/api/v1/dashboard/system/add" filterRule="{unit_type in ['@@0002_0000000002@@MYSQL']}">
+                <inputParameters>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.guid">guid</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.key_name">display_name</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.subsys>wecmdb:subsys.guid">parent</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit~(unit)wecmdb:rdb_instance{state_code neq 'destroyed'}.rdb_resource_instance>wecmdb:rdb_resource_instance.monitor_key_name">endpoint</parameter>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.manage_role>wecmdb:manage_role.email">email</parameter>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.manage_role>wecmdb:manage_role.phone">phone</parameter>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.manage_role>wecmdb:manage_role.code">role</parameter>
@@ -898,6 +1078,25 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
+            <interface action="update-cache-unit-resource" path="/wecube-monitor/api/v1/dashboard/system/add" filterRule="{unit_type in ['@@0002_0000000003@@REDIS']}">
+                <inputParameters>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.guid">guid</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.key_name">display_name</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.subsys>wecmdb:subsys.guid">parent</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit~(unit)wecmdb:cache_instance{state_code neq 'destroyed'}.cache_resource_instance>wecmdb:cache_resource_instance.monitor_key_name">endpoint</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.manage_role>wecmdb:manage_role.email">email</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.manage_role>wecmdb:manage_role.phone">phone</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.manage_role>wecmdb:manage_role.code">role</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_FIRING_CALLBACK">firing_callback</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_RECOVER_CALLBACK">recover_callback</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="WECMDB_UNIT">type</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
+                </outputParameters>
+            </interface>
             <interface action="delete-cache-unit-resource" path="/wecube-monitor/api/v1/dashboard/system/delete" filterRule="{state_code eq 'destroyed'}{fixed_date is NULL}{unit_type in ['@@0002_0000000003@@REDIS']}">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.guid">guid</parameter>
@@ -912,6 +1111,38 @@
             </interface>
         </plugin>
         <plugin name="dashboard" targetPackage="wecmdb" targetEntity="resource_set" registerName="resource_set" targetEntityFilterRule="">
+            <interface action="add-set" path="/wecube-monitor/api/v1/dashboard/system/add" filterRule="{state_code eq 'created'}{fixed_date is NULL}">
+                <inputParameters>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.guid">guid</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.key_name">display_name</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.network_zone>wecmdb:network_zone.guid">parent</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.NONE">endpoint</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.manage_role>wecmdb:manage_role.email">email</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.manage_role>wecmdb:manage_role.phone">phone</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.manage_role>wecmdb:manage_role.code">role</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_FIRING_CALLBACK">firing_callback</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_RECOVER_CALLBACK">recover_callback</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="WECMDB_RESOURCE_SET">type</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
+                </outputParameters>
+            </interface>
+            <interface action="delete-set" path="/wecube-monitor/api/v1/dashboard/system/delete" filterRule="{state_code eq 'destroyed'}{fixed_date is NULL}">
+                <inputParameters>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.guid">guid</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.NONE">endpoint</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_DASHBOARD_DELETE_ALL">delete_all</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
+                </outputParameters>
+            </interface>
+
             <interface action="add-host-set" path="/wecube-monitor/api/v1/dashboard/system/add" filterRule="{state_code eq 'created'}{fixed_date is NULL}{resource_type eq 'HOST'}">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.guid">guid</parameter>
@@ -931,50 +1162,12 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
-            <interface action="add-rdb-set" path="/wecube-monitor/api/v1/dashboard/system/add" filterRule="{state_code eq 'created'}{fixed_date is NULL}{resource_type eq 'RDB'}">
+            <interface action="update-host-set" path="/wecube-monitor/api/v1/dashboard/system/add" filterRule="{resource_type eq 'HOST'}">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.guid">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.key_name">display_name</parameter>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.network_zone>wecmdb:network_zone.guid">parent</parameter>
-                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set~(resource_set)wecmdb:rdb_resource_instance.monitor_key_name">endpoint</parameter>
-                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.manage_role>wecmdb:manage_role.email">email</parameter>
-                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.manage_role>wecmdb:manage_role.phone">phone</parameter>
-                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.manage_role>wecmdb:manage_role.code">role</parameter>
-                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_FIRING_CALLBACK">firing_callback</parameter>
-                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_RECOVER_CALLBACK">recover_callback</parameter>
-                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="WECMDB_RESOURCE_SET">type</parameter>
-                </inputParameters>
-                <outputParameters>
-                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
-                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
-                    <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
-                </outputParameters>
-            </interface>
-            <interface action="add-cache-set" path="/wecube-monitor/api/v1/dashboard/system/add" filterRule="{state_code eq 'created'}{fixed_date is NULL}{resource_type eq 'CACHE'}">
-                <inputParameters>
-                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.guid">guid</parameter>
-                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.key_name">display_name</parameter>
-                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.network_zone>wecmdb:network_zone.guid">parent</parameter>
-                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set~(resource_set)wecmdb:cache_resource_instance.monitor_key_name">endpoint</parameter>
-                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.manage_role>wecmdb:manage_role.email">email</parameter>
-                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.manage_role>wecmdb:manage_role.phone">phone</parameter>
-                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.manage_role>wecmdb:manage_role.code">role</parameter>
-                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_FIRING_CALLBACK">firing_callback</parameter>
-                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_RECOVER_CALLBACK">recover_callback</parameter>
-                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="WECMDB_RESOURCE_SET">type</parameter>
-                </inputParameters>
-                <outputParameters>
-                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
-                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
-                    <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
-                </outputParameters>
-            </interface>
-            <interface action="add-lb-set" path="/wecube-monitor/api/v1/dashboard/system/add" filterRule="{state_code eq 'created'}{fixed_date is NULL}{resource_type eq 'LB'}">
-                <inputParameters>
-                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.guid">guid</parameter>
-                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.key_name">display_name</parameter>
-                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.network_zone>wecmdb:network_zone.guid">parent</parameter>
-                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.NONE">endpoint</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set~(resource_set)wecmdb:host_resource_instance{state_code neq 'destroyed'}.monitor_key_name">endpoint</parameter>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.manage_role>wecmdb:manage_role.email">email</parameter>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.manage_role>wecmdb:manage_role.phone">phone</parameter>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.manage_role>wecmdb:manage_role.code">role</parameter>
@@ -1000,6 +1193,45 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
+
+            <interface action="add-rdb-set" path="/wecube-monitor/api/v1/dashboard/system/add" filterRule="{state_code eq 'created'}{fixed_date is NULL}{resource_type eq 'RDB'}">
+                <inputParameters>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.guid">guid</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.key_name">display_name</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.network_zone>wecmdb:network_zone.guid">parent</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set~(resource_set)wecmdb:rdb_resource_instance.monitor_key_name">endpoint</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.manage_role>wecmdb:manage_role.email">email</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.manage_role>wecmdb:manage_role.phone">phone</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.manage_role>wecmdb:manage_role.code">role</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_FIRING_CALLBACK">firing_callback</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_RECOVER_CALLBACK">recover_callback</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="WECMDB_RESOURCE_SET">type</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
+                </outputParameters>
+            </interface>
+            <interface action="update-rdb-set" path="/wecube-monitor/api/v1/dashboard/system/add" filterRule="{resource_type eq 'RDB'}">
+                <inputParameters>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.guid">guid</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.key_name">display_name</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.network_zone>wecmdb:network_zone.guid">parent</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set~(resource_set)wecmdb:rdb_resource_instance{state_code neq 'destroyed'}.monitor_key_name">endpoint</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.manage_role>wecmdb:manage_role.email">email</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.manage_role>wecmdb:manage_role.phone">phone</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.manage_role>wecmdb:manage_role.code">role</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_FIRING_CALLBACK">firing_callback</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_RECOVER_CALLBACK">recover_callback</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="WECMDB_RESOURCE_SET">type</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
+                </outputParameters>
+            </interface>
             <interface action="delete-rdb-set" path="/wecube-monitor/api/v1/dashboard/system/delete" filterRule="{state_code eq 'destroyed'}{fixed_date is NULL}{resource_type eq 'RDB'}">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.guid">guid</parameter>
@@ -1012,11 +1244,89 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
+
+            <interface action="add-cache-set" path="/wecube-monitor/api/v1/dashboard/system/add" filterRule="{state_code eq 'created'}{fixed_date is NULL}{resource_type eq 'CACHE'}">
+                <inputParameters>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.guid">guid</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.key_name">display_name</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.network_zone>wecmdb:network_zone.guid">parent</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set~(resource_set)wecmdb:cache_resource_instance.monitor_key_name">endpoint</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.manage_role>wecmdb:manage_role.email">email</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.manage_role>wecmdb:manage_role.phone">phone</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.manage_role>wecmdb:manage_role.code">role</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_FIRING_CALLBACK">firing_callback</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_RECOVER_CALLBACK">recover_callback</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="WECMDB_RESOURCE_SET">type</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
+                </outputParameters>
+            </interface>
+            <interface action="update-cache-set" path="/wecube-monitor/api/v1/dashboard/system/add" filterRule="{resource_type eq 'CACHE'}">
+                <inputParameters>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.guid">guid</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.key_name">display_name</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.network_zone>wecmdb:network_zone.guid">parent</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set~(resource_set)wecmdb:cache_resource_instance{state_code neq 'destroyed'}.monitor_key_name">endpoint</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.manage_role>wecmdb:manage_role.email">email</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.manage_role>wecmdb:manage_role.phone">phone</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.manage_role>wecmdb:manage_role.code">role</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_FIRING_CALLBACK">firing_callback</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_RECOVER_CALLBACK">recover_callback</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="WECMDB_RESOURCE_SET">type</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
+                </outputParameters>
+            </interface>
             <interface action="delete-cache-set" path="/wecube-monitor/api/v1/dashboard/system/delete" filterRule="{state_code eq 'destroyed'}{fixed_date is NULL}{resource_type eq 'CACHE'}">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.guid">guid</parameter>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.NONE">endpoint</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_DASHBOARD_DELETE_ALL">delete_all</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
+                </outputParameters>
+            </interface>
+
+            <interface action="add-lb-set" path="/wecube-monitor/api/v1/dashboard/system/add" filterRule="{state_code eq 'created'}{fixed_date is NULL}{resource_type eq 'LB'}">
+                <inputParameters>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.guid">guid</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.key_name">display_name</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.network_zone>wecmdb:network_zone.guid">parent</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.NONE">endpoint</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.manage_role>wecmdb:manage_role.email">email</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.manage_role>wecmdb:manage_role.phone">phone</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.manage_role>wecmdb:manage_role.code">role</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_FIRING_CALLBACK">firing_callback</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_RECOVER_CALLBACK">recover_callback</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="WECMDB_RESOURCE_SET">type</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
+                </outputParameters>
+            </interface>
+            <interface action="update-lb-set" path="/wecube-monitor/api/v1/dashboard/system/add" filterRule="{resource_type eq 'LB'}">
+                <inputParameters>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.guid">guid</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.key_name">display_name</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.network_zone>wecmdb:network_zone.guid">parent</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.NONE">endpoint</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.manage_role>wecmdb:manage_role.email">email</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.manage_role>wecmdb:manage_role.phone">phone</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.manage_role>wecmdb:manage_role.code">role</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_FIRING_CALLBACK">firing_callback</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_RECOVER_CALLBACK">recover_callback</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="WECMDB_RESOURCE_SET">type</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>

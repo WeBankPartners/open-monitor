@@ -217,6 +217,17 @@
         </section>
       </div>
     </ModalComponent>
+    <Modal
+      v-model="isShowWarning"
+      title="Delete confirmation"
+      @on-ok="ok"
+      @on-cancel="cancle">
+      <div class="modal-body" style="padding:30px">
+        <div style="text-align:center">
+          <p style="color: red">Will you delete it?</p>
+        </div>
+      </div>
+    </Modal>
   </div>
 </template>
 <script>
@@ -256,7 +267,7 @@
   const btn = [
     {btn_name: 'button.thresholdManagement', btn_func: 'thresholdConfig'},
     {btn_name: 'button.historicalAlert', btn_func: 'historyAlarm'},
-    {btn_name: 'button.remove', btn_func: 'deleteConfirm'},
+    {btn_name: 'button.remove', btn_func: 'deleteConfirmModal'},
     {btn_name: 'button.logConfiguration', btn_func: 'logManagement'},
     {btn_name: 'button.portConfiguration', btn_func: 'portManagement'},
     {btn_name: 'button.processConfiguration', btn_func: 'processManagement'},
@@ -266,6 +277,7 @@
     name: '',
     data() {
       return {
+        isShowWarning: false,
         pageConfig: {
           CRUD: this.$root.apiCenter.endpointManagement.list.api,
           researchConfig: {
@@ -460,7 +472,7 @@
         this.$root.$tableUtil.initTable(this, 'GET', url, params)
       },
       filterMoreBtn (rowData) {
-        let moreBtnGroup = ['thresholdConfig','historyAlarm','logManagement', 'portManagement', 'deleteConfirm']
+        let moreBtnGroup = ['thresholdConfig','historyAlarm','logManagement', 'portManagement', 'deleteConfirmModal']
         if (rowData.type === 'host') {
           moreBtnGroup.push('processManagement', 'businessManagement')
         }
@@ -493,6 +505,16 @@
           this.initData(this.pageConfig.CRUD, this.pageConfig)
         })
       },
+      deleteConfirmModal (rowData) {
+        this.selectedData = rowData
+        this.isShowWarning = true
+      },
+      ok () {
+        this.delF(this.selectedData)
+      },
+      cancle () {
+        this.isShowWarning = false
+      },
       deleteConfirm (rowData) {
         this.$delConfirm({
           msg: rowData.guid,
@@ -516,7 +538,7 @@
           methodType = 'POST'
         }
         this.$root.$httpRequestEntrance.httpRequestEntrance(methodType, url, params, () => {
-          this.$root.$eventBus.$emit('hideConfirmModal')
+          // this.$root.$eventBus.$emit('hideConfirmModal')
           this.$Message.success(this.$t('tips.success'))
           this.initData(this.pageConfig.CRUD, this.pageConfig)
         })
