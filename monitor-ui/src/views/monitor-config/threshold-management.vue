@@ -154,6 +154,28 @@
           </div>
         </div>
       </ModalComponent>
+      <Modal
+        v-model="isShowWarning"
+        title="Delete confirmation"
+        @on-ok="ok"
+        @on-cancel="cancle">
+        <div class="modal-body" style="padding:30px">
+          <div style="text-align:center">
+            <p style="color: red">Will you delete it?</p>
+          </div>
+        </div>
+      </Modal>
+      <Modal
+        v-model="isShowWarningDelete"
+        title="Delete confirmation"
+        @on-ok="okDelRow"
+        @on-cancel="cancleDelRow">
+        <div class="modal-body" style="padding:30px">
+          <div style="text-align:center">
+            <p style="color: red">Will you delete it?</p>
+          </div>
+        </div>
+      </Modal>
     </section>
   </div>
 </template>
@@ -171,13 +193,16 @@ let tableEle = [
 ]
 const btn = [
   {btn_name: 'button.edit', btn_func: 'editF'},
-  {btn_name: 'button.remove', btn_func: 'deleteConfirm'},
+  {btn_name: 'button.remove', btn_func: 'deleteConfirmModal'},
 ]
 
 export default {
   name: '',
   data() {
     return {
+      isShowWarning: false,
+      requestParams: null,
+      isShowWarningDelete: false,
       type: '',
       typeValue: 'endpoint',
       typeList: [
@@ -303,21 +328,43 @@ export default {
       }, {isNeedloading:false})
     },
     removeReceiver (tableItem, receiver, index) {
-      this.$delConfirm({
-        msg: receiver.option_text,
-        callback: () => {
-          tableItem.accept.splice(index,1)
-          const params = {
-            tpl_id: tableItem.tpl_id,
-            accept: tableItem.accept
-          }
-          this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.thresholdManagement.recevier.api, params, () => {
-            this.$root.$eventBus.$emit('hideConfirmModal')
-            this.$Message.success(this.$t('tips.success'))
-            this.requestData(this.type, this.typeValue)
-          }, {isNeedloading:false})
-        }
-      })
+      this.isShowWarning = true
+      tableItem.accept.splice(index,1)
+      this.requestParams = {
+        tpl_id: tableItem.tpl_id,
+        accept: tableItem.accept
+      }
+      // this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.thresholdManagement.recevier.api, params, () => {
+      //   this.$root.$eventBus.$emit('hideConfirmModal')
+      //   this.$Message.success(this.$t('tips.success'))
+      //   this.requestData(this.type, this.typeValue)
+      // }, {isNeedloading:false})
+      // this.$delConfirm({
+      //   msg: receiver.option_text,
+      //   callback: () => {
+      //     tableItem.accept.splice(index,1)
+      //     const params = {
+      //       tpl_id: tableItem.tpl_id,
+      //       accept: tableItem.accept
+      //     }
+      //     this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.thresholdManagement.recevier.api, params, () => {
+      //       this.$root.$eventBus.$emit('hideConfirmModal')
+      //       this.$Message.success(this.$t('tips.success'))
+      //       this.requestData(this.type, this.typeValue)
+      //     }, {isNeedloading:false})
+      //   }
+      // })
+    },
+    ok () {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.thresholdManagement.recevier.api, this.requestParams, () => {
+        // this.$root.$eventBus.$emit('hideConfirmModal')
+        this.$Message.success(this.$t('tips.success'))
+        this.isShowWarning = false
+        this.requestData(this.type, this.typeValue)
+      }, {isNeedloading:false})
+    },
+    cancle () {
+      this.isShowWarning = false
     },
     search () {
       if (this.endpointID === null) {
@@ -370,6 +417,16 @@ export default {
         })
       })
     },
+    deleteConfirmModal (rowData) {
+       this.selectedData = rowData
+      this.isShowWarningDelete = true
+    },
+    okDelRow () {
+      this.delF(this.selectedData)
+    },
+    cancleDelRow () {
+      this.isShowWarningDelete = false
+    },
     deleteConfirm (rowData) {
       this.$delConfirm({
         msg: rowData.name,
@@ -380,8 +437,9 @@ export default {
     },
     delF (rowData) {
       let params = {id: rowData.id}
+      console.log(params)
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.thresholdManagement.delete.api, params, () => {
-        this.$root.$eventBus.$emit('hideConfirmModal')
+        // this.$root.$eventBus.$emit('hideConfirmModal')
         this.$Message.success(this.$t('tips.success'))
         this.requestData(this.type, this.typeValue)
       })
