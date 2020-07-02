@@ -29,6 +29,17 @@
         </div>
       </div>
     </ModalComponent>
+    <Modal
+        v-model="isShowWarning"
+        title="Delete confirmation"
+        @on-ok="ok"
+        @on-cancel="cancle">
+        <div class="modal-body" style="padding:30px">
+          <div style="text-align:center">
+            <p style="color: red">Will you delete it?</p>
+          </div>
+        </div>
+    </Modal>
   </div>
 </template>
 <script>
@@ -42,7 +53,7 @@
     {btn_name: 'field.endpoint', btn_func: 'checkMember'},
     {btn_name: 'field.threshold', btn_func: 'thresholdConfig'},
     {btn_name: 'button.edit', btn_func: 'editF'},
-    {btn_name: 'button.remove', btn_func: 'deleteConfirm'},
+    {btn_name: 'button.remove', btn_func: 'deleteConfirmModal'},
     {btn_name: 'field.log', btn_func: 'logManagement'},
     {btn_name: 'button.authorize', btn_func: 'authorizeF'},
   ]
@@ -50,6 +61,7 @@
     name: '',
     data() {
       return {
+        isShowWarning: false,
         token: null,
         uploadUrl: '',
         pageConfig: {
@@ -159,6 +171,16 @@
       checkMember (rowData) {
         this.$router.push({name: 'endpointManagement', params: {group: rowData}})
       },
+      deleteConfirmModal (rowData) {
+        this.selectedData = rowData
+        this.isShowWarning = true
+      },
+      ok () {
+        this.delF(this.selectedData)
+      },
+      cancle () {
+        this.isShowWarning = false
+      },
       deleteConfirm (rowData) {
         this.$delConfirm({
           msg: rowData.name,
@@ -170,9 +192,10 @@
       delF (rowData) {
         let params = {id: rowData.id}
         this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.groupManagement.delete.api, params, () => {
-          this.$root.$eventBus.$emit('hideConfirmModal')
+          // this.$root.$eventBus.$emit('hideConfirmModal')
           this.$Message.success(this.$t('tips.success'))
           this.initData(this.pageConfig.CRUD, this.pageConfig)
+          this.isShowWarning = false
         })
       },
       thresholdConfig (rowData) {

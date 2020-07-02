@@ -603,6 +603,9 @@ func GetChart(c *gin.Context)  {
 				}
 				step = endpointObj.Step
 			}
+			if strings.Contains(v.PromQl, "$guid") {
+				v.PromQl = strings.Replace(v.PromQl, "$guid", v.Endpoint, -1)
+			}
 			if strings.Contains(v.PromQl, "$") {
 				re, _ := regexp.Compile("=\"[\\$]+[^\"]+\"")
 				fetchTag := re.FindAll([]byte(v.PromQl), -1)
