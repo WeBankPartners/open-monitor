@@ -19,7 +19,7 @@
               </p>
               <a slot="extra">
                 <button class="btn btn-sm btn-confirm-f" @click="goToPanal(panalItem)">{{$t('button.view')}}</button>
-                <button class="btn btn-sm btn-cancle-f" @click="deleteConfirm(panalItem)">{{$t('button.remove')}}</button>
+                <button class="btn btn-sm btn-cancle-f" @click="deleteConfirmModal(panalItem)">{{$t('button.remove')}}</button>
               </a>
               <ul class="panal-content">
                 <li>
@@ -43,6 +43,17 @@
         </div>
       </div>
     </ModalComponent>
+    <Modal
+      v-model="isShowWarning"
+      title="Delete confirmation"
+      @on-ok="ok"
+      @on-cancel="cancle">
+      <div class="modal-body" style="padding:30px">
+        <div style="text-align:center">
+          <p style="color: red">Will you delete it?</p>
+        </div>
+      </div>
+    </Modal>
   </div>
 </template>
 
@@ -51,6 +62,7 @@ export default {
   name: '',
   data() {
     return {
+      isShowWarning: false,
       dataList: [
       ],
       modelConfig: {
@@ -97,6 +109,16 @@ export default {
       this.modelConfig.isAdd = true
       this.$root.JQ('#add_edit_Modal').modal('show')
     },
+    deleteConfirmModal (rowData) {
+      this.selectedData = rowData
+      this.isShowWarning = true
+    },
+    ok () {
+      this.removeTemplate(this.selectedData)
+    },
+    cancle () {
+      this.isShowWarning = false
+    },
     deleteConfirm (item) {
       this.$delConfirm({
         msg: item.name,
@@ -108,7 +130,7 @@ export default {
     removeTemplate (item) {
       let params = {id: item.id}
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.template.delete, params, () => {
-        this.$root.$eventBus.$emit('hideConfirmModal')
+        // this.$root.$eventBus.$emit('hideConfirmModal')
         this.$Message.success(this.$t('tips.success'))
         this.viewList()
       })

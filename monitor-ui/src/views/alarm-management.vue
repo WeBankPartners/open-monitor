@@ -1,6 +1,17 @@
 <template>
   <div class=" ">
     <Title :title="$t('menu.alert')"></Title>
+    <Modal
+      v-model="isShowWarning"
+      title="Delete confirmation"
+      @on-ok="ok"
+      @on-cancel="cancle">
+      <div class="modal-body" style="padding:30px">
+        <div style="text-align:center">
+          <p style="color: red">Will you delete it?</p>
+        </div>
+      </div>
+    </Modal>
     <section style="margin-left:8px" class="c-dark-exclude-color">
       <Tag color="warning">{{$t('title.updateTime')}}：{{timeForDataAchieve}}</Tag>
       <template v-for="(filterItem, filterIndex) in filtersForShow">
@@ -10,10 +21,9 @@
         <Tag color="primary">{{$t('table.noDataTip')}}！</Tag>
       </template>
     </section>
-
     <template v-for="(alarmItem, alarmIndex) in resultData">
       <section :key="alarmIndex" class="alarm-item c-dark-exclude-color" :class="'alarm-item-border-'+ alarmItem.s_priority">
-        <i class="fa fa-times" @click="removeConfirm(alarmItem)" aria-hidden="true"></i>
+        <i class="fa fa-times" @click="deleteConfirmModal(alarmItem)" aria-hidden="true"></i>
         <ul>
           <li>
             <label class="col-md-1">{{$t('field.endpoint')}}:</label>
@@ -69,7 +79,7 @@
           </template>
         </ul>
       </section>
-    </template>  
+    </template>
   </div>
 </template>
 
@@ -78,12 +88,14 @@ export default {
   name: '',
   data() {
     return {
+      isShowWarning: false,
       interval: null,
       timeForDataAchieve: null,
       filters: {},
       filtersForShow: [],
       actveAlarmIndex: null,
-      resultData: []
+      resultData: [],
+      selectedData: '', // 存放选中数据
     }
   },
   mounted(){
@@ -116,6 +128,16 @@ export default {
       this.filters[key] = value
       this.getAlarm()
     },
+    deleteConfirmModal (rowData) {
+      this.selectedData = rowData
+      this.isShowWarning = true
+    },
+    ok () {
+      this.removeAlarm(this.selectedData)
+    },
+    cancle () {
+      this.isShowWarning = false
+    },
     removeConfirm (alarmItem) {
       this.$delConfirm({
         msg: alarmItem.endpoint,
@@ -133,7 +155,7 @@ export default {
         params.custom = false
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.alarmManagement.close.api, params, () => {
-        this.$root.$eventBus.$emit('hideConfirmModal')
+        // this.$root.$eventBus.$emit('hideConfirmModal')
         this.getAlarm()
       })
     },
