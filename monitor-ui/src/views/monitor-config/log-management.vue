@@ -98,6 +98,28 @@
           </div>
         </div>
       </ModalComponent>
+      <Modal
+        v-model="isShowWarning"
+        title="Delete confirmation"
+        @on-ok="ok"
+        @on-cancel="cancle">
+        <div class="modal-body" style="padding:30px">
+          <div style="text-align:center">
+            <p style="color: red">Will you delete it?</p>
+          </div>
+        </div>
+      </Modal>
+      <Modal
+        v-model="isShowWarningDelete"
+        title="Delete confirmation"
+        @on-ok="okDelRow"
+        @on-cancel="cancleDelRow">
+        <div class="modal-body" style="padding:30px">
+          <div style="text-align:center">
+            <p style="color: red">Will you delete it?</p>
+          </div>
+        </div>
+      </Modal>
     </section>
   </div>
 </template>
@@ -111,13 +133,16 @@ let tableEle = [
 const btn = [
   {btn_name: 'button.add', btn_func: 'singeAddF'},
   {btn_name: 'button.edit', btn_func: 'editF'},
-  {btn_name: 'button.remove', btn_func: 'deleteConfirm'},
+  {btn_name: 'button.remove', btn_func: 'deleteConfirmModal'},
 ]
 
 export default {
   name: '',
   data() {
     return {
+      isShowWarning: false,
+      requestParams: null,
+      isShowWarningDelete: false,
       type: '',
       typeValue: 'endpoint',
       typeList: [
@@ -151,7 +176,7 @@ export default {
                 {title: 'tableKey.s_priority', value: 'priority', display: true},
                 {title: 'table.action',btn:[
                   {btn_name: 'button.edit', btn_func: 'editPathItem'},
-                  {btn_name: 'button.remove', btn_func: 'delPathconfirm'}
+                  {btn_name: 'button.remove', btn_func: 'delPathconfirmModal'}
                 ]}
               ],
               data: [],
@@ -265,6 +290,16 @@ export default {
         })
       })
     },
+    deleteConfirmModal (rowData) {
+      this.selectedData = rowData
+      this.isShowWarning = true
+    },
+    ok () {
+      this.delF(this.selectedData)
+    },
+    cancle () {
+      this.isShowWarning = false
+    },
     deleteConfirm (rowData) {
       this.$delConfirm({
         msg: rowData.path,
@@ -276,7 +311,7 @@ export default {
     delF (rowData) {
       let params = {id: rowData.id}
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.logManagement.delList.api, params, () => {
-        this.$root.$eventBus.$emit('hideConfirmModal')
+        // this.$root.$eventBus.$emit('hideConfirmModal')
         this.$Message.success(this.$t('tips.success'))
         this.requestData(this.type, this.typeValue)
       })
@@ -376,10 +411,20 @@ export default {
         }
       })
     },
+    delPathconfirmModal (rowData) {
+      this.selectedData = rowData
+      this.isShowWarningDelete = true
+    },
+    okDelRow () {
+      this.delPathItem(this.selectedData)
+    },
+    cancleDelRow () {
+      this.isShowWarningDelete = false
+    },
     delPathItem (rowData) {
       let params = {id: rowData.id}
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.logManagement.delete.api, params, () => {
-        this.$root.$eventBus.$emit('hideConfirmModal')
+        // this.$root.$eventBus.$emit('hideConfirmModal')
         this.$Message.success(this.$t('tips.success'))
         this.requestData(this.type, this.typeValue)
       })
