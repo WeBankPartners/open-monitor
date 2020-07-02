@@ -13,6 +13,17 @@
         </div>
       </div>
     </ModalComponent>
+    <Modal
+      v-model="isShowWarning"
+      title="Delete confirmation"
+      @on-ok="ok"
+      @on-cancel="cancle">
+      <div class="modal-body" style="padding:30px">
+        <div style="text-align:center">
+          <p style="color: red">Will you delete it?</p>
+        </div>
+      </div>
+    </Modal>
   </div>
 </template>
 
@@ -26,12 +37,14 @@ let tableEle = [
 const btn = [
     {btn_name: 'button.edit', btn_func: 'editF'},
     {btn_name: 'button.authorization', btn_func: 'authorizationF'},
-    {btn_name: 'button.remove', btn_func: 'deleteConfirm'}
+    {btn_name: 'button.remove', btn_func: 'deleteConfirmModal'}
   ]
 export default {
   name: '',
   data() {
     return {
+      isShowWarning: false,
+      selectedData: null,
       pageConfig: {
         CRUD: this.$root.apiCenter.setup.role.get,
         researchConfig: {
@@ -133,6 +146,16 @@ export default {
         this.initData(this.pageConfig.CRUD, this.pageConfig)
       })
     },
+    deleteConfirmModal (rowData) {
+      this.selectedData = rowData
+      this.isShowWarning = true
+    },
+    ok () {
+      this.delF(this.selectedData)
+    },
+    cancle () {
+      this.isShowWarning = false
+    },
     deleteConfirm (rowData) {
       this.$delConfirm({
         msg: rowData.name,
@@ -144,7 +167,7 @@ export default {
     delF (rowData) {
       let params = {role_id: rowData.id, operation: 'delete' }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.setup.role.update, params, () => {
-        this.$root.$eventBus.$emit('hideConfirmModal')
+        // this.$root.$eventBus.$emit('hideConfirmModal')
         this.$Message.success(this.$t('tips.success'))
         this.initData(this.pageConfig.CRUD, this.pageConfig)
       })
