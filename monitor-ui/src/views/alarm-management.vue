@@ -1,6 +1,17 @@
 <template>
   <div class=" ">
     <Title :title="$t('menu.alert')"></Title>
+    <Modal
+      v-model="isShowWarning"
+      title="Delete confirmation"
+      @on-ok="ok"
+      @on-cancel="cancle">
+      <div class="modal-body" style="padding:30px">
+        <div style="text-align:center">
+          <p style="color: red">Will you delete it?</p>
+        </div>
+      </div>
+    </Modal>
     <section style="margin-left:8px" class="c-dark-exclude-color">
       <Tag color="warning">{{$t('title.updateTime')}}：{{timeForDataAchieve}}</Tag>
       <template v-for="(filterItem, filterIndex) in filtersForShow">
@@ -10,7 +21,6 @@
         <Tag color="primary">{{$t('table.noDataTip')}}！</Tag>
       </template>
     </section>
-
     <template v-for="(alarmItem, alarmIndex) in resultData">
       <section :key="alarmIndex" class="alarm-item c-dark-exclude-color" :class="'alarm-item-border-'+ alarmItem.s_priority">
         <i class="fa fa-times" @click="deleteConfirmModal(alarmItem)" aria-hidden="true"></i>
@@ -70,17 +80,6 @@
         </ul>
       </section>
     </template>
-    <Modal
-      v-model="isShowWarning"
-      title="Delete confirmation"
-      @on-ok="ok"
-      @on-cancel="cancle">
-      <div class="modal-body" style="padding:30px">
-        <div style="text-align:center">
-          <p style="color: red">Will you delete it?</p>
-        </div>
-      </div>
-    </Modal>
   </div>
 </template>
 
