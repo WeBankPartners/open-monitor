@@ -1,0 +1,36 @@
+{
+  "mysql": {
+    "server": "127.0.0.1",
+    "port": 3306,
+    "user": "root",
+    "password": "wecube",
+    "database": "prometheus_archive",
+    "max_open": 100,
+    "max_idle": 10,
+    "timeout": 60
+  },
+  "prometheus": {
+    "server": "127.0.0.1",
+    "port": 9090,
+    "max_http_open": 100,
+    "max_http_idle": 10,
+    "http_idle_timeout": 60,
+    "query_step": 10,
+    "ignore_tags": ["__name__","job"]
+  },
+  "monitor": {
+    "mysql": {
+      "server": "127.0.0.1",
+      "port": 3306,
+      "user": "root",
+      "password": "wecube",
+      "database": "monitor",
+      "max_open": 10,
+      "max_idle": 2,
+      "timeout": 60
+    }
+  },
+  "trans": {
+    "max_unit_speed": 5
+  }
+}
