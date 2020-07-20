@@ -135,10 +135,10 @@ func NotifyCoreEvent(endpoint string,strategyId int) error {
 		var requestParam m.CoreNotifyRequest
 		requestParam.EventSeqNo = fmt.Sprintf("%d-%s-%d-%d", alarms[0].Id, alarms[0].Status, time.Now().Unix(), i)
 		requestParam.EventType = "alarm"
-		requestParam.SourceSubSystem = "monitor"
+		requestParam.SourceSubSystem = "SYS_MONITOR"
 		requestParam.OperationKey = keySplit[1]
 		requestParam.OperationData = fmt.Sprintf("%d-%s", alarms[0].Id, keySplit[0])
-		requestParam.OperationUser = "wds_system"
+		requestParam.OperationUser = ""
 		mid.LogInfo(fmt.Sprintf("notify request data --> eventSeqNo:%s operationKey:%s operationData:%s", requestParam.EventSeqNo, requestParam.OperationKey, requestParam.OperationData))
 		b, _ := json.Marshal(requestParam)
 		request, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/platform/v1/operation-events", m.CoreUrl), strings.NewReader(string(b)))
