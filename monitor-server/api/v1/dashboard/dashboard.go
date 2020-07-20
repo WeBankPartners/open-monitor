@@ -652,7 +652,9 @@ func GetChart(c *gin.Context)  {
 			if aggType == "" {
 				aggType = "avg"
 			}
-			s.Data = db.Aggregate(s.Data, agg, aggType)
+			if aggType != "none" {
+				s.Data = db.Aggregate(s.Data, agg, aggType)
+			}
 		}
 		if compareSubTime > 0 {
 			if strings.Contains(s.Name, compareSecondLegend) {
