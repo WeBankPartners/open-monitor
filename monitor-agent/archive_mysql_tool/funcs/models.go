@@ -25,7 +25,8 @@ type PrometheusQueryObj struct {
 }
 
 type PrometheusQueryParam struct {
-	LastSecond  int64  `json:"last_second"`
+	Start  int64  `json:"start"`
+	End    int64  `json:"end"`
 	PromQl   string  `json:"prom_ql"`
 	Data   []*PrometheusQueryObj  `json:"data"`
 }
@@ -69,6 +70,8 @@ type ArchiveActionParamObj struct {
 	Metric  string  `json:"metric"`
 	PromQl  string  `json:"prom_ql"`
 	TableName string `json:"table_name"`
+	Start  int64  `json:"start"`
+	End    int64  `json:"end"`
 }
 
 type ArchiveActionList []*ArchiveActionParamObj
@@ -101,4 +104,10 @@ func (s DefaultSortList) ToTagString() string {
 		}
 	}
 	return output
+}
+
+type HttpRespJson struct {
+	Code  int  `json:"code"`
+	Msg   string    `json:"msg"`
+	Data  interface{}  `json:"data"`
 }
