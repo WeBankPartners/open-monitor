@@ -32,5 +32,9 @@
   },
   "trans": {
     "max_unit_speed": 5
+  },
+  "http": {
+    "enable": true,
+    "port": 9097
   }
 }

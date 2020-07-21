@@ -17,14 +17,29 @@ func StartCronJob()  {
 	time.Sleep(time.Duration(subSecond)*time.Second)
 	c := time.NewTicker(24*time.Hour).C
 	for {
-		go CreateJob()
+		go CreateJob("")
 		<- c
 	}
 }
 
-func CreateJob()  {
-	log.Printf("start cron job \n")
-	err,tableName := createTable()
+func CreateJob(dateString string)  {
+	var start,end int64
+	if dateString == "" {
+		t,_ := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s 00:00:00 CST", time.Now().Format("2006-01-02")))
+		start = t.Unix()-86400
+		end = t.Unix()
+		dateString = time.Unix(start, 0).Format("2006-01-02")
+	}else {
+		t, err := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s 00:00:00 CST", dateString))
+		if err != nil {
+			log.Printf("dateString validate fail,must format like 2006-01-02 \n")
+			return
+		}
+		start = t.Unix()
+		end = t.Unix()+86400
+	}
+	log.Printf("start cron job %s \n", dateString)
+	err,tableName := createTable(start)
 	if err != nil {
 		log.Printf("try to create table:%s error:%v \n", tableName, err)
 		return
@@ -46,7 +61,7 @@ func CreateJob()  {
 	for _,v := range MonitorObjList {
 		for _,vv := range v.Metrics {
 			unitCount++
-			tmpActionParamObjList = append(tmpActionParamObjList, &ArchiveActionParamObj{Endpoint:v.Endpoint, Metric:vv.Metric, PromQl:vv.PromQl, TableName:tableName})
+			tmpActionParamObjList = append(tmpActionParamObjList, &ArchiveActionParamObj{Endpoint:v.Endpoint, Metric:vv.Metric, PromQl:vv.PromQl, TableName:tableName, Start:start, End:end})
 			if unitCount == unitPerJob {
 				tmpArchiveActionList := ArchiveActionList{}
 				for _,vvv := range tmpActionParamObjList {
@@ -89,7 +104,7 @@ func archiveAction(param ArchiveActionList)  {
 	var err error
 	var rowData []*ArchiveTable
 	for _,v :=range param {
-		tmpPrometheusParam := PrometheusQueryParam{LastSecond:86400, PromQl:v.PromQl}
+		tmpPrometheusParam := PrometheusQueryParam{Start:v.Start, End:v.End, PromQl:v.PromQl}
 		err = getPrometheusData(&tmpPrometheusParam)
 		if err != nil {
 			log.Printf("acrhive action: endpoint->%s metric->%s get prometheus data error-> %v \n", v.Endpoint, v.Metric, err)
@@ -141,4 +156,14 @@ func calcData(data []float64) (avg,min,max,p95 float64) {
 	}
 	avg = sum/float64(len(data))
 	return avg,min,max,p95
+}
+
+func ArchiveFromMysql()  {
+	t,_ := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s 00:00:00 CST", time.Now().Format("2006-01-02")))
+	tableUnixTime := t.Unix()-(90*86400)
+	tableName := fmt.Sprintf("archive_%s", time.Unix(tableUnixTime, 0).Format("2006_01_02"))
+	if !checkTableExists(tableName) {
+		return
+	}
+
 }

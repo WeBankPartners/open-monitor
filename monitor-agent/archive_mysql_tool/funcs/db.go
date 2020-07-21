@@ -71,24 +71,31 @@ func insertMysql(rows []*ArchiveTable,tableName string) error {
 	return nil
 }
 
-func createTable() (err error, tableName string) {
-	var tables []*PrometheusArchiveTables
-	err = mysqlEngine.SQL("show tables").Find(&tables)
-	if err != nil {
-		log.Printf("show tables error: %v \n", err)
-		return err,tableName
+func createTable(start int64) (err error, tableName string) {
+	tableName = fmt.Sprintf("archive_%s", time.Unix(start, 0).Format("2006_01_02"))
+	if checkTableExists(tableName) {
+		return nil,tableName
 	}
-	tableName = fmt.Sprintf("archive_%s_1m", time.Now().Format("2006_01"))
-	for _,v := range tables {
-		if v.TablesInPrometheusArchive == tableName {
-			return nil,tableName
-		}
-	}
-	tableDate := time.Now().Format("2006_01")
-	createSql := fmt.Sprintf("CREATE TABLE IF NOT EXISTS `archive_%s_1m` (`endpoint` VARCHAR(255) NOT NULL,`metric` VARCHAR(255) NOT NULL,`tags` VARCHAR(500) NOT NULL DEFAULT '',`unix_time` INT(11) NOT NULL,`avg` DOUBLE NOT NULL DEFAULT 0,`min` DOUBLE NOT NULL DEFAULT 0,`max` DOUBLE NOT NULL DEFAULT 0,`p95` DOUBLE NOT NULL DEFAULT 0,INDEX idx_%s_1m_endpoint (`endpoint`),INDEX idx_%s_1m_metric (`metric`)) ENGINE=INNODB DEFAULT CHARSET=utf8",tableDate,tableDate,tableDate)
+	tableDate := time.Unix(start, 0).Format("2006_01_02")
+	createSql := fmt.Sprintf("CREATE TABLE IF NOT EXISTS `%s` (`endpoint` VARCHAR(255) NOT NULL,`metric` VARCHAR(255) NOT NULL,`tags` VARCHAR(500) NOT NULL DEFAULT '',`unix_time` INT(11) NOT NULL,`avg` DOUBLE NOT NULL DEFAULT 0,`min` DOUBLE NOT NULL DEFAULT 0,`max` DOUBLE NOT NULL DEFAULT 0,`p95` DOUBLE NOT NULL DEFAULT 0,INDEX idx_%s_endpoint (`endpoint`),INDEX idx_%s_metric (`metric`)) ENGINE=INNODB DEFAULT CHARSET=utf8",tableName,tableDate,tableDate)
 	_,err = mysqlEngine.Exec(createSql)
 	if err != nil {
 		log.Printf("create table %s error: %v \n", tableName, err)
 	}
 	return err,tableName
+}
+
+func checkTableExists(tableName string) bool {
+	var tables []*PrometheusArchiveTables
+	err := mysqlEngine.SQL("show tables").Find(&tables)
+	if err != nil {
+		log.Printf("show tables error: %v \n", err)
+		return false
+	}
+	for _,v := range tables {
+		if v.TablesInPrometheusArchive == tableName {
+			return true
+		}
+	}
+	return false
 }

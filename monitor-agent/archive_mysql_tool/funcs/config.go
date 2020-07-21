@@ -39,11 +39,17 @@ type TransConfig struct {
 	MaxUnitSpeed  int  `json:"max_unit_speed"`
 }
 
+type HttpConfig struct {
+	Enable  bool  `json:"enable"`
+	Port    int   `json:"port"`
+}
+
 type GlobalConfig struct {
 	Mysql  MysqlConfig  `json:"mysql"`
 	Prometheus  PrometheusConfig `json:"prometheus"`
 	Monitor  MonitorConfig  `json:"monitor"`
 	Trans    TransConfig    `json:"trans"`
+	Http     HttpConfig     `json:"http"`
 }
 
 var (
