@@ -34,5 +34,6 @@ func main() {
 		log.Printf("init prometheus http transport pool fail : %v \n", err)
 		return
 	}
+	go funcs.InitHttpHandles()
 	funcs.StartCronJob()
 }
