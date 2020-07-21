@@ -18,6 +18,7 @@ import (
 var (
 	checkEventKey string
 	checkEventToMail string
+	monitorSelfIp  string
 	intervalMin int
 )
 
@@ -37,6 +38,7 @@ func StartCheckCron()  {
 		mid.LogInfo("start check cron fail,interval min is validate fail,please check env MONITOR_CHECK_EVENT_INTERVAL_MIN")
 		return
 	}
+	monitorSelfIp = os.Getenv("MONITOR_HOST_IP")
 	var timeStartValue string
 	var timeSubValue,sleepWaitTime int64
 	switch intervalMin {
@@ -65,7 +67,7 @@ func StartCheckCron()  {
 		mid.LogInfo("invalidate interval setting,must like 1、10、30、60、120、180...60*n \n")
 		return
 	}
-	mid.LogInfo(fmt.Sprintf("start check cron with event key=%s to=%s interval_min=%d ", checkEventKey, checkEventToMail, intervalMin))
+	mid.LogInfo(fmt.Sprintf("start check cron with event key=%s to=%s interval_min=%d monitor_ip=%s", checkEventKey, checkEventToMail, intervalMin, monitorSelfIp))
 	t,_ := time.Parse("2006-01-02 15:04:05 MST", timeStartValue)
 	if timeSubValue == 1800 {
 		if time.Now().Unix() > t.Unix()+timeSubValue {
@@ -125,7 +127,7 @@ func GetCheckProgressContent() m.AlarmEntityObj {
 	result.Status = "OK"
 	result.To = checkEventToMail
 	result.ToMail = checkEventToMail
-	result.Subject = "Monitor Check OK"
-	result.Content = fmt.Sprintf("Monitor Self Check Message \r\nTime:%s ", time.Now().Format(m.DatetimeFormat))
+	result.Subject = "Monitor Check - "+monitorSelfIp
+	result.Content = fmt.Sprintf("Monitor Self Check Message From %s \r\nTime:%s ", monitorSelfIp, time.Now().Format(m.DatetimeFormat))
 	return result
 }
