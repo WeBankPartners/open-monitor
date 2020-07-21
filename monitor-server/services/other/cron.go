@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"context"
 	"strconv"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 )
 
 var (
@@ -88,8 +89,13 @@ func StartCheckCron()  {
 }
 
 func DoCheckProgress() error {
+	err := db.UpdateAliveCheckQueue(monitorSelfIp)
+	if err != nil {
+		mid.LogError("update alive check queue fail", err)
+		return err
+	}
 	var requestParam m.CoreNotifyRequest
-	requestParam.EventSeqNo = fmt.Sprintf("%s-%s-%d", "monitor", "check", time.Now().Unix())
+	requestParam.EventSeqNo = fmt.Sprintf("%s-%s-%s-%d", "monitor", "check", strings.Replace(monitorSelfIp, ".", "-", -1), time.Now().Unix())
 	requestParam.EventType = "alarm"
 	requestParam.SourceSubSystem = "SYS_MONITOR"
 	requestParam.OperationKey = checkEventKey
@@ -123,11 +129,16 @@ func DoCheckProgress() error {
 
 func GetCheckProgressContent() m.AlarmEntityObj {
 	var result m.AlarmEntityObj
+	err,aliveQueueTable := db.GetAliveCheckQueue()
+	if err != nil {
+		mid.LogError("get check alive queue fail", err)
+		return result
+	}
 	result.Id = "monitor-check"
 	result.Status = "OK"
 	result.To = checkEventToMail
 	result.ToMail = checkEventToMail
-	result.Subject = "Monitor Check - "+monitorSelfIp
-	result.Content = fmt.Sprintf("Monitor Self Check Message From %s \r\nTime:%s ", monitorSelfIp, time.Now().Format(m.DatetimeFormat))
+	result.Subject = "Monitor Check - "+aliveQueueTable[0].Message
+	result.Content = fmt.Sprintf("Monitor Self Check Message From %s \r\nTime:%s ", aliveQueueTable[0].Message, time.Now().Format(m.DatetimeFormat))
 	return result
 }

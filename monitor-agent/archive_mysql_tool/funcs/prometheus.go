@@ -55,12 +55,8 @@ func InitHttpTransport() error {
 func getPrometheusData(param *PrometheusQueryParam) error {
 	requestUrl,_ := url.Parse(prometheusQueryUrl)
 	urlParams := url.Values{}
-	t,_ := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s 00:00:00 CST", time.Now().Format("2006-01-02")))
-	var startTime,endTime int64
-	startTime = t.Unix()-param.LastSecond
-	endTime = t.Unix()
-	urlParams.Set("start", fmt.Sprintf("%d", startTime))
-	urlParams.Set("end", fmt.Sprintf("%d", endTime))
+	urlParams.Set("start", fmt.Sprintf("%d", param.Start))
+	urlParams.Set("end", fmt.Sprintf("%d", param.End))
 	urlParams.Set("step", fmt.Sprintf("%d", queryStep))
 	urlParams.Set("query", param.PromQl)
 	requestUrl.RawQuery = urlParams.Encode()
@@ -87,7 +83,7 @@ func getPrometheusData(param *PrometheusQueryParam) error {
 		return fmt.Errorf("prometheus response status=%s \n", result.Status)
 	}
 	for _,v := range result.Data.Result {
-		tmpResultObj := PrometheusQueryObj{Start:startTime, End:endTime}
+		tmpResultObj := PrometheusQueryObj{Start:param.Start, End:param.End}
 		var tmpValues [][]float64
 		var tmpTagSortList DefaultSortList
 		for kk,vv := range v.Metric {
