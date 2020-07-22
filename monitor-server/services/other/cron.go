@@ -95,7 +95,7 @@ func DoCheckProgress() error {
 		return err
 	}
 	var requestParam m.CoreNotifyRequest
-	requestParam.EventSeqNo = fmt.Sprintf("%s-%s-%s-%d", "monitor", "check", strings.Replace(monitorSelfIp, ".", "-", -1), time.Now().Unix())
+	requestParam.EventSeqNo = fmt.Sprintf("monitor-auto-check-%s-%d", strings.Replace(monitorSelfIp, ".", "-", -1), time.Now().Unix())
 	requestParam.EventType = "alarm"
 	requestParam.SourceSubSystem = "SYS_MONITOR"
 	requestParam.OperationKey = checkEventKey
