@@ -140,5 +140,6 @@ func GetCheckProgressContent() m.AlarmEntityObj {
 	result.ToMail = checkEventToMail
 	result.Subject = "Monitor Check - "+aliveQueueTable[0].Message
 	result.Content = fmt.Sprintf("Monitor Self Check Message From %s \r\nTime:%s ", aliveQueueTable[0].Message, time.Now().Format(m.DatetimeFormat))
+	mid.LogInfo(fmt.Sprintf("get check progress content: %s, %s, %s", result.ToMail, result.Subject, result.Content))
 	return result
 }
