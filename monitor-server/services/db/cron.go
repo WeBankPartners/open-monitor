@@ -98,7 +98,7 @@ func DoCheckProgress() error {
 	requestParam.EventType = "alarm"
 	requestParam.SourceSubSystem = "SYS_MONITOR"
 	requestParam.OperationKey = checkEventKey
-	requestParam.OperationData = fmt.Sprintf("%s-%s", "monitor", "check")
+	requestParam.OperationData = fmt.Sprintf("monitor-check-%s", monitorSelfIp)
 	requestParam.OperationUser = ""
 	mid.LogInfo(fmt.Sprintf("notify request data --> eventSeqNo:%s operationKey:%s operationData:%s", requestParam.EventSeqNo, requestParam.OperationKey, requestParam.OperationData))
 	b, _ := json.Marshal(requestParam)
@@ -126,9 +126,14 @@ func DoCheckProgress() error {
 	return nil
 }
 
-func GetCheckProgressContent() m.AlarmEntityObj {
+func GetCheckProgressContent(param string) m.AlarmEntityObj {
 	var result m.AlarmEntityObj
-	err,aliveQueueTable := GetAliveCheckQueue()
+	requestMessageIp := strings.Split(param, "-")
+	if len(requestMessageIp) != 3 {
+		mid.LogError(fmt.Sprintf("get check progress content param validate error with data=%s ", param), nil)
+		return result
+	}
+	err,aliveQueueTable := GetAliveCheckQueue(requestMessageIp[2])
 	if err != nil {
 		mid.LogError("get check alive queue fail", err)
 		return result
