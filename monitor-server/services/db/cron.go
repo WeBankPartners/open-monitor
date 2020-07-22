@@ -1,4 +1,4 @@
-package other
+package db
 
 import (
 	"os"
@@ -13,7 +13,6 @@ import (
 	"fmt"
 	"context"
 	"strconv"
-	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 )
 
 var (
@@ -89,7 +88,7 @@ func StartCheckCron()  {
 }
 
 func DoCheckProgress() error {
-	err := db.UpdateAliveCheckQueue(monitorSelfIp)
+	err := UpdateAliveCheckQueue(monitorSelfIp)
 	if err != nil {
 		mid.LogError("update alive check queue fail", err)
 		return err
@@ -129,7 +128,7 @@ func DoCheckProgress() error {
 
 func GetCheckProgressContent() m.AlarmEntityObj {
 	var result m.AlarmEntityObj
-	err,aliveQueueTable := db.GetAliveCheckQueue()
+	err,aliveQueueTable := GetAliveCheckQueue()
 	if err != nil {
 		mid.LogError("get check alive queue fail", err)
 		return result

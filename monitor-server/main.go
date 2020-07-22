@@ -36,7 +36,7 @@ func main() {
 	}
 	go api.InitClusterApi()
 	go db.StartCronJob()
-	go other.StartCheckCron()
+	go db.StartCheckCron()
 	alarm.SyncInitSdFile()
 	alarm.SyncInitConfigFile()
 	api.InitDependenceParam()
