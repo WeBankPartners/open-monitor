@@ -621,15 +621,58 @@ func GetChart(c *gin.Context)  {
 		return
 	}
 	var serials []*m.SerialModel
+	archiveQueryFlag := false
+	if query.Start < (time.Now().Unix()-m.Config().ArchiveMysql.LocalStorageMaxDay*86400) && m.Config().ArchiveMysql.Enable {
+		archiveQueryFlag = true
+	}
+	appendDataFlag := false
 	for _,v := range querys {
 		mid.LogInfo(fmt.Sprintf("query : endpoint : %v  metric : %v  start:%d  end:%d  promql:%s", v.Endpoint, v.Metric, v.Start, v.End, v.PromQ))
-		tmpSerials := ds.PrometheusData(&v)
-		for _,vv := range tmpSerials {
-			serials = append(serials, vv)
+		if !archiveQueryFlag {
+			tmpSerials := ds.PrometheusData(&v)
+			if len(tmpSerials) > 0 {
+				if len(tmpSerials[0].Data) > 0 {
+					tmpSerialEnd := int64(tmpSerials[0].Data[0][0])/1000
+					if tmpSerialEnd > (query.Start+120) {
+						_,_,tmpArchiveSerials := db.GetArchiveData(&m.QueryMonitorData{Start:v.Start, End:tmpSerialEnd, Endpoint:v.Endpoint, Metric:v.Metric, Legend:v.Legend, CompareLegend:v.CompareLegend, SameEndpoint:v.SameEndpoint}, paramConfig[0].Aggregate)
+						for _,tmpSerial := range tmpArchiveSerials {
+							if len(tmpSerial.Data) > 0 {
+								appendDataFlag = true
+								for si,vv := range tmpSerials {
+									if tmpSerial.Name == vv.Name {
+										tmpSerials[si].Data = append(tmpSerial.Data, vv.Data...)
+									}
+								}
+							}
+						}
+					}
+				}
+			}else{
+				err,step,tmpSerials = db.GetArchiveData(&m.QueryMonitorData{Start:v.Start, End:v.End, Endpoint:v.Endpoint, Metric:v.Metric, Legend:v.Legend, CompareLegend:v.CompareLegend, SameEndpoint:v.SameEndpoint}, paramConfig[0].Aggregate)
+				if err != nil {
+					mid.LogError("prometheus no data,try to get archive data error", err)
+				}
+			}
+			for _, vv := range tmpSerials {
+				serials = append(serials, vv)
+			}
+		}else{
+			err,tmpStep,tmpSerials := db.GetArchiveData(&v, paramConfig[0].Aggregate)
+			if err != nil {
+				mid.ReturnError(c, "Query archive db data error", err)
+				return
+			}
+			for _, vv := range tmpSerials {
+				serials = append(serials, vv)
+			}
+			step = tmpStep
 		}
 	}
 	// agg
-	agg := db.CheckAggregate(query.Start, query.End, firstEndpoint, step, len(serials))
+	agg := 0
+	if !appendDataFlag {
+		agg = db.CheckAggregate(query.Start, query.End, firstEndpoint, step, len(serials))
+	}
 	mid.LogInfo(fmt.Sprintf("serials length: %d query length: %d", len(serials), len(querys)))
 	//var firstSerialTime float64
 	for i, s := range serials {

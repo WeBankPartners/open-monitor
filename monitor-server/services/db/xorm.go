@@ -12,8 +12,10 @@ import (
 	"strings"
 )
 
-var stores []*xorm.Engine
-var x *xorm.Engine
+var (
+	x *xorm.Engine
+    archiveMysql *xorm.Engine
+)
 //var RedisStore sessions.RedisStore
 
 type DBObj struct {
@@ -50,18 +52,35 @@ func InitDbConn() {
 	if dbCfg.Type == "mysql" {
 		initDefaultMysql(dbCfg)
 	}
+	if m.Config().ArchiveMysql.Enable {
+		initArchiveDbEngine()
+	}
 }
 
 func initDefaultMysql(dbCfg m.StoreConfig)  {
 	dbObj := DBObj{DbType: dbCfg.Type, ConnUser: dbCfg.User, ConnPwd: dbCfg.Pwd, ConnHost: fmt.Sprintf("%s:%d", dbCfg.Server, dbCfg.Port), ConnDb: dbCfg.DataBase, ConnPtl: "tcp", MaxOpen: dbCfg.MaxOpen, MaxIdle: dbCfg.MaxIdle, Timeout: dbCfg.Timeout}
 	dbObj.InitXorm()
-	stores = []*xorm.Engine{dbObj.x}
 	x = dbObj.x
 	mid.LogInfo("default db init success")
 }
 
-func Default() *xorm.Engine {
-	return stores[0]
+func initArchiveDbEngine() {
+	var err error
+	connectStr := fmt.Sprintf("%s:%s@%s(%s:%d)/%s?collation=utf8mb4_unicode_ci&allowNativePasswords=true",
+		m.Config().ArchiveMysql.User, m.Config().ArchiveMysql.Password, "tcp", m.Config().ArchiveMysql.Server, m.Config().ArchiveMysql.Port, m.Config().ArchiveMysql.DataBase)
+	archiveMysql,err = xorm.NewEngine("mysql", connectStr)
+	if err != nil {
+		archiveMysql = nil
+		mid.LogError("init archive mysql fail with connect: "+connectStr+" error ", err)
+	}else{
+		archiveMysql.SetMaxIdleConns(m.Config().ArchiveMysql.MaxIdle)
+		archiveMysql.SetMaxOpenConns(m.Config().ArchiveMysql.MaxOpen)
+		archiveMysql.SetConnMaxLifetime(time.Duration(m.Config().ArchiveMysql.Timeout)*time.Second)
+		archiveMysql.Charset("utf8")
+		// 使用驼峰式映射
+		archiveMysql.SetMapper(core.SnakeMapper{})
+		mid.LogInfo("init archive mysql success ")
+	}
 }
 
 type Action struct {

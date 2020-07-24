@@ -49,3 +49,11 @@ func (s DataSort) Swap(i,j int)  {
 func (s DataSort) Less(i,j int) bool {
 	return s[i][0] < s[j][0]
 }
+
+type ArchiveQueryTable struct {
+	Endpoint  string  `json:"endpoint"`
+	Metric  string  `json:"metric"`
+	Tags    string  `json:"tags"`
+	UnixTime  int64  `json:"unix_time"`
+	Value  float64  `json:"value"`
+}
