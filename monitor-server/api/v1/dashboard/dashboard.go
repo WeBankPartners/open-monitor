@@ -622,7 +622,7 @@ func GetChart(c *gin.Context)  {
 	}
 	var serials []*m.SerialModel
 	archiveQueryFlag := false
-	if query.Start < (time.Now().Unix()-m.Config().ArchiveMysql.LocalStorageMaxDay*86400) && m.Config().ArchiveMysql.Enable {
+	if query.Start < (time.Now().Unix()-m.Config().ArchiveMysql.LocalStorageMaxDay*86400) && db.ArchiveEnable {
 		archiveQueryFlag = true
 	}
 	appendDataFlag := false
