@@ -16,6 +16,7 @@ type MysqlConfig struct {
 	User  string  `json:"user"`
 	Password   string  `json:"password"`
 	DataBase  string  `json:"database"`
+	DatabasePrefix string  `json:"database_prefix"`
 	MaxOpen  int  `json:"maxOpen"`
 	MaxIdle  int  `json:"maxIdle"`
 	Timeout  int  `json:"timeout"`
@@ -37,6 +38,7 @@ type MonitorConfig struct {
 
 type TransConfig struct {
 	MaxUnitSpeed  int  `json:"max_unit_speed"`
+	FiveMinStartDay int64 `json:"five_min_start_day"`
 }
 
 type HttpConfig struct {
@@ -45,6 +47,7 @@ type HttpConfig struct {
 }
 
 type GlobalConfig struct {
+	Enable  string  `json:"enable"`
 	Mysql  MysqlConfig  `json:"mysql"`
 	Prometheus  PrometheusConfig `json:"prometheus"`
 	Monitor  MonitorConfig  `json:"monitor"`
