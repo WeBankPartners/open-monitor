@@ -99,7 +99,7 @@ func ExportAgentNew(c *gin.Context)  {
 			}
 		}
 		var param m.RegisterParamNew
-		var validateMessage string
+		var validateMessage,endpointGuid string
 		var inputErr error
 		tmpStep := 10
 		if v.Step != "" {
@@ -116,7 +116,7 @@ func ExportAgentNew(c *gin.Context)  {
 			param.Method = v.Method
 		}
 		if action == "register" {
-			validateMessage,inputErr = AgentRegister(param)
+			validateMessage,endpointGuid,inputErr = AgentRegister(param)
 			if validateMessage != "" {
 				validateMessage = fmt.Sprintf("input index:%d validate fail -> ", i) + validateMessage
 			}
@@ -134,6 +134,7 @@ func ExportAgentNew(c *gin.Context)  {
 			mid.LogInfo(fmt.Sprintf("Export deregister endpoint id:%d guid:%s ", endpointObj.Id, endpointObj.Guid))
 			if endpointObj.Id > 0 {
 				inputErr = DeregisterJob(endpointObj.Guid)
+				endpointGuid = endpointObj.Guid
 			}
 		}
 		if validateMessage != "" || inputErr != nil {
@@ -141,10 +142,10 @@ func ExportAgentNew(c *gin.Context)  {
 			if inputErr != nil {
 				errorMessage = fmt.Sprintf("input index:%d %s [agentType:%s, name:%s, hostIp:%s, instanceIp:%s] error -> %v ", i, action, agentType, v.Instance, v.HostIp, v.InstanceIp, inputErr)
 			}
-			resultData.Outputs = append(resultData.Outputs, resultOutputObj{CallbackParameter:v.CallbackParameter, ErrorCode:"1", ErrorMessage:errorMessage})
+			resultData.Outputs = append(resultData.Outputs, resultOutputObj{CallbackParameter:v.CallbackParameter, ErrorCode:"1", ErrorMessage:errorMessage, Guid:endpointGuid})
 			resultCode = "1"
 		}else{
-			resultData.Outputs = append(resultData.Outputs, resultOutputObj{CallbackParameter:v.CallbackParameter, ErrorCode:"0", ErrorMessage:""})
+			resultData.Outputs = append(resultData.Outputs, resultOutputObj{CallbackParameter:v.CallbackParameter, ErrorCode:"0", ErrorMessage:"", Guid:endpointGuid})
 		}
 	}
 }
