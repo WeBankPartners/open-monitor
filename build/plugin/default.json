@@ -156,15 +156,16 @@
     "path": "/app/monitor/prometheus/sd_file/"
   },
   "archive_mysql": {
-    "enable": false,
-    "server": "127.0.0.1",
-    "port": 3306,
-    "user": "root",
-    "password": "wecube",
-    "database": "prometheus_archive",
+    "enable": "{{MONITOR_ARCHIVE_ENABLE}}",
+    "server": "{{MONITOR_ARCHIVE_MYSQL_HOST}}",
+    "port": {{MONITOR_ARCHIVE_MYSQL_PORT}},
+    "user": "{{MONITOR_ARCHIVE_MYSQL_USER}}",
+    "password": "{{MONITOR_ARCHIVE_MYSQL_PWD}}",
+    "database_prefix": "prometheus_archive_",
     "max_open": 100,
     "max_idle": 10,
     "timeout": 60,
-    "local_storage_max_day": 30
+    "local_storage_max_day": 30,
+    "five_min_start_day": 90
   }
 }

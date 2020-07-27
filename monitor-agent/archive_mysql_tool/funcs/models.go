@@ -42,8 +42,13 @@ type ArchiveTable struct {
 	P95       float64 `json:"p_95"`
 }
 
+type ArchiveCountQueryObj struct {
+	Endpoint  string  `json:"endpoint"`
+	Metric    string  `json:"metric"`
+}
+
 type PrometheusArchiveTables struct {
-	TablesInPrometheusArchive string  `xorm:"Tables_in_prometheus_archive"`
+	TableName string  `xorm:"TABLE_NAME"`
 }
 
 type MonitorEndpointTable struct {
@@ -110,4 +115,23 @@ type HttpRespJson struct {
 	Code  int  `json:"code"`
 	Msg   string    `json:"msg"`
 	Data  interface{}  `json:"data"`
+}
+
+type ArchiveFiveRowObj struct {
+	Endpoint  string  `json:"endpoint"`
+	Metric    string  `json:"metric"`
+	Tags  string  `json:"tags"`
+	UnixTime  int64  `json:"unix_time"`
+	Avg  []float64  `json:"avg"`
+	Min  []float64  `json:"min"`
+	Max  []float64  `json:"max"`
+	P95  []float64  `json:"p_95"`
+}
+
+func (a ArchiveFiveRowObj) CalcArchiveTable() ArchiveTable {
+	tmpAvg,_,_,_ := calcData(a.Avg)
+	_,tmpMin,_,_ := calcData(a.Min)
+	_,_,tmpMax,_ := calcData(a.Max)
+	_,_,_,tmpP95 := calcData(a.P95)
+	return ArchiveTable{Endpoint:a.Endpoint,Metric:a.Metric,Tags:a.Tags,UnixTime:a.UnixTime,Avg:tmpAvg,Min:tmpMin,Max:tmpMax,P95:tmpP95}
 }

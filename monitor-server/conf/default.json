@@ -156,15 +156,16 @@
     "path": "/app/monitor/prometheus/sd_file/"
   },
   "archive_mysql": {
-    "enable": true,
+    "enable": "Y",
     "server": "127.0.0.1",
     "port": 3306,
     "user": "root",
     "password": "wecube",
-    "database": "prometheus_archive",
+    "database_prefix": "prometheus_archive_",
     "max_open": 100,
     "max_idle": 10,
     "timeout": 60,
-    "local_storage_max_day": 30
+    "local_storage_max_day": 30,
+    "five_min_start_day": 90
   }
 }
