@@ -479,11 +479,12 @@ func GetChartTitle(metric string,id int) string {
 }
 
 func GetArchiveData(query *m.QueryMonitorData,agg string) (err error,step int,result []*m.SerialModel) {
-	if archiveMysql == nil {
+	if !archiveEnable {
 		err = fmt.Errorf("please make sure archive mysql connect done ")
 		mid.LogError("", err)
 		return err,step,result
 	}
+	checkArchiveDatabase()
 	if query.Start == 0 || query.End == 0 || (query.Start>=query.End) {
 		err = fmt.Errorf("get archive data query start and end validate fail,start:%d end:%d ", query.Start, query.End)
 		mid.LogError("", err)
@@ -494,7 +495,7 @@ func GetArchiveData(query *m.QueryMonitorData,agg string) (err error,step int,re
 		agg = "avg"
 	}
 	step = 60
-	if query.Start < time.Now().Unix()-(90*86400) {
+	if query.Start < time.Now().Unix()-(m.Config().ArchiveMysql.FiveMinStartDay*86400) {
 		step = 300
 	}
 	dateStringList := getDateStringList(query.Start, query.End)
