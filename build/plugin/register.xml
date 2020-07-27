@@ -106,6 +106,7 @@
                 <outputParameters>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
             <interface action="deregister" path="/wecube-monitor/api/v1/agent/export/deregister/host" filterRule="">
@@ -150,6 +151,7 @@
                 <outputParameters>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
             <interface action="deregister" path="/wecube-monitor/api/v1/agent/export/deregister/mysql" filterRule="">
@@ -202,6 +204,7 @@
                 <outputParameters>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
             <interface action="deregister" path="/wecube-monitor/api/v1/agent/export/deregister/redis" filterRule="">
@@ -253,6 +256,7 @@
                 <outputParameters>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
             <interface action="deregister" path="/wecube-monitor/api/v1/agent/export/deregister/java" filterRule="">
@@ -299,6 +303,7 @@
                 <outputParameters>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
             <interface action="deregister" path="/wecube-monitor/api/v1/agent/export/deregister/ping" filterRule="">
@@ -343,6 +348,7 @@
                 <outputParameters>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
             <interface action="deregister" path="/wecube-monitor/api/v1/agent/export/deregister/telnet" filterRule="">
@@ -424,6 +430,7 @@
                 <outputParameters>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
             <interface action="deregister" path="/wecube-monitor/api/v1/agent/export/deregister/nginx" filterRule="">
@@ -472,6 +479,7 @@
                 <outputParameters>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
             <interface action="deregister" path="/wecube-monitor/api/v1/agent/export/deregister/http" filterRule="">
@@ -522,6 +530,7 @@
                 <outputParameters>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
             <interface action="deregister" path="/wecube-monitor/api/v1/agent/export/deregister/host" filterRule="{state_code eq 'destroyed'}{fixed_date is NULL}">
@@ -566,6 +575,7 @@
                 <outputParameters>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
             <interface action="deregister" path="/wecube-monitor/api/v1/agent/export/deregister/mysql" filterRule="{state_code eq 'destroyed'}{fixed_date is NULL}">
@@ -618,6 +628,7 @@
                 <outputParameters>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
             <interface action="deregister" path="/wecube-monitor/api/v1/agent/export/deregister/redis" filterRule="{state_code eq 'destroyed'}{fixed_date is NULL}">
@@ -669,6 +680,7 @@
                 <outputParameters>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
             <interface action="deregister" path="/wecube-monitor/api/v1/agent/export/deregister/java" filterRule="{state_code eq 'destroyed'}{fixed_date is NULL}">
@@ -716,6 +728,7 @@
                 <outputParameters>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
             <interface action="deregister" path="/wecube-monitor/api/v1/agent/export/deregister/telnet" filterRule="{state_code eq 'destroyed'}{fixed_date is NULL}">
@@ -764,6 +777,7 @@
                 <outputParameters>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
             <interface action="deregister" path="/wecube-monitor/api/v1/agent/export/deregister/nginx" filterRule="{state_code eq 'destroyed'}{fixed_date is NULL}">
