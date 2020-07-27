@@ -4,6 +4,7 @@ import (
 	"flag"
 	"log"
 	"github.com/WeBankPartners/open-monitor/monitor-agent/archive_mysql_tool/funcs"
+	"strings"
 )
 
 func main() {
@@ -14,9 +15,21 @@ func main() {
 		log.Printf("init config fail : %v \n", err)
 		return
 	}
-	err = funcs.InitDbEngine()
+	enable := strings.ToLower(funcs.Config().Enable)
+	if enable == "y" || enable == "yes" || enable == "true" {
+		log.Println("enable flag true,start... ")
+	}else{
+		log.Println("enable flag false,stop... ")
+		return
+	}
+	err = funcs.InitDbEngine("")
 	if err != nil {
 		log.Printf("init mysql connect fail : %v \n", err)
+		return
+	}
+	err = funcs.ChangeDatabase()
+	if err != nil {
+		log.Printf("change mysql database connect fail : %v \n", err)
 		return
 	}
 	err = funcs.InitMonitorDbEngine()
