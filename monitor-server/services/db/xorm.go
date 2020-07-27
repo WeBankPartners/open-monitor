@@ -16,7 +16,7 @@ var (
 	x *xorm.Engine
     archiveMysql *xorm.Engine
     archiveDatabase  string
-    archiveEnable bool
+    ArchiveEnable bool
 )
 //var RedisStore sessions.RedisStore
 
@@ -58,7 +58,7 @@ func InitDbConn() {
 	if tmpEnable == "y" || tmpEnable == "yes" || tmpEnable == "true" {
 		initArchiveDbEngine()
 	}else{
-		archiveEnable = false
+		ArchiveEnable = false
 	}
 }
 
@@ -76,10 +76,10 @@ func initArchiveDbEngine() {
 		m.Config().ArchiveMysql.User, m.Config().ArchiveMysql.Password, "tcp", m.Config().ArchiveMysql.Server, m.Config().ArchiveMysql.Port, databaseName)
 	archiveMysql,err = xorm.NewEngine("mysql", connectStr)
 	if err != nil {
-		archiveEnable = false
+		ArchiveEnable = false
 		mid.LogError("init archive mysql fail with connect: "+connectStr+" error ", err)
 	}else{
-		archiveEnable = true
+		ArchiveEnable = true
 		archiveMysql.SetMaxIdleConns(m.Config().ArchiveMysql.MaxIdle)
 		archiveMysql.SetMaxOpenConns(m.Config().ArchiveMysql.MaxOpen)
 		archiveMysql.SetConnMaxLifetime(time.Duration(m.Config().ArchiveMysql.Timeout)*time.Second)
