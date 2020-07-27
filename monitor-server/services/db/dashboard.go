@@ -479,7 +479,7 @@ func GetChartTitle(metric string,id int) string {
 }
 
 func GetArchiveData(query *m.QueryMonitorData,agg string) (err error,step int,result []*m.SerialModel) {
-	if !archiveEnable {
+	if !ArchiveEnable {
 		err = fmt.Errorf("please make sure archive mysql connect done ")
 		mid.LogError("", err)
 		return err,step,result
