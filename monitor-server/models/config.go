@@ -135,17 +135,19 @@ type SdFileConfig struct {
 }
 
 type ArchiveMysqlConfig struct {
-	Enable  bool  `json:"enable"`
+	Enable  string  `json:"enable"`
 	Type  string  `json:"type"`
 	Server  string  `json:"server"`
 	Port  int     `json:"port"`
 	User  string  `json:"user"`
 	Password   string  `json:"password"`
 	DataBase  string  `json:"database"`
+	DatabasePrefix string  `json:"database_prefix"`
 	MaxOpen  int  `json:"maxOpen"`
 	MaxIdle  int  `json:"maxIdle"`
 	Timeout  int  `json:"timeout"`
 	LocalStorageMaxDay int64 `json:"local_storage_max_day"`
+	FiveMinStartDay int64 `json:"five_min_start_day"`
 }
 
 type GlobalConfig struct {

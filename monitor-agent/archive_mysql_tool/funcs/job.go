@@ -18,6 +18,10 @@ func StartCronJob()  {
 	c := time.NewTicker(24*time.Hour).C
 	for {
 		go CreateJob("")
+		go func() {
+			time.Sleep(60*time.Minute)
+			ArchiveFromMysql(0)
+		}()
 		<- c
 	}
 }
@@ -39,7 +43,7 @@ func CreateJob(dateString string)  {
 		end = t.Unix()+86400
 	}
 	log.Printf("start cron job %s \n", dateString)
-	err,tableName := createTable(start)
+	err,tableName := createTable(start, false)
 	if err != nil {
 		log.Printf("try to create table:%s error:%v \n", tableName, err)
 		return
@@ -158,12 +162,37 @@ func calcData(data []float64) (avg,min,max,p95 float64) {
 	return avg,min,max,p95
 }
 
-func ArchiveFromMysql()  {
-	t,_ := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s 00:00:00 CST", time.Now().Format("2006-01-02")))
-	tableUnixTime := t.Unix()-(90*86400)
-	tableName := fmt.Sprintf("archive_%s", time.Unix(tableUnixTime, 0).Format("2006_01_02"))
-	if !checkTableExists(tableName) {
+func ArchiveFromMysql(tableUnixTime int64)  {
+	if tableUnixTime <= 0 {
+		var startDays int64 = 90
+		if Config().Trans.FiveMinStartDay > 0 {
+			startDays = Config().Trans.FiveMinStartDay
+		}
+		t, _ := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s 00:00:00 CST", time.Now().Format("2006-01-02")))
+		tableUnixTime = t.Unix() - (startDays * 86400)
+	}
+	oldTableName := fmt.Sprintf("archive_%s", time.Unix(tableUnixTime, 0).Format("2006_01_02"))
+	if !checkTableExists(oldTableName) {
 		return
 	}
-
+	err,newTableName := createTable(tableUnixTime, true)
+	if err != nil {
+		log.Printf("archive 5 min job,create table:%s error:%v \n", newTableName, err)
+		return
+	}
+	err,countNowTable := getArchiveTableCountData(oldTableName)
+	if err != nil {
+		log.Printf("archive 5 min job,get count data from table:%s error:%v \n", oldTableName, err)
+		return
+	}
+	for _,v := range countNowTable {
+		tmpErr := archiveOneToFive(oldTableName,newTableName,v.Endpoint,v.Metric)
+		if tmpErr != nil {
+			log.Printf("archive 5 min job,archive 1 min to 5 min job error: %v \n", tmpErr)
+		}
+	}
+	err = renameFiveToOne(oldTableName,newTableName)
+	if err != nil {
+		log.Printf("archive 5 min job,rename %s to %s error: %v \n", oldTableName, newTableName, err)
+	}
 }

@@ -1,10 +1,10 @@
 {
-  "enable": "Y",
+  "enable": "{{MONITOR_ARCHIVE_ENABLE}}",
   "mysql": {
-    "server": "127.0.0.1",
-    "port": 3306,
-    "user": "root",
-    "password": "wecube",
+    "server": "{{MONITOR_ARCHIVE_MYSQL_HOST}}",
+    "port": {{MONITOR_ARCHIVE_MYSQL_PORT}},
+    "user": "{{MONITOR_ARCHIVE_MYSQL_USER}}",
+    "password": "{{MONITOR_ARCHIVE_MYSQL_PWD}}",
     "database_prefix": "prometheus_archive_",
     "max_open": 100,
     "max_idle": 10,
@@ -21,10 +21,10 @@
   },
   "monitor": {
     "mysql": {
-      "server": "127.0.0.1",
-      "port": 3306,
-      "user": "root",
-      "password": "wecube",
+      "server": "{{MONITOR_DB_HOST}}",
+      "port": {{MONITOR_DB_PORT}},
+      "user": "{{MONITOR_DB_USER}}",
+      "password": "{{MONITOR_DB_PWD}}",
       "database": "monitor",
       "max_open": 10,
       "max_idle": 2,
