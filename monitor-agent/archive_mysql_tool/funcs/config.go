@@ -91,5 +91,9 @@ func InitConfig(cfg string) error {
 	config = &c
 	log.Println("read config file:", cfg, "successfully")
 	lock.Unlock()
+	hostIp = "127.0.0.1"
+	if os.Getenv("MONITOR_HOST_IP") != "" {
+		hostIp = os.Getenv("MONITOR_HOST_IP")
+	}
 	return nil
 }
