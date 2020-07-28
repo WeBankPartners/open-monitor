@@ -27,6 +27,11 @@ func StartCronJob()  {
 }
 
 func CreateJob(dateString string)  {
+	err := InitMonitorMetricMap()
+	if err != nil {
+		log.Printf("start to create job,init monitor metric map error: %v \n", err)
+		return
+	}
 	var start,end int64
 	if dateString == "" {
 		t,_ := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s 00:00:00 CST", time.Now().Format("2006-01-02")))
