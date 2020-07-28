@@ -7,7 +7,7 @@
     <ModalComponent :modelConfig="modelConfig">
       <div slot="advancedConfig" class="extentClass">   
         <div class="marginbottom params-each">
-          <label class="col-md-2">{{$t('field.endpoint')}}:</label>
+          <label class="col-md-2 label-name">{{$t('field.endpoint')}}:</label>
           <Select v-model="modelConfig.slotConfig.resourceSelected" multiple filterable style="width:300px">
               <Option v-for="item in modelConfig.slotConfig.resourceOption" :value="item.id" :key="item.id">
                 <Tag color="cyan" v-if="item.option_value.split(':')[1] == 'host'">host</Tag>
@@ -27,14 +27,14 @@
     <ModalComponent :modelConfig="endpointRejectModel">
       <div slot="endpointReject">  
         <div class="marginbottom params-each">
-          <label class="col-md-2">{{$t('field.endpoint')}}:</label>
+          <label class="col-md-2 label-name">{{$t('field.endpoint')}}:</label>
           <Select v-model="endpointRejectModel.addRow.type" style="width:338px" @on-change="typeChange">
               <Option v-for="item in endpointRejectModel.endpointType" :value="item.value" :key="item.value">
               {{item.label}}</Option>
           </Select>
         </div>
         <div class="marginbottom params-each" v-if="!(['host','windows'].includes(endpointRejectModel.addRow.type))">
-          <label class="col-md-2">{{$t('field.instance')}}:</label>
+          <label class="col-md-2 label-name">{{$t('field.instance')}}:</label>
           <input 
             v-validate="'required'"
             v-model="endpointRejectModel.addRow.name" 
@@ -46,12 +46,12 @@
           <label v-show="veeErrors.has('name')" class="is-danger">{{ veeErrors.first('name')}}</label>
         </div>
         <div class="marginbottom params-each" v-if="['mysql','redis','java'].includes(endpointRejectModel.addRow.type)">
-          <label class="col-md-2">{{$t('button.trusteeship')}}:</label>
+          <label class="col-md-2 label-name">{{$t('button.trusteeship')}}:</label>
           <Checkbox v-model="endpointRejectModel.addRow.agent_manager"></Checkbox>
         </div>
         <section v-if="['mysql','redis','java'].includes(endpointRejectModel.addRow.type) && endpointRejectModel.addRow.agent_manager">
           <div v-if="['mysql','java'].includes(endpointRejectModel.addRow.type)" class="marginbottom params-each">
-            <label class="col-md-2">{{$t('button.username')}}:</label>
+            <label class="col-md-2 label-name">{{$t('button.username')}}:</label>
             <input 
               v-validate="'required'"
               v-model="endpointRejectModel.addRow.user" 
@@ -63,7 +63,7 @@
             <label v-show="veeErrors.has('user')" class="is-danger">{{ veeErrors.first('user')}}</label>
           </div>
           <div class="marginbottom params-each">
-            <label class="col-md-2">{{$t('button.password')}}:</label>
+            <label class="col-md-2 label-name">{{$t('button.password')}}:</label>
             <input 
               v-validate="'required'"
               v-model="endpointRejectModel.addRow.password" 
@@ -77,7 +77,7 @@
         </section>
         <section v-if="endpointRejectModel.addRow.type === 'http'">
           <div class="marginbottom params-each">
-            <label class="col-md-2">Method:</label>
+            <label class="col-md-2 label-name">Method:</label>
             <input 
               v-validate="'required'"
               v-model="endpointRejectModel.addRow.method" 
@@ -89,7 +89,7 @@
             <label v-show="veeErrors.has('method')" class="is-danger">{{ veeErrors.first('method')}}</label>
           </div>
           <div class="marginbottom params-each">
-            <label class="col-md-2">URL:</label>
+            <label class="col-md-2 label-name" >URL:</label>
             <input 
               v-validate="'required'"
               v-model="endpointRejectModel.addRow.url" 
@@ -102,7 +102,7 @@
           </div>
         </section>
         <div class="marginbottom params-each" v-if="endpointRejectModel.addRow.type === 'other'">
-          <label class="col-md-2">exporter_type: </label>
+          <label class="col-md-2 label-name">exporter_type: </label>
           <input 
             v-validate="'required'"
             v-model="endpointRejectModel.addRow.exporter_type" 
@@ -114,7 +114,7 @@
           <label v-show="veeErrors.has('exporter_type')" class="is-danger">{{ veeErrors.first('exporter_type')}}</label>
         </div>
         <div class="marginbottom params-each" v-if="!(['ping','http'].includes(endpointRejectModel.addRow.type))">
-          <label class="col-md-2">{{$t('button.port')}}:</label>
+          <label class="col-md-2 label-name">{{$t('button.port')}}:</label>
           <input 
             v-validate="'required|isNumber'" 
             v-model="endpointRejectModel.addRow.port" 
@@ -137,7 +137,7 @@
           </div>
         </div>
         <div class="marginbottom params-each">
-          <label class="col-md-2">{{$t('tableKey.condition')}}:</label>
+          <label class="col-md-2 label-name">{{$t('tableKey.condition')}}:</label>
           <div class="search-input-content">
             <input type="text" v-model="processConfigModel.processName" class="search-input c-dark" />
           </div>

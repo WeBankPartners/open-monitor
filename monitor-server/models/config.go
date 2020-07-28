@@ -134,6 +134,22 @@ type SdFileConfig struct {
 	Path  string  `json:"path"`
 }
 
+type ArchiveMysqlConfig struct {
+	Enable  string  `json:"enable"`
+	Type  string  `json:"type"`
+	Server  string  `json:"server"`
+	Port  string     `json:"port"`
+	User  string  `json:"user"`
+	Password   string  `json:"password"`
+	DataBase  string  `json:"database"`
+	DatabasePrefix string  `json:"database_prefix"`
+	MaxOpen  int  `json:"maxOpen"`
+	MaxIdle  int  `json:"maxIdle"`
+	Timeout  int  `json:"timeout"`
+	LocalStorageMaxDay int64 `json:"local_storage_max_day"`
+	FiveMinStartDay int64 `json:"five_min_start_day"`
+}
+
 type GlobalConfig struct {
 	Http  *HttpConfig  `json:"http"`
 	Store  StoreConfig  `json:"store"`
@@ -147,6 +163,7 @@ type GlobalConfig struct {
 	Cluster  ClusterConfig  `json:"cluster"`
 	CronJob  CronJobConfig  `json:"cron_job"`
 	SdFile  SdFileConfig  `json:"sd_file"`
+	ArchiveMysql  ArchiveMysqlConfig  `json:"archive_mysql"`
 }
 
 var (
