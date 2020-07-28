@@ -135,3 +135,8 @@ func (a ArchiveFiveRowObj) CalcArchiveTable() ArchiveTable {
 	_,_,_,tmpP95 := calcData(a.P95)
 	return ArchiveTable{Endpoint:a.Endpoint,Metric:a.Metric,Tags:a.Tags,UnixTime:a.UnixTime,Avg:tmpAvg,Min:tmpMin,Max:tmpMax,P95:tmpP95}
 }
+
+type JobRecordTable struct {
+	Id  int  `json:"id"`
+	HostIp  string  `json:"host_ip"`
+}
