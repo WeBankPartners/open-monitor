@@ -350,27 +350,32 @@ func QueryEntityAlarm(c *gin.Context)  {
 	var id int
 	var guid string
 	value := param.Criteria.Condition
-	if strings.Contains(value, "-") {
-		tmpSplit := strings.Split(value, "-")
-		id, _ = strconv.Atoi(tmpSplit[0])
-		guid = value[len(tmpSplit[0])+1:]
-	}else{
-		id, _ = strconv.Atoi(value)
+	if strings.Contains(value, "monitor-check") {
+		alarmObj := db.GetCheckProgressContent(value)
+		result.Data = append(result.Data, &alarmObj)
+	}else {
+		if strings.Contains(value, "-") {
+			tmpSplit := strings.Split(value, "-")
+			id, _ = strconv.Atoi(tmpSplit[0])
+			guid = value[len(tmpSplit[0])+1:]
+		} else {
+			id, _ = strconv.Atoi(value)
+		}
+		if id <= 0 {
+			result.Status = "ERROR"
+			result.Message = fmt.Sprintf("Query criteria condition: %s -> filter validation failed", param.Criteria.Condition)
+			mid.ReturnData(c, result)
+			return
+		}
+		alarmObj, err := db.GetAlarmEvent("alarm", guid, id)
+		if err != nil {
+			result.Status = "ERROR"
+			result.Message = fmt.Sprintf("error: %v", err)
+			mid.ReturnData(c, result)
+			return
+		}
+		result.Data = append(result.Data, &alarmObj)
 	}
-	if id <= 0 {
-		result.Status = "ERROR"
-		result.Message = fmt.Sprintf("Query criteria condition: %s -> filter validation failed", param.Criteria.Condition)
-		mid.ReturnData(c, result)
-		return
-	}
-	alarmObj,err := db.GetAlarmEvent("alarm", guid, id)
-	if err != nil {
-		result.Status = "ERROR"
-		result.Message = fmt.Sprintf("error: %v", err)
-		mid.ReturnData(c, result)
-		return
-	}
-	result.Data = append(result.Data, &alarmObj)
 	result.Status = "OK"
 	result.Message = "Success"
 	mid.ReturnData(c, result)

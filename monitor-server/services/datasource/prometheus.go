@@ -122,45 +122,7 @@ func PrometheusData(query *m.QueryMonitorData) []*m.SerialModel  {
 	for _,otr := range data.Data.Result {
 		var serial m.SerialModel
 		serial.Type = "line"
-		tmpName := query.Legend
-		for k,v := range otr.Metric {
-			if strings.Contains(query.Legend, "$"+k) {
-				tmpName = strings.Replace(tmpName, "$"+k, v, -1)
-				if !query.SameEndpoint {
-					tmpName = fmt.Sprintf("%s:%s", query.Endpoint[0], tmpName)
-				}
-			}
-		}
-		if strings.Contains(query.Legend, "$custom") {
-			if query.Legend == "$custom" {
-				tmpName = fmt.Sprintf("%s:%s", query.Endpoint[0], query.Metric[0])
-				if len(data.Data.Result) > 1 {
-					tmpName = appendTagString(tmpName, otr.Metric)
-				}
-			}else if query.Legend == "$custom_metric" {
-				tmpName = query.Metric[0]
-				if len(data.Data.Result) > 1 {
-					tmpName = appendTagString(tmpName, otr.Metric)
-				}
-			}else if query.Legend == "$custom_endpoint" {
-				tmpName = query.Endpoint[0]
-				if len(data.Data.Result) > 1 {
-					tmpName = appendTagString(tmpName, otr.Metric)
-				}
-			}else if query.Legend == "$custom_all" {
-				tmpName = fmt.Sprintf("%s:%s", query.Endpoint[0], query.Metric[0])
-				tmpName = appendTagString(tmpName, otr.Metric)
-			}
-		}
-		if query.Legend == "$metric" || query.Legend == "$custom_metric" {
-			if !strings.Contains(tmpName, ":") && !query.SameEndpoint {
-				tmpName = fmt.Sprintf("%s:%s", query.Endpoint[0], tmpName)
-			}
-		}
-		if query.CompareLegend != "" {
-			tmpName = fmt.Sprintf("%s_%s", query.CompareLegend, tmpName)
-		}
-		serial.Name = tmpName
+		serial.Name = GetSerialName(query, otr.Metric, len(data.Data.Result))
 		var sdata m.DataSort
 		for _,v := range otr.Values {
 			tmpTime := v[0].(float64) * 1000
@@ -190,5 +152,50 @@ func appendTagString(name string, metricMap map[string]string) string {
 	}
 	tmpName = tmpName[:len(tmpName)-1]
 	tmpName += "}"
+	return tmpName
+}
+
+func GetSerialName(query *m.QueryMonitorData,tagMap map[string]string,dataLength int) string {
+	tmpName := query.Legend
+	legend := query.Legend
+	endpoint := query.Endpoint[0]
+	metric := query.Metric[0]
+	for k,v := range tagMap {
+		if strings.Contains(legend, "$"+k) {
+			tmpName = strings.Replace(tmpName, "$"+k, v, -1)
+			if !query.SameEndpoint {
+				tmpName = fmt.Sprintf("%s:%s", endpoint, tmpName)
+			}
+		}
+	}
+	if strings.Contains(legend, "$custom") {
+		if legend == "$custom" {
+			tmpName = fmt.Sprintf("%s:%s", endpoint, metric)
+			if dataLength > 1 {
+				tmpName = appendTagString(tmpName, tagMap)
+			}
+		}else if legend == "$custom_metric" {
+			tmpName = metric
+			if dataLength > 1 {
+				tmpName = appendTagString(tmpName, tagMap)
+			}
+		}else if legend == "$custom_endpoint" {
+			tmpName = endpoint
+			if dataLength > 1 {
+				tmpName = appendTagString(tmpName, tagMap)
+			}
+		}else if legend == "$custom_all" {
+			tmpName = fmt.Sprintf("%s:%s", endpoint, metric)
+			tmpName = appendTagString(tmpName, tagMap)
+		}
+	}
+	if legend == "$metric" || legend == "$custom_metric" {
+		if !strings.Contains(tmpName, ":") && !query.SameEndpoint {
+			tmpName = fmt.Sprintf("%s:%s", endpoint, tmpName)
+		}
+	}
+	if query.CompareLegend != "" {
+		tmpName = fmt.Sprintf("%s_%s", query.CompareLegend, tmpName)
+	}
 	return tmpName
 }
