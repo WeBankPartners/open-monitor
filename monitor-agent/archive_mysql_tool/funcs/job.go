@@ -17,11 +17,13 @@ func StartCronJob()  {
 	time.Sleep(time.Duration(subSecond)*time.Second)
 	c := time.NewTicker(24*time.Hour).C
 	for {
-		go CreateJob("")
-		go func() {
-			time.Sleep(60*time.Minute)
-			ArchiveFromMysql(0)
-		}()
+		if checkJobState() {
+			go CreateJob("")
+			go func() {
+				time.Sleep(60 * time.Minute)
+				ArchiveFromMysql(0)
+			}()
+		}
 		<- c
 	}
 }
