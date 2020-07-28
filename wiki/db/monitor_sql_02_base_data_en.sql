@@ -40,3 +40,13 @@ insert  into `tpl`(`grp_id`,`endpoint_id`,`create_at`) SELECT id,0,NOW() FROM gr
 insert  into `strategy`(`tpl_id`,`metric`,`expr`,`cond`,`last`,`priority`,`content`,`config_type`) SELECT id,'http.status','http_status{guid="$guid"}','<3','60s','medium','http check fail','' FROM tpl ORDER BY id DESC LIMIT 1;
 insert  into `strategy`(`tpl_id`,`metric`,`expr`,`cond`,`last`,`priority`,`content`,`config_type`) SELECT id,'http.status','http_status{guid="$guid"}','>=300','60s','high','http response status problem','' FROM tpl ORDER BY id DESC LIMIT 1;
 #@v1.5.0.6-end@;
+
+#@v1.6.0.3-begin@;
+DROP TABLE IF EXISTS `alive_check_queue`;
+CREATE TABLE `alive_check_queue` (
+  `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `message` VARCHAR(255) NOT NULL,
+  `update_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+#@v1.6.0.3-end@;

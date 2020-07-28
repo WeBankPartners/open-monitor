@@ -10,3 +10,8 @@ type ProcessUpdateDto struct {
 	EndpointId  int  `json:"endpoint_id" binding:"required"`
 	ProcessList  []string  `json:"process_list"`
 }
+
+type AliveCheckQueueTable struct {
+	Id  int  `json:"id"`
+	Message  string  `json:"message"`
+}

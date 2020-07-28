@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"strings"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
+	"time"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
+	"sort"
 )
 
 func GetDashboard(dType string) (error, m.DashboardTable) {
@@ -473,4 +476,150 @@ func GetChartTitle(metric string,id int) string {
 		return ""
 	}
 	return chartTables[0].Title
+}
+
+func GetArchiveData(query *m.QueryMonitorData,agg string) (err error,step int,result []*m.SerialModel) {
+	if !ArchiveEnable {
+		err = fmt.Errorf("please make sure archive mysql connect done ")
+		mid.LogError("", err)
+		return err,step,result
+	}
+	checkArchiveDatabase()
+	if query.Start == 0 || query.End == 0 || (query.Start>=query.End) {
+		err = fmt.Errorf("get archive data query start and end validate fail,start:%d end:%d ", query.Start, query.End)
+		mid.LogError("", err)
+		return err,step,result
+	}
+	mid.LogInfo(fmt.Sprintf("start to get archive data,endpoint:%v metric:%v start:%d end:%d", query.Endpoint, query.Metric, query.Start, query.End))
+	if agg == "" || agg == "none" {
+		agg = "avg"
+	}
+	step = 60
+	if query.Start < time.Now().Unix()-(m.Config().ArchiveMysql.FiveMinStartDay*86400) {
+		step = 300
+	}
+	dateStringList := getDateStringList(query.Start, query.End)
+	tagLength := 0
+	if len(query.Endpoint) > 1 || len(query.Metric) > 1 {
+		tagLength = 2
+	}
+	for _,endpoint := range query.Endpoint {
+		for _,metric := range query.Metric {
+			var tmpTag string
+			tmpMetric := metric
+			if strings.Contains(tmpMetric, "/") {
+				tmpTag = tmpMetric[strings.Index(tmpMetric, "/")+1:]+"\""
+				tmpTag = strings.Replace(tmpTag, "=", "=\"", -1)
+				tmpMetric = metric[:strings.Index(metric, "/")]
+			}
+			tmpQueryResult := queryArchiveTables(endpoint, tmpMetric, tmpTag, agg, dateStringList, query, tagLength)
+			result = append(result, tmpQueryResult...)
+		}
+	}
+	return err,step,result
+}
+
+func getDateStringList(start,end int64) []string {
+	var dateList []string
+	cursorTime := start
+	for {
+		if cursorTime > end {
+			break
+		}
+		dateList = append(dateList, time.Unix(cursorTime, 0).Format("2006_01_02"))
+		cursorTime += 86400
+	}
+	t,_ := time.Parse("2006_01_02 15:04:05 MST", fmt.Sprintf("%s 00:00:00 CST", time.Unix(cursorTime, 0).Format("2006_01_02")))
+	if end > t.Unix()+60 {
+		dateList = append(dateList, time.Unix(cursorTime, 0).Format("2006_01_02"))
+	}
+	return dateList
+}
+
+func queryArchiveTables(endpoint,metric,tag,agg string,dateList []string,query *m.QueryMonitorData,tagLength int) []*m.SerialModel {
+	var result []*m.SerialModel
+	query.Endpoint = []string{endpoint}
+	query.Metric = []string{metric}
+	resultMap := make(map[string]m.DataSort)
+	recordTagMap := make(map[string]map[string]string)
+	recordNameMap := make(map[string]string)
+	for i,v := range dateList {
+		var tmpStart,tmpEnd int64
+		if i == 0 {
+			tmpStart = query.Start
+		}else{
+			tmpT,err := time.Parse("2006_01_02 15:04:05 MST", fmt.Sprintf("%s 00:00:00 CST", v))
+			if err == nil {
+				tmpStart = tmpT.Unix()
+			}else{
+				continue
+			}
+		}
+		if i == len(v)-1 {
+			tmpEnd = query.End
+		}else{
+			tmpT,err := time.Parse("2006_01_02 15:04:05 MST", fmt.Sprintf("%s 00:00:00 CST", v))
+			if err == nil {
+				tmpEnd = tmpT.Unix()+86400
+			}else{
+				continue
+			}
+		}
+		var tableData []*m.ArchiveQueryTable
+		err := archiveMysql.SQL(fmt.Sprintf("SELECT `endpoint`,metric,tags,unix_time,`avg` AS `value`  FROM archive_%s WHERE `endpoint`='%s' AND metric='%s' AND unix_time>=%d AND unix_time<=%d", v,endpoint,metric,tmpStart,tmpEnd)).Find(&tableData)
+		if err != nil {
+			if strings.Contains(err.Error(), "doesn't exist") {
+				mid.LogError(fmt.Sprintf("query archive table:archive_%s error,table doesn't exist", v), nil)
+			}else {
+				mid.LogError(fmt.Sprintf("query archive table:archive_%s error", v), err)
+			}
+			continue
+		}
+		if len(tableData) == 0 {
+			mid.LogInfo(fmt.Sprintf("query archive table:archive_%s empty", v))
+			continue
+		}
+		if tagLength <= 1 && i == 0 {
+			tmpTagString := tableData[0].Tags
+			for _,vv := range tableData {
+				if vv.Tags != tmpTagString {
+					tagLength = 2
+					break
+				}
+			}
+		}
+		for _,rowData := range tableData {
+			if tag != "" {
+				if !strings.Contains(rowData.Tags, tag) {
+					continue
+				}
+			}
+			if _,b := recordNameMap[rowData.Tags];!b {
+				if _,b := recordTagMap[rowData.Tags];!b {
+					recordTagMap[rowData.Tags] = getKVMapFromArchiveTags(rowData.Tags)
+				}
+				recordNameMap[rowData.Tags] = datasource.GetSerialName(query, recordTagMap[rowData.Tags], tagLength)
+			}
+			tmpRowName := recordNameMap[rowData.Tags]
+			if _,b := resultMap[tmpRowName];!b {
+				resultMap[tmpRowName] = m.DataSort{[]float64{float64(rowData.UnixTime)*1000,rowData.Value}}
+			}else{
+				resultMap[tmpRowName] = append(resultMap[tmpRowName], []float64{float64(rowData.UnixTime)*1000, rowData.Value})
+			}
+		}
+	}
+	for k,v := range resultMap {
+		sort.Sort(v)
+		result = append(result, &m.SerialModel{Name:k, Data:v})
+	}
+	return result
+}
+
+func getKVMapFromArchiveTags(tag string) map[string]string {
+	tMap := make(map[string]string)
+	for _,v := range strings.Split(tag, ",") {
+		kv := strings.Split(v, "=\"")
+		tMap[kv[0]] = kv[1][:len(kv[1])-1]
+	}
+	return tMap
 }
