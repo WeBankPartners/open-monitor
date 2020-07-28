@@ -54,7 +54,7 @@ func InitDbConn() {
 	if dbCfg.Type == "mysql" {
 		initDefaultMysql(dbCfg)
 	}
-	tmpEnable := m.Config().ArchiveMysql.Enable
+	tmpEnable := strings.ToLower(m.Config().ArchiveMysql.Enable)
 	if tmpEnable == "y" || tmpEnable == "yes" || tmpEnable == "true" {
 		initArchiveDbEngine()
 	}else{
