@@ -138,7 +138,7 @@ type ArchiveMysqlConfig struct {
 	Enable  string  `json:"enable"`
 	Type  string  `json:"type"`
 	Server  string  `json:"server"`
-	Port  int     `json:"port"`
+	Port  string     `json:"port"`
 	User  string  `json:"user"`
 	Password   string  `json:"password"`
 	DataBase  string  `json:"database"`
