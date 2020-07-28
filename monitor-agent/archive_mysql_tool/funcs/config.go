@@ -12,7 +12,7 @@ import (
 type MysqlConfig struct {
 	Type  string  `json:"type"`
 	Server  string  `json:"server"`
-	Port  int     `json:"port"`
+	Port  string     `json:"port"`
 	User  string  `json:"user"`
 	Password   string  `json:"password"`
 	DataBase  string  `json:"database"`
