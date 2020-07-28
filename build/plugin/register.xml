@@ -537,6 +537,10 @@
 
         <!--最佳实践-->
         <plugin name="host" targetPackage="wecmdb" targetEntity="host_resource_instance" registerName="resource" targetEntityFilterRule="">
+            <roleBinds>
+                <roleBind permission="MGMT" roleName="SUPER_ADMIN"/>
+                <roleBind permission="USE" roleName="SUPER_ADMIN"/>
+            </roleBinds>
             <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/host" filterRule="{state_code eq 'created'}{fixed_date is NULL}">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:host_resource_instance.ip_address">host_ip</parameter>
@@ -579,6 +583,10 @@
             </interface>
         </plugin>
         <plugin name="mysql" targetPackage="wecmdb" targetEntity="rdb_resource_instance" registerName="resource" targetEntityFilterRule="">
+            <roleBinds>
+                <roleBind permission="MGMT" roleName="SUPER_ADMIN"/>
+                <roleBind permission="USE" roleName="SUPER_ADMIN"/>
+            </roleBinds>
             <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/mysql" filterRule="{state_code eq 'created'}{fixed_date is NULL}">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:rdb_resource_instance.ip_address">instance_ip</parameter>
@@ -631,6 +639,10 @@
             </interface>
         </plugin>
         <plugin name="redis" targetPackage="wecmdb" targetEntity="cache_resource_instance" registerName="resource"  targetEntityFilterRule="">
+            <roleBinds>
+                <roleBind permission="MGMT" roleName="SUPER_ADMIN"/>
+                <roleBind permission="USE" roleName="SUPER_ADMIN"/>
+            </roleBinds>
             <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/redis" filterRule="{state_code eq 'created'}{fixed_date is NULL}">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:cache_resource_instance.ip_address">instance_ip</parameter>
@@ -685,6 +697,10 @@
             </interface>
         </plugin>
         <plugin name="java" targetPackage="wecmdb" targetEntity="app_instance" registerName="app" targetEntityFilterRule="">
+            <roleBinds>
+                <roleBind permission="MGMT" roleName="SUPER_ADMIN"/>
+                <roleBind permission="USE" roleName="SUPER_ADMIN"/>
+            </roleBinds>
             <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/java" filterRule="{state_code eq 'created'}{fixed_date is NULL}">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.host_resource_instance>wecmdb:host_resource_instance.ip_address">instance_ip</parameter>
@@ -738,6 +754,10 @@
             </interface>
         </plugin>
         <plugin name="telnet" targetPackage="wecmdb" targetEntity="lb_instance" registerName="lb_listener" targetEntityFilterRule="">
+            <roleBinds>
+                <roleBind permission="MGMT" roleName="SUPER_ADMIN"/>
+                <roleBind permission="USE" roleName="SUPER_ADMIN"/>
+            </roleBinds>
             <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/telnet" filterRule="{state_code eq 'created'}{fixed_date is NULL}">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:lb_instance.lb_resource_instance>wecmdb:lb_resource_instance.ip_address">instance_ip</parameter>
@@ -787,6 +807,10 @@
             </interface>
         </plugin>
         <plugin name="nginx" targetPackage="wecmdb" targetEntity="app_instance" registerName="nginx" targetEntityFilterRule="">
+            <roleBinds>
+                <roleBind permission="MGMT" roleName="SUPER_ADMIN"/>
+                <roleBind permission="USE" roleName="SUPER_ADMIN"/>
+            </roleBinds>
             <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/nginx" filterRule="{state_code eq 'created'}{fixed_date is NULL}">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:app_instance.host_resource_instance>wecmdb:host_resource_instance.ip_address">instance_ip</parameter>
@@ -837,6 +861,10 @@
             </interface>
         </plugin>
         <plugin name="dashboard" targetPackage="wecmdb" targetEntity="app_system" registerName="app_system" targetEntityFilterRule="">
+            <roleBinds>
+                <roleBind permission="MGMT" roleName="SUPER_ADMIN"/>
+                <roleBind permission="USE" roleName="SUPER_ADMIN"/>
+            </roleBinds>
             <interface action="add" path="/wecube-monitor/api/v1/dashboard/system/add" filterRule="{state_code eq 'created'}{fixed_date is NULL}">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:app_system.guid">guid</parameter>
@@ -870,6 +898,10 @@
             </interface>
         </plugin>
         <plugin name="dashboard" targetPackage="wecmdb" targetEntity="subsys" registerName="subsys"  targetEntityFilterRule="">
+            <roleBinds>
+                <roleBind permission="MGMT" roleName="SUPER_ADMIN"/>
+                <roleBind permission="USE" roleName="SUPER_ADMIN"/>
+            </roleBinds>
             <interface action="add" path="/wecube-monitor/api/v1/dashboard/system/add" filterRule="{state_code eq 'created'}{fixed_date is NULL}">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:subsys.guid">guid</parameter>
@@ -903,6 +935,10 @@
             </interface>
         </plugin>
         <plugin name="dashboard" targetPackage="wecmdb" targetEntity="unit" registerName="unit" targetEntityFilterRule="">
+            <roleBinds>
+                <roleBind permission="MGMT" roleName="SUPER_ADMIN"/>
+                <roleBind permission="USE" roleName="SUPER_ADMIN"/>
+            </roleBinds>
             <interface action="add-app-unit" path="/wecube-monitor/api/v1/dashboard/system/add"  filterRule="{state_code eq 'created'}{fixed_date is NULL}{unit_type in ['@@0002_0000000001@@JAVA','@@0002_0000000011@@NGINX']}">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:unit.guid">guid</parameter>
@@ -1155,6 +1191,10 @@
             </interface>
         </plugin>
         <plugin name="dashboard" targetPackage="wecmdb" targetEntity="resource_set" registerName="resource_set" targetEntityFilterRule="">
+            <roleBinds>
+                <roleBind permission="MGMT" roleName="SUPER_ADMIN"/>
+                <roleBind permission="USE" roleName="SUPER_ADMIN"/>
+            </roleBinds>
             <interface action="add-set" path="/wecube-monitor/api/v1/dashboard/system/add" filterRule="{state_code eq 'created'}{fixed_date is NULL}">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:resource_set.guid">guid</parameter>
@@ -1392,6 +1432,10 @@
             </interface>
         </plugin>
         <plugin name="dashboard" targetPackage="wecmdb" targetEntity="network_zone" registerName="network_zone" targetEntityFilterRule="">
+            <roleBinds>
+                <roleBind permission="MGMT" roleName="SUPER_ADMIN"/>
+                <roleBind permission="USE" roleName="SUPER_ADMIN"/>
+            </roleBinds>
             <interface action="add" path="/wecube-monitor/api/v1/dashboard/system/add" filterRule="{state_code eq 'created'}{fixed_date is NULL}">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:network_zone.guid">guid</parameter>
@@ -1425,6 +1469,10 @@
             </interface>
         </plugin>
         <plugin name="dashboard" targetPackage="wecmdb" targetEntity="data_center" registerName="data_center" targetEntityFilterRule="">
+            <roleBinds>
+                <roleBind permission="MGMT" roleName="SUPER_ADMIN"/>
+                <roleBind permission="USE" roleName="SUPER_ADMIN"/>
+            </roleBinds>
             <interface action="add" path="/wecube-monitor/api/v1/dashboard/system/add" filterRule="{state_code eq 'created'}{fixed_date is NULL}">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:data_center.guid">guid</parameter>
@@ -1458,6 +1506,10 @@
             </interface>
         </plugin>
         <plugin name="dashboard" targetPackage="wecmdb" targetEntity="data_center" registerName="region_data_center" targetEntityFilterRule="{data_center_type eq 'REGION'}">
+            <roleBinds>
+                <roleBind permission="MGMT" roleName="SUPER_ADMIN"/>
+                <roleBind permission="USE" roleName="SUPER_ADMIN"/>
+            </roleBinds>
             <interface action="add" path="/wecube-monitor/api/v1/dashboard/system/add" filterRule="{state_code eq 'created'}{fixed_date is NULL}">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="wecmdb:data_center.guid">guid</parameter>
