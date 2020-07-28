@@ -12,8 +12,12 @@ import (
 	"strings"
 )
 
-var stores []*xorm.Engine
-var x *xorm.Engine
+var (
+	x *xorm.Engine
+    archiveMysql *xorm.Engine
+    archiveDatabase  string
+    ArchiveEnable bool
+)
 //var RedisStore sessions.RedisStore
 
 type DBObj struct {
@@ -50,18 +54,49 @@ func InitDbConn() {
 	if dbCfg.Type == "mysql" {
 		initDefaultMysql(dbCfg)
 	}
+	tmpEnable := strings.ToLower(m.Config().ArchiveMysql.Enable)
+	if tmpEnable == "y" || tmpEnable == "yes" || tmpEnable == "true" {
+		initArchiveDbEngine()
+	}else{
+		ArchiveEnable = false
+	}
 }
 
 func initDefaultMysql(dbCfg m.StoreConfig)  {
 	dbObj := DBObj{DbType: dbCfg.Type, ConnUser: dbCfg.User, ConnPwd: dbCfg.Pwd, ConnHost: fmt.Sprintf("%s:%d", dbCfg.Server, dbCfg.Port), ConnDb: dbCfg.DataBase, ConnPtl: "tcp", MaxOpen: dbCfg.MaxOpen, MaxIdle: dbCfg.MaxIdle, Timeout: dbCfg.Timeout}
 	dbObj.InitXorm()
-	stores = []*xorm.Engine{dbObj.x}
 	x = dbObj.x
 	mid.LogInfo("default db init success")
 }
 
-func Default() *xorm.Engine {
-	return stores[0]
+func initArchiveDbEngine() {
+	databaseName := m.Config().ArchiveMysql.DatabasePrefix + time.Now().Format("2006")
+	var err error
+	connectStr := fmt.Sprintf("%s:%s@%s(%s:%s)/%s?collation=utf8mb4_unicode_ci&allowNativePasswords=true",
+		m.Config().ArchiveMysql.User, m.Config().ArchiveMysql.Password, "tcp", m.Config().ArchiveMysql.Server, m.Config().ArchiveMysql.Port, databaseName)
+	archiveMysql,err = xorm.NewEngine("mysql", connectStr)
+	if err != nil {
+		ArchiveEnable = false
+		mid.LogError("init archive mysql fail with connect: "+connectStr+" error ", err)
+	}else{
+		ArchiveEnable = true
+		archiveMysql.SetMaxIdleConns(m.Config().ArchiveMysql.MaxIdle)
+		archiveMysql.SetMaxOpenConns(m.Config().ArchiveMysql.MaxOpen)
+		archiveMysql.SetConnMaxLifetime(time.Duration(m.Config().ArchiveMysql.Timeout)*time.Second)
+		archiveMysql.Charset("utf8")
+		// 使用驼峰式映射
+		archiveMysql.SetMapper(core.SnakeMapper{})
+		archiveDatabase = databaseName
+		mid.LogInfo("init archive mysql "+archiveDatabase+" success ")
+	}
+}
+
+func checkArchiveDatabase()  {
+	databaseName := m.Config().ArchiveMysql.DatabasePrefix + time.Now().Format("2006")
+	if databaseName == archiveDatabase {
+		return
+	}
+	initArchiveDbEngine()
 }
 
 type Action struct {
