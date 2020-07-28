@@ -23,7 +23,7 @@ func InitDbEngine(databaseName string) (err error) {
 	if databaseName == "" {
 		databaseName = "mysql"
 	}
-	connectStr := fmt.Sprintf("%s:%s@%s(%s:%d)/%s?collation=utf8mb4_unicode_ci&allowNativePasswords=true",
+	connectStr := fmt.Sprintf("%s:%s@%s(%s:%s)/%s?collation=utf8mb4_unicode_ci&allowNativePasswords=true",
 		Config().Mysql.User, Config().Mysql.Password, "tcp", Config().Mysql.Server, Config().Mysql.Port, databaseName)
 	mysqlEngine,err = xorm.NewEngine("mysql", connectStr)
 	if err != nil {
@@ -47,7 +47,7 @@ func InitDbEngine(databaseName string) (err error) {
 }
 
 func InitMonitorDbEngine() (err error) {
-	connectStr := fmt.Sprintf("%s:%s@%s(%s:%d)/%s?collation=utf8mb4_unicode_ci&allowNativePasswords=true",
+	connectStr := fmt.Sprintf("%s:%s@%s(%s:%s)/%s?collation=utf8mb4_unicode_ci&allowNativePasswords=true",
 		Config().Monitor.Mysql.User, Config().Monitor.Mysql.Password, "tcp", Config().Monitor.Mysql.Server, Config().Monitor.Mysql.Port, Config().Monitor.Mysql.DataBase)
 	monitorMysqlEngine,err = xorm.NewEngine("mysql", connectStr)
 	if err != nil {
