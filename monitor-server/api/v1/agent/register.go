@@ -32,7 +32,7 @@ type returnData struct {
 func RegisterAgentNew(c *gin.Context)  {
 	var param m.RegisterParamNew
 	if err := c.ShouldBindJSON(&param); err==nil {
-		validateMessage,err := AgentRegister(param)
+		validateMessage,_,err := AgentRegister(param)
 		if validateMessage != "" {
 			mid.ReturnValidateFail(c, validateMessage)
 			return
@@ -65,9 +65,9 @@ func InitAgentManager()  {
 	}
 }
 
-func AgentRegister(param m.RegisterParamNew) (validateMessage string,err error) {
+func AgentRegister(param m.RegisterParamNew) (validateMessage,guid string,err error) {
 	if agentManagerServer == "" && param.AgentManager {
-		return validateMessage,fmt.Errorf("agent manager server not found,can not enable agent manager ")
+		return validateMessage,guid,fmt.Errorf("agent manager server not found,can not enable agent manager ")
 	}
 	if param.Type == "tomcat" {
 		param.Type = "java"
@@ -85,18 +85,19 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage string,err error) 
 		case "windows": rData = windowsRegister(param)
 		default: rData = otherExporterRegister(param)
 	}
+	guid = rData.endpoint.Guid
 	if rData.validateMessage != "" || rData.err != nil {
-		return rData.validateMessage,rData.err
+		return rData.validateMessage,guid,rData.err
 	}
 	err = db.UpdateEndpoint(&rData.endpoint)
 	if err != nil {
-		return validateMessage,err
+		return validateMessage,guid,err
 	}
 	if rData.fetchMetric {
 		if rData.storeMetric {
 			err = db.RegisterEndpointMetric(rData.endpoint.Id, rData.metricList)
 			if err != nil {
-				return validateMessage, err
+				return validateMessage,guid,err
 			}
 		}
 		tmpIp,tmpPort := param.Ip,param.Port
@@ -117,18 +118,18 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage string,err error) 
 		if rData.defaultGroup != "" {
 			err, grpObj := db.GetSingleGrp(0, rData.defaultGroup)
 			if err != nil || grpObj.Id <= 0 {
-				return validateMessage, fmt.Errorf("Add group %s fail,id:%d err:%v ", rData.defaultGroup, grpObj.Id, err)
+				return validateMessage,guid, fmt.Errorf("Add group %s fail,id:%d err:%v ", rData.defaultGroup, grpObj.Id, err)
 			}
 			err, _ = db.UpdateGrpEndpoint(m.GrpEndpointParamNew{Grp: grpObj.Id, Endpoints: []int{rData.endpoint.Id}, Operation: "add"})
 			if err != nil {
-				return validateMessage,err
+				return validateMessage,guid,err
 			}
 			_, tplObj := db.GetTpl(0, grpObj.Id, 0)
 			if tplObj.Id > 0 {
 				err := alarm.SaveConfigFile(tplObj.Id, false)
 				if err != nil {
 					mid.LogError(fmt.Sprintf("register interface update prometheus config fail , group : %s  error ", rData.defaultGroup), err)
-					return validateMessage,err
+					return validateMessage,guid,err
 				}
 			}
 		}
@@ -146,7 +147,7 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage string,err error) 
 			mid.LogError("Update agent manager table fail ", err)
 		}
 	}
-	return validateMessage,err
+	return validateMessage,guid,err
 }
 
 func hostRegister(param m.RegisterParamNew) returnData {
