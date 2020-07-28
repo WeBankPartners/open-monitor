@@ -118,3 +118,12 @@ type CoreRoleDataObj struct {
 	Email  string  `json:"email"`
 	DisplayName  string  `json:"displayName"`
 }
+
+type CoreRequestToken struct {
+	Sub  string  `json:"sub"`
+	Iat  int64   `json:"iat"`
+	Type string  `json:"type"`
+	ClientType string  `json:"clientType"`
+	Exp  int64   `json:"exp"`
+	Authority  string  `json:"authority"`
+}
