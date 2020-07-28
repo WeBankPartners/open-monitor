@@ -181,7 +181,7 @@ type ChartConfigObj struct {
 	Start  string  `form:"start" json:"start"`
 	End  string  `form:"end" json:"end"`
 	Time  string  `form:"time" json:"time"`
-	Aggregate  string  `form:"aggregate" json:"aggregate"`
+	Aggregate  string  `form:"agg" json:"agg"`
 	CompareFirstStart  string  `form:"compare_first_start" json:"compare_first_start"`
 	CompareFirstEnd  string  `form:"compare_first_end" json:"compare_first_end"`
 	CompareSecondStart  string  `form:"compare_second_start" json:"compare_second_start"`
