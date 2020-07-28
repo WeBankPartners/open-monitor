@@ -3,7 +3,7 @@
     "port": "8088",
     "swagger": true,
     "cross": true,
-    "return_error": false,
+    "return_error": true,
     "alive": 2591000,
     "ldap": {
       "enable": false,
@@ -154,5 +154,18 @@
   "sd_file": {
     "enable": false,
     "path": "/app/monitor/prometheus/sd_file/"
+  },
+  "archive_mysql": {
+    "enable": "Y",
+    "server": "127.0.0.1",
+    "port": "3306",
+    "user": "root",
+    "password": "wecube",
+    "database_prefix": "prometheus_archive_",
+    "max_open": 100,
+    "max_idle": 10,
+    "timeout": 60,
+    "local_storage_max_day": 30,
+    "five_min_start_day": 90
   }
 }
