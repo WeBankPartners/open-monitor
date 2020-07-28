@@ -3,7 +3,7 @@
     "port": "{{MONITOR_SERVER_PORT}}",
     "swagger": true,
     "cross": true,
-    "return_error": false,
+    "return_error": true,
     "alive": 2591000,
     "ldap": {
       "enable": false,
@@ -154,5 +154,18 @@
   "sd_file": {
     "enable": true,
     "path": "/app/monitor/prometheus/sd_file/"
+  },
+  "archive_mysql": {
+    "enable": "{{MONITOR_ARCHIVE_ENABLE}}",
+    "server": "{{MONITOR_ARCHIVE_MYSQL_HOST}}",
+    "port": "{{MONITOR_ARCHIVE_MYSQL_PORT}}",
+    "user": "{{MONITOR_ARCHIVE_MYSQL_USER}}",
+    "password": "{{MONITOR_ARCHIVE_MYSQL_PWD}}",
+    "database_prefix": "prometheus_archive_",
+    "max_open": 100,
+    "max_idle": 10,
+    "timeout": 60,
+    "local_storage_max_day": 30,
+    "five_min_start_day": 90
   }
 }
