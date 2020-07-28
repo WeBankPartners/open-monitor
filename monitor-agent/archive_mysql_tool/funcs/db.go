@@ -7,12 +7,16 @@ import (
 	"log"
 	"time"
 	"fmt"
+	"strconv"
+	"strings"
+	"math/rand"
 )
 
 var (
 	mysqlEngine *xorm.Engine
 	monitorMysqlEngine *xorm.Engine
 	databaseSelect string
+	hostIp string
 )
 
 func InitDbEngine(databaseName string) (err error) {
@@ -31,8 +35,13 @@ func InitDbEngine(databaseName string) (err error) {
 		mysqlEngine.Charset("utf8")
 		// 使用驼峰式映射
 		mysqlEngine.SetMapper(core.SnakeMapper{})
-		databaseSelect = databaseName
-		log.Printf("init mysql %s success \n", databaseSelect)
+		if !strings.HasPrefix(databaseName, Config().Mysql.DatabasePrefix) {
+			err = ChangeDatabase()
+		}else {
+			databaseSelect = databaseName
+			log.Printf("init mysql %s success \n", databaseSelect)
+			err = initJobRecordTable()
+		}
 	}
 	return err
 }
@@ -180,4 +189,30 @@ func renameFiveToOne(oldTable,newTable string) error {
 	}
 	_,err = mysqlEngine.Exec(fmt.Sprintf("ALTER TABLE %s RENAME `%s`", newTable, oldTable))
 	return err
+}
+
+func initJobRecordTable() error {
+	_,err := mysqlEngine.Exec("CREATE TABLE IF NOT EXISTS `job_record` (`id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,`host_ip` VARCHAR(255) NOT NULL,`update_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,  PRIMARY KEY (`id`)) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8")
+	if err != nil {
+		err = fmt.Errorf("init job_record table error: %v", err)
+	}
+	return err
+}
+
+func checkJobState() bool {
+	ipInt,_ := strconv.Atoi(strings.Replace(hostIp, ".", "", -1))
+	rand.Seed(time.Now().UnixNano()+int64(ipInt))
+	waitSecond := rand.Intn(100)
+	log.Printf("host:%s run wait job %d second...\n", hostIp, waitSecond)
+	time.Sleep(time.Duration(waitSecond)*time.Second)
+	var jobTables []*JobRecordTable
+	mysqlEngine.SQL(fmt.Sprintf("SELECT * FROM job_record WHERE update_at>'%s'", time.Unix(time.Now().Unix()-120, 0).Format("2006-01-02 15:04:05"))).Find(&jobTables)
+	if len(jobTables) > 0 {
+		return false
+	}
+	_,err := mysqlEngine.Exec(fmt.Sprintf("INSERT INTO job_record(host_ip,update_at) VALUE ('%s','%s')", hostIp, time.Now().Format("2006-01-02 15:04:05")))
+	if err != nil {
+		log.Printf("update job_record table with host:%s error: %v \n", hostIp, err)
+	}
+	return true
 }
