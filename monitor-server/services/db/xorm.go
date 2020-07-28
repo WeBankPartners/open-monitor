@@ -72,7 +72,7 @@ func initDefaultMysql(dbCfg m.StoreConfig)  {
 func initArchiveDbEngine() {
 	databaseName := m.Config().ArchiveMysql.DatabasePrefix + time.Now().Format("2006")
 	var err error
-	connectStr := fmt.Sprintf("%s:%s@%s(%s:%d)/%s?collation=utf8mb4_unicode_ci&allowNativePasswords=true",
+	connectStr := fmt.Sprintf("%s:%s@%s(%s:%s)/%s?collation=utf8mb4_unicode_ci&allowNativePasswords=true",
 		m.Config().ArchiveMysql.User, m.Config().ArchiveMysql.Password, "tcp", m.Config().ArchiveMysql.Server, m.Config().ArchiveMysql.Port, databaseName)
 	archiveMysql,err = xorm.NewEngine("mysql", connectStr)
 	if err != nil {

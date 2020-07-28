@@ -2,7 +2,7 @@
   "enable": "Y",
   "mysql": {
     "server": "127.0.0.1",
-    "port": 3306,
+    "port": "3306",
     "user": "root",
     "password": "wecube",
     "database_prefix": "prometheus_archive_",
@@ -22,7 +22,7 @@
   "monitor": {
     "mysql": {
       "server": "127.0.0.1",
-      "port": 3306,
+      "port": "3306",
       "user": "root",
       "password": "wecube",
       "database": "monitor",
