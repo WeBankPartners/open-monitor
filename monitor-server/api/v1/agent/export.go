@@ -28,6 +28,7 @@ type resultOutput struct {
 type resultOutputObj struct {
 	CallbackParameter  string  `json:"callbackParameter"`
 	Guid  string  `json:"guid"`
+	MonitorKey  string  `json:"monitor_key"`
 	ErrorCode  string  `json:"errorCode"`
 	ErrorMessage  string  `json:"errorMessage"`
 }
@@ -38,6 +39,7 @@ type requestObj struct {
 }
 
 type endpointRequestObj struct {
+	Guid  string  `json:"guid"`
 	CallbackParameter  string  `json:"callbackParameter"`
 	HostIp  string  `json:"host_ip"`
 	InstanceIp  string  `json:"instance_ip"`
@@ -142,10 +144,10 @@ func ExportAgentNew(c *gin.Context)  {
 			if inputErr != nil {
 				errorMessage = fmt.Sprintf("input index:%d %s [agentType:%s, name:%s, hostIp:%s, instanceIp:%s] error -> %v ", i, action, agentType, v.Instance, v.HostIp, v.InstanceIp, inputErr)
 			}
-			resultData.Outputs = append(resultData.Outputs, resultOutputObj{CallbackParameter:v.CallbackParameter, ErrorCode:"1", ErrorMessage:errorMessage, Guid:endpointGuid})
+			resultData.Outputs = append(resultData.Outputs, resultOutputObj{CallbackParameter:v.CallbackParameter, ErrorCode:"1", ErrorMessage:errorMessage, Guid:v.Guid, MonitorKey:endpointGuid})
 			resultCode = "1"
 		}else{
-			resultData.Outputs = append(resultData.Outputs, resultOutputObj{CallbackParameter:v.CallbackParameter, ErrorCode:"0", ErrorMessage:"", Guid:endpointGuid})
+			resultData.Outputs = append(resultData.Outputs, resultOutputObj{CallbackParameter:v.CallbackParameter, ErrorCode:"0", ErrorMessage:"", Guid:v.Guid, MonitorKey:endpointGuid})
 		}
 	}
 }
