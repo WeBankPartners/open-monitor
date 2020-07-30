@@ -6,12 +6,12 @@ import (
 	"os"
 	"fmt"
 	"io/ioutil"
-	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"gopkg.in/yaml.v2"
 	"strings"
 	"net/http"
 	"time"
 	"os/exec"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 )
 
 type fileObj struct {
@@ -38,16 +38,16 @@ func InitPrometheusConfigFile()  {
 		PathEnbale = false
 	}
 	if !PathEnbale {
-		mid.LogError("init prometheus fail", fmt.Errorf("path %s is illeagal", path))
+		log.Logger.Warn("Init prometheus fail,path illegal", log.String("path", path))
 		return
 	}
 	files,_ := ioutil.ReadDir(path)
 	for _,v := range files {
 		name := strings.Split(v.Name(), ".yml")[0]
 		FileMap[name] = fileObj{RWLock:*new(sync.RWMutex), Name:name}
-		mid.LogInfo(fmt.Sprintf("prometheus rule file : %s", v.Name()))
+		log.Logger.Info(fmt.Sprintf("prometheus rule file : %s", v.Name()))
 	}
-	mid.LogInfo("Success init prometheus config file")
+	log.Logger.Info("Success init prometheus config file")
 }
 
 func GetConfig(name string, isGrp bool) (error,bool,m.RFGroup) {
@@ -75,13 +75,13 @@ func GetConfig(name string, isGrp bool) (error,bool,m.RFGroup) {
 	}
 	data,err := ioutil.ReadFile(path)
 	if err != nil {
-		mid.LogError("get prometheus rule,read file fail", err)
+		log.Logger.Error("Get prometheus rule,read file fail", log.Error(err))
 		return err,isExist,m.RFGroup{}
 	}
 	var rf m.RuleFile
 	err = yaml.Unmarshal(data, &rf)
 	if err != nil {
-		mid.LogError("get prometheus rule,unmarshal fail", err)
+		log.Logger.Error("Get prometheus rule,unmarshal fail", log.Error(err))
 		return err,isExist,m.RFGroup{}
 	}
 	if len(rf.Groups) <= 0 {
@@ -106,7 +106,7 @@ func SetConfig(name string, isGrp bool, config m.RFGroup, exist bool) error {
 	rf := m.RuleFile{Groups:[]*m.RFGroup{&config}}
 	data,err := yaml.Marshal(&rf)
 	if err != nil {
-		mid.LogError("set prometheus rule,marshal fail", err)
+		log.Logger.Error("Set prometheus rule,marshal fail", log.Error(err))
 		return err
 	}
 	if fo,b := FileMap[name]; b {
@@ -115,21 +115,14 @@ func SetConfig(name string, isGrp bool, config m.RFGroup, exist bool) error {
 	}
 	err = ioutil.WriteFile(path, data, 0644)
 	if err != nil {
-		mid.LogError("set prometheus rule,write file fail", err)
+		log.Logger.Error("Set prometheus rule,write file fail", log.Error(err))
 		return err
 	}
-	//err = reloadConfig()
-	//if err != nil {
-	//	mid.LogError("set prometheus rule,reload config fail", err)
-	//	return err
-	//}
 	return nil
 }
 
 func ReloadConfig() error {
 	_,err := http.Post(m.Config().Prometheus.ConfigReload, "application/json", strings.NewReader(""))
-	//mid.LogInfo(fmt.Sprintf("reload config resp : %v", resp.Body))
-	//defer resp.Body.Close()
 	return err
 }
 
@@ -155,13 +148,13 @@ func StartCheckPrometheusJob(interval int)  {
 func checkPrometheusAlive(address string)  {
 	_,err := http.Get(fmt.Sprintf("http://%s", address))
 	if err != nil {
-		mid.LogError("prometheus alive check: error ", err)
+		log.Logger.Error("Prometheus alive check: error", log.Error(err))
 		restartPrometheus()
 	}
 }
 
 func restartPrometheus()  {
-	mid.LogInfo("try to start prometheus . . . . . .")
+	log.Logger.Info("Try to start prometheus . . . . . .")
 	lastLog,_ := execCommand("tail -n 30 /app/monitor/prometheus/logs/prometheus.log")
 	if lastLog != "" {
 		for _,v := range strings.Split(lastLog, "\n") {
@@ -169,14 +162,14 @@ func restartPrometheus()  {
 				errorFile := strings.Split(strings.Split(v, "err=\"/app/monitor/prometheus/rules/")[1], ":")[0]
 				err := os.Remove(fmt.Sprintf("/app/monitor/prometheus/rules/%s", errorFile))
 				if err != nil {
-					mid.LogError(fmt.Sprintf("remove problem file %s error ", errorFile), err)
+					log.Logger.Error(fmt.Sprintf("Remove problem file %s error ", errorFile), log.Error(err))
 				}else{
-					mid.LogInfo(fmt.Sprintf("remove problem file %s success", errorFile))
+					log.Logger.Info(fmt.Sprintf("Remove problem file %s success", errorFile))
 				}
 			}
 		}
 	}else{
-		mid.LogInfo("prometheus last log is empty ??")
+		log.Logger.Info("Prometheus last log is empty ??")
 	}
 	startCommand,_ := execCommand("cat /app/monitor/start.sh |grep prometheus")
 	if startCommand != "" {
@@ -184,19 +177,19 @@ func restartPrometheus()  {
 		startCommand = startCommand[:len(startCommand)-3]
 		_,err := execCommand(startCommand)
 		if err != nil {
-			mid.LogError("start prometheus fail,error ", err)
+			log.Logger.Error("Start prometheus fail,error", log.Error(err))
 		}else{
-			mid.LogInfo("start prometheus success ")
+			log.Logger.Info("Start prometheus success")
 		}
 	}else{
-		mid.LogError("start prometheus fail, the start command is empty!!", nil)
+		log.Logger.Warn("Start prometheus fail, the start command is empty!!")
 	}
 }
 
 func execCommand(str string) (string,error) {
 	b,err := exec.Command("/bin/sh", "-c", str).Output()
 	if err != nil {
-		mid.LogError(fmt.Sprintf("exec command %s fail,error", str), err)
+		log.Logger.Error(fmt.Sprintf("Exec command %s fail,error", str), log.Error(err))
 	}
 	return string(b),err
 }

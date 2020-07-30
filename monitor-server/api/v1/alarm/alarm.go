@@ -13,13 +13,14 @@ import (
 	"io/ioutil"
 	"encoding/json"
 	"sort"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 )
 
 func AcceptAlertMsg(c *gin.Context)  {
 	var param m.AlterManagerRespObj
 	if err := c.ShouldBindJSON(&param); err==nil {
 		if len(param.Alerts) == 0 {
-			mid.LogInfo("accept alert is null")
+			log.Logger.Warn("Accept alert is null")
 			mid.ReturnSuccess(c, "Success")
 		}
 		var alarms []*m.AlarmTable
@@ -27,7 +28,7 @@ func AcceptAlertMsg(c *gin.Context)  {
 			if v.Labels["instance"] == "127.0.0.1:8300" {
 				continue
 			}
-			mid.LogInfo(fmt.Sprintf("accept alert msg : %v", v))
+			log.Logger.Debug("Accept alert msg", log.JsonObj("alert", v))
 			var tmpValue float64
 			var tmpAlarms m.AlarmProblemList
 			var tmpTags  string
@@ -57,7 +58,7 @@ func AcceptAlertMsg(c *gin.Context)  {
 				tmpAlarm.Content = v.Annotations["description"]
 				tmpSummaryMsg := strings.Split(v.Annotations["summary"], "__")
 				if len(tmpSummaryMsg) != 3 {
-					mid.LogInfo(fmt.Sprintf("summary illegal %s", v.Annotations["summary"]))
+					log.Logger.Warn("Summary illegal", log.String("summary", v.Annotations["summary"]))
 					continue
 				}
 				endpointObj := m.EndpointTable{Address: tmpSummaryMsg[0], AddressAgent: tmpSummaryMsg[0]}
@@ -77,12 +78,12 @@ func AcceptAlertMsg(c *gin.Context)  {
 				// config strategy
 				tmpAlarm.StrategyId, _ = strconv.Atoi(v.Labels["strategy_id"])
 				if tmpAlarm.StrategyId <= 0 {
-					mid.LogInfo(fmt.Sprintf("Alert's strategy id is null : %v ", v))
+					log.Logger.Warn("Alert's strategy id is null")
 					continue
 				}
 				_, strategyObj := db.GetStrategy(m.StrategyTable{Id: tmpAlarm.StrategyId})
 				if strategyObj.Id <= 0 {
-					mid.LogInfo(fmt.Sprintf("Alert's strategy id can not found : %d ", tmpAlarm.StrategyId))
+					log.Logger.Warn("Alert's strategy id can not found", log.Int("id", tmpAlarm.StrategyId))
 					continue
 				}
 				tmpAlarm.SMetric = strategyObj.Metric
@@ -112,7 +113,7 @@ func AcceptAlertMsg(c *gin.Context)  {
 					tmpValue, _ = strconv.ParseFloat(fmt.Sprintf("%.3f", tmpValue), 64)
 				}
 				if tmpAlarm.Endpoint == "" {
-					mid.LogInfo(fmt.Sprintf("Can't find the endpoint %v", v))
+					log.Logger.Warn("Can't find the endpoint")
 					continue
 				}
 				if strings.Contains(tmpAlarm.SMetric, "ping_alive") || strings.Contains(tmpAlarm.SMetric, "telnet_alive") || strings.Contains(tmpAlarm.SMetric, "http_alive") {
@@ -147,7 +148,7 @@ func AcceptAlertMsg(c *gin.Context)  {
 				}
 			}
 			if tmpOperation == "same" {
-				mid.LogInfo(fmt.Sprintf("Accept alert msg ,firing repeat,do nothing! Msg: %v", v))
+				log.Logger.Debug("Accept alert msg ,firing repeat,do nothing!")
 				continue
 			}
 			if tmpOperation == "resolve" {
@@ -156,7 +157,7 @@ func AcceptAlertMsg(c *gin.Context)  {
 				tmpAlarm.StartValue = tmpValue
 				tmpAlarm.Start = time.Now()
 			}
-			mid.LogInfo(fmt.Sprintf("add alarm ,operation: %s ,value: %v", tmpOperation, tmpAlarm))
+			log.Logger.Debug("Add alarm", log.String("operation", tmpOperation), log.JsonObj("alarm", tmpAlarm))
 			alarms = append(alarms, &tmpAlarm)
 		}
 		err = db.UpdateAlarms(alarms)
@@ -181,7 +182,7 @@ func AcceptAlertMsg(c *gin.Context)  {
 			for _, v := range alarms {
 				notifyErr := db.NotifyCoreEvent(v.Endpoint, v.StrategyId)
 				if notifyErr != nil {
-					mid.LogError("notify core event fail", notifyErr)
+					log.Logger.Error("notify core event fail", log.Error(notifyErr))
 				}
 			}
 		}
