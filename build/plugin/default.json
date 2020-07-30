@@ -1,8 +1,8 @@
 {
   "http": {
     "port": "{{MONITOR_SERVER_PORT}}",
-    "swagger": true,
-    "cross": true,
+    "swagger": false,
+    "cross": false,
     "return_error": true,
     "alive": 2591000,
     "ldap": {
@@ -15,10 +15,12 @@
       "attributes": ["name", "mail", "telephoneNumber"]
     },
     "log": {
-      "enable": true,
-      "level": "debug",
-      "file": "logs/prometheus_monitor.log",
-      "stdout": true
+      "level": "{{MONITOR_LOG_LEVEL}}",
+      "file": "logs/open-monitor.log",
+      "archive_max_size": 64,
+      "archive_max_backup": 10,
+      "archive_max_day": 15,
+      "compress": true
     },
     "session": {
       "enable": {{MONITOR_SESSION_ENABLE}},

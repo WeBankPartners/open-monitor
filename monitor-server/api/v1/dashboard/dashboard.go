@@ -15,6 +15,7 @@ import (
 	"regexp"
 	"io/ioutil"
 	"os"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 )
 
 // @Summary 页面通用接口 : 视图
@@ -382,7 +383,7 @@ func GetChartOld(c *gin.Context)  {
 		return
 	}
 	query.Legend = chart.Legend
-	mid.LogInfo(fmt.Sprintf("endpoint : %v  metric : %v  start:%d  end:%d  promql:%s", query.Endpoint, query.Metric, query.Start, query.End, query.PromQ))
+	log.Logger.Debug("Query param", log.StringList("endpoint",query.Endpoint), log.StringList("metric",query.Metric), log.Int64("start", query.Start), log.Int64("end", query.End), log.String("promQl", query.PromQ))
 	serials := ds.PrometheusData(&query)
 	agg := db.CheckAggregate(query.Start, query.End, query.Endpoint[0], 0, len(serials))
 	for _, s := range serials {
@@ -520,7 +521,7 @@ func GetChart(c *gin.Context)  {
 			for _, v := range strings.Split(chart.Metric, "^") {
 				err, tmpPromQl := db.GetPromMetric([]string{tmpParamConfig.Endpoint}, v)
 				if err != nil {
-					mid.LogError("Get prometheus metric failed", err)
+					log.Logger.Error("Get prometheus metric failed", log.Error(err))
 					continue
 				}
 				tmpLegend := chart.Legend
@@ -627,7 +628,7 @@ func GetChart(c *gin.Context)  {
 	}
 	appendDataFlag := false
 	for _,v := range querys {
-		mid.LogInfo(fmt.Sprintf("query : endpoint : %v  metric : %v  start:%d  end:%d  promql:%s", v.Endpoint, v.Metric, v.Start, v.End, v.PromQ))
+		log.Logger.Debug("Query param", log.StringList("endpoint",v.Endpoint), log.StringList("metric",v.Metric), log.Int64("start", v.Start), log.Int64("end", v.End), log.String("promQl", v.PromQ))
 		if !archiveQueryFlag {
 			tmpSerials := ds.PrometheusData(&v)
 			if len(tmpSerials) > 0 {
@@ -650,7 +651,7 @@ func GetChart(c *gin.Context)  {
 			}else{
 				err,step,tmpSerials = db.GetArchiveData(&m.QueryMonitorData{Start:v.Start, End:v.End, Endpoint:v.Endpoint, Metric:v.Metric, Legend:v.Legend, CompareLegend:v.CompareLegend, SameEndpoint:v.SameEndpoint}, paramConfig[0].Aggregate)
 				if err != nil {
-					mid.LogError("prometheus no data,try to get archive data error", err)
+					log.Logger.Error("Prometheus no data,try to get archive data error", log.Error(err))
 				}
 			}
 			for _, vv := range tmpSerials {
@@ -673,7 +674,6 @@ func GetChart(c *gin.Context)  {
 	if !appendDataFlag {
 		agg = db.CheckAggregate(query.Start, query.End, firstEndpoint, step, len(serials))
 	}
-	mid.LogInfo(fmt.Sprintf("serials length: %d query length: %d", len(serials), len(querys)))
 	//var firstSerialTime float64
 	for i, s := range serials {
 		if strings.Contains(s.Name, "$metric") {
@@ -681,7 +681,6 @@ func GetChart(c *gin.Context)  {
 			if i >= len(querys) {
 				queryIndex = len(querys)-1
 			}
-			mid.LogInfo(fmt.Sprintf("sname: %s, query %d metric : %s ", s.Name, i, querys[queryIndex].Metric))
 			s.Name = strings.Replace(s.Name, "$metric", querys[queryIndex].Metric[0], -1)
 		}
 		eOption.Legend = append(eOption.Legend, s.Name)
@@ -759,7 +758,6 @@ func GetPieChart(c *gin.Context)  {
 	}
 	queryResult := m.QueryMonitorData{Start:query.Start, End:query.End, PromQ:paramConfig.PromQl, Metric:[]string{paramConfig.Metric}, Endpoint:[]string{paramConfig.Endpoint}, ChartType: "pie"}
 	ds.PrometheusData(&queryResult)
-	mid.LogInfo(fmt.Sprintf("pie data --> legend: %s", queryResult.PieData.Legend))
 	mid.ReturnData(c, queryResult.PieData)
 }
 
@@ -910,7 +908,7 @@ func GetChartsByEndpoint(c *gin.Context)  {
 		}
 	}
 	// Query data
-	mid.LogInfo(fmt.Sprintf("endpoint : %v  metric : %v  start:%d  end:%d  promql:%s", query.Endpoint, query.Metric, query.Start, query.End, query.PromQ))
+	log.Logger.Debug("Query param", log.StringList("endpoint",query.Endpoint), log.StringList("metric",query.Metric), log.Int64("start", query.Start), log.Int64("end", query.End), log.String("promQl", query.PromQ))
 	serials := ds.PrometheusData(&query)
 	for _, s := range serials {
 		if strings.Contains(s.Name, "$metric") {
@@ -935,7 +933,7 @@ func GetChartsByEndpoint(c *gin.Context)  {
 func GetMainPage(c *gin.Context)  {
 	err,result := db.GetMainCustomDashboard()
 	if err != nil {
-		mid.LogError("Get main page failed ", err)
+		log.Logger.Error("Get main page failed", log.Error(err))
 	}
 	mid.ReturnData(c, result)
 }

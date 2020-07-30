@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"io/ioutil"
 	"encoding/json"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 )
 
 func ListTpl(c *gin.Context)  {
@@ -170,14 +171,14 @@ func SaveConfigFile(tplId int, fromCluster bool) error  {
 	idList := db.GetParentTpl(tplId)
 	err = updateConfigFile(tplId)
 	if err != nil {
-		mid.LogError("update prometheus rule file error", err)
+		log.Logger.Error("Update prometheus rule file error", log.Error(err))
 		return err
 	}
 	if len(idList) > 0 {
 		for _,v := range idList {
 			err = updateConfigFile(v)
 			if err != nil {
-				mid.LogError(fmt.Sprintf("update prometheus rule tpl id %d error", v), err)
+				log.Logger.Error("Update prometheus rule error", log.Int("tplId", v), log.Error(err))
 			}
 		}
 	}
@@ -186,7 +187,7 @@ func SaveConfigFile(tplId int, fromCluster bool) error  {
 	}
 	err = prom.ReloadConfig()
 	if err != nil {
-		mid.LogError("reload prometheus config error", err)
+		log.Logger.Error("Reload prometheus config error", log.Error(err))
 		return err
 	}
 	if !fromCluster {
@@ -198,7 +199,7 @@ func SaveConfigFile(tplId int, fromCluster bool) error  {
 func updateConfigFile(tplId int) error {
 	err,tplObj := db.GetTpl(tplId,0 ,0)
 	if err != nil {
-		mid.LogError("get tpl error", err)
+		log.Logger.Error("Get tpl error", log.Error(err))
 		return err
 	}
 	var query m.TplQuery
@@ -214,7 +215,7 @@ func updateConfigFile(tplId int) error {
 	}
 	err = db.GetStrategys(&query, false)
 	if err != nil {
-		mid.LogError("get strategy error", err)
+		log.Logger.Error("Get strategy error", log.Error(err))
 		return err
 	}
 	var fileName string
@@ -271,7 +272,7 @@ func updateConfigFile(tplId int) error {
 	}
 	err,isExist,cObj := prom.GetConfig(fileName, isGrp)
 	if err != nil {
-		mid.LogError("get prom get config error", err)
+		log.Logger.Error("Get prom get config error", log.Error(err))
 		return err
 	}
 	rfu := []*m.RFRule{}
@@ -330,7 +331,7 @@ func updateConfigFile(tplId int) error {
 	cObj.Rules = rfu
 	err = prom.SetConfig(fileName, isGrp, cObj, isExist)
 	if err != nil {
-		mid.LogError("prom set config error", err)
+		log.Logger.Error("Prom set config error", log.Error(err))
 	}
 	return err
 }
@@ -339,12 +340,12 @@ func SearchUserRole(c *gin.Context)  {
 	search := c.Query("search")
 	err,roles := db.SearchUserRole(search, "role")
 	if err != nil {
-		mid.LogError("search role error", err)
+		log.Logger.Error("Search role error", log.Error(err))
 	}
 	if len(roles) < 15 {
 		err,users := db.SearchUserRole(search, "user")
 		if err != nil {
-			mid.LogError("search user error", err)
+			log.Logger.Error("Search user error", log.Error(err))
 		}
 		for _,v := range users {
 			if len(roles) >= 15 {
@@ -422,7 +423,7 @@ func UpdateTplAction(c *gin.Context)  {
 }
 
 func SyncConfigHandle(w http.ResponseWriter,r *http.Request)  {
-	mid.LogInfo("start sync config")
+	log.Logger.Debug("Start sync config")
 	var response mid.RespJson
 	w.Header().Set("Content-Type", "application/json")
 	defer w.Write([]byte(fmt.Sprintf("{\"code\":%d,\"msg\":\"%s\",\"data\":\"%v\"}", response.Code,response.Msg,response.Data)))
@@ -444,7 +445,7 @@ func SyncConfigHandle(w http.ResponseWriter,r *http.Request)  {
 }
 
 func SyncConsulHandle(w http.ResponseWriter,r *http.Request)  {
-	mid.LogInfo("start sync consul")
+	log.Logger.Debug("start sync consul")
 	var response mid.RespJson
 	w.Header().Set("Content-Type", "application/json")
 	defer w.Write([]byte(fmt.Sprintf("{\"code\":%d,\"msg\":\"%s\",\"data\":\"%v\"}", response.Code,response.Msg,response.Data)))
