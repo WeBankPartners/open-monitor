@@ -11,6 +11,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"encoding/base64"
 	"strconv"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 )
 
 type auth struct {
@@ -219,7 +220,7 @@ func LdapLogin(c *gin.Context) {
 func HealthCheck(c *gin.Context)  {
 	ip := c.ClientIP()
 	date := time.Now().Format(m.DatetimeFormat)
-	mid.LogInfo(fmt.Sprintf("healthcheck request ip : %s , date : %s", ip, date))
+	log.Logger.Info("Health check", log.String("requestIp", ip), log.String("date", date))
 	c.JSON(http.StatusOK, gin.H{"status": "ok", "request_ip": ip, "date": date})
 }
 

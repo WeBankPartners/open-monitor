@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"encoding/json"
 	"time"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 )
 
 var clusterList []string
@@ -18,7 +19,7 @@ var selfIp string
 var timeoutCheck int64
 
 func SyncConfig(tplId int, param m.SyncConsulDto) {
-	mid.LogInfo(fmt.Sprintf("start sync config: id->%d param.guid->%s param.is_register->%v", tplId, param.Guid, param.IsRegister))
+	log.Logger.Info(fmt.Sprintf("Start sync config: id->%d param.guid->%s param.is_register->%v", tplId, param.Guid, param.IsRegister))
 	if !m.Config().Cluster.Enable {
 		return
 	}
@@ -29,7 +30,7 @@ func SyncConfig(tplId int, param m.SyncConsulDto) {
 		}
 	}else{
 		if len(m.Config().Cluster.ServerList) == 0 {
-			mid.LogInfo("config cluster server list is empty, return")
+			log.Logger.Warn("Config cluster server list is empty, return")
 			return
 		}
 		if selfIp == "" {
@@ -53,7 +54,7 @@ func SyncConfig(tplId int, param m.SyncConsulDto) {
 		if v == "" || strings.Contains(v, "127.0.0.1") || strings.Contains(v, "localhost") {
 			continue
 		}
-		mid.LogInfo(fmt.Sprintf("cluster : %s", v))
+		log.Logger.Debug(fmt.Sprintf("Cluster : %s", v))
 		address := strings.Replace(v, "http://", "", -1)
 		if m.Config().Cluster.HttpPort != "" {
 			address = fmt.Sprintf("%s:%s", address, m.Config().Cluster.HttpPort)
@@ -67,13 +68,13 @@ func SyncConfig(tplId int, param m.SyncConsulDto) {
 			time.Sleep(3*time.Second)
 		}
 		if !tmpFlag {
-			mid.LogInfo(fmt.Sprintf("sync cluster:%s config fail!!", v))
+			log.Logger.Warn(fmt.Sprintf("Sync cluster:%s config fail!!", v))
 		}
 	}
 }
 
 func requestClusterSync(tplId int,address string,param m.SyncConsulDto) bool {
-	mid.LogInfo(fmt.Sprintf("request sync: tplid->%d address->%s", tplId, address))
+	log.Logger.Debug(fmt.Sprintf("Request sync: tplid->%d address->%s", tplId, address))
 	url := fmt.Sprintf("http://%s", address)
 	var req *http.Request
 	if tplId > 0 {
@@ -85,7 +86,7 @@ func requestClusterSync(tplId int,address string,param m.SyncConsulDto) bool {
 	req.Header.Set("X-Auth-Token", "default-token-used-in-server-side")
 	resp,err := ctxhttp.Do(context.Background(), http.DefaultClient, req)
 	if err != nil {
-		mid.LogInfo(fmt.Sprintf("sync cluster:%s error:%v", address, err))
+		log.Logger.Warn(fmt.Sprintf("Sync cluster:%s error:%v", address, err))
 		return false
 	}
 	var result mid.RespJson
@@ -93,7 +94,7 @@ func requestClusterSync(tplId int,address string,param m.SyncConsulDto) bool {
 	json.Unmarshal(b, &result)
 	resp.Body.Close()
 	if result.Code >= 400 {
-		mid.LogInfo(fmt.Sprintf("sync cluster:%s fail,response code:%d message:%s error:%v", address, result.Code, result.Msg, result.Data))
+		log.Logger.Warn(fmt.Sprintf("sync cluster:%s fail,response code:%d message:%s error:%v", address, result.Code, result.Msg, result.Data))
 		return false
 	}
 	return true
@@ -107,27 +108,27 @@ type coreHostDto struct {
 
 func getCoreContainerHost() (result coreHostDto,err error) {
 	if m.CoreUrl == "" {
-		mid.LogInfo("get core hosts key fail, core url is null")
+		log.Logger.Warn("Get core hosts key fail, core url is null")
 		return result,fmt.Errorf("get core hosts key fail, core url is null")
 	}
 	request,err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/platform/v1/available-container-hosts", m.CoreUrl), strings.NewReader(""))
 	if err != nil {
-		mid.LogError("get core hosts key new request fail", err)
+		log.Logger.Error("Get core hosts key new request fail", log.Error(err))
 		return result,err
 	}
 	request.Header.Set("Authorization", m.TmpCoreToken)
 	res,err := ctxhttp.Do(context.Background(), http.DefaultClient, request)
 	if err != nil {
-		mid.LogError("get core hosts key ctxhttp request fail", err)
+		log.Logger.Error("Get core hosts key ctxhttp request fail", log.Error(err))
 		return result,err
 	}
 	defer res.Body.Close()
 	b,_ := ioutil.ReadAll(res.Body)
 	err = json.Unmarshal(b, &result)
 	if err != nil {
-		mid.LogError("get core hosts key json unmarshal result ", err)
+		log.Logger.Error("Get core hosts key json unmarshal result", log.Error(err))
 		return result,err
 	}
-	mid.LogInfo(fmt.Sprintf("get core hosts, resultObj status:%s  message:%s  data:%v", result.Status, result.Message, result.Data))
+	log.Logger.Debug(fmt.Sprintf("get core hosts, resultObj status:%s  message:%s  data:%v", result.Status, result.Message, result.Data))
 	return result,nil
 }

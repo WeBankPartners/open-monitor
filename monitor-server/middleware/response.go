@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 )
 
 const (
@@ -32,7 +33,7 @@ func Return(c *gin.Context, j RespJson)  {
 }
 
 func ReturnError(c *gin.Context, msg string, err error) {
-	LogError(fmt.Sprintf("request %s fail", c.FullPath()), err)
+	log.Logger.Error(fmt.Sprintf("Request %s fail", c.FullPath()), log.Error(err))
 	if models.Config().Http.ReturnError {
 		c.JSON(http.StatusInternalServerError, gin.H{"msg": msg, "data": err})
 	}else{

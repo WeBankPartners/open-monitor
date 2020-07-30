@@ -10,6 +10,8 @@ import (
 	"encoding/json"
 	"strings"
 	"strconv"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
+	"io/ioutil"
 )
 
 // @Summary 日志告警配置接口 : 获取列表
@@ -172,21 +174,21 @@ func EditLogPath(c *gin.Context)  {
 			logMonitorObj := m.LogMonitorTable{Id:v.Id, StrategyId:v.StrategyId, Path:param.Path, Keyword:v.Keyword}
 			err = db.UpdateLogMonitor(&m.UpdateLogMonitor{LogMonitor:[]*m.LogMonitorTable{&logMonitorObj}, Operation:"update"})
 			if err != nil {
-				mid.LogError("Update log monitor alert failed", err)
+				log.Logger.Error("Update log monitor alert failed", log.Error(err))
 			}
 		}
 		// Update strategy
 		for _,v := range strategyObjs {
 			err,tmpObj := db.GetStrategyTable(v.Id)
 			if err != nil {
-				mid.LogError(fmt.Sprintf("Get strategy with id %d failed", v.Id), err)
+				log.Logger.Error("Get strategy failed", log.Int("id", v.Id), log.Error(err))
 				continue
 			}
 			tmpObj.Expr = strings.Replace(tmpObj.Expr, oldPath, param.Path, -1)
 			tmpObj.Content = strings.Replace(tmpObj.Content, oldPath, param.Path, -1)
 			err = db.UpdateStrategy(&m.UpdateStrategy{Strategy:[]*m.StrategyTable{&tmpObj}, Operation:"update"})
 			if err != nil {
-				mid.LogError("Update strategy fail", err)
+				log.Logger.Error("Update strategy fail", log.Error(err))
 			}
 		}
 		// Call endpoint node exporter
@@ -318,14 +320,14 @@ func DeleteLogPath(c *gin.Context)  {
 		strategyObjs = append(strategyObjs, &m.StrategyTable{Id:v.StrategyId})
 		err = db.UpdateLogMonitor(&m.UpdateLogMonitor{LogMonitor:[]*m.LogMonitorTable{&m.LogMonitorTable{Id:v.Id}}, Operation:"delete"})
 		if err != nil {
-			mid.LogError("Delete log monitor alert failed", err)
+			log.Logger.Error("Delete log monitor alert failed", log.Error(err))
 		}
 	}
 	// Delete strategy
 	for _,v := range strategyObjs {
 		err = db.UpdateStrategy(&m.UpdateStrategy{Strategy:[]*m.StrategyTable{&m.StrategyTable{Id:v.Id}}, Operation:"delete"})
 		if err != nil {
-			mid.LogError("Delete strategy failed", err)
+			log.Logger.Error("Delete strategy failed", log.Error(err))
 		}
 	}
 	// Call endpoint node exporter
@@ -429,7 +431,7 @@ func sendLogConfig(endpointId,grpId,tplId int) error {
 	for _,v := range endpoints {
 		err,logMonitors := db.GetLogMonitorByEndpoint(v.Id)
 		if err != nil {
-			mid.LogError(fmt.Sprintf("Send log config with endpoint : %s failed", v.Guid),err)
+			log.Logger.Error("Send log config with endpoint failed", log.String("endpoint", v.Guid), log.Error(err))
 			continue
 		}
 		if len(logMonitors) == 0 {
@@ -452,9 +454,10 @@ func sendLogConfig(endpointId,grpId,tplId int) error {
 			url := fmt.Sprintf("http://%s/log/config", v.Address)
 			resp,err := http.Post(url, "application/json", strings.NewReader(string(postData)))
 			if err != nil {
-				mid.LogError("curl "+url+" error ", err)
+				log.Logger.Error("curl "+url+" error ", log.Error(err))
 			}else{
-				mid.LogInfo(fmt.Sprintf("curl %s resp : %v", url, resp.Body))
+				responseBody,_ := ioutil.ReadAll(resp.Body)
+				log.Logger.Info("curl " + url, log.String("response", string(responseBody)))
 				resp.Body.Close()
 			}
 		}

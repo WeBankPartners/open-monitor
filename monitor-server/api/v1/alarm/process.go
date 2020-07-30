@@ -10,6 +10,8 @@ import (
 	"net/http"
 	"encoding/json"
 	"strings"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
+	"io/ioutil"
 )
 
 func GetEndpointProcessConfig(c *gin.Context)  {
@@ -52,13 +54,13 @@ type processHttpDto struct {
 func updateNodeExporterProcessConfig(endpointId int) error {
 	err,data := db.GetProcessList(endpointId)
 	if err != nil {
-		mid.LogError("Update node_exporter fail ", err)
+		log.Logger.Error("Update node_exporter fail", log.Error(err))
 		return err
 	}
 	endpointObj := m.EndpointTable{Id:endpointId}
 	err = db.GetEndpoint(&endpointObj)
 	if err != nil {
-		mid.LogError("Update node_exporter fail, get endpoint msg fail ", err)
+		log.Logger.Error("Update node_exporter fail, get endpoint msg fail", log.Error(err))
 		return err
 	}
 	postParam := processHttpDto{Process:[]string{}}
@@ -67,16 +69,17 @@ func updateNodeExporterProcessConfig(endpointId int) error {
 	}
 	postData,err := json.Marshal(postParam)
 	if err != nil {
-		mid.LogError("Update node_exporter fail, marshal post data fail ", err)
+		log.Logger.Error("Update node_exporter fail, marshal post data fail", log.Error(err))
 		return err
 	}
 	url := fmt.Sprintf("http://%s/process/config", endpointObj.Address)
 	resp, err := http.Post(url, "application/json", strings.NewReader(string(postData)))
 	if err != nil {
-		mid.LogError("Update node_exporter fail, http post fail ", err)
+		log.Logger.Error("Update node_exporter fail, http post fail", log.Error(err))
 		return err
 	}
-	mid.LogInfo(fmt.Sprintf("curl %s resp : %v", url, resp.Body))
+	responseBody,_ := ioutil.ReadAll(resp.Body)
+	log.Logger.Info("curl "+url, log.String("response", string(responseBody)))
 	resp.Body.Close()
 	return nil
 }
