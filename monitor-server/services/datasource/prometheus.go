@@ -2,7 +2,6 @@ package datasource
 
 import (
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
-	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"fmt"
 	"net/http"
 	"strings"
@@ -14,6 +13,7 @@ import (
 	"strconv"
 	"sort"
 	"net/url"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 )
 
 var promDS DataSourceParam
@@ -32,7 +32,7 @@ func PrometheusData(query *m.QueryMonitorData) []*m.SerialModel  {
 	urlParams := url.Values{}
 	requestUrl,err := url.Parse(fmt.Sprintf("http://%s/api/v1/query_range", promDS.Host))
 	if err!=nil {
-		mid.LogError("make url fail", err)
+		log.Logger.Error("Make url fail", log.Error(err))
 		return serials
 	}
 	var tmpStep int64
@@ -54,38 +54,38 @@ func PrometheusData(query *m.QueryMonitorData) []*m.SerialModel  {
 	requestUrl.RawQuery = urlParams.Encode()
 	req, err := http.NewRequest(http.MethodGet, requestUrl.String(), strings.NewReader(""))
 	if err != nil {
-		mid.LogError("Failed to create request", err)
+		log.Logger.Error("Failed to create request", log.Error(err))
 		return serials
 	}
 	req.Header.Set("Content-Type", "application/json")
 	httpClient,err := promDS.DataSource.GetHttpClient()
 	if err != nil {
-		mid.LogError("get httpClient fail", err)
+		log.Logger.Error("Get httpClient fail", log.Error(err))
 		return serials
 	}
 	res, err := ctxhttp.Do(context.Background(), httpClient, req)
 	if err != nil {
-		mid.LogError("http request fail", err)
+		log.Logger.Error("Http request fail", log.Error(err))
 		return serials
 	}
 	body, err := ioutil.ReadAll(res.Body)
 	defer res.Body.Close()
 	if err != nil {
-		mid.LogError("http request body read fail", err)
+		log.Logger.Error("Http request body read fail", log.Error(err))
 		return serials
 	}
 	if res.StatusCode/100 != 2 {
-		mid.LogError(fmt.Sprintf("request status : %v", res.Status), nil)
+		log.Logger.Warn("Request fail with bad status", log.String("status", res.Status))
 		return serials
 	}
 	var data m.PrometheusResponse
 	err = json.Unmarshal(body, &data)
 	if err != nil {
-		mid.LogError("unmarshal response fail", err)
+		log.Logger.Error("Unmarshal response fail", log.Error(err))
 		return serials
 	}
 	if data.Status != "success" {
-		mid.LogError(fmt.Sprintf("query prometheus data fail : %s", data.Status), nil)
+		log.Logger.Warn("Query prometheus data fail", log.String("status", data.Status))
 		return serials
 	}
 	if query.ChartType == "pie" {

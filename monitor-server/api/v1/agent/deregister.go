@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"time"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 )
 
 const hostType  = "host"
@@ -56,18 +57,16 @@ func DeregisterJob(guid string) error {
 			}
 		}
 	}
-	mid.LogInfo(fmt.Sprintf("start delete endpoint:%s ", guid))
+	log.Logger.Debug("Start delete endpoint", log.String("guid", guid))
 	err = db.DeleteEndpoint(guid)
 	if err != nil {
-		mid.LogError(fmt.Sprintf("Delete endpint %s failed", guid), err)
+		log.Logger.Error("Delete endpoint failed", log.Error(err))
 		return err
 	}
-
-	mid.LogInfo(fmt.Sprintf("delete endpoint:%s step:%d", guid, endpointObj.Step))
 	prom.DeleteSdEndpoint(guid)
 	err = prom.SyncSdConfigFile(endpointObj.Step)
 	if err != nil {
-		mid.LogError("sync service discover file error: ", err)
+		log.Logger.Error("Sync service discover file error", log.Error(err))
 		return err
 	}
 
@@ -83,11 +82,11 @@ func CustomRegister(c *gin.Context)  {
 		if TransGateWayAddress == "" {
 			query := m.QueryMonitorData{Start:time.Now().Unix()-60, End:time.Now().Unix(), Endpoint:[]string{"endpoint"}, Metric:[]string{"metric"}, PromQ:"up{job=\"transgateway\"}", Legend:"$custom_all"}
 			sm := datasource.PrometheusData(&query)
-			mid.LogInfo(fmt.Sprintf("sm length : %d ", len(sm)))
+			log.Logger.Debug("", log.Int("sm length", len(sm)))
 			if len(sm) > 0 {
-				mid.LogInfo(fmt.Sprintf("sm0 -> %s  %s  %v", sm[0].Name, sm[0].Type, sm[0].Data))
+				log.Logger.Debug("", log.String("sm0", fmt.Sprintf(" -> %s  %s  %v", sm[0].Name, sm[0].Type, sm[0].Data)))
 				TransGateWayAddress = strings.Split(strings.Split(sm[0].Name, "instance=")[1], ",job")[0]
-				mid.LogInfo(fmt.Sprintf("TransGateWayAddress : %s", TransGateWayAddress))
+				log.Logger.Debug("", log.String("TransGateWayAddress", TransGateWayAddress))
 			}
 		}
 		var endpointObj m.EndpointTable
@@ -113,7 +112,7 @@ func CustomMetricPush(c *gin.Context)  {
 	if err:=c.ShouldBindJSON(&param); err==nil {
 		err = db.AddCustomMetric(param)
 		if err != nil {
-			mid.LogError("Add custom metric fail", err)
+			log.Logger.Error("Add custom metric fail", log.Error(err))
 			mid.ReturnError(c, "Add custom metric fail", err)
 		}else{
 			mid.ReturnSuccess(c, "Success")

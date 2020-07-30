@@ -8,7 +8,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"strings"
-	"encoding/json"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 )
 
 type requestPanelObj struct {
@@ -37,7 +37,7 @@ func ExportPanelAdd(c *gin.Context)  {
 	if err := c.ShouldBindJSON(&param); err==nil {
 		if len(param.Inputs) == 0 {
 			result = resultObj{ResultCode:"0", ResultMessage:"inputs length is zero,do nothing"}
-			mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
+			log.Logger.Warn(result.ResultMessage)
 			c.JSON(http.StatusOK, result)
 			return
 		}
@@ -112,12 +112,11 @@ func ExportPanelAdd(c *gin.Context)  {
 			}
 		}
 		result = resultObj{ResultCode: successFlag, ResultMessage: errorMessage, Results: resultOutput{Outputs: tmpResult}}
-		resultString,_ := json.Marshal(result)
-		mid.LogInfo(string(resultString))
+		log.Logger.Info("", log.JsonObj("result", result))
 		mid.ReturnData(c, result)
 	}else{
 		result = resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("Param validate fail : %v", err)}
-		mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
+		log.Logger.Warn(result.ResultMessage)
 		c.JSON(http.StatusBadRequest, result)
 	}
 }
@@ -215,12 +214,11 @@ func ExportPanelDelete(c *gin.Context)  {
 			}
 		}
 		result = resultObj{ResultCode: successFlag, ResultMessage: errorMessage, Results: resultOutput{Outputs: tmpResult}}
-		resultString,_ := json.Marshal(result)
-		mid.LogInfo(string(resultString))
+		log.Logger.Info("", log.JsonObj("result", result))
 		mid.ReturnData(c, result)
 	}else{
 		result = resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("Param validate fail : %v", err)}
-		mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
+		log.Logger.Warn(result.ResultMessage)
 		c.JSON(http.StatusBadRequest, result)
 	}
 }

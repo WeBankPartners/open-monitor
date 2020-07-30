@@ -3,11 +3,11 @@ package db
 import (
 	"strconv"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
-	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"fmt"
 	"time"
 	"strings"
 	"sort"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 )
 
 func ListGrp(query *m.GrpQuery) error {
@@ -55,7 +55,7 @@ func GetSingleGrp(id int,name string) (error,m.GrpTable) {
 	var result []*m.GrpTable
 	err := x.SQL("SELECT * FROM grp WHERE id=? or name=?", id, name).Find(&result)
 	if err != nil {
-		mid.LogError("get single grp fail", err)
+		log.Logger.Error("Get single grp fail", log.Error(err))
 		return err,m.GrpTable{}
 	}
 	if len(result) == 0 {
@@ -72,7 +72,7 @@ func SearchGrp(search string) (error,[]*m.OptionModel) {
 	}
 	err := x.SQL(`SELECT * FROM grp WHERE name LIKE '%`+search+`%'`).Find(&grps)
 	if err != nil {
-		mid.LogError("search grp fail", err)
+		log.Logger.Error("Search grp fail", log.Error(err))
 		return err,result
 	}
 	for _,v := range grps {
@@ -134,7 +134,6 @@ func UpdateGrp(obj *m.UpdateGrp) error {
 			grp.UpdateAt = time.Now()
 		}
 		action := Classify(*grp, obj.Operation, "grp", true)
-		mid.LogInfo(fmt.Sprintf("action: sql-> %s params->%v", action.Sql, action.Param))
 		if action.Sql != "" {
 			actions = append(actions, &action)
 		}
@@ -186,8 +185,6 @@ func UpdateGrpEndpoint(param m.GrpEndpointParamNew) (error,bool) {
 	return fmt.Errorf("operation is not add or delete"),false
 }
 
-
-
 func GetStrategy(param m.StrategyTable) (error,m.StrategyTable) {
 	var result []*m.StrategyTable
 	var err error
@@ -216,15 +213,11 @@ func getGrpParent(grpId int) m.GrpTable {
 
 func GetStrategys(query *m.TplQuery, ignoreLogMonitor bool) error {
 	var result []*m.TplObj
-	//ignoreLogMonitorSql := "and t2.metric<>'log_monitor'"
-	//if !ignoreLogMonitor {
-	//	ignoreLogMonitorSql = ""
-	//}
 	if query.SearchType == "endpoint" {
 		var grps []*m.GrpTable
 		err := x.SQL("SELECT * FROM grp where id in (select grp_id from grp_endpoint WHERE endpoint_id=?)", query.SearchId).Find(&grps)
 		if err != nil {
-			mid.LogError("get strategy fail", err)
+			log.Logger.Error("Get strategy fail", log.Error(err))
 			return err
 		}
 		var grpIds string
@@ -267,7 +260,7 @@ func GetStrategys(query *m.TplQuery, ignoreLogMonitor bool) error {
 				FROM tpl t1 LEFT JOIN strategy t2 ON t1.id=t2.tpl_id WHERE (`+grpIds+` endpoint_id=?)  order by t1.endpoint_id,t1.id,t2.id`
 		err = x.SQL(sql, query.SearchId).Find(&tpls)
 		if err != nil {
-			mid.LogError("get strategy fail", err)
+			log.Logger.Error("Get strategy fail", log.Error(err))
 			return err
 		}
 		if len(tpls) == 0 {
@@ -327,11 +320,11 @@ func GetStrategys(query *m.TplQuery, ignoreLogMonitor bool) error {
 		var grps []*m.GrpTable
 		err := x.SQL("SELECT * FROM grp WHERE id=?", query.SearchId).Find(&grps)
 		if err != nil {
-			mid.LogError("get grp fail", err)
+			log.Logger.Error("Get group fail", log.Error(err))
 			return err
 		}
 		if len(grps) <= 0 {
-			mid.LogInfo("can't find this grp")
+			log.Logger.Warn("Can't find this grp")
 			return fmt.Errorf("can't find this grp")
 		}
 		var parentTpls []*m.TplStrategyTable
@@ -380,7 +373,7 @@ func GetStrategys(query *m.TplQuery, ignoreLogMonitor bool) error {
 				FROM tpl t1 LEFT JOIN strategy t2 ON t1.id=t2.tpl_id WHERE t1.grp_id=?  ORDER BY t2.id`
 		err = x.SQL(sql, query.SearchId).Find(&tpls)
 		if err != nil {
-			mid.LogError("get strategy fail", err)
+			log.Logger.Error("Get strategy fail", log.Error(err))
 			return err
 		}
 		if len(tpls) > 0 {
@@ -500,13 +493,13 @@ func AddTpl(grpId,endpointId int, operateUser string) (error,m.TplTable) {
 	insertSql := fmt.Sprintf("INSERT INTO tpl(grp_id,endpoint_id,create_user,update_user,create_at,update_at) VALUE (%d,%d,'%s','%s',NOW(),NOW())", grpId, endpointId, operateUser, operateUser)
 	_,err := x.Exec(insertSql)
 	if err != nil {
-		mid.LogError("add tpl fail", err)
+		log.Logger.Error("Add tpl fail", log.Error(err))
 		return err,tpl
 	}
 	_,tpl = GetTpl(0, grpId, endpointId)
 	if tpl.Id <= 0 {
 		err = fmt.Errorf("cat't find the new one")
-		mid.LogError("add tpl fail", err)
+		log.Logger.Error("Add tpl fail", log.Error(err))
 		return err,tpl
 	}
 	return nil,tpl
@@ -515,7 +508,7 @@ func AddTpl(grpId,endpointId int, operateUser string) (error,m.TplTable) {
 func UpdateTpl(tplId int, operateUser string) error {
 	_,err := x.Exec("UPDATE tpl SET update_user=?,update_at=NOW() WHERE id=?", operateUser, tplId)
 	if err != nil {
-		mid.LogError("update tpl fail", err)
+		log.Logger.Error("Update tpl fail", log.Error(err))
 	}
 	return err
 }
@@ -523,7 +516,7 @@ func UpdateTpl(tplId int, operateUser string) error {
 func DeleteTpl(tplId int) error {
 	_,err := x.Exec("DELETE from tpl where id=?", tplId)
 	if err != nil {
-		mid.LogError("delete tpl fail", err)
+		log.Logger.Error("Delete tpl fail", log.Error(err))
 	}
 	return err
 }
@@ -532,7 +525,7 @@ func GetStrategyTable(id int) (error,m.StrategyTable) {
 	var result []*m.StrategyTable
 	err := x.SQL("SELECT * FROM strategy WHERE id=?", id).Find(&result)
 	if err != nil || len(result) <= 0 {
-		mid.LogError("get strategy table fail", err)
+		log.Logger.Error("Get strategy table fail", log.Error(err))
 		return err,m.StrategyTable{}
 	}
 	return nil,*result[0]
@@ -542,7 +535,7 @@ func GetEndpointsByGrp(grpId int) (error,[]*m.EndpointTable) {
 	var result []*m.EndpointTable
 	err := x.SQL("SELECT * FROM endpoint WHERE id IN (SELECT endpoint_id FROM grp_endpoint WHERE grp_id=?)", grpId).Find(&result)
 	if err != nil {
-		mid.LogError("get endpoint by grp fail", err)
+		log.Logger.Error("Get endpoint by grp fail", log.Error(err))
 	}
 	return err,result
 }
@@ -601,7 +594,7 @@ func GetAlarms(query m.AlarmTable) (error,m.AlarmProblemList) {
 			) t3 ORDER BY t3.id DESC`
 	err := x.SQL(sql,params...).Find(&result)
 	if err != nil {
-		mid.LogError("get alarms fail", err)
+		log.Logger.Error("Get alarms fail", log.Error(err))
 	}
 	for _,v := range result {
 		v.StartString = v.Start.Format(m.DatetimeFormat)
@@ -634,7 +627,7 @@ func UpdateAlarms(alarms []*m.AlarmTable) error {
 			_,cErr = x.Exec(action.Sql, v.StrategyId, v.Endpoint, v.Status, v.SMetric, v.SExpr, v.SCond, v.SLast, v.SPriority, v.Content, v.StartValue, time.Now().Format(m.DatetimeFormat), v.Tags)
 		}
 		if cErr != nil {
-			mid.LogInfo(fmt.Sprintf("update alarm:%s param:%v fail with:%v", action.Sql, action.Param, cErr))
+			log.Logger.Error("Update alarm fail", log.Error(cErr))
 		}
 	}
 	return nil
@@ -695,7 +688,7 @@ func ListLogMonitor(query *m.TplQuery) error {
 		var grps []*m.GrpTable
 		err := x.SQL("SELECT id,name FROM grp where id in (select grp_id from grp_endpoint WHERE endpoint_id=?)", query.SearchId).Find(&grps)
 		if err != nil {
-			mid.LogError("get strategy fail", err)
+			log.Logger.Error("Get strategy fail", log.Error(err))
 			return err
 		}
 		var grpIds string
@@ -716,7 +709,7 @@ func ListLogMonitor(query *m.TplQuery) error {
 				WHERE (`+grpIds+` t1.endpoint_id=?) and t2.config_type='log_monitor' ORDER BY t1.endpoint_id,t1.id,t3.path`
 		err = x.SQL(sql, query.SearchId).Find(&tpls)
 		if err != nil {
-			mid.LogError("get log monitor strategy fail", err)
+			log.Logger.Error("Get log monitor strategy fail", log.Error(err))
 			return err
 		}
 		if len(tpls) == 0 {
@@ -790,11 +783,11 @@ func ListLogMonitor(query *m.TplQuery) error {
 		var grps []*m.GrpTable
 		err := x.SQL("SELECT * FROM grp WHERE id=?", query.SearchId).Find(&grps)
 		if err != nil {
-			mid.LogError("get grp fail", err)
+			log.Logger.Error("Get group fail", log.Error(err))
 			return err
 		}
 		if len(grps) <= 0 {
-			mid.LogInfo("can't find this grp")
+			log.Logger.Warn("Can't find this grp", log.Int("grpId", query.SearchId))
 			return fmt.Errorf("can't find this grp")
 		}
 		var tpls []*m.TplStrategyLogMonitorTable
@@ -804,7 +797,7 @@ func ListLogMonitor(query *m.TplQuery) error {
 			WHERE t1.grp_id=? and t2.config_type='log_monitor' ORDER BY t1.endpoint_id,t1.id,t2.id`
 		err = x.SQL(sql, query.SearchId).Find(&tpls)
 		if err != nil {
-			mid.LogError("get log monitor strategy fail", err)
+			log.Logger.Error("Get log monitor strategy fail", log.Error(err))
 			return err
 		}
 		if len(tpls) > 0 {
@@ -896,13 +889,13 @@ func SetGrpStrategy(paramObj []*m.GrpStrategyExportObj) error {
 		tmpName := takeGrpName(v.GrpName, existGrp)
 		err := UpdateGrp(&m.UpdateGrp{Operation:"insert", Groups:[]*m.GrpTable{&m.GrpTable{Name:tmpName, Description:v.Description}}})
 		if err != nil {
-			mid.LogError("Set group strategy, insert group fail", err)
+			log.Logger.Error("Set group strategy, insert group fail", log.Error(err))
 			return err
 		}
 		_,grpObj := GetSingleGrp(0, tmpName)
 		err,tplObj := AddTpl(grpObj.Id, 0, "")
 		if err != nil {
-			mid.LogError("Set group strategy, insert tpl fail", err)
+			log.Logger.Error("Set group strategy, insert tpl fail", log.Error(err))
 			return err
 		}
 		for _,vv := range v.Strategy {
@@ -970,7 +963,7 @@ func SaveOpenAlarm(param m.OpenAlarmRequest) error {
 				tmpIds = tmpIds[:len(tmpIds)-1]
 				_,cErr := x.Exec(fmt.Sprintf("UPDATE alarm_custom SET closed=1,closed_at=NOW() WHERE id in (%s)", tmpIds))
 				if cErr != nil {
-					mid.LogError(fmt.Sprintf("update custom alarm %s close fail", tmpIds), cErr)
+					log.Logger.Error("Update custom alarm close fail", log.String("ids", tmpIds), log.Error(cErr))
 				}
 			}
 			continue
@@ -979,7 +972,7 @@ func SaveOpenAlarm(param m.OpenAlarmRequest) error {
 		subSystemId,_ = strconv.Atoi(v.SubSystemId)
 		_,err = x.Exec("INSERT INTO alarm_custom(alert_info,alert_ip,alert_level,alert_obj,alert_title,alert_reciver,remark_info,sub_system_id) VALUE (?,?,?,?,?,?,?,?)", v.AlertInfo, v.AlertIp, alertLevel,v.AlertObj,v.AlertTitle,v.AlertReciver,v.RemarkInfo, subSystemId)
 		if err != nil {
-			mid.LogError("save open alarm error", err)
+			log.Logger.Error("Save open alarm error", log.Error(err))
 		}
 	}
 	return err
@@ -1036,7 +1029,7 @@ func CloseOpenAlarm(id int) error {
 		tmpIds = tmpIds[:len(tmpIds)-1]
 		_,err = x.Exec(fmt.Sprintf("UPDATE alarm_custom SET closed=1,closed_at=NOW() WHERE id in (%s)", tmpIds))
 		if err != nil {
-			mid.LogError(fmt.Sprintf("update custom alarm %s close fail", tmpIds), err)
+			log.Logger.Error("Update custom alarm close fail", log.String("ids", tmpIds), log.Error(err))
 		}
 	}
 	return err
@@ -1064,7 +1057,7 @@ func UpdateTplAction(tplId int,user,role []int,extraMail,extraPhone []string) er
 	}
 	_,err := x.Exec(fmt.Sprintf("UPDATE tpl SET action_user='%s',action_role='%s',extra_mail='%s',extra_phone='%s' WHERE id=%d", userString, roleString, mailString, phoneString, tplId))
 	if err != nil {
-		mid.LogError("Update tpl action error", err)
+		log.Logger.Error("Update tpl action error", log.Error(err))
 	}
 	return err
 }
