@@ -188,19 +188,12 @@ func ExportGrpStrategy(c *gin.Context)  {
 		mid.ReturnError(c, "Export group strategy fail, get db strategy error ", err)
 		return
 	}
-	for _,v := range result {
-		mid.LogInfo(fmt.Sprintf("grp name: %s ", v.GrpName))
-		for _,vv := range v.Strategy {
-			mid.LogInfo(fmt.Sprintf("strategy metric: %s ", vv.Metric))
-		}
-	}
 
 	b,err := json.Marshal(result)
 	if err != nil {
 		mid.ReturnError(c, "Export group strategy fail, json marshal object error ", err)
 		return
 	}
-	mid.LogInfo(fmt.Sprintf("result ----> %s", string(b)))
 	c.Writer.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=%s_%s.json", "monitor_group_", time.Now().Format("20060102150405")))
 	c.Data(http.StatusOK, "application/octet-stream", b)
 }

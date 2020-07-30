@@ -6,8 +6,8 @@ import (
 	"strings"
 	"fmt"
 	"bytes"
-	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"crypto/tls"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 )
 
 var (
@@ -46,7 +46,7 @@ func SendSmtpMail(smo m.SendAlertObj) {
 	}
 	err := smtp.SendMail(fmt.Sprintf("%s:25", smtpServer), smtpAuth, sendFrom, smo.Accept, mailQQMessage(smo.Accept,smo.Subject,smo.Content))
 	if err != nil {
-		mid.LogError("send mail error", err)
+		log.Logger.Error("Send mail error", log.Error(err))
 	}
 }
 
@@ -58,47 +58,47 @@ func sendSMTPMailTLS(smo m.SendAlertObj)  {
 	address := fmt.Sprintf("%s:465", smtpServer)
 	conn,err := tls.Dial("tcp", address, tlsConfig)
 	if err != nil {
-		mid.LogError("tls dial error ", err)
+		log.Logger.Error("Tls dial error", log.Error(err))
 		return
 	}
 	client,err := smtp.NewClient(conn, smtpServer)
 	if err != nil {
-		mid.LogError("smtp new client error ", err)
+		log.Logger.Error("Smtp new client error", log.Error(err))
 		return
 	}
 	defer client.Close()
 	if b,_ := client.Extension("AUTH"); b {
 		err = client.Auth(smtpAuth)
 		if err != nil {
-			mid.LogError("client auth error ", err)
+			log.Logger.Error("Client auth error", log.Error(err))
 			return
 		}
 	}
 	err = client.Mail(sendFrom)
 	if err != nil {
-		mid.LogError("client mail set from error ", err)
+		log.Logger.Error("Client mail set from error", log.Error(err))
 		return
 	}
 	for _,to := range smo.Accept {
 		if err = client.Rcpt(to); err != nil {
-			mid.LogError(fmt.Sprintf("client rcpt %s error ", to), err)
+			log.Logger.Error(fmt.Sprintf("Client rcpt %s error", to), log.Error(err))
 			return
 		}
 	}
 	w,err := client.Data()
 	if err != nil {
-		mid.LogError("client data init error ", err)
+		log.Logger.Error("Client data init error", log.Error(err))
 		return
 	}
 	_,err = w.Write(mailQQMessage(smo.Accept, smo.Subject, smo.Content))
 	if err != nil {
-		mid.LogError("write message error ", err)
+		log.Logger.Error("Write message error", log.Error(err))
 		return
 	}
 	w.Close()
 	err = client.Quit()
 	if err != nil {
-		mid.LogError("client quit error ", err)
+		log.Logger.Error("Client quit error", log.Error(err))
 		return
 	}
 }

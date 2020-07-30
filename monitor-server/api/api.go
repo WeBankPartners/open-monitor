@@ -3,7 +3,6 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
-	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"github.com/gin-contrib/cors"
 	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/user"
 	"net/http"
@@ -14,6 +13,8 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/agent"
 	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/alarm"
 	_ "github.com/WeBankPartners/open-monitor/monitor-server/docs"
+	"time"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 )
 
 func InitHttpServer(exportAgent bool) {
@@ -28,23 +29,23 @@ func InitHttpServer(exportAgent bool) {
 	if exportAgent {
 		r.Static(fmt.Sprintf("%s/exporter", urlPrefix), "exporter")
 	}
-	r.Use(func(c *gin.Context) {
-		// Deal with options request
-		if c.Request.Method == "OPTIONS" {
-			c.Header("Access-Control-Allow-Credentials", "true")
-			c.Header("Access-Control-Allow-Headers", "Origin, Content-Length, Content-Type, Authorization, authorization, Token, X-Auth-Token")
-			c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS")
-			if c.GetHeader("Origin") != "" {
-				c.Header("Access-Control-Allow-Origin", c.GetHeader("Origin"))
-			}else{
-				c.Header("Access-Control-Allow-Origin", "*")
-			}
-			c.AbortWithStatus(http.StatusNoContent)
-		}else{
-			c.Next()
-		}
-	})
 	if m.Config().Http.Cross {
+		r.Use(func(c *gin.Context) {
+			// Deal with options request
+			if c.Request.Method == "OPTIONS" {
+				c.Header("Access-Control-Allow-Credentials", "true")
+				c.Header("Access-Control-Allow-Headers", "Origin, Content-Length, Content-Type, Authorization, authorization, Token, X-Auth-Token")
+				c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS")
+				if c.GetHeader("Origin") != "" {
+					c.Header("Access-Control-Allow-Origin", c.GetHeader("Origin"))
+				}else{
+					c.Header("Access-Control-Allow-Origin", "*")
+				}
+				c.AbortWithStatus(http.StatusNoContent)
+			}else{
+				c.Next()
+			}
+		})
 		corsConfig := cors.DefaultConfig()
 		corsConfig.AllowAllOrigins = true
 		corsConfig.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization", "authorization", "Token", "X-Auth-Token"}
@@ -58,11 +59,11 @@ func InitHttpServer(exportAgent bool) {
 			}
 		})
 	}
+	r.Use(httpLogHandle())
 	// public api
 	r.GET(fmt.Sprintf("%s/", urlPrefix), func(c *gin.Context) {
 		c.HTML(http.StatusOK, "index.html", gin.H{})
 	})
-	r.Use(mid.ValidateGet)
 	if m.Config().Http.Ldap.Enable {
 		r.POST(fmt.Sprintf("%s/login", urlPrefix), user.LdapLogin)
 	}else{
@@ -196,4 +197,12 @@ func InitClusterApi()  {
 
 func InitDependenceParam()  {
 	agent.InitAgentManager()
+}
+
+func httpLogHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		start := time.Now()
+		c.Next()
+		log.Logger.Info("request", log.String("url", c.Request.RequestURI), log.String("method",c.Request.Method), log.Int("code",c.Writer.Status()), log.String("ip",c.ClientIP()), log.Float64("cost_second",time.Now().Sub(start).Seconds()))
+	}
 }
