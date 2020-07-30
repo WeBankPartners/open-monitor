@@ -8,10 +8,12 @@ import (
 )
 
 type LogConfig struct {
-	Enable  bool  `json:"enable"`
 	Level   string  `json:"level"`
 	File    string  `json:"file"`
-	Stdout  bool  `json:"stdout"`
+	ArchiveMaxSize int `json:"archive_max_size"`
+	ArchiveMaxBackup int `json:"archive_max_backup"`
+	ArchiveMaxDay int `json:"archive_max_day"`
+	Compress  bool  `json:"compress"`
 }
 
 type LdapConfig struct {
