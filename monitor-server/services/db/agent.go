@@ -2,10 +2,10 @@ package db
 
 import (
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
-	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"fmt"
 	"time"
 	"strings"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 )
 
 func UpdateEndpoint(endpoint *m.EndpointTable) error {
@@ -16,7 +16,7 @@ func UpdateEndpoint(endpoint *m.EndpointTable) error {
 			endpoint.Guid,endpoint.Name,endpoint.Ip,endpoint.EndpointVersion,endpoint.ExportType,endpoint.ExportVersion,endpoint.Step,endpoint.Address,endpoint.OsType,time.Now().Format(m.DatetimeFormat),endpoint.AddressAgent)
 		_,err := x.Exec(insert)
 		if err != nil {
-			mid.LogError("insert endpoint fail ", err)
+			log.Logger.Error("Insert endpoint fail", log.Error(err))
 			return err
 		}
 		host := m.EndpointTable{Guid:endpoint.Guid}
@@ -27,7 +27,7 @@ func UpdateEndpoint(endpoint *m.EndpointTable) error {
 			endpoint.Name,endpoint.Ip,endpoint.EndpointVersion,endpoint.ExportType,endpoint.ExportVersion,endpoint.Step,endpoint.Address,endpoint.OsType,endpoint.AddressAgent,endpoint.Id)
 		_,err := x.Exec(update)
 		if err != nil {
-			mid.LogError("update endpoint fail ", err)
+			log.Logger.Error("Update endpoint fail", log.Error(err))
 			return err
 		}
 		endpoint.Id = host.Id
@@ -71,7 +71,7 @@ func AddCustomMetric(param m.TransGatewayMetricDto) error {
 		insertSql = insertSql[:len(insertSql)-1]
 		_,err = x.Exec("INSERT INTO endpoint_metric(endpoint_id,metric) VALUES " + insertSql)
 		if err != nil {
-			mid.LogError("update custom endpoint_metric fail", err)
+			log.Logger.Error("Update custom endpoint_metric fail", log.Error(err))
 		}
 	}
 	if err != nil {
@@ -102,7 +102,7 @@ func AddCustomMetric(param m.TransGatewayMetricDto) error {
 		insertSql = insertSql[:len(insertSql)-1]
 		_,err = x.Exec("INSERT INTO prom_metric(metric,metric_type,prom_ql) VALUES " + insertSql)
 		if err != nil {
-			mid.LogError("update custom prom_metric fail", err)
+			log.Logger.Error("Update custom prom_metric fail", log.Error(err))
 			return err
 		}
 	}
@@ -125,7 +125,7 @@ func DeleteEndpoint(guid string) error {
 	}
 	err := Transaction(actions)
 	if err != nil {
-		mid.LogError("delete endpoint fail", err)
+		log.Logger.Error("Delete endpoint fail", log.Error(err))
 		return err
 	}
 	return nil
@@ -142,7 +142,6 @@ func UpdateEndpointAlarmFlag(isStop bool,exportType,instance,ip,port string) err
 			x.SQL("SELECT id FROM endpoint WHERE export_type=? AND ip=? AND name=?", exportType, ip, instance).Find(&endpoints)
 		}
 	}
-	mid.LogInfo(fmt.Sprintf("update endpoint alarm flag : query endpoints -> %v ", endpoints))
 	if len(endpoints) > 0 {
 		stopAlarm := "0"
 		if isStop {
@@ -248,15 +247,11 @@ func GetRecursivePanel(guid string) (err error, result m.RecursivePanelObj) {
 	if err != nil {
 		return err,result
 	}
-	for i,v := range prt {
-		mid.LogInfo(fmt.Sprintf("prt data %d -> %v", i ,v))
-	}
 	result = recursiveData(guid, prt, len(prt), 1)
 	return nil,result
 }
 
 func recursiveData(guid string, prt []*m.PanelRecursiveTable, length,depth int) m.RecursivePanelObj {
-	mid.LogInfo(fmt.Sprintf("recursive : guid->%s length->%d depth->%d", guid, length, depth))
 	var obj m.RecursivePanelObj
 	if length < depth {
 		return obj
@@ -323,7 +318,7 @@ func UpdateEndpointTelnet(param m.UpdateEndpointTelnetParam) error {
 	}
 	err := Transaction(actions)
 	if err != nil {
-		mid.LogError("update endpoint table fail", err)
+		log.Logger.Error("Update endpoint table fail", log.Error(err))
 	}
 	return err
 }
@@ -344,7 +339,7 @@ func UpdateEndpointHttp(param []*m.EndpointHttpTable) error {
 	}
 	err := Transaction(actions)
 	if err != nil {
-		mid.LogError("update endpoint http fail", err)
+		log.Logger.Error("Update endpoint http fail", log.Error(err))
 	}
 	return err
 }

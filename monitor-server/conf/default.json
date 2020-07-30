@@ -15,10 +15,12 @@
       "attributes": ["name", "mail", "telephoneNumber"]
     },
     "log": {
-      "enable": true,
       "level": "debug",
-      "file": "prometheus_monitor.log",
-      "stdout": true
+      "file": "logs/open-monitor.log",
+      "archive_max_size": 64,
+      "archive_max_backup": 10,
+      "archive_max_day": 15,
+      "compress": true
     },
     "session": {
       "enable": true,

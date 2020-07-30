@@ -13,6 +13,7 @@ import (
 	"encoding/json"
 	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/alarm"
 	"strconv"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 )
 
 type resultObj struct {
@@ -67,8 +68,7 @@ func ExportAgentNew(c *gin.Context)  {
 	resultCode = "0"
 	resultData := resultOutput{}
 	defer func() {
-		b,_ := json.Marshal(resultData)
-		mid.LogInfo(fmt.Sprintf("plugin result -> code: %s ,message: %s ,data: %s", resultCode, resultMessage, string(b)))
+		log.Logger.Info("plugin result", log.JsonObj("result", resultData))
 		if strings.Contains(resultMessage, "validate") {
 			c.JSON(http.StatusBadRequest, resultObj{ResultCode:resultCode, ResultMessage:resultMessage})
 		}else{
@@ -76,7 +76,7 @@ func ExportAgentNew(c *gin.Context)  {
 		}
 	}()
 	data,_ := ioutil.ReadAll(c.Request.Body)
-	mid.LogInfo(fmt.Sprintf("plugin request -> agent %s, type %s, param : %v", action, agentType, string(data)))
+	log.Logger.Info("plugin request", log.String("action", action), log.String("agentType", agentType), log.String("param", string(data)))
 	var param requestObj
 	err := json.Unmarshal(data, &param)
 	if err != nil {
@@ -133,8 +133,8 @@ func ExportAgentNew(c *gin.Context)  {
 				endpointObj = m.EndpointTable{Ip: v.InstanceIp, ExportType: tmpAgentType, Name: v.Instance}
 			}
 			db.GetEndpoint(&endpointObj)
-			mid.LogInfo(fmt.Sprintf("Export deregister endpoint id:%d guid:%s ", endpointObj.Id, endpointObj.Guid))
 			if endpointObj.Id > 0 {
+				log.Logger.Debug("Export deregister endpoint", log.Int("id", endpointObj.Id), log.String("guid", endpointObj.Guid))
 				inputErr = DeregisterJob(endpointObj.Guid)
 				endpointGuid = endpointObj.Guid
 			}
@@ -159,7 +159,6 @@ func GetSystemDashboardUrl(c *gin.Context)  {
 	urlParms.Set("systemName", name)
 	urlParms.Set("ips", ips)
 	urlPath := fmt.Sprintf("http://%s/wecube-monitor/#/systemMonitoring?%s", c.Request.Host, urlParms.Encode())
-	mid.LogInfo(fmt.Sprintf("url : %s", urlPath))
 	mid.ReturnData(c, resultObj{ResultCode:"0", ResultMessage:urlPath})
 }
 
@@ -182,20 +181,15 @@ func AlarmControl(c *gin.Context)  {
 			break
 		}
 	}
-	//if illegal {
-	//	result = resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("No such monitor type like %s", agentType)}
-	//	mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
-	//	c.JSON(http.StatusBadRequest, result)
-	//	return
-	//}
+
 	data,_ := ioutil.ReadAll(c.Request.Body)
-	mid.LogInfo(fmt.Sprintf("param : %v", string(data)))
+	log.Logger.Info("", log.String("param", string(data)))
 	var param requestObj
 	err := json.Unmarshal(data, &param)
 	if err == nil {
 		if len(param.Inputs) == 0 {
 			result = resultObj{ResultCode:"0", ResultMessage:"inputs length is zero,do nothing"}
-			mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
+			log.Logger.Warn(result.ResultMessage)
 			c.JSON(http.StatusOK, result)
 			return
 		}
@@ -217,15 +211,14 @@ func AlarmControl(c *gin.Context)  {
 				msg = fmt.Sprintf("%s %s:%s %s succeed", action, agentType, v.HostIp, v.Instance)
 				tmpResult = append(tmpResult, resultOutputObj{CallbackParameter:v.CallbackParameter, ErrorCode:"0", ErrorMessage:""})
 			}
-			mid.LogInfo(msg)
+			log.Logger.Info(msg)
 		}
 		result = resultObj{ResultCode:"0", ResultMessage:"Done", Results:resultOutput{Outputs:tmpResult}}
-		resultString,_ := json.Marshal(result)
-		mid.LogInfo(string(resultString))
+		log.Logger.Info("result", log.JsonObj("result", result))
 		mid.ReturnData(c, result)
 	}else{
 		result = resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("Param validate fail : %v", err)}
-		mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
+		log.Logger.Error("Param validate fail", log.Error(err))
 		c.JSON(http.StatusBadRequest, result)
 	}
 }
@@ -279,12 +272,12 @@ func autoAddAppPathConfig(param m.RegisterParamNew, paths string) error {
 	}
 	err := db.UpdateBusiness(m.BusinessUpdateDto{EndpointId:hostEndpoint.Id, PathList:businessTables})
 	if err != nil {
-		mid.LogError("Update endpoint business table error ", err)
+		log.Logger.Error("Update endpoint business table error", log.Error(err))
 		return err
 	}
 	err = alarm.UpdateNodeExporterBusinessConfig(hostEndpoint.Id)
 	if err != nil {
-		mid.LogError("Update business config error ", err)
+		log.Logger.Error("Update business config error", log.Error(err))
 	}
 	return err
 }

@@ -2,17 +2,17 @@ package db
 
 import (
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
-	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"strings"
 	"fmt"
 	"strconv"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 )
 
 func GetOrganizationList() (result []*m.OrganizationPanel,err error) {
 	var data []*m.PanelRecursiveTable
 	err = x.SQL("SELECT * FROM panel_recursive").Find(&data)
 	if err != nil {
-		mid.LogError("get panel_recursive table error", err)
+		log.Logger.Error("Get panel_recursive table error", log.Error(err))
 		return result,err
 	}
 	if len(data) == 0 {
@@ -180,7 +180,7 @@ func UpdateOrgRole(param m.UpdateOrgPanelRoleParam) error {
 	}
 	_,err := x.Exec("UPDATE panel_recursive SET role=? WHERE guid=?", idString, param.Guid)
 	if err != nil {
-		mid.LogError("update organization role error ", err)
+		log.Logger.Error("Update organization role error", log.Error(err))
 	}
 	return err
 }
@@ -219,7 +219,7 @@ func UpdateOrgEndpoint(param m.UpdateOrgPanelEndpointParam) error {
 	endpointString = strings.Join(param.Endpoint, "^")
 	_,err := x.Exec("UPDATE panel_recursive SET endpoint=? WHERE guid=?", endpointString, param.Guid)
 	if err != nil {
-		mid.LogError("update organization endpoint error ", err)
+		log.Logger.Error("Update organization endpoint error", log.Error(err))
 	}
 	return err
 }
@@ -239,7 +239,7 @@ func GetOrgCallback(guid string) (result m.PanelRecursiveTable, err error) {
 func UpdateOrgCallback(param m.UpdateOrgPanelEventParam) error {
 	_,err := x.Exec("UPDATE panel_recursive SET firing_callback_name=?,firing_callback_key=?,recover_callback_name=?,recover_callback_key=? WHERE guid=?", param.FiringCallbackName, param.FiringCallbackKey, param.RecoverCallbackName, param.RecoverCallbackKey, param.Guid)
 	if err != nil {
-		mid.LogError("update organization callback error ", err)
+		log.Logger.Error("Update organization callback error", log.Error(err))
 	}
 	return err
 }
@@ -247,7 +247,7 @@ func UpdateOrgCallback(param m.UpdateOrgPanelEventParam) error {
 func UpdateOrgConnect(param m.UpdateOrgConnectParam) error {
 	_,err := x.Exec("UPDATE panel_recursive SET email=?,phone=? WHERE guid=?", strings.Join(param.Mail, ","), strings.Join(param.Phone, ","), param.Guid)
 	if err != nil {
-		mid.LogError("update organization connection error ", err)
+		log.Logger.Error("Update organization connection error", log.Error(err))
 	}
 	return err
 }
