@@ -1,0 +1,84 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"checksumSHA1": "8uCaUp4B6qHFQhBQ/bTyYQ4ZIUE=",
+			"path": "github.com/gin-contrib/cors",
+			"revision": ""
+		},
+		{
+			"checksumSHA1": "mKall8xfKBPL/a5Ji//i968rLsY=",
+			"path": "github.com/gin-contrib/sse",
+			"revision": ""
+		},
+		{
+			"checksumSHA1": "eHgE8uf31Whcj+uE109mYbd/bnk=",
+			"path": "github.com/gin-gonic/gin",
+			"revision": ""
+		},
+		{
+			"checksumSHA1": "aw60+zrdHljLi87Opq74tg0Hors=",
+			"path": "github.com/gin-gonic/gin/binding",
+			"revision": ""
+		},
+		{
+			"checksumSHA1": "GAHho8qMLbDfGoD4w7SX7ZRT56U=",
+			"path": "github.com/gin-gonic/gin/internal/json",
+			"revision": ""
+		},
+		{
+			"checksumSHA1": "NvLYXVVRP88zB/qHwu5CSb/hU98=",
+			"path": "github.com/gin-gonic/gin/render",
+			"revision": ""
+		},
+		{
+			"checksumSHA1": "EXls795feZCyMJ4W1W4QWhQKZKE=",
+			"path": "github.com/golang/protobuf/proto",
+			"revision": ""
+		},
+		{
+			"checksumSHA1": "JXlC3eSy7kLsz93aVdKGKtfBSj0=",
+			"path": "github.com/json-iterator/go",
+			"revision": ""
+		},
+		{
+			"checksumSHA1": "syj6POVljYx2Crad5J7M/2qKCtg=",
+			"path": "github.com/mattn/go-isatty",
+			"revision": ""
+		},
+		{
+			"checksumSHA1": "R7UwDjqiaLRoaEanrANwPOfbgN4=",
+			"path": "github.com/modern-go/concurrent",
+			"revision": ""
+		},
+		{
+			"checksumSHA1": "SnVnj87vJdiHFJUcwdL03T0ZMhI=",
+			"path": "github.com/modern-go/reflect2",
+			"revision": ""
+		},
+		{
+			"checksumSHA1": "tUybPhSS6kQxGMa6rmzF11EcnkE=",
+			"path": "github.com/ugorji/go/codec",
+			"revision": ""
+		},
+		{
+			"checksumSHA1": "tY+5thYxjKDUQyQXYcBqogmMS5U=",
+			"path": "golang.org/x/sys/unix",
+			"revision": "429f518978ab01db8bb6f44b66785088e7fba58b",
+			"revisionTime": "2017-09-20T21:38:28Z"
+		},
+		{
+			"checksumSHA1": "q190bL03wQok3wVwYmMub2XhOiU=",
+			"path": "gopkg.in/go-playground/validator.v8",
+			"revision": ""
+		},
+		{
+			"checksumSHA1": "QqDq2x8XOU7IoOR98Cx1eiV5QY8=",
+			"path": "gopkg.in/yaml.v2",
+			"revision": "51d6538a90f86fe93ac480b35f37b2be17fef232",
+			"revisionTime": "2018-11-15T11:05:04Z"
+		}
+	],
+	"rootPath": "github.com/WeBankPartners/open-monitor/monitor-agent/transgateway"
+}
