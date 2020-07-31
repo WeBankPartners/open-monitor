@@ -18,6 +18,7 @@ monitor-server/monitor-server
 monitor-agent/node_exporter/node_exporter
 monitor-agent/node_exporter/node_exporter_new
 monitor-agent/agent_manager/agent_manager
+monitor-agent/agent_manager/transgateway/api/vendor
 
 #tmp
 monitor-ui/.history/*
