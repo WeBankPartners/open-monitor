@@ -17,9 +17,7 @@
               v-for="(option, index) in chartTypeOption"
               :value="option.value"
               :key="index"
-            >
-              {{option.label}}
-            </Option>
+            >{{option.label}}</Option>
           </Select>
         </div>
         <button class="btn btn-sm btn-confirm-f" @click="saveConfig">{{$t('button.saveConfig')}}</button>
@@ -57,9 +55,7 @@
                         :value="option.option_value"
                         :key="index"
                       >
-                        <TagShow :tagName="option.option_type_name" :index="index"></TagShow> 
-                        {{option.option_text}}
-                      </Option>
+                        <TagShow :tagName="option.option_type_name" :index="index"></TagShow>{{option.option_text}}</Option>
                       <Option value="moreTips" disabled>{{$t('tips.requestMoreData')}}</Option>
                     </Select>
                   </div>
@@ -121,6 +117,7 @@ export default {
 
       elId: null,
       noDataTip: false,
+      endpointType: null,
       templateQuery: {
         endpoint: '',
         metricLabel: '',
@@ -177,6 +174,9 @@ export default {
       },
       deep: true
       // immediate: true
+    },
+    'templateQuery.endpoint': function (val) {
+      this.endpointType = this.options.find(item => item.option_value === val).type
     }
   },
   created() {
@@ -282,7 +282,7 @@ export default {
           this.$t("tableKey.s_metric") + this.$t("tips.required")
         )
       } else {
-        let params = { type: metric.split(":")[1] }
+        let params = { type: this.endpointType }
         this.$root.$httpRequestEntrance.httpRequestEntrance(
           'GET',
           this.$root.apiCenter.metricList.api,
