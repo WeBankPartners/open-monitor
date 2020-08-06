@@ -52,6 +52,7 @@ type HttpConfig struct {
 	Ldap   *LdapConfig  `json:"ldap"`
 	Log    *LogConfig   `json:"log"`
 	Session  *SessionConfig  `json:"session"`
+	DefaultLanguage  string  `json:"default_language"`
 }
 
 type StoreConfig struct {

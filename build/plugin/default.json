@@ -35,7 +35,8 @@
         "db": 0,
         "maxIdle": 10
       }
-    }
+    },
+    "default_language": "en"
   },
   "store": {
       "name": "default",

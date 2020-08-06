@@ -13,15 +13,15 @@ import (
 
 func GetDashboard(dType string) (error, m.DashboardTable) {
 	var dashboards []*m.DashboardTable
-	sql := `select * from dashboard where dashboard_type=?`
-	err := x.SQL(sql, dType).Find(&dashboards)
-	if err!=nil {
-		log.Logger.Error("Query dashboard fail", log.Error(err))
-	}
+	err := x.SQL("select * from dashboard where dashboard_type=?", dType).Find(&dashboards)
 	if len(dashboards) > 0 {
-		return err, *dashboards[0]
+		return nil, *dashboards[0]
 	}else{
-		return fmt.Errorf("no rows fetch"), *new(m.DashboardTable)
+		if err == nil {
+			err = fmt.Errorf("No rows fetch ")
+		}
+		log.Logger.Error("Query dashboard fail", log.Error(err))
+		return err, m.DashboardTable{}
 	}
 }
 
@@ -91,7 +91,7 @@ func GetCharts(cGroup int, chartId int, panelId int) (error, []*m.ChartTable) {
 	if len(charts) > 0 {
 		return err,charts
 	}
-	return fmt.Errorf("get charts error"), charts
+	return fmt.Errorf("Get charts error "), charts
 }
 
 func GetPromMetric(endpoint []string,metric string) (error, string) {
@@ -329,26 +329,6 @@ func UpdatePromMetric(data []m.PromMetricTable) error {
 }
 
 func GetEndpointMetric(id int) (err error,result []*m.OptionModel) {
-	var endpointMetrics []*m.EndpointMetricTable
-	err = x.SQL("SELECT id,endpoint_id,metric FROM endpoint_metric WHERE endpoint_id=?", id).Find(&endpointMetrics)
-	if err != nil {
-		log.Logger.Error("Get endpoint metric fail", log.Error(err))
-	}
-	metricMap := make(map[string]string)
-	for _,v := range endpointMetrics {
-		tmpMetric := v.Metric
-		if strings.Contains(v.Metric, "{") {
-			tmpMetric = strings.Split(v.Metric, "{")[0]
-		}
-		metricMap[tmpMetric] = fmt.Sprintf("%s{instance=\"$address\"}", tmpMetric)
-	}
-	for k,v := range metricMap {
-		result = append(result, &m.OptionModel{OptionText:k, OptionValue:v})
-	}
-	return err,result
-}
-
-func GetEndpointMetricNew(id int) (err error,result []*m.OptionModel) {
 	endpointObj := m.EndpointTable{Id:id}
 	GetEndpoint(&endpointObj)
 	if endpointObj.Guid == "" {
@@ -419,7 +399,7 @@ func UpdateChartTitle(param m.UpdateChartTitleParam) error {
 	var chartTables []*m.ChartTable
 	x.SQL("SELECT id,group_id,metric,title FROM chart").Find(&chartTables)
 	if len(chartTables) == 0 {
-		return fmt.Errorf("chart table can not find any data")
+		return fmt.Errorf("Chart table can not find any data ")
 	}
 	var chartExist,titleAuto bool
 	var groupId int
@@ -434,7 +414,7 @@ func UpdateChartTitle(param m.UpdateChartTitleParam) error {
 		}
 	}
 	if !chartExist {
-		return fmt.Errorf("chart id %d can not find any record", param.ChartId)
+		return fmt.Errorf("Chart id %d can not find any record ", param.ChartId)
 	}
 	var err error
 	if titleAuto {

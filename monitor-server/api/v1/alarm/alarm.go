@@ -21,7 +21,7 @@ func AcceptAlertMsg(c *gin.Context)  {
 	if err := c.ShouldBindJSON(&param); err==nil {
 		if len(param.Alerts) == 0 {
 			log.Logger.Warn("Accept alert is null")
-			mid.ReturnSuccess(c, "Success")
+			mid.ReturnSuccess(c)
 		}
 		var alarms []*m.AlarmTable
 		for _,v := range param.Alerts {
@@ -162,7 +162,7 @@ func AcceptAlertMsg(c *gin.Context)  {
 		}
 		err = db.UpdateAlarms(alarms)
 		if err != nil {
-			mid.ReturnError(c, "Failed to accept alert msg", err)
+			mid.ReturnUpdateTableError(c, "alarm", err)
 			return
 		}
 		if m.Config().Alert.Enable {
@@ -186,16 +186,16 @@ func AcceptAlertMsg(c *gin.Context)  {
 				}
 			}
 		}
-		mid.ReturnSuccess(c, "Success")
+		mid.ReturnSuccess(c)
 	}else{
-		mid.ReturnValidateFail(c, fmt.Sprintf("Parameter validation failed %v", err))
+		mid.ReturnValidateError(c, err.Error())
 	}
 }
 
 func GetHistoryAlarm(c *gin.Context)  {
 	endpointId,err := strconv.Atoi(c.Query("id"))
 	if err != nil || endpointId <= 0 {
-		mid.ReturnValidateFail(c, "Endpoint id validation failed")
+		mid.ReturnParamTypeError(c, "id", "int")
 		return
 	}
 	start := c.Query("start")
@@ -203,7 +203,7 @@ func GetHistoryAlarm(c *gin.Context)  {
 	endpointObj := m.EndpointTable{Id:endpointId}
 	db.GetEndpoint(&endpointObj)
 	if endpointObj.Guid == "" {
-		mid.ReturnError(c, "Get historical alerts failed", fmt.Errorf("can't find endpoint with id: %d", endpointId))
+		mid.ReturnFetchDataError(c, "endpoint", "id", strconv.Itoa(endpointId))
 		return
 	}
 	query := m.AlarmTable{Endpoint:endpointObj.Guid}
@@ -212,7 +212,7 @@ func GetHistoryAlarm(c *gin.Context)  {
 		if err == nil {
 			query.Start = startTime
 		}else{
-			mid.ReturnValidateFail(c, "Date and time format should be "+m.DatetimeFormat)
+			mid.ReturnParamTypeError(c, "start", m.DatetimeFormat)
 			return
 		}
 	}
@@ -221,16 +221,16 @@ func GetHistoryAlarm(c *gin.Context)  {
 		if err == nil {
 			query.End = endTime
 		}else{
-			mid.ReturnValidateFail(c, "Date and time format should be "+m.DatetimeFormat)
+			mid.ReturnParamTypeError(c, "end", m.DatetimeFormat)
 			return
 		}
 	}
 	err,data := db.GetAlarms(query)
 	if err != nil {
-		mid.ReturnError(c, "Get historical alerts failed", err)
+		mid.ReturnQueryTableError(c, "alarm", err)
 		return
 	}
-	mid.ReturnData(c, data)
+	mid.ReturnSuccessData(c, data)
 }
 
 func GetProblemAlarm(c *gin.Context)  {
@@ -252,10 +252,10 @@ func GetProblemAlarm(c *gin.Context)  {
 	}
 	err,data := db.GetAlarms(query)
 	if err != nil {
-		mid.ReturnError(c, "Get alerts failed", err)
+		mid.ReturnQueryTableError(c, "alarm", err)
 		return
 	}
-	mid.ReturnData(c, data)
+	mid.ReturnSuccessData(c, data)
 }
 
 // @Summary 手动关闭告警接口
@@ -267,7 +267,7 @@ func CloseALarm(c *gin.Context)  {
 	id,err := strconv.Atoi(c.Query("id"))
 	isCustom := strings.ToLower(c.Query("custom"))
 	if err != nil || id <= 0 {
-		mid.ReturnValidateFail(c, "Parameter \"id\" validation failed")
+		mid.ReturnParamTypeError(c, "id", "int")
 		return
 	}
 	if isCustom == "true" {
@@ -276,10 +276,10 @@ func CloseALarm(c *gin.Context)  {
 		err = db.CloseAlarm(id)
 	}
 	if err != nil {
-		mid.ReturnError(c, "Close alert failed", err)
+		mid.ReturnHandleError(c, err.Error(), err)
 		return
 	}
-	mid.ReturnSuccess(c, "Success")
+	mid.ReturnSuccess(c)
 }
 
 func OpenAlarmApi(c *gin.Context)  {
@@ -287,12 +287,12 @@ func OpenAlarmApi(c *gin.Context)  {
 	if err := c.ShouldBindJSON(&param); err==nil {
 		err = db.SaveOpenAlarm(param)
 		if err != nil {
-			mid.ReturnError(c, "Send alarm api fail", err)
+			mid.ReturnHandleError(c, err.Error(), err)
 		}else{
-			mid.ReturnSuccess(c, "Success")
+			mid.ReturnSuccess(c)
 		}
 	}else{
-		mid.ReturnValidateFail(c, fmt.Sprintf("Parameter validation failed %v", err))
+		mid.ReturnValidateError(c, err.Error())
 	}
 }
 
@@ -387,8 +387,8 @@ func TestNotifyAlarm(c *gin.Context)  {
 	strategyId,_ := strconv.Atoi(c.Query("id"))
 	err := db.NotifyCoreEvent(endpoint, strategyId)
 	if err != nil {
-		mid.ReturnError(c, "", err)
+		mid.ReturnHandleError(c, err.Error(), err)
 	}else{
-		mid.ReturnSuccess(c, "Success")
+		mid.ReturnSuccess(c)
 	}
 }
