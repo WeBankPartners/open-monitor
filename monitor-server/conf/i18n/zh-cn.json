@@ -1,0 +1,15 @@
+{
+  "success": "成功",
+  "param_validate_error": "参数校验失败，详情:%s",
+  "param_empty_error": "参数 %s 不能为空",
+  "param_type_error": "参数 %s 类型必须是 %s",
+  "request_body_error": "读取请求体body数据错误",
+  "request_json_unmarshal_error": "json反格式化请求体内容错误",
+  "query_table_error": "查询数据库表 %s 失败",
+  "fetch_table_data_error": "用条件 %k=%v 查询数据库表 %t 无数据",
+  "update_table_error": "更新数据库表 %s 失败",
+  "delete_table_data_error": "用条件 %k=%v 删除数据库表 %t 失败",
+  "handle_error": "请求处理失败，详情:%s",
+  "password_error": "密码错误",
+  "token_error": "请求认证失败"
+}
