@@ -17,14 +17,14 @@ import (
 func GetEndpointBusinessConfig(c *gin.Context)  {
 	endpointId,err := strconv.Atoi(c.Query("id"))
 	if err != nil || endpointId <= 0 {
-		mid.ReturnValidateFail(c, fmt.Sprintf("Param id validate fail %v", err))
+		mid.ReturnParamTypeError(c, "id", "int")
 		return
 	}
 	err,data := db.GetBusinessList(endpointId, "")
 	if err != nil {
-		mid.ReturnError(c, "Get business list fail", err)
+		mid.ReturnQueryTableError(c, "business_monitor", err)
 	}else{
-		mid.ReturnData(c, data)
+		mid.ReturnSuccessData(c, data)
 	}
 }
 
@@ -33,23 +33,23 @@ func UpdateEndpointBusinessConfig(c *gin.Context)  {
 	if err := c.ShouldBindJSON(&param); err==nil {
 		for _,v := range param.PathList {
 			if !mid.IsIllegalPath(v.Path) {
-				mid.ReturnValidateFail(c, "Parameter validate fail, path illegal")
+				mid.ReturnValidateError(c, "path illegal")
 				return
 			}
 		}
 		err = db.UpdateBusiness(param)
 		if err != nil {
-			mid.ReturnError(c, "Update business fail ", err)
+			mid.ReturnUpdateTableError(c, "business_monitor", err)
 		}else{
 			err = UpdateNodeExporterBusinessConfig(param.EndpointId)
 			if err != nil {
-				mid.ReturnError(c, "Update node exporter config fail ", err)
+				mid.ReturnHandleError(c, err.Error(), err)
 				return
 			}
-			mid.ReturnSuccess(c, "Success")
+			mid.ReturnSuccess(c)
 		}
 	}else{
-		mid.ReturnValidateFail(c, fmt.Sprintf("Param validate fail %v \n", err))
+		mid.ReturnValidateError(c, err.Error())
 	}
 }
 
