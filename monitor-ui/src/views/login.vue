@@ -70,12 +70,12 @@ export default {
             password: Base64.encode(this.form.password)
         }
       }).then((response) => {
-          if (response.status < 400) {
-            setToken(`${response.data.data.token}`)
-            localStorage.username = response.data.data.user
-            this.$Message.success(response.data.msg)
-            this.$router.push({path: '/'})
-          }
+        if (response.status < 400) {
+          setToken(`${response.data.Data.token}`)
+          localStorage.username = response.data.Data.user
+          this.$Message.success(response.data.Message)
+          this.$router.push({path: '/'})
+        }
       })
       .catch(() => {
         this.$Message.warning(this.$t('tips.failed'))
