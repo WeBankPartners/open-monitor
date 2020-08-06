@@ -94,7 +94,7 @@ func requestClusterSync(tplId int,address string,param m.SyncConsulDto) bool {
 	json.Unmarshal(b, &result)
 	resp.Body.Close()
 	if result.Code >= 400 {
-		log.Logger.Warn(fmt.Sprintf("sync cluster:%s fail,response code:%d message:%s error:%v", address, result.Code, result.Msg, result.Data))
+		log.Logger.Warn(fmt.Sprintf("sync cluster:%s fail,response code:%d message:%s error:%v", address, result.Code, result.Message, result.Data))
 		return false
 	}
 	return true

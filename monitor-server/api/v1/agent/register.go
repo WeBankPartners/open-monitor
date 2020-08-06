@@ -35,17 +35,17 @@ func RegisterAgentNew(c *gin.Context)  {
 	if err := c.ShouldBindJSON(&param); err==nil {
 		validateMessage,_,err := AgentRegister(param)
 		if validateMessage != "" {
-			mid.ReturnValidateFail(c, validateMessage)
+			mid.ReturnValidateError(c, validateMessage)
 			return
 		}
 		if err != nil {
 			log.Logger.Error("Register agent fail", log.Error(err))
-			mid.ReturnError(c, "Register agent error ", err)
+			mid.ReturnHandleError(c, err.Error(), err)
 			return
 		}
-		mid.ReturnSuccess(c, "Success")
+		mid.ReturnSuccess(c)
 	}else{
-		mid.ReturnValidateFail(c, fmt.Sprintf("Parameter validation failed %v", err))
+		mid.ReturnValidateError(c, err.Error())
 	}
 }
 

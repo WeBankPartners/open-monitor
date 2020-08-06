@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"time"
 	"strings"
-	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"encoding/base64"
 	"strconv"
@@ -35,16 +34,16 @@ func Login(c *gin.Context)  {
 		if !mid.ValidatePost(c, authData, "Password", "RePassword") {return}
 		err,user := db.GetUser(authData.Username)
 		if err != nil {
-			mid.ReturnError(c ,"Query db fail ", err)
+			mid.ReturnQueryTableError(c, err.Error(), err)
 			return
 		}
 		if user.Id == 0 {
-			mid.ReturnValidateFail(c, fmt.Sprintf("Username not exist"))
+			mid.ReturnFetchDataError(c, "user", "name", authData.Username)
 			return
 		}
 		authPassword,err := base64.StdEncoding.DecodeString(authData.Password)
 		if err != nil {
-			mid.ReturnValidateFail(c, "Password is not base64 encode")
+			mid.ReturnValidateError(c, "password is not base64 encode")
 			return
 		}
 		savePassword,_ := mid.Dncrypt(user.Passwd)
@@ -52,16 +51,16 @@ func Login(c *gin.Context)  {
 			session := m.Session{User:authData.Username}
 			isOk, sId := mid.SaveSession(session)
 			if !isOk {
-				mid.Return(c, mid.RespJson{Msg:"Save session failed"})
+				mid.ReturnHandleError(c, "save session failed", nil)
 			}else{
 				session.Token = sId
-				mid.Return(c, mid.RespJson{Msg:"Login successfully", Data:session})
+				mid.ReturnSuccessData(c, session)
 			}
 		}else{
-			mid.Return(c, mid.RespJson{Msg:"Authorization failed", Code:http.StatusBadRequest})
+			mid.ReturnPasswordError(c)
 		}
 	}else{
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Parameter validation failed"})
+		mid.ReturnValidateError(c, err.Error())
 	}
 }
 
@@ -73,9 +72,9 @@ func Logout(c *gin.Context) {
 	auToken := c.GetHeader("X-Auth-Token")
 	if auToken!= ""{
 		mid.DelSession(auToken)
-		mid.Return(c, mid.RespJson{Msg:"Logout successfully"})
+		mid.ReturnSuccess(c)
 	}else{
-		mid.Return(c, mid.RespJson{Msg:"Invalid session token", Code:http.StatusUnauthorized})
+		mid.ReturnError(c, http.StatusUnauthorized, "Invalid session token", nil)
 	}
 }
 
@@ -83,34 +82,34 @@ func Register(c *gin.Context)  {
 	var param auth
 	if err := c.ShouldBindJSON(&param); err==nil {
 		if param.Password != param.RePassword {
-			mid.ReturnValidateFail(c, "Password and RePassword is different")
+			mid.ReturnValidateError(c, "password and re_password is different")
 			return
 		}
 		tmpPassword,err := base64.StdEncoding.DecodeString(param.Password)
 		if err != nil {
-			mid.ReturnValidateFail(c, "Password is not base64 encode")
+			mid.ReturnValidateError(c, "password is not base64 encode")
 			return
 		}
 		newPassword,err := mid.Encrypt(tmpPassword)
 		if err != nil {
-			mid.ReturnError(c, "Register user fail", err)
+			mid.ReturnHandleError(c, err.Error(), err)
 			return
 		}
 		err = db.AddUser(m.UserTable{Name:param.Username, Passwd:string(newPassword), DisplayName:param.DisplayName, Email:param.Email, Phone:param.Phone}, "")
 		if err != nil {
-			mid.ReturnError(c, "Register user fail", err)
+			mid.ReturnUpdateTableError(c, "user", err)
 		}else{
 			session := m.Session{User:param.Username}
 			isOk, sId := mid.SaveSession(session)
 			if !isOk {
-				mid.Return(c, mid.RespJson{Msg:"Register success,but login with save session failed,please login"})
+				mid.ReturnSuccessWithMessage(c, "Register success,but login with save session failed,please login")
 			}else{
 				session.Token = sId
-				mid.Return(c, mid.RespJson{Msg:"Success", Data:session})
+				mid.ReturnSuccessData(c, session)
 			}
 		}
 	}else{
-		mid.ReturnValidateFail(c, fmt.Sprintf("Parameter validate failed %v", err))
+		mid.ReturnValidateError(c, err.Error())
 	}
 }
 
@@ -118,21 +117,23 @@ func UpdateUserMsg(c *gin.Context)  {
 	var param m.UpdateUserDto
 	if err := c.ShouldBindJSON(&param); err==nil {
 		if mid.GetOperateUser(c) == "admin" {
-			mid.ReturnError(c, "admin message can not change", nil)
+			mid.ReturnHandleError(c, "admin message can not change", nil)
 			return
 		}
-		if !mid.ValidatePost(c, param, "NewPassword", "ReNewPassword") {return}
+		if !mid.ValidatePost(c, param, "NewPassword", "ReNewPassword") {
+			return
+		}
 		operator := mid.GetOperateUser(c)
 		var userObj m.UserTable
 		userObj.Name = operator
 		if param.NewPassword != "" && param.ReNewPassword != "" {
 			if param.NewPassword != param.ReNewPassword {
-				mid.ReturnValidateFail(c, "Password and RePassword is different")
+				mid.ReturnValidateError(c, "password and re_password is different")
 				return
 			}
 			tmpPassword,err := base64.StdEncoding.DecodeString(param.NewPassword)
 			if err != nil {
-				mid.ReturnValidateFail(c, "Password is not base64 encode")
+				mid.ReturnValidateError(c, "password is not base64 encode")
 				return
 			}
 			newPassword,err := mid.Encrypt(tmpPassword)
@@ -144,12 +145,12 @@ func UpdateUserMsg(c *gin.Context)  {
 		}
 		err = db.UpdateUser(userObj)
 		if err != nil {
-			mid.ReturnError(c, "Update user msg fail ", err)
+			mid.ReturnUpdateTableError(c, "user", err)
 		}else{
-			mid.ReturnSuccess(c, "Success")
+			mid.ReturnSuccess(c)
 		}
 	}else{
-		mid.ReturnValidateFail(c, fmt.Sprintf("Parameter validate failed %v", err))
+		mid.ReturnValidateError(c, err.Error())
 	}
 }
 
@@ -157,11 +158,11 @@ func GetUserMsg(c *gin.Context)  {
 	operator := mid.GetOperateUser(c)
 	err,userObj := db.GetUser(operator)
 	if err != nil {
-		mid.ReturnError(c, "Get user message fail ", err)
+		mid.ReturnQueryTableError(c, err.Error(), err)
 		return
 	}
 	userObj.Passwd = ""
-	mid.ReturnData(c, userObj)
+	mid.ReturnSuccessData(c, userObj)
 }
 
 func AuthRequired() gin.HandlerFunc {
@@ -186,11 +187,11 @@ func AuthRequired() gin.HandlerFunc {
 			if mid.IsActive(auToken) {
 				c.Next()
 			}else{
-				mid.Return(c, mid.RespJson{Msg:"Invalid session token", Code:http.StatusUnauthorized})
+				mid.ReturnTokenError(c)
 				c.Abort()
 			}
 		}else{
-			mid.Return(c, mid.RespJson{Msg:"Token is not authorized", Code:http.StatusUnauthorized})
+			mid.ReturnTokenError(c)
 			c.Abort()
 		}
 	}
@@ -199,21 +200,23 @@ func AuthRequired() gin.HandlerFunc {
 func LdapLogin(c *gin.Context) {
 	var authData auth
 	if err := c.ShouldBindJSON(&authData); err==nil {
-		if !mid.ValidatePost(c, authData, "Password") {return}
+		if !mid.ValidatePost(c, authData, "Password") {
+			return
+	    }
 		if ldapAuth(authData.Username, authData.Password) {
 			session := m.Session{User:authData.Username}
 			isOk, sId := mid.SaveSession(session)
 			if !isOk {
-				mid.Return(c, mid.RespJson{Msg:"Save session failed"})
+				mid.ReturnHandleError(c, "save session failed", nil)
 			}else{
 				session.Token = sId
-				mid.Return(c, mid.RespJson{Msg:"Login successfully", Data:session})
+				mid.ReturnSuccessData(c, session)
 			}
 		}else{
-			mid.Return(c, mid.RespJson{Msg:"Auth fail", Code:http.StatusUnauthorized})
+			mid.ReturnValidateError(c, "ldap auth fail")
 		}
 	}else{
-		mid.Return(c, mid.RespJson{Msg:"Params validation fail", Code:http.StatusUnauthorized})
+		mid.ReturnValidateError(c, err.Error())
 	}
 }
 
@@ -237,9 +240,9 @@ func ListUser(c *gin.Context)  {
 	}
 	err,data := db.ListUser(search, role, page, size)
 	if err != nil {
-		mid.ReturnError(c, "Get user list fail", err)
+		mid.ReturnQueryTableError(c, "user", err)
 	}else{
-		mid.ReturnData(c, data)
+		mid.ReturnSuccessData(c, data)
 	}
 }
 
@@ -247,18 +250,18 @@ func UpdateRole(c *gin.Context)  {
 	var param m.UpdateRoleDto
 	if err := c.ShouldBindJSON(&param); err==nil {
 		if param.Operation != "add" && param.Operation != "update" && param.Operation != "delete" {
-			mid.ReturnValidateFail(c, "Param operation should be add,update,delete")
+			mid.ReturnValidateError(c, "operation should be add,update,delete")
 			return
 		}
 		param.Operator = mid.GetOperateUser(c)
 		err = db.UpdateRole(param)
 		if err != nil {
-			mid.ReturnError(c, fmt.Sprintf("%s role fail", param.Operation), err)
+			mid.ReturnUpdateTableError(c, "role", err)
 		}else{
-			mid.ReturnSuccess(c, "Success")
+			mid.ReturnSuccess(c)
 		}
 	}else{
-		mid.ReturnValidateFail(c, fmt.Sprintf("Param validate fail : %v", err))
+		mid.ReturnValidateError(c, err.Error())
 	}
 }
 
@@ -275,9 +278,9 @@ func ListRole(c *gin.Context)  {
 	db.SyncCoreRole()
 	err,data := db.ListRole(search, page, size)
 	if err != nil {
-		mid.ReturnError(c, "Get role list fail", err)
+		mid.ReturnQueryTableError(c, "role", err)
 	}else{
-		mid.ReturnData(c, data)
+		mid.ReturnSuccessData(c, data)
 	}
 }
 
@@ -286,11 +289,11 @@ func UpdateRoleUser(c *gin.Context)  {
 	if err := c.ShouldBindJSON(&param); err==nil {
 		err = db.UpdateRoleUser(param)
 		if err != nil {
-			mid.ReturnError(c, "Update role user fail", err)
+			mid.ReturnUpdateTableError(c, "rel_role_user", err)
 		}else{
-			mid.ReturnSuccess(c, "Success")
+			mid.ReturnSuccess(c)
 		}
 	}else{
-		mid.ReturnValidateFail(c, fmt.Sprintf("Param validate fail : %v", err))
+		mid.ReturnValidateError(c, err.Error())
 	}
 }

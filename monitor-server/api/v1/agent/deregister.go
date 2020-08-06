@@ -24,15 +24,15 @@ const otherType = "other"
 func DeregisterAgent(c *gin.Context)  {
 	guid := c.Query("guid")
 	if guid == "" {
-		mid.ReturnValidateFail(c, "Guid can not be empty")
+		mid.ReturnParamEmptyError(c, "guid")
 		return
 	}
 	err := DeregisterJob(guid)
 	if err != nil {
-		mid.ReturnError(c, fmt.Sprintf("Delete endpint %s failed", guid),err)
+		mid.ReturnHandleError(c, err.Error(), err)
 		return
 	}
-	mid.ReturnSuccess(c, fmt.Sprintf("Deregister %s successfully", guid))
+	mid.ReturnSuccess(c)
 }
 
 func DeregisterJob(guid string) error {
@@ -98,12 +98,12 @@ func CustomRegister(c *gin.Context)  {
 		endpointObj.Step = 10
 		err := db.UpdateEndpoint(&endpointObj)
 		if err != nil {
-			mid.ReturnError(c, fmt.Sprintf("Update endpoint %s_%s_custom fail", param.Name, param.HostIp), err)
+			mid.ReturnUpdateTableError(c, "endpoint", err)
 		}else{
-			mid.ReturnSuccess(c, "Success")
+			mid.ReturnSuccess(c)
 		}
 	}else{
-		mid.ReturnValidateFail(c, fmt.Sprintf("Parameter validate fail %v", err))
+		mid.ReturnValidateError(c, fmt.Sprintf(mid.GetMessageMap(c).ParamValidateError, err.Error()))
 	}
 }
 
@@ -112,20 +112,19 @@ func CustomMetricPush(c *gin.Context)  {
 	if err:=c.ShouldBindJSON(&param); err==nil {
 		err = db.AddCustomMetric(param)
 		if err != nil {
-			log.Logger.Error("Add custom metric fail", log.Error(err))
-			mid.ReturnError(c, "Add custom metric fail", err)
+			mid.ReturnHandleError(c, err.Error(), err)
 		}else{
-			mid.ReturnSuccess(c, "Success")
+			mid.ReturnSuccess(c)
 		}
 	}else{
-		mid.ReturnValidateFail(c, fmt.Sprintf("Parameter validate fail %v", err))
+		mid.ReturnValidateError(c, err.Error())
 	}
 }
 
 func ReloadEndpointMetric(c *gin.Context)  {
 	id,_ := strconv.Atoi(c.Query("id"))
 	if id <= 0 {
-		mid.ReturnValidateFail(c, "Param id validate fail")
+		mid.ReturnParamTypeError(c, "id", "int")
 		return
 	}
 	endpointObj := m.EndpointTable{Id:id}
@@ -133,7 +132,7 @@ func ReloadEndpointMetric(c *gin.Context)  {
 	var address string
 	if endpointObj.Address == "" {
 		if endpointObj.AddressAgent == "" {
-			mid.ReturnError(c, fmt.Sprintf("Endpoint id %d have no address", id), nil)
+			mid.ReturnHandleError(c, fmt.Sprintf("Endpoint id %d have no address", id), nil)
 			return
 		}
 		address = endpointObj.AddressAgent
@@ -156,8 +155,8 @@ func ReloadEndpointMetric(c *gin.Context)  {
 	}
 	err := db.RegisterEndpointMetric(id, strList)
 	if err != nil {
-		mid.ReturnError(c, "Update endpoint metric db fail", err)
+		mid.ReturnHandleError(c, "Update endpoint metric db fail", err)
 	}else{
-		mid.ReturnSuccess(c, "Success")
+		mid.ReturnSuccess(c)
 	}
 }
