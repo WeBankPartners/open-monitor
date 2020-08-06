@@ -17,14 +17,14 @@ import (
 func GetEndpointProcessConfig(c *gin.Context)  {
 	endpointId,err := strconv.Atoi(c.Query("id"))
 	if err != nil || endpointId <= 0 {
-		mid.ReturnValidateFail(c, fmt.Sprintf("Param id validate fail %v", err))
+		mid.ReturnParamTypeError(c, "id", "int")
 		return
 	}
 	err,data := db.GetProcessList(endpointId)
 	if err != nil {
-		mid.ReturnError(c, "Get process list fail", err)
+		mid.ReturnFetchDataError(c, "process_monitor", "endpoint_id", strconv.Itoa(endpointId))
 	}else{
-		mid.ReturnData(c, data)
+		mid.ReturnSuccessData(c, data)
 	}
 }
 
@@ -33,17 +33,17 @@ func UpdateEndpointProcessConfig(c *gin.Context)  {
 	if err := c.ShouldBindJSON(&param); err==nil {
 		err = db.UpdateProcess(param)
 		if err != nil {
-			mid.ReturnError(c, "Update process fail ", err)
+			mid.ReturnUpdateTableError(c, "process_monitor", err)
 		}else{
 			err = updateNodeExporterProcessConfig(param.EndpointId)
 			if err != nil {
-				mid.ReturnError(c, "Update node exporter config fail ", err)
+				mid.ReturnHandleError(c, "update node exporter config fail ", err)
 				return
 			}
-			mid.ReturnSuccess(c, "Success")
+			mid.ReturnSuccess(c)
 		}
 	}else{
-		mid.ReturnValidateFail(c, fmt.Sprintf("Param validate fail %v \n", err))
+		mid.ReturnValidateError(c, err.Error())
 	}
 }
 
