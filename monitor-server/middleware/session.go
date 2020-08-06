@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"sync"
 	"github.com/gin-gonic/gin"
-	"net/http"
 	"github.com/go-redis/redis"
 	"strings"
 	"encoding/base64"
@@ -84,7 +83,7 @@ func GetOperateUser(c *gin.Context) string {
 		session := GetSessionData(auToken)
 		return fmt.Sprintf("%s", session.User)
 	}else{
-		Return(c, RespJson{Msg:"no auth token", Code:http.StatusUnauthorized})
+		ReturnTokenError(c)
 		return ""
 	}
 }

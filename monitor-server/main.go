@@ -42,5 +42,6 @@ func main() {
 	alarm.SyncInitSdFile()
 	alarm.SyncInitConfigFile()
 	api.InitDependenceParam()
+	middleware.InitErrorMessageList()
 	api.InitHttpServer(*exportAgent)
 }
