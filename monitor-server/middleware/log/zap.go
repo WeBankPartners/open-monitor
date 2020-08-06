@@ -14,13 +14,14 @@ import (
 var (
 	Logger *zap.Logger
 	levelStringList = []string{"debug","info","warn","error"}
+	LogLevel string
 )
 
 func InitArchiveZapLogger() {
-	logLevel := strings.ToLower(m.Config().Http.Log.Level)
+	LogLevel = strings.ToLower(m.Config().Http.Log.Level)
 	var level int
 	for i,v := range levelStringList {
-		if v == logLevel {
+		if v == LogLevel {
 			level = i-1
 			break
 		}

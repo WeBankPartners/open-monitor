@@ -24,11 +24,11 @@ func ListLogTpl(c *gin.Context)  {
 	searchType := c.Query("type")
 	id,_ := strconv.Atoi(c.Query("id"))
 	if searchType == "" || id <= 0 {
-		mid.ReturnValidateFail(c, "Type or id can not be empty")
+		mid.ReturnParamEmptyError(c, "type or id")
 		return
 	}
 	if !(searchType == "endpoint" || searchType == "grp") {
-		mid.ReturnValidateFail(c, "Type must be \"endpoint\" or \"grp\"")
+		mid.ReturnValidateError(c, "type must be \"endpoint\" or \"grp\"")
 		return
 	}
 	var query m.TplQuery
@@ -36,10 +36,10 @@ func ListLogTpl(c *gin.Context)  {
 	query.SearchId = id
 	err := db.ListLogMonitor(&query)
 	if err != nil {
-		mid.ReturnError(c, "Query strategy failed", err)
+		mid.ReturnHandleError(c, err.Error(), err)
 		return
 	}
-	mid.ReturnData(c, query.Tpl)
+	mid.ReturnSuccessData(c, query.Tpl)
 }
 
 // @Summary 日志告警配置接口 : 新增
@@ -54,19 +54,19 @@ func AddLogStrategy(c *gin.Context)  {
 	var param m.LogMonitorDto
 	if err := c.ShouldBindJSON(&param);err == nil {
 		if len(param.Strategy) == 0 {
-			mid.ReturnValidateFail(c, "Parameter must contain a strategy at least")
+			mid.ReturnParamEmptyError(c, "strategy")
 			return
 		}
 		if !mid.IsIllegalCond(param.Strategy[0].Cond) || !mid.IsIllegalLast(param.Strategy[0].Last) {
-			mid.ReturnValidateFail(c, "Parameter validate fail, cond or last illegal")
+			mid.ReturnValidateError(c, "cond or last illegal")
 			return
 		}
 		if !mid.IsIllegalPath(param.Path) {
-			mid.ReturnValidateFail(c, "Parameter validate fail, path is illegal")
+			mid.ReturnValidateError(c, "path illegal")
 			return
 		}
 		if !mid.IsIllegalNormalInput(param.Strategy[0].Keyword) {
-			mid.ReturnValidateFail(c, "Parameter validate fail, keyword is illegal")
+			mid.ReturnValidateError(c, "keyword illegal")
 			return
 		}
 		var logMonitorObj m.LogMonitorTable
@@ -75,11 +75,11 @@ func AddLogStrategy(c *gin.Context)  {
 		// Add strategy
 		if param.TplId <= 0 {
 			if param.GrpId+param.EndpointId <= 0 {
-				mid.ReturnValidateFail(c, "Both endpoint and group id are missing")
+				mid.ReturnValidateError(c, "both endpoint and group id are missing")
 				return
 			}
 			if param.GrpId > 0 && param.EndpointId > 0 {
-				mid.ReturnValidateFail(c, "Endpoint and group id can not be provided at the same time")
+				mid.ReturnValidateError(c, "endpoint and group id can not be provided at the same time")
 				return
 			}
 			needAdd := true
@@ -93,7 +93,7 @@ func AddLogStrategy(c *gin.Context)  {
 			if needAdd {
 				err, tplObj := db.AddTpl(param.GrpId, param.EndpointId, "")
 				if err != nil {
-					mid.ReturnError(c, "Add strategy failed", err)
+					mid.ReturnUpdateTableError(c, "tpl", err)
 					return
 				}
 				param.TplId = tplObj.Id
@@ -103,7 +103,7 @@ func AddLogStrategy(c *gin.Context)  {
 			_,lms := db.GetLogMonitorTable(0,0, param.TplId, "")
 			for _, v := range lms {
 				if v.Path == param.Path {
-					mid.ReturnValidateFail(c, "Path already exists")
+					mid.ReturnValidateError(c, "path exists")
 					return
 				}
 			}
@@ -113,7 +113,7 @@ func AddLogStrategy(c *gin.Context)  {
 		strategyObj.ConfigType = "log_monitor"
 		err = db.UpdateStrategy(&m.UpdateStrategy{Strategy:[]*m.StrategyTable{&strategyObj}, Operation:"insert"})
 		if err != nil {
-			mid.ReturnError(c, "Insert strategy failed", err)
+			mid.ReturnUpdateTableError(c, "strategy", err)
 			return
 		}
 		_,strategyObj = db.GetStrategy(m.StrategyTable{Expr:tmpExpr})
@@ -121,24 +121,24 @@ func AddLogStrategy(c *gin.Context)  {
 		logMonitorObj.StrategyId = strategyObj.Id
 		err = db.UpdateLogMonitor(&m.UpdateLogMonitor{LogMonitor:[]*m.LogMonitorTable{&logMonitorObj}, Operation:"insert"})
 		if err != nil {
-			mid.ReturnError(c, "Insert log monitor alert failed", err)
+			mid.ReturnUpdateTableError(c, "log_monitor", err)
 			return
 		}
 		// Call endpoint node exporter
 		err = sendLogConfig(param.EndpointId, param.GrpId, param.TplId)
 		if err != nil {
-			mid.ReturnError(c, "Send log config to endpoint failed", err)
+			mid.ReturnHandleError(c, "send log config to endpoint failed", err)
 			return
 		}
 		// Save Prometheus rule file
 		err = SaveConfigFile(param.TplId, false)
 		if err != nil {
-			mid.ReturnError(c, "Save alert rules file failed", err)
+			mid.ReturnHandleError(c, "save alert rules file failed", err)
 			return
 		}
-		mid.ReturnSuccess(c, "Success")
+		mid.ReturnSuccess(c)
 	}else{
-		mid.ReturnValidateFail(c, fmt.Sprintf("Parameter validation failed %v", err))
+		mid.ReturnValidateError(c, err.Error())
 	}
 }
 
@@ -153,16 +153,16 @@ func EditLogPath(c *gin.Context)  {
 	var param m.LogMonitorDto
 	if err := c.ShouldBindJSON(&param);err == nil {
 		if param.TplId <= 0 || param.Id <= 0 {
-			mid.ReturnValidateFail(c, "Parameter id or template id can not be empty")
+			mid.ReturnParamEmptyError(c, "id or tpl_id")
 			return
 		}
 		if !mid.IsIllegalPath(param.Path) {
-			mid.ReturnValidateFail(c, "Parameter validate fail, path is illegal")
+			mid.ReturnValidateError(c, "path illegal")
 			return
 		}
 		err,lms := db.GetLogMonitorTable(0, param.Id, 0, "")
 		if err != nil || len(lms) == 0 {
-			mid.ReturnError(c, "Get log monitor alert failed", err)
+			mid.ReturnFetchDataError(c, "log_monitor", "strategy_id", strconv.Itoa(param.Id))
 			return
 		}
 		oldPath := lms[0].Path
@@ -194,25 +194,25 @@ func EditLogPath(c *gin.Context)  {
 		// Call endpoint node exporter
 		err,tplObj := db.GetTpl(param.TplId, 0, 0)
 		if err != nil {
-			mid.ReturnError(c, "Update log monitor alert failed for getting template error", err)
+			mid.ReturnFetchDataError(c, "tpl", "id", strconv.Itoa(param.TplId))
 			return
 		}
 		param.EndpointId = tplObj.EndpointId
 		param.GrpId = tplObj.GrpId
 		err = sendLogConfig(param.EndpointId, param.GrpId, param.TplId)
 		if err != nil {
-			mid.ReturnError(c, "Send log config to endpoint fail", err)
+			mid.ReturnHandleError(c, "send log config to endpoint fail", err)
 			return
 		}
 		// Save Prometheus rule file
 		err = SaveConfigFile(param.TplId, false)
 		if err != nil {
-			mid.ReturnError(c, "Save prometheus rule file fail", err)
+			mid.ReturnHandleError(c, "save prometheus rule file fail", err)
 			return
 		}
-		mid.ReturnSuccess(c, "Success")
+		mid.ReturnSuccess(c)
 	}else{
-		mid.ReturnValidateFail(c, fmt.Sprintf("Parameter validation failed %v", err))
+		mid.ReturnValidateError(c, err.Error())
 	}
 }
 
@@ -227,67 +227,67 @@ func EditLogStrategy(c *gin.Context)  {
 	var param m.LogMonitorDto
 	if err := c.ShouldBindJSON(&param);err == nil {
 		if len(param.Strategy) == 0 {
-			mid.ReturnValidateFail(c, "Param strategy must contain a strategy at least")
+			mid.ReturnParamEmptyError(c, "strategy")
 			return
 		}
 		if param.Strategy[0].Id <= 0 {
-			mid.ReturnValidateFail(c, "Param id in strategy can not be empty")
+			mid.ReturnParamEmptyError(c, "strategy -> id")
 			return
 		}
 		if param.TplId <= 0 {
-			mid.ReturnValidateFail(c, "Param tplId can not be empty")
+			mid.ReturnParamEmptyError(c, "tpl_id")
 			return
 		}
 		if !mid.IsIllegalCond(param.Strategy[0].Cond) || !mid.IsIllegalLast(param.Strategy[0].Last) {
-			mid.ReturnValidateFail(c, "Parameter validate fail, cond or last illegal")
+			mid.ReturnValidateError(c, "cond or last illegal")
 			return
 		}
 		if !mid.IsIllegalNormalInput(param.Strategy[0].Keyword) {
-			mid.ReturnValidateFail(c, "Parameter validate fail, keyword is illegal")
+			mid.ReturnValidateError(c, "keyword is illegal")
 			return
 		}
 		// Update strategy
 		err,lms := db.GetLogMonitorTable(param.Strategy[0].Id,0,0,"")
 		if err != nil || len(lms) == 0 {
-			mid.ReturnError(c, "Update strategy failed for getting log monitor by strategy error", err)
+			mid.ReturnFetchDataError(c, "log_monitor", "id", strconv.Itoa(param.Strategy[0].Id))
 			return
 		}
 		tmpMetric,tmpExpr,tmpContent := makeStrategyMsg(param.Path, param.Strategy[0].Keyword, param.Strategy[0].Cond, param.Strategy[0].Last)
 		strategyObj := m.StrategyTable{Id:lms[0].StrategyId,TplId:param.TplId,Metric:tmpMetric,Expr:tmpExpr,Cond:param.Strategy[0].Cond,Priority:param.Strategy[0].Priority,Content:tmpContent}
 		err = db.UpdateStrategy(&m.UpdateStrategy{Strategy:[]*m.StrategyTable{&strategyObj}, Operation:"update"})
 		if err != nil {
-			mid.ReturnError(c, "Update strategy failed", err)
+			mid.ReturnUpdateTableError(c, "strategy", err)
 			return
 		}
 		// Update log_monitor
 		logMonitorObj := m.LogMonitorTable{Id:param.Strategy[0].Id, StrategyId:lms[0].StrategyId, Path:param.Path, Keyword:param.Strategy[0].Keyword}
 		err = db.UpdateLogMonitor(&m.UpdateLogMonitor{LogMonitor:[]*m.LogMonitorTable{&logMonitorObj}, Operation:"update"})
 		if err != nil {
-			mid.ReturnError(c, "Update log monitor failed", err)
+			mid.ReturnUpdateTableError(c, "log_monitor", err)
 			return
 		}
 		// Call endpoint node exporter
 		err,tplObj := db.GetTpl(param.TplId, 0, 0)
 		if err != nil {
-			mid.ReturnError(c, "Update log monitor failed for getting tpl error", err)
+			mid.ReturnFetchDataError(c, "tpl", "id", strconv.Itoa(param.TplId))
 			return
 		}
 		param.EndpointId = tplObj.EndpointId
 		param.GrpId = tplObj.GrpId
 		err = sendLogConfig(param.EndpointId, param.GrpId, param.TplId)
 		if err != nil {
-			mid.ReturnError(c, "Send log config to endpoint failed", err)
+			mid.ReturnHandleError(c, "send log config to endpoint failed", err)
 			return
 		}
 		// Save Prometheus rule file
 		err = SaveConfigFile(param.TplId, false)
 		if err != nil {
-			mid.ReturnError(c, "Save prometheus rule file failed", err)
+			mid.ReturnHandleError(c, "save prometheus rule file failed", err)
 			return
 		}
-		mid.ReturnSuccess(c, "Success")
+		mid.ReturnSuccess(c)
 	}else{
-		mid.ReturnValidateFail(c, fmt.Sprintf("Parameter validation failed %v", err))
+		mid.ReturnValidateError(c, err.Error())
 	}
 }
 
@@ -299,17 +299,17 @@ func EditLogStrategy(c *gin.Context)  {
 func DeleteLogPath(c *gin.Context)  {
 	strategyId,err := strconv.Atoi(c.Query("id"))
 	if err != nil || strategyId <= 0 {
-		mid.ReturnValidateFail(c, fmt.Sprintf("Param validate failed:%v", err))
+		mid.ReturnParamTypeError(c, "id", "int")
 		return
 	}
 	err,strategyObj := db.GetStrategy(m.StrategyTable{Id:strategyId})
 	if err != nil || strategyObj.TplId <= 0 {
-		mid.ReturnError(c, "Delete strategy failed for getting strategy by id error", err)
+		mid.ReturnFetchDataError(c, "strategy", "id", strconv.Itoa(strategyId))
 		return
 	}
 	err,lms := db.GetLogMonitorTable(0, strategyId, 0, "")
 	if err != nil || len(lms) == 0 {
-		mid.ReturnError(c, "Get log monitor alert failed", err)
+		mid.ReturnFetchDataError(c, "log_monitor", "strategy_id", strconv.Itoa(strategyId))
 		return
 	}
 	oldPath := lms[0].Path
@@ -333,21 +333,21 @@ func DeleteLogPath(c *gin.Context)  {
 	// Call endpoint node exporter
 	err,tplObj := db.GetTpl(strategyObj.TplId, 0, 0)
 	if err != nil {
-		mid.ReturnError(c, "Delete log monitor alert failed for getting tpl error", err)
+		mid.ReturnFetchDataError(c, "tpl", "id", strconv.Itoa(strategyObj.TplId))
 		return
 	}
 	err = sendLogConfig(tplObj.EndpointId, tplObj.GrpId, tplObj.Id)
 	if err != nil {
-		mid.ReturnError(c, "Send log config to endpoint failed", err)
+		mid.ReturnHandleError(c, "send log config to endpoint failed", err)
 		return
 	}
 	// Save Prometheus rule file
 	err = SaveConfigFile(tplObj.Id, false)
 	if err != nil {
-		mid.ReturnError(c, "Save prometheus rule file failed", err)
+		mid.ReturnHandleError(c, "save prometheus rule file failed", err)
 		return
 	}
-	mid.ReturnSuccess(c, "Success")
+	mid.ReturnSuccess(c)
 }
 
 // @Summary 日志告警配置接口 : 删除
@@ -358,49 +358,49 @@ func DeleteLogPath(c *gin.Context)  {
 func DeleteLogStrategy(c *gin.Context)  {
 	logMonitorId,err := strconv.Atoi(c.Query("id"))
 	if err != nil || logMonitorId <= 0 {
-		mid.ReturnValidateFail(c, fmt.Sprintf("Param validate failed:%v", err))
+		mid.ReturnParamTypeError(c, "id", "int")
 		return
 	}
 	err,lms := db.GetLogMonitorTable(logMonitorId,0,0,"")
 	if err != nil || len(lms) == 0 {
-		mid.ReturnError(c, "Update strategy failed for getting log monitor by strategy error", err)
+		mid.ReturnFetchDataError(c, "log_monitor", "id", strconv.Itoa(logMonitorId))
 		return
 	}
 	err,strategyObj := db.GetStrategy(m.StrategyTable{Id:lms[0].StrategyId})
 	if err != nil || strategyObj.TplId <= 0 {
-		mid.ReturnError(c, "Delete strategy failed for getting strategy by id error", err)
+		mid.ReturnFetchDataError(c, "strategy", "id", strconv.Itoa(lms[0].StrategyId))
 		return
 	}
 	// Delete log monitor
 	err = db.UpdateLogMonitor(&m.UpdateLogMonitor{LogMonitor:[]*m.LogMonitorTable{&m.LogMonitorTable{Id:logMonitorId}}, Operation:"delete"})
 	if err != nil {
-		mid.ReturnError(c, "Delete log monitor alert failed", err)
+		mid.ReturnUpdateTableError(c, "log_monitor", err)
 		return
 	}
 	// Delete strategy
 	err = db.UpdateStrategy(&m.UpdateStrategy{Strategy:[]*m.StrategyTable{&m.StrategyTable{Id:strategyObj.Id}}, Operation:"delete"})
 	if err != nil {
-		mid.ReturnError(c, "Delete strategy failed", err)
+		mid.ReturnUpdateTableError(c, "strategy", err)
 		return
 	}
 	// Call endpoint node exporter
 	err,tplObj := db.GetTpl(strategyObj.TplId, 0, 0)
 	if err != nil {
-		mid.ReturnError(c, "Delete log monitor alert failed for getting template error", err)
+		mid.ReturnFetchDataError(c, "tpl", "id", strconv.Itoa(strategyObj.TplId))
 		return
 	}
 	err = sendLogConfig(tplObj.EndpointId, tplObj.GrpId, tplObj.Id)
 	if err != nil {
-		mid.ReturnError(c, "Send log config to endpoint failed", err)
+		mid.ReturnHandleError(c, "send log config to endpoint failed", err)
 		return
 	}
 	// Save Prometheus rule file
 	err = SaveConfigFile(tplObj.Id, false)
 	if err != nil {
-		mid.ReturnError(c, "Save prometheus rule file failed", err)
+		mid.ReturnHandleError(c, "save prometheus rule file failed", err)
 		return
 	}
-	mid.ReturnSuccess(c, "Success")
+	mid.ReturnSuccess(c)
 }
 
 type logHttpDto struct {

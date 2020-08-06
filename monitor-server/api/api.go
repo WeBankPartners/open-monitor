@@ -119,7 +119,6 @@ func InitHttpServer(exportAgent bool) {
 			agentApi.POST("/export/deregister/:name", agent.ExportAgentNew)
 			agentApi.POST("/export/start/:name", agent.AlarmControl)
 			agentApi.POST("/export/stop/:name", agent.AlarmControl)
-			agentApi.POST("/export/install/:name", agent.InstallAgent)
 			agentApi.POST("/export/custom/endpoint/add", agent.CustomRegister)
 			agentApi.POST("/export/custom/metric/add", agent.CustomMetricPush)
 			agentApi.POST("/export/endpoint/telnet/update", agent.UpdateEndpointTelnet)
