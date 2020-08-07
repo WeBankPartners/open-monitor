@@ -74,7 +74,7 @@ The plugin is based on Prometheus. The upper layer `Monitor` encapsulates the co
 
 Open-Monitor is deployed in a docker container.
 
-Please refer to the [Open-Monitor_Compiling_Guide](wiki/compile_guide.md) on how to compile Open-Monitor.
+Please refer to the [Open-Monitor_Compiling_Guide](wiki/compile_guide_new.md) on how to compile Open-Monitor.
 
 Please refer to the [Open-Monitor_Deployment_Guide](wiki/install_guide.md) on how to install Open-Monitor.
 
