@@ -1,30 +1,22 @@
-export GOPATH=$(PWD)
-
 current_dir=$(shell pwd)
-version=$(shell bash ./build/version.sh)
-project_name=open-monitor
+version=$(PLUGIN_VERSION)
+project_name=$(shell basename "${current_dir}")
 
-
-APP_HOME=src/github.com/WeBankPartners/open-monitor
-
-ifndef RUN_MODE
-  RUN_MODE=dev
-endif
-
-clean-server:
+clean:
 	rm -rf monitor-server/monitor-server
-
-clean-ui:
+	rm -rf monitor-agent/agent_manager/agent_manager
+	rm -rf monitor-agent/archive_mysql_tool/archive_mysql_tool
+	rm -rf monitor-agent/node_exporter/node_exporter_new
+	rm -rf monitor-agent/ping_exporter/ping_exporter
+	rm -rf monitor-agent/transgateway/transgateway
 	rm -rf monitor-ui/dist
+	rm -rf monitor-ui/plugin
 
-build-server: clean-server
+build: clean
 	chmod +x ./build/*.sh
-	docker run --rm -v $(current_dir):/go/src/github.com/WeBankPartners/$(project_name) --name build_$(project_name)_server golang:1.12.5 /bin/bash /go/src/github.com/WeBankPartners/$(project_name)/build/build-server.sh
+	docker run --rm -v $(current_dir):/go/src/github.com/WeBankPartners/$(project_name) --name build_monitor_server golang:1.12.5 /bin/bash /go/src/github.com/WeBankPartners/$(project_name)/build/build-server.sh
+	./build/build-ui.sh $(current_dir)
 
-build-ui: clean-ui
-	chmod +x ./build/*.sh
-	docker run --rm -v $(current_dir):/go/src/github.com/WeBankPartners/$(project_name) --name build_$(project_name)_ui node:12.10.0 /bin/bash /go/src/github.com/WeBankPartners/$(project_name)/build/build-ui.sh
-
-image: build-server build-ui
-	docker build -t monitor:$(version) .
+image: build
+	docker build -t $(project_name):$(version) .
 
