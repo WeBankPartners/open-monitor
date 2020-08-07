@@ -1,5 +1,14 @@
 #!/bin/bash
 set -e -x
 cd $(dirname $0)/../monitor-server
-LINKFLAGS="-linkmode external -extldflags -static -s"
-go build -ldflags "-X main.VERSION=0.9 $LINKFLAGS"
+go build -ldflags "-linkmode external -extldflags -static -s"
+cd ../monitor-agent/agent_manager
+go build -ldflags "-linkmode external -extldflags -static -s"
+cd ../archive_mysql_tool
+go build -ldflags "-linkmode external -extldflags -static -s"
+cd ../ping_exporter
+go build -ldflags "-linkmode external -extldflags -static -s"
+cd ../node_exporter
+go build -ldflags "-linkmode external -extldflags -static -s" -o node_exporter_new
+cd ../transgateway
+go build -ldflags "-linkmode external -extldflags -static -s"
