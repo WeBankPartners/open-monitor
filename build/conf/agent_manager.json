@@ -1,0 +1,26 @@
+{
+  "http": {
+    "port": 19999
+  },
+  "deploy": {
+    "enable": true,
+    "start_port": 20000,
+    "package_path": ["./exporters/mysqld_exporter","./exporters/redis_exporter","./exporters/tomcat_exporter","./exporters/nginx_exporter"],
+    "deploy_dir": "/app/deploy",
+    "each_max_process": 50
+  },
+  "manager": {
+    "alive_check": 30,
+    "auto_restart": true,
+    "retry": 3,
+    "save_file": "/app/deploy/process.data"
+  },
+  "agents": {
+    "process": [{
+      "name": "",
+      "cmd": ""
+    }],
+    "http_register_enable": false
+  },
+  "os_bash" : ["bash", "/bin/sh"]
+}
