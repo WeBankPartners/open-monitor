@@ -25,7 +25,7 @@
 ## 功能演示
 <img src="./wiki/images/wecube-monitor01.gif" />
 
-## 引言
+## 引言  
 Prometheus是由SoundCloud开发的开源监控报警系统和时序列数据库(TSDB)。Prometheus使用Go语言开发，是Google BorgMon监控系统的开源版本。
 
 Prometheus 监控插件包括几个组成部分： Prometheus Server、Consul、Alert Manager、监控应用程序。
@@ -39,22 +39,26 @@ Open-Monitor 无侵入式地封装了Prometheus的功能，并提供更好的告
 
 
 ## 简介
-WeCube通过监控插件来对资源以及应用的监控及告警。
+WeCube通过Open-Monitor监控插件来对资源以及应用的监控及告警。
 
-此插件底层引用Prometheus，上层Monitor封装了对Prometheus的配置管理和图表展示，Monitor后端技术选型为Go + Gin + Xorm, 前端技术选型为Vue + ECharts。
+此插件底层引用Prometheus，上层Monitor封装了对Prometheus的配置管理和图表展示，并增加了一系列企业级监控的通用功能，Monitor-Server技术选型为Go + Gin + Xorm + Zap, 前端技术选型为Vue + ECharts。
 
-**Monitor具备以下特点：**
+**Open-Monitor具备以下功能点：**
 
 - 管理监控对象
 
     支持对象的注册和注销，并在对接了CMDB的情况下可主动从CMDB同步监控对象  
     支持监控对象的组管理，可对组进行告警配置  
+    支持层级组织结构，来对监控对象作业务和组织构架上的划分  
+    支持进程监控  
+    支持业务日志监控
+    
     
 - 友好的视图
 
-    默认提供主要监控对象类型的指标视图，包括主机、mysql、redis、tomcat等  
+    默认提供主要监控对象类型的指标视图，主要包括主机、mysql、redis、java、系统视图等  
     提供Prometheus原生PromQL查询与查询指标配置保存  
-    提供自定义视图的功能  
+    提供高度可配置化的自定义视图的功能，并且可把自定义视图设置为首页  
     
 - 管理告警
 
@@ -62,6 +66,19 @@ WeCube通过监控插件来对资源以及应用的监控及告警。
     提供未恢复告警面板展示与历史告警  
     提供对象告警配置与组告警配置  
     提供告警接收方管理  
+    提供自集成的邮件通知功能  
+    
+- 管理监控agent
+
+    提供agent_manager组件来提供方便快捷的 mysql、redis、jmx、nginx监控
+    
+- 包含一系列检测工具
+
+    提供ping、telnet、http等方式的存活性检测方式，可直接在界面上增加对应的监控对象基础信息即可直接监控
+    
+- 监控数据归档
+
+    提供程序自动归档监控数据到mysql中，自动管理分库分表，图表读取适配多处数据整合
     
 
 ## 主要功能
@@ -76,7 +93,7 @@ WeCube通过监控插件来对资源以及应用的监控及告警。
 Open-Monitor采用容器化部署。
 
 如何编译，请查看以下文档
-[Open-Monitor编译文档](wiki/compile_guide.md)
+[Open-Monitor编译文档](wiki/compile_guide_new.md)
 
 如何安装， 请查看以下文档
 [Open-Monitor部署文档](wiki/install_guide.md)
