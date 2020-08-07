@@ -9,13 +9,11 @@ alerting:
   alertmanagers:
   - static_configs:
     - targets:
-       - alertmanager:9093
+       - 127.0.0.1:9093
 
 # Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
 rule_files:
-  - /etc/prometheus/rules/*.yml
-  # - "first_rules.yml"
-  # - "second_rules.yml"
+  - /app/monitor/prometheus/rules/*.yml
 
 # A scrape configuration containing exactly one endpoint to scrape:
 # Here it's Prometheus itself.
@@ -23,11 +21,52 @@ scrape_configs:
   # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
   - job_name: 'prometheus'
     static_configs:
-    - targets: ['prometheus:9090']
+    - targets: ['127.0.0.1:9090']
 
-  - job_name: 'consul'
-    scheme: http
-    consul_sd_configs:
-      - server: consul:8500
-        scheme: http
-        services: []
+  - job_name: 'transgateway'
+    static_configs:
+    - targets: ['127.0.0.1:19091']
+
+  - job_name: 'ping_exporter'
+    static_configs:
+    - targets: ['127.0.0.1:9191']
+
+  - job_name: 'sd_file_1'
+    scrape_interval: 1s
+    scrape_timeout: 1s
+    file_sd_configs:
+      - refresh_interval: 1m
+        files:
+          - '/app/monitor/prometheus/sd_file/sd_file_1.json'
+
+  - job_name: 'sd_file_5'
+    scrape_interval: 5s
+    scrape_timeout: 5s
+    file_sd_configs:
+      - refresh_interval: 1m
+        files:
+          - '/app/monitor/prometheus/sd_file/sd_file_5.json'
+
+  - job_name: 'sd_file_10'
+    scrape_interval: 10s
+    scrape_timeout: 10s
+    file_sd_configs:
+      - refresh_interval: 1m
+        files:
+          - '/app/monitor/prometheus/sd_file/sd_file_10.json'
+
+  - job_name: 'sd_file_30'
+    scrape_interval: 30s
+    scrape_timeout: 30s
+    file_sd_configs:
+      - refresh_interval: 1m
+        files:
+          - '/app/monitor/prometheus/sd_file/sd_file_30.json'
+
+  - job_name: 'sd_file_60'
+    scrape_interval: 60s
+    scrape_timeout: 60s
+    file_sd_configs:
+      - refresh_interval: 1m
+        files:
+          - '/app/monitor/prometheus/sd_file/sd_file_60.json'
