@@ -1,5 +1,6 @@
 # IDEA
 .idea
+.editorconfig
 
 # node
 monitor-ui/node_modules

@@ -1,0 +1,26 @@
+#!/bin/bash
+
+tmppath=$0
+exporter_type='host'
+bin_name='node_exporter_new'
+package_path=${tmppath/\/start\.sh/}
+chmod +x $package_path/$bin_name $package_path/control
+mkdir -p /usr/local/monitor/$exporter_type
+mkdir -p /usr/local/monitor/$exporter_type/data
+/bin/cp -f $package_path/$bin_name $package_path/control /usr/local/monitor/$exporter_type/
+cd /usr/local/monitor/$exporter_type/
+./control restart
+
+cronfile="/var/spool/cron/root"
+if [[ ! -f $cronfile ]];
+then
+    result=0
+else
+    result=`grep -c 'monitor-agent-host' ${cronfile}`
+fi
+
+if [[ $result -eq 0 ]];
+then
+    echo "#Ansible: monitor-agent-host
+* * * * * cd /usr/local/monitor/$exporter_type;./control start > /dev/null 2>&1" >> /var/spool/cron/root;
+fi
