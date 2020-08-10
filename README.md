@@ -30,9 +30,9 @@ English / [中文](README_CN.md)
 
 Prometheus is an open-source monitor-alarm system and time series database (TSDB) developed by SoundCloud. It is an open-source version of the Google BorgMon monitoring system in Go language.
 
-The Prometheus Monitoring Plugin consists of several components: `Prometheus Server`, `Consul`, `Alert Manager`, and `Monitoring Applications`.
+Open-Monitor encapsulates the functionality of Prometheus without intrusion and provides better alarm management and graphic dashboard, as well as interaction with other systems.  
 
-Open-Monitor encapsulates the functionality of Prometheus without intrusion and provides better alarm management and graphic dashboard, as well as interaction with other systems.
+Open-Monitor consists of several components: `Prometheus`, `Alert Manager`, `Monitor`, `Agent_manager`, `Ping_exporter`, `Archive_mysql_tool`.
 
 ## System Architecture
 
