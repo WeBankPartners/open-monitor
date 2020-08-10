@@ -1,0 +1,63 @@
+{
+  "debug": false,
+  "interval": 30,
+  "ping_enable": true,
+  "telnet_enable": true,
+  "http_check_enable": true,
+  "open-falcon" : {
+    "enabled": false,
+    "transfer": {
+      "address": [
+        "127.0.0.1:8080"
+      ],
+      "timeout": 1000,
+      "sn": 500
+    }
+  },
+  "prometheus" : {
+    "enabled" : true,
+    "port": "9191",
+    "path": "/metrics"
+  },
+  "source": {
+    "const": {
+      "enabled" : true,
+      "ips": [],
+      "weight": 1
+    },
+    "file": {
+      "enabled" : true,
+      "path": "ip.txt",
+      "weight": 2
+    },
+    "remote": {
+      "enabled" : true,
+      "header": ["X-Auth-Token=default-token-used-in-server-side"],
+      "group_tag" : "group=g1",
+      "url": "http://127.0.0.1:8080/wecube-monitor/api/v1/agent/export/ping/source",
+      "interval": 60,
+      "weight": 3
+    },
+    "listen": {
+      "enabled" : false,
+      "port": "9191",
+      "path": "/config/ip",
+      "weight": 4
+    }
+  },
+  "metrics": {
+    "ping": "ping_alive",
+    "ping_use_time": "ping_time",
+    "ping_count_num": "ping_count",
+    "ping_count_success": "ping_success",
+    "ping_count_fail": "ping_fail",
+    "telnet": "telnet_alive",
+    "telnet_count_num": "telnet_count",
+    "telnet_count_success": "telnet_success",
+    "telnet_count_fail": "telnet_fail",
+    "http_check": "http_status",
+    "http_check_count_num": "http_count",
+    "http_check_count_success": "http_success",
+    "http_check_count_fail": "http_fail"
+  }
+}
