@@ -64,7 +64,7 @@ function httpRequestEntrance (method, url, data, callback, customHttpConfig) {
       },0)
     }
     if (window.request) {
-      return callback(response,response.data.Message)
+      return callback(response.Data)
     } else {
       if (response.status < 400 && callback !== undefined) {
         return callback(response.data.Data,response.data.Message)
