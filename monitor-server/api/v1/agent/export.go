@@ -8,11 +8,11 @@ import (
 	"net/http"
 	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
-	"net/url"
 	"io/ioutil"
 	"encoding/json"
 	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/alarm"
 	"strconv"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 )
 
 type resultObj struct {
@@ -31,6 +31,7 @@ type resultOutputObj struct {
 	MonitorKey  string  `json:"monitor_key"`
 	ErrorCode  string  `json:"errorCode"`
 	ErrorMessage  string  `json:"errorMessage"`
+	ErrorDetail  string  `json:"errorDetail,omitempty"`
 }
 
 type requestObj struct {
@@ -67,29 +68,29 @@ func ExportAgentNew(c *gin.Context)  {
 	resultCode = "0"
 	resultData := resultOutput{}
 	defer func() {
-		b,_ := json.Marshal(resultData)
-		mid.LogInfo(fmt.Sprintf("plugin result -> code: %s ,message: %s ,data: %s", resultCode, resultMessage, string(b)))
-		if strings.Contains(resultMessage, "validate") {
-			c.JSON(http.StatusBadRequest, resultObj{ResultCode:resultCode, ResultMessage:resultMessage})
-		}else{
-			c.JSON(http.StatusOK, resultObj{ResultCode:resultCode, ResultMessage:resultMessage, Results:resultData})
-		}
+		log.Logger.Info("Plugin result", log.JsonObj("result", resultData))
+		//if strings.Contains(resultMessage, "validate") {
+		//	c.JSON(http.StatusBadRequest, resultObj{ResultCode:resultCode, ResultMessage:resultMessage})
+		//}else{
+		//	c.JSON(http.StatusOK, resultObj{ResultCode:resultCode, ResultMessage:resultMessage, Results:resultData})
+		//}
+		c.JSON(http.StatusOK, resultObj{ResultCode:resultCode, ResultMessage:resultMessage, Results:resultData})
 	}()
 	data,_ := ioutil.ReadAll(c.Request.Body)
-	mid.LogInfo(fmt.Sprintf("plugin request -> agent %s, type %s, param : %v", action, agentType, string(data)))
+	log.Logger.Debug("Plugin request", log.String("action", action), log.String("agentType", agentType), log.String("param", string(data)))
 	var param requestObj
 	err := json.Unmarshal(data, &param)
 	if err != nil {
 		resultCode = "1"
-		resultMessage = fmt.Sprintf("Param validate fail : %v", err)
+		resultMessage = mid.GetMessageMap(c).RequestJsonUnmarshalError
 		return
 	}
 	if len(param.Inputs) == 0 {
 		resultCode = "0"
-		resultMessage = "inputs length is zero,do nothing"
+		resultMessage = fmt.Sprintf(mid.GetMessageMap(c).ParamEmptyError, "inputs")
 		return
 	}
-	for i,v := range param.Inputs {
+	for _,v := range param.Inputs {
 		tmpAgentType := agentType
 		if v.JavaType == "tomcat" || v.Group == "default_tomcat_group" {
 			tmpAgentType = "tomcat"
@@ -120,7 +121,7 @@ func ExportAgentNew(c *gin.Context)  {
 		if action == "register" {
 			validateMessage,endpointGuid,inputErr = AgentRegister(param)
 			if validateMessage != "" {
-				validateMessage = fmt.Sprintf("input index:%d validate fail -> ", i) + validateMessage
+				validateMessage = fmt.Sprintf(mid.GetMessageMap(c).ParamValidateError, validateMessage)
 			}
 			if validateMessage == "" && inputErr == nil && v.AppLogPaths != "" {
 				inputErr = autoAddAppPathConfig(param, v.AppLogPaths)
@@ -133,34 +134,23 @@ func ExportAgentNew(c *gin.Context)  {
 				endpointObj = m.EndpointTable{Ip: v.InstanceIp, ExportType: tmpAgentType, Name: v.Instance}
 			}
 			db.GetEndpoint(&endpointObj)
-			mid.LogInfo(fmt.Sprintf("Export deregister endpoint id:%d guid:%s ", endpointObj.Id, endpointObj.Guid))
 			if endpointObj.Id > 0 {
+				log.Logger.Debug("Export deregister endpoint", log.Int("id", endpointObj.Id), log.String("guid", endpointObj.Guid))
 				inputErr = DeregisterJob(endpointObj.Guid)
 				endpointGuid = endpointObj.Guid
 			}
 		}
 		if validateMessage != "" || inputErr != nil {
 			errorMessage := validateMessage
-			if inputErr != nil {
-				errorMessage = fmt.Sprintf("input index:%d %s [agentType:%s, name:%s, hostIp:%s, instanceIp:%s] error -> %v ", i, action, agentType, v.Instance, v.HostIp, v.InstanceIp, inputErr)
+			if errorMessage == "" {
+				errorMessage = fmt.Sprintf(mid.GetMessageMap(c).HandleError, inputErr.Error())
 			}
-			resultData.Outputs = append(resultData.Outputs, resultOutputObj{CallbackParameter:v.CallbackParameter, ErrorCode:"1", ErrorMessage:errorMessage, Guid:v.Guid, MonitorKey:endpointGuid})
+			resultData.Outputs = append(resultData.Outputs, resultOutputObj{CallbackParameter: v.CallbackParameter, ErrorCode: "1", ErrorMessage: errorMessage, Guid: v.Guid, MonitorKey: endpointGuid})
 			resultCode = "1"
 		}else{
 			resultData.Outputs = append(resultData.Outputs, resultOutputObj{CallbackParameter:v.CallbackParameter, ErrorCode:"0", ErrorMessage:"", Guid:v.Guid, MonitorKey:endpointGuid})
 		}
 	}
-}
-
-func GetSystemDashboardUrl(c *gin.Context)  {
-	name := c.Query("system_name")
-	ips := c.Query("ips")
-	urlParms := url.Values{}
-	urlParms.Set("systemName", name)
-	urlParms.Set("ips", ips)
-	urlPath := fmt.Sprintf("http://%s/wecube-monitor/#/systemMonitoring?%s", c.Request.Host, urlParms.Encode())
-	mid.LogInfo(fmt.Sprintf("url : %s", urlPath))
-	mid.ReturnData(c, resultObj{ResultCode:"0", ResultMessage:urlPath})
 }
 
 func AlarmControl(c *gin.Context)  {
@@ -182,24 +172,20 @@ func AlarmControl(c *gin.Context)  {
 			break
 		}
 	}
-	//if illegal {
-	//	result = resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("No such monitor type like %s", agentType)}
-	//	mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
-	//	c.JSON(http.StatusBadRequest, result)
-	//	return
-	//}
+
 	data,_ := ioutil.ReadAll(c.Request.Body)
-	mid.LogInfo(fmt.Sprintf("param : %v", string(data)))
+	log.Logger.Info("", log.String("param", string(data)))
 	var param requestObj
 	err := json.Unmarshal(data, &param)
 	if err == nil {
 		if len(param.Inputs) == 0 {
-			result = resultObj{ResultCode:"0", ResultMessage:"inputs length is zero,do nothing"}
-			mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
+			result = resultObj{ResultCode:"0", ResultMessage:fmt.Sprintf(mid.GetMessageMap(c).ParamEmptyError, "inputs")}
+			log.Logger.Warn(result.ResultMessage)
 			c.JSON(http.StatusOK, result)
 			return
 		}
 		var tmpResult []resultOutputObj
+		var resultMessage string
 		for _,v := range param.Inputs {
 			if agentType == "tomcat" && v.Port != "" {
 				agentPort = v.Port
@@ -212,20 +198,20 @@ func AlarmControl(c *gin.Context)  {
 			var msg string
 			if err != nil {
 				msg = fmt.Sprintf("%s %s:%s %s fail,error %v",action, agentType, v.HostIp, v.Instance, err)
-				tmpResult = append(tmpResult, resultOutputObj{CallbackParameter:v.CallbackParameter, ErrorCode:"1", ErrorMessage:msg})
+				resultMessage = fmt.Sprintf(mid.GetMessageMap(c).HandleError, msg)
+				tmpResult = append(tmpResult, resultOutputObj{CallbackParameter:v.CallbackParameter, ErrorCode:"1", ErrorMessage:fmt.Sprintf(mid.GetMessageMap(c).HandleError, msg)})
 			}else{
 				msg = fmt.Sprintf("%s %s:%s %s succeed", action, agentType, v.HostIp, v.Instance)
 				tmpResult = append(tmpResult, resultOutputObj{CallbackParameter:v.CallbackParameter, ErrorCode:"0", ErrorMessage:""})
 			}
-			mid.LogInfo(msg)
+			log.Logger.Info(msg)
 		}
-		result = resultObj{ResultCode:"0", ResultMessage:"Done", Results:resultOutput{Outputs:tmpResult}}
-		resultString,_ := json.Marshal(result)
-		mid.LogInfo(string(resultString))
+		result = resultObj{ResultCode:"0", ResultMessage:resultMessage, Results:resultOutput{Outputs:tmpResult}}
+		log.Logger.Info("result", log.JsonObj("result", result))
 		mid.ReturnData(c, result)
 	}else{
-		result = resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf("Param validate fail : %v", err)}
-		mid.LogInfo(fmt.Sprintf("result : code %s , message %s", result.ResultCode, result.ResultMessage))
+		result = resultObj{ResultCode:"1", ResultMessage:fmt.Sprintf(mid.GetMessageMap(c).ParamValidateError, err.Error())}
+		log.Logger.Error("Param validate fail", log.Error(err))
 		c.JSON(http.StatusBadRequest, result)
 	}
 }
@@ -240,26 +226,26 @@ func UpdateEndpointTelnet(c *gin.Context)  {
 	if err := c.ShouldBindJSON(&param); err == nil {
 		err = db.UpdateEndpointTelnet(param)
 		if err != nil {
-			mid.ReturnError(c, "Update endpoint telnet config fail", err)
+			mid.ReturnUpdateTableError(c, "endpoint_telnet", err)
 		}else{
-			mid.ReturnSuccess(c, "Success")
+			mid.ReturnSuccess(c)
 		}
 	}else{
-		mid.ReturnValidateFail(c, fmt.Sprintf("Parameter validate fail %v", err))
+		mid.ReturnValidateError(c, err.Error())
 	}
 }
 
 func GetEndpointTelnet(c *gin.Context)  {
 	guid := c.Query("guid")
 	if guid == "" {
-		mid.ReturnValidateFail(c, "Guid can not empty")
+		mid.ReturnParamEmptyError(c, "guid")
 		return
 	}
 	result,err := db.GetEndpointTelnet(guid)
 	if err != nil {
-		mid.ReturnError(c, "Get endpoint telnet config fail", err)
+		mid.ReturnQueryTableError(c, "endpoint_telnet", err)
 	}else{
-		mid.ReturnData(c, result)
+		mid.ReturnSuccessData(c, result)
 	}
 }
 
@@ -279,12 +265,12 @@ func autoAddAppPathConfig(param m.RegisterParamNew, paths string) error {
 	}
 	err := db.UpdateBusiness(m.BusinessUpdateDto{EndpointId:hostEndpoint.Id, PathList:businessTables})
 	if err != nil {
-		mid.LogError("Update endpoint business table error ", err)
+		log.Logger.Error("Update endpoint business table error", log.Error(err))
 		return err
 	}
 	err = alarm.UpdateNodeExporterBusinessConfig(hostEndpoint.Id)
 	if err != nil {
-		mid.LogError("Update business config error ", err)
+		log.Logger.Error("Update business config error", log.Error(err))
 	}
 	return err
 }

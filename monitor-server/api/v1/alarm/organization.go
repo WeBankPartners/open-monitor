@@ -11,10 +11,10 @@ import (
 func GetOrganizaionList(c *gin.Context)  {
 	data,err := db.GetOrganizationList()
 	if err != nil {
-		mid.ReturnError(c, "Get organization list fail", err)
+		mid.ReturnQueryTableError(c, "panel_recursive", err)
 		return
 	}
-	mid.ReturnData(c, data)
+	mid.ReturnSuccessData(c, data)
 }
 
 func UpdateOrgPanel(c *gin.Context)  {
@@ -23,27 +23,27 @@ func UpdateOrgPanel(c *gin.Context)  {
 	if err := c.ShouldBindJSON(&param); err==nil {
 		err = db.UpdateOrganization(operation, param)
 		if err != nil {
-			mid.ReturnError(c, operation + " organization panel fail", err)
+			mid.ReturnUpdateTableError(c, "panel_recursive", err)
 		}else{
-			mid.ReturnSuccess(c, "Success")
+			mid.ReturnSuccess(c)
 		}
 	}else{
-		mid.ReturnValidateFail(c, fmt.Sprintf("Parameter validation failed %v", err))
+		mid.ReturnValidateError(c, err.Error())
 	}
 }
 
 func GetOrgPanelRole(c *gin.Context)  {
 	guid := c.Query("guid")
 	if guid == "" {
-		mid.ReturnValidateFail(c, "Parameter guid can not be empty")
+		mid.ReturnParamEmptyError(c, "guid")
 		return
 	}
 	data,err := db.GetOrgRole(guid)
 	if err != nil {
-		mid.ReturnError(c, "Get organization role fail", err)
+		mid.ReturnFetchDataError(c, "panel_recursive", "guid", guid)
 		return
 	}
-	mid.ReturnData(c, data)
+	mid.ReturnSuccessData(c, data)
 }
 
 func UpdateOrgPanelRole(c *gin.Context)  {
@@ -51,27 +51,27 @@ func UpdateOrgPanelRole(c *gin.Context)  {
 	if err := c.ShouldBindJSON(&param); err==nil {
 		err = db.UpdateOrgRole(param)
 		if err != nil {
-			mid.ReturnError(c, "Update organization role fail", err)
+			mid.ReturnUpdateTableError(c, "panel_recursive", err)
 			return
 		}
-		mid.ReturnSuccess(c, "Success")
+		mid.ReturnSuccess(c)
 	}else{
-		mid.ReturnValidateFail(c, fmt.Sprintf("Parameter validation failed %v", err))
+		mid.ReturnValidateError(c, err.Error())
 	}
 }
 
 func GetOrgPanelEndpoint(c *gin.Context)  {
 	guid := c.Query("guid")
 	if guid == "" {
-		mid.ReturnValidateFail(c, "Parameter guid can not be empty")
+		mid.ReturnParamEmptyError(c, "guid")
 		return
 	}
 	data,err := db.GetOrgEndpoint(guid)
 	if err != nil {
-		mid.ReturnError(c, "Get organization endpoint fail", err)
+		mid.ReturnHandleError(c, "get organization endpoint fail", err)
 		return
 	}
-	mid.ReturnData(c, data)
+	mid.ReturnSuccessData(c, data)
 }
 
 func UpdateOrgPanelEndpoint(c *gin.Context)  {
@@ -79,12 +79,12 @@ func UpdateOrgPanelEndpoint(c *gin.Context)  {
 	if err := c.ShouldBindJSON(&param); err==nil {
 		err = db.UpdateOrgEndpoint(param)
 		if err != nil {
-			mid.ReturnError(c, "Update organization endpoint fail", err)
+			mid.ReturnUpdateTableError(c, "panel_recursive", err)
 			return
 		}
-		mid.ReturnSuccess(c, "Success")
+		mid.ReturnSuccess(c)
 	}else{
-		mid.ReturnValidateFail(c, fmt.Sprintf("Parameter validation failed %v", err))
+		mid.ReturnValidateError(c, err.Error())
 	}
 }
 
@@ -93,27 +93,27 @@ func UpdateOrgConnect(c *gin.Context)  {
 	if err := c.ShouldBindJSON(&param); err==nil {
 		err = db.UpdateOrgConnect(param)
 		if err != nil {
-			mid.ReturnError(c, "Update organization connection fail", err)
+			mid.ReturnUpdateTableError(c, "panel_recursive", err)
 			return
 		}
-		mid.ReturnSuccess(c, "Success")
+		mid.ReturnSuccess(c)
 	}else{
-		mid.ReturnValidateFail(c, fmt.Sprintf("Parameter validation failed %v", err))
+		mid.ReturnValidateError(c, err.Error())
 	}
 }
 
 func GetOrgConnect(c *gin.Context)  {
 	guid := c.Query("guid")
 	if guid == "" {
-		mid.ReturnValidateFail(c, "Parameter guid can not be empty")
+		mid.ReturnParamEmptyError(c, "guid")
 		return
 	}
 	data,err := db.GetOrgConnect(guid)
 	if err != nil {
-		mid.ReturnError(c, "Get organization endpoint fail", err)
+		mid.ReturnFetchDataError(c, "panel_recursive", "guid", guid)
 		return
 	}
-	mid.ReturnData(c, data)
+	mid.ReturnSuccessData(c, data)
 }
 
 func IsPluginMode(c *gin.Context)  {
@@ -121,23 +121,23 @@ func IsPluginMode(c *gin.Context)  {
 	if m.CoreUrl == "" {
 		result.IsPlugin = false
 	}
-	mid.ReturnData(c, result)
+	mid.ReturnSuccessData(c, result)
 }
 
 func GetOrgPanelEventList(c *gin.Context)  {
 	guid := c.Query("guid")
 	if guid == "" {
-		mid.ReturnValidateFail(c, "Parameter guid can not be empty")
+		mid.ReturnParamEmptyError(c, "guid")
 		return
 	}
 	eventList,err := db.GetCoreEventList()
 	if err != nil {
-		mid.ReturnError(c, "Get core event list fail", err)
+		mid.ReturnHandleError(c, "get core event list fail", err)
 		return
 	}
 	recordData,err := db.GetOrgCallback(guid)
 	if err != nil {
-		mid.ReturnError(c, "Get organization callback fail", err)
+		mid.ReturnFetchDataError(c, "panel_recursive", "guid", guid)
 		return
 	}
 	var result m.GetOrgPanelCallbackData
@@ -164,7 +164,7 @@ func GetOrgPanelEventList(c *gin.Context)  {
 	if !recoverFlag {
 		result.RecoverCallback[0].Active = true
 	}
-	mid.ReturnData(c, result)
+	mid.ReturnSuccessData(c, result)
 }
 
 func UpdateOrgPanelCallback(c *gin.Context)  {
@@ -172,11 +172,11 @@ func UpdateOrgPanelCallback(c *gin.Context)  {
 	if err := c.ShouldBindJSON(&param); err==nil {
 		err = db.UpdateOrgCallback(param)
 		if err != nil {
-			mid.ReturnError(c, "Update organization callback fail", err)
+			mid.ReturnUpdateTableError(c, "panel_recursive", err)
 			return
 		}
-		mid.ReturnSuccess(c, "Success")
+		mid.ReturnSuccess(c)
 	}else{
-		mid.ReturnValidateFail(c, fmt.Sprintf("Parameter validation failed %v", err))
+		mid.ReturnValidateError(c, err.Error())
 	}
 }

@@ -35,9 +35,7 @@
                         :value="option.option_value"
                         :key="index"
                       >
-                        <TagShow :tagName="option.option_type_name" :index="index"></TagShow> 
-                        {{option.option_text}}
-                      </Option>
+                        <TagShow :tagName="option.option_type_name" :index="index"></TagShow>{{option.option_text}}</Option>
                       <Option value="moreTips" disabled>{{$t('tips.requestMoreData')}}</Option>
                     </Select>
                   </div>
@@ -92,6 +90,7 @@ export default {
 
       elId: null,
       noDataTip: false,
+      endpointType: null,
       templateQuery: {
         endpoint: "",
         metricLabel: "",
@@ -127,6 +126,9 @@ export default {
         )
       },
       deep: true
+    },
+    'templateQuery.endpoint': function (val) {
+      this.endpointType = this.options.find(item => item.option_value === val).type
     }
   },
   created() {
@@ -205,10 +207,11 @@ export default {
           this.$t("tableKey.s_metric") + this.$t("tips.required")
         )
       } else {
+        let params = { type: this.endpointType }
         this.$root.$httpRequestEntrance.httpRequestEntrance(
           'GET',
           this.$root.apiCenter.metricList.api,
-          '',
+          params,
           responseData => {
             this.metricList = responseData
           }

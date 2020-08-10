@@ -2,7 +2,6 @@ package db
 
 import (
 	"os"
-	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"time"
 	"encoding/json"
@@ -13,6 +12,7 @@ import (
 	"fmt"
 	"context"
 	"strconv"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 )
 
 var (
@@ -25,17 +25,17 @@ var (
 func StartCheckCron()  {
 	checkEventKey = os.Getenv("MONITOR_CHECK_EVENT_KEY")
 	if checkEventKey == "" {
-		mid.LogInfo("start check cron fail,event key is empty,please check env MONITOR_CHECK_EVENT_KEY")
+		log.Logger.Info("Start check cron fail,event key is empty,please check env MONITOR_CHECK_EVENT_KEY")
 		return
 	}
 	checkEventToMail = os.Getenv("MONITOR_CHECK_EVENT_TO_MAIL")
 	if checkEventToMail == "" {
-		mid.LogInfo("start check cron fail,to mail is empty,please check env MONITOR_CHECK_EVENT_TO_MAIL")
+		log.Logger.Info("Start check cron fail,to mail is empty,please check env MONITOR_CHECK_EVENT_TO_MAIL")
 		return
 	}
 	intervalMin,_ = strconv.Atoi(os.Getenv("MONITOR_CHECK_EVENT_INTERVAL_MIN"))
 	if intervalMin < 1 {
-		mid.LogInfo("start check cron fail,interval min is validate fail,please check env MONITOR_CHECK_EVENT_INTERVAL_MIN")
+		log.Logger.Info("Start check cron fail,interval min is validate fail,please check env MONITOR_CHECK_EVENT_INTERVAL_MIN")
 		return
 	}
 	monitorSelfIp = os.Getenv("MONITOR_HOST_IP")
@@ -64,10 +64,10 @@ func StartCheckCron()  {
 		}
 	}
 	if timeSubValue == 0 {
-		mid.LogInfo("invalidate interval setting,must like 1、10、30、60、120、180...60*n \n")
+		log.Logger.Warn("Invalidate interval setting,must like 1、10、30、60、120、180...60*n")
 		return
 	}
-	mid.LogInfo(fmt.Sprintf("start check cron with event key=%s to=%s interval_min=%d monitor_ip=%s", checkEventKey, checkEventToMail, intervalMin, monitorSelfIp))
+	log.Logger.Info("Start check cron with event", log.String("key",checkEventKey),log.String("to",checkEventToMail),log.Int("interval_min",intervalMin),log.String("monitor_ip",monitorSelfIp))
 	t,_ := time.Parse("2006-01-02 15:04:05 MST", timeStartValue)
 	if timeSubValue == 1800 {
 		if time.Now().Unix() > t.Unix()+timeSubValue {
@@ -81,7 +81,7 @@ func StartCheckCron()  {
 	time.Sleep(time.Duration(sleepWaitTime)*time.Second)
 	c := time.NewTicker(time.Duration(intervalMin)*time.Minute).C
 	for {
-		mid.LogInfo("monitor check --> active \n")
+		log.Logger.Info("Monitor check --> active")
 		go DoCheckProgress()
 		<- c
 	}
@@ -90,7 +90,7 @@ func StartCheckCron()  {
 func DoCheckProgress() error {
 	err := UpdateAliveCheckQueue(monitorSelfIp)
 	if err != nil {
-		mid.LogError("update alive check queue fail", err)
+		log.Logger.Error("Update alive check queue fail", log.Error(err))
 		return err
 	}
 	var requestParam m.CoreNotifyRequest
@@ -100,18 +100,18 @@ func DoCheckProgress() error {
 	requestParam.OperationKey = checkEventKey
 	requestParam.OperationData = fmt.Sprintf("monitor-check-%s", monitorSelfIp)
 	requestParam.OperationUser = ""
-	mid.LogInfo(fmt.Sprintf("notify request data --> eventSeqNo:%s operationKey:%s operationData:%s", requestParam.EventSeqNo, requestParam.OperationKey, requestParam.OperationData))
+	log.Logger.Info("Notify request data", log.String("eventSeqNo",requestParam.EventSeqNo),log.String("operationKey",requestParam.OperationKey),log.String("operationData",requestParam.OperationData))
 	b, _ := json.Marshal(requestParam)
 	request, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/platform/v1/operation-events", m.CoreUrl), strings.NewReader(string(b)))
 	request.Header.Set("Authorization", m.TmpCoreToken)
 	request.Header.Set("Content-Type", "application/json")
 	if err != nil {
-		mid.LogError("notify core event new request fail", err)
+		log.Logger.Error("Notify core event new request fail", log.Error(err))
 		return err
 	}
 	res, err := ctxhttp.Do(context.Background(), http.DefaultClient, request)
 	if err != nil {
-		mid.LogError("notify core event ctxhttp request fail", err)
+		log.Logger.Error("Notify core event ctxhttp request fail", log.Error(err))
 		return err
 	}
 	resultBody, _ := ioutil.ReadAll(res.Body)
@@ -119,10 +119,10 @@ func DoCheckProgress() error {
 	err = json.Unmarshal(resultBody, &resultObj)
 	res.Body.Close()
 	if err != nil {
-		mid.LogError("notify core event unmarshal json body fail", err)
+		log.Logger.Error("Notify core event unmarshal json body fail", log.Error(err))
 		return err
 	}
-	mid.LogInfo(fmt.Sprintf("result -> status:%s  message:%s", resultObj.Status, resultObj.Message))
+	log.Logger.Info("Request core operation-events result", log.String("status",resultObj.Status),log.String("message",resultObj.Message))
 	return nil
 }
 
@@ -130,12 +130,12 @@ func GetCheckProgressContent(param string) m.AlarmEntityObj {
 	var result m.AlarmEntityObj
 	requestMessageIp := strings.Split(param, "-")
 	if len(requestMessageIp) != 3 {
-		mid.LogError(fmt.Sprintf("get check progress content param validate error with data=%s ", param), nil)
+		log.Logger.Warn("Get check progress content param validate error", log.String("data",param))
 		return result
 	}
 	err,aliveQueueTable := GetAliveCheckQueue(requestMessageIp[2])
 	if err != nil {
-		mid.LogError("get check alive queue fail", err)
+		log.Logger.Error("Get check alive queue fail", log.Error(err))
 		return result
 	}
 	result.Id = "monitor-check"
@@ -144,6 +144,6 @@ func GetCheckProgressContent(param string) m.AlarmEntityObj {
 	result.ToMail = checkEventToMail
 	result.Subject = "Monitor Check - "+aliveQueueTable[0].Message
 	result.Content = fmt.Sprintf("Monitor Self Check Message From %s \r\nTime:%s ", aliveQueueTable[0].Message, time.Now().Format(m.DatetimeFormat))
-	mid.LogInfo(fmt.Sprintf("get check progress content: %s, %s, %s", result.ToMail, result.Subject, result.Content))
+	log.Logger.Info("get check progress content", log.String("toMail",result.ToMail),log.String("subject",result.Subject),log.String("content",result.Content))
 	return result
 }
