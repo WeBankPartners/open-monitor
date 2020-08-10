@@ -10,19 +10,21 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
+	"io/ioutil"
 )
 
 func GetEndpointBusinessConfig(c *gin.Context)  {
 	endpointId,err := strconv.Atoi(c.Query("id"))
 	if err != nil || endpointId <= 0 {
-		mid.ReturnValidateFail(c, fmt.Sprintf("Param id validate fail %v", err))
+		mid.ReturnParamTypeError(c, "id", "int")
 		return
 	}
 	err,data := db.GetBusinessList(endpointId, "")
 	if err != nil {
-		mid.ReturnError(c, "Get business list fail", err)
+		mid.ReturnQueryTableError(c, "business_monitor", err)
 	}else{
-		mid.ReturnData(c, data)
+		mid.ReturnSuccessData(c, data)
 	}
 }
 
@@ -31,23 +33,23 @@ func UpdateEndpointBusinessConfig(c *gin.Context)  {
 	if err := c.ShouldBindJSON(&param); err==nil {
 		for _,v := range param.PathList {
 			if !mid.IsIllegalPath(v.Path) {
-				mid.ReturnValidateFail(c, "Parameter validate fail, path illegal")
+				mid.ReturnValidateError(c, "path illegal")
 				return
 			}
 		}
 		err = db.UpdateBusiness(param)
 		if err != nil {
-			mid.ReturnError(c, "Update business fail ", err)
+			mid.ReturnUpdateTableError(c, "business_monitor", err)
 		}else{
 			err = UpdateNodeExporterBusinessConfig(param.EndpointId)
 			if err != nil {
-				mid.ReturnError(c, "Update node exporter config fail ", err)
+				mid.ReturnHandleError(c, err.Error(), err)
 				return
 			}
-			mid.ReturnSuccess(c, "Success")
+			mid.ReturnSuccess(c)
 		}
 	}else{
-		mid.ReturnValidateFail(c, fmt.Sprintf("Param validate fail %v \n", err))
+		mid.ReturnValidateError(c, err.Error())
 	}
 }
 
@@ -58,13 +60,13 @@ type businessHttpDto struct {
 func UpdateNodeExporterBusinessConfig(endpointId int) error {
 	err,data := db.GetBusinessList(endpointId, "")
 	if err != nil {
-		mid.LogError("Update node_exporter fail ", err)
+		log.Logger.Error("Update node_exporter fail", log.Error(err))
 		return err
 	}
 	endpointObj := m.EndpointTable{Id:endpointId}
 	err = db.GetEndpoint(&endpointObj)
 	if err != nil {
-		mid.LogError("Update node_exporter fail, get endpoint msg fail ", err)
+		log.Logger.Error("Update node_exporter fail, get endpoint msg fail", log.Error(err))
 		return err
 	}
 	postParam := businessHttpDto{Paths:[]string{}}
@@ -73,16 +75,17 @@ func UpdateNodeExporterBusinessConfig(endpointId int) error {
 	}
 	postData,err := json.Marshal(postParam)
 	if err != nil {
-		mid.LogError("Update node_exporter fail, marshal post data fail ", err)
+		log.Logger.Error("Update node_exporter fail, marshal post data fail", log.Error(err))
 		return err
 	}
 	url := fmt.Sprintf("http://%s/business/config", endpointObj.Address)
 	resp, err := http.Post(url, "application/json", strings.NewReader(string(postData)))
 	if err != nil {
-		mid.LogError("Update node_exporter fail, http post fail ", err)
+		log.Logger.Error("Update node_exporter fail, http post fail", log.Error(err))
 		return err
 	}
-	mid.LogInfo(fmt.Sprintf("curl %s resp : %v", url, resp.Body))
+	respBody,_ := ioutil.ReadAll(resp.Body)
+	log.Logger.Info("", log.String("url", url), log.String("response", string(respBody)))
 	resp.Body.Close()
 	return nil
 }

@@ -33,7 +33,7 @@ func ValidateGet(c *gin.Context)  {
 	if isOk {
 		c.Next()
 	}else{
-		Return(c, RespJson{Msg:"request validate fail", Code:http.StatusBadRequest})
+		ReturnError(c, http.StatusBadRequest, "request get param validate fail", nil)
 		c.Abort()
 		return
 	}
@@ -68,7 +68,7 @@ func ValidatePost(c *gin.Context, obj interface{}, ex ...string) bool {
 		}
 	}
 	if !isOk {
-		Return(c, RespJson{Msg:"request validate fail", Code:http.StatusBadRequest})
+		ReturnError(c, http.StatusBadRequest, "request post param validate fail", nil)
 		c.Abort()
 	}
 	return isOk

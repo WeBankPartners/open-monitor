@@ -6,31 +6,30 @@ import (
 	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"strconv"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
-	"fmt"
 )
 
 func ListCustomDashboard(c *gin.Context)  {
 	err,result := db.ListCustomDashboard()
 	if err != nil {
-		mid.ReturnError(c, "List customized dashboard failed", err)
+		mid.ReturnQueryTableError(c, "custom_dashboard", err)
 		return
 	}
-	mid.ReturnData(c, result)
+	mid.ReturnSuccessData(c, result)
 }
 
 func GetCustomDashboard(c *gin.Context)  {
 	id,err := strconv.Atoi(c.Query("id"))
 	if err != nil || id <= 0 {
-		mid.ReturnValidateFail(c, "Parameter \"id\" validation failed")
+		mid.ReturnParamTypeError(c, "id", "int")
 		return
 	}
 	query := m.CustomDashboardTable{Id:id}
 	err = db.GetCustomDashboard(&query)
 	if err != nil {
-		mid.ReturnError(c, "Get customized dashboard failed", err)
+		mid.ReturnFetchDataError(c, "custom_dashboard", "id", strconv.Itoa(id))
 		return
 	}
-	mid.ReturnData(c, query)
+	mid.ReturnSuccessData(c, query)
 }
 
 func SaveCustomDashboard(c *gin.Context)  {
@@ -38,26 +37,26 @@ func SaveCustomDashboard(c *gin.Context)  {
 	if err := c.ShouldBindJSON(&param);err==nil {
 		err = db.SaveCustomDashboard(&param)
 		if err != nil {
-			mid.ReturnError(c, "Save customized dashboard failed", err)
+			mid.ReturnUpdateTableError(c, "custom_dashboard", err)
 			return
 		}
-		mid.ReturnSuccess(c, "Success")
+		mid.ReturnSuccess(c)
 	}else{
-		mid.ReturnValidateFail(c, fmt.Sprintf("Parameter validation failed %v", err))
+		mid.ReturnValidateError(c, err.Error())
 	}
 }
 
 func DeleteCustomDashboard(c *gin.Context)  {
 	id,err := strconv.Atoi(c.Query("id"))
 	if err != nil || id <= 0 {
-		mid.ReturnValidateFail(c, "Parameter \"id\" validation failed")
+		mid.ReturnParamTypeError(c, "id", "int")
 		return
 	}
 	query := m.CustomDashboardTable{Id:id}
 	err = db.DeleteCustomDashboard(&query)
 	if err != nil {
-		mid.ReturnError(c, "Delete customized dashboard failed", err)
+		mid.ReturnDeleteTableError(c, "custom_dashboard", "id", strconv.Itoa(id), err)
 		return
 	}
-	mid.ReturnSuccess(c, "Success")
+	mid.ReturnSuccess(c)
 }

@@ -95,8 +95,8 @@
   <ModalComponent :modelConfig="setChartTypeModel">
     <div slot="setChartType">
       <div style="display:flex;justify-content:center">
-        <i @click="choiceChartType('line')" :class="['fa', 'fa-line-chart', activeChartType==='line' ? 'aa': '']" aria-hidden="true"></i>
-        <i @click="choiceChartType('pie')" :class="['fa', 'fa-pie-chart', activeChartType==='pie' ? 'aa': '']" aria-hidden="true"></i>
+        <i @dblclick="dblChartType('line')" @click="choiceChartType('line')" :class="['fa', 'fa-line-chart', activeChartType==='line' ? 'active-tag': '']" aria-hidden="true"></i>
+        <i @dblclick="dblChartType('pie')" @click="choiceChartType('pie')" :class="['fa', 'fa-pie-chart', activeChartType==='pie' ? 'active-tag': '']" aria-hidden="true"></i>
       </div>
     </div>
   </ModalComponent>
@@ -116,7 +116,7 @@
     box-shadow: 0 1px 8px @gray-d;
     border-color: @blue-2;
   }
-  .aa {
+  .active-tag {
     color: @blue-2;
     border-color: @blue-2;
   } 
@@ -244,6 +244,10 @@ export default {
     },
     choiceChartType (activeChartType) {
       this.activeChartType = activeChartType
+    },
+    dblChartType (activeChartType) {
+      this.activeChartType = activeChartType
+      this.confirmChartType()
     },
     confirmChartType () {
       if (!this.activeChartType) {
