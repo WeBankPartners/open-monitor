@@ -78,7 +78,6 @@ function httpRequestEntrance (method, url, data, callback, customHttpConfig) {
       },0)
     }
     errorMessage(error.response.data.Message)
-    router.push('/login')
   })
 }
 
