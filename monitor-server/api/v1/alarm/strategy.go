@@ -13,17 +13,18 @@ import (
 	"net/http"
 	"io/ioutil"
 	"encoding/json"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 )
 
 func ListTpl(c *gin.Context)  {
 	searchType := c.Query("type")
 	id,_ := strconv.Atoi(c.Query("id"))
 	if searchType == "" || id <= 0 {
-		mid.ReturnValidateFail(c, "Type or id can not be empty")
+		mid.ReturnParamEmptyError(c, "type or id")
 		return
 	}
 	if !(searchType == "endpoint" || searchType == "grp") {
-		mid.ReturnValidateFail(c, "Type must be \"endpoint\" or \"grp\"")
+		mid.ReturnValidateError(c, "type must be \"endpoint\" or \"grp\"")
 		return
 	}
 	var query m.TplQuery
@@ -31,10 +32,10 @@ func ListTpl(c *gin.Context)  {
 	query.SearchId = id
 	err := db.GetStrategys(&query, true)
 	if err != nil {
-		mid.ReturnError(c, "Query strategy failed", err)
+		mid.ReturnQueryTableError(c, "strategy", err)
 		return
 	}
-	mid.ReturnData(c, query.Tpl)
+	mid.ReturnSuccessData(c, query.Tpl)
 }
 
 func AddStrategy(c *gin.Context)  {
@@ -45,22 +46,22 @@ func AddStrategy(c *gin.Context)  {
 		param.Content = strings.Replace(param.Content, "'", "", -1)
 		param.Content = strings.Replace(param.Content, "\"", "", -1)
 		if !mid.IsIllegalCond(param.Cond) || !mid.IsIllegalLast(param.Last) {
-			mid.ReturnValidateFail(c, "cond or last param validate fail")
+			mid.ReturnValidateError(c, "cond or last illegal")
 			return
 		}
 		// check tpl
 		if param.TplId <= 0 {
 			if param.GrpId + param.EndpointId <= 0 {
-				mid.ReturnValidateFail(c, "Both endpoint and group id are missing")
+				mid.ReturnValidateError(c, "grp_id and endpoint_id is empty")
 				return
 			}
 			if param.GrpId > 0 && param.EndpointId > 0 {
-				mid.ReturnValidateFail(c, "Endpoint and group id can not be provided at the same time")
+				mid.ReturnValidateError(c, "grp_id and endpoint_id can not be provided at the same time")
 				return
 			}
 			err,tplObj := db.AddTpl(param.GrpId, param.EndpointId, "")
 			if err != nil {
-				mid.ReturnError(c, "Add strategy failed", err)
+				mid.ReturnUpdateTableError(c, "tpl", err)
 				return
 			}
 			param.TplId = tplObj.Id
@@ -68,17 +69,17 @@ func AddStrategy(c *gin.Context)  {
 		strategyObj := m.StrategyTable{TplId:param.TplId,Metric:param.Metric,Expr:param.Expr,Cond:param.Cond,Last:param.Last,Priority:param.Priority,Content:param.Content}
 		err = db.UpdateStrategy(&m.UpdateStrategy{Strategy:[]*m.StrategyTable{&strategyObj}, Operation:"insert"})
 		if err != nil {
-			mid.ReturnError(c, "Insert strategy failed", err)
+			mid.ReturnUpdateTableError(c, "strategy", err)
 			return
 		}
 		err = SaveConfigFile(param.TplId, false)
 		if err != nil {
-			mid.ReturnError(c, "Save alert rules file failed", err)
+			mid.ReturnHandleError(c, "save alert rules file failed", err)
 			return
 		}
-		mid.ReturnSuccess(c, "Success")
+		mid.ReturnSuccess(c)
 	}else{
-		mid.ReturnValidateFail(c, fmt.Sprintf("Parameter validation failed %v", err))
+		mid.ReturnValidateError(c, err.Error())
 	}
 }
 
@@ -86,7 +87,7 @@ func EditStrategy(c *gin.Context)  {
 	var param m.TplStrategyTable
 	if err := c.ShouldBindJSON(&param); err==nil {
 		if param.StrategyId <= 0 {
-			mid.ReturnValidateFail(c, "Strategy id can not be empty")
+			mid.ReturnParamEmptyError(c, "strategy_id")
 			return
 		}
 		// check param
@@ -94,58 +95,58 @@ func EditStrategy(c *gin.Context)  {
 		param.Content = strings.Replace(param.Content, "'", "", -1)
 		param.Content = strings.Replace(param.Content, "\"", "", -1)
 		if !mid.IsIllegalCond(param.Cond) || !mid.IsIllegalLast(param.Last) {
-			mid.ReturnValidateFail(c, "cond or last param validate fail")
+			mid.ReturnValidateError(c, "cond or last illegal")
 			return
 		}
 		strategyObj := m.StrategyTable{Id:param.StrategyId,Metric:param.Metric,Expr:param.Expr,Cond:param.Cond,Last:param.Last,Priority:param.Priority,Content:param.Content}
 		err = db.UpdateStrategy(&m.UpdateStrategy{Strategy:[]*m.StrategyTable{&strategyObj}, Operation:"update"})
 		if err != nil {
-			mid.ReturnError(c, "Update strategy failed", err)
+			mid.ReturnUpdateTableError(c, "strategy", err)
 			return
 		}
 		_,strategy := db.GetStrategyTable(param.StrategyId)
 		db.UpdateTpl(strategy.TplId, "")
 		err = SaveConfigFile(strategy.TplId, false)
 		if err != nil {
-			mid.ReturnError(c, "Save alert rules file failed", err)
+			mid.ReturnHandleError(c, "save alert rules file failed", err)
 			return
 		}
-		mid.ReturnSuccess(c, "Success")
+		mid.ReturnSuccess(c)
 	}else{
-		mid.ReturnValidateFail(c, fmt.Sprintf("Parameter validation failed %v", err))
+		mid.ReturnValidateError(c, err.Error())
 	}
 }
 
 func DeleteStrategy(c *gin.Context)  {
 	strategyId,_ := strconv.Atoi(c.Query("id"))
 	if strategyId <= 0 {
-		mid.ReturnValidateFail(c, "Id can not be empty")
+		mid.ReturnParamEmptyError(c, "id")
 		return
 	}
 	_,strategy := db.GetStrategyTable(strategyId)
 	if strategy.Id <= 0 {
-		mid.ReturnValidateFail(c, "The strategy id is not in use")
+		mid.ReturnFetchDataError(c, "strategy", "id", strconv.Itoa(strategyId))
 		return
 	}
 	err := db.UpdateStrategy(&m.UpdateStrategy{Strategy:[]*m.StrategyTable{&m.StrategyTable{Id:strategyId}}, Operation:"delete"})
 	if err != nil {
-		mid.ReturnError(c, "Delete strategy failed", err)
+		mid.ReturnUpdateTableError(c, "strategy", err)
 		return
 	}
 	db.UpdateTpl(strategy.TplId, "")
 	err = SaveConfigFile(strategy.TplId, false)
 	if err != nil {
-		mid.ReturnError(c, "Save prometheus rule file failed", err)
+		mid.ReturnHandleError(c, "save prometheus rule file failed", err)
 		return
 	}
-	mid.ReturnSuccess(c, "Success")
+	mid.ReturnSuccess(c)
 }
 
 func SearchObjOption(c *gin.Context)  {
 	searchType := c.Query("type")
 	searchMsg := c.Query("search")
 	if searchType == "" || searchMsg == "" {
-		mid.ReturnValidateFail(c, "Type or search content can not be empty")
+		mid.ReturnParamEmptyError(c, "type and search")
 		return
 	}
 	var err error
@@ -156,13 +157,13 @@ func SearchObjOption(c *gin.Context)  {
 		err,data = db.SearchGrp(searchMsg)
 	}
 	if err != nil {
-		mid.ReturnError(c, "Search failed", err)
+		mid.ReturnHandleError(c, err.Error(), err)
 		return
 	}
 	for _,v := range data {
 		v.OptionTypeName = v.OptionType
 	}
-	mid.ReturnData(c, data)
+	mid.ReturnSuccessData(c, data)
 }
 
 func SaveConfigFile(tplId int, fromCluster bool) error  {
@@ -170,14 +171,14 @@ func SaveConfigFile(tplId int, fromCluster bool) error  {
 	idList := db.GetParentTpl(tplId)
 	err = updateConfigFile(tplId)
 	if err != nil {
-		mid.LogError("update prometheus rule file error", err)
+		log.Logger.Error("Update prometheus rule file error", log.Error(err))
 		return err
 	}
 	if len(idList) > 0 {
 		for _,v := range idList {
 			err = updateConfigFile(v)
 			if err != nil {
-				mid.LogError(fmt.Sprintf("update prometheus rule tpl id %d error", v), err)
+				log.Logger.Error("Update prometheus rule error", log.Int("tplId", v), log.Error(err))
 			}
 		}
 	}
@@ -186,7 +187,7 @@ func SaveConfigFile(tplId int, fromCluster bool) error  {
 	}
 	err = prom.ReloadConfig()
 	if err != nil {
-		mid.LogError("reload prometheus config error", err)
+		log.Logger.Error("Reload prometheus config error", log.Error(err))
 		return err
 	}
 	if !fromCluster {
@@ -198,7 +199,7 @@ func SaveConfigFile(tplId int, fromCluster bool) error  {
 func updateConfigFile(tplId int) error {
 	err,tplObj := db.GetTpl(tplId,0 ,0)
 	if err != nil {
-		mid.LogError("get tpl error", err)
+		log.Logger.Error("Get tpl error", log.Error(err))
 		return err
 	}
 	var query m.TplQuery
@@ -214,7 +215,7 @@ func updateConfigFile(tplId int) error {
 	}
 	err = db.GetStrategys(&query, false)
 	if err != nil {
-		mid.LogError("get strategy error", err)
+		log.Logger.Error("Get strategy error", log.Error(err))
 		return err
 	}
 	var fileName string
@@ -271,7 +272,7 @@ func updateConfigFile(tplId int) error {
 	}
 	err,isExist,cObj := prom.GetConfig(fileName, isGrp)
 	if err != nil {
-		mid.LogError("get prom get config error", err)
+		log.Logger.Error("Get prom get config error", log.Error(err))
 		return err
 	}
 	rfu := []*m.RFRule{}
@@ -330,7 +331,7 @@ func updateConfigFile(tplId int) error {
 	cObj.Rules = rfu
 	err = prom.SetConfig(fileName, isGrp, cObj, isExist)
 	if err != nil {
-		mid.LogError("prom set config error", err)
+		log.Logger.Error("Prom set config error", log.Error(err))
 	}
 	return err
 }
@@ -339,12 +340,12 @@ func SearchUserRole(c *gin.Context)  {
 	search := c.Query("search")
 	err,roles := db.SearchUserRole(search, "role")
 	if err != nil {
-		mid.LogError("search role error", err)
+		log.Logger.Error("Search role error", log.Error(err))
 	}
 	if len(roles) < 15 {
 		err,users := db.SearchUserRole(search, "user")
 		if err != nil {
-			mid.LogError("search user error", err)
+			log.Logger.Error("Search user error", log.Error(err))
 		}
 		for _,v := range users {
 			if len(roles) >= 15 {
@@ -353,7 +354,7 @@ func SearchUserRole(c *gin.Context)  {
 			roles = append(roles, v)
 		}
 	}
-	mid.ReturnData(c, roles)
+	mid.ReturnSuccessData(c, roles)
 }
 
 func UpdateTplAction(c *gin.Context)  {
@@ -412,54 +413,54 @@ func UpdateTplAction(c *gin.Context)  {
 		}
 		err = db.UpdateTplAction(param.TplId, userIds, roleIds, extraMail, extraPhone)
 		if err != nil {
-			mid.ReturnError(c, "Update tpl action fail ", err)
+			mid.ReturnUpdateTableError(c, "tpl", err)
 		}else{
-			mid.ReturnSuccess(c, "Success")
+			mid.ReturnSuccess(c)
 		}
 	}else{
-		mid.ReturnValidateFail(c, fmt.Sprintf("Parameter validation failed %v", err))
+		mid.ReturnValidateError(c, err.Error())
 	}
 }
 
 func SyncConfigHandle(w http.ResponseWriter,r *http.Request)  {
-	mid.LogInfo("start sync config")
+	log.Logger.Debug("Start sync config")
 	var response mid.RespJson
 	w.Header().Set("Content-Type", "application/json")
-	defer w.Write([]byte(fmt.Sprintf("{\"code\":%d,\"msg\":\"%s\",\"data\":\"%v\"}", response.Code,response.Msg,response.Data)))
+	defer w.Write([]byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\",\"Data\":\"%v\"}", response.Code,response.Message,response.Data)))
 	tplId,_ := strconv.Atoi(r.FormValue("id"))
 	if tplId <= 0 {
 		response.Code = 401
-		response.Msg = "Parameter id is empty"
+		response.Message = "Parameter id is empty"
 		return
 	}
 	err := SaveConfigFile(tplId, true)
 	if err != nil {
 		response.Code = 500
-		response.Msg = "Sync save config file fail"
+		response.Message = "Sync save config file fail"
 		response.Data = err
 		return
 	}
 	response.Code = 200
-	response.Msg = "Success"
+	response.Message = "Success"
 }
 
 func SyncConsulHandle(w http.ResponseWriter,r *http.Request)  {
-	mid.LogInfo("start sync consul")
+	log.Logger.Debug("start sync consul")
 	var response mid.RespJson
 	w.Header().Set("Content-Type", "application/json")
-	defer w.Write([]byte(fmt.Sprintf("{\"code\":%d,\"msg\":\"%s\",\"data\":\"%v\"}", response.Code,response.Msg,response.Data)))
+	defer w.Write([]byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\",\"Data\":\"%v\"}", response.Code,response.Message,response.Data)))
 	var param m.SyncConsulDto
 	b,_ := ioutil.ReadAll(r.Body)
 	err := json.Unmarshal(b, &param)
 	if err != nil {
 		response.Code = 401
-		response.Msg = "Param json format fail"
+		response.Message = "Param json format fail"
 		response.Data = err
 		return
 	}
 	if param.Guid == "" {
 		response.Code = 401
-		response.Msg = "Guid is empty"
+		response.Message = "Guid is empty"
 		return
 	}
 	if param.IsRegister {
@@ -469,10 +470,10 @@ func SyncConsulHandle(w http.ResponseWriter,r *http.Request)  {
 	}
 	if err != nil {
 		response.Code = 500
-		response.Msg = "Sync consul fail"
+		response.Message = "Sync consul fail"
 		response.Data = err
 		return
 	}
 	response.Code = 200
-	response.Msg = "Success"
+	response.Message = "Success"
 }
