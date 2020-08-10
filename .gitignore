@@ -1,9 +1,11 @@
 # IDEA
 .idea
+.editorconfig
 
 # node
 monitor-ui/node_modules
 monitor-ui/dist
+monitor-ui/plugin
 monitor-ui/src/assets/js/baseURL.js
 monitor-ui/package-lock.json
 
@@ -18,6 +20,10 @@ monitor-server/monitor-server
 monitor-agent/node_exporter/node_exporter
 monitor-agent/node_exporter/node_exporter_new
 monitor-agent/agent_manager/agent_manager
+monitor-agent/agent_manager/transgateway/api/vendor
+monitor-agent/ping_exporter/ping_exporter
+monitor-agent/archive_mysql_tool/archive_mysql_tool
+monitor-agent/transgateway/transgateway
 
 #tmp
 monitor-ui/.history/*

@@ -2,7 +2,6 @@ package db
 
 import (
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
-	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"fmt"
 	"strings"
 	"time"
@@ -12,12 +11,13 @@ import (
 	"encoding/json"
 	"context"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 )
 
 func AddUser(user m.UserTable, creator string) error {
 	_,err := x.Exec("INSERT INTO user(name,passwd,display_name,email,phone,creator,created) VALUE (?,?,?,?,?,?,NOW())", user.Name,user.Passwd,user.DisplayName,user.Email,user.Phone,creator)
 	if err != nil {
-		mid.LogError(fmt.Sprintf("add user %s fail", user.Name), err)
+		log.Logger.Error(fmt.Sprintf("Add user %s fail", user.Name), log.Error(err))
 	}
 	return err
 }
@@ -61,7 +61,7 @@ func UpdateUser(user m.UserTable) error {
 	}
 	_,err := x.Exec(newParam...)
 	if err != nil {
-		mid.LogError("update user error ",err)
+		log.Logger.Error("Update user error", log.Error(err))
 	}
 	return err
 }
@@ -93,7 +93,7 @@ func GetMailByStrategy(strategyId int) []string {
 	var tpls []*m.TplTable
 	x.SQL("SELECT DISTINCT t2.* FROM strategy t1 LEFT JOIN tpl t2 ON t1.tpl_id=t2.id WHERE t1.id=?", strategyId).Find(&tpls)
 	if len(tpls) == 0 {
-		mid.LogInfo(fmt.Sprintf("can not find tpl with strategy %d",strategyId))
+		log.Logger.Warn(fmt.Sprintf("can not find tpl with strategy %d",strategyId))
 		return result
 	}
 	userIds := tpls[0].ActionUser
@@ -230,13 +230,13 @@ func SyncCoreRole()  {
 	}
 	request,err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/platform/v1/roles/retrieve", m.CoreUrl), strings.NewReader(""))
 	if err != nil {
-		mid.LogError("get core role key new request fail", err)
+		log.Logger.Error("Get core role key new request fail", log.Error(err))
 		return
 	}
 	request.Header.Set("Authorization", m.TmpCoreToken)
 	res,err := ctxhttp.Do(context.Background(), http.DefaultClient, request)
 	if err != nil {
-		mid.LogError("get core role key ctxhttp request fail", err)
+		log.Logger.Error("Get core role key ctxhttp request fail", log.Error(err))
 		return
 	}
 	defer res.Body.Close()
@@ -244,7 +244,7 @@ func SyncCoreRole()  {
 	var result m.CoreRoleDto
 	err = json.Unmarshal(b, &result)
 	if err != nil {
-		mid.LogError("get core role key json unmarshal result ", err)
+		log.Logger.Error("Get core role key json unmarshal result", log.Error(err))
 		return
 	}
 	var tableData,insertData,updateData,deleteData []*m.RoleTable
@@ -293,7 +293,7 @@ func SyncCoreRole()  {
 	if len(actions) > 0 {
 		err = Transaction(actions)
 		if err != nil {
-			mid.LogError("sync core role fail ", err)
+			log.Logger.Error("Sync core role fail", log.Error(err))
 		}
 	}
 }
@@ -404,7 +404,6 @@ func UpdateRole(param m.UpdateRoleDto) error {
 		role.Id = param.RoleId
 	}
 	action := Classify(role, param.Operation, "role", force)
-	mid.LogInfo(fmt.Sprintf("action sql : %s  param : %v ", action.Sql, action.Param))
 	return Transaction([]*Action{&action})
 }
 
@@ -412,7 +411,7 @@ func GetGrpRole(grpId int) (err error, result []*m.OptionModel) {
 	var queryData []*m.RoleTable
 	err = x.SQL("SELECT t2.id,t2.name,t2.display_name FROM rel_role_grp t1 LEFT JOIN role t2 ON t1.role_id=t2.id WHERE t1.grp_id=?", grpId).Find(&queryData)
 	if err != nil {
-		mid.LogError("get grp role fail", err)
+		log.Logger.Error("Get grp role fail", log.Error(err))
 		return err,result
 	}
 	for _,v := range queryData {
@@ -441,7 +440,7 @@ func CheckRoleList(param string) string {
 		}else{
 			_,err := x.Exec("INSERT INTO role(name,display_name) VALUE (?,?)", k, k)
 			if err != nil {
-				mid.LogError(fmt.Sprintf("check role list,insert table with name:%s error", k), err)
+				log.Logger.Error(fmt.Sprintf("check role list,insert table with name:%s error", k), log.Error(err))
 			}else{
 				x.SQL("SELECT id FROM role WHERE name=?", k).Find(&tableData)
 				if len(tableData) > 0 {
@@ -457,6 +456,5 @@ func CheckRoleList(param string) string {
 	if result != "" {
 		result = result[:len(result)-1]
 	}
-	mid.LogInfo(fmt.Sprintf("check role list : %s", result))
 	return result
 }

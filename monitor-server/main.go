@@ -8,6 +8,7 @@ import (
 	ds "github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/other"
 	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/alarm"
 )
@@ -24,7 +25,8 @@ func main() {
 	exportAgent := flag.Bool("export_agent", false, "true or false to choice export agent")
 	flag.Parse()
 	m.InitConfig(*cfgFile)
-	middleware.InitMonitorLog()
+	//middleware.InitMonitorLog()
+	log.InitArchiveZapLogger()
 	db.InitDbConn()
 	if m.Config().Http.Session.Enable {
 		middleware.InitSession()
@@ -40,5 +42,6 @@ func main() {
 	alarm.SyncInitSdFile()
 	alarm.SyncInitConfigFile()
 	api.InitDependenceParam()
+	middleware.InitErrorMessageList()
 	api.InitHttpServer(*exportAgent)
 }

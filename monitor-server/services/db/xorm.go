@@ -5,11 +5,11 @@ import (
 	"github.com/go-xorm/xorm"
 	"fmt"
 	"github.com/go-xorm/core"
-	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"time"
 	"reflect"
 	"strings"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 )
 
 var (
@@ -34,12 +34,12 @@ type DBObj struct {
 }
 
 func (d *DBObj) InitXorm()  {
-	mid.LogInfo("start init db")
+	log.Logger.Info("Start init db")
 	cnnstr := fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&allowNativePasswords=true",
 		d.ConnUser, d.ConnPwd, d.ConnPtl, d.ConnHost, d.ConnDb)
 	engine,err := xorm.NewEngine(d.DbType, cnnstr)
 	if err!=nil {
-		mid.LogError("init db fail", err)
+		log.Logger.Error("Init db fail", log.Error(err))
 	}
 	engine.SetMaxIdleConns(d.MaxIdle)
 	engine.SetMaxOpenConns(d.MaxOpen)
@@ -66,7 +66,7 @@ func initDefaultMysql(dbCfg m.StoreConfig)  {
 	dbObj := DBObj{DbType: dbCfg.Type, ConnUser: dbCfg.User, ConnPwd: dbCfg.Pwd, ConnHost: fmt.Sprintf("%s:%d", dbCfg.Server, dbCfg.Port), ConnDb: dbCfg.DataBase, ConnPtl: "tcp", MaxOpen: dbCfg.MaxOpen, MaxIdle: dbCfg.MaxIdle, Timeout: dbCfg.Timeout}
 	dbObj.InitXorm()
 	x = dbObj.x
-	mid.LogInfo("default db init success")
+	log.Logger.Info("Default db init success")
 }
 
 func initArchiveDbEngine() {
@@ -77,7 +77,7 @@ func initArchiveDbEngine() {
 	archiveMysql,err = xorm.NewEngine("mysql", connectStr)
 	if err != nil {
 		ArchiveEnable = false
-		mid.LogError("init archive mysql fail with connect: "+connectStr+" error ", err)
+		log.Logger.Error("Init archive mysql fail", log.String("connectStr",connectStr), log.Error(err))
 	}else{
 		ArchiveEnable = true
 		archiveMysql.SetMaxIdleConns(m.Config().ArchiveMysql.MaxIdle)
@@ -87,7 +87,7 @@ func initArchiveDbEngine() {
 		// 使用驼峰式映射
 		archiveMysql.SetMapper(core.SnakeMapper{})
 		archiveDatabase = databaseName
-		mid.LogInfo("init archive mysql "+archiveDatabase+" success ")
+		log.Logger.Info("Init archive mysql "+archiveDatabase+" success")
 	}
 }
 
@@ -271,7 +271,6 @@ func update(obj interface{}, table string, force bool) Action {
 		value = value[0:len(value)-1]
 		action.Sql = `update ` + table + ` set ` + value + where
 		action.Param = params
-		mid.LogInfo(fmt.Sprintf("sql:%s param:%v", action.Sql, action.Param))
 	}else{
 		action.Sql = ""
 		action.Param = params
