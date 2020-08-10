@@ -2,26 +2,26 @@ package db
 
 import (
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
-	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"fmt"
 	"strings"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
 	"time"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
 	"sort"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 )
 
 func GetDashboard(dType string) (error, m.DashboardTable) {
 	var dashboards []*m.DashboardTable
-	sql := `select * from dashboard where dashboard_type=?`
-	err := x.SQL(sql, dType).Find(&dashboards)
-	if err!=nil {
-		mid.LogError("query dashboard fail", err)
-	}
+	err := x.SQL("select * from dashboard where dashboard_type=?", dType).Find(&dashboards)
 	if len(dashboards) > 0 {
-		return err, *dashboards[0]
+		return nil, *dashboards[0]
 	}else{
-		return fmt.Errorf("no rows fetch"), *new(m.DashboardTable)
+		if err == nil {
+			err = fmt.Errorf("No rows fetch ")
+		}
+		log.Logger.Error("Query dashboard fail", log.Error(err))
+		return err, m.DashboardTable{}
 	}
 }
 
@@ -30,7 +30,7 @@ func GetSearch(id int) (error, m.SearchModel) {
 	sql := `select * from search where id=?`
 	err := x.SQL(sql, id).Find(&search)
 	if err!=nil {
-		mid.LogError("query search fail", err)
+		log.Logger.Error("Query search fail", log.Error(err))
 	}
 	if len(search) > 0 {
 		return err, *search[0]
@@ -44,7 +44,7 @@ func GetButton(bGroup int) (error, []*m.ButtonModel)  {
 	sql := `select * from button where group_id=?`
 	err := x.SQL(sql, bGroup).Find(&buttons)
 	if err!=nil {
-		mid.LogError("query button fail", err)
+		log.Logger.Error("Query button fail", log.Error(err))
 	}
 	if len(buttons) > 0 {
 		for _,v := range buttons {
@@ -66,14 +66,8 @@ func GetPanels(pGroup int) (error, []*m.PanelTable) {
 	sql := `select * from panel where group_id=?`
 	err := x.SQL(sql, pGroup).Find(&panels)
 	if err!=nil {
-		mid.LogError("query panels fail", err)
+		log.Logger.Error("Query panels fail", log.Error(err))
 	}
-	//if len(panels) > 0 {
-	//	var dashboards []*m.DashboardTable
-	//	sqlSec := `select dashboard_type from dashboard where panels_group=?`
-	//	err := x.SQL(sqlSec, pGroup).Find(&dashboards)
-	//	return err,panels
-	//}
 	return err, panels
 }
 
@@ -92,12 +86,12 @@ func GetCharts(cGroup int, chartId int, panelId int) (error, []*m.ChartTable) {
 		err = x.SQL(sql, panelId).Find(&charts)
 	}
 	if err!=nil {
-		mid.LogError("query charts fail", err)
+		log.Logger.Error("Query charts fail", log.Error(err))
 	}
 	if len(charts) > 0 {
 		return err,charts
 	}
-	return fmt.Errorf("get charts error"), charts
+	return fmt.Errorf("Get charts error "), charts
 }
 
 func GetPromMetric(endpoint []string,metric string) (error, string) {
@@ -112,13 +106,13 @@ func GetPromMetric(endpoint []string,metric string) (error, string) {
 	var query []*m.PromMetricTable
 	err := x.SQL("SELECT prom_ql FROM prom_metric WHERE metric=?", tmpMetric).Find(&query)
 	if err!=nil {
-		mid.LogError("query prom_metric fail", err)
+		log.Logger.Error("Query prom_metric fail", log.Error(err))
 	}
 	if len(query) > 0 {
 		host := m.EndpointTable{Guid:endpoint[0]}
 		GetEndpoint(&host)
 		if err!=nil || host.Id==0 {
-			mid.LogError("can't find endpoint "+endpoint[0], err)
+			log.Logger.Error("Find endpoint fail", log.String("endpoint",endpoint[0]),log.Error(err))
 			return err,promQL
 		}
 		reg := query[0].PromQl
@@ -150,7 +144,7 @@ func SearchHost(endpoint string) (error, []*m.OptionModel) {
 	endpoint = `%` + endpoint + `%`
 	err := x.SQL("SELECT * FROM endpoint WHERE (ip LIKE ? OR name LIKE ?) and export_type<>'custom' order by export_type,ip limit 10", endpoint, endpoint).Find(&hosts)
 	if err != nil {
-		mid.LogError("search host fail", err)
+		log.Logger.Error("Search host fail", log.Error(err))
 		return err,options
 	}
 	for _,host := range hosts {
@@ -185,7 +179,7 @@ func GetEndpoint(query *m.EndpointTable) error {
 		}
 	}
 	if err != nil {
-		mid.LogError("get tags fail ", err)
+		log.Logger.Error("Get tags fail", log.Error(err))
 		return err
 	}
 	if len(endpointObj) <= 0 {
@@ -216,19 +210,19 @@ func GetTags(endpoint string, key string, metric string) (error, []*m.OptionMode
 	var endpointObj []*m.EndpointTable
 	err := x.SQL("SELECT id FROM endpoint WHERE guid=?", endpoint).Find(&endpointObj)
 	if err != nil || len(endpointObj) <= 0{
-		mid.LogError("get tags fail, can't find endpoint ", err)
+		log.Logger.Error("Get tags fail, can't find endpoint", log.Error(err))
 		return err,options
 	}
 	var promMetricObj []*m.PromMetricTable
 	err = x.SQL("SELECT prom_main FROM prom_metric WHERE metric=?", metric).Find(&promMetricObj)
 	if err != nil || len(promMetricObj) <=0{
-		mid.LogError("get tags fail,can't find prom_metric ", err)
+		log.Logger.Error("Get tags fail,can't find prom_metric", log.Error(err))
 		return err,options
 	}
 	var endpointMetricObj []*m.EndpointMetricTable
 	err = x.SQL("SELECT metric FROM endpoint_metric WHERE endpoint_id=? AND metric LIKE ?", endpointObj[0].Id, `%`+promMetricObj[0].PromMain+`%`).Find(&endpointMetricObj)
 	if err != nil || len(endpointMetricObj) <=0{
-		mid.LogError("get tags fail,can't find metric ", err)
+		log.Logger.Error("Get tags fail,can't find metric", log.Error(err))
 		return err,options
 	}
 	key = key + "="
@@ -298,7 +292,7 @@ func GetPromMetricTable(metricType string) (err error,result []*m.PromMetricTabl
 		err = x.SQL("SELECT * FROM prom_metric").Find(&result)
 	}
 	if err != nil {
-		mid.LogError("get prom metric table fail", err)
+		log.Logger.Error("Get prom metric table fail", log.Error(err))
 	}
 	return err,result
 }
@@ -335,26 +329,6 @@ func UpdatePromMetric(data []m.PromMetricTable) error {
 }
 
 func GetEndpointMetric(id int) (err error,result []*m.OptionModel) {
-	var endpointMetrics []*m.EndpointMetricTable
-	err = x.SQL("SELECT id,endpoint_id,metric FROM endpoint_metric WHERE endpoint_id=?", id).Find(&endpointMetrics)
-	if err != nil {
-		mid.LogError("get endpoint metric fail", err)
-	}
-	metricMap := make(map[string]string)
-	for _,v := range endpointMetrics {
-		tmpMetric := v.Metric
-		if strings.Contains(v.Metric, "{") {
-			tmpMetric = strings.Split(v.Metric, "{")[0]
-		}
-		metricMap[tmpMetric] = fmt.Sprintf("%s{instance=\"$address\"}", tmpMetric)
-	}
-	for k,v := range metricMap {
-		result = append(result, &m.OptionModel{OptionText:k, OptionValue:v})
-	}
-	return err,result
-}
-
-func GetEndpointMetricNew(id int) (err error,result []*m.OptionModel) {
 	endpointObj := m.EndpointTable{Id:id}
 	GetEndpoint(&endpointObj)
 	if endpointObj.Guid == "" {
@@ -425,7 +399,7 @@ func UpdateChartTitle(param m.UpdateChartTitleParam) error {
 	var chartTables []*m.ChartTable
 	x.SQL("SELECT id,group_id,metric,title FROM chart").Find(&chartTables)
 	if len(chartTables) == 0 {
-		return fmt.Errorf("chart table can not find any data")
+		return fmt.Errorf("Chart table can not find any data ")
 	}
 	var chartExist,titleAuto bool
 	var groupId int
@@ -440,7 +414,7 @@ func UpdateChartTitle(param m.UpdateChartTitleParam) error {
 		}
 	}
 	if !chartExist {
-		return fmt.Errorf("chart id %d can not find any record", param.ChartId)
+		return fmt.Errorf("Chart id %d can not find any record ", param.ChartId)
 	}
 	var err error
 	if titleAuto {
@@ -480,17 +454,17 @@ func GetChartTitle(metric string,id int) string {
 
 func GetArchiveData(query *m.QueryMonitorData,agg string) (err error,step int,result []*m.SerialModel) {
 	if !ArchiveEnable {
-		err = fmt.Errorf("please make sure archive mysql connect done ")
-		mid.LogError("", err)
+		err = fmt.Errorf("please make sure archive mysql connect done")
+		log.Logger.Error("", log.Error(err))
 		return err,step,result
 	}
 	checkArchiveDatabase()
 	if query.Start == 0 || query.End == 0 || (query.Start>=query.End) {
 		err = fmt.Errorf("get archive data query start and end validate fail,start:%d end:%d ", query.Start, query.End)
-		mid.LogError("", err)
+		log.Logger.Error("", log.Error(err))
 		return err,step,result
 	}
-	mid.LogInfo(fmt.Sprintf("start to get archive data,endpoint:%v metric:%v start:%d end:%d", query.Endpoint, query.Metric, query.Start, query.End))
+	log.Logger.Info("Start to get archive data", log.StringList("endpoint",query.Endpoint),log.StringList("metric",query.Metric),log.Int64("start",query.Start),log.Int64("end",query.End))
 	if agg == "" || agg == "none" {
 		agg = "avg"
 	}
@@ -569,14 +543,14 @@ func queryArchiveTables(endpoint,metric,tag,agg string,dateList []string,query *
 		err := archiveMysql.SQL(fmt.Sprintf("SELECT `endpoint`,metric,tags,unix_time,`avg` AS `value`  FROM archive_%s WHERE `endpoint`='%s' AND metric='%s' AND unix_time>=%d AND unix_time<=%d", v,endpoint,metric,tmpStart,tmpEnd)).Find(&tableData)
 		if err != nil {
 			if strings.Contains(err.Error(), "doesn't exist") {
-				mid.LogError(fmt.Sprintf("query archive table:archive_%s error,table doesn't exist", v), nil)
+				log.Logger.Warn(fmt.Sprintf("Query archive table:archive_%s error,table doesn't exist", v))
 			}else {
-				mid.LogError(fmt.Sprintf("query archive table:archive_%s error", v), err)
+				log.Logger.Error(fmt.Sprintf("query archive table:archive_%s error", v), log.Error(err))
 			}
 			continue
 		}
 		if len(tableData) == 0 {
-			mid.LogInfo(fmt.Sprintf("query archive table:archive_%s empty", v))
+			log.Logger.Info(fmt.Sprintf("query archive table:archive_%s empty", v))
 			continue
 		}
 		if tagLength <= 1 && i == 0 {

@@ -10,6 +10,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/alarm"
 	"github.com/gin-gonic/gin"
 	"time"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 )
 
 const defaultStep = 10
@@ -34,17 +35,17 @@ func RegisterAgentNew(c *gin.Context)  {
 	if err := c.ShouldBindJSON(&param); err==nil {
 		validateMessage,_,err := AgentRegister(param)
 		if validateMessage != "" {
-			mid.ReturnValidateFail(c, validateMessage)
+			mid.ReturnValidateError(c, validateMessage)
 			return
 		}
 		if err != nil {
-			mid.LogError("Register agent fail ", err)
-			mid.ReturnError(c, "Register agent error ", err)
+			log.Logger.Error("Register agent fail", log.Error(err))
+			mid.ReturnHandleError(c, err.Error(), err)
 			return
 		}
-		mid.ReturnSuccess(c, "Success")
+		mid.ReturnSuccess(c)
 	}else{
-		mid.ReturnValidateFail(c, fmt.Sprintf("Parameter validation failed %v", err))
+		mid.ReturnValidateError(c, err.Error())
 	}
 }
 
@@ -58,7 +59,7 @@ func InitAgentManager()  {
 	if agentManagerServer != "" {
 		param,err := db.GetAgentManager()
 		if err != nil {
-			mid.LogError("Get agent manager table fail ", err)
+			log.Logger.Error("Get agent manager table fail", log.Error(err))
 			return
 		}
 		go prom.InitAgentManager(param, agentManagerServer)
@@ -108,7 +109,7 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage,guid string,err er
 		prom.AddSdEndpoint(m.ServiceDiscoverFileObj{Guid: rData.endpoint.Guid, Address: fmt.Sprintf("%s:%s", tmpIp, tmpPort), Step: rData.endpoint.Step})
 		err = prom.SyncSdConfigFile(rData.endpoint.Step)
 		if err != nil {
-			mid.LogError("sync service discover file error: ", err)
+			log.Logger.Error("Sync service discover file error", log.Error(err))
 		}
 	}
 	if rData.addDefaultGroup {
@@ -128,7 +129,7 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage,guid string,err er
 			if tplObj.Id > 0 {
 				err := alarm.SaveConfigFile(tplObj.Id, false)
 				if err != nil {
-					mid.LogError(fmt.Sprintf("register interface update prometheus config fail , group : %s  error ", rData.defaultGroup), err)
+					log.Logger.Error("Register interface update prometheus config fail", log.String("group", rData.defaultGroup), log.Error(err))
 					return validateMessage,guid,err
 				}
 			}
@@ -144,7 +145,7 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage,guid string,err er
 		}
 		err = db.UpdateAgentManagerTable(rData.endpoint, param.User, param.Password, configFile, binPath, true)
 		if err != nil {
-			mid.LogError("Update agent manager table fail ", err)
+			log.Logger.Error("Update agent manager table fail", log.Error(err))
 		}
 	}
 	return validateMessage,guid,err

@@ -2,10 +2,9 @@ package alarm
 
 import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
-	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
-	"fmt"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 )
 
 func SyncInitConfigFile()  {
@@ -13,10 +12,10 @@ func SyncInitConfigFile()  {
 	for _,v := range tplTable {
 		err := SaveConfigFile(v.Id, true)
 		if err != nil {
-			mid.LogError(fmt.Sprintf("Sync init config fail fail with tpl id:%d", v.Id), err)
+			log.Logger.Error("Sync init config fail fail", log.Int("tplId", v.Id), log.Error(err))
 		}
 	}
-	mid.LogInfo("Sync init config file done")
+	log.Logger.Info("Sync init config file done")
 }
 
 func SyncInitSdFile()  {
@@ -47,7 +46,7 @@ func SyncInitSdFile()  {
 	for _,v := range stepList {
 		err := prom.SyncSdConfigFile(v)
 		if err != nil {
-			mid.LogError(fmt.Sprintf("Sync service discover file fail,step: %d ", v), err)
+			log.Logger.Error("Sync service discover file fail", log.Int("step", v), log.Error(err))
 		}
 	}
 }
