@@ -10,11 +10,11 @@ import (
 	"fmt"
 	"sync"
 	"github.com/gin-gonic/gin"
-	"net/http"
 	"github.com/go-redis/redis"
 	"strings"
 	"encoding/base64"
 	"encoding/json"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 )
 
 var RedisClient *redis.Client
@@ -35,10 +35,10 @@ func InitSession()  {
 		})
 		_, err := client.Ping().Result()
 		if err!=nil {
-			LogError("init session redis fail ", err)
+			log.Logger.Error("Init session redis fail", log.Error(err))
 			onlyLocalStore = true
 		}else{
-			LogInfo("init session redis success")
+			log.Logger.Info("init session redis success")
 			onlyLocalStore = false
 			RedisClient = client
 		}
@@ -50,7 +50,7 @@ func SaveSession(session m.Session) (isOk bool,sId string) {
 	session.Expire = time.Now().Unix() + expireTime
 	serializeData,err := serialize(session)
 	if err != nil {
-		LogError("serialize session error", err)
+		log.Logger.Error("Serialize session error", log.Error(err))
 		return false, sId
 	}
 	md := md5.New()
@@ -59,7 +59,7 @@ func SaveSession(session m.Session) (isOk bool,sId string) {
 	if !onlyLocalStore {
 		backCmd := RedisClient.Set(fmt.Sprintf("session_%s", sId), serializeData, time.Duration(expireTime) * time.Second)
 		if !strings.Contains(backCmd.Val(), "OK") {
-			LogError(fmt.Sprintf("save session to redis fail : %v ", err), nil)
+			log.Logger.Error("Save session to redis fail", log.Error(err))
 			return false, sId
 		}
 	}
@@ -83,7 +83,7 @@ func GetOperateUser(c *gin.Context) string {
 		session := GetSessionData(auToken)
 		return fmt.Sprintf("%s", session.User)
 	}else{
-		Return(c, RespJson{Msg:"no auth token", Code:http.StatusUnauthorized})
+		ReturnTokenError(c)
 		return ""
 	}
 }
@@ -99,13 +99,13 @@ func GetCoreRequestRoleList(c *gin.Context) []string {
 	authHeader += "=="
 	b,err := base64.StdEncoding.DecodeString(authHeader)
 	if err != nil {
-		LogError("decode core request base64 fail ", err)
+		log.Logger.Error("Decode core request base64 fail", log.Error(err))
 		return result
 	}
 	var requestToke m.CoreRequestToken
 	err = json.Unmarshal(b, &requestToke)
 	if err != nil {
-		LogError("get core token,json unmarchal fail ", err)
+		log.Logger.Error("Get core token,json unmarchal fail", log.Error(err))
 		return result
 	}
 	if requestToke.Authority != "" {

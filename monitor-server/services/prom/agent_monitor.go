@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"strings"
 	"io/ioutil"
-	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"time"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 )
 
 type agentManagerRequest struct {
@@ -75,17 +75,17 @@ func InitAgentManager(param []*m.AgentManagerTable, url string) {
 		time.Sleep(3*time.Second)
 		resp, err := requestAgentMonitor(param, url, "init")
 		if err != nil {
-			mid.LogError("init agent manager, request error -> ", err)
+			log.Logger.Error("Init agent manager, request error", log.Error(err))
 		}
 		if resp.Code == 200 {
-			mid.LogInfo("init agent manager success")
+			log.Logger.Info("Init agent manager success")
 			break
 		}else{
-			mid.LogError("init agent manager, response error -> ", fmt.Errorf(resp.Message))
+			log.Logger.Warn("Init agent manager, response error", log.String("message", resp.Message))
 		}
 		count++
 		if count >= 10 {
-			mid.LogError("init agent manager fail, retry max time ", nil)
+			log.Logger.Warn("Init agent manager fail, retry max time")
 			break
 		}
 	}
@@ -94,25 +94,25 @@ func InitAgentManager(param []*m.AgentManagerTable, url string) {
 func requestAgentMonitor(param interface{},url,method string) (resp agentManagerResponse,err error) {
 	postData,err := json.Marshal(param)
 	if err != nil {
-		mid.LogError("Failed marshalling data", err)
+		log.Logger.Error("Failed marshalling data", log.Error(err))
 		return resp,err
 	}
 	req,err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/deploy/%s", url, method), strings.NewReader(string(postData)))
 	if err != nil {
-		mid.LogError("curl agent_monitor http request error ", err)
+		log.Logger.Error("Curl agent_monitor http request error", log.Error(err))
 		return resp,err
 	}
 	res,err := http.DefaultClient.Do(req)
 	if err != nil {
-		mid.LogError("curl agent_monitor http response error ", err)
+		log.Logger.Error("Curl agent_monitor http response error", log.Error(err))
 		return resp,err
 	}
 	defer res.Body.Close()
 	body,_ := ioutil.ReadAll(res.Body)
-	mid.LogInfo(fmt.Sprintf("curl %s agent_monitor response : %s ", method, string(body)))
+	log.Logger.Debug(fmt.Sprintf("Curl %s agent_monitor response : %s ", method, string(body)))
 	err = json.Unmarshal(body, &resp)
 	if err != nil {
-		mid.LogError("curl agent_monitor unmarshal error ", err)
+		log.Logger.Error("Curl agent_monitor unmarshal error", log.Error(err))
 		return resp,err
 	}
 	return resp,nil
