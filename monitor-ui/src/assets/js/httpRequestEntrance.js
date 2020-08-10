@@ -6,10 +6,10 @@
 * 统一http请求入口，统一处理http请求响应
 *
  */
-// import router from '@/router'
+import router from '@/router'
 import httpRequest from '@/assets/js/axiosHttp'
 import $ from 'jquery'
-// import {Message} from 'view-design'
+import {Message} from 'view-design'
 
 let loadingCount = 0
 // 页面loading配置
@@ -29,13 +29,13 @@ export const loading = {
   }
 }
 // 错误消息提醒统一组件
-// function errorMessage(content) {
-//   Message.error({
-//     content: content,
-//     duration: 5,
-//     closable: true
-//   })
-// }
+function errorMessage(content) {
+  Message.error({
+    content: content,
+    duration: 5,
+    closable: true
+  })
+}
 
 /*
  * Func: http统一处理
@@ -70,13 +70,15 @@ function httpRequestEntrance (method, url, data, callback, customHttpConfig) {
         return callback(response.data.Data,response.data.Message)
       }
     }
-  }).catch(function () {
+  }).catch(function (error) {
     if (config.isNeedloading) {
       setTimeout(() => {
         loadingCount--
         loading.end()
       },0)
     }
+    errorMessage(error.response.data.Message)
+    router.push('/login')
   })
 }
 
