@@ -98,5 +98,5 @@ func ReturnPasswordError(c *gin.Context)  {
 }
 
 func ReturnTokenError(c *gin.Context)  {
-	ReturnError(c, 401, GetMessageMap(c).TokenError, nil)
+	ReturnError(c, 402, GetMessageMap(c).TokenError, nil)
 }
