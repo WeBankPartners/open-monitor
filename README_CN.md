@@ -28,9 +28,9 @@
 ## 引言  
 Prometheus是由SoundCloud开发的开源监控报警系统和时序列数据库(TSDB)。Prometheus使用Go语言开发，是Google BorgMon监控系统的开源版本。
 
-Prometheus 监控插件包括几个组成部分： Prometheus Server、Consul、Alert Manager、监控应用程序。
+Open-Monitor 无侵入式地封装了Prometheus的功能，并提供更好的告警管理和图表展示，以及监控配置管理与其它系统的交互等。  
 
-Open-Monitor 无侵入式地封装了Prometheus的功能，并提供更好的告警管理和图表展示，以及与其它系统的交互等
+Open-Monitor 包含的组件有Prometheus、Alertmanager、Monitor、Agent_manager、Ping_exporter、Archive_mysql_tool等。
 
 ## 系统架构
 整体架构图如下:  
