@@ -3,14 +3,14 @@ global:
 
 route:
   group_by: ['alertname']
-  group_wait: {{MONITOR_ALERT_WAIT}}s
+  group_wait: 3s
   group_interval: 10s
   repeat_interval: 10m
   receiver: 'web.hook'
 receivers:
 - name: 'web.hook'
   webhook_configs:
-  - url: 'http://127.0.0.1:{{MONITOR_SERVER_PORT}}/wecube-monitor/api/v1/alarm/webhook'
+  - url: 'http://127.0.0.1:8080/wecube-monitor/api/v1/alarm/webhook'
     send_resolved: true
 inhibit_rules:
   - source_match:
