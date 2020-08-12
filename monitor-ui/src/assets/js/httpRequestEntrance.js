@@ -64,10 +64,10 @@ function httpRequestEntrance (method, url, data, callback, customHttpConfig) {
       },0)
     }
     if (window.request) {
-      return callback(response.Data)
+      return callback(response.data)
     } else {
       if (response.status < 400 && callback !== undefined) {
-        return callback(response.data.Data,response.data.Message)
+        return callback(response.data.data,response.data.message)
       }
     }
   }).catch(function (error) {
@@ -77,7 +77,7 @@ function httpRequestEntrance (method, url, data, callback, customHttpConfig) {
         loading.end()
       },0)
     }
-    errorMessage(error.response.data.Message)
+    errorMessage(error.response.data.message)
   })
 }
 
