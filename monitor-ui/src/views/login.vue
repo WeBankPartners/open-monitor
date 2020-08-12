@@ -71,9 +71,9 @@ export default {
         }
       }).then((response) => {
         if (response.status < 400) {
-          setToken(`${response.data.Data.token}`)
-          localStorage.username = response.data.Data.user
-          this.$Message.success(response.data.Message)
+          setToken(`${response.data.data.token}`)
+          localStorage.username = response.data.data.user
+          this.$Message.success(response.data.message)
           this.$router.push({path: '/'})
         }
       })
