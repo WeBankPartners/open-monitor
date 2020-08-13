@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "serve": "vue-cli-service serve",
+    "start": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
     "plugin": "vue-cli-service build --mode plugin"
@@ -21,7 +21,7 @@
     "jquery": "^3.4.1",
     "js-base64": "^2.5.1",
     "js-cookie": "^2.2.1",
-    "serialize-javascript": "^2.1.1",
+    "serialize-javascript": "^3.1.0",
     "style-resources-loader": "^1.2.1",
     "typescript": "^3.9.2",
     "vee-validate": "^2.0.6",
