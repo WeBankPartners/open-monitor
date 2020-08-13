@@ -1,6 +1,6 @@
 {
   "http": {
-    "port": "{{MONITOR_SERVER_PORT}}",
+    "port": "8080",
     "swagger": false,
     "cross": false,
     "return_error": true,
