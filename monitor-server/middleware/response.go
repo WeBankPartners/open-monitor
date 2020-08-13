@@ -9,26 +9,27 @@ import (
 )
 
 type RespJson struct {
-	Code  int  `json:"Code"`
-	Message   string    `json:"Message"`
-	Data  interface{}  `json:"Data"`
+	Code  int  `json:"code"`
+	Status  string  `json:"status"`
+	Message   string    `json:"message"`
+	Data  interface{}  `json:"data"`
 }
 
 func ReturnError(c *gin.Context, code int, msg string, err error) {
 	log.Logger.Error(fmt.Sprintf("Request %s fail", c.FullPath()), log.Int("Code", code), log.String("Message", msg), log.Error(err))
 	if log.LogLevel == "debug" {
-		c.JSON(code, RespJson{Code:code, Message:msg, Data:err})
+		c.JSON(code, RespJson{Status:"ERROR", Code:code, Message:msg, Data:err})
 	}else{
-		c.JSON(code, RespJson{Code:code, Message:msg})
+		c.JSON(code, RespJson{Status:"ERROR", Code:code, Message:msg})
 	}
 }
 
 func ReturnSuccessWithMessage(c *gin.Context, msg string) {
-	c.JSON(http.StatusOK, RespJson{Code:200, Message:msg})
+	c.JSON(http.StatusOK, RespJson{Status:"OK", Code:200, Message:msg})
 }
 
 func ReturnSuccess(c *gin.Context) {
-	c.JSON(http.StatusOK, RespJson{Code:200, Message:GetMessageMap(c).Success})
+	c.JSON(http.StatusOK, RespJson{Status:"OK", Code:200, Message:GetMessageMap(c).Success})
 }
 
 func ReturnData(c *gin.Context, data interface{}) {
@@ -42,7 +43,7 @@ func ReturnSuccessData(c *gin.Context, data interface{})  {
 	if fmt.Sprintf("%v", data) == `[]` {
 		data = []string{}
 	}
-	c.JSON(http.StatusOK, RespJson{Code:200, Message:GetMessageMap(c).Success, Data:data})
+	c.JSON(http.StatusOK, RespJson{Status:"OK", Code:200, Message:GetMessageMap(c).Success, Data:data})
 }
 
 func ReturnValidateError(c *gin.Context, msg string)  {
@@ -98,5 +99,5 @@ func ReturnPasswordError(c *gin.Context)  {
 }
 
 func ReturnTokenError(c *gin.Context)  {
-	ReturnError(c, 401, GetMessageMap(c).TokenError, nil)
+	ReturnError(c, 402, GetMessageMap(c).TokenError, nil)
 }

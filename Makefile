@@ -46,6 +46,6 @@ package: image agent
 upload: package
 	$(eval container_id:=$(shell docker run -v $(current_dir):/package -itd --entrypoint=/bin/sh minio/mc))
 	docker exec $(container_id) mc config host add wecubeS3 $(s3_server_url) $(s3_access_key) $(s3_secret_key) wecubeS3
-	docker exec $(container_id) mc cp wecube-plugins-monitor-$(version).zip wecubeS3/wecube-plugin-package-bucket
+	docker exec $(container_id) mc cp /package/wecube-plugins-monitor-$(version).zip wecubeS3/wecube-plugin-package-bucket
 	docker rm -f $(container_id)
 	rm -rf wecube-plugins-monitor-$(version).zip
