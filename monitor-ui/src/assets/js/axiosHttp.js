@@ -18,8 +18,9 @@ export default function ajax (options) {
     data: JSON.stringify(options.data)
   }
   // 导出请求时增加响应类型
-  if (options.url.endsWith('/export')) {
-    ajaxObj.responseType = 'blob'
-  }
+  console.log('monitor')
+  // if (options.url.endsWith('/export')) {
+  //   ajaxObj.responseType = 'blob'
+  // }
   return window.request ? window.request(ajaxObj) : axios(ajaxObj)
 }

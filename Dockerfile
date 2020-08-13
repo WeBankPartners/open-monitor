@@ -1,6 +1,8 @@
 FROM  ccr.ccs.tencentyun.com/webankpartners/wecube-prometheus:v1.0
 LABEL maintainer = "Webank CTB Team"
 
+ENV JAVA_HOME=/opt/jdk
+ENV PATH=$PATH:/opt/jdk/bin
 ENV BASE_HOME=/app/monitor
 ENV PROMETHEUS_HOME=$BASE_HOME/prometheus
 ENV ALERTMANAGER_HOME=$BASE_HOME/alertmanager
