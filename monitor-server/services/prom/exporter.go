@@ -13,10 +13,8 @@ func GetEndpointData(ip,port string,prefix,keyword []string) (error, []string) {
 	var strList []string
 	resp,err := http.Get(fmt.Sprintf("http://%s:%s/metrics", ip, port))
 	if err != nil {
-		tryCount := 0
 		var tmpErr error
 		for i:=0;i<4;i++ {
-			tryCount = tryCount + 1
 			time.Sleep(3*time.Second)
 			resp,tmpErr = http.Get(fmt.Sprintf("http://%s:%s/metrics", ip, port))
 			if tmpErr == nil {
