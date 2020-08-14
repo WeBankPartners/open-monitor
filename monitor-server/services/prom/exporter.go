@@ -5,23 +5,37 @@ import (
 	"fmt"
 	"io/ioutil"
 	"strings"
+	"time"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 )
 
 func GetEndpointData(ip,port string,prefix,keyword []string) (error, []string) {
 	var strList []string
 	resp,err := http.Get(fmt.Sprintf("http://%s:%s/metrics", ip, port))
 	if err != nil {
-		fmt.Printf("http get error %v \n", err)
-		return err,strList
+		tryCount := 0
+		var tmpErr error
+		for i:=0;i<4;i++ {
+			tryCount = tryCount + 1
+			time.Sleep(3*time.Second)
+			resp,tmpErr = http.Get(fmt.Sprintf("http://%s:%s/metrics", ip, port))
+			if tmpErr == nil {
+				break
+			}
+		}
+		if tmpErr != nil {
+			log.Logger.Error("Get agent metric data fail,retry 5 times", log.Error(tmpErr))
+			return tmpErr, strList
+		}
 	}
 	body, err := ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
 	if err != nil {
-		fmt.Printf("read body error %v \n", err)
+		log.Logger.Error("Get agent metric response body fail", log.Error(err))
 		return err,strList
 	}
 	if resp.StatusCode/100 != 2 {
-		fmt.Printf("response http code %v \n", resp.StatusCode)
+		log.Logger.Error("Get agent metric response code error", log.Int("code", resp.StatusCode))
 		return err,strList
 	}
 	for _,v := range strings.Split(string(body), "\n") {
@@ -54,6 +68,6 @@ func GetEndpointData(ip,port string,prefix,keyword []string) (error, []string) {
 			}
 		}
 	}
-	fmt.Printf("metric num : %d \n", len(strList))
+	log.Logger.Info("Get agent metric success", log.Int("num", len(strList)))
 	return nil,strList
 }
