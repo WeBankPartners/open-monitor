@@ -2,7 +2,7 @@
 
 ## <span id="menu_introdution"></span>主菜单介绍
 ![主页面](images/user_guide/user_guide_01.png)  
-Monitor的功能总体分为: 视图、告警配置、告警展示。下面详细介绍每个菜单下的每个功能。
+Open-Monitor的功能总体分为: 视图、配置、告警展示。下面详细介绍每个菜单下的每个功能。
 
 ## <span id="dashboard"></span>视图  
 视图包括 对象视图、指标配置、自定义视图。
