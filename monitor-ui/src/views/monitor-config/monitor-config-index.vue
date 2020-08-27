@@ -21,10 +21,10 @@ export default {
       activeTab: '/monitorConfigIndex/endpointManagement',
       tabs: [
         {label: 'field.endpoint', path:'/monitorConfigIndex/endpointManagement'},
+        {label: 'field.resourceLevel', path:'/monitorConfigIndex/resourceLevel'},
         {label: 'field.group', path:'/monitorConfigIndex/groupManagement'},
         {label: 'field.threshold', path:'/monitorConfigIndex/thresholdManagement'},
-        {label: 'field.log', path:'/monitorConfigIndex/logManagement'},
-        {label: 'field.resourceLevel', path:'/monitorConfigIndex/resourceLevel'}
+        {label: 'field.log', path:'/monitorConfigIndex/logManagement'}
       ]
     }
   },
