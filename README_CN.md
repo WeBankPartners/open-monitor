@@ -109,7 +109,7 @@ agent安装文档
 请参考本地开发环境配置文档 [Open-Monitor本地环境配置文档](wiki/develop_local_guide.md)
 
 ## 版权声明
-WeCMDB是基于 Apache License 2.0 协议， 详情请参考
+Open-Monitor是基于 Apache License 2.0 协议， 详情请参考
 [LICENSE](LICENSE)
 
 ## 社区
