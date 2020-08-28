@@ -682,6 +682,11 @@ func GetLogMonitorByEndpoint(endpointId int) (err error,result []*m.LogMonitorTa
 	return err,result
 }
 
+func GetLogMonitorByEndpointNew(endpointId int) (err error,result []*m.LogMonitorTable) {
+	err = x.SQL("SELECT * FROM log_monitor WHERE strategy_id=? order by path", endpointId).Find(&result)
+	return err,result
+}
+
 func ListLogMonitorNew(query *m.TplQuery) error  {
 	var result []*m.TplObj
 	if query.SearchType == "endpoint" {
@@ -702,7 +707,7 @@ func ListLogMonitorNew(query *m.TplQuery) error  {
 				tmpPath = v.Path
 				tmpKeywords = []*m.LogMonitorStrategyDto{}
 			}
-			tmpKeywords = append(tmpKeywords, &m.LogMonitorStrategyDto{Id:v.Id,Keyword:v.Keyword})
+			tmpKeywords = append(tmpKeywords, &m.LogMonitorStrategyDto{Id:v.Id,Keyword:v.Keyword,Priority:v.Priority})
 		}
 		if len(tmpKeywords) > 0 {
 			lms = append(lms, &m.LogMonitorDto{Id:logMonitorTable[len(logMonitorTable)-1].Id, EndpointId:logMonitorTable[len(logMonitorTable)-1].StrategyId, Path:logMonitorTable[len(logMonitorTable)-1].Path, Strategy:tmpKeywords})
