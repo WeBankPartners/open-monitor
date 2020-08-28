@@ -699,6 +699,7 @@ func ListLogMonitorNew(query *m.TplQuery) error  {
 		GetEndpoint(&endpointObj)
 		if len(logMonitorTable) == 0 {
 			result = append(result, &m.TplObj{TplId: 0, ObjId: query.SearchId, ObjName: endpointObj.Guid, ObjType: "endpoint", Operation: true, Strategy: []*m.StrategyTable{}, LogMonitor: []*m.LogMonitorDto{}})
+			query.Tpl = result
 			return nil
 		}
 		var lms []*m.LogMonitorDto
