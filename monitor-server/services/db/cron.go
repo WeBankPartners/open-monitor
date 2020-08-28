@@ -158,7 +158,7 @@ func StartCheckLogKeyword()  {
 }
 
 func CheckLogKeyword()  {
-	log.Logger.Info("start check log keyword")
+	log.Logger.Debug("start check log keyword")
 	nowTime := time.Now().Unix()
 	var queryParam m.QueryMonitorData
 	queryParam.Start = nowTime - 10
@@ -166,6 +166,8 @@ func CheckLogKeyword()  {
 	queryParam.Step = 10
 	queryParam.PromQ = "node_log_monitor_count_total"
 	queryParam.Legend = "$custom_all"
+	queryParam.Endpoint = []string{"endpoint"}
+	queryParam.Metric = []string{"metric"}
 	dataSerials := datasource.PrometheusData(&queryParam)
 	if len(dataSerials) == 0 {
 		log.Logger.Info("Check log keyword data empty")
@@ -230,7 +232,8 @@ func CheckLogKeyword()  {
 
 func getLogMonitorAlarmTags(name string) m.LogMonitorTags {
 	var result m.LogMonitorTags
-	result.Endpoint = strings.Split(name, ":log-monitor")[0]
+	tmpEndpoint := strings.Split(name, "e_guid=")[1]
+	result.Endpoint = strings.Split(tmpEndpoint, ",")[0]
 	result.Tags = fmt.Sprintf("e_guid:%s", result.Endpoint)
 	fileName := strings.Split(name, "file=")
 	if len(fileName) > 1 {
