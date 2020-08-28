@@ -695,7 +695,10 @@ func ListLogMonitorNew(query *m.TplQuery) error  {
 		if err != nil {
 			return err
 		}
+		endpointObj := m.EndpointTable{Id:query.SearchId}
+		GetEndpoint(&endpointObj)
 		if len(logMonitorTable) == 0 {
+			result = append(result, &m.TplObj{TplId: 0, ObjId: query.SearchId, ObjName: endpointObj.Guid, ObjType: "endpoint", Operation: true, Strategy: []*m.StrategyTable{}, LogMonitor: []*m.LogMonitorDto{}})
 			return nil
 		}
 		var lms []*m.LogMonitorDto
@@ -712,7 +715,7 @@ func ListLogMonitorNew(query *m.TplQuery) error  {
 		if len(tmpKeywords) > 0 {
 			lms = append(lms, &m.LogMonitorDto{Id:logMonitorTable[len(logMonitorTable)-1].Id, EndpointId:logMonitorTable[len(logMonitorTable)-1].StrategyId, Path:logMonitorTable[len(logMonitorTable)-1].Path, Strategy:tmpKeywords})
 		}
-		result = append(result, &m.TplObj{Operation:true, LogMonitor:lms})
+		result = append(result, &m.TplObj{Operation:true, ObjId: query.SearchId, ObjName: endpointObj.Guid, ObjType: "endpoint", LogMonitor:lms})
 	}
 	query.Tpl = result
 	return nil
