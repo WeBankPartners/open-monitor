@@ -34,7 +34,7 @@ func ListLogTpl(c *gin.Context)  {
 	var query m.TplQuery
 	query.SearchType = searchType
 	query.SearchId = id
-	err := db.ListLogMonitor(&query)
+	err := db.ListLogMonitorNew(&query)
 	if err != nil {
 		mid.ReturnHandleError(c, err.Error(), err)
 		return
