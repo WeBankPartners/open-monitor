@@ -318,3 +318,10 @@ type EndpointHttpTable struct {
 	Method  string  `json:"method"`
 	Url  string  `json:"url"`
 }
+
+type LogMonitorTags struct {
+	Endpoint  string  `json:"endpoint"`
+	FilePath  string  `json:"file_path"`
+	Keyword   string  `json:"keyword"`
+	Tags      string  `json:"tags"`
+}
