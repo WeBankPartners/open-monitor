@@ -51,7 +51,7 @@ import DelConfirm from '@/components/del-confirm/index.js'
 window.use(DelConfirm)
 
 import Dashboard from '@/views/dashboard'
-window.addHomepageComponent && window.addHomepageComponent({name:()=>{return window.vm.$t('menu.systemName')},component: Dashboard})
+window.addHomepageComponent && window.addHomepageComponent({name:()=>{return window.vm.$t('menu.homepageName')},component: Dashboard})
 
 window.component('tdSlot', {
   render(createElement) {
