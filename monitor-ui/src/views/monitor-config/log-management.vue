@@ -52,7 +52,7 @@
       </ModalComponent>
       <ModalComponent :modelConfig="modelConfig">
         <div slot="thresholdConfig" class="extentClass">  
-          <div class="marginbottom params-each">
+          <!-- <div class="marginbottom params-each">
             <label class="col-md-2 label-name">{{$t('tableKey.condition')}}:</label>
             <Select v-model="modelConfig.cond" style="width:100px">
               <Option v-for="item in modelConfig.condList" :value="item.value" :key="item.value">{{ item.label }}</Option>
@@ -89,7 +89,7 @@
             <div style="margin-left:10px">
               <label v-show="veeErrors.has('lastValue')" class="is-danger">{{ veeErrors.first('lastValue')}}</label>
             </div>
-          </div>
+          </div> -->
           <div class="marginbottom params-each">
             <label class="col-md-2 label-name">{{$t('tableKey.s_priority')}}:</label>
             <Select v-model="modelConfig.priority" style="width:100px">
@@ -170,9 +170,9 @@ export default {
               isExtendF: true,
               title: '',
               config: [
-                {title: 'tableKey.condition', value: 'cond', display: true},
+                // {title: 'tableKey.condition', value: 'cond', display: true},
                 {title: 'tableKey.keyword', value: 'keyword', display: true},
-                {title: 'tableKey.s_last', value: 'last', display: true},
+                // {title: 'tableKey.s_last', value: 'last', display: true},
                 {title: 'tableKey.s_priority', value: 'priority', display: true},
                 {title: 'table.action',btn:[
                   {btn_name: 'button.edit', btn_func: 'editPathItem'},
