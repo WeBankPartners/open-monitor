@@ -216,7 +216,7 @@ func CheckLogKeyword()  {
 						}
 					}
 					if needAdd {
-						addAlarmRows = append(addAlarmRows, &m.AlarmTable{StrategyId:0, Endpoint:lmt.Endpoint,Status:"firing",SMetric:"log_monitor",SExpr:"node_log_monitor_count_total",SCond:">0",SLast:"10s",SPriority:"high",Content:"log_alarm",Tags:lmt.Tags,StartValue:lastValue})
+						addAlarmRows = append(addAlarmRows, &m.AlarmTable{StrategyId:0, Endpoint:lmt.Endpoint,Status:"firing",SMetric:"log_monitor",SExpr:"node_log_monitor_count_total",SCond:">0",SLast:"10s",SPriority:v.Priority,Content:"log_alarm",Tags:lmt.Tags,StartValue:lastValue})
 					}
 				}
 			}

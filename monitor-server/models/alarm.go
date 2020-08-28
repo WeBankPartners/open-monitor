@@ -218,6 +218,7 @@ type LogMonitorTable struct {
 	StrategyId  int  `json:"strategy_id"`
 	Path  string  `json:"path"`
 	Keyword  string `json:"keyword"`
+	Priority  string  `json:"priority"`
 }
 
 type LogMonitorDto struct {
