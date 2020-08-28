@@ -4,6 +4,7 @@
   },
   "menu": {
     "systemName": "Open-Monitor (功能演示版)",
+    "homepageName": "监控平台",
     "view": "视图",
     "endpointView": "对象视图",
     "systemMonitoring": "系统监控",

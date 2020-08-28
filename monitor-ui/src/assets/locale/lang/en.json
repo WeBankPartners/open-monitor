@@ -4,6 +4,7 @@
   },
   "menu": {
     "systemName": "Open-Monitor (Demo Version)",
+    "homepageName": "Open-Monitor",
     "view": "Views",
     "endpointView": "Endpoint Views",
     "systemMonitoring": "System Monitoring",
