@@ -119,9 +119,13 @@ func getCoreEventKey(status,endpoint string) []string {
 	return result
 }
 
-func NotifyCoreEvent(endpoint string,strategyId int) error {
+func NotifyCoreEvent(endpoint string,strategyId int,alarmId int) error {
 	var alarms []*m.AlarmTable
-	x.SQL("SELECT id,status FROM alarm WHERE endpoint=? AND strategy_id=? ORDER BY id DESC", endpoint, strategyId).Find(&alarms)
+	if alarmId > 0 {
+		x.SQL("SELECT id,status FROM alarm WHERE id=? ORDER BY id DESC", alarmId).Find(&alarms)
+	}else {
+		x.SQL("SELECT id,status FROM alarm WHERE endpoint=? AND strategy_id=? ORDER BY id DESC", endpoint, strategyId).Find(&alarms)
+	}
 	if len(alarms) == 0 {
 		return fmt.Errorf("can not find any alarm with endpoint:%s startegy_id:%d", endpoint, strategyId)
 	}
