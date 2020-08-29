@@ -45,13 +45,13 @@
         <systemParameter name="MONITOR_TOMCAT_GROUP" scopeType="plugins" defaultValue="default_tomcat_group"/>
         <systemParameter name="MONITOR_NGINX_GROUP" scopeType="plugins" defaultValue="default_nginx_group"/>
         <systemParameter name="MONITOR_JAVA_GROUP" scopeType="plugins" defaultValue="default_java_group"/>
-        <systemParameter name="HOST_EXPORTER_S3_PATH" scopeType="global" defaultValue="http://127.0.0.1:9000/wecube-agent/node_exporter_v2.1.tar.gz"/>
+        <systemParameter name="HOST_EXPORTER_S3_PATH" scopeType="global" defaultValue="http://127.0.0.1:9000/wecube-agent/node_exporter_v2.2.tar.gz"/>
         <systemParameter name="MONITOR_MAIL_SENDER_USER" scopeType="global" defaultValue="default_user"/>
         <systemParameter name="MONITOR_MAIL_SENDER_SERVER" scopeType="global" defaultValue="default_server"/>
         <systemParameter name="MONITOR_MAIL_SENDER_PASSWORD" scopeType="global" defaultValue="default_password"/>
         <systemParameter name="MONITOR_ALARM_FIRING_CALLBACK" scopeType="plugins" defaultValue="default_firing_callback"/>
         <systemParameter name="MONITOR_ALARM_RECOVER_CALLBACK" scopeType="plugins" defaultValue="default_recover_callback"/>
-        <systemParameter name="HOST_EXPORTER_INSTALL_SCRIPT" scopeType="global" defaultValue="/tmp/monitor/node_exporter_v2.1/start.sh"/>
+        <systemParameter name="HOST_EXPORTER_INSTALL_SCRIPT" scopeType="global" defaultValue="/tmp/monitor/node_exporter_v2.2/start.sh"/>
         <systemParameter name="HOST_EXPORTER_UNPACK" scopeType="global" defaultValue="true"/>
         <systemParameter name="HOST_EXPORTER_UPLOAD_PATH" scopeType="global" defaultValue="/tmp/monitor/"/>
         <systemParameter name="MONITOR_PING_GROUP" scopeType="plugins" defaultValue="default_ping_group"/>
