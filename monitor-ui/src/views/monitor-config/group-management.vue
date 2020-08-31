@@ -218,7 +218,6 @@
             'X-Auth-Token': getToken() || null
           }
         }).then((response) => {
-          console.log(response)
           if (response.status < 400) {
            let content = JSON.stringify(response.data)
           let fileName = `grp_strategy_tpl_${new Date().format('yyyyMMddhhmmss')}.json`
