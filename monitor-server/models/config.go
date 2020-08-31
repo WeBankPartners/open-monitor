@@ -5,6 +5,7 @@ import (
 	"log"
 	"github.com/toolkits/file"
 	"encoding/json"
+	"os"
 )
 
 type LogConfig struct {
@@ -174,6 +175,7 @@ var (
 	config     *GlobalConfig
 	lock       = new(sync.RWMutex)
 	CoreUrl string
+	CoreJwtKey string
 )
 
 func Config() *GlobalConfig {
@@ -214,5 +216,6 @@ func InitConfig(cfg string) {
 			break
 		}
 	}
+	CoreJwtKey = os.Getenv("JWT_SIGNING_KEY")
 	log.Println("read config file:", cfg, "successfully")
 }

@@ -15,6 +15,9 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
+	"io/ioutil"
+	"github.com/dgrijalva/jwt-go"
+	"strconv"
 )
 
 var RedisClient *redis.Client
@@ -191,4 +194,40 @@ func deserialize(src []byte, dst interface{}) error {
 		return err
 	}
 	return nil
+}
+
+func DecodeCoreToken(token,key string) (result m.CoreJwtToken,err error) {
+	if strings.HasPrefix(token, "Bearer") {
+		token = token[7:]
+	}
+	if key == "" || strings.HasPrefix(key, "{{") {
+		key = "Platform+Auth+Server+Secret"
+	}
+	keyBytes,err := ioutil.ReadAll(base64.NewDecoder(base64.RawStdEncoding, bytes.NewBufferString(key)))
+	if err != nil {
+		log.Logger.Error("Decode core token fail,base64 decode error", log.Error(err))
+		return result,err
+	}
+	pToken,err := jwt.Parse(token, func(*jwt.Token) (interface{}, error) {
+		return keyBytes, nil
+	})
+	if err != nil {
+		log.Logger.Error("Decode core token fail,jwt parse error", log.Error(err))
+		return result,err
+	}
+	claimMap,ok := pToken.Claims.(jwt.MapClaims)
+	if !ok {
+		log.Logger.Error("Decode core token fail,claims to map error", log.Error(err))
+		return result,err
+	}
+	result.User = fmt.Sprintf("%s", claimMap["sub"])
+	result.Expire,err = strconv.ParseInt(fmt.Sprintf("%.0f", claimMap["exp"]), 10, 64)
+	if err != nil {
+		log.Logger.Error("Decode core token fail,parse expire to int64 error", log.Error(err))
+		return result,err
+	}
+	roleListString := fmt.Sprintf("%s", claimMap["authority"])
+	roleListString = roleListString[1:len(roleListString)-1]
+	result.Roles = strings.Split(roleListString, ",")
+	return result,nil
 }
