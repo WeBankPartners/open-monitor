@@ -6,7 +6,6 @@ import (
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"net/http"
 	"time"
-	"strings"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"encoding/base64"
 	"strconv"
@@ -168,23 +167,42 @@ func GetUserMsg(c *gin.Context)  {
 func AuthRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if !m.Config().Http.Session.Enable {
+			//auToken := c.GetHeader("Authorization")
+			//if auToken != "" {
+			//	_,err := mid.DecodeCoreToken(auToken, m.CoreJwtKey)
+			//	if err != nil {
+			//		mid.ReturnTokenError(c)
+			//		c.Abort()
+			//	}else{
+			//		c.Next()
+			//	}
+			//}else{
+			//	mid.ReturnTokenError(c)
+			//	c.Abort()
+			//}
 			c.Next()
 			return
-		}
-		if strings.Contains(c.Request.URL.Path, "alarm/problem/list") || strings.Contains(c.Request.URL.Path, "alarm/webhook") {
-			c.Next()
-			return
-		}
-		auToken := c.GetHeader("X-Auth-Token")
-		if auToken != ""{
-			if m.Config().Http.Session.ServerEnable {
-				if strings.Contains(c.Request.URL.Path, "agent/export/") || strings.Contains(c.Request.URL.Path, "alarm/send") {
-					if auToken == m.Config().Http.Session.ServerToken {
-						c.Next()
-					}
+		}else {
+			auToken := c.GetHeader("X-Auth-Token")
+			if auToken != "" {
+				if mid.IsActive(auToken) {
+					c.Next()
+				} else {
+					mid.ReturnTokenError(c)
+					c.Abort()
 				}
+			} else {
+				mid.ReturnTokenError(c)
+				c.Abort()
 			}
-			if mid.IsActive(auToken) {
+		}
+	}
+}
+
+func AuthServerRequest() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if m.Config().Http.Session.ServerEnable {
+			if c.GetHeader("X-Auth-Token") == m.Config().Http.Session.ServerToken {
 				c.Next()
 			}else{
 				mid.ReturnTokenError(c)
