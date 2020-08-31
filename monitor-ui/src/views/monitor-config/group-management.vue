@@ -57,6 +57,7 @@
     {btn_name: 'field.log', btn_func: 'logManagement'},
     {btn_name: 'button.authorize', btn_func: 'authorizeF'},
   ]
+  import axios from 'axios'
   export default {
     name: '',
     data() {
@@ -209,9 +210,17 @@
           this.$Message.warning(this.$t('tips.selectData'))
           return
         }
-        const api = this.$root.apiCenter.groupManagement.export.api + '?id=' + this.selectedData.checkedIds.join(',')
-        this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, {}, (responseData) => {
-          let content = JSON.stringify(responseData)
+        const api = require('@/assets/js/baseURL').baseURL_config + '/api/v1/' + this.$root.apiCenter.groupManagement.export.api + '?id=' + this.selectedData.checkedIds.join(',')
+        axios({
+          method: 'GET',
+          url: api,
+          headers: {
+            'X-Auth-Token': getToken() || null
+          }
+        }).then((response) => {
+          console.log(response)
+          if (response.status < 400) {
+           let content = JSON.stringify(response.data)
           let fileName = `grp_strategy_tpl_${new Date().format('yyyyMMddhhmmss')}.json`
           let blob = new Blob([content])
           if('msSaveOrOpenBlob' in navigator){
@@ -231,7 +240,12 @@
               navigator.msSaveOrOpenBlob(blob, fileName)
             }
           }
+          }
         })
+        .catch(() => {
+          this.$Message.warning(this.$t('tips.failed'))
+        });
+
       },
       uploadSucess () {
         this.$Message.success(this.$t('tips.success'))
