@@ -82,6 +82,12 @@ func InitHttpServer(exportAgent bool) {
 		entityApi.GET("/test", alarm.TestNotifyAlarm)
 		entityApi.POST("/alarm/query", alarm.QueryEntityAlarm)
 	}
+	r.POST(fmt.Sprintf("%s/webhook", urlPrefix), alarm.AcceptAlertMsg)
+	// auth server side
+	serverApi := r.Group(fmt.Sprintf("%s/openapi", urlPrefix), user.AuthServerRequest())
+	{
+		serverApi.POST("/alarm/send", alarm.OpenAlarmApi)
+	}
 	// auth api
 	authApi := r.Group(fmt.Sprintf("%s/api/v1", urlPrefix), user.AuthRequired())
 	{
@@ -140,7 +146,6 @@ func InitHttpServer(exportAgent bool) {
 			alarmApi.POST("/strategy/add", alarm.AddStrategy)
 			alarmApi.POST("/strategy/update", alarm.EditStrategy)
 			alarmApi.GET("/strategy/delete", alarm.DeleteStrategy)
-			alarmApi.POST("/webhook", alarm.AcceptAlertMsg)
 			alarmApi.GET("/history", alarm.GetHistoryAlarm)
 			alarmApi.GET("/problem/list", alarm.GetProblemAlarm)
 			alarmApi.GET("/problem/close", alarm.CloseALarm)

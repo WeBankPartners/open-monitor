@@ -10,6 +10,15 @@ mkdir -p /usr/local/monitor/$exporter_type/data
 /bin/cp -f $package_path/$bin_name $package_path/control /usr/local/monitor/$exporter_type/
 cd /usr/local/monitor/$exporter_type/
 ./control restart
+for i in `seq 1 60`
+do
+  if [ "`netstat -lntp|grep 9100|wc -l`" = "1" ]
+  then
+    break
+  else
+    sleep 1
+  fi
+done
 
 cronfile="/var/spool/cron/root"
 if [[ ! -f $cronfile ]];
