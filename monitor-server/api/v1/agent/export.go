@@ -274,3 +274,113 @@ func autoAddAppPathConfig(param m.RegisterParamNew, paths string) error {
 	}
 	return err
 }
+
+type processResult struct {
+	ResultCode  string  `json:"resultCode"`
+	ResultMessage  string  `json:"resultMessage"`
+	Results  processResultOutput  `json:"results"`
+}
+
+type processResultOutput struct {
+	Outputs  []processResultOutputObj  `json:"outputs"`
+}
+
+type processResultOutputObj struct {
+	CallbackParameter  string  `json:"callbackParameter"`
+	Guid  string  `json:"guid"`
+	ErrorCode  string  `json:"errorCode"`
+	ErrorMessage  string  `json:"errorMessage"`
+	ErrorDetail  string  `json:"errorDetail,omitempty"`
+}
+
+type processRequest struct {
+	RequestId  string  	`json:"requestId"`
+	Inputs  []processRequestObj  `json:"inputs"`
+}
+
+type processRequestObj struct {
+	Guid  string  `json:"guid"`
+	CallbackParameter  string  `json:"callbackParameter"`
+	HostIp  string  `json:"host_ip"`
+	ProcessName string `json:"process_name"`
+	ProcessTag  string `json:"process_tag"`
+}
+
+func AutoUpdateProcessMonitor(c *gin.Context)  {
+	var param processRequest
+	var result processResult
+	results := []processResultOutputObj{}
+	var err error
+	defer func() {
+		if err != nil {
+			result.ResultCode = "1"
+			result.ResultMessage = err.Error()
+		}else{
+			result.ResultCode = "0"
+			result.ResultMessage = "success"
+		}
+		result.Results= processResultOutput{Outputs:results}
+		c.JSON(http.StatusOK, result)
+	}()
+	if err = c.ShouldBindJSON(&param);err==nil {
+		if len(param.Inputs) == 0 {
+			return
+		}
+		for _,input := range param.Inputs {
+			subResult,subError := updateProcess(input)
+			results = append(results, subResult)
+			if subError != nil {
+				log.Logger.Error("Handle auto update process fail", log.JsonObj("input", input), log.Error(subError))
+				err = subError
+			}
+		}
+	}else{
+		return
+	}
+}
+
+func updateProcess(input processRequestObj) (result processResultOutputObj,err error) {
+	result.Guid = input.Guid
+	result.CallbackParameter = input.CallbackParameter
+	defer func() {
+		if err != nil {
+			result.ErrorCode = "1"
+			result.ErrorMessage = err.Error()
+		}else{
+			result.ErrorCode = "0"
+			result.ErrorMessage = ""
+		}
+	}()
+	if input.HostIp == "" {
+		err = fmt.Errorf("Param host_ip is empty ")
+		return result,err
+	}
+	if input.ProcessName == "" {
+		err = fmt.Errorf("Param process_name is empty ")
+		return result,err
+	}
+	endpointObj := m.EndpointTable{ExportType:"host", Ip:input.HostIp}
+	db.GetEndpoint(&endpointObj)
+	if endpointObj.Id <= 0 {
+		err = fmt.Errorf("Can not find host endpoint with ip=%s ", input.HostIp)
+		return result,err
+	}
+	var param m.ProcessUpdateDto
+	param.EndpointId = endpointObj.Id
+	processMsg := input.ProcessName
+	if input.ProcessTag != "" {
+		processMsg = fmt.Sprintf("%s(%s)", input.ProcessName, input.ProcessTag)
+	}
+	param.ProcessList = []string{processMsg}
+	err = db.UpdateProcess(param)
+	if err != nil {
+		err = fmt.Errorf("Update db fail,%s ", err.Error())
+		return result,err
+	}
+	err = db.UpdateNodeExporterProcessConfig(param.EndpointId)
+	if err != nil {
+		err = fmt.Errorf("Update proxy to remote node_exporter fail,%s ", err.Error())
+		return result,err
+	}
+	return result,err
+}
