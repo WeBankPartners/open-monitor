@@ -47,15 +47,15 @@ func ReturnSuccessData(c *gin.Context, data interface{})  {
 }
 
 func ReturnValidateError(c *gin.Context, msg string)  {
-	ReturnError(c, 401, fmt.Sprintf(GetMessageMap(c).ParamValidateError, msg), nil)
+	ReturnError(c, 400, fmt.Sprintf(GetMessageMap(c).ParamValidateError, msg), nil)
 }
 
 func ReturnParamTypeError(c *gin.Context, paramName,typeName string)  {
-	ReturnError(c, 401, fmt.Sprintf(GetMessageMap(c).ParamTypeError, paramName, typeName), nil)
+	ReturnError(c, 400, fmt.Sprintf(GetMessageMap(c).ParamTypeError, paramName, typeName), nil)
 }
 
 func ReturnParamEmptyError(c *gin.Context, key string)  {
-	ReturnError(c, 401, fmt.Sprintf(GetMessageMap(c).ParamEmptyError, key), nil)
+	ReturnError(c, 400, fmt.Sprintf(GetMessageMap(c).ParamEmptyError, key), nil)
 }
 
 func ReturnQueryTableError(c *gin.Context, table string, err error)  {
@@ -95,7 +95,7 @@ func ReturnHandleError(c *gin.Context, msg string, err error)  {
 }
 
 func ReturnPasswordError(c *gin.Context)  {
-	ReturnError(c, 401, GetMessageMap(c).PasswordError, nil)
+	ReturnError(c, 400, GetMessageMap(c).PasswordError, nil)
 }
 
 func ReturnTokenError(c *gin.Context)  {
