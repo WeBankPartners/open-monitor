@@ -72,7 +72,7 @@ type businessHttpDto struct {
 func (c *businessMonitorObj) start()  {
 	var err error
 	log.Infof("start business collector, path: %s \n", c.Path)
-	c.TailSession,err = tail.TailFile(c.Path, tail.Config{Follow:true})
+	c.TailSession,err = tail.TailFile(c.Path, tail.Config{Follow:true, ReOpen:true})
 	if err != nil {
 		log.Errorf("start business collector fail, path: %s, error: %v", c.Path, err)
 		return
