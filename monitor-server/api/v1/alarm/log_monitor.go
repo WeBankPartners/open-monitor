@@ -34,7 +34,7 @@ func ListLogTpl(c *gin.Context)  {
 	var query m.TplQuery
 	query.SearchType = searchType
 	query.SearchId = id
-	err := db.ListLogMonitor(&query)
+	err := db.ListLogMonitorNew(&query)
 	if err != nil {
 		mid.ReturnHandleError(c, err.Error(), err)
 		return
@@ -57,10 +57,14 @@ func AddLogStrategy(c *gin.Context)  {
 			mid.ReturnParamEmptyError(c, "strategy")
 			return
 		}
-		if !mid.IsIllegalCond(param.Strategy[0].Cond) || !mid.IsIllegalLast(param.Strategy[0].Last) {
-			mid.ReturnValidateError(c, "cond or last illegal")
+		if param.EndpointId <= 0 {
+			mid.ReturnParamEmptyError(c, "endpoint_id")
 			return
 		}
+		//if !mid.IsIllegalCond(param.Strategy[0].Cond) || !mid.IsIllegalLast(param.Strategy[0].Last) {
+		//	mid.ReturnValidateError(c, "cond or last illegal")
+		//	return
+		//}
 		if !mid.IsIllegalPath(param.Path) {
 			mid.ReturnValidateError(c, "path illegal")
 			return
@@ -72,33 +76,34 @@ func AddLogStrategy(c *gin.Context)  {
 		var logMonitorObj m.LogMonitorTable
 		logMonitorObj.Path = param.Path
 		logMonitorObj.Keyword = param.Strategy[0].Keyword
+		logMonitorObj.Priority = param.Strategy[0].Priority
 		// Add strategy
-		if param.TplId <= 0 {
-			if param.GrpId+param.EndpointId <= 0 {
-				mid.ReturnValidateError(c, "both endpoint and group id are missing")
-				return
-			}
-			if param.GrpId > 0 && param.EndpointId > 0 {
-				mid.ReturnValidateError(c, "endpoint and group id can not be provided at the same time")
-				return
-			}
-			needAdd := true
-			if param.Id > 0 {
-				_,strategyObj := db.GetStrategy(m.StrategyTable{Id:param.Id})
-				if strategyObj.TplId > 0 {
-					needAdd = false
-					param.TplId = strategyObj.TplId
-				}
-			}
-			if needAdd {
-				err, tplObj := db.AddTpl(param.GrpId, param.EndpointId, "")
-				if err != nil {
-					mid.ReturnUpdateTableError(c, "tpl", err)
-					return
-				}
-				param.TplId = tplObj.Id
-			}
-		}
+		//if param.TplId <= 0 {
+		//	if param.GrpId+param.EndpointId <= 0 {
+		//		mid.ReturnValidateError(c, "both endpoint and group id are missing")
+		//		return
+		//	}
+		//	if param.GrpId > 0 && param.EndpointId > 0 {
+		//		mid.ReturnValidateError(c, "endpoint and group id can not be provided at the same time")
+		//		return
+		//	}
+		//	needAdd := true
+		//	if param.Id > 0 {
+		//		_,strategyObj := db.GetStrategy(m.StrategyTable{Id:param.Id})
+		//		if strategyObj.TplId > 0 {
+		//			needAdd = false
+		//			param.TplId = strategyObj.TplId
+		//		}
+		//	}
+		//	if needAdd {
+		//		err, tplObj := db.AddTpl(param.GrpId, param.EndpointId, "")
+		//		if err != nil {
+		//			mid.ReturnUpdateTableError(c, "tpl", err)
+		//			return
+		//		}
+		//		param.TplId = tplObj.Id
+		//	}
+		//}
 		if param.Id <= 0 {
 			_,lms := db.GetLogMonitorTable(0,0, param.TplId, "")
 			for _, v := range lms {
@@ -108,17 +113,18 @@ func AddLogStrategy(c *gin.Context)  {
 				}
 			}
 		}
-		tmpMetric,tmpExpr,tmpContent := makeStrategyMsg(param.Path, param.Strategy[0].Keyword, param.Strategy[0].Cond, param.Strategy[0].Last)
-		strategyObj := m.StrategyTable{TplId:param.TplId,Metric:tmpMetric,Expr:tmpExpr,Cond:param.Strategy[0].Cond,Last:"10s",Priority:param.Strategy[0].Priority,Content:tmpContent}
-		strategyObj.ConfigType = "log_monitor"
-		err = db.UpdateStrategy(&m.UpdateStrategy{Strategy:[]*m.StrategyTable{&strategyObj}, Operation:"insert"})
-		if err != nil {
-			mid.ReturnUpdateTableError(c, "strategy", err)
-			return
-		}
-		_,strategyObj = db.GetStrategy(m.StrategyTable{Expr:tmpExpr})
+		//tmpMetric,tmpExpr,tmpContent := makeStrategyMsg(param.Path, param.Strategy[0].Keyword, param.Strategy[0].Cond, param.Strategy[0].Last)
+		//strategyObj := m.StrategyTable{TplId:param.TplId,Metric:tmpMetric,Expr:tmpExpr,Cond:param.Strategy[0].Cond,Last:"10s",Priority:param.Strategy[0].Priority,Content:tmpContent}
+		//strategyObj.ConfigType = "log_monitor"
+		//err = db.UpdateStrategy(&m.UpdateStrategy{Strategy:[]*m.StrategyTable{&strategyObj}, Operation:"insert"})
+		//if err != nil {
+		//	mid.ReturnUpdateTableError(c, "strategy", err)
+		//	return
+		//}
+		//_,strategyObj = db.GetStrategy(m.StrategyTable{Expr:tmpExpr})
 		// Add log_monitor
-		logMonitorObj.StrategyId = strategyObj.Id
+		//logMonitorObj.StrategyId = strategyObj.Id
+		logMonitorObj.StrategyId = param.EndpointId
 		err = db.UpdateLogMonitor(&m.UpdateLogMonitor{LogMonitor:[]*m.LogMonitorTable{&logMonitorObj}, Operation:"insert"})
 		if err != nil {
 			mid.ReturnUpdateTableError(c, "log_monitor", err)
@@ -131,11 +137,11 @@ func AddLogStrategy(c *gin.Context)  {
 			return
 		}
 		// Save Prometheus rule file
-		err = SaveConfigFile(param.TplId, false)
-		if err != nil {
-			mid.ReturnHandleError(c, "save alert rules file failed", err)
-			return
-		}
+		//err = SaveConfigFile(param.TplId, false)
+		//if err != nil {
+		//	mid.ReturnHandleError(c, "save alert rules file failed", err)
+		//	return
+		//}
 		mid.ReturnSuccess(c)
 	}else{
 		mid.ReturnValidateError(c, err.Error())
@@ -230,37 +236,37 @@ func EditLogStrategy(c *gin.Context)  {
 			mid.ReturnParamEmptyError(c, "strategy")
 			return
 		}
-		if param.Strategy[0].Id <= 0 {
-			mid.ReturnParamEmptyError(c, "strategy -> id")
-			return
-		}
-		if param.TplId <= 0 {
-			mid.ReturnParamEmptyError(c, "tpl_id")
-			return
-		}
-		if !mid.IsIllegalCond(param.Strategy[0].Cond) || !mid.IsIllegalLast(param.Strategy[0].Last) {
-			mid.ReturnValidateError(c, "cond or last illegal")
-			return
-		}
+		//if param.Strategy[0].Id <= 0 {
+		//	mid.ReturnParamEmptyError(c, "strategy -> id")
+		//	return
+		//}
+		//if param.TplId <= 0 {
+		//	mid.ReturnParamEmptyError(c, "tpl_id")
+		//	return
+		//}
+		//if !mid.IsIllegalCond(param.Strategy[0].Cond) || !mid.IsIllegalLast(param.Strategy[0].Last) {
+		//	mid.ReturnValidateError(c, "cond or last illegal")
+		//	return
+		//}
 		if !mid.IsIllegalNormalInput(param.Strategy[0].Keyword) {
 			mid.ReturnValidateError(c, "keyword is illegal")
 			return
 		}
 		// Update strategy
-		err,lms := db.GetLogMonitorTable(param.Strategy[0].Id,0,0,"")
-		if err != nil || len(lms) == 0 {
-			mid.ReturnFetchDataError(c, "log_monitor", "id", strconv.Itoa(param.Strategy[0].Id))
-			return
-		}
-		tmpMetric,tmpExpr,tmpContent := makeStrategyMsg(param.Path, param.Strategy[0].Keyword, param.Strategy[0].Cond, param.Strategy[0].Last)
-		strategyObj := m.StrategyTable{Id:lms[0].StrategyId,TplId:param.TplId,Metric:tmpMetric,Expr:tmpExpr,Cond:param.Strategy[0].Cond,Priority:param.Strategy[0].Priority,Content:tmpContent}
-		err = db.UpdateStrategy(&m.UpdateStrategy{Strategy:[]*m.StrategyTable{&strategyObj}, Operation:"update"})
-		if err != nil {
-			mid.ReturnUpdateTableError(c, "strategy", err)
-			return
-		}
+		//err,lms := db.GetLogMonitorTable(param.Strategy[0].Id,0,0,"")
+		//if err != nil || len(lms) == 0 {
+		//	mid.ReturnFetchDataError(c, "log_monitor", "id", strconv.Itoa(param.Strategy[0].Id))
+		//	return
+		//}
+		//tmpMetric,tmpExpr,tmpContent := makeStrategyMsg(param.Path, param.Strategy[0].Keyword, param.Strategy[0].Cond, param.Strategy[0].Last)
+		//strategyObj := m.StrategyTable{Id:lms[0].StrategyId,TplId:param.TplId,Metric:tmpMetric,Expr:tmpExpr,Cond:param.Strategy[0].Cond,Priority:param.Strategy[0].Priority,Content:tmpContent}
+		//err = db.UpdateStrategy(&m.UpdateStrategy{Strategy:[]*m.StrategyTable{&strategyObj}, Operation:"update"})
+		//if err != nil {
+		//	mid.ReturnUpdateTableError(c, "strategy", err)
+		//	return
+		//}
 		// Update log_monitor
-		logMonitorObj := m.LogMonitorTable{Id:param.Strategy[0].Id, StrategyId:lms[0].StrategyId, Path:param.Path, Keyword:param.Strategy[0].Keyword}
+		logMonitorObj := m.LogMonitorTable{Id:param.Strategy[0].Id, StrategyId:param.EndpointId, Path:param.Path, Keyword:param.Strategy[0].Keyword,Priority:param.Strategy[0].Priority}
 		err = db.UpdateLogMonitor(&m.UpdateLogMonitor{LogMonitor:[]*m.LogMonitorTable{&logMonitorObj}, Operation:"update"})
 		if err != nil {
 			mid.ReturnUpdateTableError(c, "log_monitor", err)
@@ -280,11 +286,11 @@ func EditLogStrategy(c *gin.Context)  {
 			return
 		}
 		// Save Prometheus rule file
-		err = SaveConfigFile(param.TplId, false)
-		if err != nil {
-			mid.ReturnHandleError(c, "save prometheus rule file failed", err)
-			return
-		}
+		//err = SaveConfigFile(param.TplId, false)
+		//if err != nil {
+		//	mid.ReturnHandleError(c, "save prometheus rule file failed", err)
+		//	return
+		//}
 		mid.ReturnSuccess(c)
 	}else{
 		mid.ReturnValidateError(c, err.Error())
@@ -429,7 +435,7 @@ func sendLogConfig(endpointId,grpId,tplId int) error {
 	var tmpList []string
 	var tmpPath string
 	for _,v := range endpoints {
-		err,logMonitors := db.GetLogMonitorByEndpoint(v.Id)
+		err,logMonitors := db.GetLogMonitorByEndpointNew(v.Id)
 		if err != nil {
 			log.Logger.Error("Send log config with endpoint failed", log.String("endpoint", v.Guid), log.Error(err))
 			continue
