@@ -682,6 +682,46 @@ func GetLogMonitorByEndpoint(endpointId int) (err error,result []*m.LogMonitorTa
 	return err,result
 }
 
+func GetLogMonitorByEndpointNew(endpointId int) (err error,result []*m.LogMonitorTable) {
+	err = x.SQL("SELECT * FROM log_monitor WHERE strategy_id=? order by path", endpointId).Find(&result)
+	return err,result
+}
+
+func ListLogMonitorNew(query *m.TplQuery) error  {
+	var result []*m.TplObj
+	if query.SearchType == "endpoint" {
+		var logMonitorTable []*m.LogMonitorTable
+		err := x.SQL("SELECT * FROM log_monitor where strategy_id=? order by path,keyword", query.SearchId).Find(&logMonitorTable)
+		if err != nil {
+			return err
+		}
+		endpointObj := m.EndpointTable{Id:query.SearchId}
+		GetEndpoint(&endpointObj)
+		if len(logMonitorTable) == 0 {
+			result = append(result, &m.TplObj{TplId: 0, ObjId: query.SearchId, ObjName: endpointObj.Guid, ObjType: "endpoint", Operation: true, Strategy: []*m.StrategyTable{}, LogMonitor: []*m.LogMonitorDto{}})
+			query.Tpl = result
+			return nil
+		}
+		var lms []*m.LogMonitorDto
+		var tmpKeywords []*m.LogMonitorStrategyDto
+		tmpPath := logMonitorTable[0].Path
+		for _,v := range logMonitorTable {
+			if v.Path != tmpPath {
+				lms = append(lms, &m.LogMonitorDto{Id:v.Id, EndpointId:v.StrategyId, Path:tmpPath, Strategy:tmpKeywords})
+				tmpPath = v.Path
+				tmpKeywords = []*m.LogMonitorStrategyDto{}
+			}
+			tmpKeywords = append(tmpKeywords, &m.LogMonitorStrategyDto{Id:v.Id,Keyword:v.Keyword,Priority:v.Priority})
+		}
+		if len(tmpKeywords) > 0 {
+			lms = append(lms, &m.LogMonitorDto{Id:logMonitorTable[len(logMonitorTable)-1].Id, EndpointId:logMonitorTable[len(logMonitorTable)-1].StrategyId, Path:logMonitorTable[len(logMonitorTable)-1].Path, Strategy:tmpKeywords})
+		}
+		result = append(result, &m.TplObj{Operation:true, ObjId: query.SearchId, ObjName: endpointObj.Guid, ObjType: "endpoint", LogMonitor:lms})
+	}
+	query.Tpl = result
+	return nil
+}
+
 func ListLogMonitor(query *m.TplQuery) error {
 	var result []*m.TplObj
 	if query.SearchType == "endpoint" {
