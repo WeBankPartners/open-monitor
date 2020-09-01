@@ -9,7 +9,7 @@
           remote
           ref="select"
           clearable
-          :placeholder="$t('placeholder.requestMoreData')"
+          :placeholder="$t('requestMoreData')"
           :remote-method="getEndpointList"
           >
           <Option v-for="(option, index) in endpointList" :value="option.option_value" :key="index">
