@@ -279,7 +279,7 @@
       return {
         isShowWarning: false,
         pageConfig: {
-          CRUD: this.$root.apiCenter.endpointManagement.list.api,
+          CRUD: '',
           researchConfig: {
             input_conditions: [
               {value: 'search', type: 'input', placeholder: 'placeholder.input', style: ''}],
@@ -422,6 +422,7 @@
       }
     },
     mounted() {
+      this.pageConfig.CRUD = this.$root.apiCenter.endpointManagement.list.api
       if (this.$root.$validate.isEmpty_reset(this.$route.params)) {
         this.groupMsg = {}
         this.showGroupMsg = false
