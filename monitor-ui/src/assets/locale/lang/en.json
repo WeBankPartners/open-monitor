@@ -26,9 +26,9 @@
     "editTitle": "Edit title",
     "chartConfiguration": "Chart configuration",
     "viewChart": "View chart",
-    "deleteChart": "Delete chart",
-    "requestMoreData": "Search for more data…"
+    "deleteChart": "Delete chart"
   },
+  "requestMoreData": "Search for more data…",
   "field": {
     "group": "Group",
     "threshold": "Threshold",
@@ -152,14 +152,12 @@
     "failed": " Failed!",
     "selectData": " Please select data first!",
     "selectDate": "Please select date!",
-    "metricConfigTips": {
-      "one": "1. Input endpoint as data source and select the metric from the dropdown list.",
-      "two": "2. Click 'Search' button to view the monitor graph based on the selected metric.",
-      "three": "3. Click 'Add metric' button to config the metric, then click Save button to save the configuration."
-    },
     "requestMoreData": "For more objects, please enter a query ...",
     "dashboardEmpty": "The homepage has not been set, please go to the monitoring custom view to set"
   },
+  "metricConfigTipsone": "1. Input endpoint as data source and select the metric from the dropdown list.",
+  "metricConfigTipstwo": "2. Click 'Search' button to view the monitor graph based on the selected metric.",
+  "metricConfigTipsthree": "3. Click 'Add metric' button to config the metric, then click Save button to save the configuration.",
   "delConfirm": {
     "title": "Delete confirmation",
     "tip": "will be deleted soon",
