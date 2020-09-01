@@ -167,21 +167,21 @@ func GetUserMsg(c *gin.Context)  {
 func AuthRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if !m.Config().Http.Session.Enable {
-			//auToken := c.GetHeader("Authorization")
-			//if auToken != "" {
-			//	_,err := mid.DecodeCoreToken(auToken, m.CoreJwtKey)
-			//	if err != nil {
-			//		mid.ReturnTokenError(c)
-			//		c.Abort()
-			//	}else{
-			//		c.Next()
-			//	}
-			//}else{
-			//	mid.ReturnTokenError(c)
-			//	c.Abort()
-			//}
-			c.Next()
-			return
+			auToken := c.GetHeader("Authorization")
+			if auToken != "" {
+				_,err := mid.DecodeCoreToken(auToken, m.CoreJwtKey)
+				if err != nil {
+					mid.ReturnTokenError(c)
+					c.Abort()
+				}else{
+					c.Next()
+				}
+			}else{
+				mid.ReturnTokenError(c)
+				c.Abort()
+			}
+			//c.Next()
+			//return
 		}else {
 			auToken := c.GetHeader("X-Auth-Token")
 			if auToken != "" {
