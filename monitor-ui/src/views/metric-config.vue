@@ -2,7 +2,12 @@
   <div class="">
     <Title :title="$t('title.metricConfiguration')"></Title>
     <div style="margin-bottom:24px;">
-      <Notice :noticeConfig='noticeConfig'> </Notice>
+      <!-- <Notice :noticeConfig='noticeConfig'> </Notice> -->
+      <div class="page-notice" :class="'page-notice-'+noticeConfig.type">
+        <template v-for="(noticeItem, noticeIndex) in noticeConfig.contents">
+          <p :key="noticeIndex">{{$t(noticeItem.tip)}}</p>
+        </template>      
+      </div>
       <Select
         style="width:300px;"
         v-model="endpoint"
@@ -10,7 +15,7 @@
         clearable
         remote
         :label-in-value="true" 
-        :placeholder="$t('placeholder.requestMoreData')"
+        :placeholder="$t('requestMoreData')"
         :remote-method="getEndpointList"
         >
         <Option v-for="(option, index) in endpointList" :value="option.option_value" :key="index">
@@ -67,7 +72,7 @@
 </template>
 
 <script>
-import Notice from '@/components/notice'
+// import Notice from '@/components/notice'
 import {dataPick} from '@/assets/config/common-config'
 import {generateUuid} from '@/assets/js/utils'
 import TagShow from '@/components/Tag-show.vue'
@@ -333,7 +338,6 @@ export default {
     }
   },
   components: {
-    Notice,
     TagShow
   },
 }
@@ -369,5 +373,17 @@ export default {
     text-align: center;
     vertical-align: middle;
     display: table-cell;
+  }
+
+   // 页面提示信息样式--开始
+  .page-notice {
+    margin:16px 0;
+    padding: 10px;
+  }
+  .page-notice-info {
+    color: #5db558;
+    background: #f4fbf5;
+    border:1px solid #35b34a;
+    border-radius: 4px;
   }
 </style>
