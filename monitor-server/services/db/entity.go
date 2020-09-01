@@ -108,13 +108,23 @@ func getCoreEventKey(status,endpoint string) []string {
 				}
 			}
 		}
-	}else{
-		return result
 	}
 	if status == "firing" {
-		result = firingList
+		if len(firingList) > 0 {
+			result = firingList
+		}else{
+			if m.FiringCallback != "" {
+				result = []string{"monitor_default_guid^"+m.FiringCallback}
+			}
+		}
 	}else{
-		result = recoverList
+		if len(recoverList) > 0 {
+			result = recoverList
+		}else{
+			if m.RecoverCallback != "" {
+				result = []string{"monitor_default_guid^"+m.RecoverCallback}
+			}
+		}
 	}
 	return result
 }
