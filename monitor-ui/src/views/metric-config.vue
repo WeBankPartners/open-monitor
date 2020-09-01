@@ -91,13 +91,13 @@ export default {
         type: 'info',
         contents: [
           {
-            tip: 'tips.metricConfigTips.one'
+            tip: 'metricConfigTipsone'
           },
           {
-            tip: 'tips.metricConfigTips.two'
+            tip: 'metricConfigTipstwo'
           },
           {
-            tip: 'tips.metricConfigTips.three'
+            tip: 'metricConfigTipsthree'
           },
         ]
       },
