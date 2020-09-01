@@ -45,18 +45,20 @@ func InitErrorMessageList()  {
 
 func GetMessageMap(c *gin.Context) *models.ErrorMessageObj {
 	acceptLanguage := c.GetHeader("Accept-Language")
-	if len(errorMessageList) == 0 || acceptLanguage == "" {
+	if len(errorMessageList) == 0 {
 		return &models.ErrorMessageObj{}
 	}
-	acceptLanguage = strings.Replace(acceptLanguage, ";", ",", -1)
-	for _,v := range strings.Split(acceptLanguage, ",") {
-		if strings.HasPrefix(v, "q=") {
-			continue
-		}
-		lowerV := strings.ToLower(v)
-		for _,vv := range errorMessageList {
-			if vv.Language == lowerV {
-				return vv
+	if acceptLanguage != "" {
+		acceptLanguage = strings.Replace(acceptLanguage, ";", ",", -1)
+		for _, v := range strings.Split(acceptLanguage, ",") {
+			if strings.HasPrefix(v, "q=") {
+				continue
+			}
+			lowerV := strings.ToLower(v)
+			for _, vv := range errorMessageList {
+				if vv.Language == lowerV {
+					return vv
+				}
 			}
 		}
 	}
