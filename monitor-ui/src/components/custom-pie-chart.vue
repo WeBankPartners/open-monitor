@@ -64,7 +64,8 @@ export default {
         'POST','dashboard/pie/chart', params,
         responseData => {
           drawPieChart(this, responseData)
-        }
+        },
+        { isNeedloading: false }
       )
     }
   },
