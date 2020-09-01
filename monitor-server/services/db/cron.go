@@ -13,6 +13,7 @@ import (
 	"context"
 	"strconv"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
 )
 
 var (
@@ -145,5 +146,118 @@ func GetCheckProgressContent(param string) m.AlarmEntityObj {
 	result.Subject = "Monitor Check - "+aliveQueueTable[0].Message
 	result.Content = fmt.Sprintf("Monitor Self Check Message From %s \r\nTime:%s ", aliveQueueTable[0].Message, time.Now().Format(m.DatetimeFormat))
 	log.Logger.Info("get check progress content", log.String("toMail",result.ToMail),log.String("subject",result.Subject),log.String("content",result.Content))
+	return result
+}
+
+func StartCheckLogKeyword()  {
+	t := time.NewTicker(10*time.Second).C
+	for {
+		<- t
+		go CheckLogKeyword()
+	}
+}
+
+func CheckLogKeyword()  {
+	log.Logger.Debug("start check log keyword")
+	nowTime := time.Now().Unix()
+	var queryParam m.QueryMonitorData
+	queryParam.Start = nowTime - 10
+	queryParam.End = nowTime
+	queryParam.Step = 10
+	queryParam.PromQ = "node_log_monitor_count_total"
+	queryParam.Legend = "$custom_all"
+	queryParam.Endpoint = []string{"endpoint"}
+	queryParam.Metric = []string{"metric"}
+	dataSerials := datasource.PrometheusData(&queryParam)
+	if len(dataSerials) == 0 {
+		log.Logger.Info("Check log keyword data empty")
+		return
+	}
+	var logMonitorTable []*m.LogMonitorTable
+	err := x.SQL("SELECT * FROM log_monitor").Find(&logMonitorTable)
+	if err != nil {
+		log.Logger.Error("Check log keyword,get log_monitor data fail", log.Error(err))
+		return
+	}
+	if len(logMonitorTable) == 0 {
+		log.Logger.Info("Check log keyword config empty")
+		return
+	}
+	var alarmTable []*m.AlarmTable
+	err = x.SQL("SELECT * FROM alarm WHERE s_metric='log_monitor' ORDER BY id DESC").Find(&alarmTable)
+	if err != nil {
+		log.Logger.Error("Check log keyword,get alarm data fail", log.Error(err))
+		return
+	}
+	var addAlarmRows []*m.AlarmTable
+	for _,v := range logMonitorTable {
+		tmpEndpointObj := m.EndpointTable{Id:v.StrategyId}
+		GetEndpoint(&tmpEndpointObj)
+		if tmpEndpointObj.Guid == "" {
+			log.Logger.Warn("Check log keyword,endpoint not find with id="+strconv.Itoa(v.StrategyId))
+			continue
+		}
+		for _,vv := range dataSerials {
+			lmt := getLogMonitorAlarmTags(vv.Name)
+			if lmt.Endpoint == tmpEndpointObj.Guid && lmt.FilePath == v.Path && lmt.Keyword == v.Keyword {
+				lastValue := vv.Data[len(vv.Data)-1][1]
+				if lastValue > 0 {
+					needAdd := true
+					for _,tmpAlarm := range alarmTable {
+						if tmpAlarm.Tags == lmt.Tags {
+							if tmpAlarm.Status == "firing" {
+								needAdd = false
+							}else{
+								if tmpAlarm.StartValue >= lastValue {
+									needAdd = false
+								}
+							}
+							break
+						}
+					}
+					if needAdd {
+						addAlarmRows = append(addAlarmRows, &m.AlarmTable{StrategyId:0, Endpoint:lmt.Endpoint,Status:"firing",SMetric:"log_monitor",SExpr:"node_log_monitor_count_total",SCond:">0",SLast:"10s",SPriority:v.Priority,Content:"log_alarm",Tags:lmt.Tags,StartValue:lastValue})
+					}
+				}
+			}
+		}
+	}
+	if len(addAlarmRows) > 0 {
+		err = UpdateAlarms(addAlarmRows)
+		if err != nil {
+			log.Logger.Error("Update alarm table fail", log.Error(err))
+		}
+		for _,v := range addAlarmRows {
+			var tmpAlarmTable []*m.AlarmTable
+			x.SQL("SELECT id FROM alarm WHERE status='firing' AND tags=?", v.Tags).Find(&tmpAlarmTable)
+			if len(tmpAlarmTable) > 0 {
+				notifyErr := NotifyCoreEvent("", 0 , tmpAlarmTable[0].Id)
+				if notifyErr != nil {
+					log.Logger.Error("Try to notify log monitor alarm fail", log.String("tags", v.Tags), log.Error(notifyErr))
+				}
+			}
+		}
+	}
+}
+
+func getLogMonitorAlarmTags(name string) m.LogMonitorTags {
+	var result m.LogMonitorTags
+	tmpEndpoint := strings.Split(name, "e_guid=")[1]
+	result.Endpoint = strings.Split(tmpEndpoint, ",")[0]
+	result.Tags = fmt.Sprintf("e_guid:%s", result.Endpoint)
+	fileName := strings.Split(name, "file=")
+	if len(fileName) > 1 {
+		result.FilePath = strings.Split(fileName[1], ",instance")[0]
+	}else{
+		return result
+	}
+	keyWord := strings.Split(name, "keyword=")
+	if len(keyWord) > 1 {
+		tmpKeyword := keyWord[1]
+		result.Keyword = tmpKeyword[:strings.LastIndex(tmpKeyword, "}")]
+	}else{
+		return result
+	}
+	result.Tags = fmt.Sprintf("e_guid:%s^file:%s^keyword:%s", result.Endpoint, result.FilePath, result.Keyword)
 	return result
 }

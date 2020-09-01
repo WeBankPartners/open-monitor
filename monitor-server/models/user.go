@@ -127,3 +127,9 @@ type CoreRequestToken struct {
 	Exp  int64   `json:"exp"`
 	Authority  string  `json:"authority"`
 }
+
+type CoreJwtToken struct {
+	User    string    `json:"user"`
+	Expire  int64     `json:"expire"`
+	Roles   []string  `json:"roles"`
+}
