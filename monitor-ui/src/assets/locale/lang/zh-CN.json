@@ -152,14 +152,12 @@
     "failed": " 失败!",
     "selectData": " 请先选择数据!",
     "selectDate": "请选择时间区间!",
-    "metricConfigTips": {
-      "one": "1、请先搜索主机作为输入源并选择监控指标",
-      "two": "2、点击 '查询' 可查看当前对象及指标下监控视图；",
-      "three": "3、使用 '新增指标' 增加指标项，并在点击 '保存修改' 后将配置保存；"
-    },
     "requestMoreData": "更多对象请输入名称匹配查询...",
     "dashboardEmpty": "尚未设置主页，请前往监控自定义视图中设置"
   },
+  "metricConfigTipsone": "1、请先搜索主机作为输入源并选择监控指标",
+  "metricConfigTipstwo": "2、点击 '查询' 可查看当前对象及指标下监控视图；",
+  "metricConfigTipsthree": "3、使用 '新增指标' 增加指标项，并在点击 '保存修改' 后将配置保存；",
   "delConfirm": {
     "title": "删除确认",
     "tip": "即将被删除",
