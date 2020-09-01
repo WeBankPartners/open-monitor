@@ -50,3 +50,7 @@ CREATE TABLE `alive_check_queue` (
   PRIMARY KEY (`id`)
 ) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 #@v1.6.0.3-end@;
+
+#@v1.7.0.12-begin@;
+ALTER TABLE log_monitor ADD COLUMN priority VARCHAR(50) DEFAULT 'high';
+#@v1.7.0.12-end@;

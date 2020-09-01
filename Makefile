@@ -35,12 +35,12 @@ package: image agent
 	cat wiki/db/monitor_sql_02_base_data_en.sql >> ./init.sql
 	sed -i "s~{{PLUGIN_VERSION}}~$(version)~g" ./register.xml
 	docker save -o image.tar $(project_name):$(version)
-	zip  wecube-plugins-monitor-$(version).zip image.tar init.sql register.xml ui.zip node_exporter_*
+	zip  wecube-plugins-monitor-$(version).zip image.tar init.sql register.xml ui.zip node_exporter.tar.gz
 	rm -f register.xml
 	rm -f init.sql
 	rm -f ui.zip
 	rm -rf ./*.tar
-	rm -f node_exporter_*
+	rm -f node_exporter.tar.gz
 	docker rmi $(project_name):$(version)
 
 upload: package
