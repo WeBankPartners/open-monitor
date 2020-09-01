@@ -90,7 +90,7 @@ func (c *logCollectorObj) update(rule []*logKeywordObj)  {
 
 func (c *logCollectorObj) start() {
 	var err error
-	c.TailSession,err = tail.TailFile(c.Path, tail.Config{Follow:true})
+	c.TailSession,err = tail.TailFile(c.Path, tail.Config{Follow:true, ReOpen:true})
 	if err != nil {
 		log.Errorf("start log collector fail, path: %s, error: %v", c.Path, err)
 		return
