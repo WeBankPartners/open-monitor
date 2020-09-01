@@ -26,9 +26,9 @@
     "editTitle": "Edit title",
     "chartConfiguration": "Chart configuration",
     "viewChart": "View chart",
-    "deleteChart": "Delete chart",
-    "requestMoreData": "Search for more data…"
+    "deleteChart": "Delete chart"
   },
+  "requestMoreData": "Search for more data…",
   "field": {
     "group": "Group",
     "threshold": "Threshold",
