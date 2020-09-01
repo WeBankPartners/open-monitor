@@ -206,7 +206,7 @@
         <section v-for="(pm, pmIndex) in portModel.portMsg" :key="pmIndex">
           <div class="port-config">
             <div style="width: 48%">
-              <Input v-model.number="pm.port" type="number" style="width: 100%" placeholder="Required, type: Number" />
+              <InputNumber v-model.number="pm.port" type="number" :min=1 :max=65535 style="width: 100%" placeholder="Required, type: Number" />
             </div>
             <div style="width: 48%">
               <input type="text" v-model="pm.note" class="search-input" style="width: 100%"/>
@@ -472,9 +472,9 @@
         this.$root.$tableUtil.initTable(this, 'GET', url, params)
       },
       filterMoreBtn (rowData) {
-        let moreBtnGroup = ['thresholdConfig','historyAlarm','logManagement', 'portManagement', 'deleteConfirmModal']
+        let moreBtnGroup = ['thresholdConfig','historyAlarm', 'deleteConfirmModal']
         if (rowData.type === 'host') {
-          moreBtnGroup.push('processManagement', 'businessManagement')
+          moreBtnGroup.push('processManagement', 'businessManagement','logManagement', 'portManagement')
         }
         // if (this.showGroupMsg) {
         //   moreBtnGroup.push('deleteConfirm')

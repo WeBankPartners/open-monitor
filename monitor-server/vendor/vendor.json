@@ -33,6 +33,12 @@
 			"revisionTime": "2019-07-18T01:26:54Z"
 		},
 		{
+			"checksumSHA1": "QsN57dtteQDAyZa8ssuWyi6TFsg=",
+			"path": "github.com/dgrijalva/jwt-go",
+			"revision": "dc14462fd58732591c7fa58cc8496d6824316a82",
+			"revisionTime": "2020-01-07T01:32:13Z"
+		},
+		{
 			"path": "github.com/gin-contrib/cors",
 			"revision": ""
 		},

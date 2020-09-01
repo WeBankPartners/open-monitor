@@ -108,20 +108,34 @@ func getCoreEventKey(status,endpoint string) []string {
 				}
 			}
 		}
-	}else{
-		return result
 	}
 	if status == "firing" {
-		result = firingList
+		if len(firingList) > 0 {
+			result = firingList
+		}else{
+			if m.FiringCallback != "" {
+				result = []string{"monitor_default_guid^"+m.FiringCallback}
+			}
+		}
 	}else{
-		result = recoverList
+		if len(recoverList) > 0 {
+			result = recoverList
+		}else{
+			if m.RecoverCallback != "" {
+				result = []string{"monitor_default_guid^"+m.RecoverCallback}
+			}
+		}
 	}
 	return result
 }
 
-func NotifyCoreEvent(endpoint string,strategyId int) error {
+func NotifyCoreEvent(endpoint string,strategyId int,alarmId int) error {
 	var alarms []*m.AlarmTable
-	x.SQL("SELECT id,status FROM alarm WHERE endpoint=? AND strategy_id=? ORDER BY id DESC", endpoint, strategyId).Find(&alarms)
+	if alarmId > 0 {
+		x.SQL("SELECT id,status FROM alarm WHERE id=? ORDER BY id DESC", alarmId).Find(&alarms)
+	}else {
+		x.SQL("SELECT id,status FROM alarm WHERE endpoint=? AND strategy_id=? ORDER BY id DESC", endpoint, strategyId).Find(&alarms)
+	}
 	if len(alarms) == 0 {
 		return fmt.Errorf("can not find any alarm with endpoint:%s startegy_id:%d", endpoint, strategyId)
 	}
