@@ -176,6 +176,8 @@ var (
 	lock       = new(sync.RWMutex)
 	CoreUrl string
 	CoreJwtKey string
+	FiringCallback string
+	RecoverCallback string
 )
 
 func Config() *GlobalConfig {
@@ -217,5 +219,7 @@ func InitConfig(cfg string) {
 		}
 	}
 	CoreJwtKey = os.Getenv("JWT_SIGNING_KEY")
+	FiringCallback = os.Getenv("ALARM_FIRING_CALLBACK")
+	RecoverCallback = os.Getenv("ALARM_RECOVER_CALLBACK")
 	log.Println("read config file:", cfg, "successfully")
 }
