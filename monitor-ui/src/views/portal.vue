@@ -9,7 +9,7 @@
           remote
           ref="select"
           clearable
-          :placeholder="$t('placeholder.requestMoreData')"
+          :placeholder="$t('requestMoreData')"
           @on-open-change="getEndpointList('.')"
           :remote-method="getEndpointList"
           >

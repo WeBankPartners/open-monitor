@@ -66,7 +66,7 @@
         token: null,
         uploadUrl: '',
         pageConfig: {
-          CRUD: this.$root.apiCenter.groupManagement.list.api,
+          CRUD: '',
           researchConfig: {
             input_conditions: [
               {value: 'search', type: 'input', placeholder: 'placeholder.input', style: ''}],
@@ -131,6 +131,7 @@
       }
     },
     mounted() {
+      this.pageConfig.CRUD = this.$root.apiCenter.groupManagement.list.api
       this.token = getToken()
       this.initData(this.pageConfig.CRUD, this.pageConfig)
       this.uploadUrl =  baseURL_config + this.$root.apiCenter.groupManagement.upload.api
