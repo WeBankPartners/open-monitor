@@ -218,6 +218,7 @@ type LogMonitorTable struct {
 	StrategyId  int  `json:"strategy_id"`
 	Path  string  `json:"path"`
 	Keyword  string `json:"keyword"`
+	Priority  string  `json:"priority"`
 }
 
 type LogMonitorDto struct {
@@ -317,4 +318,11 @@ type EndpointHttpTable struct {
 	EndpointGuid  string  `json:"endpoint_guid"`
 	Method  string  `json:"method"`
 	Url  string  `json:"url"`
+}
+
+type LogMonitorTags struct {
+	Endpoint  string  `json:"endpoint"`
+	FilePath  string  `json:"file_path"`
+	Keyword   string  `json:"keyword"`
+	Tags      string  `json:"tags"`
 }
