@@ -180,7 +180,7 @@ func AcceptAlertMsg(c *gin.Context)  {
 		}
 		if m.CoreUrl != "" {
 			for _, v := range alarms {
-				notifyErr := db.NotifyCoreEvent(v.Endpoint, v.StrategyId, 0)
+				notifyErr := db.NotifyCoreEvent(v.Endpoint, v.StrategyId, 0, 0)
 				if notifyErr != nil {
 					log.Logger.Error("notify core event fail", log.Error(notifyErr))
 				}
@@ -385,7 +385,7 @@ func QueryEntityAlarm(c *gin.Context)  {
 func TestNotifyAlarm(c *gin.Context)  {
 	endpoint := c.Query("endpoint")
 	strategyId,_ := strconv.Atoi(c.Query("id"))
-	err := db.NotifyCoreEvent(endpoint, strategyId, 0)
+	err := db.NotifyCoreEvent(endpoint, strategyId, 0, 0)
 	if err != nil {
 		mid.ReturnHandleError(c, err.Error(), err)
 	}else{
