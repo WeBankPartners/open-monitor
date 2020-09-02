@@ -72,7 +72,7 @@ export default {
         this.$nextTick( () => {
           readyToDraw(this,responseData, this.chartIndex, chartConfig)
         })
-      })
+      }, { isNeedloading: false })
     }
   },
   components: {},
