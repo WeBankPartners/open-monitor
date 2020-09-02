@@ -221,36 +221,40 @@ func GetAlarmEvent(alarmType,inputGuid string,id int) (result m.AlarmEntityObj,e
 		mailMap := make(map[string]bool)
 		phoneMap := make(map[string]bool)
 		roleMap := make(map[string]bool)
-		for _,v := range GetMailByStrategy(alarms[0].StrategyId) {
-			mailMap[fmt.Sprintf("%s^%s", inputGuid, v)] = true
+		if alarms[0].StrategyId == 0 {
+			for _, v := range GetMailByEndpointGroup(alarms[0].Endpoint) {
+				mailMap[fmt.Sprintf("%s^%s", inputGuid, v)] = true
+			}
+		}else {
+			for _, v := range GetMailByStrategy(alarms[0].StrategyId) {
+				mailMap[fmt.Sprintf("%s^%s", inputGuid, v)] = true
+			}
 		}
-		if !strings.Contains(inputGuid, "monitor_default_guid") {
-			var recursiveData []*m.PanelRecursiveTable
-			x.SQL("SELECT * FROM panel_recursive").Find(&recursiveData)
-			if len(recursiveData) > 0 {
-				for _, v := range recursiveData {
-					if strings.Contains(v.Endpoint, alarms[0].Endpoint) {
-						for _, vv := range strings.Split(v.Email, ",") {
-							mailMap[fmt.Sprintf("%s^%s", v.Guid, vv)] = true
+		var recursiveData []*m.PanelRecursiveTable
+		x.SQL("SELECT * FROM panel_recursive").Find(&recursiveData)
+		if len(recursiveData) > 0 {
+			for _, v := range recursiveData {
+				if strings.Contains(v.Endpoint, alarms[0].Endpoint) {
+					for _, vv := range strings.Split(v.Email, ",") {
+						mailMap[fmt.Sprintf("%s^%s", v.Guid, vv)] = true
+					}
+					for _, vv := range strings.Split(v.Phone, ",") {
+						phoneMap[fmt.Sprintf("%s^%s", v.Guid, vv)] = true
+					}
+					for _, vv := range strings.Split(v.Role, ",") {
+						roleMap[fmt.Sprintf("%s^%s", v.Guid, vv)] = true
+					}
+					for _, vv := range strings.Split(v.Parent, "^") {
+						tmpToRecursiveMail, tmpToRecursivePhone, tmpToRecursiveRole, _, _ := searchRecursiveParent(recursiveData, []string{}, []string{}, []string{}, []string{}, []string{}, vv)
+						log.Logger.Info(fmt.Sprintf("parent: %s  mail: %v phone: %v role: %v", vv, tmpToRecursiveMail, tmpToRecursivePhone, tmpToRecursiveRole))
+						for _, vvv := range tmpToRecursiveMail {
+							mailMap[vvv] = true
 						}
-						for _, vv := range strings.Split(v.Phone, ",") {
-							phoneMap[fmt.Sprintf("%s^%s", v.Guid, vv)] = true
+						for _, vvv := range tmpToRecursivePhone {
+							phoneMap[vvv] = true
 						}
-						for _, vv := range strings.Split(v.Role, ",") {
-							roleMap[fmt.Sprintf("%s^%s", v.Guid, vv)] = true
-						}
-						for _, vv := range strings.Split(v.Parent, "^") {
-							tmpToRecursiveMail, tmpToRecursivePhone, tmpToRecursiveRole, _, _ := searchRecursiveParent(recursiveData, []string{}, []string{}, []string{}, []string{}, []string{}, vv)
-							log.Logger.Info(fmt.Sprintf("parent: %s  mail: %v phone: %v role: %v", vv, tmpToRecursiveMail, tmpToRecursivePhone, tmpToRecursiveRole))
-							for _, vvv := range tmpToRecursiveMail {
-								mailMap[vvv] = true
-							}
-							for _, vvv := range tmpToRecursivePhone {
-								phoneMap[vvv] = true
-							}
-							for _, vvv := range tmpToRecursiveRole {
-								roleMap[vvv] = true
-							}
+						for _, vvv := range tmpToRecursiveRole {
+							roleMap[vvv] = true
 						}
 					}
 				}
@@ -259,16 +263,28 @@ func GetAlarmEvent(alarmType,inputGuid string,id int) (result m.AlarmEntityObj,e
 		inputGuid = inputGuid + "^"
 		var toMail,toPhone,toRole []string
 		for k,_ := range mailMap {
+			if alarms[0].StrategyId == 0 {
+				toMail = append(toMail, k[strings.Index(k, "^")+1:])
+				continue
+			}
 			if strings.Contains(k, inputGuid) {
 				toMail = append(toMail, k[len(inputGuid):])
 			}
 		}
 		for k,_ := range phoneMap {
+			if alarms[0].StrategyId == 0 {
+				toPhone = append(toPhone, k[strings.Index(k, "^")+1:])
+				continue
+			}
 			if strings.Contains(k, inputGuid) {
 				toPhone = append(toPhone, k[len(inputGuid):])
 			}
 		}
 		for k,_ := range roleMap {
+			if alarms[0].StrategyId == 0 {
+				toRole = append(toRole, k[strings.Index(k, "^")+1:])
+				continue
+			}
 			if strings.Contains(k, inputGuid) {
 				toRole = append(toRole, k[len(inputGuid):])
 			}
