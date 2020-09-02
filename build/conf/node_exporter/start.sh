@@ -12,7 +12,7 @@ cd /usr/local/monitor/$exporter_type/
 ./control restart
 for i in `seq 1 60`
 do
-  if [ "`netstat -lntp|grep 9100|wc -l`" = "1" ]
+  if [ "`netstat -lntp|grep ':9100'|wc -l`" = "1" ]
   then
     break
   else
