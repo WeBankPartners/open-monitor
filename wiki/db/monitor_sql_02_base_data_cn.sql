@@ -54,3 +54,7 @@ CREATE TABLE `alive_check_queue` (
 #@v1.7.0.12-begin@;
 ALTER TABLE log_monitor ADD COLUMN priority VARCHAR(50) DEFAULT 'high';
 #@v1.7.0.12-end@;
+
+#@v1.7.1.5-begin@;
+INSERT  INTO `strategy`(`tpl_id`,`metric`,`expr`,`cond`,`last`,`priority`,`content`,`config_type`) VALUE (1,'process_alive_count','node_process_monitor_count_current{instance="$address"}','==0','30s','high','process down','');
+#@v1.7.1.5-end@;
