@@ -126,7 +126,7 @@ func AcceptAlertMsg(c *gin.Context)  {
 						continue
 					}
 				}
-				tmpAlarmQuery := m.AlarmTable{Endpoint: tmpAlarm.Endpoint, StrategyId: tmpAlarm.StrategyId, Tags:tmpAlarm.Tags}
+				tmpAlarmQuery := m.AlarmTable{Endpoint: tmpAlarm.Endpoint, StrategyId: tmpAlarm.StrategyId, Tags:tmpAlarm.Tags, SCond:tmpAlarm.SCond, SLast:tmpAlarm.SLast}
 				_, tmpAlarms = db.GetAlarms(tmpAlarmQuery)
 			}
 			tmpOperation := "add"
