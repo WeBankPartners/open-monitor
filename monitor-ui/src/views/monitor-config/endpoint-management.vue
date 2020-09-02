@@ -594,6 +594,7 @@
         })
       },
       processManagement (rowData) {
+        this.processConfigModel.processName = ''
         this.id = rowData.id
         this.processConfigModel.addRow.processSet = []
         this.$root.$httpRequestEntrance.httpRequestEntrance('GET','alarm/process/list', {id:this.id}, responseData=> {
@@ -604,14 +605,17 @@
         })
       },
       processConfigSave () {
+        if (this.processConfigModel.processName.trim()) {
+          this.processConfigModel.addRow.processSet.push(this.processConfigModel.processName.trim())
+        }
         const params = {
           endpoint_id: +this.id,
           process_list: this.processConfigModel.addRow.processSet
         }
         this.$root.$httpRequestEntrance.httpRequestEntrance('POST','alarm/process/update', params, ()=> {
           this.$Message.success(this.$t('tips.success'))
-          this.$root.JQ('#process_config_model').modal('hide')
         })
+        this.$root.JQ('#process_config_model').modal('hide')
       },
       addProcess () {
         if (!this.$root.$validate.isEmpty_reset(this.processConfigModel.processName.trim())) {
