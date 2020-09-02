@@ -560,6 +560,14 @@ func GetAlarms(query m.AlarmTable) (error,m.AlarmProblemList) {
 		whereSql += " and t1.s_metric=? "
 		params = append(params, query.SMetric)
 	}
+	if query.SCond != "" {
+		whereSql += " and t1.s_cond=? "
+		params = append(params, query.SCond)
+	}
+	if query.SLast != "" {
+		whereSql += " and t1.s_last=? "
+		params = append(params, query.SLast)
+	}
 	if query.SPriority != "" {
 		whereSql += " and t1.s_priority=? "
 		params = append(params, query.SPriority)
