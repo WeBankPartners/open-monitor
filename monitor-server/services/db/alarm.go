@@ -1014,6 +1014,7 @@ func SaveOpenAlarm(param m.OpenAlarmRequest) error {
 		if err != nil {
 			log.Logger.Error("Save open alarm error", log.Error(err))
 		}
+
 	}
 	return err
 }
