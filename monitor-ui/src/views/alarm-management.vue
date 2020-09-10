@@ -5,7 +5,7 @@
       v-model="isShowWarning"
       title="Delete confirmation"
       @on-ok="ok"
-      @on-cancel="cancle">
+      @on-cancel="cancel">
       <div class="modal-body" style="padding:30px">
         <div style="text-align:center">
           <p style="color: red">Will you delete it?</p>
@@ -135,7 +135,7 @@ export default {
     ok () {
       this.removeAlarm(this.selectedData)
     },
-    cancle () {
+    cancel () {
       this.isShowWarning = false
     },
     removeConfirm (alarmItem) {

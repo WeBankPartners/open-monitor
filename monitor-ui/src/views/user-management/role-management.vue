@@ -17,7 +17,7 @@
       v-model="isShowWarning"
       title="Delete confirmation"
       @on-ok="ok"
-      @on-cancel="cancle">
+      @on-cancel="cancel">
       <div class="modal-body" style="padding:30px">
         <div style="text-align:center">
           <p style="color: red">Will you delete it?</p>
@@ -52,7 +52,7 @@ export default {
             {value: 'search', type: 'input', placeholder: 'placeholder.input', style: ''}],
           btn_group: [
             {btn_name: 'button.search', btn_func: 'search', class: 'btn-confirm-f', btn_icon: 'fa fa-search'},
-            {btn_name: 'button.add', btn_func: 'addRole', class: 'btn-cancle-f', btn_icon: 'fa fa-plus'}
+            {btn_name: 'button.add', btn_func: 'addRole', class: 'btn-cancel-f', btn_icon: 'fa fa-plus'}
           ],
           filters: {
             search: ''
@@ -153,7 +153,7 @@ export default {
     ok () {
       this.delF(this.selectedData)
     },
-    cancle () {
+    cancel () {
       this.isShowWarning = false
     },
     deleteConfirm (rowData) {
