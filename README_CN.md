@@ -20,7 +20,7 @@
 中文 / [English](README.md)
 
 ## 试用链接
-[点此试用Open-Monitor](https://sandbox.webank.com/wecube-monitor)
+[点此试用Open-Monitor](http://124.156.108.126:8080/wecube-monitor)
 
 ## 功能演示
 <img src="./wiki/images/wecube-monitor01.gif" />
