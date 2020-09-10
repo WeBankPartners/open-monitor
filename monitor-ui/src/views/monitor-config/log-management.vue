@@ -37,7 +37,7 @@
       <template v-for="(tableItem, tableIndex) in totalPageConfig">
         <div :key="tableIndex + 'f'" class="section-table-tip">
           <Tag color="blue" :key="tableIndex + 'a'" v-if="tableItem.obj_name">{{tableItem.obj_name}}</Tag>
-          <button @click="add(tableItem.obj_type)" type="button" v-if="tableItem.operation" class="btn btn-sm btn-cancle-f" :key="tableIndex + 'b'">
+          <button @click="add(tableItem.obj_type)" type="button" v-if="tableItem.operation" class="btn btn-sm btn-cancel-f" :key="tableIndex + 'b'">
             <i class="fa fa-plus"></i>
             {{$t('button.add')}}
           </button>
@@ -102,7 +102,7 @@
         v-model="isShowWarning"
         title="Delete confirmation"
         @on-ok="ok"
-        @on-cancel="cancle">
+        @on-cancel="cancel">
         <div class="modal-body" style="padding:30px">
           <div style="text-align:center">
             <p style="color: red">Will you delete it?</p>
@@ -297,7 +297,7 @@ export default {
     ok () {
       this.delF(this.selectedData)
     },
-    cancle () {
+    cancel () {
       this.isShowWarning = false
     },
     deleteConfirm (rowData) {
