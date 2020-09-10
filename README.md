@@ -1,4 +1,4 @@
-# Open-Monitor
+# Open-Monitor 监控插件
 
 <p align="left">
     <a href="https://opensource.org/licenses/Apache-2.0" alt="License">
@@ -17,85 +17,111 @@
         <img src="https://img.shields.io/github/commit-activity/m/WeBankPartners/open-monitor" /></a>
 </p>
 
-English / [中文](README_CN.md)
+中文 / [English](README_EN.md)
 
-## Link for Trial
+## 在线体验环境
+[点此试用Open-Monitor](http://124.156.108.126:8080/wecube-monitor)
 
-[Click_To_Try_Open-Monitor](http://124.156.108.126:8080/wecube-monitor)
+<img src="./wiki/images/wecube-monitor01.gif" />
 
-## Demo
-<img src="./wiki/images/wecube-monitor02.gif" />
+> 注意：
+>
+> 1. 体验环境每天凌晨2:00-4:00进行重建，重建时间段内环境将不可用，且所有用户修改内容将被丢弃
+> 2. 多人同时使用admin用户，可能会相互影响，若希望更好的体验可参照：[Open-Monitor部署文档](wiki/install_guide.md) 搭建私有环境
 
-## Introduction
+## 引言  
+Prometheus是由SoundCloud开发的开源监控报警系统和时序列数据库(TSDB)。Prometheus使用Go语言开发，是Google BorgMon监控系统的开源版本。
 
-Prometheus is an open-source monitor-alarm system and time series database (TSDB) developed by SoundCloud. It is an open-source version of the Google BorgMon monitoring system in Go language.
+Open-Monitor 无侵入式地封装了Prometheus的功能，并提供更好的告警管理和图表展示，以及监控配置管理与其它系统的交互等。  
 
-Open-Monitor encapsulates the functionality of Prometheus without intrusion and provides better alarm management and graphic dashboard, as well as interaction with other systems.  
+Open-Monitor 包含的组件有Prometheus、Alertmanager、Monitor、Agent_manager、Ping_exporter、Archive_mysql_tool等。
 
-Open-Monitor consists of several components: `Prometheus`, `Alert Manager`, `Monitor`, `Agent_manager`, `Ping_exporter`, `Archive_mysql_tool`.
+## 系统架构
+整体架构图如下:  
 
-## System Architecture
+![Open-Monitor架构图](wiki/images/Architecture.svg)
 
-The overall architecture diagram is as follows:
 
-![Open-Monitor_Architecture](wiki/images/Architecture.svg)
+## 简介
+WeCube通过Open-Monitor监控插件来对资源以及应用的监控及告警。
 
-## Summary
+此插件底层引用Prometheus，上层Monitor封装了对Prometheus的配置管理和图表展示，并增加了一系列企业级监控的通用功能，Monitor-Server技术选型为Go + Gin + Xorm + Zap, 前端技术选型为Vue + ECharts。
 
-WeCube monitors, alerts resources and applications through monitoring plugins.
+**Open-Monitor具备以下功能点：**
 
-The plugin is based on Prometheus. The upper layer `Monitor` encapsulates the configuration management and chart display of Prometheus. The `Monitor` backend technology is written by Go + Gin + Xorm, and the front-end technology is written by Vue + ECharts.
+- 管理监控对象
 
-**Monitor has the following features：**
+    支持对象的注册和注销，并在对接了CMDB的情况下可主动从CMDB同步监控对象  
+    支持监控对象的组管理，可对组进行告警配置  
+    支持层级组织结构，来对监控对象作业务和组织构架上的划分  
+    支持进程监控  
+    支持业务日志监控
+    
+    
+- 友好的视图
 
-- Endpoint Management
+    默认提供主要监控对象类型的指标视图，主要包括主机、mysql、redis、java、系统视图等  
+    提供Prometheus原生PromQL查询与查询指标配置保存  
+    提供高度可配置化的自定义视图的功能，并且可把自定义视图设置为首页  
+    
+- 管理告警
 
-  The monitor supplies register and de-register endpoint functions. It synchronizes endpoint from CMDB when it connects to CMDB. It supports group management of endpoints and customization of the the alarm configuration.
+    提供对Prometheus告警规则配置的持久化与下发  
+    提供未恢复告警面板展示与历史告警  
+    提供对象告警配置与组告警配置  
+    提供告警接收方管理  
+    提供自集成的邮件通知功能  
+    
+- 管理监控agent
 
-- Friendly Dashboard
+    提供agent_manager组件来提供方便快捷的 mysql、redis、jmx、nginx监控
+    
+- 包含一系列检测工具
 
-  The monitor supports mainstream monitoring types, including the host, MySQL, Redis, Tomcat, etc.  
-   It also supports Prometheus' native `PromQL` query and its metric configuration.
-  The dashboard customization is friendly, too.
+    提供ping、telnet、http等方式的存活性检测方式，可直接在界面上增加对应的监控对象基础信息即可直接监控
+    
+- 监控数据归档
 
-- Alarm Management
+    提供程序自动归档监控数据到mysql中，自动管理分库分表，图表读取适配多处数据整合
+    
 
-  It provides the persistence and the distribution of Prometheus alert rules, and it also supports the manifestation of un-recovered alarm panels and historical alarms.
-  User can customize endpoint alarm configuration, group alert configuration and receiver management of alarms.
+## 主要功能
+监控插件包括以下功能：
 
-## Main Features
+- agent管理: 注册、启动、停止；
+- 数据管理: 提供数据采集配置， 数据查询等功能；
+- 告警管理: 提供阈值配置、日志监控、告警触发等功能；
+- 视图管理: 提供图形配置和自定义视图功能；
 
-- Endpoint Management: register, start and stop functions.
-- Data Management: data collection configuration and data query functions.
-- Alarm Management: threshold configuration, log monitoring, alarm triggering functions.
-- Dashboard Management: graphical configuration and custom dashboard functions.
+## 快速入门
+Open-Monitor采用容器化部署。
 
-## Quick Start
+如何编译，请查看以下文档
+[Open-Monitor编译文档](wiki/compile_guide_new.md)
 
-Open-Monitor is deployed in a docker container.
+如何安装， 请查看以下文档
+[Open-Monitor部署文档](wiki/install_guide.md)
 
-Please refer to the [Open-Monitor_Compiling_Guide](wiki/compile_guide_new.md) on how to compile Open-Monitor.
+agent安装文档
+[Prometheus-agent安装文档](wiki/install_agent.md)
 
-Please refer to the [Open-Monitor_Deployment_Guide](wiki/install_guide.md) on how to install Open-Monitor.
+## 用户手册
+关于Open-Monitor的使用和操作说明，请查看文档[Open-Monitor用户手册](wiki/user_guide.md)
 
-## User Manuals
+## 开发者文档
+**Open-Monitor本地环境搭建与开发**  
+请参考本地开发环境配置文档 [Open-Monitor本地环境配置文档](wiki/develop_local_guide.md)
 
-Please refer to [Open-Monitor User Guide](wiki/user_guide.md) for usage and operations
+## 版权声明
+Open-Monitor是基于 Apache License 2.0 协议， 详情请参考
+[LICENSE](LICENSE)
 
-## Developer Guide
-Develop Open-Monitor in Normal Mode  
-Please refer to the [Open-Monitor Develop Doc](wiki/develop_local_guide.md) for setting up local environment quickly.
-
-## License
-
-Open-Monitor is licensed under the Apache License Version 2.0 , please refer to the [license](LICENSE) for details.
-
-## Community
-
-- For quick response, please [raise_an_issue](https://github.com/WeBankPartners/open-monitor/issues/new/choose) to us, or you can also scan the following QR code to join our community, we will provide feedback as quickly as we can.
+## 社区
+- 如果您想得到最快的响应，请给我们提[Issue](https://github.com/WeBankPartners/open-monitor/issues/new/choose)或扫描下面的二维码，我们会第一时间反馈。
 
 	<div align="left">
 	<img src="wiki/images/wecube_qr_code.png"  height="200" width="200">
 	</div>
 
-* Contact us: fintech@webank.com
+
+- 联系我们：fintech@webank.com
