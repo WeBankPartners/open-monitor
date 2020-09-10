@@ -46,7 +46,7 @@
                       v-model="templateQuery.endpoint"
                       filterable
                       remote
-                      :placeholder="$t('placeholder.requestMoreData')"
+                      :placeholder="$t('requestMoreData')"
                       @on-open-change="getEndpointList('.')"
                       :remote-method="getEndpointList"
                     >
