@@ -8,7 +8,7 @@
       <p>Will you delete it?</p>
     </div>
     <div slot="footer">
-      <button class="btn-cancle-f" @click="ModelDelConfig.deleteWarning = false">Cancle</button>
+      <button class="btn-cancel-f" @click="ModelDelConfig.deleteWarning = false">Cancel</button>
       <button class="btn-delete-f" @click="deleteConfirm">Delete</button>
     </div>
   </Modal>

@@ -37,7 +37,7 @@
         <section :key="tableIndex + 'f'">
           <div class="section-table-tip">
             <Tag color="blue" :key="tableIndex + 'a'" v-if="tableItem.obj_name">{{tableItem.obj_name}}</Tag>
-            <button @click="add" type="button" v-if="tableItem.operation" class="btn btn-sm btn-cancle-f" :key="tableIndex + 'b'">
+            <button @click="add" type="button" v-if="tableItem.operation" class="btn btn-sm btn-cancel-f" :key="tableIndex + 'b'">
               <i class="fa fa-plus"></i>
               {{$t('button.add')}}
             </button>
@@ -53,7 +53,7 @@
                 color="primary">
                 {{receiver.option_text}}
               </Tag>
-              <button @click="tableItem.showReceiver = !tableItem.showReceiver" class="btn btn-small btn-cancle-f">{{$t('button.edit')}}</button>
+              <button @click="tableItem.showReceiver = !tableItem.showReceiver" class="btn btn-small btn-cancel-f">{{$t('button.edit')}}</button>
             </section>
             <div v-else  style="margin: 16px 0">
               <h5>{{$t('button.receiversConfiguration')}}:</h5>
@@ -158,7 +158,7 @@
         v-model="isShowWarning"
         title="Delete confirmation"
         @on-ok="ok"
-        @on-cancel="cancle">
+        @on-cancel="cancel">
         <div class="modal-body" style="padding:30px">
           <div style="text-align:center">
             <p style="color: red">Will you delete it?</p>
@@ -363,7 +363,7 @@ export default {
         this.requestData(this.type, this.typeValue)
       }, {isNeedloading:false})
     },
-    cancle () {
+    cancel () {
       this.isShowWarning = false
     },
     search () {

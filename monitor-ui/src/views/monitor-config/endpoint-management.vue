@@ -141,7 +141,7 @@
           <div class="search-input-content">
             <input type="text" v-model="processConfigModel.processName" class="search-input c-dark" />
           </div>
-          <button type="button" @click="addProcess" class="btn-cancle-f" style="vertical-align:middle">{{$t('button.confirm')}}</button>
+          <button type="button" @click="addProcess" class="btn-cancel-f" style="vertical-align:middle">{{$t('button.confirm')}}</button>
         </div>
         <div class="marginbottom params-each row" style="">
           <div class="offset-md-2">
@@ -221,7 +221,7 @@
       v-model="isShowWarning"
       title="Delete confirmation"
       @on-ok="ok"
-      @on-cancel="cancle">
+      @on-cancel="cancel">
       <div class="modal-body" style="padding:30px">
         <div style="text-align:center">
           <p style="color: red">Will you delete it?</p>
@@ -426,13 +426,13 @@
       if (this.$root.$validate.isEmpty_reset(this.$route.params)) {
         this.groupMsg = {}
         this.showGroupMsg = false
-        this.pageConfig.researchConfig.btn_group.push({btn_name: 'button.add', btn_func: 'endpointReject', class: 'btn-cancle-f', btn_icon: 'fa fa-plus'})
+        this.pageConfig.researchConfig.btn_group.push({btn_name: 'button.add', btn_func: 'endpointReject', class: 'btn-cancel-f', btn_icon: 'fa fa-plus'})
       } else {
         this.$parent.activeTab = '/monitorConfigIndex/endpointManagement'
         if (Object.prototype.hasOwnProperty.call(this.$route.params, 'group')) {
           this.groupMsg = this.$route.params.group
           this.showGroupMsg = true
-          this.pageConfig.researchConfig.btn_group.push({btn_name: 'button.add', btn_func: 'add', class: 'btn-cancle-f', btn_icon: 'fa fa-plus'})
+          this.pageConfig.researchConfig.btn_group.push({btn_name: 'button.add', btn_func: 'add', class: 'btn-cancel-f', btn_icon: 'fa fa-plus'})
           this.pageConfig.researchConfig.filters.grp = this.groupMsg.id
         }
         if (Object.prototype.hasOwnProperty.call(this.$route.params, 'search')) {
@@ -513,7 +513,7 @@
       ok () {
         this.delF(this.selectedData)
       },
-      cancle () {
+      cancel () {
         this.isShowWarning = false
       },
       deleteConfirm (rowData) {
@@ -556,7 +556,7 @@
         this.pageConfig.researchConfig.filters.grp = ''
         this.pageConfig.table.btn.splice(this.pageConfig.table.btn.length-1, 1)
         this.pageConfig.researchConfig.btn_group.splice(this.pageConfig.researchConfig.btn_group.length-1, 1)
-        this.pageConfig.researchConfig.btn_group.push({btn_name: 'button.add', btn_func: 'endpointReject', class: 'btn-cancle-f', btn_icon: 'fa fa-plus'})
+        this.pageConfig.researchConfig.btn_group.push({btn_name: 'button.add', btn_func: 'endpointReject', class: 'btn-cancel-f', btn_icon: 'fa fa-plus'})
         this.initData(this.pageConfig.CRUD, this.pageConfig)
       },
       historyAlarm (rowData) {
