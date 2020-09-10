@@ -231,7 +231,7 @@ func CheckLogKeyword()  {
 			var tmpAlarmTable []*m.AlarmTable
 			x.SQL("SELECT id FROM alarm WHERE status='firing' AND tags=?", v.Tags).Find(&tmpAlarmTable)
 			if len(tmpAlarmTable) > 0 {
-				notifyErr := NotifyCoreEvent("", 0 , tmpAlarmTable[0].Id)
+				notifyErr := NotifyCoreEvent("", 0 , tmpAlarmTable[0].Id, 0)
 				if notifyErr != nil {
 					log.Logger.Error("Try to notify log monitor alarm fail", log.String("tags", v.Tags), log.Error(notifyErr))
 				}
