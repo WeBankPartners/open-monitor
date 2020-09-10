@@ -108,12 +108,12 @@
           </div>
           <template v-if="!modelConfig.noBtn">
             <div class="model-footer-f c-dark" v-if="!modelConfig.modalFooter">
-              <button type="button" class="btn-cancle-f" data-dismiss="modal">{{$t('button.cancle')}}</button>
+              <button type="button" class="btn-cancel-f" data-dismiss="modal">{{$t('button.cancel')}}</button>
               <button v-if="!modelConfig.saveFunc" @click="save(modelConfig.isAdd)" type="button" class="btn-confirm-f">{{$t('button.save')}}</button>
               <button v-if="modelConfig.saveFunc" @click="customFunc(modelConfig.saveFunc)" type="button" class="btn-confirm-f">{{$t('button.save')}}</button>
             </div>
             <div class="model-footer-f c-dark" v-if="modelConfig.modalFooter">
-              <button type="button" class="btn-cancle-f" data-dismiss="modal">{{$t('button.cancle')}}</button>
+              <button type="button" class="btn-cancel-f" data-dismiss="modal">{{$t('button.cancel')}}</button>
               <template v-for="(item, index) in modelConfig.modalFooter">
               <button  @click="customFunc(item.Func)" type="button" class="btn-confirm-f" v-if='item.name' :key="index">{{item.name}}</button>
               </template>

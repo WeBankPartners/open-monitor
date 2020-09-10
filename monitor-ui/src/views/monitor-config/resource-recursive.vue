@@ -9,10 +9,10 @@
               <Tag :color="choiceColor(item.type)" class="tag-width">{{item.type}}</Tag>
             </div>
             <div>
-              <button class="btn-cancle-f btn-small" @click="alarmReceivers(item)">{{$t('button.receiversConfiguration')}}</button>
-              <button class="btn-cancle-f btn-small" @click="associatedRole(item)">{{$t('resourceLevel.addAssociatedRole')}}</button>
-              <button class="btn-cancle-f btn-small" @click="associatedObject(item)">{{$t('resourceLevel.addAssociatedObject')}}</button>
-              <button class="btn-cancle-f btn-small" v-if="isPlugin" @click="alarmCallback(item)">{{$t('resourceLevel.alarmCallback')}}</button>
+              <button class="btn-cancel-f btn-small" @click="alarmReceivers(item)">{{$t('button.receiversConfiguration')}}</button>
+              <button class="btn-cancel-f btn-small" @click="associatedRole(item)">{{$t('resourceLevel.addAssociatedRole')}}</button>
+              <button class="btn-cancel-f btn-small" @click="associatedObject(item)">{{$t('resourceLevel.addAssociatedObject')}}</button>
+              <button class="btn-cancel-f btn-small" v-if="isPlugin" @click="alarmCallback(item)">{{$t('resourceLevel.alarmCallback')}}</button>
               <i class="fa fa-plus" aria-hidden="true" @click="addPanel(item)"> </i>
               <i class="fa fa-pencil" @click="editPanal(item)" aria-hidden="true"></i>
               <i class="fa fa-trash-o" @click="deleteConfirmModal(item)" aria-hidden="true"></i>
@@ -50,7 +50,7 @@
         </FormItem>
       </Form>
       <div slot="footer">
-        <button class="btn-cancle-f" @click="isEditPanal = false">{{$t('button.cancle')}}</button>
+        <button class="btn-cancel-f" @click="isEditPanal = false">{{$t('button.cancel')}}</button>
         <button class="btn-confirm-f" @click="savePanal">{{$t('button.save')}}</button>
       </div>
     </Modal>
@@ -67,7 +67,7 @@
         </FormItem>
       </Form>
       <div slot="footer">
-        <button class="btn-cancle-f" @click="isAssociatedRole = false">{{$t('button.cancle')}}</button>
+        <button class="btn-cancel-f" @click="isAssociatedRole = false">{{$t('button.cancel')}}</button>
         <button class="btn-confirm-f" @click="saveAssociatedRole">{{$t('button.save')}}</button>
       </div>
     </Modal>
@@ -85,7 +85,7 @@
         </FormItem>
       </Form>
       <div slot="footer">
-        <button class="btn-cancle-f" @click="isAssociatedObject = false">{{$t('button.cancle')}}</button>
+        <button class="btn-cancel-f" @click="isAssociatedObject = false">{{$t('button.cancel')}}</button>
         <button class="btn-confirm-f" @click="saveAssociatedObject">{{$t('button.save')}}</button>
       </div>
     </Modal>
@@ -107,7 +107,7 @@
         </FormItem>
       </Form>
       <div slot="footer">
-        <button class="btn-cancle-f" @click="isAlarmCallback = false">{{$t('button.cancle')}}</button>
+        <button class="btn-cancel-f" @click="isAlarmCallback = false">{{$t('button.cancel')}}</button>
         <button class="btn-confirm-f" @click="saveAlarmCallback">{{$t('button.save')}}</button>
       </div>
     </Modal>
@@ -122,7 +122,7 @@
               <Option v-for="item in roleList" :value="item.id" :key="item.id">
               {{item.display_name}}</Option>
           </Select>
-          <button class="btn-cancle-f" @click="addSelectReceivers">{{$t('button.add')}}</button>
+          <button class="btn-cancel-f" @click="addSelectReceivers">{{$t('button.add')}}</button>
         </div>
         <div style="margin: 8px 0">
           <label style="width:110px">{{$t('button.receiversInput')}}:</label>
@@ -131,10 +131,10 @@
             type="text" 
             :placeholder="$t('button.receiversInputTip')"
             class="form-control search-input c-dark"/>
-          <button class="btn-cancle-f" @click="addInputReceivers">{{$t('button.add')}}</button>
+          <button class="btn-cancel-f" @click="addInputReceivers">{{$t('button.add')}}</button>
         </div>
       <div slot="footer">
-        <button class="btn-cancle-f" @click="isAlarmReceivers = false">{{$t('button.cancle')}}</button>
+        <button class="btn-cancel-f" @click="isAlarmReceivers = false">{{$t('button.cancel')}}</button>
         <button class="btn-confirm-f" @click="saveAlarmReceivers">{{$t('button.save')}}</button>
       </div>
       <template>
@@ -153,7 +153,7 @@
       v-model="isShowWarning"
       title="Delete confirmation"
       @on-ok="ok"
-      @on-cancel="cancle">
+      @on-cancel="cancel">
       <div class="modal-body" style="padding:30px">
         <div style="text-align:center">
           <p style="color: red">Will you delete it?</p>
@@ -369,7 +369,7 @@ export default {
     ok () {
       this.deletePanal(this.selectedData)
     },
-    cancle () {
+    cancel () {
       this.isShowWarning = false
     },
     // deleteConfirm (panalData) {
