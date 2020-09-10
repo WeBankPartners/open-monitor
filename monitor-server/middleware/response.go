@@ -18,9 +18,9 @@ type RespJson struct {
 func ReturnError(c *gin.Context, code int, msg string, err error) {
 	log.Logger.Error(fmt.Sprintf("Request %s fail", c.FullPath()), log.Int("Code", code), log.String("Message", msg), log.Error(err))
 	if log.LogLevel == "debug" {
-		c.JSON(code, RespJson{Status:"ERROR", Code:code, Message:msg, Data:err})
+		c.JSON(code, RespJson{Status:"ERROR", Code:200, Message:msg, Data:err})
 	}else{
-		c.JSON(code, RespJson{Status:"ERROR", Code:code, Message:msg})
+		c.JSON(code, RespJson{Status:"ERROR", Code:200, Message:msg})
 	}
 }
 
@@ -99,5 +99,5 @@ func ReturnPasswordError(c *gin.Context)  {
 }
 
 func ReturnTokenError(c *gin.Context)  {
-	ReturnError(c, 402, GetMessageMap(c).TokenError, nil)
+	ReturnError(c, 401, GetMessageMap(c).TokenError, nil)
 }

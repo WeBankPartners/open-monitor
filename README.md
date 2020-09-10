@@ -21,7 +21,7 @@ English / [中文](README_CN.md)
 
 ## Link for Trial
 
-[Click_To_Try_Open-Monitor](https://sandbox.webank.com/wecube-monitor)
+[Click_To_Try_Open-Monitor](http://124.156.108.126:8080/wecube-monitor)
 
 ## Demo
 <img src="./wiki/images/wecube-monitor02.gif" />

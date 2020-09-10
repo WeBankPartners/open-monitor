@@ -129,28 +129,47 @@ func getCoreEventKey(status,endpoint string) []string {
 	return result
 }
 
-func NotifyCoreEvent(endpoint string,strategyId int,alarmId int) error {
-	var alarms []*m.AlarmTable
-	if alarmId > 0 {
-		x.SQL("SELECT id,status FROM alarm WHERE id=? ORDER BY id DESC", alarmId).Find(&alarms)
+func NotifyCoreEvent(endpoint string,strategyId int,alarmId int,customAlarmId int) error {
+	var alarmStatus string
+	var eventKeys []string
+	if customAlarmId > 0 {
+		var customAlarms []*m.AlarmCustomTable
+		x.SQL("SELECT * FROM alarm_custom WHERE id=?", customAlarmId).Find(&customAlarms)
+		if len(customAlarms) == 0 {
+			return fmt.Errorf("can not find any custom alarm with id:%d", customAlarmId)
+		}
+		alarmId = customAlarms[0].Id
+		alarmStatus = "firing"
+		eventKeys = []string{"custom_alarm_guid^"+m.FiringCallback}
+		if customAlarms[0].Closed == 1 {
+			alarmStatus = "ok"
+			eventKeys = []string{"custom_alarm_guid^"+m.RecoverCallback}
+		}
 	}else {
-		x.SQL("SELECT id,status FROM alarm WHERE endpoint=? AND strategy_id=? ORDER BY id DESC", endpoint, strategyId).Find(&alarms)
+		var alarms []*m.AlarmTable
+		if alarmId > 0 {
+			x.SQL("SELECT id,status FROM alarm WHERE id=? ORDER BY id DESC", alarmId).Find(&alarms)
+		} else {
+			x.SQL("SELECT id,status FROM alarm WHERE endpoint=? AND strategy_id=? ORDER BY id DESC", endpoint, strategyId).Find(&alarms)
+		}
+		if len(alarms) == 0 {
+			return fmt.Errorf("can not find any alarm with endpoint:%s startegy_id:%d", endpoint, strategyId)
+		}
+		alarmStatus = alarms[0].Status
+		alarmId = alarms[0].Id
+		eventKeys = getCoreEventKey(alarmStatus, endpoint)
 	}
-	if len(alarms) == 0 {
-		return fmt.Errorf("can not find any alarm with endpoint:%s startegy_id:%d", endpoint, strategyId)
-	}
-	eventKeys := getCoreEventKey(alarms[0].Status, endpoint)
 	if len(eventKeys) == 0 {
 		return fmt.Errorf("notify core event fail, event key is null")
 	}
 	for i,coreKey := range eventKeys {
 		keySplit := strings.Split(coreKey, "^")
 		var requestParam m.CoreNotifyRequest
-		requestParam.EventSeqNo = fmt.Sprintf("%d-%s-%d-%d", alarms[0].Id, alarms[0].Status, time.Now().Unix(), i)
+		requestParam.EventSeqNo = fmt.Sprintf("%d-%s-%d-%d", alarmId, alarmStatus, time.Now().Unix(), i)
 		requestParam.EventType = "alarm"
 		requestParam.SourceSubSystem = "SYS_MONITOR"
 		requestParam.OperationKey = keySplit[1]
-		requestParam.OperationData = fmt.Sprintf("%d-%s", alarms[0].Id, keySplit[0])
+		requestParam.OperationData = fmt.Sprintf("%d-%s", alarmId, keySplit[0])
 		requestParam.OperationUser = ""
 		log.Logger.Info(fmt.Sprintf("notify request data --> eventSeqNo:%s operationKey:%s operationData:%s", requestParam.EventSeqNo, requestParam.OperationKey, requestParam.OperationData))
 		b, _ := json.Marshal(requestParam)
@@ -180,6 +199,10 @@ func NotifyCoreEvent(endpoint string,strategyId int,alarmId int) error {
 }
 
 func GetAlarmEvent(alarmType,inputGuid string,id int) (result m.AlarmEntityObj,err error) {
+	if inputGuid == "custom_alarm_guid" {
+		result,err = getCustomAlarmEvent(id)
+		return result,err
+	}
 	result.Id = fmt.Sprintf("%s-%d-%s", alarmType, id, inputGuid)
 	if alarmType == "alarm" {
 		var alarms []*m.AlarmTable
@@ -198,33 +221,39 @@ func GetAlarmEvent(alarmType,inputGuid string,id int) (result m.AlarmEntityObj,e
 		mailMap := make(map[string]bool)
 		phoneMap := make(map[string]bool)
 		roleMap := make(map[string]bool)
-		for _,v := range GetMailByStrategy(alarms[0].StrategyId) {
-			mailMap[fmt.Sprintf("%s^%s", inputGuid, v)] = true
+		if alarms[0].StrategyId == 0 {
+			for _, v := range GetMailByEndpointGroup(alarms[0].Endpoint) {
+				mailMap[fmt.Sprintf("%s^%s", inputGuid, v)] = true
+			}
+		}else {
+			for _, v := range GetMailByStrategy(alarms[0].StrategyId) {
+				mailMap[fmt.Sprintf("%s^%s", inputGuid, v)] = true
+			}
 		}
 		var recursiveData []*m.PanelRecursiveTable
 		x.SQL("SELECT * FROM panel_recursive").Find(&recursiveData)
 		if len(recursiveData) > 0 {
-			for _,v := range recursiveData {
+			for _, v := range recursiveData {
 				if strings.Contains(v.Endpoint, alarms[0].Endpoint) {
-					for _,vv := range strings.Split(v.Email, ",") {
+					for _, vv := range strings.Split(v.Email, ",") {
 						mailMap[fmt.Sprintf("%s^%s", v.Guid, vv)] = true
 					}
-					for _,vv := range strings.Split(v.Phone, ",") {
+					for _, vv := range strings.Split(v.Phone, ",") {
 						phoneMap[fmt.Sprintf("%s^%s", v.Guid, vv)] = true
 					}
-					for _,vv := range strings.Split(v.Role, ",") {
+					for _, vv := range strings.Split(v.Role, ",") {
 						roleMap[fmt.Sprintf("%s^%s", v.Guid, vv)] = true
 					}
-					for _,vv := range strings.Split(v.Parent, "^") {
-						tmpToRecursiveMail,tmpToRecursivePhone,tmpToRecursiveRole,_,_ := searchRecursiveParent(recursiveData,[]string{},[]string{},[]string{},[]string{},[]string{},vv)
+					for _, vv := range strings.Split(v.Parent, "^") {
+						tmpToRecursiveMail, tmpToRecursivePhone, tmpToRecursiveRole, _, _ := searchRecursiveParent(recursiveData, []string{}, []string{}, []string{}, []string{}, []string{}, vv)
 						log.Logger.Info(fmt.Sprintf("parent: %s  mail: %v phone: %v role: %v", vv, tmpToRecursiveMail, tmpToRecursivePhone, tmpToRecursiveRole))
-						for _,vvv := range tmpToRecursiveMail {
+						for _, vvv := range tmpToRecursiveMail {
 							mailMap[vvv] = true
 						}
-						for _,vvv := range tmpToRecursivePhone {
+						for _, vvv := range tmpToRecursivePhone {
 							phoneMap[vvv] = true
 						}
-						for _,vvv := range tmpToRecursiveRole {
+						for _, vvv := range tmpToRecursiveRole {
 							roleMap[vvv] = true
 						}
 					}
@@ -234,16 +263,28 @@ func GetAlarmEvent(alarmType,inputGuid string,id int) (result m.AlarmEntityObj,e
 		inputGuid = inputGuid + "^"
 		var toMail,toPhone,toRole []string
 		for k,_ := range mailMap {
+			if alarms[0].StrategyId == 0 {
+				toMail = append(toMail, k[strings.Index(k, "^")+1:])
+				continue
+			}
 			if strings.Contains(k, inputGuid) {
 				toMail = append(toMail, k[len(inputGuid):])
 			}
 		}
 		for k,_ := range phoneMap {
+			if alarms[0].StrategyId == 0 {
+				toPhone = append(toPhone, k[strings.Index(k, "^")+1:])
+				continue
+			}
 			if strings.Contains(k, inputGuid) {
 				toPhone = append(toPhone, k[len(inputGuid):])
 			}
 		}
 		for k,_ := range roleMap {
+			if alarms[0].StrategyId == 0 {
+				toRole = append(toRole, k[strings.Index(k, "^")+1:])
+				continue
+			}
 			if strings.Contains(k, inputGuid) {
 				toRole = append(toRole, k[len(inputGuid):])
 			}
@@ -264,6 +305,26 @@ func GetAlarmEvent(alarmType,inputGuid string,id int) (result m.AlarmEntityObj,e
 		result.Content = fmt.Sprintf("Endpoint:%s \r\nStatus:%s\r\nMetric:%s\r\nEvent:%.3f%s\r\nLast:%s\r\nPriority:%s\r\nNote:%s\r\nTime:%s %s",alarms[0].Endpoint,alarms[0].Status,alarms[0].SMetric,alarms[0].StartValue,alarms[0].SCond,alarms[0].SLast,alarms[0].SPriority,alarms[0].Content,alarms[0].Start.Format(m.DatetimeFormat),tagsContent)
 		log.Logger.Info(fmt.Sprintf("alarm event --> id:%s status:%s to:%s subejct:%s content:%s", result.Id, result.Status, result.To, result.Subject, result.Content))
 	}
+	return result,err
+}
+
+func getCustomAlarmEvent(id int) (result m.AlarmEntityObj,err error) {
+	result.Id = fmt.Sprintf("custom-%d-custom_alarm_guid", id)
+	var customAlarms []*m.AlarmCustomTable
+	x.SQL("SELECT * FROM alarm_custom WHERE id=?", id).Find(&customAlarms)
+	if len(customAlarms) == 0 {
+		err = fmt.Errorf("can not find any custom alarm with id:%d", id)
+		return result,err
+	}
+	result.To = customAlarms[0].AlertReciver
+	result.ToMail = customAlarms[0].AlertReciver
+	alarmStatus := "firing"
+	if customAlarms[0].Closed == 1 {
+		alarmStatus = "ok"
+	}
+	result.Subject = fmt.Sprintf("[%s][level_%d] %s", alarmStatus, customAlarms[0].AlertLevel, customAlarms[0].AlertTitle)
+	result.Content = fmt.Sprintf("Title:%s \r\n Level:level_%d \r\n Info:%s \r\n Content:%s \r\n SubSystemId:%s \r\n AlertIp:%s \r\n RemarkInfo:%s \r\n Time:%s",customAlarms[0].AlertTitle,customAlarms[0].AlertLevel,customAlarms[0].AlertInfo,customAlarms[0].AlertObj,customAlarms[0].SubSystemId,customAlarms[0].AlertIp,customAlarms[0].RemarkInfo,customAlarms[0].UpdateAt.Format(m.DatetimeFormat))
+	log.Logger.Info("Get custom alarm message done", log.String("subject", result.Subject), log.String("mail", result.ToMail))
 	return result,err
 }
 
