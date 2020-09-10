@@ -2,7 +2,7 @@
   <div class="main-content">
     <PageTable :pageConfig="pageConfig" ref="child">
       <div slot="extraBtn">
-        <button type="button" class="btn-cancle-f" @click="exportThreshold">{{$t("button.export")}}</button>
+        <button type="button" class="btn-cancel-f" @click="exportThreshold">{{$t("button.export")}}</button>
         <div style="display: inline-block;margin-bottom: 3px;vertical-align: bottom;"> 
           <Upload 
           :action="uploadUrl" 
@@ -33,7 +33,7 @@
         v-model="isShowWarning"
         title="Delete confirmation"
         @on-ok="ok"
-        @on-cancel="cancle">
+        @on-cancel="cancel">
         <div class="modal-body" style="padding:30px">
           <div style="text-align:center">
             <p style="color: red">Will you delete it?</p>
@@ -72,7 +72,7 @@
               {value: 'search', type: 'input', placeholder: 'placeholder.input', style: ''}],
             btn_group: [
               {btn_name: 'button.search', btn_func: 'search', class: 'btn-confirm-f', btn_icon: 'fa fa-search'},
-              {btn_name: 'button.add', btn_func: 'add', class: 'btn-cancle-f', btn_icon: 'fa fa-plus'}
+              {btn_name: 'button.add', btn_func: 'add', class: 'btn-cancel-f', btn_icon: 'fa fa-plus'}
             ],
             filters: {
               name__icontains: '',
@@ -180,7 +180,7 @@
       ok () {
         this.delF(this.selectedData)
       },
-      cancle () {
+      cancel () {
         this.isShowWarning = false
       },
       deleteConfirm (rowData) {

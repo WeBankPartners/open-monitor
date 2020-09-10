@@ -53,7 +53,7 @@
         </button>
       </li>
       <li class="search-li">
-        <button type="button" v-if="isShow" @click="changeRoute" class="btn btn-sm btn-cancle-f btn-jump">{{$t('button.endpointManagement')}}</button>
+        <button type="button" v-if="isShow" @click="changeRoute" class="btn btn-sm btn-cancel-f btn-jump">{{$t('button.endpointManagement')}}</button>
       </li>
    </ul>
   </div>

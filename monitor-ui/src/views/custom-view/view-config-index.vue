@@ -5,7 +5,7 @@
       <button class="btn btn-sm btn-confirm-f" @click="addView">
         <i class="fa fa-plus"></i>{{$t('button.addViewTemplate')}}
       </button>
-      <button class="btn btn-sm btn-cancle-f" @click="setDashboard">
+      <button class="btn btn-sm btn-cancel-f" @click="setDashboard">
         {{$t('button.setDashboard')}}
       </button>
     </div>
@@ -19,7 +19,7 @@
               </p>
               <a slot="extra">
                 <button class="btn btn-sm btn-confirm-f" @click="goToPanal(panalItem)">{{$t('button.view')}}</button>
-                <button class="btn btn-sm btn-cancle-f" @click="deleteConfirmModal(panalItem)">{{$t('button.remove')}}</button>
+                <button class="btn btn-sm btn-cancel-f" @click="deleteConfirmModal(panalItem)">{{$t('button.remove')}}</button>
               </a>
               <ul class="panal-content">
                 <li>
@@ -47,7 +47,7 @@
       v-model="isShowWarning"
       title="Delete confirmation"
       @on-ok="ok"
-      @on-cancel="cancle">
+      @on-cancel="cancel">
       <div class="modal-body" style="padding:30px">
         <div style="text-align:center">
           <p style="color: red">Will you delete it?</p>
@@ -116,7 +116,7 @@ export default {
     ok () {
       this.removeTemplate(this.selectedData)
     },
-    cancle () {
+    cancel () {
       this.isShowWarning = false
     },
     deleteConfirm (item) {
