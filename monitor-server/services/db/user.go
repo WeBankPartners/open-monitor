@@ -138,6 +138,59 @@ func GetMailByStrategy(strategyId int) []string {
 	return result
 }
 
+func GetMailByEndpointGroup(guid string) []string {
+	result := []string{}
+	resultMap := make(map[string]int)
+	var tpls []*m.TplTable
+	x.SQL("SELECT t1.* FROM tpl t1 LEFT JOIN grp_endpoint t2 ON t1.grp_id=t2.grp_id LEFT JOIN endpoint t3 ON t2.endpoint_id=t3.id WHERE t3.guid=?", guid).Find(&tpls)
+	if len(tpls) == 0 {
+		log.Logger.Warn(fmt.Sprintf("can not find group with endpoint %s", guid))
+		return result
+	}
+	for _,tpl := range tpls {
+		userIds := tpl.ActionUser
+		if tpl.ActionRole != "" {
+			var tmpRel []*m.RelRoleUserTable
+			x.SQL(fmt.Sprintf("SELECT user_id FROM rel_role_user WHERE role_id IN (%s)", tpl.ActionRole)).Find(&tmpRel)
+			for _,v := range tmpRel {
+				userIds = userIds + fmt.Sprintf(",%d", v.UserId)
+			}
+			if strings.HasPrefix(userIds, ",") {
+				userIds = userIds[1:]
+			}
+			var roleTable []*m.RoleTable
+			x.SQL(fmt.Sprintf("SELECT * FROM role WHERE id IN (%s)", tpl.ActionRole)).Find(&roleTable)
+			for _,v := range roleTable {
+				if v.Email != "" {
+					if _,b := resultMap[v.Email]; !b {
+						result = append(result, v.Email)
+						resultMap[v.Email] = 1
+					}
+				}
+			}
+		}
+		if userIds != "" {
+			var users []*m.UserTable
+			x.SQL(fmt.Sprintf("SELECT DISTINCT email FROM user WHERE id IN (%s)", userIds)).Find(&users)
+			for _,v := range users {
+				if _,b := resultMap[v.Email]; !b {
+					result = append(result, v.Email)
+					resultMap[v.Email] = 1
+				}
+			}
+		}
+		if tpl.ExtraMail != "" {
+			for _,v := range strings.Split(tpl.ExtraMail, ",") {
+				if _,b := resultMap[v]; !b {
+					result = append(result, v)
+					resultMap[v] = 1
+				}
+			}
+		}
+	}
+	return result
+}
+
 func ListUser(search string,role,page,size int) (err error,data m.TableData) {
 	var users []*m.UserQuery
 	var count []int

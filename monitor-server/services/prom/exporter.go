@@ -14,15 +14,15 @@ func GetEndpointData(ip,port string,prefix,keyword []string) (error, []string) {
 	resp,err := http.Get(fmt.Sprintf("http://%s:%s/metrics", ip, port))
 	if err != nil {
 		var tmpErr error
-		for i:=0;i<4;i++ {
-			time.Sleep(3*time.Second)
+		for i:=0;i<6;i++ {
+			time.Sleep(10*time.Second)
 			resp,tmpErr = http.Get(fmt.Sprintf("http://%s:%s/metrics", ip, port))
 			if tmpErr == nil {
 				break
 			}
 		}
 		if tmpErr != nil {
-			log.Logger.Error("Get agent metric data fail,retry 5 times", log.Error(tmpErr))
+			log.Logger.Error("Get agent metric data fail,retry 6 times", log.Error(tmpErr))
 			return tmpErr, strList
 		}
 	}
