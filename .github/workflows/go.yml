@@ -20,6 +20,6 @@ jobs:
         path: go/src/github.com/WeBankPartners/open-monitor
 
     - name: Build
-      run: cd monitor-server && go build -v .
+      run: cd /home/runner/work/open-monitor/go/src/github.com/WeBankPartners/open-monitor/monitor-server && go build -v .
       env:
         GOPATH: /home/runner/work/open-monitor/go
