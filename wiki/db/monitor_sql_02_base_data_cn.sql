@@ -55,6 +55,11 @@ CREATE TABLE `alive_check_queue` (
 ALTER TABLE log_monitor ADD COLUMN priority VARCHAR(50) DEFAULT 'high';
 #@v1.7.0.12-end@;
 
-#@v1.7.1.5-begin@;
-INSERT  INTO `strategy`(`tpl_id`,`metric`,`expr`,`cond`,`last`,`priority`,`content`,`config_type`) VALUE (1,'process_alive_count','node_process_monitor_count_current{instance="$address"}','==0','30s','high','process down','');
-#@v1.7.1.5-end@;
+#@v1.7.1.8-begin@;
+DELETE FROM strategy WHERE tpl_id=1 AND metric='process_alive_count';
+INSERT  INTO `strategy`(`tpl_id`,`metric`,`expr`,`cond`,`last`,`priority`,`content`,`config_type`) VALUE (1,'process_alive_count','node_process_monitor_count_current{instance=\"$address\"}','==0','30s','high','process down','');
+DELETE FROM prom_metric WHERE metric='volume_used_percent';
+INSERT  INTO `prom_metric`(`metric`,`metric_type`,`prom_ql`,`prom_main`) VALUES ('volume_used_percent','host','100-(node_filesystem_avail_bytes{fstype=~\"ext3|ext4|xfs\",instance=\"$address\"}/node_filesystem_size_bytes{fstype=~\"ext3|ext4|xfs\",instance=\"$address\"})*100','');
+DELETE FROM strategy WHERE tpl_id=1 AND metric='volume_used_percent';
+INSERT  INTO `strategy`(`tpl_id`,`metric`,`expr`,`cond`,`last`,`priority`,`content`,`config_type`) VALUE (1,'volume_used_percent','100-(node_filesystem_avail_bytes{fstype=~\"ext3|ext4|xfs\",instance=\"$address\"}/node_filesystem_size_bytes{fstype=~\"ext3|ext4|xfs\",instance=\"$address\"})*100','>=85','60s','high','disk space alert','');
+#@v1.7.1.8-end@;
