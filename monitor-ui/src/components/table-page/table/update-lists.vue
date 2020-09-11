@@ -40,7 +40,7 @@
               </form>
             </div>
             <div class="modal-footer">
-              <button type="button" class="btn-cancle-f" data-dismiss="modal">取消</button>
+              <button type="button" class="btn-cancel-f" data-dismiss="modal">取消</button>
               <button type="button" @click="changeTableTr" class="btn-confirm-f">保存</button>
             </div>
           </div>
