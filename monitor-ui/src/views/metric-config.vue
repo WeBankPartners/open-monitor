@@ -33,8 +33,8 @@
       </Select>
       
       <button class="btn btn-sm btn-confirm-f" :disabled="btnDisable" @click="getChartData">{{$t('button.search')}}</button>
-      <button class="btn btn-sm btn-cancle-f" :disabled="btnDisable" @click="addMetric">{{$t('button.addMetric')}}</button>
-      <button class="btn btn-sm btn-cancle-f" :disabled="btnDisable" @click="saveConfig">{{$t('button.saveEdit')}}</button>
+      <button class="btn btn-sm btn-cancel-f" :disabled="btnDisable" @click="addMetric">{{$t('button.addMetric')}}</button>
+      <button class="btn btn-sm btn-cancel-f" :disabled="btnDisable" @click="saveConfig">{{$t('button.saveEdit')}}</button>
     </div>
     <section class="metric-section">
       <ul>
