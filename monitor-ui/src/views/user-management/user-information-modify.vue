@@ -28,7 +28,7 @@
           <label for="">{{$t('button.rePassword')}}：</label>
           <input v-model="userInfo.re_new_password" type="text" class="form-control model-input">
           <button type="button" class="btn-confirm-f" @click="confirmPassword">{{$t('button.rePassword')}}</button>
-          <button type="button" class="btn-cancle-f" @click="abandonModify">{{$t('button.cancle')}}</button>
+          <button type="button" class="btn-cancel-f" @click="abandonModify">{{$t('button.cancel')}}</button>
         </li> 
       </template>
       <li v-else>

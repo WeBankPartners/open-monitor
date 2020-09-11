@@ -12,7 +12,7 @@
     <div class="zone zone-config c-dark">
       <div class="tool-save">
         <button class="btn btn-sm btn-confirm-f" @click="saveConfig">{{$t('button.saveConfig')}}</button>
-        <button class="btn btn-sm btn-cancle-f" @click="goback()">{{$t('button.back')}}</button>
+        <button class="btn btn-sm btn-cancel-f" @click="goback()">{{$t('button.back')}}</button>
       </div>
       <div>
         <section class="zone-config-operation">
