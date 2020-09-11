@@ -21,7 +21,7 @@
           </Select>
         </div>
         <button class="btn btn-sm btn-confirm-f" @click="saveConfig">{{$t('button.saveConfig')}}</button>
-        <button class="btn btn-sm btn-cancle-f" @click="goback()">{{$t('button.back')}}</button>
+        <button class="btn btn-sm btn-cancel-f" @click="goback()">{{$t('button.back')}}</button>
       </div>
       <div>
         <section class="zone-config-operation">
@@ -93,7 +93,7 @@
                   <div class="condition">
                     <Input v-model="panalUnit" placeholder="Enter something..." style="width: 300px" />
                   </div>
-                  <button class="btn btn-cancle-f" @click="addQuery()">{{$t('button.addConfig')}}</button>
+                  <button class="btn btn-cancel-f" @click="addQuery()">{{$t('button.addConfig')}}</button>
                 </li>
               </ul>
             </div>
