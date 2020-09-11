@@ -15,7 +15,7 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn-cancle-f" @click="cancle">Cancle</button>
+          <button class="btn-cancel-f" @click="cancel">Cancel</button>
           <button class="btn-delete-f" @click="exect">Delete</button>
         </div>
       </div>
@@ -34,7 +34,7 @@ export default {
     },
     created() {
       this.$root.$eventBus.$on('hideConfirmModal', () => {
-        this.cancle()
+        this.cancel()
       })
     },
     methods: {
@@ -42,7 +42,7 @@ export default {
         this.$root.JQ('#deleteConfirmId').modal('show')
         this.confirmInfo = confirmInfo
       },
-      cancle() {
+      cancel() {
         this.$root.JQ('#deleteConfirmId').modal('hide')
       },
       exect() {
