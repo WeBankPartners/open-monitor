@@ -36,9 +36,9 @@
           </div>
 
           <div class="header-tools"> 
-            <button class="btn btn-sm btn-cancle-f" @click="addItem">{{$t('button.add')}}</button>
+            <button class="btn btn-sm btn-cancel-f" @click="addItem">{{$t('button.add')}}</button>
             <button class="btn btn-sm btn-confirm-f" @click="saveEdit">{{$t('button.saveEdit')}}</button>
-            <button class="btn btn-sm btn-cancle-f" @click="goBack()">{{$t('button.back')}}</button>
+            <button class="btn btn-sm btn-cancel-f" @click="goBack()">{{$t('button.back')}}</button>
           </div>
       </div>
     </header>

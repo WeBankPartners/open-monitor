@@ -19,17 +19,6 @@
 
 English / [中文](README.md)
 
-## Live Demo
-
-[Live Demo](http://124.156.108.126:8080/wecube-monitor)
-
-<img src="./wiki/images/wecube-monitor02.gif" />
-
-> Note:
->  1. Live Demo will reset on 2:00 - 4:00am every day. The environment is not available during the period, and all changes will be discarded.
->  2. Multiple people use [admin] at the same time, may influence each other, if you want to get better experience, please set up your private environment refer to: [Open-Monitor_Deployment_Guide](wiki/install_guide.md)
-
-
 ## Introduction
 
 Prometheus is an open-source monitor-alarm system and time series database (TSDB) developed by SoundCloud. It is an open-source version of the Google BorgMon monitoring system in Go language.
