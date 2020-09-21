@@ -13,7 +13,7 @@ var invalidData = []string{"select", "insert", "update", "alter", "delete", "dro
 var regCond = regexp.MustCompile(`^([<=|>=|!=|==|<|>]*)-?\d+(\.\d+)?$`)
 var regLast = regexp.MustCompile(`^\d+[s|m|h]$`)
 var regPath = regexp.MustCompile(`^\/([\w|\.|\-]+\/?)+$`)
-var regNormal = regexp.MustCompile(`^[\w|\.|\-|\~|\!|\@|\#|\$|\%|\^|\[|\]|\{|\}|\(|\)]+$`)
+var regNormal = regexp.MustCompile(`^[\w|\.|\-|\~|\!|\@|\#|\$|\%|\^|\[|\]|\{|\}|\(|\)|\,|\s]+$`)
 
 func ValidateGet(c *gin.Context)  {
 	isOk := true
