@@ -667,14 +667,15 @@ func GetLogMonitorTable(id,strategyId,tplId int, path string) (err error,result 
 	if id > 0 {
 		err = x.SQL("SELECT * FROM log_monitor WHERE id=?", id).Find(&result)
 	}
-	if path != "" {
-		err = x.SQL("SELECT * FROM log_monitor WHERE path=?", path).Find(&result)
-	}
-	if strategyId > 0 {
-		err = x.SQL("SELECT * FROM log_monitor WHERE strategy_id=?", strategyId).Find(&result)
-	}
 	if path != "" && strategyId > 0 {
 		err = x.SQL("SELECT * FROM log_monitor WHERE strategy_id=? and path=?", strategyId, path).Find(&result)
+	}else{
+		if path != "" {
+			err = x.SQL("SELECT * FROM log_monitor WHERE path=?", path).Find(&result)
+		}
+		if strategyId > 0 {
+			err = x.SQL("SELECT * FROM log_monitor WHERE strategy_id=?", strategyId).Find(&result)
+		}
 	}
 	if tplId > 0 {
 		err = x.SQL("SELECT * FROM log_monitor WHERE strategy_id IN (SELECT id FROM strategy WHERE tpl_id=?) ORDER BY path", tplId).Find(&result)
