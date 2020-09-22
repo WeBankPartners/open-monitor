@@ -25,7 +25,7 @@ func GetEndpointProcessConfig(c *gin.Context)  {
 func UpdateEndpointProcessConfig(c *gin.Context)  {
 	var param m.ProcessUpdateDto
 	if err := c.ShouldBindJSON(&param); err==nil {
-		if !param.Force && len(param.ProcessList) > 0 {
+		if param.Check && len(param.ProcessList) > 0 {
 			err,illegal,msg := db.CheckNodeExporterProcessConfig(param.EndpointId, param.ProcessList)
 			if err != nil {
 				mid.ReturnHandleError(c, "check node exporter config fail ", err)
