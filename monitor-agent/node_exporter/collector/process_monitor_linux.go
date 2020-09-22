@@ -223,7 +223,7 @@ var ProcessCacheObj processCache
 
 type processHttpDto struct {
 	Process  []string  `json:"process"`
-	Force    int       `json:"force"`
+	Check    int       `json:"check"`
 }
 
 func ProcessMonitorHttpHandle(w http.ResponseWriter, r *http.Request)  {
@@ -248,7 +248,7 @@ func ProcessMonitorHttpHandle(w http.ResponseWriter, r *http.Request)  {
 		w.Write([]byte("Success"))
 		return
 	}
-	if param.Force > 0 {
+	if param.Check > 0 {
 		illegalFlag := false
 		checkNumResult := ProcessCacheObj.checkNum(param.Process)
 		for i,v := range checkNumResult {
