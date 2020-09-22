@@ -14,7 +14,7 @@ import (
 
 type processHttpDto struct {
 	Process  []string  `json:"process"`
-	Force    int       `json:"force"`
+	Check    int       `json:"check"`
 }
 
 func UpdateNodeExporterProcessConfig(endpointId int) error {
@@ -29,7 +29,7 @@ func UpdateNodeExporterProcessConfig(endpointId int) error {
 		log.Logger.Error("Update node_exporter fail, get endpoint msg fail", log.Error(err))
 		return err
 	}
-	postParam := processHttpDto{Process:[]string{}, Force:0}
+	postParam := processHttpDto{Process:[]string{}, Check:0}
 	for _,v := range data {
 		postParam.Process = append(postParam.Process, v.Name)
 	}
@@ -57,7 +57,7 @@ func CheckNodeExporterProcessConfig(endpointId int,processList []string) (err er
 		log.Logger.Error("Check node_exporter fail, get endpoint msg fail", log.Error(err))
 		return
 	}
-	postParam := processHttpDto{Process:processList, Force:1}
+	postParam := processHttpDto{Process:processList, Check:1}
 	postData,err := json.Marshal(postParam)
 	if err != nil {
 		log.Logger.Error("Check node_exporter fail, marshal post data fail", log.Error(err))
