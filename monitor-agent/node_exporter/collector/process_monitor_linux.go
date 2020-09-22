@@ -115,15 +115,16 @@ func (c *processCache) start()  {
 		if len(processUsedList) > 0 {
 			for _,v := range c.ProcessMonitor {
 				tmpName := v.Name
-				tmpTag := ""
+				//tmpTag := ""
 				var tmpCount float64 = 0
-				if strings.Contains(v.Name, "(") {
-					tmpNameList := strings.Split(v.Name, "(")
-					tmpName = tmpNameList[0]
-					tmpTag = strings.Replace(tmpNameList[1], ")", "", -1)
-				}
+				//if strings.Contains(v.Name, "(") {
+				//	tmpNameList := strings.Split(v.Name, "(")
+				//	tmpName = tmpNameList[0]
+				//	tmpTag = strings.Replace(tmpNameList[1], ")", "", -1)
+				//}
 				for _,vv := range processUsedList {
-					if vv.Name == tmpName && strings.Contains(vv.Cmd, tmpTag) {
+					//if vv.Name == tmpName && strings.Contains(vv.Cmd, tmpTag) {
+					if strings.Contains(vv.Name, tmpName) || strings.Contains(vv.Cmd, tmpName) {
 						tmpCount = tmpCount + 1
 						if len(vv.Cmd) > 100 {
 							v.Command = vv.Cmd[:100]
@@ -200,10 +201,29 @@ func (c *processCache) get() []*processMonitorObj {
 	return c.ProcessMonitor
 }
 
+func (c *processCache) checkNum(names []string) []int {
+	processUseList := getProcessUsedResource()
+	if len(processUseList) == 0 {
+		return []int{}
+	}
+	var result []int
+	for _,v := range names {
+		count := 0
+		for _,vv := range processUseList {
+			if strings.Contains(vv.Name, v) || strings.Contains(vv.Cmd, v) {
+				count = count + 1
+			}
+		}
+		result = append(result, count)
+	}
+	return result
+}
+
 var ProcessCacheObj processCache
 
 type processHttpDto struct {
 	Process  []string  `json:"process"`
+	Force    int       `json:"force"`
 }
 
 func ProcessMonitorHttpHandle(w http.ResponseWriter, r *http.Request)  {
@@ -227,6 +247,21 @@ func ProcessMonitorHttpHandle(w http.ResponseWriter, r *http.Request)  {
 		ProcessCacheObj.stop()
 		w.Write([]byte("Success"))
 		return
+	}
+	if param.Force > 0 {
+		illegalFlag := false
+		checkNumResult := ProcessCacheObj.checkNum(param.Process)
+		for i,v := range checkNumResult {
+			if v != 1 {
+				w.WriteHeader(http.StatusBadRequest)
+				w.Write([]byte(fmt.Sprintf("Process %s num = %d", param.Process[i], v)))
+				illegalFlag = true
+				break
+			}
+		}
+		if illegalFlag {
+			return
+		}
 	}
 	ProcessCacheObj.update(param.Process)
 	if !ProcessCacheObj.isRunning() {
