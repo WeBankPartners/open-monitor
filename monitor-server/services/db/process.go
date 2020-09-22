@@ -14,6 +14,7 @@ import (
 
 type processHttpDto struct {
 	Process  []string  `json:"process"`
+	Force    int       `json:"force"`
 }
 
 func UpdateNodeExporterProcessConfig(endpointId int) error {
@@ -28,7 +29,7 @@ func UpdateNodeExporterProcessConfig(endpointId int) error {
 		log.Logger.Error("Update node_exporter fail, get endpoint msg fail", log.Error(err))
 		return err
 	}
-	postParam := processHttpDto{Process:[]string{}}
+	postParam := processHttpDto{Process:[]string{}, Force:0}
 	for _,v := range data {
 		postParam.Process = append(postParam.Process, v.Name)
 	}
@@ -47,6 +48,37 @@ func UpdateNodeExporterProcessConfig(endpointId int) error {
 	log.Logger.Info("curl "+url, log.String("response", string(responseBody)))
 	resp.Body.Close()
 	return nil
+}
+
+func CheckNodeExporterProcessConfig(endpointId int,processList []string) (err error,illegal bool,msg string) {
+	endpointObj := m.EndpointTable{Id:endpointId}
+	err = GetEndpoint(&endpointObj)
+	if err != nil {
+		log.Logger.Error("Check node_exporter fail, get endpoint msg fail", log.Error(err))
+		return
+	}
+	postParam := processHttpDto{Process:processList, Force:1}
+	postData,err := json.Marshal(postParam)
+	if err != nil {
+		log.Logger.Error("Check node_exporter fail, marshal post data fail", log.Error(err))
+		return
+	}
+	url := fmt.Sprintf("http://%s/process/config", endpointObj.Address)
+	resp, err := http.Post(url, "application/json", strings.NewReader(string(postData)))
+	if err != nil {
+		log.Logger.Error("Check node_exporter fail, http post fail", log.Error(err))
+		return
+	}
+	responseBody,_ := ioutil.ReadAll(resp.Body)
+	log.Logger.Info("curl "+url, log.String("response", string(responseBody)))
+	resp.Body.Close()
+	msg = string(responseBody)
+	if resp.StatusCode > 300 {
+		illegal = true
+	}else{
+		illegal = false
+	}
+	return
 }
 
 func GetProcessList(endpointId int) (err error, processList []*m.ProcessMonitorTable) {
