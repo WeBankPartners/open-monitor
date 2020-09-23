@@ -6,6 +6,7 @@ import (
 	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
+	"fmt"
 )
 
 func GetDbMonitorList(c *gin.Context) {
@@ -27,7 +28,7 @@ func AddDbMonitor(c *gin.Context)  {
 	if err := c.ShouldBindJSON(&param);err == nil {
 		err = db.AddDbMonitor(param)
 		if err != nil {
-			mid.ReturnHandleError(c, "Add db_monitor table fail", err)
+			mid.ReturnHandleError(c, fmt.Sprintf("Add db_monitor table fail,%s ", err.Error()), err)
 			return
 		}
 		err = db.SendConfigToDbManager()
