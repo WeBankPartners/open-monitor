@@ -25,7 +25,7 @@ func AddDbMonitor(param m.DbMonitorUpdateDto) error {
 }
 
 func UpdateDbMonitor(param m.DbMonitorUpdateDto) error {
-	_,err := x.Exec("UPDATE db_monitor SET name=?,sql=? WHERE id=?", param.Name, param.Sql, param.Id)
+	_,err := x.Exec("UPDATE db_monitor SET `name`=?,`sql`=? WHERE id=?", param.Name, param.Sql, param.Id)
 	return err
 }
 
