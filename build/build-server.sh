@@ -12,3 +12,5 @@ cd ../node_exporter
 go build -ldflags "-linkmode external -extldflags -static -s" -o node_exporter_new
 cd ../transgateway
 go build -ldflags "-linkmode external -extldflags -static -s"
+cd ../db_data_exporter
+go build -ldflags "-linkmode external -extldflags -static -s"
