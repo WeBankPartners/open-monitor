@@ -303,6 +303,7 @@ type processRequestObj struct {
 	CallbackParameter  string  `json:"callbackParameter"`
 	HostIp  string  `json:"host_ip"`
 	ProcessTag  string `json:"process_tag"`
+	DisplayName string `json:"display_name"`
 }
 
 func AutoUpdateProcessMonitor(c *gin.Context)  {
@@ -364,10 +365,9 @@ func updateProcess(input processRequestObj) (result processResultOutputObj,err e
 		err = fmt.Errorf("Can not find host endpoint with ip=%s ", input.HostIp)
 		return result,err
 	}
-	var param m.ProcessUpdateDto
+	var param m.ProcessUpdateDtoNew
 	param.EndpointId = endpointObj.Id
-	processMsg := input.ProcessTag
-	param.ProcessList = []string{processMsg}
+	param.ProcessList = append(param.ProcessList, m.ProcessMonitorTable{Name:input.ProcessTag, DisplayName:input.DisplayName})
 	err = db.UpdateProcess(param)
 	if err != nil {
 		err = fmt.Errorf("Update db fail,%s ", err.Error())
