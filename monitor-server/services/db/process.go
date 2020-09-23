@@ -86,15 +86,16 @@ func GetProcessList(endpointId int) (err error, processList []*m.ProcessMonitorT
 	return err,processList
 }
 
-func UpdateProcess(param m.ProcessUpdateDto) error {
+func UpdateProcess(param m.ProcessUpdateDtoNew) error {
 	var actions []*Action
 	actions = append(actions, &Action{Sql:"DELETE FROM process_monitor WHERE endpoint_id=?", Param:[]interface{}{param.EndpointId}})
 	for _,v := range param.ProcessList {
 		var action Action
 		params := make([]interface{}, 0)
-		action.Sql = "INSERT INTO process_monitor(endpoint_id,NAME) VALUE (?,?)"
+		action.Sql = "INSERT INTO process_monitor(endpoint_id,name,display_name) VALUE (?,?,?)"
 		params = append(params, param.EndpointId)
-		params = append(params, v)
+		params = append(params, v.Name)
+		params = append(params, v.DisplayName)
 		action.Param = params
 		actions = append(actions, &action)
 	}
@@ -116,4 +117,22 @@ func GetAliveCheckQueue(param string) (err error,result []*m.AliveCheckQueueTabl
 		err = fmt.Errorf("get alive_check_queue table fail,nodata with message=%s and update_at>%s", param, lastMinDateString)
 	}
 	return err,result
+}
+
+func GetProcessDisplayMap(endpoint string) map[string]string {
+	result := make(map[string]string)
+	var processData []m.ProcessMonitorTable
+	err := x.SQL("SELECT * FROM process_monitor WHERE endpoint_id IN (SELECT id FROM endpoint WHERE guid=?)", endpoint).Find(&processData)
+	if err != nil {
+		log.Logger.Error("get process monitor data with endpoint fail", log.String("endpoint", endpoint), log.Error(err))
+		return result
+	}
+	for _,v := range processData {
+		if v.DisplayName != "" {
+			result[v.Name] = v.DisplayName
+		}else{
+			result[v.Name] = v.Name
+		}
+	}
+	return result
 }
