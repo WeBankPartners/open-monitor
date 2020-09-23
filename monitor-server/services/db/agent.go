@@ -408,7 +408,11 @@ func UpdateAgentManagerTable(endpoint m.EndpointTable, user,password,configFile,
 	return Transaction(actions)
 }
 
-func GetAgentManager() (result []*m.AgentManagerTable, err error) {
-	err = x.SQL("SELECT * FROM agent_manager").Find(&result)
+func GetAgentManager(guid string) (result []*m.AgentManagerTable, err error) {
+	if guid != "" {
+		err = x.SQL("SELECT * FROM agent_manager where endpoint_guid=?", guid).Find(&result)
+	}else {
+		err = x.SQL("SELECT * FROM agent_manager").Find(&result)
+	}
 	return result,err
 }
