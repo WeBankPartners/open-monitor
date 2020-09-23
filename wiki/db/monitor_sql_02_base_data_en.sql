@@ -74,4 +74,6 @@ CREATE TABLE IF NOT EXISTS `db_monitor` (
   `update_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 ) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+DELETE FROM prom_metric WHERE metric='db_monitor_count';
+INSERT  INTO `prom_metric`(`metric`,`metric_type`,`prom_ql`,`prom_main`) VALUES ('db_monitor_count','mysql','db_monitor_count{guid="$guid"}','');
 #@v1.7.1.12-end@;
