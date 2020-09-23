@@ -6,6 +6,7 @@ import (
 	"strings"
 	"net/http"
 	"encoding/json"
+	"io/ioutil"
 )
 
 func ListDbMonitor(endpointId int) (result []*m.DbMonitorTable, err error) {
@@ -72,7 +73,9 @@ func CheckDbMonitor(param m.DbMonitorUpdateDto) error {
 		return fmt.Errorf("Http request to %s/db/check fail,%s ", dbExportAddress, err.Error())
 	}
 	if resp.StatusCode > 300 {
-		return fmt.Errorf("%s", resp.Body)
+		bodyByte,_ := ioutil.ReadAll(resp.Body)
+		resp.Body.Close()
+		return fmt.Errorf("%s", string(bodyByte))
 	}
 	return nil
 }
@@ -107,7 +110,9 @@ func SendConfigToDbManager() error {
 		return fmt.Errorf("Http request to %s/db/config fail,%s ", dbExportAddress, err.Error())
 	}
 	if resp.StatusCode > 300 {
-		return fmt.Errorf("%s", resp.Body)
+		bodyByte,_ := ioutil.ReadAll(resp.Body)
+		resp.Body.Close()
+		return fmt.Errorf("%s", string(bodyByte))
 	}
 	return nil
 }
