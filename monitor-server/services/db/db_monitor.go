@@ -19,13 +19,8 @@ func AddDbMonitor(param m.DbMonitorUpdateDto) error {
 	if endpointObj.Guid == "" {
 		return fmt.Errorf("Can not find endpoint with id=%d ", param.EndpointId)
 	}
-	var actions []*Action
-	rowData := m.DbMonitorTable{Name:param.Name,Sql:param.Sql,EndpointGuid:endpointObj.Guid}
-	action := Classify(rowData, "insert", "db_monitor", false)
-	if action.Sql != "" {
-		actions = append(actions, &action)
-	}
-	return Transaction(actions)
+	_,err := x.Exec("INSERT INTO db_monitor(`endpoint_guid`,`name`,`sql`) VALUE (?,?,?)", endpointObj.Guid, param.Name, param.Sql)
+	return err
 }
 
 func UpdateDbMonitor(param m.DbMonitorUpdateDto) error {
