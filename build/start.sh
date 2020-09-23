@@ -65,6 +65,9 @@ nohup ./transgateway -d data -m http://127.0.0.1:8080 > logs/app.log 2>&1 &
 cd ../archive_mysql_tool
 mkdir -p logs
 nohup ./archive_mysql_tool > logs/app.log 2>&1 &
+cd ../db_data_exporter
+mkdir -p logs
+nohup ./db_data_exporter > logs/app.log 2>&1 &
 cd ../monitor/
 mkdir -p logs
 sleep 2

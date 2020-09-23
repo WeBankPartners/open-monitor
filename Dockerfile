@@ -12,8 +12,9 @@ ENV AGENT_MANAGER_DEPLOY=/app/deploy
 ENV TRANS_GATEWAY=$BASE_HOME/transgateway
 ENV PING_EXPORTER=$BASE_HOME/ping_exporter
 ENV ARCHIVE_TOOL=$BASE_HOME/archive_mysql_tool
+ENV DB_DATA_EXPORTER=$BASE_HOME/db_data_exporter
 
-RUN mkdir -p $BASE_HOME $PROMETHEUS_HOME $PROMETHEUS_HOME/rules $ALERTMANAGER_HOME $MONITOR_HOME $MONITOR_HOME/conf $AGENT_MANAGER_HOME $PING_EXPORTER $AGENT_MANAGER_DEPLOY $TRANS_GATEWAY $ARCHIVE_TOOL
+RUN mkdir -p $BASE_HOME $PROMETHEUS_HOME $PROMETHEUS_HOME/rules $ALERTMANAGER_HOME $MONITOR_HOME $MONITOR_HOME/conf $AGENT_MANAGER_HOME $PING_EXPORTER $AGENT_MANAGER_DEPLOY $TRANS_GATEWAY $ARCHIVE_TOOL $DB_DATA_EXPORTER
 
 COPY build/start.sh $BASE_HOME/
 COPY build/stop.sh $BASE_HOME/
@@ -32,6 +33,7 @@ COPY monitor-agent/ping_exporter/ping_exporter $PING_EXPORTER/
 COPY build/conf/ping_exporter.json $PING_EXPORTER/cfg.json
 COPY monitor-agent/archive_mysql_tool/archive_mysql_tool $ARCHIVE_TOOL/
 COPY build/conf/archive_mysql_tool.json $ARCHIVE_TOOL/default.json
+COPY monitor-agent/db_data_exporter/db_data_exporter $DB_DATA_EXPORTER/
 
 RUN chmod +x $PROMETHEUS_HOME/prometheus
 RUN chmod +x $PROMETHEUS_HOME/promtool
@@ -43,6 +45,7 @@ RUN chmod +x $MONITOR_HOME/monitor-server
 RUN chmod +x $BASE_HOME/*.sh
 RUN chmod +x $PING_EXPORTER/ping_exporter
 RUN chmod +x $ARCHIVE_TOOL/archive_mysql_tool
+RUN chmod +x $DB_DATA_EXPORTER/db_data_exporter
 
 WORKDIR $BASE_HOME
 

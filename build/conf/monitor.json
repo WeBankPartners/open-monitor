@@ -86,6 +86,13 @@
     "username": "",
     "password": "",
     "expire": 0
+    },
+    {
+    "name": "db_data_exporter",
+    "server": "http://127.0.0.1:9192",
+    "username": "",
+    "password": "",
+    "expire": 0
     }
   ],
   "prometheus" : {
