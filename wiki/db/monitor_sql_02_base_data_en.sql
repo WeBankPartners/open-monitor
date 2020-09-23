@@ -63,3 +63,15 @@ INSERT  INTO `prom_metric`(`metric`,`metric_type`,`prom_ql`,`prom_main`) VALUES 
 DELETE FROM strategy WHERE tpl_id=1 AND metric='volume_used_percent';
 INSERT  INTO `strategy`(`tpl_id`,`metric`,`expr`,`cond`,`last`,`priority`,`content`,`config_type`) VALUE (1,'volume_used_percent','100-(node_filesystem_avail_bytes{fstype=~\"ext3|ext4|xfs\",instance=\"$address\"}/node_filesystem_size_bytes{fstype=~\"ext3|ext4|xfs\",instance=\"$address\"})*100','>=85','60s','high','disk space alert','');
 #@v1.7.1.9-end@;
+
+#@v1.7.1.12-begin@;
+ALTER TABLE process_monitor ADD COLUMN display_name VARCHAR(255) DEFAULT '';
+CREATE TABLE IF NOT EXISTS `db_monitor` (
+  `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `endpoint_guid` VARCHAR(255) NOT NULL,
+  `name` VARCHAR(255) DEFAULT '',
+  `sql` VARCHAR(2000) DEFAULT '',
+  `update_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+#@v1.7.1.12-end@;

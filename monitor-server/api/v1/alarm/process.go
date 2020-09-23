@@ -36,6 +36,45 @@ func UpdateEndpointProcessConfig(c *gin.Context)  {
 				return
 			}
 		}
+		var processDtoNew m.ProcessUpdateDtoNew
+		processDtoNew.EndpointId = param.EndpointId
+		for _,v := range param.ProcessList {
+			processDtoNew.ProcessList = append(processDtoNew.ProcessList, m.ProcessMonitorTable{Name:v, DisplayName:""})
+		}
+		err = db.UpdateProcess(processDtoNew)
+		if err != nil {
+			mid.ReturnUpdateTableError(c, "process_monitor", err)
+		}else{
+			err = db.UpdateNodeExporterProcessConfig(param.EndpointId)
+			if err != nil {
+				mid.ReturnHandleError(c, "update node exporter config fail ", err)
+				return
+			}
+			mid.ReturnSuccess(c)
+		}
+	}else{
+		mid.ReturnValidateError(c, err.Error())
+	}
+}
+
+func UpdateEndpointProcessConfigNew(c *gin.Context)  {
+	var param m.ProcessUpdateDtoNew
+	if err := c.ShouldBindJSON(&param); err==nil {
+		if param.Check && len(param.ProcessList) > 0 {
+			var processList []string
+			for _,v := range param.ProcessList {
+				processList = append(processList, v.Name)
+			}
+			err,illegal,msg := db.CheckNodeExporterProcessConfig(param.EndpointId, processList)
+			if err != nil {
+				mid.ReturnHandleError(c, "check node exporter config fail ", err)
+				return
+			}
+			if illegal {
+				mid.ReturnValidateError(c, msg)
+				return
+			}
+		}
 		err = db.UpdateProcess(param)
 		if err != nil {
 			mid.ReturnUpdateTableError(c, "process_monitor", err)

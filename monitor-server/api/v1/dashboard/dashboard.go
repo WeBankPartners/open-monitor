@@ -672,6 +672,7 @@ func GetChart(c *gin.Context)  {
 		agg = db.CheckAggregate(query.Start, query.End, firstEndpoint, step, len(serials))
 	}
 	//var firstSerialTime float64
+	processDisplayMap := db.GetProcessDisplayMap(paramConfig[0].Endpoint)
 	for i, s := range serials {
 		if strings.Contains(s.Name, "$metric") {
 			queryIndex := i
@@ -679,6 +680,9 @@ func GetChart(c *gin.Context)  {
 				queryIndex = len(querys)-1
 			}
 			s.Name = strings.Replace(s.Name, "$metric", querys[queryIndex].Metric[0], -1)
+		}
+		if processName,b:=processDisplayMap[s.Name];b{
+			s.Name = processName
 		}
 		eOption.Legend = append(eOption.Legend, s.Name)
 		if eOption.Title == "${auto}" {
