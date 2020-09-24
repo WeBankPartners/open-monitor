@@ -23,6 +23,7 @@ func AcceptAlertMsg(c *gin.Context)  {
 			log.Logger.Warn("Accept alert is null")
 			mid.ReturnSuccess(c)
 		}
+		log.Logger.Debug("accept", log.JsonObj("body", param))
 		var alarms []*m.AlarmTable
 		for _,v := range param.Alerts {
 			if v.Labels["instance"] == "127.0.0.1:8300" {
@@ -64,9 +65,11 @@ func AcceptAlertMsg(c *gin.Context)  {
 				endpointObj := m.EndpointTable{Address: tmpSummaryMsg[0], AddressAgent: tmpSummaryMsg[0]}
 				db.GetEndpoint(&endpointObj)
 				if endpointObj.Id <= 0 || endpointObj.StopAlarm == 1 {
+					log.Logger.Debug("Up alarm break,endpoint not exists or stop alarm", log.String("endpoint", endpointObj.Guid))
 					continue
 				}
 				if endpointObj.ExportType == "telnet" || endpointObj.ExportType == "http" || endpointObj.ExportType == "ping" {
+					log.Logger.Debug("Up alarm break,endpoint export type illegal", log.String("exportType", endpointObj.ExportType))
 					continue
 				}
 				tmpAlarm.Endpoint = endpointObj.Guid
