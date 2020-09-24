@@ -58,7 +58,7 @@ func AcceptAlertMsg(c *gin.Context)  {
 				tmpAlarm.SPriority = "high"
 				tmpAlarm.Content = v.Annotations["description"]
 				tmpSummaryMsg := strings.Split(v.Annotations["summary"], "__")
-				if len(tmpSummaryMsg) != 3 {
+				if len(tmpSummaryMsg) != 4 {
 					log.Logger.Warn("Summary illegal", log.String("summary", v.Annotations["summary"]))
 					continue
 				}
@@ -73,7 +73,7 @@ func AcceptAlertMsg(c *gin.Context)  {
 					continue
 				}
 				tmpAlarm.Endpoint = endpointObj.Guid
-				tmpValue, _ = strconv.ParseFloat(tmpSummaryMsg[2], 64)
+				tmpValue, _ = strconv.ParseFloat(tmpSummaryMsg[3], 64)
 				tmpValue, _ = strconv.ParseFloat(fmt.Sprintf("%.3f", tmpValue), 64)
 				tmpAlarmQuery := m.AlarmTable{Endpoint: tmpAlarm.Endpoint, SMetric: tmpAlarm.SMetric}
 				_, tmpAlarms = db.GetAlarms(tmpAlarmQuery)
