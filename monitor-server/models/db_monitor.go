@@ -5,6 +5,7 @@ type DbMonitorTable struct {
 	EndpointGuid  string  `json:"endpoint_guid"`
 	Name  string  `json:"name"`
 	Sql   string  `json:"sql"`
+	SysPanel string `json:"sys_panel"`
 }
 
 type DbMonitorUpdateDto struct {
@@ -12,6 +13,7 @@ type DbMonitorUpdateDto struct {
 	EndpointId  int  `json:"endpoint_id" binding:"required"`
 	Name  string  `json:"name" binding:"required"`
 	Sql   string  `json:"sql" binding:"required"`
+	SysPanel string `json:"sys_panel"`
 }
 
 type DbMonitorTaskObj struct {
