@@ -20,12 +20,12 @@ func AddDbMonitor(param m.DbMonitorUpdateDto) error {
 	if endpointObj.Guid == "" {
 		return fmt.Errorf("Can not find endpoint with id=%d ", param.EndpointId)
 	}
-	_,err := x.Exec("INSERT INTO db_monitor(`endpoint_guid`,`name`,`sql`) VALUE (?,?,?)", endpointObj.Guid, param.Name, param.Sql)
+	_,err := x.Exec("INSERT INTO db_monitor(`endpoint_guid`,`name`,`sql`,`sys_panel`) VALUE (?,?,?,?)", endpointObj.Guid, param.Name, param.Sql, param.SysPanel)
 	return err
 }
 
 func UpdateDbMonitor(param m.DbMonitorUpdateDto) error {
-	_,err := x.Exec("UPDATE db_monitor SET `name`=?,`sql`=? WHERE id=?", param.Name, param.Sql, param.Id)
+	_,err := x.Exec("UPDATE db_monitor SET `name`=?,`sql`=?,`sys_panel`=? WHERE id=?", param.Name, param.Sql, param.SysPanel, param.Id)
 	return err
 }
 

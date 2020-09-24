@@ -176,6 +176,7 @@ func InitHttpServer(exportAgent bool) {
 			alarmApi.POST("/org/callback/update", alarm.UpdateOrgPanelCallback)
 			alarmApi.GET("/org/connect/get", alarm.GetOrgConnect)
 			alarmApi.POST("/org/connect/update", alarm.UpdateOrgConnect)
+			alarmApi.GET("/org/search", alarm.SearchSysPanelData)
 			alarmApi.GET("/db/monitor/list", alarm.GetDbMonitorList)
 			alarmApi.POST("/db/monitor/add", alarm.AddDbMonitor)
 			alarmApi.POST("/db/monitor/update", alarm.UpdateDbMonitor)
