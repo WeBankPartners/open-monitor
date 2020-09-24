@@ -228,6 +228,9 @@ func updateConfigFile(tplId int) error {
 			for _,v := range query.Tpl {
 				for _,vv := range v.Strategy {
 					//tmpStrategyMap[vv.Metric] = vv
+					if vv.Metric == "log_monitor" {
+						continue
+					}
 					tmpStrategy = append(tmpStrategy, vv)
 				}
 			}
