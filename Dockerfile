@@ -21,6 +21,7 @@ COPY build/stop.sh $BASE_HOME/
 COPY build/conf/prometheus.yml $PROMETHEUS_HOME/
 COPY build/conf/sd_file $PROMETHEUS_HOME/sd_file
 COPY build/conf/alertmanager.yml $ALERTMANAGER_HOME/
+COPY build/conf/base.yml $PROMETHEUS_HOME/rules/
 COPY monitor-server/monitor-server $MONITOR_HOME/
 COPY build/conf/monitor.json $MONITOR_HOME/conf/default.json
 COPY monitor-server/conf/i18n $MONITOR_HOME/conf/i18n
