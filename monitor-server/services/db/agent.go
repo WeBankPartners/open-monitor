@@ -281,6 +281,9 @@ func recursiveData(guid string, prt []*m.PanelRecursiveTable, length,depth int) 
 					for _,cv := range chartTables {
 						obj.Charts = append(obj.Charts, &m.ChartModel{Id:cv.Id, Endpoint:mv, Metric:strings.Split(cv.Metric, "^"), Aggregate:cv.AggType})
 					}
+					for _,extendChart := range getExtendPanelCharts(mv, mk, v.Guid) {
+						obj.Charts = append(obj.Charts, extendChart)
+					}
 				}
 				break
 			}
@@ -292,6 +295,22 @@ func recursiveData(guid string, prt []*m.PanelRecursiveTable, length,depth int) 
 		}
 	}
 	return obj
+}
+
+func getExtendPanelCharts(endpoints []string,exportType,guid string) []*m.ChartModel {
+	var result []*m.ChartModel
+	if exportType == "java" {
+		for _,endpoint := range endpoints {
+			_,businessMonitorList := GetBusinessList(0, endpoint)
+			if len(businessMonitorList) > 0 {
+				// TODO
+			}
+		}
+	}
+	if exportType == "mysql" {
+
+	}
+	return result
 }
 
 func getChartsByEndpointType(endpointType string) []*m.ChartTable {
