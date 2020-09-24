@@ -213,7 +213,7 @@ func updateConfigFile(tplId int) error {
 		query.SearchType = "endpoint"
 		query.SearchId = tplObj.EndpointId
 	}
-	err = db.GetStrategys(&query, false)
+	err = db.GetStrategys(&query, true)
 	if err != nil {
 		log.Logger.Error("Get strategy error", log.Error(err))
 		return err
@@ -228,9 +228,6 @@ func updateConfigFile(tplId int) error {
 			for _,v := range query.Tpl {
 				for _,vv := range v.Strategy {
 					//tmpStrategyMap[vv.Metric] = vv
-					if vv.Metric == "log_monitor" {
-						continue
-					}
 					tmpStrategy = append(tmpStrategy, vv)
 				}
 			}
