@@ -116,3 +116,13 @@ func SendConfigToDbManager() error {
 	}
 	return nil
 }
+
+func GetDbMonitorByPanel(guid string) (result []*m.DbMonitorTable, err error) {
+	err = x.SQL("SELECT * FROM db_monitor WHERE sys_panel=?", guid).Find(&result)
+	return result,err
+}
+
+func GetDbMonitorChart() (result []*m.ChartTable, err error) {
+	err = x.SQL("SELECT * FROM chart WHERE metric='db_monitor_count'").Find(&result)
+	return result,err
+}
