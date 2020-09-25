@@ -308,7 +308,17 @@ func getExtendPanelCharts(endpoints []string,exportType,guid string) []*m.ChartM
 		}
 	}
 	if exportType == "mysql" {
-
+		dbMonitorList,_ := GetDbMonitorByPanel(guid)
+		if len(dbMonitorList) > 0 {
+			dbMonitorChart,_ := GetDbMonitorChart()
+			if len(dbMonitorChart) > 0 {
+				var tmpMetrics []string
+				for _,v := range dbMonitorList {
+					tmpMetrics = append(tmpMetrics, v.Name)
+				}
+				result = append(result, &m.ChartModel{Id:dbMonitorChart[0].Id,Endpoint:endpoints,Aggregate:dbMonitorChart[0].AggType,Metric:tmpMetrics})
+			}
+		}
 	}
 	return result
 }
