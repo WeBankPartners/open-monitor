@@ -170,7 +170,7 @@ func CheckLogKeyword()  {
 	queryParam.Metric = []string{"metric"}
 	dataSerials := datasource.PrometheusData(&queryParam)
 	if len(dataSerials) == 0 {
-		log.Logger.Info("Check log keyword data empty")
+		log.Logger.Debug("Check log keyword data empty")
 		return
 	}
 	var logMonitorTable []*m.LogMonitorTable
