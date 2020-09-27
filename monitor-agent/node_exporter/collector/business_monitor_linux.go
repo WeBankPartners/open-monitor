@@ -91,13 +91,20 @@ func (c *businessMonitorObj) start()  {
 		c.Lock.Lock()
 		textList := strings.Split(line.Text, "][")
 		//log.Infof("Get a new line : %v \n", textList)
-		if len(textList) > 8 {
-			c.LastDate = textList[1]
-			mapData := make(map[string]string)
-			err := json.Unmarshal([]byte(textList[7]), &mapData)
-			if err == nil {
-				//log.Infof("Update new data : %v \n", mapData)
-				c.Data = mapData
+		for _,textSplit := range textList {
+			if strings.HasPrefix(textSplit, "20") {
+				c.LastDate = textSplit
+			}
+			if strings.Contains(textSplit, "{") &&  strings.Contains(textSplit, "}") {
+				if strings.HasSuffix(textSplit, "]") {
+					textSplit = textSplit[:len(textSplit)-1]
+				}
+				mapData := make(map[string]string)
+				err := json.Unmarshal([]byte(textSplit), &mapData)
+				if err == nil {
+					//log.Infof("Update new data : %v \n", mapData)
+					c.Data = mapData
+				}
 			}
 		}
 		c.Lock.Unlock()
