@@ -138,6 +138,28 @@ func GetPromMetric(endpoint []string,metric string) (error, string) {
 	return err,promQL
 }
 
+func GetDbPromMetric(endpoint,metric,legend string) (error,string) {
+	promQL := "db_monitor_count"
+	var query []*m.PromMetricTable
+	err := x.SQL("SELECT prom_ql FROM prom_metric WHERE metric='db_monitor_count'").Find(&query)
+	if err!=nil {
+		log.Logger.Error("Query prom_metric fail", log.Error(err))
+	}
+	if len(query) > 0 {
+		promQL = query[0].PromQl
+		if strings.Contains(promQL, "$guid") {
+			promQL = strings.Replace(promQL, "$guid", endpoint, -1)
+		}
+		if metric != "" && legend != "" {
+			promQL = promQL[:len(promQL)-1]
+			legend = legend[1:]
+			promQL = promQL + fmt.Sprintf(",%s=\"%s\"}", legend, metric)
+		}
+	}
+	log.Logger.Debug("db prom metric", log.String("promQl", promQL))
+	return err,promQL
+}
+
 func SearchHost(endpoint string) (error, []*m.OptionModel) {
 	options := []*m.OptionModel{}
 	var hosts []*m.EndpointTable

@@ -484,22 +484,21 @@ func GetChart(c *gin.Context)  {
 		step = firstEndpointObj.Step
 		// one endpoint -> metrics
 		for _,tmpParamConfig := range paramConfig {
-			tmpIndex := fmt.Sprintf("%d^%s", tmpParamConfig.Id, tmpParamConfig.Endpoint)
-			if _,b := recordMap[tmpIndex];b {
-				continue
-			}
-			recordMap[tmpIndex] = true
 			err, charts := db.GetCharts(0, tmpParamConfig.Id, 0)
 			if err != nil || len(charts) <= 0 {
 				mid.ReturnQueryTableError(c, "chart", err)
 				return
 			}
 			chart := *charts[0]
+			tmpIndex := fmt.Sprintf("%d^%s", tmpParamConfig.Id, tmpParamConfig.Endpoint)
+			if _,b := recordMap[tmpIndex];b {
+				if chart.Metric != "db_monitor_count" {
+					continue
+				}
+			}
+			recordMap[tmpIndex] = true
 			aggType = chart.AggType
 			eOption.Id = chart.Id
-			if chart.Metric == "db_monitor_count" {
-
-			}
 			if chart.Title == "${auto}" {
 				if strings.Contains(tmpParamConfig.Metric, "=") {
 					eOption.Title = db.GetChartTitle(strings.Split(tmpParamConfig.Metric, "=")[1], tmpParamConfig.Id)
@@ -519,8 +518,12 @@ func GetChart(c *gin.Context)  {
 				chart.Metric = tmpParamConfig.Metric
 			}
 			for _, v := range strings.Split(chart.Metric, "^") {
-
-				err, tmpPromQl := db.GetPromMetric([]string{tmpParamConfig.Endpoint}, v)
+				var tmpPromQl string
+				if chart.Metric == "db_monitor_count" && tmpParamConfig.Metric != "db_monitor_count" {
+					err, tmpPromQl = db.GetDbPromMetric(tmpParamConfig.Endpoint, tmpParamConfig.Metric, chart.Legend)
+				}else {
+					err, tmpPromQl = db.GetPromMetric([]string{tmpParamConfig.Endpoint}, v)
+				}
 				if err != nil {
 					log.Logger.Error("Get prometheus metric failed", log.Error(err))
 					continue

@@ -35,3 +35,8 @@ type DbMonitorConfigQuery struct {
 	Password  string  `json:"password"`
 	InstanceAddress  string  `json:"instance_address"`
 }
+
+type DbMonitorListObj struct {
+	SysPanel  string  `json:"sys_panel"`
+	Data  []*DbMonitorTable  `json:"data"`
+}
