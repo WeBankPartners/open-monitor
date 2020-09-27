@@ -7,6 +7,8 @@ clean:
 	rm -rf monitor-agent/agent_manager/agent_manager
 	rm -rf monitor-agent/archive_mysql_tool/archive_mysql_tool
 	rm -rf monitor-agent/node_exporter/node_exporter_new
+	rm -rf build/conf/node_exporter/node_exporter_new
+	rm -rf build/conf/node_exporter/VERSION
 	rm -rf monitor-agent/ping_exporter/ping_exporter
 	rm -rf monitor-agent/db_data_exporter/db_data_exporter
 	rm -rf monitor-agent/transgateway/transgateway
@@ -23,7 +25,8 @@ image: build
 
 agent:
 	chmod +x ./build/build-agent.sh
-	chmod +x ./build/conf/node_exporter/*
+	chmod +x ./build/conf/node_exporter/control
+	chmod +x ./build/conf/node_exporter/start.sh
 	./build/build-agent.sh
 
 package: image agent
