@@ -12,11 +12,18 @@ import (
 	"io/ioutil"
 	"fmt"
 	"time"
+	"bytes"
+	"encoding/gob"
+	"os"
+	"regexp"
 )
 
 const (
 	businessCollectorName = "business_monitor"
+	businessMonitorFilePath = "data/business_monitor_cache.data"
 )
+
+var regDate = regexp.MustCompile(`^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}`)
 
 type businessMonitorCollector struct {
 	businessMonitor  *prometheus.Desc
@@ -24,6 +31,7 @@ type businessMonitorCollector struct {
 
 func init() {
 	registerCollector(businessCollectorName, defaultEnabled, BusinessMonitorCollector)
+	BusinessCollectorStore.Load()
 }
 
 func BusinessMonitorCollector() (Collector, error) {
@@ -56,13 +64,13 @@ type businessMetricObj struct {
 }
 
 type businessMonitorObj struct {
-	SystemNum  string
-	Path  string
-	Name  string
-	LastDate  string
-	Data  map[string]string
-	TailSession  *tail.Tail
-	Lock  sync.RWMutex
+	SystemNum  string  `json:"system_num"`
+	Path  string  `json:"path"`
+	Name  string  `json:"name"`
+	LastDate  string  `json:"last_date"`
+	Data  map[string]string  `json:"data"`
+	TailSession  *tail.Tail  `json:"-"`
+	Lock  sync.RWMutex  `json:"-"`
 }
 
 type businessHttpDto struct {
@@ -92,7 +100,7 @@ func (c *businessMonitorObj) start()  {
 		textList := strings.Split(line.Text, "][")
 		//log.Infof("Get a new line : %v \n", textList)
 		for _,textSplit := range textList {
-			if strings.HasPrefix(textSplit, "20") {
+			if regDate.MatchString(textSplit) {
 				c.LastDate = textSplit
 			}
 			if strings.Contains(textSplit, "{") &&  strings.Contains(textSplit, "}") {
@@ -188,9 +196,48 @@ func checkIllegalDate(input string) bool {
 	if err != nil {
 		return true
 	}
-	sub := time.Now().Unix()-t.Unix()
-	if sub >= 10 {
+	if time.Now().Sub(t).Seconds() > 10 {
 		return true
 	}
 	return false
+}
+
+type businessCollectorStore struct {
+	Data  []*businessMetricObj  `json:"data"`
+}
+
+var BusinessCollectorStore businessCollectorStore
+
+func (c *businessCollectorStore) Save()  {
+	for _,v := range businessMonitorJobs {
+		BusinessCollectorStore.Data = append(BusinessCollectorStore.Data, &businessMetricObj{SystemNum:v.SystemNum,Path:v.Path,Name:v.Name})
+	}
+	var tmpBuffer bytes.Buffer
+	enc := gob.NewEncoder(&tmpBuffer)
+	err := enc.Encode(c.Data)
+	if err != nil {
+		log.Errorf("gob encode business monitor error : %v \n", err)
+	}else{
+		ioutil.WriteFile(businessMonitorFilePath, tmpBuffer.Bytes(), 0644)
+		log.Infof("write %s succeed \n", businessMonitorFilePath)
+	}
+}
+
+func (c *businessCollectorStore) Load()  {
+	file,err := os.Open(businessMonitorFilePath)
+	if err != nil {
+		log.Infof("read %s file error %v \n", businessMonitorFilePath, err)
+	}else{
+		dec := gob.NewDecoder(file)
+		err = dec.Decode(&c.Data)
+		if err != nil {
+			log.Errorf("gob decode %s error %v \n", businessMonitorFilePath, err)
+		}else{
+			log.Infof("load %s file succeed \n", businessMonitorFilePath)
+		}
+	}
+	for _,v := range c.Data {
+		businessMonitorJobs[v.Path] = &businessMonitorObj{Path:v.Path,SystemNum:v.SystemNum,Name:v.Name}
+		go businessMonitorJobs[v.Path].start()
+	}
 }
