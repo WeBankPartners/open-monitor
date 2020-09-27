@@ -9,8 +9,25 @@ import (
 	"io/ioutil"
 )
 
-func ListDbMonitor(endpointId int) (result []*m.DbMonitorTable, err error) {
-	err = x.SQL("SELECT * FROM db_monitor WHERE endpoint_guid IN (SELECT id FROM endpoint WHERE id=?)", endpointId).Find(&result)
+func ListDbMonitor(endpointId int) (result []*m.DbMonitorListObj, err error) {
+	var tableData []*m.DbMonitorTable
+	err = x.SQL("SELECT * FROM db_monitor WHERE endpoint_guid IN (SELECT guid FROM endpoint WHERE id=?) ORDER BY sys_panel DESC", endpointId).Find(&tableData)
+	if len(tableData) == 0 {
+		return result,err
+	}
+	tmpSysPanel := tableData[0].SysPanel
+	var tmpRowData []*m.DbMonitorTable
+	for _,v := range tableData {
+		if v.SysPanel != tmpSysPanel {
+			result = append(result, &m.DbMonitorListObj{SysPanel:tmpSysPanel, Data:tmpRowData})
+			tmpRowData = []*m.DbMonitorTable{}
+			tmpSysPanel = v.SysPanel
+		}
+		tmpRowData = append(tmpRowData, v)
+	}
+	if len(tmpRowData) > 0 {
+		result = append(result, &m.DbMonitorListObj{SysPanel:tableData[len(tableData)-1].SysPanel, Data:tmpRowData})
+	}
 	return result,err
 }
 
