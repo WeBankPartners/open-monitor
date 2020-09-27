@@ -298,6 +298,7 @@ func recursiveData(guid string, prt []*m.PanelRecursiveTable, length,depth int) 
 }
 
 func getExtendPanelCharts(endpoints []string,exportType,guid string) []*m.ChartModel {
+	log.Logger.Debug("getExtendPanel", log.String("exportType", exportType), log.StringList("endpoints", endpoints), log.String("guid", guid))
 	var result []*m.ChartModel
 	if exportType == "java" {
 		for _,endpoint := range endpoints {
