@@ -10,6 +10,7 @@ mkdir -p /usr/local/monitor/$exporter_type/data
 /bin/cp -f $package_path/* /usr/local/monitor/$exporter_type/
 cd /usr/local/monitor/$exporter_type/
 rm -f start.sh
+rm -f VERSION
 ./control restart
 for i in `seq 1 60`
 do
