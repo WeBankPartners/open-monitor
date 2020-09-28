@@ -277,7 +277,7 @@ func SearchPanelByName(name string) []m.OptionModel {
 		log.Logger.Error("Get panel_recursive table data fail", log.Error(err))
 	}
 	for _,v := range panelRecursiveTables {
-		result = append(result, m.OptionModel{OptionText:fmt.Sprintf("%s(%s)", v.DisplayName, v.Guid),OptionValue:v.Guid})
+		result = append(result, m.OptionModel{OptionText:fmt.Sprintf("%s(%s)", v.DisplayName, v.ObjType),OptionValue:v.Guid})
 	}
 	return result
 }
