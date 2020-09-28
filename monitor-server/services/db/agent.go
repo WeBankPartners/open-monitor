@@ -302,10 +302,32 @@ func getExtendPanelCharts(endpoints []string,exportType,guid string) []*m.ChartM
 	var result []*m.ChartModel
 	if exportType == "java" {
 		for _,endpoint := range endpoints {
-			_,businessMonitorList := GetBusinessList(0, endpoint)
-			if len(businessMonitorList) > 0 {
-				// TODO
-				
+			_,businessMonitor := GetBusinessList(0, endpoint)
+			if len(businessMonitor) > 0 {
+				businessMonitorMap := make(map[int][]string)
+				for _,v := range businessMonitor {
+					if _,b := businessMonitorMap[v.EndpointId];b {
+						exist := false
+						for _,vv := range businessMonitorMap[v.EndpointId] {
+							if vv == v.Path {
+								exist = true
+								break
+							}
+						}
+						if !exist {
+							businessMonitorMap[v.EndpointId] = append(businessMonitorMap[v.EndpointId], v.Path)
+						}
+					}else{
+						businessMonitorMap[v.EndpointId] = []string{v.Path}
+					}
+				}
+				businessCharts,businessPanels := GetBusinessPanelChart()
+				if len(businessCharts) > 0 {
+					chartsDto, _ := GetAutoDisplay(businessMonitorMap, businessPanels[0].TagsKey, businessCharts)
+					for _,tmpChartModel := range chartsDto {
+						result = append(result, tmpChartModel)
+					}
+				}
 			}
 		}
 	}
