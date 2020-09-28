@@ -26,6 +26,7 @@ var onlyLocalStore bool
 var localStoreLock = new(sync.RWMutex)
 var expireTime = int64(3600)
 var RecordRequestMap = make(map[string]int64)
+var recordRequestLock = new(sync.RWMutex)
 
 func InitSession()  {
 	sessionConfig := m.Config().Http.Session
@@ -156,6 +157,7 @@ func IsActive(sId string, clientIp string) bool {
 	if v,i := LocalMem[sId];i {
 		tmpUser = v.User
 		if time.Now().Unix() > v.Expire {
+			recordRequestLock.RLock()
 			if rrm,b := RecordRequestMap[fmt.Sprintf("%s_%s", tmpUser,clientIp)]; b{
 				if time.Now().Unix()-rrm <= expireTime {
 					localContain = true
@@ -163,6 +165,7 @@ func IsActive(sId string, clientIp string) bool {
 					SaveSession(tmpSession)
 				}
 			}
+			recordRequestLock.RUnlock()
 			if !localContain {
 				delete(LocalMem, sId)
 				return false
@@ -181,7 +184,9 @@ func IsActive(sId string, clientIp string) bool {
 		}
 	}
 	if localContain {
+		recordRequestLock.Lock()
 		RecordRequestMap[fmt.Sprintf("%s_%s", tmpUser,clientIp)] = time.Now().Unix()
+		recordRequestLock.Unlock()
 	}
 	return localContain
 }
