@@ -16,18 +16,23 @@ func ListDbMonitor(endpointId int) (result []*m.DbMonitorListObj, err error) {
 	if len(tableData) == 0 {
 		return result,err
 	}
+	recursiveDatas := SearchPanelByName("")
+	recursiveMap := make(map[string]string)
+	for _,v := range recursiveDatas {
+		recursiveMap[v.OptionValue] = v.OptionText
+	}
 	tmpSysPanel := tableData[0].SysPanel
 	var tmpRowData []*m.DbMonitorTable
 	for _,v := range tableData {
 		if v.SysPanel != tmpSysPanel {
-			result = append(result, &m.DbMonitorListObj{SysPanel:tmpSysPanel, Data:tmpRowData})
+			result = append(result, &m.DbMonitorListObj{SysPanel:recursiveMap[tmpSysPanel], SysPanelValue:tmpSysPanel, Data:tmpRowData})
 			tmpRowData = []*m.DbMonitorTable{}
 			tmpSysPanel = v.SysPanel
 		}
 		tmpRowData = append(tmpRowData, v)
 	}
 	if len(tmpRowData) > 0 {
-		result = append(result, &m.DbMonitorListObj{SysPanel:tableData[len(tableData)-1].SysPanel, Data:tmpRowData})
+		result = append(result, &m.DbMonitorListObj{SysPanel:recursiveMap[tableData[len(tableData)-1].SysPanel], SysPanelValue:tableData[len(tableData)-1].SysPanel, Data:tmpRowData})
 	}
 	return result,err
 }
