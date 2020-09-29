@@ -7,6 +7,7 @@ import (
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"fmt"
+	"strings"
 )
 
 func GetDbMonitorList(c *gin.Context) {
@@ -45,6 +46,16 @@ func AddDbMonitor(c *gin.Context)  {
 func CheckDbMonitor(c *gin.Context)  {
 	var param m.DbMonitorUpdateDto
 	if err := c.ShouldBindJSON(&param);err == nil {
+		param.Sql = strings.TrimSpace(param.Sql)
+		sql := strings.ToLower(param.Sql)
+		if !strings.HasPrefix(sql, "select") {
+			mid.ReturnValidateError(c, "SQL must start with select")
+			return
+		}
+		if strings.Contains(sql, ";") || strings.Contains(sql, "insert") || strings.Contains(sql, "update") || strings.Contains(sql, "delete") || strings.Contains(sql, "alter") {
+			mid.ReturnValidateError(c, "SQL contains illegal character")
+			return
+		}
 		err = db.CheckDbMonitor(param)
 		if err != nil {
 			mid.ReturnHandleError(c, err.Error(), err)
