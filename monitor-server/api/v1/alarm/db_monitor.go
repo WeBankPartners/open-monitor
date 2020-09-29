@@ -70,7 +70,7 @@ func CheckDbMonitor(c *gin.Context)  {
 		}
 		if nameExists {
 			mid.ReturnValidateError(c, "Name already used")
-			return 
+			return
 		}
 		err = db.CheckDbMonitor(param)
 		if err != nil {
@@ -100,6 +100,20 @@ func UpdateDbMonitor(c *gin.Context)  {
 		err = db.SendConfigToDbManager()
 		if err != nil {
 			mid.ReturnHandleError(c, "Send config to db_data_exporter fail", err)
+		}else{
+			mid.ReturnSuccess(c)
+		}
+	}else{
+		mid.ReturnValidateError(c, err.Error())
+	}
+}
+
+func UpdateDbMonitorSysName(c *gin.Context)  {
+	var param m.DbMonitorSysNameDto
+	if err := c.ShouldBindJSON(&param);err == nil {
+		err = db.UpdateDbMonitorSysName(param)
+		if err != nil {
+			mid.ReturnHandleError(c, fmt.Sprintf("Update db_monitor sys_panel fail,%s ", err.Error()), err)
 		}else{
 			mid.ReturnSuccess(c)
 		}
