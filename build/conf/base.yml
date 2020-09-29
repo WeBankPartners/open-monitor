@@ -1,0 +1,11 @@
+groups:
+- name: base
+  rules:
+  - alert: base_up
+    expr: up == 0
+    for: 60s
+    labels:
+      strategy_id: "up"
+    annotations:
+      summary: '{{$labels.instance}}__high__up__{{$value}}'
+      description: exporter down

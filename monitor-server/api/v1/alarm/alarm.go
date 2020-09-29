@@ -23,6 +23,7 @@ func AcceptAlertMsg(c *gin.Context)  {
 			log.Logger.Warn("Accept alert is null")
 			mid.ReturnSuccess(c)
 		}
+		log.Logger.Debug("accept", log.JsonObj("body", param))
 		var alarms []*m.AlarmTable
 		for _,v := range param.Alerts {
 			if v.Labels["instance"] == "127.0.0.1:8300" {
@@ -57,20 +58,22 @@ func AcceptAlertMsg(c *gin.Context)  {
 				tmpAlarm.SPriority = "high"
 				tmpAlarm.Content = v.Annotations["description"]
 				tmpSummaryMsg := strings.Split(v.Annotations["summary"], "__")
-				if len(tmpSummaryMsg) != 3 {
+				if len(tmpSummaryMsg) != 4 {
 					log.Logger.Warn("Summary illegal", log.String("summary", v.Annotations["summary"]))
 					continue
 				}
 				endpointObj := m.EndpointTable{Address: tmpSummaryMsg[0], AddressAgent: tmpSummaryMsg[0]}
 				db.GetEndpoint(&endpointObj)
 				if endpointObj.Id <= 0 || endpointObj.StopAlarm == 1 {
+					log.Logger.Debug("Up alarm break,endpoint not exists or stop alarm", log.String("endpoint", endpointObj.Guid))
 					continue
 				}
 				if endpointObj.ExportType == "telnet" || endpointObj.ExportType == "http" || endpointObj.ExportType == "ping" {
+					log.Logger.Debug("Up alarm break,endpoint export type illegal", log.String("exportType", endpointObj.ExportType))
 					continue
 				}
 				tmpAlarm.Endpoint = endpointObj.Guid
-				tmpValue, _ = strconv.ParseFloat(tmpSummaryMsg[2], 64)
+				tmpValue, _ = strconv.ParseFloat(tmpSummaryMsg[3], 64)
 				tmpValue, _ = strconv.ParseFloat(fmt.Sprintf("%.3f", tmpValue), 64)
 				tmpAlarmQuery := m.AlarmTable{Endpoint: tmpAlarm.Endpoint, SMetric: tmpAlarm.SMetric}
 				_, tmpAlarms = db.GetAlarms(tmpAlarmQuery)

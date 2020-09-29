@@ -200,6 +200,7 @@ func startSignal(pid int) {
 			// do something
 			collector.ProcessCacheObj.Save()
 			collector.LogCollectorStore.Save()
+			collector.BusinessCollectorStore.Save()
 			log.Infoln("shutdown , done")
 			log.Infoln(pid, "exit")
 			os.Exit(0)
