@@ -105,7 +105,7 @@ func AddLogStrategy(c *gin.Context)  {
 		//	}
 		//}
 		if param.Id <= 0 {
-			_,lms := db.GetLogMonitorTable(0,0, param.TplId, "")
+			_,lms := db.GetLogMonitorTable(0,param.EndpointId, 0, "")
 			for _, v := range lms {
 				if v.Path == param.Path {
 					mid.ReturnValidateError(c, "path exists")
@@ -158,25 +158,25 @@ func AddLogStrategy(c *gin.Context)  {
 func EditLogPath(c *gin.Context)  {
 	var param m.LogMonitorDto
 	if err := c.ShouldBindJSON(&param);err == nil {
-		if param.TplId <= 0 || param.Id <= 0 {
-			mid.ReturnParamEmptyError(c, "id or tpl_id")
+		if param.Id <= 0 {
+			mid.ReturnParamEmptyError(c, "id")
 			return
 		}
 		if !mid.IsIllegalPath(param.Path) {
 			mid.ReturnValidateError(c, "path illegal")
 			return
 		}
-		err,lms := db.GetLogMonitorTable(0, param.Id, 0, "")
+		err,lms := db.GetLogMonitorTable(param.Id, 0, 0, "")
 		if err != nil || len(lms) == 0 {
-			mid.ReturnFetchDataError(c, "log_monitor", "strategy_id", strconv.Itoa(param.Id))
+			mid.ReturnFetchDataError(c, "log_monitor", "id", strconv.Itoa(param.Id))
 			return
 		}
 		oldPath := lms[0].Path
-		_,lmsGrp := db.GetLogMonitorTable(0, 0, 0, oldPath)
-		var strategyObjs []*m.StrategyTable
+		_,lmsGrp := db.GetLogMonitorTable(0, lms[0].StrategyId, 0, oldPath)
+		//var strategyObjs []*m.StrategyTable
 		// Update log_monitor
 		for _,v := range lmsGrp {
-			strategyObjs = append(strategyObjs, &m.StrategyTable{Id:v.StrategyId})
+			//strategyObjs = append(strategyObjs, &m.StrategyTable{Id:v.StrategyId})
 			logMonitorObj := m.LogMonitorTable{Id:v.Id, StrategyId:v.StrategyId, Path:param.Path, Keyword:v.Keyword}
 			err = db.UpdateLogMonitor(&m.UpdateLogMonitor{LogMonitor:[]*m.LogMonitorTable{&logMonitorObj}, Operation:"update"})
 			if err != nil {
@@ -184,38 +184,38 @@ func EditLogPath(c *gin.Context)  {
 			}
 		}
 		// Update strategy
-		for _,v := range strategyObjs {
-			err,tmpObj := db.GetStrategyTable(v.Id)
-			if err != nil {
-				log.Logger.Error("Get strategy failed", log.Int("id", v.Id), log.Error(err))
-				continue
-			}
-			tmpObj.Expr = strings.Replace(tmpObj.Expr, oldPath, param.Path, -1)
-			tmpObj.Content = strings.Replace(tmpObj.Content, oldPath, param.Path, -1)
-			err = db.UpdateStrategy(&m.UpdateStrategy{Strategy:[]*m.StrategyTable{&tmpObj}, Operation:"update"})
-			if err != nil {
-				log.Logger.Error("Update strategy fail", log.Error(err))
-			}
-		}
+		//for _,v := range strategyObjs {
+		//	err,tmpObj := db.GetStrategyTable(v.Id)
+		//	if err != nil {
+		//		log.Logger.Error("Get strategy failed", log.Int("id", v.Id), log.Error(err))
+		//		continue
+		//	}
+		//	tmpObj.Expr = strings.Replace(tmpObj.Expr, oldPath, param.Path, -1)
+		//	tmpObj.Content = strings.Replace(tmpObj.Content, oldPath, param.Path, -1)
+		//	err = db.UpdateStrategy(&m.UpdateStrategy{Strategy:[]*m.StrategyTable{&tmpObj}, Operation:"update"})
+		//	if err != nil {
+		//		log.Logger.Error("Update strategy fail", log.Error(err))
+		//	}
+		//}
 		// Call endpoint node exporter
-		err,tplObj := db.GetTpl(param.TplId, 0, 0)
-		if err != nil {
-			mid.ReturnFetchDataError(c, "tpl", "id", strconv.Itoa(param.TplId))
-			return
-		}
-		param.EndpointId = tplObj.EndpointId
-		param.GrpId = tplObj.GrpId
-		err = sendLogConfig(param.EndpointId, param.GrpId, param.TplId)
+		//err,tplObj := db.GetTpl(param.TplId, 0, 0)
+		//if err != nil {
+		//	mid.ReturnFetchDataError(c, "tpl", "id", strconv.Itoa(param.TplId))
+		//	return
+		//}
+		//param.EndpointId = tplObj.EndpointId
+		//param.GrpId = tplObj.GrpId
+		err = sendLogConfig(lms[0].StrategyId, param.GrpId, param.TplId)
 		if err != nil {
 			mid.ReturnHandleError(c, "send log config to endpoint fail", err)
 			return
 		}
 		// Save Prometheus rule file
-		err = SaveConfigFile(param.TplId, false)
-		if err != nil {
-			mid.ReturnHandleError(c, "save prometheus rule file fail", err)
-			return
-		}
+		//err = SaveConfigFile(param.TplId, false)
+		//if err != nil {
+		//	mid.ReturnHandleError(c, "save prometheus rule file fail", err)
+		//	return
+		//}
 		mid.ReturnSuccess(c)
 	}else{
 		mid.ReturnValidateError(c, err.Error())
@@ -303,56 +303,56 @@ func EditLogStrategy(c *gin.Context)  {
 // @Success 200 {string} json "{"message": "Success"}"
 // @Router /api/v1/alarm/log/monitor/delete_path [get]
 func DeleteLogPath(c *gin.Context)  {
-	strategyId,err := strconv.Atoi(c.Query("id"))
-	if err != nil || strategyId <= 0 {
+	logMonitorId,err := strconv.Atoi(c.Query("id"))
+	if err != nil || logMonitorId <= 0 {
 		mid.ReturnParamTypeError(c, "id", "int")
 		return
 	}
-	err,strategyObj := db.GetStrategy(m.StrategyTable{Id:strategyId})
-	if err != nil || strategyObj.TplId <= 0 {
-		mid.ReturnFetchDataError(c, "strategy", "id", strconv.Itoa(strategyId))
-		return
-	}
-	err,lms := db.GetLogMonitorTable(0, strategyId, 0, "")
+	//err,strategyObj := db.GetStrategy(m.StrategyTable{Id:strategyId})
+	//if err != nil || strategyObj.TplId <= 0 {
+	//	mid.ReturnFetchDataError(c, "strategy", "id", strconv.Itoa(strategyId))
+	//	return
+	//}
+	err,lms := db.GetLogMonitorTable(logMonitorId, 0, 0, "")
 	if err != nil || len(lms) == 0 {
-		mid.ReturnFetchDataError(c, "log_monitor", "strategy_id", strconv.Itoa(strategyId))
+		mid.ReturnFetchDataError(c, "log_monitor", "id", strconv.Itoa(logMonitorId))
 		return
 	}
 	oldPath := lms[0].Path
-	_,lmsGrp := db.GetLogMonitorTable(0, 0, 0, oldPath)
-	var strategyObjs []*m.StrategyTable
+	_,lmsGrp := db.GetLogMonitorTable(0, lms[0].StrategyId, 0, oldPath)
+	//var strategyObjs []*m.StrategyTable
 	// Delete log monitor
 	for _,v := range lmsGrp {
-		strategyObjs = append(strategyObjs, &m.StrategyTable{Id:v.StrategyId})
+		//strategyObjs = append(strategyObjs, &m.StrategyTable{Id:v.StrategyId})
 		err = db.UpdateLogMonitor(&m.UpdateLogMonitor{LogMonitor:[]*m.LogMonitorTable{&m.LogMonitorTable{Id:v.Id}}, Operation:"delete"})
 		if err != nil {
 			log.Logger.Error("Delete log monitor alert failed", log.Error(err))
 		}
 	}
 	// Delete strategy
-	for _,v := range strategyObjs {
-		err = db.UpdateStrategy(&m.UpdateStrategy{Strategy:[]*m.StrategyTable{&m.StrategyTable{Id:v.Id}}, Operation:"delete"})
-		if err != nil {
-			log.Logger.Error("Delete strategy failed", log.Error(err))
-		}
-	}
+	//for _,v := range strategyObjs {
+	//	err = db.UpdateStrategy(&m.UpdateStrategy{Strategy:[]*m.StrategyTable{&m.StrategyTable{Id:v.Id}}, Operation:"delete"})
+	//	if err != nil {
+	//		log.Logger.Error("Delete strategy failed", log.Error(err))
+	//	}
+	//}
 	// Call endpoint node exporter
-	err,tplObj := db.GetTpl(strategyObj.TplId, 0, 0)
-	if err != nil {
-		mid.ReturnFetchDataError(c, "tpl", "id", strconv.Itoa(strategyObj.TplId))
-		return
-	}
-	err = sendLogConfig(tplObj.EndpointId, tplObj.GrpId, tplObj.Id)
+	//err,tplObj := db.GetTpl(strategyObj.TplId, 0, 0)
+	//if err != nil {
+	//	mid.ReturnFetchDataError(c, "tpl", "id", strconv.Itoa(strategyObj.TplId))
+	//	return
+	//}
+	err = sendLogConfig(lms[0].StrategyId, 0, 0)
 	if err != nil {
 		mid.ReturnHandleError(c, "send log config to endpoint failed", err)
 		return
 	}
 	// Save Prometheus rule file
-	err = SaveConfigFile(tplObj.Id, false)
-	if err != nil {
-		mid.ReturnHandleError(c, "save prometheus rule file failed", err)
-		return
-	}
+	//err = SaveConfigFile(tplObj.Id, false)
+	//if err != nil {
+	//	mid.ReturnHandleError(c, "save prometheus rule file failed", err)
+	//	return
+	//}
 	mid.ReturnSuccess(c)
 }
 
@@ -372,11 +372,11 @@ func DeleteLogStrategy(c *gin.Context)  {
 		mid.ReturnFetchDataError(c, "log_monitor", "id", strconv.Itoa(logMonitorId))
 		return
 	}
-	err,strategyObj := db.GetStrategy(m.StrategyTable{Id:lms[0].StrategyId})
-	if err != nil || strategyObj.TplId <= 0 {
-		mid.ReturnFetchDataError(c, "strategy", "id", strconv.Itoa(lms[0].StrategyId))
-		return
-	}
+	//err,strategyObj := db.GetStrategy(m.StrategyTable{Id:lms[0].StrategyId})
+	//if err != nil || strategyObj.TplId <= 0 {
+	//	mid.ReturnFetchDataError(c, "strategy", "id", strconv.Itoa(lms[0].StrategyId))
+	//	return
+	//}
 	// Delete log monitor
 	err = db.UpdateLogMonitor(&m.UpdateLogMonitor{LogMonitor:[]*m.LogMonitorTable{&m.LogMonitorTable{Id:logMonitorId}}, Operation:"delete"})
 	if err != nil {
@@ -384,28 +384,28 @@ func DeleteLogStrategy(c *gin.Context)  {
 		return
 	}
 	// Delete strategy
-	err = db.UpdateStrategy(&m.UpdateStrategy{Strategy:[]*m.StrategyTable{&m.StrategyTable{Id:strategyObj.Id}}, Operation:"delete"})
-	if err != nil {
-		mid.ReturnUpdateTableError(c, "strategy", err)
-		return
-	}
+	//err = db.UpdateStrategy(&m.UpdateStrategy{Strategy:[]*m.StrategyTable{&m.StrategyTable{Id:strategyObj.Id}}, Operation:"delete"})
+	//if err != nil {
+	//	mid.ReturnUpdateTableError(c, "strategy", err)
+	//	return
+	//}
 	// Call endpoint node exporter
-	err,tplObj := db.GetTpl(strategyObj.TplId, 0, 0)
-	if err != nil {
-		mid.ReturnFetchDataError(c, "tpl", "id", strconv.Itoa(strategyObj.TplId))
-		return
-	}
-	err = sendLogConfig(tplObj.EndpointId, tplObj.GrpId, tplObj.Id)
+	//err,tplObj := db.GetTpl(strategyObj.TplId, 0, 0)
+	//if err != nil {
+	//	mid.ReturnFetchDataError(c, "tpl", "id", strconv.Itoa(strategyObj.TplId))
+	//	return
+	//}
+	err = sendLogConfig(lms[0].StrategyId, 0, 0)
 	if err != nil {
 		mid.ReturnHandleError(c, "send log config to endpoint failed", err)
 		return
 	}
 	// Save Prometheus rule file
-	err = SaveConfigFile(tplObj.Id, false)
-	if err != nil {
-		mid.ReturnHandleError(c, "save prometheus rule file failed", err)
-		return
-	}
+	//err = SaveConfigFile(tplObj.Id, false)
+	//if err != nil {
+	//	mid.ReturnHandleError(c, "save prometheus rule file failed", err)
+	//	return
+	//}
 	mid.ReturnSuccess(c)
 }
 
