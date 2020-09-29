@@ -4,8 +4,10 @@
     <template v-for="(tableItem, tableIndex) in totalData">
       <section :key="tableIndex + 'f'">
         <div class="section-table-tip">
-          <Tag color="blue" :key="tableIndex + 'a'">{{tableItem.sys_panel || '请设置名称'}}</Tag>
-          <button type="button" @click="addDbMonitor(tableItem.sys_panel)" class="btn btn-sm btn-cancel-f" :key="tableIndex + 'b'">
+          <Tag color="blue" :key="tableIndex + 'a'">{{tableItem.sys_panel || 'Please Set Name'}}
+            <span @click="editPanalName(tableItem.sys_panel)"><i class="fa fa-pencil" aria-hidden="true"></i></span>
+          </Tag>
+          <button type="button" @click="addDbMonitor(tableItem.sys_panel_value)" class="btn btn-sm btn-cancel-f" :key="tableIndex + 'b'">
             <i class="fa fa-plus"></i>
             {{$t('button.add')}}
           </button>
@@ -22,6 +24,11 @@
     @on-cancel="cancelAddDbConfig"
   >
     <Form :model="activeSysPanal" :label-width="80">
+      <FormItem :label="$t('field.resourceLevel')">
+        <Select v-model="newPanalName" style="width:400px">
+          <Option v-for="item in panalNameList" :value="item.option_value" :key="item.option_value">{{ item.option_text }}</Option>
+        </Select>
+      </FormItem>
       <FormItem :label="$t('tableKey.name')">
         <Input v-model="activeSysPanal.name" placeholder=""></Input>
       </FormItem>
@@ -38,6 +45,11 @@
     @on-cancel="cancelEditDbConfig"
   >
     <Form :model="activeSysPanal" :label-width="80">
+      <FormItem :label="$t('field.resourceLevel')">
+        <Select v-model="newPanalName" style="width:400px">
+          <Option v-for="item in panalNameList" :value="item.option_value" :key="item.option_value">{{ item.option_text }}</Option>
+        </Select>
+      </FormItem>
       <FormItem :label="$t('tableKey.name')">
         <Input v-model="activeSysPanal.name" placeholder=""></Input>
       </FormItem>
@@ -52,6 +64,14 @@
         <p style="color: red">Will you delete it?</p>
       </div>
     </div>
+  </Modal>
+  <Modal
+    v-model="isShowChangePanalName"
+    :title="$t('button.edit')"
+    @on-ok="changePanalName">
+    <Select v-model="newPanalName" style="width:400px">
+        <Option v-for="item in panalNameList" :value="item.option_value" :key="item.option_value">{{ item.option_text }}</Option>
+    </Select>
   </Modal>
 </div>
 </template>
@@ -95,6 +115,11 @@ export default {
       isShowWarning: false,
       selectedData: null,
 
+      isShowChangePanalName: false,
+      activePanalName: '',
+      newPanalName: '',
+      panalNameList: [],
+
       db_add_Modal: false,
       db_edit_Modal: false,
       isAdd: true,
@@ -116,6 +141,7 @@ export default {
       dbMonitorData.forEach(item => {
         this.totalData.push({
           sys_panel: item.sys_panel,
+          sys_panel_value: item.sys_panel_value, 
           pageConfig: {
             table: {
               tableData: item.data,
@@ -131,11 +157,20 @@ export default {
     addDbMonitor(sys_panel) {
       this.activeSysPanal.name = ''
       this.activeSysPanal.sql = ''
-      this.activeSysPanal.sys_panel = sys_panel
+      this.newPanalName = sys_panel
+      // this.activeSysPanal.sys_panel = sys_panel
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.endpointManagement.db.panalName, '', (responseData) => {
+        this.panalNameList = responseData
+        this.panalNameList.unshift({
+          option_text: 'null',
+          option_value: ''
+        })
+      })
       this.db_add_Modal = true
     },
     addDbConfig() {
       this.activeSysPanal.endpoint_id = Number(this.endpointId)
+      this.activeSysPanal.sys_panel = this.newPanalName
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.endpointManagement.db.check, this.activeSysPanal, () => {
         this.addPost(this.activeSysPanal)
       })
@@ -168,14 +203,20 @@ export default {
     },
     editDbMonitor(row) {
       this.activeId = row.id
-      // this.activeSysPanal.id = row.id
-      this.activeSysPanal.sys_panel = row.sys_panel
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.endpointManagement.db.panalName, '', (responseData) => {
+        this.panalNameList = responseData
+        this.panalNameList.unshift({
+          option_text: 'null',
+          option_value: ''
+        })
+      })
+      this.newPanalName = row.sys_panel
       this.activeSysPanal.name = row.name
       this.activeSysPanal.sql = row.sql
       this.db_edit_Modal = true
     },
     editDbConfig() {
-      let params = Object.assign(this.activeSysPanal, {id: this.activeId,endpoint_id: Number(this.endpointId)})
+      let params = Object.assign(this.activeSysPanal, {id: this.activeId,endpoint_id: Number(this.endpointId),sys_panel: this.newPanalName})
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.endpointManagement.db.check, params, () => {
         this.editPost(params)
       })
@@ -193,6 +234,30 @@ export default {
     cancel() {
       this.isShowWarning = false
     },
+    editPanalName (panalName) {
+      this.newPanalName = null
+      this.panalName = panalName
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.endpointManagement.db.panalName, '', (responseData) => {
+        console.log(responseData)
+        this.panalNameList = responseData
+         this.panalNameList.unshift({
+          option_text: 'null',
+          option_value: ''
+        })
+        this.isShowChangePanalName = true
+      })
+    },
+    changePanalName() {
+      const params = {
+        old_name: this.panalName,
+        new_name: this.newPanalName,
+        endpoint_id: Number(this.endpointId)
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.endpointManagement.db.updatePanalName, params, () => {
+        this.$Message.success('Success!')
+        this.getData()
+      })
+    }
   },
   components: {},
 }
