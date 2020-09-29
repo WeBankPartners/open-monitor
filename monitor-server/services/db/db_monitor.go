@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"encoding/json"
 	"io/ioutil"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 )
 
 func ListDbMonitor(endpointId int) (result []*m.DbMonitorListObj, err error) {
@@ -142,4 +143,17 @@ func GetDbMonitorByPanel(guid string) (result []*m.DbMonitorTable, err error) {
 func GetDbMonitorChart() (result []*m.ChartTable, err error) {
 	err = x.SQL("SELECT * FROM chart WHERE metric='db_monitor_count'").Find(&result)
 	return result,err
+}
+
+func UpdateDbMonitorSysName(param m.DbMonitorSysNameDto) error {
+	endpointObj := m.EndpointTable{Id:param.EndpointId}
+	GetEndpoint(&endpointObj)
+	if endpointObj.Guid == "" {
+		return fmt.Errorf("Endpoint id %d can not find any endpoint ", param.EndpointId)
+	}
+	_,err := x.Exec("UPDATE db_monitor SET sys_panel=? WHERE endpoint_guid=? AND sys_panel=?", param.NewName, endpointObj.Guid, param.OldName)
+	if err != nil {
+		log.Logger.Error("UpdateDbMonitorSysName fail", log.Error(err))
+	}
+	return err
 }
