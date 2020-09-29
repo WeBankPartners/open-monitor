@@ -111,7 +111,8 @@
       "back": "恢复",
       "dataView": "放大",
       "editTitle": "编辑标题"
-    }
+    },
+    "dataMonitoring": "数据监控"
   },
   "table": {
     "more": "更多",

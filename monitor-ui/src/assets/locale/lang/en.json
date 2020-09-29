@@ -101,7 +101,7 @@
     "back": "Back",
     "view": "View",
     "authorization": "Authorization",
-    "cancel": "Cancle",
+    "cancel": "Cancel",
     "endpointManagement": "Endpoint Management",
     "upload": "Upload Threshold",
     "export": "Export Threshold",
@@ -111,7 +111,8 @@
       "back": "Reset",
       "dataView": "Enlarged View",
       "editTitle": "Edit Title"
-    }
+    },
+    "dataMonitoring": "Data Monitoring"
   },
   "table": {
     "more": "More",
