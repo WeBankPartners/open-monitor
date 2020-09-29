@@ -667,11 +667,15 @@ func GetLogMonitorTable(id,strategyId,tplId int, path string) (err error,result 
 	if id > 0 {
 		err = x.SQL("SELECT * FROM log_monitor WHERE id=?", id).Find(&result)
 	}
-	if path != "" {
-		err = x.SQL("SELECT * FROM log_monitor WHERE path=?", path).Find(&result)
-	}
-	if strategyId > 0 {
-		err = x.SQL("SELECT * FROM log_monitor WHERE strategy_id=?", strategyId).Find(&result)
+	if path != "" && strategyId > 0 {
+		err = x.SQL("SELECT * FROM log_monitor WHERE strategy_id=? and path=?", strategyId, path).Find(&result)
+	}else{
+		if path != "" {
+			err = x.SQL("SELECT * FROM log_monitor WHERE path=?", path).Find(&result)
+		}
+		if strategyId > 0 {
+			err = x.SQL("SELECT * FROM log_monitor WHERE strategy_id=?", strategyId).Find(&result)
+		}
 	}
 	if tplId > 0 {
 		err = x.SQL("SELECT * FROM log_monitor WHERE strategy_id IN (SELECT id FROM strategy WHERE tpl_id=?) ORDER BY path", tplId).Find(&result)
@@ -713,9 +717,9 @@ func ListLogMonitorNew(query *m.TplQuery) error  {
 		var lms []*m.LogMonitorDto
 		var tmpKeywords []*m.LogMonitorStrategyDto
 		tmpPath := logMonitorTable[0].Path
-		for _,v := range logMonitorTable {
+		for i,v := range logMonitorTable {
 			if v.Path != tmpPath {
-				lms = append(lms, &m.LogMonitorDto{Id:v.Id, EndpointId:v.StrategyId, Path:tmpPath, Strategy:tmpKeywords})
+				lms = append(lms, &m.LogMonitorDto{Id:logMonitorTable[i-1].Id, EndpointId:v.StrategyId, Path:tmpPath, Strategy:tmpKeywords})
 				tmpPath = v.Path
 				tmpKeywords = []*m.LogMonitorStrategyDto{}
 			}

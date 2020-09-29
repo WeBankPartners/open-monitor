@@ -25,6 +25,8 @@ var LocalMem = make(map[string]m.Session)
 var onlyLocalStore bool
 var localStoreLock = new(sync.RWMutex)
 var expireTime = int64(3600)
+var RecordRequestMap = make(map[string]int64)
+var recordRequestLock = new(sync.RWMutex)
 
 func InitSession()  {
 	sessionConfig := m.Config().Http.Session
@@ -58,7 +60,11 @@ func SaveSession(session m.Session) (isOk bool,sId string) {
 	}
 	md := md5.New()
 	md.Write(serializeData)
-	sId = hex.EncodeToString(md.Sum(nil))
+	if session.Token != "" {
+		sId = session.Token
+	}else {
+		sId = hex.EncodeToString(md.Sum(nil))
+	}
 	if !onlyLocalStore {
 		backCmd := RedisClient.Set(fmt.Sprintf("session_%s", sId), serializeData, time.Duration(expireTime) * time.Second)
 		if !strings.Contains(backCmd.Val(), "OK") {
@@ -138,19 +144,32 @@ func GetSessionData(sId string) m.Session {
 	return result
 }
 
-func IsActive(sId string) bool {
+func IsActive(sId string, clientIp string) bool {
 	if m.Config().Http.Session.ServerEnable {
 		if sId == m.Config().Http.Session.ServerToken {
 			return true
 		}
 	}
+	var tmpUser string
 	localContain := false
-	localStoreLock.RLock()
-	defer localStoreLock.RUnlock()
+	//localStoreLock.RLock()
+	//defer localStoreLock.RUnlock()
 	if v,i := LocalMem[sId];i {
+		tmpUser = v.User
 		if time.Now().Unix() > v.Expire {
-			delete(LocalMem, sId)
-			return false
+			recordRequestLock.RLock()
+			if rrm,b := RecordRequestMap[fmt.Sprintf("%s_%s", tmpUser,clientIp)]; b{
+				if time.Now().Unix()-rrm <= expireTime {
+					localContain = true
+					tmpSession := m.Session{User:v.User, Token:sId}
+					SaveSession(tmpSession)
+				}
+			}
+			recordRequestLock.RUnlock()
+			if !localContain {
+				delete(LocalMem, sId)
+				return false
+			}
 		}
 		localContain = true
 	}
@@ -159,9 +178,15 @@ func IsActive(sId string) bool {
 		re := RedisClient.Get(fmt.Sprintf("session_%s", sId))
 		if len(re.Val()) > 0 {
 			deserialize([]byte(re.Val()), &result)
+			tmpUser = result.User
 			LocalMem[sId] = result
 			localContain = true
 		}
+	}
+	if localContain {
+		recordRequestLock.Lock()
+		RecordRequestMap[fmt.Sprintf("%s_%s", tmpUser,clientIp)] = time.Now().Unix()
+		recordRequestLock.Unlock()
 	}
 	return localContain
 }

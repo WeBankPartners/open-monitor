@@ -181,7 +181,7 @@ func GetPanels(c *gin.Context)  {
 		}
 		businessCharts,businessPanels := db.GetBusinessPanelChart()
 		if len(businessCharts) > 0 {
-			chartsDto, _ := getAutoDisplay(businessMonitorMap, businessPanels[0].TagsKey, businessCharts)
+			chartsDto, _ := db.GetAutoDisplay(businessMonitorMap, businessPanels[0].TagsKey, businessCharts)
 			var panelDto m.PanelModel
 			panelDto.Title = businessPanels[0].Title
 			panelDto.Other = false
@@ -191,63 +191,6 @@ func GetPanels(c *gin.Context)  {
 		}
 	}
 	mid.ReturnSuccessData(c, panelsDto)
-}
-
-func getAutoDisplay(businessMonitorMap map[int][]string,tagKey string,charts []*m.ChartTable) (result []*m.ChartModel,fetch bool) {
-	result = []*m.ChartModel{}
-	if len(charts) == 0 {
-		return result,false
-	}
-	if tagKey == "" {
-		return result,false
-	}
-	for endpointId,paths := range businessMonitorMap {
-		if len(paths) == 0 {
-			continue
-		}
-		endpointObj := m.EndpointTable{Id:endpointId}
-		db.GetEndpoint(&endpointObj)
-		if endpointObj.Guid == "" {
-			continue
-		}
-		_,promQl := db.GetPromMetric([]string{endpointObj.Guid}, charts[0].Metric)
-		if promQl == "" {
-			continue
-		}
-		tmpLegend := charts[0].Legend
-		if paths[0] != "" {
-			tmpLegend = "$custom_all"
-		}
-		sm := ds.PrometheusData(&m.QueryMonitorData{Start:time.Now().Unix()-300, End:time.Now().Unix(), PromQ:promQl, Legend:tmpLegend, Metric:[]string{charts[0].Metric}, Endpoint:[]string{endpointObj.Guid}})
-		for _,v := range sm {
-			for _, path := range paths {
-				if path != "" {
-					if !strings.Contains(v.Name, path) {
-						continue
-					}
-				}
-				chartDto := m.ChartModel{Id: charts[0].Id, Col: charts[0].Col}
-				chartDto.Url = `/dashboard/chart`
-				chartDto.Endpoint = []string{endpointObj.Guid}
-				tmpName := v.Name
-				if strings.Contains(tmpName, ":") {
-					tmpName = tmpName[strings.Index(tmpName,":")+1:]
-				}
-				if path != "" && strings.Contains(tmpName, tagKey+"=") {
-					tmpName = strings.Split(tmpName, tagKey+"=")[1]
-					if strings.Contains(tmpName, ",") {
-						tmpName = strings.Split(tmpName, ",")[0]
-					}else{
-						tmpName = strings.Split(tmpName, "}")[0]
-					}
-				}
-				chartDto.Metric = []string{fmt.Sprintf("%s/%s=%s", charts[0].Metric, tagKey, tmpName)}
-				result = append(result, &chartDto)
-			}
-		}
-	}
-
-	return result,true
 }
 
 func UpdateChartsTitle(c *gin.Context)  {
@@ -484,17 +427,19 @@ func GetChart(c *gin.Context)  {
 		step = firstEndpointObj.Step
 		// one endpoint -> metrics
 		for _,tmpParamConfig := range paramConfig {
-			tmpIndex := fmt.Sprintf("%d^%s", tmpParamConfig.Id, tmpParamConfig.Endpoint)
-			if _,b := recordMap[tmpIndex];b {
-				continue
-			}
-			recordMap[tmpIndex] = true
 			err, charts := db.GetCharts(0, tmpParamConfig.Id, 0)
 			if err != nil || len(charts) <= 0 {
 				mid.ReturnQueryTableError(c, "chart", err)
 				return
 			}
 			chart := *charts[0]
+			tmpIndex := fmt.Sprintf("%d^%s", tmpParamConfig.Id, tmpParamConfig.Endpoint)
+			if _,b := recordMap[tmpIndex];b {
+				if chart.Metric != "db_monitor_count" {
+					continue
+				}
+			}
+			recordMap[tmpIndex] = true
 			aggType = chart.AggType
 			eOption.Id = chart.Id
 			if chart.Title == "${auto}" {
@@ -516,7 +461,12 @@ func GetChart(c *gin.Context)  {
 				chart.Metric = tmpParamConfig.Metric
 			}
 			for _, v := range strings.Split(chart.Metric, "^") {
-				err, tmpPromQl := db.GetPromMetric([]string{tmpParamConfig.Endpoint}, v)
+				var tmpPromQl string
+				if chart.Metric == "db_monitor_count" && tmpParamConfig.Metric != "db_monitor_count" {
+					err, tmpPromQl = db.GetDbPromMetric(tmpParamConfig.Endpoint, tmpParamConfig.Metric, chart.Legend)
+				}else {
+					err, tmpPromQl = db.GetPromMetric([]string{tmpParamConfig.Endpoint}, v)
+				}
 				if err != nil {
 					log.Logger.Error("Get prometheus metric failed", log.Error(err))
 					continue
@@ -672,6 +622,7 @@ func GetChart(c *gin.Context)  {
 		agg = db.CheckAggregate(query.Start, query.End, firstEndpoint, step, len(serials))
 	}
 	//var firstSerialTime float64
+	processDisplayMap := db.GetProcessDisplayMap(paramConfig[0].Endpoint)
 	for i, s := range serials {
 		if strings.Contains(s.Name, "$metric") {
 			queryIndex := i
@@ -679,6 +630,9 @@ func GetChart(c *gin.Context)  {
 				queryIndex = len(querys)-1
 			}
 			s.Name = strings.Replace(s.Name, "$metric", querys[queryIndex].Metric[0], -1)
+		}
+		if processName,b:=processDisplayMap[s.Name];b{
+			s.Name = processName
 		}
 		eOption.Legend = append(eOption.Legend, s.Name)
 		if eOption.Title == "${auto}" {
