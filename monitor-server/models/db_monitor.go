@@ -40,3 +40,9 @@ type DbMonitorListObj struct {
 	SysPanel  string  `json:"sys_panel"`
 	Data  []*DbMonitorTable  `json:"data"`
 }
+
+type DbMonitorSysNameDto struct {
+	OldName  string  `json:"old_name" binding:"required"`
+	NewName  string  `json:"new_name" binding:"required"`
+	EndpointId  int  `json:"endpoint_id" binding:"required"`
+}
