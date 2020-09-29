@@ -27,6 +27,8 @@ func GetDbMonitorList(c *gin.Context) {
 func AddDbMonitor(c *gin.Context)  {
 	var param m.DbMonitorUpdateDto
 	if err := c.ShouldBindJSON(&param);err == nil {
+		param.Sql = strings.TrimSpace(param.Sql)
+		param.Sql = strings.Replace(param.Sql, "\n", " ", -1)
 		err = db.AddDbMonitor(param)
 		if err != nil {
 			mid.ReturnHandleError(c, fmt.Sprintf("Add db_monitor table fail,%s ", err.Error()), err)
@@ -47,6 +49,7 @@ func CheckDbMonitor(c *gin.Context)  {
 	var param m.DbMonitorUpdateDto
 	if err := c.ShouldBindJSON(&param);err == nil {
 		param.Sql = strings.TrimSpace(param.Sql)
+		param.Sql = strings.Replace(param.Sql, "\n", " ", -1)
 		sql := strings.ToLower(param.Sql)
 		if !strings.HasPrefix(sql, "select") {
 			mid.ReturnValidateError(c, "SQL must start with select")
@@ -74,6 +77,8 @@ func UpdateDbMonitor(c *gin.Context)  {
 			mid.ReturnParamEmptyError(c, "id")
 			return
 		}
+		param.Sql = strings.TrimSpace(param.Sql)
+		param.Sql = strings.Replace(param.Sql, "\n", " ", -1)
 		err = db.UpdateDbMonitor(param)
 		if err != nil {
 			mid.ReturnHandleError(c, "Update db_monitor table fail", err)
