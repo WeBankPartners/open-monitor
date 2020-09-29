@@ -38,6 +38,7 @@ type DbMonitorConfigQuery struct {
 
 type DbMonitorListObj struct {
 	SysPanel  string  `json:"sys_panel"`
+	SysPanelValue string `json:"sys_panel_value"`
 	Data  []*DbMonitorTable  `json:"data"`
 }
 
