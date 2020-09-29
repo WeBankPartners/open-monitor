@@ -55,7 +55,7 @@ func CheckDbMonitor(c *gin.Context)  {
 			mid.ReturnValidateError(c, "SQL must start with select")
 			return
 		}
-		if strings.Contains(sql, ";") || strings.Contains(sql, "insert") || strings.Contains(sql, "update") || strings.Contains(sql, "delete") || strings.Contains(sql, "alter") {
+		if strings.Contains(sql, ";") || strings.Contains(sql, "insert") || strings.Contains(sql, "update") || strings.Contains(sql, "delete") || strings.Contains(sql, "alter") || strings.Contains(sql, "drop") {
 			mid.ReturnValidateError(c, "SQL contains illegal character")
 			return
 		}
