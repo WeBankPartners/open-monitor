@@ -7,8 +7,9 @@ package_path=${tmppath/\/start\.sh/}
 chmod +x $package_path/$bin_name $package_path/control
 mkdir -p /usr/local/monitor/$exporter_type
 mkdir -p /usr/local/monitor/$exporter_type/data
-/bin/cp -f $package_path/$bin_name $package_path/control /usr/local/monitor/$exporter_type/
+/bin/cp -f $package_path/* /usr/local/monitor/$exporter_type/
 cd /usr/local/monitor/$exporter_type/
+rm -f start.sh
 ./control restart
 for i in `seq 1 60`
 do

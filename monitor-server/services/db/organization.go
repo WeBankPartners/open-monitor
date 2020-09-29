@@ -267,3 +267,17 @@ func GetOrgConnect(guid string) (result m.UpdateOrgConnectParam, err error) {
 	result.Phone = strings.Split(tableData[0].Phone, ",")
 	return result,nil
 }
+
+func SearchPanelByName(name string) []m.OptionModel {
+	name = "%" + name + "%"
+	var result []m.OptionModel
+	var panelRecursiveTables []*m.PanelRecursiveTable
+	err := x.SQL("SELECT guid,display_name FROM panel_recursive WHERE display_name LIKE ?", name).Find(&panelRecursiveTables)
+	if err != nil {
+		log.Logger.Error("Get panel_recursive table data fail", log.Error(err))
+	}
+	for _,v := range panelRecursiveTables {
+		result = append(result, m.OptionModel{OptionText:fmt.Sprintf("%s(%s)", v.DisplayName, v.ObjType),OptionValue:v.Guid})
+	}
+	return result
+}
