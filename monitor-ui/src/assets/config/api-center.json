@@ -54,6 +54,9 @@
         },
         "register": {
             "api": "agent/register"
+        },
+        "db": {
+            "dbMonitor": "alarm/db/monitor/list"
         }
     },
     "thresholdManagement": {
