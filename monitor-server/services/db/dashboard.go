@@ -138,6 +138,28 @@ func GetPromMetric(endpoint []string,metric string) (error, string) {
 	return err,promQL
 }
 
+func GetDbPromMetric(endpoint,metric,legend string) (error,string) {
+	promQL := "db_monitor_count"
+	var query []*m.PromMetricTable
+	err := x.SQL("SELECT prom_ql FROM prom_metric WHERE metric='db_monitor_count'").Find(&query)
+	if err!=nil {
+		log.Logger.Error("Query prom_metric fail", log.Error(err))
+	}
+	if len(query) > 0 {
+		promQL = query[0].PromQl
+		if strings.Contains(promQL, "$guid") {
+			promQL = strings.Replace(promQL, "$guid", endpoint, -1)
+		}
+		if metric != "" && legend != "" {
+			promQL = promQL[:len(promQL)-1]
+			legend = legend[1:]
+			promQL = promQL + fmt.Sprintf(",%s=\"%s\"}", legend, metric)
+		}
+	}
+	log.Logger.Debug("db prom metric", log.String("promQl", promQL))
+	return err,promQL
+}
+
 func SearchHost(endpoint string) (error, []*m.OptionModel) {
 	options := []*m.OptionModel{}
 	var hosts []*m.EndpointTable
@@ -596,4 +618,61 @@ func getKVMapFromArchiveTags(tag string) map[string]string {
 		tMap[kv[0]] = kv[1][:len(kv[1])-1]
 	}
 	return tMap
+}
+
+func GetAutoDisplay(businessMonitorMap map[int][]string,tagKey string,charts []*m.ChartTable) (result []*m.ChartModel,fetch bool) {
+	result = []*m.ChartModel{}
+	if len(charts) == 0 {
+		return result,false
+	}
+	if tagKey == "" {
+		return result,false
+	}
+	for endpointId,paths := range businessMonitorMap {
+		if len(paths) == 0 {
+			continue
+		}
+		endpointObj := m.EndpointTable{Id:endpointId}
+		GetEndpoint(&endpointObj)
+		if endpointObj.Guid == "" {
+			continue
+		}
+		_,promQl := GetPromMetric([]string{endpointObj.Guid}, charts[0].Metric)
+		if promQl == "" {
+			continue
+		}
+		tmpLegend := charts[0].Legend
+		if paths[0] != "" {
+			tmpLegend = "$custom_all"
+		}
+		sm := datasource.PrometheusData(&m.QueryMonitorData{Start:time.Now().Unix()-300, End:time.Now().Unix(), PromQ:promQl, Legend:tmpLegend, Metric:[]string{charts[0].Metric}, Endpoint:[]string{endpointObj.Guid}})
+		for _,v := range sm {
+			for _, path := range paths {
+				if path != "" {
+					if !strings.Contains(v.Name, path) {
+						continue
+					}
+				}
+				chartDto := m.ChartModel{Id: charts[0].Id, Col: charts[0].Col}
+				chartDto.Url = `/dashboard/chart`
+				chartDto.Endpoint = []string{endpointObj.Guid}
+				tmpName := v.Name
+				if strings.Contains(tmpName, ":") {
+					tmpName = tmpName[strings.Index(tmpName,":")+1:]
+				}
+				if path != "" && strings.Contains(tmpName, tagKey+"=") {
+					tmpName = strings.Split(tmpName, tagKey+"=")[1]
+					if strings.Contains(tmpName, ",") {
+						tmpName = strings.Split(tmpName, ",")[0]
+					}else{
+						tmpName = strings.Split(tmpName, "}")[0]
+					}
+				}
+				chartDto.Metric = []string{fmt.Sprintf("%s/%s=%s", charts[0].Metric, tagKey, tmpName)}
+				result = append(result, &chartDto)
+			}
+		}
+	}
+
+	return result,true
 }
