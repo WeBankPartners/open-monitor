@@ -213,7 +213,7 @@ func updateConfigFile(tplId int) error {
 		query.SearchType = "endpoint"
 		query.SearchId = tplObj.EndpointId
 	}
-	err = db.GetStrategys(&query, false)
+	err = db.GetStrategys(&query, true)
 	if err != nil {
 		log.Logger.Error("Get strategy error", log.Error(err))
 		return err

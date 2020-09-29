@@ -40,6 +40,7 @@ func main() {
 	go db.StartCronJob()
 	go db.StartCheckCron()
 	go db.StartCheckLogKeyword()
+	go db.SendConfigToDbManager()
 	alarm.SyncInitSdFile()
 	alarm.SyncInitConfigFile()
 	api.InitDependenceParam()

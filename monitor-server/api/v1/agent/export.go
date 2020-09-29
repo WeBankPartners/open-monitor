@@ -302,8 +302,8 @@ type processRequestObj struct {
 	Guid  string  `json:"guid"`
 	CallbackParameter  string  `json:"callbackParameter"`
 	HostIp  string  `json:"host_ip"`
-	ProcessName string `json:"process_name"`
 	ProcessTag  string `json:"process_tag"`
+	DisplayName string `json:"display_name"`
 }
 
 func AutoUpdateProcessMonitor(c *gin.Context)  {
@@ -355,8 +355,8 @@ func updateProcess(input processRequestObj) (result processResultOutputObj,err e
 		err = fmt.Errorf("Param host_ip is empty ")
 		return result,err
 	}
-	if input.ProcessName == "" {
-		err = fmt.Errorf("Param process_name is empty ")
+	if input.ProcessTag == "" {
+		err = fmt.Errorf("Param process_tag is empty ")
 		return result,err
 	}
 	endpointObj := m.EndpointTable{ExportType:"host", Ip:input.HostIp}
@@ -365,13 +365,9 @@ func updateProcess(input processRequestObj) (result processResultOutputObj,err e
 		err = fmt.Errorf("Can not find host endpoint with ip=%s ", input.HostIp)
 		return result,err
 	}
-	var param m.ProcessUpdateDto
+	var param m.ProcessUpdateDtoNew
 	param.EndpointId = endpointObj.Id
-	processMsg := input.ProcessName
-	if input.ProcessTag != "" {
-		processMsg = fmt.Sprintf("%s(%s)", input.ProcessName, input.ProcessTag)
-	}
-	param.ProcessList = []string{processMsg}
+	param.ProcessList = append(param.ProcessList, m.ProcessMonitorTable{Name:input.ProcessTag, DisplayName:input.DisplayName})
 	err = db.UpdateProcess(param)
 	if err != nil {
 		err = fmt.Errorf("Update db fail,%s ", err.Error())
