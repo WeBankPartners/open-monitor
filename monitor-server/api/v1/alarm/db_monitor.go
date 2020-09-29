@@ -59,6 +59,19 @@ func CheckDbMonitor(c *gin.Context)  {
 			mid.ReturnValidateError(c, "SQL contains illegal character")
 			return
 		}
+		nameExists := false
+		dbMonitorObjs,_ := db.ListDbMonitor(param.EndpointId)
+		for _,v := range dbMonitorObjs {
+			for _,vv := range v.Data {
+				if vv.Name == param.Name && vv.Id != param.Id {
+					nameExists = true
+				}
+			}
+		}
+		if nameExists {
+			mid.ReturnValidateError(c, "Name already used")
+			return 
+		}
 		err = db.CheckDbMonitor(param)
 		if err != nil {
 			mid.ReturnHandleError(c, err.Error(), err)
