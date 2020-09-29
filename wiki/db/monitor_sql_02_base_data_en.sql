@@ -55,11 +55,35 @@ CREATE TABLE `alive_check_queue` (
 ALTER TABLE log_monitor ADD COLUMN priority VARCHAR(50) DEFAULT 'high';
 #@v1.7.0.12-end@;
 
-#@v1.7.1.8-begin@;
+#@v1.7.1.9-begin@;
 DELETE FROM strategy WHERE tpl_id=1 AND metric='process_alive_count';
-INSERT  INTO `strategy`(`tpl_id`,`metric`,`expr`,`cond`,`last`,`priority`,`content`,`config_type`) VALUE (1,'process_alive_count','node_process_monitor_count_current{instance=\"$address\"}','==0','30s','high','process down','');
+INSERT  INTO `strategy`(`tpl_id`,`metric`,`expr`,`cond`,`last`,`priority`,`content`,`config_type`) VALUE (1,'process_alive_count','node_process_monitor_count_current{instance=\"$address\"}','!=1','30s','high','process down','');
 DELETE FROM prom_metric WHERE metric='volume_used_percent';
 INSERT  INTO `prom_metric`(`metric`,`metric_type`,`prom_ql`,`prom_main`) VALUES ('volume_used_percent','host','100-(node_filesystem_avail_bytes{fstype=~\"ext3|ext4|xfs\",instance=\"$address\"}/node_filesystem_size_bytes{fstype=~\"ext3|ext4|xfs\",instance=\"$address\"})*100','');
 DELETE FROM strategy WHERE tpl_id=1 AND metric='volume_used_percent';
 INSERT  INTO `strategy`(`tpl_id`,`metric`,`expr`,`cond`,`last`,`priority`,`content`,`config_type`) VALUE (1,'volume_used_percent','100-(node_filesystem_avail_bytes{fstype=~\"ext3|ext4|xfs\",instance=\"$address\"}/node_filesystem_size_bytes{fstype=~\"ext3|ext4|xfs\",instance=\"$address\"})*100','>=85','60s','high','disk space alert','');
-#@v1.7.1.8-end@;
+#@v1.7.1.9-end@;
+
+#@v1.7.1.12-begin@;
+ALTER TABLE process_monitor ADD COLUMN display_name VARCHAR(255) DEFAULT '';
+CREATE TABLE IF NOT EXISTS `db_monitor` (
+  `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `endpoint_guid` VARCHAR(255) NOT NULL,
+  `name` VARCHAR(255) DEFAULT '',
+  `sql` VARCHAR(2000) DEFAULT '',
+  `sys_panel` VARCHAR(50) DEFAULT '',
+  `update_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+DELETE FROM prom_metric WHERE metric='db_monitor_count';
+INSERT  INTO `prom_metric`(`metric`,`metric_type`,`prom_ql`,`prom_main`) VALUES ('db_monitor_count','mysql','db_monitor_count{guid="$guid"}','');
+#@v1.7.1.12-end@;
+
+#@v1.7.1.15-begin@;
+DELETE FROM panel WHERE title='DataMonitor' AND group_id=2;
+DELETE FROM chart WHERE group_id=13 AND metric='db_monitor_count';
+INSERT  INTO `panel`(`group_id`,`title`,`tags_enable`,`tags_url`,`tags_key`,`chart_group`,`auto_display`) VALUES (2,'DataMonitor',0,'','',13,0);
+INSERT  INTO `chart`(`group_id`,`endpoint`,`metric`,`col`,`url`,`unit`,`title`,`grid_type`,`series_name`,`rate`,`agg_type`,`legend`) VALUES (13,'','db_monitor_count',6,'/dashboard/chart','','db_data_count','line','metric',0,'avg','$name');
+DELETE FROM prom_metric WHERE metric='db_count_change';
+INSERT  INTO `prom_metric`(`metric`,`metric_type`,`prom_ql`,`prom_main`) VALUES ('db_count_change','mysql','idelta(db_monitor_count{guid=\"$guid\"}[20s])','');
+#@v1.7.1.15-end@;

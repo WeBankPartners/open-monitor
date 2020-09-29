@@ -281,6 +281,9 @@ func recursiveData(guid string, prt []*m.PanelRecursiveTable, length,depth int) 
 					for _,cv := range chartTables {
 						obj.Charts = append(obj.Charts, &m.ChartModel{Id:cv.Id, Endpoint:mv, Metric:strings.Split(cv.Metric, "^"), Aggregate:cv.AggType})
 					}
+					for _,extendChart := range getExtendPanelCharts(mv, mk, v.Guid) {
+						obj.Charts = append(obj.Charts, extendChart)
+					}
 				}
 				break
 			}
@@ -292,6 +295,56 @@ func recursiveData(guid string, prt []*m.PanelRecursiveTable, length,depth int) 
 		}
 	}
 	return obj
+}
+
+func getExtendPanelCharts(endpoints []string,exportType,guid string) []*m.ChartModel {
+	log.Logger.Debug("getExtendPanel", log.String("exportType", exportType), log.StringList("endpoints", endpoints), log.String("guid", guid))
+	var result []*m.ChartModel
+	if exportType == "java" {
+		for _,endpoint := range endpoints {
+			_,businessMonitor := GetBusinessList(0, endpoint)
+			if len(businessMonitor) > 0 {
+				businessMonitorMap := make(map[int][]string)
+				for _,v := range businessMonitor {
+					if _,b := businessMonitorMap[v.EndpointId];b {
+						exist := false
+						for _,vv := range businessMonitorMap[v.EndpointId] {
+							if vv == v.Path {
+								exist = true
+								break
+							}
+						}
+						if !exist {
+							businessMonitorMap[v.EndpointId] = append(businessMonitorMap[v.EndpointId], v.Path)
+						}
+					}else{
+						businessMonitorMap[v.EndpointId] = []string{v.Path}
+					}
+				}
+				businessCharts,businessPanels := GetBusinessPanelChart()
+				if len(businessCharts) > 0 {
+					chartsDto, _ := GetAutoDisplay(businessMonitorMap, businessPanels[0].TagsKey, businessCharts)
+					for _,tmpChartModel := range chartsDto {
+						result = append(result, tmpChartModel)
+					}
+				}
+			}
+		}
+	}
+	if exportType == "mysql" {
+		dbMonitorList,_ := GetDbMonitorByPanel(guid)
+		if len(dbMonitorList) > 0 {
+			dbMonitorChart,_ := GetDbMonitorChart()
+			if len(dbMonitorChart) > 0 {
+				var tmpMetrics []string
+				for _,v := range dbMonitorList {
+					tmpMetrics = append(tmpMetrics, v.Name)
+				}
+				result = append(result, &m.ChartModel{Id:dbMonitorChart[0].Id,Endpoint:endpoints,Aggregate:dbMonitorChart[0].AggType,Metric:tmpMetrics})
+			}
+		}
+	}
+	return result
 }
 
 func getChartsByEndpointType(endpointType string) []*m.ChartTable {
@@ -408,7 +461,11 @@ func UpdateAgentManagerTable(endpoint m.EndpointTable, user,password,configFile,
 	return Transaction(actions)
 }
 
-func GetAgentManager() (result []*m.AgentManagerTable, err error) {
-	err = x.SQL("SELECT * FROM agent_manager").Find(&result)
+func GetAgentManager(guid string) (result []*m.AgentManagerTable, err error) {
+	if guid != "" {
+		err = x.SQL("SELECT * FROM agent_manager where endpoint_guid=?", guid).Find(&result)
+	}else {
+		err = x.SQL("SELECT * FROM agent_manager").Find(&result)
+	}
 	return result,err
 }
