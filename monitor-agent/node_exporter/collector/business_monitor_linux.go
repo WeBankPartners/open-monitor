@@ -23,7 +23,11 @@ const (
 	businessMonitorFilePath = "data/business_monitor_cache.data"
 )
 
-var regDate = regexp.MustCompile(`^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}`)
+var (
+	regDate = regexp.MustCompile(`^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}`)
+	businessMonitorJobs []*businessMonitorObj
+	businessMonitorLock = new(sync.RWMutex)
+)
 
 type businessMonitorCollector struct {
 	businessMonitor  *prometheus.Desc
@@ -45,6 +49,7 @@ func BusinessMonitorCollector() (Collector, error) {
 }
 
 func (c *businessMonitorCollector) Update(ch chan<- prometheus.Metric) error {
+	businessMonitorLock.RLock()
 	for _,v := range businessMonitorJobs {
 		for _,vv := range v.get() {
 			ch <- prometheus.MustNewConstMetric(c.businessMonitor,
@@ -52,6 +57,7 @@ func (c *businessMonitorCollector) Update(ch chan<- prometheus.Metric) error {
 				vv.Value, vv.SystemNum, vv.Name, vv.Key, vv.Path)
 		}
 	}
+	businessMonitorLock.RUnlock()
 	return nil
 }
 
@@ -68,9 +74,9 @@ type businessMonitorObj struct {
 	Path  string  `json:"path"`
 	Name  string  `json:"name"`
 	LastDate  string  `json:"last_date"`
-	Data  map[string]string  `json:"data"`
+	Data  []*businessMetricObj  `json:"data"`
 	TailSession  *tail.Tail  `json:"-"`
-	Lock  sync.RWMutex  `json:"-"`
+	Lock  *sync.RWMutex  `json:"-"`
 }
 
 type businessHttpDto struct {
@@ -79,7 +85,6 @@ type businessHttpDto struct {
 
 func (c *businessMonitorObj) start()  {
 	var err error
-	log.Infof("start business collector, path: %s \n", c.Path)
 	c.TailSession,err = tail.TailFile(c.Path, tail.Config{Follow:true, ReOpen:true})
 	if err != nil {
 		log.Errorf("start business collector fail, path: %s, error: %v", c.Path, err)
@@ -98,20 +103,32 @@ func (c *businessMonitorObj) start()  {
 	for line := range c.TailSession.Lines {
 		c.Lock.Lock()
 		textList := strings.Split(line.Text, "][")
-		//log.Infof("Get a new line : %v \n", textList)
 		for _,textSplit := range textList {
+			if strings.HasPrefix(textSplit, "[") {
+				textSplit = textSplit[1:]
+			}
+			if strings.HasSuffix(textSplit, "]") {
+				textSplit = textSplit[:len(textSplit)-1]
+			}
 			if regDate.MatchString(textSplit) {
 				c.LastDate = textSplit
 			}
 			if strings.Contains(textSplit, "{") &&  strings.Contains(textSplit, "}") {
-				if strings.HasSuffix(textSplit, "]") {
-					textSplit = textSplit[:len(textSplit)-1]
-				}
 				mapData := make(map[string]string)
 				err := json.Unmarshal([]byte(textSplit), &mapData)
 				if err == nil {
-					//log.Infof("Update new data : %v \n", mapData)
-					c.Data = mapData
+					if len(mapData) > 0 {
+						c.Data = []*businessMetricObj{}
+						for k, v := range mapData {
+							floatValue,err := strconv.ParseFloat(v, 64)
+							if err != nil {
+								continue
+							}
+							c.Data = append(c.Data, &businessMetricObj{Key:k, Value:floatValue})
+						}
+					}
+				}else{
+					log.Infof("json unmarshal %s error:%v \n", textSplit, err)
 				}
 			}
 		}
@@ -123,17 +140,17 @@ func (c *businessMonitorObj) get() []businessMetricObj {
 	data := []businessMetricObj{}
 	c.Lock.RLock()
 	zeroFlag := true
-	if checkIllegalDate(c.LastDate) {
-		zeroFlag = false
+	if c.LastDate != "" {
+		if checkIllegalDate(c.LastDate) {
+			zeroFlag = false
+		}
 	}
-	for k,v := range c.Data {
-		value,err := strconv.ParseFloat(v, 64)
+	for _,v := range c.Data {
+		tmpValue := v.Value
 		if !zeroFlag {
-			value = 0
+			tmpValue = 0
 		}
-		if err == nil {
-			data = append(data, businessMetricObj{SystemNum:c.SystemNum, Name:c.Name, Path:c.Path, Key:k, Value:value})
-		}
+		data = append(data, businessMetricObj{SystemNum:c.SystemNum, Name:c.Name, Path:c.Path, Key:v.Key, Value:tmpValue})
 	}
 	c.Lock.RUnlock()
 	return data
@@ -141,10 +158,8 @@ func (c *businessMonitorObj) get() []businessMetricObj {
 
 func (c *businessMonitorObj) destroy()  {
 	c.TailSession.Stop()
-	c.Data = make(map[string]string)
+	c.Data = []*businessMetricObj{}
 }
-
-var businessMonitorJobs = make(map[string]*businessMonitorObj)
 
 func BusinessMonitorHttpHandle(w http.ResponseWriter, r *http.Request)  {
 	buff,err := ioutil.ReadAll(r.Body)
@@ -163,7 +178,10 @@ func BusinessMonitorHttpHandle(w http.ResponseWriter, r *http.Request)  {
 		w.Write([]byte(errorMsg))
 		return
 	}
-	for k,v := range businessMonitorJobs {
+	businessMonitorLock.Lock()
+
+	var newBusinessMonitorJobs []*businessMonitorObj
+	for _,v := range businessMonitorJobs {
 		exist := false
 		for _,vv := range param.Paths {
 			if v.Path == vv {
@@ -172,17 +190,29 @@ func BusinessMonitorHttpHandle(w http.ResponseWriter, r *http.Request)  {
 			}
 		}
 		if !exist {
-			businessMonitorJobs[k].destroy()
-			delete(businessMonitorJobs, k)
+			v.destroy()
+		}else{
+			newBusinessMonitorJobs = append(newBusinessMonitorJobs, v)
 		}
 	}
 	for _,v := range param.Paths {
-		if _,b := businessMonitorJobs[v];!b {
+		exist := false
+		for _,vv := range businessMonitorJobs {
+			if vv.Path == v {
+				exist = true
+				break
+			}
+		}
+		if !exist {
 			tmpBusinessObj := businessMonitorObj{Path:v}
-			businessMonitorJobs[v] = &tmpBusinessObj
-			go businessMonitorJobs[v].start()
+			tmpBusinessObj.Data = []*businessMetricObj{}
+			tmpBusinessObj.Lock = new(sync.RWMutex)
+			go tmpBusinessObj.start()
+			newBusinessMonitorJobs = append(newBusinessMonitorJobs, &tmpBusinessObj)
 		}
 	}
+	businessMonitorJobs = newBusinessMonitorJobs
+	businessMonitorLock.Unlock()
 	log.Infoln("success")
 	w.Write([]byte("success"))
 }
@@ -236,8 +266,22 @@ func (c *businessCollectorStore) Load()  {
 			log.Infof("load %s file succeed \n", businessMonitorFilePath)
 		}
 	}
+	tmpMap := make(map[string]int)
+	businessMonitorLock.Lock()
+	businessMonitorJobs = []*businessMonitorObj{}
 	for _,v := range c.Data {
-		businessMonitorJobs[v.Path] = &businessMonitorObj{Path:v.Path,SystemNum:v.SystemNum,Name:v.Name}
-		go businessMonitorJobs[v.Path].start()
+		if v.Path != "" {
+			if _,b := tmpMap[v.Path];!b {
+				tmpMap[v.Path] = 1
+				newBusinessMonitorObj := businessMonitorObj{Path: v.Path, SystemNum: v.SystemNum, Name: v.Name}
+				newBusinessMonitorObj.Data = []*businessMetricObj{}
+				newBusinessMonitorObj.Lock = new(sync.RWMutex)
+				businessMonitorJobs = append(businessMonitorJobs, &newBusinessMonitorObj)
+			}
+		}
 	}
+	for _,v := range businessMonitorJobs {
+		go v.start()
+	}
+	businessMonitorLock.Unlock()
 }
