@@ -177,7 +177,7 @@
       </div>
     </div>
   </Modal>
-  <Modal v-model="isShowDataMonitor" :title="$t('button.dataMonitoring')" :styles="{top: '100px',width: '1000px'}">
+  <Modal v-model="isShowDataMonitor" :title="$t('button.dataMonitoring')" :styles="{top: '100px',width: '1000px'}" footer-hide>
     <DataMonitor :endpointId="dbEndpointId" ref="dataMonitor"></DataMonitor>
   </Modal>
 </div>
