@@ -272,7 +272,7 @@ func SearchPanelByName(name string) []m.OptionModel {
 	name = "%" + name + "%"
 	var result []m.OptionModel
 	var panelRecursiveTables []*m.PanelRecursiveTable
-	err := x.SQL("SELECT guid,display_name FROM panel_recursive WHERE display_name LIKE ?", name).Find(&panelRecursiveTables)
+	err := x.SQL("SELECT guid,display_name,obj_type FROM panel_recursive WHERE display_name LIKE ?", name).Find(&panelRecursiveTables)
 	if err != nil {
 		log.Logger.Error("Get panel_recursive table data fail", log.Error(err))
 	}
