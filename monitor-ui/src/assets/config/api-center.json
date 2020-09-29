@@ -56,7 +56,11 @@
             "api": "agent/register"
         },
         "db": {
-            "dbMonitor": "alarm/db/monitor/list"
+            "dbMonitor": "alarm/db/monitor/list",
+            "check": "alarm/db/monitor/check",
+            "add": "alarm/db/monitor/add",
+            "delete": "alarm/db/monitor/delete",
+            "update": "alarm/db/monitor/update"
         }
     },
     "thresholdManagement": {

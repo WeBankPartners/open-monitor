@@ -177,8 +177,8 @@
       </div>
     </div>
   </Modal>
-  <Modal v-model="isShowDataMonitor" :title="$t('button.dataMonitoring')" fullscreen :styles="{top: '100px'}">
-    <DataMonitor :dbEndpointId="dbEndpointId" :dbMonitorData="dbMonitorData"></DataMonitor>
+  <Modal v-model="isShowDataMonitor" :title="$t('button.dataMonitoring')" :styles="{top: '100px',width: '1000px'}">
+    <DataMonitor :endpointId="dbEndpointId" ref="dataMonitor"></DataMonitor>
   </Modal>
 </div>
 </template>
@@ -538,6 +538,8 @@ export default {
         endpoint_id: this.dbEndpointId
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.endpointManagement.db.dbMonitor, params, responseData => {
+        console.log(responseData)
+        this.$refs.dataMonitor.managementData(responseData)
         this.dbMonitorData = responseData
         this.isShowDataMonitor = true
       })
