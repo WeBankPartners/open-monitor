@@ -1,20 +1,24 @@
 <template>
 <div class=" ">
   <section>
-    <template v-for="(tableItem, tableIndex) in totalData">
-      <section :key="tableIndex + 'f'">
-        <div class="section-table-tip">
-          <Tag color="blue" :key="tableIndex + 'a'">{{tableItem.sys_panel || 'Please Set Name'}}
-            <span @click="editPanalName(tableItem.sys_panel)"><i class="fa fa-pencil" aria-hidden="true"></i></span>
-          </Tag>
-          <button type="button" @click="addDbMonitor(tableItem.sys_panel_value)" class="btn btn-sm btn-cancel-f" :key="tableIndex + 'b'">
-            <i class="fa fa-plus"></i>
-            {{$t('button.add')}}
-          </button>
-          <PageTable :pageConfig="tableItem.pageConfig"></PageTable>
-        </div>
-      </section>
-    </template>
+    <div style="text-align: end;">
+      <button type="button" @click="addDbMonitor" class="btn btn-sm btn-confirm-f">
+        <i class="fa fa-plus"></i>
+        {{$t('button.add')}}
+      </button>
+    </div>
+    <div style="height:500px;overflow-y:auto">
+      <template v-for="(tableItem, tableIndex) in totalData">
+        <section :key="tableIndex + 'f'">
+          <div class="section-table-tip">
+            <Tag color="blue" :key="tableIndex + 'a'">{{tableItem.sys_panel || 'Please Set Name'}}
+              <span @click="editPanalName(tableItem.sys_panel_value)"><i class="fa fa-pencil" aria-hidden="true"></i></span>
+            </Tag>
+            <PageTable :pageConfig="tableItem.pageConfig"></PageTable>
+          </div>
+        </section>
+      </template>
+    </div>
   </section>
   <Modal
    v-model="db_add_Modal"
@@ -154,10 +158,10 @@ export default {
         })
       })
     },
-    addDbMonitor(sys_panel) {
+    addDbMonitor() {
+      this.newPanalName = null
       this.activeSysPanal.name = ''
       this.activeSysPanal.sql = ''
-      this.newPanalName = sys_panel
       // this.activeSysPanal.sys_panel = sys_panel
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.endpointManagement.db.panalName, '', (responseData) => {
         this.panalNameList = responseData
@@ -170,12 +174,12 @@ export default {
     },
     addDbConfig() {
       this.activeSysPanal.endpoint_id = Number(this.endpointId)
-      this.activeSysPanal.sys_panel = this.newPanalName
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.endpointManagement.db.check, this.activeSysPanal, () => {
         this.addPost(this.activeSysPanal)
       })
     },
     addPost(params) {
+      params.sys_panel = this.newPanalName
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.endpointManagement.db.add, params, () => {
         this.getData()
       })
@@ -235,10 +239,9 @@ export default {
       this.isShowWarning = false
     },
     editPanalName (panalName) {
-      this.newPanalName = null
+      this.newPanalName = panalName
       this.panalName = panalName
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.endpointManagement.db.panalName, '', (responseData) => {
-        console.log(responseData)
         this.panalNameList = responseData
          this.panalNameList.unshift({
           option_text: 'null',
