@@ -7,6 +7,7 @@ import (
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"fmt"
+	"strings"
 )
 
 func GetDbMonitorList(c *gin.Context) {
@@ -26,6 +27,8 @@ func GetDbMonitorList(c *gin.Context) {
 func AddDbMonitor(c *gin.Context)  {
 	var param m.DbMonitorUpdateDto
 	if err := c.ShouldBindJSON(&param);err == nil {
+		param.Sql = strings.TrimSpace(param.Sql)
+		param.Sql = strings.Replace(param.Sql, "\n", " ", -1)
 		err = db.AddDbMonitor(param)
 		if err != nil {
 			mid.ReturnHandleError(c, fmt.Sprintf("Add db_monitor table fail,%s ", err.Error()), err)
@@ -45,6 +48,30 @@ func AddDbMonitor(c *gin.Context)  {
 func CheckDbMonitor(c *gin.Context)  {
 	var param m.DbMonitorUpdateDto
 	if err := c.ShouldBindJSON(&param);err == nil {
+		param.Sql = strings.TrimSpace(param.Sql)
+		param.Sql = strings.Replace(param.Sql, "\n", " ", -1)
+		sql := strings.ToLower(param.Sql)
+		if !strings.HasPrefix(sql, "select") {
+			mid.ReturnValidateError(c, "SQL must start with select")
+			return
+		}
+		if strings.Contains(sql, ";") || strings.Contains(sql, "insert") || strings.Contains(sql, "update") || strings.Contains(sql, "delete") || strings.Contains(sql, "alter") || strings.Contains(sql, "drop") {
+			mid.ReturnValidateError(c, "SQL contains illegal character")
+			return
+		}
+		nameExists := false
+		dbMonitorObjs,_ := db.ListDbMonitor(param.EndpointId)
+		for _,v := range dbMonitorObjs {
+			for _,vv := range v.Data {
+				if vv.Name == param.Name && vv.Id != param.Id {
+					nameExists = true
+				}
+			}
+		}
+		if nameExists {
+			mid.ReturnValidateError(c, "Name already used")
+			return
+		}
 		err = db.CheckDbMonitor(param)
 		if err != nil {
 			mid.ReturnHandleError(c, err.Error(), err)
@@ -63,6 +90,8 @@ func UpdateDbMonitor(c *gin.Context)  {
 			mid.ReturnParamEmptyError(c, "id")
 			return
 		}
+		param.Sql = strings.TrimSpace(param.Sql)
+		param.Sql = strings.Replace(param.Sql, "\n", " ", -1)
 		err = db.UpdateDbMonitor(param)
 		if err != nil {
 			mid.ReturnHandleError(c, "Update db_monitor table fail", err)
@@ -71,6 +100,20 @@ func UpdateDbMonitor(c *gin.Context)  {
 		err = db.SendConfigToDbManager()
 		if err != nil {
 			mid.ReturnHandleError(c, "Send config to db_data_exporter fail", err)
+		}else{
+			mid.ReturnSuccess(c)
+		}
+	}else{
+		mid.ReturnValidateError(c, err.Error())
+	}
+}
+
+func UpdateDbMonitorSysName(c *gin.Context)  {
+	var param m.DbMonitorSysNameDto
+	if err := c.ShouldBindJSON(&param);err == nil {
+		err = db.UpdateDbMonitorSysName(param)
+		if err != nil {
+			mid.ReturnHandleError(c, fmt.Sprintf("Update db_monitor sys_panel fail,%s ", err.Error()), err)
 		}else{
 			mid.ReturnSuccess(c)
 		}

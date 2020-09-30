@@ -38,5 +38,12 @@ type DbMonitorConfigQuery struct {
 
 type DbMonitorListObj struct {
 	SysPanel  string  `json:"sys_panel"`
+	SysPanelValue string `json:"sys_panel_value"`
 	Data  []*DbMonitorTable  `json:"data"`
+}
+
+type DbMonitorSysNameDto struct {
+	OldName  string  `json:"old_name"`
+	NewName  string  `json:"new_name" binding:"required"`
+	EndpointId  int  `json:"endpoint_id" binding:"required"`
 }
