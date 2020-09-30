@@ -182,6 +182,7 @@ func InitHttpServer(exportAgent bool) {
 			alarmApi.POST("/db/monitor/update", alarm.UpdateDbMonitor)
 			alarmApi.POST("/db/monitor/check", alarm.CheckDbMonitor)
 			alarmApi.POST("/db/monitor/delete", alarm.DeleteDbMonitor)
+			alarmApi.POST("/db/monitor/sys/update", alarm.UpdateDbMonitorSysName)
 		}
 		userApi := authApi.Group("/user")
 		{
