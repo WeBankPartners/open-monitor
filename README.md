@@ -20,7 +20,8 @@
 中文 / [English](README_EN.md)
 
 ## 在线体验环境
-[点此试用Open-Monitor](http://124.156.108.126:8080/wecube-monitor)
+[点此试用Open-Monitor](http://124.156.108.126:8080/wecube-monitor)  
+<img src="./wiki/images/wecube-monitor01.gif" />  
 > 注意：
 >
 > 1. 体验环境每天凌晨2:00-4:00进行重建，重建时间段内环境将不可用，且所有用户修改内容将被丢弃
