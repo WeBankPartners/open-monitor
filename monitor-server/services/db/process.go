@@ -86,20 +86,56 @@ func GetProcessList(endpointId int) (err error, processList []*m.ProcessMonitorT
 	return err,processList
 }
 
-func UpdateProcess(param m.ProcessUpdateDtoNew) error {
+func UpdateProcess(param m.ProcessUpdateDtoNew,operation string) error {
 	var actions []*Action
-	actions = append(actions, &Action{Sql:"DELETE FROM process_monitor WHERE endpoint_id=?", Param:[]interface{}{param.EndpointId}})
-	for _,v := range param.ProcessList {
-		var action Action
-		params := make([]interface{}, 0)
-		action.Sql = "INSERT INTO process_monitor(endpoint_id,name,display_name) VALUE (?,?,?)"
-		params = append(params, param.EndpointId)
-		params = append(params, v.Name)
-		params = append(params, v.DisplayName)
-		action.Param = params
-		actions = append(actions, &action)
+	if operation == "update" || operation == "add" {
+		if operation == "update" {
+			actions = append(actions, &Action{Sql: "DELETE FROM process_monitor WHERE endpoint_id=?", Param: []interface{}{param.EndpointId}})
+		}
+		existMap := make(map[string]int)
+		if operation == "add" {
+			_,nowProcessList := GetProcessList(param.EndpointId)
+			for _,v := range nowProcessList {
+				existMap[v.Name] = 1
+			}
+		}
+		for _, v := range param.ProcessList {
+			var action Action
+			params := make([]interface{}, 0)
+			existFlag := false
+			if operation == "add" {
+				if _,b := existMap[v.Name];b {
+					if v.DisplayName != "" {
+						action.Sql = "UPDATE process_monitor SET display_name=? WHERE endpoint_id=? AND name=?"
+						params = append(params, v.DisplayName)
+						params = append(params, param.EndpointId)
+						params = append(params, v.Name)
+					}
+					existFlag = true
+				}
+			}
+			if !existFlag {
+				action.Sql = "INSERT INTO process_monitor(endpoint_id,name,display_name) VALUE (?,?,?)"
+				params = append(params, param.EndpointId)
+				params = append(params, v.Name)
+				params = append(params, v.DisplayName)
+			}
+			action.Param = params
+			if action.Sql != "" {
+				actions = append(actions, &action)
+			}
+		}
 	}
-	return Transaction(actions)
+	if operation == "delete" {
+		for _, v := range param.ProcessList {
+			actions = append(actions, &Action{Sql: "DELETE FROM process_monitor WHERE endpoint_id=? and name=?", Param: []interface{}{param.EndpointId, v.Name}})
+		}
+	}
+	if len(actions) > 0 {
+		return Transaction(actions)
+	}else{
+		return nil
+	}
 }
 
 func UpdateAliveCheckQueue(monitorIp string) error {
