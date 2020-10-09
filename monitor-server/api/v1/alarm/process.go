@@ -41,7 +41,7 @@ func UpdateEndpointProcessConfig(c *gin.Context)  {
 		for _,v := range param.ProcessList {
 			processDtoNew.ProcessList = append(processDtoNew.ProcessList, m.ProcessMonitorTable{Name:v, DisplayName:""})
 		}
-		err = db.UpdateProcess(processDtoNew)
+		err = db.UpdateProcess(processDtoNew, "update")
 		if err != nil {
 			mid.ReturnUpdateTableError(c, "process_monitor", err)
 		}else{
@@ -75,7 +75,7 @@ func UpdateEndpointProcessConfigNew(c *gin.Context)  {
 				return
 			}
 		}
-		err = db.UpdateProcess(param)
+		err = db.UpdateProcess(param, "update")
 		if err != nil {
 			mid.ReturnUpdateTableError(c, "process_monitor", err)
 		}else{
