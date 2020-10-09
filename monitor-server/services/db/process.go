@@ -50,14 +50,18 @@ func UpdateNodeExporterProcessConfig(endpointId int) error {
 	return nil
 }
 
-func CheckNodeExporterProcessConfig(endpointId int,processList []string) (err error,illegal bool,msg string) {
+func CheckNodeExporterProcessConfig(endpointId int,processList []m.ProcessMonitorTable) (err error,illegal bool,msg string) {
 	endpointObj := m.EndpointTable{Id:endpointId}
 	err = GetEndpoint(&endpointObj)
 	if err != nil {
 		log.Logger.Error("Check node_exporter fail, get endpoint msg fail", log.Error(err))
 		return
 	}
-	postParam := processHttpDto{Process:processList, Check:1}
+	var processNameList []string
+	for _,v := range processList {
+		processNameList = append(processNameList, v.Name)
+	}
+	postParam := processHttpDto{Process:processNameList, Check:1}
 	postData,err := json.Marshal(postParam)
 	if err != nil {
 		log.Logger.Error("Check node_exporter fail, marshal post data fail", log.Error(err))
