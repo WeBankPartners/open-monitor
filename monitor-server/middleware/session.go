@@ -92,7 +92,7 @@ func GetOperateUser(c *gin.Context) string {
 		session := GetSessionData(auToken)
 		return fmt.Sprintf("%s", session.User)
 	}else{
-		ReturnTokenError(c)
+		//ReturnTokenError(c)
 		return ""
 	}
 }
