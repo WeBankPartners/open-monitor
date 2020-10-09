@@ -256,3 +256,8 @@ type UpdateChartTitleParam struct {
 type DisplayDemoFlagDto struct {
 	Display  bool  `json:"display"`
 }
+
+type CustomDashboardRoleDto struct {
+	DashboardId  int  `json:"dashboard_id" binding:"required"`
+	RoleId  []int  `json:"role_id"`
+}
