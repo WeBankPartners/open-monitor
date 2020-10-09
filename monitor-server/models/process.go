@@ -9,7 +9,7 @@ type ProcessMonitorTable struct {
 
 type ProcessUpdateDto struct {
 	EndpointId  int  `json:"endpoint_id" binding:"required"`
-	ProcessList  []string  `json:"process_list"`
+	ProcessList  []ProcessMonitorTable  `json:"process_list"`
 	Check       bool  `json:"check"`
 }
 
