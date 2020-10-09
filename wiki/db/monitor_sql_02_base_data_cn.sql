@@ -87,3 +87,12 @@ INSERT  INTO `chart`(`group_id`,`endpoint`,`metric`,`col`,`url`,`unit`,`title`,`
 DELETE FROM prom_metric WHERE metric='db_count_change';
 INSERT  INTO `prom_metric`(`metric`,`metric_type`,`prom_ql`,`prom_main`) VALUES ('db_count_change','mysql','idelta(db_monitor_count{guid=\"$guid\"}[20s])','');
 #@v1.7.1.15-end@;
+
+#@v1.7.1.20-begin@;
+CREATE TABLE `rel_role_custom_dashboard` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `role_id` INT UNSIGNED NOT NULL,
+  `custom_dashboard_id` INT UNSIGNED NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+#@v1.7.1.20-end@;
