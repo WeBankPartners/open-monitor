@@ -9,7 +9,7 @@ import (
 )
 
 func ListCustomDashboard(c *gin.Context)  {
-	err,result := db.ListCustomDashboard()
+	err,result := db.ListCustomDashboard(mid.GetOperateUser(c), mid.GetCoreRequestRoleList(c))
 	if err != nil {
 		mid.ReturnQueryTableError(c, "custom_dashboard", err)
 		return
@@ -35,6 +35,7 @@ func GetCustomDashboard(c *gin.Context)  {
 func SaveCustomDashboard(c *gin.Context)  {
 	var param m.CustomDashboardTable
 	if err := c.ShouldBindJSON(&param);err==nil {
+		param.UpdateUser = mid.GetOperateUser(c)
 		err = db.SaveCustomDashboard(&param)
 		if err != nil {
 			mid.ReturnUpdateTableError(c, "custom_dashboard", err)
@@ -59,4 +60,32 @@ func DeleteCustomDashboard(c *gin.Context)  {
 		return
 	}
 	mid.ReturnSuccess(c)
+}
+
+func GetCustomDashboardRole(c *gin.Context)  {
+	id,err := strconv.Atoi(c.Query("dashboard_id"))
+	if err != nil || id <= 0 {
+		mid.ReturnParamTypeError(c, "dashboard_id", "int")
+		return
+	}
+	err,result := db.GetCustomDashboardRole(id)
+	if err != nil {
+		mid.ReturnQueryTableError(c, "rel_role_custom_dashboard", err)
+	}else{
+		mid.ReturnSuccessData(c, result)
+	}
+}
+
+func SaveCustomDashboardRole(c *gin.Context)  {
+	var param m.CustomDashboardRoleDto
+	if err := c.ShouldBindJSON(&param);err==nil {
+		err = db.SaveCustomeDashboardRole(param)
+		if err != nil {
+			mid.ReturnUpdateTableError(c, "rel_role_custom_dashboard", err)
+			return
+		}
+		mid.ReturnSuccess(c)
+	}else{
+		mid.ReturnValidateError(c, err.Error())
+	}
 }

@@ -14,8 +14,8 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 )
 
-func AddUser(user m.UserTable, creator string) error {
-	_,err := x.Exec("INSERT INTO user(name,passwd,display_name,email,phone,creator,created) VALUE (?,?,?,?,?,?,NOW())", user.Name,user.Passwd,user.DisplayName,user.Email,user.Phone,creator)
+func AddUser(user m.UserTable) error {
+	_,err := x.Exec("INSERT INTO user(name,passwd,display_name,email,phone,created) VALUE (?,?,?,?,?,NOW())", user.Name,user.Passwd,user.DisplayName,user.Email,user.Phone)
 	if err != nil {
 		log.Logger.Error(fmt.Sprintf("Add user %s fail", user.Name), log.Error(err))
 	}
@@ -510,4 +510,9 @@ func CheckRoleList(param string) string {
 		result = result[:len(result)-1]
 	}
 	return result
+}
+
+func GetUserRole(user string) (err error,result []*m.RoleTable) {
+	err = x.SQL("SELECT DISTINCT t3.* FROM user t1 LEFT JOIN rel_role_user t2 ON t1.id=t2.user_id LEFT JOIN role t3 ON t2.role_id=t3.id WHERE t1.name=?", user).Find(&result)
+	return err,result
 }
