@@ -19,6 +19,7 @@
               </p>
               <a slot="extra">
                 <button class="btn btn-sm btn-confirm-f" @click="goToPanal(panalItem)">{{$t('button.view')}}</button>
+                <button class="btn btn-sm btn-cancel-f" @click="authorization(panalItem)">{{$t('button.authorization')}}</button>
                 <button class="btn btn-sm btn-cancel-f" @click="deleteConfirmModal(panalItem)">{{$t('button.remove')}}</button>
               </a>
               <ul class="panal-content">
@@ -31,6 +32,17 @@
         </template>
       <!-- </ul> -->
     </section>
+    <ModalComponent :modelConfig="authorizationModel">
+      <div slot="authorization">  
+        <div>
+          <label class="col-md-2 label-name">{{$t('field.role')}}:</label>
+          <Select v-model="authorizationModel.addRow.role" multiple filterable style="width:338px">
+              <Option v-for="item in authorizationModel.roleList" :value="item.id" :key="item.id">
+              {{item.display_name}}</Option>
+          </Select>
+        </div>
+      </div>
+    </ModalComponent>
     <ModalComponent :modelConfig="modelConfig"></ModalComponent>
     <ModalComponent :modelConfig="setDashboardModel">
       <div slot="setDashboard">  
@@ -88,13 +100,59 @@ export default {
           templateSelect: null
         },
         templateList: []
-      }
+      },
+      authorizationModel: {
+        modalId: 'authorization_model',
+        modalTitle: 'button.authorization',
+        isAdd: true,
+        saveFunc: 'authorizationSave',
+        config: [
+          {name:'authorization',type:'slot'}
+        ],
+        addRow: {
+          role: []
+        },
+        roleList: []
+      },
+      dashboard_id: ''
     }
   },
   mounted(){
     this.viewList()
+    this.getAllRoles()
   },
   methods: {
+    authorization (panalItem) {
+      this.dashboard_id = panalItem.id
+      const params = {
+        dashboard_id: panalItem.id
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET','dashboard/custom/role/get', params, (res) => {
+        res.forEach((item) => {
+          this.authorizationModel.addRow.role.push(item.id)
+        })
+        this.$root.JQ('#authorization_model').modal('show')
+      })
+    },
+    authorizationSave () {
+      let params = {
+        dashboard_id: this.dashboard_id,
+        role_id: this.authorizationModel.addRow.role
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', 'dashboard/custom/role/save', params, () => {
+        this.$Message.success(this.$t('tips.success'))
+        this.$root.JQ('#authorization_model').modal('hide')
+      })
+    },
+    getAllRoles () {
+      const params = {
+        page: 1,
+        size: 1000
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET','user/role/list?page=1&size=1000', params, (responseData) => {
+        this.authorizationModel.roleList = responseData.data
+      })
+    },
     addPost () {
       this.$root.JQ('#add_edit_Modal').modal('hide')
       let params = {
