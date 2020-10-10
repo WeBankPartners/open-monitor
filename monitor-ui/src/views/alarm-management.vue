@@ -1,5 +1,5 @@
 <template>
-  <div class=" ">
+  <div>
     <Title :title="$t('menu.alert')"></Title>
     <Modal
       v-model="isShowWarning"
@@ -195,10 +195,11 @@ label {
   float: right;
   font-size: 18px;
 }
-// .alarm-list {
-//   height: calc(100vh - 200px);
-//   overflow-y: auto;
-// }
+.alarm-list {
+  height: ~"calc(100vh - 150px)";
+  width: 100%;
+  overflow-y: auto;
+}
 .alarm-item {
   border: 1px solid @gray-d;
   margin: 8px;
