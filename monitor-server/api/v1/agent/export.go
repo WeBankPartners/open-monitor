@@ -307,6 +307,11 @@ type processRequestObj struct {
 }
 
 func AutoUpdateProcessMonitor(c *gin.Context)  {
+	operation := c.Param("operation")
+	if operation != "add" && operation != "delete" && operation != "update" {
+		mid.ReturnValidateError(c, "Url illegal")
+		return
+	}
 	var param processRequest
 	var result processResult
 	results := []processResultOutputObj{}
@@ -327,7 +332,7 @@ func AutoUpdateProcessMonitor(c *gin.Context)  {
 			return
 		}
 		for _,input := range param.Inputs {
-			subResult,subError := updateProcess(input)
+			subResult,subError := updateProcess(input, operation)
 			results = append(results, subResult)
 			if subError != nil {
 				log.Logger.Error("Handle auto update process fail", log.JsonObj("input", input), log.Error(subError))
@@ -339,7 +344,7 @@ func AutoUpdateProcessMonitor(c *gin.Context)  {
 	}
 }
 
-func updateProcess(input processRequestObj) (result processResultOutputObj,err error) {
+func updateProcess(input processRequestObj,operation string) (result processResultOutputObj,err error) {
 	result.Guid = input.Guid
 	result.CallbackParameter = input.CallbackParameter
 	defer func() {
@@ -368,7 +373,7 @@ func updateProcess(input processRequestObj) (result processResultOutputObj,err e
 	var param m.ProcessUpdateDtoNew
 	param.EndpointId = endpointObj.Id
 	param.ProcessList = append(param.ProcessList, m.ProcessMonitorTable{Name:input.ProcessTag, DisplayName:input.DisplayName})
-	err = db.UpdateProcess(param)
+	err = db.UpdateProcess(param, operation)
 	if err != nil {
 		err = fmt.Errorf("Update db fail,%s ", err.Error())
 		return result,err
