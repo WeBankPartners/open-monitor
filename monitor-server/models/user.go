@@ -31,7 +31,6 @@ type UserTable struct {
 	Phone  string  `json:"phone"`
 	ExtContactOne  string  `json:"ext_contact_one"`
 	ExtContactTwo  string  `json:"ext_contact_two"`
-	Creator  string  `json:"creator"`
 	Created  time.Time  `json:"created"`
 }
 
