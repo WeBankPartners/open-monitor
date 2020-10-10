@@ -89,27 +89,32 @@
   </ModalComponent>
   <ModalComponent :modelConfig="processConfigModel">
     <div slot="processConfig">
-      <div class="marginbottom params-each">
-        <div class="offset-md-2" style="color:#fa7821">
-          <span>{{$t('button.processConfiguration_tip1')}}</span>
-          <br />
-          <span>{{$t('button.processConfiguration_tip2')}}</span>
+      <section>
+        <div style="display: flex;">
+          <div class="port-title">
+            <span>{{$t('tableKey.name')}}:</span>
+            <i class="fa fa-plus-square-o port-config-icon" @click="addProcess" aria-hidden="true"></i>
+          </div>
+          <div class="port-title">
+            <span>{{$t('field.displayName')}}:</span>
+            <i class="fa fa-plus-square-o port-config-icon" @click="addProcess" aria-hidden="true"></i>
+          </div>
         </div>
-      </div>
-      <div class="marginbottom params-each">
-        <label class="col-md-2 label-name">{{$t('tableKey.condition')}}:</label>
-        <div class="search-input-content">
-          <input type="text" v-model="processConfigModel.processName" class="search-input c-dark" />
+      </section>
+      <section v-for="(pl, plIndex) in processConfigModel.process_list" :key="plIndex">
+        <div class="port-config">
+          <div style="width: 48%">
+            <input type="text" v-model.trim="pl.name" class="search-input" style="width: 95%" />
+            <label class="required-tip">*</label>
+          </div>
+          <div style="width: 48%">
+            <input type="text" v-model.trim="pl.display_name" class="search-input" style="width: 95%" />
+          </div>
+          <span style="float: right" >
+            <i class="fa fa-trash-o port-config-icon" @click="delProcess(plIndex)" aria-hidden="true"></i>
+          </span>
         </div>
-        <button type="button" @click="addProcess" class="btn-cancel-f" style="vertical-align:middle">{{$t('button.confirm')}}</button>
-      </div>
-      <div class="marginbottom params-each row" style="">
-        <div class="offset-md-2">
-          <Tag v-for="(process, processIndex) in processConfigModel.addRow.processSet" color="primary" type="border" :key="processIndex" :name="processIndex" closable @on-close="delProcess(process)">{{process|interceptParams}}
-            <i class="fa fa-pencil" @click="editProcess(process)" aria-hidden="true"></i>
-          </Tag>
-        </div>
-      </div>
+      </section>
     </div>
   </ModalComponent>
   <ModalComponent :modelConfig="businessConfigModel">
@@ -471,10 +476,11 @@ export default {
           type: 'slot'
         }],
         addRow: {
-          processSet: [],
+          businessSet: [],
         },
-        processName: ''
+        process_list: [],
       },
+
       businessConfigModel: {
         modalId: 'business_config_model',
         modalTitle: 'button.businessConfiguration',
@@ -725,19 +731,27 @@ export default {
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', 'alarm/process/list', {
         id: this.id
       }, responseData => {
-        responseData.forEach((item) => {
-          this.processConfigModel.addRow.processSet.push(item.name)
-        })
+        if (!responseData.length) {
+          responseData.push({
+            name: null,
+            display_name: null
+          })
+        }
+        this.processConfigModel.process_list = responseData
         this.$root.JQ('#process_config_model').modal('show')
       })
     },
     processConfigSave() {
-      if (this.processConfigModel.processName.trim()) {
-        this.processConfigModel.addRow.processSet.push(this.processConfigModel.processName.trim())
+      const emptyPath = this.processConfigModel.process_list.some(t => {
+        return !t.name
+      })
+      if (emptyPath) {
+        this.$Message.warning(this.$t('tableKey.name') + this.$t('tips.required'))
+        return
       }
       const params = {
         endpoint_id: +this.id,
-        process_list: this.processConfigModel.addRow.processSet
+        process_list: this.processConfigModel.process_list
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', 'alarm/process/update', params, () => {
         this.$Message.success(this.$t('tips.success'))
@@ -745,20 +759,20 @@ export default {
       this.$root.JQ('#process_config_model').modal('hide')
     },
     addProcess() {
-      if (!this.$root.$validate.isEmpty_reset(this.processConfigModel.processName.trim())) {
-        this.processConfigModel.addRow.processSet.push(this.processConfigModel.processName.trim())
-        this.processConfigModel.processName = ''
-      }
-    },
-    delProcess(process) {
-      const i = this.processConfigModel.addRow.processSet.findIndex((val) => {
-        return val === process
+      const emptyPath = this.processConfigModel.process_list.some(t => {
+        return !t.name
       })
-      this.processConfigModel.addRow.processSet.splice(i, 1)
+      if (emptyPath) {
+        this.$Message.warning(this.$t('tableKey.name') + this.$t('tips.required'))
+        return
+      }
+      this.processConfigModel.process_list.push({
+        name: null,
+        display_name: null
+      })
     },
-    editProcess(process) {
-      this.delProcess(process)
-      this.processConfigModel.processName = process
+    delProcess(plIndex) {
+      this.processConfigModel.process_list.splice(plIndex, 1)
     },
 
     businessManagement(rowData) {
