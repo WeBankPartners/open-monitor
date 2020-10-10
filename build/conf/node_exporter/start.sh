@@ -7,6 +7,7 @@ package_path=${tmppath/\/start\.sh/}
 chmod +x $package_path/$bin_name $package_path/control
 mkdir -p /usr/local/monitor/$exporter_type
 mkdir -p /usr/local/monitor/$exporter_type/data
+rm -f /usr/local/monitor/host/VERSION
 /bin/cp -f $package_path/* /usr/local/monitor/$exporter_type/
 cd /usr/local/monitor/$exporter_type/
 rm -f start.sh
