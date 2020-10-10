@@ -12,6 +12,11 @@
         </div>
       </div>
     </Modal>
+    <div style="float:right:font-size:18px">
+      <Tag color="primary">Low:{{this.low}}</Tag>
+      <Tag color="success">Medium:{{this.mid}}</Tag>
+      <Tag color="error">High:{{this.high}}</Tag>
+    </div>
     <section style="margin-left:8px" class="c-dark-exclude-color">
       <Tag color="warning">{{$t('title.updateTime')}}：{{timeForDataAchieve}}</Tag>
       <template v-for="(filterItem, filterIndex) in filtersForShow">
@@ -109,19 +114,22 @@ export default {
   },
   methods: {
     getAlarm() {
-      let temp = []
+      let params = {}
       let keys = Object.keys(this.filters)
       this.filtersForShow = []
       for (let i = 0; i< keys.length ;i++) {
-        temp.push(`${keys[i]}=${this.filters[keys[i]]}`)
+        params[keys[i]] = this.filters[keys[i]]
         this.filtersForShow.push({key:keys[i], value:this.filters[keys[i]]})
       }
-      let params = {filter:temp}
+      
       this.timeForDataAchieve = new Date().toLocaleString()
       this.timeForDataAchieve = this.timeForDataAchieve.replace('上午', 'AM ')
       this.timeForDataAchieve = this.timeForDataAchieve.replace('下午', 'PM ')
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.alarmManagement.list.api, params, (responseData) => {
-        this.resultData = responseData
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', 'alarm/problem/query', params, (responseData) => {
+        this.resultData = responseData.data
+        this.low = responseData.low
+        this.mid = responseData.mid
+        this.high = responseData.high
       })
     },
     addParams (key, value) {
