@@ -9,7 +9,7 @@ import (
 )
 
 func ListCustomDashboard(c *gin.Context)  {
-	err,result := db.ListCustomDashboard(mid.GetOperateUser(c), mid.GetCoreRequestRoleList(c))
+	err,result := db.ListCustomDashboard(mid.GetOperateUser(c), mid.GetCoreToken(c))
 	if err != nil {
 		mid.ReturnQueryTableError(c, "custom_dashboard", err)
 		return
