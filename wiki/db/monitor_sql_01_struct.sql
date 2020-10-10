@@ -295,7 +295,6 @@ CREATE TABLE `user` (
   `phone` VARCHAR(16) NOT NULL DEFAULT '',
   `ext_contact_one` VARCHAR(255) NOT NULL DEFAULT '',
   `ext_contact_two` VARCHAR(255) NOT NULL DEFAULT '',
-  `creator` INT(10) UNSIGNED NOT NULL DEFAULT '0',
   `created` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx_user_name` (`name`)
