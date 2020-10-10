@@ -88,8 +88,6 @@
     "port": "Port",
     "portConfiguration": "Port Configuration",
     "processConfiguration": "Process Configuration",
-    "processConfiguration_tip1": "Reference /proc/{pid}/status Name",
-    "processConfiguration_tip2": "Support Name (tag) format, tag is the keyword in the progress command",
     "businessConfiguration": "Business Monitor",
     "addMetric": "Add Metric",
     "addConfig": "Add Config",
@@ -154,7 +152,9 @@
     "selectData": " Please select data first!",
     "selectDate": "Please select date!",
     "requestMoreData": "For more objects, please enter a query ...",
-    "dashboardEmpty": "The homepage has not been set, please go to the monitoring custom view to set"
+    "dashboardEmpty": "The homepage has not been set, please go to the monitoring custom view to set",
+    "emptyToadd": "There are empty items and cannot be added!",
+    "emptyToSave": "There are empty items and cannot be saved!"
   },
   "metricConfigTipsone": "1. Input endpoint as data source and select the metric from the dropdown list.",
   "metricConfigTipstwo": "2. Click 'Search' button to view the monitor graph based on the selected metric.",
