@@ -6,19 +6,25 @@ import (
 	"strings"
 )
 
-func ListCustomDashboard(user string,roleList []string) (err error,result []*m.CustomDashboardTable) {
-	if len(roleList) == 0 && user != "" {
-		_,userRoleList := GetUserRole(user)
-		for _,v := range userRoleList {
-			roleList = append(roleList, v.Name)
+func ListCustomDashboard(user string,coreToken m.CoreJwtToken) (err error,result []*m.CustomDashboardTable) {
+	var sql string
+	roleList := coreToken.Roles
+	if user == "" {
+		user = coreToken.User
+	}else {
+		if len(roleList) == 0 {
+			_, userRoleList := GetUserRole(user)
+			for _, v := range userRoleList {
+				roleList = append(roleList, v.Name)
+			}
 		}
 	}
 	roleString := strings.Join(roleList, "','")
-	sql := `SELECT * FROM (
-	SELECT DISTINCT t1.* FROM custom_dashboard t1 LEFT JOIN rel_role_custom_dashboard t2 ON t1.id=t2.custom_dashboard_id LEFT JOIN role t3 ON t2.role_id=t3.id WHERE t3.name IN ('`+roleString+`')
-	UNION
-	SELECT * FROM custom_dashboard WHERE create_user='`+user+`'
-	) t ORDER BY t.id`
+	sql = `SELECT * FROM (
+		SELECT DISTINCT t1.* FROM custom_dashboard t1 LEFT JOIN rel_role_custom_dashboard t2 ON t1.id=t2.custom_dashboard_id LEFT JOIN role t3 ON t2.role_id=t3.id WHERE t3.name IN ('` + roleString + `')
+		UNION
+		SELECT * FROM custom_dashboard WHERE create_user='` + user + `'
+		) t ORDER BY t.id`
 	err = x.SQL(sql).Find(&result)
 	return err,result
 }
