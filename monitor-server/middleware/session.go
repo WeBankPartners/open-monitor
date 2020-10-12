@@ -13,7 +13,6 @@ import (
 	"github.com/go-redis/redis"
 	"strings"
 	"encoding/base64"
-	"encoding/json"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"io/ioutil"
 	"github.com/dgrijalva/jwt-go"
@@ -80,10 +79,11 @@ func SaveSession(session m.Session) (isOk bool,sId string) {
 
 func GetOperateUser(c *gin.Context) string {
 	if !m.Config().Http.Session.Enable {
-		return ""
+		coreToken := GetCoreToken(c)
+		return coreToken.User
 	}
 	auToken := c.GetHeader("X-Auth-Token")
-	if auToken!= "" {
+	if auToken != "" {
 		if m.Config().Http.Session.ServerEnable {
 			if auToken == m.Config().Http.Session.ServerToken {
 				return "auth_server"
@@ -92,38 +92,39 @@ func GetOperateUser(c *gin.Context) string {
 		session := GetSessionData(auToken)
 		return fmt.Sprintf("%s", session.User)
 	}else{
-		ReturnTokenError(c)
-		return ""
+		//ReturnTokenError(c)
+		coreToken := GetCoreToken(c)
+		return coreToken.User
 	}
 }
 
-func GetCoreRequestRoleList(c *gin.Context) []string {
-	var result []string
-	authHeader := c.GetHeader("Authorization")
-	if authHeader == "" {
-		return result
-	}
-	authHeader = authHeader[strings.Index(authHeader, ".")+1:]
-	authHeader = authHeader[:strings.LastIndex(authHeader, ".")]
-	authHeader += "=="
-	b,err := base64.StdEncoding.DecodeString(authHeader)
-	if err != nil {
-		log.Logger.Error("Decode core request base64 fail", log.Error(err))
-		return result
-	}
-	var requestToke m.CoreRequestToken
-	err = json.Unmarshal(b, &requestToke)
-	if err != nil {
-		log.Logger.Error("Get core token,json unmarchal fail", log.Error(err))
-		return result
-	}
-	if requestToke.Authority != "" {
-		requestToke.Authority = strings.Replace(requestToke.Authority, "[", "", -1)
-		requestToke.Authority = strings.Replace(requestToke.Authority, "]", "", -1)
-		result = strings.Split(requestToke.Authority, ",")
-	}
-	return result
-}
+//func GetCoreRequestRoleList(c *gin.Context) []string {
+//	var result []string
+//	authHeader := c.GetHeader("Authorization")
+//	if authHeader == "" {
+//		return result
+//	}
+//	authHeader = authHeader[strings.Index(authHeader, ".")+1:]
+//	authHeader = authHeader[:strings.LastIndex(authHeader, ".")]
+//	authHeader += "=="
+//	b,err := base64.StdEncoding.DecodeString(authHeader)
+//	if err != nil {
+//		log.Logger.Error("Decode core request base64 fail", log.Error(err))
+//		return result
+//	}
+//	var requestToke m.CoreRequestToken
+//	err = json.Unmarshal(b, &requestToke)
+//	if err != nil {
+//		log.Logger.Error("Get core token,json unmarchal fail", log.Error(err))
+//		return result
+//	}
+//	if requestToke.Authority != "" {
+//		requestToke.Authority = strings.Replace(requestToke.Authority, "[", "", -1)
+//		requestToke.Authority = strings.Replace(requestToke.Authority, "]", "", -1)
+//		result = strings.Split(requestToke.Authority, ",")
+//	}
+//	return result
+//}
 
 func GetSessionData(sId string) m.Session {
 	var result m.Session
@@ -219,6 +220,18 @@ func deserialize(src []byte, dst interface{}) error {
 		return err
 	}
 	return nil
+}
+
+func GetCoreToken(c *gin.Context) m.CoreJwtToken {
+	result := m.CoreJwtToken{}
+	auToken := c.GetHeader("Authorization")
+	if auToken != "" && m.CoreJwtKey != "" {
+		coreToken, err := DecodeCoreToken(auToken, m.CoreJwtKey)
+		if err == nil {
+			result = coreToken
+		}
+	}
+	return result
 }
 
 func DecodeCoreToken(token,key string) (result m.CoreJwtToken,err error) {
