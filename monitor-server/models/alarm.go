@@ -81,6 +81,13 @@ type AlarmProblemQuery struct {
 	IsCustom  bool  `json:"is_custom"`
 }
 
+type AlarmProblemQueryResult struct {
+	Data  AlarmProblemList  `json:"data"`
+	High  int  `json:"high"`
+	Mid   int  `json:"mid"`
+	Low   int  `json:"low"`
+}
+
 type AlarmProblemList []*AlarmProblemQuery
 
 func (s AlarmProblemList) Len() int {
@@ -339,4 +346,10 @@ type LogMonitorTags struct {
 	FilePath  string  `json:"file_path"`
 	Keyword   string  `json:"keyword"`
 	Tags      string  `json:"tags"`
+}
+
+type QueryProblemAlarmDto struct {
+	Endpoint string  `json:"endpoint"`
+	Metric  string  `json:"metric"`
+	Priority  string  `json:"priority"`
 }
