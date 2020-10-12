@@ -95,7 +95,7 @@ func Register(c *gin.Context)  {
 			mid.ReturnHandleError(c, err.Error(), err)
 			return
 		}
-		err = db.AddUser(m.UserTable{Name:param.Username, Passwd:string(newPassword), DisplayName:param.DisplayName, Email:param.Email, Phone:param.Phone}, "")
+		err = db.AddUser(m.UserTable{Name:param.Username, Passwd:string(newPassword), DisplayName:param.DisplayName, Email:param.Email, Phone:param.Phone})
 		if err != nil {
 			mid.ReturnUpdateTableError(c, "user", err)
 		}else{
