@@ -183,6 +183,7 @@ func UpdateOrgPanelCallback(c *gin.Context)  {
 
 func SearchSysPanelData(c *gin.Context)  {
 	search := c.Query("search")
+	endpoint := c.Query("endpoint")
 	if !mid.IsIllegalNormalInput(search) {
 		mid.ReturnValidateError(c, "Illegal input")
 		return
@@ -190,6 +191,6 @@ func SearchSysPanelData(c *gin.Context)  {
 	if search == "." {
 		search = ""
 	}
-	result := db.SearchPanelByName(search)
+	result := db.SearchPanelByName(search, endpoint)
 	mid.ReturnSuccessData(c, result)
 }
