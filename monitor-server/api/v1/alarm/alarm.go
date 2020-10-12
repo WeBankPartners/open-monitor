@@ -261,6 +261,34 @@ func GetProblemAlarm(c *gin.Context)  {
 	mid.ReturnSuccessData(c, data)
 }
 
+func QueryProblemAlarm(c *gin.Context)  {
+	var param m.QueryProblemAlarmDto
+	if err := c.ShouldBindJSON(&param);err == nil {
+		query := m.AlarmTable{Status:"firing", Endpoint:param.Endpoint, SMetric:param.Metric, SPriority:param.Priority}
+		err,data := db.GetAlarms(query)
+		if err != nil {
+			mid.ReturnQueryTableError(c, "alarm", err)
+			return
+		}
+		var highCount,mediumCount,lowCount int
+		for _,v := range data {
+			if v.SPriority == "high" {
+				highCount += 1
+			}
+			if v.SPriority == "medium" {
+				mediumCount += 1
+			}
+			if v.SPriority == "low" {
+				lowCount += 1
+			}
+		}
+		result := m.AlarmProblemQueryResult{Data:data,High:highCount,Mid:mediumCount,Low:lowCount}
+		mid.ReturnSuccessData(c, result)
+	}else{
+		mid.ReturnValidateError(c, err.Error())
+	}
+}
+
 // @Summary 手动关闭告警接口
 // @Produce  json
 // @Param id query int true "告警id"

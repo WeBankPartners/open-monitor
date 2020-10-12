@@ -39,9 +39,9 @@ func UpdateEndpointProcessConfig(c *gin.Context)  {
 		var processDtoNew m.ProcessUpdateDtoNew
 		processDtoNew.EndpointId = param.EndpointId
 		for _,v := range param.ProcessList {
-			processDtoNew.ProcessList = append(processDtoNew.ProcessList, m.ProcessMonitorTable{Name:v, DisplayName:""})
+			processDtoNew.ProcessList = append(processDtoNew.ProcessList, m.ProcessMonitorTable{Name:v.Name, DisplayName:v.DisplayName})
 		}
-		err = db.UpdateProcess(processDtoNew)
+		err = db.UpdateProcess(processDtoNew, "update")
 		if err != nil {
 			mid.ReturnUpdateTableError(c, "process_monitor", err)
 		}else{
@@ -61,9 +61,9 @@ func UpdateEndpointProcessConfigNew(c *gin.Context)  {
 	var param m.ProcessUpdateDtoNew
 	if err := c.ShouldBindJSON(&param); err==nil {
 		if param.Check && len(param.ProcessList) > 0 {
-			var processList []string
+			var processList []m.ProcessMonitorTable
 			for _,v := range param.ProcessList {
-				processList = append(processList, v.Name)
+				processList = append(processList, m.ProcessMonitorTable{Name:v.Name, DisplayName:v.DisplayName})
 			}
 			err,illegal,msg := db.CheckNodeExporterProcessConfig(param.EndpointId, processList)
 			if err != nil {
@@ -75,7 +75,7 @@ func UpdateEndpointProcessConfigNew(c *gin.Context)  {
 				return
 			}
 		}
-		err = db.UpdateProcess(param)
+		err = db.UpdateProcess(param, "update")
 		if err != nil {
 			mid.ReturnUpdateTableError(c, "process_monitor", err)
 		}else{
