@@ -150,8 +150,12 @@ func AcceptAlertMsg(c *gin.Context)  {
 					}
 				}
 			}
-			if tmpOperation == "same" || v.Status == "resolved" {
+			if tmpOperation == "same" {
 				log.Logger.Debug("Accept alert msg ,firing repeat,do nothing!")
+				continue
+			}
+			if tmpOperation == "add" && v.Status == "resolved" {
+				log.Logger.Debug("Accept alert msg ,cat not add resolved,do nothing!")
 				continue
 			}
 			if tmpOperation == "resolve" {
