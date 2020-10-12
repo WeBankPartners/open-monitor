@@ -16,7 +16,7 @@ func ListDbMonitor(endpointId int) (result []*m.DbMonitorListObj, err error) {
 	if len(tableData) == 0 {
 		return result,err
 	}
-	recursiveDatas := SearchPanelByName("")
+	recursiveDatas := SearchPanelByName("", "")
 	recursiveMap := make(map[string]string)
 	for _,v := range recursiveDatas {
 		recursiveMap[v.OptionValue] = v.OptionText
