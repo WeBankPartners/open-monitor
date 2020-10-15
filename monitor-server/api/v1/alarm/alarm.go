@@ -287,6 +287,9 @@ func QueryProblemAlarm(c *gin.Context)  {
 				lowCount += 1
 			}
 		}
+		if len(data) == 0 {
+			data = []*m.AlarmProblemQuery{}
+		}
 		result := m.AlarmProblemQueryResult{Data:data,High:highCount,Mid:mediumCount,Low:lowCount}
 		mid.ReturnSuccessData(c, result)
 	}else{
