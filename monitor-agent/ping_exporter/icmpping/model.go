@@ -48,6 +48,19 @@ func addRetryIp(ip string) {
 	retryIpList = append(retryIpList, ip)
 }
 
+func IsInRetryIp(ip string) bool {
+	exist := false
+	retryListLock.RLock()
+	for _,v := range retryIpList {
+		if v == ip {
+			exist = true
+			break
+		}
+	}
+	retryListLock.RUnlock()
+	return exist
+}
+
 func GetRetryIp() []string {
 	retryListLock.RLock()
 	defer retryListLock.RUnlock()
@@ -70,6 +83,12 @@ func readResultMap() map[string]funcs.PingResultObj {
 	resultMapLock.RLock()
 	defer resultMapLock.RUnlock()
 	return resultMap
+}
+
+func clearResultMap()  {
+	resultMapLock.Lock()
+	resultMap = make(map[string]funcs.PingResultObj)
+	resultMapLock.Unlock()
 }
 
 func GetRetryMap(ip string, n int) int {
