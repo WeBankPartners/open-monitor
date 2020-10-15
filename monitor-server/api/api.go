@@ -84,7 +84,7 @@ func InitHttpServer(exportAgent bool) {
 	}
 	r.POST(fmt.Sprintf("%s/webhook", urlPrefix), alarm.AcceptAlertMsg)
 	// auth server side
-	serverApi := r.Group(fmt.Sprintf("%s/openapi", urlPrefix), user.AuthServerRequest())
+	serverApi := r.Group(fmt.Sprintf("%s/openapi", urlPrefix))
 	{
 		serverApi.POST("/alarm/send", alarm.OpenAlarmApi)
 	}
