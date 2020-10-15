@@ -540,7 +540,7 @@ func GetEndpointsByGrp(grpId int) (error,[]*m.EndpointTable) {
 	return err,result
 }
 
-func GetAlarms(query m.AlarmTable) (error,m.AlarmProblemList) {
+func GetAlarms(query m.AlarmTable,limit int,extLogMonitor,extOpenAlarm bool) (error,m.AlarmProblemList) {
 	var result []*m.AlarmProblemQuery
 	var whereSql,extWhereSql string
 	var params,extParams []interface{}
@@ -591,15 +591,22 @@ func GetAlarms(query m.AlarmTable) (error,m.AlarmProblemList) {
 	if !query.End.IsZero() {
 		whereSql += fmt.Sprintf(" and t1.end<='%s' ", query.End.Format(m.DatetimeFormat))
 	}
-	for _,v := range extParams {
-		params = append(params, v)
+	var sql string
+	if extLogMonitor {
+		for _,v := range extParams {
+			params = append(params, v)
+		}
+		sql = `SELECT t3.* FROM (
+				SELECT t1.*,'' path,'' keyword FROM alarm t1 WHERE t1.s_metric<>'log_monitor' `+whereSql+`
+				UNION
+				SELECT t1.*,t2.path,t2.keyword FROM alarm t1 LEFT JOIN log_monitor t2 ON t1.strategy_id=t2.strategy_id WHERE t1.s_metric='log_monitor' `+extWhereSql+`
+				) t3 ORDER BY t3.id DESC`
+	}else {
+		sql = "SELECT * FROM alarm t1 WHERE 1=1 " + whereSql + " ORDER BY t1.id DESC "
+		if limit > 0 {
+			sql += fmt.Sprintf(" LIMIT %d", limit)
+		}
 	}
-	//err := x.SQL("SELECT t1.*,t2.path,t2.keyword FROM alarm t1 LEFT JOIN log_monitor t2 ON t1.strategy_id=t2.strategy_id where 1=1 " + whereSql + " order by t1.id desc", params...).Find(&result)
-	sql := `SELECT t3.* FROM (
-			SELECT t1.*,'' path,'' keyword FROM alarm t1 WHERE t1.s_metric<>'log_monitor' `+whereSql+`
-			UNION 
-			SELECT t1.*,t2.path,t2.keyword FROM alarm t1 LEFT JOIN log_monitor t2 ON t1.strategy_id=t2.strategy_id WHERE t1.s_metric='log_monitor' `+extWhereSql+`
-			) t3 ORDER BY t3.id DESC`
 	err := x.SQL(sql,params...).Find(&result)
 	if err != nil {
 		log.Logger.Error("Get alarms fail", log.Error(err))
@@ -611,12 +618,16 @@ func GetAlarms(query m.AlarmTable) (error,m.AlarmProblemList) {
 			v.IsLogMonitor = true
 		}
 	}
-	for _,v := range GetOpenAlarm() {
-		result = append(result, v)
+	if extOpenAlarm {
+		for _, v := range GetOpenAlarm() {
+			result = append(result, v)
+		}
 	}
 	var sortResult m.AlarmProblemList
 	sortResult = result
-	sort.Sort(sortResult)
+	if len(result) > 1 {
+		sort.Sort(sortResult)
+	}
 	return err,sortResult
 }
 
@@ -1035,7 +1046,7 @@ func GetOpenAlarm() []*m.AlarmProblemQuery {
 	var query []*m.OpenAlarmObj
 	result := []*m.AlarmProblemQuery{}
 	//sql := fmt.Sprintf("SELECT * FROM alarm_custom WHERE closed<>1 and update_at>'%s' ORDER BY id ASC", time.Unix(time.Now().Unix()-300,0).Format(m.DatetimeFormat))
-	sql := fmt.Sprintf("SELECT * FROM alarm_custom WHERE closed<>1 ORDER BY id ASC")
+	sql := fmt.Sprintf("SELECT * FROM alarm_custom WHERE closed<>1 ORDER BY id DESC")
 	x.SQL(sql).Find(&query)
 	if len(query) == 0 {
 		return result
@@ -1051,7 +1062,7 @@ func GetOpenAlarm() []*m.AlarmProblemQuery {
 				priority = "medium"
 			}
 			query[i-1].AlertInfo = strings.Replace(query[i-1].AlertInfo, "\n", " <br/> ", -1)
-			result = append(result, &m.AlarmProblemQuery{IsCustom:true,Id:query[i-1].Id,Endpoint:query[i-1].AlertIp,Status:"firing",Content:fmt.Sprintf("system_id:%s <br/> title:%s <br/> %s info: <br/> %s ",query[i-1].SubSystemId,query[i-1].AlertTitle,query[i-1].AlertObj,query[i-1].AlertInfo),Start:query[i-1].UpdateAt,StartString:query[i-1].UpdateAt.Format(m.DatetimeFormat),SPriority:priority})
+			result = append(result, &m.AlarmProblemQuery{IsCustom:true,Id:query[i-1].Id,Endpoint:fmt.Sprintf("%s(%s)", query[i-1].AlertObj, query[i-1].AlertIp),Status:"firing",Content:fmt.Sprintf("system_id:%s <br/> title:%s <br/> object:%s <br/> info:%s ",query[i-1].SubSystemId,query[i-1].AlertTitle,query[i-1].AlertObj,query[i-1].AlertInfo),Start:query[i-1].UpdateAt,StartString:query[i-1].UpdateAt.Format(m.DatetimeFormat),SPriority:priority})
 		}
 	}
 	priority := "high"
@@ -1063,7 +1074,7 @@ func GetOpenAlarm() []*m.AlarmProblemQuery {
 		priority = "medium"
 	}
 	query[lastIndex].AlertInfo = strings.Replace(query[lastIndex].AlertInfo, "\n", " <br/> ", -1)
-	result = append(result, &m.AlarmProblemQuery{IsCustom:true,Id:query[lastIndex].Id,Endpoint:query[lastIndex].AlertIp,Status:"firing",IsLogMonitor:false,Content:fmt.Sprintf("system_id:%s <br/> title:%s <br/> %s info: <br/> %s ",query[lastIndex].SubSystemId,query[lastIndex].AlertTitle,query[lastIndex].AlertObj,query[lastIndex].AlertInfo),Start:query[lastIndex].UpdateAt,StartString:query[lastIndex].UpdateAt.Format(m.DatetimeFormat),SPriority:priority})
+	result = append(result, &m.AlarmProblemQuery{IsCustom:true,Id:query[lastIndex].Id,Endpoint:fmt.Sprintf("%s(%s)", query[lastIndex].AlertObj, query[lastIndex].AlertIp),Status:"firing",IsLogMonitor:false,Content:fmt.Sprintf("system_id:%s <br/> title:%s <br/> object:%s <br/> info:%s ",query[lastIndex].SubSystemId,query[lastIndex].AlertTitle,query[lastIndex].AlertObj,query[lastIndex].AlertInfo),Start:query[lastIndex].UpdateAt,StartString:query[lastIndex].UpdateAt.Format(m.DatetimeFormat),SPriority:priority})
 	return result
 }
 
