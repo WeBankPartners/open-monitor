@@ -133,6 +133,7 @@ func InitHttpServer(exportAgent bool) {
 			agentApi.GET("/export/ping/source", agent.ExportPingSource)
 			agentApi.GET("/export/endpoint/telnet/get", agent.GetEndpointTelnet)
 			agentApi.POST("/export/process/:operation", agent.AutoUpdateProcessMonitor)
+			agentApi.POST("/export/log_monitor/:operation", agent.AutoUpdateLogMonitor)
 		}
 		alarmApi := authApi.Group("/alarm")
 		{
