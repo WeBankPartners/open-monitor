@@ -628,6 +628,9 @@ func GetAlarms(query m.AlarmTable,limit int,extLogMonitor,extOpenAlarm bool) (er
 	if len(result) > 1 {
 		sort.Sort(sortResult)
 	}
+	if len(result) == 0 {
+		sortResult = []*m.AlarmProblemQuery{}
+	}
 	return err,sortResult
 }
 
@@ -671,6 +674,24 @@ func UpdateLogMonitor(obj *m.UpdateLogMonitor) error {
 		}
 	}
 	err := Transaction(actions)
+	return err
+}
+
+func AutoUpdateLogMonitor(obj *m.UpdateLogMonitor) error {
+	if len(obj.LogMonitor) == 0 {
+		return fmt.Errorf("update log monitor fail,data empty")
+	}
+	var err error
+	if obj.Operation == "add" {
+		var logMonitorTable []*m.LogMonitorTable
+		x.SQL("SELECT * FROM log_monitor WHERE strategy_id=? AND path=? AND keyword=?", obj.LogMonitor[0].StrategyId, obj.LogMonitor[0].Path, obj.LogMonitor[0].Keyword).Find(&logMonitorTable)
+		if len(logMonitorTable) == 0 {
+			_, err = x.Exec("INSERT INTO log_monitor(strategy_id,path,keyword,priority) VALUE (?,?,?,?)", obj.LogMonitor[0].StrategyId, obj.LogMonitor[0].Path, obj.LogMonitor[0].Keyword, obj.LogMonitor[0].Priority)
+		}
+	}
+	if obj.Operation == "delete" {
+		_,err = x.Exec("DELETE FROM log_monitor WHERE strategy_id=? AND path=? AND keyword=?", obj.LogMonitor[0].StrategyId, obj.LogMonitor[0].Path, obj.LogMonitor[0].Keyword)
+	}
 	return err
 }
 
