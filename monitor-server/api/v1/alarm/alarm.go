@@ -76,7 +76,7 @@ func AcceptAlertMsg(c *gin.Context)  {
 				tmpValue, _ = strconv.ParseFloat(tmpSummaryMsg[3], 64)
 				tmpValue, _ = strconv.ParseFloat(fmt.Sprintf("%.3f", tmpValue), 64)
 				tmpAlarmQuery := m.AlarmTable{Endpoint: tmpAlarm.Endpoint, SMetric: tmpAlarm.SMetric}
-				_, tmpAlarms = db.GetAlarms(tmpAlarmQuery)
+				_, tmpAlarms = db.GetAlarms(tmpAlarmQuery, 1, false, false)
 			}else {
 				// config strategy
 				tmpAlarm.StrategyId, _ = strconv.Atoi(v.Labels["strategy_id"])
@@ -129,8 +129,9 @@ func AcceptAlertMsg(c *gin.Context)  {
 						continue
 					}
 				}
-				tmpAlarmQuery := m.AlarmTable{Endpoint: tmpAlarm.Endpoint, StrategyId: tmpAlarm.StrategyId, Tags:tmpAlarm.Tags, SCond:tmpAlarm.SCond, SLast:tmpAlarm.SLast}
-				_, tmpAlarms = db.GetAlarms(tmpAlarmQuery)
+				//tmpAlarmQuery := m.AlarmTable{Endpoint: tmpAlarm.Endpoint, StrategyId: tmpAlarm.StrategyId, Tags:tmpAlarm.Tags, SCond:tmpAlarm.SCond, SLast:tmpAlarm.SLast}
+				tmpAlarmQuery := m.AlarmTable{Endpoint: tmpAlarm.Endpoint, StrategyId: tmpAlarm.StrategyId, Tags:tmpAlarm.Tags}
+				_, tmpAlarms = db.GetAlarms(tmpAlarmQuery, 1, false, false)
 			}
 			tmpOperation := "add"
 			if len(tmpAlarms) > 0 {
@@ -232,7 +233,7 @@ func GetHistoryAlarm(c *gin.Context)  {
 			return
 		}
 	}
-	err,data := db.GetAlarms(query)
+	err,data := db.GetAlarms(query, 0, true, true)
 	if err != nil {
 		mid.ReturnQueryTableError(c, "alarm", err)
 		return
@@ -257,7 +258,7 @@ func GetProblemAlarm(c *gin.Context)  {
 			}
 		}
 	}
-	err,data := db.GetAlarms(query)
+	err,data := db.GetAlarms(query, 0, true, true)
 	if err != nil {
 		mid.ReturnQueryTableError(c, "alarm", err)
 		return
@@ -269,7 +270,7 @@ func QueryProblemAlarm(c *gin.Context)  {
 	var param m.QueryProblemAlarmDto
 	if err := c.ShouldBindJSON(&param);err == nil {
 		query := m.AlarmTable{Status:"firing", Endpoint:param.Endpoint, SMetric:param.Metric, SPriority:param.Priority}
-		err,data := db.GetAlarms(query)
+		err,data := db.GetAlarms(query, 0, true, true)
 		if err != nil {
 			mid.ReturnQueryTableError(c, "alarm", err)
 			return
