@@ -564,5 +564,35 @@
                 </outputParameters>
             </interface>
         </plugin>
+        <plugin name="log_monitor" targetPackage="" targetEntity="" registerName="" targetEntityFilterRule="">
+            <interface action="add" path="/wecube-monitor/api/v1/agent/export/log_monitor/add" filterRule="">
+                <inputParameters>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="">guid</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">host_ip</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">path</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">keyword</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="">priority</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
+                </outputParameters>
+            </interface>
+            <interface action="delete" path="/wecube-monitor/api/v1/agent/export/log_monitor/delete" filterRule="">
+                <inputParameters>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="">guid</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">host_ip</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">path</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">keyword</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="">priority</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
+                </outputParameters>
+            </interface>
+        </plugin>
     </plugins>
 </package>

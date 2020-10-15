@@ -6,12 +6,8 @@ import (
 	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
-	"net/http"
-	"encoding/json"
-	"strings"
 	"strconv"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
-	"io/ioutil"
 )
 
 // @Summary 日志告警配置接口 : 获取列表
@@ -131,7 +127,7 @@ func AddLogStrategy(c *gin.Context)  {
 			return
 		}
 		// Call endpoint node exporter
-		err = sendLogConfig(param.EndpointId, param.GrpId, param.TplId)
+		err = db.SendLogConfig(param.EndpointId, param.GrpId, param.TplId)
 		if err != nil {
 			mid.ReturnHandleError(c, "send log config to endpoint failed", err)
 			return
@@ -205,7 +201,7 @@ func EditLogPath(c *gin.Context)  {
 		//}
 		//param.EndpointId = tplObj.EndpointId
 		//param.GrpId = tplObj.GrpId
-		err = sendLogConfig(lms[0].StrategyId, param.GrpId, param.TplId)
+		err = db.SendLogConfig(lms[0].StrategyId, param.GrpId, param.TplId)
 		if err != nil {
 			mid.ReturnHandleError(c, "send log config to endpoint fail", err)
 			return
@@ -280,7 +276,7 @@ func EditLogStrategy(c *gin.Context)  {
 		}
 		param.EndpointId = tplObj.EndpointId
 		param.GrpId = tplObj.GrpId
-		err = sendLogConfig(param.EndpointId, param.GrpId, param.TplId)
+		err = db.SendLogConfig(param.EndpointId, param.GrpId, param.TplId)
 		if err != nil {
 			mid.ReturnHandleError(c, "send log config to endpoint failed", err)
 			return
@@ -342,7 +338,7 @@ func DeleteLogPath(c *gin.Context)  {
 	//	mid.ReturnFetchDataError(c, "tpl", "id", strconv.Itoa(strategyObj.TplId))
 	//	return
 	//}
-	err = sendLogConfig(lms[0].StrategyId, 0, 0)
+	err = db.SendLogConfig(lms[0].StrategyId, 0, 0)
 	if err != nil {
 		mid.ReturnHandleError(c, "send log config to endpoint failed", err)
 		return
@@ -395,7 +391,7 @@ func DeleteLogStrategy(c *gin.Context)  {
 	//	mid.ReturnFetchDataError(c, "tpl", "id", strconv.Itoa(strategyObj.TplId))
 	//	return
 	//}
-	err = sendLogConfig(lms[0].StrategyId, 0, 0)
+	err = db.SendLogConfig(lms[0].StrategyId, 0, 0)
 	if err != nil {
 		mid.ReturnHandleError(c, "send log config to endpoint failed", err)
 		return
@@ -407,68 +403,6 @@ func DeleteLogStrategy(c *gin.Context)  {
 	//	return
 	//}
 	mid.ReturnSuccess(c)
-}
-
-type logHttpDto struct {
-	Path  string  `json:"path"`
-	Keywords  []string  `json:"keywords"`
-}
-
-func sendLogConfig(endpointId,grpId,tplId int) error {
-	var endpoints []*m.EndpointTable
-	var err error
-	if grpId > 0 {
-		err,endpoints = db.GetEndpointsByGrp(grpId)
-		if err != nil {
-			return err
-		}
-	}
-	if endpointId > 0 {
-		endpointQuery := m.EndpointTable{Id:endpointId}
-		err = db.GetEndpoint(&endpointQuery)
-		if err != nil {
-			return err
-		}
-		endpoints = append(endpoints, &endpointQuery)
-	}
-	var postParam []logHttpDto
-	var tmpList []string
-	var tmpPath string
-	for _,v := range endpoints {
-		err,logMonitors := db.GetLogMonitorByEndpointNew(v.Id)
-		if err != nil {
-			log.Logger.Error("Send log config with endpoint failed", log.String("endpoint", v.Guid), log.Error(err))
-			continue
-		}
-		if len(logMonitors) == 0 {
-			continue
-		}
-		postParam = []logHttpDto{}
-		tmpList = []string{}
-		tmpPath = logMonitors[0].Path
-		for _,v := range logMonitors {
-			if v.Path != tmpPath {
-				postParam = append(postParam, logHttpDto{Path:tmpPath, Keywords:tmpList})
-				tmpPath = v.Path
-				tmpList = []string{}
-			}
-			tmpList = append(tmpList, v.Keyword)
-		}
-		postParam = append(postParam, logHttpDto{Path:logMonitors[len(logMonitors)-1].Path, Keywords:tmpList})
-		postData,err := json.Marshal(postParam)
-		if err == nil {
-			url := fmt.Sprintf("http://%s/log/config", v.Address)
-			resp,err := http.Post(url, "application/json", strings.NewReader(string(postData)))
-			if err != nil {
-				log.Logger.Error("curl "+url+" error ", log.Error(err))
-			}else{
-				responseBody,_ := ioutil.ReadAll(resp.Body)
-				log.Logger.Info("curl " + url, log.String("response", string(responseBody)))
-				resp.Body.Close()
-			}
-		}
-	}
-	return nil
 }
 
 func makeStrategyMsg(path,keyword,cond,last string) (metric,expr,content string) {
