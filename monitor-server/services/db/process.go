@@ -31,7 +31,7 @@ func UpdateNodeExporterProcessConfig(endpointId int) error {
 	}
 	postParam := processHttpDto{Process:[]string{}, Check:0}
 	for _,v := range data {
-		postParam.Process = append(postParam.Process, v.Name)
+		postParam.Process = append(postParam.Process, fmt.Sprintf("%s^%s", v.ProcessName, v.Tags))
 	}
 	postData,err := json.Marshal(postParam)
 	if err != nil {
@@ -59,7 +59,7 @@ func CheckNodeExporterProcessConfig(endpointId int,processList []m.ProcessMonito
 	}
 	var processNameList []string
 	for _,v := range processList {
-		processNameList = append(processNameList, v.Name)
+		processNameList = append(processNameList, fmt.Sprintf("%s^%s", v.ProcessName, v.Tags))
 	}
 	postParam := processHttpDto{Process:processNameList, Check:1}
 	postData,err := json.Marshal(postParam)
@@ -100,7 +100,7 @@ func UpdateProcess(param m.ProcessUpdateDtoNew,operation string) error {
 		if operation == "add" {
 			_,nowProcessList := GetProcessList(param.EndpointId)
 			for _,v := range nowProcessList {
-				existMap[v.Name] = 1
+				existMap[fmt.Sprintf("%s^%s", v.ProcessName, v.Tags)] = 1
 			}
 		}
 		for _, v := range param.ProcessList {
@@ -108,21 +108,23 @@ func UpdateProcess(param m.ProcessUpdateDtoNew,operation string) error {
 			params := make([]interface{}, 0)
 			existFlag := false
 			if operation == "add" {
-				if _,b := existMap[v.Name];b {
+				if _,b := existMap[fmt.Sprintf("%s^%s", v.ProcessName, v.Tags)];b {
 					if v.DisplayName != "" {
-						action.Sql = "UPDATE process_monitor SET display_name=? WHERE endpoint_id=? AND name=?"
+						action.Sql = "UPDATE process_monitor SET display_name=? WHERE endpoint_id=? AND process_name=? AND tags=?"
 						params = append(params, v.DisplayName)
 						params = append(params, param.EndpointId)
-						params = append(params, v.Name)
+						params = append(params, v.ProcessName)
+						params = append(params, v.Tags)
 					}
 					existFlag = true
 				}
 			}
 			if !existFlag {
-				action.Sql = "INSERT INTO process_monitor(endpoint_id,name,display_name) VALUE (?,?,?)"
+				action.Sql = "INSERT INTO process_monitor(endpoint_id,process_name,display_name,tags) VALUE (?,?,?,?)"
 				params = append(params, param.EndpointId)
-				params = append(params, v.Name)
+				params = append(params, v.ProcessName)
 				params = append(params, v.DisplayName)
+				params = append(params, v.Tags)
 			}
 			action.Param = params
 			if action.Sql != "" {
@@ -132,7 +134,7 @@ func UpdateProcess(param m.ProcessUpdateDtoNew,operation string) error {
 	}
 	if operation == "delete" {
 		for _, v := range param.ProcessList {
-			actions = append(actions, &Action{Sql: "DELETE FROM process_monitor WHERE endpoint_id=? and name=?", Param: []interface{}{param.EndpointId, v.Name}})
+			actions = append(actions, &Action{Sql: "DELETE FROM process_monitor WHERE endpoint_id=? and process_name=? and tags=?", Param: []interface{}{param.EndpointId, v.ProcessName, v.Tags}})
 		}
 	}
 	if len(actions) > 0 {
@@ -168,10 +170,13 @@ func GetProcessDisplayMap(endpoint string) map[string]string {
 		return result
 	}
 	for _,v := range processData {
-		if v.DisplayName != "" {
-			result[v.Name] = v.DisplayName
-		}else{
-			result[v.Name] = v.Name
+		for _,vv := range strings.Split(v.ProcessName, ",") {
+			tmpName := fmt.Sprintf("%s(%s)", vv, v.Tags)
+			if v.DisplayName != "" {
+				result[tmpName] = v.DisplayName
+			}else{
+				result[tmpName] = tmpName
+			}
 		}
 	}
 	return result
