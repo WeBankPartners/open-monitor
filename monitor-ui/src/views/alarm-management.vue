@@ -12,6 +12,9 @@
         </div>
       </div>
     </Modal>
+    <div class="sunburst">
+      <div id="elId" class="echart" style="height:400px;width:400px"></div>
+    </div>
     <div class="alarm-total">
       <Tag color="primary">Low:{{this.low}}</Tag>
       <Tag color="success">Medium:{{this.mid}}</Tag>
@@ -91,6 +94,7 @@
 </template>
 
 <script>
+import echarts from 'echarts'
 export default {
   name: '',
   data() {
@@ -110,6 +114,7 @@ export default {
     }
   },
   mounted(){
+    this.showSunburst()
     this.getAlarm()
     this.interval = setInterval(()=>{
       this.getAlarm()
@@ -136,7 +141,228 @@ export default {
         this.low = responseData.low
         this.mid = responseData.mid
         this.high = responseData.high
+        this.showSunburst()
       })
+    },
+    showSunburst () {
+      var myChart = echarts.init(document.getElementById('elId'))
+
+      let alramData = this.resultData
+      let sunburstData = [
+      ]
+      let high = {
+        name: 'high',
+          itemStyle: {
+            color: '#ed4014'
+          },
+        children: []
+      }
+      let medium = {
+        name: 'medium',
+          itemStyle: {
+            color: '#2d8cf0'
+          },
+        children: []
+      }
+      let low = {
+        name: 'low',
+          itemStyle: {
+            color: '#19be6b'
+          },
+        children: []
+      }
+      const colorX = ['#33CCCC','#666699','#66CC66','#996633','#9999CC','#339933','#339966','#663333','#6666CC','#336699','#3399CC','#33CC66','#CC3333','#CC6666','#996699','#CC9933']
+      let usedColor = {}
+      let index = 0
+      alramData.forEach(alarm => {
+        if (alarm.s_priority === 'high') {
+          const metric = alarm.s_metric
+          let child = high.children.find(child => child.name === metric)
+          if (child) {
+            child.value ++
+          } else {
+            let color = ''
+            if (metric in usedColor) {
+              color = usedColor[metric]
+            } else {
+              color = colorX[index]
+              usedColor[metric] = colorX[index]
+              index++
+            }
+            high.children.push({
+              name: metric,
+                  itemStyle: {
+                    color: color
+                  },
+              value: 1
+            })
+          }
+        } else if (alarm.s_priority === 'medium') {
+          const metric = alarm.s_metric
+          let child = medium.children.find(child => child.name === metric)
+          if (child) {
+            child.value ++
+          } else {
+            let color = ''
+            if (metric in usedColor) {
+              color = usedColor[metric]
+            } else {
+              color = colorX[index]
+              usedColor[metric] = colorX[index]
+              index++
+            }
+            medium.children.push({
+              name: metric,
+                  itemStyle: {
+                    color: color
+                  },
+              value: 1
+            })
+          }
+
+        } else {
+          const metric = alarm.s_metric
+          let child = low.children.find(child => child.name === metric)
+          if (child) {
+            child.value ++
+          } else {
+            let color = ''
+            if (metric in usedColor) {
+              color = usedColor[metric]
+            } else {
+              color = colorX[index]
+              usedColor[metric] = colorX[index]
+              index++
+            }
+            low.children.push({
+              name: metric,
+                  itemStyle: {
+                    color: color
+                  },
+              value: 1
+            })
+          }
+        }
+      })
+      sunburstData.push(high, medium, low)
+
+      var option = {
+        grid: {
+          top: 10,
+          left: 10,
+          right: 10,
+          bottom: 10,
+          height: '90%',
+          width: '90%'
+        },
+        series: {
+          type: 'sunburst',
+          data: sunburstData,
+          radius: [0, '95%'],
+          sort: null,
+          levels: [{}, {
+            r0: '10%',
+            r: '35%',
+            itemStyle: {
+              borderWidth: 2
+            },
+            label: {
+              rotate: 'tangential'
+            }
+          }, {
+            r0: '35%',
+            r: '70%',
+            label: {
+              align: 'right'
+            }
+          }]
+        }
+      }
+      myChart.setOption(option)
+      let filters = []
+      myChart.on('click', 'series.sunburst', function (params) {
+          // console.log(params);
+          if (params.dataType === 'main') {
+            filters = params.treePathInfo.slice(1)
+          } else {
+            filters.pop()
+          }
+          console.log(filters)
+      });
+    },
+    managementSunBurst (alarmData) {
+       var myChart = echarts.init(document.getElementById('elId'))
+      let sunburstData = [
+      ]
+      let high = {
+        name: 'high',
+        children: []
+      }
+      let medium = {
+        name: 'medium',
+        children: []
+      }
+      let low = {
+        name: 'low',
+        children: []
+      }
+      alarmData.forEach(alarm => {
+        if (alarm.s_priority === 'high') {
+          const metric = alarm.s_metric
+          let child = high.children.find(child => child.name === metric)
+          if (child) {
+            child.value ++
+          } else {
+            high.children.push({
+              name: metric,
+              value: 1
+            })
+          }
+        } else if (alarm.s_priority === 'medium') {
+          const metric = alarm.s_metric
+          let child = medium.children.find(child => child.name === metric)
+          if (child) {
+            child.value ++
+          } else {
+            medium.children.push({
+              name: metric,
+              value: 1
+            })
+          }
+
+        } else {
+          const metric = alarm.s_metric
+          let child = low.children.find(child => child.name === metric)
+          if (child) {
+            child.value ++
+          } else {
+            low.children.push({
+              name: metric,
+              value: 1
+            })
+          }
+        }
+      })
+      sunburstData.push(high, medium, low)
+      var option = {
+          visualMap: {
+              type: 'continuous',
+              min: 0,
+              max: 10,
+              inRange: {
+                  color: ['#2D5F73', '#538EA6', '#F2D1B3', '#F2B8A2', '#F28C8C']
+              }
+          },
+          series: {
+              type: 'sunburst',
+              data: sunburstData,
+              radius: [0, '90%'],
+              label: {
+                  rotate: 'radial'
+              }
+          }
+      }
+      myChart.setOption(option)
     },
     addParams (key, value) {
       this.filters[key] = value
