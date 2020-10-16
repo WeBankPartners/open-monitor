@@ -304,6 +304,7 @@ type processRequestObj struct {
 	Guid  string  `json:"guid"`
 	CallbackParameter  string  `json:"callbackParameter"`
 	HostIp  string  `json:"host_ip"`
+	ProcessName string `json:"process_name"`
 	ProcessTag  string `json:"process_tag"`
 	DisplayName string `json:"display_name"`
 }
@@ -362,8 +363,12 @@ func updateProcess(input processRequestObj,operation string) (result processResu
 		err = fmt.Errorf("Param host_ip is empty ")
 		return result,err
 	}
-	if input.ProcessTag == "" {
-		err = fmt.Errorf("Param process_tag is empty ")
+	if input.ProcessName == "" {
+		err = fmt.Errorf("Param process_name is empty ")
+		return result,err
+	}
+	if strings.Contains(input.ProcessName, ",") && input.ProcessTag == "" {
+		err = fmt.Errorf("Param process_tag cat not empty when process_name is multiple ")
 		return result,err
 	}
 	endpointObj := m.EndpointTable{ExportType:"host", Ip:input.HostIp}
@@ -374,7 +379,7 @@ func updateProcess(input processRequestObj,operation string) (result processResu
 	}
 	var param m.ProcessUpdateDtoNew
 	param.EndpointId = endpointObj.Id
-	param.ProcessList = append(param.ProcessList, m.ProcessMonitorTable{Name:input.ProcessTag, DisplayName:input.DisplayName})
+	param.ProcessList = append(param.ProcessList, m.ProcessMonitorTable{ProcessName:input.ProcessName, Tags:input.ProcessTag, DisplayName:input.DisplayName})
 	err = db.UpdateProcess(param, operation)
 	if err != nil {
 		err = fmt.Errorf("Update db fail,%s ", err.Error())

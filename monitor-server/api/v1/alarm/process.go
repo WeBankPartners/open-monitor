@@ -39,7 +39,7 @@ func UpdateEndpointProcessConfig(c *gin.Context)  {
 		var processDtoNew m.ProcessUpdateDtoNew
 		processDtoNew.EndpointId = param.EndpointId
 		for _,v := range param.ProcessList {
-			processDtoNew.ProcessList = append(processDtoNew.ProcessList, m.ProcessMonitorTable{Name:v.Name, DisplayName:v.DisplayName})
+			processDtoNew.ProcessList = append(processDtoNew.ProcessList, m.ProcessMonitorTable{ProcessName:v.ProcessName, Tags:v.Tags, DisplayName:v.DisplayName})
 		}
 		err = db.UpdateProcess(processDtoNew, "update")
 		if err != nil {
@@ -63,7 +63,7 @@ func UpdateEndpointProcessConfigNew(c *gin.Context)  {
 		if param.Check && len(param.ProcessList) > 0 {
 			var processList []m.ProcessMonitorTable
 			for _,v := range param.ProcessList {
-				processList = append(processList, m.ProcessMonitorTable{Name:v.Name, DisplayName:v.DisplayName})
+				processList = append(processList, m.ProcessMonitorTable{ProcessName:v.ProcessName, DisplayName:v.DisplayName, Tags:v.Tags})
 			}
 			err,illegal,msg := db.CheckNodeExporterProcessConfig(param.EndpointId, processList)
 			if err != nil {
