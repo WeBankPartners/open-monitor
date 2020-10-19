@@ -63,6 +63,7 @@ func InitAgentManager()  {
 			return
 		}
 		go prom.InitAgentManager(param, agentManagerServer)
+		go prom.StartSyncAgentManagerJob(param, agentManagerServer)
 	}
 }
 
