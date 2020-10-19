@@ -155,9 +155,9 @@ func ExportAgentNew(c *gin.Context)  {
 
 func AlarmControl(c *gin.Context)  {
 	agentType := c.Param("name")
-	if agentType == "java" {
-		agentType = "tomcat"
-	}
+	//if agentType == "java" {
+	//	agentType = "tomcat"
+	//}
 	isStop := false
 	action := "start"
 	if strings.Contains(c.Request.URL.String(), "stop") {
@@ -165,13 +165,13 @@ func AlarmControl(c *gin.Context)  {
 		action = "stop"
 	}
 	var result resultObj
-	var agentPort string
-	for _,v := range m.Config().Agent {
-		if v.AgentType == agentType {
-			agentPort = v.Port
-			break
-		}
-	}
+	//var agentPort string
+	//for _,v := range m.Config().Agent {
+	//	if v.AgentType == agentType {
+	//		agentPort = v.Port
+	//		break
+	//	}
+	//}
 
 	data,_ := ioutil.ReadAll(c.Request.Body)
 	log.Logger.Info("", log.String("param", string(data)))
@@ -188,14 +188,14 @@ func AlarmControl(c *gin.Context)  {
 		var resultMessage string
 		successFlag := "0"
 		for _,v := range param.Inputs {
-			if agentType == "tomcat" && v.Port != "" {
-				agentPort = v.Port
-			}
+			//if agentType != "host" && v.Port != "" {
+			//	agentPort = v.Port
+			//}
 			tmpIp := v.HostIp
 			if agentType != "host" {
 				tmpIp = v.InstanceIp
 			}
-			err := db.UpdateEndpointAlarmFlag(isStop,agentType,v.Instance,tmpIp,agentPort)
+			err := db.UpdateEndpointAlarmFlag(isStop,agentType,v.Instance,tmpIp,v.Port)
 			var msg string
 			if err != nil {
 				msg = fmt.Sprintf("%s %s:%s %s fail,error %v",action, agentType, v.HostIp, v.Instance, err)
