@@ -68,7 +68,7 @@ func AcceptAlertMsg(c *gin.Context)  {
 					log.Logger.Debug("Up alarm break,endpoint not exists or stop alarm", log.String("endpoint", endpointObj.Guid))
 					continue
 				}
-				if endpointObj.ExportType == "telnet" || endpointObj.ExportType == "http" || endpointObj.ExportType == "ping" {
+				if endpointObj.ExportType != "host" {
 					log.Logger.Debug("Up alarm break,endpoint export type illegal", log.String("exportType", endpointObj.ExportType))
 					continue
 				}
