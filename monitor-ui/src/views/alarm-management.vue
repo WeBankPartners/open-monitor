@@ -12,83 +12,68 @@
         </div>
       </div>
     </Modal>
-    <div class="sunburst">
-      <div id="elId" class="echart" style="height:400px;width:400px"></div>
-    </div>
-    <div class="alarm-total">
-      <Tag color="primary">Low:{{this.low}}</Tag>
-      <Tag color="success">Medium:{{this.mid}}</Tag>
-      <Tag color="error">High:{{this.high}}</Tag>
-    </div>
-    <section style="margin-left:8px" class="c-dark-exclude-color">
-      <Tag color="warning">{{$t('title.updateTime')}}：{{timeForDataAchieve}}</Tag>
-      <template v-for="(filterItem, filterIndex) in filtersForShow">
-        <Tag color="success" type="border" closable @on-close="exclude(filterItem.key)" :key="filterIndex">{{filterItem.key}}：{{filterItem.value}}</Tag>
-      </template>
-      <template v-if="!resultData.length">
-        <Tag color="primary">{{$t('table.noDataTip')}}！</Tag>
-      </template>
-    </section>
-    <div class="alarm-list">
-      <template v-for="(alarmItem, alarmIndex) in resultData">
-        <section :key="alarmIndex" class="alarm-item c-dark-exclude-color" :class="'alarm-item-border-'+ alarmItem.s_priority">
-          <i class="fa fa-times" @click="deleteConfirmModal(alarmItem)" aria-hidden="true"></i>
-          <ul>
-            <li>
-              <label class="col-md-1">{{$t('field.endpoint')}}:</label>
-              <Tag type="border" closable @on-close="addParams('endpoint',alarmItem.endpoint)" color="primary">{{alarmItem.endpoint}}</Tag>
-            </li>
-            <li v-if="!alarmItem.is_custom">
-              <label class="col-md-1">{{$t('field.metric')}}:</label>
-              <Tag type="border" closable @on-close="addParams('metric',alarmItem.s_metric)" color="primary">{{alarmItem.s_metric}}</Tag>
-            </li>
-            <li>
-              <label class="col-md-1">{{$t('tableKey.s_priority')}}:</label>
-              <Tag type="border" closable @on-close="addParams('priority',alarmItem.s_priority)" color="primary">{{alarmItem.s_priority}}</Tag>
-            </li>
-            <li v-if="!alarmItem.is_custom && alarmItem.tags">
-              <label class="col-md-1">Tags:</label>
-              <Tag type="border" v-for="(t,tIndex) in alarmItem.tags.split('^')" :key="tIndex" color="cyan">{{t}}</Tag>
-            </li>
-            <li>
-              <label class="col-md-1">{{$t('tableKey.start')}}:</label><span>{{alarmItem.start_string}}</span>
-            </li>
-            <li v-if="alarmIndex != actveAlarmIndex">
-              <label class="col-md-1"></label><span><Icon @click="actveAlarmIndex = alarmIndex" type="ios-arrow-dropdown" size=16 /></span>
-            </li>
-            <template v-if="alarmIndex === actveAlarmIndex">
-              <template v-if="alarmItem.is_log_monitor">
-                <li>
-                  <label class="col-md-1">{{$t('tableKey.path')}}:</label><span>{{alarmItem.path}}</span>
-                </li>
-                <li>
-                  <label class="col-md-1">{{$t('tableKey.keyword')}}:</label><span>{{alarmItem.keyword}}</span>
-                </li>
-                <li>
-                  <label class="col-md-1">{{$t('tableKey.description')}}:</label><span>{{alarmItem.content}}</span>
-                </li>
-              </template>
-              <template v-else-if="alarmItem.is_custom">
-                <li>
-                  <label class="col-md-1">Log:</label>
-                  <div class="col-md-10" style="display: inline-flex;padding: 0px;font-size: 15px;" v-html="alarmItem.content"></div>
-                </li>
-              </template>
-              <template v-else>
-                <li>
-                  <label class="col-md-1">{{$t('tableKey.start_value')}}:</label><span>{{alarmItem.start_value}}</span>
-                </li>
-                <li>
-                  <label class="col-md-1">{{$t('field.threshold')}}:</label><span>{{alarmItem.s_cond}}</span>
-                </li>
-                <li>
-                  <label class="col-md-1">{{$t('tableKey.s_last')}}:</label><span>{{alarmItem.s_last}}</span>
-                </li>
-              </template>
-            </template>
-          </ul>
+    <div class="flex-container">
+      <div class="flex-item">
+        <div>
+          <Tag type="border" color="primary">告警可视化</Tag>
+        </div>
+        <div id="elId" class="echart" style="height:500px;width:500px;background:#ffffff"></div>
+      </div>
+      <div class="flex-item" style="width: 100%">
+        <div class="alarm-total">
+          <Tag color="primary">Low:{{this.low}}</Tag>
+          <Tag color="success">Medium:{{this.mid}}</Tag>
+          <Tag color="error">High:{{this.high}}</Tag>
+        </div>
+        <section style="margin-left:8px" class="c-dark-exclude-color">
+          <Tag color="warning">{{$t('title.updateTime')}}：{{timeForDataAchieve}}</Tag>
+          <template v-for="(filterItem, filterIndex) in filtersForShow">
+            <Tag color="success" type="border" closable @on-close="exclude(filterItem.key)" :key="filterIndex">{{filterItem.key}}：{{filterItem.value}}</Tag>
+          </template>
+          <template v-if="!resultData.length">
+            <Tag color="primary">{{$t('table.noDataTip')}}！</Tag>
+          </template>
         </section>
-      </template>
+        <div class="alarm-list">
+          <template v-for="(alarmItem, alarmIndex) in resultData">
+            <section :key="alarmIndex" class="alarm-item c-dark-exclude-color" :class="'alarm-item-border-'+ alarmItem.s_priority">
+              <i class="fa fa-times" @click="deleteConfirmModal(alarmItem)" aria-hidden="true"></i>
+              <ul>
+                <li>
+                  <label class="col-md-2">{{$t('field.endpoint')}}:</label>
+                  <Tag type="border" closable @on-close="addParams('endpoint',alarmItem.endpoint)" color="primary">{{alarmItem.endpoint}}</Tag>
+                </li>
+                <li v-if="!alarmItem.is_custom">
+                  <label class="col-md-2">{{$t('field.metric')}}:</label>
+                  <Tag type="border" closable @on-close="addParams('metric',alarmItem.s_metric)" color="primary">{{alarmItem.s_metric}}</Tag>
+                </li>
+                <li>
+                  <label class="col-md-2">{{$t('tableKey.s_priority')}}:</label>
+                  <Tag type="border" closable @on-close="addParams('priority',alarmItem.s_priority)" color="primary">{{alarmItem.s_priority}}</Tag>
+                </li>
+                <li v-if="!alarmItem.is_custom && alarmItem.tags">
+                  <label class="col-md-2">Tags:</label>
+                  <Tag type="border" v-for="(t,tIndex) in alarmItem.tags.split('^')" :key="tIndex" color="cyan">{{t}}</Tag>
+                </li>
+                <li>
+                  <label class="col-md-2">{{$t('tableKey.start')}}:</label><span>{{alarmItem.start_string}}</span>
+                </li>
+                <li>
+                  <label class="col-md-2">详细信息:</label>
+                  <span>
+                    <Tag color="default">{{$t('tableKey.start_value')}}:{{alarmItem.start_value}}</Tag>
+                    <Tag color="default" v-if="alarmItem.s_cond">{{$t('tableKey.threshold')}}:{{alarmItem.s_cond}}</Tag>
+                    <Tag color="default" v-if="alarmItem.s_last">{{$t('tableKey.s_last')}}:{{alarmItem.s_last}}</Tag>
+                    <Tag color="default" v-if="alarmItem.path">{{$t('tableKey.path')}}:{{alarmItem.path}}</Tag>
+                    <Tag color="default" v-if="alarmItem.keyword">{{$t('tableKey.keyword')}}:{{alarmItem.keyword}}</Tag>
+                    <Tag color="default" v-if="alarmItem.content">{{$t('tableKey.description')}}:{{alarmItem.content}}</Tag>
+                  </span>
+                </li>
+              </ul>
+            </section>
+          </template>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -99,6 +84,7 @@ export default {
   name: '',
   data() {
     return {
+      myChart: null,
       isShowWarning: false,
       interval: null,
       timeForDataAchieve: null,
@@ -114,7 +100,7 @@ export default {
     }
   },
   mounted(){
-    this.showSunburst()
+    this.myChart = echarts.init(document.getElementById('elId'))
     this.getAlarm()
     this.interval = setInterval(()=>{
       this.getAlarm()
@@ -141,228 +127,146 @@ export default {
         this.low = responseData.low
         this.mid = responseData.mid
         this.high = responseData.high
-        this.showSunburst()
-      })
+        this.showSunburst(responseData)
+      }, {isNeedloading: false})
     },
-    showSunburst () {
-      var myChart = echarts.init(document.getElementById('elId'))
-
-      let alramData = this.resultData
-      let sunburstData = [
-      ]
-      let high = {
-        name: 'high',
+    compare (prop) {
+      return function (obj1, obj2) {
+        var val1 = obj1[prop];
+        var val2 = obj2[prop];
+        if (!isNaN(Number(val1)) && !isNaN(Number(val2))) {
+          val1 = Number(val1);
+          val2 = Number(val2);
+        }
+        if (val1 < val2) {
+          return -1;
+        } else if (val1 > val2) {
+          return 1;
+        } else {
+          return 0;
+        }  
+      } 
+    },
+    showSunburst (originData) {
+      this.myChart.off()
+      let alramData = originData.data
+      let legendData = []
+      let pieInner = []
+      if (originData.high) {
+        let high = {
+          name: 'high',
+          value: originData.high,
           itemStyle: {
             color: '#ed4014'
-          },
-        children: []
+          }
+        }
+        legendData.push('high')
+        pieInner.push(high)
       }
-      let medium = {
-        name: 'medium',
-          itemStyle: {
-            color: '#2d8cf0'
-          },
-        children: []
-      }
-      let low = {
-        name: 'low',
+      if (originData.low) {
+        let low = {
+          name: 'low',
+          value: originData.low,
           itemStyle: {
             color: '#19be6b'
-          },
-        children: []
+          }
+        }
+        legendData.push('low')
+        pieInner.push(low)
       }
+      if (originData.mid) {
+        let mid = {
+          name: 'medium',
+          value: originData.mid,
+          itemStyle: {
+            color: '#2d8cf0'
+          }
+        }
+        legendData.push('medium')
+        pieInner.push(mid)
+      }
+
       const colorX = ['#33CCCC','#666699','#66CC66','#996633','#9999CC','#339933','#339966','#663333','#6666CC','#336699','#3399CC','#33CC66','#CC3333','#CC6666','#996699','#CC9933']
-      let usedColor = {}
       let index = 0
+      let pieOuter = []
       alramData.forEach(alarm => {
-        if (alarm.s_priority === 'high') {
-          const metric = alarm.s_metric
-          let child = high.children.find(child => child.name === metric)
-          if (child) {
-            child.value ++
-          } else {
-            let color = ''
-            if (metric in usedColor) {
-              color = usedColor[metric]
-            } else {
-              color = colorX[index]
-              usedColor[metric] = colorX[index]
-              index++
-            }
-            high.children.push({
-              name: metric,
-                  itemStyle: {
-                    color: color
-                  },
-              value: 1
-            })
-          }
-        } else if (alarm.s_priority === 'medium') {
-          const metric = alarm.s_metric
-          let child = medium.children.find(child => child.name === metric)
-          if (child) {
-            child.value ++
-          } else {
-            let color = ''
-            if (metric in usedColor) {
-              color = usedColor[metric]
-            } else {
-              color = colorX[index]
-              usedColor[metric] = colorX[index]
-              index++
-            }
-            medium.children.push({
-              name: metric,
-                  itemStyle: {
-                    color: color
-                  },
-              value: 1
-            })
-          }
-
+        const has = pieOuter.find(item => item.name === alarm.s_metric && item.type === alarm.s_priority)
+        if (has) {
+          has.value++
         } else {
-          const metric = alarm.s_metric
-          let child = low.children.find(child => child.name === metric)
-          if (child) {
-            child.value ++
-          } else {
-            let color = ''
-            if (metric in usedColor) {
-              color = usedColor[metric]
-            } else {
-              color = colorX[index]
-              usedColor[metric] = colorX[index]
-              index++
-            }
-            low.children.push({
-              name: metric,
-                  itemStyle: {
-                    color: color
-                  },
-              value: 1
-            })
-          }
-        }
-      })
-      sunburstData.push(high, medium, low)
-
-      var option = {
-        grid: {
-          top: 10,
-          left: 10,
-          right: 10,
-          bottom: 10,
-          height: '90%',
-          width: '90%'
-        },
-        series: {
-          type: 'sunburst',
-          data: sunburstData,
-          radius: [0, '95%'],
-          sort: null,
-          levels: [{}, {
-            r0: '10%',
-            r: '35%',
+          const color = colorX[index]
+          index++
+          legendData.push(alarm.s_metric)
+          pieOuter.push({
+            name: alarm.s_metric,
+            value: 1,
+            type: alarm.s_priority,
             itemStyle: {
-              borderWidth: 2
-            },
-            label: {
-              rotate: 'tangential'
+              color: color
             }
-          }, {
-            r0: '35%',
-            r: '70%',
-            label: {
-              align: 'right'
-            }
-          }]
-        }
-      }
-      myChart.setOption(option)
-      let filters = []
-      myChart.on('click', 'series.sunburst', function (params) {
-          // console.log(params);
-          if (params.dataType === 'main') {
-            filters = params.treePathInfo.slice(1)
-          } else {
-            filters.pop()
-          }
-          console.log(filters)
-      });
-    },
-    managementSunBurst (alarmData) {
-       var myChart = echarts.init(document.getElementById('elId'))
-      let sunburstData = [
-      ]
-      let high = {
-        name: 'high',
-        children: []
-      }
-      let medium = {
-        name: 'medium',
-        children: []
-      }
-      let low = {
-        name: 'low',
-        children: []
-      }
-      alarmData.forEach(alarm => {
-        if (alarm.s_priority === 'high') {
-          const metric = alarm.s_metric
-          let child = high.children.find(child => child.name === metric)
-          if (child) {
-            child.value ++
-          } else {
-            high.children.push({
-              name: metric,
-              value: 1
-            })
-          }
-        } else if (alarm.s_priority === 'medium') {
-          const metric = alarm.s_metric
-          let child = medium.children.find(child => child.name === metric)
-          if (child) {
-            child.value ++
-          } else {
-            medium.children.push({
-              name: metric,
-              value: 1
-            })
-          }
-
-        } else {
-          const metric = alarm.s_metric
-          let child = low.children.find(child => child.name === metric)
-          if (child) {
-            child.value ++
-          } else {
-            low.children.push({
-              name: metric,
-              value: 1
-            })
-          }
+          })
         }
       })
-      sunburstData.push(high, medium, low)
-      var option = {
-          visualMap: {
-              type: 'continuous',
-              min: 0,
-              max: 10,
-              inRange: {
-                  color: ['#2D5F73', '#538EA6', '#F2D1B3', '#F2B8A2', '#F28C8C']
-              }
+      pieOuter = pieOuter.sort(this.compare('type'))
+      let option = {
+        backgroundColor: '#ffffff',
+          tooltip: {
+              trigger: 'item',
+              formatter: '{b}: {c} ({d}%)'
           },
-          series: {
-              type: 'sunburst',
-              data: sunburstData,
-              radius: [0, '90%'],
-              label: {
-                  rotate: 'radial'
+          legend: {
+            bottom: 'bottom',
+            data: legendData
+          },
+          series: [
+              {
+                  type: 'pie',
+                  selectedMode: 'single',
+                  radius: [0, '30%'],
+                  center: ['60%', '50%'],
+                  label: {
+                      position: 'inner'
+                  },
+                  labelLine: {
+                      show: false
+                  },
+                  data: pieInner
+              },
+              {
+                  type: 'pie',
+                  radius: ['40%', '55%'],
+                  center: ['60%', '50%'],
+                  label: {
+                      formatter: '{b|{b}:}{c}  {per|{d}%}  ',
+                      backgroundColor: '#ffffff',
+                      borderColor: '#2d8cf0',
+                      borderWidth: 1,
+                      borderRadius: 4,
+                      // position: 'outer',
+                      alignTo: 'edge',
+                      margin: 8,
+                      rich: {
+                          b: {
+                              fontSize: 12,
+                              lineHeight: 28
+                          },
+                          per: {
+                              color: '#eee',
+                              backgroundColor: '#334455',
+                              padding: [2, 4],
+                              borderRadius: 2
+                          }
+                      }
+                  },
+                  data: pieOuter
               }
-          }
+          ]
       }
-      myChart.setOption(option)
+
+      this.myChart.setOption(option)
+      this.myChart.on('click', function (params) {
+        console.log(params)
+      })
     },
     addParams (key, value) {
       this.filters[key] = value
@@ -409,6 +313,12 @@ export default {
 </script>
 
 <style scoped lang="less">
+.flex-container {
+  display: flex;
+}
+.flex-item {
+
+}
 li {
   list-style: none;
 } 
