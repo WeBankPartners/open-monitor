@@ -15,15 +15,14 @@
     <div class="flex-container">
       <div class="flex-item">
         <div>
-          <Tag type="border" color="primary">告警可视化</Tag>
+          <Tag color="success">Low:{{this.low}}</Tag>
+          <Tag color="warning">Medium:{{this.mid}}</Tag>
+          <Tag color="error">High:{{this.high}}</Tag>
         </div>
-        <div id="elId" class="echart" style="height:500px;width:500px;background:#ffffff"></div>
+        <div id="elId" class="echart"></div>
       </div>
       <div class="flex-item" style="width: 100%">
         <div class="alarm-total">
-          <Tag color="primary">Low:{{this.low}}</Tag>
-          <Tag color="success">Medium:{{this.mid}}</Tag>
-          <Tag color="error">High:{{this.high}}</Tag>
         </div>
         <section style="margin-left:8px" class="c-dark-exclude-color">
           <Tag color="warning">{{$t('title.updateTime')}}：{{timeForDataAchieve}}</Tag>
@@ -156,6 +155,7 @@ export default {
         let high = {
           name: 'high',
           value: originData.high,
+          filterType: 'priority',
           itemStyle: {
             color: '#ed4014'
           }
@@ -167,6 +167,7 @@ export default {
         let low = {
           name: 'low',
           value: originData.low,
+          filterType: 'priority',
           itemStyle: {
             color: '#19be6b'
           }
@@ -178,6 +179,7 @@ export default {
         let mid = {
           name: 'medium',
           value: originData.mid,
+          filterType: 'priority',
           itemStyle: {
             color: '#2d8cf0'
           }
@@ -201,6 +203,7 @@ export default {
             name: alarm.s_metric,
             value: 1,
             type: alarm.s_priority,
+            filterType: 'metric',
             itemStyle: {
               color: color
             }
@@ -212,10 +215,11 @@ export default {
         backgroundColor: '#ffffff',
           tooltip: {
               trigger: 'item',
-              formatter: '{b}: {c} ({d}%)'
+              formatter: '{b}: {c}'
           },
           legend: {
-            bottom: 'bottom',
+            bottom: '15%',
+            selectedMode: false,
             data: legendData
           },
           series: [
@@ -223,7 +227,7 @@ export default {
                   type: 'pie',
                   selectedMode: 'single',
                   radius: [0, '30%'],
-                  center: ['60%', '50%'],
+                  center: ['50%', '40%'],
                   label: {
                       position: 'inner'
                   },
@@ -235,27 +239,21 @@ export default {
               {
                   type: 'pie',
                   radius: ['40%', '55%'],
-                  center: ['60%', '50%'],
+                  center: ['50%', '40%'],
                   label: {
-                      formatter: '{b|{b}:}{c}  {per|{d}%}  ',
+                      formatter: ' {b|{b}:}{c} ',
                       backgroundColor: '#ffffff',
                       borderColor: '#2d8cf0',
                       borderWidth: 1,
                       borderRadius: 4,
-                      // position: 'outer',
+                      position: 'outer',
                       alignTo: 'edge',
                       margin: 8,
                       rich: {
-                          b: {
-                              fontSize: 12,
-                              lineHeight: 28
-                          },
-                          per: {
-                              color: '#eee',
-                              backgroundColor: '#334455',
-                              padding: [2, 4],
-                              borderRadius: 2
-                          }
+                        b: {
+                          fontSize: 12,
+                          lineHeight: 28
+                        }
                       }
                   },
                   data: pieOuter
@@ -264,8 +262,8 @@ export default {
       }
 
       this.myChart.setOption(option)
-      this.myChart.on('click', function (params) {
-        console.log(params)
+      this.myChart.on('click', params => {
+        this.addParams(params.data.filterType, params.data.name)
       })
     },
     addParams (key, value) {
@@ -313,11 +311,13 @@ export default {
 </script>
 
 <style scoped lang="less">
+.echart {
+  height: ~"calc(100vh - 180px)";
+  width: 550px;
+  background:#ffffff;
+}
 .flex-container {
   display: flex;
-}
-.flex-item {
-
 }
 li {
   list-style: none;
