@@ -136,7 +136,7 @@ func UpdateEndpointAlarmFlag(isStop bool,exportType,instance,ip,port string) err
 	if exportType == "host" {
 		x.SQL("SELECT id FROM endpoint WHERE export_type=? AND ip=?", exportType, ip).Find(&endpoints)
 	}else {
-		if exportType == "tomcat" {
+		if port != "" {
 			x.SQL("SELECT id FROM endpoint WHERE export_type=? AND address=? AND name=?", exportType, fmt.Sprintf("%s:%s", ip, port), instance).Find(&endpoints)
 		} else {
 			x.SQL("SELECT id FROM endpoint WHERE export_type=? AND ip=? AND name=?", exportType, ip, instance).Find(&endpoints)
