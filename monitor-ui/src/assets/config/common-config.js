@@ -10,7 +10,15 @@ export const dataPick = [
   {
     value: -10800,
     label: '3h'
-  }
+  },
+  {
+    value: -21600,
+    label: '6h'
+  },
+  {
+    value: -43200,
+    label: '12h'
+  },
 ];
 
 export const autoRefreshConfig = [
