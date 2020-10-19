@@ -13,18 +13,30 @@
       </div>
     </Modal>
     <div class="flex-container">
-      <div class="flex-item">
-        <div>
-          <Tag color="success">Low:{{this.low}}</Tag>
-          <Tag color="warning">Medium:{{this.mid}}</Tag>
-          <Tag color="error">High:{{this.high}}</Tag>
+      <transition name="slide-fade">
+        <div class="flex-item" v-show="showGraph">
+          <div>
+            <Tag color="success"><span style="font-size:14px">Low:{{this.low}}</span></Tag>
+            <Tag color="warning"><span style="font-size:14px">Medium:{{this.mid}}</span></Tag>
+            <Tag color="error"><span style="font-size:14px">High:{{this.high}}</span></Tag>
+            <div id="elId" class="echart"></div>
+          </div>
         </div>
-        <div id="elId" class="echart"></div>
-      </div>
+      </transition>
       <div class="flex-item" style="width: 100%">
-        <div class="alarm-total">
+        <div class="alarm-total" v-if="!showGraph">
+          <Tag color="success"><span style="font-size:14px">Low:{{this.low}}</span></Tag>
+          <Tag color="warning"><span style="font-size:14px">Medium:{{this.mid}}</span></Tag>
+          <Tag color="error"><span style="font-size:14px">High:{{this.high}}</span></Tag>
         </div>
         <section style="margin-left:8px" class="c-dark-exclude-color">
+          <div style="display: inline-block;margin-right:16px">
+            <span>可视化告警展示：</span>
+            <i-switch size="large" v-model="showGraph">
+              <span slot="open">ON</span>
+              <span slot="close">OFF</span>
+            </i-switch>
+          </div>
           <Tag color="warning">{{$t('title.updateTime')}}：{{timeForDataAchieve}}</Tag>
           <template v-for="(filterItem, filterIndex) in filtersForShow">
             <Tag color="success" type="border" closable @on-close="exclude(filterItem.key)" :key="filterIndex">{{filterItem.key}}：{{filterItem.value}}</Tag>
@@ -83,6 +95,7 @@ export default {
   name: '',
   data() {
     return {
+      showGraph: true,
       myChart: null,
       isShowWarning: false,
       interval: null,
@@ -372,4 +385,17 @@ label {
   cursor: pointer;
 }
 
+/* 可以设置不同的进入和离开动画 */
+/* 设置持续时间和动画函数 */
+.slide-fade-enter-active {
+  transition: all .3s ease;
+}
+.slide-fade-leave-active {
+  transition: all .8s cubic-bezier(1.0, 0.5, 0.8, 1.0);
+}
+.slide-fade-enter, .slide-fade-leave-to
+/* .slide-fade-leave-active for below version 2.1.8 */ {
+  transform: translateX(10px);
+  opacity: 0;
+}
 </style>
