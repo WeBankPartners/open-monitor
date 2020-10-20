@@ -178,6 +178,9 @@
     "alarmFiring": "告警异常",
     "alarmRecover": "告警恢复"
   },
+  "alarmEmpty": "WoW !! 无任何报警！",
+  "details": "详细信息",
+  "visualAlarm": "可视化告警展示"
   "processName": "进程名",
   "processTags": "进程标签",
   "displayName": "别名"
