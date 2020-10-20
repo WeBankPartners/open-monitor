@@ -180,7 +180,7 @@
   },
   "alarmEmpty": "WoW !! 无任何报警！",
   "details": "详细信息",
-  "visualAlarm": "可视化告警展示"
+  "visualAlarm": "可视化告警展示",
   "processName": "进程名",
   "processTags": "进程标签",
   "displayName": "别名"
