@@ -431,3 +431,35 @@ func TestNotifyAlarm(c *gin.Context)  {
 		mid.ReturnSuccess(c)
 	}
 }
+
+func GetCustomDashboardAlarm(c *gin.Context)  {
+	customDashboardId,_ := strconv.Atoi(c.Query("id"))
+	if customDashboardId <= 0 {
+		mid.ReturnParamEmptyError(c, "id")
+		return
+	}
+	err,result := db.GetCustomDashboardAlarms(customDashboardId)
+	if err != nil {
+		mid.ReturnHandleError(c, err.Error(), err)
+	}else{
+		mid.ReturnSuccessData(c, result)
+	}
+}
+
+func QueryHistoryAlarm(c *gin.Context)  {
+	var param m.QueryHistoryAlarmParam
+	if err := c.ShouldBindJSON(&param); err==nil {
+		if param.Filter != "all" && param.Filter != "start" && param.Filter != "end" {
+			mid.ReturnValidateError(c, "filter must in [all,start,end]")
+			return
+		}
+		err,result := db.QueryHistoryAlarm(param)
+		if err != nil {
+			mid.ReturnHandleError(c, err.Error(), err)
+		}else{
+			mid.ReturnSuccessData(c, result)
+		}
+	}else{
+		mid.ReturnValidateError(c, err.Error())
+	}
+}

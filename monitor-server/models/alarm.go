@@ -353,3 +353,9 @@ type QueryProblemAlarmDto struct {
 	Metric  string  `json:"metric"`
 	Priority  string  `json:"priority"`
 }
+
+type QueryHistoryAlarmParam struct {
+	Start  int64  `json:"start" binding:"required"`
+	End    int64  `json:"end" binding:"required"`
+	Filter string  `json:"filter" binding:"required"`
+}
