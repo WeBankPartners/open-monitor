@@ -1188,3 +1188,67 @@ func getActionOptions(tplId int) []*m.OptionModel {
 	}
 	return result
 }
+
+func QueryAlarmBySql(sql string,params []interface{}) (err error,result m.AlarmProblemQueryResult) {
+	result = m.AlarmProblemQueryResult{High:0, Mid:0, Low:0, Data:[]*m.AlarmProblemQuery{}}
+	var alarmQuery []*m.AlarmProblemQuery
+	err = x.SQL(sql, params...).Find(&alarmQuery)
+	if err != nil || len(alarmQuery) == 0 {
+		return err,result
+	}
+	var logMonitorStrategyIds []string
+	for _,v := range alarmQuery {
+		if v.SMetric == "log_monitor" {
+			logMonitorStrategyIds = append(logMonitorStrategyIds, strconv.Itoa(v.StrategyId))
+		}
+	}
+	if len(logMonitorStrategyIds) > 0 {
+		var logMonitorQuery []*m.LogMonitorTable
+		x.SQL("SELECT * FROM log_monitor WHERE strategy_id IN ("+strings.Join(logMonitorStrategyIds, ",")+")").Find(&logMonitorQuery)
+		if len(logMonitorQuery) > 0 {
+			for _,v := range alarmQuery {
+				if v.SMetric == "log_monitor" {
+					for _,vv := range logMonitorQuery {
+						if v.StrategyId == vv.StrategyId {
+							v.Path = vv.Path
+							v.Keyword = vv.Keyword
+							break
+						}
+					}
+				}
+			}
+		}
+	}
+	for _,v := range alarmQuery {
+		if v.SPriority == "high" {
+			result.High += 1
+		}else if v.SPriority == "medium" {
+			result.Mid += 1
+		}else if v.SPriority == "low" {
+			result.Low += 1
+		}
+	}
+	result.Data = alarmQuery
+	return err,result
+}
+
+func QueryHistoryAlarm(param m.QueryHistoryAlarmParam) (err error,result m.AlarmProblemQueryResult) {
+	result = m.AlarmProblemQueryResult{High:0, Mid:0, Low:0, Data:[]*m.AlarmProblemQuery{}}
+	startString := time.Unix(param.Start, 0).Format(m.DatetimeFormat)
+	endString := time.Unix(param.End, 0).Format(m.DatetimeFormat)
+	if startString == "" || endString == "" {
+		return fmt.Errorf("param start or end format fail"),result
+	}
+	var sql string
+	if param.Filter == "all" {
+		sql = "SELECT * FROM alarm WHERE start<'"+endString+"' OR end>='"+startString+"' ORDER BY id DESC"
+	}
+	if param.Filter == "start" {
+		sql = "SELECT * FROM alarm WHERE start>='"+startString+"' AND start<'"+endString+"' ORDER BY id DESC"
+	}
+	if param.Filter == "end" {
+		sql = "SELECT * FROM alarm WHERE end>='"+startString+"' AND end<'"+endString+"' ORDER BY id DESC"
+	}
+	err,result = QueryAlarmBySql(sql, []interface{}{})
+	return err,result
+}
