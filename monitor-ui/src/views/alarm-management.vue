@@ -12,89 +12,91 @@
         </div>
       </div>
     </Modal>
-    <div class="alarm-total">
-      <Tag color="primary">Low:{{this.low}}</Tag>
-      <Tag color="success">Medium:{{this.mid}}</Tag>
-      <Tag color="error">High:{{this.high}}</Tag>
-    </div>
-    <section style="margin-left:8px" class="c-dark-exclude-color">
-      <Tag color="warning">{{$t('title.updateTime')}}：{{timeForDataAchieve}}</Tag>
-      <template v-for="(filterItem, filterIndex) in filtersForShow">
-        <Tag color="success" type="border" closable @on-close="exclude(filterItem.key)" :key="filterIndex">{{filterItem.key}}：{{filterItem.value}}</Tag>
-      </template>
-      <template v-if="!resultData.length">
-        <Tag color="primary">{{$t('table.noDataTip')}}！</Tag>
-      </template>
-    </section>
-    <div class="alarm-list">
-      <template v-for="(alarmItem, alarmIndex) in resultData">
-        <section :key="alarmIndex" class="alarm-item c-dark-exclude-color" :class="'alarm-item-border-'+ alarmItem.s_priority">
-          <i class="fa fa-times" @click="deleteConfirmModal(alarmItem)" aria-hidden="true"></i>
-          <ul>
-            <li>
-              <label class="col-md-1">{{$t('field.endpoint')}}:</label>
-              <Tag type="border" closable @on-close="addParams('endpoint',alarmItem.endpoint)" color="primary">{{alarmItem.endpoint}}</Tag>
-            </li>
-            <li v-if="!alarmItem.is_custom">
-              <label class="col-md-1">{{$t('field.metric')}}:</label>
-              <Tag type="border" closable @on-close="addParams('metric',alarmItem.s_metric)" color="primary">{{alarmItem.s_metric}}</Tag>
-            </li>
-            <li>
-              <label class="col-md-1">{{$t('tableKey.s_priority')}}:</label>
-              <Tag type="border" closable @on-close="addParams('priority',alarmItem.s_priority)" color="primary">{{alarmItem.s_priority}}</Tag>
-            </li>
-            <li v-if="!alarmItem.is_custom && alarmItem.tags">
-              <label class="col-md-1">Tags:</label>
-              <Tag type="border" v-for="(t,tIndex) in alarmItem.tags.split('^')" :key="tIndex" color="cyan">{{t}}</Tag>
-            </li>
-            <li>
-              <label class="col-md-1">{{$t('tableKey.start')}}:</label><span>{{alarmItem.start_string}}</span>
-            </li>
-            <li v-if="alarmIndex != actveAlarmIndex">
-              <label class="col-md-1"></label><span><Icon @click="actveAlarmIndex = alarmIndex" type="ios-arrow-dropdown" size=16 /></span>
-            </li>
-            <template v-if="alarmIndex === actveAlarmIndex">
-              <template v-if="alarmItem.is_log_monitor">
-                <li>
-                  <label class="col-md-1">{{$t('tableKey.path')}}:</label><span>{{alarmItem.path}}</span>
-                </li>
-                <li>
-                  <label class="col-md-1">{{$t('tableKey.keyword')}}:</label><span>{{alarmItem.keyword}}</span>
-                </li>
-                <li>
-                  <label class="col-md-1">{{$t('tableKey.description')}}:</label><span>{{alarmItem.content}}</span>
-                </li>
-              </template>
-              <template v-else-if="alarmItem.is_custom">
-                <li>
-                  <label class="col-md-1">Log:</label>
-                  <div class="col-md-10" style="display: inline-flex;padding: 0px;font-size: 15px;" v-html="alarmItem.content"></div>
-                </li>
-              </template>
-              <template v-else>
-                <li>
-                  <label class="col-md-1">{{$t('tableKey.start_value')}}:</label><span>{{alarmItem.start_value}}</span>
-                </li>
-                <li>
-                  <label class="col-md-1">{{$t('field.threshold')}}:</label><span>{{alarmItem.s_cond}}</span>
-                </li>
-                <li>
-                  <label class="col-md-1">{{$t('tableKey.s_last')}}:</label><span>{{alarmItem.s_last}}</span>
-                </li>
-              </template>
-            </template>
-          </ul>
+    <div class="flex-container">
+      <transition name="slide-fade">
+        <div class="flex-item" v-show="showGraph">
+          <div>
+            <Tag color="success"><span style="font-size:14px">Low:{{this.low}}</span></Tag>
+            <Tag color="warning"><span style="font-size:14px">Medium:{{this.mid}}</span></Tag>
+            <Tag color="error"><span style="font-size:14px">High:{{this.high}}</span></Tag>
+            <div id="elId" class="echart"></div>
+          </div>
+        </div>
+      </transition>
+      <div class="flex-item" style="width: 100%">
+        <div class="alarm-total" v-if="!showGraph">
+          <Tag color="success"><span style="font-size:14px">Low:{{this.low}}</span></Tag>
+          <Tag color="warning"><span style="font-size:14px">Medium:{{this.mid}}</span></Tag>
+          <Tag color="error"><span style="font-size:14px">High:{{this.high}}</span></Tag>
+        </div>
+        <section style="margin-left:8px" class="c-dark-exclude-color">
+          <div style="display: inline-block;margin-right:16px">
+            <span>可视化告警展示：</span>
+            <i-switch size="large" v-model="showGraph">
+              <span slot="open">ON</span>
+              <span slot="close">OFF</span>
+            </i-switch>
+          </div>
+          <Tag color="warning">{{$t('title.updateTime')}}：{{timeForDataAchieve}}</Tag>
+          <template v-for="(filterItem, filterIndex) in filtersForShow">
+            <Tag color="success" type="border" closable @on-close="exclude(filterItem.key)" :key="filterIndex">{{filterItem.key}}：{{filterItem.value}}</Tag>
+          </template>
+          <template v-if="!resultData.length">
+            <Tag color="primary">{{$t('table.noDataTip')}}！</Tag>
+          </template>
         </section>
-      </template>
+        <div class="alarm-list">
+          <template v-for="(alarmItem, alarmIndex) in resultData">
+            <section :key="alarmIndex" class="alarm-item c-dark-exclude-color" :class="'alarm-item-border-'+ alarmItem.s_priority">
+              <i class="fa fa-times" @click="deleteConfirmModal(alarmItem)" aria-hidden="true"></i>
+              <ul>
+                <li>
+                  <label class="col-md-2">{{$t('field.endpoint')}}:</label>
+                  <Tag type="border" closable @on-close="addParams('endpoint',alarmItem.endpoint)" color="primary">{{alarmItem.endpoint}}</Tag>
+                </li>
+                <li v-if="!alarmItem.is_custom">
+                  <label class="col-md-2">{{$t('field.metric')}}:</label>
+                  <Tag type="border" closable @on-close="addParams('metric',alarmItem.s_metric)" color="primary">{{alarmItem.s_metric}}</Tag>
+                </li>
+                <li>
+                  <label class="col-md-2">{{$t('tableKey.s_priority')}}:</label>
+                  <Tag type="border" closable @on-close="addParams('priority',alarmItem.s_priority)" color="primary">{{alarmItem.s_priority}}</Tag>
+                </li>
+                <li v-if="!alarmItem.is_custom && alarmItem.tags">
+                  <label class="col-md-2">Tags:</label>
+                  <Tag type="border" v-for="(t,tIndex) in alarmItem.tags.split('^')" :key="tIndex" color="cyan">{{t}}</Tag>
+                </li>
+                <li>
+                  <label class="col-md-2">{{$t('tableKey.start')}}:</label><span>{{alarmItem.start_string}}</span>
+                </li>
+                <li>
+                  <label class="col-md-2">详细信息:</label>
+                  <span>
+                    <Tag color="default">{{$t('tableKey.start_value')}}:{{alarmItem.start_value}}</Tag>
+                    <Tag color="default" v-if="alarmItem.s_cond">{{$t('tableKey.threshold')}}:{{alarmItem.s_cond}}</Tag>
+                    <Tag color="default" v-if="alarmItem.s_last">{{$t('tableKey.s_last')}}:{{alarmItem.s_last}}</Tag>
+                    <Tag color="default" v-if="alarmItem.path">{{$t('tableKey.path')}}:{{alarmItem.path}}</Tag>
+                    <Tag color="default" v-if="alarmItem.keyword">{{$t('tableKey.keyword')}}:{{alarmItem.keyword}}</Tag>
+                    <Tag color="default" v-if="alarmItem.content">{{$t('tableKey.description')}}:{{alarmItem.content}}</Tag>
+                  </span>
+                </li>
+              </ul>
+            </section>
+          </template>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
+import echarts from 'echarts'
 export default {
   name: '',
   data() {
     return {
+      showGraph: true,
+      myChart: null,
       isShowWarning: false,
       interval: null,
       timeForDataAchieve: null,
@@ -110,6 +112,7 @@ export default {
     }
   },
   mounted(){
+    this.myChart = echarts.init(document.getElementById('elId'))
     this.getAlarm()
     this.interval = setInterval(()=>{
       this.getAlarm()
@@ -136,6 +139,144 @@ export default {
         this.low = responseData.low
         this.mid = responseData.mid
         this.high = responseData.high
+        this.showSunburst(responseData)
+      }, {isNeedloading: false})
+    },
+    compare (prop) {
+      return function (obj1, obj2) {
+        var val1 = obj1[prop];
+        var val2 = obj2[prop];
+        if (!isNaN(Number(val1)) && !isNaN(Number(val2))) {
+          val1 = Number(val1);
+          val2 = Number(val2);
+        }
+        if (val1 < val2) {
+          return -1;
+        } else if (val1 > val2) {
+          return 1;
+        } else {
+          return 0;
+        }  
+      } 
+    },
+    showSunburst (originData) {
+      this.myChart.off()
+      let alramData = originData.data
+      let legendData = []
+      let pieInner = []
+      if (originData.high) {
+        let high = {
+          name: 'high',
+          value: originData.high,
+          filterType: 'priority',
+          itemStyle: {
+            color: '#ed4014'
+          }
+        }
+        legendData.push('high')
+        pieInner.push(high)
+      }
+      if (originData.low) {
+        let low = {
+          name: 'low',
+          value: originData.low,
+          filterType: 'priority',
+          itemStyle: {
+            color: '#19be6b'
+          }
+        }
+        legendData.push('low')
+        pieInner.push(low)
+      }
+      if (originData.mid) {
+        let mid = {
+          name: 'medium',
+          value: originData.mid,
+          filterType: 'priority',
+          itemStyle: {
+            color: '#2d8cf0'
+          }
+        }
+        legendData.push('medium')
+        pieInner.push(mid)
+      }
+
+      const colorX = ['#33CCCC','#666699','#66CC66','#996633','#9999CC','#339933','#339966','#663333','#6666CC','#336699','#3399CC','#33CC66','#CC3333','#CC6666','#996699','#CC9933']
+      let index = 0
+      let pieOuter = []
+      alramData.forEach(alarm => {
+        const has = pieOuter.find(item => item.name === alarm.s_metric && item.type === alarm.s_priority)
+        if (has) {
+          has.value++
+        } else {
+          const color = colorX[index]
+          index++
+          legendData.push(alarm.s_metric)
+          pieOuter.push({
+            name: alarm.s_metric,
+            value: 1,
+            type: alarm.s_priority,
+            filterType: 'metric',
+            itemStyle: {
+              color: color
+            }
+          })
+        }
+      })
+      pieOuter = pieOuter.sort(this.compare('type'))
+      let option = {
+        backgroundColor: '#ffffff',
+          tooltip: {
+              trigger: 'item',
+              formatter: '{b}: {c}'
+          },
+          legend: {
+            bottom: '15%',
+            selectedMode: false,
+            data: legendData
+          },
+          series: [
+              {
+                  type: 'pie',
+                  selectedMode: 'single',
+                  radius: [0, '30%'],
+                  center: ['50%', '40%'],
+                  label: {
+                      position: 'inner'
+                  },
+                  labelLine: {
+                      show: false
+                  },
+                  data: pieInner
+              },
+              {
+                  type: 'pie',
+                  radius: ['40%', '55%'],
+                  center: ['50%', '40%'],
+                  label: {
+                      formatter: ' {b|{b}:}{c} ',
+                      backgroundColor: '#ffffff',
+                      borderColor: '#2d8cf0',
+                      borderWidth: 1,
+                      borderRadius: 4,
+                      position: 'outer',
+                      alignTo: 'edge',
+                      margin: 8,
+                      rich: {
+                        b: {
+                          fontSize: 12,
+                          lineHeight: 28
+                        }
+                      }
+                  },
+                  data: pieOuter
+              }
+          ]
+      }
+
+      this.myChart.setOption(option)
+      this.myChart.on('click', params => {
+        this.addParams(params.data.filterType, params.data.name)
       })
     },
     addParams (key, value) {
@@ -183,6 +324,14 @@ export default {
 </script>
 
 <style scoped lang="less">
+.echart {
+  height: ~"calc(100vh - 180px)";
+  width: 550px;
+  background:#ffffff;
+}
+.flex-container {
+  display: flex;
+}
 li {
   list-style: none;
 } 
@@ -236,4 +385,17 @@ label {
   cursor: pointer;
 }
 
+/* 可以设置不同的进入和离开动画 */
+/* 设置持续时间和动画函数 */
+.slide-fade-enter-active {
+  transition: all .3s ease;
+}
+.slide-fade-leave-active {
+  transition: all .8s cubic-bezier(1.0, 0.5, 0.8, 1.0);
+}
+.slide-fade-enter, .slide-fade-leave-to
+/* .slide-fade-leave-active for below version 2.1.8 */ {
+  transform: translateX(10px);
+  opacity: 0;
+}
 </style>
