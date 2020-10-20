@@ -68,7 +68,7 @@ func AcceptAlertMsg(c *gin.Context)  {
 					log.Logger.Debug("Up alarm break,endpoint not exists or stop alarm", log.String("endpoint", endpointObj.Guid))
 					continue
 				}
-				if endpointObj.ExportType == "telnet" || endpointObj.ExportType == "http" || endpointObj.ExportType == "ping" {
+				if endpointObj.ExportType != "host" {
 					log.Logger.Debug("Up alarm break,endpoint export type illegal", log.String("exportType", endpointObj.ExportType))
 					continue
 				}
@@ -76,7 +76,7 @@ func AcceptAlertMsg(c *gin.Context)  {
 				tmpValue, _ = strconv.ParseFloat(tmpSummaryMsg[3], 64)
 				tmpValue, _ = strconv.ParseFloat(fmt.Sprintf("%.3f", tmpValue), 64)
 				tmpAlarmQuery := m.AlarmTable{Endpoint: tmpAlarm.Endpoint, SMetric: tmpAlarm.SMetric}
-				_, tmpAlarms = db.GetAlarms(tmpAlarmQuery)
+				_, tmpAlarms = db.GetAlarms(tmpAlarmQuery, 1, false, false)
 			}else {
 				// config strategy
 				tmpAlarm.StrategyId, _ = strconv.Atoi(v.Labels["strategy_id"])
@@ -129,8 +129,9 @@ func AcceptAlertMsg(c *gin.Context)  {
 						continue
 					}
 				}
-				tmpAlarmQuery := m.AlarmTable{Endpoint: tmpAlarm.Endpoint, StrategyId: tmpAlarm.StrategyId, Tags:tmpAlarm.Tags, SCond:tmpAlarm.SCond, SLast:tmpAlarm.SLast}
-				_, tmpAlarms = db.GetAlarms(tmpAlarmQuery)
+				//tmpAlarmQuery := m.AlarmTable{Endpoint: tmpAlarm.Endpoint, StrategyId: tmpAlarm.StrategyId, Tags:tmpAlarm.Tags, SCond:tmpAlarm.SCond, SLast:tmpAlarm.SLast}
+				tmpAlarmQuery := m.AlarmTable{Endpoint: tmpAlarm.Endpoint, StrategyId: tmpAlarm.StrategyId, Tags:tmpAlarm.Tags}
+				_, tmpAlarms = db.GetAlarms(tmpAlarmQuery, 1, false, false)
 			}
 			tmpOperation := "add"
 			if len(tmpAlarms) > 0 {
@@ -232,7 +233,7 @@ func GetHistoryAlarm(c *gin.Context)  {
 			return
 		}
 	}
-	err,data := db.GetAlarms(query)
+	err,data := db.GetAlarms(query, 0, true, true)
 	if err != nil {
 		mid.ReturnQueryTableError(c, "alarm", err)
 		return
@@ -257,7 +258,7 @@ func GetProblemAlarm(c *gin.Context)  {
 			}
 		}
 	}
-	err,data := db.GetAlarms(query)
+	err,data := db.GetAlarms(query, 0, true, true)
 	if err != nil {
 		mid.ReturnQueryTableError(c, "alarm", err)
 		return
@@ -269,7 +270,7 @@ func QueryProblemAlarm(c *gin.Context)  {
 	var param m.QueryProblemAlarmDto
 	if err := c.ShouldBindJSON(&param);err == nil {
 		query := m.AlarmTable{Status:"firing", Endpoint:param.Endpoint, SMetric:param.Metric, SPriority:param.Priority}
-		err,data := db.GetAlarms(query)
+		err,data := db.GetAlarms(query, 0, true, true)
 		if err != nil {
 			mid.ReturnQueryTableError(c, "alarm", err)
 			return
@@ -285,6 +286,9 @@ func QueryProblemAlarm(c *gin.Context)  {
 			if v.SPriority == "low" {
 				lowCount += 1
 			}
+		}
+		if len(data) == 0 {
+			data = []*m.AlarmProblemQuery{}
 		}
 		result := m.AlarmProblemQueryResult{Data:data,High:highCount,Mid:mediumCount,Low:lowCount}
 		mid.ReturnSuccessData(c, result)
@@ -425,5 +429,37 @@ func TestNotifyAlarm(c *gin.Context)  {
 		mid.ReturnHandleError(c, err.Error(), err)
 	}else{
 		mid.ReturnSuccess(c)
+	}
+}
+
+func GetCustomDashboardAlarm(c *gin.Context)  {
+	customDashboardId,_ := strconv.Atoi(c.Query("id"))
+	if customDashboardId <= 0 {
+		mid.ReturnParamEmptyError(c, "id")
+		return
+	}
+	err,result := db.GetCustomDashboardAlarms(customDashboardId)
+	if err != nil {
+		mid.ReturnHandleError(c, err.Error(), err)
+	}else{
+		mid.ReturnSuccessData(c, result)
+	}
+}
+
+func QueryHistoryAlarm(c *gin.Context)  {
+	var param m.QueryHistoryAlarmParam
+	if err := c.ShouldBindJSON(&param); err==nil {
+		if param.Filter != "all" && param.Filter != "start" && param.Filter != "end" {
+			mid.ReturnValidateError(c, "filter must in [all,start,end]")
+			return
+		}
+		err,result := db.QueryHistoryAlarm(param)
+		if err != nil {
+			mid.ReturnHandleError(c, err.Error(), err)
+		}else{
+			mid.ReturnSuccessData(c, result)
+		}
+	}else{
+		mid.ReturnValidateError(c, err.Error())
 	}
 }

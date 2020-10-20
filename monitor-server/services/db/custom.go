@@ -4,6 +4,7 @@ import (
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"fmt"
 	"strings"
+	"encoding/json"
 )
 
 func ListCustomDashboard(user string,coreToken m.CoreJwtToken) (err error,result []*m.CustomDashboardTable) {
@@ -91,4 +92,30 @@ func SaveCustomeDashboardRole(param m.CustomDashboardRoleDto) error {
 		actions = append(actions, &Action{Sql:"INSERT INTO rel_role_custom_dashboard(role_id,custom_dashboard_id) VALUE (?,?)", Param:[]interface{}{v, param.DashboardId}})
 	}
 	return Transaction(actions)
+}
+
+func GetCustomDashboardAlarms(id int) (err error,result m.AlarmProblemQueryResult) {
+	result = m.AlarmProblemQueryResult{High:0, Mid:0, Low:0, Data:[]*m.AlarmProblemQuery{}}
+	var customQuery m.CustomDashboardTable
+	customQuery.Id = id
+	err = GetCustomDashboard(&customQuery)
+	if err != nil || customQuery.Cfg == "" {
+		return err,result
+	}
+	var customConfig []*m.CustomDashboardConfigObj
+	err = json.Unmarshal([]byte(customQuery.Cfg), &customConfig)
+	if err != nil {
+		return fmt.Errorf("json unmarshal dashboard config fail,%s", err.Error()), result
+	}
+	var endpointList []string
+	for _,v := range customConfig {
+		for _,vv := range v.Query {
+			endpointList = append(endpointList, vv.Endpoint)
+		}
+	}
+	if len(endpointList) > 0 {
+		sql := "SELECT * FROM alarm WHERE status='firing' AND endpoint IN ('"+strings.Join(endpointList, "','")+"') ORDER BY id DESC"
+		err,result = QueryAlarmBySql(sql, []interface{}{})
+	}
+	return err,result
 }
