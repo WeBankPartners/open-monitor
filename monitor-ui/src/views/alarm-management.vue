@@ -21,7 +21,7 @@
             <Tag color="error"><span style="font-size:14px">High:{{this.high}}</span></Tag>
             <div v-show="alramEmpty" style="display:none" id="elId" class="echart"></div>
             <div v-if="!alramEmpty"  class="alarm-empty">
-              <span style="font-size:14px">{{$t('alarmEmpty')}}</span>
+              <span style="font-size:14px"></span>
             </div>
           </div>
         </div>
@@ -51,7 +51,8 @@
         <div class="alarm-list">
           <template v-for="(alarmItem, alarmIndex) in resultData">
             <section :key="alarmIndex" class="alarm-item c-dark-exclude-color" :class="'alarm-item-border-'+ alarmItem.s_priority">
-              <i class="fa fa-times" @click="deleteConfirmModal(alarmItem)" aria-hidden="true"></i>
+              <i class="fa fa-times fa-operate" @click="deleteConfirmModal(alarmItem)" aria-hidden="true"></i>
+              <i class="fa fa-bar-chart fa-operate" v-if="!alarmItem.is_custom" @click="goToEndpointView(alarmItem)" aria-hidden="true"></i>
               <ul>
                 <li>
                   <label class="col-md-2">{{$t('field.endpoint')}}:</label>
@@ -126,6 +127,13 @@ export default {
     })
   },
   methods: {
+    goToEndpointView (alarmItem) {
+      const endpointObject = {
+        option_value: alarmItem.endpoint,
+        type: alarmItem.endpoint.split('_').slice(-1)[0]
+      }
+      this.$router.push({ name: 'endpointView',params: endpointObject})
+    },
     getAlarm() {
       let params = {}
       let keys = Object.keys(this.filters)
@@ -390,7 +398,7 @@ label {
   content: "\F102";
 }
 
-.fa-times {
+.fa-operate {
   margin: 8px;
   float: right;
   font-size: 16px;
