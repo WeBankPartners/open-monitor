@@ -3,8 +3,9 @@ package models
 type ProcessMonitorTable struct {
 	Id  int  `json:"id"`
 	EndpointId  int  `json:"endpoint_id"`
-	Name  string  `json:"name"`
+	ProcessName  string  `json:"process_name"`
 	DisplayName  string  `json:"display_name"`
+	Tags         string  `json:"tags"`
 }
 
 type ProcessUpdateDto struct {

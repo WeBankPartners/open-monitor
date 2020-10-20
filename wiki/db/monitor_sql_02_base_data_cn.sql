@@ -96,3 +96,8 @@ CREATE TABLE `rel_role_custom_dashboard` (
   PRIMARY KEY (`id`)
 ) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 #@v1.7.1.20-end@;
+
+#@v1.8.0.3-begin@;
+ALTER TABLE process_monitor CHANGE COLUMN `name` `tags` VARCHAR(255) DEFAULT '';
+ALTER TABLE process_monitor ADD COLUMN process_name VARCHAR(255) DEFAULT '';
+#@v1.8.0.3-end@;
