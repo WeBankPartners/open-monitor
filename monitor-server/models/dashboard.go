@@ -261,3 +261,13 @@ type CustomDashboardRoleDto struct {
 	DashboardId  int  `json:"dashboard_id" binding:"required"`
 	RoleId  []int  `json:"role_id"`
 }
+
+type CustomDashboardConfigObj struct {
+	Query  []*CustomDashboardConfigQueryObj  `json:"query"`
+}
+
+type CustomDashboardConfigQueryObj struct {
+	Endpoint string  `json:"endpoint"`
+	MetricLabel  string  `json:"metricLabel"`
+	Metric  string  `json:"metric"`
+}
