@@ -176,5 +176,8 @@
     "endpoint": "Endpoint",
     "alarmFiring": "Alarm Firing",
     "alarmRecover": "Alarm Recover"
-  }
+  },
+  "alarmEmpty": "WoW !!No alarm!",
+  "details": "Details",
+  "visualAlarm": "Visual Alarm Display"
 }
