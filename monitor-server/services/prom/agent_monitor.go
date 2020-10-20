@@ -97,7 +97,6 @@ func StartSyncAgentManagerJob(param []*m.AgentManagerTable, url string)  {
 	time.Sleep(time.Duration(timeStartValue.Unix()+86400-time.Now().Unix()) * time.Second)
 	t := time.NewTicker(time.Duration(intervalSecond) * time.Second).C
 	for {
-		<- t
 		resp, err := requestAgentMonitor(param, url, "init")
 		if err != nil {
 			log.Logger.Error("Init agent manager, request error", log.Error(err))
@@ -107,6 +106,7 @@ func StartSyncAgentManagerJob(param []*m.AgentManagerTable, url string)  {
 		}else{
 			log.Logger.Warn("Init agent manager, response error", log.String("message", resp.Message))
 		}
+		<- t
 	}
 }
 
