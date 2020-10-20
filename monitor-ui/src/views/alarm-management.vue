@@ -19,7 +19,10 @@
             <Tag color="success"><span style="font-size:14px">Low:{{this.low}}</span></Tag>
             <Tag color="warning"><span style="font-size:14px">Medium:{{this.mid}}</span></Tag>
             <Tag color="error"><span style="font-size:14px">High:{{this.high}}</span></Tag>
-            <div id="elId" class="echart"></div>
+            <div v-show="alramEmpty" style="display:none" id="elId" class="echart"></div>
+            <div v-if="!alramEmpty"  class="alarm-empty">
+              <span style="font-size:14px">{{$t('alarmEmpty')}}</span>
+            </div>
           </div>
         </div>
       </transition>
@@ -31,7 +34,7 @@
         </div>
         <section style="margin-left:8px" class="c-dark-exclude-color">
           <div style="display: inline-block;margin-right:16px">
-            <span>可视化告警展示：</span>
+            <span>{{$t('visualAlarm')}}：</span>
             <i-switch size="large" v-model="showGraph">
               <span slot="open">ON</span>
               <span slot="close">OFF</span>
@@ -70,7 +73,7 @@
                   <label class="col-md-2">{{$t('tableKey.start')}}:</label><span>{{alarmItem.start_string}}</span>
                 </li>
                 <li>
-                  <label class="col-md-2">详细信息:</label>
+                  <label class="col-md-2">{{$t('details')}}:</label>
                   <span>
                     <Tag color="default">{{$t('tableKey.start_value')}}:{{alarmItem.start_value}}</Tag>
                     <Tag color="default" v-if="alarmItem.s_cond">{{$t('tableKey.threshold')}}:{{alarmItem.s_cond}}</Tag>
@@ -96,6 +99,7 @@ export default {
   data() {
     return {
       showGraph: true,
+      alramEmpty: true,
       myChart: null,
       isShowWarning: false,
       interval: null,
@@ -139,6 +143,7 @@ export default {
         this.low = responseData.low
         this.mid = responseData.mid
         this.high = responseData.high
+        this.alramEmpty = !!this.low || !!this.mid ||!!this.high
         this.showSunburst(responseData)
       }, {isNeedloading: false})
     },
@@ -328,6 +333,13 @@ export default {
   height: ~"calc(100vh - 180px)";
   width: 550px;
   background:#ffffff;
+}
+.alarm-empty {
+  height: ~"calc(100vh - 180px)";
+  width: 550px;
+  text-align: center;
+  padding:50px;
+  color: #2d8cf0;
 }
 .flex-container {
   display: flex;
