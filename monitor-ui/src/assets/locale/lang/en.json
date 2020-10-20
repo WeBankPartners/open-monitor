@@ -180,7 +180,7 @@
   },
   "alarmEmpty": "WoW !!No alarm!",
   "details": "Details",
-  "visualAlarm": "Visual Alarm Display"
+  "visualAlarm": "Visual Alarm Display",
   "processName": "Process Name",
   "processTags": "Process Tags",
   "displayName": "Display Name"
