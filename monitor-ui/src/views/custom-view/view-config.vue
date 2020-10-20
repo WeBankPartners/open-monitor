@@ -3,9 +3,17 @@
   <div class=" ">
     <Title :title="$t('menu.templateManagement')"></Title>
     <header>
-      <div class="header-name" >
+      <div class="header-name">
         <i class="fa fa-th-large fa-18" aria-hidden="true"></i>
-        <span> {{$route.params.name}}</span>
+        <template v-if="isEditPanal">
+          <Input v-model.trim="panalName" style="width: 100px" type="text"></Input>
+          <Icon class="panal-edit-icon" @click="savePanalEdit" type="md-checkmark" />
+          <Icon class="panal-edit-icon" @click="canclePanalEdit" type="md-close" />
+        </template>
+        <template v-else>
+          <span> {{panalName}}</span>
+          <Icon class="panal-edit-icon" @click="isEditPanal=true" type="md-create" />
+        </template>
       </div>
       <div class="search-container">
           <div>
@@ -132,6 +140,8 @@ export default {
   name: '',
   data() {
     return {
+      isEditPanal: false,
+      panalName: this.$route.params.name,
       viewCondition: {
         timeTnterval: -1800,
         dateRange: ['', ''],
@@ -322,17 +332,29 @@ export default {
         })
       })
       let params = {
-        name: this.$route.params.name,
+        name: this.panalName,
         id: this.$route.params.id,
         cfg: JSON.stringify(res)
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.template.save, params, () => {
+        this.isEditPanal = false
         this.$Message.success(this.$t('tips.success'))
       })
     },
     goBack () {
       this.$router.push({name:'viewConfigIndex'})
     },
+    savePanalEdit () {
+      if (!this.panalName) {
+        this.$Message.warning(this.$t('tips.required'))
+        return
+      }
+      this.saveEdit()
+    },
+    canclePanalEdit () {
+      this.isEditPanal = false
+      this.panalName = this.$route.params.name
+    }
   },
   components: {
     GridLayout: VueGridLayout.GridLayout,
@@ -344,6 +366,10 @@ export default {
 </script>
 
 <style scoped lang="less">
+.panal-edit-icon {
+  margin-left:4px;
+  padding: 4px;
+}
 .header-name {
   font-size: 16px; 
 }
