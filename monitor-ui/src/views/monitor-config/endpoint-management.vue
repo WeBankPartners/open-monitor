@@ -554,7 +554,6 @@ export default {
         endpoint_id: this.dbEndpointId
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.endpointManagement.db.dbMonitor, params, responseData => {
-        console.log(responseData)
         this.$refs.dataMonitor.managementData(responseData)
         this.dbMonitorData = responseData
         this.isShowDataMonitor = true

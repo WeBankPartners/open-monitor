@@ -180,8 +180,13 @@
   },
   "alarmEmpty": "WoW !! 无任何报警！",
   "details": "详细信息",
-  "visualAlarm": "可视化告警展示"
+  "visualAlarm": "可视化告警展示",
   "processName": "进程名",
   "processTags": "进程标签",
-  "displayName": "别名"
+  "displayName": "别名",
+  "alarmHistory": "历史告警",
+  "startDatePlaceholder": "请选择开始时间",
+  "endDatePlaceholder": "请选择结束时间",
+  "timeIntervalWarn": "时间区间选择错误",
+  "realTimeAlarm": "实时告警"
 }
