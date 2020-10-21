@@ -39,12 +39,14 @@ func StartTask() {
 
 func doTask()  {
 	// 清空上次数据，把resultMap数据保存到lastResultMap
-	ClearRetryIp()
+	//ClearRetryIp()
 	ClearSuccessIp()
-	ClearRetryMap()
-	for k,v := range readResultMap(){
-		lastResultMap[k] = v
-	}
+	//ClearRetryMap()
+	lastResultMap := readResultMap()
+	//lastResultMap := make(map[string]funcs.PingResultObj)
+	//for k,v := range readResultMap(){
+	//	lastResultMap[k] = v
+	//}
 	clearResultMap()
 	log.Println("start")
 	startTime := time.Now()
@@ -70,7 +72,6 @@ func doTask()  {
 		}
 		wg.Add(1)
 		go func(ip string,timeout int,lv int,le bool) {
-			defer wg.Done()
 			d,ut,isConfused := StartPing(ip, timeout)
 			if isConfused {
 				if le == true && lv == 1 {
@@ -81,6 +82,7 @@ func doTask()  {
 			}
 			writeResultMap(ip ,d, ut)
 			funcs.DebugLog("ping %s result %d ", ip, d)
+			wg.Done()
 		}(ip,timeout,lastValue,lastExist)
 	}
 	wg.Wait()
