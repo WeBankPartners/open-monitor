@@ -2,6 +2,7 @@
   <div class="" style="display:inline-block">
    <ul class="search-ul">
       <li class="search-li">
+        {{endpoint}}
         <Select
           style="width:300px;"
           v-model="endpoint"
@@ -107,7 +108,18 @@ export default {
   mounted() {
     this.getEndpointList('.')
     if (!this.$root.$validate.isEmpty_reset(this.$route.params)) {
-      this.endpoint = this.$route.params.option_value
+      const option_value = this.$route.params.option_value
+      const option_value_split = option_value.split('_')
+      const option_text = option_value_split.slice(0, option_value_split.length - 1).join('_')
+      this.endpointList = [{
+        active: false,
+        id: '',
+        option_text: option_text,
+        option_type_name: this.$route.params.type,
+        option_value: option_value,
+        type: this.$route.params.type
+      }]
+      this.endpoint = option_value
       this.endpointObject = this.$route.params
     }
     if (this.$root.$validate.isEmpty_reset(this.$route.params) && !this.$root.$validate.isEmpty_reset(this.$route.query)) {
@@ -153,13 +165,13 @@ export default {
     pickSecondDate(data) {
       this.compareSecondDate = data
     },
-    getEndpointList(query) {
+    async getEndpointList(query) {
       let params = {
         search: query,
         page: 1,
         size: 1000
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.resourceSearch.api, params, (responseData) => {
+      await this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.resourceSearch.api, params, (responseData) => {
         this.endpointList = responseData
       })
     },
