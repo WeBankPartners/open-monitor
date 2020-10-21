@@ -1239,15 +1239,24 @@ func QueryHistoryAlarm(param m.QueryHistoryAlarmParam) (err error,result m.Alarm
 	if startString == "" || endString == "" {
 		return fmt.Errorf("param start or end format fail"),result
 	}
-	var sql string
+	var sql,whereSql string
+	if param.Endpoint != "" {
+		whereSql += fmt.Sprintf(" AND endpoint='%s' ", param.Endpoint)
+	}
+	if param.Priority != "" {
+		whereSql += fmt.Sprintf(" AND s_priority='%s' ", param.Priority)
+	}
+	if param.Metric != "" {
+		whereSql += fmt.Sprintf(" AND s_metric='%s' ", param.Metric)
+	}
 	if param.Filter == "all" {
-		sql = "SELECT * FROM alarm WHERE start<'"+endString+"' OR end>='"+startString+"' ORDER BY id DESC"
+		sql = "SELECT * FROM alarm WHERE (start<'"+endString+"' OR end>='"+startString+"') "+whereSql+" ORDER BY id DESC"
 	}
 	if param.Filter == "start" {
-		sql = "SELECT * FROM alarm WHERE start>='"+startString+"' AND start<'"+endString+"' ORDER BY id DESC"
+		sql = "SELECT * FROM alarm WHERE start>='"+startString+"' AND start<'"+endString+"' "+whereSql+" ORDER BY id DESC"
 	}
 	if param.Filter == "end" {
-		sql = "SELECT * FROM alarm WHERE end>='"+startString+"' AND end<'"+endString+"' ORDER BY id DESC"
+		sql = "SELECT * FROM alarm WHERE end>='"+startString+"' AND end<'"+endString+"' "+whereSql+" ORDER BY id DESC"
 	}
 	err,result = QueryAlarmBySql(sql, []interface{}{})
 	return err,result
