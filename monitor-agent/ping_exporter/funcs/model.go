@@ -22,6 +22,7 @@ func DebugLog(msg string, v ...interface{}){
 }
 
 type PingResultObj struct {
+	Ip  string
 	UpDown  int
 	UseTime float64
 }
