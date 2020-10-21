@@ -180,8 +180,13 @@
   },
   "alarmEmpty": "WoW !!No alarm!",
   "details": "Details",
-  "visualAlarm": "Visual Alarm Display"
+  "visualAlarm": "Visual Alarm Display",
   "processName": "Process Name",
   "processTags": "Process Tags",
-  "displayName": "Display Name"
+  "displayName": "Display Name",
+  "alarmHistory": "History alarm",
+  "startDatePlaceholder": "Start Date",
+  "endDatePlaceholder": "End Date",
+  "timeIntervalWarn": "Wrong Time Interval Selection",
+  "realTimeAlarm": "Real-time Alarm"
 }
