@@ -256,7 +256,14 @@ export default {
                   radius: [0, '30%'],
                   center: ['50%', '40%'],
                   label: {
-                      position: 'inner'
+                    formatter: '{b}:{c}',
+                    position: 'inner',
+                    rich: {
+                      b: {
+                        fontSize: 16,
+                        lineHeight: 33
+                      }
+                    }
                   },
                   labelLine: {
                       show: false
