@@ -44,6 +44,7 @@
           <template v-for="(filterItem, filterIndex) in filtersForShow">
             <Tag color="success" type="border" closable @on-close="exclude(filterItem.key)" :key="filterIndex">{{filterItem.key}}：{{filterItem.value}}</Tag>
           </template>
+          <button v-if="filtersForShow.length" @click="clearAll" class="btn btn-small btn-cancel-f">{{$t('clearAll')}}</button>
           <template v-if="!resultData.length">
             <Tag color="primary">{{$t('table.noDataTip')}}！</Tag>
           </template>
@@ -334,6 +335,10 @@ export default {
         // this.$root.$eventBus.$emit('hideConfirmModal')
         this.getAlarm()
       })
+    },
+    clearAll () {
+      this.filters = []
+      this.getAlarm()
     },
     exclude (key) {
       delete this.filters[key]
