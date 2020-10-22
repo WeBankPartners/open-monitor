@@ -2,7 +2,6 @@
   <div class="" style="display:inline-block">
    <ul class="search-ul">
       <li class="search-li">
-        {{endpoint}}
         <Select
           style="width:300px;"
           v-model="endpoint"
