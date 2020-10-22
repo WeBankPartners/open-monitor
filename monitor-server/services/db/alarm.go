@@ -1227,6 +1227,7 @@ func QueryAlarmBySql(sql string,params []interface{}) (err error,result m.AlarmP
 		}else if v.SPriority == "low" {
 			result.Low += 1
 		}
+		v.StartString = v.Start.Format(m.DatetimeFormat)
 	}
 	result.Data = alarmQuery
 	return err,result
