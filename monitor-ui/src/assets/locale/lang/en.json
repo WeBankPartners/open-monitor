@@ -188,5 +188,6 @@
   "startDatePlaceholder": "Start Date",
   "endDatePlaceholder": "End Date",
   "timeIntervalWarn": "Wrong Time Interval Selection",
-  "realTimeAlarm": "Real-time Alarm"
+  "realTimeAlarm": "Real-time Alarm",
+  "clearAll": "Clear All"
 }
