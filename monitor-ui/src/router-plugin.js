@@ -1,5 +1,6 @@
 
 import alarmManagement from "@/views/alarm-management";
+import alarmHistory from "@/views/alarm-history";
 import dashboard from "@/views/dashboard";
 import endpointView from "@/views/endpoint-view";
 import monitorConfigIndex from "@/views/monitor-config/monitor-config-index";
@@ -25,6 +26,13 @@ const router = [
     title: "告警管理",
     meta: {},
     component: alarmManagement
+  },
+  {
+    path: "/alarmHistory",
+    name: "alarmHistory",
+    title: "告警历史",
+    meta: {},
+    component: alarmHistory
   },
   {
     path: "/dashboard",
