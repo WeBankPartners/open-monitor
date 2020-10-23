@@ -38,7 +38,7 @@
         </li>
         <li class="filter-li">
           <button class="btn btn-sm btn-cancel-f" @click="realTimeAlarm">
-            实时告警
+            {{$t('realTimeAlarm')}}
           </button>
         </li>
       </ul>
@@ -65,6 +65,7 @@
           <template v-for="(filterItem, filterIndex) in filtersForShow">
             <Tag color="success" type="border" closable @on-close="exclude(filterItem.key)" :key="filterIndex">{{filterItem.key}}：{{filterItem.value}}</Tag>
           </template>
+          <button v-if="filtersForShow.length" @click="clearAll" class="btn btn-small btn-cancel-f">{{$t('clearAll')}}</button>
         </section>
         <div class="alarm-list">
           <template v-for="(alarmItem, alarmIndex) in resultData">
@@ -279,7 +280,14 @@ export default {
                   radius: [0, '30%'],
                   center: ['50%', '40%'],
                   label: {
-                      position: 'inner'
+                    formatter: '{b}:{c}',
+                    position: 'inner',
+                    rich: {
+                      b: {
+                        fontSize: 16,
+                        lineHeight: 33
+                      }
+                    }
                   },
                   labelLine: {
                       show: false
@@ -310,7 +318,6 @@ export default {
               }
           ]
       }
-
       this.myChart.setOption(option)
       this.myChart.on('click', params => {
         this.addParams(params.data.filterType, params.data.name)
@@ -321,6 +328,10 @@ export default {
     },
     addParams (key, value) {
       this.filters[key] = value
+      this.getAlarm()
+    },
+    clearAll () {
+      this.filters = []
       this.getAlarm()
     },
     exclude (key) {
