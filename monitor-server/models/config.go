@@ -208,6 +208,8 @@ func InitConfig(cfg string) {
 		log.Fatalln("parse config file:", cfg, "fail:", err)
 	}
 
+	c.Store.Pwd = DecryptRsa(c.Store.Pwd)
+	c.ArchiveMysql.Password = DecryptRsa(c.ArchiveMysql.Password)
 	lock.Lock()
 	defer lock.Unlock()
 
@@ -218,7 +220,7 @@ func InitConfig(cfg string) {
 			break
 		}
 	}
-	CoreJwtKey = os.Getenv("JWT_SIGNING_KEY")
+	CoreJwtKey = DecryptRsa(os.Getenv("JWT_SIGNING_KEY"))
 	FiringCallback = os.Getenv("ALARM_FIRING_CALLBACK")
 	RecoverCallback = os.Getenv("ALARM_RECOVER_CALLBACK")
 	log.Println("read config file:", cfg, "successfully")
