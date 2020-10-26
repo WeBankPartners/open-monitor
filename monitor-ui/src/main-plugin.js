@@ -34,7 +34,8 @@ const implicitRoute = {
   'viewConfig': {'zh-CN': '监控', 'en-US': 'Monitor'},
   'editLineView': {'zh-CN': '监控', 'en-US': 'Monitor'},
   'editPieView': {'zh-CN': '监控', 'en-US': 'Monitor'},
-  'viewChart': {'zh-CN': '监控', 'en-US': 'Monitor'}
+  'viewChart': {'zh-CN': '监控', 'en-US': 'Monitor'},
+  'alarmHistory': {'zh-CN': '监控', 'en-US': 'Monitor'}
 }
 window.addImplicitRoute(implicitRoute)
 window.addRoutersWithoutPermission(routerP, 'open-monitor')
