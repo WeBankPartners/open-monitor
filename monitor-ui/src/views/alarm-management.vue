@@ -48,7 +48,7 @@
           <template v-if="!resultData.length">
             <Tag color="primary">{{$t('table.noDataTip')}}！</Tag>
           </template>
-          <!-- <button @click="alarmHistory" style="float: right;margin-right: 25px;" class="btn btn-sm btn-cancel-f">{{$t('alarmHistory')}}</button> -->
+          <button @click="alarmHistory" style="float: right;margin-right: 25px;" class="btn btn-sm btn-cancel-f">{{$t('alarmHistory')}}</button>
         </section>
         <div class="alarm-list">
           <template v-for="(alarmItem, alarmIndex) in resultData">
