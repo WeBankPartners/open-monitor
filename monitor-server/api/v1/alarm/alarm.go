@@ -323,15 +323,34 @@ func CloseALarm(c *gin.Context)  {
 
 func OpenAlarmApi(c *gin.Context)  {
 	var param m.OpenAlarmRequest
-	if err := c.ShouldBindJSON(&param); err==nil {
-		err = db.SaveOpenAlarm(param)
+	contentType := c.Request.Header.Get("Content-Type")
+	if strings.Contains(contentType, "x-www-form-urlencoded") {
+		var requestObj m.OpenAlarmObj
+		requestObj.AlertInfo = c.PostForm("alert_info")
+		requestObj.AlertIp = c.PostForm("alert_ip")
+		requestObj.AlertLevel = c.PostForm("alert_level")
+		requestObj.AlertObj = c.PostForm("alert_obj")
+		requestObj.AlertTitle = c.PostForm("alert_title")
+		requestObj.RemarkInfo = c.PostForm("remark_info")
+		requestObj.SubSystemId = c.PostForm("sub_system_id")
+		param.AlertList = []m.OpenAlarmObj{requestObj}
+		err := db.SaveOpenAlarm(param)
 		if err != nil {
 			mid.ReturnHandleError(c, err.Error(), err)
-		}else{
+		} else {
 			mid.ReturnSuccess(c)
 		}
-	}else{
-		mid.ReturnValidateError(c, err.Error())
+	}else {
+		if err := c.ShouldBindJSON(&param); err == nil {
+			err = db.SaveOpenAlarm(param)
+			if err != nil {
+				mid.ReturnHandleError(c, err.Error(), err)
+			} else {
+				mid.ReturnSuccess(c)
+			}
+		} else {
+			mid.ReturnValidateError(c, err.Error())
+		}
 	}
 }
 
