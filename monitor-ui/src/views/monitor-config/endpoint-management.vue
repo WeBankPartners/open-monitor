@@ -10,11 +10,7 @@
         <label class="col-md-2 label-name">{{$t('field.endpoint')}}:</label>
         <Select v-model="modelConfig.slotConfig.resourceSelected" multiple filterable style="width:300px">
           <Option v-for="item in modelConfig.slotConfig.resourceOption" :value="item.id" :key="item.id">
-            <Tag color="cyan" v-if="item.option_value.split(':')[1] == 'host'">host</Tag>
-            <Tag color="blue" v-if="item.option_value.split(':')[1] == 'mysql'">mysql</Tag>
-            <Tag color="geekblue" v-if="item.option_value.split(':')[1] == 'redis'">redis</Tag>
-            <Tag color="purple" v-if="item.option_value.split(':')[1] == 'tomcat'">tomcat</Tag>
-            {{ item.option_text }}
+            {{ item.guid }}
           </Option>
         </Select>
       </div>
@@ -601,10 +597,12 @@ export default {
     add() {
       this.modelConfig.slotConfig.resourceOption = []
       this.modelConfig.slotConfig.resourceSelected = []
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.resourceSearch.api, {
-        search: '.'
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', 'alarm/endpoint/list', {
+        search: '.',
+        page: 1,
+        size: 300
       }, responseData => {
-        responseData.forEach((item) => {
+        responseData.data.forEach((item) => {
           if (item.id !== -1) {
             this.modelConfig.slotConfig.resourceOption.push(item)
           }
@@ -615,7 +613,7 @@ export default {
     addPost() {
       let params = {
         grp: this.groupMsg.id,
-        endpoints: this.modelConfig.slotConfig.resourceSelected,
+        endpoints: this.modelConfig.slotConfig.resourceSelected.map(Number),
         operation: 'add'
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.endpointManagement.update.api, params, () => {
