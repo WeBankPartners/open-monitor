@@ -32,39 +32,44 @@
           </DatePicker>
         </div>
       </header>
-      <div>
-        <grid-layout
-          :layout.sync="layoutData"
-          :col-num="12"
-          :row-height="30"
-          :is-draggable="false"
-          :is-resizable="false"
-          :is-mirrored="false"
-          :vertical-compact="true"
-          :use-css-transforms="true"
-          >
-          <grid-item v-for="(item,index) in layoutData"
-            class="c-dark"
-            :x="item.x"
-            :y="item.y"
-            :w="item.w"
-            :h="item.h"
-            :i="item.i"
-            :key="index"
-            @resized="resizeEvent">   
-            <div class="c-dark" style="display:flex;justify-content:flex-end;padding:0 32px;">
-              <div class="header-grid header-grid-name">
-                {{item.i}}
+      <div style="display:flex">
+        <div class="grid-style">
+          <grid-layout
+            :layout.sync="layoutData"
+            :col-num="12"
+            :row-height="30"
+            :is-draggable="false"
+            :is-resizable="false"
+            :is-mirrored="false"
+            :vertical-compact="true"
+            :use-css-transforms="true"
+            >
+            <grid-item v-for="(item,index) in layoutData"
+              class="c-dark"
+              :x="item.x"
+              :y="item.y"
+              :w="item.w"
+              :h="item.h"
+              :i="item.i"
+              :key="index"
+              @resized="resizeEvent">   
+              <div class="c-dark" style="display:flex;justify-content:flex-end;padding:0 32px;">
+                <div class="header-grid header-grid-name">
+                  {{item.i}}
+                </div>
               </div>
-            </div>
-            <section>
-              <div v-for="(chartInfo,chartIndex) in item._activeCharts" :key="chartIndex">
-                <CustomChart v-if="['line','bar'].includes(chartInfo.chartType)" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomChart>
-                <CustomPieChart v-if="chartInfo.chartType === 'pie'" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomPieChart>
-              </div>
-            </section>
-          </grid-item>
-        </grid-layout>
+              <section>
+                <div v-for="(chartInfo,chartIndex) in item._activeCharts" :key="chartIndex">
+                  <CustomChart v-if="['line','bar'].includes(chartInfo.chartType)" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomChart>
+                  <CustomPieChart v-if="chartInfo.chartType === 'pie'" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomPieChart>
+                </div>
+              </section>
+            </grid-item>
+          </grid-layout>
+        </div>
+        <div v-show="showAlarm" class="alarm-style">
+          <ViewConfigAlarm ref="cutsomViewId"></ViewConfigAlarm>
+        </div>
       </div>
     </section>
   </div>
@@ -76,6 +81,7 @@ import {dataPick, autoRefreshConfig} from '@/assets/config/common-config'
 import {resizeEvent} from '@/assets/js/gridUtils.ts'
 import CustomChart from '@/components/custom-chart'
 import CustomPieChart from '@/components/custom-pie-chart'
+import ViewConfigAlarm from '@/views/custom-view/view-config-alarm'
 export default {
   name: '',
   data() {
@@ -93,7 +99,10 @@ export default {
       layoutData: [
         //   {'x':0,'y':0,'w':2,'h':2,'i':'0'},
         //   {'x':1,'y':1,'w':2,'h':2,'i':'1'},
-      ]
+      ],
+
+      showAlarm: true, // 显示告警信息
+      cutsomViewId: null
     }
   },
   mounted() {
@@ -123,6 +132,8 @@ export default {
         }else {
           this.viewData = JSON.parse(responseData.cfg) 
           this.initPanals()
+          this.cutsomViewId = responseData.id
+          this.$refs.cutsomViewId.getAlarm(this.cutsomViewId, this.viewCondition)
         }
       })
     },
@@ -159,12 +170,22 @@ export default {
     GridLayout: VueGridLayout.GridLayout,
     GridItem: VueGridLayout.GridItem,
     CustomChart,
-    CustomPieChart
+    CustomPieChart,
+    ViewConfigAlarm
   },
 }
 </script>
 
 <style scoped lang="less">
+.grid-style {
+  width: 100%;
+  display: inline-block;
+}
+.alarm-style {
+  width: 800px;
+  display: inline-block;
+}
+
 header {
   margin: 16px 8px;
 }

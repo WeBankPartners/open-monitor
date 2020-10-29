@@ -56,7 +56,6 @@
           </div>
       </div>
     </header>
-    <!-- <span @click="showAlarm=!showAlarm">123412341234</span> -->
     <div style="display:flex">
       <div class="grid-style">
         <grid-layout 
@@ -236,7 +235,6 @@ export default {
       }
     },
     initPanals () {
-      console.log(123123)
       let tmp = []
       this.viewData.forEach((item) => {
         let params = []
