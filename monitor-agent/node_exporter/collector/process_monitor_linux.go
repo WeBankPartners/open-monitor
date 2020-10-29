@@ -131,7 +131,7 @@ func (c *processCache) start()  {
 				for _,vv := range processUsedList {
 					nameMatch := ""
 					for _,nameSplitObj := range nameSplit {
-						if vv.Name == nameSplitObj {
+						if vv.Name == strings.ToLower(nameSplitObj) {
 							nameMatch = nameSplitObj
 							break
 						}
@@ -232,7 +232,7 @@ func (c *processCache) checkNum(names []string) []int {
 		for _,vv := range processUseList {
 			nameMatch := ""
 			for _,nameSplitObj := range nameSplit {
-				if vv.Name == nameSplitObj {
+				if vv.Name == strings.ToLower(nameSplitObj) {
 					nameMatch = nameSplitObj
 					break
 				}
@@ -325,7 +325,7 @@ func getProcessUsedResource() []processUsedResource {
 							tmpProcessObj.Pid = tmpPid
 						}
 					}else if tmpIndex == 2 {
-						tmpProcessObj.Name = vv
+						tmpProcessObj.Name = strings.ToLower(vv)
 					}else if tmpIndex == 3 {
 						tmpCpu,_ := strconv.ParseFloat(vv, 64)
 						tmpProcessObj.Cpu = tmpCpu
