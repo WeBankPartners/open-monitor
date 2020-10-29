@@ -162,9 +162,10 @@ func UpdateGrpEndpoint(param m.GrpEndpointParamNew) (error,bool) {
 		for _,v := range param.Endpoints {
 			needAdd = true
 			for _,vv := range grpEndpoints {
-				if v == vv.EndpointId {}
-				needAdd = false
-				break
+				if v == vv.EndpointId {
+					needAdd = false
+					break
+				}
 			}
 			if needAdd {
 				insertSql += fmt.Sprintf("(%d,%d),", param.Grp, v)
