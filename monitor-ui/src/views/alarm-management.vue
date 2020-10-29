@@ -345,7 +345,7 @@ export default {
       this.getAlarm()
     },
     alarmHistory () {
-      this.$router.push('/alarmHistory')
+      this.$router.push({name: 'alarmHistory'})
     }
   },
   components: {},
