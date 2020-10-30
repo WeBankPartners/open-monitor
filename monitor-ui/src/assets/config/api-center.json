@@ -137,6 +137,8 @@
     },
     "template": {
         "list": "dashboard/custom/list",
+        "portalConfig": "dashboard/custom/main/list",
+        "singleDash": "dashboard/custom/get",
         "get": "dashboard/custom/main/get",
         "templateSet": "dashboard/custom/main/set",
         "save": "dashboard/custom/save",
