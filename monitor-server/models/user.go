@@ -55,6 +55,7 @@ type RoleTable struct {
 	Parent  int  `json:"parent"`
 	Creator  string  `json:"creator"`
 	Created  time.Time  `json:"created"`
+	MainDashboard  int  `json:"main_dashboard"`
 }
 
 type RoleQuery struct {

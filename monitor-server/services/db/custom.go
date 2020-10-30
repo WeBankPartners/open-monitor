@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"strings"
 	"encoding/json"
+	"strconv"
 )
 
-func ListCustomDashboard(user string,coreToken m.CoreJwtToken) (err error,result []*m.CustomDashboardTable) {
+func ListCustomDashboard(user string,coreToken m.CoreJwtToken) (err error,result []*m.CustomDashboardQuery) {
 	var sql string
 	roleList := coreToken.Roles
 	if user == "" {
@@ -27,6 +28,19 @@ func ListCustomDashboard(user string,coreToken m.CoreJwtToken) (err error,result
 		SELECT * FROM custom_dashboard WHERE create_user='` + user + `'
 		) t ORDER BY t.id`
 	err = x.SQL(sql).Find(&result)
+	if err != nil {
+		return err,result
+	}
+	var roleTables []*m.RoleTable
+	x.SQL("SELECT * FROM role WHERE name IN ('" + roleString + "')").Find(&roleTables)
+	for _,v := range result {
+		for _,vv := range roleTables {
+			if v.Id == vv.MainDashboard {
+				v.MainPage = append(v.MainPage, vv.Name)
+				v.Main = 1
+			}
+		}
+	}
 	return err,result
 }
 
@@ -118,4 +132,50 @@ func GetCustomDashboardAlarms(id int) (err error,result m.AlarmProblemQueryResul
 		err,result = QueryAlarmBySql(sql, []interface{}{})
 	}
 	return err,result
+}
+
+func ListMainPageRole(user string,roleList []string) (err error,result []*m.MainPageRoleQuery) {
+	var customDashboards []*m.CustomDashboardQuery
+	roleString := strings.Join(roleList, "','")
+	sql := `SELECT * FROM (
+		SELECT DISTINCT t1.* FROM custom_dashboard t1 LEFT JOIN rel_role_custom_dashboard t2 ON t1.id=t2.custom_dashboard_id LEFT JOIN role t3 ON t2.role_id=t3.id WHERE t3.name IN ('` + roleString + `')
+		UNION
+		SELECT * FROM custom_dashboard WHERE create_user='` + user + `'
+		) t ORDER BY t.id`
+	err = x.SQL(sql).Find(&customDashboards)
+	if err != nil {
+		return err,result
+	}
+	var options []*m.OptionModel
+	options = append(options, &m.OptionModel{Id:0,OptionValue:"0",OptionText:"null"})
+	for _,v := range customDashboards {
+		options = append(options, &m.OptionModel{Id:v.Id,OptionValue:strconv.Itoa(v.Id),OptionText:v.Name})
+	}
+	var roleTables []*m.RoleTable
+	x.SQL("SELECT * FROM role WHERE name IN ('" + roleString + "')").Find(&roleTables)
+	for _,v := range roleTables {
+		var tmpMainName string
+		for _,vv := range options {
+			if v.MainDashboard == vv.Id {
+				tmpMainName = vv.OptionText
+				break
+			}
+		}
+		result = append(result, &m.MainPageRoleQuery{RoleName:v.Name,MainPageId:v.MainDashboard,MainPageName:tmpMainName,Options:options})
+	}
+	return err,result
+}
+
+func UpdateMainPageRole(param []m.MainPageRoleQuery) error {
+	var actions []*Action
+	for _,v := range param {
+		var tmpAction Action
+		var tmpParam []interface{}
+		tmpAction.Sql = "UPDATE role SET main_dashboard=? WHERE name=?"
+		tmpParam = append(tmpParam, v.MainPageId)
+		tmpParam = append(tmpParam, v.RoleName)
+		tmpAction.Param = tmpParam
+		actions = append(actions, &tmpAction)
+	}
+	return Transaction(actions)
 }
