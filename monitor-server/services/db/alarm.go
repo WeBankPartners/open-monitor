@@ -619,7 +619,7 @@ func GetAlarms(query m.AlarmTable,limit int,extLogMonitor,extOpenAlarm bool) (er
 			v.IsLogMonitor = true
 		}
 	}
-	if extOpenAlarm {
+	if extOpenAlarm && query.SMetric == "" {
 		for _, v := range GetOpenAlarm() {
 			result = append(result, v)
 		}
