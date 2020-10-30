@@ -247,6 +247,26 @@ type CustomDashboardTable struct {
 	UpdateAt  time.Time  `json:"update_at"`
 }
 
+type CustomDashboardQuery struct {
+	Id  int  `json:"id"`
+	Name  string  `json:"name"`
+	PanelsGroup  int  `json:"panels_group"`
+	Cfg  string  `json:"cfg"`
+	Main  int  `json:"main"`
+	CreateUser  string  `json:"create_user"`
+	UpdateUser  string  `json:"update_user"`
+	CreateAt  time.Time  `json:"create_at"`
+	UpdateAt  time.Time  `json:"update_at"`
+	MainPage  []string  `json:"main_page"`
+}
+
+type MainPageRoleQuery struct {
+	RoleName  string  `json:"role_name"`
+	MainPageId  int  `json:"main_page_id"`
+	MainPageName string  `json:"main_page_name"`
+	Options  []*OptionModel  `json:"options"`
+}
+
 type UpdateChartTitleParam struct {
 	ChartId  int  `json:"chart_id" binding:"required"`
 	Metric  string  `json:"metric"`
