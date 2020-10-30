@@ -34,6 +34,7 @@ func ListCustomDashboard(user string,coreToken m.CoreJwtToken) (err error,result
 	var roleTables []*m.RoleTable
 	x.SQL("SELECT * FROM role WHERE name IN ('" + roleString + "')").Find(&roleTables)
 	for _,v := range result {
+		v.Main = 0
 		v.MainPage = []string{}
 		for _,vv := range roleTables {
 			if v.Id == vv.MainDashboard {
