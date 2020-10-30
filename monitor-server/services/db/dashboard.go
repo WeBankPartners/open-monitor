@@ -388,7 +388,9 @@ func GetEndpointMetric(id int) (err error,result []*m.OptionModel) {
 }
 
 func GetMainCustomDashboard(roleList []string) (err error,result []*m.CustomDashboardTable) {
-	err = x.SQL("SELECT t2.* FROM role t1 LEFT JOIN custom_dashboard t2 ON t1.main_dashboard=t2.id WHERE t1.name IN ('"+strings.Join(roleList, ",")+"') and t1.main_dashboard>0").Find(&result)
+	sql := "SELECT t2.* FROM role t1 LEFT JOIN custom_dashboard t2 ON t1.main_dashboard=t2.id WHERE t1.name IN ('"+strings.Join(roleList, ",")+"') and t1.main_dashboard>0"
+	log.Logger.Debug("Get main dashboard", log.String("sql", sql))
+	err = x.SQL(sql).Find(&result)
 	if len(result) == 0 {
 		result = []*m.CustomDashboardTable{}
 	}
