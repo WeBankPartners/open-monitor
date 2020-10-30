@@ -878,25 +878,75 @@ func GetChartsByEndpoint(c *gin.Context)  {
 }
 
 func GetMainPage(c *gin.Context)  {
-	err,result := db.GetMainCustomDashboard()
+	var roleList []string
+	var user string
+	token := mid.GetCoreToken(c)
+	roleList = token.Roles
+	user = token.User
+	if user == "" || len(roleList) == 0 {
+		user = mid.GetOperateUser(c)
+		_, userRoleList := db.GetUserRole(user)
+		for _, v := range userRoleList {
+			roleList = append(roleList, v.Name)
+		}
+	}
+	err,result := db.GetMainCustomDashboard(roleList)
 	if err != nil {
 		log.Logger.Error("Get main page failed", log.Error(err))
 	}
 	mid.ReturnSuccessData(c, result)
 }
 
-func SetMainPage(c *gin.Context)  {
-	id,err := strconv.Atoi(c.Query("id"))
-	if err != nil || id <= 0 {
-		mid.ReturnParamTypeError(c, "id", "int")
-		return
+func ListMainPageRole(c *gin.Context)  {
+	var roleList []string
+	var user string
+	token := mid.GetCoreToken(c)
+	roleList = token.Roles
+	user = token.User
+	if user == "" || len(roleList) == 0 {
+		user = mid.GetOperateUser(c)
+		_, userRoleList := db.GetUserRole(user)
+		for _, v := range userRoleList {
+			roleList = append(roleList, v.Name)
+		}
 	}
-	err = db.SetMainCustomDashboard(id)
+	err,result := db.ListMainPageRole(user, roleList)
 	if err != nil {
-		mid.ReturnUpdateTableError(c, "custom_dashboard", err)
-		return
+		mid.ReturnHandleError(c, err.Error(), err)
+	}else{
+		if result == nil {
+			result = []*m.MainPageRoleQuery{}
+		}
+		mid.ReturnSuccessData(c, result)
 	}
-	mid.ReturnSuccess(c)
+}
+
+//func SetMainPage(c *gin.Context)  {
+//	id,err := strconv.Atoi(c.Query("id"))
+//	if err != nil || id <= 0 {
+//		mid.ReturnParamTypeError(c, "id", "int")
+//		return
+//	}
+//	err = db.SetMainCustomDashboard(id)
+//	if err != nil {
+//		mid.ReturnUpdateTableError(c, "custom_dashboard", err)
+//		return
+//	}
+//	mid.ReturnSuccess(c)
+//}
+
+func UpdateMainPage(c *gin.Context)  {
+	var param []m.MainPageRoleQuery
+	if err := c.ShouldBindJSON(&param);err == nil {
+		err := db.UpdateMainPageRole(param)
+		if err != nil {
+			mid.ReturnHandleError(c, err.Error(), err)
+			return
+		}
+		mid.ReturnSuccess(c)
+	}else{
+		mid.ReturnValidateError(c, err.Error())
+	}
 }
 
 func GetEndpointsByIp(c *gin.Context)  {
