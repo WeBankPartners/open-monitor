@@ -31,15 +31,17 @@ func httpCheckTask()  {
 	clearHttpCheckResult()
 	startTime := time.Now()
 	httpCheckList := funcs.GetHttpCheckList()
+	http.DefaultClient.CloseIdleConnections()
 	wg := sync.WaitGroup{}
 	//var successCounter int
 	for _,v := range httpCheckList {
 		wg.Add(1)
 		go func(method string,url string) {
-			defer wg.Done()
-			b := doHttpCheck(method, url)
+			//b := doHttpCheck(method, url)
+			b := doHttpCheckNew(method, url)
 			writeHttpCheckResult(method, url, b)
 			funcs.DebugLog("http check %s:%s result %d ", method, url, b)
+			wg.Done()
 		}(v.Method,v.Url)
 	}
 	wg.Wait()
@@ -64,6 +66,24 @@ func doHttpCheck(method,url string) int  {
 	if err != nil {
 		log.Printf("do http check -> method:%s url:%s response error: %v \n", method, url, err)
 		return 2
+	}
+	return resp.StatusCode
+}
+
+func doHttpCheckNew(method,url string) int {
+	var resp *http.Response
+	var err error
+	if method == "post" {
+		resp,err = http.Post(url, "application/json", strings.NewReader(""))
+	}else{
+		resp,err = http.Get(url)
+	}
+	if err != nil {
+		log.Printf("do http check -> method:%s url:%s response error: %v \n", method, url, err)
+		return 2
+	}
+	if resp.Body != nil {
+		resp.Body.Close()
 	}
 	return resp.StatusCode
 }
