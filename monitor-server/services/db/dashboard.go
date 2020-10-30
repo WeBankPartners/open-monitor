@@ -387,28 +387,14 @@ func GetEndpointMetric(id int) (err error,result []*m.OptionModel) {
 	return nil,result
 }
 
-func GetMainCustomDashboard() (error, m.CustomDashboardTable) {
-	var result []*m.CustomDashboardTable
-	err := x.SQL("SELECT * FROM custom_dashboard WHERE main=1").Find(&result)
-	if len(result) > 0 {
-		return nil,*result[0]
-	}else{
-		return err,m.CustomDashboardTable{Id:0}
+func GetMainCustomDashboard(roleList []string) (err error,result []*m.CustomDashboardTable) {
+	sql := "SELECT t2.* FROM role t1 LEFT JOIN custom_dashboard t2 ON t1.main_dashboard=t2.id WHERE t1.name IN ('"+strings.Join(roleList, "','")+"') and t1.main_dashboard>0"
+	log.Logger.Debug("Get main dashboard", log.String("sql", sql))
+	err = x.SQL(sql).Find(&result)
+	if len(result) == 0 {
+		result = []*m.CustomDashboardTable{}
 	}
-}
-
-func SetMainCustomDashboard(id int) error {
-	var actions []*Action
-	err,cdt := GetMainCustomDashboard()
-	if cdt.Id > 0 {
-		if cdt.Id == id {
-			return nil
-		}
-		actions = append(actions, &Action{Sql:"UPDATE custom_dashboard SET main=0 WHERE id=?", Param:[]interface{}{cdt.Id}})
-	}
-	actions = append(actions, &Action{Sql:"UPDATE custom_dashboard SET main=1 WHERE id=?", Param:[]interface{}{id}})
-	err = Transaction(actions)
-	return err
+	return err,result
 }
 
 func GetEndpointsByIp(ipList []string, exportType string) (err error,endpoints []m.EndpointTable) {

@@ -155,9 +155,9 @@ func ExportAgentNew(c *gin.Context)  {
 
 func AlarmControl(c *gin.Context)  {
 	agentType := c.Param("name")
-	if agentType == "java" {
-		agentType = "tomcat"
-	}
+	//if agentType == "java" {
+	//	agentType = "tomcat"
+	//}
 	isStop := false
 	action := "start"
 	if strings.Contains(c.Request.URL.String(), "stop") {
@@ -165,13 +165,13 @@ func AlarmControl(c *gin.Context)  {
 		action = "stop"
 	}
 	var result resultObj
-	var agentPort string
-	for _,v := range m.Config().Agent {
-		if v.AgentType == agentType {
-			agentPort = v.Port
-			break
-		}
-	}
+	//var agentPort string
+	//for _,v := range m.Config().Agent {
+	//	if v.AgentType == agentType {
+	//		agentPort = v.Port
+	//		break
+	//	}
+	//}
 
 	data,_ := ioutil.ReadAll(c.Request.Body)
 	log.Logger.Info("", log.String("param", string(data)))
@@ -186,27 +186,29 @@ func AlarmControl(c *gin.Context)  {
 		}
 		var tmpResult []resultOutputObj
 		var resultMessage string
+		successFlag := "0"
 		for _,v := range param.Inputs {
-			if agentType == "tomcat" && v.Port != "" {
-				agentPort = v.Port
-			}
+			//if agentType != "host" && v.Port != "" {
+			//	agentPort = v.Port
+			//}
 			tmpIp := v.HostIp
 			if agentType != "host" {
 				tmpIp = v.InstanceIp
 			}
-			err := db.UpdateEndpointAlarmFlag(isStop,agentType,v.Instance,tmpIp,agentPort)
+			err := db.UpdateEndpointAlarmFlag(isStop,agentType,v.Instance,tmpIp,v.Port)
 			var msg string
 			if err != nil {
 				msg = fmt.Sprintf("%s %s:%s %s fail,error %v",action, agentType, v.HostIp, v.Instance, err)
 				resultMessage = fmt.Sprintf(mid.GetMessageMap(c).HandleError, msg)
 				tmpResult = append(tmpResult, resultOutputObj{CallbackParameter:v.CallbackParameter, ErrorCode:"1", ErrorMessage:fmt.Sprintf(mid.GetMessageMap(c).HandleError, msg)})
+				successFlag = "1"
 			}else{
 				msg = fmt.Sprintf("%s %s:%s %s succeed", action, agentType, v.HostIp, v.Instance)
 				tmpResult = append(tmpResult, resultOutputObj{CallbackParameter:v.CallbackParameter, ErrorCode:"0", ErrorMessage:""})
 			}
 			log.Logger.Info(msg)
 		}
-		result = resultObj{ResultCode:"0", ResultMessage:resultMessage, Results:resultOutput{Outputs:tmpResult}}
+		result = resultObj{ResultCode:successFlag, ResultMessage:resultMessage, Results:resultOutput{Outputs:tmpResult}}
 		log.Logger.Info("result", log.JsonObj("result", result))
 		mid.ReturnData(c, result)
 	}else{
@@ -302,6 +304,7 @@ type processRequestObj struct {
 	Guid  string  `json:"guid"`
 	CallbackParameter  string  `json:"callbackParameter"`
 	HostIp  string  `json:"host_ip"`
+	ProcessName string `json:"process_name"`
 	ProcessTag  string `json:"process_tag"`
 	DisplayName string `json:"display_name"`
 }
@@ -360,8 +363,12 @@ func updateProcess(input processRequestObj,operation string) (result processResu
 		err = fmt.Errorf("Param host_ip is empty ")
 		return result,err
 	}
-	if input.ProcessTag == "" {
-		err = fmt.Errorf("Param process_tag is empty ")
+	if input.ProcessName == "" {
+		err = fmt.Errorf("Param process_name is empty ")
+		return result,err
+	}
+	if strings.Contains(input.ProcessName, ",") && input.ProcessTag == "" {
+		err = fmt.Errorf("Param process_tag cat not empty when process_name is multiple ")
 		return result,err
 	}
 	endpointObj := m.EndpointTable{ExportType:"host", Ip:input.HostIp}
@@ -372,7 +379,7 @@ func updateProcess(input processRequestObj,operation string) (result processResu
 	}
 	var param m.ProcessUpdateDtoNew
 	param.EndpointId = endpointObj.Id
-	param.ProcessList = append(param.ProcessList, m.ProcessMonitorTable{Name:input.ProcessTag, DisplayName:input.DisplayName})
+	param.ProcessList = append(param.ProcessList, m.ProcessMonitorTable{ProcessName:input.ProcessName, Tags:input.ProcessTag, DisplayName:input.DisplayName})
 	err = db.UpdateProcess(param, operation)
 	if err != nil {
 		err = fmt.Errorf("Update db fail,%s ", err.Error())
@@ -383,5 +390,127 @@ func updateProcess(input processRequestObj,operation string) (result processResu
 		err = fmt.Errorf("Update proxy to remote node_exporter fail,%s ", err.Error())
 		return result,err
 	}
+	return result,err
+}
+
+type logMonitorResult struct {
+	ResultCode  string  `json:"resultCode"`
+	ResultMessage  string  `json:"resultMessage"`
+	Results  logMonitorResultOutput  `json:"results"`
+}
+
+type logMonitorResultOutput struct {
+	Outputs  []logMonitorResultOutputObj  `json:"outputs"`
+}
+
+type logMonitorResultOutputObj struct {
+	CallbackParameter  string  `json:"callbackParameter"`
+	Guid  string  `json:"guid"`
+	ErrorCode  string  `json:"errorCode"`
+	ErrorMessage  string  `json:"errorMessage"`
+	ErrorDetail  string  `json:"errorDetail,omitempty"`
+}
+
+type logMonitorRequest struct {
+	RequestId  string  	`json:"requestId"`
+	Inputs  []logMonitorRequestObj  `json:"inputs"`
+}
+
+type logMonitorRequestObj struct {
+	Guid  string  `json:"guid"`
+	CallbackParameter  string  `json:"callbackParameter"`
+	HostIp  string  `json:"host_ip"`
+	Path  string `json:"path"`
+	Keyword string `json:"keyword"`
+	Priority string  `json:"priority"`
+}
+
+func AutoUpdateLogMonitor(c *gin.Context)  {
+	operation := c.Param("operation")
+	if operation != "add" && operation != "delete" && operation != "update" {
+		mid.ReturnValidateError(c, "Url illegal")
+		return
+	}
+	var param logMonitorRequest
+	var result logMonitorResult
+	results := []logMonitorResultOutputObj{}
+	var err error
+	defer func() {
+		if err != nil {
+			result.ResultCode = "1"
+			result.ResultMessage = err.Error()
+		}else{
+			result.ResultCode = "0"
+			result.ResultMessage = "success"
+		}
+		result.Results= logMonitorResultOutput{Outputs:results}
+		c.JSON(http.StatusOK, result)
+	}()
+	if err = c.ShouldBindJSON(&param);err==nil {
+		if len(param.Inputs) == 0 {
+			return
+		}
+		for _,input := range param.Inputs {
+			subResult,subError := updateLogMonitor(input, operation)
+			results = append(results, subResult)
+			if subError != nil {
+				log.Logger.Error("Handle auto update log monitor fail", log.JsonObj("input", input), log.Error(subError))
+				err = subError
+			}
+		}
+	}else{
+		return
+	}
+}
+
+func updateLogMonitor(input logMonitorRequestObj,operation string) (result logMonitorResultOutputObj,err error) {
+	result.Guid = input.Guid
+	result.CallbackParameter = input.CallbackParameter
+	defer func() {
+		if err != nil {
+			result.ErrorCode = "1"
+			result.ErrorMessage = err.Error()
+		}else{
+			result.ErrorCode = "0"
+			result.ErrorMessage = ""
+		}
+	}()
+	if input.HostIp == "" {
+		err = fmt.Errorf("Param host_ip is empty ")
+		return result,err
+	}
+	if input.Path == "" {
+		err = fmt.Errorf("Param path is empty ")
+		return result,err
+	}
+	if input.Keyword == "" {
+		err = fmt.Errorf("Param keyword is empty ")
+		return result,err
+	}
+	endpointObj := m.EndpointTable{ExportType:"host", Ip:input.HostIp}
+	db.GetEndpoint(&endpointObj)
+	if endpointObj.Id <= 0 {
+		err = fmt.Errorf("Can not find host endpoint with ip=%s ", input.HostIp)
+		return result,err
+	}
+	if input.Priority == "" {
+		input.Priority = "low"
+	}
+	var logMonitorObj m.LogMonitorTable
+	logMonitorObj.Path = input.Path
+	logMonitorObj.Keyword = input.Keyword
+	logMonitorObj.Priority = input.Priority
+	logMonitorObj.StrategyId = endpointObj.Id
+	err = db.AutoUpdateLogMonitor(&m.UpdateLogMonitor{LogMonitor:[]*m.LogMonitorTable{&logMonitorObj}, Operation:operation})
+	if err != nil {
+		err = fmt.Errorf("Update log monitor db fail,%s ", err.Error())
+		return result,err
+	}
+	err = db.SendLogConfig(endpointObj.Id, 0, 0)
+	if err != nil {
+		err = fmt.Errorf("Send log config fail,%s ", err.Error())
+		return
+	}
+
 	return result,err
 }
