@@ -921,20 +921,6 @@ func ListMainPageRole(c *gin.Context)  {
 	}
 }
 
-//func SetMainPage(c *gin.Context)  {
-//	id,err := strconv.Atoi(c.Query("id"))
-//	if err != nil || id <= 0 {
-//		mid.ReturnParamTypeError(c, "id", "int")
-//		return
-//	}
-//	err = db.SetMainCustomDashboard(id)
-//	if err != nil {
-//		mid.ReturnUpdateTableError(c, "custom_dashboard", err)
-//		return
-//	}
-//	mid.ReturnSuccess(c)
-//}
-
 func UpdateMainPage(c *gin.Context)  {
 	var param []m.MainPageRoleQuery
 	if err := c.ShouldBindJSON(&param);err == nil {
