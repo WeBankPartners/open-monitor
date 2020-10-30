@@ -62,19 +62,6 @@ export default {
     getDashboardData () {
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.template.get, '', responseData => {
         this.dataHome = responseData
-        console.log(this.dataHome)
-        // if (responseData.cfg === '' || responseData.cfg === '[]') {
-        //   if (window.request) {
-        //     this.isPlugin = true
-        //   } else {
-        //     this.$router.push({path: 'portal'})
-        //   }
-        // }else {
-        //   this.viewData = JSON.parse(responseData.cfg) 
-        //   this.initPanals()
-        //   this.cutsomViewId = responseData.id
-        //   this.$refs.cutsomViewId.getAlarm(this.cutsomViewId, this.viewCondition)
-        // }
       })
     },
     initPanals () {
