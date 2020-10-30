@@ -98,8 +98,11 @@
                     <Tag color="default" v-if="alarmItem.s_last">{{$t('tableKey.s_last')}}:{{alarmItem.s_last}}</Tag>
                     <Tag color="default" v-if="alarmItem.path">{{$t('tableKey.path')}}:{{alarmItem.path}}</Tag>
                     <Tag color="default" v-if="alarmItem.keyword">{{$t('tableKey.keyword')}}:{{alarmItem.keyword}}</Tag>
-                    <Tag color="default" v-if="alarmItem.content">{{$t('tableKey.description')}}:{{alarmItem.content}}</Tag>
                   </span>
+                </li>
+                <li>
+                  <label class="col-md-2" style="vertical-align: top;">{{$t('alarmContent')}}:</label>
+                  <div class="col-md-9" style="display: inline-block;padding:0" v-html="alarmItem.content"></div>
                 </li>
               </ul>
             </section>
