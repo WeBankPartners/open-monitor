@@ -101,3 +101,7 @@ CREATE TABLE `rel_role_custom_dashboard` (
 ALTER TABLE process_monitor CHANGE COLUMN `name` `tags` VARCHAR(255) DEFAULT '';
 ALTER TABLE process_monitor ADD COLUMN process_name VARCHAR(255) DEFAULT '';
 #@v1.8.0.3-end@;
+
+#@v1.9.0-begin@;
+ALTER TABLE role ADD COLUMN main_dashboard INT DEFAULT 0;
+#@v1.9.0-end@;
