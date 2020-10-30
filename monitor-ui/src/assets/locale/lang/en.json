@@ -88,6 +88,7 @@
     "port": "Port",
     "portConfiguration": "Port Configuration",
     "processConfiguration": "Process Configuration",
+    "processConfiguration_tip1": "Process Name Reference /proc/{pid}/status Name",
     "businessConfiguration": "Business Monitor",
     "addMetric": "Add Metric",
     "addConfig": "Add Config",
@@ -176,5 +177,18 @@
     "endpoint": "Endpoint",
     "alarmFiring": "Alarm Firing",
     "alarmRecover": "Alarm Recover"
-  }
+  },
+  "alarmEmpty": "WoW !!No alarm!",
+  "details": "Details",
+  "visualAlarm": "Visual Alarm Display",
+  "processName": "Process Name",
+  "processTags": "Process Tags",
+  "displayName": "Display Name",
+  "alarmHistory": "History alarm",
+  "startDatePlaceholder": "Start Date",
+  "endDatePlaceholder": "End Date",
+  "timeIntervalWarn": "Wrong Time Interval Selection",
+  "realTimeAlarm": "Real-time Alarm",
+  "clearAll": "Clear All",
+  "alarmContent": "Alarm Content"
 }

@@ -16,7 +16,7 @@ func ListDbMonitor(endpointId int) (result []*m.DbMonitorListObj, err error) {
 	if len(tableData) == 0 {
 		return result,err
 	}
-	recursiveDatas := SearchPanelByName("")
+	recursiveDatas := SearchPanelByName("", "")
 	recursiveMap := make(map[string]string)
 	for _,v := range recursiveDatas {
 		recursiveMap[v.OptionValue] = v.OptionText
@@ -161,4 +161,66 @@ func UpdateDbMonitorSysName(param m.DbMonitorSysNameDto) error {
 		log.Logger.Error("UpdateDbMonitorSysName fail", log.Error(err))
 	}
 	return err
+}
+
+type logHttpDto struct {
+	Path  string  `json:"path"`
+	Keywords  []string  `json:"keywords"`
+}
+
+func SendLogConfig(endpointId,grpId,tplId int) error {
+	var endpoints []*m.EndpointTable
+	var err error
+	if grpId > 0 {
+		err,endpoints = GetEndpointsByGrp(grpId)
+		if err != nil {
+			return err
+		}
+	}
+	if endpointId > 0 {
+		endpointQuery := m.EndpointTable{Id:endpointId}
+		err = GetEndpoint(&endpointQuery)
+		if err != nil {
+			return err
+		}
+		endpoints = append(endpoints, &endpointQuery)
+	}
+	var postParam []logHttpDto
+	var tmpList []string
+	var tmpPath string
+	for _,v := range endpoints {
+		err,logMonitors := GetLogMonitorByEndpointNew(v.Id)
+		if err != nil {
+			log.Logger.Error("Send log config with endpoint failed", log.String("endpoint", v.Guid), log.Error(err))
+			continue
+		}
+		if len(logMonitors) == 0 {
+			continue
+		}
+		postParam = []logHttpDto{}
+		tmpList = []string{}
+		tmpPath = logMonitors[0].Path
+		for _,v := range logMonitors {
+			if v.Path != tmpPath {
+				postParam = append(postParam, logHttpDto{Path:tmpPath, Keywords:tmpList})
+				tmpPath = v.Path
+				tmpList = []string{}
+			}
+			tmpList = append(tmpList, v.Keyword)
+		}
+		postParam = append(postParam, logHttpDto{Path:logMonitors[len(logMonitors)-1].Path, Keywords:tmpList})
+		postData,err := json.Marshal(postParam)
+		if err == nil {
+			url := fmt.Sprintf("http://%s/log/config", v.Address)
+			resp,err := http.Post(url, "application/json", strings.NewReader(string(postData)))
+			if err != nil {
+				log.Logger.Error("curl "+url+" error ", log.Error(err))
+			}else{
+				responseBody,_ := ioutil.ReadAll(resp.Body)
+				log.Logger.Info("curl " + url, log.String("response", string(responseBody)))
+				resp.Body.Close()
+			}
+		}
+	}
+	return nil
 }

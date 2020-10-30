@@ -88,6 +88,7 @@
     "port": "端口",
     "portConfiguration": "端口配置",
     "processConfiguration": "进程配置",
+    "processConfiguration_tip1": "进程名参阅 /proc/{pid}/status 文件中的 Name",
     "businessConfiguration": "业务日志监控",
     "addMetric": "新增指标",
     "addConfig": "生成配置",
@@ -176,5 +177,18 @@
     "endpoint": "对象",
     "alarmFiring": "告警异常",
     "alarmRecover": "告警恢复"
-  }
+  },
+  "alarmEmpty": "WoW !! 无任何报警！",
+  "details": "详细信息",
+  "visualAlarm": "可视化告警展示",
+  "processName": "进程名",
+  "processTags": "进程标签",
+  "displayName": "别名",
+  "alarmHistory": "历史告警",
+  "startDatePlaceholder": "请选择开始时间",
+  "endDatePlaceholder": "请选择结束时间",
+  "timeIntervalWarn": "时间区间选择错误",
+  "realTimeAlarm": "实时告警",
+  "clearAll": "清空",
+  "alarmContent": "告警内容"
 }

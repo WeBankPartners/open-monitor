@@ -31,13 +31,13 @@ func (c *processMonitorCollector) Update(ch chan<- prometheus.Metric) error {
 	for _,v := range ProcessCacheObj.get() {
 		ch <- prometheus.MustNewConstMetric(c.processMonitor,
 			prometheus.GaugeValue,
-			v.Value, v.Name, v.Command)
+			v.Value, v.DisplayName, v.Command)
 		ch <- prometheus.MustNewConstMetric(c.processCpuMonitor,
 			prometheus.GaugeValue,
-			v.CpuUsedPercent, v.Name, v.Command)
+			v.CpuUsedPercent, v.DisplayName, v.Command)
 		ch <- prometheus.MustNewConstMetric(c.processMemMonitor,
 			prometheus.GaugeValue,
-			v.MemUsedByte, v.Name, v.Command)
+			v.MemUsedByte, v.DisplayName, v.Command)
 	}
 	return nil
 }
@@ -69,6 +69,7 @@ func NewProcessMonitorCollector() (Collector, error) {
 
 type processMonitorObj struct {
 	Name  string
+	DisplayName string
 	Value   float64
 	Command  string
 	CpuUsedPercent  float64
@@ -113,29 +114,41 @@ func (c *processCache) start()  {
 		c.Lock.Lock()
 		processUsedList := getProcessUsedResource()
 		if len(processUsedList) > 0 {
-			for _,v := range c.ProcessMonitor {
-				tmpName := v.Name
-				//tmpTag := ""
+			for _,tmpProcessMonitorObj := range c.ProcessMonitor {
+				tmpNameList := strings.Split(tmpProcessMonitorObj.Name, "^")
+				tmpName := tmpNameList[0]
+				tmpTag := ""
+				if len(tmpNameList) > 1 {
+					tmpTag = tmpNameList[1]
+				}
+				nameSplit := strings.Split(tmpName, ",")
+				if tmpTag != "" {
+					tmpProcessMonitorObj.DisplayName = fmt.Sprintf("%s(%s)", tmpName, tmpTag)
+				}else{
+					tmpProcessMonitorObj.DisplayName = tmpName
+				}
 				var tmpCount float64 = 0
-				//if strings.Contains(v.Name, "(") {
-				//	tmpNameList := strings.Split(v.Name, "(")
-				//	tmpName = tmpNameList[0]
-				//	tmpTag = strings.Replace(tmpNameList[1], ")", "", -1)
-				//}
 				for _,vv := range processUsedList {
-					//if vv.Name == tmpName && strings.Contains(vv.Cmd, tmpTag) {
-					if strings.Contains(vv.Name, tmpName) || strings.Contains(vv.Cmd, tmpName) {
+					nameMatch := ""
+					for _,nameSplitObj := range nameSplit {
+						if vv.Name == strings.ToLower(nameSplitObj) {
+							nameMatch = nameSplitObj
+							break
+						}
+					}
+					if nameMatch != "" && strings.Contains(vv.Cmd, tmpTag) {
+						tmpProcessMonitorObj.DisplayName = fmt.Sprintf("%s(%s)", nameMatch, tmpTag)
 						tmpCount = tmpCount + 1
 						if len(vv.Cmd) > 100 {
-							v.Command = vv.Cmd[:100]
+							tmpProcessMonitorObj.Command = vv.Cmd[:100]
 						}else{
-							v.Command = vv.Cmd
+							tmpProcessMonitorObj.Command = vv.Cmd
 						}
-						v.CpuUsedPercent = vv.Cpu
-						v.MemUsedByte = vv.Mem
+						tmpProcessMonitorObj.CpuUsedPercent = vv.Cpu
+						tmpProcessMonitorObj.MemUsedByte = vv.Mem
 					}
 				}
-				v.Value = tmpCount
+				tmpProcessMonitorObj.Value = tmpCount
 			}
 		}
 		c.Lock.Unlock()
@@ -209,8 +222,22 @@ func (c *processCache) checkNum(names []string) []int {
 	var result []int
 	for _,v := range names {
 		count := 0
+		tmpNameList := strings.Split(v, "^")
+		tmpName := tmpNameList[0]
+		tmpTag := ""
+		if len(tmpNameList) > 1 {
+			tmpTag = tmpNameList[1]
+		}
+		nameSplit := strings.Split(tmpName, ",")
 		for _,vv := range processUseList {
-			if strings.Contains(vv.Name, v) || strings.Contains(vv.Cmd, v) {
+			nameMatch := ""
+			for _,nameSplitObj := range nameSplit {
+				if vv.Name == strings.ToLower(nameSplitObj) {
+					nameMatch = nameSplitObj
+					break
+				}
+			}
+			if nameMatch != "" && strings.Contains(vv.Cmd, tmpTag) {
 				count = count + 1
 			}
 		}
@@ -254,7 +281,13 @@ func ProcessMonitorHttpHandle(w http.ResponseWriter, r *http.Request)  {
 		for i,v := range checkNumResult {
 			if v != 1 {
 				w.WriteHeader(http.StatusBadRequest)
-				w.Write([]byte(fmt.Sprintf("Process %s num = %d", param.Process[i], v)))
+				tmpProcessName := param.Process[i]
+				if strings.HasSuffix(tmpProcessName, "^") {
+					tmpProcessName = tmpProcessName[:len(tmpProcessName)-1]
+				}else{
+					tmpProcessName = strings.Replace(tmpProcessName, "^", "(", -1) + ")"
+				}
+				w.Write([]byte(fmt.Sprintf("Process %s num = %d", tmpProcessName, v)))
 				illegalFlag = true
 				break
 			}
@@ -292,7 +325,7 @@ func getProcessUsedResource() []processUsedResource {
 							tmpProcessObj.Pid = tmpPid
 						}
 					}else if tmpIndex == 2 {
-						tmpProcessObj.Name = vv
+						tmpProcessObj.Name = strings.ToLower(vv)
 					}else if tmpIndex == 3 {
 						tmpCpu,_ := strconv.ParseFloat(vv, 64)
 						tmpProcessObj.Cpu = tmpCpu

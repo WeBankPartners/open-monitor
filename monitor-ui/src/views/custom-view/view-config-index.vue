@@ -15,7 +15,11 @@
             <Card class="c-dark">
               <p slot="title" class="panal-title">
                 {{$t('title.templateName')}}:{{panalItem.name}}
-                  <i class="fa fa-star" v-if="panalItem.main === 1" aria-hidden="true"></i>
+                  <i class="fa fa-star" style="margin-right:16px;" v-if="panalItem.main === 1" aria-hidden="true"></i>
+
+                <template v-for="(role,roleIndex) in panalItem.main_page">
+                  <Tag color="blue" :key="roleIndex">{{role}}</Tag>
+                </template>
               </p>
               <a slot="extra">
                 <button class="btn btn-sm btn-confirm-f" @click="goToPanal(panalItem)">{{$t('button.view')}}</button>
@@ -44,15 +48,30 @@
       </div>
     </ModalComponent>
     <ModalComponent :modelConfig="modelConfig"></ModalComponent>
-    <ModalComponent :modelConfig="setDashboardModel">
-      <div slot="setDashboard">  
-        <div class="marginbottom params-each">
-          <label class="col-md-2 label-name">{{$t('title.templateName')}}:</label>
-          <Select v-model="setDashboardModel.addRow.templateSelect" style="width:338px">
-              <Option v-for="item in setDashboardModel.templateList" :value="item.value" :key="item.value">
-              {{item.label}}</Option>
-          </Select>
-        </div>
+    <ModalComponent :modelConfig="processConfigModel">
+      <div slot="processConfig">
+        <section>
+          <div style="display: flex;">
+            <div class="port-title">
+              <span>{{$t('tableKey.role')}}:</span>
+            </div>
+            <div class="port-title">
+              <span>{{$t('menu.customViews')}}:</span>
+            </div>
+          </div>
+        </section>
+        <section v-for="(pl, plIndex) in processConfigModel.dashboardConfig" :key="plIndex">
+          <div class="port-config">
+            <div style="width: 40%">
+              <label>{{pl.role_name}}：</label>
+            </div>
+            <div style="width: 55%">
+              <Select v-model="pl.main_page_id" style="width:200px" :placeholder="$t('placeholder.refresh')">
+                <Option v-for="item in pl.options" :value="item.id" :key="item.id">{{ item.option_text }}</Option>
+              </Select>
+            </div>
+          </div>
+        </section>
       </div>
     </ModalComponent>
     <Modal
@@ -101,6 +120,20 @@ export default {
         },
         templateList: []
       },
+      processConfigModel: {
+        modalId: 'set_dashboard_modal',
+        modalTitle: 'button.setDashboard',
+        isAdd: true,
+        saveFunc: 'processConfigSave',
+        config: [{
+          name: 'processConfig',
+          type: 'slot'
+        }],
+        addRow: {
+          businessSet: [],
+        },
+        dashboardConfig: [],
+      },
       authorizationModel: {
         modalId: 'authorization_model',
         modalTitle: 'button.authorization',
@@ -122,6 +155,20 @@ export default {
     this.getAllRoles()
   },
   methods: {
+    processConfigSave () {
+      console.log(this.processConfigModel.dashboardConfig)
+      let params = []
+      this.processConfigModel.dashboardConfig.forEach(item => {
+        params.push({
+          role_name: item.role_name,
+          main_page_id: item.main_page_id,
+        })
+      })
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST','dashboard/custom/main/set', params, () => {
+        this.$Message.success(this.$t('tips.success'))
+        this.$root.JQ('#set_dashboard_modal').modal('hide')
+      })
+    },
     authorization (panalItem) {
       this.dashboard_id = panalItem.id
       const params = {
@@ -210,7 +257,10 @@ export default {
       })
     },
     setDashboard () {
-      this.$root.JQ('#set_dashboard_modal').modal('show')
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.template.portalConfig, '', responseData => {
+        this.processConfigModel.dashboardConfig = responseData
+        this.$root.JQ('#set_dashboard_modal').modal('show')
+      })
     },
     setDashboardSave () {
       let params = {id: this.setDashboardModel.addRow.templateSelect}
@@ -229,6 +279,17 @@ export default {
 </script>
 
 <style scoped lang="less">
+.port-title {
+  width: 40%;
+  font-size: 14px;
+  padding: 2px 0 2px 4px;
+  // border: 1px solid @blue-2;
+}
+
+.port-config {
+  display: flex;
+  margin-top: 4px;
+}
 li {
   list-style: none;
 } 
@@ -240,6 +301,7 @@ li {
 }
 .panal-title {
   color: @blue-2;
+  height: 26px;
 }
 .panal-content {
   font-size: 12px;

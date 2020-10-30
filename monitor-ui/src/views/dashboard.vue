@@ -6,76 +6,20 @@
       </div>
     </section>
     <section v-else>
-      <header>
-        <div class="search-zone">
-          <span class="params-title">{{$t('field.relativeTime')}}：</span>
-          <Select v-model="viewCondition.timeTnterval" :disabled="disableTime" style="width:80px"  @on-change="initPanals">
-            <Option v-for="item in dataPick" :value="item.value" :key="item.value">{{ item.label }}</Option>
-          </Select>
-        </div>
-        <div class="search-zone">
-          <span class="params-title">{{$t('placeholder.refresh')}}：</span>
-          <Select v-model="viewCondition.autoRefresh" :disabled="disableTime" style="width:100px" @on-change="initPanals" :placeholder="$t('placeholder.refresh')">
-            <Option v-for="item in autoRefreshConfig" :value="item.value" :key="item.value">{{ item.label }}</Option>
-          </Select>
-        </div>
-        <div class="search-zone">
-          <span class="params-title">{{$t('field.timeInterval')}}：</span>
-          <DatePicker 
-            type="datetimerange" 
-            :value="viewCondition.dateRange" 
-            format="yyyy-MM-dd HH:mm:ss" 
-            placement="bottom-start" 
-            @on-change="datePick" 
-            :placeholder="$t('placeholder.datePicker')" 
-            style="width: 320px">
-          </DatePicker>
-        </div>
-      </header>
-      <div>
-        <grid-layout
-          :layout.sync="layoutData"
-          :col-num="12"
-          :row-height="30"
-          :is-draggable="false"
-          :is-resizable="false"
-          :is-mirrored="false"
-          :vertical-compact="true"
-          :use-css-transforms="true"
-          >
-          <grid-item v-for="(item,index) in layoutData"
-            class="c-dark"
-            :x="item.x"
-            :y="item.y"
-            :w="item.w"
-            :h="item.h"
-            :i="item.i"
-            :key="index"
-            @resized="resizeEvent">   
-            <div class="c-dark" style="display:flex;justify-content:flex-end;padding:0 32px;">
-              <div class="header-grid header-grid-name">
-                {{item.i}}
-              </div>
-            </div>
-            <section>
-              <div v-for="(chartInfo,chartIndex) in item._activeCharts" :key="chartIndex">
-                <CustomChart v-if="['line','bar'].includes(chartInfo.chartType)" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomChart>
-                <CustomPieChart v-if="chartInfo.chartType === 'pie'" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomPieChart>
-              </div>
-            </section>
-          </grid-item>
-        </grid-layout>
-      </div>
+      <template v-for="(dash, dashIndex) in dataHome">
+        <Card style="width: 100%" :key="dashIndex">
+          <p slot="title">
+            {{dash.name}}
+          </p>
+          <SingleDashboard :id="dash.id"></SingleDashboard>
+        </Card>
+      </template>
     </section>
   </div>
 </template>
 
 <script>
-import VueGridLayout from 'vue-grid-layout'
-import {dataPick, autoRefreshConfig} from '@/assets/config/common-config'
-import {resizeEvent} from '@/assets/js/gridUtils.ts'
-import CustomChart from '@/components/custom-chart'
-import CustomPieChart from '@/components/custom-pie-chart'
+import SingleDashboard from '@/views/single-dashboard'
 export default {
   name: '',
   data() {
@@ -87,13 +31,16 @@ export default {
         autoRefresh: 10,
       },
       disableTime: false,
-      dataPick: dataPick,
-      autoRefreshConfig: autoRefreshConfig,
       viewData: [],
       layoutData: [
         //   {'x':0,'y':0,'w':2,'h':2,'i':'0'},
         //   {'x':1,'y':1,'w':2,'h':2,'i':'1'},
-      ]
+      ],
+
+      showAlarm: true, // 显示告警信息
+      cutsomViewId: null,
+      
+      dataHome: []
     }
   },
   mounted() {
@@ -114,16 +61,7 @@ export default {
     },
     getDashboardData () {
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.template.get, '', responseData => {
-        if (responseData.cfg === '' || responseData.cfg === '[]') {
-          if (window.request) {
-            this.isPlugin = true
-          } else {
-            this.$router.push({path: 'portal'})
-          }
-        }else {
-          this.viewData = JSON.parse(responseData.cfg) 
-          this.initPanals()
-        }
+        this.dataHome = responseData
       })
     },
     initPanals () {
@@ -150,21 +88,24 @@ export default {
         tmp.push(item.viewConfig)
       })
       this.layoutData = tmp
-    },
-    resizeEvent: function(i, newH, newW, newHPx, newWPx){
-      resizeEvent(this, i, newH, newW, newHPx, newWPx)
     }
   },
   components: {
-    GridLayout: VueGridLayout.GridLayout,
-    GridItem: VueGridLayout.GridItem,
-    CustomChart,
-    CustomPieChart
+    SingleDashboard
   },
 }
 </script>
 
 <style scoped lang="less">
+.grid-style {
+  width: 100%;
+  display: inline-block;
+}
+.alarm-style {
+  width: 800px;
+  display: inline-block;
+}
+
 header {
   margin: 16px 8px;
 }
