@@ -437,7 +437,6 @@ export default {
     },
     delF (rowData) {
       let params = {id: rowData.id}
-      console.log(params)
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.thresholdManagement.delete.api, params, () => {
         // this.$root.$eventBus.$emit('hideConfirmModal')
         this.$Message.success(this.$t('tips.success'))
