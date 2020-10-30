@@ -53,10 +53,10 @@
         <section>
           <div style="display: flex;">
             <div class="port-title">
-              <span>角色:</span>
+              <span>{{$t('tableKey.role')}}:</span>
             </div>
             <div class="port-title">
-              <span>视图:</span>
+              <span>{{$t('menu.customViews')}}:</span>
             </div>
           </div>
         </section>
@@ -122,7 +122,7 @@ export default {
       },
       processConfigModel: {
         modalId: 'set_dashboard_modal',
-        modalTitle: 'button.processConfiguration',
+        modalTitle: 'button.setDashboard',
         isAdd: true,
         saveFunc: 'processConfigSave',
         config: [{
