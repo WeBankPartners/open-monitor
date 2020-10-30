@@ -11,14 +11,20 @@ var fileSdList m.ServiceDiscoverFileList
 var fileSdLock = new(sync.RWMutex)
 var fileSdPath string
 
-func AddSdEndpoint(param m.ServiceDiscoverFileObj) {
+func AddSdEndpoint(param m.ServiceDiscoverFileObj) []int {
+	var stepList []int
 	if param.Guid == "" || param.Address == "" || param.Step == 0 {
-		return
+		return stepList
 	}
+	stepList = append(stepList, param.Step)
 	fileSdLock.Lock()
 	exist := false
 	for _,v := range fileSdList {
 		if v.Guid == param.Guid {
+			if v.Step != param.Step {
+				stepList = append(stepList, v.Step)
+				v.Step = param.Step
+			}
 			exist = true
 			break
 		}
@@ -27,6 +33,7 @@ func AddSdEndpoint(param m.ServiceDiscoverFileObj) {
 		fileSdList = append(fileSdList, &m.ServiceDiscoverFileObj{Guid:param.Guid, Address:param.Address, Step:param.Step})
 	}
 	fileSdLock.Unlock()
+	return stepList
 }
 
 func DeleteSdEndpoint(guid string)  {
