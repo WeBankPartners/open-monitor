@@ -113,7 +113,6 @@ export default {
     id: {
       immediate:true,
       handler:function(val){
-        console.log(val)
         if (val) {
           this.getDashData(val)
         }
