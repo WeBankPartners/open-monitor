@@ -1,20 +1,54 @@
 <template>
   <div>
-    <Title :title="$t('menu.alert')"></Title>
-    <Modal
-      v-model="isShowWarning"
-      title="Delete confirmation"
-      @on-ok="ok"
-      @on-cancel="cancel">
-      <div class="modal-body" style="padding:30px">
-        <div style="text-align:center">
-          <p style="color: red">Will you delete it?</p>
-        </div>
-      </div>
-    </Modal>
+    <Title :title="$t('alarmHistory')"></Title>
+    <div>
+      <ul>
+        <li class="filter-li">
+          <DatePicker 
+            type="date" 
+            :value="startDate" 
+            @on-change="changeStartDate"
+            format="yyyy-MM-dd HH:mm:ss" 
+            placement="bottom-start" 
+            :placeholder="$t('startDatePlaceholder')" 
+            style="width: 220px">
+          </DatePicker>
+        </li>
+        <li class="filter-li">
+          <DatePicker 
+            type="date" 
+            :value="endDate" 
+            @on-change="changeEndDate"
+            format="yyyy-MM-dd HH:mm:ss" 
+            placement="bottom-start" 
+            :placeholder="$t('endDatePlaceholder')" 
+            style="width: 220px">
+          </DatePicker>
+        </li>
+        <li class="filter-li">
+          <Select v-model="filter" style="width:80px">
+            <Option v-for="item in filterList" :value="item.value" :key="item.value">{{ item.label }}</Option>
+          </Select>
+        </li>
+        <li class="filter-li">
+          <button class="btn btn-sm btn-confirm-f" @click="getAlarm">
+            <i class="fa fa-search"></i>
+            {{$t('button.search')}}
+          </button>
+        </li>
+        <li class="filter-li">
+          <button class="btn btn-sm btn-cancel-f" @click="realTimeAlarm">
+            {{$t('realTimeAlarm')}}
+          </button>
+        </li>
+      </ul>
+    </div>
     <div class="flex-container">
+      <template v-if="!resultData.length">
+        <Tag color="primary">{{$t('table.noDataTip')}}！</Tag>
+      </template>
       <transition name="slide-fade">
-        <div class="flex-item" v-show="showGraph">
+        <div class="flex-item" v-show="showGraph && resultData.length">
           <div>
             <Tag color="success"><span style="font-size:14px">Low:{{this.low}}</span></Tag>
             <Tag color="warning"><span style="font-size:14px">Medium:{{this.mid}}</span></Tag>
@@ -27,34 +61,15 @@
         </div>
       </transition>
       <div class="flex-item" style="width: 100%">
-        <div class="alarm-total" v-if="!showGraph">
-          <Tag color="success"><span style="font-size:14px">Low:{{this.low}}</span></Tag>
-          <Tag color="warning"><span style="font-size:14px">Medium:{{this.mid}}</span></Tag>
-          <Tag color="error"><span style="font-size:14px">High:{{this.high}}</span></Tag>
-        </div>
         <section style="margin-left:8px" class="c-dark-exclude-color">
-          <div style="display: inline-block;margin-right:16px">
-            <span>{{$t('visualAlarm')}}：</span>
-            <i-switch size="large" v-model="showGraph">
-              <span slot="open">ON</span>
-              <span slot="close">OFF</span>
-            </i-switch>
-          </div>
-          <Tag color="warning">{{$t('title.updateTime')}}：{{timeForDataAchieve}}</Tag>
           <template v-for="(filterItem, filterIndex) in filtersForShow">
             <Tag color="success" type="border" closable @on-close="exclude(filterItem.key)" :key="filterIndex">{{filterItem.key}}：{{filterItem.value}}</Tag>
           </template>
           <button v-if="filtersForShow.length" @click="clearAll" class="btn btn-small btn-cancel-f">{{$t('clearAll')}}</button>
-          <template v-if="!resultData.length">
-            <Tag color="primary">{{$t('table.noDataTip')}}！</Tag>
-          </template>
-          <button @click="alarmHistory" style="float: right;margin-right: 25px;" class="btn btn-sm btn-cancel-f">{{$t('alarmHistory')}}</button>
         </section>
         <div class="alarm-list">
           <template v-for="(alarmItem, alarmIndex) in resultData">
             <section :key="alarmIndex" class="alarm-item c-dark-exclude-color" :class="'alarm-item-border-'+ alarmItem.s_priority">
-              <i class="fa fa-times fa-operate" @click="deleteConfirmModal(alarmItem)" aria-hidden="true"></i>
-              <i class="fa fa-bar-chart fa-operate" v-if="!alarmItem.is_custom" @click="goToEndpointView(alarmItem)" aria-hidden="true"></i>
               <ul>
                 <li>
                   <label class="col-md-2">{{$t('field.endpoint')}}:</label>
@@ -104,10 +119,17 @@ export default {
   name: '',
   data() {
     return {
+      startDate: '',
+      endDate: '',
+      filter:'all',
+      filterList: [
+        {label: 'all', value: 'all'},
+        {label: 'start', value: 'start'}
+      ],
+
       showGraph: true,
       alramEmpty: true,
       myChart: null,
-      isShowWarning: false,
       interval: null,
       timeForDataAchieve: null,
       filters: {},
@@ -123,42 +145,43 @@ export default {
   },
   mounted(){
     this.myChart = echarts.init(document.getElementById('elId'))
-    this.getAlarm()
-    this.interval = setInterval(()=>{
-      this.getAlarm()
-    }, 10000)
-    this.$once('hook:beforeDestroy', () => {
-      clearInterval(this.interval)
-    })
   },
   methods: {
-    goToEndpointView (alarmItem) {
-      const endpointObject = {
-        option_value: alarmItem.endpoint,
-        type: alarmItem.endpoint.split('_').slice(-1)[0]
-      }
-      this.$router.push({ name: 'endpointView',params: endpointObject})
+    changeStartDate (data) {
+      this.startDate = data
+    },
+    changeEndDate (data) {
+      this.endDate = data
     },
     getAlarm() {
-      let params = {}
+      if (!this.startDate || !this.endDate || Date.parse(new Date(this.startDate)) > Date.parse(new Date(this.endDate))) {
+        this.$Message.error(this.$t('timeIntervalWarn'))
+        return
+      }
+      if (this.startDate === this.endDate) {
+        this.endDate = this.endDate.replace('00:00:00', '23:59:59')
+      }
+      const start = Date.parse(this.startDate)/1000
+      const end = Date.parse(this.endDate)/1000
+      let params = {
+        start,
+        end,
+        filter: this.filter
+      }
       let keys = Object.keys(this.filters)
       this.filtersForShow = []
       for (let i = 0; i< keys.length ;i++) {
         params[keys[i]] = this.filters[keys[i]]
         this.filtersForShow.push({key:keys[i], value:this.filters[keys[i]]})
       }
-      
-      this.timeForDataAchieve = new Date().toLocaleString()
-      this.timeForDataAchieve = this.timeForDataAchieve.replace('上午', 'AM ')
-      this.timeForDataAchieve = this.timeForDataAchieve.replace('下午', 'PM ')
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', 'alarm/problem/query', params, (responseData) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', 'alarm/problem/history', params, (responseData) => {
         this.resultData = responseData.data
         this.low = responseData.low
         this.mid = responseData.mid
         this.high = responseData.high
         this.alramEmpty = !!this.low || !!this.mid ||!!this.high
         this.showSunburst(responseData)
-      }, {isNeedloading: false})
+      })
     },
     compare (prop) {
       return function (obj1, obj2) {
@@ -298,46 +321,17 @@ export default {
               }
           ]
       }
-
       this.myChart.setOption(option)
       this.myChart.on('click', params => {
         this.addParams(params.data.filterType, params.data.name)
       })
     },
+    realTimeAlarm () {
+      this.$router.push('/alarmManagement')
+    },
     addParams (key, value) {
       this.filters[key] = value
       this.getAlarm()
-    },
-    deleteConfirmModal (rowData) {
-      this.selectedData = rowData
-      this.isShowWarning = true
-    },
-    ok () {
-      this.removeAlarm(this.selectedData)
-    },
-    cancel () {
-      this.isShowWarning = false
-    },
-    removeConfirm (alarmItem) {
-      this.$delConfirm({
-        msg: alarmItem.endpoint,
-        callback: () => {
-          this.removeAlarm(alarmItem)
-        }
-      })
-    },
-    removeAlarm(alarmItem) {
-      let params = {
-        id: alarmItem.id,
-        custom: true
-      }
-      if (!alarmItem.is_custom) {
-        params.custom = false
-      }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.alarmManagement.close.api, params, () => {
-        // this.$root.$eventBus.$emit('hideConfirmModal')
-        this.getAlarm()
-      })
     },
     clearAll () {
       this.filters = []
@@ -347,15 +341,16 @@ export default {
       delete this.filters[key]
       this.getAlarm()
     },
-    alarmHistory () {
-      this.$router.push({name: 'alarmHistory'})
-    }
   },
   components: {},
 }
 </script>
 
 <style scoped lang="less">
+ .filter-li {
+   display: inline-block;
+   margin-left: 8px;
+ }
 .echart {
   height: ~"calc(100vh - 180px)";
   width: ~"calc(100vw * 0.4)";
@@ -369,6 +364,7 @@ export default {
   color: #2d8cf0;
 }
 .flex-container {
+  margin: 8px;
   display: flex;
 }
 li {

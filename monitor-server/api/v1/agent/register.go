@@ -63,6 +63,7 @@ func InitAgentManager()  {
 			return
 		}
 		go prom.InitAgentManager(param, agentManagerServer)
+		go prom.StartSyncAgentManagerJob(param, agentManagerServer)
 	}
 }
 
@@ -106,10 +107,12 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage,guid string,err er
 			tmpIp = rData.endpoint.AddressAgent[:strings.Index(rData.endpoint.AddressAgent, ":")]
 			tmpPort = rData.endpoint.AddressAgent[strings.Index(rData.endpoint.AddressAgent, ":")+1:]
 		}
-		prom.AddSdEndpoint(m.ServiceDiscoverFileObj{Guid: rData.endpoint.Guid, Address: fmt.Sprintf("%s:%s", tmpIp, tmpPort), Step: rData.endpoint.Step})
-		err = prom.SyncSdConfigFile(rData.endpoint.Step)
-		if err != nil {
-			log.Logger.Error("Sync service discover file error", log.Error(err))
+		stepList := prom.AddSdEndpoint(m.ServiceDiscoverFileObj{Guid: rData.endpoint.Guid, Address: fmt.Sprintf("%s:%s", tmpIp, tmpPort), Step: rData.endpoint.Step})
+		for _,tmpStep := range stepList {
+			err = prom.SyncSdConfigFile(tmpStep)
+			if err != nil {
+				log.Logger.Error("Sync service discover file error", log.Error(err))
+			}
 		}
 	}
 	if rData.addDefaultGroup {
@@ -672,5 +675,6 @@ func calcStep(startTime int64,paramStep int) (step int,err error) {
 			step = defaultStep
 		}
 	}
+	log.Logger.Debug("Calc step", log.Int("step", step))
 	return step,err
 }

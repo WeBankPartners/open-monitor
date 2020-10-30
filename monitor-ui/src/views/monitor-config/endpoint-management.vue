@@ -10,11 +10,7 @@
         <label class="col-md-2 label-name">{{$t('field.endpoint')}}:</label>
         <Select v-model="modelConfig.slotConfig.resourceSelected" multiple filterable style="width:300px">
           <Option v-for="item in modelConfig.slotConfig.resourceOption" :value="item.id" :key="item.id">
-            <Tag color="cyan" v-if="item.option_value.split(':')[1] == 'host'">host</Tag>
-            <Tag color="blue" v-if="item.option_value.split(':')[1] == 'mysql'">mysql</Tag>
-            <Tag color="geekblue" v-if="item.option_value.split(':')[1] == 'redis'">redis</Tag>
-            <Tag color="purple" v-if="item.option_value.split(':')[1] == 'tomcat'">tomcat</Tag>
-            {{ item.option_text }}
+            {{ item.guid }}
           </Option>
         </Select>
       </div>
@@ -89,26 +85,36 @@
   </ModalComponent>
   <ModalComponent :modelConfig="processConfigModel">
     <div slot="processConfig">
+      <div class="marginbottom params-each">
+        <div style="color:#fa7821">
+          <span>{{$t('button.processConfiguration_tip1')}}</span>
+        </div>
+      </div>
       <section>
         <div style="display: flex;">
           <div class="port-title">
-            <span>{{$t('tableKey.name')}}:</span>
-            <i class="fa fa-plus-square-o port-config-icon" @click="addProcess" aria-hidden="true"></i>
+            <span>{{$t('processName')}}:</span>
           </div>
           <div class="port-title">
-            <span>{{$t('field.displayName')}}:</span>
-            <i class="fa fa-plus-square-o port-config-icon" @click="addProcess" aria-hidden="true"></i>
+            <span>{{$t('processTags')}}:</span>
           </div>
+          <div class="port-title">
+            <span>{{$t('displayName')}}:</span>
+          </div>
+          <i class="fa fa-plus-square-o port-config-icon" @click="addProcess" aria-hidden="true"></i>
         </div>
       </section>
       <section v-for="(pl, plIndex) in processConfigModel.process_list" :key="plIndex">
         <div class="port-config">
-          <div style="width: 48%">
-            <input type="text" v-model.trim="pl.name" class="search-input" style="width: 95%" />
+          <div style="width: 55%">
+            <input type="text" v-model.trim="pl.process_name" class="search-input" style="width: 93%" />
             <label class="required-tip">*</label>
           </div>
-          <div style="width: 48%">
-            <input type="text" v-model.trim="pl.display_name" class="search-input" style="width: 95%" />
+          <div style="width: 51%">
+            <input type="text" v-model.trim="pl.tags" class="search-input" style="width: 93%" />
+          </div>
+          <div style="width: 47%">
+            <input type="text" v-model.trim="pl.display_name" class="search-input" style="width: 93%" />
           </div>
           <span style="float: right" >
             <i class="fa fa-trash-o port-config-icon" @click="delProcess(plIndex)" aria-hidden="true"></i>
@@ -544,7 +550,6 @@ export default {
         endpoint_id: this.dbEndpointId
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.endpointManagement.db.dbMonitor, params, responseData => {
-        console.log(responseData)
         this.$refs.dataMonitor.managementData(responseData)
         this.dbMonitorData = responseData
         this.isShowDataMonitor = true
@@ -592,10 +597,12 @@ export default {
     add() {
       this.modelConfig.slotConfig.resourceOption = []
       this.modelConfig.slotConfig.resourceSelected = []
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.resourceSearch.api, {
-        search: '.'
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', 'alarm/endpoint/list', {
+        search: '.',
+        page: 1,
+        size: 300
       }, responseData => {
-        responseData.forEach((item) => {
+        responseData.data.forEach((item) => {
           if (item.id !== -1) {
             this.modelConfig.slotConfig.resourceOption.push(item)
           }
@@ -606,7 +613,7 @@ export default {
     addPost() {
       let params = {
         grp: this.groupMsg.id,
-        endpoints: this.modelConfig.slotConfig.resourceSelected,
+        endpoints: this.modelConfig.slotConfig.resourceSelected.map(Number),
         operation: 'add'
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.endpointManagement.update.api, params, () => {
@@ -733,8 +740,9 @@ export default {
       }, responseData => {
         if (!responseData.length) {
           responseData.push({
-            name: null,
-            display_name: null
+            process_name: '',
+            display_name: '',
+            tags: ''
           })
         }
         this.processConfigModel.process_list = responseData
@@ -743,7 +751,7 @@ export default {
     },
     processConfigSave() {
       const emptyPath = this.processConfigModel.process_list.some(t => {
-        return !t.name
+        return !t.process_name
       })
       if (emptyPath) {
         this.$Message.warning(this.$t('tableKey.name') + this.$t('tips.required'))
@@ -751,7 +759,8 @@ export default {
       }
       const params = {
         endpoint_id: +this.id,
-        process_list: this.processConfigModel.process_list
+        process_list: this.processConfigModel.process_list,
+        check: true
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', 'alarm/process/update', params, () => {
         this.$Message.success(this.$t('tips.success'))
@@ -760,15 +769,16 @@ export default {
     },
     addProcess() {
       const emptyPath = this.processConfigModel.process_list.some(t => {
-        return !t.name
+        return !t.process_name
       })
       if (emptyPath) {
         this.$Message.warning(this.$t('tableKey.name') + this.$t('tips.required'))
         return
       }
       this.processConfigModel.process_list.push({
-        name: null,
-        display_name: null
+        process_name: '',
+        display_name: '',
+        tags: ''
       })
     },
     delProcess(plIndex) {

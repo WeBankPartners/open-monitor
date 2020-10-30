@@ -55,7 +55,14 @@ func InitSourceList()  {
 			log.Printf("read file %s error: %v \n", Config().Source.File.Path, err)
 		}else{
 			for _,v := range strings.Split(string(ips), "\n") {
-				sourceMap[strings.TrimSpace(v)] = weight
+				tmpMessage := strings.TrimSpace(v)
+				if strings.Contains(tmpMessage, "^") {
+					tmpSplit := strings.Split(tmpMessage, "^")
+					sourceMap[tmpSplit[0]] = weight
+					sourceRemoteData = append(sourceRemoteData, &PingExportSourceObj{Ip:tmpSplit[0], Guid:tmpSplit[1]})
+				}else {
+					sourceMap[tmpMessage] = weight
+				}
 			}
 		}
 	}
