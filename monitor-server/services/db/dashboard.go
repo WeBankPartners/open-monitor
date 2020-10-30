@@ -403,20 +403,6 @@ func GetMainCustomDashboard(roleList []string) (err error,result []*m.CustomDash
 	return err,result
 }
 
-//func SetMainCustomDashboard(id int) error {
-//	var actions []*Action
-//	err,cdt := GetMainCustomDashboard()
-//	if cdt.Id > 0 {
-//		if cdt.Id == id {
-//			return nil
-//		}
-//		actions = append(actions, &Action{Sql:"UPDATE custom_dashboard SET main=0 WHERE id=?", Param:[]interface{}{cdt.Id}})
-//	}
-//	actions = append(actions, &Action{Sql:"UPDATE custom_dashboard SET main=1 WHERE id=?", Param:[]interface{}{id}})
-//	err = Transaction(actions)
-//	return err
-//}
-
 func GetEndpointsByIp(ipList []string, exportType string) (err error,endpoints []m.EndpointTable) {
 	sql := fmt.Sprintf("SELECT * FROM endpoint WHERE export_type='%s' AND ip IN ('%s')", exportType, strings.Join(ipList, "','"))
 	err = x.SQL(sql).Find(&endpoints)
