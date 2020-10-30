@@ -30,15 +30,18 @@
               <label class="alarm-item-label">{{$t('tableKey.start')}}:</label><span>{{alarmItem.start_string}}</span>
             </li>
             <li>
-              <label class="alarm-item-label">{{$t('details')}}:</label>
+              <label class="col-md-2">{{$t('details')}}:</label>
               <span>
                 <Tag color="default">{{$t('tableKey.start_value')}}:{{alarmItem.start_value}}</Tag>
                 <Tag color="default" v-if="alarmItem.s_cond">{{$t('tableKey.threshold')}}:{{alarmItem.s_cond}}</Tag>
                 <Tag color="default" v-if="alarmItem.s_last">{{$t('tableKey.s_last')}}:{{alarmItem.s_last}}</Tag>
                 <Tag color="default" v-if="alarmItem.path">{{$t('tableKey.path')}}:{{alarmItem.path}}</Tag>
                 <Tag color="default" v-if="alarmItem.keyword">{{$t('tableKey.keyword')}}:{{alarmItem.keyword}}</Tag>
-                <Tag color="default" v-if="alarmItem.content">{{$t('tableKey.description')}}:{{alarmItem.content}}</Tag>
               </span>
+            </li>
+            <li>
+              <label class="col-md-2" style="vertical-align: top;">{{$t('alarmContent')}}:</label>
+              <div class="col-md-9" style="display: inline-block;padding:0" v-html="alarmItem.content"></div>
             </li>
           </ul>
         </section>
