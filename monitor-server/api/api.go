@@ -84,7 +84,7 @@ func InitHttpServer(exportAgent bool) {
 	}
 	r.POST(fmt.Sprintf("%s/webhook", urlPrefix), alarm.AcceptAlertMsg)
 	// auth server side
-	serverApi := r.Group(fmt.Sprintf("%s/openapi", urlPrefix), user.AuthServerRequest())
+	serverApi := r.Group(fmt.Sprintf("%s/openapi", urlPrefix))
 	{
 		serverApi.POST("/alarm/send", alarm.OpenAlarmApi)
 	}
@@ -110,7 +110,8 @@ func InitHttpServer(exportAgent bool) {
 			dashboardApi.GET("/custom/delete", dashboard.DeleteCustomDashboard)
 			dashboardApi.GET("/server/chart", dashboard.GetChartsByEndpoint)
 			dashboardApi.GET("/custom/main/get", dashboard.GetMainPage)
-			dashboardApi.GET("/custom/main/set", dashboard.SetMainPage)
+			dashboardApi.GET("/custom/main/list", dashboard.ListMainPageRole)
+			dashboardApi.POST("/custom/main/set", dashboard.UpdateMainPage)
 			dashboardApi.GET("/custom/endpoint/get", dashboard.GetEndpointsByIp)
 			dashboardApi.POST("/system/add", agent.ExportPanelAdd)
 			dashboardApi.POST("/system/delete", agent.ExportPanelDelete)
@@ -118,6 +119,7 @@ func InitHttpServer(exportAgent bool) {
 			dashboardApi.POST("/config/chart/title", dashboard.UpdateChartsTitle)
 			dashboardApi.GET("/custom/role/get", dashboard.GetCustomDashboardRole)
 			dashboardApi.POST("/custom/role/save", dashboard.SaveCustomDashboardRole)
+			dashboardApi.GET("/custom/alarm/list", alarm.GetCustomDashboardAlarm)
 		}
 		agentApi := authApi.Group("/agent")
 		{
@@ -133,6 +135,7 @@ func InitHttpServer(exportAgent bool) {
 			agentApi.GET("/export/ping/source", agent.ExportPingSource)
 			agentApi.GET("/export/endpoint/telnet/get", agent.GetEndpointTelnet)
 			agentApi.POST("/export/process/:operation", agent.AutoUpdateProcessMonitor)
+			agentApi.POST("/export/log_monitor/:operation", agent.AutoUpdateLogMonitor)
 		}
 		alarmApi := authApi.Group("/alarm")
 		{
@@ -165,7 +168,6 @@ func InitHttpServer(exportAgent bool) {
 			alarmApi.POST("/business/update", alarm.UpdateEndpointBusinessConfig)
 			alarmApi.GET("/grp/export", alarm.ExportGrpStrategy)
 			alarmApi.POST("/grp/import", alarm.ImportGrpStrategy)
-			alarmApi.POST("/send", alarm.OpenAlarmApi)
 			alarmApi.GET("/action/search", alarm.SearchUserRole)
 			alarmApi.POST("/action/update", alarm.UpdateTplAction)
 			alarmApi.GET("/org/panel/get", alarm.GetOrganizaionList)
@@ -186,6 +188,7 @@ func InitHttpServer(exportAgent bool) {
 			alarmApi.POST("/db/monitor/check", alarm.CheckDbMonitor)
 			alarmApi.POST("/db/monitor/delete", alarm.DeleteDbMonitor)
 			alarmApi.POST("/db/monitor/sys/update", alarm.UpdateDbMonitorSysName)
+			alarmApi.POST("/problem/history", alarm.QueryHistoryAlarm)
 		}
 		userApi := authApi.Group("/user")
 		{

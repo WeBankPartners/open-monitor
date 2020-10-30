@@ -162,9 +162,10 @@ func UpdateGrpEndpoint(param m.GrpEndpointParamNew) (error,bool) {
 		for _,v := range param.Endpoints {
 			needAdd = true
 			for _,vv := range grpEndpoints {
-				if v == vv.EndpointId {}
-				needAdd = false
-				break
+				if v == vv.EndpointId {
+					needAdd = false
+					break
+				}
 			}
 			if needAdd {
 				insertSql += fmt.Sprintf("(%d,%d),", param.Grp, v)
@@ -540,7 +541,7 @@ func GetEndpointsByGrp(grpId int) (error,[]*m.EndpointTable) {
 	return err,result
 }
 
-func GetAlarms(query m.AlarmTable) (error,m.AlarmProblemList) {
+func GetAlarms(query m.AlarmTable,limit int,extLogMonitor,extOpenAlarm bool) (error,m.AlarmProblemList) {
 	var result []*m.AlarmProblemQuery
 	var whereSql,extWhereSql string
 	var params,extParams []interface{}
@@ -591,15 +592,22 @@ func GetAlarms(query m.AlarmTable) (error,m.AlarmProblemList) {
 	if !query.End.IsZero() {
 		whereSql += fmt.Sprintf(" and t1.end<='%s' ", query.End.Format(m.DatetimeFormat))
 	}
-	for _,v := range extParams {
-		params = append(params, v)
+	var sql string
+	if extLogMonitor {
+		for _,v := range extParams {
+			params = append(params, v)
+		}
+		sql = `SELECT t3.* FROM (
+				SELECT t1.*,'' path,'' keyword FROM alarm t1 WHERE t1.s_metric<>'log_monitor' `+whereSql+`
+				UNION
+				SELECT t1.*,t2.path,t2.keyword FROM alarm t1 LEFT JOIN log_monitor t2 ON t1.strategy_id=t2.strategy_id WHERE t1.s_metric='log_monitor' `+extWhereSql+`
+				) t3 ORDER BY t3.id DESC`
+	}else {
+		sql = "SELECT * FROM alarm t1 WHERE 1=1 " + whereSql + " ORDER BY t1.id DESC "
+		if limit > 0 {
+			sql += fmt.Sprintf(" LIMIT %d", limit)
+		}
 	}
-	//err := x.SQL("SELECT t1.*,t2.path,t2.keyword FROM alarm t1 LEFT JOIN log_monitor t2 ON t1.strategy_id=t2.strategy_id where 1=1 " + whereSql + " order by t1.id desc", params...).Find(&result)
-	sql := `SELECT t3.* FROM (
-			SELECT t1.*,'' path,'' keyword FROM alarm t1 WHERE t1.s_metric<>'log_monitor' `+whereSql+`
-			UNION 
-			SELECT t1.*,t2.path,t2.keyword FROM alarm t1 LEFT JOIN log_monitor t2 ON t1.strategy_id=t2.strategy_id WHERE t1.s_metric='log_monitor' `+extWhereSql+`
-			) t3 ORDER BY t3.id DESC`
 	err := x.SQL(sql,params...).Find(&result)
 	if err != nil {
 		log.Logger.Error("Get alarms fail", log.Error(err))
@@ -611,12 +619,19 @@ func GetAlarms(query m.AlarmTable) (error,m.AlarmProblemList) {
 			v.IsLogMonitor = true
 		}
 	}
-	for _,v := range GetOpenAlarm() {
-		result = append(result, v)
+	if extOpenAlarm && query.SMetric == "" {
+		for _, v := range GetOpenAlarm() {
+			result = append(result, v)
+		}
 	}
 	var sortResult m.AlarmProblemList
 	sortResult = result
-	sort.Sort(sortResult)
+	if len(result) > 1 {
+		sort.Sort(sortResult)
+	}
+	if len(result) == 0 {
+		sortResult = []*m.AlarmProblemQuery{}
+	}
 	return err,sortResult
 }
 
@@ -660,6 +675,24 @@ func UpdateLogMonitor(obj *m.UpdateLogMonitor) error {
 		}
 	}
 	err := Transaction(actions)
+	return err
+}
+
+func AutoUpdateLogMonitor(obj *m.UpdateLogMonitor) error {
+	if len(obj.LogMonitor) == 0 {
+		return fmt.Errorf("update log monitor fail,data empty")
+	}
+	var err error
+	if obj.Operation == "add" {
+		var logMonitorTable []*m.LogMonitorTable
+		x.SQL("SELECT * FROM log_monitor WHERE strategy_id=? AND path=? AND keyword=?", obj.LogMonitor[0].StrategyId, obj.LogMonitor[0].Path, obj.LogMonitor[0].Keyword).Find(&logMonitorTable)
+		if len(logMonitorTable) == 0 {
+			_, err = x.Exec("INSERT INTO log_monitor(strategy_id,path,keyword,priority) VALUE (?,?,?,?)", obj.LogMonitor[0].StrategyId, obj.LogMonitor[0].Path, obj.LogMonitor[0].Keyword, obj.LogMonitor[0].Priority)
+		}
+	}
+	if obj.Operation == "delete" {
+		_,err = x.Exec("DELETE FROM log_monitor WHERE strategy_id=? AND path=? AND keyword=?", obj.LogMonitor[0].StrategyId, obj.LogMonitor[0].Path, obj.LogMonitor[0].Keyword)
+	}
 	return err
 }
 
@@ -1035,7 +1068,7 @@ func GetOpenAlarm() []*m.AlarmProblemQuery {
 	var query []*m.OpenAlarmObj
 	result := []*m.AlarmProblemQuery{}
 	//sql := fmt.Sprintf("SELECT * FROM alarm_custom WHERE closed<>1 and update_at>'%s' ORDER BY id ASC", time.Unix(time.Now().Unix()-300,0).Format(m.DatetimeFormat))
-	sql := fmt.Sprintf("SELECT * FROM alarm_custom WHERE closed<>1 ORDER BY id ASC")
+	sql := fmt.Sprintf("SELECT * FROM alarm_custom WHERE closed<>1 ORDER BY id DESC")
 	x.SQL(sql).Find(&query)
 	if len(query) == 0 {
 		return result
@@ -1051,7 +1084,7 @@ func GetOpenAlarm() []*m.AlarmProblemQuery {
 				priority = "medium"
 			}
 			query[i-1].AlertInfo = strings.Replace(query[i-1].AlertInfo, "\n", " <br/> ", -1)
-			result = append(result, &m.AlarmProblemQuery{IsCustom:true,Id:query[i-1].Id,Endpoint:query[i-1].AlertIp,Status:"firing",Content:fmt.Sprintf("system_id:%s <br/> title:%s <br/> %s info: <br/> %s ",query[i-1].SubSystemId,query[i-1].AlertTitle,query[i-1].AlertObj,query[i-1].AlertInfo),Start:query[i-1].UpdateAt,StartString:query[i-1].UpdateAt.Format(m.DatetimeFormat),SPriority:priority})
+			result = append(result, &m.AlarmProblemQuery{IsCustom:true,Id:query[i-1].Id,Endpoint:fmt.Sprintf("%s(%s)", query[i-1].AlertObj, query[i-1].AlertIp),Status:"firing",Content:fmt.Sprintf("system_id:%s <br/> title:%s <br/> object:%s <br/> info:%s ",query[i-1].SubSystemId,query[i-1].AlertTitle,query[i-1].AlertObj,query[i-1].AlertInfo),Start:query[i-1].UpdateAt,StartString:query[i-1].UpdateAt.Format(m.DatetimeFormat),SPriority:priority})
 		}
 	}
 	priority := "high"
@@ -1063,7 +1096,7 @@ func GetOpenAlarm() []*m.AlarmProblemQuery {
 		priority = "medium"
 	}
 	query[lastIndex].AlertInfo = strings.Replace(query[lastIndex].AlertInfo, "\n", " <br/> ", -1)
-	result = append(result, &m.AlarmProblemQuery{IsCustom:true,Id:query[lastIndex].Id,Endpoint:query[lastIndex].AlertIp,Status:"firing",IsLogMonitor:false,Content:fmt.Sprintf("system_id:%s <br/> title:%s <br/> %s info: <br/> %s ",query[lastIndex].SubSystemId,query[lastIndex].AlertTitle,query[lastIndex].AlertObj,query[lastIndex].AlertInfo),Start:query[lastIndex].UpdateAt,StartString:query[lastIndex].UpdateAt.Format(m.DatetimeFormat),SPriority:priority})
+	result = append(result, &m.AlarmProblemQuery{IsCustom:true,Id:query[lastIndex].Id,Endpoint:fmt.Sprintf("%s(%s)", query[lastIndex].AlertObj, query[lastIndex].AlertIp),Status:"firing",IsLogMonitor:false,Content:fmt.Sprintf("system_id:%s <br/> title:%s <br/> object:%s <br/> info:%s ",query[lastIndex].SubSystemId,query[lastIndex].AlertTitle,query[lastIndex].AlertObj,query[lastIndex].AlertInfo),Start:query[lastIndex].UpdateAt,StartString:query[lastIndex].UpdateAt.Format(m.DatetimeFormat),SPriority:priority})
 	return result
 }
 
@@ -1155,4 +1188,78 @@ func getActionOptions(tplId int) []*m.OptionModel {
 		}
 	}
 	return result
+}
+
+func QueryAlarmBySql(sql string,params []interface{}) (err error,result m.AlarmProblemQueryResult) {
+	result = m.AlarmProblemQueryResult{High:0, Mid:0, Low:0, Data:[]*m.AlarmProblemQuery{}}
+	var alarmQuery []*m.AlarmProblemQuery
+	err = x.SQL(sql, params...).Find(&alarmQuery)
+	if err != nil || len(alarmQuery) == 0 {
+		return err,result
+	}
+	var logMonitorStrategyIds []string
+	for _,v := range alarmQuery {
+		if v.SMetric == "log_monitor" {
+			logMonitorStrategyIds = append(logMonitorStrategyIds, strconv.Itoa(v.StrategyId))
+		}
+	}
+	if len(logMonitorStrategyIds) > 0 {
+		var logMonitorQuery []*m.LogMonitorTable
+		x.SQL("SELECT * FROM log_monitor WHERE strategy_id IN ("+strings.Join(logMonitorStrategyIds, ",")+")").Find(&logMonitorQuery)
+		if len(logMonitorQuery) > 0 {
+			for _,v := range alarmQuery {
+				if v.SMetric == "log_monitor" {
+					for _,vv := range logMonitorQuery {
+						if v.StrategyId == vv.StrategyId {
+							v.Path = vv.Path
+							v.Keyword = vv.Keyword
+							break
+						}
+					}
+				}
+			}
+		}
+	}
+	for _,v := range alarmQuery {
+		if v.SPriority == "high" {
+			result.High += 1
+		}else if v.SPriority == "medium" {
+			result.Mid += 1
+		}else if v.SPriority == "low" {
+			result.Low += 1
+		}
+		v.StartString = v.Start.Format(m.DatetimeFormat)
+	}
+	result.Data = alarmQuery
+	return err,result
+}
+
+func QueryHistoryAlarm(param m.QueryHistoryAlarmParam) (err error,result m.AlarmProblemQueryResult) {
+	result = m.AlarmProblemQueryResult{High:0, Mid:0, Low:0, Data:[]*m.AlarmProblemQuery{}}
+	startString := time.Unix(param.Start, 0).Format(m.DatetimeFormat)
+	endString := time.Unix(param.End, 0).Format(m.DatetimeFormat)
+	if startString == "" || endString == "" {
+		return fmt.Errorf("param start or end format fail"),result
+	}
+	var sql,whereSql string
+	if param.Endpoint != "" {
+		whereSql += fmt.Sprintf(" AND endpoint='%s' ", param.Endpoint)
+	}
+	if param.Priority != "" {
+		whereSql += fmt.Sprintf(" AND s_priority='%s' ", param.Priority)
+	}
+	if param.Metric != "" {
+		whereSql += fmt.Sprintf(" AND s_metric='%s' ", param.Metric)
+	}
+	if param.Filter == "all" {
+		sql = "SELECT * FROM alarm WHERE (start<'"+endString+"' OR end>='"+startString+"') "+whereSql+" ORDER BY id DESC"
+	}
+	if param.Filter == "start" {
+		sql = "SELECT * FROM alarm WHERE start>='"+startString+"' AND start<'"+endString+"' "+whereSql+" ORDER BY id DESC"
+	}
+	if param.Filter == "end" {
+		sql = "SELECT * FROM alarm WHERE end>='"+startString+"' AND end<'"+endString+"' "+whereSql+" ORDER BY id DESC"
+	}
+	err,result = QueryAlarmBySql(sql, []interface{}{})
+	return err,result
 }
