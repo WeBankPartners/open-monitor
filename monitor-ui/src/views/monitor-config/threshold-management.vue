@@ -18,7 +18,7 @@
             @on-clear="clearEndpoint"
             >
             <Option v-for="(option, index) in endpointOptions" :value="option.id" :key="index">
-            <TagShow :tagName="option.option_type_name" :index="index"></TagShow> 
+            <TagShow v-if="type!== 'grp'" :tagName="option.option_type_name" :index="index"></TagShow> 
             {{option.option_text}}
             </Option>
           </Select>
@@ -334,26 +334,6 @@ export default {
         tpl_id: tableItem.tpl_id,
         accept: tableItem.accept
       }
-      // this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.thresholdManagement.recevier.api, params, () => {
-      //   this.$root.$eventBus.$emit('hideConfirmModal')
-      //   this.$Message.success(this.$t('tips.success'))
-      //   this.requestData(this.type, this.typeValue)
-      // }, {isNeedloading:false})
-      // this.$delConfirm({
-      //   msg: receiver.option_text,
-      //   callback: () => {
-      //     tableItem.accept.splice(index,1)
-      //     const params = {
-      //       tpl_id: tableItem.tpl_id,
-      //       accept: tableItem.accept
-      //     }
-      //     this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.thresholdManagement.recevier.api, params, () => {
-      //       this.$root.$eventBus.$emit('hideConfirmModal')
-      //       this.$Message.success(this.$t('tips.success'))
-      //       this.requestData(this.type, this.typeValue)
-      //     }, {isNeedloading:false})
-      //   }
-      // })
     },
     ok () {
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.thresholdManagement.recevier.api, this.requestParams, () => {
@@ -498,7 +478,7 @@ export default {
       this.modelTip.value = rowData.metric
       this.modelConfig.addRow = this.$root.$tableUtil.manageEditParams(this.modelConfig.addRow, rowData)
       let cond = rowData.cond.split('')
-      if (cond.indexOf('=') > 0) {
+      if (cond.indexOf('=') >= 0) {
         this.modelConfig.threshold = cond.slice(0,2).join('')
         this.modelConfig.thresholdValue = cond.slice(2).join('')
       } else {
