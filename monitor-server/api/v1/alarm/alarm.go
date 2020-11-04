@@ -14,6 +14,7 @@ import (
 	"encoding/json"
 	"sort"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
+	"net/http"
 )
 
 func AcceptAlertMsg(c *gin.Context)  {
@@ -336,20 +337,20 @@ func OpenAlarmApi(c *gin.Context)  {
 		param.AlertList = []m.OpenAlarmObj{requestObj}
 		err := db.SaveOpenAlarm(param)
 		if err != nil {
-			mid.ReturnHandleError(c, err.Error(), err)
+			c.JSON(http.StatusOK, m.OpenAlarmResponse{ResultCode:-1, ResultMsg:err.Error()})
 		} else {
-			mid.ReturnSuccess(c)
+			c.JSON(http.StatusOK, m.OpenAlarmResponse{ResultCode:0, ResultMsg:"success"})
 		}
 	}else {
 		if err := c.ShouldBindJSON(&param); err == nil {
 			err = db.SaveOpenAlarm(param)
 			if err != nil {
-				mid.ReturnHandleError(c, err.Error(), err)
+				c.JSON(http.StatusOK, m.OpenAlarmResponse{ResultCode:-1, ResultMsg:err.Error()})
 			} else {
-				mid.ReturnSuccess(c)
+				c.JSON(http.StatusOK, m.OpenAlarmResponse{ResultCode:0, ResultMsg:"success"})
 			}
 		} else {
-			mid.ReturnValidateError(c, err.Error())
+			c.JSON(http.StatusOK, m.OpenAlarmResponse{ResultCode:-1, ResultMsg:err.Error()})
 		}
 	}
 }
