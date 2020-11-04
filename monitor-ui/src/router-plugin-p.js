@@ -62,6 +62,13 @@ const routerP = [
     // title: "搜索主页",
     // meta: {},
     // component: portal
+  },
+  {
+    path: "/alarmHistory",
+    name: "alarmHistory",
+    // title: "告警历史",
+    // meta: {},
+    // component: portal
   }
 ];
 
