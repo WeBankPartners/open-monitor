@@ -196,7 +196,7 @@ func LoadCacheData(dataDir string)  {
 
 func InitMonitorUrl(url,port string)  {
 	if url != "" {
-		MonitorUrl = url + "/wecube-monitor/api/v1/agent/export/custom/endpoint/add"
+		MonitorUrl = url + "/monitor/api/v1/agent/export/custom/endpoint/add"
 		LocalPort = port
 		LocalIp = getIntranetIp()
 	}
