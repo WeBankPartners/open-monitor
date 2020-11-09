@@ -8,7 +8,7 @@ module.exports = {
   //     },
   //   }
 	// },
-	// assetsDir: process.env.PLUGIN === 'plugin'? '':'monitor',
+	assetsDir: process.env.PLUGIN === 'plugin'? '':'monitor',
 	outputDir: process.env.PLUGIN === 'plugin'? 'plugin':'dist',
 	productionSourceMap: process.env.PLUGIN !== 'plugin',
 	chainWebpack: config => {
