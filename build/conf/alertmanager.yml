@@ -10,7 +10,7 @@ route:
 receivers:
 - name: 'web.hook'
   webhook_configs:
-  - url: 'http://127.0.0.1:8080/wecube-monitor/webhook'
+  - url: 'http://127.0.0.1:8080/monitor/webhook'
     send_resolved: true
 inhibit_rules:
   - source_match:
