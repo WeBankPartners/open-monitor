@@ -18,7 +18,7 @@ import (
 )
 
 func InitHttpServer(exportAgent bool) {
-	urlPrefix := "/wecube-monitor"
+	urlPrefix := "/monitor"
 	r := gin.Default()
 	r.LoadHTMLGlob("public/*.html")
 	r.Static(fmt.Sprintf("%s/js", urlPrefix), fmt.Sprintf("public%s/js", urlPrefix))
