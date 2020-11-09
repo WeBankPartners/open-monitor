@@ -34,7 +34,7 @@
       "enabled" : true,
       "header": ["X-Auth-Token=default-token-used-in-server-side"],
       "group_tag" : "group=g1",
-      "url": "http://127.0.0.1:8080/wecube-monitor/api/v1/agent/export/ping/source",
+      "url": "http://127.0.0.1:8080/monitor/api/v1/agent/export/ping/source",
       "interval": 60,
       "weight": 3
     },
