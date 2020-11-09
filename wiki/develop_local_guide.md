@@ -85,7 +85,7 @@
    ```bash
    go run main.go -c ../build/develop/monitor.json
    ```
-   程序启动后访问 http://127.0.0.1:8088/wecube-monitor
+   程序启动后访问 http://127.0.0.1:8088/monitor
     
 9. 安装agent并注册监控对象查看视图  
     安装agent说明文档: [agent安装说明](install_agent.md)  
