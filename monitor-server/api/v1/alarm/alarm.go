@@ -334,13 +334,16 @@ func OpenAlarmApi(c *gin.Context)  {
 		requestObj.AlertTitle = c.PostForm("alert_title")
 		requestObj.RemarkInfo = c.PostForm("remark_info")
 		requestObj.SubSystemId = c.PostForm("sub_system_id")
+		requestObj.UseUmgPolicy = c.PostForm("use_umg_policy")
+		requestObj.AlertWay = c.PostForm("alert_way")
+		requestObj.AlertReciver = c.PostForm("alert_reciver")
 		param.AlertList = []m.OpenAlarmObj{requestObj}
 		err := db.SaveOpenAlarm(param)
 		if err != nil {
 			c.JSON(http.StatusOK, m.OpenAlarmResponse{ResultCode:-1, ResultMsg:err.Error()})
-		} else {
-			c.JSON(http.StatusOK, m.OpenAlarmResponse{ResultCode:0, ResultMsg:"success"})
+			return
 		}
+		c.JSON(http.StatusOK, m.OpenAlarmResponse{ResultCode:0, ResultMsg:"success"})
 	}else {
 		if err := c.ShouldBindJSON(&param); err == nil {
 			err = db.SaveOpenAlarm(param)
