@@ -1059,7 +1059,9 @@ func SaveOpenAlarm(param m.OpenAlarmRequest) error {
 		if err != nil {
 			log.Logger.Error("Save open alarm error", log.Error(err))
 		}
-
+	}
+	if err != nil {
+		err = fmt.Errorf("Update database fail,%s ", err.Error())
 	}
 	return err
 }
