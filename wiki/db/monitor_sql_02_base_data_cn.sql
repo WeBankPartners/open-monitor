@@ -105,3 +105,8 @@ ALTER TABLE process_monitor ADD COLUMN process_name VARCHAR(255) DEFAULT '';
 #@v1.9.0-begin@;
 ALTER TABLE role ADD COLUMN main_dashboard INT DEFAULT 0;
 #@v1.9.0-end@;
+
+#@v1.9.0.4-begin@;
+alter table alarm_custom add column use_umg_policy varchar(50) default '';
+alter table alarm_custom add column alert_way varchar(50) default '';
+#@v1.9.0.4-end@;
