@@ -1,15 +1,15 @@
 package funcs
 
 import (
-	"encoding/json"
-	"log"
-	"sync"
-	"os/exec"
-	"os"
 	"bufio"
-	"strings"
+	"encoding/json"
 	"io"
 	"io/ioutil"
+	"log"
+	"os"
+	"os/exec"
+	"strings"
+	"sync"
 )
 
 type TransferConfig struct {
@@ -87,6 +87,8 @@ type GlobalConfig struct {
 	PingEnable    bool              `json:"ping_enable"`
 	TelnetEnable  bool              `json:"telnet_enable"`
 	HttpCheckEnable  bool           `json:"http_check_enable"`
+	HttpProxyEnable  bool           `json:"http_proxy_enable"`
+	HttpProxyAddress  string           `json:"http_proxy"`
 	OpenFalcon    OpenFalconConfig  `json:"open-falcon"`
 	Prometheus    PrometheusCOnfig  `json:"prometheus"`
 	Source      SourceConfig    `json:"source"`
