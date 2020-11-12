@@ -90,7 +90,7 @@ func doHttpCheckNew(method,url string,httpClient *http.Client) int {
 	var err error
 	body:=strings.NewReader("")
 	var httpMethods map[string]string = map[string]string{"POST": "POST","GET":"GET","OPTIONS":"OPTIONS","HEAD":"HEAD","PUT":"PUT","DELETE":"DELETE","TRACE":"TRACE","CONNECT":"CONNECT"}
-	if _, ok := httpMethods[method]; !ok {
+	if _, ok := httpMethods[strings.ToUpper(method)]; !ok {
 		log.Printf("do http check -> Not support method:%s \n", method)
 		return 2
 	}
