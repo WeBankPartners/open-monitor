@@ -79,9 +79,15 @@
       :title="$t('resourceLevel.associatedObject')">
       <Form :model="currentData" label-position="left" :label-width="60">
         <FormItem :label="$t('resourceLevel.endpoint')">
-          <Select v-model="selectedObject" multiple>
+          <Select
+            v-model="selectedObject"
+            filterable
+            multiple
+            :remote-method="getAllObject"
+            >
             <Option v-for="item in allObject" :value="item.option_value" :key="item.option_value">{{ item.option_text }}</Option>
           </Select>
+
         </FormItem>
       </Form>
       <div slot="footer">
@@ -456,8 +462,11 @@ export default {
         this.getAllObject()
       })
     },
-    getAllObject () {
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', 'dashboard/search?search=.', '', (responseData) => {
+    getAllObject (query='.') {
+      let params = {
+        search: query
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', 'dashboard/search', params, (responseData) => {
         this.allObject = []
         responseData.forEach((item) => {
             if (item.id !== -1) {
