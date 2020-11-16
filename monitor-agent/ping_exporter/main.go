@@ -18,7 +18,7 @@ func main() {
 		log.Println("parse config fail,stop now...")
 		return
 	}
-	if !funcs.Config().PingEnable && !funcs.Config().TelnetEnable {
+	if !funcs.Config().PingEnable && !funcs.Config().TelnetEnable && !funcs.Config().HttpCheckEnable {
 		return
 	}
 	icmpping.TestModel = *isTest

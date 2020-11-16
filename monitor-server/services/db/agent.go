@@ -417,7 +417,7 @@ func GetPingExporterSource() []*m.PingExportSourceObj {
 		}
 		if grpIds != "" {
 			grpIds = grpIds[:len(grpIds)-1]
-			x.SQL(fmt.Sprintf("SELECT t2.guid,t2.ip FROM grp_endpoint t1 LEFT JOIN endpoint t2 ON t1.endpoint_id=t2.id WHERE t1.grp_id IN (%s)", grpIds)).Find(&endpointTable)
+			x.SQL(fmt.Sprintf("SELECT t2.guid,t2.ip FROM grp_endpoint t1 LEFT JOIN endpoint t2 ON t1.endpoint_id=t2.id WHERE t1.grp_id IN (%s) AND t2.address_agent=''", grpIds)).Find(&endpointTable)
 			for _,v := range endpointTable {
 				result = append(result, &m.PingExportSourceObj{Ip:v.Ip, Guid:v.Guid})
 			}
@@ -425,14 +425,14 @@ func GetPingExporterSource() []*m.PingExportSourceObj {
 		if endpointIds != "" {
 			endpointTable = []*m.EndpointTable{}
 			endpointIds = endpointIds[:len(endpointIds)-1]
-			x.SQL(fmt.Sprintf("SELECT guid,ip FROM endpoint WHERE id IN (%s)", endpointIds)).Find(&endpointTable)
+			x.SQL(fmt.Sprintf("SELECT guid,ip FROM endpoint WHERE id IN (%s) AND address_agent=''", endpointIds)).Find(&endpointTable)
 			for _,v := range endpointTable {
 				result = append(result, &m.PingExportSourceObj{Ip:v.Ip, Guid:v.Guid})
 			}
 		}
 	}
 	var telnetQuery []*m.TelnetSourceQuery
-	x.SQL("SELECT t2.guid,t1.port,t2.ip FROM endpoint_telnet t1 JOIN endpoint t2 ON t1.endpoint_guid=t2.guid").Find(&telnetQuery)
+	x.SQL("SELECT t2.guid,t1.port,t2.ip FROM endpoint_telnet t1 JOIN endpoint t2 ON t1.endpoint_guid=t2.guid WHERE t2.address_agent=''").Find(&telnetQuery)
 	if len(telnetQuery) > 0 {
 		for _,v := range telnetQuery {
 			if v.Ip != "" && v.Port > 0 {
@@ -441,7 +441,7 @@ func GetPingExporterSource() []*m.PingExportSourceObj {
 		}
 	}
 	var endpointHttpTable []*m.EndpointHttpTable
-	x.SQL("SELECT * FROM endpoint_http").Find(&endpointHttpTable)
+	x.SQL("SELECT t1.* FROM endpoint_http t1 join endpoint t2 on t1.endpoint_guid=t2.guid where t2.address_agent=''").Find(&endpointHttpTable)
 	if len(endpointHttpTable) > 0 {
 		for _,v := range endpointHttpTable {
 			tmpUrl := v.Url
