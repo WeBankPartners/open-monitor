@@ -27,13 +27,9 @@ func handlePrometheus(w http.ResponseWriter,r *http.Request)  {
 	w.Write(funcs.GetExportMetric())
 }
 
-type ipRequest struct {
-	Ip  []string  `json:"ip"`
-}
-
 func handleIpSource(w http.ResponseWriter,r *http.Request)  {
 	var respMessage string
-	var param ipRequest
+	var param funcs.RemoteResponse
 	b,err := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()
 	if err != nil {
@@ -49,6 +45,6 @@ func handleIpSource(w http.ResponseWriter,r *http.Request)  {
 		w.Write([]byte(respMessage))
 		return
 	}
-	funcs.UpdateIpList(param.Ip, funcs.Config().Source.Listen.Weight)
+	funcs.UpdateIpList(param.Config, funcs.Config().Source.Listen.Weight)
 	w.Write([]byte("success"))
 }
