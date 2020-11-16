@@ -20,7 +20,7 @@ var (
 	sourceGuidLock sync.RWMutex
 )
 
-type remoteResponse struct {
+type RemoteResponse struct {
 	Config  []*PingExportSourceObj  `json:"config"`
 }
 
@@ -104,7 +104,7 @@ func startRemoteCurl()  {
 			if resp.StatusCode >= 300 {
 				log.Printf("curl %s fail,resp code %d %s \n", url, resp.StatusCode, string(b))
 			}else{
-				var responseData remoteResponse
+				var responseData RemoteResponse
 				err = json.Unmarshal(b, &responseData)
 				if err != nil {
 					log.Printf("curl %s fail,body unmarshal fail: %s", url, err)
@@ -124,7 +124,7 @@ func startRemoteCurl()  {
 	}
 }
 
-func UpdateIpList(ips []string,sourceType int) {
+func UpdateIpList(ips []*PingExportSourceObj,sourceType int) {
 	if len(ips) == 0 {
 		return
 	}
