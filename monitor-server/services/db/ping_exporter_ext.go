@@ -4,6 +4,10 @@ import (
 	"time"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
+	"strings"
+	"fmt"
+	"net/http"
+	"encoding/json"
 )
 
 func StartNotifyPingExport()  {
@@ -34,12 +38,68 @@ func notifyPingExport()  {
 			httpGuidList = append(httpGuidList, v.Guid)
 		}
 	}
-
+	var telnetTables []*m.EndpointTelnetTable
+	var httpTables []*m.EndpointHttpTable
 	if len(telnetGuidList) > 0 {
-
+		x.SQL("select * from endpoint_telnet where endpoint_guid in ('"+strings.Join(telnetGuidList, "','")+"')").Find(&telnetTables)
 	}
 	if len(httpGuidList) > 0 {
-
+		x.SQL("select * from endpoint_http where endpoint_guid in ('"+strings.Join(telnetGuidList, "','")+"')").Find(&httpTables)
+	}
+	var extendExporterMap = make(map[string][]*m.PingExportSourceObj)
+	for _,v := range endpointTable {
+		if !strings.Contains(v.AddressAgent, ":") {
+			continue
+		}
+		var tmpPingExporterSourceObj m.PingExportSourceObj
+		if v.ExportType == "ping" {
+			tmpPingExporterSourceObj.Ip = v.Ip
+			tmpPingExporterSourceObj.Guid = v.Guid
+		}else if v.ExportType == "telnet" {
+			for _,vv := range telnetTables {
+				if vv.EndpointGuid == v.Guid {
+					tmpPingExporterSourceObj.Ip = fmt.Sprintf("%s:%s", v.Ip, vv.Port)
+					tmpPingExporterSourceObj.Guid = v.Guid
+					break
+				}
+			}
+		}else if v.ExportType == "http" {
+			for _,vv := range httpTables {
+				if vv.EndpointGuid == v.Guid {
+					tmpPingExporterSourceObj.Ip = fmt.Sprintf("%s_%s",strings.ToLower(vv.Method),vv.Url)
+					tmpPingExporterSourceObj.Guid = v.Guid
+					break
+				}
+			}
+		}
+		if _,b := extendExporterMap[v.AddressAgent];b {
+			extendExporterMap[v.AddressAgent] = append(extendExporterMap[v.AddressAgent], &tmpPingExporterSourceObj)
+		}else{
+			extendExporterMap[v.AddressAgent] = []*m.PingExportSourceObj{&tmpPingExporterSourceObj}
+		}
+	}
+	for k,v := range extendExporterMap {
+		requestPingExporter(k, v)
 	}
 
+}
+
+func requestPingExporter(address string,objList []*m.PingExportSourceObj)  {
+	if address == "" || len(objList) == 0 {
+		return
+	}
+	url := fmt.Sprintf("http://%s/config/ip", address)
+	var param m.PingExporterSourceDto
+	param.Config = objList
+	paramBytes,_ := json.Marshal(param)
+	resp,err := http.Post(url, "application/json", strings.NewReader(string(paramBytes)))
+	if err != nil {
+		log.Logger.Error("Request ping exporter fail", log.Error(err))
+		return
+	}
+	if resp.StatusCode >= 300 {
+		log.Logger.Error("Request ping exporter fail,status code error", log.Int("status", resp.StatusCode))
+	}else{
+		log.Logger.Info("Request ping exporter success", log.String("address", address))
+	}
 }
