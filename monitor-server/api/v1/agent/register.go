@@ -522,6 +522,7 @@ func pingRegister(param m.RegisterParamNew) returnData {
 	if param.ExportAddress != "" {
 		param.ExportAddress = formatExportAddress(param.ExportAddress)
 		result.endpoint.AddressAgent = param.ExportAddress
+		result.fetchMetric = true
 	}
 	return result
 }
@@ -541,6 +542,7 @@ func telnetRegister(param m.RegisterParamNew) returnData {
 	if param.ExportAddress != "" {
 		param.ExportAddress = formatExportAddress(param.ExportAddress)
 		result.endpoint.AddressAgent = param.ExportAddress
+		result.fetchMetric = true
 	}
 	result.defaultGroup = "default_telnet_group"
 	result.addDefaultGroup = true
@@ -571,6 +573,7 @@ func httpRegister(param m.RegisterParamNew) returnData {
 	if param.ExportAddress != "" {
 		param.ExportAddress = formatExportAddress(param.ExportAddress)
 		result.endpoint.AddressAgent = param.ExportAddress
+		result.fetchMetric = true
 	}
 	result.defaultGroup = "default_http_group"
 	result.addDefaultGroup = true
