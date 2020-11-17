@@ -45,6 +45,11 @@ func handleIpSource(w http.ResponseWriter,r *http.Request)  {
 		w.Write([]byte(respMessage))
 		return
 	}
-	funcs.UpdateIpList(param.Config, funcs.Config().Source.Listen.Weight)
+	var ips []string
+	for _,v := range param.Config {
+		ips = append(ips, v.Ip)
+	}
+	funcs.UpdateIpList(ips, funcs.Config().Source.Listen.Weight)
+	funcs.UpdateSourceRemoteData(param.Config)
 	w.Write([]byte("success"))
 }
