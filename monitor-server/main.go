@@ -41,6 +41,7 @@ func main() {
 	go db.StartCheckCron()
 	go db.StartCheckLogKeyword()
 	go db.SendConfigToDbManager()
+	go db.StartNotifyPingExport()
 	alarm.SyncInitSdFile()
 	alarm.SyncInitConfigFile()
 	api.InitDependenceParam()
