@@ -546,7 +546,6 @@ func telnetRegister(param m.RegisterParamNew) returnData {
 	}
 	result.defaultGroup = "default_telnet_group"
 	result.addDefaultGroup = true
-	result.fetchMetric = false
 	result.agentManager = false
 	// store to db -> endpoint_telnet
 	var eto []*m.EndpointTelnetObj
