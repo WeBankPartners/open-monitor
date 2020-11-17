@@ -16,7 +16,7 @@ import (
 var (
 	sourceMap map[string]int
 	sourceLock sync.RWMutex
-	sourceRemoteData  []*PingExportSourceObj
+	sourceRemoteMap  map[string][]string
 	sourceGuidLock sync.RWMutex
 )
 
@@ -34,6 +34,7 @@ type PingExportSourceObj struct {
 func InitSourceList()  {
 	sourceLock = *new(sync.RWMutex)
 	sourceMap = make(map[string]int)
+	sourceRemoteMap = make(map[string][]string)
 	sourceGuidLock = *new(sync.RWMutex)
 	var weight int
 	if Config().Source.Const.Enabled {
@@ -54,16 +55,18 @@ func InitSourceList()  {
 		if err != nil {
 			log.Printf("read file %s error: %v \n", Config().Source.File.Path, err)
 		}else{
+			var tmpSourceRemoteData []*PingExportSourceObj
 			for _,v := range strings.Split(string(ips), "\n") {
 				tmpMessage := strings.TrimSpace(v)
 				if strings.Contains(tmpMessage, "^") {
 					tmpSplit := strings.Split(tmpMessage, "^")
 					sourceMap[tmpSplit[0]] = weight
-					sourceRemoteData = append(sourceRemoteData, &PingExportSourceObj{Ip:tmpSplit[0], Guid:tmpSplit[1]})
+					tmpSourceRemoteData = append(tmpSourceRemoteData, &PingExportSourceObj{Ip:tmpSplit[0], Guid:tmpSplit[1]})
 				}else {
 					sourceMap[tmpMessage] = weight
 				}
 			}
+			UpdateSourceRemoteData(tmpSourceRemoteData)
 		}
 	}
 	if Config().Source.Remote.Enabled && Config().Source.Remote.Url != "" {
@@ -110,9 +113,7 @@ func startRemoteCurl()  {
 					log.Printf("curl %s fail,body unmarshal fail: %s", url, err)
 				}else{
 					var tmpIps []string
-					sourceGuidLock.Lock()
-					sourceRemoteData = responseData.Config
-					sourceGuidLock.Unlock()
+					UpdateSourceRemoteData(responseData.Config)
 					for _,vv := range responseData.Config {
 						tmpIps = append(tmpIps, vv.Ip)
 					}
@@ -124,7 +125,7 @@ func startRemoteCurl()  {
 	}
 }
 
-func UpdateIpList(ips []*PingExportSourceObj,sourceType int) {
+func UpdateIpList(ips []string,sourceType int) {
 	if len(ips) == 0 {
 		return
 	}
@@ -156,6 +157,30 @@ func UpdateIpList(ips []*PingExportSourceObj,sourceType int) {
 		delete(sourceMap, v)
 	}
 	sourceLock.Unlock()
+}
+
+func UpdateSourceRemoteData(input []*PingExportSourceObj)  {
+	if len(input) == 0 {
+		return
+	}
+	sourceGuidLock.Lock()
+	for _,v := range input {
+		if _,b := sourceRemoteMap[v.Ip];b {
+			existFlag := false
+			for _,vv := range sourceRemoteMap[v.Ip] {
+				if vv == v.Guid {
+					existFlag = true
+					break
+				}
+			}
+			if !existFlag {
+				sourceRemoteMap[v.Ip] = append(sourceRemoteMap[v.Ip], v.Guid)
+			}
+		}else{
+			sourceRemoteMap[v.Ip] = []string{v.Guid}
+		}
+	}
+	sourceGuidLock.Unlock()
 }
 
 func GetIpList() []string {
@@ -212,15 +237,5 @@ func GetHttpCheckList() []*HttpCheckObj {
 }
 
 func GetSourceGuidMap() map[string][]string {
-	tmpMap := make(map[string][]string)
-	sourceGuidLock.RLock()
-	for _,v := range sourceRemoteData {
-		if _,b := tmpMap[v.Ip];b {
-			tmpMap[v.Ip] = []string{v.Guid}
-		}else{
-			tmpMap[v.Ip] = append(tmpMap[v.Ip], v.Guid)
-		}
-	}
-	sourceGuidLock.RUnlock()
-	return tmpMap
+	return sourceRemoteMap
 }
