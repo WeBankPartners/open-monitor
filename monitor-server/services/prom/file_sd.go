@@ -5,6 +5,7 @@ import (
 	"sync"
 	"fmt"
 	"io/ioutil"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 )
 
 var fileSdList m.ServiceDiscoverFileList
@@ -12,6 +13,7 @@ var fileSdLock = new(sync.RWMutex)
 var fileSdPath string
 
 func AddSdEndpoint(param m.ServiceDiscoverFileObj) []int {
+	log.Logger.Debug("add sd endpoint", log.String("guid", param.Guid), log.String("address", param.Address), log.Int("step", param.Step))
 	var stepList []int
 	if param.Guid == "" || param.Address == "" || param.Step == 0 {
 		return stepList
