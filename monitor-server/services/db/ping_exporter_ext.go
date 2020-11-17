@@ -19,6 +19,7 @@ func StartNotifyPingExport()  {
 }
 
 func notifyPingExport()  {
+	log.Logger.Debug("start to notify ping exporter")
 	var endpointTable []*m.EndpointTable
 	err := x.SQL("select * from endpoint where export_type in ('ping','telnet','http') and address_agent<>'' order by address_agent").Find(&endpointTable)
 	if err != nil {
