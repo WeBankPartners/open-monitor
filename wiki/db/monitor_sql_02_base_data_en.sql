@@ -112,5 +112,8 @@ alter table alarm_custom add column alert_way varchar(50) default '';
 #@v1.9.0.4-end@;
 
 #@v1.9.0.5-begin@;
-insert into prom_metric(metric,metric_type,prom_ql) values ('ping_alive','ping','ping_alive{guid="$guid",e_guid="$guid"}'),('telnet_alive','telnet','telnet_alive{guid="$guid",e_guid="$guid"}'),('http.status','http','http_status{guid="$guid",e_guid="$guid"}');
+update prom_metric set prom_ql='ping_alive{guid=\"$guid\",e_guid=\"$guid\"}' where metric='ping_alive';
+update prom_metric set prom_ql='telnet_alive{guid=\"$guid\",e_guid=\"$guid\"}' where metric='telnet_alive';
+update prom_metric set prom_ql='http_status{guid=\"$guid\",e_guid=\"$guid\"}' where metric='http.status';
+insert into prom_metric(metric,metric_type,prom_ql) values ('ping_alive','ping','ping_alive{guid=\"$guid\",e_guid=\"$guid\"}'),('telnet_alive','telnet','telnet_alive{guid=\"$guid\",e_guid=\"$guid\"}');
 #@v1.9.0.5-end@;
