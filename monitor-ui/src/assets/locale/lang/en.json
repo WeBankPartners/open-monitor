@@ -176,7 +176,9 @@
     "associatedObject": "Associated Endpoint",
     "endpoint": "Endpoint",
     "alarmFiring": "Alarm Firing",
-    "alarmRecover": "Alarm Recover"
+    "alarmRecover": "Alarm Recover",
+    "level_search_name": "Please Enter Name",
+    "level_search_endpoint": "Please Select Endpoint"
   },
   "alarmEmpty": "WoW !!No alarm!",
   "details": "Details",
