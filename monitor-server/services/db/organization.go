@@ -8,7 +8,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 )
 
-func GetOrganizationList() (result []*m.OrganizationPanel,err error) {
+func GetOrganizationList(nameText,endpointText string) (result []*m.OrganizationPanel,err error) {
 	var data []*m.PanelRecursiveTable
 	err = x.SQL("SELECT * FROM panel_recursive").Find(&data)
 	if err != nil {
@@ -20,9 +20,11 @@ func GetOrganizationList() (result []*m.OrganizationPanel,err error) {
 	}
 	tmpMap := make(map[string]string)
 	objTypeMap := make(map[string]string)
+	endpointMap := make(map[string][]string)
 	for _,v := range data {
 		tmpMap[v.Guid] = v.DisplayName
 		objTypeMap[v.Guid] = v.ObjType
+		endpointMap[v.Guid] = strings.Split(v.Endpoint, "^")
 	}
 	var headers []string
 	for _,v := range data {
@@ -42,13 +44,13 @@ func GetOrganizationList() (result []*m.OrganizationPanel,err error) {
 		}
 	}
 	for _,v := range headers {
-		tmpNodeList := recursiveOrganization(data, v, m.OrganizationPanel{Guid:v, DisplayName:tmpMap[v], Type:objTypeMap[v]})
+		tmpNodeList := recursiveOrganization(data, v, m.OrganizationPanel{Guid:v, DisplayName:tmpMap[v], Type:objTypeMap[v]}, nameText, endpointText)
 		result = append(result, &tmpNodeList)
 	}
 	return result,nil
 }
 
-func recursiveOrganization(data []*m.PanelRecursiveTable, parent string, tmpNode m.OrganizationPanel) m.OrganizationPanel {
+func recursiveOrganization(data []*m.PanelRecursiveTable, parent string, tmpNode m.OrganizationPanel, nameText,endpointText string) m.OrganizationPanel {
 	for _,v := range data {
 		if v.Parent == "" || v.Guid == parent {
 			continue
@@ -61,8 +63,34 @@ func recursiveOrganization(data []*m.PanelRecursiveTable, parent string, tmpNode
 			}
 		}
 		if tmpFlag {
-			tn := recursiveOrganization(data, v.Guid, m.OrganizationPanel{Guid:v.Guid, DisplayName:v.DisplayName, Type:v.ObjType})
-			tmpNode.Children = append(tmpNode.Children, &tn)
+			tmpOrganizationObj := m.OrganizationPanel{Guid:v.Guid, DisplayName:v.DisplayName, Type:v.ObjType}
+			if endpointText != "" {
+				if strings.Contains(v.Endpoint, endpointText) {
+					tmpOrganizationObj.FetchSearch = true
+					tmpOrganizationObj.FetchOriginFlag = true
+				}
+			}
+			if nameText != "" {
+				if strings.Contains(v.DisplayName, nameText) {
+					tmpOrganizationObj.FetchSearch = true
+					tmpOrganizationObj.FetchOriginFlag = true
+				}
+			}
+			tn := recursiveOrganization(data, v.Guid, tmpOrganizationObj, nameText, endpointText)
+			if nameText != "" || endpointText != "" {
+				if tn.FetchOriginFlag == false {
+					continue
+				}
+				tmpNode.Children = append(tmpNode.Children, &tn)
+				for _,tmpChildren := range tmpNode.Children {
+					if tmpChildren.FetchOriginFlag {
+						tmpNode.FetchOriginFlag = true
+						break
+					}
+				}
+			}else {
+				tmpNode.Children = append(tmpNode.Children, &tn)
+			}
 		}
 	}
 	return tmpNode
