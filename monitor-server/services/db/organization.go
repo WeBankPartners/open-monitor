@@ -96,9 +96,9 @@ func recursiveOrganization(data []*m.PanelRecursiveTable, parent string, tmpNode
 			}
 			tn := recursiveOrganization(data, v.Guid, tmpOrganizationObj, nameText, endpointText)
 			if nameText != "" || endpointText != "" {
-				if tn.FetchOriginFlag == false {
-					continue
-				}
+				//if tn.FetchOriginFlag == false {
+				//	continue
+				//}
 				tmpNode.Children = append(tmpNode.Children, &tn)
 				for _,tmpChildren := range tmpNode.Children {
 					if tmpChildren.FetchOriginFlag {
