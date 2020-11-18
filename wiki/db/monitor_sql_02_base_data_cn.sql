@@ -110,3 +110,7 @@ ALTER TABLE role ADD COLUMN main_dashboard INT DEFAULT 0;
 alter table alarm_custom add column use_umg_policy varchar(50) default '';
 alter table alarm_custom add column alert_way varchar(50) default '';
 #@v1.9.0.4-end@;
+
+#@v1.9.0.5-begin@;
+insert into prom_metric(metric,metric_type,prom_ql) values ('ping_alive','ping','ping_alive{guid="$guid",e_guid="$guid"}'),('telnet_alive','telnet','telnet_alive{guid="$guid",e_guid="$guid"}'),('http.status','http','http_status{guid="$guid",e_guid="$guid"}');
+#@v1.9.0.5-end@;
