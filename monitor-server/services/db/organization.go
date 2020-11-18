@@ -20,11 +20,11 @@ func GetOrganizationList(nameText,endpointText string) (result []*m.Organization
 	}
 	tmpMap := make(map[string]string)
 	objTypeMap := make(map[string]string)
-	endpointMap := make(map[string][]string)
+	endpointMap := make(map[string]string)
 	for _,v := range data {
 		tmpMap[v.Guid] = v.DisplayName
 		objTypeMap[v.Guid] = v.ObjType
-		endpointMap[v.Guid] = strings.Split(v.Endpoint, "^")
+		endpointMap[v.Guid] = v.Endpoint
 	}
 	var headers []string
 	for _,v := range data {
@@ -44,7 +44,25 @@ func GetOrganizationList(nameText,endpointText string) (result []*m.Organization
 		}
 	}
 	for _,v := range headers {
-		tmpNodeList := recursiveOrganization(data, v, m.OrganizationPanel{Guid:v, DisplayName:tmpMap[v], Type:objTypeMap[v]}, nameText, endpointText)
+		tmpHeaderObj := m.OrganizationPanel{Guid:v, DisplayName:tmpMap[v], Type:objTypeMap[v]}
+		if nameText != "" {
+			if strings.Contains(tmpMap[v], nameText) {
+				tmpHeaderObj.FetchSearch = true
+				tmpHeaderObj.FetchOriginFlag = true
+			}
+		}
+		if endpointText != "" {
+			if strings.Contains(endpointMap[v], endpointText) {
+				tmpHeaderObj.FetchSearch = true
+				tmpHeaderObj.FetchOriginFlag = true
+			}
+		}
+		tmpNodeList := recursiveOrganization(data, v, tmpHeaderObj, nameText, endpointText)
+		if nameText != "" || endpointText != "" {
+			if tmpNodeList.FetchOriginFlag == false {
+				continue
+			}
+		}
 		result = append(result, &tmpNodeList)
 	}
 	return result,nil
