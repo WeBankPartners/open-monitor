@@ -1,8 +1,38 @@
 <template>
   <div class="">
     <button class="btn-confirm-f btn-small" @click="addPanel">{{$t('resourceLevel.addPanel')}}</button>
-    <i class="fa fa-refresh" aria-hidden="true" @click="getAllResource"></i>
-    <recursive :recursiveViewConfig="resourceRecursive"></recursive>
+    <i class="fa fa-refresh" aria-hidden="true" @click="getAllResource" style="margin-right:16px"></i>
+    <Input v-model="searchParams.name" :placeholder="$t('resourceLevel.level_search_name')" style="width: 300px" />
+    <Select
+      v-model="searchParams.endpoint"
+      class="col-md-2"
+      filterable
+      clearable
+       :placeholder="$t('resourceLevel.level_search_endpoint')"
+      :remote-method="getAllObject"
+      >
+      <Option v-for="item in allObject" :value="item.option_value" :key="item.option_value">{{ item.option_text }}</Option>
+    </Select>
+    <button type="button" class="btn btn-confirm-f" @click="getAllResource(true)">{{$t('button.search')}}</button>
+    
+    <template v-if="extend">
+      <recursive :recursiveViewConfig="resourceRecursive"></recursive>
+    </template>
+    <template v-else>
+      <template v-for="(rr, index) in resourceRecursive">
+        <div :key="index">
+          <div class="levelClass" @click="activeLevel(rr.guid)">
+            <i v-if="!inShowLevel(rr.guid)" class="fa fa-angle-double-down" aria-hidden="true"></i>
+            <i v-else class="fa fa-angle-double-up" aria-hidden="true"></i>
+            {{rr.display_name}}
+            <Tag type="border" color="primary" style="margin-left:8px">{{rr.type}}</Tag>    
+          </div>
+          <div v-if="inShowLevel(rr.guid)">
+            <recursive :recursiveViewConfig="[rr]"></recursive>
+          </div>
+        </div>
+      </template>
+    </template>
     <ModalComponent :modelConfig="modelConfig"></ModalComponent>
   </div>
 </template>
@@ -13,7 +43,14 @@ export default {
   name: '',
   data() {
     return {
-      resourceRecursive: null,
+      searchParams: {
+        name: '',
+        endpoint: ''
+      },
+      extend: false,
+      allObject: [],
+      resourceRecursive: [],
+      activedLevel: [],
       modelConfig: {
         modalId: 'add_panel_Modal',
         modalTitle: 'button.add',
@@ -38,10 +75,40 @@ export default {
   },
   mounted () {
     this.getAllResource()
+    this.getAllObject()
   },
   methods: {
-    getAllResource () {
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.resourceLevel.getAll, '', (responseData) => {
+    getAllObject (query='.') {
+      let params = {
+        search: query
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', 'dashboard/search', params, (responseData) => {
+        this.allObject = []
+        responseData.forEach((item) => {
+            if (item.id !== -1) {
+              this.allObject.push({
+                ...item,
+                value: item.id
+              })
+            }
+          })
+        this.isAssociatedObject = true
+      })
+    },
+    activeLevel (guid) {
+      if (this.activedLevel.includes(guid)) {
+        const index = this.activedLevel.findIndex(item => item === guid)
+        this.activedLevel.splice(index, 1)
+      } else {
+        this.activedLevel.push(guid)
+      }
+    },
+    inShowLevel (guid) {
+      return this.activedLevel.includes(guid) || false
+    },
+    getAllResource (extend = false) {
+      this.extend = extend
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.resourceLevel.getAll, this.searchParams, (responseData) => {
         this.resourceRecursive = responseData
       })
     },
@@ -67,9 +134,14 @@ export default {
 <style scoped lang="less">
  .fa {
    margin-left: 4px;
-   font-size: 14px;
    padding: 4px 6px;
-   border: 1px solid #2d8cf0;
    border-radius: 4px;
+ }
+ .levelClass {
+    font-size: 14px;
+    border: 1px solid @gray-d;
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin: 6px;
  }
 </style>
