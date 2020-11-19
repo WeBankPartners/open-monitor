@@ -176,7 +176,9 @@
     "associatedObject": "关联对象",
     "endpoint": "对象",
     "alarmFiring": "告警异常",
-    "alarmRecover": "告警恢复"
+    "alarmRecover": "告警恢复",
+    "level_search_name": "请输入层级名称",
+    "level_search_endpoint": "请选择对象"
   },
   "alarmEmpty": "WoW !! 无任何报警！",
   "details": "详细信息",
@@ -190,5 +192,7 @@
   "timeIntervalWarn": "时间区间选择错误",
   "realTimeAlarm": "实时告警",
   "clearAll": "清空",
-  "alarmContent": "告警内容"
+  "alarmContent": "告警内容",
+  "exporter": "扩展",
+  "exporter_address": "扩展地址"
 }
