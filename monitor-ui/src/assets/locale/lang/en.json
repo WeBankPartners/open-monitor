@@ -192,5 +192,7 @@
   "timeIntervalWarn": "Wrong Time Interval Selection",
   "realTimeAlarm": "Real-time Alarm",
   "clearAll": "Clear All",
-  "alarmContent": "Alarm Content"
+  "alarmContent": "Alarm Content",
+  "exporter": "Exporter",
+  "exporter_address": "Exporter Address"
 }
