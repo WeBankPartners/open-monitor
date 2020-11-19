@@ -81,6 +81,16 @@
         <label class="required-tip">*</label>
         <label v-show="veeErrors.has('port')" class="is-danger">{{ veeErrors.first('port')}}</label>
       </div>
+      <div class="marginbottom params-each" v-if="(['ping','http','telnet'].includes(endpointRejectModel.addRow.type))">
+        <label class="col-md-2 label-name">{{$t('exporter')}}:</label>
+        <Checkbox v-model="endpointRejectModel.addRow.exporter"></Checkbox>
+      </div>
+      <div v-if="endpointRejectModel.addRow.exporter">
+        <label class="col-md-2 label-name">{{$t('exporter_address')}}:</label>
+        <input v-validate="'required'" v-model="endpointRejectModel.addRow.export_address" name="export_address" :class="{ 'red-border': veeErrors.has('export_address') }" type="text" class="col-md-7 form-control model-input c-dark" />
+        <label class="required-tip">*</label>
+        <label v-show="veeErrors.has('export_address')" class="is-danger">{{ veeErrors.first('export_address')}}</label>
+      </div>
     </div>
   </ModalComponent>
   <ModalComponent :modelConfig="processConfigModel">
@@ -432,7 +442,9 @@ export default {
           password: '',
           method: '',
           url: '',
-          exporter_type: ''
+          exporter_type: '',
+          exporter: false,
+          export_address: ''
         },
         endpointType: [{
             label: 'host',
