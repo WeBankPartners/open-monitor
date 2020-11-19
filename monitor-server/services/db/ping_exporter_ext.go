@@ -93,6 +93,7 @@ func requestPingExporter(address string,objList []*m.PingExportSourceObj)  {
 	var param m.PingExporterSourceDto
 	param.Config = objList
 	paramBytes,_ := json.Marshal(param)
+	log.Logger.Debug("request ping exporter", log.String("address", address), log.String("body", string(paramBytes)))
 	resp,err := http.Post(url, "application/json", strings.NewReader(string(paramBytes)))
 	if err != nil {
 		log.Logger.Error("Request ping exporter fail", log.Error(err))
