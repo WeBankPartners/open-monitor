@@ -45,7 +45,7 @@ func notifyPingExport()  {
 		x.SQL("select * from endpoint_telnet where endpoint_guid in ('"+strings.Join(telnetGuidList, "','")+"')").Find(&telnetTables)
 	}
 	if len(httpGuidList) > 0 {
-		x.SQL("select * from endpoint_http where endpoint_guid in ('"+strings.Join(telnetGuidList, "','")+"')").Find(&httpTables)
+		x.SQL("select * from endpoint_http where endpoint_guid in ('"+strings.Join(httpGuidList, "','")+"')").Find(&httpTables)
 	}
 	var extendExporterMap = make(map[string][]*m.PingExportSourceObj)
 	for _,v := range endpointTable {
