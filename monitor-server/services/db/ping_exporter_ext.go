@@ -67,7 +67,7 @@ func notifyPingExport()  {
 		}else if v.ExportType == "http" {
 			for _,vv := range httpTables {
 				if vv.EndpointGuid == v.Guid {
-					tmpPingExporterSourceObj.Ip = fmt.Sprintf("%s_%s",strings.ToLower(vv.Method),vv.Url)
+					tmpPingExporterSourceObj.Ip = fmt.Sprintf("%s_%s",strings.ToUpper(vv.Method),vv.Url)
 					tmpPingExporterSourceObj.Guid = v.Guid
 					break
 				}
