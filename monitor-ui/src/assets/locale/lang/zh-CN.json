@@ -194,5 +194,6 @@
   "clearAll": "清空",
   "alarmContent": "告警内容",
   "exporter": "扩展",
-  "exporter_address": "扩展地址"
+  "exporter_address": "扩展地址",
+  "exporter_address_placeholder": "ip:port"
 }

@@ -87,7 +87,7 @@
       </div>
       <div v-if="endpointRejectModel.addRow.exporter">
         <label class="col-md-2 label-name">{{$t('exporter_address')}}:</label>
-        <input v-validate="'required'" v-model="endpointRejectModel.addRow.export_address" name="export_address" :class="{ 'red-border': veeErrors.has('export_address') }" type="text" class="col-md-7 form-control model-input c-dark" />
+        <input v-validate="'required'" :placeholder="$t('exporter_address_placeholder')" v-model="endpointRejectModel.addRow.export_address" name="export_address" :class="{ 'red-border': veeErrors.has('export_address') }" type="text" class="col-md-7 form-control model-input c-dark" />
         <label class="required-tip">*</label>
         <label v-show="veeErrors.has('export_address')" class="is-danger">{{ veeErrors.first('export_address')}}</label>
       </div>
