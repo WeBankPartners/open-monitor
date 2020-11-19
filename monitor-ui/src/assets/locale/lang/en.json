@@ -194,5 +194,6 @@
   "clearAll": "Clear All",
   "alarmContent": "Alarm Content",
   "exporter": "Exporter",
-  "exporter_address": "Exporter Address"
+  "exporter_address": "Exporter Address",
+  "exporter_address_placeholder": "ip:port"
 }
