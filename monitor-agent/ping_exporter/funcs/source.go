@@ -219,11 +219,11 @@ func GetHttpCheckList() []*HttpCheckObj {
 	sourceLock.RLock()
 	for k,_ := range sourceMap {
 		if strings.Contains(k, "http") {
-			tmpMethod := "get"
+			tmpMethod := "GET"
 			tmpUrl := k
-			if strings.HasPrefix(k, "post") {
-				tmpMethod = "post"
-				tmpUrl = k[strings.Index(k, "http"):]
+			if strings.Contains(k, "_") {
+				tmpUrl = k[strings.Index(k, "_")+1:]
+				tmpMethod = strings.ToUpper(k[:strings.Index(k, "_")])
 			}
 			if !strings.HasPrefix(tmpUrl, "http") {
 				log.Printf("get http check list,url:%s is illegal", tmpUrl)

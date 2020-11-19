@@ -13,6 +13,7 @@ import (
 var (
 	httpCheckResultList  []*funcs.HttpCheckObj
 	resultLock = new(sync.RWMutex)
+	httpMethodList = []string{"POST","GET","OPTIONS","HEAD","PUT","DELETE","TRACE","CONNECT"}
 )
 
 func StartHttpCheckTask()  {
@@ -89,11 +90,22 @@ func doHttpCheckNew(method,url string,httpClient *http.Client) int {
 	var resp *http.Response
 	var err error
 	body:=strings.NewReader("")
-	var httpMethods map[string]string = map[string]string{"POST": "POST","GET":"GET","OPTIONS":"OPTIONS","HEAD":"HEAD","PUT":"PUT","DELETE":"DELETE","TRACE":"TRACE","CONNECT":"CONNECT"}
-	if _, ok := httpMethods[strings.ToUpper(method)]; !ok {
+	methodIllegal := true
+	for _,v := range httpMethodList {
+		if v == method {
+			methodIllegal = false
+			break
+		}
+	}
+	if methodIllegal {
 		log.Printf("do http check -> Not support method:%s \n", method)
 		return 2
 	}
+	//var httpMethods map[string]string = map[string]string{"POST": "POST","GET":"GET","OPTIONS":"OPTIONS","HEAD":"HEAD","PUT":"PUT","DELETE":"DELETE","TRACE":"TRACE","CONNECT":"CONNECT"}
+	//if _, ok := httpMethods[strings.ToUpper(method)]; !ok {
+	//	log.Printf("do http check -> Not support method:%s \n", method)
+	//	return 2
+	//}
 	
 	req, err := http.NewRequest(strings.ToUpper(method), url, body)
 	if err != nil {
