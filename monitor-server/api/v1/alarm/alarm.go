@@ -44,7 +44,13 @@ func AcceptAlertMsg(c *gin.Context)  {
 				if label.Key == "strategy_id" || label.Key == "job" || label.Key == "instance" || label.Key == "alertname" {
 					continue
 				}
-				tmpTags += fmt.Sprintf("%s:%s^", label.Key, label.Value)
+				tmpLabelValue := label.Value
+				if label.Key == "command" {
+					if len(label.Value) > 150 {
+						tmpLabelValue = label.Value[:150]
+					}
+				}
+				tmpTags += fmt.Sprintf("%s:%s^", label.Key, tmpLabelValue)
 			}
 			if tmpTags != "" {
 				tmpTags = tmpTags[:len(tmpTags)-1]
