@@ -176,7 +176,9 @@
     "associatedObject": "Associated Endpoint",
     "endpoint": "Endpoint",
     "alarmFiring": "Alarm Firing",
-    "alarmRecover": "Alarm Recover"
+    "alarmRecover": "Alarm Recover",
+    "level_search_name": "Please Enter Name",
+    "level_search_endpoint": "Please Select Endpoint"
   },
   "alarmEmpty": "WoW !!No alarm!",
   "details": "Details",
@@ -190,5 +192,7 @@
   "timeIntervalWarn": "Wrong Time Interval Selection",
   "realTimeAlarm": "Real-time Alarm",
   "clearAll": "Clear All",
-  "alarmContent": "Alarm Content"
+  "alarmContent": "Alarm Content",
+  "exporter": "Exporter",
+  "exporter_address": "Exporter Address"
 }

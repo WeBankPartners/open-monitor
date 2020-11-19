@@ -2,7 +2,7 @@
   <div class=" ">
     <ul>
       <li v-for="(item, itemIndex) in recursiveViewConfig" class="tree-border" :key="itemIndex">
-        <div @click="hide(itemIndex)" class="tree-title" :style="stylePadding">
+        <div @click="hide(itemIndex)" class="tree-title" :style="[addTag(item.fetch_search), stylePadding]">
           <div style="display:flex;justify-content: space-between;">
             <div>
               <span class="title-style">{{item.display_name}}</span>
@@ -224,7 +224,7 @@ export default {
     },
     stylePadding(){
       return {
-        'padding-left':this.count * 16 + 'px'
+        'padding-left': this.count * 16 + 'px'
       }
     },
     isPlugin () {
@@ -240,6 +240,11 @@ export default {
     // }) 
   },
   methods: {
+    addTag (fetch_search) {
+      if (fetch_search) {
+        return {'background': '#c9dded'}
+      }
+    },
     alarmReceivers (item) {
       this.currentRecursive = item.guid
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.groupManagement.allRoles.api, '', (responseData) => {
