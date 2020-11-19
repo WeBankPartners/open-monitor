@@ -192,5 +192,7 @@
   "timeIntervalWarn": "时间区间选择错误",
   "realTimeAlarm": "实时告警",
   "clearAll": "清空",
-  "alarmContent": "告警内容"
+  "alarmContent": "告警内容",
+  "exporter": "扩展",
+  "exporter_address": "扩展地址"
 }
