@@ -62,6 +62,13 @@ export default {
     getDashboardData () {
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.template.get, '', responseData => {
         this.dataHome = responseData
+        if (this.dataHome.length === 0) {
+          if (window.request) {
+            this.isPlugin = true
+          } else {
+            this.$router.push({path: 'portal'})
+          }
+        }
       })
     },
     initPanals () {
