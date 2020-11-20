@@ -266,6 +266,7 @@ func StartCronJob()  {
 	}
 	go StartSyncCoreRoleJob(intervalSec)
 	go prom.StartCheckPrometheusJob(intervalSec)
+	go prom.StartCheckProcessList(intervalSec)
 }
 
 func StartSyncCoreRoleJob(interval int)  {
