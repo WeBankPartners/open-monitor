@@ -1040,7 +1040,7 @@ func SaveOpenAlarm(param m.OpenAlarmRequest) error {
 	for _, v := range param.AlertList {
 		var customAlarmId int
 		var query []*m.OpenAlarmObj
-		x.SQL("SELECT * FROM alarm_custom WHERE alert_title=? AND alert_info=?", v.AlertTitle, v.AlertInfo).Find(&query)
+		x.SQL("SELECT * FROM alarm_custom WHERE alert_title=? AND alert_info=? AND closed=0", v.AlertTitle, v.AlertInfo).Find(&query)
 		if v.AlertLevel == "0" {
 			if len(query) > 0 {
 				tmpIds := ""
