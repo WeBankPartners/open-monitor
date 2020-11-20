@@ -45,11 +45,11 @@ func AcceptAlertMsg(c *gin.Context)  {
 					continue
 				}
 				tmpLabelValue := label.Value
-				if label.Key == "command" {
-					if len(label.Value) > 150 {
-						tmpLabelValue = label.Value[:150]
-					}
-				}
+				//if label.Key == "command" {
+				//	if len(label.Value) > 150 {
+				//		tmpLabelValue = label.Value[:150]
+				//	}
+				//}
 				tmpTags += fmt.Sprintf("%s:%s^", label.Key, tmpLabelValue)
 			}
 			if tmpTags != "" {
