@@ -77,3 +77,5 @@ scrape_configs:
       - refresh_interval: 1m
         files:
           - '/app/monitor/prometheus/sd_file/sd_file_60.json'
+
+#Kubernetes scrape configuration
