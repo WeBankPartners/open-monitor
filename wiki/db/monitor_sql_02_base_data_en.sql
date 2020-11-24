@@ -127,7 +127,7 @@ insert  into `chart`(`group_id`,`endpoint`,`metric`,`col`,`url`,`unit`,`title`,`
 #@v1.9.0.6-begin@;
 CREATE TABLE `kubernetes_cluster` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-  `cluster_name` varchar(50) NOT NULL,
+  `cluster_name` varchar(50) NOT NULL unique,
   `api_server` varchar(100) NOT NULL,
   `token` text,
   `create_at` DATETIME DEFAULT NULL,
