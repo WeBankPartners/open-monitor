@@ -52,5 +52,6 @@ func UpdateKubernetesCluster(c *gin.Context)  {
 		mid.ReturnHandleError(c, err.Error(), err)
 	}else{
 		mid.ReturnSuccess(c)
+		db.SyncKubernetesPod()
 	}
 }
