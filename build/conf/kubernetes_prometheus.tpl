@@ -5,10 +5,10 @@
     kubernetes_sd_configs:
     - api_server: https://{{api_server_ip}}:{{api_server_port}}
       role: node
-      bearer_token_file: /app/monitor/prometheus/k8s_token/{{cluster_name}}
+      bearer_token_file: /app/monitor/prometheus/token/{{cluster_name}}
       tls_config:
         insecure_skip_verify: true
-    bearer_token_file: /app/monitor/prometheus/k8s_token/{{cluster_name}}
+    bearer_token_file: /app/monitor/prometheus/token/{{cluster_name}}
     tls_config:
       insecure_skip_verify: true
     relabel_configs:
@@ -34,10 +34,10 @@
     kubernetes_sd_configs:
     - api_server: https://{{api_server_ip}}:{{api_server_port}}
       role: node
-      bearer_token_file: /app/monitor/prometheus/k8s_token/{{cluster_name}}
+      bearer_token_file: /app/monitor/prometheus/token/{{cluster_name}}
       tls_config:
         insecure_skip_verify: true
-    bearer_token_file: /app/monitor/prometheus/k8s_token/{{cluster_name}}
+    bearer_token_file: /app/monitor/prometheus/token/{{cluster_name}}
     tls_config:
       insecure_skip_verify: true
     relabel_configs:
