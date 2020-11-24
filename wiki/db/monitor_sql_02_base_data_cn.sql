@@ -123,3 +123,21 @@ insert  into `dashboard`(`dashboard_type`,`search_enable`,`search_id`,`button_en
 insert  into `panel`(`group_id`,`title`,`tags_enable`,`tags_url`,`tags_key`,`chart_group`,`auto_display`) values (9,'Ping',0,'','',14,0);
 insert  into `chart`(`group_id`,`endpoint`,`metric`,`col`,`url`,`unit`,`title`,`grid_type`,`series_name`,`rate`,`agg_type`,`legend`) values (14,'','ping_alive',6,'/dashboard/chart','','ping.alive','line','metric',0,'avg','$metric');
 #@v1.9.0.5-end@;
+
+#@v1.9.0.6-begin@;
+CREATE TABLE `kubernetes_cluster` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `cluster_name` varchar(50) NOT NULL,
+  `api_server` varchar(100) NOT NULL,
+  `token` text,
+  `create_at` DATETIME DEFAULT NULL,
+  `update_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+CREATE TABLE `kubernetes_endpoint_rel` (
+  `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `kubernete_id` INT(10) UNSIGNED NOT NULL,
+  `endpoint_guid` varchar(100) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+#@v1.9.0.6-end@;
