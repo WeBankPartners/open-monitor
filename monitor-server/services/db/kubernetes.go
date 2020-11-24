@@ -10,6 +10,7 @@ import (
 	"strings"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
 )
 
 func AddKubernetesCluster(param m.KubernetesClusterParam) error {
@@ -117,3 +118,91 @@ func SyncKubernetesConfig() error {
 	return nil
 }
 
+func SyncKubernetesPod()  {
+	for i:=0;i<3;i++ {
+		time.Sleep(time.Second*30)
+		tmpResult := syncPodToEndpoint()
+		if tmpResult {
+			break
+		}
+	}
+}
+
+func syncPodToEndpoint() bool {
+	var kubernetesTables []*m.KubernetesClusterTable
+	result := false
+	x.SQL("select * from kubernetes_cluster").Find(&kubernetesTables)
+	if len(kubernetesTables) == 0 {
+		return result
+	}
+	var endpointGroup []*m.GrpTable
+	x.SQL("select * from grp where name='default_pod_group'").Find(&endpointGroup)
+	var endpointTables []*m.EndpointTable
+	var kubernetesEndpointTables []*m.KubernetesEndpointRelTable
+	for _,v := range kubernetesTables {
+		queryParam := m.QueryMonitorData{Legend: "$pod", SameEndpoint: true, ChartType: "line", PromQ: fmt.Sprintf("container_processes{pod=~\".*-.*\",job=\"k8s-cadvisor-%s\"}", v.ClusterName), Start: time.Now().Unix() - 600, End: time.Now().Unix()}
+		series := datasource.PrometheusData(&queryParam)
+		var tmpKubernetesEndpointTables []*m.KubernetesEndpointRelTable
+		x.SQL("select * from kubernetes_endpoint_rel where kubernete_id=?", v.Id).Find(&tmpKubernetesEndpointTables)
+		tmpApiServerIp := v.ApiServer[:strings.Index(v.ApiServer, ":")]
+		for _,vv := range series {
+			tmpEndpointGuid := fmt.Sprintf("%s_%s_pod", vv.Name, tmpApiServerIp)
+			existsFlag := false
+			for _,ke := range tmpKubernetesEndpointTables {
+				if ke.EndpointGuid == tmpEndpointGuid {
+					existsFlag = true
+					break
+				}
+			}
+			if !existsFlag {
+				endpointTables = append(endpointTables, &m.EndpointTable{Guid:tmpEndpointGuid, Name:vv.Name, Ip:tmpApiServerIp, ExportType:"pod", Step:10})
+				kubernetesEndpointTables = append(kubernetesEndpointTables, &m.KubernetesEndpointRelTable{KuberneteId:v.Id, EndpointGuid:tmpEndpointGuid})
+			}
+		}
+	}
+	if len(endpointTables) > 0 {
+		result = true
+		var tmpGuidList []string
+		endpointSql := "insert into endpoint(guid,name,ip,export_type,step) values "
+		for i,v := range endpointTables {
+			tmpGuidList = append(tmpGuidList, v.Guid)
+			endpointSql += fmt.Sprintf("('%s','%s','%s','%s',%d)", v.Guid, v.Name, v.Ip, v.ExportType, v.Step)
+			if i < len(endpointTables)-1 {
+				endpointSql += ","
+			}
+		}
+		_,err := x.Exec(endpointSql)
+		if err != nil {
+			log.Logger.Error("Update kubernetes pod to endpoint table fail", log.String("sql", endpointSql), log.Error(err))
+		}
+		if len(endpointGroup) > 0 {
+			var tmpEndpointTables []*m.EndpointTable
+			x.SQL("select id from endpoint where guid in ('"+strings.Join(tmpGuidList, "','")+"')").Find(&tmpEndpointTables)
+			if len(tmpEndpointTables) > 0 {
+				insertEndpointGrpSql := "insert into grp_endpoint(grp_id,endpoint_id) values "
+				for _,v := range tmpEndpointTables {
+					insertEndpointGrpSql += fmt.Sprintf("(%d,%d),", endpointGroup[0].Id, v.Id)
+				}
+				_,err = x.Exec(insertEndpointGrpSql[:len(insertEndpointGrpSql)-1])
+				if err != nil {
+					log.Logger.Error("Try to update endpoint group fail", log.String("sql", insertEndpointGrpSql), log.Error(err))
+				}
+			}
+		}
+	}
+	if len(kubernetesEndpointTables) > 0 {
+		result = true
+		keRelSql := "insert into kubernetes_endpoint_rel(kubernete_id,endpoint_guid) values "
+		for i,v := range kubernetesEndpointTables {
+			keRelSql += fmt.Sprintf("(%d,'%s')", v.KuberneteId, v.EndpointGuid)
+			if i < len(kubernetesEndpointTables)-1 {
+				keRelSql += ","
+			}
+		}
+		_,err := x.Exec(keRelSql)
+		if err != nil {
+			log.Logger.Error("Update kubernetes endpoint rel table fail", log.String("sql", keRelSql), log.Error(err))
+		}
+	}
+	return result
+}
