@@ -90,7 +90,7 @@ func SyncKubernetesConfig() error {
 	}
 	var kubernetesConfigBuffer bytes.Buffer
 	kubernetesConfigBuffer.Write(tplBytes)
-	kubernetesConfigBuffer.WriteString("/n")
+	kubernetesConfigBuffer.WriteString("\n")
 	for _,v := range kubernetesTables {
 		tmpKPConfig := string(kubernetesPrometheusConfig)
 		tmpIpSplit := strings.Split(v.ApiServer, ":")
