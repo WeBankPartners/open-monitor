@@ -10,7 +10,7 @@ type KubernetesClusterTable struct {
 	CreateAt  time.Time  `json:"create_at"`
 }
 
-type KubernetesEndpointRel struct {
+type KubernetesEndpointRelTable struct {
 	Id  int  `json:"id"`
 	KuberneteId  int  `json:"kubernete_id"`
 	EndpointGuid string  `json:"endpoint_guid"`

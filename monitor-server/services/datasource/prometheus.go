@@ -158,8 +158,13 @@ func appendTagString(name string, metricMap map[string]string) string {
 func GetSerialName(query *m.QueryMonitorData,tagMap map[string]string,dataLength int) string {
 	tmpName := query.Legend
 	legend := query.Legend
-	endpoint := query.Endpoint[0]
-	metric := query.Metric[0]
+	var endpoint,metric string
+	if len(query.Endpoint) > 0 {
+		endpoint = query.Endpoint[0]
+	}
+	if len(query.Metric) > 0 {
+		metric = query.Metric[0]
+	}
 	for k,v := range tagMap {
 		if strings.Contains(legend, "$"+k) {
 			tmpName = strings.Replace(tmpName, "$"+k, v, -1)
