@@ -1,4 +1,4 @@
- - job_name: 'k8s-kubelet-{{cluster_name}}'
+  - job_name: 'k8s-kubelet-{{cluster_name}}'
     honor_timestamps: true
     metrics_path: /metrics
     scheme: https
@@ -27,7 +27,7 @@
       action: replace
 
 
- - job_name: 'k8s-cadvisor-{{cluster_name}}'
+  - job_name: 'k8s-cadvisor-{{cluster_name}}'
     honor_timestamps: true
     metrics_path: /metrics
     scheme: https
