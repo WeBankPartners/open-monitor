@@ -155,7 +155,7 @@ func syncPodToEndpoint() bool {
 				}
 			}
 			if !existsFlag {
-				endpointTables = append(endpointTables, &m.EndpointTable{Guid:tmpEndpointGuid, Name:vv.Name, Ip:tmpApiServerIp, ExportType:"pod", Step:10})
+				endpointTables = append(endpointTables, &m.EndpointTable{Guid:tmpEndpointGuid, Name:vv.Name, Ip:tmpApiServerIp, ExportType:"pod", Step:10, OsType:v.ClusterName})
 				kubernetesEndpointTables = append(kubernetesEndpointTables, &m.KubernetesEndpointRelTable{KuberneteId:v.Id, EndpointGuid:tmpEndpointGuid})
 			}
 		}
@@ -163,10 +163,10 @@ func syncPodToEndpoint() bool {
 	if len(endpointTables) > 0 {
 		result = true
 		var tmpGuidList []string
-		endpointSql := "insert into endpoint(guid,name,ip,export_type,step) values "
+		endpointSql := "insert into endpoint(guid,name,ip,export_type,step,os_type) values "
 		for i,v := range endpointTables {
 			tmpGuidList = append(tmpGuidList, v.Guid)
-			endpointSql += fmt.Sprintf("('%s','%s','%s','%s',%d)", v.Guid, v.Name, v.Ip, v.ExportType, v.Step)
+			endpointSql += fmt.Sprintf("('%s','%s','%s','%s',%d,'%s')", v.Guid, v.Name, v.Ip, v.ExportType, v.Step, v.OsType)
 			if i < len(endpointTables)-1 {
 				endpointSql += ","
 			}
