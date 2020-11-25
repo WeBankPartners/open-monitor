@@ -56,6 +56,8 @@ type endpointRequestObj struct {
 	Step  string  `json:"step"`
 	Url   string  `json:"url"`
 	Method  string  `json:"method"`
+	Pod  string  `json:"pod"`
+	KubernetesCluster  string  `json:"kubernetes_cluster"`
 }
 
 func ExportAgentNew(c *gin.Context)  {
@@ -195,7 +197,7 @@ func AlarmControl(c *gin.Context)  {
 			if agentType != "host" {
 				tmpIp = v.InstanceIp
 			}
-			err := db.UpdateEndpointAlarmFlag(isStop,agentType,v.Instance,tmpIp,v.Port)
+			err := db.UpdateEndpointAlarmFlag(isStop,agentType,v.Instance,tmpIp,v.Port,v.Pod,v.KubernetesCluster)
 			var msg string
 			if err != nil {
 				msg = fmt.Sprintf("%s %s:%s %s fail,error %v",action, agentType, v.HostIp, v.Instance, err)
