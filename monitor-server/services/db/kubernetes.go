@@ -13,6 +13,11 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
 )
 
+func ListKubernetesCluster() (result []*m.KubernetesClusterTable,err error) {
+	err = x.SQL("select * from kubernetes_cluster").Find(&result)
+	return result,err
+}
+
 func AddKubernetesCluster(param m.KubernetesClusterParam) error {
 	_,err := x.Exec("insert into kubernetes_cluster(cluster_name,api_server,token,create_at) value (?,?,?,'"+ time.Now().Format(m.DatetimeFormat) +"')", param.ClusterName, fmt.Sprintf("%s:%s", param.Ip, param.Port), param.Token)
 	if err != nil {
@@ -118,6 +123,15 @@ func SyncKubernetesConfig() error {
 	return nil
 }
 
+func StartCronSyncKubernetesPod()  {
+	t := time.NewTicker(time.Second*60).C
+	for {
+		<- t
+		go syncPodToEndpoint()
+	}
+}
+
+
 func SyncKubernetesPod()  {
 	for i:=0;i<3;i++ {
 		time.Sleep(time.Second*30)
@@ -129,6 +143,7 @@ func SyncKubernetesPod()  {
 }
 
 func syncPodToEndpoint() bool {
+	log.Logger.Info("start to sync kubernetes pod")
 	var kubernetesTables []*m.KubernetesClusterTable
 	result := false
 	x.SQL("select * from kubernetes_cluster").Find(&kubernetesTables)
@@ -166,6 +181,7 @@ func syncPodToEndpoint() bool {
 		endpointSql := "insert into endpoint(guid,name,ip,export_type,step,os_type) values "
 		for i,v := range endpointTables {
 			tmpGuidList = append(tmpGuidList, v.Guid)
+			log.Logger.Info("add kubernetes pod endpoint", log.String("guid", v.Guid))
 			endpointSql += fmt.Sprintf("('%s','%s','%s','%s',%d,'%s')", v.Guid, v.Name, v.Ip, v.ExportType, v.Step, v.OsType)
 			if i < len(endpointTables)-1 {
 				endpointSql += ","
