@@ -133,11 +133,17 @@ func DeleteEndpoint(guid string) error {
 	return nil
 }
 
-func UpdateEndpointAlarmFlag(isStop bool,exportType,instance,ip,port string) error {
+func UpdateEndpointAlarmFlag(isStop bool,exportType,instance,ip,port,pod,k8sCluster string) error {
 	var endpoints []*m.EndpointTable
 	if exportType == "host" {
 		x.SQL("SELECT id FROM endpoint WHERE export_type=? AND ip=?", exportType, ip).Find(&endpoints)
-	}else {
+	} else if exportType == "pod" {
+		if k8sCluster != "" {
+			x.SQL("select * from endpoint where name=? and os_type=? and export_type='pod'", pod, k8sCluster).Find(&endpoints)
+		}else {
+			x.SQL("select * from endpoint where name=? and export_type='pod'", pod).Find(&endpoints)
+		}
+	} else {
 		if port != "" {
 			x.SQL("SELECT id FROM endpoint WHERE export_type=? AND address=? AND name=?", exportType, fmt.Sprintf("%s:%s", ip, port), instance).Find(&endpoints)
 		} else {

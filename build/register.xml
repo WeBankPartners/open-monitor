@@ -596,5 +596,27 @@
                 </outputParameters>
             </interface>
         </plugin>
+        <plugin name="kubernetes_pod" targetPackage="" targetEntity="" registerName="" targetEntityFilterRule="">
+            <interface action="start-alarm" path="/monitor/api/v1/agent/export/start/pod" filterRule="">
+                <inputParameters>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">pod</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="">kubernetes_cluster</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+            <interface action="stop-alarm" path="/monitor/api/v1/agent/export/stop/pod" filterRule="">
+                <inputParameters>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">pod</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="">kubernetes_cluster</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+        </plugin>
     </plugins>
 </package>
