@@ -13,6 +13,15 @@ func UpdateKubernetesCluster(c *gin.Context)  {
 	var param m.KubernetesClusterParam
 	operation := c.Param("operation")
 	var err error
+	if operation == "get" || operation == "list" {
+		result,err := db.ListKubernetesCluster()
+		if err != nil {
+			mid.ReturnHandleError(c, err.Error(), err)
+		}else{
+			mid.ReturnSuccessData(c, result)
+		}
+		return
+	}
 	if operation == "delete" {
 		if param.Id <= 0 {
 			mid.ReturnParamEmptyError(c, "id")
@@ -52,6 +61,5 @@ func UpdateKubernetesCluster(c *gin.Context)  {
 		mid.ReturnHandleError(c, err.Error(), err)
 	}else{
 		mid.ReturnSuccess(c)
-		db.SyncKubernetesPod()
 	}
 }
