@@ -35,6 +35,9 @@ func SyncInitSdFile()  {
 		if v.AddressAgent != "" {
 			tmpAddress = v.AddressAgent
 		}
+		if tmpAddress == "" {
+			continue
+		}
 		data = append(data, &m.ServiceDiscoverFileObj{Guid:v.Guid, Address:tmpAddress, Step:v.Step})
 		exist := false
 		for _,vv := range stepList {
