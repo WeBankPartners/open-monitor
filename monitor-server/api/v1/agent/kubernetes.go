@@ -23,11 +23,17 @@ func UpdateKubernetesCluster(c *gin.Context)  {
 		return
 	}
 	if operation == "delete" {
-		if param.Id <= 0 {
-			mid.ReturnParamEmptyError(c, "id")
+		var tmpParam m.KubernetesClusterTable
+		if err = c.ShouldBindJSON(&tmpParam);err==nil {
+			if param.Id <= 0 {
+				mid.ReturnParamEmptyError(c, "id")
+				return
+			}
+			err = db.DeleteKubernetesCluster(param.Id)
+		}else{
+			mid.ReturnValidateError(c, err.Error())
 			return
 		}
-		err = db.DeleteKubernetesCluster(param.Id)
 	}
 	if err = c.ShouldBindJSON(&param);err==nil {
 		if mid.IsIllegalIp(param.Ip) {
