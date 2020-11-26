@@ -195,5 +195,8 @@
   "alarmContent": "Alarm Content",
   "exporter": "Exporter",
   "exporter_address": "Exporter Address",
-  "exporter_address_placeholder": "ip:port"
+  "exporter_address_placeholder": "ip:port",
+  "k8s": "k8s",
+  "clusterName": "Cluster Name",
+  "token": "TOKEN"
 }
