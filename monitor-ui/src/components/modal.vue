@@ -60,6 +60,7 @@
                        v-model="modelConfig.addRow[item.value]"
                        autocomplete="off"
                        :type="item.type"
+                       :name="item.value"
                        :disabled="modelConfig.isAdd ? false : item.disabled"
                        class="checkbox">
                 <i-switch v-if="item.type === 'switch' && isHide(item.hide)"
@@ -70,6 +71,7 @@
                    v-validate="item.v_validate"
                   :class="item.isError?'red-border textareaSty':'textareaSty'"
                   :disabled="item.disabled"
+                  :name="item.value"
                 />
                 <!-- <v-select v-if="item.type === 'select' && isHide(item.hide)"
                           v-model="modelConfig.v_select_configs[item.value]"

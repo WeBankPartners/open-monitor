@@ -106,6 +106,14 @@ const router = new Router({
               meta: {},
               component: () =>
                 import("@/views/monitor-config/resource-level")
+            },
+            {
+              path: "k8s",
+              name: "k8s",
+              title: "k8s",
+              meta: {},
+              component: () =>
+                import("@/views/monitor-config/k8s")
             }
           ]
         },
