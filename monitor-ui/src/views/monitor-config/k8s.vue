@@ -31,11 +31,11 @@
         </ul>
       </Card>
     </template>
-    <Card style="width:350px;display:inline-block;margin:16px;">
+    <Card style="width:350px;display:inline-block;margin:16px;vertical-align: bottom;">
       <p slot="title">
         {{$t('button.add')}}
       </p>
-      <div style="margin:14px;vertical-align: bottom;text-align:center">
+      <div style="margin:14px;text-align:center">
         <Icon @click="addCluster" type="md-add-circle" :size=40 style="cursor:pointer" :color="'#2d8cf0'" />
       </div>
     </Card>
@@ -169,4 +169,7 @@ export default {
 </script>
 
 <style scoped lang="less">
+.ivu-card-head {
+  background: red;
+}
 </style>
