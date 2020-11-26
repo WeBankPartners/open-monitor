@@ -63,6 +63,10 @@ const implicitRoute = {
     parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
     childBreadcrumb: { 'zh-CN': '历史监控', 'en-US': 'History' }
   },
+  'k8s': {
+    parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
+    childBreadcrumb: { 'zh-CN': 'k8s', 'en-US': 'k8s' }
+  }
 }
 window.addImplicitRoute(implicitRoute)
 window.addRoutersWithoutPermission(routerP, 'open-monitor')
