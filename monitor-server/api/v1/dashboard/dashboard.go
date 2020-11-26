@@ -636,7 +636,9 @@ func GetChart(c *gin.Context)  {
 		}
 		eOption.Legend = append(eOption.Legend, s.Name)
 		if eOption.Title == "${auto}" {
-			if len(serials) == 1 {
+			if strings.Contains(s.Name, ":") {
+				eOption.Title = s.Name[strings.Index(s.Name, ":")+1:]
+			}else{
 				eOption.Title = s.Name
 			}
 		}
