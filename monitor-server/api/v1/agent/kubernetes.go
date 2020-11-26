@@ -25,43 +25,44 @@ func UpdateKubernetesCluster(c *gin.Context)  {
 	if operation == "delete" {
 		var tmpParam m.KubernetesClusterTable
 		if err = c.ShouldBindJSON(&tmpParam);err==nil {
-			if param.Id <= 0 {
+			if tmpParam.Id <= 0 {
 				mid.ReturnParamEmptyError(c, "id")
 				return
 			}
-			err = db.DeleteKubernetesCluster(param.Id)
+			err = db.DeleteKubernetesCluster(tmpParam.Id)
 		}else{
 			mid.ReturnValidateError(c, err.Error())
 			return
 		}
-	}
-	if err = c.ShouldBindJSON(&param);err==nil {
-		if mid.IsIllegalIp(param.Ip) {
-			mid.ReturnValidateError(c, "param ip is illegal")
-			return
-		}
-		portInt,_ := strconv.Atoi(param.Port)
-		if portInt <= 0 {
-			mid.ReturnValidateError(c, "param port is illegal")
-			return
-		}
-		param.ClusterName = strings.TrimSpace(param.ClusterName)
-		if !mid.IsIllegalNormalInput(param.ClusterName) {
-			mid.ReturnValidateError(c, "param cluster_name is illegal")
-			return
-		}
-		if operation == "update" {
-			if param.Id <= 0 {
-				mid.ReturnValidateError(c, "param id is empty")
+	}else {
+		if err = c.ShouldBindJSON(&param); err == nil {
+			if mid.IsIllegalIp(param.Ip) {
+				mid.ReturnValidateError(c, "param ip is illegal")
 				return
 			}
-			err = db.UpdateKubernetesCluster(param)
-		}else {
-			err = db.AddKubernetesCluster(param)
+			portInt, _ := strconv.Atoi(param.Port)
+			if portInt <= 0 {
+				mid.ReturnValidateError(c, "param port is illegal")
+				return
+			}
+			param.ClusterName = strings.TrimSpace(param.ClusterName)
+			if !mid.IsIllegalNormalInput(param.ClusterName) {
+				mid.ReturnValidateError(c, "param cluster_name is illegal")
+				return
+			}
+			if operation == "update" {
+				if param.Id <= 0 {
+					mid.ReturnValidateError(c, "param id is empty")
+					return
+				}
+				err = db.UpdateKubernetesCluster(param)
+			} else {
+				err = db.AddKubernetesCluster(param)
+			}
+		} else {
+			mid.ReturnValidateError(c, err.Error())
+			return
 		}
-	}else{
-		mid.ReturnValidateError(c, err.Error())
-		return
 	}
 	if err != nil {
 		mid.ReturnHandleError(c, err.Error(), err)
