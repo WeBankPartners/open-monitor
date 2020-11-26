@@ -267,7 +267,7 @@ func autoAddAppPathConfig(param m.RegisterParamNew, paths string) error {
 	for _,v := range tmpPathList {
 		businessTables = append(businessTables, &m.BusinessMonitorTable{EndpointId:hostEndpoint.Id, Path:v, OwnerEndpoint:fmt.Sprintf("%s_%s_%s", param.Name, param.Ip, param.Type)})
 	}
-	err := db.UpdateBusiness(m.BusinessUpdateDto{EndpointId:hostEndpoint.Id, PathList:businessTables})
+	err := db.UpdateAppendBusiness(m.BusinessUpdateDto{EndpointId:hostEndpoint.Id, PathList:businessTables})
 	if err != nil {
 		log.Logger.Error("Update endpoint business table error", log.Error(err))
 		return err
