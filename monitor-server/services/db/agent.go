@@ -338,6 +338,23 @@ func getExtendPanelCharts(endpoints []string,exportType,guid string) []*m.ChartM
 				}
 			}
 		}
+		// Agg same metric
+		var newResult []*m.ChartModel
+		for _,v := range result {
+			metricIndex := -1
+			for i,vv := range newResult {
+				if v.Metric[0] == vv.Metric[0] {
+					metricIndex = i
+					break
+				}
+			}
+			if metricIndex >= 0 {
+				newResult[metricIndex].Endpoint = append(newResult[metricIndex].Endpoint, v.Endpoint...)
+			}else{
+				newResult = append(newResult, v)
+			}
+		}
+		result = newResult
 	}
 	if exportType == "mysql" {
 		dbMonitorList,_ := GetDbMonitorByPanel(guid)
