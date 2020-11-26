@@ -240,7 +240,7 @@ func GetHistoryAlarm(c *gin.Context)  {
 			return
 		}
 	}
-	err,data := db.GetAlarms(query, 0, true, true)
+	err,data := db.GetAlarms(query, 0, true, false)
 	if err != nil {
 		mid.ReturnQueryTableError(c, "alarm", err)
 		return
