@@ -9,6 +9,7 @@ import groupManagement from "@/views/monitor-config/group-management";
 import thresholdManagement from "@/views/monitor-config/threshold-management";
 import logManagement from "@/views/monitor-config/log-management";
 import resourceLevel from "@/views/monitor-config/resource-level";
+import k8s from "@/views/monitor-config/k8s";
 import metricConfig from "@/views/metric-config";
 import viewConfigIndex from "@/views/custom-view/view-config-index";
 import viewConfig from "@/views/custom-view/view-config";
@@ -90,6 +91,13 @@ const router = [
         title: "资源层级",
         meta: {},
         component: resourceLevel
+      },
+      {
+        path: "k8s",
+        name: "k8s",
+        title: "k8s",
+        meta: {},
+        component: k8s
       }
     ]
   },
