@@ -636,7 +636,9 @@ func GetChart(c *gin.Context)  {
 		}
 		eOption.Legend = append(eOption.Legend, s.Name)
 		if eOption.Title == "${auto}" {
-			eOption.Title = s.Name
+			if len(serials) == 1 {
+				eOption.Title = s.Name
+			}
 		}
 		if agg > 1 {
 			if paramConfig[0].Aggregate != "" {
