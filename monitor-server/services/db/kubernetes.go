@@ -50,17 +50,17 @@ func DeleteKubernetesCluster(id int) error {
 		err = fmt.Errorf("Delete db data fail,%s ", err.Error())
 		return err
 	}
-	err = SyncKubernetesConfig()
-	if err != nil {
-		err = fmt.Errorf("Update prometheus config fail,%s ", err.Error())
-	}
+	SyncKubernetesConfig()
 	return err
 }
 
 func SyncKubernetesConfig() error {
 	var kubernetesTables []*m.KubernetesClusterTable
-	x.SQL("select * from kubernetes_cluster").Find(&kubernetesTables)
+	err := x.SQL("select * from kubernetes_cluster").Find(&kubernetesTables)
 	if len(kubernetesTables) == 0 {
+		if err == nil {
+			x.Exec("delete from kubernetes_endpoint_rel")
+		}
 		return fmt.Errorf("kubernetes config empty")
 	}
 	tplBytes,err := ioutil.ReadFile("/app/monitor/prometheus/prometheus_tpl.yml")
