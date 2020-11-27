@@ -14,6 +14,7 @@ import (
 	"encoding/json"
 	"sort"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
+	"net/http"
 )
 
 func AcceptAlertMsg(c *gin.Context)  {
@@ -43,7 +44,13 @@ func AcceptAlertMsg(c *gin.Context)  {
 				if label.Key == "strategy_id" || label.Key == "job" || label.Key == "instance" || label.Key == "alertname" {
 					continue
 				}
-				tmpTags += fmt.Sprintf("%s:%s^", label.Key, label.Value)
+				tmpLabelValue := label.Value
+				//if label.Key == "command" {
+				//	if len(label.Value) > 150 {
+				//		tmpLabelValue = label.Value[:150]
+				//	}
+				//}
+				tmpTags += fmt.Sprintf("%s:%s^", label.Key, tmpLabelValue)
 			}
 			if tmpTags != "" {
 				tmpTags = tmpTags[:len(tmpTags)-1]
@@ -233,7 +240,7 @@ func GetHistoryAlarm(c *gin.Context)  {
 			return
 		}
 	}
-	err,data := db.GetAlarms(query, 0, true, true)
+	err,data := db.GetAlarms(query, 0, true, false)
 	if err != nil {
 		mid.ReturnQueryTableError(c, "alarm", err)
 		return
@@ -333,23 +340,26 @@ func OpenAlarmApi(c *gin.Context)  {
 		requestObj.AlertTitle = c.PostForm("alert_title")
 		requestObj.RemarkInfo = c.PostForm("remark_info")
 		requestObj.SubSystemId = c.PostForm("sub_system_id")
+		requestObj.UseUmgPolicy = c.PostForm("use_umg_policy")
+		requestObj.AlertWay = c.PostForm("alert_way")
+		requestObj.AlertReciver = c.PostForm("alert_reciver")
 		param.AlertList = []m.OpenAlarmObj{requestObj}
 		err := db.SaveOpenAlarm(param)
 		if err != nil {
-			mid.ReturnHandleError(c, err.Error(), err)
-		} else {
-			mid.ReturnSuccess(c)
+			c.JSON(http.StatusOK, m.OpenAlarmResponse{ResultCode:-1, ResultMsg:err.Error()})
+			return
 		}
+		c.JSON(http.StatusOK, m.OpenAlarmResponse{ResultCode:0, ResultMsg:"success"})
 	}else {
 		if err := c.ShouldBindJSON(&param); err == nil {
 			err = db.SaveOpenAlarm(param)
 			if err != nil {
-				mid.ReturnHandleError(c, err.Error(), err)
+				c.JSON(http.StatusOK, m.OpenAlarmResponse{ResultCode:-1, ResultMsg:err.Error()})
 			} else {
-				mid.ReturnSuccess(c)
+				c.JSON(http.StatusOK, m.OpenAlarmResponse{ResultCode:0, ResultMsg:"success"})
 			}
 		} else {
-			mid.ReturnValidateError(c, err.Error())
+			c.JSON(http.StatusOK, m.OpenAlarmResponse{ResultCode:-1, ResultMsg:err.Error()})
 		}
 	}
 }

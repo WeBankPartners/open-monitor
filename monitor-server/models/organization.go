@@ -4,6 +4,8 @@ type OrganizationPanel struct {
 	Guid  string  `json:"guid"`
 	DisplayName  string  `json:"display_name"`
 	Type  string  `json:"type"`
+	FetchSearch  bool  `json:"fetch_search"`
+	FetchOriginFlag  bool  `json:"fetch_origin_flag"`
 	Children  []*OrganizationPanel  `json:"children"`
 }
 

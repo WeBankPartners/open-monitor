@@ -15,7 +15,7 @@ then
 else
     mkdir -p $exporter_type
 fi
-curl -O http://$server_address/wecube-monitor/exporter/exporter_$exporter_type.tar.gz
+curl -O http://$server_address/monitor/exporter/exporter_$exporter_type.tar.gz
 tar zxf exporter_$exporter_type.tar.gz $exporter_type/
 rm -f exporter_$exporter_type.tar.gz
 if [[ -d tmp_data ]]

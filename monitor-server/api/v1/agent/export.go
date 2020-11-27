@@ -56,6 +56,8 @@ type endpointRequestObj struct {
 	Step  string  `json:"step"`
 	Url   string  `json:"url"`
 	Method  string  `json:"method"`
+	Pod  string  `json:"pod"`
+	KubernetesCluster  string  `json:"kubernetes_cluster"`
 }
 
 func ExportAgentNew(c *gin.Context)  {
@@ -195,7 +197,7 @@ func AlarmControl(c *gin.Context)  {
 			if agentType != "host" {
 				tmpIp = v.InstanceIp
 			}
-			err := db.UpdateEndpointAlarmFlag(isStop,agentType,v.Instance,tmpIp,v.Port)
+			err := db.UpdateEndpointAlarmFlag(isStop,agentType,v.Instance,tmpIp,v.Port,v.Pod,v.KubernetesCluster)
 			var msg string
 			if err != nil {
 				msg = fmt.Sprintf("%s %s:%s %s fail,error %v",action, agentType, v.HostIp, v.Instance, err)
@@ -265,7 +267,7 @@ func autoAddAppPathConfig(param m.RegisterParamNew, paths string) error {
 	for _,v := range tmpPathList {
 		businessTables = append(businessTables, &m.BusinessMonitorTable{EndpointId:hostEndpoint.Id, Path:v, OwnerEndpoint:fmt.Sprintf("%s_%s_%s", param.Name, param.Ip, param.Type)})
 	}
-	err := db.UpdateBusiness(m.BusinessUpdateDto{EndpointId:hostEndpoint.Id, PathList:businessTables})
+	err := db.UpdateAppendBusiness(m.BusinessUpdateDto{EndpointId:hostEndpoint.Id, PathList:businessTables})
 	if err != nil {
 		log.Logger.Error("Update endpoint business table error", log.Error(err))
 		return err

@@ -9,7 +9,9 @@ import (
 )
 
 func GetOrganizaionList(c *gin.Context)  {
-	data,err := db.GetOrganizationList()
+	nameText := c.Query("name")
+	endpointText := c.Query("endpoint")
+	data, err := db.GetOrganizationList(nameText, endpointText)
 	if err != nil {
 		mid.ReturnQueryTableError(c, "panel_recursive", err)
 		return
