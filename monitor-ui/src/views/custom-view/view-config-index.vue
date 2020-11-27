@@ -156,7 +156,6 @@ export default {
   },
   methods: {
     processConfigSave () {
-      console.log(this.processConfigModel.dashboardConfig)
       let params = []
       this.processConfigModel.dashboardConfig.forEach(item => {
         params.push({
