@@ -27,15 +27,46 @@ window.addOptions({
 })
 
 const implicitRoute = {
-  'monitorConfigIndex/groupManagement': {'zh-CN': '监控', 'en-US': 'Monitor'},
-  'monitorConfigIndex/thresholdManagement': {'zh-CN': '监控', 'en-US': 'Monitor'},
-  'monitorConfigIndex/logManagement': {'zh-CN': '监控', 'en-US': 'Monitor'},
-  'monitorConfigIndex/resourceLevel': {'zh-CN': '监控', 'en-US': 'Monitor'},
-  'viewConfig': {'zh-CN': '监控', 'en-US': 'Monitor'},
-  'editLineView': {'zh-CN': '监控', 'en-US': 'Monitor'},
-  'editPieView': {'zh-CN': '监控', 'en-US': 'Monitor'},
-  'viewChart': {'zh-CN': '监控', 'en-US': 'Monitor'},
-  'alarmHistory': {'zh-CN': '监控', 'en-US': 'Monitor'}
+  'monitorConfigIndex/groupManagement': {
+    parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
+    childBreadcrumb: { 'zh-CN': '组管理', 'en-US': 'Group' }
+  },
+  'monitorConfigIndex/thresholdManagement': {
+    parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
+    childBreadcrumb: { 'zh-CN': '阀值', 'en-US': 'Threshold' }
+  },
+  'monitorConfigIndex/logManagement': {
+    parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
+    childBreadcrumb: { 'zh-CN': '关键字', 'en-US': 'Log' }
+  },
+  'monitorConfigIndex/resourceLevel': {
+    parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
+    childBreadcrumb: { 'zh-CN': '层级对象', 'en-US': 'Resource Level' }
+  },
+  'monitorConfigIndex/k8s': {
+    parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
+    childBreadcrumb: { 'zh-CN': 'k8s', 'en-US': 'k8s' }
+  },
+  'viewConfig': {
+    parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
+    childBreadcrumb: { 'zh-CN': '查看视图', 'en-US': 'View' }
+  },
+  'editLineView': {
+    parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
+    childBreadcrumb: { 'zh-CN': '编辑视图', 'en-US': 'View' }
+  },
+  'editPieView': {
+    parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
+    childBreadcrumb: { 'zh-CN': '编辑视图', 'en-US': 'View' }
+  },
+  'viewChart': {
+    parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
+    childBreadcrumb: { 'zh-CN': '视图', 'en-US': 'View' }
+  },
+  'alarmHistory': {
+    parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
+    childBreadcrumb: { 'zh-CN': '历史监控', 'en-US': 'History' }
+  }
 }
 window.addImplicitRoute(implicitRoute)
 window.addRoutersWithoutPermission(routerP, 'open-monitor')

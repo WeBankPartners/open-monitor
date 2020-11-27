@@ -70,7 +70,7 @@
     receivers:
     - name: 'web.hook'
       webhook_configs:
-      - url: 'http://127.0.0.1:8088/wecube-monitor/api/v1/alarm/webhook'
+      - url: 'http://127.0.0.1:8088/monitor/api/v1/alarm/webhook'
         send_resolved: true
     inhibit_rules:
       - source_match:

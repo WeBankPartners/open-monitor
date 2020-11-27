@@ -27,16 +27,13 @@ func handlePrometheus(w http.ResponseWriter,r *http.Request)  {
 	w.Write(funcs.GetExportMetric())
 }
 
-type ipRequest struct {
-	Ip  []string  `json:"ip"`
-}
-
 func handleIpSource(w http.ResponseWriter,r *http.Request)  {
 	var respMessage string
-	var param ipRequest
+	var param funcs.RemoteResponse
 	b,err := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()
 	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
 		respMessage = fmt.Sprintf("handle ip source read body error : %v \n", err)
 		log.Printf(respMessage)
 		w.Write([]byte(respMessage))
@@ -44,11 +41,18 @@ func handleIpSource(w http.ResponseWriter,r *http.Request)  {
 	}
 	err = json.Unmarshal(b, &param)
 	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
 		respMessage = fmt.Sprintf("handle ip source unmarshal json error : %v \n", err)
 		log.Printf(respMessage)
 		w.Write([]byte(respMessage))
 		return
 	}
-	funcs.UpdateIpList(param.Ip, funcs.Config().Source.Listen.Weight)
+	var ips []string
+	for _,v := range param.Config {
+		ips = append(ips, v.Ip)
+	}
+	funcs.UpdateIpList(ips, funcs.Config().Source.Listen.Weight)
+	funcs.UpdateSourceRemoteData(param.Config)
+	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("success"))
 }
