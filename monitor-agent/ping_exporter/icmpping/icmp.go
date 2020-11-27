@@ -73,31 +73,31 @@ func StartPing(distIp string, timeout int) (int,float64,bool) {
 	re := 0
 	tq := 0
 	startTime := time.Now()
-	for i:=0;i<4;i++ {
+	for i:=0;i<5;i++ {
 		r := doping(*conn, distIp, timeout)
-		if r==2{
+		if r==2 {
 			tq++
 			r = 0
 		}
 		re += r
 	}
 	useTime := float64(time.Now().Sub(startTime).Nanoseconds()) / 1e6
-	if re >= 3 {  // 发4个ICMP包,如果有3个回复成功则算ping通
+	if re >= 2 {  // 发5个ICMP包,如果有2个回复成功则算ping通
 		addSuccessIp(distIp)
 		return 0,useTime/float64(re),isConfused
 	}else{
 		isConfused = true
-		if tq == 4 {
+		if tq == 5 {
 			//addSuccessIp(distIp)
 			return 0,useTime,isConfused
 		}
-		if re == 1 && tq == 3 {
+		if re == 1 && tq == 4 {
 			//addSuccessIp(distIp)
 			return 0,useTime,isConfused
 		}
-		if re == 2 && tq == 2 {  // 如果有2个回复成功和2个太快回复(下面把这当做了一种异常,有时候主机不通也会出现这种情况),也算主机是通的
+		if re == 2 && tq >= 1 {  // 如果有2个回复成功和3个太快回复(下面把这当做了一种异常,有时候主机不通也会出现这种情况),也算主机是通的
 			//addSuccessIp(distIp)
-			return 0,useTime/2,isConfused
+			return 0,useTime/2,false
 		}
 		funcs.DebugLog("%s ping fail,%.3f ms, renum : %d ## ", distIp, useTime, re)
 		return 1,useTime,false

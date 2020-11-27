@@ -137,7 +137,7 @@ func (c *processCache) start()  {
 						}
 					}
 					if nameMatch != "" && strings.Contains(vv.Cmd, tmpTag) {
-						tmpProcessMonitorObj.DisplayName = fmt.Sprintf("%s(%s)", nameMatch, tmpTag)
+						//tmpProcessMonitorObj.DisplayName = fmt.Sprintf("%s(%s)", nameMatch, tmpTag)
 						tmpCount = tmpCount + 1
 						if len(vv.Cmd) > 100 {
 							tmpProcessMonitorObj.Command = vv.Cmd[:100]

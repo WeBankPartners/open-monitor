@@ -133,11 +133,17 @@ func DeleteEndpoint(guid string) error {
 	return nil
 }
 
-func UpdateEndpointAlarmFlag(isStop bool,exportType,instance,ip,port string) error {
+func UpdateEndpointAlarmFlag(isStop bool,exportType,instance,ip,port,pod,k8sCluster string) error {
 	var endpoints []*m.EndpointTable
 	if exportType == "host" {
 		x.SQL("SELECT id FROM endpoint WHERE export_type=? AND ip=?", exportType, ip).Find(&endpoints)
-	}else {
+	} else if exportType == "pod" {
+		if k8sCluster != "" {
+			x.SQL("select * from endpoint where name=? and os_type=? and export_type='pod'", pod, k8sCluster).Find(&endpoints)
+		}else {
+			x.SQL("select * from endpoint where name=? and export_type='pod'", pod).Find(&endpoints)
+		}
+	} else {
 		if port != "" {
 			x.SQL("SELECT id FROM endpoint WHERE export_type=? AND address=? AND name=?", exportType, fmt.Sprintf("%s:%s", ip, port), instance).Find(&endpoints)
 		} else {
@@ -332,6 +338,23 @@ func getExtendPanelCharts(endpoints []string,exportType,guid string) []*m.ChartM
 				}
 			}
 		}
+		// Agg same metric
+		var newResult []*m.ChartModel
+		for _,v := range result {
+			metricIndex := -1
+			for i,vv := range newResult {
+				if v.Metric[0] == vv.Metric[0] {
+					metricIndex = i
+					break
+				}
+			}
+			if metricIndex >= 0 {
+				newResult[metricIndex].Endpoint = append(newResult[metricIndex].Endpoint, v.Endpoint...)
+			}else{
+				newResult = append(newResult, v)
+			}
+		}
+		result = newResult
 	}
 	if exportType == "mysql" {
 		dbMonitorList,_ := GetDbMonitorByPanel(guid)
@@ -417,7 +440,7 @@ func GetPingExporterSource() []*m.PingExportSourceObj {
 		}
 		if grpIds != "" {
 			grpIds = grpIds[:len(grpIds)-1]
-			x.SQL(fmt.Sprintf("SELECT t2.guid,t2.ip FROM grp_endpoint t1 LEFT JOIN endpoint t2 ON t1.endpoint_id=t2.id WHERE t1.grp_id IN (%s)", grpIds)).Find(&endpointTable)
+			x.SQL(fmt.Sprintf("SELECT t2.guid,t2.ip FROM grp_endpoint t1 LEFT JOIN endpoint t2 ON t1.endpoint_id=t2.id WHERE t1.grp_id IN (%s) AND t2.address_agent=''", grpIds)).Find(&endpointTable)
 			for _,v := range endpointTable {
 				result = append(result, &m.PingExportSourceObj{Ip:v.Ip, Guid:v.Guid})
 			}
@@ -425,14 +448,14 @@ func GetPingExporterSource() []*m.PingExportSourceObj {
 		if endpointIds != "" {
 			endpointTable = []*m.EndpointTable{}
 			endpointIds = endpointIds[:len(endpointIds)-1]
-			x.SQL(fmt.Sprintf("SELECT guid,ip FROM endpoint WHERE id IN (%s)", endpointIds)).Find(&endpointTable)
+			x.SQL(fmt.Sprintf("SELECT guid,ip FROM endpoint WHERE id IN (%s) AND address_agent=''", endpointIds)).Find(&endpointTable)
 			for _,v := range endpointTable {
 				result = append(result, &m.PingExportSourceObj{Ip:v.Ip, Guid:v.Guid})
 			}
 		}
 	}
 	var telnetQuery []*m.TelnetSourceQuery
-	x.SQL("SELECT t2.guid,t1.port,t2.ip FROM endpoint_telnet t1 JOIN endpoint t2 ON t1.endpoint_guid=t2.guid").Find(&telnetQuery)
+	x.SQL("SELECT t2.guid,t1.port,t2.ip FROM endpoint_telnet t1 JOIN endpoint t2 ON t1.endpoint_guid=t2.guid WHERE t2.address_agent=''").Find(&telnetQuery)
 	if len(telnetQuery) > 0 {
 		for _,v := range telnetQuery {
 			if v.Ip != "" && v.Port > 0 {
@@ -441,13 +464,10 @@ func GetPingExporterSource() []*m.PingExportSourceObj {
 		}
 	}
 	var endpointHttpTable []*m.EndpointHttpTable
-	x.SQL("SELECT * FROM endpoint_http").Find(&endpointHttpTable)
+	x.SQL("SELECT t1.* FROM endpoint_http t1 join endpoint t2 on t1.endpoint_guid=t2.guid where t2.address_agent=''").Find(&endpointHttpTable)
 	if len(endpointHttpTable) > 0 {
 		for _,v := range endpointHttpTable {
-			tmpUrl := v.Url
-			if v.Method == "post" {
-				tmpUrl = fmt.Sprintf("%s:%s", v.Method, v.Url)
-			}
+			tmpUrl := fmt.Sprintf("%s_%s", strings.ToUpper(v.Method), v.Url)
 			result = append(result, &m.PingExportSourceObj{Ip:tmpUrl, Guid:v.EndpointGuid})
 		}
 	}

@@ -42,7 +42,11 @@ func DeregisterJob(guid string) error {
 	if endpointObj.Id <= 0 {
 		return fmt.Errorf("Guid:%s can not find in table ", guid)
 	}
-	if endpointObj.AddressAgent != "" {
+	pingExporterFlag := false
+	if endpointObj.ExportType == "ping" || endpointObj.ExportType == "telnet" || endpointObj.ExportType == "http" {
+		pingExporterFlag = true
+	}
+	if endpointObj.AddressAgent != "" && pingExporterFlag == false {
 		agentManagerUrl := ""
 		for _, v := range m.Config().Dependence {
 			if v.Name == "agent_manager" {

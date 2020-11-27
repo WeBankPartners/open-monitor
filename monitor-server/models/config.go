@@ -168,6 +168,7 @@ type GlobalConfig struct {
 	CronJob  CronJobConfig  `json:"cron_job"`
 	SdFile  SdFileConfig  `json:"sd_file"`
 	ArchiveMysql  ArchiveMysqlConfig  `json:"archive_mysql"`
+	ProcessCheckList  []string  `json:"process_check_list"`
 }
 
 var (
