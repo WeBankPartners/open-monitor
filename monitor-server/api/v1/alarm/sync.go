@@ -26,9 +26,17 @@ func SyncInitSdFile()  {
 	var stepList []int
 	endpointTable := db.ListEndpoint()
 	for _,v := range endpointTable {
+		if v.ExportType == "ping" || v.ExportType == "telnet" || v.ExportType == "http" {
+			if v.AddressAgent == "" {
+				continue
+			}
+		}
 		tmpAddress := v.Address
 		if v.AddressAgent != "" {
 			tmpAddress = v.AddressAgent
+		}
+		if tmpAddress == "" {
+			continue
 		}
 		data = append(data, &m.ServiceDiscoverFileObj{Guid:v.Guid, Address:tmpAddress, Step:v.Step})
 		exist := false
