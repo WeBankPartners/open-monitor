@@ -43,6 +43,10 @@ const implicitRoute = {
     parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
     childBreadcrumb: { 'zh-CN': '层级对象', 'en-US': 'Resource Level' }
   },
+  'monitorConfigIndex/k8s': {
+    parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
+    childBreadcrumb: { 'zh-CN': 'k8s', 'en-US': 'k8s' }
+  },
   'viewConfig': {
     parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
     childBreadcrumb: { 'zh-CN': '查看视图', 'en-US': 'View' }
@@ -62,10 +66,6 @@ const implicitRoute = {
   'alarmHistory': {
     parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
     childBreadcrumb: { 'zh-CN': '历史监控', 'en-US': 'History' }
-  },
-  'k8s': {
-    parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
-    childBreadcrumb: { 'zh-CN': 'k8s', 'en-US': 'k8s' }
   }
 }
 window.addImplicitRoute(implicitRoute)
