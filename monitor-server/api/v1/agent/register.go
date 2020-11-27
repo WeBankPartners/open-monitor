@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"time"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
+	"strconv"
 )
 
 const defaultStep = 10
@@ -508,12 +509,21 @@ func pingRegister(param m.RegisterParamNew) returnData {
 	result.endpoint.Guid = fmt.Sprintf("%s_%s_%s", param.Name, param.Ip, param.Type)
 	result.endpoint.Name = param.Name
 	result.endpoint.Ip = param.Ip
-	result.endpoint.Address = fmt.Sprintf("%s:%s", param.Ip, param.Port)
+	tmpPort,_ := strconv.Atoi(param.Port)
+	if tmpPort <= 0 {
+		tmpPort = 9191
+	}
+	result.endpoint.Address = fmt.Sprintf("%s:%d", param.Ip, tmpPort)
 	result.endpoint.ExportType = param.Type
 	result.endpoint.Step = defaultStep
 	result.defaultGroup = "default_ping_group"
 	result.addDefaultGroup = true
 	result.agentManager = false
+	if param.ExportAddress != "" {
+		param.ExportAddress = formatExportAddress(param.ExportAddress)
+		result.endpoint.AddressAgent = param.ExportAddress
+		result.fetchMetric = true
+	}
 	return result
 }
 
@@ -529,9 +539,13 @@ func telnetRegister(param m.RegisterParamNew) returnData {
 	result.endpoint.Address = fmt.Sprintf("%s:%s", param.Ip, param.Port)
 	result.endpoint.ExportType = param.Type
 	result.endpoint.Step = defaultStep
+	if param.ExportAddress != "" {
+		param.ExportAddress = formatExportAddress(param.ExportAddress)
+		result.endpoint.AddressAgent = param.ExportAddress
+		result.fetchMetric = true
+	}
 	result.defaultGroup = "default_telnet_group"
 	result.addDefaultGroup = true
-	result.fetchMetric = false
 	result.agentManager = false
 	// store to db -> endpoint_telnet
 	var eto []*m.EndpointTelnetObj
@@ -555,6 +569,11 @@ func httpRegister(param m.RegisterParamNew) returnData {
 	result.endpoint.Address = fmt.Sprintf("%s:%s", param.Ip, param.Port)
 	result.endpoint.ExportType = param.Type
 	result.endpoint.Step = defaultStep
+	if param.ExportAddress != "" {
+		param.ExportAddress = formatExportAddress(param.ExportAddress)
+		result.endpoint.AddressAgent = param.ExportAddress
+		result.fetchMetric = true
+	}
 	result.defaultGroup = "default_http_group"
 	result.addDefaultGroup = true
 	result.agentManager = false
@@ -677,4 +696,21 @@ func calcStep(startTime int64,paramStep int) (step int,err error) {
 	}
 	log.Logger.Debug("Calc step", log.Int("step", step))
 	return step,err
+}
+
+func formatExportAddress(input string) string {
+	result := input
+	if input == "" {
+		return result
+	}
+	if strings.HasPrefix(result, "http://") {
+		result = strings.ReplaceAll(result, "http://", "")
+	}
+	if strings.Contains(result, "/") {
+		result = result[:strings.Index(result, "/")]
+	}
+	if !strings.Contains(result, ":") {
+		result = ""
+	}
+	return result
 }

@@ -15,6 +15,22 @@ func GetBusinessList(endpointId int,ownerEndpoint string) (err error, pathList [
 
 func UpdateBusiness(param m.BusinessUpdateDto) error {
 	var actions []*Action
+	actions = append(actions, &Action{Sql:"DELETE FROM business_monitor WHERE endpoint_id=?", Param:[]interface{}{param.EndpointId}})
+	for _,v := range param.PathList {
+		var action Action
+		params := make([]interface{}, 0)
+		action.Sql = "INSERT INTO business_monitor(endpoint_id,path,owner_endpoint) VALUE (?,?,?)"
+		params = append(params, param.EndpointId)
+		params = append(params, v.Path)
+		params = append(params, v.OwnerEndpoint)
+		action.Param = params
+		actions = append(actions, &action)
+	}
+	return Transaction(actions)
+}
+
+func UpdateAppendBusiness(param m.BusinessUpdateDto) error {
+	var actions []*Action
 	var tmpOwnerList []string
 	for _,v := range param.PathList {
 		exist := false
@@ -29,7 +45,7 @@ func UpdateBusiness(param m.BusinessUpdateDto) error {
 		}
 	}
 	for _,v := range tmpOwnerList {
-		actions = append(actions, &Action{Sql:"DELETE FROM business_monitor WHERE endpoint_id=? and owner_endpoint=?", Param:[]interface{}{param.EndpointId, v}})
+		actions = append(actions, &Action{Sql: "DELETE FROM business_monitor WHERE endpoint_id=? AND owner_endpoint=?", Param: []interface{}{param.EndpointId, v}})
 	}
 	for _,v := range param.PathList {
 		var action Action

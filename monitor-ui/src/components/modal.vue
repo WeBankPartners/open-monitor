@@ -60,6 +60,7 @@
                        v-model="modelConfig.addRow[item.value]"
                        autocomplete="off"
                        :type="item.type"
+                       :name="item.value"
                        :disabled="modelConfig.isAdd ? false : item.disabled"
                        class="checkbox">
                 <i-switch v-if="item.type === 'switch' && isHide(item.hide)"
@@ -70,8 +71,9 @@
                    v-validate="item.v_validate"
                   :class="item.isError?'red-border textareaSty':'textareaSty'"
                   :disabled="item.disabled"
+                  :name="item.value"
                 />
-                <v-select v-if="item.type === 'select' && isHide(item.hide)"
+                <!-- <v-select v-if="item.type === 'select' && isHide(item.hide)"
                           v-model="modelConfig.v_select_configs[item.value]"
                           :disabled="modelConfig.isAdd ? false : item.disabled"
                           label='name'
@@ -79,7 +81,7 @@
                           :multiple="item.multiple? item.multiple : false"
                           class="col-md-7 v-selectss "
                           :options="modelConfig.v_select_configs[item.option]">
-                </v-select>
+                </v-select> -->
                
                   <slot v-if="item.type === 'slot' && isHide(item.hide) && !item.ishide" :name="item.name"></slot>
                   <label class="required-tip  isRequired_s" v-if="isRequired_s(item.v_validate) && isHide(item.hide)">*</label>

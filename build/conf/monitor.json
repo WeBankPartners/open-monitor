@@ -177,5 +177,6 @@
     "timeout": 60,
     "local_storage_max_day": 30,
     "five_min_start_day": 90
-  }
+  },
+  "process_check_list": ["ping_exporter", "agent_manager"]
 }
