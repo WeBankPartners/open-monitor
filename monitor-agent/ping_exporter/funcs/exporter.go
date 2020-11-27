@@ -161,10 +161,7 @@ func getHttpCheckExportMetric(guidMap map[string][]string) []byte {
 			buff.WriteString(fmt.Sprintf("%s %d \n", v.Url, v.Value))
 			continue
 		}
-		tmpMethodUrl := v.Url
-		if v.Method == "post" {
-			tmpMethodUrl = fmt.Sprintf("%s:%s", v.Method, v.Url)
-		}
+		tmpMethodUrl := fmt.Sprintf("%s_%s", v.Method, v.Url)
 		if len(guidMap[tmpMethodUrl]) > 0 {
 			for _,vv := range guidMap[tmpMethodUrl] {
 				buff.WriteString(fmt.Sprintf("%s{url=\"%s\",method=\"%s\",guid=\"%s\"} %d \n", metricString, v.Url, v.Method, vv, v.Value))

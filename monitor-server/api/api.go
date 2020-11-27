@@ -18,7 +18,7 @@ import (
 )
 
 func InitHttpServer(exportAgent bool) {
-	urlPrefix := "/wecube-monitor"
+	urlPrefix := "/monitor"
 	r := gin.Default()
 	r.LoadHTMLGlob("public/*.html")
 	r.Static(fmt.Sprintf("%s/js", urlPrefix), fmt.Sprintf("public%s/js", urlPrefix))
@@ -136,6 +136,7 @@ func InitHttpServer(exportAgent bool) {
 			agentApi.GET("/export/endpoint/telnet/get", agent.GetEndpointTelnet)
 			agentApi.POST("/export/process/:operation", agent.AutoUpdateProcessMonitor)
 			agentApi.POST("/export/log_monitor/:operation", agent.AutoUpdateLogMonitor)
+			agentApi.POST("/kubernetes/cluster/:operation", agent.UpdateKubernetesCluster)
 		}
 		alarmApi := authApi.Group("/alarm")
 		{

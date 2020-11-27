@@ -4,6 +4,8 @@
   "ping_enable": true,
   "telnet_enable": true,
   "http_check_enable": true,
+  "http_proxy_enable": false,
+  "http_proxy": "http://127.0.0.1:10",
   "open-falcon" : {
     "enabled": false,
     "transfer": {
@@ -34,7 +36,7 @@
       "enabled" : true,
       "header": ["X-Auth-Token=default-token-used-in-server-side"],
       "group_tag" : "group=g1",
-      "url": "http://127.0.0.1:8088/wecube-monitor/api/v1/agent/export/ping/source",
+      "url": "http://127.0.0.1:8088/monitor/api/v1/agent/export/ping/source",
       "interval": 60,
       "weight": 3
     },

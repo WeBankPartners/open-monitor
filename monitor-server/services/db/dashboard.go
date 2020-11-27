@@ -133,6 +133,12 @@ func GetPromMetric(endpoint []string,metric string) (error, string) {
 		if strings.Contains(reg, `$guid`) {
 			reg = strings.Replace(reg, "$guid", host.Guid, -1)
 		}
+		if strings.Contains(reg, "$pod") {
+			reg = strings.Replace(reg, "$pod", host.Name, -1)
+		}
+		if strings.Contains(reg, "$k8s_cluster") {
+			reg = strings.Replace(reg, "$k8s_cluster", host.OsType, -1)
+		}
 		promQL = reg
 	}
 	return err,promQL
