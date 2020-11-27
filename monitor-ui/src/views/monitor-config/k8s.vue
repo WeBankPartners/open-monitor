@@ -1,7 +1,7 @@
 <template>
   <div class=" ">
     <template v-for="cluster in clusterList">
-      <Card style="width:350px;display:inline-block;margin:16px;" :key="cluster.id">
+      <Card style="width:20%;display:inline-block;margin:16px;" :key="cluster.id">
         <p slot="title">
           {{cluster.cluster_name.split(':')[0]}}
         </p>
@@ -12,18 +12,18 @@
           {{$t('button.remove')}}
         </a>
         <ul>
-          <li style="margin:8px;">
-            <h5 style="width:30%;display:inline-block;text">
+          <li style="margin:8px;list-style: none;">
+            <div style="width:30%;display:inline-block;font-size:16px;font-weight: 500;">
             {{$t('field.ip')}}:
-            </h5>
+            </div>
             <div style="width:30%;display:inline-block;">
               {{cluster.api_server.split(':')[0]}}
             </div>
           </li>
-          <li style="margin:8px;">
-            <h5 style="width:30%;display:inline-block;">
+          <li style="margin:8px;list-style: none;">
+            <div style="width:30%;display:inline-block;font-size:16px;font-weight: 500;">
               {{$t('field.port')}}:
-            </h5>
+            </div>
             <div style="width:30%;display:inline-block;">
               {{cluster.api_server.split(':')[1]}}
             </div>
@@ -31,11 +31,11 @@
         </ul>
       </Card>
     </template>
-    <Card style="width:350px;display:inline-block;margin:16px;vertical-align: bottom;">
+    <Card style="width:20%;display:inline-block;margin:16px;vertical-align: bottom;">
       <p slot="title">
         {{$t('button.add')}}
       </p>
-      <div style="margin:14px;text-align:center">
+      <div style="margin:16px;text-align:center">
         <Icon @click="addCluster" type="md-add-circle" :size=40 style="cursor:pointer" :color="'#2d8cf0'" />
       </div>
     </Card>
@@ -119,7 +119,6 @@ export default {
       this.$root.JQ('#cluster_Modal').modal('show')
     },
     addPost () {
-      console.log(this.modelConfig.addRow)
       this.modelConfig.addRow.api_server = this.modelConfig.addRow.ip + ':' + this.modelConfig.addRow.port
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/agent/kubernetes/cluster/add', this.modelConfig.addRow, () => {
         this.$root.JQ('#cluster_Modal').modal('hide')
@@ -169,7 +168,6 @@ export default {
 </script>
 
 <style scoped lang="less">
-.ivu-card-head {
-  background: red;
-}
+
+
 </style>
