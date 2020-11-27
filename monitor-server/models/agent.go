@@ -23,6 +23,7 @@ type RegisterParamNew struct {
 	AgentManager  bool  `json:"agent_manager"`
 	FetchMetric  bool  `json:"fetch_metric"`
 	Step  int  `json:"step"`
+	ExportAddress  string  `json:"export_address"`
 }
 
 type RegisterConsulParam struct {

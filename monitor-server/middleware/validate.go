@@ -14,6 +14,7 @@ var regCond = regexp.MustCompile(`^([<=|>=|!=|==|<|>]*)-?\d+(\.\d+)?$`)
 var regLast = regexp.MustCompile(`^\d+[s|m|h]$`)
 var regPath = regexp.MustCompile(`^\/([\w|\.|\-]+\/?)+$`)
 var regNormal = regexp.MustCompile(`^[\w|\.|\-|\~|\!|\@|\#|\$|\%|\^|\[|\]|\{|\}|\(|\)|\,|\s]+$`)
+var regIp = regexp.MustCompile(`^((25[0-5]|2[0-4]\d|((1\d{2})|([1-9]?\d)))\.){3}(25[0-5]|2[0-4]\d|((1\d{2})|([1-9]?\d)))$`)
 
 func ValidateGet(c *gin.Context)  {
 	isOk := true
@@ -99,4 +100,8 @@ func IsIllegalPath(str string) bool  {
 
 func IsIllegalNormalInput(str string) bool {
 	return regNormal.MatchString(str)
+}
+
+func IsIllegalIp(str string) bool {
+	return !regIp.MatchString(str)
 }
