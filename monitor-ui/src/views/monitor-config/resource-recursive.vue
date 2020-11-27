@@ -2,7 +2,7 @@
   <div class=" ">
     <ul>
       <li v-for="(item, itemIndex) in recursiveViewConfig" class="tree-border" :key="itemIndex">
-        <div @click="hide(itemIndex)" class="tree-title" :style="stylePadding">
+        <div @click="hide(itemIndex)" class="tree-title" :style="[addTag(item.fetch_search), stylePadding]">
           <div style="display:flex;justify-content: space-between;">
             <div>
               <span class="title-style">{{item.display_name}}</span>
@@ -79,9 +79,15 @@
       :title="$t('resourceLevel.associatedObject')">
       <Form :model="currentData" label-position="left" :label-width="60">
         <FormItem :label="$t('resourceLevel.endpoint')">
-          <Select v-model="selectedObject" multiple>
+          <Select
+            v-model="selectedObject"
+            filterable
+            multiple
+            :remote-method="getAllObject"
+            >
             <Option v-for="item in allObject" :value="item.option_value" :key="item.option_value">{{ item.option_text }}</Option>
           </Select>
+
         </FormItem>
       </Form>
       <div slot="footer">
@@ -218,7 +224,7 @@ export default {
     },
     stylePadding(){
       return {
-        'padding-left':this.count * 16 + 'px'
+        'padding-left': this.count * 16 + 'px'
       }
     },
     isPlugin () {
@@ -234,6 +240,11 @@ export default {
     // }) 
   },
   methods: {
+    addTag (fetch_search) {
+      if (fetch_search) {
+        return {'background': '#c9dded'}
+      }
+    },
     alarmReceivers (item) {
       this.currentRecursive = item.guid
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.groupManagement.allRoles.api, '', (responseData) => {
@@ -456,8 +467,11 @@ export default {
         this.getAllObject()
       })
     },
-    getAllObject () {
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', 'dashboard/search?search=.', '', (responseData) => {
+    getAllObject (query='.') {
+      let params = {
+        search: query
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', 'dashboard/search', params, (responseData) => {
         this.allObject = []
         responseData.forEach((item) => {
             if (item.id !== -1) {

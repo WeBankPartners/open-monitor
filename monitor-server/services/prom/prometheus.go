@@ -186,6 +186,41 @@ func restartPrometheus()  {
 	}
 }
 
+func StartCheckProcessList(interval int)  {
+	if len(m.Config().ProcessCheckList) == 0 {
+		return
+	}
+	t := time.NewTicker(time.Second*time.Duration(interval)).C
+	for {
+		<- t
+		for _,v := range m.Config().ProcessCheckList {
+			go checkSubProcessAlive(v)
+		}
+	}
+}
+
+func checkSubProcessAlive(name string)  {
+	if name == "" {
+		return
+	}
+	_,err := execCommand("ps aux|grep -v grep|grep "+name)
+	if err != nil {
+		if strings.Contains(err.Error(), "status 1") {
+			startCommand, _ := execCommand("cat /app/monitor/start.sh |grep " + name)
+			if startCommand != "" {
+				startCommand = strings.Replace(startCommand, "\n", " && ", -1)
+				startCommand = startCommand[:len(startCommand)-3]
+				_, err := execCommand(startCommand)
+				if err != nil {
+					log.Logger.Error("Start sub process fail,error", log.String("process", name), log.String("command", startCommand), log.Error(err))
+				} else {
+					log.Logger.Info("Start sub process success", log.String("process", name))
+				}
+			}
+		}
+	}
+}
+
 func execCommand(str string) (string,error) {
 	b,err := exec.Command("/bin/sh", "-c", str).Output()
 	if err != nil {

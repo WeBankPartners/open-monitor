@@ -305,6 +305,8 @@ type OpenAlarmObj struct {
 	AlertLevel  string  `json:"alert_level"`
 	AlertObj  string  `json:"alert_obj"`
 	AlertTitle  string  `json:"alert_title"`
+	UseUmgPolicy string  `json:"use_umg_policy"`
+	AlertWay    string  `json:"alert_way"`
 	AlertReciver  string  `json:"alert_reciver"`
 	RemarkInfo  string  `json:"remark_info"`
 	SubSystemId  string  `json:"sub_system_id"`

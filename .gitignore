@@ -1,6 +1,7 @@
 # IDEA
 .idea
 .editorconfig
+.vscode
 
 # node
 monitor-ui/node_modules

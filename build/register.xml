@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<package name="wecube-monitor" version="{{PLUGIN_VERSION}}">
+<package name="monitor" version="{{PLUGIN_VERSION}}">
 
     <!-- 1.依赖分析 - 描述运行本插件包需要的其他插件包 -->
     <packageDependencies>
@@ -99,7 +99,7 @@
     <!-- 7.插件列表 - 描述插件包中单个插件的输入和输出 -->
     <plugins>
         <plugin name="host" targetPackage="" targetEntity="" registerName="" targetEntityFilterRule="">
-            <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/host" filterRule="">
+            <interface action="register" path="/monitor/api/v1/agent/export/register/host" filterRule="">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">host_ip</parameter>
@@ -113,7 +113,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">monitor_key</parameter>
                 </outputParameters>
             </interface>
-            <interface action="deregister" path="/wecube-monitor/api/v1/agent/export/deregister/host" filterRule="">
+            <interface action="deregister" path="/monitor/api/v1/agent/export/deregister/host" filterRule="">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">host_ip</parameter>
                 </inputParameters>
@@ -122,7 +122,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="start-alarm" path="/wecube-monitor/api/v1/agent/export/start/host" filterRule="">
+            <interface action="start-alarm" path="/monitor/api/v1/agent/export/start/host" filterRule="">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">host_ip</parameter>
                 </inputParameters>
@@ -131,7 +131,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="stop-alarm" path="/wecube-monitor/api/v1/agent/export/stop/host" filterRule="">
+            <interface action="stop-alarm" path="/monitor/api/v1/agent/export/stop/host" filterRule="">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">host_ip</parameter>
                 </inputParameters>
@@ -142,7 +142,7 @@
             </interface>
         </plugin>
         <plugin name="mysql" targetPackage="" targetEntity="" registerName="" targetEntityFilterRule="">
-            <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/mysql" filterRule="">
+            <interface action="register" path="/monitor/api/v1/agent/export/register/mysql" filterRule="">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance_ip</parameter>
@@ -160,7 +160,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">monitor_key</parameter>
                 </outputParameters>
             </interface>
-            <interface action="deregister" path="/wecube-monitor/api/v1/agent/export/deregister/mysql" filterRule="">
+            <interface action="deregister" path="/monitor/api/v1/agent/export/deregister/mysql" filterRule="">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance_ip</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">port</parameter>
@@ -171,7 +171,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="start-alarm" path="/wecube-monitor/api/v1/agent/export/start/mysql" filterRule="">
+            <interface action="start-alarm" path="/monitor/api/v1/agent/export/start/mysql" filterRule="">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance_ip</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">port</parameter>
@@ -182,7 +182,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="stop-alarm" path="/wecube-monitor/api/v1/agent/export/stop/mysql" filterRule="">
+            <interface action="stop-alarm" path="/monitor/api/v1/agent/export/stop/mysql" filterRule="">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance_ip</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">port</parameter>
@@ -195,7 +195,7 @@
             </interface>
         </plugin>
         <plugin name="redis" targetPackage="" targetEntity="" registerName="" targetEntityFilterRule="">
-            <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/redis" filterRule="">
+            <interface action="register" path="/monitor/api/v1/agent/export/register/redis" filterRule="">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance_ip</parameter>
@@ -215,7 +215,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">monitor_key</parameter>
                 </outputParameters>
             </interface>
-            <interface action="deregister" path="/wecube-monitor/api/v1/agent/export/deregister/redis" filterRule="">
+            <interface action="deregister" path="/monitor/api/v1/agent/export/deregister/redis" filterRule="">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance_ip</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">port</parameter>
@@ -226,7 +226,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="start-alarm" path="/wecube-monitor/api/v1/agent/export/start/redis" filterRule="">
+            <interface action="start-alarm" path="/monitor/api/v1/agent/export/start/redis" filterRule="">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance_ip</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">port</parameter>
@@ -237,7 +237,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="stop-alarm" path="/wecube-monitor/api/v1/agent/export/stop/redis" filterRule="">
+            <interface action="stop-alarm" path="/monitor/api/v1/agent/export/stop/redis" filterRule="">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance_ip</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">port</parameter>
@@ -250,7 +250,7 @@
             </interface>
         </plugin>
         <plugin name="java" targetPackage="" targetEntity="" registerName="" targetEntityFilterRule="">
-            <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/java" filterRule="">
+            <interface action="register" path="/monitor/api/v1/agent/export/register/java" filterRule="">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance_ip</parameter>
@@ -269,7 +269,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">monitor_key</parameter>
                 </outputParameters>
             </interface>
-            <interface action="deregister" path="/wecube-monitor/api/v1/agent/export/deregister/java" filterRule="">
+            <interface action="deregister" path="/monitor/api/v1/agent/export/deregister/java" filterRule="">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance_ip</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">port</parameter>
@@ -280,7 +280,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="start-alarm" path="/wecube-monitor/api/v1/agent/export/start/java" filterRule="">
+            <interface action="start-alarm" path="/monitor/api/v1/agent/export/start/java" filterRule="">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance_ip</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">port</parameter>
@@ -291,7 +291,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="stop-alarm" path="/wecube-monitor/api/v1/agent/export/stop/java" filterRule="">
+            <interface action="stop-alarm" path="/monitor/api/v1/agent/export/stop/java" filterRule="">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance_ip</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">port</parameter>
@@ -304,7 +304,7 @@
             </interface>
         </plugin>
         <plugin name="ping" targetPackage="" targetEntity="" registerName="" targetEntityFilterRule="">
-            <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/ping" filterRule="">
+            <interface action="register" path="/monitor/api/v1/agent/export/register/ping" filterRule="">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance_ip</parameter>
@@ -318,7 +318,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">monitor_key</parameter>
                 </outputParameters>
             </interface>
-            <interface action="deregister" path="/wecube-monitor/api/v1/agent/export/deregister/ping" filterRule="">
+            <interface action="deregister" path="/monitor/api/v1/agent/export/deregister/ping" filterRule="">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance_ip</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance</parameter>
@@ -328,7 +328,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="start-alarm" path="/wecube-monitor/api/v1/agent/export/start/ping" filterRule="">
+            <interface action="start-alarm" path="/monitor/api/v1/agent/export/start/ping" filterRule="">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance_ip</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance</parameter>
@@ -338,7 +338,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="stop-alarm" path="/wecube-monitor/api/v1/agent/export/stop/ping" filterRule="">
+            <interface action="stop-alarm" path="/monitor/api/v1/agent/export/stop/ping" filterRule="">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance_ip</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance</parameter>
@@ -350,7 +350,7 @@
             </interface>
         </plugin>
         <plugin name="telnet" targetPackage="" targetEntity="" registerName="" targetEntityFilterRule="">
-            <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/telnet" filterRule="">
+            <interface action="register" path="/monitor/api/v1/agent/export/register/telnet" filterRule="">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance_ip</parameter>
@@ -365,7 +365,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">monitor_key</parameter>
                 </outputParameters>
             </interface>
-            <interface action="deregister" path="/wecube-monitor/api/v1/agent/export/deregister/telnet" filterRule="">
+            <interface action="deregister" path="/monitor/api/v1/agent/export/deregister/telnet" filterRule="">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance_ip</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">port</parameter>
@@ -376,7 +376,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="start-alarm" path="/wecube-monitor/api/v1/agent/export/start/telnet" filterRule="">
+            <interface action="start-alarm" path="/monitor/api/v1/agent/export/start/telnet" filterRule="">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance_ip</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">port</parameter>
@@ -387,7 +387,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="stop-alarm" path="/wecube-monitor/api/v1/agent/export/stop/telnet" filterRule="">
+            <interface action="stop-alarm" path="/monitor/api/v1/agent/export/stop/telnet" filterRule="">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance_ip</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">port</parameter>
@@ -400,7 +400,7 @@
             </interface>
         </plugin>
         <plugin name="dashboard" targetPackage="" targetEntity="" registerName="" targetEntityFilterRule="">
-            <interface action="add" path="/wecube-monitor/api/v1/dashboard/system/add" filterRule="">
+            <interface action="add" path="/monitor/api/v1/dashboard/system/add" filterRule="">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">display_name</parameter>
@@ -419,7 +419,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
-            <interface action="delete" path="/wecube-monitor/api/v1/dashboard/system/delete" filterRule="">
+            <interface action="delete" path="/monitor/api/v1/dashboard/system/delete" filterRule="">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="">endpoint</parameter>
@@ -433,7 +433,7 @@
             </interface>
         </plugin>
         <plugin name="nginx" targetPackage="" targetEntity="" registerName="" targetEntityFilterRule="">
-            <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/nginx" filterRule="">
+            <interface action="register" path="/monitor/api/v1/agent/export/register/nginx" filterRule="">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance_ip</parameter>
@@ -449,7 +449,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">monitor_key</parameter>
                 </outputParameters>
             </interface>
-            <interface action="deregister" path="/wecube-monitor/api/v1/agent/export/deregister/nginx" filterRule="">
+            <interface action="deregister" path="/monitor/api/v1/agent/export/deregister/nginx" filterRule="">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance_ip</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">port</parameter>
@@ -460,7 +460,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="start-alarm" path="/wecube-monitor/api/v1/agent/export/start/nginx" filterRule="">
+            <interface action="start-alarm" path="/monitor/api/v1/agent/export/start/nginx" filterRule="">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance_ip</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">port</parameter>
@@ -471,7 +471,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="stop-alarm" path="/wecube-monitor/api/v1/agent/export/stop/nginx" filterRule="">
+            <interface action="stop-alarm" path="/monitor/api/v1/agent/export/stop/nginx" filterRule="">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance_ip</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">port</parameter>
@@ -484,7 +484,7 @@
             </interface>
         </plugin>
         <plugin name="http" targetPackage="" targetEntity="" registerName="" targetEntityFilterRule="">
-            <interface action="register" path="/wecube-monitor/api/v1/agent/export/register/http" filterRule="">
+            <interface action="register" path="/monitor/api/v1/agent/export/register/http" filterRule="">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance</parameter>
@@ -500,7 +500,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">monitor_key</parameter>
                 </outputParameters>
             </interface>
-            <interface action="deregister" path="/wecube-monitor/api/v1/agent/export/deregister/http" filterRule="">
+            <interface action="deregister" path="/monitor/api/v1/agent/export/deregister/http" filterRule="">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance_ip</parameter>
@@ -513,7 +513,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="start-alarm" path="/wecube-monitor/api/v1/agent/export/start/http" filterRule="">
+            <interface action="start-alarm" path="/monitor/api/v1/agent/export/start/http" filterRule="">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance_ip</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">port</parameter>
@@ -524,7 +524,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="stop-alarm" path="/wecube-monitor/api/v1/agent/export/stop/http" filterRule="">
+            <interface action="stop-alarm" path="/monitor/api/v1/agent/export/stop/http" filterRule="">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">instance_ip</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">port</parameter>
@@ -537,7 +537,7 @@
             </interface>
         </plugin>
         <plugin name="process" targetPackage="" targetEntity="" registerName="" targetEntityFilterRule="">
-            <interface action="add" path="/wecube-monitor/api/v1/agent/export/process/add" filterRule="">
+            <interface action="add" path="/monitor/api/v1/agent/export/process/add" filterRule="">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">host_ip</parameter>
@@ -551,7 +551,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
-            <interface action="delete" path="/wecube-monitor/api/v1/agent/export/process/delete" filterRule="">
+            <interface action="delete" path="/monitor/api/v1/agent/export/process/delete" filterRule="">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">host_ip</parameter>
@@ -567,7 +567,7 @@
             </interface>
         </plugin>
         <plugin name="log_monitor" targetPackage="" targetEntity="" registerName="" targetEntityFilterRule="">
-            <interface action="add" path="/wecube-monitor/api/v1/agent/export/log_monitor/add" filterRule="">
+            <interface action="add" path="/monitor/api/v1/agent/export/log_monitor/add" filterRule="">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">host_ip</parameter>
@@ -581,7 +581,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
-            <interface action="delete" path="/wecube-monitor/api/v1/agent/export/log_monitor/delete" filterRule="">
+            <interface action="delete" path="/monitor/api/v1/agent/export/log_monitor/delete" filterRule="">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">host_ip</parameter>
@@ -593,6 +593,28 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
+                </outputParameters>
+            </interface>
+        </plugin>
+        <plugin name="kubernetes_pod" targetPackage="" targetEntity="" registerName="" targetEntityFilterRule="">
+            <interface action="start-alarm" path="/monitor/api/v1/agent/export/start/pod" filterRule="">
+                <inputParameters>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">pod</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="">kubernetes_cluster</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+            <interface action="stop-alarm" path="/monitor/api/v1/agent/export/stop/pod" filterRule="">
+                <inputParameters>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">pod</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="">kubernetes_cluster</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
         </plugin>

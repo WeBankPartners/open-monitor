@@ -105,3 +105,49 @@ ALTER TABLE process_monitor ADD COLUMN process_name VARCHAR(255) DEFAULT '';
 #@v1.9.0-begin@;
 ALTER TABLE role ADD COLUMN main_dashboard INT DEFAULT 0;
 #@v1.9.0-end@;
+
+#@v1.9.0.4-begin@;
+alter table alarm_custom add column use_umg_policy varchar(50) default '';
+alter table alarm_custom add column alert_way varchar(50) default '';
+#@v1.9.0.4-end@;
+
+#@v1.9.0.5-begin@;
+update prom_metric set prom_ql='ping_alive{guid=\"$guid\",e_guid=\"$guid\"}' where metric='ping_alive';
+update prom_metric set prom_ql='telnet_alive{guid=\"$guid\",e_guid=\"$guid\"}' where metric='telnet_alive';
+update prom_metric set prom_ql='http_status{guid=\"$guid\",e_guid=\"$guid\"}' where metric='http.status';
+insert into prom_metric(metric,metric_type,prom_ql) values ('ping_alive','ping','ping_alive{guid=\"$guid\",e_guid=\"$guid\"}'),('telnet_alive','telnet','telnet_alive{guid=\"$guid\",e_guid=\"$guid\"}');
+update strategy set expr='ping_alive{guid=\"$guid\",e_guid=\"$guid\"}' where metric='ping_alive';
+update strategy set expr='telnet_alive{guid=\"$guid\",e_guid=\"$guid\"}' where metric='telnet_alive';
+update strategy set expr='http_status{guid=\"$guid\",e_guid=\"$guid\"}' where metric='http.status';
+insert  into `dashboard`(`dashboard_type`,`search_enable`,`search_id`,`button_enable`,`button_group`,`message_enable`,`message_group`,`message_url`,`panels_enable`,`panels_type`,`panels_group`,`panels_param`) values ('ping',1,1,1,1,0,0,'',1,'tabs',9,'endpoint={endpoint}');
+insert  into `panel`(`group_id`,`title`,`tags_enable`,`tags_url`,`tags_key`,`chart_group`,`auto_display`) values (9,'Ping',0,'','',14,0);
+insert  into `chart`(`group_id`,`endpoint`,`metric`,`col`,`url`,`unit`,`title`,`grid_type`,`series_name`,`rate`,`agg_type`,`legend`) values (14,'','ping_alive',6,'/dashboard/chart','','ping.alive','line','metric',0,'avg','$metric');
+#@v1.9.0.5-end@;
+
+#@v1.9.0.12-begin@;
+CREATE TABLE `kubernetes_cluster` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `cluster_name` varchar(50) NOT NULL unique,
+  `api_server` varchar(100) NOT NULL,
+  `token` text,
+  `create_at` DATETIME DEFAULT NULL,
+  `update_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+CREATE TABLE `kubernetes_endpoint_rel` (
+  `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `kubernete_id` INT(10) UNSIGNED NOT NULL,
+  `endpoint_guid` varchar(100) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+insert  into `dashboard`(`dashboard_type`,`search_enable`,`search_id`,`button_enable`,`button_group`,`message_enable`,`message_group`,`message_url`,`panels_enable`,`panels_type`,`panels_group`,`panels_param`) values ('pod',1,1,1,1,0,0,'',1,'tabs',10,'endpoint={endpoint}');
+insert  into `panel`(`group_id`,`title`,`tags_enable`,`tags_url`,`tags_key`,`chart_group`,`auto_display`) values (10,'pod',0,'','',15,0);
+insert  into `chart`(`group_id`,`endpoint`,`metric`,`col`,`url`,`unit`,`title`,`grid_type`,`series_name`,`rate`,`agg_type`,`legend`) values (15,'','pod.cpu.used.percent',6,'/dashboard/chart','%','pod.cpu','line','metric',0,'p95','$metric');
+insert  into `chart`(`group_id`,`endpoint`,`metric`,`col`,`url`,`unit`,`title`,`grid_type`,`series_name`,`rate`,`agg_type`,`legend`) values (15,'','pod.mem.used.percent',6,'/dashboard/chart','%','pod.memory','line','metric',0,'avg','$metric');
+insert  into `prom_metric`(`metric`,`metric_type`,`prom_ql`,`prom_main`) values ('pod.cpu.used.percent','pod','rate(container_cpu_usage_seconds_total{pod=\"$pod\",job=\"k8s-cadvisor-$k8s_cluster\"}[60s])*100','');
+insert  into `prom_metric`(`metric`,`metric_type`,`prom_ql`,`prom_main`) values ('pod.mem.used.percent','pod','100-(container_memory_usage_bytes{pod=\"$pod\",job=\"k8s-cadvisor-$k8s_cluster\"}/container_memory_max_usage_bytes{pod=\"$pod\",job=\"k8s-cadvisor-$k8s_cluster\"})*100','');
+insert  into `grp`(`name`,`create_at`) VALUES ('default_pod_group',NOW());
+insert  into `tpl`(`grp_id`,`endpoint_id`,`create_at`) SELECT id,0,NOW() FROM grp WHERE `name`='default_pod_group';
+insert  into `strategy`(`tpl_id`,`metric`,`expr`,`cond`,`last`,`priority`,`content`,`config_type`) SELECT id,'pod.cpu.used.percent','rate(container_cpu_usage_seconds_total{pod="$pod",job="k8s-cadvisor-$k8s_cluster"}[60s])*100','>=85','90s','high','pod cpu used high','' FROM tpl ORDER BY id DESC LIMIT 1;
+insert  into `strategy`(`tpl_id`,`metric`,`expr`,`cond`,`last`,`priority`,`content`,`config_type`) SELECT id,'pod.mem.used.percent','100-(container_memory_usage_bytes{pod="$pod",job="k8s-cadvisor-$k8s_cluster"}/container_memory_max_usage_bytes{pod="$pod",job="k8s-cadvisor-$k8s_cluster"})*100','>=85','90s','medium','pod memory used high','' FROM tpl ORDER BY id DESC LIMIT 1;
+#@v1.9.0.12-end@;

@@ -7,11 +7,13 @@ import (
 	"time"
 	"net/http"
 	"strings"
+	"net/url"
 )
 
 var (
 	httpCheckResultList  []*funcs.HttpCheckObj
 	resultLock = new(sync.RWMutex)
+	httpMethodList = []string{"POST","GET","OPTIONS","HEAD","PUT","DELETE","TRACE","CONNECT"}
 )
 
 func StartHttpCheckTask()  {
@@ -27,18 +29,32 @@ func StartHttpCheckTask()  {
 	}
 }
 
+func buildHtppClient() *http.Client {
+	var proxy func(*http.Request) (*url.URL, error) = nil
+	if funcs.Config().HttpProxyEnable {
+		proxy = func(_ *http.Request) (*url.URL, error) {
+			return url.Parse(funcs.Config().HttpProxyAddress)
+		}
+	}
+	transport := &http.Transport{Proxy: proxy}
+	client := &http.Client{Transport: transport}
+	return client
+}
+
 func httpCheckTask()  {
 	clearHttpCheckResult()
 	startTime := time.Now()
 	httpCheckList := funcs.GetHttpCheckList()
-	http.DefaultClient.CloseIdleConnections()
+
+	httpClient := buildHtppClient()
+	httpClient.CloseIdleConnections()
 	wg := sync.WaitGroup{}
 	//var successCounter int
 	for _,v := range httpCheckList {
 		wg.Add(1)
 		go func(method string,url string) {
 			//b := doHttpCheck(method, url)
-			b := doHttpCheckNew(method, url)
+			b := doHttpCheckNew(method, url, httpClient)
 			writeHttpCheckResult(method, url, b)
 			funcs.DebugLog("http check %s:%s result %d ", method, url, b)
 			wg.Done()
@@ -70,14 +86,35 @@ func doHttpCheck(method,url string) int  {
 	return resp.StatusCode
 }
 
-func doHttpCheckNew(method,url string) int {
+func doHttpCheckNew(method,url string,httpClient *http.Client) int {
 	var resp *http.Response
 	var err error
-	if method == "post" {
-		resp,err = http.Post(url, "application/json", strings.NewReader(""))
-	}else{
-		resp,err = http.Get(url)
+	body:=strings.NewReader("")
+	methodIllegal := true
+	for _,v := range httpMethodList {
+		if v == method {
+			methodIllegal = false
+			break
+		}
 	}
+	if methodIllegal {
+		log.Printf("do http check -> Not support method:%s \n", method)
+		return 2
+	}
+	//var httpMethods map[string]string = map[string]string{"POST": "POST","GET":"GET","OPTIONS":"OPTIONS","HEAD":"HEAD","PUT":"PUT","DELETE":"DELETE","TRACE":"TRACE","CONNECT":"CONNECT"}
+	//if _, ok := httpMethods[strings.ToUpper(method)]; !ok {
+	//	log.Printf("do http check -> Not support method:%s \n", method)
+	//	return 2
+	//}
+	
+	req, err := http.NewRequest(strings.ToUpper(method), url, body)
+	if err != nil {
+		log.Printf("do http check -> method:%s url:%s response error: %v \n", method, url, err)
+		return 2
+	}
+	req.Header.Set("Content-Type", "application/json")
+	resp , err = httpClient.Do(req)
+
 	if err != nil {
 		log.Printf("do http check -> method:%s url:%s response error: %v \n", method, url, err)
 		return 2
