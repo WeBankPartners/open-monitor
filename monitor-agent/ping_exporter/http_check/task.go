@@ -14,6 +14,7 @@ var (
 	httpCheckResultList  []*funcs.HttpCheckObj
 	resultLock = new(sync.RWMutex)
 	httpMethodList = []string{"POST","GET","OPTIONS","HEAD","PUT","DELETE","TRACE","CONNECT"}
+	httpCheckTimeOut = 10
 )
 
 func StartHttpCheckTask()  {
@@ -21,6 +22,9 @@ func StartHttpCheckTask()  {
 	if interval < 30 {
 		log.Println("http_check interval refresh to 30s")
 		interval = 30
+	}
+	if funcs.Config().HttpCheckTimeout > 0 {
+		httpCheckTimeOut = funcs.Config().HttpCheckTimeout
 	}
 	t := time.NewTicker(time.Second*time.Duration(interval)).C
 	for {
@@ -37,7 +41,7 @@ func buildHtppClient() *http.Client {
 		}
 	}
 	transport := &http.Transport{Proxy: proxy}
-	client := &http.Client{Transport: transport}
+	client := &http.Client{Transport: transport, Timeout:time.Duration(httpCheckTimeOut)*time.Second}
 	return client
 }
 
@@ -101,15 +105,10 @@ func doHttpCheckNew(method,url string,httpClient *http.Client) int {
 		log.Printf("do http check -> Not support method:%s \n", method)
 		return 2
 	}
-	//var httpMethods map[string]string = map[string]string{"POST": "POST","GET":"GET","OPTIONS":"OPTIONS","HEAD":"HEAD","PUT":"PUT","DELETE":"DELETE","TRACE":"TRACE","CONNECT":"CONNECT"}
-	//if _, ok := httpMethods[strings.ToUpper(method)]; !ok {
-	//	log.Printf("do http check -> Not support method:%s \n", method)
-	//	return 2
-	//}
 	
 	req, err := http.NewRequest(strings.ToUpper(method), url, body)
 	if err != nil {
-		log.Printf("do http check -> method:%s url:%s response error: %v \n", method, url, err)
+		log.Printf("do http check -> method:%s url:%s new request error: %v \n", method, url, err)
 		return 2
 	}
 	req.Header.Set("Content-Type", "application/json")

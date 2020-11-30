@@ -93,6 +93,7 @@ type GlobalConfig struct {
 	Prometheus    PrometheusCOnfig  `json:"prometheus"`
 	Source      SourceConfig    `json:"source"`
 	Metrics       MetricConfig      `json:"metrics"`
+	HttpCheckTimeout  int           `json:"http_check_timeout"`
 }
 
 var (
