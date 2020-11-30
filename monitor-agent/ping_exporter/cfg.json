@@ -61,5 +61,6 @@
     "http_check_count_num": "http_count",
     "http_check_count_success": "http_success",
     "http_check_count_fail": "http_fail"
-  }
+  },
+  "http_check_timeout": 10
 }
