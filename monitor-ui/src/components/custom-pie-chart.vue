@@ -61,7 +61,7 @@ export default {
       }
       this.elId = this.chartInfo.elId
       this.$root.$httpRequestEntrance.httpRequestEntrance(
-        'POST','dashboard/pie/chart', params,
+        'POST',this.$root.apiCenter.metricConfigPieView.api, params,
         responseData => {
           drawPieChart(this, responseData)
         },
