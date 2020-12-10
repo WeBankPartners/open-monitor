@@ -99,7 +99,7 @@ export default {
           if (this.btns.length !== 0) {
             this.currentParameter = this.btns[0].option_value
           }
-          this.tagsUrl = item.tagsUrl     
+          this.tagsUrl = '/monitor/api/v1'+ item.tagsUrl     
           this.$nextTick(() => {
             this.activeCharts = item.charts
           })
