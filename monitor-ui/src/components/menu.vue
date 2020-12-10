@@ -150,7 +150,7 @@ export default {
       this.$router.push({path: '/userConfigIndex/userInformationModify'})
     },
     logout () {
-      const url =  require('../../src/assets/js/baseURL').baseURL_config + '/logout'
+      const url =  require('../../src/assets/js/baseURL').baseURL_config + '/monitor/logout'
       axios({
         method: 'GET',
         url: url,

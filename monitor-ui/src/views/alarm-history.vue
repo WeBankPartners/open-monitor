@@ -174,7 +174,7 @@ export default {
         params[keys[i]] = this.filters[keys[i]]
         this.filtersForShow.push({key:keys[i], value:this.filters[keys[i]]})
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', 'alarm/problem/history', params, (responseData) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/alarm/problem/history', params, (responseData) => {
         this.resultData = responseData.data
         this.low = responseData.low
         this.mid = responseData.mid

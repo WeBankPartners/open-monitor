@@ -1,11 +1,10 @@
 import axios from 'axios'
 import {baseURL_config} from './baseURL'
 import { getToken } from '@/assets/js/cookies.ts'
-const baseURL = `${baseURL_config}/api/v1`
 export default function ajax (options) {
   const ajaxObj = {
     method: options.method,
-    baseURL: baseURL,
+    baseURL: baseURL_config,
     url: options.url,
     timeout: 30000,
     params: options.params,

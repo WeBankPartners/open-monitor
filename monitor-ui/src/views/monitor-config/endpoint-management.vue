@@ -609,7 +609,7 @@ export default {
     add() {
       this.modelConfig.slotConfig.resourceOption = []
       this.modelConfig.slotConfig.resourceSelected = []
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', 'alarm/endpoint/list', {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v1/alarm/endpoint/list', {
         search: '.',
         page: 1,
         size: 300
@@ -747,7 +747,7 @@ export default {
       this.processConfigModel.processName = ''
       this.id = rowData.id
       this.processConfigModel.addRow.processSet = []
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', 'alarm/process/list', {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v1/alarm/process/list', {
         id: this.id
       }, responseData => {
         if (!responseData.length) {
@@ -774,7 +774,7 @@ export default {
         process_list: this.processConfigModel.process_list,
         check: true
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', 'alarm/process/update', params, () => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/alarm/process/update', params, () => {
         this.$Message.success(this.$t('tips.success'))
       })
       this.$root.JQ('#process_config_model').modal('hide')
@@ -806,7 +806,7 @@ export default {
       })
       this.id = rowData.id
       this.businessConfigModel.addRow.businessSet = []
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', 'alarm/business/list', {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v1/alarm/business/list', {
         id: this.id
       }, responseData => {
         if (!responseData.length) {
@@ -831,7 +831,7 @@ export default {
         endpoint_id: +this.id,
         path_list: this.businessConfigModel.pathMsg
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', 'alarm/business/update', params, () => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/alarm/business/update', params, () => {
         this.$Message.success(this.$t('tips.success'))
         this.$root.JQ('#business_config_model').modal('hide')
       })
@@ -857,7 +857,7 @@ export default {
       let params = {
         guid: rowData.guid
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', 'agent/export/endpoint/telnet/get', params, (responseData) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v1/agent/export/endpoint/telnet/get', params, (responseData) => {
         if (!responseData.length) {
           responseData.push({
             port: null,
@@ -898,7 +898,7 @@ export default {
         guid: this.id,
         config: temp
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', 'agent/export/endpoint/telnet/update', params, () => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/agent/export/endpoint/telnet/update', params, () => {
         this.$Message.success(this.$t('tips.success'))
         this.$root.JQ('#port_Modal').modal('hide')
       })
