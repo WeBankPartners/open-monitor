@@ -163,7 +163,7 @@ export default {
           main_page_id: item.main_page_id,
         })
       })
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST','dashboard/custom/main/set', params, () => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST','/monitor/api/v1/dashboard/custom/main/set', params, () => {
         this.$Message.success(this.$t('tips.success'))
         this.$root.JQ('#set_dashboard_modal').modal('hide')
       })
@@ -173,7 +173,7 @@ export default {
       const params = {
         dashboard_id: panalItem.id
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET','dashboard/custom/role/get', params, (res) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET','/monitor/api/v1/dashboard/custom/role/get', params, (res) => {
         res.forEach((item) => {
           this.authorizationModel.addRow.role.push(item.id)
         })
@@ -185,7 +185,7 @@ export default {
         dashboard_id: this.dashboard_id,
         role_id: this.authorizationModel.addRow.role
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', 'dashboard/custom/role/save', params, () => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/dashboard/custom/role/save', params, () => {
         this.$Message.success(this.$t('tips.success'))
         this.$root.JQ('#authorization_model').modal('hide')
       })
@@ -195,7 +195,7 @@ export default {
         page: 1,
         size: 1000
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET','user/role/list?page=1&size=1000', params, (responseData) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET','/monitor/api/v1/user/role/list?page=1&size=1000', params, (responseData) => {
         this.authorizationModel.roleList = responseData.data
       })
     },

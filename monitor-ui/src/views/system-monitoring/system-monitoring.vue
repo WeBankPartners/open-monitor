@@ -120,7 +120,7 @@ export default {
   },
   methods: {
     getMetric () {
-      let url = '/dashboard/custom/endpoint/get?'
+      let url = '/monitor/api/v1//dashboard/custom/endpoint/get?'
       let ipManage = this.sysConfig.ips.map((item) => {
         return 'ip=' + item
       })
