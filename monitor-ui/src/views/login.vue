@@ -61,7 +61,7 @@ export default {
   methods: {
     handleSubmit () {
       let Base64 = require('js-base64').Base64
-      const url =  require('../../src/assets/js/baseURL').baseURL_config + '/login'
+      const url =  require('../../src/assets/js/baseURL').baseURL_config + '/monitor/login'
       axios({
         method: 'POST',
         url: url,
