@@ -1,175 +1,175 @@
 {
     "resourceSearch": {
         "_des": "资源搜索接口",
-        "api": "/dashboard/search",
-        "strategyApi": "/alarm/strategy/search"
+        "api": "/monitor/api/v1/dashboard/search",
+        "strategyApi": "/monitor/api/v1/alarm/strategy/search"
     },
     "mainConfig": {
         "_des": "主视图配置获取",
-        "api": "/dashboard/main"
+        "api": "/monitor/api/v1/dashboard/main"
     },
     "alarm": {
-        "history": "alarm/history"
+        "history": "/monitor/api/v1/alarm/history"
     },
     "groupManagement": {
         "_des": "组管理",
         "list": {
-            "api": "alarm/grp/list"
+            "api": "/monitor/api/v1/alarm/grp/list"
         },
         "add": {
-            "api": "alarm/grp/add"
+            "api": "/monitor/api/v1/alarm/grp/add"
         },
         "update": {
-            "api": "alarm/grp/update"
+            "api": "/monitor/api/v1/alarm/grp/update"
         },
         "delete": {
-            "api": "alarm/grp/delete"
+            "api": "/monitor/api/v1/alarm/grp/delete"
         },
         "upload": {
             "api": "/api/v1/alarm/grp/import"
         },
         "export": {
-            "api": "alarm/grp/export"
+            "api": "/monitor/api/v1/alarm/grp/export"
         },
         "exitRoles": {
-            "api": "alarm/grp/role/get"
+            "api": "/monitor/api/v1/alarm/grp/role/get"
         },
         "allRoles": {
-            "api": "user/role/list?page=1&size=1000&search"
+            "api": "/monitor/api/v1/user/role/list?page=1&size=1000&search"
         },
         "updateRoles": {
-            "api": "alarm/grp/role/update"
+            "api": "/monitor/api/v1/alarm/grp/role/update"
         }
     },
     "endpointManagement": {
         "_des": "对象管理",
         "list": {
-            "api": "alarm/endpoint/list"
+            "api": "/monitor/api/v1/alarm/endpoint/list"
         },
         "update": {
-            "api": "alarm/endpoint/update"
+            "api": "/monitor/api/v1/alarm/endpoint/update"
         },
         "deregister": {
-            "api": "agent/deregister"
+            "api": "/monitor/api/v1/agent/deregister"
         },
         "register": {
-            "api": "agent/register"
+            "api": "/monitor/api/v1/agent/register"
         },
         "db": {
-            "dbMonitor": "alarm/db/monitor/list",
-            "check": "alarm/db/monitor/check",
-            "add": "alarm/db/monitor/add",
-            "delete": "alarm/db/monitor/delete",
-            "update": "alarm/db/monitor/update",
-            "panalName": "alarm/org/search?search=.",
-            "updatePanalName": "alarm/db/monitor/sys/update"
+            "dbMonitor": "/monitor/api/v1/alarm/db/monitor/list",
+            "check": "/monitor/api/v1/alarm/db/monitor/check",
+            "add": "/monitor/api/v1/alarm/db/monitor/add",
+            "delete": "/monitor/api/v1/alarm/db/monitor/delete",
+            "update": "/monitor/api/v1/alarm/db/monitor/update",
+            "panalName": "/monitor/api/v1/alarm/org/search?search=.",
+            "updatePanalName": "/monitor/api/v1/alarm/db/monitor/sys/update"
         }
     },
     "thresholdManagement": {
         "_des": "阈值管理",
         "list": {
-            "api": "alarm/strategy/list"
+            "api": "/monitor/api/v1/alarm/strategy/list"
         },
         "add": {
-            "api": "alarm/strategy/add"
+            "api": "/monitor/api/v1/alarm/strategy/add"
         },
         "update": {
-            "api": "alarm/strategy/update"
+            "api": "/monitor/api/v1/alarm/strategy/update"
         },
         "delete": {
-            "api": "alarm/strategy/delete"
+            "api": "/monitor/api/v1/alarm/strategy/delete"
         },
         "recevier": {
             "_des": "接收人管理",
-            "getReceivers": "alarm/action/search",
-            "api": "alarm/action/update"
+            "getReceivers": "/monitor/api/v1/alarm/action/search",
+            "api": "/monitor/api/v1/alarm/action/update"
         }
     },
     "logManagement": {
         "_des": "阈值管理",
         "list": {
-            "api": "alarm/log/monitor/list"
+            "api": "/monitor/api/v1/alarm/log/monitor/list"
         },
         "delList": {
-            "api": "alarm/log/monitor/delete_path"
+            "api": "/monitor/api/v1/alarm/log/monitor/delete_path"
         },
         "editList": {
-            "api": "alarm/log/monitor/update_path"
+            "api": "/monitor/api/v1/alarm/log/monitor/update_path"
         },
         "add": {
-            "api": "alarm/log/monitor/add"
+            "api": "/monitor/api/v1/alarm/log/monitor/add"
         },
         "update": {
-            "api": "alarm/log/monitor/update"
+            "api": "/monitor/api/v1/alarm/log/monitor/update"
         },
         "delete": {
-            "api": "alarm/log/monitor/delete"
+            "api": "/monitor/api/v1/alarm/log/monitor/delete"
         }
     },
     "metricList": {
         "_des": "指标列表",
-        "api": "dashboard/config/metric/list"
+        "api": "/monitor/api/v1/dashboard/config/metric/list"
     },
     "originMetricList": {
         "_des": "原始指标列表",
-        "api": "dashboard/endpoint/metric/list"
+        "api": "/monitor/api/v1/dashboard/endpoint/metric/list"
     },
     "metricUpdate": {
         "_des": "指标更新",
-        "api": "dashboard/config/metric/update"
+        "api": "/monitor/api/v1/dashboard/config/metric/update"
     },
     "metricConfigView": {
         "_des": "指标配置预览视图",
-        "api": "dashboard/newchart"
+        "api": "/monitor/api/v1/dashboard/newchart"
     },
     "metricConfigPieView": {
         "_des": "指标配置饼图",
-        "api": "dashboard/pie/chart"
+        "api": "/monitor/api/v1/dashboard/pie/chart"
     },
     "alarmManagement": {
         "_des": "告警管理",
         "list": {
-            "api": "alarm/problem/list"
+            "api": "/monitor/api/v1/alarm/problem/list"
         },
         "close": {
-            "api": "alarm/problem/close"
+            "api": "/monitor/api/v1/alarm/problem/close"
         }
     },
     "template": {
-        "list": "dashboard/custom/list",
-        "portalConfig": "dashboard/custom/main/list",
-        "singleDash": "dashboard/custom/get",
-        "get": "dashboard/custom/main/get",
-        "templateSet": "dashboard/custom/main/set",
-        "save": "dashboard/custom/save",
-        "delete": "dashboard/custom/delete"
+        "list": "/monitor/api/v1/dashboard/custom/list",
+        "portalConfig": "/monitor/api/v1/dashboard/custom/main/list",
+        "singleDash": "/monitor/api/v1/dashboard/custom/get",
+        "get": "/monitor/api/v1/dashboard/custom/main/get",
+        "templateSet": "/monitor/api/v1/dashboard/custom/main/set",
+        "save": "/monitor/api/v1/dashboard/custom/save",
+        "delete": "/monitor/api/v1/dashboard/custom/delete"
     },
     "setup": {
         "userInformation": {
-            "get": "user/message/get",
-            "update":"user/message/update"
+            "get": "/monitor/api/v1/user/message/get",
+            "update":"/monitor/api/v1/user/message/update"
         },
         "userManagement": {
-            "get": "user/list"
+            "get": "/monitor/api/v1/user/list"
         },
         "role": {
-            "get": "user/role/list",
-            "update":"user/role/update",
-            "authorization":"user/role/user/update"
+            "get": "/monitor/api/v1/user/role/list",
+            "update":"/monitor/api/v1/user/role/update",
+            "authorization":"/monitor/api/v1/user/role/user/update"
         }
     },
     "recursive": {
         "_des": "递归视图配置",
-        "api": "dashboard/recursive/get"
+        "api": "/monitor/api/v1/dashboard/recursive/get"
     },
     "resourceLevel": {
         "_des": "资源层级",
-        "getAll": "alarm/org/panel/get",
-        "getReceivers": "alarm/org/connect/get",
-        "updateReceivers": "alarm/org/connect/update"
+        "getAll": "/monitor/api/v1/alarm/org/panel/get",
+        "getReceivers": "/monitor/api/v1/alarm/org/connect/get",
+        "updateReceivers": "/monitor/api/v1/alarm/org/connect/update"
     },
     "editTitle": {
         "_des": "对象视图标题编辑",
-        "api": "dashboard/config/chart/title"
+        "api": "/monitor/api/v1/dashboard/config/chart/title"
     }
 }
