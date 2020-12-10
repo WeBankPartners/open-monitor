@@ -217,7 +217,7 @@ export default {
         compare_second_end: this.compareSecondDate[1],
         sys: false
       }
-      url = url.replace(`{${key}}`,params[key])
+      url = '/monitor/api/v1' + url.replace(`{${key}}`,params[key])
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET',url, params, responseData => {
         this.$parent.manageCharts(responseData, params)
       },{isNeedloading: false})
