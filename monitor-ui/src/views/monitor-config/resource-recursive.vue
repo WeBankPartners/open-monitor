@@ -396,7 +396,7 @@ export default {
       const params = {
         guid: this.selectedData.guid
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', 'alarm/org/panel/delete', params, () => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/alarm/org/panel/delete', params, () => {
         // this.$root.$eventBus.$emit('hideConfirmModal')
         this.$Message.success(this.$t('tips.success'))
         this.$root.$eventBus.$emit('updateResource', '')
@@ -409,9 +409,9 @@ export default {
     },
     savePanal () {
       let params = JSON.parse(JSON.stringify(this.currentData))
-      let api = 'alarm/org/panel/edit'
+      let api = '/monitor/api/v1/alarm/org/panel/edit'
       if (this.isAdd) {
-        api = 'alarm/org/panel/add'
+        api = '/monitor/api/v1/alarm/org/panel/add'
         params.parent = this.parentPanal
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', api, params, () => {
@@ -425,7 +425,7 @@ export default {
       const params = {
         guid: panalData.guid
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', 'alarm/org/role/get', params, (responseData) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v1/alarm/org/role/get', params, (responseData) => {
         this.selectedRole = []
         responseData.forEach((_) => {
           this.selectedRole.push(_.id)
@@ -434,7 +434,7 @@ export default {
       })
     },
     getAllRole () {
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', 'user/role/list?page=1&size=1000', '', (responseData) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v1/user/role/list?page=1&size=1000', '', (responseData) => {
         this.allRole = responseData.data.map((_) => {
           return {
             ..._,
@@ -449,7 +449,7 @@ export default {
         "guid": this.parentPanal,
         "role_id": this.selectedRole
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', 'alarm/org/role/update', params, () => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/alarm/org/role/update', params, () => {
         this.$Message.success(this.$t('tips.success'))
         this.isAssociatedRole = false
       })
@@ -459,7 +459,7 @@ export default {
       const params = {
         guid: panalData.guid
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', 'alarm/org/endpoint/get', params, (responseData) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v1/alarm/org/endpoint/get', params, (responseData) => {
         this.selectedObject = []
         responseData.forEach((_) => {
           this.selectedObject.push(_.option_value)
@@ -471,7 +471,7 @@ export default {
       let params = {
         search: query
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', 'dashboard/search', params, (responseData) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v1/dashboard/search', params, (responseData) => {
         this.allObject = []
         responseData.forEach((item) => {
             if (item.id !== -1) {
@@ -489,7 +489,7 @@ export default {
         "guid": this.parentPanal,
         "endpoint": this.selectedObject
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', 'alarm/org/endpoint/update', params, () => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/alarm/org/endpoint/update', params, () => {
         this.$Message.success(this.$t('tips.success'))
         this.isAssociatedObject = false
       })
@@ -499,7 +499,7 @@ export default {
       const params = {
         guid: panalData.guid
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', 'alarm/org/callback/get', params, (responseData) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v1/alarm/org/callback/get', params, (responseData) => {
         this.alarmCallbackata = responseData
         this.selectedFiring = responseData.firing_callback.find((_) => {
           return _.active === true
@@ -528,7 +528,7 @@ export default {
         recover_callback_name: selectedRecover_choiced.option_text,
         recover_callback_key: selectedRecover_choiced.option_value
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', 'alarm/org/callback/update', params, () => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/alarm/org/callback/update', params, () => {
         this.$Message.success(this.$t('tips.success'))
         this.isAlarmCallback = false
       })

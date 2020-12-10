@@ -81,7 +81,7 @@ export default {
     },
     getAlarmdata (id) {
       const parmas = {id}
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', 'dashboard/custom/alarm/list', parmas, (responseData) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v1/dashboard/custom/alarm/list', parmas, (responseData) => {
         this.resultData = responseData.data
         this.low = responseData.low
         this.mid = responseData.mid
