@@ -1,21 +1,22 @@
 package collector
 
 import (
-	"sync"
-	"github.com/prometheus/client_golang/prometheus"
-	"strconv"
-	"github.com/hpcloud/tail"
-	"strings"
-	"github.com/prometheus/common/log"
-	"encoding/json"
-	"net/http"
-	"io/ioutil"
-	"fmt"
-	"time"
 	"bytes"
 	"encoding/gob"
+	"encoding/json"
+	"fmt"
+	"github.com/go-kit/kit/log/level"
+	"github.com/hpcloud/tail"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/go-kit/kit/log"
+	"io/ioutil"
+	"net/http"
 	"os"
 	"regexp"
+	"strconv"
+	"strings"
+	"sync"
+	"time"
 )
 
 const (
@@ -27,10 +28,16 @@ var (
 	regDate = regexp.MustCompile(`^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}`)
 	businessMonitorJobs []*businessMonitorObj
 	businessMonitorLock = new(sync.RWMutex)
+	newLogger  log.Logger
 )
 
 type businessMonitorCollector struct {
 	businessMonitor  *prometheus.Desc
+	logger  log.Logger
+}
+
+func InitNewLogger(logger  log.Logger)  {
+	newLogger = logger
 }
 
 func init() {
@@ -38,13 +45,14 @@ func init() {
 	BusinessCollectorStore.Load()
 }
 
-func BusinessMonitorCollector() (Collector, error) {
+func BusinessMonitorCollector(logger log.Logger) (Collector, error) {
 	return &businessMonitorCollector{
 		businessMonitor: prometheus.NewDesc(
 			prometheus.BuildFQName(namespace, businessCollectorName, "value"),
 			"Show business data from log file.",
 			[]string{"sys", "msg", "key", "path"}, nil,
 		),
+		logger: logger,
 	}, nil
 }
 
@@ -87,7 +95,7 @@ func (c *businessMonitorObj) start()  {
 	var err error
 	c.TailSession,err = tail.TailFile(c.Path, tail.Config{Follow:true, ReOpen:true})
 	if err != nil {
-		log.Errorf("start business collector fail, path: %s, error: %v", c.Path, err)
+		level.Error(newLogger).Log(fmt.Sprintf("start business collector fail, path: %s, error: %v", c.Path, err))
 		return
 	}
 	var tmpList []string
@@ -128,7 +136,7 @@ func (c *businessMonitorObj) start()  {
 						}
 					}
 				}else{
-					log.Infof("json unmarshal %s error:%v \n", textSplit, err)
+					level.Info(newLogger).Log(fmt.Sprintf("json unmarshal %s error:%v ", textSplit, err))
 				}
 			}
 		}
@@ -166,7 +174,7 @@ func BusinessMonitorHttpHandle(w http.ResponseWriter, r *http.Request)  {
 	var errorMsg string
 	if err != nil {
 		errorMsg = fmt.Sprintf("Handel business monitor http request fail,read body error: %v \n", err)
-		log.Errorln(errorMsg)
+		level.Error(newLogger).Log(errorMsg)
 		w.Write([]byte(errorMsg))
 		return
 	}
@@ -174,7 +182,7 @@ func BusinessMonitorHttpHandle(w http.ResponseWriter, r *http.Request)  {
 	err = json.Unmarshal(buff, &param)
 	if err != nil {
 		errorMsg = fmt.Sprintf("Handel business monitor http request fail,json unmarshal error: %v \n", err)
-		log.Errorln(errorMsg)
+		level.Error(newLogger).Log(errorMsg)
 		w.Write([]byte(errorMsg))
 		return
 	}
@@ -213,7 +221,7 @@ func BusinessMonitorHttpHandle(w http.ResponseWriter, r *http.Request)  {
 	}
 	businessMonitorJobs = newBusinessMonitorJobs
 	businessMonitorLock.Unlock()
-	log.Infoln("success")
+	level.Info(newLogger).Log("success")
 	w.Write([]byte("success"))
 }
 
@@ -246,24 +254,24 @@ func (c *businessCollectorStore) Save()  {
 	enc := gob.NewEncoder(&tmpBuffer)
 	err := enc.Encode(c.Data)
 	if err != nil {
-		log.Errorf("gob encode business monitor error : %v \n", err)
+		level.Error(newLogger).Log(fmt.Sprintf("gob encode business monitor error : %v ", err))
 	}else{
 		ioutil.WriteFile(businessMonitorFilePath, tmpBuffer.Bytes(), 0644)
-		log.Infof("write %s succeed \n", businessMonitorFilePath)
+		level.Info(newLogger).Log(fmt.Sprintf("write %s succeed ", businessMonitorFilePath))
 	}
 }
 
 func (c *businessCollectorStore) Load()  {
 	file,err := os.Open(businessMonitorFilePath)
 	if err != nil {
-		log.Infof("read %s file error %v \n", businessMonitorFilePath, err)
+		level.Info(newLogger).Log(fmt.Sprintf("read %s file error %v ", businessMonitorFilePath, err))
 	}else{
 		dec := gob.NewDecoder(file)
 		err = dec.Decode(&c.Data)
 		if err != nil {
-			log.Errorf("gob decode %s error %v \n", businessMonitorFilePath, err)
+			level.Error(newLogger).Log(fmt.Sprintf("gob decode %s error %v ", businessMonitorFilePath, err))
 		}else{
-			log.Infof("load %s file succeed \n", businessMonitorFilePath)
+			level.Info(newLogger).Log(fmt.Sprintf("load %s file succeed ", businessMonitorFilePath))
 		}
 	}
 	tmpMap := make(map[string]int)
