@@ -8,7 +8,7 @@
             alert: 'NodeFilesystemSpaceFillingUp',
             expr: |||
               (
-                node_filesystem_avail_bytes{%(nodeExporterSelector)s,%(fsSelector)s} / node_filesystem_size_bytes{%(nodeExporterSelector)s,%(fsSelector)s} * 100 < 40
+                node_filesystem_avail_bytes{%(nodeExporterSelector)s,%(fsSelector)s} / node_filesystem_size_bytes{%(nodeExporterSelector)s,%(fsSelector)s} * 100 < %(fsSpaceFillingUpWarningThreshold)d
               and
                 predict_linear(node_filesystem_avail_bytes{%(nodeExporterSelector)s,%(fsSelector)s}[6h], 24*60*60) < 0
               and
@@ -28,7 +28,7 @@
             alert: 'NodeFilesystemSpaceFillingUp',
             expr: |||
               (
-                node_filesystem_avail_bytes{%(nodeExporterSelector)s,%(fsSelector)s} / node_filesystem_size_bytes{%(nodeExporterSelector)s,%(fsSelector)s} * 100 < 20
+                node_filesystem_avail_bytes{%(nodeExporterSelector)s,%(fsSelector)s} / node_filesystem_size_bytes{%(nodeExporterSelector)s,%(fsSelector)s} * 100 < %(fsSpaceFillingUpCriticalThreshold)d
               and
                 predict_linear(node_filesystem_avail_bytes{%(nodeExporterSelector)s,%(fsSelector)s}[6h], 4*60*60) < 0
               and
@@ -182,6 +182,70 @@
             annotations: {
               summary: 'Network interface is reporting many transmit errors.',
               description: '{{ $labels.instance }} interface {{ $labels.device }} has encountered {{ printf "%.0f" $value }} transmit errors in the last two minutes.',
+            },
+          },
+          {
+            alert: 'NodeHighNumberConntrackEntriesUsed',
+            expr: |||
+              (node_nf_conntrack_entries / node_nf_conntrack_entries_limit) > 0.75
+            ||| % $._config,
+            annotations: {
+              summary: 'Number of conntrack are getting close to the limit.',
+              description: '{{ $value | humanizePercentage }} of conntrack entries are used.',
+            },
+            labels: {
+              severity: 'warning',
+            },
+          },
+          {
+            alert: 'NodeTextFileCollectorScrapeError',
+            expr: |||
+              node_textfile_scrape_error{%(nodeExporterSelector)s} == 1
+            ||| % $._config,
+            annotations: {
+              summary: 'Node Exporter text file collector failed to scrape.',
+              description: 'Node Exporter text file collector failed to scrape.',
+            },
+            labels: {
+              severity: 'warning',
+            },
+          },
+          {
+            alert: 'NodeClockSkewDetected',
+            expr: |||
+              (
+                node_timex_offset_seconds > 0.05
+              and
+                deriv(node_timex_offset_seconds[5m]) >= 0
+              )
+              or
+              (
+                node_timex_offset_seconds < -0.05
+              and
+                deriv(node_timex_offset_seconds[5m]) <= 0
+              )
+            ||| % $._config,
+            'for': '10m',
+            labels: {
+              severity: 'warning',
+            },
+            annotations: {
+              summary: 'Clock skew detected.',
+              message: 'Clock on {{ $labels.instance }} is out of sync by more than 300s. Ensure NTP is configured correctly on this host.',
+            },
+          },
+          {
+            alert: 'NodeClockNotSynchronising',
+            expr: |||
+              min_over_time(node_timex_sync_status[5m]) == 0
+            ||| % $._config,
+            'for': '10m',
+            labels: {
+              severity: 'warning',
+            },
+            annotations: {
+              summary: 'Clock not synchronising.',
+              message: 'Clock on {{ $labels.instance }} is not synchronising. Ensure NTP is configured on this host.',
             },
           },
         ],
