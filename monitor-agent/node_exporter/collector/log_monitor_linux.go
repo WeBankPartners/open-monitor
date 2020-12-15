@@ -29,7 +29,6 @@ const (
 
 func init() {
 	registerCollector("log_monitor", defaultEnabled, NewLogMonitorCollector)
-	LogCollectorStore.Load()
 }
 
 func NewLogMonitorCollector(logger log.Logger) (Collector, error) {
