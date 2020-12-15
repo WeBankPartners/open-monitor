@@ -14,6 +14,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"os"
+	"time"
 )
 
 
@@ -53,9 +54,15 @@ func (c *logMonitorCollector) Update(ch chan<- prometheus.Metric) error {
 	return nil
 }
 
+type logKeywordFetchObj struct {
+	Timestamp  int64  `json:"timestamp"`
+	Content    string `json:"content"`
+}
+
 type logKeywordObj struct {
 	Keyword  string
 	Count  float64
+	FetchRow []logKeywordFetchObj
 }
 
 type logCollectorObj struct {
@@ -74,6 +81,17 @@ type logMetricObj struct {
 type logHttpDto struct {
 	Path  string  `json:"path"`
 	Keywords  []string  `json:"keywords"`
+}
+
+type logRowsHttpDto struct {
+	Path  string  `json:"path"`
+	Keyword  string  `json:"keyword"`
+}
+
+type logRowsHttpResult struct {
+	Status  string  `json:"status"`
+	Message string  `json:"message"`
+	Data  []logKeywordFetchObj  `json:"data"`
 }
 
 var logCollectorJobs []*logCollectorObj
@@ -98,11 +116,20 @@ func (c *logCollectorObj) start() {
 		level.Error(newLogger).Log("msg",fmt.Sprintf("start log collector fail, path: %s, error: %v", c.Path, err))
 		return
 	}
+	firstFlag := true
+	timeNow := time.Now()
 	for line := range c.TailSession.Lines {
+		if firstFlag {
+			if time.Now().Sub(timeNow).Seconds() >= 5 {
+				firstFlag = false
+			}
+			continue
+		}
 		c.Lock.Lock()
 		for _,v := range c.Rule {
 			if strings.Contains(line.Text, v.Keyword) {
 				v.Count++
+				v.FetchRow = append(v.FetchRow, logKeywordFetchObj{Timestamp: time.Now().Unix(),Content: line.Text})
 			}
 		}
 		c.Lock.Unlock()
@@ -124,7 +151,24 @@ func (c *logCollectorObj) get() []logMetricObj {
 	return data
 }
 
-type logCollectorStrore struct {
+func (c *logCollectorObj) getRows(keyword string) []logKeywordFetchObj {
+	var data []logKeywordFetchObj
+	nowTimestamp := time.Now().Unix()
+	c.Lock.RLock()
+	for _,v := range c.Rule {
+		if v.Keyword == keyword {
+			for _,vv := range v.FetchRow {
+				if (nowTimestamp-vv.Timestamp) <= 10 {
+					data = append(data, logKeywordFetchObj{Timestamp: vv.Timestamp, Content: vv.Content})
+				}
+			}
+		}
+	}
+	c.Lock.RUnlock()
+	return data
+}
+
+type logCollectorStore struct {
 	Data  []*logCollectorStoreObj
 }
 
@@ -133,7 +177,7 @@ type logCollectorStoreObj struct {
 	Rule  []*logKeywordObj
 }
 
-func (c *logCollectorStrore) Save()  {
+func (c *logCollectorStore) Save()  {
 	c.Data = []*logCollectorStoreObj{}
 	for _,v := range logCollectorJobs {
 		lmo := v.get()
@@ -159,7 +203,7 @@ func (c *logCollectorStrore) Save()  {
 	}
 }
 
-func (c *logCollectorStrore) Load()  {
+func (c *logCollectorStore) Load()  {
 	file,err := os.Open(logMonitorFilePath)
 	if err != nil {
 		level.Info(newLogger).Log("msg",fmt.Sprintf("read %s file error %v ", logMonitorFilePath, err))
@@ -181,13 +225,13 @@ func (c *logCollectorStrore) Load()  {
 	}
 }
 
-var LogCollectorStore logCollectorStrore
+var LogCollectorStore logCollectorStore
 
 func LogMonitorHttpHandle(w http.ResponseWriter, r *http.Request)  {
 	buff,err := ioutil.ReadAll(r.Body)
 	var errorMsg string
 	if err != nil {
-		errorMsg = fmt.Sprintf("Handel log monitor http request fail,read body error: %v \n", err)
+		errorMsg = fmt.Sprintf("Handel log monitor http request fail,read body error: %v ", err)
 		level.Error(newLogger).Log("msg",errorMsg)
 		w.Write([]byte(errorMsg))
 		return
@@ -195,7 +239,7 @@ func LogMonitorHttpHandle(w http.ResponseWriter, r *http.Request)  {
 	var param []logHttpDto
 	err = json.Unmarshal(buff, &param)
 	if err != nil {
-		errorMsg = fmt.Sprintf("Handel log monitor http request fail,json unmarshal error: %v \n", err)
+		errorMsg = fmt.Sprintf("Handel log monitor http request fail,json unmarshal error: %v ", err)
 		level.Error(newLogger).Log("msg",errorMsg)
 		w.Write([]byte(errorMsg))
 		return
@@ -237,4 +281,38 @@ func LogMonitorHttpHandle(w http.ResponseWriter, r *http.Request)  {
 		}
 	}
 	w.Write([]byte("success"))
+}
+
+func LogMonitorRowsHttpHandle(w http.ResponseWriter, r *http.Request)  {
+	var result logRowsHttpResult
+	defer func() {
+		w.Header().Set("Content-Type", "application/json")
+		d,_ := json.Marshal(result)
+		w.Write(d)
+	}()
+	buff,err := ioutil.ReadAll(r.Body)
+	var errorMsg string
+	if err != nil {
+		errorMsg = fmt.Sprintf("Handel log monitor rows http request fail,read body error: %v ", err)
+		level.Error(newLogger).Log("msg",errorMsg)
+		result.Status = "error"
+		result.Message = errorMsg
+		return
+	}
+	var param logRowsHttpDto
+	err = json.Unmarshal(buff, &param)
+	if err != nil {
+		errorMsg = fmt.Sprintf("Handel log monitor rows http request fail,json unmarshal error: %v ", err)
+		level.Error(newLogger).Log("msg",errorMsg)
+		result.Status = "error"
+		result.Message = errorMsg
+		return
+	}
+	for _,v := range logCollectorJobs {
+		if v.Path == param.Path {
+			result.Data = v.getRows(param.Keyword)
+		}
+	}
+	result.Status = "ok"
+	result.Message = "success"
 }

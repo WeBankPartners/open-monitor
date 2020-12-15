@@ -196,6 +196,7 @@ func main() {
 	collector.ProcessCacheObj.Init()
 	// Add log monitor handle http config
 	http.HandleFunc("/log/config", collector.LogMonitorHttpHandle)
+	http.HandleFunc("/log/rows/query", collector.LogMonitorRowsHttpHandle)
 	// Add process monitor handle http config
 	http.HandleFunc("/process/config", collector.ProcessMonitorHttpHandle)
 	// Add business monitor handle http config
