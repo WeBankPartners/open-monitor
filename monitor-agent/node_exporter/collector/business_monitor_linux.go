@@ -94,7 +94,7 @@ func (c *businessMonitorObj) start()  {
 	var err error
 	c.TailSession,err = tail.TailFile(c.Path, tail.Config{Follow:true, ReOpen:true})
 	if err != nil {
-		level.Error(newLogger).Log(fmt.Sprintf("start business collector fail, path: %s, error: %v", c.Path, err))
+		level.Error(newLogger).Log("msg",fmt.Sprintf("start business collector fail, path: %s, error: %v", c.Path, err))
 		return
 	}
 	var tmpList []string
@@ -135,7 +135,7 @@ func (c *businessMonitorObj) start()  {
 						}
 					}
 				}else{
-					level.Info(newLogger).Log(fmt.Sprintf("json unmarshal %s error:%v ", textSplit, err))
+					level.Info(newLogger).Log("msg",fmt.Sprintf("json unmarshal %s error:%v ", textSplit, err))
 				}
 			}
 		}
@@ -173,7 +173,7 @@ func BusinessMonitorHttpHandle(w http.ResponseWriter, r *http.Request)  {
 	var errorMsg string
 	if err != nil {
 		errorMsg = fmt.Sprintf("Handel business monitor http request fail,read body error: %v \n", err)
-		level.Error(newLogger).Log(errorMsg)
+		level.Error(newLogger).Log("msg",errorMsg)
 		w.Write([]byte(errorMsg))
 		return
 	}
@@ -181,7 +181,7 @@ func BusinessMonitorHttpHandle(w http.ResponseWriter, r *http.Request)  {
 	err = json.Unmarshal(buff, &param)
 	if err != nil {
 		errorMsg = fmt.Sprintf("Handel business monitor http request fail,json unmarshal error: %v \n", err)
-		level.Error(newLogger).Log(errorMsg)
+		level.Error(newLogger).Log("msg",errorMsg)
 		w.Write([]byte(errorMsg))
 		return
 	}
@@ -220,7 +220,7 @@ func BusinessMonitorHttpHandle(w http.ResponseWriter, r *http.Request)  {
 	}
 	businessMonitorJobs = newBusinessMonitorJobs
 	businessMonitorLock.Unlock()
-	level.Info(newLogger).Log("success")
+	level.Info(newLogger).Log("msg","success")
 	w.Write([]byte("success"))
 }
 
@@ -253,24 +253,24 @@ func (c *businessCollectorStore) Save()  {
 	enc := gob.NewEncoder(&tmpBuffer)
 	err := enc.Encode(c.Data)
 	if err != nil {
-		level.Error(newLogger).Log(fmt.Sprintf("gob encode business monitor error : %v ", err))
+		level.Error(newLogger).Log("msg",fmt.Sprintf("gob encode business monitor error : %v ", err))
 	}else{
 		ioutil.WriteFile(businessMonitorFilePath, tmpBuffer.Bytes(), 0644)
-		level.Info(newLogger).Log(fmt.Sprintf("write %s succeed ", businessMonitorFilePath))
+		level.Info(newLogger).Log("msg",fmt.Sprintf("write %s succeed ", businessMonitorFilePath))
 	}
 }
 
 func (c *businessCollectorStore) Load()  {
 	file,err := os.Open(businessMonitorFilePath)
 	if err != nil {
-		level.Info(newLogger).Log(fmt.Sprintf("read %s file error %v ", businessMonitorFilePath, err))
+		level.Info(newLogger).Log("msg",fmt.Sprintf("read %s file error %v ", businessMonitorFilePath, err))
 	}else{
 		dec := gob.NewDecoder(file)
 		err = dec.Decode(&c.Data)
 		if err != nil {
-			level.Error(newLogger).Log(fmt.Sprintf("gob decode %s error %v ", businessMonitorFilePath, err))
+			level.Error(newLogger).Log("msg",fmt.Sprintf("gob decode %s error %v ", businessMonitorFilePath, err))
 		}else{
-			level.Info(newLogger).Log(fmt.Sprintf("load %s file succeed ", businessMonitorFilePath))
+			level.Info(newLogger).Log("msg",fmt.Sprintf("load %s file succeed ", businessMonitorFilePath))
 		}
 	}
 	tmpMap := make(map[string]int)
