@@ -27,6 +27,16 @@
               style="width: 320px">
             </DatePicker>
           </div>
+          <div class="search-zone">
+            <span class="params-title">{{$t('field.aggType')}}：</span>
+            <RadioGroup v-model="viewCondition.agg" @on-change="initPanal" size="small" type="button">
+              <Radio label="min">Min</Radio>
+              <Radio label="max">Max</Radio>
+              <Radio label="avg">Average </Radio>
+              <Radio label="p95">P95</Radio>
+              <Radio label="none">Original</Radio>
+            </RadioGroup>
+          </div>
         </div>
 
         <div class="header-tools"> 
@@ -60,6 +70,7 @@ export default {
         timeTnterval: -1800,
         dateRange: ['', ''],
         autoRefresh: 10,
+        agg: 'none'
       },
       disableTime: false,
       dataPick: dataPick,
@@ -125,6 +136,7 @@ export default {
       this.panalData.query.forEach(item => {
         params.push(
           {
+            agg: this.viewCondition.agg,
             endpoint: item.endpoint,
             prom_ql: item.metric,
             metric: item.metricLabel,
@@ -132,7 +144,7 @@ export default {
               '':Date.parse(this.viewCondition.dateRange[0].replace(/-/g, '/'))/1000 + '',
             end: this.viewCondition.dateRange[1] ===''? 
               '':Date.parse(this.viewCondition.dateRange[1].replace(/-/g, '/'))/1000 + '',
-            time: '' + this.viewCondition.timeTnterval
+            time: '' + this.viewCondition.timeTnterval  
           }
         );
       });
