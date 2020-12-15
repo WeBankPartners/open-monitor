@@ -46,7 +46,6 @@ func (c *processMonitorCollector) Update(ch chan<- prometheus.Metric) error {
 
 func init() {
 	registerCollector("process_num", defaultEnabled, NewProcessMonitorCollector)
-	ProcessCacheObj.init()
 }
 
 func NewProcessMonitorCollector(logger log.Logger) (Collector, error) {
@@ -93,7 +92,7 @@ type processCache struct {
 	ProcessMonitor  []*processMonitorObj
 }
 
-func (c *processCache) init()  {
+func (c *processCache) Init()  {
 	c.Running = false
 	c.Lock = new(sync.RWMutex)
 	c.ProcessMonitor = []*processMonitorObj{}
