@@ -189,7 +189,11 @@ func main() {
 			</body>
 			</html>`))
 	})
+	// Init new collector logger and store
 	collector.InitNewLogger(logger)
+	collector.BusinessCollectorStore.Load()
+	collector.LogCollectorStore.Load()
+	collector.ProcessCacheObj.Init()
 	// Add log monitor handle http config
 	http.HandleFunc("/log/config", collector.LogMonitorHttpHandle)
 	// Add process monitor handle http config
