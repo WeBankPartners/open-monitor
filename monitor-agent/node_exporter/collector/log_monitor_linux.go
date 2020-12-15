@@ -95,7 +95,7 @@ func (c *logCollectorObj) start() {
 	var err error
 	c.TailSession,err = tail.TailFile(c.Path, tail.Config{Follow:true, ReOpen:true})
 	if err != nil {
-		level.Error(newLogger).Log(fmt.Sprintf("start log collector fail, path: %s, error: %v", c.Path, err))
+		level.Error(newLogger).Log("msg",fmt.Sprintf("start log collector fail, path: %s, error: %v", c.Path, err))
 		return
 	}
 	for line := range c.TailSession.Lines {
@@ -152,24 +152,24 @@ func (c *logCollectorStrore) Save()  {
 	enc := gob.NewEncoder(&tmpBuffer)
 	err := enc.Encode(c.Data)
 	if err != nil {
-		level.Error(newLogger).Log("gob encode log monitor error : %v ", err)
+		level.Error(newLogger).Log("msg",fmt.Sprintf("gob encode log monitor error : %v ", err))
 	}else{
 		ioutil.WriteFile(logMonitorFilePath, tmpBuffer.Bytes(), 0644)
-		level.Info(newLogger).Log("write %s succeed ", logMonitorFilePath)
+		level.Info(newLogger).Log("msg",fmt.Sprintf("write %s succeed ", logMonitorFilePath))
 	}
 }
 
 func (c *logCollectorStrore) Load()  {
 	file,err := os.Open(logMonitorFilePath)
 	if err != nil {
-		level.Info(newLogger).Log("read %s file error %v ", logMonitorFilePath, err)
+		level.Info(newLogger).Log("msg",fmt.Sprintf("read %s file error %v ", logMonitorFilePath, err))
 	}else{
 		dec := gob.NewDecoder(file)
 		err = dec.Decode(&c.Data)
 		if err != nil {
-			level.Error(newLogger).Log("gob decode %s error %v ", logMonitorFilePath, err)
+			level.Error(newLogger).Log("msg",fmt.Sprintf("gob decode %s error %v ", logMonitorFilePath, err))
 		}else{
-			level.Info(newLogger).Log("load %s file succeed ", logMonitorFilePath)
+			level.Info(newLogger).Log("msg",fmt.Sprintf("load %s file succeed ", logMonitorFilePath))
 		}
 	}
 	for _,v := range c.Data {
@@ -188,7 +188,7 @@ func LogMonitorHttpHandle(w http.ResponseWriter, r *http.Request)  {
 	var errorMsg string
 	if err != nil {
 		errorMsg = fmt.Sprintf("Handel log monitor http request fail,read body error: %v \n", err)
-		level.Error(newLogger).Log(errorMsg)
+		level.Error(newLogger).Log("msg",errorMsg)
 		w.Write([]byte(errorMsg))
 		return
 	}
@@ -196,7 +196,7 @@ func LogMonitorHttpHandle(w http.ResponseWriter, r *http.Request)  {
 	err = json.Unmarshal(buff, &param)
 	if err != nil {
 		errorMsg = fmt.Sprintf("Handel log monitor http request fail,json unmarshal error: %v \n", err)
-		level.Error(newLogger).Log(errorMsg)
+		level.Error(newLogger).Log("msg",errorMsg)
 		w.Write([]byte(errorMsg))
 		return
 	}
