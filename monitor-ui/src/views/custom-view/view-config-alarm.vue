@@ -30,7 +30,7 @@
               <label class="alarm-item-label">{{$t('tableKey.start')}}:</label><span>{{alarmItem.start_string}}</span>
             </li>
             <li>
-              <label class="col-md-2">{{$t('details')}}:</label>
+              <label class="alarm-item-label">{{$t('details')}}:</label>
               <span>
                 <Tag color="default">{{$t('tableKey.start_value')}}:{{alarmItem.start_value}}</Tag>
                 <Tag color="default" v-if="alarmItem.s_cond">{{$t('tableKey.threshold')}}:{{alarmItem.s_cond}}</Tag>
@@ -40,7 +40,7 @@
               </span>
             </li>
             <li>
-              <label class="col-md-2" style="vertical-align: top;">{{$t('alarmContent')}}:</label>
+              <label class="alarm-item-label" style="vertical-align: top;">{{$t('alarmContent')}}:</label>
               <div class="col-md-9" style="display: inline-block;padding:0" v-html="alarmItem.content"></div>
             </li>
           </ul>

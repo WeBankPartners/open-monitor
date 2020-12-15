@@ -41,6 +41,16 @@
                 style="width: 320px">
               </DatePicker>
             </div>
+            <div class="search-zone">
+              <span class="params-title">{{$t('field.aggType')}}：</span>
+              <RadioGroup v-model="viewCondition.agg" @on-change="initPanals" size="small" type="button">
+                <Radio label="min">Min</Radio>
+                <Radio label="max">Max</Radio>
+                <Radio label="avg">Average </Radio>
+                <Radio label="p95">P95</Radio>
+                <Radio label="none">Original</Radio>
+              </RadioGroup>
+            </div>
           </div>
 
           <div class="header-tools"> 
@@ -171,6 +181,7 @@ export default {
         timeTnterval: -1800,
         dateRange: ['', ''],
         autoRefresh: 10,
+        agg: 'none' // 聚合类型
       },
       disableTime: false,
       dataPick: dataPick,
@@ -243,6 +254,7 @@ export default {
             endpoint: _.endpoint,
             metric: _.metricLabel,
             prom_ql: _.metric,
+            agg: this.viewCondition.agg
           })
         })
         let height = (item.viewConfig.h+1) * 30-8
