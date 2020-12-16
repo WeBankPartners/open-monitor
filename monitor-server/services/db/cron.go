@@ -201,6 +201,10 @@ func CheckLogKeyword()  {
 			lmt := getLogMonitorAlarmTags(vv.Name)
 			if lmt.Endpoint == tmpEndpointObj.Guid && lmt.FilePath == v.Path && lmt.Keyword == v.Keyword {
 				lastValue := vv.Data[len(vv.Data)-1][1]
+				var oldValue float64
+				if len(vv.Data) > 2 {
+					oldValue = vv.Data[len(vv.Data)-2][1]
+				}
 				if lastValue > 0 {
 					needAdd := true
 					for _,tmpAlarm := range alarmTable {
@@ -208,18 +212,11 @@ func CheckLogKeyword()  {
 							if lastValue <= tmpAlarm.StartValue {
 								needAdd = false
 							}
-							//if tmpAlarm.Status == "firing" {
-							//	needAdd = false
-							//}else{
-							//	if tmpAlarm.StartValue >= lastValue {
-							//		needAdd = false
-							//	}
-							//}
 							break
 						}
 					}
 					if needAdd {
-						tmpContent := getLogMonitorRows(tmpEndpointObj.Ip, v.Path, v.Keyword)
+						tmpContent := getLogMonitorRows(tmpEndpointObj.Ip, v.Path, v.Keyword,lastValue,oldValue)
 						addAlarmRows = append(addAlarmRows, &m.AlarmTable{StrategyId:0, Endpoint:lmt.Endpoint,Status:"firing",SMetric:"log_monitor",SExpr:"node_log_monitor_count_total",SCond:">0",SLast:"10s",SPriority:v.Priority,Content:tmpContent,Tags:lmt.Tags,StartValue:lastValue})
 					}
 				}
@@ -269,6 +266,8 @@ func getLogMonitorAlarmTags(name string) m.LogMonitorTags {
 type logRowsHttpDto struct {
 	Path  string  `json:"path"`
 	Keyword  string  `json:"keyword"`
+	Value  float64  `json:"value"`
+	LastValue float64  `json:"last_value"`
 }
 
 type logKeywordFetchObj struct {
@@ -282,12 +281,12 @@ type logRowsHttpResult struct {
 	Data  []logKeywordFetchObj  `json:"data"`
 }
 
-func getLogMonitorRows(ip,path,keyword string) string {
+func getLogMonitorRows(ip,path,keyword string,lastValue,oldValue float64) string {
 	var result string
 	if ip == "" || path == "" || keyword == "" {
 		return result
 	}
-	param := logRowsHttpDto{Path: path, Keyword: keyword}
+	param := logRowsHttpDto{Path: path, Keyword: keyword, Value: lastValue, LastValue: oldValue}
 	postData,_ := json.Marshal(param)
 	http.DefaultClient.CloseIdleConnections()
 	req,err := http.NewRequest(http.MethodPost, fmt.Sprintf("http://%s:9100/log/rows/query", ip), strings.NewReader(string(postData)))
