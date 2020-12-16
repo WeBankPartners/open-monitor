@@ -190,6 +190,8 @@ func InitHttpServer(exportAgent bool) {
 			alarmApi.POST("/db/monitor/delete", alarm.DeleteDbMonitor)
 			alarmApi.POST("/db/monitor/sys/update", alarm.UpdateDbMonitorSysName)
 			alarmApi.POST("/problem/history", alarm.QueryHistoryAlarm)
+			alarmApi.GET("/window/get", alarm.GetAlertWindowList)
+			alarmApi.POST("/window/update", alarm.UpdateAlertWindow)
 		}
 		userApi := authApi.Group("/user")
 		{
