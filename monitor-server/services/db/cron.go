@@ -215,6 +215,9 @@ func CheckLogKeyword()  {
 					}
 					if needAdd {
 						tmpContent := getLogMonitorRows(tmpEndpointObj.Ip, v.Path, v.Keyword,lastValue,oldValue)
+						if len(tmpContent) > 500 {
+							tmpContent = tmpContent[:500]
+						}
 						addAlarmRows = append(addAlarmRows, &m.AlarmTable{StrategyId:0, Endpoint:lmt.Endpoint,Status:"firing",SMetric:"log_monitor",SExpr:"node_log_monitor_count_total",SCond:">0",SLast:"10s",SPriority:v.Priority,Content:tmpContent,Tags:lmt.Tags,StartValue:lastValue})
 					}
 				}
@@ -269,7 +272,6 @@ type logRowsHttpDto struct {
 }
 
 type logKeywordFetchObj struct {
-	Timestamp  int64  `json:"timestamp"`
 	Content    string `json:"content"`
 }
 

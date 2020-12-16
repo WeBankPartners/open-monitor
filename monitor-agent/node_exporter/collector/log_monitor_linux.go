@@ -56,7 +56,6 @@ func (c *logMonitorCollector) Update(ch chan<- prometheus.Metric) error {
 
 type logKeywordFetchObj struct {
 	Index  float64  `json:"index"`
-	Timestamp  int64  `json:"timestamp"`
 	Content    string `json:"content"`
 }
 
@@ -133,7 +132,7 @@ func (c *logCollectorObj) start() {
 		for _,v := range c.Rule {
 			if strings.Contains(line.Text, v.Keyword) {
 				v.Count++
-				v.FetchRow = append(v.FetchRow, logKeywordFetchObj{Timestamp: time.Now().Unix(),Content: line.Text,Index: v.Count})
+				v.FetchRow = append(v.FetchRow, logKeywordFetchObj{Content: line.Text,Index: v.Count})
 			}
 		}
 		c.Lock.Unlock()
@@ -163,7 +162,7 @@ func (c *logCollectorObj) getRows(keyword string,value,lastValue float64) []logK
 		if v.Keyword == keyword {
 			for _,vv := range v.FetchRow {
 				if vv.Index > lastValue && vv.Index <= value {
-					data = append(data, logKeywordFetchObj{Timestamp: vv.Timestamp, Content: vv.Content})
+					data = append(data, logKeywordFetchObj{Content: vv.Content})
 				}
 				//if (nowTimestamp-vv.Timestamp) <= 10 {
 				//	data = append(data, logKeywordFetchObj{Timestamp: vv.Timestamp, Content: vv.Content})

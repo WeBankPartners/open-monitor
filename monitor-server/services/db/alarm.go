@@ -619,6 +619,9 @@ func GetAlarms(query m.AlarmTable, limit int, extLogMonitor, extOpenAlarm bool) 
 		if v.Path != "" {
 			v.IsLogMonitor = true
 		}
+		if strings.Contains(v.Content, "\n") {
+			v.Content = strings.ReplaceAll(v.Content, "\n", "<br/>")
+		}
 	}
 	if extOpenAlarm && query.SMetric == "" {
 		for _, v := range GetOpenAlarm() {
