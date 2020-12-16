@@ -125,8 +125,9 @@ func (c *logCollectorObj) start() {
 		if firstFlag {
 			if time.Now().Sub(timeNow).Seconds() >= 5 {
 				firstFlag = false
+			}else {
+				continue
 			}
-			continue
 		}
 		c.Lock.Lock()
 		for _,v := range c.Rule {
