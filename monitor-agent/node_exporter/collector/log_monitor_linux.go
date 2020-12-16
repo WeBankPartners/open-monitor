@@ -55,6 +55,7 @@ func (c *logMonitorCollector) Update(ch chan<- prometheus.Metric) error {
 }
 
 type logKeywordFetchObj struct {
+	Index  float64  `json:"index"`
 	Timestamp  int64  `json:"timestamp"`
 	Content    string `json:"content"`
 }
@@ -86,6 +87,8 @@ type logHttpDto struct {
 type logRowsHttpDto struct {
 	Path  string  `json:"path"`
 	Keyword  string  `json:"keyword"`
+	Value  float64  `json:"value"`
+	LastValue float64  `json:"last_value"`
 }
 
 type logRowsHttpResult struct {
@@ -129,7 +132,7 @@ func (c *logCollectorObj) start() {
 		for _,v := range c.Rule {
 			if strings.Contains(line.Text, v.Keyword) {
 				v.Count++
-				v.FetchRow = append(v.FetchRow, logKeywordFetchObj{Timestamp: time.Now().Unix(),Content: line.Text})
+				v.FetchRow = append(v.FetchRow, logKeywordFetchObj{Timestamp: time.Now().Unix(),Content: line.Text,Index: v.Count})
 			}
 		}
 		c.Lock.Unlock()
@@ -151,16 +154,19 @@ func (c *logCollectorObj) get() []logMetricObj {
 	return data
 }
 
-func (c *logCollectorObj) getRows(keyword string) []logKeywordFetchObj {
+func (c *logCollectorObj) getRows(keyword string,value,lastValue float64) []logKeywordFetchObj {
 	var data []logKeywordFetchObj
-	nowTimestamp := time.Now().Unix()
+	//nowTimestamp := time.Now().Unix()
 	c.Lock.RLock()
 	for _,v := range c.Rule {
 		if v.Keyword == keyword {
 			for _,vv := range v.FetchRow {
-				if (nowTimestamp-vv.Timestamp) <= 10 {
+				if vv.Index > lastValue && vv.Index <= value {
 					data = append(data, logKeywordFetchObj{Timestamp: vv.Timestamp, Content: vv.Content})
 				}
+				//if (nowTimestamp-vv.Timestamp) <= 10 {
+				//	data = append(data, logKeywordFetchObj{Timestamp: vv.Timestamp, Content: vv.Content})
+				//}
 			}
 		}
 	}
@@ -310,7 +316,7 @@ func LogMonitorRowsHttpHandle(w http.ResponseWriter, r *http.Request)  {
 	}
 	for _,v := range logCollectorJobs {
 		if v.Path == param.Path {
-			result.Data = v.getRows(param.Keyword)
+			result.Data = v.getRows(param.Keyword, param.Value, param.LastValue)
 		}
 	}
 	result.Status = "ok"
