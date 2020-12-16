@@ -364,3 +364,23 @@ type QueryHistoryAlarmParam struct {
 	Metric  string  `json:"metric"`
 	Priority  string  `json:"priority"`
 }
+
+type AlertWindowTable struct {
+	Id  int  `json:"id"`
+	Endpoint  string  `json:"endpoint"`
+	Start  string  `json:"start"`
+	End  string  `json:"end"`
+	Weekday  string  `json:"weekday"`
+	UpdateUser  string  `json:"update_user"`
+}
+
+type AlertWindowObj struct {
+	Start  string  `json:"start"`
+	End  string  `json:"end"`
+	Weekday string  `json:"weekday"`
+}
+
+type AlertWindowParam struct {
+	Endpoint string  `json:"endpoint" binding:"required"`
+	Data  []*AlertWindowObj  `json:"data"`
+}
