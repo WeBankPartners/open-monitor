@@ -202,13 +202,11 @@ func CheckLogKeyword()  {
 			if lmt.Endpoint == tmpEndpointObj.Guid && lmt.FilePath == v.Path && lmt.Keyword == v.Keyword {
 				lastValue := vv.Data[len(vv.Data)-1][1]
 				var oldValue float64
-				if len(vv.Data) > 2 {
-					oldValue = vv.Data[len(vv.Data)-2][1]
-				}
 				if lastValue > 0 {
 					needAdd := true
 					for _,tmpAlarm := range alarmTable {
 						if tmpAlarm.Tags == lmt.Tags {
+							oldValue = tmpAlarm.StartValue
 							if lastValue <= tmpAlarm.StartValue {
 								needAdd = false
 							}
