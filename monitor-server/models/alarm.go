@@ -377,6 +377,7 @@ type AlertWindowTable struct {
 type AlertWindowObj struct {
 	Start  string  `json:"start"`
 	End  string  `json:"end"`
+	TimeList  []string  `json:"time_list"`
 	Weekday string  `json:"weekday"`
 }
 

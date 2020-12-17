@@ -17,7 +17,7 @@ func GetAlertWindowList(endpoint string) (result []*m.AlertWindowObj,err error) 
 		return result,err
 	}
 	for _,v := range tableData {
-		result = append(result, &m.AlertWindowObj{Start: v.Start,End: v.End,Weekday: v.Weekday})
+		result = append(result, &m.AlertWindowObj{Start: v.Start,End: v.End,Weekday: v.Weekday,TimeList: []string{v.Start,v.End}})
 	}
 	return result,err
 }
@@ -29,6 +29,10 @@ func UpdateAlertWindowList(endpoint,updateUser string,data []*m.AlertWindowObj) 
 		var tmpParams []interface{}
 		sql := "insert into alert_window(endpoint,start,end,weekday,update_user) values "
 		for i, v := range data {
+			if len(v.TimeList) == 2 {
+				v.Start = v.TimeList[0]
+				v.End = v.TimeList[1]
+			}
 			sql += "(?,?,?,?,?)"
 			tmpParams = append(tmpParams, endpoint, v.Start, v.End, v.Weekday, updateUser)
 			if i < len(data)-1 {
