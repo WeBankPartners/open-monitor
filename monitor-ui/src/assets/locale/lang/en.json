@@ -111,7 +111,8 @@
       "dataView": "Enlarged View",
       "editTitle": "Edit Title"
     },
-    "dataMonitoring": "Data Monitoring"
+    "dataMonitoring": "Data Monitoring",
+    "maintenanceWindow": "Maintenance Window"
   },
   "table": {
     "more": "More",

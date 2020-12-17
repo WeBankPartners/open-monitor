@@ -63,6 +63,10 @@
             "update": "/monitor/api/v1/alarm/db/monitor/update",
             "panalName": "/monitor/api/v1/alarm/org/search?search=.",
             "updatePanalName": "/monitor/api/v1/alarm/db/monitor/sys/update"
+        },
+        "maintenanceWindow": {
+            "get": "monitor/api/v1/alarm/window/get",
+            "update": "monitor/api/v1/alarm/window/update"
         }
     },
     "thresholdManagement": {
