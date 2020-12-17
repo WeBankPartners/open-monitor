@@ -201,6 +201,38 @@
   <Modal v-model="isShowDataMonitor" :title="$t('button.dataMonitoring')" :styles="{top: '100px',width: '1000px'}" footer-hide>
     <DataMonitor :endpointId="dbEndpointId" ref="dataMonitor"></DataMonitor>
   </Modal>
+
+  <ModalComponent :modelConfig="maintenanceWindowModel">
+    <template #maintenanceWindow>
+      <div style="margin: 4px 12px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
+        <template v-for="(item, index) in maintenanceWindowModel.result">
+          <p :key="index" style="margin:6px 0">
+            <Button
+              @click="deleteMaintenanceWindow(index)"
+              size="small"
+              style="background-color: #ff9900;border-color: #ff9900;"
+              type="error"
+              icon="md-close"
+            ></Button>
+            <TimePicker format="HH:mm" type="timerange" v-model="item.time_list" :clearable="false" style="width: 200px"></TimePicker>
+            <Select v-model="item.weekday" multiple filterable style="width:200px">
+              <Option v-for="cycle in maintenanceWindowModel.cycleOption" :value="cycle" :key="cycle">{{
+                cycle
+              }}</Option>
+            </Select>
+          </p>
+        </template>
+        <Button
+          @click="addEmptyMaintenanceWindow"
+          type="success"
+          size="small"
+          style="background-color: #0080FF;border-color: #0080FF;"
+          long
+          >{{ $t('button.add') }}</Button
+        >
+      </div>
+    </template>
+  </ModalComponent>
 </div>
 </template>
 
@@ -317,6 +349,10 @@ const btn = [{
     btn_name: 'button.dataMonitoring',
     btn_func: 'dataMonitor'
   },
+  {
+    btn_name: 'button.maintenanceWindow',
+    btn_func: 'maintenanceWindow'
+  }
 ]
 export default {
   name: '',
@@ -515,6 +551,22 @@ export default {
         pathMsg: [],
         businessName: ''
       },
+
+      maintenanceWindowModel: {
+        modalId: 'maintenance_window_model',
+        modalTitle: 'button.maintenanceWindow',
+        isAdd: true,
+        saveFunc: 'maintenanceWindowSave',
+        config: [{
+          name: 'maintenanceWindow',
+          type: 'slot'
+        }],
+        addRow: {
+          // businessSet: [],
+        },
+        result: [],
+        cycleOption: ['All', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+      },
       id: null,
       showGroupMsg: false,
       groupMsg: {}
@@ -556,6 +608,41 @@ export default {
     }
   },
   methods: {
+    maintenanceWindowSave () {
+      this.maintenanceWindowModel.result.forEach(item => {
+        item.weekday = item.weekday.join(',')
+      })
+      const params = {
+        endpoint: this.id,
+        data: this.maintenanceWindowModel.result
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.endpointManagement.maintenanceWindow.update, params, () => {
+        this.$root.JQ('#maintenance_window_model').modal('hide')
+      })
+    },
+    maintenanceWindow (rowData) {
+      this.id = rowData.guid
+      const params = {
+        endpoint: rowData.guid
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.endpointManagement.maintenanceWindow.get, params, (responseData) => {
+        console.log(responseData)
+        this.maintenanceWindowModel.result = []
+        responseData.forEach(item => {
+          this.maintenanceWindowModel.result.push({
+            time_list: item.time_list,
+            weekday: item.weekday.split(',')
+          })
+        })
+        this.$root.JQ('#maintenance_window_model').modal('show')
+      })
+    },
+    deleteMaintenanceWindow (index) {
+      this.maintenanceWindowModel.result.splice(index, 1)
+    },
+    addEmptyMaintenanceWindow () {
+      this.maintenanceWindowModel.result.push({time_list: ['00:00', '00:00'], weekday: ['All']})
+    },
     dataMonitor(row) {
       this.dbEndpointId = row.id
       const params = {
@@ -594,7 +681,7 @@ export default {
       this.$root.$tableUtil.initTable(this, 'GET', url, params)
     },
     filterMoreBtn(rowData) {
-      let moreBtnGroup = ['thresholdConfig', 'historyAlarm', 'deleteConfirmModal']
+      let moreBtnGroup = ['thresholdConfig', 'historyAlarm', 'maintenanceWindow', 'deleteConfirmModal']
       if (rowData.type === 'host') {
         moreBtnGroup.push('processManagement', 'businessManagement', 'logManagement', 'portManagement')
       }
