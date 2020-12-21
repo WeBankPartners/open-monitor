@@ -1,5 +1,5 @@
 <template>
-  <div id="app" class="c-dark">
+  <div class="c-dark">
     <router-view />
   </div>
 </template>
