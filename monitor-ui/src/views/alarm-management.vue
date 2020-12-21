@@ -50,7 +50,7 @@
           </template>
           <button @click="alarmHistory" style="float: right;margin-right: 25px;" class="btn btn-sm btn-cancel-f">{{$t('alarmHistory')}}</button>
         </section>
-        <div class="alarm-list">
+        <div v-if="!compactDisplay" class="alarm-list">
           <template v-for="(alarmItem, alarmIndex) in resultData">
             <section :key="alarmIndex" class="alarm-item c-dark-exclude-color" :class="'alarm-item-border-'+ alarmItem.s_priority">
               <i class="fa fa-times fa-operate" @click="deleteConfirmModal(alarmItem)" aria-hidden="true"></i>
@@ -93,6 +93,45 @@
             </section>
           </template>
         </div>
+        <div v-else class="alarm-list">
+          <template v-for="(alarmItem, alarmIndex) in resultData">
+            <section :key="alarmIndex" class="alarm-item c-dark-exclude-color" :class="'alarm-item-border-'+ alarmItem.s_priority">
+              <i class="fa fa-times fa-operate" @click="deleteConfirmModal(alarmItem)" aria-hidden="true"></i>
+              <i class="fa fa-bar-chart fa-operate" v-if="!alarmItem.is_custom" @click="goToEndpointView(alarmItem)" aria-hidden="true"></i>
+              <ul>
+                <li>
+                  <label class="col-md-2" style="vertical-align: top;">{{$t('field.endpoint')}}&{{$t('tableKey.s_priority')}}&{{$t('tableKey.start')}}:</label>
+                  <Tag type="border" closable @on-close="addParams('endpoint',alarmItem.endpoint)" color="primary">{{alarmItem.endpoint}}</Tag>
+                  <Tag type="border" closable @on-close="addParams('priority',alarmItem.s_priority)" color="primary">{{alarmItem.s_priority}}</Tag>
+                  <span>{{alarmItem.start_string}}</span>
+                </li>
+                <li>
+                  <label class="col-md-2">
+                    <span v-if="!alarmItem.is_custom">{{$t('field.metric')}}&</span>
+                    <span v-if="!alarmItem.is_custom && alarmItem.tags">Tags</span>
+                    :</label>
+                  <Tag type="border" closable @on-close="addParams('metric',alarmItem.s_metric)" color="primary">{{alarmItem.s_metric}}</Tag>
+                  <template v-if="!alarmItem.is_custom && alarmItem.tags">
+                    <Tag type="border" v-for="(t,tIndex) in alarmItem.tags.split('^')" :key="tIndex" color="cyan">{{t}}</Tag>
+                  </template>
+                </li>
+                <li>
+                  <label class="col-md-2" style="vertical-align: top;">{{$t('details')}}&{{$t('alarmContent')}}:</label>
+                  <div class="col-md-9" style="display: inline-block;padding:0">
+                    <span>
+                      <Tag color="default">{{$t('tableKey.start_value')}}:{{alarmItem.start_value}}</Tag>
+                      <Tag color="default" v-if="alarmItem.s_cond">{{$t('tableKey.threshold')}}:{{alarmItem.s_cond}}</Tag>
+                      <Tag color="default" v-if="alarmItem.s_last">{{$t('tableKey.s_last')}}:{{alarmItem.s_last}}</Tag>
+                      <Tag color="default" v-if="alarmItem.path">{{$t('tableKey.path')}}:{{alarmItem.path}}</Tag>
+                      <Tag color="default" v-if="alarmItem.keyword">{{$t('tableKey.keyword')}}:{{alarmItem.keyword}}</Tag>
+                    </span>
+                    <span style="word-break: break-all;" v-html="alarmItem.content"></span>
+                  </div>
+                </li>
+              </ul>
+            </section>
+          </template>
+        </div>
       </div>
     </div>
   </div>
@@ -118,7 +157,9 @@ export default {
 
       low: 0,
       mid: 0,
-      high: 0
+      high: 0,
+
+      compactDisplay: true
     }
   },
   mounted(){
