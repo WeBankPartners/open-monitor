@@ -194,6 +194,7 @@ func main() {
 	collector.BusinessCollectorStore.Load()
 	collector.LogCollectorStore.Load()
 	collector.ProcessCacheObj.Init()
+	collector.StartBusinessAggCron()
 	// Add log monitor handle http config
 	http.HandleFunc("/log/config", collector.LogMonitorHttpHandle)
 	http.HandleFunc("/log/rows/query", collector.LogMonitorRowsHttpHandle)
