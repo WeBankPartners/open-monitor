@@ -165,3 +165,17 @@ CREATE TABLE `alert_window` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 #@v1.10.0.2-end@;
+
+#@v1.10.0.3-begin@;
+DROP TABLE IF EXISTS `business_monitor_cfg`;
+CREATE TABLE `business_monitor_cfg` (
+  `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `business_monitor_id` int NOT NULL,
+  `regular` varchar(255) NOT NULL,
+  `tags` varchar(255) default '',
+  `string_map` text,
+  `metric_config` text,
+  `update_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+#@v1.10.0.3-end@;
