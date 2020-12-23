@@ -11,3 +11,36 @@ type BusinessUpdateDto struct {
 	EndpointId  int  `json:"endpoint_id" binding:"required"`
 	PathList  []*BusinessMonitorTable  `json:"path_list"`
 }
+
+type BusinessMonitorCfgTable struct {
+	Id  int  `json:"id"`
+	BusinessMonitorId  int  `json:"business_monitor_id"`
+	Regular  string  `json:"regular"`
+	Tags  string  `json:"tags"`
+	StringMap  string  `json:"string_map"`
+	MetricConfig  string  `json:"metric_config"`
+}
+
+type BusinessStringMapObj struct {
+	Key  string  `json:"key"`
+	StringValue  string  `json:"string_value"`
+	IntValue  float64  `json:"int_value"`
+}
+
+type BusinessMetricObj struct {
+	Key  string  `json:"key"`
+	Metric  string  `json:"metric"`
+	AggType  string  `json:"agg_type"`
+}
+
+type BusinessMonitorCfgObj struct {
+	Regular  string  `json:"regular"`
+	Tags  string  `json:"tags"`
+	StringMap  []*BusinessStringMapObj  `json:"string_map"`
+	MetricConfig  []*BusinessMetricObj  `json:"metric_config"`
+}
+
+type BusinessAgentDto struct {
+	Path  string  `json:"path"`
+	Config  []*BusinessMonitorCfgObj  `json:"config"`
+}
