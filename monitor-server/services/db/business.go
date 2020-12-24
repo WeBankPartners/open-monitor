@@ -18,6 +18,7 @@ func GetBusinessList(endpointId int,ownerEndpoint string) (err error, pathList [
 
 func GetBusinessListNew(endpointId int,ownerEndpoint string) (err error,result m.BusinessUpdateDto) {
 	result.EndpointId = endpointId
+	result.PathList = []*m.BusinessUpdatePathObj{}
 	var businessMonitorTable []*m.BusinessMonitorTable
 	if endpointId > 0 {
 		err = x.SQL("SELECT * FROM business_monitor WHERE endpoint_id=?", endpointId).Find(&businessMonitorTable)
@@ -106,7 +107,7 @@ func UpdateBusinessNew(param m.BusinessUpdateDto) error {
 			}
 		}
 		if delFlag {
-			actions = append(actions, &Action{Sql: "delete from business_monitor where endpoint_id=?", Param: []interface{}{v.Id}})
+			actions = append(actions, &Action{Sql: "delete from business_monitor where id=?", Param: []interface{}{v.Id}})
 		}
 	}
 	err := Transaction(actions)
