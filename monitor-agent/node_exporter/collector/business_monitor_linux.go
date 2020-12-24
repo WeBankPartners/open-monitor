@@ -383,6 +383,12 @@ func StartBusinessAggCron()  {
 	}
 }
 
+type businessValueObj struct {
+	Sum  float64
+	Avg  float64
+	Count  float64
+}
+
 func calcBusinessAggData()  {
 	var newRuleData []*businessRuleMetricObj
 	businessMonitorLock.RLock()
@@ -392,6 +398,7 @@ func calcBusinessAggData()  {
 			if dataLength == 0 {
 				break
 			}
+			valueCountMap := make(map[string]*businessValueObj)
 			var sum,avg,count []float64
 			for i:=0;i<len(rule.MetricConfig);i++ {
 				sum = append(sum, 0)
@@ -399,14 +406,16 @@ func calcBusinessAggData()  {
 			}
 			for i:=0;i<dataLength;i++ {
 				tmpMapData := <- rule.DataChannel
-				if i == 0 {
-					for tagIndex,tagKey := range rule.TagsKey {
-						if tmpTagValue,b:=tmpMapData[tagKey];b {
-							rule.TagsValue[tagIndex] = printReflectString(tmpTagValue)
-						}
+				tmpTagString := ""
+				for _,tagKey := range rule.TagsKey {
+					if tmpTagValue,b:=tmpMapData[tagKey];b {
+						tmpTagString += fmt.Sprintf("%s=%s,", tagKey, printReflectString(tmpTagValue))
 					}
 				}
-				for metricIndex,metricConfig := range rule.MetricConfig {
+				if tmpTagString != "" {
+					tmpTagString = tmpTagString[:len(tmpTagString)-1]
+				}
+				for _,metricConfig := range rule.MetricConfig {
 					if metricValue,b:=tmpMapData[metricConfig.Key];b {
 						metricValueString := fmt.Sprintf("%s", metricValue)
 						metricValueFloat,parseError := strconv.ParseFloat(metricValueString,64)
@@ -418,8 +427,8 @@ func calcBusinessAggData()  {
 								}
 							}
 						}
-						sum[metricIndex] += metricValueFloat
-						count[metricIndex]++
+						valueCountMap[fmt.Sprintf("%s^%s^%s", metricConfig.Key, metricConfig.AggType, tmpTagString)].Sum += metricValueFloat
+						valueCountMap[fmt.Sprintf("%s^%s^%s", metricConfig.Key, metricConfig.AggType, tmpTagString)].Count ++
 					}
 				}
 			}
