@@ -12,6 +12,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -401,7 +402,7 @@ func calcBusinessAggData()  {
 				if i == 0 {
 					for tagIndex,tagKey := range rule.TagsKey {
 						if tmpTagValue,b:=tmpMapData[tagKey];b {
-							rule.TagsValue[tagIndex] = fmt.Sprintf("%s", tmpTagValue)
+							rule.TagsValue[tagIndex] = printReflectString(tmpTagValue)
 						}
 					}
 				}
@@ -427,6 +428,9 @@ func calcBusinessAggData()  {
 			}
 			var tagStringContent string
 			for tmpTagIndex,tmpTags := range rule.TagsKey {
+				if tmpTags == "" {
+					continue
+				}
 				tagStringContent += fmt.Sprintf("%s=%s", tmpTags, rule.TagsValue[tmpTagIndex])
 				if tmpTagIndex < len(rule.TagsKey)-1 {
 					tagStringContent += ","
@@ -450,4 +454,17 @@ func calcBusinessAggData()  {
 	businessMonitorMetricLock.Lock()
 	businessMonitorMetrics = newRuleData
 	businessMonitorMetricLock.Unlock()
+}
+
+func printReflectString(input interface{}) string {
+	outputString := ""
+	typeString := reflect.TypeOf(input).String()
+	if strings.Contains(typeString, "string") {
+		outputString = fmt.Sprintf("%s", input)
+	}else if strings.Contains(typeString, "int") {
+		outputString = fmt.Sprintf("%d", input)
+	}else if strings.Contains(typeString, "float") {
+		outputString = fmt.Sprintf("%.0f", input)
+	}
+	return outputString
 }
