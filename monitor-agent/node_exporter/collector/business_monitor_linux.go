@@ -25,7 +25,6 @@ const (
 )
 
 var (
-	regDate = regexp.MustCompile(`^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}`)
 	businessMonitorJobs []*businessMonitorObj
 	businessMonitorLock = new(sync.RWMutex)
 	businessMonitorMetrics []*businessRuleMetricObj
@@ -60,7 +59,6 @@ func BusinessMonitorCollector(logger log.Logger) (Collector, error) {
 func (c *businessMonitorCollector) Update(ch chan<- prometheus.Metric) error {
 	businessMonitorMetricLock.RLock()
 	for _,v := range businessMonitorMetrics {
-		level.Info(newLogger).Log("display update metric", v.Metric, "value", v.Value, "path", v.Path, "tags", v.TagsString)
 		ch <- prometheus.MustNewConstMetric(c.businessMonitor,
 			prometheus.GaugeValue,
 			v.Value, v.Metric, v.TagsString, v.Path, v.Agg)
@@ -139,20 +137,16 @@ func (c *businessMonitorObj) start()  {
 		level.Error(newLogger).Log("msg",fmt.Sprintf("start business collector fail, path: %s, error: %v", c.Path, err))
 		return
 	}
-	level.Info(newLogger).Log("start business job", c.Path)
 	for line := range c.TailSession.Lines {
 		c.Lock.RLock()
-		level.Info(newLogger).Log("new line", line.Text)
 		for _,rule := range c.Rules {
 			fetchList := rule.RegExp.FindStringSubmatch(line.Text)
-			level.Info(newLogger).Log("rule ", rule.Regular, "fetch length", len(fetchList))
 			if len(fetchList) > 1 {
 				fetchKeyMap := make(map[string]interface{})
 				for i,v := range fetchList {
 					if i == 0 {
 						continue
 					}
-					level.Info(newLogger).Log("fetch content", v)
 					tmpKeyMap := make(map[string]interface{})
 					tmpErr := json.Unmarshal([]byte(v), &tmpKeyMap)
 					if tmpErr != nil {
@@ -163,7 +157,6 @@ func (c *businessMonitorObj) start()  {
 						}
 					}
 				}
-				level.Info(newLogger).Log("fetch map length", len(fetchKeyMap))
 				if len(fetchKeyMap) > 0 {
 					rule.DataChannel <- fetchKeyMap
 				}
@@ -315,21 +308,6 @@ func updateBusinessRules(bmo *businessMonitorObj,config  *businessAgentDto)  {
 	bmo.Rules = newRules
 }
 
-func checkIllegalDate(input string) bool {
-	tmpList := strings.Split(input, " ")
-	if len(tmpList) < 2 {
-		return true
-	}
-	t,err := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s %s CST", tmpList[0], tmpList[1]))
-	if err != nil {
-		return true
-	}
-	if time.Now().Sub(t).Seconds() > 10 {
-		return true
-	}
-	return false
-}
-
 type businessCollectorStore struct {
 	Data  []*businessStoreMonitorObj  `json:"data"`
 }
@@ -405,13 +383,11 @@ func StartBusinessAggCron()  {
 }
 
 func calcBusinessAggData()  {
-	level.Info(newLogger).Log("start", "calcBusinessAggData")
 	var newRuleData []*businessRuleMetricObj
 	businessMonitorLock.RLock()
 	for _,v := range businessMonitorJobs {
 		for _,rule := range v.Rules {
 			dataLength := len(rule.DataChannel)
-			level.Info(newLogger).Log("calc rule", rule.Regular, "channel length", dataLength)
 			if dataLength == 0 {
 				break
 			}
@@ -449,9 +425,15 @@ func calcBusinessAggData()  {
 			for i,tmpSum := range sum {
 				avg = append(avg, tmpSum/count[i])
 			}
-			level.Info(newLogger).Log("calc result sum", sum, "avg", avg, "count", count)
+			var tagStringContent string
+			for tmpTagIndex,tmpTags := range rule.TagsKey {
+				tagStringContent += fmt.Sprintf("%s=%s", tmpTags, rule.TagsValue[tmpTagIndex])
+				if tmpTagIndex < len(rule.TagsKey)-1 {
+					tagStringContent += ","
+				}
+			}
 			for metricIndex,metricConfig := range rule.MetricConfig {
-				tmpMetricObj := businessRuleMetricObj{Path: v.Path, Agg: metricConfig.AggType}
+				tmpMetricObj := businessRuleMetricObj{Path: v.Path, Agg: metricConfig.AggType, TagsString: tagStringContent}
 				tmpMetricObj.Metric = metricConfig.Metric
 				if metricConfig.AggType == "sum" {
 					tmpMetricObj.Value = sum[metricIndex]
