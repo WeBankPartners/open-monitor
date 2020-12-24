@@ -1,6 +1,9 @@
 package db
 
 import (
+	"encoding/json"
+	"fmt"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 )
 
@@ -11,6 +14,45 @@ func GetBusinessList(endpointId int,ownerEndpoint string) (err error, pathList [
 		err = x.SQL("SELECT * FROM business_monitor WHERE owner_endpoint=?", ownerEndpoint).Find(&pathList)
 	}
 	return err,pathList
+}
+
+func GetBusinessListNew(endpointId int,ownerEndpoint string) (err error,result m.BusinessUpdateDto) {
+	result.EndpointId = endpointId
+	var businessMonitorTable []*m.BusinessMonitorTable
+	if endpointId > 0 {
+		err = x.SQL("SELECT * FROM business_monitor WHERE endpoint_id=?", endpointId).Find(&businessMonitorTable)
+	}else if ownerEndpoint != "" {
+		err = x.SQL("SELECT * FROM business_monitor WHERE owner_endpoint=?", ownerEndpoint).Find(&businessMonitorTable)
+	}
+	if err != nil {
+		return err,result
+	}
+	var businessMonitorConfigTable []*m.BusinessMonitorCfgTable
+	var tmpErr error
+	for _,v := range businessMonitorTable {
+		tmpBup := m.BusinessUpdatePathObj{Id: v.Id,Path: v.Path,OwnerEndpoint: v.OwnerEndpoint}
+		x.SQL("select * from business_monitor_cfg where business_monitor_id=?", v.Id).Find(&businessMonitorConfigTable)
+		for _,vv := range businessMonitorConfigTable {
+			tmpBmc := m.BusinessMonitorCfgObj{Id: vv.Id,Regular: vv.Regular,Tags: vv.Tags}
+			tmpStringMap := []*m.BusinessStringMapObj{}
+			tmpErr = json.Unmarshal([]byte(vv.StringMap), &tmpStringMap)
+			if tmpErr != nil {
+				log.Logger.Error("json unmarshal string map obj fail", log.String("string_map", vv.StringMap), log.Error(tmpErr))
+			}else{
+				tmpBmc.StringMap = tmpStringMap
+			}
+			tmpMetricConfig := []*m.BusinessMetricObj{}
+			tmpErr = json.Unmarshal([]byte(vv.MetricConfig), &tmpMetricConfig)
+			if tmpErr != nil {
+				log.Logger.Error("json unmarshal metric config obj fail", log.String("metric_config", vv.MetricConfig), log.Error(tmpErr))
+			}else{
+				tmpBmc.MetricConfig = tmpMetricConfig
+			}
+			tmpBup.Rules = append(tmpBup.Rules, &tmpBmc)
+		}
+		result.PathList = append(result.PathList, &tmpBup)
+	}
+	return nil,result
 }
 
 func UpdateBusiness(param m.BusinessUpdateDto) error {
@@ -25,6 +67,70 @@ func UpdateBusiness(param m.BusinessUpdateDto) error {
 		params = append(params, v.OwnerEndpoint)
 		action.Param = params
 		actions = append(actions, &action)
+	}
+	return Transaction(actions)
+}
+
+func UpdateBusinessNew(param m.BusinessUpdateDto) error {
+	var actions []*Action
+	var businessMonitorTable []*m.BusinessMonitorTable
+	x.SQL("select * from business_monitor where endpoint_id=?", param.EndpointId).Find(&businessMonitorTable)
+	if len(param.PathList) == 0 {
+		if len(businessMonitorTable) == 0 {
+			return nil
+		}
+		actions = append(actions, &Action{Sql: "delete from business_monitor where endpoint_id=?", Param: []interface{}{param.EndpointId}})
+		for _,v := range businessMonitorTable {
+			actions = append(actions, &Action{Sql: "delete from business_monitor_cfg where business_monitor_id=?", Param: []interface{}{v.Id}})
+		}
+		return Transaction(actions)
+	}
+	for _,v := range param.PathList {
+		if v.Id == 0 {
+			actions = append(actions, &Action{Sql: "INSERT INTO business_monitor(endpoint_id,path,owner_endpoint) VALUE (?,?,?)", Param: []interface{}{param.EndpointId,v.Path,v.OwnerEndpoint}})
+			continue
+		}
+		for _,vv := range businessMonitorTable {
+			if v.Id == vv.Id {
+				actions = append(actions, &Action{Sql: "update business_monitor set path=?,owner_endpoint=? where id=?", Param: []interface{}{v.Path,v.OwnerEndpoint,v.Id}})
+				break
+			}
+		}
+	}
+	for _,v := range businessMonitorTable {
+		delFlag := true
+		for _,vv := range param.PathList {
+			if vv.Id == v.Id {
+				delFlag = false
+				break
+			}
+		}
+		if delFlag {
+			actions = append(actions, &Action{Sql: "delete from business_monitor where endpoint_id=?", Param: []interface{}{v.Id}})
+		}
+	}
+	err := Transaction(actions)
+	if err != nil {
+		err = fmt.Errorf("Update business_monitor table fail,%s ", err.Error())
+		return err
+	}
+	actions = []*Action{}
+	businessMonitorTable = []*m.BusinessMonitorTable{}
+	x.SQL("select * from business_monitor where endpoint_id=?", param.EndpointId).Find(&businessMonitorTable)
+	for _,v := range param.PathList {
+		tmpId := v.Id
+		for _,vv := range businessMonitorTable {
+			if v.Path == vv.Path {
+				tmpId = vv.Id
+				break
+			}
+		}
+		actions = append(actions, &Action{Sql: "delete from business_monitor_cfg where business_monitor_id=?", Param: []interface{}{tmpId}})
+		for _,rule := range v.Rules {
+			stringMapBytes,_ := json.Marshal(rule.StringMap)
+			metricConfigBytes,_ := json.Marshal(rule.MetricConfig)
+			actions = append(actions, &Action{Sql: "insert into business_monitor_cfg(business_monitor_id,regular,tags,string_map,metric_config) value (?,?,?,?,?)", Param: []interface{}{tmpId,rule.Regular,rule.Tags,string(stringMapBytes),string(metricConfigBytes)}})
+		}
 	}
 	return Transaction(actions)
 }
