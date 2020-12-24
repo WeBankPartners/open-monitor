@@ -20,7 +20,7 @@ func GetEndpointBusinessConfig(c *gin.Context)  {
 		mid.ReturnParamTypeError(c, "id", "int")
 		return
 	}
-	err,data := db.GetBusinessList(endpointId, "")
+	err,data := db.GetBusinessListNew(endpointId, "")
 	if err != nil {
 		mid.ReturnQueryTableError(c, "business_monitor", err)
 	}else{
@@ -31,13 +31,34 @@ func GetEndpointBusinessConfig(c *gin.Context)  {
 func UpdateEndpointBusinessConfig(c *gin.Context)  {
 	var param m.BusinessUpdateDto
 	if err := c.ShouldBindJSON(&param); err==nil {
+		pathMap := make(map[string]int)
 		for _,v := range param.PathList {
 			if !mid.IsIllegalPath(v.Path) {
 				mid.ReturnValidateError(c, "path illegal")
 				return
 			}
+			if _,b:=pathMap[v.Path];b {
+				mid.ReturnValidateError(c, "path "+v.Path+" is duplicated")
+				return
+			}else{
+				pathMap[v.Path] = 1
+			}
+			if len(v.Rules) == 0 {
+				mid.ReturnValidateError(c, "path "+v.Path+" rules can not empty")
+				return
+			}
+			for _,vv := range v.Rules {
+				if vv.Regular == "" {
+					mid.ReturnValidateError(c, "path "+v.Path+" rules regular can not empty")
+					return
+				}
+				if len(vv.MetricConfig) == 0 {
+					mid.ReturnValidateError(c, "path "+v.Path+" rules metric_config can not empty")
+					return
+				}
+			}
 		}
-		err = db.UpdateBusiness(param)
+		err = db.UpdateBusinessNew(param)
 		if err != nil {
 			mid.ReturnUpdateTableError(c, "business_monitor", err)
 		}else{
@@ -58,7 +79,7 @@ type businessHttpDto struct {
 }
 
 func UpdateNodeExporterBusinessConfig(endpointId int) error {
-	err,data := db.GetBusinessList(endpointId, "")
+	err,data := db.GetBusinessListNew(endpointId, "")
 	if err != nil {
 		log.Logger.Error("Update node_exporter fail", log.Error(err))
 		return err
@@ -69,9 +90,9 @@ func UpdateNodeExporterBusinessConfig(endpointId int) error {
 		log.Logger.Error("Update node_exporter fail, get endpoint msg fail", log.Error(err))
 		return err
 	}
-	postParam := businessHttpDto{Paths:[]string{}}
-	for _,v := range data {
-		postParam.Paths = append(postParam.Paths, v.Path)
+	postParam := []*m.BusinessAgentDto{}
+	for _,v := range data.PathList {
+		postParam = append(postParam, &m.BusinessAgentDto{Path: v.Path, Config: v.Rules})
 	}
 	postData,err := json.Marshal(postParam)
 	if err != nil {

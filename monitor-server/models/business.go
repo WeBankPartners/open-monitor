@@ -7,9 +7,16 @@ type BusinessMonitorTable struct {
 	OwnerEndpoint  string  `json:"owner_endpoint"`
 }
 
+type BusinessUpdatePathObj struct {
+	Id  int  `json:"id"`
+	Path  string  `json:"path"`
+	OwnerEndpoint  string  `json:"owner_endpoint"`
+	Rules  []*BusinessMonitorCfgObj  `json:"rules"`
+}
+
 type BusinessUpdateDto struct {
 	EndpointId  int  `json:"endpoint_id" binding:"required"`
-	PathList  []*BusinessMonitorTable  `json:"path_list"`
+	PathList  []*BusinessUpdatePathObj  `json:"path_list"`
 }
 
 type BusinessMonitorCfgTable struct {
@@ -34,6 +41,7 @@ type BusinessMetricObj struct {
 }
 
 type BusinessMonitorCfgObj struct {
+	Id  int  `json:"id"`
 	Regular  string  `json:"regular"`
 	Tags  string  `json:"tags"`
 	StringMap  []*BusinessStringMapObj  `json:"string_map"`
