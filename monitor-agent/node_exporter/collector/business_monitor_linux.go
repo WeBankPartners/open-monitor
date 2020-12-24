@@ -60,6 +60,7 @@ func BusinessMonitorCollector(logger log.Logger) (Collector, error) {
 func (c *businessMonitorCollector) Update(ch chan<- prometheus.Metric) error {
 	businessMonitorMetricLock.RLock()
 	for _,v := range businessMonitorMetrics {
+		level.Info(newLogger).Log("display update metric", v.Metric, "value", v.Value, "path", v.Path, "tags", v.TagsString)
 		ch <- prometheus.MustNewConstMetric(c.businessMonitor,
 			prometheus.GaugeValue,
 			v.Value, v.Metric, v.TagsString, v.Path, v.Agg)
@@ -83,12 +84,12 @@ type businessStoreMetricObj struct {
 
 type businessRuleObj struct {
 	Regular  string  `json:"regular"`
-	RegExp  *regexp.Regexp  `json:"regular"`
+	RegExp  *regexp.Regexp  `json:"-"`
 	StringMap  []*businessStringMapObj  `json:"string_map"`
 	TagsKey  []string  `json:"tags_key"`
 	TagsValue  []string  `json:"tags_value"`
 	MetricConfig  []*businessMetricConfigObj  `json:"metric_config"`
-	DataChannel chan map[string]interface{}
+	DataChannel chan map[string]interface{}  `json:"-"`
 }
 
 type businessRuleMetricObj struct {
@@ -105,10 +106,6 @@ type businessMonitorObj struct {
 	TailSession  *tail.Tail  `json:"-"`
 	Lock  *sync.RWMutex  `json:"-"`
 	Rules  []*businessRuleObj  `json:"rules"`
-}
-
-type businessHttpDto struct {
-	Paths  []string  `json:"paths"`
 }
 
 type businessStringMapObj struct {
@@ -142,16 +139,20 @@ func (c *businessMonitorObj) start()  {
 		level.Error(newLogger).Log("msg",fmt.Sprintf("start business collector fail, path: %s, error: %v", c.Path, err))
 		return
 	}
+	level.Info(newLogger).Log("start business job", c.Path)
 	for line := range c.TailSession.Lines {
 		c.Lock.RLock()
+		level.Info(newLogger).Log("new line", line.Text)
 		for _,rule := range c.Rules {
 			fetchList := rule.RegExp.FindStringSubmatch(line.Text)
+			level.Info(newLogger).Log("rule ", rule.Regular, "fetch length", len(fetchList))
 			if len(fetchList) > 1 {
 				fetchKeyMap := make(map[string]interface{})
 				for i,v := range fetchList {
 					if i == 0 {
 						continue
 					}
+					level.Info(newLogger).Log("fetch content", v)
 					tmpKeyMap := make(map[string]interface{})
 					tmpErr := json.Unmarshal([]byte(v), &tmpKeyMap)
 					if tmpErr != nil {
@@ -162,6 +163,7 @@ func (c *businessMonitorObj) start()  {
 						}
 					}
 				}
+				level.Info(newLogger).Log("fetch map length", len(fetchKeyMap))
 				if len(fetchKeyMap) > 0 {
 					rule.DataChannel <- fetchKeyMap
 				}
@@ -241,7 +243,7 @@ func BusinessMonitorHttpHandle(w http.ResponseWriter, r *http.Request) {
 				tmpRuleObj.DataChannel = make(chan map[string]interface{}, 10000)
 				newBmo.Rules = append(newBmo.Rules, &tmpRuleObj)
 			}
-			newBmo.start()
+			go newBmo.start()
 			businessMonitorJobs = append(businessMonitorJobs, &newBmo)
 		}
 	}
@@ -308,6 +310,8 @@ func updateBusinessRules(bmo *businessMonitorObj,config  *businessAgentDto)  {
 			newRules = append(newRules, &tmpRuleObj)
 		}
 	}
+	printByte,_ := json.Marshal(newRules)
+	level.Info(newLogger).Log("updateBusinessRules",string(printByte))
 	bmo.Rules = newRules
 }
 
@@ -401,10 +405,13 @@ func StartBusinessAggCron()  {
 }
 
 func calcBusinessAggData()  {
+	level.Info(newLogger).Log("start", "calcBusinessAggData")
 	var newRuleData []*businessRuleMetricObj
+	businessMonitorLock.RLock()
 	for _,v := range businessMonitorJobs {
 		for _,rule := range v.Rules {
 			dataLength := len(rule.DataChannel)
+			level.Info(newLogger).Log("calc rule", rule.Regular, "channel length", dataLength)
 			if dataLength == 0 {
 				break
 			}
@@ -442,6 +449,7 @@ func calcBusinessAggData()  {
 			for i,tmpSum := range sum {
 				avg = append(avg, tmpSum/count[i])
 			}
+			level.Info(newLogger).Log("calc result sum", sum, "avg", avg, "count", count)
 			for metricIndex,metricConfig := range rule.MetricConfig {
 				tmpMetricObj := businessRuleMetricObj{Path: v.Path, Agg: metricConfig.AggType}
 				tmpMetricObj.Metric = metricConfig.Metric
@@ -456,6 +464,7 @@ func calcBusinessAggData()  {
 			}
 		}
 	}
+	businessMonitorLock.RUnlock()
 	businessMonitorMetricLock.Lock()
 	businessMonitorMetrics = newRuleData
 	businessMonitorMetricLock.Unlock()
