@@ -28,9 +28,9 @@ func GetBusinessListNew(endpointId int,ownerEndpoint string) (err error,result m
 	if err != nil {
 		return err,result
 	}
-	var businessMonitorConfigTable []*m.BusinessMonitorCfgTable
 	var tmpErr error
 	for _,v := range businessMonitorTable {
+		var businessMonitorConfigTable []*m.BusinessMonitorCfgTable
 		tmpBup := m.BusinessUpdatePathObj{Id: v.Id,Path: v.Path,OwnerEndpoint: v.OwnerEndpoint,Rules: []*m.BusinessMonitorCfgObj{}}
 		x.SQL("select * from business_monitor_cfg where business_monitor_id=?", v.Id).Find(&businessMonitorConfigTable)
 		for _,vv := range businessMonitorConfigTable {
