@@ -1,13 +1,7 @@
 <template>
   <div class=" ">
-    业务监控
     <section>
       <ul class="search-ul">
-        <li class="search-li">
-          <Select v-model="type" style="width:100px" @on-change="typeChange">
-            <Option v-for="item in typeList" :value="item.value" :key="item.value">{{ $t(item.label) }}</Option>
-          </Select>
-        </li>
         <li class="search-li">
           <Select
             style="width:300px"
@@ -16,86 +10,68 @@
             remote
             clearable
             :remote-method="getEndpointList"
+            @on-change="changeEndpoint"
             @on-clear="clearEndpoint"
             >
             <Option v-for="(option, index) in endpointOptions" :value="option.id" :key="index">
-            <Tag color="cyan" class="tag-width" v-if="option.type == 'host'">host</Tag>
-            <Tag color="blue" class="tag-width" v-if="option.type == 'mysql'">mysql </Tag>
-            <Tag color="geekblue" class="tag-width" v-if="option.type == 'redis'">redis </Tag>
-            <Tag color="purple" class="tag-width" v-if="option.type == 'tomcat'">tomcat</Tag>{{option.option_text}}</Option>
+             <Tag color="cyan" class="tag-width" v-if="option.type == 'host'">host</Tag>{{option.option_text}}</Option>
           </Select>
         </li>
-        <li class="search-li">
-          <button type="button" class="btn btn-sm btn-confirm-f"
-          @click="search">
-            <i class="fa fa-search" ></i>
-            {{$t('button.search')}}
-          </button>
-        </li>
-      </ul> 
+      </ul>
     </section>
-    <section>
-      <template v-for="(tableItem, tableIndex) in totalPageConfig">
-        <div :key="tableIndex + 'f'" class="section-table-tip">
-          <Tag color="blue" :key="tableIndex + 'a'" v-if="tableItem.obj_name">{{tableItem.obj_name}}</Tag>
-          <button @click="add(tableItem.obj_type)" type="button" v-if="tableItem.operation" class="btn btn-sm btn-cancel-f" :key="tableIndex + 'b'">
-            <i class="fa fa-plus"></i>
-            {{$t('button.add')}}
-          </button>
+    <section v-if="!!endpointID" style="margin-top: 16px;">
+      <Tag color="blue">{{endpointGuid}}</Tag>
+      <button @click="add" type="button" class="btn btn-sm btn-cancel-f">
+        <i class="fa fa-plus"></i>
+        {{$t('button.add')}}
+      </button>
+      <PageTable :pageConfig="pageConfig">
+        <div slot='tableExtend'>
+          <extendTable :detailConfig="pageConfig.table.isExtend.detailConfig"></extendTable>
         </div>
-        <PageTable :pageConfig="tableItem" :key="tableIndex + 'c'">
-          <div slot='tableExtend'>
-            <extendTable :detailConfig="pageConfig.table.isExtend.detailConfig"></extendTable>
-          </div>
-        </PageTable>
-      </template>
-      <ModalComponent :modelConfig="pathModelConfig">
-      </ModalComponent>
+      </PageTable>
       <ModalComponent :modelConfig="modelConfig">
         <div slot="thresholdConfig" class="extentClass">  
-          <!-- <div class="marginbottom params-each">
-            <label class="col-md-2 label-name">{{$t('tableKey.condition')}}:</label>
-            <Select v-model="modelConfig.cond" style="width:100px">
-              <Option v-for="item in modelConfig.condList" :value="item.value" :key="item.value">{{ item.label }}</Option>
+          <div class="marginbottom params-each">
+            <label class="col-md-2 label-name">{{$t('field.endpoint')}}:</label>
+            <Select v-model="modelConfig.addRow.owner_endpoint" style="width:338px">
+              <Option v-for="item in modelConfig.slotConfig.endpointOption" :value="item.guid" :key="item.guid">{{ item.groups_name }}</Option>
             </Select>
-            <div class="search-input-content" style="margin-left: 8px">
-              <input 
-                v-validate="'required|isNumber'" 
-                v-model="modelConfig.condValue" 
-                name="condValue"
-                :class="{ 'red-border': veeErrors.has('condValue') }"
-                type="text" 
-                class="form-control model-input search-input c-dark"/>
-              <label class="required-tip">*</label>
-            </div>
-            <div style="margin-left:120px">
-              <label v-show="veeErrors.has('condValue')" class="is-danger">{{ veeErrors.first('condValue')}}</label>
-            </div>
           </div>
+        </div>
+      </ModalComponent>
+      <ModalComponent :modelConfig="ruleModelConfig">
+        <div slot="ruleConfig" class="extentClass">
           <div class="marginbottom params-each">
-            <label class="col-md-2 label-name">{{$t('tableKey.s_last')}}:</label>
-            <div class="search-input-content" style="margin-right: 8px">
-              <input 
-                v-validate="'required|isNumber'" 
-                v-model="modelConfig.lastValue" 
-                name="lastValue"
-                :class="{ 'red-border': veeErrors.has('lastValue') }"
-                type="text" 
-                class="form-control model-input search-input c-dark"/>
-              <label class="required-tip">*</label>
+            <label class="col-md-2 label-name">metric_config:</label>
+           <div style="margin: 4px 12px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
+              <template v-for="(item, index) in ruleModelConfig.addRow.metric_config">
+                <p :key="index">
+                  <Button
+                    @click="deleterule(index)"
+                    size="small"
+                    style="background-color: #ff9900;border-color: #ff9900;"
+                    type="error"
+                    icon="md-close"
+                  ></Button>
+                  <Input v-model="item.key" style="width: 146px" placeholder="e.g:[.*][.*]" />
+                  <Input v-model="item.metric" style="width: 146px" placeholder="e.g:code" />
+                  <Select v-model="item.agg_type" filterable style="width:140px">
+                    <Option v-for="agg in ruleModelConfig.slotConfig.aggOption" :value="agg" :key="agg">{{
+                      agg
+                    }}</Option>
+                  </Select>
+                </p>
+              </template>
+              <Button
+                @click="addEmpty('metric_config')"
+                type="success"
+                size="small"
+                style="background-color: #0080FF;border-color: #0080FF;"
+                long
+                >{{ $t('hr_add_rule') }}</Button
+              >
             </div>
-            <Select v-model="modelConfig.last" style="width:100px">
-              <Option v-for="item in modelConfig.lastList" :value="item.value" :key="item.value">{{ item.label }}</Option>
-            </Select>
-            <div style="margin-left:10px">
-              <label v-show="veeErrors.has('lastValue')" class="is-danger">{{ veeErrors.first('lastValue')}}</label>
-            </div>
-          </div> -->
-          <div class="marginbottom params-each">
-            <label class="col-md-2 label-name">{{$t('tableKey.s_priority')}}:</label>
-            <Select v-model="modelConfig.priority" style="width:100px">
-              <Option v-for="item in modelConfig.priorityList" :value="item.value" :key="item.value">{{ item.label }}</Option>
-            </Select>
           </div>
         </div>
       </ModalComponent>
@@ -126,10 +102,10 @@
 </template>
 
 <script>
-import {thresholdList, lastList, priorityList} from '@/assets/config/common-config.js'
 import extendTable from '@/components/table-page/extend-table'
 let tableEle = [
-  {title: 'tableKey.path', value: 'path', display: true}
+  {title: 'tableKey.path', value: 'path', display: true},
+  {title: 'tableKey.endpoint', value: 'owner_endpoint', display: true}
 ]
 const btn = [
   {btn_name: 'button.add', btn_func: 'singeAddF'},
@@ -152,6 +128,7 @@ export default {
       ],
 
       endpointID: null,
+      endpointGuid: null,
       endpointOptions: [],
 
       totalPageConfig: [],
@@ -171,16 +148,14 @@ export default {
               isExtendF: true,
               title: '',
               config: [
-                // {title: 'tableKey.condition', value: 'cond', display: true},
-                {title: 'tableKey.keyword', value: 'keyword', display: true},
-                // {title: 'tableKey.s_last', value: 'last', display: true},
-                {title: 'tableKey.s_priority', value: 'priority', display: true},
+                {title: 'tableKey.regular', value: 'regular', display: true},
+                {title: 'tableKey.tags', value: 'tags', display: true},
                 {title: 'table.action',btn:[
                   {btn_name: 'button.edit', btn_func: 'editPathItem'},
                   {btn_name: 'button.remove', btn_func: 'delPathconfirmModal'}
                 ]}
               ],
-              data: [],
+              data: [1],
               scales: ['25%', '20%', '15%', '20%', '20%']
             }]
           }
@@ -190,77 +165,63 @@ export default {
         key: '',
         value: 'metric'
       },
-      pathModelConfig: {
-        modalId: 'path_Modal',
-        modalTitle: 'title.logAdd',
-        saveFunc: 'savePath',
+      ruleModelConfig: {
+        modalId: 'rule_Modal',
+        isAdd: true,
+        modalStyle: 'min-width:53px',
+        modalTitle: 'rule',
+        saveFunc: 'saveRule',
         config: [
-          {label: 'tableKey.path', value: 'path', placeholder: 'tips.required', v_validate: 'required:true', disabled: false, type: 'text'}
+          {label: 'regular', value: 'regular', placeholder: 'tips.required', v_validate: 'required:true', disabled: false, type: 'text'},
+          {label: 'tags', value: 'tags', placeholder: 'tips.required', v_validate: 'required:true', disabled: false, type: 'text'},
+          {name:'ruleConfig',type:'slot'}
         ],
         addRow: { // [通用]-保存用户新增、编辑时数据
-          path: null,
+          regular: null,
+          tags: null,
+          metric_config: []
+        },
+        slotConfig: {
+          aggOption: ['sum', 'avg', 'count']
         }
       },
       modelConfig: {
         modalId: 'add_edit_Modal',
-        modalTitle: 'title.logAdd',
+        modalTitle: 'field.businessMonitor',
         isAdd: true,
         config: [
-          {label: 'tableKey.path', value: 'path', placeholder: 'tips.required', v_validate: 'required:true',hide: 'edit', disabled: false, type: 'text'},
-          {label: 'tableKey.keyword', value: 'keyword', placeholder: 'tips.required', v_validate: 'required:true', disabled: false, type: 'text'},
+          {label: 'tableKey.path', value: 'path', placeholder: 'tips.required', v_validate: 'required:true', disabled: false, type: 'text'},
           {name:'thresholdConfig',type:'slot'}
         ],
         addRow: { // [通用]-保存用户新增、编辑时数据
           path: null,
-          keyword: null,
+          owner_endpoint: ''
         },
-        metricName: '',
-        metricList: [],
-        cond: '>',
-        condList: thresholdList,
-        condValue: '',
-        last: 's',
-        lastList: lastList,
-        lastValue: '',
-        priority: 'low',
-        priorityList: priorityList,
         slotConfig: {
-          resourceSelected: [],
-          resourceOption: []
+          endpointOption: []
         }
       },
       id: null,
-      singeAddId: '',
       activeData: null,
       extendData: null,
     }
   },
+  
   mounted () {
-    if (!this.$root.$validate.isEmpty_reset(this.$route.params)) {
-      this.$parent.activeTab = '/monitorConfigIndex/logManagement'
-      this.type = this.$route.params.type
-      this.typeValue = this.$route.params.id
-      this.requestData(this.type, this.typeValue)
-    } else {
-      this.type = 'endpoint'
-      this.typeValue = ''
-    }
     this.getEndpointList('.')
-    this.$root.JQ('#add_edit_Modal').on('hidden.bs.modal', () => {
-      this.modelConfig.thresholdValue = ''
-      this.modelConfig.lastValue = ''
-      this.modelConfig.condValue = ''
-      this.singeAddId = ''
-    })
   },
   methods: {
-    search () {
-      if (this.endpointID === null) {
-        return
+    /*********/
+    addEmpty (type) {
+      if (type === 'metric_config') {
+        this.ruleModelConfig.addRow.metric_config.push({
+          key: '',
+          metric: '',
+          agg_type: 'avg'
+        })
       }
-      this.typeValue = this.endpointID
-      this.requestData(this.type, this.endpointID)
     },
+    /*********/
     typeChange() {
       this.totalPageConfig = []
       this.getEndpointList('.')
@@ -269,26 +230,25 @@ export default {
       this.totalPageConfig = []
       this.getEndpointList('.')
     },
+    changeEndpoint (val) {
+      if (val) {
+        this.endpointGuid = this.endpointOptions.find(item => item.id === val).option_text
+        this.requestData(this.endpointID)
+      } else {
+        this.endpointGuid = ''
+      }
+    },
     getEndpointList (query) {
-      const params = {type: this.type,search: query}
+      const params = {type: 'endpoint', search: query}
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.resourceSearch.strategyApi, params, (responseData) => {
-        this.endpointOptions = this.type === 'endpoint'? responseData.filter(item => item.type === 'host'):responseData
+        this.endpointOptions = responseData.filter(item => item.type === 'host')
       })
     },
-    requestData (type, id) {
-      let params = {}
-      params.type = type
-      params.id = id
+    requestData (id) {
+      let params = {id}
       this.totalPageConfig = []
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.logManagement.list.api, params, (responseData) => {
-        responseData.forEach((item)=>{
-          let config = this.$root.$validate.deepCopy(this.pageConfig.table)
-          if (!item.operation) {
-            config.btn = []
-          }
-          config.tableData = item.log_monitor
-          this.totalPageConfig.push({table:config, obj_type: item.obj_type, obj_name: item.obj_name, operation:item.operation})
-        })
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', 'monitor/api/v1/alarm/business/list', params, (responseData) => {
+        this.pageConfig.table.tableData = responseData.path_list
       })
     },
     deleteConfirmModal (rowData) {
@@ -310,11 +270,16 @@ export default {
       })
     },
     delF (rowData) {
-      let params = {id: rowData.id}
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.logManagement.delList.api, params, () => {
-        // this.$root.$eventBus.$emit('hideConfirmModal')
+      const index = this.pageConfig.table.tableData.findIndex(item => item.id === rowData.id)
+      let tableData = JSON.parse(JSON.stringify(this.pageConfig.table.tableData))
+      tableData.splice(index,1)
+      let params = {
+        endpoint_id: this.endpointID,
+        path_list: tableData
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', 'monitor/api/v1/alarm/business/update', params, () => {
         this.$Message.success(this.$t('tips.success'))
-        this.requestData(this.type, this.typeValue)
+        this.requestData(this.endpointID)
       })
     },
     paramsPrepare() {
@@ -338,32 +303,66 @@ export default {
       return modelParams
     },
     singeAddF (rowData) {
-      this.modelConfig.addRow.path = rowData.path
-      this.singeAddId = rowData.id
-      this.modelConfig.isAdd = false
-      this.$root.JQ('#add_edit_Modal').modal('show')
+      this.activeData = rowData
+      // this.ruleModelConfig.addRow.path = rowData.path
+      this.ruleModelConfig.isAdd = true
+      this.$root.JQ('#rule_Modal').modal('show')
     },
     add () {
       this.modelConfig.isAdd = true
-      this.$root.JQ('#add_edit_Modal').modal('show')
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', 'monitor/api/v1/alarm/endpoint/list?page=1&size=1000', '', responseData => {
+        this.modelConfig.slotConfig.endpointOption = responseData.data
+        this.$root.JQ('#add_edit_Modal').modal('show')
+      })
     },
     addPost () {
       this.$validator.validate().then(result => {
         if (!result) return
-        let params = this.paramsPrepare()
-        this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.logManagement.add.api, params, () => {
+        let params = {
+          endpoint_id: this.endpointID,
+          path_list: [
+            {
+              id: 0,
+              ...this.modelConfig.addRow,
+              rules: []
+            }
+          ]
+        }
+        this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/alarm/business/add', params, () => {
           this.$Message.success(this.$t('tips.success'))
           this.$root.JQ('#add_edit_Modal').modal('hide')
-          this.requestData(this.type, this.typeValue)
+          this.requestData(this.endpointID)
         })
       })
     },
     editF (rowData) {
-      this.pathModelConfig.isAdd = false
+      this.modelConfig.isAdd = false
       this.activeData = rowData
-      this.pathModelConfig.addRow.path = rowData.path
+      this.modelConfig.addRow.path = rowData.path
+      this.modelConfig.addRow.owner_endpoint = rowData.owner_endpoint
       this.modelTip.value = rowData.path
-      this.$root.JQ('#path_Modal').modal('show')
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', 'monitor/api/v1/alarm/endpoint/list?page=1&size=1000', '', responseData => {
+        this.modelConfig.slotConfig.endpointOption = responseData.data
+        this.$root.JQ('#add_edit_Modal').modal('show')
+      })
+    },
+    editPost () {
+      this.$validator.validate().then(result => {
+        if (!result) return
+        const index = this.pageConfig.table.tableData.findIndex(item => item.id === this.activeData.id)
+        let tableData = JSON.parse(JSON.stringify(this.pageConfig.table.tableData))
+        tableData[index].path = this.modelConfig.addRow.path
+        tableData[index].owner_endpoint = this.modelConfig.addRow.owner_endpoint
+        let params = {
+          endpoint_id: this.endpointID,
+          path_list: tableData
+        }
+        this.$root.$httpRequestEntrance.httpRequestEntrance('POST', 'monitor/api/v1/alarm/business/update', params, () => {
+          this.$Message.success(this.$t('tips.success'))
+          this.$root.JQ('#add_edit_Modal').modal('hide')
+          this.requestData(this.endpointID)
+        })
+      })
     },
     savePath () {
       let params = {
@@ -374,15 +373,13 @@ export default {
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.logManagement.editList.api, params, () => {
         this.$Message.success(this.$t('tips.success'))
         this.$root.JQ('#path_Modal').modal('hide')
-        this.requestData(this.type, this.typeValue)
+        this.requestData(this.typeValue)
       })
     },
     getExtendInfo(item){
-      item.strategy.forEach((i)=>{
-        i.tpl_id = item.tpl_id
-        i.path = item.path
-      })
-      this.pageConfig.table.isExtend.detailConfig[0].data = item.strategy
+      console.log(item)
+      console.log(this.pageConfig.table.isExtend.detailConfig)
+      this.pageConfig.table.isExtend.detailConfig[0].data = item.rules
     },
     editPathItem (rowData) {
       this.modelConfig.isAdd = false
@@ -427,31 +424,9 @@ export default {
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.logManagement.delete.api, params, () => {
         // this.$root.$eventBus.$emit('hideConfirmModal')
         this.$Message.success(this.$t('tips.success'))
-        this.requestData(this.type, this.typeValue)
+        this.requestData(this.typeValue)
       })
-    },
-    editPost () {
-      this.$validator.validate().then(result => {
-        if (!result) return
-        let params = this.paramsPrepare()
-        let url = ''
-        if (!this.$root.$validate.isEmpty_reset(this.singeAddId)) {
-          params.id = this.singeAddId
-          url = this.$root.apiCenter.logManagement.add.api
-        } else {
-          params.tpl_id = this.extendData.tpl_id
-          params.strategy[0].id = this.extendData.id
-          url = this.$root.apiCenter.logManagement.update.api
-        }
-
-        this.$root.$httpRequestEntrance.httpRequestEntrance('POST', url, params, () => {
-          this.$Message.success(this.$t('tips.success'))
-          this.$root.JQ('#add_edit_Modal').modal('hide')
-          this.requestData(this.type, this.typeValue)
-          this.$root.$store.commit('changeTableExtendActive', -1)
-        })
-      })
-    },
+    }
   },
   components: {
     extendTable
