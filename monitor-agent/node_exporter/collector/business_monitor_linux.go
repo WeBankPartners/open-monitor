@@ -138,7 +138,16 @@ func (c *businessMonitorObj) start()  {
 		level.Error(newLogger).Log("msg",fmt.Sprintf("start business collector fail, path: %s, error: %v", c.Path, err))
 		return
 	}
+	firstFlag := true
+	timeNow := time.Now()
 	for line := range c.TailSession.Lines {
+		if firstFlag {
+			if time.Now().Sub(timeNow).Seconds() >= 5 {
+				firstFlag = false
+			}else {
+				continue
+			}
+		}
 		c.Lock.RLock()
 		for _,rule := range c.Rules {
 			fetchList := rule.RegExp.FindStringSubmatch(line.Text)
@@ -159,6 +168,7 @@ func (c *businessMonitorObj) start()  {
 					}
 				}
 				if len(fetchKeyMap) > 0 {
+					level.Info(newLogger).Log("get a new line fetch", len(fetchKeyMap))
 					rule.DataChannel <- fetchKeyMap
 				}
 			}
@@ -395,6 +405,7 @@ func calcBusinessAggData()  {
 	for _,v := range businessMonitorJobs {
 		for _,rule := range v.Rules {
 			dataLength := len(rule.DataChannel)
+			level.Info(newLogger).Log("calc get data channel length", dataLength)
 			if dataLength == 0 {
 				break
 			}
@@ -422,11 +433,17 @@ func calcBusinessAggData()  {
 								}
 							}
 						}
-						valueCountMap[fmt.Sprintf("%s^%s^%s^%s", metricConfig.Key, metricConfig.AggType, metricConfig.Metric, tmpTagString)].Sum += metricValueFloat
-						valueCountMap[fmt.Sprintf("%s^%s^%s^%s", metricConfig.Key, metricConfig.AggType, metricConfig.Metric, tmpTagString)].Count ++
+						tmpMapKey := fmt.Sprintf("%s^%s^%s^%s", metricConfig.Key, metricConfig.AggType, metricConfig.Metric, tmpTagString)
+						if _,keyExist:=valueCountMap[tmpMapKey];keyExist {
+							valueCountMap[tmpMapKey].Sum += metricValueFloat
+							valueCountMap[tmpMapKey].Count++
+						}else{
+							valueCountMap[tmpMapKey] = &businessValueObj{Sum: metricValueFloat, Count: 1, Avg: 0}
+						}
 					}
 				}
 			}
+			level.Info(newLogger).Log("value count map length", len(valueCountMap))
 			for mapKey,mapValue := range valueCountMap {
 				mapValue.Avg = mapValue.Sum/mapValue.Count
 				keySplitList := strings.Split(mapKey, "^")
