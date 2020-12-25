@@ -35,6 +35,7 @@
     "threshold": "阈值",
     "log": "关键字",
     "resourceLevel": "层级对象",
+    "businessMonitor": "业务监控",
     "metric": "指标",
     "relativeTime": "时间段",
     "timeInterval": "时间区间",
