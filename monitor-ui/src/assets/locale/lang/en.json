@@ -34,6 +34,7 @@
     "threshold": "Threshold",
     "log": "Keyword",
     "resourceLevel": "Resource Level",
+    "businessMonitor": "Business Monitor",
     "endpoint": "Endpoint",
     "metric": "Metric",
     "relativeTime": "Relative Time",
