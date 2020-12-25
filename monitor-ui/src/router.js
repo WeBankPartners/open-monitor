@@ -114,6 +114,14 @@ const router = new Router({
               meta: {},
               component: () =>
                 import("@/views/monitor-config/k8s")
+            },
+            {
+              path: "businessMonitor",
+              name: "businessMonitor",
+              title: "businessMonitor",
+              meta: {},
+              component: () =>
+                import("@/views/monitor-config/business-monitor")
             }
           ]
         },
