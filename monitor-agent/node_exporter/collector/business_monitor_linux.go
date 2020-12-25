@@ -153,7 +153,6 @@ func (c *businessMonitorObj) start()  {
 		c.Lock.RLock()
 		for _,rule := range c.Rules {
 			fetchList := rule.RegExp.FindStringSubmatch(line.Text)
-			level.Info(newLogger).Log("fetch list length", len(fetchList))
 			if len(fetchList) > 1 {
 				fetchKeyMap := make(map[string]interface{})
 				for i,v := range fetchList {
@@ -171,7 +170,6 @@ func (c *businessMonitorObj) start()  {
 					}
 				}
 				if len(fetchKeyMap) > 0 {
-					level.Info(newLogger).Log("get a new line fetch", len(fetchKeyMap), "rule", rule.Regular)
 					rule.DataChannel <- fetchKeyMap
 				}
 			}
@@ -411,7 +409,6 @@ func calcBusinessAggData()  {
 	for _,v := range businessMonitorJobs {
 		for _,rule := range v.Rules {
 			dataLength := len(rule.DataChannel)
-			level.Info(newLogger).Log("calc get data channel length", dataLength, "rule", rule.Regular)
 			if dataLength == 0 {
 				continue
 			}
@@ -449,7 +446,6 @@ func calcBusinessAggData()  {
 					}
 				}
 			}
-			level.Info(newLogger).Log("value count map length", len(valueCountMap))
 			for mapKey,mapValue := range valueCountMap {
 				mapValue.Avg = mapValue.Sum/mapValue.Count
 				keySplitList := strings.Split(mapKey, "^")
