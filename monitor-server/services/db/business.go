@@ -31,7 +31,7 @@ func GetBusinessListNew(endpointId int,ownerEndpoint string) (err error,result m
 	var businessMonitorConfigTable []*m.BusinessMonitorCfgTable
 	var tmpErr error
 	for _,v := range businessMonitorTable {
-		tmpBup := m.BusinessUpdatePathObj{Id: v.Id,Path: v.Path,OwnerEndpoint: v.OwnerEndpoint}
+		tmpBup := m.BusinessUpdatePathObj{Id: v.Id,Path: v.Path,OwnerEndpoint: v.OwnerEndpoint,Rules: []*m.BusinessMonitorCfgObj{}}
 		x.SQL("select * from business_monitor_cfg where business_monitor_id=?", v.Id).Find(&businessMonitorConfigTable)
 		for _,vv := range businessMonitorConfigTable {
 			tmpBmc := m.BusinessMonitorCfgObj{Id: vv.Id,Regular: vv.Regular,Tags: vv.Tags}
@@ -68,6 +68,26 @@ func UpdateBusiness(param m.BusinessUpdateDto) error {
 		params = append(params, v.OwnerEndpoint)
 		action.Param = params
 		actions = append(actions, &action)
+	}
+	return Transaction(actions)
+}
+
+func AddBusinessTable(param m.BusinessUpdateDto) error {
+	var actions []*Action
+	var err error
+	var businessMonitorTable []*m.BusinessMonitorTable
+	x.SQL("select * from business_monitor where endpoint_id=?", param.EndpointId).Find(&businessMonitorTable)
+	for _,v := range param.PathList {
+		for _,vv := range businessMonitorTable {
+			if v.Path == vv.Path {
+				err = fmt.Errorf("Path %s already exists ", v.Path)
+				break
+			}
+		}
+		actions = append(actions, &Action{Sql: "INSERT INTO business_monitor(endpoint_id,path,owner_endpoint) VALUE (?,?,?)", Param: []interface{}{param.EndpointId,v.Path,v.OwnerEndpoint}})
+	}
+	if err != nil {
+		return err
 	}
 	return Transaction(actions)
 }
