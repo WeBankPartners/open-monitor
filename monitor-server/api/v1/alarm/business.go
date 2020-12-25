@@ -63,10 +63,6 @@ func UpdateEndpointBusinessConfig(c *gin.Context)  {
 			}else{
 				pathMap[v.Path] = 1
 			}
-			if len(v.Rules) == 0 {
-				mid.ReturnValidateError(c, "path "+v.Path+" rules can not empty")
-				return
-			}
 			for _, vv := range v.Rules {
 				if vv.Regular == "" {
 					mid.ReturnValidateError(c, "path "+v.Path+" rules regular can not empty")
