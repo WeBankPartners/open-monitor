@@ -399,11 +399,6 @@ func calcBusinessAggData()  {
 				break
 			}
 			valueCountMap := make(map[string]*businessValueObj)
-			var sum,avg,count []float64
-			for i:=0;i<len(rule.MetricConfig);i++ {
-				sum = append(sum, 0)
-				count = append(count, 0)
-			}
 			for i:=0;i<dataLength;i++ {
 				tmpMapData := <- rule.DataChannel
 				tmpTagString := ""
@@ -427,33 +422,21 @@ func calcBusinessAggData()  {
 								}
 							}
 						}
-						valueCountMap[fmt.Sprintf("%s^%s^%s", metricConfig.Key, metricConfig.AggType, tmpTagString)].Sum += metricValueFloat
-						valueCountMap[fmt.Sprintf("%s^%s^%s", metricConfig.Key, metricConfig.AggType, tmpTagString)].Count ++
+						valueCountMap[fmt.Sprintf("%s^%s^%s^%s", metricConfig.Key, metricConfig.AggType, metricConfig.Metric, tmpTagString)].Sum += metricValueFloat
+						valueCountMap[fmt.Sprintf("%s^%s^%s^%s", metricConfig.Key, metricConfig.AggType, metricConfig.Metric, tmpTagString)].Count ++
 					}
 				}
 			}
-			for i,tmpSum := range sum {
-				avg = append(avg, tmpSum/count[i])
-			}
-			var tagStringContent string
-			for tmpTagIndex,tmpTags := range rule.TagsKey {
-				if tmpTags == "" {
-					continue
-				}
-				tagStringContent += fmt.Sprintf("%s=%s", tmpTags, rule.TagsValue[tmpTagIndex])
-				if tmpTagIndex < len(rule.TagsKey)-1 {
-					tagStringContent += ","
-				}
-			}
-			for metricIndex,metricConfig := range rule.MetricConfig {
-				tmpMetricObj := businessRuleMetricObj{Path: v.Path, Agg: metricConfig.AggType, TagsString: tagStringContent}
-				tmpMetricObj.Metric = metricConfig.Metric
-				if metricConfig.AggType == "sum" {
-					tmpMetricObj.Value = sum[metricIndex]
-				}else if metricConfig.AggType == "avg" {
-					tmpMetricObj.Value = avg[metricIndex]
-				}else if metricConfig.AggType == "count" {
-					tmpMetricObj.Value = count[metricIndex]
+			for mapKey,mapValue := range valueCountMap {
+				mapValue.Avg = mapValue.Sum/mapValue.Count
+				keySplitList := strings.Split(mapKey, "^")
+				tmpMetricObj := businessRuleMetricObj{Path: v.Path, Agg: keySplitList[1], TagsString: keySplitList[3], Metric: keySplitList[2]}
+				if keySplitList[1] == "sum" {
+					tmpMetricObj.Value = mapValue.Sum
+				}else if keySplitList[1] == "avg" {
+					tmpMetricObj.Value = mapValue.Avg
+				}else if keySplitList[1] == "count" {
+					tmpMetricObj.Value = mapValue.Count
 				}
 				newRuleData = append(newRuleData, &tmpMetricObj)
 			}
