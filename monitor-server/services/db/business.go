@@ -205,3 +205,21 @@ func GetBusinessPanelChart() (charts []*m.ChartTable,panels []*m.PanelTable) {
 	x.SQL("SELECT t3.* FROM dashboard t1 LEFT JOIN panel t2 ON t1.panels_group=t2.group_id LEFT JOIN chart t3 ON t2.chart_group=t3.group_id WHERE t1.dashboard_type='host' AND t2.auto_display=1").Find(&charts)
 	return charts,panels
 }
+
+func GetBusinessPromMetric(keys []string) (err error,result []*m.PromMetricTable) {
+	if len(keys) == 0 {
+		return err,result
+	}
+	sql := "SELECT * FROM monitor.prom_metric where "
+	for i,v := range keys {
+		if v == "" {
+			continue
+		}
+		sql += " (prom_ql like %key=\"" + v + "\"%) "
+		if i < len(keys)-1 {
+			sql += " OR "
+		}
+	}
+	err = x.SQL(sql).Find(&result)
+	return err,result
+}

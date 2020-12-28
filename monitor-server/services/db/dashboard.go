@@ -120,9 +120,15 @@ func GetPromMetric(endpoint []string,metric string) (error, string) {
 			reg = strings.Replace(reg, "$ip", host.Ip, -1)
 		}
 		if strings.Contains(reg, `$address`) {
-			if strings.Contains(tmpTag, "=") {
-				tmpList := strings.Split(tmpTag, "=")
-				reg = strings.Replace(reg, "$address\"", fmt.Sprintf("$address\",%s=\"%s\"", tmpList[0], tmpList[1]), -1)
+			if tmpTag != "" {
+				tagAppendString := ""
+				for _,tagString := range strings.Split(tmpTag, ",") {
+					tagKeyValue := strings.Split(tagString, "=")
+					if len(tagKeyValue) == 2 {
+						tagAppendString += fmt.Sprintf(",%s=\"%s\"", tagKeyValue[0], tagKeyValue[1])
+					}
+				}
+				reg = strings.ReplaceAll(reg, "\"$address\"", fmt.Sprintf("\"$address\"%s", tagAppendString))
 			}
 			if host.AddressAgent != "" {
 				reg = strings.Replace(reg, "$address", host.AddressAgent, -1)
