@@ -215,7 +215,7 @@ func GetBusinessPromMetric(keys []string) (err error,result []*m.PromMetricTable
 		if v == "" {
 			continue
 		}
-		sql += " (prom_ql like %key=\"" + v + "\"%) "
+		sql += " (prom_ql like '%key=\"" + v + "\"%') "
 		if i < len(keys)-1 {
 			sql += " OR "
 		}
