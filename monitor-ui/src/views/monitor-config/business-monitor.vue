@@ -234,8 +234,14 @@ export default {
     }
   },
   
-  mounted () {
-    this.getEndpointList('.')
+  async mounted () {
+    await this.getEndpointList('.')
+    if (!this.$root.$validate.isEmpty_reset(this.$route.params)) {
+       this.$parent.activeTab = '/monitorConfigIndex/businessMonitor'
+      this.endpointID = Number(this.$route.params.id)
+      this.endpointGuid = this.$route.params.guid
+      this.requestData(this.endpointID)
+    }
   },
   methods: {
     /*********/
@@ -288,7 +294,7 @@ export default {
             path_list: copyData,
           }
         }
-        this.$root.$httpRequestEntrance.httpRequestEntrance('POST', 'monitor/api/v1/alarm/business/update', params, () => {
+        this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.businessMonitor.update, params, () => {
           this.$Message.success(this.$t('tips.success'))
           this.$root.JQ('#rule_Modal').modal('hide')
           this.requestData(this.endpointID)
@@ -312,7 +318,7 @@ export default {
         this.endpointGuid = ''
       }
     },
-    getEndpointList (query) {
+    async getEndpointList (query) {
       const params = {type: 'endpoint', search: query}
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.resourceSearch.strategyApi, params, (responseData) => {
         this.endpointOptions = responseData.filter(item => item.type === 'host')
@@ -321,7 +327,7 @@ export default {
     requestData (id) {
       let params = {id}
       this.totalPageConfig = []
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', 'monitor/api/v1/alarm/business/list', params, (responseData) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.businessMonitor.list, params, (responseData) => {
         this.pageConfig.table.tableData = responseData.path_list
         this.$root.$store.commit('changeTableExtendActive', -1)
       })
@@ -352,7 +358,7 @@ export default {
         endpoint_id: this.endpointID,
         path_list: tableData
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', 'monitor/api/v1/alarm/business/update', params, () => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.businessMonitor.update, params, () => {
         this.$Message.success(this.$t('tips.success'))
         this.requestData(this.endpointID)
       })
@@ -364,7 +370,7 @@ export default {
     },
     add () {
       this.modelConfig.isAdd = true
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', 'monitor/api/v1/alarm/endpoint/list?page=1&size=1000', '', responseData => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.endpointManagement.list.api + '?page=1&size=1000', '', responseData => {
         this.modelConfig.slotConfig.endpointOption = responseData.data
         this.$root.JQ('#add_edit_Modal').modal('show')
       })
@@ -382,7 +388,7 @@ export default {
             }
           ]
         }
-        this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/alarm/business/add', params, () => {
+        this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.businessMonitor.add, params, () => {
           this.$Message.success(this.$t('tips.success'))
           this.$root.JQ('#add_edit_Modal').modal('hide')
           this.requestData(this.endpointID)
@@ -395,7 +401,7 @@ export default {
       this.modelConfig.addRow.path = rowData.path
       this.modelConfig.addRow.owner_endpoint = rowData.owner_endpoint
       this.modelTip.value = rowData.path
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', 'monitor/api/v1/alarm/endpoint/list?page=1&size=1000', '', responseData => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.endpointManagement.list.api + '?page=1&size=1000', '', responseData => {
         this.modelConfig.slotConfig.endpointOption = responseData.data
         this.$root.JQ('#add_edit_Modal').modal('show')
       })
@@ -411,7 +417,7 @@ export default {
           endpoint_id: this.endpointID,
           path_list: tableData
         }
-        this.$root.$httpRequestEntrance.httpRequestEntrance('POST', 'monitor/api/v1/alarm/business/update', params, () => {
+        this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.businessMonitor.update, params, () => {
           this.$Message.success(this.$t('tips.success'))
           this.$root.JQ('#add_edit_Modal').modal('hide')
           this.requestData(this.endpointID)
@@ -462,7 +468,7 @@ export default {
         endpoint_id: this.endpointID,
         path_list: copyData,
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', 'monitor/api/v1/alarm/business/update', params, () => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.businessMonitor.update, params, () => {
         this.$Message.success(this.$t('tips.success'))
         this.requestData(this.endpointID)
       })
