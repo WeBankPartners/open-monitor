@@ -28,6 +28,26 @@ func GetEndpointBusinessConfig(c *gin.Context)  {
 	}
 }
 
+func AddEndpointBusinessConfig(c *gin.Context)  {
+	var param m.BusinessUpdateDto
+	if err := c.ShouldBindJSON(&param); err==nil {
+		for _,v := range param.PathList {
+			if !mid.IsIllegalPath(v.Path) {
+				mid.ReturnValidateError(c, "path illegal")
+				return
+			}
+		}
+		err = db.AddBusinessTable(param)
+		if err != nil {
+			mid.ReturnUpdateTableError(c, "business_monitor", err)
+		}else{
+			mid.ReturnSuccess(c)
+		}
+	}else{
+		mid.ReturnValidateError(c, err.Error())
+	}
+}
+
 func UpdateEndpointBusinessConfig(c *gin.Context)  {
 	var param m.BusinessUpdateDto
 	if err := c.ShouldBindJSON(&param); err==nil {
@@ -43,11 +63,7 @@ func UpdateEndpointBusinessConfig(c *gin.Context)  {
 			}else{
 				pathMap[v.Path] = 1
 			}
-			if len(v.Rules) == 0 {
-				mid.ReturnValidateError(c, "path "+v.Path+" rules can not empty")
-				return
-			}
-			for _,vv := range v.Rules {
+			for _, vv := range v.Rules {
 				if vv.Regular == "" {
 					mid.ReturnValidateError(c, "path "+v.Path+" rules regular can not empty")
 					return
