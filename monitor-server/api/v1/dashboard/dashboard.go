@@ -100,16 +100,19 @@ func GetPanels(c *gin.Context)  {
 		mid.ReturnQueryTableError(c, "panel", err)
 		return
 	}
-	endpointBusinessShow := true
-	for _,panel := range panels {
-		if panel.AutoDisplay > 0 {
-			endpointBusinessShow = db.CheckEndpointBusiness(endpoint)
-			break
-		}
-	}
+	//endpointBusinessShow := true
+	//for _,panel := range panels {
+	//	if panel.AutoDisplay > 0 {
+	//		endpointBusinessShow = db.CheckEndpointBusiness(endpoint)
+	//		break
+	//	}
+	//}
 	var panelsDto []*m.PanelModel
 	for _,panel := range panels {
-		if panel.AutoDisplay > 0 && !endpointBusinessShow {
+		//if panel.AutoDisplay > 0 && !endpointBusinessShow {
+		//	continue
+		//}
+		if panel.Title == "Business" {
 			continue
 		}
 		var panelDto m.PanelModel
@@ -160,37 +163,84 @@ func GetPanels(c *gin.Context)  {
 		panelDto.Charts = chartsDto
 		panelsDto = append(panelsDto, &panelDto)
 	}
-	_,businessMonitor := db.GetBusinessList(0, endpoint)
-	if len(businessMonitor) > 0 {
-		businessMonitorMap := make(map[int][]string)
-		for _,v := range businessMonitor {
-			if _,b := businessMonitorMap[v.EndpointId];b {
-				exist := false
-				for _,vv := range businessMonitorMap[v.EndpointId] {
-					if vv == v.Path {
-						exist = true
-						break
-					}
-				}
-				if !exist {
-					businessMonitorMap[v.EndpointId] = append(businessMonitorMap[v.EndpointId], v.Path)
-				}
-			}else{
-				businessMonitorMap[v.EndpointId] = []string{v.Path}
+	err,businessPanel := fetchBusinessPanel(endpoint)
+	if err != nil {
+		log.Logger.Error("Fetch business panel fail", log.Error(err))
+	}
+	if len(businessPanel.Charts) > 0 {
+		panelsDto = append(panelsDto, &businessPanel)
+	}
+	//_,businessMonitor := db.GetBusinessList(0, endpoint)
+	//if len(businessMonitor) > 0 {
+	//	businessMonitorMap := make(map[int][]string)
+	//	for _,v := range businessMonitor {
+	//		if _,b := businessMonitorMap[v.EndpointId];b {
+	//			exist := false
+	//			for _,vv := range businessMonitorMap[v.EndpointId] {
+	//				if vv == v.Path {
+	//					exist = true
+	//					break
+	//				}
+	//			}
+	//			if !exist {
+	//				businessMonitorMap[v.EndpointId] = append(businessMonitorMap[v.EndpointId], v.Path)
+	//			}
+	//		}else{
+	//			businessMonitorMap[v.EndpointId] = []string{v.Path}
+	//		}
+	//	}
+	//	businessCharts,businessPanels := db.GetBusinessPanelChart()
+	//	if len(businessCharts) > 0 {
+	//		chartsDto, _ := db.GetAutoDisplay(businessMonitorMap, businessPanels[0].TagsKey, businessCharts)
+	//		var panelDto m.PanelModel
+	//		panelDto.Title = businessPanels[0].Title
+	//		panelDto.Other = false
+	//		panelDto.Tags = m.TagsModel{Enable: false, Option: []*m.OptionModel{}}
+	//		panelDto.Charts = chartsDto
+	//		panelsDto = append(panelsDto, &panelDto)
+	//	}
+	//}
+	mid.ReturnSuccessData(c, panelsDto)
+}
+
+func fetchBusinessPanel(endpoint string) (err error,result m.PanelModel) {
+	result.Tags = m.TagsModel{Enable: false, Option: []*m.OptionModel{}}
+	var businessList m.BusinessUpdateDto
+	endpointObj := m.EndpointTable{Guid: endpoint}
+	db.GetEndpoint(&endpointObj)
+	if endpointObj.ExportType == "host" {
+		err,businessList = db.GetBusinessListNew(endpointObj.Id, "")
+	}else{
+		err,businessList = db.GetBusinessListNew(0, endpoint)
+	}
+	if err != nil || len(businessList.PathList) == 0 {
+		return err,result
+	}
+	chartTable,panelTable := db.GetBusinessPanelChart()
+	if len(panelTable) == 0 || len(chartTable) == 0 {
+		return err,result
+	}
+	result.Title = panelTable[0].Title
+	var promMetricKeys []string
+	for _,path := range businessList.PathList {
+		for _,rule := range path.Rules {
+			for _,metricConfig := range rule.MetricConfig {
+				promMetricKeys = append(promMetricKeys, metricConfig.Metric)
+				tmpChartObj := m.ChartModel{Id: chartTable[0].Id, Endpoint: []string{endpoint}, Url: chartTable[0].Url}
+				tmpChartObj.Title = metricConfig.Title
+				tmpChartObj.Metric = []string{fmt.Sprintf("%s/path=%s,key=%s", chartTable[0].Metric, path.Path, metricConfig.Metric)}
+				result.Charts = append(result.Charts, &tmpChartObj)
 			}
 		}
-		businessCharts,businessPanels := db.GetBusinessPanelChart()
-		if len(businessCharts) > 0 {
-			chartsDto, _ := db.GetAutoDisplay(businessMonitorMap, businessPanels[0].TagsKey, businessCharts)
-			var panelDto m.PanelModel
-			panelDto.Title = businessPanels[0].Title
-			panelDto.Other = false
-			panelDto.Tags = m.TagsModel{Enable: false, Option: []*m.OptionModel{}}
-			panelDto.Charts = chartsDto
-			panelsDto = append(panelsDto, &panelDto)
-		}
 	}
-	mid.ReturnSuccessData(c, panelsDto)
+	_,extendMetric := db.GetBusinessPromMetric(promMetricKeys)
+	for _,v := range extendMetric {
+		tmpChartObj := m.ChartModel{Id: chartTable[0].Id, Endpoint: []string{endpoint}, Url: chartTable[0].Url}
+		tmpChartObj.Metric = []string{v.Metric}
+		tmpChartObj.Title = v.Metric
+		result.Charts = append(result.Charts, &tmpChartObj)
+	}
+	return err,result
 }
 
 func UpdateChartsTitle(c *gin.Context)  {
@@ -442,22 +492,29 @@ func GetChart(c *gin.Context)  {
 			recordMap[tmpIndex] = true
 			aggType = chart.AggType
 			eOption.Id = chart.Id
-			if chart.Title == "${auto}" {
-				if strings.Contains(tmpParamConfig.Metric, "=") {
-					eOption.Title = db.GetChartTitle(strings.Split(tmpParamConfig.Metric, "=")[1], tmpParamConfig.Id)
-				}
-				if eOption.Title == "" {
-					eOption.Title = "${auto}"
-				}
-			} else {
-				eOption.Title = chart.Title
+			eOption.Title = chart.Title
+			if tmpParamConfig.Title != "" {
+				eOption.Title = tmpParamConfig.Title
 			}
+			//if chart.Title == "${auto}" {
+			//	if strings.Contains(tmpParamConfig.Metric, "=") {
+			//		eOption.Title = db.GetChartTitle(strings.Split(tmpParamConfig.Metric, "=")[1], tmpParamConfig.Id)
+			//	}
+			//	if eOption.Title == "" {
+			//		eOption.Title = "${auto}"
+			//	}
+			//} else {
+			//	eOption.Title = chart.Title
+			//}
 			unit = chart.Unit
 			if tmpParamConfig.Endpoint == "" {
 				mid.ReturnParamEmptyError(c, "endpoint")
 				return
 			}
 			if strings.Contains(tmpParamConfig.Metric, "/") {
+				chart.Metric = tmpParamConfig.Metric
+			}
+			if chart.Metric == "app.metric" {
 				chart.Metric = tmpParamConfig.Metric
 			}
 			for _, v := range strings.Split(chart.Metric, "^") {
