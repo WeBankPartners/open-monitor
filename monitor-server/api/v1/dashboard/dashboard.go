@@ -204,6 +204,7 @@ func GetPanels(c *gin.Context)  {
 }
 
 func fetchBusinessPanel(endpoint string) (err error,result m.PanelModel) {
+	result.Tags = m.TagsModel{Enable: false, Option: []*m.OptionModel{}}
 	var businessList m.BusinessUpdateDto
 	endpointObj := m.EndpointTable{Guid: endpoint}
 	db.GetEndpoint(&endpointObj)
