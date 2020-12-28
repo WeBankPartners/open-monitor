@@ -110,6 +110,12 @@
             "api": "/monitor/api/v1/alarm/log/monitor/delete"
         }
     },
+    "businessMonitor": {
+        "_des": "业务监控列表",
+        "list": "/monitor/api/v1/alarm/business/list",
+        "add": "/monitor/api/v1/alarm/business/add",
+        "update": "/monitor/api/v1/alarm/business/update"
+    },
     "metricList": {
         "_des": "指标列表",
         "api": "/monitor/api/v1/dashboard/config/metric/list"
