@@ -202,5 +202,8 @@
   "exporter_address_placeholder": "ip:port",
   "k8s": "k8s",
   "clusterName": "集群名",
-  "token": "TOKEN"
+  "token": "TOKEN",
+  "rule": "规则",
+  "addMetricConfig": "新增指标配置",
+  "addStringMap": "新增映射"
 }

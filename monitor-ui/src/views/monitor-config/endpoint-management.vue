@@ -626,7 +626,6 @@ export default {
         endpoint: rowData.guid
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.endpointManagement.maintenanceWindow.get, params, (responseData) => {
-        console.log(responseData)
         this.maintenanceWindowModel.result = []
         responseData.forEach(item => {
           this.maintenanceWindowModel.result.push({
