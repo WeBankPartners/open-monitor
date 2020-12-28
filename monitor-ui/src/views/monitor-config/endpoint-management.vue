@@ -133,37 +133,6 @@
       </section>
     </div>
   </ModalComponent>
-  <ModalComponent :modelConfig="businessConfigModel">
-    <div slot="businessConfig">
-      <section>
-        <div style="display: flex;">
-          <div class="port-title">
-            <span>{{$t('tableKey.logPath')}}:</span>
-          </div>
-          <div class="port-title">
-            <span>{{$t('field.endpoint')}}:</span>
-          </div>
-        </div>
-      </section>
-      <section v-for="(pm, pmIndex) in businessConfigModel.pathMsg" :key="pmIndex">
-        <div class="port-config">
-          <div style="width: 48%">
-            <input type="text" v-model.trim="pm.path" class="search-input" style="width: 95%" />
-            <label class="required-tip">*</label>
-          </div>
-          <div style="width: 48%">
-            <Select v-model="pm.owner_endpoint" style="width: 95%">
-              <Option v-for="item in businessConfigModel.allPath" :value="item.guid" :key="item.guid">
-                {{item.guid}}
-              </Option>
-            </Select>
-          </div>
-          <i class="fa fa-trash-o port-config-icon" v-if="businessConfigModel.pathMsg.length > 1" @click="delBusiness(pmIndex)" aria-hidden="true"></i>
-          <i class="fa fa-plus-square-o port-config-icon" @click="addBusiness" :style="{'visibility': pmIndex+1===businessConfigModel.pathMsg.length?  'unset' : 'hidden'}" aria-hidden="true"></i>
-        </div>
-      </section>
-    </div>
-  </ModalComponent>
   <ModalComponent :modelConfig="portModel">
     <div slot="port">
       <section>
@@ -535,23 +504,6 @@ export default {
         process_list: [],
       },
 
-      businessConfigModel: {
-        modalId: 'business_config_model',
-        modalTitle: 'button.businessConfiguration',
-        isAdd: true,
-        saveFunc: 'businessConfigSave',
-        config: [{
-          name: 'businessConfig',
-          type: 'slot'
-        }],
-        addRow: {
-          businessSet: [],
-        },
-        allPath: [],
-        pathMsg: [],
-        businessName: ''
-      },
-
       maintenanceWindowModel: {
         modalId: 'maintenance_window_model',
         modalTitle: 'button.maintenanceWindow',
@@ -884,43 +836,7 @@ export default {
     },
 
     businessManagement(rowData) {
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.pageConfig.CRUD + '?page=1&size=1000', '', responseData => {
-        this.businessConfigModel.allPath = responseData.data.map(t => {
-          t.id = Number(t.id)
-          return t
-        })
-      })
-      this.id = rowData.id
-      this.businessConfigModel.addRow.businessSet = []
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v1/alarm/business/list', {
-        id: this.id
-      }, responseData => {
-        if (!responseData.length) {
-          responseData.push({
-            owner_endpoint: null,
-            path: null
-          })
-        }
-        this.businessConfigModel.pathMsg = responseData
-        this.$root.JQ('#business_config_model').modal('show')
-      })
-    },
-    businessConfigSave() {
-      const emptyBusindess = this.businessConfigModel.pathMsg.some(t => {
-        return !t.path
-      })
-      if (emptyBusindess) {
-        this.$Message.warning(this.$t('tableKey.path') + this.$t('tips.required'))
-        return
-      }
-      const params = {
-        endpoint_id: +this.id,
-        path_list: this.businessConfigModel.pathMsg
-      }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/alarm/business/update', params, () => {
-        this.$Message.success(this.$t('tips.success'))
-        this.$root.JQ('#business_config_model').modal('hide')
-      })
+      this.$router.push({name: 'businessMonitor', params: rowData})
     },
     addBusiness() {
       const emptyPath = this.businessConfigModel.pathMsg.some(t => {
