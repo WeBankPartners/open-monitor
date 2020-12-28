@@ -100,13 +100,6 @@ func GetPanels(c *gin.Context)  {
 		mid.ReturnQueryTableError(c, "panel", err)
 		return
 	}
-	//endpointBusinessShow := true
-	//for _,panel := range panels {
-	//	if panel.AutoDisplay > 0 {
-	//		endpointBusinessShow = db.CheckEndpointBusiness(endpoint)
-	//		break
-	//	}
-	//}
 	var panelsDto []*m.PanelModel
 	for _,panel := range panels {
 		//if panel.AutoDisplay > 0 && !endpointBusinessShow {
@@ -206,12 +199,14 @@ func GetPanels(c *gin.Context)  {
 func fetchBusinessPanel(endpoint string) (err error,result m.PanelModel) {
 	result.Tags = m.TagsModel{Enable: false, Option: []*m.OptionModel{}}
 	var businessList m.BusinessUpdateDto
+	realEndpoint := endpoint
 	endpointObj := m.EndpointTable{Guid: endpoint}
 	db.GetEndpoint(&endpointObj)
 	if endpointObj.ExportType == "host" {
 		err,businessList = db.GetBusinessListNew(endpointObj.Id, "")
 	}else{
 		err,businessList = db.GetBusinessListNew(0, endpoint)
+		realEndpoint = db.GetBusinessRealEndpoint(endpoint)
 	}
 	if err != nil || len(businessList.PathList) == 0 {
 		return err,result
@@ -235,7 +230,7 @@ func fetchBusinessPanel(endpoint string) (err error,result m.PanelModel) {
 	}
 	_,extendMetric := db.GetBusinessPromMetric(promMetricKeys)
 	for _,v := range extendMetric {
-		tmpChartObj := m.ChartModel{Id: chartTable[0].Id, Endpoint: []string{endpoint}, Url: chartTable[0].Url}
+		tmpChartObj := m.ChartModel{Id: chartTable[0].Id, Endpoint: []string{realEndpoint}, Url: chartTable[0].Url}
 		tmpChartObj.Metric = []string{v.Metric}
 		tmpChartObj.Title = v.Metric
 		result.Charts = append(result.Charts, &tmpChartObj)
