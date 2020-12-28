@@ -279,10 +279,8 @@ export default {
           // 获取上层数据序号
           const index = this.pageConfig.table.tableData.findIndex(item => item.id === this.activeData.pId)
           let copyData = JSON.parse(JSON.stringify(this.pageConfig.table.tableData))
-          console.log(copyData)
           let allRules = copyData[index].rules
           const ruleIndex = allRules.findIndex(item => item.id === this.activeData.id)
-          console.log(allRules,ruleIndex)
           let newRow = JSON.parse(JSON.stringify(this.ruleModelConfig.addRow))
           allRules[ruleIndex] = newRow
           params = {
