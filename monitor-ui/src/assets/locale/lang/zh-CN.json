@@ -147,7 +147,7 @@
     "systemName": "系统名称",
     "logPath": "日志路径",
     "regular": "正则表达式",
-    "tags": "名称"
+    "tags": "标签"
   },
   "tips": {
     "required": " 必填",
