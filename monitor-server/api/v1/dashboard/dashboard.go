@@ -112,6 +112,9 @@ func GetPanels(c *gin.Context)  {
 		//if panel.AutoDisplay > 0 && !endpointBusinessShow {
 		//	continue
 		//}
+		if panel.Title == "Business" {
+			continue
+		}
 		var panelDto m.PanelModel
 		panelDto.Title = panel.Title
 		if panel.ChartGroup < 0 {
