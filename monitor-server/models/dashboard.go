@@ -56,6 +56,7 @@ type Dashboard struct {
 type ChartModel struct {
 	Id  int  `json:"id"`
 	Col  int  `json:"col"`
+	Title  string  `json:"title"`
 	Endpoint  []string  `json:"endpoint"`
 	Metric  []string  `json:"metric"`
 	Url  string  `json:"url"`
@@ -175,6 +176,7 @@ type ChartTable struct {
 
 type ChartConfigObj struct {
 	Id   int    `form:"id" json:"id"`
+	Title  string  `form:"title" json:"title"`
 	Endpoint   string    `form:"endpoint" json:"endpoint"`
 	Metric   string    `form:"metric" json:"metric"`
 	PromQl  string  `form:"prom_ql" json:"prom_ql"`

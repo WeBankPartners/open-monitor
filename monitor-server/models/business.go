@@ -37,6 +37,7 @@ type BusinessStringMapObj struct {
 type BusinessMetricObj struct {
 	Key  string  `json:"key"`
 	Metric  string  `json:"metric"`
+	Title  string  `json:"title"`
 	AggType  string  `json:"agg_type"`
 }
 
