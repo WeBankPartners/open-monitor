@@ -99,8 +99,8 @@ func GetPromMetric(endpoint []string,metric string) (error, string) {
 	tmpMetric := metric
 	var tmpTag string
 	if strings.Contains(tmpMetric, "/") {
-		tmpMetric = tmpMetric[:strings.Index(tmpMetric, "/")]
-		tmpTag = tmpMetric[strings.Index(tmpMetric, "/")+1:]
+		tmpMetric = metric[:strings.Index(metric, "/")]
+		tmpTag = metric[strings.Index(metric, "/")+1:]
 	}
 	var query []*m.PromMetricTable
 	err := x.SQL("SELECT prom_ql FROM prom_metric WHERE metric=?", tmpMetric).Find(&query)
