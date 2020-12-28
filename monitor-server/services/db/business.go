@@ -56,6 +56,16 @@ func GetBusinessListNew(endpointId int,ownerEndpoint string) (err error,result m
 	return nil,result
 }
 
+func GetBusinessRealEndpoint(endpoint string) string {
+	var endpointTable []*m.EndpointTable
+	x.SQL("select t2.guid from business_monitor t1 left join endpoint t2 on t1.endpoint_id=t2.id where t1.owner_endpoint=?", endpoint).Find(&endpointTable)
+	if len(endpointTable) > 0 {
+		return endpointTable[0].Guid
+	}else{
+		return endpoint
+	}
+}
+
 func UpdateBusiness(param m.BusinessUpdateDto) error {
 	var actions []*Action
 	actions = append(actions, &Action{Sql:"DELETE FROM business_monitor WHERE endpoint_id=?", Param:[]interface{}{param.EndpointId}})
