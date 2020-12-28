@@ -202,5 +202,8 @@
   "exporter_address_placeholder": "ip:port",
   "k8s": "k8s",
   "clusterName": "Cluster Name",
-  "token": "TOKEN"
+  "token": "TOKEN",
+  "rule": "Rule",
+  "addMetricConfig": "Add Metric",
+  "addStringMap": "Add Mapping"
 }
