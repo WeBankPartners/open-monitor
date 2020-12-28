@@ -43,19 +43,18 @@
       <ModalComponent :modelConfig="ruleModelConfig">
         <div slot="ruleConfig" class="extentClass">
           <div class="marginbottom params-each">
-            <label class="col-md-2 label-name">metric_config:</label>
            <div style="margin: 4px 12px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
               <template v-for="(item, index) in ruleModelConfig.addRow.metric_config">
                 <p :key="index">
                   <Button
-                    @click="deleterule(index)"
+                    @click="deleterule('metric_config', index)"
                     size="small"
                     style="background-color: #ff9900;border-color: #ff9900;"
                     type="error"
                     icon="md-close"
                   ></Button>
-                  <Input v-model="item.key" style="width: 146px" placeholder="e.g:[.*][.*]" />
-                  <Input v-model="item.metric" style="width: 146px" placeholder="e.g:code" />
+                  <Input v-model="item.key" style="width: 146px" placeholder="key, e.g:[.*][.*]" />
+                  <Input v-model="item.metric" style="width: 146px" placeholder="metric, e.g:code" />
                   <Select v-model="item.agg_type" filterable style="width:140px">
                     <Option v-for="agg in ruleModelConfig.slotConfig.aggOption" :value="agg" :key="agg">{{
                       agg
@@ -69,7 +68,33 @@
                 size="small"
                 style="background-color: #0080FF;border-color: #0080FF;"
                 long
-                >{{ $t('hr_add_rule') }}</Button
+                >{{ $t('addMetricConfig') }}</Button
+              >
+            </div>
+          </div>
+          <div class="marginbottom params-each">
+           <div style="margin: 4px 12px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
+              <template v-for="(item, index) in ruleModelConfig.addRow.string_map">
+                <p :key="index">
+                  <Button
+                    @click="deleterule('string_map', index)"
+                    size="small"
+                    style="background-color: #ff9900;border-color: #ff9900;"
+                    type="error"
+                    icon="md-close"
+                  ></Button>
+                  <Input v-model="item.key" style="width: 146px" placeholder="key" />
+                  <Input v-model="item.string_value" style="width: 146px" placeholder="string_value" />
+                  <InputNumber v-model="item.int_value" style="width: 140px"></InputNumber>
+                </p>
+              </template>
+              <Button
+                @click="addEmpty('string_map')"
+                type="success"
+                size="small"
+                style="background-color: #0080FF;border-color: #0080FF;"
+                long
+                >{{ $t('addStringMap') }}</Button
               >
             </div>
           </div>
@@ -108,7 +133,7 @@ let tableEle = [
   {title: 'tableKey.endpoint', value: 'owner_endpoint', display: true}
 ]
 const btn = [
-  {btn_name: 'button.add', btn_func: 'singeAddF'},
+  {btn_name: 'button.add', btn_func: 'singleAddF'},
   {btn_name: 'button.edit', btn_func: 'editF'},
   {btn_name: 'button.remove', btn_func: 'deleteConfirmModal'},
 ]
@@ -151,8 +176,8 @@ export default {
                 {title: 'tableKey.regular', value: 'regular', display: true},
                 {title: 'tableKey.tags', value: 'tags', display: true},
                 {title: 'table.action',btn:[
-                  {btn_name: 'button.edit', btn_func: 'editPathItem'},
-                  {btn_name: 'button.remove', btn_func: 'delPathconfirmModal'}
+                  {btn_name: 'button.edit', btn_func: 'editRuleItem'},
+                  {btn_name: 'button.remove', btn_func: 'delRuleconfirmModal'}
                 ]}
               ],
               data: [1],
@@ -168,18 +193,19 @@ export default {
       ruleModelConfig: {
         modalId: 'rule_Modal',
         isAdd: true,
-        modalStyle: 'min-width:53px',
+        modalStyle: 'min-width:530px',
         modalTitle: 'rule',
         saveFunc: 'saveRule',
         config: [
-          {label: 'regular', value: 'regular', placeholder: 'tips.required', v_validate: 'required:true', disabled: false, type: 'text'},
-          {label: 'tags', value: 'tags', placeholder: 'tips.required', v_validate: 'required:true', disabled: false, type: 'text'},
+          {label: 'tableKey.regular', value: 'regular', placeholder: 'tips.required', v_validate: 'required:true', disabled: false, type: 'text'},
+          {label: 'tableKey.tags', value: 'tags', placeholder: 'tips.required', v_validate: 'required:true', disabled: false, type: 'text'},
           {name:'ruleConfig',type:'slot'}
         ],
         addRow: { // [通用]-保存用户新增、编辑时数据
           regular: null,
           tags: null,
-          metric_config: []
+          metric_config: [],
+          string_map: []
         },
         slotConfig: {
           aggOption: ['sum', 'avg', 'count']
@@ -203,6 +229,7 @@ export default {
       },
       id: null,
       activeData: null,
+      activeIndex: '',
       extendData: null,
     }
   },
@@ -213,13 +240,62 @@ export default {
   methods: {
     /*********/
     addEmpty (type) {
+      if (!this.ruleModelConfig.addRow[type]) {
+        this.ruleModelConfig.addRow[type] = []
+      }
       if (type === 'metric_config') {
-        this.ruleModelConfig.addRow.metric_config.push({
+        this.ruleModelConfig.addRow[type].push({
           key: '',
           metric: '',
           agg_type: 'avg'
         })
+      } else {
+        this.ruleModelConfig.addRow[type].push({
+          key: '',
+          string_value: '',
+          int_value: 0
+        })
       }
+    },
+    deleterule(type, index) {
+      this.ruleModelConfig.addRow[type].splice(index, 1)
+    },
+    saveRule () {
+      this.$validator.validate().then(result => {
+        if (!result) return
+        let params = null
+        if (this.ruleModelConfig.isAdd === true) {
+          let newRow = JSON.parse(JSON.stringify(this.ruleModelConfig.addRow))
+          newRow.id = 0
+          let newData = JSON.parse(JSON.stringify(this.activeData))
+          newData.rules.push(newRow)
+          const index = this.pageConfig.table.tableData.findIndex(item => item.id === this.activeData.id)
+          this.pageConfig.table.tableData[index] = newData
+          params = {
+            endpoint_id: this.endpointID,
+            path_list: this.pageConfig.table.tableData,
+          }
+        } else {
+          // 获取上层数据序号
+          const index = this.pageConfig.table.tableData.findIndex(item => item.id === this.activeData.pId)
+          let copyData = JSON.parse(JSON.stringify(this.pageConfig.table.tableData))
+          console.log(copyData)
+          let allRules = copyData[index].rules
+          const ruleIndex = allRules.findIndex(item => item.id === this.activeData.id)
+          console.log(allRules,ruleIndex)
+          let newRow = JSON.parse(JSON.stringify(this.ruleModelConfig.addRow))
+          allRules[ruleIndex] = newRow
+          params = {
+            endpoint_id: this.endpointID,
+            path_list: copyData,
+          }
+        }
+        this.$root.$httpRequestEntrance.httpRequestEntrance('POST', 'monitor/api/v1/alarm/business/update', params, () => {
+          this.$Message.success(this.$t('tips.success'))
+          this.$root.JQ('#rule_Modal').modal('hide')
+          this.requestData(this.endpointID)
+        })
+      })
     },
     /*********/
     typeChange() {
@@ -249,6 +325,7 @@ export default {
       this.totalPageConfig = []
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', 'monitor/api/v1/alarm/business/list', params, (responseData) => {
         this.pageConfig.table.tableData = responseData.path_list
+        this.$root.$store.commit('changeTableExtendActive', -1)
       })
     },
     deleteConfirmModal (rowData) {
@@ -282,29 +359,8 @@ export default {
         this.requestData(this.endpointID)
       })
     },
-    paramsPrepare() {
-      let modelParams = {
-        path: this.modelConfig.addRow.path,
-        strategy: [{
-          keyword: this.modelConfig.addRow.keyword,
-          cond: this.modelConfig.cond + this.modelConfig.condValue,
-          last: this.modelConfig.lastValue + this.modelConfig.last,
-          priority: this.modelConfig.priority
-        }]
-      }
-      if (this.type === 'grp') {
-        modelParams.grp_id = this.typeValue
-        modelParams.endpoint_id = 0
-      } else {
-        modelParams.endpoint_id = parseInt(this.typeValue)
-        modelParams.grp_id = 0
-      }
-              
-      return modelParams
-    },
-    singeAddF (rowData) {
+    singleAddF (rowData) {
       this.activeData = rowData
-      // this.ruleModelConfig.addRow.path = rowData.path
       this.ruleModelConfig.isAdd = true
       this.$root.JQ('#rule_Modal').modal('show')
     },
@@ -364,42 +420,20 @@ export default {
         })
       })
     },
-    savePath () {
-      let params = {
-        id: this.activeData.id,
-        tpl_id: this.activeData.tpl_id,
-        path: this.pathModelConfig.addRow.path
-      }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.logManagement.editList.api, params, () => {
-        this.$Message.success(this.$t('tips.success'))
-        this.$root.JQ('#path_Modal').modal('hide')
-        this.requestData(this.typeValue)
-      })
-    },
     getExtendInfo(item){
-      console.log(item)
-      console.log(this.pageConfig.table.isExtend.detailConfig)
+      item.rules.forEach(xx => xx.pId = item.id)
       this.pageConfig.table.isExtend.detailConfig[0].data = item.rules
     },
-    editPathItem (rowData) {
-      this.modelConfig.isAdd = false
-      this.id = rowData.id
-      this.extendData = rowData
-      this.modelTip.value = rowData.id
-      this.modelConfig.addRow = this.$root.$tableUtil.manageEditParams(this.modelConfig.addRow, rowData)
-      let cond = rowData.cond.split('')
-      if (cond.indexOf('=') > 0) {
-        this.modelConfig.cond = cond.slice(0,2).join('')
-        this.modelConfig.condValue = cond.slice(2).join('')
-      } else {
-        this.modelConfig.cond = cond.slice(0,1).join('')
-        this.modelConfig.condValue = cond.slice(1).join('')
-      }
-      let last = rowData.last
-      this.modelConfig.last = last.substring(last.length-1)
-      this.modelConfig.lastValue = last.substring(0,last.length-1)
-      this.modelConfig.priority = rowData.priority
-      this.$root.JQ('#add_edit_Modal').modal('show')
+    editRuleItem (rowData) {
+      this.ruleModelConfig.isAdd = false
+      // 获取上层数据序号
+      const index = this.pageConfig.table.tableData.findIndex(item => item.id === rowData.pId)
+      let copyData = JSON.parse(JSON.stringify(this.pageConfig.table.tableData))
+      let allRules = copyData[index].rules
+      const ruleIndex = allRules.findIndex(item => item.id === rowData.id)
+      this.ruleModelConfig.addRow = allRules[ruleIndex]
+      this.activeData = allRules[ruleIndex]
+      this.$root.JQ('#rule_Modal').modal('show')
     },
     delPathconfirm (rowData) {
       this.$delConfirm({
@@ -409,22 +443,30 @@ export default {
         }
       })
     },
-    delPathconfirmModal (rowData) {
+    delRuleconfirmModal (rowData) {
       this.selectedData = rowData
       this.isShowWarningDelete = true
     },
     okDelRow () {
-      this.delPathItem(this.selectedData)
+      this.delRuleItem(this.selectedData)
     },
     cancleDelRow () {
       this.isShowWarningDelete = false
     },
-    delPathItem (rowData) {
-      let params = {id: rowData.id}
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.logManagement.delete.api, params, () => {
-        // this.$root.$eventBus.$emit('hideConfirmModal')
+    delRuleItem (rowData) {
+      // 获取上层数据序号
+      const index = this.pageConfig.table.tableData.findIndex(item => item.id === rowData.pId)
+      let copyData = JSON.parse(JSON.stringify(this.pageConfig.table.tableData))
+      let allRules = copyData[index].rules
+      const ruleIndex = allRules.findIndex(item => item.id === rowData.id)
+      allRules.splice(ruleIndex, 1)
+      const params = {
+        endpoint_id: this.endpointID,
+        path_list: copyData,
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', 'monitor/api/v1/alarm/business/update', params, () => {
         this.$Message.success(this.$t('tips.success'))
-        this.requestData(this.typeValue)
+        this.requestData(this.endpointID)
       })
     }
   },
