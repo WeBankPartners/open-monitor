@@ -76,6 +76,7 @@ type businessStoreMonitorObj struct {
 type businessStoreMetricObj struct {
 	Regular  string  `json:"regular"`
 	StringMap  []*businessStringMapObj  `json:"string_map"`
+	TagsString  string  `json:"tags_string"`
 	TagsKey  []string  `json:"tags_key"`
 	TagsValue  []string  `json:"tags_value"`
 	MetricConfig  []*businessMetricConfigObj  `json:"metric_config"`
@@ -85,6 +86,7 @@ type businessRuleObj struct {
 	Regular  string  `json:"regular"`
 	RegExp  *regexp.Regexp  `json:"-"`
 	StringMap  []*businessStringMapObj  `json:"string_map"`
+	TagsString  string  `json:"tags_string"`
 	TagsKey  []string  `json:"tags_key"`
 	TagsValue  []string  `json:"tags_value"`
 	MetricConfig  []*businessMetricConfigObj  `json:"metric_config"`
@@ -138,7 +140,16 @@ func (c *businessMonitorObj) start()  {
 		level.Error(newLogger).Log("msg",fmt.Sprintf("start business collector fail, path: %s, error: %v", c.Path, err))
 		return
 	}
+	firstFlag := true
+	timeNow := time.Now()
 	for line := range c.TailSession.Lines {
+		if firstFlag {
+			if time.Now().Sub(timeNow).Seconds() >= 5 {
+				firstFlag = false
+			}else {
+				continue
+			}
+		}
 		c.Lock.RLock()
 		for _,rule := range c.Rules {
 			fetchList := rule.RegExp.FindStringSubmatch(line.Text)
@@ -182,6 +193,7 @@ func BusinessMonitorHttpHandle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var param []*businessAgentDto
+	level.Info(newLogger).Log("http_param", string(buff))
 	err = json.Unmarshal(buff, &param)
 	if err != nil {
 		errorMsg = fmt.Sprintf("Handel business monitor http request fail,json unmarshal error: %v \n", err)
@@ -227,6 +239,7 @@ func BusinessMonitorHttpHandle(w http.ResponseWriter, r *http.Request) {
 				tmpRuleObj.MetricConfig = vv.MetricConfig
 				tmpRuleObj.Regular = vv.Regular
 				tmpRuleObj.RegExp = transBusinessRegular(vv.Regular)
+				tmpRuleObj.TagsString = vv.Tags
 				var tmpTagsKey,tmpTagsValue []string
 				for _,tmpKey := range strings.Split(vv.Tags, ",") {
 					tmpTagsKey = append(tmpTagsKey, tmpKey)
@@ -251,7 +264,7 @@ func updateBusinessRules(bmo *businessMonitorObj,config  *businessAgentDto)  {
 	for _,v := range bmo.Rules {
 		delFlag := true
 		for _,vv := range config.Config {
-			if vv.Regular == v.Regular {
+			if vv.Regular == v.Regular && vv.Tags == v.TagsString {
 				delFlag = false
 				v.StringMap = vv.StringMap
 				v.MetricConfig = vv.MetricConfig
@@ -282,7 +295,7 @@ func updateBusinessRules(bmo *businessMonitorObj,config  *businessAgentDto)  {
 	for _,v := range config.Config {
 		addFlag := true
 		for _,vv := range newRules {
-			if v.Regular == vv.Regular {
+			if v.Regular == vv.Regular && v.Tags == vv.TagsString {
 				addFlag = false
 				break
 			}
@@ -293,6 +306,7 @@ func updateBusinessRules(bmo *businessMonitorObj,config  *businessAgentDto)  {
 			tmpRuleObj.MetricConfig = v.MetricConfig
 			tmpRuleObj.Regular = v.Regular
 			tmpRuleObj.RegExp = transBusinessRegular(v.Regular)
+			tmpRuleObj.TagsString = v.Tags
 			var tmpTagsKey,tmpTagsValue []string
 			for _,tmpKey := range strings.Split(v.Tags, ",") {
 				tmpTagsKey = append(tmpTagsKey, tmpKey)
@@ -319,7 +333,7 @@ func (c *businessCollectorStore) Save()  {
 	for _,v := range businessMonitorJobs {
 		var newStoreRules []*businessStoreMetricObj
 		for _,vv := range v.Rules {
-			newStoreRules = append(newStoreRules, &businessStoreMetricObj{Regular: vv.Regular, StringMap: vv.StringMap, MetricConfig: vv.MetricConfig, TagsKey: vv.TagsKey, TagsValue: vv.TagsValue})
+			newStoreRules = append(newStoreRules, &businessStoreMetricObj{Regular: vv.Regular, StringMap: vv.StringMap, MetricConfig: vv.MetricConfig, TagsKey: vv.TagsKey, TagsValue: vv.TagsValue, TagsString: vv.TagsString})
 		}
 		c.Data = append(c.Data, &businessStoreMonitorObj{Path: v.Path,Rules: newStoreRules})
 	}
@@ -354,7 +368,7 @@ func (c *businessCollectorStore) Load()  {
 			newBusinessMonitorObj := businessMonitorObj{Path: v.Path}
 			newBusinessMonitorObj.Lock = new(sync.RWMutex)
 			for _,vv := range v.Rules {
-				tmpRuleObj := businessRuleObj{Regular: vv.Regular, MetricConfig: vv.MetricConfig, StringMap: vv.StringMap, TagsKey: vv.TagsKey, TagsValue: vv.TagsValue}
+				tmpRuleObj := businessRuleObj{Regular: vv.Regular, MetricConfig: vv.MetricConfig, StringMap: vv.StringMap, TagsKey: vv.TagsKey, TagsValue: vv.TagsValue, TagsString: vv.TagsString}
 				tmpRuleObj.RegExp = transBusinessRegular(vv.Regular)
 				tmpRuleObj.DataChannel = make(chan map[string]interface{}, 10000)
 				newBusinessMonitorObj.Rules = append(newBusinessMonitorObj.Rules, &tmpRuleObj)
@@ -396,7 +410,7 @@ func calcBusinessAggData()  {
 		for _,rule := range v.Rules {
 			dataLength := len(rule.DataChannel)
 			if dataLength == 0 {
-				break
+				continue
 			}
 			valueCountMap := make(map[string]*businessValueObj)
 			for i:=0;i<dataLength;i++ {
@@ -422,8 +436,13 @@ func calcBusinessAggData()  {
 								}
 							}
 						}
-						valueCountMap[fmt.Sprintf("%s^%s^%s^%s", metricConfig.Key, metricConfig.AggType, metricConfig.Metric, tmpTagString)].Sum += metricValueFloat
-						valueCountMap[fmt.Sprintf("%s^%s^%s^%s", metricConfig.Key, metricConfig.AggType, metricConfig.Metric, tmpTagString)].Count ++
+						tmpMapKey := fmt.Sprintf("%s^%s^%s^%s", metricConfig.Key, metricConfig.AggType, metricConfig.Metric, tmpTagString)
+						if _,keyExist:=valueCountMap[tmpMapKey];keyExist {
+							valueCountMap[tmpMapKey].Sum += metricValueFloat
+							valueCountMap[tmpMapKey].Count++
+						}else{
+							valueCountMap[tmpMapKey] = &businessValueObj{Sum: metricValueFloat, Count: 1, Avg: 0}
+						}
 					}
 				}
 			}
