@@ -179,3 +179,7 @@ CREATE TABLE `business_monitor_cfg` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 #@v1.10.0.3-end@;
+
+#@v1.10.0.5-begin@;
+update chart set legend='$app_metric' where legend='$key';
+#@v1.10.0.5-end@;
