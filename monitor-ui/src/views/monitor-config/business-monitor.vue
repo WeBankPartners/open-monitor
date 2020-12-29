@@ -198,7 +198,7 @@ export default {
         saveFunc: 'saveRule',
         config: [
           {label: 'tableKey.regular', value: 'regular', placeholder: 'tips.required', v_validate: 'required:true', disabled: false, type: 'text'},
-          {label: 'tableKey.tags', value: 'tags', placeholder: 'tips.required', v_validate: 'required:true', disabled: false, type: 'text'},
+          {label: 'tableKey.tags', value: 'tags', placeholder: '', disabled: false, type: 'text'},
           {name:'ruleConfig',type:'slot'}
         ],
         addRow: { // [通用]-保存用户新增、编辑时数据
