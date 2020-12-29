@@ -688,11 +688,12 @@ func GetChart(c *gin.Context)  {
 		}
 		eOption.Legend = append(eOption.Legend, s.Name)
 		if eOption.Title == "${auto}" {
-			if strings.Contains(s.Name, ":") {
-				eOption.Title = s.Name[strings.Index(s.Name, ":")+1:]
-			}else{
-				eOption.Title = s.Name
-			}
+			eOption.Title = s.Name[:strings.Index(s.Name, "{")]
+			//if strings.Contains(s.Name, ":") {
+			//	eOption.Title = s.Name[strings.Index(s.Name, ":")+1:]
+			//}else{
+			//	eOption.Title = s.Name
+			//}
 		}
 		if agg > 1 {
 			if paramConfig[0].Aggregate != "" {
