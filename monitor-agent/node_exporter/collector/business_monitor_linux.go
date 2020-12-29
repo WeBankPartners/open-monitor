@@ -478,7 +478,17 @@ func printReflectString(input interface{}) string {
 	}else if strings.Contains(typeString, "int") {
 		outputString = fmt.Sprintf("%d", input)
 	}else if strings.Contains(typeString, "float") {
-		outputString = fmt.Sprintf("%.0f", input)
+		outputString = fmt.Sprintf("%.6f", input)
+		for i:=0;i<6;i++ {
+			if outputString[len(outputString)-1:] == "0" {
+				outputString = outputString[:len(outputString)-1]
+			}else{
+				break
+			}
+		}
+		if outputString[len(outputString)-1:] == "." {
+			outputString = outputString[:len(outputString)-1]
+		}
 	}
 	return outputString
 }
