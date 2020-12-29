@@ -468,6 +468,9 @@ func calcBusinessAggData()  {
 }
 
 func printReflectString(input interface{}) string {
+	if input == nil {
+		return ""
+	}
 	outputString := ""
 	typeString := reflect.TypeOf(input).String()
 	if strings.Contains(typeString, "string") {
