@@ -238,7 +238,7 @@ func BusinessMonitorHttpHandle(w http.ResponseWriter, r *http.Request) {
 				tmpRuleObj.StringMap = vv.StringMap
 				tmpRuleObj.MetricConfig = vv.MetricConfig
 				tmpRuleObj.Regular = vv.Regular
-				tmpRuleObj.RegExp = transBusinessRegular(vv.Regular)
+				tmpRuleObj.RegExp = regexp.MustCompile(vv.Regular)
 				tmpRuleObj.TagsString = vv.Tags
 				var tmpTagsKey,tmpTagsValue []string
 				for _,tmpKey := range strings.Split(vv.Tags, ",") {
@@ -305,7 +305,7 @@ func updateBusinessRules(bmo *businessMonitorObj,config  *businessAgentDto)  {
 			tmpRuleObj.StringMap = v.StringMap
 			tmpRuleObj.MetricConfig = v.MetricConfig
 			tmpRuleObj.Regular = v.Regular
-			tmpRuleObj.RegExp = transBusinessRegular(v.Regular)
+			tmpRuleObj.RegExp = regexp.MustCompile(v.Regular)
 			tmpRuleObj.TagsString = v.Tags
 			var tmpTagsKey,tmpTagsValue []string
 			for _,tmpKey := range strings.Split(v.Tags, ",") {
@@ -369,7 +369,7 @@ func (c *businessCollectorStore) Load()  {
 			newBusinessMonitorObj.Lock = new(sync.RWMutex)
 			for _,vv := range v.Rules {
 				tmpRuleObj := businessRuleObj{Regular: vv.Regular, MetricConfig: vv.MetricConfig, StringMap: vv.StringMap, TagsKey: vv.TagsKey, TagsValue: vv.TagsValue, TagsString: vv.TagsString}
-				tmpRuleObj.RegExp = transBusinessRegular(vv.Regular)
+				tmpRuleObj.RegExp = regexp.MustCompile(vv.Regular)
 				tmpRuleObj.DataChannel = make(chan map[string]interface{}, 10000)
 				newBusinessMonitorObj.Rules = append(newBusinessMonitorObj.Rules, &tmpRuleObj)
 			}
@@ -382,12 +382,12 @@ func (c *businessCollectorStore) Load()  {
 	businessMonitorLock.Unlock()
 }
 
-func transBusinessRegular(regRuleString string) *regexp.Regexp {
-	regRuleString = strings.ReplaceAll(regRuleString, "[", "\\[")
-	regRuleString = strings.ReplaceAll(regRuleString, "]", "\\]")
-	regRuleString = strings.ReplaceAll(regRuleString, "${json_content}", "(.*)")
-	return regexp.MustCompile(regRuleString)
-}
+//func transBusinessRegular(regRuleString string) *regexp.Regexp {
+//	regRuleString = strings.ReplaceAll(regRuleString, "[", "\\[")
+//	regRuleString = strings.ReplaceAll(regRuleString, "]", "\\]")
+//	regRuleString = strings.ReplaceAll(regRuleString, "${json_content}", "(.*)")
+//	return regexp.MustCompile(regRuleString)
+//}
 
 func StartBusinessAggCron()  {
 	t := time.NewTicker(10*time.Second).C
@@ -426,7 +426,7 @@ func calcBusinessAggData()  {
 				}
 				for _,metricConfig := range rule.MetricConfig {
 					if metricValue,b:=tmpMapData[metricConfig.Key];b {
-						metricValueString := fmt.Sprintf("%s", metricValue)
+						metricValueString := printReflectString(metricValue)
 						metricValueFloat,parseError := strconv.ParseFloat(metricValueString,64)
 						if parseError != nil {
 							for _,tmpStringMapObj := range rule.StringMap {
