@@ -200,7 +200,11 @@ func GetSerialName(query *m.QueryMonitorData,tagMap map[string]string,dataLength
 		}
 	}
 	if legend == "$app_metric" {
-		tmpName = fmt.Sprintf("%s{agg=%s,%s}", tagMap["key"], tagMap["agg"],tagMap["tags"])
+		if _,b:=tagMap["key"];b {
+			tmpName = fmt.Sprintf("%s{agg=%s,%s}", tagMap["key"], tagMap["agg"], tagMap["tags"])
+		}else{
+			tmpName = metric
+		}
 	}
 	if query.CompareLegend != "" {
 		tmpName = fmt.Sprintf("%s_%s", query.CompareLegend, tmpName)
