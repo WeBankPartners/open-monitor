@@ -221,7 +221,7 @@ func fetchBusinessPanel(endpoint string) (err error,result m.PanelModel) {
 		for _,rule := range path.Rules {
 			for _,metricConfig := range rule.MetricConfig {
 				promMetricKeys = append(promMetricKeys, metricConfig.Metric)
-				tmpChartObj := m.ChartModel{Id: chartTable[0].Id, Endpoint: []string{endpoint}, Url: chartTable[0].Url}
+				tmpChartObj := m.ChartModel{Id: chartTable[0].Id, Endpoint: []string{realEndpoint}, Url: chartTable[0].Url}
 				tmpChartObj.Title = metricConfig.Title
 				tmpChartObj.Metric = []string{fmt.Sprintf("%s/path=%s,key=%s", chartTable[0].Metric, path.Path, metricConfig.Metric)}
 				result.Charts = append(result.Charts, &tmpChartObj)
