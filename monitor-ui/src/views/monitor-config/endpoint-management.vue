@@ -133,37 +133,6 @@
       </section>
     </div>
   </ModalComponent>
-  <ModalComponent :modelConfig="businessConfigModel">
-    <div slot="businessConfig">
-      <section>
-        <div style="display: flex;">
-          <div class="port-title">
-            <span>{{$t('tableKey.logPath')}}:</span>
-          </div>
-          <div class="port-title">
-            <span>{{$t('field.endpoint')}}:</span>
-          </div>
-        </div>
-      </section>
-      <section v-for="(pm, pmIndex) in businessConfigModel.pathMsg" :key="pmIndex">
-        <div class="port-config">
-          <div style="width: 48%">
-            <input type="text" v-model.trim="pm.path" class="search-input" style="width: 95%" />
-            <label class="required-tip">*</label>
-          </div>
-          <div style="width: 48%">
-            <Select v-model="pm.owner_endpoint" style="width: 95%">
-              <Option v-for="item in businessConfigModel.allPath" :value="item.guid" :key="item.guid">
-                {{item.guid}}
-              </Option>
-            </Select>
-          </div>
-          <i class="fa fa-trash-o port-config-icon" v-if="businessConfigModel.pathMsg.length > 1" @click="delBusiness(pmIndex)" aria-hidden="true"></i>
-          <i class="fa fa-plus-square-o port-config-icon" @click="addBusiness" :style="{'visibility': pmIndex+1===businessConfigModel.pathMsg.length?  'unset' : 'hidden'}" aria-hidden="true"></i>
-        </div>
-      </section>
-    </div>
-  </ModalComponent>
   <ModalComponent :modelConfig="portModel">
     <div slot="port">
       <section>
@@ -201,6 +170,38 @@
   <Modal v-model="isShowDataMonitor" :title="$t('button.dataMonitoring')" :styles="{top: '100px',width: '1000px'}" footer-hide>
     <DataMonitor :endpointId="dbEndpointId" ref="dataMonitor"></DataMonitor>
   </Modal>
+
+  <ModalComponent :modelConfig="maintenanceWindowModel">
+    <template #maintenanceWindow>
+      <div style="margin: 4px 12px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
+        <template v-for="(item, index) in maintenanceWindowModel.result">
+          <p :key="index" style="margin:6px 0">
+            <Button
+              @click="deleteMaintenanceWindow(index)"
+              size="small"
+              style="background-color: #ff9900;border-color: #ff9900;"
+              type="error"
+              icon="md-close"
+            ></Button>
+            <TimePicker format="HH:mm" type="timerange" v-model="item.time_list" :clearable="false" style="width: 200px"></TimePicker>
+            <Select v-model="item.weekday" multiple filterable style="width:200px">
+              <Option v-for="cycle in maintenanceWindowModel.cycleOption" :value="cycle" :key="cycle">{{
+                cycle
+              }}</Option>
+            </Select>
+          </p>
+        </template>
+        <Button
+          @click="addEmptyMaintenanceWindow"
+          type="success"
+          size="small"
+          style="background-color: #0080FF;border-color: #0080FF;"
+          long
+          >{{ $t('button.add') }}</Button
+        >
+      </div>
+    </template>
+  </ModalComponent>
 </div>
 </template>
 
@@ -317,6 +318,10 @@ const btn = [{
     btn_name: 'button.dataMonitoring',
     btn_func: 'dataMonitor'
   },
+  {
+    btn_name: 'button.maintenanceWindow',
+    btn_func: 'maintenanceWindow'
+  }
 ]
 export default {
   name: '',
@@ -499,21 +504,20 @@ export default {
         process_list: [],
       },
 
-      businessConfigModel: {
-        modalId: 'business_config_model',
-        modalTitle: 'button.businessConfiguration',
+      maintenanceWindowModel: {
+        modalId: 'maintenance_window_model',
+        modalTitle: 'button.maintenanceWindow',
         isAdd: true,
-        saveFunc: 'businessConfigSave',
+        saveFunc: 'maintenanceWindowSave',
         config: [{
-          name: 'businessConfig',
+          name: 'maintenanceWindow',
           type: 'slot'
         }],
         addRow: {
-          businessSet: [],
+          // businessSet: [],
         },
-        allPath: [],
-        pathMsg: [],
-        businessName: ''
+        result: [],
+        cycleOption: ['All', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
       },
       id: null,
       showGroupMsg: false,
@@ -556,6 +560,40 @@ export default {
     }
   },
   methods: {
+    maintenanceWindowSave () {
+      this.maintenanceWindowModel.result.forEach(item => {
+        item.weekday = item.weekday.join(',')
+      })
+      const params = {
+        endpoint: this.id,
+        data: this.maintenanceWindowModel.result
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.endpointManagement.maintenanceWindow.update, params, () => {
+        this.$root.JQ('#maintenance_window_model').modal('hide')
+      })
+    },
+    maintenanceWindow (rowData) {
+      this.id = rowData.guid
+      const params = {
+        endpoint: rowData.guid
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.endpointManagement.maintenanceWindow.get, params, (responseData) => {
+        this.maintenanceWindowModel.result = []
+        responseData.forEach(item => {
+          this.maintenanceWindowModel.result.push({
+            time_list: item.time_list,
+            weekday: item.weekday.split(',')
+          })
+        })
+        this.$root.JQ('#maintenance_window_model').modal('show')
+      })
+    },
+    deleteMaintenanceWindow (index) {
+      this.maintenanceWindowModel.result.splice(index, 1)
+    },
+    addEmptyMaintenanceWindow () {
+      this.maintenanceWindowModel.result.push({time_list: ['00:00', '00:00'], weekday: ['All']})
+    },
     dataMonitor(row) {
       this.dbEndpointId = row.id
       const params = {
@@ -594,7 +632,7 @@ export default {
       this.$root.$tableUtil.initTable(this, 'GET', url, params)
     },
     filterMoreBtn(rowData) {
-      let moreBtnGroup = ['thresholdConfig', 'historyAlarm', 'deleteConfirmModal']
+      let moreBtnGroup = ['thresholdConfig', 'historyAlarm', 'maintenanceWindow', 'deleteConfirmModal']
       if (rowData.type === 'host') {
         moreBtnGroup.push('processManagement', 'businessManagement', 'logManagement', 'portManagement')
       }
@@ -609,7 +647,7 @@ export default {
     add() {
       this.modelConfig.slotConfig.resourceOption = []
       this.modelConfig.slotConfig.resourceSelected = []
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', 'alarm/endpoint/list', {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v1/alarm/endpoint/list', {
         search: '.',
         page: 1,
         size: 300
@@ -747,7 +785,7 @@ export default {
       this.processConfigModel.processName = ''
       this.id = rowData.id
       this.processConfigModel.addRow.processSet = []
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', 'alarm/process/list', {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v1/alarm/process/list', {
         id: this.id
       }, responseData => {
         if (!responseData.length) {
@@ -774,7 +812,7 @@ export default {
         process_list: this.processConfigModel.process_list,
         check: true
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', 'alarm/process/update', params, () => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/alarm/process/update', params, () => {
         this.$Message.success(this.$t('tips.success'))
       })
       this.$root.JQ('#process_config_model').modal('hide')
@@ -798,43 +836,7 @@ export default {
     },
 
     businessManagement(rowData) {
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.pageConfig.CRUD + '?page=1&size=1000', '', responseData => {
-        this.businessConfigModel.allPath = responseData.data.map(t => {
-          t.id = Number(t.id)
-          return t
-        })
-      })
-      this.id = rowData.id
-      this.businessConfigModel.addRow.businessSet = []
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', 'alarm/business/list', {
-        id: this.id
-      }, responseData => {
-        if (!responseData.length) {
-          responseData.push({
-            owner_endpoint: null,
-            path: null
-          })
-        }
-        this.businessConfigModel.pathMsg = responseData
-        this.$root.JQ('#business_config_model').modal('show')
-      })
-    },
-    businessConfigSave() {
-      const emptyBusindess = this.businessConfigModel.pathMsg.some(t => {
-        return !t.path
-      })
-      if (emptyBusindess) {
-        this.$Message.warning(this.$t('tableKey.path') + this.$t('tips.required'))
-        return
-      }
-      const params = {
-        endpoint_id: +this.id,
-        path_list: this.businessConfigModel.pathMsg
-      }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', 'alarm/business/update', params, () => {
-        this.$Message.success(this.$t('tips.success'))
-        this.$root.JQ('#business_config_model').modal('hide')
-      })
+      this.$router.push({name: 'businessMonitor', params: rowData})
     },
     addBusiness() {
       const emptyPath = this.businessConfigModel.pathMsg.some(t => {
@@ -857,7 +859,7 @@ export default {
       let params = {
         guid: rowData.guid
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', 'agent/export/endpoint/telnet/get', params, (responseData) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v1/agent/export/endpoint/telnet/get', params, (responseData) => {
         if (!responseData.length) {
           responseData.push({
             port: null,
@@ -898,7 +900,7 @@ export default {
         guid: this.id,
         config: temp
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', 'agent/export/endpoint/telnet/update', params, () => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/agent/export/endpoint/telnet/update', params, () => {
         this.$Message.success(this.$t('tips.success'))
         this.$root.JQ('#port_Modal').modal('hide')
       })

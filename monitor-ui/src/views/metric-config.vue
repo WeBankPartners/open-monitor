@@ -28,6 +28,15 @@
           @on-change="selectMetric" @on-open-change="metricSelectOpen" :placeholder="$t('placeholder.metric')">
           <Option v-for="item in metricList" :value="item.id + '^^' + item.prom_ql" :key="item.metric">{{item.metric}}</Option>
       </Select>
+      <DatePicker 
+        type="datetimerange" 
+        :value="dateRange" 
+        format="yyyy-MM-dd HH:mm:ss" 
+        placement="bottom-start" 
+        @on-change="datePick" 
+        :placeholder="$t('placeholder.datePicker')" 
+        style="width: 320px">
+      </DatePicker>
       <Select v-model="timeTnterval" style="width:80px;margin: 0 8px;">
         <Option v-for="item in dataPick" :value="item.value" :key="item.value">{{ item.label }}</Option>
       </Select>
@@ -109,6 +118,8 @@ export default {
       metricSelectedOptions: [],
       metricList: [],
 
+      dateRange: ['', ''],
+
       timeTnterval: -1800,
       dataPick: dataPick,
 
@@ -174,6 +185,14 @@ export default {
     this.getEndpointList('.')
   },
   methods: {
+    datePick (data) {
+      this.dateRange = data
+      if (this.dateRange[0] && this.dateRange[1]) {
+        if (this.dateRange[0] === this.dateRange[1]) {
+          this.dateRange[1] = this.dateRange[1].replace('00:00:00', '23:59:59')
+        }
+      }
+    },
     getEndpointList(query) {
       let params = {
         search: query,
@@ -265,7 +284,7 @@ export default {
         this.metricList = responseData
       })
     },
-    getChartData (tmp, start, end) {
+    getChartData () {
       this.noDataTip = false
       if (this.$root.$validate.isEmpty_reset(this.totalMetric)) {
         this.$Message.warning(this.$t('tableKey.s_metric')+this.$t('tips.required'))
@@ -285,8 +304,8 @@ export default {
           prom_ql: item.value,
           metric: item.label,
           time: this.timeTnterval + '',
-          start: start,
-          end: end
+          start: this.dateRange[0] ===''? '':Date.parse(this.dateRange[0].replace(/-/g, '/'))/1000+'',
+          end: this.dateRange[1] ===''? '':Date.parse(this.dateRange[1].replace(/-/g, '/'))/1000+''
         })
       })
       if (!requestFlag) {

@@ -41,10 +41,10 @@
 
 	![open-monitor-dir](images/open-monitor-dir.png)
 	
-2. 拉取wecube-prometheus基础镜像和golang:1.12.5镜像
+2. 拉取wecube-prometheus基础镜像和golang:1.15.6镜像
     ```bash
     docker pull ccr.ccs.tencentyun.com/webankpartners/wecube-prometheus:v1.0
-    docker pull golang:1.12.5
+    docker pull golang:1.15.6
     ```
     wecube-prometheus基础镜像是在platten/alpine-oracle-jre8-docker标准镜像上放入原生Prometheus和Alertmanager二进制程序的封装镜像，
     v1.0里的Prometheus版本为2.20.1，Alertmanager版本为0.21.0  

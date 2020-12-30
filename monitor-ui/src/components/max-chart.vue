@@ -149,8 +149,7 @@ export default {
         params.end = end ? end : (this.chartCondition.dateRange[1] ===''? 
           '':Date.parse(this.chartCondition.dateRange[1].replace(/-/g, '/'))/1000 + '')
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/dashboard/newchart', [params], responseData => {
-      
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.metricConfigView.api, [params], responseData => {
         const chartConfig = {eye: false,clear:true, zoomCallback: true}
         readyToDraw(this,responseData, 1, chartConfig)
       })
