@@ -14,7 +14,7 @@
             @on-clear="clearEndpoint"
             >
             <Option v-for="(option, index) in endpointOptions" :value="option.id" :key="index">
-             <Tag color="cyan" class="tag-width" v-if="option.type == 'host'">host</Tag>{{option.guid}}</Option>
+             <Tag color="cyan" class="tag-width" v-if="option.type == 'host'">host</Tag>{{option.option_text}}11</Option>
           </Select>
         </li>
       </ul>
@@ -35,7 +35,7 @@
           <div class="marginbottom params-each">
             <label class="col-md-2 label-name">{{$t('field.endpoint')}}:</label>
             <Select v-model="modelConfig.addRow.owner_endpoint" style="width:338px">
-              <Option v-for="item in modelConfig.slotConfig.endpointOption" :value="item.guid" :key="item.guid">{{ item.groups_name }}</Option>
+              <Option v-for="item in modelConfig.slotConfig.endpointOption" :value="item.guid" :key="item.guid">{{ item.guid }}</Option>
             </Select>
           </div>
         </div>
@@ -242,6 +242,9 @@ export default {
       this.endpointGuid = this.$route.params.guid
       this.requestData(this.endpointID)
     }
+  },
+  beforeDestroy () {
+    this.$root.$store.commit('changeTableExtendActive', -1)
   },
   methods: {
     /*********/
