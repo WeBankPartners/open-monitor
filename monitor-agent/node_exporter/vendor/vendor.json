@@ -1,15 +1,15 @@
 {
 	"comment": "",
-	"ignore": "test",
+	"ignore": "",
 	"package": [
 		{
-			"checksumSHA1": "Ox5LkTafijv6NKp4hSHpQQJTS7k=",
+			"checksumSHA1": "G+FktTXafCd1VSIrc4955lUehNw=",
 			"path": "github.com/hpcloud/tail",
 			"revision": "a1dbeea552b7c8df4b542c66073e393de198a800",
 			"revisionTime": "2018-05-14T19:44:41Z"
 		},
 		{
-			"checksumSHA1": "/vOFpWVxFSz6spvdjByFbq4zgXY=",
+			"checksumSHA1": "nPqQFoEBNdAD5CB70jy6mNxYaGU=",
 			"path": "github.com/hpcloud/tail/ratelimiter",
 			"revision": "a1dbeea552b7c8df4b542c66073e393de198a800",
 			"revisionTime": "2018-05-14T19:44:41Z"
@@ -33,29 +33,6 @@
 			"revisionTime": "2018-05-14T19:44:41Z"
 		},
 		{
-			"checksumSHA1": "NaoYWMJoqvHk9x3vUddGfovHUH8=",
-			"path": "github.com/toolkits/file",
-			"revision": ""
-		},
-		{
-			"checksumSHA1": "UJ3naBYDRc2u1NMWcoE29hi1IgI=",
-			"path": "github.com/toolkits/nux",
-			"revision": "8ddcb501004c69a2a0b11acd8e39589917b1f5c2",
-			"revisionTime": "2019-11-07T14:20:17Z"
-		},
-		{
-			"checksumSHA1": "Qiry1sk4xCNWyEomSpHx6FOdnGw=",
-			"path": "github.com/toolkits/slice",
-			"revision": "e44a80af24848e28cf208d84778e62e660303159",
-			"revisionTime": "2014-11-16T08:51:17Z"
-		},
-		{
-			"checksumSHA1": "tX4ECnkw4GfLp3P06OVhhdqpEUg=",
-			"path": "github.com/toolkits/sys",
-			"revision": "1f33b217ffafd62561fa8f5b4977dfe3099f47e3",
-			"revisionTime": "2017-06-15T10:30:26Z"
-		},
-		{
 			"checksumSHA1": "z0gRzQFyyYJrLr0tjpN17JLyxmU=",
 			"origin": "github.com/hpcloud/tail/vendor/gopkg.in/fsnotify/fsnotify.v1",
 			"path": "gopkg.in/fsnotify/fsnotify.v1",
@@ -70,5 +47,5 @@
 			"revisionTime": "2018-05-14T19:44:41Z"
 		}
 	],
-	"rootPath": "github.com/WeBankPartners/open-monitor/monitor-agent/node_exporter"
+	"rootPath": "github.com/prometheus/node_exporter"
 }

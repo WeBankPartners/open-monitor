@@ -1,11 +1,12 @@
 package collector
 
 import (
+	"github.com/go-kit/kit/log/level"
 	"net/http"
 	"sync"
 	"github.com/prometheus/client_golang/prometheus"
 	"time"
-	"github.com/prometheus/common/log"
+	"github.com/go-kit/kit/log"
 	"encoding/json"
 	"io/ioutil"
 	"fmt"
@@ -25,6 +26,7 @@ type processMonitorCollector struct {
 	processMonitor  *prometheus.Desc
 	processCpuMonitor  *prometheus.Desc
 	processMemMonitor  *prometheus.Desc
+	logger  log.Logger
 }
 
 func (c *processMonitorCollector) Update(ch chan<- prometheus.Metric) error {
@@ -44,10 +46,9 @@ func (c *processMonitorCollector) Update(ch chan<- prometheus.Metric) error {
 
 func init() {
 	registerCollector("process_num", defaultEnabled, NewProcessMonitorCollector)
-	ProcessCacheObj.init()
 }
 
-func NewProcessMonitorCollector() (Collector, error) {
+func NewProcessMonitorCollector(logger log.Logger) (Collector, error) {
 	return &processMonitorCollector{
 		processMonitor: prometheus.NewDesc(
 			prometheus.BuildFQName(namespace, "process_monitor", "count_current"),
@@ -64,6 +65,7 @@ func NewProcessMonitorCollector() (Collector, error) {
 			"Process memory used byte",
 			[]string{"name", "command"}, nil,
 		),
+		logger: logger,
 	}, nil
 }
 
@@ -90,7 +92,7 @@ type processCache struct {
 	ProcessMonitor  []*processMonitorObj
 }
 
-func (c *processCache) init()  {
+func (c *processCache) Init()  {
 	c.Running = false
 	c.Lock = new(sync.RWMutex)
 	c.ProcessMonitor = []*processMonitorObj{}
@@ -184,10 +186,10 @@ func (c *processCache) Save()  {
 	enc := gob.NewEncoder(&tmpBuffer)
 	err := enc.Encode(c.ProcessMonitor)
 	if err != nil {
-		log.Errorf("gob encode process monitor error : %v \n", err)
+		level.Error(newLogger).Log("msg",fmt.Sprintf("gob encode process monitor error : %v ", err))
 	}else{
 		ioutil.WriteFile(processFilePath, tmpBuffer.Bytes(), 0644)
-		log.Infof("write %s succeed \n", processFilePath)
+		level.Info(newLogger).Log("msg",fmt.Sprintf("write %s succeed ", processFilePath))
 	}
 }
 
@@ -196,14 +198,14 @@ func (c *processCache) Load()  {
 	defer c.Lock.Unlock()
 	file,err := os.Open(processFilePath)
 	if err != nil {
-		log.Infof("read %s file error %v \n", processFilePath, err)
+		level.Info(newLogger).Log("msg",fmt.Sprintf("read %s file error %v ", processFilePath, err))
 	}else{
 		dec := gob.NewDecoder(file)
 		err = dec.Decode(&c.ProcessMonitor)
 		if err != nil {
-			log.Errorf("gob decode %s error %v \n", processFilePath, err)
+			level.Error(newLogger).Log("msg",fmt.Sprintf("gob decode %s error %v ", processFilePath, err))
 		}else{
-			log.Infof("load %s file succeed \n", processFilePath)
+			level.Info(newLogger).Log("msg",fmt.Sprintf("load %s file succeed ", processFilePath))
 		}
 	}
 }
@@ -258,7 +260,7 @@ func ProcessMonitorHttpHandle(w http.ResponseWriter, r *http.Request)  {
 	var errorMsg string
 	if err != nil {
 		errorMsg = fmt.Sprintf("Handel process monitor http request fail,read body error: %v \n", err)
-		log.Errorln(errorMsg)
+		level.Error(newLogger).Log("msg",errorMsg)
 		w.Write([]byte(errorMsg))
 		return
 	}
@@ -266,7 +268,7 @@ func ProcessMonitorHttpHandle(w http.ResponseWriter, r *http.Request)  {
 	err = json.Unmarshal(buff, &param)
 	if err != nil {
 		errorMsg = fmt.Sprintf("Handel process monitor http request fail,json unmarshal error: %v \n", err)
-		log.Errorln(errorMsg)
+		level.Error(newLogger).Log("msg",errorMsg)
 		w.Write([]byte(errorMsg))
 		return
 	}
@@ -308,7 +310,7 @@ func getProcessUsedResource() []processUsedResource {
 	cmd := exec.Command("bash", "-c", "ps -eo 'pid,comm,pcpu,rsz,args'")
 	b,err := cmd.Output()
 	if err != nil {
-		log.Errorf("get process used resource error : %v \n", err)
+		level.Error(newLogger).Log("msg",fmt.Sprintf("get process used resource error : %v ", err))
 	}else{
 		outputList := strings.Split(string(b), "\n")
 		for _,v := range outputList {

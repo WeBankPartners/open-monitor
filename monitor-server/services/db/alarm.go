@@ -619,6 +619,9 @@ func GetAlarms(query m.AlarmTable, limit int, extLogMonitor, extOpenAlarm bool) 
 		if v.Path != "" {
 			v.IsLogMonitor = true
 		}
+		if strings.Contains(v.Content, "\n") {
+			v.Content = strings.ReplaceAll(v.Content, "\n", "<br/>")
+		}
 	}
 	if extOpenAlarm && query.SMetric == "" {
 		for _, v := range GetOpenAlarm() {
@@ -1040,7 +1043,7 @@ func SaveOpenAlarm(param m.OpenAlarmRequest) error {
 	for _, v := range param.AlertList {
 		var customAlarmId int
 		var query []*m.OpenAlarmObj
-		x.SQL("SELECT * FROM alarm_custom WHERE alert_title=? AND alert_info=? AND closed=0", v.AlertTitle, v.AlertInfo).Find(&query)
+		x.SQL("SELECT * FROM alarm_custom WHERE alert_title=? AND closed=0", v.AlertTitle).Find(&query)
 		if v.AlertLevel == "0" {
 			if len(query) > 0 {
 				tmpIds := ""
@@ -1069,7 +1072,7 @@ func SaveOpenAlarm(param m.OpenAlarmRequest) error {
 				err = fmt.Errorf("Update database fail,%s ", err.Error())
 				break
 			}
-			x.SQL("SELECT * FROM alarm_custom WHERE alert_title=? AND alert_info=?", v.AlertTitle, v.AlertInfo).Find(&query)
+			x.SQL("SELECT * FROM alarm_custom WHERE alert_title=? AND closed=0", v.AlertTitle).Find(&query)
 			for _,vv := range query {
 				customAlarmId = vv.Id
 			}
@@ -1280,7 +1283,7 @@ func QueryHistoryAlarm(param m.QueryHistoryAlarmParam) (err error, result m.Alar
 		whereSql += fmt.Sprintf(" AND s_metric='%s' ", param.Metric)
 	}
 	if param.Filter == "all" {
-		sql = "SELECT * FROM alarm WHERE (start<'" + endString + "' OR end>='" + startString + "') " + whereSql + " ORDER BY id DESC"
+		sql = "SELECT * FROM alarm WHERE not (start>'" + endString + "' OR end<='" + startString + "') " + whereSql + " ORDER BY id DESC"
 	}
 	if param.Filter == "start" {
 		sql = "SELECT * FROM alarm WHERE start>='" + startString + "' AND start<'" + endString + "' " + whereSql + " ORDER BY id DESC"
