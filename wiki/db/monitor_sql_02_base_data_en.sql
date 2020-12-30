@@ -151,3 +151,35 @@ insert  into `tpl`(`grp_id`,`endpoint_id`,`create_at`) SELECT id,0,NOW() FROM gr
 insert  into `strategy`(`tpl_id`,`metric`,`expr`,`cond`,`last`,`priority`,`content`,`config_type`) SELECT id,'pod.cpu.used.percent','rate(container_cpu_usage_seconds_total{pod="$pod",job="k8s-cadvisor-$k8s_cluster"}[60s])*100','>=85','90s','high','pod cpu used high','' FROM tpl ORDER BY id DESC LIMIT 1;
 insert  into `strategy`(`tpl_id`,`metric`,`expr`,`cond`,`last`,`priority`,`content`,`config_type`) SELECT id,'pod.mem.used.percent','100-(container_memory_usage_bytes{pod="$pod",job="k8s-cadvisor-$k8s_cluster"}/container_memory_max_usage_bytes{pod="$pod",job="k8s-cadvisor-$k8s_cluster"})*100','>=85','90s','medium','pod memory used high','' FROM tpl ORDER BY id DESC LIMIT 1;
 #@v1.9.0.12-end@;
+
+#@v1.10.0.2-begin@;
+DROP TABLE IF EXISTS `alert_window`;
+CREATE TABLE `alert_window` (
+  `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `endpoint` varchar(50) NOT NULL,
+  `start` varchar(50) NOT NULL,
+  `end` varchar(50) NOT NULL,
+  `weekday` varchar(50) NOT NULL,
+  `update_user` varchar(50) NOT NULL,
+  `update_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+#@v1.10.0.2-end@;
+
+#@v1.10.0.3-begin@;
+DROP TABLE IF EXISTS `business_monitor_cfg`;
+CREATE TABLE `business_monitor_cfg` (
+  `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `business_monitor_id` int NOT NULL,
+  `regular` varchar(255) NOT NULL,
+  `tags` varchar(255) default '',
+  `string_map` text,
+  `metric_config` text,
+  `update_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+#@v1.10.0.3-end@;
+
+#@v1.10.0.5-begin@;
+update chart set legend='$app_metric' where legend='$key';
+#@v1.10.0.5-end@;

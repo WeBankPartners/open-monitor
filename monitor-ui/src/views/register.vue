@@ -80,7 +80,7 @@ export default {
   },
   methods: {
     handleSubmit () {
-      const url =  require('../../src/assets/js/baseURL').baseURL_config + '/register'
+      const url =  require('../../src/assets/js/baseURL').baseURL_config + '/monitor/register'
       this.$refs['loginForm'].validate((valid) => {
         if (valid) {
           let Base64 = require('js-base64').Base64
