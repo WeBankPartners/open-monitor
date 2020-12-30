@@ -82,7 +82,7 @@ export default {
       let params = {
         search: query
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', 'dashboard/search', params, (responseData) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v1/dashboard/search', params, (responseData) => {
         this.allObject = []
         responseData.forEach((item) => {
             if (item.id !== -1) {
@@ -118,7 +118,7 @@ export default {
     },
     addPost () {
       const params = this.modelConfig.addRow
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', 'alarm/org/panel/add', params, () => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/alarm/org/panel/add', params, () => {
         this.$Message.success(this.$t('tips.success'))
         this.$root.JQ('#add_panel_Modal').modal('hide')
         this.getAllResource()
