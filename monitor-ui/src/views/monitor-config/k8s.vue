@@ -120,13 +120,13 @@ export default {
     },
     addPost () {
       this.modelConfig.addRow.api_server = this.modelConfig.addRow.ip + ':' + this.modelConfig.addRow.port
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/agent/kubernetes/cluster/add', this.modelConfig.addRow, () => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1//agent/kubernetes/cluster/add', this.modelConfig.addRow, () => {
         this.$root.JQ('#cluster_Modal').modal('hide')
         this.getClusterList()
       })
     },
     getClusterList () {
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/agent/kubernetes/cluster/list', '', (responseData) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1//agent/kubernetes/cluster/list', '', (responseData) => {
         this.clusterList = responseData
       })
     },
@@ -141,7 +141,7 @@ export default {
       this.isShowWarning = false
     },
     delF() {
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/agent/kubernetes/cluster/delete', this.selectedData, () => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1//agent/kubernetes/cluster/delete', this.selectedData, () => {
         this.isShowWarning = false
         this.getClusterList()
       })
@@ -157,7 +157,7 @@ export default {
       this.$root.JQ('#cluster_Modal').modal('show')
     },
     editPost () {
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/agent/kubernetes/cluster/update', this.modelConfig.addRow, () => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1//agent/kubernetes/cluster/update', this.modelConfig.addRow, () => {
         this.$root.JQ('#cluster_Modal').modal('hide')
         this.getClusterList()
       })

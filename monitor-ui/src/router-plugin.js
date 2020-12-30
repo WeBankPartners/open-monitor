@@ -10,6 +10,7 @@ import thresholdManagement from "@/views/monitor-config/threshold-management";
 import logManagement from "@/views/monitor-config/log-management";
 import resourceLevel from "@/views/monitor-config/resource-level";
 import k8s from "@/views/monitor-config/k8s";
+import businessMonitor from "@/views/monitor-config/business-monitor";
 import metricConfig from "@/views/metric-config";
 import viewConfigIndex from "@/views/custom-view/view-config-index";
 import viewConfig from "@/views/custom-view/view-config";
@@ -98,6 +99,13 @@ const router = [
         title: "k8s",
         meta: {},
         component: k8s
+      },
+      {
+        path: "businessMonitor",
+        name: "businessMonitor",
+        title: "businessMonitor",
+        meta: {},
+        component: businessMonitor
       }
     ]
   },
