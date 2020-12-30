@@ -75,6 +75,10 @@ func AcceptAlertMsg(c *gin.Context)  {
 					log.Logger.Debug("Up alarm break,endpoint not exists or stop alarm", log.String("endpoint", endpointObj.Guid))
 					continue
 				}
+				if !db.CheckEndpointActiveAlert(endpointObj.Guid) {
+					log.Logger.Info("Check endpoint is in maintain window,continue", log.String("endpoint", endpointObj.Guid))
+					continue
+				}
 				if endpointObj.ExportType != "host" {
 					log.Logger.Debug("Up alarm break,endpoint export type illegal", log.String("exportType", endpointObj.ExportType))
 					continue
@@ -116,6 +120,10 @@ func AcceptAlertMsg(c *gin.Context)  {
 						tmpAlarm.Endpoint = endpointObj.Guid
 						tmpEndpointIp = endpointObj.Ip
 						if endpointObj.StopAlarm == 1 {
+							continue
+						}
+						if !db.CheckEndpointActiveAlert(endpointObj.Guid) {
+							log.Logger.Info("Check endpoint is in maintain window,continue", log.String("endpoint", endpointObj.Guid))
 							continue
 						}
 					}
@@ -487,6 +495,34 @@ func QueryHistoryAlarm(c *gin.Context)  {
 			mid.ReturnHandleError(c, err.Error(), err)
 		}else{
 			mid.ReturnSuccessData(c, result)
+		}
+	}else{
+		mid.ReturnValidateError(c, err.Error())
+	}
+}
+
+func GetAlertWindowList(c *gin.Context)  {
+	endpoint := c.Query("endpoint")
+	if endpoint == "" {
+		mid.ReturnParamEmptyError(c, "endpoint")
+		return
+	}
+	data,err := db.GetAlertWindowList(endpoint)
+	if err != nil {
+		mid.ReturnHandleError(c, err.Error(), err)
+	}else{
+		mid.ReturnSuccessData(c, data)
+	}
+}
+
+func UpdateAlertWindow(c *gin.Context)  {
+	var param m.AlertWindowParam
+	if err := c.ShouldBindJSON(&param); err==nil {
+		err = db.UpdateAlertWindowList(param.Endpoint, mid.GetOperateUser(c), param.Data)
+		if err != nil {
+			mid.ReturnHandleError(c, err.Error(), err)
+		}else{
+			mid.ReturnSuccess(c)
 		}
 	}else{
 		mid.ReturnValidateError(c, err.Error())

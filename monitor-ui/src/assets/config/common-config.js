@@ -27,6 +27,10 @@ export const autoRefreshConfig = [
     label: "off"
   },
   {
+    value: 5,
+    label: '5s'
+  },
+  {
     value: 10,
     label: '10s'
   },

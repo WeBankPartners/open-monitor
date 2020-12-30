@@ -90,10 +90,11 @@ export default {
           compare_first_start: this.params.compare_first_start,
           compare_first_end: this.params.compare_first_end,
           compare_second_start: this.params.compare_second_start,
-          compare_second_end: this.params.compare_second_end
+          compare_second_end: this.params.compare_second_end,
+          title: this.chartInfo.title
         })
       }
-      this.$httpRequestEntrance.httpRequestEntrance('POST', 'dashboard/newchart', params, responseData => {
+      this.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.metricConfigView.api, params, responseData => {
         const chartConfig = {editTitle: true, zoomCallback: true}
         responseData.metric = this.chartInfo.metric[0]
         readyToDraw(this,responseData, this.chartIndex, chartConfig)
