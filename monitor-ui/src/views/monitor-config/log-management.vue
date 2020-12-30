@@ -452,6 +452,9 @@ export default {
       })
     },
   },
+  beforeDestroy () {
+    this.$root.$store.commit('changeTableExtendActive', -1)
+  },
   components: {
     extendTable
   },
