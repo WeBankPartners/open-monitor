@@ -267,7 +267,7 @@ func autoAddAppPathConfig(param m.RegisterParamNew, paths string) error {
 	for _,v := range tmpPathList {
 		businessTables = append(businessTables, &m.BusinessMonitorTable{EndpointId:hostEndpoint.Id, Path:v, OwnerEndpoint:fmt.Sprintf("%s_%s_%s", param.Name, param.Ip, param.Type)})
 	}
-	err := db.UpdateAppendBusiness(m.BusinessUpdateDto{EndpointId:hostEndpoint.Id, PathList:businessTables})
+	err := db.UpdateAppendBusiness(m.BusinessUpdateDto{EndpointId:hostEndpoint.Id, PathList:[]*m.BusinessUpdatePathObj{}})
 	if err != nil {
 		log.Logger.Error("Update endpoint business table error", log.Error(err))
 		return err
@@ -453,11 +453,23 @@ func AutoUpdateLogMonitor(c *gin.Context)  {
 			return
 		}
 		for _,input := range param.Inputs {
-			subResult,subError := updateLogMonitor(input, operation)
-			results = append(results, subResult)
-			if subError != nil {
-				log.Logger.Error("Handle auto update log monitor fail", log.JsonObj("input", input), log.Error(subError))
-				err = subError
+			tmpLogResultObj := logMonitorResultOutputObj{CallbackParameter: input.CallbackParameter,Guid: input.Guid,ErrorCode: "0",ErrorMessage: ""}
+			var tmpError error
+			for _,v := range strings.Split(input.Path, ",") {
+				if v == "" {
+					continue
+				}
+				input.Path = v
+				subResult, subError := updateLogMonitor(input, operation)
+				if subError != nil {
+					tmpLogResultObj = subResult
+					tmpError = subError
+				}
+			}
+			results = append(results, tmpLogResultObj)
+			if tmpError != nil {
+				log.Logger.Error("Handle auto update log monitor fail", log.JsonObj("input", input), log.Error(tmpError))
+				err = tmpError
 			}
 		}
 	}else{

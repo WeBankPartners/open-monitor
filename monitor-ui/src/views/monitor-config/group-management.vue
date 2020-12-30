@@ -211,7 +211,7 @@
           this.$Message.warning(this.$t('tips.selectData'))
           return
         }
-        const api = require('@/assets/js/baseURL').baseURL_config + '/api/v1/' + this.$root.apiCenter.groupManagement.export.api + '?id=' + this.selectedData.checkedIds.join(',')
+        const api = require('@/assets/js/baseURL').baseURL_config + 'monitor/api/v1/' + this.$root.apiCenter.groupManagement.export.api + '?id=' + this.selectedData.checkedIds.join(',')
         axios({
           method: 'GET',
           url: api,

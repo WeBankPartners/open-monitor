@@ -1,1 +1,1 @@
-export const baseURL_config = '/monitor'
+export const baseURL_config = ''

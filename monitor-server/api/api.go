@@ -166,6 +166,7 @@ func InitHttpServer(exportAgent bool) {
 			alarmApi.GET("/process/list", alarm.GetEndpointProcessConfig)
 			alarmApi.POST("/process/update", alarm.UpdateEndpointProcessConfig)
 			alarmApi.GET("/business/list", alarm.GetEndpointBusinessConfig)
+			alarmApi.POST("/business/add", alarm.AddEndpointBusinessConfig)
 			alarmApi.POST("/business/update", alarm.UpdateEndpointBusinessConfig)
 			alarmApi.GET("/grp/export", alarm.ExportGrpStrategy)
 			alarmApi.POST("/grp/import", alarm.ImportGrpStrategy)
@@ -190,6 +191,8 @@ func InitHttpServer(exportAgent bool) {
 			alarmApi.POST("/db/monitor/delete", alarm.DeleteDbMonitor)
 			alarmApi.POST("/db/monitor/sys/update", alarm.UpdateDbMonitorSysName)
 			alarmApi.POST("/problem/history", alarm.QueryHistoryAlarm)
+			alarmApi.GET("/window/get", alarm.GetAlertWindowList)
+			alarmApi.POST("/window/update", alarm.UpdateAlertWindow)
 		}
 		userApi := authApi.Group("/user")
 		{
