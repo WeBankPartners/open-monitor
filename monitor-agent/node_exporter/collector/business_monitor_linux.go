@@ -1,21 +1,23 @@
 package collector
 
 import (
-	"sync"
-	"github.com/prometheus/client_golang/prometheus"
-	"strconv"
-	"github.com/hpcloud/tail"
-	"strings"
-	"github.com/prometheus/common/log"
-	"encoding/json"
-	"net/http"
-	"io/ioutil"
-	"fmt"
-	"time"
 	"bytes"
 	"encoding/gob"
+	"encoding/json"
+	"fmt"
+	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
+	"github.com/hpcloud/tail"
+	"github.com/prometheus/client_golang/prometheus"
+	"io/ioutil"
+	"net/http"
 	"os"
+	"reflect"
 	"regexp"
+	"strconv"
+	"strings"
+	"sync"
+	"time"
 )
 
 const (
@@ -24,264 +26,469 @@ const (
 )
 
 var (
-	regDate = regexp.MustCompile(`^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}`)
 	businessMonitorJobs []*businessMonitorObj
 	businessMonitorLock = new(sync.RWMutex)
+	businessMonitorMetrics []*businessRuleMetricObj
+	businessMonitorMetricLock = new(sync.RWMutex)
+	newLogger  log.Logger
 )
 
 type businessMonitorCollector struct {
 	businessMonitor  *prometheus.Desc
+	logger  log.Logger
+}
+
+func InitNewLogger(logger  log.Logger)  {
+	newLogger = logger
 }
 
 func init() {
 	registerCollector(businessCollectorName, defaultEnabled, BusinessMonitorCollector)
-	BusinessCollectorStore.Load()
 }
 
-func BusinessMonitorCollector() (Collector, error) {
+func BusinessMonitorCollector(logger log.Logger) (Collector, error) {
 	return &businessMonitorCollector{
 		businessMonitor: prometheus.NewDesc(
 			prometheus.BuildFQName(namespace, businessCollectorName, "value"),
 			"Show business data from log file.",
-			[]string{"sys", "msg", "key", "path"}, nil,
+			[]string{"key", "tags", "path", "agg"}, nil,
 		),
+		logger: logger,
 	}, nil
 }
 
 func (c *businessMonitorCollector) Update(ch chan<- prometheus.Metric) error {
-	businessMonitorLock.RLock()
-	for _,v := range businessMonitorJobs {
-		for _,vv := range v.get() {
-			ch <- prometheus.MustNewConstMetric(c.businessMonitor,
-				prometheus.GaugeValue,
-				vv.Value, vv.SystemNum, vv.Name, vv.Key, vv.Path)
-		}
+	businessMonitorMetricLock.RLock()
+	for _,v := range businessMonitorMetrics {
+		ch <- prometheus.MustNewConstMetric(c.businessMonitor,
+			prometheus.GaugeValue,
+			v.Value, v.Metric, v.TagsString, v.Path, v.Agg)
 	}
-	businessMonitorLock.RUnlock()
+	businessMonitorMetricLock.RUnlock()
 	return nil
 }
 
-type businessMetricObj struct {
-	SystemNum  string
-	Name  string
-	Path  string
-	Key  string
-	Value  float64
+type businessStoreMonitorObj struct {
+	Path  string  `json:"path"`
+	Rules  []*businessStoreMetricObj  `json:"rules"`
+}
+
+type businessStoreMetricObj struct {
+	Regular  string  `json:"regular"`
+	StringMap  []*businessStringMapObj  `json:"string_map"`
+	TagsString  string  `json:"tags_string"`
+	TagsKey  []string  `json:"tags_key"`
+	TagsValue  []string  `json:"tags_value"`
+	MetricConfig  []*businessMetricConfigObj  `json:"metric_config"`
+}
+
+type businessRuleObj struct {
+	Regular  string  `json:"regular"`
+	RegExp  *regexp.Regexp  `json:"-"`
+	StringMap  []*businessStringMapObj  `json:"string_map"`
+	TagsString  string  `json:"tags_string"`
+	TagsKey  []string  `json:"tags_key"`
+	TagsValue  []string  `json:"tags_value"`
+	MetricConfig  []*businessMetricConfigObj  `json:"metric_config"`
+	DataChannel chan map[string]interface{}  `json:"-"`
+}
+
+type businessRuleMetricObj struct {
+	Metric  string  `json:"metric"`
+	Path  string  `json:"path"`
+	Agg   string  `json:"agg"`
+	Tags    []string  `json:"tags"`
+	TagsString string  `json:"tags_string"`
+	Value   float64  `json:"value"`
 }
 
 type businessMonitorObj struct {
-	SystemNum  string  `json:"system_num"`
 	Path  string  `json:"path"`
-	Name  string  `json:"name"`
-	LastDate  string  `json:"last_date"`
-	Data  []*businessMetricObj  `json:"data"`
 	TailSession  *tail.Tail  `json:"-"`
 	Lock  *sync.RWMutex  `json:"-"`
+	Rules  []*businessRuleObj  `json:"rules"`
 }
 
-type businessHttpDto struct {
-	Paths  []string  `json:"paths"`
+type businessStringMapObj struct {
+	Key  string  `json:"key"`
+	StringValue  string  `json:"string_value"`
+	IntValue  float64  `json:"int_value"`
+}
+
+type businessMetricConfigObj struct {
+	Key  string  `json:"key"`
+	Metric  string  `json:"metric"`
+	AggType  string  `json:"agg_type"`
+}
+
+type businessMonitorCfgObj struct {
+	Regular  string  `json:"regular"`
+	Tags  string  `json:"tags"`
+	StringMap  []*businessStringMapObj  `json:"string_map"`
+	MetricConfig  []*businessMetricConfigObj  `json:"metric_config"`
+}
+
+type businessAgentDto struct {
+	Path  string  `json:"path"`
+	Config  []*businessMonitorCfgObj  `json:"config"`
 }
 
 func (c *businessMonitorObj) start()  {
 	var err error
 	c.TailSession,err = tail.TailFile(c.Path, tail.Config{Follow:true, ReOpen:true})
 	if err != nil {
-		log.Errorf("start business collector fail, path: %s, error: %v", c.Path, err)
+		level.Error(newLogger).Log("msg",fmt.Sprintf("start business collector fail, path: %s, error: %v", c.Path, err))
 		return
 	}
-	var tmpList []string
-	if strings.Contains(c.Path, "/") {
-		tmpList = strings.Split(strings.Split(c.Path, "/")[strings.Count(c.Path, "/")], "_")
-	}else{
-		tmpList = strings.Split(c.Path, "_")
-	}
-	if len(tmpList) > 3 {
-		c.SystemNum = tmpList[1]
-		c.Name = tmpList[2]
-	}
+	firstFlag := true
+	timeNow := time.Now()
 	for line := range c.TailSession.Lines {
-		c.Lock.Lock()
-		textList := strings.Split(line.Text, "][")
-		for _,textSplit := range textList {
-			if strings.HasPrefix(textSplit, "[") {
-				textSplit = textSplit[1:]
+		if firstFlag {
+			if time.Now().Sub(timeNow).Seconds() >= 5 {
+				firstFlag = false
+			}else {
+				continue
 			}
-			if strings.HasSuffix(textSplit, "]") {
-				textSplit = textSplit[:len(textSplit)-1]
-			}
-			if regDate.MatchString(textSplit) {
-				c.LastDate = textSplit
-			}
-			if strings.Contains(textSplit, "{") &&  strings.Contains(textSplit, "}") {
-				mapData := make(map[string]string)
-				err := json.Unmarshal([]byte(textSplit), &mapData)
-				if err == nil {
-					if len(mapData) > 0 {
-						c.Data = []*businessMetricObj{}
-						for k, v := range mapData {
-							floatValue,err := strconv.ParseFloat(v, 64)
-							if err != nil {
-								continue
-							}
-							c.Data = append(c.Data, &businessMetricObj{Key:k, Value:floatValue})
+		}
+		c.Lock.RLock()
+		for _,rule := range c.Rules {
+			fetchList := rule.RegExp.FindStringSubmatch(line.Text)
+			if len(fetchList) > 1 {
+				fetchKeyMap := make(map[string]interface{})
+				for i,v := range fetchList {
+					if i == 0 {
+						continue
+					}
+					tmpKeyMap := make(map[string]interface{})
+					tmpErr := json.Unmarshal([]byte(v), &tmpKeyMap)
+					if tmpErr != nil {
+						level.Error(newLogger).Log("line fetch regexp fail", fmt.Sprintf("line:%s error:%s", v, tmpErr.Error()))
+					}else{
+						for tmpKeyMapKey,tmpKeyMapValue := range tmpKeyMap {
+							fetchKeyMap[tmpKeyMapKey] = tmpKeyMapValue
 						}
 					}
-				}else{
-					log.Infof("json unmarshal %s error:%v \n", textSplit, err)
+				}
+				if len(fetchKeyMap) > 0 {
+					rule.DataChannel <- fetchKeyMap
 				}
 			}
 		}
-		c.Lock.Unlock()
+		c.Lock.RUnlock()
 	}
-}
-
-func (c *businessMonitorObj) get() []businessMetricObj {
-	data := []businessMetricObj{}
-	c.Lock.RLock()
-	zeroFlag := true
-	if c.LastDate != "" {
-		if checkIllegalDate(c.LastDate) {
-			zeroFlag = false
-		}
-	}
-	for _,v := range c.Data {
-		tmpValue := v.Value
-		if !zeroFlag {
-			tmpValue = 0
-		}
-		data = append(data, businessMetricObj{SystemNum:c.SystemNum, Name:c.Name, Path:c.Path, Key:v.Key, Value:tmpValue})
-	}
-	c.Lock.RUnlock()
-	return data
 }
 
 func (c *businessMonitorObj) destroy()  {
 	c.TailSession.Stop()
-	c.Data = []*businessMetricObj{}
+	c.Rules = []*businessRuleObj{}
 }
 
-func BusinessMonitorHttpHandle(w http.ResponseWriter, r *http.Request)  {
-	buff,err := ioutil.ReadAll(r.Body)
+func BusinessMonitorHttpHandle(w http.ResponseWriter, r *http.Request) {
+	buff, err := ioutil.ReadAll(r.Body)
 	var errorMsg string
 	if err != nil {
 		errorMsg = fmt.Sprintf("Handel business monitor http request fail,read body error: %v \n", err)
-		log.Errorln(errorMsg)
+		level.Error(newLogger).Log("msg", errorMsg)
 		w.Write([]byte(errorMsg))
 		return
 	}
-	var param businessHttpDto
+	var param []*businessAgentDto
+	level.Info(newLogger).Log("http_param", string(buff))
 	err = json.Unmarshal(buff, &param)
 	if err != nil {
 		errorMsg = fmt.Sprintf("Handel business monitor http request fail,json unmarshal error: %v \n", err)
-		log.Errorln(errorMsg)
+		level.Error(newLogger).Log("msg", errorMsg)
 		w.Write([]byte(errorMsg))
 		return
 	}
 	businessMonitorLock.Lock()
-
-	var newBusinessMonitorJobs []*businessMonitorObj
+	var newBmj []*businessMonitorObj
 	for _,v := range businessMonitorJobs {
-		exist := false
-		for _,vv := range param.Paths {
-			if v.Path == vv {
-				exist = true
+		delFlag := true
+		for _,vv := range param {
+			if vv.Path == v.Path {
+				delFlag = false
+				v.Lock.Lock()
+				updateBusinessRules(v, vv)
+				v.Lock.Unlock()
 				break
 			}
 		}
-		if !exist {
+		if delFlag {
 			v.destroy()
 		}else{
-			newBusinessMonitorJobs = append(newBusinessMonitorJobs, v)
+			newBmj = append(newBmj, v)
 		}
 	}
-	for _,v := range param.Paths {
-		exist := false
+	businessMonitorJobs = newBmj
+	for _,v := range param {
+		addFlag := true
 		for _,vv := range businessMonitorJobs {
-			if vv.Path == v {
-				exist = true
+			if vv.Path == v.Path {
+				addFlag = false
 				break
 			}
 		}
-		if !exist {
-			tmpBusinessObj := businessMonitorObj{Path:v}
-			tmpBusinessObj.Data = []*businessMetricObj{}
-			tmpBusinessObj.Lock = new(sync.RWMutex)
-			go tmpBusinessObj.start()
-			newBusinessMonitorJobs = append(newBusinessMonitorJobs, &tmpBusinessObj)
+		if addFlag {
+			newBmo := businessMonitorObj{}
+			newBmo.Path = v.Path
+			newBmo.Lock = new(sync.RWMutex)
+			for _,vv := range v.Config {
+				tmpRuleObj := businessRuleObj{}
+				tmpRuleObj.StringMap = vv.StringMap
+				tmpRuleObj.MetricConfig = vv.MetricConfig
+				tmpRuleObj.Regular = vv.Regular
+				tmpRuleObj.RegExp = regexp.MustCompile(vv.Regular)
+				tmpRuleObj.TagsString = vv.Tags
+				var tmpTagsKey,tmpTagsValue []string
+				for _,tmpKey := range strings.Split(vv.Tags, ",") {
+					tmpTagsKey = append(tmpTagsKey, tmpKey)
+					tmpTagsValue = append(tmpTagsValue, "")
+				}
+				tmpRuleObj.TagsKey = tmpTagsKey
+				tmpRuleObj.TagsValue = tmpTagsValue
+				tmpRuleObj.DataChannel = make(chan map[string]interface{}, 10000)
+				newBmo.Rules = append(newBmo.Rules, &tmpRuleObj)
+			}
+			go newBmo.start()
+			businessMonitorJobs = append(businessMonitorJobs, &newBmo)
 		}
 	}
-	businessMonitorJobs = newBusinessMonitorJobs
 	businessMonitorLock.Unlock()
-	log.Infoln("success")
+	level.Info(newLogger).Log("msg","success")
 	w.Write([]byte("success"))
 }
 
-func checkIllegalDate(input string) bool {
-	tmpList := strings.Split(input, " ")
-	if len(tmpList) < 2 {
-		return true
+func updateBusinessRules(bmo *businessMonitorObj,config  *businessAgentDto)  {
+	var newRules []*businessRuleObj
+	for _,v := range bmo.Rules {
+		delFlag := true
+		for _,vv := range config.Config {
+			if vv.Regular == v.Regular && vv.Tags == v.TagsString {
+				delFlag = false
+				v.StringMap = vv.StringMap
+				v.MetricConfig = vv.MetricConfig
+				var newTagsKey,newTagsValue []string
+				for _,cfgKey := range strings.Split(vv.Tags, ",") {
+					newTagsKey = append(newTagsKey, cfgKey)
+					keyExistFlag := false
+					for existKeyIndex,existKey := range v.TagsKey {
+						if existKey == cfgKey {
+							keyExistFlag = true
+							newTagsValue = append(newTagsValue, v.TagsValue[existKeyIndex])
+							break
+						}
+					}
+					if !keyExistFlag {
+						newTagsValue = append(newTagsValue, "")
+					}
+				}
+				v.TagsKey = newTagsKey
+				v.TagsValue = newTagsValue
+				break
+			}
+		}
+		if !delFlag {
+			newRules = append(newRules, v)
+		}
 	}
-	t,err := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s %s CST", tmpList[0], tmpList[1]))
-	if err != nil {
-		return true
+	for _,v := range config.Config {
+		addFlag := true
+		for _,vv := range newRules {
+			if v.Regular == vv.Regular && v.Tags == vv.TagsString {
+				addFlag = false
+				break
+			}
+		}
+		if addFlag {
+			tmpRuleObj := businessRuleObj{}
+			tmpRuleObj.StringMap = v.StringMap
+			tmpRuleObj.MetricConfig = v.MetricConfig
+			tmpRuleObj.Regular = v.Regular
+			tmpRuleObj.RegExp = regexp.MustCompile(v.Regular)
+			tmpRuleObj.TagsString = v.Tags
+			var tmpTagsKey,tmpTagsValue []string
+			for _,tmpKey := range strings.Split(v.Tags, ",") {
+				tmpTagsKey = append(tmpTagsKey, tmpKey)
+				tmpTagsValue = append(tmpTagsValue, "")
+			}
+			tmpRuleObj.TagsKey = tmpTagsKey
+			tmpRuleObj.TagsValue = tmpTagsValue
+			tmpRuleObj.DataChannel = make(chan map[string]interface{}, 10000)
+			newRules = append(newRules, &tmpRuleObj)
+		}
 	}
-	if time.Now().Sub(t).Seconds() > 10 {
-		return true
-	}
-	return false
+	printByte,_ := json.Marshal(newRules)
+	level.Info(newLogger).Log("updateBusinessRules",string(printByte))
+	bmo.Rules = newRules
 }
 
 type businessCollectorStore struct {
-	Data  []*businessMetricObj  `json:"data"`
+	Data  []*businessStoreMonitorObj  `json:"data"`
 }
 
 var BusinessCollectorStore businessCollectorStore
 
 func (c *businessCollectorStore) Save()  {
 	for _,v := range businessMonitorJobs {
-		BusinessCollectorStore.Data = append(BusinessCollectorStore.Data, &businessMetricObj{SystemNum:v.SystemNum,Path:v.Path,Name:v.Name})
+		var newStoreRules []*businessStoreMetricObj
+		for _,vv := range v.Rules {
+			newStoreRules = append(newStoreRules, &businessStoreMetricObj{Regular: vv.Regular, StringMap: vv.StringMap, MetricConfig: vv.MetricConfig, TagsKey: vv.TagsKey, TagsValue: vv.TagsValue, TagsString: vv.TagsString})
+		}
+		c.Data = append(c.Data, &businessStoreMonitorObj{Path: v.Path,Rules: newStoreRules})
 	}
 	var tmpBuffer bytes.Buffer
 	enc := gob.NewEncoder(&tmpBuffer)
 	err := enc.Encode(c.Data)
 	if err != nil {
-		log.Errorf("gob encode business monitor error : %v \n", err)
+		level.Error(newLogger).Log("msg",fmt.Sprintf("gob encode business monitor error : %v ", err))
 	}else{
 		ioutil.WriteFile(businessMonitorFilePath, tmpBuffer.Bytes(), 0644)
-		log.Infof("write %s succeed \n", businessMonitorFilePath)
+		level.Info(newLogger).Log("msg",fmt.Sprintf("write %s succeed ", businessMonitorFilePath))
 	}
 }
 
 func (c *businessCollectorStore) Load()  {
 	file,err := os.Open(businessMonitorFilePath)
 	if err != nil {
-		log.Infof("read %s file error %v \n", businessMonitorFilePath, err)
+		level.Info(newLogger).Log("msg",fmt.Sprintf("read %s file error %v ", businessMonitorFilePath, err))
 	}else{
 		dec := gob.NewDecoder(file)
 		err = dec.Decode(&c.Data)
 		if err != nil {
-			log.Errorf("gob decode %s error %v \n", businessMonitorFilePath, err)
+			level.Error(newLogger).Log("msg",fmt.Sprintf("gob decode %s error %v ", businessMonitorFilePath, err))
 		}else{
-			log.Infof("load %s file succeed \n", businessMonitorFilePath)
+			level.Info(newLogger).Log("msg",fmt.Sprintf("load %s file succeed ", businessMonitorFilePath))
 		}
 	}
-	tmpMap := make(map[string]int)
 	businessMonitorLock.Lock()
 	businessMonitorJobs = []*businessMonitorObj{}
 	for _,v := range c.Data {
 		if v.Path != "" {
-			if _,b := tmpMap[v.Path];!b {
-				tmpMap[v.Path] = 1
-				newBusinessMonitorObj := businessMonitorObj{Path: v.Path, SystemNum: v.SystemNum, Name: v.Name}
-				newBusinessMonitorObj.Data = []*businessMetricObj{}
-				newBusinessMonitorObj.Lock = new(sync.RWMutex)
-				businessMonitorJobs = append(businessMonitorJobs, &newBusinessMonitorObj)
+			newBusinessMonitorObj := businessMonitorObj{Path: v.Path}
+			newBusinessMonitorObj.Lock = new(sync.RWMutex)
+			for _,vv := range v.Rules {
+				tmpRuleObj := businessRuleObj{Regular: vv.Regular, MetricConfig: vv.MetricConfig, StringMap: vv.StringMap, TagsKey: vv.TagsKey, TagsValue: vv.TagsValue, TagsString: vv.TagsString}
+				tmpRuleObj.RegExp = regexp.MustCompile(vv.Regular)
+				tmpRuleObj.DataChannel = make(chan map[string]interface{}, 10000)
+				newBusinessMonitorObj.Rules = append(newBusinessMonitorObj.Rules, &tmpRuleObj)
 			}
+			businessMonitorJobs = append(businessMonitorJobs, &newBusinessMonitorObj)
 		}
 	}
 	for _,v := range businessMonitorJobs {
 		go v.start()
 	}
 	businessMonitorLock.Unlock()
+}
+
+//func transBusinessRegular(regRuleString string) *regexp.Regexp {
+//	regRuleString = strings.ReplaceAll(regRuleString, "[", "\\[")
+//	regRuleString = strings.ReplaceAll(regRuleString, "]", "\\]")
+//	regRuleString = strings.ReplaceAll(regRuleString, "${json_content}", "(.*)")
+//	return regexp.MustCompile(regRuleString)
+//}
+
+func StartBusinessAggCron()  {
+	t := time.NewTicker(10*time.Second).C
+	for {
+		<- t
+		go calcBusinessAggData()
+	}
+}
+
+type businessValueObj struct {
+	Sum  float64
+	Avg  float64
+	Count  float64
+}
+
+func calcBusinessAggData()  {
+	var newRuleData []*businessRuleMetricObj
+	businessMonitorLock.RLock()
+	for _,v := range businessMonitorJobs {
+		for _,rule := range v.Rules {
+			dataLength := len(rule.DataChannel)
+			if dataLength == 0 {
+				continue
+			}
+			valueCountMap := make(map[string]*businessValueObj)
+			for i:=0;i<dataLength;i++ {
+				tmpMapData := <- rule.DataChannel
+				tmpTagString := ""
+				for _,tagKey := range rule.TagsKey {
+					if tmpTagValue,b:=tmpMapData[tagKey];b {
+						tmpTagString += fmt.Sprintf("%s=%s,", tagKey, printReflectString(tmpTagValue))
+					}
+				}
+				if tmpTagString != "" {
+					tmpTagString = tmpTagString[:len(tmpTagString)-1]
+				}
+				for _,metricConfig := range rule.MetricConfig {
+					if metricValue,b:=tmpMapData[metricConfig.Key];b {
+						metricValueString := printReflectString(metricValue)
+						metricValueFloat,parseError := strconv.ParseFloat(metricValueString,64)
+						if parseError != nil {
+							for _,tmpStringMapObj := range rule.StringMap {
+								if tmpStringMapObj.Key == metricConfig.Key && tmpStringMapObj.StringValue == metricValueString {
+									metricValueFloat = tmpStringMapObj.IntValue
+									break
+								}
+							}
+						}
+						tmpMapKey := fmt.Sprintf("%s^%s^%s^%s", metricConfig.Key, metricConfig.AggType, metricConfig.Metric, tmpTagString)
+						if _,keyExist:=valueCountMap[tmpMapKey];keyExist {
+							valueCountMap[tmpMapKey].Sum += metricValueFloat
+							valueCountMap[tmpMapKey].Count++
+						}else{
+							valueCountMap[tmpMapKey] = &businessValueObj{Sum: metricValueFloat, Count: 1, Avg: 0}
+						}
+					}
+				}
+			}
+			for mapKey,mapValue := range valueCountMap {
+				mapValue.Avg = mapValue.Sum/mapValue.Count
+				keySplitList := strings.Split(mapKey, "^")
+				tmpMetricObj := businessRuleMetricObj{Path: v.Path, Agg: keySplitList[1], TagsString: keySplitList[3], Metric: keySplitList[2]}
+				if keySplitList[1] == "sum" {
+					tmpMetricObj.Value = mapValue.Sum
+				}else if keySplitList[1] == "avg" {
+					tmpMetricObj.Value = mapValue.Avg
+				}else if keySplitList[1] == "count" {
+					tmpMetricObj.Value = mapValue.Count
+				}
+				newRuleData = append(newRuleData, &tmpMetricObj)
+			}
+		}
+	}
+	businessMonitorLock.RUnlock()
+	businessMonitorMetricLock.Lock()
+	businessMonitorMetrics = newRuleData
+	businessMonitorMetricLock.Unlock()
+}
+
+func printReflectString(input interface{}) string {
+	if input == nil {
+		return ""
+	}
+	outputString := ""
+	typeString := reflect.TypeOf(input).String()
+	if strings.Contains(typeString, "string") {
+		outputString = fmt.Sprintf("%s", input)
+	}else if strings.Contains(typeString, "int") {
+		outputString = fmt.Sprintf("%d", input)
+	}else if strings.Contains(typeString, "float") {
+		outputString = fmt.Sprintf("%.6f", input)
+		for i:=0;i<6;i++ {
+			if outputString[len(outputString)-1:] == "0" {
+				outputString = outputString[:len(outputString)-1]
+			}else{
+				break
+			}
+		}
+		if outputString[len(outputString)-1:] == "." {
+			outputString = outputString[:len(outputString)-1]
+		}
+	}
+	return outputString
 }
