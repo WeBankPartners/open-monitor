@@ -201,9 +201,10 @@ func GetSerialName(query *m.QueryMonitorData,tagMap map[string]string,dataLength
 	}
 	if legend == "$app_metric" {
 		if _,b:=tagMap["key"];b {
-			tmpName = fmt.Sprintf("%s{agg=%s,%s}", tagMap["key"], tagMap["agg"], tagMap["tags"])
-			if tmpName[:len(tmpName)-1] == "," {
-				tmpName = tmpName[:len(tmpName)-1]
+			if tagMap["tags"] != "" {
+				tmpName = fmt.Sprintf("%s{agg=%s,%s}", tagMap["key"], tagMap["agg"], tagMap["tags"])
+			}else{
+				tmpName = fmt.Sprintf("%s{agg=%s}", tagMap["key"], tagMap["agg"])
 			}
 		}else{
 			tmpName = metric
