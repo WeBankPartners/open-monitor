@@ -780,7 +780,7 @@ func GetPieChart(c *gin.Context)  {
 func MainSearch(c *gin.Context)  {
 	endpoint := c.Query("search")
 	//limit := c.Query("limit")
-	if endpoint == ""{
+	if endpoint == "" {
 		mid.ReturnParamEmptyError(c, "search")
 		return
 	}
@@ -797,14 +797,9 @@ func MainSearch(c *gin.Context)  {
 	for _,v := range result {
 		v.OptionTypeName = v.OptionType
 	}
-	if len(result) < 100 {
-		sysResult := db.SearchRecursivePanel(endpoint)
-		for _, v := range sysResult {
-			if len(result) >= 100 {
-				break
-			}
-			result = append(result, v)
-		}
+	sysResult := db.SearchRecursivePanel(endpoint)
+	for _, v := range sysResult {
+		result = append(result, v)
 	}
 	if tmpFlag {
 		var tmpResult []*m.OptionModel
