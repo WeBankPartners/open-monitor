@@ -6,6 +6,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	ds "github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
 	"github.com/gin-gonic/gin"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -796,10 +797,10 @@ func MainSearch(c *gin.Context)  {
 	for _,v := range result {
 		v.OptionTypeName = v.OptionType
 	}
-	if len(result) < 10 {
+	if len(result) < 100 {
 		sysResult := db.SearchRecursivePanel(endpoint)
 		for _, v := range sysResult {
-			if len(result) >= 10 {
+			if len(result) >= 100 {
 				break
 			}
 			result = append(result, v)
@@ -817,7 +818,10 @@ func MainSearch(c *gin.Context)  {
 			result = tmpResult
 		}
 	}
-	mid.ReturnSuccessData(c, result)
+	var sortOptionList m.OptionModelSortList
+	sortOptionList = append(sortOptionList, result...)
+	sort.Sort(sortOptionList)
+	mid.ReturnSuccessData(c, sortOptionList)
 }
 
 func GetPromMetric(c *gin.Context)  {
