@@ -291,6 +291,7 @@ func QueryProblemAlarm(c *gin.Context)  {
 			return
 		}
 		var highCount,mediumCount,lowCount int
+		metricMap := make(map[string]int)
 		for _,v := range data {
 			if v.SPriority == "high" {
 				highCount += 1
@@ -301,11 +302,16 @@ func QueryProblemAlarm(c *gin.Context)  {
 			if v.SPriority == "low" {
 				lowCount += 1
 			}
+			if _,b:=metricMap[v.SMetric];b {
+				metricMap[v.SMetric] += 1
+			}else{
+				metricMap[v.SMetric] = 1
+			}
 		}
 		if len(data) == 0 {
 			data = []*m.AlarmProblemQuery{}
 		}
-		result := m.AlarmProblemQueryResult{Data:data,High:highCount,Mid:mediumCount,Low:lowCount}
+		result := m.AlarmProblemQueryResult{Data:data,High:highCount,Mid:mediumCount,Low:lowCount,MetricMap: metricMap}
 		mid.ReturnSuccessData(c, result)
 	}else{
 		mid.ReturnValidateError(c, err.Error())

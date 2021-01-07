@@ -183,3 +183,10 @@ CREATE TABLE `business_monitor_cfg` (
 #@v1.10.0.5-begin@;
 update chart set legend='$app_metric' where legend='$key';
 #@v1.10.0.5-end@;
+
+#@v1.11.0.1-begin@;
+create index alarm_endpoint_idx on alarm(endpoint);
+create index alarm_metric_idx on alarm(s_metric);
+create index alarm_status_idx on alarm(status);
+create index alarm_priority_idx on alarm(s_priority);
+#@v1.11.0.1-end@;
