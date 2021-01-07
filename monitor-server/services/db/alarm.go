@@ -618,11 +618,11 @@ func GetAlarms(query m.AlarmTable, limit int, extLogMonitor, extOpenAlarm bool) 
 			v.IsLogMonitor = true
 			if v.EndValue > 0 {
 				v.Start,v.End = v.End,v.Start
-				v.StartString = v.EndString
 				v.StartValue = v.EndValue - v.StartValue + 1
 				if strings.Contains(v.Content, "^^") {
 					v.Content = fmt.Sprintf("%s: %s <br/>%s: %s", v.StartString, v.Content[:strings.Index(v.Content, "^^")], v.EndString, v.Content[strings.Index(v.Content, "^^")+2:])
 				}
+				v.StartString = v.EndString
 			}else{
 				v.StartValue = 1
 				if strings.HasSuffix(v.Content, "^^") {
