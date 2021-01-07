@@ -224,7 +224,7 @@ func CheckLogKeyword()  {
 						if len(tmpContent) > 240 {
 							tmpContent = tmpContent[:240]
 						}
-						if fetchAlarm.Id > 0 {
+						if fetchAlarm.Id > 0 && fetchAlarm.Status == "firing" {
 							tmpContent = strings.Split(fetchAlarm.Content, "^^")[0] + "^^" + tmpContent
 							addAlarmRows = append(addAlarmRows, &m.AlarmTable{Id: fetchAlarm.Id, StrategyId: 0, Endpoint: lmt.Endpoint, Status: "firing", SMetric: "log_monitor", SExpr: "node_log_monitor_count_total", SCond: ">0", SLast: "10s", SPriority: v.Priority, Content: tmpContent, Tags: lmt.Tags, StartValue: fetchAlarm.StartValue, EndValue: lastValue, Start: fetchAlarm.Start, End: nowTime})
 						}else {
