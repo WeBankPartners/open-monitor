@@ -544,71 +544,69 @@ func GetEndpointsByGrp(grpId int) (error, []*m.EndpointTable) {
 
 func GetAlarms(query m.AlarmTable, limit int, extLogMonitor, extOpenAlarm bool) (error, m.AlarmProblemList) {
 	var result []*m.AlarmProblemQuery
-	var whereSql, extWhereSql string
-	var params, extParams []interface{}
+	var whereSql string
+	var params []interface{}
 	if query.Id > 0 {
-		whereSql += " and t1.id=? "
+		whereSql += " and id=? "
 		params = append(params, query.Id)
 	}
 	if query.StrategyId > 0 {
-		whereSql += " and t1.strategy_id=? "
+		whereSql += " and strategy_id=? "
 		params = append(params, query.StrategyId)
 	}
 	if query.Endpoint != "" {
-		whereSql += " and t1.endpoint=? "
+		whereSql += " and endpoint=? "
 		params = append(params, query.Endpoint)
 	}
 	if query.SMetric != "" {
-		whereSql += " and t1.s_metric=? "
+		whereSql += " and s_metric=? "
 		params = append(params, query.SMetric)
 	}
 	if query.SCond != "" {
-		whereSql += " and t1.s_cond=? "
+		whereSql += " and s_cond=? "
 		params = append(params, query.SCond)
 	}
 	if query.SLast != "" {
-		whereSql += " and t1.s_last=? "
+		whereSql += " and s_last=? "
 		params = append(params, query.SLast)
 	}
 	if query.SPriority != "" {
-		whereSql += " and t1.s_priority=? "
+		whereSql += " and s_priority=? "
 		params = append(params, query.SPriority)
 	}
 	if query.Tags != "" {
-		whereSql += " and t1.tags=? "
+		whereSql += " and tags=? "
 		params = append(params, query.Tags)
 	}
-	extWhereSql = whereSql
-	extParams = params
 	if query.Status != "" {
-		whereSql += " and t1.status=? "
+		whereSql += " and status=? "
 		params = append(params, query.Status)
-		if query.Status == "firing" {
-			extWhereSql += "and t1.status!='closed' "
-		}
 	}
 	if !query.Start.IsZero() {
-		whereSql += fmt.Sprintf(" and t1.start>='%s' ", query.Start.Format(m.DatetimeFormat))
+		whereSql += fmt.Sprintf(" and start>='%s' ", query.Start.Format(m.DatetimeFormat))
 	}
 	if !query.End.IsZero() {
-		whereSql += fmt.Sprintf(" and t1.end<='%s' ", query.End.Format(m.DatetimeFormat))
+		whereSql += fmt.Sprintf(" and end<='%s' ", query.End.Format(m.DatetimeFormat))
 	}
-	var sql string
-	if extLogMonitor {
-		for _, v := range extParams {
-			params = append(params, v)
-		}
-		sql = `SELECT t3.* FROM (
-				SELECT t1.*,'' path,'' keyword FROM alarm t1 WHERE t1.s_metric<>'log_monitor' ` + whereSql + `
-				UNION
-				SELECT t1.*,t2.path,t2.keyword FROM alarm t1 LEFT JOIN log_monitor t2 ON t1.strategy_id=t2.strategy_id WHERE t1.s_metric='log_monitor' ` + extWhereSql + `
-				) t3 ORDER BY t3.id DESC`
-	} else {
-		sql = "SELECT * FROM alarm t1 WHERE 1=1 " + whereSql + " ORDER BY t1.id DESC "
-		if limit > 0 {
-			sql += fmt.Sprintf(" LIMIT %d", limit)
-		}
+	sql := "SELECT * FROM alarm " + whereSql + " ORDER BY id DESC "
+	if limit > 0 {
+		sql += fmt.Sprintf(" LIMIT %d", limit)
 	}
+	//if extLogMonitor {
+	//	for _, v := range extParams {
+	//		params = append(params, v)
+	//	}
+	//	sql = `SELECT t3.* FROM (
+	//			SELECT t1.*,'' path,'' keyword FROM alarm t1 WHERE t1.s_metric<>'log_monitor' ` + whereSql + `
+	//			UNION
+	//			SELECT t1.*,t2.path,t2.keyword FROM alarm t1 LEFT JOIN log_monitor t2 ON t1.strategy_id=t2.strategy_id WHERE t1.s_metric='log_monitor' ` + extWhereSql + `
+	//			) t3 ORDER BY t3.id DESC`
+	//} else {
+	//	sql = "SELECT * FROM alarm t1 WHERE 1=1 " + whereSql + " ORDER BY t1.id DESC "
+	//	if limit > 0 {
+	//		sql += fmt.Sprintf(" LIMIT %d", limit)
+	//	}
+	//}
 	err := x.SQL(sql, params...).Find(&result)
 	if err != nil {
 		log.Logger.Error("Get alarms fail", log.Error(err))
@@ -616,8 +614,20 @@ func GetAlarms(query m.AlarmTable, limit int, extLogMonitor, extOpenAlarm bool) 
 	for _, v := range result {
 		v.StartString = v.Start.Format(m.DatetimeFormat)
 		v.EndString = v.End.Format(m.DatetimeFormat)
-		if v.Path != "" {
+		if v.SMetric == "log_monitor" {
 			v.IsLogMonitor = true
+			if v.EndValue > 0 {
+				v.Start,v.End = v.End,v.Start
+				v.StartValue = v.EndValue - v.StartValue
+				if strings.Contains(v.Content, "^^") {
+					v.Content = fmt.Sprintf("%s: %s <br/>%s: %s", v.StartString, v.Content[:strings.Index(v.Content, "^^")], v.EndString, v.Content[strings.Index(v.Content, "^^")+2:])
+				}
+			}else{
+				v.StartValue = 1
+				if strings.HasSuffix(v.Content, "^^") {
+					v.Content = v.StartString +": " + v.Content
+				}
+			}
 		}
 		if strings.Contains(v.Content, "\n") {
 			v.Content = strings.ReplaceAll(v.Content, "\n", "<br/>")
