@@ -1239,29 +1239,48 @@ func QueryAlarmBySql(sql string, params []interface{}) (err error, result m.Alar
 	if err != nil || len(alarmQuery) == 0 {
 		return err, result
 	}
-	var logMonitorStrategyIds []string
+	//var logMonitorStrategyIds []string
 	for _, v := range alarmQuery {
+		v.StartString = v.Start.Format(m.DatetimeFormat)
+		v.EndString = v.End.Format(m.DatetimeFormat)
 		if v.SMetric == "log_monitor" {
-			logMonitorStrategyIds = append(logMonitorStrategyIds, strconv.Itoa(v.StrategyId))
-		}
-	}
-	if len(logMonitorStrategyIds) > 0 {
-		var logMonitorQuery []*m.LogMonitorTable
-		x.SQL("SELECT * FROM log_monitor WHERE strategy_id IN (" + strings.Join(logMonitorStrategyIds, ",") + ")").Find(&logMonitorQuery)
-		if len(logMonitorQuery) > 0 {
-			for _, v := range alarmQuery {
-				if v.SMetric == "log_monitor" {
-					for _, vv := range logMonitorQuery {
-						if v.StrategyId == vv.StrategyId {
-							v.Path = vv.Path
-							v.Keyword = vv.Keyword
-							break
-						}
-					}
+			v.IsLogMonitor = true
+			if v.EndValue > 0 {
+				v.Start,v.End = v.End,v.Start
+				v.StartValue = v.EndValue - v.StartValue + 1
+				if strings.Contains(v.Content, "^^") {
+					v.Content = fmt.Sprintf("%s: %s <br/>%s: %s", v.StartString, v.Content[:strings.Index(v.Content, "^^")], v.EndString, v.Content[strings.Index(v.Content, "^^")+2:])
+				}
+				v.StartString = v.EndString
+			}else{
+				v.StartValue = 1
+				if strings.HasSuffix(v.Content, "^^") {
+					v.Content = v.StartString +": " + v.Content[:len(v.Content)-2]
 				}
 			}
 		}
+		if strings.Contains(v.Content, "\n") {
+			v.Content = strings.ReplaceAll(v.Content, "\n", "<br/>")
+		}
 	}
+	//if len(logMonitorStrategyIds) > 0 {
+	//	var logMonitorQuery []*m.LogMonitorTable
+	//	x.SQL("SELECT * FROM log_monitor WHERE strategy_id IN (" + strings.Join(logMonitorStrategyIds, ",") + ")").Find(&logMonitorQuery)
+	//	if len(logMonitorQuery) > 0 {
+	//		for _, v := range alarmQuery {
+	//			if v.SMetric == "log_monitor" {
+	//				for _, vv := range logMonitorQuery {
+	//					if v.StrategyId == vv.StrategyId {
+	//						v.Path = vv.Path
+	//						v.Keyword = vv.Keyword
+	//						break
+	//					}
+	//				}
+	//			}
+	//		}
+	//	}
+	//}
+	metricMap := make(map[string]int)
 	for _, v := range alarmQuery {
 		if v.SPriority == "high" {
 			result.High += 1
@@ -1270,9 +1289,14 @@ func QueryAlarmBySql(sql string, params []interface{}) (err error, result m.Alar
 		} else if v.SPriority == "low" {
 			result.Low += 1
 		}
-		v.StartString = v.Start.Format(m.DatetimeFormat)
+		if _,b:=metricMap[v.SMetric];b {
+			metricMap[v.SMetric] += 1
+		}else{
+			metricMap[v.SMetric] = 1
+		}
 	}
 	result.Data = alarmQuery
+	result.MetricMap = metricMap
 	return err, result
 }
 
