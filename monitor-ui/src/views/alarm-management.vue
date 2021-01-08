@@ -103,7 +103,7 @@
                   <label class="col-md-2" style="vertical-align: top;">{{$t('field.endpoint')}}&{{$t('tableKey.s_priority')}}&{{$t('tableKey.start')}}:</label>
                   <Tag type="border" closable @on-close="addParams('endpoint',alarmItem.endpoint)" color="primary">{{alarmItem.endpoint}}</Tag>
                   <Tag type="border" closable @on-close="addParams('priority',alarmItem.s_priority)" color="primary">{{alarmItem.s_priority}}</Tag>
-                  <span>{{alarmItem.start_string}}</span>
+                  <Tag type="border" color="warning">{{alarmItem.start_string}}</Tag>
                 </li>
                 <li>
                   <label class="col-md-2">
@@ -116,7 +116,7 @@
                   </template>
                 </li>
                 <li>
-                  <label class="col-md-2" style="vertical-align: top;">{{$t('details')}}&{{$t('alarmContent')}}:</label>
+                  <label class="col-md-2" style="vertical-align: top;">{{$t('details')}}:</label>
                   <div class="col-md-9" style="display: inline-block;padding:0">
                     <span>
                       <Tag color="default">{{$t('tableKey.start_value')}}:{{alarmItem.start_value}}</Tag>
@@ -125,6 +125,11 @@
                       <Tag color="default" v-if="alarmItem.path">{{$t('tableKey.path')}}:{{alarmItem.path}}</Tag>
                       <Tag color="default" v-if="alarmItem.keyword">{{$t('tableKey.keyword')}}:{{alarmItem.keyword}}</Tag>
                     </span>
+                  </div>
+                </li>
+                <li>
+                  <label class="col-md-2" style="vertical-align: top;">{{$t('alarmContent')}}:</label>
+                  <div class="col-md-9" style="display: inline-block;padding:0">
                     <span style="word-break: break-all;" v-html="alarmItem.content"></span>
                   </div>
                 </li>
