@@ -14,7 +14,7 @@
             @on-clear="clearEndpoint"
             >
             <Option v-for="(option, index) in endpointOptions" :value="option.id" :key="index">
-             <Tag color="cyan" class="tag-width" v-if="option.type == 'host'">host</Tag>{{option.option_text}}11</Option>
+             <Tag color="cyan" class="tag-width" v-if="option.type == 'host'">host</Tag>{{option.option_text}}</Option>
           </Select>
         </li>
       </ul>
