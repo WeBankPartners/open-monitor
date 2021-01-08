@@ -27,6 +27,9 @@ func AddSdEndpoint(param m.ServiceDiscoverFileObj) []int {
 				stepList = append(stepList, v.Step)
 				v.Step = param.Step
 			}
+			if v.Address != param.Address {
+				v.Address = param.Address
+			}
 			exist = true
 			break
 		}

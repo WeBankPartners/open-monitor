@@ -183,6 +183,7 @@ func LoadDeployProcess()  {
 						log.Printf("process start error : %v \n", err)
 					} else {
 						GlobalProcessMap[p.Guid] = &p
+						deployGuidStatus[p.Guid] = p.Status
 					}
 				}
 			}
