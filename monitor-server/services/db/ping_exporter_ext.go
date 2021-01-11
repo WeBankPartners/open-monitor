@@ -104,4 +104,5 @@ func requestPingExporter(address string,objList []*m.PingExportSourceObj)  {
 	}else{
 		log.Logger.Info("Request ping exporter success", log.String("address", address))
 	}
+	resp.Body.Close()
 }
