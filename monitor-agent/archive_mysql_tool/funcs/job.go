@@ -142,6 +142,7 @@ func checkJobStatus()  {
 			log.Printf("archive job done \n")
 			break
 		}
+		time.Sleep(10*time.Second)
 	}
 }
 
