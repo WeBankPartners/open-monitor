@@ -33,7 +33,8 @@
   },
   "trans": {
     "max_unit_speed": 5,
-    "five_min_start_day": 90
+    "five_min_start_day": 90,
+    "concurrent_insert_num": 50
   },
   "http": {
     "enable": true,
