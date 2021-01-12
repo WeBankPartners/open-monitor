@@ -40,17 +40,25 @@ func AcceptAlertMsg(c *gin.Context)  {
 				sortTagList = append(sortTagList, &m.DefaultSortObj{Key:labelKey, Value:labelValue})
 			}
 			sort.Sort(sortTagList)
+			var guidTagString,eGuidTagString string
 			for _,label := range sortTagList {
 				if label.Key == "strategy_id" || label.Key == "job" || label.Key == "instance" || label.Key == "alertname" {
 					continue
 				}
+				if label.Key == "guid" {
+					guidTagString = label.Value
+				}
+				if label.Key == "e_guid" {
+					eGuidTagString = label.Value
+				}
 				tmpLabelValue := label.Value
-				//if label.Key == "command" {
-				//	if len(label.Value) > 150 {
-				//		tmpLabelValue = label.Value[:150]
-				//	}
-				//}
 				tmpTags += fmt.Sprintf("%s:%s^", label.Key, tmpLabelValue)
+			}
+			if guidTagString != "" && eGuidTagString != "" {
+				if guidTagString != eGuidTagString {
+					log.Logger.Warn("EGuid diff with guid,ignore", log.String("guid", guidTagString), log.String("e_guid", eGuidTagString))
+					continue
+				}
 			}
 			if tmpTags != "" {
 				tmpTags = tmpTags[:len(tmpTags)-1]
