@@ -78,13 +78,24 @@ func insertMysql(rows []*ArchiveTable,tableName string) error {
 			sqlString += ","
 		}
 	}
-	for _,v := range sqlList {
-		_,err := mysqlEngine.Exec(v)
-		if err != nil {
-			return fmt.Errorf("insert to mysql error,%s,sql:%s ", err.Error(), v)
+	var gErr error
+	for i:=0;i<3;i++ {
+		successFlag := false
+		for _, v := range sqlList {
+			_, err := mysqlEngine.Exec(v)
+			if err != nil {
+				gErr = fmt.Errorf("insert to mysql error,%s,sql:%s ", err.Error(), v)
+			}else{
+				successFlag = true
+			}
 		}
+		if successFlag {
+			gErr = nil
+			break
+		}
+		time.Sleep(10*time.Second)
 	}
-	return nil
+	return gErr
 }
 
 func createTable(start int64,isFiveArchive bool) (err error, tableName string) {
