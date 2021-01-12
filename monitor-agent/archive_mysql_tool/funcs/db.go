@@ -17,6 +17,7 @@ var (
 	monitorMysqlEngine *xorm.Engine
 	databaseSelect string
 	hostIp string
+	maxUnitNum int
 	concurrentInsertNum int
 )
 
