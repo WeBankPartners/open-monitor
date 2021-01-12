@@ -39,6 +39,7 @@ type MonitorConfig struct {
 type TransConfig struct {
 	MaxUnitSpeed  int  `json:"max_unit_speed"`
 	FiveMinStartDay int64 `json:"five_min_start_day"`
+	ConcurrentInsertNum  int  `json:"concurrent_insert_num"`
 }
 
 type HttpConfig struct {
