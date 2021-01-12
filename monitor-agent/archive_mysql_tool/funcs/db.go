@@ -17,6 +17,7 @@ var (
 	monitorMysqlEngine *xorm.Engine
 	databaseSelect string
 	hostIp string
+	concurrentInsertNum int
 )
 
 func InitDbEngine(databaseName string) (err error) {
@@ -69,7 +70,7 @@ func insertMysql(rows []*ArchiveTable,tableName string) error {
 	sqlString := fmt.Sprintf("INSERT INTO %s VALUES ", tableName)
 	for i,v := range rows {
 		sqlString += fmt.Sprintf("('%s','%s','%s',%d,%.3f,%.3f,%.3f,%.3f)", v.Endpoint, v.Metric, v.Tags, v.UnixTime, v.Avg, v.Min, v.Max, v.P95)
-		if (i+1)%100 == 0 || i == len(rows)-1 {
+		if (i+1)%concurrentInsertNum == 0 || i == len(rows)-1 {
 			sqlList = append(sqlList, sqlString)
 			sqlString = fmt.Sprintf("INSERT INTO %s VALUES ", tableName)
 		}else{
@@ -79,7 +80,7 @@ func insertMysql(rows []*ArchiveTable,tableName string) error {
 	for _,v := range sqlList {
 		_,err := mysqlEngine.Exec(v)
 		if err != nil {
-			return err
+			return fmt.Errorf("insert to mysql error,%s,sql:%s ", err.Error(), v)
 		}
 	}
 	return nil
