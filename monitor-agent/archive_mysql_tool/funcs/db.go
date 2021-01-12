@@ -79,21 +79,16 @@ func insertMysql(rows []*ArchiveTable,tableName string) error {
 		}
 	}
 	var gErr error
-	for i:=0;i<3;i++ {
-		successFlag := false
-		for _, v := range sqlList {
+	for _, v := range sqlList {
+		for i:=0;i<3;i++ {
 			_, err := mysqlEngine.Exec(v)
 			if err != nil {
 				gErr = fmt.Errorf("insert to mysql error,%s,sql:%s ", err.Error(), v)
-			}else{
-				successFlag = true
+			} else {
+				break
 			}
+			time.Sleep(10*time.Second)
 		}
-		if successFlag {
-			gErr = nil
-			break
-		}
-		time.Sleep(10*time.Second)
 	}
 	return gErr
 }
