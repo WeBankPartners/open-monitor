@@ -19,6 +19,10 @@ func StartCronJob()  {
 	if Config().Trans.MaxUnitSpeed > 0 {
 		maxUnitNum = Config().Trans.MaxUnitSpeed
 	}
+	retryWaitSecond = 60
+	if Config().Trans.RetryWaitSecond > 0 {
+		retryWaitSecond = Config().Trans.RetryWaitSecond
+	}
 	jobChannelList = make(chan ArchiveActionList, Config().Prometheus.MaxHttpOpen)
 	go consumeJob()
 	t,_ := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s 00:00:00 CST", time.Now().Format("2006-01-02")))
