@@ -3,6 +3,7 @@ package funcs
 import (
 	"log"
 	"sort"
+	"sync"
 	"time"
 	"fmt"
 )
@@ -10,6 +11,18 @@ import (
 var jobChannelList chan ArchiveActionList
 
 func StartCronJob()  {
+	concurrentInsertNum = 50
+	if Config().Trans.ConcurrentInsertNum > 0 {
+		concurrentInsertNum = Config().Trans.ConcurrentInsertNum
+	}
+	maxUnitNum = 5
+	if Config().Trans.MaxUnitSpeed > 0 {
+		maxUnitNum = Config().Trans.MaxUnitSpeed
+	}
+	retryWaitSecond = 60
+	if Config().Trans.RetryWaitSecond > 0 {
+		retryWaitSecond = Config().Trans.RetryWaitSecond
+	}
 	jobChannelList = make(chan ArchiveActionList, Config().Prometheus.MaxHttpOpen)
 	go consumeJob()
 	t,_ := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s 00:00:00 CST", time.Now().Format("2006-01-02")))
@@ -55,25 +68,15 @@ func CreateJob(dateString string)  {
 		log.Printf("try to create table:%s error:%v \n", tableName, err)
 		return
 	}
-	var unitPerJob int
 	unitCount := 0
-	for _,v := range MonitorObjList {
-		unitPerJob += len(v.Metrics)
-	}
-	unitPerJob = unitPerJob/Config().Prometheus.MaxHttpOpen
-	if unitPerJob > Config().Trans.MaxUnitSpeed {
-		unitPerJob = Config().Trans.MaxUnitSpeed
-	}
-	if unitPerJob == 0 {
-		unitPerJob = 1
-	}
+	actionParamObjLength := maxUnitNum*Config().Prometheus.MaxHttpOpen
 	var actionParamList []*ArchiveActionList
 	var tmpActionParamObjList []*ArchiveActionParamObj
 	for _,v := range MonitorObjList {
 		for _,vv := range v.Metrics {
 			unitCount++
 			tmpActionParamObjList = append(tmpActionParamObjList, &ArchiveActionParamObj{Endpoint:v.Endpoint, Metric:vv.Metric, PromQl:vv.PromQl, TableName:tableName, Start:start, End:end})
-			if unitCount == unitPerJob {
+			if unitCount == actionParamObjLength {
 				tmpArchiveActionList := ArchiveActionList{}
 				for _,vvv := range tmpActionParamObjList {
 					tmpArchiveActionList = append(tmpArchiveActionList, vvv)
@@ -84,6 +87,13 @@ func CreateJob(dateString string)  {
 			}
 		}
 	}
+	if len(tmpActionParamObjList) > 0 {
+		tmpArchiveActionList := ArchiveActionList{}
+		for _,vvv := range tmpActionParamObjList {
+			tmpArchiveActionList = append(tmpArchiveActionList, vvv)
+		}
+		actionParamList = append(actionParamList, &tmpArchiveActionList)
+	}
 	go checkJobStatus()
 	for _,v := range actionParamList {
 		jobChannelList <- *v
@@ -93,7 +103,38 @@ func CreateJob(dateString string)  {
 func consumeJob()  {
 	for {
 		param := <- jobChannelList
-		go archiveAction(param)
+		if len(param) == 0 {
+			continue
+		}
+		tmpUnixCount := 0
+		var concurrentJobList []ArchiveActionList
+		tmpJobList := ArchiveActionList{}
+		for _,v := range param {
+			tmpUnixCount ++
+			tmpJobList = append(tmpJobList, v)
+			if tmpUnixCount >= maxUnitNum {
+				concurrentJobList = append(concurrentJobList, tmpJobList)
+				tmpJobList = ArchiveActionList{}
+				tmpUnixCount = 0
+			}
+		}
+		if len(tmpJobList) > 0 {
+			concurrentJobList = append(concurrentJobList, tmpJobList)
+		}
+		log.Printf("start consume job,length:%d ,concurrent:%d \n", len(param), len(concurrentJobList))
+		startTime := time.Now()
+		wg := sync.WaitGroup{}
+		for _,job := range concurrentJobList {
+			wg.Add(1)
+			go func(jobList ArchiveActionList) {
+				archiveAction(jobList)
+				wg.Done()
+			}(job)
+		}
+		wg.Wait()
+		endTime := time.Now()
+		useTime := float64(endTime.Sub(startTime).Nanoseconds()) / 1e6
+		log.Printf("done with consume job,use time: %.3f ms", useTime)
 	}
 }
 
@@ -105,6 +146,7 @@ func checkJobStatus()  {
 			log.Printf("archive job done \n")
 			break
 		}
+		time.Sleep(10*time.Second)
 	}
 }
 
