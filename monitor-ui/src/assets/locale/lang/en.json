@@ -205,5 +205,6 @@
   "token": "TOKEN",
   "rule": "Rule",
   "addMetricConfig": "Add Metric",
-  "addStringMap": "Add Mapping"
+  "addStringMap": "Add Mapping",
+  "operationDoc": "Operation Document"
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	ds "github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
 	"github.com/gin-gonic/gin"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -779,7 +780,7 @@ func GetPieChart(c *gin.Context)  {
 func MainSearch(c *gin.Context)  {
 	endpoint := c.Query("search")
 	//limit := c.Query("limit")
-	if endpoint == ""{
+	if endpoint == "" {
 		mid.ReturnParamEmptyError(c, "search")
 		return
 	}
@@ -796,14 +797,9 @@ func MainSearch(c *gin.Context)  {
 	for _,v := range result {
 		v.OptionTypeName = v.OptionType
 	}
-	if len(result) < 10 {
-		sysResult := db.SearchRecursivePanel(endpoint)
-		for _, v := range sysResult {
-			if len(result) >= 10 {
-				break
-			}
-			result = append(result, v)
-		}
+	sysResult := db.SearchRecursivePanel(endpoint)
+	for _, v := range sysResult {
+		result = append(result, v)
 	}
 	if tmpFlag {
 		var tmpResult []*m.OptionModel
@@ -817,7 +813,10 @@ func MainSearch(c *gin.Context)  {
 			result = tmpResult
 		}
 	}
-	mid.ReturnSuccessData(c, result)
+	var sortOptionList m.OptionModelSortList
+	sortOptionList = append(sortOptionList, result...)
+	sort.Sort(sortOptionList)
+	mid.ReturnSuccessData(c, sortOptionList)
 }
 
 func GetPromMetric(c *gin.Context)  {
