@@ -160,14 +160,10 @@ func (c *logCollectorObj) getRows(keyword string,value,lastValue float64) []logK
 	c.Lock.RLock()
 	for _,v := range c.Rule {
 		if v.Keyword == keyword {
-			for _,vv := range v.FetchRow {
-				if vv.Index > lastValue && vv.Index <= value {
-					data = append(data, logKeywordFetchObj{Content: vv.Content})
-				}
-				//if (nowTimestamp-vv.Timestamp) <= 10 {
-				//	data = append(data, logKeywordFetchObj{Timestamp: vv.Timestamp, Content: vv.Content})
-				//}
+			if len(v.FetchRow) == 0 {
+				continue
 			}
+			data = append(data, logKeywordFetchObj{Content: v.FetchRow[len(v.FetchRow)-1].Content})
 		}
 	}
 	c.Lock.RUnlock()
