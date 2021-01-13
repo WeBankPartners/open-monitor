@@ -19,6 +19,7 @@ var (
 	hostIp string
 	maxUnitNum int
 	concurrentInsertNum int
+	retryWaitSecond int
 )
 
 func InitDbEngine(databaseName string) (err error) {
@@ -87,7 +88,7 @@ func insertMysql(rows []*ArchiveTable,tableName string) error {
 			} else {
 				break
 			}
-			time.Sleep(10*time.Second)
+			time.Sleep(time.Duration(retryWaitSecond)*time.Second)
 		}
 	}
 	return gErr
