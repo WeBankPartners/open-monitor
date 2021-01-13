@@ -1318,7 +1318,7 @@ func QueryHistoryAlarm(param m.QueryHistoryAlarmParam) (err error, result m.Alar
 		whereSql += fmt.Sprintf(" AND s_metric='%s' ", param.Metric)
 	}
 	if param.Filter == "all" {
-		sql = "SELECT * FROM alarm WHERE start<='" + endString + "' OR end>='" + startString + "' " + whereSql + " ORDER BY id DESC"
+		sql = "SELECT * FROM alarm WHERE (start<='" + endString + "' OR end>='" + startString + "') " + whereSql + " ORDER BY id DESC"
 	}
 	if param.Filter == "start" {
 		sql = "SELECT * FROM alarm WHERE start>='" + startString + "' AND start<'" + endString + "' " + whereSql + " ORDER BY id DESC"
