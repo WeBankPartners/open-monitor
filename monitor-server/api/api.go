@@ -227,11 +227,12 @@ func httpLogHandle() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
 		c.Next()
-		var bodyBytes []byte
 		if strings.Contains(c.Request.RequestURI, "api/v1") && c.Request.Method == http.MethodPost {
-			bodyBytes,_ = ioutil.ReadAll(c.Request.Body)
+			bodyBytes,_ := ioutil.ReadAll(c.Request.Body)
+			log.Logger.Info("request", log.String("url", c.Request.RequestURI), log.String("method",c.Request.Method), log.Int("code",c.Writer.Status()), log.String("operator", c.GetString("operatorName")), log.String("ip",c.ClientIP()), log.Int64("cost_time",time.Now().Sub(start).Milliseconds()), log.String("body", string(bodyBytes)))
 			c.Request.Body.Close()
+		}else {
+			log.Logger.Info("request", log.String("url", c.Request.RequestURI), log.String("method", c.Request.Method), log.Int("code", c.Writer.Status()), log.String("operator", c.GetString("operatorName")), log.String("ip", c.ClientIP()), log.Int64("cost_time", time.Now().Sub(start).Milliseconds()))
 		}
-		log.Logger.Info("request", log.String("url", c.Request.RequestURI), log.String("method",c.Request.Method), log.Int("code",c.Writer.Status()), log.String("operator", c.GetString("operatorName")), log.String("ip",c.ClientIP()), log.Float64("cost_second",time.Now().Sub(start).Seconds()), log.String("body", string(bodyBytes)))
 	}
 }
