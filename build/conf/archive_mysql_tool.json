@@ -34,7 +34,8 @@
   "trans": {
     "max_unit_speed": 5,
     "five_min_start_day": 90,
-    "concurrent_insert_num": 50
+    "concurrent_insert_num": 50,
+    "retry_wait_second": 60
   },
   "http": {
     "enable": true,
