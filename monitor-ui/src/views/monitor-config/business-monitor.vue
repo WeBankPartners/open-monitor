@@ -16,6 +16,14 @@
             <Option v-for="(option, index) in endpointOptions" :value="option.id" :key="index">
              <Tag color="cyan" class="tag-width" v-if="option.type == 'host'">host</Tag>{{option.option_text}}</Option>
           </Select>
+          <span @click="openDoc">
+            <i 
+              class="fa fa-book" 
+              aria-hidden="true" 
+              style="font-size:20px;color:#58a0e6;vertical-align: middle;margin-left:20px">
+            </i>
+            {{$t('operationDoc')}}
+          </span>
         </li>
       </ul>
     </section>
@@ -247,6 +255,9 @@ export default {
     this.$root.$store.commit('changeTableExtendActive', -1)
   },
   methods: {
+    openDoc () {
+      window.open('http://webankpartners.gitee.io/wecube-docs/manual-open-monitor-config/#_6')
+    },
     /*********/
     addEmpty (type) {
       if (!this.ruleModelConfig.addRow[type]) {
