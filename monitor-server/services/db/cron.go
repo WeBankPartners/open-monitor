@@ -159,10 +159,10 @@ func StartCheckLogKeyword()  {
 
 func CheckLogKeyword()  {
 	log.Logger.Debug("start check log keyword")
-	nowTime := time.Now().Unix()
+	nowTime := time.Now()
 	var queryParam m.QueryMonitorData
-	queryParam.Start = nowTime - 10
-	queryParam.End = nowTime
+	queryParam.Start = nowTime.Unix() - 10
+	queryParam.End = nowTime.Unix()
 	queryParam.Step = 10
 	queryParam.PromQ = "node_log_monitor_count_total"
 	queryParam.Legend = "$custom_all"
@@ -204,32 +204,60 @@ func CheckLogKeyword()  {
 				var oldValue float64
 				if lastValue > 0 {
 					needAdd := true
+					var fetchAlarm m.AlarmTable
 					for _,tmpAlarm := range alarmTable {
 						if tmpAlarm.Tags == lmt.Tags {
 							oldValue = tmpAlarm.StartValue
-							if lastValue <= tmpAlarm.StartValue {
+							if tmpAlarm.EndValue > 0 {
+								oldValue = tmpAlarm.EndValue
+							}
+							if lastValue <= oldValue {
 								needAdd = false
+							}else{
+								fetchAlarm = *tmpAlarm
 							}
 							break
 						}
 					}
 					if needAdd {
 						tmpContent := getLogMonitorRows(tmpEndpointObj.Ip, v.Path, v.Keyword,lastValue,oldValue)
-						if len(tmpContent) > 500 {
-							tmpContent = tmpContent[:500]
+						if len(tmpContent) > 240 {
+							tmpContent = tmpContent[:240]
 						}
-						addAlarmRows = append(addAlarmRows, &m.AlarmTable{StrategyId:0, Endpoint:lmt.Endpoint,Status:"firing",SMetric:"log_monitor",SExpr:"node_log_monitor_count_total",SCond:">0",SLast:"10s",SPriority:v.Priority,Content:tmpContent,Tags:lmt.Tags,StartValue:lastValue})
+						if fetchAlarm.Id > 0 && fetchAlarm.Status == "firing" {
+							tmpContent = strings.Split(fetchAlarm.Content, "^^")[0] + "^^" + tmpContent
+							addAlarmRows = append(addAlarmRows, &m.AlarmTable{Id: fetchAlarm.Id, StrategyId: 0, Endpoint: lmt.Endpoint, Status: "firing", SMetric: "log_monitor", SExpr: "node_log_monitor_count_total", SCond: ">0", SLast: "10s", SPriority: v.Priority, Content: tmpContent, Tags: lmt.Tags, StartValue: fetchAlarm.StartValue, EndValue: lastValue, Start: fetchAlarm.Start, End: nowTime})
+						}else {
+							tmpContent = tmpContent + "^^"
+							addAlarmRows = append(addAlarmRows, &m.AlarmTable{StrategyId: 0, Endpoint: lmt.Endpoint, Status: "firing", SMetric: "log_monitor", SExpr: "node_log_monitor_count_total", SCond: ">0", SLast: "10s", SPriority: v.Priority, Content: tmpContent, Tags: lmt.Tags, StartValue: lastValue, Start: nowTime})
+						}
 					}
 				}
 			}
 		}
 	}
 	if len(addAlarmRows) > 0 {
-		err = UpdateAlarms(addAlarmRows)
+		var actions []*Action
+		for _,v := range addAlarmRows {
+			tmpAction := Action{}
+			if v.Id > 0 {
+				tmpAction.Sql = "UPDATE alarm SET content=?,end_value=?,end=? WHERE id=?"
+				tmpAction.Param = []interface{}{v.Content, v.EndValue, v.End.Format(m.DatetimeFormat), v.Id}
+			}else{
+				tmpAction.Sql = "INSERT INTO alarm(strategy_id,endpoint,status,s_metric,s_expr,s_cond,s_last,s_priority,content,start_value,start,tags) VALUE (?,?,?,?,?,?,?,?,?,?,?,?)"
+				tmpAction.Param = []interface{}{v.StrategyId,v.Endpoint,v.Status,v.SMetric,v.SExpr,v.SCond,v.SLast,v.SPriority,v.Content,v.StartValue,v.Start.Format(m.DatetimeFormat),v.Tags}
+			}
+			actions = append(actions, &tmpAction)
+		}
+		err = Transaction(actions)
+		//err = UpdateAlarms(addAlarmRows)
 		if err != nil {
 			log.Logger.Error("Update alarm table fail", log.Error(err))
 		}
 		for _,v := range addAlarmRows {
+			if v.Id > 0 {
+				continue
+			}
 			var tmpAlarmTable []*m.AlarmTable
 			x.SQL("SELECT id FROM alarm WHERE status='firing' AND tags=?", v.Tags).Find(&tmpAlarmTable)
 			if len(tmpAlarmTable) > 0 {

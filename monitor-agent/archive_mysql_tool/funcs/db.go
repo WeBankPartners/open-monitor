@@ -17,6 +17,9 @@ var (
 	monitorMysqlEngine *xorm.Engine
 	databaseSelect string
 	hostIp string
+	maxUnitNum int
+	concurrentInsertNum int
+	retryWaitSecond int
 )
 
 func InitDbEngine(databaseName string) (err error) {
@@ -66,23 +69,49 @@ func InitMonitorDbEngine() (err error) {
 
 func insertMysql(rows []*ArchiveTable,tableName string) error {
 	var sqlList []string
+	var rowCountList []int
+	tmpCount := 0
 	sqlString := fmt.Sprintf("INSERT INTO %s VALUES ", tableName)
 	for i,v := range rows {
+		tmpCount += 1
 		sqlString += fmt.Sprintf("('%s','%s','%s',%d,%.3f,%.3f,%.3f,%.3f)", v.Endpoint, v.Metric, v.Tags, v.UnixTime, v.Avg, v.Min, v.Max, v.P95)
-		if (i+1)%100 == 0 || i == len(rows)-1 {
+		if (i+1)%concurrentInsertNum == 0 || i == len(rows)-1 {
+			rowCountList = append(rowCountList, tmpCount)
+			tmpCount = 0
 			sqlList = append(sqlList, sqlString)
 			sqlString = fmt.Sprintf("INSERT INTO %s VALUES ", tableName)
 		}else{
 			sqlString += ","
 		}
 	}
-	for _,v := range sqlList {
-		_,err := mysqlEngine.Exec(v)
-		if err != nil {
-			return err
+	gErrMessage := ""
+	for sqlIndex, v := range sqlList {
+		var tmpErr error
+		for i:=0;i<3;i++ {
+			_, err := mysqlEngine.Exec(v)
+			if err != nil {
+				tmpErr = err
+			} else {
+				tmpErr = nil
+				break
+			}
+			if i < 2 {
+				time.Sleep(time.Duration(retryWaitSecond) * time.Second)
+			}
+		}
+		if tmpErr != nil {
+			tmpErrorString := tmpErr.Error()
+			if len(tmpErrorString) > 200 {
+				tmpErrorString = tmpErrorString[:200]
+			}
+			gErrMessage += fmt.Sprintf("fail with rows length:%d error:%s \n", rowCountList[sqlIndex], tmpErrorString)
 		}
 	}
-	return nil
+	if gErrMessage == "" {
+		return nil
+	}else{
+		return fmt.Errorf(gErrMessage)
+	}
 }
 
 func createTable(start int64,isFiveArchive bool) (err error, tableName string) {

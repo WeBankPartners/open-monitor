@@ -73,6 +73,7 @@ type AlarmProblemQuery struct {
 	StartValue  float64  `json:"start_value"`
 	Start  time.Time  `json:"start"`
 	StartString  string  `json:"start_string"`
+	EndValue  float64  `json:"end_value"`
 	End  time.Time  `json:"end"`
 	EndString  string  `json:"end_string"`
 	IsLogMonitor  bool  `json:"is_log_monitor"`
@@ -86,6 +87,7 @@ type AlarmProblemQueryResult struct {
 	High  int  `json:"high"`
 	Mid   int  `json:"mid"`
 	Low   int  `json:"low"`
+	MetricMap map[string]int  `json:"metric"`
 }
 
 type AlarmProblemList []*AlarmProblemQuery
