@@ -1,22 +1,20 @@
 package api
 
 import (
-	"github.com/gin-gonic/gin"
-	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
-	"github.com/gin-contrib/cors"
-	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/user"
-	"io/ioutil"
-	"net/http"
-	"github.com/swaggo/gin-swagger"
-	"github.com/swaggo/gin-swagger/swaggerFiles"
 	"fmt"
-	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/dashboard"
 	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/agent"
 	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/alarm"
+	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/dashboard"
+	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/user"
 	_ "github.com/WeBankPartners/open-monitor/monitor-server/docs"
-	"strings"
-	"time"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
+	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
+	"github.com/swaggo/gin-swagger"
+	"github.com/swaggo/gin-swagger/swaggerFiles"
+	"net/http"
+	"time"
 )
 
 func InitHttpServer(exportAgent bool) {
@@ -227,12 +225,6 @@ func httpLogHandle() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
 		c.Next()
-		if strings.Contains(c.Request.RequestURI, "api/v1") && c.Request.Method == http.MethodPost {
-			bodyBytes,_ := ioutil.ReadAll(c.Request.Body)
-			log.Logger.Info("request", log.String("url", c.Request.RequestURI), log.String("method",c.Request.Method), log.Int("code",c.Writer.Status()), log.String("operator", c.GetString("operatorName")), log.String("ip",c.ClientIP()), log.Int64("cost_time",time.Now().Sub(start).Milliseconds()), log.String("body", string(bodyBytes)))
-			c.Request.Body.Close()
-		}else {
-			log.Logger.Info("request", log.String("url", c.Request.RequestURI), log.String("method", c.Request.Method), log.Int("code", c.Writer.Status()), log.String("operator", c.GetString("operatorName")), log.String("ip", c.ClientIP()), log.Int64("cost_time", time.Now().Sub(start).Milliseconds()))
-		}
+		log.Logger.Info("request", log.String("url", c.Request.RequestURI), log.String("method", c.Request.Method), log.Int("code", c.Writer.Status()), log.String("operator", c.GetString("operatorName")), log.String("ip", c.ClientIP()), log.Int64("cost_time", time.Now().Sub(start).Milliseconds()))
 	}
 }
