@@ -78,6 +78,10 @@ func SaveSession(session m.Session) (isOk bool,sId string) {
 }
 
 func GetOperateUser(c *gin.Context) string {
+	operator := c.GetString("operatorName")
+	if operator != "" {
+		return operator
+	}
 	if !m.Config().Http.Session.Enable {
 		coreToken := GetCoreToken(c)
 		return coreToken.User
@@ -97,34 +101,6 @@ func GetOperateUser(c *gin.Context) string {
 		return coreToken.User
 	}
 }
-
-//func GetCoreRequestRoleList(c *gin.Context) []string {
-//	var result []string
-//	authHeader := c.GetHeader("Authorization")
-//	if authHeader == "" {
-//		return result
-//	}
-//	authHeader = authHeader[strings.Index(authHeader, ".")+1:]
-//	authHeader = authHeader[:strings.LastIndex(authHeader, ".")]
-//	authHeader += "=="
-//	b,err := base64.StdEncoding.DecodeString(authHeader)
-//	if err != nil {
-//		log.Logger.Error("Decode core request base64 fail", log.Error(err))
-//		return result
-//	}
-//	var requestToke m.CoreRequestToken
-//	err = json.Unmarshal(b, &requestToke)
-//	if err != nil {
-//		log.Logger.Error("Get core token,json unmarchal fail", log.Error(err))
-//		return result
-//	}
-//	if requestToke.Authority != "" {
-//		requestToke.Authority = strings.Replace(requestToke.Authority, "[", "", -1)
-//		requestToke.Authority = strings.Replace(requestToke.Authority, "]", "", -1)
-//		result = strings.Split(requestToke.Authority, ",")
-//	}
-//	return result
-//}
 
 func GetSessionData(sId string) m.Session {
 	var result m.Session
