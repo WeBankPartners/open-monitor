@@ -5,6 +5,7 @@ import (
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/gin-contrib/cors"
 	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/user"
+	"io/ioutil"
 	"net/http"
 	"github.com/swaggo/gin-swagger"
 	"github.com/swaggo/gin-swagger/swaggerFiles"
@@ -13,6 +14,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/agent"
 	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/alarm"
 	_ "github.com/WeBankPartners/open-monitor/monitor-server/docs"
+	"strings"
 	"time"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 )
@@ -225,6 +227,11 @@ func httpLogHandle() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
 		c.Next()
-		log.Logger.Info("request", log.String("url", c.Request.RequestURI), log.String("method",c.Request.Method), log.Int("code",c.Writer.Status()), log.String("ip",c.ClientIP()), log.Float64("cost_second",time.Now().Sub(start).Seconds()))
+		var bodyBytes []byte
+		if strings.Contains(c.Request.RequestURI, "api/v1") && c.Request.Method == http.MethodPost {
+			bodyBytes,_ = ioutil.ReadAll(c.Request.Body)
+			c.Request.Body.Close()
+		}
+		log.Logger.Info("request", log.String("url", c.Request.RequestURI), log.String("method",c.Request.Method), log.Int("code",c.Writer.Status()), log.String("operator", c.GetString("operatorName")), log.String("ip",c.ClientIP()), log.Float64("cost_second",time.Now().Sub(start).Seconds()), log.String("body", string(bodyBytes)))
 	}
 }
