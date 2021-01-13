@@ -205,5 +205,6 @@
   "token": "TOKEN",
   "rule": "规则",
   "addMetricConfig": "新增指标配置",
-  "addStringMap": "新增映射"
+  "addStringMap": "新增映射",
+  "operationDoc": "操作文档"
 }

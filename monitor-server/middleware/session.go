@@ -145,10 +145,10 @@ func GetSessionData(sId string) m.Session {
 	return result
 }
 
-func IsActive(sId string, clientIp string) bool {
+func IsActive(sId string, clientIp string) (bool,string) {
 	if m.Config().Http.Session.ServerEnable {
 		if sId == m.Config().Http.Session.ServerToken {
-			return true
+			return true,"server"
 		}
 	}
 	var tmpUser string
@@ -169,7 +169,7 @@ func IsActive(sId string, clientIp string) bool {
 			recordRequestLock.RUnlock()
 			if !localContain {
 				delete(LocalMem, sId)
-				return false
+				return false,""
 			}
 		}
 		localContain = true
@@ -189,7 +189,7 @@ func IsActive(sId string, clientIp string) bool {
 		RecordRequestMap[fmt.Sprintf("%s_%s", tmpUser,clientIp)] = time.Now().Unix()
 		recordRequestLock.Unlock()
 	}
-	return localContain
+	return localContain,tmpUser
 }
 
 func DelSession(sId string) {

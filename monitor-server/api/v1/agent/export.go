@@ -1,18 +1,17 @@
 package agent
 
 import (
-	"github.com/gin-gonic/gin"
-	"strings"
-	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
-	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
-	"net/http"
-	"fmt"
-	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
-	"io/ioutil"
 	"encoding/json"
-	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/alarm"
-	"strconv"
+	"fmt"
+	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
+	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
+	"github.com/gin-gonic/gin"
+	"io/ioutil"
+	"net/http"
+	"strconv"
+	"strings"
 )
 
 type resultObj struct {
@@ -263,19 +262,19 @@ func autoAddAppPathConfig(param m.RegisterParamNew, paths string) error {
 	if hostEndpoint.Id <= 0 {
 		return fmt.Errorf("Host endpoint with ip:%s can not find,please register this host first ", param.Ip)
 	}
-	var businessTables []*m.BusinessMonitorTable
+	var businessTables []*m.BusinessUpdatePathObj
 	for _,v := range tmpPathList {
-		businessTables = append(businessTables, &m.BusinessMonitorTable{EndpointId:hostEndpoint.Id, Path:v, OwnerEndpoint:fmt.Sprintf("%s_%s_%s", param.Name, param.Ip, param.Type)})
+		businessTables = append(businessTables, &m.BusinessUpdatePathObj{Path:v, OwnerEndpoint:fmt.Sprintf("%s_%s_%s", param.Name, param.Ip, param.Type)})
 	}
-	err := db.UpdateAppendBusiness(m.BusinessUpdateDto{EndpointId:hostEndpoint.Id, PathList:[]*m.BusinessUpdatePathObj{}})
+	err := db.UpdateAppendBusiness(m.BusinessUpdateDto{EndpointId:hostEndpoint.Id, PathList:businessTables})
 	if err != nil {
 		log.Logger.Error("Update endpoint business table error", log.Error(err))
 		return err
 	}
-	err = alarm.UpdateNodeExporterBusinessConfig(hostEndpoint.Id)
-	if err != nil {
-		log.Logger.Error("Update business config error", log.Error(err))
-	}
+	//err = alarm.UpdateNodeExporterBusinessConfig(hostEndpoint.Id)
+	//if err != nil {
+	//	log.Logger.Error("Update business config error", log.Error(err))
+	//}
 	return err
 }
 
