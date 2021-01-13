@@ -40,17 +40,25 @@ func AcceptAlertMsg(c *gin.Context)  {
 				sortTagList = append(sortTagList, &m.DefaultSortObj{Key:labelKey, Value:labelValue})
 			}
 			sort.Sort(sortTagList)
+			var guidTagString,eGuidTagString string
 			for _,label := range sortTagList {
 				if label.Key == "strategy_id" || label.Key == "job" || label.Key == "instance" || label.Key == "alertname" {
 					continue
 				}
+				if label.Key == "guid" {
+					guidTagString = label.Value
+				}
+				if label.Key == "e_guid" {
+					eGuidTagString = label.Value
+				}
 				tmpLabelValue := label.Value
-				//if label.Key == "command" {
-				//	if len(label.Value) > 150 {
-				//		tmpLabelValue = label.Value[:150]
-				//	}
-				//}
 				tmpTags += fmt.Sprintf("%s:%s^", label.Key, tmpLabelValue)
+			}
+			if guidTagString != "" && eGuidTagString != "" {
+				if guidTagString != eGuidTagString {
+					log.Logger.Warn("EGuid diff with guid,ignore", log.String("guid", guidTagString), log.String("e_guid", eGuidTagString))
+					continue
+				}
 			}
 			if tmpTags != "" {
 				tmpTags = tmpTags[:len(tmpTags)-1]
@@ -291,6 +299,7 @@ func QueryProblemAlarm(c *gin.Context)  {
 			return
 		}
 		var highCount,mediumCount,lowCount int
+		metricMap := make(map[string]int)
 		for _,v := range data {
 			if v.SPriority == "high" {
 				highCount += 1
@@ -301,11 +310,16 @@ func QueryProblemAlarm(c *gin.Context)  {
 			if v.SPriority == "low" {
 				lowCount += 1
 			}
+			if _,b:=metricMap[v.SMetric];b {
+				metricMap[v.SMetric] += 1
+			}else{
+				metricMap[v.SMetric] = 1
+			}
 		}
 		if len(data) == 0 {
 			data = []*m.AlarmProblemQuery{}
 		}
-		result := m.AlarmProblemQueryResult{Data:data,High:highCount,Mid:mediumCount,Low:lowCount}
+		result := m.AlarmProblemQueryResult{Data:data,High:highCount,Mid:mediumCount,Low:lowCount,MetricMap: metricMap}
 		mid.ReturnSuccessData(c, result)
 	}else{
 		mid.ReturnValidateError(c, err.Error())

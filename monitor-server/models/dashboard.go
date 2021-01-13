@@ -12,6 +12,20 @@ type SearchModel struct {
 	RefreshMessage bool  `json:"refresh_message"`
 }
 
+type OptionModelSortList []*OptionModel
+
+func (e OptionModelSortList) Len() int {
+	return len(e)
+}
+
+func (e OptionModelSortList) Swap(i,j int)  {
+	e[i], e[j] = e[j], e[i]
+}
+
+func (e OptionModelSortList) Less(i,j int) bool {
+	return len(e[i].OptionText) < len(e[j].OptionText)
+}
+
 type OptionModel struct {
 	Id  int  `json:"id"`
 	OptionValue  string  `json:"option_value"`
