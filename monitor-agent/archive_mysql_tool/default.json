@@ -6,7 +6,7 @@
     "user": "root",
     "password": "wecube",
     "database_prefix": "prometheus_archive_",
-    "max_open": 100,
+    "max_open": 150,
     "max_idle": 10,
     "timeout": 60
   },
@@ -33,7 +33,9 @@
   },
   "trans": {
     "max_unit_speed": 5,
-    "five_min_start_day": 90
+    "five_min_start_day": 90,
+    "concurrent_insert_num": 100,
+    "retry_wait_second": 60
   },
   "http": {
     "enable": true,
