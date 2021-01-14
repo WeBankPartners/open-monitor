@@ -39,7 +39,7 @@ Open-Monitor consists of several components: `Prometheus`, `Alert Manager`, `Mon
 
 The overall architecture diagram is as follows:
 
-![Open-Monitor_Architecture](wiki/images/Architecture.svg)
+![Open-Monitor_Architecture](wiki/images/Architecture-new.svg)
 
 ## Summary
 
