@@ -37,7 +37,7 @@ Open-Monitor 包含的组件有Prometheus、Alertmanager、Monitor、Agent_manag
 ## 系统架构
 整体架构图如下:  
 
-![Open-Monitor架构图](wiki/images/Architecture.svg)
+![Open-Monitor架构图](wiki/images/Architecture-new.svg)
 
 
 ## 简介
