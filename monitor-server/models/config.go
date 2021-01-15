@@ -169,6 +169,7 @@ type GlobalConfig struct {
 	SdFile  SdFileConfig  `json:"sd_file"`
 	ArchiveMysql  ArchiveMysqlConfig  `json:"archive_mysql"`
 	ProcessCheckList  []string  `json:"process_check_list"`
+	DefaultAdminRole  string  `json:"default_admin_role"`
 }
 
 var (
