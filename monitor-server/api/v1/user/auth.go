@@ -179,6 +179,7 @@ func AuthRequired() gin.HandlerFunc {
 						c.Abort()
 					} else {
 						c.Set("operatorName", coreToken.User)
+						c.Set("operatorRoles", coreToken.Roles)
 						c.Next()
 					}
 				} else {
