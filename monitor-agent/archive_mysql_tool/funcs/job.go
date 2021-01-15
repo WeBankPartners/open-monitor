@@ -179,7 +179,7 @@ func archiveAction(param ArchiveActionList)  {
 					tmpFloatList = []float64{vvv[1]}
 				}
 			}
-			if len(tmpFloatList) > 0 {
+			if len(tmpFloatList) > 0 && tmpStartTime <= v.End {
 				avg,min,max,p95 := calcData(tmpFloatList)
 				rowData = append(rowData, &ArchiveTable{Endpoint:v.Endpoint,Metric:v.Metric,Tags:tmpTagString,UnixTime:tmpStartTime-60,Avg:avg,Min:min,Max:max,P95:p95})
 			}
