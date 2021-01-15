@@ -1,15 +1,15 @@
 package funcs
 
 import (
-	"net/http"
-	"time"
-	"net/url"
-	"fmt"
-	"strings"
-	"io/ioutil"
 	"encoding/json"
-	"strconv"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"net/url"
 	"sort"
+	"strconv"
+	"strings"
+	"time"
 )
 
 var (
