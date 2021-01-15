@@ -6,5 +6,8 @@ const (
 	DateFormatWithZone = `2006-01-02 15:04:05 MST`
 	Version = `1.0.0`
 	TmpCoreToken = `***REMOVED***`
+)
 
+var (
+	LogParamIgnorePath = []string{"/dashboard/newchart", "/dashboard/pie/chart", "/problem/query", "/problem/history"}
 )
