@@ -120,5 +120,5 @@ func CheckRoleEndpointOwner(roles []string)  {
 }
 
 func UpdateRoleEndpointMap()  {
-	
+
 }
