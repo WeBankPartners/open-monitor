@@ -112,7 +112,7 @@ func IsIllegalIp(str string) bool {
 }
 
 func InitRoleEndpointMap()  {
-	
+
 }
 
 func CheckRoleEndpointOwner(roles []string)  {
