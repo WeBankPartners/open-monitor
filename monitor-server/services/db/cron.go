@@ -104,7 +104,7 @@ func DoCheckProgress() error {
 	log.Logger.Info("Notify request data", log.String("eventSeqNo",requestParam.EventSeqNo),log.String("operationKey",requestParam.OperationKey),log.String("operationData",requestParam.OperationData))
 	b, _ := json.Marshal(requestParam)
 	request, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/platform/v1/operation-events", m.CoreUrl), strings.NewReader(string(b)))
-	request.Header.Set("Authorization", m.TmpCoreToken)
+	request.Header.Set("Authorization", m.GetCoreToken())
 	request.Header.Set("Content-Type", "application/json")
 	if err != nil {
 		log.Logger.Error("Notify core event new request fail", log.Error(err))
