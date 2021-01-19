@@ -17,6 +17,7 @@
     "log": {
       "level": "{{MONITOR_LOG_LEVEL}}",
       "file": "logs/open-monitor.log",
+      "access_file": "logs/open-monitor-access.log",
       "archive_max_size": 64,
       "archive_max_backup": 10,
       "archive_max_day": 15,
