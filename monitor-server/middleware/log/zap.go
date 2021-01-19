@@ -13,11 +13,17 @@ import (
 
 var (
 	Logger *zap.Logger
+	AccessLogger *zap.Logger
 	levelStringList = []string{"debug","info","warn","error"}
 	LogLevel string
 )
 
-func InitArchiveZapLogger() {
+func InitLogger()  {
+	Logger = InitArchiveZapLogger(m.Config().Http.Log.File)
+	AccessLogger = InitArchiveZapLogger(m.Config().Http.Log.AccessFile)
+}
+
+func InitArchiveZapLogger(filePath string) *zap.Logger {
 	LogLevel = strings.ToLower(m.Config().Http.Log.Level)
 	var level int
 	for i,v := range levelStringList {
@@ -29,7 +35,7 @@ func InitArchiveZapLogger() {
 	zapLevel := zap.NewAtomicLevel()
 	zapLevel.SetLevel(zapcore.Level(level))
 	hook := lumberjack.Logger{
-		Filename:   m.Config().Http.Log.File,
+		Filename:   filePath,
 		MaxSize:    m.Config().Http.Log.ArchiveMaxSize,
 		MaxBackups: m.Config().Http.Log.ArchiveMaxBackup,
 		MaxAge:     m.Config().Http.Log.ArchiveMaxDay,
@@ -51,8 +57,9 @@ func InitArchiveZapLogger() {
 		EncodeCaller:   zapcore.ShortCallerEncoder,
 	}
 	core := zapcore.NewCore(zapcore.NewJSONEncoder(encoderConfig), zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout),zapcore.AddSync(&hook)), zapLevel)
-	Logger = zap.New(core, zap.AddCaller(), zap.Development())
-	Logger.Info("success init zap log !!")
+	logger := zap.New(core, zap.AddCaller(), zap.Development())
+	logger.Info("success init zap log !!")
+	return logger
 }
 
 func Error(err error) zap.Field {
