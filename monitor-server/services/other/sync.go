@@ -116,7 +116,7 @@ func getCoreContainerHost() (result coreHostDto,err error) {
 		log.Logger.Error("Get core hosts key new request fail", log.Error(err))
 		return result,err
 	}
-	request.Header.Set("Authorization", m.TmpCoreToken)
+	request.Header.Set("Authorization", m.GetCoreToken())
 	res,err := ctxhttp.Do(context.Background(), http.DefaultClient, request)
 	if err != nil {
 		log.Logger.Error("Get core hosts key ctxhttp request fail", log.Error(err))
