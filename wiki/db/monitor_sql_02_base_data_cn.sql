@@ -192,5 +192,11 @@ create index alarm_priority_idx on alarm(s_priority);
 #@v1.11.0-end@;
 
 #@v1.11.0.7-begin@;
-alter table alarm_custom modify column alert_info varchar(2048);
+alter table alarm_custom modify column alert_info varchar(2048) default '';
+alter table alarm_custom modify column alert_ip varchar(50) default '';
+alter table alarm_custom modify column alert_obj varchar(50) default '';
+alter table alarm_custom modify column alert_title varchar(100) default '';
+alter table alarm_custom modify column alert_reciver varchar(500) default '';
+alter table alarm_custom modify column remark_info varchar(256) default '';
+alter table alarm_custom modify column sub_system_id varchar(10) default '';
 #@v1.11.0.7-end@;
