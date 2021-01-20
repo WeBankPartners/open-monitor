@@ -226,23 +226,34 @@ func InitDependenceParam()  {
 
 func httpLogHandle() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		start := time.Now()
-		var bodyBytes []byte
-		if c.Request.Method == http.MethodPost {
-			ignore := false
-			for _,v := range m.LogParamIgnorePath {
-				if strings.Contains(c.Request.RequestURI, v) {
-					ignore = true
-					break
-				}
-			}
-			if !ignore {
-				bodyBytes,_ = ioutil.ReadAll(c.Request.Body)
-				c.Request.Body.Close()
-				c.Request.Body = ioutil.NopCloser(bytes.NewReader(bodyBytes))
+		ignoreLog := false
+		for _,v := range m.LogIgnorePath {
+			if strings.Contains(c.Request.RequestURI, v) {
+				ignoreLog = true
+				break
 			}
 		}
-		c.Next()
-		log.AccessLogger.Info("request", log.String("url", c.Request.RequestURI), log.String("method", c.Request.Method), log.Int("code", c.Writer.Status()), log.String("operator", c.GetString("operatorName")), log.String("ip", c.ClientIP()), log.Float64("cost_second", time.Now().Sub(start).Seconds()), log.String("body", string(bodyBytes)))
+		if ignoreLog {
+			c.Next()
+		}else {
+			start := time.Now()
+			var bodyBytes []byte
+			if c.Request.Method == http.MethodPost {
+				ignore := false
+				for _, v := range m.LogParamIgnorePath {
+					if strings.Contains(c.Request.RequestURI, v) {
+						ignore = true
+						break
+					}
+				}
+				if !ignore {
+					bodyBytes, _ = ioutil.ReadAll(c.Request.Body)
+					c.Request.Body.Close()
+					c.Request.Body = ioutil.NopCloser(bytes.NewReader(bodyBytes))
+				}
+			}
+			c.Next()
+			log.AccessLogger.Info("request", log.String("url", c.Request.RequestURI), log.String("method", c.Request.Method), log.Int("code", c.Writer.Status()), log.String("operator", c.GetString("operatorName")), log.String("ip", c.ClientIP()), log.Float64("cost_second", time.Now().Sub(start).Seconds()), log.String("body", string(bodyBytes)))
+		}
 	}
 }
