@@ -10,5 +10,5 @@ const (
 )
 
 var (
-	LogParamIgnorePath = []string{"/dashboard/newchart", "/dashboard/pie/chart", "/problem/query", "/problem/history"}
+	LogParamIgnorePath = []string{"/dashboard/newchart", "/dashboard/pie/chart", "/problem/query", "/problem/history", "/monitor/webhook"}
 )
