@@ -238,6 +238,6 @@ func InitConfig(cfg string) {
 	if CoreUrl != "" && SubSystemCode != "" && SubSystemKey != "" {
 		InitCoreToken()
 	}else{
-		log.Printf("")
+		log.Printf("Init core token fail,coreUrl & subSystemCode & subSystemKey can not empty")
 	}
 }
