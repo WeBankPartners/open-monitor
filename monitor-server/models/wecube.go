@@ -45,7 +45,7 @@ func refreshToken() error {
 	if err != nil {
 		return fmt.Errorf("http new request fail,%s ", err.Error())
 	}
-	req.Header.Set("Authorization", "Bearer " + coreRefreshToken)
+	req.Header.Set("Authorization", coreRefreshToken)
 	resp,err := http.DefaultClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("http response fail,%s ", err.Error())
@@ -63,11 +63,11 @@ func refreshToken() error {
 		}
 		expInt,_ := strconv.ParseInt(v.Expiration, 10, 64)
 		if v.TokenType == "refreshToken" {
-			coreRefreshToken = v.Token
+			coreRefreshToken = "Bearer " + v.Token
 			coreRefreshTokenExpTime = time.Unix(expInt, 0)
 		}
 		if v.TokenType == "accessToken" {
-			coreRequestToken = v.Token
+			coreRequestToken = "Bearer " + v.Token
 			coreRequestTokenExpTime = time.Unix(expInt, 0)
 		}
 	}
@@ -104,11 +104,11 @@ func requestCoreToken(rsaKey string) error {
 		}
 		expInt,_ := strconv.ParseInt(v.Expiration, 10, 64)
 		if v.TokenType == "refreshToken" {
-			coreRefreshToken = v.Token
+			coreRefreshToken = "Bearer " + v.Token
 			coreRefreshTokenExpTime = time.Unix(expInt, 0)
 		}
 		if v.TokenType == "accessToken" {
-			coreRequestToken = v.Token
+			coreRequestToken = "Bearer " + v.Token
 			coreRequestTokenExpTime = time.Unix(expInt, 0)
 		}
 	}
