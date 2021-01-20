@@ -190,3 +190,7 @@ create index alarm_metric_idx on alarm(s_metric);
 create index alarm_status_idx on alarm(status);
 create index alarm_priority_idx on alarm(s_priority);
 #@v1.11.0-end@;
+
+#@v1.11.0.7-begin@;
+alter table alarm_custom modify column alert_info varchar(2048);
+#@v1.11.0.7-end@;
