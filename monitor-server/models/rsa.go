@@ -19,7 +19,7 @@ func DecryptRsa(inputString string) string {
 	}
 	inputString = inputString[4:]
 	result := inputString
-	inputBytes,err := base64.RawStdEncoding.DecodeString(inputString)
+	inputBytes,err := base64.StdEncoding.DecodeString(inputString)
 	if err != nil {
 		log.Printf("Input string format to base64 fail,%s \n", err.Error())
 		return inputString
