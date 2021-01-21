@@ -100,23 +100,25 @@
               <i class="fa fa-bar-chart fa-operate" v-if="!alarmItem.is_custom" @click="goToEndpointView(alarmItem)" aria-hidden="true"></i>
               <ul>
                 <li>
-                  <label class="col-md-2" style="vertical-align: top;">{{$t('field.endpoint')}}&{{$t('tableKey.s_priority')}}&{{$t('tableKey.start')}}:</label>
+                  <label class="col-md-2" style="vertical-align: top;line-height: 24px;">{{$t('field.endpoint')}}&{{$t('tableKey.s_priority')}}:</label>
                   <Tag type="border" closable @on-close="addParams('endpoint',alarmItem.endpoint)" color="primary">{{alarmItem.endpoint}}</Tag>
                   <Tag type="border" closable @on-close="addParams('priority',alarmItem.s_priority)" color="primary">{{alarmItem.s_priority}}</Tag>
                   <Tag type="border" color="warning">{{alarmItem.start_string}}</Tag>
                 </li>
                 <li>
-                  <label class="col-md-2">
+                  <label class="col-md-2" style="vertical-align: top;line-height: 24px;">
                     <span v-if="!alarmItem.is_custom">{{$t('field.metric')}}&</span>
                     <span v-if="!alarmItem.is_custom && alarmItem.tags">Tags</span>
                     :</label>
-                  <Tag type="border" closable @on-close="addParams('metric',alarmItem.s_metric)" color="primary">{{alarmItem.s_metric}}</Tag>
-                  <template v-if="!alarmItem.is_custom && alarmItem.tags">
-                    <Tag type="border" v-for="(t,tIndex) in alarmItem.tags.split('^')" :key="tIndex" color="cyan">{{t}}</Tag>
-                  </template>
+                    <div class="col-md-9" style="display: inline-block;padding:0">
+                      <Tag type="border" closable @on-close="addParams('metric',alarmItem.s_metric)" color="primary">{{alarmItem.s_metric}}</Tag>
+                      <template v-if="!alarmItem.is_custom && alarmItem.tags">
+                        <Tag type="border" v-for="(t,tIndex) in alarmItem.tags.split('^')" :key="tIndex" color="cyan">{{t}}</Tag>
+                      </template>
+                    </div>
                 </li>
                 <li>
-                  <label class="col-md-2" style="vertical-align: top;">{{$t('details')}}:</label>
+                  <label class="col-md-2" style="vertical-align: top;line-height: 24px;">{{$t('details')}}:</label>
                   <div class="col-md-9" style="display: inline-block;padding:0">
                     <span>
                       <Tag color="default">{{$t('tableKey.start_value')}}:{{alarmItem.start_value}}</Tag>
