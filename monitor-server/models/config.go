@@ -184,6 +184,7 @@ var (
 	RecoverCallback string
 	SubSystemCode string
 	SubSystemKey  string
+	DefaultMailReceiver  []string
 )
 
 func Config() *GlobalConfig {
