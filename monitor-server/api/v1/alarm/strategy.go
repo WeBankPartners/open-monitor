@@ -67,6 +67,8 @@ func AddStrategy(c *gin.Context)  {
 			param.TplId = tplObj.Id
 		}
 		strategyObj := m.StrategyTable{TplId:param.TplId,Metric:param.Metric,Expr:param.Expr,Cond:param.Cond,Last:param.Last,Priority:param.Priority,Content:param.Content}
+		strategyObj.NotifyEnable = param.NotifyEnable
+		strategyObj.NotifyDelay = param.NotifyDelay
 		err = db.UpdateStrategy(&m.UpdateStrategy{Strategy:[]*m.StrategyTable{&strategyObj}, Operation:"insert"})
 		if err != nil {
 			mid.ReturnUpdateTableError(c, "strategy", err)
