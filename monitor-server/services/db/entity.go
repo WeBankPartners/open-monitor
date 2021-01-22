@@ -297,8 +297,11 @@ func GetAlarmEvent(alarmType,inputGuid string,id int) (result m.AlarmEntityObj,e
 				toRole = append(toRole, v.Name)
 			}
 		}
+		if len(toMail) == 0 {
+			toMail = m.DefaultMailReceiver
+		}
 		result.To = strings.Join(toMail, ",")
-		result.ToMail = strings.Join(toMail, ",")
+		result.ToMail = result.To
 		result.ToPhone = strings.Join(toPhone, ",")
 		result.ToRole = strings.Join(toRole, ",")
 		result.Subject = fmt.Sprintf("[%s][%s] Endpoint:%s Metric:%s", alarms[0].Status, alarms[0].SPriority, alarms[0].Endpoint, alarms[0].SMetric)
@@ -316,8 +319,12 @@ func getCustomAlarmEvent(id int) (result m.AlarmEntityObj,err error) {
 		err = fmt.Errorf("can not find any custom alarm with id:%d", id)
 		return result,err
 	}
-	result.To = customAlarms[0].AlertReciver
-	result.ToMail = customAlarms[0].AlertReciver
+	if !strings.Contains(customAlarms[0].AlertReciver, "@") {
+		result.To = strings.Join(m.DefaultMailReceiver, ",")
+	}else {
+		result.To = customAlarms[0].AlertReciver
+	}
+	result.ToMail = result.To
 	alarmStatus := "firing"
 	if customAlarms[0].Closed == 1 {
 		alarmStatus = "ok"

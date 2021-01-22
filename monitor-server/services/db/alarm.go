@@ -1092,7 +1092,7 @@ func SaveOpenAlarm(param m.OpenAlarmRequest) error {
 				customAlarmId = vv.Id
 			}
 		}
-		if v.UseUmgPolicy != "1" && v.AlertReciver != "" && customAlarmId > 0 {
+		if v.UseUmgPolicy != "1" && customAlarmId > 0 {
 			sendMailErr := NotifyCoreEvent("", 0, 0, customAlarmId)
 			if sendMailErr != nil {
 				log.Logger.Error("Send custom alarm mail event fail", log.Error(sendMailErr))
@@ -1355,9 +1355,13 @@ func NotifyAlarm(alarmObj *m.AlarmHandleObj) {
 			if len(accept) == 0 {
 				return
 			}
+			timeString := alarmObj.Start.Format(m.DatetimeFormat)
+			if alarmObj.Status == "ok" {
+				timeString = alarmObj.End.Format(m.DatetimeFormat)
+			}
 			sao.Accept = accept
 			sao.Subject = fmt.Sprintf("[%s][%s] Endpoint:%s Metric:%s", alarmObj.Status, alarmObj.SPriority, alarmObj.Endpoint, alarmObj.SMetric)
-			sao.Content = fmt.Sprintf("Endpoint:%s \r\nStatus:%s\r\nMetric:%s\r\nEvent:%.3f%s\r\nLast:%s\r\nPriority:%s\r\nNote:%s\r\nTime:%s",alarmObj.Endpoint,alarmObj.Status,alarmObj.SMetric,alarmObj.StartValue,alarmObj.SCond,alarmObj.SLast,alarmObj.SPriority,alarmObj.Content,alarmObj.Start.Format(m.DatetimeFormat))
+			sao.Content = fmt.Sprintf("Endpoint:%s \r\nStatus:%s\r\nMetric:%s\r\nEvent:%.3f%s\r\nLast:%s\r\nPriority:%s\r\nNote:%s\r\nTime:%s",alarmObj.Endpoint,alarmObj.Status,alarmObj.SMetric,alarmObj.StartValue,alarmObj.SCond,alarmObj.SLast,alarmObj.SPriority,alarmObj.Content,timeString)
 			other.SendSmtpMail(sao)
 		}
 	}
