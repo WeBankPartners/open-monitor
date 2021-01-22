@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/other"
 	"sort"
 	"strconv"
 	"strings"
@@ -258,7 +259,7 @@ func GetStrategys(query *m.TplQuery, ignoreLogMonitor bool) error {
 			grpIds += ") OR"
 		}
 		var tpls []*m.TplStrategyTable
-		sql := `SELECT t1.id tpl_id,t1.grp_id,t1.endpoint_id,t2.id strategy_id,t2.metric,t2.expr,t2.cond,t2.last,t2.priority,t2.content 
+		sql := `SELECT t1.id tpl_id,t1.grp_id,t1.endpoint_id,t2.id strategy_id,t2.metric,t2.expr,t2.cond,t2.last,t2.priority,t2.content,t2.notify_enable,t2.notify_delay 
 				FROM tpl t1 LEFT JOIN strategy t2 ON t1.id=t2.tpl_id WHERE (` + grpIds + ` endpoint_id=?)  order by t1.endpoint_id,t1.id,t2.id`
 		err = x.SQL(sql, query.SearchId).Find(&tpls)
 		if err != nil {
@@ -279,7 +280,7 @@ func GetStrategys(query *m.TplQuery, ignoreLogMonitor bool) error {
 				if i == 0 {
 					tmpTplId = v.TplId
 					if v.StrategyId > 0 {
-						tmpStrategys = append(tmpStrategys, &m.StrategyTable{Id: v.StrategyId, TplId: v.TplId, Metric: v.Metric, Expr: v.Expr, Cond: v.Cond, Last: v.Last, Priority: v.Priority, Content: v.Content})
+						tmpStrategys = append(tmpStrategys, &m.StrategyTable{Id: v.StrategyId, TplId: v.TplId, Metric: v.Metric, Expr: v.Expr, Cond: v.Cond, Last: v.Last, Priority: v.Priority, Content: v.Content, NotifyEnable: v.NotifyEnable, NotifyDelay: v.NotifyDelay})
 					}
 				} else {
 					if v.TplId != tmpTplId {
@@ -303,7 +304,7 @@ func GetStrategys(query *m.TplQuery, ignoreLogMonitor bool) error {
 						tmpStrategys = []*m.StrategyTable{}
 					}
 					if v.StrategyId > 0 {
-						tmpStrategys = append(tmpStrategys, &m.StrategyTable{Id: v.StrategyId, TplId: v.TplId, Metric: v.Metric, Expr: v.Expr, Cond: v.Cond, Last: v.Last, Priority: v.Priority, Content: v.Content})
+						tmpStrategys = append(tmpStrategys, &m.StrategyTable{Id: v.StrategyId, TplId: v.TplId, Metric: v.Metric, Expr: v.Expr, Cond: v.Cond, Last: v.Last, Priority: v.Priority, Content: v.Content, NotifyEnable: v.NotifyEnable, NotifyDelay: v.NotifyDelay})
 					}
 				}
 			}
@@ -335,7 +336,7 @@ func GetStrategys(query *m.TplQuery, ignoreLogMonitor bool) error {
 			tmpParentId := grps[0].Parent
 			for i := 0; i < 10; i++ {
 				parentGrp := getGrpParent(tmpParentId)
-				sql := `SELECT t1.id tpl_id,t1.grp_id,t1.endpoint_id,t2.id strategy_id,t2.metric,t2.expr,t2.cond,t2.last,t2.priority,t2.content 
+				sql := `SELECT t1.id tpl_id,t1.grp_id,t1.endpoint_id,t2.id strategy_id,t2.metric,t2.expr,t2.cond,t2.last,t2.priority,t2.content,t2.notify_enable,t2.notify_delay 
 				FROM tpl t1 LEFT JOIN strategy t2 ON t1.id=t2.tpl_id WHERE t1.grp_id=?  ORDER BY t2.id`
 				parentTpls = []*m.TplStrategyTable{}
 				x.SQL(sql, parentGrp.Id).Find(&parentTpls)
@@ -346,7 +347,7 @@ func GetStrategys(query *m.TplQuery, ignoreLogMonitor bool) error {
 							if ignoreLogMonitor && v.Metric == "log_monitor" {
 								continue
 							}
-							tmpStrategys = append(tmpStrategys, &m.StrategyTable{Id: v.StrategyId, TplId: v.TplId, Metric: v.Metric, Expr: v.Expr, Cond: v.Cond, Last: v.Last, Priority: v.Priority, Content: v.Content})
+							tmpStrategys = append(tmpStrategys, &m.StrategyTable{Id: v.StrategyId, TplId: v.TplId, Metric: v.Metric, Expr: v.Expr, Cond: v.Cond, Last: v.Last, Priority: v.Priority, Content: v.Content, NotifyEnable: v.NotifyEnable, NotifyDelay: v.NotifyDelay})
 						}
 					}
 					result = append(result, &m.TplObj{TplId: parentTpls[0].TplId, ObjId: parentGrp.Id, ObjName: parentGrp.Name, ObjType: "grp", Operation: false, Strategy: tmpStrategys})
@@ -371,7 +372,7 @@ func GetStrategys(query *m.TplQuery, ignoreLogMonitor bool) error {
 			}
 			result = newResult
 		}
-		sql := `SELECT t1.id tpl_id,t1.grp_id,t1.endpoint_id,t2.id strategy_id,t2.metric,t2.expr,t2.cond,t2.last,t2.priority,t2.content 
+		sql := `SELECT t1.id tpl_id,t1.grp_id,t1.endpoint_id,t2.id strategy_id,t2.metric,t2.expr,t2.cond,t2.last,t2.priority,t2.content,t2.notify_enable,t2.notify_delay 
 				FROM tpl t1 LEFT JOIN strategy t2 ON t1.id=t2.tpl_id WHERE t1.grp_id=?  ORDER BY t2.id`
 		err = x.SQL(sql, query.SearchId).Find(&tpls)
 		if err != nil {
@@ -385,7 +386,7 @@ func GetStrategys(query *m.TplQuery, ignoreLogMonitor bool) error {
 					if ignoreLogMonitor && v.Metric == "log_monitor" {
 						continue
 					}
-					tmpStrategys = append(tmpStrategys, &m.StrategyTable{Id: v.StrategyId, TplId: v.TplId, Metric: v.Metric, Expr: v.Expr, Cond: v.Cond, Last: v.Last, Priority: v.Priority, Content: v.Content})
+					tmpStrategys = append(tmpStrategys, &m.StrategyTable{Id: v.StrategyId, TplId: v.TplId, Metric: v.Metric, Expr: v.Expr, Cond: v.Cond, Last: v.Last, Priority: v.Priority, Content: v.Content, NotifyEnable: v.NotifyEnable, NotifyDelay: v.NotifyDelay})
 				}
 			}
 			result = append(result, &m.TplObj{TplId: tpls[0].TplId, ObjId: tpls[0].GrpId, ObjName: grps[0].Name, ObjType: "grp", Operation: true, Strategy: tmpStrategys})
@@ -650,7 +651,7 @@ func GetAlarms(query m.AlarmTable, limit int, extLogMonitor, extOpenAlarm bool) 
 	return err, sortResult
 }
 
-func UpdateAlarms(alarms []*m.AlarmTable) error {
+func UpdateAlarms(alarms []*m.AlarmHandleObj) error {
 	if len(alarms) == 0 {
 		return nil
 	}
@@ -662,7 +663,7 @@ func UpdateAlarms(alarms []*m.AlarmTable) error {
 			_, cErr = x.Exec(action.Sql, v.Status, v.EndValue, v.End.Format(m.DatetimeFormat), v.Id)
 		} else {
 			action.Sql = "INSERT INTO alarm(strategy_id,endpoint,status,s_metric,s_expr,s_cond,s_last,s_priority,content,start_value,start,tags) VALUE (?,?,?,?,?,?,?,?,?,?,?,?)"
-			_, cErr = x.Exec(action.Sql, v.StrategyId, v.Endpoint, v.Status, v.SMetric, v.SExpr, v.SCond, v.SLast, v.SPriority, v.Content, v.StartValue, time.Now().Format(m.DatetimeFormat), v.Tags)
+			_, cErr = x.Exec(action.Sql, v.StrategyId, v.Endpoint, v.Status, v.SMetric, v.SExpr, v.SCond, v.SLast, v.SPriority, v.Content, v.StartValue, v.Start.Format(m.DatetimeFormat), v.Tags)
 		}
 		if cErr != nil {
 			log.Logger.Error("Update alarm fail", log.Error(cErr))
@@ -1266,23 +1267,6 @@ func QueryAlarmBySql(sql string, params []interface{}) (err error, result m.Alar
 			v.Content = strings.ReplaceAll(v.Content, "\n", "<br/>")
 		}
 	}
-	//if len(logMonitorStrategyIds) > 0 {
-	//	var logMonitorQuery []*m.LogMonitorTable
-	//	x.SQL("SELECT * FROM log_monitor WHERE strategy_id IN (" + strings.Join(logMonitorStrategyIds, ",") + ")").Find(&logMonitorQuery)
-	//	if len(logMonitorQuery) > 0 {
-	//		for _, v := range alarmQuery {
-	//			if v.SMetric == "log_monitor" {
-	//				for _, vv := range logMonitorQuery {
-	//					if v.StrategyId == vv.StrategyId {
-	//						v.Path = vv.Path
-	//						v.Keyword = vv.Keyword
-	//						break
-	//					}
-	//				}
-	//			}
-	//		}
-	//	}
-	//}
 	metricMap := make(map[string]int)
 	for _, v := range alarmQuery {
 		if v.SPriority == "high" {
@@ -1331,4 +1315,51 @@ func QueryHistoryAlarm(param m.QueryHistoryAlarmParam) (err error, result m.Alar
 	}
 	err, result = QueryAlarmBySql(sql, []interface{}{})
 	return err, result
+}
+
+func NotifyAlarm(alarmObj *m.AlarmHandleObj) {
+	if alarmObj.NotifyDelay > 0 {
+		time.Sleep(time.Duration(alarmObj.NotifyDelay) * time.Second)
+		var alarmRows []*m.AlarmTable
+		abortNotify := false
+		if alarmObj.Id > 0 {
+			x.SQL("select * from alarm where id=?", alarmObj.Id).Find(&alarmRows)
+			if len(alarmRows) > 0 {
+				if (alarmRows[0].End.Unix()-alarmRows[0].Start.Unix()) <= int64(alarmObj.NotifyDelay) {
+					log.Logger.Info("Abort recover alarm notify", log.Int("id", alarmObj.Id), log.String("start",alarmRows[0].Start.Format(m.DatetimeFormat)),log.String("end",alarmRows[0].End.Format(m.DatetimeFormat)))
+					abortNotify = true
+				}
+			}
+		} else {
+			x.SQL("select * from alarm where strategy_id=? and endpoint=? and start=?", alarmObj.StrategyId, alarmObj.Endpoint, alarmObj.Start.Format(m.DatetimeFormat)).Find(&alarmRows)
+			if len(alarmRows) > 0 {
+				if alarmRows[0].Status == "ok" {
+					log.Logger.Info("Abort firing alarm notify", log.String("endpoint",alarmObj.Endpoint), log.Int("strategyId",alarmObj.StrategyId), log.String("start",alarmObj.Start.Format(m.DatetimeFormat)))
+					abortNotify = true
+				}
+			}
+		}
+		if abortNotify {
+			return
+		}
+	}
+	if m.CoreUrl != "" {
+		notifyErr := NotifyCoreEvent(alarmObj.Endpoint, alarmObj.StrategyId, 0, 0)
+		if notifyErr != nil {
+			log.Logger.Error("notify core event fail", log.Error(notifyErr))
+		}
+	}else{
+		if m.Config().Alert.Enable {
+			var sao m.SendAlertObj
+			accept := GetMailByStrategy(alarmObj.StrategyId)
+			if len(accept) == 0 {
+				return
+			}
+			sao.Accept = accept
+			sao.Subject = fmt.Sprintf("[%s][%s] Endpoint:%s Metric:%s", alarmObj.Status, alarmObj.SPriority, alarmObj.Endpoint, alarmObj.SMetric)
+			sao.Content = fmt.Sprintf("Endpoint:%s \r\nStatus:%s\r\nMetric:%s\r\nEvent:%.3f%s\r\nLast:%s\r\nPriority:%s\r\nNote:%s\r\nTime:%s",alarmObj.Endpoint,alarmObj.Status,alarmObj.SMetric,alarmObj.StartValue,alarmObj.SCond,alarmObj.SLast,alarmObj.SPriority,alarmObj.Content,alarmObj.Start.Format(m.DatetimeFormat))
+			other.SendSmtpMail(sao)
+		}
+	}
+
 }
