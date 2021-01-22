@@ -1,6 +1,7 @@
 package db
 
 import (
+	"bytes"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"fmt"
 	"strings"
@@ -264,17 +265,18 @@ func StartCronJob()  {
 	if m.Config().CronJob.Interval > 30 {
 		intervalSec = m.Config().CronJob.Interval
 	}
-	go StartSyncCoreRoleJob(intervalSec)
+	go StartSyncCoreJob(intervalSec)
 	go prom.StartCheckPrometheusJob(intervalSec)
 	go prom.StartCheckProcessList(intervalSec)
 	go StartCronSyncKubernetesPod()
 }
 
-func StartSyncCoreRoleJob(interval int)  {
+func StartSyncCoreJob(interval int)  {
 	// Sync core role
 	t := time.NewTicker(time.Second*time.Duration(interval)).C
 	for {
 		go SyncCoreRole()
+		go SyncCoreSystemVariable()
 		<- t
 	}
 }
@@ -349,6 +351,49 @@ func SyncCoreRole()  {
 		err = Transaction(actions)
 		if err != nil {
 			log.Logger.Error("Sync core role fail", log.Error(err))
+		}
+	}
+}
+
+func SyncCoreSystemVariable()  {
+	if m.CoreUrl == "" {
+		return
+	}
+	var param m.RequestCoreVariableDto
+	var filters []*m.CoreVariableFilter
+	param.Paging = true
+	param.Pageable = m.CoreVariablePage{PageSize: 10, StartIndex: 0}
+	filters = append(filters, &m.CoreVariableFilter{Name: "name", Operator: "contains", Value: "MONITOR_ARCHIVE_MYSQL_USER"})
+	filters = append(filters, &m.CoreVariableFilter{Name: "status", Operator: "eq", Value: "active"})
+	param.Filters = filters
+	postBytes,_ := json.Marshal(param)
+	request,err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/platform/v1/system-variables/retrieve", m.CoreUrl), bytes.NewReader(postBytes))
+	if err != nil {
+		log.Logger.Error("Get core system variable new request fail", log.Error(err))
+		return
+	}
+	request.Header.Set("Authorization", m.GetCoreToken())
+	res,err := ctxhttp.Do(context.Background(), http.DefaultClient, request)
+	if err != nil {
+		log.Logger.Error("Get core system variable ctxhttp request fail", log.Error(err))
+		return
+	}
+	defer res.Body.Close()
+	b,_ := ioutil.ReadAll(res.Body)
+	var result m.RequestCoreVariableResult
+	err = json.Unmarshal(b, &result)
+	if err != nil {
+		log.Logger.Error("Get core system variable json unmarshal result", log.Error(err))
+		return
+	}
+	if result.Message != "Success" {
+		log.Logger.Error("Get core system variable fail", log.JsonObj("response", result))
+	}else{
+		if len(result.Data.Contents) > 0 {
+			m.DefaultMailReceiver = []string{}
+			for _,v := range strings.Split(result.Data.Contents[0].Value, ",") {
+				m.DefaultMailReceiver = append(m.DefaultMailReceiver, v)
+			}
 		}
 	}
 }
