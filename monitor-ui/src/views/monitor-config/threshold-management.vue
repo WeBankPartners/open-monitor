@@ -276,7 +276,10 @@ export default {
           {label: '30s', value: 30},
           {label: '60s', value: 60},
           {label: '90s', value: 90},
-          {label: '120s', value: 120}
+          {label: '120s', value: 120},
+          {label: '180s', value: 180},
+          {label: '300s', value: 300},
+          {label: '600s', value: 600}
         ],
         slotConfig: {
           resourceSelected: [],
