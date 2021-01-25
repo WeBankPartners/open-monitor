@@ -363,7 +363,7 @@ func SyncCoreSystemVariable()  {
 	var filters []*m.CoreVariableFilter
 	param.Paging = true
 	param.Pageable = m.CoreVariablePage{PageSize: 10, StartIndex: 0}
-	filters = append(filters, &m.CoreVariableFilter{Name: "name", Operator: "contains", Value: "MONITOR_ARCHIVE_MYSQL_USER"})
+	filters = append(filters, &m.CoreVariableFilter{Name: "name", Operator: "contains", Value: "MONITOR_MAIL_DEFAULT_RECEIVER"})
 	filters = append(filters, &m.CoreVariableFilter{Name: "status", Operator: "eq", Value: "active"})
 	param.Filters = filters
 	postBytes,_ := json.Marshal(param)
@@ -390,6 +390,9 @@ func SyncCoreSystemVariable()  {
 		log.Logger.Error("Get core system variable fail", log.JsonObj("response", result))
 	}else{
 		if len(result.Data.Contents) > 0 {
+			if len(m.DefaultMailReceiver) == 0 {
+				log.Logger.Info("Get core system variable success", log.String("name", "MONITOR_MAIL_DEFAULT_RECEIVER"), log.String("value", result.Data.Contents[0].Value))
+			}
 			m.DefaultMailReceiver = []string{}
 			for _,v := range strings.Split(result.Data.Contents[0].Value, ",") {
 				m.DefaultMailReceiver = append(m.DefaultMailReceiver, v)
