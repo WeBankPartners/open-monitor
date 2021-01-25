@@ -75,6 +75,7 @@
         <systemParameter name="MONITOR_ARCHIVE_MYSQL_USER" scopeType="global" defaultValue=""/>
         <systemParameter name="MONITOR_ARCHIVE_MYSQL_PWD" scopeType="global" defaultValue=""/>
         <systemParameter name="MONITOR_LOG_LEVEL" scopeType="global" defaultValue="info"/>
+        <systemParameter name="MONITOR_MAIL_DEFAULT_RECEIVER" scopeType="global" defaultValue=""/>
     </systemParameters>
 
 
