@@ -1319,7 +1319,6 @@ func QueryHistoryAlarm(param m.QueryHistoryAlarmParam) (err error, result m.Alar
 
 func NotifyAlarm(alarmObj *m.AlarmHandleObj) {
 	if alarmObj.NotifyDelay > 0 {
-		time.Sleep(time.Duration(alarmObj.NotifyDelay) * time.Second)
 		var alarmRows []*m.AlarmTable
 		abortNotify := false
 		if alarmObj.Id > 0 {
@@ -1331,6 +1330,7 @@ func NotifyAlarm(alarmObj *m.AlarmHandleObj) {
 				}
 			}
 		} else {
+			time.Sleep(time.Duration(alarmObj.NotifyDelay) * time.Second)
 			x.SQL("select * from alarm where strategy_id=? and endpoint=? and start=?", alarmObj.StrategyId, alarmObj.Endpoint, alarmObj.Start.Format(m.DatetimeFormat)).Find(&alarmRows)
 			if len(alarmRows) > 0 {
 				if alarmRows[0].Status == "ok" {
