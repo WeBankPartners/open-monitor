@@ -133,3 +133,41 @@ type CoreJwtToken struct {
 	Expire  int64     `json:"expire"`
 	Roles   []string  `json:"roles"`
 }
+
+type RequestCoreVariableDto struct {
+	Filters  []*CoreVariableFilter  `json:"filters"`
+	Pageable  CoreVariablePage  `json:"pageable"`
+	Paging   bool  `json:"paging"`
+}
+
+type CoreVariableFilter struct {
+	Name  string  `json:"name"`
+	Operator  string  `json:"operator"`
+	Value  string  `json:"value"`
+}
+
+type CoreVariablePage struct {
+	PageSize  int  `json:"pageSize"`
+	StartIndex int `json:"startIndex"`
+}
+
+type RequestCoreVariableResult struct {
+	Data  CoreVariableResultData  `json:"data"`
+	Message  string  `json:"message"`
+	Status   string  `json:"status"`
+}
+
+type CoreVariableResultData struct {
+	Contents  []*CoreVariableResultContentObj  `json:"contents"`
+}
+
+type CoreVariableResultContentObj struct {
+	DefaultValue  string  `json:"defaultValue"`
+	Id  string  `json:"id"`
+	Name  string  `json:"name"`
+	PackageName  string  `json:"packageName"`
+	Scope  string  `json:"scope"`
+	Source  string  `json:"source"`
+	Status  string  `json:"status"`
+	Value  string  `json:"value"`
+}
