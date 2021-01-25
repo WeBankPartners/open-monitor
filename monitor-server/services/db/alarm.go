@@ -404,7 +404,7 @@ func GetStrategys(query *m.TplQuery, ignoreLogMonitor bool) error {
 func UpdateStrategy(obj *m.UpdateStrategy) error {
 	var actions []*Action
 	for _, v := range obj.Strategy {
-		action := Classify(*v, obj.Operation, "strategy", false)
+		action := Classify(*v, obj.Operation, "strategy", true)
 		if action.Sql != "" {
 			actions = append(actions, &action)
 		}
