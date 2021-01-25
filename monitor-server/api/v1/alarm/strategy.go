@@ -100,7 +100,7 @@ func EditStrategy(c *gin.Context)  {
 			mid.ReturnValidateError(c, "cond or last illegal")
 			return
 		}
-		strategyObj := m.StrategyTable{Id:param.StrategyId,Metric:param.Metric,Expr:param.Expr,Cond:param.Cond,Last:param.Last,Priority:param.Priority,Content:param.Content}
+		strategyObj := m.StrategyTable{Id:param.StrategyId,Metric:param.Metric,Expr:param.Expr,Cond:param.Cond,Last:param.Last,Priority:param.Priority,Content:param.Content,NotifyEnable: param.NotifyEnable,NotifyDelay: param.NotifyDelay}
 		err = db.UpdateStrategy(&m.UpdateStrategy{Strategy:[]*m.StrategyTable{&strategyObj}, Operation:"update"})
 		if err != nil {
 			mid.ReturnUpdateTableError(c, "strategy", err)
