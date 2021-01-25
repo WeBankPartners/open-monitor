@@ -373,6 +373,7 @@ func SyncCoreSystemVariable()  {
 		return
 	}
 	request.Header.Set("Authorization", m.GetCoreToken())
+	request.Header.Set("Content-Type", "application/json")
 	res,err := ctxhttp.Do(context.Background(), http.DefaultClient, request)
 	if err != nil {
 		log.Logger.Error("Get core system variable ctxhttp request fail", log.Error(err))
