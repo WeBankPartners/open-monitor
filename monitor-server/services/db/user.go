@@ -391,12 +391,14 @@ func SyncCoreSystemVariable()  {
 		log.Logger.Error("Get core system variable fail", log.JsonObj("response", result))
 	}else{
 		if len(result.Data.Contents) > 0 {
-			if len(m.DefaultMailReceiver) == 0 {
+			if strings.Join(m.DefaultMailReceiver, ",") != result.Data.Contents[0].Value {
 				log.Logger.Info("Get core system variable success", log.String("name", "MONITOR_MAIL_DEFAULT_RECEIVER"), log.String("value", result.Data.Contents[0].Value))
 			}
 			m.DefaultMailReceiver = []string{}
 			for _,v := range strings.Split(result.Data.Contents[0].Value, ",") {
-				m.DefaultMailReceiver = append(m.DefaultMailReceiver, v)
+				if v != "" {
+					m.DefaultMailReceiver = append(m.DefaultMailReceiver, v)
+				}
 			}
 		}
 	}
