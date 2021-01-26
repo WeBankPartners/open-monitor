@@ -7,8 +7,14 @@ import (
 	"strings"
 	"io/ioutil"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"sync"
 	"time"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
+)
+
+var (
+	AgentManagerInitFlag = false
+	AgentManagerLock = new(sync.RWMutex)
 )
 
 type agentManagerRequest struct {
@@ -28,6 +34,11 @@ type agentManagerResponse struct {
 }
 
 func DeployAgent(agentType,instance,bin,ip,port,user,pwd,url,configFile string) (address string,err error) {
+	if !AgentManagerInitFlag {
+		time.Sleep(1*time.Second)
+		AgentManagerLock.RLock()
+		AgentManagerLock.RUnlock()
+	}
 	var param agentManagerRequest
 	param.Guid = fmt.Sprintf("%s_%s_%s", instance, ip, agentType)
 	param.Exporter = bin
@@ -71,6 +82,7 @@ func StopAgent(agentType,instance,ip,url string) error {
 
 func InitAgentManager(param []*m.AgentManagerTable, url string) {
 	count := 0
+	AgentManagerLock.Lock()
 	for {
 		time.Sleep(30*time.Second)
 		resp, err := requestAgentMonitor(param, url, "init")
@@ -89,6 +101,8 @@ func InitAgentManager(param []*m.AgentManagerTable, url string) {
 			break
 		}
 	}
+	AgentManagerLock.Unlock()
+	AgentManagerInitFlag = true
 }
 
 func StartSyncAgentManagerJob(param []*m.AgentManagerTable, url string)  {
