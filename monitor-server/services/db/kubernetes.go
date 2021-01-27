@@ -123,8 +123,8 @@ func SyncKubernetesConfig() error {
 	return nil
 }
 
-func StartCronSyncKubernetesPod()  {
-	t := time.NewTicker(time.Second*60).C
+func StartCronSyncKubernetesPod(interval int)  {
+	t := time.NewTicker(time.Duration(interval*10)*time.Second).C
 	for {
 		<- t
 		go syncPodToEndpoint()
