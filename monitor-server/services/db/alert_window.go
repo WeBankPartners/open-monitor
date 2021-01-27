@@ -59,12 +59,12 @@ func CheckEndpointActiveAlert(endpoint string) bool {
 	nTime := time.Now()
 	for _,v := range tableData {
 		if strings.Contains(v.Weekday, "All") || strings.Contains(v.Weekday, time.Now().Weekday().String()) {
-			startTime,err := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s %s:00 CST", nTime.Format("2006-01-02"), v.Start))
+			startTime,err := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s %s:00 "+m.DefaultLocalTimeZone, nTime.Format("2006-01-02"), v.Start))
 			if err != nil {
 				log.Logger.Error("Check endpoint is in active alert window error", log.String("start", v.Start), log.Error(err))
 				continue
 			}
-			endTime,err := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s %s:00 CST", nTime.Format("2006-01-02"), v.End))
+			endTime,err := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s %s:00 "+m.DefaultLocalTimeZone, nTime.Format("2006-01-02"), v.End))
 			if err != nil {
 				log.Logger.Error("Check endpoint is in active alert window error", log.String("end", v.End), log.Error(err))
 				continue

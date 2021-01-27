@@ -1,6 +1,7 @@
 package funcs
 
 import (
+	"os/exec"
 	"sync"
 	"log"
 	"os"
@@ -60,6 +61,7 @@ type GlobalConfig struct {
 var (
 	config     *GlobalConfig
 	lock       = new(sync.RWMutex)
+	DefaultLocalTimeZone string
 )
 
 func Config() *GlobalConfig {
@@ -93,9 +95,25 @@ func InitConfig(cfg string) error {
 	config = &c
 	log.Println("read config file:", cfg, "successfully")
 	lock.Unlock()
+	initLocalTimeZone()
 	hostIp = "127.0.0.1"
 	if os.Getenv("MONITOR_HOST_IP") != "" {
 		hostIp = os.Getenv("MONITOR_HOST_IP")
 	}
 	return nil
+}
+
+func initLocalTimeZone()  {
+	cmdOut,err := exec.Command("/bin/sh", "-c", "date|awk '{print $5}'").Output()
+	if err != nil {
+		log.Printf("init local time zone fail,%s \n", err.Error())
+	}else{
+		cmdOutString := strings.TrimSpace(string(cmdOut))
+		if cmdOutString != "" {
+			DefaultLocalTimeZone = cmdOutString
+			log.Printf("init local time zone to %s \n", DefaultLocalTimeZone)
+		}else{
+			DefaultLocalTimeZone = "CST"
+		}
+	}
 }
