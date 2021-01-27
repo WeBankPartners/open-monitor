@@ -25,7 +25,7 @@ func StartCronJob()  {
 	}
 	jobChannelList = make(chan ArchiveActionList, Config().Prometheus.MaxHttpOpen)
 	go consumeJob()
-	t,_ := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s 00:00:00 CST", time.Now().Format("2006-01-02")))
+	t,_ := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s 00:00:00 "+DefaultLocalTimeZone, time.Now().Format("2006-01-02")))
 	subSecond := t.Unix()+86410-time.Now().Unix()
 	time.Sleep(time.Duration(subSecond)*time.Second)
 	c := time.NewTicker(24*time.Hour).C
@@ -49,12 +49,12 @@ func CreateJob(dateString string)  {
 	}
 	var start,end int64
 	if dateString == "" {
-		t,_ := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s 00:00:00 CST", time.Now().Format("2006-01-02")))
+		t,_ := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s 00:00:00 "+DefaultLocalTimeZone, time.Now().Format("2006-01-02")))
 		start = t.Unix()-86400
 		end = t.Unix()
 		dateString = time.Unix(start, 0).Format("2006-01-02")
 	}else {
-		t, err := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s 00:00:00 CST", dateString))
+		t, err := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s 00:00:00 "+DefaultLocalTimeZone, dateString))
 		if err != nil {
 			log.Printf("dateString validate fail,must format like 2006-01-02 \n")
 			return
@@ -217,7 +217,7 @@ func ArchiveFromMysql(tableUnixTime int64)  {
 		if Config().Trans.FiveMinStartDay > 0 {
 			startDays = Config().Trans.FiveMinStartDay
 		}
-		t, _ := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s 00:00:00 CST", time.Now().Format("2006-01-02")))
+		t, _ := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s 00:00:00 "+DefaultLocalTimeZone, time.Now().Format("2006-01-02")))
 		tableUnixTime = t.Unix() - (startDays * 86400)
 	}
 	oldTableName := fmt.Sprintf("archive_%s", time.Unix(tableUnixTime, 0).Format("2006_01_02"))
