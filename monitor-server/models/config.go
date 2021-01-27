@@ -1,6 +1,7 @@
 package models
 
 import (
+	"os/exec"
 	"strings"
 	"sync"
 	"log"
@@ -185,6 +186,7 @@ var (
 	SubSystemCode string
 	SubSystemKey  string
 	DefaultMailReceiver  []string
+	DefaultLocalTimeZone string
 )
 
 func Config() *GlobalConfig {
@@ -240,5 +242,21 @@ func InitConfig(cfg string) {
 		InitCoreToken()
 	}else{
 		log.Printf("Init core token fail,coreUrl & subSystemCode & subSystemKey can not empty")
+	}
+	initLocalTimeZone()
+}
+
+func initLocalTimeZone()  {
+	cmdOut,err := exec.Command("/bin/sh", "-c", "date|awk '{print $5}'").Output()
+	if err != nil {
+		log.Printf("init local time zone fail,%s \n", err.Error())
+	}else{
+		cmdOutString := strings.TrimSpace(string(cmdOut))
+		if cmdOutString != "" {
+			DefaultLocalTimeZone = cmdOutString
+			log.Printf("init local time zone to %s \n", DefaultLocalTimeZone)
+		}else{
+			DefaultLocalTimeZone = "CST"
+		}
 	}
 }
