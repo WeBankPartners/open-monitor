@@ -107,7 +107,7 @@ func InitAgentManager(param []*m.AgentManagerTable, url string) {
 
 func StartSyncAgentManagerJob(param []*m.AgentManagerTable, url string)  {
 	intervalSecond := 86400
-	timeStartValue, _ := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s 00:00:00 CST", time.Now().Format("2006-01-02")))
+	timeStartValue, _ := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s 00:00:00 "+m.DefaultLocalTimeZone, time.Now().Format("2006-01-02")))
 	time.Sleep(time.Duration(timeStartValue.Unix()+86400-time.Now().Unix()) * time.Second)
 	t := time.NewTicker(time.Duration(intervalSecond) * time.Second).C
 	for {
