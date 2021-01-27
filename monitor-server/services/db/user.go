@@ -268,14 +268,14 @@ func StartCronJob()  {
 	go StartSyncCoreJob(intervalSec)
 	go prom.StartCheckPrometheusJob(intervalSec)
 	go prom.StartCheckProcessList(intervalSec)
-	go StartCronSyncKubernetesPod()
+	go StartCronSyncKubernetesPod(intervalSec)
 }
 
 func StartSyncCoreJob(interval int)  {
 	// Sync core role
-	t := time.NewTicker(time.Second*time.Duration(interval)).C
+	t := time.NewTicker(time.Second*time.Duration(interval*5)).C
 	for {
-		go SyncCoreRole()
+		//go SyncCoreRole()
 		go SyncCoreSystemVariable()
 		<- t
 	}
@@ -298,10 +298,15 @@ func SyncCoreRole()  {
 	}
 	defer res.Body.Close()
 	b,_ := ioutil.ReadAll(res.Body)
+	log.Logger.Info("Get core role response", log.String("body", string(b)))
 	var result m.CoreRoleDto
 	err = json.Unmarshal(b, &result)
 	if err != nil {
 		log.Logger.Error("Get core role key json unmarshal result", log.Error(err))
+		return
+	}
+	if len(result.Data) == 0 {
+		log.Logger.Warn("Get core role key fail with no data")
 		return
 	}
 	var tableData,insertData,updateData,deleteData []*m.RoleTable
@@ -382,6 +387,7 @@ func SyncCoreSystemVariable()  {
 	defer res.Body.Close()
 	b,_ := ioutil.ReadAll(res.Body)
 	var result m.RequestCoreVariableResult
+	log.Logger.Info("Get core system variable response", log.String("body", string(b)))
 	err = json.Unmarshal(b, &result)
 	if err != nil {
 		log.Logger.Error("Get core system variable json unmarshal result", log.Error(err))
