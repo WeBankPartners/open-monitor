@@ -44,21 +44,21 @@ func StartCheckCron()  {
 	var timeSubValue,sleepWaitTime int64
 	switch intervalMin {
 	case 1:
-		timeStartValue = fmt.Sprintf("%s:00 CST", time.Now().Format("2006-01-02 15:04"))
+		timeStartValue = fmt.Sprintf("%s:00 "+m.DefaultLocalTimeZone, time.Now().Format("2006-01-02 15:04"))
 		timeSubValue=60
 	case 10:
 		tmpTimeString := time.Now().Format("2006-01-02 15:04")
-		timeStartValue = fmt.Sprintf("%s0:00 CST", tmpTimeString[:len(tmpTimeString)-1])
+		timeStartValue = fmt.Sprintf("%s0:00 "+m.DefaultLocalTimeZone, tmpTimeString[:len(tmpTimeString)-1])
 		timeSubValue=600
 	case 30:
-		timeStartValue = fmt.Sprintf("%s:00:00 CST", time.Now().Format("2006-01-02 15"))
+		timeStartValue = fmt.Sprintf("%s:00:00 "+m.DefaultLocalTimeZone, time.Now().Format("2006-01-02 15"))
 		timeSubValue=1800
 	case 60:
-		timeStartValue = fmt.Sprintf("%s:00:00 CST", time.Now().Format("2006-01-02 15"))
+		timeStartValue = fmt.Sprintf("%s:00:00 "+m.DefaultLocalTimeZone, time.Now().Format("2006-01-02 15"))
 		timeSubValue=3600
 	default:
 		if intervalMin%60==0 && intervalMin/60>1 {
-			timeStartValue = fmt.Sprintf("%s:00:00 CST", time.Now().Format("2006-01-02 15"))
+			timeStartValue = fmt.Sprintf("%s:00:00 "+m.DefaultLocalTimeZone, time.Now().Format("2006-01-02 15"))
 			timeSubValue=3600
 		}else{
 			timeSubValue = 0
