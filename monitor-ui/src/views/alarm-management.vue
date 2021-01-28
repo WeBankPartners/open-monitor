@@ -3,7 +3,7 @@
     <Title :title="$t('menu.alert')"></Title>
     <Modal
       v-model="isShowWarning"
-      title="Delete confirmation"
+      title="Close Confirmation"
       @on-ok="ok"
       @on-cancel="cancel">
       <div class="modal-body" style="padding:30px">
