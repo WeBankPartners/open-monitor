@@ -21,7 +21,7 @@ func InitHttpHandles()  {
 
 func handleCustomJob(w http.ResponseWriter,r *http.Request)  {
 	dateString := r.FormValue("date")
-	_, err := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s 00:00:00 CST", dateString))
+	_, err := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s 00:00:00 "+DefaultLocalTimeZone, dateString))
 	if err != nil {
 		returnJson(r,w,err,nil)
 	}else{
@@ -32,7 +32,7 @@ func handleCustomJob(w http.ResponseWriter,r *http.Request)  {
 
 func handleFiveMinJob(w http.ResponseWriter,r *http.Request)  {
 	dateString := r.FormValue("date")
-	t, err := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s 00:00:00 CST", dateString))
+	t, err := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s 00:00:00 "+DefaultLocalTimeZone, dateString))
 	if err != nil {
 		returnJson(r,w,err,nil)
 	}else{
