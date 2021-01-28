@@ -417,12 +417,12 @@ func GetChart(c *gin.Context)  {
 	var subStartSecond,subEndSecond int64
 	// validate config time
 	if paramConfig[0].CompareFirstStart != "" && paramConfig[0].CompareFirstEnd != "" {
-		st,err := time.Parse(m.DateFormatWithZone, fmt.Sprintf("%s 00:00:00 CST", paramConfig[0].CompareFirstStart))
+		st,err := time.Parse(m.DateFormatWithZone, fmt.Sprintf("%s 00:00:00 "+m.DefaultLocalTimeZone, paramConfig[0].CompareFirstStart))
 		if err != nil {
 			mid.ReturnParamTypeError(c, "compare_first_start", "2006-01-02")
 			return
 		}
-		et,err := time.Parse(m.DateFormatWithZone, fmt.Sprintf("%s 23:59:59 CST", paramConfig[0].CompareFirstEnd))
+		et,err := time.Parse(m.DateFormatWithZone, fmt.Sprintf("%s 23:59:59 "+m.DefaultLocalTimeZone, paramConfig[0].CompareFirstEnd))
 		if err != nil {
 			mid.ReturnParamTypeError(c, "compare_first_end", "2006-01-02")
 			return
@@ -530,8 +530,8 @@ func GetChart(c *gin.Context)  {
 				}
 				querys = append(querys, m.QueryMonitorData{Start: query.Start, End: query.End, PromQ: tmpPromQl, Legend: tmpLegend, Metric: []string{v}, Endpoint: []string{tmpParamConfig.Endpoint}, CompareLegend:compareLegend, SameEndpoint:sameEndpoint, Step:step})
 				if paramConfig[0].CompareSecondStart != "" && paramConfig[0].CompareSecondEnd != "" {
-					st,sErr := time.Parse(m.DateFormatWithZone, fmt.Sprintf("%s 00:00:00 CST", paramConfig[0].CompareSecondStart))
-					et,eErr := time.Parse(m.DateFormatWithZone, fmt.Sprintf("%s 23:59:59 CST", paramConfig[0].CompareSecondEnd))
+					st,sErr := time.Parse(m.DateFormatWithZone, fmt.Sprintf("%s 00:00:00 "+m.DefaultLocalTimeZone, paramConfig[0].CompareSecondStart))
+					et,eErr := time.Parse(m.DateFormatWithZone, fmt.Sprintf("%s 23:59:59 "+m.DefaultLocalTimeZone, paramConfig[0].CompareSecondEnd))
 					stTimestamp := st.Unix()
 					etTimestamp := et.Unix()
 					if sErr == nil && eErr == nil {
