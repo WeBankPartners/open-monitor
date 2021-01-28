@@ -1,14 +1,13 @@
 package log
 
 import (
+	"encoding/json"
+	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"time"
 	"gopkg.in/natefinch/lumberjack.v2"
-	"os"
-	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"strings"
-	"encoding/json"
+	"time"
 )
 
 var (
@@ -56,7 +55,7 @@ func InitArchiveZapLogger(filePath string) *zap.Logger {
 		EncodeDuration: zapcore.SecondsDurationEncoder,
 		EncodeCaller:   zapcore.ShortCallerEncoder,
 	}
-	core := zapcore.NewCore(zapcore.NewJSONEncoder(encoderConfig), zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout),zapcore.AddSync(&hook)), zapLevel)
+	core := zapcore.NewCore(zapcore.NewJSONEncoder(encoderConfig), zapcore.NewMultiWriteSyncer(zapcore.AddSync(&hook)), zapLevel)
 	logger := zap.New(core, zap.AddCaller(), zap.Development())
 	logger.Info("success init zap log !!")
 	return logger
