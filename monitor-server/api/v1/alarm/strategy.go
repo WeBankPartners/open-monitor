@@ -59,7 +59,7 @@ func AddStrategy(c *gin.Context)  {
 				mid.ReturnValidateError(c, "grp_id and endpoint_id can not be provided at the same time")
 				return
 			}
-			err,tplObj := db.AddTpl(param.GrpId, param.EndpointId, "")
+			err,tplObj := db.AddTpl(param.GrpId, param.EndpointId, mid.GetOperateUser(c))
 			if err != nil {
 				mid.ReturnUpdateTableError(c, "tpl", err)
 				return
@@ -92,6 +92,11 @@ func EditStrategy(c *gin.Context)  {
 			mid.ReturnParamEmptyError(c, "strategy_id")
 			return
 		}
+		_,strategy := db.GetStrategyTable(param.StrategyId)
+		if strategy.TplId <= 0 {
+			mid.ReturnHandleError(c, "template for this strategy is empty", nil)
+			return
+		}
 		// check param
 		param.Expr = strings.Replace(param.Expr, "'", "", -1)
 		param.Content = strings.Replace(param.Content, "'", "", -1)
@@ -100,14 +105,13 @@ func EditStrategy(c *gin.Context)  {
 			mid.ReturnValidateError(c, "cond or last illegal")
 			return
 		}
-		strategyObj := m.StrategyTable{Id:param.StrategyId,Metric:param.Metric,Expr:param.Expr,Cond:param.Cond,Last:param.Last,Priority:param.Priority,Content:param.Content}
+		strategyObj := m.StrategyTable{Id:param.StrategyId,TplId:strategy.TplId,Metric:param.Metric,Expr:param.Expr,Cond:param.Cond,Last:param.Last,Priority:param.Priority,Content:param.Content,NotifyEnable: param.NotifyEnable,NotifyDelay: param.NotifyDelay}
 		err = db.UpdateStrategy(&m.UpdateStrategy{Strategy:[]*m.StrategyTable{&strategyObj}, Operation:"update"})
 		if err != nil {
 			mid.ReturnUpdateTableError(c, "strategy", err)
 			return
 		}
-		_,strategy := db.GetStrategyTable(param.StrategyId)
-		db.UpdateTpl(strategy.TplId, "")
+		db.UpdateTpl(strategy.TplId, mid.GetOperateUser(c))
 		err = SaveConfigFile(strategy.TplId, false)
 		if err != nil {
 			mid.ReturnHandleError(c, "save alert rules file failed", err)
