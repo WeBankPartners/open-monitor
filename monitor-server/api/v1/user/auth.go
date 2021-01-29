@@ -165,6 +165,16 @@ func GetUserMsg(c *gin.Context)  {
 	mid.ReturnSuccessData(c, userObj)
 }
 
+type pluginInterfaceResultObj struct {
+	ResultCode  string  `json:"resultCode"`
+	ResultMessage  string  `json:"resultMessage"`
+	Results  pluginInterfaceResultOutput  `json:"results"`
+}
+
+type pluginInterfaceResultOutput struct {
+	Outputs  []string  `json:"outputs"`
+}
+
 func AuthRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if strings.Contains(c.Request.RequestURI, "/export/ping/source") {
@@ -179,7 +189,26 @@ func AuthRequired() gin.HandlerFunc {
 						c.Abort()
 					} else {
 						c.Set("operatorName", coreToken.User)
-						c.Next()
+						c.Set("operatorRoles", coreToken.Roles)
+						// plugin interface call
+						if strings.Contains(c.Request.RequestURI, "/agent/export/") || strings.Contains(c.Request.RequestURI, "/dashboard/system/") {
+							isSystemCall := false
+							for _,v := range coreToken.Roles {
+								if v == m.SystemRole {
+									if coreToken.User == m.PlatformUser {
+										isSystemCall = true
+									}
+									break
+								}
+							}
+							if !isSystemCall {
+								c.JSON(http.StatusOK, pluginInterfaceResultObj{ResultCode:"1", ResultMessage:"Token authority validate fail", Results:pluginInterfaceResultOutput{Outputs: []string{}}})
+							}else {
+								c.Next()
+							}
+						}else {
+							c.Next()
+						}
 					}
 				} else {
 					mid.ReturnTokenError(c)

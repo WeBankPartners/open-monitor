@@ -7,14 +7,19 @@ import (
 	"reflect"
 	"fmt"
 	"regexp"
+	"sync"
 )
 
-var invalidData = []string{"select", "insert", "update", "alter", "delete", "drop", "truncate", "show"}
-var regCond = regexp.MustCompile(`^([<=|>=|!=|==|<|>]*)-?\d+(\.\d+)?$`)
-var regLast = regexp.MustCompile(`^\d+[s|m|h]$`)
-var regPath = regexp.MustCompile(`^\/([\w|\.|\-]+\/?)+$`)
-var regNormal = regexp.MustCompile(`^[\w|\.|\-|\~|\!|\@|\#|\$|\%|\^|\[|\]|\{|\}|\(|\)|\,|\s]+$`)
-var regIp = regexp.MustCompile(`^((25[0-5]|2[0-4]\d|((1\d{2})|([1-9]?\d)))\.){3}(25[0-5]|2[0-4]\d|((1\d{2})|([1-9]?\d)))$`)
+var (
+	invalidData = []string{"select", "insert", "update", "alter", "delete", "drop", "truncate", "show"}
+	regCond = regexp.MustCompile(`^([<=|>=|!=|==|<|>]*)-?\d+(\.\d+)?$`)
+	regLast = regexp.MustCompile(`^\d+[s|m|h]$`)
+	regPath = regexp.MustCompile(`^\/([\w|\.|\-]+\/?)+$`)
+	regNormal = regexp.MustCompile(`^[\w|\.|\-|\~|\!|\@|\#|\$|\%|\^|\[|\]|\{|\}|\(|\)|\,|\s]+$`)
+	regIp = regexp.MustCompile(`^((25[0-5]|2[0-4]\d|((1\d{2})|([1-9]?\d)))\.){3}(25[0-5]|2[0-4]\d|((1\d{2})|([1-9]?\d)))$`)
+	roleEndpointMap  []map[string]int
+	roleEndpointLock  sync.RWMutex
+)
 
 func ValidateGet(c *gin.Context)  {
 	isOk := true
@@ -104,4 +109,16 @@ func IsIllegalNormalInput(str string) bool {
 
 func IsIllegalIp(str string) bool {
 	return !regIp.MatchString(str)
+}
+
+func InitRoleEndpointMap()  {
+
+}
+
+func CheckRoleEndpointOwner(roles []string)  {
+
+}
+
+func UpdateRoleEndpointMap()  {
+
 }

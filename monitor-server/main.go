@@ -26,7 +26,7 @@ func main() {
 	flag.Parse()
 	m.InitConfig(*cfgFile)
 	//middleware.InitMonitorLog()
-	log.InitArchiveZapLogger()
+	log.InitLogger()
 	db.InitDbConn()
 	if m.Config().Http.Session.Enable {
 		middleware.InitSession()

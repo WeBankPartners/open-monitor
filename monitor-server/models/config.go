@@ -1,6 +1,8 @@
 package models
 
 import (
+	"os/exec"
+	"strings"
 	"sync"
 	"log"
 	"github.com/toolkits/file"
@@ -11,6 +13,7 @@ import (
 type LogConfig struct {
 	Level   string  `json:"level"`
 	File    string  `json:"file"`
+	AccessFile    string  `json:"access_file"`
 	ArchiveMaxSize int `json:"archive_max_size"`
 	ArchiveMaxBackup int `json:"archive_max_backup"`
 	ArchiveMaxDay int `json:"archive_max_day"`
@@ -169,6 +172,7 @@ type GlobalConfig struct {
 	SdFile  SdFileConfig  `json:"sd_file"`
 	ArchiveMysql  ArchiveMysqlConfig  `json:"archive_mysql"`
 	ProcessCheckList  []string  `json:"process_check_list"`
+	DefaultAdminRole  string  `json:"default_admin_role"`
 }
 
 var (
@@ -179,6 +183,10 @@ var (
 	CoreJwtKey string
 	FiringCallback string
 	RecoverCallback string
+	SubSystemCode string
+	SubSystemKey  string
+	DefaultMailReceiver  []string
+	DefaultLocalTimeZone string
 )
 
 func Config() *GlobalConfig {
@@ -218,11 +226,37 @@ func InitConfig(cfg string) {
 	for _,v :=range config.Dependence {
 		if v.Name == "core" {
 			CoreUrl = v.Server
+			if strings.HasSuffix(CoreUrl, "/") {
+				CoreUrl = CoreUrl[:len(CoreUrl)-1]
+			}
 			break
 		}
 	}
 	CoreJwtKey = DecryptRsa(os.Getenv("JWT_SIGNING_KEY"))
+	SubSystemCode = os.Getenv("SUB_SYSTEM_CODE")
+	SubSystemKey = os.Getenv("SUB_SYSTEM_KEY")
 	FiringCallback = os.Getenv("ALARM_FIRING_CALLBACK")
 	RecoverCallback = os.Getenv("ALARM_RECOVER_CALLBACK")
 	log.Println("read config file:", cfg, "successfully")
+	if CoreUrl != "" && SubSystemCode != "" && SubSystemKey != "" {
+		InitCoreToken()
+	}else{
+		log.Printf("Init core token fail,coreUrl & subSystemCode & subSystemKey can not empty")
+	}
+	initLocalTimeZone()
+}
+
+func initLocalTimeZone()  {
+	cmdOut,err := exec.Command("/bin/sh", "-c", "date|awk '{print $5}'").Output()
+	if err != nil {
+		log.Printf("init local time zone fail,%s \n", err.Error())
+	}else{
+		cmdOutString := strings.TrimSpace(string(cmdOut))
+		if cmdOutString != "" {
+			DefaultLocalTimeZone = cmdOutString
+			log.Printf("init local time zone to %s \n", DefaultLocalTimeZone)
+		}else{
+			DefaultLocalTimeZone = "CST"
+		}
+	}
 }
