@@ -1,6 +1,7 @@
 package db
 
 import (
+	"bytes"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"fmt"
 	"strings"
@@ -264,17 +265,18 @@ func StartCronJob()  {
 	if m.Config().CronJob.Interval > 30 {
 		intervalSec = m.Config().CronJob.Interval
 	}
-	go StartSyncCoreRoleJob(intervalSec)
+	go StartSyncCoreJob(intervalSec)
 	go prom.StartCheckPrometheusJob(intervalSec)
 	go prom.StartCheckProcessList(intervalSec)
-	go StartCronSyncKubernetesPod()
+	go StartCronSyncKubernetesPod(intervalSec)
 }
 
-func StartSyncCoreRoleJob(interval int)  {
+func StartSyncCoreJob(interval int)  {
 	// Sync core role
-	t := time.NewTicker(time.Second*time.Duration(interval)).C
+	t := time.NewTicker(time.Second*time.Duration(interval*5)).C
 	for {
-		go SyncCoreRole()
+		//go SyncCoreRole()
+		go SyncCoreSystemVariable()
 		<- t
 	}
 }
@@ -288,7 +290,7 @@ func SyncCoreRole()  {
 		log.Logger.Error("Get core role key new request fail", log.Error(err))
 		return
 	}
-	request.Header.Set("Authorization", m.TmpCoreToken)
+	request.Header.Set("Authorization", m.GetCoreToken())
 	res,err := ctxhttp.Do(context.Background(), http.DefaultClient, request)
 	if err != nil {
 		log.Logger.Error("Get core role key ctxhttp request fail", log.Error(err))
@@ -296,10 +298,15 @@ func SyncCoreRole()  {
 	}
 	defer res.Body.Close()
 	b,_ := ioutil.ReadAll(res.Body)
+	log.Logger.Info("Get core role response", log.String("body", string(b)))
 	var result m.CoreRoleDto
 	err = json.Unmarshal(b, &result)
 	if err != nil {
 		log.Logger.Error("Get core role key json unmarshal result", log.Error(err))
+		return
+	}
+	if len(result.Data) == 0 {
+		log.Logger.Warn("Get core role key fail with no data")
 		return
 	}
 	var tableData,insertData,updateData,deleteData []*m.RoleTable
@@ -349,6 +356,56 @@ func SyncCoreRole()  {
 		err = Transaction(actions)
 		if err != nil {
 			log.Logger.Error("Sync core role fail", log.Error(err))
+		}
+	}
+}
+
+func SyncCoreSystemVariable()  {
+	if m.CoreUrl == "" {
+		return
+	}
+	var param m.RequestCoreVariableDto
+	var filters []*m.CoreVariableFilter
+	param.Paging = true
+	param.Pageable = m.CoreVariablePage{PageSize: 10, StartIndex: 0}
+	filters = append(filters, &m.CoreVariableFilter{Name: "name", Operator: "contains", Value: "MONITOR_MAIL_DEFAULT_RECEIVER"})
+	filters = append(filters, &m.CoreVariableFilter{Name: "status", Operator: "eq", Value: "active"})
+	param.Filters = filters
+	postBytes,_ := json.Marshal(param)
+	request,err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/platform/v1/system-variables/retrieve", m.CoreUrl), bytes.NewReader(postBytes))
+	if err != nil {
+		log.Logger.Error("Get core system variable new request fail", log.Error(err))
+		return
+	}
+	request.Header.Set("Authorization", m.GetCoreToken())
+	request.Header.Set("Content-Type", "application/json")
+	res,err := ctxhttp.Do(context.Background(), http.DefaultClient, request)
+	if err != nil {
+		log.Logger.Error("Get core system variable ctxhttp request fail", log.Error(err))
+		return
+	}
+	defer res.Body.Close()
+	b,_ := ioutil.ReadAll(res.Body)
+	var result m.RequestCoreVariableResult
+	log.Logger.Info("Get core system variable response", log.String("body", string(b)))
+	err = json.Unmarshal(b, &result)
+	if err != nil {
+		log.Logger.Error("Get core system variable json unmarshal result", log.Error(err))
+		return
+	}
+	if result.Message != "Success" {
+		log.Logger.Error("Get core system variable fail", log.JsonObj("response", result))
+	}else{
+		if len(result.Data.Contents) > 0 {
+			if strings.Join(m.DefaultMailReceiver, ",") != result.Data.Contents[0].Value {
+				log.Logger.Info("Get core system variable success", log.String("name", "MONITOR_MAIL_DEFAULT_RECEIVER"), log.String("value", result.Data.Contents[0].Value))
+			}
+			m.DefaultMailReceiver = []string{}
+			for _,v := range strings.Split(result.Data.Contents[0].Value, ",") {
+				if v != "" {
+					m.DefaultMailReceiver = append(m.DefaultMailReceiver, v)
+				}
+			}
 		}
 	}
 }

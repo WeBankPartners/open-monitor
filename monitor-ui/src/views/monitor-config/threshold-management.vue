@@ -103,7 +103,7 @@
             <label class="col-md-2 label-name">{{$t('tableKey.name')}}:</label>
             <Select v-model="modelConfig.addRow.expr" filterable style="width:340px"
             :label-in-value="true" @on-change="selectMetric">
-              <Option v-for="item in modelConfig.metricList" :value="item.prom_ql" :key="item.prom_ql+item.metric">{{ item.metric }}</Option>
+              <Option v-for="(item, index) in modelConfig.metricList" :value="item.prom_ql" :key="item.prom_ql+item.metric+index">{{ item.metric }}</Option>
             </Select>
           </div> 
         </div>
@@ -111,7 +111,7 @@
           <div class="marginbottom params-each">
             <label class="col-md-2 label-name">{{$t('field.threshold')}}:</label>
             <Select v-model="modelConfig.threshold" style="width:100px">
-              <Option v-for="item in modelConfig.thresholdList" :value="item.value" :key="item.value">{{ item.label }}</Option>
+              <Option v-for="(item, index) in modelConfig.thresholdList" :value="item.value" :key="index">{{ item.label }}</Option>
             </Select>
             <div class="search-input-content" style="margin-left: 8px">
               <input 
@@ -148,8 +148,20 @@
           </div>
           <div class="marginbottom params-each">
             <label class="col-md-2 label-name">{{$t('tableKey.s_priority')}}:</label>
-            <Select v-model="modelConfig.priority" style="width:100px">
+            <Select v-model="modelConfig.priority" style="width:340px">
               <Option v-for="item in modelConfig.priorityList" :value="item.value" :key="item.value">{{ item.label }}</Option>
+            </Select>
+          </div>
+          <div class="marginbottom params-each">
+            <label class="col-md-2 label-name">{{$t('sendAlarm')}}:</label>
+            <Select v-model="modelConfig.addRow.notify_enable" style="width:340px">
+              <Option v-for="item in modelConfig.notifyEnableOption" :value="item.value" :key="item.value">{{ item.label }}</Option>
+            </Select>
+          </div>
+          <div class="marginbottom params-each">
+            <label class="col-md-2 label-name">{{$t('delay')}}:</label>
+            <Select v-model="modelConfig.addRow.notify_delay" style="width:340px">
+              <Option v-for="item in modelConfig.notifyDelayOption" :value="item.value" :key="item.value">{{ item.label }}</Option>
             </Select>
           </div>
         </div>
@@ -242,6 +254,8 @@ export default {
           metric: null,
           expr: null,
           content: null,
+          notify_enable: 1,
+          notify_delay: 0
         },
         metricName: '',
         metricList: [],
@@ -253,6 +267,20 @@ export default {
         lastValue: '',
         priority: 'low',
         priorityList: priorityList,
+        notifyEnableOption: [
+          {label: 'Yes', value: 1},
+          {label: 'No', value: 0}
+        ],
+        notifyDelayOption: [
+          {label: '0s', value: 0},
+          {label: '30s', value: 30},
+          {label: '60s', value: 60},
+          {label: '90s', value: 90},
+          {label: '120s', value: 120},
+          {label: '180s', value: 180},
+          {label: '300s', value: 300},
+          {label: '600s', value: 600}
+        ],
         slotConfig: {
           resourceSelected: [],
           resourceOption: []
