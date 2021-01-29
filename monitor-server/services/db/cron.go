@@ -180,7 +180,7 @@ func CheckLogKeyword()  {
 		return
 	}
 	if len(logMonitorTable) == 0 {
-		log.Logger.Info("Check log keyword config empty")
+		log.Logger.Debug("Check log keyword config empty")
 		return
 	}
 	var alarmTable []*m.AlarmTable
