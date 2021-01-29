@@ -197,7 +197,7 @@ func SaveConfigFile(tplId int, fromCluster bool) error  {
 		return err
 	}
 	if !fromCluster {
-		go other.SyncConfig(tplId, m.SyncConsulDto{})
+		go other.SyncConfig(tplId, m.SyncSdConfigDto{})
 	}
 	return nil
 }
@@ -473,6 +473,50 @@ func SyncConsulHandle(w http.ResponseWriter,r *http.Request)  {
 		err = prom.RegisteConsul(param.Guid,param.Ip,param.Port,param.Tags,param.Interval,true)
 	}else{
 		err = prom.DeregisteConsul(param.Guid,true)
+	}
+	if err != nil {
+		response.Code = 500
+		response.Message = "Sync consul fail"
+		response.Data = err
+		return
+	}
+	response.Code = 200
+	response.Message = "Success"
+}
+
+func SyncSdFileHandle(w http.ResponseWriter,r *http.Request)  {
+	log.Logger.Info("start to sync sd config")
+	var response mid.RespJson
+	w.Header().Set("Content-Type", "application/json")
+	defer w.Write([]byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\",\"Data\":\"%v\"}", response.Code,response.Message,response.Data)))
+	var param m.SyncSdConfigDto
+	b,_ := ioutil.ReadAll(r.Body)
+	err := json.Unmarshal(b, &param)
+	if err != nil {
+		response.Code = 401
+		response.Message = "Param json format fail"
+		response.Data = err
+		return
+	}
+	if param.Guid == "" {
+		response.Code = 401
+		response.Message = "Guid is empty"
+		return
+	}
+	if param.IsRegister {
+		stepList := prom.AddSdEndpoint(m.ServiceDiscoverFileObj{Guid: param.Guid, Address: param.Ip, Step: param.Step})
+		for _,tmpStep := range stepList {
+			err = prom.SyncSdConfigFile(tmpStep)
+			if err != nil {
+				log.Logger.Error("Sync service discover file error", log.Error(err))
+			}
+		}
+	}else{
+		prom.DeleteSdEndpoint(param.Guid)
+		err = prom.SyncSdConfigFile(param.Step)
+		if err != nil {
+			log.Logger.Error("Sync service discover file error", log.Error(err))
+		}
 	}
 	if err != nil {
 		response.Code = 500
