@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/agent"
 	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/alarm"
@@ -13,7 +14,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/swaggo/gin-swagger"
 	"github.com/swaggo/gin-swagger/swaggerFiles"
+	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -213,7 +216,7 @@ func InitClusterApi()  {
 		return
 	}
 	http.Handle("/sync/config", http.HandlerFunc(alarm.SyncConfigHandle))
-	http.Handle("/sync/consul", http.HandlerFunc(alarm.SyncConsulHandle))
+	http.Handle("/sync/sd", http.HandlerFunc(alarm.SyncSdFileHandle))
 	http.ListenAndServe(fmt.Sprintf(":%s", m.Config().Cluster.HttpPort), nil)
 }
 
@@ -223,8 +226,34 @@ func InitDependenceParam()  {
 
 func httpLogHandle() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		start := time.Now()
-		c.Next()
-		log.Logger.Info("request", log.String("url", c.Request.RequestURI), log.String("method", c.Request.Method), log.Int("code", c.Writer.Status()), log.String("operator", c.GetString("operatorName")), log.String("ip", c.ClientIP()), log.Int64("cost_time", time.Now().Sub(start).Milliseconds()))
+		ignoreLog := false
+		for _,v := range m.LogIgnorePath {
+			if strings.Contains(c.Request.RequestURI, v) {
+				ignoreLog = true
+				break
+			}
+		}
+		if ignoreLog {
+			c.Next()
+		}else {
+			start := time.Now()
+			var bodyBytes []byte
+			if c.Request.Method == http.MethodPost {
+				ignore := false
+				for _, v := range m.LogParamIgnorePath {
+					if strings.Contains(c.Request.RequestURI, v) {
+						ignore = true
+						break
+					}
+				}
+				if !ignore {
+					bodyBytes, _ = ioutil.ReadAll(c.Request.Body)
+					c.Request.Body.Close()
+					c.Request.Body = ioutil.NopCloser(bytes.NewReader(bodyBytes))
+				}
+			}
+			c.Next()
+			log.AccessLogger.Info("request", log.String("url", c.Request.RequestURI), log.String("method", c.Request.Method), log.Int("code", c.Writer.Status()), log.String("operator", c.GetString("operatorName")), log.String("ip", c.ClientIP()), log.Float64("cost_second", time.Now().Sub(start).Seconds()), log.String("body", string(bodyBytes)))
+		}
 	}
 }
