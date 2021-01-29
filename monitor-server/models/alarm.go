@@ -348,6 +348,15 @@ type SyncConsulDto struct {
 	Interval  int  `json:"interval"`
 }
 
+type SyncSdConfigDto struct {
+	IsRegister  bool  `json:"is_register"`
+	Guid  string  `json:"guid"`
+	Ip  string  `json:"ip"`
+	Port  string  `json:"port"`
+	Tags  []string  `json:"tags"`
+	Step  int  `json:"step"`
+}
+
 type EndpointHttpTable struct {
 	Id  int  `json:"id"`
 	EndpointGuid  string  `json:"endpoint_guid"`

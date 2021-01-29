@@ -2,6 +2,7 @@ package agent
 
 import (
 	"fmt"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/other"
 	"strings"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
@@ -115,6 +116,7 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage,guid string,err er
 				log.Logger.Error("Sync service discover file error", log.Error(err))
 			}
 		}
+		go other.SyncConfig(0, m.SyncSdConfigDto{Guid:rData.endpoint.Guid, Ip:fmt.Sprintf("%s:%s", tmpIp, tmpPort), Step:rData.endpoint.Step, IsRegister:true})
 	}
 	if rData.addDefaultGroup {
 		if param.DefaultGroupName != "" {
