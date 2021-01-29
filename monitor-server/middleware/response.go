@@ -101,3 +101,7 @@ func ReturnPasswordError(c *gin.Context)  {
 func ReturnTokenError(c *gin.Context)  {
 	ReturnError(c, 401, GetMessageMap(c).TokenError, nil)
 }
+
+func ReturnTokenAuthorityError(c *gin.Context)  {
+	ReturnError(c, 403, GetMessageMap(c).TokenAuthorityError, nil)
+}
