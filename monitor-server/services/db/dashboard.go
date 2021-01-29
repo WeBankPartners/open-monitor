@@ -522,7 +522,7 @@ func getDateStringList(start,end int64) []string {
 		dateList = append(dateList, time.Unix(cursorTime, 0).Format("2006_01_02"))
 		cursorTime += 86400
 	}
-	t,_ := time.Parse("2006_01_02 15:04:05 MST", fmt.Sprintf("%s 00:00:00 CST", time.Unix(cursorTime, 0).Format("2006_01_02")))
+	t,_ := time.Parse("2006_01_02 15:04:05 MST", fmt.Sprintf("%s 00:00:00 "+m.DefaultLocalTimeZone, time.Unix(cursorTime, 0).Format("2006_01_02")))
 	if end > t.Unix()+60 {
 		dateList = append(dateList, time.Unix(cursorTime, 0).Format("2006_01_02"))
 	}
@@ -541,7 +541,7 @@ func queryArchiveTables(endpoint,metric,tag,agg string,dateList []string,query *
 		if i == 0 {
 			tmpStart = query.Start
 		}else{
-			tmpT,err := time.Parse("2006_01_02 15:04:05 MST", fmt.Sprintf("%s 00:00:00 CST", v))
+			tmpT,err := time.Parse("2006_01_02 15:04:05 MST", fmt.Sprintf("%s 00:00:00 "+m.DefaultLocalTimeZone, v))
 			if err == nil {
 				tmpStart = tmpT.Unix()
 			}else{
@@ -551,7 +551,7 @@ func queryArchiveTables(endpoint,metric,tag,agg string,dateList []string,query *
 		if i == len(v)-1 {
 			tmpEnd = query.End
 		}else{
-			tmpT,err := time.Parse("2006_01_02 15:04:05 MST", fmt.Sprintf("%s 00:00:00 CST", v))
+			tmpT,err := time.Parse("2006_01_02 15:04:05 MST", fmt.Sprintf("%s 00:00:00 "+m.DefaultLocalTimeZone, v))
 			if err == nil {
 				tmpEnd = tmpT.Unix()+86400
 			}else{

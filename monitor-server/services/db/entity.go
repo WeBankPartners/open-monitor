@@ -29,7 +29,7 @@ func getCoreProcessKey() string {
 		log.Logger.Error("Get core process key new request fail", log.Error(err))
 		return ""
 	}
-	request.Header.Set("Authorization", m.TmpCoreToken)
+	request.Header.Set("Authorization", m.GetCoreToken())
 	res,err := ctxhttp.Do(context.Background(), http.DefaultClient, request)
 	if err != nil {
 		log.Logger.Error("Get core process key ctxhttp request fail", log.Error(err))
@@ -63,7 +63,7 @@ func GetCoreEventList() (result m.CoreProcessResult,err error) {
 		log.Logger.Error("Get core process key new request fail", log.Error(err))
 		return result,err
 	}
-	request.Header.Set("Authorization", m.TmpCoreToken)
+	request.Header.Set("Authorization", m.GetCoreToken())
 	res,err := ctxhttp.Do(context.Background(), http.DefaultClient, request)
 	if err != nil {
 		log.Logger.Error("Get core process key ctxhttp request fail", log.Error(err))
@@ -174,7 +174,7 @@ func NotifyCoreEvent(endpoint string,strategyId int,alarmId int,customAlarmId in
 		log.Logger.Info(fmt.Sprintf("notify request data --> eventSeqNo:%s operationKey:%s operationData:%s", requestParam.EventSeqNo, requestParam.OperationKey, requestParam.OperationData))
 		b, _ := json.Marshal(requestParam)
 		request, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/platform/v1/operation-events", m.CoreUrl), strings.NewReader(string(b)))
-		request.Header.Set("Authorization", m.TmpCoreToken)
+		request.Header.Set("Authorization", m.GetCoreToken())
 		request.Header.Set("Content-Type", "application/json")
 		if err != nil {
 			log.Logger.Error("Notify core event new request fail", log.Error(err))
@@ -297,8 +297,11 @@ func GetAlarmEvent(alarmType,inputGuid string,id int) (result m.AlarmEntityObj,e
 				toRole = append(toRole, v.Name)
 			}
 		}
+		if len(toMail) == 0 {
+			toMail = m.DefaultMailReceiver
+		}
 		result.To = strings.Join(toMail, ",")
-		result.ToMail = strings.Join(toMail, ",")
+		result.ToMail = result.To
 		result.ToPhone = strings.Join(toPhone, ",")
 		result.ToRole = strings.Join(toRole, ",")
 		result.Subject = fmt.Sprintf("[%s][%s] Endpoint:%s Metric:%s", alarms[0].Status, alarms[0].SPriority, alarms[0].Endpoint, alarms[0].SMetric)
@@ -316,8 +319,12 @@ func getCustomAlarmEvent(id int) (result m.AlarmEntityObj,err error) {
 		err = fmt.Errorf("can not find any custom alarm with id:%d", id)
 		return result,err
 	}
-	result.To = customAlarms[0].AlertReciver
-	result.ToMail = customAlarms[0].AlertReciver
+	if !strings.Contains(customAlarms[0].AlertReciver, "@") {
+		result.To = strings.Join(m.DefaultMailReceiver, ",")
+	}else {
+		result.To = customAlarms[0].AlertReciver
+	}
+	result.ToMail = result.To
 	alarmStatus := "firing"
 	if customAlarms[0].Closed == 1 {
 		alarmStatus = "ok"

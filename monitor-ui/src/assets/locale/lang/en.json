@@ -206,5 +206,7 @@
   "rule": "Rule",
   "addMetricConfig": "Add Metric",
   "addStringMap": "Add Mapping",
-  "operationDoc": "Operation Document"
+  "operationDoc": "Operation Document",
+  "sendAlarm": "Send Alarm",
+  "delay": "Delay"
 }

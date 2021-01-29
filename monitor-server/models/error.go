@@ -21,4 +21,5 @@ type ErrorMessageObj struct{
 
 	PasswordError  string  `json:"password_error"`
 	TokenError   string  `json:"token_error"`
+	TokenAuthorityError  string  `json:"token_authority_error"`
 }
