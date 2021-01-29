@@ -49,6 +49,7 @@ RUN chmod +x $BASE_HOME/*.sh
 RUN chmod +x $PING_EXPORTER/ping_exporter
 RUN chmod +x $ARCHIVE_TOOL/archive_mysql_tool
 RUN chmod +x $DB_DATA_EXPORTER/db_data_exporter
+RUN apk add -U tzdata
 
 WORKDIR $BASE_HOME
 

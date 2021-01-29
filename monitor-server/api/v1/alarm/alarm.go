@@ -1,20 +1,19 @@
 package alarm
 
 import (
-	"github.com/gin-gonic/gin"
-	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
-	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
-	"strconv"
+	"encoding/json"
 	"fmt"
+	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
+	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
+	"github.com/gin-gonic/gin"
+	"io/ioutil"
+	"net/http"
+	"sort"
+	"strconv"
 	"strings"
 	"time"
-	"github.com/WeBankPartners/open-monitor/monitor-server/services/other"
-	"io/ioutil"
-	"encoding/json"
-	"sort"
-	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
-	"net/http"
 )
 
 func AcceptAlertMsg(c *gin.Context)  {
@@ -25,17 +24,17 @@ func AcceptAlertMsg(c *gin.Context)  {
 			mid.ReturnSuccess(c)
 		}
 		log.Logger.Debug("accept", log.JsonObj("body", param))
-		var alarms []*m.AlarmTable
+		var alarms []*m.AlarmHandleObj
 		for _,v := range param.Alerts {
 			if v.Labels["instance"] == "127.0.0.1:8300" {
 				continue
 			}
-			log.Logger.Debug("Accept alert msg", log.JsonObj("alert", v))
 			var tmpValue float64
 			var tmpAlarms m.AlarmProblemList
 			var tmpTags  string
 			var sortTagList m.DefaultSortList
-			tmpAlarm := m.AlarmTable{Status: v.Status}
+			tmpAlarm := m.AlarmHandleObj{}
+			tmpAlarm.Status = v.Status
 			for labelKey,labelValue := range v.Labels {
 				sortTagList = append(sortTagList, &m.DefaultSortObj{Key:labelKey, Value:labelValue})
 			}
@@ -114,6 +113,8 @@ func AcceptAlertMsg(c *gin.Context)  {
 				tmpAlarm.SLast = strategyObj.Last
 				tmpAlarm.SPriority = strategyObj.Priority
 				tmpAlarm.Content = v.Annotations["description"]
+				tmpAlarm.NotifyEnable = strategyObj.NotifyEnable
+				tmpAlarm.NotifyDelay = strategyObj.NotifyDelay
 				tmpSummaryMsg := strings.Split(v.Annotations["summary"], "__")
 				var tmpEndpointIp string
 				if len(tmpSummaryMsg) == 4 {
@@ -152,7 +153,6 @@ func AcceptAlertMsg(c *gin.Context)  {
 						continue
 					}
 				}
-				//tmpAlarmQuery := m.AlarmTable{Endpoint: tmpAlarm.Endpoint, StrategyId: tmpAlarm.StrategyId, Tags:tmpAlarm.Tags, SCond:tmpAlarm.SCond, SLast:tmpAlarm.SLast}
 				tmpAlarmQuery := m.AlarmTable{Endpoint: tmpAlarm.Endpoint, StrategyId: tmpAlarm.StrategyId, Tags:tmpAlarm.Tags}
 				_, tmpAlarms = db.GetAlarms(tmpAlarmQuery, 1, false, false)
 			}
@@ -183,7 +183,12 @@ func AcceptAlertMsg(c *gin.Context)  {
 				continue
 			}
 			if tmpOperation == "resolve" {
-				tmpAlarm = m.AlarmTable{Id:tmpAlarms[0].Id, Endpoint:tmpAlarms[0].Endpoint, StrategyId:tmpAlarms[0].StrategyId, Status:"ok", EndValue:tmpValue, End:time.Now()}
+				tmpAlarm.Id = tmpAlarms[0].Id
+				tmpAlarm.Endpoint = tmpAlarms[0].Endpoint
+				tmpAlarm.StrategyId = tmpAlarms[0].StrategyId
+				tmpAlarm.Status = "ok"
+				tmpAlarm.EndValue = tmpValue
+				tmpAlarm.End = time.Now()
 			}else if tmpOperation == "add" {
 				tmpAlarm.StartValue = tmpValue
 				tmpAlarm.Start = time.Now()
@@ -196,26 +201,11 @@ func AcceptAlertMsg(c *gin.Context)  {
 			mid.ReturnUpdateTableError(c, "alarm", err)
 			return
 		}
-		if m.Config().Alert.Enable {
-			for _,v := range alarms {
-				var sao m.SendAlertObj
-				accept := db.GetMailByStrategy(v.StrategyId)
-				if len(accept) == 0 {
-					continue
-				}
-				sao.Accept = accept
-				sao.Subject = fmt.Sprintf("[%s][%s] Endpoint:%s Metric:%s", v.Status, v.SPriority, v.Endpoint, v.SMetric)
-				sao.Content = fmt.Sprintf("Endpoint:%s \r\nStatus:%s\r\nMetric:%s\r\nEvent:%.3f%s\r\nLast:%s\r\nPriority:%s\r\nNote:%s\r\nTime:%s",v.Endpoint,v.Status,v.SMetric,v.StartValue,v.SCond,v.SLast,v.SPriority,v.Content,v.Start.Format(m.DatetimeFormat))
-				other.SendSmtpMail(sao)
+		for _,v := range alarms {
+			if v.NotifyEnable == 0 {
+				continue
 			}
-		}
-		if m.CoreUrl != "" {
-			for _, v := range alarms {
-				notifyErr := db.NotifyCoreEvent(v.Endpoint, v.StrategyId, 0, 0)
-				if notifyErr != nil {
-					log.Logger.Error("notify core event fail", log.Error(notifyErr))
-				}
-			}
+			go db.NotifyAlarm(v)
 		}
 		mid.ReturnSuccess(c)
 	}else{
@@ -357,6 +347,9 @@ func OpenAlarmApi(c *gin.Context)  {
 		var requestObj m.OpenAlarmObj
 		requestObj.AlertInfo = c.PostForm("alert_info")
 		requestObj.AlertIp = c.PostForm("alert_ip")
+		if requestObj.AlertIp == "" {
+			requestObj.AlertIp = c.ClientIP()
+		}
 		requestObj.AlertLevel = c.PostForm("alert_level")
 		requestObj.AlertObj = c.PostForm("alert_obj")
 		requestObj.AlertTitle = c.PostForm("alert_title")
@@ -374,6 +367,11 @@ func OpenAlarmApi(c *gin.Context)  {
 		c.JSON(http.StatusOK, m.OpenAlarmResponse{ResultCode:0, ResultMsg:"success"})
 	}else {
 		if err := c.ShouldBindJSON(&param); err == nil {
+			for _,v := range param.AlertList {
+				if v.AlertIp == "" {
+					v.AlertIp = c.ClientIP()
+				}
+			}
 			err = db.SaveOpenAlarm(param)
 			if err != nil {
 				c.JSON(http.StatusOK, m.OpenAlarmResponse{ResultCode:-1, ResultMsg:err.Error()})

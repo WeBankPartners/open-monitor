@@ -11,5 +11,6 @@
   "delete_table_data_error": "用条件 %k=%v 删除数据库表 %t 失败",
   "handle_error": "请求处理失败，详情:%s",
   "password_error": "密码错误",
-  "token_error": "请求认证失败"
+  "token_error": "请求认证失败",
+  "token_authority_error": "鉴权失败，权限不足"
 }
