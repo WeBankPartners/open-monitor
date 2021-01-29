@@ -11,5 +11,6 @@
   "delete_table_data_error": "Failed to delete db table %t where %k=%v",
   "handle_error": "Failed to handle request, details: %s",
   "password_error": "Password is wrong.",
-  "token_error": "Invalid session token"
+  "token_error": "Invalid session token",
+  "token_authority_error": "Token authority validate fail"
 }

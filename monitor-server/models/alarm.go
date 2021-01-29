@@ -38,6 +38,8 @@ type StrategyTable struct {
 	Priority  string  `json:"priority" binding:"required"`
 	Content  string  `json:"content" binding:"required"`
 	ConfigType  string  `json:"config_type"`
+	NotifyEnable int  `json:"notify_enable"`
+	NotifyDelay  int  `json:"notify_delay"`
 }
 
 type AlarmTable struct {
@@ -56,6 +58,12 @@ type AlarmTable struct {
 	Start  time.Time  `json:"start"`
 	EndValue  float64  `json:"end_value"`
 	End  time.Time  `json:"end"`
+}
+
+type AlarmHandleObj struct {
+	AlarmTable
+	NotifyEnable int  `json:"notify_enable"`
+	NotifyDelay  int  `json:"notify_delay"`
 }
 
 type AlarmProblemQuery struct {
@@ -192,6 +200,8 @@ type TplStrategyTable struct {
 	Last  string  `json:"last" binding:"required"`
 	Priority  string  `json:"priority" binding:"required"`
 	Content  string  `json:"content" binding:"required"`
+	NotifyEnable int `json:"notify_enable"`
+	NotifyDelay  int    `json:"notify_delay"`
 }
 
 type UpdateStrategy struct {
@@ -336,6 +346,15 @@ type SyncConsulDto struct {
 	Port  string  `json:"port"`
 	Tags  []string  `json:"tags"`
 	Interval  int  `json:"interval"`
+}
+
+type SyncSdConfigDto struct {
+	IsRegister  bool  `json:"is_register"`
+	Guid  string  `json:"guid"`
+	Ip  string  `json:"ip"`
+	Port  string  `json:"port"`
+	Tags  []string  `json:"tags"`
+	Step  int  `json:"step"`
 }
 
 type EndpointHttpTable struct {
