@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/other"
 	"github.com/gin-gonic/gin"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
@@ -73,7 +74,7 @@ func DeregisterJob(guid string) error {
 		log.Logger.Error("Sync service discover file error", log.Error(err))
 		return err
 	}
-
+	go other.SyncConfig(0, m.SyncSdConfigDto{Guid:guid, Step:endpointObj.Step, IsRegister:false})
 	db.UpdateAgentManagerTable(m.EndpointTable{Guid:guid}, "", "", "", "", false)
 	return err
 }

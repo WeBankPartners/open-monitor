@@ -58,7 +58,7 @@ func RegisteConsul(guid,ip,port string, tags []string, interval int, fromCluster
 		return fmt.Errorf("consul response %s", string(body))
 	}
 	if !fromCluster {
-		go other.SyncConfig(0, m.SyncConsulDto{Guid:guid, Ip:ip, Port:port, Tags:tags, Interval:interval, IsRegister:true})
+		go other.SyncConfig(0, m.SyncSdConfigDto{Guid:guid, Ip:ip, Port:port, Tags:tags, Step:interval, IsRegister:true})
 	}
 	return nil
 }
@@ -87,7 +87,7 @@ func DeregisteConsul(guid string, fromCluster bool) error {
 		return fmt.Errorf("consul response %s", string(body))
 	}
 	if !fromCluster {
-		go other.SyncConfig(0, m.SyncConsulDto{Guid:guid, IsRegister:false})
+		go other.SyncConfig(0, m.SyncSdConfigDto{Guid:guid, IsRegister:false})
 	}
 	return nil
 }
