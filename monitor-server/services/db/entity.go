@@ -111,7 +111,7 @@ func getCoreEventKey(status,endpoint string) []string {
 	}
 	if status == "firing" {
 		if len(firingList) > 0 {
-			result = firingList
+			result = clearCallback(recursiveData, firingList)
 		}else{
 			if m.FiringCallback != "" {
 				result = []string{"monitor_default_guid^"+m.FiringCallback}
@@ -119,12 +119,35 @@ func getCoreEventKey(status,endpoint string) []string {
 		}
 	}else{
 		if len(recoverList) > 0 {
-			result = recoverList
+			result = clearCallback(recursiveData, recoverList)
 		}else{
 			if m.RecoverCallback != "" {
 				result = []string{"monitor_default_guid^"+m.RecoverCallback}
 			}
 		}
+	}
+	return result
+}
+
+func clearCallback(data []*m.PanelRecursiveTable,callbackList []string) []string {
+	var result []string
+	callbackMap := make(map[string]string)
+	for _,v := range callbackList {
+		vGuid := v[:strings.Index(v, "^")]
+		vCallback := v[strings.Index(v, "^")+1:]
+		for _,vv := range data {
+			if vv.Guid == vGuid {
+				acceptMsg := fmt.Sprintf("%s^^%s^^%s^^%s", vCallback, vv.Email, vv.Phone, vv.Role)
+				if _,b:=callbackMap[acceptMsg];!b {
+					callbackMap[acceptMsg] = v
+					result = append(result, v)
+				}
+				break
+			}
+		}
+	}
+	if len(result) == 0 && len(callbackList) > 0 {
+		result = callbackList
 	}
 	return result
 }
@@ -161,6 +184,8 @@ func NotifyCoreEvent(endpoint string,strategyId int,alarmId int,customAlarmId in
 	}
 	if len(eventKeys) == 0 {
 		return fmt.Errorf("notify core event fail, event key is null")
+	}else{
+		log.Logger.Info("Start to notify with event keys", log.StringList("eventKeys", eventKeys))
 	}
 	for i,coreKey := range eventKeys {
 		keySplit := strings.Split(coreKey, "^")
