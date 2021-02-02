@@ -321,9 +321,9 @@ func RegisterEndpointMetric(endpointId int,endpointMetrics []string) error {
 
 func GetPromMetricTable(metricType string) (err error,result []*m.PromMetricUpdateParam) {
 	if metricType != "" {
-		err = x.SQL("SELECT t1.*,t2.group_id as panel_id FROM prom_metric t1 left join chart t2 on t1.metric=t2.metric WHERE t1.metric_type=?", metricType).Find(&result)
+		err = x.SQL("SELECT t1.*,t2.group_id as panel_id FROM prom_metric t1 left join chart t2 on t1.metric=t2.metric WHERE t1.metric_type=? order by t1.id", metricType).Find(&result)
 	}else{
-		err = x.SQL("SELECT t1.*,t2.group_id as panel_id FROM prom_metric t1 left join chart t2 on t1.metric=t2.metric").Find(&result)
+		err = x.SQL("SELECT t1.*,t2.group_id as panel_id FROM prom_metric t1 left join chart t2 on t1.metric=t2.metric order by t1.id").Find(&result)
 	}
 	if err != nil {
 		log.Logger.Error("Get prom metric table fail", log.Error(err))
