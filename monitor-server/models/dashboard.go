@@ -204,6 +204,15 @@ type ChartConfigObj struct {
 	CompareSecondEnd  string  `form:"compare_second_end" json:"compare_second_end"`
 }
 
+type PromMetricUpdateParam struct {
+	Id  int  `json:"id"`
+	PanelId  int  `json:"panel_id"`
+	Metric  string  `json:"metric" binding:"required"`
+	MetricType  string  `json:"metric_type"`
+	PromQl  string  `json:"prom_ql" binding:"required"`
+	PromMain  string  `json:"prom_main"`
+}
+
 type PromMetricTable struct {
 	Id  int  `json:"id"`
 	Metric  string  `json:"metric" binding:"required"`
