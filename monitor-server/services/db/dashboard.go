@@ -3,6 +3,7 @@ package db
 import (
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"fmt"
+	"strconv"
 	"strings"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
 	"time"
@@ -318,11 +319,11 @@ func RegisterEndpointMetric(endpointId int,endpointMetrics []string) error {
 	return err
 }
 
-func GetPromMetricTable(metricType string) (err error,result []*m.PromMetricTable) {
+func GetPromMetricTable(metricType string) (err error,result []*m.PromMetricUpdateParam) {
 	if metricType != "" {
-		err = x.SQL("SELECT * FROM prom_metric WHERE metric_type=?", metricType).Find(&result)
+		err = x.SQL("SELECT t1.*,t2.group_id as panel_id FROM prom_metric t1 left join chart t2 on t1.metric=t2.metric WHERE t1.metric_type=?", metricType).Find(&result)
 	}else{
-		err = x.SQL("SELECT * FROM prom_metric").Find(&result)
+		err = x.SQL("SELECT t1.*,t2.group_id as panel_id FROM prom_metric t1 left join chart t2 on t1.metric=t2.metric").Find(&result)
 	}
 	if err != nil {
 		log.Logger.Error("Get prom metric table fail", log.Error(err))
@@ -330,16 +331,23 @@ func GetPromMetricTable(metricType string) (err error,result []*m.PromMetricTabl
 	return err,result
 }
 
-func UpdatePromMetric(data []m.PromMetricTable) error {
+func UpdatePromMetric(data []m.PromMetricUpdateParam) error {
 	if len(data) == 0 {
 		return fmt.Errorf("data is null")
 	}
 	var insertData,updateData []m.PromMetricTable
+	var updateChartAction []*Action
 	for _,v := range data {
 		if v.Id > 0 {
-			updateData = append(updateData, v)
+			updateData = append(updateData, m.PromMetricTable{Id: v.Id,Metric: v.Metric,MetricType: v.MetricType,PromQl: v.PromQl,PromMain: v.PromMain})
+			if v.PanelId > 0 {
+				updateChartAction = append(updateChartAction, &Action{Sql: "update chart set group_id=? where metric=?", Param: []interface{}{v.PanelId,v.Metric}})
+			}
 		}else{
-			insertData = append(insertData, v)
+			insertData = append(insertData, m.PromMetricTable{Metric: v.Metric,MetricType: v.MetricType,PromQl: v.PromQl,PromMain: v.PromMain})
+			if v.PanelId > 0 {
+				updateChartAction = append(updateChartAction, &Action{Sql: "insert into chart(group_id,metric,url,title,legend) value (?,?,'/dashboard/chart',?,'$metric')",Param: []interface{}{v.PanelId,v.Metric,v.Metric}})
+			}
 		}
 	}
 	var actions []*Action
@@ -356,7 +364,13 @@ func UpdatePromMetric(data []m.PromMetricTable) error {
 		}
 	}
 	if len(actions) > 0 {
-		return Transaction(actions)
+		err := Transaction(actions)
+		if err != nil {
+			return err
+		}
+		if len(updateChartAction) > 0 {
+			return Transaction(updateChartAction)
+		}
 	}
 	return nil
 }
@@ -672,4 +686,17 @@ func GetAutoDisplay(businessMonitorMap map[int][]string,tagKey string,charts []*
 	}
 
 	return result,true
+}
+
+func GetDashboardPanelList(endpointType string) []*m.OptionModel {
+	result := []*m.OptionModel{}
+	var panelTables []*m.PanelTable
+	err := x.SQL("select t2.* from dashboard t1 left join panel t2 on t1.panels_group=t2.group_id where t1.dashboard_type=?", endpointType).Find(&panelTables)
+	if err != nil {
+		log.Logger.Error("Get dashboard panel list error", log.String("type", endpointType), log.Error(err))
+	}
+	for _,v := range panelTables {
+		result = append(result, &m.OptionModel{Id: v.ChartGroup, OptionText: v.Title, OptionValue: strconv.Itoa(v.ChartGroup)})
+	}
+	return result
 }
