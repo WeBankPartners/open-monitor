@@ -26,7 +26,7 @@
       </Select>
       <Select v-model="metricSelected" filterable multiple style="width:260px" :label-in-value="true" 
           @on-change="selectMetric" @on-open-change="metricSelectOpen" :placeholder="$t('placeholder.metric')">
-          <Option v-for="item in metricList" :value="item.id + '^^' + item.prom_ql" :key="item.metric">{{item.metric}}</Option>
+          <Option v-for="item in metricList" :value="item.id + '^^' + item.prom_ql + '^^' + item.panel_id" :key="item.metric">{{item.metric}}</Option>
       </Select>
       <DatePicker 
         type="datetimerange" 
@@ -61,8 +61,16 @@
                 {{ item.option_text }}
               </Option>
             </Select>
+            <Select v-model="metricItem.panel" style="width:248px" filterable size="small" placeholder="panel">
+              <Option 
+                v-for="item in panelOptions" 
+                :value="item.option_value" 
+                :key="item.option_value">
+                {{ item.option_text }}
+              </Option>
+            </Select>
             <div>
-               <textarea v-model="metricItem.value" class="textareaSty"></textarea> 
+              <textarea v-model="metricItem.value" class="textareaSty"></textarea> 
             </div>
           </li>
         </template>
@@ -138,7 +146,9 @@ export default {
       },
       
       originalList: [],
-      originalMetricList: {}
+      originalMetricList: {},
+
+      panelOptions: []
     }
   },
   created (){
@@ -152,6 +162,7 @@ export default {
         this.endpointObject = this.endpointList.find(ep => {
           return ep.option_value === val
         })
+        this.getPanelList()
       } else {
         this.endpointObject = {}
       }
@@ -213,7 +224,8 @@ export default {
      this.editMetric.push({label: `default${key}`, value: '',key: `add_${key}`})
       let o_metric = {
         list: '',
-        model: ''
+        model: '',
+        panel: ''
       }
       o_metric.list = this.originalList
       this.originalMetricList[`add_${key}`] = o_metric
@@ -256,12 +268,14 @@ export default {
           id: parseInt(item.value.split('^^')[0]),
           value: item.value.split('^^')[1],
           label: item.label,
-          key: 'origin_' + parseInt(item.value.split('^^')[0])
+          key: 'origin_' + parseInt(item.value.split('^^')[0]),
+          panel: item.value.split('^^')[2]
         })
 
         let o_metric = {
           list: this.originalList,
-          model: ''
+          model: '',
+          panel: ''
         }
         this.originalMetricList['origin_' + parseInt(item.value.split('^^')[0])] = o_metric
       })
@@ -284,7 +298,15 @@ export default {
         this.metricList = responseData
       })
     },
-    getChartData () {
+    getPanelList () {
+      const params ={
+        type: this.endpointObject.type
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v1/dashboard/panel/list', params, responseData => {
+        this.panelOptions = responseData
+      })
+    },
+    async getChartData () {
       this.noDataTip = false
       if (this.$root.$validate.isEmpty_reset(this.totalMetric)) {
         this.$Message.warning(this.$t('tableKey.s_metric')+this.$t('tips.required'))
@@ -325,8 +347,8 @@ export default {
         if (item.value === '') {
           return
         }
-        let {id:id,label:metric,value:prom_ql} = item
-        params.push({id,metric,prom_ql,metric_type: this.endpointObject.type})
+        let {id:id,label:metric,value:prom_ql, panel:panel_id} = item
+        params.push({id,metric,prom_ql,metric_type: this.endpointObject.type, panel_id:Number(panel_id)})
       })
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.metricUpdate.api, params, () => {
         this.$Message.success(this.$t('tips.success'))
