@@ -395,11 +395,14 @@ func GetEntityAlarm(c *gin.Context)  {
 		return
 	}
 	var id int
-	var guid string
+	var guid,alarmStatus string
 	value := idSplit[1]
 	if strings.Contains(value, "-") {
 		tmpSplit := strings.Split(value, "-")
 		id, _ = strconv.Atoi(tmpSplit[0])
+		if len(tmpSplit) > 1 {
+			alarmStatus = tmpSplit[1]
+		}
 		guid = value[len(tmpSplit[0])+1:]
 	}else{
 		id, _ = strconv.Atoi(value)
@@ -410,7 +413,7 @@ func GetEntityAlarm(c *gin.Context)  {
 		mid.ReturnData(c, result)
 		return
 	}
-	alarmObj,err := db.GetAlarmEvent("alarm", guid, id)
+	alarmObj,err := db.GetAlarmEvent("alarm", guid, id, alarmStatus)
 	if err != nil {
 		result.Status = "ERROR"
 		result.Message = fmt.Sprintf("error: %v", err)
@@ -437,7 +440,7 @@ func QueryEntityAlarm(c *gin.Context)  {
 		return
 	}
 	var id int
-	var guid string
+	var guid,alarmStatus string
 	value := param.Criteria.Condition
 	if strings.Contains(value, "monitor-check") {
 		alarmObj := db.GetCheckProgressContent(value)
@@ -446,6 +449,9 @@ func QueryEntityAlarm(c *gin.Context)  {
 		if strings.Contains(value, "-") {
 			tmpSplit := strings.Split(value, "-")
 			id, _ = strconv.Atoi(tmpSplit[0])
+			if len(tmpSplit) > 1 {
+				alarmStatus = tmpSplit[1]
+			}
 			guid = value[len(tmpSplit[0])+1:]
 		} else {
 			id, _ = strconv.Atoi(value)
@@ -456,7 +462,7 @@ func QueryEntityAlarm(c *gin.Context)  {
 			mid.ReturnData(c, result)
 			return
 		}
-		alarmObj, err := db.GetAlarmEvent("alarm", guid, id)
+		alarmObj, err := db.GetAlarmEvent("alarm", guid, id, alarmStatus)
 		if err != nil {
 			result.Status = "ERROR"
 			result.Message = fmt.Sprintf("error: %v", err)
