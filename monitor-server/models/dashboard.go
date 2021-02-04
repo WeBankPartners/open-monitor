@@ -207,13 +207,17 @@ type ChartConfigObj struct {
 type PromMetricUpdateParam struct {
 	Id  int  `json:"id"`
 	PanelId  int  `json:"panel_id"`
-	ChartMetrics  string  `json:"chart_metrics"`
-	ChartTitle  string  `json:"chart_title"`
-	ChartUnit  string  `json:"chart_unit"`
+	Chart  PromMetricUpdateChartParam  `json:"chart"`
 	Metric  string  `json:"metric" binding:"required"`
 	MetricType  string  `json:"metric_type"`
 	PromQl  string  `json:"prom_ql" binding:"required"`
 	PromMain  string  `json:"prom_main"`
+}
+
+type PromMetricUpdateChartParam struct {
+	Metric  string  `json:"metric"`
+	Title  string  `json:"title"`
+	Unit  string  `json:"unit"`
 }
 
 type PromMetricTable struct {
