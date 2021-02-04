@@ -1,15 +1,14 @@
 package db
 
 import (
-	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"fmt"
-	"strconv"
-	"strings"
-	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
-	"time"
-	"github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
-	"sort"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
+	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
+	"sort"
+	"strings"
+	"time"
 )
 
 func GetDashboard(dType string) (error, m.DashboardTable) {
@@ -336,17 +335,67 @@ func UpdatePromMetric(data []m.PromMetricUpdateParam) error {
 		return fmt.Errorf("data is null")
 	}
 	var insertData,updateData []m.PromMetricTable
+	var chartTable []*m.ChartTable
+	x.SQL("select * from chart").Find(&chartTable)
 	var updateChartAction []*Action
 	for _,v := range data {
 		if v.Id > 0 {
 			updateData = append(updateData, m.PromMetricTable{Id: v.Id,Metric: v.Metric,MetricType: v.MetricType,PromQl: v.PromQl,PromMain: v.PromMain})
-			if v.PanelId > 0 {
-				updateChartAction = append(updateChartAction, &Action{Sql: "update chart set group_id=? where metric=?", Param: []interface{}{v.PanelId,v.Metric}})
-			}
 		}else{
 			insertData = append(insertData, m.PromMetricTable{Metric: v.Metric,MetricType: v.MetricType,PromQl: v.PromQl,PromMain: v.PromMain})
-			if v.PanelId > 0 {
-				updateChartAction = append(updateChartAction, &Action{Sql: "insert into chart(group_id,metric,url,title,legend) value (?,?,'/dashboard/chart',?,'$metric')",Param: []interface{}{v.PanelId,v.Metric,v.Metric}})
+		}
+		newChartGroupId := v.PanelId
+		if newChartGroupId > 0 {
+			var existChartObj,newUpdateChartObj m.ChartTable
+			for _,chart := range chartTable {
+				for _,tmpMetric := range strings.Split(chart.Metric, "^") {
+					if tmpMetric == v.Metric {
+						existChartObj = *chart
+						break
+					}
+				}
+				if chart.GroupId == newChartGroupId && v.ChartMetrics == chart.Metric {
+					newUpdateChartObj = *chart
+				}
+			}
+			if existChartObj.Id > 0 {
+				if newUpdateChartObj.Id > 0 {
+					if existChartObj.Id != newUpdateChartObj.Id {
+						if strings.Contains(existChartObj.Metric, "^") {
+							var newOldMetricList []string
+							for _,tmpExistMetricObj := range strings.Split(existChartObj.Metric, "^") {
+								if tmpExistMetricObj != v.Metric {
+									newOldMetricList = append(newOldMetricList, tmpExistMetricObj)
+								}
+							}
+							updateChartAction = append(updateChartAction, &Action{Sql: "update chart set metric=? where id=?", Param: []interface{}{strings.Join(newOldMetricList, "^"),existChartObj.Id}})
+						}else{
+							updateChartAction = append(updateChartAction, &Action{Sql: "delete from chart where id=?", Param: []interface{}{existChartObj.Id}})
+						}
+						updateChartAction = append(updateChartAction, &Action{Sql: "update chart set metric=?,title=?,unit=? where id=?", Param: []interface{}{fmt.Sprintf("%s^%s",newUpdateChartObj.Metric,v.Metric),v.ChartTitle,v.ChartUnit,newUpdateChartObj.Id}})
+					}
+				}else{
+					if existChartObj.GroupId != newChartGroupId {
+						if strings.Contains(existChartObj.Metric, "^") {
+							var newOldMetricList []string
+							for _,tmpExistMetricObj := range strings.Split(existChartObj.Metric, "^") {
+								if tmpExistMetricObj != v.Metric {
+									newOldMetricList = append(newOldMetricList, tmpExistMetricObj)
+								}
+							}
+							updateChartAction = append(updateChartAction, &Action{Sql: "update chart set metric=? where id=?", Param: []interface{}{strings.Join(newOldMetricList, "^"),existChartObj.Id}})
+							updateChartAction = append(updateChartAction, &Action{Sql: "insert into chart(group_id,metric,url,title,unit,legend) value (?,?,'/dashboard/chart',?,?,'$metric')",Param: []interface{}{newChartGroupId,v.Metric,v.ChartTitle,v.ChartUnit}})
+						}else{
+							updateChartAction = append(updateChartAction, &Action{Sql: "update chart set group_id=? where id=?", Param: []interface{}{newChartGroupId,existChartObj.Id}})
+						}
+					}
+				}
+			}else{
+				if newUpdateChartObj.Id > 0 {
+					updateChartAction = append(updateChartAction, &Action{Sql: "update chart set metric=?,title=?,unit=? where id=?", Param: []interface{}{fmt.Sprintf("%s^%s",newUpdateChartObj.Metric,v.Metric),v.ChartTitle,v.ChartUnit,newUpdateChartObj.Id}})
+				}else{
+					updateChartAction = append(updateChartAction, &Action{Sql: "insert into chart(group_id,metric,url,title,unit,legend) value (?,?,'/dashboard/chart',?,?,'$metric')",Param: []interface{}{newChartGroupId,v.Metric,v.ChartTitle,v.ChartUnit}})
+				}
 			}
 		}
 	}
@@ -369,7 +418,13 @@ func UpdatePromMetric(data []m.PromMetricUpdateParam) error {
 			return err
 		}
 		if len(updateChartAction) > 0 {
-			return Transaction(updateChartAction)
+			for _,v := range updateChartAction {
+				log.Logger.Info("Update chart action", log.String("sql", v.Sql), log.String("param", fmt.Sprintf("%v", v.Param)))
+			}
+			err = Transaction(updateChartAction)
+			if err != nil {
+				log.Logger.Error("Update chart config fail", log.Error(err))
+			}
 		}
 	}
 	return nil
@@ -688,15 +743,40 @@ func GetAutoDisplay(businessMonitorMap map[int][]string,tagKey string,charts []*
 	return result,true
 }
 
-func GetDashboardPanelList(endpointType string) []*m.OptionModel {
-	result := []*m.OptionModel{}
-	var panelTables []*m.PanelTable
-	err := x.SQL("select t2.* from dashboard t1 left join panel t2 on t1.panels_group=t2.group_id where t1.dashboard_type=?", endpointType).Find(&panelTables)
+func GetDashboardPanelList(endpointType,searchMetric string) []*m.PanelResultObj {
+	result := []*m.PanelResultObj{}
+	var panelChartQuery []*m.PanelChartQueryObj
+	err := x.SQL("select t2.id,t2.tags_key,t2.title,t3.group_id,t3.metric,t3.title as chart_title,t3.unit as chart_unit from dashboard t1 left join panel t2 on t1.panels_group=t2.group_id left join chart t3 on t2.chart_group=t3.group_id where t1.dashboard_type==?", endpointType).Find(&panelChartQuery)
 	if err != nil {
-		log.Logger.Error("Get dashboard panel list error", log.String("type", endpointType), log.Error(err))
+		log.Logger.Error("Get dashboard panel chart list error", log.String("type", endpointType), log.Error(err))
 	}
-	for _,v := range panelTables {
-		result = append(result, &m.OptionModel{Id: v.ChartGroup, OptionText: v.Title, OptionValue: strconv.Itoa(v.ChartGroup)})
+	if len(result) == 0 {
+		return result
+	}
+	tmpPanelGroupId := panelChartQuery[0].GroupId
+	tmpChartList := []*m.PanelResultChartObj{}
+	for i,v := range panelChartQuery {
+		if v.Title == "Business" {
+			continue
+		}
+		if tmpPanelGroupId != v.GroupId {
+			result = append(result, &m.PanelResultObj{GroupId: tmpPanelGroupId,PanelTitle: panelChartQuery[i-1].Title,TagsKey: panelChartQuery[i-1].TagsKey,Charts: tmpChartList})
+			tmpPanelGroupId = v.GroupId
+			tmpChartList = []*m.PanelResultChartObj{}
+		}
+		tmpChartObj := m.PanelResultChartObj{Metric: v.Metric, Title: v.ChartTitle, Unit: v.ChartUnit}
+		metricContainFlag := false
+		for _,tmpMetricObj := range strings.Split(v.Metric, "^") {
+			if tmpMetricObj == searchMetric {
+				metricContainFlag = true
+				break
+			}
+		}
+		tmpChartObj.Active = metricContainFlag
+		tmpChartList = append(tmpChartList, &tmpChartObj)
+	}
+	if len(tmpChartList) > 0 {
+		result = append(result, &m.PanelResultObj{GroupId: tmpPanelGroupId,PanelTitle: panelChartQuery[len(panelChartQuery)-1].Title,TagsKey: panelChartQuery[len(panelChartQuery)-1].TagsKey,Charts: tmpChartList})
 	}
 	return result
 }
