@@ -3,6 +3,7 @@ package collector
 import (
 	"github.com/go-kit/kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
+	"regexp"
 	"sync"
 	"github.com/hpcloud/tail"
 	"fmt"
@@ -61,6 +62,7 @@ type logKeywordFetchObj struct {
 
 type logKeywordObj struct {
 	Keyword  string
+	RegExp  *regexp.Regexp
 	Count  float64
 	FetchRow []logKeywordFetchObj
 }
@@ -130,9 +132,16 @@ func (c *logCollectorObj) start() {
 		}
 		c.Lock.Lock()
 		for _,v := range c.Rule {
-			if strings.Contains(line.Text, v.Keyword) {
-				v.Count++
-				v.FetchRow = append(v.FetchRow, logKeywordFetchObj{Content: line.Text,Index: v.Count})
+			if v.RegExp != nil {
+				if len(v.RegExp.FindStringSubmatch(line.Text)) > 0 {
+					v.Count ++
+					v.FetchRow = append(v.FetchRow, logKeywordFetchObj{Content: line.Text,Index: v.Count})
+				}
+			}else {
+				if strings.Contains(line.Text, v.Keyword) {
+					v.Count++
+					v.FetchRow = append(v.FetchRow, logKeywordFetchObj{Content: line.Text, Index: v.Count})
+				}
 			}
 		}
 		c.Lock.Unlock()
@@ -253,7 +262,8 @@ func LogMonitorHttpHandle(w http.ResponseWriter, r *http.Request)  {
 				exist = true
 				var tmp []*logKeywordObj
 				for _,vvv := range vv.Keywords {
-					tmp = append(tmp, &logKeywordObj{Keyword:vvv})
+					tmpRegExp,_ := regexp.Compile("("+vvv+")")
+					tmp = append(tmp, &logKeywordObj{Keyword:vvv, RegExp: tmpRegExp})
 				}
 				v.update(tmp)
 			}
@@ -275,7 +285,8 @@ func LogMonitorHttpHandle(w http.ResponseWriter, r *http.Request)  {
 			lco.Lock = new(sync.RWMutex)
 			var tmp []*logKeywordObj
 			for _,vv := range v.Keywords {
-				tmp = append(tmp, &logKeywordObj{Keyword:vv, Count:0})
+				tmpRegExp,_ := regexp.Compile("("+vv+")")
+				tmp = append(tmp, &logKeywordObj{Keyword:vv, RegExp: tmpRegExp, Count:0})
 			}
 			lco.Rule = tmp
 			logCollectorJobs = append(logCollectorJobs, &lco)
