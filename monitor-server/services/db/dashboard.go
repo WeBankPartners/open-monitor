@@ -743,15 +743,16 @@ func GetAutoDisplay(businessMonitorMap map[int][]string,tagKey string,charts []*
 	return result,true
 }
 
-func GetDashboardPanelList(endpointType,searchMetric string) []*m.PanelResultObj {
-	result := []*m.PanelResultObj{}
+func GetDashboardPanelList(endpointType,searchMetric string) m.PanelResult {
+	returnObj := m.PanelResult{}
+	var result []*m.PanelResultObj
 	var panelChartQuery []*m.PanelChartQueryObj
 	err := x.SQL("select t2.id,t2.tags_key,t2.title,t3.group_id,t3.metric,t3.title as chart_title,t3.unit as chart_unit from dashboard t1 left join panel t2 on t1.panels_group=t2.group_id left join chart t3 on t2.chart_group=t3.group_id where t1.dashboard_type=?", endpointType).Find(&panelChartQuery)
 	if err != nil {
 		log.Logger.Error("Get dashboard panel chart list error", log.String("type", endpointType), log.Error(err))
 	}
 	if len(panelChartQuery) == 0 {
-		return result
+		return returnObj
 	}
 	tmpPanelGroupId := panelChartQuery[0].GroupId
 	tmpChartList := []*m.PanelResultChartObj{}
@@ -769,6 +770,7 @@ func GetDashboardPanelList(endpointType,searchMetric string) []*m.PanelResultObj
 		for _,tmpMetricObj := range strings.Split(v.Metric, "^") {
 			if tmpMetricObj == searchMetric {
 				metricContainFlag = true
+				returnObj.ActiveChart = m.PanelResultChartObj{Metric: v.Metric, Title: v.ChartTitle, Unit: v.ChartUnit, Active: true}
 				break
 			}
 		}
@@ -778,5 +780,6 @@ func GetDashboardPanelList(endpointType,searchMetric string) []*m.PanelResultObj
 	if len(tmpChartList) > 0 {
 		result = append(result, &m.PanelResultObj{GroupId: tmpPanelGroupId,PanelTitle: panelChartQuery[len(panelChartQuery)-1].Title,TagsKey: panelChartQuery[len(panelChartQuery)-1].TagsKey,Charts: tmpChartList})
 	}
-	return result
+	returnObj.PanelList = result
+	return returnObj
 }
