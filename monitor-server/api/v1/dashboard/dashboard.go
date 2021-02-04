@@ -1016,6 +1016,11 @@ func DisplayWatermark(c *gin.Context)  {
 
 func GetDashboardPanelList(c *gin.Context)  {
 	endpointType := c.Query("type")
-	result := db.GetDashboardPanelList(endpointType)
+	metric := c.Query("metric")
+	if endpointType == "" || metric == "" {
+		mid.ReturnValidateError(c, "Param type and metric can not empty")
+		return
+	}
+	result := db.GetDashboardPanelList(endpointType, metric)
 	mid.ReturnSuccessData(c, result)
 }
