@@ -354,7 +354,7 @@ func UpdatePromMetric(data []m.PromMetricUpdateParam) error {
 						break
 					}
 				}
-				if chart.GroupId == newChartGroupId && v.ChartMetrics == chart.Metric {
+				if chart.GroupId == newChartGroupId && v.Chart.Metric == chart.Metric {
 					newUpdateChartObj = *chart
 				}
 			}
@@ -372,7 +372,7 @@ func UpdatePromMetric(data []m.PromMetricUpdateParam) error {
 						}else{
 							updateChartAction = append(updateChartAction, &Action{Sql: "delete from chart where id=?", Param: []interface{}{existChartObj.Id}})
 						}
-						updateChartAction = append(updateChartAction, &Action{Sql: "update chart set metric=?,title=?,unit=? where id=?", Param: []interface{}{fmt.Sprintf("%s^%s",newUpdateChartObj.Metric,v.Metric),v.ChartTitle,v.ChartUnit,newUpdateChartObj.Id}})
+						updateChartAction = append(updateChartAction, &Action{Sql: "update chart set metric=?,title=?,unit=? where id=?", Param: []interface{}{fmt.Sprintf("%s^%s",newUpdateChartObj.Metric,v.Metric),v.Chart.Title,v.Chart.Unit,newUpdateChartObj.Id}})
 					}
 				}else{
 					if existChartObj.GroupId != newChartGroupId {
@@ -384,7 +384,7 @@ func UpdatePromMetric(data []m.PromMetricUpdateParam) error {
 								}
 							}
 							updateChartAction = append(updateChartAction, &Action{Sql: "update chart set metric=? where id=?", Param: []interface{}{strings.Join(newOldMetricList, "^"),existChartObj.Id}})
-							updateChartAction = append(updateChartAction, &Action{Sql: "insert into chart(group_id,metric,url,title,unit,legend) value (?,?,'/dashboard/chart',?,?,'$metric')",Param: []interface{}{newChartGroupId,v.Metric,v.ChartTitle,v.ChartUnit}})
+							updateChartAction = append(updateChartAction, &Action{Sql: "insert into chart(group_id,metric,url,title,unit,legend) value (?,?,'/dashboard/chart',?,?,'$metric')",Param: []interface{}{newChartGroupId,v.Metric,v.Chart.Title,v.Chart.Unit}})
 						}else{
 							updateChartAction = append(updateChartAction, &Action{Sql: "update chart set group_id=? where id=?", Param: []interface{}{newChartGroupId,existChartObj.Id}})
 						}
@@ -392,9 +392,9 @@ func UpdatePromMetric(data []m.PromMetricUpdateParam) error {
 				}
 			}else{
 				if newUpdateChartObj.Id > 0 {
-					updateChartAction = append(updateChartAction, &Action{Sql: "update chart set metric=?,title=?,unit=? where id=?", Param: []interface{}{fmt.Sprintf("%s^%s",newUpdateChartObj.Metric,v.Metric),v.ChartTitle,v.ChartUnit,newUpdateChartObj.Id}})
+					updateChartAction = append(updateChartAction, &Action{Sql: "update chart set metric=?,title=?,unit=? where id=?", Param: []interface{}{fmt.Sprintf("%s^%s",newUpdateChartObj.Metric,v.Metric),v.Chart.Title,v.Chart.Unit,newUpdateChartObj.Id}})
 				}else{
-					updateChartAction = append(updateChartAction, &Action{Sql: "insert into chart(group_id,metric,url,title,unit,legend) value (?,?,'/dashboard/chart',?,?,'$metric')",Param: []interface{}{newChartGroupId,v.Metric,v.ChartTitle,v.ChartUnit}})
+					updateChartAction = append(updateChartAction, &Action{Sql: "insert into chart(group_id,metric,url,title,unit,legend) value (?,?,'/dashboard/chart',?,?,'$metric')",Param: []interface{}{newChartGroupId,v.Metric,v.Chart.Title,v.Chart.Unit}})
 				}
 			}
 		}
