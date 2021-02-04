@@ -358,8 +358,14 @@ func getCustomAlarmEvent(id int) (result m.AlarmEntityObj,err error) {
 	if customAlarms[0].Closed == 1 {
 		alarmStatus = "ok"
 	}
-	result.Subject = fmt.Sprintf("[%s][level_%d] %s", alarmStatus, customAlarms[0].AlertLevel, customAlarms[0].AlertTitle)
-	result.Content = fmt.Sprintf("Title:%s \r\n Level:level_%d \r\n Info:%s \r\n Content:%s \r\n SubSystemId:%s \r\n AlertIp:%s \r\n RemarkInfo:%s \r\n Time:%s",customAlarms[0].AlertTitle,customAlarms[0].AlertLevel,customAlarms[0].AlertInfo,customAlarms[0].AlertObj,customAlarms[0].SubSystemId,customAlarms[0].AlertIp,customAlarms[0].RemarkInfo,customAlarms[0].UpdateAt.Format(m.DatetimeFormat))
+	priority := "high"
+	if customAlarms[0].AlertLevel > 4 {
+		priority = "low"
+	} else if customAlarms[0].AlertLevel > 2 {
+		priority = "medium"
+	}
+	result.Subject = fmt.Sprintf("[%s][%s] %s", alarmStatus, priority, customAlarms[0].AlertTitle)
+	result.Content = fmt.Sprintf("Title:%s \r\n Level:%s \r\n Info:%s \r\n Content:%s \r\n SubSystemId:%s \r\n AlertIp:%s \r\n RemarkInfo:%s \r\n Time:%s",customAlarms[0].AlertTitle,priority,customAlarms[0].AlertInfo,customAlarms[0].AlertObj,customAlarms[0].SubSystemId,customAlarms[0].AlertIp,customAlarms[0].RemarkInfo,customAlarms[0].UpdateAt.Format(m.DatetimeFormat))
 	log.Logger.Info("Get custom alarm message done", log.String("subject", result.Subject), log.String("mail", result.ToMail))
 	return result,err
 }
