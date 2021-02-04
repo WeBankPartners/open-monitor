@@ -750,7 +750,7 @@ func GetDashboardPanelList(endpointType,searchMetric string) []*m.PanelResultObj
 	if err != nil {
 		log.Logger.Error("Get dashboard panel chart list error", log.String("type", endpointType), log.Error(err))
 	}
-	if len(result) == 0 {
+	if len(panelChartQuery) == 0 {
 		return result
 	}
 	tmpPanelGroupId := panelChartQuery[0].GroupId
