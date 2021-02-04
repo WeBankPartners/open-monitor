@@ -746,7 +746,7 @@ func GetAutoDisplay(businessMonitorMap map[int][]string,tagKey string,charts []*
 func GetDashboardPanelList(endpointType,searchMetric string) []*m.PanelResultObj {
 	result := []*m.PanelResultObj{}
 	var panelChartQuery []*m.PanelChartQueryObj
-	err := x.SQL("select t2.id,t2.tags_key,t2.title,t3.group_id,t3.metric,t3.title as chart_title,t3.unit as chart_unit from dashboard t1 left join panel t2 on t1.panels_group=t2.group_id left join chart t3 on t2.chart_group=t3.group_id where t1.dashboard_type==?", endpointType).Find(&panelChartQuery)
+	err := x.SQL("select t2.id,t2.tags_key,t2.title,t3.group_id,t3.metric,t3.title as chart_title,t3.unit as chart_unit from dashboard t1 left join panel t2 on t1.panels_group=t2.group_id left join chart t3 on t2.chart_group=t3.group_id where t1.dashboard_type=?", endpointType).Find(&panelChartQuery)
 	if err != nil {
 		log.Logger.Error("Get dashboard panel chart list error", log.String("type", endpointType), log.Error(err))
 	}
