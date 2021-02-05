@@ -1242,33 +1242,32 @@ func getActionOptions(tplId int) []*m.OptionModel {
 
 func QueryAlarmBySql(sql string, params []interface{},customQueryParam m.CustomAlarmQueryParam) (err error, result m.AlarmProblemQueryResult) {
 	result = m.AlarmProblemQueryResult{High: 0, Mid: 0, Low: 0, Data: []*m.AlarmProblemQuery{}}
-	var alarmQuery []*m.AlarmProblemQuery
+	alarmQuery := []*m.AlarmProblemQuery{}
 	err = x.SQL(sql, params...).Find(&alarmQuery)
-	if err != nil || len(alarmQuery) == 0 {
-		return err, result
-	}
-	//var logMonitorStrategyIds []string
-	for _, v := range alarmQuery {
-		v.StartString = v.Start.Format(m.DatetimeFormat)
-		v.EndString = v.End.Format(m.DatetimeFormat)
-		if v.SMetric == "log_monitor" {
-			v.IsLogMonitor = true
-			if v.EndValue > 0 {
-				v.Start,v.End = v.End,v.Start
-				v.StartValue = v.EndValue - v.StartValue + 1
-				if strings.Contains(v.Content, "^^") {
-					v.Content = fmt.Sprintf("%s: %s <br/>%s: %s", v.StartString, v.Content[:strings.Index(v.Content, "^^")], v.EndString, v.Content[strings.Index(v.Content, "^^")+2:])
-				}
-				v.StartString = v.EndString
-			}else{
-				v.StartValue = 1
-				if strings.HasSuffix(v.Content, "^^") {
-					v.Content = v.StartString +": " + v.Content[:len(v.Content)-2]
+	if len(alarmQuery) > 0 {
+		//var logMonitorStrategyIds []string
+		for _, v := range alarmQuery {
+			v.StartString = v.Start.Format(m.DatetimeFormat)
+			v.EndString = v.End.Format(m.DatetimeFormat)
+			if v.SMetric == "log_monitor" {
+				v.IsLogMonitor = true
+				if v.EndValue > 0 {
+					v.Start, v.End = v.End, v.Start
+					v.StartValue = v.EndValue - v.StartValue + 1
+					if strings.Contains(v.Content, "^^") {
+						v.Content = fmt.Sprintf("%s: %s <br/>%s: %s", v.StartString, v.Content[:strings.Index(v.Content, "^^")], v.EndString, v.Content[strings.Index(v.Content, "^^")+2:])
+					}
+					v.StartString = v.EndString
+				} else {
+					v.StartValue = 1
+					if strings.HasSuffix(v.Content, "^^") {
+						v.Content = v.StartString + ": " + v.Content[:len(v.Content)-2]
+					}
 				}
 			}
-		}
-		if strings.Contains(v.Content, "\n") {
-			v.Content = strings.ReplaceAll(v.Content, "\n", "<br/>")
+			if strings.Contains(v.Content, "\n") {
+				v.Content = strings.ReplaceAll(v.Content, "\n", "<br/>")
+			}
 		}
 	}
 	if customQueryParam.Enable {
