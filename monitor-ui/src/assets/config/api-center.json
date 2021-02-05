@@ -181,5 +181,6 @@
     "editTitle": {
         "_des": "对象视图标题编辑",
         "api": "/monitor/api/v1/dashboard/config/chart/title"
-    }
+    },
+    "panelInfo": "/monitor/api/v1/dashboard/panel/list"
 }
