@@ -229,7 +229,6 @@ export default {
     },
     showSunburst (originData) {
       this.myChart.off()
-      let alramData = originData.data
       let legendData = []
       let pieInner = []
       if (originData.high) {
@@ -272,26 +271,24 @@ export default {
       const colorX = ['#33CCCC','#666699','#66CC66','#996633','#9999CC','#339933','#339966','#663333','#6666CC','#336699','#3399CC','#33CC66','#CC3333','#CC6666','#996699','#CC9933']
       let index = 0
       let pieOuter = []
-      alramData.forEach(alarm => {
-        const has = pieOuter.find(item => item.name === alarm.s_metric && item.type === alarm.s_priority)
-        if (has) {
-          has.value++
+      let itemStyleSet = {}
+      const metricInfo = originData.count
+      let set = new Set()
+      metricInfo.forEach(item => {
+        if (set.has(item.name)) {
+          item.itemStyle = itemStyleSet[item.name]
         } else {
-          const color = colorX[index]
+          legendData.push(item.name)
           index++
-          legendData.push(alarm.s_metric)
-          pieOuter.push({
-            name: alarm.s_metric,
-            value: 1,
-            type: alarm.s_priority,
-            filterType: 'metric',
-            itemStyle: {
-              color: color
-            }
-          })
+          const itemStyle = {
+            color: colorX[index]
+          }
+          itemStyleSet[item.name] = itemStyle
+          item.itemStyle = itemStyle
         }
+        set.add(item.name)
       })
-      pieOuter = pieOuter.sort(this.compare('type'))
+      pieOuter = metricInfo.sort(this.compare('type'))
       let option = {
         backgroundColor: '#ffffff',
           tooltip: {
