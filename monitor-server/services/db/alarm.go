@@ -1276,14 +1276,20 @@ func QueryAlarmBySql(sql string, params []interface{}) (err error, result m.Alar
 		} else if v.SPriority == "low" {
 			result.Low += 1
 		}
-		if _,b:=metricMap[v.SMetric];b {
-			metricMap[v.SMetric] += 1
+		tmpMetricLevel := fmt.Sprintf("%s^%s", v.SMetric, v.SPriority)
+		if _,b:=metricMap[tmpMetricLevel];b {
+			metricMap[tmpMetricLevel] += 1
 		}else{
-			metricMap[v.SMetric] = 1
+			metricMap[tmpMetricLevel] = 1
 		}
 	}
+	var resultCount []*m.AlarmProblemCountObj
+	for k,v := range metricMap {
+		tmpSplit := strings.Split(k, "^")
+		resultCount = append(resultCount, &m.AlarmProblemCountObj{Metric: tmpSplit[0], Level: tmpSplit[1], Num: v})
+	}
 	result.Data = alarmQuery
-	result.MetricMap = metricMap
+	result.Count = resultCount
 	return err, result
 }
 
