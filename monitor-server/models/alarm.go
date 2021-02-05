@@ -99,9 +99,10 @@ type AlarmProblemQueryResult struct {
 }
 
 type AlarmProblemCountObj struct {
-	Metric  string  `json:"metric"`
-	Level  string  `json:"level"`
-	Num  int  `json:"num"`
+	Name  string  `json:"name"`
+	Type  string  `json:"type"`
+	Value  int  `json:"value"`
+	FilterType string  `json:"filterType"`
 }
 
 type AlarmProblemList []*AlarmProblemQuery
