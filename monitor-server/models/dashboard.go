@@ -337,6 +337,7 @@ type PanelChartQueryObj struct {
 type PanelResult struct {
 	PanelList []*PanelResultObj  `json:"panel_list"`
 	ActiveChart  PanelResultChartObj  `json:"active_chart"`
+	PanelGroupId int  `json:"panel_group_id"`
 }
 
 type PanelResultObj struct {
