@@ -593,21 +593,6 @@ func GetAlarms(query m.AlarmTable, limit int, extLogMonitor, extOpenAlarm bool) 
 	if limit > 0 {
 		sql += fmt.Sprintf(" LIMIT %d", limit)
 	}
-	//if extLogMonitor {
-	//	for _, v := range extParams {
-	//		params = append(params, v)
-	//	}
-	//	sql = `SELECT t3.* FROM (
-	//			SELECT t1.*,'' path,'' keyword FROM alarm t1 WHERE t1.s_metric<>'log_monitor' ` + whereSql + `
-	//			UNION
-	//			SELECT t1.*,t2.path,t2.keyword FROM alarm t1 LEFT JOIN log_monitor t2 ON t1.strategy_id=t2.strategy_id WHERE t1.s_metric='log_monitor' ` + extWhereSql + `
-	//			) t3 ORDER BY t3.id DESC`
-	//} else {
-	//	sql = "SELECT * FROM alarm t1 WHERE 1=1 " + whereSql + " ORDER BY t1.id DESC "
-	//	if limit > 0 {
-	//		sql += fmt.Sprintf(" LIMIT %d", limit)
-	//	}
-	//}
 	err := x.SQL(sql, params...).Find(&result)
 	if err != nil {
 		log.Logger.Error("Get alarms fail", log.Error(err))
@@ -635,8 +620,8 @@ func GetAlarms(query m.AlarmTable, limit int, extLogMonitor, extOpenAlarm bool) 
 			v.Content = strings.ReplaceAll(v.Content, "\n", "<br/>")
 		}
 	}
-	if extOpenAlarm && query.SMetric == "" {
-		for _, v := range GetOpenAlarm() {
+	if extOpenAlarm && query.SMetric == "custom" {
+		for _, v := range GetOpenAlarm(m.CustomAlarmQueryParam{Enable: true, Status: "problem", Start: "", End: "",Level: query.SPriority}) {
 			result = append(result, v)
 		}
 	}
@@ -1102,11 +1087,30 @@ func SaveOpenAlarm(param m.OpenAlarmRequest) error {
 	return err
 }
 
-func GetOpenAlarm() []*m.AlarmProblemQuery {
+func GetOpenAlarm(param m.CustomAlarmQueryParam) []*m.AlarmProblemQuery {
 	var query []*m.OpenAlarmObj
+	var sql string
 	result := []*m.AlarmProblemQuery{}
 	//sql := fmt.Sprintf("SELECT * FROM alarm_custom WHERE closed<>1 and update_at>'%s' ORDER BY id ASC", time.Unix(time.Now().Unix()-300,0).Format(m.DatetimeFormat))
-	sql := fmt.Sprintf("SELECT * FROM alarm_custom WHERE closed<>1 ORDER BY id DESC")
+	if param.Status == "problem" {
+		sql = "SELECT * FROM alarm_custom WHERE closed<>1 "
+	}else{
+		if param.Start != "" && param.End != "" {
+			sql = fmt.Sprintf("SELECT * FROM alarm_custom WHERE update_at<='%s' AND update_at>'%s' ", param.End, param.Start)
+		}
+	}
+	if param.Level != "" {
+		levelFilterSql := ""
+		if param.Level == "high" {
+			levelFilterSql = " AND alert_level in (1,2) "
+		}else if param.Level == "medium" {
+			levelFilterSql = " AND alert_level in (3,4) "
+		}else{
+			levelFilterSql = " AND alert_level>=5 "
+		}
+		sql += levelFilterSql
+	}
+	sql += " ORDER BY id DESC"
 	x.SQL(sql).Find(&query)
 	if len(query) == 0 {
 		return result
@@ -1142,7 +1146,7 @@ func GetOpenAlarm() []*m.AlarmProblemQuery {
 	if query[lastIndex].AlertObj == "" && query[lastIndex].AlertIp == "" {
 		tmpDisplayEndpoint = "custom_alarm"
 	}
-	result = append(result, &m.AlarmProblemQuery{IsCustom: true, Id: query[lastIndex].Id, Endpoint: tmpDisplayEndpoint, Status: "firing", IsLogMonitor: false, Content: fmt.Sprintf("system_id:%s <br/> title:%s <br/> object:%s <br/> info:%s ", query[lastIndex].SubSystemId, query[lastIndex].AlertTitle, query[lastIndex].AlertObj, query[lastIndex].AlertInfo), Start: query[lastIndex].UpdateAt, StartString: query[lastIndex].UpdateAt.Format(m.DatetimeFormat), SPriority: priority})
+	result = append(result, &m.AlarmProblemQuery{IsCustom: true, Id: query[lastIndex].Id, Endpoint: tmpDisplayEndpoint, Status: "firing", IsLogMonitor: false, Content: fmt.Sprintf("system_id:%s <br/> title:%s <br/> object:%s <br/> info:%s ", query[lastIndex].SubSystemId, query[lastIndex].AlertTitle, query[lastIndex].AlertObj, query[lastIndex].AlertInfo), Start: query[lastIndex].UpdateAt, StartString: query[lastIndex].UpdateAt.Format(m.DatetimeFormat), SPriority: priority, SMetric: "custom"})
 	return result
 }
 
@@ -1236,7 +1240,7 @@ func getActionOptions(tplId int) []*m.OptionModel {
 	return result
 }
 
-func QueryAlarmBySql(sql string, params []interface{}) (err error, result m.AlarmProblemQueryResult) {
+func QueryAlarmBySql(sql string, params []interface{},customQueryParam m.CustomAlarmQueryParam) (err error, result m.AlarmProblemQueryResult) {
 	result = m.AlarmProblemQueryResult{High: 0, Mid: 0, Low: 0, Data: []*m.AlarmProblemQuery{}}
 	var alarmQuery []*m.AlarmProblemQuery
 	err = x.SQL(sql, params...).Find(&alarmQuery)
@@ -1265,6 +1269,11 @@ func QueryAlarmBySql(sql string, params []interface{}) (err error, result m.Alar
 		}
 		if strings.Contains(v.Content, "\n") {
 			v.Content = strings.ReplaceAll(v.Content, "\n", "<br/>")
+		}
+	}
+	if customQueryParam.Enable {
+		for _,v := range GetOpenAlarm(customQueryParam) {
+			alarmQuery = append(alarmQuery, v)
 		}
 	}
 	metricMap := make(map[string]int)
@@ -1319,7 +1328,11 @@ func QueryHistoryAlarm(param m.QueryHistoryAlarmParam) (err error, result m.Alar
 	if param.Filter == "end" {
 		sql = "SELECT * FROM alarm WHERE end>='" + startString + "' AND end<'" + endString + "' " + whereSql + " ORDER BY id DESC"
 	}
-	err, result = QueryAlarmBySql(sql, []interface{}{})
+	customQueryParam := m.CustomAlarmQueryParam{Enable: true, Level: param.Priority, Start: startString, End: endString, Status: "all"}
+	if param.Metric != "" && param.Metric != "custom" {
+		customQueryParam.Enable = false
+	}
+	err, result = QueryAlarmBySql(sql, []interface{}{}, customQueryParam)
 	return err, result
 }
 
