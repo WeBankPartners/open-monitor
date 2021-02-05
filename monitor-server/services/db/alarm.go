@@ -1291,11 +1291,12 @@ func QueryAlarmBySql(sql string, params []interface{},customQueryParam m.CustomA
 			metricMap[tmpMetricLevel] = 1
 		}
 	}
-	var resultCount []*m.AlarmProblemCountObj
+	var resultCount m.AlarmProblemCountList
 	for k,v := range metricMap {
 		tmpSplit := strings.Split(k, "^")
 		resultCount = append(resultCount, &m.AlarmProblemCountObj{Name: tmpSplit[0], Type: tmpSplit[1], Value: v, FilterType: "metric"})
 	}
+	sort.Sort(resultCount)
 	result.Data = alarmQuery
 	result.Count = resultCount
 	return err, result
