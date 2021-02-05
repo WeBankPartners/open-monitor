@@ -61,14 +61,15 @@
                 {{ item.option_text }}
               </Option>
             </Select>
-            <Select v-model="metricItem.panel" style="width:248px" filterable size="small" placeholder="panel">
+            <button class="btn btn-small btn-cancel-f" @click="getPanelList(metricItem, metricIndex)">{{$t('m_panel_config')}}</button>
+            <!-- <Select v-model="metricItem.panel" style="width:248px" filterable size="small" placeholder="panel">
               <Option 
                 v-for="item in panelOptions" 
                 :value="item.option_value" 
                 :key="item.option_value">
                 {{ item.option_text }}
               </Option>
-            </Select>
+            </Select> -->
             <div>
               <textarea v-model="metricItem.value" class="textareaSty"></textarea> 
             </div>
@@ -85,6 +86,31 @@
       </div>
     </div>
     <ModalComponent :modelConfig="modelConfig"></ModalComponent>
+    <Modal
+      v-model="showPanelConfig"
+      @on-ok="confirmPanelConfig"
+      :title="$t('m_panel_config')">
+      <div class="marginbottom params-each" style="margin-bottom:8px">
+        <label class="col-md-2 label-name">{{$t('tableKey.s_metric')}}:</label>
+          <Input v-model="chart.title" :placeholder="$t('tableKey.s_metric')" style="width: 300px" />
+      </div>
+      <div class="marginbottom params-each" style="margin-bottom:8px">
+        <label class="col-md-2 label-name">{{$t('field.unit')}}:</label>
+          <Input v-model="chart.unit" :placeholder="$t('field.unit')" style="width: 300px" />
+      </div>
+      <RadioGroup v-model="test"  @on-change="checkRadio">
+        <template v-for="(group, gIndex) in panelInfo.panel_list">
+          <div :key="group.panel_title">
+            <Radio :label="gIndex">{{group.panel_title}}</Radio>
+            <template v-for="(chart, cIndex) in group.charts">
+              <div :key="chart.metric" style="padding-left:20px">
+                <Radio :label="gIndex+','+cIndex">{{chart.metric}}</Radio>
+              </div>
+            </template>
+          </div>
+        </template>
+      </RadioGroup>
+    </Modal>
   </div>
 </template>
 
@@ -100,6 +126,20 @@ export default {
   name: '',
   data() {
     return {
+      test: '',
+      showPanelConfig: false,
+      currentPanelNo: 0, // 当前配置panel编号
+      panelInfo: {
+        active_chart: {},
+        panel_list: []
+      },
+      chart: {
+        group_id: '',
+        metric: '',
+        title: '',
+        unit: '',
+      },
+
       endpoint: '',
       endpointObject: {},
       endpointId: '',
@@ -162,7 +202,6 @@ export default {
         this.endpointObject = this.endpointList.find(ep => {
           return ep.option_value === val
         })
-        this.getPanelList()
       } else {
         this.endpointObject = {}
       }
@@ -196,6 +235,34 @@ export default {
     this.getEndpointList('.')
   },
   methods: {
+    canclePanelCOnfig () {
+      this.chart.group_id = ''
+      this.chart.metric = ''
+      this.chart.title = ''
+      this.chart.unit = ''
+      this.test = ''
+    },
+    confirmPanelConfig () {
+      this.totalMetric[this.currentPanelNo].chart = this.chart
+    },
+    checkRadio (item) {
+      item += ''
+      const num = item.split(',')
+      let tmp = this.panelInfo.panel_list
+      num.forEach(t => {
+        tmp = tmp[Number(t)] || tmp.charts[Number(t)]
+        this.chart.group_id = tmp.group_id || this.chart.group_id
+      })
+      if (num.length >1) {
+        this.chart.title = tmp.title
+        this.chart.unit = tmp.unit
+        this.chart.metric = tmp.metric
+      } else {
+        this.chart.title = ''
+        this.chart.unit = ''
+        this.chart.metric = this.panelInfo.active_chart.metric
+      }
+    },
     datePick (data) {
       this.dateRange = data
       if (this.dateRange[0] && this.dateRange[1]) {
@@ -298,12 +365,17 @@ export default {
         this.metricList = responseData
       })
     },
-    getPanelList () {
+    getPanelList (item, index) {
+      this.currentPanelNo = index
       const params ={
-        type: this.endpointObject.type
+        type: this.endpointObject.type,
+        metric: item.label
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v1/dashboard/panel/list', params, responseData => {
-        this.panelOptions = responseData
+      this.canclePanelCOnfig()
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.panelInfo, params, responseData => {
+        this.panelInfo = responseData
+        this.chart = JSON.parse(JSON.stringify(this.panelInfo.active_chart))
+        this.showPanelConfig = true
       })
     },
     async getChartData () {
@@ -347,8 +419,8 @@ export default {
         if (item.value === '') {
           return
         }
-        let {id:id,label:metric,value:prom_ql, panel:panel_id} = item
-        params.push({id,metric,prom_ql,metric_type: this.endpointObject.type, panel_id:Number(panel_id)})
+        let {id:id,label:metric,value:prom_ql, chart} = item
+        params.push({id,metric,prom_ql,metric_type: this.endpointObject.type, chart: chart || null, panel_id: Number((item.chart&&item.chart.group_id) || item.panel)})
       })
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.metricUpdate.api, params, () => {
         this.$Message.success(this.$t('tips.success'))
