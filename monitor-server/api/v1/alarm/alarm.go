@@ -300,16 +300,22 @@ func QueryProblemAlarm(c *gin.Context)  {
 			if v.SPriority == "low" {
 				lowCount += 1
 			}
-			if _,b:=metricMap[v.SMetric];b {
-				metricMap[v.SMetric] += 1
+			tmpMetricLevel := fmt.Sprintf("%s^%s", v.SMetric, v.SPriority)
+			if _,b:=metricMap[tmpMetricLevel];b {
+				metricMap[tmpMetricLevel] += 1
 			}else{
-				metricMap[v.SMetric] = 1
+				metricMap[tmpMetricLevel] = 1
 			}
 		}
 		if len(data) == 0 {
 			data = []*m.AlarmProblemQuery{}
 		}
-		result := m.AlarmProblemQueryResult{Data:data,High:highCount,Mid:mediumCount,Low:lowCount,MetricMap: metricMap}
+		var resultCount []*m.AlarmProblemCountObj
+		for k,v := range metricMap {
+			tmpSplit := strings.Split(k, "^")
+			resultCount = append(resultCount, &m.AlarmProblemCountObj{Metric: tmpSplit[0], Level: tmpSplit[1], Num: v})
+		}
+		result := m.AlarmProblemQueryResult{Data:data,High:highCount,Mid:mediumCount,Low:lowCount,Count: resultCount}
 		mid.ReturnSuccessData(c, result)
 	}else{
 		mid.ReturnValidateError(c, err.Error())
