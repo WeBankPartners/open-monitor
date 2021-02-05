@@ -310,11 +310,12 @@ func QueryProblemAlarm(c *gin.Context)  {
 		if len(data) == 0 {
 			data = []*m.AlarmProblemQuery{}
 		}
-		var resultCount []*m.AlarmProblemCountObj
+		var resultCount m.AlarmProblemCountList
 		for k,v := range metricMap {
 			tmpSplit := strings.Split(k, "^")
 			resultCount = append(resultCount, &m.AlarmProblemCountObj{Name: tmpSplit[0], Type: tmpSplit[1], Value: v, FilterType: "metric"})
 		}
+		sort.Sort(resultCount)
 		result := m.AlarmProblemQueryResult{Data:data,High:highCount,Mid:mediumCount,Low:lowCount,Count: resultCount}
 		mid.ReturnSuccessData(c, result)
 	}else{
