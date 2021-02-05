@@ -770,6 +770,7 @@ func GetDashboardPanelList(endpointType,searchMetric string) m.PanelResult {
 		for _,tmpMetricObj := range strings.Split(v.Metric, "^") {
 			if tmpMetricObj == searchMetric {
 				metricContainFlag = true
+				returnObj.PanelGroupId = v.GroupId
 				returnObj.ActiveChart = m.PanelResultChartObj{Metric: v.Metric, Title: v.ChartTitle, Unit: v.ChartUnit, Active: true}
 				break
 			}
