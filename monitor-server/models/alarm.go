@@ -105,6 +105,20 @@ type AlarmProblemCountObj struct {
 	FilterType string  `json:"filterType"`
 }
 
+type AlarmProblemCountList []*AlarmProblemCountObj
+
+func (s AlarmProblemCountList) Len() int {
+	return len(s)
+}
+
+func (s AlarmProblemCountList) Swap(i,j int) {
+	s[i],s[j] = s[j],s[i]
+}
+
+func (s AlarmProblemCountList) Less(i,j int) bool {
+	return s[i].Name+s[i].Type > s[j].Name+s[j].Type
+}
+
 type AlarmProblemList []*AlarmProblemQuery
 
 func (s AlarmProblemList) Len() int {
