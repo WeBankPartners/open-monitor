@@ -95,7 +95,13 @@ type AlarmProblemQueryResult struct {
 	High  int  `json:"high"`
 	Mid   int  `json:"mid"`
 	Low   int  `json:"low"`
-	MetricMap map[string]int  `json:"metric"`
+	Count []*AlarmProblemCountObj  `json:"count"`
+}
+
+type AlarmProblemCountObj struct {
+	Metric  string  `json:"metric"`
+	Level  string  `json:"level"`
+	Num  int  `json:"num"`
 }
 
 type AlarmProblemList []*AlarmProblemQuery
