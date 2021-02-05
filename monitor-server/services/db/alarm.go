@@ -1286,7 +1286,7 @@ func QueryAlarmBySql(sql string, params []interface{}) (err error, result m.Alar
 	var resultCount []*m.AlarmProblemCountObj
 	for k,v := range metricMap {
 		tmpSplit := strings.Split(k, "^")
-		resultCount = append(resultCount, &m.AlarmProblemCountObj{Metric: tmpSplit[0], Level: tmpSplit[1], Num: v})
+		resultCount = append(resultCount, &m.AlarmProblemCountObj{Name: tmpSplit[0], Type: tmpSplit[1], Value: v, FilterType: "metric"})
 	}
 	result.Data = alarmQuery
 	result.Count = resultCount
