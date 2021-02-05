@@ -105,19 +105,19 @@
                   <Tag type="border" closable @on-close="addParams('priority',alarmItem.s_priority)" color="primary">{{alarmItem.s_priority}}</Tag>
                   <Tag type="border" color="warning">{{alarmItem.start_string}}</Tag>
                 </li>
-                <li>
+                <li v-if="!alarmItem.is_custom">
                   <label class="col-md-2" style="vertical-align: top;line-height: 24px;">
-                    <span v-if="!alarmItem.is_custom">{{$t('field.metric')}}&</span>
-                    <span v-if="!alarmItem.is_custom && alarmItem.tags">Tags</span>
+                    <span>{{$t('field.metric')}}&</span>
+                    <span v-if="alarmItem.tags">Tags</span>
                     :</label>
                     <div class="col-md-9" style="display: inline-block;padding:0">
                       <Tag type="border" closable @on-close="addParams('metric',alarmItem.s_metric)" color="primary">{{alarmItem.s_metric}}</Tag>
-                      <template v-if="!alarmItem.is_custom && alarmItem.tags">
+                      <template v-if="alarmItem.tags">
                         <Tag type="border" v-for="(t,tIndex) in alarmItem.tags.split('^')" :key="tIndex" color="cyan">{{t}}</Tag>
                       </template>
                     </div>
                 </li>
-                <li>
+                <li  v-if="!alarmItem.is_custom">
                   <label class="col-md-2" style="vertical-align: top;line-height: 24px;">{{$t('details')}}:</label>
                   <div class="col-md-9" style="display: inline-block;padding:0">
                     <span>
