@@ -757,11 +757,10 @@ func GetDashboardPanelList(endpointType,searchMetric string) m.PanelResult {
 	tmpPanelGroupId := panelChartQuery[0].GroupId
 	tmpChartList := []*m.PanelResultChartObj{}
 	for i,v := range panelChartQuery {
-		if v.Title == "Business" {
-			continue
-		}
 		if tmpPanelGroupId != v.GroupId {
-			result = append(result, &m.PanelResultObj{GroupId: tmpPanelGroupId,PanelTitle: panelChartQuery[i-1].Title,TagsKey: panelChartQuery[i-1].TagsKey,Charts: tmpChartList})
+			if panelChartQuery[i-1].Title != "Business" {
+				result = append(result, &m.PanelResultObj{GroupId: tmpPanelGroupId, PanelTitle: panelChartQuery[i-1].Title, TagsKey: panelChartQuery[i-1].TagsKey, Charts: tmpChartList})
+			}
 			tmpPanelGroupId = v.GroupId
 			tmpChartList = []*m.PanelResultChartObj{}
 		}
@@ -779,7 +778,9 @@ func GetDashboardPanelList(endpointType,searchMetric string) m.PanelResult {
 		tmpChartList = append(tmpChartList, &tmpChartObj)
 	}
 	if len(tmpChartList) > 0 {
-		result = append(result, &m.PanelResultObj{GroupId: tmpPanelGroupId,PanelTitle: panelChartQuery[len(panelChartQuery)-1].Title,TagsKey: panelChartQuery[len(panelChartQuery)-1].TagsKey,Charts: tmpChartList})
+		if panelChartQuery[len(panelChartQuery)-1].Title != "Business" {
+			result = append(result, &m.PanelResultObj{GroupId: tmpPanelGroupId, PanelTitle: panelChartQuery[len(panelChartQuery)-1].Title, TagsKey: panelChartQuery[len(panelChartQuery)-1].TagsKey, Charts: tmpChartList})
+		}
 	}
 	returnObj.PanelList = result
 	return returnObj
