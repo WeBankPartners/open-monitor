@@ -413,3 +413,11 @@ type AlertWindowParam struct {
 	Endpoint string  `json:"endpoint" binding:"required"`
 	Data  []*AlertWindowObj  `json:"data"`
 }
+
+type CustomAlarmQueryParam struct {
+	Enable  bool
+	Level  string
+	Start  string
+	End  string
+	Status  string
+}
