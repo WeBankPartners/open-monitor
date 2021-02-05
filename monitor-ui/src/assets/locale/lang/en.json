@@ -208,5 +208,6 @@
   "addStringMap": "Add Mapping",
   "operationDoc": "Operation Document",
   "sendAlarm": "Send Alarm",
-  "delay": "Delay"
+  "delay": "Delay",
+  "m_panel_config": "Panel Configuration"
 }
