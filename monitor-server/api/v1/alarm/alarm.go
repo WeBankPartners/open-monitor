@@ -196,11 +196,7 @@ func AcceptAlertMsg(c *gin.Context)  {
 			log.Logger.Debug("Add alarm", log.String("operation", tmpOperation), log.JsonObj("alarm", tmpAlarm))
 			alarms = append(alarms, &tmpAlarm)
 		}
-		err = db.UpdateAlarms(alarms)
-		if err != nil {
-			mid.ReturnUpdateTableError(c, "alarm", err)
-			return
-		}
+		alarms = db.UpdateAlarms(alarms)
 		for _,v := range alarms {
 			if v.NotifyEnable == 0 {
 				continue
