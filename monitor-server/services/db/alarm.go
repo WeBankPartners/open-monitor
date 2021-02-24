@@ -1,6 +1,7 @@
 package db
 
 import (
+	"database/sql"
 	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/other"
 	"sort"
@@ -636,25 +637,36 @@ func GetAlarms(query m.AlarmTable, limit int, extLogMonitor, extOpenAlarm bool) 
 	return err, sortResult
 }
 
-func UpdateAlarms(alarms []*m.AlarmHandleObj) error {
+func UpdateAlarms(alarms []*m.AlarmHandleObj) []*m.AlarmHandleObj {
+	successAlarms := []*m.AlarmHandleObj{}
 	if len(alarms) == 0 {
-		return nil
+		return alarms
 	}
+	var rowAffected int64
 	for _, v := range alarms {
+		rowAffected = 0
 		var action Action
 		var cErr error
+		var execResult sql.Result
 		if v.Id > 0 {
-			action.Sql = "UPDATE alarm SET status=?,end_value=?,end=? WHERE id=?"
-			_, cErr = x.Exec(action.Sql, v.Status, v.EndValue, v.End.Format(m.DatetimeFormat), v.Id)
+			action.Sql = "UPDATE alarm SET status=?,end_value=?,end=? WHERE id=? AND status='firing'"
+			execResult, cErr = x.Exec(action.Sql, v.Status, v.EndValue, v.End.Format(m.DatetimeFormat), v.Id)
 		} else {
 			action.Sql = "INSERT INTO alarm(strategy_id,endpoint,status,s_metric,s_expr,s_cond,s_last,s_priority,content,start_value,start,tags) VALUE (?,?,?,?,?,?,?,?,?,?,?,?)"
-			_, cErr = x.Exec(action.Sql, v.StrategyId, v.Endpoint, v.Status, v.SMetric, v.SExpr, v.SCond, v.SLast, v.SPriority, v.Content, v.StartValue, v.Start.Format(m.DatetimeFormat), v.Tags)
+			execResult, cErr = x.Exec(action.Sql, v.StrategyId, v.Endpoint, v.Status, v.SMetric, v.SExpr, v.SCond, v.SLast, v.SPriority, v.Content, v.StartValue, v.Start.Format(m.DatetimeFormat), v.Tags)
 		}
 		if cErr != nil {
 			log.Logger.Error("Update alarm fail", log.Error(cErr))
+		}else{
+			rowAffected,_ = execResult.RowsAffected()
+			if rowAffected > 0 {
+				successAlarms = append(successAlarms, v)
+			}else{
+				log.Logger.Warn("Update alarm done but not any rows affected")
+			}
 		}
 	}
-	return nil
+	return successAlarms
 }
 
 func judgeExist(alarm m.AlarmTable) bool {
