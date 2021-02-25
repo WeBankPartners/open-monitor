@@ -102,7 +102,7 @@ func requestPingExporter(address string,objList []*m.PingExportSourceObj)  {
 	if resp.StatusCode >= 300 {
 		log.Logger.Error("Request ping exporter fail,status code error", log.Int("status", resp.StatusCode))
 	}else{
-		log.Logger.Info("Request ping exporter success", log.String("address", address))
+		log.Logger.Debug("Request ping exporter success", log.String("address", address))
 	}
 	resp.Body.Close()
 }
