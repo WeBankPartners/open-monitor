@@ -209,4 +209,5 @@ alter table strategy add column notify_delay int default 0;
 #@v1.11.1.2-begin@;
 update prom_metric set prom_ql='mysql_global_status_threads_connected{instance=\"$address\"}/mysql_global_variables_max_connections{instance=\"$address\"} * 100' where metric='mysql.connect.used.percent';
 update strategy set expr='mysql_global_status_threads_connected{instance=\"$address\"}/mysql_global_variables_max_connections{instance=\"$address\"} * 100' where metric='mysql.connect.used.percent';
+alter table role add column disable tinyint default 0;
 #@v1.11.1.2-end@;
