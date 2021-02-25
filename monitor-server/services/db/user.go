@@ -235,7 +235,9 @@ func ListRole(search string,page,size int) (err error,data m.TableData) {
 	var count []int
 	var whereSql string
 	if search != "" {
-		whereSql = "where name LIKE '%"+search+"%' OR display_name LIKE '%"+search+"%'"
+		whereSql = "where (name LIKE '%"+search+"%' OR display_name LIKE '%"+search+"%') AND disable=0 "
+	}else{
+		whereSql = "where disable=0 "
 	}
 	err = x.SQL("SELECT * FROM role "+whereSql+fmt.Sprintf(" ORDER BY id LIMIT %d,%d", (page-1)*size, size)).Find(&roles)
 	x.SQL("SELECT count(1) num FROM role " + whereSql).Find(&count)
@@ -296,8 +298,8 @@ func SyncCoreRole()  {
 		log.Logger.Error("Get core role key ctxhttp request fail", log.Error(err))
 		return
 	}
-	defer res.Body.Close()
 	b,_ := ioutil.ReadAll(res.Body)
+	defer res.Body.Close()
 	log.Logger.Info("Get core role response", log.String("body", string(b)))
 	var result m.CoreRoleDto
 	err = json.Unmarshal(b, &result)
@@ -317,6 +319,9 @@ func SyncCoreRole()  {
 		for _,vv := range tableData {
 			if vv.Name == v.Name {
 				existFlag = true
+				if vv.Disable == 1 {
+					updateName = v.DisplayName
+				}
 				if vv.DisplayName != v.DisplayName {
 					updateName = v.DisplayName
 				}
@@ -347,10 +352,10 @@ func SyncCoreRole()  {
 		actions = append(actions, &Action{Sql:fmt.Sprintf("INSERT INTO role(name,display_name) VALUE ('%s','%s')", v.Name, v.DisplayName)})
 	}
 	for _,v := range updateData {
-		actions = append(actions, &Action{Sql:fmt.Sprintf("UPDATE role SET display_name='%s' WHERE name='%s'", v.DisplayName, v.Name)})
+		actions = append(actions, &Action{Sql:fmt.Sprintf("UPDATE role SET display_name='%s',disable=0 WHERE name='%s'", v.DisplayName, v.Name)})
 	}
 	for _,v := range deleteData {
-		actions = append(actions, &Action{Sql:fmt.Sprintf("DELETE FROM role WHERE name='%s'", v.Name)})
+		actions = append(actions, &Action{Sql:fmt.Sprintf("UPDATE role SET disable=1 WHERE name='%s'", v.Name)})
 	}
 	if len(actions) > 0 {
 		err = Transaction(actions)
@@ -479,6 +484,39 @@ func UpdateGrpRole(param m.RoleGrpDto) error {
 		actions = append(actions, &Action{Sql:"INSERT INTO rel_role_grp(role_id,grp_id) VALUE (?,?)", Param:[]interface{}{v, param.GrpId}})
 	}
 	err = Transaction(actions)
+	return err
+}
+
+func UpdateRoleNew(param m.UpdateRoleDto) error {
+	var rowData []*m.RoleTable
+	var err error
+	if param.Operator == "add" {
+		if param.Name == "" {
+			return fmt.Errorf("Role name can not emtpy")
+		}
+		x.SQL("select * from role where name=?", param.Name).Find(&rowData)
+		if len(rowData) > 0 {
+			_,err = x.Exec("update role set disable=0 where name=?", param.Name)
+		}else{
+			_,err = x.Exec("insert into role(name,display_name,email,creator,created) value (?,?,?,?,?)", param.Name,param.DisplayName,param.Email,param.Operator,time.Now())
+		}
+	}else if param.Operator == "update" {
+		if param.RoleId <= 0 {
+			return fmt.Errorf("Role id can not emtpy ")
+		}
+		if param.Name == "" {
+			return fmt.Errorf("Role name can not empty ")
+		}
+		_,err = x.Exec("update role set name=?,display_name=?,email=? where id=?", param.Name,param.DisplayName,param.Email,param.RoleId)
+	}else {
+		if param.RoleId <= 0 {
+			return fmt.Errorf("Role id can not emtpy ")
+		}
+		x.SQL("select * from role where name=?", param.Name).Find(&rowData)
+		if len(rowData) > 0 {
+			_,err = x.Exec("update role set disable=1 where id=?", param.RoleId)
+		}
+	}
 	return err
 }
 
