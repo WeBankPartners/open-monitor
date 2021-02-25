@@ -621,9 +621,11 @@ func GetAlarms(query m.AlarmTable, limit int, extLogMonitor, extOpenAlarm bool) 
 			v.Content = strings.ReplaceAll(v.Content, "\n", "<br/>")
 		}
 	}
-	if extOpenAlarm && query.SMetric == "custom" {
-		for _, v := range GetOpenAlarm(m.CustomAlarmQueryParam{Enable: true, Status: "problem", Start: "", End: "",Level: query.SPriority}) {
-			result = append(result, v)
+	if query.SMetric == "" || query.SMetric == "custom" {
+		if extOpenAlarm {
+			for _, v := range GetOpenAlarm(m.CustomAlarmQueryParam{Enable: true, Status: "problem", Start: "", End: "",Level: query.SPriority}) {
+				result = append(result, v)
+			}
 		}
 	}
 	var sortResult m.AlarmProblemList
