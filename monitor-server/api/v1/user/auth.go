@@ -307,7 +307,7 @@ func UpdateRole(c *gin.Context)  {
 			return
 		}
 		param.Operator = mid.GetOperateUser(c)
-		err = db.UpdateRole(param)
+		err = db.UpdateRoleNew(param)
 		if err != nil {
 			mid.ReturnUpdateTableError(c, "role", err)
 		}else{
