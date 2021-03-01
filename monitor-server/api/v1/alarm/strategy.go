@@ -450,40 +450,6 @@ func SyncConfigHandle(w http.ResponseWriter,r *http.Request)  {
 	response.Message = "Success"
 }
 
-func SyncConsulHandle(w http.ResponseWriter,r *http.Request)  {
-	log.Logger.Debug("start sync consul")
-	var response mid.RespJson
-	w.Header().Set("Content-Type", "application/json")
-	defer w.Write([]byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\",\"Data\":\"%v\"}", response.Code,response.Message,response.Data)))
-	var param m.SyncConsulDto
-	b,_ := ioutil.ReadAll(r.Body)
-	err := json.Unmarshal(b, &param)
-	if err != nil {
-		response.Code = 401
-		response.Message = "Param json format fail"
-		response.Data = err
-		return
-	}
-	if param.Guid == "" {
-		response.Code = 401
-		response.Message = "Guid is empty"
-		return
-	}
-	if param.IsRegister {
-		err = prom.RegisteConsul(param.Guid,param.Ip,param.Port,param.Tags,param.Interval,true)
-	}else{
-		err = prom.DeregisteConsul(param.Guid,true)
-	}
-	if err != nil {
-		response.Code = 500
-		response.Message = "Sync consul fail"
-		response.Data = err
-		return
-	}
-	response.Code = 200
-	response.Message = "Success"
-}
-
 func SyncSdFileHandle(w http.ResponseWriter,r *http.Request)  {
 	log.Logger.Info("start to sync sd config")
 	var response mid.RespJson

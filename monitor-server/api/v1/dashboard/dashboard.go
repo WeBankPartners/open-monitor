@@ -830,7 +830,7 @@ func GetPromMetric(c *gin.Context)  {
 }
 
 func UpdatePromMetric(c *gin.Context)  {
-	var param []m.PromMetricTable
+	var param []m.PromMetricUpdateParam
 	if err := c.ShouldBindJSON(&param);err == nil {
 		if len(param) == 0 {
 			mid.ReturnParamEmptyError(c, "")
@@ -1011,5 +1011,16 @@ func DisplayWatermark(c *gin.Context)  {
 	if isDisplay == "n" || isDisplay == "no" || isDisplay == "false" {
 		result.Display = false
 	}
+	mid.ReturnSuccessData(c, result)
+}
+
+func GetDashboardPanelList(c *gin.Context)  {
+	endpointType := c.Query("type")
+	metric := c.Query("metric")
+	if endpointType == "" || metric == "" {
+		mid.ReturnValidateError(c, "Param type and metric can not empty")
+		return
+	}
+	result := db.GetDashboardPanelList(endpointType, metric)
 	mid.ReturnSuccessData(c, result)
 }
