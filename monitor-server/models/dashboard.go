@@ -204,6 +204,22 @@ type ChartConfigObj struct {
 	CompareSecondEnd  string  `form:"compare_second_end" json:"compare_second_end"`
 }
 
+type PromMetricUpdateParam struct {
+	Id  int  `json:"id"`
+	PanelId  int  `json:"panel_id"`
+	Chart  PromMetricUpdateChartParam  `json:"chart"`
+	Metric  string  `json:"metric" binding:"required"`
+	MetricType  string  `json:"metric_type"`
+	PromQl  string  `json:"prom_ql" binding:"required"`
+	PromMain  string  `json:"prom_main"`
+}
+
+type PromMetricUpdateChartParam struct {
+	Metric  string  `json:"metric"`
+	Title  string  `json:"title"`
+	Unit  string  `json:"unit"`
+}
+
 type PromMetricTable struct {
 	Id  int  `json:"id"`
 	Metric  string  `json:"metric" binding:"required"`
@@ -306,4 +322,34 @@ type CustomDashboardConfigQueryObj struct {
 	Endpoint string  `json:"endpoint"`
 	MetricLabel  string  `json:"metricLabel"`
 	Metric  string  `json:"metric"`
+}
+
+type PanelChartQueryObj struct {
+	Id  int  `json:"id"`
+	TagsKey  string  `json:"tags_key"`
+	Title  string  `json:"title"`
+	GroupId  int  `json:"group_id"`
+	Metric  string  `json:"metric"`
+	ChartTitle  string  `json:"chart_title"`
+	ChartUnit  string  `json:"chart_unit"`
+}
+
+type PanelResult struct {
+	PanelList []*PanelResultObj  `json:"panel_list"`
+	ActiveChart  PanelResultChartObj  `json:"active_chart"`
+	PanelGroupId int  `json:"panel_group_id"`
+}
+
+type PanelResultObj struct {
+	GroupId  int  `json:"group_id"`
+	PanelTitle  string  `json:"panel_title"`
+	TagsKey  string  `json:"tags_key"`
+	Charts  []*PanelResultChartObj  `json:"charts"`
+}
+
+type PanelResultChartObj struct {
+	Metric  string  `json:"metric"`
+	Title  string  `json:"title"`
+	Unit  string  `json:"unit"`
+	Active  bool  `json:"active"`
 }
