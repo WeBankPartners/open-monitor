@@ -111,7 +111,7 @@ func getCoreEventKey(status,endpoint string) []string {
 	}
 	if status == "firing" {
 		if len(firingList) > 0 {
-			result = firingList
+			result = clearCallback(recursiveData, firingList)
 		}else{
 			if m.FiringCallback != "" {
 				result = []string{"monitor_default_guid^"+m.FiringCallback}
@@ -119,12 +119,35 @@ func getCoreEventKey(status,endpoint string) []string {
 		}
 	}else{
 		if len(recoverList) > 0 {
-			result = recoverList
+			result = clearCallback(recursiveData, recoverList)
 		}else{
 			if m.RecoverCallback != "" {
 				result = []string{"monitor_default_guid^"+m.RecoverCallback}
 			}
 		}
+	}
+	return result
+}
+
+func clearCallback(data []*m.PanelRecursiveTable,callbackList []string) []string {
+	var result []string
+	callbackMap := make(map[string]string)
+	for _,v := range callbackList {
+		vGuid := v[:strings.Index(v, "^")]
+		vCallback := v[strings.Index(v, "^")+1:]
+		for _,vv := range data {
+			if vv.Guid == vGuid {
+				acceptMsg := fmt.Sprintf("%s^^%s^^%s^^%s", vCallback, vv.Email, vv.Phone, vv.Role)
+				if _,b:=callbackMap[acceptMsg];!b {
+					callbackMap[acceptMsg] = v
+					result = append(result, v)
+				}
+				break
+			}
+		}
+	}
+	if len(result) == 0 && len(callbackList) > 0 {
+		result = callbackList
 	}
 	return result
 }
@@ -161,6 +184,8 @@ func NotifyCoreEvent(endpoint string,strategyId int,alarmId int,customAlarmId in
 	}
 	if len(eventKeys) == 0 {
 		return fmt.Errorf("notify core event fail, event key is null")
+	}else{
+		log.Logger.Info("Start to notify with event keys", log.StringList("eventKeys", eventKeys))
 	}
 	for i,coreKey := range eventKeys {
 		keySplit := strings.Split(coreKey, "^")
@@ -198,7 +223,7 @@ func NotifyCoreEvent(endpoint string,strategyId int,alarmId int,customAlarmId in
 	return nil
 }
 
-func GetAlarmEvent(alarmType,inputGuid string,id int) (result m.AlarmEntityObj,err error) {
+func GetAlarmEvent(alarmType,inputGuid string,id int,alarmStatus string) (result m.AlarmEntityObj,err error) {
 	if inputGuid == "custom_alarm_guid" {
 		result,err = getCustomAlarmEvent(id)
 		return result,err
@@ -213,7 +238,11 @@ func GetAlarmEvent(alarmType,inputGuid string,id int) (result m.AlarmEntityObj,e
 		if len(alarms) == 0 {
 			return result,fmt.Errorf("%s %d can not fetch any data", alarmType, id)
 		}
-		result.Status = alarms[0].Status
+		if alarmStatus == "firing" || alarmStatus == "ok" {
+			result.Status = alarmStatus
+		}else {
+			result.Status = alarms[0].Status
+		}
 		var tagsContent string
 		for _,v := range strings.Split(alarms[0].Tags, "^") {
 			tagsContent += fmt.Sprintf("\r\n%s", v)
@@ -304,8 +333,8 @@ func GetAlarmEvent(alarmType,inputGuid string,id int) (result m.AlarmEntityObj,e
 		result.ToMail = result.To
 		result.ToPhone = strings.Join(toPhone, ",")
 		result.ToRole = strings.Join(toRole, ",")
-		result.Subject = fmt.Sprintf("[%s][%s] Endpoint:%s Metric:%s", alarms[0].Status, alarms[0].SPriority, alarms[0].Endpoint, alarms[0].SMetric)
-		result.Content = fmt.Sprintf("Endpoint:%s \r\nStatus:%s\r\nMetric:%s\r\nEvent:%.3f%s\r\nLast:%s\r\nPriority:%s\r\nNote:%s\r\nTime:%s %s",alarms[0].Endpoint,alarms[0].Status,alarms[0].SMetric,alarms[0].StartValue,alarms[0].SCond,alarms[0].SLast,alarms[0].SPriority,alarms[0].Content,alarms[0].Start.Format(m.DatetimeFormat),tagsContent)
+		result.Subject = fmt.Sprintf("[%s][%s] Endpoint:%s Metric:%s", result.Status, alarms[0].SPriority, alarms[0].Endpoint, alarms[0].SMetric)
+		result.Content = fmt.Sprintf("Endpoint:%s \r\nStatus:%s\r\nMetric:%s\r\nEvent:%.3f%s\r\nLast:%s\r\nPriority:%s\r\nNote:%s\r\nTime:%s %s",alarms[0].Endpoint,result.Status,alarms[0].SMetric,alarms[0].StartValue,alarms[0].SCond,alarms[0].SLast,alarms[0].SPriority,alarms[0].Content,alarms[0].Start.Format(m.DatetimeFormat),tagsContent)
 		log.Logger.Info(fmt.Sprintf("alarm event --> id:%s status:%s to:%s subejct:%s content:%s", result.Id, result.Status, result.To, result.Subject, result.Content))
 	}
 	return result,err
@@ -329,8 +358,14 @@ func getCustomAlarmEvent(id int) (result m.AlarmEntityObj,err error) {
 	if customAlarms[0].Closed == 1 {
 		alarmStatus = "ok"
 	}
-	result.Subject = fmt.Sprintf("[%s][level_%d] %s", alarmStatus, customAlarms[0].AlertLevel, customAlarms[0].AlertTitle)
-	result.Content = fmt.Sprintf("Title:%s \r\n Level:level_%d \r\n Info:%s \r\n Content:%s \r\n SubSystemId:%s \r\n AlertIp:%s \r\n RemarkInfo:%s \r\n Time:%s",customAlarms[0].AlertTitle,customAlarms[0].AlertLevel,customAlarms[0].AlertInfo,customAlarms[0].AlertObj,customAlarms[0].SubSystemId,customAlarms[0].AlertIp,customAlarms[0].RemarkInfo,customAlarms[0].UpdateAt.Format(m.DatetimeFormat))
+	priority := "high"
+	if customAlarms[0].AlertLevel > 4 {
+		priority = "low"
+	} else if customAlarms[0].AlertLevel > 2 {
+		priority = "medium"
+	}
+	result.Subject = fmt.Sprintf("[%s][%s] %s", alarmStatus, priority, customAlarms[0].AlertTitle)
+	result.Content = fmt.Sprintf("Title:%s \r\n Level:%s \r\n Info:%s \r\n Content:%s \r\n SubSystemId:%s \r\n AlertIp:%s \r\n RemarkInfo:%s \r\n Time:%s",customAlarms[0].AlertTitle,priority,customAlarms[0].AlertInfo,customAlarms[0].AlertObj,customAlarms[0].SubSystemId,customAlarms[0].AlertIp,customAlarms[0].RemarkInfo,customAlarms[0].UpdateAt.Format(m.DatetimeFormat))
 	log.Logger.Info("Get custom alarm message done", log.String("subject", result.Subject), log.String("mail", result.ToMail))
 	return result,err
 }

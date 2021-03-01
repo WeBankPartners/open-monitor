@@ -93,7 +93,9 @@ export default {
         option_value: alarmItem.endpoint,
         type: alarmItem.endpoint.split('_').slice(-1)[0]
       }
-      this.$router.push({ name: 'endpointView',params: endpointObject})
+      localStorage.setItem('jumpCallData', JSON.stringify(endpointObject))
+      const news = this.$router.resolve({name: 'endpointView'})
+      window.open(news.href, '_blank')
     }
   },
   components: {},

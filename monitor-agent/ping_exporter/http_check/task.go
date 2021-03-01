@@ -2,12 +2,12 @@ package http_check
 
 import (
 	"github.com/WeBankPartners/open-monitor/monitor-agent/ping_exporter/funcs"
-	"sync"
 	"log"
-	"time"
 	"net/http"
-	"strings"
 	"net/url"
+	"strings"
+	"sync"
+	"time"
 )
 
 var (
@@ -40,7 +40,10 @@ func buildHtppClient() *http.Client {
 			return url.Parse(funcs.Config().HttpProxyAddress)
 		}
 	}
-	transport := &http.Transport{Proxy: proxy}
+	transport := &http.Transport{
+		Proxy: proxy,
+		//TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
 	client := &http.Client{Transport: transport, Timeout:time.Duration(httpCheckTimeOut)*time.Second}
 	return client
 }
