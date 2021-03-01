@@ -123,6 +123,7 @@ func InitHttpServer(exportAgent bool) {
 			dashboardApi.GET("/custom/role/get", dashboard.GetCustomDashboardRole)
 			dashboardApi.POST("/custom/role/save", dashboard.SaveCustomDashboardRole)
 			dashboardApi.GET("/custom/alarm/list", alarm.GetCustomDashboardAlarm)
+			dashboardApi.GET("/panel/list", dashboard.GetDashboardPanelList)
 		}
 		agentApi := authApi.Group("/agent")
 		{

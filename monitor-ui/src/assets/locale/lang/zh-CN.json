@@ -208,5 +208,6 @@
   "addStringMap": "新增映射",
   "operationDoc": "操作文档",
   "sendAlarm": "告警发送",
-  "delay": "延时"
+  "delay": "延时",
+  "m_panel_config": "Panel 配置"
 }
