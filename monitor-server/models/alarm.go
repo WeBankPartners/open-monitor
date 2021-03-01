@@ -95,7 +95,28 @@ type AlarmProblemQueryResult struct {
 	High  int  `json:"high"`
 	Mid   int  `json:"mid"`
 	Low   int  `json:"low"`
-	MetricMap map[string]int  `json:"metric"`
+	Count []*AlarmProblemCountObj  `json:"count"`
+}
+
+type AlarmProblemCountObj struct {
+	Name  string  `json:"name"`
+	Type  string  `json:"type"`
+	Value  int  `json:"value"`
+	FilterType string  `json:"filterType"`
+}
+
+type AlarmProblemCountList []*AlarmProblemCountObj
+
+func (s AlarmProblemCountList) Len() int {
+	return len(s)
+}
+
+func (s AlarmProblemCountList) Swap(i,j int) {
+	s[i],s[j] = s[j],s[i]
+}
+
+func (s AlarmProblemCountList) Less(i,j int) bool {
+	return s[i].Name+s[i].Type > s[j].Name+s[j].Type
 }
 
 type AlarmProblemList []*AlarmProblemQuery
@@ -405,4 +426,12 @@ type AlertWindowObj struct {
 type AlertWindowParam struct {
 	Endpoint string  `json:"endpoint" binding:"required"`
 	Data  []*AlertWindowObj  `json:"data"`
+}
+
+type CustomAlarmQueryParam struct {
+	Enable  bool
+	Level  string
+	Start  string
+	End  string
+	Status  string
 }

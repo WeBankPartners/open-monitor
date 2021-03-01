@@ -105,19 +105,19 @@
                   <Tag type="border" closable @on-close="addParams('priority',alarmItem.s_priority)" color="primary">{{alarmItem.s_priority}}</Tag>
                   <Tag type="border" color="warning">{{alarmItem.start_string}}</Tag>
                 </li>
-                <li>
+                <li v-if="!alarmItem.is_custom">
                   <label class="col-md-2" style="vertical-align: top;line-height: 24px;">
-                    <span v-if="!alarmItem.is_custom">{{$t('field.metric')}}&</span>
-                    <span v-if="!alarmItem.is_custom && alarmItem.tags">Tags</span>
+                    <span>{{$t('field.metric')}}&</span>
+                    <span v-if="alarmItem.tags">Tags</span>
                     :</label>
                     <div class="col-md-9" style="display: inline-block;padding:0">
                       <Tag type="border" closable @on-close="addParams('metric',alarmItem.s_metric)" color="primary">{{alarmItem.s_metric}}</Tag>
-                      <template v-if="!alarmItem.is_custom && alarmItem.tags">
+                      <template v-if="alarmItem.tags">
                         <Tag type="border" v-for="(t,tIndex) in alarmItem.tags.split('^')" :key="tIndex" color="cyan">{{t}}</Tag>
                       </template>
                     </div>
                 </li>
-                <li>
+                <li  v-if="!alarmItem.is_custom">
                   <label class="col-md-2" style="vertical-align: top;line-height: 24px;">{{$t('details')}}:</label>
                   <div class="col-md-9" style="display: inline-block;padding:0">
                     <span>
@@ -185,7 +185,9 @@ export default {
         option_value: alarmItem.endpoint,
         type: alarmItem.endpoint.split('_').slice(-1)[0]
       }
-      this.$router.push({ name: 'endpointView',params: endpointObject})
+      localStorage.setItem('jumpCallData', JSON.stringify(endpointObject))
+      const news = this.$router.resolve({name: 'endpointView'})
+      window.open(news.href, '_blank')
     },
     getAlarm() {
       let params = {}
@@ -227,7 +229,6 @@ export default {
     },
     showSunburst (originData) {
       this.myChart.off()
-      let alramData = originData.data
       let legendData = []
       let pieInner = []
       if (originData.high) {
@@ -270,26 +271,24 @@ export default {
       const colorX = ['#33CCCC','#666699','#66CC66','#996633','#9999CC','#339933','#339966','#663333','#6666CC','#336699','#3399CC','#33CC66','#CC3333','#CC6666','#996699','#CC9933']
       let index = 0
       let pieOuter = []
-      alramData.forEach(alarm => {
-        const has = pieOuter.find(item => item.name === alarm.s_metric && item.type === alarm.s_priority)
-        if (has) {
-          has.value++
+      let itemStyleSet = {}
+      const metricInfo = originData.count
+      let set = new Set()
+      metricInfo.forEach(item => {
+        if (set.has(item.name)) {
+          item.itemStyle = itemStyleSet[item.name]
         } else {
-          const color = colorX[index]
+          legendData.push(item.name)
           index++
-          legendData.push(alarm.s_metric)
-          pieOuter.push({
-            name: alarm.s_metric,
-            value: 1,
-            type: alarm.s_priority,
-            filterType: 'metric',
-            itemStyle: {
-              color: color
-            }
-          })
+          const itemStyle = {
+            color: colorX[index]
+          }
+          itemStyleSet[item.name] = itemStyle
+          item.itemStyle = itemStyle
         }
+        set.add(item.name)
       })
-      pieOuter = pieOuter.sort(this.compare('type'))
+      pieOuter = metricInfo.sort(this.compare('type'))
       let option = {
         backgroundColor: '#ffffff',
           tooltip: {
