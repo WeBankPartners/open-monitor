@@ -1144,7 +1144,7 @@ func GetOpenAlarm(param m.CustomAlarmQueryParam) []*m.AlarmProblemQuery {
 			if query[i-1].AlertObj == "" && query[i-1].AlertIp == "" {
 				tmpDisplayEndpoint = "custom_alarm"
 			}
-			result = append(result, &m.AlarmProblemQuery{IsCustom: true, Id: query[i-1].Id, Endpoint: tmpDisplayEndpoint, Status: "firing", Content: fmt.Sprintf("system_id:%s <br/> title:%s <br/> object:%s <br/> info:%s ", query[i-1].SubSystemId, query[i-1].AlertTitle, query[i-1].AlertObj, query[i-1].AlertInfo), Start: query[i-1].UpdateAt, StartString: query[i-1].UpdateAt.Format(m.DatetimeFormat), SPriority: priority})
+			result = append(result, &m.AlarmProblemQuery{IsCustom: true, Id: query[i-1].Id, Endpoint: tmpDisplayEndpoint, Status: "firing", Content: fmt.Sprintf("system_id:%s <br/> title:%s <br/> object:%s <br/> info:%s ", query[i-1].SubSystemId, query[i-1].AlertTitle, query[i-1].AlertObj, query[i-1].AlertInfo), Start: query[i-1].UpdateAt, StartString: query[i-1].UpdateAt.Format(m.DatetimeFormat), SPriority: priority, SMetric: "custom"})
 		}
 	}
 	priority := "high"
