@@ -191,7 +191,7 @@ export default {
       },
       pathModelConfig: {
         modalId: 'path_Modal',
-        modalTitle: 'title.logAdd',
+        modalTitle: 'field.log',
         saveFunc: 'savePath',
         config: [
           {label: 'tableKey.path', value: 'path', placeholder: 'tips.required', v_validate: 'required:true', disabled: false, type: 'text'}
@@ -202,7 +202,7 @@ export default {
       },
       modelConfig: {
         modalId: 'add_edit_Modal',
-        modalTitle: 'title.logAdd',
+        modalTitle: 'field.log',
         isAdd: true,
         config: [
           {label: 'tableKey.path', value: 'path', placeholder: 'tips.required', v_validate: 'required:true',hide: 'edit', disabled: false, type: 'text'},
@@ -339,7 +339,7 @@ export default {
     singeAddF (rowData) {
       this.modelConfig.addRow.path = rowData.path
       this.singeAddId = rowData.id
-      this.modelConfig.isAdd = false
+      this.modelConfig.isAdd = true
       this.$root.JQ('#add_edit_Modal').modal('show')
     },
     add () {
