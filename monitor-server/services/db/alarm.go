@@ -1400,3 +1400,7 @@ func NotifyAlarm(alarmObj *m.AlarmHandleObj) {
 	}
 
 }
+
+func NotifyTreevent() {
+
+}
