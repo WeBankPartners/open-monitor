@@ -33,7 +33,7 @@ func StartHttpCheckTask()  {
 	}
 }
 
-func buildHtppClient() *http.Client {
+func buildHttpClient() *http.Client {
 	var proxy func(*http.Request) (*url.URL, error) = nil
 	if funcs.Config().HttpProxyEnable {
 		proxy = func(_ *http.Request) (*url.URL, error) {
@@ -49,11 +49,11 @@ func buildHtppClient() *http.Client {
 }
 
 func httpCheckTask()  {
-	clearHttpCheckResult()
 	startTime := time.Now()
 	httpCheckList := funcs.GetHttpCheckList()
+	clearHttpCheckResult(httpCheckList)
 
-	httpClient := buildHtppClient()
+	httpClient := buildHttpClient()
 	httpClient.CloseIdleConnections()
 	wg := sync.WaitGroup{}
 	//var successCounter int
@@ -129,13 +129,21 @@ func doHttpCheckNew(method,url string,httpClient *http.Client) int {
 
 func writeHttpCheckResult(method,url string,statusCode int)  {
 	resultLock.Lock()
-	httpCheckResultList = append(httpCheckResultList, &funcs.HttpCheckObj{Method:method, Url:url, StatusCode:statusCode})
+	for _,v := range httpCheckResultList {
+		if v.Method == method && v.Url == url {
+			v.StatusCode = statusCode
+			break
+		}
+	}
 	resultLock.Unlock()
 }
 
-func clearHttpCheckResult()  {
+func clearHttpCheckResult(param []*funcs.HttpCheckObj)  {
 	resultLock.Lock()
 	httpCheckResultList = []*funcs.HttpCheckObj{}
+	for _,v := range param {
+		httpCheckResultList = append(httpCheckResultList, &funcs.HttpCheckObj{Method: v.Method, Url: v.Url, StatusCode: 2})
+	}
 	resultLock.Unlock()
 }
 
