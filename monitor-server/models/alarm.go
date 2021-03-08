@@ -436,14 +436,21 @@ type CustomAlarmQueryParam struct {
 	Status  string
 }
 
-type EventNotifyDto struct {
+type EventTreeventNotifyDto struct {
 	Type  string  `json:"type"`
-	Data  []*EventNodeParam  `json:"data"`
+	Data  []*EventTreeventNodeParam  `json:"data"`
 }
 
-type EventNodeParam struct {
+type EventTreeventNodeParam struct {
 	EventId   string `json:"event_id"`
 	Status    string `json:"status"`
 	Endpoint  string `json:"endpoint"`
+	Message   string `json:"message"`
 	StartUnix int64  `json:"start_unix"`
+}
+
+type EventTreeventResponse struct {
+	Code  int  `json:"code"`
+	Status string `json:"status"`
+	Msg   string    `json:"message"`
 }
