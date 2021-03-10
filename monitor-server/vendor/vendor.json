@@ -77,11 +77,6 @@
 			"revisionTime": "2019-08-30T02:58:55Z"
 		},
 		{
-			"checksumSHA1": "lT/hy5HfhxpMqSMDdtrSrVgtwgs=",
-			"path": "github.com/glenn-brown/golang-pkg-pcre/src/pkg/pcre",
-			"revision": ""
-		},
-		{
 			"path": "github.com/go-ldap/ldap",
 			"revision": ""
 		},
