@@ -693,7 +693,7 @@ func judgeExist(alarm m.AlarmTable) bool {
 func UpdateLogMonitor(obj *m.UpdateLogMonitor) error {
 	var actions []*Action
 	for _, v := range obj.LogMonitor {
-		action := Classify(*v, obj.Operation, "log_monitor", false)
+		action := Classify(*v, obj.Operation, "log_monitor", true)
 		if action.Sql != "" {
 			actions = append(actions, &action)
 		}
@@ -780,7 +780,7 @@ func ListLogMonitorNew(query *m.TplQuery) error {
 				tmpPath = v.Path
 				tmpKeywords = []*m.LogMonitorStrategyDto{}
 			}
-			tmpKeywords = append(tmpKeywords, &m.LogMonitorStrategyDto{Id: v.Id, Keyword: v.Keyword, Priority: v.Priority})
+			tmpKeywords = append(tmpKeywords, &m.LogMonitorStrategyDto{Id: v.Id, Keyword: v.Keyword, Priority: v.Priority, NotifyEnable: v.NotifyEnable})
 		}
 		if len(tmpKeywords) > 0 {
 			lms = append(lms, &m.LogMonitorDto{Id: logMonitorTable[len(logMonitorTable)-1].Id, EndpointId: logMonitorTable[len(logMonitorTable)-1].StrategyId, Path: logMonitorTable[len(logMonitorTable)-1].Path, Strategy: tmpKeywords})
