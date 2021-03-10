@@ -259,6 +259,7 @@ type LogMonitorTable struct {
 	Path  string  `json:"path"`
 	Keyword  string `json:"keyword"`
 	Priority  string  `json:"priority"`
+	NotifyEnable  int  `json:"notify_enable"`
 }
 
 type LogMonitorDto struct {
@@ -277,6 +278,7 @@ type LogMonitorStrategyDto struct {
 	Cond  string  `json:"cond"`
 	Last  string  `json:"last"`
 	Priority  string  `json:"priority"`
+	NotifyEnable  int  `json:"notify_enable"`
 }
 
 type UpdateLogMonitor struct {
