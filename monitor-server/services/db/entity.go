@@ -171,7 +171,7 @@ func NotifyCoreEvent(endpoint string,strategyId int,alarmId int,customAlarmId in
 	}else {
 		var alarms []*m.AlarmTable
 		if alarmId > 0 {
-			x.SQL("SELECT id,status FROM alarm WHERE id=? ORDER BY id DESC", alarmId).Find(&alarms)
+			x.SQL("SELECT id,status FROM alarm WHERE id=?", alarmId).Find(&alarms)
 		} else {
 			x.SQL("SELECT id,status FROM alarm WHERE endpoint=? AND strategy_id=? ORDER BY id DESC", endpoint, strategyId).Find(&alarms)
 		}

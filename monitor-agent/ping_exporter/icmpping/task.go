@@ -47,7 +47,6 @@ func doTask()  {
 	//for k,v := range readResultMap(){
 	//	lastResultMap[k] = v
 	//}
-	clearResultMap()
 	log.Println("start")
 	startTime := time.Now()
 	wg := sync.WaitGroup{}
@@ -55,6 +54,7 @@ func doTask()  {
 	var lastValue int
 	var lastExist bool
 	ipList := funcs.GetIpList()
+	clearResultMap(ipList)
 	// first check
 	for _,ip := range ipList {
 		if containString(ip, localIp) {
