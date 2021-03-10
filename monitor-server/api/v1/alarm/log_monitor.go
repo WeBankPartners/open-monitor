@@ -7,7 +7,7 @@ import (
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
-	"regexp"
+	"github.com/glenn-brown/golang-pkg-pcre/src/pkg/pcre"
 	"strconv"
 )
 
@@ -62,11 +62,7 @@ func AddLogStrategy(c *gin.Context)  {
 			mid.ReturnValidateError(c, "path illegal")
 			return
 		}
-		//if !mid.IsIllegalNormalInput(param.Strategy[0].Keyword) {
-		//	mid.ReturnValidateError(c, "keyword illegal")
-		//	return
-		//}
-		_,regErr := regexp.Compile("("+param.Strategy[0].Keyword+")")
+		_,regErr := pcre.Compile(param.Strategy[0].Keyword, 0)
 		if regErr != nil {
 			mid.ReturnValidateError(c, "keyword validate fail")
 			return
@@ -75,6 +71,7 @@ func AddLogStrategy(c *gin.Context)  {
 		logMonitorObj.Path = param.Path
 		logMonitorObj.Keyword = param.Strategy[0].Keyword
 		logMonitorObj.Priority = param.Strategy[0].Priority
+		logMonitorObj.NotifyEnable = param.Strategy[0].NotifyEnable
 		if param.Id <= 0 {
 			_,lms := db.GetLogMonitorTable(0,param.EndpointId, 0, "")
 			for _, v := range lms {
@@ -131,45 +128,17 @@ func EditLogPath(c *gin.Context)  {
 		// Update log_monitor
 		for _,v := range lmsGrp {
 			//strategyObjs = append(strategyObjs, &m.StrategyTable{Id:v.StrategyId})
-			logMonitorObj := m.LogMonitorTable{Id:v.Id, StrategyId:v.StrategyId, Path:param.Path, Keyword:v.Keyword}
+			logMonitorObj := m.LogMonitorTable{Id:v.Id, StrategyId:v.StrategyId, Path:param.Path, Keyword:v.Keyword, NotifyEnable: v.NotifyEnable}
 			err = db.UpdateLogMonitor(&m.UpdateLogMonitor{LogMonitor:[]*m.LogMonitorTable{&logMonitorObj}, Operation:"update"})
 			if err != nil {
 				log.Logger.Error("Update log monitor alert failed", log.Error(err))
 			}
 		}
-		// Update strategy
-		//for _,v := range strategyObjs {
-		//	err,tmpObj := db.GetStrategyTable(v.Id)
-		//	if err != nil {
-		//		log.Logger.Error("Get strategy failed", log.Int("id", v.Id), log.Error(err))
-		//		continue
-		//	}
-		//	tmpObj.Expr = strings.Replace(tmpObj.Expr, oldPath, param.Path, -1)
-		//	tmpObj.Content = strings.Replace(tmpObj.Content, oldPath, param.Path, -1)
-		//	err = db.UpdateStrategy(&m.UpdateStrategy{Strategy:[]*m.StrategyTable{&tmpObj}, Operation:"update"})
-		//	if err != nil {
-		//		log.Logger.Error("Update strategy fail", log.Error(err))
-		//	}
-		//}
-		// Call endpoint node exporter
-		//err,tplObj := db.GetTpl(param.TplId, 0, 0)
-		//if err != nil {
-		//	mid.ReturnFetchDataError(c, "tpl", "id", strconv.Itoa(param.TplId))
-		//	return
-		//}
-		//param.EndpointId = tplObj.EndpointId
-		//param.GrpId = tplObj.GrpId
 		err = db.SendLogConfig(lms[0].StrategyId, param.GrpId, param.TplId)
 		if err != nil {
 			mid.ReturnHandleError(c, "send log config to endpoint fail", err)
 			return
 		}
-		// Save Prometheus rule file
-		//err = SaveConfigFile(param.TplId, false)
-		//if err != nil {
-		//	mid.ReturnHandleError(c, "save prometheus rule file fail", err)
-		//	return
-		//}
 		mid.ReturnSuccess(c)
 	}else{
 		mid.ReturnValidateError(c, err.Error())
@@ -190,37 +159,13 @@ func EditLogStrategy(c *gin.Context)  {
 			mid.ReturnParamEmptyError(c, "strategy")
 			return
 		}
-		//if param.Strategy[0].Id <= 0 {
-		//	mid.ReturnParamEmptyError(c, "strategy -> id")
-		//	return
-		//}
-		//if param.TplId <= 0 {
-		//	mid.ReturnParamEmptyError(c, "tpl_id")
-		//	return
-		//}
-		//if !mid.IsIllegalCond(param.Strategy[0].Cond) || !mid.IsIllegalLast(param.Strategy[0].Last) {
-		//	mid.ReturnValidateError(c, "cond or last illegal")
-		//	return
-		//}
-		if !mid.IsIllegalNormalInput(param.Strategy[0].Keyword) {
+		_,regErr := pcre.Compile(param.Strategy[0].Keyword, 0)
+		if regErr != nil {
 			mid.ReturnValidateError(c, "keyword is illegal")
 			return
 		}
-		// Update strategy
-		//err,lms := db.GetLogMonitorTable(param.Strategy[0].Id,0,0,"")
-		//if err != nil || len(lms) == 0 {
-		//	mid.ReturnFetchDataError(c, "log_monitor", "id", strconv.Itoa(param.Strategy[0].Id))
-		//	return
-		//}
-		//tmpMetric,tmpExpr,tmpContent := makeStrategyMsg(param.Path, param.Strategy[0].Keyword, param.Strategy[0].Cond, param.Strategy[0].Last)
-		//strategyObj := m.StrategyTable{Id:lms[0].StrategyId,TplId:param.TplId,Metric:tmpMetric,Expr:tmpExpr,Cond:param.Strategy[0].Cond,Priority:param.Strategy[0].Priority,Content:tmpContent}
-		//err = db.UpdateStrategy(&m.UpdateStrategy{Strategy:[]*m.StrategyTable{&strategyObj}, Operation:"update"})
-		//if err != nil {
-		//	mid.ReturnUpdateTableError(c, "strategy", err)
-		//	return
-		//}
 		// Update log_monitor
-		logMonitorObj := m.LogMonitorTable{Id:param.Strategy[0].Id, StrategyId:param.EndpointId, Path:param.Path, Keyword:param.Strategy[0].Keyword,Priority:param.Strategy[0].Priority}
+		logMonitorObj := m.LogMonitorTable{Id:param.Strategy[0].Id, StrategyId:param.EndpointId, Path:param.Path, Keyword:param.Strategy[0].Keyword,Priority:param.Strategy[0].Priority,NotifyEnable: param.Strategy[0].NotifyEnable}
 		err = db.UpdateLogMonitor(&m.UpdateLogMonitor{LogMonitor:[]*m.LogMonitorTable{&logMonitorObj}, Operation:"update"})
 		if err != nil {
 			mid.ReturnUpdateTableError(c, "log_monitor", err)
@@ -239,12 +184,6 @@ func EditLogStrategy(c *gin.Context)  {
 			mid.ReturnHandleError(c, "send log config to endpoint failed", err)
 			return
 		}
-		// Save Prometheus rule file
-		//err = SaveConfigFile(param.TplId, false)
-		//if err != nil {
-		//	mid.ReturnHandleError(c, "save prometheus rule file failed", err)
-		//	return
-		//}
 		mid.ReturnSuccess(c)
 	}else{
 		mid.ReturnValidateError(c, err.Error())
