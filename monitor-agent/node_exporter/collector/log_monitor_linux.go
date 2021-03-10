@@ -3,7 +3,6 @@ package collector
 import (
 	"github.com/go-kit/kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
-	"regexp"
 	"sync"
 	"github.com/hpcloud/tail"
 	"fmt"
@@ -16,6 +15,7 @@ import (
 	"encoding/gob"
 	"os"
 	"time"
+	"github.com/glenn-brown/golang-pkg-pcre/src/pkg/pcre"
 )
 
 
@@ -62,7 +62,7 @@ type logKeywordFetchObj struct {
 
 type logKeywordObj struct {
 	Keyword  string
-	RegExp  *regexp.Regexp
+	RegExp  *pcre.Regexp
 	Count  float64
 	FetchRow []logKeywordFetchObj
 }
@@ -133,7 +133,7 @@ func (c *logCollectorObj) start() {
 		c.Lock.Lock()
 		for _,v := range c.Rule {
 			if v.RegExp != nil {
-				if len(v.RegExp.FindStringSubmatch(line.Text)) > 0 {
+				if len(v.RegExp.FindIndex([]byte(line.Text), 0)) > 0 {
 					v.Count ++
 					v.FetchRow = append(v.FetchRow, logKeywordFetchObj{Content: line.Text,Index: v.Count})
 				}
@@ -262,8 +262,12 @@ func LogMonitorHttpHandle(w http.ResponseWriter, r *http.Request)  {
 				exist = true
 				var tmp []*logKeywordObj
 				for _,vvv := range vv.Keywords {
-					tmpRegExp,_ := regexp.Compile("("+vvv+")")
-					tmp = append(tmp, &logKeywordObj{Keyword:vvv, RegExp: tmpRegExp})
+					//tmpRegExp,_ := regexp.Compile("("+vvv+")")
+					tmpRegExp,tmpRegErr := pcre.Compile(vvv, 0)
+					if tmpRegErr != nil {
+						level.Error(newLogger).Log("reg compile error", fmt.Sprintf("%v", tmpRegErr))
+					}
+					tmp = append(tmp, &logKeywordObj{Keyword:vvv, RegExp: &tmpRegExp})
 				}
 				v.update(tmp)
 			}
@@ -285,8 +289,12 @@ func LogMonitorHttpHandle(w http.ResponseWriter, r *http.Request)  {
 			lco.Lock = new(sync.RWMutex)
 			var tmp []*logKeywordObj
 			for _,vv := range v.Keywords {
-				tmpRegExp,_ := regexp.Compile("("+vv+")")
-				tmp = append(tmp, &logKeywordObj{Keyword:vv, RegExp: tmpRegExp, Count:0})
+				//tmpRegExp,_ := regexp.Compile("("+vv+")")
+				tmpRegExp,tmpRegErr := pcre.Compile(vv, 0)
+				if tmpRegErr != nil {
+					level.Error(newLogger).Log("reg compile error", fmt.Sprintf("%v", tmpRegErr))
+				}
+				tmp = append(tmp, &logKeywordObj{Keyword:vv, RegExp: &tmpRegExp, Count:0})
 			}
 			lco.Rule = tmp
 			logCollectorJobs = append(logCollectorJobs, &lco)

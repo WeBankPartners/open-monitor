@@ -7,7 +7,7 @@ import (
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
-	"regexp"
+	"github.com/glenn-brown/golang-pkg-pcre/src/pkg/pcre"
 	"strconv"
 )
 
@@ -66,7 +66,8 @@ func AddLogStrategy(c *gin.Context)  {
 		//	mid.ReturnValidateError(c, "keyword illegal")
 		//	return
 		//}
-		_,regErr := regexp.Compile("("+param.Strategy[0].Keyword+")")
+		//_,regErr := regexp.Compile("("+param.Strategy[0].Keyword+")")
+		_,regErr := pcre.Compile(param.Strategy[0].Keyword, 0)
 		if regErr != nil {
 			mid.ReturnValidateError(c, "keyword validate fail")
 			return
