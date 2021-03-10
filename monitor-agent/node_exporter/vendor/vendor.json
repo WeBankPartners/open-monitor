@@ -3,6 +3,11 @@
 	"ignore": "",
 	"package": [
 		{
+			"checksumSHA1": "8FDQ7WcMpu8u+/kcoeKYvnZB3SU=",
+			"path": "github.com/glenn-brown/golang-pkg-pcre/src/pkg/pcre",
+			"revision": ""
+		},
+		{
 			"checksumSHA1": "G+FktTXafCd1VSIrc4955lUehNw=",
 			"path": "github.com/hpcloud/tail",
 			"revision": "a1dbeea552b7c8df4b542c66073e393de198a800",
@@ -47,5 +52,5 @@
 			"revisionTime": "2018-05-14T19:44:41Z"
 		}
 	],
-	"rootPath": "github.com/prometheus/node_exporter"
+	"rootPath": "github.com/WeBankPartners/open-monitor/monitor-agent/node_exporter"
 }
