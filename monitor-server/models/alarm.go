@@ -259,6 +259,7 @@ type LogMonitorTable struct {
 	Path  string  `json:"path"`
 	Keyword  string `json:"keyword"`
 	Priority  string  `json:"priority"`
+	NotifyEnable  int  `json:"notify_enable"`
 }
 
 type LogMonitorDto struct {
@@ -277,6 +278,7 @@ type LogMonitorStrategyDto struct {
 	Cond  string  `json:"cond"`
 	Last  string  `json:"last"`
 	Priority  string  `json:"priority"`
+	NotifyEnable  int  `json:"notify_enable"`
 }
 
 type UpdateLogMonitor struct {
@@ -434,4 +436,23 @@ type CustomAlarmQueryParam struct {
 	Start  string
 	End  string
 	Status  string
+}
+
+type EventTreeventNotifyDto struct {
+	Type  string  `json:"type"`
+	Data  []*EventTreeventNodeParam  `json:"data"`
+}
+
+type EventTreeventNodeParam struct {
+	EventId   string `json:"event_id"`
+	Status    string `json:"status"`
+	Endpoint  string `json:"endpoint"`
+	Message   string `json:"message"`
+	StartUnix int64  `json:"start_unix"`
+}
+
+type EventTreeventResponse struct {
+	Code  int  `json:"code"`
+	Status string `json:"status"`
+	Msg   string    `json:"message"`
 }
