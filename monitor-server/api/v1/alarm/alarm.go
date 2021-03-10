@@ -197,12 +197,15 @@ func AcceptAlertMsg(c *gin.Context)  {
 			alarms = append(alarms, &tmpAlarm)
 		}
 		alarms = db.UpdateAlarms(alarms)
+		var treeventSendObj m.EventTreeventNotifyDto
 		for _,v := range alarms {
+			treeventSendObj.Data = append(treeventSendObj.Data, &m.EventTreeventNodeParam{EventId: fmt.Sprintf("%d",v.Id),Status: v.Status,Endpoint: v.Endpoint,StartUnix: v.Start.Unix(),Message: fmt.Sprintf("%s \n %s \n %.3f %s", v.Endpoint,v.SMetric,v.StartValue,v.SCond)})
 			if v.NotifyEnable == 0 {
 				continue
 			}
 			go db.NotifyAlarm(v)
 		}
+		go db.NotifyTreevent(treeventSendObj)
 		mid.ReturnSuccess(c)
 	}else{
 		mid.ReturnValidateError(c, err.Error())
