@@ -43,14 +43,15 @@ func GetEndpointData(ip,port string,prefix,keyword []string) (error, []string) {
 		if strings.Contains(v, ` `) {
 			v = v[:strings.LastIndex(v, ` `)]
 		}
-		tmpStr := strings.ToLower(v)
+		tmpStr := v
+		tmpStrLower := strings.ToLower(v)
 		if len(prefix) == 0 && len(keyword) == 0 {
 			strList = append(strList, tmpStr)
 			continue
 		}
 		tmpFlag := false
 		for _,vv := range prefix {
-			if strings.HasPrefix(tmpStr, vv+"_") {
+			if strings.HasPrefix(tmpStrLower, vv+"_") {
 				strList = append(strList, tmpStr)
 				tmpFlag = true
 				break
@@ -60,7 +61,7 @@ func GetEndpointData(ip,port string,prefix,keyword []string) (error, []string) {
 			continue
 		}
 		for _,vv := range keyword {
-			if strings.Contains(tmpStr, vv) {
+			if strings.Contains(tmpStrLower, vv) {
 				strList = append(strList, tmpStr)
 				break
 			}
