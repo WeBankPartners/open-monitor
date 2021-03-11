@@ -157,6 +157,7 @@ func syncPodToEndpoint() bool {
 	for _,v := range kubernetesTables {
 		queryParam := m.QueryMonitorData{Legend: "$pod", SameEndpoint: true, ChartType: "line", PromQ: fmt.Sprintf("container_processes{pod=~\".*-.*\",job=\"k8s-cadvisor-%s\"}", v.ClusterName), Start: time.Now().Unix() - 600, End: time.Now().Unix()}
 		series := datasource.PrometheusData(&queryParam)
+		tmpGuidMap := make(map[string]int)
 		var tmpKubernetesEndpointTables []*m.KubernetesEndpointRelTable
 		x.SQL("select * from kubernetes_endpoint_rel where kubernete_id=?", v.Id).Find(&tmpKubernetesEndpointTables)
 		tmpApiServerIp := v.ApiServer[:strings.Index(v.ApiServer, ":")]
@@ -170,6 +171,11 @@ func syncPodToEndpoint() bool {
 				}
 			}
 			if !existsFlag {
+				if _,b := tmpGuidMap[tmpEndpointGuid]; b {
+					continue
+				}else{
+					tmpGuidMap[tmpEndpointGuid] = 1
+				}
 				endpointTables = append(endpointTables, &m.EndpointTable{Guid:tmpEndpointGuid, Name:vv.Name, Ip:tmpApiServerIp, ExportType:"pod", Step:10, OsType:v.ClusterName})
 				kubernetesEndpointTables = append(kubernetesEndpointTables, &m.KubernetesEndpointRelTable{KuberneteId:v.Id, EndpointGuid:tmpEndpointGuid})
 			}
