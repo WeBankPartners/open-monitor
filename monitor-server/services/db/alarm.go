@@ -2,8 +2,11 @@ package db
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/other"
+	"io/ioutil"
+	"net/http"
 	"sort"
 	"strconv"
 	"strings"
@@ -662,6 +665,12 @@ func UpdateAlarms(alarms []*m.AlarmHandleObj) []*m.AlarmHandleObj {
 		}else{
 			rowAffected,_ = execResult.RowsAffected()
 			if rowAffected > 0 {
+				if v.Id <= 0 {
+					lastInsertId,_ := execResult.LastInsertId()
+					if lastInsertId > 0 {
+						v.Id = int(lastInsertId)
+					}
+				}
 				successAlarms = append(successAlarms, v)
 			}else{
 				log.Logger.Warn("Update alarm done but not any rows affected")
@@ -684,7 +693,7 @@ func judgeExist(alarm m.AlarmTable) bool {
 func UpdateLogMonitor(obj *m.UpdateLogMonitor) error {
 	var actions []*Action
 	for _, v := range obj.LogMonitor {
-		action := Classify(*v, obj.Operation, "log_monitor", false)
+		action := Classify(*v, obj.Operation, "log_monitor", true)
 		if action.Sql != "" {
 			actions = append(actions, &action)
 		}
@@ -771,7 +780,7 @@ func ListLogMonitorNew(query *m.TplQuery) error {
 				tmpPath = v.Path
 				tmpKeywords = []*m.LogMonitorStrategyDto{}
 			}
-			tmpKeywords = append(tmpKeywords, &m.LogMonitorStrategyDto{Id: v.Id, Keyword: v.Keyword, Priority: v.Priority})
+			tmpKeywords = append(tmpKeywords, &m.LogMonitorStrategyDto{Id: v.Id, Keyword: v.Keyword, Priority: v.Priority, NotifyEnable: v.NotifyEnable})
 		}
 		if len(tmpKeywords) > 0 {
 			lms = append(lms, &m.LogMonitorDto{Id: logMonitorTable[len(logMonitorTable)-1].Id, EndpointId: logMonitorTable[len(logMonitorTable)-1].StrategyId, Path: logMonitorTable[len(logMonitorTable)-1].Path, Strategy: tmpKeywords})
@@ -1144,7 +1153,7 @@ func GetOpenAlarm(param m.CustomAlarmQueryParam) []*m.AlarmProblemQuery {
 			if query[i-1].AlertObj == "" && query[i-1].AlertIp == "" {
 				tmpDisplayEndpoint = "custom_alarm"
 			}
-			result = append(result, &m.AlarmProblemQuery{IsCustom: true, Id: query[i-1].Id, Endpoint: tmpDisplayEndpoint, Status: "firing", Content: fmt.Sprintf("system_id:%s <br/> title:%s <br/> object:%s <br/> info:%s ", query[i-1].SubSystemId, query[i-1].AlertTitle, query[i-1].AlertObj, query[i-1].AlertInfo), Start: query[i-1].UpdateAt, StartString: query[i-1].UpdateAt.Format(m.DatetimeFormat), SPriority: priority})
+			result = append(result, &m.AlarmProblemQuery{IsCustom: true, Id: query[i-1].Id, Endpoint: tmpDisplayEndpoint, Status: "firing", Content: fmt.Sprintf("system_id:%s <br/> title:%s <br/> object:%s <br/> info:%s ", query[i-1].SubSystemId, query[i-1].AlertTitle, query[i-1].AlertObj, query[i-1].AlertInfo), Start: query[i-1].UpdateAt, StartString: query[i-1].UpdateAt.Format(m.DatetimeFormat), SPriority: priority, SMetric: "custom"})
 		}
 	}
 	priority := "high"
@@ -1354,7 +1363,7 @@ func NotifyAlarm(alarmObj *m.AlarmHandleObj) {
 	if alarmObj.NotifyDelay > 0 {
 		var alarmRows []*m.AlarmTable
 		abortNotify := false
-		if alarmObj.Id > 0 {
+		if alarmObj.Status == "ok" {
 			x.SQL("select * from alarm where id=?", alarmObj.Id).Find(&alarmRows)
 			if len(alarmRows) > 0 {
 				if (alarmRows[0].End.Unix()-alarmRows[0].Start.Unix()) <= int64(alarmObj.NotifyDelay) {
@@ -1377,7 +1386,7 @@ func NotifyAlarm(alarmObj *m.AlarmHandleObj) {
 		}
 	}
 	if m.CoreUrl != "" {
-		notifyErr := NotifyCoreEvent(alarmObj.Endpoint, alarmObj.StrategyId, 0, 0)
+		notifyErr := NotifyCoreEvent(alarmObj.Endpoint, alarmObj.StrategyId, alarmObj.Id, 0)
 		if notifyErr != nil {
 			log.Logger.Error("notify core event fail", log.Error(notifyErr))
 		}
@@ -1399,4 +1408,36 @@ func NotifyAlarm(alarmObj *m.AlarmHandleObj) {
 		}
 	}
 
+}
+
+func NotifyTreevent(param m.EventTreeventNotifyDto) {
+	if m.CoreUrl == "" || len(param.Data) == 0 {
+		return
+	}
+	postBytes,_ := json.Marshal(param)
+	request, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/treevent/api/v1/event/send", m.CoreUrl), strings.NewReader(string(postBytes)))
+	request.Header.Set("Authorization", m.GetCoreToken())
+	request.Header.Set("Content-Type", "application/json")
+	if err != nil {
+		log.Logger.Error("Notify treevent event new request fail", log.Error(err))
+		return
+	}
+	res, err := http.DefaultClient.Do(request)
+	if err != nil {
+		log.Logger.Error("Notify treevent event ctxhttp request fail", log.Error(err))
+		return
+	}
+	resultBody, _ := ioutil.ReadAll(res.Body)
+	var responseData m.EventTreeventResponse
+	err = json.Unmarshal(resultBody, &responseData)
+	res.Body.Close()
+	if err != nil {
+		log.Logger.Error("Notify treevent event unmarshal json body fail", log.Error(err))
+		return
+	}
+	if responseData.Code > 0 {
+		log.Logger.Error("Notify treevent fail", log.String("message", responseData.Msg))
+	}else{
+		log.Logger.Info("Notify treevent success", log.Int("event length", len(param.Data)))
+	}
 }
