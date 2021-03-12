@@ -28,9 +28,9 @@ func StartTelnetTask()  {
 }
 
 func telnetTask()  {
-	clearTelnetResult()
 	startTime := time.Now()
 	telnetList := funcs.GetTelnetList()
+	clearTelnetResult(telnetList)
 	wg := sync.WaitGroup{}
 	//var successCounter int
 	for _,v := range telnetList {
@@ -62,13 +62,21 @@ func doTelnet(ip string,port int) bool {
 
 func writeTelnetResult(ip string,port int,success bool)  {
 	resultLock.Lock()
-	telnetResultList = append(telnetResultList, &funcs.TelnetObj{Ip:ip, Port:port, Success:success})
+	for _,v := range telnetResultList {
+		if v.Ip == ip && v.Port == port {
+			v.Success = success
+			break
+		}
+	}
 	resultLock.Unlock()
 }
 
-func clearTelnetResult()  {
+func clearTelnetResult(param []*funcs.TelnetObj)  {
 	resultLock.Lock()
 	telnetResultList = []*funcs.TelnetObj{}
+	for _,v := range param {
+		telnetResultList = append(telnetResultList, &funcs.TelnetObj{Ip: v.Ip, Port: v.Port, Success: false})
+	}
 	resultLock.Unlock()
 }
 

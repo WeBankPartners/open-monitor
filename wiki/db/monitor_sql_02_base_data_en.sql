@@ -211,3 +211,7 @@ update prom_metric set prom_ql='mysql_global_status_threads_connected{instance=\
 update strategy set expr='mysql_global_status_threads_connected{instance=\"$address\"}/mysql_global_variables_max_connections{instance=\"$address\"} * 100' where metric='mysql.connect.used.percent';
 alter table role add column disable tinyint default 0;
 #@v1.11.1.2-end@;
+
+#@v1.11.2.1-begin@;
+alter table log_monitor add column notify_enable tinyint default 1;
+#@v1.11.2.1-end@;
