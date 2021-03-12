@@ -17,7 +17,7 @@ clean:
 
 build: clean
 	chmod +x ./build/*.sh
-	docker run --rm -v $(current_dir):/go/src/github.com/WeBankPartners/$(project_name) --name build_monitor_server golang:1.15.6 /bin/bash /go/src/github.com/WeBankPartners/$(project_name)/build/build-server.sh
+	docker run --rm -v $(current_dir):/go/src/github.com/WeBankPartners/$(project_name) --name build_monitor_server ccr.ccs.tencentyun.com/webankpartners/golang-ext:v1.15.6 /bin/bash /go/src/github.com/WeBankPartners/$(project_name)/build/build-server.sh
 	./build/build-ui.sh $(current_dir)
 
 image: build

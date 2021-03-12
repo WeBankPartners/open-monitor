@@ -91,6 +91,12 @@
             </div>
           </div> -->
           <div class="marginbottom params-each">
+            <label class="col-md-2 label-name">{{$t('sendAlarm')}}:</label>
+            <Select v-model="modelConfig.addRow.notify_enable" style="width:340px">
+              <Option v-for="item in modelConfig.notifyEnableOption" :value="item.value" :key="item.value">{{ item.label }}</Option>
+            </Select>
+          </div>
+          <div class="marginbottom params-each">
             <label class="col-md-2 label-name">{{$t('tableKey.s_priority')}}:</label>
             <Select v-model="modelConfig.priority" style="width:100px">
               <Option v-for="item in modelConfig.priorityList" :value="item.value" :key="item.value">{{ item.label }}</Option>
@@ -191,7 +197,7 @@ export default {
       },
       pathModelConfig: {
         modalId: 'path_Modal',
-        modalTitle: 'title.logAdd',
+        modalTitle: 'field.log',
         saveFunc: 'savePath',
         config: [
           {label: 'tableKey.path', value: 'path', placeholder: 'tips.required', v_validate: 'required:true', disabled: false, type: 'text'}
@@ -202,7 +208,8 @@ export default {
       },
       modelConfig: {
         modalId: 'add_edit_Modal',
-        modalTitle: 'title.logAdd',
+        modalTitle: 'field.log',
+        saveFunc: 'saveLog',
         isAdd: true,
         config: [
           {label: 'tableKey.path', value: 'path', placeholder: 'tips.required', v_validate: 'required:true',hide: 'edit', disabled: false, type: 'text'},
@@ -212,6 +219,7 @@ export default {
         addRow: { // [通用]-保存用户新增、编辑时数据
           path: null,
           keyword: null,
+          notify_enable: 1
         },
         metricName: '',
         metricList: [],
@@ -226,12 +234,17 @@ export default {
         slotConfig: {
           resourceSelected: [],
           resourceOption: []
-        }
+        },
+        notifyEnableOption: [
+          {label: 'Yes', value: 1},
+          {label: 'No', value: 0}
+        ],
       },
       id: null,
       singeAddId: '',
       activeData: null,
       extendData: null,
+      handlerType: '' // 控制多处保存与编辑模态框响应函数
     }
   },
   mounted () {
@@ -247,6 +260,7 @@ export default {
     this.getEndpointList('.')
     this.$root.JQ('#add_edit_Modal').on('hidden.bs.modal', () => {
       this.modelConfig.thresholdValue = ''
+      this.modelConfig.addRow.notify_enable = 1
       this.modelConfig.lastValue = ''
       this.modelConfig.condValue = ''
       this.singeAddId = ''
@@ -321,6 +335,7 @@ export default {
         path: this.modelConfig.addRow.path,
         strategy: [{
           keyword: this.modelConfig.addRow.keyword,
+          notify_enable: this.modelConfig.addRow.notify_enable,
           cond: this.modelConfig.cond + this.modelConfig.condValue,
           last: this.modelConfig.lastValue + this.modelConfig.last,
           priority: this.modelConfig.priority
@@ -337,14 +352,23 @@ export default {
       return modelParams
     },
     singeAddF (rowData) {
+      this.handlerType = 'edit'
       this.modelConfig.addRow.path = rowData.path
       this.singeAddId = rowData.id
-      this.modelConfig.isAdd = false
+      this.modelConfig.isAdd = true
       this.$root.JQ('#add_edit_Modal').modal('show')
     },
     add () {
+      this.handlerType = 'add'
       this.modelConfig.isAdd = true
       this.$root.JQ('#add_edit_Modal').modal('show')
+    },
+    saveLog () {
+      if (this.handlerType === 'add') {
+        this.addPost()
+      } else if (this.handlerType === 'edit') {
+        this.editPost()
+      }
     },
     addPost () {
       this.$validator.validate().then(result => {
@@ -384,6 +408,7 @@ export default {
       this.pageConfig.table.isExtend.detailConfig[0].data = item.strategy
     },
     editPathItem (rowData) {
+      this.handlerType = 'edit'
       this.modelConfig.isAdd = false
       this.id = rowData.id
       this.extendData = rowData
