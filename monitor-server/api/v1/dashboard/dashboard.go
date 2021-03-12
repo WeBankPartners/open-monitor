@@ -579,12 +579,14 @@ func GetChart(c *gin.Context)  {
 			if v.PromQl == "" {
 				continue
 			}
+			endpointObj := m.EndpointTable{Guid:v.Endpoint}
+			if v.Endpoint != "" {
+				db.GetEndpoint(&endpointObj)
+			}
 			if strings.Contains(v.PromQl, "$address") {
 				if v.Endpoint == "" {
 					continue
 				}
-				endpointObj := m.EndpointTable{Guid:v.Endpoint}
-				db.GetEndpoint(&endpointObj)
 				if endpointObj.Address == "" {
 					continue
 				}
@@ -597,6 +599,12 @@ func GetChart(c *gin.Context)  {
 			}
 			if strings.Contains(v.PromQl, "$guid") {
 				v.PromQl = strings.Replace(v.PromQl, "$guid", v.Endpoint, -1)
+			}
+			if strings.Contains(v.PromQl, "$pod") {
+				v.PromQl = strings.Replace(v.PromQl, "$pod", endpointObj.Name, -1)
+			}
+			if strings.Contains(v.PromQl, "$k8s_cluster") {
+				v.PromQl = strings.Replace(v.PromQl, "$k8s_cluster", endpointObj.OsType, -1)
 			}
 			if strings.Contains(v.PromQl, "$") {
 				re, _ := regexp.Compile("=\"[\\$]+[^\"]+\"")
