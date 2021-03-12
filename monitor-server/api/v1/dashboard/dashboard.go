@@ -466,6 +466,7 @@ func GetChart(c *gin.Context)  {
 	var compareSubTime int64
 	var compareSecondLegend string
 	if paramConfig[0].Id > 0 {
+		// Handle config dashboard
 		sameEndpoint = true
 		recordMap := make(map[string]bool)
 		firstEndpointObj := m.EndpointTable{Guid:paramConfig[0].Endpoint}
@@ -492,16 +493,6 @@ func GetChart(c *gin.Context)  {
 			if tmpParamConfig.Title != "" {
 				eOption.Title = tmpParamConfig.Title
 			}
-			//if chart.Title == "${auto}" {
-			//	if strings.Contains(tmpParamConfig.Metric, "=") {
-			//		eOption.Title = db.GetChartTitle(strings.Split(tmpParamConfig.Metric, "=")[1], tmpParamConfig.Id)
-			//	}
-			//	if eOption.Title == "" {
-			//		eOption.Title = "${auto}"
-			//	}
-			//} else {
-			//	eOption.Title = chart.Title
-			//}
 			unit = chart.Unit
 			if tmpParamConfig.Endpoint == "" {
 				mid.ReturnParamEmptyError(c, "endpoint")
@@ -551,7 +542,7 @@ func GetChart(c *gin.Context)  {
 			}
 		}
 	}else{
-		step = 10
+		// Handle custom dashboard
 		var customLegend,tmpEndpointParam,tmpMetricParam string
 		var diffEndpoint,diffMetric bool
 		for i,v := range paramConfig {
@@ -588,12 +579,14 @@ func GetChart(c *gin.Context)  {
 			if v.PromQl == "" {
 				continue
 			}
+			endpointObj := m.EndpointTable{Guid:v.Endpoint}
+			if v.Endpoint != "" {
+				db.GetEndpoint(&endpointObj)
+			}
 			if strings.Contains(v.PromQl, "$address") {
 				if v.Endpoint == "" {
 					continue
 				}
-				endpointObj := m.EndpointTable{Guid:v.Endpoint}
-				db.GetEndpoint(&endpointObj)
 				if endpointObj.Address == "" {
 					continue
 				}
@@ -606,6 +599,12 @@ func GetChart(c *gin.Context)  {
 			}
 			if strings.Contains(v.PromQl, "$guid") {
 				v.PromQl = strings.Replace(v.PromQl, "$guid", v.Endpoint, -1)
+			}
+			if strings.Contains(v.PromQl, "$pod") {
+				v.PromQl = strings.Replace(v.PromQl, "$pod", endpointObj.Name, -1)
+			}
+			if strings.Contains(v.PromQl, "$k8s_cluster") {
+				v.PromQl = strings.Replace(v.PromQl, "$k8s_cluster", endpointObj.OsType, -1)
 			}
 			if strings.Contains(v.PromQl, "$") {
 				re, _ := regexp.Compile("=\"[\\$]+[^\"]+\"")

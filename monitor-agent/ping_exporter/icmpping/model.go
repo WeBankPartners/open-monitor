@@ -80,7 +80,13 @@ func writeResultMap(ip string, re int, useTime float64) {
 	//defer resultMapLock.Unlock()
 	//resultMap[ip] = funcs.PingResultObj{UpDown:re, UseTime:useTime}
 	resultMapLock.Lock()
-	resultListNew = append(resultListNew, &funcs.PingResultObj{Ip:ip, UpDown:re, UseTime:useTime})
+	for _,v := range resultListNew {
+		if v.Ip == ip {
+			v.UpDown = re
+			v.UseTime = useTime
+			break
+		}
+	}
 	resultMapLock.Unlock()
 }
 
@@ -97,10 +103,13 @@ func readResultMap() map[string]funcs.PingResultObj {
 	return tmpResultMap
 }
 
-func clearResultMap()  {
+func clearResultMap(param []string)  {
 	resultMapLock.Lock()
 	//resultMap = make(map[string]funcs.PingResultObj)
 	resultListNew = []*funcs.PingResultObj{}
+	for _,v := range param {
+		resultListNew = append(resultListNew, &funcs.PingResultObj{Ip: v, UpDown: 1, UseTime: 0})
+	}
 	resultMapLock.Unlock()
 }
 
