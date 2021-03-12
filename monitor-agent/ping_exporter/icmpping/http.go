@@ -17,6 +17,7 @@ func StartHttpServer() {
 			http.Handle(funcs.Config().Prometheus.Path, http.HandlerFunc(handlePrometheus))
 		}
 		if funcs.Config().Source.Listen.Enabled {
+			loadHttpConfigData()
 			http.Handle(funcs.Config().Source.Listen.Path, http.HandlerFunc(handleIpSource))
 		}
 		http.ListenAndServe(":"+port, nil)
@@ -53,6 +54,36 @@ func handleIpSource(w http.ResponseWriter,r *http.Request)  {
 	}
 	funcs.UpdateIpList(ips, funcs.Config().Source.Listen.Weight)
 	funcs.UpdateSourceRemoteData(param.Config)
+	saveHttpConfigData(b)
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("success"))
+}
+
+func saveHttpConfigData(bodyData []byte)  {
+	err := ioutil.WriteFile("http_config_data.json", bodyData, 0644)
+	if err != nil {
+		log.Printf("Save http config data fail,error: %s \n", err.Error())
+	}else{
+		log.Println("Save http config data success")
+	}
+}
+
+func loadHttpConfigData()  {
+	b,err := ioutil.ReadFile("http_config_data.json")
+	if err != nil {
+		log.Printf("Load http config data fail,error: %s \n", err.Error())
+		return
+	}
+	var param funcs.RemoteResponse
+	err = json.Unmarshal(b, &param)
+	if err != nil {
+		log.Printf("Load http config data fail,json unmarshal error: %s \n", err.Error())
+		return
+	}
+	var ips []string
+	for _,v := range param.Config {
+		ips = append(ips, v.Ip)
+	}
+	funcs.UpdateIpList(ips, funcs.Config().Source.Listen.Weight)
+	funcs.UpdateSourceRemoteData(param.Config)
 }
