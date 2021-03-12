@@ -50,6 +50,7 @@ func DeleteKubernetesCluster(id int) error {
 		err = fmt.Errorf("Delete db data fail,%s ", err.Error())
 		return err
 	}
+	x.Exec("delete from kubernetes_endpoint_rel where kubernete_id=?", id)
 	SyncKubernetesConfig()
 	return err
 }
