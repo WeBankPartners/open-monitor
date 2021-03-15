@@ -12,5 +12,5 @@ const (
 var (
 	LogIgnorePath = []string{"/monitor/webhook", "export/ping/source"}
 	LogParamIgnorePath = []string{"/dashboard/newchart", "/dashboard/pie/chart", "/problem/query", "/problem/history"}
-	DashboardIgnoreTagKey = []string{"job", "__name__", "e_guid"}
+	DashboardIgnoreTagKey = []string{"job", "__name__"}
 )
