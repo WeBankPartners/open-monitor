@@ -776,14 +776,14 @@ func ListLogMonitorNew(query *m.TplQuery) error {
 		tmpPath := logMonitorTable[0].Path
 		for i, v := range logMonitorTable {
 			if v.Path != tmpPath {
-				lms = append(lms, &m.LogMonitorDto{Id: logMonitorTable[i-1].Id, EndpointId: v.StrategyId, Path: tmpPath, Strategy: tmpKeywords})
+				lms = append(lms, &m.LogMonitorDto{Id: logMonitorTable[i-1].Id, EndpointId: v.StrategyId, Path: tmpPath, Strategy: tmpKeywords, OwnerEndpoint: logMonitorTable[i-1].OwnerEndpoint})
 				tmpPath = v.Path
 				tmpKeywords = []*m.LogMonitorStrategyDto{}
 			}
 			tmpKeywords = append(tmpKeywords, &m.LogMonitorStrategyDto{Id: v.Id, Keyword: v.Keyword, Priority: v.Priority, NotifyEnable: v.NotifyEnable})
 		}
 		if len(tmpKeywords) > 0 {
-			lms = append(lms, &m.LogMonitorDto{Id: logMonitorTable[len(logMonitorTable)-1].Id, EndpointId: logMonitorTable[len(logMonitorTable)-1].StrategyId, Path: logMonitorTable[len(logMonitorTable)-1].Path, Strategy: tmpKeywords})
+			lms = append(lms, &m.LogMonitorDto{Id: logMonitorTable[len(logMonitorTable)-1].Id, EndpointId: logMonitorTable[len(logMonitorTable)-1].StrategyId, Path: logMonitorTable[len(logMonitorTable)-1].Path, Strategy: tmpKeywords, OwnerEndpoint: logMonitorTable[len(logMonitorTable)-1].OwnerEndpoint})
 		}
 		result = append(result, &m.TplObj{Operation: true, ObjId: query.SearchId, ObjName: endpointObj.Guid, ObjType: "endpoint", LogMonitor: lms})
 	}
