@@ -212,6 +212,10 @@ update strategy set expr='mysql_global_status_threads_connected{instance=\"$addr
 alter table role add column disable tinyint default 0;
 #@v1.11.1.2-end@;
 
-#@v1.11.1.4-begin@;
+#@v1.11.2.1-begin@;
 alter table log_monitor add column notify_enable tinyint default 1;
-#@v1.11.1.4-end@;
+#@v1.11.2.1-end@;
+
+#@v1.11.2.2-begin@;
+alter table log_monitor add column owner_endpoint varchar(255) default '';
+#@v1.11.2.2-end@;
