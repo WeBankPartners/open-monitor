@@ -49,47 +49,23 @@
         </PageTable>
       </template>
       <ModalComponent :modelConfig="pathModelConfig">
+        <div slot="pathSlotConfig" class="extentClass">  
+          <div class="marginbottom params-each">
+            <label class="col-md-2 label-name">{{$t('field.endpoint')}}:</label>
+            <Select v-model="pathModelConfig.addRow.owner_endpoint" style="width:338px">
+              <Option v-for="item in pathModelConfig.slotConfig.endpointOption" :value="item.guid" :key="item.guid">{{ item.guid }}</Option>
+            </Select>
+          </div>
+        </div>
       </ModalComponent>
       <ModalComponent :modelConfig="modelConfig">
         <div slot="thresholdConfig" class="extentClass">  
-          <!-- <div class="marginbottom params-each">
-            <label class="col-md-2 label-name">{{$t('tableKey.condition')}}:</label>
-            <Select v-model="modelConfig.cond" style="width:100px">
-              <Option v-for="item in modelConfig.condList" :value="item.value" :key="item.value">{{ item.label }}</Option>
+          <div class="marginbottom params-each" v-if="modelConfig.hideEndpointSelect">
+            <label class="col-md-2 label-name">{{$t('field.endpoint')}}:</label>
+            <Select v-model="modelConfig.addRow.owner_endpoint" style="width:338px">
+              <Option v-for="item in modelConfig.slotConfig.endpointOption" :value="item.guid" :key="item.guid">{{ item.guid }}</Option>
             </Select>
-            <div class="search-input-content" style="margin-left: 8px">
-              <input 
-                v-validate="'required|isNumber'" 
-                v-model="modelConfig.condValue" 
-                name="condValue"
-                :class="{ 'red-border': veeErrors.has('condValue') }"
-                type="text" 
-                class="form-control model-input search-input c-dark"/>
-              <label class="required-tip">*</label>
-            </div>
-            <div style="margin-left:120px">
-              <label v-show="veeErrors.has('condValue')" class="is-danger">{{ veeErrors.first('condValue')}}</label>
-            </div>
           </div>
-          <div class="marginbottom params-each">
-            <label class="col-md-2 label-name">{{$t('tableKey.s_last')}}:</label>
-            <div class="search-input-content" style="margin-right: 8px">
-              <input 
-                v-validate="'required|isNumber'" 
-                v-model="modelConfig.lastValue" 
-                name="lastValue"
-                :class="{ 'red-border': veeErrors.has('lastValue') }"
-                type="text" 
-                class="form-control model-input search-input c-dark"/>
-              <label class="required-tip">*</label>
-            </div>
-            <Select v-model="modelConfig.last" style="width:100px">
-              <Option v-for="item in modelConfig.lastList" :value="item.value" :key="item.value">{{ item.label }}</Option>
-            </Select>
-            <div style="margin-left:10px">
-              <label v-show="veeErrors.has('lastValue')" class="is-danger">{{ veeErrors.first('lastValue')}}</label>
-            </div>
-          </div> -->
           <div class="marginbottom params-each">
             <label class="col-md-2 label-name">{{$t('sendAlarm')}}:</label>
             <Select v-model="modelConfig.addRow.notify_enable" style="width:340px">
@@ -193,18 +169,23 @@ export default {
       },
       modelTip: {
         key: '',
-        value: 'metric'
+        value: ''
       },
       pathModelConfig: {
         modalId: 'path_Modal',
         modalTitle: 'field.log',
         saveFunc: 'savePath',
         config: [
-          {label: 'tableKey.path', value: 'path', placeholder: 'tips.required', v_validate: 'required:true', disabled: false, type: 'text'}
+          {label: 'tableKey.path', value: 'path', placeholder: 'tips.required', v_validate: 'required:true', disabled: false, type: 'text'},
+          {name:'pathSlotConfig',type:'slot'}
         ],
         addRow: { // [通用]-保存用户新增、编辑时数据
           path: null,
-        }
+          owner_endpoint: ''
+        },
+        slotConfig: {
+          endpointOption: []
+        },
       },
       modelConfig: {
         modalId: 'add_edit_Modal',
@@ -219,8 +200,10 @@ export default {
         addRow: { // [通用]-保存用户新增、编辑时数据
           path: null,
           keyword: null,
-          notify_enable: 1
+          notify_enable: 1,
+          owner_endpoint: ''
         },
+        hideEndpointSelect: true, // 控制对象选择
         metricName: '',
         metricList: [],
         cond: '>',
@@ -233,7 +216,8 @@ export default {
         priorityList: priorityList,
         slotConfig: {
           resourceSelected: [],
-          resourceOption: []
+          resourceOption: [],
+          endpointOption: []
         },
         notifyEnableOption: [
           {label: 'Yes', value: 1},
@@ -263,6 +247,7 @@ export default {
       this.modelConfig.addRow.notify_enable = 1
       this.modelConfig.lastValue = ''
       this.modelConfig.condValue = ''
+      this.modelConfig.hideEndpointSelect = true
       this.singeAddId = ''
     })
   },
@@ -333,6 +318,7 @@ export default {
     paramsPrepare() {
       let modelParams = {
         path: this.modelConfig.addRow.path,
+        owner_endpoint: this.modelConfig.addRow.owner_endpoint,
         strategy: [{
           keyword: this.modelConfig.addRow.keyword,
           notify_enable: this.modelConfig.addRow.notify_enable,
@@ -352,16 +338,21 @@ export default {
       return modelParams
     },
     singeAddF (rowData) {
+      this.modelConfig.hideEndpointSelect = false
       this.handlerType = 'edit'
       this.modelConfig.addRow.path = rowData.path
+      this.modelConfig.addRow.owner_endpoint = rowData.owner_endpoint
       this.singeAddId = rowData.id
-      this.modelConfig.isAdd = true
+      this.modelConfig.isAdd = false
       this.$root.JQ('#add_edit_Modal').modal('show')
     },
     add () {
       this.handlerType = 'add'
       this.modelConfig.isAdd = true
-      this.$root.JQ('#add_edit_Modal').modal('show')
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.endpointManagement.list.api + '?page=1&size=1000', '', responseData => {
+        this.modelConfig.slotConfig.endpointOption = responseData.data
+        this.$root.JQ('#add_edit_Modal').modal('show')
+      })
     },
     saveLog () {
       if (this.handlerType === 'add') {
@@ -385,14 +376,20 @@ export default {
       this.pathModelConfig.isAdd = false
       this.activeData = rowData
       this.pathModelConfig.addRow.path = rowData.path
+      this.pathModelConfig.addRow.owner_endpoint = rowData.owner_endpoint
       this.modelTip.value = rowData.path
-      this.$root.JQ('#path_Modal').modal('show')
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.endpointManagement.list.api + '?page=1&size=1000', '', responseData => {
+        this.pathModelConfig.slotConfig.endpointOption = responseData.data
+        this.$root.JQ('#path_Modal').modal('show')
+      })    
     },
     savePath () {
       let params = {
         id: this.activeData.id,
         tpl_id: this.activeData.tpl_id,
-        path: this.pathModelConfig.addRow.path
+        path: this.pathModelConfig.addRow.path,
+        owner_endpoint: this.pathModelConfig.addRow.owner_endpoint
+
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.logManagement.editList.api, params, () => {
         this.$Message.success(this.$t('tips.success'))
@@ -408,6 +405,7 @@ export default {
       this.pageConfig.table.isExtend.detailConfig[0].data = item.strategy
     },
     editPathItem (rowData) {
+      this.modelConfig.hideEndpointSelect = false
       this.handlerType = 'edit'
       this.modelConfig.isAdd = false
       this.id = rowData.id
@@ -426,7 +424,10 @@ export default {
       this.modelConfig.last = last.substring(last.length-1)
       this.modelConfig.lastValue = last.substring(0,last.length-1)
       this.modelConfig.priority = rowData.priority
-      this.$root.JQ('#add_edit_Modal').modal('show')
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.endpointManagement.list.api + '?page=1&size=1000', '', responseData => {
+        this.modelConfig.slotConfig.endpointOption = responseData.data
+        this.$root.JQ('#add_edit_Modal').modal('show')
+      })
     },
     delPathconfirm (rowData) {
       this.$delConfirm({
