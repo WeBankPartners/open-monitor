@@ -145,7 +145,14 @@ func appendTagString(name string, metricMap map[string]string) string {
 	sort.Sort(tmpList)
 	tmpName := name + "{"
 	for _,v := range tmpList {
-		if v.Key == "job" && v.Value == "consul" {
+		ignoreFlag := false
+		for _,vv := range m.DashboardIgnoreTagKey {
+			if v.Key == vv {
+				ignoreFlag = true
+				break
+			}
+		}
+		if ignoreFlag {
 			continue
 		}
 		tmpName += fmt.Sprintf("%s=%s,", v.Key, v.Value)
