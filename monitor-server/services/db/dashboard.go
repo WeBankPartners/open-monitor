@@ -431,6 +431,7 @@ func UpdatePromMetric(data []m.PromMetricUpdateParam) error {
 }
 
 func GetEndpointMetric(id int) (err error,result []*m.OptionModel) {
+	result = []*m.OptionModel{}
 	endpointObj := m.EndpointTable{Id:id}
 	GetEndpoint(&endpointObj)
 	if endpointObj.Guid == "" {
@@ -444,11 +445,14 @@ func GetEndpointMetric(id int) (err error,result []*m.OptionModel) {
 		ip = endpointObj.AddressAgent[:strings.Index(endpointObj.AddressAgent, ":")]
 		port = endpointObj.AddressAgent[strings.Index(endpointObj.AddressAgent, ":")+1:]
 	}else{
-		ip = endpointObj.Address[:strings.Index(endpointObj.Address, ":")]
-		port = endpointObj.Address[strings.Index(endpointObj.Address, ":")+1:]
+		if strings.Contains(endpointObj.Address, ":") {
+			ip = endpointObj.Address[:strings.Index(endpointObj.Address, ":")]
+			port = endpointObj.Address[strings.Index(endpointObj.Address, ":")+1:]
+		}
 	}
 	if ip == "" || port == "" {
-		return fmt.Errorf("endpoint: %s address illegal ", endpointObj.Guid),result
+		log.Logger.Warn("endpoint address illegal ", log.String("endpoint", endpointObj.Guid))
+		return nil,result
 	}
 	err, strList := prom.GetEndpointData(ip, port, []string{}, []string{})
 	if err != nil {
