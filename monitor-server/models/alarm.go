@@ -260,6 +260,7 @@ type LogMonitorTable struct {
 	Keyword  string `json:"keyword"`
 	Priority  string  `json:"priority"`
 	NotifyEnable  int  `json:"notify_enable"`
+	OwnerEndpoint string `json:"owner_endpoint"`
 }
 
 type LogMonitorDto struct {
@@ -268,6 +269,7 @@ type LogMonitorDto struct {
 	GrpId  int  `json:"grp_id"`
 	EndpointId  int  `json:"endpoint_id"`
 	Path  string  `json:"path" binding:"required"`
+	OwnerEndpoint  string  `json:"owner_endpoint"`
 	Strategy []*LogMonitorStrategyDto  `json:"strategy"`
 }
 
