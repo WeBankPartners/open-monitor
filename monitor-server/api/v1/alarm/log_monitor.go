@@ -72,6 +72,7 @@ func AddLogStrategy(c *gin.Context)  {
 		logMonitorObj.Keyword = param.Strategy[0].Keyword
 		logMonitorObj.Priority = param.Strategy[0].Priority
 		logMonitorObj.NotifyEnable = param.Strategy[0].NotifyEnable
+		logMonitorObj.OwnerEndpoint = param.OwnerEndpoint
 		if param.Id <= 0 {
 			_,lms := db.GetLogMonitorTable(0,param.EndpointId, 0, "")
 			for _, v := range lms {
@@ -128,7 +129,7 @@ func EditLogPath(c *gin.Context)  {
 		// Update log_monitor
 		for _,v := range lmsGrp {
 			//strategyObjs = append(strategyObjs, &m.StrategyTable{Id:v.StrategyId})
-			logMonitorObj := m.LogMonitorTable{Id:v.Id, StrategyId:v.StrategyId, Path:param.Path, Keyword:v.Keyword, NotifyEnable: v.NotifyEnable}
+			logMonitorObj := m.LogMonitorTable{Id:v.Id, StrategyId:v.StrategyId, Path:param.Path, Keyword:v.Keyword, NotifyEnable: v.NotifyEnable, OwnerEndpoint: param.OwnerEndpoint}
 			err = db.UpdateLogMonitor(&m.UpdateLogMonitor{LogMonitor:[]*m.LogMonitorTable{&logMonitorObj}, Operation:"update"})
 			if err != nil {
 				log.Logger.Error("Update log monitor alert failed", log.Error(err))
@@ -165,7 +166,7 @@ func EditLogStrategy(c *gin.Context)  {
 			return
 		}
 		// Update log_monitor
-		logMonitorObj := m.LogMonitorTable{Id:param.Strategy[0].Id, StrategyId:param.EndpointId, Path:param.Path, Keyword:param.Strategy[0].Keyword,Priority:param.Strategy[0].Priority,NotifyEnable: param.Strategy[0].NotifyEnable}
+		logMonitorObj := m.LogMonitorTable{Id:param.Strategy[0].Id, StrategyId:param.EndpointId, Path:param.Path, Keyword:param.Strategy[0].Keyword,Priority:param.Strategy[0].Priority,NotifyEnable: param.Strategy[0].NotifyEnable, OwnerEndpoint: param.OwnerEndpoint}
 		err = db.UpdateLogMonitor(&m.UpdateLogMonitor{LogMonitor:[]*m.LogMonitorTable{&logMonitorObj}, Operation:"update"})
 		if err != nil {
 			mid.ReturnUpdateTableError(c, "log_monitor", err)
