@@ -166,7 +166,7 @@
   "metricConfigTipsthree": "3. Click 'Add metric' button to config the metric, then click Save button to save the configuration.",
   "delConfirm": {
     "title": "Delete confirmation",
-    "tip": "will be deleted soon",
+    "tip": "Will be deleted soon ?",
     "button": "Delete"
   },
   "resourceLevel": {
