@@ -632,9 +632,11 @@ export default {
       this.$root.$tableUtil.initTable(this, 'GET', url, params)
     },
     filterMoreBtn(rowData) {
-      let moreBtnGroup = ['thresholdConfig', 'historyAlarm', 'maintenanceWindow', 'deleteConfirmModal']
+      // let moreBtnGroup = ['thresholdConfig', 'historyAlarm', 'maintenanceWindow', 'deleteConfirmModal']
+      let moreBtnGroup = ['historyAlarm', 'maintenanceWindow', 'deleteConfirmModal']
       if (rowData.type === 'host') {
-        moreBtnGroup.push('processManagement', 'businessManagement', 'logManagement', 'portManagement')
+        // moreBtnGroup.push('processManagement', 'businessManagement', 'logManagement', 'portManagement')
+        moreBtnGroup.push('processManagement', 'portManagement')
       }
       if (rowData.type === 'mysql') {
         moreBtnGroup.push('dataMonitor')
