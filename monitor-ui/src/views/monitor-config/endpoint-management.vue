@@ -160,10 +160,13 @@
       </section>
     </div>
   </ModalComponent>
-  <Modal v-model="isShowWarning" title="Delete confirmation" @on-ok="ok" @on-cancel="cancel">
+  <Modal v-model="isShowWarning" 
+    :title="$t('delConfirm.title')"
+    @on-ok="ok" 
+    @on-cancel="cancel">
     <div class="modal-body" style="padding:30px">
       <div style="text-align:center">
-        <p style="color: red">Will you delete it?</p>
+        <p style="color: red">{{$t('delConfirm.tip')}}</p>
       </div>
     </div>
   </Modal>
