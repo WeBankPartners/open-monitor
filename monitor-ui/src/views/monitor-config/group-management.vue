@@ -29,6 +29,18 @@
         </div>
       </div>
     </ModalComponent>
+    <ModalComponent :modelConfig="endpointModel">
+      <div slot="endpointOperate">  
+        <Transfer
+        :data="endpointModel.endpointOptions"
+        :target-keys="endpointModel.endpoint"
+        :titles="endpointModel.titles"
+        :list-style="endpointModel.listStyle"
+        @on-change="handleChange"
+        filterable>
+        </Transfer>
+      </div>
+    </ModalComponent>
     <Modal
         v-model="isShowWarning"
         :title="$t('delConfirm.title')"
@@ -50,11 +62,11 @@
     {title: 'tableKey.description', value: 'description', display: true}
   ]
   const btn = [
-    {btn_name: 'field.endpoint', btn_func: 'checkMember'},
-    {btn_name: 'field.threshold', btn_func: 'thresholdConfig'},
+    {btn_name: 'field.endpoint', btn_func: 'editEndpoints'},
+    // {btn_name: 'field.threshold', btn_func: 'thresholdConfig'},
     {btn_name: 'button.edit', btn_func: 'editF'},
     {btn_name: 'button.remove', btn_func: 'deleteConfirmModal'},
-    {btn_name: 'field.log', btn_func: 'logManagement'},
+    // {btn_name: 'field.log', btn_func: 'logManagement'},
     {btn_name: 'button.authorize', btn_func: 'authorizeF'},
   ]
   import axios from 'axios'
@@ -102,7 +114,7 @@
         },
         modelConfig: {
           modalId: 'add_edit_Modal',
-          modalTitle: 'title.groupAdd',
+          modalTitle: 'field.group',
           isAdd: true,
           config: [
             {label: 'tableKey.name', value: 'name', placeholder: 'tips.inputRequired', v_validate: 'required:true|min:2|max:60', disabled: false, type: 'text'},
@@ -112,6 +124,23 @@
             name: null,
             description: null,
           },
+        },
+        endpointModel: {
+          modalId: 'endpoint_Modal',
+          modalTitle: 'tableKey.endpoint',
+          saveFunc: 'managementEndpoint',
+          modalStyle: 'min-width:900px',
+          isAdd: true,
+          config: [
+            {name:'endpointOperate',type:'slot'}
+          ],
+          endpoint: [],
+          endpointOptions: [],
+          titles: [this.$t('m_value_to_be_selected'), this.$t('m_selected_value')],
+          listStyle: {
+            width: '400px',
+            height: '400px'
+          }
         },
         authorizationModel: {
           modalId: 'authorization_model',
@@ -170,8 +199,41 @@
         this.modelConfig.addRow = this.$root.$tableUtil.manageEditParams(this.modelConfig.addRow, rowData)
         this.$root.JQ('#add_edit_Modal').modal('show')
       },
-      checkMember (rowData) {
-        this.$router.push({name: 'endpointManagement', params: {group: rowData}})
+      async editEndpoints (rowData) {
+        this.id = rowData.id
+        // this.$router.push({name: 'endpointManagement', params: {group: rowData}})
+        let params = {
+          page: 1,
+          size: 10000,
+        }
+        await this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.endpointManagement.list.api, params, res => {
+          this.endpointModel.endpointOptions = res.data.map(item => {
+            return {
+              label: item.guid,
+              key: item.id
+            }
+          })
+        })
+        params.grp = rowData.id
+        this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.endpointManagement.list.api, params, res => {
+          this.endpointModel.endpoint = res.data.map(item => item.id)
+          this.$root.JQ('#endpoint_Modal').modal('show')
+        })
+      },
+      handleChange (newTargetKeys) {
+        this.endpointModel.endpoint = newTargetKeys
+      },
+      managementEndpoint() {
+        let params = {
+          grp: this.id,
+          endpoints: this.endpointModel.endpoint.map(Number),
+          operation: 'update'
+        }
+        this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.endpointManagement.update.api, params, () => {
+          this.$Message.success(this.$t('tips.success'))
+          this.$root.JQ('#endpoint_Modal').modal('hide')
+          this.initData(this.pageConfig.CRUD, this.pageConfig)
+        })
       },
       deleteConfirmModal (rowData) {
         this.selectedData = rowData
