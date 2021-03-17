@@ -209,5 +209,7 @@
   "operationDoc": "Operation Document",
   "sendAlarm": "Send Alarm",
   "delay": "Delay",
-  "m_panel_config": "Panel Configuration"
+  "m_panel_config": "Panel Configuration",
+  "m_selected_value": "Selected Value",
+  "m_value_to_be_selected": "Value To Be Selected"
 }
