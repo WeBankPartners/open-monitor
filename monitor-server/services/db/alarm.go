@@ -149,13 +149,6 @@ func UpdateGrp(obj *m.UpdateGrp) error {
 }
 
 func UpdateGrpEndpoint(param m.GrpEndpointParamNew) (error, bool) {
-	if len(param.Endpoints) == 0 {
-		return nil, false
-	}
-	var ids string
-	for _, v := range param.Endpoints {
-		ids += fmt.Sprintf("%d,", v)
-	}
 	if param.Operation == "update" {
 		var actions []*Action
 		actions = append(actions, &Action{Sql: "delete from grp_endpoint where grp_id=?", Param: []interface{}{param.Grp}})
@@ -172,6 +165,13 @@ func UpdateGrpEndpoint(param m.GrpEndpointParamNew) (error, bool) {
 		}else{
 			return updateError,true
 		}
+	}
+	if len(param.Endpoints) == 0 {
+		return nil, false
+	}
+	var ids string
+	for _, v := range param.Endpoints {
+		ids += fmt.Sprintf("%d,", v)
 	}
 	if param.Operation == "add" {
 		var grpEndpoints []*m.GrpEndpointTable
