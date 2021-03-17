@@ -169,6 +169,10 @@
     "tip": "即将被删除",
     "button": "删除"
   },
+  "closeConfirm": {
+    "title": "关闭确认",
+    "tip": "即将被关闭"
+  },
   "resourceLevel": {
     "addPanel": "新增层级对象",
     "addAssociatedRole": "配置关联角色",
