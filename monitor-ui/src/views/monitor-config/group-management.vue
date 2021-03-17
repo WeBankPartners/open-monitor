@@ -171,6 +171,7 @@
         this.$root.$tableUtil.initTable(this, 'GET', url, params)
       },
       add () {
+        this.modelConfig.isAdd = true
         this.$root.JQ('#add_edit_Modal').modal('show')
       },
       addPost () {
