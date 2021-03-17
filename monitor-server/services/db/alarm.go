@@ -156,6 +156,21 @@ func UpdateGrpEndpoint(param m.GrpEndpointParamNew) (error, bool) {
 	for _, v := range param.Endpoints {
 		ids += fmt.Sprintf("%d,", v)
 	}
+	if param.Operation == "update" {
+		var actions []*Action
+		actions = append(actions, &Action{Sql: "delete from grp_endpoint where grp_id=?", Param: []interface{}{param.Grp}})
+		insertSql := "INSERT INTO grp_endpoint VALUES "
+		for _,v := range param.Endpoints {
+			insertSql += fmt.Sprintf("(%d,%d),", param.Grp, v)
+		}
+		actions = append(actions, &Action{Sql: insertSql[:len(insertSql)-1]})
+		updateError := Transaction(actions)
+		if updateError != nil {
+			return updateError,false
+		}else{
+			return updateError,true
+		}
+	}
 	if param.Operation == "add" {
 		var grpEndpoints []*m.GrpEndpointTable
 		err := x.SQL(fmt.Sprintf("SELECT * FROM grp_endpoint WHERE grp_id=%d AND endpoint_id IN (%s)", param.Grp, ids[:len(ids)-1])).Find(&grpEndpoints)
