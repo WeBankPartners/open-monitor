@@ -169,6 +169,10 @@
     "tip": "Will be deleted soon ?",
     "button": "Delete"
   },
+  "closeConfirm": {
+    "title": "Close confirmation",
+    "tip": "About to close ?"
+  },
   "resourceLevel": {
     "addPanel": "Add Panel",
     "addAssociatedRole": "Add Associated Role",
