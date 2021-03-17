@@ -3,11 +3,6 @@
     <section>
       <ul class="search-ul">
         <li class="search-li">
-          <Select v-model="type" style="width:100px" @on-change="typeChange">
-            <Option v-for="item in typeList" :value="item.value" :key="item.value">{{ $t(item.label) }}</Option>
-          </Select>
-        </li>
-        <li class="search-li">
           <Select
             style="width:300px"
             v-model="endpointID"
@@ -125,12 +120,7 @@ export default {
       isShowWarning: false,
       requestParams: null,
       isShowWarningDelete: false,
-      type: '',
-      typeValue: 'endpoint',
-      typeList: [
-        {label: 'field.endpoint', value: 'endpoint'},
-        {label: 'field.group', value: 'grp'}
-      ],
+      type: 'endpoint',
 
       endpointID: null,
       endpointOptions: [],
@@ -259,10 +249,10 @@ export default {
       this.typeValue = this.endpointID
       this.requestData(this.type, this.endpointID)
     },
-    typeChange() {
-      this.totalPageConfig = []
-      this.getEndpointList('.')
-    },
+    // typeChange() {
+    //   this.totalPageConfig = []
+    //   this.getEndpointList('.')
+    // },
     clearEndpoint () {
       this.totalPageConfig = []
       this.getEndpointList('.')
