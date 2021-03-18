@@ -54,6 +54,7 @@
     "displayName": "显示名",
     "type": "类型"
   },
+  "m_field_businessMonitor": "业务监控",
   "title": {
     "viewConfiguration": "视图配置",
     "metricConfiguration": "指标配置",

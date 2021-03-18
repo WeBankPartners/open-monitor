@@ -26,7 +26,7 @@ export default {
         {label: 'field.threshold', path:'/monitorConfigIndex/thresholdManagement'},
         {label: 'field.log', path:'/monitorConfigIndex/logManagement'},
         {label: 'k8s', path:'/monitorConfigIndex/k8s'},
-        {label: 'field.businessMonitor', path:'/monitorConfigIndex/businessMonitor'}
+        {label: 'm_field_businessMonitor', path:'/monitorConfigIndex/businessMonitor'}
       ]
     }
   },
