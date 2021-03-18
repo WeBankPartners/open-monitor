@@ -116,6 +116,7 @@
     "dataMonitoring": "数据监控",
     "maintenanceWindow": "维护窗口"
   },
+  "m_button_maintenanceWindow": "维护窗口",
   "table": {
     "more": "更多",
     "action": "操作",
