@@ -113,8 +113,7 @@
       "dataView": "放大",
       "editTitle": "编辑标题"
     },
-    "dataMonitoring": "数据监控",
-    "maintenanceWindow": "维护窗口"
+    "dataMonitoring": "数据监控"
   },
   "m_button_maintenanceWindow": "维护窗口",
   "table": {
