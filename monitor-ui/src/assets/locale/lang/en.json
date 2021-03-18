@@ -114,8 +114,8 @@
       "editTitle": "Edit Title"
     },
     "dataMonitoring": "Data Monitoring",
-    "maintenanceWindow": "Maintenance Window"
   },
+  "m_button_maintenanceWindow": "Maintenance Window",
   "table": {
     "more": "More",
     "action": "Action",
