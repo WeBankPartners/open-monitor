@@ -54,6 +54,7 @@
     "displayName": "Display Name",
     "type": "Type"
   },
+  "m_field_businessMonitor": "Business Monitor",
   "title": {
     "viewConfiguration": "View Configuration",
     "metricConfiguration": "Metrics Configuration",
