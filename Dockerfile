@@ -40,7 +40,6 @@ COPY monitor-agent/db_data_exporter/db_data_exporter $DB_DATA_EXPORTER/
 
 RUN chmod +x $PROMETHEUS_HOME/prometheus
 RUN chmod +x $PROMETHEUS_HOME/promtool
-RUN chmod +x $PROMETHEUS_HOME/tsdb
 RUN chmod +x $ALERTMANAGER_HOME/alertmanager
 RUN chmod +x $AGENT_MANAGER_HOME/agent_manager
 RUN chmod +x $TRANS_GATEWAY/transgateway
