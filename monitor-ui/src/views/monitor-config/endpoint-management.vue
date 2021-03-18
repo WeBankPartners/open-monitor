@@ -322,7 +322,7 @@ const btn = [{
     btn_func: 'dataMonitor'
   },
   {
-    btn_name: 'button.maintenanceWindow',
+    btn_name: 'm_button_maintenanceWindow',
     btn_func: 'maintenanceWindow'
   }
 ]
@@ -509,7 +509,7 @@ export default {
 
       maintenanceWindowModel: {
         modalId: 'maintenance_window_model',
-        modalTitle: 'button.maintenanceWindow',
+        modalTitle: 'm_button_maintenanceWindow',
         isAdd: true,
         saveFunc: 'maintenanceWindowSave',
         config: [{
