@@ -37,12 +37,12 @@
         <label class="required-tip">*</label>
         <label v-show="veeErrors.has('name')" class="is-danger">{{ veeErrors.first('name')}}</label>
       </div>
-      <div class="marginbottom params-each" v-if="['mysql','redis','java'].includes(endpointRejectModel.addRow.type)">
+      <div class="marginbottom params-each" v-if="['mysql','redis','java','nginx'].includes(endpointRejectModel.addRow.type)">
         <label class="col-md-2 label-name">{{$t('button.trusteeship')}}:</label>
         <Checkbox v-model="endpointRejectModel.addRow.agent_manager"></Checkbox>
       </div>
-      <section v-if="['mysql','redis','java'].includes(endpointRejectModel.addRow.type) && endpointRejectModel.addRow.agent_manager">
-        <div v-if="['mysql','java'].includes(endpointRejectModel.addRow.type)" class="marginbottom params-each">
+      <section v-if="['mysql','redis','java','nginx'].includes(endpointRejectModel.addRow.type) && endpointRejectModel.addRow.agent_manager">
+        <div v-if="['mysql','java','nginx'].includes(endpointRejectModel.addRow.type)" class="marginbottom params-each">
           <label class="col-md-2 label-name">{{$t('button.username')}}:</label>
           <input v-validate="'required'" v-model="endpointRejectModel.addRow.user" name="user" :class="{ 'red-border': veeErrors.has('user') }" type="text" class="col-md-7 form-control model-input c-dark" />
           <label class="required-tip">*</label>
@@ -469,6 +469,10 @@ export default {
           {
             label: 'java',
             value: 'java'
+          },
+          {
+            label: 'nginx',
+            value: 'nginx'
           },
           {
             label: 'windows',
