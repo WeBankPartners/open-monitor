@@ -136,7 +136,7 @@ func ListEndpoint(c *gin.Context)  {
 func EditGrpEndpoint(c *gin.Context)  {
 	var param m.GrpEndpointParamNew
 	if err := c.ShouldBindJSON(&param); err==nil {
-		if param.Operation != "add" && param.Operation != "delete" {
+		if param.Operation != "add" && param.Operation != "delete" && param.Operation != "update" {
 			mid.ReturnValidateError(c, "operation must be add or delete")
 			return
 		}
