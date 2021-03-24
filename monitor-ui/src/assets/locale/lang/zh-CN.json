@@ -54,6 +54,7 @@
     "displayName": "显示名",
     "type": "类型"
   },
+  "m_field_businessMonitor": "业务监控",
   "title": {
     "viewConfiguration": "视图配置",
     "metricConfiguration": "指标配置",
@@ -112,9 +113,9 @@
       "dataView": "放大",
       "editTitle": "编辑标题"
     },
-    "dataMonitoring": "数据监控",
-    "maintenanceWindow": "维护窗口"
+    "dataMonitoring": "数据监控"
   },
+  "m_button_maintenanceWindow": "维护窗口",
   "table": {
     "more": "更多",
     "action": "操作",
@@ -169,6 +170,10 @@
     "tip": "即将被删除",
     "button": "删除"
   },
+  "closeConfirm": {
+    "title": "关闭确认",
+    "tip": "即将被关闭"
+  },
   "resourceLevel": {
     "addPanel": "新增层级对象",
     "addAssociatedRole": "配置关联角色",
@@ -209,5 +214,7 @@
   "operationDoc": "操作文档",
   "sendAlarm": "告警发送",
   "delay": "延时",
-  "m_panel_config": "Panel 配置"
+  "m_panel_config": "Panel 配置",
+  "m_selected_value": "选中值",
+  "m_value_to_be_selected": "待选值"
 }

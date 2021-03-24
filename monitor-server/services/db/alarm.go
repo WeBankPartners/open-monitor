@@ -149,6 +149,23 @@ func UpdateGrp(obj *m.UpdateGrp) error {
 }
 
 func UpdateGrpEndpoint(param m.GrpEndpointParamNew) (error, bool) {
+	if param.Operation == "update" {
+		var actions []*Action
+		actions = append(actions, &Action{Sql: "delete from grp_endpoint where grp_id=?", Param: []interface{}{param.Grp}})
+		if len(param.Endpoints) > 0 {
+			insertSql := "INSERT INTO grp_endpoint VALUES "
+			for _, v := range param.Endpoints {
+				insertSql += fmt.Sprintf("(%d,%d),", param.Grp, v)
+			}
+			actions = append(actions, &Action{Sql: insertSql[:len(insertSql)-1]})
+		}
+		updateError := Transaction(actions)
+		if updateError != nil {
+			return updateError,false
+		}else{
+			return updateError,true
+		}
+	}
 	if len(param.Endpoints) == 0 {
 		return nil, false
 	}
@@ -776,14 +793,14 @@ func ListLogMonitorNew(query *m.TplQuery) error {
 		tmpPath := logMonitorTable[0].Path
 		for i, v := range logMonitorTable {
 			if v.Path != tmpPath {
-				lms = append(lms, &m.LogMonitorDto{Id: logMonitorTable[i-1].Id, EndpointId: v.StrategyId, Path: tmpPath, Strategy: tmpKeywords})
+				lms = append(lms, &m.LogMonitorDto{Id: logMonitorTable[i-1].Id, EndpointId: v.StrategyId, Path: tmpPath, Strategy: tmpKeywords, OwnerEndpoint: logMonitorTable[i-1].OwnerEndpoint})
 				tmpPath = v.Path
 				tmpKeywords = []*m.LogMonitorStrategyDto{}
 			}
 			tmpKeywords = append(tmpKeywords, &m.LogMonitorStrategyDto{Id: v.Id, Keyword: v.Keyword, Priority: v.Priority, NotifyEnable: v.NotifyEnable})
 		}
 		if len(tmpKeywords) > 0 {
-			lms = append(lms, &m.LogMonitorDto{Id: logMonitorTable[len(logMonitorTable)-1].Id, EndpointId: logMonitorTable[len(logMonitorTable)-1].StrategyId, Path: logMonitorTable[len(logMonitorTable)-1].Path, Strategy: tmpKeywords})
+			lms = append(lms, &m.LogMonitorDto{Id: logMonitorTable[len(logMonitorTable)-1].Id, EndpointId: logMonitorTable[len(logMonitorTable)-1].StrategyId, Path: logMonitorTable[len(logMonitorTable)-1].Path, Strategy: tmpKeywords, OwnerEndpoint: logMonitorTable[len(logMonitorTable)-1].OwnerEndpoint})
 		}
 		result = append(result, &m.TplObj{Operation: true, ObjId: query.SearchId, ObjName: endpointObj.Guid, ObjType: "endpoint", LogMonitor: lms})
 	}
