@@ -226,12 +226,16 @@ func CheckLogKeyword()  {
 							tmpContent = tmpContent[:240]
 						}
 						notifyMap[lmt.Tags] = v.NotifyEnable
+						rowAlarmEndpoint := lmt.Endpoint
+						if v.OwnerEndpoint != "" {
+							rowAlarmEndpoint = v.OwnerEndpoint
+						}
 						if fetchAlarm.Id > 0 && fetchAlarm.Status == "firing" {
 							tmpContent = strings.Split(fetchAlarm.Content, "^^")[0] + "^^" + tmpContent
-							addAlarmRows = append(addAlarmRows, &m.AlarmTable{Id: fetchAlarm.Id, StrategyId: 0, Endpoint: lmt.Endpoint, Status: "firing", SMetric: "log_monitor", SExpr: "node_log_monitor_count_total", SCond: ">0", SLast: "10s", SPriority: v.Priority, Content: tmpContent, Tags: lmt.Tags, StartValue: fetchAlarm.StartValue, EndValue: lastValue, Start: fetchAlarm.Start, End: nowTime})
+							addAlarmRows = append(addAlarmRows, &m.AlarmTable{Id: fetchAlarm.Id, StrategyId: 0, Endpoint: rowAlarmEndpoint, Status: "firing", SMetric: "log_monitor", SExpr: "node_log_monitor_count_total", SCond: ">0", SLast: "10s", SPriority: v.Priority, Content: tmpContent, Tags: lmt.Tags, StartValue: fetchAlarm.StartValue, EndValue: lastValue, Start: fetchAlarm.Start, End: nowTime})
 						}else {
 							tmpContent = tmpContent + "^^"
-							addAlarmRows = append(addAlarmRows, &m.AlarmTable{StrategyId: 0, Endpoint: lmt.Endpoint, Status: "firing", SMetric: "log_monitor", SExpr: "node_log_monitor_count_total", SCond: ">0", SLast: "10s", SPriority: v.Priority, Content: tmpContent, Tags: lmt.Tags, StartValue: lastValue, Start: nowTime})
+							addAlarmRows = append(addAlarmRows, &m.AlarmTable{StrategyId: 0, Endpoint: rowAlarmEndpoint, Status: "firing", SMetric: "log_monitor", SExpr: "node_log_monitor_count_total", SCond: ">0", SLast: "10s", SPriority: v.Priority, Content: tmpContent, Tags: lmt.Tags, StartValue: lastValue, Start: nowTime})
 						}
 					}
 				}
