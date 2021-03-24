@@ -3,12 +3,12 @@
     <Title :title="$t('menu.alert')"></Title>
     <Modal
       v-model="isShowWarning"
-      title="Close Confirmation"
+      :title="$t('closeConfirm.title')"
       @on-ok="ok"
       @on-cancel="cancel">
       <div class="modal-body" style="padding:30px">
         <div style="text-align:center">
-          <p style="color: red">Will you close it?</p>
+          <p style="color: red">{{$t('closeConfirm.tip')}}</p>
         </div>
       </div>
     </Modal>

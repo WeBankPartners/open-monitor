@@ -54,6 +54,7 @@
     "displayName": "Display Name",
     "type": "Type"
   },
+  "m_field_businessMonitor": "Business Monitor",
   "title": {
     "viewConfiguration": "View Configuration",
     "metricConfiguration": "Metrics Configuration",
@@ -112,9 +113,9 @@
       "dataView": "Enlarged View",
       "editTitle": "Edit Title"
     },
-    "dataMonitoring": "Data Monitoring",
-    "maintenanceWindow": "Maintenance Window"
+    "dataMonitoring": "Data Monitoring"
   },
+  "m_button_maintenanceWindow": "Maintenance Window",
   "table": {
     "more": "More",
     "action": "Action",
@@ -166,8 +167,12 @@
   "metricConfigTipsthree": "3. Click 'Add metric' button to config the metric, then click Save button to save the configuration.",
   "delConfirm": {
     "title": "Delete confirmation",
-    "tip": "will be deleted soon",
+    "tip": "Will be deleted soon ?",
     "button": "Delete"
+  },
+  "closeConfirm": {
+    "title": "Close confirmation",
+    "tip": "About to close ?"
   },
   "resourceLevel": {
     "addPanel": "Add Panel",
@@ -209,5 +214,7 @@
   "operationDoc": "Operation Document",
   "sendAlarm": "Send Alarm",
   "delay": "Delay",
-  "m_panel_config": "Panel Configuration"
+  "m_panel_config": "Panel Configuration",
+  "m_selected_value": "Selected Value",
+  "m_value_to_be_selected": "Value To Be Selected"
 }

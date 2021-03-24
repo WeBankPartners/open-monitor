@@ -215,3 +215,7 @@ alter table role add column disable tinyint default 0;
 #@v1.11.2.1-begin@;
 alter table log_monitor add column notify_enable tinyint default 1;
 #@v1.11.2.1-end@;
+
+#@v1.11.2.4-begin@;
+alter table log_monitor add column owner_endpoint varchar(255) default '';
+#@v1.11.2.4-end@;
