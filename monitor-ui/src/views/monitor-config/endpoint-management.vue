@@ -37,12 +37,12 @@
         <label class="required-tip">*</label>
         <label v-show="veeErrors.has('name')" class="is-danger">{{ veeErrors.first('name')}}</label>
       </div>
-      <div class="marginbottom params-each" v-if="['mysql','redis','java'].includes(endpointRejectModel.addRow.type)">
+      <div class="marginbottom params-each" v-if="['mysql','redis','java','nginx'].includes(endpointRejectModel.addRow.type)">
         <label class="col-md-2 label-name">{{$t('button.trusteeship')}}:</label>
         <Checkbox v-model="endpointRejectModel.addRow.agent_manager"></Checkbox>
       </div>
-      <section v-if="['mysql','redis','java'].includes(endpointRejectModel.addRow.type) && endpointRejectModel.addRow.agent_manager">
-        <div v-if="['mysql','java'].includes(endpointRejectModel.addRow.type)" class="marginbottom params-each">
+      <section v-if="['mysql','redis','java','nginx'].includes(endpointRejectModel.addRow.type) && endpointRejectModel.addRow.agent_manager">
+        <div v-if="['mysql','java','nginx'].includes(endpointRejectModel.addRow.type)" class="marginbottom params-each">
           <label class="col-md-2 label-name">{{$t('button.username')}}:</label>
           <input v-validate="'required'" v-model="endpointRejectModel.addRow.user" name="user" :class="{ 'red-border': veeErrors.has('user') }" type="text" class="col-md-7 form-control model-input c-dark" />
           <label class="required-tip">*</label>
@@ -160,10 +160,13 @@
       </section>
     </div>
   </ModalComponent>
-  <Modal v-model="isShowWarning" title="Delete confirmation" @on-ok="ok" @on-cancel="cancel">
+  <Modal v-model="isShowWarning" 
+    :title="$t('delConfirm.title')"
+    @on-ok="ok" 
+    @on-cancel="cancel">
     <div class="modal-body" style="padding:30px">
       <div style="text-align:center">
-        <p style="color: red">Will you delete it?</p>
+        <p style="color: red">{{$t('delConfirm.tip')}}</p>
       </div>
     </div>
   </Modal>
@@ -319,7 +322,7 @@ const btn = [{
     btn_func: 'dataMonitor'
   },
   {
-    btn_name: 'button.maintenanceWindow',
+    btn_name: 'm_button_maintenanceWindow',
     btn_func: 'maintenanceWindow'
   }
 ]
@@ -468,6 +471,10 @@ export default {
             value: 'java'
           },
           {
+            label: 'nginx',
+            value: 'nginx'
+          },
+          {
             label: 'windows',
             value: 'windows'
           },
@@ -506,7 +513,7 @@ export default {
 
       maintenanceWindowModel: {
         modalId: 'maintenance_window_model',
-        modalTitle: 'button.maintenanceWindow',
+        modalTitle: 'm_button_maintenanceWindow',
         isAdd: true,
         saveFunc: 'maintenanceWindowSave',
         config: [{
@@ -632,9 +639,11 @@ export default {
       this.$root.$tableUtil.initTable(this, 'GET', url, params)
     },
     filterMoreBtn(rowData) {
-      let moreBtnGroup = ['thresholdConfig', 'historyAlarm', 'maintenanceWindow', 'deleteConfirmModal']
+      // let moreBtnGroup = ['thresholdConfig', 'historyAlarm', 'maintenanceWindow', 'deleteConfirmModal']
+      let moreBtnGroup = ['historyAlarm', 'maintenanceWindow', 'deleteConfirmModal']
       if (rowData.type === 'host') {
-        moreBtnGroup.push('processManagement', 'businessManagement', 'logManagement', 'portManagement')
+        // moreBtnGroup.push('processManagement', 'businessManagement', 'logManagement', 'portManagement')
+        moreBtnGroup.push('processManagement', 'portManagement')
       }
       if (rowData.type === 'mysql') {
         moreBtnGroup.push('dataMonitor')
