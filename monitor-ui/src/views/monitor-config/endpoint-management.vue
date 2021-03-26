@@ -17,8 +17,8 @@
     </div>
   </ModalComponent>
   <ModalComponent :modelConfig="historyAlarmModel">
-    <div slot="historyAlarm">
-      <tableTemp :table="historyAlarmPageConfig.table" :pageConfig="historyAlarmPageConfig"></tableTemp>
+    <div slot="historyAlarm"  style="max-height:400px;overflow-y:auto">
+      <TableTemp :table="historyAlarmPageConfig.table" :pageConfig="historyAlarmPageConfig"></TableTemp>
     </div>
   </ModalComponent>
   <ModalComponent :modelConfig="endpointRejectModel">
@@ -209,7 +209,7 @@
 </template>
 
 <script>
-import tableTemp from '@/components/table-page/table'
+import TableTemp from '@/components/table-page/table'
 import DataMonitor from '@/views/monitor-config/data-monitor'
 import {
   interceptParams
@@ -403,13 +403,7 @@ export default {
         config: [{
           name: 'historyAlarm',
           type: 'slot'
-        }],
-        pageConfig: {
-          table: {
-            tableData: [],
-            tableEle: tableEle
-          }
-        },
+        }]
       },
       portModel: {
         modalId: 'port_Modal',
@@ -916,7 +910,7 @@ export default {
     }
   },
   components: {
-    tableTemp,
+    TableTemp,
     DataMonitor
   }
 }
