@@ -170,6 +170,43 @@ func EditGrpEndpoint(c *gin.Context)  {
 	}
 }
 
+func EditEndpointGrp(c *gin.Context)  {
+	var param m.EndpointGrpParam
+	if err := c.ShouldBindJSON(&param); err==nil {
+		if param.EndpointId <= 0 {
+			mid.ReturnValidateError(c, "EndpointId illegal ")
+			return
+		}
+		err,groupIds := db.UpdateEndpointGrp(param)
+		if err != nil {
+			mid.ReturnHandleError(c, fmt.Sprintf("Update endpoint group fail %s ", err.Error()), err)
+			return
+		}
+		for _,v := range groupIds {
+			err,tplObj := db.GetTpl(0, v, 0)
+			if err != nil {
+				mid.ReturnFetchDataError(c, "tpl", "grp_id", strconv.Itoa(v))
+				return
+			}
+			if tplObj.Id <= 0 {
+				err,tplObj = db.AddTpl(v, 0, mid.GetOperateUser(c))
+				if err != nil {
+					mid.ReturnUpdateTableError(c, "tpl", err)
+					return
+				}
+			}
+			err = SaveConfigFile(tplObj.Id, false)
+			if err != nil {
+				mid.ReturnHandleError(c, "save configuration file failed", err)
+				return
+			}
+		}
+		mid.ReturnSuccess(c)
+	}else{
+		mid.ReturnValidateError(c, err.Error())
+	}
+}
+
 func ExportGrpStrategy(c *gin.Context)  {
 	idStringList := strings.Split(c.Query("id"), ",")
 	var idList []string

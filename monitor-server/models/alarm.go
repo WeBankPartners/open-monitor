@@ -195,6 +195,11 @@ type GrpEndpointParamNew struct {
 	Operation  string  `json:"operation" binding:"required"`
 }
 
+type EndpointGrpParam struct {
+	EndpointId  int  `json:"endpoint_id"`
+	GroupIds  []int  `json:"group_ids"`
+}
+
 type AcceptObj struct {
 	Employ  []string  `json:"employ"`
 }
