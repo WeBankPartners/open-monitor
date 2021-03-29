@@ -152,6 +152,7 @@ func InitHttpServer(exportAgent bool) {
 			alarmApi.GET("/grp/role/get", alarm.GetGrpRole)
 			alarmApi.GET("/endpoint/list", alarm.ListEndpoint)
 			alarmApi.POST("/endpoint/update", alarm.EditGrpEndpoint)
+			alarmApi.POST("/endpoint/grp/update", alarm.EditEndpointGrp)
 			alarmApi.GET("/strategy/search", alarm.SearchObjOption)
 			alarmApi.GET("/strategy/list", alarm.ListTpl)
 			alarmApi.POST("/strategy/add", alarm.AddStrategy)

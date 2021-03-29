@@ -219,3 +219,8 @@ alter table log_monitor add column notify_enable tinyint default 1;
 #@v1.11.2.4-begin@;
 alter table log_monitor add column owner_endpoint varchar(255) default '';
 #@v1.11.2.4-end@;
+
+#@v1.11.3-begin@;
+alter table alarm drop index `alarm_unique_index`;
+alter table alarm modify column tags varchar(1024) default '';
+#@v1.11.3-end@;
