@@ -133,6 +133,11 @@ func (s AlarmProblemList) Less(i,j int) bool {
 	return s[i].Start.Unix() > s[j].Start.Unix()
 }
 
+type AlarmHistoryReturnData struct {
+	Endpoint  string  `json:"endpoint"`
+	ProblemList  AlarmProblemList  `json:"problem_list"`
+}
+
 type GrpEndpointTable struct {
 	GrpId  int  `json:"grp_id"`
 	EndpointId  int  `json:"endpoint_id"`
