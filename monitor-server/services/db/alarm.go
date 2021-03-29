@@ -165,6 +165,50 @@ func UpdateGrp(obj *m.UpdateGrp) error {
 	return err
 }
 
+func UpdateEndpointGrp(param m.EndpointGrpParam) (err error,affectGroupIds []int) {
+	var grpEndpoints []*m.GrpEndpointTable
+	x.SQL("select * from grp_endpoint where endpoint_id=?", param.EndpointId).Find(&grpEndpoints)
+	if len(grpEndpoints) > 0 {
+		for _,v := range grpEndpoints {
+			existFlag := false
+			for _,vv := range param.GroupIds {
+				if vv == v.GrpId {
+					existFlag = true
+					break
+				}
+			}
+			if !existFlag {
+				// need delete
+				affectGroupIds = append(affectGroupIds, v.GrpId)
+			}
+		}
+		for _,v := range param.GroupIds {
+			existFlag := false
+			for _,vv := range grpEndpoints {
+				if vv.GrpId == v {
+					existFlag = true
+					break
+				}
+			}
+			if !existFlag {
+				affectGroupIds = append(affectGroupIds, v)
+			}
+		}
+	}else{
+		affectGroupIds = param.GroupIds
+	}
+	var actions []*Action
+	actions = append(actions, &Action{Sql: "delete from grp_endpoint where endpoint_id=?", Param: []interface{}{param.EndpointId}})
+	if len(param.GroupIds) > 0 {
+		insertSql := "INSERT INTO grp_endpoint(endpoint_id,grp_id) VALUES "
+		for _, v := range param.GroupIds {
+			insertSql += fmt.Sprintf("(%d,%d),", param.EndpointId, v)
+		}
+		actions = append(actions, &Action{Sql: insertSql[:len(insertSql)-1]})
+	}
+	return Transaction(actions),affectGroupIds
+}
+
 func UpdateGrpEndpoint(param m.GrpEndpointParamNew) (error, bool) {
 	if param.Operation == "update" {
 		var actions []*Action
