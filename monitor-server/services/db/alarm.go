@@ -76,7 +76,8 @@ func SearchGrp(search string) (error, []*m.OptionModel) {
 	if search == "." {
 		search = ""
 	}
-	err := x.SQL(`SELECT * FROM grp WHERE name LIKE '%` + search + `%'`).Find(&grps)
+	search = "%" + search + "%"
+	err := x.SQL(`SELECT * FROM grp WHERE name LIKE ?`, search).Find(&grps)
 	if err != nil {
 		log.Logger.Error("Search grp fail", log.Error(err))
 		return err, result
@@ -88,37 +89,53 @@ func SearchGrp(search string) (error, []*m.OptionModel) {
 }
 
 func ListAlarmEndpoints(query *m.AlarmEndpointQuery) error {
+	var countParams []interface{}
 	whereSql := ""
 	if query.Search != "" {
-		whereSql += ` AND t1.guid LIKE '%` + query.Search + `%' `
+		whereSql += ` AND t1.guid LIKE ? `
+		countParams = append(countParams, "%s"+query.Search+"%")
 	}
 	if query.Grp > 0 {
-		whereSql += fmt.Sprintf(" AND t3.id=%d ", query.Grp)
+		whereSql += " AND t3.id=? "
+		countParams = append(countParams, query.Grp)
 	}
 	querySql := `SELECT t5.* FROM (
-            SELECT t4.id,t4.guid,GROUP_CONCAT(t4.name) groups_name,t4.type FROM (
-			SELECT t1.id,t1.guid,t3.name,t1.export_type as type FROM endpoint t1 
+            SELECT t4.id,t4.guid,GROUP_CONCAT(t4.grp_id) groups_ids,t4.type FROM (
+			SELECT t1.id,t1.guid,t2.grp_id,t1.export_type as type FROM endpoint t1 
 			LEFT JOIN grp_endpoint t2 ON t1.id=t2.endpoint_id 
-			LEFT JOIN grp t3 ON t2.grp_id=t3.id 
 			WHERE 1=1 ` + whereSql + `
 			) t4 GROUP BY t4.guid
 			) t5 ORDER BY t5.guid LIMIT ?,?`
 	countSql := `SELECT COUNT(1) num FROM (
-			SELECT t4.guid,GROUP_CONCAT(t4.name) groups_name FROM (
-			SELECT t1.guid,t3.name FROM endpoint t1 
+			SELECT t4.guid,GROUP_CONCAT(t4.grp_id) groups_ids FROM (
+			SELECT t1.guid,t2.grp_id FROM endpoint t1 
 			LEFT JOIN grp_endpoint t2 ON t1.id=t2.endpoint_id 
-			LEFT JOIN grp t3 ON t2.grp_id=t3.id
 			WHERE 1=1 ` + whereSql + `
 			) t4 GROUP BY t4.guid
 			) t5`
 	var result []*m.AlarmEndpointObj
 	var count []int
-	err := x.SQL(querySql, (query.Page-1)*query.Size, query.Size).Find(&result)
-	err = x.SQL(countSql).Find(&count)
+	queryParams := countParams
+	queryParams = append(queryParams, (query.Page-1)*query.Size, query.Size)
+	err := x.SQL(querySql, queryParams...).Find(&result)
+	err = x.SQL(countSql, countParams...).Find(&count)
 	if len(result) > 0 {
+		groupTableData := []*m.GrpTable{}
+		x.SQL("select * from grp").Find(&groupTableData)
 		for _, v := range result {
-			if v.GroupsName != "" {
-				v.GroupsName = v.GroupsName[:len(v.GroupsName)]
+			if v.GroupsIds != "" {
+				for _,tmpGroupId := range strings.Split(v.GroupsIds, ",") {
+					if tmpGroupId == "" {
+						continue
+					}
+					groupId,_ := strconv.Atoi(tmpGroupId)
+					for _,groupObj := range groupTableData {
+						if groupObj.Id == groupId {
+							v.Groups = append(v.Groups, groupObj)
+							break
+						}
+					}
+				}
 			}
 		}
 		query.Result = result
