@@ -1,12 +1,10 @@
 /*
-* @author: pobu168
-* @CreateDate: 2019-09-04
 * @version: V0.1.1
 * @describe:
 * 统一http请求入口，统一处理http请求响应
 *
  */
-// import router from '@/router'
+import router from '@/router'
 import httpRequest from '@/assets/js/axiosHttp'
 import $ from 'jquery'
 import {Message} from 'view-design'
@@ -84,6 +82,9 @@ function httpRequestEntrance (method, url, data, callback, customHttpConfig) {
       },0)
     }
     errorMessage(error.response.data.message)
+    if (!window.request) {
+      router.push({path: '/login'})
+    }
   })
 }
 
