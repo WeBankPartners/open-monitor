@@ -89,14 +89,14 @@ func SearchGrp(search string) (error, []*m.OptionModel) {
 }
 
 func ListAlarmEndpoints(query *m.AlarmEndpointQuery) error {
-	var countParams []interface{}
+	var queryParams,countParams []interface{}
 	whereSql := ""
 	if query.Search != "" {
 		whereSql += ` AND t1.guid LIKE ? `
-		countParams = append(countParams, "%s"+query.Search+"%")
+		countParams = append(countParams, "%"+query.Search+"%")
 	}
 	if query.Grp > 0 {
-		whereSql += " AND t3.id=? "
+		whereSql += " AND t2.grp_id=? "
 		countParams = append(countParams, query.Grp)
 	}
 	querySql := `SELECT t5.* FROM (
@@ -115,7 +115,7 @@ func ListAlarmEndpoints(query *m.AlarmEndpointQuery) error {
 			) t5`
 	var result []*m.AlarmEndpointObj
 	var count []int
-	queryParams := countParams
+	queryParams = append(queryParams, countParams...)
 	queryParams = append(queryParams, (query.Page-1)*query.Size, query.Size)
 	err := x.SQL(querySql, queryParams...).Find(&result)
 	err = x.SQL(countSql, countParams...).Find(&count)
