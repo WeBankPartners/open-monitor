@@ -14,7 +14,7 @@
       width="1200"
       :footer-hide="true"
       :title="$t('button.historicalAlert')">
-      <Table height="400" row-key="id" :columns="historyAlarmPageConfig.table.tableEle" :data="historyAlarmPageConfig.table.tableData"></Table>
+      <Table height="500" row-key="id" :columns="historyAlarmPageConfig.table.tableEle" :data="historyAlarmPageConfig.table.tableData"></Table>
     </Modal>
   </div>
 </template>
@@ -160,6 +160,9 @@ export default {
         responseData.forEach((item) => {
           item.children = item.problem_list
           item.id = item.endpoint + '--'
+          if (endpointObject.id !== -1) {
+            item._showChildren = true
+          }
           return item
         })
         this.historyAlarmPageConfig.table.tableData = responseData
