@@ -7,13 +7,15 @@
       <Recursive :recursiveViewConfig="recursiveViewConfig" :params="params"></Recursive>
     </div>
     <Drawer title="View details" :width="zoneWidth" :closable="false" v-model="showMaxChart">
-        <MaxChart ref="maxChart"></MaxChart>
+      <MaxChart ref="maxChart"></MaxChart>
     </Drawer>
-    <ModalComponent :modelConfig="historyAlarmModel">
-      <div slot="historyAlarm" style="max-height:400px;overflow-y:auto">
-        <Table height="400" width="900" :columns="historyAlarmPageConfig.table.tableEle" :data="historyAlarmPageConfig.table.tableData"></Table>
-      </div>
-    </ModalComponent>
+    <Modal
+      v-model="historyAlarmModel"
+      width="1200"
+      :footer-hide="true"
+      :title="$t('button.historicalAlert')">
+      <Table height="400" row-key="id" :columns="historyAlarmPageConfig.table.tableEle" :data="historyAlarmPageConfig.table.tableData"></Table>
+    </Modal>
   </div>
 </template>
 <script>
@@ -34,23 +36,21 @@ export default {
       recursiveViewConfig: [],
       showMaxChart: false,
       zoneWidth: '800',
-
-      historyAlarmModel: {
-        modalId: 'history_alarm_Modal',
-        modalTitle: 'button.historicalAlert',
-        modalStyle: 'width:930px;max-width: none;',
-        noBtn: true,
-        isAdd: true,
-        config: [{
-          name: 'historyAlarm',
-          type: 'slot'
-        }]
-      },
+      
+      historyAlarmModel: false,
       historyAlarmPageConfig: {
         table: {
           tableData: [],
-          tableEle: [{
+          tableEle: [
+            {
+              title: this.$t('tableKey.endpoint'),
+              width: 220,
+              key: 'endpoint',
+              tree: true
+            },
+            {
               title: this.$t('tableKey.status'),
+              width: 80,
               key: 'status'
             },
             {
@@ -60,18 +60,22 @@ export default {
             },
             {
               title: this.$t('tableKey.start_value'),
+              width: 120,
               key: 'start_value'
             },
             {
               title: this.$t('tableKey.s_cond'),
+              width: 80,
               key: 's_cond'
             },
             {
               title: this.$t('tableKey.s_last'),
+              width: 100,
               key: 's_last'
             },
             {
               title: this.$t('tableKey.s_priority'),
+              width: 100,
               key: 's_priority'
             },
             {
@@ -149,12 +153,18 @@ export default {
     },
     historyAlarm(endpointObject) {
       let params = {
-        id: endpointObject.id
+        id: endpointObject.id,
+        guid: endpointObject.option_value
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.alarm.history, params, (responseData) => {
+        responseData.forEach((item) => {
+          item.children = item.problem_list
+          item.id = item.endpoint + '--'
+          return item
+        })
         this.historyAlarmPageConfig.table.tableData = responseData
       })
-      this.$root.JQ('#history_alarm_Modal').modal('show')
+      this.historyAlarmModel = true
     }
   },
   components: {
