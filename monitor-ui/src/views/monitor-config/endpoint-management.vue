@@ -1,8 +1,8 @@
 <template>
 <div class="main-content">
-  <div v-if="showGroupMsg" style="padding-left:20px">
+  <!-- <div v-if="showGroupMsg" style="padding-left:20px">
     <Tag type="border" closable color="primary" @on-close="closeTag">{{$t('field.group')}}:{{groupMsg.name}}</Tag>
-  </div>
+  </div> -->
   <PageTable :pageConfig="pageConfig"></PageTable>
   <ModalComponent :modelConfig="modelConfig">
     <div slot="advancedConfig" class="extentClass">
@@ -205,6 +205,18 @@
       </div>
     </template>
   </ModalComponent>
+  <ModalComponent :modelConfig="groupModel">
+    <div slot="endpointOperate">  
+      <Transfer
+      :data="groupModel.groupOptions"
+      :target-keys="groupModel.group"
+      :titles="groupModel.titles"
+      :list-style="groupModel.listStyle"
+      @on-change="handleChange"
+      filterable>
+      </Transfer>
+    </div>
+  </ModalComponent>
 </div>
 </template>
 
@@ -216,19 +228,20 @@ import {
 let tableEle = [{
     title: 'tableKey.endpoint',
     value: 'guid',
+    style: 'width:300px',
     display: true
   },
   {
     title: 'tableKey.group',
     display: true,
     tags: {
-      style: 'width: 300px;'
+      // style: 'width: 300px;'
     },
     'render': (item) => {
-      let res = item.groups_name.split(',').map((i) => {
+      let res = item.groups&&item.groups.map((i) => {
         return {
-          label: i,
-          value: i
+          label: i.name,
+          value: i.name
         }
       })
       return res
@@ -242,6 +255,10 @@ const btn = [{
   {
     btn_name: 'button.historicalAlert',
     btn_func: 'historyAlarm'
+  },
+  {
+    btn_name: 'field.group',
+    btn_func: 'groupManagement'
   },
   {
     btn_name: 'button.remove',
@@ -509,7 +526,24 @@ export default {
       },
       id: null,
       showGroupMsg: false,
-      groupMsg: {}
+      groupMsg: {},
+      groupModel: {
+        modalId: 'group_modal',
+        modalTitle: 'tableKey.endpoint',
+        saveFunc: 'managementEndpoint',
+        modalStyle: 'min-width:900px',
+        isAdd: true,
+        config: [
+          {name:'endpointOperate',type:'slot'}
+        ],
+        group: [],
+        groupOptions: [],
+        titles: [this.$t('m_value_to_be_selected'), this.$t('m_selected_value')],
+        listStyle: {
+          width: '400px',
+          height: '400px'
+        }
+      },
     }
   },
   mounted() {
@@ -548,6 +582,37 @@ export default {
     }
   },
   methods: {
+    managementEndpoint() {
+      let params = {
+        endpoint_id: Number(this.id),
+        group_ids: this.groupModel.group.map(Number)
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.endpointManagement.groupUpdate, params, () => {
+        this.$Message.success(this.$t('tips.success'))
+        this.$root.JQ('#group_modal').modal('hide')
+        this.initData(this.pageConfig.CRUD, this.pageConfig)
+      })
+    },
+    handleChange (newTargetKeys) {
+      this.groupModel.group = newTargetKeys
+    },
+    async groupManagement (rowData) {
+      this.id = rowData.id
+      let params = {
+        page: 1,
+        size: 10000,
+      }
+      await this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.groupManagement.list.api, params, res => {
+        this.groupModel.groupOptions = res.data.map(item => {
+          return {
+            label: item.name,
+            key: item.id
+          }
+        })
+      })
+      this.groupModel.group = rowData.groups.map(item => item.id)
+      this.$root.JQ('#group_modal').modal('show')
+    },
     maintenanceWindowSave () {
       this.maintenanceWindowModel.result.forEach(item => {
         item.weekday = item.weekday.join(',')
@@ -621,7 +686,7 @@ export default {
     },
     filterMoreBtn(rowData) {
       // let moreBtnGroup = ['thresholdConfig', 'historyAlarm', 'maintenanceWindow', 'deleteConfirmModal']
-      let moreBtnGroup = ['historyAlarm', 'maintenanceWindow', 'deleteConfirmModal']
+      let moreBtnGroup = ['historyAlarm', 'groupManagement', 'maintenanceWindow', 'deleteConfirmModal']
       if (rowData.type === 'host') {
         // moreBtnGroup.push('processManagement', 'businessManagement', 'logManagement', 'portManagement')
         moreBtnGroup.push('processManagement', 'portManagement')
@@ -722,20 +787,20 @@ export default {
         }
       })
     },
-    closeTag() {
-      this.groupMsg = {}
-      this.showGroupMsg = false
-      this.pageConfig.researchConfig.filters.grp = ''
-      this.pageConfig.table.btn.splice(this.pageConfig.table.btn.length - 1, 1)
-      this.pageConfig.researchConfig.btn_group.splice(this.pageConfig.researchConfig.btn_group.length - 1, 1)
-      this.pageConfig.researchConfig.btn_group.push({
-        btn_name: 'button.add',
-        btn_func: 'endpointReject',
-        class: 'btn-cancel-f',
-        btn_icon: 'fa fa-plus'
-      })
-      this.initData(this.pageConfig.CRUD, this.pageConfig)
-    },
+    // closeTag() {
+    //   this.groupMsg = {}
+    //   this.showGroupMsg = false
+    //   this.pageConfig.researchConfig.filters.grp = ''
+    //   this.pageConfig.table.btn.splice(this.pageConfig.table.btn.length - 1, 1)
+    //   this.pageConfig.researchConfig.btn_group.splice(this.pageConfig.researchConfig.btn_group.length - 1, 1)
+    //   this.pageConfig.researchConfig.btn_group.push({
+    //     btn_name: 'button.add',
+    //     btn_func: 'endpointReject',
+    //     class: 'btn-cancel-f',
+    //     btn_icon: 'fa fa-plus'
+    //   })
+    //   this.initData(this.pageConfig.CRUD, this.pageConfig)
+    // },
     historyAlarm(rowData) {
       let params = {
         id: rowData.id
