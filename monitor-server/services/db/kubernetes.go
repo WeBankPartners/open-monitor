@@ -132,17 +132,6 @@ func StartCronSyncKubernetesPod(interval int)  {
 	}
 }
 
-
-func SyncKubernetesPod()  {
-	for i:=0;i<3;i++ {
-		time.Sleep(time.Second*30)
-		tmpResult := syncPodToEndpoint()
-		if tmpResult {
-			break
-		}
-	}
-}
-
 func syncPodToEndpoint() bool {
 	log.Logger.Info("start to sync kubernetes pod")
 	var kubernetesTables []*m.KubernetesClusterTable
