@@ -56,7 +56,7 @@
         <button type="button" v-if="isShow&&endpointObject.id !== -1" @click="changeRoute" class="btn btn-sm btn-cancel-f btn-jump">{{$t('button.endpointManagement')}}</button>
       </li>
       <li class="search-li">
-        <button type="button" v-if="isShow&&endpointObject.id !== -1" @click="historyAlarm" class="btn btn-sm btn-cancel-f btn-jump">{{$t('button.historicalAlert')}}</button>
+        <button type="button" v-if="isShow" @click="historyAlarm" class="btn btn-sm btn-cancel-f btn-jump">{{$t('button.historicalAlert')}}</button>
       </li>
    </ul>
   </div>
