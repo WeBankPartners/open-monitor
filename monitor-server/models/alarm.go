@@ -133,6 +133,11 @@ func (s AlarmProblemList) Less(i,j int) bool {
 	return s[i].Start.Unix() > s[j].Start.Unix()
 }
 
+type AlarmHistoryReturnData struct {
+	Endpoint  string  `json:"endpoint"`
+	ProblemList  AlarmProblemList  `json:"problem_list"`
+}
+
 type GrpEndpointTable struct {
 	GrpId  int  `json:"grp_id"`
 	EndpointId  int  `json:"endpoint_id"`
@@ -175,7 +180,8 @@ type AlarmEndpointObj struct {
 	Id  string  `json:"id"`
 	Guid  string  `json:"guid"`
 	Type  string  `json:"type"`
-	GroupsName  string  `json:"groups_name"`
+	GroupsIds  string  `json:"groups_ids"`
+	Groups  []*GrpTable  `json:"groups"`
 }
 
 type GrpEndpointParam struct {
@@ -187,6 +193,11 @@ type GrpEndpointParamNew struct {
 	Grp  int  `json:"grp" binding:"required"`
 	Endpoints  []int  `json:"endpoints"`
 	Operation  string  `json:"operation" binding:"required"`
+}
+
+type EndpointGrpParam struct {
+	EndpointId  int  `json:"endpoint_id"`
+	GroupIds  []int  `json:"group_ids"`
 }
 
 type AcceptObj struct {
