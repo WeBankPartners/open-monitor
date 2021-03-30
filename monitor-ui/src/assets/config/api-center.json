@@ -46,6 +46,7 @@
         "list": {
             "api": "/monitor/api/v1/alarm/endpoint/list"
         },
+        "groupUpdate": "/monitor/api/v1/alarm/endpoint/grp/update",
         "update": {
             "api": "/monitor/api/v1/alarm/endpoint/update"
         },
