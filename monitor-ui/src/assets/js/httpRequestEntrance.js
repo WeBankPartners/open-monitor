@@ -82,7 +82,7 @@ function httpRequestEntrance (method, url, data, callback, customHttpConfig) {
       },0)
     }
     errorMessage(error.response.data.message)
-    if (!window.request) {
+    if (!window.request && error.response.status === 401) {
       router.push({path: '/login'})
     }
   })
