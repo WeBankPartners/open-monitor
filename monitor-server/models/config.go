@@ -173,6 +173,7 @@ type GlobalConfig struct {
 	ArchiveMysql  ArchiveMysqlConfig  `json:"archive_mysql"`
 	ProcessCheckList  []string  `json:"process_check_list"`
 	DefaultAdminRole  string  `json:"default_admin_role"`
+	AlarmAliveMaxDay  int  `json:"alarm_alive_max_day"`
 }
 
 var (
