@@ -19,6 +19,7 @@ sed -i "s~{{MONITOR_ARCHIVE_MYSQL_HOST}}~$MONITOR_ARCHIVE_MYSQL_HOST~g" monitor/
 sed -i "s~{{MONITOR_ARCHIVE_MYSQL_PORT}}~$MONITOR_ARCHIVE_MYSQL_PORT~g" monitor/conf/default.json
 sed -i "s~{{MONITOR_ARCHIVE_MYSQL_USER}}~$MONITOR_ARCHIVE_MYSQL_USER~g" monitor/conf/default.json
 sed -i "s~{{MONITOR_ARCHIVE_MYSQL_PWD}}~$MONITOR_ARCHIVE_MYSQL_PWD~g" monitor/conf/default.json
+sed -i "s~{{MONITOR_ALARM_ALIVE_MAX_DAY}}~$MONITOR_ALARM_ALIVE_MAX_DAY~g" monitor/conf/default.json
 sed -i "s~{{MONITOR_LOG_LEVEL}}~$MONITOR_LOG_LEVEL~g" monitor/conf/default.json
 sed -i "s~{{MONITOR_DB_HOST}}~$MONITOR_DB_HOST~g" archive_mysql_tool/default.json
 sed -i "s~{{MONITOR_DB_PORT}}~$MONITOR_DB_PORT~g" archive_mysql_tool/default.json
