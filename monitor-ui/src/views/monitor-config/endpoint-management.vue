@@ -955,7 +955,7 @@ export default {
         guid: this.id,
         config: temp
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/agent/export/endpoint/telnet/update', params, () => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/agent/endpoint/telnet/update', params, () => {
         this.$Message.success(this.$t('tips.success'))
         this.$root.JQ('#port_Modal').modal('hide')
       })
