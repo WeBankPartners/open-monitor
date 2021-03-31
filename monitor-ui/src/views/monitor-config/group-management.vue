@@ -67,7 +67,7 @@
     {btn_name: 'button.edit', btn_func: 'editF'},
     {btn_name: 'button.remove', btn_func: 'deleteConfirmModal'},
     // {btn_name: 'field.log', btn_func: 'logManagement'},
-    {btn_name: 'button.authorize', btn_func: 'authorizeF'},
+    {btn_name: 'button.authorize', btn_func: 'authorizeF'}
   ]
   import axios from 'axios'
   export default {
