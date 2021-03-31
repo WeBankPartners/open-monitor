@@ -914,7 +914,7 @@ export default {
       let params = {
         guid: rowData.guid
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v1/agent/export/endpoint/telnet/get', params, (responseData) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v1/agent/endpoint/telnet/get', params, (responseData) => {
         if (!responseData.length) {
           responseData.push({
             port: null,
