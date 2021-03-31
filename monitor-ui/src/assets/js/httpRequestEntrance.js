@@ -4,7 +4,7 @@
 * 统一http请求入口，统一处理http请求响应
 *
  */
-// import router from '@/router'
+import router from '@/router'
 import httpRequest from '@/assets/js/axiosHttp'
 import $ from 'jquery'
 import {Message} from 'view-design'
@@ -34,6 +34,7 @@ export const loading = {
 }
 // 错误消息提醒统一组件
 function errorMessage(content) {
+  console.log(content)
   Message.error({
     content: content,
     duration: 5,
@@ -81,10 +82,11 @@ function httpRequestEntrance (method, url, data, callback, customHttpConfig) {
         loading.end()
       },0)
     }
+    console.log(error)
     errorMessage(error.response.data.message)
-    // if (!window.request && error.response.status === 401) {
-    //   router.push({path: '/login'})
-    // }
+    if (!window.request && error.response.status === 401) {
+      router.push({path: '/login'})
+    }
   })
 }
 
