@@ -1,8 +1,8 @@
 <template>
 <div class="main-content">
-  <div v-if="showGroupMsg" style="padding-left:20px">
+  <!-- <div v-if="showGroupMsg" style="padding-left:20px">
     <Tag type="border" closable color="primary" @on-close="closeTag">{{$t('field.group')}}:{{groupMsg.name}}</Tag>
-  </div>
+  </div> -->
   <PageTable :pageConfig="pageConfig"></PageTable>
   <ModalComponent :modelConfig="modelConfig">
     <div slot="advancedConfig" class="extentClass">
@@ -18,7 +18,7 @@
   </ModalComponent>
   <ModalComponent :modelConfig="historyAlarmModel">
     <div slot="historyAlarm"  style="max-height:400px;overflow-y:auto">
-      <TableTemp :table="historyAlarmPageConfig.table" :pageConfig="historyAlarmPageConfig"></TableTemp>
+      <Table height="400" width="930" :columns="historyAlarmPageConfig.table.tableEle" :data="historyAlarmPageConfig.table.tableData"></Table>
     </div>
   </ModalComponent>
   <ModalComponent :modelConfig="endpointRejectModel">
@@ -205,11 +205,22 @@
       </div>
     </template>
   </ModalComponent>
+  <ModalComponent :modelConfig="groupModel">
+    <div slot="endpointOperate">  
+      <Transfer
+      :data="groupModel.groupOptions"
+      :target-keys="groupModel.group"
+      :titles="groupModel.titles"
+      :list-style="groupModel.listStyle"
+      @on-change="handleChange"
+      filterable>
+      </Transfer>
+    </div>
+  </ModalComponent>
 </div>
 </template>
 
 <script>
-import TableTemp from '@/components/table-page/table'
 import DataMonitor from '@/views/monitor-config/data-monitor'
 import {
   interceptParams
@@ -217,75 +228,23 @@ import {
 let tableEle = [{
     title: 'tableKey.endpoint',
     value: 'guid',
+    style: 'width:300px',
     display: true
   },
   {
     title: 'tableKey.group',
     display: true,
     tags: {
-      style: 'width: 300px;'
+      // style: 'width: 300px;'
     },
     'render': (item) => {
-      let res = item.groups_name.split(',').map((i) => {
+      let res = item.groups&&item.groups.map((i) => {
         return {
-          label: i,
-          value: i
+          label: i.name,
+          value: i.name
         }
       })
       return res
-    }
-  }
-]
-let historyAlarmEle = [{
-    title: 'tableKey.status',
-    value: 'status',
-    style: 'min-width:70px',
-    display: true
-  },
-  {
-    title: 'tableKey.s_metric',
-    value: 's_metric',
-    display: true
-  },
-  {
-    title: 'tableKey.start_value',
-    value: 'start_value',
-    display: true
-  },
-  {
-    title: 'tableKey.s_cond',
-    value: 's_cond',
-    style: 'min-width:70px',
-    display: true
-  },
-  {
-    title: 'tableKey.s_last',
-    value: 's_last',
-    style: 'min-width:65px',
-    display: true
-  },
-  {
-    title: 'tableKey.s_priority',
-    value: 's_priority',
-    display: true
-  },
-  {
-    title: 'tableKey.start',
-    value: 'start_string',
-    style: 'min-width:200px',
-    display: true
-  },
-  {
-    title: 'tableKey.end',
-    value: 'end_string',
-    style: 'min-width:200px',
-    display: true,
-    'render': (item) => {
-      if (item.end_string === '0001-01-01 00:00:00') {
-        return '-'
-      } else {
-        return item.end_string
-      }
     }
   }
 ]
@@ -296,6 +255,10 @@ const btn = [{
   {
     btn_name: 'button.historicalAlert',
     btn_func: 'historyAlarm'
+  },
+  {
+    btn_name: 'field.group',
+    btn_func: 'groupManagement'
   },
   {
     btn_name: 'button.remove',
@@ -373,9 +336,55 @@ export default {
       historyAlarmPageConfig: {
         table: {
           tableData: [],
-          tableEle: historyAlarmEle,
-          btn: [],
-        },
+          tableEle: [{
+              title: this.$t('tableKey.status'),
+              width: 80,
+              key: 'status'
+            },
+            {
+              title: this.$t('tableKey.s_metric'),
+              width: 200,
+              key: 's_metric'
+            },
+            {
+              title: this.$t('tableKey.start_value'),
+              width: 120,
+              key: 'start_value'
+            },
+            {
+              title: this.$t('tableKey.s_cond'),
+              width: 90,
+              key: 's_cond'
+            },
+            {
+              title: this.$t('tableKey.s_last'),
+              width: 100,
+              key: 's_last'
+            },
+            {
+              title: this.$t('tableKey.s_priority'),
+              width: 90,
+              key: 's_priority'
+            },
+            {
+              title: this.$t('tableKey.start'),
+              width: 120,
+              key: 'start_string'
+            },
+            {
+              title: this.$t('tableKey.end'),
+              key: 'end_string',
+              width: 120,
+              render: (h, params) => {
+                let res = params.row.end_string
+                if (params.row.end_string === '0001-01-01 00:00:00') {
+                  res = '-'
+                }
+                return h('span', res);
+              }
+            }
+          ]
+        }
       },
       modelConfig: {
         modalId: 'add_object_Modal',
@@ -397,7 +406,7 @@ export default {
       historyAlarmModel: {
         modalId: 'history_alarm_Modal',
         modalTitle: 'button.historicalAlert',
-        modalStyle: 'width:930px;max-width: none;',
+        modalStyle: 'width:950px;max-width: none;',
         noBtn: true,
         isAdd: true,
         config: [{
@@ -522,7 +531,24 @@ export default {
       },
       id: null,
       showGroupMsg: false,
-      groupMsg: {}
+      groupMsg: {},
+      groupModel: {
+        modalId: 'group_modal',
+        modalTitle: 'tableKey.endpoint',
+        saveFunc: 'managementEndpoint',
+        modalStyle: 'min-width:900px',
+        isAdd: true,
+        config: [
+          {name:'endpointOperate',type:'slot'}
+        ],
+        group: [],
+        groupOptions: [],
+        titles: [this.$t('m_value_to_be_selected'), this.$t('m_selected_value')],
+        listStyle: {
+          width: '400px',
+          height: '400px'
+        }
+      },
     }
   },
   mounted() {
@@ -561,6 +587,37 @@ export default {
     }
   },
   methods: {
+    managementEndpoint() {
+      let params = {
+        endpoint_id: Number(this.id),
+        group_ids: this.groupModel.group.map(Number)
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.endpointManagement.groupUpdate, params, () => {
+        this.$Message.success(this.$t('tips.success'))
+        this.$root.JQ('#group_modal').modal('hide')
+        this.initData(this.pageConfig.CRUD, this.pageConfig)
+      })
+    },
+    handleChange (newTargetKeys) {
+      this.groupModel.group = newTargetKeys
+    },
+    async groupManagement (rowData) {
+      this.id = rowData.id
+      let params = {
+        page: 1,
+        size: 10000,
+      }
+      await this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.groupManagement.list.api, params, res => {
+        this.groupModel.groupOptions = res.data.map(item => {
+          return {
+            label: item.name,
+            key: item.id
+          }
+        })
+      })
+      this.groupModel.group = rowData.groups.map(item => item.id)
+      this.$root.JQ('#group_modal').modal('show')
+    },
     maintenanceWindowSave () {
       this.maintenanceWindowModel.result.forEach(item => {
         item.weekday = item.weekday.join(',')
@@ -634,7 +691,7 @@ export default {
     },
     filterMoreBtn(rowData) {
       // let moreBtnGroup = ['thresholdConfig', 'historyAlarm', 'maintenanceWindow', 'deleteConfirmModal']
-      let moreBtnGroup = ['historyAlarm', 'maintenanceWindow', 'deleteConfirmModal']
+      let moreBtnGroup = ['historyAlarm', 'groupManagement', 'maintenanceWindow', 'deleteConfirmModal']
       if (rowData.type === 'host') {
         // moreBtnGroup.push('processManagement', 'businessManagement', 'logManagement', 'portManagement')
         moreBtnGroup.push('processManagement', 'portManagement')
@@ -735,26 +792,26 @@ export default {
         }
       })
     },
-    closeTag() {
-      this.groupMsg = {}
-      this.showGroupMsg = false
-      this.pageConfig.researchConfig.filters.grp = ''
-      this.pageConfig.table.btn.splice(this.pageConfig.table.btn.length - 1, 1)
-      this.pageConfig.researchConfig.btn_group.splice(this.pageConfig.researchConfig.btn_group.length - 1, 1)
-      this.pageConfig.researchConfig.btn_group.push({
-        btn_name: 'button.add',
-        btn_func: 'endpointReject',
-        class: 'btn-cancel-f',
-        btn_icon: 'fa fa-plus'
-      })
-      this.initData(this.pageConfig.CRUD, this.pageConfig)
-    },
+    // closeTag() {
+    //   this.groupMsg = {}
+    //   this.showGroupMsg = false
+    //   this.pageConfig.researchConfig.filters.grp = ''
+    //   this.pageConfig.table.btn.splice(this.pageConfig.table.btn.length - 1, 1)
+    //   this.pageConfig.researchConfig.btn_group.splice(this.pageConfig.researchConfig.btn_group.length - 1, 1)
+    //   this.pageConfig.researchConfig.btn_group.push({
+    //     btn_name: 'button.add',
+    //     btn_func: 'endpointReject',
+    //     class: 'btn-cancel-f',
+    //     btn_icon: 'fa fa-plus'
+    //   })
+    //   this.initData(this.pageConfig.CRUD, this.pageConfig)
+    // },
     historyAlarm(rowData) {
       let params = {
         id: rowData.id
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.alarm.history, params, (responseData) => {
-        this.historyAlarmPageConfig.table.tableData = responseData
+        this.historyAlarmPageConfig.table.tableData = responseData[0].problem_list
       })
       this.$root.JQ('#history_alarm_Modal').modal('show')
     },
@@ -862,7 +919,7 @@ export default {
       let params = {
         guid: rowData.guid
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v1/agent/export/endpoint/telnet/get', params, (responseData) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v1/agent/endpoint/telnet/get', params, (responseData) => {
         if (!responseData.length) {
           responseData.push({
             port: null,
@@ -903,14 +960,13 @@ export default {
         guid: this.id,
         config: temp
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/agent/export/endpoint/telnet/update', params, () => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/agent/endpoint/telnet/update', params, () => {
         this.$Message.success(this.$t('tips.success'))
         this.$root.JQ('#port_Modal').modal('hide')
       })
     }
   },
   components: {
-    TableTemp,
     DataMonitor
   }
 }

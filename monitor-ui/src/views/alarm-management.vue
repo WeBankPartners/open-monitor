@@ -107,8 +107,8 @@
                 </li>
                 <li v-if="!alarmItem.is_custom">
                   <label class="col-md-2" style="vertical-align: top;line-height: 24px;">
-                    <span>{{$t('field.metric')}}&</span>
-                    <span v-if="alarmItem.tags">Tags</span>
+                    <span>{{$t('field.metric')}}</span>
+                    <span v-if="alarmItem.tags">&Tags</span>
                     :</label>
                     <div class="col-md-9" style="display: inline-block;padding:0">
                       <Tag type="border" closable @on-close="addParams('metric',alarmItem.s_metric)" color="primary">{{alarmItem.s_metric}}</Tag>
