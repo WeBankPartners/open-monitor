@@ -83,8 +83,8 @@ function httpRequestEntrance (method, url, data, callback, customHttpConfig) {
       },0)
     }
     console.log(error)
-    errorMessage(error.response.data.message)
-    if (!window.request && error.response.status === 401) {
+    error.response&&error.response.data&&errorMessage(error.response.data.message)
+    if (!window.request && error.response && error.response.status === 401) {
       router.push({path: '/login'})
     }
   })
