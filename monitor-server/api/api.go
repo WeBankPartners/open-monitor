@@ -137,7 +137,7 @@ func InitHttpServer(exportAgent bool) {
 			agentApi.POST("/export/custom/metric/add", agent.CustomMetricPush)
 			agentApi.POST("/export/endpoint/telnet/update", agent.UpdateEndpointTelnet)
 			agentApi.GET("/export/ping/source", agent.ExportPingSource)
-			agentApi.GET("/export/endpoint/telnet/get", agent.GetEndpointTelnet)
+			agentApi.GET("/endpoint/telnet/get", agent.GetEndpointTelnet)
 			agentApi.POST("/export/process/:operation", agent.AutoUpdateProcessMonitor)
 			agentApi.POST("/export/log_monitor/:operation", agent.AutoUpdateLogMonitor)
 			agentApi.POST("/kubernetes/cluster/:operation", agent.UpdateKubernetesCluster)
