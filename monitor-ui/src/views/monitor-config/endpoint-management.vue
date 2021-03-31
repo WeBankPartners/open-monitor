@@ -18,7 +18,7 @@
   </ModalComponent>
   <ModalComponent :modelConfig="historyAlarmModel">
     <div slot="historyAlarm"  style="max-height:400px;overflow-y:auto">
-      <Table height="400" width="900" :columns="historyAlarmPageConfig.table.tableEle" :data="historyAlarmPageConfig.table.tableData"></Table>
+      <Table height="400" width="930" :columns="historyAlarmPageConfig.table.tableEle" :data="historyAlarmPageConfig.table.tableData"></Table>
     </div>
   </ModalComponent>
   <ModalComponent :modelConfig="endpointRejectModel">
@@ -338,6 +338,7 @@ export default {
           tableData: [],
           tableEle: [{
               title: this.$t('tableKey.status'),
+              width: 80,
               key: 'status'
             },
             {
@@ -347,18 +348,22 @@ export default {
             },
             {
               title: this.$t('tableKey.start_value'),
+              width: 120,
               key: 'start_value'
             },
             {
               title: this.$t('tableKey.s_cond'),
+              width: 90,
               key: 's_cond'
             },
             {
               title: this.$t('tableKey.s_last'),
+              width: 100,
               key: 's_last'
             },
             {
               title: this.$t('tableKey.s_priority'),
+              width: 90,
               key: 's_priority'
             },
             {
@@ -401,7 +406,7 @@ export default {
       historyAlarmModel: {
         modalId: 'history_alarm_Modal',
         modalTitle: 'button.historicalAlert',
-        modalStyle: 'width:930px;max-width: none;',
+        modalStyle: 'width:950px;max-width: none;',
         noBtn: true,
         isAdd: true,
         config: [{
@@ -806,7 +811,7 @@ export default {
         id: rowData.id
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.alarm.history, params, (responseData) => {
-        this.historyAlarmPageConfig.table.tableData = responseData
+        this.historyAlarmPageConfig.table.tableData = responseData[0].problem_list
       })
       this.$root.JQ('#history_alarm_Modal').modal('show')
     },
