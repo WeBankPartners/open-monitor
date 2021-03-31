@@ -354,3 +354,38 @@ func getLogMonitorRows(ip,path,keyword string,lastValue,oldValue float64) string
 	}
 	return result
 }
+
+func StartCleanAlarmTable()  {
+	if m.Config().AlarmAliveMaxDay <= 0 {
+		return
+	}
+	t,err := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s 00:00:00 "+m.DefaultLocalTimeZone, time.Now().Format("2006-01-02 ")))
+	if err != nil {
+		log.Logger.Error("Start clean alarm table job init fail", log.Error(err))
+		return
+	}
+	sleepTime := t.Unix() + 86400 - time.Now().Unix()
+	if sleepTime < 0 {
+		log.Logger.Warn("Start clean alarm table job fail,calc sleep time fail", log.Int64("sleep time", sleepTime))
+		return
+	}
+	time.Sleep(time.Duration(sleepTime)*time.Second)
+	tc := time.NewTicker(86400*time.Second).C
+	for {
+		go cleanAlarmTableJob()
+		<- tc
+	}
+}
+
+func cleanAlarmTableJob()  {
+	log.Logger.Info("Start to clean alarm table")
+	maxDay := int64(m.Config().AlarmAliveMaxDay)
+	lastDayString := time.Unix(time.Now().Unix() - maxDay*86400, 0).Format("2006-01-02")
+	execResult, err := x.Exec(fmt.Sprintf("delete from alarm where (status='ok' or status='closed') and start<='%s 00:00:00'", lastDayString))
+	if err != nil {
+		log.Logger.Error("Clean alarm table job fail", log.Error(err))
+		return
+	}
+	rowAffected,_ := execResult.RowsAffected()
+	log.Logger.Info("Clean alarm table job done", log.String("last day", lastDayString), log.Int64("delete row num", rowAffected))
+}
