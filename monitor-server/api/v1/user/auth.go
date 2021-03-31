@@ -203,6 +203,7 @@ func AuthRequired() gin.HandlerFunc {
 							}
 							if !isSystemCall {
 								c.JSON(http.StatusOK, pluginInterfaceResultObj{ResultCode:"1", ResultMessage:"Token authority validate fail", Results:pluginInterfaceResultOutput{Outputs: []string{}}})
+								c.Abort()
 							}else {
 								c.Next()
 							}
