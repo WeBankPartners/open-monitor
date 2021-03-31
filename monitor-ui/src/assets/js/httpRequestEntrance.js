@@ -1,6 +1,4 @@
 /*
-* @author: pobu168
-* @CreateDate: 2019-09-04
 * @version: V0.1.1
 * @describe:
 * 统一http请求入口，统一处理http请求响应
@@ -36,6 +34,7 @@ export const loading = {
 }
 // 错误消息提醒统一组件
 function errorMessage(content) {
+  console.log(content)
   Message.error({
     content: content,
     duration: 5,
@@ -83,7 +82,12 @@ function httpRequestEntrance (method, url, data, callback, customHttpConfig) {
         loading.end()
       },0)
     }
+    console.log(error)
     errorMessage(error.response.data.message)
+    // error.response&&error.response.data&&errorMessage(error.response.data.message)
+    // if (!window.request && error.response && error.response.status === 401) {
+    //   router.push({path: '/login'})
+    // }
   })
 }
 
