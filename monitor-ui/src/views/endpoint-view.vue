@@ -7,74 +7,22 @@
       <Recursive :recursiveViewConfig="recursiveViewConfig" :params="params"></Recursive>
     </div>
     <Drawer title="View details" :width="zoneWidth" :closable="false" v-model="showMaxChart">
-        <MaxChart ref="maxChart"></MaxChart>
+      <MaxChart ref="maxChart"></MaxChart>
     </Drawer>
-    <ModalComponent :modelConfig="historyAlarmModel">
-      <div slot="historyAlarm" style="max-height:400px;overflow-y:auto">
-        <TableTemp :table="historyAlarmPageConfig.table" :pageConfig="historyAlarmPageConfig"></TableTemp>
-      </div>
-    </ModalComponent>
+    <Modal
+      v-model="historyAlarmModel"
+      width="1200"
+      :footer-hide="true"
+      :title="$t('button.historicalAlert')">
+      <Table height="500" row-key="id" :columns="historyAlarmPageConfig.table.tableEle" :data="historyAlarmPageConfig.table.tableData"></Table>
+    </Modal>
   </div>
 </template>
 <script>
 import Search from '@/components/search'
-import TableTemp from '@/components/table-page/table'
 import Charts from '@/components/charts'
 import Recursive from '@/views/recursive-view/recursive'
 import MaxChart from '@/components/max-chart'
-const historyAlarmEle = [{
-    title: 'tableKey.status',
-    value: 'status',
-    style: 'min-width:70px',
-    display: true
-  },
-  {
-    title: 'tableKey.s_metric',
-    value: 's_metric',
-    display: true
-  },
-  {
-    title: 'tableKey.start_value',
-    value: 'start_value',
-    display: true
-  },
-  {
-    title: 'tableKey.s_cond',
-    value: 's_cond',
-    style: 'min-width:70px',
-    display: true
-  },
-  {
-    title: 'tableKey.s_last',
-    value: 's_last',
-    style: 'min-width:65px',
-    display: true
-  },
-  {
-    title: 'tableKey.s_priority',
-    value: 's_priority',
-    display: true
-  },
-  {
-    title: 'tableKey.start',
-    value: 'start_string',
-    style: 'min-width:200px',
-    display: true
-  },
-  {
-    title: 'tableKey.end',
-    value: 'end_string',
-    style: 'min-width:200px',
-    display: true,
-    'render': (item) => {
-      if (item.end_string === '0001-01-01 00:00:00') {
-        return '-'
-      } else {
-        return item.end_string
-      }
-    }
-  }
-]
 export default {
   name: 'endpoint-view',
   data() {
@@ -88,22 +36,66 @@ export default {
       recursiveViewConfig: [],
       showMaxChart: false,
       zoneWidth: '800',
-
-      historyAlarmModel: {
-        modalId: 'history_alarm_Modal',
-        modalTitle: 'button.historicalAlert',
-        modalStyle: 'width:930px;max-width: none;',
-        noBtn: true,
-        isAdd: true,
-        config: [{
-          name: 'historyAlarm',
-          type: 'slot'
-        }]
-      },
+      
+      historyAlarmModel: false,
       historyAlarmPageConfig: {
         table: {
           tableData: [],
-          tableEle: historyAlarmEle,
+          tableEle: [
+            {
+              title: this.$t('tableKey.endpoint'),
+              width: 220,
+              key: 'endpoint',
+              tree: true
+            },
+            {
+              title: this.$t('tableKey.status'),
+              width: 80,
+              key: 'status'
+            },
+            {
+              title: this.$t('tableKey.s_metric'),
+              width: 200,
+              key: 's_metric'
+            },
+            {
+              title: this.$t('tableKey.start_value'),
+              width: 120,
+              key: 'start_value'
+            },
+            {
+              title: this.$t('tableKey.s_cond'),
+              width: 80,
+              key: 's_cond'
+            },
+            {
+              title: this.$t('tableKey.s_last'),
+              width: 100,
+              key: 's_last'
+            },
+            {
+              title: this.$t('tableKey.s_priority'),
+              width: 100,
+              key: 's_priority'
+            },
+            {
+              title: this.$t('tableKey.start'),
+              width: 120,
+              key: 'start_string'
+            },
+            {
+              title: this.$t('tableKey.end'),
+              key: 'end_string',
+              width: 120,
+              render: (h, params) => {
+                let res = params.row.end_string
+                if (params.row.end_string === '0001-01-01 00:00:00') {
+                  res = '-'
+                }
+                return h('span', res);
+              }
+            }
+          ],
           btn: [],
         },
       },
@@ -146,7 +138,7 @@ export default {
       })
       this.showCharts = true
       this.showRecursive = false
-      this.$refs.parentCharts.refreshCharts()
+      this.$refs.parentCharts&&this.$refs.parentCharts.refreshCharts()
     },
     recursiveView (params) {
       this.recursiveViewConfig = []
@@ -161,20 +153,28 @@ export default {
     },
     historyAlarm(endpointObject) {
       let params = {
-        id: endpointObject.id
+        id: endpointObject.id,
+        guid: endpointObject.option_value
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.alarm.history, params, (responseData) => {
+        responseData.forEach((item) => {
+          item.children = item.problem_list
+          item.id = item.endpoint + '--'
+          if (endpointObject.id !== -1) {
+            item._showChildren = true
+          }
+          return item
+        })
         this.historyAlarmPageConfig.table.tableData = responseData
       })
-      this.$root.JQ('#history_alarm_Modal').modal('show')
+      this.historyAlarmModel = true
     }
   },
   components: {
     Search,
     Charts,
     Recursive,
-    MaxChart,
-    TableTemp
+    MaxChart
   }
 }
 </script>
