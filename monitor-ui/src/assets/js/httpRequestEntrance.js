@@ -4,7 +4,7 @@
 * 统一http请求入口，统一处理http请求响应
 *
  */
-import router from '@/router'
+// import router from '@/router'
 import httpRequest from '@/assets/js/axiosHttp'
 import $ from 'jquery'
 import {Message} from 'view-design'
