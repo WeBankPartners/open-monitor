@@ -13,8 +13,12 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
 )
 
-func ListKubernetesCluster() (result []*m.KubernetesClusterTable,err error) {
-	err = x.SQL("select * from kubernetes_cluster").Find(&result)
+func ListKubernetesCluster(clusterName string) (result []*m.KubernetesClusterTable,err error) {
+	if clusterName != "" {
+		err = x.SQL("select * from kubernetes_cluster where cluster_name=?", clusterName).Find(&result)
+	}else {
+		err = x.SQL("select * from kubernetes_cluster").Find(&result)
+	}
 	return result,err
 }
 
@@ -44,7 +48,15 @@ func UpdateKubernetesCluster(param m.KubernetesClusterParam) error {
 	return err
 }
 
-func DeleteKubernetesCluster(id int) error {
+func DeleteKubernetesCluster(id int, clusterName string) error {
+	if id <= 0 {
+		kubernetesTables,_ := ListKubernetesCluster(clusterName)
+		if len(kubernetesTables) == 0 {
+			log.Logger.Warn("Delete kubernetes cluster break,can not find fetch data", log.String("cluster_name", clusterName))
+			return nil
+		}
+		id = kubernetesTables[0].Id
+	}
 	_,err := x.Exec("delete from kubernetes_cluster where id=?", id)
 	if err != nil {
 		err = fmt.Errorf("Delete db data fail,%s ", err.Error())
@@ -217,4 +229,96 @@ func syncPodToEndpoint() bool {
 		}
 	}
 	return result
+}
+
+func AddKubernetesPod(cluster *m.KubernetesClusterTable,podGuid string) (err error,id int64,endpointGuid string) {
+	apiServerIp := cluster.ApiServer[:strings.Index(cluster.ApiServer, ":")]
+	endpointGuid = fmt.Sprintf("%s_%s_pod", podGuid, apiServerIp)
+	endpointObj := m.EndpointTable{Guid: endpointGuid}
+	err = GetEndpoint(&endpointObj)
+	if err != nil {
+		return err,id,endpointGuid
+	}
+	if endpointObj.Id <= 0 {
+		execResult,err := x.Exec("insert into endpoint(guid,name,ip,export_type,step,os_type) value (?,?,?,'pod',10,?)", endpointGuid,podGuid,apiServerIp,cluster.ClusterName)
+		if err != nil {
+			return err,id,endpointGuid
+		}
+		lastId,_ := execResult.LastInsertId()
+		if lastId <= 0 {
+			err = fmt.Errorf("Insert endpoint table fail,last insert id illegal,please check server log ")
+			return err,id,endpointGuid
+		}
+		id = lastId
+	}
+	var kubernetesEndpointTables []*m.KubernetesEndpointRelTable
+	x.SQL("select * from kubernetes_endpoint_rel where kubernete_id=? and endpoint_guid=?", cluster.Id, endpointGuid).Find(&kubernetesEndpointTables)
+	if len(kubernetesEndpointTables) <= 0 {
+		_,err = x.Exec("insert into kubernetes_endpoint_rel(kubernete_id,endpoint_guid) value (?,?)", cluster.Id, endpointGuid)
+	}
+	return err,id,endpointGuid
+}
+
+func DeleteKubernetesPod(cluster *m.KubernetesClusterTable,podGuid,endpointGuid string) (err error,id int64) {
+	if endpointGuid == "" {
+		apiServerIp := cluster.ApiServer[:strings.Index(cluster.ApiServer, ":")]
+		endpointGuid = fmt.Sprintf("%s_%s_pod", podGuid, apiServerIp)
+	}
+	endpointObj := m.EndpointTable{Guid: endpointGuid}
+	err = GetEndpoint(&endpointObj)
+	if err != nil {
+		return err,id
+	}
+	if endpointObj.Id > 0 {
+		id = int64(endpointObj.Id)
+		_,err = x.Exec("delete from endpoint where id=?", endpointObj.Id)
+		if err != nil {
+			return err,id
+		}
+	}
+	if cluster.Id <= 0 {
+		clusterList,_ := ListKubernetesCluster(endpointObj.OsType)
+		if len(clusterList) > 0 {
+			cluster = clusterList[0]
+		}
+	}
+	if cluster.Id > 0 {
+		var kubernetesEndpointTables []*m.KubernetesEndpointRelTable
+		x.SQL("select * from kubernetes_endpoint_rel where kubernete_id=? and endpoint_guid=?", cluster.Id, endpointGuid).Find(&kubernetesEndpointTables)
+		if len(kubernetesEndpointTables) > 0 {
+			_,err = x.Exec("delete from kubernetes_endpoint_rel where kubernete_id=? and endpoint_guid=?", cluster.Id, endpointGuid)
+		}
+	}
+	return err,id
+}
+
+func UpdateKubernetesPodGroup(endpointId int64,group,operation string) (err error,tplId int) {
+	var groupTables []*m.GrpTable
+	x.SQL("select * from grp where name=?", group).Find(&groupTables)
+	if len(groupTables) == 0 {
+		err = fmt.Errorf("Group:%s can not find,please check group config ", group)
+		return
+	}
+	var groupEndpointTable []*m.GrpEndpointTable
+	x.SQL("select * from grp_endpoint where grp_id=? and endpoint_id=?", groupTables[0].Id, endpointId).Find(&groupEndpointTable)
+	if len(groupEndpointTable) > 0 {
+		if operation == "add" {
+			return
+		}
+		_,err = x.Exec("delete from grp_endpoint where grp_id=? and endpoint_id=?", groupTables[0].Id, endpointId)
+		if err != nil {
+			return
+		}
+	}else{
+		if operation == "delete" {
+			return
+		}
+		_,err = x.Exec("insert into grp_endpoint(grp_id,endpoint_id) value (?,?)", groupTables[0].Id, endpointId)
+		if err != nil {
+			return
+		}
+	}
+	_,tplObj := GetTpl(0, groupTables[0].Id, 0)
+	tplId = tplObj.Id
+	return
 }
