@@ -235,10 +235,7 @@ func AddKubernetesPod(cluster *m.KubernetesClusterTable,podGuid string) (err err
 	apiServerIp := cluster.ApiServer[:strings.Index(cluster.ApiServer, ":")]
 	endpointGuid = fmt.Sprintf("%s_%s_pod", podGuid, apiServerIp)
 	endpointObj := m.EndpointTable{Guid: endpointGuid}
-	err = GetEndpoint(&endpointObj)
-	if err != nil {
-		return err,id,endpointGuid
-	}
+	GetEndpoint(&endpointObj)
 	if endpointObj.Id <= 0 {
 		execResult,err := x.Exec("insert into endpoint(guid,name,ip,export_type,step,os_type) value (?,?,?,'pod',10,?)", endpointGuid,podGuid,apiServerIp,cluster.ClusterName)
 		if err != nil {
@@ -265,10 +262,7 @@ func DeleteKubernetesPod(cluster *m.KubernetesClusterTable,podGuid,endpointGuid 
 		endpointGuid = fmt.Sprintf("%s_%s_pod", podGuid, apiServerIp)
 	}
 	endpointObj := m.EndpointTable{Guid: endpointGuid}
-	err = GetEndpoint(&endpointObj)
-	if err != nil {
-		return err,id
-	}
+	GetEndpoint(&endpointObj)
 	if endpointObj.Id > 0 {
 		id = int64(endpointObj.Id)
 		_,err = x.Exec("delete from endpoint where id=?", endpointObj.Id)
