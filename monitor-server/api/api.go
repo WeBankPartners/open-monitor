@@ -141,6 +141,8 @@ func InitHttpServer(exportAgent bool) {
 			agentApi.POST("/export/process/:operation", agent.AutoUpdateProcessMonitor)
 			agentApi.POST("/export/log_monitor/:operation", agent.AutoUpdateLogMonitor)
 			agentApi.POST("/kubernetes/cluster/:operation", agent.UpdateKubernetesCluster)
+			agentApi.POST("/export/kubernetes/cluster/:action", agent.PluginKubernetesCluster)
+			agentApi.POST("/export/kubernetes/pod/:action", agent.PluginKubernetesPod)
 		}
 		alarmApi := authApi.Group("/alarm")
 		{
