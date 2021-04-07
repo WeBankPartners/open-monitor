@@ -601,7 +601,10 @@ func GetChart(c *gin.Context)  {
 				v.PromQl = strings.Replace(v.PromQl, "$guid", v.Endpoint, -1)
 			}
 			if strings.Contains(v.PromQl, "$pod") {
-				v.PromQl = strings.Replace(v.PromQl, "$pod", endpointObj.Name, -1)
+				v.PromQl = strings.Replace(v.PromQl, "$pod", endpointObj.Name[len(endpointObj.ExportVersion)+1:], -1)
+			}
+			if strings.Contains(v.PromQl, "$k8s_namespace") {
+				v.PromQl = strings.Replace(v.PromQl, "$k8s_namespace", endpointObj.ExportVersion, -1)
 			}
 			if strings.Contains(v.PromQl, "$k8s_cluster") {
 				v.PromQl = strings.Replace(v.PromQl, "$k8s_cluster", endpointObj.OsType, -1)

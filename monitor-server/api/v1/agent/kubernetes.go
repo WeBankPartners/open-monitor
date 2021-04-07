@@ -106,10 +106,11 @@ type k8sClusterRequestInputObj struct {
 	Guid  string  `json:"guid"`
 	CallbackParameter  string  `json:"callbackParameter"`
 	ClusterName  string  `json:"clusterName"`
+	Namespace  string  `json:"namespace"`
 	Ip  string  `json:"ip"`
 	Port  string  `json:"port"`
 	Token  string  `json:"token"`
-	PodGuid  string  `json:"podGuid"`
+	PodName  string  `json:"podName"`
 	PodGroup string  `json:"podGroup"`
 	PodMonitorKey string `json:"podMonitorKey"`
 }
@@ -240,6 +241,11 @@ func PluginKubernetesPod(c *gin.Context)  {
 }
 
 func handleAddKubernetesPod(input k8sClusterRequestInputObj) (err error,endpointGuid string) {
+	input.Guid = strings.TrimSpace(input.Guid)
+	if input.Guid == "" {
+		err = fmt.Errorf("Pod guid can not empty ")
+		return err,endpointGuid
+	}
 	clusterList,err := db.ListKubernetesCluster(input.ClusterName)
 	if err != nil {
 		return err,endpointGuid
@@ -248,13 +254,18 @@ func handleAddKubernetesPod(input k8sClusterRequestInputObj) (err error,endpoint
 		err = fmt.Errorf("Cluster_name: %s can not find ", input.ClusterName)
 		return err,endpointGuid
 	}
-	input.PodGuid = strings.TrimSpace(input.PodGuid)
-	if input.PodGuid == "" {
-		err = fmt.Errorf("Pod guid can not empty ")
+	input.Namespace = strings.TrimSpace(input.Namespace)
+	if input.Namespace == "" {
+		err = fmt.Errorf("Namespace can not empty ")
+		return err,endpointGuid
+	}
+	input.PodName = strings.TrimSpace(input.PodName)
+	if input.PodName == "" {
+		err = fmt.Errorf("Pod name can not empty ")
 		return err,endpointGuid
 	}
 	var insertId int64
-	err,insertId,endpointGuid = db.AddKubernetesPod(clusterList[0], input.PodGuid)
+	err,insertId,endpointGuid = db.AddKubernetesPod(clusterList[0], input.Guid, input.PodName, input.Namespace)
 	if err != nil {
 		return err,endpointGuid
 	}
@@ -271,22 +282,14 @@ func handleAddKubernetesPod(input k8sClusterRequestInputObj) (err error,endpoint
 }
 
 func handleDeleteKubernetesPod(input k8sClusterRequestInputObj) error {
-	var clusterList []*m.KubernetesClusterTable
 	var err error
 	if input.PodMonitorKey == "" {
-		clusterList, err = db.ListKubernetesCluster(input.ClusterName)
-		if err != nil {
-			return err
-		}
-		if len(clusterList) == 0 {
-			return fmt.Errorf("Cluster_name: %s can not find ", input.ClusterName)
-		}
-		input.PodGuid = strings.TrimSpace(input.PodGuid)
-		if input.PodGuid == "" {
+		input.Guid = strings.TrimSpace(input.Guid)
+		if input.Guid == "" {
 			return fmt.Errorf("Pod guid can not empty ")
 		}
 	}
-	err,endpointId := db.DeleteKubernetesPod(clusterList[0], input.PodGuid, input.PodMonitorKey)
+	err,endpointId := db.DeleteKubernetesPod(input.Guid, input.PodMonitorKey)
 	if err != nil {
 		return err
 	}
