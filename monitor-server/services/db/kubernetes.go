@@ -67,6 +67,13 @@ func DeleteKubernetesCluster(id int, clusterName string) error {
 	return err
 }
 
+func InitKubernetesConfig()  {
+	err := SyncKubernetesConfig()
+	if err != nil {
+		log.Logger.Error("Init kubernetes config fail", log.Error(err))
+	}
+}
+
 func SyncKubernetesConfig() error {
 	var kubernetesTables []*m.KubernetesClusterTable
 	err := x.SQL("select * from kubernetes_cluster").Find(&kubernetesTables)
