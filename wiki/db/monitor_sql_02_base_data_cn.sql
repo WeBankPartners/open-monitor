@@ -225,3 +225,8 @@ alter table alarm drop index `alarm_unique_index`;
 create index `alarm_unique_index_sec` on alarm (`strategy_id`,`endpoint`,`status`,`start`);
 alter table alarm modify column tags varchar(1024) default '';
 #@v1.11.3-end@;
+
+#@v1.11.3.2-begin@;
+alter table kubernetes_endpoint_rel add column pod_guid varchar(100) not null;
+alter table kubernetes_endpoint_rel add column namespace varchar(50) not null;
+#@v1.11.3.2-end@;
