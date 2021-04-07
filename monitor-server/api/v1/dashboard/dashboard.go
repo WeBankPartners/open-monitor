@@ -677,6 +677,7 @@ func GetChart(c *gin.Context)  {
 		agg = db.CheckAggregate(query.Start, query.End, firstEndpoint, step, len(serials))
 	}
 	//var firstSerialTime float64
+	eOption.Series = []*m.SerialModel{}
 	processDisplayMap := db.GetProcessDisplayMap(paramConfig[0].Endpoint)
 	for i, s := range serials {
 		if strings.Contains(s.Name, "$metric") {
@@ -692,13 +693,8 @@ func GetChart(c *gin.Context)  {
 		eOption.Legend = append(eOption.Legend, s.Name)
 		if eOption.Title == "${auto}" {
 			eOption.Title = s.Name[:strings.Index(s.Name, "{")]
-			//if strings.Contains(s.Name, ":") {
-			//	eOption.Title = s.Name[strings.Index(s.Name, ":")+1:]
-			//}else{
-			//	eOption.Title = s.Name
-			//}
 		}
-		if agg > 1 {
+		if agg > 1 && len(s.Data) > 300 {
 			if paramConfig[0].Aggregate != "" {
 				aggType = paramConfig[0].Aggregate
 			}
@@ -714,14 +710,13 @@ func GetChart(c *gin.Context)  {
 				s.Data = db.CompareSubData(s.Data, float64(compareSubTime)*1000)
 			}
 		}
+		_,tmpJsonMarshalErr := json.Marshal(s)
+		if tmpJsonMarshalErr == nil {
+			eOption.Series = append(eOption.Series, s)
+		}
 	}
 	eOption.Xaxis = make(map[string]interface{})
 	eOption.Yaxis = m.YaxisModel{Unit: unit}
-	if len(serials) > 0 {
-		eOption.Series = serials
-	}else{
-		eOption.Series = []*m.SerialModel{}
-	}
 	mid.ReturnSuccessData(c, eOption)
 }
 
