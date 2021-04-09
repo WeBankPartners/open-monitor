@@ -500,6 +500,9 @@ func changeValueByStringMap(input map[string]interface{},tagKey []string,mapConf
 		newMapConfigList = append(newMapConfigList, &businessStringMapRegexpObj{Key: v.Key,Regulation: v.Regulation,StringValue: v.StringValue,IntValue: v.IntValue,RegEnable: tmpRegEnable,Regexp: tmpExp})
 	}
 	for k,v := range input {
+		if v == nil || reflect.TypeOf(v) == nil {
+			continue
+		}
 		var newValue float64 = 0
 		typeString := reflect.TypeOf(v).String()
 		if strings.Contains(typeString, "string") {
