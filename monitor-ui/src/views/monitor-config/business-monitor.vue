@@ -61,8 +61,8 @@
                     type="error"
                     icon="md-close"
                   ></Button>
-                  <Input v-model="item.key" style="width: 190px" placeholder="key, e.g:[.*][.*]" />
-                  <Input v-model="item.metric" style="width: 190px" placeholder="metric, e.g:code" />
+                  <Input v-model="item.key" style="width: 190px" :placeholder="$t('m_key') + ' e.g:[.*][.*]'" />
+                  <Input v-model="item.metric" style="width: 190px" :placeholder="$t('field.metric') + ' , e.g:code'" />
                   <Select v-model="item.agg_type" filterable style="width:190px">
                     <Option v-for="agg in ruleModelConfig.slotConfig.aggOption" :value="agg" :key="agg">{{
                       agg
@@ -91,13 +91,13 @@
                     type="error"
                     icon="md-close"
                   ></Button>
-                  <Input v-model="item.key" style="width: 146px" placeholder="key" />
+                  <Input v-model="item.key" style="width: 146px" :placeholder="$t('m_key')" />
                   <Select v-model="item.regulation" filterable style="width:140px">
                     <Option v-for="regulation in ruleModelConfig.slotConfig.regulationOption" :value="regulation.value" :key="regulation.value">{{
                       regulation.label
                     }}</Option>
                   </Select>
-                  <Input v-model="item.string_value" style="width: 146px" placeholder="string_value" />
+                  <Input v-model="item.string_value" style="width: 146px" :placeholder="$t('m_value')" />
                   <InputNumber v-model="item.int_value" style="width: 140px"></InputNumber>
                 </p>
               </template>
