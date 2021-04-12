@@ -50,9 +50,9 @@
       <transition name="slide-fade">
         <div class="flex-item" v-show="showGraph && resultData.length">
           <div>
-            <Tag color="success"><span style="font-size:14px">Low:{{this.low}}</span></Tag>
-            <Tag color="warning"><span style="font-size:14px">Medium:{{this.mid}}</span></Tag>
-            <Tag color="error"><span style="font-size:14px">High:{{this.high}}</span></Tag>
+            <Tag color="success"><span style="font-size:14px">{{$t('m_low')}}:{{this.low}}</span></Tag>
+            <Tag color="warning"><span style="font-size:14px">{{$t('m_medium')}}:{{this.mid}}</span></Tag>
+            <Tag color="error"><span style="font-size:14px">{{$t('m_high')}}:{{this.high}}</span></Tag>
             <div v-show="alramEmpty" style="display:none" id="elId" class="echart"></div>
             <div v-if="!alramEmpty"  class="alarm-empty">
               <span style="font-size:14px"></span>
@@ -84,7 +84,7 @@
                   <Tag type="border" closable @on-close="addParams('priority',alarmItem.s_priority)" color="primary">{{alarmItem.s_priority}}</Tag>
                 </li>
                 <li v-if="!alarmItem.is_custom && alarmItem.tags">
-                  <label class="col-md-2">Tags:</label>
+                  <label class="col-md-2">{{$t('tableKey.tags')}}:</label>
                   <Tag type="border" v-for="(t,tIndex) in alarmItem.tags.split('^')" :key="tIndex" color="cyan">{{t}}</Tag>
                 </li>
                 <li>
