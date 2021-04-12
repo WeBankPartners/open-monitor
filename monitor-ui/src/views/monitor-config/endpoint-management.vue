@@ -1,8 +1,5 @@
 <template>
 <div class="main-content">
-  <!-- <div v-if="showGroupMsg" style="padding-left:20px">
-    <Tag type="border" closable color="primary" @on-close="closeTag">{{$t('field.group')}}:{{groupMsg.name}}</Tag>
-  </div> -->
   <PageTable :pageConfig="pageConfig"></PageTable>
   <ModalComponent :modelConfig="modelConfig">
     <div slot="advancedConfig" class="extentClass">
@@ -16,11 +13,13 @@
       </div>
     </div>
   </ModalComponent>
-  <ModalComponent :modelConfig="historyAlarmModel">
-    <div slot="historyAlarm"  style="max-height:400px;overflow-y:auto">
-      <Table height="400" width="930" :columns="historyAlarmPageConfig.table.tableEle" :data="historyAlarmPageConfig.table.tableData"></Table>
-    </div>
-  </ModalComponent>
+  <Modal
+    v-model="historyAlarmModel"
+    width="950"
+    :footer-hide="true"
+    :title="$t('button.historicalAlert')">
+    <Table height="400" width="930" :columns="historyAlarmPageConfig.table.tableEle" :data="historyAlarmPageConfig.table.tableData"></Table>
+  </Modal>
   <ModalComponent :modelConfig="endpointRejectModel">
     <div slot="endpointReject">
       <div class="marginbottom params-each">
@@ -404,17 +403,7 @@ export default {
           resourceOption: []
         }
       },
-      historyAlarmModel: {
-        modalId: 'history_alarm_Modal',
-        modalTitle: 'button.historicalAlert',
-        modalStyle: 'width:950px;max-width: none;',
-        noBtn: true,
-        isAdd: true,
-        config: [{
-          name: 'historyAlarm',
-          type: 'slot'
-        }]
-      },
+      historyAlarmModel: false,
       portModel: {
         modalId: 'port_Modal',
         modalTitle: 'button.portConfiguration',
@@ -793,20 +782,6 @@ export default {
         }
       })
     },
-    // closeTag() {
-    //   this.groupMsg = {}
-    //   this.showGroupMsg = false
-    //   this.pageConfig.researchConfig.filters.grp = ''
-    //   this.pageConfig.table.btn.splice(this.pageConfig.table.btn.length - 1, 1)
-    //   this.pageConfig.researchConfig.btn_group.splice(this.pageConfig.researchConfig.btn_group.length - 1, 1)
-    //   this.pageConfig.researchConfig.btn_group.push({
-    //     btn_name: 'button.add',
-    //     btn_func: 'endpointReject',
-    //     class: 'btn-cancel-f',
-    //     btn_icon: 'fa fa-plus'
-    //   })
-    //   this.initData(this.pageConfig.CRUD, this.pageConfig)
-    // },
     historyAlarm(rowData) {
       let params = {
         id: rowData.id
@@ -814,7 +789,7 @@ export default {
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.alarm.history, params, (responseData) => {
         this.historyAlarmPageConfig.table.tableData = responseData[0].problem_list
       })
-      this.$root.JQ('#history_alarm_Modal').modal('show')
+      this.historyAlarmModel = true
     },
     endpointReject() {
       this.endpointRejectModel.addRow.type = 'host'
