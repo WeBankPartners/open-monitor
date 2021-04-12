@@ -218,5 +218,18 @@
   "m_selected_value": "Selected Value",
   "m_value_to_be_selected": "Value To Be Selected",
   "m_regular_match": "Regular Match",
-  "m_irregular_matching": "Irregular Matching"
+  "m_irregular_matching": "Irregular Matching",
+  "m_key": "Key",
+  "m_value": "Value",
+  "m_low": "Low",
+  "m_medium": "Medium",
+  "m_high": "High",
+  "m_all": "All",
+  "m_monday": "Monday",
+  "m_tuesday": "Tuesday",
+  "m_wednesday": "Wednesday",
+  "m_thursday": "Thursday",
+  "m_friday": "Friday",
+  "m_saturday": "Saturday",
+  "m_sunday": "Sunday"
 }

@@ -70,7 +70,7 @@
           <div class="marginbottom params-each">
             <label class="col-md-2 label-name">{{$t('tableKey.s_priority')}}:</label>
             <Select v-model="modelConfig.priority" style="width:100px">
-              <Option v-for="item in modelConfig.priorityList" :value="item.value" :key="item.value">{{ item.label }}</Option>
+              <Option v-for="item in modelConfig.priorityList" :value="item.value" :key="item.value">{{ $t(item.label) }}</Option>
             </Select>
           </div>
         </div>
