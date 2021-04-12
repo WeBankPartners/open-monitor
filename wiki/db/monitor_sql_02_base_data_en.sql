@@ -225,3 +225,15 @@ alter table alarm drop index `alarm_unique_index`;
 create index `alarm_unique_index_sec` on alarm (`strategy_id`,`endpoint`,`status`,`start`);
 alter table alarm modify column tags varchar(1024) default '';
 #@v1.11.3-end@;
+
+#@v1.11.3.2-begin@;
+alter table kubernetes_endpoint_rel add column pod_guid varchar(100) not null;
+alter table kubernetes_endpoint_rel add column namespace varchar(50) not null;
+#@v1.11.3.2-end@;
+
+#@v1.11.3.3-begin@;
+update prom_metric set prom_ql='sum by (pod,job)(rate(container_cpu_usage_seconds_total{pod=\"$pod\",job=\"k8s-cadvisor-$k8s_cluster\"}[60s])*100)' where metric='pod.cpu.used.percent';
+update prom_metric set prom_ql='100-(sum by (pod,job)(container_memory_usage_bytes{pod=\"$pod\",job=\"k8s-cadvisor-$k8s_cluster\"})/sum by (pod,job)(container_memory_max_usage_bytes{pod=\"$pod\",job=\"k8s-cadvisor-$k8s_cluster\"}))*100' where metric='pod.mem.used.percent';
+update strategy set expr='sum by (pod,job)(rate(container_cpu_usage_seconds_total{pod="$pod",job="k8s-cadvisor-$k8s_cluster"}[60s])*100)' where metric='pod.cpu.used.percent';
+update strategy set expr='100-(sum by (pod,job)(container_memory_usage_bytes{pod="$pod",job="k8s-cadvisor-$k8s_cluster"})/sum by (pod,job)(container_memory_max_usage_bytes{pod="$pod",job="k8s-cadvisor-$k8s_cluster"}))*100' where metric='pod.mem.used.percent';
+#@v1.11.3.3-end@;
