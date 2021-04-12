@@ -37,6 +37,7 @@ func main() {
 		other.InitSmtpMail()
 	}
 	go api.InitClusterApi()
+	go db.InitKubernetesConfig()
 	go db.StartCronJob()
 	go db.StartCheckCron()
 	go db.StartCheckLogKeyword()
