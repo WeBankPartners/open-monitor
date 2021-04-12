@@ -149,7 +149,7 @@
       <section v-for="(pm, pmIndex) in portModel.portMsg" :key="pmIndex">
         <div class="port-config">
           <div style="width: 48%">
-            <InputNumber v-model.number="pm.port" type="number" :min=1 :max=65535 style="width: 100%" placeholder="Required, type: Number" />
+            <InputNumber v-model.number="pm.port" type="number" :min=1 :max=65535 style="width: 100%" />
           </div>
           <div style="width: 48%">
             <input type="text" v-model="pm.note" class="search-input" style="width: 100%" />
@@ -188,8 +188,8 @@
             ></Button>
             <TimePicker format="HH:mm" type="timerange" v-model="item.time_list" :clearable="false" style="width: 200px"></TimePicker>
             <Select v-model="item.weekday" multiple filterable style="width:200px">
-              <Option v-for="cycle in maintenanceWindowModel.cycleOption" :value="cycle" :key="cycle">{{
-                cycle
+              <Option v-for="cycle in maintenanceWindowModel.cycleOption" :value="cycle.value" :key="cycle.value">{{
+                $t(cycle.label)
               }}</Option>
             </Select>
           </p>
@@ -222,6 +222,7 @@
 
 <script>
 import DataMonitor from '@/views/monitor-config/data-monitor'
+import { cycleOption } from '@/assets/config/common-config'
 import {
   interceptParams
 } from '@/assets/js/utils'
@@ -527,7 +528,7 @@ export default {
           // businessSet: [],
         },
         result: [],
-        cycleOption: ['All', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        cycleOption: cycleOption
       },
       id: null,
       showGroupMsg: false,
