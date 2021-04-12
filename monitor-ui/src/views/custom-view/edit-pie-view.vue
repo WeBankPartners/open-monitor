@@ -63,7 +63,7 @@
                   <div class="condition">
                     <Input
                       v-model="panalTitle"
-                      placeholder="Enter something..."
+                      placeholder=""
                       style="width: 300px"
                     />
                   </div>
