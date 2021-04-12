@@ -216,5 +216,7 @@
   "delay": "Delay",
   "m_panel_config": "Panel Configuration",
   "m_selected_value": "Selected Value",
-  "m_value_to_be_selected": "Value To Be Selected"
+  "m_value_to_be_selected": "Value To Be Selected",
+  "m_regular_match": "Regular Match",
+  "m_irregular_matching": "Irregular Matching"
 }

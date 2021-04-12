@@ -216,5 +216,7 @@
   "delay": "延时",
   "m_panel_config": "Panel 配置",
   "m_selected_value": "选中值",
-  "m_value_to_be_selected": "待选值"
+  "m_value_to_be_selected": "待选值",
+  "m_regular_match": "正则匹配",
+  "m_irregular_matching": "非正则匹配"
 }
