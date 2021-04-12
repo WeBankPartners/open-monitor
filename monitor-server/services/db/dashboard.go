@@ -139,7 +139,10 @@ func GetPromMetric(endpoint []string,metric string) (error, string) {
 			reg = strings.Replace(reg, "$guid", host.Guid, -1)
 		}
 		if strings.Contains(reg, "$pod") {
-			reg = strings.Replace(reg, "$pod", host.Name, -1)
+			reg = strings.Replace(reg, "$pod", host.Name[len(host.ExportVersion)+1:], -1)
+		}
+		if strings.Contains(reg, "$k8s_namespace") {
+			reg = strings.Replace(reg, "$k8s_namespace", host.ExportVersion, -1)
 		}
 		if strings.Contains(reg, "$k8s_cluster") {
 			reg = strings.Replace(reg, "$k8s_cluster", host.OsType, -1)
@@ -216,7 +219,8 @@ func GetEndpoint(query *m.EndpointTable) error {
 		return err
 	}
 	if len(endpointObj) <= 0 {
-		return fmt.Errorf("no data")
+		log.Logger.Error("Get endpoint fail", log.JsonObj("param", query))
+		return fmt.Errorf("Get endpoint fail,can not fetch any data ")
 	}
 	query.Id = endpointObj[0].Id
 	query.Guid = endpointObj[0].Guid
