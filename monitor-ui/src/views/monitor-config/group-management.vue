@@ -9,7 +9,7 @@
           :show-upload-list="false"
           :max-size="1000"
           with-credentials
-          :headers="{'X-Auth-Token': token}"
+          :headers="{'X-Auth-Token': token,'Authorization': token}"
           :on-success="uploadSucess"
           :on-error="uploadFailed">
             <Button icon="ios-cloud-upload-outline">{{$t('button.upload')}}</Button>
@@ -161,7 +161,7 @@
     },
     mounted() {
       this.pageConfig.CRUD = this.$root.apiCenter.groupManagement.list.api
-      this.token = (window.request ? getPlatFormToken() : getToken())|| null
+      this.token = (window.request ? 'Bearer ' + getPlatFormToken() : getToken())|| null
       this.initData(this.pageConfig.CRUD, this.pageConfig)
       this.uploadUrl =  baseURL_config + this.$root.apiCenter.groupManagement.upload.api
       this.$refs.child.clearSelectedData()
@@ -279,7 +279,8 @@
           method: 'GET',
           url: api,
           headers: {
-            'X-Auth-Token': this.token
+            'X-Auth-Token': this.token,
+            'Authorization': this.token
           }
         }).then((response) => {
           if (response.status < 400) {
