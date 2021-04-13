@@ -26,7 +26,7 @@
             "api": "/monitor/api/v1/alarm/grp/delete"
         },
         "upload": {
-            "api": "/api/v1/alarm/grp/import"
+            "api": "/monitor/api/v1/alarm/grp/import"
         },
         "export": {
             "api": "/monitor/api/v1/alarm/grp/export"
