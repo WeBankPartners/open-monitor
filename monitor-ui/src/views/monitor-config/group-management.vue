@@ -55,7 +55,7 @@
   </div>
 </template>
 <script>
-  import { getToken} from '@/assets/js/cookies.ts'
+  import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
   import {baseURL_config} from '@/assets/js/baseURL'
   let tableEle = [
     {title: 'tableKey.name', value: 'name', display: true},
@@ -161,7 +161,7 @@
     },
     mounted() {
       this.pageConfig.CRUD = this.$root.apiCenter.groupManagement.list.api
-      this.token = getToken()
+      this.token = (window.request ? getPlatFormToken() : getToken())|| null
       this.initData(this.pageConfig.CRUD, this.pageConfig)
       this.uploadUrl =  baseURL_config + this.$root.apiCenter.groupManagement.upload.api
       this.$refs.child.clearSelectedData()
@@ -279,7 +279,7 @@
           method: 'GET',
           url: api,
           headers: {
-            'X-Auth-Token': getToken() || null
+            'X-Auth-Token': this.token
           }
         }).then((response) => {
           if (response.status < 400) {
