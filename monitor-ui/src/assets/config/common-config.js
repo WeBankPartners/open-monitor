@@ -118,3 +118,11 @@ export const cycleOption = [
   {label: 'm_saturday', value: 'Saturday'},
   {label: 'm_sunday', value: 'Sunday'}
 ]
+
+export const collectionInterval =[
+  {label: '1s', value: 1},
+  {label: '5s', value: 5},
+  {label: '10s', value: 10},
+  {label: '30s', value: 30},
+  {label: '60s', value: 60},
+]
