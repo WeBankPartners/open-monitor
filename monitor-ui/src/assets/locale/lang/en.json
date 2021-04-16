@@ -231,5 +231,6 @@
   "m_thursday": "Thursday",
   "m_friday": "Friday",
   "m_saturday": "Saturday",
-  "m_sunday": "Sunday"
+  "m_sunday": "Sunday",
+  "m_collection_interval": "Collection Interval"
 }
