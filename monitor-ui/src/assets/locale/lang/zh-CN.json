@@ -231,5 +231,6 @@
   "m_thursday": "周四",
   "m_friday": "周五",
   "m_saturday": "周六",
-  "m_sunday": "周日"
+  "m_sunday": "周日",
+  "m_collection_interval": "采集间隔"
 }
