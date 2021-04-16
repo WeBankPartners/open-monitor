@@ -30,6 +30,14 @@
           </Option>
         </Select>
       </div>
+      <div class="marginbottom params-each">
+        <label class="col-md-2 label-name">{{$t('m_collection_interval')}}:</label>
+        <Select v-model="endpointRejectModel.addRow.step" style="width:338px">
+          <Option v-for="item in endpointRejectModel.stepOptions" :value="item.value" :key="item.value">
+            {{item.label}}
+          </Option>
+        </Select>
+      </div>
       <div class="marginbottom params-each" v-if="!(['host','windows'].includes(endpointRejectModel.addRow.type))">
         <label class="col-md-2 label-name">{{$t('field.instance')}}:</label>
         <input v-validate="'required'" v-model="endpointRejectModel.addRow.name" name="name" :class="{ 'red-border': veeErrors.has('name') }" type="text" class="col-md-7 form-control model-input c-dark" />
@@ -221,7 +229,7 @@
 
 <script>
 import DataMonitor from '@/views/monitor-config/data-monitor'
-import { cycleOption } from '@/assets/config/common-config'
+import { cycleOption, collectionInterval } from '@/assets/config/common-config'
 import {
   interceptParams
 } from '@/assets/js/utils'
@@ -436,6 +444,7 @@ export default {
         addRow: {
           name: '',
           type: 'host',
+          step: 10,
           ip: null,
           port: 9100,
           agent_manager: false,
@@ -447,6 +456,7 @@ export default {
           exporter: false,
           export_address: ''
         },
+        stepOptions: collectionInterval,
         endpointType: [{
             label: 'host',
             value: 'host'
@@ -793,6 +803,7 @@ export default {
     },
     endpointReject() {
       this.endpointRejectModel.addRow.type = 'host'
+      this.endpointRejectModel.addRow.step = 10
       this.endpointRejectModel.addRow.port = 9100
       this.$root.JQ('#endpoint_reject_model').modal('show')
     },
