@@ -126,6 +126,7 @@ func (c *processCache) start()  {
 				nameSplit := strings.Split(tmpName, ",")
 				if tmpTag != "" {
 					tmpProcessMonitorObj.DisplayName = fmt.Sprintf("%s(%s)", tmpName, tmpTag)
+					tmpTag = strings.ToLower(tmpTag)
 				}else{
 					tmpProcessMonitorObj.DisplayName = tmpName
 				}
@@ -228,7 +229,7 @@ func (c *processCache) checkNum(names []string) []int {
 		tmpName := tmpNameList[0]
 		tmpTag := ""
 		if len(tmpNameList) > 1 {
-			tmpTag = tmpNameList[1]
+			tmpTag = strings.ToLower(tmpNameList[1])
 		}
 		nameSplit := strings.Split(tmpName, ",")
 		for _,vv := range processUseList {
