@@ -61,9 +61,9 @@
                     type="error"
                     icon="md-close"
                   ></Button>
-                  <Input v-model="item.key" style="width: 146px" placeholder="key, e.g:[.*][.*]" />
-                  <Input v-model="item.metric" style="width: 146px" placeholder="metric, e.g:code" />
-                  <Select v-model="item.agg_type" filterable style="width:140px">
+                  <Input v-model="item.key" style="width: 190px" :placeholder="$t('m_key') + ' e.g:[.*][.*]'" />
+                  <Input v-model="item.metric" style="width: 190px" :placeholder="$t('field.metric') + ' , e.g:code'" />
+                  <Select v-model="item.agg_type" filterable style="width:190px">
                     <Option v-for="agg in ruleModelConfig.slotConfig.aggOption" :value="agg" :key="agg">{{
                       agg
                     }}</Option>
@@ -91,8 +91,13 @@
                     type="error"
                     icon="md-close"
                   ></Button>
-                  <Input v-model="item.key" style="width: 146px" placeholder="key" />
-                  <Input v-model="item.string_value" style="width: 146px" placeholder="string_value" />
+                  <Input v-model="item.key" style="width: 146px" :placeholder="$t('m_key')" />
+                  <Select v-model="item.regulation" filterable style="width:140px">
+                    <Option v-for="regulation in ruleModelConfig.slotConfig.regulationOption" :value="regulation.value" :key="regulation.value">{{
+                      regulation.label
+                    }}</Option>
+                  </Select>
+                  <Input v-model="item.string_value" style="width: 146px" :placeholder="$t('m_value')" />
                   <InputNumber v-model="item.int_value" style="width: 140px"></InputNumber>
                 </p>
               </template>
@@ -201,7 +206,7 @@ export default {
       ruleModelConfig: {
         modalId: 'rule_Modal',
         isAdd: true,
-        modalStyle: 'min-width:530px',
+        modalStyle: 'min-width:670px',
         modalTitle: 'rule',
         saveFunc: 'saveRule',
         config: [
@@ -212,11 +217,16 @@ export default {
         addRow: { // [通用]-保存用户新增、编辑时数据
           regular: null,
           tags: null,
+          regulation: 'regexp',
           metric_config: [],
           string_map: []
         },
         slotConfig: {
-          aggOption: ['sum', 'avg', 'count']
+          aggOption: ['sum', 'avg', 'count'],
+          regulationOption: [
+            {label: this.$t('m_regular_match'), value: 'regexp'},
+            {label: this.$t('m_irregular_matching'), value: '!regexp'}
+          ]
         }
       },
       modelConfig: {
@@ -272,6 +282,7 @@ export default {
       } else {
         this.ruleModelConfig.addRow[type].push({
           key: '',
+          regulation: 'regexp',
           string_value: '',
           int_value: 0
         })
