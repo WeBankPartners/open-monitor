@@ -1,17 +1,17 @@
 package prom
 
 import (
-	"sync"
-	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
-	"os"
 	"fmt"
-	"io/ioutil"
-	"gopkg.in/yaml.v2"
-	"strings"
-	"net/http"
-	"time"
-	"os/exec"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
+	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"gopkg.in/yaml.v2"
+	"io/ioutil"
+	"net/http"
+	"os"
+	"os/exec"
+	"strings"
+	"sync"
+	"time"
 )
 
 type fileObj struct {

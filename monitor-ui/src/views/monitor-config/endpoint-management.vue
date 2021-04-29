@@ -1,8 +1,5 @@
 <template>
 <div class="main-content">
-  <!-- <div v-if="showGroupMsg" style="padding-left:20px">
-    <Tag type="border" closable color="primary" @on-close="closeTag">{{$t('field.group')}}:{{groupMsg.name}}</Tag>
-  </div> -->
   <PageTable :pageConfig="pageConfig"></PageTable>
   <ModalComponent :modelConfig="modelConfig">
     <div slot="advancedConfig" class="extentClass">
@@ -16,17 +13,27 @@
       </div>
     </div>
   </ModalComponent>
-  <ModalComponent :modelConfig="historyAlarmModel">
-    <div slot="historyAlarm"  style="max-height:400px;overflow-y:auto">
-      <Table height="400" width="930" :columns="historyAlarmPageConfig.table.tableEle" :data="historyAlarmPageConfig.table.tableData"></Table>
-    </div>
-  </ModalComponent>
+  <Modal
+    v-model="historyAlarmModel"
+    width="950"
+    :footer-hide="true"
+    :title="$t('button.historicalAlert')">
+    <Table height="400" width="930" :columns="historyAlarmPageConfig.table.tableEle" :data="historyAlarmPageConfig.table.tableData"></Table>
+  </Modal>
   <ModalComponent :modelConfig="endpointRejectModel">
     <div slot="endpointReject">
       <div class="marginbottom params-each">
         <label class="col-md-2 label-name">{{$t('field.endpoint')}}:</label>
         <Select v-model="endpointRejectModel.addRow.type" style="width:338px" @on-change="typeChange">
           <Option v-for="item in endpointRejectModel.endpointType" :value="item.value" :key="item.value">
+            {{item.label}}
+          </Option>
+        </Select>
+      </div>
+      <div class="marginbottom params-each">
+        <label class="col-md-2 label-name">{{$t('m_collection_interval')}}:</label>
+        <Select v-model="endpointRejectModel.addRow.step" style="width:338px">
+          <Option v-for="item in endpointRejectModel.stepOptions" :value="item.value" :key="item.value">
             {{item.label}}
           </Option>
         </Select>
@@ -149,7 +156,7 @@
       <section v-for="(pm, pmIndex) in portModel.portMsg" :key="pmIndex">
         <div class="port-config">
           <div style="width: 48%">
-            <InputNumber v-model.number="pm.port" type="number" :min=1 :max=65535 style="width: 100%" placeholder="Required, type: Number" />
+            <InputNumber v-model.number="pm.port" type="number" :min=1 :max=65535 style="width: 100%" />
           </div>
           <div style="width: 48%">
             <input type="text" v-model="pm.note" class="search-input" style="width: 100%" />
@@ -188,8 +195,8 @@
             ></Button>
             <TimePicker format="HH:mm" type="timerange" v-model="item.time_list" :clearable="false" style="width: 200px"></TimePicker>
             <Select v-model="item.weekday" multiple filterable style="width:200px">
-              <Option v-for="cycle in maintenanceWindowModel.cycleOption" :value="cycle" :key="cycle">{{
-                cycle
+              <Option v-for="cycle in maintenanceWindowModel.cycleOption" :value="cycle.value" :key="cycle.value">{{
+                $t(cycle.label)
               }}</Option>
             </Select>
           </p>
@@ -222,6 +229,7 @@
 
 <script>
 import DataMonitor from '@/views/monitor-config/data-monitor'
+import { cycleOption, collectionInterval } from '@/assets/config/common-config'
 import {
   interceptParams
 } from '@/assets/js/utils'
@@ -403,17 +411,7 @@ export default {
           resourceOption: []
         }
       },
-      historyAlarmModel: {
-        modalId: 'history_alarm_Modal',
-        modalTitle: 'button.historicalAlert',
-        modalStyle: 'width:950px;max-width: none;',
-        noBtn: true,
-        isAdd: true,
-        config: [{
-          name: 'historyAlarm',
-          type: 'slot'
-        }]
-      },
+      historyAlarmModel: false,
       portModel: {
         modalId: 'port_Modal',
         modalTitle: 'button.portConfiguration',
@@ -446,6 +444,7 @@ export default {
         addRow: {
           name: '',
           type: 'host',
+          step: 10,
           ip: null,
           port: 9100,
           agent_manager: false,
@@ -457,6 +456,7 @@ export default {
           exporter: false,
           export_address: ''
         },
+        stepOptions: collectionInterval,
         endpointType: [{
             label: 'host',
             value: 'host'
@@ -527,7 +527,7 @@ export default {
           // businessSet: [],
         },
         result: [],
-        cycleOption: ['All', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        cycleOption: cycleOption
       },
       id: null,
       showGroupMsg: false,
@@ -792,20 +792,6 @@ export default {
         }
       })
     },
-    // closeTag() {
-    //   this.groupMsg = {}
-    //   this.showGroupMsg = false
-    //   this.pageConfig.researchConfig.filters.grp = ''
-    //   this.pageConfig.table.btn.splice(this.pageConfig.table.btn.length - 1, 1)
-    //   this.pageConfig.researchConfig.btn_group.splice(this.pageConfig.researchConfig.btn_group.length - 1, 1)
-    //   this.pageConfig.researchConfig.btn_group.push({
-    //     btn_name: 'button.add',
-    //     btn_func: 'endpointReject',
-    //     class: 'btn-cancel-f',
-    //     btn_icon: 'fa fa-plus'
-    //   })
-    //   this.initData(this.pageConfig.CRUD, this.pageConfig)
-    // },
     historyAlarm(rowData) {
       let params = {
         id: rowData.id
@@ -813,10 +799,11 @@ export default {
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.alarm.history, params, (responseData) => {
         this.historyAlarmPageConfig.table.tableData = responseData[0].problem_list
       })
-      this.$root.JQ('#history_alarm_Modal').modal('show')
+      this.historyAlarmModel = true
     },
     endpointReject() {
       this.endpointRejectModel.addRow.type = 'host'
+      this.endpointRejectModel.addRow.step = 10
       this.endpointRejectModel.addRow.port = 9100
       this.$root.JQ('#endpoint_reject_model').modal('show')
     },
