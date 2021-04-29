@@ -5,6 +5,7 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
+	"github.com/glenn-brown/golang-pkg-pcre/src/pkg/pcre"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/hpcloud/tail"
@@ -111,8 +112,18 @@ type businessMonitorObj struct {
 
 type businessStringMapObj struct {
 	Key  string  `json:"key"`
+	Regulation  string  `json:"regulation"`
 	StringValue  string  `json:"string_value"`
 	IntValue  float64  `json:"int_value"`
+}
+
+type businessStringMapRegexpObj struct {
+	Key  string  `json:"key"`
+	Regulation  string  `json:"regulation"`
+	StringValue  string  `json:"string_value"`
+	IntValue  float64  `json:"int_value"`
+	RegEnable  bool
+	Regexp  pcre.Regexp
 }
 
 type businessMetricConfigObj struct {
@@ -415,33 +426,16 @@ func calcBusinessAggData()  {
 			valueCountMap := make(map[string]*businessValueObj)
 			for i:=0;i<dataLength;i++ {
 				tmpMapData := <- rule.DataChannel
-				tmpTagString := ""
-				for _,tagKey := range rule.TagsKey {
-					if tmpTagValue,b:=tmpMapData[tagKey];b {
-						tmpTagString += fmt.Sprintf("%s=%s,", tagKey, printReflectString(tmpTagValue))
-					}
-				}
-				if tmpTagString != "" {
-					tmpTagString = tmpTagString[:len(tmpTagString)-1]
-				}
+				// Try to change value to float64
+				changedMapData,tmpTagString := changeValueByStringMap(tmpMapData,rule.TagsKey,rule.StringMap)
 				for _,metricConfig := range rule.MetricConfig {
-					if metricValue,b:=tmpMapData[metricConfig.Key];b {
-						metricValueString := printReflectString(metricValue)
-						metricValueFloat,parseError := strconv.ParseFloat(metricValueString,64)
-						if parseError != nil {
-							for _,tmpStringMapObj := range rule.StringMap {
-								if tmpStringMapObj.Key == metricConfig.Key && tmpStringMapObj.StringValue == metricValueString {
-									metricValueFloat = tmpStringMapObj.IntValue
-									break
-								}
-							}
-						}
+					if metricValueFloat,b:=changedMapData[metricConfig.Key];b {
 						tmpMapKey := fmt.Sprintf("%s^%s^%s^%s", metricConfig.Key, metricConfig.AggType, metricConfig.Metric, tmpTagString)
 						if _,keyExist:=valueCountMap[tmpMapKey];keyExist {
 							valueCountMap[tmpMapKey].Sum += metricValueFloat
 							valueCountMap[tmpMapKey].Count++
 						}else{
-							valueCountMap[tmpMapKey] = &businessValueObj{Sum: metricValueFloat, Count: 1, Avg: 0}
+							valueCountMap[tmpMapKey] = &businessValueObj{Sum: metricValueFloat, Count: 1, Avg: metricValueFloat}
 						}
 					}
 				}
@@ -491,4 +485,85 @@ func printReflectString(input interface{}) string {
 		}
 	}
 	return outputString
+}
+
+func changeValueByStringMap(input map[string]interface{},tagKey []string,mapConfig []*businessStringMapObj) (output map[string]float64, tagString string) {
+	output = make(map[string]float64)
+	inputTagMap := make(map[string]string)
+	var newMapConfigList []*businessStringMapRegexpObj
+	for _,v := range mapConfig {
+		tmpExp,tmpErr := pcre.Compile(v.StringValue, 0)
+		tmpRegEnable := false
+		if tmpErr == nil {
+			tmpRegEnable = true
+		}
+		newMapConfigList = append(newMapConfigList, &businessStringMapRegexpObj{Key: v.Key,Regulation: v.Regulation,StringValue: v.StringValue,IntValue: v.IntValue,RegEnable: tmpRegEnable,Regexp: tmpExp})
+	}
+	for k,v := range input {
+		if v == nil || reflect.TypeOf(v) == nil {
+			continue
+		}
+		var newValue float64 = 0
+		typeString := reflect.TypeOf(v).String()
+		if strings.Contains(typeString, "string") {
+			valueString := fmt.Sprintf("%s", v)
+			fetchReg := false
+			for _,stringMapObj := range newMapConfigList {
+				if stringMapObj.Key == k {
+					if strings.Contains(stringMapObj.Regulation, "regexp") && stringMapObj.RegEnable {
+						if len(stringMapObj.Regexp.FindIndex([]byte(valueString), 0)) > 0 {
+							if !strings.HasPrefix(stringMapObj.Regulation, "!") {
+								newValue = stringMapObj.IntValue
+								fetchReg = true
+							}
+						}else{
+							if strings.HasPrefix(stringMapObj.Regulation, "!") {
+								newValue = stringMapObj.IntValue
+								fetchReg = true
+							}
+						}
+					}
+					if fetchReg {
+						break
+					}
+				}
+			}
+			if !fetchReg {
+				metricValueFloat,parseError := strconv.ParseFloat(valueString,64)
+				if parseError == nil {
+					newValue = metricValueFloat
+				}
+				inputTagMap[k] = valueString
+			}
+		}else if strings.Contains(typeString, "int") {
+			newValue,_ = strconv.ParseFloat(fmt.Sprintf("%d", v), 64)
+		}else if strings.Contains(typeString, "float") {
+			fmt.Sprintf("%.6f", input)
+			newValue,_ = strconv.ParseFloat(fmt.Sprintf("%.6f", v), 64)
+		}
+		output[k] = newValue
+	}
+	for _,v := range tagKey {
+		if tmpTagValue,b:=input[v];b {
+			outputString := fmt.Sprintf("%s", tmpTagValue)
+			if _,bb:=inputTagMap[v];!bb {
+				outputString = fmt.Sprintf("%.6f", output[v])
+				for i:=0;i<6;i++ {
+					if outputString[len(outputString)-1:] == "0" {
+						outputString = outputString[:len(outputString)-1]
+					}else{
+						break
+					}
+				}
+				if outputString[len(outputString)-1:] == "." {
+					outputString = outputString[:len(outputString)-1]
+				}
+			}
+			tagString += fmt.Sprintf("%s=%s,", v, outputString)
+		}
+	}
+	if tagString != "" {
+		tagString = tagString[:len(tagString)-1]
+	}
+	return output,tagString
 }

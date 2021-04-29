@@ -443,6 +443,10 @@ func OpenAlarmApi(c *gin.Context)  {
 		c.JSON(http.StatusOK, m.OpenAlarmResponse{ResultCode:0, ResultMsg:"success"})
 	}else {
 		if err := c.ShouldBindJSON(&param); err == nil {
+			if len(param.AlertList) == 0 {
+				c.JSON(http.StatusOK, m.OpenAlarmResponse{ResultCode:-1, ResultMsg:"alertList is empty"})
+				return
+			}
 			for _,v := range param.AlertList {
 				if v.AlertIp == "" {
 					v.AlertIp = c.ClientIP()
