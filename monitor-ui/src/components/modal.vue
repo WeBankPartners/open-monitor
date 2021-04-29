@@ -1,6 +1,12 @@
 <template>
   <div class="modal-component">
-    <div class="modal fade" :id="modelConfig.modalId ? modelConfig.modalId: 'add_edit_Modal'"  role="dialog" aria-labelledby="myModalLabel">
+    <div 
+      class="modal fade" 
+      :id="modelConfig.modalId ? modelConfig.modalId: 'add_edit_Modal'"  
+      aria-hidden="false"
+      data-backdrop="static" 
+      role="dialog" 
+      aria-labelledby="myModalLabel">
       <div class="modal-dialog" :style="modelConfig.modalStyle" role="document">
         <div class="modal-content c-dark">
           <div class="modal-header c-dark">
