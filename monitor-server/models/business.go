@@ -30,6 +30,7 @@ type BusinessMonitorCfgTable struct {
 
 type BusinessStringMapObj struct {
 	Key  string  `json:"key"`
+	Regulation  string  `json:"regulation"`
 	StringValue  string  `json:"string_value"`
 	IntValue  float64  `json:"int_value"`
 }
