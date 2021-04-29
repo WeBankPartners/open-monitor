@@ -270,7 +270,7 @@ func StartCronJob()  {
 	go StartSyncCoreJob(intervalSec)
 	go prom.StartCheckPrometheusJob(intervalSec)
 	go prom.StartCheckProcessList(intervalSec)
-	go StartCronSyncKubernetesPod(intervalSec)
+	//go StartCronSyncKubernetesPod(intervalSec)
 	go StartCleanAlarmTable()
 }
 

@@ -83,7 +83,7 @@
                   <div class="condition">
                     <Input
                       v-model="panalTitle"
-                      placeholder="Enter something..."
+                      placeholder=""
                       style="width: 300px"
                     />
                   </div>
@@ -91,7 +91,7 @@
                 <li>
                   <div class="condition condition-title">{{$t('field.unit')}}</div>
                   <div class="condition">
-                    <Input v-model="panalUnit" placeholder="Enter something..." style="width: 300px" />
+                    <Input v-model="panalUnit" placeholder="" style="width: 300px" />
                   </div>
                   <button class="btn btn-cancel-f" @click="addQuery()">{{$t('button.addConfig')}}</button>
                 </li>
@@ -176,7 +176,9 @@ export default {
       // immediate: true
     },
     'templateQuery.endpoint': function (val) {
-      this.endpointType = this.options.find(item => item.option_value === val).type
+      if (val) {
+        this.endpointType = this.options.find(item => item.option_value === val).type
+      }
     }
   },
   created() {

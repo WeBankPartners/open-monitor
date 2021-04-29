@@ -64,9 +64,9 @@ export const lastList = [
 ]
 
 export const priorityList = [
-  {label: 'high', value: 'high'},
-  {label: 'medium', value: 'medium'},
-  {label: 'low', value: 'low'}
+  {label: 'm_high', value: 'high'},
+  {label: 'm_medium', value: 'medium'},
+  {label: 'm_low', value: 'low'}
 ]
 
 export const endpointTag = {
@@ -108,3 +108,21 @@ export const colorList = {
   'volcano': '#fa541c',
   'orange': '#fff7e6'
 }
+export const cycleOption = [
+  {label: 'm_all', value: 'All'},
+  {label: 'm_monday', value: 'Monday'},
+  {label: 'm_tuesday', value: 'Tuesday'},
+  {label: 'm_wednesday', value: 'Wednesday'},
+  {label: 'm_thursday', value: 'Thursday'},
+  {label: 'm_friday', value: 'Friday'},
+  {label: 'm_saturday', value: 'Saturday'},
+  {label: 'm_sunday', value: 'Sunday'}
+]
+
+export const collectionInterval =[
+  {label: '1s', value: 1},
+  {label: '5s', value: 5},
+  {label: '10s', value: 10},
+  {label: '30s', value: 30},
+  {label: '60s', value: 60},
+]

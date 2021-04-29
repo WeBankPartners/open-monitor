@@ -14,6 +14,8 @@ type KubernetesEndpointRelTable struct {
 	Id  int  `json:"id"`
 	KuberneteId  int  `json:"kubernete_id"`
 	EndpointGuid string  `json:"endpoint_guid"`
+	PodGuid  string  `json:"pod_guid"`
+	Namespace  string  `json:"namespace"`
 }
 
 type KubernetesClusterParam struct {
