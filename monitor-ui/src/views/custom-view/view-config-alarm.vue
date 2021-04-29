@@ -1,9 +1,9 @@
 <template>
   <div class=" ">
     <div class="alarm-total">
-      <Tag color="success"><span style="font-size:14px">Low:{{this.low}}</span></Tag>
-      <Tag color="warning"><span style="font-size:14px">Medium:{{this.mid}}</span></Tag>
-      <Tag color="error"><span style="font-size:14px">High:{{this.high}}</span></Tag>
+      <Tag color="success"><span style="font-size:14px">{{$t('m_low')}}:{{this.low}}</span></Tag>
+      <Tag color="warning"><span style="font-size:14px">{{$t('m_medium')}}:{{this.mid}}</span></Tag>
+      <Tag color="error"><span style="font-size:14px">{{$t('m_high')}}:{{this.high}}</span></Tag>
     </div>
     <div class="alarm-list">
       <template v-for="(alarmItem, alarmIndex) in resultData">
@@ -23,7 +23,7 @@
               <Tag type="border" color="primary">{{alarmItem.s_priority}}</Tag>
             </li>
             <li v-if="!alarmItem.is_custom && alarmItem.tags">
-              <label class="alarm-item-label">Tags:</label>
+              <label class="alarm-item-label">{{$t('tableKey.tags')}}:</label>
               <Tag type="border" v-for="(t,tIndex) in alarmItem.tags.split('^')" :key="tIndex" color="cyan">{{t}}</Tag>
             </li>
             <li>

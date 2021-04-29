@@ -216,5 +216,21 @@
   "delay": "延时",
   "m_panel_config": "Panel 配置",
   "m_selected_value": "选中值",
-  "m_value_to_be_selected": "待选值"
+  "m_value_to_be_selected": "待选值",
+  "m_regular_match": "正则匹配",
+  "m_irregular_matching": "非正则匹配",
+  "m_key": "键",
+  "m_value": "值",
+  "m_low": "低",
+  "m_medium": "中",
+  "m_high": "高",
+  "m_all": "全部",
+  "m_monday": "周一",
+  "m_tuesday": "周二",
+  "m_wednesday": "周三",
+  "m_thursday": "周四",
+  "m_friday": "周五",
+  "m_saturday": "周六",
+  "m_sunday": "周日",
+  "m_collection_interval": "采集间隔"
 }
