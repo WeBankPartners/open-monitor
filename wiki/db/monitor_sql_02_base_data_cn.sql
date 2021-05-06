@@ -237,3 +237,7 @@ update prom_metric set prom_ql='100-(sum by (pod,job)(container_memory_usage_byt
 update strategy set expr='sum by (pod,job)(rate(container_cpu_usage_seconds_total{pod="$pod",job="k8s-cadvisor-$k8s_cluster"}[60s])*100)' where metric='pod.cpu.used.percent';
 update strategy set expr='100-(sum by (pod,job)(container_memory_usage_bytes{pod="$pod",job="k8s-cadvisor-$k8s_cluster"})/sum by (pod,job)(container_memory_max_usage_bytes{pod="$pod",job="k8s-cadvisor-$k8s_cluster"}))*100' where metric='pod.mem.used.percent';
 #@v1.11.3.3-end@;
+
+#@v1.11.3.4-begin@;
+alter table alarm_custom modify column alert_title  varchar(1024) default '';
+#@v1.11.3.4-end@;
