@@ -240,4 +240,6 @@ update strategy set expr='100-(sum by (pod,job)(container_memory_usage_bytes{pod
 
 #@v1.11.3.4-begin@;
 alter table alarm_custom modify column alert_title  varchar(1024) default '';
+alter table alarm drop index `alarm_unique_index_sec`;
+create unique index `alarm_unique_index_sec` on alarm (`strategy_id`,`endpoint`,`status`,`start`);
 #@v1.11.3.4-end@;
