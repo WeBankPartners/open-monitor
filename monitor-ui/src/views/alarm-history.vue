@@ -53,6 +53,7 @@
             <Tag color="success"><span style="font-size:14px">{{$t('m_low')}}:{{this.low}}</span></Tag>
             <Tag color="warning"><span style="font-size:14px">{{$t('m_medium')}}:{{this.mid}}</span></Tag>
             <Tag color="error"><span style="font-size:14px">{{$t('m_high')}}:{{this.high}}</span></Tag>
+            <button v-if="filtersForShow.length" @click="clearAll" style="float:right;margin-right:50px" class="btn btn-small btn-cancel-f">{{$t('m_reset_condition')}}</button>
             <div v-show="alramEmpty" style="display:none" id="elId" class="echart"></div>
             <div v-if="!alramEmpty"  class="alarm-empty">
               <span style="font-size:14px"></span>
