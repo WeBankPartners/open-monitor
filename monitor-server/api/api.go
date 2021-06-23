@@ -124,6 +124,8 @@ func InitHttpServer(exportAgent bool) {
 			dashboardApi.POST("/custom/role/save", dashboard.SaveCustomDashboardRole)
 			dashboardApi.GET("/custom/alarm/list", alarm.GetCustomDashboardAlarm)
 			dashboardApi.GET("/panel/list", dashboard.GetDashboardPanelList)
+			dashboardApi.GET("/endpoint/type", dashboard.GetEndpointTypeList)
+			dashboardApi.GET("/endpoint", dashboard.GetEndpointList)
 		}
 		agentApi := authApi.Group("/agent")
 		{
@@ -152,7 +154,7 @@ func InitHttpServer(exportAgent bool) {
 			alarmApi.GET("/grp/delete", alarm.DeleteGrp)
 			alarmApi.POST("/grp/role/update", alarm.UpdateGrpRole)
 			alarmApi.GET("/grp/role/get", alarm.GetGrpRole)
-			alarmApi.GET("/endpoint/list", alarm.ListEndpoint)
+			alarmApi.GET("/endpoint/list", alarm.ListGrpEndpoint)
 			alarmApi.POST("/endpoint/update", alarm.EditGrpEndpoint)
 			alarmApi.POST("/endpoint/grp/update", alarm.EditEndpointGrp)
 			alarmApi.GET("/strategy/search", alarm.SearchObjOption)
