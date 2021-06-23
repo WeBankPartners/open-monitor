@@ -115,7 +115,7 @@ func DeleteGrp(c *gin.Context)  {
 	}
 }
 
-func ListEndpoint(c *gin.Context)  {
+func ListGrpEndpoint(c *gin.Context)  {
 	search := c.Query("search")
 	page,_ := strconv.Atoi(c.Query("page"))
 	size,_ := strconv.Atoi(c.Query("size"))
