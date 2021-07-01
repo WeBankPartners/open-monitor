@@ -334,20 +334,23 @@ func GetPromMetricTable(metricType string) (err error,result []*m.PromMetricUpda
 	return err,result
 }
 
-func UpdatePromMetric(data []m.PromMetricUpdateParam) error {
-	if len(data) == 0 {
-		return fmt.Errorf("data is null")
+func UpdatePromMetric(data []*m.PromMetricTable) error {
+	var actions []*Action
+	for _,v := range data {
+		if v.Id > 0 {
+			actions = append(actions, &Action{Sql: "update prom_metric set metric=?,prom_ql=? where id=?", Param: []interface{}{v.Metric,v.PromQl,v.Id}})
+		}else{
+			actions = append(actions, &Action{Sql: "insert into prom_metric(metric,metric_type,prom_ql) value (?,?,?)", Param: []interface{}{v.Metric,v.MetricType,v.PromQl}})
+		}
 	}
-	var insertData,updateData []m.PromMetricTable
+	return Transaction(actions)
+}
+
+func UpdatePanelChartMetric(data []m.PromMetricUpdateParam) error {
 	var chartTable []*m.ChartTable
 	x.SQL("select * from chart").Find(&chartTable)
 	var updateChartAction []*Action
 	for _,v := range data {
-		if v.Id > 0 {
-			updateData = append(updateData, m.PromMetricTable{Id: v.Id,Metric: v.Metric,MetricType: v.MetricType,PromQl: v.PromQl,PromMain: v.PromMain})
-		}else{
-			insertData = append(insertData, m.PromMetricTable{Metric: v.Metric,MetricType: v.MetricType,PromQl: v.PromQl,PromMain: v.PromMain})
-		}
 		newChartGroupId := v.PanelId
 		if newChartGroupId > 0 {
 			var existChartObj,newUpdateChartObj m.ChartTable
@@ -403,35 +406,7 @@ func UpdatePromMetric(data []m.PromMetricUpdateParam) error {
 			}
 		}
 	}
-	var actions []*Action
-	for _,v := range insertData {
-		action := Classify(v, "insert", "prom_metric", false)
-		if action.Sql != "" {
-			actions = append(actions, &action)
-		}
-	}
-	for _,v := range updateData {
-		action := Classify(v, "update", "prom_metric", false)
-		if action.Sql != "" {
-			actions = append(actions, &action)
-		}
-	}
-	if len(actions) > 0 {
-		err := Transaction(actions)
-		if err != nil {
-			return err
-		}
-		if len(updateChartAction) > 0 {
-			for _,v := range updateChartAction {
-				log.Logger.Info("Update chart action", log.String("sql", v.Sql), log.String("param", fmt.Sprintf("%v", v.Param)))
-			}
-			err = Transaction(updateChartAction)
-			if err != nil {
-				log.Logger.Error("Update chart config fail", log.Error(err))
-			}
-		}
-	}
-	return nil
+	return Transaction(updateChartAction)
 }
 
 func GetEndpointMetric(id int) (err error,result []*m.OptionModel) {
