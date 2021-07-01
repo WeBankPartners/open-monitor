@@ -71,7 +71,7 @@ func ReturnFetchDataError(c *gin.Context, table,key,value string)  {
 }
 
 func ReturnUpdateTableError(c *gin.Context, table string, err error)  {
-	ReturnError(c, 500, fmt.Sprintf(GetMessageMap(c).UpdateTableError, table), err)
+	ReturnError(c, 500, fmt.Sprintf(GetMessageMap(c).UpdateTableError, table) + " detail: " + err.Error(), err)
 }
 
 func ReturnDeleteTableError(c *gin.Context, table,key,value string, err error)  {
