@@ -406,6 +406,9 @@ func UpdatePanelChartMetric(data []m.PromMetricUpdateParam) error {
 			}
 		}
 	}
+	if len(updateChartAction) == 0 {
+		return nil
+	}
 	return Transaction(updateChartAction)
 }
 
