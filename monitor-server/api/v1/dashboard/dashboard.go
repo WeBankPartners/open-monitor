@@ -826,8 +826,26 @@ func GetPromMetric(c *gin.Context)  {
 	mid.ReturnSuccessData(c, data)
 }
 
-func UpdatePromMetric(c *gin.Context)  {
+func UpdatePanelChartMetric(c *gin.Context)  {
 	var param []m.PromMetricUpdateParam
+	if err := c.ShouldBindJSON(&param);err == nil {
+		if len(param) == 0 {
+			mid.ReturnParamEmptyError(c, "")
+			return
+		}
+		err := db.UpdatePanelChartMetric(param)
+		if err != nil {
+			mid.ReturnUpdateTableError(c, "prom_metric", err)
+			return
+		}
+		mid.ReturnSuccess(c)
+	}else{
+		mid.ReturnValidateError(c, err.Error())
+	}
+}
+
+func UpdatePromMetric(c *gin.Context) {
+	var param []*m.PromMetricTable
 	if err := c.ShouldBindJSON(&param);err == nil {
 		if len(param) == 0 {
 			mid.ReturnParamEmptyError(c, "")
