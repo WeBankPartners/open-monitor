@@ -35,7 +35,7 @@ func GetEndpointData(ip,port string,prefix,keyword []string) (error, []string) {
 	}
 	if resp.StatusCode/100 != 2 {
 		log.Logger.Error("Get agent metric response code error", log.Int("code", resp.StatusCode))
-		return err,strList
+		return fmt.Errorf("Get agent metric response code:%d ", resp.StatusCode),strList
 	}
 	for _,v := range strings.Split(string(body), "\n") {
 		if strings.HasPrefix(v, "#") {
