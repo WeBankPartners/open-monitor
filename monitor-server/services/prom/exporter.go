@@ -1,6 +1,7 @@
 package prom
 
 import (
+	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"net/http"
 	"fmt"
 	"io/ioutil"
@@ -43,6 +44,9 @@ func GetEndpointData(ip,port string,prefix,keyword []string) (error, []string) {
 		if strings.Contains(v, ` `) {
 			v = v[:strings.LastIndex(v, ` `)]
 		}
+		if isInBlacklist(v) {
+			continue
+		}
 		if len(prefix) == 0 && len(keyword) == 0 {
 			strList = append(strList, v)
 			continue
@@ -68,4 +72,18 @@ func GetEndpointData(ip,port string,prefix,keyword []string) (error, []string) {
 	}
 	log.Logger.Info("Get agent metric success", log.Int("num", len(strList)))
 	return nil,strList
+}
+
+func isInBlacklist(metric string) bool {
+	if len(models.Config().TagBlacklist) == 0 {
+		return false
+	}
+	illegal := false
+	for _,v := range models.Config().TagBlacklist {
+		if strings.Contains(metric, "=\""+v) {
+			illegal = true
+			break
+		}
+	}
+	return illegal
 }
