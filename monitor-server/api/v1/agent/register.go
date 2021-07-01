@@ -172,7 +172,7 @@ func hostRegister(param m.RegisterParamNew) returnData {
 		return result
 	}
 	if len(strList) == 0 {
-		result.err = fmt.Errorf("Can't get anything from http://%s:%d/metrics ", param.Ip, &param.Port)
+		result.err = fmt.Errorf("Can't get anything from http://%s:%s/metrics ", param.Ip, param.Port)
 		return result
 	}
 	result.endpoint.Step,err = calcStep(startTime, param.Step)
