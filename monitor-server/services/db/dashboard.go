@@ -475,6 +475,20 @@ func GetEndpointMetric(id int) (err error,result []*m.OptionModel) {
 	return nil,result
 }
 
+func GetEndpointMetricByEndpointType(endpointType string) (err error,result []*m.OptionModel) {
+	var endpointMetricTable []*m.EndpointMetricTable
+	err = x.SQL("select distinct metric from endpoint_metric where endpoint_id in (select id from endpoint where export_type=?)", endpointType).Find(&endpointMetricTable)
+	result = []*m.OptionModel{}
+	for _,v := range endpointMetricTable {
+		if v.Metric[len(v.Metric)-1:] == "}" {
+			result = append(result, &m.OptionModel{OptionText: v.Metric, OptionValue: fmt.Sprintf("%s,instance=\"$address\"}", v.Metric[:len(v.Metric)-1])})
+		}else {
+			result = append(result, &m.OptionModel{OptionText: v.Metric, OptionValue: fmt.Sprintf("%s{instance=\"$address\"}", v.Metric)})
+		}
+	}
+	return
+}
+
 func GetMainCustomDashboard(roleList []string) (err error,result []*m.CustomDashboardTable) {
 	sql := "SELECT t2.* FROM role t1 LEFT JOIN custom_dashboard t2 ON t1.main_dashboard=t2.id WHERE t1.name IN ('"+strings.Join(roleList, "','")+"') and t1.main_dashboard>0"
 	log.Logger.Debug("Get main dashboard", log.String("sql", sql))
