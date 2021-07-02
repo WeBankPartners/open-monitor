@@ -233,5 +233,9 @@
   "m_saturday": "周六",
   "m_sunday": "周日",
   "m_collection_interval": "采集间隔",
-  "m_reset_condition": "重置条件"
+  "m_reset_condition": "重置条件",
+  "m_collected_data": "采集数据",
+  "m_preview": "预览",
+  "m_host": "主机",
+  "m_select_host": "选择主机"
 }
