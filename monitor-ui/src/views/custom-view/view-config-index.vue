@@ -22,7 +22,7 @@
                 </template>
               </p>
               <a slot="extra">
-                <button class="btn btn-sm btn-confirm-f" @click="goToPanal(panalItem)">{{$t('button.view')}}</button>
+                <button class="btn btn-sm btn-confirm-f" @click="goToPanal(panalItem)">{{$t('m_configuration')}}</button>
                 <button class="btn btn-sm btn-cancel-f" @click="authorization(panalItem)">{{$t('button.authorization')}}</button>
                 <button class="btn btn-sm btn-cancel-f" @click="deleteConfirmModal(panalItem)">{{$t('button.remove')}}</button>
               </a>
