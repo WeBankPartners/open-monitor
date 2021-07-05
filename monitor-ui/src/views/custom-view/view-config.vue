@@ -54,8 +54,8 @@
           </div>
 
           <div class="header-tools"> 
-            <button class="btn btn-sm btn-cancel-f" @click="addItem">{{$t('button.add')}}</button>
-            <button class="btn btn-sm btn-confirm-f" @click="saveEdit">{{$t('button.saveEdit')}}</button>
+            <button class="btn btn-sm btn-cancel-f" style="margin-right:60px" @click="addItem">{{$t('m_new_graph')}}</button>
+            <button class="btn btn-sm btn-confirm-f" @click="saveEdit">{{$t('button.saveConfig')}}</button>
             <button class="btn btn-sm btn-cancel-f" @click="goBack()">{{$t('button.back')}}</button>
             <button v-if="!showAlarm" class="btn btn-sm btn-cancel-f" @click="openAlarmDisplay()">
               <i style="font-size: 18px;color: #0080FF;" class="fa fa-eye-slash" aria-hidden="true"></i>
@@ -94,18 +94,18 @@
                 <span v-if="editChartId !== item.id">{{item.i}}</span>
                 <Input v-else v-model="item.i" class="editChartId" style="width:100px" @on-blur="editChartId = null" size="small" placeholder="small size" />
                 <Tooltip :content="$t('placeholder.editTitle')" theme="light" transfer placement="top">
-                  <i class="fa fa-pencil-square" @click="editChartId = item.id" aria-hidden="true"></i>
+                  <i class="fa fa-pencil-square" style="font-size: 16px;"  @click="editChartId = item.id" aria-hidden="true"></i>
                 </Tooltip>
               </div>
               <div class="header-grid header-grid-tools"> 
                 <Tooltip :content="$t('button.chart.dataView')" theme="light" transfer placement="top">
-                  <i class="fa fa-eye" v-if="isShowGridPlus(item)" aria-hidden="true" @click="gridPlus(item)"></i>
+                  <i class="fa fa-eye" style="font-size: 16px;" v-if="isShowGridPlus(item)" aria-hidden="true" @click="gridPlus(item)"></i>
                 </Tooltip>
                 <Tooltip :content="$t('placeholder.chartConfiguration')" theme="light" transfer placement="top">
-                  <i class="fa fa-cog" @click="setChartType(item)" aria-hidden="true"></i>
+                  <i class="fa fa-cog" style="font-size: 16px;"  @click="setChartType(item)" aria-hidden="true"></i>
                 </Tooltip>
                 <Tooltip :content="$t('placeholder.deleteChart')" theme="light" transfer placement="top">
-                  <i class="fa fa-trash" @click="removeGrid(item)" aria-hidden="true"></i>
+                  <i class="fa fa-trash" style="font-size: 16px;"  @click="removeGrid(item)" aria-hidden="true"></i>
                 </Tooltip>
               </div>
             </div>
@@ -123,6 +123,9 @@
       </div>
     </div>
   </div>
+  <Drawer title="View details" :width="zoneWidth" :closable="false" v-model="showMaxChart">
+    <ViewChart ref="viewChart"></ViewChart>
+  </Drawer>
   <ModalComponent :modelConfig="setChartTypeModel">
     <div slot="setChartType">
       <div style="display:flex;justify-content:center">
@@ -171,6 +174,7 @@ import VueGridLayout from 'vue-grid-layout'
 import CustomChart from '@/components/custom-chart'
 import CustomPieChart from '@/components/custom-pie-chart'
 import ViewConfigAlarm from '@/views/custom-view/view-config-alarm'
+import ViewChart from '@/views/custom-view/view-chart'
 export default {
   name: '',
   data() {
@@ -210,8 +214,14 @@ export default {
       activeChartType: 'line',
 
       showAlarm: true, // 显示告警信息
-      cutsomViewId: null
+      cutsomViewId: null,
+
+      showMaxChart: false,
+      zoneWidth: '800',
     }
+  },
+  created () {
+    this.zoneWidth = window.screen.width * 0.65
   },
   mounted() {
     if(this.$root.$validate.isEmpty_reset(this.$route.params)) {
@@ -337,8 +347,9 @@ export default {
     async gridPlus(item) {
       const resViewData = await this.modifyLayoutData()
       let parentRouteData = this.$route.params
-      parentRouteData.cfg = JSON.stringify(resViewData) 
-      this.$router.push({name: 'viewChart', params:{templateData: parentRouteData, panal:item, parentData: this.$route.params}}) 
+      parentRouteData.cfg = JSON.stringify(resViewData)
+      this.showMaxChart = true
+      this.$refs.viewChart.initChart({templateData: parentRouteData, panal:item, parentData: this.$route.params})
     },
     async modifyLayoutData() {
       var resViewData = []
@@ -410,7 +421,8 @@ export default {
     GridItem: VueGridLayout.GridItem,
     CustomChart,
     CustomPieChart,
-    ViewConfigAlarm
+    ViewConfigAlarm,
+    ViewChart
   },
 }
 </script>
