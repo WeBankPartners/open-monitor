@@ -19,19 +19,20 @@
           <div>
             <div class="search-zone">
               <span class="params-title">{{$t('field.relativeTime')}}：</span>
-              <Select v-model="viewCondition.timeTnterval" :disabled="disableTime" style="width:80px"  @on-change="initPanals">
+              <Select v-model="viewCondition.timeTnterval" disabled style="width:80px"  @on-change="initPanals">
                 <Option v-for="item in dataPick" :value="item.value" :key="item.value">{{ item.label }}</Option>
               </Select>
             </div>
             <div class="search-zone">
               <span class="params-title">{{$t('placeholder.refresh')}}：</span>
-              <Select v-model="viewCondition.autoRefresh" :disabled="disableTime" style="width:100px" @on-change="initPanals" :placeholder="$t('placeholder.refresh')">
+              <Select v-model="viewCondition.autoRefresh" disabled style="width:100px" @on-change="initPanals" :placeholder="$t('placeholder.refresh')">
                 <Option v-for="item in autoRefreshConfig" :value="item.value" :key="item.value">{{ item.label }}</Option>
               </Select>
             </div>
             <div class="search-zone">
               <span class="params-title">{{$t('field.timeInterval')}}：</span>
               <DatePicker 
+                disabled
                 type="datetimerange" 
                 :value="viewCondition.dateRange" 
                 format="yyyy-MM-dd HH:mm:ss" 
@@ -44,11 +45,11 @@
             <div class="search-zone">
               <span class="params-title">{{$t('field.aggType')}}：</span>
               <RadioGroup v-model="viewCondition.agg" @on-change="initPanals" size="small" type="button">
-                <Radio label="min">Min</Radio>
-                <Radio label="max">Max</Radio>
-                <Radio label="avg">Average </Radio>
-                <Radio label="p95">P95</Radio>
-                <Radio label="none">Original</Radio>
+                <Radio disabled label="min">Min</Radio>
+                <Radio disabled label="max">Max</Radio>
+                <Radio disabled label="avg">Average </Radio>
+                <Radio disabled label="p95">P95</Radio>
+                <Radio disabled label="none">Original</Radio>
               </RadioGroup>
             </div>
           </div>
@@ -126,6 +127,10 @@
   <Drawer title="View details" :width="zoneWidth" :closable="false" v-model="showMaxChart">
     <ViewChart ref="viewChart"></ViewChart>
   </Drawer>
+  <Drawer :title="$t('placeholder.chartConfiguration')" :width="zoneWidth" :closable="false" :mask-closable="false" v-model="showChartConfig">
+    <editPieView v-if="chartType === 'pie'" ref="editPieView"></editPieView>
+    <editLineView v-else ref="editLineView"></editLineView>
+  </Drawer>
   <ModalComponent :modelConfig="setChartTypeModel">
     <div slot="setChartType">
       <div style="display:flex;justify-content:center">
@@ -175,6 +180,8 @@ import CustomChart from '@/components/custom-chart'
 import CustomPieChart from '@/components/custom-pie-chart'
 import ViewConfigAlarm from '@/views/custom-view/view-config-alarm'
 import ViewChart from '@/views/custom-view/view-chart'
+import editLineView from '@/views/custom-view/edit-line-view'
+import editPieView from '@/views/custom-view/edit-pie-view'
 export default {
   name: '',
   data() {
@@ -218,24 +225,29 @@ export default {
 
       showMaxChart: false,
       zoneWidth: '800',
+      showChartConfig: false,
+      chartType: ''
     }
   },
   created () {
     this.zoneWidth = window.screen.width * 0.65
   },
   mounted() {
-    if(this.$root.$validate.isEmpty_reset(this.$route.params)) {
-      this.$router.push({path:'viewConfigIndex'})
-    } else {
-      if (!this.$root.$validate.isEmpty_reset(this.$route.params.cfg)) {
-        this.viewData = JSON.parse(this.$route.params.cfg)
-        this.initPanals()
-        this.cutsomViewId = this.$route.params.id
-        this.$refs.cutsomViewId.getAlarm(this.cutsomViewId, this.viewCondition)
-      }
-    }
+    this.reloadPanal(this.$route.params)
   },
   methods: {
+    reloadPanal (params) {
+      if(this.$root.$validate.isEmpty_reset(params)) {
+        this.$router.push({path:'viewConfigIndex'})
+      } else {
+        if (!this.$root.$validate.isEmpty_reset(params.cfg)) {
+          this.viewData = JSON.parse(params.cfg)
+          this.initPanals()
+          this.cutsomViewId = params.id
+          this.$refs.cutsomViewId.getAlarm(this.cutsomViewId, this.viewCondition)
+        }
+      }
+    },
     openAlarmDisplay () {
       this.showAlarm = !this.showAlarm
       this.$refs.cutsomViewId.getAlarm(this.cutsomViewId, this.viewCondition)
@@ -313,9 +325,11 @@ export default {
     },
     choiceChartType (activeChartType) {
       this.activeChartType = activeChartType
+      this.chartType = activeChartType
     },
     dblChartType (activeChartType) {
       this.activeChartType = activeChartType
+      this.chartType = activeChartType
       this.confirmChartType()
     },
     confirmChartType () {
@@ -331,16 +345,25 @@ export default {
         let parentRouteData = this.$route.params
         parentRouteData.cfg = JSON.stringify(resViewData)
         if (['line','bar'].includes(this.activeChartType)) {
-          this.$router.push({name: 'editLineView', params:{templateData: parentRouteData, panal:this.activeGridConfig}})
+          this.chartType = 'line'
+          this.$refs.editLineView.initChart({templateData: parentRouteData, panal:this.activeGridConfig})
         } else {
-          this.$router.push({name: 'editPieView', params:{templateData: parentRouteData, panal:this.activeGridConfig}})
+          this.chartType = 'pie'
+          this.$refs.editPieView.initChart({templateData: parentRouteData, panal:this.activeGridConfig})
         }
+        this.showChartConfig = true
       })
     },
     removeGrid(itemxxx) {
-      this.layoutData.forEach((item,index) => {
-        if (item.id === itemxxx.id) {
-          this.layoutData.splice(index,1)
+      this.$delConfirm({
+        msg: itemxxx.i,
+        callback: () => {
+          this.layoutData.forEach((item,index) => {
+            if (item.id === itemxxx.id) {
+              this.layoutData.splice(index,1)
+            }
+          })
+          this.$root.$eventBus.$emit('hideConfirmModal')
         }
       })
     },
@@ -422,7 +445,9 @@ export default {
     CustomChart,
     CustomPieChart,
     ViewConfigAlarm,
-    ViewChart
+    ViewChart,
+    editPieView,
+    editLineView
   },
 }
 </script>
