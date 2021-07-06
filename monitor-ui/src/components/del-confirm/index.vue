@@ -4,19 +4,19 @@
       <div class="modal-content">
         <div class="modal-header-f">
           <Icon style="font-size:16px;color:#ff6600;" type="ios-information-circle"></Icon>
-          <span class="modal-title-">Delete confirmation ({{confirmInfo.msg}})</span>
+          <span class="modal-title-">确认删除 ({{confirmInfo.msg}})</span>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
             <Icon style="font-size: 26px" type="ios-close" />
           </button>
         </div>
         <div class="modal-body" style="padding:30px">
           <div style="text-align:center">
-            <p>Will you delete it?</p>
+            <p>即将被删除?</p>
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn-cancel-f" @click="cancel">Cancel</button>
-          <button class="btn-delete-f" @click="exect">Delete</button>
+          <button class="btn-cancel-f" @click="cancel">取消</button>
+          <button class="btn-delete-f" @click="exect">确定</button>
         </div>
       </div>
     </div>
