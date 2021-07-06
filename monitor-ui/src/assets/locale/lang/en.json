@@ -237,5 +237,7 @@
   "m_collected_data": "Collected Data",
   "m_preview": "Preview",
   "m_host": "Host",
-  "m_select_host": "Select Host"
+  "m_select_host": "Select Host",
+  "m_acquisition_configuration": "Acquisition Configuration",
+  "m_display_configuration": "Display Configuration"
 }
