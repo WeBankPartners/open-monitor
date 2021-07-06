@@ -41,7 +41,7 @@
         <!-- 操作区 -->
         <div v-if="showConfigTab || isAddMetric">
           <Tabs value="name1">
-            <TabPane :label="$t('field.metric')" name="name1">
+            <TabPane :label="$t('m_acquisition_configuration')" name="name1">
               <div style="max-height:600px;overflow-y:auto">
                 <Form :label-width="80">
                   <FormItem :label="$t('tableKey.name')">
@@ -78,7 +78,7 @@
                 <button class="btn btn-sm btn-confirm-f" @click="saveMetric">{{$t('button.saveEdit')}}</button>
               </div>
             </TabPane>
-            <TabPane label="Panel" name="name2" v-if="!isAddMetric">
+            <TabPane :label="$t('m_display_configuration')" name="name2" v-if="!isAddMetric">
               <div>
                 <div class="marginbottom params-each" style="margin-bottom:8px">
                   <label class="col-md-2 label-name">{{$t('tableKey.s_metric')}}:</label>
