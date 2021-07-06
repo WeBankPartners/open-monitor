@@ -237,5 +237,7 @@
   "m_collected_data": "采集数据",
   "m_preview": "预览",
   "m_host": "主机",
-  "m_select_host": "选择主机"
+  "m_select_host": "选择主机",
+  "m_acquisition_configuration": "采集配置",
+  "m_display_configuration": "展示配置"
 }
