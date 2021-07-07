@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"strconv"
 )
@@ -96,10 +97,15 @@ func PanelUpdate(param []*models.PanelTable) error {
 	return Transaction(actions)
 }
 
-func PanelDelete(param []*models.PanelTable) error {
+func PanelDelete(ids []string) error {
 	var actions []*Action
-	for _,panel := range param {
-		actions = append(actions, &Action{Sql: "delete from panel where id=?", Param: []interface{}{panel.Id}})
+	for _,id := range ids {
+		idInt,tmpErr := strconv.Atoi(id)
+		if tmpErr != nil {
+			log.Logger.Error("Try to trans id to int fail", log.Error(tmpErr))
+			continue
+		}
+		actions = append(actions, &Action{Sql: "delete from panel where id=?", Param: []interface{}{idInt}})
 	}
 	return Transaction(actions)
 }
