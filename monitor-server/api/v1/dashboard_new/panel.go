@@ -9,14 +9,12 @@ import (
 )
 
 func PanelList(c *gin.Context)  {
-	var id,groupId int
+	var id int
 	if c.Query("id") != "" {
 		id,_ = strconv.Atoi(c.Query("id"))
 	}
-	if c.Query("groupId") != "" {
-		groupId,_ = strconv.Atoi(c.Query("groupId"))
-	}
-	result,err := db.PanelList(id,groupId)
+	endpointType := c.Query("endpointType")
+	result,err := db.PanelList(id,endpointType)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	}else{
