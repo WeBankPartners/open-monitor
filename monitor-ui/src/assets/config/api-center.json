@@ -183,10 +183,11 @@
         "_des": "对象视图标题编辑",
         "api": "/monitor/api/v1/dashboard/config/chart/title"
     },
-    "panelInfo": "/monitor/api/v1/dashboard/panel/list",
+    "panelInfo": "/monitor/api/v1/dashboard/new/panel",
     "getEndpointType": "/monitor/api/v1/dashboard/endpoint/type",
     "getEndpoint": "/monitor/api/v1/dashboard/endpoint",
     "getMetricOptions": "/monitor/api/v1/dashboard/endpoint/metric/list",
     "saveMetric": "/monitor/api/v1/dashboard/config/metric/update",
-    "savePanel": "/monitor/api/v1/dashboard/config/panel/update"
+    "savePanel": "/monitor/api/v1/dashboard/config/panel/update",
+    "getGraph": "monitor/api/v1/dashboard/new/chart"
 }

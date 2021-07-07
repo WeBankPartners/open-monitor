@@ -239,5 +239,9 @@
   "m_host": "Host",
   "m_select_host": "Select Host",
   "m_acquisition_configuration": "Acquisition Configuration",
-  "m_display_configuration": "Display Configuration"
+  "m_display_configuration": "Display Configuration",
+  "m_display_group": "Display Group",
+  "m_graph": "Graph",
+  "m_graph_name": "Graph Name",
+  "m_search": "Search"
 }
