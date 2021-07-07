@@ -6,6 +6,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
 	"strconv"
+	"strings"
 )
 
 func PanelList(c *gin.Context)  {
@@ -52,12 +53,8 @@ func PanelUpdate(c *gin.Context)  {
 }
 
 func PanelDelete(c *gin.Context)  {
-	var param []*models.PanelTable
-	if err := c.ShouldBindJSON(&param); err != nil {
-		middleware.ReturnValidateError(c, err.Error())
-		return
-	}
-	err := db.PanelDelete(param)
+	ids := c.Query("ids")
+	err := db.PanelDelete(strings.Split(ids,","))
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	}else{
