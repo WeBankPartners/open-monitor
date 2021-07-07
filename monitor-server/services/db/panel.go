@@ -6,7 +6,21 @@ import (
 	"strconv"
 )
 
-func PanelList(id,groupId int) (result []*models.PanelTable,err error) {
+func PanelList(id int,endpointType string) (result []*models.PanelTable,err error) {
+	groupId := 0
+	if endpointType != "" {
+		var dashboardTable []*models.DashboardTable
+		err = x.SQL("select * from dashboard where dashboard_type=?", endpointType).Find(&dashboardTable)
+		if err != nil {
+			err = fmt.Errorf("Try to query dashboard table fail,%s ", err.Error())
+			return
+		}
+		if len(dashboardTable) == 0 {
+			err = fmt.Errorf("Can not find dashboard wity type:%s ", endpointType)
+			return
+		}
+		groupId = dashboardTable[0].PanelsGroup
+	}
 	result = []*models.PanelTable{}
 	params := []interface{}{}
 	baseSql := "select * from panel where 1=1 "
