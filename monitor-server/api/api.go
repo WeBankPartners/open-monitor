@@ -6,6 +6,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/agent"
 	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/alarm"
 	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/dashboard"
+	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/dashboard_new"
 	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/user"
 	_ "github.com/WeBankPartners/open-monitor/monitor-server/docs"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
@@ -127,6 +128,17 @@ func InitHttpServer(exportAgent bool) {
 			dashboardApi.GET("/panel/list", dashboard.GetDashboardPanelList)
 			dashboardApi.GET("/endpoint/type", dashboard.GetEndpointTypeList)
 			dashboardApi.GET("/endpoint", dashboard.GetEndpointList)
+		}
+		dashboardNewApi := authApi.Group("/dashboard/new")
+		{
+			dashboardNewApi.GET("/panel", dashboard_new.PanelList)
+			dashboardNewApi.POST("/panel/:endpointType", dashboard_new.PanelCreate)
+			dashboardNewApi.PUT("/panel", dashboard_new.PanelUpdate)
+			dashboardNewApi.DELETE("/panel", dashboard_new.PanelDelete)
+			dashboardNewApi.GET("/chart", dashboard_new.ChartList)
+			dashboardNewApi.POST("/chart", dashboard_new.ChartCreate)
+			dashboardNewApi.PUT("/chart", dashboard_new.ChartUpdate)
+			dashboardNewApi.DELETE("/chart", dashboard_new.ChartDelete)
 		}
 		agentApi := authApi.Group("/agent")
 		{
