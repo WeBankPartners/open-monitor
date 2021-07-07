@@ -23,7 +23,7 @@ func PanelList(c *gin.Context)  {
 }
 
 func PanelCreate(c *gin.Context)  {
-	endpointType := c.Param("type")
+	endpointType := c.Param("endpointType")
 	var param []*models.PanelTable
 	if err := c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnValidateError(c, err.Error())
