@@ -23,7 +23,7 @@ func ChartList(id,groupId int) (result []*models.ChartTable,err error) {
 }
 
 func getMaxChartGroupId() (id int,err error) {
-	query,queryErr := x.QueryString("select max(group_id) as id from chart")
+	query,queryErr := x.QueryString("select max(chart_group) as id from panel")
 	if queryErr != nil {
 		err = fmt.Errorf("Try to get max chart groupId fail,%s ", queryErr.Error())
 		return
