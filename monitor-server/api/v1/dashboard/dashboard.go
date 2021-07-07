@@ -1,6 +1,7 @@
 package dashboard
 
 import (
+	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/alarm"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
@@ -860,6 +861,32 @@ func UpdatePromMetric(c *gin.Context) {
 	}else{
 		mid.ReturnValidateError(c, err.Error())
 	}
+}
+
+func DeletePromMetric(c *gin.Context) {
+	metric := c.Query("metric")
+	if metric == "" {
+		mid.ReturnParamEmptyError(c, "metric")
+		return
+	}
+	tplIds,err := db.DeletePromMetric(metric)
+	if err != nil {
+		mid.ReturnUpdateTableError(c, "prom_metric", err)
+		return
+	}
+	if len(tplIds) > 0 {
+		for _,tplId := range tplIds {
+			err = alarm.SaveConfigFile(tplId, false)
+			if err != nil {
+				break
+			}
+		}
+		if err != nil {
+			mid.ReturnHandleError(c, "Save rule config file fail,"+err.Error(), err)
+			return
+		}
+	}
+	mid.ReturnSuccess(c)
 }
 
 func GetEndpointMetric(c *gin.Context)  {
