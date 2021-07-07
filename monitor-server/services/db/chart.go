@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"strconv"
 )
@@ -54,10 +55,15 @@ func ChartUpdate(param []*models.ChartTable) error {
 	return Transaction(actions)
 }
 
-func ChartDelete(param []*models.ChartTable) error {
+func ChartDelete(ids []string) error {
 	var actions []*Action
-	for _,chart := range param {
-		actions = append(actions, &Action{Sql: "delete from chart where id=?", Param: []interface{}{chart.Id}})
+	for _,id := range ids {
+		idInt,tmpErr := strconv.Atoi(id)
+		if tmpErr != nil {
+			log.Logger.Error("Try to trans id to int fail", log.Error(tmpErr))
+			continue
+		}
+		actions = append(actions, &Action{Sql: "delete from chart where id=?", Param: []interface{}{idInt}})
 	}
 	return Transaction(actions)
 }
