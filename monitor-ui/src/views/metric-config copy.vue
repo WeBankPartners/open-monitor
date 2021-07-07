@@ -65,90 +65,43 @@
 
                 <div v-if="isRequestChartData" class="metric-section">
                   <div>
-                    <div :id="acquisitionConfigurationElId" class="echart"></div>
+                    <div :id="elId" class="echart"></div>
                   </div>
+                  <!-- <div v-else class="echart echart-no-data-tip">
+                    <span>~~~No Data!~~~</span>
+                  </div> -->
                 </div>
               </div>
               
               <div style="text-align: right;margin-top:24px">
-                <button class="btn btn-sm btn-cancel-f" @click="preview('acquisitionConfiguration')">{{$t('m_preview')}}</button>
+                <button class="btn btn-sm btn-cancel-f" @click="preview">{{$t('m_preview')}}</button>
                 <button class="btn btn-sm btn-confirm-f" @click="saveMetric">{{$t('button.saveEdit')}}</button>
               </div>
             </TabPane>
-            <TabPane :label="$t('m_display_group')" name="name2" v-if="!isAddMetric">
+            <TabPane :label="$t('m_display_configuration')" name="name2" v-if="!isAddMetric">
               <div>
-                <div style="margin-right:16px;display:inline-block;">
-                  <span style="font-size: 14px;">
-                    {{$t('m_display_group')}}:
-                  </span>
-                  <Select v-model="selectdPanel" style="width:300px" @on-open-change="getPanelinfo">
-                    <Option v-for="panel in panelOptions" :value="panel.chart_group" :key="panel.chart_group">{{ panel.title }}</Option>
-                  </Select>
+                <div class="marginbottom params-each" style="margin-bottom:8px">
+                  <label class="col-md-2 label-name">{{$t('tableKey.s_metric')}}:</label>
+                    <Input v-model="chart.title" :placeholder="$t('tableKey.s_metric')" style="width: 300px" />
                 </div>
-                <div style="margin-right:16px;display:inline-block;">
-                  <span style="font-size: 14px;">
-                    {{$t('m_graph')}}:
-                  </span>
-                  <Select v-model="selectdGraph" style="width:300px" @on-open-change="getGraphInfo" :disabled="!selectdPanel">
-                    <Option v-for="graph in graphOptions" :value="graph.metric" :key="graph.metric">{{ graph.title }}</Option>
-                  </Select>
+                <div class="marginbottom params-each" style="margin-bottom:8px">
+                  <label class="col-md-2 label-name">{{$t('field.unit')}}:</label>
+                    <Input v-model="chart.unit" :placeholder="$t('field.unit')" style="width: 300px" />
                 </div>
-                <Button type="info" style="background-color:#2db7f5" @click="getGraphConfig" size="small">
-                  {{$t('m_search')}}
-                </Button>
-                <div style="max-height:600px;overflow-y:auto;margin-top:24px">
-                  <!-- <div style="margin-right:16px;display:inline-block;">
-                  <span style="font-size: 14px;">
-                    {{$t('m_graph')}}:
-                  </span>
-                  <Select v-model="selectdGraph" style="width:300px" @on-open-change="getGraphInfo" :disabled="!selectdPanel">
-                    <Option v-for="graph in graphOptions" :value="graph.metric" :key="graph.metric">{{ graph.title }}</Option>
-                  </Select>
-                </div>
-
-                <div style="margin-right:16px;display:inline-block;">
-                  <span style="font-size: 14px;">
-                    {{$t('m_graph')}}:
-                  </span>
-                  <Select v-model="selectdGraph" style="width:300px" @on-open-change="getGraphInfo" :disabled="!selectdPanel">
-                    <Option v-for="graph in graphOptions" :value="graph.metric" :key="graph.metric">{{ graph.title }}</Option>
-                  </Select>
-                </div> -->
-                  <Form :label-width="80" inline>
-                    <FormItem :label="$t('m_graph_name')">
-                      <Input v-model="graphConfig.graphName"></Input>
-                    </FormItem>
-                    <FormItem :label="$t('field.unit')">
-                      <Input v-model="graphConfig.unit"/>
-                    </FormItem>
-                  </Form>
-                  <div style="margin-right:16px">
-                    <span style="font-size: 14px;">
-                      {{$t('field.metric')}}:
-                    </span>
-                    <Select v-model="graphConfig.metric" filterable style="width:300px" @on-change="selectMetrc">
-                      <Option v-for="metric in metricOptions" :value="metric.metric" :key="metric.metric">{{ metric.metric }}</Option>
-                    </Select>
-                  </div>
-                  <div>
-                    <Tag
-                      v-for="(graphMetric, index) in graphConfig.graphContainsMetric"
-                      :key="graphMetric"
-                      type="border"
-                      @on-close="removeGraphMetric(index)"
-                      closable color="primary">
-                      {{graphMetric}}
-                    </Tag>
-                  </div>
-                  <div v-if="isRequestChartData" class="metric-section">
-                    <div>
-                      <div :id="displayGroupElId" class="echart"></div>
+                <RadioGroup v-model="test"  @on-change="checkRadio">
+                  <template v-for="(group, gIndex) in panelInfo.panel_list">
+                    <div :key="group.panel_title">
+                      <Radio :label="gIndex">{{group.panel_title}}</Radio>
+                      <template v-for="(chart, cIndex) in group.charts">
+                        <div :key="chart.metric" style="padding-left:20px">
+                          <Radio :label="gIndex+','+cIndex">{{chart.metric}}</Radio>
+                        </div>
+                      </template>
                     </div>
-                  </div>
-                  <div style="text-align: right;margin-top:24px">
-                    <button class="btn btn-sm btn-cancel-f" @click="preview('displayGroup')">{{$t('m_preview')}}</button>
-                    <button class="btn btn-sm btn-confirm-f" @click="saveGraphMetric">{{$t('button.saveEdit')}}</button>
-                  </div>
+                  </template>
+                </RadioGroup>
+                <div style="text-align: right;margin-top:24px">
+                  <button class="btn btn-sm btn-confirm-f" @click="savePanel">{{$t('button.saveEdit')}}</button>
                 </div>
               </div>
             </TabPane>
@@ -194,11 +147,9 @@ export default {
         prom_ql: '',
         endpoint: ''
       },
-      displayGroupElId: '',
-      acquisitionConfigurationElId: '',
+      elId: '',
       noDataTip: true,
       isRequestChartData: false,
-      previewPosition: '',
       showEndpointSelect: false,
       endpointOptions: [],
       noticeConfig: {
@@ -215,26 +166,25 @@ export default {
           },
         ]
       },
+      panelInfo: {
+        active_chart: {},
+        panel_list: []
+      },
       chart: {
         group_id: '',
         metric: '',
         title: '',
         unit: '',
       },
+      test: '',
 
-      isAddMetric: false,
-
-      selectdPanel: '',
-      panelOptions: [],
-      selectdGraph: '',
-      graphOptions: [],
-      graphConfig: {
-        graphName: '',
-        unit: '',
-        metric: '',
-        graphContainsMetric: []
-      }
+      isAddMetric: false
     }
+  },
+  created (){
+    generateUuid().then((elId)=>{
+      this.elId =  `id_${elId}`
+    })
   },
   mounted() {
     this.getEndpointType()
@@ -264,60 +214,46 @@ export default {
         this.$Message.success(this.$t('tips.success'))
       })
     },
-    removeGraphMetric (index) {
-      this.graphConfig.graphContainsMetric.splice(index, 1)
+    canclePanelConfig () {
+      this.chart.group_id = ''
+      this.chart.metric = ''
+      this.chart.title = ''
+      this.chart.unit = ''
+      this.test = ''
     },
-    selectMetrc (val) {
-      const find = this.graphConfig.graphContainsMetric.find(item => item === val)
-      if (!find) {
-        this.graphConfig.graphContainsMetric.push(val)
-      }
-    },
-    saveGraphMetric () {
-       const graph = this.graphOptions.find(item => item.metric === this.selectdGraph)
-      const params = {
-        metric: this.graphConfig.graphContainsMetric.join('^'),
-        title: this.graphConfig.graphName,
-        unit: this.graphConfig.unit,
-        group_id: this.selectdPanel,
-        id: graph.id
-      }
-      console.log(params)
-      this.$root.$httpRequestEntrance.httpRequestEntrance('PUT', this.$root.apiCenter.getGraph, [params], responseData => {
-        console.log(responseData)
+    checkRadio (item) {
+      item += ''
+      const num = item.split(',')
+      let tmp = this.panelInfo.panel_list
+      num.forEach(t => {
+        tmp = tmp[Number(t)] || tmp.charts[Number(t)]
+        this.chart.group_id = tmp.group_id || this.chart.group_id
       })
-    },
-    getGraphConfig () {
-      this.graphConfig.graphName = ''
-      this.graphConfig.unit = ''
-      const graph = this.graphOptions.find(item => item.metric === this.selectdGraph)
-      if (graph) {
-        this.graphConfig.graphName = graph.title
-        this.graphConfig.unit = graph.unit
-        this.graphConfig.graphContainsMetric = graph.metric.split('^').filter(item => item !== '')
+      if (num.length >1) {
+        this.chart.title = tmp.title
+        this.chart.unit = tmp.unit
+        this.chart.metric = tmp.metric
+      } else {
+        this.chart.title = ''
+        this.chart.unit = ''
+        this.chart.metric = this.panelInfo.active_chart.metric
       }
-    },
-    getGraphInfo () {
-      const params = {
-        groupId: this.selectdPanel
-      }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.getGraph, params, responseData => {
-        this.graphOptions = responseData
-      })
     },
     getPanelinfo () {
-      const params = {
-        endpointType: this.endpointType
+      const findMetricConfig = this.metricOptions.find(m => m.id === this.metricId)
+      const params ={
+        type: this.endpointType,
+        metric: findMetricConfig.metric
       }
+      this.canclePanelConfig()
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.panelInfo, params, responseData => {
-        this.panelOptions = responseData
+        this.panelInfo = responseData
+        this.chart = JSON.parse(JSON.stringify(this.panelInfo.active_chart))
+        this.chart.group_id = responseData.panel_group_id
       })
     },
     async getChartData () {
       this.isRequestChartData = true
-      generateUuid().then((elId)=>{
-        this.acquisitionConfigurationElId =  `id_${elId}`
-      })
       const params = [{
         endpoint: this.metricConfigData.endpoint,
         prom_ql: this.metricConfigData.prom_ql,
@@ -326,34 +262,11 @@ export default {
       }]
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.metricConfigView.api, params, responseData => {
         const chartConfig = {eye: false,clear:true, zoomCallback: true}
-        readyToDraw(this,responseData, 1, chartConfig, this.acquisitionConfigurationElId)
-      })
-    },
-    async getDispalyChartData () {
-      generateUuid().then((elId)=>{
-        this.displayGroupElId =  `id_${elId}`
-      })
-      let params = []
-      this.graphConfig.graphContainsMetric.forEach(metric => {
-        params.push({
-          endpoint: this.metricConfigData.endpoint,
-          prom_ql: '',
-          metric: metric,
-          time: '-1800'
-        })
-      })
-      this.isRequestChartData = true
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.metricConfigView.api, params, responseData => {
-        const chartConfig = {eye: false,clear:true, zoomCallback: true}
-        readyToDraw(this,responseData, 1, chartConfig, this.displayGroupElId)
+        readyToDraw(this,responseData, 1, chartConfig)
       })
     },
     checkEndpoint () {
-      if (this.previewPosition === 'acquisitionConfiguration') {
-        this.getChartData()
-      } else {
-        this.getDispalyChartData()
-      }
+      this.getChartData()
     },
     getEndpoint () {
       this.metricConfigData.endpoint = ''
@@ -365,8 +278,7 @@ export default {
         this.showEndpointSelect = true
       })
     },
-    preview (previewPosition) {
-      this.previewPosition = previewPosition
+    preview () {
       this.getEndpoint()
     },
     saveMetric () {
@@ -393,6 +305,7 @@ export default {
     configMetric () {
       this.isAddMetric = false
       this.isRequestChartData = false
+      this.getPanelinfo()
       const findMetricConfig = this.metricOptions.find(m => m.id === this.metricId)
       this.getCollectedMetric()
       this.metricConfigData = {
