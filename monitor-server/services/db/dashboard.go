@@ -346,6 +346,51 @@ func UpdatePromMetric(data []*m.PromMetricTable) error {
 	return Transaction(actions)
 }
 
+func DeletePromMetric(metric string) (tplIds []int,err error) {
+	var actions []*Action
+	actions = append(actions, &Action{Sql: "delete from prom_metric where metric=?", Param: []interface{}{metric}})
+	var charts []*m.ChartTable
+	err = x.SQL("select id,metric from chart where metric like ?", "%"+metric+"%").Find(&charts)
+	if err != nil {
+		err = fmt.Errorf("Try to get charts data fail,%s ", err.Error())
+		return
+	}
+	if len(charts) > 0 {
+		for _,chart := range charts {
+			newChartMetricList := []string{}
+			for _,v := range strings.Split(chart.Metric, "^") {
+				if v == metric || v == "" {
+					continue
+				}
+				newChartMetricList = append(newChartMetricList, v)
+			}
+			if len(newChartMetricList) == 0 {
+				actions = append(actions, &Action{Sql: "delete from chart where id=?", Param: []interface{}{chart.Id}})
+			}else{
+				actions = append(actions, &Action{Sql: "update chart set metric=? where id=?", Param: []interface{}{strings.Join(newChartMetricList, "^"), chart.Id}})
+			}
+		}
+	}
+	var strategys []*m.StrategyTable
+	err = x.SQL("select id,tpl_id,metric from strategy where metric=?", metric).Find(&strategys)
+	if err != nil {
+		err = fmt.Errorf("Try to get strategy fail,%s ", err.Error())
+		return
+	}
+	if len(strategys) > 0 {
+		for _,strategy := range strategys {
+			tplIds = append(tplIds, strategy.TplId)
+			actions = append(actions, &Action{Sql: "delete from strategy where id=?", Param: []interface{}{strategy.Id}})
+		}
+	}
+	err = Transaction(actions)
+	if err != nil {
+		err = fmt.Errorf("Update database fail,%s ", err.Error())
+		return
+	}
+	return
+}
+
 func UpdatePanelChartMetric(data []m.PromMetricUpdateParam) error {
 	var chartTable []*m.ChartTable
 	x.SQL("select * from chart").Find(&chartTable)
