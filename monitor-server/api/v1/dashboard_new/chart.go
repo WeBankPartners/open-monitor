@@ -6,6 +6,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
 	"strconv"
+	"strings"
 )
 
 func ChartList(c *gin.Context)  {
@@ -53,12 +54,8 @@ func ChartUpdate(c *gin.Context)  {
 }
 
 func ChartDelete(c *gin.Context)  {
-	var param []*models.ChartTable
-	if err := c.ShouldBindJSON(&param); err != nil {
-		middleware.ReturnValidateError(c, err.Error())
-		return
-	}
-	err := db.ChartDelete(param)
+	ids := c.Query("ids")
+	err := db.ChartDelete(strings.Split(ids,","))
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	}else{
