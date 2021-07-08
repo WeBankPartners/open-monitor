@@ -243,3 +243,20 @@ alter table alarm_custom modify column alert_title  varchar(1024) default '';
 alter table alarm drop index `alarm_unique_index_sec`;
 create unique index `alarm_unique_index_sec` on alarm (`strategy_id`,`endpoint`,`status`,`start`);
 #@v1.11.3.4-end@;
+
+#@v1.11.4.2-begin@;
+CREATE TABLE `snmp_exporter` (
+  `id` varchar(255) NOT NULL PRIMARY KEY,
+  `address` varchar(255) NOT NULL,
+  `modules` varchar(255) default 'if_mib',
+  `create_at` datetime,
+  `update_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `snmp_endpoint_rel` (
+  `id` INT(10) UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+  `snmp_exporter` varchar(255) NOT NULL,
+  `endpoint_guid` varchar(100) NOT NULL,
+  `target` varchar(100) NOT NULL
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+create unique index prom_metric_unique on prom_metric(metric,metric_type);
+#@v1.11.4.2-end@;
