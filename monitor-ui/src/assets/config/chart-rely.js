@@ -11,7 +11,7 @@ require('echarts/lib/component/legendScroll');
 
 const echarts = require('echarts/lib/echarts');
 
-export const readyToDraw = function(that, responseData, viewIndex, chartConfig) {
+export const readyToDraw = function(that, responseData, viewIndex, chartConfig, elId) {
   var legend = []
   if (responseData.series.length === 0) {
     that.chartTitle = responseData.title
@@ -57,10 +57,10 @@ export const readyToDraw = function(that, responseData, viewIndex, chartConfig) 
     ...responseData,
     legend: legend
   }
-  drawChart(that, config, chartConfig)
+  drawChart(that, config, chartConfig, elId)
 }
 
-export const drawChart = function(that,config,userConfig) {
+export const drawChart = function(that,config,userConfig, elId) {
   const chartTextColor = '#a1a1a2'
   let originConfig = {
     title: true,
@@ -74,7 +74,7 @@ export const drawChart = function(that,config,userConfig) {
   }
   let finalConfig = Object.assign(originConfig, userConfig)
   // 基于准备好的dom，初始化echarts实例
-  var myChart = echarts.init(document.getElementById(that.elId))
+  var myChart = echarts.init(document.getElementById(elId || that.elId))
   myChart.resize()
   if (originConfig.clear) {
     myChart.clear()
