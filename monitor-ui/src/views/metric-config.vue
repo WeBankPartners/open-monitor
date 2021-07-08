@@ -28,7 +28,7 @@
                 <Icon type="ios-add" size="24"></Icon>
               </Button>
               <Option v-for="metric in metricOptions" :value="metric.id" :key="metric.id">{{ metric.metric }}<span style="float:right">
-                  <Button icon="ios-trash" type="error" size="small" style="background-color:#ed4014"></Button>
+                  <Button icon="ios-trash" type="error" @click="deleteMetric(metric)" size="small" style="background-color:#ed4014"></Button>
                 </span>
               </Option>
             </Select>
@@ -98,11 +98,14 @@
                     {{$t('m_graph')}}:
                   </span>
                   <Select v-model="selectdGraph" filterable style="width:300px" @on-open-change="getGraphInfo" @on-change="changeGraph" :disabled="!selectdPanel">
-                    <Button type="success" style="width:92%;background-color:#19be6b" @click="addMetric" size="small">
+                    <Button type="success" style="width:92%;background-color:#19be6b" @click="addGraph('graph')" size="small">
                       <Icon type="ios-add" size="24"></Icon>
                     </Button>
                     <Option v-for="graph in graphOptions" :value="graph.metric" :key="graph.metric">{{ graph.title }}<span style="float:right">
-                        <Button icon="ios-trash" type="error" size="small" style="background-color:#ed4014"></Button>
+                        <Button icon="ios-trash" type="error" @click="deletePanel('graph', graph)" size="small" style="background-color:#ed4014"></Button>
+                      </span>
+                      <span style="float:right">
+                        <Button icon="ios-create-outline" @click="editGraph('graph', graph)" type="primary" size="small" style="background-color:#0080FF"></Button>
                       </span>
                     </Option>
                   </Select>
@@ -256,6 +259,19 @@ export default {
     this.getEndpointType()
   },
   methods: {
+    deleteMetric (metric) {
+      this.$delConfirm({
+        msg: metric.metric,
+        callback: () => {
+          this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', this.$root.apiCenter.metricManagement + '?id=' + metric.id, '', () => {
+            this.$Message.success(this.$t('tips.success'))
+            this.metricId = ''
+            this.showConfigTab = false
+            this.$root.$eventBus.$emit('hideConfirmModal')
+          })
+        }
+      })
+    },
     changePanel () {
       this.showGraphConfig =false
       this.selectdGraph = ''
@@ -283,6 +299,7 @@ export default {
       this.titleManagement.show = true
       this.titleManagement.isAdd = true
       this.titleManagement.type = type
+      this.titleManagement.title = ''
     },
     editPanel (type, item) {
       this.titleManagement.show = true
@@ -302,6 +319,33 @@ export default {
     removePanel (id) {
       this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', this.$root.apiCenter.addPanel + '?ids=' + id, '', () => {
         this.$Message.success(this.$t('tips.success'))
+        this.selectdPanel = ''
+        this.$root.$eventBus.$emit('hideConfirmModal')
+      })
+    },
+    addGraph (type) {
+      this.titleManagement.show = true
+      this.titleManagement.isAdd = true
+      this.titleManagement.type = type
+      this.titleManagement.title = ''
+    },
+    editGraph (type, item) {
+      this.titleManagement.show = true
+      this.titleManagement.isAdd = false
+      this.titleManagement.type = type
+      this.titleManagement.title = item.title
+      this.titleManagement.id = item.id
+    },
+    deleteGraph (type, item) {
+      this.$delConfirm({
+        msg: item.title,
+        callback: () => {
+          this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', this.$root.apiCenter.getGraph + '?ids=' + item.id, '', () => {
+            this.$Message.success(this.$t('tips.success'))
+            this.selectMetrc = ''
+            this.$root.$eventBus.$emit('hideConfirmModal')
+          })
+        }
       })
     },
     saveTitle () {
@@ -322,6 +366,26 @@ export default {
             this.$Message.success(this.$t('tips.success'))
           })
         }
+        this.selectdPanel = ''
+      } else {
+        if (this.titleManagement.isAdd) {
+          let params = {
+            title: this.titleManagement.title,
+            group_id: this.selectdPanel
+          }
+          this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.getGraph, [params], () => {
+            this.$Message.success(this.$t('tips.success'))
+          })
+        } else {
+          let params = {
+            id: this.titleManagement.id,
+            title: this.titleManagement.title
+          }
+          this.$root.$httpRequestEntrance.httpRequestEntrance('PUT', this.$root.apiCenter.getGraph, [params], () => {
+            this.$Message.success(this.$t('tips.success'))
+          })
+        }
+        this.selectMetrc = ''
       }
     },
     savePanel () {
@@ -442,6 +506,7 @@ export default {
       this.getEndpoint()
     },
     saveMetric () {
+      this.metricConfigData.metric_type = this.endpointType
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.saveMetric, [this.metricConfigData], () => {
         this.$Message.success(this.$t('tips.success'))
       })
