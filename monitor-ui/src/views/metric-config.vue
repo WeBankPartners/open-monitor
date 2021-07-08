@@ -41,15 +41,21 @@
         <div v-if="showConfigTab || isAddMetric">
           <Tabs value="name1">
             <TabPane :label="$t('m_acquisition_configuration')" name="name1">
-              <div style="max-height:600px;overflow-y:auto">
+              <div >
                 <Form :label-width="80">
                   <FormItem :label="$t('tableKey.name')">
                     <Input v-model="metricConfigData.metric"></Input>
                   </FormItem>
+                  <FormItem :label="$t('m_host')">
+                    <Select filterable v-model="endpoint" @on-open-change="getEndpointForAcquisitionConfiguration" @on-change="collectedMetric = ''">
+                      <Option v-for="item in endpointOptions" :value="item.id" :key="item.id">{{ item.guid }}</Option>
+                    </Select>
+                  </FormItem>
+
                   <FormItem :label="$t('m_collected_data')">
-                    <Select filterable v-model="collectedMetric" @on-change="changeCollectedMetric">
+                    <Select filterable v-model="collectedMetric" class="select-dropdown" @on-open-change="getCollectedMetric" @on-change="changeCollectedMetric">
                       <Option 
-                        style="width:300px;"
+                        style="white-space: normal;"
                         v-for="item in collectedMetricOptions" 
                         :value="item.option_value" 
                         :key="item.option_value">
@@ -196,6 +202,7 @@ export default {
       collectedMetric: '',
       collectedMetricOptions: [],
       showConfigTab: false,
+      endpoint: '',
       metricConfigData: {
         id: null,
         metric: '',
@@ -259,6 +266,7 @@ export default {
     this.getEndpointType()
   },
   methods: {
+    test () {},
     deleteMetric (metric) {
       this.$delConfirm({
         msg: metric.metric,
@@ -501,6 +509,14 @@ export default {
         this.showEndpointSelect = true
       })
     },
+    getEndpointForAcquisitionConfiguration () {
+      const params = {
+        type: this.endpointType
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.getEndpoint, params, responseData => {
+        this.endpointOptions = responseData
+      })
+    },
     preview (previewPosition) {
       this.previewPosition = previewPosition
       this.getEndpoint()
@@ -525,13 +541,16 @@ export default {
       }, {isNeedloading: false})
     },
     changeCollectedMetric (val) {
-      this.metricConfigData.prom_ql += val
+      if (val) {
+        this.metricConfigData.prom_ql += ' ' + val
+      }
     },
     configMetric () {
       this.isAddMetric = false
+      this.endpoint = ''
+      this.collectedMetric = ''
       this.isRequestChartData = false
       const findMetricConfig = this.metricOptions.find(m => m.id === this.metricId)
-      this.getCollectedMetric()
       this.metricConfigData = {
         ...findMetricConfig
       }
@@ -539,7 +558,8 @@ export default {
     },
     getCollectedMetric () {
       const params = {
-        endpoint_type: this.endpointType
+        endpoint_type: this.endpointType,
+        id: this.endpoint
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.getMetricOptions, params, (responseData) => {
         this.collectedMetricOptions = responseData
@@ -548,8 +568,13 @@ export default {
   }
 }
 </script>
+<style lang="less">
+.select-dropdown /deep/ .ivu-select-dropdown {
+  max-height: 100px !important;
+}
+</style>
 <style scoped lang="less">
-  ivu-form-item {
+  .ivu-form-item {
     margin-bottom: 8px;
   }
    // 页面提示信息样式--开始
