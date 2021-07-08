@@ -15,7 +15,7 @@
             <span style="font-size: 14px;">
               {{$t('field.type')}}:
             </span>
-            <Select v-model="endpointType" style="width:300px">
+            <Select filterable v-model="endpointType" style="width:300px">
               <Option v-for="type in endpointTypeOptions" :value="type" :key="type">{{ type }}</Option>
             </Select>
           </div>
@@ -27,8 +27,7 @@
               <Button type="success" style="width:92%;background-color:#19be6b" @click="addMetric" size="small">
                 <Icon type="ios-add" size="24"></Icon>
               </Button>
-              <Option v-for="metric in metricOptions" :value="metric.id" :key="metric.id">{{ metric.metric }}
-                <span style="float:right">
+              <Option v-for="metric in metricOptions" :value="metric.id" :key="metric.id">{{ metric.metric }}<span style="float:right">
                   <Button icon="ios-trash" type="error" size="small" style="background-color:#ed4014"></Button>
                 </span>
               </Option>
@@ -48,7 +47,7 @@
                     <Input v-model="metricConfigData.metric"></Input>
                   </FormItem>
                   <FormItem :label="$t('m_collected_data')">
-                    <Select v-model="collectedMetric" @on-change="changeCollectedMetric">
+                    <Select filterable v-model="collectedMetric" @on-change="changeCollectedMetric">
                       <Option 
                         style="width:300px;"
                         v-for="item in collectedMetricOptions" 
@@ -72,7 +71,7 @@
               
               <div style="text-align: right;margin-top:24px">
                 <button class="btn btn-sm btn-cancel-f" @click="preview('acquisitionConfiguration')">{{$t('m_preview')}}</button>
-                <button class="btn btn-sm btn-confirm-f" @click="saveMetric">{{$t('button.saveEdit')}}</button>
+                <button class="btn btn-sm btn-confirm-f" @click="saveMetric">{{$t('button.saveConfig')}}</button>
               </div>
             </TabPane>
             <TabPane :label="$t('m_display_group')" name="name2" v-if="!isAddMetric">
@@ -81,39 +80,38 @@
                   <span style="font-size: 14px;">
                     {{$t('m_display_group')}}:
                   </span>
-                  <Select v-model="selectdPanel" style="width:300px" @on-open-change="getPanelinfo">
-                    <Option v-for="panel in panelOptions" :value="panel.chart_group" :key="panel.chart_group">{{ panel.title }}</Option>
+                  <Select filterable v-model="selectdPanel" style="width:300px" @on-open-change="getPanelinfo" @on-change="changePanel">
+                    <Button type="success" style="width:92%;background-color:#19be6b" @click="addPanel('panel')" size="small">
+                      <Icon type="ios-add" size="24"></Icon>
+                    </Button>
+                    <Option v-for="panel in panelOptions" :value="panel.chart_group" :key="panel.chart_group">{{ panel.title }}<span style="float:right">
+                        <Button icon="ios-trash" @click="deletePanel('panel', panel)" type="error" size="small" style="background-color:#ed4014"></Button>
+                      </span>
+                      <span style="float:right">
+                        <Button icon="ios-create-outline" @click="editPanel('panel', panel)" type="primary" size="small" style="background-color:#0080FF"></Button>
+                      </span>
+                    </Option>
                   </Select>
                 </div>
                 <div style="margin-right:16px;display:inline-block;">
                   <span style="font-size: 14px;">
                     {{$t('m_graph')}}:
                   </span>
-                  <Select v-model="selectdGraph" style="width:300px" @on-open-change="getGraphInfo" :disabled="!selectdPanel">
-                    <Option v-for="graph in graphOptions" :value="graph.metric" :key="graph.metric">{{ graph.title }}</Option>
+                  <Select v-model="selectdGraph" filterable style="width:300px" @on-open-change="getGraphInfo" @on-change="changeGraph" :disabled="!selectdPanel">
+                    <Button type="success" style="width:92%;background-color:#19be6b" @click="addMetric" size="small">
+                      <Icon type="ios-add" size="24"></Icon>
+                    </Button>
+                    <Option v-for="graph in graphOptions" :value="graph.metric" :key="graph.metric">{{ graph.title }}<span style="float:right">
+                        <Button icon="ios-trash" type="error" size="small" style="background-color:#ed4014"></Button>
+                      </span>
+                    </Option>
                   </Select>
                 </div>
                 <Button type="info" style="background-color:#2db7f5" @click="getGraphConfig" size="small">
                   {{$t('m_search')}}
                 </Button>
-                <div style="max-height:600px;overflow-y:auto;margin-top:24px">
-                  <!-- <div style="margin-right:16px;display:inline-block;">
-                  <span style="font-size: 14px;">
-                    {{$t('m_graph')}}:
-                  </span>
-                  <Select v-model="selectdGraph" style="width:300px" @on-open-change="getGraphInfo" :disabled="!selectdPanel">
-                    <Option v-for="graph in graphOptions" :value="graph.metric" :key="graph.metric">{{ graph.title }}</Option>
-                  </Select>
-                </div>
 
-                <div style="margin-right:16px;display:inline-block;">
-                  <span style="font-size: 14px;">
-                    {{$t('m_graph')}}:
-                  </span>
-                  <Select v-model="selectdGraph" style="width:300px" @on-open-change="getGraphInfo" :disabled="!selectdPanel">
-                    <Option v-for="graph in graphOptions" :value="graph.metric" :key="graph.metric">{{ graph.title }}</Option>
-                  </Select>
-                </div> -->
+                <div v-if="showGraphConfig" style="margin-top:48px">
                   <Form :label-width="80" inline>
                     <FormItem :label="$t('m_graph_name')">
                       <Input v-model="graphConfig.graphName"></Input>
@@ -121,15 +119,12 @@
                     <FormItem :label="$t('field.unit')">
                       <Input v-model="graphConfig.unit"/>
                     </FormItem>
+                    <FormItem :label="$t('field.metric')">
+                      <Select v-model="graphConfig.metric" filterable style="width:300px" @on-change="selectMetrc">
+                        <Option v-for="metric in metricOptions" :value="metric.metric" :key="metric.metric">{{ metric.metric }}</Option>
+                      </Select>
+                    </FormItem>
                   </Form>
-                  <div style="margin-right:16px">
-                    <span style="font-size: 14px;">
-                      {{$t('field.metric')}}:
-                    </span>
-                    <Select v-model="graphConfig.metric" filterable style="width:300px" @on-change="selectMetrc">
-                      <Option v-for="metric in metricOptions" :value="metric.metric" :key="metric.metric">{{ metric.metric }}</Option>
-                    </Select>
-                  </div>
                   <div>
                     <Tag
                       v-for="(graphMetric, index) in graphConfig.graphContainsMetric"
@@ -140,14 +135,14 @@
                       {{graphMetric}}
                     </Tag>
                   </div>
-                  <div v-if="isRequestChartData" class="metric-section">
+                  <div v-if="isRequestChartData" class="metric-section" style="margin-top:24px">
                     <div>
                       <div :id="displayGroupElId" class="echart"></div>
                     </div>
                   </div>
                   <div style="text-align: right;margin-top:24px">
                     <button class="btn btn-sm btn-cancel-f" @click="preview('displayGroup')">{{$t('m_preview')}}</button>
-                    <button class="btn btn-sm btn-confirm-f" @click="saveGraphMetric">{{$t('button.saveEdit')}}</button>
+                    <button class="btn btn-sm btn-confirm-f" @click="saveGraphMetric">{{$t('button.saveConfig')}}</button>
                   </div>
                 </div>
               </div>
@@ -160,9 +155,21 @@
             :title="$t('m_select_host')">
             <Form :label-width="80">
               <FormItem :label="$t('m_host')">
-                <Select v-model="metricConfigData.endpoint" style="width:300px">
+                <Select filterable v-model="metricConfigData.endpoint" style="width:300px">
                   <Option v-for="item in endpointOptions" :value="item.guid" :key="item.guid">{{ item.guid }}</Option>
                 </Select>
+              </FormItem>
+            </Form>
+          </Modal>
+
+          <Modal
+            v-model="titleManagement.show"
+            @on-ok="saveTitle"
+            @on-cancel="titleManagement.title = ''"
+            :title="titleManagement.isAdd ? $t('button.add') : $t('button.edit')">
+            <Form :label-width="80">
+              <FormItem :label="$t('field.title')">
+                <Input v-model="titleManagement.title"/>
               </FormItem>
             </Form>
           </Modal>
@@ -233,6 +240,15 @@ export default {
         unit: '',
         metric: '',
         graphContainsMetric: []
+      },
+      showGraphConfig: false, // 指标配置区
+
+      titleManagement: {
+        show:false,
+        isAdd: true,
+        type: '',
+        id: '',
+        title: '',
       }
     }
   },
@@ -240,6 +256,17 @@ export default {
     this.getEndpointType()
   },
   methods: {
+    changePanel () {
+      this.showGraphConfig =false
+      this.selectdGraph = ''
+      this.changeGraph()
+    },
+    changeGraph () {
+      this.showGraphConfig =false
+      this.graphConfig.graphName = ''
+      this.graphConfig.unit = ''
+      this.graphConfig.graphContainsMetric = []
+    },
     addMetric () {
       this.$refs.metricSelect.visible = false
       this.metricId = ''
@@ -251,6 +278,51 @@ export default {
         endpoint: ''
       }
       this.isAddMetric = true
+    },
+    addPanel (type) {
+      this.titleManagement.show = true
+      this.titleManagement.isAdd = true
+      this.titleManagement.type = type
+    },
+    editPanel (type, item) {
+      this.titleManagement.show = true
+      this.titleManagement.isAdd = false
+      this.titleManagement.type = type
+      this.titleManagement.title = item.title
+      this.titleManagement.id = item.id
+    },
+    deletePanel (type, item) {
+      this.$delConfirm({
+        msg: item.title,
+        callback: () => {
+          this.removePanel(item.id)
+        }
+      })
+    },
+    removePanel (id) {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', this.$root.apiCenter.addPanel + '?ids=' + id, '', () => {
+        this.$Message.success(this.$t('tips.success'))
+      })
+    },
+    saveTitle () {
+      if (this.titleManagement.type === 'panel') {
+        if (this.titleManagement.isAdd) {
+          let params = {
+            title: this.titleManagement.title
+          }
+          this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.addPanel + '/' + this.endpointType, [params], () => {
+            this.$Message.success(this.$t('tips.success'))
+          })
+        } else {
+          let params = {
+            id: this.titleManagement.id,
+            title: this.titleManagement.title
+          }
+          this.$root.$httpRequestEntrance.httpRequestEntrance('PUT', this.$root.apiCenter.addPanel, [params], () => {
+            this.$Message.success(this.$t('tips.success'))
+          })
+        }
+      }
     },
     savePanel () {
       const findMetricConfig = this.metricOptions.find(m => m.id === this.metricId)
@@ -282,12 +354,12 @@ export default {
         group_id: this.selectdPanel,
         id: graph.id
       }
-      console.log(params)
-      this.$root.$httpRequestEntrance.httpRequestEntrance('PUT', this.$root.apiCenter.getGraph, [params], responseData => {
-        console.log(responseData)
+      this.$root.$httpRequestEntrance.httpRequestEntrance('PUT', this.$root.apiCenter.getGraph, [params], () => {
+        this.$Message.success(this.$t('tips.success'))
       })
     },
     getGraphConfig () {
+      this.showGraphConfig = true
       this.graphConfig.graphName = ''
       this.graphConfig.unit = ''
       const graph = this.graphOptions.find(item => item.metric === this.selectdGraph)
@@ -303,7 +375,7 @@ export default {
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.getGraph, params, responseData => {
         this.graphOptions = responseData
-      })
+      }, {isNeedloading: false})
     },
     getPanelinfo () {
       const params = {
@@ -311,7 +383,7 @@ export default {
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.panelInfo, params, responseData => {
         this.panelOptions = responseData
-      })
+      }, {isNeedloading: false})
     },
     async getChartData () {
       this.isRequestChartData = true
@@ -412,6 +484,9 @@ export default {
 }
 </script>
 <style scoped lang="less">
+  ivu-form-item {
+    margin-bottom: 8px;
+  }
    // 页面提示信息样式--开始
   .page-notice {
     margin:16px 0;
@@ -426,12 +501,11 @@ export default {
 
   .metric-section {
     width: 1000px;
-    margin: 0 auto;
+    // margin: 0 auto;
   }
   .echart {
     height: 400px;
     width: 1000px;
-    margin-left: 40px;
     background: #f5f7f9;
   }
   .echart-no-data-tip {
