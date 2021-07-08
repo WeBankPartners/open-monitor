@@ -32,12 +32,12 @@ func main() {
 		middleware.InitSession()
 	}
 	ds.InitPrometheusDatasource()
-	prom.InitPrometheusConfigFile()
+	prom.InitPrometheusRuleFile()
 	if m.Config().Alert.Enable {
 		other.InitSmtpMail()
 	}
 	go api.InitClusterApi()
-	go db.InitKubernetesConfig()
+	go db.InitPrometheusConfigFile()
 	go db.StartCronJob()
 	go db.StartCheckCron()
 	go db.StartCheckLogKeyword()
