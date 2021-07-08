@@ -17,7 +17,7 @@ import (
 )
 
 func ListGrp(query *m.GrpQuery) error {
-	var querySql = `SELECT id,name,description FROM grp WHERE 1=1 `
+	var querySql = `SELECT * FROM grp WHERE 1=1 `
 	var countSql = `SELECT count(1) num FROM grp WHERE 1=1 `
 	var whereSql string
 	qParams := make([]interface{}, 0)
@@ -83,7 +83,7 @@ func SearchGrp(search string) (error, []*m.OptionModel) {
 		return err, result
 	}
 	for _, v := range grps {
-		result = append(result, &m.OptionModel{OptionValue: fmt.Sprintf("%d", v.Id), OptionText: v.Name, Id: v.Id})
+		result = append(result, &m.OptionModel{OptionValue: fmt.Sprintf("%d", v.Id), OptionText: v.Name, Id: v.Id, OptionType: v.EndpointType, OptionTypeName: v.EndpointType})
 	}
 	return nil, result
 }

@@ -259,4 +259,16 @@ CREATE TABLE `snmp_endpoint_rel` (
   `target` varchar(100) NOT NULL
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 create unique index prom_metric_unique on prom_metric(metric,metric_type);
+insert  into `grp`(`name`,`create_at`) VALUES ('default_snmp_group',NOW());
+alter table grp add column endpoint_type varchar(100);
+update grp set endpoint_type='host' where name='default_host_group';
+update grp set endpoint_type='mysql' where name='default_mysql_group';
+update grp set endpoint_type='redis' where name='default_redis_group';
+update grp set endpoint_type='java' where name='default_java_group';
+update grp set endpoint_type='ping' where name='default_ping_group';
+update grp set endpoint_type='telnet' where name='default_telnet_group';
+update grp set endpoint_type='nginx' where name='default_nginx_group';
+update grp set endpoint_type='http' where name='default_http_group';
+update grp set endpoint_type='pod' where name='default_pod_group';
+update grp set endpoint_type='snmp' where name='default_snmp_group';
 #@v1.11.4.2-end@;
