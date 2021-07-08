@@ -38,10 +38,6 @@
             </RadioGroup>
           </div>
         </div>
-
-        <div class="header-tools"> 
-          <button class="btn btn-sm btn-confirm-f" @click="goBack()">{{$t('button.back')}}</button>
-        </div>
       </div>
     </header>
     <div class="zone zone-chart c-dark">
@@ -91,13 +87,32 @@ export default {
     });
   },
   mounted() {
-    if (this.$root.$validate.isEmpty_reset(this.$route.params)) {
-      this.$router.push({ path: "viewConfig" });
-    } else {
-      if (!this.$root.$validate.isEmpty_reset(this.$route.params.templateData.cfg)) {
-        this.viewData = JSON.parse(this.$route.params.templateData.cfg);
+    // if (this.$root.$validate.isEmpty_reset(this.$route.params)) {
+    //   this.$router.push({ path: "viewConfig" });
+    // } else {
+    //   if (!this.$root.$validate.isEmpty_reset(this.$route.params.templateData.cfg)) {
+    //     this.viewData = JSON.parse(this.$route.params.templateData.cfg);
+    //     this.viewData.forEach((itemx) => {
+    //       if (itemx.viewConfig.id === this.$route.params.panal.id) {
+    //         this.panalData = itemx
+    //         this.initPanal()
+    //         if (this.viewCondition.autoRefresh > 0) {
+    //           this.interval = setInterval(()=>{
+    //             this.initPanal()
+    //           },this.viewCondition.autoRefresh*1000)
+    //         }
+    //         return;
+    //       }
+    //     });
+    //   }
+    // }
+  },
+  methods: {
+    initChart (params) {
+      if (!this.$root.$validate.isEmpty_reset(params.templateData.cfg)) {
+        this.viewData = JSON.parse(params.templateData.cfg);
         this.viewData.forEach((itemx) => {
-          if (itemx.viewConfig.id === this.$route.params.panal.id) {
+          if (itemx.viewConfig.id === params.panal.id) {
             this.panalData = itemx
             this.initPanal()
             if (this.viewCondition.autoRefresh > 0) {
@@ -109,9 +124,7 @@ export default {
           }
         });
       }
-    }
-  },
-  methods: {
+    },
     datePick (data) {
       this.viewCondition.dateRange = data
       this.disableTime = false
@@ -158,9 +171,6 @@ export default {
           }
         );
       }
-    },
-    goBack() {
-      this.$router.push({ name: "viewConfig", params: this.$route.params.parentData });
     }
   },
   components: {}
