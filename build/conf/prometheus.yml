@@ -79,3 +79,9 @@ scrape_configs:
           - '/app/monitor/prometheus/sd_file/sd_file_60.json'
 
 #Kubernetes scrape configuration
+#Kubernetes_start
+#Kubernetes_end
+
+#Snmp scrape configuration
+#Snmp_start
+#Snmp_end
