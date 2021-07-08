@@ -234,6 +234,8 @@
   "m_sunday": "Sunday",
   "m_collection_interval": "Collection Interval",
   "m_reset_condition": "Reset Condition",
+  "m_configuration": "Configuration",
+  "m_new_graph": "Add New Graph",
   "m_collected_data": "Collected Data",
   "m_preview": "Preview",
   "m_host": "Host",
