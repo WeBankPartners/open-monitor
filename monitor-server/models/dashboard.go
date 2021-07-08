@@ -210,7 +210,7 @@ type PromMetricUpdateParam struct {
 	Chart  PromMetricUpdateChartParam  `json:"chart"`
 	Metric  string  `json:"metric" binding:"required"`
 	MetricType  string  `json:"metric_type"`
-	PromQl  string  `json:"prom_ql" binding:"required"`
+	PromQl  string  `json:"prom_ql"`
 	PromMain  string  `json:"prom_main"`
 }
 
