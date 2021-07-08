@@ -190,5 +190,6 @@
     "saveMetric": "/monitor/api/v1/dashboard/config/metric/update",
     "savePanel": "/monitor/api/v1/dashboard/config/panel/update",
     "getGraph": "monitor/api/v1/dashboard/new/chart",
-    "addPanel": "/monitor/api/v1/dashboard/new/panel"
+    "addPanel": "/monitor/api/v1/dashboard/new/panel",
+    "metricManagement": "/monitor/api/v1/dashboard/new/metric"
 }
