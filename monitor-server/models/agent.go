@@ -24,6 +24,8 @@ type RegisterParamNew struct {
 	FetchMetric  bool  `json:"fetch_metric"`
 	Step  int  `json:"step"`
 	ExportAddress  string  `json:"export_address"`
+	Cluster string `json:"cluster"`
+	ProxyExporter string `json:"proxy_exporter"`
 }
 
 type RegisterConsulParam struct {
