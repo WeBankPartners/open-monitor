@@ -235,5 +235,15 @@
   "m_collection_interval": "Collection Interval",
   "m_reset_condition": "Reset Condition",
   "m_configuration": "Configuration",
-  "m_new_graph": "Add New Graph"
+  "m_new_graph": "Add New Graph",
+  "m_collected_data": "Collected Data",
+  "m_preview": "Preview",
+  "m_host": "Host",
+  "m_select_host": "Select Host",
+  "m_acquisition_configuration": "Acquisition Configuration",
+  "m_display_configuration": "Display Configuration",
+  "m_display_group": "Display Group",
+  "m_graph": "Graph",
+  "m_graph_name": "Graph Name",
+  "m_search": "Search"
 }
