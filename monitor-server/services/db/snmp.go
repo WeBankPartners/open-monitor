@@ -51,6 +51,9 @@ func SnmpExporterDelete(id string) error {
 }
 
 func SnmpEndpointAdd(snmpExporter,endpointGuid,target string) error {
+	if checkSnmpEndpointExists(snmpExporter,endpointGuid) {
+		return nil
+	}
 	_,err := x.Exec("insert into snmp_endpoint_rel(snmp_exporter,endpoint_guid,target) value (?,?,?)", snmpExporter, endpointGuid, target)
 	if err != nil {
 		return fmt.Errorf("Insert database fail,%s ", err.Error())
@@ -60,12 +63,24 @@ func SnmpEndpointAdd(snmpExporter,endpointGuid,target string) error {
 }
 
 func SnmpEndpointDelete(snmpExporter,endpointGuid string) error {
+	if !checkSnmpEndpointExists(snmpExporter,endpointGuid) {
+		return nil
+	}
 	_,err := x.Exec("delete from snmp_endpoint_rel where snmp_exporter=? and target=?", snmpExporter, endpointGuid)
 	if err != nil {
 		return fmt.Errorf("Delete database fail,%s ", err.Error())
 	}
 	err = SyncSnmpPrometheusConfig()
 	return err
+}
+
+func checkSnmpEndpointExists(snmpExporter,endpointGuid string) bool {
+	var snmpEndpointTable []*models.SnmpEndpointRelTable
+	x.SQL("select id from snmp_endpoint_rel where snmp_exporter=? and target=?", snmpExporter, endpointGuid).Find(&snmpEndpointTable)
+	if len(snmpEndpointTable) > 0 {
+		return true
+	}
+	return false
 }
 
 func SyncSnmpPrometheusConfig() error {
