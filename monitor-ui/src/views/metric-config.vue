@@ -182,20 +182,20 @@
               </FormItem>
             </Form>
           </Modal>
-          <Modal
-            v-model="isShowWarning"
-            :title="$t('delConfirm.title')"
-            @on-ok="ok"
-            @on-cancel="cancel">
-            <div class="modal-body" style="padding:30px">
-              <div style="text-align:center">
-                <p style="color: red">{{$t('delConfirm.tip')}}</p>
-              </div>
-            </div>
-          </Modal>
         </div>
       </div>
     </div>
+    <Modal
+      v-model="isShowWarning"
+      :title="$t('delConfirm.title')"
+      @on-ok="ok"
+      @on-cancel="cancel">
+      <div class="modal-body" style="padding:30px">
+        <div style="text-align:center">
+          <p style="color: red">{{$t('delConfirm.tip')}}</p>
+        </div>
+      </div>
+    </Modal>
   </div>
 </template>
 <script>
@@ -490,7 +490,7 @@ export default {
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.metricConfigView.api, params, responseData => {
         const chartConfig = {eye: false,clear:true, zoomCallback: true}
         readyToDraw(this,responseData, 1, chartConfig, this.acquisitionConfigurationElId)
-      })
+      }, {isNeedloading: false})
     },
     async getDispalyChartData () {
       generateUuid().then((elId)=>{
@@ -509,7 +509,7 @@ export default {
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.metricConfigView.api, params, responseData => {
         const chartConfig = {eye: false,clear:true, zoomCallback: true}
         readyToDraw(this,responseData, 1, chartConfig, this.displayGroupElId)
-      })
+      }, {isNeedloading: false})
     },
     checkEndpoint () {
       if (this.previewPosition === 'acquisitionConfiguration') {
@@ -609,12 +609,12 @@ export default {
   }
 
   .metric-section {
-    width: 1000px;
+    width: 1100px;
     // margin: 0 auto;
   }
   .echart {
     height: 400px;
-    width: 1000px;
+    width: 1100px;
     background: #f5f7f9;
   }
   .echart-no-data-tip {
