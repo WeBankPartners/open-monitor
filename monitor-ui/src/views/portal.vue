@@ -6,9 +6,9 @@
           style="width:400px;"
           v-model="endpoint"
           filterable
+          clearable
           remote
           ref="select"
-          clearable
           :placeholder="$t('requestMoreData')"
           @on-open-change="getEndpointList('.')"
           :remote-method="getEndpointList"

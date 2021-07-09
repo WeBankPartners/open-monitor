@@ -5,7 +5,7 @@
         <div>
           <div class="search-zone">
             <span class="params-title">{{$t('field.relativeTime')}}：</span>
-            <Select v-model="viewCondition.timeTnterval" :disabled="disableTime" style="width:80px"  @on-change="initPanal">
+            <Select filterable clearable v-model="viewCondition.timeTnterval" :disabled="disableTime" style="width:80px"  @on-change="initPanal">
               <Option v-for="item in dataPick" :value="item.value" :key="item.value">{{ item.label }}</Option>
             </Select>
           </div>
@@ -37,10 +37,6 @@
               <Radio label="none">Original</Radio>
             </RadioGroup>
           </div>
-        </div>
-
-        <div class="header-tools"> 
-          <button class="btn btn-sm btn-confirm-f" @click="goBack()">{{$t('button.back')}}</button>
         </div>
       </div>
     </header>
@@ -91,13 +87,32 @@ export default {
     });
   },
   mounted() {
-    if (this.$root.$validate.isEmpty_reset(this.$route.params)) {
-      this.$router.push({ path: "viewConfig" });
-    } else {
-      if (!this.$root.$validate.isEmpty_reset(this.$route.params.templateData.cfg)) {
-        this.viewData = JSON.parse(this.$route.params.templateData.cfg);
+    // if (this.$root.$validate.isEmpty_reset(this.$route.params)) {
+    //   this.$router.push({ path: "viewConfig" });
+    // } else {
+    //   if (!this.$root.$validate.isEmpty_reset(this.$route.params.templateData.cfg)) {
+    //     this.viewData = JSON.parse(this.$route.params.templateData.cfg);
+    //     this.viewData.forEach((itemx) => {
+    //       if (itemx.viewConfig.id === this.$route.params.panal.id) {
+    //         this.panalData = itemx
+    //         this.initPanal()
+    //         if (this.viewCondition.autoRefresh > 0) {
+    //           this.interval = setInterval(()=>{
+    //             this.initPanal()
+    //           },this.viewCondition.autoRefresh*1000)
+    //         }
+    //         return;
+    //       }
+    //     });
+    //   }
+    // }
+  },
+  methods: {
+    initChart (params) {
+      if (!this.$root.$validate.isEmpty_reset(params.templateData.cfg)) {
+        this.viewData = JSON.parse(params.templateData.cfg);
         this.viewData.forEach((itemx) => {
-          if (itemx.viewConfig.id === this.$route.params.panal.id) {
+          if (itemx.viewConfig.id === params.panal.id) {
             this.panalData = itemx
             this.initPanal()
             if (this.viewCondition.autoRefresh > 0) {
@@ -109,9 +124,7 @@ export default {
           }
         });
       }
-    }
-  },
-  methods: {
+    },
     datePick (data) {
       this.viewCondition.dateRange = data
       this.disableTime = false
@@ -158,9 +171,6 @@ export default {
           }
         );
       }
-    },
-    goBack() {
-      this.$router.push({ name: "viewConfig", params: this.$route.params.parentData });
     }
   },
   components: {}
