@@ -12,7 +12,7 @@
     <div class="zone zone-config c-dark">
       <div class="tool-save">
         <div class="condition">
-          <Select v-model="templateQuery.chartType" @on-change="switchChartType">
+          <Select filterable clearable v-model="templateQuery.chartType" @on-change="switchChartType">
             <Option
               v-for="(option, index) in chartTypeOption"
               :value="option.value"
@@ -45,6 +45,7 @@
                       style="width:300px"
                       v-model="templateQuery.endpoint"
                       filterable
+                      clearable
                       remote
                       :placeholder="$t('requestMoreData')"
                       @on-open-change="getEndpointList('.')"
@@ -66,6 +67,8 @@
                     <Select
                       v-model="templateQuery.metric"
                       style="width:300px"
+                      filterable
+                      clearable
                       :label-in-value="true"
                       @on-change="v=>{ setMetric(v)}"
                       @on-open-change="metricSelectOpen(templateQuery.endpoint)"
