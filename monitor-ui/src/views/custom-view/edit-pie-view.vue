@@ -26,6 +26,7 @@
                       style="width:300px"
                       v-model="templateQuery.endpoint"
                       filterable
+                      clearable
                       remote
                       :placeholder="$t('requestMoreData')"
                       @on-open-change="getEndpointList('.')"
@@ -46,6 +47,8 @@
                   <div class="condition">
                     <Select
                       v-model="templateQuery.metric"
+                      filterable
+                      clearable
                       style="width:300px"
                       :label-in-value="true"
                       @on-change="v=>{ setMetric(v)}"

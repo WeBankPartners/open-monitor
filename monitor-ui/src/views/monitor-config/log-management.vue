@@ -47,7 +47,7 @@
         <div slot="pathSlotConfig" class="extentClass">  
           <div class="marginbottom params-each">
             <label class="col-md-2 label-name">{{$t('field.endpoint')}}:</label>
-            <Select v-model="pathModelConfig.addRow.owner_endpoint" style="width:338px">
+            <Select filterable clearable v-model="pathModelConfig.addRow.owner_endpoint" style="width:338px">
               <Option v-for="item in pathModelConfig.slotConfig.endpointOption" :value="item.guid" :key="item.guid">{{ item.guid }}</Option>
             </Select>
           </div>
@@ -57,19 +57,19 @@
         <div slot="thresholdConfig" class="extentClass">  
           <div class="marginbottom params-each" v-if="modelConfig.hideEndpointSelect">
             <label class="col-md-2 label-name">{{$t('field.endpoint')}}:</label>
-            <Select v-model="modelConfig.addRow.owner_endpoint" style="width:338px">
+            <Select filterable clearable v-model="modelConfig.addRow.owner_endpoint" style="width:338px">
               <Option v-for="item in modelConfig.slotConfig.endpointOption" :value="item.guid" :key="item.guid">{{ item.guid }}</Option>
             </Select>
           </div>
           <div class="marginbottom params-each">
             <label class="col-md-2 label-name">{{$t('sendAlarm')}}:</label>
-            <Select v-model="modelConfig.addRow.notify_enable" style="width:340px">
+            <Select filterable clearable v-model="modelConfig.addRow.notify_enable" style="width:340px">
               <Option v-for="item in modelConfig.notifyEnableOption" :value="item.value" :key="item.value">{{ item.label }}</Option>
             </Select>
           </div>
           <div class="marginbottom params-each">
             <label class="col-md-2 label-name">{{$t('tableKey.s_priority')}}:</label>
-            <Select v-model="modelConfig.priority" style="width:100px">
+            <Select filterable clearable v-model="modelConfig.priority" style="width:100px">
               <Option v-for="item in modelConfig.priorityList" :value="item.value" :key="item.value">{{ $t(item.label) }}</Option>
             </Select>
           </div>
