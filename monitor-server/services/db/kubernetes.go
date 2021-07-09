@@ -1,16 +1,15 @@
 package db
 
 import (
-	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
-	"time"
 	"fmt"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
+	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
 	"io/ioutil"
 	"os/exec"
-	"bytes"
 	"strings"
-	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
-	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
-	"github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
+	"time"
 )
 
 func ListKubernetesCluster(clusterName string) (result []*m.KubernetesClusterTable,err error) {
@@ -67,10 +66,14 @@ func DeleteKubernetesCluster(id int, clusterName string) error {
 	return err
 }
 
-func InitKubernetesConfig()  {
+func InitPrometheusConfigFile()  {
 	err := SyncKubernetesConfig()
 	if err != nil {
 		log.Logger.Error("Init kubernetes config fail", log.Error(err))
+	}
+	err = SyncSnmpPrometheusConfig()
+	if err != nil {
+		log.Logger.Error("Init Snmp config fail", log.Error(err))
 	}
 }
 
@@ -83,16 +86,14 @@ func SyncKubernetesConfig() error {
 		}
 		return fmt.Errorf("kubernetes config empty")
 	}
-	tplBytes,err := ioutil.ReadFile("/app/monitor/prometheus/prometheus_tpl.yml")
+	promBytes,err := ioutil.ReadFile("/app/monitor/prometheus/prometheus.yml")
 	if err != nil {
 		err = fmt.Errorf("Read prometheus tpl file fail,%s ", err.Error())
 		return err
 	}
-	backupConfigName := fmt.Sprintf("prometheus_%d.yml", time.Now().Unix())
-	backupBytes,err := exec.Command("/bin/sh", "-c", "cp /app/monitor/prometheus/prometheus.yml /app/monitor/prometheus/"+backupConfigName).Output()
-	if err != nil {
-		err = fmt.Errorf("Backup prometheus config file fail,output:%s,err:%s ", string(backupBytes), err.Error())
-		return err
+	backupConfigName,backupErr := backupPrometheusConfig()
+	if backupErr != nil {
+		return backupErr
 	}
 	cleanTokenOutput,err := exec.Command("/bin/sh", "-c", "rm -f /app/monitor/prometheus/token/*").Output()
 	if err != nil {
@@ -109,38 +110,56 @@ func SyncKubernetesConfig() error {
 	if err != nil {
 		return err
 	}
-	kubernetesPrometheusConfig,err := ioutil.ReadFile("/app/monitor/prometheus/kubernetes_prometheus.tpl")
+	promString := string(promBytes)
+	startIndex := strings.Index(promString, "#Kubernetes_start")
+	endIndex := strings.Index(promString, "#Kubernetes_end")
+	tplBytes,err := ioutil.ReadFile("/app/monitor/prometheus/kubernetes_prometheus.tpl")
 	if err != nil {
 		err = fmt.Errorf("Read kubernetes prometheus config template file fail,%s ", err.Error())
 		return err
 	}
-	var kubernetesConfigBuffer bytes.Buffer
-	kubernetesConfigBuffer.Write(tplBytes)
-	kubernetesConfigBuffer.WriteString("\n")
-	for _,v := range kubernetesTables {
-		tmpKPConfig := string(kubernetesPrometheusConfig)
-		tmpIpSplit := strings.Split(v.ApiServer, ":")
-		tmpKPConfig = strings.ReplaceAll(tmpKPConfig, "{{cluster_name}}", v.ClusterName)
+	kubernetesConfigString := ""
+	tplString := string(tplBytes)
+	for _,kube := range kubernetesTables {
+		tmpKPConfig := tplString + "\n"
+		tmpIpSplit := strings.Split(kube.ApiServer, ":")
+		tmpKPConfig = strings.ReplaceAll(tmpKPConfig, "{{cluster_name}}", kube.ClusterName)
 		tmpKPConfig = strings.ReplaceAll(tmpKPConfig, "{{api_server_ip}}", tmpIpSplit[0])
 		tmpKPConfig = strings.ReplaceAll(tmpKPConfig, "{{api_server_port}}", tmpIpSplit[1])
-		tmpKPConfig += "\n\n"
-		kubernetesConfigBuffer.WriteString(tmpKPConfig)
+		kubernetesConfigString += tmpKPConfig + "\n"
 	}
-	err = ioutil.WriteFile("/app/monitor/prometheus/prometheus.yml", kubernetesConfigBuffer.Bytes(), 0644)
+	promString = promString[:startIndex+17] + "\n" + kubernetesConfigString + promString[endIndex:]
+	err = ioutil.WriteFile("/app/monitor/prometheus/prometheus.yml", []byte(promString), 0644)
 	if err != nil {
-		err = fmt.Errorf("Update prometheus file fail,%s ", err.Error())
-		recoverOutput,recoverError := exec.Command("/bin/sh", "-c", "rm -f /app/monitor/prometheus/prometheus.yml && cp /app/monitor/prometheus/"+backupConfigName+" /app/monitor/prometheus/prometheus.yml").Output()
-		if recoverError != nil {
-			log.Logger.Error("Try to rebuild prometheus config file fail", log.String("output", string(recoverOutput)), log.Error(recoverError))
-		}
+		err = fmt.Errorf("Write kubenetes config to prometheus fail,%s ", err.Error())
+		recoverPrometheusConfig(backupConfigName)
 		return err
 	}
 	err = prom.ReloadConfig()
 	if err != nil {
 		err = fmt.Errorf("Reload prometheus config fail,%s ", err.Error())
+		recoverPrometheusConfig(backupConfigName)
+		prom.ReloadConfig()
 		return err
 	}
 	return nil
+}
+
+func backupPrometheusConfig() (name string,err error) {
+	name = fmt.Sprintf("prometheus_%d.yml", time.Now().Unix())
+	backupOutput,err := exec.Command("/bin/sh", "-c", "cp /app/monitor/prometheus/prometheus.yml /tmp/"+name).Output()
+	if err != nil {
+		err = fmt.Errorf("Backup prometheus config file fail,output:%s,err:%s ", string(backupOutput), err.Error())
+		log.Logger.Error("Backup prometheus config fail", log.Error(err))
+	}
+	return
+}
+
+func recoverPrometheusConfig(name string) {
+	recoverOutput,recoverError := exec.Command("/bin/sh", "-c", "rm -f /app/monitor/prometheus/prometheus.yml && cp /tmp/"+name+" /app/monitor/prometheus/prometheus.yml").Output()
+	if recoverError != nil {
+		log.Logger.Error("Recover prometheus config fail", log.String("output", string(recoverOutput)), log.Error(recoverError))
+	}
 }
 
 func StartCronSyncKubernetesPod(interval int)  {
