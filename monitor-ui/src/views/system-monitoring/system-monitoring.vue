@@ -7,7 +7,7 @@
                 <span> {{sysConfig.systemName}}</span>
             </div>
             <div class="header-tools"> 
-              <Select v-model="sysConfig.metricMulti" multiple style="width:200px" @on-change="getMetric">
+              <Select filterable v-model="sysConfig.metricMulti" multiple style="width:200px" @on-change="getMetric">
                 <Option v-for="item in metricLabelList" :value="item.value" :key="item.value">{{ item.label }}</Option>
               </Select>
             </div>
