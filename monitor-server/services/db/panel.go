@@ -32,6 +32,9 @@ func PanelList(id int,endpointType string) (result []*models.PanelTable,err erro
 		baseSql += " and group_id=? "
 		params = append(params, groupId)
 	}
+	if endpointType == "host" {
+		baseSql += " and title<>'Business' "
+	}
 	err = x.SQL(baseSql, params...).Find(&result)
 	return
 }
