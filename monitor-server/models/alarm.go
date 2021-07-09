@@ -9,6 +9,7 @@ type GrpTable struct {
 	Description  string  `json:"description"`
 	CreateUser  string  `json:"create_user"`
 	UpdateUser  string  `json:"update_user"`
+	EndpointType string `json:"endpoint_type"`
 	CreateAt  time.Time  `json:"create_at"`
 	UpdateAt  time.Time  `json:"update_at"`
 }

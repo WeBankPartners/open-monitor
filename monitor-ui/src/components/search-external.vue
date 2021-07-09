@@ -7,13 +7,13 @@
       </li>
       <li class="search-li">
         <span class="params-title">{{$t('field.relativeTime')}}：</span>
-        <Select v-model="timeTnterval" :disabled="disableTime" style="width:80px" @on-change="getChartsConfig">
+        <Select filterable clearable v-model="timeTnterval" :disabled="disableTime" style="width:80px" @on-change="getChartsConfig">
           <Option v-for="item in dataPick" :value="item.value" :key="item.value">{{ item.label }}</Option>
         </Select>
       </li>
       <li class="search-li">
         <span class="params-title">{{$t('placeholder.refresh')}}：</span>
-        <Select v-model="autoRefresh" :disabled="disableTime" style="width:100px" @on-change="getChartsConfig" :placeholder="$t('placeholder.refresh')">
+        <Select filterable clearable v-model="autoRefresh" :disabled="disableTime" style="width:100px" @on-change="getChartsConfig" :placeholder="$t('placeholder.refresh')">
           <Option v-for="item in autoRefreshConfig" :value="item.value" :key="item.value">{{ item.label }}</Option>
         </Select>
       </li>

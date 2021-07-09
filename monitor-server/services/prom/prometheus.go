@@ -22,7 +22,7 @@ type fileObj struct {
 var FileMap map[string]fileObj
 var PathEnbale bool
 
-func InitPrometheusConfigFile()  {
+func InitPrometheusRuleFile()  {
 	PathEnbale = true
 	FileMap = make(map[string]fileObj)
 	path := m.Config().Prometheus.ConfigPath

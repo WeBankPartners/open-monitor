@@ -491,7 +491,7 @@ func UpdateGrpRole(param m.RoleGrpDto) error {
 func UpdateRoleNew(param m.UpdateRoleDto) error {
 	var rowData []*m.RoleTable
 	var err error
-	if param.Operator == "add" {
+	if param.Operation == "add" {
 		if param.Name == "" {
 			return fmt.Errorf("Role name can not emtpy")
 		}
@@ -501,7 +501,7 @@ func UpdateRoleNew(param m.UpdateRoleDto) error {
 		}else{
 			_,err = x.Exec("insert into role(name,display_name,email,creator,created) value (?,?,?,?,?)", param.Name,param.DisplayName,param.Email,param.Operator,time.Now())
 		}
-	}else if param.Operator == "update" {
+	}else if param.Operation == "update" {
 		if param.RoleId <= 0 {
 			return fmt.Errorf("Role id can not emtpy ")
 		}

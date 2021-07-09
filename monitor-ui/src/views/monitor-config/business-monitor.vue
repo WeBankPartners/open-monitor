@@ -42,7 +42,7 @@
         <div slot="thresholdConfig" class="extentClass">  
           <div class="marginbottom params-each">
             <label class="col-md-2 label-name">{{$t('field.endpoint')}}:</label>
-            <Select v-model="modelConfig.addRow.owner_endpoint" style="width:338px">
+            <Select filterable clearable v-model="modelConfig.addRow.owner_endpoint" style="width:338px">
               <Option v-for="item in modelConfig.slotConfig.endpointOption" :value="item.guid" :key="item.guid">{{ item.guid }}</Option>
             </Select>
           </div>
@@ -63,7 +63,7 @@
                   ></Button>
                   <Input v-model="item.key" style="width: 190px" :placeholder="$t('m_key') + ' e.g:[.*][.*]'" />
                   <Input v-model="item.metric" style="width: 190px" :placeholder="$t('field.metric') + ' , e.g:code'" />
-                  <Select v-model="item.agg_type" filterable style="width:190px">
+                  <Select v-model="item.agg_type" filterable clearable style="width:190px">
                     <Option v-for="agg in ruleModelConfig.slotConfig.aggOption" :value="agg" :key="agg">{{
                       agg
                     }}</Option>
@@ -92,7 +92,7 @@
                     icon="md-close"
                   ></Button>
                   <Input v-model="item.key" style="width: 146px" :placeholder="$t('m_key')" />
-                  <Select v-model="item.regulation" filterable style="width:140px">
+                  <Select v-model="item.regulation" filterable clearable style="width:140px">
                     <Option v-for="regulation in ruleModelConfig.slotConfig.regulationOption" :value="regulation.value" :key="regulation.value">{{
                       regulation.label
                     }}</Option>

@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/agent"
 	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/alarm"
+	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/config_new"
 	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/dashboard"
+	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/dashboard_new"
 	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/user"
 	_ "github.com/WeBankPartners/open-monitor/monitor-server/docs"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
@@ -104,6 +106,7 @@ func InitHttpServer(exportAgent bool) {
 			dashboardApi.GET("/config/metric/list", dashboard.GetPromMetric)
 			dashboardApi.POST("/newchart", dashboard.GetChart)
 			dashboardApi.POST("/pie/chart", dashboard.GetPieChart)
+			dashboardApi.POST("/config/panel/update", dashboard.UpdatePanelChartMetric)
 			dashboardApi.POST("/config/metric/update", dashboard.UpdatePromMetric)
 			dashboardApi.GET("/config/metric/reload", agent.ReloadEndpointMetric)
 			dashboardApi.GET("/endpoint/metric/list", dashboard.GetEndpointMetric)
@@ -124,6 +127,34 @@ func InitHttpServer(exportAgent bool) {
 			dashboardApi.POST("/custom/role/save", dashboard.SaveCustomDashboardRole)
 			dashboardApi.GET("/custom/alarm/list", alarm.GetCustomDashboardAlarm)
 			dashboardApi.GET("/panel/list", dashboard.GetDashboardPanelList)
+			dashboardApi.GET("/endpoint/type", dashboard.GetEndpointTypeList)
+			dashboardApi.GET("/endpoint", dashboard.GetEndpointList)
+		}
+		dashboardNewApi := authApi.Group("/dashboard/new")
+		{
+			// dashboard metric curd
+			dashboardNewApi.GET("/metric", dashboard_new.MetricList)
+			dashboardNewApi.POST("/metric", dashboard_new.MetricCreate)
+			dashboardNewApi.PUT("/metric", dashboard_new.MetricUpdate)
+			dashboardNewApi.DELETE("/metric", dashboard_new.MetricDelete)
+			// dashboard panel curd
+			dashboardNewApi.GET("/panel", dashboard_new.PanelList)
+			dashboardNewApi.POST("/panel/:endpointType", dashboard_new.PanelCreate)
+			dashboardNewApi.PUT("/panel", dashboard_new.PanelUpdate)
+			dashboardNewApi.DELETE("/panel", dashboard_new.PanelDelete)
+			// dashboard chart curd
+			dashboardNewApi.GET("/chart", dashboard_new.ChartList)
+			dashboardNewApi.POST("/chart", dashboard_new.ChartCreate)
+			dashboardNewApi.PUT("/chart", dashboard_new.ChartUpdate)
+			dashboardNewApi.DELETE("/chart", dashboard_new.ChartDelete)
+		}
+		configNewApi := authApi.Group("/config/new")
+		{
+			// snmp config curd
+			configNewApi.GET("/snmp", config_new.SnmpExporterList)
+			configNewApi.POST("/snmp", config_new.SnmpExporterCreate)
+			configNewApi.PUT("/snmp", config_new.SnmpExporterUpdate)
+			configNewApi.DELETE("/snmp", config_new.SnmpExporterDelete)
 		}
 		agentApi := authApi.Group("/agent")
 		{
@@ -152,7 +183,7 @@ func InitHttpServer(exportAgent bool) {
 			alarmApi.GET("/grp/delete", alarm.DeleteGrp)
 			alarmApi.POST("/grp/role/update", alarm.UpdateGrpRole)
 			alarmApi.GET("/grp/role/get", alarm.GetGrpRole)
-			alarmApi.GET("/endpoint/list", alarm.ListEndpoint)
+			alarmApi.GET("/endpoint/list", alarm.ListGrpEndpoint)
 			alarmApi.POST("/endpoint/update", alarm.EditGrpEndpoint)
 			alarmApi.POST("/endpoint/grp/update", alarm.EditEndpointGrp)
 			alarmApi.GET("/strategy/search", alarm.SearchObjOption)
