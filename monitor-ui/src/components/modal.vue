@@ -93,6 +93,7 @@
                   :disabled="modelConfig.isAdd ? false : item.disabled"
                   multiple
                   filterable
+                  clearable
                   class="col-md-7 v-selectss"
                   v-model="modelConfig.addRow[item.value]"
                 >
