@@ -15,7 +15,7 @@
             <span style="font-size: 14px;">
               {{$t('field.type')}}:
             </span>
-            <Select v-model="endpointType" style="width:300px">
+            <Select filterable clearable v-model="endpointType" style="width:300px">
               <Option v-for="type in endpointTypeOptions" :value="type" :key="type">{{ type }}</Option>
             </Select>
           </div>
@@ -23,7 +23,7 @@
             <span style="font-size: 14px;">
               {{$t('field.metric')}}:
             </span>
-            <Select v-model="metricId" filterable style="width:300px" @on-open-change="getMetricOptions" ref="metricSelect" :disabled="!endpointType">
+            <Select v-model="metricId" filterable clearable style="width:300px" @on-open-change="getMetricOptions" ref="metricSelect" :disabled="!endpointType">
               <Button type="success" style="width:92%;background-color:#19be6b" @click="addMetric" size="small">
                 <Icon type="ios-add" size="24"></Icon>
               </Button>
@@ -48,7 +48,7 @@
                     <Input v-model="metricConfigData.metric"></Input>
                   </FormItem>
                   <FormItem :label="$t('m_collected_data')">
-                    <Select v-model="collectedMetric" @on-change="changeCollectedMetric">
+                    <Select filterable clearable v-model="collectedMetric" @on-change="changeCollectedMetric">
                       <Option 
                         style="width:300px;"
                         v-for="item in collectedMetricOptions" 
@@ -113,7 +113,7 @@
             :title="$t('m_select_host')">
             <Form :label-width="80">
               <FormItem :label="$t('m_host')">
-                <Select v-model="metricConfigData.endpoint" style="width:300px">
+                <Select filterable clearable v-model="metricConfigData.endpoint" style="width:300px">
                   <Option v-for="item in endpointOptions" :value="item.guid" :key="item.guid">{{ item.guid }}</Option>
                 </Select>
               </FormItem>
