@@ -15,7 +15,7 @@
             <span style="font-size: 14px;">
               {{$t('field.type')}}:
             </span>
-            <Select filterable v-model="endpointType" style="width:300px">
+            <Select filterable multiple v-model="endpointType" style="width:300px">
               <Option v-for="type in endpointTypeOptions" :value="type" :key="type">{{ type }}</Option>
             </Select>
           </div>
@@ -23,7 +23,7 @@
             <span style="font-size: 14px;">
               {{$t('field.metric')}}:
             </span>
-            <Select v-model="metricId" filterable style="width:300px" @on-open-change="getMetricOptions" ref="metricSelect" :disabled="!endpointType">
+            <Select v-model="metricId" filterable clearable style="width:300px" @on-open-change="getMetricOptions" ref="metricSelect" :disabled="!endpointType">
               <Button type="success" style="width:92%;background-color:#19be6b" @click="addMetric" size="small">
                 <Icon type="ios-add" size="24"></Icon>
               </Button>
@@ -47,13 +47,13 @@
                     <Input v-model="metricConfigData.metric"></Input>
                   </FormItem>
                   <FormItem :label="$t('m_host')">
-                    <Select filterable v-model="endpoint" @on-open-change="getEndpointForAcquisitionConfiguration" @on-change="collectedMetric = ''">
+                    <Select filterable clearable v-model="endpoint" @on-open-change="getEndpointForAcquisitionConfiguration" @on-change="collectedMetric = ''">
                       <Option v-for="item in endpointOptions" :value="item.id" :key="item.id">{{ item.guid }}</Option>
                     </Select>
                   </FormItem>
 
                   <FormItem :label="$t('m_collected_data')">
-                    <Select filterable v-model="collectedMetric" class="select-dropdown" @on-open-change="getCollectedMetric" @on-change="changeCollectedMetric">
+                    <Select filterable clearable v-model="collectedMetric" class="select-dropdown" @on-open-change="getCollectedMetric" @on-change="changeCollectedMetric">
                       <Option 
                         style="white-space: normal;"
                         v-for="item in collectedMetricOptions" 
@@ -86,7 +86,7 @@
                   <span style="font-size: 14px;">
                     {{$t('m_display_group')}}:
                   </span>
-                  <Select filterable v-model="selectdPanel" style="width:300px" @on-open-change="getPanelinfo" @on-change="changePanel">
+                  <Select filterable clearable v-model="selectdPanel" style="width:300px" @on-open-change="getPanelinfo" @on-change="changePanel">
                     <Button type="success" style="width:92%;background-color:#19be6b" @click="addPanel('panel')" size="small">
                       <Icon type="ios-add" size="24"></Icon>
                     </Button>
@@ -103,11 +103,11 @@
                   <span style="font-size: 14px;">
                     {{$t('m_graph')}}:
                   </span>
-                  <Select v-model="selectdGraph" filterable style="width:300px" @on-open-change="getGraphInfo" @on-change="changeGraph" :disabled="!selectdPanel">
+                  <Select v-model="selectdGraph" filterable clearable style="width:300px" @on-open-change="getGraphInfo" @on-change="changeGraph" :disabled="!selectdPanel">
                     <Button type="success" style="width:92%;background-color:#19be6b" @click="addGraph('graph')" size="small">
                       <Icon type="ios-add" size="24"></Icon>
                     </Button>
-                    <Option v-for="graph in graphOptions" :value="graph.metric" :key="graph.metric">{{ graph.title }}<span style="float:right">
+                    <Option v-for="graph in graphOptions" :value="graph.id" :key="graph.id">{{ graph.title }}<span style="float:right">
                         <Button icon="ios-trash" type="error" @click="deletePanel('graph', graph)" size="small" style="background-color:#ed4014"></Button>
                       </span>
                       <span style="float:right">
@@ -129,8 +129,8 @@
                       <Input v-model="graphConfig.unit"/>
                     </FormItem>
                     <FormItem :label="$t('field.metric')">
-                      <Select v-model="graphConfig.metric" filterable style="width:300px" @on-change="selectMetrc">
-                        <Option v-for="metric in metricOptions" :value="metric.metric" :key="metric.metric">{{ metric.metric }}</Option>
+                      <Select v-model="graphConfig.metric" filterable clearable style="width:300px" @on-change="changeSelectMetrc">
+                        <Option v-for="(metric, index) in metricOptions" :value="metric.metric" :key="metric.metric + index">{{ metric.metric }}</Option>
                       </Select>
                     </FormItem>
                   </Form>
@@ -164,7 +164,7 @@
             :title="$t('m_select_host')">
             <Form :label-width="80">
               <FormItem :label="$t('m_host')">
-                <Select filterable v-model="metricConfigData.endpoint" style="width:300px">
+                <Select filterable clearable v-model="metricConfigData.endpoint" style="width:300px">
                   <Option v-for="item in endpointOptions" :value="item.guid" :key="item.guid">{{ item.guid }}</Option>
                 </Select>
               </FormItem>
@@ -411,20 +411,22 @@ export default {
     removeGraphMetric (index) {
       this.graphConfig.graphContainsMetric.splice(index, 1)
     },
-    selectMetrc (val) {
+    changeSelectMetrc (val) {
+      console.log(val,
+      this.graphConfig.graphContainsMetric)
       const find = this.graphConfig.graphContainsMetric.find(item => item === val)
+      console.log(find)
       if (!find) {
         this.graphConfig.graphContainsMetric.push(val)
       }
     },
     saveGraphMetric () {
-       const graph = this.graphOptions.find(item => item.metric === this.selectdGraph)
       const params = {
         metric: this.graphConfig.graphContainsMetric.join('^'),
         title: this.graphConfig.graphName,
         unit: this.graphConfig.unit,
         group_id: this.selectdPanel,
-        id: graph.id
+        id: this.selectdGraph
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('PUT', this.$root.apiCenter.getGraph, [params], () => {
         this.$Message.success(this.$t('tips.success'))
@@ -434,7 +436,7 @@ export default {
       this.showGraphConfig = true
       this.graphConfig.graphName = ''
       this.graphConfig.unit = ''
-      const graph = this.graphOptions.find(item => item.metric === this.selectdGraph)
+      const graph = this.graphOptions.find(item => item.id === this.selectdGraph)
       if (graph) {
         this.graphConfig.graphName = graph.title
         this.graphConfig.unit = graph.unit
@@ -534,9 +536,9 @@ export default {
     },
     getMetricOptions () {
       const params = {
-        type: this.endpointType
+        endpointType: this.endpointType
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.metricList.api, params, responseData => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.getMetricByEndpointType, params, responseData => {
         this.metricOptions = responseData
       }, {isNeedloading: false})
     },
