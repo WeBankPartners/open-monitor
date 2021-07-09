@@ -66,7 +66,7 @@
               <label>{{pl.role_name}}：</label>
             </div>
             <div style="width: 55%">
-              <Select v-model="pl.main_page_id" style="width:200px" :placeholder="$t('placeholder.refresh')">
+              <Select filterable clearable v-model="pl.main_page_id" style="width:200px" :placeholder="$t('placeholder.refresh')">
                 <Option v-for="item in pl.options" :value="item.id" :key="item.id">{{ item.option_text }}</Option>
               </Select>
             </div>

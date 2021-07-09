@@ -19,13 +19,13 @@
           <div>
             <div class="search-zone">
               <span class="params-title">{{$t('field.relativeTime')}}：</span>
-              <Select v-model="viewCondition.timeTnterval" disabled style="width:80px"  @on-change="initPanals">
+              <Select filterable clearable v-model="viewCondition.timeTnterval" disabled style="width:80px"  @on-change="initPanals">
                 <Option v-for="item in dataPick" :value="item.value" :key="item.value">{{ item.label }}</Option>
               </Select>
             </div>
             <div class="search-zone">
               <span class="params-title">{{$t('placeholder.refresh')}}：</span>
-              <Select v-model="viewCondition.autoRefresh" disabled style="width:100px" @on-change="initPanals" :placeholder="$t('placeholder.refresh')">
+              <Select filterable clearable v-model="viewCondition.autoRefresh" disabled style="width:100px" @on-change="initPanals" :placeholder="$t('placeholder.refresh')">
                 <Option v-for="item in autoRefreshConfig" :value="item.value" :key="item.value">{{ item.label }}</Option>
               </Select>
             </div>

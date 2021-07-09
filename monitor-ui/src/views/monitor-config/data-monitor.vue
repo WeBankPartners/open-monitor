@@ -29,7 +29,7 @@
   >
     <Form :model="activeSysPanal" :label-width="80">
       <FormItem :label="$t('field.resourceLevel')">
-        <Select v-model="newPanalName" style="width:400px">
+        <Select filterable clearable v-model="newPanalName" style="width:400px">
           <Option v-for="item in panalNameList" :value="item.option_value" :key="item.option_value">{{ item.option_text }}</Option>
         </Select>
       </FormItem>
@@ -50,7 +50,7 @@
   >
     <Form :model="activeSysPanal" :label-width="80">
       <FormItem :label="$t('field.resourceLevel')">
-        <Select v-model="newPanalName" style="width:400px">
+        <Select filterable clearable v-model="newPanalName" style="width:400px">
           <Option v-for="item in panalNameList" :value="item.option_value" :key="item.option_value">{{ item.option_text }}</Option>
         </Select>
       </FormItem>
@@ -76,7 +76,7 @@
     v-model="isShowChangePanalName"
     :title="$t('button.edit')"
     @on-ok="changePanalName">
-    <Select v-model="newPanalName" style="width:400px">
+    <Select filterable clearable v-model="newPanalName" style="width:400px">
         <Option v-for="item in panalNameList" :value="item.option_value" :key="item.option_value">{{ item.option_text }}</Option>
     </Select>
   </Modal>
