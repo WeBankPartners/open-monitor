@@ -87,6 +87,7 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage,guid string,err er
 		case "telnet": rData = telnetRegister(param)
 		case "http": rData = httpRegister(param)
 		case "windows": rData = windowsRegister(param)
+		case "snmp": rData = snmpExporterRegister(param)
 		default: rData = otherExporterRegister(param)
 	}
 	guid = rData.endpoint.Guid
@@ -172,7 +173,7 @@ func hostRegister(param m.RegisterParamNew) returnData {
 		return result
 	}
 	if len(strList) == 0 {
-		result.err = fmt.Errorf("Can't get anything from http://%s:%d/metrics ", param.Ip, &param.Port)
+		result.err = fmt.Errorf("Can't get anything from http://%s:%s/metrics ", param.Ip, param.Port)
 		return result
 	}
 	result.endpoint.Step,err = calcStep(startTime, param.Step)
@@ -635,6 +636,34 @@ func windowsRegister(param m.RegisterParamNew) returnData {
 	result.addDefaultGroup = true
 	result.fetchMetric = true
 	result.agentManager = false
+	return result
+}
+
+func snmpExporterRegister(param m.RegisterParamNew) returnData  {
+	var result returnData
+	result.endpoint.Step = defaultStep
+	if param.Ip == "" {
+		result.validateMessage = "Snmp target ip can not empty"
+		return result
+	}
+	if param.Name == "" {
+		result.validateMessage = "Snmp target name can not empty"
+		return result
+	}
+	result.endpoint.Guid = fmt.Sprintf("%s_%s_%s", param.Name, param.Ip, param.Type)
+	result.endpoint.Name = param.Name
+	result.endpoint.Ip = param.Ip
+	result.endpoint.ExportType = param.Type
+	result.endpoint.Address = param.Ip
+	result.defaultGroup = "default_snmp_group"
+	result.addDefaultGroup = true
+	result.storeMetric = false
+	result.fetchMetric = false
+	result.agentManager = false
+	err := db.SnmpEndpointAdd(param.ProxyExporter, result.endpoint.Guid, param.Ip)
+	if err != nil {
+		result.err = err
+	}
 	return result
 }
 
