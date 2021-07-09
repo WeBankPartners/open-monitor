@@ -124,10 +124,10 @@
       </div>
     </div>
   </div>
-  <Drawer title="View details" :width="zoneWidth" :closable="false" v-model="showMaxChart">
+  <Drawer title="View details" :width="zoneWidth" v-model="showMaxChart">
     <ViewChart ref="viewChart"></ViewChart>
   </Drawer>
-  <Drawer :title="$t('placeholder.chartConfiguration')" :width="zoneWidth" :closable="false" :mask-closable="false" v-model="showChartConfig">
+  <Drawer :title="$t('placeholder.chartConfiguration')" :width="zoneWidth" :mask-closable="false" v-model="showChartConfig">
     <editPieView v-if="chartType === 'pie'" ref="editPieView"></editPieView>
     <editLineView v-else ref="editLineView"></editLineView>
   </Drawer>
