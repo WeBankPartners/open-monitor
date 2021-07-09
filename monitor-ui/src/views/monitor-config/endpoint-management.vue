@@ -24,7 +24,7 @@
     <div slot="endpointReject">
       <div class="marginbottom params-each">
         <label class="col-md-2 label-name">{{$t('field.endpoint')}}:</label>
-        <Select v-model="endpointRejectModel.addRow.type" style="width:338px" @on-change="typeChange">
+        <Select filterable clearable v-model="endpointRejectModel.addRow.type" style="width:338px" @on-change="typeChange">
           <Option v-for="item in endpointRejectModel.endpointType" :value="item.value" :key="item.value">
             {{item.label}}
           </Option>
@@ -32,7 +32,7 @@
       </div>
       <div class="marginbottom params-each">
         <label class="col-md-2 label-name">{{$t('m_collection_interval')}}:</label>
-        <Select v-model="endpointRejectModel.addRow.step" style="width:338px">
+        <Select filterable clearable v-model="endpointRejectModel.addRow.step" style="width:338px">
           <Option v-for="item in endpointRejectModel.stepOptions" :value="item.value" :key="item.value">
             {{item.label}}
           </Option>

@@ -61,7 +61,7 @@
       :title="$t('resourceLevel.associatedRole')">
       <Form :model="currentData" label-position="left" :label-width="60">
         <FormItem :label="$t('resourceLevel.role')">
-          <Select v-model="selectedRole" multiple>
+          <Select v-model="selectedRole" multiple filterable>
             <Option v-for="item in allRole" :value="item.value" :key="item.value">{{ item.name }}</Option>
           </Select>
         </FormItem>
@@ -82,6 +82,7 @@
           <Select
             v-model="selectedObject"
             filterable
+            clearable
             multiple
             :remote-method="getAllObject"
             >
@@ -102,12 +103,12 @@
       :title="$t('resourceLevel.alarmCallback')">
       <Form label-position="left" :label-width="80">
         <FormItem :label="$t('resourceLevel.alarmFiring')">
-          <Select v-model="selectedFiring">
+          <Select v-model="selectedFiring" filterable clearable>
             <Option v-for="item in allFiring" :value="item.option_text" :key="item.option_text+'ab'">{{ item.option_text }}</Option>
           </Select>
         </FormItem>
         <FormItem :label="$t('resourceLevel.alarmRecover')">
-          <Select v-model="selectedRecover">
+          <Select v-model="selectedRecover" filterable clearable>
             <Option v-for="item in allRecover" :value="item.option_text" :key="item.option_text+'cd'">{{ item.option_text }}</Option>
           </Select>
         </FormItem>
