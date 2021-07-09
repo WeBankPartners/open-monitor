@@ -26,7 +26,7 @@
           </DatePicker>
         </li>
         <li class="filter-li">
-          <Select v-model="filter" style="width:80px">
+          <Select filterable clearable v-model="filter" style="width:80px">
             <Option v-for="item in filterList" :value="item.value" :key="item.value">{{ item.label }}</Option>
           </Select>
         </li>
