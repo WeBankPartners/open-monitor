@@ -91,7 +91,7 @@
                       <Icon type="ios-add" size="24"></Icon>
                     </Button>
                     <Option v-for="panel in panelOptions" :value="panel.chart_group" :key="panel.chart_group">{{ panel.title }}<span style="float:right">
-                        <Button icon="ios-trash" @click="deletePanel('panel', panel)" type="error" size="small" style="background-color:#ed4014"></Button>
+                        <Button icon="ios-trash" @click="deletePanel(panel)" type="error" size="small" style="background-color:#ed4014"></Button>
                       </span>
                       <span style="float:right">
                         <Button icon="ios-create-outline" @click="editPanel('panel', panel)" type="primary" size="small" style="background-color:#0080FF"></Button>
@@ -108,7 +108,7 @@
                       <Icon type="ios-add" size="24"></Icon>
                     </Button>
                     <Option v-for="graph in graphOptions" :value="graph.id" :key="graph.id">{{ graph.title }}<span style="float:right">
-                        <Button icon="ios-trash" type="error" @click="deletePanel('graph', graph)" size="small" style="background-color:#ed4014"></Button>
+                        <Button icon="ios-trash" type="error" @click="deleteGraph(graph)" size="small" style="background-color:#ed4014"></Button>
                       </span>
                       <span style="float:right">
                         <Button icon="ios-create-outline" @click="editGraph('graph', graph)" type="primary" size="small" style="background-color:#0080FF"></Button>
@@ -182,6 +182,17 @@
               </FormItem>
             </Form>
           </Modal>
+          <Modal
+            v-model="isShowWarning"
+            :title="$t('delConfirm.title')"
+            @on-ok="ok"
+            @on-cancel="cancel">
+            <div class="modal-body" style="padding:30px">
+              <div style="text-align:center">
+                <p style="color: red">{{$t('delConfirm.tip')}}</p>
+              </div>
+            </div>
+          </Modal>
         </div>
       </div>
     </div>
@@ -195,6 +206,11 @@ export default {
   name: '',
   data() {
     return {
+      isShowWarning: false,
+      deleteConfirm: {
+        id: '',
+        method: ''
+      },
       endpointType: '',
       endpointTypeOptions: [],
       metricId: '',
@@ -266,18 +282,22 @@ export default {
     this.getEndpointType()
   },
   methods: {
-    test () {},
+    ok () {
+      this[this.deleteConfirm.method](this.deleteConfirm.id)
+    },
+    cancel () {
+      this.isShowWarning = false
+    },
     deleteMetric (metric) {
-      this.$delConfirm({
-        msg: metric.metric,
-        callback: () => {
-          this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', this.$root.apiCenter.metricManagement + '?id=' + metric.id, '', () => {
-            this.$Message.success(this.$t('tips.success'))
-            this.metricId = ''
-            this.showConfigTab = false
-            this.$root.$eventBus.$emit('hideConfirmModal')
-          })
-        }
+      this.deleteConfirm.id = metric.id
+      this.deleteConfirm.method = 'removeMetric'
+      this.isShowWarning = true
+    },
+    removeMetric (id) {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', this.$root.apiCenter.metricManagement + '?id=' + id, '', () => {
+        this.$Message.success(this.$t('tips.success'))
+        this.metricId = ''
+        this.showConfigTab = false
       })
     },
     changePanel () {
@@ -316,15 +336,13 @@ export default {
       this.titleManagement.title = item.title
       this.titleManagement.id = item.id
     },
-    deletePanel (type, item) {
-      this.$delConfirm({
-        msg: item.title,
-        callback: () => {
-          this.removePanel(item.id)
-        }
-      })
+    deletePanel (item) {
+      this.deleteConfirm.id = item.id
+      this.deleteConfirm.method = 'removePanel'
+      this.isShowWarning = true
     },
     removePanel (id) {
+      console.log(3333)
       this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', this.$root.apiCenter.addPanel + '?ids=' + id, '', () => {
         this.$Message.success(this.$t('tips.success'))
         this.selectdPanel = ''
@@ -344,16 +362,15 @@ export default {
       this.titleManagement.title = item.title
       this.titleManagement.id = item.id
     },
-    deleteGraph (type, item) {
-      this.$delConfirm({
-        msg: item.title,
-        callback: () => {
-          this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', this.$root.apiCenter.getGraph + '?ids=' + item.id, '', () => {
-            this.$Message.success(this.$t('tips.success'))
-            this.selectMetrc = ''
-            this.$root.$eventBus.$emit('hideConfirmModal')
-          })
-        }
+    deleteGraph (item) {
+      this.deleteConfirm.id = item.id
+      this.deleteConfirm.method = 'removeGraph'
+      this.isShowWarning = true
+    },
+    removeGraph (id) {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', this.$root.apiCenter.getGraph + '?ids=' + id, '', () => {
+        this.$Message.success(this.$t('tips.success'))
+        this.selectMetrc = ''
       })
     },
     saveTitle () {
