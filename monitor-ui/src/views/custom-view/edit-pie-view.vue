@@ -12,7 +12,8 @@
     <div class="zone zone-config c-dark">
       <div class="tool-save">
         <button class="btn btn-sm btn-confirm-f" @click="saveConfig">{{$t('button.saveConfig')}}</button>
-        <button class="btn btn-sm btn-cancel-f" @click="goback()">{{$t('button.back')}}</button>
+        <!-- <button class="btn btn-sm btn-cancel-f" @click="goback()">{{$t('button.back')}}</button> -->
+        <button class="btn btn-sm btn-cancel-f" @click="goback()">{{$t('button.cancel')}}</button>
       </div>
       <div>
         <section class="zone-config-operation">
@@ -25,6 +26,7 @@
                       style="width:300px"
                       v-model="templateQuery.endpoint"
                       filterable
+                      clearable
                       remote
                       :placeholder="$t('requestMoreData')"
                       @on-open-change="getEndpointList('.')"
@@ -45,6 +47,8 @@
                   <div class="condition">
                     <Select
                       v-model="templateQuery.metric"
+                      filterable
+                      clearable
                       style="width:300px"
                       :label-in-value="true"
                       @on-change="v=>{ setMetric(v)}"
@@ -102,6 +106,7 @@ export default {
 
       panalTitle: "Default title",
 
+      oriParams: null,
       params: '' // 保存增加及返回时参数，返回时直接取该值
     }
   },
@@ -135,15 +140,33 @@ export default {
 
   },
   mounted() {
-    if (this.$root.$validate.isEmpty_reset(this.$route.params)) {
-      this.$router.push({ path: "viewConfig" })
-    } else {
-      if (!this.$root.$validate.isEmpty_reset(this.$route.params.templateData.cfg)) {
-        this.elId = this.$route.params.panal.id
+    // if (this.$root.$validate.isEmpty_reset(this.$route.params)) {
+    //   this.$router.push({ path: "viewConfig" })
+    // } else {
+    //   if (!this.$root.$validate.isEmpty_reset(this.$route.params.templateData.cfg)) {
+    //     this.elId = this.$route.params.panal.id
+    //     this.getEndpointList()
+    //     this.viewData = JSON.parse(this.$route.params.templateData.cfg)
+    //     this.viewData.forEach((itemx, index) => {
+    //       if (itemx.viewConfig.id === this.$route.params.panal.id) {
+    //         this.panalIndex = index
+    //         this.panalData = itemx
+    //         this.initPanal()
+    //         return
+    //       }
+    //     })
+    //   }
+    // }
+  },
+  methods: {
+    initChart (params) {
+      this.oriParams = params
+      if (!this.$root.$validate.isEmpty_reset(params.templateData.cfg)) {
+        this.elId = params.panal.id
         this.getEndpointList()
-        this.viewData = JSON.parse(this.$route.params.templateData.cfg)
+        this.viewData = JSON.parse(params.templateData.cfg)
         this.viewData.forEach((itemx, index) => {
-          if (itemx.viewConfig.id === this.$route.params.panal.id) {
+          if (itemx.viewConfig.id === params.panal.id) {
             this.panalIndex = index
             this.panalData = itemx
             this.initPanal()
@@ -151,9 +174,7 @@ export default {
           }
         })
       }
-    }
-  },
-  methods: {
+    },
     initPanal() {
       this.panalTitle = this.panalData.panalTitle
       this.panalUnit = this.panalData.panalUnit
@@ -226,6 +247,8 @@ export default {
         this.params,
         () => {
           this.$Message.success(this.$t("tips.success"))
+          this.$parent.$parent.showChartConfig = false
+          this.$parent.$parent.reloadPanal(this.params)
         }
       )
     },
@@ -235,7 +258,7 @@ export default {
       }
     },
     pp() {
-      let panal = this.$route.params.panal
+      let panal = this.oriParams.panal
       panal.i = this.panalTitle
       const temp = {
         panalTitle: this.panalTitle,
@@ -250,17 +273,18 @@ export default {
       }
       this.viewData[this.panalIndex] = temp
       let params = {
-        name: this.$route.params.templateData.name,
-        id: this.$route.params.templateData.id,
+        name: this.oriParams.templateData.name,
+        id: this.oriParams.templateData.id,
         cfg: JSON.stringify(this.viewData)
       }
       this.params = params
     },
     goback() {
-      if (!this.params) {
-        this.pp()
-      }
-      this.$router.push({ name: "viewConfig", params: this.params })
+      // if (!this.params) {
+      //   this.pp()
+      // }
+      // this.$router.push({ name: "viewConfig", params: this.params })
+      this.$parent.$parent.showChartConfig = false
     }
   },
   components: {

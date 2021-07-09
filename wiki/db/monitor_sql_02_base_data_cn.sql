@@ -237,3 +237,38 @@ update prom_metric set prom_ql='100-(sum by (pod,job)(container_memory_usage_byt
 update strategy set expr='sum by (pod,job)(rate(container_cpu_usage_seconds_total{pod="$pod",job="k8s-cadvisor-$k8s_cluster"}[60s])*100)' where metric='pod.cpu.used.percent';
 update strategy set expr='100-(sum by (pod,job)(container_memory_usage_bytes{pod="$pod",job="k8s-cadvisor-$k8s_cluster"})/sum by (pod,job)(container_memory_max_usage_bytes{pod="$pod",job="k8s-cadvisor-$k8s_cluster"}))*100' where metric='pod.mem.used.percent';
 #@v1.11.3.3-end@;
+
+#@v1.11.3.4-begin@;
+alter table alarm_custom modify column alert_title  varchar(1024) default '';
+alter table alarm drop index `alarm_unique_index_sec`;
+create unique index `alarm_unique_index_sec` on alarm (`strategy_id`,`endpoint`,`status`,`start`);
+#@v1.11.3.4-end@;
+
+#@v1.11.4.2-begin@;
+CREATE TABLE `snmp_exporter` (
+  `id` varchar(255) NOT NULL PRIMARY KEY,
+  `address` varchar(255) NOT NULL,
+  `modules` varchar(255) default 'if_mib',
+  `create_at` datetime,
+  `update_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE `snmp_endpoint_rel` (
+  `id` INT(10) UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+  `snmp_exporter` varchar(255) NOT NULL,
+  `endpoint_guid` varchar(100) NOT NULL,
+  `target` varchar(100) NOT NULL
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+create unique index prom_metric_unique on prom_metric(metric,metric_type);
+insert  into `grp`(`name`,`create_at`) VALUES ('default_snmp_group',NOW());
+alter table grp add column endpoint_type varchar(100);
+update grp set endpoint_type='host' where name='default_host_group';
+update grp set endpoint_type='mysql' where name='default_mysql_group';
+update grp set endpoint_type='redis' where name='default_redis_group';
+update grp set endpoint_type='java' where name='default_java_group';
+update grp set endpoint_type='ping' where name='default_ping_group';
+update grp set endpoint_type='telnet' where name='default_telnet_group';
+update grp set endpoint_type='nginx' where name='default_nginx_group';
+update grp set endpoint_type='http' where name='default_http_group';
+update grp set endpoint_type='pod' where name='default_pod_group';
+update grp set endpoint_type='snmp' where name='default_snmp_group';
+#@v1.11.4.2-end@;
