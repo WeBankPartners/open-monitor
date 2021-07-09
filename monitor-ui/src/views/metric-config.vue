@@ -15,7 +15,7 @@
             <span style="font-size: 14px;">
               {{$t('field.type')}}:
             </span>
-            <Select filterable multiple v-model="endpointType" style="width:300px">
+            <Select filterable clearable v-model="endpointType" style="width:300px">
               <Option v-for="type in endpointTypeOptions" :value="type" :key="type">{{ type }}</Option>
             </Select>
           </div>
