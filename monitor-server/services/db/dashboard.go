@@ -334,20 +334,68 @@ func GetPromMetricTable(metricType string) (err error,result []*m.PromMetricUpda
 	return err,result
 }
 
-func UpdatePromMetric(data []m.PromMetricUpdateParam) error {
-	if len(data) == 0 {
-		return fmt.Errorf("data is null")
+func UpdatePromMetric(data []*m.PromMetricTable) error {
+	var actions []*Action
+	for _,v := range data {
+		if v.Id > 0 {
+			actions = append(actions, &Action{Sql: "update prom_metric set metric=?,prom_ql=? where id=?", Param: []interface{}{v.Metric,v.PromQl,v.Id}})
+		}else{
+			actions = append(actions, &Action{Sql: "insert into prom_metric(metric,metric_type,prom_ql) value (?,?,?)", Param: []interface{}{v.Metric,v.MetricType,v.PromQl}})
+		}
 	}
-	var insertData,updateData []m.PromMetricTable
+	return Transaction(actions)
+}
+
+func DeletePromMetric(metric string) (tplIds []int,err error) {
+	var actions []*Action
+	actions = append(actions, &Action{Sql: "delete from prom_metric where metric=?", Param: []interface{}{metric}})
+	var charts []*m.ChartTable
+	err = x.SQL("select id,metric from chart where metric like ?", "%"+metric+"%").Find(&charts)
+	if err != nil {
+		err = fmt.Errorf("Try to get charts data fail,%s ", err.Error())
+		return
+	}
+	if len(charts) > 0 {
+		for _,chart := range charts {
+			newChartMetricList := []string{}
+			for _,v := range strings.Split(chart.Metric, "^") {
+				if v == metric || v == "" {
+					continue
+				}
+				newChartMetricList = append(newChartMetricList, v)
+			}
+			if len(newChartMetricList) == 0 {
+				actions = append(actions, &Action{Sql: "delete from chart where id=?", Param: []interface{}{chart.Id}})
+			}else{
+				actions = append(actions, &Action{Sql: "update chart set metric=? where id=?", Param: []interface{}{strings.Join(newChartMetricList, "^"), chart.Id}})
+			}
+		}
+	}
+	var strategys []*m.StrategyTable
+	err = x.SQL("select id,tpl_id,metric from strategy where metric=?", metric).Find(&strategys)
+	if err != nil {
+		err = fmt.Errorf("Try to get strategy fail,%s ", err.Error())
+		return
+	}
+	if len(strategys) > 0 {
+		for _,strategy := range strategys {
+			tplIds = append(tplIds, strategy.TplId)
+			actions = append(actions, &Action{Sql: "delete from strategy where id=?", Param: []interface{}{strategy.Id}})
+		}
+	}
+	err = Transaction(actions)
+	if err != nil {
+		err = fmt.Errorf("Update database fail,%s ", err.Error())
+		return
+	}
+	return
+}
+
+func UpdatePanelChartMetric(data []m.PromMetricUpdateParam) error {
 	var chartTable []*m.ChartTable
 	x.SQL("select * from chart").Find(&chartTable)
 	var updateChartAction []*Action
 	for _,v := range data {
-		if v.Id > 0 {
-			updateData = append(updateData, m.PromMetricTable{Id: v.Id,Metric: v.Metric,MetricType: v.MetricType,PromQl: v.PromQl,PromMain: v.PromMain})
-		}else{
-			insertData = append(insertData, m.PromMetricTable{Metric: v.Metric,MetricType: v.MetricType,PromQl: v.PromQl,PromMain: v.PromMain})
-		}
 		newChartGroupId := v.PanelId
 		if newChartGroupId > 0 {
 			var existChartObj,newUpdateChartObj m.ChartTable
@@ -403,35 +451,10 @@ func UpdatePromMetric(data []m.PromMetricUpdateParam) error {
 			}
 		}
 	}
-	var actions []*Action
-	for _,v := range insertData {
-		action := Classify(v, "insert", "prom_metric", false)
-		if action.Sql != "" {
-			actions = append(actions, &action)
-		}
+	if len(updateChartAction) == 0 {
+		return nil
 	}
-	for _,v := range updateData {
-		action := Classify(v, "update", "prom_metric", false)
-		if action.Sql != "" {
-			actions = append(actions, &action)
-		}
-	}
-	if len(actions) > 0 {
-		err := Transaction(actions)
-		if err != nil {
-			return err
-		}
-		if len(updateChartAction) > 0 {
-			for _,v := range updateChartAction {
-				log.Logger.Info("Update chart action", log.String("sql", v.Sql), log.String("param", fmt.Sprintf("%v", v.Param)))
-			}
-			err = Transaction(updateChartAction)
-			if err != nil {
-				log.Logger.Error("Update chart config fail", log.Error(err))
-			}
-		}
-	}
-	return nil
+	return Transaction(updateChartAction)
 }
 
 func GetEndpointMetric(id int) (err error,result []*m.OptionModel) {
@@ -473,6 +496,20 @@ func GetEndpointMetric(id int) (err error,result []*m.OptionModel) {
 		}
 	}
 	return nil,result
+}
+
+func GetEndpointMetricByEndpointType(endpointType string) (err error,result []*m.OptionModel) {
+	var endpointMetricTable []*m.EndpointMetricTable
+	err = x.SQL("select distinct metric from endpoint_metric where endpoint_id in (select id from endpoint where export_type=?)", endpointType).Find(&endpointMetricTable)
+	result = []*m.OptionModel{}
+	for _,v := range endpointMetricTable {
+		if v.Metric[len(v.Metric)-1:] == "}" {
+			result = append(result, &m.OptionModel{OptionText: v.Metric, OptionValue: fmt.Sprintf("%s,instance=\"$address\"}", v.Metric[:len(v.Metric)-1])})
+		}else {
+			result = append(result, &m.OptionModel{OptionText: v.Metric, OptionValue: fmt.Sprintf("%s{instance=\"$address\"}", v.Metric)})
+		}
+	}
+	return
 }
 
 func GetMainCustomDashboard(roleList []string) (err error,result []*m.CustomDashboardTable) {

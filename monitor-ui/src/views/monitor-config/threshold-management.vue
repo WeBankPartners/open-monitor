@@ -3,7 +3,7 @@
     <section>
       <ul class="search-ul">
         <li class="search-li">
-          <Select v-model="type" style="width:100px" @on-change="typeChange">
+          <Select filterable clearable v-model="type" style="width:100px" @on-change="typeChange">
             <Option v-for="item in typeList" :value="item.value" :key="item.value">{{ $t(item.label) }}</Option>
           </Select>
         </li>
@@ -64,7 +64,7 @@
                     style="width:200px"
                     v-model="tableItem.selectedReceiver"
                     @on-open-change="getSelectReceivers('r')"
-                    filterable
+                    filterable clearable
                     multiple
                     remote
                     :remote-method="getSelectReceivers"
@@ -101,7 +101,7 @@
         <div slot="metricSelect" class="extentClass">  
           <div class="marginbottom params-each">
             <label class="col-md-2 label-name">{{$t('tableKey.name')}}:</label>
-            <Select v-model="modelConfig.addRow.expr" filterable style="width:340px"
+            <Select v-model="modelConfig.addRow.expr" filterable clearable style="width:340px"
             :label-in-value="true" @on-change="selectMetric">
               <Option v-for="(item, index) in modelConfig.metricList" :value="item.prom_ql" :key="item.prom_ql+item.metric+index">{{ item.metric }}</Option>
             </Select>
@@ -110,7 +110,7 @@
         <div slot="thresholdConfig" class="extentClass">  
           <div class="marginbottom params-each">
             <label class="col-md-2 label-name">{{$t('field.threshold')}}:</label>
-            <Select v-model="modelConfig.threshold" style="width:100px">
+            <Select filterable clearable v-model="modelConfig.threshold" style="width:100px">
               <Option v-for="(item, index) in modelConfig.thresholdList" :value="item.value" :key="index">{{ item.label }}</Option>
             </Select>
             <div class="search-input-content" style="margin-left: 8px">
@@ -139,7 +139,7 @@
                 class="form-control model-input search-input c-dark"/>
               <label class="required-tip">*</label>
             </div>
-            <Select v-model="modelConfig.last" style="width:100px">
+            <Select filterable clearable v-model="modelConfig.last" style="width:100px">
               <Option v-for="item in modelConfig.lastList" :value="item.value" :key="item.value">{{ item.label }}</Option>
             </Select>
             <div style="margin-left:10px">
@@ -148,19 +148,19 @@
           </div>
           <div class="marginbottom params-each">
             <label class="col-md-2 label-name">{{$t('tableKey.s_priority')}}:</label>
-            <Select v-model="modelConfig.priority" style="width:340px">
+            <Select filterable clearable v-model="modelConfig.priority" style="width:340px">
               <Option v-for="item in modelConfig.priorityList" :value="item.value" :key="item.value">{{ $t(item.label) }}</Option>
             </Select>
           </div>
           <div class="marginbottom params-each">
             <label class="col-md-2 label-name">{{$t('sendAlarm')}}:</label>
-            <Select v-model="modelConfig.addRow.notify_enable" style="width:340px">
+            <Select filterable clearable v-model="modelConfig.addRow.notify_enable" style="width:340px">
               <Option v-for="item in modelConfig.notifyEnableOption" :value="item.value" :key="item.value">{{ item.label }}</Option>
             </Select>
           </div>
           <div class="marginbottom params-each">
             <label class="col-md-2 label-name">{{$t('delay')}}:</label>
-            <Select v-model="modelConfig.addRow.notify_delay" style="width:340px">
+            <Select filterable clearable v-model="modelConfig.addRow.notify_delay" style="width:340px">
               <Option v-for="item in modelConfig.notifyDelayOption" :value="item.value" :key="item.value">{{ item.label }}</Option>
             </Select>
           </div>

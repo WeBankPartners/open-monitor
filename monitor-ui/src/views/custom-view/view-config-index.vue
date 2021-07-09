@@ -22,7 +22,7 @@
                 </template>
               </p>
               <a slot="extra">
-                <button class="btn btn-sm btn-confirm-f" @click="goToPanal(panalItem)">{{$t('button.view')}}</button>
+                <button class="btn btn-sm btn-confirm-f" @click="goToPanal(panalItem)">{{$t('m_configuration')}}</button>
                 <button class="btn btn-sm btn-cancel-f" @click="authorization(panalItem)">{{$t('button.authorization')}}</button>
                 <button class="btn btn-sm btn-cancel-f" @click="deleteConfirmModal(panalItem)">{{$t('button.remove')}}</button>
               </a>
@@ -66,7 +66,7 @@
               <label>{{pl.role_name}}：</label>
             </div>
             <div style="width: 55%">
-              <Select v-model="pl.main_page_id" style="width:200px" :placeholder="$t('placeholder.refresh')">
+              <Select filterable clearable v-model="pl.main_page_id" style="width:200px" :placeholder="$t('placeholder.refresh')">
                 <Option v-for="item in pl.options" :value="item.id" :key="item.id">{{ item.option_text }}</Option>
               </Select>
             </div>

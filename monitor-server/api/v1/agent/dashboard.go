@@ -122,8 +122,12 @@ func ExportPanelAdd(c *gin.Context)  {
 }
 
 func trimListString(input string) string {
-	input = strings.Replace(input, "[", "", -1)
-	input = strings.Replace(input, "]", "", -1)
+	if strings.HasPrefix(input, "[") {
+		input = input[1:]
+	}
+	if strings.HasSuffix(input, "]") {
+		input = input[:len(input)-1]
+	}
 	return input
 }
 

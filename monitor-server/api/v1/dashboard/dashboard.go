@@ -1,6 +1,7 @@
 package dashboard
 
 import (
+	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/alarm"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
@@ -826,8 +827,26 @@ func GetPromMetric(c *gin.Context)  {
 	mid.ReturnSuccessData(c, data)
 }
 
-func UpdatePromMetric(c *gin.Context)  {
+func UpdatePanelChartMetric(c *gin.Context)  {
 	var param []m.PromMetricUpdateParam
+	if err := c.ShouldBindJSON(&param);err == nil {
+		if len(param) == 0 {
+			mid.ReturnParamEmptyError(c, "")
+			return
+		}
+		err := db.UpdatePanelChartMetric(param)
+		if err != nil {
+			mid.ReturnUpdateTableError(c, "prom_metric", err)
+			return
+		}
+		mid.ReturnSuccess(c)
+	}else{
+		mid.ReturnValidateError(c, err.Error())
+	}
+}
+
+func UpdatePromMetric(c *gin.Context) {
+	var param []*m.PromMetricTable
 	if err := c.ShouldBindJSON(&param);err == nil {
 		if len(param) == 0 {
 			mid.ReturnParamEmptyError(c, "")
@@ -844,13 +863,46 @@ func UpdatePromMetric(c *gin.Context)  {
 	}
 }
 
+func DeletePromMetric(c *gin.Context) {
+	metric := c.Query("metric")
+	if metric == "" {
+		mid.ReturnParamEmptyError(c, "metric")
+		return
+	}
+	tplIds,err := db.DeletePromMetric(metric)
+	if err != nil {
+		mid.ReturnUpdateTableError(c, "prom_metric", err)
+		return
+	}
+	if len(tplIds) > 0 {
+		for _,tplId := range tplIds {
+			err = alarm.SaveConfigFile(tplId, false)
+			if err != nil {
+				break
+			}
+		}
+		if err != nil {
+			mid.ReturnHandleError(c, "Save rule config file fail,"+err.Error(), err)
+			return
+		}
+	}
+	mid.ReturnSuccess(c)
+}
+
 func GetEndpointMetric(c *gin.Context)  {
 	id,_ := strconv.Atoi(c.Query("id"))
-	if id <= 0 {
+	endpointType := c.Query("endpoint_type")
+	if id <= 0 && endpointType == "" {
 		mid.ReturnParamTypeError(c, "id", "int")
 		return
 	}
-	err,data := db.GetEndpointMetric(id)
+	var err error
+	var data []*m.OptionModel
+	if id > 0 {
+		err, data = db.GetEndpointMetric(id)
+	}else{
+		err, data = db.GetEndpointMetricByEndpointType(endpointType)
+	}
 	if err != nil {
 		mid.ReturnHandleError(c, "Get endpoint metric failed", err)
 		return
