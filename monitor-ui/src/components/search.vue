@@ -6,9 +6,9 @@
           style="width:300px;"
           v-model="endpoint"
           filterable
+          clearable 
           remote
           ref="select"
-          clearable
           :placeholder="$t('requestMoreData')"
           :remote-method="getEndpointList"
           >
@@ -21,12 +21,12 @@
       </li>
       <template v-if="!is_mom_yoy">
         <li class="search-li">
-          <Select v-model="timeTnterval" :disabled="disableTime" style="width:80px" @on-change="getChartsConfig">
+          <Select filterable clearable v-model="timeTnterval" :disabled="disableTime" style="width:80px" @on-change="getChartsConfig">
             <Option v-for="item in dataPick" :value="item.value" :key="item.value">{{ item.label }}</Option>
           </Select>
         </li>
         <li class="search-li">
-          <Select v-model="autoRefresh" :disabled="disableTime" style="width:100px" @on-change="getChartsConfig" :placeholder="$t('placeholder.refresh')">
+          <Select filterable clearable v-model="autoRefresh" :disabled="disableTime" style="width:100px" @on-change="getChartsConfig" :placeholder="$t('placeholder.refresh')">
             <Option v-for="item in autoRefreshConfig" :value="item.value" :key="item.value">{{ item.label }}</Option>
           </Select>
         </li>
