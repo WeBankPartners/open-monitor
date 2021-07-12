@@ -52,7 +52,10 @@
     "role": "Role",
     "guid": "GUID",
     "displayName": "Display Name",
-    "type": "Type"
+    "type": "Type",
+    "proxy_exporter": "Exporter",
+    "id": "ID",
+    "address": "Address"
   },
   "m_field_businessMonitor": "Business Monitor",
   "title": {
@@ -148,7 +151,8 @@
     "systemName": "System Name",
     "logPath": "Log Path",
     "regular": "Regular",
-    "tags": "Tags"
+    "tags": "Tags",
+    "endpoint_type": "Endpoint Type"
   },
   "tips": {
     "required": " Required!",
@@ -245,5 +249,7 @@
   "m_display_group": "Display Group",
   "m_graph": "Graph",
   "m_graph_name": "Graph Name",
-  "m_search": "Search"
+  "m_search": "Search",
+  "m_field_exporter": "Exporter",
+  "m_proxy_exporter": "Proxy Exporter"
 }
