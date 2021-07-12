@@ -1,4 +1,5 @@
   - job_name: '{{snmp_exporter_id}}'
+    scrape_interval: {{interval}}s
     static_configs:
       - targets: [{{snmp_target}}]
     metrics_path: /snmp
