@@ -172,7 +172,7 @@ func SearchObjOption(c *gin.Context)  {
 	mid.ReturnSuccessData(c, data)
 }
 
-func SaveConfigFile(tplId int, fromCluster bool) error  {
+func SaveConfigFile(tplId int, fromPeer bool) error  {
 	var err error
 	idList := db.GetParentTpl(tplId)
 	err = updateConfigFile(tplId)
@@ -196,8 +196,8 @@ func SaveConfigFile(tplId int, fromCluster bool) error  {
 		log.Logger.Error("Reload prometheus config error", log.Error(err))
 		return err
 	}
-	if !fromCluster {
-		go other.SyncConfig(tplId, m.SyncSdConfigDto{})
+	if !fromPeer {
+		go other.SyncPeerConfig(tplId, m.SyncSdConfigDto{})
 	}
 	return nil
 }

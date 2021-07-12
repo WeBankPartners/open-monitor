@@ -4,6 +4,7 @@ import "time"
 
 type SnmpExporterTable struct {
 	Id  string  `json:"id" binding:"required"`
+	ScrapeInterval  int  `json:"scrape_interval"`
 	Address string `json:"address" binding:"required"`
 	Modules string `json:"modules"`
 	CreateAt time.Time  `json:"create_at"`
