@@ -74,7 +74,7 @@ func DeregisterJob(guid string) error {
 		log.Logger.Error("Sync service discover file error", log.Error(err))
 		return err
 	}
-	go other.SyncConfig(0, m.SyncSdConfigDto{Guid:guid, Step:endpointObj.Step, IsRegister:false})
+	go other.SyncPeerConfig(0, m.SyncSdConfigDto{Guid:guid, Step:endpointObj.Step, IsRegister:false})
 	db.UpdateAgentManagerTable(m.EndpointTable{Guid:guid}, "", "", "", "", false)
 	return err
 }
