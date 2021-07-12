@@ -25,7 +25,7 @@ export default {
         {label: 'field.group', path:'/monitorConfigIndex/groupManagement'},
         {label: 'field.threshold', path:'/monitorConfigIndex/thresholdManagement'},
         {label: 'field.log', path:'/monitorConfigIndex/logManagement'},
-        {label: 'exporter', path:'/monitorConfigIndex/exporter'},
+        {label: 'm_field_exporter', path:'/monitorConfigIndex/exporter'},
         {label: 'm_field_businessMonitor', path:'/monitorConfigIndex/businessMonitor'}
       ]
     }
