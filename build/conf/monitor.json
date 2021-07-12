@@ -153,7 +153,7 @@
       "token": ""
     }
   },
-  "cluster": {
+  "peer": {
     "enable": true,
     "http_port": "14241",
     "server_list": ["{{MONITOR_SERVER_PEER}}"]
