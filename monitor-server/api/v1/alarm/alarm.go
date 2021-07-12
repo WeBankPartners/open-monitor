@@ -144,8 +144,8 @@ func AcceptAlertMsg(c *gin.Context)  {
 					continue
 				}
 				if strings.Contains(tmpAlarm.SMetric, "ping_alive") || strings.Contains(tmpAlarm.SMetric, "telnet_alive") || strings.Contains(tmpAlarm.SMetric, "http_alive") {
-					if len(m.Config().Cluster.ServerList) > 0 {
-						if m.Config().Cluster.ServerList[0] == tmpEndpointIp {
+					if len(m.Config().Peer.ServerList) > 0 {
+						if m.Config().Peer.ServerList[0] == tmpEndpointIp {
 							continue
 						}
 					}
