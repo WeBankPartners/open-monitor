@@ -15,7 +15,7 @@ func QueryClusterConfig(id string) (result []*m.ClusterTable, err error) {
 	var filterParams []interface{}
 	if id != "" {
 		filterSql += " and id=? "
-		filterParams = append(filterParams)
+		filterParams = append(filterParams, id)
 	}
 	result = []*m.ClusterTable{}
 	err = x.SQL("select * from cluster where 1=1 "+filterSql, filterParams...).Find(&result)
