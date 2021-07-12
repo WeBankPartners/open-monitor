@@ -2,17 +2,17 @@ package agent
 
 import (
 	"fmt"
-	"github.com/WeBankPartners/open-monitor/monitor-server/services/other"
-	"strings"
-	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
-	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
-	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
-	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/alarm"
-	"github.com/gin-gonic/gin"
-	"time"
+	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
+	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/other"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
+	"github.com/gin-gonic/gin"
 	"strconv"
+	"strings"
+	"time"
 )
 
 const defaultStep = 10
@@ -91,6 +91,7 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage,guid string,err er
 		default: rData = otherExporterRegister(param)
 	}
 	guid = rData.endpoint.Guid
+	rData.endpoint.Cluster = param.Cluster
 	if rData.validateMessage != "" || rData.err != nil {
 		return rData.validateMessage,guid,rData.err
 	}
@@ -110,14 +111,19 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage,guid string,err er
 			tmpIp = rData.endpoint.AddressAgent[:strings.Index(rData.endpoint.AddressAgent, ":")]
 			tmpPort = rData.endpoint.AddressAgent[strings.Index(rData.endpoint.AddressAgent, ":")+1:]
 		}
-		stepList := prom.AddSdEndpoint(m.ServiceDiscoverFileObj{Guid: rData.endpoint.Guid, Address: fmt.Sprintf("%s:%s", tmpIp, tmpPort), Step: rData.endpoint.Step})
-		for _,tmpStep := range stepList {
-			err = prom.SyncSdConfigFile(tmpStep)
-			if err != nil {
-				log.Logger.Error("Sync service discover file error", log.Error(err))
-			}
+		stepList := prom.AddSdEndpoint(m.ServiceDiscoverFileObj{Guid: rData.endpoint.Guid, Address: fmt.Sprintf("%s:%s", tmpIp, tmpPort), Step: rData.endpoint.Step, Cluster: rData.endpoint.Cluster})
+		err = db.AddSdEndpointNew(stepList, rData.endpoint.Cluster)
+		if err != nil {
+			err = fmt.Errorf("Sync sd config file fail,%s ", err.Error())
+			return
 		}
-		go other.SyncConfig(0, m.SyncSdConfigDto{Guid:rData.endpoint.Guid, Ip:fmt.Sprintf("%s:%s", tmpIp, tmpPort), Step:rData.endpoint.Step, IsRegister:true})
+		//for _,tmpStep := range stepList {
+		//	err = prom.SyncSdConfigFile(tmpStep)
+		//	if err != nil {
+		//		log.Logger.Error("Sync service discover file error", log.Error(err))
+		//	}
+		//}
+		go other.SyncPeerConfig(0, m.SyncSdConfigDto{Guid:rData.endpoint.Guid, Ip:fmt.Sprintf("%s:%s", tmpIp, tmpPort), Step:rData.endpoint.Step, IsRegister:true})
 	}
 	if rData.addDefaultGroup {
 		if param.DefaultGroupName != "" {
