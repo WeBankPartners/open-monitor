@@ -125,7 +125,7 @@ type AlertConfig struct {
 	Mail  AlertMailConfig  `json:"mail"`
 }
 
-type ClusterConfig struct {
+type PeerConfig struct {
 	Enable  bool  `json:"enable"`
 	HttpPort  string  `json:"http_port"`
 	ServerList  []string  `json:"server_list"`
@@ -167,7 +167,7 @@ type GlobalConfig struct {
 	TagBlacklist  []string  `json:"tag_blacklist"`
 	Agent  []*AgentConfig  `json:"agent"`
 	Alert  AlertConfig  `json:"alert"`
-	Cluster  ClusterConfig  `json:"cluster"`
+	Peer  PeerConfig  `json:"peer"`
 	CronJob  CronJobConfig  `json:"cron_job"`
 	SdFile  SdFileConfig  `json:"sd_file"`
 	ArchiveMysql  ArchiveMysqlConfig  `json:"archive_mysql"`
