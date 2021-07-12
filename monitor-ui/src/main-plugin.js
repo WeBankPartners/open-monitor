@@ -45,7 +45,7 @@ const implicitRoute = {
   },
   'monitorConfigIndex/exporter': {
     parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
-    childBreadcrumb: { 'zh-CN': 'Exporter', 'en-US': 'Exporter' }
+    childBreadcrumb: { 'zh-CN': '采集器', 'en-US': 'Exporter'}
   },
   'monitorConfigIndex/businessMonitor': {
     parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
