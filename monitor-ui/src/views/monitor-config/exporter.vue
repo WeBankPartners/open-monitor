@@ -63,7 +63,7 @@ export default {
       clusterList: [],
       modelConfig: {
         modalId: 'cluster_Modal',
-        modalTitle: 'k8s',
+        modalTitle: 'Exporter',
         isAdd: true,
         config: [
             {

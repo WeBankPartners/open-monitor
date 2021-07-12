@@ -148,7 +148,8 @@
     "systemName": "System Name",
     "logPath": "Log Path",
     "regular": "Regular",
-    "tags": "Tags"
+    "tags": "Tags",
+    "endpoint_type": "Endpoint Type"
   },
   "tips": {
     "required": " Required!",
