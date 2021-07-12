@@ -52,7 +52,8 @@
     "role": "Role",
     "guid": "GUID",
     "displayName": "Display Name",
-    "type": "Type"
+    "type": "Type",
+    "proxy_exporter": "Exporter"
   },
   "m_field_businessMonitor": "Business Monitor",
   "title": {
