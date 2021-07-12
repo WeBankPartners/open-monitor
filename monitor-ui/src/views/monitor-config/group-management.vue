@@ -17,7 +17,16 @@
         </div>
       </div>
     </PageTable>
-    <ModalComponent :modelConfig="modelConfig"></ModalComponent>
+    <ModalComponent :modelConfig="modelConfig">
+      <div slot="slotEndpointType">
+        <label class="col-md-2 label-name">{{$t('tableKey.endpoint_type')}}:</label>
+        <Select v-model="modelConfig.addRow.endpoint_type" filterable style="width:338px">
+            <Option v-for="item in modelConfig.endpointTypeList" :value="item.id" :key="item.id">
+            {{item.name}}</Option>
+        </Select>
+        <label class="required-tip" style="margin-left: 3px;">*</label>
+      </div>
+    </ModalComponent>
     <ModalComponent :modelConfig="authorizationModel">
       <div slot="authorization">  
         <div>
@@ -59,7 +68,8 @@
   import {baseURL_config} from '@/assets/js/baseURL'
   let tableEle = [
     {title: 'tableKey.name', value: 'name', display: true},
-    {title: 'tableKey.description', value: 'description', display: true}
+    {title: 'tableKey.description', value: 'description', display: true},
+    {title: 'tableKey.endpoint_type', value: 'endpoint_type', display: true}
   ]
   const btn = [
     {btn_name: 'field.endpoint', btn_func: 'editEndpoints'},
@@ -119,11 +129,17 @@
           config: [
             {label: 'tableKey.name', value: 'name', placeholder: 'tips.inputRequired', v_validate: 'required:true|min:2|max:60', disabled: false, type: 'text'},
             {label: 'tableKey.description', value: 'description', placeholder: '', disabled: false, type: 'text'},
+            //{name: 'slotEndpointType', type:'slot'}
+            {label: 'tableKey.endpoint_type', value: 'endpoint_type', option: 'endpoint_type',v_validate: 'required:true', disabled: false, type: 'select'}
           ],
           addRow: { // [通用]-保存用户新增、编辑时数据
             name: null,
             description: null,
+            endpoint_type: null,
           },
+          v_select_configs: {
+            endpoint_type: []
+          }
         },
         endpointModel: {
           modalId: 'endpoint_Modal',
@@ -170,8 +186,20 @@
       initData (url= this.pageConfig.CRUD, params) {
         this.$root.$tableUtil.initTable(this, 'GET', url, params)
       },
-      add () {
+      async add () {
         this.modelConfig.isAdd = true
+        let params = {
+          page: 1,
+          size: 10000,
+        }
+        await this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.getEndpointType, params, res => {
+          this.modelConfig.v_select_configs.endpoint_type = res.map(item => {
+            return {
+              label: item,
+              value: item
+            }
+          })
+        })
         this.$root.JQ('#add_edit_Modal').modal('show')
       },
       addPost () {
@@ -193,10 +221,22 @@
           this.initData(this.pageConfig.CRUD, this.pageConfig)
         })
       },
-      editF (rowData) {
+      async editF (rowData) {
         this.modelConfig.isAdd = false
         this.modelTip.value = rowData[this.modelTip.key]
         this.id = rowData.id
+        let params = {
+          page: 1,
+          size: 10000,
+        }
+        await this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.getEndpointType, params, res => {
+          this.modelConfig.v_select_configs.endpoint_type = res.map(item => {
+            return {
+              label: item,
+              value: item
+            }
+          })
+        })
         this.modelConfig.addRow = this.$root.$tableUtil.manageEditParams(this.modelConfig.addRow, rowData)
         this.$root.JQ('#add_edit_Modal').modal('show')
       },
