@@ -70,7 +70,7 @@ func UpdateGrp(c *gin.Context)  {
 		query := m.GrpQuery{Name:param.Name}
 		db.ListGrp(&query)
 		if len(query.Result) > 0 {
-			if query.Result[0].Id == param.Id && query.Result[0].Description == param.Description {
+			if query.Result[0].Id == param.Id && query.Result[0].Description == param.Description && query.Result[0].EndpointType == param.EndpointType {
 				mid.ReturnSuccess(c)
 				return
 			}

@@ -13,7 +13,7 @@ var fileSdLock = new(sync.RWMutex)
 var fileSdPath string
 
 func AddSdEndpoint(param m.ServiceDiscoverFileObj) []int {
-	log.Logger.Debug("add sd endpoint", log.String("guid", param.Guid), log.String("address", param.Address), log.Int("step", param.Step))
+	log.Logger.Debug("add sd endpoint", log.String("guid", param.Guid), log.String("address", param.Address), log.String("cluster", param.Cluster), log.Int("step", param.Step))
 	var stepList []int
 	if param.Guid == "" || param.Address == "" || param.Step == 0 {
 		return stepList
@@ -35,7 +35,7 @@ func AddSdEndpoint(param m.ServiceDiscoverFileObj) []int {
 		}
 	}
 	if !exist {
-		fileSdList = append(fileSdList, &m.ServiceDiscoverFileObj{Guid:param.Guid, Address:param.Address, Step:param.Step})
+		fileSdList = append(fileSdList, &m.ServiceDiscoverFileObj{Guid:param.Guid, Address:param.Address, Step:param.Step, Cluster: param.Cluster})
 	}
 	fileSdLock.Unlock()
 	return stepList
