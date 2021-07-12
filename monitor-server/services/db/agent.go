@@ -8,33 +8,37 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 )
 
-func UpdateEndpoint(endpoint *m.EndpointTable) error {
+func UpdateEndpoint(endpoint *m.EndpointTable) (stepList []int,err error) {
+	stepList = append(stepList, endpoint.Step)
 	host := m.EndpointTable{Guid:endpoint.Guid}
 	GetEndpoint(&host)
 	if host.Id == 0 {
 		insert := fmt.Sprintf("INSERT INTO endpoint(guid,name,ip,endpoint_version,export_type,export_version,step,address,os_type,create_at,address_agent,cluster) VALUE ('%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%s','%s')",
 			endpoint.Guid,endpoint.Name,endpoint.Ip,endpoint.EndpointVersion,endpoint.ExportType,endpoint.ExportVersion,endpoint.Step,endpoint.Address,endpoint.OsType,time.Now().Format(m.DatetimeFormat),endpoint.AddressAgent,endpoint.Cluster)
 		log.Logger.Debug("Insert", log.String("sql", insert))
-		_,err := x.Exec(insert)
+		_,err = x.Exec(insert)
 		if err != nil {
 			log.Logger.Error("Insert endpoint fail", log.Error(err))
-			return err
+			return
 		}
 		host := m.EndpointTable{Guid:endpoint.Guid}
 		GetEndpoint(&host)
 		endpoint.Id = host.Id
 	}else{
+		if host.Step != endpoint.Step {
+			stepList = append(stepList, host.Step)
+		}
 		update := fmt.Sprintf("UPDATE endpoint SET name='%s',ip='%s',endpoint_version='%s',export_type='%s',export_version='%s',step=%d,address='%s',os_type='%s',address_agent='%s',cluster='%s' WHERE id=%d",
 			endpoint.Name,endpoint.Ip,endpoint.EndpointVersion,endpoint.ExportType,endpoint.ExportVersion,endpoint.Step,endpoint.Address,endpoint.OsType,endpoint.AddressAgent,endpoint.Cluster,host.Id)
 		log.Logger.Debug("Update", log.String("sql", update))
-		_,err := x.Exec(update)
+		_,err = x.Exec(update)
 		if err != nil {
 			log.Logger.Error("Update endpoint fail", log.Error(err))
-			return err
+			return
 		}
 		endpoint.Id = host.Id
 	}
-	return nil
+	return
 }
 
 func AddCustomMetric(param m.TransGatewayMetricDto) error {
