@@ -37,6 +37,7 @@ type ServiceDiscoverFileObj struct {
 	Guid  string `json:"guid"`
 	Address  string  `json:"address"`
 	Step  int  `json:"step"`
+	Cluster string `json:"cluster"`
 }
 
 func (s ServiceDiscoverFileList) TurnToFileSdConfigByte(step int) []byte {

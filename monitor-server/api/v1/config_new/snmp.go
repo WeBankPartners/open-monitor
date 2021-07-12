@@ -22,6 +22,10 @@ func SnmpExporterCreate(c *gin.Context)  {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
+	if !middleware.IsIllegalNormalInput(param.Id) {
+		middleware.ReturnValidateError(c, "Param id is illegal")
+		return
+	}
 	err := db.SnmpExporterCreate(param)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
