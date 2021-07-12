@@ -108,12 +108,12 @@ const router = new Router({
                 import("@/views/monitor-config/resource-level")
             },
             {
-              path: "k8s",
-              name: "k8s",
-              title: "k8s",
+              path: "exporter",
+              name: "exporter",
+              title: "exporter",
               meta: {},
               component: () =>
-                import("@/views/monitor-config/k8s")
+                import("@/views/monitor-config/exporter")
             },
             {
               path: "businessMonitor",
