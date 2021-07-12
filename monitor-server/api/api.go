@@ -247,12 +247,12 @@ func InitHttpServer(exportAgent bool) {
 }
 
 func InitClusterApi()  {
-	if !m.Config().Cluster.Enable {
+	if !m.Config().Peer.Enable {
 		return
 	}
 	http.Handle("/sync/config", http.HandlerFunc(alarm.SyncConfigHandle))
 	http.Handle("/sync/sd", http.HandlerFunc(alarm.SyncSdFileHandle))
-	http.ListenAndServe(fmt.Sprintf(":%s", m.Config().Cluster.HttpPort), nil)
+	http.ListenAndServe(fmt.Sprintf(":%s", m.Config().Peer.HttpPort), nil)
 }
 
 func InitDependenceParam()  {
