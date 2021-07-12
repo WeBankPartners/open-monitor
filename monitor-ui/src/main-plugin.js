@@ -43,9 +43,9 @@ const implicitRoute = {
     parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
     childBreadcrumb: { 'zh-CN': '层级对象', 'en-US': 'Resource Level' }
   },
-  'monitorConfigIndex/k8s': {
+  'monitorConfigIndex/exporter': {
     parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
-    childBreadcrumb: { 'zh-CN': 'k8s', 'en-US': 'k8s' }
+    childBreadcrumb: { 'zh-CN': '采集器', 'en-US': 'Exporter'}
   },
   'monitorConfigIndex/businessMonitor': {
     parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
