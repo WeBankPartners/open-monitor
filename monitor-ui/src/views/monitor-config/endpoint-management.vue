@@ -30,7 +30,7 @@
           </Option>
         </Select>
       </div>
-      <div class="marginbottom params-each">
+      <div v-if="endpointRejectModel.supportStep" class="marginbottom params-each">
         <label class="col-md-2 label-name">{{$t('m_collection_interval')}}:</label>
         <Select filterable clearable v-model="endpointRejectModel.addRow.step" style="width:338px">
           <Option v-for="item in endpointRejectModel.stepOptions" :value="item.value" :key="item.value">
@@ -82,7 +82,7 @@
         <label class="required-tip">*</label>
         <label v-show="veeErrors.has('exporter_type')" class="is-danger">{{ veeErrors.first('exporter_type')}}</label>
       </div>
-      <div class="marginbottom params-each" v-if="!(['ping','http'].includes(endpointRejectModel.addRow.type))">
+      <div class="marginbottom params-each" v-if="!(['ping','http', 'snmp'].includes(endpointRejectModel.addRow.type))">
         <label class="col-md-2 label-name">{{$t('button.port')}}:</label>
         <input v-validate="'required|isNumber'" v-model="endpointRejectModel.addRow.port" name="port" :class="{ 'red-border': veeErrors.has('port') }" type="text" class="col-md-7 form-control model-input c-dark" />
         <label class="required-tip">*</label>
@@ -426,6 +426,7 @@ export default {
       endpointRejectModel: {
         modalId: 'endpoint_reject_model',
         modalTitle: 'title.endpointAdd',
+        supportStep: true,
         isAdd: true,
         saveFunc: 'endpointRejectSave',
         config: [{
@@ -439,7 +440,8 @@ export default {
             v_validate: 'required:true|isIP',
             disabled: false,
             type: 'text'
-          }
+          },
+          {label: 'field.proxy_exporter', value: 'proxy_exporter', option: 'proxy_exporter', hide: true, disabled: false, type: 'select'}
         ],
         addRow: {
           name: '',
@@ -454,7 +456,11 @@ export default {
           url: '',
           exporter_type: '',
           exporter: false,
-          export_address: ''
+          export_address: '',
+          proxy_exporter: null,
+        },
+        v_select_configs: {
+            proxy_exporter: []
         },
         stepOptions: collectionInterval,
         endpointType: [{
@@ -492,6 +498,10 @@ export default {
           {
             label: 'http',
             value: 'http'
+          },
+          {
+            label: 'snmp',
+            value: 'snmp'
           },
           {
             label: 'other',
@@ -685,6 +695,19 @@ export default {
         windows: 9182
       }
       this.endpointRejectModel.addRow.port = typeToPort[type]
+      let proxy_exporter = this.endpointRejectModel.config.find(item => item.value === 'proxy_exporter')
+      proxy_exporter.hide = true
+      this.endpointRejectModel.supportStep = true
+      if (type && type === 'snmp') {
+        proxy_exporter.hide = false
+        this.endpointRejectModel.supportStep = false
+        this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v1/config/new/snmp', {},
+        responseData => {
+          this.endpointRejectModel.v_select_configs.proxy_exporter = responseData.map(item => {
+            return {label: item.id, value: item.id}
+          })
+        })
+      }
     },
     initData(url = this.pageConfig.CRUD, params) {
       this.$root.$tableUtil.initTable(this, 'GET', url, params)
