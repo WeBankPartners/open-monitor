@@ -3,6 +3,7 @@ package db
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
 	"io/ioutil"
@@ -42,8 +43,14 @@ func AddSdEndpointNew(steps []int, cluster string) error {
 	}
 	if cluster == "" || cluster == "default" {
 		err = SyncLocalSdConfigFile(syncList)
+		if err != nil {
+			log.Logger.Error("Sync local sd config file fail", log.Error(err))
+		}
 	} else {
 		err = SyncRemoteSdConfigFile(cluster, syncList)
+		if err != nil {
+			log.Logger.Error("Sync remote sd config file fail", log.Error(err))
+		}
 	}
 	return err
 }
