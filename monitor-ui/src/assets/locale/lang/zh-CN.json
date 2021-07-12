@@ -53,7 +53,9 @@
     "guid": "GUID",
     "displayName": "显示名",
     "type": "类型",
-    "proxy_exporter": "Exporter"
+    "proxy_exporter": "Exporter",
+    "id": "ID",
+    "address": "IP地址"
   },
   "m_field_businessMonitor": "业务监控",
   "title": {
@@ -246,5 +248,7 @@
   "m_display_group": "展示分组",
   "m_graph": "图表",
   "m_graph_name": "图表名称",
-  "m_search": "查询"
+  "m_search": "查询",
+  "m_field_exporter": "采集器",
+  "m_proxy_exporter": "代理采集器"
 }
