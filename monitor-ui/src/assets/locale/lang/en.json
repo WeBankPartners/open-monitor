@@ -53,7 +53,9 @@
     "guid": "GUID",
     "displayName": "Display Name",
     "type": "Type",
-    "proxy_exporter": "Exporter"
+    "proxy_exporter": "Exporter",
+    "id": "ID",
+    "address": "Address"
   },
   "m_field_businessMonitor": "Business Monitor",
   "title": {
@@ -247,5 +249,7 @@
   "m_display_group": "Display Group",
   "m_graph": "Graph",
   "m_graph_name": "Graph Name",
-  "m_search": "Search"
+  "m_search": "Search",
+  "m_field_exporter": "Exporter",
+  "m_proxy_exporter": "Proxy Exporter"
 }
