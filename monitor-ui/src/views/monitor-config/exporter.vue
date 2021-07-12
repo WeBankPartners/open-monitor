@@ -1,45 +1,76 @@
 <template>
   <div class=" ">
-    <template v-for="cluster in clusterList">
-      <Card style="width:20%;display:inline-block;margin:16px;" :key="cluster.id">
+    <!-- <Divider plain orientation="left">K8s Com</Divider> -->
+    <Card :key="'k8s'" :bordered="true" :dis-hover="true">
+      <p slot="title">K8S</p>
+      <template v-for="cluster in clusterList">
+        <Card style="width:20%;display:inline-block;margin:16px;" :key="'k8s_'+cluster.id">
+          <p slot="title">
+            {{cluster.cluster_name.split(':')[0]}}
+          </p>
+          <a href="#" slot="extra" @click.prevent="editCluster(cluster)">
+            {{$t('button.edit')}}
+          </a>
+          <a href="#" slot="extra" @click.prevent="deleteCluster({id: cluster.id, name: cluster.cluster_name})" style="color:red">
+            {{$t('button.remove')}}
+          </a>
+          <ul>
+            <li style="margin:8px;list-style: none;">
+              <div style="width:30%;display:inline-block;font-size:16px;font-weight: 500;">
+              {{$t('field.ip')}}:
+              </div>
+              <div style="width:30%;display:inline-block;">
+                {{cluster.api_server}}
+              </div>
+            </li>
+          </ul>
+        </Card>
+      </template>
+      <Card style="width:20%;display:inline-block;margin:16px;vertical-align: bottom;">
         <p slot="title">
-          {{cluster.cluster_name.split(':')[0]}}
+          {{$t('button.add')}}
         </p>
-        <a href="#" slot="extra" @click.prevent="editCluster(cluster)">
-          {{$t('button.edit')}}
-        </a>
-        <a href="#" slot="extra" @click.prevent="deleteCluster({id: cluster.id})" style="color:red">
-          {{$t('button.remove')}}
-        </a>
-        <ul>
-          <li style="margin:8px;list-style: none;">
-            <div style="width:30%;display:inline-block;font-size:16px;font-weight: 500;">
-            {{$t('field.ip')}}:
-            </div>
-            <div style="width:30%;display:inline-block;">
-              {{cluster.api_server.split(':')[0]}}
-            </div>
-          </li>
-          <li style="margin:8px;list-style: none;">
-            <div style="width:30%;display:inline-block;font-size:16px;font-weight: 500;">
-              {{$t('field.port')}}:
-            </div>
-            <div style="width:30%;display:inline-block;">
-              {{cluster.api_server.split(':')[1]}}
-            </div>
-          </li>
-        </ul>
+        <div style="margin:8px;text-align:center">
+          <Icon @click="addCluster" type="md-add-circle" :size=25 style="cursor:pointer" :color="'#2d8cf0'" />
+        </div>
       </Card>
-    </template>
-    <Card style="width:20%;display:inline-block;margin:16px;vertical-align: bottom;">
-      <p slot="title">
-        {{$t('button.add')}}
-      </p>
-      <div style="margin:16px;text-align:center">
-        <Icon @click="addCluster" type="md-add-circle" :size=40 style="cursor:pointer" :color="'#2d8cf0'" />
-      </div>
+    </Card>
+    <Card :key="'k8s'" :bordered="true" :dis-hover="true" style="margin-top: 10px">
+      <p slot="title">SNMP</p>
+      <template v-for="item in snmpList">
+        <Card style="width:20%;display:inline-block;margin:16px;" :key="'snmp_'+item.id">
+          <p slot="title">
+            {{item.id}}
+          </p>
+          <a href="#" slot="extra" @click.prevent="editItem(item)">
+            {{$t('button.edit')}}
+          </a>
+          <a href="#" slot="extra" @click.prevent="deleteItem({id: item.id})" style="color:red">
+            {{$t('button.remove')}}
+          </a>
+          <ul>
+            <li style="margin:8px;list-style: none;">
+              <div style="width:30%;display:inline-block;font-size:16px;font-weight: 500;">
+              {{$t('field.ip')}}:
+              </div>
+              <div style="width:30%;display:inline-block;">
+                {{item.address}}
+              </div>
+            </li>
+          </ul>
+        </Card>
+      </template>
+      <Card style="width:20%;display:inline-block;margin:16px;vertical-align: bottom;">
+        <p slot="title">
+          {{$t('button.add')}}
+        </p>
+        <div style="margin:8px;text-align:center">
+          <Icon @click="addItem" type="md-add-circle" :size=25 style="cursor:pointer" :color="'#2d8cf0'" />
+        </div>
+      </Card>
     </Card>
     <ModalComponent :modelConfig="modelConfig"></ModalComponent>
+    <ModalComponent :modelConfig="modelItemConfig"></ModalComponent>
     <Modal 
       v-model="isShowWarning" 
       :title="$t('delConfirm.title')"
@@ -47,7 +78,7 @@
       @on-cancel="cancel">
       <div class="modal-body" style="padding:30px">
         <div style="text-align:center">
-          <p style="color: red">{{$t('delConfirm.tip')}}</p>
+          <p style="color: red">{{selectedData.name || selectedData.id}}{{$t('delConfirm.tip')}}</p>
         </div>
       </div>
     </Modal>
@@ -55,15 +86,17 @@
 </template>
 
 <script>
+import { collectionInterval } from '@/assets/config/common-config'
 export default {
   name: '',
   data() {
     return {
       isShowWarning: false,
       clusterList: [],
+      snmpList: [],
       modelConfig: {
         modalId: 'cluster_Modal',
-        modalTitle: 'Exporter',
+        modalTitle: 'm_proxy_exporter',
         isAdd: true,
         config: [
             {
@@ -107,7 +140,49 @@ export default {
           token: null
         }
       },
-      selectedData: null,
+      modelItemConfig: {
+        modalId: 'item_Modal',
+        modalTitle: 'm_proxy_exporter',
+        isAdd: true,
+        saveFunc: 'saveItem',
+        config: [
+            {
+            label: 'field.id',
+            value: 'id',
+            placeholder: 'tips.required',
+            v_validate: 'required:true',
+            disabled: true,
+            type: 'text'
+          },
+          {
+            label: 'field.address',
+            value: 'address',
+            placeholder: 'tips.required',
+            v_validate: 'required:true',
+            disabled: false,
+            type: 'text'
+          },
+          {
+            label: 'm_collection_interval',
+            value: 'scrape_interval',
+            option: 'scrape_interval',
+            placeholder: 'tips.required',
+            v_validate: 'required:true',
+            disabled: false,
+            type: 'select'
+          }
+        ],
+        addRow: {
+          id: null,
+          address: null,
+          scrape_interval: null
+        },
+        v_select_configs: {
+            scrape_interval: collectionInterval
+        },
+      },
+      selectedData: {},
+      selectedDataType: '',
       modelTip: {
         key: 'cluster_name',
         value: null
@@ -116,6 +191,7 @@ export default {
   },
   mounted () {
     this.getClusterList()
+    this.getSnmpList()
   },
   methods: {
     addCluster () {
@@ -136,6 +212,7 @@ export default {
     },
     deleteCluster (params) {
       this.selectedData = params
+      this.selectedDataType = 'k8s'
       this.isShowWarning = true
     },
     ok() {
@@ -145,10 +222,17 @@ export default {
       this.isShowWarning = false
     },
     delF() {
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1//agent/kubernetes/cluster/delete', this.selectedData, () => {
-        this.isShowWarning = false
-        this.getClusterList()
-      })
+      if (this.selectedDataType === 'k8s') {
+        this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1//agent/kubernetes/cluster/delete', this.selectedData, () => {
+          this.isShowWarning = false
+          this.getClusterList()
+        })
+      } else if (this.selectedDataType === 'snmp') {
+        this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', '/monitor/api/v1/config/new/snmp', this.selectedData, () => {
+          this.isShowWarning = false
+          this.getSnmpList()
+        })
+      }
     },
     editCluster (cluster) {
       this.modelTip.value = cluster.cluster_name
@@ -165,6 +249,44 @@ export default {
         this.$root.JQ('#cluster_Modal').modal('hide')
         this.getClusterList()
       })
+    },
+    getSnmpList () {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v1/config/new/snmp', '', (responseData) => {
+        this.snmpList = responseData
+      })
+    },
+    addItem () {
+      this.modelItemConfig.isAdd = true
+      this.modelItemConfig.addRow.id = null
+      this.modelItemConfig.addRow.address = null
+      this.modelItemConfig.addRow.scrape_interval = 10
+      this.$root.JQ('#item_Modal').modal('show')
+    },
+    editItem (item) {
+      this.modelTip.value = item.id
+      this.modelItemConfig.isAdd = false
+      this.modelItemConfig.addRow.id = item.id
+      this.modelItemConfig.addRow.address = item.address
+      this.modelItemConfig.addRow.scrape_interval = item.scrape_interval
+      this.$root.JQ('#item_Modal').modal('show')
+    },
+    deleteItem (params) {
+      this.selectedData = params
+      this.selectedDataType = 'snmp'
+      this.isShowWarning = true
+    },
+    saveItem () {
+      if (this.modelItemConfig.isAdd) {
+        this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/config/new/snmp', this.modelItemConfig.addRow, () => {
+          this.$root.JQ('#item_Modal').modal('hide')
+          this.getSnmpList()
+        })
+      } else {
+        this.$root.$httpRequestEntrance.httpRequestEntrance('PUT', '/monitor/api/v1/config/new/snmp', this.modelItemConfig.addRow, () => {
+          this.$root.JQ('#item_Modal').modal('hide')
+          this.getSnmpList()
+        })
+      }
     }
   },
   components: {},
