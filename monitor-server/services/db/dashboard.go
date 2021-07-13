@@ -479,8 +479,7 @@ func GetEndpointMetric(id int) (err error,result []*m.OptionModel) {
 		}
 		exporterAddress = snmpQueryList[0]["address"]
 		fetchKeywords = []string{endpointObj.Ip}
-	}
-	if endpointObj.AddressAgent != "" {
+	}else if endpointObj.AddressAgent != "" {
 		exporterAddress = endpointObj.AddressAgent
 	}else{
 		exporterAddress = endpointObj.Address
