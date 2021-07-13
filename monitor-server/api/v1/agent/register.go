@@ -77,6 +77,7 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage,guid string,err er
 		param.Type = "java"
 	}
 	var rData returnData
+	var stepList []int
 	switch param.Type {
 		case "host": rData = hostRegister(param)
 		case "mysql": rData = mysqlRegister(param)
@@ -95,7 +96,7 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage,guid string,err er
 	if rData.validateMessage != "" || rData.err != nil {
 		return rData.validateMessage,guid,rData.err
 	}
-	err = db.UpdateEndpoint(&rData.endpoint)
+	stepList,err = db.UpdateEndpoint(&rData.endpoint)
 	if err != nil {
 		return validateMessage,guid,err
 	}
@@ -111,7 +112,7 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage,guid string,err er
 			tmpIp = rData.endpoint.AddressAgent[:strings.Index(rData.endpoint.AddressAgent, ":")]
 			tmpPort = rData.endpoint.AddressAgent[strings.Index(rData.endpoint.AddressAgent, ":")+1:]
 		}
-		stepList := prom.AddSdEndpoint(m.ServiceDiscoverFileObj{Guid: rData.endpoint.Guid, Address: fmt.Sprintf("%s:%s", tmpIp, tmpPort), Step: rData.endpoint.Step, Cluster: rData.endpoint.Cluster})
+		//stepList := prom.AddSdEndpoint(m.ServiceDiscoverFileObj{Guid: rData.endpoint.Guid, Address: fmt.Sprintf("%s:%s", tmpIp, tmpPort), Step: rData.endpoint.Step, Cluster: rData.endpoint.Cluster})
 		err = db.AddSdEndpointNew(stepList, rData.endpoint.Cluster)
 		if err != nil {
 			err = fmt.Errorf("Sync sd config file fail,%s ", err.Error())
