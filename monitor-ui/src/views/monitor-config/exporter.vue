@@ -157,7 +157,7 @@ export default {
           {
             label: 'field.address',
             value: 'address',
-            placeholder: 'tips.required',
+            placeholder: 'exporter_address_placeholder',
             v_validate: 'required:true',
             disabled: false,
             type: 'text'
