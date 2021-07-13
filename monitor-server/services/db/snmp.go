@@ -63,11 +63,11 @@ func SnmpEndpointAdd(snmpExporter,endpointGuid,target string) error {
 	return err
 }
 
-func SnmpEndpointDelete(snmpExporter,endpointGuid string) error {
-	if !checkSnmpEndpointExists(snmpExporter,endpointGuid) {
+func SnmpEndpointDelete(endpointGuid string) error {
+	if !checkSnmpEndpointExists("",endpointGuid) {
 		return nil
 	}
-	_,err := x.Exec("delete from snmp_endpoint_rel where snmp_exporter=? and target=?", snmpExporter, endpointGuid)
+	_,err := x.Exec("delete from snmp_endpoint_rel where endpoint_guid=?", endpointGuid)
 	if err != nil {
 		return fmt.Errorf("Delete database fail,%s ", err.Error())
 	}
@@ -77,7 +77,11 @@ func SnmpEndpointDelete(snmpExporter,endpointGuid string) error {
 
 func checkSnmpEndpointExists(snmpExporter,endpointGuid string) bool {
 	var snmpEndpointTable []*models.SnmpEndpointRelTable
-	x.SQL("select id from snmp_endpoint_rel where snmp_exporter=? and target=?", snmpExporter, endpointGuid).Find(&snmpEndpointTable)
+	if snmpExporter != "" {
+		x.SQL("select id from snmp_endpoint_rel where snmp_exporter=? and endpoint_guid=?", snmpExporter, endpointGuid).Find(&snmpEndpointTable)
+	}else{
+		x.SQL("select id from snmp_endpoint_rel where endpoint_guid=?", endpointGuid).Find(&snmpEndpointTable)
+	}
 	if len(snmpEndpointTable) > 0 {
 		return true
 	}
