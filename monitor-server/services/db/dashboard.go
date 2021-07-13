@@ -219,7 +219,7 @@ func GetEndpoint(query *m.EndpointTable) error {
 		return err
 	}
 	if len(endpointObj) <= 0 {
-		log.Logger.Error("Get endpoint fail", log.JsonObj("param", query))
+		log.Logger.Warn("Get endpoint fail", log.JsonObj("param", query))
 		return fmt.Errorf("Get endpoint fail,can not fetch any data ")
 	}
 	query.Id = endpointObj[0].Id
