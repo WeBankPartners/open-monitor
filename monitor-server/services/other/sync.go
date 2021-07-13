@@ -15,7 +15,6 @@ import (
 )
 
 var peerList []string
-var selfIp string
 var timeoutCheck int64
 
 // 配置同步给兄弟实例
@@ -23,19 +22,16 @@ func SyncPeerConfig(tplId int, param m.SyncSdConfigDto) {
 	if !m.Config().Peer.Enable {
 		return
 	}
-	if m.CoreUrl == "" {
-		peerList = m.Config().Peer.ServerList
+	if !m.PluginRunningMode {
+		peerList = m.Config().Peer.OtherServerList
 		if len(peerList) == 0 {
 			return
 		}
 	}else{
 		log.Logger.Info(fmt.Sprintf("Start sync config: id->%d param.guid->%s param.is_register->%v", tplId, param.Guid, param.IsRegister))
-		if len(m.Config().Peer.ServerList) == 0 {
+		if len(m.Config().Peer.OtherServerList) == 0 {
 			log.Logger.Warn("Config peer server list is empty, return")
 			return
-		}
-		if selfIp == "" {
-			selfIp = m.Config().Peer.ServerList[0]
 		}
 		if timeoutCheck < time.Now().Unix() {
 			chd,err := getCoreContainerHost()
@@ -44,7 +40,7 @@ func SyncPeerConfig(tplId int, param m.SyncSdConfigDto) {
 			}
 			peerList = []string{}
 			for _,v := range chd.Data {
-				if v != selfIp {
+				if v != m.Config().Peer.InstanceHostIp {
 					peerList = append(peerList, v)
 				}
 			}

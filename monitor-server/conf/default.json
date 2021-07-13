@@ -1,4 +1,5 @@
 {
+  "is_plugin_mode": "no",
   "http": {
     "port": "8088",
     "swagger": true,
@@ -155,8 +156,9 @@
   },
   "peer": {
     "enable": true,
+    "instance_host_ip": "",
     "http_port": "14241",
-    "server_list": []
+    "other_server_list": []
   },
   "cron_job": {
     "enable": false,
