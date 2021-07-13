@@ -144,10 +144,9 @@ func AcceptAlertMsg(c *gin.Context)  {
 					continue
 				}
 				if strings.Contains(tmpAlarm.SMetric, "ping_alive") || strings.Contains(tmpAlarm.SMetric, "telnet_alive") || strings.Contains(tmpAlarm.SMetric, "http_alive") {
-					if len(m.Config().Peer.ServerList) > 0 {
-						if m.Config().Peer.ServerList[0] == tmpEndpointIp {
-							continue
-						}
+					if tmpEndpointIp == m.Config().Peer.InstanceHostIp {
+						log.Logger.Info("Ignore check alive alarm,is self instance host", log.String("ip", tmpEndpointIp))
+						continue
 					}
 					if tmpValue != 0 && tmpValue != 1 && tmpValue != 2 {
 						continue
