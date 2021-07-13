@@ -127,8 +127,9 @@ type AlertConfig struct {
 
 type PeerConfig struct {
 	Enable  bool  `json:"enable"`
+	InstanceHostIp string `json:"instance_host_ip"`
 	HttpPort  string  `json:"http_port"`
-	ServerList  []string  `json:"server_list"`
+	OtherServerList  []string  `json:"other_server_list"`
 }
 
 type CronJobConfig struct {
@@ -158,6 +159,7 @@ type ArchiveMysqlConfig struct {
 }
 
 type GlobalConfig struct {
+	IsPluginMode  string `json:"is_plugin_mode"`
 	Http  *HttpConfig  `json:"http"`
 	Store  StoreConfig  `json:"store"`
 	Datasource  DataSourceConfig  `json:"datasource"`
@@ -188,6 +190,7 @@ var (
 	SubSystemKey  string
 	DefaultMailReceiver  []string
 	DefaultLocalTimeZone string
+	PluginRunningMode bool
 )
 
 func Config() *GlobalConfig {
@@ -220,6 +223,11 @@ func InitConfig(cfg string) {
 
 	c.Store.Pwd = DecryptRsa(c.Store.Pwd)
 	c.ArchiveMysql.Password = DecryptRsa(c.ArchiveMysql.Password)
+	if c.IsPluginMode == "yes" || c.IsPluginMode == "y" || c.IsPluginMode == "true" {
+		PluginRunningMode = true
+	}else{
+		PluginRunningMode = false
+	}
 	lock.Lock()
 	defer lock.Unlock()
 
