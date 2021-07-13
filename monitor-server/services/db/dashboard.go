@@ -468,7 +468,7 @@ func GetEndpointMetric(id int) (err error,result []*m.OptionModel) {
 		return nil,result
 	}
 	var ip,port,exporterAddress string
-	fetchKeywords := []string{}
+	var strList []string
 	if endpointObj.ExportType == "snmp" {
 		snmpQueryList,err := x.QueryString("select address from snmp_exporter where id in (select snmp_exporter from snmp_endpoint_rel where endpoint_guid=?)", endpointObj.Guid)
 		if err != nil {
@@ -477,23 +477,24 @@ func GetEndpointMetric(id int) (err error,result []*m.OptionModel) {
 		if len(snmpQueryList) == 0 {
 			return fmt.Errorf("Can not find snmp address record "),result
 		}
-		exporterAddress = snmpQueryList[0]["address"]
-		fetchKeywords = []string{endpointObj.Ip}
-	}else if endpointObj.AddressAgent != "" {
-		exporterAddress = endpointObj.AddressAgent
-	}else{
-		exporterAddress = endpointObj.Address
+		strList,err = prom.GetSnmpMetricList(snmpQueryList[0]["address"], endpointObj.Ip)
+	}else {
+		if endpointObj.AddressAgent != "" {
+			exporterAddress = endpointObj.AddressAgent
+		} else {
+			exporterAddress = endpointObj.Address
+		}
+		if !strings.Contains(exporterAddress, ":") {
+			return fmt.Errorf("Address %s is illegal ", exporterAddress), result
+		}
+		ip = exporterAddress[:strings.Index(exporterAddress, ":")]
+		port = exporterAddress[strings.Index(exporterAddress, ":")+1:]
+		if ip == "" || port == "" {
+			log.Logger.Warn("endpoint address illegal ", log.String("endpoint", endpointObj.Guid))
+			return nil, result
+		}
+		err, strList = prom.GetEndpointData(ip, port, []string{}, []string{})
 	}
-	if !strings.Contains(exporterAddress, ":") {
-		return fmt.Errorf("Address %s is illegal ", exporterAddress),result
-	}
-	ip = exporterAddress[:strings.Index(exporterAddress, ":")]
-	port = exporterAddress[strings.Index(exporterAddress, ":")+1:]
-	if ip == "" || port == "" {
-		log.Logger.Warn("endpoint address illegal ", log.String("endpoint", endpointObj.Guid))
-		return nil,result
-	}
-	err, strList := prom.GetEndpointData(ip, port, []string{}, fetchKeywords)
 	if err != nil {
 		return err,result
 	}
