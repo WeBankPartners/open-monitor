@@ -28,6 +28,7 @@ func QueryClusterConfig(id string) (result []*m.ClusterTable, err error) {
 
 // Service discover functions
 func AddSdEndpointNew(steps []int, cluster string) error {
+	log.Logger.Info("Add sd endpoint", log.String("steps", fmt.Sprintf("%v", steps)), log.String("cluster",cluster))
 	var syncList []*m.SdConfigSyncObj
 	var err error
 	for _, step := range steps {
@@ -36,6 +37,7 @@ func AddSdEndpointNew(steps []int, cluster string) error {
 			err = tmpErr
 			break
 		}
+		log.Logger.Info("Get sd file list content", log.Int("step", step), log.JsonObj("sdFileList", tmpSdFileList))
 		syncList = append(syncList, &m.SdConfigSyncObj{Step: step, Content: string(tmpSdFileList.TurnToFileSdConfigByte(step))})
 	}
 	if err != nil {
@@ -127,7 +129,7 @@ func SyncRemoteSdConfigFile(cluster string, params []*m.SdConfigSyncObj) error {
 
 func GetSdFileListByStep(step int, cluster string) (result m.ServiceDiscoverFileList, err error) {
 	var endpointTables []*m.EndpointTable
-	err = x.SQL("select guid,address,address_agent from endpoint where step=? and cluster=?", step, cluster).Find(&endpointTables)
+	err = x.SQL("select guid,address,address_agent,step,cluster from endpoint where step=? and cluster=?", step, cluster).Find(&endpointTables)
 	if err != nil {
 		err = fmt.Errorf("Try to query endpoint table fail,%s ", err.Error())
 		return
@@ -137,6 +139,7 @@ func GetSdFileListByStep(step int, cluster string) (result m.ServiceDiscoverFile
 		if v.AddressAgent != "" {
 			tmpSdFileObj.Address = v.AddressAgent
 		}
+		log.Logger.Info("add endpoint", log.String("guid", v.Guid))
 		result = append(result, &tmpSdFileObj)
 	}
 	return
