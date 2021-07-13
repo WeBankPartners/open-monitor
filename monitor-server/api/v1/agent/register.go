@@ -118,12 +118,6 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage,guid string,err er
 			err = fmt.Errorf("Sync sd config file fail,%s ", err.Error())
 			return
 		}
-		//for _,tmpStep := range stepList {
-		//	err = prom.SyncSdConfigFile(tmpStep)
-		//	if err != nil {
-		//		log.Logger.Error("Sync service discover file error", log.Error(err))
-		//	}
-		//}
 		go other.SyncPeerConfig(0, m.SyncSdConfigDto{Guid:rData.endpoint.Guid, Ip:fmt.Sprintf("%s:%s", tmpIp, tmpPort), Step:rData.endpoint.Step, IsRegister:true})
 	}
 	if rData.addDefaultGroup {
