@@ -27,7 +27,7 @@ func QueryClusterConfig(id string) (result []*m.ClusterTable, err error) {
 }
 
 // Service discover functions
-func AddSdEndpointNew(steps []int, cluster string) error {
+func SyncSdEndpointNew(steps []int, cluster string) error {
 	log.Logger.Info("Add sd endpoint", log.String("steps", fmt.Sprintf("%v", steps)), log.String("cluster",cluster))
 	var syncList []*m.SdConfigSyncObj
 	var err error
