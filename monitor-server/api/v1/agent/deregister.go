@@ -76,8 +76,9 @@ func DeregisterJob(guid string) error {
 		go other.SyncPeerConfig(0, m.SyncSdConfigDto{Guid:guid, Step:endpointObj.Step, IsRegister:false})
 		return nil
 	}
-	prom.DeleteSdEndpoint(guid)
-	err = prom.SyncSdConfigFile(endpointObj.Step)
+	err = db.SyncSdEndpointNew([]int{endpointObj.Step}, endpointObj.Cluster)
+	//prom.DeleteSdEndpoint(guid)
+	//err = prom.SyncSdConfigFile(endpointObj.Step)
 	if err != nil {
 		log.Logger.Error("Sync service discover file error", log.Error(err))
 		return err
