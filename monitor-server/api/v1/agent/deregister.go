@@ -68,6 +68,14 @@ func DeregisterJob(guid string) error {
 		log.Logger.Error("Delete endpoint failed", log.Error(err))
 		return err
 	}
+	if endpointObj.ExportType == "snmp" {
+		err = db.SnmpEndpointDelete(endpointObj.Guid)
+		if err != nil {
+			return err
+		}
+		go other.SyncPeerConfig(0, m.SyncSdConfigDto{Guid:guid, Step:endpointObj.Step, IsRegister:false})
+		return nil
+	}
 	prom.DeleteSdEndpoint(guid)
 	err = prom.SyncSdConfigFile(endpointObj.Step)
 	if err != nil {
