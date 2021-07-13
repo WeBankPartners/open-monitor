@@ -24,15 +24,12 @@ func SyncPeerConfig(tplId int, param m.SyncSdConfigDto) {
 	}
 	if !m.PluginRunningMode {
 		peerList = m.Config().Peer.OtherServerList
-		if len(peerList) == 0 {
-			return
-		}
 	}else{
 		log.Logger.Info(fmt.Sprintf("Start sync config: id->%d param.guid->%s param.is_register->%v", tplId, param.Guid, param.IsRegister))
-		if len(m.Config().Peer.OtherServerList) == 0 {
-			log.Logger.Warn("Config peer server list is empty, return")
-			return
-		}
+		//if len(m.Config().Peer.OtherServerList) == 0 {
+		//	log.Logger.Warn("Config peer server list is empty, return")
+		//	return
+		//}
 		if timeoutCheck < time.Now().Unix() {
 			chd,err := getCoreContainerHost()
 			if err != nil {
@@ -46,6 +43,9 @@ func SyncPeerConfig(tplId int, param m.SyncSdConfigDto) {
 			}
 			timeoutCheck = time.Now().Unix() + 300
 		}
+	}
+	if len(peerList) == 0 {
+		return
 	}
 	for _,v := range peerList {
 		if v == "" || strings.Contains(v, "127.0.0.1") || strings.Contains(v, "localhost") {
