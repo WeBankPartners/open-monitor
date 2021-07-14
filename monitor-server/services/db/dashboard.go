@@ -215,8 +215,7 @@ func GetEndpoint(query *m.EndpointTable) error {
 		}
 	}
 	if err != nil {
-		log.Logger.Error("Get tags fail", log.Error(err))
-		return err
+		return fmt.Errorf("Get endpoint table fail,%s ", err.Error())
 	}
 	if len(endpointObj) <= 0 {
 		log.Logger.Warn("Get endpoint fail", log.JsonObj("param", query))
@@ -233,6 +232,7 @@ func GetEndpoint(query *m.EndpointTable) error {
 	query.ExportType = endpointObj[0].ExportType
 	query.StopAlarm = endpointObj[0].StopAlarm
 	query.AddressAgent = endpointObj[0].AddressAgent
+	query.Cluster = endpointObj[0].Cluster
 	return nil
 }
 
@@ -467,21 +467,34 @@ func GetEndpointMetric(id int) (err error,result []*m.OptionModel) {
 	if endpointObj.ExportType == "ping" || endpointObj.ExportType == "telnet" || endpointObj.ExportType == "http" {
 		return nil,result
 	}
-	var ip,port string
-	if endpointObj.AddressAgent != "" {
-		ip = endpointObj.AddressAgent[:strings.Index(endpointObj.AddressAgent, ":")]
-		port = endpointObj.AddressAgent[strings.Index(endpointObj.AddressAgent, ":")+1:]
-	}else{
-		if strings.Contains(endpointObj.Address, ":") {
-			ip = endpointObj.Address[:strings.Index(endpointObj.Address, ":")]
-			port = endpointObj.Address[strings.Index(endpointObj.Address, ":")+1:]
+	var ip,port,exporterAddress string
+	var strList []string
+	if endpointObj.ExportType == "snmp" {
+		snmpQueryList,err := x.QueryString("select address from snmp_exporter where id in (select snmp_exporter from snmp_endpoint_rel where endpoint_guid=?)", endpointObj.Guid)
+		if err != nil {
+			return fmt.Errorf("Try to get snmp address fail,%s ", err.Error()),result
 		}
+		if len(snmpQueryList) == 0 {
+			return fmt.Errorf("Can not find snmp address record "),result
+		}
+		strList,err = prom.GetSnmpMetricList(snmpQueryList[0]["address"], endpointObj.Ip)
+	}else {
+		if endpointObj.AddressAgent != "" {
+			exporterAddress = endpointObj.AddressAgent
+		} else {
+			exporterAddress = endpointObj.Address
+		}
+		if !strings.Contains(exporterAddress, ":") {
+			return fmt.Errorf("Address %s is illegal ", exporterAddress), result
+		}
+		ip = exporterAddress[:strings.Index(exporterAddress, ":")]
+		port = exporterAddress[strings.Index(exporterAddress, ":")+1:]
+		if ip == "" || port == "" {
+			log.Logger.Warn("endpoint address illegal ", log.String("endpoint", endpointObj.Guid))
+			return nil, result
+		}
+		err, strList = prom.GetEndpointData(ip, port, []string{}, []string{})
 	}
-	if ip == "" || port == "" {
-		log.Logger.Warn("endpoint address illegal ", log.String("endpoint", endpointObj.Guid))
-		return nil,result
-	}
-	err, strList := prom.GetEndpointData(ip, port, []string{}, []string{})
 	if err != nil {
 		return err,result
 	}

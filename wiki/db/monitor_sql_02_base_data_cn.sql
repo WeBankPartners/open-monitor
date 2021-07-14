@@ -277,3 +277,13 @@ update grp set endpoint_type='snmp' where name='default_snmp_group';
 alter table snmp_exporter add column scrape_interval int default 10;
 alter table endpoint add column cluster varchar(64) default 'default';
 #@v1.11.5.1-end@;
+
+#@v1.11.5.2-begin@;
+CREATE TABLE `cluster` (
+  `id` varchar(255) NOT NULL PRIMARY KEY,
+  `display_name` varchar(255),
+  `remote_agent_address` varchar(255),
+  `prom_address` varchar(255)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+insert into cluster value ('default','default','','');
+#@v1.11.5.2-end@;
