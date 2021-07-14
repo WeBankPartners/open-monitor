@@ -215,8 +215,7 @@ func GetEndpoint(query *m.EndpointTable) error {
 		}
 	}
 	if err != nil {
-		log.Logger.Error("Get tags fail", log.Error(err))
-		return err
+		return fmt.Errorf("Get endpoint table fail,%s ", err.Error())
 	}
 	if len(endpointObj) <= 0 {
 		log.Logger.Warn("Get endpoint fail", log.JsonObj("param", query))
@@ -233,6 +232,7 @@ func GetEndpoint(query *m.EndpointTable) error {
 	query.ExportType = endpointObj[0].ExportType
 	query.StopAlarm = endpointObj[0].StopAlarm
 	query.AddressAgent = endpointObj[0].AddressAgent
+	query.Cluster = endpointObj[0].Cluster
 	return nil
 }
 
