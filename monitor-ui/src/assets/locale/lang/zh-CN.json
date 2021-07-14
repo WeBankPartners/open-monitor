@@ -55,7 +55,8 @@
     "type": "类型",
     "proxy_exporter": "Exporter",
     "id": "ID",
-    "address": "IP地址"
+    "address": "IP地址",
+    "legend": "展示标签"
   },
   "m_field_businessMonitor": "业务监控",
   "title": {
@@ -250,5 +251,6 @@
   "m_graph_name": "图表名称",
   "m_search": "查询",
   "m_field_exporter": "采集器",
-  "m_proxy_exporter": "代理采集器"
+  "m_proxy_exporter": "代理采集器",
+  "m_legend_tips": "选择一种 或 手动配置，格式为$tag1,$tag2,..."
 }
