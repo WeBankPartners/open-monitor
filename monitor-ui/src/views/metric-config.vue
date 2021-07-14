@@ -46,7 +46,7 @@
                   <FormItem :label="$t('tableKey.name')">
                     <Input v-model="metricConfigData.metric"></Input>
                   </FormItem>
-                  <FormItem :label="$t('m_host')">
+                  <FormItem :label="$t('m_endpoint')">
                     <Select filterable clearable v-model="endpoint" @on-open-change="getEndpointForAcquisitionConfiguration" @on-change="collectedMetric = ''">
                       <Option v-for="item in endpointOptions" :value="item.id" :key="item.id">{{ item.guid }}</Option>
                     </Select>
@@ -161,9 +161,9 @@
             v-model="showEndpointSelect"
             @on-ok="checkEndpoint"
             @on-cancel="metricConfigData.endpoint = ''"
-            :title="$t('m_select_host')">
+            :title="$t('m_select_endpoint')">
             <Form :label-width="80">
-              <FormItem :label="$t('m_host')">
+              <FormItem :label="$t('m_endpoint')">
                 <Select filterable clearable v-model="metricConfigData.endpoint" style="width:300px">
                   <Option v-for="item in endpointOptions" :value="item.guid" :key="item.guid">{{ item.guid }}</Option>
                 </Select>
