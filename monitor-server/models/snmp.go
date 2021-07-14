@@ -17,3 +17,33 @@ type SnmpEndpointRelTable struct {
 	EndpointGuid string `json:"endpoint_guid"`
 	Target string `json:"target"`
 }
+
+type PluginSnmpExporterRequest struct {
+	RequestId string                             `json:"requestId"`
+	Inputs    []*PluginSnmpExporterRequestObj `json:"inputs"`
+}
+
+type PluginSnmpExporterRequestObj struct {
+	CallbackParameter string `json:"callbackParameter"`
+	Id                string `json:"id"`
+	Address           string `json:"address"`
+	ScrapeInterval    string `json:"scrapeInterval"`
+}
+
+type PluginSnmpExporterResp struct {
+	ResultCode    string                      `json:"resultCode"`
+	ResultMessage string                      `json:"resultMessage"`
+	Results       PluginSnmpExporterOutput `json:"results"`
+}
+
+type PluginSnmpExporterOutput struct {
+	Outputs []*PluginSnmpExporterOutputObj `json:"outputs"`
+}
+
+type PluginSnmpExporterOutputObj struct {
+	CallbackParameter string `json:"callbackParameter"`
+	Id                string `json:"id"`
+	ErrorCode         string `json:"errorCode"`
+	ErrorMessage      string `json:"errorMessage"`
+	ErrorDetail       string `json:"errorDetail,omitempty"`
+}
