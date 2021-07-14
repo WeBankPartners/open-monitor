@@ -30,7 +30,7 @@ func ListTpl(c *gin.Context)  {
 	var query m.TplQuery
 	query.SearchType = searchType
 	query.SearchId = id
-	err := db.GetStrategys(&query, true)
+	err := db.GetTplStrategy(&query, true)
 	if err != nil {
 		mid.ReturnQueryTableError(c, "strategy", err)
 		return
@@ -112,8 +112,10 @@ func EditStrategy(c *gin.Context)  {
 			return
 		}
 		db.UpdateTpl(strategy.TplId, mid.GetOperateUser(c))
-		err = SaveConfigFile(strategy.TplId, false)
+		err = db.SyncRuleConfigFile(strategy.TplId, []string{})
+		//err = SaveConfigFile(strategy.TplId, false)
 		if err != nil {
+			log.Logger.Error("Sync rule config file fail", log.Error(err))
 			mid.ReturnHandleError(c, "save alert rules file failed", err)
 			return
 		}
@@ -219,7 +221,7 @@ func updateConfigFile(tplId int) error {
 		query.SearchType = "endpoint"
 		query.SearchId = tplObj.EndpointId
 	}
-	err = db.GetStrategys(&query, true)
+	err = db.GetTplStrategy(&query, true)
 	if err != nil {
 		log.Logger.Error("Get strategy error", log.Error(err))
 		return err
@@ -276,7 +278,11 @@ func updateConfigFile(tplId int) error {
 	if fileName == "" {
 		return nil
 	}
-	err,isExist,cObj := prom.GetConfig(fileName, isGrp)
+	ruleFileName := "e_" + fileName
+	if isGrp {
+		ruleFileName = "g_" + fileName
+	}
+	err,isExist,cObj := prom.GetConfig(ruleFileName)
 	if err != nil {
 		log.Logger.Error("Get prom get config error", log.Error(err))
 		return err
@@ -335,7 +341,7 @@ func updateConfigFile(tplId int) error {
 		}
 	}
 	cObj.Rules = rfu
-	err = prom.SetConfig(fileName, isGrp, cObj, isExist)
+	err = prom.SetConfig(ruleFileName, cObj)
 	if err != nil {
 		log.Logger.Error("Prom set config error", log.Error(err))
 	}
