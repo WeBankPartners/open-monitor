@@ -83,7 +83,7 @@ func SyncRuleConfigFile(tplId int, moveOutEndpoints []string) error {
 	}
 	for _,cluster := range clusterList {
 		guidExpr,addressExpr := buildRuleReplaceExpr(clusterEndpointMap[cluster])
-		ruleFileConfig := buildRuleFileContent(ruleFileName,guidExpr,addressExpr,strategyList)
+		ruleFileConfig := buildRuleFileContent(ruleFileName,guidExpr,addressExpr,copyStrategyList(strategyList))
 		if cluster == "default" || cluster == "" {
 			tmpErr := prom.SetConfig(ruleFileName, ruleFileConfig)
 			if tmpErr != nil {
@@ -166,6 +166,15 @@ func buildRuleFileContent(ruleFileName,guidExpr,addressExpr string,strategyList 
 		tmpRfu.Labels["strategy_id"] = fmt.Sprintf("%d", strategy.Id)
 		tmpRfu.Annotations = models.RFAnnotation{Summary:fmt.Sprintf("{{$labels.instance}}__%s__%s__{{$value}}", strategy.Priority, strategy.Metric), Description:strategy.Content}
 		result.Rules = append(result.Rules, &tmpRfu)
+	}
+	return result
+}
+
+func copyStrategyList(inputs []*models.StrategyTable) []*models.StrategyTable {
+	result := []*models.StrategyTable{}
+	for _,strategy := range inputs {
+		tmpStrategy := models.StrategyTable{Id: strategy.Id,TplId: strategy.TplId,Metric: strategy.Metric,Expr: strategy.Expr,Cond: strategy.Cond,Last: strategy.Last,Priority: strategy.Priority,Content: strategy.Content,ConfigType: strategy.ConfigType}
+		result = append(result, &tmpStrategy)
 	}
 	return result
 }
