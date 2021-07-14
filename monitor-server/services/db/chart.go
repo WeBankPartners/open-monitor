@@ -39,7 +39,7 @@ func ChartCreate(param []*models.ChartTable) error {
 		if chart.AggType == "" {
 			chart.AggType = "avg"
 		}
-		actions = append(actions, &Action{Sql: "insert into chart(group_id,metric,url,unit,title,agg_type,legend) value (?,?,'/dashboard/chart',?,?,?,'$metric')", Param: []interface{}{chart.GroupId,chart.Metric,chart.Unit,chart.Title,chart.AggType}})
+		actions = append(actions, &Action{Sql: "insert into chart(group_id,metric,url,unit,title,agg_type,legend) value (?,?,'/dashboard/chart',?,?,?,?)", Param: []interface{}{chart.GroupId,chart.Metric,chart.Unit,chart.Title,chart.AggType,chart.Legend}})
 	}
 	return Transaction(actions)
 }
@@ -50,7 +50,7 @@ func ChartUpdate(param []*models.ChartTable) error {
 		if chart.AggType == "" {
 			chart.AggType = "avg"
 		}
-		actions = append(actions, &Action{Sql: "update chart set metric=?,unit=?,title=?,agg_type=? where id=?", Param: []interface{}{chart.Metric,chart.Unit,chart.Title,chart.AggType,chart.Id}})
+		actions = append(actions, &Action{Sql: "update chart set metric=?,unit=?,title=?,agg_type=?,legend=? where id=?", Param: []interface{}{chart.Metric,chart.Unit,chart.Title,chart.AggType,chart.Legend,chart.Id}})
 	}
 	return Transaction(actions)
 }

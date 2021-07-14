@@ -19,6 +19,5 @@ type ClusterAgentResponse struct {
 
 type RFClusterRequestObj struct {
 	Name  string    `json:"name"`
-	IsGrp string    `json:"is_grp"`
 	Rules []*RFRule `json:"rules"`
 }
