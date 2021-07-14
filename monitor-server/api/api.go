@@ -174,6 +174,7 @@ func InitHttpServer(exportAgent bool) {
 			agentApi.POST("/kubernetes/cluster/:operation", agent.UpdateKubernetesCluster)
 			agentApi.POST("/export/kubernetes/cluster/:action", agent.PluginKubernetesCluster)
 			agentApi.POST("/export/kubernetes/pod/:action", agent.PluginKubernetesPod)
+			agentApi.POST("/export/snmp/exporter/:action", config_new.PluginSnmpExporterHandle)
 		}
 		alarmApi := authApi.Group("/alarm")
 		{

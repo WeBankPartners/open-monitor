@@ -174,7 +174,7 @@ func GetSerialName(query *m.QueryMonitorData,tagMap map[string]string,dataLength
 	}
 	for k,v := range tagMap {
 		if strings.Contains(legend, "$"+k) {
-			tmpName = strings.Replace(tmpName, "$"+k, v, -1)
+			tmpName = strings.Replace(tmpName, "$"+k, k + "=" + v, -1)
 			if !query.SameEndpoint {
 				tmpName = fmt.Sprintf("%s:%s", endpoint, tmpName)
 			}
