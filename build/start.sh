@@ -36,12 +36,18 @@ sed -i "s~{{CORE_ADDR}}~$GATEWAY_URL~g" monitor/conf/default.json
 else
 sed -i "s~{{CORE_ADDR}}~$CORE_ADDR~g" monitor/conf/default.json
 fi
-sed -i "s~{{MONITOR_SERVER_PEER}}~$MONITOR_HOST_IP~g" monitor/conf/default.json
+sed -i "s~{{MONITOR_SERVER_IP}}~$MONITOR_HOST_IP~g" monitor/conf/default.json
 if [ $MONITOR_SESSION_ENABLE ]
 then
 sed -i "s~{{MONITOR_SESSION_ENABLE}}~true~g" monitor/conf/default.json
 else
 sed -i "s~{{MONITOR_SESSION_ENABLE}}~false~g" monitor/conf/default.json
+fi
+if [ $PLUGIN_MODE ]
+then
+sed -i "s~{{PLUGIN_MODE}}~yes~g" monitor/conf/default.json
+else
+sed -i "s~{{PLUGIN_MODE}}~no~g" monitor/conf/default.json
 fi
 
 cd alertmanager
