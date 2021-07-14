@@ -50,12 +50,7 @@ func InitPrometheusRuleFile()  {
 	log.Logger.Info("Success init prometheus config file")
 }
 
-func GetConfig(name string, isGrp bool) (error,bool,m.RFGroup) {
-	if isGrp {
-		name = "g_" + name
-	}else{
-		name = "e_" + name
-	}
+func GetConfig(name string) (error,bool,m.RFGroup) {
 	path := fmt.Sprintf("%s/%s.yml", m.Config().Prometheus.ConfigPath, name)
 	isExist := false
 	_,err := os.Stat(path)
@@ -90,12 +85,7 @@ func GetConfig(name string, isGrp bool) (error,bool,m.RFGroup) {
 	return nil,isExist,*rf.Groups[0]
 }
 
-func SetConfig(name string, isGrp bool, config m.RFGroup, exist bool) error {
-	if isGrp {
-		name = "g_" + name
-	}else{
-		name = "e_" + name
-	}
+func SetConfig(name string, config m.RFGroup) error {
 	path := fmt.Sprintf("%s/%s.yml", m.Config().Prometheus.ConfigPath, name)
 	if len(config.Rules) == 0 {
 		err := os.Remove(path)
