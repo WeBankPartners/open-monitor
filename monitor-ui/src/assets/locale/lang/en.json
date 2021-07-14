@@ -55,7 +55,8 @@
     "type": "Type",
     "proxy_exporter": "Exporter",
     "id": "ID",
-    "address": "Address"
+    "address": "Address",
+    "legend": "Display Tag"
   },
   "m_field_businessMonitor": "Business Monitor",
   "title": {
@@ -251,5 +252,6 @@
   "m_graph_name": "Graph Name",
   "m_search": "Search",
   "m_field_exporter": "Exporter",
-  "m_proxy_exporter": "Proxy Exporter"
+  "m_proxy_exporter": "Proxy Exporter",
+  "m_legend_tips": "Select or input as $tag1,$tag2,..."
 }
