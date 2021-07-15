@@ -105,7 +105,8 @@ type DatasourceServers struct {
 }
 
 type PrometheusConfig struct {
-	ConfigPath  string  `json:"config_path"`
+	SdConfigPath  string  `json:"sd_config_path"`
+	RuleConfigPath  string  `json:"rule_config_path"`
 	ConfigReload  string  `json:"config_reload"`
 }
 

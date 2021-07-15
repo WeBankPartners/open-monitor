@@ -25,7 +25,7 @@ var PathEnbale bool
 func InitPrometheusRuleFile()  {
 	PathEnbale = true
 	FileMap = make(map[string]fileObj)
-	path := m.Config().Prometheus.ConfigPath
+	path := m.Config().Prometheus.RuleConfigPath
 	s, err := os.Stat(path)
 	if err != nil {
 		PathEnbale = false
@@ -51,7 +51,7 @@ func InitPrometheusRuleFile()  {
 }
 
 func GetConfig(name string) (error,bool,m.RFGroup) {
-	path := fmt.Sprintf("%s/%s.yml", m.Config().Prometheus.ConfigPath, name)
+	path := fmt.Sprintf("%s/%s.yml", m.Config().Prometheus.RuleConfigPath, name)
 	isExist := false
 	_,err := os.Stat(path)
 	if err != nil {
@@ -86,7 +86,7 @@ func GetConfig(name string) (error,bool,m.RFGroup) {
 }
 
 func SetConfig(name string, config m.RFGroup) error {
-	path := fmt.Sprintf("%s/%s.yml", m.Config().Prometheus.ConfigPath, name)
+	path := fmt.Sprintf("%s/%s.yml", m.Config().Prometheus.RuleConfigPath, name)
 	if len(config.Rules) == 0 {
 		err := os.Remove(path)
 		if err == nil {
