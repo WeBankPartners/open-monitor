@@ -2,6 +2,7 @@ package prom
 
 import (
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"strings"
 	"sync"
 	"fmt"
 	"io/ioutil"
@@ -86,4 +87,46 @@ func SyncSdConfigFile(step int) error {
 		return err
 	}
 	return nil
+}
+
+// New
+var consumeSdConfigChan = make(chan []*m.SdConfigSyncObj, 50)
+
+func StartConsumeSdConfig()  {
+	if strings.HasSuffix(m.Config().Prometheus.SdConfigPath, "/") {
+		m.Config().Prometheus.SdConfigPath = m.Config().Prometheus.SdConfigPath[:len(m.Config().Prometheus.SdConfigPath)-1]
+	}
+	output,err := execCommand("mkdir -p " + m.Config().Prometheus.SdConfigPath)
+	if err != nil {
+		log.Logger.Error("Run make sd dir command fail", log.String("output", output), log.Error(err))
+	}
+	log.Logger.Info("Start consume prometheus service discover config job")
+	for {
+		sdConfig := <- consumeSdConfigChan
+		consumeSdConfig(sdConfig)
+	}
+}
+
+func consumeSdConfig(params []*m.SdConfigSyncObj)  {
+	log.Logger.Info("start consume sd config")
+	var err error
+	for _, param := range params {
+		configFile := fmt.Sprintf("%ssd_file_%d.json", m.Config().Prometheus.SdConfigPath, param.Step)
+		writeErr := ioutil.WriteFile(configFile, []byte(param.Content), 0644)
+		if writeErr != nil {
+			err = fmt.Errorf("Try to write sd file fail,%s ", writeErr.Error())
+			break
+		}
+	}
+	if err != nil {
+		log.Logger.Error("Consume sd config fail", log.Error(err))
+	}else{
+		ReloadConfig()
+	}
+}
+
+func SyncLocalSdConfig(params []*m.SdConfigSyncObj)  {
+	if len(params) > 0 {
+		consumeSdConfigChan <- params
+	}
 }
