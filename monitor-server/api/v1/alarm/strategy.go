@@ -74,7 +74,8 @@ func AddStrategy(c *gin.Context)  {
 			mid.ReturnUpdateTableError(c, "strategy", err)
 			return
 		}
-		err = SaveConfigFile(param.TplId, false)
+		//err = SaveConfigFile(param.TplId, false)
+		err = db.SyncRuleConfigFile(param.TplId, []string{}, false)
 		if err != nil {
 			mid.ReturnHandleError(c, "save alert rules file failed", err)
 			return
@@ -112,7 +113,7 @@ func EditStrategy(c *gin.Context)  {
 			return
 		}
 		db.UpdateTpl(strategy.TplId, mid.GetOperateUser(c))
-		err = db.SyncRuleConfigFile(strategy.TplId, []string{})
+		err = db.SyncRuleConfigFile(strategy.TplId, []string{}, false)
 		//err = SaveConfigFile(strategy.TplId, false)
 		if err != nil {
 			log.Logger.Error("Sync rule config file fail", log.Error(err))
@@ -142,7 +143,8 @@ func DeleteStrategy(c *gin.Context)  {
 		return
 	}
 	db.UpdateTpl(strategy.TplId, "")
-	err = SaveConfigFile(strategy.TplId, false)
+	//err = SaveConfigFile(strategy.TplId, false)
+	err = db.SyncRuleConfigFile(strategy.TplId, []string{}, false)
 	if err != nil {
 		mid.ReturnHandleError(c, "save prometheus rule file failed", err)
 		return
@@ -445,7 +447,8 @@ func SyncConfigHandle(w http.ResponseWriter,r *http.Request)  {
 		response.Message = "Parameter id is empty"
 		return
 	}
-	err := SaveConfigFile(tplId, true)
+	//err := SaveConfigFile(tplId, true)
+	err := db.SyncRuleConfigFile(tplId, []string{}, true)
 	if err != nil {
 		response.Code = 500
 		response.Message = "Sync save config file fail"
