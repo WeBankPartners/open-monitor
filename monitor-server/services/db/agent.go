@@ -13,6 +13,9 @@ func UpdateEndpoint(endpoint *m.EndpointTable) (stepList []int,err error) {
 	host := m.EndpointTable{Guid:endpoint.Guid}
 	GetEndpoint(&host)
 	if host.Id == 0 {
+		if endpoint.Cluster == "" {
+			endpoint.Cluster = "default"
+		}
 		insert := fmt.Sprintf("INSERT INTO endpoint(guid,name,ip,endpoint_version,export_type,export_version,step,address,os_type,create_at,address_agent,cluster) VALUE ('%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%s','%s')",
 			endpoint.Guid,endpoint.Name,endpoint.Ip,endpoint.EndpointVersion,endpoint.ExportType,endpoint.ExportVersion,endpoint.Step,endpoint.Address,endpoint.OsType,time.Now().Format(m.DatetimeFormat),endpoint.AddressAgent,endpoint.Cluster)
 		log.Logger.Debug("Insert", log.String("sql", insert))
