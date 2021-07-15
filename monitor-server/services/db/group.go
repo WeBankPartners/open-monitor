@@ -209,3 +209,20 @@ func getGrpParent(grpId int) m.GrpTable {
 	}
 	return m.GrpTable{}
 }
+
+func DeleteEndpointFromGroup(endpointId int) (tplList []int,err error) {
+	var tplTable []*m.TplTable
+	err = x.SQL("select * from tpl where grp_id in (select grp_id from grp_endpoint where endpoint_id=?)", endpointId).Find(&tplTable)
+	if err != nil {
+		err = fmt.Errorf("Get delete endpoint affect tpl list fail,%s ", err.Error())
+		return
+	}
+	for _,tpl := range tplTable {
+		tplList = append(tplList, tpl.Id)
+	}
+	_,err = x.Exec("delete from grp_endpoint where endpoint_id=?", endpointId)
+	if err != nil {
+		err = fmt.Errorf("Delete group endpoint relation fail,%s ", err.Error())
+	}
+	return
+}

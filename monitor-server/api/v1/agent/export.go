@@ -138,7 +138,7 @@ func ExportAgentNew(c *gin.Context)  {
 			db.GetEndpoint(&endpointObj)
 			if endpointObj.Id > 0 {
 				log.Logger.Debug("Export deregister endpoint", log.Int("id", endpointObj.Id), log.String("guid", endpointObj.Guid))
-				inputErr = DeregisterJob(endpointObj.Guid)
+				inputErr = DeregisterJob(endpointObj)
 				endpointGuid = endpointObj.Guid
 			}
 		}

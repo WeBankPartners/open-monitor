@@ -7,6 +7,11 @@ type ClusterTable struct {
 	PromAddress        string `json:"prom_address"`
 }
 
+type SdLocalConfigJob struct {
+	FromPeer  bool
+	Configs   []*SdConfigSyncObj
+}
+
 type SdConfigSyncObj struct {
 	Step    int    `json:"step"`
 	Content string `json:"content"`
