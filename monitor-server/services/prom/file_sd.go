@@ -111,7 +111,7 @@ func consumeSdConfig(params []*m.SdConfigSyncObj)  {
 	log.Logger.Info("start consume sd config")
 	var err error
 	for _, param := range params {
-		configFile := fmt.Sprintf("%ssd_file_%d.json", m.Config().Prometheus.SdConfigPath, param.Step)
+		configFile := fmt.Sprintf("%s/sd_file_%d.json", m.Config().Prometheus.SdConfigPath, param.Step)
 		writeErr := ioutil.WriteFile(configFile, []byte(param.Content), 0644)
 		if writeErr != nil {
 			err = fmt.Errorf("Try to write sd file fail,%s ", writeErr.Error())
