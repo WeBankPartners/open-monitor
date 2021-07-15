@@ -39,7 +39,7 @@ func GetClusterAddress(cluster string) string {
 }
 
 // Service discover functions
-func SyncSdEndpointNew(steps []int, cluster string) error {
+func SyncSdEndpointNew(steps []int, cluster string, fromPeer bool) error {
 	log.Logger.Info("Add sd endpoint", log.String("steps", fmt.Sprintf("%v", steps)), log.String("cluster",cluster))
 	var syncList []*m.SdConfigSyncObj
 	var err error
@@ -63,7 +63,7 @@ func SyncSdEndpointNew(steps []int, cluster string) error {
 		return nil
 	}
 	if cluster == "" || cluster == "default" {
-		prom.SyncLocalSdConfig(syncList)
+		prom.SyncLocalSdConfig(m.SdLocalConfigJob{Configs: syncList, FromPeer: fromPeer})
 	} else {
 		err = SyncRemoteSdConfigFile(cluster, syncList)
 		if err != nil {

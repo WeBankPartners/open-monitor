@@ -4,112 +4,12 @@ import (
 	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
-	"gopkg.in/yaml.v2"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
 	"strings"
-	"sync"
 	"time"
 )
-
-type fileObj struct {
-	RWLock  sync.RWMutex
-	Name  string
-}
-
-var FileMap map[string]fileObj
-var PathEnbale bool
-
-func InitPrometheusRuleFile()  {
-	PathEnbale = true
-	FileMap = make(map[string]fileObj)
-	path := m.Config().Prometheus.RuleConfigPath
-	s, err := os.Stat(path)
-	if err != nil {
-		PathEnbale = false
-	}
-	if s != nil {
-		if !s.IsDir() {
-			PathEnbale = false
-		}
-	}else{
-		PathEnbale = false
-	}
-	if !PathEnbale {
-		log.Logger.Warn("Init prometheus fail,path illegal", log.String("path", path))
-		return
-	}
-	files,_ := ioutil.ReadDir(path)
-	for _,v := range files {
-		name := strings.Split(v.Name(), ".yml")[0]
-		FileMap[name] = fileObj{RWLock:*new(sync.RWMutex), Name:name}
-		log.Logger.Info(fmt.Sprintf("prometheus rule file : %s", v.Name()))
-	}
-	log.Logger.Info("Success init prometheus config file")
-}
-
-func GetConfig(name string) (error,bool,m.RFGroup) {
-	path := fmt.Sprintf("%s/%s.yml", m.Config().Prometheus.RuleConfigPath, name)
-	isExist := false
-	_,err := os.Stat(path)
-	if err != nil {
-		if os.IsExist(err) {
-			isExist = true
-		}
-	}else{
-		isExist = true
-	}
-	if !isExist {
-		return nil,isExist,m.RFGroup{}
-	}
-	if fo,b := FileMap[name]; b {
-		fo.RWLock.RLock()
-		defer fo.RWLock.RUnlock()
-	}
-	data,err := ioutil.ReadFile(path)
-	if err != nil {
-		log.Logger.Error("Get prometheus rule,read file fail", log.Error(err))
-		return err,isExist,m.RFGroup{}
-	}
-	var rf m.RuleFile
-	err = yaml.Unmarshal(data, &rf)
-	if err != nil {
-		log.Logger.Error("Get prometheus rule,unmarshal fail", log.Error(err))
-		return err,isExist,m.RFGroup{}
-	}
-	if len(rf.Groups) <= 0 {
-		return nil,isExist,m.RFGroup{}
-	}
-	return nil,isExist,*rf.Groups[0]
-}
-
-func SetConfig(name string, config m.RFGroup) error {
-	path := fmt.Sprintf("%s/%s.yml", m.Config().Prometheus.RuleConfigPath, name)
-	if len(config.Rules) == 0 {
-		err := os.Remove(path)
-		if err == nil {
-			return nil
-		}
-	}
-	rf := m.RuleFile{Groups:[]*m.RFGroup{&config}}
-	data,err := yaml.Marshal(&rf)
-	if err != nil {
-		log.Logger.Error("Set prometheus rule,marshal fail", log.Error(err))
-		return err
-	}
-	if fo,b := FileMap[name]; b {
-		fo.RWLock.Lock()
-		defer fo.RWLock.Unlock()
-	}
-	err = ioutil.WriteFile(path, data, 0644)
-	if err != nil {
-		log.Logger.Error("Set prometheus rule,write file fail", log.Error(err))
-		return err
-	}
-	return nil
-}
 
 func ReloadConfig() error {
 	_,err := http.Post(m.Config().Prometheus.ConfigReload, "application/json", strings.NewReader(""))

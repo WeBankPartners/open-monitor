@@ -12,6 +12,13 @@ type RFGroup struct {
 	Rules  []*RFRule  `yaml:"rules"`
 }
 
+type RuleLocalConfigJob struct {
+	TplId  int
+	FromPeer bool
+	Name  string
+	Rules  []*RFRule
+}
+
 type RFRule struct {
 	Alert  string  `yaml:"alert"`
 	Expr  string  `yaml:"expr"`
