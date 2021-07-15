@@ -440,7 +440,7 @@ export default {
       })
     },
     saveGraphMetric () {
-      const params = {
+      let params = {
         metric: this.graphConfig.metric.join('^'),
         title: this.graphConfig.graphName,
         unit: this.graphConfig.unit,
@@ -453,6 +453,7 @@ export default {
           this.$Message.success(this.$t('tips.success'))
         })
       } else {
+        delete params.id
         this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.getGraph, [params], () => {
           this.$Message.success(this.$t('tips.success'))
         })
