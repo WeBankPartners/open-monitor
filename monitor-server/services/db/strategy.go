@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-var ruleConfigIgnoreType = []string{"snmp"}
+var ruleConfigIgnoreType = []string{}
 
 // 更新告警规则文件rule file
 func SyncRuleConfigFile(tplId int, moveOutEndpoints []string, fromPeer bool) error {
