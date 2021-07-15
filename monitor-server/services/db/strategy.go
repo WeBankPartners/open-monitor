@@ -194,6 +194,7 @@ func GetTemplateObject(id,grpId,endpointId int) (result *models.TplTable,err err
 		err = fmt.Errorf("Try to query tpl table fail,%s ", err.Error())
 	}
 	if len(queryResult) == 0 {
+		result = &models.TplTable{Id: 0}
 		err = fmt.Errorf("Can not find any tpl row by id=%d or endpoint_id=%d or grp_id=%d ", id, endpointId, grpId)
 	}else{
 		result = queryResult[0]
