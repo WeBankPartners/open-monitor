@@ -46,7 +46,7 @@ func InitPrometheusServiceDiscoverConfig()  {
 		}
 	}
 	for k,v := range clusterStepMap {
-		tmpErr := SyncSdEndpointNew(v, k)
+		tmpErr := SyncSdEndpointNew(v, k, true)
 		if tmpErr != nil {
 			log.Logger.Error("Init sd config fail", log.String("cluster",k), log.Error(tmpErr))
 		}

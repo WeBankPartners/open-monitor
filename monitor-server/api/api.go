@@ -252,7 +252,7 @@ func InitClusterApi()  {
 		return
 	}
 	http.Handle("/sync/config", http.HandlerFunc(alarm.SyncConfigHandle))
-	http.Handle("/sync/sd", http.HandlerFunc(alarm.SyncSdFileHandle))
+	http.Handle("/sync/sd", http.HandlerFunc(alarm.AcceptPeerSdConfigHandle))
 	http.ListenAndServe(fmt.Sprintf(":%s", m.Config().Peer.HttpPort), nil)
 }
 
