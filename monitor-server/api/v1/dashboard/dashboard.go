@@ -463,7 +463,7 @@ func GetChart(c *gin.Context)  {
 	// custom or from mysql
 	var querys []m.QueryMonitorData
 	step := 10
-	var firstEndpoint,unit string
+	var firstEndpoint,unit,clusterAddress string
 	var compareSubTime int64
 	var compareSecondLegend string
 	if paramConfig[0].Id > 0 {
@@ -473,6 +473,7 @@ func GetChart(c *gin.Context)  {
 		firstEndpointObj := m.EndpointTable{Guid:paramConfig[0].Endpoint}
 		db.GetEndpoint(&firstEndpointObj)
 		step = firstEndpointObj.Step
+		clusterAddress = db.GetClusterAddress(firstEndpointObj.Cluster)
 		// one endpoint -> metrics
 		for _,tmpParamConfig := range paramConfig {
 			err, charts := db.GetCharts(0, tmpParamConfig.Id, 0)
@@ -520,7 +521,7 @@ func GetChart(c *gin.Context)  {
 				if len(paramConfig) > 1 && strings.Contains(chart.Legend, "metric") {
 					tmpLegend = "$custom"
 				}
-				querys = append(querys, m.QueryMonitorData{Start: query.Start, End: query.End, PromQ: tmpPromQl, Legend: tmpLegend, Metric: []string{v}, Endpoint: []string{tmpParamConfig.Endpoint}, CompareLegend:compareLegend, SameEndpoint:sameEndpoint, Step:step})
+				querys = append(querys, m.QueryMonitorData{Start: query.Start, End: query.End, PromQ: tmpPromQl, Legend: tmpLegend, Metric: []string{v}, Endpoint: []string{tmpParamConfig.Endpoint}, CompareLegend:compareLegend, SameEndpoint:sameEndpoint, Step:step, Cluster: clusterAddress})
 				if paramConfig[0].CompareSecondStart != "" && paramConfig[0].CompareSecondEnd != "" {
 					st,sErr := time.Parse(m.DateFormatWithZone, fmt.Sprintf("%s 00:00:00 "+m.DefaultLocalTimeZone, paramConfig[0].CompareSecondStart))
 					et,eErr := time.Parse(m.DateFormatWithZone, fmt.Sprintf("%s 23:59:59 "+m.DefaultLocalTimeZone, paramConfig[0].CompareSecondEnd))
@@ -537,7 +538,7 @@ func GetChart(c *gin.Context)  {
 						}
 						compareSubTime = stTimestamp-query.Start
 						compareSecondLegend = fmt.Sprintf("%s_%s", paramConfig[0].CompareSecondStart, paramConfig[0].CompareSecondEnd)
-						querys = append(querys, m.QueryMonitorData{Start: stTimestamp, End: etTimestamp, PromQ: tmpPromQl, Legend: tmpLegend, Metric: []string{v}, Endpoint: []string{tmpParamConfig.Endpoint}, CompareLegend:compareSecondLegend, SameEndpoint:sameEndpoint, Step:step})
+						querys = append(querys, m.QueryMonitorData{Start: stTimestamp, End: etTimestamp, PromQ: tmpPromQl, Legend: tmpLegend, Metric: []string{v}, Endpoint: []string{tmpParamConfig.Endpoint}, CompareLegend:compareSecondLegend, SameEndpoint:sameEndpoint, Step:step, Cluster: clusterAddress})
 					}
 				}
 			}
@@ -583,6 +584,7 @@ func GetChart(c *gin.Context)  {
 			endpointObj := m.EndpointTable{Guid:v.Endpoint}
 			if v.Endpoint != "" {
 				db.GetEndpoint(&endpointObj)
+				clusterAddress = db.GetClusterAddress(endpointObj.Cluster)
 			}
 			if strings.Contains(v.PromQl, "$address") {
 				if v.Endpoint == "" {
@@ -617,7 +619,7 @@ func GetChart(c *gin.Context)  {
 					v.PromQl = strings.Replace(v.PromQl, string(vv), "=~\".*\"", -1)
 				}
 			}
-			querys = append(querys, m.QueryMonitorData{Start:query.Start, End:query.End, PromQ:v.PromQl, Legend:customLegend, Metric:[]string{v.Metric}, Endpoint:[]string{v.Endpoint}, Step:step})
+			querys = append(querys, m.QueryMonitorData{Start:query.Start, End:query.End, PromQ:v.PromQl, Legend:customLegend, Metric:[]string{v.Metric}, Endpoint:[]string{v.Endpoint}, Step:step, Cluster: clusterAddress})
 		}
 	}
 	if len(querys) == 0 {
