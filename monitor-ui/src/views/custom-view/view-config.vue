@@ -139,6 +139,17 @@
       </div>
     </div>
   </ModalComponent>
+  <Modal
+    v-model="isShowWarning"
+    :title="$t('delConfirm.title')"
+    @on-ok="confirmRemoveGrid"
+    @on-cancel="cancel">
+    <div class="modal-body" style="padding:30px">
+      <div style="text-align:center">
+        <p style="color: red">{{$t('delConfirm.tip')}}</p>
+      </div>
+    </div>
+  </Modal>
 </div>
 
 </template>
@@ -186,6 +197,11 @@ export default {
   name: '',
   data() {
     return {
+      isShowWarning: false,
+      deleteConfirm: {
+        id: '',
+        method: ''
+      },
       isEditPanal: false,
       panalName: this.$route.params.name,
       viewCondition: {
@@ -355,17 +371,18 @@ export default {
       })
     },
     removeGrid(itemxxx) {
-      this.$delConfirm({
-        msg: itemxxx.i,
-        callback: () => {
-          this.layoutData.forEach((item,index) => {
-            if (item.id === itemxxx.id) {
-              this.layoutData.splice(index,1)
-            }
-          })
-          this.$root.$eventBus.$emit('hideConfirmModal')
+      this.isShowWarning = true
+      this.deleteConfirm.id = itemxxx.id
+    },
+    confirmRemoveGrid () {
+      this.layoutData.forEach((item,index) => {
+        if (item.id ===  this.deleteConfirm.id) {
+          this.layoutData.splice(index,1)
         }
       })
+    },
+    cancel () {
+      this.isShowWarning = false
     },
     async gridPlus(item) {
       const resViewData = await this.modifyLayoutData()
