@@ -2,7 +2,6 @@ package agent
 
 import (
 	"fmt"
-	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/alarm"
 	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
@@ -135,7 +134,8 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage,guid string,err er
 			}
 			_, tplObj := db.GetTpl(0, grpObj.Id, 0)
 			if tplObj.Id > 0 {
-				err := alarm.SaveConfigFile(tplObj.Id, false)
+				//err := alarm.SaveConfigFile(tplObj.Id, false)
+				err := db.SyncRuleConfigFile(tplObj.Id, []string{}, false)
 				if err != nil {
 					log.Logger.Error("Register interface update prometheus config fail", log.String("group", rData.defaultGroup), log.Error(err))
 					return validateMessage,guid,err

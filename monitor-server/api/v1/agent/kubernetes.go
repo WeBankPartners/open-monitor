@@ -3,7 +3,6 @@ package agent
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/alarm"
 	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
@@ -275,7 +274,8 @@ func handleAddKubernetesPod(input k8sClusterRequestInputObj) (err error,endpoint
 			return err,endpointGuid
 		}
 		if tplId > 0 {
-			err = alarm.SaveConfigFile(tplId, false)
+			//err = alarm.SaveConfigFile(tplId, false)
+			err = db.SyncRuleConfigFile(tplId, []string{}, false)
 		}
 	}
 	return err,endpointGuid
@@ -299,7 +299,8 @@ func handleDeleteKubernetesPod(input k8sClusterRequestInputObj) error {
 			return err
 		}
 		if tplId > 0 {
-			err = alarm.SaveConfigFile(tplId, false)
+			//err = alarm.SaveConfigFile(tplId, false)
+			err = db.SyncRuleConfigFile(tplId, []string{}, false)
 		}
 	}
 	return err
