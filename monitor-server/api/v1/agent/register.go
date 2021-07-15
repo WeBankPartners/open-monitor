@@ -6,7 +6,6 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
-	"github.com/WeBankPartners/open-monitor/monitor-server/services/other"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
 	"github.com/gin-gonic/gin"
 	"strconv"
@@ -106,18 +105,11 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage,guid string,err er
 				return validateMessage,guid,err
 			}
 		}
-		tmpIp,tmpPort := param.Ip,param.Port
-		if strings.Contains(rData.endpoint.AddressAgent, ":") {
-			tmpIp = rData.endpoint.AddressAgent[:strings.Index(rData.endpoint.AddressAgent, ":")]
-			tmpPort = rData.endpoint.AddressAgent[strings.Index(rData.endpoint.AddressAgent, ":")+1:]
-		}
-		//stepList := prom.AddSdEndpoint(m.ServiceDiscoverFileObj{Guid: rData.endpoint.Guid, Address: fmt.Sprintf("%s:%s", tmpIp, tmpPort), Step: rData.endpoint.Step, Cluster: rData.endpoint.Cluster})
-		err = db.SyncSdEndpointNew(stepList, rData.endpoint.Cluster)
+		err = db.SyncSdEndpointNew(stepList, rData.endpoint.Cluster, false)
 		if err != nil {
 			err = fmt.Errorf("Sync sd config file fail,%s ", err.Error())
 			return
 		}
-		go other.SyncPeerConfig(0, m.SyncSdConfigDto{Guid:rData.endpoint.Guid, Ip:fmt.Sprintf("%s:%s", tmpIp, tmpPort), Step:rData.endpoint.Step, IsRegister:true})
 	}
 	if rData.addDefaultGroup {
 		if param.DefaultGroupName != "" {
