@@ -30,7 +30,11 @@ var PieLegendBlackName = []string{"job", "instance"}
 func PrometheusData(query *m.QueryMonitorData) []*m.SerialModel  {
 	serials := []*m.SerialModel{}
 	urlParams := url.Values{}
-	requestUrl,err := url.Parse(fmt.Sprintf("http://%s/api/v1/query_range", promDS.Host))
+	hostAddress := promDS.Host
+	if query.Cluster != "" {
+		hostAddress = query.Cluster
+	}
+	requestUrl,err := url.Parse(fmt.Sprintf("http://%s/api/v1/query_range", hostAddress))
 	if err!=nil {
 		log.Logger.Error("Make url fail", log.Error(err))
 		return serials

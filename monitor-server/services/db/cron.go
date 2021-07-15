@@ -158,7 +158,6 @@ func StartCheckLogKeyword()  {
 }
 
 func CheckLogKeyword()  {
-	log.Logger.Debug("start check log keyword")
 	nowTime := time.Now()
 	var queryParam m.QueryMonitorData
 	queryParam.Start = nowTime.Unix() - 10
@@ -180,7 +179,6 @@ func CheckLogKeyword()  {
 		return
 	}
 	if len(logMonitorTable) == 0 {
-		log.Logger.Debug("Check log keyword config empty")
 		return
 	}
 	var alarmTable []*m.AlarmTable
