@@ -38,59 +38,26 @@ func SyncSdEndpointNew(steps []int, cluster string) error {
 			break
 		}
 		log.Logger.Info("Get sd file list content", log.Int("step", step), log.JsonObj("sdFileList", tmpSdFileList))
+		if len(tmpSdFileList) <= 0 {
+			continue
+		}
 		syncList = append(syncList, &m.SdConfigSyncObj{Step: step, Content: string(tmpSdFileList.TurnToFileSdConfigByte(step))})
 	}
 	if err != nil {
 		return err
 	}
+	if len(syncList) == 0 {
+		log.Logger.Warn("Sync sd endpoint break,sync list is empty")
+		return nil
+	}
 	if cluster == "" || cluster == "default" {
-		err = SyncLocalSdConfigFile(syncList)
-		if err != nil {
-			log.Logger.Error("Sync local sd config file fail", log.Error(err))
-		}
+		prom.SyncLocalSdConfig(syncList)
 	} else {
 		err = SyncRemoteSdConfigFile(cluster, syncList)
 		if err != nil {
 			log.Logger.Error("Sync remote sd config file fail", log.Error(err))
 		}
 	}
-	return err
-}
-
-func DeleteSdEndpointNew(step int, cluster string) error {
-	sdFileList, err := GetSdFileListByStep(step, cluster)
-	if err != nil {
-		return err
-	}
-	syncList := []*m.SdConfigSyncObj{&m.SdConfigSyncObj{Step: step, Content: string(sdFileList.TurnToFileSdConfigByte(step))}}
-	if cluster == "" || cluster == "default" {
-		err = SyncLocalSdConfigFile(syncList)
-	} else {
-		err = SyncRemoteSdConfigFile(cluster, syncList)
-	}
-	return err
-}
-
-func SyncLocalSdConfigFile(params []*m.SdConfigSyncObj) error {
-	var err error
-	fileSdPath := m.Config().SdFile.Path
-	if fileSdPath != "" {
-		if fileSdPath[len(fileSdPath)-1:] != "/" {
-			fileSdPath = fileSdPath + "/"
-		}
-	}
-	for _, param := range params {
-		configFile := fmt.Sprintf("%ssd_file_%d.json", fileSdPath, param.Step)
-		writeErr := ioutil.WriteFile(configFile, []byte(param.Content), 0644)
-		if writeErr != nil {
-			err = fmt.Errorf("Try to write sd file fail,%s ", writeErr.Error())
-			break
-		}
-	}
-	if err != nil {
-		return err
-	}
-	err = prom.ReloadConfig()
 	return err
 }
 
@@ -129,12 +96,21 @@ func SyncRemoteSdConfigFile(cluster string, params []*m.SdConfigSyncObj) error {
 
 func GetSdFileListByStep(step int, cluster string) (result m.ServiceDiscoverFileList, err error) {
 	var endpointTables []*m.EndpointTable
-	err = x.SQL("select guid,address,address_agent,step,cluster from endpoint where step=? and cluster=?", step, cluster).Find(&endpointTables)
+	err = x.SQL("select guid,address,export_type,address_agent,step,cluster from endpoint where step=? and cluster=?", step, cluster).Find(&endpointTables)
 	if err != nil {
 		err = fmt.Errorf("Try to query endpoint table fail,%s ", err.Error())
 		return
 	}
+	result = m.ServiceDiscoverFileList{}
 	for _, v := range endpointTables {
+		if v.ExportType == "snmp" {
+			continue
+		}
+		if v.ExportType == "ping" || v.ExportType == "telnet" || v.ExportType == "http" {
+			if v.AddressAgent == "" {
+				continue
+			}
+		}
 		tmpSdFileObj := m.ServiceDiscoverFileObj{Guid: v.Guid, Step: v.Step, Cluster: v.Cluster, Address: v.Address}
 		if v.AddressAgent != "" {
 			tmpSdFileObj.Address = v.AddressAgent
