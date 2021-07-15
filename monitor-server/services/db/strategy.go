@@ -11,7 +11,7 @@ import (
 var ruleConfigIgnoreType = []string{"snmp"}
 
 // 更新告警规则文件rule file
-func SyncRuleConfigFile(tplId int, moveOutEndpoints []string) error {
+func SyncRuleConfigFile(tplId int, moveOutEndpoints []string, fromPeer bool) error {
 	// 获取tpl对象
 	tplObj,err := GetTemplateObject(tplId,0 ,0)
 	if err != nil {
@@ -85,13 +85,7 @@ func SyncRuleConfigFile(tplId int, moveOutEndpoints []string) error {
 		guidExpr,addressExpr := buildRuleReplaceExpr(clusterEndpointMap[cluster])
 		ruleFileConfig := buildRuleFileContent(ruleFileName,guidExpr,addressExpr,copyStrategyList(strategyList))
 		if cluster == "default" || cluster == "" {
-			tmpErr := prom.SetConfig(ruleFileName, ruleFileConfig)
-			if tmpErr != nil {
-				err = fmt.Errorf("Update local prometheus rule file fail,%s ", tmpErr.Error())
-				log.Logger.Error("Update local prometheus rule file fail", log.Error(tmpErr))
-			}else{
-				prom.ReloadConfig()
-			}
+			prom.SyncLocalRuleConfig(ruleFileConfig)
 		}else{
 			tmpErr := SyncRemoteRuleConfigFile(cluster, models.RFClusterRequestObj{Name: ruleFileConfig.Name, Rules: ruleFileConfig.Rules})
 			if tmpErr != nil {
