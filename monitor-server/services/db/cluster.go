@@ -26,6 +26,18 @@ func QueryClusterConfig(id string) (result []*m.ClusterTable, err error) {
 	return
 }
 
+func GetClusterAddress(cluster string) string {
+	if cluster == "default" || cluster == "" {
+		return ""
+	}
+	var clusterTable []*m.ClusterTable
+	x.SQL("select * from cluster where id=?", cluster).Find(&clusterTable)
+	if len(clusterTable) > 0 {
+		return clusterTable[0].PromAddress
+	}
+	return ""
+}
+
 // Service discover functions
 func SyncSdEndpointNew(steps []int, cluster string) error {
 	log.Logger.Info("Add sd endpoint", log.String("steps", fmt.Sprintf("%v", steps)), log.String("cluster",cluster))
