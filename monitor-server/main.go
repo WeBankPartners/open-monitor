@@ -23,27 +23,22 @@ func main() {
 	exportAgent := flag.Bool("export_agent", false, "true or false to choice export agent")
 	flag.Parse()
 	m.InitConfig(*cfgFile)
-	//middleware.InitMonitorLog()
 	log.InitLogger()
 	db.InitDbConn()
 	if m.Config().Http.Session.Enable {
 		middleware.InitSession()
 	}
 	ds.InitPrometheusDatasource()
-	//prom.InitPrometheusRuleFile()
 	if m.Config().Alert.Enable {
 		other.InitSmtpMail()
 	}
 	go api.InitClusterApi()
 	go db.InitPrometheusConfig()
-	//go db.InitPrometheusConfigFile()
 	go db.StartCronJob()
 	go db.StartCheckCron()
 	go db.StartCheckLogKeyword()
 	go db.SendConfigToDbManager()
 	go db.StartNotifyPingExport()
-	//alarm.SyncInitSdFile()
-	//alarm.SyncInitConfigFile()
 	api.InitDependenceParam()
 	middleware.InitErrorMessageList()
 	api.InitHttpServer(*exportAgent)

@@ -85,7 +85,7 @@ func SyncRuleConfigFile(tplId int, moveOutEndpoints []string, fromPeer bool) err
 		guidExpr,addressExpr := buildRuleReplaceExpr(clusterEndpointMap[cluster])
 		ruleFileConfig := buildRuleFileContent(ruleFileName,guidExpr,addressExpr,copyStrategyList(strategyList))
 		if cluster == "default" || cluster == "" {
-			prom.SyncLocalRuleConfig(ruleFileConfig)
+			prom.SyncLocalRuleConfig(models.RuleLocalConfigJob{FromPeer: fromPeer,TplId: tplId,Name: ruleFileConfig.Name,Rules: ruleFileConfig.Rules})
 		}else{
 			tmpErr := SyncRemoteRuleConfigFile(cluster, models.RFClusterRequestObj{Name: ruleFileConfig.Name, Rules: ruleFileConfig.Rules})
 			if tmpErr != nil {
