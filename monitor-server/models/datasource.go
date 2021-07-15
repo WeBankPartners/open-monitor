@@ -12,6 +12,7 @@ type QueryMonitorData struct{
 	PieData  EChartPie  `json:"pie_data"`
 	SameEndpoint bool `json:"same_endpoint"`
 	Step  int  `json:"step"`
+	Cluster string `json:"cluster"`
 }
 
 type PrometheusParam struct {
