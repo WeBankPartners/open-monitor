@@ -1,19 +1,17 @@
 package alarm
 
 import (
-	"github.com/gin-gonic/gin"
-	"strconv"
+	"encoding/json"
+	"fmt"
 	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
-	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
-	"fmt"
-	"strings"
-	"github.com/WeBankPartners/open-monitor/monitor-server/services/other"
-	"net/http"
+	"github.com/gin-gonic/gin"
 	"io/ioutil"
-	"encoding/json"
-	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
+	"net/http"
+	"strconv"
+	"strings"
 )
 
 func ListTpl(c *gin.Context)  {
@@ -176,180 +174,6 @@ func SearchObjOption(c *gin.Context)  {
 	mid.ReturnSuccessData(c, data)
 }
 
-func SaveConfigFile(tplId int, fromPeer bool) error  {
-	var err error
-	idList := db.GetParentTpl(tplId)
-	err = updateConfigFile(tplId)
-	if err != nil {
-		log.Logger.Error("Update prometheus rule file error", log.Error(err))
-		return err
-	}
-	if len(idList) > 0 {
-		for _,v := range idList {
-			err = updateConfigFile(v)
-			if err != nil {
-				log.Logger.Error("Update prometheus rule error", log.Int("tplId", v), log.Error(err))
-			}
-		}
-	}
-	if err != nil {
-		return err
-	}
-	err = prom.ReloadConfig()
-	if err != nil {
-		log.Logger.Error("Reload prometheus config error", log.Error(err))
-		return err
-	}
-	if !fromPeer {
-		go other.SyncPeerConfig(tplId, m.SyncSdConfigDto{})
-	}
-	return nil
-}
-
-func updateConfigFile(tplId int) error {
-	err,tplObj := db.GetTpl(tplId,0 ,0)
-	if err != nil {
-		log.Logger.Error("Get tpl error", log.Error(err))
-		return err
-	}
-	var query m.TplQuery
-	var isGrp bool
-	if tplObj.GrpId > 0 {
-		isGrp = true
-		query.SearchType = "grp"
-		query.SearchId = tplObj.GrpId
-	}else{
-		isGrp = false
-		query.SearchType = "endpoint"
-		query.SearchId = tplObj.EndpointId
-	}
-	err = db.GetTplStrategy(&query, true)
-	if err != nil {
-		log.Logger.Error("Get strategy error", log.Error(err))
-		return err
-	}
-	var fileName string
-	var endpointExpr,guidExpr string
-	if len(query.Tpl) > 0 {
-		fileName = query.Tpl[len(query.Tpl)-1].ObjName
-		if isGrp {
-			tmpStrategy := []*m.StrategyTable{}
-			//tmpStrategyMap := make(map[string]*m.StrategyTable)
-			for _,v := range query.Tpl {
-				for _,vv := range v.Strategy {
-					//tmpStrategyMap[vv.Metric] = vv
-					tmpStrategy = append(tmpStrategy, vv)
-				}
-			}
-			//for _,v := range tmpStrategyMap {
-			//	tmpStrategy = append(tmpStrategy, v)
-			//}
-			query.Tpl[len(query.Tpl)-1].Strategy = tmpStrategy
-		}
-	}else{
-		if isGrp {
-			_,grpObj := db.GetSingleGrp(tplObj.GrpId, "")
-			fileName = grpObj.Name
-		}else{
-			endpointObj := m.EndpointTable{Id:tplObj.EndpointId}
-			db.GetEndpoint(&endpointObj)
-			fileName = endpointObj.Guid
-			if endpointObj.AddressAgent != "" {
-				endpointExpr = endpointObj.AddressAgent
-			}else {
-				endpointExpr = endpointObj.Address
-			}
-			guidExpr = endpointObj.Guid
-		}
-	}
-	if isGrp {
-		_,endpointObjs := db.GetEndpointsByGrp(tplObj.GrpId)
-		if len(endpointObjs) > 0 {
-			for _, v := range endpointObjs {
-				if v.AddressAgent != "" {
-					endpointExpr += fmt.Sprintf("%s|", v.AddressAgent)
-				}else {
-					endpointExpr += fmt.Sprintf("%s|", v.Address)
-				}
-				guidExpr += fmt.Sprintf("%s|", v.Guid)
-			}
-			endpointExpr = endpointExpr[:len(endpointExpr)-1]
-			guidExpr = guidExpr[:len(guidExpr)-1]
-		}
-	}
-	if fileName == "" {
-		return nil
-	}
-	ruleFileName := "e_" + fileName
-	if isGrp {
-		ruleFileName = "g_" + fileName
-	}
-	err,isExist,cObj := prom.GetConfig(ruleFileName)
-	if err != nil {
-		log.Logger.Error("Get prom get config error", log.Error(err))
-		return err
-	}
-	rfu := []*m.RFRule{}
-	if !isExist {
-		cObj.Name = fileName
-	}
-	if len(query.Tpl) > 0 {
-		if !isGrp && endpointExpr == "" && query.Tpl[len(query.Tpl)-1].ObjType == "endpoint" {
-			endpointObj := m.EndpointTable{Guid:query.Tpl[len(query.Tpl)-1].ObjName}
-			db.GetEndpoint(&endpointObj)
-			if endpointObj.AddressAgent != "" {
-				endpointExpr = endpointObj.AddressAgent
-			}else {
-				endpointExpr = endpointObj.Address
-			}
-			guidExpr = endpointObj.Guid
-		}
-		for _,v := range query.Tpl[len(query.Tpl)-1].Strategy {
-			tmpRfu := m.RFRule{}
-			tmpRfu.Alert = fmt.Sprintf("%s_%d", v.Metric, v.Id)
-			if !strings.Contains(v.Cond, " ") && v.Cond != "" {
-				if strings.Contains(v.Cond, "=") {
-					v.Cond = v.Cond[:2] + " " + v.Cond[2:]
-				}else{
-					v.Cond = v.Cond[:1] + " " + v.Cond[1:]
-				}
-			}
-			//if strings.Contains(v.Expr, " ") {
-			//	v.Expr = strings.Replace(v.Expr, " ", "", -1)
-			//}
-			if strings.Contains(v.Expr, "$address") {
-				if isGrp {
-					v.Expr = strings.Replace(v.Expr, "=\"$address\"", "=~\""+endpointExpr+"\"", -1)
-				}else{
-					v.Expr = strings.Replace(v.Expr, "=\"$address\"", "=\""+endpointExpr+"\"", -1)
-				}
-			}
-			if strings.Contains(v.Expr, "$guid") {
-				if isGrp {
-					v.Expr = strings.Replace(v.Expr, "=\"$guid\"", "=~\""+guidExpr+"\"", -1)
-				}else{
-					v.Expr = strings.Replace(v.Expr, "=\"$guid\"", "=\""+guidExpr+"\"", -1)
-				}
-			}
-			tmpRfu.Expr = fmt.Sprintf("%s %s", v.Expr, v.Cond)
-			tmpRfu.For = v.Last
-			tmpRfu.Labels = make(map[string]string)
-			tmpRfu.Labels["strategy_id"] = fmt.Sprintf("%d", v.Id)
-			tmpRfu.Annotations = m.RFAnnotation{Summary:fmt.Sprintf("{{$labels.instance}}__%s__%s__{{$value}}", v.Priority, v.Metric), Description:v.Content}
-			rfu = append(rfu, &tmpRfu)
-		}
-		if len(query.Tpl[len(query.Tpl)-1].Strategy) == 0 {
-			rfu = []*m.RFRule{}
-		}
-	}
-	cObj.Rules = rfu
-	err = prom.SetConfig(ruleFileName, cObj)
-	if err != nil {
-		log.Logger.Error("Prom set config error", log.Error(err))
-	}
-	return err
-}
-
 func SearchUserRole(c *gin.Context)  {
 	search := c.Query("search")
 	err,roles := db.SearchUserRole(search, "role")
@@ -459,8 +283,8 @@ func SyncConfigHandle(w http.ResponseWriter,r *http.Request)  {
 	response.Message = "Success"
 }
 
-func SyncSdFileHandle(w http.ResponseWriter,r *http.Request)  {
-	log.Logger.Info("start to sync sd config")
+func AcceptPeerSdConfigHandle(w http.ResponseWriter,r *http.Request)  {
+	log.Logger.Info("start to sync sd config from peer request")
 	var response mid.RespJson
 	w.Header().Set("Content-Type", "application/json")
 	defer w.Write([]byte(fmt.Sprintf("{\"Code\":%d,\"Message\":\"%s\",\"Data\":\"%v\"}", response.Code,response.Message,response.Data)))
@@ -478,25 +302,12 @@ func SyncSdFileHandle(w http.ResponseWriter,r *http.Request)  {
 		response.Message = "Guid is empty"
 		return
 	}
-	if param.IsRegister {
-		stepList := prom.AddSdEndpoint(m.ServiceDiscoverFileObj{Guid: param.Guid, Address: param.Ip, Step: param.Step})
-		for _,tmpStep := range stepList {
-			err = prom.SyncSdConfigFile(tmpStep)
-			if err != nil {
-				log.Logger.Error("Sync service discover file error", log.Error(err))
-			}
-		}
-	}else{
-		prom.DeleteSdEndpoint(param.Guid)
-		err = prom.SyncSdConfigFile(param.Step)
-		if err != nil {
-			log.Logger.Error("Sync service discover file error", log.Error(err))
-		}
-	}
+	err = db.SyncSdEndpointNew(param.StepList, "default", true)
 	if err != nil {
+		log.Logger.Error("Handle sd config from peer fail", log.Error(err))
 		response.Code = 500
-		response.Message = "Sync consul fail"
-		response.Data = err
+		response.Message = "Sync peer sd config fail"
+		response.Data = err.Error()
 		return
 	}
 	response.Code = 200
