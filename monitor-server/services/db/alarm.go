@@ -16,77 +16,6 @@ import (
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 )
 
-func ListGrp(query *m.GrpQuery) error {
-	var querySql = `SELECT * FROM grp WHERE 1=1 `
-	var countSql = `SELECT count(1) num FROM grp WHERE 1=1 `
-	var whereSql string
-	qParams := make([]interface{}, 0)
-	if query.Id > 0 {
-		whereSql += ` AND id=? `
-		qParams = append(qParams, query.Id)
-	}
-	if query.Search != "" {
-		if query.Search == "." {
-			query.Search = ""
-		}
-		whereSql += ` AND (name like '%` + query.Search + `%' or description like '%` + query.Search + `%') `
-	}
-	if query.Name != "" {
-		whereSql += ` AND name=? `
-		qParams = append(qParams, query.Name)
-	}
-	querySql += whereSql
-	countSql += whereSql
-	cParams := qParams
-	if query.Size > 0 && query.Page > 0 {
-		querySql += ` ORDER BY create_at DESC limit ?,?`
-		qParams = append(qParams, (query.Page-1)*query.Size)
-		qParams = append(qParams, query.Size)
-	}
-	var result []*m.GrpTable
-	var count []int
-	err := x.SQL(querySql, qParams...).Find(&result)
-	err = x.SQL(countSql, cParams...).Find(&count)
-	if len(result) > 0 {
-		query.Result = result
-		query.ResultNum = count[0]
-	} else {
-		query.Result = []*m.GrpTable{}
-		query.ResultNum = 0
-	}
-	return err
-}
-
-func GetSingleGrp(id int, name string) (error, m.GrpTable) {
-	var result []*m.GrpTable
-	err := x.SQL("SELECT * FROM grp WHERE id=? or name=?", id, name).Find(&result)
-	if err != nil {
-		log.Logger.Error("Get single grp fail", log.Error(err))
-		return err, m.GrpTable{}
-	}
-	if len(result) == 0 {
-		return nil, m.GrpTable{}
-	}
-	return nil, *result[0]
-}
-
-func SearchGrp(search string) (error, []*m.OptionModel) {
-	var result []*m.OptionModel
-	var grps []*m.GrpTable
-	if search == "." {
-		search = ""
-	}
-	search = "%" + search + "%"
-	err := x.SQL(`SELECT * FROM grp WHERE name LIKE ?`, search).Find(&grps)
-	if err != nil {
-		log.Logger.Error("Search grp fail", log.Error(err))
-		return err, result
-	}
-	for _, v := range grps {
-		result = append(result, &m.OptionModel{OptionValue: fmt.Sprintf("%d", v.Id), OptionText: v.Name, Id: v.Id, OptionType: v.EndpointType, OptionTypeName: v.EndpointType})
-	}
-	return nil, result
-}
 
 func ListAlarmEndpoints(query *m.AlarmEndpointQuery) error {
 	var queryParams,countParams []interface{}
@@ -147,156 +76,7 @@ func ListAlarmEndpoints(query *m.AlarmEndpointQuery) error {
 	return err
 }
 
-func UpdateGrp(obj *m.UpdateGrp) error {
-	var actions []*Action
-	for _, grp := range obj.Groups {
-		grp.UpdateUser = obj.OperateUser
-		if obj.Operation == "insert" {
-			grp.CreateUser = obj.OperateUser
-			grp.CreateAt = time.Now()
-			grp.UpdateAt = time.Now()
-		}
-		action := Classify(*grp, obj.Operation, "grp", true)
-		if action.Sql != "" {
-			actions = append(actions, &action)
-		}
-	}
-	err := Transaction(actions)
-	return err
-}
-
-func UpdateEndpointGrp(param m.EndpointGrpParam) (err error,affectGroupIds []int) {
-	var grpEndpoints []*m.GrpEndpointTable
-	x.SQL("select * from grp_endpoint where endpoint_id=?", param.EndpointId).Find(&grpEndpoints)
-	if len(grpEndpoints) > 0 {
-		for _,v := range grpEndpoints {
-			existFlag := false
-			for _,vv := range param.GroupIds {
-				if vv == v.GrpId {
-					existFlag = true
-					break
-				}
-			}
-			if !existFlag {
-				// need delete
-				affectGroupIds = append(affectGroupIds, v.GrpId)
-			}
-		}
-		for _,v := range param.GroupIds {
-			existFlag := false
-			for _,vv := range grpEndpoints {
-				if vv.GrpId == v {
-					existFlag = true
-					break
-				}
-			}
-			if !existFlag {
-				affectGroupIds = append(affectGroupIds, v)
-			}
-		}
-	}else{
-		affectGroupIds = param.GroupIds
-	}
-	var actions []*Action
-	actions = append(actions, &Action{Sql: "delete from grp_endpoint where endpoint_id=?", Param: []interface{}{param.EndpointId}})
-	if len(param.GroupIds) > 0 {
-		insertSql := "INSERT INTO grp_endpoint(endpoint_id,grp_id) VALUES "
-		for _, v := range param.GroupIds {
-			insertSql += fmt.Sprintf("(%d,%d),", param.EndpointId, v)
-		}
-		actions = append(actions, &Action{Sql: insertSql[:len(insertSql)-1]})
-	}
-	return Transaction(actions),affectGroupIds
-}
-
-func UpdateGrpEndpoint(param m.GrpEndpointParamNew) (error, bool) {
-	if param.Operation == "update" {
-		var actions []*Action
-		actions = append(actions, &Action{Sql: "delete from grp_endpoint where grp_id=?", Param: []interface{}{param.Grp}})
-		if len(param.Endpoints) > 0 {
-			insertSql := "INSERT INTO grp_endpoint VALUES "
-			for _, v := range param.Endpoints {
-				insertSql += fmt.Sprintf("(%d,%d),", param.Grp, v)
-			}
-			actions = append(actions, &Action{Sql: insertSql[:len(insertSql)-1]})
-		}
-		updateError := Transaction(actions)
-		if updateError != nil {
-			return updateError,false
-		}else{
-			return updateError,true
-		}
-	}
-	if len(param.Endpoints) == 0 {
-		return nil, false
-	}
-	var ids string
-	for _, v := range param.Endpoints {
-		ids += fmt.Sprintf("%d,", v)
-	}
-	if param.Operation == "add" {
-		var grpEndpoints []*m.GrpEndpointTable
-		err := x.SQL(fmt.Sprintf("SELECT * FROM grp_endpoint WHERE grp_id=%d AND endpoint_id IN (%s)", param.Grp, ids[:len(ids)-1])).Find(&grpEndpoints)
-		if err != nil {
-			return err, false
-		}
-		var needAdd = true
-		var needInsert = false
-		insertSql := "INSERT INTO grp_endpoint VALUES "
-		for _, v := range param.Endpoints {
-			needAdd = true
-			for _, vv := range grpEndpoints {
-				if v == vv.EndpointId {
-					needAdd = false
-					break
-				}
-			}
-			if needAdd {
-				insertSql += fmt.Sprintf("(%d,%d),", param.Grp, v)
-				needInsert = true
-			}
-		}
-		if needInsert {
-			_, err = x.Exec(insertSql[:len(insertSql)-1])
-			return err, needInsert
-		} else {
-			return nil, needInsert
-		}
-	}
-	if param.Operation == "delete" {
-		_, err := x.Exec(fmt.Sprintf("DELETE FROM grp_endpoint WHERE grp_id=%d AND endpoint_id IN (%s)", param.Grp, ids[:len(ids)-1]))
-		return err, true
-	}
-	return fmt.Errorf("operation is not add or delete"), false
-}
-
-func GetStrategy(param m.StrategyTable) (error, m.StrategyTable) {
-	var result []*m.StrategyTable
-	var err error
-	if param.Id > 0 {
-		err = x.SQL("SELECT * FROM strategy WHERE id=?", param.Id).Find(&result)
-	} else if param.Expr != "" {
-		err = x.SQL("SELECT * FROM strategy WHERE expr=? order by id desc", param.Expr).Find(&result)
-	}
-	if err == nil && len(result) == 0 {
-		err = fmt.Errorf("no data")
-	}
-	if err != nil {
-		return err, m.StrategyTable{}
-	}
-	return err, *result[0]
-}
-
-func getGrpParent(grpId int) m.GrpTable {
-	var grp []*m.GrpTable
-	x.SQL("SELECT id,name,parent FROM grp WHERE id=?", grpId).Find(&grp)
-	if len(grp) > 0 {
-		return *grp[0]
-	}
-	return m.GrpTable{}
-}
-
-func GetStrategys(query *m.TplQuery, ignoreLogMonitor bool) error {
+func GetTplStrategy(query *m.TplQuery, ignoreLogMonitor bool) error {
 	var result []*m.TplObj
 	if query.SearchType == "endpoint" {
 		var grps []*m.GrpTable
@@ -483,18 +263,6 @@ func GetStrategys(query *m.TplQuery, ignoreLogMonitor bool) error {
 	return nil
 }
 
-func UpdateStrategy(obj *m.UpdateStrategy) error {
-	var actions []*Action
-	for _, v := range obj.Strategy {
-		action := Classify(*v, obj.Operation, "strategy", true)
-		if action.Sql != "" {
-			actions = append(actions, &action)
-		}
-	}
-	err := Transaction(actions)
-	return err
-}
-
 func GetTpl(tplId, grpId, endpointId int) (error, m.TplTable) {
 	param := make([]interface{}, 0)
 	sql := `SELECT id,grp_id,endpoint_id,notify_url FROM tpl WHERE 1=1 `
@@ -509,8 +277,11 @@ func GetTpl(tplId, grpId, endpointId int) (error, m.TplTable) {
 	}
 	var result []*m.TplTable
 	err := x.SQL(sql, param...).Find(&result)
-	if err != nil || len(result) <= 0 {
-		return err, m.TplTable{}
+	if err != nil {
+		return fmt.Errorf("Query tpl table fail,%s ", err.Error()),m.TplTable{}
+	}
+	if len(result) == 0 {
+		return fmt.Errorf("Can not find any tpl obj with id=%d or grp_id=%d and endpoint_id=%d ", tplId,grpId,endpointId),m.TplTable{}
 	}
 	return nil, *result[0]
 }
@@ -620,7 +391,7 @@ func GetEndpointsByGrp(grpId int) (error, []*m.EndpointTable) {
 	var result []*m.EndpointTable
 	err := x.SQL("SELECT * FROM endpoint WHERE id IN (SELECT endpoint_id FROM grp_endpoint WHERE grp_id=?)", grpId).Find(&result)
 	if err != nil {
-		log.Logger.Error("Get endpoint by grp fail", log.Error(err))
+		err = fmt.Errorf("Get endpoint by grp fail,%s ", err.Error())
 	}
 	return err, result
 }
