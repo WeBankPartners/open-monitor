@@ -87,3 +87,31 @@ func isInBlacklist(metric string) bool {
 	}
 	return illegal
 }
+
+func GetSnmpMetricList(address,target string) (metricList []string,err error) {
+	resp,respErr := http.Get(fmt.Sprintf("http://%s/snmp?target=%s", address, target))
+	if respErr != nil {
+		err = fmt.Errorf("Request snmp metric fail,%s ", respErr.Error())
+		return
+	}
+	body, readErr := ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+	if readErr != nil {
+		err = fmt.Errorf("Read snmp response body fail,%s ", readErr.Error())
+		return
+	}
+	if resp.StatusCode/100 != 2 {
+		err = fmt.Errorf("Get snmp metric response code:%d ", resp.StatusCode)
+		return
+	}
+	for _,v := range strings.Split(string(body), "\n") {
+		if strings.HasPrefix(v, "#") {
+			continue
+		}
+		if strings.Contains(v, ` `) {
+			v = v[:strings.LastIndex(v, ` `)]
+		}
+		metricList = append(metricList, v)
+	}
+	return
+}
