@@ -1,18 +1,17 @@
 package agent
 
 import (
-	"github.com/WeBankPartners/open-monitor/monitor-server/services/other"
-	"github.com/gin-gonic/gin"
-	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
-	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
-	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
-	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
-	"strings"
 	"fmt"
-	"strconv"
-	"time"
-	"github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
+	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
+	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
+	"github.com/gin-gonic/gin"
+	"strconv"
+	"strings"
+	"time"
 )
 
 const hostType  = "host"
@@ -28,7 +27,13 @@ func DeregisterAgent(c *gin.Context)  {
 		mid.ReturnParamEmptyError(c, "guid")
 		return
 	}
-	err := DeregisterJob(guid)
+	endpointObj := m.EndpointTable{Guid: guid}
+	err := db.GetEndpoint(&endpointObj)
+	if err != nil {
+		mid.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	err = DeregisterJob(endpointObj)
 	if err != nil {
 		mid.ReturnHandleError(c, err.Error(), err)
 		return
@@ -36,13 +41,9 @@ func DeregisterAgent(c *gin.Context)  {
 	mid.ReturnSuccess(c)
 }
 
-func DeregisterJob(guid string) error {
+func DeregisterJob(endpointObj m.EndpointTable) error {
 	var err error
-	endpointObj := m.EndpointTable{Guid:guid}
-	db.GetEndpoint(&endpointObj)
-	if endpointObj.Id <= 0 {
-		return fmt.Errorf("Guid:%s can not find in table ", guid)
-	}
+	guid := endpointObj.Guid
 	pingExporterFlag := false
 	if endpointObj.ExportType == "ping" || endpointObj.ExportType == "telnet" || endpointObj.ExportType == "http" {
 		pingExporterFlag = true
@@ -62,20 +63,44 @@ func DeregisterJob(guid string) error {
 			}
 		}
 	}
+	// Remove from group
+	affectTplList,deleteErr := db.DeleteEndpointFromGroup(endpointObj.Id)
+	if deleteErr != nil {
+		return deleteErr
+	}
+	// Update sd file
+	err = db.SyncSdEndpointNew([]int{endpointObj.Step}, endpointObj.Cluster, false)
+	if err != nil {
+		return fmt.Errorf("Sync sd config fail,%s ", err.Error())
+	}
+	// Update rule file
+	tplObj,_ := db.GetTemplateObject(0, 0, endpointObj.Id)
+	if tplObj.Id > 0 {
+		affectTplList = append(affectTplList, tplObj.Id)
+	}
+	for _,tplId := range affectTplList {
+		tmpErr := db.SyncRuleConfigFile(tplId, []string{endpointObj.Guid}, false)
+		if tmpErr != nil {
+			err = fmt.Errorf("Sync rule config fail,%s ", tmpErr.Error())
+			break
+		}
+	}
+	if err != nil {
+		return err
+	}
+
 	log.Logger.Debug("Start delete endpoint", log.String("guid", guid))
 	err = db.DeleteEndpoint(guid)
 	if err != nil {
 		log.Logger.Error("Delete endpoint failed", log.Error(err))
 		return err
 	}
-	prom.DeleteSdEndpoint(guid)
-	err = prom.SyncSdConfigFile(endpointObj.Step)
-	if err != nil {
-		log.Logger.Error("Sync service discover file error", log.Error(err))
-		return err
+	if endpointObj.ExportType == "snmp" {
+		err = db.SnmpEndpointDelete(endpointObj.Guid)
 	}
-	go other.SyncConfig(0, m.SyncSdConfigDto{Guid:guid, Step:endpointObj.Step, IsRegister:false})
-	db.UpdateAgentManagerTable(m.EndpointTable{Guid:guid}, "", "", "", "", false)
+	if endpointObj.AddressAgent != "" {
+		err = db.UpdateAgentManagerTable(m.EndpointTable{Guid: guid}, "", "", "", "", false)
+	}
 	return err
 }
 
@@ -101,7 +126,7 @@ func CustomRegister(c *gin.Context)  {
 		endpointObj.Ip = param.HostIp
 		endpointObj.ExportType = "custom"
 		endpointObj.Step = 10
-		err := db.UpdateEndpoint(&endpointObj)
+		_,err := db.UpdateEndpoint(&endpointObj)
 		if err != nil {
 			mid.ReturnUpdateTableError(c, "endpoint", err)
 		}else{

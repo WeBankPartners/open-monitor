@@ -5,6 +5,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
 	"io/ioutil"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -19,7 +20,7 @@ func SnmpExporterCreate(input models.SnmpExporterTable) error {
 	if input.Modules == "" {
 		input.Modules = "if_mib"
 	}
-	_,err := x.Exec("insert into snmp_exporter(id,address,modules,create_at) value (?,?,?,?)", input.Id, input.Address, input.Modules, time.Now().Format(models.DatetimeFormat))
+	_,err := x.Exec("insert into snmp_exporter(id,scrape_interval,address,modules,create_at) value (?,?,?,?,?)", input.Id, input.ScrapeInterval, input.Address, input.Modules, time.Now().Format(models.DatetimeFormat))
 	return err
 }
 
@@ -27,7 +28,7 @@ func SnmpExporterUpdate(input models.SnmpExporterTable) error {
 	if input.Modules == "" {
 		input.Modules = "if_mib"
 	}
-	_,err := x.Exec("update snmp_exporter set address=?,modules=? where id=?", input.Address, input.Modules, input.Id)
+	_,err := x.Exec("update snmp_exporter set address=?,modules=?,scrape_interval=? where id=?", input.Address, input.Modules, input.ScrapeInterval, input.Id)
 	if err != nil {
 		return fmt.Errorf("Update database fail,%s ", err.Error())
 	}
@@ -62,11 +63,11 @@ func SnmpEndpointAdd(snmpExporter,endpointGuid,target string) error {
 	return err
 }
 
-func SnmpEndpointDelete(snmpExporter,endpointGuid string) error {
-	if !checkSnmpEndpointExists(snmpExporter,endpointGuid) {
+func SnmpEndpointDelete(endpointGuid string) error {
+	if !checkSnmpEndpointExists("",endpointGuid) {
 		return nil
 	}
-	_,err := x.Exec("delete from snmp_endpoint_rel where snmp_exporter=? and target=?", snmpExporter, endpointGuid)
+	_,err := x.Exec("delete from snmp_endpoint_rel where endpoint_guid=?", endpointGuid)
 	if err != nil {
 		return fmt.Errorf("Delete database fail,%s ", err.Error())
 	}
@@ -76,7 +77,11 @@ func SnmpEndpointDelete(snmpExporter,endpointGuid string) error {
 
 func checkSnmpEndpointExists(snmpExporter,endpointGuid string) bool {
 	var snmpEndpointTable []*models.SnmpEndpointRelTable
-	x.SQL("select id from snmp_endpoint_rel where snmp_exporter=? and target=?", snmpExporter, endpointGuid).Find(&snmpEndpointTable)
+	if snmpExporter != "" {
+		x.SQL("select id from snmp_endpoint_rel where snmp_exporter=? and endpoint_guid=?", snmpExporter, endpointGuid).Find(&snmpEndpointTable)
+	}else{
+		x.SQL("select id from snmp_endpoint_rel where endpoint_guid=?", endpointGuid).Find(&snmpEndpointTable)
+	}
 	if len(snmpEndpointTable) > 0 {
 		return true
 	}
@@ -125,8 +130,12 @@ func SyncSnmpPrometheusConfig() error {
 		if len(exporterTargetMap[exporter.Id]) <= 0 {
 			continue
 		}
+		if exporter.ScrapeInterval == 0 {
+			exporter.ScrapeInterval = 10
+		}
 		tmpConfigString := tplString + "\n"
 		tmpConfigString = strings.ReplaceAll(tmpConfigString, "{{snmp_exporter_id}}", exporter.Id)
+		tmpConfigString = strings.ReplaceAll(tmpConfigString, "{{interval}}", strconv.Itoa(exporter.ScrapeInterval))
 		tmpConfigString = strings.ReplaceAll(tmpConfigString, "{{modules}}", exporter.Modules)
 		tmpConfigString = strings.ReplaceAll(tmpConfigString, "{{snmp_exporter_address}}", exporter.Address)
 		tmpConfigString = strings.ReplaceAll(tmpConfigString, "{{snmp_target}}", "'"+strings.Join(exporterTargetMap[exporter.Id], "','")+"'")

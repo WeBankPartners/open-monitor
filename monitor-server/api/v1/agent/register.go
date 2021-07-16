@@ -2,17 +2,15 @@ package agent
 
 import (
 	"fmt"
-	"github.com/WeBankPartners/open-monitor/monitor-server/services/other"
-	"strings"
-	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
-	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
-	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
-	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/alarm"
-	"github.com/gin-gonic/gin"
-	"time"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
+	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
+	"github.com/gin-gonic/gin"
 	"strconv"
+	"strings"
+	"time"
 )
 
 const defaultStep = 10
@@ -77,6 +75,7 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage,guid string,err er
 		param.Type = "java"
 	}
 	var rData returnData
+	var stepList []int
 	switch param.Type {
 		case "host": rData = hostRegister(param)
 		case "mysql": rData = mysqlRegister(param)
@@ -91,10 +90,11 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage,guid string,err er
 		default: rData = otherExporterRegister(param)
 	}
 	guid = rData.endpoint.Guid
+	rData.endpoint.Cluster = param.Cluster
 	if rData.validateMessage != "" || rData.err != nil {
 		return rData.validateMessage,guid,rData.err
 	}
-	err = db.UpdateEndpoint(&rData.endpoint)
+	stepList,err = db.UpdateEndpoint(&rData.endpoint)
 	if err != nil {
 		return validateMessage,guid,err
 	}
@@ -105,19 +105,11 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage,guid string,err er
 				return validateMessage,guid,err
 			}
 		}
-		tmpIp,tmpPort := param.Ip,param.Port
-		if strings.Contains(rData.endpoint.AddressAgent, ":") {
-			tmpIp = rData.endpoint.AddressAgent[:strings.Index(rData.endpoint.AddressAgent, ":")]
-			tmpPort = rData.endpoint.AddressAgent[strings.Index(rData.endpoint.AddressAgent, ":")+1:]
+		err = db.SyncSdEndpointNew(stepList, rData.endpoint.Cluster, false)
+		if err != nil {
+			err = fmt.Errorf("Sync sd config file fail,%s ", err.Error())
+			return
 		}
-		stepList := prom.AddSdEndpoint(m.ServiceDiscoverFileObj{Guid: rData.endpoint.Guid, Address: fmt.Sprintf("%s:%s", tmpIp, tmpPort), Step: rData.endpoint.Step})
-		for _,tmpStep := range stepList {
-			err = prom.SyncSdConfigFile(tmpStep)
-			if err != nil {
-				log.Logger.Error("Sync service discover file error", log.Error(err))
-			}
-		}
-		go other.SyncConfig(0, m.SyncSdConfigDto{Guid:rData.endpoint.Guid, Ip:fmt.Sprintf("%s:%s", tmpIp, tmpPort), Step:rData.endpoint.Step, IsRegister:true})
 	}
 	if rData.addDefaultGroup {
 		if param.DefaultGroupName != "" {
@@ -134,7 +126,8 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage,guid string,err er
 			}
 			_, tplObj := db.GetTpl(0, grpObj.Id, 0)
 			if tplObj.Id > 0 {
-				err := alarm.SaveConfigFile(tplObj.Id, false)
+				//err := alarm.SaveConfigFile(tplObj.Id, false)
+				err := db.SyncRuleConfigFile(tplObj.Id, []string{}, false)
 				if err != nil {
 					log.Logger.Error("Register interface update prometheus config fail", log.String("group", rData.defaultGroup), log.Error(err))
 					return validateMessage,guid,err

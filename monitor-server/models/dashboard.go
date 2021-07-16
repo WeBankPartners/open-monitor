@@ -242,6 +242,7 @@ type EndpointTable struct {
 	CreateAt  string  `json:"create_at"`
 	StopAlarm  int  `json:"stop_alarm"`
 	AddressAgent  string  `json:"address_agent"`
+	Cluster string `json:"cluster"`
 }
 
 type EndpointMetricTable struct {

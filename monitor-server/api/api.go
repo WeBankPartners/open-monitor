@@ -174,6 +174,7 @@ func InitHttpServer(exportAgent bool) {
 			agentApi.POST("/kubernetes/cluster/:operation", agent.UpdateKubernetesCluster)
 			agentApi.POST("/export/kubernetes/cluster/:action", agent.PluginKubernetesCluster)
 			agentApi.POST("/export/kubernetes/pod/:action", agent.PluginKubernetesPod)
+			agentApi.POST("/export/snmp/exporter/:action", config_new.PluginSnmpExporterHandle)
 		}
 		alarmApi := authApi.Group("/alarm")
 		{
@@ -247,12 +248,12 @@ func InitHttpServer(exportAgent bool) {
 }
 
 func InitClusterApi()  {
-	if !m.Config().Cluster.Enable {
+	if !m.Config().Peer.Enable {
 		return
 	}
 	http.Handle("/sync/config", http.HandlerFunc(alarm.SyncConfigHandle))
-	http.Handle("/sync/sd", http.HandlerFunc(alarm.SyncSdFileHandle))
-	http.ListenAndServe(fmt.Sprintf(":%s", m.Config().Cluster.HttpPort), nil)
+	http.Handle("/sync/sd", http.HandlerFunc(alarm.AcceptPeerSdConfigHandle))
+	http.ListenAndServe(fmt.Sprintf(":%s", m.Config().Peer.HttpPort), nil)
 }
 
 func InitDependenceParam()  {
