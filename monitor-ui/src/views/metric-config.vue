@@ -15,7 +15,7 @@
             <span style="font-size: 14px;">
               {{$t('field.type')}}:
             </span>
-            <Select filterable clearable v-model="endpointType" style="width:300px">
+            <Select filterable clearable v-model="endpointType" @on-change="changeEndpointType" style="width:300px">
               <Option v-for="type in endpointTypeOptions" :value="type" :key="type">{{ type }}</Option>
             </Select>
           </div>
@@ -23,7 +23,7 @@
             <span style="font-size: 14px;">
               {{$t('field.metric')}}:
             </span>
-            <Select v-model="metricId" filterable clearable style="width:300px" @on-open-change="getMetricOptions" ref="metricSelect" :disabled="!endpointType">
+            <Select v-model="metricId" filterable clearable style="width:300px" @on-open-change="getMetricOptions" @on-change="changeMetricOptions" ref="metricSelect" :disabled="!endpointType">
               <Button type="success" style="width:92%;background-color:#19be6b" @click="addMetric" size="small">
                 <Icon type="ios-add" size="24"></Icon>
               </Button>
@@ -46,7 +46,7 @@
                   <FormItem :label="$t('tableKey.name')">
                     <Input v-model="metricConfigData.metric"></Input>
                   </FormItem>
-                  <FormItem :label="$t('m_host')">
+                  <FormItem :label="$t('m_endpoint')">
                     <Select filterable clearable v-model="endpoint" @on-open-change="getEndpointForAcquisitionConfiguration" @on-change="collectedMetric = ''">
                       <Option v-for="item in endpointOptions" :value="item.id" :key="item.id">{{ item.guid }}</Option>
                     </Select>
@@ -76,7 +76,7 @@
               </div>
               
               <div style="text-align: right;margin-top:24px">
-                <button class="btn btn-sm btn-cancel-f" @click="preview('acquisitionConfiguration')">{{$t('m_preview')}}</button>
+                <button :disabled="metricConfigData.prom_ql.length === 0" class="btn btn-sm btn-cancel-f" @click="preview('acquisitionConfiguration')">{{$t('m_preview')}}</button>
                 <button class="btn btn-sm btn-confirm-f" @click="saveMetric">{{$t('button.saveConfig')}}</button>
               </div>
             </TabPane>
@@ -86,7 +86,7 @@
                   <span style="font-size: 14px;">
                     {{$t('m_display_group')}}:
                   </span>
-                  <Select filterable clearable v-model="selectdPanel" style="width:300px" @on-open-change="getPanelinfo" @on-change="changePanel">
+                  <Select filterable clearable v-model="selectdPanel" style="width:300px" @on-open-change="getPanelinfo" @on-change="changePanel" ref="selectdPanel">
                     <Button type="success" style="width:92%;background-color:#19be6b" @click="addPanel('panel')" size="small">
                       <Icon type="ios-add" size="24"></Icon>
                     </Button>
@@ -103,54 +103,53 @@
                   <span style="font-size: 14px;">
                     {{$t('m_graph')}}:
                   </span>
-                  <Select v-model="selectdGraph" filterable clearable style="width:300px" @on-open-change="getGraphInfo" @on-change="changeGraph" :disabled="!selectdPanel">
-                    <Button type="success" style="width:92%;background-color:#19be6b" @click="addGraph('graph')" size="small">
+                  <Select v-model="selectdGraph" filterable clearable style="width:300px" @on-open-change="getGraphInfo" @on-change="changeGraph" :disabled="!selectdPanel" ref="selectdGraph">
+                    <Button type="success" style="width:92%;background-color:#19be6b" @click="addGraph()" size="small">
                       <Icon type="ios-add" size="24"></Icon>
                     </Button>
                     <Option v-for="graph in graphOptions" :value="graph.id" :key="graph.id">{{ graph.title }}<span style="float:right">
                         <Button icon="ios-trash" type="error" @click="deleteGraph(graph)" size="small" style="background-color:#ed4014"></Button>
                       </span>
-                      <span style="float:right">
+                      <!-- <span style="float:right">
                         <Button icon="ios-create-outline" @click="editGraph('graph', graph)" type="primary" size="small" style="background-color:#0080FF"></Button>
-                      </span>
+                      </span> -->
                     </Option>
                   </Select>
                 </div>
-                <Button type="info" style="background-color:#2db7f5" @click="getGraphConfig" size="small">
+                <!-- <Button type="info" style="background-color:#2db7f5" @click="getGraphConfig" size="small">
                   {{$t('m_search')}}
-                </Button>
+                </Button> -->
 
                 <div v-if="showGraphConfig" style="margin-top:48px">
                   <Form :label-width="80" inline>
-                    <FormItem :label="$t('m_graph_name')">
-                      <Input v-model="graphConfig.graphName"></Input>
-                    </FormItem>
-                    <FormItem :label="$t('field.unit')">
-                      <Input v-model="graphConfig.unit"/>
-                    </FormItem>
-                    <FormItem :label="$t('field.metric')">
-                      <Select v-model="graphConfig.metric" filterable clearable style="width:300px" @on-change="changeSelectMetrc">
-                        <Option v-for="(metric, index) in metricOptions" :value="metric.metric" :key="metric.metric + index">{{ metric.metric }}</Option>
-                      </Select>
-                    </FormItem>
+                    <div>
+                      <FormItem :label="$t('m_graph_name')">
+                        <Input v-model="graphConfig.graphName" style="width: 300px"></Input>
+                      </FormItem>
+                      <FormItem :label="$t('field.unit')">
+                        <Input v-model="graphConfig.unit"  style="width: 300px" />
+                      </FormItem>
+                    </div>
+                    <div>
+                      <FormItem :label="$t('field.legend')">
+                        <Select filterable clearable allow-create v-model="graphConfig.legend" @on-create="handleCreateLegend" :placeholder="$t('m_legend_tips')" style="width: 300px">
+                          <Option v-for="item in legendOptions" :value="item.value" :key="item.value">{{ item.label }}</Option>
+                        </Select>
+                      </FormItem>
+                      <FormItem :label="$t('field.metric')">
+                        <Select v-model="graphConfig.metric" filterable multiple clearable style="width:300px">
+                          <Option v-for="(metric, index) in metricOptions" :value="metric.metric" :key="metric.metric + index">{{ metric.metric }}</Option>
+                        </Select>
+                      </FormItem>
+                    </div>
                   </Form>
-                  <div>
-                    <Tag
-                      v-for="(graphMetric, index) in graphConfig.graphContainsMetric"
-                      :key="graphMetric"
-                      type="border"
-                      @on-close="removeGraphMetric(index)"
-                      closable color="primary">
-                      {{graphMetric}}
-                    </Tag>
-                  </div>
                   <div v-if="isRequestChartData" class="metric-section" style="margin-top:24px">
                     <div>
                       <div :id="displayGroupElId" class="echart"></div>
                     </div>
                   </div>
                   <div style="text-align: right;margin-top:24px">
-                    <button class="btn btn-sm btn-cancel-f" @click="preview('displayGroup')">{{$t('m_preview')}}</button>
+                    <button :disabled="graphConfig.metric.length === 0" class="btn btn-sm btn-cancel-f" @click="preview('displayGroup')">{{$t('m_preview')}}</button>
                     <button class="btn btn-sm btn-confirm-f" @click="saveGraphMetric">{{$t('button.saveConfig')}}</button>
                   </div>
                 </div>
@@ -161,9 +160,9 @@
             v-model="showEndpointSelect"
             @on-ok="checkEndpoint"
             @on-cancel="metricConfigData.endpoint = ''"
-            :title="$t('m_select_host')">
+            :title="$t('m_select_endpoint')">
             <Form :label-width="80">
-              <FormItem :label="$t('m_host')">
+              <FormItem :label="$t('m_endpoint')">
                 <Select filterable clearable v-model="metricConfigData.endpoint" style="width:300px">
                   <Option v-for="item in endpointOptions" :value="item.guid" :key="item.guid">{{ item.guid }}</Option>
                 </Select>
@@ -182,20 +181,20 @@
               </FormItem>
             </Form>
           </Modal>
-          <Modal
-            v-model="isShowWarning"
-            :title="$t('delConfirm.title')"
-            @on-ok="ok"
-            @on-cancel="cancel">
-            <div class="modal-body" style="padding:30px">
-              <div style="text-align:center">
-                <p style="color: red">{{$t('delConfirm.tip')}}</p>
-              </div>
-            </div>
-          </Modal>
         </div>
       </div>
     </div>
+    <Modal
+      v-model="isShowWarning"
+      :title="$t('delConfirm.title')"
+      @on-ok="ok"
+      @on-cancel="cancel">
+      <div class="modal-body" style="padding:30px">
+        <div style="text-align:center">
+          <p style="color: red">{{$t('delConfirm.tip')}}</p>
+        </div>
+      </div>
+    </Modal>
   </div>
 </template>
 <script>
@@ -256,16 +255,22 @@ export default {
       },
 
       isAddMetric: false,
+      legendOptions: [
+        {label: '指标名称+对象+标签', value: '$custom_all'},
+        {label: '指标名称+标签', value: '$custom_metric'},
+        {label: '指标名称', value: '$metric'}
+      ],
 
       selectdPanel: '',
       panelOptions: [],
       selectdGraph: '',
       graphOptions: [],
       graphConfig: {
+        id: '',
         graphName: '',
         unit: '',
-        metric: '',
-        graphContainsMetric: []
+        metric: [],
+        legend: ''
       },
       showGraphConfig: false, // 指标配置区
 
@@ -282,6 +287,20 @@ export default {
     this.getEndpointType()
   },
   methods: {
+    handleCreateLegend (val) {
+      const exist = this.legendOptions.find(el => el.value === val)
+      if (!exist) {
+        this.legendOptions.push({label: val, value: val})
+      }
+    },
+    changeEndpointType () {
+      this.metricId = ''
+    },
+    changeMetricOptions (val) {
+      if (!val) {
+        this.showConfigTab = false
+      }
+    },
     ok () {
       this[this.deleteConfirm.method](this.deleteConfirm.id)
     },
@@ -303,13 +322,14 @@ export default {
     changePanel () {
       this.showGraphConfig =false
       this.selectdGraph = ''
-      this.changeGraph()
+      this.changeGraph('')
     },
-    changeGraph () {
-      this.showGraphConfig =false
-      this.graphConfig.graphName = ''
-      this.graphConfig.unit = ''
-      this.graphConfig.graphContainsMetric = []
+    changeGraph (val) {
+      if (val) {
+        this.editGraph(val)
+      } else {
+        this.showGraphConfig = false
+      }
     },
     addMetric () {
       this.$refs.metricSelect.visible = false
@@ -328,6 +348,7 @@ export default {
       this.titleManagement.isAdd = true
       this.titleManagement.type = type
       this.titleManagement.title = ''
+      this.$refs.selectdPanel.visible = false
     },
     editPanel (type, item) {
       this.titleManagement.show = true
@@ -349,18 +370,30 @@ export default {
         this.$root.$eventBus.$emit('hideConfirmModal')
       })
     },
-    addGraph (type) {
-      this.titleManagement.show = true
-      this.titleManagement.isAdd = true
-      this.titleManagement.type = type
-      this.titleManagement.title = ''
+    addGraph () {
+      this.selectdGraph = ''
+      this.$nextTick( () => {
+        this.graphConfig.id = ''
+        this.graphConfig.graphName = ''
+        this.graphConfig.unit = ''
+        this.graphConfig.metric = []
+        this.graphConfig.legend = ''
+        this.$refs.selectdGraph.visible = false
+        this.showGraphConfig = true
+      })
     },
-    editGraph (type, item) {
-      this.titleManagement.show = true
-      this.titleManagement.isAdd = false
-      this.titleManagement.type = type
-      this.titleManagement.title = item.title
-      this.titleManagement.id = item.id
+    editGraph (id) {
+      this.showGraphConfig = true
+      const graph = this.graphOptions.find(el => el.id === id)
+      this.graphConfig.id = id
+      this.graphConfig.graphName = graph.title
+      this.graphConfig.unit = graph.unit
+      this.graphConfig.metric = graph.metric.split('^').filter(item => item !== '')
+      this.graphConfig.legend = graph.legend
+      const exist = this.legendOptions.find(el => el.value === graph.legend)
+      if (!exist) {
+        this.legendOptions.push({label: graph.legend, value: graph.legend})
+      }
     },
     deleteGraph (item) {
       this.deleteConfirm.id = item.id
@@ -392,25 +425,6 @@ export default {
           })
         }
         this.selectdPanel = ''
-      } else {
-        if (this.titleManagement.isAdd) {
-          let params = {
-            title: this.titleManagement.title,
-            group_id: this.selectdPanel
-          }
-          this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.getGraph, [params], () => {
-            this.$Message.success(this.$t('tips.success'))
-          })
-        } else {
-          let params = {
-            id: this.titleManagement.id,
-            title: this.titleManagement.title
-          }
-          this.$root.$httpRequestEntrance.httpRequestEntrance('PUT', this.$root.apiCenter.getGraph, [params], () => {
-            this.$Message.success(this.$t('tips.success'))
-          })
-        }
-        this.selectMetrc = ''
       }
     },
     savePanel () {
@@ -425,41 +439,37 @@ export default {
         this.$Message.success(this.$t('tips.success'))
       })
     },
-    removeGraphMetric (index) {
-      this.graphConfig.graphContainsMetric.splice(index, 1)
-    },
-    changeSelectMetrc (val) {
-      console.log(val,
-      this.graphConfig.graphContainsMetric)
-      const find = this.graphConfig.graphContainsMetric.find(item => item === val)
-      console.log(find)
-      if (!find) {
-        this.graphConfig.graphContainsMetric.push(val)
-      }
-    },
     saveGraphMetric () {
-      const params = {
-        metric: this.graphConfig.graphContainsMetric.join('^'),
+      let params = {
+        metric: this.graphConfig.metric.join('^'),
         title: this.graphConfig.graphName,
         unit: this.graphConfig.unit,
+        legend: this.graphConfig.legend,
         group_id: this.selectdPanel,
         id: this.selectdGraph
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('PUT', this.$root.apiCenter.getGraph, [params], () => {
-        this.$Message.success(this.$t('tips.success'))
-      })
-    },
-    getGraphConfig () {
-      this.showGraphConfig = true
-      this.graphConfig.graphName = ''
-      this.graphConfig.unit = ''
-      const graph = this.graphOptions.find(item => item.id === this.selectdGraph)
-      if (graph) {
-        this.graphConfig.graphName = graph.title
-        this.graphConfig.unit = graph.unit
-        this.graphConfig.graphContainsMetric = graph.metric.split('^').filter(item => item !== '')
+      if (this.selectdGraph) {
+        this.$root.$httpRequestEntrance.httpRequestEntrance('PUT', this.$root.apiCenter.getGraph, [params], () => {
+          this.$Message.success(this.$t('tips.success'))
+        })
+      } else {
+        delete params.id
+        this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.getGraph, [params], () => {
+          this.$Message.success(this.$t('tips.success'))
+        })
       }
     },
+    // getGraphConfig () {
+    //   this.showGraphConfig = true
+    //   this.graphConfig.graphName = ''
+    //   this.graphConfig.unit = ''
+    //   const graph = this.graphOptions.find(item => item.id === this.selectdGraph)
+    //   if (graph) {
+    //     this.graphConfig.graphName = graph.title
+    //     this.graphConfig.unit = graph.unit
+    //     this.graphConfig.graphContainsMetric = graph.metric.split('^').filter(item => item !== '')
+    //   }
+    // },
     getGraphInfo () {
       const params = {
         groupId: this.selectdPanel
@@ -490,14 +500,14 @@ export default {
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.metricConfigView.api, params, responseData => {
         const chartConfig = {eye: false,clear:true, zoomCallback: true}
         readyToDraw(this,responseData, 1, chartConfig, this.acquisitionConfigurationElId)
-      })
+      }, {isNeedloading: false})
     },
     async getDispalyChartData () {
       generateUuid().then((elId)=>{
         this.displayGroupElId =  `id_${elId}`
       })
       let params = []
-      this.graphConfig.graphContainsMetric.forEach(metric => {
+      this.graphConfig.metric.forEach(metric => {
         params.push({
           endpoint: this.metricConfigData.endpoint,
           prom_ql: '',
@@ -509,7 +519,7 @@ export default {
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.metricConfigView.api, params, responseData => {
         const chartConfig = {eye: false,clear:true, zoomCallback: true}
         readyToDraw(this,responseData, 1, chartConfig, this.displayGroupElId)
-      })
+      }, {isNeedloading: false})
     },
     checkEndpoint () {
       if (this.previewPosition === 'acquisitionConfiguration') {
@@ -544,6 +554,14 @@ export default {
       this.metricConfigData.metric_type = this.endpointType
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.saveMetric, [this.metricConfigData], () => {
         this.$Message.success(this.$t('tips.success'))
+        this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.metricManagement, {endpointType: this.endpointType}, (res) => {
+          this.metricOptions = res
+          const newMetric = res.find(el => el.metric === this.metricConfigData.metric)
+          if (newMetric) {
+            this.metricId = newMetric.id
+            this.configMetric()
+          }
+        })
       })
     },
     getEndpointType () {
@@ -573,6 +591,9 @@ export default {
       this.metricConfigData = {
         ...findMetricConfig
       }
+      this.selectdPanel = ''
+      this.selectdGraph = ''
+      this.changeGraph('')
       this.showConfigTab = true
     },
     getCollectedMetric () {
@@ -609,12 +630,12 @@ export default {
   }
 
   .metric-section {
-    width: 1000px;
+    width: 1100px;
     // margin: 0 auto;
   }
   .echart {
     height: 400px;
-    width: 1000px;
+    width: 1100px;
     background: #f5f7f9;
   }
   .echart-no-data-tip {

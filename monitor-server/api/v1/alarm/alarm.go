@@ -102,11 +102,12 @@ func AcceptAlertMsg(c *gin.Context)  {
 					log.Logger.Warn("Alert's strategy id is null")
 					continue
 				}
-				_, strategyObj := db.GetStrategy(m.StrategyTable{Id: tmpAlarm.StrategyId})
-				if strategyObj.Id <= 0 {
-					log.Logger.Warn("Alert's strategy id can not found", log.Int("id", tmpAlarm.StrategyId))
+				strategyList,getStrategyErr := db.GetStrategyList(tmpAlarm.StrategyId,0)
+				if getStrategyErr != nil || len(strategyList) == 0 {
+					log.Logger.Warn("Alert's strategy fetch error", log.Int("strategy_id", tmpAlarm.StrategyId), log.Error(getStrategyErr))
 					continue
 				}
+				strategyObj := strategyList[0]
 				tmpAlarm.SMetric = strategyObj.Metric
 				tmpAlarm.SExpr = strategyObj.Expr
 				tmpAlarm.SCond = strategyObj.Cond
@@ -144,10 +145,9 @@ func AcceptAlertMsg(c *gin.Context)  {
 					continue
 				}
 				if strings.Contains(tmpAlarm.SMetric, "ping_alive") || strings.Contains(tmpAlarm.SMetric, "telnet_alive") || strings.Contains(tmpAlarm.SMetric, "http_alive") {
-					if len(m.Config().Cluster.ServerList) > 0 {
-						if m.Config().Cluster.ServerList[0] == tmpEndpointIp {
-							continue
-						}
+					if tmpEndpointIp == m.Config().Peer.InstanceHostIp {
+						log.Logger.Info("Ignore check alive alarm,is self instance host", log.String("ip", tmpEndpointIp))
+						continue
 					}
 					if tmpValue != 0 && tmpValue != 1 && tmpValue != 2 {
 						continue

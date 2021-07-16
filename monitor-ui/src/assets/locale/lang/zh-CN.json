@@ -52,7 +52,11 @@
     "role": "角色",
     "guid": "GUID",
     "displayName": "显示名",
-    "type": "类型"
+    "type": "类型",
+    "proxy_exporter": "Exporter",
+    "id": "ID",
+    "address": "IP地址",
+    "legend": "展示标签"
   },
   "m_field_businessMonitor": "业务监控",
   "title": {
@@ -148,7 +152,8 @@
     "systemName": "系统名称",
     "logPath": "日志路径",
     "regular": "正则表达式",
-    "tags": "标签"
+    "tags": "标签",
+    "endpoint_type": "对象类型"
   },
   "tips": {
     "required": " 必填",
@@ -238,11 +243,14 @@
   "m_new_graph": "新增图表",
   "m_collected_data": "采集数据",
   "m_preview": "预览",
-  "m_host": "主机",
-  "m_select_host": "选择主机",
+  "m_endpoint": "对象",
+  "m_select_endpoint": "选择对象",
   "m_acquisition_configuration": "采集配置",
   "m_display_group": "展示分组",
   "m_graph": "图表",
   "m_graph_name": "图表名称",
-  "m_search": "查询"
+  "m_search": "查询",
+  "m_field_exporter": "采集器",
+  "m_proxy_exporter": "代理采集器",
+  "m_legend_tips": "选择一种 或 手动配置，格式为$tag1,$tag2,..."
 }
