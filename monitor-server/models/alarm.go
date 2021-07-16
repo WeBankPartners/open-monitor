@@ -392,6 +392,7 @@ type SyncSdConfigDto struct {
 	Port  string  `json:"port"`
 	Tags  []string  `json:"tags"`
 	Step  int  `json:"step"`
+	StepList  []int  `json:"step_list"`
 }
 
 type EndpointHttpTable struct {
