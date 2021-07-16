@@ -223,6 +223,7 @@ export default {
       ],
       paramsType: null, // For get thresholdList
       endpointID: null,
+      endpointType: '',
       endpointOptions: [],
 
       totalPageConfig: [],
@@ -294,12 +295,13 @@ export default {
   watch: {
     endpointID: function (id) {
       this.paramsType = null
-      if (this.type === 'endpoint' && id) {
-        const selectedEndpoint = this.endpointOptions.find((endpoint) => {
+      const selectedEndpoint = this.endpointOptions.find((endpoint) => {
           return endpoint.id === id
-        })
+      })
+      if (this.type === 'endpoint' && id) {
         this.paramsType = selectedEndpoint.option_value.split(':')[1]
       }
+      this.endpointType = selectedEndpoint.type
     }
   },
   mounted () {
@@ -467,11 +469,8 @@ export default {
       return Object.assign(modelParams, this.modelConfig.addRow)
     },
     add () {
-      var params = {}
-      if (this.type === 'endpoint') {
-        params = {type: this.paramsType}
-      } 
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.metricList.api, params, (responseData) => {
+      var params = {endpointType: this.endpointType}
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.getMetricByEndpointType, params, (responseData) => {
         this.modelConfig.metricList = responseData
       })
       this.modelConfig.isAdd = true

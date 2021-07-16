@@ -52,7 +52,11 @@
     "role": "Role",
     "guid": "GUID",
     "displayName": "Display Name",
-    "type": "Type"
+    "type": "Type",
+    "proxy_exporter": "Exporter",
+    "id": "ID",
+    "address": "Address",
+    "legend": "Display Tag"
   },
   "m_field_businessMonitor": "Business Monitor",
   "title": {
@@ -148,7 +152,8 @@
     "systemName": "System Name",
     "logPath": "Log Path",
     "regular": "Regular",
-    "tags": "Tags"
+    "tags": "Tags",
+    "endpoint_type": "Endpoint Type"
   },
   "tips": {
     "required": " Required!",
@@ -238,12 +243,15 @@
   "m_new_graph": "Add New Graph",
   "m_collected_data": "Collected Data",
   "m_preview": "Preview",
-  "m_host": "Host",
-  "m_select_host": "Select Host",
+  "m_endpoint": "Endpoint",
+  "m_select_endpoint": "Select Endpoint",
   "m_acquisition_configuration": "Acquisition Configuration",
   "m_display_configuration": "Display Configuration",
   "m_display_group": "Display Group",
   "m_graph": "Graph",
   "m_graph_name": "Graph Name",
-  "m_search": "Search"
+  "m_search": "Search",
+  "m_field_exporter": "Exporter",
+  "m_proxy_exporter": "Proxy Exporter",
+  "m_legend_tips": "Select or input as $tag1,$tag2,..."
 }

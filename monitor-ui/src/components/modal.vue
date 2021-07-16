@@ -104,6 +104,21 @@
                     >{{ item.label }}</Option
                   >
                 </Select>
+                <Select
+                  v-if="item.type === 'select' && isHide(item.hide)"
+                  :disabled="modelConfig.isAdd ? false : item.disabled"
+                  filterable
+                  clearable
+                  class="col-md-7 v-selectss"
+                  v-model="modelConfig.addRow[item.value]"
+                >
+                  <Option
+                    v-for="item in modelConfig.v_select_configs[item.option]"
+                    :value="item.value"
+                    :key="item.value"
+                    >{{ item.label }}</Option
+                  >
+                </Select>
                
                   <slot v-if="item.type === 'slot' && isHide(item.hide) && !item.ishide" :name="item.name"></slot>
                   <label class="required-tip  isRequired_s" v-if="isRequired_s(item.v_validate) && isHide(item.hide)">*</label>
@@ -126,7 +141,7 @@
                 </Poptip>
 
                 <label v-show="veeErrors.has(item.value) && isHide(item.hide)" class="col-md-7 help is-danger">{{$t(item.label)}} {{veeErrors.first(item.value)}}</label>
-                <label v-if="(item.type === 'select' || item.type === 'textarea') && item.isError" class="col-md-7 help is-danger">{{$t(item.label)}} {{$t('tips.required')}}</label>
+                <label v-if="(item.type === 'select' || item.type === 'multiSelect' || item.type === 'textarea') && item.isError" class="col-md-7 help is-danger">{{$t(item.label)}} {{$t('tips.required')}}</label>
               </div>
             </form>
           </div>
@@ -231,15 +246,24 @@ import {interceptParams} from '@/assets/js/utils'
             /* ****** 配置里面的select ***** */
             //配置规则为：在配置type:selcet时，如需校验则添加v_validate: 'required:true',isError: false==>控制错误提示label显示
             //如果无需校验，则不添加
-            // if(this.modelConfig.config[i].type === 'select' && this.modelConfig.config[i].v_validate) {
-            //   let obj = this.modelConfig.config[i]
-            //   if(!this.modelConfig.v_select_configs[obj.value]){
-            //     this.modelConfig.config[i].isError = true
-            //     flag = false
-            //   }else{
-            //     this.modelConfig.config[i].isError = false
-            //   }
-            // }
+            if(this.modelConfig.config[i].type === 'select' && this.modelConfig.config[i].v_validate) {
+              let obj = this.modelConfig.config[i]
+              if(!this.modelConfig.addRow[obj.value]){
+                this.modelConfig.config[i].isError = true
+                flag = false
+              }else{
+                this.modelConfig.config[i].isError = false
+              }
+            }
+            if(this.modelConfig.config[i].type === 'multiSelect' && this.modelConfig.config[i].v_validate) {
+              let obj = this.modelConfig.config[i]
+              if(this.modelConfig.addRow[obj.value] && this.modelConfig.addRow[obj.value].length === 0){
+                this.modelConfig.config[i].isError = true
+                flag = false
+              }else{
+                this.modelConfig.config[i].isError = false
+              }
+            }
             /* ******  slot里面的select  ****** */
             //配置规则为：在配置type:slot 时，添加 v_validate:[],数组里面存放需要校验的select的配置信息
             //value:绑定值,isError:错误标签显示绑定值，type:select  ===> 如果以后再校验其他类型，再增加判断逻辑
