@@ -70,7 +70,7 @@ func UpdateGrp(c *gin.Context)  {
 		query := m.GrpQuery{Name:param.Name}
 		db.ListGrp(&query)
 		if len(query.Result) > 0 {
-			if query.Result[0].Id == param.Id && query.Result[0].Description == param.Description {
+			if query.Result[0].Id == param.Id && query.Result[0].Description == param.Description && query.Result[0].EndpointType == param.EndpointType {
 				mid.ReturnSuccess(c)
 				return
 			}
@@ -99,7 +99,8 @@ func DeleteGrp(c *gin.Context)  {
 	_,tplObj := db.GetTpl(0, id, 0)
 	if tplObj.Id > 0 {
 		db.DeleteStrategyByGrp(0, tplObj.Id)
-		err := SaveConfigFile(tplObj.Id, false)
+		//err := SaveConfigFile(tplObj.Id, false)
+		err := db.SyncRuleConfigFile(tplObj.Id, []string{}, false)
 		if err != nil {
 			mid.ReturnHandleError(c, "update prometheus config file fail", err)
 			return
@@ -158,7 +159,8 @@ func EditGrpEndpoint(c *gin.Context)  {
 					return
 				}
 			}
-			err = SaveConfigFile(tplObj.Id, false)
+			//err = SaveConfigFile(tplObj.Id, false)
+			err = db.SyncRuleConfigFile(tplObj.Id, []string{}, false)
 			if err != nil {
 				mid.ReturnHandleError(c, "save configuration file failed", err)
 				return
@@ -195,7 +197,8 @@ func EditEndpointGrp(c *gin.Context)  {
 					return
 				}
 			}
-			err = SaveConfigFile(tplObj.Id, false)
+			//err = SaveConfigFile(tplObj.Id, false)
+			err = db.SyncRuleConfigFile(tplObj.Id, []string{}, false)
 			if err != nil {
 				mid.ReturnHandleError(c, "save configuration file failed", err)
 				return

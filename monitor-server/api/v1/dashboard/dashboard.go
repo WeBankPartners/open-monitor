@@ -1,22 +1,21 @@
 package dashboard
 
 import (
-	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/alarm"
-	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"encoding/json"
+	"fmt"
 	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
-	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
+	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	ds "github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
+	"io/ioutil"
+	"os"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
-	"fmt"
-	"encoding/json"
-	"regexp"
-	"io/ioutil"
-	"os"
-	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 )
 
 // @Summary 页面通用接口 : 视图
@@ -463,7 +462,7 @@ func GetChart(c *gin.Context)  {
 	// custom or from mysql
 	var querys []m.QueryMonitorData
 	step := 10
-	var firstEndpoint,unit string
+	var firstEndpoint,unit,clusterAddress string
 	var compareSubTime int64
 	var compareSecondLegend string
 	if paramConfig[0].Id > 0 {
@@ -473,6 +472,7 @@ func GetChart(c *gin.Context)  {
 		firstEndpointObj := m.EndpointTable{Guid:paramConfig[0].Endpoint}
 		db.GetEndpoint(&firstEndpointObj)
 		step = firstEndpointObj.Step
+		clusterAddress = db.GetClusterAddress(firstEndpointObj.Cluster)
 		// one endpoint -> metrics
 		for _,tmpParamConfig := range paramConfig {
 			err, charts := db.GetCharts(0, tmpParamConfig.Id, 0)
@@ -520,7 +520,7 @@ func GetChart(c *gin.Context)  {
 				if len(paramConfig) > 1 && strings.Contains(chart.Legend, "metric") {
 					tmpLegend = "$custom"
 				}
-				querys = append(querys, m.QueryMonitorData{Start: query.Start, End: query.End, PromQ: tmpPromQl, Legend: tmpLegend, Metric: []string{v}, Endpoint: []string{tmpParamConfig.Endpoint}, CompareLegend:compareLegend, SameEndpoint:sameEndpoint, Step:step})
+				querys = append(querys, m.QueryMonitorData{Start: query.Start, End: query.End, PromQ: tmpPromQl, Legend: tmpLegend, Metric: []string{v}, Endpoint: []string{tmpParamConfig.Endpoint}, CompareLegend:compareLegend, SameEndpoint:sameEndpoint, Step:step, Cluster: clusterAddress})
 				if paramConfig[0].CompareSecondStart != "" && paramConfig[0].CompareSecondEnd != "" {
 					st,sErr := time.Parse(m.DateFormatWithZone, fmt.Sprintf("%s 00:00:00 "+m.DefaultLocalTimeZone, paramConfig[0].CompareSecondStart))
 					et,eErr := time.Parse(m.DateFormatWithZone, fmt.Sprintf("%s 23:59:59 "+m.DefaultLocalTimeZone, paramConfig[0].CompareSecondEnd))
@@ -537,7 +537,7 @@ func GetChart(c *gin.Context)  {
 						}
 						compareSubTime = stTimestamp-query.Start
 						compareSecondLegend = fmt.Sprintf("%s_%s", paramConfig[0].CompareSecondStart, paramConfig[0].CompareSecondEnd)
-						querys = append(querys, m.QueryMonitorData{Start: stTimestamp, End: etTimestamp, PromQ: tmpPromQl, Legend: tmpLegend, Metric: []string{v}, Endpoint: []string{tmpParamConfig.Endpoint}, CompareLegend:compareSecondLegend, SameEndpoint:sameEndpoint, Step:step})
+						querys = append(querys, m.QueryMonitorData{Start: stTimestamp, End: etTimestamp, PromQ: tmpPromQl, Legend: tmpLegend, Metric: []string{v}, Endpoint: []string{tmpParamConfig.Endpoint}, CompareLegend:compareSecondLegend, SameEndpoint:sameEndpoint, Step:step, Cluster: clusterAddress})
 					}
 				}
 			}
@@ -583,6 +583,7 @@ func GetChart(c *gin.Context)  {
 			endpointObj := m.EndpointTable{Guid:v.Endpoint}
 			if v.Endpoint != "" {
 				db.GetEndpoint(&endpointObj)
+				clusterAddress = db.GetClusterAddress(endpointObj.Cluster)
 			}
 			if strings.Contains(v.PromQl, "$address") {
 				if v.Endpoint == "" {
@@ -617,7 +618,7 @@ func GetChart(c *gin.Context)  {
 					v.PromQl = strings.Replace(v.PromQl, string(vv), "=~\".*\"", -1)
 				}
 			}
-			querys = append(querys, m.QueryMonitorData{Start:query.Start, End:query.End, PromQ:v.PromQl, Legend:customLegend, Metric:[]string{v.Metric}, Endpoint:[]string{v.Endpoint}, Step:step})
+			querys = append(querys, m.QueryMonitorData{Start:query.Start, End:query.End, PromQ:v.PromQl, Legend:customLegend, Metric:[]string{v.Metric}, Endpoint:[]string{v.Endpoint}, Step:step, Cluster: clusterAddress})
 		}
 	}
 	if len(querys) == 0 {
@@ -861,32 +862,6 @@ func UpdatePromMetric(c *gin.Context) {
 	}else{
 		mid.ReturnValidateError(c, err.Error())
 	}
-}
-
-func DeletePromMetric(c *gin.Context) {
-	metric := c.Query("metric")
-	if metric == "" {
-		mid.ReturnParamEmptyError(c, "metric")
-		return
-	}
-	tplIds,err := db.DeletePromMetric(metric)
-	if err != nil {
-		mid.ReturnUpdateTableError(c, "prom_metric", err)
-		return
-	}
-	if len(tplIds) > 0 {
-		for _,tplId := range tplIds {
-			err = alarm.SaveConfigFile(tplId, false)
-			if err != nil {
-				break
-			}
-		}
-		if err != nil {
-			mid.ReturnHandleError(c, "Save rule config file fail,"+err.Error(), err)
-			return
-		}
-	}
-	mid.ReturnSuccess(c)
 }
 
 func GetEndpointMetric(c *gin.Context)  {

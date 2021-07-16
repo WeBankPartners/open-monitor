@@ -57,6 +57,8 @@ type endpointRequestObj struct {
 	Method  string  `json:"method"`
 	Pod  string  `json:"pod"`
 	KubernetesCluster  string  `json:"kubernetes_cluster"`
+	ProxyExporter string `json:"proxy_exporter"`
+	Cluster string `json:"cluster"`
 }
 
 func ExportAgentNew(c *gin.Context)  {
@@ -70,11 +72,6 @@ func ExportAgentNew(c *gin.Context)  {
 	resultData := resultOutput{}
 	defer func() {
 		log.Logger.Info("Plugin result", log.JsonObj("result", resultData))
-		//if strings.Contains(resultMessage, "validate") {
-		//	c.JSON(http.StatusBadRequest, resultObj{ResultCode:resultCode, ResultMessage:resultMessage})
-		//}else{
-		//	c.JSON(http.StatusOK, resultObj{ResultCode:resultCode, ResultMessage:resultMessage, Results:resultData})
-		//}
 		c.JSON(http.StatusOK, resultObj{ResultCode:resultCode, ResultMessage:resultMessage, Results:resultData})
 	}()
 	data,_ := ioutil.ReadAll(c.Request.Body)
@@ -113,9 +110,11 @@ func ExportAgentNew(c *gin.Context)  {
 			}
 		}
 		if tmpAgentType == "host" {
-			param = m.RegisterParamNew{Type: tmpAgentType, Ip: v.HostIp, Port: "9100", AddDefaultGroup:true, AgentManager:false, FetchMetric:true, DefaultGroupName:v.Group, Step:tmpStep}
+			param = m.RegisterParamNew{Type: tmpAgentType, Ip: v.HostIp, Cluster: v.Cluster, Port: "9100", AddDefaultGroup:true, AgentManager:false, FetchMetric:true, DefaultGroupName:v.Group, Step:tmpStep}
+		} else if tmpAgentType == "snmp" {
+			param = m.RegisterParamNew{Type: tmpAgentType, Name: v.Instance, Ip: v.InstanceIp, Cluster: v.Cluster, AddDefaultGroup:true, AgentManager:false, FetchMetric:false, DefaultGroupName:v.Group, Step:tmpStep, ProxyExporter: v.ProxyExporter}
 		} else {
-			param = m.RegisterParamNew{Type: tmpAgentType, Ip: v.InstanceIp, Port: v.Port, Name: v.Instance, User: v.User, Password: v.Password, AgentManager:true, AddDefaultGroup:true, FetchMetric:true, DefaultGroupName:v.Group, Step:tmpStep}
+			param = m.RegisterParamNew{Type: tmpAgentType, Ip: v.InstanceIp, Cluster: v.Cluster, Port: v.Port, Name: v.Instance, User: v.User, Password: v.Password, AgentManager:true, AddDefaultGroup:true, FetchMetric:true, DefaultGroupName:v.Group, Step:tmpStep}
 			param.Url = v.Url
 			param.Method = v.Method
 		}
@@ -131,13 +130,15 @@ func ExportAgentNew(c *gin.Context)  {
 			var endpointObj m.EndpointTable
 			if tmpAgentType == "host" {
 				endpointObj = m.EndpointTable{Ip: v.HostIp, ExportType: tmpAgentType}
+			} else if tmpAgentType == "snmp" {
+				endpointObj = m.EndpointTable{Ip: v.InstanceIp, ExportType: tmpAgentType}
 			} else {
 				endpointObj = m.EndpointTable{Ip: v.InstanceIp, ExportType: tmpAgentType, Name: v.Instance}
 			}
 			db.GetEndpoint(&endpointObj)
 			if endpointObj.Id > 0 {
 				log.Logger.Debug("Export deregister endpoint", log.Int("id", endpointObj.Id), log.String("guid", endpointObj.Guid))
-				inputErr = DeregisterJob(endpointObj.Guid)
+				inputErr = DeregisterJob(endpointObj)
 				endpointGuid = endpointObj.Guid
 			}
 		}
