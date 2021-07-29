@@ -1,13 +1,21 @@
 const path = require('path')
-
+const baseUrl = ''
 module.exports = {
-	// devServer: {
-	// 	proxy: {
-  //     "monitor": {
-  //       target: ""
-  //     },
-  //   }
-	// },
+  devServer: {
+    // hot: true,
+    // inline: true,
+		host: 'localhost',
+    open: true,
+    port: 3000,
+    proxy: {
+      '/': {
+        target: baseUrl,
+				pathRewrite: {
+						'^/': ''  // rewrite path
+				}
+      }
+    }
+  },
 	assetsDir: process.env.PLUGIN === 'plugin'? '':'monitor',
 	outputDir: process.env.PLUGIN === 'plugin'? 'plugin':'dist',
 	productionSourceMap: process.env.PLUGIN !== 'plugin',
