@@ -108,6 +108,14 @@ const router = new Router({
                 import("@/views/monitor-config/resource-level")
             },
             {
+              path: "clusterManagement",
+              name: "clusterManagement",
+              title: "集群配置",
+              meta: {},
+              component: () =>
+                import("@/views/monitor-config/cluster-management")
+            },
+            {
               path: "exporter",
               name: "exporter",
               title: "exporter",
