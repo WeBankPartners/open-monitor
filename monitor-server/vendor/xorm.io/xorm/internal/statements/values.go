@@ -8,26 +8,34 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"fmt"
+	"math/big"
 	"reflect"
 	"time"
 
-	"xorm.io/xorm/convert"
 	"xorm.io/xorm/dialects"
+	"xorm.io/xorm/internal/convert"
 	"xorm.io/xorm/internal/json"
 	"xorm.io/xorm/schemas"
 )
 
 var (
 	nullFloatType = reflect.TypeOf(sql.NullFloat64{})
+	bigFloatType  = reflect.TypeOf(big.Float{})
 )
 
-// Value2Interface convert a field value of a struct to interface for puting into database
+// Value2Interface convert a field value of a struct to interface for putting into database
 func (statement *Statement) Value2Interface(col *schemas.Column, fieldValue reflect.Value) (interface{}, error) {
 	if fieldValue.CanAddr() {
 		if fieldConvert, ok := fieldValue.Addr().Interface().(convert.Conversion); ok {
 			data, err := fieldConvert.ToDB()
 			if err != nil {
 				return nil, err
+			}
+			if data == nil {
+				if col.Nullable {
+					return nil, nil
+				}
+				data = []byte{}
 			}
 			if col.SQLType.IsBlob() {
 				return data, nil
@@ -43,11 +51,14 @@ func (statement *Statement) Value2Interface(col *schemas.Column, fieldValue refl
 			if err != nil {
 				return nil, err
 			}
+			if data == nil {
+				if col.Nullable {
+					return nil, nil
+				}
+				data = []byte{}
+			}
 			if col.SQLType.IsBlob() {
 				return data, nil
-			}
-			if nil == data {
-				return nil, nil
 			}
 			return string(data), nil
 		}
@@ -84,6 +95,9 @@ func (statement *Statement) Value2Interface(col *schemas.Column, fieldValue refl
 				return nil, nil
 			}
 			return t.Float64, nil
+		} else if fieldType.ConvertibleTo(bigFloatType) {
+			t := fieldValue.Convert(bigFloatType).Interface().(big.Float)
+			return t.String(), nil
 		}
 
 		if !col.IsJSON {
