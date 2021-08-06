@@ -19,21 +19,21 @@ const longStep = 60
 var agentManagerServer string
 
 type returnData struct {
-	endpoint  m.EndpointTable
-	metricList  []string
-	defaultGroup  string
-	validateMessage  string
-	storeMetric bool
-	fetchMetric bool
+	endpoint        m.EndpointTable
+	metricList      []string
+	defaultGroup    string
+	validateMessage string
+	storeMetric     bool
+	fetchMetric     bool
 	addDefaultGroup bool
-	agentManager bool
-	err  error
+	agentManager    bool
+	err             error
 }
 
-func RegisterAgentNew(c *gin.Context)  {
+func RegisterAgentNew(c *gin.Context) {
 	var param m.RegisterParamNew
-	if err := c.ShouldBindJSON(&param); err==nil {
-		validateMessage,_,err := AgentRegister(param)
+	if err := c.ShouldBindJSON(&param); err == nil {
+		validateMessage, _, err := AgentRegister(param)
 		if validateMessage != "" {
 			mid.ReturnValidateError(c, validateMessage)
 			return
@@ -44,12 +44,12 @@ func RegisterAgentNew(c *gin.Context)  {
 			return
 		}
 		mid.ReturnSuccess(c)
-	}else{
+	} else {
 		mid.ReturnValidateError(c, err.Error())
 	}
 }
 
-func InitAgentManager()  {
+func InitAgentManager() {
 	for _, v := range m.Config().Dependence {
 		if v.Name == "agent_manager" {
 			agentManagerServer = v.Server
@@ -57,7 +57,7 @@ func InitAgentManager()  {
 		}
 	}
 	if agentManagerServer != "" {
-		param,err := db.GetAgentManager("")
+		param, err := db.GetAgentManager("")
 		if err != nil {
 			log.Logger.Error("Get agent manager table fail", log.Error(err))
 			return
@@ -67,9 +67,9 @@ func InitAgentManager()  {
 	}
 }
 
-func AgentRegister(param m.RegisterParamNew) (validateMessage,guid string,err error) {
+func AgentRegister(param m.RegisterParamNew) (validateMessage, guid string, err error) {
 	if agentManagerServer == "" && param.AgentManager {
-		return validateMessage,guid,fmt.Errorf("agent manager server not found,can not enable agent manager ")
+		return validateMessage, guid, fmt.Errorf("agent manager server not found,can not enable agent manager ")
 	}
 	if param.Type == "tomcat" {
 		param.Type = "java"
@@ -77,32 +77,43 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage,guid string,err er
 	var rData returnData
 	var stepList []int
 	switch param.Type {
-		case "host": rData = hostRegister(param)
-		case "mysql": rData = mysqlRegister(param)
-		case "redis": rData = redisRegister(param)
-		case "java": rData = javaRegister(param)
-		case "nginx": rData = nginxRegister(param)
-		case "ping": rData = pingRegister(param)
-		case "telnet": rData = telnetRegister(param)
-		case "http": rData = httpRegister(param)
-		case "windows": rData = windowsRegister(param)
-		case "snmp": rData = snmpExporterRegister(param)
-		default: rData = otherExporterRegister(param)
+	case "host":
+		rData = hostRegister(param)
+	case "mysql":
+		rData = mysqlRegister(param)
+	case "redis":
+		rData = redisRegister(param)
+	case "java":
+		rData = javaRegister(param)
+	case "nginx":
+		rData = nginxRegister(param)
+	case "ping":
+		rData = pingRegister(param)
+	case "telnet":
+		rData = telnetRegister(param)
+	case "http":
+		rData = httpRegister(param)
+	case "windows":
+		rData = windowsRegister(param)
+	case "snmp":
+		rData = snmpExporterRegister(param)
+	default:
+		rData = otherExporterRegister(param)
 	}
 	guid = rData.endpoint.Guid
 	rData.endpoint.Cluster = param.Cluster
 	if rData.validateMessage != "" || rData.err != nil {
-		return rData.validateMessage,guid,rData.err
+		return rData.validateMessage, guid, rData.err
 	}
-	stepList,err = db.UpdateEndpoint(&rData.endpoint)
+	stepList, err = db.UpdateEndpoint(&rData.endpoint)
 	if err != nil {
-		return validateMessage,guid,err
+		return validateMessage, guid, err
 	}
 	if rData.fetchMetric {
 		if rData.storeMetric {
 			err = db.RegisterEndpointMetric(rData.endpoint.Id, rData.metricList)
 			if err != nil {
-				return validateMessage,guid,err
+				return validateMessage, guid, err
 			}
 		}
 		err = db.SyncSdEndpointNew(stepList, rData.endpoint.Cluster, false)
@@ -118,11 +129,11 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage,guid string,err er
 		if rData.defaultGroup != "" {
 			err, grpObj := db.GetSingleGrp(0, rData.defaultGroup)
 			if err != nil || grpObj.Id <= 0 {
-				return validateMessage,guid, fmt.Errorf("Add group %s fail,id:%d err:%v ", rData.defaultGroup, grpObj.Id, err)
+				return validateMessage, guid, fmt.Errorf("Add group %s fail,id:%d err:%v ", rData.defaultGroup, grpObj.Id, err)
 			}
 			err, _ = db.UpdateGrpEndpoint(m.GrpEndpointParamNew{Grp: grpObj.Id, Endpoints: []int{rData.endpoint.Id}, Operation: "add"})
 			if err != nil {
-				return validateMessage,guid,err
+				return validateMessage, guid, err
 			}
 			_, tplObj := db.GetTpl(0, grpObj.Id, 0)
 			if tplObj.Id > 0 {
@@ -130,14 +141,14 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage,guid string,err er
 				err := db.SyncRuleConfigFile(tplObj.Id, []string{}, false)
 				if err != nil {
 					log.Logger.Error("Register interface update prometheus config fail", log.String("group", rData.defaultGroup), log.Error(err))
-					return validateMessage,guid,err
+					return validateMessage, guid, err
 				}
 			}
 		}
 	}
 	if rData.agentManager {
-		var binPath,configFile string
-		for _,v := range m.Config().Agent {
+		var binPath, configFile string
+		for _, v := range m.Config().Agent {
 			if v.AgentType == param.Type {
 				binPath = v.AgentBin
 				configFile = v.ConfigFile
@@ -148,7 +159,7 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage,guid string,err er
 			log.Logger.Error("Update agent manager table fail", log.Error(err))
 		}
 	}
-	return validateMessage,guid,err
+	return validateMessage, guid, err
 }
 
 func hostRegister(param m.RegisterParamNew) returnData {
@@ -158,9 +169,9 @@ func hostRegister(param m.RegisterParamNew) returnData {
 		result.validateMessage = "Host ip and port can not empty"
 		return result
 	}
-	var hostname,sysname,release,exportVersion string
+	var hostname, sysname, release, exportVersion string
 	startTime := time.Now().Unix()
-	err,strList := prom.GetEndpointData(param.Ip, param.Port, []string{"node"}, []string{})
+	err, strList := db.QueryExporterMetric(m.QueryPrometheusMetricParam{Ip: param.Ip, Port: param.Port, Cluster: param.Cluster, Prefix: []string{"node"}, Keyword: []string{}})
 	if err != nil {
 		result.err = err
 		return result
@@ -169,12 +180,12 @@ func hostRegister(param m.RegisterParamNew) returnData {
 		result.err = fmt.Errorf("Can't get anything from http://%s:%s/metrics ", param.Ip, param.Port)
 		return result
 	}
-	result.endpoint.Step,err = calcStep(startTime, param.Step)
+	result.endpoint.Step, err = calcStep(startTime, param.Step)
 	if err != nil {
 		result.err = err
 		return result
 	}
-	for _,v := range strList {
+	for _, v := range strList {
 		if strings.Contains(v, "node_uname_info{") {
 			if strings.Contains(v, "nodename") {
 				hostname = strings.Split(strings.Split(v, "nodename=\"")[1], "\"")[0]
@@ -187,7 +198,7 @@ func hostRegister(param m.RegisterParamNew) returnData {
 			}
 		}
 		if strings.Contains(v, "node_exporter_build_info{") {
-			exportVersion = strings.Split(strings.Split(v, ",version=\"")[1], "\"")[0]
+			exportVersion = strings.Split(strings.Split(v, "version=\"")[1], "\"")[0]
 		}
 	}
 	result.metricList = strList
@@ -215,13 +226,13 @@ func mysqlRegister(param m.RegisterParamNew) returnData {
 		result.validateMessage = "Mysql instance name and ip and post can not empty "
 		return result
 	}
-	var binPath,address,configFile string
+	var binPath, address, configFile string
 	if param.AgentManager {
 		if param.User == "" || param.Password == "" {
 			result.validateMessage = "Mysql user and password can not empty"
 			return result
 		}
-		for _,v := range m.Config().Agent {
+		for _, v := range m.Config().Agent {
 			if v.AgentType == param.Type {
 				binPath = v.AgentBin
 				configFile = v.ConfigFile
@@ -232,21 +243,21 @@ func mysqlRegister(param m.RegisterParamNew) returnData {
 			result.err = fmt.Errorf("Mysql agnet bin can not found in config ")
 			return result
 		}
-		address,err = prom.DeployAgent(param.Type,param.Name,binPath,param.Ip,param.Port,param.User,param.Password,agentManagerServer,configFile)
+		address, err = prom.DeployAgent(param.Type, param.Name, binPath, param.Ip, param.Port, param.User, param.Password, agentManagerServer, configFile)
 		if err != nil {
 			result.err = err
 			return result
 		}
 	}
-	var mysqlVersion,exportVersion string
+	var mysqlVersion, exportVersion string
 	if param.FetchMetric {
-		tmpIp,tmpPort := param.Ip,param.Port
+		tmpIp, tmpPort := param.Ip, param.Port
 		if strings.Contains(address, ":") {
 			tmpIp = address[:strings.Index(address, ":")]
 			tmpPort = address[strings.Index(address, ":")+1:]
 		}
 		startTime := time.Now().Unix()
-		err, strList := prom.GetEndpointData(tmpIp, tmpPort, []string{"mysql", "mysqld"}, []string{})
+		err, strList := db.QueryExporterMetric(m.QueryPrometheusMetricParam{Ip: tmpIp, Port: tmpPort, Cluster: param.Cluster, Prefix: []string{"mysql", "mysqld"}, Keyword: []string{}})
 		if err != nil {
 			result.err = err
 			return result
@@ -255,12 +266,12 @@ func mysqlRegister(param m.RegisterParamNew) returnData {
 			result.err = fmt.Errorf("Connect to instance get metric error, please check param ")
 			return result
 		}
-		result.endpoint.Step,err = calcStep(startTime, param.Step)
+		result.endpoint.Step, err = calcStep(startTime, param.Step)
 		if err != nil {
 			result.err = err
 			return result
 		}
-		for _,v := range strList {
+		for _, v := range strList {
 			if strings.HasPrefix(v, "mysql_version_info{") {
 				mysqlVersion = strings.Split(strings.Split(v, ",version=\"")[1], "\"")[0]
 			}
@@ -293,13 +304,13 @@ func redisRegister(param m.RegisterParamNew) returnData {
 		result.validateMessage = "Redis instance name and ip and post can not empty "
 		return result
 	}
-	var binPath,address string
+	var binPath, address string
 	if param.AgentManager {
 		if param.Password == "" {
 			result.validateMessage = "Redis password can not empty"
 			return result
 		}
-		for _,v := range m.Config().Agent {
+		for _, v := range m.Config().Agent {
 			if v.AgentType == param.Type {
 				binPath = v.AgentBin
 				break
@@ -309,21 +320,21 @@ func redisRegister(param m.RegisterParamNew) returnData {
 			result.err = fmt.Errorf("Redis agnet bin can not found in config ")
 			return result
 		}
-		address,err = prom.DeployAgent(param.Type,param.Name,binPath,param.Ip,param.Port,param.User,param.Password,agentManagerServer,"")
+		address, err = prom.DeployAgent(param.Type, param.Name, binPath, param.Ip, param.Port, param.User, param.Password, agentManagerServer, "")
 		if err != nil {
 			result.err = err
 			return result
 		}
 	}
-	var redisVersion,exportVersion string
+	var redisVersion, exportVersion string
 	if param.FetchMetric {
-		tmpIp,tmpPort := param.Ip,param.Port
+		tmpIp, tmpPort := param.Ip, param.Port
 		if strings.Contains(address, ":") {
 			tmpIp = address[:strings.Index(address, ":")]
 			tmpPort = address[strings.Index(address, ":")+1:]
 		}
 		startTime := time.Now().Unix()
-		err, strList := prom.GetEndpointData(tmpIp, tmpPort, []string{"redis"}, []string{"redis_version", ",version"})
+		err, strList := db.QueryExporterMetric(m.QueryPrometheusMetricParam{Ip: tmpIp, Port: tmpPort, Cluster: param.Cluster, Prefix: []string{"redis"}, Keyword: []string{"redis_version", ",version"}})
 		if err != nil {
 			result.err = err
 			return result
@@ -332,12 +343,12 @@ func redisRegister(param m.RegisterParamNew) returnData {
 			result.err = fmt.Errorf("Connect to instance get metric error, please check param ")
 			return result
 		}
-		result.endpoint.Step,err = calcStep(startTime, param.Step)
+		result.endpoint.Step, err = calcStep(startTime, param.Step)
 		if err != nil {
 			result.err = err
 			return result
 		}
-		for _,v := range strList {
+		for _, v := range strList {
 			if strings.Contains(v, "redis_version") {
 				redisVersion = strings.Split(strings.Split(v, ",redis_version=\"")[1], "\"")[0]
 			}
@@ -370,9 +381,9 @@ func javaRegister(param m.RegisterParamNew) returnData {
 		result.validateMessage = "Java instance name and ip and post can not empty "
 		return result
 	}
-	var binPath,address,configFile string
+	var binPath, address, configFile string
 	if param.AgentManager {
-		for _,v := range m.Config().Agent {
+		for _, v := range m.Config().Agent {
 			if v.AgentType == param.Type {
 				binPath = v.AgentBin
 				configFile = v.ConfigFile
@@ -383,21 +394,21 @@ func javaRegister(param m.RegisterParamNew) returnData {
 			result.err = fmt.Errorf("Java agnet bin can not found in config ")
 			return result
 		}
-		address,err = prom.DeployAgent(param.Type,param.Name,binPath,param.Ip,param.Port,param.User,param.Password,agentManagerServer,configFile)
+		address, err = prom.DeployAgent(param.Type, param.Name, binPath, param.Ip, param.Port, param.User, param.Password, agentManagerServer, configFile)
 		if err != nil {
 			result.err = err
 			return result
 		}
 	}
-	var jvmVersion,exportVersion string
+	var jvmVersion, exportVersion string
 	if param.FetchMetric {
-		tmpIp,tmpPort := param.Ip,param.Port
+		tmpIp, tmpPort := param.Ip, param.Port
 		if strings.Contains(address, ":") {
 			tmpIp = address[:strings.Index(address, ":")]
 			tmpPort = address[strings.Index(address, ":")+1:]
 		}
 		startTime := time.Now().Unix()
-		err, strList := prom.GetEndpointData(tmpIp, tmpPort, []string{"catalina", "jvm", "java", "tomcat", "process", "com"}, []string{"version"})
+		err, strList := db.QueryExporterMetric(m.QueryPrometheusMetricParam{Ip: tmpIp, Port: tmpPort, Cluster: param.Cluster, Prefix: []string{"catalina", "jvm", "java", "tomcat", "process", "com"}, Keyword: []string{"version"}})
 		if err != nil {
 			result.err = err
 			return result
@@ -406,12 +417,12 @@ func javaRegister(param m.RegisterParamNew) returnData {
 			result.err = fmt.Errorf("Connect to instance get metric error, please check param ")
 			return result
 		}
-		result.endpoint.Step,err = calcStep(startTime, param.Step)
+		result.endpoint.Step, err = calcStep(startTime, param.Step)
 		if err != nil {
 			result.err = err
 			return result
 		}
-		for _,v := range strList {
+		for _, v := range strList {
 			if strings.Contains(v, "jvm_info") {
 				jvmVersion = strings.Split(strings.Split(v, "version=\"")[1], "\"")[0]
 			}
@@ -444,9 +455,9 @@ func nginxRegister(param m.RegisterParamNew) returnData {
 		result.validateMessage = "Nginx instance name and ip and post can not empty "
 		return result
 	}
-	var binPath,address string
+	var binPath, address string
 	if param.AgentManager {
-		for _,v := range m.Config().Agent {
+		for _, v := range m.Config().Agent {
 			if v.AgentType == param.Type {
 				binPath = v.AgentBin
 				break
@@ -456,25 +467,25 @@ func nginxRegister(param m.RegisterParamNew) returnData {
 			result.err = fmt.Errorf("Nginx agnet bin can not found in config ")
 			return result
 		}
-		address,err = prom.DeployAgent(param.Type,param.Name,binPath,param.Ip,param.Port,param.User,param.Password,agentManagerServer,"")
+		address, err = prom.DeployAgent(param.Type, param.Name, binPath, param.Ip, param.Port, param.User, param.Password, agentManagerServer, "")
 		if err != nil {
 			result.err = err
 			return result
 		}
 	}
 	if param.FetchMetric {
-		tmpIp,tmpPort := param.Ip,param.Port
+		tmpIp, tmpPort := param.Ip, param.Port
 		if strings.Contains(address, ":") {
 			tmpIp = address[:strings.Index(address, ":")]
 			tmpPort = address[strings.Index(address, ":")+1:]
 		}
 		startTime := time.Now().Unix()
-		err, strList := prom.GetEndpointData(tmpIp, tmpPort, []string{}, []string{})
+		err, strList := db.QueryExporterMetric(m.QueryPrometheusMetricParam{Ip: tmpIp, Port: tmpPort, Cluster: param.Cluster, Prefix: []string{}, Keyword: []string{}})
 		if err != nil {
 			result.err = err
 			return result
 		}
-		result.endpoint.Step,err = calcStep(startTime, param.Step)
+		result.endpoint.Step, err = calcStep(startTime, param.Step)
 		if err != nil {
 			result.err = err
 			return result
@@ -505,7 +516,7 @@ func pingRegister(param m.RegisterParamNew) returnData {
 	result.endpoint.Guid = fmt.Sprintf("%s_%s_%s", param.Name, param.Ip, param.Type)
 	result.endpoint.Name = param.Name
 	result.endpoint.Ip = param.Ip
-	tmpPort,_ := strconv.Atoi(param.Port)
+	tmpPort, _ := strconv.Atoi(param.Port)
 	if tmpPort <= 0 {
 		tmpPort = 9191
 	}
@@ -545,8 +556,8 @@ func telnetRegister(param m.RegisterParamNew) returnData {
 	result.agentManager = false
 	// store to db -> endpoint_telnet
 	var eto []*m.EndpointTelnetObj
-	eto = append(eto, &m.EndpointTelnetObj{Port:param.Port, Note:""})
-	err := db.UpdateEndpointTelnet(m.UpdateEndpointTelnetParam{Guid:result.endpoint.Guid, Config:eto})
+	eto = append(eto, &m.EndpointTelnetObj{Port: param.Port, Note: ""})
+	err := db.UpdateEndpointTelnet(m.UpdateEndpointTelnetParam{Guid: result.endpoint.Guid, Config: eto})
 	if err != nil {
 		result.err = err
 	}
@@ -574,7 +585,7 @@ func httpRegister(param m.RegisterParamNew) returnData {
 	result.addDefaultGroup = true
 	result.agentManager = false
 	var eho []*m.EndpointHttpTable
-	eho = append(eho, &m.EndpointHttpTable{EndpointGuid:result.endpoint.Guid, Url:param.Url, Method:param.Method})
+	eho = append(eho, &m.EndpointHttpTable{EndpointGuid: result.endpoint.Guid, Url: param.Url, Method: param.Method})
 	err := db.UpdateEndpointHttp(eho)
 	if err != nil {
 		result.err = err
@@ -589,10 +600,10 @@ func windowsRegister(param m.RegisterParamNew) returnData {
 		result.validateMessage = "Windows exporter ip and port can not empty"
 		return result
 	}
-	var hostname,sysname,release string
+	var hostname, sysname, release string
 	if param.FetchMetric {
 		startTime := time.Now().Unix()
-		err,strList := prom.GetEndpointData(param.Ip, param.Port, []string{"wmi"}, []string{})
+		err, strList := db.QueryExporterMetric(m.QueryPrometheusMetricParam{Ip: param.Ip, Port: param.Port, Cluster: param.Cluster, Prefix: []string{"wmi"}, Keyword: []string{}})
 		if err != nil {
 			result.err = err
 			return result
@@ -601,12 +612,12 @@ func windowsRegister(param m.RegisterParamNew) returnData {
 			result.err = fmt.Errorf("Can't get anything from http://%s:%d/metrics ", param.Ip, &param.Port)
 			return result
 		}
-		result.endpoint.Step,err = calcStep(startTime, param.Step)
+		result.endpoint.Step, err = calcStep(startTime, param.Step)
 		if err != nil {
 			result.err = err
 			return result
 		}
-		for _,v := range strList {
+		for _, v := range strList {
 			if strings.Contains(v, "wmi_cs_hostname{") {
 				hostname = strings.Split(strings.Split(v, "hostname=\"")[1], "\"")[0]
 			}
@@ -632,7 +643,7 @@ func windowsRegister(param m.RegisterParamNew) returnData {
 	return result
 }
 
-func snmpExporterRegister(param m.RegisterParamNew) returnData  {
+func snmpExporterRegister(param m.RegisterParamNew) returnData {
 	var result returnData
 	result.endpoint.Step = defaultStep
 	if param.Ip == "" {
@@ -673,7 +684,7 @@ func otherExporterRegister(param m.RegisterParamNew) returnData {
 			return result
 		}
 		startTime := time.Now().Unix()
-		err,strList := prom.GetEndpointData(param.Ip, param.Port, []string{}, []string{})
+		err, strList := db.QueryExporterMetric(m.QueryPrometheusMetricParam{Ip: param.Ip, Port: param.Port, Cluster: param.Cluster, Prefix: []string{}, Keyword: []string{}})
 		if err != nil {
 			result.err = err
 			return result
@@ -682,7 +693,7 @@ func otherExporterRegister(param m.RegisterParamNew) returnData {
 			result.err = fmt.Errorf("Can't get anything from http://%s:%d/metrics ", param.Ip, &param.Port)
 			return result
 		}
-		result.endpoint.Step,err = calcStep(startTime, param.Step)
+		result.endpoint.Step, err = calcStep(startTime, param.Step)
 		if err != nil {
 			result.err = err
 			return result
@@ -699,27 +710,27 @@ func otherExporterRegister(param m.RegisterParamNew) returnData {
 	return result
 }
 
-func calcStep(startTime int64,paramStep int) (step int,err error) {
+func calcStep(startTime int64, paramStep int) (step int, err error) {
 	subTime := int(time.Now().Unix() - startTime)
 	if subTime > defaultStep {
 		if subTime > longStep {
 			err = fmt.Errorf("get exporter data use too many time:%d seconds", subTime)
-		}else{
+		} else {
 			if paramStep > subTime {
 				step = paramStep
-			}else{
+			} else {
 				step = longStep
 			}
 		}
-	}else{
+	} else {
 		if paramStep > 0 {
 			step = paramStep
-		}else{
+		} else {
 			step = defaultStep
 		}
 	}
 	log.Logger.Debug("Calc step", log.Int("step", step))
-	return step,err
+	return step, err
 }
 
 func formatExportAddress(input string) string {

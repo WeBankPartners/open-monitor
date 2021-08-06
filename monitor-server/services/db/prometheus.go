@@ -1,12 +1,16 @@
 package db
 
 import (
+	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
+	"strings"
+	"time"
 )
 
-func InitPrometheusConfig()  {
+func InitPrometheusConfig() {
 	var err error
 	// init sd config
 	go prom.StartConsumeSdConfig()
@@ -27,7 +31,7 @@ func InitPrometheusConfig()  {
 	select {}
 }
 
-func InitPrometheusServiceDiscoverConfig()  {
+func InitPrometheusServiceDiscoverConfig() {
 	var endpointTable []*models.EndpointTable
 	err := x.SQL("select step,cluster from endpoint group by step,cluster order by cluster,step").Find(&endpointTable)
 	if err != nil {
@@ -38,17 +42,17 @@ func InitPrometheusServiceDiscoverConfig()  {
 		return
 	}
 	var clusterStepMap = make(map[string][]int)
-	for _,endpoint := range endpointTable {
-		if _,b := clusterStepMap[endpoint.Cluster]; !b {
+	for _, endpoint := range endpointTable {
+		if _, b := clusterStepMap[endpoint.Cluster]; !b {
 			clusterStepMap[endpoint.Cluster] = []int{endpoint.Step}
-		}else{
+		} else {
 			clusterStepMap[endpoint.Cluster] = append(clusterStepMap[endpoint.Cluster], endpoint.Step)
 		}
 	}
-	for k,v := range clusterStepMap {
+	for k, v := range clusterStepMap {
 		tmpErr := SyncSdEndpointNew(v, k, true)
 		if tmpErr != nil {
-			log.Logger.Error("Init sd config fail", log.String("cluster",k), log.Error(tmpErr))
+			log.Logger.Error("Init sd config fail", log.String("cluster", k), log.Error(tmpErr))
 		}
 	}
 }
@@ -61,10 +65,72 @@ func initPrometheusRuleConfig() {
 		log.Logger.Error("init prometheus rule config fail,query tpl table fail", log.Error(err))
 		return
 	}
-	for _,tpl := range tplList {
+	for _, tpl := range tplList {
 		tmpErr := SyncRuleConfigFile(tpl.Id, []string{}, false)
 		if tmpErr != nil {
 			log.Logger.Error("init prometheus rule config fail", log.Error(tmpErr))
 		}
 	}
+}
+
+func QueryExporterMetric(param models.QueryPrometheusMetricParam) (err error, result []string) {
+	if param.Cluster == "" || param.Cluster == "default" {
+		err, result = prom.GetEndpointData(param)
+		return
+	}
+	clusterAddress := GetClusterAddress(param.Cluster)
+	if clusterAddress == "" {
+		err = fmt.Errorf("Can not find cluster address with cluster:%s ", param.Cluster)
+		return
+	}
+	nowTime := time.Now().Unix()
+	metricList, queryErr := datasource.QueryPromQLMetric(fmt.Sprintf("{instance=\"%s:%s\"}", param.Ip, param.Port), clusterAddress, nowTime-120, nowTime)
+	if queryErr != nil {
+		err = fmt.Errorf("Try to query remote cluster data fail,%s ", queryErr.Error())
+		return
+	}
+	metricMap := make(map[string]int)
+	prefixLen := len(param.Prefix)
+	keywordLen := len(param.Keyword)
+	for _, metric := range metricList {
+		if prefixLen == 0 && keywordLen == 0 {
+			if _, b := metricMap[metric]; !b {
+				result = append(result, metric)
+				metricMap[metric] = 1
+			}
+			continue
+		}
+		if prefixLen > 0 {
+			prefixFlag := false
+			for _, prefix := range param.Prefix {
+				if strings.HasPrefix(metric, prefix) {
+					prefixFlag = true
+					break
+				}
+			}
+			if prefixFlag {
+				if _, b := metricMap[metric]; !b {
+					result = append(result, metric)
+					metricMap[metric] = 1
+				}
+				continue
+			}
+		}
+		if keywordLen > 0 {
+			keywordFlag := false
+			for _, keyword := range param.Keyword {
+				if strings.Contains(metric, keyword) {
+					keywordFlag = true
+					break
+				}
+			}
+			if keywordFlag {
+				if _, b := metricMap[metric]; !b {
+					result = append(result, metric)
+					metricMap[metric] = 1
+				}
+			}
+		}
+	}
+	return
 }
