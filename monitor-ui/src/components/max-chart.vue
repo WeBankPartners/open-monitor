@@ -76,7 +76,7 @@ export default {
       elId: null,
       is_mom_yoy: false,
       chartCondition: {
-        timeTnterval: "-1800",
+        timeTnterval: -1800,
         dateRange: ['',''],
         compareFirstDate: ['', ''],
         compareSecondDate: ['', ''],
@@ -132,24 +132,31 @@ export default {
         this.chartItem = chartItem
       }
       let params = {
-        id: this.chartItem.id,
+          aggregate: this.chartCondition.agg,
+          time_second: Number(this.chartCondition.timeTnterval),
+          start: 0,
+          end: 0,
+          title: '',
+          unit: '',
+          chart_id: this.chartItem.id,
+          data: []
+        }
+      params.data = [{
         endpoint: this.chartItem.endpoint[0],
         metric: this.chartItem.metric[0],
-        time: this.chartCondition.timeTnterval,
-        agg: this.chartCondition.agg,
         compare_first_start: this.chartCondition.compareFirstDate[0],
         compare_first_end: this.chartCondition.compareFirstDate[1],
         compare_second_start: this.chartCondition.compareSecondDate[0],
         compare_second_end: this.chartCondition.compareSecondDate[1]
-      }
+      }]
       // 外部有时间传入(放大)，以传入时间为准
       if (this.chartCondition.dateRange.length !==0) {
         params.start = start ? start : (this.chartCondition.dateRange[0] ===''? 
-          '':Date.parse(this.chartCondition.dateRange[0].replace(/-/g, '/'))/1000 + ''),
+          0 :Date.parse(this.chartCondition.dateRange[0].replace(/-/g, '/'))/1000),
         params.end = end ? end : (this.chartCondition.dateRange[1] ===''? 
-          '':Date.parse(this.chartCondition.dateRange[1].replace(/-/g, '/'))/1000 + '')
+          0 :Date.parse(this.chartCondition.dateRange[1].replace(/-/g, '/'))/1000)
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.metricConfigView.api, [params], responseData => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.metricConfigView.api, params, responseData => {
         const chartConfig = {eye: false,clear:true, zoomCallback: true}
         readyToDraw(this,responseData, 1, chartConfig)
       })

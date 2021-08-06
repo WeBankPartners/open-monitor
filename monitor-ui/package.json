@@ -25,7 +25,7 @@
     "style-resources-loader": "^1.2.1",
     "typescript": "^3.9.2",
     "vee-validate": "^2.0.6",
-    "view-design": "^4.0.2",
+    "view-design": "4.3.2",
     "vue": "^2.6.12",
     "vue-cli-plugin-iview": "^2.0.0",
     "vue-grid-layout": "2.1.13",

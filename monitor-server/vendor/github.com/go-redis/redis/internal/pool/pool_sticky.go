@@ -1,9 +1,6 @@
 package pool
 
-import (
-	"context"
-	"sync"
-)
+import "sync"
 
 type StickyConnPool struct {
 	pool     *ConnPool
@@ -23,7 +20,7 @@ func NewStickyConnPool(pool *ConnPool, reusable bool) *StickyConnPool {
 	}
 }
 
-func (p *StickyConnPool) NewConn(context.Context) (*Conn, error) {
+func (p *StickyConnPool) NewConn() (*Conn, error) {
 	panic("not implemented")
 }
 
@@ -31,7 +28,7 @@ func (p *StickyConnPool) CloseConn(*Conn) error {
 	panic("not implemented")
 }
 
-func (p *StickyConnPool) Get(ctx context.Context) (*Conn, error) {
+func (p *StickyConnPool) Get() (*Conn, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
@@ -42,7 +39,7 @@ func (p *StickyConnPool) Get(ctx context.Context) (*Conn, error) {
 		return p.cn, nil
 	}
 
-	cn, err := p.pool.Get(ctx)
+	cn, err := p.pool.Get()
 	if err != nil {
 		return nil, err
 	}
