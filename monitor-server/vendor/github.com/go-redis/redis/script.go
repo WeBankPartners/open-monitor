@@ -24,7 +24,7 @@ type Script struct {
 
 func NewScript(src string) *Script {
 	h := sha1.New()
-	_, _ = io.WriteString(h, src)
+	io.WriteString(h, src)
 	return &Script{
 		src:  src,
 		hash: hex.EncodeToString(h.Sum(nil)),

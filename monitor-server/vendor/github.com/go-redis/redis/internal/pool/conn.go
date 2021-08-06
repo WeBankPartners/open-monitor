@@ -1,7 +1,6 @@
 package pool
 
 import (
-	"context"
 	"net"
 	"sync/atomic"
 	"time"
@@ -14,13 +13,14 @@ var noDeadline = time.Time{}
 type Conn struct {
 	netConn net.Conn
 
-	rd *proto.Reader
-	wr *proto.Writer
+	rd       *proto.Reader
+	rdLocked bool
+	wr       *proto.Writer
 
 	Inited    bool
 	pooled    bool
 	createdAt time.Time
-	usedAt    int64 // atomic
+	usedAt    atomic.Value
 }
 
 func NewConn(netConn net.Conn) *Conn {
@@ -35,18 +35,35 @@ func NewConn(netConn net.Conn) *Conn {
 }
 
 func (cn *Conn) UsedAt() time.Time {
-	unix := atomic.LoadInt64(&cn.usedAt)
-	return time.Unix(unix, 0)
+	return cn.usedAt.Load().(time.Time)
 }
 
 func (cn *Conn) SetUsedAt(tm time.Time) {
-	atomic.StoreInt64(&cn.usedAt, tm.Unix())
+	cn.usedAt.Store(tm)
 }
 
 func (cn *Conn) SetNetConn(netConn net.Conn) {
 	cn.netConn = netConn
 	cn.rd.Reset(netConn)
 	cn.wr.Reset(netConn)
+}
+
+func (cn *Conn) setReadTimeout(timeout time.Duration) error {
+	now := time.Now()
+	cn.SetUsedAt(now)
+	if timeout > 0 {
+		return cn.netConn.SetReadDeadline(now.Add(timeout))
+	}
+	return cn.netConn.SetReadDeadline(noDeadline)
+}
+
+func (cn *Conn) setWriteTimeout(timeout time.Duration) error {
+	now := time.Now()
+	cn.SetUsedAt(now)
+	if timeout > 0 {
+		return cn.netConn.SetWriteDeadline(now.Add(timeout))
+	}
+	return cn.netConn.SetWriteDeadline(noDeadline)
 }
 
 func (cn *Conn) Write(b []byte) (int, error) {
@@ -57,62 +74,22 @@ func (cn *Conn) RemoteAddr() net.Addr {
 	return cn.netConn.RemoteAddr()
 }
 
-func (cn *Conn) WithReader(ctx context.Context, timeout time.Duration, fn func(rd *proto.Reader) error) error {
-	err := cn.netConn.SetReadDeadline(cn.deadline(ctx, timeout))
-	if err != nil {
-		return err
-	}
+func (cn *Conn) WithReader(timeout time.Duration, fn func(rd *proto.Reader) error) error {
+	_ = cn.setReadTimeout(timeout)
 	return fn(cn.rd)
 }
 
-func (cn *Conn) WithWriter(
-	ctx context.Context, timeout time.Duration, fn func(wr *proto.Writer) error,
-) error {
-	err := cn.netConn.SetWriteDeadline(cn.deadline(ctx, timeout))
-	if err != nil {
-		return err
-	}
+func (cn *Conn) WithWriter(timeout time.Duration, fn func(wr *proto.Writer) error) error {
+	_ = cn.setWriteTimeout(timeout)
 
-	if cn.wr.Buffered() > 0 {
-		cn.wr.Reset(cn.netConn)
+	firstErr := fn(cn.wr)
+	err := cn.wr.Flush()
+	if err != nil && firstErr == nil {
+		firstErr = err
 	}
-
-	err = fn(cn.wr)
-	if err != nil {
-		return err
-	}
-
-	return cn.wr.Flush()
+	return firstErr
 }
 
 func (cn *Conn) Close() error {
 	return cn.netConn.Close()
-}
-
-func (cn *Conn) deadline(ctx context.Context, timeout time.Duration) time.Time {
-	tm := time.Now()
-	cn.SetUsedAt(tm)
-
-	if timeout > 0 {
-		tm = tm.Add(timeout)
-	}
-
-	if ctx != nil {
-		deadline, ok := ctx.Deadline()
-		if ok {
-			if timeout == 0 {
-				return deadline
-			}
-			if deadline.Before(tm) {
-				return deadline
-			}
-			return tm
-		}
-	}
-
-	if timeout > 0 {
-		return tm
-	}
-
-	return noDeadline
 }

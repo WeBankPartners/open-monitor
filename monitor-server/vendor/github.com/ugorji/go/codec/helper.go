@@ -144,7 +144,6 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
-	"unicode/utf8"
 )
 
 const (
@@ -186,19 +185,11 @@ var (
 
 	codecgen bool
 
-	halt panicHdl
+	panicv panicHdl
 
 	refBitset    bitset32
 	isnilBitset  bitset32
 	scalarBitset bitset32
-
-	digitCharBitset      bitset256
-	numCharBitset        bitset256
-	whitespaceCharBitset bitset256
-
-	numCharWithExpBitset64 bitset64
-	numCharNoExpBitset64   bitset64
-	whitespaceCharBitset64 bitset64
 )
 
 var (
@@ -243,27 +234,6 @@ func init() {
 		set(byte(reflect.Complex64)).
 		set(byte(reflect.Complex128)).
 		set(byte(reflect.String))
-
-	var i byte
-	for i = 0; i <= utf8.RuneSelf; i++ {
-		switch i {
-		case ' ', '\t', '\r', '\n':
-			whitespaceCharBitset.set(i)
-			whitespaceCharBitset64 = whitespaceCharBitset64.set(i)
-		case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
-			digitCharBitset.set(i)
-			numCharBitset.set(i)
-			numCharWithExpBitset64 = numCharWithExpBitset64.set(i - 42)
-			numCharNoExpBitset64 = numCharNoExpBitset64.set(i)
-		case '.', '+', '-':
-			numCharBitset.set(i)
-			numCharWithExpBitset64 = numCharWithExpBitset64.set(i - 42)
-			numCharNoExpBitset64 = numCharNoExpBitset64.set(i)
-		case 'e', 'E':
-			numCharBitset.set(i)
-			numCharWithExpBitset64 = numCharWithExpBitset64.set(i - 42)
-		}
-	}
 
 }
 
@@ -382,33 +352,6 @@ const (
 	typeInfoLoadArrayEtypesLen = 12
 	typeInfoLoadArrayBLen      = 8 * 4
 )
-
-// fauxUnion is used to keep track of the primitives decoded.
-//
-// Without it, we would have to decode each primitive and wrap it
-// in an interface{}, causing an allocation.
-// In this model, the primitives are decoded in a "pseudo-atomic" fashion,
-// so we can rest assured that no other decoding happens while these
-// primitives are being decoded.
-//
-// maps and arrays are not handled by this mechanism.
-type fauxUnion struct {
-	// r RawExt // used for RawExt, uint, []byte.
-
-	// primitives below
-	u uint64
-	i int64
-	f float64
-	l []byte
-	s string
-
-	// ---- cpu cache line boundary?
-	t time.Time
-	b bool
-
-	// state
-	v valueType
-}
 
 // typeInfoLoad is a transient object used while loading up a typeInfo.
 type typeInfoLoad struct {
@@ -1148,21 +1091,21 @@ func (x addExtWrapper) UpdateExt(dest interface{}, v interface{}) {
 type bytesExtFailer struct{}
 
 func (bytesExtFailer) WriteExt(v interface{}) []byte {
-	halt.errorstr("BytesExt.WriteExt is not supported")
+	panicv.errorstr("BytesExt.WriteExt is not supported")
 	return nil
 }
 func (bytesExtFailer) ReadExt(v interface{}, bs []byte) {
-	halt.errorstr("BytesExt.ReadExt is not supported")
+	panicv.errorstr("BytesExt.ReadExt is not supported")
 }
 
 type interfaceExtFailer struct{}
 
 func (interfaceExtFailer) ConvertExt(v interface{}) interface{} {
-	halt.errorstr("InterfaceExt.ConvertExt is not supported")
+	panicv.errorstr("InterfaceExt.ConvertExt is not supported")
 	return nil
 }
 func (interfaceExtFailer) UpdateExt(dest interface{}, v interface{}) {
-	halt.errorstr("InterfaceExt.UpdateExt is not supported")
+	panicv.errorstr("InterfaceExt.UpdateExt is not supported")
 }
 
 type bytesExtWrapper struct {
@@ -1755,7 +1698,7 @@ func (x *TypeInfos) get(rtid uintptr, rt reflect.Type) (pti *typeInfo) {
 	rk := rt.Kind()
 
 	if rk == reflect.Ptr { // || (rk == reflect.Interface && rtid != intfTypId) {
-		halt.errorf("invalid kind passed to TypeInfos.get: %v - %v", rk, rt)
+		panicv.errorf("invalid kind passed to TypeInfos.get: %v - %v", rk, rt)
 	}
 
 	// do not hold lock while computing this.
@@ -1864,7 +1807,7 @@ func (x *TypeInfos) rget(rt reflect.Type, rtid uintptr, omitEmpty bool,
 	//       and iteration using equals is faster than maps there
 	flen := rt.NumField()
 	if flen > (1<<maxLevelsEmbedding - 1) {
-		halt.errorf("codec: types with > %v fields are not supported - has %v fields",
+		panicv.errorf("codec: types with > %v fields are not supported - has %v fields",
 			(1<<maxLevelsEmbedding - 1), flen)
 	}
 	// pv.sfis = make([]structFieldInfo, flen)
@@ -1975,7 +1918,7 @@ LOOP:
 		si.flagSet(structFieldInfoFlagReady)
 
 		if len(indexstack) > maxLevelsEmbedding-1 {
-			halt.errorf("codec: only supports up to %v depth of embedding - type has %v depth",
+			panicv.errorf("codec: only supports up to %v depth of embedding - type has %v depth",
 				maxLevelsEmbedding-1, len(indexstack))
 		}
 		si.nis = uint8(len(indexstack)) + 1
@@ -2079,7 +2022,7 @@ func rgetResolveSFI(rt reflect.Type, x []structFieldInfo, pv *typeInfoLoadArray)
 		n++
 	}
 	if n != len(y) {
-		halt.errorf("failure reading struct %v - expecting %d of %d valid fields, got %d",
+		panicv.errorf("failure reading struct %v - expecting %d of %d valid fields, got %d",
 			rt, len(y), len(x), n)
 	}
 
@@ -2286,7 +2229,7 @@ func baseRV(v interface{}) (rv reflect.Value) {
 type checkOverflow struct{}
 
 // func (checkOverflow) Float16(f float64) (overflow bool) {
-// 	halt.errorf("unimplemented")
+// 	panicv.errorf("unimplemented")
 // 	if f < 0 {
 // 		f = -f
 // 	}
@@ -2300,34 +2243,23 @@ func (checkOverflow) Float32(v float64) (overflow bool) {
 	return math.MaxFloat32 < v && v <= math.MaxFloat64
 }
 func (checkOverflow) Uint(v uint64, bitsize uint8) (overflow bool) {
-	// if bitsize == 0 || bitsize >= 64 || v == 0 {
-	// if v == 0 {
-	// 	return
-	// }
-	// if trunc := (v << (64 - bitsize)) >> (64 - bitsize); v != trunc {
-	if v != 0 && v != (v<<(64-bitsize))>>(64-bitsize) {
+	if bitsize == 0 || bitsize >= 64 || v == 0 {
+		return
+	}
+	if trunc := (v << (64 - bitsize)) >> (64 - bitsize); v != trunc {
 		overflow = true
 	}
 	return
 }
 func (checkOverflow) Int(v int64, bitsize uint8) (overflow bool) {
-	// if bitsize == 0 || bitsize >= 64 || v == 0 {
-	// if v == 0 {
-	// 	return
-	// }
-	// if trunc := (v << (64 - bitsize)) >> (64 - bitsize); v != trunc {
-	// 	overflow = true
-	// }
-	if v != 0 && v != (v<<(64-bitsize))>>(64-bitsize) {
+	if bitsize == 0 || bitsize >= 64 || v == 0 {
+		return
+	}
+	if trunc := (v << (64 - bitsize)) >> (64 - bitsize); v != trunc {
 		overflow = true
 	}
 	return
 }
-
-func (checkOverflow) Uint2Int(v uint64, neg bool) (overflow bool) {
-	return (neg && v > 1<<63) || (!neg && v >= 1<<63)
-}
-
 func (checkOverflow) SignedInt(v uint64) (overflow bool) {
 	//e.g. -127 to 128 for int8
 	pos := (v >> 63) == 0
@@ -2346,25 +2278,25 @@ func (checkOverflow) SignedInt(v uint64) (overflow bool) {
 
 func (x checkOverflow) Float32V(v float64) float64 {
 	if x.Float32(v) {
-		halt.errorf("float32 overflow: %v", v)
+		panicv.errorf("float32 overflow: %v", v)
 	}
 	return v
 }
 func (x checkOverflow) UintV(v uint64, bitsize uint8) uint64 {
 	if x.Uint(v, bitsize) {
-		halt.errorf("uint64 overflow: %v", v)
+		panicv.errorf("uint64 overflow: %v", v)
 	}
 	return v
 }
 func (x checkOverflow) IntV(v int64, bitsize uint8) int64 {
 	if x.Int(v, bitsize) {
-		halt.errorf("int64 overflow: %v", v)
+		panicv.errorf("int64 overflow: %v", v)
 	}
 	return v
 }
 func (x checkOverflow) SignedIntV(v uint64) int64 {
 	if x.SignedInt(v) {
-		halt.errorf("uint64 to int64 overflow: %v", v)
+		panicv.errorf("uint64 to int64 overflow: %v", v)
 	}
 	return int64(v)
 }
@@ -2409,31 +2341,6 @@ func noFrac32(f float32) (v bool) {
 		return x<<(9+e) == 0
 	}
 	return
-}
-
-func isWhitespaceChar(v byte) bool {
-	// these are in order of speed below ...
-
-	return v < 33
-	// return v < 33 && whitespaceCharBitset64.isset(v)
-	// return v < 33 && (v == ' ' || v == '\n' || v == '\t' || v == '\r')
-	// return v == ' ' || v == '\n' || v == '\t' || v == '\r'
-	// return whitespaceCharBitset.isset(v)
-}
-
-func isNumberChar(v byte) bool {
-	// these are in order of speed below ...
-
-	return numCharBitset.isset(v)
-	// return v < 64 && numCharNoExpBitset64.isset(v) || v == 'e' || v == 'E'
-	// return v > 42 && v < 102 && numCharWithExpBitset64.isset(v-42)
-}
-
-func isDigitChar(v byte) bool {
-	// these are in order of speed below ...
-
-	return digitCharBitset.isset(v)
-	// return v >= '0' && v <= '9'
 }
 
 // func noFrac(f float64) bool {
@@ -2544,47 +2451,23 @@ func (s *set) remove(v interface{}) (exists bool) {
 // given x > 0 and n > 0 and x is exactly 2^n, then pos/x === pos>>n AND pos%x === pos&(x-1).
 // consequently, pos/32 === pos>>5, pos/16 === pos>>4, pos/8 === pos>>3, pos%8 == pos&7
 
-// type bitset256 [32]byte
+type bitset256 [32]byte
 
-// func (x *bitset256) set(pos byte) {
-// 	x[pos>>3] |= (1 << (pos & 7))
-// }
-// func (x *bitset256) check(pos byte) uint8 {
+func (x *bitset256) check(pos byte) uint8 {
+	return x[pos>>3] & (1 << (pos & 7))
+}
+
+func (x *bitset256) isset(pos byte) bool {
+	return x.check(pos) != 0
+	// return x[pos>>3]&(1<<(pos&7)) != 0
+}
+
+// func (x *bitset256) issetv(pos byte) byte {
 // 	return x[pos>>3] & (1 << (pos & 7))
 // }
-// func (x *bitset256) isset(pos byte) bool {
-// 	return x.check(pos) != 0
-// 	// return x[pos>>3]&(1<<(pos&7)) != 0
-// }
-// func (x *bitset256) isnotset(pos byte) bool {
-// 	return x.check(pos) == 0
-// }
-
-// type bitset256 [4]uint64
-
-// func (x *bitset256) set(pos byte) {
-// 	x[pos>>6] |= (1 << (pos & 63))
-// }
-// func (x *bitset256) check(pos byte) uint64 {
-// 	return x[pos>>6] & (1 << (pos & 63))
-// }
-// func (x *bitset256) isset(pos byte) bool {
-// 	return x.check(pos) != 0
-// }
-// func (x *bitset256) isnotset(pos byte) bool {
-// 	return x.check(pos) == 0
-// }
-
-type bitset256 [256]bool
 
 func (x *bitset256) set(pos byte) {
-	x[pos] = true
-}
-func (x *bitset256) isset(pos byte) bool {
-	return x[pos]
-}
-func (x *bitset256) isnotset(pos byte) bool {
-	return !x[pos]
+	x[pos>>3] |= (1 << (pos & 7))
 }
 
 type bitset32 uint32
@@ -2592,29 +2475,13 @@ type bitset32 uint32
 func (x bitset32) set(pos byte) bitset32 {
 	return x | (1 << pos)
 }
+
 func (x bitset32) check(pos byte) uint32 {
 	return uint32(x) & (1 << pos)
 }
 func (x bitset32) isset(pos byte) bool {
 	return x.check(pos) != 0
-}
-func (x bitset32) isnotset(pos byte) bool {
-	return x.check(pos) == 0
-}
-
-type bitset64 uint64
-
-func (x bitset64) set(pos byte) bitset64 {
-	return x | (1 << pos)
-}
-func (x bitset64) check(pos byte) uint64 {
-	return uint64(x) & (1 << pos)
-}
-func (x bitset64) isset(pos byte) bool {
-	return x.check(pos) != 0
-}
-func (x bitset64) isnotset(pos byte) bool {
-	return x.check(pos) == 0
+	// return x&(1<<pos) != 0
 }
 
 // func (x *bitset256) unset(pos byte) {
@@ -2679,25 +2546,25 @@ type must struct{}
 
 func (must) String(s string, err error) string {
 	if err != nil {
-		halt.errorv(err)
+		panicv.errorv(err)
 	}
 	return s
 }
 func (must) Int(s int64, err error) int64 {
 	if err != nil {
-		halt.errorv(err)
+		panicv.errorv(err)
 	}
 	return s
 }
 func (must) Uint(s uint64, err error) uint64 {
 	if err != nil {
-		halt.errorv(err)
+		panicv.errorv(err)
 	}
 	return s
 }
 func (must) Float(s float64, err error) float64 {
 	if err != nil {
-		halt.errorv(err)
+		panicv.errorv(err)
 	}
 	return s
 }
