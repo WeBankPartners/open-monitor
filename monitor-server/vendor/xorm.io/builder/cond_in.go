@@ -23,7 +23,7 @@ func In(col string, values ...interface{}) Cond {
 }
 
 func (condIn condIn) handleBlank(w Writer) error {
-	_, err := fmt.Fprintf(w, "%s IN ()", condIn.col)
+	_, err := fmt.Fprint(w, "0=1")
 	return err
 }
 
