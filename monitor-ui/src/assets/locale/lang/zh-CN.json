@@ -117,7 +117,8 @@
       "dataView": "放大",
       "editTitle": "编辑标题"
     },
-    "dataMonitoring": "数据监控"
+    "dataMonitoring": "数据监控",
+    "syncMonitor": "同步监控"
   },
   "m_button_maintenanceWindow": "维护窗口",
   "table": {
@@ -252,5 +253,8 @@
   "m_search": "查询",
   "m_field_exporter": "采集器",
   "m_proxy_exporter": "代理采集器",
-  "m_legend_tips": "选择一种 或 手动配置，格式为$tag1,$tag2,..."
+  "m_legend_tips": "选择一种 或 手动配置，格式为$tag1,$tag2,...",
+  "m_cluster_management": "集群配置",
+  "m_prom_address": "prometheus地址",
+  "m_remote_agent_address": "集群agent地址"
 }
