@@ -55,17 +55,8 @@ export default {
     },
     getchartdata () {
       this.isAutoRefresh()
-      let params = []
-      this.chartInfo.chartParams.forEach((item) => {
-        params.push({
-          ...item,
-          time: this.params.timeTnterval + '',
-          start: this.params.dateRange[0] ===''? '':Date.parse(this.params.dateRange[0].replace(/-/g, '/'))/1000+'',
-          end: this.params.dateRange[1] ===''? '':Date.parse(this.params.dateRange[1].replace(/-/g, '/'))/1000+'',
-        })
-      })
 
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.metricConfigView.api, params, responseData => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.metricConfigView.api, this.chartInfo.chartParams, responseData => {
         responseData.yaxis.unit =  this.chartInfo.panalUnit  
         this.elId = this.chartInfo.elId
         const chartConfig = {eye: false,dataZoom:false, lineBarSwitch: true, chartType: this.chartInfo.chartType}

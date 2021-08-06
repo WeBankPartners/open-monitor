@@ -131,7 +131,7 @@
     },
     "metricConfigView": {
         "_des": "指标配置预览视图",
-        "api": "/monitor/api/v1/dashboard/newchart"
+        "api": "/monitor/api/v1/dashboard/chart"
     },
     "metricConfigPieView": {
         "_des": "指标配置饼图",
@@ -192,5 +192,7 @@
     "getGraph": "/monitor/api/v1/dashboard/new/chart",
     "addPanel": "/monitor/api/v1/dashboard/new/panel",
     "metricManagement": "/monitor/api/v1/dashboard/new/metric",
-    "getMetricByEndpointType": "/monitor/api/v1/dashboard/new/metric"
+    "getMetricByEndpointType": "/monitor/api/v1/dashboard/new/metric",
+    "cluster": "/monitor/api/v1/cluster/config",
+    "recursiveType": "/monitor/api/v1/dashboard/recursive/endpoint_type/list"
 }

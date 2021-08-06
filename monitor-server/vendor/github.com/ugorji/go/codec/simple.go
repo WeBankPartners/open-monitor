@@ -224,12 +224,12 @@ func (d *simpleDecDriver) readNextBd() {
 	d.bdRead = true
 }
 
-// func (d *simpleDecDriver) uncacheRead() {
-// 	if d.bdRead {
-// 		d.d.decRd.unreadn1()
-// 		d.bdRead = false
-// 	}
-// }
+func (d *simpleDecDriver) uncacheRead() {
+	if d.bdRead {
+		d.d.decRd.unreadn1()
+		d.bdRead = false
+	}
+}
 
 func (d *simpleDecDriver) advanceNil() (null bool) {
 	d.fnil = false
@@ -244,9 +244,9 @@ func (d *simpleDecDriver) advanceNil() (null bool) {
 	return
 }
 
-// func (d *simpleDecDriver) Nil() bool {
-// 	return d.fnil
-// }
+func (d *simpleDecDriver) Nil() bool {
+	return d.fnil
+}
 
 func (d *simpleDecDriver) ContainerType() (vt valueType) {
 	if !d.bdRead {
@@ -442,11 +442,12 @@ func (d *simpleDecDriver) DecodeBytes(bs []byte, zerocopy bool) (bsOut []byte) {
 
 	clen := d.decLen()
 	d.bdRead = false
-	if d.d.bytes && (zerocopy || d.h.ZeroCopy) {
-		return d.d.decRd.rb.readx(uint(clen))
-	}
-	if zerocopy && len(bs) == 0 {
-		bs = d.d.b[:]
+	if zerocopy {
+		if d.d.bytes {
+			return d.d.decRd.readx(uint(clen))
+		} else if len(bs) == 0 {
+			bs = d.d.b[:]
+		}
 	}
 	return decByteSlice(d.d.r(), clen, d.d.h.MaxInitLen, bs)
 }
@@ -499,7 +500,7 @@ func (d *simpleDecDriver) decodeExtV(verifyTag bool, tag byte) (xtag byte, xbs [
 			return
 		}
 		if d.d.bytes {
-			xbs = d.d.decRd.rb.readx(uint(l))
+			xbs = d.d.decRd.readx(uint(l))
 		} else {
 			xbs = decByteSlice(d.d.r(), l, d.d.h.MaxInitLen, d.d.b[:])
 		}
@@ -559,13 +560,13 @@ func (d *simpleDecDriver) DecodeNaked() {
 		n.s = string(d.DecodeStringAsBytes())
 	case simpleVdByteArray, simpleVdByteArray + 1,
 		simpleVdByteArray + 2, simpleVdByteArray + 3, simpleVdByteArray + 4:
-		fauxUnionReadRawBytes(d, &d.d, n, d.h.RawToString)
+		decNakedReadRawBytes(d, &d.d, n, d.h.RawToString)
 	case simpleVdExt, simpleVdExt + 1, simpleVdExt + 2, simpleVdExt + 3, simpleVdExt + 4:
 		n.v = valueTypeExt
 		l := d.decLen()
 		n.u = uint64(d.d.decRd.readn1())
 		if d.d.bytes {
-			n.l = d.d.decRd.rb.readx(uint(l))
+			n.l = d.d.decRd.readx(uint(l))
 		} else {
 			n.l = decByteSlice(d.d.r(), l, d.d.h.MaxInitLen, d.d.b[:])
 		}
