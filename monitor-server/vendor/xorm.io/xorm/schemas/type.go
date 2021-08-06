@@ -5,6 +5,7 @@
 package schemas
 
 import (
+	"math/big"
 	"reflect"
 	"sort"
 	"strings"
@@ -38,6 +39,7 @@ const (
 	TIME_TYPE
 	NUMERIC_TYPE
 	ARRAY_TYPE
+	BOOL_TYPE
 )
 
 // IsType reutrns ture if the column type is the same as the parameter
@@ -63,6 +65,11 @@ func (s *SQLType) IsTime() bool {
 	return s.IsType(TIME_TYPE)
 }
 
+// IsBool returns true if column is a boolean type
+func (s *SQLType) IsBool() bool {
+	return s.IsType(BOOL_TYPE)
+}
+
 // IsNumeric returns true if column is a numeric type
 func (s *SQLType) IsNumeric() bool {
 	return s.IsType(NUMERIC_TYPE)
@@ -85,16 +92,19 @@ func (s *SQLType) IsXML() bool {
 
 // enumerates all the database column types
 var (
-	Bit            = "BIT"
-	UnsignedBit    = "UNSIGNED BIT"
-	TinyInt        = "TINYINT"
-	SmallInt       = "SMALLINT"
-	MediumInt      = "MEDIUMINT"
-	Int            = "INT"
-	UnsignedInt    = "UNSIGNED INT"
-	Integer        = "INTEGER"
-	BigInt         = "BIGINT"
-	UnsignedBigInt = "UNSIGNED BIGINT"
+	Bit               = "BIT"
+	UnsignedBit       = "UNSIGNED BIT"
+	TinyInt           = "TINYINT"
+	UnsignedTinyInt   = "UNSIGNED TINYINT"
+	SmallInt          = "SMALLINT"
+	UnsignedSmallInt  = "UNSIGNED SMALLINT"
+	MediumInt         = "MEDIUMINT"
+	UnsignedMediumInt = "UNSIGNED MEDIUMINT"
+	Int               = "INT"
+	UnsignedInt       = "UNSIGNED INT"
+	Integer           = "INTEGER"
+	BigInt            = "BIGINT"
+	UnsignedBigInt    = "UNSIGNED BIGINT"
 
 	Enum = "ENUM"
 	Set  = "SET"
@@ -151,16 +161,19 @@ var (
 	Array = "ARRAY"
 
 	SqlTypes = map[string]int{
-		Bit:            NUMERIC_TYPE,
-		UnsignedBit:    NUMERIC_TYPE,
-		TinyInt:        NUMERIC_TYPE,
-		SmallInt:       NUMERIC_TYPE,
-		MediumInt:      NUMERIC_TYPE,
-		Int:            NUMERIC_TYPE,
-		UnsignedInt:    NUMERIC_TYPE,
-		Integer:        NUMERIC_TYPE,
-		BigInt:         NUMERIC_TYPE,
-		UnsignedBigInt: NUMERIC_TYPE,
+		Bit:               NUMERIC_TYPE,
+		UnsignedBit:       NUMERIC_TYPE,
+		TinyInt:           NUMERIC_TYPE,
+		UnsignedTinyInt:   NUMERIC_TYPE,
+		SmallInt:          NUMERIC_TYPE,
+		UnsignedSmallInt:  NUMERIC_TYPE,
+		MediumInt:         NUMERIC_TYPE,
+		UnsignedMediumInt: NUMERIC_TYPE,
+		Int:               NUMERIC_TYPE,
+		UnsignedInt:       NUMERIC_TYPE,
+		Integer:           NUMERIC_TYPE,
+		BigInt:            NUMERIC_TYPE,
+		UnsignedBigInt:    NUMERIC_TYPE,
 
 		Enum:  TEXT_TYPE,
 		Set:   TEXT_TYPE,
@@ -208,7 +221,8 @@ var (
 		Bytea:            BLOB_TYPE,
 		UniqueIdentifier: BLOB_TYPE,
 
-		Bool: NUMERIC_TYPE,
+		Bool:    BOOL_TYPE,
+		Boolean: BOOL_TYPE,
 
 		Serial:    NUMERIC_TYPE,
 		BigSerial: NUMERIC_TYPE,
@@ -240,6 +254,7 @@ var (
 	intDefault        int
 	uintDefault       uint
 	timeDefault       time.Time
+	bigFloatDefault   big.Float
 )
 
 // enumerates all types
@@ -267,7 +282,8 @@ var (
 	ByteType   = reflect.TypeOf(byteDefault)
 	BytesType  = reflect.SliceOf(ByteType)
 
-	TimeType = reflect.TypeOf(timeDefault)
+	TimeType     = reflect.TypeOf(timeDefault)
+	BigFloatType = reflect.TypeOf(bigFloatDefault)
 )
 
 // enumerates all types
@@ -364,4 +380,10 @@ func SQLType2Type(st SQLType) reflect.Type {
 	default:
 		return reflect.TypeOf("")
 	}
+}
+
+// SQLTypeName returns sql type name
+func SQLTypeName(tp string) string {
+	fields := strings.Split(tp, "(")
+	return fields[0]
 }

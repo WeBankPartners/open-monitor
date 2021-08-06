@@ -81,6 +81,9 @@ func (session *Session) cacheUpdate(table *schemas.Table, tableName, sqlStr stri
 
 			ids = append(ids, pk)
 		}
+		if rows.Err() != nil {
+			return rows.Err()
+		}
 		session.engine.logger.Debugf("[cache] find updated id: %v", ids)
 	} /*else {
 	    session.engine.LogDebug("[xorm:cacheUpdate] del cached sql:", tableName, newsql, args)

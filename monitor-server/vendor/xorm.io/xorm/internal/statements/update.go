@@ -11,8 +11,8 @@ import (
 	"reflect"
 	"time"
 
-	"xorm.io/xorm/convert"
 	"xorm.io/xorm/dialects"
+	"xorm.io/xorm/internal/convert"
 	"xorm.io/xorm/internal/json"
 	"xorm.io/xorm/internal/utils"
 	"xorm.io/xorm/schemas"
@@ -127,8 +127,12 @@ func (statement *Statement) BuildUpdates(tableValue reflect.Value,
 				if err != nil {
 					return nil, nil, err
 				}
-
-				val = data
+				if data != nil {
+					val = data
+					if !col.SQLType.IsBlob() {
+						val = string(data)
+					}
+				}
 				goto APPEND
 			}
 		}
@@ -138,8 +142,12 @@ func (statement *Statement) BuildUpdates(tableValue reflect.Value,
 			if err != nil {
 				return nil, nil, err
 			}
-
-			val = data
+			if data != nil {
+				val = data
+				if !col.SQLType.IsBlob() {
+					val = string(data)
+				}
+			}
 			goto APPEND
 		}
 
