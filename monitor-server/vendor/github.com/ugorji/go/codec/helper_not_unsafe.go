@@ -155,25 +155,25 @@ func (x *atomicRtidFnSlice) store(p []codecRtidFn) {
 }
 
 // --------------------------
-func (n *fauxUnion) ru() reflect.Value {
+func (n *decNaked) ru() reflect.Value {
 	return rv4i(&n.u).Elem()
 }
-func (n *fauxUnion) ri() reflect.Value {
+func (n *decNaked) ri() reflect.Value {
 	return rv4i(&n.i).Elem()
 }
-func (n *fauxUnion) rf() reflect.Value {
+func (n *decNaked) rf() reflect.Value {
 	return rv4i(&n.f).Elem()
 }
-func (n *fauxUnion) rl() reflect.Value {
+func (n *decNaked) rl() reflect.Value {
 	return rv4i(&n.l).Elem()
 }
-func (n *fauxUnion) rs() reflect.Value {
+func (n *decNaked) rs() reflect.Value {
 	return rv4i(&n.s).Elem()
 }
-func (n *fauxUnion) rt() reflect.Value {
+func (n *decNaked) rt() reflect.Value {
 	return rv4i(&n.t).Elem()
 }
-func (n *fauxUnion) rb() reflect.Value {
+func (n *decNaked) rb() reflect.Value {
 	return rv4i(&n.b).Elem()
 }
 
