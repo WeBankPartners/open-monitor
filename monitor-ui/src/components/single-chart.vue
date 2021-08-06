@@ -65,28 +65,29 @@ export default {
   },
   methods: {
     getChartData (tmp, start, end) {
-      let params = []
+      let params = {
+        aggregate: 'none',
+        time_second: this.params.time,
+        start: start ? 0 : this.params.start || 0,
+        end: end ? 0 : this.params.end || 0,
+        title: '',
+        unit: '',
+        chart_id: this.chartInfo.id,
+        data: []
+      }
       if (this.params.sys) {
         this.chartInfo.endpoint.forEach((ep) => {
           this.chartInfo.metric.forEach((me) => {
-            params.push({
-              id: this.chartInfo.id,
+            params.data.push({
               endpoint: ep,
-              metric: me,
-              time: this.params.time.toString(),
-              start: start ? start : this.params.start + '',
-              end: end ? end : this.params.end + ''
+              metric: me
             })
           })
         })
       } else {
-        params.push({
-          id: this.chartInfo.id,
+        params.data.push({
           endpoint: this.chartInfo.endpoint[0],
           metric: this.chartInfo.metric[0],
-          time: this.params.time.toString(),
-          start: start ? start : this.params.start + '',
-          end: end ? end : this.params.end + '',
           compare_first_start: this.params.compare_first_start,
           compare_first_end: this.params.compare_first_end,
           compare_second_start: this.params.compare_second_start,

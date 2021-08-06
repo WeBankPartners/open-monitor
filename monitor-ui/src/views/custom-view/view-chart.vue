@@ -141,26 +141,24 @@ export default {
     initPanal() {
       this.panalTitle = this.panalData.panalTitle;
       this.panalUnit = this.panalData.panalUnit;
-      let params = [];
       this.noDataTip = false;
       if (this.$root.$validate.isEmpty_reset(this.panalData.query)) {
         return;
       }
+      let params = {
+        aggregate: this.viewCondition.agg,
+        time_second: this.viewCondition.timeTnterval,
+        start: this.viewCondition.dateRange[0] ===''? 
+          0 :Date.parse(this.viewCondition.dateRange[0].replace(/-/g, '/'))/1000,
+          end: this.viewCondition.dateRange[1] ===''? 
+          0 :Date.parse(this.viewCondition.dateRange[1].replace(/-/g, '/'))/1000,
+        title: '',
+        unit: '',
+        data: []
+      }
       this.panalData.query.forEach(item => {
-        params.push(
-          {
-            agg: this.viewCondition.agg,
-            endpoint: item.endpoint,
-            prom_ql: item.metric,
-            metric: item.metricLabel,
-            start: this.viewCondition.dateRange[0] ===''? 
-              '':Date.parse(this.viewCondition.dateRange[0].replace(/-/g, '/'))/1000 + '',
-            end: this.viewCondition.dateRange[1] ===''? 
-              '':Date.parse(this.viewCondition.dateRange[1].replace(/-/g, '/'))/1000 + '',
-            time: '' + this.viewCondition.timeTnterval  
-          }
-        );
-      });
+        params.data.push(item)
+      })
       if (params !== []) {
         this.$root.$httpRequestEntrance.httpRequestEntrance(
           'POST',this.$root.apiCenter.metricConfigView.api, params,

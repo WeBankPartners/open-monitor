@@ -26,8 +26,8 @@ image: build
 
 agent:
 	chmod +x ./build/build-agent.sh
-	chmod +x ./build/conf/node_exporter/control
-	chmod +x ./build/conf/node_exporter/start.sh
+	chmod +x ./build/node_exporter/control
+	chmod +x ./build/node_exporter/start.sh
 	./build/build-agent.sh
 
 package: image agent
