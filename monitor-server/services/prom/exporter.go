@@ -1,23 +1,23 @@
 package prom
 
 import (
-	"github.com/WeBankPartners/open-monitor/monitor-server/models"
-	"net/http"
 	"fmt"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
+	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"io/ioutil"
+	"net/http"
 	"strings"
 	"time"
-	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 )
 
-func GetEndpointData(ip,port string,prefix,keyword []string) (error, []string) {
+func GetEndpointData(param models.QueryPrometheusMetricParam) (error, []string) {
 	var strList []string
-	resp,err := http.Get(fmt.Sprintf("http://%s:%s/metrics", ip, port))
+	resp, err := http.Get(fmt.Sprintf("http://%s:%s/metrics", param.Ip, param.Port))
 	if err != nil {
 		var tmpErr error
-		for i:=0;i<6;i++ {
-			time.Sleep(10*time.Second)
-			resp,tmpErr = http.Get(fmt.Sprintf("http://%s:%s/metrics", ip, port))
+		for i := 0; i < 6; i++ {
+			time.Sleep(10 * time.Second)
+			resp, tmpErr = http.Get(fmt.Sprintf("http://%s:%s/metrics", param.Ip, param.Port))
 			if tmpErr == nil {
 				break
 			}
@@ -31,13 +31,13 @@ func GetEndpointData(ip,port string,prefix,keyword []string) (error, []string) {
 	defer resp.Body.Close()
 	if err != nil {
 		log.Logger.Error("Get agent metric response body fail", log.Error(err))
-		return err,strList
+		return err, strList
 	}
 	if resp.StatusCode/100 != 2 {
 		log.Logger.Error("Get agent metric response code error", log.Int("code", resp.StatusCode))
-		return fmt.Errorf("Get agent metric response code:%d ", resp.StatusCode),strList
+		return fmt.Errorf("Get agent metric response code:%d ", resp.StatusCode), strList
 	}
-	for _,v := range strings.Split(string(body), "\n") {
+	for _, v := range strings.Split(string(body), "\n") {
 		if strings.HasPrefix(v, "#") {
 			continue
 		}
@@ -47,13 +47,13 @@ func GetEndpointData(ip,port string,prefix,keyword []string) (error, []string) {
 		if isInBlacklist(v) {
 			continue
 		}
-		if len(prefix) == 0 && len(keyword) == 0 {
+		if len(param.Prefix) == 0 && len(param.Keyword) == 0 {
 			strList = append(strList, v)
 			continue
 		}
 		tmpStrLower := strings.ToLower(v)
 		tmpFlag := false
-		for _,vv := range prefix {
+		for _, vv := range param.Prefix {
 			if strings.HasPrefix(tmpStrLower, vv+"_") {
 				strList = append(strList, v)
 				tmpFlag = true
@@ -63,7 +63,7 @@ func GetEndpointData(ip,port string,prefix,keyword []string) (error, []string) {
 		if tmpFlag {
 			continue
 		}
-		for _,vv := range keyword {
+		for _, vv := range param.Keyword {
 			if strings.Contains(tmpStrLower, vv) {
 				strList = append(strList, v)
 				break
@@ -71,7 +71,7 @@ func GetEndpointData(ip,port string,prefix,keyword []string) (error, []string) {
 		}
 	}
 	log.Logger.Info("Get agent metric success", log.Int("num", len(strList)))
-	return nil,strList
+	return nil, strList
 }
 
 func isInBlacklist(metric string) bool {
@@ -79,7 +79,7 @@ func isInBlacklist(metric string) bool {
 		return false
 	}
 	illegal := false
-	for _,v := range models.Config().TagBlacklist {
+	for _, v := range models.Config().TagBlacklist {
 		if strings.Contains(metric, "=\""+v) {
 			illegal = true
 			break
@@ -88,8 +88,8 @@ func isInBlacklist(metric string) bool {
 	return illegal
 }
 
-func GetSnmpMetricList(address,target string) (metricList []string,err error) {
-	resp,respErr := http.Get(fmt.Sprintf("http://%s/snmp?target=%s", address, target))
+func GetSnmpMetricList(address, target string) (metricList []string, err error) {
+	resp, respErr := http.Get(fmt.Sprintf("http://%s/snmp?target=%s", address, target))
 	if respErr != nil {
 		err = fmt.Errorf("Request snmp metric fail,%s ", respErr.Error())
 		return
@@ -104,7 +104,7 @@ func GetSnmpMetricList(address,target string) (metricList []string,err error) {
 		err = fmt.Errorf("Get snmp metric response code:%d ", resp.StatusCode)
 		return
 	}
-	for _,v := range strings.Split(string(body), "\n") {
+	for _, v := range strings.Split(string(body), "\n") {
 		if strings.HasPrefix(v, "#") {
 			continue
 		}
