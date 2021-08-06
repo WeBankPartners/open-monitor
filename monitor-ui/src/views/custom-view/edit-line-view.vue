@@ -34,7 +34,7 @@
                 :name="queryIndex"
                 closable
                 @on-close="removeQuery(queryIndex)"
-              >{{$t('field.endpoint')}}：{{query.endpoint}}; {{$t('field.metric')}}：{{query.metricLabel}}</Tag>
+              >{{$t('field.endpoint')}}：{{query.endpoint}}; {{$t('field.metric')}}：{{query.metric}}</Tag>
             </div>
             <div class="condition-zone">
               <ul>
@@ -49,6 +49,7 @@
                       remote
                       :placeholder="$t('requestMoreData')"
                       @on-open-change="getEndpointList('.')"
+                      @on-change="selectEndpoint"
                       :remote-method="getEndpointList"
                     >
                       <Option
@@ -61,6 +62,23 @@
                     </Select>
                   </div>
                 </li>
+                <li v-if="showRecursiveType">
+                  <div class="condition condition-title c-black-gray">{{$t('field.type')}}</div>
+                  <div class="condition">
+                    <Select
+                      v-model="templateQuery.endpoint_type"
+                      style="width:300px"
+                      filterable
+                      clearable
+                    >
+                      <Option
+                        v-for="(item,index) in recursiveTypeOptions"
+                        :value="item"
+                        :key="item+index"
+                      >{{ item }}</Option>
+                    </Select>
+                  </div>
+                </li>
                 <li>
                   <div class="condition condition-title c-black-gray">{{$t('field.metric')}}</div>
                   <div class="condition">
@@ -70,13 +88,12 @@
                       filterable
                       clearable
                       :label-in-value="true"
-                      @on-change="v=>{ setMetric(v)}"
                       @on-open-change="metricSelectOpen(templateQuery.endpoint)"
                     >
                       <Option
                         v-for="(item,index) in metricList"
-                        :value="item.prom_ql"
-                        :key="item.prom_ql+index"
+                        :value="item.metric"
+                        :key="item.metric+index"
                       >{{ item.metric }}</Option>
                     </Select>
                   </div>
@@ -123,9 +140,10 @@ export default {
       endpointType: null,
       templateQuery: {
         endpoint: '',
-        metricLabel: '',
         metric: '',
         chartType: '',
+        endpoint_type: '',
+        app_object: ''
       },
       chartTypeOption: [
         {label: '线性图', value: 'line'},
@@ -134,14 +152,14 @@ export default {
       chartQueryList: [
         // {
         //   endpoint: '',
-        //   metricLabel: '',
         //   metric: ''
         // }
       ],
 
       options: [],
       metricList: [],
-
+      showRecursiveType: false,
+      recursiveTypeOptions: [],
       panalTitle: "Default title",
       panalUnit: "",
 
@@ -153,20 +171,21 @@ export default {
     chartQueryList: {
       handler(data) {
         this.noDataTip = false
-        let params = []
+        let params = {
+          aggregate: 'none',
+          time_second: -1800,
+          start: 0,
+          end: 0,
+          title: '',
+          unit: '',
+          data: []
+        }
         if (this.$root.$validate.isEmpty_reset(data)) {
           this.noDataTip = true
           return
         }
         data.forEach(item => {
-          params.push(
-            {
-              endpoint: item.endpoint,
-              prom_ql: item.metric,
-              metric: item.metricLabel,
-              time: "-1800"
-            }
-          )
+          params.data.push(item)
         })
         this.$root.$httpRequestEntrance.httpRequestEntrance(
           'POST',this.$root.apiCenter.metricConfigView.api, params,
@@ -181,7 +200,7 @@ export default {
     },
     'templateQuery.endpoint': function (val) {
       if (val) {
-        this.endpointType = this.options.find(item => item.option_value === val).type
+        this.endpointType = this.options.find(item => item.option_value === val).type  
       }
     }
   },
@@ -191,25 +210,23 @@ export default {
     })
   },
   mounted() {
-    // if (this.$root.$validate.isEmpty_reset(this.$route.params)) {
-    //   this.$router.push({ path: "viewConfig" })
-    // } else {
-    //   if (!this.$root.$validate.isEmpty_reset(this.$route.params.templateData.cfg)) {
-    //     this.getEndpointList()
-    //     this.viewData = JSON.parse(this.$route.params.templateData.cfg)
-    //     this.viewData.forEach((itemx, index) => {
-    //       if (itemx.viewConfig.id === this.$route.params.panal.id) {
-    //         this.templateQuery.chartType = itemx.chartType
-    //         this.panalIndex = index
-    //         this.panalData = itemx
-    //         this.initPanal()
-    //         return
-    //       }
-    //     })
-    //   }
-    // }
   },
   methods: {
+    selectEndpoint (val) {
+      this.showRecursiveType = false
+      this.templateQuery.endpoint_type = ''
+      const find = this.options.find(item => item.option_value === val)
+      if (find && find.id === -1) {
+        this.showRecursiveType = true
+        let params = {
+          guid: find.option_value
+        }
+        this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.recursiveType, params, responseData => {
+          this.templateQuery.endpoint_type = responseData[0]
+          this.recursiveTypeOptions = responseData
+        }
+      )}
+    },
     initChart (params) {
       this.oriParams = params
       if (!this.$root.$validate.isEmpty_reset(params.templateData.cfg)) {
@@ -227,16 +244,22 @@ export default {
       }
     },
     switchChartType () {
-      let params = []
+      let params = {
+          aggregate: 'none',
+          time_second: -1800,
+          start: 0,
+          end: 0,
+          title: '',
+          unit: '',
+          data: []
+        }
       this.chartQueryList.forEach(item => {
-        params.push(
-          {
-            endpoint: item.endpoint,
-            prom_ql: item.metric,
-            metric: item.metricLabel,
-            time: "-1800"
-          }
-        )
+        params.data.push({
+          endpoint: item.endpoint,
+          metric: item.metric,
+          app_object: item.app_object,
+          endpoint_type: item.endpoint_type
+        })
       })
       this.$root.$httpRequestEntrance.httpRequestEntrance(
         'POST',this.$root.apiCenter.metricConfigView.api, params,
@@ -249,20 +272,23 @@ export default {
     initPanal() {
       this.panalTitle = this.panalData.panalTitle
       this.panalUnit = this.panalData.panalUnit
-      let params = []
+      let params = {
+        aggregate: 'none',
+        time_second: -1800,
+        start: 0,
+        end: 0,
+        title: '',
+        unit: '',
+        data: []
+      }
       this.noDataTip = false
       if (this.$root.$validate.isEmpty_reset(this.panalData.query)) {
         return
       }
       this.initQueryList(this.panalData.query)
       this.panalData.query.forEach(item => {
-        params.push(
-          {
-            endpoint: item.endpoint,
-            prom_ql: item.metric,
-            metric: item.metricLabel,
-            time: "-1800"
-          }
+        params.data.push(
+          item
         )
       })
       if (params !== []) {
@@ -289,12 +315,7 @@ export default {
         this.$root.apiCenter.resourceSearch.api,
         params,
         responseData => {
-          this.options = []
-          responseData.forEach((item) => {
-            if (item.id !== -1) {
-              this.options.push(item)
-            }
-          })
+          this.options = responseData
         }
       )
     },
@@ -304,7 +325,7 @@ export default {
           this.$t("tableKey.s_metric") + this.$t("tips.required")
         )
       } else {
-        let params = { type: this.endpointType }
+        let params = { type: this.showRecursiveType ? this.templateQuery.endpoint_type : this.endpointType }
         this.$root.$httpRequestEntrance.httpRequestEntrance(
           'GET',
           this.$root.apiCenter.metricList.api,
@@ -316,19 +337,21 @@ export default {
       }
     },
     addQuery() {
-      if (
-        this.templateQuery.endpoint === "" ||
-        this.templateQuery.metricLabel === ""
-      ) {
+      if (this.templateQuery.endpoint === '') {
         this.$Message.warning("配置完整方可保存！")
         return
       }
-      this.chartQueryList.push(this.templateQuery)
+      let tmp = JSON.parse(JSON.stringify(this.templateQuery))
+      if (tmp.endpoint_type !== '') {
+        tmp.app_object = tmp.endpoint
+      }
+      this.chartQueryList.push(tmp)
       this.templateQuery = {
-        endpoint: "",
-        metricLabel: "",
-        metric: "",
-        chartType: this.templateQuery.chartType
+        endpoint: '',
+        metric: '',
+        chartType: this.templateQuery.chartType,
+        endpoint_type: '',
+        app_object: ''
       }
       this.options = []
       this.metricList = []
@@ -350,19 +373,11 @@ export default {
         }
       )
     },
-    setMetric(value) {
-      if (!this.$root.$validate.isEmpty_reset(value)) {
-        this.templateQuery.metricLabel = value.label
-      }
-    },
     pp() {
       let query = []
+
       this.chartQueryList.forEach(item => {
-        query.push({
-          endpoint: item.endpoint,
-          metricLabel: item.metricLabel,
-          metric: item.metric
-        })
+        query.push(item)
       })
       let panal = this.oriParams.panal
       panal.i = this.panalTitle
@@ -388,10 +403,6 @@ export default {
     },
     goback() {
       this.$parent.$parent.showChartConfig = false
-      // if (!this.params) {
-      //   this.pp()
-      // }
-      // this.$router.push({ name: "viewConfig", params: this.params })
     }
   },
   components: {

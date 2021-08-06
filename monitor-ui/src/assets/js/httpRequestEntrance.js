@@ -34,7 +34,6 @@ export const loading = {
 }
 // 错误消息提醒统一组件
 function errorMessage(content) {
-  console.log(content)
   Message.error({
     content: content,
     duration: 5,
