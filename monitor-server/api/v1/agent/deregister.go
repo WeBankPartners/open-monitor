@@ -14,14 +14,14 @@ import (
 	"time"
 )
 
-const hostType  = "host"
-const mysqlType  = "mysql"
+const hostType = "host"
+const mysqlType = "mysql"
 const redisType = "redis"
 const tomcatType = "tomcat"
 const javaType = "java"
 const otherType = "other"
 
-func DeregisterAgent(c *gin.Context)  {
+func DeregisterAgent(c *gin.Context) {
 	guid := c.Query("guid")
 	if guid == "" {
 		mid.ReturnParamEmptyError(c, "guid")
@@ -64,7 +64,7 @@ func DeregisterJob(endpointObj m.EndpointTable) error {
 		}
 	}
 	// Remove from group
-	affectTplList,deleteErr := db.DeleteEndpointFromGroup(endpointObj.Id)
+	affectTplList, deleteErr := db.DeleteEndpointFromGroup(endpointObj.Id)
 	if deleteErr != nil {
 		return deleteErr
 	}
@@ -74,11 +74,11 @@ func DeregisterJob(endpointObj m.EndpointTable) error {
 		return fmt.Errorf("Sync sd config fail,%s ", err.Error())
 	}
 	// Update rule file
-	tplObj,_ := db.GetTemplateObject(0, 0, endpointObj.Id)
+	tplObj, _ := db.GetTemplateObject(0, 0, endpointObj.Id)
 	if tplObj.Id > 0 {
 		affectTplList = append(affectTplList, tplObj.Id)
 	}
-	for _,tplId := range affectTplList {
+	for _, tplId := range affectTplList {
 		tmpErr := db.SyncRuleConfigFile(tplId, []string{endpointObj.Guid}, false)
 		if tmpErr != nil {
 			err = fmt.Errorf("Sync rule config fail,%s ", tmpErr.Error())
@@ -106,11 +106,11 @@ func DeregisterJob(endpointObj m.EndpointTable) error {
 
 var TransGateWayAddress string
 
-func CustomRegister(c *gin.Context)  {
+func CustomRegister(c *gin.Context) {
 	var param m.TransGatewayRequestDto
-	if err:=c.ShouldBindJSON(&param); err==nil {
+	if err := c.ShouldBindJSON(&param); err == nil {
 		if TransGateWayAddress == "" {
-			query := m.QueryMonitorData{Start:time.Now().Unix()-60, End:time.Now().Unix(), Endpoint:[]string{"endpoint"}, Metric:[]string{"metric"}, PromQ:"up{job=\"transgateway\"}", Legend:"$custom_all"}
+			query := m.QueryMonitorData{Start: time.Now().Unix() - 60, End: time.Now().Unix(), Endpoint: []string{"endpoint"}, Metric: []string{"metric"}, PromQ: "up{job=\"transgateway\"}", Legend: "$custom_all"}
 			sm := datasource.PrometheusData(&query)
 			log.Logger.Debug("", log.Int("sm length", len(sm)))
 			if len(sm) > 0 {
@@ -126,38 +126,38 @@ func CustomRegister(c *gin.Context)  {
 		endpointObj.Ip = param.HostIp
 		endpointObj.ExportType = "custom"
 		endpointObj.Step = 10
-		_,err := db.UpdateEndpoint(&endpointObj)
+		_, err := db.UpdateEndpoint(&endpointObj)
 		if err != nil {
 			mid.ReturnUpdateTableError(c, "endpoint", err)
-		}else{
+		} else {
 			mid.ReturnSuccess(c)
 		}
-	}else{
+	} else {
 		mid.ReturnValidateError(c, fmt.Sprintf(mid.GetMessageMap(c).ParamValidateError, err.Error()))
 	}
 }
 
-func CustomMetricPush(c *gin.Context)  {
+func CustomMetricPush(c *gin.Context) {
 	var param m.TransGatewayMetricDto
-	if err:=c.ShouldBindJSON(&param); err==nil {
+	if err := c.ShouldBindJSON(&param); err == nil {
 		err = db.AddCustomMetric(param)
 		if err != nil {
 			mid.ReturnHandleError(c, err.Error(), err)
-		}else{
+		} else {
 			mid.ReturnSuccess(c)
 		}
-	}else{
+	} else {
 		mid.ReturnValidateError(c, err.Error())
 	}
 }
 
-func ReloadEndpointMetric(c *gin.Context)  {
-	id,_ := strconv.Atoi(c.Query("id"))
+func ReloadEndpointMetric(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Query("id"))
 	if id <= 0 {
 		mid.ReturnParamTypeError(c, "id", "int")
 		return
 	}
-	endpointObj := m.EndpointTable{Id:id}
+	endpointObj := m.EndpointTable{Id: id}
 	db.GetEndpoint(&endpointObj)
 	var address string
 	if endpointObj.Address == "" {
@@ -166,27 +166,34 @@ func ReloadEndpointMetric(c *gin.Context)  {
 			return
 		}
 		address = endpointObj.AddressAgent
-	}else{
+	} else {
 		address = endpointObj.Address
 	}
 	tmpExporterIp := strings.Split(address, ":")[0]
 	tmpExporterPort := strings.Split(address, ":")[1]
 	var strList []string
+	getEndpointParam := m.QueryPrometheusMetricParam{Ip: tmpExporterIp, Port: tmpExporterPort, Cluster: endpointObj.Cluster, Prefix: []string{}, Keyword: []string{}}
 	if endpointObj.ExportType == hostType {
-		_, strList = prom.GetEndpointData(tmpExporterIp, tmpExporterPort, []string{"node"}, []string{})
-	}else if endpointObj.ExportType == mysqlType {
-		_, strList = prom.GetEndpointData(tmpExporterIp, tmpExporterPort, []string{"mysql", "mysqld"}, []string{})
-	}else if endpointObj.ExportType == redisType {
-		_, strList = prom.GetEndpointData(tmpExporterIp, tmpExporterPort, []string{"redis"}, []string{"redis_version", ",version"})
-	}else if endpointObj.ExportType == tomcatType {
-		_, strList = prom.GetEndpointData(tmpExporterIp, tmpExporterPort, []string{"Catalina", "catalina", "jvm", "java"}, []string{"version"})
-	}else{
-		_, strList = prom.GetEndpointData(tmpExporterIp, tmpExporterPort, []string{}, []string{""})
+		getEndpointParam.Prefix = []string{"node"}
+		_, strList = db.QueryExporterMetric(getEndpointParam)
+	} else if endpointObj.ExportType == mysqlType {
+		getEndpointParam.Prefix = []string{"mysql", "mysqld"}
+		_, strList = db.QueryExporterMetric(getEndpointParam)
+	} else if endpointObj.ExportType == redisType {
+		getEndpointParam.Prefix = []string{"redis"}
+		getEndpointParam.Keyword = []string{"redis_version", ",version"}
+		_, strList = db.QueryExporterMetric(getEndpointParam)
+	} else if endpointObj.ExportType == tomcatType {
+		getEndpointParam.Prefix = []string{"Catalina", "catalina", "jvm", "java"}
+		getEndpointParam.Keyword = []string{"version"}
+		_, strList = db.QueryExporterMetric(getEndpointParam)
+	} else {
+		_, strList = db.QueryExporterMetric(getEndpointParam)
 	}
 	err := db.RegisterEndpointMetric(id, strList)
 	if err != nil {
 		mid.ReturnHandleError(c, "Update endpoint metric db fail", err)
-	}else{
+	} else {
 		mid.ReturnSuccess(c)
 	}
 }

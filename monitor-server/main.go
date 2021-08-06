@@ -20,7 +20,7 @@ import (
 // @BasePath /v1
 func main() {
 	cfgFile := flag.String("c", "conf/default.json", "config file")
-	exportAgent := flag.Bool("export_agent", false, "true or false to choice export agent")
+	//exportAgent := flag.Bool("export_agent", false, "true or false to choice export agent")
 	flag.Parse()
 	m.InitConfig(*cfgFile)
 	log.InitLogger()
@@ -41,5 +41,5 @@ func main() {
 	go db.StartNotifyPingExport()
 	api.InitDependenceParam()
 	middleware.InitErrorMessageList()
-	api.InitHttpServer(*exportAgent)
+	api.InitHttpServer()
 }

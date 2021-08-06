@@ -164,16 +164,26 @@ export default {
         }
       })
     },
+    dateToTimestamp (date) {
+      if (!date) return 0
+      let timestamp = Date.parse(new Date(date))
+      timestamp = timestamp / 1000;
+      return timestamp
+    },
     initPanals () {
       let tmp = []
       this.viewData.forEach((item) => {
-        let params = []
+        let params = {
+          aggregate: 'none',
+          time_second: -1800,
+          start: this.dateToTimestamp(this.viewCondition.dateRange[0]),
+          end: this.dateToTimestamp(this.viewCondition.dateRange[1]),
+          title: '',
+          unit: '',
+          data: []
+        }
         item.query.forEach( _ => {
-          params.push({
-            endpoint: _.endpoint,
-            metric: _.metricLabel,
-            prom_ql: _.metric,
-          })
+          params.data.push(_)
         })
         let height = (item.viewConfig.h) * 30
         let _activeCharts = []
