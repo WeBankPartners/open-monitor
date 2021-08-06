@@ -1,25 +1,25 @@
 package user
 
 import (
-	"github.com/gin-gonic/gin"
-	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
-	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
-	"net/http"
-	"time"
-	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"encoding/base64"
-	"strconv"
+	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
+	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
+	"github.com/gin-gonic/gin"
+	"net/http"
+	"strconv"
 	"strings"
+	"time"
 )
 
 type auth struct {
-	Username  string  `form:"username" json:"username" binding:"required"`
-	Password  string  `form:"password" json:"password" binding:"required"`
-	RePassword  string  `form:"re_password" json:"re_password"`
-	DisplayName  string  `form:"display_name" json:"display_name"`
-	Email  string  `form:"email" json:"email"`
-	Phone  string  `form:"phone" json:"phone"`
+	Username    string `form:"username" json:"username" binding:"required"`
+	Password    string `form:"password" json:"password" binding:"required"`
+	RePassword  string `form:"re_password" json:"re_password"`
+	DisplayName string `form:"display_name" json:"display_name"`
+	Email       string `form:"email" json:"email"`
+	Phone       string `form:"phone" json:"phone"`
 }
 
 // @Summary 登录
@@ -28,11 +28,13 @@ type auth struct {
 // @Param password query string true "password"
 // @Success 200 {string} json "{"message": "login success"}"
 // @Router /login [post]
-func Login(c *gin.Context)  {
+func Login(c *gin.Context) {
 	var authData auth
-	if err := c.ShouldBindJSON(&authData); err==nil {
-		if !mid.ValidatePost(c, authData, "Password", "RePassword") {return}
-		err,user := db.GetUser(authData.Username)
+	if err := c.ShouldBindJSON(&authData); err == nil {
+		if !mid.ValidatePost(c, authData, "Password", "RePassword") {
+			return
+		}
+		err, user := db.GetUser(authData.Username)
 		if err != nil {
 			mid.ReturnQueryTableError(c, err.Error(), err)
 			return
@@ -41,25 +43,25 @@ func Login(c *gin.Context)  {
 			mid.ReturnFetchDataError(c, "user", "name", authData.Username)
 			return
 		}
-		authPassword,err := base64.StdEncoding.DecodeString(authData.Password)
+		authPassword, err := base64.StdEncoding.DecodeString(authData.Password)
 		if err != nil {
 			mid.ReturnValidateError(c, "password is not base64 encode")
 			return
 		}
-		savePassword,_ := mid.Dncrypt(user.Passwd)
+		savePassword, _ := mid.Dncrypt(user.Passwd)
 		if string(authPassword) == savePassword {
-			session := m.Session{User:authData.Username}
+			session := m.Session{User: authData.Username}
 			isOk, sId := mid.SaveSession(session)
 			if !isOk {
 				mid.ReturnHandleError(c, "save session failed", nil)
-			}else{
+			} else {
 				session.Token = sId
 				mid.ReturnSuccessData(c, session)
 			}
-		}else{
+		} else {
 			mid.ReturnPasswordError(c)
 		}
-	}else{
+	} else {
 		mid.ReturnValidateError(c, err.Error())
 	}
 }
@@ -70,52 +72,52 @@ func Login(c *gin.Context)  {
 // @Router /login [get]
 func Logout(c *gin.Context) {
 	auToken := c.GetHeader("X-Auth-Token")
-	if auToken!= ""{
+	if auToken != "" {
 		mid.DelSession(auToken)
 		mid.ReturnSuccess(c)
-	}else{
+	} else {
 		mid.ReturnError(c, http.StatusUnauthorized, "Invalid session token", nil)
 	}
 }
 
-func Register(c *gin.Context)  {
+func Register(c *gin.Context) {
 	var param auth
-	if err := c.ShouldBindJSON(&param); err==nil {
+	if err := c.ShouldBindJSON(&param); err == nil {
 		if param.Password != param.RePassword {
 			mid.ReturnValidateError(c, "password and re_password is different")
 			return
 		}
-		tmpPassword,err := base64.StdEncoding.DecodeString(param.Password)
+		tmpPassword, err := base64.StdEncoding.DecodeString(param.Password)
 		if err != nil {
 			mid.ReturnValidateError(c, "password is not base64 encode")
 			return
 		}
-		newPassword,err := mid.Encrypt(tmpPassword)
+		newPassword, err := mid.Encrypt(tmpPassword)
 		if err != nil {
 			mid.ReturnHandleError(c, err.Error(), err)
 			return
 		}
-		err = db.AddUser(m.UserTable{Name:param.Username, Passwd:string(newPassword), DisplayName:param.DisplayName, Email:param.Email, Phone:param.Phone})
+		err = db.AddUser(m.UserTable{Name: param.Username, Passwd: string(newPassword), DisplayName: param.DisplayName, Email: param.Email, Phone: param.Phone})
 		if err != nil {
 			mid.ReturnUpdateTableError(c, "user", err)
-		}else{
-			session := m.Session{User:param.Username}
+		} else {
+			session := m.Session{User: param.Username}
 			isOk, sId := mid.SaveSession(session)
 			if !isOk {
 				mid.ReturnSuccessWithMessage(c, "Register success,but login with save session failed,please login")
-			}else{
+			} else {
 				session.Token = sId
 				mid.ReturnSuccessData(c, session)
 			}
 		}
-	}else{
+	} else {
 		mid.ReturnValidateError(c, err.Error())
 	}
 }
 
-func UpdateUserMsg(c *gin.Context)  {
+func UpdateUserMsg(c *gin.Context) {
 	var param m.UpdateUserDto
-	if err := c.ShouldBindJSON(&param); err==nil {
+	if err := c.ShouldBindJSON(&param); err == nil {
 		if mid.GetOperateUser(c) == "admin" {
 			mid.ReturnHandleError(c, "admin message can not change", nil)
 			return
@@ -131,14 +133,14 @@ func UpdateUserMsg(c *gin.Context)  {
 				mid.ReturnValidateError(c, "password and re_password is different")
 				return
 			}
-			tmpPassword,err := base64.StdEncoding.DecodeString(param.NewPassword)
+			tmpPassword, err := base64.StdEncoding.DecodeString(param.NewPassword)
 			if err != nil {
 				mid.ReturnValidateError(c, "password is not base64 encode")
 				return
 			}
-			newPassword,err := mid.Encrypt(tmpPassword)
+			newPassword, err := mid.Encrypt(tmpPassword)
 			userObj.Passwd = newPassword
-		}else{
+		} else {
 			userObj.Phone = param.Phone
 			userObj.Email = param.Email
 			userObj.DisplayName = param.DisplayName
@@ -146,17 +148,17 @@ func UpdateUserMsg(c *gin.Context)  {
 		err = db.UpdateUser(userObj)
 		if err != nil {
 			mid.ReturnUpdateTableError(c, "user", err)
-		}else{
+		} else {
 			mid.ReturnSuccess(c)
 		}
-	}else{
+	} else {
 		mid.ReturnValidateError(c, err.Error())
 	}
 }
 
-func GetUserMsg(c *gin.Context)  {
+func GetUserMsg(c *gin.Context) {
 	operator := mid.GetOperateUser(c)
-	err,userObj := db.GetUser(operator)
+	err, userObj := db.GetUser(operator)
 	if err != nil {
 		mid.ReturnQueryTableError(c, err.Error(), err)
 		return
@@ -166,20 +168,20 @@ func GetUserMsg(c *gin.Context)  {
 }
 
 type pluginInterfaceResultObj struct {
-	ResultCode  string  `json:"resultCode"`
-	ResultMessage  string  `json:"resultMessage"`
-	Results  pluginInterfaceResultOutput  `json:"results"`
+	ResultCode    string                      `json:"resultCode"`
+	ResultMessage string                      `json:"resultMessage"`
+	Results       pluginInterfaceResultOutput `json:"results"`
 }
 
 type pluginInterfaceResultOutput struct {
-	Outputs  []string  `json:"outputs"`
+	Outputs []string `json:"outputs"`
 }
 
 func AuthRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if strings.Contains(c.Request.RequestURI, "/export/ping/source") {
 			c.Next()
-		}else {
+		} else {
 			if !m.Config().Http.Session.Enable {
 				auToken := c.GetHeader("Authorization")
 				if auToken != "" {
@@ -193,7 +195,7 @@ func AuthRequired() gin.HandlerFunc {
 						// plugin interface call
 						if strings.Contains(c.Request.RequestURI, "/agent/export/") || strings.Contains(c.Request.RequestURI, "/dashboard/system/") {
 							isSystemCall := false
-							for _,v := range coreToken.Roles {
+							for _, v := range coreToken.Roles {
 								if v == m.SystemRole {
 									if coreToken.User == m.PlatformUser {
 										isSystemCall = true
@@ -202,12 +204,12 @@ func AuthRequired() gin.HandlerFunc {
 								}
 							}
 							if !isSystemCall {
-								c.JSON(http.StatusOK, pluginInterfaceResultObj{ResultCode:"1", ResultMessage:"Token authority validate fail", Results:pluginInterfaceResultOutput{Outputs: []string{}}})
+								c.JSON(http.StatusOK, pluginInterfaceResultObj{ResultCode: "1", ResultMessage: "Token authority validate fail", Results: pluginInterfaceResultOutput{Outputs: []string{}}})
 								c.Abort()
-							}else {
+							} else {
 								c.Next()
 							}
-						}else {
+						} else {
 							c.Next()
 						}
 					}
@@ -218,11 +220,11 @@ func AuthRequired() gin.HandlerFunc {
 			} else {
 				auToken := c.GetHeader("X-Auth-Token")
 				if auToken != "" {
-					isOk,operator := mid.IsActive(auToken, c.ClientIP())
+					isOk, operator := mid.IsActive(auToken, c.ClientIP())
 					if isOk {
 						c.Set("operatorName", operator)
 						c.Next()
-					}else {
+					} else {
 						mid.ReturnTokenError(c)
 						c.Abort()
 					}
@@ -240,69 +242,46 @@ func AuthServerRequest() gin.HandlerFunc {
 		if m.Config().Http.Session.ServerEnable {
 			if c.GetHeader("X-Auth-Token") == m.Config().Http.Session.ServerToken {
 				c.Next()
-			}else{
+			} else {
 				mid.ReturnTokenError(c)
 				c.Abort()
 			}
-		}else{
+		} else {
 			mid.ReturnTokenError(c)
 			c.Abort()
 		}
 	}
 }
 
-func LdapLogin(c *gin.Context) {
-	var authData auth
-	if err := c.ShouldBindJSON(&authData); err==nil {
-		if !mid.ValidatePost(c, authData, "Password") {
-			return
-	    }
-		if ldapAuth(authData.Username, authData.Password) {
-			session := m.Session{User:authData.Username}
-			isOk, sId := mid.SaveSession(session)
-			if !isOk {
-				mid.ReturnHandleError(c, "save session failed", nil)
-			}else{
-				session.Token = sId
-				mid.ReturnSuccessData(c, session)
-			}
-		}else{
-			mid.ReturnValidateError(c, "ldap auth fail")
-		}
-	}else{
-		mid.ReturnValidateError(c, err.Error())
-	}
-}
-
-func HealthCheck(c *gin.Context)  {
+func HealthCheck(c *gin.Context) {
 	ip := c.ClientIP()
 	date := time.Now().Format(m.DatetimeFormat)
 	log.Logger.Info("Health check", log.String("requestIp", ip), log.String("date", date))
 	c.JSON(http.StatusOK, gin.H{"status": "ok", "request_ip": ip, "date": date})
 }
 
-func ListUser(c *gin.Context)  {
+func ListUser(c *gin.Context) {
 	search := c.Query("search")
-	page,_ := strconv.Atoi(c.Query("page"))
-	size,_ := strconv.Atoi(c.Query("size"))
-	role,_ := strconv.Atoi(c.Query("role"))
+	page, _ := strconv.Atoi(c.Query("page"))
+	size, _ := strconv.Atoi(c.Query("size"))
+	role, _ := strconv.Atoi(c.Query("role"))
 	if page == 0 {
 		page = 1
 	}
 	if size == 0 {
 		size = 10
 	}
-	err,data := db.ListUser(search, role, page, size)
+	err, data := db.ListUser(search, role, page, size)
 	if err != nil {
 		mid.ReturnQueryTableError(c, "user", err)
-	}else{
+	} else {
 		mid.ReturnSuccessData(c, data)
 	}
 }
 
-func UpdateRole(c *gin.Context)  {
+func UpdateRole(c *gin.Context) {
 	var param m.UpdateRoleDto
-	if err := c.ShouldBindJSON(&param); err==nil {
+	if err := c.ShouldBindJSON(&param); err == nil {
 		if param.Operation != "add" && param.Operation != "update" && param.Operation != "delete" {
 			mid.ReturnValidateError(c, "operation should be add,update,delete")
 			return
@@ -311,18 +290,18 @@ func UpdateRole(c *gin.Context)  {
 		err = db.UpdateRoleNew(param)
 		if err != nil {
 			mid.ReturnUpdateTableError(c, "role", err)
-		}else{
+		} else {
 			mid.ReturnSuccess(c)
 		}
-	}else{
+	} else {
 		mid.ReturnValidateError(c, err.Error())
 	}
 }
 
-func ListRole(c *gin.Context)  {
+func ListRole(c *gin.Context) {
 	search := c.Query("search")
-	page,_ := strconv.Atoi(c.Query("page"))
-	size,_ := strconv.Atoi(c.Query("size"))
+	page, _ := strconv.Atoi(c.Query("page"))
+	size, _ := strconv.Atoi(c.Query("size"))
 	if page == 0 {
 		page = 1
 	}
@@ -330,24 +309,24 @@ func ListRole(c *gin.Context)  {
 		size = 10
 	}
 	db.SyncCoreRole()
-	err,data := db.ListRole(search, page, size)
+	err, data := db.ListRole(search, page, size)
 	if err != nil {
 		mid.ReturnQueryTableError(c, "role", err)
-	}else{
+	} else {
 		mid.ReturnSuccessData(c, data)
 	}
 }
 
-func UpdateRoleUser(c *gin.Context)  {
+func UpdateRoleUser(c *gin.Context) {
 	var param m.UpdateRoleUserDto
-	if err := c.ShouldBindJSON(&param); err==nil {
+	if err := c.ShouldBindJSON(&param); err == nil {
 		err = db.UpdateRoleUser(param)
 		if err != nil {
 			mid.ReturnUpdateTableError(c, "rel_role_user", err)
-		}else{
+		} else {
 			mid.ReturnSuccess(c)
 		}
-	}else{
+	} else {
 		mid.ReturnValidateError(c, err.Error())
 	}
 }
