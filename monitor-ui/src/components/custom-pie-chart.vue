@@ -55,10 +55,7 @@ export default {
     },
     getchartdata () {
       this.isAutoRefresh()
-      let params = {
-        endpoint: this.chartInfo.chartParams[0].endpoint,
-        metric: this.chartInfo.chartParams[0].prom_ql
-      }
+      let params = this.chartInfo.chartParams.data[0]
       this.elId = this.chartInfo.elId
       this.$root.$httpRequestEntrance.httpRequestEntrance(
         'POST',this.$root.apiCenter.metricConfigPieView.api, params,

@@ -74,13 +74,17 @@ export default {
     initPanals () {
       let tmp = []
       this.viewData.forEach((item) => {
-        let params = []
+        let params = {
+          aggregate: 'none',
+          time_second: -1800,
+          start: 0,
+          end: 0,
+          title: '',
+          unit: '',
+          data: []
+        }
         item.query.forEach( _ => {
-          params.push({
-            endpoint: _.endpoint,
-            metric: _.metricLabel,
-            prom_ql: _.metric,
-          })
+          params.data.push(_)
         })
         let height = (item.viewConfig.h) * 30
         let _activeCharts = []
