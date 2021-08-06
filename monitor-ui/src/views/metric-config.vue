@@ -363,7 +363,6 @@ export default {
       this.isShowWarning = true
     },
     removePanel (id) {
-      console.log(3333)
       this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', this.$root.apiCenter.addPanel + '?ids=' + id, '', () => {
         this.$Message.success(this.$t('tips.success'))
         this.selectdPanel = ''
@@ -491,11 +490,19 @@ export default {
       generateUuid().then((elId)=>{
         this.acquisitionConfigurationElId =  `id_${elId}`
       })
-      const params = [{
+      let params = {
+        aggregate: 'none',
+        time_second: -1800,
+        start: 0,
+        end: 0,
+        title: '',
+        unit: '',
+        data: []
+      }
+      params.data = [{
         endpoint: this.metricConfigData.endpoint,
         prom_ql: this.metricConfigData.prom_ql,
-        metric: this.metricConfigData.metric,
-        time: '-1800'
+        metric: this.metricConfigData.metric
       }]
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.metricConfigView.api, params, responseData => {
         const chartConfig = {eye: false,clear:true, zoomCallback: true}
@@ -506,13 +513,20 @@ export default {
       generateUuid().then((elId)=>{
         this.displayGroupElId =  `id_${elId}`
       })
-      let params = []
+      let params = {
+        aggregate: 'none',
+        time_second: -1800,
+        start: 0,
+        end: 0,
+        title: '',
+        unit: '',
+        data: []
+      }
       this.graphConfig.metric.forEach(metric => {
-        params.push({
+        params.data.push({
           endpoint: this.metricConfigData.endpoint,
           prom_ql: '',
-          metric: metric,
-          time: '-1800'
+          metric: metric
         })
       })
       this.isRequestChartData = true

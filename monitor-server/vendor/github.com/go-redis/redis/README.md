@@ -20,29 +20,28 @@ Supports:
 - [Instrumentation](https://godoc.org/github.com/go-redis/redis#ex-package--Instrumentation).
 - [Cache friendly](https://github.com/go-redis/cache).
 - [Rate limiting](https://github.com/go-redis/redis_rate).
-- [Distributed Locks](https://github.com/bsm/redislock).
+- [Distributed Locks](https://github.com/bsm/redis-lock).
 
 API docs: https://godoc.org/github.com/go-redis/redis.
 Examples: https://godoc.org/github.com/go-redis/redis#pkg-examples.
 
 ## Installation
 
-go-redis requires a Go version with [Modules](https://github.com/golang/go/wiki/Modules) support and uses import versioning. So please make sure to initialize a Go module before installing go-redis:
+Install:
 
-``` shell
-go mod init github.com/my/repo
-go get github.com/go-redis/redis/v7
+```shell
+go get -u github.com/go-redis/redis
 ```
 
 Import:
 
-``` go
-import "github.com/go-redis/redis/v7"
+```go
+import "github.com/go-redis/redis"
 ```
 
 ## Quickstart
 
-``` go
+```go
 func ExampleNewClient() {
 	client := redis.NewClient(&redis.Options{
 		Addr:     "localhost:6379",
@@ -88,7 +87,7 @@ Please go through [examples](https://godoc.org/github.com/go-redis/redis#pkg-exa
 
 Some corner cases:
 
-``` go
+```go
 // SET key value EX 10 NX
 set, err := client.SetNX("key", "value", 10*time.Second).Result()
 
@@ -108,9 +107,36 @@ vals, err := client.ZInterStore("out", redis.ZStore{Weights: []int64{2, 3}}, "zs
 
 // EVAL "return {KEYS[1],ARGV[1]}" 1 "key" "hello"
 vals, err := client.Eval("return {KEYS[1],ARGV[1]}", []string{"key"}, "hello").Result()
+```
 
-// custom command
-res, err := client.Do("set", "key", "value").Result()
+## Benchmark
+
+go-redis vs redigo:
+
+```
+BenchmarkSetGoRedis10Conns64Bytes-4 	  200000	      7621 ns/op	     210 B/op	       6 allocs/op
+BenchmarkSetGoRedis100Conns64Bytes-4	  200000	      7554 ns/op	     210 B/op	       6 allocs/op
+BenchmarkSetGoRedis10Conns1KB-4     	  200000	      7697 ns/op	     210 B/op	       6 allocs/op
+BenchmarkSetGoRedis100Conns1KB-4    	  200000	      7688 ns/op	     210 B/op	       6 allocs/op
+BenchmarkSetGoRedis10Conns10KB-4    	  200000	      9214 ns/op	     210 B/op	       6 allocs/op
+BenchmarkSetGoRedis100Conns10KB-4   	  200000	      9181 ns/op	     210 B/op	       6 allocs/op
+BenchmarkSetGoRedis10Conns1MB-4     	    2000	    583242 ns/op	    2337 B/op	       6 allocs/op
+BenchmarkSetGoRedis100Conns1MB-4    	    2000	    583089 ns/op	    2338 B/op	       6 allocs/op
+BenchmarkSetRedigo10Conns64Bytes-4  	  200000	      7576 ns/op	     208 B/op	       7 allocs/op
+BenchmarkSetRedigo100Conns64Bytes-4 	  200000	      7782 ns/op	     208 B/op	       7 allocs/op
+BenchmarkSetRedigo10Conns1KB-4      	  200000	      7958 ns/op	     208 B/op	       7 allocs/op
+BenchmarkSetRedigo100Conns1KB-4     	  200000	      7725 ns/op	     208 B/op	       7 allocs/op
+BenchmarkSetRedigo10Conns10KB-4     	  100000	     18442 ns/op	     208 B/op	       7 allocs/op
+BenchmarkSetRedigo100Conns10KB-4    	  100000	     18818 ns/op	     208 B/op	       7 allocs/op
+BenchmarkSetRedigo10Conns1MB-4      	    2000	    668829 ns/op	     226 B/op	       7 allocs/op
+BenchmarkSetRedigo100Conns1MB-4     	    2000	    679542 ns/op	     226 B/op	       7 allocs/op
+```
+
+Redis Cluster:
+
+```
+BenchmarkRedisPing-4                	  200000	      6983 ns/op	     116 B/op	       4 allocs/op
+BenchmarkRedisClusterPing-4         	  100000	     11535 ns/op	     117 B/op	       4 allocs/op
 ```
 
 ## See also

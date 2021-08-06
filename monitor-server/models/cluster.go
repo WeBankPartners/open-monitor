@@ -1,15 +1,15 @@
 package models
 
 type ClusterTable struct {
-	Id                 string `json:"id"`
-	DisplayName        string `json:"display_name"`
-	RemoteAgentAddress string `json:"remote_agent_address"`
-	PromAddress        string `json:"prom_address"`
+	Id                 string `json:"id" binding:"required"`
+	DisplayName        string `json:"display_name" binding:"required"`
+	RemoteAgentAddress string `json:"remote_agent_address" binding:"required"`
+	PromAddress        string `json:"prom_address" binding:"required"`
 }
 
 type SdLocalConfigJob struct {
-	FromPeer  bool
-	Configs   []*SdConfigSyncObj
+	FromPeer bool
+	Configs  []*SdConfigSyncObj
 }
 
 type SdConfigSyncObj struct {

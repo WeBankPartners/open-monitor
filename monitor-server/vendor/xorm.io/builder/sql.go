@@ -21,7 +21,7 @@ func condToSQL(cond Cond) (string, []interface{}, error) {
 	if err := cond.WriteTo(w); err != nil {
 		return "", nil, err
 	}
-	return w.writer.String(), w.args, nil
+	return w.String(), w.args, nil
 }
 
 func condToBoundSQL(cond Cond) (string, error) {
@@ -33,7 +33,7 @@ func condToBoundSQL(cond Cond) (string, error) {
 	if err := cond.WriteTo(w); err != nil {
 		return "", err
 	}
-	return ConvertToBoundSQL(w.writer.String(), w.args)
+	return ConvertToBoundSQL(w.String(), w.args)
 }
 
 // ToSQL convert a builder or conditions to SQL and args
@@ -59,6 +59,9 @@ func ToBoundSQL(cond interface{}) (string, error) {
 }
 
 func noSQLQuoteNeeded(a interface{}) bool {
+	if a == nil {
+		return false
+	}
 	switch a.(type) {
 	case int, int8, int16, int32, int64:
 		return true
@@ -75,6 +78,7 @@ func noSQLQuoteNeeded(a interface{}) bool {
 	}
 
 	t := reflect.TypeOf(a)
+
 	switch t.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		return true
@@ -93,7 +97,7 @@ func noSQLQuoteNeeded(a interface{}) bool {
 
 // ConvertToBoundSQL will convert SQL and args to a bound SQL
 func ConvertToBoundSQL(sql string, args []interface{}) (string, error) {
-	buf := StringBuilder{}
+	buf := strings.Builder{}
 	var i, j, start int
 	for ; i < len(sql); i++ {
 		if sql[i] == '?' {
@@ -133,12 +137,16 @@ func ConvertToBoundSQL(sql string, args []interface{}) (string, error) {
 	return buf.String(), nil
 }
 
-// ConvertPlaceholder replaces ? to $1, $2 ... or :1, :2 ... according prefix
+// ConvertPlaceholder replaces the place holder ? to $1, $2 ... or :1, :2 ... according prefix
 func ConvertPlaceholder(sql, prefix string) (string, error) {
-	buf := StringBuilder{}
+	buf := strings.Builder{}
 	var i, j, start int
+	var ready = true
 	for ; i < len(sql); i++ {
-		if sql[i] == '?' {
+		if sql[i] == '\'' && i > 0 && sql[i-1] != '\\' {
+			ready = !ready
+		}
+		if ready && sql[i] == '?' {
 			if _, err := buf.WriteString(sql[start:i]); err != nil {
 				return "", err
 			}
