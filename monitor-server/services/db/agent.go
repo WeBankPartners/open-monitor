@@ -1,40 +1,40 @@
 package db
 
 import (
-	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"fmt"
-	"time"
-	"strings"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
+	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"strings"
+	"time"
 )
 
-func UpdateEndpoint(endpoint *m.EndpointTable) (stepList []int,err error) {
+func UpdateEndpoint(endpoint *m.EndpointTable) (stepList []int, err error) {
 	stepList = append(stepList, endpoint.Step)
 	if endpoint.Cluster == "" {
 		endpoint.Cluster = "default"
 	}
-	host := m.EndpointTable{Guid:endpoint.Guid}
+	host := m.EndpointTable{Guid: endpoint.Guid}
 	GetEndpoint(&host)
 	if host.Id == 0 {
 		insert := fmt.Sprintf("INSERT INTO endpoint(guid,name,ip,endpoint_version,export_type,export_version,step,address,os_type,create_at,address_agent,cluster) VALUE ('%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%s','%s')",
-			endpoint.Guid,endpoint.Name,endpoint.Ip,endpoint.EndpointVersion,endpoint.ExportType,endpoint.ExportVersion,endpoint.Step,endpoint.Address,endpoint.OsType,time.Now().Format(m.DatetimeFormat),endpoint.AddressAgent,endpoint.Cluster)
+			endpoint.Guid, endpoint.Name, endpoint.Ip, endpoint.EndpointVersion, endpoint.ExportType, endpoint.ExportVersion, endpoint.Step, endpoint.Address, endpoint.OsType, time.Now().Format(m.DatetimeFormat), endpoint.AddressAgent, endpoint.Cluster)
 		log.Logger.Debug("Insert", log.String("sql", insert))
-		_,err = x.Exec(insert)
+		_, err = x.Exec(insert)
 		if err != nil {
 			log.Logger.Error("Insert endpoint fail", log.Error(err))
 			return
 		}
-		host := m.EndpointTable{Guid:endpoint.Guid}
+		host := m.EndpointTable{Guid: endpoint.Guid}
 		GetEndpoint(&host)
 		endpoint.Id = host.Id
-	}else{
+	} else {
 		if host.Step != endpoint.Step {
 			stepList = append(stepList, host.Step)
 		}
 		update := fmt.Sprintf("UPDATE endpoint SET name='%s',ip='%s',endpoint_version='%s',export_type='%s',export_version='%s',step=%d,address='%s',os_type='%s',address_agent='%s',cluster='%s' WHERE id=%d",
-			endpoint.Name,endpoint.Ip,endpoint.EndpointVersion,endpoint.ExportType,endpoint.ExportVersion,endpoint.Step,endpoint.Address,endpoint.OsType,endpoint.AddressAgent,endpoint.Cluster,host.Id)
+			endpoint.Name, endpoint.Ip, endpoint.EndpointVersion, endpoint.ExportType, endpoint.ExportVersion, endpoint.Step, endpoint.Address, endpoint.OsType, endpoint.AddressAgent, endpoint.Cluster, host.Id)
 		log.Logger.Debug("Update", log.String("sql", update))
-		_,err = x.Exec(update)
+		_, err = x.Exec(update)
 		if err != nil {
 			log.Logger.Error("Update endpoint fail", log.Error(err))
 			return
@@ -47,7 +47,7 @@ func UpdateEndpoint(endpoint *m.EndpointTable) (stepList []int,err error) {
 func AddCustomMetric(param m.TransGatewayMetricDto) error {
 	distinctMetricMap := make(map[string]bool)
 	var err error
-	for _,v := range param.Params {
+	for _, v := range param.Params {
 		var endpointObjs []*m.EndpointTable
 		x.SQL("SELECT id FROM endpoint WHERE export_type='custom' AND name=?", v.Name).Find(&endpointObjs)
 		if len(endpointObjs) == 0 {
@@ -57,10 +57,10 @@ func AddCustomMetric(param m.TransGatewayMetricDto) error {
 		var endpointMetricObjs []*m.EndpointMetricTable
 		x.SQL("SELECT * FROM endpoint_metric WHERE endpoint_id=?", tmpEndpointId).Find(&endpointMetricObjs)
 		var tmpMetricList []string
-		for _,vv := range v.Metrics {
+		for _, vv := range v.Metrics {
 			distinctMetricMap[vv] = true
 			existFlag := false
-			for _,vvv := range endpointMetricObjs {
+			for _, vvv := range endpointMetricObjs {
 				if vvv.Metric == vv {
 					existFlag = true
 					break
@@ -74,11 +74,11 @@ func AddCustomMetric(param m.TransGatewayMetricDto) error {
 			continue
 		}
 		var insertSql string
-		for _,vv := range tmpMetricList {
+		for _, vv := range tmpMetricList {
 			insertSql = insertSql + fmt.Sprintf("(%d,'%s'),", tmpEndpointId, vv)
 		}
 		insertSql = insertSql[:len(insertSql)-1]
-		_,err = x.Exec("INSERT INTO endpoint_metric(endpoint_id,metric) VALUES " + insertSql)
+		_, err = x.Exec("INSERT INTO endpoint_metric(endpoint_id,metric) VALUES " + insertSql)
 		if err != nil {
 			log.Logger.Error("Update custom endpoint_metric fail", log.Error(err))
 		}
@@ -90,15 +90,15 @@ func AddCustomMetric(param m.TransGatewayMetricDto) error {
 		return nil
 	}
 	var promMetricObjs []*m.PromMetricTable
-	var whereSql,insertSql string
-	for k,_ := range distinctMetricMap {
+	var whereSql, insertSql string
+	for k, _ := range distinctMetricMap {
 		whereSql = whereSql + fmt.Sprintf("'%s',", k)
 	}
 	whereSql = whereSql[:len(whereSql)-1]
 	x.SQL("SELECT * FROM prom_metric WHERE metric_type='custom' AND metric IN (" + whereSql + ")").Find(&promMetricObjs)
-	for k,_ := range distinctMetricMap {
+	for k, _ := range distinctMetricMap {
 		existFlag := false
-		for _,v := range promMetricObjs {
+		for _, v := range promMetricObjs {
 			if k == v.Metric {
 				existFlag = true
 			}
@@ -109,7 +109,7 @@ func AddCustomMetric(param m.TransGatewayMetricDto) error {
 	}
 	if insertSql != "" {
 		insertSql = insertSql[:len(insertSql)-1]
-		_,err = x.Exec("INSERT INTO prom_metric(metric,metric_type,prom_ql) VALUES " + insertSql)
+		_, err = x.Exec("INSERT INTO prom_metric(metric,metric_type,prom_ql) VALUES " + insertSql)
 		if err != nil {
 			log.Logger.Error("Update custom prom_metric fail", log.Error(err))
 			return err
@@ -120,17 +120,17 @@ func AddCustomMetric(param m.TransGatewayMetricDto) error {
 
 func DeleteEndpoint(guid string) error {
 	var actions []*Action
-	actions = append(actions, &Action{Sql:"DELETE FROM endpoint_metric WHERE endpoint_id IN (SELECT id FROM endpoint WHERE guid=?)", Param:[]interface{}{guid}})
-	actions = append(actions, &Action{Sql:"DELETE FROM endpoint WHERE guid=?", Param:[]interface{}{guid}})
+	actions = append(actions, &Action{Sql: "DELETE FROM endpoint_metric WHERE endpoint_id IN (SELECT id FROM endpoint WHERE guid=?)", Param: []interface{}{guid}})
+	actions = append(actions, &Action{Sql: "DELETE FROM endpoint WHERE guid=?", Param: []interface{}{guid}})
 	var alarms []*m.AlarmTable
 	x.SQL("SELECT id FROM alarm WHERE endpoint=? AND status='firing'", guid).Find(&alarms)
 	if len(alarms) > 0 {
 		var ids string
-		for _,v := range alarms {
+		for _, v := range alarms {
 			ids += fmt.Sprintf("%d,", v.Id)
 		}
 		ids = ids[:len(ids)-1]
-		actions = append(actions, &Action{Sql:fmt.Sprintf("UPDATE alarm SET STATUS='closed' WHERE id IN (%s)", ids), Param:[]interface{}{}})
+		actions = append(actions, &Action{Sql: fmt.Sprintf("UPDATE alarm SET STATUS='closed' WHERE id IN (%s)", ids), Param: []interface{}{}})
 	}
 	err := Transaction(actions)
 	if err != nil {
@@ -140,14 +140,14 @@ func DeleteEndpoint(guid string) error {
 	return nil
 }
 
-func UpdateEndpointAlarmFlag(isStop bool,exportType,instance,ip,port,pod,k8sCluster string) error {
+func UpdateEndpointAlarmFlag(isStop bool, exportType, instance, ip, port, pod, k8sCluster string) error {
 	var endpoints []*m.EndpointTable
 	if exportType == "host" {
 		x.SQL("SELECT id FROM endpoint WHERE export_type=? AND ip=?", exportType, ip).Find(&endpoints)
 	} else if exportType == "pod" {
 		if k8sCluster != "" {
 			x.SQL("select * from endpoint where name=? and os_type=? and export_type='pod'", pod, k8sCluster).Find(&endpoints)
-		}else {
+		} else {
 			x.SQL("select * from endpoint where name=? and export_type='pod'", pod).Find(&endpoints)
 		}
 	} else {
@@ -162,10 +162,10 @@ func UpdateEndpointAlarmFlag(isStop bool,exportType,instance,ip,port,pod,k8sClus
 		if isStop {
 			stopAlarm = "1"
 		}
-		_,err := x.Exec(fmt.Sprintf("UPDATE endpoint SET stop_alarm=%s WHERE id=%d", stopAlarm, endpoints[0].Id))
+		_, err := x.Exec(fmt.Sprintf("UPDATE endpoint SET stop_alarm=%s WHERE id=%d", stopAlarm, endpoints[0].Id))
 		return err
-	}else{
-		return fmt.Errorf("Can not find this monitor object with %s %s %s %s \n", exportType,instance,ip,port)
+	} else {
+		return fmt.Errorf("Can not find this monitor object with %s %s %s %s \n", exportType, instance, ip, port)
 	}
 }
 
@@ -181,14 +181,14 @@ func UpdateRecursivePanel(param m.PanelRecursiveTable) error {
 		//tmpEmail := unionList(param.Email, prt[0].Email, ",")
 		//tmpPhone := unionList(param.Phone, prt[0].Phone, ",")
 		//tmpRole := unionList(param.Role, prt[0].Role, ",")
-		_,err = x.Exec("UPDATE panel_recursive SET display_name=?,parent=?,endpoint=?,email=?,phone=?,role=?,firing_callback_key=?,recover_callback_key=?,obj_type=? WHERE guid=?", param.DisplayName,tmpParent,tmpEndpoint,param.Email,param.Phone,param.Role,param.FiringCallbackKey,param.RecoverCallbackKey,param.ObjType,param.Guid)
-	}else{
-		_,err = x.Exec("INSERT INTO panel_recursive(guid,display_name,parent,endpoint,email,phone,role,firing_callback_key,recover_callback_key,obj_type) VALUE (?,?,?,?,?,?,?,?,?,?)", param.Guid,param.DisplayName,param.Parent,param.Endpoint,param.Email,param.Phone,param.Role,param.FiringCallbackKey,param.RecoverCallbackKey,param.ObjType)
+		_, err = x.Exec("UPDATE panel_recursive SET display_name=?,parent=?,endpoint=?,email=?,phone=?,role=?,firing_callback_key=?,recover_callback_key=?,obj_type=? WHERE guid=?", param.DisplayName, tmpParent, tmpEndpoint, param.Email, param.Phone, param.Role, param.FiringCallbackKey, param.RecoverCallbackKey, param.ObjType, param.Guid)
+	} else {
+		_, err = x.Exec("INSERT INTO panel_recursive(guid,display_name,parent,endpoint,email,phone,role,firing_callback_key,recover_callback_key,obj_type) VALUE (?,?,?,?,?,?,?,?,?,?)", param.Guid, param.DisplayName, param.Parent, param.Endpoint, param.Email, param.Phone, param.Role, param.FiringCallbackKey, param.RecoverCallbackKey, param.ObjType)
 	}
 	return err
 }
 
-func UpdateRecursiveEndpoint(guid string,endpoint []string) error {
+func UpdateRecursiveEndpoint(guid string, endpoint []string) error {
 	var prt []*m.PanelRecursiveTable
 	err := x.SQL("SELECT * FROM panel_recursive WHERE guid=?", guid).Find(&prt)
 	if err != nil {
@@ -202,9 +202,9 @@ func UpdateRecursiveEndpoint(guid string,endpoint []string) error {
 		return nil
 	}
 	var newEndpoint []string
-	for _,v := range tmpEndpoint {
+	for _, v := range tmpEndpoint {
 		tmpFlag := false
-		for _,vv := range endpoint {
+		for _, vv := range endpoint {
 			if vv == v {
 				tmpFlag = true
 				break
@@ -214,21 +214,21 @@ func UpdateRecursiveEndpoint(guid string,endpoint []string) error {
 			newEndpoint = append(newEndpoint, v)
 		}
 	}
-	_,err = x.Exec("UPDATE panel_recursive SET endpoint=? WHERE guid=?", strings.Join(newEndpoint, "^"), guid)
+	_, err = x.Exec("UPDATE panel_recursive SET endpoint=? WHERE guid=?", strings.Join(newEndpoint, "^"), guid)
 	return err
 }
 
 func DeleteRecursivePanel(guid string) error {
-	_,err := x.Exec("DELETE FROM panel_recursive WHERE guid=?", guid)
+	_, err := x.Exec("DELETE FROM panel_recursive WHERE guid=?", guid)
 	return err
 }
 
-func unionList(param,exist,split string) string {
+func unionList(param, exist, split string) string {
 	paramList := strings.Split(param, split)
 	existList := strings.Split(exist, split)
-	for _,v := range paramList {
+	for _, v := range paramList {
 		tmpExist := false
-		for _,vv := range existList {
+		for _, vv := range existList {
 			if vv == v {
 				tmpExist = true
 				break
@@ -250,54 +250,77 @@ func SearchRecursivePanel(search string) []*m.OptionModel {
 	search = `%` + search + `%`
 	sql := `SELECT * FROM panel_recursive WHERE display_name LIKE  ? limit 100`
 	x.SQL(sql, search).Find(&prt)
-	for _,v := range prt {
+	for _, v := range prt {
 		//options = append(options, &m.OptionModel{Id:-1, OptionValue:fmt.Sprintf("%s:sys", v.Guid), OptionText:v.DisplayName})
-		options = append(options, &m.OptionModel{Id:-1, OptionValue:v.Guid, OptionText:v.DisplayName, OptionType:"sys", OptionTypeName:v.ObjType})
+		options = append(options, &m.OptionModel{Id: -1, OptionValue: v.Guid, OptionText: v.DisplayName, OptionType: "sys", OptionTypeName: v.ObjType})
 	}
 	return options
+}
+
+func ListRecursiveEndpointType(guid string) (result []string, err error) {
+	result = []string{}
+	var prt []*m.PanelRecursiveTable
+	err = x.SQL("select endpoint from panel_recursive where guid=?", guid).Find(&prt)
+	if err != nil {
+		return
+	}
+	if len(prt) == 0 {
+		err = fmt.Errorf("Can not find recursive panel with guid:%s ", guid)
+		return
+	}
+	endpointList := strings.Split(prt[0].Endpoint, "^")
+	if len(endpointList) == 0 {
+		return result, nil
+	}
+	var endpointTable []*m.EndpointTable
+	x.SQL("select distinct export_type from endpoint where guid in ('" + strings.Join(endpointList, "','") + "')").Find(&endpointTable)
+	for _, v := range endpointTable {
+		result = append(result, v.ExportType)
+	}
+	return
 }
 
 func GetRecursivePanel(guid string) (err error, result m.RecursivePanelObj) {
 	var prt []*m.PanelRecursiveTable
 	err = x.SQL("SELECT guid,display_name,CONCAT(parent,'^') parent,endpoint FROM panel_recursive").Find(&prt)
 	if err != nil {
-		return err,result
+		return err, result
 	}
 	result = recursiveData(guid, prt, len(prt), 1)
-	return nil,result
+	return nil, result
 }
 
-func recursiveData(guid string, prt []*m.PanelRecursiveTable, length,depth int) m.RecursivePanelObj {
+func recursiveData(guid string, prt []*m.PanelRecursiveTable, length, depth int) m.RecursivePanelObj {
 	var obj m.RecursivePanelObj
 	if length < depth {
 		return obj
 	}
 	tmp := guid + "^"
-	for _,v := range prt {
+	for _, v := range prt {
 		if v.Guid == guid {
 			obj.DisplayName = v.DisplayName
 			if v.Endpoint != "" {
 				endpointList := strings.Split(v.Endpoint, "^")
 				tmpMap := make(map[string][]string)
-				for _,vv := range endpointList {
-					tmpEndpointObj := m.EndpointTable{Guid:vv}
+				for _, vv := range endpointList {
+					tmpEndpointObj := m.EndpointTable{Guid: vv}
 					GetEndpoint(&tmpEndpointObj)
 					if tmpEndpointObj.ExportType == "" {
 						continue
 					}
 					tmpType := tmpEndpointObj.ExportType
-					if _,b := tmpMap[tmpType]; b {
+					if _, b := tmpMap[tmpType]; b {
 						tmpMap[tmpType] = append(tmpMap[tmpType], vv)
-					}else{
+					} else {
 						tmpMap[tmpType] = []string{vv}
 					}
 				}
-				for mk,mv := range tmpMap {
+				for mk, mv := range tmpMap {
 					chartTables := getChartsByEndpointType(mk)
-					for _,cv := range chartTables {
-						obj.Charts = append(obj.Charts, &m.ChartModel{Id:cv.Id, Endpoint:mv, Metric:strings.Split(cv.Metric, "^"), Aggregate:cv.AggType})
+					for _, cv := range chartTables {
+						obj.Charts = append(obj.Charts, &m.ChartModel{Id: cv.Id, Endpoint: mv, Metric: strings.Split(cv.Metric, "^"), Aggregate: cv.AggType})
 					}
-					for _,extendChart := range getExtendPanelCharts(mv, mk, v.Guid) {
+					for _, extendChart := range getExtendPanelCharts(mv, mk, v.Guid) {
 						obj.Charts = append(obj.Charts, extendChart)
 					}
 				}
@@ -313,18 +336,18 @@ func recursiveData(guid string, prt []*m.PanelRecursiveTable, length,depth int) 
 	return obj
 }
 
-func getExtendPanelCharts(endpoints []string,exportType,guid string) []*m.ChartModel {
+func getExtendPanelCharts(endpoints []string, exportType, guid string) []*m.ChartModel {
 	log.Logger.Debug("getExtendPanel", log.String("exportType", exportType), log.StringList("endpoints", endpoints), log.String("guid", guid))
 	var result []*m.ChartModel
 	if exportType == "java" {
-		for _,endpoint := range endpoints {
-			_,businessMonitor := GetBusinessList(0, endpoint)
+		for _, endpoint := range endpoints {
+			_, businessMonitor := GetBusinessList(0, endpoint)
 			if len(businessMonitor) > 0 {
 				businessMonitorMap := make(map[int][]string)
-				for _,v := range businessMonitor {
-					if _,b := businessMonitorMap[v.EndpointId];b {
+				for _, v := range businessMonitor {
+					if _, b := businessMonitorMap[v.EndpointId]; b {
 						exist := false
-						for _,vv := range businessMonitorMap[v.EndpointId] {
+						for _, vv := range businessMonitorMap[v.EndpointId] {
 							if vv == v.Path {
 								exist = true
 								break
@@ -333,14 +356,14 @@ func getExtendPanelCharts(endpoints []string,exportType,guid string) []*m.ChartM
 						if !exist {
 							businessMonitorMap[v.EndpointId] = append(businessMonitorMap[v.EndpointId], v.Path)
 						}
-					}else{
+					} else {
 						businessMonitorMap[v.EndpointId] = []string{v.Path}
 					}
 				}
-				businessCharts,businessPanels := GetBusinessPanelChart()
+				businessCharts, businessPanels := GetBusinessPanelChart()
 				if len(businessCharts) > 0 {
 					chartsDto, _ := GetAutoDisplay(businessMonitorMap, businessPanels[0].TagsKey, businessCharts)
-					for _,tmpChartModel := range chartsDto {
+					for _, tmpChartModel := range chartsDto {
 						result = append(result, tmpChartModel)
 					}
 				}
@@ -348,9 +371,9 @@ func getExtendPanelCharts(endpoints []string,exportType,guid string) []*m.ChartM
 		}
 		// Agg same metric
 		var newResult []*m.ChartModel
-		for _,v := range result {
+		for _, v := range result {
 			metricIndex := -1
-			for i,vv := range newResult {
+			for i, vv := range newResult {
 				if v.Metric[0] == vv.Metric[0] {
 					metricIndex = i
 					break
@@ -358,22 +381,22 @@ func getExtendPanelCharts(endpoints []string,exportType,guid string) []*m.ChartM
 			}
 			if metricIndex >= 0 {
 				newResult[metricIndex].Endpoint = append(newResult[metricIndex].Endpoint, v.Endpoint...)
-			}else{
+			} else {
 				newResult = append(newResult, v)
 			}
 		}
 		result = newResult
 	}
 	if exportType == "mysql" {
-		dbMonitorList,_ := GetDbMonitorByPanel(guid)
+		dbMonitorList, _ := GetDbMonitorByPanel(guid)
 		if len(dbMonitorList) > 0 {
-			dbMonitorChart,_ := GetDbMonitorChart()
+			dbMonitorChart, _ := GetDbMonitorChart()
 			if len(dbMonitorChart) > 0 {
 				var tmpMetrics []string
-				for _,v := range dbMonitorList {
+				for _, v := range dbMonitorList {
 					tmpMetrics = append(tmpMetrics, v.Name)
 				}
-				result = append(result, &m.ChartModel{Id:dbMonitorChart[0].Id,Endpoint:endpoints,Aggregate:dbMonitorChart[0].AggType,Metric:tmpMetrics})
+				result = append(result, &m.ChartModel{Id: dbMonitorChart[0].Id, Endpoint: endpoints, Aggregate: dbMonitorChart[0].AggType, Metric: tmpMetrics})
 			}
 		}
 	}
@@ -388,7 +411,7 @@ func getChartsByEndpointType(endpointType string) []*m.ChartTable {
 	}
 	tmpGroupId := result[0].GroupId
 	var ct []*m.ChartTable
-	for _,v := range result {
+	for _, v := range result {
 		if v.GroupId == tmpGroupId {
 			ct = append(ct, v)
 		}
@@ -398,9 +421,9 @@ func getChartsByEndpointType(endpointType string) []*m.ChartTable {
 
 func UpdateEndpointTelnet(param m.UpdateEndpointTelnetParam) error {
 	var actions []*Action
-	actions = append(actions, &Action{Sql:"DELETE FROM endpoint_telnet WHERE endpoint_guid=?", Param:[]interface{}{param.Guid}})
-	for _,v := range param.Config {
-		actions = append(actions, &Action{Sql:"INSERT INTO endpoint_telnet(`endpoint_guid`,`port`,`note`) VALUE (?,?,?)", Param:[]interface{}{param.Guid,v.Port,v.Note}})
+	actions = append(actions, &Action{Sql: "DELETE FROM endpoint_telnet WHERE endpoint_guid=?", Param: []interface{}{param.Guid}})
+	for _, v := range param.Config {
+		actions = append(actions, &Action{Sql: "INSERT INTO endpoint_telnet(`endpoint_guid`,`port`,`note`) VALUE (?,?,?)", Param: []interface{}{param.Guid, v.Port, v.Note}})
 	}
 	err := Transaction(actions)
 	if err != nil {
@@ -409,9 +432,9 @@ func UpdateEndpointTelnet(param m.UpdateEndpointTelnetParam) error {
 	return err
 }
 
-func GetEndpointTelnet(guid string) (result []*m.EndpointTelnetTable,err error) {
+func GetEndpointTelnet(guid string) (result []*m.EndpointTelnetTable, err error) {
 	err = x.SQL("SELECT port,note FROM endpoint_telnet WHERE endpoint_guid=?", guid).Find(&result)
-	return result,err
+	return result, err
 }
 
 func UpdateEndpointHttp(param []*m.EndpointHttpTable) error {
@@ -419,9 +442,9 @@ func UpdateEndpointHttp(param []*m.EndpointHttpTable) error {
 		return nil
 	}
 	var actions []*Action
-	actions = append(actions, &Action{Sql:"DELETE FROM endpoint_http WHERE endpoint_guid=?", Param:[]interface{}{param[0].EndpointGuid}})
-	for _,v := range param {
-		actions = append(actions, &Action{Sql:"INSERT INTO endpoint_http(`endpoint_guid`,`method`,`url`) VALUE (?,?,?)", Param:[]interface{}{v.EndpointGuid,v.Method,v.Url}})
+	actions = append(actions, &Action{Sql: "DELETE FROM endpoint_http WHERE endpoint_guid=?", Param: []interface{}{param[0].EndpointGuid}})
+	for _, v := range param {
+		actions = append(actions, &Action{Sql: "INSERT INTO endpoint_http(`endpoint_guid`,`method`,`url`) VALUE (?,?,?)", Param: []interface{}{v.EndpointGuid, v.Method, v.Url}})
 	}
 	err := Transaction(actions)
 	if err != nil {
@@ -436,9 +459,9 @@ func GetPingExporterSource() []*m.PingExportSourceObj {
 	var tplTables []*m.TplTable
 	x.SQL(fmt.Sprintf("SELECT t2.id,t2.grp_id,t2.endpoint_id FROM strategy t1 LEFT JOIN tpl t2 ON t1.tpl_id=t2.id WHERE t1.metric='%s'", pingMetric)).Find(&tplTables)
 	if len(tplTables) > 0 {
-		var grpIds,endpointIds string
+		var grpIds, endpointIds string
 		var endpointTable []*m.EndpointTable
-		for _,v := range tplTables {
+		for _, v := range tplTables {
 			if v.GrpId > 0 {
 				grpIds += fmt.Sprintf("%d,", v.GrpId)
 			}
@@ -449,40 +472,40 @@ func GetPingExporterSource() []*m.PingExportSourceObj {
 		if grpIds != "" {
 			grpIds = grpIds[:len(grpIds)-1]
 			x.SQL(fmt.Sprintf("SELECT t2.guid,t2.ip FROM grp_endpoint t1 LEFT JOIN endpoint t2 ON t1.endpoint_id=t2.id WHERE t1.grp_id IN (%s) AND t2.address_agent=''", grpIds)).Find(&endpointTable)
-			for _,v := range endpointTable {
-				result = append(result, &m.PingExportSourceObj{Ip:v.Ip, Guid:v.Guid})
+			for _, v := range endpointTable {
+				result = append(result, &m.PingExportSourceObj{Ip: v.Ip, Guid: v.Guid})
 			}
 		}
 		if endpointIds != "" {
 			endpointTable = []*m.EndpointTable{}
 			endpointIds = endpointIds[:len(endpointIds)-1]
 			x.SQL(fmt.Sprintf("SELECT guid,ip FROM endpoint WHERE id IN (%s) AND address_agent=''", endpointIds)).Find(&endpointTable)
-			for _,v := range endpointTable {
-				result = append(result, &m.PingExportSourceObj{Ip:v.Ip, Guid:v.Guid})
+			for _, v := range endpointTable {
+				result = append(result, &m.PingExportSourceObj{Ip: v.Ip, Guid: v.Guid})
 			}
 		}
 	}
 	var telnetQuery []*m.TelnetSourceQuery
 	x.SQL("SELECT t2.guid,t1.port,t2.ip FROM endpoint_telnet t1 JOIN endpoint t2 ON t1.endpoint_guid=t2.guid WHERE t2.address_agent=''").Find(&telnetQuery)
 	if len(telnetQuery) > 0 {
-		for _,v := range telnetQuery {
+		for _, v := range telnetQuery {
 			if v.Ip != "" && v.Port > 0 {
-				result = append(result, &m.PingExportSourceObj{Ip:fmt.Sprintf("%s:%d", v.Ip, v.Port), Guid:v.Guid})
+				result = append(result, &m.PingExportSourceObj{Ip: fmt.Sprintf("%s:%d", v.Ip, v.Port), Guid: v.Guid})
 			}
 		}
 	}
 	var endpointHttpTable []*m.EndpointHttpTable
 	x.SQL("SELECT t1.* FROM endpoint_http t1 join endpoint t2 on t1.endpoint_guid=t2.guid where t2.address_agent=''").Find(&endpointHttpTable)
 	if len(endpointHttpTable) > 0 {
-		for _,v := range endpointHttpTable {
+		for _, v := range endpointHttpTable {
 			tmpUrl := fmt.Sprintf("%s_%s", strings.ToUpper(v.Method), v.Url)
-			result = append(result, &m.PingExportSourceObj{Ip:tmpUrl, Guid:v.EndpointGuid})
+			result = append(result, &m.PingExportSourceObj{Ip: tmpUrl, Guid: v.EndpointGuid})
 		}
 	}
 	return result
 }
 
-func UpdateAgentManagerTable(endpoint m.EndpointTable, user,password,configFile,binPath string, isAdd bool) error {
+func UpdateAgentManagerTable(endpoint m.EndpointTable, user, password, configFile, binPath string, isAdd bool) error {
 	var actions []*Action
 	actions = append(actions, &Action{Sql: fmt.Sprintf("DELETE FROM agent_manager WHERE endpoint_guid='%s'", endpoint.Guid)})
 	if isAdd {
@@ -494,8 +517,8 @@ func UpdateAgentManagerTable(endpoint m.EndpointTable, user,password,configFile,
 func GetAgentManager(guid string) (result []*m.AgentManagerTable, err error) {
 	if guid != "" {
 		err = x.SQL("SELECT * FROM agent_manager where endpoint_guid=?", guid).Find(&result)
-	}else {
+	} else {
 		err = x.SQL("SELECT * FROM agent_manager").Find(&result)
 	}
-	return result,err
+	return result, err
 }
