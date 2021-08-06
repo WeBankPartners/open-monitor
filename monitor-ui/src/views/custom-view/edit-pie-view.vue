@@ -140,26 +140,9 @@ export default {
 
   },
   mounted() {
-    // if (this.$root.$validate.isEmpty_reset(this.$route.params)) {
-    //   this.$router.push({ path: "viewConfig" })
-    // } else {
-    //   if (!this.$root.$validate.isEmpty_reset(this.$route.params.templateData.cfg)) {
-    //     this.elId = this.$route.params.panal.id
-    //     this.getEndpointList()
-    //     this.viewData = JSON.parse(this.$route.params.templateData.cfg)
-    //     this.viewData.forEach((itemx, index) => {
-    //       if (itemx.viewConfig.id === this.$route.params.panal.id) {
-    //         this.panalIndex = index
-    //         this.panalData = itemx
-    //         this.initPanal()
-    //         return
-    //       }
-    //     })
-    //   }
-    // }
   },
   methods: {
-    initChart (params) {
+    async initChart (params) {
       this.oriParams = params
       if (!this.$root.$validate.isEmpty_reset(params.templateData.cfg)) {
         this.elId = params.panal.id
@@ -183,7 +166,6 @@ export default {
       if (this.$root.$validate.isEmpty_reset(this.panalData.query)) {
         return
       }
-
       let {endpoint, metric} =  this.panalData.query[0]
       this.templateQuery.endpoint = endpoint
       this.templateQuery.metric = metric

@@ -2,9 +2,9 @@ package db
 
 import (
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/go-xorm/xorm"
+	"xorm.io/core"
+	"xorm.io/xorm"
 	"fmt"
-	"github.com/go-xorm/core"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"time"
 	"reflect"

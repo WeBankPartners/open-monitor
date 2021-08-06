@@ -117,7 +117,8 @@
       "dataView": "Enlarged View",
       "editTitle": "Edit Title"
     },
-    "dataMonitoring": "Data Monitoring"
+    "dataMonitoring": "Data Monitoring",
+    "syncMonitor": "sync Monitor"
   },
   "m_button_maintenanceWindow": "Maintenance Window",
   "table": {
@@ -253,5 +254,8 @@
   "m_search": "Search",
   "m_field_exporter": "Exporter",
   "m_proxy_exporter": "Proxy Exporter",
-  "m_legend_tips": "Select or input as $tag1,$tag2,..."
+  "m_legend_tips": "Select or input as $tag1,$tag2,...",
+  "m_cluster_management": "Cluster Management",
+  "m_prom_address": "Prometheus Address",
+  "m_remote_agent_address": " Remote Agent Address"
 }
