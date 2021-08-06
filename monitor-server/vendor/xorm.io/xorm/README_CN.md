@@ -43,11 +43,13 @@ v1.0.0 相对于 v0.8.2 有以下不兼容的变更：
 
 * [SQLite](https://sqlite.org)
   - [github.com/mattn/go-sqlite3](https://github.com/mattn/go-sqlite3)
+  - [modernc.org/sqlite](https://gitlab.com/cznic/sqlite) (Windows试验性支持)
 
 * MsSql
   - [github.com/denisenkom/go-mssqldb](https://github.com/denisenkom/go-mssqldb)
 
 * Oracle
+  - [github.com/godror/godror)](https://github.com/godror/godror) (试验性支持)
   - [github.com/mattn/go-oci8](https://github.com/mattn/go-oci8) (试验性支持)
 
 ## 安装
@@ -271,6 +273,9 @@ affected, err := engine.Where(...).Delete(&user)
 
 affected, err := engine.ID(2).Delete(&user)
 // DELETE FROM user Where id = ?
+
+affected, err := engine.Table("user").Where(...).Delete()
+// DELETE FROM user WHERE ...
 ```
 
 * `Count` 获取记录条数
