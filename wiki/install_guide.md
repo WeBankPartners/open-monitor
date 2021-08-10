@@ -26,10 +26,6 @@ docker run --name open-monitor --volume /app/test/prometheus/logs:/app/monitor/p
 ```
 docker-compose运行：  
 去github上拷贝一份open-monitor的docker-compose.tpl，重命名为docker-compose.yml
-```
-wget https://github.com/WeBankPartners/open-monitor/blob/master/docker-compose.tpl
-mv docker-compose.tpl docker-compose.yml
-```
 修改docker-compose.yml里的一些参数
 ```
 {{version}} -> open-monitor镜像版本
