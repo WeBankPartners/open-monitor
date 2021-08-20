@@ -197,7 +197,7 @@
   },
   "alarmEmpty": "WoW !! 无任何报警！",
   "details": "详细信息",
-  "visualAlarm": "可视化告警展示",
+  "alarmStatistics": "告警统计",
   "processName": "进程名",
   "processTags": "进程标签",
   "displayName": "别名",
@@ -256,5 +256,9 @@
   "m_legend_tips": "选择一种 或 手动配置，格式为$tag1,$tag2,...",
   "m_cluster_management": "集群配置",
   "m_prom_address": "prometheus地址",
-  "m_remote_agent_address": "集群agent地址"
+  "m_remote_agent_address": "集群agent地址",
+  "recommended_mode": "推荐模式",
+  "classic_mode": "经典模式",
+  "close": "关闭",
+  "remark": "标记"
 }
