@@ -17,8 +17,8 @@
 
 <script>
   let tableEle = [
-    {title: 'alarmContent', value: 'content', display: true},
     {title: 'field.endpoint', value: 'endpoint', display: true},
+    {title: 'alarmContent', value: 'content', display: true},
     {title: 'tableKey.s_priority', value: 's_priority', display: true},
     {title: 'tableKey.start', value: 'start_string', display: true},
     {title: 'field.metric', value: 's_metric', display: true},
@@ -29,7 +29,7 @@
   ]
   const btn = [
     {btn_name: 'button.view', btn_func: 'goToEndpointView'},
-    {btn_name: 'remark', btn_func: 'remarkAlarm'},
+    {btn_name: 'm_remark', btn_func: 'remarkModal'},
     {btn_name: 'close', btn_func: 'deleteConfirmModal'}
   ]
 export default {
@@ -65,12 +65,6 @@ export default {
   },
   mounted(){
     this.getAlarm()
-    // this.interval = setInterval(()=>{
-    //   this.getAlarm()
-    // }, 10000)
-    // this.$once('hook:beforeDestroy', () => {
-    //   clearInterval(this.interval)
-    // })
   },
   methods: {
     getAlarm() {
@@ -80,7 +74,6 @@ export default {
       this.timeForDataAchieve = this.timeForDataAchieve.replace('下午', 'PM ')
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/alarm/problem/query', params, (responseData) => {
         this.pageConfig.table.tableData = responseData.data
-        console.log(this.resultData)
       }, {isNeedloading: false})
     },
     goToEndpointView (alarmItem) {
@@ -92,7 +85,9 @@ export default {
       const news = this.$router.resolve({name: 'endpointView'})
       window.open(news.href, '_blank')
     },
-    remarkAlarm () {},
+    remarkModal (item) {
+      this.$parent.$parent.$parent.remarkModal(item)
+    },
     deleteConfirmModal (rowData) {
       this.selectedData = rowData
       this.isShowWarning = true
