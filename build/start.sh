@@ -78,4 +78,4 @@ nohup ./db_data_exporter > logs/app.log 2>&1 &
 cd ../monitor/
 mkdir -p logs
 sleep 2
-./monitor-server --export_agent=true
+./monitor-server
