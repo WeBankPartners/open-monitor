@@ -99,8 +99,17 @@
             <div v-else class="alarm-list">
               <template v-for="(alarmItem, alarmIndex) in resultData">
                 <section :key="alarmIndex" class="alarm-item c-dark-exclude-color" :class="'alarm-item-border-'+ alarmItem.s_priority">
-                  <Icon type="ios-eye-off" size="18" class="fa-operate" @click="deleteConfirmModal(alarmItem)"/>
-                  <Icon type="ios-stats" size="18" class="fa-operate" v-if="!alarmItem.is_custom" @click="goToEndpointView(alarmItem)"/>
+                  <div style="position: absolute;right:8px">
+                    <Tooltip :content="$t('menu.endpointView')">
+                      <Icon type="ios-stats" size="18" class="fa-operate" v-if="!alarmItem.is_custom" @click="goToEndpointView(alarmItem)"/>
+                    </Tooltip>
+                    <Tooltip :content="$t('close')">
+                      <Icon type="ios-eye-off" size="18" class="fa-operate" @click="deleteConfirmModal(alarmItem)"/>
+                    </Tooltip>
+                    <Tooltip :content="$t('m_remark')">
+                      <Icon type="ios-pricetags-outline" size="18" class="fa-operate" @click="remarkModal(alarmItem)" />
+                    </Tooltip>
+                  </div>
                   <ul>
                     <li>
                       <label class="col-md-2" style="vertical-align: top;line-height: 24px;">{{$t('field.endpoint')}}&{{$t('tableKey.s_priority')}}:</label>
@@ -146,15 +155,16 @@
         </div>
       </TabPane>
       <TabPane :label="$t('classic_mode')" name="classic">
-        <ClassicAlarm></ClassicAlarm>
+        <ClassicAlarm ref="classicAlarm"></ClassicAlarm>
       </TabPane>
     </Tabs>
+    <ModalComponent :modelConfig="modelConfig"></ModalComponent>
   </div>
 </template>
 
 <script>
 import echarts from 'echarts'
-import ClassicAlarm from '@/views/alram-management-classic'
+import ClassicAlarm from '@/views/alarm-management-classic'
 export default {
   name: '',
   data() {
@@ -175,7 +185,21 @@ export default {
       mid: 0,
       high: 0,
 
-      compactDisplay: true
+      compactDisplay: true,
+      modelConfig: {
+        modalId: 'remark_Modal',
+        modalTitle: 'm_remark',
+        saveFunc: 'remarkAlarm',
+        isAdd: true,
+        config: [
+          {label: 'm_remark', value: 'message', placeholder: 'tips.required', v_validate: 'required:true', disabled: false, type: 'text'}
+        ],
+        addRow: { // [通用]-保存用户新增、编辑时数据
+          id: '',
+          message: '',
+          is_custom: false
+        }
+      }
     }
   },
   mounted(){
@@ -189,6 +213,22 @@ export default {
     })
   },
   methods: {
+    remarkModal (item) {
+      this.modelConfig.addRow = {
+        id: item.id,
+        message: item.custom_message,
+        is_custom: false
+      }
+      this.$root.JQ('#remark_Modal').modal('show')
+    },
+    remarkAlarm () {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.remarkAlarm, this.modelConfig.addRow, () => {
+        this.$Message.success(this.$t('tips.success'))
+        this.getAlarm()
+        this.$refs.classicAlarm.getAlarm()
+        this.$root.JQ('#remark_Modal').modal('hide')
+      })
+    },
     goToEndpointView (alarmItem) {
       const endpointObject = {
         option_value: alarmItem.endpoint,
