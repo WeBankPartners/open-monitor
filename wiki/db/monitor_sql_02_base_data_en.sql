@@ -287,3 +287,8 @@ CREATE TABLE `cluster` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 insert into cluster value ('default','default','','');
 #@v1.11.5.2-end@;
+
+#@v1.12.0.1-begin@;
+alter table alarm add column custom_message varchar(500);
+alter table alarm_custom add column custom_message varchar(500);
+#@v1.12.0.1-end@;
