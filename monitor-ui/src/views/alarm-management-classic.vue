@@ -38,15 +38,15 @@ export default {
     return {
       pageConfig: {
         CRUD: '',
-        researchConfig: {
-          input_conditions: [
-            {value: 'search', type: 'input', placeholder: 'placeholder.input', style: ''}],
-          btn_group: [
-            {btn_name: 'button.search', btn_func: 'search', class: 'btn-confirm-f', btn_icon: 'fa fa-search'}
-          ],
-          filters: {
-          }
-        },
+        // researchConfig: {
+        //   input_conditions: [
+        //     {value: 'search', type: 'input', placeholder: 'placeholder.input', style: ''}],
+        //   btn_group: [
+        //     {btn_name: 'button.search', btn_func: 'search', class: 'btn-confirm-f', btn_icon: 'fa fa-search'}
+        //   ],
+        //   filters: {
+        //   }
+        // },
         table: {
           selection: false,
           tableData: [],
