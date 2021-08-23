@@ -178,7 +178,6 @@ import {interceptParams} from '@/assets/js/utils'
     mounted() {
       let _this = this
       let modalId = !this.$root.$validate.isEmpty(this.modelConfig.modalId) ? 'add_edit_Modal':this.modelConfig.modalId
-
       this.$root.JQ('#' + modalId).on('hidden.bs.modal', () => {
         // 清理表单验证错误信息
         _this.veeErrors.clear()
