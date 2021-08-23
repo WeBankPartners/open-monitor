@@ -10,7 +10,9 @@
 ```
 docker load --input image.tar
 ```
-#### 5. 创建本地目录，例如/app/test(如果是其它目录请替换下面命令中的/app/test)，替换如下命令的mysql连接参数
+#### 5. docker运行(docker或docker-compose)：
+docker run运行：  
+创建本地目录，例如/app/test(如果是其它目录请替换下面命令中的/app/test)，替换如下命令的mysql连接参数  
 ```
 MONITOR_DB_HOST=127.0.0.1 -> 把127.0.0.1替换成mysql地址
 MONITOR_DB_PORT=3306  -> 把3306替换成mysql端口
@@ -21,6 +23,23 @@ monitor:v1.3.0 -> 把后面的版本号改成所导入镜像的版本号
 ```
 mkdir -p /app/test
 docker run --name open-monitor --volume /app/test/prometheus/logs:/app/monitor/prometheus/logs --volume /app/test/prometheus/data:/app/monitor/prometheus/data --volume /app/test/prometheus/rules:/app/monitor/prometheus/rules  --volume /app/test/alertmanager/logs:/app/monitor/alertmanager/logs --volume /app/test/alertmanager/data:/app/monitor/alertmanager/data --volume /app/test/consul/data:/app/monitor/consul/data --volume /app/test/consul/logs:/app/monitor/consul/logs --volume /app/test/monitor/logs:/app/monitor/monitor/logs --volume /app/test/deploy:/app/deploy --volume /app/test/transgateway/logs:/app/monitor/transgateway/logs --volume /app/test/transgateway/data:/app/monitor/transgateway/data --volume /etc/localtime:/etc/localtime -d -p 8080:8080 -p 8500:8500 -p 8300:8300 -p 9090:9090 -p 19091:19091 -e MONITOR_SERVER_PORT=8080 -e MONITOR_DB_HOST=127.0.0.1 -e MONITOR_DB_PORT=3306 -e MONITOR_DB_USER=root -e MONITOR_DB_PWD=wecube -e MONITOR_SESSION_ENABLE=true -e MONITOR_LOG_LEVEL=info -e MONITOR_ALARM_ALIVE_MAX_DAY=30  monitor:v1.3.0
+```
+docker-compose运行：  
+去github上拷贝一份open-monitor的docker-compose.tpl，重命名为docker-compose.yml   
+修改docker-compose.yml里的一些参数
+```
+{{version}} -> open-monitor镜像版本
+{{path}} -> 容器文件映射到主机的目录
+{{port}} -> http对外服务端口
+{{db_host}} -> mysql连接主机
+{{db_port}} -> mysql连接端口
+{{db_user}} -> mysql连接用户
+{{db_password}} -> mysql连接密码
+{{monitor_host_ip}} -> 容器运行所在主机ip
+```
+最后运行docker-compose
+```
+docker-compose -f docker-compose.yml up -d
 ```
 容器运行起来后打开 http://127.0.0.1:8080/monitor/ 登录界面
 
