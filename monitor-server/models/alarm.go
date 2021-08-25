@@ -59,6 +59,7 @@ type AlarmTable struct {
 	Start  time.Time  `json:"start"`
 	EndValue  float64  `json:"end_value"`
 	End  time.Time  `json:"end"`
+	CustomMessage string `json:"custom_message"`
 }
 
 type AlarmHandleObj struct {
@@ -89,6 +90,13 @@ type AlarmProblemQuery struct {
 	Path  string  `json:"path"`
 	Keyword  string  `json:"keyword"`
 	IsCustom  bool  `json:"is_custom"`
+	CustomMessage string `json:"custom_message"`
+}
+
+type UpdateAlarmCustomMessageDto struct {
+	Id  int  `json:"id" binding:"required"`
+	IsCustom  bool  `json:"is_custom"`
+	Message  string `json:"message"`
 }
 
 type AlarmProblemQueryResult struct {
@@ -360,6 +368,7 @@ type OpenAlarmObj struct {
 	RemarkInfo  string  `json:"remark_info"`
 	SubSystemId  string  `json:"sub_system_id"`
 	UpdateAt  time.Time  `json:"update_at"`
+	CustomMessage string `json:"custom_message"`
 }
 
 type OpenAlarmRequest struct {
