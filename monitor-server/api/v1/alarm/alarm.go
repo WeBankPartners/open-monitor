@@ -397,7 +397,7 @@ func QueryProblemAlarm(c *gin.Context)  {
 // @Param id query int true "告警id"
 // @Success 200 {string} json "{"message": "Success"}"
 // @Router /api/v1/alarm/problem/close [get]
-func CloseALarm(c *gin.Context)  {
+func CloseAlarm(c *gin.Context)  {
 	id,err := strconv.Atoi(c.Query("id"))
 	isCustom := strings.ToLower(c.Query("custom"))
 	if err != nil || id <= 0 {
@@ -409,6 +409,20 @@ func CloseALarm(c *gin.Context)  {
 	}else {
 		err = db.CloseAlarm(id)
 	}
+	if err != nil {
+		mid.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	mid.ReturnSuccess(c)
+}
+
+func UpdateAlarmCustomMessage(c *gin.Context)  {
+	var param m.UpdateAlarmCustomMessageDto
+	if err:=c.ShouldBindJSON(&param);err!=nil {
+		mid.ReturnValidateError(c, err.Error())
+		return
+	}
+	err := db.UpdateAlarmCustomMessage(param)
 	if err != nil {
 		mid.ReturnHandleError(c, err.Error(), err)
 		return
