@@ -565,8 +565,9 @@ export default {
       this.getEndpoint()
     },
     saveMetric () {
+      const type = this.metricConfigData.id === null ? 'POST' : 'PUT'
       this.metricConfigData.metric_type = this.endpointType
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.saveMetric, [this.metricConfigData], () => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance(type, this.$root.apiCenter.metricManagement, [this.metricConfigData], () => {
         this.$Message.success(this.$t('tips.success'))
         this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.metricManagement, {endpointType: this.endpointType}, (res) => {
           this.metricOptions = res
