@@ -525,7 +525,7 @@ func QueryEntityAlarm(c *gin.Context)  {
 	var result m.AlarmEntity
 	result.Data = []*m.AlarmEntityObj{}
 	data,_ := ioutil.ReadAll(c.Request.Body)
-	defer c.Request.Body.Close()
+	c.Request.Body.Close()
 	err := json.Unmarshal(data, &param)
 	if err != nil {
 		result.Status = "ERROR"
@@ -551,8 +551,10 @@ func QueryEntityAlarm(c *gin.Context)  {
 			id, _ = strconv.Atoi(value)
 		}
 		if id <= 0 {
-			result.Status = "ERROR"
-			result.Message = fmt.Sprintf("Query criteria condition: %s -> filter validation failed", param.Criteria.Condition)
+			log.Logger.Warn("Query entity alarm fail,id is empty")
+			result.Status = "OK"
+			result.Message = "Success"
+			result.Data = []*m.AlarmEntityObj{}
 			mid.ReturnData(c, result)
 			return
 		}
