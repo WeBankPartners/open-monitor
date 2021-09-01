@@ -281,6 +281,7 @@ func GetEndpoint(query *m.EndpointTable) error {
 	query.StopAlarm = endpointObj[0].StopAlarm
 	query.AddressAgent = endpointObj[0].AddressAgent
 	query.Cluster = endpointObj[0].Cluster
+	query.Tags = endpointObj[0].Tags
 	return nil
 }
 
