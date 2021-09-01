@@ -140,6 +140,7 @@
     "end": "End time",
     "activeDate": "Active date",
     "name": "Name",
+    "metricName": "Metric Name",
     "nickname": "Nickname",
     "email": "Email",
     "phone": "Phone",
