@@ -30,7 +30,7 @@ func ListAlarmEndpoints(query *m.AlarmEndpointQuery) error {
 	}
 	querySql := `SELECT t5.* FROM (
             SELECT t4.id,t4.guid,GROUP_CONCAT(t4.grp_id) groups_ids,t4.type,t4.tags FROM (
-			SELECT t1.id,t1.guid,t2.grp_id,t1.export_type,t1.tags as type FROM endpoint t1 
+			SELECT t1.id,t1.guid,t2.grp_id,t1.export_type as type,t1.tags FROM endpoint t1 
 			LEFT JOIN grp_endpoint t2 ON t1.id=t2.endpoint_id 
 			WHERE 1=1 ` + whereSql + `
 			) t4 GROUP BY t4.guid
