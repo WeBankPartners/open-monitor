@@ -140,6 +140,7 @@
     "end": "结束时间",
     "activeDate": "生效时间",
     "name": "名称",
+    "metricName": "指标名称",
     "nickname": "昵称",
     "email": "邮箱",
     "phone": "电话",
