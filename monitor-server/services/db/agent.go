@@ -262,8 +262,12 @@ func ListRecursiveEndpointType(guid string) (result []string, err error) {
 	resultMap := make(map[string]int)
 	for _,v := range getRecursiveEndpointList(guid) {
 		tmpType := v[strings.LastIndex(v, "_")+1:]
+		if tmpType == "" {
+			continue
+		}
 		if _,b := resultMap[tmpType]; !b {
 			result = append(result, tmpType)
+			resultMap[tmpType] = 1
 		}
 	}
 	return
@@ -289,6 +293,9 @@ func getRecursiveEndpointList(guid string) []string {
 	for _,v := range prt {
 		if v.Guid == guid {
 			for _,vv := range strings.Split(v.Endpoint, "^") {
+				if vv == "" {
+					continue
+				}
 				if _,b := resultMap[vv]; !b {
 					result = append(result, vv)
 					resultMap[vv] = 1
@@ -297,6 +304,9 @@ func getRecursiveEndpointList(guid string) []string {
 			continue
 		}
 		for _,vv := range getRecursiveEndpointList(v.Guid) {
+			if vv == "" {
+				continue
+			}
 			if _,b := resultMap[vv]; !b {
 				result = append(result, vv)
 				resultMap[vv] = 1
