@@ -192,6 +192,7 @@ type AlarmEndpointObj struct {
 	Guid      string      `json:"guid"`
 	Type      string      `json:"type"`
 	GroupsIds string      `json:"groups_ids"`
+	Tags      string      `json:"tags"`
 	Groups    []*GrpTable `json:"groups"`
 }
 
