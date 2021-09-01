@@ -100,7 +100,7 @@
       <ModalComponent :modelConfig="modelConfig">
         <div slot="metricSelect" class="extentClass">  
           <div class="marginbottom params-each">
-            <label class="col-md-2 label-name">{{$t('tableKey.name')}}:</label>
+            <label class="col-md-2 label-name">{{$t('tableKey.metricName')}}:</label>
             <Select v-model="modelConfig.addRow.expr" filterable clearable style="width:340px"
             :label-in-value="true" @on-change="selectMetric">
               <Option v-for="(item, index) in modelConfig.metricList" :value="item.prom_ql" :key="item.prom_ql+item.metric+index">{{ item.metric }}</Option>
@@ -197,7 +197,7 @@ import {thresholdList, lastList, priorityList} from '@/assets/config/common-conf
 import TagShow from '@/components/Tag-show.vue'
 let tableEle = [
   {title: 'ID', value: 'id', display: false},
-  {title: 'tableKey.name', value: 'metric', display: true},
+  {title: 'tableKey.metricName', value: 'metric', display: true},
   {title: 'tableKey.expr', value: 'expr', display: true},
   {title: 'tableKey.s_cond', value: 'cond', display: true},
   {title: 'tableKey.s_last', value: 'last', display: true},
@@ -247,7 +247,7 @@ export default {
         isAdd: true,
         config: [
           {name:'metricSelect',type:'slot'},
-          {label: 'tableKey.expr', value: 'expr', placeholder: 'tips.required', v_validate: 'required:true', disabled: false, type: 'textarea'},
+          {label: 'tableKey.expr', value: 'expr', placeholder: 'tips.required', v_validate: 'required:true', disabled: true, type: 'textarea'},
           {label: 'tableKey.content', value: 'content', placeholder: 'tips.required', v_validate: 'required:true', disabled: false, type: 'textarea'},
           {name:'thresholdConfig',type:'slot'}
         ],
@@ -492,31 +492,27 @@ export default {
       })
     },
     editF (rowData) {
-      let params = {}
-      if (this.type === 'endpoint') {
-        params = {type: this.paramsType}
-      } 
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.metricList.api, params, (responseData) => {
+      let params = {type: this.paramsType}
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.getMetricByEndpointType, params, (responseData) => {
         this.modelConfig.metricList = responseData
+        this.modelConfig.isAdd = false
+        this.id = rowData.id
+        this.modelTip.value = rowData.metric
+        this.modelConfig.addRow = this.$root.$tableUtil.manageEditParams(this.modelConfig.addRow, rowData)
+        let cond = rowData.cond.split('')
+        if (cond.indexOf('=') >= 0) {
+          this.modelConfig.threshold = cond.slice(0,2).join('')
+          this.modelConfig.thresholdValue = cond.slice(2).join('')
+        } else {
+          this.modelConfig.threshold = cond.slice(0,1).join('')
+          this.modelConfig.thresholdValue = cond.slice(1).join('')
+        }
+        let last = rowData.last
+        this.modelConfig.last = last.substring(last.length-1)
+        this.modelConfig.lastValue = last.substring(0,last.length-1)
+        this.modelConfig.priority = rowData.priority
+        this.$root.JQ('#add_edit_Modal').modal('show')
       })
-
-      this.modelConfig.isAdd = false
-      this.id = rowData.id
-      this.modelTip.value = rowData.metric
-      this.modelConfig.addRow = this.$root.$tableUtil.manageEditParams(this.modelConfig.addRow, rowData)
-      let cond = rowData.cond.split('')
-      if (cond.indexOf('=') >= 0) {
-        this.modelConfig.threshold = cond.slice(0,2).join('')
-        this.modelConfig.thresholdValue = cond.slice(2).join('')
-      } else {
-        this.modelConfig.threshold = cond.slice(0,1).join('')
-        this.modelConfig.thresholdValue = cond.slice(1).join('')
-      }
-      let last = rowData.last
-      this.modelConfig.last = last.substring(last.length-1)
-      this.modelConfig.lastValue = last.substring(0,last.length-1)
-      this.modelConfig.priority = rowData.priority
-      this.$root.JQ('#add_edit_Modal').modal('show')
     },
     editPost () {
       this.$validator.validate().then(result => {
