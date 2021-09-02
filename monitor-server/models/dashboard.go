@@ -278,6 +278,7 @@ type EndpointTable struct {
 	StopAlarm       int    `json:"stop_alarm"`
 	AddressAgent    string `json:"address_agent"`
 	Cluster         string `json:"cluster"`
+	Tags            string `json:"tags"`
 }
 
 type EndpointMetricTable struct {
