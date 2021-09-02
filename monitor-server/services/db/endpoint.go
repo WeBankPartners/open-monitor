@@ -3,6 +3,7 @@ package db
 import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"strings"
 )
 
 func GetEndpointTypeList() (result []string,err error) {
@@ -24,9 +25,26 @@ func GetEndpointByType(endpointType string) (result []*models.EndpointTable,err 
 	return
 }
 
-func GetAlarmRealEndpoint(endpointId,strategyId int) (isReal bool,endpoint models.EndpointTable) {
+func GetAlarmRealEndpoint(endpointId,strategyId int,endpointType,metric,expr string) (isReal bool,endpoint models.EndpointTable) {
 	isReal = true
 	endpoint = models.EndpointTable{}
+	if endpointType == "host" && metric == "node_business_monitor_value" {
+		var businessMonitorTable []*models.BusinessMonitorTable
+		x.SQL("select owner_endpoint from business_monitor where endpoint_id=?", endpointId).Find(&businessMonitorTable)
+		if len(businessMonitorTable) > 0 {
+			for _,v := range businessMonitorTable {
+				if strings.Contains(expr, v.Path) {
+					endpoint.Guid = v.OwnerEndpoint
+					break
+				}
+			}
+			if endpoint.Guid != "" {
+				GetEndpoint(&endpoint)
+				log.Logger.Info("Use business alarm endpoint", log.Int("from", endpointId), log.String("to", endpoint.Guid))
+				return false,endpoint
+			}
+		}
+	}
 	var tplTables []*models.TplTable
 	x.SQL("select * from tpl where id in (select tpl_id from strategy where id=?)", strategyId).Find(&tplTables)
 	if len(tplTables) > 0 {
