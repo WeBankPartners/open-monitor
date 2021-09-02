@@ -229,13 +229,13 @@ func fetchBusinessPanel(endpoint string) (err error,result m.PanelModel) {
 			}
 		}
 	}
-	_,extendMetric := db.GetBusinessPromMetric(promMetricKeys)
-	for _,v := range extendMetric {
-		tmpChartObj := m.ChartModel{Id: chartTable[0].Id, Endpoint: []string{realEndpoint}, Url: chartTable[0].Url}
-		tmpChartObj.Metric = []string{v.Metric}
-		tmpChartObj.Title = v.Metric
-		result.Charts = append(result.Charts, &tmpChartObj)
-	}
+	//_,extendMetric := db.GetBusinessPromMetric(promMetricKeys)
+	//for _,v := range extendMetric {
+	//	tmpChartObj := m.ChartModel{Id: chartTable[0].Id, Endpoint: []string{realEndpoint}, Url: chartTable[0].Url}
+	//	tmpChartObj.Metric = []string{v.Metric}
+	//	tmpChartObj.Title = v.Metric
+	//	result.Charts = append(result.Charts, &tmpChartObj)
+	//}
 	return err,result
 }
 
