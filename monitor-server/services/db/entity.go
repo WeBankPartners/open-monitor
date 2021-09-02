@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -227,6 +228,14 @@ func GetAlarmEvent(alarmType, inputGuid string, id int, alarmStatus string) (res
 	if inputGuid == "custom_alarm_guid" {
 		result, err = getCustomAlarmEvent(id)
 		return result, err
+	}
+	if id == 0 {
+		tmpQueryMapList,_ := x.QueryString("select max(id) as id from alarm")
+		id,_ = strconv.Atoi(tmpQueryMapList[0]["id"])
+		if id == 0 {
+			result = m.AlarmEntityObj{Id: ""}
+			return
+		}
 	}
 	result.Id = fmt.Sprintf("%s-%d-%s", alarmType, id, inputGuid)
 	if alarmType == "alarm" {

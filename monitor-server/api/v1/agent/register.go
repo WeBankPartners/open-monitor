@@ -102,6 +102,7 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage, guid string, err 
 	}
 	guid = rData.endpoint.Guid
 	rData.endpoint.Cluster = param.Cluster
+	rData.endpoint.Tags = param.Tags
 	if rData.validateMessage != "" || rData.err != nil {
 		return rData.validateMessage, guid, rData.err
 	}

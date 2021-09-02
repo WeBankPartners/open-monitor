@@ -223,6 +223,7 @@ export default {
         }
         this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.recursiveType, params, responseData => {
           this.templateQuery.endpoint_type = responseData[0]
+          console.log(responseData)
           this.recursiveTypeOptions = responseData
         }
       )}
@@ -337,7 +338,7 @@ export default {
       }
     },
     addQuery() {
-      if (this.templateQuery.endpoint === '') {
+      if (this.templateQuery.endpoint === '' || this.templateQuery.metric === '' || this.templateQuery.endpoint === undefined || this.templateQuery.metric === undefined) {
         this.$Message.warning("配置完整方可保存！")
         return
       }
