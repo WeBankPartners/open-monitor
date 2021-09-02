@@ -25,10 +25,10 @@ func GetEndpointByType(endpointType string) (result []*models.EndpointTable,err 
 	return
 }
 
-func GetAlarmRealEndpoint(endpointId,strategyId int,endpointType,metric,expr string) (isReal bool,endpoint models.EndpointTable) {
+func GetAlarmRealEndpoint(endpointId,strategyId int,endpointType,expr string) (isReal bool,endpoint models.EndpointTable) {
 	isReal = true
 	endpoint = models.EndpointTable{}
-	if endpointType == "host" && metric == "node_business_monitor_value" {
+	if endpointType == "host" && strings.HasPrefix(expr, "node_business_monitor_value") {
 		var businessMonitorTable []*models.BusinessMonitorTable
 		x.SQL("select owner_endpoint from business_monitor where endpoint_id=?", endpointId).Find(&businessMonitorTable)
 		if len(businessMonitorTable) > 0 {
