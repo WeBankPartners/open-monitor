@@ -174,7 +174,7 @@ func init() {
 		&handlerFuncObj{Url: "/agent/export/deregister/:name", Method: http.MethodPost, HandlerFunc: agent.ExportAgentNew},
 		&handlerFuncObj{Url: "/agent/export/start/:name", Method: http.MethodPost, HandlerFunc: agent.AlarmControl},
 		&handlerFuncObj{Url: "/agent/export/stop/:name", Method: http.MethodPost, HandlerFunc: agent.AlarmControl},
-		&handlerFuncObj{Url: "/agent/export/ping/source", Method: http.MethodPost, HandlerFunc: agent.ExportPingSource},
+		&handlerFuncObj{Url: "/agent/export/ping/source", Method: http.MethodGet, HandlerFunc: agent.ExportPingSource},
 		&handlerFuncObj{Url: "/agent/export/process/:operation", Method: http.MethodPost, HandlerFunc: agent.AutoUpdateProcessMonitor},
 		&handlerFuncObj{Url: "/agent/export/log_monitor/:operation", Method: http.MethodPost, HandlerFunc: agent.AutoUpdateLogMonitor},
 		&handlerFuncObj{Url: "/agent/export/kubernetes/cluster/:action", Method: http.MethodPost, HandlerFunc: agent.PluginKubernetesCluster},
