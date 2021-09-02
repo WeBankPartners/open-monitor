@@ -16,8 +16,8 @@ func UpdateEndpoint(endpoint *m.EndpointTable) (stepList []int, err error) {
 	host := m.EndpointTable{Guid: endpoint.Guid}
 	GetEndpoint(&host)
 	if host.Id == 0 {
-		insert := fmt.Sprintf("INSERT INTO endpoint(guid,name,ip,endpoint_version,export_type,export_version,step,address,os_type,create_at,address_agent,cluster) VALUE ('%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%s','%s')",
-			endpoint.Guid, endpoint.Name, endpoint.Ip, endpoint.EndpointVersion, endpoint.ExportType, endpoint.ExportVersion, endpoint.Step, endpoint.Address, endpoint.OsType, time.Now().Format(m.DatetimeFormat), endpoint.AddressAgent, endpoint.Cluster)
+		insert := fmt.Sprintf("INSERT INTO endpoint(guid,name,ip,endpoint_version,export_type,export_version,step,address,os_type,create_at,address_agent,cluster,tags) VALUE ('%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%s','%s','%s')",
+			endpoint.Guid, endpoint.Name, endpoint.Ip, endpoint.EndpointVersion, endpoint.ExportType, endpoint.ExportVersion, endpoint.Step, endpoint.Address, endpoint.OsType, time.Now().Format(m.DatetimeFormat), endpoint.AddressAgent, endpoint.Cluster, endpoint.Tags)
 		log.Logger.Debug("Insert", log.String("sql", insert))
 		_, err = x.Exec(insert)
 		if err != nil {
@@ -31,8 +31,8 @@ func UpdateEndpoint(endpoint *m.EndpointTable) (stepList []int, err error) {
 		if host.Step != endpoint.Step {
 			stepList = append(stepList, host.Step)
 		}
-		update := fmt.Sprintf("UPDATE endpoint SET name='%s',ip='%s',endpoint_version='%s',export_type='%s',export_version='%s',step=%d,address='%s',os_type='%s',address_agent='%s',cluster='%s' WHERE id=%d",
-			endpoint.Name, endpoint.Ip, endpoint.EndpointVersion, endpoint.ExportType, endpoint.ExportVersion, endpoint.Step, endpoint.Address, endpoint.OsType, endpoint.AddressAgent, endpoint.Cluster, host.Id)
+		update := fmt.Sprintf("UPDATE endpoint SET name='%s',ip='%s',endpoint_version='%s',export_type='%s',export_version='%s',step=%d,address='%s',os_type='%s',address_agent='%s',cluster='%s',tags='%s' WHERE id=%d",
+			endpoint.Name, endpoint.Ip, endpoint.EndpointVersion, endpoint.ExportType, endpoint.ExportVersion, endpoint.Step, endpoint.Address, endpoint.OsType, endpoint.AddressAgent, endpoint.Cluster, endpoint.Tags, host.Id)
 		log.Logger.Debug("Update", log.String("sql", update))
 		_, err = x.Exec(update)
 		if err != nil {
@@ -259,25 +259,61 @@ func SearchRecursivePanel(search string) []*m.OptionModel {
 
 func ListRecursiveEndpointType(guid string) (result []string, err error) {
 	result = []string{}
-	var prt []*m.PanelRecursiveTable
-	err = x.SQL("select endpoint from panel_recursive where guid=?", guid).Find(&prt)
-	if err != nil {
-		return
-	}
-	if len(prt) == 0 {
-		err = fmt.Errorf("Can not find recursive panel with guid:%s ", guid)
-		return
-	}
-	endpointList := strings.Split(prt[0].Endpoint, "^")
-	if len(endpointList) == 0 {
-		return result, nil
-	}
-	var endpointTable []*m.EndpointTable
-	x.SQL("select distinct export_type from endpoint where guid in ('" + strings.Join(endpointList, "','") + "')").Find(&endpointTable)
-	for _, v := range endpointTable {
-		result = append(result, v.ExportType)
+	resultMap := make(map[string]int)
+	for _,v := range getRecursiveEndpointList(guid) {
+		tmpType := v[strings.LastIndex(v, "_")+1:]
+		if tmpType == "" {
+			continue
+		}
+		if _,b := resultMap[tmpType]; !b {
+			result = append(result, tmpType)
+			resultMap[tmpType] = 1
+		}
 	}
 	return
+}
+
+func GetRecursiveEndpointByType(guid,endpointType string) (result []*m.EndpointTable,err error) {
+	result = []*m.EndpointTable{}
+	guidList := []string{}
+	for _,v := range getRecursiveEndpointList(guid) {
+		if strings.HasSuffix(v, fmt.Sprintf("_%s", endpointType)) {
+			guidList = append(guidList, v)
+		}
+	}
+	err = x.SQL("select * from endpoint where guid in ('"+strings.Join(guidList, "','")+"')").Find(&result)
+	return
+}
+
+func getRecursiveEndpointList(guid string) []string {
+	result := []string{}
+	resultMap := make(map[string]int)
+	var prt []*m.PanelRecursiveTable
+	x.SQL("select guid,endpoint from panel_recursive where guid=? or parent=?", guid, guid).Find(&prt)
+	for _,v := range prt {
+		if v.Guid == guid {
+			for _,vv := range strings.Split(v.Endpoint, "^") {
+				if vv == "" {
+					continue
+				}
+				if _,b := resultMap[vv]; !b {
+					result = append(result, vv)
+					resultMap[vv] = 1
+				}
+			}
+			continue
+		}
+		for _,vv := range getRecursiveEndpointList(v.Guid) {
+			if vv == "" {
+				continue
+			}
+			if _,b := resultMap[vv]; !b {
+				result = append(result, vv)
+				resultMap[vv] = 1
+			}
+		}
+	}
+	return result
 }
 
 func GetRecursivePanel(guid string) (err error, result m.RecursivePanelObj) {
