@@ -159,10 +159,16 @@ func buildRuleFileContent(ruleFileName,guidExpr,addressExpr,ipExpr string,strate
 			}
 		}
 		if strings.Contains(strategy.Expr, "$ip") {
-			if strings.Contains(guidExpr, "|") {
-				strategy.Expr = strings.Replace(strategy.Expr, "=\"$ip\"", "=~\""+ipExpr+"\"", -1)
+			if strings.Contains(ipExpr, "|") {
+				tmpStr := strings.Split(strategy.Expr, "$ip")[1]
+				tmpStr = tmpStr[:strings.Index(tmpStr,"\"")]
+				newList := []string{}
+				for _,v := range strings.Split(ipExpr, "|") {
+					newList = append(newList, v+tmpStr)
+				}
+				strategy.Expr = strings.Replace(strategy.Expr, "=\"$ip"+tmpStr+"\"", "=~\""+strings.Join(newList, "|")+"\"", -1)
 			}else{
-				strategy.Expr = strings.Replace(strategy.Expr, "=\"$ip\"", "=\""+ipExpr+"\"", -1)
+				strategy.Expr = strings.ReplaceAll(strategy.Expr, "$ip", ipExpr)
 			}
 		}
 		tmpRfu.Expr = fmt.Sprintf("%s %s", strategy.Expr, strategy.Cond)
