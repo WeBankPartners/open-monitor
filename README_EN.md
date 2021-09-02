@@ -21,7 +21,7 @@ English / [中文](README.md)
 
 ## Live Demo
 
-[Live Demo](http://124.156.108.126:8080/monitor)  
+[Live Demo](http://119.91.78.168:8080/monitor)  
 <img src="./wiki/images/wecube-monitor01.gif" />  
 > Note:
 >  1. Live Demo will reset on 2:00 - 4:00am every day. The environment is not available during the period, and all changes will be discarded.

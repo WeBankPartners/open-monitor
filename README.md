@@ -20,7 +20,7 @@
 中文 / [English](README_EN.md)
 
 ## 在线体验环境
-[点此试用Open-Monitor](http://124.156.108.126:8080/monitor)  
+[点此试用Open-Monitor](http://119.91.78.168:8080/monitor)  
 <img src="./wiki/images/wecube-monitor01.gif" />  
 > 注意：
 >
