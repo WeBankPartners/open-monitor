@@ -129,7 +129,7 @@ func AcceptAlertMsg(c *gin.Context)  {
 					db.GetEndpoint(&endpointObj)
 					if endpointObj.Id > 0 {
 						// get real endpoint
-						isRealFlag,newEndpointObj := db.GetAlarmRealEndpoint(endpointObj.Id, strategyObj.Id)
+						isRealFlag,newEndpointObj := db.GetAlarmRealEndpoint(endpointObj.Id, strategyObj.Id, endpointObj.ExportType, tmpAlarm.SMetric, tmpAlarm.SExpr)
 						if !isRealFlag {
 							endpointObj = newEndpointObj
 						}
