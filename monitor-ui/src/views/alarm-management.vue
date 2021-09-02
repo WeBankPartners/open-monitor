@@ -53,53 +53,10 @@
               </template>
               <button @click="alarmHistory" style="float: right;margin-right: 25px;" class="btn btn-sm btn-cancel-f">{{$t('alarmHistory')}}</button>
             </section>
-            <div v-if="!compactDisplay" class="alarm-list">
+            <div class="alarm-list">
               <template v-for="(alarmItem, alarmIndex) in resultData">
                 <section :key="alarmIndex" class="alarm-item c-dark-exclude-color" :class="'alarm-item-border-'+ alarmItem.s_priority">
-                  <i class="fa fa-times fa-operate" @click="deleteConfirmModal(alarmItem)" aria-hidden="true"></i>
-                  <i class="fa fa-bar-chart fa-operate" v-if="!alarmItem.is_custom" @click="goToEndpointView(alarmItem)" aria-hidden="true"></i>
-                  <ul>
-                    <li>
-                      <label class="col-md-2">{{$t('field.endpoint')}}:</label>
-                      <Tag type="border" closable @on-close="addParams('endpoint',alarmItem.endpoint)" color="primary">{{alarmItem.endpoint}}</Tag>
-                    </li>
-                    <li v-if="!alarmItem.is_custom">
-                      <label class="col-md-2">{{$t('field.metric')}}:</label>
-                      <Tag type="border" closable @on-close="addParams('metric',alarmItem.s_metric)" color="primary">{{alarmItem.s_metric}}</Tag>
-                    </li>
-                    <li>
-                      <label class="col-md-2">{{$t('tableKey.s_priority')}}:</label>
-                      <Tag type="border" closable @on-close="addParams('priority',alarmItem.s_priority)" color="primary">{{alarmItem.s_priority}}</Tag>
-                    </li>
-                    <li v-if="!alarmItem.is_custom && alarmItem.tags">
-                      <label class="col-md-2">{{$t('tableKey.tags')}}:</label>
-                      <Tag type="border" v-for="(t,tIndex) in alarmItem.tags.split('^')" :key="tIndex" color="cyan">{{t}}</Tag>
-                    </li>
-                    <li>
-                      <label class="col-md-2">{{$t('tableKey.start')}}:</label><span>{{alarmItem.start_string}}</span>
-                    </li>
-                    <li>
-                      <label class="col-md-2">{{$t('details')}}:</label>
-                      <span>
-                        <Tag color="default">{{$t('tableKey.start_value')}}:{{alarmItem.start_value}}</Tag>
-                        <Tag color="default" v-if="alarmItem.s_cond">{{$t('tableKey.threshold')}}:{{alarmItem.s_cond}}</Tag>
-                        <Tag color="default" v-if="alarmItem.s_last">{{$t('tableKey.s_last')}}:{{alarmItem.s_last}}</Tag>
-                        <Tag color="default" v-if="alarmItem.path">{{$t('tableKey.path')}}:{{alarmItem.path}}</Tag>
-                        <Tag color="default" v-if="alarmItem.keyword">{{$t('tableKey.keyword')}}:{{alarmItem.keyword}}</Tag>
-                      </span>
-                    </li>
-                    <li>
-                      <label class="col-md-2" style="vertical-align: top;">{{$t('alarmContent')}}:</label>
-                      <div class="col-md-9" style="display: inline-block;padding:0" v-html="alarmItem.content"></div>
-                    </li>
-                  </ul>
-                </section>
-              </template>
-            </div>
-            <div v-else class="alarm-list">
-              <template v-for="(alarmItem, alarmIndex) in resultData">
-                <section :key="alarmIndex" class="alarm-item c-dark-exclude-color" :class="'alarm-item-border-'+ alarmItem.s_priority">
-                  <div style="position: absolute;right:8px">
+                  <div style="float:right">
                     <Tooltip :content="$t('menu.endpointView')">
                       <Icon type="ios-stats" size="18" class="fa-operate" v-if="!alarmItem.is_custom" @click="goToEndpointView(alarmItem)"/>
                     </Tooltip>
@@ -122,11 +79,16 @@
                         <span>{{$t('field.metric')}}</span>
                         <span v-if="alarmItem.tags">&{{$t('tableKey.tags')}}</span>
                         :</label>
+                        <Tag type="border" closable @on-close="addParams('metric',alarmItem.s_metric)" color="primary">{{alarmItem.s_metric}}</Tag>
+                        <template v-if="alarmItem.tags">
+                          <Tag type="border" v-for="(t,tIndex) in alarmItem.tags.split('^')" :key="tIndex" color="cyan">{{t}}</Tag>
+                        </template>
+                    </li>
+                    <li v-if="alarmItem.custom_message">
+                      <label class="col-md-2" style="vertical-align: top;line-height: 24px;">
+                        <span>{{$t('m_remark')}}:</span></label>
                         <div class="col-md-9" style="display: inline-block;padding:0">
-                          <Tag type="border" closable @on-close="addParams('metric',alarmItem.s_metric)" color="primary">{{alarmItem.s_metric}}</Tag>
-                          <template v-if="alarmItem.tags">
-                            <Tag type="border" v-for="(t,tIndex) in alarmItem.tags.split('^')" :key="tIndex" color="cyan">{{t}}</Tag>
-                          </template>
+                          <Tag type="border" color="primary">{{alarmItem.custom_message}}</Tag>
                         </div>
                     </li>
                     <li  v-if="!alarmItem.is_custom">
@@ -185,14 +147,13 @@ export default {
       mid: 0,
       high: 0,
 
-      compactDisplay: true,
       modelConfig: {
         modalId: 'remark_Modal',
         modalTitle: 'm_remark',
         saveFunc: 'remarkAlarm',
         isAdd: true,
         config: [
-          {label: 'm_remark', value: 'message', placeholder: 'tips.required', v_validate: 'required:true', disabled: false, type: 'text'}
+          {label: 'm_remark', value: 'message', placeholder: '', v_validate: '', disabled: false, type: 'text'}
         ],
         addRow: { // [通用]-保存用户新增、编辑时数据
           id: '',
@@ -225,7 +186,6 @@ export default {
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.remarkAlarm, this.modelConfig.addRow, () => {
         this.$Message.success(this.$t('tips.success'))
         this.getAlarm()
-        this.$refs.classicAlarm.getAlarm()
         this.$root.JQ('#remark_Modal').modal('hide')
       })
     },
@@ -257,6 +217,7 @@ export default {
         this.high = responseData.high
         this.alramEmpty = !!this.low || !!this.mid ||!!this.high
         this.showSunburst(responseData)
+        this.$refs.classicAlarm.getAlarm(this.resultData)
       }, {isNeedloading: false})
     },
     compare (prop) {

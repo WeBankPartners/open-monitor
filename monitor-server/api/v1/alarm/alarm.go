@@ -91,6 +91,7 @@ func AcceptAlertMsg(c *gin.Context)  {
 					continue
 				}
 				tmpAlarm.Endpoint = endpointObj.Guid
+				tmpAlarm.EndpointTags = endpointObj.Tags
 				tmpValue, _ = strconv.ParseFloat(tmpSummaryMsg[3], 64)
 				tmpValue, _ = strconv.ParseFloat(fmt.Sprintf("%.3f", tmpValue), 64)
 				tmpAlarmQuery := m.AlarmTable{Endpoint: tmpAlarm.Endpoint, SMetric: tmpAlarm.SMetric}
@@ -128,6 +129,7 @@ func AcceptAlertMsg(c *gin.Context)  {
 					db.GetEndpoint(&endpointObj)
 					if endpointObj.Id > 0 {
 						tmpAlarm.Endpoint = endpointObj.Guid
+						tmpAlarm.EndpointTags = endpointObj.Tags
 						tmpEndpointIp = endpointObj.Ip
 						if endpointObj.StopAlarm == 1 {
 							continue
@@ -525,7 +527,7 @@ func QueryEntityAlarm(c *gin.Context)  {
 	var result m.AlarmEntity
 	result.Data = []*m.AlarmEntityObj{}
 	data,_ := ioutil.ReadAll(c.Request.Body)
-	defer c.Request.Body.Close()
+	c.Request.Body.Close()
 	err := json.Unmarshal(data, &param)
 	if err != nil {
 		result.Status = "ERROR"
@@ -550,13 +552,14 @@ func QueryEntityAlarm(c *gin.Context)  {
 		} else {
 			id, _ = strconv.Atoi(value)
 		}
+		var alarmObj m.AlarmEntityObj
+		var err error
 		if id <= 0 {
-			result.Status = "ERROR"
-			result.Message = fmt.Sprintf("Query criteria condition: %s -> filter validation failed", param.Criteria.Condition)
-			mid.ReturnData(c, result)
-			return
+			log.Logger.Warn("Can not find alarm with empty id,get last one firing alarm", log.String("request param", string(data)))
+			alarmObj, err = db.GetAlarmEvent("alarm", "", 0, "firing")
+		}else {
+			alarmObj, err = db.GetAlarmEvent("alarm", guid, id, alarmStatus)
 		}
-		alarmObj, err := db.GetAlarmEvent("alarm", guid, id, alarmStatus)
 		if err != nil {
 			result.Status = "ERROR"
 			result.Message = fmt.Sprintf("error: %v", err)
