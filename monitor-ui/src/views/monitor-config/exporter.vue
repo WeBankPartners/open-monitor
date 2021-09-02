@@ -245,7 +245,7 @@ export default {
       this.$root.JQ('#cluster_Modal').modal('show')
     },
     editPost () {
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1//agent/kubernetes/cluster/update', this.modelConfig.addRow, () => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/agent/kubernetes/cluster/update', this.modelConfig.addRow, () => {
         this.$root.JQ('#cluster_Modal').modal('hide')
         this.getClusterList()
       })

@@ -25,7 +25,8 @@
     {title: 'tableKey.tags', value: 'tags', display: true},
     {title: 'tableKey.start_value', value: 'start_value', display: true},
     {title: 'tableKey.threshold', value: 's_cond', display: true},
-    {title: 'tableKey.s_last', value: 's_last', display: true}
+    {title: 'tableKey.s_last', value: 's_last', display: true},
+    {title: 'm_remark', value: 'custom_message', display: true}
   ]
   const btn = [
     {btn_name: 'button.view', btn_func: 'goToEndpointView'},
@@ -38,15 +39,6 @@ export default {
     return {
       pageConfig: {
         CRUD: '',
-        // researchConfig: {
-        //   input_conditions: [
-        //     {value: 'search', type: 'input', placeholder: 'placeholder.input', style: ''}],
-        //   btn_group: [
-        //     {btn_name: 'button.search', btn_func: 'search', class: 'btn-confirm-f', btn_icon: 'fa fa-search'}
-        //   ],
-        //   filters: {
-        //   }
-        // },
         table: {
           selection: false,
           tableData: [],
@@ -64,17 +56,13 @@ export default {
     }
   },
   mounted(){
-    this.getAlarm()
   },
   methods: {
-    getAlarm() {
-      let params = {}
+    getAlarm(resultData) {
       this.timeForDataAchieve = new Date().toLocaleString()
       this.timeForDataAchieve = this.timeForDataAchieve.replace('上午', 'AM ')
       this.timeForDataAchieve = this.timeForDataAchieve.replace('下午', 'PM ')
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/alarm/problem/query', params, (responseData) => {
-        this.pageConfig.table.tableData = responseData.data
-      }, {isNeedloading: false})
+      this.pageConfig.table.tableData = resultData
     },
     goToEndpointView (alarmItem) {
       const endpointObject = {
@@ -107,8 +95,7 @@ export default {
         params.custom = false
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.alarmManagement.close.api, params, () => {
-        // this.$root.$eventBus.$emit('hideConfirmModal')
-        this.getAlarm()
+        this.$parent.$parent.$parent.getAlarm()
       })
     }
   },

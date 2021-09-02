@@ -292,3 +292,8 @@ insert into cluster value ('default','default','','');
 alter table alarm add column custom_message varchar(500);
 alter table alarm_custom add column custom_message varchar(500);
 #@v1.12.0.1-end@;
+
+#@v1.12.1.1-begin@;
+alter table endpoint add column tags varchar(255);
+alter table alarm add column endpoint_tags varchar(255);
+#@v1.12.1.1-end@;
