@@ -207,7 +207,7 @@ func getChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.
 	for _, dataConfig := range param.Data {
 		endpointList = []*models.EndpointTable{}
 		if dataConfig.AppObject != "" {
-			endpointList, err = db.GetPanelRecursiveEndpoints(dataConfig.AppObject, dataConfig.EndpointType)
+			endpointList,err = db.GetRecursiveEndpointByType(dataConfig.AppObject, dataConfig.EndpointType)
 			if err != nil {
 				err = fmt.Errorf("Try to get endpoints from object:%s fail,%s ", dataConfig.AppObject, err.Error())
 				break
