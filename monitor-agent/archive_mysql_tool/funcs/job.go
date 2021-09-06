@@ -126,10 +126,11 @@ func consumeJob()  {
 		wg := sync.WaitGroup{}
 		for _,job := range concurrentJobList {
 			wg.Add(1)
-			go func(jobList ArchiveActionList) {
-				archiveAction(jobList)
-				wg.Done()
-			}(job)
+			go func(jobList ArchiveActionList,tmpWg *sync.WaitGroup) {
+				//archiveAction(jobList)
+				archiveTimeoutAction(jobList)
+				tmpWg.Done()
+			}(job, &wg)
 		}
 		wg.Wait()
 		endTime := time.Now()
@@ -150,7 +151,22 @@ func checkJobStatus()  {
 	}
 }
 
+func archiveTimeoutAction(param ArchiveActionList)  {
+	timeoutChan := make(chan int, 1)
+	go func(tmpC chan int,p ArchiveActionList) {
+		archiveAction(p)
+		timeoutChan <- 1
+	}(timeoutChan, param)
+	select {
+	case <-timeoutChan:
+		log.Printf("done archive action,job length:%d \n", len(param))
+	case <-time.After(600*time.Second):
+		log.Printf("timeout archive action in 10min,job length:%d \n", len(param))
+	}
+}
+
 func archiveAction(param ArchiveActionList)  {
+	log.Printf("start archive action,job length:%d \n", len(param))
 	if len(param) == 0 {
 		return
 	}
