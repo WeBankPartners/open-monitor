@@ -867,8 +867,8 @@ func UpdatePromMetric(c *gin.Context) {
 func GetEndpointMetric(c *gin.Context)  {
 	id,_ := strconv.Atoi(c.Query("id"))
 	endpointType := c.Query("endpoint_type")
-	if id <= 0 && endpointType == "" {
-		mid.ReturnParamTypeError(c, "id", "int")
+	if id <= 0 {
+		mid.ReturnSuccessData(c, []string{})
 		return
 	}
 	var err error
