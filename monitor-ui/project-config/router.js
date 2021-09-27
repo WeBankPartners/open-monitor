@@ -64,7 +64,7 @@ const router = new Router({
           title: "",
           meta: {},
           component: () =>
-            import("@/views/monitor-config/monitor-config-index"),
+            import("./pages/monitor-config-index"),
           redirect: "/monitorConfigIndex/endpointManagement",
           children: [
             {
