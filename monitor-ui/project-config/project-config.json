@@ -1,0 +1,5 @@
+{
+  "_description": "MAIN_PLUGIN_PATH为插件版配置入口、MAIN_PATH为独立版配置入口，IS_PRO为是否为企业版标志位，在监控配置页面使用",
+  "MAIN_PLUGIN_PATH": "./project-config/main-plugin.js",
+  "MAIN_PATH": "./project-config/main.js"
+}
