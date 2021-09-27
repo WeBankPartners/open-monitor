@@ -3,7 +3,7 @@ import alarmManagement from "@/views/alarm-management";
 import alarmHistory from "@/views/alarm-history";
 import dashboard from "@/views/dashboard";
 import endpointView from "@/views/endpoint-view";
-import monitorConfigIndex from "@/views/monitor-config/monitor-config-index";
+import monitorConfigIndex from "./pages/monitor-config-index";
 import endpointManagement from "@/views/monitor-config/endpoint-management";
 import groupManagement from "@/views/monitor-config/group-management";
 import thresholdManagement from "@/views/monitor-config/threshold-management";
