@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"strings"
 )
 
 func GetBusinessList(endpointId int,ownerEndpoint string) (err error, pathList []*m.BusinessMonitorTable) {
@@ -232,4 +233,88 @@ func GetBusinessPromMetric(keys []string) (err error,result []*m.PromMetricTable
 	}
 	err = x.SQL(sql).Find(&result)
 	return err,result
+}
+
+func CheckHostLogFileExist(hostIp,logPath string) error {
+	return nil
+}
+
+func PluginBusinessAction(input *m.PluginBusinessValueRequestObj) (result *m.PluginBusinessOutputObj, endpointId int, err error) {
+	result = &m.PluginBusinessOutputObj{CallbackParameter: input.CallbackParameter, ErrorCode: "0", ErrorMessage: ""}
+	if input.HostIp == "" {
+		err = fmt.Errorf("Param validate fail,hostIp can not empty ")
+		return
+	}
+	endpointObj := m.EndpointTable{Ip: input.HostIp, ExportType: "host"}
+	GetEndpoint(&endpointObj)
+	endpointId = endpointObj.Id
+	refEndpointObj := m.EndpointTable{Guid: input.RefMonitorObj}
+	GetEndpoint(&refEndpointObj)
+	if input.RefMonitorObj != "" && refEndpointObj.Id <= 0 {
+		err = fmt.Errorf("Param refMonitorObj can not fetch any data ")
+		return
+	}
+	var actions []*Action
+	for _,pathConfig := range input.Config {
+		logPath := input.PathPrefix + pathConfig.Path
+		tmpErr := CheckHostLogFileExist(input.HostIp, logPath)
+		if tmpErr != nil {
+			err = fmt.Errorf("LogFile:%s check illegal in host:%s,%s ", logPath, input.HostIp, tmpErr.Error())
+			break
+		}
+		actions = append(actions, getPluginBusinessUpdateActions(endpointObj.Id,logPath,refEndpointObj,pathConfig.Rules)...)
+	}
+	if err != nil {
+		return
+	}
+	err = Transaction(actions)
+	if err != nil {
+		err = fmt.Errorf("Update database fail,%s ", err.Error())
+	}
+	return
+}
+
+func getPluginBusinessUpdateActions(endpointId int,path string,refEndpointObj m.EndpointTable,rules []*m.PluginBusinessRuleObj) []*Action {
+	var actions []*Action
+	var businessMonitorTable []*m.BusinessMonitorTable
+	var businessMonitorConfigs []*m.BusinessMonitorCfgTable
+	var metricConfigList []*m.BusinessMetricObj
+	for _,rule := range rules {
+		tmpConfigRow := m.BusinessMonitorCfgTable{Regular: rule.Regular, Tags: rule.Tags}
+		tmpMetricConfigs := []*m.BusinessMetricObj{}
+		tmpStringMap := []*m.BusinessStringMapObj{}
+		for _,metric := range rule.MetricConfig {
+			tmpMetricConfigs = append(tmpMetricConfigs, &m.BusinessMetricObj{Key: metric.Key,Metric: metric.Metric,Title: metric.Title,AggType: metric.AggType})
+			for _,valueMap := range metric.ValueMap {
+				tmpReguslar := "regexp"
+				if strings.ToLower(valueMap.IsRegular) == "no" {
+					tmpReguslar = "!regexp"
+				}
+				tmpStringMap = append(tmpStringMap, &m.BusinessStringMapObj{Key: metric.Key,StringValue: valueMap.StringValue,IntValue: valueMap.IntValue,Regulation: tmpReguslar})
+			}
+		}
+		metricConfigList = append(metricConfigList, tmpMetricConfigs...)
+		metricConfigBytes,_ := json.Marshal(tmpMetricConfigs)
+		tmpConfigRow.MetricConfig = string(metricConfigBytes)
+		stringMapBytes,_ := json.Marshal(tmpStringMap)
+		tmpConfigRow.StringMap = string(stringMapBytes)
+		businessMonitorConfigs = append(businessMonitorConfigs, &tmpConfigRow)
+	}
+	x.SQL("select * from business_monitor where endpoint_id=? and `path`=?", endpointId, path).Find(&businessMonitorTable)
+	if len(businessMonitorTable) == 0 {
+		actions = append(actions, &Action{Sql: "insert into business_monitor(endpoint_id,`path`,owner_endpoint) value (?,?,?)",Param: []interface{}{endpointId,path,refEndpointObj.Guid}})
+		for _,v := range businessMonitorConfigs {
+			actions = append(actions, &Action{Sql: "insert into business_monitor_cfg(business_monitor_id,regular,tags,string_map,metric_config) select id as business_monitor_id,? as regular,? as tags,? as string_map,? as metric_config from business_monitor where endpoint_id=? and `path`=?",Param: []interface{}{v.Regular,v.Tags,v.StringMap,v.MetricConfig,endpointId,path}})
+		}
+	}else{
+		if businessMonitorTable[0].OwnerEndpoint != refEndpointObj.Guid {
+			actions = append(actions, &Action{Sql: "update business_monitor set owner_endpoint=? where id=?",Param: []interface{}{refEndpointObj.Guid,businessMonitorTable[0].Id}})
+			actions = append(actions, &Action{Sql: "delete from business_monitor_cfg where business_monitor_id=?", Param: []interface{}{businessMonitorTable[0].Id}})
+			for _,v := range businessMonitorConfigs {
+				actions = append(actions, &Action{Sql: "insert into business_monitor_cfg(business_monitor_id,regular,tags,string_map,metric_config) value (?,?,?,?,?)",Param: []interface{}{businessMonitorTable[0].Id,v.Regular,v.Tags,v.StringMap,v.MetricConfig}})
+			}
+		}
+	}
+
+	return actions
 }
