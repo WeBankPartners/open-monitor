@@ -38,6 +38,7 @@ func main() {
 	go db.StartCheckCron()
 	go db.StartCheckLogKeyword()
 	go db.SendConfigToDbManager()
+	go db.StartCallCronJob()
 	go db.StartNotifyPingExport()
 	api.InitDependenceParam()
 	middleware.InitErrorMessageList()
