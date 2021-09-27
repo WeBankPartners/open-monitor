@@ -1,4 +1,5 @@
 const path = require('path')
+const vueConfig = require('./project-config/project-config.json')
 const baseUrl = ''
 module.exports = {
   devServer: {
@@ -24,13 +25,13 @@ module.exports = {
       config
         .entry("app")
         .clear()
-        .add("./src/main-plugin.js"); //作为插件时
+        .add(vueConfig.MAIN_PLUGIN_PATH); //作为插件时
     });
     config.when(!process.env.PLUGIN, config => {
       config
         .entry("app")
 				.clear()
-				.add("./src/main.js"); //独立运行时
+				.add(vueConfig.MAIN_PATH); //独立运行时
     })
 		const types = ['vue-modules', 'vue', 'normal-modules', 'normal']
 		types.forEach(type => addStyleResource(config.module.rule('less').oneOf(type)))
