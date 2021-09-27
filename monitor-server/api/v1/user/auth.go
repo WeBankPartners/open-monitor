@@ -192,26 +192,7 @@ func AuthRequired() gin.HandlerFunc {
 					} else {
 						c.Set("operatorName", coreToken.User)
 						c.Set("operatorRoles", coreToken.Roles)
-						// plugin interface call
-						if strings.Contains(c.Request.RequestURI, "/agent/export/") || strings.Contains(c.Request.RequestURI, "/dashboard/system/") {
-							isSystemCall := false
-							for _, v := range coreToken.Roles {
-								if v == m.SystemRole {
-									if coreToken.User == m.PlatformUser {
-										isSystemCall = true
-									}
-									break
-								}
-							}
-							if !isSystemCall {
-								c.JSON(http.StatusOK, pluginInterfaceResultObj{ResultCode: "1", ResultMessage: "Token authority validate fail", Results: pluginInterfaceResultOutput{Outputs: []string{}}})
-								c.Abort()
-							} else {
-								c.Next()
-							}
-						} else {
-							c.Next()
-						}
+						c.Next()
 					}
 				} else {
 					mid.ReturnTokenError(c)
