@@ -35,7 +35,8 @@
     "max_unit_speed": 5,
     "five_min_start_day": 90,
     "concurrent_insert_num": 100,
-    "retry_wait_second": 60
+    "retry_wait_second": 60,
+    "job_timeout": 1800
   },
   "http": {
     "enable": true,

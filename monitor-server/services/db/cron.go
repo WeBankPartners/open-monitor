@@ -21,7 +21,29 @@ var (
 	checkEventToMail string
 	monitorSelfIp  string
 	intervalMin int
+	CronJobList []*m.CornJobObj
 )
+
+func StartCallCronJob()  {
+	if len(CronJobList) == 0 {
+		return
+	}
+	for _,cron := range CronJobList {
+		go callCronJob(cron)
+	}
+	select{}
+}
+
+func callCronJob(param *m.CornJobObj)  {
+	if param.Interval == 0 {
+		return
+	}
+	t := time.NewTicker(time.Duration(param.Interval)*time.Second).C
+	for {
+		<- t
+		go param.Func()
+	}
+}
 
 func StartCheckCron()  {
 	checkEventKey = os.Getenv("MONITOR_CHECK_EVENT_KEY")
