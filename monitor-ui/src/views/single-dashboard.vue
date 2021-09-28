@@ -175,7 +175,7 @@ export default {
       this.viewData.forEach((item) => {
         let params = {
           aggregate: 'none',
-          time_second: -1800,
+          time_second: this.viewCondition.timeTnterval,
           start: this.dateToTimestamp(this.viewCondition.dateRange[0]),
           end: this.dateToTimestamp(this.viewCondition.dateRange[1]),
           title: '',
