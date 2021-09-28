@@ -82,8 +82,8 @@ func SyncRuleConfigFile(tplId int, moveOutEndpoints []string, fromPeer bool) err
 		}
 	}
 	for _,cluster := range clusterList {
-		guidExpr,addressExpr := buildRuleReplaceExpr(clusterEndpointMap[cluster])
-		ruleFileConfig := buildRuleFileContent(ruleFileName,guidExpr,addressExpr,copyStrategyList(strategyList))
+		guidExpr,addressExpr,ipExpr := buildRuleReplaceExpr(clusterEndpointMap[cluster])
+		ruleFileConfig := buildRuleFileContent(ruleFileName,guidExpr,addressExpr,ipExpr,copyStrategyList(strategyList))
 		if cluster == "default" || cluster == "" {
 			prom.SyncLocalRuleConfig(models.RuleLocalConfigJob{FromPeer: fromPeer,TplId: tplId,Name: ruleFileConfig.Name,Rules: ruleFileConfig.Rules})
 		}else{
@@ -97,7 +97,7 @@ func SyncRuleConfigFile(tplId int, moveOutEndpoints []string, fromPeer bool) err
 	return err
 }
 
-func buildRuleReplaceExpr(endpointList []*models.EndpointTable) (guidExpr,addressExpr string) {
+func buildRuleReplaceExpr(endpointList []*models.EndpointTable) (guidExpr,addressExpr,ipExpr string) {
 	for _,endpoint := range endpointList {
 		ignoreType := false
 		for _,tmpType := range ruleConfigIgnoreType {
@@ -115,6 +115,7 @@ func buildRuleReplaceExpr(endpointList []*models.EndpointTable) (guidExpr,addres
 			addressExpr += endpoint.Address + "|"
 		}
 		guidExpr += endpoint.Guid + "|"
+		ipExpr += endpoint.Ip + "|"
 	}
 	if addressExpr != "" {
 		addressExpr = addressExpr[:len(addressExpr)-1]
@@ -122,10 +123,13 @@ func buildRuleReplaceExpr(endpointList []*models.EndpointTable) (guidExpr,addres
 	if guidExpr != "" {
 		guidExpr = guidExpr[:len(guidExpr)-1]
 	}
+	if ipExpr != "" {
+		ipExpr = ipExpr[:len(ipExpr)-1]
+	}
 	return
 }
 
-func buildRuleFileContent(ruleFileName,guidExpr,addressExpr string,strategyList []*models.StrategyTable ) models.RFGroup {
+func buildRuleFileContent(ruleFileName,guidExpr,addressExpr,ipExpr string,strategyList []*models.StrategyTable ) models.RFGroup {
 	result := models.RFGroup{Name: ruleFileName}
 	if len(strategyList) == 0 {
 		return result
@@ -152,6 +156,19 @@ func buildRuleFileContent(ruleFileName,guidExpr,addressExpr string,strategyList 
 				strategy.Expr = strings.Replace(strategy.Expr, "=\"$guid\"", "=~\""+guidExpr+"\"", -1)
 			}else{
 				strategy.Expr = strings.Replace(strategy.Expr, "=\"$guid\"", "=\""+guidExpr+"\"", -1)
+			}
+		}
+		if strings.Contains(strategy.Expr, "$ip") {
+			if strings.Contains(ipExpr, "|") {
+				tmpStr := strings.Split(strategy.Expr, "$ip")[1]
+				tmpStr = tmpStr[:strings.Index(tmpStr,"\"")]
+				newList := []string{}
+				for _,v := range strings.Split(ipExpr, "|") {
+					newList = append(newList, v+tmpStr)
+				}
+				strategy.Expr = strings.Replace(strategy.Expr, "=\"$ip"+tmpStr+"\"", "=~\""+strings.Join(newList, "|")+"\"", -1)
+			}else{
+				strategy.Expr = strings.ReplaceAll(strategy.Expr, "$ip", ipExpr)
 			}
 		}
 		tmpRfu.Expr = fmt.Sprintf("%s %s", strategy.Expr, strategy.Cond)
