@@ -230,6 +230,7 @@ export default {
     },
     initChart (params) {
       this.oriParams = params
+      this.chartQueryList = []
       if (!this.$root.$validate.isEmpty_reset(params.templateData.cfg)) {
         this.getEndpointList()
         this.viewData = JSON.parse(params.templateData.cfg)

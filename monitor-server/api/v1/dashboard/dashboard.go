@@ -229,13 +229,13 @@ func fetchBusinessPanel(endpoint string) (err error,result m.PanelModel) {
 			}
 		}
 	}
-	_,extendMetric := db.GetBusinessPromMetric(promMetricKeys)
-	for _,v := range extendMetric {
-		tmpChartObj := m.ChartModel{Id: chartTable[0].Id, Endpoint: []string{realEndpoint}, Url: chartTable[0].Url}
-		tmpChartObj.Metric = []string{v.Metric}
-		tmpChartObj.Title = v.Metric
-		result.Charts = append(result.Charts, &tmpChartObj)
-	}
+	//_,extendMetric := db.GetBusinessPromMetric(promMetricKeys)
+	//for _,v := range extendMetric {
+	//	tmpChartObj := m.ChartModel{Id: chartTable[0].Id, Endpoint: []string{realEndpoint}, Url: chartTable[0].Url}
+	//	tmpChartObj.Metric = []string{v.Metric}
+	//	tmpChartObj.Title = v.Metric
+	//	result.Charts = append(result.Charts, &tmpChartObj)
+	//}
 	return err,result
 }
 
@@ -867,8 +867,8 @@ func UpdatePromMetric(c *gin.Context) {
 func GetEndpointMetric(c *gin.Context)  {
 	id,_ := strconv.Atoi(c.Query("id"))
 	endpointType := c.Query("endpoint_type")
-	if id <= 0 && endpointType == "" {
-		mid.ReturnParamTypeError(c, "id", "int")
+	if id <= 0 {
+		mid.ReturnSuccessData(c, []string{})
 		return
 	}
 	var err error
