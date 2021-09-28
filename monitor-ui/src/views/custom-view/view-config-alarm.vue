@@ -8,7 +8,17 @@
     <div class="alarm-list">
       <template v-for="(alarmItem, alarmIndex) in resultData">
         <section :key="alarmIndex" class="alarm-item c-dark-exclude-color" :class="'alarm-item-border-'+ alarmItem.s_priority">
-          <i class="fa fa-bar-chart fa-operate" v-if="!alarmItem.is_custom" @click="goToEndpointView(alarmItem)" aria-hidden="true"></i>
+          <div style="float:right">
+            <Tooltip :content="$t('menu.endpointView')">
+              <Icon type="ios-stats" size="18" class="fa-operate" v-if="!alarmItem.is_custom" @click="goToEndpointView(alarmItem)"/>
+            </Tooltip>
+            <Tooltip :content="$t('close')">
+              <Icon type="ios-eye-off" size="18" class="fa-operate" @click="deleteConfirmModal(alarmItem)"/>
+            </Tooltip>
+            <Tooltip :content="$t('m_remark')">
+              <Icon type="ios-pricetags-outline" size="18" class="fa-operate" @click="remarkModal(alarmItem)" />
+            </Tooltip>
+          </div>
           <ul>
             <li>
               <label class="alarm-item-label">{{$t('field.endpoint')}}:</label>
@@ -25,6 +35,12 @@
             <li v-if="!alarmItem.is_custom && alarmItem.tags">
               <label class="alarm-item-label">{{$t('tableKey.tags')}}:</label>
               <Tag type="border" v-for="(t,tIndex) in alarmItem.tags.split('^')" :key="tIndex" color="cyan">{{t}}</Tag>
+            </li>
+            <li v-if="alarmItem.custom_message">
+              <label class="alarm-item-label">{{$t('m_remark')}}:</label>
+              <div class="col-md-9" style="display: inline-block;padding:0">
+                <Tag type="border" color="primary">{{alarmItem.custom_message}}</Tag>
+              </div>
             </li>
             <li>
               <label class="alarm-item-label">{{$t('tableKey.start')}}:</label><span>{{alarmItem.start_string}}</span>
@@ -47,6 +63,18 @@
         </section>
       </template>
     </div>
+    <Modal
+      v-model="isShowWarning"
+      :title="$t('closeConfirm.title')"
+      @on-ok="ok"
+      @on-cancel="cancel">
+      <div class="modal-body" style="padding:30px">
+        <div style="text-align:center">
+          <p style="color: red">{{$t('closeConfirm.tip')}}</p>
+        </div>
+      </div>
+    </Modal>
+    <ModalComponent :modelConfig="modelConfig"></ModalComponent>
   </div>
 </template>
 
@@ -59,9 +87,29 @@ export default {
       interval: '',
 
       resultData: [],
+      selectedData: '', // 存放选中数据
+      isShowWarning: false,
       low: 0,
       mid: 0,
-      high: 0
+      high: 0,
+      modelConfig: {
+        modalId: 'remark_Modal',
+        modalTitle: 'm_remark',
+        saveFunc: 'remarkAlarm',
+        isAdd: true,
+        config: [
+          {label: 'm_remark', value: 'message', placeholder: '', v_validate: '', disabled: false, type: 'text'}
+        ],
+        addRow: { // [通用]-保存用户新增、编辑时数据
+          id: '',
+          message: '',
+          is_custom: false
+        }
+      },
+      cacheParams: {
+        id: '',
+        viewCondition: ''
+      }
     }
   },
   mounted () {},
@@ -73,6 +121,8 @@ export default {
       clearInterval(this.interval)
     },
     getAlarm (id, viewCondition) {
+      this.cacheParams.id = id
+      this.cacheParams.viewCondition = viewCondition
       this.getAlarmdata(id)
       this.interval = setInterval(()=>{
         this.getAlarmdata(id)
@@ -94,8 +144,47 @@ export default {
         type: alarmItem.endpoint.split('_').slice(-1)[0]
       }
       localStorage.setItem('jumpCallData', JSON.stringify(endpointObject))
-      const news = this.$router.resolve({name: 'endpointView'})
-      window.open(news.href, '_blank')
+      this.$router.push({path: '/endpointView'})
+      // const news = this.$router.resolve({name: 'endpointView'})
+      // window.open(news.href, '_blank')
+    },
+    deleteConfirmModal (rowData) {
+      this.selectedData = rowData
+      this.isShowWarning = true
+    },
+    ok () {
+      this.removeAlarm(this.selectedData)
+    },
+    cancel () {
+      this.isShowWarning = false
+    },
+    removeAlarm(alarmItem) {
+      let params = {
+        id: alarmItem.id,
+        custom: true
+      }
+      if (!alarmItem.is_custom) {
+        params.custom = false
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.alarmManagement.close.api, params, () => {
+        // this.$root.$eventBus.$emit('hideConfirmModal')
+        this.getAlarm(this.cacheParams.id, this.cacheParams.viewCondition)
+      })
+    },
+    remarkModal (item) {
+      this.modelConfig.addRow = {
+        id: item.id,
+        message: item.custom_message,
+        is_custom: false
+      }
+      this.$root.JQ('#remark_Modal').modal('show')
+    },
+    remarkAlarm () {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.remarkAlarm, this.modelConfig.addRow, () => {
+        this.$Message.success(this.$t('tips.success'))
+        this.getAlarm(this.cacheParams.id, this.cacheParams.viewCondition)
+        this.$root.JQ('#remark_Modal').modal('hide')
+      })
     }
   },
   components: {},
