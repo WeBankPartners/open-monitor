@@ -1,16 +1,16 @@
 package funcs
 
 import (
+	"fmt"
 	"log"
 	"sort"
 	"sync"
 	"time"
-	"fmt"
 )
 
 var jobChannelList chan ArchiveActionList
 
-func StartCronJob()  {
+func StartCronJob() {
 	concurrentInsertNum = 50
 	if Config().Trans.ConcurrentInsertNum > 0 {
 		concurrentInsertNum = Config().Trans.ConcurrentInsertNum
@@ -23,62 +23,66 @@ func StartCronJob()  {
 	if Config().Trans.RetryWaitSecond > 0 {
 		retryWaitSecond = Config().Trans.RetryWaitSecond
 	}
+	jobTimeout = 1800
+	if Config().Trans.JobTimeout > 0 {
+		jobTimeout = Config().Trans.JobTimeout
+	}
 	jobChannelList = make(chan ArchiveActionList, Config().Prometheus.MaxHttpOpen)
 	go consumeJob()
-	t,_ := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s 00:00:00 "+DefaultLocalTimeZone, time.Now().Format("2006-01-02")))
-	subSecond := t.Unix()+86410-time.Now().Unix()
-	time.Sleep(time.Duration(subSecond)*time.Second)
-	c := time.NewTicker(24*time.Hour).C
+	t, _ := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s 00:00:00 "+DefaultLocalTimeZone, time.Now().Format("2006-01-02")))
+	subSecond := t.Unix() + 86410 - time.Now().Unix()
+	time.Sleep(time.Duration(subSecond) * time.Second)
+	c := time.NewTicker(24 * time.Hour).C
 	for {
 		go func() {
 			if checkJobState() {
 				CreateJob("")
-				time.Sleep(60 * time.Minute)
+				time.Sleep(10 * time.Minute)
 				ArchiveFromMysql(0)
 			}
 		}()
-		<- c
+		<-c
 	}
 }
 
-func CreateJob(dateString string)  {
+func CreateJob(dateString string) {
 	err := InitMonitorMetricMap()
 	if err != nil {
 		log.Printf("start to create job,init monitor metric map error: %v \n", err)
 		return
 	}
-	var start,end int64
+	var start, end int64
 	if dateString == "" {
-		t,_ := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s 00:00:00 "+DefaultLocalTimeZone, time.Now().Format("2006-01-02")))
-		start = t.Unix()-86400
+		t, _ := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s 00:00:00 "+DefaultLocalTimeZone, time.Now().Format("2006-01-02")))
+		start = t.Unix() - 86400
 		end = t.Unix()
 		dateString = time.Unix(start, 0).Format("2006-01-02")
-	}else {
+	} else {
 		t, err := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s 00:00:00 "+DefaultLocalTimeZone, dateString))
 		if err != nil {
 			log.Printf("dateString validate fail,must format like 2006-01-02 \n")
 			return
 		}
 		start = t.Unix()
-		end = t.Unix()+86400
+		end = t.Unix() + 86400
 	}
 	log.Printf("start cron job %s \n", dateString)
-	err,tableName := createTable(start, false)
+	err, tableName := createTable(start, false)
 	if err != nil {
 		log.Printf("try to create table:%s error:%v \n", tableName, err)
 		return
 	}
 	unitCount := 0
-	actionParamObjLength := maxUnitNum*Config().Prometheus.MaxHttpOpen
+	actionParamObjLength := maxUnitNum * Config().Prometheus.MaxHttpOpen
 	var actionParamList []*ArchiveActionList
 	var tmpActionParamObjList []*ArchiveActionParamObj
-	for _,v := range MonitorObjList {
-		for _,vv := range v.Metrics {
+	for _, v := range MonitorObjList {
+		for _, vv := range v.Metrics {
 			unitCount++
-			tmpActionParamObjList = append(tmpActionParamObjList, &ArchiveActionParamObj{Endpoint:v.Endpoint, Metric:vv.Metric, PromQl:vv.PromQl, TableName:tableName, Start:start, End:end})
+			tmpActionParamObjList = append(tmpActionParamObjList, &ArchiveActionParamObj{Endpoint: v.Endpoint, Metric: vv.Metric, PromQl: vv.PromQl, TableName: tableName, Start: start, End: end})
 			if unitCount == actionParamObjLength {
 				tmpArchiveActionList := ArchiveActionList{}
-				for _,vvv := range tmpActionParamObjList {
+				for _, vvv := range tmpActionParamObjList {
 					tmpArchiveActionList = append(tmpArchiveActionList, vvv)
 				}
 				actionParamList = append(actionParamList, &tmpArchiveActionList)
@@ -89,28 +93,28 @@ func CreateJob(dateString string)  {
 	}
 	if len(tmpActionParamObjList) > 0 {
 		tmpArchiveActionList := ArchiveActionList{}
-		for _,vvv := range tmpActionParamObjList {
+		for _, vvv := range tmpActionParamObjList {
 			tmpArchiveActionList = append(tmpArchiveActionList, vvv)
 		}
 		actionParamList = append(actionParamList, &tmpArchiveActionList)
 	}
 	go checkJobStatus()
-	for _,v := range actionParamList {
+	for _, v := range actionParamList {
 		jobChannelList <- *v
 	}
 }
 
-func consumeJob()  {
+func consumeJob() {
 	for {
-		param := <- jobChannelList
+		param := <-jobChannelList
 		if len(param) == 0 {
 			continue
 		}
 		tmpUnixCount := 0
 		var concurrentJobList []ArchiveActionList
 		tmpJobList := ArchiveActionList{}
-		for _,v := range param {
-			tmpUnixCount ++
+		for _, v := range param {
+			tmpUnixCount++
 			tmpJobList = append(tmpJobList, v)
 			if tmpUnixCount >= maxUnitNum {
 				concurrentJobList = append(concurrentJobList, tmpJobList)
@@ -124,12 +128,13 @@ func consumeJob()  {
 		log.Printf("start consume job,length:%d ,concurrent:%d \n", len(param), len(concurrentJobList))
 		startTime := time.Now()
 		wg := sync.WaitGroup{}
-		for _,job := range concurrentJobList {
+		for _, job := range concurrentJobList {
 			wg.Add(1)
-			go func(jobList ArchiveActionList) {
-				archiveAction(jobList)
-				wg.Done()
-			}(job)
+			go func(jobList ArchiveActionList, tmpWg *sync.WaitGroup) {
+				//archiveAction(jobList)
+				archiveTimeoutAction(jobList)
+				tmpWg.Done()
+			}(job, &wg)
 		}
 		wg.Wait()
 		endTime := time.Now()
@@ -138,50 +143,66 @@ func consumeJob()  {
 	}
 }
 
-func checkJobStatus()  {
-	time.Sleep(2*time.Second)
+func checkJobStatus() {
+	time.Sleep(2 * time.Second)
 	for {
 		log.Printf("job channel list length --> %d \n", len(jobChannelList))
 		if len(jobChannelList) == 0 {
 			log.Printf("archive job done \n")
 			break
 		}
-		time.Sleep(10*time.Second)
+		time.Sleep(10 * time.Second)
 	}
 }
 
-func archiveAction(param ArchiveActionList)  {
+func archiveTimeoutAction(param ArchiveActionList) {
+	timeoutChan := make(chan int, 1)
+	go func(tmpC chan int, p ArchiveActionList) {
+		archiveAction(p)
+		timeoutChan <- 1
+	}(timeoutChan, param)
+	select {
+	case <-timeoutChan:
+		log.Printf("done archive action,job length:%d \n", len(param))
+	case <-time.After(time.Duration(jobTimeout) * time.Second):
+		log.Printf("timeout archive action in 10min,job length:%d \n", len(param))
+	}
+}
+
+func archiveAction(param ArchiveActionList) {
+	log.Printf("start archive action,job length:%d \n", len(param))
 	if len(param) == 0 {
 		return
 	}
 	var err error
 	var rowData []*ArchiveTable
-	for _,v :=range param {
-		tmpPrometheusParam := PrometheusQueryParam{Start:v.Start, End:v.End, PromQl:v.PromQl}
+	for i, v := range param {
+		log.Printf("start build archive row data,index:%d \n", i)
+		tmpPrometheusParam := PrometheusQueryParam{Start: v.Start, End: v.End, PromQl: v.PromQl}
 		err = getPrometheusData(&tmpPrometheusParam)
 		if err != nil {
 			log.Printf("acrhive action: endpoint->%s metric->%s get prometheus data error-> %v \n", v.Endpoint, v.Metric, err)
 			continue
 		}
-		for _,vv := range tmpPrometheusParam.Data {
+		for _, vv := range tmpPrometheusParam.Data {
 			tmpTagString := vv.Metric.ToTagString()
-			tmpStartTime := vv.Start+60
+			tmpStartTime := vv.Start + 60
 			var tmpFloatList []float64
-			for _,vvv := range vv.Values {
+			for _, vvv := range vv.Values {
 				if vvv[0] < float64(tmpStartTime) {
 					tmpFloatList = append(tmpFloatList, vvv[1])
-				}else{
+				} else {
 					if len(tmpFloatList) > 0 {
-						avg,min,max,p95 := calcData(tmpFloatList)
-						rowData = append(rowData, &ArchiveTable{Endpoint:v.Endpoint,Metric:v.Metric,Tags:tmpTagString,UnixTime:tmpStartTime-60,Avg:avg,Min:min,Max:max,P95:p95})
+						avg, min, max, p95 := calcData(tmpFloatList)
+						rowData = append(rowData, &ArchiveTable{Endpoint: v.Endpoint, Metric: v.Metric, Tags: tmpTagString, UnixTime: tmpStartTime - 60, Avg: avg, Min: min, Max: max, P95: p95})
 					}
 					tmpStartTime += 60
 					tmpFloatList = []float64{vvv[1]}
 				}
 			}
 			if len(tmpFloatList) > 0 && tmpStartTime <= v.End {
-				avg,min,max,p95 := calcData(tmpFloatList)
-				rowData = append(rowData, &ArchiveTable{Endpoint:v.Endpoint,Metric:v.Metric,Tags:tmpTagString,UnixTime:tmpStartTime-60,Avg:avg,Min:min,Max:max,P95:p95})
+				avg, min, max, p95 := calcData(tmpFloatList)
+				rowData = append(rowData, &ArchiveTable{Endpoint: v.Endpoint, Metric: v.Metric, Tags: tmpTagString, UnixTime: tmpStartTime - 60, Avg: avg, Min: min, Max: max, P95: p95})
 			}
 		}
 	}
@@ -195,23 +216,23 @@ func archiveAction(param ArchiveActionList)  {
 	}
 }
 
-func calcData(data []float64) (avg,min,max,p95 float64) {
+func calcData(data []float64) (avg, min, max, p95 float64) {
 	if len(data) == 1 {
-		return data[0],data[0],data[0],data[0]
+		return data[0], data[0], data[0], data[0]
 	}
 	sort.Float64s(data)
 	min = data[0]
 	max = data[len(data)-1]
 	p95 = data[len(data)-2]
 	var sum float64
-	for _,v := range data {
+	for _, v := range data {
 		sum += v
 	}
-	avg = sum/float64(len(data))
-	return avg,min,max,p95
+	avg = sum / float64(len(data))
+	return avg, min, max, p95
 }
 
-func ArchiveFromMysql(tableUnixTime int64)  {
+func ArchiveFromMysql(tableUnixTime int64) {
 	if tableUnixTime <= 0 {
 		var startDays int64 = 90
 		if Config().Trans.FiveMinStartDay > 0 {
@@ -224,23 +245,23 @@ func ArchiveFromMysql(tableUnixTime int64)  {
 	if !checkTableExists(oldTableName) {
 		return
 	}
-	err,newTableName := createTable(tableUnixTime, true)
+	err, newTableName := createTable(tableUnixTime, true)
 	if err != nil {
 		log.Printf("archive 5 min job,create table:%s error:%v \n", newTableName, err)
 		return
 	}
-	err,countNowTable := getArchiveTableCountData(oldTableName)
+	err, countNowTable := getArchiveTableCountData(oldTableName)
 	if err != nil {
 		log.Printf("archive 5 min job,get count data from table:%s error:%v \n", oldTableName, err)
 		return
 	}
-	for _,v := range countNowTable {
-		tmpErr := archiveOneToFive(oldTableName,newTableName,v.Endpoint,v.Metric)
+	for _, v := range countNowTable {
+		tmpErr := archiveOneToFive(oldTableName, newTableName, v.Endpoint, v.Metric)
 		if tmpErr != nil {
 			log.Printf("archive 5 min job,archive 1 min to 5 min job error: %v \n", tmpErr)
 		}
 	}
-	err = renameFiveToOne(oldTableName,newTableName)
+	err = renameFiveToOne(oldTableName, newTableName)
 	if err != nil {
 		log.Printf("archive 5 min job,rename %s to %s error: %v \n", oldTableName, newTableName, err)
 	}
