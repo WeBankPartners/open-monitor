@@ -126,3 +126,39 @@ func UpdateNodeExporterBusinessConfig(endpointId int) error {
 	resp.Body.Close()
 	return nil
 }
+
+func PluginBusinessHandle(c *gin.Context) {
+	response := m.PluginBusinessResp{ResultCode: "0", ResultMessage: "success", Results: m.PluginBusinessOutput{}}
+	var err error
+	defer func() {
+		if err != nil {
+			log.Logger.Error("Plugin ci data operation handle fail", log.Error(err))
+			response.ResultCode = "1"
+			response.ResultMessage = err.Error()
+		}
+		//bodyBytes, _ := json.Marshal(response)
+		//c.Set("responseBody", string(bodyBytes))
+		c.JSON(http.StatusOK, response)
+	}()
+	var param m.PluginBusinessRequest
+	if err = c.ShouldBindJSON(&param); err != nil {
+		return
+	}
+	if len(param.Inputs) == 0 {
+		return
+	}
+	for _, input := range param.Inputs {
+		output, endpointId, tmpErr := db.PluginBusinessAction(input)
+		if tmpErr == nil {
+			tmpErr = UpdateNodeExporterBusinessConfig(endpointId)
+		}
+		if tmpErr != nil {
+			output.ErrorCode = "1"
+			output.ErrorMessage = tmpErr.Error()
+			err = tmpErr
+		}
+		response.Results.Outputs = append(response.Results.Outputs, output)
+	}
+	//logParam, _ := json.Marshal(param)
+	//c.Set("requestBody", string(logParam))
+}
