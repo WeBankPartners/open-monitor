@@ -50,6 +50,29 @@ func InitDbEngine(databaseName string) (err error) {
 	return err
 }
 
+func ResetDbEngine()  {
+	err := mysqlEngine.Close()
+	if err != nil {
+		log.Printf("close mysql engine fail,%s \n", err.Error())
+	}
+	time.Sleep(30*time.Second)
+	databaseName := Config().Mysql.DatabasePrefix + time.Now().Format("2006")
+	connectStr := fmt.Sprintf("%s:%s@%s(%s:%s)/%s?collation=utf8mb4_unicode_ci&allowNativePasswords=true",
+		Config().Mysql.User, Config().Mysql.Password, "tcp", Config().Mysql.Server, Config().Mysql.Port, databaseName)
+	mysqlEngine, err = xorm.NewEngine("mysql", connectStr)
+	if err != nil {
+		log.Printf("init mysql fail with connect: %s error: %v \n", connectStr, err)
+	} else {
+		mysqlEngine.SetMaxIdleConns(Config().Mysql.MaxIdle)
+		mysqlEngine.SetMaxOpenConns(Config().Mysql.MaxOpen)
+		mysqlEngine.SetConnMaxLifetime(time.Duration(Config().Mysql.Timeout) * time.Second)
+		mysqlEngine.Charset("utf8")
+		// 使用驼峰式映射
+		mysqlEngine.SetMapper(core.SnakeMapper{})
+	}
+	log.Println("Reset db engine done! ")
+}
+
 func InitMonitorDbEngine() (err error) {
 	connectStr := fmt.Sprintf("%s:%s@%s(%s:%s)/%s?collation=utf8mb4_unicode_ci&allowNativePasswords=true",
 		Config().Monitor.Mysql.User, Config().Monitor.Mysql.Password, "tcp", Config().Monitor.Mysql.Server, Config().Monitor.Mysql.Port, Config().Monitor.Mysql.DataBase)
@@ -91,7 +114,7 @@ func insertMysql(rows []*ArchiveTable, tableName string) error {
 	for sqlIndex, v := range sqlList {
 		var tmpErr error
 		for i := 0; i < 3; i++ {
-			log.Printf("start try %d to insert mysql,data num:%d \n", i+1, rowCountList[sqlIndex])
+			//log.Printf("start try %d to insert mysql,data num:%d \n", i+1, rowCountList[sqlIndex])
 			_, err := mysqlEngine.Exec(v)
 			if err != nil {
 				tmpErr = err
@@ -104,6 +127,7 @@ func insertMysql(rows []*ArchiveTable, tableName string) error {
 			}
 		}
 		if tmpErr != nil {
+			log.Printf("Exec sql error:%s \n", tmpErr.Error())
 			tmpErrorString := tmpErr.Error()
 			if len(tmpErrorString) > 200 {
 				tmpErrorString = tmpErrorString[:200]
