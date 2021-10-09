@@ -67,13 +67,16 @@ func getPrometheusData(param *PrometheusQueryParam) error {
 		return fmt.Errorf("http request error, %v \n", err)
 	}
 	if resp.StatusCode/100 != 2 {
+		if resp.Body != nil {
+			resp.Body.Close()
+		}
 		return fmt.Errorf("http response status %d \n", resp.StatusCode)
 	}
 	bodyBytes,err := ioutil.ReadAll(resp.Body)
+	resp.Body.Close()
 	if err != nil {
 		return fmt.Errorf("http read body error, %v \n", err)
 	}
-	resp.Body.Close()
 	var result PrometheusResponse
 	err = json.Unmarshal(bodyBytes, &result)
 	if err != nil {
