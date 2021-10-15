@@ -184,6 +184,7 @@ func handleAddKubernetesCluster(input k8sClusterRequestInputObj) error  {
 	}else {
 		err = db.AddKubernetesCluster(m.KubernetesClusterParam{ClusterName: input.ClusterName, Ip: input.Ip, Port: input.Port, Token: input.Token})
 	}
+	db.SyncPodToEndpoint()
 	return err
 }
 
