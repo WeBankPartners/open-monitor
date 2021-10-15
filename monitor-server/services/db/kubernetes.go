@@ -190,7 +190,11 @@ func SyncPodToEndpoint() bool {
 		x.SQL("select * from kubernetes_endpoint_rel where kubernete_id=?", v.Id).Find(&tmpKubernetesEndpointTables)
 		tmpApiServerIp := v.ApiServer[:strings.Index(v.ApiServer, ":")]
 		for _,vv := range series {
-			tmpEndpointGuid := fmt.Sprintf("%s_%s_pod", vv.Name, tmpApiServerIp)
+			tmpPodName := vv.Name
+			if strings.HasPrefix(tmpPodName, "pod=") {
+				tmpPodName = tmpPodName[4:]
+			}
+			tmpEndpointGuid := fmt.Sprintf("%s_%s_pod", tmpPodName, tmpApiServerIp)
 			existsFlag := false
 			for _,ke := range tmpKubernetesEndpointTables {
 				if ke.EndpointGuid == tmpEndpointGuid {
@@ -204,8 +208,8 @@ func SyncPodToEndpoint() bool {
 				}else{
 					tmpGuidMap[tmpEndpointGuid] = 1
 				}
-				endpointTables = append(endpointTables, &m.EndpointTable{Guid:tmpEndpointGuid, Name:vv.Name, Ip:tmpApiServerIp, ExportType:"pod", Step:10, OsType:v.ClusterName})
-				kubernetesEndpointTables = append(kubernetesEndpointTables, &m.KubernetesEndpointRelTable{KuberneteId:v.Id, EndpointGuid:tmpEndpointGuid, PodGuid: vv.Name})
+				endpointTables = append(endpointTables, &m.EndpointTable{Guid:tmpEndpointGuid, Name:tmpPodName, Ip:tmpApiServerIp, ExportType:"pod", Step:10, OsType:v.ClusterName})
+				kubernetesEndpointTables = append(kubernetesEndpointTables, &m.KubernetesEndpointRelTable{KuberneteId:v.Id, EndpointGuid:tmpEndpointGuid, PodGuid: tmpPodName})
 			}
 		}
 	}
