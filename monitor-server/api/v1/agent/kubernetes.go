@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func UpdateKubernetesCluster(c *gin.Context)  {
@@ -72,6 +73,8 @@ func UpdateKubernetesCluster(c *gin.Context)  {
 	if err != nil {
 		mid.ReturnHandleError(c, err.Error(), err)
 	}else{
+		time.Sleep(10*time.Second)
+		db.SyncPodToEndpoint()
 		mid.ReturnSuccess(c)
 	}
 }
