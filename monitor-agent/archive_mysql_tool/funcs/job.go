@@ -140,6 +140,11 @@ func consumeJob() {
 		endTime := time.Now()
 		useTime := float64(endTime.Sub(startTime).Nanoseconds()) / 1e6
 		log.Printf("done with consume job,use time: %.3f ms", useTime)
+		if int(endTime.Sub(startTime).Seconds()) >= jobTimeout {
+			log.Println("job timeout,try to reset db connection ")
+			ResetDbEngine()
+		}
+		gTransport.CloseIdleConnections()
 	}
 }
 
@@ -151,7 +156,7 @@ func checkJobStatus() {
 			log.Printf("archive job done \n")
 			break
 		}
-		time.Sleep(10 * time.Second)
+		time.Sleep(30 * time.Second)
 	}
 }
 
@@ -165,8 +170,9 @@ func archiveTimeoutAction(param ArchiveActionList) {
 	case <-timeoutChan:
 		log.Printf("done archive action,job length:%d \n", len(param))
 	case <-time.After(time.Duration(jobTimeout) * time.Second):
-		log.Printf("timeout archive action in 10min,job length:%d \n", len(param))
+		log.Printf("timeout archive action in %d s,job length:%d \n", jobTimeout, len(param))
 	}
+	close(timeoutChan)
 }
 
 func archiveAction(param ArchiveActionList) {
