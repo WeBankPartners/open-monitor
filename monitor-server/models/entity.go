@@ -76,6 +76,7 @@ type AlarmEntity struct {
 
 type AlarmEntityObj struct {
 	Id         string `json:"id"`
+	DisplayName string `json:"displayName"`
 	Status     string `json:"status"`
 	Subject    string `json:"subject"`
 	Content    string `json:"content"`
