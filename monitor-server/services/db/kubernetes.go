@@ -166,11 +166,11 @@ func StartCronSyncKubernetesPod(interval int)  {
 	t := time.NewTicker(time.Duration(interval*10)*time.Second).C
 	for {
 		<- t
-		go syncPodToEndpoint()
+		go SyncPodToEndpoint()
 	}
 }
 
-func syncPodToEndpoint() bool {
+func SyncPodToEndpoint() bool {
 	log.Logger.Info("start to sync kubernetes pod")
 	var kubernetesTables []*m.KubernetesClusterTable
 	result := false
@@ -190,7 +190,11 @@ func syncPodToEndpoint() bool {
 		x.SQL("select * from kubernetes_endpoint_rel where kubernete_id=?", v.Id).Find(&tmpKubernetesEndpointTables)
 		tmpApiServerIp := v.ApiServer[:strings.Index(v.ApiServer, ":")]
 		for _,vv := range series {
-			tmpEndpointGuid := fmt.Sprintf("%s_%s_pod", vv.Name, tmpApiServerIp)
+			tmpPodName := vv.Name
+			if strings.HasPrefix(tmpPodName, "pod=") {
+				tmpPodName = tmpPodName[4:]
+			}
+			tmpEndpointGuid := fmt.Sprintf("%s_%s_pod", tmpPodName, tmpApiServerIp)
 			existsFlag := false
 			for _,ke := range tmpKubernetesEndpointTables {
 				if ke.EndpointGuid == tmpEndpointGuid {
@@ -204,8 +208,8 @@ func syncPodToEndpoint() bool {
 				}else{
 					tmpGuidMap[tmpEndpointGuid] = 1
 				}
-				endpointTables = append(endpointTables, &m.EndpointTable{Guid:tmpEndpointGuid, Name:vv.Name, Ip:tmpApiServerIp, ExportType:"pod", Step:10, OsType:v.ClusterName})
-				kubernetesEndpointTables = append(kubernetesEndpointTables, &m.KubernetesEndpointRelTable{KuberneteId:v.Id, EndpointGuid:tmpEndpointGuid})
+				endpointTables = append(endpointTables, &m.EndpointTable{Guid:tmpEndpointGuid, Name:tmpPodName, Ip:tmpApiServerIp, ExportType:"pod", Step:10, OsType:v.ClusterName})
+				kubernetesEndpointTables = append(kubernetesEndpointTables, &m.KubernetesEndpointRelTable{KuberneteId:v.Id, EndpointGuid:tmpEndpointGuid, PodGuid: tmpPodName})
 			}
 		}
 	}
@@ -242,9 +246,9 @@ func syncPodToEndpoint() bool {
 	}
 	if len(kubernetesEndpointTables) > 0 {
 		result = true
-		keRelSql := "insert into kubernetes_endpoint_rel(kubernete_id,endpoint_guid) values "
+		keRelSql := "insert into kubernetes_endpoint_rel(kubernete_id,endpoint_guid,pod_guid) values "
 		for i,v := range kubernetesEndpointTables {
-			keRelSql += fmt.Sprintf("(%d,'%s')", v.KuberneteId, v.EndpointGuid)
+			keRelSql += fmt.Sprintf("(%d,'%s','%s')", v.KuberneteId, v.EndpointGuid, v.PodGuid)
 			if i < len(kubernetesEndpointTables)-1 {
 				keRelSql += ","
 			}
