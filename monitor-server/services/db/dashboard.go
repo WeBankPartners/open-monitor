@@ -140,7 +140,7 @@ func GetPromMetric(endpoint []string, metric string) (error, string) {
 			reg = strings.Replace(reg, "$guid", host.Guid, -1)
 		}
 		if strings.Contains(reg, "$pod") {
-			reg = strings.Replace(reg, "$pod", host.Name[len(host.ExportVersion)+1:], -1)
+			reg = strings.Replace(reg, "$pod", host.Name, -1)
 		}
 		if strings.Contains(reg, "$k8s_namespace") {
 			reg = strings.Replace(reg, "$k8s_namespace", host.ExportVersion, -1)
@@ -182,7 +182,7 @@ func ReplacePromQlKeyword(promQl, metric string, host m.EndpointTable) string {
 		promQl = strings.Replace(promQl, "$guid", host.Guid, -1)
 	}
 	if strings.Contains(promQl, "$pod") {
-		promQl = strings.Replace(promQl, "$pod", host.Name[len(host.ExportVersion)+1:], -1)
+		promQl = strings.Replace(promQl, "$pod", host.Name, -1)
 	}
 	if strings.Contains(promQl, "$k8s_namespace") {
 		promQl = strings.Replace(promQl, "$k8s_namespace", host.ExportVersion, -1)
