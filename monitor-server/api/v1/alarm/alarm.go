@@ -545,6 +545,8 @@ func QueryEntityAlarm(c *gin.Context)  {
 	value := param.Criteria.Condition
 	if strings.Contains(value, "monitor-check") {
 		alarmObj := db.GetCheckProgressContent(value)
+		alarmObj.Id = value
+		alarmObj.DisplayName = alarmObj.Subject
 		result.Data = append(result.Data, &alarmObj)
 	}else {
 		if strings.Contains(value, "-") {
@@ -571,6 +573,8 @@ func QueryEntityAlarm(c *gin.Context)  {
 			mid.ReturnData(c, result)
 			return
 		}
+		alarmObj.Id = value
+		alarmObj.DisplayName = alarmObj.Subject
 		result.Data = append(result.Data, &alarmObj)
 	}
 	result.Status = "OK"
