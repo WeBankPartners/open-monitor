@@ -108,7 +108,7 @@ func UpdateNodeExporterBusinessConfig(endpointId int) error {
 	}
 	postParam := []*m.BusinessAgentDto{}
 	for _,v := range data.PathList {
-		postParam = append(postParam, &m.BusinessAgentDto{Path: v.Path, Config: v.Rules})
+		postParam = append(postParam, &m.BusinessAgentDto{Path: v.Path, Config: v.Rules, Custom: v.CustomMetrics})
 	}
 	postData,err := json.Marshal(postParam)
 	if err != nil {
