@@ -297,3 +297,8 @@ alter table alarm_custom add column custom_message varchar(500);
 alter table endpoint add column tags varchar(255);
 alter table alarm add column endpoint_tags varchar(255);
 #@v1.12.1.1-end@;
+
+#@v1.12.3.1-begin@;
+alter table business_monitor_cfg add column config_type varchar(16) default 'json';
+alter table business_monitor_cfg add column agg_type varchar(16) default 'avg';
+#@v1.12.3.1-end@;
