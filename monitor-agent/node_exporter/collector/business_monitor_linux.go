@@ -139,9 +139,18 @@ type businessMonitorCfgObj struct {
 	MetricConfig  []*businessMetricConfigObj  `json:"metric_config"`
 }
 
+type BusinessMonitorCustomObj struct {
+	Id           int                     `json:"id"`
+	Metric       string                  `json:"metric"`
+	ValueRegular string                  `json:"value_regular"`
+	AggType      string                  `json:"agg_type"`
+	StringMap    []*businessStringMapObj `json:"string_map"`
+}
+
 type businessAgentDto struct {
 	Path  string  `json:"path"`
 	Config  []*businessMonitorCfgObj  `json:"config"`
+	Custom []*BusinessMonitorCustomObj `json:"custom"`
 }
 
 func (c *businessMonitorObj) start()  {
