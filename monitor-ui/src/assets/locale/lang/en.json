@@ -262,5 +262,9 @@
   "recommended_mode": "Recommended Mode",
   "classic_mode": "Classic Mode",
   "close": "Close",
-  "m_remark": "Remark"
+  "m_remark": "Remark",
+  "m_add_json_regular": "Add JSON Regular",
+  "m_add_metric_regular": "Add Metric Regular",
+  "m_json_regular": "JSON Regular",
+  "m_metric_regular": "Metric Regular"
 }
