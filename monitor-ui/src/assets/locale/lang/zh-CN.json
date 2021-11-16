@@ -261,5 +261,9 @@
   "recommended_mode": "推荐模式",
   "classic_mode": "经典模式",
   "close": "关闭",
-  "m_remark": "标记"
+  "m_remark": "标记",
+  "m_add_json_regular": "新增JSON正则",
+  "m_add_metric_regular": "新增指标正则",
+  "m_json_regular": "JSON正则",
+  "m_metric_regular": "指标正则"
 }
