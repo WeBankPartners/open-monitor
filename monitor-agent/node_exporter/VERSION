@@ -5,3 +5,6 @@ Update business monitor config,support key regexp regulation.
 
 v1.11.3.5
 Fix process monitor tag match case.
+
+v1.12.3.1
+Update business monitor config,support custom metric regular config.
