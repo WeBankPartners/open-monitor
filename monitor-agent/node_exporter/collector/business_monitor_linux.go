@@ -72,6 +72,7 @@ func (c *businessMonitorCollector) Update(ch chan<- prometheus.Metric) error {
 type businessStoreMonitorObj struct {
 	Path  string                    `json:"path"`
 	Rules []*businessStoreMetricObj `json:"rules"`
+	Custom []*businessStoreCustomObj `json:"custom"`
 }
 
 type businessStoreMetricObj struct {
@@ -81,6 +82,13 @@ type businessStoreMetricObj struct {
 	TagsKey      []string                   `json:"tags_key"`
 	TagsValue    []string                   `json:"tags_value"`
 	MetricConfig []*businessMetricConfigObj `json:"metric_config"`
+}
+
+type businessStoreCustomObj struct {
+	Metric string `json:"metric"`
+	ValueRegular string `json:"value_regular"`
+	AggType string `json:"agg_type"`
+	StringMap    []*businessStringMapObj    `json:"string_map"`
 }
 
 type businessRuleObj struct {
@@ -207,7 +215,6 @@ func (c *businessMonitorObj) start() {
 		for _, custom := range c.Custom {
 			fetchList := custom.RegExp.FindStringSubmatch(line.Text)
 			if len(fetchList) > 1 {
-				level.Info(newLogger).Log("line fetch custom regexp", fmt.Sprintf("find string:%s ", fetchList))
 				if fetchList[1] != "" {
 					custom.DataChannel <- fetchList[1]
 				}
@@ -424,7 +431,11 @@ func (c *businessCollectorStore) Save() {
 		for _, vv := range v.Rules {
 			newStoreRules = append(newStoreRules, &businessStoreMetricObj{Regular: vv.Regular, StringMap: vv.StringMap, MetricConfig: vv.MetricConfig, TagsKey: vv.TagsKey, TagsValue: vv.TagsValue, TagsString: vv.TagsString})
 		}
-		c.Data = append(c.Data, &businessStoreMonitorObj{Path: v.Path, Rules: newStoreRules})
+		var newStoreCustoms []*businessStoreCustomObj
+		for _,vv := range v.Custom {
+			newStoreCustoms = append(newStoreCustoms, &businessStoreCustomObj{Metric: vv.Metric,ValueRegular: vv.ValueRegular,AggType: vv.AggType,StringMap: vv.StringMap})
+		}
+		c.Data = append(c.Data, &businessStoreMonitorObj{Path: v.Path, Rules: newStoreRules, Custom: newStoreCustoms})
 	}
 	var tmpBuffer bytes.Buffer
 	enc := gob.NewEncoder(&tmpBuffer)
@@ -462,6 +473,10 @@ func (c *businessCollectorStore) Load() {
 				tmpRuleObj.DataChannel = make(chan map[string]interface{}, 10000)
 				newBusinessMonitorObj.Rules = append(newBusinessMonitorObj.Rules, &tmpRuleObj)
 			}
+			for _,vv := range v.Custom {
+				tmpCustomObj := businessCustomObj{Metric: vv.Metric,ValueRegular: vv.ValueRegular,AggType: vv.AggType,StringMap: vv.StringMap}
+				newBusinessMonitorObj.Custom = append(newBusinessMonitorObj.Custom, &tmpCustomObj)
+			}
 			businessMonitorJobs = append(businessMonitorJobs, &newBusinessMonitorObj)
 		}
 	}
@@ -470,13 +485,6 @@ func (c *businessCollectorStore) Load() {
 	}
 	businessMonitorLock.Unlock()
 }
-
-//func transBusinessRegular(regRuleString string) *regexp.Regexp {
-//	regRuleString = strings.ReplaceAll(regRuleString, "[", "\\[")
-//	regRuleString = strings.ReplaceAll(regRuleString, "]", "\\]")
-//	regRuleString = strings.ReplaceAll(regRuleString, "${json_content}", "(.*)")
-//	return regexp.MustCompile(regRuleString)
-//}
 
 func StartBusinessAggCron() {
 	t := time.NewTicker(10 * time.Second).C
