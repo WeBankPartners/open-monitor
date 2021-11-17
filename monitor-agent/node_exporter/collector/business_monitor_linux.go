@@ -475,6 +475,8 @@ func (c *businessCollectorStore) Load() {
 			}
 			for _,vv := range v.Custom {
 				tmpCustomObj := businessCustomObj{Metric: vv.Metric,ValueRegular: vv.ValueRegular,AggType: vv.AggType,StringMap: vv.StringMap}
+				tmpCustomObj.RegExp = regexp.MustCompile(vv.ValueRegular)
+				tmpCustomObj.DataChannel = make(chan string, 10000)
 				newBusinessMonitorObj.Custom = append(newBusinessMonitorObj.Custom, &tmpCustomObj)
 			}
 			businessMonitorJobs = append(businessMonitorJobs, &newBusinessMonitorObj)
