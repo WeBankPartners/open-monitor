@@ -563,6 +563,19 @@ func calcBusinessAggData() {
 	}
 	businessMonitorLock.RUnlock()
 	businessMonitorMetricLock.Lock()
+	for _,v := range businessMonitorMetrics {
+		existFlag := false
+		for _,vv := range newRuleData {
+			if v.Path == vv.Path && v.Metric == vv.Metric {
+				existFlag = true
+				break
+			}
+		}
+		if !existFlag {
+			v.Value = 0
+			newRuleData = append(newRuleData, v)
+		}
+	}
 	businessMonitorMetrics = newRuleData
 	businessMonitorMetricLock.Unlock()
 }
