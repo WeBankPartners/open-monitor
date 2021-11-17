@@ -217,16 +217,22 @@ func fetchBusinessPanel(endpoint string) (err error,result m.PanelModel) {
 		return err,result
 	}
 	result.Title = panelTable[0].Title
-	var promMetricKeys []string
+	//var promMetricKeys []string
 	for _,path := range businessList.PathList {
 		for _,rule := range path.Rules {
 			for _,metricConfig := range rule.MetricConfig {
-				promMetricKeys = append(promMetricKeys, metricConfig.Metric)
+				//promMetricKeys = append(promMetricKeys, metricConfig.Metric)
 				tmpChartObj := m.ChartModel{Id: chartTable[0].Id, Endpoint: []string{realEndpoint}, Url: chartTable[0].Url}
 				tmpChartObj.Title = metricConfig.Title
 				tmpChartObj.Metric = []string{fmt.Sprintf("%s/path=%s,key=%s", chartTable[0].Metric, path.Path, metricConfig.Metric)}
 				result.Charts = append(result.Charts, &tmpChartObj)
 			}
+		}
+		for _,custom := range path.CustomMetrics {
+			tmpChartObj := m.ChartModel{Id: chartTable[0].Id, Endpoint: []string{realEndpoint}, Url: chartTable[0].Url}
+			tmpChartObj.Title = custom.Metric
+			tmpChartObj.Metric = []string{fmt.Sprintf("%s/path=%s,key=%s", chartTable[0].Metric, path.Path, custom.Metric)}
+			result.Charts = append(result.Charts, &tmpChartObj)
 		}
 	}
 	//_,extendMetric := db.GetBusinessPromMetric(promMetricKeys)
