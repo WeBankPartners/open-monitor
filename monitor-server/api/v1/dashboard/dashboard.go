@@ -106,7 +106,7 @@ func GetPanels(c *gin.Context)  {
 		//if panel.AutoDisplay > 0 && !endpointBusinessShow {
 		//	continue
 		//}
-		if panel.Title == "Business" {
+		if panel.AutoDisplay == 1 {
 			continue
 		}
 		var panelDto m.PanelModel
