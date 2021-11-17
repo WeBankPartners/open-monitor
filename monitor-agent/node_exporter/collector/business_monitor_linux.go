@@ -190,6 +190,9 @@ func (c *businessMonitorObj) start() {
 		}
 		c.Lock.RLock()
 		for _, rule := range c.Rules {
+			if rule.RegExp == nil {
+				continue
+			}
 			fetchList := rule.RegExp.FindStringSubmatch(line.Text)
 			if len(fetchList) > 1 {
 				fetchKeyMap := make(map[string]interface{})
@@ -213,6 +216,9 @@ func (c *businessMonitorObj) start() {
 			}
 		}
 		for _, custom := range c.Custom {
+			if custom.RegExp == nil {
+				continue
+			}
 			fetchList := custom.RegExp.FindStringSubmatch(line.Text)
 			if len(fetchList) > 1 {
 				if fetchList[1] != "" {
