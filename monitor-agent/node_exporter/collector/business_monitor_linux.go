@@ -206,10 +206,10 @@ func (c *businessMonitorObj) start() {
 		}
 		for _, custom := range c.Custom {
 			fetchList := custom.RegExp.FindStringSubmatch(line.Text)
-			if len(fetchList) > 0 {
+			if len(fetchList) > 1 {
 				level.Info(newLogger).Log("line fetch custom regexp", fmt.Sprintf("find string:%s ", fetchList))
-				if fetchList[0] != "" {
-					custom.DataChannel <- fetchList[0]
+				if fetchList[1] != "" {
+					custom.DataChannel <- fetchList[1]
 				}
 			}
 		}
