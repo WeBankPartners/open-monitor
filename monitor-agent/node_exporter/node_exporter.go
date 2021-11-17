@@ -18,6 +18,7 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"os"
+	"os/exec"
 	"os/signal"
 	"sort"
 	"syscall"
@@ -215,8 +216,12 @@ func main() {
 }
 
 func startSignal(pid int,tmpLog log.Logger) {
+	_,mkErr := exec.Command("mkdir", "-p", "data").Output()
+	if mkErr != nil {
+		level.Error(tmpLog).Log("mkdir_error", mkErr.Error())
+	}
 	sigs := make(chan os.Signal, 1)
-	level.Info(tmpLog).Log("register signal notify")
+	level.Info(tmpLog).Log("register", "signal notify")
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	for {
 		s := <-sigs
