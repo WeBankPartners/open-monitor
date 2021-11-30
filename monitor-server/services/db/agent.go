@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func UpdateEndpoint(endpoint *m.EndpointTable) (stepList []int, err error) {
+func UpdateEndpoint(endpoint *m.EndpointTable,extendParam string) (stepList []int, err error) {
 	stepList = append(stepList, endpoint.Step)
 	if endpoint.Cluster == "" {
 		endpoint.Cluster = "default"
@@ -24,6 +24,12 @@ func UpdateEndpoint(endpoint *m.EndpointTable) (stepList []int, err error) {
 			log.Logger.Error("Insert endpoint fail", log.Error(err))
 			return
 		}
+		// V2
+		tmpAgentAddress := endpoint.Address
+		if endpoint.AddressAgent != "" {
+			tmpAgentAddress = endpoint.AddressAgent
+		}
+		x.Exec("insert into endpoint_new(guid,name,ip,monitor_type,agent_version,agent_address,step,endpoint_version,endpoint_address,cluster,extend_param) value (?,?,?,?,?,?,?,?,?,?,?)",endpoint.Guid,endpoint.Name,endpoint.Ip,endpoint.ExportType,endpoint.ExportVersion,tmpAgentAddress,endpoint.Step,endpoint.EndpointVersion,endpoint.Address,endpoint.Cluster,extendParam)
 		host := m.EndpointTable{Guid: endpoint.Guid}
 		GetEndpoint(&host)
 		endpoint.Id = host.Id
