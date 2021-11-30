@@ -17,6 +17,19 @@ type EndpointServiceRelTable struct {
 
 type ServiceGroupLinkNode struct {
 	Guid string `json:"guid"`
-	Parent string `json:"parent"`
+	Parent *ServiceGroupLinkNode `json:"parent"`
 	Children []*ServiceGroupLinkNode `json:"children"`
+}
+
+func (s *ServiceGroupLinkNode) FetchChildGuid() []string {
+	result := []string{s.Guid}
+	for _,v := range s.Children {
+		result = append(result, v.FetchChildGuid()...)
+	}
+	return result
+}
+
+type ServiceGroupEndpointListObj struct {
+	Guid string `json:"guid"`
+	DisplayName string `json:"display_name"`
 }
