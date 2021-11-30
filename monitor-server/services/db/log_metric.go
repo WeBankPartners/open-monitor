@@ -13,6 +13,7 @@ func GetLogMetricByServiceGroup(serviceGroup string) (result models.LogMetricQue
 		return result,getErr
 	}
 	result.ServiceGroupTable = serviceGroupObj
+	result.Config = []*models.LogMetricMonitorObj{}
 	var logMetricMonitorTable []*models.LogMetricMonitorTable
 	err = x.SQL("select * from log_metric_monitor where service_group=?", serviceGroup).Find(&logMetricMonitorTable)
 	if err != nil {
