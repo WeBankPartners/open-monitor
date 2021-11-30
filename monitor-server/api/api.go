@@ -9,6 +9,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/dashboard"
 	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/dashboard_new"
 	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/user"
+	"github.com/WeBankPartners/open-monitor/monitor-server/api/v2/service"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/gin-gonic/gin"
@@ -28,6 +29,7 @@ type handlerFuncObj struct {
 
 var (
 	httpHandlerFuncList []*handlerFuncObj
+	httpHandlerFuncListV2 []*handlerFuncObj
 )
 
 func init() {
@@ -181,6 +183,23 @@ func init() {
 		&handlerFuncObj{Url: "/agent/export/kubernetes/pod/:action", Method: http.MethodPost, HandlerFunc: agent.PluginKubernetesPod},
 		&handlerFuncObj{Url: "/agent/export/snmp/exporter/:action", Method: http.MethodPost, HandlerFunc: config_new.PluginSnmpExporterHandle},
 	)
+	// V2
+	httpHandlerFuncListV2 = append(httpHandlerFuncListV2,
+		&handlerFuncObj{Url: "/service/log_metric/log_metric_monitor/:queryType/:guid", Method: http.MethodGet, HandlerFunc: service.GetLogMetricMonitor},
+		&handlerFuncObj{Url: "/service/log_metric/log_metric_monitor", Method: http.MethodPost, HandlerFunc: service.CreateLogMetricMonitor},
+		&handlerFuncObj{Url: "/service/log_metric/log_metric_monitor", Method: http.MethodPut, HandlerFunc: service.UpdateLogMetricMonitor},
+		&handlerFuncObj{Url: "/service/log_metric/log_metric_monitor/:logMonitorGuid", Method: http.MethodDelete, HandlerFunc: service.DeleteLogMetricMonitor},
+
+		&handlerFuncObj{Url: "/service/log_metric/log_metric_json/:logMonitorJsonGuid", Method: http.MethodGet, HandlerFunc: service.GetLogMetricJson},
+		&handlerFuncObj{Url: "/service/log_metric/log_metric_json", Method: http.MethodPost, HandlerFunc: service.CreateLogMetricJson},
+		&handlerFuncObj{Url: "/service/log_metric/log_metric_json", Method: http.MethodPut, HandlerFunc: service.UpdateLogMetricJson},
+		&handlerFuncObj{Url: "/service/log_metric/log_metric_json/:logMonitorJsonGuid", Method: http.MethodDelete, HandlerFunc: service.DeleteLogMetricJson},
+
+		&handlerFuncObj{Url: "/service/log_metric/log_metric_config/:logMonitorConfigGuid", Method: http.MethodGet, HandlerFunc: service.GetLogMetricConfig},
+		&handlerFuncObj{Url: "/service/log_metric/log_metric_config", Method: http.MethodPost, HandlerFunc: service.CreateLogMetricConfig},
+		&handlerFuncObj{Url: "/service/log_metric/log_metric_config", Method: http.MethodPut, HandlerFunc: service.UpdateLogMetricConfig},
+		&handlerFuncObj{Url: "/service/log_metric/log_metric_config/:logMonitorConfigGuid", Method: http.MethodDelete, HandlerFunc: service.DeleteLogMetricConfig},
+	)
 }
 
 func InitHttpServer() {
@@ -249,6 +268,27 @@ func InitHttpServer() {
 			break
 		case "DELETE":
 			authRouter.DELETE(funcObj.Url, funcObj.HandlerFunc)
+			break
+		}
+	}
+	authRouterV2 := r.Group(urlPrefix+"/api/v2", user.AuthRequired())
+	for _, funcObj := range httpHandlerFuncListV2 {
+		handleFuncList := []gin.HandlerFunc{funcObj.HandlerFunc}
+		if funcObj.PreHandle != nil {
+			handleFuncList = append([]gin.HandlerFunc{funcObj.PreHandle}, funcObj.HandlerFunc)
+		}
+		switch funcObj.Method {
+		case "GET":
+			authRouterV2.GET(funcObj.Url, handleFuncList...)
+			break
+		case "POST":
+			authRouterV2.POST(funcObj.Url, handleFuncList...)
+			break
+		case "PUT":
+			authRouterV2.PUT(funcObj.Url, handleFuncList...)
+			break
+		case "DELETE":
+			authRouterV2.DELETE(funcObj.Url, handleFuncList...)
 			break
 		}
 	}
