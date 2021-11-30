@@ -15,15 +15,6 @@
       "filter": "(sAMAccountName=%s)",
       "attributes": ["name", "mail", "telephoneNumber"]
     },
-    "log": {
-      "level": "debug",
-      "file": "logs/open-monitor.log",
-      "access_file": "logs/open-monitor-access.log",
-      "archive_max_size": 64,
-      "archive_max_backup": 10,
-      "archive_max_day": 15,
-      "compress": true
-    },
     "session": {
       "enable": true,
       "expire": 3600,
@@ -39,6 +30,14 @@
       }
     },
     "default_language": "en"
+  },
+  "log": {
+    "level": "debug",
+    "log_dir": "logs",
+    "archive_max_size": 64,
+    "archive_max_backup": 10,
+    "archive_max_day": 15,
+    "compress": true
   },
   "store": {
     "name": "default",
