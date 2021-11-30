@@ -15,8 +15,7 @@ import (
 
 type LogConfig struct {
 	Level            string `json:"level"`
-	File             string `json:"file"`
-	AccessFile       string `json:"access_file"`
+	LogDir             string `json:"log_dir"`
 	ArchiveMaxSize   int    `json:"archive_max_size"`
 	ArchiveMaxBackup int    `json:"archive_max_backup"`
 	ArchiveMaxDay    int    `json:"archive_max_day"`
@@ -57,7 +56,6 @@ type HttpConfig struct {
 	ReturnError     bool           `json:"return_error"`
 	Alive           int64          `json:"alive"`
 	Ldap            *LdapConfig    `json:"ldap"`
-	Log             *LogConfig     `json:"log"`
 	Session         *SessionConfig `json:"session"`
 	DefaultLanguage string         `json:"default_language"`
 }
@@ -165,6 +163,7 @@ type ArchiveMysqlConfig struct {
 type GlobalConfig struct {
 	IsPluginMode     string              `json:"is_plugin_mode"`
 	Http             *HttpConfig         `json:"http"`
+	Log              LogConfig           `json:"log"`
 	Store            StoreConfig         `json:"store"`
 	Datasource       DataSourceConfig    `json:"datasource"`
 	LimitIp          []string            `json:"limitIp"`
