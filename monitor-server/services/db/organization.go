@@ -130,7 +130,11 @@ func UpdateOrganization(operation string, param m.UpdateOrgPanelParam) error {
 		}
 		//_, err = x.Exec("INSERT INTO panel_recursive(guid,display_name,parent,obj_type) VALUE (?,?,?,?)", param.Guid, param.DisplayName, param.Parent, param.Type)
 		actions = append(actions, &Action{Sql: "INSERT INTO panel_recursive(guid,display_name,parent,obj_type) VALUE (?,?,?,?)",Param: []interface{}{param.Guid, param.DisplayName, param.Parent, param.Type}})
-		actions = append(actions, &Action{Sql: "insert into service_group(guid,display_name,description,parent,service_type,update_time) value (?,?,?,?,?,?)",Param: []interface{}{param.Guid,param.DisplayName,"",param.Parent,param.Type,nowTime}})
+		if param.Parent == "" {
+			actions = append(actions, &Action{Sql: "insert into service_group(guid,display_name,description,service_type,update_time) value (?,?,?,?,?)", Param: []interface{}{param.Guid, param.DisplayName, "", param.Type, nowTime}})
+		}else {
+			actions = append(actions, &Action{Sql: "insert into service_group(guid,display_name,description,parent,service_type,update_time) value (?,?,?,?,?,?)", Param: []interface{}{param.Guid, param.DisplayName, "", param.Parent, param.Type, nowTime}})
+		}
 	} else if operation == "edit" {
 		if param.Guid == "" || param.DisplayName == "" {
 			return fmt.Errorf("param guid and display_name cat not be empty")
