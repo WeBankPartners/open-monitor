@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"encoding/json"
 	"fmt"
 	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
@@ -28,6 +29,7 @@ type returnData struct {
 	addDefaultGroup bool
 	agentManager    bool
 	err             error
+	extendParam     m.EndpointExtendParamObj
 }
 
 func RegisterAgentNew(c *gin.Context) {
@@ -106,7 +108,12 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage, guid string, err 
 	if rData.validateMessage != "" || rData.err != nil {
 		return rData.validateMessage, guid, rData.err
 	}
-	stepList, err = db.UpdateEndpoint(&rData.endpoint)
+	extendString := ""
+	if rData.extendParam.Enable {
+		tmpExtendBytes,_ := json.Marshal(rData.extendParam)
+		extendString = string(tmpExtendBytes)
+	}
+	stepList, err = db.UpdateEndpoint(&rData.endpoint, extendString)
 	if err != nil {
 		return validateMessage, guid, err
 	}
@@ -249,6 +256,7 @@ func mysqlRegister(param m.RegisterParamNew) returnData {
 			result.err = err
 			return result
 		}
+		result.extendParam = m.EndpointExtendParamObj{Enable: true,Ip: param.Ip,Port: param.Port,User: param.User,Password: param.Password,BinPath: binPath,ConfigPath: configFile}
 	}
 	var mysqlVersion, exportVersion string
 	if param.FetchMetric {
@@ -326,6 +334,7 @@ func redisRegister(param m.RegisterParamNew) returnData {
 			result.err = err
 			return result
 		}
+		result.extendParam = m.EndpointExtendParamObj{Enable: true,Ip: param.Ip,Port: param.Port,User: param.User,Password: param.Password,BinPath: binPath}
 	}
 	var redisVersion, exportVersion string
 	if param.FetchMetric {
@@ -400,6 +409,7 @@ func javaRegister(param m.RegisterParamNew) returnData {
 			result.err = err
 			return result
 		}
+		result.extendParam = m.EndpointExtendParamObj{Enable: true,Ip: param.Ip,Port: param.Port,User: param.User,Password: param.Password,BinPath: binPath,ConfigPath: configFile}
 	}
 	var jvmVersion, exportVersion string
 	if param.FetchMetric {
@@ -473,6 +483,7 @@ func nginxRegister(param m.RegisterParamNew) returnData {
 			result.err = err
 			return result
 		}
+		result.extendParam = m.EndpointExtendParamObj{Enable: true,Ip: param.Ip,Port: param.Port,User: param.User,Password: param.Password,BinPath: binPath}
 	}
 	if param.FetchMetric {
 		tmpIp, tmpPort := param.Ip, param.Port
@@ -562,6 +573,7 @@ func telnetRegister(param m.RegisterParamNew) returnData {
 	if err != nil {
 		result.err = err
 	}
+	result.extendParam = m.EndpointExtendParamObj{Enable: true,Ip: param.Ip,Port: param.Port}
 	return result
 }
 
@@ -591,6 +603,7 @@ func httpRegister(param m.RegisterParamNew) returnData {
 	if err != nil {
 		result.err = err
 	}
+	result.extendParam = m.EndpointExtendParamObj{Enable: true,HttpMethod: param.Method,HttpUrl: param.Url}
 	return result
 }
 
