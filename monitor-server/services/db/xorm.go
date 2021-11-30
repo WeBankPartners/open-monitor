@@ -1,98 +1,78 @@
 package db
 
 import (
+	"fmt"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
+	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	_ "github.com/go-sql-driver/mysql"
+	"go.uber.org/zap"
+	"reflect"
+	"strconv"
+	"strings"
+	"time"
 	"xorm.io/core"
 	"xorm.io/xorm"
-	"fmt"
-	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
-	"time"
-	"reflect"
-	"strings"
-	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
+	xorm_log "xorm.io/xorm/log"
 )
 
 var (
-	x *xorm.Engine
-    archiveMysql *xorm.Engine
-    archiveDatabase  string
-    ArchiveEnable bool
+	x               *xorm.Engine
+	archiveMysql    *xorm.Engine
+	archiveDatabase string
+	ArchiveEnable   bool
 )
+
 //var RedisStore sessions.RedisStore
 
-type DBObj struct {
-	x *xorm.Engine
-	DbType  string
-	ConnUser  string
-	ConnPwd   string
-	ConnHost  string
-	ConnDb    string
-	ConnPtl   string
-	MaxIdle   int
-	MaxOpen   int
-	Timeout   int
-}
-
-func (d *DBObj) InitXorm()  {
-	log.Logger.Info("Start init db")
-	cnnstr := fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&allowNativePasswords=true",
-		d.ConnUser, d.ConnPwd, d.ConnPtl, d.ConnHost, d.ConnDb)
-	engine,err := xorm.NewEngine(d.DbType, cnnstr)
-	if err!=nil {
-		log.Logger.Error("Init db fail", log.Error(err))
+func InitDatabase() error {
+	connStr := fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&allowNativePasswords=true",
+		models.Config().Store.User, models.Config().Store.Pwd, "tcp", fmt.Sprintf("%s:%s", models.Config().Store.Server, models.Config().Store.Port), models.Config().Store.DataBase)
+	engine, err := xorm.NewEngine("mysql", connStr)
+	if err != nil {
+		log.Logger.Error("Init database connect fail", log.Error(err))
+		return err
 	}
-	engine.SetMaxIdleConns(d.MaxIdle)
-	engine.SetMaxOpenConns(d.MaxOpen)
+	engine.SetMaxIdleConns(models.Config().Store.MaxIdle)
+	engine.SetMaxOpenConns(models.Config().Store.MaxOpen)
+	engine.SetConnMaxLifetime(time.Duration(models.Config().Store.Timeout) * time.Second)
+	engine.SetLogger(&dbLogger{LogLevel: 1, ShowSql: true, Logger: log.DatabaseLogger})
 	// 使用驼峰式映射
 	engine.SetMapper(core.SnakeMapper{})
-	d.x = engine
-	go keepAlive(d.Timeout)
-}
-
-func InitDbConn() {
-	dbCfg := m.Config().Store
-	if dbCfg.Type == "mysql" {
-		initDefaultMysql(dbCfg)
-	}
-	tmpEnable := strings.ToLower(m.Config().ArchiveMysql.Enable)
+	x = engine
+	log.Logger.Info("Success init database connect !!")
+	tmpEnable := strings.ToLower(models.Config().ArchiveMysql.Enable)
 	if tmpEnable == "y" || tmpEnable == "yes" || tmpEnable == "true" {
 		initArchiveDbEngine()
-	}else{
+	} else {
 		ArchiveEnable = false
 	}
-}
-
-func initDefaultMysql(dbCfg m.StoreConfig)  {
-	dbObj := DBObj{DbType: dbCfg.Type, ConnUser: dbCfg.User, ConnPwd: dbCfg.Pwd, ConnHost: fmt.Sprintf("%s:%d", dbCfg.Server, dbCfg.Port), ConnDb: dbCfg.DataBase, ConnPtl: "tcp", MaxOpen: dbCfg.MaxOpen, MaxIdle: dbCfg.MaxIdle, Timeout: dbCfg.Timeout}
-	dbObj.InitXorm()
-	x = dbObj.x
-	log.Logger.Info("Default db init success")
+	return nil
 }
 
 func initArchiveDbEngine() {
-	databaseName := m.Config().ArchiveMysql.DatabasePrefix + time.Now().Format("2006")
+	databaseName := models.Config().ArchiveMysql.DatabasePrefix + time.Now().Format("2006")
 	var err error
 	connectStr := fmt.Sprintf("%s:%s@%s(%s:%s)/%s?collation=utf8mb4_unicode_ci&allowNativePasswords=true",
-		m.Config().ArchiveMysql.User, m.Config().ArchiveMysql.Password, "tcp", m.Config().ArchiveMysql.Server, m.Config().ArchiveMysql.Port, databaseName)
-	archiveMysql,err = xorm.NewEngine("mysql", connectStr)
+		models.Config().ArchiveMysql.User, models.Config().ArchiveMysql.Password, "tcp", models.Config().ArchiveMysql.Server, models.Config().ArchiveMysql.Port, databaseName)
+	archiveMysql, err = xorm.NewEngine("mysql", connectStr)
 	if err != nil {
 		ArchiveEnable = false
-		log.Logger.Error("Init archive mysql fail", log.String("connectStr",connectStr), log.Error(err))
-	}else{
+		log.Logger.Error("Init archive mysql fail", log.String("connectStr", connectStr), log.Error(err))
+	} else {
 		ArchiveEnable = true
-		archiveMysql.SetMaxIdleConns(m.Config().ArchiveMysql.MaxIdle)
-		archiveMysql.SetMaxOpenConns(m.Config().ArchiveMysql.MaxOpen)
-		archiveMysql.SetConnMaxLifetime(time.Duration(m.Config().ArchiveMysql.Timeout)*time.Second)
+		archiveMysql.SetMaxIdleConns(models.Config().ArchiveMysql.MaxIdle)
+		archiveMysql.SetMaxOpenConns(models.Config().ArchiveMysql.MaxOpen)
+		archiveMysql.SetConnMaxLifetime(time.Duration(models.Config().ArchiveMysql.Timeout) * time.Second)
 		archiveMysql.Charset("utf8")
 		// 使用驼峰式映射
 		archiveMysql.SetMapper(core.SnakeMapper{})
 		archiveDatabase = databaseName
-		log.Logger.Info("Init archive mysql "+archiveDatabase+" success")
+		log.Logger.Info("Init archive mysql " + archiveDatabase + " success")
 	}
 }
 
-func checkArchiveDatabase()  {
-	databaseName := m.Config().ArchiveMysql.DatabasePrefix + time.Now().Format("2006")
+func checkArchiveDatabase() {
+	databaseName := models.Config().ArchiveMysql.DatabasePrefix + time.Now().Format("2006")
 	if databaseName == archiveDatabase {
 		return
 	}
@@ -100,8 +80,8 @@ func checkArchiveDatabase()  {
 }
 
 type Action struct {
-	Sql  string
-	Param  []interface{}
+	Sql   string
+	Param []interface{}
 }
 
 func Transaction(actions []*Action) error {
@@ -110,62 +90,32 @@ func Transaction(actions []*Action) error {
 	}
 	session := x.NewSession()
 	err := session.Begin()
-	for _,action := range actions {
+	for _, action := range actions {
 		params := make([]interface{}, 0)
 		params = append(params, action.Sql)
-		for _,v := range action.Param {
+		for _, v := range action.Param {
 			params = append(params, v)
 		}
-		_,err = session.Exec(params...)
+		_, err = session.Exec(params...)
 		if err != nil {
 			session.Rollback()
 			break
 		}
 	}
-	if err==nil {
+	if err == nil {
 		err = session.Commit()
 	}
 	session.Close()
 	return err
 }
 
-type dbTransactionFunc func(session *xorm.Session) error
-
-func InTransaction(callback dbTransactionFunc) error {
-	return inTransactionWithRetry(callback)
-}
-
-func inTransactionWithRetry(callback dbTransactionFunc) error {
-	var err error
-	session := x.NewSession()
-	defer session.Close()
-	if err = session.Begin(); err != nil {
-		return err
-	}
-	err = callback(session)
-	if err != nil {
-		session.Rollback()
-		return err
-	} else if err = session.Commit(); err != nil {
-		return err
-	}
-	return nil
-}
-
-func keepAlive(interval int)  {
-	for {
-		x.Exec(`select 1`)
-		time.Sleep(time.Duration(interval)*time.Second)
-	}
-}
-
 func Classify(obj interface{}, operation string, table string, force bool) Action {
 	var action Action
 	if operation == "insert" {
 		action = insert(obj, table)
-	}else if operation == "update" {
+	} else if operation == "update" {
 		action = update(obj, table, force)
-	}else if operation == "delete" {
+	} else if operation == "delete" {
 		action = delete(obj, table)
 	}
 	return action
@@ -192,7 +142,7 @@ func insert(obj interface{}, table string) Action {
 			fetchType = true
 		}
 		if f == "time.Time" {
-			params = append(params, v.Field(i).Interface().(time.Time).Format(m.DatetimeFormat))
+			params = append(params, v.Field(i).Interface().(time.Time).Format(models.DatetimeFormat))
 			fetchType = true
 		}
 		if f == "string" {
@@ -205,7 +155,7 @@ func insert(obj interface{}, table string) Action {
 		if i == length-1 {
 			column = column + transColumn(t.Field(i).Name) + `)`
 			value = value + `?)`
-		}else{
+		} else {
 			column = column + transColumn(t.Field(i).Name) + `,`
 			value = value + `?,`
 		}
@@ -218,7 +168,7 @@ func insert(obj interface{}, table string) Action {
 func update(obj interface{}, table string, force bool) Action {
 	var action Action
 	params := make([]interface{}, 0)
-	var where,value string
+	var where, value string
 	t := reflect.TypeOf(obj)
 	v := reflect.ValueOf(obj)
 	var tmpId int64
@@ -251,7 +201,7 @@ func update(obj interface{}, table string, force bool) Action {
 		if f == "time.Time" {
 			tt := v.Field(i).Interface().(time.Time)
 			if tt.Unix() > 0 {
-				params = append(params, tt.Format(m.DatetimeFormat))
+				params = append(params, tt.Format(models.DatetimeFormat))
 				fetchType = true
 			}
 		}
@@ -262,16 +212,16 @@ func update(obj interface{}, table string, force bool) Action {
 	}
 	if tmpGuid != "" {
 		params = append(params, tmpGuid)
-	}else{
+	} else {
 		if tmpId > 0 {
 			params = append(params, tmpId)
 		}
 	}
 	if len(params) > 0 {
-		value = value[0:len(value)-1]
+		value = value[0 : len(value)-1]
 		action.Sql = `update ` + table + ` set ` + value + where
 		action.Param = params
-	}else{
+	} else {
 		action.Sql = ""
 		action.Param = params
 	}
@@ -339,4 +289,79 @@ func transColumn(s string) string {
 		v = append(v, rr)
 	}
 	return string(v)
+}
+
+type dbLogger struct {
+	LogLevel xorm_log.LogLevel
+	ShowSql  bool
+	Logger   *zap.Logger
+}
+
+func (d *dbLogger) Debug(v ...interface{}) {
+	d.Logger.Debug(fmt.Sprint(v...))
+}
+
+func (d *dbLogger) Debugf(format string, v ...interface{}) {
+	d.Logger.Debug(fmt.Sprintf(format, v...))
+}
+
+func (d *dbLogger) Error(v ...interface{}) {
+	d.Logger.Error(fmt.Sprint(v...))
+}
+
+func (d *dbLogger) Errorf(format string, v ...interface{}) {
+	d.Logger.Error(fmt.Sprintf(format, v...))
+}
+
+func (d *dbLogger) Info(v ...interface{}) {
+	d.Logger.Info(fmt.Sprint(v...))
+}
+
+func (d *dbLogger) Infof(format string, v ...interface{}) {
+	if len(v) < 4 {
+		d.Logger.Info(fmt.Sprintf(format, v...))
+		return
+	}
+	var costMs float64 = 0
+	costTime := fmt.Sprintf("%s", v[3])
+	if strings.Contains(costTime, "µs") {
+		costMs, _ = strconv.ParseFloat(strings.ReplaceAll(costTime, "µs", ""), 64)
+		costMs = costMs / 1000
+	} else if strings.Contains(costTime, "ms") {
+		costMs, _ = strconv.ParseFloat(costTime[:len(costTime)-2], 64)
+	} else if strings.Contains(costTime, "s") && !strings.Contains(costTime, "m") {
+		costMs, _ = strconv.ParseFloat(costTime[:len(costTime)-1], 64)
+		costMs = costMs * 1000
+	} else {
+		costTime = costTime[:len(costTime)-1]
+		mIndex := strings.Index(costTime, "m")
+		minTime, _ := strconv.ParseFloat(costTime[:mIndex], 64)
+		secTime, _ := strconv.ParseFloat(costTime[mIndex+1:], 64)
+		costMs = (minTime*60 + secTime) * 1000
+	}
+	d.Logger.Info("db_log", log.String("sql", fmt.Sprintf("%s", v[1])), log.String("param", fmt.Sprintf("%v", v[2])), log.Float64("cost_ms", costMs))
+}
+
+func (d *dbLogger) Warn(v ...interface{}) {
+	d.Logger.Warn(fmt.Sprint(v...))
+}
+
+func (d *dbLogger) Warnf(format string, v ...interface{}) {
+	d.Logger.Warn(fmt.Sprintf(format, v...))
+}
+
+func (d *dbLogger) Level() xorm_log.LogLevel {
+	return d.LogLevel
+}
+
+func (d *dbLogger) SetLevel(l xorm_log.LogLevel) {
+	d.LogLevel = l
+}
+
+func (d *dbLogger) ShowSQL(b ...bool) {
+	d.ShowSql = b[0]
+}
+
+func (d *dbLogger) IsShowSQL() bool {
+	return d.ShowSql
 }
