@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"fmt"
@@ -17,7 +18,7 @@ type RespJson struct {
 
 func ReturnError(c *gin.Context, code int, msg string, err error) {
 	log.Logger.Error(fmt.Sprintf("Request %s fail", c.FullPath()), log.Int("Code", code), log.String("Message", msg), log.Error(err))
-	if log.LogLevel == "debug" {
+	if models.Config().Log.Level == "debug" {
 		c.JSON(code, RespJson{Status:"ERROR", Code:200, Message:msg, Data:err})
 	}else{
 		c.JSON(code, RespJson{Status:"ERROR", Code:200, Message:msg})
