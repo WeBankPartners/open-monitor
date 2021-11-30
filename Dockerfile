@@ -39,16 +39,7 @@ COPY monitor-agent/archive_mysql_tool/archive_mysql_tool $ARCHIVE_TOOL/
 COPY build/conf/archive_mysql_tool.json $ARCHIVE_TOOL/default.json
 COPY monitor-agent/db_data_exporter/db_data_exporter $DB_DATA_EXPORTER/
 
-RUN chmod +x $PROMETHEUS_HOME/prometheus
-RUN chmod +x $PROMETHEUS_HOME/promtool
-RUN chmod +x $ALERTMANAGER_HOME/alertmanager
-RUN chmod +x $AGENT_MANAGER_HOME/agent_manager
-RUN chmod +x $TRANS_GATEWAY/transgateway
-RUN chmod +x $MONITOR_HOME/monitor-server
-RUN chmod +x $BASE_HOME/*.sh
-RUN chmod +x $PING_EXPORTER/ping_exporter
-RUN chmod +x $ARCHIVE_TOOL/archive_mysql_tool
-RUN chmod +x $DB_DATA_EXPORTER/db_data_exporter
+RUN chmod +x $PROMETHEUS_HOME/prometheus $PROMETHEUS_HOME/promtool $ALERTMANAGER_HOME/alertmanager $AGENT_MANAGER_HOME/agent_manager $TRANS_GATEWAY/transgateway $MONITOR_HOME/monitor-server $BASE_HOME/*.sh $PING_EXPORTER/ping_exporter $ARCHIVE_TOOL/archive_mysql_tool $DB_DATA_EXPORTER/db_data_exporter
 
 WORKDIR $BASE_HOME
 

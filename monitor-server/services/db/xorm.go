@@ -26,7 +26,7 @@ var (
 
 func InitDatabase() error {
 	connStr := fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&allowNativePasswords=true",
-		models.Config().Store.User, models.Config().Store.Pwd, "tcp", fmt.Sprintf("%s:%s", models.Config().Store.Server, models.Config().Store.Port), models.Config().Store.DataBase)
+		models.Config().Store.User, models.Config().Store.Pwd, "tcp", fmt.Sprintf("%s:%d", models.Config().Store.Server, models.Config().Store.Port), models.Config().Store.DataBase)
 	engine, err := xorm.NewEngine("mysql", connStr)
 	if err != nil {
 		log.Logger.Error("Init database connect fail", log.Error(err))
