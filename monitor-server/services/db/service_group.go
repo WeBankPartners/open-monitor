@@ -41,6 +41,49 @@ func buildGlobalServiceGroupLink(serviceGroupTable []*models.ServiceGroupTable) 
 	globalServiceGroupLock.Unlock()
 }
 
+func fetchGlobalServiceGroupChildGuidList(rootKey string) (result []string,err error) {
+	globalServiceGroupLock.RLock()
+	if v,b:=globalServiceGroupMap[rootKey];b {
+		result = v.FetchChildGuid()
+	}else{
+		err = fmt.Errorf("Can not find service group with guid:%s ", rootKey)
+	}
+	globalServiceGroupLock.RUnlock()
+	return
+}
+
+func addGlobalServiceGroupNode(param models.ServiceGroupTable)  {
+	globalServiceGroupLock.Lock()
+	if _,b:=globalServiceGroupMap[param.Guid];!b {
+		if param.Parent != "" {
+			globalServiceGroupMap[param.Guid] = &models.ServiceGroupLinkNode{Guid: param.Guid, Parent: globalServiceGroupMap[param.Parent]}
+			globalServiceGroupMap[param.Parent].Children = append(globalServiceGroupMap[param.Parent].Children, globalServiceGroupMap[param.Guid])
+		}else{
+			globalServiceGroupMap[param.Guid] = &models.ServiceGroupLinkNode{Guid: param.Guid}
+		}
+	}
+	globalServiceGroupLock.Unlock()
+}
+
+func deleteGlobalServiceGroupNode(guid string)  {
+	globalServiceGroupLock.Lock()
+	if v,b:=globalServiceGroupMap[guid];b {
+		if v.Parent != nil {
+			newChildList := []*models.ServiceGroupLinkNode{}
+			for _,child := range v.Parent.Children {
+				if child.Guid != guid {
+					newChildList = append(newChildList, child)
+				}
+			}
+			v.Parent.Children = newChildList
+		}
+		for _,key := range v.FetchChildGuid() {
+			delete(globalServiceGroupMap, key)
+		}
+	}
+	globalServiceGroupLock.Unlock()
+}
+
 func ListServiceGroup() (result []*models.ServiceGroupTable, err error) {
 	result = []*models.ServiceGroupTable{}
 	err = x.SQL("select * from service_group").Find(&result)
@@ -82,10 +125,11 @@ func DeleteServiceGroup() {
 }
 
 func ListServiceGroupEndpoint(serviceGroup, monitorType string) (result []*models.ServiceGroupEndpointListObj, err error) {
-	if _, b := globalServiceGroupMap[serviceGroup]; !b {
-		return result, fmt.Errorf("Can not find service_group:%s ", serviceGroup)
+	var guidList []string
+	guidList,err = fetchGlobalServiceGroupChildGuidList(serviceGroup)
+	if err != nil {
+		return
 	}
-	guidList := globalServiceGroupMap[serviceGroup].FetchChildGuid()
 	result = []*models.ServiceGroupEndpointListObj{}
 	var endpointServiceRel []*models.EndpointServiceRelTable
 	err = x.SQL("select distinct t1.endpoint from endpoint_service_rel t1 left join endpoint_new t2 on t1.endpoint=t2.guid where t1.service_group in ('"+strings.Join(guidList, "','")+"') and t2.monitor_type=?", monitorType).Find(&endpointServiceRel)
