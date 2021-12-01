@@ -50,6 +50,46 @@ func UpdateNodeExporterProcessConfig(endpointId int) error {
 	return nil
 }
 
+func SyncNodeExporterProcessConfig(hostIp string) error {
+	var endpointTable []*m.EndpointNew
+	err := x.SQL("select * from endpoint_new where monitor_type='process' and ip=?",hostIp).Find(&endpointTable)
+	if err != nil {
+		return fmt.Errorf("Query table endpoint_new fail,%s ", err.Error())
+	}
+	var nodeExportAddress string
+	if len(endpointTable) > 0 {
+		nodeExportAddress = endpointTable[0].AgentAddress
+	}else{
+		endpointObj := m.EndpointTable{Ip: hostIp,ExportType: "host"}
+		GetEndpoint(&endpointObj)
+		nodeExportAddress = endpointObj.Address
+	}
+	syncParam := m.SyncProcessDto{Check: 0, Process: []*m.SyncProcessObj{}}
+	for _,v := range endpointTable {
+		if v.ExtendParam == "" {
+			continue
+		}
+		tmpExtendObj := m.EndpointExtendParamObj{}
+		tmpErr := json.Unmarshal([]byte(v.ExtendParam), &tmpExtendObj)
+		if tmpErr != nil {
+			log.Logger.Error("Sync process config,extendParam illegal", log.String("processEndpoint", v.Guid), log.String("extendParam",v.ExtendParam), log.Error(tmpErr))
+			continue
+		}
+		syncParam.Process = append(syncParam.Process, &m.SyncProcessObj{ProcessGuid: v.Guid,ProcessName: tmpExtendObj.ProcessName,ProcessTags: tmpExtendObj.ProcessTags})
+	}
+	postData,_ := json.Marshal(syncParam)
+	url := fmt.Sprintf("http://%s/process/config", nodeExportAddress)
+	resp, err := http.Post(url, "application/json", strings.NewReader(string(postData)))
+	if err != nil {
+		log.Logger.Error("Update node_exporter fail, http post fail", log.Error(err))
+		return err
+	}
+	responseBody,_ := ioutil.ReadAll(resp.Body)
+	log.Logger.Info("curl "+url, log.String("response", string(responseBody)))
+	resp.Body.Close()
+	return nil
+}
+
 func CheckNodeExporterProcessConfig(endpointId int,processList []m.ProcessMonitorTable) (err error,illegal bool,msg string) {
 	endpointObj := m.EndpointTable{Id:endpointId}
 	err = GetEndpoint(&endpointObj)
