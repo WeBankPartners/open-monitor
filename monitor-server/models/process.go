@@ -24,3 +24,14 @@ type ProcessUpdateDtoNew struct {
 	ProcessList  []ProcessMonitorTable  `json:"process_list"`
 	Check       bool  `json:"check"`
 }
+
+type SyncProcessObj struct {
+	ProcessGuid string `json:"process_guid"`
+	ProcessName string `json:"process_name"`
+	ProcessTags string `json:"process_tags"`
+}
+
+type SyncProcessDto struct {
+	Check int `json:"check"`
+	Process []*SyncProcessObj `json:"process"`
+}
