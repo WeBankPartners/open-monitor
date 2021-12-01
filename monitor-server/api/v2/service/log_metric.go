@@ -15,14 +15,14 @@ func GetLogMetricMonitor(c *gin.Context)  {
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		}else{
-			middleware.ReturnData(c, result)
+			middleware.ReturnSuccessData(c, result)
 		}
 	}else{
 		result,err := db.GetLogMetricByServiceGroup(guid)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		}else{
-			middleware.ReturnData(c, result)
+			middleware.ReturnSuccessData(c, result)
 		}
 	}
 }
@@ -71,7 +71,7 @@ func GetLogMetricJson(c *gin.Context)  {
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	}else {
-		middleware.ReturnData(c, result)
+		middleware.ReturnSuccessData(c, result)
 	}
 }
 
@@ -85,7 +85,8 @@ func CreateLogMetricJson(c *gin.Context)  {
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(),err)
 	}else{
-		middleware.ReturnSuccess(c)
+		result,_ := db.GetLogMetricJson(param.Guid)
+		middleware.ReturnSuccessData(c, result)
 	}
 }
 
@@ -99,7 +100,8 @@ func UpdateLogMetricJson(c *gin.Context)  {
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(),err)
 	}else{
-		middleware.ReturnSuccess(c)
+		result,_ := db.GetLogMetricJson(param.Guid)
+		middleware.ReturnSuccessData(c, result)
 	}
 }
 
@@ -119,7 +121,7 @@ func GetLogMetricConfig(c *gin.Context)  {
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	}else {
-		middleware.ReturnData(c, result)
+		middleware.ReturnSuccessData(c, result)
 	}
 }
 
@@ -133,7 +135,8 @@ func CreateLogMetricConfig(c *gin.Context)  {
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(),err)
 	}else{
-		middleware.ReturnSuccess(c)
+		result,_ := db.GetLogMetricConfig(param.Guid)
+		middleware.ReturnSuccessData(c, result)
 	}
 }
 
@@ -147,7 +150,8 @@ func UpdateLogMetricConfig(c *gin.Context)  {
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(),err)
 	}else{
-		middleware.ReturnSuccess(c)
+		result,_ := db.GetLogMetricConfig(param.Guid)
+		middleware.ReturnSuccessData(c, result)
 	}
 }
 

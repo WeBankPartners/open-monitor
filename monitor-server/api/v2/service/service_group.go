@@ -12,7 +12,7 @@ func GetServiceGroupEndpointList(c *gin.Context)  {
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	}else{
-		middleware.ReturnData(c, result)
+		middleware.ReturnSuccessData(c, result)
 	}
 }
 
@@ -23,6 +23,6 @@ func ListServiceGroupEndpoint(c *gin.Context)  {
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	}else{
-		middleware.ReturnData(c, result)
+		middleware.ReturnSuccessData(c, result)
 	}
 }
