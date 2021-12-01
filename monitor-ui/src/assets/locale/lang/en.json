@@ -56,7 +56,8 @@
     "proxy_exporter": "Exporter",
     "id": "ID",
     "address": "Address",
-    "legend": "Display Tag"
+    "legend": "Display Tag",
+    "serviceType": "Service Type"
   },
   "m_field_businessMonitor": "Business Monitor",
   "title": {
