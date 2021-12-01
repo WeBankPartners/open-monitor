@@ -221,7 +221,11 @@ func getCreateLogMetricConfigAction(param *models.LogMetricConfigObj, nowTime st
 	if param.Guid == "" {
 		param.Guid = guid.CreateGuid()
 	}
-	actions = append(actions, &Action{Sql: "insert into log_metric_config(guid,log_metric_monitor,log_metric_json,metric,display_name,json_key,regular,agg_type,update_time) value (?,?,?,?,?,?,?,?,?)",Param: []interface{}{param.Guid,param.LogMetricMonitor,param.LogMetricJson,param.Metric,param.DisplayName,param.JsonKey,param.Regular,param.AggType,nowTime}})
+	if param.LogMetricJson != "" {
+		actions = append(actions, &Action{Sql: "insert into log_metric_config(guid,log_metric_json,metric,display_name,json_key,regular,agg_type,update_time) value (?,?,?,?,?,?,?,?)",Param: []interface{}{param.Guid,param.LogMetricJson,param.Metric,param.DisplayName,param.JsonKey,param.Regular,param.AggType,nowTime}})
+	}else{
+		actions = append(actions, &Action{Sql: "insert into log_metric_config(guid,log_metric_monitor,metric,display_name,json_key,regular,agg_type,update_time) value (?,?,?,?,?,?,?,?)",Param: []interface{}{param.Guid,param.LogMetricMonitor,param.Metric,param.DisplayName,param.JsonKey,param.Regular,param.AggType,nowTime}})
+	}
 	guidList := guid.CreateGuidList(len(param.StringMap))
 	for i,v := range param.StringMap {
 		actions = append(actions, &Action{Sql: "insert into log_metric_string_map(guid,log_metric_config,source_value,regulative,target_value,update_time) value (?,?,?,?,?,?)",Param: []interface{}{guidList[i],v.LogMetricConfig,v.SourceValue,v.Regulative,v.TargetValue,nowTime}})
