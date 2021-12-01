@@ -186,7 +186,8 @@ func init() {
 	// V2
 	httpHandlerFuncListV2 = append(httpHandlerFuncListV2,
 		&handlerFuncObj{Url: "/service_endpoint/search/:searchType", Method: http.MethodGet, HandlerFunc: service.GetServiceGroupEndpointList},
-		&handlerFuncObj{Url: "/service/log_metric/log_metric_monitor/:queryType/:guid", Method: http.MethodGet, HandlerFunc: service.GetLogMetricMonitor},
+		&handlerFuncObj{Url: "/service/log_metric/list/:queryType/:guid", Method: http.MethodGet, HandlerFunc: service.ListLogMetricMonitor},
+		&handlerFuncObj{Url: "/service/log_metric/log_metric_monitor/:logMonitorGuid", Method: http.MethodGet, HandlerFunc: service.GetLogMetricMonitor},
 		&handlerFuncObj{Url: "/service/log_metric/log_metric_monitor", Method: http.MethodPost, HandlerFunc: service.CreateLogMetricMonitor},
 		&handlerFuncObj{Url: "/service/log_metric/log_metric_monitor", Method: http.MethodPut, HandlerFunc: service.UpdateLogMetricMonitor},
 		&handlerFuncObj{Url: "/service/log_metric/log_metric_monitor/:logMonitorGuid", Method: http.MethodDelete, HandlerFunc: service.DeleteLogMetricMonitor},
