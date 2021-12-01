@@ -10,7 +10,7 @@ import (
 func GetLogMetricMonitor(c *gin.Context)  {
 	queryType := c.Param("queryType")
 	guid := c.Param("guid")
-	if queryType == "host" {
+	if queryType == "endpoint" {
 		result,err := db.GetLogMetricByEndpoint(guid)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
