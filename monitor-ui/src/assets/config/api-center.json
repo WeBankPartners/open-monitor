@@ -195,5 +195,7 @@
     "getMetricByEndpointType": "/monitor/api/v1/dashboard/new/metric",
     "cluster": "/monitor/api/v1/cluster/config",
     "recursiveType": "/monitor/api/v1/dashboard/recursive/endpoint_type/list",
-    "remarkAlarm": "/monitor/api/v1/alarm/problem/message"
+    "remarkAlarm": "/monitor/api/v1/alarm/problem/message",
+    "getTargetByEndpoint": "/monitor/api/v2/service_endpoint/search",
+    "getTargetDetail": "/monitor/api/v2/service/log_metric/log_metric_monitor"
 }
