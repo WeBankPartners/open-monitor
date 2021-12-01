@@ -33,13 +33,13 @@ func (c *processMonitorCollector) Update(ch chan<- prometheus.Metric) error {
 	for _,v := range ProcessCacheObj.get() {
 		ch <- prometheus.MustNewConstMetric(c.processMonitor,
 			prometheus.GaugeValue,
-			v.Value, v.DisplayName, v.Command)
+			v.Value, v.DisplayName, v.Command, v.EndpointGuid)
 		ch <- prometheus.MustNewConstMetric(c.processCpuMonitor,
 			prometheus.GaugeValue,
-			v.CpuUsedPercent, v.DisplayName, v.Command)
+			v.CpuUsedPercent, v.DisplayName, v.Command, v.EndpointGuid)
 		ch <- prometheus.MustNewConstMetric(c.processMemMonitor,
 			prometheus.GaugeValue,
-			v.MemUsedByte, v.DisplayName, v.Command)
+			v.MemUsedByte, v.DisplayName, v.Command, v.EndpointGuid)
 	}
 	return nil
 }
@@ -53,17 +53,17 @@ func NewProcessMonitorCollector(logger log.Logger) (Collector, error) {
 		processMonitor: prometheus.NewDesc(
 			prometheus.BuildFQName(namespace, "process_monitor", "count_current"),
 			"Count the process num with assign name.",
-			[]string{"name", "command"}, nil,
+			[]string{"name", "command", "process_guid"}, nil,
 		),
 		processCpuMonitor: prometheus.NewDesc(
 			prometheus.BuildFQName(namespace, "process_monitor", "cpu"),
 			"Process cpu used percent",
-			[]string{"name", "command"}, nil,
+			[]string{"name", "command", "process_guid"}, nil,
 		),
 		processMemMonitor: prometheus.NewDesc(
 			prometheus.BuildFQName(namespace, "process_monitor", "mem"),
 			"Process memory used byte",
-			[]string{"name", "command"}, nil,
+			[]string{"name", "command", "process_guid"}, nil,
 		),
 		logger: logger,
 	}, nil
@@ -71,6 +71,8 @@ func NewProcessMonitorCollector(logger log.Logger) (Collector, error) {
 
 type processMonitorObj struct {
 	Name  string
+	Tags  string
+	EndpointGuid string
 	DisplayName string
 	Value   float64
 	Command  string
@@ -104,7 +106,7 @@ func (c *processCache) Init()  {
 
 func (c *processCache) start()  {
 	c.Running = true
-	t := time.NewTicker(time.Duration(5 * time.Second)).C
+	t := time.NewTicker(time.Duration(10 * time.Second)).C
 	for {
 		<- t
 		c.Lock.RLock()
@@ -117,18 +119,13 @@ func (c *processCache) start()  {
 		processUsedList := getProcessUsedResource()
 		if len(processUsedList) > 0 {
 			for _,tmpProcessMonitorObj := range c.ProcessMonitor {
-				tmpNameList := strings.Split(tmpProcessMonitorObj.Name, "^")
-				tmpName := tmpNameList[0]
-				tmpTag := ""
-				if len(tmpNameList) > 1 {
-					tmpTag = tmpNameList[1]
-				}
-				nameSplit := strings.Split(tmpName, ",")
+				tmpTag := tmpProcessMonitorObj.Tags
+				nameSplit := strings.Split(tmpProcessMonitorObj.Name, ",")
 				if tmpTag != "" {
-					tmpProcessMonitorObj.DisplayName = fmt.Sprintf("%s(%s)", tmpName, tmpTag)
+					tmpProcessMonitorObj.DisplayName = fmt.Sprintf("%s(%s)", tmpProcessMonitorObj.Name, tmpTag)
 					tmpTag = strings.ToLower(tmpTag)
 				}else{
-					tmpProcessMonitorObj.DisplayName = tmpName
+					tmpProcessMonitorObj.DisplayName = tmpProcessMonitorObj.Name
 				}
 				var tmpCount float64 = 0
 				for _,vv := range processUsedList {
@@ -140,7 +137,6 @@ func (c *processCache) start()  {
 						}
 					}
 					if nameMatch != "" && strings.Contains(vv.Cmd, tmpTag) {
-						//tmpProcessMonitorObj.DisplayName = fmt.Sprintf("%s(%s)", nameMatch, tmpTag)
 						tmpCount = tmpCount + 1
 						if len(vv.Cmd) > 100 {
 							tmpProcessMonitorObj.Command = vv.Cmd[:100]
@@ -166,16 +162,18 @@ func (c *processCache) stop()  {
 }
 
 func (c *processCache) isRunning() bool {
+	isRunning := false
 	c.Lock.RLock()
-	defer c.Lock.RUnlock()
-	return c.Running
+	isRunning = c.Running
+	c.Lock.RUnlock()
+	return isRunning
 }
 
-func (c *processCache) update(names []string)  {
+func (c *processCache) update(names []*SyncProcessObj)  {
 	c.Lock.Lock()
 	c.ProcessMonitor = []*processMonitorObj{}
 	for _,v := range names {
-		c.ProcessMonitor = append(c.ProcessMonitor, &processMonitorObj{Name:v, Value:0, Command:""})
+		c.ProcessMonitor = append(c.ProcessMonitor, &processMonitorObj{Name:v.ProcessName, Tags: v.ProcessTags, EndpointGuid: v.ProcessGuid, Value:0, Command:""})
 	}
 	c.Lock.Unlock()
 }
@@ -217,21 +215,15 @@ func (c *processCache) get() []*processMonitorObj {
 	return c.ProcessMonitor
 }
 
-func (c *processCache) checkNum(names []string) []int {
+func (c *processCache) checkNum(processList []*SyncProcessObj) []int {
 	processUseList := getProcessUsedResource()
 	if len(processUseList) == 0 {
 		return []int{}
 	}
 	var result []int
-	for _,v := range names {
+	for _,v := range processList {
 		count := 0
-		tmpNameList := strings.Split(v, "^")
-		tmpName := tmpNameList[0]
-		tmpTag := ""
-		if len(tmpNameList) > 1 {
-			tmpTag = strings.ToLower(tmpNameList[1])
-		}
-		nameSplit := strings.Split(tmpName, ",")
+		nameSplit := strings.Split(v.ProcessName, ",")
 		for _,vv := range processUseList {
 			nameMatch := ""
 			for _,nameSplitObj := range nameSplit {
@@ -240,7 +232,7 @@ func (c *processCache) checkNum(names []string) []int {
 					break
 				}
 			}
-			if nameMatch != "" && strings.Contains(vv.Cmd, tmpTag) {
+			if nameMatch != "" && strings.Contains(vv.Cmd, v.ProcessTags) {
 				count = count + 1
 			}
 		}
@@ -256,6 +248,16 @@ type processHttpDto struct {
 	Check    int       `json:"check"`
 }
 
+type SyncProcessObj struct {
+	ProcessGuid string `json:"process_guid"`
+	ProcessName string `json:"process_name"`
+	ProcessTags string `json:"process_tags"`
+}
+
+type SyncProcessDto struct {
+	Check int `json:"check"`
+	Process []*SyncProcessObj `json:"process"`
+}
 
 func ProcessMonitorHttpHandle(w http.ResponseWriter, r *http.Request)  {
 	buff,err := ioutil.ReadAll(r.Body)
@@ -266,7 +268,7 @@ func ProcessMonitorHttpHandle(w http.ResponseWriter, r *http.Request)  {
 		w.Write([]byte(errorMsg))
 		return
 	}
-	var param processHttpDto
+	var param SyncProcessDto
 	err = json.Unmarshal(buff, &param)
 	if err != nil {
 		errorMsg = fmt.Sprintf("Handel process monitor http request fail,json unmarshal error: %v \n", err)
@@ -285,11 +287,9 @@ func ProcessMonitorHttpHandle(w http.ResponseWriter, r *http.Request)  {
 		for i,v := range checkNumResult {
 			if v != 1 {
 				w.WriteHeader(http.StatusBadRequest)
-				tmpProcessName := param.Process[i]
-				if strings.HasSuffix(tmpProcessName, "^") {
-					tmpProcessName = tmpProcessName[:len(tmpProcessName)-1]
-				}else{
-					tmpProcessName = strings.Replace(tmpProcessName, "^", "(", -1) + ")"
+				tmpProcessName := param.Process[i].ProcessName
+				if param.Process[i].ProcessTags != "" {
+					tmpProcessName += "(" + param.Process[i].ProcessTags + ")"
 				}
 				w.Write([]byte(fmt.Sprintf("Process %s num = %d", tmpProcessName, v)))
 				illegalFlag = true
