@@ -143,14 +143,21 @@ func UpdateLogMetricMonitor(param *models.LogMetricMonitorObj) error {
 	return Transaction(actions)
 }
 
-func DeleteLogMetricMonitor(logMetricMonitorGuid string) error {
+func DeleteLogMetricMonitor(logMetricMonitorGuid string) (serviceGroup string,err error) {
+	var logMetricMonitorTable []*models.LogMetricMonitorTable
+	err = x.SQL("select * from log_metric_monitor where guid=?", logMetricMonitorGuid).Find(&logMetricMonitorTable)
+	if len(logMetricMonitorTable) == 0 {
+		return
+	}
+	serviceGroup = logMetricMonitorTable[0].ServiceGroup
 	var actions []*Action
 	actions = append(actions, &Action{Sql: "delete from log_metric_endpoint_rel where log_metric_monitor=?",Param: []interface{}{logMetricMonitorGuid}})
 	actions = append(actions, &Action{Sql: "delete from log_metric_string_map where log_metric_config in (select guid from log_metric_config where log_metric_monitor=? or log_metric_json in (select guid from log_metric_json where log_metric_monitor=?))",Param: []interface{}{logMetricMonitorGuid,logMetricMonitorGuid}})
 	actions = append(actions, &Action{Sql: "delete from log_metric_config where log_metric_monitor=? or log_metric_json in (select guid from log_metric_json where log_metric_monitor=?)",Param: []interface{}{logMetricMonitorGuid,logMetricMonitorGuid}})
 	actions = append(actions, &Action{Sql: "delete from log_metric_json where log_metric_monitor=?",Param: []interface{}{logMetricMonitorGuid}})
 	actions = append(actions, &Action{Sql: "delete from log_metric_monitor where guid=?",Param: []interface{}{logMetricMonitorGuid}})
-	return Transaction(actions)
+	err = Transaction(actions)
+	return
 }
 
 func GetLogMetricJson(logMetricJsonGuid string) (result models.LogMetricJsonObj,err error) {
@@ -210,7 +217,13 @@ func UpdateLogMetricJson(param *models.LogMetricJsonObj) error {
 	return Transaction(actions)
 }
 
-func DeleteLogMetricJson(logMetricJsonGuid string) error {
+func DeleteLogMetricJson(logMetricJsonGuid string) (logMetricMonitorGuid string,err error) {
+	var logMetricJsonTable []*models.LogMetricJsonTable
+	err = x.SQL("select * from log_metric_json where guid=?", logMetricJsonGuid).Find(&logMetricJsonTable)
+	if len(logMetricJsonTable) == 0 {
+		return
+	}
+	logMetricMonitorGuid = logMetricJsonTable[0].LogMetricMonitor
 	var actions []*Action
 	var logMetricConfigTable []*models.LogMetricConfigTable
 	x.SQL("select * from log_metric_config where log_metric_json=?", logMetricJsonGuid).Find(&logMetricConfigTable)
@@ -218,7 +231,8 @@ func DeleteLogMetricJson(logMetricJsonGuid string) error {
 		actions = append(actions, getDeleteLogMetricConfigAction(v.Guid)...)
 	}
 	actions = append(actions, &Action{Sql: "delete from log_metric_json where guid=?",Param: []interface{}{logMetricJsonGuid}})
-	return Transaction(actions)
+	err = Transaction(actions)
+	return
 }
 
 func GetLogMetricConfig(logMetricConfigGuid string) (result models.LogMetricConfigObj,err error) {
@@ -246,9 +260,16 @@ func UpdateLogMetricConfig(param *models.LogMetricConfigObj) error {
 	return Transaction(actions)
 }
 
-func DeleteLogMetricConfig(logMetricConfigGuid string) error {
+func DeleteLogMetricConfig(logMetricConfigGuid string) (logMetricMonitorGuid string,err error) {
+	var logMetricConfigTable []*models.LogMetricConfigTable
+	err = x.SQL("select * from log_metric_config where guid=?",logMetricConfigGuid).Find(&logMetricConfigTable)
+	if len(logMetricConfigTable) == 0 {
+		return
+	}
+	logMetricMonitorGuid = logMetricConfigTable[0].LogMetricMonitor
 	actions := getDeleteLogMetricConfigAction(logMetricConfigGuid)
-	return Transaction(actions)
+	err = Transaction(actions)
+	return
 }
 
 func getCreateLogMetricConfigAction(param *models.LogMetricConfigObj, nowTime string) []*Action {
@@ -284,4 +305,16 @@ func getDeleteLogMetricConfigAction(logMetricConfigGuid string) []*Action {
 	actions = append(actions, &Action{Sql: "delete from log_metric_string_map where log_metric_config=?",Param: []interface{}{logMetricConfigGuid}})
 	actions = append(actions, &Action{Sql: "delete from log_metric_config where guid=?",Param: []interface{}{logMetricConfigGuid}})
 	return actions
+}
+
+func GetServiceGroupByLogMetricMonitor(logMetricMonitorGuid string) string {
+	if logMetricMonitorGuid == "" {
+		return ""
+	}
+	var logMetricMonitorTable []*models.LogMetricMonitorTable
+	x.SQL("select * from log_metric_monitor where guid=?", logMetricMonitorGuid).Find(&logMetricMonitorTable)
+	if len(logMetricMonitorTable) > 0 {
+		return logMetricMonitorTable[0].ServiceGroup
+	}
+	return ""
 }
