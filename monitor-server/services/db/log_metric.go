@@ -21,7 +21,7 @@ func GetLogMetricByServiceGroup(serviceGroup string) (result models.LogMetricQue
 	}
 	for _,logMetricMonitor := range logMetricMonitorTable {
 		tmpConfig := models.LogMetricMonitorObj{Guid: logMetricMonitor.Guid,ServiceGroup: logMetricMonitor.ServiceGroup,LogPath: logMetricMonitor.LogPath,MetricType: logMetricMonitor.MetricType,MonitorType: logMetricMonitor.MonitorType}
-		tmpConfig.EndpointRel = ListLogMetricEndpointRel(logMetricMonitor.Guid)
+		tmpConfig.EndpointRel = ListLogMetricEndpointRel(serviceGroup, logMetricMonitor.Guid)
 		tmpConfig.JsonConfigList = ListLogMetricJson(logMetricMonitor.Guid)
 		tmpConfig.MetricConfigList = ListLogMetricConfig("", logMetricMonitor.Guid)
 		result.Config = append(result.Config, &tmpConfig)
@@ -44,9 +44,21 @@ func GetLogMetricByEndpoint(endpoint string) (result []*models.LogMetricQueryObj
 	return
 }
 
-func ListLogMetricEndpointRel(logMetricMonitor string) (result []*models.LogMetricEndpointRelTable) {
-	result = []*models.LogMetricEndpointRelTable{}
-	x.SQL("select * from log_metric_endpoint_rel where log_metric_monitor=?", logMetricMonitor).Find(&result)
+func ListLogMetricEndpointRel(serviceGroup,logMetricMonitor string) (result []*models.LogMetricEndpointRelTable) {
+	endpointList,_ := ListServiceGroupEndpoint(serviceGroup, "host")
+	var logMetricRelTable []*models.LogMetricEndpointRelTable
+	x.SQL("select * from log_metric_endpoint_rel where log_metric_monitor=?", logMetricMonitor).Find(&logMetricRelTable)
+	endpointRelMap := make(map[string]*models.LogMetricEndpointRelTable)
+	for _,v := range logMetricRelTable {
+		endpointRelMap[v.SourceEndpoint] = v
+	}
+	for _,v := range endpointList {
+		if existRow,b:=endpointRelMap[v.Guid];b {
+			result = append(result, existRow)
+		}else{
+			result = append(result, &models.LogMetricEndpointRelTable{SourceEndpoint: v.Guid})
+		}
+	}
 	return result
 }
 
@@ -91,10 +103,29 @@ func CreateLogMetricMonitor(param *models.LogMetricMonitorCreateDto) error {
 		actions = append(actions, &Action{Sql: "insert into log_metric_monitor(guid,service_group,log_path,metric_type,monitor_type,update_time) value (?,?,?,?,?,?)", Param: []interface{}{logMonitorGuidList[i], param.ServiceGroup, v, param.MetricType, param.MonitorType, nowTime}})
 		relGuidList := guid.CreateGuidList(len(param.EndpointRel))
 		for ii, vv := range param.EndpointRel {
+			if vv.TargetEndpoint == "" {
+				continue
+			}
 			actions = append(actions, &Action{Sql: "insert into log_metric_endpoint_rel(guid,log_metric_monitor,source_endpoint,target_endpoint) value (?,?,?,?)", Param: []interface{}{relGuidList[ii], logMonitorGuidList[i], vv.SourceEndpoint, vv.TargetEndpoint}})
 		}
 	}
 	return Transaction(actions)
+}
+
+func GetLogMetricMonitor(logMetricMonitorGuid string) (result models.LogMetricMonitorObj,err error) {
+	var logMetricMonitorTable []*models.LogMetricMonitorTable
+	err = x.SQL("select * from log_metric_monitor where guid=?", logMetricMonitorGuid).Find(&logMetricMonitorTable)
+	if err != nil {
+		return result,fmt.Errorf("Query table log_metric_monitor fail,%s ", err.Error())
+	}
+	if len(logMetricMonitorTable) == 0 {
+		return result,fmt.Errorf("Can not find log_metric_monitor with guid:%s ", logMetricMonitorGuid)
+	}
+	result = models.LogMetricMonitorObj{Guid: logMetricMonitorTable[0].Guid,ServiceGroup: logMetricMonitorTable[0].ServiceGroup,LogPath: logMetricMonitorTable[0].LogPath,MetricType: logMetricMonitorTable[0].MetricType,MonitorType: logMetricMonitorTable[0].MonitorType}
+	result.EndpointRel = ListLogMetricEndpointRel(logMetricMonitorTable[0].ServiceGroup, logMetricMonitorTable[0].Guid)
+	result.JsonConfigList = ListLogMetricJson(logMetricMonitorTable[0].Guid)
+	result.MetricConfigList = ListLogMetricConfig("", logMetricMonitorTable[0].Guid)
+	return result,nil
 }
 
 func UpdateLogMetricMonitor(param *models.LogMetricMonitorObj) error {
@@ -104,6 +135,9 @@ func UpdateLogMetricMonitor(param *models.LogMetricMonitorObj) error {
 	actions = append(actions, &Action{Sql: "delete from log_metric_endpoint_rel where log_metric_monitor=?",Param: []interface{}{param.Guid}})
 	guidList := guid.CreateGuidList(len(param.EndpointRel))
 	for i,v := range param.EndpointRel {
+		if v.TargetEndpoint == "" {
+			continue
+		}
 		actions = append(actions, &Action{Sql: "insert into log_metric_endpoint_rel(guid,log_metric_monitor,source_endpoint,target_endpoint) value (?,?,?,?)",Param: []interface{}{guidList[i],param.Guid,v.SourceEndpoint,v.TargetEndpoint}})
 	}
 	return Transaction(actions)
