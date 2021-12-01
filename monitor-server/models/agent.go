@@ -26,6 +26,7 @@ type RegisterParamNew struct {
 	ExportAddress    string `json:"export_address"`
 	Cluster          string `json:"cluster"`
 	ProxyExporter    string `json:"proxy_exporter"`
+	ProcessName      string `json:"process_name"`
 	Tags             string `json:"tags"`
 }
 
