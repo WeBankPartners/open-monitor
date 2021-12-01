@@ -56,7 +56,8 @@
     "proxy_exporter": "Exporter",
     "id": "ID",
     "address": "IP地址",
-    "legend": "展示标签"
+    "legend": "展示标签",
+    "serviceType": "服务类型"
   },
   "m_field_businessMonitor": "业务监控",
   "title": {
