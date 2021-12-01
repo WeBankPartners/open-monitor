@@ -228,18 +228,18 @@ func getCreateLogMetricConfigAction(param *models.LogMetricConfigObj, nowTime st
 	}
 	guidList := guid.CreateGuidList(len(param.StringMap))
 	for i,v := range param.StringMap {
-		actions = append(actions, &Action{Sql: "insert into log_metric_string_map(guid,log_metric_config,source_value,regulative,target_value,update_time) value (?,?,?,?,?,?)",Param: []interface{}{guidList[i],v.LogMetricConfig,v.SourceValue,v.Regulative,v.TargetValue,nowTime}})
+		actions = append(actions, &Action{Sql: "insert into log_metric_string_map(guid,log_metric_config,source_value,regulative,target_value,update_time) value (?,?,?,?,?,?)",Param: []interface{}{guidList[i],param.Guid,v.SourceValue,v.Regulative,v.TargetValue,nowTime}})
 	}
 	return actions
 }
 
 func getUpdateLogMetricConfigAction(param *models.LogMetricConfigObj, nowTime string) []*Action {
 	var actions []*Action
-	actions = append(actions, &Action{Sql: "update log_metric_config set metric=?,display_name=?,json_key=?,regular=?,agg_type=?,update_time=? where guid=?",Param: []interface{}{param.Metric,param.DisplayName,param.JsonKey,param.Regular,param.AggType,nowTime}})
+	actions = append(actions, &Action{Sql: "update log_metric_config set metric=?,display_name=?,json_key=?,regular=?,agg_type=?,update_time=? where guid=?",Param: []interface{}{param.Metric,param.DisplayName,param.JsonKey,param.Regular,param.AggType,nowTime,param.Guid}})
 	actions = append(actions, &Action{Sql: "delete from log_metric_string_map where log_metric_config=?",Param: []interface{}{param.Guid}})
 	guidList := guid.CreateGuidList(len(param.StringMap))
 	for i,v := range param.StringMap {
-		actions = append(actions, &Action{Sql: "insert into log_metric_string_map(guid,log_metric_config,source_value,regulative,target_value,update_time) value (?,?,?,?,?,?)",Param: []interface{}{guidList[i],v.LogMetricConfig,v.SourceValue,v.Regulative,v.TargetValue,nowTime}})
+		actions = append(actions, &Action{Sql: "insert into log_metric_string_map(guid,log_metric_config,source_value,regulative,target_value,update_time) value (?,?,?,?,?,?)",Param: []interface{}{guidList[i],param.Guid,v.SourceValue,v.Regulative,v.TargetValue,nowTime}})
 	}
 	return actions
 }
