@@ -99,6 +99,8 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage, guid string, err 
 		rData = windowsRegister(param)
 	case "snmp":
 		rData = snmpExporterRegister(param)
+	case "process":
+		rData = processMonitorRegister(param)
 	default:
 		rData = otherExporterRegister(param)
 	}
@@ -682,6 +684,33 @@ func snmpExporterRegister(param m.RegisterParamNew) returnData {
 	if err != nil {
 		result.err = err
 	}
+	return result
+}
+
+func processMonitorRegister(param m.RegisterParamNew) returnData {
+	var result returnData
+	result.endpoint.Step = defaultStep
+	if param.Ip == "" {
+		result.validateMessage = "Process host ip can not empty"
+		return result
+	}
+	if param.Name == "" {
+		result.validateMessage = "Process displayName can not empty"
+		return result
+	}
+	result.endpoint.Guid = fmt.Sprintf("%s_%s_%s", param.Name, param.Ip, param.Type)
+	result.endpoint.Name = param.Name
+	result.endpoint.Ip = param.Ip
+	endpointObj := m.EndpointTable{Ip: param.Ip,ExportType: "host"}
+	db.GetEndpoint(&endpointObj)
+	result.endpoint.ExportType = param.Type
+	result.endpoint.Address = endpointObj.Address
+	result.defaultGroup = "default_process_group"
+	result.addDefaultGroup = true
+	result.storeMetric = false
+	result.fetchMetric = false
+	result.agentManager = false
+	result.extendParam = m.EndpointExtendParamObj{Enable: true,ProcessName: param.ProcessName,ProcessTags: param.Tags}
 	return result
 }
 
