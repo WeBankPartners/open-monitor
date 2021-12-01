@@ -1,9 +1,11 @@
 package service
 
 import (
+	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/node_exporter"
 	"github.com/gin-gonic/gin"
 )
 
@@ -47,7 +49,12 @@ func CreateLogMetricMonitor(c *gin.Context)  {
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(),err)
 	}else{
-		middleware.ReturnSuccess(c)
+		err = syncNodeExporterConfig(param.ServiceGroup, "")
+		if err != nil {
+			middleware.ReturnHandleError(c, err.Error(), err)
+		}else {
+			middleware.ReturnSuccess(c)
+		}
 	}
 }
 
@@ -61,17 +68,31 @@ func UpdateLogMetricMonitor(c *gin.Context)  {
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(),err)
 	}else{
-		middleware.ReturnSuccess(c)
+		err = syncNodeExporterConfig("", param.Guid)
+		if err != nil {
+			middleware.ReturnHandleError(c, err.Error(), err)
+		}else {
+			middleware.ReturnSuccess(c)
+		}
 	}
 }
 
 func DeleteLogMetricMonitor(c *gin.Context)  {
 	logMonitorGuid := c.Param("logMonitorGuid")
-	err := db.DeleteLogMetricMonitor(logMonitorGuid)
+	serviceGroup,err := db.DeleteLogMetricMonitor(logMonitorGuid)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(),err)
 	}else{
-		middleware.ReturnSuccess(c)
+		if serviceGroup != "" {
+			err = syncNodeExporterConfig(serviceGroup, "")
+			if err != nil {
+				middleware.ReturnHandleError(c, err.Error(), err)
+			} else {
+				middleware.ReturnSuccess(c)
+			}
+		}else{
+			middleware.ReturnSuccess(c)
+		}
 	}
 }
 
@@ -95,8 +116,12 @@ func CreateLogMetricJson(c *gin.Context)  {
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(),err)
 	}else{
-		result,_ := db.GetLogMetricJson(param.Guid)
-		middleware.ReturnSuccessData(c, result)
+		err = syncNodeExporterConfig("", param.LogMetricMonitor)
+		if err != nil {
+			middleware.ReturnHandleError(c, err.Error(), err)
+		}else {
+			middleware.ReturnSuccess(c)
+		}
 	}
 }
 
@@ -110,18 +135,31 @@ func UpdateLogMetricJson(c *gin.Context)  {
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(),err)
 	}else{
-		result,_ := db.GetLogMetricJson(param.Guid)
-		middleware.ReturnSuccessData(c, result)
+		err = syncNodeExporterConfig("", param.LogMetricMonitor)
+		if err != nil {
+			middleware.ReturnHandleError(c, err.Error(), err)
+		}else {
+			middleware.ReturnSuccess(c)
+		}
 	}
 }
 
 func DeleteLogMetricJson(c *gin.Context)  {
 	logMonitorJsonGuid := c.Param("logMonitorJsonGuid")
-	err := db.DeleteLogMetricJson(logMonitorJsonGuid)
+	logMetricMonitor,err := db.DeleteLogMetricJson(logMonitorJsonGuid)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	}else{
-		middleware.ReturnSuccess(c)
+		if logMetricMonitor != "" {
+			err = syncNodeExporterConfig("", logMetricMonitor)
+			if err != nil {
+				middleware.ReturnHandleError(c, err.Error(), err)
+			} else {
+				middleware.ReturnSuccess(c)
+			}
+		}else{
+			middleware.ReturnSuccess(c)
+		}
 	}
 }
 
@@ -145,8 +183,12 @@ func CreateLogMetricConfig(c *gin.Context)  {
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(),err)
 	}else{
-		result,_ := db.GetLogMetricConfig(param.Guid)
-		middleware.ReturnSuccessData(c, result)
+		err = syncNodeExporterConfig("", param.LogMetricMonitor)
+		if err != nil {
+			middleware.ReturnHandleError(c, err.Error(), err)
+		}else {
+			middleware.ReturnSuccess(c)
+		}
 	}
 }
 
@@ -160,17 +202,40 @@ func UpdateLogMetricConfig(c *gin.Context)  {
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(),err)
 	}else{
-		result,_ := db.GetLogMetricConfig(param.Guid)
-		middleware.ReturnSuccessData(c, result)
+		err = syncNodeExporterConfig("", param.LogMetricMonitor)
+		if err != nil {
+			middleware.ReturnHandleError(c, err.Error(), err)
+		}else {
+			middleware.ReturnSuccess(c)
+		}
 	}
 }
 
 func DeleteLogMetricConfig(c *gin.Context)  {
 	logMonitorConfigGuid := c.Param("logMonitorConfigGuid")
-	err := db.DeleteLogMetricConfig(logMonitorConfigGuid)
+	logMetricMonitor,err := db.DeleteLogMetricConfig(logMonitorConfigGuid)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	}else {
-		middleware.ReturnSuccess(c)
+		if logMetricMonitor != "" {
+			err = syncNodeExporterConfig("", logMetricMonitor)
+			if err != nil {
+				middleware.ReturnHandleError(c, err.Error(), err)
+			} else {
+				middleware.ReturnSuccess(c)
+			}
+		}else{
+			middleware.ReturnSuccess(c)
+		}
 	}
+}
+
+func syncNodeExporterConfig(serviceGroup,logMetricMonitor string) error {
+	if serviceGroup == "" {
+		serviceGroup = db.GetServiceGroupByLogMetricMonitor(logMetricMonitor)
+		if serviceGroup == "" {
+			return fmt.Errorf("Sync node exporter log metric fail,serviceGroup and logMetricMonitor can not empty ")
+		}
+	}
+	return node_exporter.SyncLogMetricConfig(serviceGroup)
 }
