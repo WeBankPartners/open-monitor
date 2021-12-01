@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func GetLogMetricMonitor(c *gin.Context)  {
+func ListLogMetricMonitor(c *gin.Context)  {
 	queryType := c.Param("queryType")
 	guid := c.Param("guid")
 	if queryType == "endpoint" {
@@ -24,6 +24,16 @@ func GetLogMetricMonitor(c *gin.Context)  {
 		}else{
 			middleware.ReturnSuccessData(c, result)
 		}
+	}
+}
+
+func GetLogMetricMonitor(c *gin.Context)  {
+	logMonitorMonitorGuid := c.Param("logMonitorGuid")
+	result,err := db.GetLogMetricMonitor(logMonitorMonitorGuid)
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+	}else {
+		middleware.ReturnSuccessData(c, result)
 	}
 }
 
