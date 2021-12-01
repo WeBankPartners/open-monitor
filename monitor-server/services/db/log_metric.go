@@ -202,6 +202,7 @@ func GetLogMetricConfig(logMetricConfigGuid string) (result models.LogMetricConf
 }
 
 func CreateLogMetricConfig(param *models.LogMetricConfigObj) error {
+	param.Guid = guid.CreateGuid()
 	actions := getCreateLogMetricConfigAction(param, time.Now().Format(models.DatetimeFormat))
 	return Transaction(actions)
 }
