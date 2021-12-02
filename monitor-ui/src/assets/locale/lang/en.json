@@ -267,5 +267,7 @@
   "m_add_json_regular": "Add JSON Regular",
   "m_add_metric_regular": "Add Metric Regular",
   "m_json_regular": "JSON Regular",
-  "m_metric_regular": "Metric Regular"
+  "m_metric_regular": "Metric Regular",
+  "m_log_server": "Log Server",
+  "m_business_object": "Business Object"
 }

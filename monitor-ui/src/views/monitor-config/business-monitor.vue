@@ -62,7 +62,7 @@ export default {
         {label: this.$t('tableKey.endpoint'), value: 'endpoint'},
         {label: this.$t('field.resourceLevel'), value: 'group'}
       ],
-      targrtId: 'app01',
+      targrtId: 'unit01',
       targetOptions: [],
       showTargetManagement: false
     }

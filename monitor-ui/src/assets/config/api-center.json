@@ -197,5 +197,10 @@
     "recursiveType": "/monitor/api/v1/dashboard/recursive/endpoint_type/list",
     "remarkAlarm": "/monitor/api/v1/alarm/problem/message",
     "getTargetByEndpoint": "/monitor/api/v2/service_endpoint/search",
-    "getTargetDetail": "/monitor/api/v2/service/log_metric/log_metric_monitor"
+    "getTargetDetail": "/monitor/api/v2/service/log_metric/list",
+    "getEndpointsByType": "/monitor/api/v2/service/service_group",
+    "logMetricMonitor": "/monitor/api/v2/service/log_metric/log_metric_monitor",
+    "deletePath": "/monitor/api/v2/service/log_metric/log_metric_monitor",
+    "logMetricJson": "/monitor/api/v2/service/log_metric/log_metric_json",
+    "logMetricReg": "/monitor/api/v2/service/log_metric/log_metric_config"
 }
