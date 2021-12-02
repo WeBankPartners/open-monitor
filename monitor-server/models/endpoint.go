@@ -13,7 +13,7 @@ type MonitorTypeTable struct {
 	Description string `json:"description" xorm:"description"`
 }
 
-type EndpointNew struct {
+type EndpointNewTable struct {
 	Guid            string `json:"guid" xorm:"guid"`
 	Name            string `json:"name" xorm:"name"`
 	Ip              string `json:"ip" xorm:"ip"`

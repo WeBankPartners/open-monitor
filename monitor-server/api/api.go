@@ -202,6 +202,12 @@ func init() {
 		&handlerFuncObj{Url: "/service/log_metric/log_metric_config", Method: http.MethodPut, HandlerFunc: service.UpdateLogMetricConfig},
 		&handlerFuncObj{Url: "/service/log_metric/log_metric_config/:logMonitorConfigGuid", Method: http.MethodDelete, HandlerFunc: service.DeleteLogMetricConfig},
 		&handlerFuncObj{Url: "/service/service_group/:serviceGroup/endpoint/:monitorType", Method: http.MethodGet, HandlerFunc: service.ListServiceGroupEndpoint},
+
+		&handlerFuncObj{Url: "/service/db_metric/list/:queryType/:guid", Method: http.MethodGet, HandlerFunc: service.ListDbMetricMonitor},
+		&handlerFuncObj{Url: "/service/db_metric/:dbMonitorGuid", Method: http.MethodGet, HandlerFunc: service.GetDbMetricMonitor},
+		&handlerFuncObj{Url: "/service/db_metric", Method: http.MethodPost, HandlerFunc: service.CreateDbMetricMonitor},
+		&handlerFuncObj{Url: "/service/db_metric", Method: http.MethodPut, HandlerFunc: service.UpdateDbMetricMonitor},
+		&handlerFuncObj{Url: "/service/db_metric/:dbMonitorGuid", Method: http.MethodDelete, HandlerFunc: service.DeleteDbMetricMonitor},
 	)
 }
 
