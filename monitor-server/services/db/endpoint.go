@@ -1,6 +1,7 @@
 package db
 
 import (
+	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"strings"
@@ -70,4 +71,27 @@ func GetAlarmRealEndpoint(endpointId,strategyId int,endpointType,expr string) (i
 		}
 	}
 	return true,endpoint
+}
+
+func GetEndpointNew(param *models.EndpointNewTable) error {
+	var endpointNew []*models.EndpointNewTable
+	var err error
+	var filterMessage string
+	if param.Guid != "" {
+		err = x.SQL("select * from endpoint_new where guid=?",param.Guid).Find(&endpointNew)
+		filterMessage = fmt.Sprintf("guid=%s", param.Guid)
+	}else if param.Ip != "" && param.MonitorType != "" {
+		err = x.SQL("select * from endpoint_new where ip=? and monitor_type=?",param.Ip,param.MonitorType).Find(&endpointNew)
+		filterMessage = fmt.Sprintf("ip=%s and monitor_type=%s", param.Ip, param.MonitorType)
+	}else{
+		err = fmt.Errorf("param illegal ")
+	}
+	if err != nil {
+		return fmt.Errorf("Query endpoint fail,%s ", err.Error())
+	}
+	if len(endpointNew) == 0 {
+		return fmt.Errorf("Can not find endpoint %s ", filterMessage)
+	}
+	param = endpointNew[0]
+	return nil
 }
