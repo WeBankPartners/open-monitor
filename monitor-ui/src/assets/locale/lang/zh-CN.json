@@ -56,7 +56,8 @@
     "proxy_exporter": "Exporter",
     "id": "ID",
     "address": "IP地址",
-    "legend": "展示标签"
+    "legend": "展示标签",
+    "serviceType": "服务类型"
   },
   "m_field_businessMonitor": "业务监控",
   "title": {
@@ -265,5 +266,7 @@
   "m_add_json_regular": "新增JSON正则",
   "m_add_metric_regular": "新增指标正则",
   "m_json_regular": "JSON正则",
-  "m_metric_regular": "指标正则"
+  "m_metric_regular": "指标正则",
+  "m_log_server": "日志主机",
+  "m_business_object": "业务对象"
 }
