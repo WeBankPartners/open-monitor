@@ -347,6 +347,7 @@ export default {
       customMetricsModelConfig: {
         modalId: 'custom_metrics',
         isAdd: true,
+        noBtn: true,
         modalStyle: 'min-width:550px',
         modalTitle: 'm_metric_regular',
         saveFunc: 'saveCustomMetric',
@@ -412,7 +413,6 @@ export default {
     },
     editCustomMetricItem (rowData) {
       this.customMetricsModelConfig.isAdd = false
-      console.log(rowData)
       this.modelTip.value = rowData.display_name
       this.customMetricsModelConfig.addRow = rowData
       this.$root.JQ('#custom_metrics').modal('show')
@@ -424,7 +424,6 @@ export default {
     },
     editRuleItem (rowData) {
       this.ruleModelConfig.isAdd = false
-      console.log(rowData)
       this.ruleModelConfig.addRow = rowData
       this.ruleModelConfig.isShow = true
     },
@@ -469,7 +468,6 @@ export default {
     },
     saveRule () {
       this.ruleModelConfig.addRow.log_metric_monitor = this.activeData.guid
-      console.log(this.ruleModelConfig.addRow)
       const requestType = this.ruleModelConfig.isAdd ? 'POST' : 'PUT'
       this.$root.$httpRequestEntrance.httpRequestEntrance(requestType, this.$root.apiCenter.logMetricJson, this.ruleModelConfig.addRow, () => {
         this.$Message.success(this.$t('tips.success'))
@@ -560,7 +558,6 @@ export default {
         } else {
           this.$Message.warning('Can Not Empty')
         }
-        console.log(this.addAndEditModal.dataConfig)
       }
       if (type === 'metric_list') {
         this.ruleModelConfig.addRow[type].push({
@@ -577,7 +574,6 @@ export default {
           regulative: 1,
           target_value: ''
         })
-        console.log(this.ruleModelConfig.addRow)
       }
       
     },
