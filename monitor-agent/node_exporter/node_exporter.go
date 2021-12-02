@@ -202,7 +202,7 @@ func main() {
 	// Add process monitor handle http config
 	http.HandleFunc("/process/config", collector.ProcessMonitorHttpHandle)
 	// Add business monitor handle http config
-	http.HandleFunc("/business/config", collector.BusinessMonitorHttpHandle)
+	http.HandleFunc("/log_metric/config", collector.BusinessMonitorHttpHandle)
 
 	level.Info(logger).Log("msg", "Listening on", "address", *listenAddress)
 	go func(address,configFile string,logger2 log.Logger) {
