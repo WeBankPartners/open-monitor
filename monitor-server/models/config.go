@@ -162,6 +162,11 @@ type ArchiveMysqlConfig struct {
 	FiveMinStartDay    int64  `json:"five_min_start_day"`
 }
 
+type CapacityServerConfig struct {
+	Server             string `json:"server"`
+	Port               string `json:"port"`
+}
+
 type GlobalConfig struct {
 	IsPluginMode     string              `json:"is_plugin_mode"`
 	Http             *HttpConfig         `json:"http"`
@@ -180,6 +185,7 @@ type GlobalConfig struct {
 	ProcessCheckList []string            `json:"process_check_list"`
 	DefaultAdminRole string              `json:"default_admin_role"`
 	AlarmAliveMaxDay int                 `json:"alarm_alive_max_day"`
+	CapacityServer   CapacityServerConfig `json:"capacity_server"`
 }
 
 var (
