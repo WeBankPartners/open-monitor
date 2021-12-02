@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
@@ -49,12 +48,7 @@ func CreateLogMetricMonitor(c *gin.Context)  {
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(),err)
 	}else{
-		err = syncNodeExporterConfig(param.ServiceGroup, "")
-		if err != nil {
-			middleware.ReturnHandleError(c, err.Error(), err)
-		}else {
-			middleware.ReturnSuccess(c)
-		}
+		middleware.ReturnSuccess(c)
 	}
 }
 
@@ -64,11 +58,57 @@ func UpdateLogMetricMonitor(c *gin.Context)  {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	err := db.UpdateLogMetricMonitor(&param)
+	result,err := db.GetLogMetricMonitor(param.Guid)
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	hostEndpointList := []string{}
+	if param.LogPath != result.LogPath {
+		for _,v := range param.EndpointRel {
+			hostEndpointList = append(hostEndpointList, v.SourceEndpoint)
+		}
+	}else{
+		for _,v := range result.EndpointRel {
+			existFlag,changeFlag := false,false
+			for _,vv := range param.EndpointRel {
+				if vv.SourceEndpoint == v.SourceEndpoint {
+					existFlag = true
+					if vv.TargetEndpoint != v.TargetEndpoint {
+						changeFlag = true
+					}
+					break
+				}
+			}
+			if !existFlag {
+				// remove endpoint
+				hostEndpointList = append(hostEndpointList, v.SourceEndpoint)
+			}else{
+				if changeFlag {
+					// update endpoint rel
+					hostEndpointList = append(hostEndpointList, v.SourceEndpoint)
+				}
+			}
+		}
+		for _,v := range param.EndpointRel {
+			existFlag := false
+			for _,vv := range result.EndpointRel {
+				if vv.SourceEndpoint == v.SourceEndpoint {
+					existFlag = true
+					break
+				}
+			}
+			if !existFlag {
+				// add endpoint
+				hostEndpointList = append(hostEndpointList, v.SourceEndpoint)
+			}
+		}
+	}
+	err = db.UpdateLogMetricMonitor(&param)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(),err)
 	}else{
-		err = syncNodeExporterConfig("", param.Guid)
+		err = syncNodeExporterConfig(hostEndpointList)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		}else {
@@ -79,12 +119,23 @@ func UpdateLogMetricMonitor(c *gin.Context)  {
 
 func DeleteLogMetricMonitor(c *gin.Context)  {
 	logMonitorGuid := c.Param("logMonitorGuid")
+	result,err := db.GetLogMetricMonitor(logMonitorGuid)
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	hostEndpointList := []string{}
+	for _,v := range result.EndpointRel {
+		if v.TargetEndpoint != "" {
+			hostEndpointList = append(hostEndpointList, v.SourceEndpoint)
+		}
+	}
 	serviceGroup,err := db.DeleteLogMetricMonitor(logMonitorGuid)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(),err)
 	}else{
 		if serviceGroup != "" {
-			err = syncNodeExporterConfig(serviceGroup, "")
+			err = syncNodeExporterConfig(hostEndpointList)
 			if err != nil {
 				middleware.ReturnHandleError(c, err.Error(), err)
 			} else {
@@ -116,7 +167,7 @@ func CreateLogMetricJson(c *gin.Context)  {
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(),err)
 	}else{
-		err = syncNodeExporterConfig("", param.LogMetricMonitor)
+		err = syncLogMetricMonitorConfig(param.LogMetricMonitor)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		}else {
@@ -135,7 +186,7 @@ func UpdateLogMetricJson(c *gin.Context)  {
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(),err)
 	}else{
-		err = syncNodeExporterConfig("", param.LogMetricMonitor)
+		err = syncLogMetricMonitorConfig(param.LogMetricMonitor)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		}else {
@@ -151,7 +202,7 @@ func DeleteLogMetricJson(c *gin.Context)  {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	}else{
 		if logMetricMonitor != "" {
-			err = syncNodeExporterConfig("", logMetricMonitor)
+			err = syncLogMetricMonitorConfig(logMetricMonitor)
 			if err != nil {
 				middleware.ReturnHandleError(c, err.Error(), err)
 			} else {
@@ -183,7 +234,7 @@ func CreateLogMetricConfig(c *gin.Context)  {
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(),err)
 	}else{
-		err = syncNodeExporterConfig("", param.LogMetricMonitor)
+		err = syncLogMetricMonitorConfig(param.LogMetricMonitor)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		}else {
@@ -202,7 +253,7 @@ func UpdateLogMetricConfig(c *gin.Context)  {
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(),err)
 	}else{
-		err = syncNodeExporterConfig("", param.LogMetricMonitor)
+		err = syncLogMetricMonitorConfig(param.LogMetricMonitor)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		}else {
@@ -218,7 +269,7 @@ func DeleteLogMetricConfig(c *gin.Context)  {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	}else {
 		if logMetricMonitor != "" {
-			err = syncNodeExporterConfig("", logMetricMonitor)
+			err = syncLogMetricMonitorConfig(logMetricMonitor)
 			if err != nil {
 				middleware.ReturnHandleError(c, err.Error(), err)
 			} else {
@@ -230,12 +281,18 @@ func DeleteLogMetricConfig(c *gin.Context)  {
 	}
 }
 
-func syncNodeExporterConfig(serviceGroup,logMetricMonitor string) error {
-	if serviceGroup == "" {
-		serviceGroup = db.GetServiceGroupByLogMetricMonitor(logMetricMonitor)
-		if serviceGroup == "" {
-			return fmt.Errorf("Sync node exporter log metric fail,serviceGroup and logMetricMonitor can not empty ")
+func syncLogMetricMonitorConfig(logMetricMonitor string) error {
+	endpointList := []string{}
+	endpointRel := db.ListLogMetricEndpointRel("", logMetricMonitor)
+	for _,v := range endpointRel {
+		if v.TargetEndpoint != "" {
+			endpointList = append(endpointList, v.SourceEndpoint)
 		}
 	}
-	return node_exporter.SyncLogMetricConfig(serviceGroup)
+	return syncNodeExporterConfig(endpointList)
+}
+
+func syncNodeExporterConfig(endpointList []string) error {
+	err := node_exporter.UpdateNodeExportConfig(endpointList)
+	return err
 }
