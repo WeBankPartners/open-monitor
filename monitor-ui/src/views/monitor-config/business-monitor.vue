@@ -13,6 +13,7 @@
             v-model="targrtId"
             filterable
             clearable
+            ref="select"
             @on-open-change="getTargrtList"
             @on-clear="clearTargrt"
             >
@@ -22,6 +23,7 @@
         </li>
         <li class="search-li">
           <button type="button" class="btn btn-sm btn-confirm-f"
+          :disabled="targrtId === ''"
           @click="search">
             <i class="fa fa-search" ></i>
             {{$t('button.search')}}
@@ -57,12 +59,12 @@ export default {
   name: '',
   data() {
     return {
-      type: 'group',
+      type: 'endpoint',
       typeList: [
         {label: this.$t('tableKey.endpoint'), value: 'endpoint'},
         {label: this.$t('field.resourceLevel'), value: 'group'}
       ],
-      targrtId: 'unit01',
+      targrtId: '',
       targetOptions: [],
       showTargetManagement: false
     }
@@ -86,15 +88,15 @@ export default {
     },
     clearTargrt () {
       this.targetOptions = []
+      this.targrtId = ''
+      this.showTargetManagement = false
+      this.$refs.select.query = ''
     },
     search () {
-      this.showTargetManagement = true
-      this.$refs[this.type].getDetail(this.targrtId)
-      // const api = this.$root.apiCenter.getTargetDetail + '/' + this.type + '/' + this.targrtId
-      // this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', (responseData) => {
-      //   this.targetDetails = this.type === 'group' ? [responseData] : responseData
-      //   console.log(responseData)
-      // }, {isNeedloading:false})
+      if (this.targrtId) {
+        this.showTargetManagement = true
+        this.$refs[this.type].getDetail(this.targrtId)
+      }
     },
     openDoc () {
       window.open('http://webankpartners.gitee.io/wecube-docs/manual-open-monitor-config/#_6')
