@@ -223,7 +223,6 @@ export default {
         }
         this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.recursiveType, params, responseData => {
           this.templateQuery.endpoint_type = responseData[0]
-          console.log(responseData)
           this.recursiveTypeOptions = responseData
         }
       )}
