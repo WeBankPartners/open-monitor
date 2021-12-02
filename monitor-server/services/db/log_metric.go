@@ -32,7 +32,7 @@ func GetLogMetricByServiceGroup(serviceGroup string) (result models.LogMetricQue
 func GetLogMetricByEndpoint(endpoint string) (result []*models.LogMetricQueryObj,err error) {
 	result = []*models.LogMetricQueryObj{}
 	var endpointServiceRelTable []*models.EndpointServiceRelTable
-	err = x.SQL("select * from endpoint_service_rel where endpoint=?", endpoint).Find(&endpointServiceRelTable)
+	err = x.SQL("select distinct t2.service_group from log_metric_endpoint_rel t1 left join log_metric_monitor t2 on t1.log_metric_monitor=t2.guid where source_endpoint=?", endpoint).Find(&endpointServiceRelTable)
 	for _,v := range endpointServiceRelTable {
 		tmpObj,tmpErr := GetLogMetricByServiceGroup(v.ServiceGroup)
 		if tmpErr != nil {
@@ -45,6 +45,16 @@ func GetLogMetricByEndpoint(endpoint string) (result []*models.LogMetricQueryObj
 }
 
 func ListLogMetricEndpointRel(serviceGroup,logMetricMonitor string) (result []*models.LogMetricEndpointRelTable) {
+	result = []*models.LogMetricEndpointRelTable{}
+	if serviceGroup == "" {
+		var logMetricMonitorTable []*models.LogMetricMonitorTable
+		x.SQL("select service_group from log_metric_monitor where guid=?", logMetricMonitor).Find(&logMetricMonitorTable)
+		if len(logMetricMonitorTable) > 0 {
+			serviceGroup = logMetricMonitorTable[0].ServiceGroup
+		}else{
+			return result
+		}
+	}
 	endpointList,_ := ListServiceGroupEndpoint(serviceGroup, "host")
 	var logMetricRelTable []*models.LogMetricEndpointRelTable
 	x.SQL("select * from log_metric_endpoint_rel where log_metric_monitor=?", logMetricMonitor).Find(&logMetricRelTable)
@@ -197,6 +207,7 @@ func UpdateLogMetricJson(param *models.LogMetricJsonObj) error {
 	x.SQL("select * from log_metric_config where log_metric_json=?", param.Guid).Find(&logMetricConfigTable)
 	for _,v := range param.MetricList {
 		if v.Guid == "" {
+			v.LogMetricJson = param.Guid
 			actions = append(actions, getCreateLogMetricConfigAction(v, nowTime)...)
 			continue
 		}
