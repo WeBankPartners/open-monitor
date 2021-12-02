@@ -93,7 +93,7 @@ func ListServiceGroup() (result []*models.ServiceGroupTable, err error) {
 func GetServiceGroupEndpointList(searchType string) (result []*models.ServiceGroupEndpointListObj, err error) {
 	result = []*models.ServiceGroupEndpointListObj{}
 	if searchType == "endpoint" {
-		var endpointTable []*models.EndpointNew
+		var endpointTable []*models.EndpointNewTable
 		err = x.SQL("select guid from endpoint_new").Find(&endpointTable)
 		for _, v := range endpointTable {
 			result = append(result, &models.ServiceGroupEndpointListObj{Guid: v.Guid, DisplayName: v.Guid})
