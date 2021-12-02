@@ -51,7 +51,7 @@ func UpdateNodeExporterProcessConfig(endpointId int) error {
 }
 
 func SyncNodeExporterProcessConfig(hostIp string) error {
-	var endpointTable []*m.EndpointNew
+	var endpointTable []*m.EndpointNewTable
 	err := x.SQL("select * from endpoint_new where monitor_type='process' and ip=?",hostIp).Find(&endpointTable)
 	if err != nil {
 		return fmt.Errorf("Query table endpoint_new fail,%s ", err.Error())
