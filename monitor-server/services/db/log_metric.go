@@ -331,18 +331,17 @@ func GetServiceGroupByLogMetricMonitor(logMetricMonitorGuid string) string {
 	return ""
 }
 
-func CheckRegExpMatch(param models.CheckRegExpParam) (result string,err error) {
+func CheckRegExpMatch(param models.CheckRegExpParam) (message string) {
 	re,tmpErr := regexp.Compile(param.RegString)
 	if tmpErr != nil {
-		return "",fmt.Errorf("reg compile fail,%s ", tmpErr.Error())
+		return fmt.Sprintf("reg compile fail,%s ", tmpErr.Error())
 	}
 	fetchList := re.FindStringSubmatch(param.TestContext)
 	if len(fetchList) <= 1 {
-		return "",fmt.Errorf("can not match any data")
+		return fmt.Sprintf("can not match any data")
 	}
 	if len(fetchList) > 2 {
-		return "",fmt.Errorf("match more then one data:%s ", fetchList[2:])
+		return fmt.Sprintf("match more then one data:%s ", fetchList[2:])
 	}
-	result = fetchList[1]
-	return
+	return fmt.Sprintf("success match:%s", fetchList[1])
 }
