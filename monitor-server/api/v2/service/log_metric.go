@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
@@ -295,4 +296,18 @@ func syncLogMetricMonitorConfig(logMetricMonitor string) error {
 func syncNodeExporterConfig(endpointList []string) error {
 	err := node_exporter.UpdateNodeExportConfig(endpointList)
 	return err
+}
+
+func CheckRegExpMatch(c *gin.Context)  {
+	var param models.CheckRegExpParam
+	if err:=c.ShouldBindJSON(&param);err!=nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	result,err := db.CheckRegExpMatch(param)
+	if err != nil {
+		middleware.ReturnSuccessWithMessage(c, err.Error())
+	}else{
+		middleware.ReturnSuccessWithMessage(c, fmt.Sprintf("success match:%s ", result))
+	}
 }

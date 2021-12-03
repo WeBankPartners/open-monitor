@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/WeBankPartners/go-common-lib/guid"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"regexp"
 	"time"
 )
 
@@ -328,4 +329,20 @@ func GetServiceGroupByLogMetricMonitor(logMetricMonitorGuid string) string {
 		return logMetricMonitorTable[0].ServiceGroup
 	}
 	return ""
+}
+
+func CheckRegExpMatch(param models.CheckRegExpParam) (result string,err error) {
+	re,tmpErr := regexp.Compile(param.RegString)
+	if tmpErr != nil {
+		return "",fmt.Errorf("reg compile fail,%s ", tmpErr.Error())
+	}
+	fetchList := re.FindStringSubmatch(param.TestContext)
+	if len(fetchList) <= 1 {
+		return "",fmt.Errorf("can not match any data")
+	}
+	if len(fetchList) > 2 {
+		return "",fmt.Errorf("match more then one data:%s ", fetchList[2:])
+	}
+	result = fetchList[1]
+	return
 }
