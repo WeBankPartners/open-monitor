@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
@@ -304,10 +303,6 @@ func CheckRegExpMatch(c *gin.Context)  {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	result,err := db.CheckRegExpMatch(param)
-	if err != nil {
-		middleware.ReturnSuccessWithMessage(c, err.Error())
-	}else{
-		middleware.ReturnSuccessWithMessage(c, fmt.Sprintf("success match:%s ", result))
-	}
+	result := db.CheckRegExpMatch(param)
+	middleware.ReturnSuccessData(c, result)
 }
