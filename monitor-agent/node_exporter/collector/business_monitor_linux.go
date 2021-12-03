@@ -70,8 +70,8 @@ func (c *businessMonitorCollector) Update(ch chan<- prometheus.Metric) error {
 }
 
 type businessStoreMonitorObj struct {
-	Path  string                    `json:"path"`
-	Rules []*businessStoreMetricObj `json:"rules"`
+	Path   string                    `json:"path"`
+	Rules  []*businessStoreMetricObj `json:"rules"`
 	Custom []*businessStoreCustomObj `json:"custom"`
 }
 
@@ -85,10 +85,10 @@ type businessStoreMetricObj struct {
 }
 
 type businessStoreCustomObj struct {
-	Metric string `json:"metric"`
-	ValueRegular string `json:"value_regular"`
-	AggType string `json:"agg_type"`
-	StringMap    []*businessStringMapObj    `json:"string_map"`
+	Metric       string                  `json:"metric"`
+	ValueRegular string                  `json:"value_regular"`
+	AggType      string                  `json:"agg_type"`
+	StringMap    []*businessStringMapObj `json:"string_map"`
 }
 
 type businessRuleObj struct {
@@ -103,12 +103,12 @@ type businessRuleObj struct {
 }
 
 type businessCustomObj struct {
-	RegExp       *regexp.Regexp              `json:"-"`
-	Metric string `json:"metric"`
-	ValueRegular string `json:"value_regular"`
-	AggType string `json:"agg_type"`
-	StringMap    []*businessStringMapObj     `json:"string_map"`
-	DataChannel  chan string `json:"-"`
+	RegExp       *regexp.Regexp          `json:"-"`
+	Metric       string                  `json:"metric"`
+	ValueRegular string                  `json:"value_regular"`
+	AggType      string                  `json:"agg_type"`
+	StringMap    []*businessStringMapObj `json:"string_map"`
+	DataChannel  chan string             `json:"-"`
 }
 
 type businessRuleMetricObj struct {
@@ -121,10 +121,10 @@ type businessRuleMetricObj struct {
 }
 
 type businessMonitorObj struct {
-	Path        string             `json:"path"`
-	TailSession *tail.Tail         `json:"-"`
-	Lock        *sync.RWMutex      `json:"-"`
-	Rules       []*businessRuleObj `json:"rules"`
+	Path        string               `json:"path"`
+	TailSession *tail.Tail           `json:"-"`
+	Lock        *sync.RWMutex        `json:"-"`
+	Rules       []*businessRuleObj   `json:"rules"`
 	Custom      []*businessCustomObj `json:"custom"`
 }
 
@@ -303,8 +303,8 @@ func BusinessMonitorHttpHandle(w http.ResponseWriter, r *http.Request) {
 				tmpRuleObj.DataChannel = make(chan map[string]interface{}, 10000)
 				newBmo.Rules = append(newBmo.Rules, &tmpRuleObj)
 			}
-			for _,vv := range v.Custom {
-				tmpCustomObj := businessCustomObj{Metric: vv.Metric,AggType: vv.AggType,ValueRegular: vv.ValueRegular}
+			for _, vv := range v.Custom {
+				tmpCustomObj := businessCustomObj{Metric: vv.Metric, AggType: vv.AggType, ValueRegular: vv.ValueRegular}
 				tmpCustomObj.RegExp = regexp.MustCompile(vv.ValueRegular)
 				tmpCustomObj.StringMap = vv.StringMap
 				tmpCustomObj.DataChannel = make(chan string, 10000)
@@ -383,12 +383,12 @@ func updateBusinessRules(bmo *businessMonitorObj, config *businessAgentDto) {
 	bmo.Rules = newRules
 }
 
-func updateBusinessCustomConfig(bmo *businessMonitorObj, config *businessAgentDto)  {
+func updateBusinessCustomConfig(bmo *businessMonitorObj, config *businessAgentDto) {
 	level.Info(newLogger).Log("StartUpdateBusiness", "custom")
 	var newCustom []*businessCustomObj
-	for _,v := range bmo.Custom {
+	for _, v := range bmo.Custom {
 		delFlag := true
-		for _,vv := range config.Custom {
+		for _, vv := range config.Custom {
 			if v.Metric == vv.Metric {
 				delFlag = false
 				v.StringMap = vv.StringMap
@@ -404,16 +404,16 @@ func updateBusinessCustomConfig(bmo *businessMonitorObj, config *businessAgentDt
 			newCustom = append(newCustom, v)
 		}
 	}
-	for _,v := range config.Custom {
+	for _, v := range config.Custom {
 		addFlag := true
-		for _,vv := range newCustom {
+		for _, vv := range newCustom {
 			if v.Metric == vv.Metric {
 				addFlag = false
 				break
 			}
 		}
 		if addFlag {
-			tmpCustomObj := businessCustomObj{Metric: v.Metric,AggType: v.AggType,ValueRegular: v.ValueRegular}
+			tmpCustomObj := businessCustomObj{Metric: v.Metric, AggType: v.AggType, ValueRegular: v.ValueRegular}
 			tmpCustomObj.RegExp = regexp.MustCompile(v.ValueRegular)
 			tmpCustomObj.StringMap = v.StringMap
 			tmpCustomObj.DataChannel = make(chan string, 10000)
@@ -438,8 +438,8 @@ func (c *businessCollectorStore) Save() {
 			newStoreRules = append(newStoreRules, &businessStoreMetricObj{Regular: vv.Regular, StringMap: vv.StringMap, MetricConfig: vv.MetricConfig, TagsKey: vv.TagsKey, TagsValue: vv.TagsValue, TagsString: vv.TagsString})
 		}
 		var newStoreCustoms []*businessStoreCustomObj
-		for _,vv := range v.Custom {
-			newStoreCustoms = append(newStoreCustoms, &businessStoreCustomObj{Metric: vv.Metric,ValueRegular: vv.ValueRegular,AggType: vv.AggType,StringMap: vv.StringMap})
+		for _, vv := range v.Custom {
+			newStoreCustoms = append(newStoreCustoms, &businessStoreCustomObj{Metric: vv.Metric, ValueRegular: vv.ValueRegular, AggType: vv.AggType, StringMap: vv.StringMap})
 		}
 		c.Data = append(c.Data, &businessStoreMonitorObj{Path: v.Path, Rules: newStoreRules, Custom: newStoreCustoms})
 	}
@@ -479,8 +479,8 @@ func (c *businessCollectorStore) Load() {
 				tmpRuleObj.DataChannel = make(chan map[string]interface{}, 10000)
 				newBusinessMonitorObj.Rules = append(newBusinessMonitorObj.Rules, &tmpRuleObj)
 			}
-			for _,vv := range v.Custom {
-				tmpCustomObj := businessCustomObj{Metric: vv.Metric,ValueRegular: vv.ValueRegular,AggType: vv.AggType,StringMap: vv.StringMap}
+			for _, vv := range v.Custom {
+				tmpCustomObj := businessCustomObj{Metric: vv.Metric, ValueRegular: vv.ValueRegular, AggType: vv.AggType, StringMap: vv.StringMap}
 				tmpCustomObj.RegExp = regexp.MustCompile(vv.ValueRegular)
 				tmpCustomObj.DataChannel = make(chan string, 10000)
 				newBusinessMonitorObj.Custom = append(newBusinessMonitorObj.Custom, &tmpCustomObj)
@@ -548,7 +548,7 @@ func calcBusinessAggData() {
 				newRuleData = append(newRuleData, &tmpMetricObj)
 			}
 		}
-		for _,custom := range v.Custom {
+		for _, custom := range v.Custom {
 			dataLength := len(custom.DataChannel)
 			if dataLength == 0 {
 				continue
@@ -561,16 +561,16 @@ func calcBusinessAggData() {
 				tmpMapData[custom.Metric] = customFetchString
 				changedMapData, _ := changeValueByStringMap(tmpMapData, []string{}, custom.StringMap)
 				tmpValueObj.Sum += changedMapData[custom.Metric]
-				tmpValueObj.Count ++
+				tmpValueObj.Count++
 			}
 			if tmpValueObj.Count > 0 {
 				tmpValueObj.Avg = tmpValueObj.Sum / tmpValueObj.Count
 				tmpMetricObj := businessRuleMetricObj{Path: v.Path, Agg: custom.AggType, Metric: custom.Metric, Tags: []string{}}
 				if custom.AggType == "sum" {
 					tmpMetricObj.Value = tmpValueObj.Sum
-				}else if custom.AggType == "avg" {
+				} else if custom.AggType == "avg" {
 					tmpMetricObj.Value = tmpValueObj.Avg
-				}else if custom.AggType == "count" {
+				} else if custom.AggType == "count" {
 					tmpMetricObj.Value = tmpValueObj.Count
 				}
 				newRuleData = append(newRuleData, &tmpMetricObj)
@@ -579,9 +579,9 @@ func calcBusinessAggData() {
 	}
 	businessMonitorLock.RUnlock()
 	businessMonitorMetricLock.Lock()
-	for _,v := range businessMonitorMetrics {
+	for _, v := range businessMonitorMetrics {
 		existFlag := false
-		for _,vv := range newRuleData {
+		for _, vv := range newRuleData {
 			if v.Path == vv.Path && v.Metric == vv.Metric {
 				existFlag = true
 				break
