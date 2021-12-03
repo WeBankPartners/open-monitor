@@ -268,5 +268,6 @@
   "m_json_regular": "JSON正则",
   "m_metric_regular": "指标正则",
   "m_log_server": "日志主机",
-  "m_business_object": "业务对象"
+  "m_business_object": "业务对象",
+  "m_db": "数据库"
 }
