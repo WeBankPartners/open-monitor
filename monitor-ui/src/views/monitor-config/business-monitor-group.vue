@@ -702,65 +702,76 @@ export default {
       }, {isNeedloading:false})
     },
     addEmptyItem (type, index) {
-      if (type === 'path') {
-        const hasEmpty = this.addAndEditModal.pathOptions.every(item => item.path !== '')
-        if (hasEmpty) {
-          this.addAndEditModal.pathOptions.push(
-            {path: ''}
-          )
-        } else {
-          this.$Message.warning('Path Can Not Empty')
+      switch (type) {
+        case 'path': {
+          const hasEmpty = this.addAndEditModal.pathOptions.every(item => item.path !== '')
+          if (hasEmpty) {
+            this.addAndEditModal.pathOptions.push(
+              {path: ''}
+            )
+          } else {
+            this.$Message.warning('Path Can Not Empty')
+          }
+          break
+        }
+        case 'relate': {
+          const hasEmpty = this.addAndEditModal.dataConfig.endpoint_rel.every(item => item.source_endpoint !== '' && item.target_endpoint !== '')
+          if (hasEmpty) {
+            this.addAndEditModal.dataConfig.endpoint_rel.push(
+              {source_endpoint: '', target_endpoint: ''}
+            )
+          } else {
+            this.$Message.warning('Can Not Empty')
+          }
+          break
+        }
+        case 'metric_list': {
+          this.ruleModelConfig.addRow[type].push({
+            json_key: '',
+            display_name: '',
+            metric: '',
+            agg_type: 'avg',
+            string_map: []
+          })
+          break
+        }
+        case 'string_map': {
+          this.ruleModelConfig.addRow.metric_list[index][type].push({
+            source_value: '',
+            regulative: 1,
+            target_value: ''
+          })
+          break
+        }
+        case 'endpoint_rel': {
+          this.dbModelConfig.addRow[type].push({
+            source_endpoint: '',
+            target_endpoint: ''
+          })
         }
       }
-      if (type === 'relate') {
-        const hasEmpty = this.addAndEditModal.dataConfig.endpoint_rel.every(item => item.source_endpoint !== '' && item.target_endpoint !== '')
-        if (hasEmpty) {
-          this.addAndEditModal.dataConfig.endpoint_rel.push(
-            {source_endpoint: '', target_endpoint: ''}
-          )
-        } else {
-          this.$Message.warning('Can Not Empty')
-        }
-      }
-      if (type === 'metric_list') {
-        this.ruleModelConfig.addRow[type].push({
-          json_key: '',
-          display_name: '',
-          metric: '',
-          agg_type: 'avg',
-          string_map: []
-        })
-      }
-      if (type === 'string_map') {
-        this.ruleModelConfig.addRow.metric_list[index][type].push({
-          source_value: '',
-          regulative: 1,
-          target_value: ''
-        })
-      }
-      if (type === 'endpoint_rel') {
-        this.dbModelConfig.addRow[type].push({
-          source_endpoint: '',
-          target_endpoint: ''
-        })
-      }
-      
     },
     deleteItem(type, index) {
-      if (type === 'path') {
-        this.addAndEditModal.pathOptions.splice(index, 1)
-      }
-      if (type === 'relate') {
-        this.addAndEditModal.dataConfig.endpoint_rel.splice(index, 1)
-      }
-      if (type === 'metric_list') {
-        this.ruleModelConfig.addRow[type].splice(index, 1)
-      }
-      if (type === 'string_map') {
-        this.ruleModelConfig.addRow.metric_list[index][type].splice(index, 1)
-      }
-      if (type === 'endpoint_rel') {
-        this.dbModelConfig.addRow.endpoint_rel.splice(index, 1)
+      switch (type) {
+        case 'path': {
+          this.addAndEditModal.pathOptions.splice(index, 1)
+          break
+        }
+        case 'relate': {
+          this.addAndEditModal.dataConfig.endpoint_rel.splice(index, 1)
+          break
+        }
+        case 'metric_list': {
+          this.ruleModelConfig.addRow[type].splice(index, 1)
+          break
+        }
+        case 'string_map': {
+          this.ruleModelConfig.addRow.metric_list[index][type].splice(index, 1)
+          break
+        }
+        case 'endpoint_rel': {
+          this.dbModelConfig.addRow.endpoint_rel.splice(index, 1)
+        }
       }
     },
     add () {
