@@ -208,6 +208,8 @@ func init() {
 		&handlerFuncObj{Url: "/service/db_metric", Method: http.MethodPost, HandlerFunc: service.CreateDbMetricMonitor},
 		&handlerFuncObj{Url: "/service/db_metric", Method: http.MethodPut, HandlerFunc: service.UpdateDbMetricMonitor},
 		&handlerFuncObj{Url: "/service/db_metric/:dbMonitorGuid", Method: http.MethodDelete, HandlerFunc: service.DeleteDbMetricMonitor},
+
+		&handlerFuncObj{Url: "/regexp/test/match", Method: http.MethodGet, HandlerFunc: service.CheckRegExpMatch},
 	)
 }
 
