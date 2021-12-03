@@ -33,7 +33,7 @@
         </Form>
         <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
           <template v-for="(item, index) in ruleModelConfig.addRow.metric_list">
-            <p :key="index + '3'">
+            <p :key="index + '3'" style="text-align: center;">
               <Input disabled v-model="item.json_key" style="width: 190px" :placeholder="$t('m_key') + ' e.g:[.*][.*]'" />
               <Input disabled v-model="item.metric" style="width: 190px" :placeholder="$t('field.metric') + ' , e.g:code'" />
               <Select disabled v-model="item.agg_type" filterable clearable style="width:190px">
@@ -45,7 +45,7 @@
             </p>
             <div v-if="item.string_map.length > 0" :key="index + 1" style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;">
               <template v-for="(stringMapItem, stringMapIndex) in item.string_map">
-                <p :key="stringMapIndex + 2">
+                <p :key="stringMapIndex + 2" style="text-align: center;">
                   <Select disabled v-model="stringMapItem.regulative" filterable clearable style="width:230px">
                     <Option v-for="regulation in regulationOption" :value="regulation.value" :key="regulation.value">{{
                       regulation.label
@@ -61,7 +61,7 @@
         </div>
       </div>
       <div slot="footer">
-        <Button @click="ruleModelConfig.isShow=false">{{$t('button.cancel')}}</Button>
+        <Button @click="ruleModelConfig.isShow=false">{{$t('button.cancel')}}111</Button>
       </div>
     </Modal>
     <ModalComponent :modelConfig="customMetricsModelConfig">
@@ -77,7 +77,7 @@
         <div class="marginbottom params-each">
           <div style="margin: 4px 12px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
             <template v-for="(item, index) in customMetricsModelConfig.addRow.string_map">
-              <p :key="index">
+              <p :key="index" style="text-align: center;">
                 <Select disabled v-model="item.regulative" filterable clearable style="width:150px">
                   <Option v-for="regulation in regulationOption" :value="regulation.value" :key="regulation.value">{{
                     regulation.label
@@ -89,26 +89,80 @@
             </template>
           </div>
         </div>
-        <Button style="float:right" @click="cancelModal">{{$t('button.cancel')}}</Button>
+        <Button style="float:right" @click="cancelModal">{{$t('button.cancel')}}222</Button>
       </div>
     </ModalComponent>
+    <!-- DB config -->
+    <section v-if="showDbManagement" style="margin-top: 16px;">
+      <Tag color="blue">{{$t('m_db')}}</Tag>
+      <PageTable :pageConfig="pageDbConfig"></PageTable>
+    </section>
+    <Modal
+      v-model="dbModelConfig.isShow"
+      :title="$t('m_db')"
+      width="620"
+      footer-hide
+      >
+      <div :style="{ 'max-height': MODALHEIGHT + 'px', overflow: 'auto' }">
+        <Form :label-width="100">
+          <FormItem :label="$t('field.displayName')">
+            <Input disabled v-model="dbModelConfig.addRow.display_name" style="width:450px"/>
+          </FormItem>
+          <FormItem :label="$t('field.metric')">
+            <Input disabled v-model="dbModelConfig.addRow.metric" style="width:450px" />
+          </FormItem>
+          <FormItem label="SQL">
+            <Input disabled v-model="dbModelConfig.addRow.metric_sql" type="textarea" style="width:450px" />
+          </FormItem>
+          <FormItem :label="$t('m_collection_interval')">
+            <Select disabled v-model="dbModelConfig.addRow.step" style="width: 450px">
+              <Option v-for="type in stepOptions" :key="type.value" :value="type.value">{{type.label}}</Option>
+            </Select>
+          </FormItem>
+          <FormItem :label="$t('field.type')">
+            <Select disabled v-model="dbModelConfig.addRow.monitor_type" @on-change="getEndpoint(dbModelConfig.addRow.monitor_type, 'mysql')" style="width: 450px">
+              <Option v-for="type in monitorTypeOptions" :key="type.value" :value="type.label">{{type.label}}</Option>
+            </Select>
+          </FormItem>
+        </Form>
+        <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
+          <template v-for="(item, index) in dbModelConfig.addRow.endpoint_rel">
+            <p :key="index + '3'" style="text-align: center;">
+              <Select disabled v-model="item.source_endpoint" style="width: 265px" :placeholder="$t('m_log_server')">
+                <Option v-for="type in sourceEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
+              </Select>
+              <Select disabled v-model="item.target_endpoint" style="width: 265px" :placeholder="$t('m_business_object')">
+                <Option v-for="type in targetEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
+              </Select>
+            </p>
+          </template>
+        </div>
+      </div>
+    </Modal>
   </div>
 </template>
 
 <script>
 import extendTable from '@/components/table-page/extend-table'
 let tableEle = [
-  {title: 'tableKey.path', value: 'log_path', display: true},
+  {title: 'tableKey.logPath', value: 'log_path', display: true},
   {title: 'field.type', value: 'monitor_type', display: true},
 ]
-const btn = [
-  // {btn_name: 'button.remove', btn_func: 'deleteConfirmModal'}
+const btn = []
+let tableDbEle = [
+  {title: 'field.displayName', value: 'display_name', display: true},
+  {title: 'field.metric', value: 'metric', display: true},
+  {title: 'field.type', value: 'monitor_type', display: true},
+  {title: 'm_collection_interval', value: 'step', display: true}
+]
+const btnDb = [
+  {btn_name: 'button.view', btn_func: 'editDbItem'}
 ]
 export default {
   name: '',
   data () {
     return {
-       MODALHEIGHT: 300,
+      MODALHEIGHT: 300,
       showManagement: false,
       totalData: [],
       regulationOption: [
@@ -158,21 +212,88 @@ export default {
         key: '',
         value: 'metric'
       },
+      // DB config 
+      showDbManagement: false,
+      pageDbConfig: {
+        table: {
+          tableData: [],
+          tableEle: tableDbEle,
+          // filterMoreBtn: 'filterMoreBtn',
+          primaryKey: 'id',
+          btn: btnDb,
+          handleFloat:true
+        }
+      },
+      dbModelConfig: {
+        isShow: false,
+        isAdd: true,
+        addRow: {
+          service_group: '',
+          metric_sql: '',
+          metric: '',
+          display_name: '',
+          step: 10,
+          monitor_type: '',
+          endpoint_rel: []
+        }
+      },
+      monitorTypeOptions: [
+        {label: 'process', value: 'process'},
+        {label: 'java', value: 'java'},
+        {label: 'nginx', value: 'nginx'},
+        {label: 'http', value: 'http'}
+      ],
+      stepOptions: [
+        {label: '10S', value: 10},
+        {label: '30S', value: 30},
+        {label: '60S', value: 60},
+        {label: '600S', value: 600},
+        {label: '1800S', value: 1800},
+        {label: '3600S', value: 3600}
+      ],
+      sourceEndpoints: [],
+      targetEndpoints: [],
     }
   },
   methods: {
+    // DB config 
+    getDbDetail (targetId) {
+      const api = this.$root.apiCenter.getTargetDbDetail + '/endpoint/' + targetId
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', (responseData) => {
+        this.pageDbConfig.table.tableData = responseData
+        this.showDbManagement = true
+      }, {isNeedloading:false})
+    },
+    editDbItem (rowData) {
+      this.getEndpoint(rowData.monitor_type, 'mysql', rowData.service_group)
+      this.dbModelConfig.addRow = JSON.parse(JSON.stringify(rowData))
+      this.dbModelConfig.isAdd = false
+      this.dbModelConfig.isShow = true
+    },
+    getEndpoint (val, type, targrtId) {
+      // get source Endpoint
+      const sourceApi = this.$root.apiCenter.getEndpointsByType + '/' + targrtId + '/endpoint/' + type
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', sourceApi, '', (responseData) => {
+        this.sourceEndpoints = responseData
+      }, {isNeedloading:false})
+      const targetApi = this.$root.apiCenter.getEndpointsByType + '/' + targrtId + '/endpoint/' + val
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', targetApi, '', (responseData) => {
+        this.targetEndpoints = responseData
+      }, {isNeedloading:false})
+    },
+    //other config 
     cancelModal () {
       this.$root.JQ('#custom_metrics').modal('hide')
     },
     editCustomMetricItem (rowData) {
       this.customMetricsModelConfig.isAdd = false
       this.modelTip.value = rowData.display_name
-      this.customMetricsModelConfig.addRow = rowData
+      this.customMetricsModelConfig.addRow = JSON.parse(JSON.stringify(rowData))
       this.$root.JQ('#custom_metrics').modal('show')
     },
     editRuleItem (rowData) {
       this.ruleModelConfig.isAdd = false
-      this.ruleModelConfig.addRow = rowData
+      this.ruleModelConfig.addRow = JSON.parse(JSON.stringify(rowData))
       this.ruleModelConfig.isShow = true
     },
     getExtendInfo(item){
@@ -194,7 +315,13 @@ export default {
       this.totalData[index].tableConfig.table.isCustomMetricExtend.parentData = item
     },
     getDetail (targrtId) {
+      this.showManagement = false
+      this.showDbManagement = false
       this.targrtId = targrtId
+      if (this.targrtId.endsWith('_mysql')) {
+        this.getDbDetail(targrtId)
+        return
+      }
       const api = this.$root.apiCenter.getTargetDetail + '/endpoint/' + targrtId
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', (responseData) => {
         this.totalData = responseData.map(d => {

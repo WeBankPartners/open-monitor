@@ -202,5 +202,7 @@
     "logMetricMonitor": "/monitor/api/v2/service/log_metric/log_metric_monitor",
     "deletePath": "/monitor/api/v2/service/log_metric/log_metric_monitor",
     "logMetricJson": "/monitor/api/v2/service/log_metric/log_metric_json",
-    "logMetricReg": "/monitor/api/v2/service/log_metric/log_metric_config"
+    "logMetricReg": "/monitor/api/v2/service/log_metric/log_metric_config",
+    "getTargetDbDetail": "/monitor/api/v2/service/db_metric/list",
+    "saveTargetDb": "/monitor/api/v2/service/db_metric"
 }
