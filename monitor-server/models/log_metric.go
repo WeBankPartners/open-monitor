@@ -94,30 +94,35 @@ type LogMetricNodeExporterResponse struct {
 	Message string `json:"message"`
 }
 
-type LogMetricNodeExporterDto struct {
+type LogMetricMonitorNeObj struct {
 	Path           string                `json:"path"`
 	TargetEndpoint string                `json:"target_endpoint"`
-	Config         []*LogMetricJsonDto   `json:"config"`
-	Custom         []*LogMetricConfigDto `json:"custom"`
+	JsonConfig     []*LogMetricJsonNeObj `json:"config"`
+	MetricConfig   []*LogMetricNeObj     `json:"custom"`
 }
 
-type LogMetricJsonDto struct {
-	Regular      string                `json:"regular"`
-	Tags         string                `json:"tags"`
-	MetricConfig []*LogMetricConfigDto `json:"metric_config"`
+type LogMetricJsonNeObj struct {
+	Regular      string            `json:"regular"`
+	Tags         string            `json:"tags"`
+	MetricConfig []*LogMetricNeObj `json:"metric_config"`
 }
 
-type LogMetricConfigDto struct {
-	Key          string                   `json:"key"`
-	Metric       string                   `json:"metric"`
-	ValueRegular string                   `json:"value_regular"`
-	Title        string                   `json:"title"`
-	AggType      string                   `json:"agg_type"`
-	StringMap    []*LogMetricStringMapDto `json:"string_map"`
+type LogMetricNeObj struct {
+	Key          string                     `json:"key"`
+	Metric       string                     `json:"metric"`
+	ValueRegular string                     `json:"value_regular"`
+	Title        string                     `json:"title"`
+	AggType      string                     `json:"agg_type"`
+	StringMap    []*LogMetricStringMapNeObj `json:"string_map"`
 }
 
-type LogMetricStringMapDto struct {
+type LogMetricStringMapNeObj struct {
 	Regulation  string  `json:"regulation"`
 	StringValue string  `json:"string_value"`
 	IntValue    float64 `json:"int_value"`
+}
+
+type CheckRegExpParam struct {
+	RegString string `json:"reg_string" binding:"required"`
+	TestContext string `json:"test_context" binding:"required"`
 }
