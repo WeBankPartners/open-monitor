@@ -1,68 +1,68 @@
 package funcs
 
 import (
+	"fmt"
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/go-xorm/core"
+	"github.com/go-xorm/xorm"
+	"log"
 	"sync"
 	"time"
-	"github.com/go-xorm/xorm"
-	_ "github.com/go-sql-driver/mysql"
-	"fmt"
-	"github.com/go-xorm/core"
-	"log"
 )
 
 type DbMonitorTaskObj struct {
-	DbType  string  `json:"db_type"`
-	Endpoint string `json:"endpoint"`
-	Name    string  `json:"name"`
-	Server  string  `json:"server"`
-	Port    string  `json:"port"`
-	User    string  `json:"user"`
-	Password string `json:"password"`
-	Sql     string  `json:"sql"`
-	Session *xorm.Engine  `json:"session"`
+	DbType   string       `json:"db_type"`
+	Endpoint string       `json:"endpoint"`
+	Name     string       `json:"name"`
+	Server   string       `json:"server"`
+	Port     string       `json:"port"`
+	User     string       `json:"user"`
+	Password string       `json:"password"`
+	Sql      string       `json:"sql"`
+	Session  *xorm.Engine `json:"session"`
 }
 
 type DbMonitorResultObj struct {
-	Name  string  `json:"name"`
+	Name     string `json:"name"`
 	Endpoint string `json:"endpoint"`
-	Server string `json:"server"`
-	Port  string  `json:"port"`
-	Value int `json:"value"`
+	Server   string `json:"server"`
+	Port     string `json:"port"`
+	Value    int    `json:"value"`
 }
 
 var (
-	taskList []*DbMonitorTaskObj
-	taskLock = new(sync.RWMutex)
-	resultList []*DbMonitorResultObj
-	resultLock = new(sync.RWMutex)
+	taskList     []*DbMonitorTaskObj
+	taskLock     = new(sync.RWMutex)
+	resultList   []*DbMonitorResultObj
+	resultLock   = new(sync.RWMutex)
 	taskInterval = 10
-	maxIdle = 2
-	maxOpen = 5
-	timeOut = 10
-	metricString = "db_monitor_count"
+	maxIdle      = 2
+	maxOpen      = 5
+	timeOut      = 10
+	metricString = "db_monitor_value"
 )
 
-func StartCronTask()  {
-	t := time.NewTicker(time.Duration(taskInterval)*time.Second).C
+func StartCronTask() {
+	t := time.NewTicker(time.Duration(taskInterval) * time.Second).C
 	for {
-		<- t
+		<-t
 		go doTask()
 	}
 }
 
-func doTask()  {
+func doTask() {
 	taskLock.RLock()
 	defer taskLock.RUnlock()
 	if len(taskList) == 0 {
 		return
 	}
 	var newResultList []*DbMonitorResultObj
-	for _,taskObj := range taskList {
+	for _, taskObj := range taskList {
 		var resultValue int
 		if taskObj.DbType == "mysql" {
 			resultValue = mysqlTask(taskObj)
 		}
-		newResultList = append(newResultList, &DbMonitorResultObj{Name:taskObj.Name,Endpoint:taskObj.Endpoint,Server:taskObj.Server,Port:taskObj.Port,Value:resultValue})
+		newResultList = append(newResultList, &DbMonitorResultObj{Name: taskObj.Name, Endpoint: taskObj.Endpoint, Server: taskObj.Server, Port: taskObj.Port, Value: resultValue})
 	}
 	resultLock.Lock()
 	resultList = newResultList
@@ -88,13 +88,13 @@ func mysqlTask(config *DbMonitorTaskObj) int {
 		}
 	}
 	queryMap := make(map[string]int)
-	_,err := config.Session.SQL(config.Sql).Get(&queryMap)
+	_, err := config.Session.SQL(config.Sql).Get(&queryMap)
 	if err != nil {
 		log.Printf("mysql query data fail with sql:%s,error: %s\n", config.Sql, err.Error())
 		return -2
 	}
 	var resultValue int
-	for _,v := range queryMap {
+	for _, v := range queryMap {
 		resultValue = v
 	}
 	return resultValue
@@ -115,7 +115,7 @@ func checkIllegal(param DbMonitorTaskObj) error {
 		// 使用驼峰式映射
 		tmpSession.SetMapper(core.SnakeMapper{})
 		queryMap := make(map[string]int)
-		_,err := tmpSession.SQL(param.Sql).Get(&queryMap)
+		_, err := tmpSession.SQL(param.Sql).Get(&queryMap)
 		if err != nil {
 			log.Printf("check illegal, mysql query data fail with sql:%s,error: %s\n", param.Sql, err.Error())
 			return fmt.Errorf("Mysql query data fail,%s ", err.Error())
