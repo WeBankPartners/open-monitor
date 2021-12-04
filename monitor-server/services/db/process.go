@@ -1,39 +1,39 @@
 package db
 
 import (
-	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
-	"fmt"
-	"time"
 	"encoding/json"
+	"fmt"
+	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"io/ioutil"
 	"net/http"
 	"strings"
-	"io/ioutil"
+	"time"
 
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 )
 
 type processHttpDto struct {
-	Process  []string  `json:"process"`
-	Check    int       `json:"check"`
+	Process []string `json:"process"`
+	Check   int      `json:"check"`
 }
 
 func UpdateNodeExporterProcessConfig(endpointId int) error {
-	err,data := GetProcessList(endpointId)
+	err, data := GetProcessList(endpointId)
 	if err != nil {
 		log.Logger.Error("Update node_exporter fail", log.Error(err))
 		return err
 	}
-	endpointObj := m.EndpointTable{Id:endpointId}
+	endpointObj := m.EndpointTable{Id: endpointId}
 	err = GetEndpoint(&endpointObj)
 	if err != nil {
 		log.Logger.Error("Update node_exporter fail, get endpoint msg fail", log.Error(err))
 		return err
 	}
-	postParam := processHttpDto{Process:[]string{}, Check:0}
-	for _,v := range data {
+	postParam := processHttpDto{Process: []string{}, Check: 0}
+	for _, v := range data {
 		postParam.Process = append(postParam.Process, fmt.Sprintf("%s^%s", v.ProcessName, v.Tags))
 	}
-	postData,err := json.Marshal(postParam)
+	postData, err := json.Marshal(postParam)
 	if err != nil {
 		log.Logger.Error("Update node_exporter fail, marshal post data fail", log.Error(err))
 		return err
@@ -44,65 +44,69 @@ func UpdateNodeExporterProcessConfig(endpointId int) error {
 		log.Logger.Error("Update node_exporter fail, http post fail", log.Error(err))
 		return err
 	}
-	responseBody,_ := ioutil.ReadAll(resp.Body)
+	responseBody, _ := ioutil.ReadAll(resp.Body)
 	log.Logger.Info("curl "+url, log.String("response", string(responseBody)))
 	resp.Body.Close()
 	return nil
 }
 
-func SyncNodeExporterProcessConfig(hostIp string) error {
+func SyncNodeExporterProcessConfig(hostIp string, newEndpoints []*m.EndpointNewTable) error {
 	var endpointTable []*m.EndpointNewTable
-	err := x.SQL("select * from endpoint_new where monitor_type='process' and ip=?",hostIp).Find(&endpointTable)
+	err := x.SQL("select * from endpoint_new where monitor_type='process' and ip=?", hostIp).Find(&endpointTable)
 	if err != nil {
 		return fmt.Errorf("Query table endpoint_new fail,%s ", err.Error())
+	}
+	if len(newEndpoints) > 0 {
+		endpointTable = append(endpointTable, newEndpoints...)
 	}
 	var nodeExportAddress string
 	if len(endpointTable) > 0 {
 		nodeExportAddress = endpointTable[0].AgentAddress
-	}else{
-		endpointObj := m.EndpointTable{Ip: hostIp,ExportType: "host"}
+	} else {
+		endpointObj := m.EndpointTable{Ip: hostIp, ExportType: "host"}
 		GetEndpoint(&endpointObj)
 		nodeExportAddress = endpointObj.Address
 	}
 	syncParam := m.SyncProcessDto{Check: 0, Process: []*m.SyncProcessObj{}}
-	for _,v := range endpointTable {
+	for _, v := range endpointTable {
 		if v.ExtendParam == "" {
 			continue
 		}
 		tmpExtendObj := m.EndpointExtendParamObj{}
 		tmpErr := json.Unmarshal([]byte(v.ExtendParam), &tmpExtendObj)
 		if tmpErr != nil {
-			log.Logger.Error("Sync process config,extendParam illegal", log.String("processEndpoint", v.Guid), log.String("extendParam",v.ExtendParam), log.Error(tmpErr))
+			log.Logger.Error("Sync process config,extendParam illegal", log.String("processEndpoint", v.Guid), log.String("extendParam", v.ExtendParam), log.Error(tmpErr))
 			continue
 		}
-		syncParam.Process = append(syncParam.Process, &m.SyncProcessObj{ProcessGuid: v.Guid,ProcessName: tmpExtendObj.ProcessName,ProcessTags: tmpExtendObj.ProcessTags})
+		syncParam.Process = append(syncParam.Process, &m.SyncProcessObj{ProcessGuid: v.Guid, ProcessName: tmpExtendObj.ProcessName, ProcessTags: tmpExtendObj.ProcessTags})
 	}
-	postData,_ := json.Marshal(syncParam)
+	postData, _ := json.Marshal(syncParam)
+	log.Logger.Info("sync new process config", log.String("postData", string(postData)))
 	url := fmt.Sprintf("http://%s/process/config", nodeExportAddress)
 	resp, err := http.Post(url, "application/json", strings.NewReader(string(postData)))
 	if err != nil {
 		log.Logger.Error("Update node_exporter fail, http post fail", log.Error(err))
 		return err
 	}
-	responseBody,_ := ioutil.ReadAll(resp.Body)
+	responseBody, _ := ioutil.ReadAll(resp.Body)
 	log.Logger.Info("curl "+url, log.String("response", string(responseBody)))
 	resp.Body.Close()
 	return nil
 }
 
-func CheckNodeExporterProcessConfig(endpointId int,processList []m.ProcessMonitorTable) (err error,illegal bool,msg string) {
-	endpointObj := m.EndpointTable{Id:endpointId}
+func CheckNodeExporterProcessConfig(endpointId int, processList []m.ProcessMonitorTable) (err error, illegal bool, msg string) {
+	endpointObj := m.EndpointTable{Id: endpointId}
 	err = GetEndpoint(&endpointObj)
 	if err != nil {
 		log.Logger.Error("Check node_exporter fail, get endpoint msg fail", log.Error(err))
 		return
 	}
 	var processNameList []string
-	for _,v := range processList {
+	for _, v := range processList {
 		processNameList = append(processNameList, fmt.Sprintf("%s^%s", v.ProcessName, v.Tags))
 	}
-	postParam := processHttpDto{Process:processNameList, Check:1}
-	postData,err := json.Marshal(postParam)
+	postParam := processHttpDto{Process: processNameList, Check: 1}
+	postData, err := json.Marshal(postParam)
 	if err != nil {
 		log.Logger.Error("Check node_exporter fail, marshal post data fail", log.Error(err))
 		return
@@ -113,13 +117,13 @@ func CheckNodeExporterProcessConfig(endpointId int,processList []m.ProcessMonito
 		log.Logger.Error("Check node_exporter fail, http post fail", log.Error(err))
 		return
 	}
-	responseBody,_ := ioutil.ReadAll(resp.Body)
+	responseBody, _ := ioutil.ReadAll(resp.Body)
 	log.Logger.Info("curl "+url, log.String("response", string(responseBody)))
 	resp.Body.Close()
 	msg = string(responseBody)
 	if resp.StatusCode > 300 {
 		illegal = true
-	}else{
+	} else {
 		illegal = false
 	}
 	return
@@ -127,10 +131,10 @@ func CheckNodeExporterProcessConfig(endpointId int,processList []m.ProcessMonito
 
 func GetProcessList(endpointId int) (err error, processList []*m.ProcessMonitorTable) {
 	err = x.SQL("SELECT * FROM process_monitor WHERE endpoint_id=?", endpointId).Find(&processList)
-	return err,processList
+	return err, processList
 }
 
-func UpdateProcess(param m.ProcessUpdateDtoNew,operation string) error {
+func UpdateProcess(param m.ProcessUpdateDtoNew, operation string) error {
 	var actions []*Action
 	if operation == "update" || operation == "add" {
 		if operation == "update" {
@@ -138,8 +142,8 @@ func UpdateProcess(param m.ProcessUpdateDtoNew,operation string) error {
 		}
 		existMap := make(map[string]int)
 		if operation == "add" {
-			_,nowProcessList := GetProcessList(param.EndpointId)
-			for _,v := range nowProcessList {
+			_, nowProcessList := GetProcessList(param.EndpointId)
+			for _, v := range nowProcessList {
 				existMap[fmt.Sprintf("%s^%s", v.ProcessName, v.Tags)] = 1
 			}
 		}
@@ -148,7 +152,7 @@ func UpdateProcess(param m.ProcessUpdateDtoNew,operation string) error {
 			params := make([]interface{}, 0)
 			existFlag := false
 			if operation == "add" {
-				if _,b := existMap[fmt.Sprintf("%s^%s", v.ProcessName, v.Tags)];b {
+				if _, b := existMap[fmt.Sprintf("%s^%s", v.ProcessName, v.Tags)]; b {
 					if v.DisplayName != "" {
 						action.Sql = "UPDATE process_monitor SET display_name=? WHERE endpoint_id=? AND process_name=? AND tags=?"
 						params = append(params, v.DisplayName)
@@ -179,26 +183,26 @@ func UpdateProcess(param m.ProcessUpdateDtoNew,operation string) error {
 	}
 	if len(actions) > 0 {
 		return Transaction(actions)
-	}else{
+	} else {
 		return nil
 	}
 }
 
 func UpdateAliveCheckQueue(monitorIp string) error {
-	_,err := x.Exec(fmt.Sprintf("INSERT INTO alive_check_queue(message) VALUE ('%s')", monitorIp))
+	_, err := x.Exec(fmt.Sprintf("INSERT INTO alive_check_queue(message) VALUE ('%s')", monitorIp))
 	return err
 }
 
-func GetAliveCheckQueue(param string) (err error,result []*m.AliveCheckQueueTable) {
+func GetAliveCheckQueue(param string) (err error, result []*m.AliveCheckQueueTable) {
 	lastMinDateString := time.Unix(time.Now().Unix()-60, 0).Format("2006-01-02 15:04:05")
 	err = x.SQL(fmt.Sprintf("SELECT * FROM alive_check_queue WHERE message='%s' AND update_at>'%s' LIMIT 1", param, lastMinDateString)).Find(&result)
 	if err != nil {
-		return err,result
+		return err, result
 	}
 	if len(result) == 0 {
 		err = fmt.Errorf("get alive_check_queue table fail,nodata with message=%s and update_at>%s", param, lastMinDateString)
 	}
-	return err,result
+	return err, result
 }
 
 func GetProcessDisplayMap(endpoint string) map[string]string {
@@ -209,12 +213,12 @@ func GetProcessDisplayMap(endpoint string) map[string]string {
 		log.Logger.Error("get process monitor data with endpoint fail", log.String("endpoint", endpoint), log.Error(err))
 		return result
 	}
-	for _,v := range processData {
-		for _,vv := range strings.Split(v.ProcessName, ",") {
+	for _, v := range processData {
+		for _, vv := range strings.Split(v.ProcessName, ",") {
 			tmpName := fmt.Sprintf("%s(%s)", vv, v.Tags)
 			if v.DisplayName != "" {
 				result[tmpName] = v.DisplayName
-			}else{
+			} else {
 				result[tmpName] = tmpName
 			}
 		}
