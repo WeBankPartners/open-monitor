@@ -112,7 +112,7 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage, guid string, err 
 	}
 	extendString := ""
 	if rData.extendParam.Enable {
-		tmpExtendBytes,_ := json.Marshal(rData.extendParam)
+		tmpExtendBytes, _ := json.Marshal(rData.extendParam)
 		extendString = string(tmpExtendBytes)
 	}
 	stepList, err = db.UpdateEndpoint(&rData.endpoint, extendString)
@@ -258,7 +258,7 @@ func mysqlRegister(param m.RegisterParamNew) returnData {
 			result.err = err
 			return result
 		}
-		result.extendParam = m.EndpointExtendParamObj{Enable: true,Ip: param.Ip,Port: param.Port,User: param.User,Password: param.Password,BinPath: binPath,ConfigPath: configFile}
+		result.extendParam = m.EndpointExtendParamObj{Enable: true, Ip: param.Ip, Port: param.Port, User: param.User, Password: param.Password, BinPath: binPath, ConfigPath: configFile}
 	}
 	var mysqlVersion, exportVersion string
 	if param.FetchMetric {
@@ -336,7 +336,7 @@ func redisRegister(param m.RegisterParamNew) returnData {
 			result.err = err
 			return result
 		}
-		result.extendParam = m.EndpointExtendParamObj{Enable: true,Ip: param.Ip,Port: param.Port,User: param.User,Password: param.Password,BinPath: binPath}
+		result.extendParam = m.EndpointExtendParamObj{Enable: true, Ip: param.Ip, Port: param.Port, User: param.User, Password: param.Password, BinPath: binPath}
 	}
 	var redisVersion, exportVersion string
 	if param.FetchMetric {
@@ -411,7 +411,7 @@ func javaRegister(param m.RegisterParamNew) returnData {
 			result.err = err
 			return result
 		}
-		result.extendParam = m.EndpointExtendParamObj{Enable: true,Ip: param.Ip,Port: param.Port,User: param.User,Password: param.Password,BinPath: binPath,ConfigPath: configFile}
+		result.extendParam = m.EndpointExtendParamObj{Enable: true, Ip: param.Ip, Port: param.Port, User: param.User, Password: param.Password, BinPath: binPath, ConfigPath: configFile}
 	}
 	var jvmVersion, exportVersion string
 	if param.FetchMetric {
@@ -485,7 +485,7 @@ func nginxRegister(param m.RegisterParamNew) returnData {
 			result.err = err
 			return result
 		}
-		result.extendParam = m.EndpointExtendParamObj{Enable: true,Ip: param.Ip,Port: param.Port,User: param.User,Password: param.Password,BinPath: binPath}
+		result.extendParam = m.EndpointExtendParamObj{Enable: true, Ip: param.Ip, Port: param.Port, User: param.User, Password: param.Password, BinPath: binPath}
 	}
 	if param.FetchMetric {
 		tmpIp, tmpPort := param.Ip, param.Port
@@ -575,7 +575,7 @@ func telnetRegister(param m.RegisterParamNew) returnData {
 	if err != nil {
 		result.err = err
 	}
-	result.extendParam = m.EndpointExtendParamObj{Enable: true,Ip: param.Ip,Port: param.Port}
+	result.extendParam = m.EndpointExtendParamObj{Enable: true, Ip: param.Ip, Port: param.Port}
 	return result
 }
 
@@ -605,7 +605,7 @@ func httpRegister(param m.RegisterParamNew) returnData {
 	if err != nil {
 		result.err = err
 	}
-	result.extendParam = m.EndpointExtendParamObj{Enable: true,HttpMethod: param.Method,HttpUrl: param.Url}
+	result.extendParam = m.EndpointExtendParamObj{Enable: true, HttpMethod: param.Method, HttpUrl: param.Url}
 	return result
 }
 
@@ -701,7 +701,7 @@ func processMonitorRegister(param m.RegisterParamNew) returnData {
 	result.endpoint.Guid = fmt.Sprintf("%s_%s_%s", param.Name, param.Ip, param.Type)
 	result.endpoint.Name = param.Name
 	result.endpoint.Ip = param.Ip
-	endpointObj := m.EndpointTable{Ip: param.Ip,ExportType: "host"}
+	endpointObj := m.EndpointTable{Ip: param.Ip, ExportType: "host"}
 	db.GetEndpoint(&endpointObj)
 	result.endpoint.ExportType = param.Type
 	result.endpoint.Address = endpointObj.Address
@@ -710,7 +710,14 @@ func processMonitorRegister(param m.RegisterParamNew) returnData {
 	result.storeMetric = false
 	result.fetchMetric = false
 	result.agentManager = false
-	result.extendParam = m.EndpointExtendParamObj{Enable: true,ProcessName: param.ProcessName,ProcessTags: param.Tags}
+	result.extendParam = m.EndpointExtendParamObj{Enable: true, ProcessName: param.ProcessName, ProcessTags: param.Tags}
+	newEndpointObj := m.EndpointNewTable{Guid: result.endpoint.Guid, Name: result.endpoint.Name, Ip: result.endpoint.Ip, MonitorType: result.endpoint.ExportType, AgentAddress: result.endpoint.Address}
+	b, _ := json.Marshal(result.extendParam)
+	newEndpointObj.ExtendParam = string(b)
+	err := db.SyncNodeExporterProcessConfig(param.Ip, []*m.EndpointNewTable{&newEndpointObj})
+	if err != nil {
+		result.err = err
+	}
 	return result
 }
 
