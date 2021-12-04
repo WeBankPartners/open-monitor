@@ -26,13 +26,13 @@ import (
 	"github.com/prometheus/common/promlog"
 	"github.com/prometheus/common/promlog/flag"
 
+	"github.com/WeBankPartners/open-monitor/monitor-agent/node_exporter/collector"
+	"github.com/WeBankPartners/open-monitor/monitor-agent/node_exporter/https"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/common/version"
-	"github.com/WeBankPartners/open-monitor/monitor-agent/node_exporter/collector"
-	"github.com/WeBankPartners/open-monitor/monitor-agent/node_exporter/https"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -192,31 +192,32 @@ func main() {
 	})
 	// Init new collector logger and store
 	collector.InitNewLogger(logger)
-	collector.BusinessCollectorStore.Load()
+	collector.InitMonitorLogger(logger)
+	//collector.BusinessCollectorStore.Load()
 	collector.LogCollectorStore.Load()
 	collector.ProcessCacheObj.Init()
-	go collector.StartBusinessAggCron()
+	go collector.StartCalcLogMetricCron()
 	// Add log monitor handle http config
 	http.HandleFunc("/log/config", collector.LogMonitorHttpHandle)
 	http.HandleFunc("/log/rows/query", collector.LogMonitorRowsHttpHandle)
 	// Add process monitor handle http config
 	http.HandleFunc("/process/config", collector.ProcessMonitorHttpHandle)
 	// Add business monitor handle http config
-	http.HandleFunc("/log_metric/config", collector.BusinessMonitorHttpHandle)
+	http.HandleFunc("/log_metric/config", collector.LogMetricMonitorHttpHandle)
 
 	level.Info(logger).Log("msg", "Listening on", "address", *listenAddress)
-	go func(address,configFile string,logger2 log.Logger) {
+	go func(address, configFile string, logger2 log.Logger) {
 		server := &http.Server{Addr: address}
 		if err := https.Listen(server, configFile, logger2); err != nil {
 			level.Error(logger2).Log("err", err)
 			os.Exit(1)
 		}
-	}(*listenAddress,*configFile,logger)
+	}(*listenAddress, *configFile, logger)
 	startSignal(os.Getpid(), logger)
 }
 
-func startSignal(pid int,tmpLog log.Logger) {
-	_,mkErr := exec.Command("mkdir", "-p", "data").Output()
+func startSignal(pid int, tmpLog log.Logger) {
+	_, mkErr := exec.Command("mkdir", "-p", "data").Output()
 	if mkErr != nil {
 		level.Error(tmpLog).Log("mkdir_error", mkErr.Error())
 	}
