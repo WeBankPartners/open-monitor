@@ -104,7 +104,7 @@ func GetPromMetric(endpoint []string, metric string) (error, string) {
 		tmpTag = metric[strings.Index(metric, "/")+1:]
 	}
 	var query []*m.PromMetricTable
-	err := x.SQL("SELECT prom_ql FROM prom_metric WHERE metric=?", tmpMetric).Find(&query)
+	err := x.SQL("SELECT * FROM prom_metric WHERE metric=?", tmpMetric).Find(&query)
 	if err != nil {
 		log.Logger.Error("Query prom_metric fail", log.Error(err))
 	}
@@ -115,7 +115,16 @@ func GetPromMetric(endpoint []string, metric string) (error, string) {
 			log.Logger.Error("Find endpoint fail", log.String("endpoint", endpoint[0]), log.Error(err))
 			return err, promQL
 		}
-		reg := query[0].PromQl
+		var reg string
+		for _, v := range query {
+			if v.MetricType == host.ExportType {
+				reg = v.PromQl
+				break
+			}
+		}
+		if reg == "" {
+			return fmt.Errorf("Can not match promQl with metric:%s and type:%s ", metric, host.ExportType), promQL
+		}
 		if strings.Contains(reg, `$ip`) {
 			reg = strings.Replace(reg, "$ip", host.Ip, -1)
 		}

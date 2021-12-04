@@ -40,7 +40,7 @@ func GetClusterAddress(cluster string) string {
 
 // Service discover functions
 func SyncSdEndpointNew(steps []int, cluster string, fromPeer bool) error {
-	log.Logger.Info("Add sd endpoint", log.String("steps", fmt.Sprintf("%v", steps)), log.String("cluster",cluster))
+	log.Logger.Info("Add sd endpoint", log.String("steps", fmt.Sprintf("%v", steps)), log.String("cluster", cluster))
 	var syncList []*m.SdConfigSyncObj
 	var err error
 	for _, step := range steps {
@@ -115,7 +115,7 @@ func GetSdFileListByStep(step int, cluster string) (result m.ServiceDiscoverFile
 	}
 	result = m.ServiceDiscoverFileList{}
 	for _, v := range endpointTables {
-		if v.ExportType == "snmp" {
+		if v.ExportType == "snmp" || v.ExportType == "process" {
 			continue
 		}
 		if v.ExportType == "ping" || v.ExportType == "telnet" || v.ExportType == "http" {
