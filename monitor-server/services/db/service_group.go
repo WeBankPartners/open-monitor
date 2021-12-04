@@ -153,5 +153,27 @@ func getSimpleServiceGroup(serviceGroupGuid string) (result models.ServiceGroupT
 }
 
 func MatchServicePanel(endpointGuid string) (result models.PanelModel, err error) {
+	result = models.PanelModel{Title: "service", Tags: models.TagsModel{Enable: false, Option: []*models.OptionModel{}}}
+	var logMetricEndpointRel []*models.LogMetricEndpointRelTable
+	err = x.SQL("select * from log_metric_endpoint_rel where target_endpoint=?", endpointGuid).Find(&logMetricEndpointRel)
+	if err != nil {
+		return result, fmt.Errorf("Query table log_metric_endpoint_rel fail,%s ", err.Error())
+	}
+	if len(logMetricEndpointRel) > 0 {
+		logMetricMonitorList := []string{}
+		for _, v := range logMetricEndpointRel {
+			logMetricMonitorList = append(logMetricMonitorList, v.LogMetricMonitor)
+		}
+		var logMetricTable []*models.LogMetricConfigTable
+		x.SQL("select metric,display_name,agg_type from log_metric_config where log_metric_monitor in ('" + strings.Join(logMetricMonitorList, "','") + "') or log_metric_json in (select guid from log_metric_json where log_metric_monitor in ('" + strings.Join(logMetricMonitorList, "','") + "'))").Find(&logMetricTable)
+		for _, v := range logMetricTable {
+			result.Charts = append(result.Charts, &models.ChartModel{Id: 0, Title: v.DisplayName, Endpoint: []string{endpointGuid}, Metric: []string{fmt.Sprintf("%s/key=%s,t_endpoint=%s,agg=%s", models.LogMetricName, v.Metric, endpointGuid, v.AggType)}})
+		}
+	}
+	var dbMetricMonitor []*models.DbMetricMonitorTable
+	x.SQL("select * from db_metric_monitor where guid in (select db_metric_monitor from db_metric_endpoint_rel where target_endpoint=?)", endpointGuid).Find(&dbMetricMonitor)
+	for _, v := range dbMetricMonitor {
+		result.Charts = append(result.Charts, &models.ChartModel{Id: 0, Title: v.DisplayName, Endpoint: []string{endpointGuid}, Metric: []string{fmt.Sprintf("%s/key=%s,t_endpoint=%s", models.DBMonitorMetricName, v.Metric, endpointGuid)}})
+	}
 	return
 }
