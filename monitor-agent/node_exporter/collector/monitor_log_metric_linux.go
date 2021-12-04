@@ -346,6 +346,10 @@ func StartCalcLogMetricCron() {
 
 func calcLogMetricData() {
 	logMetricHttpLock.RLock()
+	if len(logMetricMonitorJobs) == 0 {
+		logMetricHttpLock.RUnlock()
+		return
+	}
 	existMetricMap := make(map[string]*logMetricDisplayObj)
 	for _, displayObj := range logMetricMonitorMetrics {
 		existMetricMap[fmt.Sprintf("%s^%s^%s^%s", displayObj.Path, displayObj.Metric, displayObj.Agg, displayObj.TagsString)] = displayObj
