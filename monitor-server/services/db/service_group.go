@@ -41,43 +41,43 @@ func buildGlobalServiceGroupLink(serviceGroupTable []*models.ServiceGroupTable) 
 	globalServiceGroupLock.Unlock()
 }
 
-func fetchGlobalServiceGroupChildGuidList(rootKey string) (result []string,err error) {
+func fetchGlobalServiceGroupChildGuidList(rootKey string) (result []string, err error) {
 	globalServiceGroupLock.RLock()
-	if v,b:=globalServiceGroupMap[rootKey];b {
+	if v, b := globalServiceGroupMap[rootKey]; b {
 		result = v.FetchChildGuid()
-	}else{
+	} else {
 		err = fmt.Errorf("Can not find service group with guid:%s ", rootKey)
 	}
 	globalServiceGroupLock.RUnlock()
 	return
 }
 
-func addGlobalServiceGroupNode(param models.ServiceGroupTable)  {
+func addGlobalServiceGroupNode(param models.ServiceGroupTable) {
 	globalServiceGroupLock.Lock()
-	if _,b:=globalServiceGroupMap[param.Guid];!b {
+	if _, b := globalServiceGroupMap[param.Guid]; !b {
 		if param.Parent != "" {
 			globalServiceGroupMap[param.Guid] = &models.ServiceGroupLinkNode{Guid: param.Guid, Parent: globalServiceGroupMap[param.Parent]}
 			globalServiceGroupMap[param.Parent].Children = append(globalServiceGroupMap[param.Parent].Children, globalServiceGroupMap[param.Guid])
-		}else{
+		} else {
 			globalServiceGroupMap[param.Guid] = &models.ServiceGroupLinkNode{Guid: param.Guid}
 		}
 	}
 	globalServiceGroupLock.Unlock()
 }
 
-func deleteGlobalServiceGroupNode(guid string)  {
+func deleteGlobalServiceGroupNode(guid string) {
 	globalServiceGroupLock.Lock()
-	if v,b:=globalServiceGroupMap[guid];b {
+	if v, b := globalServiceGroupMap[guid]; b {
 		if v.Parent != nil {
 			newChildList := []*models.ServiceGroupLinkNode{}
-			for _,child := range v.Parent.Children {
+			for _, child := range v.Parent.Children {
 				if child.Guid != guid {
 					newChildList = append(newChildList, child)
 				}
 			}
 			v.Parent.Children = newChildList
 		}
-		for _,key := range v.FetchChildGuid() {
+		for _, key := range v.FetchChildGuid() {
 			delete(globalServiceGroupMap, key)
 		}
 	}
@@ -126,7 +126,7 @@ func DeleteServiceGroup() {
 
 func ListServiceGroupEndpoint(serviceGroup, monitorType string) (result []*models.ServiceGroupEndpointListObj, err error) {
 	var guidList []string
-	guidList,err = fetchGlobalServiceGroupChildGuidList(serviceGroup)
+	guidList, err = fetchGlobalServiceGroupChildGuidList(serviceGroup)
 	if err != nil {
 		return
 	}
@@ -149,5 +149,9 @@ func getSimpleServiceGroup(serviceGroupGuid string) (result models.ServiceGroupT
 		return result, fmt.Errorf("Can not find service_group with guid:%s ", serviceGroupGuid)
 	}
 	result = *serviceGroupTable[0]
+	return
+}
+
+func MatchServicePanel(endpointGuid string) (result models.PanelModel, err error) {
 	return
 }

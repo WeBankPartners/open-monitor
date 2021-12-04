@@ -6,7 +6,7 @@ services:
     restart: always
     volumes:
       - /etc/localtime:/etc/localtime
-      - {{path}}/monitor/logs:/app/monitor/logs
+      - {{path}}/monitor/logs:/app/monitor/monitor/logs
       - {{path}}/prometheus/logs:/app/monitor/prometheus/logs
       - {{path}}/prometheus/data:/app/monitor/prometheus/data
       - {{path}}/prometheus/rules:/app/monitor/prometheus/rules
