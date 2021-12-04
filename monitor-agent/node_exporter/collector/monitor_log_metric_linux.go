@@ -354,25 +354,29 @@ func calcLogMetricData() {
 	for _, displayObj := range logMetricMonitorMetrics {
 		existMetricMap[fmt.Sprintf("%s^%s^%s^%s", displayObj.Path, displayObj.Metric, displayObj.Agg, displayObj.TagsString)] = displayObj
 	}
+	appendDisplayMap := make(map[string]int)
 	valueCountMap := make(map[string]*logMetricDisplayObj)
 	for _, lmObj := range logMetricMonitorJobs {
 		for _, jsonObj := range lmObj.JsonConfig {
+			// pull channel data list
+			jsonDataList := []map[string]interface{}{}
 			dataLength := len(jsonObj.DataChannel)
-			if dataLength == 0 {
-				continue
+			for i := 0; i < dataLength; i++ {
+				tmpMapData := <-jsonObj.DataChannel
+				jsonDataList = append(jsonDataList, tmpMapData)
 			}
 			tmpTagsKey := []string{}
 			if jsonObj.Tags != "" {
 				tmpTagsKey = strings.Split(jsonObj.Tags, ",")
 			}
-			for i := 0; i < dataLength; i++ {
-				tmpMapData := <-jsonObj.DataChannel
-				// Get metric tags
-				tmpTagString := getLogMetricJsonMapTags(tmpMapData, tmpTagsKey)
-				// Try to change value to float64
-				for _, metricConfig := range jsonObj.MetricConfig {
+			for _, metricConfig := range jsonObj.MetricConfig {
+				isMatchNewDataFlag := false
+				for _, tmpMapData := range jsonDataList {
+					// Get metric tags
+					tmpTagString := getLogMetricJsonMapTags(tmpMapData, tmpTagsKey)
 					changedMapData := getLogMetricJsonMapValue(tmpMapData, metricConfig.StringMap)
 					if metricValueFloat, b := changedMapData[metricConfig.Key]; b {
+						isMatchNewDataFlag = true
 						tmpMetricKey := fmt.Sprintf("%s^%s^%s^%s", lmObj.Path, metricConfig.Metric, metricConfig.AggType, tmpTagString)
 						if valueExistObj, keyExist := valueCountMap[tmpMetricKey]; keyExist {
 							valueExistObj.ValueObj.Sum += metricValueFloat
@@ -388,11 +392,15 @@ func calcLogMetricData() {
 						}
 					}
 				}
+				if !isMatchNewDataFlag {
+					appendDisplayMap[fmt.Sprintf("%s^%s^%s", lmObj.Path, metricConfig.Metric, metricConfig.AggType)] = 1
+				}
 			}
 		}
 		for _, metricObj := range lmObj.MetricConfig {
 			dataLength := len(metricObj.DataChannel)
 			if dataLength == 0 {
+				appendDisplayMap[fmt.Sprintf("%s^%s^%s", lmObj.Path, metricObj.Metric, metricObj.AggType)] = 1
 				continue
 			}
 			tmpMetricKey := fmt.Sprintf("%s^%s^%s^%s", lmObj.Path, metricObj.Metric, metricObj.AggType, "")
@@ -410,6 +418,17 @@ func calcLogMetricData() {
 				}
 			}
 			valueCountMap[tmpMetricKey] = &tmpMetricObj
+		}
+	}
+	if len(appendDisplayMap) > 0 {
+		for k, v := range existMetricMap {
+			tmpKey := fmt.Sprintf("%s^%s^%s", v.Path, v.Metric, v.Agg)
+			if _, b := appendDisplayMap[tmpKey]; b {
+				if v.Display {
+					v.ValueObj = logMetricValueObj{Sum: 0, Count: 0, Max: 0, Min: 0}
+				}
+				valueCountMap[k] = v
+			}
 		}
 	}
 	tmpLogMetricMetrics := buildLogMetricDisplayMetrics(valueCountMap, existMetricMap)
@@ -444,7 +463,7 @@ func buildLogMetricDisplayMetrics(valueCountMap, existMetricMap map[string]*logM
 		if v.Step < 20 || firstDisplay {
 			v.Display = true
 		} else {
-			if (nowTime - lastTimestamp) >= v.Step {
+			if (nowTime - lastTimestamp + 10) >= v.Step {
 				v.Display = true
 			} else {
 				v.Display = false
@@ -463,7 +482,11 @@ func buildLogMetricDisplayMetrics(valueCountMap, existMetricMap map[string]*logM
 			case "min":
 				v.Value = v.ValueObj.Min
 			case "avg":
-				v.Value = v.ValueObj.Sum / v.ValueObj.Count
+				if v.ValueObj.Count > 0 {
+					v.Value = v.ValueObj.Sum / v.ValueObj.Count
+				} else {
+					v.Value = 0
+				}
 			}
 		} else {
 			v.UpdateTime = lastTimestamp
