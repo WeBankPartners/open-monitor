@@ -302,3 +302,138 @@ alter table alarm add column endpoint_tags varchar(255);
 alter table business_monitor_cfg add column config_type varchar(16) default 'json';
 alter table business_monitor_cfg add column agg_type varchar(16) default 'avg';
 #@v1.12.3.1-end@;
+
+#@v1.13.0.1-begin@;
+CREATE TABLE `service_group` (
+  `guid` varchar(64) NOT NULL PRIMARY KEY,
+  `display_name` varchar(255) NOT NULL,
+  `description` varchar(255),
+  `parent` varchar(64) DEFAULT NULL,
+  `service_type` varchar(32) NOT NULL,
+  `update_time` varchar(32),
+  CONSTRAINT `service_group_parent` FOREIGN KEY (`parent`) REFERENCES `service_group` (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `cluster_new` (
+  `guid` varchar(128) NOT NULL PRIMARY KEY,
+  `display_name` varchar(255),
+  `remote_agent_address` varchar(255),
+  `prometheus_address` varchar(255)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+insert into cluster_new(guid,display_name) value ('default','default');
+
+CREATE TABLE `monitor_type` (
+  `guid` varchar(32) NOT NULL PRIMARY KEY,
+  `display_name` varchar(255),
+  `description` varchar(255)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+insert into monitor_type(guid,display_name) value ('host','host'),('mysql','mysql'),('redis','redis'),('java','java'),('nginx','nginx'),('ping','ping'),('telnet','telnet'),('http','http'),('windows','windows'),('snmp','snmp'),('process','process'),('pod','pod');
+
+CREATE TABLE `endpoint_new` (
+  `guid` varchar(128) NOT NULL PRIMARY KEY,
+  `name` varchar(64) NOT NULL,
+  `ip` varchar(32),
+  `monitor_type` varchar(32) NOT NULL,
+  `agent_version` varchar(64),
+  `agent_address` varchar(64),
+  `step` int default 10,
+  `endpoint_version` varchar(64),
+  `endpoint_address` varchar(64),
+  `cluster` varchar(128) NOT NULL,
+  `alarm_enable` tinyint default 1,
+  `tags` varchar(255),
+  `extend_param` text,
+  `description` varchar(255),
+  `update_time` varchar(32),
+  CONSTRAINT `endpoint_cluster` FOREIGN KEY (`cluster`) REFERENCES `cluster_new` (`guid`),
+  CONSTRAINT `endpoint_monitor_type` FOREIGN KEY (`monitor_type`) REFERENCES `monitor_type` (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `endpoint_service_rel` (
+  `guid` varchar(64) NOT NULL PRIMARY KEY,
+  `endpoint` varchar(128) NOT NULL,
+  `service_group` varchar(64) NOT NULL,
+  CONSTRAINT `e_service_rel_e` FOREIGN KEY (`endpoint`) REFERENCES `endpoint_new` (`guid`),
+  CONSTRAINT `e_service_rel_s` FOREIGN KEY (`service_group`) REFERENCES `service_group` (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `log_metric_monitor` (
+  `guid` varchar(64) NOT NULL PRIMARY KEY,
+  `service_group` varchar(64) NOT NULL,
+  `log_path` varchar(255) NOT NULL,
+  `metric_type` varchar(16) default 'json',
+  `monitor_type` varchar(32) DEFAULT NULL,
+  `update_time` varchar(32),
+  CONSTRAINT `log_monitor_service_group` FOREIGN KEY (`service_group`) REFERENCES `service_group` (`guid`),
+  CONSTRAINT `log_monitor_monitor_type` FOREIGN KEY (`monitor_type`) REFERENCES `monitor_type` (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `log_metric_json` (
+  `guid` varchar(64) NOT NULL PRIMARY KEY,
+  `log_metric_monitor` varchar(64) NOT NULL,
+  `json_regular` varchar(255),
+  `tags` varchar(64),
+  `update_time` varchar(32),
+  CONSTRAINT `log_monitor_json_monitor` FOREIGN KEY (`log_metric_monitor`) REFERENCES `log_metric_monitor` (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `log_metric_config` (
+  `guid` varchar(64) NOT NULL PRIMARY KEY,
+  `log_metric_monitor` varchar(64) DEFAULT NULL,
+  `log_metric_json` varchar(64) DEFAULT NULL,
+  `metric` varchar(64) NOT NULL,
+  `display_name` varchar(255),
+  `json_key` varchar(255),
+  `regular` varchar(255),
+  `step` int default 10,
+  `agg_type` varchar(16) DEFAULT 'avg',
+  `update_time` varchar(32),
+  CONSTRAINT `log_monitor_config_monitor` FOREIGN KEY (`log_metric_monitor`) REFERENCES `log_metric_monitor` (`guid`),
+  CONSTRAINT `log_monitor_config_json` FOREIGN KEY (`log_metric_json`) REFERENCES `log_metric_json` (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `log_metric_string_map` (
+  `guid` varchar(64) NOT NULL PRIMARY KEY,
+  `log_metric_config` varchar(64) NOT NULL,
+  `source_value` varchar(255),
+  `regulative` tinyint default 0,
+  `target_value` varchar(64),
+  `update_time` varchar(32),
+  CONSTRAINT `log_monitor_string_config` FOREIGN KEY (`log_metric_config`) REFERENCES `log_metric_config` (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `log_metric_endpoint_rel` (
+  `guid` varchar(64) NOT NULL PRIMARY KEY,
+  `log_metric_monitor` varchar(64) NOT NULL,
+  `source_endpoint` varchar(128),
+  `target_endpoint` varchar(128),
+  CONSTRAINT `log_monitor_endpoint_metric` FOREIGN KEY (`log_metric_monitor`) REFERENCES `log_metric_monitor` (`guid`),
+  CONSTRAINT `log_monitor_endpoint_source` FOREIGN KEY (`source_endpoint`) REFERENCES `endpoint_new` (`guid`),
+  CONSTRAINT `log_monitor_endpoint_target` FOREIGN KEY (`target_endpoint`) REFERENCES `endpoint_new` (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `db_metric_monitor` (
+  `guid` varchar(64) NOT NULL PRIMARY KEY,
+  `service_group` varchar(64) NOT NULL,
+  `metric_sql` text,
+  `metric` varchar(64) NOT NULL,
+  `display_name` varchar(255),
+  `step` int default 10,
+  `monitor_type` varchar(32) DEFAULT NULL,
+  `update_time` varchar(32),
+  CONSTRAINT `db_monitor_service_group` FOREIGN KEY (`service_group`) REFERENCES `service_group` (`guid`),
+  CONSTRAINT `db_monitor_monitor_type` FOREIGN KEY (`monitor_type`) REFERENCES `monitor_type` (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `db_metric_endpoint_rel` (
+  `guid` varchar(64) NOT NULL PRIMARY KEY,
+  `db_metric_monitor` varchar(64) NOT NULL,
+  `source_endpoint` varchar(128),
+  `target_endpoint` varchar(128),
+  CONSTRAINT `db_monitor_endpoint_metric` FOREIGN KEY (`db_metric_monitor`) REFERENCES `db_metric_monitor` (`guid`),
+  CONSTRAINT `db_monitor_endpoint_source` FOREIGN KEY (`source_endpoint`) REFERENCES `endpoint_new` (`guid`),
+  CONSTRAINT `db_monitor_endpoint_target` FOREIGN KEY (`target_endpoint`) REFERENCES `endpoint_new` (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+#@v1.13.0.1-end@;
