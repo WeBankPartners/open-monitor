@@ -11,6 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//go:build !nothermalzone
 // +build !nothermalzone
 
 package collector
@@ -35,7 +36,7 @@ type thermalZoneCollector struct {
 }
 
 func init() {
-	registerCollector("thermal_zone", defaultEnabled, NewThermalZoneCollector)
+	//registerCollector("thermal_zone", defaultEnabled, NewThermalZoneCollector)
 }
 
 // NewThermalZoneCollector returns a new Collector exposing kernel/system statistics.

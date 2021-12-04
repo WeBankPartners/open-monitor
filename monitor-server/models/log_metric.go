@@ -26,6 +26,7 @@ type LogMetricConfigTable struct {
 	JsonKey          string `json:"json_key" xorm:"json_key"`
 	Regular          string `json:"regular" xorm:"regular"`
 	AggType          string `json:"agg_type" xorm:"agg_type"`
+	Step             int64  `json:"step" xorm:"step"`
 	UpdateTime       string `json:"update_time" xorm:"update_time"`
 }
 
@@ -78,6 +79,7 @@ type LogMetricConfigObj struct {
 	JsonKey          string                     `json:"json_key" xorm:"json_key"`
 	Regular          string                     `json:"regular" xorm:"regular"`
 	AggType          string                     `json:"agg_type" xorm:"agg_type"`
+	Step             int64                      `json:"step" xorm:"step"`
 	StringMap        []*LogMetricStringMapTable `json:"string_map"`
 }
 
@@ -113,6 +115,7 @@ type LogMetricNeObj struct {
 	ValueRegular string                     `json:"value_regular"`
 	Title        string                     `json:"title"`
 	AggType      string                     `json:"agg_type"`
+	Step         int64                      `json:"step"`
 	StringMap    []*LogMetricStringMapNeObj `json:"string_map"`
 }
 
@@ -120,9 +123,10 @@ type LogMetricStringMapNeObj struct {
 	Regulation  string  `json:"regulation"`
 	StringValue string  `json:"string_value"`
 	IntValue    float64 `json:"int_value"`
+	RegEnable   bool    `json:"reg_enable"`
 }
 
 type CheckRegExpParam struct {
-	RegString string `json:"reg_string" binding:"required"`
+	RegString   string `json:"reg_string" binding:"required"`
 	TestContext string `json:"test_context" binding:"required"`
 }
