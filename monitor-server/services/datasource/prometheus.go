@@ -211,11 +211,17 @@ func GetSerialName(query *m.QueryMonitorData, tagMap map[string]string, dataLeng
 		}
 	}
 	if legend == "$app_metric" {
-		if _, b := tagMap["key"]; b {
+		if keyName, b := tagMap["key"]; b {
+			tmpName = keyName
+			tagsList := []string{}
+			if tagMap["agg"] != "" {
+				tagsList = append(tagsList, "agg="+tagMap["agg"])
+			}
 			if tagMap["tags"] != "" {
-				tmpName = fmt.Sprintf("%s{agg=%s,%s}", tagMap["key"], tagMap["agg"], tagMap["tags"])
-			} else {
-				tmpName = fmt.Sprintf("%s{agg=%s}", tagMap["key"], tagMap["agg"])
+				tagsList = append(tagsList, tagMap["tags"])
+			}
+			if len(tagsList) > 0 {
+				tmpName = tmpName + "{" + strings.Join(tagsList, ",") + "}"
 			}
 		} else {
 			tmpName = metric

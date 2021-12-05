@@ -443,3 +443,89 @@ insert  into `panel`(`group_id`,`title`,`tags_enable`,`tags_url`,`tags_key`,`cha
 insert  into `chart`(`group_id`,`endpoint`,`metric`,`col`,`url`,`unit`,`title`,`grid_type`,`series_name`,`rate`,`agg_type`,`legend`) values (18,'','process_cpu_used_percent',6,'/dashboard/chart','','process.cpu.used','line','metric',0,'avg','$metric'),(18,'','process_mem_byte',6,'/dashboard/chart','','process.mem.used','line','metric',0,'avg','$metric');
 insert  into `prom_metric`(`metric`,`metric_type`,`prom_ql`,`prom_main`) values ('process_alive_count','process','node_process_monitor_count_current{instance=\"$address\"}',''),('process_cpu_used_percent','process','node_process_monitor_cpu{instance=\"$address\"}',''),('process_mem_byte','process','node_process_monitor_mem{instance=\"$address\"}','');
 #@v1.13.0.1-end@;
+
+#@v1.13.0.2-begin@;
+CREATE TABLE `endpoint_group` (
+  `guid` varchar(64) NOT NULL PRIMARY KEY,
+  `display_name` varchar(255) NOT NULL,
+  `description` varchar(255),
+  `monitor_type` varchar(32) NOT NULL,
+  `service_group` varchar(64),
+  `alarm_window` varchar(255),
+  `update_time` varchar(32),
+  CONSTRAINT `endpoint_group_monitor_type` FOREIGN KEY (`monitor_type`) REFERENCES `monitor_type` (`guid`),
+  CONSTRAINT `endpoint_group_service_group` FOREIGN KEY (`service_group`) REFERENCES `service_group` (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `endpoint_group_rel` (
+  `guid` varchar(64) NOT NULL PRIMARY KEY,
+  `endpoint` varchar(128) NOT NULL,
+  `endpoint_group` varchar(64),
+  CONSTRAINT `endpoint_group_e` FOREIGN KEY (`endpoint`) REFERENCES `endpoint_new` (`guid`),
+  CONSTRAINT `endpoint_group_g` FOREIGN KEY (`endpoint_group`) REFERENCES `endpoint_group` (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `role_new` (
+  `guid` varchar(64) NOT NULL PRIMARY KEY,
+  `display_name` varchar(255) NOT NULL,
+  `email` varchar(255),
+  `phone` varchar(32),
+  `update_time` varchar(32)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `metric` (
+  `guid` varchar(128) NOT NULL PRIMARY KEY,
+  `metric` varchar(64) NOT NULL,
+  `monitor_type` varchar(32) NOT NULL,
+  `prom_expr` text,
+  `tag_owner` varchar(64),
+  `update_time` varchar(32),
+  CONSTRAINT `metric_monitor_type` FOREIGN KEY (`monitor_type`) REFERENCES `monitor_type` (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `alarm_strategy` (
+  `guid` varchar(64) NOT NULL PRIMARY KEY,
+  `endpoint_group` varchar(64) NOT NULL,
+  `metric` varchar(128) NOT NULL,
+  `condition` varchar(32) NOT NULL,
+  `last` varchar(16) NOT NULL,
+  `priority` varchar(16) DEFAULT 'low',
+  `content` text,
+  `notify_enable` tinyint default 1,
+  `notify_delay_second` int default 0,
+  `update_time` varchar(32),
+  CONSTRAINT `strategy_endpoint_group` FOREIGN KEY (`endpoint_group`) REFERENCES `endpoint_group` (`guid`),
+  CONSTRAINT `strategy_metric` FOREIGN KEY (`metric`) REFERENCES `metric` (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `notify` (
+  `guid` varchar(64) NOT NULL PRIMARY KEY,
+  `endpoint_group` varchar(64),
+  `service_group` varchar(64),
+  `alarm_strategy` varchar(64),
+  `alarm_action` varchar(32) default 'firing',
+  `alarm_priority` varchar(32),
+  `notify_num` int default 1,
+  `proc_callback_name` varchar(64),
+  `proc_callback_key` varchar(64),
+  `callback_url` varchar(255),
+  `callback_param` varchar(255),
+  CONSTRAINT `notify_endpoint_group` FOREIGN KEY (`endpoint_group`) REFERENCES `endpoint_group` (`guid`),
+  CONSTRAINT `notify_service_group` FOREIGN KEY (`service_group`) REFERENCES `service_group` (`guid`),
+  CONSTRAINT `notify_alarm_strategy` FOREIGN KEY (`alarm_strategy`) REFERENCES `alarm_strategy` (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `notify_role_rel` (
+  `guid` varchar(64) NOT NULL PRIMARY KEY,
+  `notify` varchar(64) NOT NULL,
+  `role` varchar(64) NOT NULL,
+  CONSTRAINT `notify_role_n` FOREIGN KEY (`notify`) REFERENCES `notify` (`guid`),
+  CONSTRAINT `notify_role_r` FOREIGN KEY (`role`) REFERENCES `role_new` (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+alter table alarm add column alarm_strategy varchar(64);
+insert into role_new(guid,display_name,email) select name,display_name,email from role;
+insert into endpoint_group(guid,display_name,description,monitor_type) select name,name,description,endpoint_type from grp where endpoint_type is not null;
+insert into metric(guid,metric,monitor_type,prom_expr,tag_owner) select t1.* from (select CONCAT(metric,'__',metric_type),metric,metric_type,prom_ql,prom_main from prom_metric where metric_type<>'tomcat' union select CONCAT(metric,'__java'),metric,'java',prom_ql,prom_main from prom_metric where metric_type='tomcat') t1;
+insert into alarm_strategy select CONCAT('old_',t1.id),t3.name,t4.guid ,t1.cond,t1.`last`,t1.priority,t1.content,t1.notify_enable,t1.notify_delay,'' as update_time from strategy t1 left join tpl t2 on t1.tpl_id=t2.id left join grp t3 on t2.grp_id=t3.id left join metric t4 on (t1.metric=t4.metric and t3.endpoint_type=t4.monitor_type) where t2.grp_id>0;
+#@v1.13.0.2-end@;
