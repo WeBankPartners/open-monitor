@@ -44,7 +44,7 @@ func InitNewLogger(logger log.Logger) {
 }
 
 func init() {
-	registerCollector(businessCollectorName, defaultEnabled, BusinessMonitorCollector)
+	//registerCollector(businessCollectorName, defaultEnabled, BusinessMonitorCollector)
 }
 
 func BusinessMonitorCollector(logger log.Logger) (Collector, error) {
