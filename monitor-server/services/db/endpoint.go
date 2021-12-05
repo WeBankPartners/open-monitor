@@ -95,3 +95,36 @@ func GetEndpointNew(param *models.EndpointNewTable) (result models.EndpointNewTa
 	result = *endpointNew[0]
 	return result, nil
 }
+
+func ListEndpoint(param *models.QueryRequestParam) (pageInfo models.PageInfo, rowData []*models.EndpointNewTable, err error) {
+	rowData = []*models.EndpointNewTable{}
+	filterSql, queryColumn, queryParam := transFiltersToSQL(param, &models.TransFiltersParam{IsStruct: true, StructObj: models.EndpointNewTable{}, PrimaryKey: "guid"})
+	baseSql := fmt.Sprintf("SELECT %s FROM endpoint_new WHERE 1=1 %s ", queryColumn, filterSql)
+	if param.Paging {
+		pageInfo.StartIndex = param.Pageable.StartIndex
+		pageInfo.PageSize = param.Pageable.PageSize
+		pageInfo.TotalRows = queryCount(baseSql, queryParam...)
+		pageSql, pageParam := transPageInfoToSQL(*param.Pageable)
+		baseSql += pageSql
+		queryParam = append(queryParam, pageParam...)
+	}
+	err = x.SQL(baseSql, queryParam...).Find(&rowData)
+	return
+}
+
+func ListEndpointOptions(searchText string) (result []*models.OptionModel, err error) {
+	result = []*models.OptionModel{}
+	if searchText == "." {
+		searchText = ""
+	}
+	searchText = "%" + searchText + "%"
+	var endpointTable []*models.EndpointNewTable
+	err = x.SQL("select guid,monitor_type from endpoint_new where guid like ?", searchText).Find(&endpointTable)
+	if err != nil {
+		return
+	}
+	for _, v := range endpointTable {
+		result = append(result, &models.OptionModel{OptionValue: v.Guid, OptionText: v.Guid, OptionType: v.MonitorType, OptionTypeName: v.MonitorType})
+	}
+	return
+}

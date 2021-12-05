@@ -365,3 +365,122 @@ func (d *dbLogger) ShowSQL(b ...bool) {
 func (d *dbLogger) IsShowSQL() bool {
 	return d.ShowSql
 }
+
+func transPageInfoToSQL(pageInfo models.PageInfo) (pageSql string, param []interface{}) {
+	pageSql = " LIMIT ?,? "
+	param = append(param, pageInfo.StartIndex)
+	param = append(param, pageInfo.PageSize)
+	return
+}
+
+func queryCount(sql string, params ...interface{}) int {
+	sql = "SELECT COUNT(1) FROM ( " + sql + " ) sub_query"
+	params = append([]interface{}{sql}, params...)
+	queryRows, err := x.QueryString(params...)
+	if err != nil || len(queryRows) == 0 {
+		log.Logger.Error("Query sql count message fail", log.Error(err))
+		return 0
+	}
+	if _, b := queryRows[0]["COUNT(1)"]; b {
+		countNum, _ := strconv.Atoi(queryRows[0]["COUNT(1)"])
+		return countNum
+	}
+	return 0
+}
+
+func getJsonToXormMap(input interface{}) (resultMap map[string]string, idKeyName string) {
+	resultMap = make(map[string]string)
+	t := reflect.TypeOf(input)
+	for i := 0; i < t.NumField(); i++ {
+		resultMap[t.Field(i).Tag.Get("json")] = t.Field(i).Tag.Get("xorm")
+		if i == 0 {
+			idKeyName = t.Field(i).Tag.Get("xorm")
+		}
+	}
+	return resultMap, idKeyName
+}
+
+func createListParams(inputList []string, prefix string) (specSql string, paramList []interface{}) {
+	if len(inputList) > 0 {
+		var specList []string
+		for _, v := range inputList {
+			specList = append(specList, "?")
+			paramList = append(paramList, prefix+v)
+		}
+		specSql = strings.Join(specList, ",")
+	}
+	return
+}
+
+func transFiltersToSQL(queryParam *models.QueryRequestParam, transParam *models.TransFiltersParam) (filterSql, queryColumn string, param []interface{}) {
+	if transParam.Prefix != "" && !strings.HasSuffix(transParam.Prefix, ".") {
+		transParam.Prefix = transParam.Prefix + "."
+	}
+	if transParam.IsStruct {
+		transParam.KeyMap, transParam.PrimaryKey = getJsonToXormMap(transParam.StructObj)
+	}
+	for _, filter := range queryParam.Filters {
+		if transParam.KeyMap[filter.Name] == "" || transParam.KeyMap[filter.Name] == "-" {
+			continue
+		}
+		if filter.Operator == "eq" {
+			filterSql += fmt.Sprintf(" AND %s%s=? ", transParam.Prefix, transParam.KeyMap[filter.Name])
+			param = append(param, filter.Value)
+		} else if filter.Operator == "contains" || filter.Operator == "like" {
+			filterSql += fmt.Sprintf(" AND %s%s LIKE ? ", transParam.Prefix, transParam.KeyMap[filter.Name])
+			param = append(param, fmt.Sprintf("%%%s%%", filter.Value))
+		} else if filter.Operator == "in" {
+			inValueList := filter.Value.([]interface{})
+			inValueStringList := []string{}
+			for _, inValueInterfaceObj := range inValueList {
+				if inValueInterfaceObj == nil {
+					inValueStringList = append(inValueStringList, "")
+				} else {
+					inValueStringList = append(inValueStringList, inValueInterfaceObj.(string))
+				}
+			}
+			tmpSpecSql, tmpListParams := createListParams(inValueStringList, "")
+			filterSql += fmt.Sprintf(" AND %s%s in (%s) ", transParam.Prefix, transParam.KeyMap[filter.Name], tmpSpecSql)
+			param = append(param, tmpListParams...)
+		} else if filter.Operator == "lt" {
+			filterSql += fmt.Sprintf(" AND %s%s<=? ", transParam.Prefix, transParam.KeyMap[filter.Name])
+			param = append(param, filter.Value)
+		} else if filter.Operator == "gt" {
+			filterSql += fmt.Sprintf(" AND %s%s>=? ", transParam.Prefix, transParam.KeyMap[filter.Name])
+			param = append(param, filter.Value)
+		} else if filter.Operator == "ne" || filter.Operator == "neq" {
+			filterSql += fmt.Sprintf(" AND %s%s!=? ", transParam.Prefix, transParam.KeyMap[filter.Name])
+			param = append(param, filter.Value)
+		} else if filter.Operator == "notNull" || filter.Operator == "isnot" {
+			filterSql += fmt.Sprintf(" AND %s%s is not null ", transParam.Prefix, transParam.KeyMap[filter.Name])
+		} else if filter.Operator == "null" || filter.Operator == "is" {
+			filterSql += fmt.Sprintf(" AND %s%s is null ", transParam.Prefix, transParam.KeyMap[filter.Name])
+		}
+	}
+	if queryParam.Sorting != nil {
+		if transParam.KeyMap[queryParam.Sorting.Field] == "" || transParam.KeyMap[queryParam.Sorting.Field] == "-" {
+			queryParam.Sorting.Field = transParam.PrimaryKey
+		} else {
+			queryParam.Sorting.Field = transParam.KeyMap[queryParam.Sorting.Field]
+		}
+		if queryParam.Sorting.Asc {
+			filterSql += fmt.Sprintf(" ORDER BY %s%s ASC ", transParam.Prefix, queryParam.Sorting.Field)
+		} else {
+			filterSql += fmt.Sprintf(" ORDER BY %s%s DESC ", transParam.Prefix, queryParam.Sorting.Field)
+		}
+	}
+	if len(queryParam.ResultColumns) > 0 {
+		for _, resultColumn := range queryParam.ResultColumns {
+			if transParam.KeyMap[resultColumn] == "" || transParam.KeyMap[resultColumn] == "-" {
+				continue
+			}
+			queryColumn += fmt.Sprintf("%s%s,", transParam.Prefix, transParam.KeyMap[resultColumn])
+		}
+	}
+	if queryColumn == "" {
+		queryColumn = " * "
+	} else {
+		queryColumn = queryColumn[:len(queryColumn)-1]
+	}
+	return
+}
