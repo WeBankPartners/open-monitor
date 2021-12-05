@@ -5,7 +5,6 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"strconv"
-	"strings"
 )
 
 func ChartList(id, groupId int) (result []*models.ChartTable, err error) {
@@ -70,14 +69,6 @@ func ChartDelete(ids []string) error {
 }
 
 func GetPromQLByMetric(metric string) (result string, err error) {
-	if strings.HasPrefix(metric, models.LogMetricName) || strings.HasPrefix(metric, models.DBMonitorMetricName) {
-		tmpSplitIndex := strings.Index(metric, "/")
-		tmpTags := metric[tmpSplitIndex+1:]
-		tmpTags = strings.ReplaceAll(tmpTags, ",", "\",")
-		tmpTags = strings.ReplaceAll(tmpTags, "=", "=\"")
-		result = fmt.Sprintf("%s{%s\"}", metric[:tmpSplitIndex], tmpTags)
-		return
-	}
 	var promMetricTable []*models.PromMetricTable
 	err = x.SQL("select * from prom_metric where metric=?", metric).Find(&promMetricTable)
 	if len(promMetricTable) > 0 {

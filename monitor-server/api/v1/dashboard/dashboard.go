@@ -219,7 +219,11 @@ func fetchBusinessPanel(endpoint string) (err error, result m.PanelModel) {
 func UpdateChartsTitle(c *gin.Context) {
 	var param m.UpdateChartTitleParam
 	if err := c.ShouldBindJSON(&param); err == nil {
-		err = db.UpdateChartTitle(param)
+		if param.ChartId > 0 {
+			err = db.UpdateChartTitle(param)
+		} else {
+			err = db.UpdateServiceMetricTitle(param)
+		}
 		if err != nil {
 			mid.ReturnUpdateTableError(c, "chart", err)
 		} else {
