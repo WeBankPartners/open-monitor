@@ -226,19 +226,31 @@ func getChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.
 			}
 			endpointList = append(endpointList, &endpointObj)
 		}
+		metricLegend := "$custom"
 		if dataConfig.Metric != "" {
-			tmpPromQL, _ := db.GetPromQLByMetric(dataConfig.Metric)
-			if tmpPromQL == "" {
+			if strings.HasPrefix(dataConfig.Metric, models.LogMetricName) || strings.HasPrefix(dataConfig.Metric, models.DBMonitorMetricName) {
+				metricLegend = "$app_metric"
 				if dataConfig.PromQl == "" {
-					continue
+					tmpSplitIndex := strings.Index(dataConfig.Metric, "/")
+					tmpTags := dataConfig.Metric[tmpSplitIndex+1:]
+					tmpTags = strings.ReplaceAll(tmpTags, ",", "\",")
+					tmpTags = strings.ReplaceAll(tmpTags, "=", "=\"")
+					dataConfig.PromQl = fmt.Sprintf("%s{%s\"}", dataConfig.Metric[:tmpSplitIndex], tmpTags)
 				}
 			} else {
-				dataConfig.PromQl = tmpPromQL
+				tmpPromQL, _ := db.GetPromQLByMetric(dataConfig.Metric)
+				if tmpPromQL == "" {
+					if dataConfig.PromQl == "" {
+						continue
+					}
+				} else {
+					dataConfig.PromQl = tmpPromQL
+				}
 			}
 		}
 		for _, endpoint := range endpointList {
 			tmpPromQL := db.ReplacePromQlKeyword(dataConfig.PromQl, dataConfig.Metric, *endpoint)
-			queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQL, Legend: "$custom", Metric: []string{dataConfig.Metric}, Endpoint: []string{endpoint.Guid}, Step: endpoint.Step, Cluster: endpoint.Cluster})
+			queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQL, Legend: metricLegend, Metric: []string{dataConfig.Metric}, Endpoint: []string{endpoint.Guid}, Step: endpoint.Step, Cluster: endpoint.Cluster})
 		}
 	}
 	return
@@ -337,6 +349,9 @@ func getChartQueryData(queryList []*models.QueryMonitorData, param *models.Chart
 		if tmpJsonMarshalErr == nil {
 			result.Series = append(result.Series, s)
 		}
+	}
+	if param.ChartId == 0 && param.Title != "" {
+		result.Title = param.Title
 	}
 	result.Xaxis = make(map[string]interface{})
 	result.Yaxis = models.YaxisModel{Unit: param.Unit}

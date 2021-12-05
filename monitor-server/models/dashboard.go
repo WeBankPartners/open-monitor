@@ -337,7 +337,7 @@ type MainPageRoleQuery struct {
 }
 
 type UpdateChartTitleParam struct {
-	ChartId int    `json:"chart_id" binding:"required"`
+	ChartId int    `json:"chart_id"`
 	Metric  string `json:"metric"`
 	Name    string `json:"name" binding:"required"`
 }
