@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func MetricList(id int,endpointType string) (result []*models.PromMetricTable,err error) {
+func MetricList(id int, endpointType string) (result []*models.PromMetricTable, err error) {
 	params := []interface{}{}
 	baseSql := "select * from prom_metric where 1=1 "
 	if id > 0 {
@@ -19,27 +19,41 @@ func MetricList(id int,endpointType string) (result []*models.PromMetricTable,er
 	}
 	result = []*models.PromMetricTable{}
 	err = x.SQL(baseSql, params...).Find(&result)
+	if err != nil {
+		return
+	}
+	// append service metric
+	var logMetricTable []*models.LogMetricConfigTable
+	x.SQL("select guid,metric,display_name,agg_type from log_metric_config where log_metric_monitor in (select guid from log_metric_monitor where monitor_type=?) or log_metric_json in (select guid from log_metric_json where log_metric_monitor in (select guid from log_metric_monitor where monitor_type=?))", endpointType, endpointType).Find(&logMetricTable)
+	for _, v := range logMetricTable {
+		result = append(result, &models.PromMetricTable{Id: 0, MetricType: endpointType, Metric: v.Metric, PromQl: fmt.Sprintf("%s{key=\"%s\",agg=\"%s\",t_endpoint=\"$guid\"}", models.LogMetricName, v.Metric, v.AggType)})
+	}
+	var dbMetricTable []*models.DbMetricMonitorTable
+	x.SQL("select guid,metric,display_name from db_metric_monitor where monitor_type=?", endpointType).Find(&dbMetricTable)
+	for _, v := range dbMetricTable {
+		result = append(result, &models.PromMetricTable{Id: 0, MetricType: endpointType, Metric: v.Metric, PromQl: fmt.Sprintf("%s{key=\"%s\",t_endpoint=\"$guid\"}", models.DBMonitorMetricName, v.Metric)})
+	}
 	return
 }
 
 func MetricCreate(param []*models.PromMetricTable) error {
 	var actions []*Action
-	for _,metric := range param {
-		actions = append(actions, &Action{Sql: "insert into prom_metric(metric,metric_type,prom_ql) value (?,?,?)", Param: []interface{}{metric.Metric,metric.MetricType,metric.PromQl}})
+	for _, metric := range param {
+		actions = append(actions, &Action{Sql: "insert into prom_metric(metric,metric_type,prom_ql) value (?,?,?)", Param: []interface{}{metric.Metric, metric.MetricType, metric.PromQl}})
 	}
 	return Transaction(actions)
 }
 
 func MetricUpdate(param []*models.PromMetricTable) error {
 	var actions []*Action
-	for _,metric := range param {
-		actions = append(actions, &Action{Sql: "update prom_metric set metric=?,prom_ql=? where id=?", Param: []interface{}{metric.Metric,metric.PromQl,metric.Id}})
+	for _, metric := range param {
+		actions = append(actions, &Action{Sql: "update prom_metric set metric=?,prom_ql=? where id=?", Param: []interface{}{metric.Metric, metric.PromQl, metric.Id}})
 	}
 	return Transaction(actions)
 }
 
 func MetricDelete(id int) error {
-	metricQuery,err := MetricList(id, "")
+	metricQuery, err := MetricList(id, "")
 	if err != nil {
 		return fmt.Errorf("Try to query prom metric table fail,%s ", err.Error())
 	}
@@ -55,9 +69,9 @@ func MetricDelete(id int) error {
 		return fmt.Errorf("Try to get charts data fail,%s ", err.Error())
 	}
 	if len(charts) > 0 {
-		for _,chart := range charts {
+		for _, chart := range charts {
 			newChartMetricList := []string{}
-			for _,v := range strings.Split(chart.Metric, "^") {
+			for _, v := range strings.Split(chart.Metric, "^") {
 				if v == metric || v == "" {
 					continue
 				}
@@ -65,7 +79,7 @@ func MetricDelete(id int) error {
 			}
 			if len(newChartMetricList) == 0 {
 				actions = append(actions, &Action{Sql: "delete from chart where id=?", Param: []interface{}{chart.Id}})
-			}else{
+			} else {
 				actions = append(actions, &Action{Sql: "update chart set metric=? where id=?", Param: []interface{}{strings.Join(newChartMetricList, "^"), chart.Id}})
 			}
 		}
