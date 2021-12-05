@@ -389,6 +389,17 @@ func GetPromMetricTable(metricType string) (err error, result []*m.PromMetricUpd
 	if err != nil {
 		log.Logger.Error("Get prom metric table fail", log.Error(err))
 	}
+	// append service metric
+	var logMetricTable []*m.LogMetricConfigTable
+	x.SQL("select guid,metric,display_name,agg_type from log_metric_config where log_metric_monitor in (select guid from log_metric_monitor where monitor_type=?) or log_metric_json in (select guid from log_metric_json where log_metric_monitor in (select guid from log_metric_monitor where monitor_type=?))", metricType, metricType).Find(&logMetricTable)
+	for _, v := range logMetricTable {
+		result = append(result, &m.PromMetricUpdateParam{Id: 0, MetricType: metricType, Metric: v.Metric, PromQl: fmt.Sprintf("%s{key=\"%s\",agg=\"%s\",t_endpoint=\"$guid\"}", m.LogMetricName, v.Metric, v.AggType)})
+	}
+	var dbMetricTable []*m.DbMetricMonitorTable
+	x.SQL("select guid,metric,display_name from db_metric_monitor where monitor_type=?", metricType).Find(&dbMetricTable)
+	for _, v := range dbMetricTable {
+		result = append(result, &m.PromMetricUpdateParam{Id: 0, MetricType: metricType, Metric: v.Metric, PromQl: fmt.Sprintf("%s{key=\"%s\",t_endpoint=\"$guid\"}", m.DBMonitorMetricName, v.Metric)})
+	}
 	return err, result
 }
 
@@ -640,6 +651,48 @@ func UpdateChartTitle(param m.UpdateChartTitleParam) error {
 		}
 	} else {
 		_, err = x.Exec("UPDATE chart SET title=? WHERE id=?", param.Name, param.ChartId)
+	}
+	return err
+}
+
+func UpdateServiceMetricTitle(param m.UpdateChartTitleParam) error {
+	var err error
+	var key, endpoint string
+	var matchMetricGuidList []string
+	if !strings.Contains(param.Metric, "/") {
+		return fmt.Errorf("Try to match service metric fail,metric illegal ")
+	}
+	tags := param.Metric[strings.Index(param.Metric, "/")+1:]
+	for _, v := range strings.Split(tags, ",") {
+		if strings.HasPrefix(v, "key=") {
+			key = v[4:]
+			continue
+		}
+		if strings.HasPrefix(v, "t_endpoint=") {
+			endpoint = v[11:]
+			continue
+		}
+	}
+	if strings.HasPrefix(param.Metric, m.LogMetricName) {
+		var logMetricTable []*m.LogMetricConfigTable
+		x.SQL("select guid,display_name from log_metric_config where metric=? and log_metric_monitor in (select log_metric_monitor from log_metric_endpoint_rel where target_endpoint=?) union select guid,display_name from log_metric_config where metric=? and log_metric_json in (select guid from log_metric_json where log_metric_monitor in (select log_metric_monitor from log_metric_endpoint_rel where target_endpoint=?))", key, endpoint, key, endpoint).Find(&logMetricTable)
+		if len(logMetricTable) > 0 {
+			for _, v := range logMetricTable {
+				matchMetricGuidList = append(matchMetricGuidList, v.Guid)
+			}
+			_, err = x.Exec("update log_metric_config set display_name=? where guid in ('"+strings.Join(matchMetricGuidList, "','")+"')", param.Name)
+		}
+	} else if strings.HasPrefix(param.Metric, m.DBMonitorMetricName) {
+		var dbMetricTable []*m.DbMetricMonitorTable
+		x.SQL("select guid,display_name from db_metric_monitor where metric=? and guid in (select db_metric_monitor from db_metric_endpoint_rel where target_endpoint=?)", key, endpoint).Find(&dbMetricTable)
+		if len(dbMetricTable) > 0 {
+			for _, v := range dbMetricTable {
+				matchMetricGuidList = append(matchMetricGuidList, v.Guid)
+			}
+			_, err = x.Exec("update db_metric_monitor set display_name=? where guid in ('"+strings.Join(matchMetricGuidList, "','")+"')", param.Name)
+		}
+	} else {
+		err = fmt.Errorf("Can not match service metric ")
 	}
 	return err
 }
