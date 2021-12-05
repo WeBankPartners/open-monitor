@@ -9,6 +9,8 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/dashboard"
 	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/dashboard_new"
 	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/user"
+	alarmv2 "github.com/WeBankPartners/open-monitor/monitor-server/api/v2/alarm"
+	"github.com/WeBankPartners/open-monitor/monitor-server/api/v2/monitor"
 	"github.com/WeBankPartners/open-monitor/monitor-server/api/v2/service"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
@@ -28,7 +30,7 @@ type handlerFuncObj struct {
 }
 
 var (
-	httpHandlerFuncList []*handlerFuncObj
+	httpHandlerFuncList   []*handlerFuncObj
 	httpHandlerFuncListV2 []*handlerFuncObj
 )
 
@@ -185,6 +187,7 @@ func init() {
 	)
 	// V2
 	httpHandlerFuncListV2 = append(httpHandlerFuncListV2,
+		// service
 		&handlerFuncObj{Url: "/service_endpoint/search/:searchType", Method: http.MethodGet, HandlerFunc: service.GetServiceGroupEndpointList},
 		&handlerFuncObj{Url: "/service/log_metric/list/:queryType/:guid", Method: http.MethodGet, HandlerFunc: service.ListLogMetricMonitor},
 		&handlerFuncObj{Url: "/service/log_metric/log_metric_monitor/:logMonitorGuid", Method: http.MethodGet, HandlerFunc: service.GetLogMetricMonitor},
@@ -208,8 +211,24 @@ func init() {
 		&handlerFuncObj{Url: "/service/db_metric", Method: http.MethodPost, HandlerFunc: service.CreateDbMetricMonitor},
 		&handlerFuncObj{Url: "/service/db_metric", Method: http.MethodPut, HandlerFunc: service.UpdateDbMetricMonitor},
 		&handlerFuncObj{Url: "/service/db_metric/:dbMonitorGuid", Method: http.MethodDelete, HandlerFunc: service.DeleteDbMetricMonitor},
-
 		&handlerFuncObj{Url: "/regexp/test/match", Method: http.MethodPost, HandlerFunc: service.CheckRegExpMatch},
+		// alarm
+		&handlerFuncObj{Url: "/alarm/endpoint_group/query", Method: http.MethodPost, HandlerFunc: alarmv2.ListEndpointGroup},
+		&handlerFuncObj{Url: "/alarm/endpoint_group", Method: http.MethodPost, HandlerFunc: alarmv2.CreateEndpointGroup},
+		&handlerFuncObj{Url: "/alarm/endpoint_group", Method: http.MethodPut, HandlerFunc: alarmv2.UpdateEndpointGroup},
+		&handlerFuncObj{Url: "/alarm/endpoint_group/:groupGuid", Method: http.MethodDelete, HandlerFunc: alarmv2.DeleteEndpointGroup},
+		&handlerFuncObj{Url: "/alarm/endpoint_group/:groupGuid/endpoint/list", Method: http.MethodGet, HandlerFunc: alarmv2.GetGroupEndpointRel},
+		&handlerFuncObj{Url: "/alarm/endpoint_group/:groupGuid/endpoint/update", Method: http.MethodPost, HandlerFunc: alarmv2.UpdateGroupEndpoint},
+		&handlerFuncObj{Url: "/alarm/endpoint_group/:groupGuid/notify/list", Method: http.MethodGet, HandlerFunc: alarmv2.GetGroupEndpointNotify},
+		&handlerFuncObj{Url: "/alarm/endpoint_group/:groupGuid/notify/update", Method: http.MethodPost, HandlerFunc: alarmv2.UpdateGroupEndpointNotify},
+
+		&handlerFuncObj{Url: "/alarm/strategy/search", Method: http.MethodGet, HandlerFunc: alarmv2.ListStrategyQueryOptions},
+		&handlerFuncObj{Url: "/alarm/strategy/list/:queryType/:guid", Method: http.MethodGet, HandlerFunc: alarmv2.QueryAlarmStrategy},
+		&handlerFuncObj{Url: "/alarm/strategy", Method: http.MethodPost, HandlerFunc: alarmv2.CreateAlarmStrategy},
+		&handlerFuncObj{Url: "/alarm/strategy", Method: http.MethodPut, HandlerFunc: alarmv2.UpdateAlarmStrategy},
+		&handlerFuncObj{Url: "/alarm/strategy/:strategyGuid", Method: http.MethodDelete, HandlerFunc: alarmv2.DeleteAlarmStrategy},
+		// monitor
+		&handlerFuncObj{Url: "/monitor/endpoint/query", Method: http.MethodPost, HandlerFunc: monitor.ListEndpoint},
 	)
 }
 

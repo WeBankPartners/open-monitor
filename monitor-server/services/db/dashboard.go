@@ -294,12 +294,6 @@ func GetEndpoint(query *m.EndpointTable) error {
 	return nil
 }
 
-func ListEndpoint() []*m.EndpointTable {
-	var result []*m.EndpointTable
-	x.SQL("SELECT * FROM endpoint").Find(&result)
-	return result
-}
-
 func GetTags(endpoint string, key string, metric string) (error, []*m.OptionModel) {
 	var options []*m.OptionModel
 	var endpointObj []*m.EndpointTable
