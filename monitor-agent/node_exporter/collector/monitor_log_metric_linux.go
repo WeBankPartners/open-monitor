@@ -294,10 +294,17 @@ func LogMetricMonitorHttpHandle(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
+	err = LogMetricMonitorHandleAction(requestParamBuff)
+	if err == nil {
+		LogMetricSaveConfig(requestParamBuff)
+	}
+}
+
+func LogMetricMonitorHandleAction(requestParamBuff []byte) error {
 	var param []*logMetricMonitorNeObj
-	err = json.Unmarshal(requestParamBuff, &param)
+	err := json.Unmarshal(requestParamBuff, &param)
 	if err != nil {
-		return
+		return err
 	}
 	var tmpLogMetricObjJobs []*logMetricMonitorNeObj
 	for _, logMetricMonitorJob := range logMetricMonitorJobs {
@@ -334,9 +341,34 @@ func LogMetricMonitorHttpHandle(w http.ResponseWriter, r *http.Request) {
 		tmpLogMetricObjJobs = append(tmpLogMetricObjJobs, &newLogMetricObj)
 	}
 	logMetricMonitorJobs = tmpLogMetricObjJobs
+	return nil
+}
+
+func LogMetricSaveConfig(requestParamBuff []byte) {
+	err := ioutil.WriteFile(log_metricMonitorFilePath, requestParamBuff, 0644)
+	if err != nil {
+		level.Error(monitorLogger).Log("logMetricSaveConfig", err.Error())
+	} else {
+		level.Info(monitorLogger).Log("logMetricSaveConfig", "success")
+	}
+}
+
+func LogMetricLoadConfig() {
+	b, err := ioutil.ReadFile(log_metricMonitorFilePath)
+	if err != nil {
+		level.Error(monitorLogger).Log("logMetricLoadConfig", err.Error())
+	} else {
+		err = LogMetricMonitorHandleAction(b)
+		if err != nil {
+			level.Error(monitorLogger).Log("logMetricLoadConfigAction", err.Error())
+		} else {
+			level.Info(monitorLogger).Log("logMetricLoadConfig", "success")
+		}
+	}
 }
 
 func StartCalcLogMetricCron() {
+	LogMetricLoadConfig()
 	t := time.NewTicker(10 * time.Second).C
 	for {
 		<-t
