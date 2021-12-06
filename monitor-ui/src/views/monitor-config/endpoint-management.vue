@@ -82,7 +82,7 @@
         <label class="required-tip">*</label>
         <label v-show="veeErrors.has('exporter_type')" class="is-danger">{{ veeErrors.first('exporter_type')}}</label>
       </div>
-      <div class="marginbottom params-each" v-if="!(['ping','http', 'snmp'].includes(endpointRejectModel.addRow.type))">
+      <div class="marginbottom params-each" v-if="!(['ping','http', 'snmp', 'process'].includes(endpointRejectModel.addRow.type))">
         <label class="col-md-2 label-name">{{$t('button.port')}}:</label>
         <input v-validate="'required|isNumber'" v-model="endpointRejectModel.addRow.port" name="port" :class="{ 'red-border': veeErrors.has('port') }" type="text" class="col-md-7 form-control model-input c-dark" />
         <label class="required-tip">*</label>
@@ -98,6 +98,20 @@
         <label class="required-tip">*</label>
         <label v-show="veeErrors.has('export_address')" class="is-danger">{{ veeErrors.first('export_address')}}</label>
       </div>
+      <template v-if="endpointRejectModel.addRow.type === 'process'">
+        <div>
+          <label class="col-md-2 label-name">{{$t('processName')}}:</label>
+          <input v-validate="'required'" :placeholder="$t('processName')" v-model="endpointRejectModel.addRow.process_name" name="process_name" :class="{ 'red-border': veeErrors.has('process_name') }" type="text" class="col-md-7 form-control model-input c-dark" />
+          <label class="required-tip">*</label>
+          <label v-show="veeErrors.has('process_name')" class="is-danger">{{ veeErrors.first('process_name')}}</label>
+        </div>
+        <div>
+          <label class="col-md-2 label-name">{{$t('processTags')}}:</label>
+          <input v-validate="'required'" :placeholder="$t('processTags')" v-model="endpointRejectModel.addRow.tags" name="tags" :class="{ 'red-border': veeErrors.has('tags') }" type="text" class="col-md-7 form-control model-input c-dark" />
+          <label class="required-tip">*</label>
+          <label v-show="veeErrors.has('tags')" class="is-danger">{{ veeErrors.first('tags')}}</label>
+        </div>
+      </template>
     </div>
   </ModalComponent>
   <ModalComponent :modelConfig="processConfigModel">
@@ -458,6 +472,8 @@ export default {
           exporter: false,
           export_address: '',
           proxy_exporter: null,
+          process_name: '',
+          tags: ''
         },
         v_select_configs: {
             proxy_exporter: []
@@ -478,6 +494,10 @@ export default {
           {
             label: 'java',
             value: 'java'
+          },
+          {
+            label: 'process',
+            value: 'process'
           },
           {
             label: 'nginx',
