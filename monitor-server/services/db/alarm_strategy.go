@@ -167,7 +167,7 @@ func SyncPrometheusRuleFile(endpointGroup string,fromPeer bool) error {
 	var err error
 	ruleFileName := "g_" + endpointGroup
 	var endpointList []*models.EndpointNewTable
-	err = x.SQL("select * from endpoint_new where guid in (select endpoint from endpoint_group_rel where endpoint_group=?)", endpointGroup).Find(&endpointList)
+	err = x.SQL("select * from endpoint_new where guid in (select endpoint from endpoint_group_rel where endpoint_group=? union select endpoint from endpoint_service_rel where service_group in (select service_group from endpoint_group where guid=?))", endpointGroup, endpointGroup).Find(&endpointList)
 	if err != nil {
 		return err
 	}
