@@ -2,21 +2,21 @@
   <div class=" ">
     <section v-if="showManagement" style="margin-top: 16px;">
       <Tag color="blue">{{$t('m_log_file')}}</Tag>
-      <button @click="add" type="button" class="btn btn-sm btn-cancel-f">
+      <button @click="add" type="button" class="btn btn-sm success-btn">
         <i class="fa fa-plus"></i>
         {{$t('button.add')}}
       </button>
       <PageTable :pageConfig="pageConfig">
         <div slot='tableExtend'>
           <div style="margin:8px;border:1px solid #2db7f5">
-            <button @click="singleAddF(pageConfig.table.isExtend.parentData)" type="button" style="margin-top:8px" class="btn btn-sm btn-cancel-f">
+            <button @click="singleAddF(pageConfig.table.isExtend.parentData)" type="button" style="margin-top:8px" class="btn btn-sm success-btn">
               <i class="fa fa-plus"></i>
               {{$t('m_add_json_regular')}}
             </button>
             <extendTable :detailConfig="pageConfig.table.isExtend.detailConfig"></extendTable>
           </div>
           <div style="margin:8px;border:1px solid #19be6b">
-            <button @click="addCustomMetric(pageConfig.table.isCustomMetricExtend.parentData)" type="button" style="margin-top:8px" class="btn btn-sm btn-cancel-f">
+            <button @click="addCustomMetric(pageConfig.table.isCustomMetricExtend.parentData)" type="button" style="margin-top:8px" class="btn btn-sm success-btn">
               <i class="fa fa-plus"></i>
               {{$t('m_add_metric_regular')}}
             </button>
@@ -252,7 +252,7 @@
     <!-- DB config -->
     <section v-if="showManagement" style="margin-top: 16px;">
       <Tag color="blue">{{$t('m_db')}}</Tag>
-      <button @click="addDb" type="button" class="btn btn-sm btn-cancel-f">
+      <button @click="addDb" type="button" class="btn btn-sm success-btn">
         <i class="fa fa-plus"></i>
         {{$t('button.add')}}
       </button>
@@ -295,11 +295,11 @@
                 type="error"
                 icon="md-close"
               ></Button>
-              <Select v-model="item.source_endpoint" style="width: 255px" :placeholder="$t('m_log_server')">
-                <Option v-for="type in sourceEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
-              </Select>
               <Select v-model="item.target_endpoint" style="width: 255px" :placeholder="$t('m_business_object')">
                 <Option v-for="type in targetEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
+              </Select>
+              <Select v-model="item.source_endpoint" style="width: 255px" :placeholder="$t('m_log_server')">
+                <Option v-for="type in sourceEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
               </Select>
             </p>
           </template>
@@ -369,6 +369,7 @@ export default {
               title: '',
               config: [
                 {title: 'tableKey.regular', value: 'json_regular', display: true},
+                {title: 'm_collection_interval', value: 'step', display: true},
                 {title: 'tableKey.tags', value: 'tags', display: true},
                 {title: 'table.action',btn:[
                   {btn_name: 'button.edit', btn_func: 'editRuleItem'},
@@ -390,6 +391,7 @@ export default {
               config: [
                 {title: 'tableKey.regular', value: 'regular', display: true},
                 {title: 'field.metric', value: 'metric', display: true},
+                {title: 'm_collection_interval', value: 'step', display: true},
                 {title: 'field.aggType', value: 'agg_type', display: true},
                 {title: 'table.action',btn:[
                   {btn_name: 'button.edit', btn_func: 'editCustomMetricItem'},
@@ -446,7 +448,7 @@ export default {
         saveFunc: 'saveCustomMetric',
         config: [
           {label: 'field.metric', value: 'metric', placeholder: '', disabled: false, type: 'text'},
-          {label: 'tableKey.description', value: 'display_name', placeholder: '', disabled: false, type: 'text'},
+          {label: 'field.displayName', value: 'display_name', placeholder: '', disabled: false, type: 'text'},
           // {label: 'tableKey.regular', value: 'regular', placeholder: 'tips.required', v_validate: 'required:true', disabled: false, type: 'text'},
           {name:'ruleConfig',type:'slot'}
         ],
@@ -499,7 +501,8 @@ export default {
         {label: 'process', value: 'process'},
         {label: 'java', value: 'java'},
         {label: 'nginx', value: 'nginx'},
-        {label: 'http', value: 'http'}
+        {label: 'http', value: 'http'},
+        {label: 'mysql', value: 'mysql'}
       ],
       stepOptions: [
         {label: '10S', value: 10},
@@ -839,5 +842,10 @@ export default {
 <style>
 .ivu-form-item {
   margin-bottom: 4px;
+}
+.success-btn {
+  color: #fff;
+  background-color: #19be6b;
+  border-color: #19be6b;
 }
 </style>

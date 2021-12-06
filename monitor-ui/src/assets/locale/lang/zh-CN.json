@@ -274,5 +274,6 @@
   "m_regular": "正则",
   "m_text": "文本",
   "m_match": "匹配",
-  "m_background_trial": "后台试算"
+  "m_background_trial": "后台试算",
+  "m_guid": "唯一名称"
 }
