@@ -68,7 +68,7 @@ func DeleteAlarmStrategy(c *gin.Context) {
 func ListStrategyQueryOptions(c *gin.Context) {
 	searchType := c.Query("type")
 	searchMsg := c.Query("search")
-	if searchType == "" || searchMsg == "" {
+	if searchType == "" {
 		middleware.ReturnParamEmptyError(c, "type and search")
 		return
 	}
