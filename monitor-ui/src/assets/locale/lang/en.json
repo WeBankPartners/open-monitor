@@ -271,5 +271,9 @@
   "m_log_server": "Log Server",
   "m_business_object": "Business Object",
   "m_db": "DB",
-  "m_log_file": "Log File"
+  "m_log_file": "Log File",
+  "m_regular": "Regular",
+  "m_text": "Text",
+  "m_match": "Match",
+  "m_background_trial": "Background Trial"
 }
