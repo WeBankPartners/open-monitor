@@ -14,7 +14,7 @@
     "groupManagement": {
         "_des": "组管理",
         "list": {
-            "api": "/monitor/api/v1/alarm/grp/list"
+            "api": "/monitor/api/v2/alarm/endpoint_group/query"
         },
         "add": {
             "api": "/monitor/api/v1/alarm/grp/add"
