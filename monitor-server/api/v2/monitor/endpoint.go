@@ -20,3 +20,14 @@ func ListEndpoint(c *gin.Context) {
 		middleware.ReturnPageData(c, pageInfo, rowData)
 	}
 }
+
+func ListMetric(c *gin.Context)  {
+	guid := c.Query("guid")
+	monitorType := c.Query("monitorType")
+	result,err := db.MetricListNew(guid, monitorType)
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+	}else{
+		middleware.ReturnSuccessData(c, result)
+	}
+}
