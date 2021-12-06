@@ -112,6 +112,7 @@ type AlarmStrategyMetricObj struct {
 	Content           string `json:"content" xorm:"content"`
 	NotifyEnable      int    `json:"notify_enable" xorm:"notify_enable"`
 	NotifyDelaySecond int    `json:"notify_delay_second" xorm:"notify_delay_second"`
+	UpdateTime        string `json:"update_time" xorm:"update_time"`
 	MetricName        string `json:"metric_name" json:"metric_name"`
 	MetricExpr        string `json:"metric_expr" json:"metric_expr"`
 	MetricType        string `json:"metric_type" json:"metric_type"`
@@ -121,6 +122,7 @@ type GroupStrategyObj struct {
 	Guid              string       `json:"guid"`
 	EndpointGroup     string       `json:"endpoint_group"`
 	Metric            string       `json:"metric"`
+	MetricName        string       `json:"metric_name"`
 	Condition         string       `json:"condition"`
 	Last              string       `json:"last"`
 	Priority          string       `json:"priority"`
