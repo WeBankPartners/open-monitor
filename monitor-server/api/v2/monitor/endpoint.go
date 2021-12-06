@@ -21,10 +21,11 @@ func ListEndpoint(c *gin.Context) {
 		param.Filters = []*models.QueryRequestFilterObj{{Name: "monitor_type",Operator: "eq",Value: monitorType}}
 	}
 	pageInfo, rowData, err := db.ListEndpoint(&param)
+	returnData := models.TableData{Data: rowData,Page: page,Size: size,Num: pageInfo.TotalRows}
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
-		middleware.ReturnPageData(c, pageInfo, rowData)
+		middleware.ReturnSuccessData(c, returnData)
 	}
 }
 
