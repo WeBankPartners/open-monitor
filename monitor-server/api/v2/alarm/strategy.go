@@ -22,7 +22,7 @@ func QueryAlarmStrategy(c *gin.Context) {
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		} else {
-			middleware.ReturnSuccessData(c, result)
+			middleware.ReturnSuccessData(c, []*models.EndpointStrategyObj{{Strategy: result,EndpointGroup: guid}})
 		}
 	}
 }
@@ -37,7 +37,12 @@ func CreateAlarmStrategy(c *gin.Context) {
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
-		middleware.ReturnSuccess(c)
+		err = db.SyncPrometheusRuleFile(param.EndpointGroup, false)
+		if err != nil {
+			middleware.ReturnHandleError(c, err.Error(), err)
+		}else {
+			middleware.ReturnSuccess(c)
+		}
 	}
 }
 
@@ -51,17 +56,27 @@ func UpdateAlarmStrategy(c *gin.Context) {
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
-		middleware.ReturnSuccess(c)
+		err = db.SyncPrometheusRuleFile(param.EndpointGroup, false)
+		if err != nil {
+			middleware.ReturnHandleError(c, err.Error(), err)
+		}else {
+			middleware.ReturnSuccess(c)
+		}
 	}
 }
 
 func DeleteAlarmStrategy(c *gin.Context) {
 	strategyGuid := c.Param("strategyGuid")
-	err := db.DeleteAlarmStrategy(strategyGuid)
+	endpointGroup,err := db.DeleteAlarmStrategy(strategyGuid)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
-		middleware.ReturnSuccess(c)
+		err = db.SyncPrometheusRuleFile(endpointGroup, false)
+		if err != nil {
+			middleware.ReturnHandleError(c, err.Error(), err)
+		}else {
+			middleware.ReturnSuccess(c)
+		}
 	}
 }
 
