@@ -90,3 +90,33 @@ func MetricDelete(id int) error {
 	}
 	return err
 }
+
+func MetricListNew(guid,monitorType string) (result []*models.MetricTable,err error) {
+	params := []interface{}{}
+	baseSql := "select * from metric where 1=1 "
+	if guid != "" {
+		baseSql += " and guid=? "
+		params = append(params, guid)
+	}
+	if monitorType != "" {
+		baseSql += " and monitor_type=? "
+		params = append(params, monitorType)
+	}
+	result = []*models.MetricTable{}
+	err = x.SQL(baseSql, params...).Find(&result)
+	if err != nil {
+		return
+	}
+	// append service metric
+	var logMetricTable []*models.LogMetricConfigTable
+	x.SQL("select guid,metric,display_name,agg_type from log_metric_config where log_metric_monitor in (select guid from log_metric_monitor where monitor_type=?) or log_metric_json in (select guid from log_metric_json where log_metric_monitor in (select guid from log_metric_monitor where monitor_type=?))", monitorType, monitorType).Find(&logMetricTable)
+	for _, v := range logMetricTable {
+		result = append(result, &models.MetricTable{Guid: v.Guid, MonitorType: monitorType, Metric: v.Metric, PromExpr: fmt.Sprintf("%s{key=\"%s\",agg=\"%s\",t_endpoint=\"$guid\"}", models.LogMetricName, v.Metric, v.AggType)})
+	}
+	var dbMetricTable []*models.DbMetricMonitorTable
+	x.SQL("select guid,metric,display_name from db_metric_monitor where monitor_type=?", monitorType).Find(&dbMetricTable)
+	for _, v := range dbMetricTable {
+		result = append(result, &models.MetricTable{Guid: v.Guid, MonitorType: monitorType, Metric: v.Metric, PromExpr: fmt.Sprintf("%s{key=\"%s\",t_endpoint=\"$guid\"}", models.DBMonitorMetricName, v.Metric)})
+	}
+	return
+}

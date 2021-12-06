@@ -3,7 +3,10 @@ package db
 import (
 	"fmt"
 	"github.com/WeBankPartners/go-common-lib/guid"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
+	"strings"
 	"time"
 )
 
@@ -160,10 +163,133 @@ func getNotifyListDeleteAction(alarmStrategy, endpointGroup, serviceGroup string
 	return actions
 }
 
-func SyncPrometheusRuleFile(endpointGroup string) {
-
+func SyncPrometheusRuleFile(endpointGroup string,fromPeer bool) error {
+	var err error
+	ruleFileName := "g_" + endpointGroup
+	var endpointList []*models.EndpointNewTable
+	err = x.SQL("select * from endpoint_new where guid in (select endpoint from endpoint_group_rel where endpoint_group=?)", endpointGroup).Find(&endpointList)
+	if err != nil {
+		return err
+	}
+	// 获取strategy
+	strategyList,getStrategyErr := getAlarmStrategyWithExpr(endpointGroup)
+	if getStrategyErr != nil {
+		return getStrategyErr
+	}
+	// 区分cluster，分别下发
+	var clusterList []string
+	var clusterEndpointMap = make(map[string][]*models.EndpointNewTable)
+	if len(endpointList) > 0 {
+		for _, endpoint := range endpointList {
+			if _, b := clusterEndpointMap[endpoint.Cluster]; !b {
+				clusterList = append(clusterList, endpoint.Cluster)
+				clusterEndpointMap[endpoint.Cluster] = []*models.EndpointNewTable{endpoint}
+			} else {
+				clusterEndpointMap[endpoint.Cluster] = append(clusterEndpointMap[endpoint.Cluster], endpoint)
+			}
+		}
+	}
+	for _,cluster := range clusterList {
+		guidExpr,addressExpr,ipExpr := buildRuleReplaceExprNew(clusterEndpointMap[cluster])
+		ruleFileConfig := buildRuleFileContentNew(ruleFileName,guidExpr,addressExpr,ipExpr,copyStrategyListNew(strategyList))
+		if cluster == "default" || cluster == "" {
+			prom.SyncLocalRuleConfig(models.RuleLocalConfigJob{FromPeer: fromPeer,TplId: 0,Name: ruleFileConfig.Name,Rules: ruleFileConfig.Rules})
+		}else{
+			tmpErr := SyncRemoteRuleConfigFile(cluster, models.RFClusterRequestObj{Name: ruleFileConfig.Name, Rules: ruleFileConfig.Rules})
+			if tmpErr != nil {
+				err = fmt.Errorf("Update remote cluster:%s rule file fail,%s ", cluster, tmpErr.Error())
+				log.Logger.Error("Update remote cluster rule file fail", log.String("cluster",cluster), log.Error(tmpErr))
+			}
+		}
+	}
+	return err
 }
 
 func RemovePrometheusRuleFile(endpointGroup string) {
 
+}
+
+func getAlarmStrategyWithExpr(endpointGroup string) (result []*models.AlarmStrategyMetricObj,err error) {
+	result = []*models.AlarmStrategyMetricObj{}
+	err = x.SQL("select t1.*,t2.metric as 'metric_name',t2.prom_expr as 'metric_expr',t2.monitor_type as 'metric_type' from alarm_strategy t1 left join metric t2 on t1.metric=t2.guid where endpoint_group=?",endpointGroup).Find(&result)
+	return
+}
+
+func buildRuleReplaceExprNew(endpointList []*models.EndpointNewTable) (guidExpr,addressExpr,ipExpr string) {
+	for _,endpoint := range endpointList {
+		addressExpr += endpoint.AgentAddress + "|"
+		guidExpr += endpoint.Guid + "|"
+		ipExpr += endpoint.Ip + "|"
+	}
+	if addressExpr != "" {
+		addressExpr = addressExpr[:len(addressExpr)-1]
+	}
+	if guidExpr != "" {
+		guidExpr = guidExpr[:len(guidExpr)-1]
+	}
+	if ipExpr != "" {
+		ipExpr = ipExpr[:len(ipExpr)-1]
+	}
+	return
+}
+
+func buildRuleFileContentNew(ruleFileName,guidExpr,addressExpr,ipExpr string,strategyList []*models.AlarmStrategyMetricObj) models.RFGroup {
+	result := models.RFGroup{Name: ruleFileName}
+	if len(strategyList) == 0 {
+		return result
+	}
+	for _,strategy := range strategyList {
+		tmpRfu := models.RFRule{}
+		tmpRfu.Alert = fmt.Sprintf("%s_%s", strategy.Metric, strategy.Guid)
+		if !strings.Contains(strategy.Condition, " ") && strategy.Condition != "" {
+			if strings.Contains(strategy.Condition, "=") {
+				strategy.Condition = strategy.Condition[:2] + " " + strategy.Condition[2:]
+			}else{
+				strategy.Condition = strategy.Condition[:1] + " " + strategy.Condition[1:]
+			}
+		}
+		if strings.Contains(strategy.MetricExpr, "$address") {
+			if strings.Contains(addressExpr, "|") {
+				strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\"$address\"", "=~\""+addressExpr+"\"", -1)
+			}else{
+				strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\"$address\"", "=\""+addressExpr+"\"", -1)
+			}
+		}
+		if strings.Contains(strategy.MetricExpr, "$guid") {
+			if strings.Contains(guidExpr, "|") {
+				strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\"$guid\"", "=~\""+guidExpr+"\"", -1)
+			}else{
+				strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\"$guid\"", "=\""+guidExpr+"\"", -1)
+			}
+		}
+		if strings.Contains(strategy.MetricExpr, "$ip") {
+			if strings.Contains(ipExpr, "|") {
+				tmpStr := strings.Split(strategy.MetricExpr, "$ip")[1]
+				tmpStr = tmpStr[:strings.Index(tmpStr,"\"")]
+				newList := []string{}
+				for _,v := range strings.Split(ipExpr, "|") {
+					newList = append(newList, v+tmpStr)
+				}
+				strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\"$ip"+tmpStr+"\"", "=~\""+strings.Join(newList, "|")+"\"", -1)
+			}else{
+				strategy.MetricExpr = strings.ReplaceAll(strategy.MetricExpr, "$ip", ipExpr)
+			}
+		}
+		tmpRfu.Expr = fmt.Sprintf("%s %s", strategy.MetricExpr, strategy.Condition)
+		tmpRfu.For = strategy.Last
+		tmpRfu.Labels = make(map[string]string)
+		tmpRfu.Labels["strategy_guid"] = strategy.Guid
+		tmpRfu.Annotations = models.RFAnnotation{Summary:fmt.Sprintf("{{$labels.instance}}__%s__%s__{{$value}}", strategy.Priority, strategy.Metric), Description:strategy.Content}
+		result.Rules = append(result.Rules, &tmpRfu)
+	}
+	return result
+}
+
+func copyStrategyListNew(inputs []*models.AlarmStrategyMetricObj) (result []*models.AlarmStrategyMetricObj) {
+	result = []*models.AlarmStrategyMetricObj{}
+	for _,strategy := range inputs {
+		tmpStrategy := models.AlarmStrategyMetricObj{Guid: strategy.Guid,Metric:strategy.Metric,Condition: strategy.Condition,Last: strategy.Last,Priority: strategy.Priority,Content: strategy.Content,NotifyEnable: strategy.NotifyEnable,NotifyDelaySecond: strategy.NotifyDelaySecond,MetricName: strategy.MetricName,MetricExpr: strategy.MetricExpr,MetricType: strategy.MetricType}
+		result = append(result, &tmpStrategy)
+	}
+	return result
 }
