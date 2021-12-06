@@ -1,7 +1,7 @@
 <template>
   <div class=" ">
     <section v-if="showManagement" style="margin-top: 16px;">
-      <Tag color="blue">{{$t('tableKey.logPath')}}</Tag>
+      <Tag color="blue">{{$t('m_log_file')}}</Tag>
       <button @click="add" type="button" class="btn btn-sm btn-cancel-f">
         <i class="fa fa-plus"></i>
         {{$t('button.add')}}
@@ -98,13 +98,15 @@
       >
       <div :style="{ 'max-height': MODALHEIGHT + 'px', overflow: 'auto' }">
         <Form :label-width="100">
-          <FormItem :label="$t('tableKey.regular')">
-            <Input v-model="ruleModelConfig.addRow.json_regular" style="width:100%"/>
-          </FormItem>
           <FormItem :label="$t('tableKey.tags')">
             <Input v-model="ruleModelConfig.addRow.tags" style="width:100%" />
           </FormItem>
+          <FormItem :label="$t('tableKey.regular')">
+            <Input type="textarea" v-model="ruleModelConfig.addRow.json_regular" style="width: 580px"/>
+            <Button v-if="!showRegConfig" @click="showRegConfig = !showRegConfig">{{$t('menu.configuration')}}</Button>
+          </FormItem>
         </Form>
+        <RegTest v-if="showRegConfig" @updateReg="updateReg" @cancelReg="cancelReg"></RegTest>
         <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
           <template v-for="(item, index) in ruleModelConfig.addRow.metric_list">
             <p :key="index + 3">
@@ -193,6 +195,12 @@
     <ModalComponent :modelConfig="customMetricsModelConfig">
       <div slot="ruleConfig" class="extentClass">
         <div class="marginbottom params-each">
+          <label class="col-md-2 label-name">{{$t('tableKey.regular')}}:</label>
+          <Input style="width: 70%" type="textarea" v-model="customMetricsModelConfig.addRow.regular" />
+          <Button v-if="!showCustomRegConfig" size="small" @click="showCustomRegConfig = !showCustomRegConfig">{{$t('menu.configuration')}}</Button>
+        </div>
+        <RegTest v-if="showCustomRegConfig" @updateReg="updateCustomReg" @cancelReg="cancelCustomReg"></RegTest>
+        <div class="marginbottom params-each">
           <label class="col-md-2 label-name">{{$t('field.aggType')}}:</label>
           <Select v-model="customMetricsModelConfig.addRow.agg_type" filterable clearable style="width:375px">
             <Option v-for="agg in customMetricsModelConfig.slotConfig.aggOption" :value="agg" :key="agg">{{
@@ -270,7 +278,7 @@
         </Form>
         <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;">
           <template v-for="(item, index) in dbModelConfig.addRow.endpoint_rel">
-            <p :key="index + '3'">
+            <p :key="index + 'S'">
               <Button
                 @click="deleteItem('endpoint_rel', index)"
                 size="small"
@@ -278,10 +286,10 @@
                 type="error"
                 icon="md-close"
               ></Button>
-              <Select v-model="item.source_endpoint" style="width: 265px" :placeholder="$t('m_log_server')">
+              <Select v-model="item.source_endpoint" style="width: 255px" :placeholder="$t('m_log_server')">
                 <Option v-for="type in sourceEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
               </Select>
-              <Select v-model="item.target_endpoint" style="width: 265px" :placeholder="$t('m_business_object')">
+              <Select v-model="item.target_endpoint" style="width: 255px" :placeholder="$t('m_business_object')">
                 <Option v-for="type in targetEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
               </Select>
             </p>
@@ -305,6 +313,7 @@
 </template>
 
 <script>
+import RegTest from '@/components/reg-test'
 import extendTable from '@/components/table-page/extend-table'
 let tableEle = [
   {title: 'tableKey.logPath', value: 'log_path', display: true},
@@ -403,6 +412,7 @@ export default {
         {label: this.$t('m_regular_match'), value: 1},
         {label: this.$t('m_irregular_matching'), value: 0}
       ],
+      showRegConfig: false,
       ruleModelConfig: {
         isShow: false,
         isAdd: true,
@@ -418,6 +428,7 @@ export default {
       selectedIndex: null,
       isShowWarningDelete: false,
       deleteType: '',
+      showCustomRegConfig: false,
       customMetricsModelConfig: {
         modalId: 'custom_metrics',
         isAdd: true,
@@ -427,7 +438,7 @@ export default {
         config: [
           {label: 'field.metric', value: 'metric', placeholder: '', disabled: false, type: 'text'},
           {label: 'tableKey.description', value: 'display_name', placeholder: '', disabled: false, type: 'text'},
-          {label: 'tableKey.regular', value: 'regular', placeholder: 'tips.required', v_validate: 'required:true', disabled: false, type: 'text'},
+          // {label: 'tableKey.regular', value: 'regular', placeholder: 'tips.required', v_validate: 'required:true', disabled: false, type: 'text'},
           {name:'ruleConfig',type:'slot'}
         ],
         addRow: { // [通用]-保存用户新增、编辑时数据
@@ -540,6 +551,20 @@ export default {
       }, {isNeedloading:false})
     },
     // other config
+    updateReg (reg) {
+      this.ruleModelConfig.addRow.json_regular = reg
+      this.showRegConfig = false
+    },
+    cancelReg () {
+      this.showRegConfig = false
+    },
+    updateCustomReg (reg) {
+      this.customMetricsModelConfig.addRow.regular = reg
+      this.showCustomRegConfig = false
+    },
+    cancelCustomReg () {
+      this.showCustomRegConfig = false
+    },
     addCustomMetricEmpty (type) {
       if (!this.customMetricsModelConfig.addRow[type]) {
         this.customMetricsModelConfig.addRow[type] = []
@@ -580,6 +605,7 @@ export default {
       this.deleteType = 'custom_metrics'
     },
     editRuleItem (rowData) {
+      this.cancelReg()
       this.ruleModelConfig.isAdd = false
       this.ruleModelConfig.addRow = JSON.parse(JSON.stringify(rowData))
       this.ruleModelConfig.isShow = true
@@ -640,6 +666,7 @@ export default {
       })
     },
     singleAddF (rowData) {
+      this.cancelReg()
       this.cancelRule()
       this.activeData = rowData
       this.ruleModelConfig.isAdd = true
@@ -792,7 +819,8 @@ export default {
     }
   },
   components: {
-    extendTable
+    extendTable,
+    RegTest
   },
 }
 </script>
