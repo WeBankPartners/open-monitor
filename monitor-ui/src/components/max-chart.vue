@@ -131,12 +131,13 @@ export default {
       if (chartItem) {
         this.chartItem = chartItem
       }
+      console.log(this.chartItem)
       let params = {
           aggregate: this.chartCondition.agg,
           time_second: Number(this.chartCondition.timeTnterval),
           start: 0,
           end: 0,
-          title: '',
+          title: this.chartItem.title,
           unit: '',
           chart_id: this.chartItem.id,
           data: []
