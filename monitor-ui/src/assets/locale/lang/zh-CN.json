@@ -270,5 +270,9 @@
   "m_log_server": "日志主机",
   "m_business_object": "业务对象",
   "m_db": "数据库",
-  "m_log_file": "日志文件"
+  "m_log_file": "日志文件",
+  "m_regular": "正则",
+  "m_text": "文本",
+  "m_match": "匹配",
+  "m_background_trial": "后台试算"
 }
