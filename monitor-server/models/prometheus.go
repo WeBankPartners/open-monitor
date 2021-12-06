@@ -13,6 +13,7 @@ type RFGroup struct {
 }
 
 type RuleLocalConfigJob struct {
+	EndpointGroup string
 	TplId  int
 	FromPeer bool
 	Name  string
