@@ -137,11 +137,11 @@
         <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
           <template v-for="(item, index) in dbModelConfig.addRow.endpoint_rel">
             <p :key="index + '3'" style="text-align: center;">
-              <Select disabled v-model="item.source_endpoint" style="width: 265px" :placeholder="$t('m_log_server')">
-                <Option v-for="type in sourceEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
-              </Select>
               <Select disabled v-model="item.target_endpoint" style="width: 265px" :placeholder="$t('m_business_object')">
                 <Option v-for="type in targetEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
+              </Select>
+              <Select disabled v-model="item.source_endpoint" style="width: 265px" :placeholder="$t('m_log_server')">
+                <Option v-for="type in sourceEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
               </Select>
             </p>
           </template>
@@ -355,6 +355,7 @@ export default {
                   config: [
                     {title: 'tableKey.regular', value: 'json_regular', display: true},
                     {title: 'tableKey.tags', value: 'tags', display: true},
+                    {title: 'm_collection_interval', value: 'step', display: true},
                     {title: 'table.action',btn:[
                       {btn_name: 'button.view', btn_func: 'editRuleItem'}
                     ]}
@@ -374,6 +375,7 @@ export default {
                   config: [
                     {title: 'tableKey.regular', value: 'regular', display: true},
                     {title: 'field.metric', value: 'metric', display: true},
+                    {title: 'm_collection_interval', value: 'step', display: true},
                     {title: 'field.aggType', value: 'agg_type', display: true},
                     {title: 'table.action',btn:[
                       {btn_name: 'button.view', btn_func: 'editCustomMetricItem'}
