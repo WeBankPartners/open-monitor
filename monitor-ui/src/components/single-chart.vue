@@ -95,7 +95,6 @@ export default {
           title: this.chartInfo.title
         })
       }
-      console.log(params)
       this.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.metricConfigView.api, params, responseData => {
         const chartConfig = {editTitle: true, zoomCallback: true}
         responseData.metric = this.chartInfo.metric[0]
