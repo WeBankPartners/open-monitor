@@ -275,19 +275,31 @@ func GetOrgEndpoint(guid string) (result []*m.OptionModel, err error) {
 }
 
 func UpdateOrgEndpoint(param m.UpdateOrgPanelEndpointParam) error {
+	var actions []*Action
 	var endpointString string
 	endpointString = strings.Join(param.Endpoint, "^")
-	_, err := x.Exec("UPDATE panel_recursive SET endpoint=? WHERE guid=?", endpointString, param.Guid)
-	if err != nil {
-		log.Logger.Error("Update organization endpoint error", log.Error(err))
-		return err
-	}
-	actions := []*Action{{Sql: "delete from endpoint_service_rel where service_group=?",Param: []interface{}{param.Guid}}}
+	actions = append(actions, &Action{Sql: "UPDATE panel_recursive SET endpoint=? WHERE guid=?",Param: []interface{}{endpointString, param.Guid}})
+	//_, err := x.Exec("UPDATE panel_recursive SET endpoint=? WHERE guid=?", endpointString, param.Guid)
+	//if err != nil {
+	//	log.Logger.Error("Update organization endpoint error", log.Error(err))
+	//	return err
+	//}
+	actions = append(actions, &Action{Sql: "delete from endpoint_service_rel where service_group=?",Param: []interface{}{param.Guid}})
 	guidList := guid.CreateGuidList(len(param.Endpoint))
 	for i,v := range param.Endpoint {
 		actions = append(actions, &Action{Sql: "insert into endpoint_service_rel(guid,endpoint,service_group) value (?,?,?)",Param: []interface{}{guidList[i],v,param.Guid}})
 	}
-	Transaction(actions)
+	err := Transaction(actions)
+	if err == nil {
+		var endpointGroup []*m.EndpointGroupTable
+		x.SQL("select guid from endpoint_group where service_group=?", param.Guid).Find(&endpointGroup)
+		for _,v := range endpointGroup {
+			err = SyncPrometheusRuleFile(v.Guid, false)
+			if err != nil {
+				break
+			}
+		}
+	}
 	return err
 }
 
