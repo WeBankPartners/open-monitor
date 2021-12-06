@@ -61,6 +61,7 @@ type AlarmTable struct {
 	End           time.Time `json:"end"`
 	CustomMessage string    `json:"custom_message"`
 	EndpointTags  string    `json:"endpoint_tags"`
+	AlarmStrategy string    `json:"alarm_strategy"`
 }
 
 type AlarmHandleObj struct {
@@ -93,6 +94,7 @@ type AlarmProblemQuery struct {
 	IsCustom      bool      `json:"is_custom"`
 	CustomMessage string    `json:"custom_message"`
 	EndpointTags  string    `json:"endpoint_tags"`
+	AlarmStrategy string    `json:"alarm_strategy"`
 }
 
 type UpdateAlarmCustomMessageDto struct {
