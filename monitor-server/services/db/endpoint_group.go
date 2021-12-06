@@ -9,6 +9,7 @@ import (
 
 func ListEndpointGroup(param *models.QueryRequestParam) (pageInfo models.PageInfo, rowData []*models.EndpointGroupTable, err error) {
 	rowData = []*models.EndpointGroupTable{}
+	pageInfo = models.PageInfo{}
 	filterSql, queryColumn, queryParam := transFiltersToSQL(param, &models.TransFiltersParam{IsStruct: true, StructObj: models.EndpointGroupTable{}, PrimaryKey: "guid"})
 	baseSql := fmt.Sprintf("SELECT %s FROM endpoint_group WHERE 1=1 %s ", queryColumn, filterSql)
 	if param.Paging {
