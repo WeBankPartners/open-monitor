@@ -12,13 +12,13 @@ import (
 
 func QueryAlarmStrategyByGroup(endpointGroup string) (result []*models.GroupStrategyObj, err error) {
 	result = []*models.GroupStrategyObj{}
-	var alarmStrategyTable []*models.AlarmStrategyTable
-	err = x.SQL("select * from alarm_strategy where endpoint_group=?", endpointGroup).Find(&alarmStrategyTable)
+	var alarmStrategyTable []*models.AlarmStrategyMetricObj
+	err = x.SQL("select t1.*,t2.metric as 'metric_name' from alarm_strategy t1 left join metric t2 on t1.metric=t2.guid where t1.endpoint_group=?", endpointGroup).Find(&alarmStrategyTable)
 	if err != nil {
 		return
 	}
 	for _, v := range alarmStrategyTable {
-		tmpStrategyObj := models.GroupStrategyObj{Guid: v.Guid, EndpointGroup: v.EndpointGroup, Metric: v.Metric, Condition: v.Condition, Last: v.Last, Priority: v.Priority, Content: v.Content, NotifyEnable: v.NotifyEnable, NotifyDelaySecond: v.NotifyDelaySecond}
+		tmpStrategyObj := models.GroupStrategyObj{Guid: v.Guid, EndpointGroup: v.EndpointGroup, Metric: v.Metric, MetricName: v.MetricName, Condition: v.Condition, Last: v.Last, Priority: v.Priority, Content: v.Content, NotifyEnable: v.NotifyEnable, NotifyDelaySecond: v.NotifyDelaySecond}
 		tmpStrategyObj.NotifyList = getNotifyList(v.Guid, "", "")
 		result = append(result, &tmpStrategyObj)
 	}
@@ -290,7 +290,7 @@ func buildRuleFileContentNew(ruleFileName,guidExpr,addressExpr,ipExpr string,str
 		tmpRfu.Expr = fmt.Sprintf("%s %s", strategy.MetricExpr, strategy.Condition)
 		tmpRfu.For = strategy.Last
 		tmpRfu.Labels = make(map[string]string)
-		tmpRfu.Labels["strategy_id"] = strategy.Guid
+		tmpRfu.Labels["strategy_guid"] = strategy.Guid
 		tmpRfu.Annotations = models.RFAnnotation{Summary:fmt.Sprintf("{{$labels.instance}}__%s__%s__{{$value}}", strategy.Priority, strategy.Metric), Description:strategy.Content}
 		result.Rules = append(result.Rules, &tmpRfu)
 	}
