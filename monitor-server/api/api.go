@@ -229,6 +229,7 @@ func init() {
 		&handlerFuncObj{Url: "/alarm/strategy/:strategyGuid", Method: http.MethodDelete, HandlerFunc: alarmv2.DeleteAlarmStrategy},
 		// monitor
 		&handlerFuncObj{Url: "/monitor/endpoint/query", Method: http.MethodPost, HandlerFunc: monitor.ListEndpoint},
+		&handlerFuncObj{Url: "/monitor/metric/list", Method: http.MethodGet, HandlerFunc: monitor.ListMetric},
 	)
 }
 
