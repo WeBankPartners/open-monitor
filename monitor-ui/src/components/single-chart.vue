@@ -70,7 +70,7 @@ export default {
         time_second: this.params.time,
         start: start ? 0 : this.params.start || 0,
         end: end ? 0 : this.params.end || 0,
-        title: '',
+        title: this.chartInfo.title,
         unit: '',
         chart_id: this.chartInfo.id,
         data: []
@@ -95,6 +95,7 @@ export default {
           title: this.chartInfo.title
         })
       }
+      console.log(params)
       this.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.metricConfigView.api, params, responseData => {
         const chartConfig = {editTitle: true, zoomCallback: true}
         responseData.metric = this.chartInfo.metric[0]
