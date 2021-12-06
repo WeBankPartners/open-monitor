@@ -131,7 +131,6 @@ export default {
       if (chartItem) {
         this.chartItem = chartItem
       }
-      console.log(this.chartItem)
       let params = {
           aggregate: this.chartCondition.agg,
           time_second: Number(this.chartCondition.timeTnterval),
