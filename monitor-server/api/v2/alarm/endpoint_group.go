@@ -21,10 +21,11 @@ func ListEndpointGroup(c *gin.Context) {
 		param.Filters = []*models.QueryRequestFilterObj{{Name: "guid",Operator: "like",Value: search}}
 	}
 	pageInfo, rowData, err := db.ListEndpointGroup(&param)
+	returnData := models.TableData{Data: rowData,Page: page,Size: size,Num: pageInfo.TotalRows}
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
-		middleware.ReturnPageData(c, pageInfo, rowData)
+		middleware.ReturnSuccessData(c, returnData)
 	}
 }
 

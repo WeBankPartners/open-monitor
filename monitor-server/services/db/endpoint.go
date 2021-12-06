@@ -98,6 +98,7 @@ func GetEndpointNew(param *models.EndpointNewTable) (result models.EndpointNewTa
 
 func ListEndpoint(param *models.QueryRequestParam) (pageInfo models.PageInfo, rowData []*models.EndpointNewTable, err error) {
 	rowData = []*models.EndpointNewTable{}
+	pageInfo = models.PageInfo{}
 	filterSql, queryColumn, queryParam := transFiltersToSQL(param, &models.TransFiltersParam{IsStruct: true, StructObj: models.EndpointNewTable{}, PrimaryKey: "guid"})
 	baseSql := fmt.Sprintf("SELECT %s FROM endpoint_new WHERE 1=1 %s ", queryColumn, filterSql)
 	if param.Paging {
