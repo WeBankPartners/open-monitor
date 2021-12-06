@@ -275,5 +275,6 @@
   "m_regular": "Regular",
   "m_text": "Text",
   "m_match": "Match",
-  "m_background_trial": "Background Trial"
+  "m_background_trial": "Background Trial",
+  "m_guid": "Guid"
 }
