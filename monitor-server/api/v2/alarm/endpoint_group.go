@@ -87,7 +87,12 @@ func UpdateGroupEndpoint(c *gin.Context) {
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
-		middleware.ReturnSuccess(c)
+		err = db.SyncPrometheusRuleFile(param.GroupGuid, false)
+		if err != nil {
+			middleware.ReturnHandleError(c, err.Error(), err)
+		}else {
+			middleware.ReturnSuccess(c)
+		}
 	}
 }
 

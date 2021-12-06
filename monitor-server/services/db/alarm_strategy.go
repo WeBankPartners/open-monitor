@@ -74,11 +74,22 @@ func UpdateAlarmStrategy(param *models.GroupStrategyObj) error {
 	return Transaction(actions)
 }
 
-func DeleteAlarmStrategy(strategyGuid string) error {
+func DeleteAlarmStrategy(strategyGuid string) (endpointGroup string,err error) {
+	var strategyTable []*models.AlarmStrategyTable
+	err = x.SQL("select * from alarm_strategy where guid=?", strategyGuid).Find(&strategyTable)
+	if err != nil {
+		return
+	}
+	if len(strategyTable) == 0 {
+		err = fmt.Errorf("Can not find strategy with guid:%s ", strategyGuid)
+		return
+	}
+	endpointGroup = strategyTable[0].EndpointGroup
 	var actions []*Action
 	actions = append(actions, getNotifyListDeleteAction(strategyGuid, "", "")...)
 	actions = append(actions, &Action{Sql: "delete from alarm_strategy where guid=?", Param: []interface{}{strategyGuid}})
-	return Transaction(actions)
+	err = Transaction(actions)
+	return
 }
 
 func getNotifyList(alarmStrategy, endpointGroup, serviceGroup string) (result []*models.NotifyObj) {
@@ -164,6 +175,9 @@ func getNotifyListDeleteAction(alarmStrategy, endpointGroup, serviceGroup string
 }
 
 func SyncPrometheusRuleFile(endpointGroup string,fromPeer bool) error {
+	if endpointGroup == "" {
+		return fmt.Errorf("Sync prometheus rule fail,group is empty ")
+	}
 	var err error
 	ruleFileName := "g_" + endpointGroup
 	var endpointList []*models.EndpointNewTable
@@ -188,12 +202,14 @@ func SyncPrometheusRuleFile(endpointGroup string,fromPeer bool) error {
 				clusterEndpointMap[endpoint.Cluster] = append(clusterEndpointMap[endpoint.Cluster], endpoint)
 			}
 		}
+	}else{
+		clusterEndpointMap["default"] = []*models.EndpointNewTable{}
 	}
 	for _,cluster := range clusterList {
 		guidExpr,addressExpr,ipExpr := buildRuleReplaceExprNew(clusterEndpointMap[cluster])
 		ruleFileConfig := buildRuleFileContentNew(ruleFileName,guidExpr,addressExpr,ipExpr,copyStrategyListNew(strategyList))
 		if cluster == "default" || cluster == "" {
-			prom.SyncLocalRuleConfig(models.RuleLocalConfigJob{FromPeer: fromPeer,TplId: 0,Name: ruleFileConfig.Name,Rules: ruleFileConfig.Rules})
+			prom.SyncLocalRuleConfig(models.RuleLocalConfigJob{FromPeer: fromPeer,EndpointGroup: endpointGroup,Name: ruleFileConfig.Name,Rules: ruleFileConfig.Rules})
 		}else{
 			tmpErr := SyncRemoteRuleConfigFile(cluster, models.RFClusterRequestObj{Name: ruleFileConfig.Name, Rules: ruleFileConfig.Rules})
 			if tmpErr != nil {
@@ -203,10 +219,6 @@ func SyncPrometheusRuleFile(endpointGroup string,fromPeer bool) error {
 		}
 	}
 	return err
-}
-
-func RemovePrometheusRuleFile(endpointGroup string) {
-
 }
 
 func getAlarmStrategyWithExpr(endpointGroup string) (result []*models.AlarmStrategyMetricObj,err error) {
@@ -278,7 +290,7 @@ func buildRuleFileContentNew(ruleFileName,guidExpr,addressExpr,ipExpr string,str
 		tmpRfu.Expr = fmt.Sprintf("%s %s", strategy.MetricExpr, strategy.Condition)
 		tmpRfu.For = strategy.Last
 		tmpRfu.Labels = make(map[string]string)
-		tmpRfu.Labels["strategy_guid"] = strategy.Guid
+		tmpRfu.Labels["strategy_id"] = strategy.Guid
 		tmpRfu.Annotations = models.RFAnnotation{Summary:fmt.Sprintf("{{$labels.instance}}__%s__%s__{{$value}}", strategy.Priority, strategy.Metric), Description:strategy.Content}
 		result.Rules = append(result.Rules, &tmpRfu)
 	}
