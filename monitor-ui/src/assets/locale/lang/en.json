@@ -270,5 +270,6 @@
   "m_metric_regular": "Metric Regular",
   "m_log_server": "Log Server",
   "m_business_object": "Business Object",
-  "m_db": "DB"
+  "m_db": "DB",
+  "m_log_file": "Log File"
 }
