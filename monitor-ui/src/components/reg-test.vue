@@ -1,19 +1,19 @@
 <template>
   <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
     <Form :label-width="80">
-      <FormItem label="正则">
+      <FormItem :label="$t('m_regular')">
         <Input type="textarea" v-model="regx">
         </Input>
       </FormItem>
-      <FormItem label="文本">
+      <FormItem :label="$t('m_text')">
         <Input type="textarea" v-model="textString">
         </Input>
       </FormItem>
-      <FormItem label="匹配">
+      <FormItem :label="$t('m_match')">
         <div v-html="regRes" style="word-break: break-all;"></div>
       </FormItem>
       <FormItem>
-        <Button type="primary" size="small" @click="apiTest">后台试算</Button>
+        <Button type="primary" size="small" @click="apiTest">{{$t('m_background_trial')}}</Button>
       </FormItem>
       <FormItem>
         {{apiRes}}
