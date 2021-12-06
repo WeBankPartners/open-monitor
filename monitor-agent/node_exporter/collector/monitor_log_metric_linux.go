@@ -133,6 +133,7 @@ type logMetricValueObj struct {
 }
 
 func (c *logMetricMonitorNeObj) start() {
+	level.Info(monitorLogger).Log("startLogMetricMonitorNeObj", c.Path)
 	var err error
 	c.TailSession, err = tail.TailFile(c.Path, tail.Config{Follow: true, ReOpen: true})
 	if err != nil {
@@ -192,6 +193,7 @@ func (c *logMetricMonitorNeObj) start() {
 }
 
 func (c *logMetricMonitorNeObj) new(input *logMetricMonitorNeObj) {
+	level.Info(monitorLogger).Log("newLogMetricMonitorNeObj", c.Path)
 	c.TargetEndpoint = input.TargetEndpoint
 	c.JsonConfig = []*logMetricJsonNeObj{}
 	for _, jsonObj := range input.JsonConfig {
@@ -212,6 +214,7 @@ func (c *logMetricMonitorNeObj) new(input *logMetricMonitorNeObj) {
 
 func (c *logMetricMonitorNeObj) update(input *logMetricMonitorNeObj) {
 	c.Lock.Lock()
+	level.Info(monitorLogger).Log("updateLogMetricMonitorNeObj", c.Path)
 	newJsonConfigList := []*logMetricJsonNeObj{}
 	for _, jsonObj := range input.JsonConfig {
 		for _, existJson := range c.JsonConfig {
