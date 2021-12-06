@@ -5,6 +5,7 @@ import (
 	"github.com/WeBankPartners/go-common-lib/guid"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"regexp"
+	"strings"
 	"time"
 )
 
@@ -111,7 +112,8 @@ func CreateLogMetricMonitor(param *models.LogMetricMonitorCreateDto) error {
 	var actions []*Action
 	logMonitorGuidList := guid.CreateGuidList(len(param.LogPath))
 	for i, v := range param.LogPath {
-		actions = append(actions, &Action{Sql: "insert into log_metric_monitor(guid,service_group,log_path,metric_type,monitor_type,update_time) value (?,?,?,?,?,?)", Param: []interface{}{logMonitorGuidList[i], param.ServiceGroup, v, param.MetricType, param.MonitorType, nowTime}})
+		tmpLogPath := strings.TrimSpace(v)
+		actions = append(actions, &Action{Sql: "insert into log_metric_monitor(guid,service_group,log_path,metric_type,monitor_type,update_time) value (?,?,?,?,?,?)", Param: []interface{}{logMonitorGuidList[i], param.ServiceGroup, tmpLogPath, param.MetricType, param.MonitorType, nowTime}})
 		relGuidList := guid.CreateGuidList(len(param.EndpointRel))
 		for ii, vv := range param.EndpointRel {
 			if vv.TargetEndpoint == "" {
