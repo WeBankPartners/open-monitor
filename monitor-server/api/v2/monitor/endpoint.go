@@ -5,13 +5,20 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
+	"strconv"
 )
 
 func ListEndpoint(c *gin.Context) {
-	var param models.QueryRequestParam
-	if err := c.ShouldBindJSON(&param); err != nil {
-		middleware.ReturnValidateError(c, err.Error())
-		return
+	page,_ := strconv.Atoi(c.Query("page"))
+	size,_ := strconv.Atoi(c.Query("size"))
+	monitorType := c.Query("monitorType")
+	param := models.QueryRequestParam{}
+	if size > 0 {
+		param.Paging = true
+		param.Pageable = &models.PageInfo{PageSize: size,StartIndex: page-1}
+	}
+	if monitorType != "" {
+		param.Filters = []*models.QueryRequestFilterObj{{Name: "monitor_type",Operator: "eq",Value: monitorType}}
 	}
 	pageInfo, rowData, err := db.ListEndpoint(&param)
 	if err != nil {
