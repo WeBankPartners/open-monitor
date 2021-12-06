@@ -119,12 +119,15 @@
               ></Button>
               <Input v-model="item.json_key" style="width: 190px" :placeholder="$t('m_key') + ' e.g:[.*][.*]'" />
               <Input v-model="item.metric" style="width: 190px" :placeholder="$t('field.metric') + ' , e.g:code'" />
-              <Select v-model="item.agg_type" filterable clearable style="width:190px">
+              <Select v-model="item.agg_type" filterable clearable style="width:100px">
                 <Option v-for="agg in ruleModelConfig.aggOption" :value="agg" :key="agg">{{
                   agg
                 }}</Option>
               </Select>
-              <Input v-model="item.display_name" style="width: 160px" :placeholder="$t('tableKey.description')" />
+              <Input v-model="item.display_name" style="width: 160px" :placeholder="$t('field.displayName')" />
+              <Select v-model="item.step" style="width: 100px" :placeholder="$t('m_collection_interval')">
+                <Option v-for="type in stepOptions" :key="type.value" :value="type.value">{{type.label}}</Option>
+              </Select>
             </p>
             <div :key="index + 1" style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;text-align: end;">
               <template v-for="(stringMapItem, stringMapIndex) in item.string_map">
@@ -207,6 +210,12 @@
               agg
             }}</Option>
           </Select>
+        </div>
+        <div class="marginbottom params-each">
+          <label class="col-md-2 label-name">{{$t('m_collection_interval')}}:</label>
+          <Select v-model="customMetricsModelConfig.addRow.step" style="width: 375px">
+              <Option v-for="type in stepOptions" :key="type.value" :value="type.value">{{type.label}}</Option>
+            </Select>
         </div>
         <div class="marginbottom params-each">
           <div style="margin: 4px 12px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
@@ -445,6 +454,7 @@ export default {
           log_metric_monitor: '',
           display_name: '',
           agg_type: 'min',
+          step: 10,
           metric: null,
           regular: '',
           string_map: []
@@ -758,6 +768,7 @@ export default {
             display_name: '',
             metric: '',
             agg_type: 'avg',
+            step: 10,
             string_map: []
           })
           break

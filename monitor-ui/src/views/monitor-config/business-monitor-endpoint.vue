@@ -46,13 +46,16 @@
             <div v-if="item.string_map.length > 0" :key="index + 1" style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;">
               <template v-for="(stringMapItem, stringMapIndex) in item.string_map">
                 <p :key="stringMapIndex + 2" style="text-align: center;">
-                  <Select disabled v-model="stringMapItem.regulative" filterable clearable style="width:230px">
+                  <Select disabled v-model="stringMapItem.regulative" filterable clearable style="width:120px">
                     <Option v-for="regulation in regulationOption" :value="regulation.value" :key="regulation.value">{{
                       regulation.label
                     }}</Option>
                   </Select>
                   <Input disabled v-model="stringMapItem.source_value" style="width: 230px" :placeholder="$t('m_log_server')" />
                   <Input disabled v-model="stringMapItem.target_value" style="width: 230px" :placeholder="$t('m_business_object')" />
+                  <Select disabled v-model="item.step" style="width: 110px" :placeholder="$t('m_collection_interval')">
+                    <Option v-for="type in stepOptions" :key="type.value" :value="type.value">{{type.label}}</Option>
+                  </Select>
                 </p>
               </template>
             </div>
@@ -61,7 +64,7 @@
         </div>
       </div>
       <div slot="footer">
-        <Button @click="ruleModelConfig.isShow=false">{{$t('button.cancel')}}111</Button>
+        <Button @click="ruleModelConfig.isShow=false">{{$t('button.cancel')}}</Button>
       </div>
     </Modal>
     <ModalComponent :modelConfig="customMetricsModelConfig">
@@ -73,6 +76,12 @@
               agg
             }}</Option>
           </Select>
+        </div>
+        <div class="marginbottom params-each">
+          <label class="col-md-2 label-name">{{$t('m_collection_interval')}}:</label>
+          <Select disabled v-model="customMetricsModelConfig.addRow.step" style="width: 375px">
+              <Option v-for="type in stepOptions" :key="type.value" :value="type.value">{{type.label}}</Option>
+            </Select>
         </div>
         <div class="marginbottom params-each">
           <div style="margin: 4px 12px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
@@ -89,7 +98,7 @@
             </template>
           </div>
         </div>
-        <Button style="float:right" @click="cancelModal">{{$t('button.cancel')}}222</Button>
+        <Button style="float:right" @click="cancelModal">{{$t('button.cancel')}}</Button>
       </div>
     </ModalComponent>
     <!-- DB config -->
