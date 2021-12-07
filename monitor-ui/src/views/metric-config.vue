@@ -634,7 +634,6 @@ export default {
       }
     },
     changeCollectedMetric (val) {
-      console.log(val)
       if (val === 'paramsA') {
         this.metricConfigData.prom_ql = this.metricConfigData.prom_ql.replace('${paramsA}', this.paramsA)
       } else {
