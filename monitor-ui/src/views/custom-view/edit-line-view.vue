@@ -99,7 +99,7 @@
                     </Select>
                   </div>
                 </li>
-                <li>
+                <!-- <li>
                   <div class="condition condition-title">{{$t('field.title')}}</div>
                   <div class="condition">
                     <Input
@@ -108,7 +108,7 @@
                       style="width: 300px"
                     />
                   </div>
-                </li>
+                </li> -->
                 <li>
                   <div class="condition condition-title">{{$t('field.unit')}}</div>
                   <div class="condition">
