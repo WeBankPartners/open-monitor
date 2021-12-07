@@ -49,12 +49,6 @@
         <endpointManagement ref="endpoint"></endpointManagement>
       </template>
     </section>
-    <!-- <Input v-model="aaa" />
-    <Input v-model="bbb" type="textarea" />
-    <span v-html="xxx">
-
-    </span>
-    <Button @click="test">我有一只小</Button> -->
   </div>
 </template>
 
@@ -65,9 +59,6 @@ export default {
   name: '',
   data() {
     return {
-      aaa: `.*{"code":"./ams/account/query_user_info","biz":".*?"`,
-      bbb: 'INFO|2021-12-01 14:56:56382|http-nio-18000-exec-4|cn.webank.weden.utils.MonitorLogUtils:53|[][][CGI][{"code":"./ams/account/query_user_info","biz":"21120112D08048GSL0000Xd6G2NIgOVx","service":"","sceneid":"","cost_t":"292","ret":"80480000","msg":"SUCC","point":"CGI","uid":"876CD9A0CBA5A7257DEC83E3C79E60C9B6047CB959D9D85045AC543242A5C768"}][]',
-      xxx: '',
       type: 'endpoint',
       typeList: [
         {label: this.$t('tableKey.endpoint'), value: 'endpoint'},
@@ -86,24 +77,6 @@ export default {
     this.$root.$store.commit('changeTableExtendActive', -1)
   },
   methods: {
-    test () {
-      // var str = 'INFO|2021-12-01 14:56:56382|http-nio-18000-exec-4|cn.webank.weden.utils.MonitorLogUtils:53|[][][CGI][{"code":"./ams/account/query_user_info","biz":"21120112D08048GSL0000Xd6G2NIgOVx","service":"","sceneid":"","cost_t":"292","ret":"80480000","msg":"SUCC","point":"CGI","uid":"876CD9A0CBA5A7257DEC83E3C79E60C9B6047CB959D9D85045AC543242A5C768"}][]';
-      // eslint-disable-next-line no-useless-escape
-      const reg = new RegExp(this.aaa, 'g')
-      // str = str.replace(reg, "<span style='color:red'>" + this.filterParams + '</span>')
-      // console.log(str);
-
-      let execRes = this.bbb.match(reg)
-      this.xxx = this.bbb.replace(reg, "<span style='color:red'>" + execRes[0] + '</span>')
-      console.log(this.xxx)
-      const params = {
-        reg_string: this.aaa,
-        test_context: this.bbb
-      }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v2/regexp/test/match', params, (responseData) => {
-        console.log(responseData)
-      }, {isNeedloading:false})
-    },
     typeChange () {
       this.clearTargrt()
     },
