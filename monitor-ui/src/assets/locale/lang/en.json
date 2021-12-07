@@ -149,6 +149,7 @@
     "description": "Description",
     "expr": "Expression",
     "content": "Content",
+    "noticeConfig": "Notice COnfig",
     "path": "Path",
     "keyword": "Keyword",
     "condition": "Condition",
@@ -276,5 +277,6 @@
   "m_text": "Text",
   "m_match": "Match",
   "m_background_trial": "Background Trial",
-  "m_guid": "Guid"
+  "m_guid": "Guid",
+  "m_recommend": "Recommend"
 }
