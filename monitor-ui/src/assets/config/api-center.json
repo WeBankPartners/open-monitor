@@ -14,16 +14,16 @@
     "groupManagement": {
         "_des": "组管理",
         "list": {
-            "api": "/monitor/api/v1/alarm/grp/list"
+            "api": "/monitor/api/v2/alarm/endpoint_group/query"
         },
         "add": {
-            "api": "/monitor/api/v1/alarm/grp/add"
+            "api": "/monitor/api/v2/alarm/endpoint_group"
         },
         "update": {
-            "api": "/monitor/api/v1/alarm/grp/update"
+            "api": "/monitor/api/v2/alarm/endpoint_group"
         },
         "delete": {
-            "api": "/monitor/api/v1/alarm/grp/delete"
+            "api": "/monitor/api/v2/alarm/endpoint_group"
         },
         "upload": {
             "api": "/monitor/api/v1/alarm/grp/import"
