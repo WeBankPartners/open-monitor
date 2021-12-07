@@ -83,6 +83,9 @@ func GetEndpointNew(param *models.EndpointNewTable) (result models.EndpointNewTa
 	} else if param.Ip != "" && param.MonitorType != "" {
 		err = x.SQL("select * from endpoint_new where ip=? and monitor_type=?", param.Ip, param.MonitorType).Find(&endpointNew)
 		filterMessage = fmt.Sprintf("ip=%s and monitor_type=%s", param.Ip, param.MonitorType)
+	} else if param.AgentAddress != "" {
+		err = x.SQL("select * from endpoint_new where agent_address=?", param.AgentAddress).Find(&endpointNew)
+		filterMessage = fmt.Sprintf("agent_address=%s", param.AgentAddress)
 	} else {
 		err = fmt.Errorf("param illegal ")
 	}
