@@ -1,53 +1,27 @@
 <template>
   <div class=" ">
-    <section v-if="showManagement" style="margin-top: 16px;">
-      <Tag color="blue">{{targetDetail.endpoint_group || ''}}</Tag>
-      <button @click="add" type="button" class="btn btn-sm success-btn">
-        <i class="fa fa-plus"></i>
-        {{$t('button.add')}}
-      </button>
-      <PageTable :pageConfig="pageConfig">
-        <!-- <div slot='tableExtend'>
-          <div style="margin:8px;border:1px solid #2db7f5">
-            <button @click="singleAddF(pageConfig.table.isExtend.parentData)" type="button" style="margin-top:8px" class="btn btn-sm success-btn">
-              <i class="fa fa-plus"></i>
-              {{$t('m_add_json_regular')}}
-            </button>
-            <extendTable :detailConfig="pageConfig.table.isExtend.detailConfig"></extendTable>
-          </div>
-          <div style="margin:8px;border:1px solid #19be6b">
-            <button @click="addCustomMetric(pageConfig.table.isCustomMetricExtend.parentData)" type="button" style="margin-top:8px" class="btn btn-sm success-btn">
-              <i class="fa fa-plus"></i>
-              {{$t('m_add_metric_regular')}}
-            </button>
-            <extendTable :detailConfig="pageConfig.table.isCustomMetricExtend.detailConfig"></extendTable>
-          </div>
-        </div> -->
-      </PageTable>
-      <section class="receiver-config">
+    <template v-for="(tableItem, tableIndex) in totalPageConfig">
+      <section :key="tableIndex + 'f'">
+        <div class="section-table-tip">
+          <Tag color="blue" :key="tableIndex + 'a'" v-if="tableItem.endpoint_group">{{tableItem.endpoint_group}}</Tag>
+        </div>
+        <PageTable :pageConfig="tableItem"></PageTable>
+      </section>
+      <section class="receiver-config" :key="tableIndex + 'g'">
         <div style="margin: 16px 0">
           <h5 style="display:inline-block">{{$t('button.receiversConfiguration')}}:</h5>
-          <button @click="addEmptyItem('group')" class="btn btn-small success-btn">{{$t('button.add')}}</button>
-          <button @click="updateNotify" class="btn btn-small btn-cancel-f">{{$t('button.save')}}</button>
           <div class="receiver-config-set" style="margin: 8px 0">
           <template>
             <div style="margin: 4px 0px;padding:8px 12px;width:680px">
-              <template v-for="(item, index) in groupNotify">
+              <template v-for="(item, index) in tableItem.groupNotify">
                 <p :key="index + 'S'">
-                  <Button
-                    @click="deleteItem('group', index)"
-                    size="small"
-                    style="background-color: #ff9900;border-color: #ff9900;"
-                    type="error"
-                    icon="md-close"
-                  ></Button>
-                  <Select v-model="item.alarm_action" style="width: 100px" :placeholder="$t('alarm_action')">
+                  <Select disabled v-model="item.alarm_action" style="width: 100px" :placeholder="$t('alarm_action')">
                     <Option v-for="type in ['firing', 'ok']" :key="type" :value="type">{{type}}</Option>
                   </Select>
-                  <Select v-model="item.proc_callback_key" style="width: 160px" :placeholder="$t('proc_callback_key')">
+                  <Select disabled v-model="item.proc_callback_key" style="width: 160px" :placeholder="$t('proc_callback_key')">
                     <Option v-for="(flow, flowIndex) in flows" :key="flowIndex" :value="flow.procDefId">{{flow.procDefName}}</Option>
                   </Select>
-                  <Select v-model="item.notify_roles" :max-tag-count="2" style="width: 360px" multiple filterable :placeholder="$t('field.role')">
+                  <Select disabled v-model="item.notify_roles" :max-tag-count="2" style="width: 360px" multiple filterable>
                     <Option v-for="item in allRole" :value="item.name" :key="item.value">{{ item.name }}</Option>
                   </Select>
                 </p>
@@ -57,25 +31,25 @@
           </div>
         </div>
       </section>
-    </section>
+    </template>
     <ModalComponent :modelConfig="modelConfig">
       <div slot="metricSelect" class="extentClass">  
         <div class="marginbottom params-each">
           <label class="col-md-2 label-name">{{$t('tableKey.metricName')}}:</label>
-          <Select v-model="modelConfig.addRow.metric" filterable clearable style="width:514px"
+          <Select disabled v-model="modelConfig.addRow.metric" filterable clearable style="width:514px"
           :label-in-value="true">
             <Option v-for="(item, index) in modelConfig.metricList" :value="item.guid" :key="item.metric+index">{{ item.metric }}</Option>
           </Select>
         </div> 
         <div class="marginbottom params-each">
           <label class="col-md-2 label-name">{{$t('tableKey.content')}}:</label>
-          <Input type="textarea" v-model="modelConfig.addRow.content" style="width:514px"></Input>
+          <Input disabled type="textarea" v-model="modelConfig.addRow.content" style="width:514px"></Input>
         </div> 
       </div>
       <div slot="thresholdConfig" class="extentClass">  
         <div class="marginbottom params-each">
           <label class="col-md-2 label-name">{{$t('field.threshold')}}:</label>
-          <Select filterable clearable v-model="modelConfig.threshold" style="width:100px">
+          <Select disabled filterable clearable v-model="modelConfig.threshold" style="width:100px">
             <Option v-for="(item, index) in modelConfig.thresholdList" :value="item.value" :key="index">{{ item.label }}</Option>
           </Select>
           <div class="search-input-content" style="margin-left: 8px">
@@ -83,6 +57,7 @@
               v-validate="'required|isNumber'" 
               v-model="modelConfig.thresholdValue" 
               name="thresholdValue"
+              disabled
               style="width: 408px"
               :class="{ 'red-border': veeErrors.has('thresholdValue') }"
               type="text" 
@@ -99,6 +74,7 @@
             <input 
               v-validate="'required|isNumber'" 
               v-model="modelConfig.lastValue" 
+              disabled
               name="lastValue"
                style="width: 400px"
               :class="{ 'red-border': veeErrors.has('lastValue') }"
@@ -106,7 +82,7 @@
               class="form-control model-input search-input c-dark"/>
             <label class="required-tip">*</label>
           </div>
-          <Select filterable clearable v-model="modelConfig.last" style="width:100px">
+          <Select disabled filterable clearable v-model="modelConfig.last" style="width:100px">
             <Option v-for="item in modelConfig.lastList" :value="item.value" :key="item.value">{{ item.label }}</Option>
           </Select>
           <div style="margin-left:10px">
@@ -115,67 +91,44 @@
         </div>
         <div class="marginbottom params-each">
           <label class="col-md-2 label-name">{{$t('tableKey.s_priority')}}:</label>
-          <Select filterable clearable v-model="modelConfig.priority" style="width:514px">
+          <Select disabled filterable clearable v-model="modelConfig.priority" style="width:514px">
             <Option v-for="item in modelConfig.priorityList" :value="item.value" :key="item.value">{{ $t(item.label) }}</Option>
           </Select>
         </div>
         <div class="marginbottom params-each">
           <label class="col-md-2 label-name">{{$t('sendAlarm')}}:</label>
-          <Select filterable clearable v-model="modelConfig.addRow.notify_enable" style="width:514px">
+          <Select disabled filterable clearable v-model="modelConfig.addRow.notify_enable" style="width:514px">
             <Option v-for="item in modelConfig.notifyEnableOption" :value="item.value" :key="item.value">{{ item.label }}</Option>
           </Select>
         </div>
         <div class="marginbottom params-each">
           <label class="col-md-2 label-name">{{$t('delay')}}:</label>
-          <Select filterable clearable v-model="modelConfig.addRow.notify_delay_second" style="width:514px">
+          <Select disabled filterable clearable v-model="modelConfig.addRow.notify_delay_second" style="width:514px">
             <Option v-for="item in modelConfig.notifyDelayOption" :value="item.value" :key="item.value">{{ item.label }}</Option>
           </Select>
         </div>
       </div>
       <div slot="noticeConfig" class="extentClass">  
-        <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;">
+        <div v-if="modelConfig.addRow.notify.length > 0" style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;">
           <template v-for="(item, index) in modelConfig.addRow.notify">
             <p :key="index + 'S'">
-              <Button
-                @click="deleteItem('metric', index)"
-                size="small"
-                style="background-color: #ff9900;border-color: #ff9900;"
-                type="error"
-                icon="md-close"
-              ></Button>
-              <Select v-model="item.alarm_action" style="width: 100px" :placeholder="$t('alarm_action')">
+              <Select disabled v-model="item.alarm_action" style="width: 130px" :placeholder="$t('alarm_action')">
                 <Option v-for="type in ['firing', 'ok']" :key="type" :value="type">{{type}}</Option>
               </Select>
-              <Select v-model="item.proc_callback_key" style="width: 160px" :placeholder="$t('proc_callback_key')">
+              <Select disabled v-model="item.proc_callback_key" style="width: 160px" :placeholder="$t('proc_callback_key')">
                 <Option v-for="(flow, flowIndex) in flows" :key="flowIndex" :value="flow.procDefId">{{flow.procDefName}}</Option>
               </Select>
-              <Select v-model="item.notify_roles" :max-tag-count="2" style="width: 320px" multiple filterable :placeholder="$t('field.role')">
+              <Select disabled v-model="item.notify_roles" :max-tag-count="2" style="width: 320px" multiple filterable>
                 <Option v-for="item in allRole" :value="item.name" :key="item.value">{{ item.name }}</Option>
               </Select>
             </p>
           </template>
-          <Button
-            @click="addEmptyItem('metric')"
-            type="success"
-            size="small"
-            style="background-color: #0080FF;border-color: #0080FF;"
-            long
-            >{{ $t('button.add') }}{{$t('tableKey.noticeConfig')}}</Button
-          >
         </div>
+      </div>
+      <div slot="btn">
+        <Button style="float:right" @click="cancelModal">{{$t('button.cancel')}}</Button>
       </div>
     </ModalComponent>
-    <Modal
-      v-model="isShowWarningDelete"
-      :title="$t('delConfirm.title')"
-      @on-ok="okDelRow"
-      @on-cancel="cancleDelRow">
-      <div class="modal-body" style="padding:30px">
-        <div style="text-align:center">
-          <p style="color: red">{{$t('delConfirm.tip')}}</p>
-        </div>
-      </div>
-    </Modal>
   </div>
 </template>
 
@@ -187,8 +140,7 @@ let tableEle = [
   {title: 'tableKey.s_priority', value: 'priority', display: true}
 ]
 const btn = [
-  {btn_name: 'button.edit', btn_func: 'editF'},
-  {btn_name: 'button.remove', btn_func: 'deleteConfirmModal'},
+  {btn_name: 'button.view', btn_func: 'editF'},
 ]
 import {thresholdList, lastList, priorityList} from '@/assets/config/common-config.js'
 export default {
@@ -197,8 +149,7 @@ export default {
     return {
       targrtId: '',
       type: '',
-      showManagement: false,
-      targetDetail: {},
+      totalPageConfig: [],
       pageConfig: {
         table: {
           tableData: [],
@@ -214,11 +165,12 @@ export default {
         modalTitle: 'field.threshold',
         modalStyle: 'min-width:660px',
         isAdd: true,
+        noBtn: true,
         config: [
           {name:'metricSelect',type:'slot'},
-          // {label: 'tableKey.content', value: 'content', placeholder: 'tips.required', v_validate: 'required:true', disabled: false, type: 'textarea'},
           {name:'thresholdConfig',type:'slot'},
-          {name:'noticeConfig',type:'slot'}
+          {name:'noticeConfig',type:'slot'},
+          {name:'btn',type:'slot'}
         ],
         addRow: { // [通用]-保存用户新增、编辑时数据
           metric: null,
@@ -258,63 +210,23 @@ export default {
       },
       allRole: [],
       flows: [],
-      id: null,
       modelTip: {
         key: '',
         value: 'metric'
       },
-      isShowWarningDelete: false,
-      selectedData: {},
-
-      groupNotify: []
     }
   },
   mounted () {
-    this.getAllRole()
     this.getWorkFlow()
+    this.getAllRole()
   },
   methods: {
-    updateNotify () {
-      const api = `/monitor/api/v2/alarm/endpoint_group/${this.targrtId}/notify/update`
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', api, this.groupNotify, () => {
-        this.$Message.success(this.$t('tips.success'))
-        this.getDetail (this.targrtId, this.type)
-      })
-    },
-    editPost () {
-      this.$validator.validate().then(result => {
-        if (!result) return
-        if (this.$root.$validate.isEmpty_reset(this.modelConfig.addRow.content)) {
-          this.$Message.warning(this.$t('tableKey.content')+this.$t('tips.required'))
-          return
-        }
-        let params = this.paramsPrepare()
-        this.$root.$httpRequestEntrance.httpRequestEntrance('PUT', '/monitor/api/v2/alarm/strategy', params, () => {
-          this.$Message.success(this.$t('tips.success'))
-          this.$root.JQ('#add_edit_Modal').modal('hide')
-          this.getDetail (this.targrtId, this.type)
-        })
-      })
-    },
-    delF (rowData) {
-      const api = `/monitor/api/v2/alarm/strategy/${rowData.guid}`
-      this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', api, '', () => {
-        this.$Message.success(this.$t('tips.success'))
-        this.getDetail (this.targrtId, this.type)
-      })
-    },
-    deleteConfirmModal (rowData) {
-       this.selectedData = rowData
-      this.isShowWarningDelete = true
-    },
-    okDelRow () {
-      this.delF(this.selectedData)
-    },
-    cancleDelRow () {
-      this.isShowWarningDelete = false
+    cancelModal () {
+      this.$root.JQ('#add_edit_Modal').modal('hide')
     },
     async editF (rowData) {
-      this.selectedData = rowData
+      await this.getAllRole()
+      await this.getWorkFlow()
       const api = `/monitor/api/v2/monitor/metric/list?monitorType=${this.type}`
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', (responseData) => {
         this.modelConfig.metricList = responseData
@@ -336,37 +248,6 @@ export default {
         this.modelConfig.priority = rowData.priority
         this.$root.JQ('#add_edit_Modal').modal('show')
       })
-      await this.getAllRole()
-      await this.getWorkFlow()
-    },
-    deleteItem(type, index) {
-      if (type === 'group') {
-        this.groupNotify.splice(index, 1)
-      } else {
-        this.modelConfig.addRow.notify.splice(index, 1)
-      }
-    },
-    addEmptyItem (type) {
-      const tmp = {
-        alarm_action: 'firing',
-        proc_callback_key: '',
-        notify_roles: []
-      }
-      if (type === 'group') { 
-        this.groupNotify.push(tmp)
-      } else {
-        this.modelConfig.addRow.notify.push(tmp)
-      }
-    },
-    async add () {
-      const api = `/monitor/api/v2/monitor/metric/list?monitorType=${this.type}`
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', (responseData) => {
-        this.modelConfig.metricList = responseData
-      })
-      await this.getAllRole()
-      await this.getWorkFlow()
-      this.modelConfig.isAdd = true
-      this.$root.JQ('#add_edit_Modal').modal('show')
     },
     getWorkFlow () {
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v2/alarm/event/callback/list', '', (responseData) => {
@@ -383,45 +264,21 @@ export default {
         })
       })
     },
-    addPost () {
-      this.$validator.validate().then(result => {
-        if (!result) return
-        if (this.$root.$validate.isEmpty_reset(this.modelConfig.addRow.content)) {
-          this.$Message.warning(this.$t('tableKey.content')+this.$t('tips.required'))
-          return
-        }
-        let params = this.paramsPrepare()
-        this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v2/alarm/strategy', params, () => {
-          this.$Message.success(this.$t('tips.success'))
-          this.$root.JQ('#add_edit_Modal').modal('hide')
-          this.requestData(this.type, this.typeValue)
-        })
-      })
-    },
-    paramsPrepare() {
-      let modelParams = {
-        guid: this.selectedData.guid,
-        endpoint_group: this.targrtId,
-        condition: this.modelConfig.threshold + this.modelConfig.thresholdValue,
-        last: this.modelConfig.lastValue + this.modelConfig.last,
-        priority: this.modelConfig.priority,        
-      }
-      return Object.assign(modelParams, this.modelConfig.addRow)
-    },
     getDetail (targrtId, type) {
       this.targrtId = targrtId
       this.type = type
-      const api = '/monitor/api/v2/alarm/strategy/list/' + '/group/' + targrtId
+      const api = '/monitor/api/v2/alarm/strategy/list/' + '/endpoint/' + targrtId
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', (responseData) => {
         this.showManagement = true
-        if (responseData.length > 0) {
-          this.targetDetail = responseData[0]
-          this.pageConfig.table.tableData = responseData[0].strategy
-          this.groupNotify = responseData[0].notify
-        } else {
-          this.targetDetail = []
-          this.pageConfig.table.tableData = []
-        }
+        responseData.forEach((item)=>{
+          let config = this.$root.$validate.deepCopy(this.pageConfig.table)
+          config.tableData = item.strategy
+          this.totalPageConfig.push({
+            table:config, 
+            endpoint_group: item.endpoint_group,
+            groupNotify: item.notify
+          })
+        })
       }, {isNeedloading:false})
     }
   },
