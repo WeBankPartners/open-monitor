@@ -149,6 +149,7 @@
     "description": "描述",
     "expr": "表达式",
     "content": "通知内容",
+    "noticeConfig": "通知配置",
     "path": "路径",
     "keyword": "关键字",
     "condition": "条件",
@@ -269,5 +270,13 @@
   "m_metric_regular": "指标正则",
   "m_log_server": "日志主机",
   "m_business_object": "业务对象",
-  "m_db": "数据库"
+  "m_db": "数据库",
+  "m_log_file": "日志文件",
+  "m_regular": "正则",
+  "m_text": "文本",
+  "m_match": "匹配",
+  "m_background_trial": "后台试算",
+  "m_guid": "唯一名称",
+  "m_recommend": "推荐配置",
+  "proc_callback_key": "编排"
 }
