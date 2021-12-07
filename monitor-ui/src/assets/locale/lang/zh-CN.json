@@ -26,8 +26,7 @@
     "editTitle": "编辑标题",
     "chartConfiguration": "监控图配置",
     "viewChart": "查看视图",
-    "deleteChart": "删除监控图",
-    "test": "删除监控图"
+    "deleteChart": "删除监控图"
   },
   "requestMoreData": "搜索获得更多数据…",
   "field": {
