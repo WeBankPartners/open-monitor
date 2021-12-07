@@ -210,10 +210,10 @@ export default {
           this.$t("tableKey.s_metric") + this.$t("tips.required")
         )
       } else {
-        let params = { type: this.endpointType }
+        let params = { endpointType: this.endpointType }
         this.$root.$httpRequestEntrance.httpRequestEntrance(
           'GET',
-          this.$root.apiCenter.metricList.api,
+          this.$root.apiCenter.getMetricByEndpointType,
           params,
           responseData => {
             this.metricList = responseData
