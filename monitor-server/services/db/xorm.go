@@ -368,7 +368,7 @@ func (d *dbLogger) IsShowSQL() bool {
 
 func transPageInfoToSQL(pageInfo models.PageInfo) (pageSql string, param []interface{}) {
 	pageSql = " LIMIT ?,? "
-	param = append(param, pageInfo.StartIndex)
+	param = append(param, pageInfo.StartIndex*pageInfo.PageSize)
 	param = append(param, pageInfo.PageSize)
 	return
 }
