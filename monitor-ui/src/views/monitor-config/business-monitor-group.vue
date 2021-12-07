@@ -27,7 +27,7 @@
     </section>
     <Modal
       v-model="addAndEditModal.isShow"
-      :title="$t('button.add')"
+      :title="addAndEditModal.isAdd ? $t('button.add') : $t('button.edit')"
       >
       <div>
         <div>
@@ -36,10 +36,11 @@
             <Option v-for="type in monitorTypeOptions" :key="type.value" :value="type.label">{{type.label}}</Option>
           </Select>
         </div>
-        <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
+        <div v-if="addAndEditModal.isAdd" style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
           <template v-for="(item, index) in addAndEditModal.pathOptions">
             <p :key="index + 5">
               <Button
+                v-if="addAndEditModal.isAdd"
                 @click="deleteItem('path', index)"
                 size="small"
                 style="background-color: #ff9900;border-color: #ff9900;"
@@ -57,6 +58,10 @@
             long
             >{{ $t('button.add') }}{{$t('tableKey.logPath')}}</Button
           >
+        </div>
+        <div v-else style="margin: 8px 0">
+          <span>{{$t('tableKey.path')}}:</span>
+          <Input style="width: 445px" disabled v-model="addAndEditModal.dataConfig.log_path" />
         </div>
         <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
           <template v-for="(item, index) in addAndEditModal.dataConfig.endpoint_rel">
@@ -329,6 +334,7 @@ let tableEle = [
   {title: 'field.type', value: 'monitor_type', display: true},
 ]
 const btn = [
+  {btn_name: 'button.edit', btn_func: 'editF'},
   {btn_name: 'button.remove', btn_func: 'deleteConfirmModal'}
 ]
 
@@ -564,6 +570,29 @@ export default {
       }, {isNeedloading:false})
     },
     // other config
+    editF (rowData) {
+      this.getEndpoint(rowData.monitor_type, 'host')
+      this.cancelAddAndEdit()
+      this.addAndEditModal.isAdd = false
+      this.activeData = rowData
+      this.addAndEditModal.addRow = rowData
+      this.modelTip.value = rowData.guid
+      this.addAndEditModal.dataConfig.guid = rowData.guid
+      this.addAndEditModal.dataConfig.service_group = rowData.service_group
+      this.addAndEditModal.dataConfig.monitor_type = rowData.monitor_type
+      this.addAndEditModal.dataConfig.log_path = rowData.log_path
+      this.addAndEditModal.dataConfig.endpoint_rel = rowData.endpoint_rel
+      this.addAndEditModal.isShow = true
+    },
+    editPost () {
+      this.addAndEditModal.dataConfig.service_group = this.targrtId
+      this.addAndEditModal.dataConfig.log_path = this.addAndEditModal.pathOptions.map(p => p.path)
+      this.$root.$httpRequestEntrance.httpRequestEntrance('PUT', this.$root.apiCenter.logMetricMonitor, this.addAndEditModal.dataConfig, () => {
+        this.$Message.success(this.$t('tips.success'))
+        this.addAndEditModal.isShow = false
+        this.getDetail(this.targrtId)
+      }, {isNeedloading:false})
+    },
     updateReg (reg) {
       this.ruleModelConfig.addRow.json_regular = reg
       this.showRegConfig = false
