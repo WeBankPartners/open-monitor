@@ -88,6 +88,7 @@
                       filterable
                       clearable
                       :label-in-value="true"
+                      @on-change="getPromQl(templateQuery.metric)"
                       @on-open-change="metricSelectOpen(templateQuery.endpoint)"
                     >
                       <Option
@@ -98,7 +99,7 @@
                     </Select>
                   </div>
                 </li>
-                <li>
+                <!-- <li>
                   <div class="condition condition-title">{{$t('field.title')}}</div>
                   <div class="condition">
                     <Input
@@ -107,7 +108,7 @@
                       style="width: 300px"
                     />
                   </div>
-                </li>
+                </li> -->
                 <li>
                   <div class="condition condition-title">{{$t('field.unit')}}</div>
                   <div class="condition">
@@ -141,6 +142,7 @@ export default {
       templateQuery: {
         endpoint: '',
         metric: '',
+        prom_ql: '',
         chartType: '',
         endpoint_type: '',
         app_object: ''
@@ -212,6 +214,10 @@ export default {
   mounted() {
   },
   methods: {
+    getPromQl (metric) {
+      const find = this.metricList.find(m => m.metric === metric)
+      this.templateQuery.prom_ql = find.prom_ql
+    },
     selectEndpoint (val) {
       this.showRecursiveType = false
       this.templateQuery.endpoint_type = ''
@@ -258,6 +264,7 @@ export default {
         params.data.push({
           endpoint: item.endpoint,
           metric: item.metric,
+          prom_ql: item.prom_ql,
           app_object: item.app_object,
           endpoint_type: item.endpoint_type
         })
@@ -326,10 +333,10 @@ export default {
           this.$t("tableKey.s_metric") + this.$t("tips.required")
         )
       } else {
-        let params = { type: this.showRecursiveType ? this.templateQuery.endpoint_type : this.endpointType }
+        let params = { endpointType: this.showRecursiveType ? this.templateQuery.endpoint_type : this.endpointType }
         this.$root.$httpRequestEntrance.httpRequestEntrance(
           'GET',
-          this.$root.apiCenter.metricList.api,
+          this.$root.apiCenter.getMetricByEndpointType,
           params,
           responseData => {
             this.metricList = responseData
@@ -350,6 +357,7 @@ export default {
       this.templateQuery = {
         endpoint: '',
         metric: '',
+        prom_ql: '',
         chartType: this.templateQuery.chartType,
         endpoint_type: '',
         app_object: ''
@@ -376,7 +384,6 @@ export default {
     },
     pp() {
       let query = []
-
       this.chartQueryList.forEach(item => {
         query.push(item)
       })
