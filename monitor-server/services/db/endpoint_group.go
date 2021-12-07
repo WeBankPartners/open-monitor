@@ -84,6 +84,9 @@ func GetGroupEndpointNotify(endpointGroupGuid string) (result []*models.NotifyOb
 }
 
 func UpdateGroupEndpointNotify(endpointGroupGuid string, param []*models.NotifyObj) error {
+	for _,v := range param {
+		v.EndpointGroup = endpointGroupGuid
+	}
 	actions := getNotifyListDeleteAction("", endpointGroupGuid, "")
 	actions = append(actions, getNotifyListInsertAction(param)...)
 	return Transaction(actions)
