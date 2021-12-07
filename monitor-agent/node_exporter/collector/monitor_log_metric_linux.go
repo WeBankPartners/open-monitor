@@ -196,8 +196,13 @@ func (c *logMetricMonitorNeObj) new(input *logMetricMonitorNeObj) {
 	level.Info(monitorLogger).Log("newLogMetricMonitorNeObj", c.Path)
 	c.TargetEndpoint = input.TargetEndpoint
 	c.JsonConfig = []*logMetricJsonNeObj{}
+	var err error
 	for _, jsonObj := range input.JsonConfig {
-		jsonObj.Regexp = regexp.MustCompile(jsonObj.Regular)
+		jsonObj.Regexp,err = regexp.Compile(jsonObj.Regular)
+		if err != nil {
+			level.Error(monitorLogger).Log("newLogMetricMonitorNeObj", fmt.Sprintf("regexpError:%s ", err.Error()))
+			continue
+		}
 		jsonObj.DataChannel = make(chan map[string]interface{}, 10000)
 		for _, metricObj := range jsonObj.MetricConfig {
 			initLogMetricNeObj(metricObj)
@@ -216,7 +221,13 @@ func (c *logMetricMonitorNeObj) update(input *logMetricMonitorNeObj) {
 	c.Lock.Lock()
 	level.Info(monitorLogger).Log("updateLogMetricMonitorNeObj", c.Path)
 	newJsonConfigList := []*logMetricJsonNeObj{}
+	var err error
 	for _, jsonObj := range input.JsonConfig {
+		jsonObj.Regexp,err = regexp.Compile(jsonObj.Regular)
+		if err != nil {
+			level.Error(monitorLogger).Log("newLogMetricMonitorNeObj", fmt.Sprintf("regexpError:%s ", err.Error()))
+			continue
+		}
 		for _, existJson := range c.JsonConfig {
 			if jsonObj.Regular == existJson.Regular {
 				jsonObj.DataChannel = existJson.DataChannel
@@ -226,7 +237,6 @@ func (c *logMetricMonitorNeObj) update(input *logMetricMonitorNeObj) {
 		if jsonObj.DataChannel == nil {
 			jsonObj.DataChannel = make(chan map[string]interface{}, 10000)
 		}
-		jsonObj.Regexp = regexp.MustCompile(jsonObj.Regular)
 		for _, metricObj := range jsonObj.MetricConfig {
 			initLogMetricNeObj(metricObj)
 		}
@@ -249,8 +259,13 @@ func (c *logMetricMonitorNeObj) update(input *logMetricMonitorNeObj) {
 }
 
 func initLogMetricNeObj(metricObj *logMetricNeObj) {
+	var err error
 	if metricObj.ValueRegular != "" {
-		metricObj.RegExp = regexp.MustCompile(metricObj.ValueRegular)
+		metricObj.RegExp,err = regexp.Compile(metricObj.ValueRegular)
+		if err != nil {
+			level.Error(monitorLogger).Log("newLogMetricMonitorNeObj", fmt.Sprintf("regexpError:%s ", err.Error()))
+			metricObj.RegExp,_ = regexp.Compile(".*")
+		}
 		if metricObj.DataChannel == nil {
 			metricObj.DataChannel = make(chan string, 10000)
 		}
