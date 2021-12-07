@@ -136,4 +136,5 @@ type EndpointStrategyObj struct {
 	EndpointGroup string              `json:"endpoint_group"`
 	ServiceGroup  string              `json:"service_group"`
 	Strategy      []*GroupStrategyObj `json:"strategy"`
+	NotifyList    []*NotifyObj        `json:"notify"`
 }

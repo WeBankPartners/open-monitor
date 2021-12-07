@@ -61,6 +61,7 @@ func BusinessMonitorCollector(logger log.Logger) (Collector, error) {
 func (c *businessMonitorCollector) Update(ch chan<- prometheus.Metric) error {
 	businessMonitorMetricLock.RLock()
 	for _, v := range businessMonitorMetrics {
+		level.Info(newLogger).Log("display", fmt.Sprintf("metric:%s agg:%s value:%.3f ", v.Metric, v.Agg, v.Value))
 		ch <- prometheus.MustNewConstMetric(c.businessMonitor,
 			prometheus.GaugeValue,
 			v.Value, v.Metric, v.TagsString, v.Path, v.Agg)
@@ -189,6 +190,7 @@ func (c *businessMonitorObj) start() {
 			}
 		}
 		c.Lock.RLock()
+		level.Info(newLogger).Log("newLine", line.Text)
 		for _, rule := range c.Rules {
 			if rule.RegExp == nil {
 				continue
@@ -222,6 +224,7 @@ func (c *businessMonitorObj) start() {
 			fetchList := custom.RegExp.FindStringSubmatch(line.Text)
 			if len(fetchList) > 1 {
 				if fetchList[1] != "" {
+					level.Info(newLogger).Log("addData", fmt.Sprintf("c:%s content:%s ", custom.Metric, fetchList[1]))
 					custom.DataChannel <- fetchList[1]
 				}
 			}
@@ -432,6 +435,7 @@ type businessCollectorStore struct {
 var BusinessCollectorStore businessCollectorStore
 
 func (c *businessCollectorStore) Save() {
+	saveData := []*businessStoreMonitorObj{}
 	for _, v := range businessMonitorJobs {
 		var newStoreRules []*businessStoreMetricObj
 		for _, vv := range v.Rules {
@@ -441,11 +445,11 @@ func (c *businessCollectorStore) Save() {
 		for _, vv := range v.Custom {
 			newStoreCustoms = append(newStoreCustoms, &businessStoreCustomObj{Metric: vv.Metric, ValueRegular: vv.ValueRegular, AggType: vv.AggType, StringMap: vv.StringMap})
 		}
-		c.Data = append(c.Data, &businessStoreMonitorObj{Path: v.Path, Rules: newStoreRules, Custom: newStoreCustoms})
+		saveData = append(saveData, &businessStoreMonitorObj{Path: v.Path, Rules: newStoreRules, Custom: newStoreCustoms})
 	}
 	var tmpBuffer bytes.Buffer
 	enc := gob.NewEncoder(&tmpBuffer)
-	err := enc.Encode(c.Data)
+	err := enc.Encode(saveData)
 	if err != nil {
 		level.Error(newLogger).Log("msg", fmt.Sprintf("gob encode business monitor error : %v ", err))
 	} else {
@@ -509,6 +513,7 @@ type businessValueObj struct {
 }
 
 func calcBusinessAggData() {
+	level.Info(newLogger).Log("startCalcAggData", fmt.Sprintf("%d", time.Now().Unix()))
 	var newRuleData []*businessRuleMetricObj
 	businessMonitorLock.RLock()
 	for _, v := range businessMonitorJobs {
@@ -553,9 +558,11 @@ func calcBusinessAggData() {
 			if dataLength == 0 {
 				continue
 			}
+			level.Info(newLogger).Log("calcCustom", fmt.Sprintf("dataLength:%d ", dataLength))
 			tmpValueObj := businessValueObj{}
 			for i := 0; i < dataLength; i++ {
 				customFetchString := <-custom.DataChannel
+				level.Info(newLogger).Log("-----calcCustom", fmt.Sprintf("fetchString:%s ", customFetchString))
 				// Try to change value to float64
 				tmpMapData := make(map[string]interface{})
 				tmpMapData[custom.Metric] = customFetchString
@@ -573,6 +580,7 @@ func calcBusinessAggData() {
 				} else if custom.AggType == "count" {
 					tmpMetricObj.Value = tmpValueObj.Count
 				}
+				level.Info(newLogger).Log("calcCustomNewMetric", fmt.Sprintf("metric:%s agg:%s value:%.3f ", tmpMetricObj.Metric, tmpMetricObj.Agg, tmpMetricObj.Value))
 				newRuleData = append(newRuleData, &tmpMetricObj)
 			}
 		}
