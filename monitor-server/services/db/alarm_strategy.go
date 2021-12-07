@@ -52,6 +52,19 @@ func QueryAlarmStrategyByEndpoint(endpoint string) (result []*models.EndpointStr
 	return
 }
 
+func GetAlarmStrategy(strategyGuid string) (result models.AlarmStrategyMetricObj,err error) {
+	var strategyTable []*models.AlarmStrategyMetricObj
+	err = x.SQL("select t1.*,t2.metric as 'metric_name',t2.prom_expr as 'metric_expr',t2.monitor_type as 'metric_type' from alarm_strategy t1 left join metric t2 on t1.metric=t2.guid where t1.guid=?", strategyGuid).Find(&strategyTable)
+	if err != nil {
+		return result,fmt.Errorf("Query alarm_strategy fail,%s ", err.Error())
+	}
+	if len(strategyTable) == 0 {
+		return result,fmt.Errorf("Can not find alarm_strategy with guid:%s ", strategyGuid)
+	}
+	result = *strategyTable[0]
+	return
+}
+
 func CreateAlarmStrategy(param *models.GroupStrategyObj) error {
 	nowTime := time.Now().Format(models.DatetimeFormat)
 	param.Guid = guid.CreateGuid()
@@ -312,4 +325,40 @@ func copyStrategyListNew(inputs []*models.AlarmStrategyMetricObj) (result []*mod
 		result = append(result, &tmpStrategy)
 	}
 	return result
+}
+
+func GetAlarmObj(query *models.AlarmTable) (result models.AlarmTable,err error) {
+	result = models.AlarmTable{}
+	var alarmList []*models.AlarmTable
+	baseSql := "select * from alarm where 1=1 "
+	queryParams := []interface{}{}
+	if query.Id > 0 {
+		baseSql += " and id=? "
+		queryParams = append(queryParams, query.Id)
+	}
+	if query.Endpoint != "" {
+		baseSql += " and endpoint=? "
+		queryParams = append(queryParams, query.Endpoint)
+	}
+	if query.Tags != "" {
+		baseSql += " and endpoint=? "
+		queryParams = append(queryParams, query.Tags)
+	}
+	if query.StrategyId > 0 {
+		baseSql += " and strategy_id=? "
+		queryParams = append(queryParams, query.StrategyId)
+	}
+	if query.AlarmStrategy != "" {
+		baseSql += " and alarm_strategy=? "
+		queryParams = append(queryParams, query.AlarmStrategy)
+	}
+	if query.SMetric != "" {
+		baseSql += " and s_metric=? "
+		queryParams = append(queryParams, query.SMetric)
+	}
+	err = x.SQL(baseSql, queryParams...).Find(&alarmList)
+	if len(alarmList) > 0 {
+		result = *alarmList[0]
+	}
+	return
 }
