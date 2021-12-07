@@ -274,7 +274,7 @@ func InitHttpServer() {
 	r.GET(fmt.Sprintf("%s/logout", urlPrefix), user.Logout)
 	r.GET(fmt.Sprintf("%s/check", urlPrefix), user.HealthCheck)
 	r.GET(fmt.Sprintf("%s/demo", urlPrefix), dashboard.DisplayWatermark)
-	r.POST(fmt.Sprintf("%s/webhook", urlPrefix), alarm.AcceptAlertMsg)
+	r.POST(fmt.Sprintf("%s/webhook", urlPrefix), alarm.AcceptAlert)
 	r.POST(fmt.Sprintf("%s/openapi/alarm/send", urlPrefix), alarm.OpenAlarmApi)
 	entityApi := r.Group(fmt.Sprintf("%s/entities", urlPrefix), user.AuthRequired())
 	{
