@@ -1,22 +1,22 @@
 <template>
   <div class=" ">
     <section v-if="showManagement" style="margin-top: 16px;">
-      <Tag color="blue">{{$t('tableKey.logPath')}}</Tag>
-      <button @click="add" type="button" class="btn btn-sm btn-cancel-f">
+      <Tag color="blue">{{$t('m_log_file')}}</Tag>
+      <button @click="add" type="button" class="btn btn-sm success-btn">
         <i class="fa fa-plus"></i>
         {{$t('button.add')}}
       </button>
       <PageTable :pageConfig="pageConfig">
         <div slot='tableExtend'>
           <div style="margin:8px;border:1px solid #2db7f5">
-            <button @click="singleAddF(pageConfig.table.isExtend.parentData)" type="button" style="margin-top:8px" class="btn btn-sm btn-cancel-f">
+            <button @click="singleAddF(pageConfig.table.isExtend.parentData)" type="button" style="margin-top:8px" class="btn btn-sm success-btn">
               <i class="fa fa-plus"></i>
               {{$t('m_add_json_regular')}}
             </button>
             <extendTable :detailConfig="pageConfig.table.isExtend.detailConfig"></extendTable>
           </div>
           <div style="margin:8px;border:1px solid #19be6b">
-            <button @click="addCustomMetric(pageConfig.table.isCustomMetricExtend.parentData)" type="button" style="margin-top:8px" class="btn btn-sm btn-cancel-f">
+            <button @click="addCustomMetric(pageConfig.table.isCustomMetricExtend.parentData)" type="button" style="margin-top:8px" class="btn btn-sm success-btn">
               <i class="fa fa-plus"></i>
               {{$t('m_add_metric_regular')}}
             </button>
@@ -27,7 +27,7 @@
     </section>
     <Modal
       v-model="addAndEditModal.isShow"
-      :title="$t('button.add')"
+      :title="addAndEditModal.isAdd ? $t('button.add') : $t('button.edit')"
       >
       <div>
         <div>
@@ -36,10 +36,11 @@
             <Option v-for="type in monitorTypeOptions" :key="type.value" :value="type.label">{{type.label}}</Option>
           </Select>
         </div>
-        <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
+        <div v-if="addAndEditModal.isAdd" style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
           <template v-for="(item, index) in addAndEditModal.pathOptions">
             <p :key="index + 5">
               <Button
+                v-if="addAndEditModal.isAdd"
                 @click="deleteItem('path', index)"
                 size="small"
                 style="background-color: #ff9900;border-color: #ff9900;"
@@ -57,6 +58,10 @@
             long
             >{{ $t('button.add') }}{{$t('tableKey.logPath')}}</Button
           >
+        </div>
+        <div v-else style="margin: 8px 0">
+          <span>{{$t('tableKey.path')}}:</span>
+          <Input style="width: 445px" disabled v-model="addAndEditModal.dataConfig.log_path" />
         </div>
         <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
           <template v-for="(item, index) in addAndEditModal.dataConfig.endpoint_rel">
@@ -98,13 +103,15 @@
       >
       <div :style="{ 'max-height': MODALHEIGHT + 'px', overflow: 'auto' }">
         <Form :label-width="100">
-          <FormItem :label="$t('tableKey.regular')">
-            <Input v-model="ruleModelConfig.addRow.json_regular" style="width:100%"/>
-          </FormItem>
           <FormItem :label="$t('tableKey.tags')">
             <Input v-model="ruleModelConfig.addRow.tags" style="width:100%" />
           </FormItem>
+          <FormItem :label="$t('tableKey.regular')">
+            <Input type="textarea" v-model="ruleModelConfig.addRow.json_regular" style="width: 580px"/>
+            <Button v-if="!showRegConfig" @click="showRegConfig = !showRegConfig">{{$t('menu.configuration')}}</Button>
+          </FormItem>
         </Form>
+        <RegTest v-if="showRegConfig" @updateReg="updateReg" @cancelReg="cancelReg"></RegTest>
         <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
           <template v-for="(item, index) in ruleModelConfig.addRow.metric_list">
             <p :key="index + 3">
@@ -117,12 +124,15 @@
               ></Button>
               <Input v-model="item.json_key" style="width: 190px" :placeholder="$t('m_key') + ' e.g:[.*][.*]'" />
               <Input v-model="item.metric" style="width: 190px" :placeholder="$t('field.metric') + ' , e.g:code'" />
-              <Select v-model="item.agg_type" filterable clearable style="width:190px">
+              <Select v-model="item.agg_type" filterable clearable style="width:100px">
                 <Option v-for="agg in ruleModelConfig.aggOption" :value="agg" :key="agg">{{
                   agg
                 }}</Option>
               </Select>
-              <Input v-model="item.display_name" style="width: 160px" :placeholder="$t('tableKey.description')" />
+              <Input v-model="item.display_name" style="width: 160px" :placeholder="$t('field.displayName')" />
+              <Select v-model="item.step" style="width: 100px" :placeholder="$t('m_collection_interval')">
+                <Option v-for="type in stepOptions" :key="type.value" :value="type.value">{{type.label}}</Option>
+              </Select>
             </p>
             <div :key="index + 1" style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;text-align: end;">
               <template v-for="(stringMapItem, stringMapIndex) in item.string_map">
@@ -193,12 +203,24 @@
     <ModalComponent :modelConfig="customMetricsModelConfig">
       <div slot="ruleConfig" class="extentClass">
         <div class="marginbottom params-each">
+          <label class="col-md-2 label-name">{{$t('tableKey.regular')}}:</label>
+          <Input style="width: 70%" type="textarea" v-model="customMetricsModelConfig.addRow.regular" />
+          <Button v-if="!showCustomRegConfig" size="small" @click="showCustomRegConfig = !showCustomRegConfig">{{$t('menu.configuration')}}</Button>
+        </div>
+        <RegTest v-if="showCustomRegConfig" @updateReg="updateCustomReg" @cancelReg="cancelCustomReg"></RegTest>
+        <div class="marginbottom params-each">
           <label class="col-md-2 label-name">{{$t('field.aggType')}}:</label>
           <Select v-model="customMetricsModelConfig.addRow.agg_type" filterable clearable style="width:375px">
             <Option v-for="agg in customMetricsModelConfig.slotConfig.aggOption" :value="agg" :key="agg">{{
               agg
             }}</Option>
           </Select>
+        </div>
+        <div class="marginbottom params-each">
+          <label class="col-md-2 label-name">{{$t('m_collection_interval')}}:</label>
+          <Select v-model="customMetricsModelConfig.addRow.step" style="width: 375px">
+              <Option v-for="type in stepOptions" :key="type.value" :value="type.value">{{type.label}}</Option>
+            </Select>
         </div>
         <div class="marginbottom params-each">
           <div style="margin: 4px 12px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
@@ -235,7 +257,7 @@
     <!-- DB config -->
     <section v-if="showManagement" style="margin-top: 16px;">
       <Tag color="blue">{{$t('m_db')}}</Tag>
-      <button @click="addDb" type="button" class="btn btn-sm btn-cancel-f">
+      <button @click="addDb" type="button" class="btn btn-sm success-btn">
         <i class="fa fa-plus"></i>
         {{$t('button.add')}}
       </button>
@@ -270,7 +292,7 @@
         </Form>
         <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;">
           <template v-for="(item, index) in dbModelConfig.addRow.endpoint_rel">
-            <p :key="index + '3'">
+            <p :key="index + 'S'">
               <Button
                 @click="deleteItem('endpoint_rel', index)"
                 size="small"
@@ -278,11 +300,11 @@
                 type="error"
                 icon="md-close"
               ></Button>
-              <Select v-model="item.source_endpoint" style="width: 265px" :placeholder="$t('m_log_server')">
-                <Option v-for="type in sourceEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
-              </Select>
-              <Select v-model="item.target_endpoint" style="width: 265px" :placeholder="$t('m_business_object')">
+              <Select v-model="item.target_endpoint" style="width: 255px" :placeholder="$t('m_business_object')">
                 <Option v-for="type in targetEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
+              </Select>
+              <Select v-model="item.source_endpoint" style="width: 255px" :placeholder="$t('m_log_server')">
+                <Option v-for="type in sourceEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
               </Select>
             </p>
           </template>
@@ -305,12 +327,14 @@
 </template>
 
 <script>
+import RegTest from '@/components/reg-test'
 import extendTable from '@/components/table-page/extend-table'
 let tableEle = [
   {title: 'tableKey.logPath', value: 'log_path', display: true},
   {title: 'field.type', value: 'monitor_type', display: true},
 ]
 const btn = [
+  {btn_name: 'button.edit', btn_func: 'editF'},
   {btn_name: 'button.remove', btn_func: 'deleteConfirmModal'}
 ]
 
@@ -351,6 +375,7 @@ export default {
               title: '',
               config: [
                 {title: 'tableKey.regular', value: 'json_regular', display: true},
+                {title: 'm_collection_interval', value: 'step', display: true},
                 {title: 'tableKey.tags', value: 'tags', display: true},
                 {title: 'table.action',btn:[
                   {btn_name: 'button.edit', btn_func: 'editRuleItem'},
@@ -372,6 +397,7 @@ export default {
               config: [
                 {title: 'tableKey.regular', value: 'regular', display: true},
                 {title: 'field.metric', value: 'metric', display: true},
+                {title: 'm_collection_interval', value: 'step', display: true},
                 {title: 'field.aggType', value: 'agg_type', display: true},
                 {title: 'table.action',btn:[
                   {btn_name: 'button.edit', btn_func: 'editCustomMetricItem'},
@@ -403,6 +429,7 @@ export default {
         {label: this.$t('m_regular_match'), value: 1},
         {label: this.$t('m_irregular_matching'), value: 0}
       ],
+      showRegConfig: false,
       ruleModelConfig: {
         isShow: false,
         isAdd: true,
@@ -418,6 +445,7 @@ export default {
       selectedIndex: null,
       isShowWarningDelete: false,
       deleteType: '',
+      showCustomRegConfig: false,
       customMetricsModelConfig: {
         modalId: 'custom_metrics',
         isAdd: true,
@@ -426,14 +454,15 @@ export default {
         saveFunc: 'saveCustomMetric',
         config: [
           {label: 'field.metric', value: 'metric', placeholder: '', disabled: false, type: 'text'},
-          {label: 'tableKey.description', value: 'display_name', placeholder: '', disabled: false, type: 'text'},
-          {label: 'tableKey.regular', value: 'regular', placeholder: 'tips.required', v_validate: 'required:true', disabled: false, type: 'text'},
+          {label: 'field.displayName', value: 'display_name', placeholder: '', disabled: false, type: 'text'},
+          // {label: 'tableKey.regular', value: 'regular', placeholder: 'tips.required', v_validate: 'required:true', disabled: false, type: 'text'},
           {name:'ruleConfig',type:'slot'}
         ],
         addRow: { // [通用]-保存用户新增、编辑时数据
           log_metric_monitor: '',
           display_name: '',
           agg_type: 'min',
+          step: 10,
           metric: null,
           regular: '',
           string_map: []
@@ -478,7 +507,8 @@ export default {
         {label: 'process', value: 'process'},
         {label: 'java', value: 'java'},
         {label: 'nginx', value: 'nginx'},
-        {label: 'http', value: 'http'}
+        {label: 'http', value: 'http'},
+        {label: 'mysql', value: 'mysql'}
       ],
       stepOptions: [
         {label: '10S', value: 10},
@@ -540,6 +570,43 @@ export default {
       }, {isNeedloading:false})
     },
     // other config
+    editF (rowData) {
+      this.getEndpoint(rowData.monitor_type, 'host')
+      this.cancelAddAndEdit()
+      this.addAndEditModal.isAdd = false
+      this.activeData = rowData
+      this.addAndEditModal.addRow = rowData
+      this.modelTip.value = rowData.guid
+      this.addAndEditModal.dataConfig.guid = rowData.guid
+      this.addAndEditModal.dataConfig.service_group = rowData.service_group
+      this.addAndEditModal.dataConfig.monitor_type = rowData.monitor_type
+      this.addAndEditModal.dataConfig.log_path = rowData.log_path
+      this.addAndEditModal.dataConfig.endpoint_rel = rowData.endpoint_rel
+      this.addAndEditModal.isShow = true
+    },
+    editPost () {
+      this.addAndEditModal.dataConfig.service_group = this.targrtId
+      this.addAndEditModal.dataConfig.log_path = this.addAndEditModal.pathOptions.map(p => p.path)
+      this.$root.$httpRequestEntrance.httpRequestEntrance('PUT', this.$root.apiCenter.logMetricMonitor, this.addAndEditModal.dataConfig, () => {
+        this.$Message.success(this.$t('tips.success'))
+        this.addAndEditModal.isShow = false
+        this.getDetail(this.targrtId)
+      }, {isNeedloading:false})
+    },
+    updateReg (reg) {
+      this.ruleModelConfig.addRow.json_regular = reg
+      this.showRegConfig = false
+    },
+    cancelReg () {
+      this.showRegConfig = false
+    },
+    updateCustomReg (reg) {
+      this.customMetricsModelConfig.addRow.regular = reg
+      this.showCustomRegConfig = false
+    },
+    cancelCustomReg () {
+      this.showCustomRegConfig = false
+    },
     addCustomMetricEmpty (type) {
       if (!this.customMetricsModelConfig.addRow[type]) {
         this.customMetricsModelConfig.addRow[type] = []
@@ -580,6 +647,7 @@ export default {
       this.deleteType = 'custom_metrics'
     },
     editRuleItem (rowData) {
+      this.cancelReg()
       this.ruleModelConfig.isAdd = false
       this.ruleModelConfig.addRow = JSON.parse(JSON.stringify(rowData))
       this.ruleModelConfig.isShow = true
@@ -640,6 +708,7 @@ export default {
       })
     },
     singleAddF (rowData) {
+      this.cancelReg()
       this.cancelRule()
       this.activeData = rowData
       this.ruleModelConfig.isAdd = true
@@ -731,6 +800,7 @@ export default {
             display_name: '',
             metric: '',
             agg_type: 'avg',
+            step: 10,
             string_map: []
           })
           break
@@ -792,7 +862,8 @@ export default {
     }
   },
   components: {
-    extendTable
+    extendTable,
+    RegTest
   },
 }
 </script>
@@ -800,5 +871,10 @@ export default {
 <style>
 .ivu-form-item {
   margin-bottom: 4px;
+}
+.success-btn {
+  color: #fff;
+  background-color: #19be6b;
+  border-color: #19be6b;
 }
 </style>
