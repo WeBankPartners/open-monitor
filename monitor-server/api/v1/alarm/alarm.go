@@ -16,207 +16,236 @@ import (
 	"time"
 )
 
-func AcceptAlertMsg(c *gin.Context)  {
+func AcceptAlert(c *gin.Context)  {
 	var param m.AlterManagerRespObj
-	if err := c.ShouldBindJSON(&param); err==nil {
-		if len(param.Alerts) == 0 {
-			log.Logger.Warn("Accept alert is null")
-			mid.ReturnSuccess(c)
-		}
-		log.Logger.Debug("accept", log.JsonObj("body", param))
-		var alarms []*m.AlarmHandleObj
-		for _,v := range param.Alerts {
-			if v.Labels["instance"] == "127.0.0.1:8300" {
-				continue
-			}
-			var tmpValue float64
-			var tmpAlarms m.AlarmProblemList
-			var tmpTags  string
-			var sortTagList m.DefaultSortList
-			tmpAlarm := m.AlarmHandleObj{}
-			tmpAlarm.Status = v.Status
-			for labelKey,labelValue := range v.Labels {
-				sortTagList = append(sortTagList, &m.DefaultSortObj{Key:labelKey, Value:labelValue})
-			}
-			sort.Sort(sortTagList)
-			var guidTagString,eGuidTagString string
-			for _,label := range sortTagList {
-				if label.Key == "strategy_id" || label.Key == "job" || label.Key == "instance" || label.Key == "alertname" {
-					continue
-				}
-				if label.Key == "guid" {
-					guidTagString = label.Value
-				}
-				if label.Key == "e_guid" {
-					eGuidTagString = label.Value
-				}
-				tmpLabelValue := label.Value
-				tmpTags += fmt.Sprintf("%s:%s^", label.Key, tmpLabelValue)
-			}
-			if guidTagString != "" && eGuidTagString != "" {
-				if guidTagString != eGuidTagString {
-					log.Logger.Warn("EGuid diff with guid,ignore", log.String("guid", guidTagString), log.String("e_guid", eGuidTagString))
-					continue
-				}
-			}
-			if tmpTags != "" {
-				tmpTags = tmpTags[:len(tmpTags)-1]
-			}
-			tmpAlarm.Tags = tmpTags
-			if v.Labels["strategy_id"] == "up" {
-				// base strategy
-				tmpAlarm.SMetric = "up"
-				tmpAlarm.SExpr = "up"
-				tmpAlarm.SCond = "<1"
-				tmpAlarm.SLast = "30s"
-				tmpAlarm.SPriority = "high"
-				tmpAlarm.Content = v.Annotations["description"]
-				tmpSummaryMsg := strings.Split(v.Annotations["summary"], "__")
-				if len(tmpSummaryMsg) != 4 {
-					log.Logger.Warn("Summary illegal", log.String("summary", v.Annotations["summary"]))
-					continue
-				}
-				endpointObj := m.EndpointTable{Address: tmpSummaryMsg[0], AddressAgent: tmpSummaryMsg[0]}
-				db.GetEndpoint(&endpointObj)
-				if endpointObj.Id <= 0 || endpointObj.StopAlarm == 1 {
-					log.Logger.Debug("Up alarm break,endpoint not exists or stop alarm", log.String("endpoint", endpointObj.Guid))
-					continue
-				}
-				if !db.CheckEndpointActiveAlert(endpointObj.Guid) {
-					log.Logger.Info("Check endpoint is in maintain window,continue", log.String("endpoint", endpointObj.Guid))
-					continue
-				}
-				if endpointObj.ExportType != "host" {
-					log.Logger.Debug("Up alarm break,endpoint export type illegal", log.String("exportType", endpointObj.ExportType))
-					continue
-				}
-				tmpAlarm.Endpoint = endpointObj.Guid
-				tmpAlarm.EndpointTags = endpointObj.Tags
-				tmpValue, _ = strconv.ParseFloat(tmpSummaryMsg[3], 64)
-				tmpValue, _ = strconv.ParseFloat(fmt.Sprintf("%.3f", tmpValue), 64)
-				tmpAlarmQuery := m.AlarmTable{Endpoint: tmpAlarm.Endpoint, SMetric: tmpAlarm.SMetric}
-				_, tmpAlarms = db.GetAlarms(tmpAlarmQuery, 1, false, false)
-			}else {
-				// config strategy
-				tmpAlarm.StrategyId, _ = strconv.Atoi(v.Labels["strategy_id"])
-				if tmpAlarm.StrategyId <= 0 {
-					log.Logger.Warn("Alert's strategy id is null")
-					continue
-				}
-				strategyList,getStrategyErr := db.GetStrategyList(tmpAlarm.StrategyId,0)
-				if getStrategyErr != nil || len(strategyList) == 0 {
-					log.Logger.Warn("Alert's strategy fetch error", log.Int("strategy_id", tmpAlarm.StrategyId), log.Error(getStrategyErr))
-					continue
-				}
-				strategyObj := strategyList[0]
-				tmpAlarm.SMetric = strategyObj.Metric
-				tmpAlarm.SExpr = strategyObj.Expr
-				tmpAlarm.SCond = strategyObj.Cond
-				tmpAlarm.SLast = strategyObj.Last
-				tmpAlarm.SPriority = strategyObj.Priority
-				tmpAlarm.Content = v.Annotations["description"]
-				tmpAlarm.NotifyEnable = strategyObj.NotifyEnable
-				tmpAlarm.NotifyDelay = strategyObj.NotifyDelay
-				tmpSummaryMsg := strings.Split(v.Annotations["summary"], "__")
-				var tmpEndpointIp string
-				if len(tmpSummaryMsg) == 4 {
-					var endpointObj m.EndpointTable
-					if v.Labels["guid"] != "" {
-						endpointObj = m.EndpointTable{Guid:v.Labels["guid"]}
-					}else {
-						endpointObj = m.EndpointTable{Address: tmpSummaryMsg[0], AddressAgent: tmpSummaryMsg[0]}
-					}
-					db.GetEndpoint(&endpointObj)
-					if endpointObj.Id > 0 {
-						// get real endpoint
-						isRealFlag,newEndpointObj := db.GetAlarmRealEndpoint(endpointObj.Id, strategyObj.Id, endpointObj.ExportType, tmpAlarm.SExpr)
-						if !isRealFlag {
-							endpointObj = newEndpointObj
-						}
-						tmpAlarm.Endpoint = endpointObj.Guid
-						tmpAlarm.EndpointTags = endpointObj.Tags
-						tmpEndpointIp = endpointObj.Ip
-						if endpointObj.StopAlarm == 1 {
-							continue
-						}
-						if !db.CheckEndpointActiveAlert(endpointObj.Guid) {
-							log.Logger.Info("Check endpoint is in maintain window,continue", log.String("endpoint", endpointObj.Guid))
-							continue
-						}
-					}
-					tmpValue, _ = strconv.ParseFloat(tmpSummaryMsg[3], 64)
-					tmpValue, _ = strconv.ParseFloat(fmt.Sprintf("%.3f", tmpValue), 64)
-				}
-				if tmpAlarm.Endpoint == "" {
-					log.Logger.Warn("Can't find the endpoint")
-					continue
-				}
-				if strings.Contains(tmpAlarm.SMetric, "ping_alive") || strings.Contains(tmpAlarm.SMetric, "telnet_alive") || strings.Contains(tmpAlarm.SMetric, "http_alive") {
-					if tmpEndpointIp == m.Config().Peer.InstanceHostIp {
-						log.Logger.Info("Ignore check alive alarm,is self instance host", log.String("ip", tmpEndpointIp))
-						continue
-					}
-					if tmpValue != 0 && tmpValue != 1 && tmpValue != 2 {
-						continue
-					}
-				}
-				tmpAlarmQuery := m.AlarmTable{Endpoint: tmpAlarm.Endpoint, StrategyId: tmpAlarm.StrategyId, Tags:tmpAlarm.Tags}
-				_, tmpAlarms = db.GetAlarms(tmpAlarmQuery, 1, false, false)
-			}
-			tmpOperation := "add"
-			if len(tmpAlarms) > 0 {
-				if tmpAlarms[0].Status == "firing" {
-					if v.Status == "firing" {
-						tmpOperation = "same"
-					}else{
-						tmpOperation = "resolve"
-					}
-				}else if tmpAlarms[0].Status == "ok" {
-					if v.Status == "resolved" {
-						tmpOperation = "same"
-					}
-				}else if tmpAlarms[0].Status == "closed" {
-					if v.Status == "resolved" {
-						tmpOperation = "same"
-					}
-				}
-			}
-			if tmpOperation == "same" {
-				log.Logger.Debug("Accept alert msg ,firing repeat,do nothing!")
-				continue
-			}
-			if tmpOperation == "add" && v.Status == "resolved" {
-				log.Logger.Debug("Accept alert msg ,cat not add resolved,do nothing!")
-				continue
-			}
-			if tmpOperation == "resolve" {
-				tmpAlarm.Id = tmpAlarms[0].Id
-				tmpAlarm.Endpoint = tmpAlarms[0].Endpoint
-				tmpAlarm.StrategyId = tmpAlarms[0].StrategyId
-				tmpAlarm.Status = "ok"
-				tmpAlarm.EndValue = tmpValue
-				tmpAlarm.End = time.Now()
-			}else if tmpOperation == "add" {
-				tmpAlarm.StartValue = tmpValue
-				tmpAlarm.Start = time.Now()
-			}
-			log.Logger.Debug("Add alarm", log.String("operation", tmpOperation), log.JsonObj("alarm", tmpAlarm))
-			alarms = append(alarms, &tmpAlarm)
-		}
-		alarms = db.UpdateAlarms(alarms)
-		var treeventSendObj m.EventTreeventNotifyDto
-		for _,v := range alarms {
-			treeventSendObj.Data = append(treeventSendObj.Data, &m.EventTreeventNodeParam{EventId: fmt.Sprintf("%d",v.Id),Status: v.Status,Endpoint: v.Endpoint,StartUnix: v.Start.Unix(),Message: fmt.Sprintf("%s \n %s \n %.3f %s", v.Endpoint,v.SMetric,v.StartValue,v.SCond)})
-			if v.NotifyEnable == 0 {
-				continue
-			}
-			go db.NotifyAlarm(v)
-		}
-		go db.NotifyTreevent(treeventSendObj)
-		mid.ReturnSuccess(c)
-	}else{
+	if err := c.ShouldBindJSON(&param); err!=nil {
 		mid.ReturnValidateError(c, err.Error())
+		return
 	}
+	if len(param.Alerts) == 0 {
+		mid.ReturnSuccess(c)
+		return
+	}
+	log.Logger.Debug("accept", log.JsonObj("body", param))
+	nowTime := time.Now()
+	var alarms []*m.AlarmHandleObj
+	for _,v := range param.Alerts {
+		tmpAlarm,tmpErr := buildNewAlarm(&v, nowTime)
+		if tmpErr != nil {
+			log.Logger.Warn("Accept alert handle fail", log.Error(tmpErr))
+			continue
+		}
+		alarms = append(alarms, &tmpAlarm)
+	}
+	alarms = db.UpdateAlarms(alarms)
+	var treeventSendObj m.EventTreeventNotifyDto
+	for _,v := range alarms {
+		treeventSendObj.Data = append(treeventSendObj.Data, &m.EventTreeventNodeParam{EventId: fmt.Sprintf("%d",v.Id),Status: v.Status,Endpoint: v.Endpoint,StartUnix: v.Start.Unix(),Message: fmt.Sprintf("%s \n %s \n %.3f %s", v.Endpoint,v.SMetric,v.StartValue,v.SCond)})
+		if v.NotifyEnable == 0 {
+			continue
+		}
+		go db.NotifyAlarm(v)
+	}
+	go db.NotifyTreevent(treeventSendObj)
+	mid.ReturnSuccess(c)
+}
+
+func buildNewAlarm(param *m.AMRespAlert,nowTime time.Time) (alarm m.AlarmHandleObj,err error) {
+	alarm = m.AlarmHandleObj{}
+	alarm.Tags,err = getNewAlarmTags(param)
+	if err != nil {
+		return
+	}
+	summaryList := strings.Split(param.Annotations["summary"], "__")
+	if len(summaryList) <= 3 {
+		return alarm,fmt.Errorf("summary:%s illegal ", param.Annotations["summary"])
+	}
+	var endpointObj m.EndpointNewTable
+	endpointObj,err = getNewAlarmEndpoint(param)
+	if err != nil {
+		return
+	}
+	alarm.Endpoint = endpointObj.Guid
+	if !db.CheckEndpointActiveAlert(endpointObj.Guid) {
+		err = fmt.Errorf("check endpoint:%s is in maintain window,continue ", endpointObj.Guid)
+		return
+	}
+	var alertValue float64
+	alertValue, _ = strconv.ParseFloat(summaryList[len(summaryList)-1], 64)
+	alertValue, _ = strconv.ParseFloat(fmt.Sprintf("%.3f", alertValue), 64)
+	if param.Labels["strategy_id"] == "" && param.Labels["strategy_guid"] == "" {
+		return alarm,fmt.Errorf("labels strategy_id and strategy_guid is empty ")
+	}
+	existAlarm := m.AlarmTable{}
+	if param.Labels["strategy_guid"] != "" {
+		existAlarm,err = getNewAlarmWithStrategyGuid(&alarm, param, &endpointObj)
+	}else if param.Labels["strategy_id"] == "up" {
+		if endpointObj.MonitorType != "host" {
+			return alarm,fmt.Errorf("Up alarm break,endpoint:%s export type illegal ", endpointObj.Guid)
+		}
+		existAlarm,err = getNewAlarmWithUpCase(&alarm, param)
+	}else{
+		existAlarm,err = getNewAlarmWithStrategyId(&alarm, param, &endpointObj)
+	}
+	operation := "add"
+	if existAlarm.Status != "" {
+		if existAlarm.Status == "firing" {
+			if alarm.Status == "firing" {
+				operation = "same"
+			}else{
+				operation = "resolve"
+			}
+		}else if existAlarm.Status == "ok" {
+			if alarm.Status == "resolved" {
+				operation = "same"
+			}
+		}else if existAlarm.Status == "closed" {
+			if alarm.Status == "resolved" {
+				operation = "same"
+			}
+		}
+	}
+	if operation == "same" {
+		return alarm,fmt.Errorf("Accept alert msg ,firing repeat,do nothing! ")
+	}
+	if operation == "add" && param.Status == "resolved" {
+		return alarm,fmt.Errorf("Accept alert msg ,cat not add resolved,do nothing! ")
+	}
+	if operation == "resolve" {
+		alarm.Id = existAlarm.Id
+		alarm.AlarmStrategy = existAlarm.AlarmStrategy
+		alarm.StrategyId = existAlarm.StrategyId
+		alarm.Status = "ok"
+		alarm.EndValue = alertValue
+		alarm.End = nowTime
+	}else if operation == "add" {
+		alarm.StartValue = alertValue
+		alarm.Start = nowTime
+	}
+	return
+}
+
+func getNewAlarmEndpoint(param *m.AMRespAlert) (result m.EndpointNewTable,err error) {
+	result = m.EndpointNewTable{}
+	if param.Labels["t_endpoint"] != "" {
+		result.Guid = param.Labels["t_endpoint"]
+	}else if param.Labels["e_guid"] != "" {
+		result.Guid = param.Labels["e_guid"]
+	}else if param.Labels["instance"] != "" {
+		result.AgentAddress = param.Labels["instance"]
+	}else{
+		return result,fmt.Errorf("alert labels have no endpoint message ")
+	}
+	result,err = db.GetEndpointNew(&result)
+	return
+}
+
+func getNewAlarmTags(param *m.AMRespAlert) (tagString string,err error) {
+	var sortTagList m.DefaultSortList
+	for labelKey,labelValue := range param.Labels {
+		sortTagList = append(sortTagList, &m.DefaultSortObj{Key:labelKey, Value:labelValue})
+	}
+	sort.Sort(sortTagList)
+	var guidTagString,eGuidTagString string
+	for _,label := range sortTagList {
+		if label.Key == "strategy_id" || label.Key == "job" || label.Key == "instance" || label.Key == "alertname" || label.Key == "strategy_guid" {
+			continue
+		}
+		if label.Key == "guid" {
+			guidTagString = label.Value
+		}
+		if label.Key == "e_guid" {
+			eGuidTagString = label.Value
+		}
+		tmpLabelValue := label.Value
+		tagString += fmt.Sprintf("%s:%s^", label.Key, tmpLabelValue)
+	}
+	if guidTagString != "" && eGuidTagString != "" {
+		if guidTagString != eGuidTagString {
+			log.Logger.Warn("EGuid diff with guid,ignore", log.String("guid", guidTagString), log.String("e_guid", eGuidTagString))
+			err = fmt.Errorf("EGuid diff with guid,ignore ")
+			return
+		}
+	}
+	if tagString != "" {
+		tagString = tagString[:len(tagString)-1]
+	}
+	return
+}
+
+func getNewAlarmWithStrategyGuid(alarm *m.AlarmHandleObj,param *m.AMRespAlert,endpointObj *m.EndpointNewTable) (existAlarm m.AlarmTable,err error) {
+	existAlarm = m.AlarmTable{}
+	strategyObj,queryErr := db.GetAlarmStrategy(param.Labels["strategy_guid"])
+	if queryErr != nil {
+		err = queryErr
+		return
+	}
+	alarm.AlarmStrategy = strategyObj.Guid
+	alarm.SMetric = strategyObj.MetricName
+	alarm.SExpr = strategyObj.MetricExpr
+	alarm.SCond = strategyObj.Condition
+	alarm.SLast = strategyObj.Last
+	alarm.SPriority = strategyObj.Priority
+	alarm.Content = param.Annotations["description"]
+	alarm.NotifyEnable = strategyObj.NotifyEnable
+	alarm.NotifyDelay = strategyObj.NotifyDelaySecond
+	if strings.Contains(alarm.SMetric, "ping_alive") || strings.Contains(alarm.SMetric, "telnet_alive") || strings.Contains(alarm.SMetric, "http_alive") {
+		if endpointObj.Ip == m.Config().Peer.InstanceHostIp {
+			err = fmt.Errorf("Ignore check alive alarm,is self instance host,ip:%s ", endpointObj.Ip)
+			return
+		}
+	}
+	existAlarmQuery := m.AlarmTable{Endpoint: alarm.Endpoint, Tags:alarm.Tags, AlarmStrategy: alarm.AlarmStrategy}
+	existAlarm,_ = db.GetAlarmObj(&existAlarmQuery)
+	return
+}
+
+func getNewAlarmWithStrategyId(alarm *m.AlarmHandleObj,param *m.AMRespAlert,endpointObj *m.EndpointNewTable) (existAlarm m.AlarmTable,err error) {
+	existAlarm = m.AlarmTable{}
+	alarm.StrategyId, _ = strconv.Atoi(param.Labels["strategy_id"])
+	if alarm.StrategyId <= 0 {
+		err = fmt.Errorf("Alert's strategy id is null ")
+		return
+	}
+	strategyList,getStrategyErr := db.GetStrategyList(alarm.StrategyId,0)
+	if getStrategyErr != nil {
+		err = fmt.Errorf("Alert's strategy:%d fetch error:%s ", alarm.StrategyId, getStrategyErr.Error())
+		return
+	}
+	if len(strategyList) == 0 {
+		err = fmt.Errorf("Alert's strategy:%d can not find ", alarm.StrategyId)
+		return
+	}
+	strategyObj := strategyList[0]
+	alarm.SMetric = strategyObj.Metric
+	alarm.SExpr = strategyObj.Expr
+	alarm.SCond = strategyObj.Cond
+	alarm.SLast = strategyObj.Last
+	alarm.SPriority = strategyObj.Priority
+	alarm.Content = param.Annotations["description"]
+	alarm.NotifyEnable = strategyObj.NotifyEnable
+	alarm.NotifyDelay = strategyObj.NotifyDelay
+	if strings.Contains(alarm.SMetric, "ping_alive") || strings.Contains(alarm.SMetric, "telnet_alive") || strings.Contains(alarm.SMetric, "http_alive") {
+		if endpointObj.Ip == m.Config().Peer.InstanceHostIp {
+			err = fmt.Errorf("Ignore check alive alarm,is self instance host,ip:%s ", endpointObj.Ip)
+			return
+		}
+	}
+	existAlarmQuery := m.AlarmTable{Endpoint: alarm.Endpoint, StrategyId: alarm.StrategyId, Tags:alarm.Tags}
+	existAlarm,_ = db.GetAlarmObj(&existAlarmQuery)
+	return
+}
+
+func getNewAlarmWithUpCase(alarm *m.AlarmHandleObj,param *m.AMRespAlert) (existAlarm m.AlarmTable,err error) {
+	alarm.SMetric = "up"
+	alarm.SExpr = "up"
+	alarm.SCond = "<1"
+	alarm.SLast = "30s"
+	alarm.SPriority = "high"
+	alarm.Content = param.Annotations["description"]
+	existAlarmQuery := m.AlarmTable{Endpoint: alarm.Endpoint, SMetric: alarm.SMetric}
+	existAlarm,_ = db.GetAlarmObj(&existAlarmQuery)
+	return
 }
 
 func GetHistoryAlarm(c *gin.Context)  {
