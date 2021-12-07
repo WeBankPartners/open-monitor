@@ -22,7 +22,7 @@ func QueryAlarmStrategy(c *gin.Context) {
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		} else {
-			middleware.ReturnSuccessData(c, []*models.EndpointStrategyObj{{Strategy: result,EndpointGroup: guid}})
+			middleware.ReturnSuccessData(c, result)
 		}
 	}
 }
@@ -102,4 +102,13 @@ func ListStrategyQueryOptions(c *gin.Context) {
 		v.OptionTypeName = v.OptionType
 	}
 	middleware.ReturnSuccessData(c, data)
+}
+
+func ListCallbackEvent(c *gin.Context)  {
+	eventList,err := db.GetCoreEventList()
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+	}else{
+		middleware.ReturnSuccessData(c, eventList.Data)
+	}
 }

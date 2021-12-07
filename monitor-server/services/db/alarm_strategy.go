@@ -10,8 +10,9 @@ import (
 	"time"
 )
 
-func QueryAlarmStrategyByGroup(endpointGroup string) (result []*models.GroupStrategyObj, err error) {
-	result = []*models.GroupStrategyObj{}
+func QueryAlarmStrategyByGroup(endpointGroup string) (result []*models.EndpointStrategyObj, err error) {
+	result = []*models.EndpointStrategyObj{}
+	var strategy []*models.GroupStrategyObj
 	var alarmStrategyTable []*models.AlarmStrategyMetricObj
 	err = x.SQL("select t1.*,t2.metric as 'metric_name' from alarm_strategy t1 left join metric t2 on t1.metric=t2.guid where t1.endpoint_group=?", endpointGroup).Find(&alarmStrategyTable)
 	if err != nil {
@@ -20,8 +21,15 @@ func QueryAlarmStrategyByGroup(endpointGroup string) (result []*models.GroupStra
 	for _, v := range alarmStrategyTable {
 		tmpStrategyObj := models.GroupStrategyObj{Guid: v.Guid, EndpointGroup: v.EndpointGroup, Metric: v.Metric, MetricName: v.MetricName, Condition: v.Condition, Last: v.Last, Priority: v.Priority, Content: v.Content, NotifyEnable: v.NotifyEnable, NotifyDelaySecond: v.NotifyDelaySecond}
 		tmpStrategyObj.NotifyList = getNotifyList(v.Guid, "", "")
-		result = append(result, &tmpStrategyObj)
+		strategy = append(strategy, &tmpStrategyObj)
 	}
+	resultObj := models.EndpointStrategyObj{EndpointGroup: endpointGroup, Strategy: strategy}
+	notify,tmpErr := GetGroupEndpointNotify(endpointGroup)
+	if tmpErr != nil {
+		return result,tmpErr
+	}
+	resultObj.NotifyList = notify
+	result = append(result, &resultObj)
 	return
 }
 
@@ -33,13 +41,13 @@ func QueryAlarmStrategyByEndpoint(endpoint string) (result []*models.EndpointStr
 		return
 	}
 	for _, v := range endpointGroupTable {
-		groupStrategy, tmpErr := QueryAlarmStrategyByGroup(v.Guid)
-		if tmpErr != nil {
+		tmpEndpointStrategyList, tmpErr := QueryAlarmStrategyByGroup(v.Guid)
+		if tmpErr != nil || len(tmpEndpointStrategyList) == 0 {
 			err = tmpErr
 			break
 		}
-		tmpEndpointStrategyObj := models.EndpointStrategyObj{EndpointGroup: v.Guid, ServiceGroup: v.ServiceGroup, Strategy: groupStrategy}
-		result = append(result, &tmpEndpointStrategyObj)
+		tmpEndpointStrategyList[0].ServiceGroup = v.ServiceGroup
+		result = append(result, tmpEndpointStrategyList[0])
 	}
 	return
 }
