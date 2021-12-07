@@ -125,6 +125,9 @@ func SendConfigToDbManager() error {
 	var postData []*m.DbMonitorTaskObj
 	for _,v := range queryData {
 		tmpAddress := strings.Split(v.InstanceAddress, ":")
+		if len(tmpAddress) < 2 {
+			continue
+		}
 		postData = append(postData, &m.DbMonitorTaskObj{DbType:"mysql",Name:v.Name,Endpoint:v.EndpointGuid,Sql:v.Sql,User:v.User,Password:v.Password,Server:tmpAddress[0],Port:tmpAddress[1]})
 	}
 	postDataByte,_ := json.Marshal(postData)
