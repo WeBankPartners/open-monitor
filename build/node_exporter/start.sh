@@ -11,7 +11,20 @@ rm -f /usr/local/monitor/host/VERSION
 /bin/cp -f $package_path/* /usr/local/monitor/$exporter_type/
 cd /usr/local/monitor/$exporter_type/
 rm -f start.sh
-./control restart
+./control stop
+cleanprocess='yes'
+if [ -f /usr/local/monitor/host/VERSION ]
+then
+  if [ "`cat /usr/local/monitor/host/VERSION | grep v1.11.3.5`" == "v1.11.3.5" ]
+  then
+    cleanprocess='no'
+  fi
+fi
+if [ "$cleanprocess" == "yes" ]
+then
+  rm -f /usr/local/monitor/host/data/process_cache.data
+fi
+./control start
 for i in `seq 1 60`
 do
   if [ "`netstat -lntp|grep ':9100'|wc -l`" = "1" ]
