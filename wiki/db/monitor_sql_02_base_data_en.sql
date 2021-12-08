@@ -538,4 +538,9 @@ CREATE TABLE `sys_parameter` (
   `param_value` text
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 alter table alarm_strategy drop foreign key strategy_metric;
+insert into sys_parameter(guid,param_key,param_value) value ('metric_template_01','metric_template','{"prom_ql":"$a","param":"$a"}');
+insert into sys_parameter(guid,param_key,param_value) value ('metric_template_02','metric_template','{"prom_ql":"100*(sum($a)/(sum($b) > 0) or vector(0))","param":"$a,$b"}');
+insert into sys_parameter(guid,param_key,param_value) value ('metric_template_03','metric_template','{"prom_ql":"100*(1-(sum($a)/(sum($b) > 0) or vector(0)))","param":"$a,$b"}');
+insert into sys_parameter(guid,param_key,param_value) value ('metric_template_04','metric_template','{"prom_ql":"100*(sum($a)/((sum($a)+sum($b)) > 0) or vector(0))","param":"$a,$b"}');
+insert into sys_parameter(guid,param_key,param_value) value ('metric_template_05','metric_template','{"prom_ql":"100*((sum($a)-sum($b))/(sum($a) > 0) or vector(0))","param":"$a,$b"}');
 #@v1.13.0.6-end@;
