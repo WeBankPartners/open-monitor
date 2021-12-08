@@ -530,3 +530,11 @@ insert into metric(guid,metric,monitor_type,prom_expr,tag_owner) select t1.* fro
 insert into alarm_strategy select CONCAT('old_',t1.id),t3.name,t4.guid ,t1.cond,t1.`last`,t1.priority,t1.content,t1.notify_enable,t1.notify_delay,'' as update_time from strategy t1 left join tpl t2 on t1.tpl_id=t2.id left join grp t3 on t2.grp_id=t3.id left join metric t4 on (t1.metric=t4.metric and t3.endpoint_type=t4.monitor_type) where t2.grp_id>0;
 insert into endpoint_group_rel select concat(t1.endpoint_id,'__',t1.grp_id),t2.guid,t3.name from grp_endpoint t1 left join endpoint t2 on t1.endpoint_id=t2.id left join grp t3 on t1.grp_id=t3.id;
 #@v1.13.0.2-end@;
+
+#@v1.13.0.6-begin@;
+CREATE TABLE `sys_parameter` (
+  `guid` varchar(64) NOT NULL PRIMARY KEY,
+  `param_key` varchar(64) NOT NULL,
+  `param_value` text
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+#@v1.13.0.6-end@;
