@@ -499,7 +499,7 @@ export default {
       params.data = [{
         endpoint: find.guid,
         prom_ql: this.metricConfigData.prom_ql,
-        metric: this.metricConfigData.metric
+        metric: this.metricConfigData.prom_ql === '' ? this.metricConfigData.metric : ''
       }]
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.metricConfigView.api, params, responseData => {
         const chartConfig = {eye: false,clear:true, zoomCallback: true}
