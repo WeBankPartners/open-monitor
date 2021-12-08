@@ -39,3 +39,12 @@ func ListMetric(c *gin.Context)  {
 		middleware.ReturnSuccessData(c, result)
 	}
 }
+
+func GetSysMetricTemplate(c *gin.Context)  {
+	result,err := db.GetSysMetricTemplateConfig()
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+	}else{
+		middleware.ReturnSuccessData(c, result)
+	}
+}
