@@ -301,7 +301,6 @@ func SyncCoreRole()  {
 	}
 	b,_ := ioutil.ReadAll(res.Body)
 	defer res.Body.Close()
-	log.Logger.Info("Get core role response", log.String("body", string(b)))
 	var result m.CoreRoleDto
 	err = json.Unmarshal(b, &result)
 	if err != nil {
