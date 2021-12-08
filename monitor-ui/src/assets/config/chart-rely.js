@@ -76,7 +76,7 @@ export const drawChart = function(that,config,userConfig, elId) {
   // 基于准备好的dom，初始化echarts实例
   var myChart = echarts.init(document.getElementById(elId || that.elId))
   myChart.resize()
-  if (originConfig.clear) {
+  if (finalConfig.clear) {
     myChart.clear()
   }
   let option = {
@@ -230,6 +230,7 @@ export const drawChart = function(that,config,userConfig, elId) {
     ],
     series: config.series
   }
+  console.log(config.series)
   if (finalConfig.chartType !== config.series[0]) {
     config.series.forEach(se => {
       se.type = finalConfig.chartType
