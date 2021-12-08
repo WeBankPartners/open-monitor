@@ -1,36 +1,36 @@
 package collector
 
 import (
-	"github.com/go-kit/kit/log/level"
-	"net/http"
-	"sync"
-	"github.com/prometheus/client_golang/prometheus"
-	"time"
-	"github.com/go-kit/kit/log"
 	"encoding/json"
-	"io/ioutil"
 	"fmt"
-	"bytes"
-	"encoding/gob"
-	"os"
+	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
+	"github.com/prometheus/client_golang/prometheus"
+	"io/ioutil"
+	"net/http"
 	"os/exec"
-	"strings"
 	"strconv"
+	"strings"
+	"sync"
+	"time"
 )
 
 const (
-	processFilePath = "data/process_cache.data"
+	processFilePath = "data/process_cache.json"
 )
 
+var ProcessJob processMonitorJob
+
 type processMonitorCollector struct {
-	processMonitor  *prometheus.Desc
-	processCpuMonitor  *prometheus.Desc
-	processMemMonitor  *prometheus.Desc
-	logger  log.Logger
+	processMonitor    *prometheus.Desc
+	processCpuMonitor *prometheus.Desc
+	processMemMonitor *prometheus.Desc
+	processPidMonitor *prometheus.Desc
+	logger            log.Logger
 }
 
 func (c *processMonitorCollector) Update(ch chan<- prometheus.Metric) error {
-	for _,v := range ProcessCacheObj.get() {
+	for _, v := range ProcessJob.GetResult() {
 		ch <- prometheus.MustNewConstMetric(c.processMonitor,
 			prometheus.GaugeValue,
 			v.Value, v.DisplayName, v.Command, v.EndpointGuid)
@@ -40,6 +40,9 @@ func (c *processMonitorCollector) Update(ch chan<- prometheus.Metric) error {
 		ch <- prometheus.MustNewConstMetric(c.processMemMonitor,
 			prometheus.GaugeValue,
 			v.MemUsedByte, v.DisplayName, v.Command, v.EndpointGuid)
+		ch <- prometheus.MustNewConstMetric(c.processPidMonitor,
+			prometheus.GaugeValue,
+			v.Pid, v.DisplayName, v.Command, v.EndpointGuid)
 	}
 	return nil
 }
@@ -65,289 +68,258 @@ func NewProcessMonitorCollector(logger log.Logger) (Collector, error) {
 			"Process memory used byte",
 			[]string{"name", "command", "process_guid"}, nil,
 		),
+		processPidMonitor: prometheus.NewDesc(
+			prometheus.BuildFQName(namespace, "process_monitor", "pid"),
+			"Process pid",
+			[]string{"name", "command", "process_guid"}, nil,
+		),
 		logger: logger,
 	}, nil
 }
 
 type processMonitorObj struct {
-	Name  string
-	Tags  string
-	EndpointGuid string
-	DisplayName string
-	Value   float64
-	Command  string
-	CpuUsedPercent  float64
-	MemUsedByte  float64
+	Pid            float64
+	Name           string
+	Tags           string
+	EndpointGuid   string
+	DisplayName    string
+	Command        string
+	Value          float64
+	CpuUsedPercent float64
+	MemUsedByte    float64
 }
 
 type processUsedResource struct {
 	Pid  int
-	Name  string
+	Name string
 	Cmd  string
 	Cpu  float64
 	Mem  float64
 }
 
-type processCache struct {
-	Lock *sync.RWMutex
-	Running  bool
-	ProcessMonitor  []*processMonitorObj
+type processMonitorJob struct {
+	ConfigLock *sync.RWMutex
+	Config     []*processConfigObj
+	ResultLock *sync.RWMutex
+	ResultList []*processMonitorObj
 }
 
-func (c *processCache) Init()  {
-	c.Running = false
-	c.Lock = new(sync.RWMutex)
-	c.ProcessMonitor = []*processMonitorObj{}
-	c.Load()
-	if len(c.ProcessMonitor) > 0 {
-		go c.start()
+func (c *processMonitorJob) Init() {
+	c.ConfigLock = new(sync.RWMutex)
+	c.Config = []*processConfigObj{}
+	c.ResultLock = new(sync.RWMutex)
+	c.ResultList = []*processMonitorObj{}
+}
+
+func (c *processMonitorJob) ContainConfig() bool {
+	containFlag := false
+	c.ConfigLock.RLock()
+	if len(c.Config) > 0 {
+		containFlag = true
 	}
+	c.ConfigLock.RUnlock()
+	return containFlag
 }
 
-func (c *processCache) start()  {
-	c.Running = true
-	t := time.NewTicker(time.Duration(10 * time.Second)).C
+func (c *processMonitorJob) UpdateConfig(input []*processConfigObj) {
+	c.ConfigLock.Lock()
+	c.Config = input
+	c.ConfigLock.Unlock()
+}
+
+func (c *processMonitorJob) GetResult() []*processMonitorObj {
+	var output []*processMonitorObj
+	c.ResultLock.RLock()
+	for _, v := range c.ResultList {
+		output = append(output, &processMonitorObj{Name: v.Name, Tags: v.Tags, EndpointGuid: v.EndpointGuid, DisplayName: v.DisplayName, Command: v.Command, Value: v.Value, CpuUsedPercent: v.CpuUsedPercent, MemUsedByte: v.MemUsedByte})
+	}
+	c.ResultLock.RUnlock()
+	return output
+}
+
+func StartProcessMonitorCron() {
+	ProcessJob.Init()
+	loadProcessConfig()
+	t := time.NewTicker(10 * time.Second).C
 	for {
-		<- t
-		c.Lock.RLock()
-		isRunning := c.Running
-		c.Lock.RUnlock()
-		if !isRunning {
-			break
+		<-t
+		go doProcessMonitor()
+	}
+}
+
+func doProcessMonitor() {
+	if !ProcessJob.ContainConfig() {
+		return
+	}
+	processUsedList := getProcessUsedResource()
+	if len(processUsedList) == 0 {
+		return
+	}
+	var resultList []*processMonitorObj
+	ProcessJob.ConfigLock.RLock()
+	for _, config := range ProcessJob.Config {
+		matchList := matchProcess(processUsedList, config)
+		if len(matchList) > 0 {
+			resultList = append(resultList, matchList...)
+		} else {
+			resultList = append(resultList, &processMonitorObj{Name: config.ProcessName, DisplayName: config.ProcessName, Tags: config.ProcessTags, EndpointGuid: config.ProcessGuid, Value: 0, CpuUsedPercent: 0, MemUsedByte: 0, Pid: 0})
 		}
-		c.Lock.Lock()
-		processUsedList := getProcessUsedResource()
-		if len(processUsedList) > 0 {
-			for _,tmpProcessMonitorObj := range c.ProcessMonitor {
-				tmpTag := tmpProcessMonitorObj.Tags
-				nameSplit := strings.Split(tmpProcessMonitorObj.Name, ",")
-				if tmpTag != "" {
-					tmpProcessMonitorObj.DisplayName = fmt.Sprintf("%s(%s)", tmpProcessMonitorObj.Name, tmpTag)
-					tmpTag = strings.ToLower(tmpTag)
-				}else{
-					tmpProcessMonitorObj.DisplayName = tmpProcessMonitorObj.Name
-				}
-				var tmpCount float64 = 0
-				for _,vv := range processUsedList {
-					nameMatch := ""
-					for _,nameSplitObj := range nameSplit {
-						if vv.Name == strings.ToLower(nameSplitObj) {
-							nameMatch = nameSplitObj
-							break
-						}
-					}
-					if nameMatch != "" && strings.Contains(vv.Cmd, tmpTag) {
-						tmpCount = tmpCount + 1
-						if len(vv.Cmd) > 100 {
-							tmpProcessMonitorObj.Command = vv.Cmd[:100]
-						}else{
-							tmpProcessMonitorObj.Command = vv.Cmd
-						}
-						tmpProcessMonitorObj.CpuUsedPercent = vv.Cpu
-						tmpProcessMonitorObj.MemUsedByte = vv.Mem
-					}
-				}
-				tmpProcessMonitorObj.Value = tmpCount
+	}
+	ProcessJob.ConfigLock.RUnlock()
+	ProcessJob.ResultLock.Lock()
+	ProcessJob.ResultList = resultList
+	ProcessJob.ResultLock.Unlock()
+}
+
+func matchProcess(processList []*processUsedResource, config *processConfigObj) (result []*processMonitorObj) {
+	nameList := strings.Split(config.ProcessName, ",")
+	for _, v := range processList {
+		nameMatchFlag := false
+		for _, name := range nameList {
+			if v.Name == name {
+				nameMatchFlag = true
+				break
 			}
 		}
-		c.Lock.Unlock()
-	}
-}
-
-func (c *processCache) stop()  {
-	c.Lock.Lock()
-	c.ProcessMonitor = []*processMonitorObj{}
-	c.Running = false
-	c.Lock.Unlock()
-}
-
-func (c *processCache) isRunning() bool {
-	isRunning := false
-	c.Lock.RLock()
-	isRunning = c.Running
-	c.Lock.RUnlock()
-	return isRunning
-}
-
-func (c *processCache) update(names []*SyncProcessObj)  {
-	c.Lock.Lock()
-	c.ProcessMonitor = []*processMonitorObj{}
-	for _,v := range names {
-		c.ProcessMonitor = append(c.ProcessMonitor, &processMonitorObj{Name:v.ProcessName, Tags: v.ProcessTags, EndpointGuid: v.ProcessGuid, Value:0, Command:""})
-	}
-	c.Lock.Unlock()
-}
-
-func (c *processCache) Save()  {
-	c.Lock.Lock()
-	defer c.Lock.Unlock()
-	var tmpBuffer bytes.Buffer
-	enc := gob.NewEncoder(&tmpBuffer)
-	err := enc.Encode(c.ProcessMonitor)
-	if err != nil {
-		level.Error(newLogger).Log("msg",fmt.Sprintf("gob encode process monitor error : %v ", err))
-	}else{
-		ioutil.WriteFile(processFilePath, tmpBuffer.Bytes(), 0644)
-		level.Info(newLogger).Log("msg",fmt.Sprintf("write %s succeed ", processFilePath))
-	}
-}
-
-func (c *processCache) Load()  {
-	c.Lock.Lock()
-	defer c.Lock.Unlock()
-	file,err := os.Open(processFilePath)
-	if err != nil {
-		level.Info(newLogger).Log("msg",fmt.Sprintf("read %s file error %v ", processFilePath, err))
-	}else{
-		dec := gob.NewDecoder(file)
-		err = dec.Decode(&c.ProcessMonitor)
-		if err != nil {
-			level.Error(newLogger).Log("msg",fmt.Sprintf("gob decode %s error %v ", processFilePath, err))
-		}else{
-			level.Info(newLogger).Log("msg",fmt.Sprintf("load %s file succeed ", processFilePath))
+		if !nameMatchFlag {
+			continue
 		}
-	}
-}
-
-func (c *processCache) get() []*processMonitorObj {
-	c.Lock.RLock()
-	defer c.Lock.RUnlock()
-	return c.ProcessMonitor
-}
-
-func (c *processCache) checkNum(processList []*SyncProcessObj) []int {
-	processUseList := getProcessUsedResource()
-	if len(processUseList) == 0 {
-		return []int{}
-	}
-	var result []int
-	for _,v := range processList {
-		count := 0
-		nameSplit := strings.Split(v.ProcessName, ",")
-		for _,vv := range processUseList {
-			nameMatch := ""
-			for _,nameSplitObj := range nameSplit {
-				if vv.Name == strings.ToLower(nameSplitObj) {
-					nameMatch = nameSplitObj
-					break
-				}
-			}
-			if nameMatch != "" && strings.Contains(vv.Cmd, v.ProcessTags) {
-				count = count + 1
-			}
+		if !strings.Contains(v.Cmd, config.ProcessTags) {
+			continue
 		}
-		result = append(result, count)
+		matchObj := processMonitorObj{Pid: float64(v.Pid), Value: 1, CpuUsedPercent: v.Cpu, MemUsedByte: v.Mem, DisplayName: config.ProcessName}
+		if config.ProcessTags != "" {
+			matchObj.DisplayName = fmt.Sprintf("%s(%s)", v.Name, config.ProcessTags)
+		}
+		if len(v.Cmd) > 50 {
+			matchObj.Command = v.Cmd[:50]
+		} else {
+			matchObj.Command = v.Cmd
+		}
+		result = append(result, &matchObj)
 	}
 	return result
 }
 
-var ProcessCacheObj processCache
-
-type processHttpDto struct {
-	Process  []string  `json:"process"`
-	Check    int       `json:"check"`
-}
-
-type SyncProcessObj struct {
+type processConfigObj struct {
 	ProcessGuid string `json:"process_guid"`
 	ProcessName string `json:"process_name"`
 	ProcessTags string `json:"process_tags"`
 }
 
-type SyncProcessDto struct {
-	Check int `json:"check"`
-	Process []*SyncProcessObj `json:"process"`
+type syncProcessConfigParam struct {
+	Check   int                 `json:"check"`
+	Process []*processConfigObj `json:"process"`
 }
 
-func ProcessMonitorHttpHandle(w http.ResponseWriter, r *http.Request)  {
-	buff,err := ioutil.ReadAll(r.Body)
-	var errorMsg string
+type syncProcessResponse struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
+}
+
+func ProcessHttpHandle(w http.ResponseWriter, r *http.Request) {
+	var err error
+	defer func(returnErr error) {
+		logMetricHttpLock.Unlock()
+		responseObj := syncProcessResponse{Status: "OK", Message: "success"}
+		if returnErr != nil {
+			returnErr = fmt.Errorf("Handel process monitor http request fail,%s ", returnErr.Error())
+			responseObj = syncProcessResponse{Status: "ERROR", Message: returnErr.Error()}
+			level.Error(monitorLogger).Log("error", returnErr.Error())
+		}
+		b, _ := json.Marshal(responseObj)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write(b)
+	}(err)
+	var requestParamBuff []byte
+	requestParamBuff, err = ioutil.ReadAll(r.Body)
 	if err != nil {
-		errorMsg = fmt.Sprintf("Handel process monitor http request fail,read body error: %v \n", err)
-		level.Error(newLogger).Log("msg",errorMsg)
-		w.Write([]byte(errorMsg))
 		return
 	}
-	var param SyncProcessDto
-	err = json.Unmarshal(buff, &param)
-	if err != nil {
-		errorMsg = fmt.Sprintf("Handel process monitor http request fail,json unmarshal error: %v \n", err)
-		level.Error(newLogger).Log("msg",errorMsg)
-		w.Write([]byte(errorMsg))
-		return
+	isCheck := false
+	isCheck, err = HandleProcessAction(requestParamBuff)
+	if isCheck == false && err == nil {
+		saveProcessConfig(requestParamBuff)
 	}
-	if len(param.Process) == 0 {
-		ProcessCacheObj.stop()
-		w.Write([]byte("Success"))
+}
+
+func HandleProcessAction(requestParamBuff []byte) (isCheck bool, err error) {
+	var param syncProcessConfigParam
+	err = json.Unmarshal(requestParamBuff, &param)
+	if err != nil {
 		return
 	}
 	if param.Check > 0 {
-		illegalFlag := false
-		checkNumResult := ProcessCacheObj.checkNum(param.Process)
-		for i,v := range checkNumResult {
-			if v != 1 {
-				w.WriteHeader(http.StatusBadRequest)
-				tmpProcessName := param.Process[i].ProcessName
-				if param.Process[i].ProcessTags != "" {
-					tmpProcessName += "(" + param.Process[i].ProcessTags + ")"
-				}
-				w.Write([]byte(fmt.Sprintf("Process %s num = %d", tmpProcessName, v)))
-				illegalFlag = true
-				break
-			}
-		}
-		if illegalFlag {
-			return
-		}
+		isCheck = true
+		return
 	}
-	ProcessCacheObj.update(param.Process)
-	if !ProcessCacheObj.isRunning() {
-		go ProcessCacheObj.start()
-	}
-	w.Write([]byte("Success"))
+	ProcessJob.UpdateConfig(param.Process)
+	return
 }
 
-func getProcessUsedResource() []processUsedResource {
-	var result []processUsedResource
-	cmd := exec.Command("bash", "-c", "ps -eo 'pid,comm,pcpu,rsz,args'")
-	b,err := cmd.Output()
+func saveProcessConfig(requestParamBuff []byte) {
+	err := ioutil.WriteFile(processFilePath, requestParamBuff, 0644)
 	if err != nil {
-		level.Error(newLogger).Log("msg",fmt.Sprintf("get process used resource error : %v ", err))
-	}else{
-		outputList := strings.Split(string(b), "\n")
-		for _,v := range outputList {
-			tmpList := strings.Split(v, " ")
-			tmpIndex := 1
-			strIndex := 0
-			var tmpProcessObj processUsedResource
-			for _,vv := range tmpList {
-				strIndex += len(vv)+1
-				if vv != "" {
-					if tmpIndex == 1 {
-						tmpPid,_ := strconv.Atoi(vv)
-						if tmpPid > 0 {
-							tmpProcessObj.Pid = tmpPid
-						}
-					}else if tmpIndex == 2 {
-						tmpProcessObj.Name = strings.ToLower(vv)
-					}else if tmpIndex == 3 {
-						tmpCpu,_ := strconv.ParseFloat(vv, 64)
-						tmpProcessObj.Cpu = tmpCpu
-					}else if tmpIndex == 4 {
-						tmpMem,_ := strconv.ParseFloat(vv, 64)
-						tmpProcessObj.Mem = tmpMem
-						break
-					}
-					tmpIndex++
-				}
-			}
-			if len(v) > strIndex {
-				tmpProcessObj.Cmd = v[strIndex:]
-			}
-			if tmpProcessObj.Pid > 0 {
-				result = append(result, tmpProcessObj)
-			}
+		level.Error(monitorLogger).Log("processSaveConfig", err.Error())
+	} else {
+		level.Info(monitorLogger).Log("processSaveConfig", "success")
+	}
+}
+
+func loadProcessConfig() {
+	b, err := ioutil.ReadFile(processFilePath)
+	if err != nil {
+		level.Error(monitorLogger).Log("processLoadConfig", err.Error())
+	} else {
+		_, err = HandleProcessAction(b)
+		if err != nil {
+			level.Error(monitorLogger).Log("processLoadConfigAction", err.Error())
+		} else {
+			level.Info(monitorLogger).Log("processLoadConfig", "success")
 		}
 	}
-	return result
+}
+
+func getProcessUsedResource() (result []*processUsedResource) {
+	cmd := exec.Command("bash", "-c", "ps -eo 'pid,comm,pcpu,rsz,args'")
+	b, err := cmd.Output()
+	if err != nil {
+		level.Error(monitorLogger).Log("msg", fmt.Sprintf("get process used resource error : %v ", err))
+		return
+	}
+	for _, v := range strings.Split(string(b), "\n") {
+		tmpList := strings.Split(v, " ")
+		tmpIndex := 1
+		strIndex := 0
+		var tmpProcessObj processUsedResource
+		for _, vv := range tmpList {
+			strIndex += len(vv) + 1
+			if vv != "" {
+				if tmpIndex == 1 {
+					tmpPid, _ := strconv.Atoi(vv)
+					if tmpPid > 0 {
+						tmpProcessObj.Pid = tmpPid
+					}
+				} else if tmpIndex == 2 {
+					tmpProcessObj.Name = strings.ToLower(vv)
+				} else if tmpIndex == 3 {
+					tmpCpu, _ := strconv.ParseFloat(vv, 64)
+					tmpProcessObj.Cpu = tmpCpu
+				} else if tmpIndex == 4 {
+					tmpMem, _ := strconv.ParseFloat(vv, 64)
+					tmpProcessObj.Mem = tmpMem
+					break
+				}
+				tmpIndex++
+			}
+		}
+		if len(v) > strIndex {
+			tmpProcessObj.Cmd = v[strIndex:]
+		}
+		if tmpProcessObj.Pid > 0 {
+			result = append(result, &tmpProcessObj)
+		}
+	}
+	return
 }
