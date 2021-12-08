@@ -34,6 +34,7 @@ func main() {
 	}
 	go api.InitClusterApi()
 	go db.InitPrometheusConfig()
+	go db.InitSysParameter()
 	go db.InitServiceGroup()
 	go db.StartCronJob()
 	go db.StartCheckCron()
