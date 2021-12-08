@@ -390,7 +390,7 @@ export default {
         this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v2/alarm/strategy', params, () => {
           this.$Message.success(this.$t('tips.success'))
           this.$root.JQ('#add_edit_Modal').modal('hide')
-          this.requestData(this.type, this.typeValue)
+          this.getDetail(this.targrtId, this.type)
         })
       })
     },
