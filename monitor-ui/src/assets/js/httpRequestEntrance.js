@@ -81,11 +81,11 @@ function httpRequestEntrance (method, url, data, callback, customHttpConfig) {
         loading.end()
       },0)
     }
-//     errorMessage(error.response.data.message)
+    // errorMessage(error.response.data.message)
     error.response&&error.response.data&&errorMessage(error.response.data.message)
-//     if (!window.request && error.response && error.response.status === 401) {
-//       router.push({path: '/login'})
-//     }
+    // if (!window.request && error.response && error.response.status === 401) {
+    //   router.push({path: '/login'})
+    // }
   })
 }
 
