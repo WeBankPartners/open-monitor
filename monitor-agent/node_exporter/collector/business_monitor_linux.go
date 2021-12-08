@@ -432,6 +432,7 @@ type businessCollectorStore struct {
 var BusinessCollectorStore businessCollectorStore
 
 func (c *businessCollectorStore) Save() {
+	saveData := []*businessStoreMonitorObj{}
 	for _, v := range businessMonitorJobs {
 		var newStoreRules []*businessStoreMetricObj
 		for _, vv := range v.Rules {
@@ -441,11 +442,11 @@ func (c *businessCollectorStore) Save() {
 		for _,vv := range v.Custom {
 			newStoreCustoms = append(newStoreCustoms, &businessStoreCustomObj{Metric: vv.Metric,ValueRegular: vv.ValueRegular,AggType: vv.AggType,StringMap: vv.StringMap})
 		}
-		c.Data = append(c.Data, &businessStoreMonitorObj{Path: v.Path, Rules: newStoreRules, Custom: newStoreCustoms})
+		saveData = append(saveData, &businessStoreMonitorObj{Path: v.Path, Rules: newStoreRules, Custom: newStoreCustoms})
 	}
 	var tmpBuffer bytes.Buffer
 	enc := gob.NewEncoder(&tmpBuffer)
-	err := enc.Encode(c.Data)
+	err := enc.Encode(saveData)
 	if err != nil {
 		level.Error(newLogger).Log("msg", fmt.Sprintf("gob encode business monitor error : %v ", err))
 	} else {
