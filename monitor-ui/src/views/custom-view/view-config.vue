@@ -42,16 +42,17 @@
                 style="width: 320px">
               </DatePicker>
             </div>
-            <div class="search-zone">
+            <!-- <div class="search-zone">
               <span class="params-title">{{$t('field.aggType')}}：</span>
               <RadioGroup v-model="viewCondition.agg" @on-change="initPanals" size="small" type="button">
                 <Radio disabled label="min">Min</Radio>
                 <Radio disabled label="max">Max</Radio>
                 <Radio disabled label="avg">Average </Radio>
                 <Radio disabled label="p95">P95</Radio>
+                <Radio disabled label="sum">Sum</Radio>
                 <Radio disabled label="none">Original</Radio>
               </RadioGroup>
-            </div>
+            </div> -->
           </div>
 
           <div class="header-tools"> 
@@ -197,6 +198,7 @@ export default {
   name: '',
   data() {
     return {
+      editData: null,
       isShowWarning: false,
       deleteConfirm: {
         id: '',
@@ -250,9 +252,11 @@ export default {
   },
   mounted() {
     this.reloadPanal(this.$route.params)
+    // this.reloadPanal(this.editData)
   },
   methods: {
     reloadPanal (params) {
+      this.editData = params
       if(this.$root.$validate.isEmpty_reset(params)) {
         this.$router.push({path:'viewConfigIndex'})
       } else {
@@ -287,7 +291,7 @@ export default {
       let tmp = []
       this.viewData.forEach((item) => {
         let params = {
-          aggregate: this.viewCondition.agg,
+          aggregate: item.aggregate,
           time_second: -1800,
           start: 0,
           end: 0,
@@ -305,7 +309,8 @@ export default {
           panalUnit: item.panalUnit,
           elId: item.viewConfig.id,
           chartParams: params,
-          chartType: item.chartType                                              
+          chartType: item.chartType,
+          aggregate: item.aggregate                                              
         })
         item.viewConfig._activeCharts = _activeCharts
         tmp.push(item.viewConfig)
@@ -340,7 +345,7 @@ export default {
         this.$root.JQ('#set_chart_type_Modal').modal('show')
       } else {
         this.activeChartType = find._activeCharts[0].chartType
-        this.editGrid()
+        this.editGrid(item)
       }
     },
     choiceChartType (activeChartType) {
@@ -360,10 +365,25 @@ export default {
       this.$root.JQ('#set_chart_type_Modal').modal('hide')
       this.editGrid()
     },
-    editGrid() {
+    editGrid(item) {
       this.modifyLayoutData().then((resViewData)=>{
-        let parentRouteData = this.$route.params
-        parentRouteData.cfg = JSON.stringify(resViewData)
+        // let parentRouteData = this.$route.params
+        let parentRouteData = this.editData
+        const cfg = JSON.parse(parentRouteData.cfg)
+        parentRouteData.cfg = JSON.parse(parentRouteData.cfg)
+        const oriConfig = JSON.parse(JSON.stringify(cfg))
+        let aggregate = 'none'
+        if (item) {
+          const find = oriConfig.find(xItem => xItem.panalTitle === item.i)
+          if (find) {
+            aggregate = find.aggregate || 'none'
+          }
+          let findEditData = parentRouteData.cfg.find(xItem => xItem.panalTitle === item.i)
+          findEditData.aggregate = aggregate
+        } else {
+          parentRouteData.cfg = resViewData
+        }
+        parentRouteData.cfg = JSON.stringify(parentRouteData.cfg)
         if (['line','bar'].includes(this.activeChartType)) {
           this.chartType = 'line'
           this.$refs.editLineView.initChart({templateData: parentRouteData, panal:this.activeGridConfig})
@@ -390,10 +410,12 @@ export default {
     },
     async gridPlus(item) {
       const resViewData = await this.modifyLayoutData()
-      let parentRouteData = this.$route.params
+      // let parentRouteData = this.$route.params
+      let parentRouteData = this.editData
       parentRouteData.cfg = JSON.stringify(resViewData)
       this.showMaxChart = true
-      this.$refs.viewChart.initChart({templateData: parentRouteData, panal:item, parentData: this.$route.params})
+      // this.$refs.viewChart.initChart({templateData: parentRouteData, panal:item, parentData: this.$route.params})
+      this.$refs.viewChart.initChart({templateData: parentRouteData, panal:item, parentData: this.editData})
     },
     async modifyLayoutData() {
       var resViewData = []
@@ -411,6 +433,7 @@ export default {
             temp.panalUnit = i.panalUnit
             temp.query = i.query
             temp.chartType = i.chartType
+            temp.aggregate = i.aggregate
           }
         })
         resViewData.push(temp)
@@ -430,6 +453,7 @@ export default {
               panalUnit: i.panalUnit,
               query: i.query,
               chartType: i.chartType,
+              aggregate: i.aggregate,
               viewConfig: layoutDataItem
             })
           }
@@ -437,7 +461,8 @@ export default {
       })
       let params = {
         name: this.panalName,
-        id: this.$route.params.id,
+        // id: this.$route.params.id,
+        id: this.editData.id,
         cfg: JSON.stringify(res)
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.template.save, params, () => {
@@ -457,7 +482,7 @@ export default {
     },
     canclePanalEdit () {
       this.isEditPanal = false
-      this.panalName = this.$route.params.name
+      this.panalName = this.editData.name
     }
   },
   components: {

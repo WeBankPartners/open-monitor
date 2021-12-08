@@ -174,7 +174,7 @@ export default {
       let tmp = []
       this.viewData.forEach((item) => {
         let params = {
-          aggregate: 'none',
+          aggregate: item.aggregate,
           time_second: this.viewCondition.timeTnterval,
           start: this.dateToTimestamp(this.viewCondition.dateRange[0]),
           end: this.dateToTimestamp(this.viewCondition.dateRange[1]),
@@ -192,7 +192,8 @@ export default {
           panalUnit: item.panalUnit,
           elId: item.viewConfig.id,
           chartParams: params,
-          chartType: item.chartType                                                     
+          chartType: item.chartType,
+          aggregate: item.aggregate                                                      
         })
         item.viewConfig._activeCharts = _activeCharts
         tmp.push(item.viewConfig)
