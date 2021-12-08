@@ -216,8 +216,8 @@ func UpdateLogMetricJson(param *models.LogMetricJsonObj) error {
 	var logMetricConfigTable []*models.LogMetricConfigTable
 	x.SQL("select * from log_metric_config where log_metric_json=?", param.Guid).Find(&logMetricConfigTable)
 	for _, v := range param.MetricList {
+		v.LogMetricJson = param.Guid
 		if v.Guid == "" {
-			v.LogMetricJson = param.Guid
 			actions = append(actions, getCreateLogMetricConfigAction(v, nowTime)...)
 			continue
 		}
@@ -329,6 +329,8 @@ func getCreateLogMetricConfigAction(param *models.LogMetricConfigObj, nowTime st
 	} else {
 		actions = append(actions, &Action{Sql: "insert into log_metric_config(guid,log_metric_monitor,metric,display_name,json_key,regular,agg_type,step,update_time) value (?,?,?,?,?,?,?,?,?)", Param: []interface{}{param.Guid, param.LogMetricMonitor, param.Metric, param.DisplayName, param.JsonKey, param.Regular, param.AggType, param.Step, nowTime}})
 	}
+	monitorType := getLogMetricMonitorType(param.LogMetricJson, param.LogMetricMonitor)
+	actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,update_time) value (?,?,?,?,?)",Param: []interface{}{fmt.Sprintf("%s__%s",param.Metric,monitorType),param.Metric,monitorType,fmt.Sprintf("%s{key=\"%s\",agg=\"%s\",t_endpoint=\"$guid\"}", models.LogMetricName, param.Metric, param.AggType),nowTime}})
 	guidList := guid.CreateGuidList(len(param.StringMap))
 	for i, v := range param.StringMap {
 		actions = append(actions, &Action{Sql: "insert into log_metric_string_map(guid,log_metric_config,source_value,regulative,target_value,update_time) value (?,?,?,?,?,?)", Param: []interface{}{guidList[i], param.Guid, v.SourceValue, v.Regulative, v.TargetValue, nowTime}})
@@ -336,10 +338,34 @@ func getCreateLogMetricConfigAction(param *models.LogMetricConfigObj, nowTime st
 	return actions
 }
 
+func getLogMetricMonitorType(logMetricJson,logMetricMonitor string) string {
+	var logMetricMonitorTable []*models.LogMetricMonitorTable
+	if logMetricJson != "" {
+		x.SQL("select guid,monitor_type from log_metric_monitor where guid in (select log_metric_monitor from log_metric_json where guid=?)",logMetricJson).Find(&logMetricMonitorTable)
+	}else{
+		x.SQL("select guid,monitor_type from log_metric_monitor where guid=?",logMetricMonitor).Find(&logMetricMonitorTable)
+	}
+	if len(logMetricMonitorTable) > 0 {
+		return logMetricMonitorTable[0].MonitorType
+	}
+	return ""
+}
+
 func getUpdateLogMetricConfigAction(param *models.LogMetricConfigObj, nowTime string) []*Action {
 	var actions []*Action
 	if param.Step == 0 {
 		param.Step = 10
+	}
+	var logMetricConfigTable []*models.LogMetricConfigTable
+	x.SQL("select * from log_metric_config where guid=?", param.Guid).Find(&logMetricConfigTable)
+	if len(logMetricConfigTable) > 0 {
+		if logMetricConfigTable[0].Metric != param.Metric || logMetricConfigTable[0].AggType != param.AggType {
+			monitorType := getLogMetricMonitorType(param.LogMetricJson, param.LogMetricMonitor)
+			oldMetric := fmt.Sprintf("%s__%s", logMetricConfigTable[0].Metric, monitorType)
+			newMetric := fmt.Sprintf("%s__%s", param.Metric, monitorType)
+			actions = append(actions, &Action{Sql: "update metric set guid=?,metric=?,prom_expr=? where guid=?",Param: []interface{}{newMetric,param.Metric,fmt.Sprintf("%s{key=\"%s\",agg=\"%s\",t_endpoint=\"$guid\"}", models.LogMetricName, param.Metric, param.AggType),oldMetric}})
+			actions = append(actions, &Action{Sql: "update alarm_strategy set metric=? where metric=?",Param: []interface{}{newMetric,oldMetric}})
+		}
 	}
 	actions = append(actions, &Action{Sql: "update log_metric_config set metric=?,display_name=?,json_key=?,regular=?,agg_type=?,step=?,update_time=? where guid=?", Param: []interface{}{param.Metric, param.DisplayName, param.JsonKey, param.Regular, param.AggType, param.Step, nowTime, param.Guid}})
 	actions = append(actions, &Action{Sql: "delete from log_metric_string_map where log_metric_config=?", Param: []interface{}{param.Guid}})
