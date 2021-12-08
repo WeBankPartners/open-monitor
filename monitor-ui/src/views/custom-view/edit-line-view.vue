@@ -12,6 +12,15 @@
     <div class="zone zone-config c-dark">
       <div class="tool-save">
         <div class="condition">
+          <Select filterable v-model="templateQuery.aggregate" @on-change="switchChartType">
+            <Option
+              v-for="(type) in ['min', 'max', 'avg', 'p95', 'sum', 'none']"
+              :value="type"
+              :key="type"
+            >{{type}}</Option>
+          </Select>
+        </div>
+        <div class="condition">
           <Select filterable clearable v-model="templateQuery.chartType" @on-change="switchChartType">
             <Option
               v-for="(option, index) in chartTypeOption"
@@ -142,6 +151,7 @@ export default {
         endpoint: '',
         metric: '',
         chartType: '',
+        aggregate: '',
         endpoint_type: '',
         app_object: ''
       },
@@ -172,7 +182,7 @@ export default {
       handler(data) {
         this.noDataTip = false
         let params = {
-          aggregate: 'none',
+          aggregate: this.templateQuery.aggregate || 'none',
           time_second: -1800,
           start: 0,
           end: 0,
@@ -223,7 +233,6 @@ export default {
         }
         this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.recursiveType, params, responseData => {
           this.templateQuery.endpoint_type = responseData[0]
-          console.log(responseData)
           this.recursiveTypeOptions = responseData
         }
       )}
@@ -237,6 +246,7 @@ export default {
         this.viewData.forEach((itemx, index) => {
           if (itemx.viewConfig.id === params.panal.id) {
             this.templateQuery.chartType = itemx.chartType
+            this.templateQuery.aggregate = itemx.aggregate || 'none'
             this.panalIndex = index
             this.panalData = itemx
             this.initPanal()
@@ -246,8 +256,11 @@ export default {
       }
     },
     switchChartType () {
+      if (this.chartQueryList.length === 0) {
+        return
+      }
       let params = {
-          aggregate: 'none',
+          aggregate: this.templateQuery.aggregate || 'none',
           time_second: -1800,
           start: 0,
           end: 0,
@@ -275,7 +288,7 @@ export default {
       this.panalTitle = this.panalData.panalTitle
       this.panalUnit = this.panalData.panalUnit
       let params = {
-        aggregate: 'none',
+        aggregate: this.templateQuery.aggregate || 'none',
         time_second: -1800,
         start: 0,
         end: 0,
@@ -352,6 +365,7 @@ export default {
         endpoint: '',
         metric: '',
         chartType: this.templateQuery.chartType,
+        aggregate: this.templateQuery.aggregate,
         endpoint_type: '',
         app_object: ''
       }
@@ -387,6 +401,7 @@ export default {
         panalTitle: this.panalTitle,
         panalUnit: this.panalUnit,
         chartType: this.templateQuery.chartType,
+        aggregate: this.templateQuery.aggregate,
         query: query,
         viewConfig: panal
       }
