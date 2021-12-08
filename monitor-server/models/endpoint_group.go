@@ -138,3 +138,22 @@ type EndpointStrategyObj struct {
 	Strategy      []*GroupStrategyObj `json:"strategy"`
 	NotifyList    []*NotifyObj        `json:"notify"`
 }
+
+type SysParameterTable struct {
+	Guid string `json:"guid" xorm:"guid"`
+	ParamKey string `json:"param_key" xorm:"param_key"`
+	ParamValue string `json:"param_value" xorm:"param_value"`
+}
+
+type SysAlertMailParameter struct {
+	SenderName   string `json:"sender_name"`
+	SenderMail   string `json:"sender_mail"`
+	AuthServer   string `json:"auth_server"`
+	AuthPassword string `json:"auth_password"`
+	SSL          string `json:"ssl"`
+}
+
+type SysMetricTemplateParameter struct {
+	PromQl string `json:"prom_ql"`
+	Param  string `json:"param"`
+}

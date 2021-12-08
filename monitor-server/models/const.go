@@ -11,6 +11,8 @@ const (
 	RsaPemPath          = "/data/certs/rsa_key"
 	LogMetricName       = "node_log_metric_monitor_value"
 	DBMonitorMetricName = "db_monitor_value"
+	SPAlertMailKey           = "alert_mail"
+	SPMetricTemplate    = "metric_template"
 )
 
 var (
