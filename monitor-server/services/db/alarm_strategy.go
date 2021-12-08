@@ -6,6 +6,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
+	"github.com/WeBankPartners/go-common-lib/smtp"
 	"strings"
 	"time"
 )
@@ -361,4 +362,73 @@ func GetAlarmObj(query *models.AlarmTable) (result models.AlarmTable,err error) 
 		result = *alarmList[0]
 	}
 	return
+}
+
+func NotifyStrategyAlarm(alarmObj *models.AlarmHandleObj)  {
+	if alarmObj.AlarmStrategy == "" {
+		log.Logger.Error("Notify strategy alarm fail,alarmStrategy is empty", log.JsonObj("alarm", alarmObj))
+		return
+	}
+	var notifyTable []*models.NotifyTable
+	err := x.SQL("select * from notify where alarm_strategy=?", alarmObj.AlarmStrategy).Find(&notifyTable)
+	if err != nil {
+		log.Logger.Error("Query notify table fail", log.Error(err))
+		return
+	}
+	if len(notifyTable) == 0 {
+		x.SQL("select * from notify where endpoint_group in (select endpoint_group from alarm_strategy where guid=?) or service_group in (select service_group from endpoint_service_rel where endpoint=?)", alarmObj.AlarmStrategy, alarmObj.Endpoint).Find(&notifyTable)
+	}
+	if len(notifyTable) == 0 {
+		return
+	}
+	for _,v := range notifyTable {
+		err = notifyAction(v)
+		if err != nil {
+			log.Logger.Error("Notify mail fail", log.String("notifyGuid", v.Guid), log.Error(err))
+		}
+	}
+}
+
+func notifyAction(notify *models.NotifyTable) error {
+	if notify.ProcCallbackKey == "" {
+		return notifyMailAction(notify)
+	}
+	var err error
+	for i:=0;i<3;i++ {
+		err = notifyEventAction(notify)
+		if err == nil {
+			break
+		}else{
+			log.Logger.Error("Notify event fail", log.String("notifyGuid", notify.Guid), log.Int("try",i), log.Error(err))
+		}
+	}
+	if err != nil {
+		return notifyMailAction(notify)
+	}
+	return nil
+}
+
+func notifyEventAction(notify *models.NotifyTable) error {
+	return nil
+}
+
+func notifyMailAction(notify *models.NotifyTable) error {
+	roles := getNotifyRoles(notify.Guid)
+	if len(roles) == 0 {
+		return nil
+	}
+	mailConfig,err := GetSysAlertMailConfig()
+	if err != nil {
+		return err
+	}
+	mailSender := smtp.MailSender{SenderName: mailConfig.SenderName,SenderMail: mailConfig.SenderMail,AuthServer: mailConfig.AuthServer,AuthPassword: mailConfig.AuthPassword}
+	if mailConfig.SSL == "Y" {
+		mailSender.SSL = true
+	}
+	err = mailSender.Init()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
