@@ -6,7 +6,15 @@ import (
 	"github.com/WeBankPartners/go-common-lib/guid"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"os"
 )
+
+func InitSysParameter()  {
+	if models.PluginRunningMode {
+		alertMailObj := models.SysAlertMailParameter{SenderMail: os.Getenv("MONITOR_MAIL_SENDER_USER"),AuthServer: os.Getenv("MONITOR_MAIL_SENDER_SERVER"),AuthPassword: os.Getenv("MONITOR_MAIL_SENDER_PASSWORD"),SSL: os.Getenv("MONITOR_MAIL_SENDER_SSL")}
+		UpdateSysAlertMailConfig(&alertMailObj)
+	}
+}
 
 func GetSysAlertMailConfig() (result models.SysAlertMailParameter,err error) {
 	queryRow,tmpErr := getSysParameterTableData(models.SPAlertMailKey)
