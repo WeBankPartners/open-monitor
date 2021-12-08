@@ -537,4 +537,5 @@ CREATE TABLE `sys_parameter` (
   `param_key` varchar(64) NOT NULL,
   `param_value` text
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+alter table alarm_strategy drop foreign key strategy_metric;
 #@v1.13.0.6-end@;
