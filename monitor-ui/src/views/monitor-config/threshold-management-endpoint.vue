@@ -112,15 +112,21 @@
         <div v-if="modelConfig.addRow.notify.length > 0" style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;">
           <template v-for="(item, index) in modelConfig.addRow.notify">
             <p :key="index + 'S'">
-              <Select disabled v-model="item.alarm_action" style="width: 130px" :placeholder="$t('alarm_action')">
-                <Option v-for="type in ['firing', 'ok']" :key="type" :value="type">{{type}}</Option>
-              </Select>
-              <Select disabled v-model="item.proc_callback_key" style="width: 160px" :placeholder="$t('proc_callback_key')">
-                <Option v-for="(flow, flowIndex) in flows" :key="flowIndex" :value="flow.procDefId">{{flow.procDefName}}</Option>
-              </Select>
-              <Select disabled v-model="item.notify_roles" :max-tag-count="2" style="width: 320px" multiple filterable>
-                <Option v-for="item in allRole" :value="item.name" :key="item.value">{{ item.name }}</Option>
-              </Select>
+              <Tooltip :content="$t('alarm_action')" :delay="1000">
+                <Select v-model="item.alarm_action" style="width: 100px" :placeholder="$t('alarm_action')">
+                  <Option v-for="type in ['firing', 'ok']" :key="type" :value="type">{{type}}</Option>
+                </Select>
+              </Tooltip>
+              <Tooltip :content="$t('proc_callback_key')" :delay="1000">
+                <Select v-model="item.proc_callback_key" style="width: 160px" :placeholder="$t('proc_callback_key')">
+                  <Option v-for="(flow, flowIndex) in flows" :key="flowIndex" :value="flow.procDefId">{{flow.procDefName}}</Option>
+                </Select>
+              </Tooltip>
+              <Tooltip :content="$t('field.role')" :delay="1000">
+                <Select v-model="item.notify_roles" :max-tag-count="2" style="width: 320px" multiple filterable :placeholder="$t('field.role')">
+                  <Option v-for="item in allRole" :value="item.name" :key="item.value">{{ item.name }}</Option>
+                </Select>
+              </Tooltip>
             </p>
           </template>
         </div>
