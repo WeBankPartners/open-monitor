@@ -193,7 +193,7 @@ export default {
           'POST',this.$root.apiCenter.metricConfigView.api, params,
           responseData => {
             responseData.yaxis.unit = this.panalUnit
-            readyToDraw(this,responseData, 1, { eye: false, chartType: this.templateQuery.chartType})
+            readyToDraw(this,responseData, 1, { eye: false, chartType: this.templateQuery.chartType, clear: true})
           }
         )
       },
@@ -215,8 +215,10 @@ export default {
   },
   methods: {
     getPromQl (metric) {
-      const find = this.metricList.find(m => m.metric === metric)
-      this.templateQuery.prom_ql = find.prom_ql
+      if (metric) {
+        const find = this.metricList.find(m => m.metric === metric)
+        this.templateQuery.prom_ql = find.prom_ql
+      }
     },
     selectEndpoint (val) {
       this.showRecursiveType = false
