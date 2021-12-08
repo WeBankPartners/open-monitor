@@ -278,5 +278,6 @@
   "m_background_trial": "后台试算",
   "m_guid": "唯一名称",
   "m_recommend": "推荐配置",
-  "proc_callback_key": "编排"
+  "proc_callback_key": "流程",
+  "alarm_action": "触发类型"
 }
