@@ -3,7 +3,6 @@ package models
 import (
 	"encoding/json"
 	"github.com/WeBankPartners/go-common-lib/cipher"
-	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/toolkits/file"
 	"io/ioutil"
 	"log"
@@ -262,10 +261,6 @@ func InitConfig(cfg string) {
 	}
 	SmsParamMaxLength, _ = strconv.Atoi(os.Getenv("MONITOR_SMS_PARAM_LENGTH"))
 	initLocalTimeZone()
-	if PluginRunningMode {
-		alertMailObj := SysAlertMailParameter{SenderMail: os.Getenv("MONITOR_MAIL_SENDER_USER"),AuthServer: os.Getenv("MONITOR_MAIL_SENDER_SERVER"),AuthPassword: os.Getenv("MONITOR_MAIL_SENDER_PASSWORD"),SSL: os.Getenv("MONITOR_MAIL_SENDER_SSL")}
-		db.UpdateSysAlertMailConfig(&alertMailObj)
-	}
 }
 
 func initLocalTimeZone() {
