@@ -194,13 +194,13 @@ func main() {
 	collector.InitMonitorLogger(logger)
 	//collector.BusinessCollectorStore.Load()
 	collector.LogCollectorStore.Load()
-	collector.ProcessCacheObj.Init()
+	go collector.StartProcessMonitorCron()
 	go collector.StartCalcLogMetricCron()
 	// Add log monitor handle http config
 	http.HandleFunc("/log/config", collector.LogMonitorHttpHandle)
 	http.HandleFunc("/log/rows/query", collector.LogMonitorRowsHttpHandle)
 	// Add process monitor handle http config
-	http.HandleFunc("/process/config", collector.ProcessMonitorHttpHandle)
+	http.HandleFunc("/process/config", collector.ProcessHttpHandle)
 	// Add business monitor handle http config
 	http.HandleFunc("/log_metric/config", collector.LogMetricMonitorHttpHandle)
 
@@ -230,9 +230,7 @@ func startSignal(pid int, tmpLog log.Logger) {
 		case syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT:
 			level.Info(tmpLog).Log("shutdown , start save file")
 			// do something
-			collector.ProcessCacheObj.Save()
 			collector.LogCollectorStore.Save()
-			collector.BusinessCollectorStore.Save()
 			level.Info(tmpLog).Log("shutdown , done")
 			level.Info(tmpLog).Log("exit ", pid)
 			os.Exit(0)
