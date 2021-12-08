@@ -635,9 +635,13 @@ export default {
     },
     changeCollectedMetric (val) {
       if (val === 'paramsA') {
-        this.metricConfigData.prom_ql = this.metricConfigData.prom_ql.replace('${paramsA}', this.paramsA)
+        if (this.paramsA) {
+          this.metricConfigData.prom_ql = this.metricConfigData.prom_ql.replace('${paramsA}', this.paramsA)
+        }
       } else {
-        this.metricConfigData.prom_ql = this.metricConfigData.prom_ql.replace('${paramsB}', this.paramsB)
+        if (this.paramsB) {
+          this.metricConfigData.prom_ql = this.metricConfigData.prom_ql.replace('${paramsB}', this.paramsB)
+        }
       }
     },
     configMetric () {
