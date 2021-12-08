@@ -26,7 +26,7 @@ func AcceptAlert(c *gin.Context)  {
 		mid.ReturnSuccess(c)
 		return
 	}
-	log.Logger.Debug("accept", log.JsonObj("body", param))
+	log.Logger.Info("accept", log.JsonObj("body", param))
 	nowTime := time.Now()
 	var alarms []*m.AlarmHandleObj
 	for _,v := range param.Alerts {
@@ -88,6 +88,7 @@ func buildNewAlarm(param *m.AMRespAlert,nowTime time.Time) (alarm m.AlarmHandleO
 	}else{
 		existAlarm,err = getNewAlarmWithStrategyId(&alarm, param, &endpointObj)
 	}
+	alarm.Status = "firing"
 	operation := "add"
 	if existAlarm.Status != "" {
 		if existAlarm.Status == "firing" {
@@ -130,6 +131,8 @@ func getNewAlarmEndpoint(param *m.AMRespAlert) (result m.EndpointNewTable,err er
 	result = m.EndpointNewTable{}
 	if param.Labels["t_endpoint"] != "" {
 		result.Guid = param.Labels["t_endpoint"]
+	}else if param.Labels["guid"] != "" {
+		result.Guid = param.Labels["guid"]
 	}else if param.Labels["e_guid"] != "" {
 		result.Guid = param.Labels["e_guid"]
 	}else if param.Labels["instance"] != "" {
