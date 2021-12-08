@@ -127,7 +127,7 @@ func getChartConfigByChartId(param *models.ChartQueryParam, result *models.EChar
 	if err != nil {
 		return
 	}
-	param.Aggregate = chartList[0].AggType
+	//param.Aggregate = chartList[0].AggType
 	param.Unit = chartList[0].Unit
 	result.Id = param.ChartId
 	result.Title = chartList[0].Title
