@@ -347,7 +347,7 @@ func GetAlarmObj(query *models.AlarmTable) (result models.AlarmTable,err error) 
 		queryParams = append(queryParams, query.Endpoint)
 	}
 	if query.Tags != "" {
-		baseSql += " and endpoint=? "
+		baseSql += " and tags=? "
 		queryParams = append(queryParams, query.Tags)
 	}
 	if query.StrategyId > 0 {
