@@ -7,22 +7,6 @@
         {{$t('button.add')}}
       </button>
       <PageTable :pageConfig="pageConfig">
-        <!-- <div slot='tableExtend'>
-          <div style="margin:8px;border:1px solid #2db7f5">
-            <button @click="singleAddF(pageConfig.table.isExtend.parentData)" type="button" style="margin-top:8px" class="btn btn-sm success-btn">
-              <i class="fa fa-plus"></i>
-              {{$t('m_add_json_regular')}}
-            </button>
-            <extendTable :detailConfig="pageConfig.table.isExtend.detailConfig"></extendTable>
-          </div>
-          <div style="margin:8px;border:1px solid #19be6b">
-            <button @click="addCustomMetric(pageConfig.table.isCustomMetricExtend.parentData)" type="button" style="margin-top:8px" class="btn btn-sm success-btn">
-              <i class="fa fa-plus"></i>
-              {{$t('m_add_metric_regular')}}
-            </button>
-            <extendTable :detailConfig="pageConfig.table.isCustomMetricExtend.detailConfig"></extendTable>
-          </div>
-        </div> -->
       </PageTable>
       <section class="receiver-config">
         <div style="margin: 16px 0">
@@ -41,15 +25,21 @@
                     type="error"
                     icon="md-close"
                   ></Button>
-                  <Select v-model="item.alarm_action" style="width: 100px" :placeholder="$t('alarm_action')">
-                    <Option v-for="type in ['firing', 'ok']" :key="type" :value="type">{{type}}</Option>
-                  </Select>
-                  <Select v-model="item.proc_callback_key" style="width: 160px" :placeholder="$t('proc_callback_key')">
-                    <Option v-for="(flow, flowIndex) in flows" :key="flowIndex" :value="flow.procDefId">{{flow.procDefName}}</Option>
-                  </Select>
-                  <Select v-model="item.notify_roles" :max-tag-count="2" style="width: 360px" multiple filterable :placeholder="$t('field.role')">
-                    <Option v-for="item in allRole" :value="item.name" :key="item.value">{{ item.name }}</Option>
-                  </Select>
+                  <Tooltip :content="$t('alarm_action')" :delay="1000">
+                    <Select v-model="item.alarm_action" style="width: 100px" :placeholder="$t('alarm_action')">
+                      <Option v-for="type in ['firing', 'ok']" :key="type" :value="type">{{type}}</Option>
+                    </Select>
+                  </Tooltip>
+                  <Tooltip :content="$t('proc_callback_key')" :delay="1000">
+                    <Select v-model="item.proc_callback_key" style="width: 160px" :placeholder="$t('proc_callback_key')">
+                      <Option v-for="(flow, flowIndex) in flows" :key="flowIndex" :value="flow.procDefId">{{flow.procDefName}}</Option>
+                    </Select>
+                  </Tooltip>
+                  <Tooltip :content="$t('resourceLevel.role')" :delay="1000">
+                    <Select v-model="item.notify_roles" :max-tag-count="2" style="width: 360px" multiple filterable :placeholder="$t('field.role')">
+                      <Option v-for="item in allRole" :value="item.name" :key="item.value">{{ item.name }}</Option>
+                    </Select>
+                  </Tooltip>
                 </p>
               </template>
             </div>
@@ -143,15 +133,21 @@
                 type="error"
                 icon="md-close"
               ></Button>
-              <Select v-model="item.alarm_action" style="width: 100px" :placeholder="$t('alarm_action')">
-                <Option v-for="type in ['firing', 'ok']" :key="type" :value="type">{{type}}</Option>
-              </Select>
-              <Select v-model="item.proc_callback_key" style="width: 160px" :placeholder="$t('proc_callback_key')">
-                <Option v-for="(flow, flowIndex) in flows" :key="flowIndex" :value="flow.procDefId">{{flow.procDefName}}</Option>
-              </Select>
-              <Select v-model="item.notify_roles" :max-tag-count="2" style="width: 320px" multiple filterable :placeholder="$t('field.role')">
-                <Option v-for="item in allRole" :value="item.name" :key="item.value">{{ item.name }}</Option>
-              </Select>
+              <Tooltip :content="$t('alarm_action')" :delay="1000">
+                <Select v-model="item.alarm_action" style="width: 100px" :placeholder="$t('alarm_action')">
+                  <Option v-for="type in ['firing', 'ok']" :key="type" :value="type">{{type}}</Option>
+                </Select>
+              </Tooltip>
+              <Tooltip :content="$t('proc_callback_key')" :delay="1000">
+                <Select v-model="item.proc_callback_key" style="width: 160px" :placeholder="$t('proc_callback_key')">
+                  <Option v-for="(flow, flowIndex) in flows" :key="flowIndex" :value="flow.procDefId">{{flow.procDefName}}</Option>
+                </Select>
+              </Tooltip>
+              <Tooltip :content="$t('field.role')" :delay="1000">
+                <Select v-model="item.notify_roles" :max-tag-count="2" style="width: 320px" multiple filterable :placeholder="$t('field.role')">
+                  <Option v-for="item in allRole" :value="item.name" :key="item.value">{{ item.name }}</Option>
+                </Select>
+              </Tooltip>
             </p>
           </template>
           <Button

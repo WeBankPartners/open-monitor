@@ -279,5 +279,6 @@
   "m_background_trial": "Background Trial",
   "m_guid": "Guid",
   "m_recommend": "Recommend",
-  "proc_callback_key": "Process Key"
+  "proc_callback_key": "Process Key",
+  "alarm_action": "Alarm Action"
 }
