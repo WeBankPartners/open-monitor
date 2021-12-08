@@ -267,6 +267,10 @@ func GetAlarmEvent(alarmType, inputGuid string, id int, alarmStatus string) (res
 		mailMap := make(map[string]bool)
 		phoneMap := make(map[string]bool)
 		roleMap := make(map[string]bool)
+		if alarms[0].AlarmStrategy != "" {
+			result = getNotifyEventMessage(inputGuid, *alarms[0])
+			return
+		}
 		if alarms[0].StrategyId == 0 {
 			for _, v := range GetMailByEndpointGroup(alarms[0].Endpoint) {
 				mailMap[fmt.Sprintf("%s^%s", inputGuid, v)] = true
