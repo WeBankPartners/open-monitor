@@ -78,6 +78,7 @@ func buildNewAlarm(param *m.AMRespAlert,nowTime time.Time) (alarm m.AlarmHandleO
 		return alarm,fmt.Errorf("labels strategy_id and strategy_guid is empty ")
 	}
 	existAlarm := m.AlarmTable{}
+	log.Logger.Info("accept strategy_guid", log.String("strategy_guid",param.Labels["strategy_guid"]))
 	if param.Labels["strategy_guid"] != "" {
 		existAlarm,err = getNewAlarmWithStrategyGuid(&alarm, param, &endpointObj)
 	}else if param.Labels["strategy_id"] == "up" {
@@ -88,6 +89,7 @@ func buildNewAlarm(param *m.AMRespAlert,nowTime time.Time) (alarm m.AlarmHandleO
 	}else{
 		existAlarm,err = getNewAlarmWithStrategyId(&alarm, param, &endpointObj)
 	}
+	log.Logger.Info("exist alarm", log.JsonObj("existAlarm", existAlarm))
 	alarm.Status = "firing"
 	operation := "add"
 	if existAlarm.Status != "" {
@@ -180,6 +182,7 @@ func getNewAlarmTags(param *m.AMRespAlert) (tagString string,err error) {
 func getNewAlarmWithStrategyGuid(alarm *m.AlarmHandleObj,param *m.AMRespAlert,endpointObj *m.EndpointNewTable) (existAlarm m.AlarmTable,err error) {
 	existAlarm = m.AlarmTable{}
 	strategyObj,queryErr := db.GetAlarmStrategy(param.Labels["strategy_guid"])
+	log.Logger.Info("getNewAlarmWithStrategyGuid", log.String("query guid", strategyObj.Guid))
 	if queryErr != nil {
 		err = queryErr
 		return
