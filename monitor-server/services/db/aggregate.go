@@ -131,6 +131,10 @@ func calc(data []float64, method string) float64 {
 			index := len(data)*95/100
 			result = data[index-1]
 		}
+	}else if method == "sum" {
+		for _,v := range data {
+			result = result + v
+		}
 	}
 	result,_ = strconv.ParseFloat(fmt.Sprintf("%.3f", result), 64)
 	return result
