@@ -273,7 +273,7 @@ export default {
     getDetail (targrtId, type) {
       this.targrtId = targrtId
       this.type = type
-      const api = '/monitor/api/v2/alarm/strategy/list/' + '/endpoint/' + targrtId
+      const api = '/monitor/api/v2/alarm/strategy/list' + '/endpoint/' + targrtId
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', (responseData) => {
         this.showManagement = true
         responseData.forEach((item)=>{
