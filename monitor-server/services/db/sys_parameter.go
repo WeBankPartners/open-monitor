@@ -55,6 +55,7 @@ func UpdateSysAlertMailConfig(param *models.SysAlertMailParameter) {
 }
 
 func GetSysMetricTemplateConfig() (result []*models.SysMetricTemplateParameter,err error) {
+	result = []*models.SysMetricTemplateParameter{}
 	queryRow,tmpErr := getSysParameterTableData(models.SPMetricTemplate)
 	if tmpErr != nil {
 		return result,tmpErr
