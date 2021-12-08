@@ -1,12 +1,17 @@
 package db
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/WeBankPartners/go-common-lib/guid"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
 	"github.com/WeBankPartners/go-common-lib/smtp"
+	"golang.org/x/net/context/ctxhttp"
+	"io/ioutil"
+	"net/http"
 	"strings"
 	"time"
 )
@@ -382,20 +387,20 @@ func NotifyStrategyAlarm(alarmObj *models.AlarmHandleObj)  {
 		return
 	}
 	for _,v := range notifyTable {
-		err = notifyAction(v)
+		err = notifyAction(v,alarmObj)
 		if err != nil {
 			log.Logger.Error("Notify mail fail", log.String("notifyGuid", v.Guid), log.Error(err))
 		}
 	}
 }
 
-func notifyAction(notify *models.NotifyTable) error {
+func notifyAction(notify *models.NotifyTable,alarmObj *models.AlarmHandleObj) error {
 	if notify.ProcCallbackKey == "" {
-		return notifyMailAction(notify)
+		return notifyMailAction(notify,alarmObj)
 	}
 	var err error
 	for i:=0;i<3;i++ {
-		err = notifyEventAction(notify)
+		err = notifyEventAction(notify,alarmObj)
 		if err == nil {
 			break
 		}else{
@@ -403,18 +408,88 @@ func notifyAction(notify *models.NotifyTable) error {
 		}
 	}
 	if err != nil {
-		return notifyMailAction(notify)
+		return notifyMailAction(notify,alarmObj)
 	}
 	return nil
 }
 
-func notifyEventAction(notify *models.NotifyTable) error {
+func notifyEventAction(notify *models.NotifyTable,alarmObj *models.AlarmHandleObj) error {
+	if notify.ProcCallbackKey == "" {
+		return fmt.Errorf("Notify:%s procCallbackKey is empty ", notify.Guid)
+	}
+	var requestParam models.CoreNotifyRequest
+	requestParam.EventSeqNo = fmt.Sprintf("%d-%s-%d-%s", alarmObj.Id, alarmObj.Status, time.Now().Unix(), notify.Guid)
+	requestParam.EventType = "alarm"
+	requestParam.SourceSubSystem = "SYS_MONITOR"
+	requestParam.OperationKey = notify.ProcCallbackKey
+	requestParam.OperationData = fmt.Sprintf("%d-%s", alarmObj.Id, notify.Guid)
+	requestParam.OperationUser = ""
+	log.Logger.Info(fmt.Sprintf("new notify request data --> eventSeqNo:%s operationKey:%s operationData:%s", requestParam.EventSeqNo, requestParam.OperationKey, requestParam.OperationData))
+	b, _ := json.Marshal(requestParam)
+	request, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/platform/v1/operation-events", models.CoreUrl), strings.NewReader(string(b)))
+	request.Header.Set("Authorization", models.GetCoreToken())
+	request.Header.Set("Content-Type", "application/json")
+	if err != nil {
+		log.Logger.Error("Notify core event new request fail", log.Error(err))
+		return err
+	}
+	res, err := ctxhttp.Do(context.Background(), http.DefaultClient, request)
+	if err != nil {
+		log.Logger.Error("Notify core event ctxhttp request fail", log.Error(err))
+		return err
+	}
+	resultBody, _ := ioutil.ReadAll(res.Body)
+	var resultObj models.CoreNotifyResult
+	err = json.Unmarshal(resultBody, &resultObj)
+	res.Body.Close()
+	if err != nil {
+		log.Logger.Error("Notify core event unmarshal json body fail", log.Error(err))
+		return err
+	}
 	return nil
 }
 
-func notifyMailAction(notify *models.NotifyTable) error {
-	roles := getNotifyRoles(notify.Guid)
-	if len(roles) == 0 {
+func getNotifyEventMessage(notifyGuid string,alarm models.AlarmTable) (result models.AlarmEntityObj) {
+	result = models.AlarmEntityObj{}
+	result.Subject,result.Content = getNotifyMessage(&models.AlarmHandleObj{AlarmTable:alarm})
+	var roles []*models.RoleNewTable
+	x.SQL("select guid,email,phone from `role_new` where guid in (select `role` from notify_role_rel where notify=?)", notifyGuid).Find(&roles)
+	var email,phone,role []string
+	emailExistMap := make(map[string]int)
+	phoneExistMap := make(map[string]int)
+	for _,v := range roles {
+		if v.Email != "" {
+			if _,b:=emailExistMap[v.Email];!b {
+				email = append(email, v.Email)
+				emailExistMap[v.Email] = 1
+			}
+		}
+		if v.Phone != "" {
+			if _,b:=phoneExistMap[v.Phone];!b {
+				phone = append(phone, v.Phone)
+				phoneExistMap[v.Phone] = 1
+			}
+		}
+		role = append(role, v.Guid)
+	}
+	result.To = strings.Join(email, ",")
+	result.ToMail = result.To
+	result.ToPhone = strings.Join(phone, ",")
+	result.ToRole = strings.Join(role, ",")
+	result.SmsContent = getSmsAlarmContent(&alarm)
+	return result
+}
+
+func notifyMailAction(notify *models.NotifyTable,alarmObj *models.AlarmHandleObj) error {
+	var roles []*models.RoleNewTable
+	x.SQL("select distinct email from `role_new` where guid in (select `role` from notify_role_rel where notify=?)", notify.Guid).Find(&roles)
+	toAddress := []string{}
+	for _,v := range roles {
+		if v.Email != "" {
+			toAddress = append(toAddress, v.Email)
+		}
+	}
+	if len(toAddress) == 0 {
 		return nil
 	}
 	mailConfig,err := GetSysAlertMailConfig()
@@ -429,6 +504,12 @@ func notifyMailAction(notify *models.NotifyTable) error {
 	if err != nil {
 		return err
 	}
+	subject,content := getNotifyMessage(alarmObj)
+	return mailSender.Send(subject, content, toAddress)
+}
 
-	return nil
+func getNotifyMessage(alarmObj *models.AlarmHandleObj) (subject,content string) {
+	subject = fmt.Sprintf("[%s][%s] Endpoint:%s Metric:%s", alarmObj.Status, alarmObj.SPriority, alarmObj.Endpoint, alarmObj.SMetric)
+	content = fmt.Sprintf("Endpoint:%s \r\nStatus:%s\r\nMetric:%s\r\nEvent:%.3f%s\r\nLast:%s\r\nPriority:%s\r\nNote:%s\r\nTime:%s",alarmObj.Endpoint,alarmObj.Status,alarmObj.SMetric,alarmObj.StartValue,alarmObj.SCond,alarmObj.SLast,alarmObj.SPriority,alarmObj.Content,time.Now().Format(models.DatetimeFormat))
+	return
 }
