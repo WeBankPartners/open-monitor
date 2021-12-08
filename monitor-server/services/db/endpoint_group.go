@@ -56,6 +56,10 @@ func UpdateEndpointGroup(param *models.EndpointGroupTable) error {
 
 func DeleteEndpointGroup(endpointGroupGuid string) error {
 	var actions []*Action
+	actions = append(actions, &Action{Sql: "delete from notify_role_rel where notify in (select guid from notify where endpoint_group=? or alarm_strategy in (select guid from alarm_strategy where endpoint_group=?))",Param: []interface{}{endpointGroupGuid,endpointGroupGuid}})
+	actions = append(actions, &Action{Sql: "delete from notify where endpoint_group=? or alarm_strategy in (select guid from alarm_strategy where endpoint_group=?)",Param: []interface{}{endpointGroupGuid,endpointGroupGuid}})
+	actions = append(actions, &Action{Sql: "delete from alarm_strategy where endpoint_group=?",Param: []interface{}{endpointGroupGuid}})
+	actions = append(actions, &Action{Sql: "delete from endpoint_group_rel where endpoint_group=?",Param: []interface{}{endpointGroupGuid}})
 	actions = append(actions, &Action{Sql: "delete from endpoint_group where guid=?", Param: []interface{}{endpointGroupGuid}})
 	actions = append(actions, &Action{Sql: "delete from grp where name=?", Param: []interface{}{endpointGroupGuid}})
 	return Transaction(actions)
