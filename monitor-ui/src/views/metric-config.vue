@@ -44,49 +44,36 @@
                     <Input v-model="metricConfigData.metric"></Input>
                   </FormItem>
                   <FormItem :label="$t('m_endpoint')">
-                    <Select filterable clearable v-model="endpoint" @on-open-change="getEndpointForAcquisitionConfiguration" @on-change="clearParams">
+                    <Select filterable clearable v-model="endpoint" @on-open-change="getEndpointForAcquisitionConfiguration">
                       <Option v-for="item in endpointOptions" :value="item.id" :key="item.id">{{ item.guid }}</Option>
                     </Select>
                   </FormItem>
                   <FormItem :label="$t('m_recommend')">
-                    <Select v-model="configType" @on-change="changeConfigType">
-                      <Option v-for="item in ['default', 'percentage']" :value="item" :key="item">{{ item }}</Option>
+                    <Select v-model="templatePl" @on-change="changeTemplatePl">
+                      <Option v-for="item in metricTemplate" :value="item.prom_ql" :key="item.prom_ql">{{ item.name }}</Option>
                     </Select>
                   </FormItem>
-                  <FormItem v-if="configType !== ''" :label="$t('m_collected_data')">
-                    <Select
-                      filterable
-                      clearable
-                      v-model="paramsA"
-                      @on-open-change="getCollectedMetric"
-                      @on-change="changeCollectedMetric('paramsA')"
-                      placeholder="paramsA"
-                      class="select-dropdown">
-                      <Option 
-                        style="white-space: normal;"
-                        v-for="item in collectedMetricOptions" 
-                        :value="item.option_value" 
-                        :key="item.option_value">
-                        {{ item.option_text }}
-                      </Option>
-                    </Select>
-                    <Select
-                      v-if="configType !== 'default'"
-                      filterable
-                      placeholder="paramsB"
-                      clearable
-                      @on-open-change="getCollectedMetric"
-                      @on-change="changeCollectedMetric(('paramsB'))"
-                      v-model="paramsB"
-                      class="select-dropdown">
-                      <Option 
-                        style="white-space: normal;"
-                        v-for="item in collectedMetricOptions" 
-                        :value="item.option_value" 
-                        :key="item.option_value">
-                        {{ item.option_text }}
-                      </Option>
-                    </Select>
+                  <FormItem v-if="templatePl !== ''" :label="$t('m_collected_data')">
+                    {{templatePl}}
+                    <template v-for="param in metricTemplateParams">
+                      <Select
+                        filterable
+                        :key="param.label"
+                        clearable
+                        v-model="param.value"
+                        @on-open-change="getCollectedMetric"
+                        @on-change="changeCollectedMetric(param)"
+                        :placeholder="param.label"
+                        class="select-dropdown">
+                        <Option 
+                          style="white-space: normal;"
+                          v-for="item in collectedMetricOptions" 
+                          :value="item.option_value" 
+                          :key="item.option_value">
+                          {{ item.option_text }}
+                        </Option>
+                      </Select>
+                    </template>
                   </FormItem>
                   <FormItem :label="$t('field.metric')">
                     <Input v-model="metricConfigData.prom_ql" type="textarea" :rows="6" />
@@ -223,7 +210,7 @@ export default {
   name: '',
   data() {
     return {
-      configType: '',
+      templatePl: '',
       paramsA: '',
       paramsB: '',
       isShowWarning: false,
@@ -300,13 +287,20 @@ export default {
         type: '',
         id: '',
         title: '',
-      }
+      },
+      metricTemplate: [],
+      metricTemplateParams: []
     }
   },
   mounted() {
     this.getEndpointType()
   },
   methods: {
+    getMetricTemplate () {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v2/sys/parameter/metric_template', '', (res) => {
+        this.metricTemplate = res
+      })
+    },
     clearEndpointType () {
       this.showConfigTab = false
       this.metricId = ''
@@ -318,12 +312,7 @@ export default {
         prom_ql: '',
         endpoint: ''
       }
-      this.clearParams() 
       this.isRequestChartData = false
-    },
-    clearParams () {
-      this.paramsA = ''
-      this.paramsB = ''
     },
     handleCreateLegend (val) {
       const exist = this.legendOptions.find(el => el.value === val)
@@ -625,34 +614,30 @@ export default {
         this.metricOptions = responseData
       }, {isNeedloading: false})
     },
-    changeConfigType (val) {
-      this.clearParams()
-      if (val === 'default') {
-        this.metricConfigData.prom_ql += ' ' + '${paramsA}'
-      } else {
-        this.metricConfigData.prom_ql += ' ' + '(sum(${paramsA} or vector(0))/sum(${paramsB} or vector(1)))*100'
-      }
+    changeTemplatePl (val) {
+      const find = this.metricTemplate.find(m => m.prom_ql === val)
+      this.metricTemplateParams = find.param.split(',').map(p => {
+        return {
+          value: '',
+          label: p
+        }
+      })
+      this.metricConfigData.prom_ql += ' ' + val
     },
     changeCollectedMetric (val) {
-      if (val === 'paramsA') {
-        if (this.paramsA) {
-          this.metricConfigData.prom_ql = this.metricConfigData.prom_ql.replace('${paramsA}', this.paramsA)
-        }
-      } else {
-        if (this.paramsB) {
-          this.metricConfigData.prom_ql = this.metricConfigData.prom_ql.replace('${paramsB}', this.paramsB)
-        }
+      if (val.value) {
+        this.metricConfigData.prom_ql = this.metricConfigData.prom_ql.replace(val.label, val.value)
       }
     },
     configMetric () {
       this.isAddMetric = false
       this.endpoint = ''
-      this.clearParams() 
       this.isRequestChartData = false
       this.selectdPanel = ''
       this.selectdGraph = ''
       this.changeGraph('')
       this.getMetricOptions()
+      this.getMetricTemplate()
       this.showConfigTab = true
     },
     getCollectedMetric () {
