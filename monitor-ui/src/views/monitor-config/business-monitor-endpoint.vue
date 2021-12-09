@@ -174,6 +174,67 @@
         </div>
       </div>
     </Modal>
+    <Modal
+      v-model="addAndEditModal.isShow"
+      :title="$t('button.view')"
+      >
+      <div>
+        <div>
+          <span>{{$t('field.type')}}:</span>
+          <Select disabled v-model="addAndEditModal.dataConfig.monitor_type" @on-change="getEndpoint(addAndEditModal.dataConfig.monitor_type, 'host')" style="width: 445px">
+            <Option v-for="type in monitorTypeOptions" :key="type.value" :value="type.label">{{type.label}}</Option>
+          </Select>
+        </div>
+        <div v-if="addAndEditModal.isAdd" style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
+          <template v-for="(item, index) in addAndEditModal.pathOptions">
+            <p :key="index + 5">
+              <Button
+                v-if="addAndEditModal.isAdd"
+                @click="deleteItem('path', index)"
+                size="small"
+                style="background-color: #ff9900;border-color: #ff9900;"
+                type="error"
+                icon="md-close"
+              ></Button>
+              <Tooltip :content="$t('tableKey.logPath')" :delay="1000">
+                <Input v-model="item.path" style="width: 432px" :placeholder="$t('tableKey.logPath')" />
+              </Tooltip>
+            </p>
+          </template>
+          <Button
+            @click="addEmptyItem('path')"
+            type="success"
+            size="small"
+            style="background-color: #0080FF;border-color: #0080FF;"
+            long
+            >{{ $t('button.add') }}{{$t('tableKey.logPath')}}</Button
+          >
+        </div>
+        <div v-else style="margin: 8px 0">
+          <span>{{$t('tableKey.path')}}:</span>
+          <Input style="width: 445px" disabled v-model="addAndEditModal.dataConfig.log_path" />
+        </div>
+        <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;text-align:center">
+          <template v-for="(item, index) in addAndEditModal.dataConfig.endpoint_rel">
+            <p :key="index + 'c'">
+              <Tooltip :content="$t('m_log_server')" :delay="1000">
+                <Select disabled v-model="item.source_endpoint" style="width: 215px" :placeholder="$t('m_log_server')">
+                  <Option v-for="type in sourceEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
+                </Select>
+              </Tooltip>
+              <Tooltip :content="$t('m_business_object')" :delay="1000">
+                <Select disabled v-model="item.target_endpoint" style="width: 215px" :placeholder="$t('m_business_object')">
+                  <Option v-for="type in targetEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
+                </Select>
+              </Tooltip>
+            </p>
+          </template>
+        </div>
+      </div>
+      <div slot="footer">
+        <Button @click="addAndEditModal.isShow = false">{{$t('button.cancel')}}</Button>
+      </div>
+    </Modal>
   </div>
 </template>
 
@@ -183,7 +244,9 @@ let tableEle = [
   {title: 'tableKey.logPath', value: 'log_path', display: true},
   {title: 'field.type', value: 'monitor_type', display: true},
 ]
-const btn = []
+const btn = [
+  {btn_name: 'button.view', btn_func: 'editF'},
+]
 let tableDbEle = [
   {title: 'field.displayName', value: 'display_name', display: true},
   {title: 'field.metric', value: 'metric', display: true},
@@ -288,6 +351,17 @@ export default {
       ],
       sourceEndpoints: [],
       targetEndpoints: [],
+      addAndEditModal: {
+        isShow: false,
+        isAdd: false,
+        dataConfig: {
+          service_group: '',
+          log_path: [],
+          monitor_type: '',
+          endpoint_rel: []
+        },
+        pathOptions: []
+      },
     }
   },
   methods: {
@@ -305,7 +379,8 @@ export default {
       this.dbModelConfig.isAdd = false
       this.dbModelConfig.isShow = true
     },
-    getEndpoint (val, type, targrtId) {
+    async getEndpoint (val, type, targrtId) {
+      await this.getDefaultConfig(val, type)
       // get source Endpoint
       const sourceApi = this.$root.apiCenter.getEndpointsByType + '/' + targrtId + '/endpoint/' + type
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', sourceApi, '', (responseData) => {
@@ -317,6 +392,44 @@ export default {
       }, {isNeedloading:false})
     },
     //other config 
+    editF (rowData) {
+      this.getEndpoint(rowData.monitor_type, 'host', rowData.service_group)
+      this.addAndEditModal.isAdd = false
+      this.addAndEditModal.addRow = rowData
+      this.modelTip.value = rowData.guid
+      this.addAndEditModal.dataConfig.guid = rowData.guid
+      this.addAndEditModal.dataConfig.service_group = rowData.service_group
+      this.addAndEditModal.dataConfig.monitor_type = rowData.monitor_type
+      this.addAndEditModal.dataConfig.log_path = rowData.log_path
+      this.addAndEditModal.dataConfig.endpoint_rel = rowData.endpoint_rel
+      this.addAndEditModal.isShow = true
+    },
+    getDefaultConfig (val, type) {
+      const api = `/monitor/api/v2/service/service_group/endpoint_rel?serviceGroup=${this.targrtId}&sourceType=${type}&targetType=${val}`
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', (responseData) => {
+        const tmp = responseData.map(r => {
+            return {
+              source_endpoint: r.source_endpoint,
+              target_endpoint: r.target_endpoint
+            }
+          })
+        if (type === 'host') {
+          tmp.forEach(t => {
+            const find = this.addAndEditModal.dataConfig.endpoint_rel.find(rel => rel.source_endpoint === t.source_endpoint && rel.target_endpoint === t.target_endpoint)
+            if (find === undefined) {
+              this.addAndEditModal.dataConfig.endpoint_rel.push(t)
+            }
+          })
+        } else {
+          tmp.forEach(t => {
+            const find = this.dbModelConfig.addRow.endpoint_rel.find(rel => rel.source_endpoint === t.source_endpoint && rel.target_endpoint === t.target_endpoint)
+            if (find === undefined) {
+              this.dbModelConfig.addRow.endpoint_rel.push(t)
+            }
+          })
+        }
+      })
+    },
     cancelModal () {
       this.$root.JQ('#custom_metrics').modal('hide')
     },
