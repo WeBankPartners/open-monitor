@@ -340,7 +340,7 @@ func AutoUpdateProcessMonitor(c *gin.Context) {
 			return
 		}
 		for _, input := range param.Inputs {
-			subResult, subError := updateProcess(input, operation)
+			subResult, subError := updateProcessNew(input, operation)
 			results = append(results, subResult)
 			if subError != nil {
 				log.Logger.Error("Handle auto update process fail", log.JsonObj("input", input), log.Error(subError))
@@ -350,6 +350,42 @@ func AutoUpdateProcessMonitor(c *gin.Context) {
 	} else {
 		return
 	}
+}
+
+func updateProcessNew(input processRequestObj, operation string) (result processResultOutputObj, err error) {
+	result.Guid = input.Guid
+	result.CallbackParameter = input.CallbackParameter
+	defer func() {
+		if err != nil {
+			result.ErrorCode = "1"
+			result.ErrorMessage = err.Error()
+		} else {
+			result.ErrorCode = "0"
+			result.ErrorMessage = ""
+		}
+	}()
+	if input.HostIp == "" {
+		err = fmt.Errorf("Param host_ip is empty ")
+		return result, err
+	}
+	if input.ProcessName == "" {
+		err = fmt.Errorf("Param process_name is empty ")
+		return result, err
+	}
+	if strings.Contains(input.ProcessName, ",") && input.ProcessTag == "" {
+		err = fmt.Errorf("Param process_tag cat not empty when process_name is multiple ")
+		return result, err
+	}
+	registerParam := m.RegisterParamNew{Name: input.DisplayName, Ip: input.HostIp, ProcessName: input.ProcessName, Tags: input.ProcessTag, Type: "process", DefaultGroupName: "default_process_group", AddDefaultGroup: true, Step: 10}
+	validateMessage,guid,tmpErr := AgentRegister(registerParam)
+	if validateMessage != "" {
+		return result,fmt.Errorf("Param validate error,%s ", validateMessage)
+	}
+	if tmpErr != nil {
+		return result,tmpErr
+	}
+	result.Guid = guid
+	return
 }
 
 func updateProcess(input processRequestObj, operation string) (result processResultOutputObj, err error) {
