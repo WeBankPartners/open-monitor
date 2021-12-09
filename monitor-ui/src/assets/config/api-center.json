@@ -204,5 +204,7 @@
     "logMetricJson": "/monitor/api/v2/service/log_metric/log_metric_json",
     "logMetricReg": "/monitor/api/v2/service/log_metric/log_metric_config",
     "getTargetDbDetail": "/monitor/api/v2/service/db_metric/list",
-    "saveTargetDb": "/monitor/api/v2/service/db_metric"
+    "saveTargetDb": "/monitor/api/v2/service/db_metric",
+    "getThresholdEndpointDetail": "/monitor/api/v2/alarm/strategy/list/endpoint",
+    "getThresholdGroupDetail": "/monitor/api/v2/alarm/strategy/list/group"
 }
