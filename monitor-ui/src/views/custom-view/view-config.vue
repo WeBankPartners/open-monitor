@@ -19,7 +19,7 @@
           <div>
             <div class="search-zone">
               <span class="params-title">{{$t('field.relativeTime')}}：</span>
-              <Select filterable clearable v-model="viewCondition.timeTnterval" disabled style="width:80px"  @on-change="initPanals">
+              <Select filterable v-model="viewCondition.timeTnterval" disabled style="width:80px"  @on-change="initPanals">
                 <Option v-for="item in dataPick" :value="item.value" :key="item.value">{{ item.label }}</Option>
               </Select>
             </div>
