@@ -140,8 +140,8 @@ type EndpointStrategyObj struct {
 }
 
 type SysParameterTable struct {
-	Guid string `json:"guid" xorm:"guid"`
-	ParamKey string `json:"param_key" xorm:"param_key"`
+	Guid       string `json:"guid" xorm:"guid"`
+	ParamKey   string `json:"param_key" xorm:"param_key"`
 	ParamValue string `json:"param_value" xorm:"param_value"`
 }
 
@@ -154,6 +154,7 @@ type SysAlertMailParameter struct {
 }
 
 type SysMetricTemplateParameter struct {
+	Name   string `json:"name"`
 	PromQl string `json:"prom_ql"`
 	Param  string `json:"param"`
 }
