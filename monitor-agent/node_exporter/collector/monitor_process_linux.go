@@ -220,7 +220,6 @@ type syncProcessResponse struct {
 func ProcessHttpHandle(w http.ResponseWriter, r *http.Request) {
 	var err error
 	defer func(returnErr error) {
-		logMetricHttpLock.Unlock()
 		responseObj := syncProcessResponse{Status: "OK", Message: "success"}
 		if returnErr != nil {
 			returnErr = fmt.Errorf("Handel process monitor http request fail,%s ", returnErr.Error())
