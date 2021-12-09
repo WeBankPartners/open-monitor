@@ -205,7 +205,7 @@ func SyncPrometheusRuleFile(endpointGroup string,fromPeer bool) error {
 	if endpointGroup == "" {
 		return fmt.Errorf("Sync prometheus rule fail,group is empty ")
 	}
-	endpointGroupObj,err := getSimpleEndpointGroup(endpointGroup)
+	endpointGroupObj,err := GetSimpleEndpointGroup(endpointGroup)
 	if err != nil {
 		return fmt.Errorf("Sync prometheus rule fail,%s ", err.Error())
 	}
