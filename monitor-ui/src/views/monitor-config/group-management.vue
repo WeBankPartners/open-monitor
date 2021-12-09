@@ -123,7 +123,7 @@
             {label: 'tableKey.description', value: 'description', placeholder: '', disabled: false, type: 'text'},
             //{name: 'slotEndpointType', type:'slot'}
             {label: 'tableKey.endpoint_type', value: 'monitor_type', option: 'monitor_type',v_validate: 'required:true', disabled: false, type: 'select'},
-            {label: 'field.resourceLevel', value: 'service_group', option: 'service_group',v_validate: 'required:true', disabled: false, type: 'select'}
+            {label: 'field.resourceLevel', value: 'service_group', option: 'service_group', disabled: false, type: 'select'}
           ],
           addRow: { // [通用]-保存用户新增、编辑时数据
             display_name: null,
