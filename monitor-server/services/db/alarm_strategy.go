@@ -230,6 +230,7 @@ func SyncPrometheusRuleFile(endpointGroup string,fromPeer bool) error {
 			}
 		}
 	}else{
+		clusterList = []string{"default"}
 		clusterEndpointMap["default"] = []*models.EndpointNewTable{}
 	}
 	for _,cluster := range clusterList {
