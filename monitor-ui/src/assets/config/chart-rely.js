@@ -230,7 +230,6 @@ export const drawChart = function(that,config,userConfig, elId) {
     ],
     series: config.series
   }
-  console.log(config.series)
   if (finalConfig.chartType !== config.series[0]) {
     config.series.forEach(se => {
       se.type = finalConfig.chartType
