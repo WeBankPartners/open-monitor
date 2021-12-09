@@ -7,7 +7,7 @@
       </li>
       <li class="search-li">
         <span class="params-title">{{$t('field.relativeTime')}}：</span>
-        <Select filterable clearable v-model="timeTnterval" :disabled="disableTime" style="width:80px" @on-change="getChartsConfig">
+        <Select filterable v-model="timeTnterval" :disabled="disableTime" style="width:80px" @on-change="getChartsConfig">
           <Option v-for="item in dataPick" :value="item.value" :key="item.value">{{ item.label }}</Option>
         </Select>
       </li>
