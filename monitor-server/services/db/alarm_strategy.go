@@ -379,13 +379,13 @@ func NotifyStrategyAlarm(alarmObj *models.AlarmHandleObj)  {
 		return
 	}
 	var notifyTable []*models.NotifyTable
-	err := x.SQL("select * from notify where alarm_strategy=?", alarmObj.AlarmStrategy).Find(&notifyTable)
+	err := x.SQL("select * from notify where alarm_action=? and alarm_strategy=?", alarmObj.Status, alarmObj.AlarmStrategy).Find(&notifyTable)
 	if err != nil {
 		log.Logger.Error("Query notify table fail", log.Error(err))
 		return
 	}
 	if len(notifyTable) == 0 {
-		x.SQL("select * from notify where endpoint_group in (select endpoint_group from alarm_strategy where guid=?) or service_group in (select service_group from endpoint_service_rel where endpoint=?)", alarmObj.AlarmStrategy, alarmObj.Endpoint).Find(&notifyTable)
+		x.SQL("select * from notify where alarm_action=? and endpoint_group in (select endpoint_group from alarm_strategy where guid=?) or service_group in (select service_group from endpoint_service_rel where endpoint=?)", alarmObj.Status, alarmObj.AlarmStrategy, alarmObj.Endpoint).Find(&notifyTable)
 	}
 	if len(notifyTable) == 0 {
 		return
