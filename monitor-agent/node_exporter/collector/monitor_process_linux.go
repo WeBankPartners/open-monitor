@@ -131,7 +131,7 @@ func (c *processMonitorJob) GetResult() []*processMonitorObj {
 	var output []*processMonitorObj
 	c.ResultLock.RLock()
 	for _, v := range c.ResultList {
-		output = append(output, &processMonitorObj{Name: v.Name, Tags: v.Tags, EndpointGuid: v.EndpointGuid, DisplayName: v.DisplayName, Command: v.Command, Value: v.Value, CpuUsedPercent: v.CpuUsedPercent, MemUsedByte: v.MemUsedByte})
+		output = append(output, &processMonitorObj{Pid: v.Pid, Name: v.Name, Tags: v.Tags, EndpointGuid: v.EndpointGuid, DisplayName: v.DisplayName, Command: v.Command, Value: v.Value, CpuUsedPercent: v.CpuUsedPercent, MemUsedByte: v.MemUsedByte})
 	}
 	c.ResultLock.RUnlock()
 	return output
