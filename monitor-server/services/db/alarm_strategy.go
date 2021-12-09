@@ -205,10 +205,13 @@ func SyncPrometheusRuleFile(endpointGroup string,fromPeer bool) error {
 	if endpointGroup == "" {
 		return fmt.Errorf("Sync prometheus rule fail,group is empty ")
 	}
-	var err error
+	endpointGroupObj,err := getSimpleEndpointGroup(endpointGroup)
+	if err != nil {
+		return fmt.Errorf("Sync prometheus rule fail,%s ", err.Error())
+	}
 	ruleFileName := "g_" + endpointGroup
 	var endpointList []*models.EndpointNewTable
-	err = x.SQL("select * from endpoint_new where guid in (select endpoint from endpoint_group_rel where endpoint_group=? union select endpoint from endpoint_service_rel where service_group in (select service_group from endpoint_group where guid=?))", endpointGroup, endpointGroup).Find(&endpointList)
+	err = x.SQL("select * from endpoint_new where monitor_type=? and guid in (select endpoint from endpoint_group_rel where endpoint_group=? union select endpoint from endpoint_service_rel where service_group in (select service_group from endpoint_group where guid=?))", endpointGroupObj.MonitorType, endpointGroup, endpointGroup).Find(&endpointList)
 	if err != nil {
 		return err
 	}
