@@ -83,7 +83,7 @@ func UpdateGroupEndpoint(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	err := db.UpdateGroupEndpoint(&param)
+	err := db.UpdateGroupEndpoint(&param, false)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {

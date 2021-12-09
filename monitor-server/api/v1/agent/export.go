@@ -60,6 +60,7 @@ type endpointRequestObj struct {
 	ProxyExporter     string `json:"proxy_exporter"`
 	Cluster           string `json:"cluster"`
 	Tags              string `json:"tags"`
+	ProcessName       string `json:"process_name"`
 }
 
 func ExportAgentNew(c *gin.Context) {
@@ -115,7 +116,7 @@ func ExportAgentNew(c *gin.Context) {
 		} else if tmpAgentType == "snmp" {
 			param = m.RegisterParamNew{Type: tmpAgentType, Name: v.Instance, Ip: v.InstanceIp, Cluster: v.Cluster, AddDefaultGroup: true, AgentManager: false, FetchMetric: false, DefaultGroupName: v.Group, Step: tmpStep, ProxyExporter: v.ProxyExporter}
 		} else {
-			param = m.RegisterParamNew{Type: tmpAgentType, Ip: v.InstanceIp, Cluster: v.Cluster, Port: v.Port, Name: v.Instance, User: v.User, Password: v.Password, AgentManager: true, AddDefaultGroup: true, FetchMetric: true, DefaultGroupName: v.Group, Step: tmpStep}
+			param = m.RegisterParamNew{Type: tmpAgentType, Ip: v.InstanceIp, Cluster: v.Cluster, Port: v.Port, Name: v.Instance, User: v.User, Password: v.Password, AgentManager: true, AddDefaultGroup: true, FetchMetric: true, DefaultGroupName: v.Group, Step: tmpStep, ProcessName: v.ProcessName}
 			param.Url = v.Url
 			param.Method = v.Method
 		}
