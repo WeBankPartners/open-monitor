@@ -112,3 +112,16 @@ func ListEndpointGroupOptions(searchText string) (result []*models.OptionModel, 
 	}
 	return
 }
+
+func getSimpleEndpointGroup(guid string) (result *models.EndpointGroupTable,err error) {
+	var endpointGroup []*models.EndpointGroupTable
+	err = x.SQL("select * from endpoint_group where guid=?", guid).Find(&endpointGroup)
+	if err != nil {
+		return
+	}
+	if len(endpointGroup) == 0 {
+		return result,fmt.Errorf("Can not find endpointGroup with guid:%s ", guid)
+	}
+	result = endpointGroup[0]
+	return
+}
