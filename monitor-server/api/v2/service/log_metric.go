@@ -4,7 +4,6 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
-	"github.com/WeBankPartners/open-monitor/monitor-server/services/node_exporter"
 	"github.com/gin-gonic/gin"
 )
 
@@ -294,7 +293,7 @@ func syncLogMetricMonitorConfig(logMetricMonitor string) error {
 }
 
 func syncNodeExporterConfig(endpointList []string) error {
-	err := node_exporter.UpdateNodeExportConfig(endpointList)
+	err := db.UpdateNodeExportConfig(endpointList)
 	return err
 }
 
