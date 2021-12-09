@@ -1,4 +1,4 @@
-package node_exporter
+package db
 
 import (
 	"bytes"
@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
-	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -31,13 +30,13 @@ func UpdateNodeExportConfig(endpoints []string) error {
 }
 
 func updateEndpointLogMetric(endpointGuid string) error {
-	logMetricConfig, err := db.GetLogMetricByEndpoint(endpointGuid)
+	logMetricConfig, err := GetLogMetricByEndpoint(endpointGuid)
 	if err != nil {
 		return fmt.Errorf("Query endpoint:%s log metric config fail,%s ", endpointGuid, err.Error())
 	}
 	syncParam := transLogMetricConfigToJob(logMetricConfig, endpointGuid)
 	endpointObj := models.EndpointNewTable{Guid: endpointGuid}
-	endpointObj, err = db.GetEndpointNew(&endpointObj)
+	endpointObj, err = GetEndpointNew(&endpointObj)
 	log.Logger.Info("get endpoint new", log.JsonObj("endpoint", endpointObj), log.Error(err))
 	if err != nil || endpointObj.AgentAddress == "" {
 		return err
