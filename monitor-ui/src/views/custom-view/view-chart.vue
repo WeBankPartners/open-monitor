@@ -5,7 +5,7 @@
         <div>
           <div class="search-zone">
             <span class="params-title">{{$t('field.relativeTime')}}：</span>
-            <Select filterable clearable v-model="viewCondition.timeTnterval" :disabled="disableTime" style="width:80px"  @on-change="initPanal">
+            <Select filterable v-model="viewCondition.timeTnterval" :disabled="disableTime" style="width:80px"  @on-change="initPanal">
               <Option v-for="item in dataPick" :value="item.value" :key="item.value">{{ item.label }}</Option>
             </Select>
           </div>
@@ -34,6 +34,7 @@
               <Radio label="max">Max</Radio>
               <Radio label="avg">Average </Radio>
               <Radio label="p95">P95</Radio>
+              <Radio label="sum">Sum</Radio>
               <Radio label="none">Original</Radio>
             </RadioGroup>
           </div>
