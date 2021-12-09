@@ -107,9 +107,7 @@
         </div>
         <div>
           <label class="col-md-2 label-name">{{$t('processTags')}}:</label>
-          <input v-validate="'required'" :placeholder="$t('processTags')" v-model="endpointRejectModel.addRow.tags" name="tags" :class="{ 'red-border': veeErrors.has('tags') }" type="text" class="col-md-7 form-control model-input c-dark" />
-          <label class="required-tip">*</label>
-          <label v-show="veeErrors.has('tags')" class="is-danger">{{ veeErrors.first('tags')}}</label>
+          <input :placeholder="$t('processTags')" v-model="endpointRejectModel.addRow.tags" type="text" class="col-md-7 form-control model-input c-dark" />
         </div>
       </template>
     </div>
