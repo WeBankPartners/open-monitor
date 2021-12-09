@@ -137,21 +137,15 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage, guid string, err 
 			rData.defaultGroup = param.DefaultGroupName
 		}
 		if rData.defaultGroup != "" {
-			err, grpObj := db.GetSingleGrp(0, rData.defaultGroup)
-			if err != nil || grpObj.Id <= 0 {
-				return validateMessage, guid, fmt.Errorf("Add group %s fail,id:%d err:%v ", rData.defaultGroup, grpObj.Id, err)
-			}
-			err, _ = db.UpdateGrpEndpoint(m.GrpEndpointParamNew{Grp: grpObj.Id, Endpoints: []int{rData.endpoint.Id}, Operation: "add"})
-			if err != nil {
-				return validateMessage, guid, err
-			}
-			_, tplObj := db.GetTpl(0, grpObj.Id, 0)
-			if tplObj.Id > 0 {
-				//err := alarm.SaveConfigFile(tplObj.Id, false)
-				err := db.SyncRuleConfigFile(tplObj.Id, []string{}, false)
-				if err != nil {
-					log.Logger.Error("Register interface update prometheus config fail", log.String("group", rData.defaultGroup), log.Error(err))
-					return validateMessage, guid, err
+			_,tmpErr := db.GetSimpleEndpointGroup(rData.defaultGroup)
+			if tmpErr != nil {
+				log.Logger.Error("add default group fail", log.String("group", rData.defaultGroup), log.Error(err))
+			}else{
+				tmpErr = db.UpdateGroupEndpoint(&m.UpdateGroupEndpointParam{GroupGuid: rData.defaultGroup,EndpointGuidList: []string{rData.endpoint.Guid}}, true)
+				if tmpErr != nil {
+					log.Logger.Error("append default group endpoint fail", log.String("group", rData.defaultGroup), log.Error(err))
+				}else{
+					db.SyncPrometheusRuleFile(rData.defaultGroup, false)
 				}
 			}
 		}
