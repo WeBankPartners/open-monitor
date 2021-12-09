@@ -407,7 +407,7 @@ export default {
     getDetail (targrtId, type) {
       this.targrtId = targrtId
       this.type = type
-      const api = '/monitor/api/v2/alarm/strategy/list' + '/group/' + targrtId
+      const api = this.$root.apiCenter.getThresholdGroupDetail + '/' +  + targrtId
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', (responseData) => {
         this.showManagement = true
         if (responseData.length > 0) {
