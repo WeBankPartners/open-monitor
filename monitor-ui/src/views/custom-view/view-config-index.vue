@@ -203,7 +203,7 @@ export default {
       this.$root.JQ('#add_edit_Modal').modal('hide')
       let params = {
         name: this.modelConfig.addRow.name,
-        cfg: ''
+        cfg: '[]'
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.template.save, params, () => {
         this.viewList()
