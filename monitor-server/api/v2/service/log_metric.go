@@ -307,3 +307,15 @@ func CheckRegExpMatch(c *gin.Context) {
 	result := db.CheckRegExpMatch(param)
 	middleware.ReturnSuccessData(c, result)
 }
+
+func GetServiceGroupEndpointRel(c *gin.Context)  {
+	serviceGroup := c.Query("serviceGroup")
+	sourceType := c.Query("sourceType")
+	targetType := c.Query("targetType")
+	result,err := db.GetServiceGroupEndpointRel(serviceGroup,sourceType,targetType)
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+	}else{
+		middleware.ReturnSuccessData(c, result)
+	}
+}

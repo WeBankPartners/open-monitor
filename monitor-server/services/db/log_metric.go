@@ -74,6 +74,34 @@ func ListLogMetricEndpointRel(serviceGroup, logMetricMonitor string) (result []*
 	return result
 }
 
+func GetServiceGroupEndpointRel(serviceGroup,sourceType,targetType string) (result []*models.LogMetricEndpointRelTable,err error) {
+	result = []*models.LogMetricEndpointRelTable{}
+	var endpointTable []*models.EndpointNewTable
+	err = x.SQL("select guid,monitor_type,ip from endpoint_new where guid in (select endpoint from endpoint_service_rel where service_group=?)", serviceGroup).Find(&endpointTable)
+	if err != nil {
+		return
+	}
+	sourceMap := make(map[string]string)
+	targetMap := make(map[string]string)
+	var tmpResult []*models.LogMetricEndpointRelTable
+	for _,v := range endpointTable {
+		if v.MonitorType == sourceType {
+			sourceMap[v.Guid] = v.Ip
+			tmpResult = append(tmpResult, &models.LogMetricEndpointRelTable{SourceEndpoint: v.Guid})
+		}
+		if v.MonitorType == targetType {
+			targetMap[v.Ip] = v.Guid
+		}
+	}
+	for _,v := range tmpResult {
+		if targetGuid,b := targetMap[sourceMap[v.SourceEndpoint]]; b {
+			v.TargetEndpoint = targetGuid
+			result = append(result, v)
+		}
+	}
+	return
+}
+
 func ListLogMetricJson(logMetricMonitor string) (result []*models.LogMetricJsonObj) {
 	result = []*models.LogMetricJsonObj{}
 	var logMetricJsonTable []*models.LogMetricJsonTable
