@@ -194,6 +194,7 @@ func init() {
 		&handlerFuncObj{Url: "/service/log_metric/log_metric_monitor", Method: http.MethodPost, HandlerFunc: service.CreateLogMetricMonitor},
 		&handlerFuncObj{Url: "/service/log_metric/log_metric_monitor", Method: http.MethodPut, HandlerFunc: service.UpdateLogMetricMonitor},
 		&handlerFuncObj{Url: "/service/log_metric/log_metric_monitor/:logMonitorGuid", Method: http.MethodDelete, HandlerFunc: service.DeleteLogMetricMonitor},
+		&handlerFuncObj{Url: "/service/service_group/endpoint_rel", Method: http.MethodGet, HandlerFunc: service.GetServiceGroupEndpointRel},
 
 		&handlerFuncObj{Url: "/service/log_metric/log_metric_json/:logMonitorJsonGuid", Method: http.MethodGet, HandlerFunc: service.GetLogMetricJson},
 		&handlerFuncObj{Url: "/service/log_metric/log_metric_json", Method: http.MethodPost, HandlerFunc: service.CreateLogMetricJson},
