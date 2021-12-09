@@ -450,6 +450,7 @@ func notifyEventAction(notify *models.NotifyTable,alarmObj *models.AlarmHandleOb
 		log.Logger.Error("Notify core event unmarshal json body fail", log.Error(err))
 		return err
 	}
+	log.Logger.Info("Notify core result", log.String("body", string(resultBody)))
 	return nil
 }
 
