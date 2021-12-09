@@ -9,7 +9,7 @@
       <header>
         <div class="search-zone">
           <span class="params-title">{{$t('field.relativeTime')}}：</span>
-          <Select filterable clearable v-model="viewCondition.timeTnterval" :disabled="disableTime" style="width:80px"  @on-change="initPanals">
+          <Select filterable v-model="viewCondition.timeTnterval" :disabled="disableTime" style="width:80px"  @on-change="initPanals">
             <Option v-for="item in dataPick" :value="item.value" :key="item.value">{{ item.label }}</Option>
           </Select>
         </div>
@@ -30,6 +30,16 @@
             :placeholder="$t('placeholder.datePicker')" 
             style="width: 320px">
           </DatePicker>
+        </div>
+        <div style="float:right" class="search-zone">
+          <div class="header-tools">
+            <button v-if="!showAlarm" class="btn btn-sm btn-cancel-f" @click="openAlarmDisplay()">
+              <i style="font-size: 18px;color: #0080FF;" class="fa fa-eye-slash" aria-hidden="true"></i>
+            </button>
+            <button v-else class="btn btn-sm btn-cancel-f" @click="closeAlarmDisplay()">
+              <i style="font-size: 18px;color: #0080FF;" class="fa fa-eye" aria-hidden="true"></i>
+            </button>
+          </div>
         </div>
       </header>
       <div style="display:flex">
@@ -120,6 +130,14 @@ export default {
     }
   },
   methods: {
+    openAlarmDisplay () {
+      this.showAlarm = !this.showAlarm
+      this.$refs.cutsomViewId.getAlarm(this.cutsomViewId, this.viewCondition)
+    },
+    closeAlarmDisplay () {
+      this.showAlarm = !this.showAlarm
+      this.$refs.cutsomViewId.clearAlarmInterval()
+    },
     getDashData (id) {
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.template.singleDash, {id: id}, responseData => {
         if (responseData.cfg === '' || responseData.cfg === '[]') {
