@@ -5,7 +5,6 @@ import (
 	"github.com/WeBankPartners/go-common-lib/guid"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
-	"github.com/WeBankPartners/open-monitor/monitor-server/services/node_exporter"
 	"strings"
 	"sync"
 )
@@ -207,7 +206,7 @@ func AppendServiceConfigWithEndpoint(serviceGroup,newEndpoint string,endpointLis
 		}
 		_,tmpErr := x.Exec("insert into log_metric_endpoint_rel(guid,log_metric_monitor,source_endpoint,target_endpoint) value (?,?,?,?)", guid.CreateGuid(), v.Guid, sourceEndpoint, endpointObj.Guid)
 		if tmpErr == nil {
-			tmpErr = node_exporter.UpdateNodeExportConfig([]string{sourceEndpoint})
+			tmpErr = UpdateNodeExportConfig([]string{sourceEndpoint})
 			if tmpErr != nil {
 				log.Logger.Error("AppendServiceConfigWithEndpoint log metric fail", log.String("newEndpoint", newEndpoint), log.String("sourceEndpoint", sourceEndpoint), log.String("log_metric_monitor",v.Guid))
 			}
