@@ -90,7 +90,7 @@ func buildNewAlarm(param *m.AMRespAlert,nowTime time.Time) (alarm m.AlarmHandleO
 		existAlarm,err = getNewAlarmWithStrategyId(&alarm, param, &endpointObj)
 	}
 	log.Logger.Info("exist alarm", log.JsonObj("existAlarm", existAlarm))
-	alarm.Status = "firing"
+	alarm.Status = param.Status
 	operation := "add"
 	if existAlarm.Status != "" {
 		if existAlarm.Status == "firing" {
