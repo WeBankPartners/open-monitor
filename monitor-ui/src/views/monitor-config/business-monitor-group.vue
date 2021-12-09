@@ -613,15 +613,6 @@ export default {
       this.addAndEditModal.dataConfig.endpoint_rel = rowData.endpoint_rel
       this.addAndEditModal.isShow = true
     },
-    editPost () {
-      this.addAndEditModal.dataConfig.service_group = this.targrtId
-      this.addAndEditModal.dataConfig.log_path = this.addAndEditModal.pathOptions.map(p => p.path)
-      this.$root.$httpRequestEntrance.httpRequestEntrance('PUT', this.$root.apiCenter.logMetricMonitor, this.addAndEditModal.dataConfig, () => {
-        this.$Message.success(this.$t('tips.success'))
-        this.addAndEditModal.isShow = false
-        this.getDetail(this.targrtId)
-      }, {isNeedloading:false})
-    },
     updateReg (reg) {
       this.ruleModelConfig.addRow.json_regular = reg
       this.showRegConfig = false
@@ -770,9 +761,13 @@ export default {
       })
     },
     okAddAndEdit () {
-      this.addAndEditModal.dataConfig.service_group = this.targrtId
-      this.addAndEditModal.dataConfig.log_path = this.addAndEditModal.pathOptions.map(p => p.path)
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.logMetricMonitor, this.addAndEditModal.dataConfig, () => {
+      let params = JSON.parse(JSON.stringify(this.addAndEditModal.dataConfig))
+      const methodType = this.addAndEditModal.isAdd ? 'POST' : 'PUT'
+      params.service_group = this.targrtId
+      if (this.addAndEditModal.isAdd) {
+        params.log_path = this.addAndEditModal.pathOptions.map(p => p.path)
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance(methodType, this.$root.apiCenter.logMetricMonitor, params, () => {
         this.$Message.success(this.$t('tips.success'))
         this.addAndEditModal.isShow = false
         this.getDetail(this.targrtId)
