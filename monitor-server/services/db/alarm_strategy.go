@@ -476,6 +476,7 @@ func getNotifyEventMessage(notifyGuid string,alarm models.AlarmTable) (result mo
 		}
 		role = append(role, v.Guid)
 	}
+	email = getRoleMail(role)
 	result.To = strings.Join(email, ",")
 	result.ToMail = result.To
 	result.ToPhone = strings.Join(phone, ",")
@@ -486,14 +487,19 @@ func getNotifyEventMessage(notifyGuid string,alarm models.AlarmTable) (result mo
 
 func notifyMailAction(notify *models.NotifyTable,alarmObj *models.AlarmHandleObj) error {
 	var roles []*models.RoleNewTable
-	x.SQL("select distinct email from `role_new` where guid in (select `role` from notify_role_rel where notify=?)", notify.Guid).Find(&roles)
-	toAddress := []string{}
+	x.SQL("select guid,email from `role_new` where guid in (select `role` from notify_role_rel where notify=?)", notify.Guid).Find(&roles)
+	var toAddress,roleList []string
 	for _,v := range roles {
 		if v.Email != "" {
 			toAddress = append(toAddress, v.Email)
 		}
+		roleList = append(roleList, v.Guid)
+	}
+	if models.CoreUrl != "" {
+		toAddress = getRoleMail(roleList)
 	}
 	if len(toAddress) == 0 {
+		log.Logger.Warn("notifyMailAction toAddress empty", log.String("notify", notify.Guid), log.StringList("roleList", roleList))
 		return nil
 	}
 	mailConfig,err := GetSysAlertMailConfig()
@@ -515,5 +521,47 @@ func notifyMailAction(notify *models.NotifyTable,alarmObj *models.AlarmHandleObj
 func getNotifyMessage(alarmObj *models.AlarmHandleObj) (subject,content string) {
 	subject = fmt.Sprintf("[%s][%s] Endpoint:%s Metric:%s", alarmObj.Status, alarmObj.SPriority, alarmObj.Endpoint, alarmObj.SMetric)
 	content = fmt.Sprintf("Endpoint:%s \r\nStatus:%s\r\nMetric:%s\r\nEvent:%.3f%s\r\nLast:%s\r\nPriority:%s\r\nNote:%s\r\nTime:%s",alarmObj.Endpoint,alarmObj.Status,alarmObj.SMetric,alarmObj.StartValue,alarmObj.SCond,alarmObj.SLast,alarmObj.SPriority,alarmObj.Content,time.Now().Format(models.DatetimeFormat))
+	return
+}
+
+func getRoleMail(roleList []string) (mailList []string) {
+	if len(roleList) == 0 {
+		return
+	}
+	request, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/platform/v1/roles/retrieve", models.CoreUrl), strings.NewReader(""))
+	if err != nil {
+		log.Logger.Error("Get core role key new request fail", log.Error(err))
+		return
+	}
+	request.Header.Set("Authorization", models.GetCoreToken())
+	res, err := http.DefaultClient.Do(request)
+	if err != nil {
+		log.Logger.Error("Get core role key ctxhttp request fail", log.Error(err))
+		return
+	}
+	b, _ := ioutil.ReadAll(res.Body)
+	res.Body.Close()
+	var result models.CoreRoleDto
+	err = json.Unmarshal(b, &result)
+	if err != nil {
+		log.Logger.Error("Get core role key json unmarshal result", log.Error(err))
+		return
+	}
+	existMap := make(map[string]int)
+	for _, v := range roleList {
+		tmpMail := ""
+		for _, vv := range result.Data {
+			if vv.Name == v {
+				tmpMail = vv.Email
+				break
+			}
+		}
+		if tmpMail != "" {
+			if _,b:=existMap[tmpMail];!b{
+				mailList = append(mailList, tmpMail)
+				existMap[tmpMail] = 1
+			}
+		}
+	}
 	return
 }
