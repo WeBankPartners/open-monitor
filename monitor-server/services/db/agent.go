@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+	"github.com/WeBankPartners/go-common-lib/guid"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"strings"
@@ -181,15 +182,46 @@ func UpdateRecursivePanel(param m.PanelRecursiveTable) error {
 	if err != nil {
 		return err
 	}
+	nowTime := time.Now().Format(m.DatetimeFormat)
+	var actions []*Action
 	if len(prt) > 0 {
 		tmpParent := unionList(param.Parent, prt[0].Parent, "^")
 		tmpEndpoint := unionList(param.Endpoint, prt[0].Endpoint, "^")
-		//tmpEmail := unionList(param.Email, prt[0].Email, ",")
-		//tmpPhone := unionList(param.Phone, prt[0].Phone, ",")
-		//tmpRole := unionList(param.Role, prt[0].Role, ",")
-		_, err = x.Exec("UPDATE panel_recursive SET display_name=?,parent=?,endpoint=?,email=?,phone=?,role=?,firing_callback_key=?,recover_callback_key=?,obj_type=? WHERE guid=?", param.DisplayName, tmpParent, tmpEndpoint, param.Email, param.Phone, param.Role, param.FiringCallbackKey, param.RecoverCallbackKey, param.ObjType, param.Guid)
+		//_, err = x.Exec("UPDATE panel_recursive SET display_name=?,parent=?,endpoint=?,email=?,phone=?,role=?,firing_callback_key=?,recover_callback_key=?,obj_type=? WHERE guid=?", param.DisplayName, tmpParent, tmpEndpoint, param.Email, param.Phone, param.Role, param.FiringCallbackKey, param.RecoverCallbackKey, param.ObjType, param.Guid)
+		actions = append(actions, &Action{Sql: "UPDATE panel_recursive SET display_name=?,parent=?,endpoint=?,email=?,phone=?,role=?,firing_callback_key=?,recover_callback_key=?,obj_type=? WHERE guid=?",Param: []interface{}{param.DisplayName, tmpParent, tmpEndpoint, param.Email, param.Phone, param.Role, param.FiringCallbackKey, param.RecoverCallbackKey, param.ObjType, param.Guid}})
+		actions = append(actions, &Action{Sql: "update service_group set display_name=?,service_type=? where guid=?",Param: []interface{}{param.DisplayName,param.ObjType,param.Guid}})
+		actions = append(actions, &Action{Sql: "delete from endpoint_service_rel where service_group=?",Param: []interface{}{param.Guid}})
+		endpointList := strings.Split(tmpEndpoint, "^")
+		guidList := guid.CreateGuidList(len(endpointList))
+		for i,v := range endpointList {
+			actions = append(actions, &Action{Sql: "insert into endpoint_service_rel(guid,endpoint,service_group) value (?,?,?)",Param: []interface{}{guidList[i],v,param.Guid}})
+		}
+		err = Transaction(actions)
+		if err == nil {
+			var endpointGroup []*m.EndpointGroupTable
+			x.SQL("select guid from endpoint_group where service_group=?", param.Guid).Find(&endpointGroup)
+			for _, v := range endpointGroup {
+				err = SyncPrometheusRuleFile(v.Guid, false)
+				if err != nil {
+					log.Logger.Error("UpdateRecursivePanel warn,syncPrometheusRule fail", log.Error(err))
+				}
+			}
+			AppendServiceConfigWithEndpoint(param.Guid, param.Endpoint, endpointList)
+		}
 	} else {
-		_, err = x.Exec("INSERT INTO panel_recursive(guid,display_name,parent,endpoint,email,phone,role,firing_callback_key,recover_callback_key,obj_type) VALUE (?,?,?,?,?,?,?,?,?,?)", param.Guid, param.DisplayName, param.Parent, param.Endpoint, param.Email, param.Phone, param.Role, param.FiringCallbackKey, param.RecoverCallbackKey, param.ObjType)
+		//_, err = x.Exec("INSERT INTO panel_recursive(guid,display_name,parent,endpoint,email,phone,role,firing_callback_key,recover_callback_key,obj_type) VALUE (?,?,?,?,?,?,?,?,?,?)", param.Guid, param.DisplayName, param.Parent, param.Endpoint, param.Email, param.Phone, param.Role, param.FiringCallbackKey, param.RecoverCallbackKey, param.ObjType)
+		actions = append(actions, &Action{Sql: "INSERT INTO panel_recursive(guid,display_name,parent,endpoint,email,phone,role,firing_callback_key,recover_callback_key,obj_type) VALUE (?,?,?,?,?,?,?,?,?,?)",Param: []interface{}{param.Guid, param.DisplayName, param.Parent, param.Endpoint, param.Email, param.Phone, param.Role, param.FiringCallbackKey, param.RecoverCallbackKey, param.ObjType}})
+		if param.Parent == "" {
+			actions = append(actions, &Action{Sql: "insert into service_group(guid,display_name,description,service_type,update_time) value (?,?,?,?,?)", Param: []interface{}{param.Guid, param.DisplayName, "", param.ObjType, nowTime}})
+		}else {
+			actions = append(actions, &Action{Sql: "insert into service_group(guid,display_name,description,parent,service_type,update_time) value (?,?,?,?,?,?)", Param: []interface{}{param.Guid, param.DisplayName, "", param.Parent, param.ObjType, nowTime}})
+		}
+		//actions = append(actions, &Action{Sql: "delete from endpoint_service_rel where service_group=?",Param: []interface{}{param.Guid}})
+		if param.Endpoint != "" {
+			actions = append(actions, &Action{Sql: "insert into endpoint_service_rel(guid,endpoint,service_group) value (?,?,?)",Param: []interface{}{guid.CreateGuid(),param.Endpoint,param.Guid}})
+		}
+		addGlobalServiceGroupNode(m.ServiceGroupTable{Guid: param.Guid,Parent: param.Parent})
+		err = Transaction(actions)
 	}
 	return err
 }

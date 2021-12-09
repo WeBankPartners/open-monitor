@@ -2,8 +2,10 @@ package db
 
 import (
 	"fmt"
+	"github.com/WeBankPartners/go-common-lib/guid"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/node_exporter"
 	"strings"
 	"sync"
 )
@@ -176,4 +178,64 @@ func MatchServicePanel(endpointGuid string) (result models.PanelModel, err error
 		result.Charts = append(result.Charts, &models.ChartModel{Id: 0, Title: v.DisplayName, Endpoint: []string{endpointGuid}, Metric: []string{fmt.Sprintf("%s/key=%s,t_endpoint=%s", models.DBMonitorMetricName, v.Metric, endpointGuid)}})
 	}
 	return
+}
+
+func AppendServiceConfigWithEndpoint(serviceGroup,newEndpoint string,endpointList []string)  {
+	endpointObj,_ := GetEndpointNew(&models.EndpointNewTable{Guid: newEndpoint})
+	if endpointObj.MonitorType == "" {
+		return
+	}
+	var logMetricTable []*models.LogMetricMonitorTable
+	x.SQL("select * from log_metric_monitor where service_group=? and monitor_type=?", serviceGroup, endpointObj.MonitorType).Find(&logMetricTable)
+	for _,v := range logMetricTable {
+		var logMetricRelTable []*models.LogMetricEndpointRelTable
+		x.SQL("select * from log_metric_endpoint_rel where log_metric_monitor=?", v.Guid).Find(&logMetricRelTable)
+		existFlag := false
+		for _,vv := range logMetricRelTable {
+			if vv.TargetEndpoint == endpointObj.Guid {
+				existFlag = true
+			}
+		}
+		if existFlag {
+			continue
+		}
+		sourceEndpoint := ""
+		for _,vv := range endpointList {
+			if strings.Contains(vv, fmt.Sprintf("_%s_", endpointObj.Ip)) {
+				sourceEndpoint = vv
+			}
+		}
+		_,tmpErr := x.Exec("insert into log_metric_endpoint_rel(guid,log_metric_monitor,source_endpoint,target_endpoint) value (?,?,?,?)", guid.CreateGuid(), v.Guid, sourceEndpoint, endpointObj.Guid)
+		if tmpErr == nil {
+			tmpErr = node_exporter.UpdateNodeExportConfig([]string{sourceEndpoint})
+			if tmpErr != nil {
+				log.Logger.Error("AppendServiceConfigWithEndpoint log metric fail", log.String("newEndpoint", newEndpoint), log.String("sourceEndpoint", sourceEndpoint), log.String("log_metric_monitor",v.Guid))
+			}
+		}
+	}
+	if endpointObj.MonitorType != "mysql" {
+		return
+	}
+	var dbMetricTable []*models.DbMetricMonitorTable
+	x.SQL("select * from db_metric_monitor where service_group=? and monitor_type=?", serviceGroup, endpointObj.MonitorType).Find(&dbMetricTable)
+	for _,v := range dbMetricTable {
+		var dbMetricRelTable []*models.DbMetricEndpointRelTable
+		x.SQL("select * from db_metric_endpoint_rel where db_metric_monitor=?", v.Guid).Find(&dbMetricRelTable)
+		existFlag := false
+		for _,vv := range dbMetricRelTable {
+			if vv.SourceEndpoint == endpointObj.Guid {
+				existFlag = true
+			}
+		}
+		if existFlag {
+			continue
+		}
+		_,tmpErr := x.Exec("insert into db_metric_endpoint_rel(guid,db_metric_monitor,source_endpoint,target_endpoint) value (?,?,?,?)", guid.CreateGuid(), v.Guid, endpointObj.Guid, endpointObj.Guid)
+		if tmpErr == nil {
+			tmpErr = SyncDbMetric()
+			if tmpErr != nil {
+				log.Logger.Error("AppendServiceConfigWithEndpoint db metric fail", log.String("newEndpoint", newEndpoint), log.String("log_metric_monitor",v.Guid))
+			}
+		}
+	}
 }
