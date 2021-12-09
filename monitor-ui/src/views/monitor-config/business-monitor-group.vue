@@ -783,7 +783,8 @@ export default {
         endpoint_rel: []
       }
     },
-    getEndpoint (val, type) {
+    async getEndpoint (val, type) {
+      await this.getDefaultConfig(val, type)
       // get source Endpoint
       const sourceApi = this.$root.apiCenter.getEndpointsByType + '/' + this.targrtId + '/endpoint/' + type
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', sourceApi, '', (responseData) => {
@@ -868,10 +869,36 @@ export default {
         }
       }
     },
-    add () {
+    async add () {
       this.cancelAddAndEdit()
       this.addAndEditModal.isAdd = true
       this.addAndEditModal.isShow = true
+    },
+    getDefaultConfig (val, type) {
+      const api = `/monitor/api/v2/service/service_group/endpoint_rel?serviceGroup=${this.targrtId}&sourceType=${type}&targetType=${val}`
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', (responseData) => {
+        const tmp = responseData.map(r => {
+            return {
+              source_endpoint: r.source_endpoint,
+              target_endpoint: r.target_endpoint
+            }
+          })
+        if (type === 'host') {
+          tmp.forEach(t => {
+            const find = this.addAndEditModal.dataConfig.endpoint_rel.find(rel => rel.source_endpoint === t.source_endpoint && rel.target_endpoint === t.target_endpoint)
+            if (find === undefined) {
+              this.addAndEditModal.dataConfig.endpoint_rel.push(t)
+            }
+          })
+        } else {
+          tmp.forEach(t => {
+            const find = this.dbModelConfig.addRow.endpoint_rel.find(rel => rel.source_endpoint === t.source_endpoint && rel.target_endpoint === t.target_endpoint)
+            if (find === undefined) {
+              this.dbModelConfig.addRow.endpoint_rel.push(t)
+            }
+          })
+        }
+      })
     },
     getDetail (targrtId) {
       this.targrtId = targrtId
