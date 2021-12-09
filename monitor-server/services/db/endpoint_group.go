@@ -71,9 +71,11 @@ func GetGroupEndpointRel(endpointGroupGuid string) (result []*models.EndpointGro
 	return
 }
 
-func UpdateGroupEndpoint(param *models.UpdateGroupEndpointParam) error {
+func UpdateGroupEndpoint(param *models.UpdateGroupEndpointParam, appendFlag bool) error {
 	var actions []*Action
-	actions = append(actions, &Action{Sql: "delete from endpoint_group_rel where endpoint_group=?", Param: []interface{}{param.GroupGuid}})
+	if !appendFlag {
+		actions = append(actions, &Action{Sql: "delete from endpoint_group_rel where endpoint_group=?", Param: []interface{}{param.GroupGuid}})
+	}
 	guidList := guid.CreateGuidList(len(param.EndpointGuidList))
 	for i, v := range param.EndpointGuidList {
 		actions = append(actions, &Action{Sql: "insert into endpoint_group_rel(guid,endpoint,endpoint_group) value (?,?,?)", Param: []interface{}{guidList[i], v, param.GroupGuid}})
@@ -113,7 +115,7 @@ func ListEndpointGroupOptions(searchText string) (result []*models.OptionModel, 
 	return
 }
 
-func getSimpleEndpointGroup(guid string) (result *models.EndpointGroupTable,err error) {
+func GetSimpleEndpointGroup(guid string) (result *models.EndpointGroupTable,err error) {
 	var endpointGroup []*models.EndpointGroupTable
 	err = x.SQL("select * from endpoint_group where guid=?", guid).Find(&endpointGroup)
 	if err != nil {
