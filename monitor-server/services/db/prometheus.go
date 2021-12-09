@@ -59,16 +59,29 @@ func InitPrometheusServiceDiscoverConfig() {
 
 func initPrometheusRuleConfig() {
 	// Sync rule file
-	var tplList []*models.TplTable
-	err := x.SQL("SELECT * FROM tpl").Find(&tplList)
+	//var tplList []*models.TplTable
+	//err := x.SQL("SELECT * FROM tpl").Find(&tplList)
+	//if err != nil {
+	//	log.Logger.Error("init prometheus rule config fail,query tpl table fail", log.Error(err))
+	//	return
+	//}
+	//for _, tpl := range tplList {
+	//	tmpErr := SyncRuleConfigFile(tpl.Id, []string{}, false)
+	//	if tmpErr != nil {
+	//		log.Logger.Error("init prometheus rule config fail", log.Error(tmpErr))
+	//	}
+	//}
+
+	var endpointGroup []*models.EndpointGroupTable
+	err := x.SQL("select guid from endpoint_group").Find(&endpointGroup)
 	if err != nil {
-		log.Logger.Error("init prometheus rule config fail,query tpl table fail", log.Error(err))
+		log.Logger.Error("Init prometheus rule config fail,query endpoint group fail", log.Error(err))
 		return
 	}
-	for _, tpl := range tplList {
-		tmpErr := SyncRuleConfigFile(tpl.Id, []string{}, false)
+	for _,v := range endpointGroup {
+		tmpErr := SyncPrometheusRuleFile(v.Guid, false)
 		if tmpErr != nil {
-			log.Logger.Error("init prometheus rule config fail", log.Error(tmpErr))
+			log.Logger.Error("init prometheus rule config fail", log.String("endpointGroup", v.Guid), log.Error(tmpErr))
 		}
 	}
 }
