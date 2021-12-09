@@ -407,7 +407,7 @@ export default {
     getDetail (targrtId, type) {
       this.targrtId = targrtId
       this.type = type
-      const api = this.$root.apiCenter.getThresholdGroupDetail + '/' +  + targrtId
+      const api = this.$root.apiCenter.getThresholdGroupDetail + '/' + targrtId
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', (responseData) => {
         this.showManagement = true
         if (responseData.length > 0) {
@@ -415,7 +415,7 @@ export default {
           this.pageConfig.table.tableData = responseData[0].strategy
           this.groupNotify = responseData[0].notify
         } else {
-          this.targetDetail = []
+          this.targetDetail = {}
           this.pageConfig.table.tableData = []
         }
       }, {isNeedloading:false})
