@@ -120,7 +120,6 @@
           isAdd: true,
           config: [
             {label: 'm_guid', value: 'guid', placeholder: 'tips.inputRequired', v_validate: 'required:true|min:2|max:60', disabled: false, type: 'text'},
-            {label: 'tableKey.name', value: 'display_name', placeholder: 'tips.inputRequired', v_validate: 'required:true|min:2|max:60', disabled: false, type: 'text'},
             {label: 'tableKey.description', value: 'description', placeholder: '', disabled: false, type: 'text'},
             //{name: 'slotEndpointType', type:'slot'}
             {label: 'tableKey.endpoint_type', value: 'monitor_type', option: 'monitor_type',v_validate: 'required:true', disabled: false, type: 'select'},
