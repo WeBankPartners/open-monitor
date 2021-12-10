@@ -287,6 +287,9 @@ func UpdateOrgEndpoint(param m.UpdateOrgPanelEndpointParam) error {
 	actions = append(actions, &Action{Sql: "delete from endpoint_service_rel where service_group=?",Param: []interface{}{param.Guid}})
 	guidList := guid.CreateGuidList(len(param.Endpoint))
 	for i,v := range param.Endpoint {
+		if v == "" {
+			continue
+		}
 		actions = append(actions, &Action{Sql: "insert into endpoint_service_rel(guid,endpoint,service_group) value (?,?,?)",Param: []interface{}{guidList[i],v,param.Guid}})
 	}
 	err := Transaction(actions)
