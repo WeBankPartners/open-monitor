@@ -295,6 +295,7 @@ type processResultOutput struct {
 type processResultOutputObj struct {
 	CallbackParameter string `json:"callbackParameter"`
 	Guid              string `json:"guid"`
+	MonitorKey        string `json:"monitor_key"`
 	ErrorCode         string `json:"errorCode"`
 	ErrorMessage      string `json:"errorMessage"`
 	ErrorDetail       string `json:"errorDetail,omitempty"`
@@ -384,7 +385,8 @@ func updateProcessNew(input processRequestObj, operation string) (result process
 	if tmpErr != nil {
 		return result,tmpErr
 	}
-	result.Guid = guid
+	result.Guid = input.Guid
+	result.MonitorKey = guid
 	return
 }
 
