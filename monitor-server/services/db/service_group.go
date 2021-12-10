@@ -58,6 +58,16 @@ func addGlobalServiceGroupNode(param models.ServiceGroupTable) {
 				globalServiceGroupMap[param.Parent].Children = append(globalServiceGroupMap[param.Parent].Children, globalServiceGroupMap[param.Guid])
 			}
 		}
+		var serviceGroupTable []*models.ServiceGroupTable
+		x.SQL("select guid,parent from service_group where parent=?", param.Guid).Find(&serviceGroupTable)
+		if len(serviceGroupTable) > 0 {
+			for _,v := range serviceGroupTable {
+				if childNode,bb:=globalServiceGroupMap[v.Guid];bb {
+					childNode.Parent = globalServiceGroupMap[param.Guid]
+					globalServiceGroupMap[param.Guid].Children = append(globalServiceGroupMap[param.Guid].Children, childNode)
+				}
+			}
+		}
 	}
 }
 
