@@ -6,12 +6,10 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"strings"
-	"sync"
 )
 
 var (
 	globalServiceGroupMap  = make(map[string]*models.ServiceGroupLinkNode)
-	globalServiceGroupLock = new(sync.RWMutex)
 )
 
 func InitServiceGroup() {
@@ -28,7 +26,6 @@ func InitServiceGroup() {
 }
 
 func buildGlobalServiceGroupLink(serviceGroupTable []*models.ServiceGroupTable) {
-	globalServiceGroupLock.Lock()
 	globalServiceGroupMap = make(map[string]*models.ServiceGroupLinkNode)
 	for _, v := range serviceGroupTable {
 		globalServiceGroupMap[v.Guid] = &models.ServiceGroupLinkNode{Guid: v.Guid}
@@ -39,35 +36,30 @@ func buildGlobalServiceGroupLink(serviceGroupTable []*models.ServiceGroupTable) 
 			globalServiceGroupMap[v.Parent].Children = append(globalServiceGroupMap[v.Parent].Children, globalServiceGroupMap[v.Guid])
 		}
 	}
-	globalServiceGroupLock.Unlock()
 }
 
 func fetchGlobalServiceGroupChildGuidList(rootKey string) (result []string, err error) {
-	globalServiceGroupLock.RLock()
 	if v, b := globalServiceGroupMap[rootKey]; b {
 		result = v.FetchChildGuid()
 	} else {
 		err = fmt.Errorf("Can not find service group with guid:%s ", rootKey)
 	}
-	globalServiceGroupLock.RUnlock()
 	return
 }
 
 func addGlobalServiceGroupNode(param models.ServiceGroupTable) {
-	globalServiceGroupLock.Lock()
 	if _, b := globalServiceGroupMap[param.Guid]; !b {
+		globalServiceGroupMap[param.Guid] = &models.ServiceGroupLinkNode{Guid: param.Guid}
 		if param.Parent != "" {
-			globalServiceGroupMap[param.Guid] = &models.ServiceGroupLinkNode{Guid: param.Guid, Parent: globalServiceGroupMap[param.Parent]}
-			globalServiceGroupMap[param.Parent].Children = append(globalServiceGroupMap[param.Parent].Children, globalServiceGroupMap[param.Guid])
-		} else {
-			globalServiceGroupMap[param.Guid] = &models.ServiceGroupLinkNode{Guid: param.Guid}
+			if _,bb := globalServiceGroupMap[param.Parent]; bb {
+				globalServiceGroupMap[param.Guid] = &models.ServiceGroupLinkNode{Guid: param.Guid, Parent: globalServiceGroupMap[param.Parent]}
+				globalServiceGroupMap[param.Parent].Children = append(globalServiceGroupMap[param.Parent].Children, globalServiceGroupMap[param.Guid])
+			}
 		}
 	}
-	globalServiceGroupLock.Unlock()
 }
 
 func deleteGlobalServiceGroupNode(guid string) {
-	globalServiceGroupLock.Lock()
 	if v, b := globalServiceGroupMap[guid]; b {
 		if v.Parent != nil {
 			newChildList := []*models.ServiceGroupLinkNode{}
@@ -82,7 +74,6 @@ func deleteGlobalServiceGroupNode(guid string) {
 			delete(globalServiceGroupMap, key)
 		}
 	}
-	globalServiceGroupLock.Unlock()
 }
 
 func ListServiceGroup() (result []*models.ServiceGroupTable, err error) {
@@ -110,11 +101,9 @@ func GetServiceGroupEndpointList(searchType string) (result []*models.ServiceGro
 }
 
 func CreateServiceGroup(param models.ServiceGroupTable) {
-	globalServiceGroupLock.Lock()
 	if param.Parent != "" {
 
 	}
-	globalServiceGroupLock.Unlock()
 }
 
 func UpdateServiceGroup() {
