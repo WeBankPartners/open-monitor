@@ -735,7 +735,7 @@ export default {
       let moreBtnGroup = ['historyAlarm', 'groupManagement', 'maintenanceWindow', 'deleteConfirmModal']
       if (rowData.type === 'host') {
         // moreBtnGroup.push('processManagement', 'businessManagement', 'logManagement', 'portManagement')
-        moreBtnGroup.push('processManagement', 'portManagement')
+        moreBtnGroup.push('portManagement')
       }
       if (rowData.type === 'mysql') {
         moreBtnGroup.push('dataMonitor')
