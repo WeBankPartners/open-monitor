@@ -194,6 +194,9 @@ func UpdateRecursivePanel(param m.PanelRecursiveTable) error {
 		endpointList := strings.Split(tmpEndpoint, "^")
 		guidList := guid.CreateGuidList(len(endpointList))
 		for i,v := range endpointList {
+			if v == "" {
+				continue
+			}
 			actions = append(actions, &Action{Sql: "insert into endpoint_service_rel(guid,endpoint,service_group) value (?,?,?)",Param: []interface{}{guidList[i],v,param.Guid}})
 		}
 		err = Transaction(actions)
