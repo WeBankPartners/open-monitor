@@ -32,8 +32,10 @@ func buildGlobalServiceGroupLink(serviceGroupTable []*models.ServiceGroupTable) 
 	}
 	for _, v := range serviceGroupTable {
 		if v.Parent != "" {
-			globalServiceGroupMap[v.Guid].Parent = globalServiceGroupMap[v.Parent]
-			globalServiceGroupMap[v.Parent].Children = append(globalServiceGroupMap[v.Parent].Children, globalServiceGroupMap[v.Guid])
+			if _,b:=globalServiceGroupMap[v.Parent];b {
+				globalServiceGroupMap[v.Guid].Parent = globalServiceGroupMap[v.Parent]
+				globalServiceGroupMap[v.Parent].Children = append(globalServiceGroupMap[v.Parent].Children, globalServiceGroupMap[v.Guid])
+			}
 		}
 	}
 }
