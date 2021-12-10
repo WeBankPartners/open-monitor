@@ -220,8 +220,11 @@ func UpdateRecursivePanel(param m.PanelRecursiveTable) error {
 			actions = append(actions, &Action{Sql: "insert into service_group(guid,display_name,description,parent,service_type,update_time) value (?,?,?,?,?,?)", Param: []interface{}{param.Guid, param.DisplayName, "", param.Parent, param.ObjType, nowTime}})
 		}
 		//actions = append(actions, &Action{Sql: "delete from endpoint_service_rel where service_group=?",Param: []interface{}{param.Guid}})
-		if param.Endpoint != "" {
-			actions = append(actions, &Action{Sql: "insert into endpoint_service_rel(guid,endpoint,service_group) value (?,?,?)",Param: []interface{}{guid.CreateGuid(),param.Endpoint,param.Guid}})
+		for _,v := range strings.Split(param.Endpoint, "^") {
+			if v == "" {
+				continue
+			}
+			actions = append(actions, &Action{Sql: "insert into endpoint_service_rel(guid,endpoint,service_group) value (?,?,?)",Param: []interface{}{guid.CreateGuid(),v,param.Guid}})
 		}
 		addGlobalServiceGroupNode(m.ServiceGroupTable{Guid: param.Guid,Parent: param.Parent})
 		err = Transaction(actions)
