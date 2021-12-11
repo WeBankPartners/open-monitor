@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
-	"github.com/WeBankPartners/go-common-lib/guid"
 	"strconv"
 	"strings"
 	"time"
@@ -129,12 +128,8 @@ func UpdateOrganization(operation string, param m.UpdateOrgPanelParam) (err erro
 			return fmt.Errorf("guid already exist")
 		}
 		//_, err = x.Exec("INSERT INTO panel_recursive(guid,display_name,parent,obj_type) VALUE (?,?,?,?)", param.Guid, param.DisplayName, param.Parent, param.Type)
-		actions = append(actions, &Action{Sql: "INSERT INTO panel_recursive(guid,display_name,parent,obj_type) VALUE (?,?,?,?)",Param: []interface{}{param.Guid, param.DisplayName, param.Parent, param.Type}})
-		if param.Parent == "" {
-			actions = append(actions, &Action{Sql: "insert into service_group(guid,display_name,description,service_type,update_time) value (?,?,?,?,?)", Param: []interface{}{param.Guid, param.DisplayName, "", param.Type, nowTime}})
-		}else {
-			actions = append(actions, &Action{Sql: "insert into service_group(guid,display_name,description,parent,service_type,update_time) value (?,?,?,?,?,?)", Param: []interface{}{param.Guid, param.DisplayName, "", param.Parent, param.Type, nowTime}})
-		}
+		actions = append(actions, &Action{Sql: "INSERT INTO panel_recursive(guid,display_name,parent,obj_type) VALUE (?,?,?,?)", Param: []interface{}{param.Guid, param.DisplayName, param.Parent, param.Type}})
+		actions = append(actions, getCreateServiceGroupAction(&m.ServiceGroupTable{Guid: param.Guid, DisplayName: param.DisplayName, Description: "", Parent: param.Parent, ServiceType: param.Type, UpdateTime: nowTime})...)
 		err = Transaction(actions)
 		if err == nil {
 			addGlobalServiceGroupNode(m.ServiceGroupTable{Guid: param.Guid, Parent: param.Parent})
@@ -147,8 +142,8 @@ func UpdateOrganization(operation string, param m.UpdateOrgPanelParam) (err erro
 		if len(tableData) == 0 {
 			return fmt.Errorf("guid: %s can not find any record", param.Guid)
 		}
-		actions = append(actions, &Action{Sql: "UPDATE panel_recursive SET display_name=?,obj_type=? WHERE guid=?",Param: []interface{}{param.DisplayName, param.Type, param.Guid}})
-		actions = append(actions, &Action{Sql: "update service_group set display_name=?,service_type=? where guid=?",Param: []interface{}{param.DisplayName,param.Type,param.Guid}})
+		actions = append(actions, &Action{Sql: "UPDATE panel_recursive SET display_name=?,obj_type=? WHERE guid=?", Param: []interface{}{param.DisplayName, param.Type, param.Guid}})
+		actions = append(actions, &Action{Sql: "update service_group set display_name=?,service_type=? where guid=?", Param: []interface{}{param.DisplayName, param.Type, param.Guid}})
 		err = Transaction(actions)
 	} else if operation == "delete" {
 		if param.Guid == "" {
@@ -171,10 +166,12 @@ func UpdateOrganization(operation string, param m.UpdateOrgPanelParam) (err erro
 		}
 		actions = append(actions, &Action{Sql: fmt.Sprintf("DELETE FROM panel_recursive WHERE guid in ('%s')", strings.Join(guidList, "','"))})
 		//TODO delete fore dep
+		actions = append(actions, getDeleteServiceGroupAction(param.Guid)...)
 		actions = append(actions, &Action{Sql: fmt.Sprintf("DELETE FROM service_group WHERE guid in ('%s')", strings.Join(guidList, "','"))})
 		err = Transaction(actions)
 		if err == nil {
 			deleteGlobalServiceGroupNode(param.Guid)
+			DeleteServiceConfig(param.Guid)
 		}
 	}
 	return err
@@ -284,30 +281,22 @@ func GetOrgEndpoint(guid string) (result []*m.OptionModel, err error) {
 func UpdateOrgEndpoint(param m.UpdateOrgPanelEndpointParam) error {
 	var actions []*Action
 	var endpointString string
+	nowTime := time.Now().Format(m.DatetimeFormat)
 	endpointString = strings.Join(param.Endpoint, "^")
-	actions = append(actions, &Action{Sql: "UPDATE panel_recursive SET endpoint=? WHERE guid=?",Param: []interface{}{endpointString, param.Guid}})
-	//_, err := x.Exec("UPDATE panel_recursive SET endpoint=? WHERE guid=?", endpointString, param.Guid)
-	//if err != nil {
-	//	log.Logger.Error("Update organization endpoint error", log.Error(err))
-	//	return err
-	//}
-	actions = append(actions, &Action{Sql: "delete from endpoint_service_rel where service_group=?",Param: []interface{}{param.Guid}})
-	guidList := guid.CreateGuidList(len(param.Endpoint))
-	for i,v := range param.Endpoint {
-		if v == "" {
-			continue
-		}
-		actions = append(actions, &Action{Sql: "insert into endpoint_service_rel(guid,endpoint,service_group) value (?,?,?)",Param: []interface{}{guidList[i],v,param.Guid}})
-	}
+	actions = append(actions, &Action{Sql: "UPDATE panel_recursive SET endpoint=? WHERE guid=?", Param: []interface{}{endpointString, param.Guid}})
+	actions = append(actions, getUpdateServiceEndpointAction(param.Guid, nowTime, param.Endpoint)...)
 	err := Transaction(actions)
 	if err == nil {
 		var endpointGroup []*m.EndpointGroupTable
 		x.SQL("select guid from endpoint_group where service_group=?", param.Guid).Find(&endpointGroup)
-		for _,v := range endpointGroup {
+		for _, v := range endpointGroup {
 			err = SyncPrometheusRuleFile(v.Guid, false)
 			if err != nil {
 				break
 			}
+		}
+		if err == nil {
+			UpdateServiceConfigWithEndpoint(param.Guid)
 		}
 	}
 	return err
