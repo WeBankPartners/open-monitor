@@ -118,31 +118,11 @@ func UpdateLogMetricMonitor(c *gin.Context) {
 
 func DeleteLogMetricMonitor(c *gin.Context) {
 	logMonitorGuid := c.Param("logMonitorGuid")
-	result, err := db.GetLogMetricMonitor(logMonitorGuid)
-	if err != nil {
-		middleware.ReturnHandleError(c, err.Error(), err)
-		return
-	}
-	hostEndpointList := []string{}
-	for _, v := range result.EndpointRel {
-		if v.TargetEndpoint != "" {
-			hostEndpointList = append(hostEndpointList, v.SourceEndpoint)
-		}
-	}
-	serviceGroup, err := db.DeleteLogMetricMonitor(logMonitorGuid)
+	err := db.DeleteLogMetricMonitor(logMonitorGuid)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
-		if serviceGroup != "" {
-			err = syncNodeExporterConfig(hostEndpointList)
-			if err != nil {
-				middleware.ReturnHandleError(c, err.Error(), err)
-			} else {
-				middleware.ReturnSuccess(c)
-			}
-		} else {
-			middleware.ReturnSuccess(c)
-		}
+		middleware.ReturnSuccess(c)
 	}
 }
 
@@ -282,7 +262,7 @@ func DeleteLogMetricConfig(c *gin.Context) {
 
 func syncLogMetricMonitorConfig(logMetricMonitor string) error {
 	endpointList := []string{}
-	endpointRel := db.ListLogMetricEndpointRel("", logMetricMonitor)
+	endpointRel := db.ListLogMetricEndpointRel(logMetricMonitor)
 	for _, v := range endpointRel {
 		if v.TargetEndpoint != "" {
 			endpointList = append(endpointList, v.SourceEndpoint)
@@ -307,14 +287,14 @@ func CheckRegExpMatch(c *gin.Context) {
 	middleware.ReturnSuccessData(c, result)
 }
 
-func GetServiceGroupEndpointRel(c *gin.Context)  {
+func GetServiceGroupEndpointRel(c *gin.Context) {
 	serviceGroup := c.Query("serviceGroup")
 	sourceType := c.Query("sourceType")
 	targetType := c.Query("targetType")
-	result,err := db.GetServiceGroupEndpointRel(serviceGroup,sourceType,targetType)
+	result, err := db.GetServiceGroupEndpointRel(serviceGroup, sourceType, targetType)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
-	}else{
+	} else {
 		middleware.ReturnSuccessData(c, result)
 	}
 }
