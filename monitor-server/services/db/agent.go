@@ -226,8 +226,10 @@ func UpdateRecursivePanel(param m.PanelRecursiveTable) error {
 			}
 			actions = append(actions, &Action{Sql: "insert into endpoint_service_rel(guid,endpoint,service_group) value (?,?,?)",Param: []interface{}{guid.CreateGuid(),v,param.Guid}})
 		}
-		addGlobalServiceGroupNode(m.ServiceGroupTable{Guid: param.Guid,Parent: param.Parent})
 		err = Transaction(actions)
+		if err == nil {
+			addGlobalServiceGroupNode(m.ServiceGroupTable{Guid: param.Guid,Parent: param.Parent})
+		}
 	}
 	return err
 }
