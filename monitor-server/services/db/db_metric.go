@@ -67,7 +67,7 @@ func CreateDbMetric(param *models.DbMetricMonitorObj) error {
 	insertAction := Action{Sql: "insert into db_metric_monitor(guid,service_group,metric_sql,metric,display_name,step,monitor_type,update_time) value (?,?,?,?,?,?,?,?)"}
 	insertAction.Param = []interface{}{param.Guid, param.ServiceGroup, param.MetricSql, param.Metric, param.DisplayName, param.Step, param.MonitorType, nowTime}
 	actions = append(actions, &insertAction)
-	actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,update_time) value (?,?,?,?,?)",Param: []interface{}{fmt.Sprintf("%s__%s",param.Metric,param.MonitorType),param.Metric,param.MonitorType,fmt.Sprintf("%s{key=\"%s\",t_endpoint=\"$guid\"}", models.DBMonitorMetricName, param.Metric),nowTime}})
+	actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,db_metric_monitor,update_time) value (?,?,?,?,?,?)", Param: []interface{}{fmt.Sprintf("%s__%s__%s", param.Metric, param.MonitorType, param.Guid), param.Metric, param.MonitorType, fmt.Sprintf("%s{key=\"%s\",t_endpoint=\"$guid\"}", models.DBMonitorMetricName, param.Metric), param.Guid, nowTime}})
 	guidList := guid.CreateGuidList(len(param.EndpointRel))
 	for i, v := range param.EndpointRel {
 		if v.TargetEndpoint == "" {
@@ -91,8 +91,8 @@ func UpdateDbMetric(param *models.DbMetricMonitorObj) error {
 	if dbMetricTable[0].Metric != param.Metric || dbMetricTable[0].MonitorType != param.MonitorType {
 		oldMetric := fmt.Sprintf("%s__%s", dbMetricTable[0].Metric, dbMetricTable[0].MonitorType)
 		newMetric := fmt.Sprintf("%s__%s", param.Metric, param.MonitorType)
-		actions = append(actions, &Action{Sql: "update metric set guid=?,metric=?,prom_expr=? where guid=?",Param: []interface{}{newMetric,param.Metric,fmt.Sprintf("%s{key=\"%s\",t_endpoint=\"$guid\"}", models.DBMonitorMetricName, param.Metric),oldMetric}})
-		actions = append(actions, &Action{Sql: "update alarm_strategy set metric=? where metric=?",Param: []interface{}{newMetric,oldMetric}})
+		actions = append(actions, &Action{Sql: "update metric set guid=?,metric=?,prom_expr=? where guid=?", Param: []interface{}{newMetric, param.Metric, fmt.Sprintf("%s{key=\"%s\",t_endpoint=\"$guid\"}", models.DBMonitorMetricName, param.Metric), oldMetric}})
+		actions = append(actions, &Action{Sql: "update alarm_strategy set metric=? where metric=?", Param: []interface{}{newMetric, oldMetric}})
 	}
 	actions = append(actions, &Action{Sql: "delete from db_metric_endpoint_rel where db_metric_monitor=?", Param: []interface{}{param.Guid}})
 	guidList := guid.CreateGuidList(len(param.EndpointRel))

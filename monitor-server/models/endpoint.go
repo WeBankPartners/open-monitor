@@ -46,10 +46,12 @@ type EndpointExtendParamObj struct {
 }
 
 type MetricTable struct {
-	Guid        string `json:"guid" xorm:"guid"`
-	Metric      string `json:"metric" xorm:"metric"`
-	MonitorType string `json:"monitor_type" xorm:"monitor_type"`
-	PromExpr    string `json:"prom_expr" xorm:"prom_expr"`
-	TagOwner    string `json:"tag_owner" xorm:"tag_owner"`
-	UpdateTime  string `json:"update_time" xorm:"update_time"`
+	Guid             string `json:"guid" xorm:"guid"`
+	Metric           string `json:"metric" xorm:"metric"`
+	MonitorType      string `json:"monitor_type" xorm:"monitor_type"`
+	PromExpr         string `json:"prom_expr" xorm:"prom_expr"`
+	TagOwner         string `json:"tag_owner" xorm:"tag_owner"`
+	LogMetricMonitor string `json:"log_metric_monitor" xorm:"log_metric_monitor"`
+	DbMetricMonitor  string `json:"db_metric_monitor" xorm:"db_metric_monitor"`
+	UpdateTime       string `json:"update_time" xorm:"update_time"`
 }
