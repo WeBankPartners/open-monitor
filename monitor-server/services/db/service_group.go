@@ -112,18 +112,39 @@ func GetServiceGroupEndpointList(searchType string) (result []*models.ServiceGro
 	return
 }
 
-func CreateServiceGroup(param models.ServiceGroupTable) {
-	if param.Parent != "" {
+func CreateServiceGroup(param *models.ServiceGroupTable) {
 
+}
+
+func getCreateServiceGroupAction(param *models.ServiceGroupTable) (actions []*Action) {
+	if param.Parent == "" {
+		actions = append(actions, &Action{Sql: "insert into service_group(guid,display_name,description,service_type,update_time) value (?,?,?,?,?)", Param: []interface{}{param.Guid, param.DisplayName, "", param.ServiceType, param.UpdateTime}})
+	}else {
+		actions = append(actions, &Action{Sql: "insert into service_group(guid,display_name,description,parent,service_type,update_time) value (?,?,?,?,?,?)", Param: []interface{}{param.Guid, param.DisplayName, "", param.Parent, param.ServiceType, param.UpdateTime}})
 	}
+	return actions
 }
 
-func UpdateServiceGroup() {
+func UpdateServiceGroup(param *models.ServiceGroupTable) {
 
 }
 
-func DeleteServiceGroup() {
+func DeleteServiceGroup(serviceGroupGuid string) {
 
+}
+
+func getDeleteServiceGroupAction(serviceGroupGuid string) (actions []*Action) {
+	guidList := []string{serviceGroupGuid}
+	if sNode,b:=globalServiceGroupMap[serviceGroupGuid];b {
+		guidList = sNode.FetchChildGuid()
+	}
+	var endpointGroup []*models.EndpointGroupTable
+	x.SQL(fmt.Sprintf("select guid from endpoint_group where service_group in ('%s')", strings.Join(guidList, "','"))).Find(&endpointGroup)
+	for _,v := range endpointGroup {
+		actions = append(actions, getDeleteEndpointGroupAction(v.Guid)...)
+	}
+	actions = append(actions, &Action{Sql: fmt.Sprintf("DELETE FROM service_group WHERE guid in ('%s')", strings.Join(guidList,"','"))})
+	return actions
 }
 
 func ListServiceGroupEndpoint(serviceGroup, monitorType string) (result []*models.ServiceGroupEndpointListObj, err error) {

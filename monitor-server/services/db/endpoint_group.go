@@ -54,15 +54,12 @@ func UpdateEndpointGroup(param *models.EndpointGroupTable) error {
 	return Transaction(actions)
 }
 
-func DeleteEndpointGroup(endpointGroupGuid string) error {
-	var actions []*Action
-	actions = append(actions, &Action{Sql: "delete from notify_role_rel where notify in (select guid from notify where endpoint_group=? or alarm_strategy in (select guid from alarm_strategy where endpoint_group=?))",Param: []interface{}{endpointGroupGuid,endpointGroupGuid}})
-	actions = append(actions, &Action{Sql: "delete from notify where endpoint_group=? or alarm_strategy in (select guid from alarm_strategy where endpoint_group=?)",Param: []interface{}{endpointGroupGuid,endpointGroupGuid}})
-	actions = append(actions, &Action{Sql: "delete from alarm_strategy where endpoint_group=?",Param: []interface{}{endpointGroupGuid}})
-	actions = append(actions, &Action{Sql: "delete from endpoint_group_rel where endpoint_group=?",Param: []interface{}{endpointGroupGuid}})
-	actions = append(actions, &Action{Sql: "delete from endpoint_group where guid=?", Param: []interface{}{endpointGroupGuid}})
-	actions = append(actions, &Action{Sql: "delete from grp where name=?", Param: []interface{}{endpointGroupGuid}})
-	return Transaction(actions)
+func DeleteEndpointGroup(endpointGroupGuid string) (err error) {
+	err = Transaction(getDeleteEndpointGroupAction(endpointGroupGuid))
+	if err == nil {
+		RemovePrometheusRuleFile(endpointGroupGuid, false)
+	}
+	return err
 }
 
 func GetGroupEndpointRel(endpointGroupGuid string) (result []*models.EndpointGroupRelTable, err error) {
@@ -126,4 +123,25 @@ func GetSimpleEndpointGroup(guid string) (result *models.EndpointGroupTable,err 
 	}
 	result = endpointGroup[0]
 	return
+}
+
+func getCreateEndpointGroupAction(serviceGroupGuid,monitorType,nowTime string) (actions []*Action) {
+	endpointGroupGuid := fmt.Sprintf("service_%s_%s", serviceGroupGuid, monitorType)
+	var endpointGroup []*models.EndpointGroupTable
+	x.SQL("select guid from endpoint_group where guid=?", endpointGroupGuid).Find(&endpointGroup)
+	if len(endpointGroup) > 0 {
+		return actions
+	}
+	actions = append(actions, &Action{Sql: "insert into endpoint_group(guid,display_name,monitor_type,service_group,update_time) value (?,?,?,?,?)", Param: []interface{}{endpointGroupGuid,endpointGroupGuid,monitorType,serviceGroupGuid,nowTime}})
+	return actions
+}
+
+func getDeleteEndpointGroupAction(endpointGroupGuid string) (actions []*Action) {
+	actions = append(actions, &Action{Sql: "delete from notify_role_rel where notify in (select guid from notify where endpoint_group=? or alarm_strategy in (select guid from alarm_strategy where endpoint_group=?))",Param: []interface{}{endpointGroupGuid,endpointGroupGuid}})
+	actions = append(actions, &Action{Sql: "delete from notify where endpoint_group=? or alarm_strategy in (select guid from alarm_strategy where endpoint_group=?)",Param: []interface{}{endpointGroupGuid,endpointGroupGuid}})
+	actions = append(actions, &Action{Sql: "delete from alarm_strategy where endpoint_group=?",Param: []interface{}{endpointGroupGuid}})
+	actions = append(actions, &Action{Sql: "delete from endpoint_group_rel where endpoint_group=?",Param: []interface{}{endpointGroupGuid}})
+	actions = append(actions, &Action{Sql: "delete from endpoint_group where guid=?", Param: []interface{}{endpointGroupGuid}})
+	actions = append(actions, &Action{Sql: "delete from grp where name=?", Param: []interface{}{endpointGroupGuid}})
+	return actions
 }
