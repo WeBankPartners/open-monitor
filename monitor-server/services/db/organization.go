@@ -116,7 +116,7 @@ func recursiveOrganization(data []*m.PanelRecursiveTable, parent string, tmpNode
 	return tmpNode
 }
 
-func UpdateOrganization(operation string, param m.UpdateOrgPanelParam) error {
+func UpdateOrganization(operation string, param m.UpdateOrgPanelParam) (err error) {
 	var tableData []*m.PanelRecursiveTable
 	var actions []*Action
 	nowTime := time.Now().Format(m.DatetimeFormat)
@@ -135,7 +135,10 @@ func UpdateOrganization(operation string, param m.UpdateOrgPanelParam) error {
 		}else {
 			actions = append(actions, &Action{Sql: "insert into service_group(guid,display_name,description,parent,service_type,update_time) value (?,?,?,?,?,?)", Param: []interface{}{param.Guid, param.DisplayName, "", param.Parent, param.Type, nowTime}})
 		}
-		addGlobalServiceGroupNode(m.ServiceGroupTable{Guid: param.Guid,Parent: param.Parent})
+		err = Transaction(actions)
+		if err == nil {
+			addGlobalServiceGroupNode(m.ServiceGroupTable{Guid: param.Guid, Parent: param.Parent})
+		}
 	} else if operation == "edit" {
 		if param.Guid == "" || param.DisplayName == "" {
 			return fmt.Errorf("param guid and display_name cat not be empty")
@@ -146,6 +149,7 @@ func UpdateOrganization(operation string, param m.UpdateOrgPanelParam) error {
 		}
 		actions = append(actions, &Action{Sql: "UPDATE panel_recursive SET display_name=?,obj_type=? WHERE guid=?",Param: []interface{}{param.DisplayName, param.Type, param.Guid}})
 		actions = append(actions, &Action{Sql: "update service_group set display_name=?,service_type=? where guid=?",Param: []interface{}{param.DisplayName,param.Type,param.Guid}})
+		err = Transaction(actions)
 	} else if operation == "delete" {
 		if param.Guid == "" {
 			return fmt.Errorf("param guid cat not be empty")
@@ -168,9 +172,12 @@ func UpdateOrganization(operation string, param m.UpdateOrgPanelParam) error {
 		actions = append(actions, &Action{Sql: fmt.Sprintf("DELETE FROM panel_recursive WHERE guid in ('%s')", strings.Join(guidList, "','"))})
 		//TODO delete fore dep
 		actions = append(actions, &Action{Sql: fmt.Sprintf("DELETE FROM service_group WHERE guid in ('%s')", strings.Join(guidList, "','"))})
-		deleteGlobalServiceGroupNode(param.Guid)
+		err = Transaction(actions)
+		if err == nil {
+			deleteGlobalServiceGroupNode(param.Guid)
+		}
 	}
-	return Transaction(actions)
+	return err
 }
 
 func getNodeFromParent(data []*m.PanelRecursiveTable, input []string, guid string) []string {
