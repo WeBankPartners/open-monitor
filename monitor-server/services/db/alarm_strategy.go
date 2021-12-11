@@ -233,8 +233,12 @@ func SyncPrometheusRuleFile(endpointGroup string,fromPeer bool) error {
 			}
 		}
 	}else{
-		clusterList = []string{"default"}
-		clusterEndpointMap["default"] = []*models.EndpointNewTable{}
+		var clusterTable []*models.ClusterTable
+		x.SQL("select id from cluster").Find(&clusterTable)
+		for _,tmpCluster := range clusterTable {
+			clusterList = append(clusterList, tmpCluster.Id)
+			clusterEndpointMap[tmpCluster.Id] = []*models.EndpointNewTable{}
+		}
 	}
 	for _,cluster := range clusterList {
 		guidExpr,addressExpr,ipExpr := buildRuleReplaceExprNew(clusterEndpointMap[cluster])
@@ -250,6 +254,22 @@ func SyncPrometheusRuleFile(endpointGroup string,fromPeer bool) error {
 		}
 	}
 	return err
+}
+
+func RemovePrometheusRuleFile(endpointGroup string,fromPeer bool) {
+	ruleFileName := "g_" + endpointGroup
+	var clusterTable []*models.ClusterTable
+	x.SQL("select id from cluster").Find(&clusterTable)
+	for _,cluster := range clusterTable {
+		if cluster.Id == "default" || cluster.Id == "" {
+			prom.SyncLocalRuleConfig(models.RuleLocalConfigJob{FromPeer: fromPeer,EndpointGroup: endpointGroup,Name: ruleFileName,Rules: []*models.RFRule{}})
+		}else{
+			tmpErr := SyncRemoteRuleConfigFile(cluster.Id, models.RFClusterRequestObj{Name: ruleFileName, Rules: []*models.RFRule{}})
+			if tmpErr != nil {
+				log.Logger.Error("Remove remote cluster rule file fail", log.String("cluster",cluster.Id), log.Error(tmpErr))
+			}
+		}
+	}
 }
 
 func getAlarmStrategyWithExpr(endpointGroup string) (result []*models.AlarmStrategyMetricObj,err error) {
