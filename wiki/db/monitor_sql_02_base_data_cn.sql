@@ -544,3 +544,11 @@ insert into sys_parameter(guid,param_key,param_value) value ('metric_template_03
 insert into sys_parameter(guid,param_key,param_value) value ('metric_template_04','metric_template','{"name":"percent03","prom_ql":"100*(sum($a)/((sum($a)+sum($b)) > 0) or vector(0))","param":"$a,$b"}');
 insert into sys_parameter(guid,param_key,param_value) value ('metric_template_05','metric_template','{"name":"percent04","prom_ql":"100*((sum($a)-sum($b))/(sum($a) > 0) or vector(0))","param":"$a,$b"}');
 #@v1.13.0.6-end@;
+
+#@v1.13.0.8-begin@;
+alter table service_group drop foreign key service_group_parent;
+alter table log_metric_monitor drop foreign key log_monitor_service_group;
+alter table db_metric_monitor drop foreign key db_monitor_service_group;
+alter table metric add column log_metric_monitor varchar(64);
+alter table metric add column db_metric_monitor varchar(64);
+#@v1.13.0.8-begin@;
