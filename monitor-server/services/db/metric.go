@@ -42,7 +42,7 @@ func MetricCreate(param []*models.PromMetricTable) error {
 	nowTime := time.Now().Format(models.DatetimeFormat)
 	for _, metric := range param {
 		actions = append(actions, &Action{Sql: "insert into prom_metric(metric,metric_type,prom_ql) value (?,?,?)", Param: []interface{}{metric.Metric, metric.MetricType, metric.PromQl}})
-		actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,update_time) value (?,?,?,?,?)",Param: []interface{}{fmt.Sprintf("%s__%s",metric.Metric,metric.MetricType),metric.Metric,metric.MetricType,metric.PromQl,nowTime}})
+		actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,update_time) value (?,?,?,?,?)", Param: []interface{}{fmt.Sprintf("%s__%s", metric.Metric, metric.MetricType), metric.Metric, metric.MetricType, metric.PromQl, nowTime}})
 	}
 	return Transaction(actions)
 }
@@ -57,19 +57,19 @@ func MetricUpdate(param []*models.PromMetricTable) error {
 			continue
 		}
 		actions = append(actions, &Action{Sql: "update prom_metric set metric=?,prom_ql=? where id=?", Param: []interface{}{metric.Metric, metric.PromQl, metric.Id}})
-		newMetricObj := models.MetricTable{Guid: fmt.Sprintf("%s__%s",metric.Metric,metric.MetricType),Metric: metric.Metric,MonitorType: metric.MetricType,PromExpr: metric.PromQl,UpdateTime: nowTime}
-		actions = append(actions, getMetricUpdateAction(fmt.Sprintf("%s__%s",tmpPromMetric[0].Metric,tmpPromMetric[0].MetricType), &newMetricObj)...)
+		newMetricObj := models.MetricTable{Guid: fmt.Sprintf("%s__%s", metric.Metric, metric.MetricType), Metric: metric.Metric, MonitorType: metric.MetricType, PromExpr: metric.PromQl, UpdateTime: nowTime}
+		actions = append(actions, getMetricUpdateAction(fmt.Sprintf("%s__%s", tmpPromMetric[0].Metric, tmpPromMetric[0].MetricType), &newMetricObj)...)
 	}
 	return Transaction(actions)
 }
 
-func getMetricUpdateAction(oldGuid string,newMetricObj *models.MetricTable) (actions []*Action) {
+func getMetricUpdateAction(oldGuid string, newMetricObj *models.MetricTable) (actions []*Action) {
 	actions = []*Action{}
 	if newMetricObj.Guid != oldGuid {
-		actions = append(actions, &Action{Sql: "update metric set guid=?,metric=?,monitor_type=?,prom_expr=?,update_time=? where guid=?",Param: []interface{}{newMetricObj.Guid,newMetricObj.Metric,newMetricObj.MonitorType,newMetricObj.PromExpr,newMetricObj.UpdateTime,oldGuid}})
-		actions = append(actions, &Action{Sql: "update alarm_strategy set metric=? where metric=?",Param: []interface{}{newMetricObj.Guid,oldGuid}})
-	}else{
-		actions = append(actions, &Action{Sql: "update metric set metric=?,monitor_type=?,prom_expr=?,update_time=? where guid=?",Param: []interface{}{newMetricObj.Metric,newMetricObj.MonitorType,newMetricObj.PromExpr,newMetricObj.UpdateTime,oldGuid}})
+		actions = append(actions, &Action{Sql: "update metric set guid=?,metric=?,monitor_type=?,prom_expr=?,update_time=? where guid=?", Param: []interface{}{newMetricObj.Guid, newMetricObj.Metric, newMetricObj.MonitorType, newMetricObj.PromExpr, newMetricObj.UpdateTime, oldGuid}})
+		actions = append(actions, &Action{Sql: "update alarm_strategy set metric=? where metric=?", Param: []interface{}{newMetricObj.Guid, oldGuid}})
+	} else {
+		actions = append(actions, &Action{Sql: "update metric set metric=?,monitor_type=?,prom_expr=?,update_time=? where guid=?", Param: []interface{}{newMetricObj.Metric, newMetricObj.MonitorType, newMetricObj.PromExpr, newMetricObj.UpdateTime, oldGuid}})
 	}
 	return actions
 }
@@ -85,7 +85,7 @@ func MetricDelete(id int) error {
 	metric := metricQuery[0].Metric
 	var actions []*Action
 	actions = append(actions, &Action{Sql: "delete from prom_metric where id=?", Param: []interface{}{id}})
-	actions = append(actions, &Action{Sql: "delete from metric where guid=?", Param: []interface{}{fmt.Sprintf("%s__%s",metricQuery[0].Metric,metricQuery[0].MetricType)}})
+	actions = append(actions, &Action{Sql: "delete from metric where guid=?", Param: []interface{}{fmt.Sprintf("%s__%s", metricQuery[0].Metric, metricQuery[0].MetricType)}})
 	var charts []*models.ChartTable
 	err = x.SQL("select id,metric from chart where metric like ? and group_id in (select chart_group from panel where group_id in (select panels_group from dashboard where dashboard_type=?))", "%"+metric+"%", metricQuery[0].MetricType).Find(&charts)
 	if err != nil {
@@ -114,7 +114,7 @@ func MetricDelete(id int) error {
 	return err
 }
 
-func MetricListNew(guid,monitorType string) (result []*models.MetricTable,err error) {
+func MetricListNew(guid, monitorType, serviceGroup string) (result []*models.MetricTable, err error) {
 	params := []interface{}{}
 	baseSql := "select * from metric where 1=1 "
 	if guid != "" {
@@ -124,6 +124,13 @@ func MetricListNew(guid,monitorType string) (result []*models.MetricTable,err er
 	if monitorType != "" {
 		baseSql += " and monitor_type=? "
 		params = append(params, monitorType)
+	}
+	if serviceGroup != "" {
+		if monitorType == "" {
+			return result, fmt.Errorf("serviceGroup is disable when monitorType is null ")
+		}
+		baseSql = "select * from metric where monitor_type=? and log_metric_monitor is null and db_metric_monitor is null union select * from metric where monitor_type=? and (log_metric_monitor in (select guid from log_metric_monitor where service_group=?) or db_metric_monitor in (select guid from db_metric_monitor where service_group=?))"
+		params = []interface{}{monitorType, monitorType, serviceGroup, serviceGroup}
 	}
 	result = []*models.MetricTable{}
 	err = x.SQL(baseSql, params...).Find(&result)

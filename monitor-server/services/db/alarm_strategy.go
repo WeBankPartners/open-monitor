@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/WeBankPartners/go-common-lib/guid"
+	"github.com/WeBankPartners/go-common-lib/smtp"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
-	"github.com/WeBankPartners/go-common-lib/smtp"
 	"golang.org/x/net/context/ctxhttp"
 	"io/ioutil"
 	"net/http"
@@ -30,9 +30,9 @@ func QueryAlarmStrategyByGroup(endpointGroup string) (result []*models.EndpointS
 		strategy = append(strategy, &tmpStrategyObj)
 	}
 	resultObj := models.EndpointStrategyObj{EndpointGroup: endpointGroup, Strategy: strategy}
-	notify,tmpErr := GetGroupEndpointNotify(endpointGroup)
+	notify, tmpErr := GetGroupEndpointNotify(endpointGroup)
 	if tmpErr != nil {
-		return result,tmpErr
+		return result, tmpErr
 	}
 	resultObj.NotifyList = notify
 	result = append(result, &resultObj)
@@ -58,14 +58,33 @@ func QueryAlarmStrategyByEndpoint(endpoint string) (result []*models.EndpointStr
 	return
 }
 
-func GetAlarmStrategy(strategyGuid string) (result models.AlarmStrategyMetricObj,err error) {
+func QueryAlarmStrategyByServiceGroup(serviceGroup string) (result []*models.EndpointStrategyObj, err error) {
+	result = []*models.EndpointStrategyObj{}
+	var endpointGroupTable []*models.EndpointGroupTable
+	err = x.SQL("select guid,service_group from endpoint_group where service_group=?", serviceGroup).Find(&endpointGroupTable)
+	if err != nil {
+		return
+	}
+	for _, v := range endpointGroupTable {
+		tmpEndpointStrategyList, tmpErr := QueryAlarmStrategyByGroup(v.Guid)
+		if tmpErr != nil || len(tmpEndpointStrategyList) == 0 {
+			err = tmpErr
+			break
+		}
+		tmpEndpointStrategyList[0].ServiceGroup = v.ServiceGroup
+		result = append(result, tmpEndpointStrategyList[0])
+	}
+	return
+}
+
+func GetAlarmStrategy(strategyGuid string) (result models.AlarmStrategyMetricObj, err error) {
 	var strategyTable []*models.AlarmStrategyMetricObj
 	err = x.SQL("select t1.*,t2.metric as 'metric_name',t2.prom_expr as 'metric_expr',t2.monitor_type as 'metric_type' from alarm_strategy t1 left join metric t2 on t1.metric=t2.guid where t1.guid=?", strategyGuid).Find(&strategyTable)
 	if err != nil {
-		return result,fmt.Errorf("Query alarm_strategy fail,%s ", err.Error())
+		return result, fmt.Errorf("Query alarm_strategy fail,%s ", err.Error())
 	}
 	if len(strategyTable) == 0 {
-		return result,fmt.Errorf("Can not find alarm_strategy with guid:%s ", strategyGuid)
+		return result, fmt.Errorf("Can not find alarm_strategy with guid:%s ", strategyGuid)
 	}
 	result = *strategyTable[0]
 	return
@@ -101,7 +120,7 @@ func UpdateAlarmStrategy(param *models.GroupStrategyObj) error {
 	return Transaction(actions)
 }
 
-func DeleteAlarmStrategy(strategyGuid string) (endpointGroup string,err error) {
+func DeleteAlarmStrategy(strategyGuid string) (endpointGroup string, err error) {
 	var strategyTable []*models.AlarmStrategyTable
 	err = x.SQL("select * from alarm_strategy where guid=?", strategyGuid).Find(&strategyTable)
 	if err != nil {
@@ -201,11 +220,11 @@ func getNotifyListDeleteAction(alarmStrategy, endpointGroup, serviceGroup string
 	return actions
 }
 
-func SyncPrometheusRuleFile(endpointGroup string,fromPeer bool) error {
+func SyncPrometheusRuleFile(endpointGroup string, fromPeer bool) error {
 	if endpointGroup == "" {
 		return fmt.Errorf("Sync prometheus rule fail,group is empty ")
 	}
-	endpointGroupObj,err := GetSimpleEndpointGroup(endpointGroup)
+	endpointGroupObj, err := GetSimpleEndpointGroup(endpointGroup)
 	if err != nil {
 		return fmt.Errorf("Sync prometheus rule fail,%s ", err.Error())
 	}
@@ -216,7 +235,7 @@ func SyncPrometheusRuleFile(endpointGroup string,fromPeer bool) error {
 		return err
 	}
 	// 获取strategy
-	strategyList,getStrategyErr := getAlarmStrategyWithExpr(endpointGroup)
+	strategyList, getStrategyErr := getAlarmStrategyWithExpr(endpointGroup)
 	if getStrategyErr != nil {
 		return getStrategyErr
 	}
@@ -232,54 +251,54 @@ func SyncPrometheusRuleFile(endpointGroup string,fromPeer bool) error {
 				clusterEndpointMap[endpoint.Cluster] = append(clusterEndpointMap[endpoint.Cluster], endpoint)
 			}
 		}
-	}else{
+	} else {
 		var clusterTable []*models.ClusterTable
 		x.SQL("select id from cluster").Find(&clusterTable)
-		for _,tmpCluster := range clusterTable {
+		for _, tmpCluster := range clusterTable {
 			clusterList = append(clusterList, tmpCluster.Id)
 			clusterEndpointMap[tmpCluster.Id] = []*models.EndpointNewTable{}
 		}
 	}
-	for _,cluster := range clusterList {
-		guidExpr,addressExpr,ipExpr := buildRuleReplaceExprNew(clusterEndpointMap[cluster])
-		ruleFileConfig := buildRuleFileContentNew(ruleFileName,guidExpr,addressExpr,ipExpr,copyStrategyListNew(strategyList))
+	for _, cluster := range clusterList {
+		guidExpr, addressExpr, ipExpr := buildRuleReplaceExprNew(clusterEndpointMap[cluster])
+		ruleFileConfig := buildRuleFileContentNew(ruleFileName, guidExpr, addressExpr, ipExpr, copyStrategyListNew(strategyList))
 		if cluster == "default" || cluster == "" {
-			prom.SyncLocalRuleConfig(models.RuleLocalConfigJob{FromPeer: fromPeer,EndpointGroup: endpointGroup,Name: ruleFileConfig.Name,Rules: ruleFileConfig.Rules})
-		}else{
+			prom.SyncLocalRuleConfig(models.RuleLocalConfigJob{FromPeer: fromPeer, EndpointGroup: endpointGroup, Name: ruleFileConfig.Name, Rules: ruleFileConfig.Rules})
+		} else {
 			tmpErr := SyncRemoteRuleConfigFile(cluster, models.RFClusterRequestObj{Name: ruleFileConfig.Name, Rules: ruleFileConfig.Rules})
 			if tmpErr != nil {
 				err = fmt.Errorf("Update remote cluster:%s rule file fail,%s ", cluster, tmpErr.Error())
-				log.Logger.Error("Update remote cluster rule file fail", log.String("cluster",cluster), log.Error(tmpErr))
+				log.Logger.Error("Update remote cluster rule file fail", log.String("cluster", cluster), log.Error(tmpErr))
 			}
 		}
 	}
 	return err
 }
 
-func RemovePrometheusRuleFile(endpointGroup string,fromPeer bool) {
+func RemovePrometheusRuleFile(endpointGroup string, fromPeer bool) {
 	ruleFileName := "g_" + endpointGroup
 	var clusterTable []*models.ClusterTable
 	x.SQL("select id from cluster").Find(&clusterTable)
-	for _,cluster := range clusterTable {
+	for _, cluster := range clusterTable {
 		if cluster.Id == "default" || cluster.Id == "" {
-			prom.SyncLocalRuleConfig(models.RuleLocalConfigJob{FromPeer: fromPeer,EndpointGroup: endpointGroup,Name: ruleFileName,Rules: []*models.RFRule{}})
-		}else{
+			prom.SyncLocalRuleConfig(models.RuleLocalConfigJob{FromPeer: fromPeer, EndpointGroup: endpointGroup, Name: ruleFileName, Rules: []*models.RFRule{}})
+		} else {
 			tmpErr := SyncRemoteRuleConfigFile(cluster.Id, models.RFClusterRequestObj{Name: ruleFileName, Rules: []*models.RFRule{}})
 			if tmpErr != nil {
-				log.Logger.Error("Remove remote cluster rule file fail", log.String("cluster",cluster.Id), log.Error(tmpErr))
+				log.Logger.Error("Remove remote cluster rule file fail", log.String("cluster", cluster.Id), log.Error(tmpErr))
 			}
 		}
 	}
 }
 
-func getAlarmStrategyWithExpr(endpointGroup string) (result []*models.AlarmStrategyMetricObj,err error) {
+func getAlarmStrategyWithExpr(endpointGroup string) (result []*models.AlarmStrategyMetricObj, err error) {
 	result = []*models.AlarmStrategyMetricObj{}
-	err = x.SQL("select t1.*,t2.metric as 'metric_name',t2.prom_expr as 'metric_expr',t2.monitor_type as 'metric_type' from alarm_strategy t1 left join metric t2 on t1.metric=t2.guid where endpoint_group=?",endpointGroup).Find(&result)
+	err = x.SQL("select t1.*,t2.metric as 'metric_name',t2.prom_expr as 'metric_expr',t2.monitor_type as 'metric_type' from alarm_strategy t1 left join metric t2 on t1.metric=t2.guid where endpoint_group=?", endpointGroup).Find(&result)
 	return
 }
 
-func buildRuleReplaceExprNew(endpointList []*models.EndpointNewTable) (guidExpr,addressExpr,ipExpr string) {
-	for _,endpoint := range endpointList {
+func buildRuleReplaceExprNew(endpointList []*models.EndpointNewTable) (guidExpr, addressExpr, ipExpr string) {
+	for _, endpoint := range endpointList {
 		addressExpr += endpoint.AgentAddress + "|"
 		guidExpr += endpoint.Guid + "|"
 		ipExpr += endpoint.Ip + "|"
@@ -296,45 +315,45 @@ func buildRuleReplaceExprNew(endpointList []*models.EndpointNewTable) (guidExpr,
 	return
 }
 
-func buildRuleFileContentNew(ruleFileName,guidExpr,addressExpr,ipExpr string,strategyList []*models.AlarmStrategyMetricObj) models.RFGroup {
+func buildRuleFileContentNew(ruleFileName, guidExpr, addressExpr, ipExpr string, strategyList []*models.AlarmStrategyMetricObj) models.RFGroup {
 	result := models.RFGroup{Name: ruleFileName}
 	if len(strategyList) == 0 {
 		return result
 	}
-	for _,strategy := range strategyList {
+	for _, strategy := range strategyList {
 		tmpRfu := models.RFRule{}
 		tmpRfu.Alert = fmt.Sprintf("%s_%s", strategy.Metric, strategy.Guid)
 		if !strings.Contains(strategy.Condition, " ") && strategy.Condition != "" {
 			if strings.Contains(strategy.Condition, "=") {
 				strategy.Condition = strategy.Condition[:2] + " " + strategy.Condition[2:]
-			}else{
+			} else {
 				strategy.Condition = strategy.Condition[:1] + " " + strategy.Condition[1:]
 			}
 		}
 		if strings.Contains(strategy.MetricExpr, "$address") {
 			if strings.Contains(addressExpr, "|") {
 				strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\"$address\"", "=~\""+addressExpr+"\"", -1)
-			}else{
+			} else {
 				strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\"$address\"", "=\""+addressExpr+"\"", -1)
 			}
 		}
 		if strings.Contains(strategy.MetricExpr, "$guid") {
 			if strings.Contains(guidExpr, "|") {
 				strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\"$guid\"", "=~\""+guidExpr+"\"", -1)
-			}else{
+			} else {
 				strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\"$guid\"", "=\""+guidExpr+"\"", -1)
 			}
 		}
 		if strings.Contains(strategy.MetricExpr, "$ip") {
 			if strings.Contains(ipExpr, "|") {
 				tmpStr := strings.Split(strategy.MetricExpr, "$ip")[1]
-				tmpStr = tmpStr[:strings.Index(tmpStr,"\"")]
+				tmpStr = tmpStr[:strings.Index(tmpStr, "\"")]
 				newList := []string{}
-				for _,v := range strings.Split(ipExpr, "|") {
+				for _, v := range strings.Split(ipExpr, "|") {
 					newList = append(newList, v+tmpStr)
 				}
 				strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\"$ip"+tmpStr+"\"", "=~\""+strings.Join(newList, "|")+"\"", -1)
-			}else{
+			} else {
 				strategy.MetricExpr = strings.ReplaceAll(strategy.MetricExpr, "$ip", ipExpr)
 			}
 		}
@@ -342,7 +361,7 @@ func buildRuleFileContentNew(ruleFileName,guidExpr,addressExpr,ipExpr string,str
 		tmpRfu.For = strategy.Last
 		tmpRfu.Labels = make(map[string]string)
 		tmpRfu.Labels["strategy_guid"] = strategy.Guid
-		tmpRfu.Annotations = models.RFAnnotation{Summary:fmt.Sprintf("{{$labels.instance}}__%s__%s__{{$value}}", strategy.Priority, strategy.Metric), Description:strategy.Content}
+		tmpRfu.Annotations = models.RFAnnotation{Summary: fmt.Sprintf("{{$labels.instance}}__%s__%s__{{$value}}", strategy.Priority, strategy.Metric), Description: strategy.Content}
 		result.Rules = append(result.Rules, &tmpRfu)
 	}
 	return result
@@ -350,14 +369,14 @@ func buildRuleFileContentNew(ruleFileName,guidExpr,addressExpr,ipExpr string,str
 
 func copyStrategyListNew(inputs []*models.AlarmStrategyMetricObj) (result []*models.AlarmStrategyMetricObj) {
 	result = []*models.AlarmStrategyMetricObj{}
-	for _,strategy := range inputs {
-		tmpStrategy := models.AlarmStrategyMetricObj{Guid: strategy.Guid,Metric:strategy.Metric,Condition: strategy.Condition,Last: strategy.Last,Priority: strategy.Priority,Content: strategy.Content,NotifyEnable: strategy.NotifyEnable,NotifyDelaySecond: strategy.NotifyDelaySecond,MetricName: strategy.MetricName,MetricExpr: strategy.MetricExpr,MetricType: strategy.MetricType}
+	for _, strategy := range inputs {
+		tmpStrategy := models.AlarmStrategyMetricObj{Guid: strategy.Guid, Metric: strategy.Metric, Condition: strategy.Condition, Last: strategy.Last, Priority: strategy.Priority, Content: strategy.Content, NotifyEnable: strategy.NotifyEnable, NotifyDelaySecond: strategy.NotifyDelaySecond, MetricName: strategy.MetricName, MetricExpr: strategy.MetricExpr, MetricType: strategy.MetricType}
 		result = append(result, &tmpStrategy)
 	}
 	return result
 }
 
-func GetAlarmObj(query *models.AlarmTable) (result models.AlarmTable,err error) {
+func GetAlarmObj(query *models.AlarmTable) (result models.AlarmTable, err error) {
 	result = models.AlarmTable{}
 	var alarmList []*models.AlarmTable
 	baseSql := "select * from alarm where 1=1 "
@@ -393,7 +412,7 @@ func GetAlarmObj(query *models.AlarmTable) (result models.AlarmTable,err error) 
 	return
 }
 
-func NotifyStrategyAlarm(alarmObj *models.AlarmHandleObj)  {
+func NotifyStrategyAlarm(alarmObj *models.AlarmHandleObj) {
 	if alarmObj.AlarmStrategy == "" {
 		log.Logger.Error("Notify strategy alarm fail,alarmStrategy is empty", log.JsonObj("alarm", alarmObj))
 		return
@@ -410,34 +429,34 @@ func NotifyStrategyAlarm(alarmObj *models.AlarmHandleObj)  {
 	if len(notifyTable) == 0 {
 		return
 	}
-	for _,v := range notifyTable {
-		err = notifyAction(v,alarmObj)
+	for _, v := range notifyTable {
+		err = notifyAction(v, alarmObj)
 		if err != nil {
 			log.Logger.Error("Notify mail fail", log.String("notifyGuid", v.Guid), log.Error(err))
 		}
 	}
 }
 
-func notifyAction(notify *models.NotifyTable,alarmObj *models.AlarmHandleObj) error {
+func notifyAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleObj) error {
 	if notify.ProcCallbackKey == "" {
-		return notifyMailAction(notify,alarmObj)
+		return notifyMailAction(notify, alarmObj)
 	}
 	var err error
-	for i:=0;i<3;i++ {
-		err = notifyEventAction(notify,alarmObj)
+	for i := 0; i < 3; i++ {
+		err = notifyEventAction(notify, alarmObj)
 		if err == nil {
 			break
-		}else{
-			log.Logger.Error("Notify event fail", log.String("notifyGuid", notify.Guid), log.Int("try",i), log.Error(err))
+		} else {
+			log.Logger.Error("Notify event fail", log.String("notifyGuid", notify.Guid), log.Int("try", i), log.Error(err))
 		}
 	}
 	if err != nil {
-		return notifyMailAction(notify,alarmObj)
+		return notifyMailAction(notify, alarmObj)
 	}
 	return nil
 }
 
-func notifyEventAction(notify *models.NotifyTable,alarmObj *models.AlarmHandleObj) error {
+func notifyEventAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleObj) error {
 	if notify.ProcCallbackKey == "" {
 		return fmt.Errorf("Notify:%s procCallbackKey is empty ", notify.Guid)
 	}
@@ -474,23 +493,23 @@ func notifyEventAction(notify *models.NotifyTable,alarmObj *models.AlarmHandleOb
 	return nil
 }
 
-func getNotifyEventMessage(notifyGuid string,alarm models.AlarmTable) (result models.AlarmEntityObj) {
+func getNotifyEventMessage(notifyGuid string, alarm models.AlarmTable) (result models.AlarmEntityObj) {
 	result = models.AlarmEntityObj{}
-	result.Subject,result.Content = getNotifyMessage(&models.AlarmHandleObj{AlarmTable:alarm})
+	result.Subject, result.Content = getNotifyMessage(&models.AlarmHandleObj{AlarmTable: alarm})
 	var roles []*models.RoleNewTable
 	x.SQL("select guid,email,phone from `role_new` where guid in (select `role` from notify_role_rel where notify=?)", notifyGuid).Find(&roles)
-	var email,phone,role []string
+	var email, phone, role []string
 	emailExistMap := make(map[string]int)
 	phoneExistMap := make(map[string]int)
-	for _,v := range roles {
+	for _, v := range roles {
 		if v.Email != "" {
-			if _,b:=emailExistMap[v.Email];!b {
+			if _, b := emailExistMap[v.Email]; !b {
 				email = append(email, v.Email)
 				emailExistMap[v.Email] = 1
 			}
 		}
 		if v.Phone != "" {
-			if _,b:=phoneExistMap[v.Phone];!b {
+			if _, b := phoneExistMap[v.Phone]; !b {
 				phone = append(phone, v.Phone)
 				phoneExistMap[v.Phone] = 1
 			}
@@ -506,11 +525,11 @@ func getNotifyEventMessage(notifyGuid string,alarm models.AlarmTable) (result mo
 	return result
 }
 
-func notifyMailAction(notify *models.NotifyTable,alarmObj *models.AlarmHandleObj) error {
+func notifyMailAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleObj) error {
 	var roles []*models.RoleNewTable
 	x.SQL("select guid,email from `role_new` where guid in (select `role` from notify_role_rel where notify=?)", notify.Guid).Find(&roles)
-	var toAddress,roleList []string
-	for _,v := range roles {
+	var toAddress, roleList []string
+	for _, v := range roles {
 		if v.Email != "" {
 			toAddress = append(toAddress, v.Email)
 		}
@@ -523,11 +542,11 @@ func notifyMailAction(notify *models.NotifyTable,alarmObj *models.AlarmHandleObj
 		log.Logger.Warn("notifyMailAction toAddress empty", log.String("notify", notify.Guid), log.StringList("roleList", roleList))
 		return nil
 	}
-	mailConfig,err := GetSysAlertMailConfig()
+	mailConfig, err := GetSysAlertMailConfig()
 	if err != nil {
 		return err
 	}
-	mailSender := smtp.MailSender{SenderName: mailConfig.SenderName,SenderMail: mailConfig.SenderMail,AuthServer: mailConfig.AuthServer,AuthPassword: mailConfig.AuthPassword}
+	mailSender := smtp.MailSender{SenderName: mailConfig.SenderName, SenderMail: mailConfig.SenderMail, AuthServer: mailConfig.AuthServer, AuthPassword: mailConfig.AuthPassword}
 	if mailConfig.SSL == "Y" {
 		mailSender.SSL = true
 	}
@@ -535,13 +554,13 @@ func notifyMailAction(notify *models.NotifyTable,alarmObj *models.AlarmHandleObj
 	if err != nil {
 		return err
 	}
-	subject,content := getNotifyMessage(alarmObj)
+	subject, content := getNotifyMessage(alarmObj)
 	return mailSender.Send(subject, content, toAddress)
 }
 
-func getNotifyMessage(alarmObj *models.AlarmHandleObj) (subject,content string) {
+func getNotifyMessage(alarmObj *models.AlarmHandleObj) (subject, content string) {
 	subject = fmt.Sprintf("[%s][%s] Endpoint:%s Metric:%s", alarmObj.Status, alarmObj.SPriority, alarmObj.Endpoint, alarmObj.SMetric)
-	content = fmt.Sprintf("Endpoint:%s \r\nStatus:%s\r\nMetric:%s\r\nEvent:%.3f%s\r\nLast:%s\r\nPriority:%s\r\nNote:%s\r\nTime:%s",alarmObj.Endpoint,alarmObj.Status,alarmObj.SMetric,alarmObj.StartValue,alarmObj.SCond,alarmObj.SLast,alarmObj.SPriority,alarmObj.Content,time.Now().Format(models.DatetimeFormat))
+	content = fmt.Sprintf("Endpoint:%s \r\nStatus:%s\r\nMetric:%s\r\nEvent:%.3f%s\r\nLast:%s\r\nPriority:%s\r\nNote:%s\r\nTime:%s", alarmObj.Endpoint, alarmObj.Status, alarmObj.SMetric, alarmObj.StartValue, alarmObj.SCond, alarmObj.SLast, alarmObj.SPriority, alarmObj.Content, time.Now().Format(models.DatetimeFormat))
 	return
 }
 
@@ -578,7 +597,7 @@ func getRoleMail(roleList []string) (mailList []string) {
 			}
 		}
 		if tmpMail != "" {
-			if _,b:=existMap[tmpMail];!b{
+			if _, b := existMap[tmpMail]; !b {
 				mailList = append(mailList, tmpMail)
 				existMap[tmpMail] = 1
 			}
