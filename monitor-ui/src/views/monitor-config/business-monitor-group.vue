@@ -28,11 +28,12 @@
     <Modal
       v-model="addAndEditModal.isShow"
       :title="addAndEditModal.isAdd ? $t('button.add') : $t('button.edit')"
+      :width="720"
       >
-      <div>
+      <div :style="{ 'max-height': MODALHEIGHT + 'px', overflow: 'auto' }">
         <div>
           <span>{{$t('field.type')}}:</span>
-          <Select v-model="addAndEditModal.dataConfig.monitor_type" @on-change="getEndpoint(addAndEditModal.dataConfig.monitor_type, 'host')" style="width: 445px">
+          <Select v-model="addAndEditModal.dataConfig.monitor_type" @on-change="getEndpoint(addAndEditModal.dataConfig.monitor_type, 'host')" style="width: 640px">
             <Option v-for="type in monitorTypeOptions" :key="type.value" :value="type.label">{{type.label}}</Option>
           </Select>
         </div>
@@ -48,7 +49,7 @@
                 icon="md-close"
               ></Button>
               <Tooltip :content="$t('tableKey.logPath')" :delay="1000">
-                <Input v-model="item.path" style="width: 432px" :placeholder="$t('tableKey.logPath')" />
+                <Input v-model="item.path" style="width: 632px" :placeholder="$t('tableKey.logPath')" />
               </Tooltip>
             </p>
           </template>
@@ -63,7 +64,7 @@
         </div>
         <div v-else style="margin: 8px 0">
           <span>{{$t('tableKey.path')}}:</span>
-          <Input style="width: 445px" disabled v-model="addAndEditModal.dataConfig.log_path" />
+          <Input style="width: 640px" disabled v-model="addAndEditModal.dataConfig.log_path" />
         </div>
         <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
           <template v-for="(item, index) in addAndEditModal.dataConfig.endpoint_rel">
@@ -76,12 +77,12 @@
                 icon="md-close"
               ></Button>
               <Tooltip :content="$t('m_business_object')" :delay="1000">
-                <Select v-model="item.target_endpoint" style="width: 215px" :placeholder="$t('m_business_object')">
+                <Select v-model="item.target_endpoint" style="width: 315px" :placeholder="$t('m_business_object')">
                   <Option v-for="type in targetEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
                 </Select>
               </Tooltip>
               <Tooltip :content="$t('m_log_server')" :delay="1000">
-                <Select v-model="item.source_endpoint" style="width: 215px" :placeholder="$t('m_log_server')">
+                <Select v-model="item.source_endpoint" style="width: 315px" :placeholder="$t('m_log_server')">
                   <Option v-for="type in sourceEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
                 </Select>
               </Tooltip>
@@ -294,26 +295,26 @@
     <Modal
       v-model="dbModelConfig.isShow"
       :title="$t('m_db')"
-      width="620"
+      width="680"
       >
       <div :style="{ 'max-height': MODALHEIGHT + 'px', overflow: 'auto' }">
         <Form :label-width="100">
           <FormItem :label="$t('field.displayName')">
-            <Input v-model="dbModelConfig.addRow.display_name" style="width:450px"/>
+            <Input v-model="dbModelConfig.addRow.display_name" style="width:520px"/>
           </FormItem>
           <FormItem :label="$t('field.metric')">
-            <Input v-model="dbModelConfig.addRow.metric" style="width:450px" />
+            <Input v-model="dbModelConfig.addRow.metric" style="width:520px" />
           </FormItem>
           <FormItem label="SQL">
-            <Input v-model="dbModelConfig.addRow.metric_sql" type="textarea" style="width:450px" />
+            <Input v-model="dbModelConfig.addRow.metric_sql" type="textarea" style="width:520px" />
           </FormItem>
           <FormItem :label="$t('m_collection_interval')">
-            <Select v-model="dbModelConfig.addRow.step" style="width: 450px">
+            <Select v-model="dbModelConfig.addRow.step" style="width: 520px">
               <Option v-for="type in stepOptions" :key="type.value" :value="type.value">{{type.label}}</Option>
             </Select>
           </FormItem>
           <FormItem :label="$t('field.type')">
-            <Select v-model="dbModelConfig.addRow.monitor_type" @on-change="getEndpoint(dbModelConfig.addRow.monitor_type, 'mysql')" style="width: 450px">
+            <Select v-model="dbModelConfig.addRow.monitor_type" @on-change="getEndpoint(dbModelConfig.addRow.monitor_type, 'mysql')" style="width: 520px">
               <Option v-for="type in monitorTypeOptions" :key="type.value" :value="type.label">{{type.label}}</Option>
             </Select>
           </FormItem>
@@ -329,12 +330,12 @@
                 icon="md-close"
               ></Button>
               <Tooltip :content="$t('m_db')" :delay="1000">
-                <Select v-model="item.target_endpoint" style="width: 255px" :placeholder="$t('m_business_object')">
+                <Select v-model="item.target_endpoint" style="width: 290px" :placeholder="$t('m_business_object')">
                   <Option v-for="type in targetEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
                 </Select>
               </Tooltip>
               <Tooltip :content="$t('m_log_server')" :delay="1000">
-                <Select v-model="item.source_endpoint" style="width: 255px" :placeholder="$t('m_log_server')">
+                <Select v-model="item.source_endpoint" style="width: 290px" :placeholder="$t('m_log_server')">
                   <Option v-for="type in sourceEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
                 </Select>
               </Tooltip>
