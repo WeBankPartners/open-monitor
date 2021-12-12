@@ -274,7 +274,7 @@ export default {
       const api = `/monitor/api/v2/alarm/endpoint_group/${this.targrtId}/notify/update`
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', api, this.groupNotify, () => {
         this.$Message.success(this.$t('tips.success'))
-        this.getDetail (this.targrtId, this.type)
+        this.getDetail(this.targrtId, this.type)
       })
     },
     editPost () {
@@ -288,7 +288,7 @@ export default {
         this.$root.$httpRequestEntrance.httpRequestEntrance('PUT', '/monitor/api/v2/alarm/strategy', params, () => {
           this.$Message.success(this.$t('tips.success'))
           this.$root.JQ('#add_edit_Modal').modal('hide')
-          this.getDetail (this.targrtId, this.type)
+          this.getDetail(this.targrtId, this.type)
         })
       })
     },
@@ -296,7 +296,7 @@ export default {
       const api = `/monitor/api/v2/alarm/strategy/${rowData.guid}`
       this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', api, '', () => {
         this.$Message.success(this.$t('tips.success'))
-        this.getDetail (this.targrtId, this.type)
+        this.getDetail(this.targrtId, this.type)
       })
     },
     deleteConfirmModal (rowData) {
@@ -418,7 +418,7 @@ export default {
           this.targetDetail = {}
           this.pageConfig.table.tableData = []
         }
-      }, {isNeedloading:false})
+      }, {isNeedloading:true})
     }
   },
   components: {},
