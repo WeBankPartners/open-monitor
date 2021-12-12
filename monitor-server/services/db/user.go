@@ -494,16 +494,19 @@ func UpdateGrpRole(param m.RoleGrpDto) error {
 func UpdateRoleNew(param m.UpdateRoleDto) error {
 	var rowData []*m.RoleTable
 	var err error
+	var actions []*Action
 	if param.Operation == "add" {
 		if param.Name == "" {
 			return fmt.Errorf("Role name can not emtpy")
 		}
 		x.SQL("select * from role where name=?", param.Name).Find(&rowData)
 		if len(rowData) > 0 {
-			_,err = x.Exec("update role set disable=0 where name=?", param.Name)
+			actions = append(actions, &Action{Sql: "update role set disable=0 where name=?", Param: []interface{}{param.Name}})
 		}else{
-			_,err = x.Exec("insert into role(name,display_name,email,creator,created) value (?,?,?,?,?)", param.Name,param.DisplayName,param.Email,param.Operator,time.Now())
+			actions = append(actions, &Action{Sql: "insert into role(name,display_name,email,creator,created) value (?,?,?,?,?)", Param: []interface{}{param.Name,param.DisplayName,param.Email,param.Operator,time.Now()}})
+			actions = append(actions, &Action{Sql: "insert into role_new(guid,display_name,email) value (?,?,?)",Param: []interface{}{param.Name,param.DisplayName,param.Email}})
 		}
+		err = Transaction(actions)
 	}else if param.Operation == "update" {
 		if param.RoleId <= 0 {
 			return fmt.Errorf("Role id can not emtpy ")
