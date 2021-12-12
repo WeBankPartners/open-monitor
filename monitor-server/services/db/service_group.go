@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	globalServiceGroupMap  = make(map[string]*models.ServiceGroupLinkNode)
+	globalServiceGroupMap = make(map[string]*models.ServiceGroupLinkNode)
 )
 
 func InitServiceGroup() {
@@ -32,7 +32,7 @@ func buildGlobalServiceGroupLink(serviceGroupTable []*models.ServiceGroupTable) 
 	}
 	for _, v := range serviceGroupTable {
 		if v.Parent != "" {
-			if _,b:=globalServiceGroupMap[v.Parent];b {
+			if _, b := globalServiceGroupMap[v.Parent]; b {
 				globalServiceGroupMap[v.Guid].Parent = globalServiceGroupMap[v.Parent]
 				globalServiceGroupMap[v.Parent].Children = append(globalServiceGroupMap[v.Parent].Children, globalServiceGroupMap[v.Guid])
 			}
@@ -53,9 +53,19 @@ func addGlobalServiceGroupNode(param models.ServiceGroupTable) {
 	if _, b := globalServiceGroupMap[param.Guid]; !b {
 		globalServiceGroupMap[param.Guid] = &models.ServiceGroupLinkNode{Guid: param.Guid}
 		if param.Parent != "" {
-			if _,bb := globalServiceGroupMap[param.Parent]; bb {
+			if _, bb := globalServiceGroupMap[param.Parent]; bb {
 				globalServiceGroupMap[param.Guid] = &models.ServiceGroupLinkNode{Guid: param.Guid, Parent: globalServiceGroupMap[param.Parent]}
 				globalServiceGroupMap[param.Parent].Children = append(globalServiceGroupMap[param.Parent].Children, globalServiceGroupMap[param.Guid])
+			}
+		}
+		var serviceGroupTable []*models.ServiceGroupTable
+		x.SQL("select guid,parent from service_group where parent=?", param.Guid).Find(&serviceGroupTable)
+		if len(serviceGroupTable) > 0 {
+			for _, v := range serviceGroupTable {
+				if childNode, bb := globalServiceGroupMap[v.Guid]; bb {
+					childNode.Parent = globalServiceGroupMap[param.Guid]
+					globalServiceGroupMap[param.Guid].Children = append(globalServiceGroupMap[param.Guid].Children, childNode)
+				}
 			}
 		}
 	}
@@ -76,6 +86,23 @@ func deleteGlobalServiceGroupNode(guid string) {
 			delete(globalServiceGroupMap, key)
 		}
 	}
+}
+
+func ListServiceGroupOptions(searchText string) (result []*models.OptionModel, err error) {
+	result = []*models.OptionModel{}
+	if searchText == "." {
+		searchText = ""
+	}
+	searchText = "%" + searchText + "%"
+	var serviceGroupTable []*models.ServiceGroupTable
+	err = x.SQL("select guid,service_type from service_group where guid like ?", searchText).Find(&serviceGroupTable)
+	if err != nil {
+		return
+	}
+	for _, v := range serviceGroupTable {
+		result = append(result, &models.OptionModel{OptionValue: v.Guid, OptionText: v.Guid, OptionType: v.ServiceType, OptionTypeName: v.ServiceType})
+	}
+	return
 }
 
 func ListServiceGroup() (result []*models.ServiceGroupTable, err error) {
@@ -102,18 +129,65 @@ func GetServiceGroupEndpointList(searchType string) (result []*models.ServiceGro
 	return
 }
 
-func CreateServiceGroup(param models.ServiceGroupTable) {
-	if param.Parent != "" {
+func CreateServiceGroup(param *models.ServiceGroupTable) {
 
+}
+
+func getCreateServiceGroupAction(param *models.ServiceGroupTable) (actions []*Action) {
+	if param.Parent == "" {
+		actions = append(actions, &Action{Sql: "insert into service_group(guid,display_name,description,service_type,update_time) value (?,?,?,?,?)", Param: []interface{}{param.Guid, param.DisplayName, "", param.ServiceType, param.UpdateTime}})
+	} else {
+		actions = append(actions, &Action{Sql: "insert into service_group(guid,display_name,description,parent,service_type,update_time) value (?,?,?,?,?,?)", Param: []interface{}{param.Guid, param.DisplayName, "", param.Parent, param.ServiceType, param.UpdateTime}})
 	}
+	return actions
 }
 
-func UpdateServiceGroup() {
+func UpdateServiceGroup(param *models.ServiceGroupTable) {
 
 }
 
-func DeleteServiceGroup() {
+func getUpdateServiceEndpointAction(serviceGroupGuid, nowTime string, endpoint []string) (actions []*Action) {
+	actions = append(actions, &Action{Sql: "delete from endpoint_service_rel where service_group=?", Param: []interface{}{serviceGroupGuid}})
+	if len(endpoint) == 0 {
+		return actions
+	}
+	var endpointGroup []*models.EndpointGroupTable
+	x.SQL("select guid,monitor_type from endpoint_group where service_group=?", serviceGroupGuid).Find(&endpointGroup)
+	tmpMonitorTypeMap := make(map[string]int)
+	for _, v := range endpointGroup {
+		tmpMonitorTypeMap[v.MonitorType] = 1
+	}
+	for _, v := range endpoint {
+		if !strings.Contains(v, "_") {
+			continue
+		}
+		tmpMonitorType := v[strings.LastIndex(v, "_")+1:]
+		actions = append(actions, &Action{Sql: "insert into endpoint_service_rel(guid,endpoint,service_group) value (?,?,?)", Param: []interface{}{guid.CreateGuid(), v, serviceGroupGuid}})
+		if _, b := tmpMonitorTypeMap[tmpMonitorType]; !b {
+			endpointGroupGuid := fmt.Sprintf("service_%s_%s", serviceGroupGuid, tmpMonitorType)
+			actions = append(actions, &Action{Sql: "insert into endpoint_group(guid,display_name,monitor_type,service_group,update_time) value (?,?,?,?,?)", Param: []interface{}{endpointGroupGuid, endpointGroupGuid, tmpMonitorType, serviceGroupGuid, nowTime}})
+			tmpMonitorTypeMap[tmpMonitorType] = 1
+		}
+	}
+	return actions
+}
 
+func DeleteServiceGroup(serviceGroupGuid string) {
+
+}
+
+func getDeleteServiceGroupAction(serviceGroupGuid string) (actions []*Action) {
+	guidList := []string{serviceGroupGuid}
+	if sNode, b := globalServiceGroupMap[serviceGroupGuid]; b {
+		guidList = sNode.FetchChildGuid()
+	}
+	var endpointGroup []*models.EndpointGroupTable
+	x.SQL(fmt.Sprintf("select guid from endpoint_group where service_group in ('%s')", strings.Join(guidList, "','"))).Find(&endpointGroup)
+	for _, v := range endpointGroup {
+		actions = append(actions, getDeleteEndpointGroupAction(v.Guid)...)
+	}
+	actions = append(actions, &Action{Sql: fmt.Sprintf("DELETE FROM service_group WHERE guid in ('%s')", strings.Join(guidList, "','"))})
+	return actions
 }
 
 func ListServiceGroupEndpoint(serviceGroup, monitorType string) (result []*models.ServiceGroupEndpointListObj, err error) {
@@ -170,62 +244,192 @@ func MatchServicePanel(endpointGuid string) (result models.PanelModel, err error
 	return
 }
 
-func AppendServiceConfigWithEndpoint(serviceGroup,newEndpoint string,endpointList []string)  {
-	endpointObj,_ := GetEndpointNew(&models.EndpointNewTable{Guid: newEndpoint})
-	if endpointObj.MonitorType == "" {
-		return
-	}
-	var logMetricTable []*models.LogMetricMonitorTable
-	x.SQL("select * from log_metric_monitor where service_group=? and monitor_type=?", serviceGroup, endpointObj.MonitorType).Find(&logMetricTable)
-	for _,v := range logMetricTable {
-		var logMetricRelTable []*models.LogMetricEndpointRelTable
-		x.SQL("select * from log_metric_endpoint_rel where log_metric_monitor=?", v.Guid).Find(&logMetricRelTable)
-		existFlag := false
-		for _,vv := range logMetricRelTable {
-			if vv.TargetEndpoint == endpointObj.Guid {
-				existFlag = true
-			}
-		}
-		if existFlag {
+func UpdateServiceConfigWithEndpoint(serviceGroup string) {
+	var endpointServiceRel []*models.EndpointServiceRelTable
+	x.SQL("select * from endpoint_service_rel where service_group=?", serviceGroup).Find(&endpointServiceRel)
+	var endpointList []string
+	endpointTypeMap := make(map[string][]string)
+	for _, v := range endpointServiceRel {
+		if !strings.Contains(v.Endpoint, "_") {
 			continue
 		}
-		sourceEndpoint := ""
-		for _,vv := range endpointList {
-			if strings.Contains(vv, fmt.Sprintf("_%s_", endpointObj.Ip)) {
-				sourceEndpoint = vv
-			}
+		tmpEndpointType := v.Endpoint[strings.LastIndex(v.Endpoint, "_")+1:]
+		if vv, b := endpointTypeMap[tmpEndpointType]; b {
+			vv = append(vv, v.Endpoint)
+		} else {
+			endpointTypeMap[tmpEndpointType] = []string{v.Endpoint}
 		}
-		_,tmpErr := x.Exec("insert into log_metric_endpoint_rel(guid,log_metric_monitor,source_endpoint,target_endpoint) value (?,?,?,?)", guid.CreateGuid(), v.Guid, sourceEndpoint, endpointObj.Guid)
-		if tmpErr == nil {
-			tmpErr = UpdateNodeExportConfig([]string{sourceEndpoint})
-			if tmpErr != nil {
-				log.Logger.Error("AppendServiceConfigWithEndpoint log metric fail", log.String("newEndpoint", newEndpoint), log.String("sourceEndpoint", sourceEndpoint), log.String("log_metric_monitor",v.Guid))
-			}
-		}
+		endpointList = append(endpointList, v.Endpoint)
 	}
-	if endpointObj.MonitorType != "mysql" {
+	log.Logger.Info("UpdateServiceConfigWithEndpoint", log.String("serviceGroup", serviceGroup), log.StringList("endpointList", endpointList))
+	err := UpdateLogMetricConfigByServiceGroup(serviceGroup, endpointTypeMap)
+	if err != nil {
+		log.Logger.Error("UpdateLogMetricConfigByServiceGroup fail", log.Error(err))
+	}
+	err = UpdateDbMetricConfigByServiceGroup(serviceGroup, endpointTypeMap)
+	if err != nil {
+		log.Logger.Error("UpdateDbMetricConfigByServiceGroup fail", log.Error(err))
+	}
+}
+
+func UpdateLogMetricConfigByServiceGroup(serviceGroup string, endpointTypeMap map[string][]string) (err error) {
+	var logMetricTable []*models.LogMetricMonitorTable
+	x.SQL("select * from log_metric_monitor where service_group=?", serviceGroup).Find(&logMetricTable)
+	if len(logMetricTable) == 0 {
 		return
 	}
+	var hostEndpoint []string
+	if hostListValue, b := endpointTypeMap["host"]; b {
+		hostEndpoint = hostListValue
+	}
+	hostEndpointIpMap := make(map[string]string)
+	if len(hostEndpoint) > 0 {
+		var endpointTable []*models.EndpointNewTable
+		x.SQL("select guid,ip from endpoint_new where guid in ('" + strings.Join(hostEndpoint, "','") + "')").Find(&endpointTable)
+		for _, v := range endpointTable {
+			hostEndpointIpMap[v.Guid] = v.Ip
+		}
+	}
+	for _, v := range logMetricTable {
+		UpdateLogMetricConfigAction(v, endpointTypeMap, hostEndpoint, hostEndpointIpMap)
+	}
+	return
+}
+
+func UpdateLogMetricConfigAction(logMonitor *models.LogMetricMonitorTable, endpointTypeMap map[string][]string, hostEndpoint []string, hostEndpointIpMap map[string]string) {
+	var updateHostEndpointList []string
+	var actions []*Action
+	var logMetricRelTable []*models.LogMetricEndpointRelTable
+	x.SQL("select * from log_metric_endpoint_rel where log_metric_monitor=?", logMonitor.Guid).Find(&logMetricRelTable)
+	if len(logMetricRelTable) == 0 && len(hostEndpoint) == 0 {
+		return
+	}
+	targetTypeMap := make(map[string]int)
+	if targetTypeList, b := endpointTypeMap[logMonitor.MonitorType]; b {
+		for _, target := range targetTypeList {
+			targetTypeMap[target] = 1
+		}
+	}
+	sourceTargetMap := make(map[string]string)
+	for _, vv := range logMetricRelTable {
+		sourceTargetMap[vv.SourceEndpoint] = vv.TargetEndpoint
+	}
+	for _, host := range hostEndpoint {
+		if target, b := sourceTargetMap[host]; b {
+			// target remove
+			if _, bb := targetTypeMap[target]; !bb {
+				actions = append(actions, &Action{Sql: "delete from log_metric_endpoint_rel where log_metric_monitor=? and source_endpoint=?", Param: []interface{}{logMonitor.Guid, host}})
+				updateHostEndpointList = append(updateHostEndpointList, host)
+			}
+		} else {
+			for target, _ := range targetTypeMap {
+				// match new target
+				if strings.Contains(target, fmt.Sprintf("_%s_", hostEndpointIpMap[host])) {
+					actions = append(actions, &Action{Sql: "insert into log_metric_endpoint_rel(guid,log_metric_monitor,source_endpoint,target_endpoint) value (?,?,?,?)", Param: []interface{}{guid.CreateGuid(), logMonitor.Guid, host, target}})
+					updateHostEndpointList = append(updateHostEndpointList, host)
+				}
+			}
+		}
+	}
+	for source, _ := range sourceTargetMap {
+		existFlag := false
+		for _, host := range hostEndpoint {
+			if host == source {
+				existFlag = true
+				break
+			}
+		}
+		// source remove
+		if !existFlag {
+			actions = append(actions, &Action{Sql: "delete from log_metric_endpoint_rel where log_metric_monitor=? and source_endpoint=?", Param: []interface{}{logMonitor.Guid, source}})
+			updateHostEndpointList = append(updateHostEndpointList, source)
+		}
+	}
+	if len(actions) > 0 {
+		err := Transaction(actions)
+		if err == nil {
+			err = UpdateNodeExportConfig(updateHostEndpointList)
+			if err != nil {
+				log.Logger.Error("UpdateNodeExportConfig fail", log.String("logMetricMonitor", logMonitor.Guid), log.Error(err))
+			}
+		} else {
+			log.Logger.Error("UpdateLogMetricConfigAction exec sql fail", log.String("logMetricMonitor", logMonitor.Guid), log.Error(err))
+		}
+	}
+}
+
+func UpdateDbMetricConfigByServiceGroup(serviceGroup string, endpointTypeMap map[string][]string) (err error) {
 	var dbMetricTable []*models.DbMetricMonitorTable
-	x.SQL("select * from db_metric_monitor where service_group=? and monitor_type=?", serviceGroup, endpointObj.MonitorType).Find(&dbMetricTable)
-	for _,v := range dbMetricTable {
+	x.SQL("select * from db_metric_monitor where service_group=? and monitor_type='mysql'", serviceGroup).Find(&dbMetricTable)
+	if len(dbMetricTable) == 0 {
+		return
+	}
+	mysqlEndpointMap := make(map[string]int)
+	if mysqlListValue, b := endpointTypeMap["mysql"]; b {
+		for _, v := range mysqlListValue {
+			mysqlEndpointMap[v] = 1
+		}
+	}
+	for _, v := range dbMetricTable {
+		tmpActions := []*Action{}
 		var dbMetricRelTable []*models.DbMetricEndpointRelTable
 		x.SQL("select * from db_metric_endpoint_rel where db_metric_monitor=?", v.Guid).Find(&dbMetricRelTable)
-		existFlag := false
-		for _,vv := range dbMetricRelTable {
-			if vv.SourceEndpoint == endpointObj.Guid {
-				existFlag = true
+		for _, vv := range dbMetricRelTable {
+			if _, b := mysqlEndpointMap[vv.SourceEndpoint]; !b {
+				tmpActions = append(tmpActions, &Action{Sql: "delete from db_metric_endpoint_rel where db_metric_monitor=? and source_endpoint=?", Param: []interface{}{v.Guid, vv.SourceEndpoint}})
 			}
 		}
-		if existFlag {
+		for k, _ := range mysqlEndpointMap {
+			existFlag := false
+			for _, vv := range dbMetricRelTable {
+				if vv.SourceEndpoint == k {
+					existFlag = true
+					break
+				}
+			}
+			if !existFlag {
+				tmpActions = append(tmpActions, &Action{Sql: "insert into db_metric_endpoint_rel(guid,db_metric_monitor,source_endpoint,target_endpoint) value (?,?,?,?)", Param: []interface{}{guid.CreateGuid(), v.Guid, k, k}})
+			}
+		}
+		if len(tmpActions) == 0 {
 			continue
 		}
-		_,tmpErr := x.Exec("insert into db_metric_endpoint_rel(guid,db_metric_monitor,source_endpoint,target_endpoint) value (?,?,?,?)", guid.CreateGuid(), v.Guid, endpointObj.Guid, endpointObj.Guid)
-		if tmpErr == nil {
-			tmpErr = SyncDbMetric()
-			if tmpErr != nil {
-				log.Logger.Error("AppendServiceConfigWithEndpoint db metric fail", log.String("newEndpoint", newEndpoint), log.String("log_metric_monitor",v.Guid))
-			}
+		err = Transaction(tmpActions)
+		if err != nil {
+			break
+		}
+	}
+	if err != nil {
+		return err
+	}
+	err = SyncDbMetric()
+	if err != nil {
+		log.Logger.Error("UpdateDbMetricConfigByServiceGroup fail", log.String("serviceGroup", serviceGroup))
+	}
+	return
+}
+
+func DeleteServiceConfig(serviceGroup string) {
+	var logMetricTable []*models.LogMetricMonitorTable
+	x.SQL("select guid from log_metric_monitor where service_group=?", serviceGroup).Find(&logMetricTable)
+	for _, v := range logMetricTable {
+		tmpErr := DeleteLogMetricMonitor(v.Guid)
+		if tmpErr != nil {
+			log.Logger.Error("Try to DeleteLogMetricMonitor fail", log.Error(tmpErr))
+		}
+	}
+	var dbMetricTable []*models.DbMetricMonitorTable
+	x.SQL("select guid from db_metric_monitor where service_group=?", serviceGroup).Find(&dbMetricTable)
+	for _, v := range dbMetricTable {
+		tmpErr := DeleteDbMetric(v.Guid)
+		if tmpErr != nil {
+			log.Logger.Error("Try to DeleteDbMetric fail", log.Error(tmpErr))
+		}
+	}
+	if len(dbMetricTable) > 0 {
+		err := SyncDbMetric()
+		if err != nil {
+			log.Logger.Error("Try to SyncDbMetric fail", log.Error(err))
 		}
 	}
 }
