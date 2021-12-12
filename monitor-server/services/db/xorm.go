@@ -116,7 +116,7 @@ func Classify(obj interface{}, operation string, table string, force bool) Actio
 	} else if operation == "update" {
 		action = update(obj, table, force)
 	} else if operation == "delete" {
-		action = delete(obj, table)
+		action = actionDelete(obj, table)
 	}
 	return action
 }
@@ -228,7 +228,7 @@ func update(obj interface{}, table string, force bool) Action {
 	return action
 }
 
-func delete(obj interface{}, table string) Action {
+func actionDelete(obj interface{}, table string) Action {
 	var action Action
 	params := make([]interface{}, 0)
 	var where string
