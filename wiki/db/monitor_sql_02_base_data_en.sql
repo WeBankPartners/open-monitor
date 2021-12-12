@@ -549,4 +549,6 @@ insert into sys_parameter(guid,param_key,param_value) value ('metric_template_05
 alter table service_group drop foreign key service_group_parent;
 alter table log_metric_monitor drop foreign key log_monitor_service_group;
 alter table db_metric_monitor drop foreign key db_monitor_service_group;
+alter table metric add column log_metric_monitor varchar(64);
+alter table metric add column db_metric_monitor varchar(64);
 #@v1.13.0.8-begin@;
