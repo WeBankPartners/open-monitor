@@ -55,9 +55,9 @@ export default {
     return {
       type: 'service',
       typeList: [
-        {label: 'field.endpoint', value: 'endpoint'},
         {label: 'field.resourceLevel', value: 'service'},
-        {label: 'field.group', value: 'group'}
+        {label: 'field.group', value: 'group'},
+        {label: 'field.endpoint', value: 'endpoint'}
       ],
       targrtId: '',
       targetOptions: [],
