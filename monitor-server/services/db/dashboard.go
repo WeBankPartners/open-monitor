@@ -400,7 +400,7 @@ func GetPromMetricTable(metricType string) (err error, result []*m.PromMetricUpd
 func UpdatePromMetric(data []*m.PromMetricTable) error {
 	var actions []*Action
 	for _, v := range data {
-		if v.Id > 0 {
+		if v.Id != "" {
 			actions = append(actions, &Action{Sql: "update prom_metric set metric=?,prom_ql=? where id=?", Param: []interface{}{v.Metric, v.PromQl, v.Id}})
 		} else {
 			actions = append(actions, &Action{Sql: "insert into prom_metric(metric,metric_type,prom_ql) value (?,?,?)", Param: []interface{}{v.Metric, v.MetricType, v.PromQl}})

@@ -206,9 +206,10 @@ func getChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.
 	var endpointList []*models.EndpointTable
 	for _, dataConfig := range param.Data {
 		endpointList = []*models.EndpointTable{}
+		tmpMonitorType := dataConfig.EndpointType
 		// check endpoint if is service group
 		if dataConfig.AppObject != "" {
-			endpointList, err = db.GetRecursiveEndpointByType(dataConfig.AppObject, dataConfig.EndpointType)
+			endpointList, err = db.GetRecursiveEndpointByTypeNew(dataConfig.AppObject, dataConfig.EndpointType)
 			if err != nil {
 				err = fmt.Errorf("Try to get endpoints from object:%s fail,%s ", dataConfig.AppObject, err.Error())
 				break
@@ -225,6 +226,7 @@ func getChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.
 				break
 			}
 			endpointList = append(endpointList, &endpointObj)
+			tmpMonitorType = endpointObj.ExportType
 		}
 		metricLegend := "$custom"
 		if dataConfig.Metric != "" {
@@ -238,7 +240,7 @@ func getChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.
 					dataConfig.PromQl = fmt.Sprintf("%s{%s\"}", dataConfig.Metric[:tmpSplitIndex], tmpTags)
 				}
 			} else {
-				tmpPromQL, _ := db.GetPromQLByMetric(dataConfig.Metric)
+				tmpPromQL, _ := db.GetPromQLByMetric(dataConfig.Metric, tmpMonitorType)
 				if tmpPromQL == "" {
 					if dataConfig.PromQl == "" {
 						continue
