@@ -38,6 +38,7 @@ func buildGlobalServiceGroupLink(serviceGroupTable []*models.ServiceGroupTable) 
 			}
 		}
 	}
+	displayGlobalServiceGroup()
 }
 
 func fetchGlobalServiceGroupChildGuidList(rootKey string) (result []string, err error) {
@@ -50,6 +51,7 @@ func fetchGlobalServiceGroupChildGuidList(rootKey string) (result []string, err 
 }
 
 func addGlobalServiceGroupNode(param models.ServiceGroupTable) {
+	displayGlobalServiceGroup()
 	if _, b := globalServiceGroupMap[param.Guid]; !b {
 		globalServiceGroupMap[param.Guid] = &models.ServiceGroupLinkNode{Guid: param.Guid}
 		if param.Parent != "" {
@@ -69,9 +71,12 @@ func addGlobalServiceGroupNode(param models.ServiceGroupTable) {
 			}
 		}
 	}
+	displayGlobalServiceGroup()
 }
 
 func deleteGlobalServiceGroupNode(guid string) {
+	log.Logger.Info("start deleteGlobalServiceGroupNode", log.String("guid", guid))
+	displayGlobalServiceGroup()
 	if v, b := globalServiceGroupMap[guid]; b {
 		if v.Parent != nil {
 			newChildList := []*models.ServiceGroupLinkNode{}
@@ -84,6 +89,17 @@ func deleteGlobalServiceGroupNode(guid string) {
 		}
 		for _, key := range v.FetchChildGuid() {
 			delete(globalServiceGroupMap, key)
+		}
+	}
+	displayGlobalServiceGroup()
+}
+
+func displayGlobalServiceGroup()  {
+	for k,v := range globalServiceGroupMap {
+		if v.Parent != nil {
+			log.Logger.Info("globalServiceGroupMap", log.String("k", k), log.String("parent", v.Parent.Guid))
+		}else {
+			log.Logger.Info("globalServiceGroupMap", log.String("k", k))
 		}
 	}
 }
@@ -186,6 +202,7 @@ func getDeleteServiceGroupAction(serviceGroupGuid string) (actions []*Action) {
 	for _, v := range endpointGroup {
 		actions = append(actions, getDeleteEndpointGroupAction(v.Guid)...)
 	}
+	actions = append(actions, &Action{Sql: fmt.Sprintf("delete from endpoint_service_rel where service_group in ('%s')", strings.Join(guidList, "','"))})
 	actions = append(actions, &Action{Sql: fmt.Sprintf("DELETE FROM service_group WHERE guid in ('%s')", strings.Join(guidList, "','"))})
 	return actions
 }

@@ -116,6 +116,7 @@ func recursiveOrganization(data []*m.PanelRecursiveTable, parent string, tmpNode
 }
 
 func UpdateOrganization(operation string, param m.UpdateOrgPanelParam) (err error) {
+	log.Logger.Info("start UpdateOrganization", log.String("operation", operation), log.String("guid", param.Guid))
 	var tableData []*m.PanelRecursiveTable
 	var actions []*Action
 	nowTime := time.Now().Format(m.DatetimeFormat)
