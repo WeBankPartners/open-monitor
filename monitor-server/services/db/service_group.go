@@ -86,6 +86,8 @@ func deleteGlobalServiceGroupNode(guid string) {
 			}
 			v.Parent.Children = newChildList
 		}
+		fetchChild := v.FetchChildGuid()
+		log.Logger.Info("fetchChild", log.StringList("fetchChild", fetchChild))
 		for _, key := range v.FetchChildGuid() {
 			if _,bb:=globalServiceGroupMap[key];bb {
 				delete(globalServiceGroupMap, key)
