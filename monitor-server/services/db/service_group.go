@@ -281,8 +281,8 @@ func UpdateServiceConfigWithEndpoint(serviceGroup string) {
 			continue
 		}
 		tmpEndpointType := v.Endpoint[strings.LastIndex(v.Endpoint, "_")+1:]
-		if vv, b := endpointTypeMap[tmpEndpointType]; b {
-			vv = append(vv, v.Endpoint)
+		if _, b := endpointTypeMap[tmpEndpointType]; b {
+			endpointTypeMap[tmpEndpointType] = append(endpointTypeMap[tmpEndpointType], v.Endpoint)
 		} else {
 			endpointTypeMap[tmpEndpointType] = []string{v.Endpoint}
 		}
