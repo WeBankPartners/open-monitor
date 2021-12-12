@@ -262,24 +262,34 @@ func MatchServicePanel(endpointGuid string) (result models.PanelModel, err error
 }
 
 func UpdateServiceConfigWithEndpoint(serviceGroup string) {
+	serviceGroupList := []string{serviceGroup}
+	fetchServiceGroupList,err := fetchGlobalServiceGroupChildGuidList(serviceGroup)
+	if err == nil {
+		serviceGroupList = fetchServiceGroupList
+	}
 	var endpointServiceRel []*models.EndpointServiceRelTable
-	x.SQL("select * from endpoint_service_rel where service_group=?", serviceGroup).Find(&endpointServiceRel)
+	x.SQL("select * from endpoint_service_rel where service_group in ('"+strings.Join(serviceGroupList,"','")+"')").Find(&endpointServiceRel)
 	var endpointList []string
+	endpointExistMap := make(map[string]int)
 	endpointTypeMap := make(map[string][]string)
 	for _, v := range endpointServiceRel {
+		if _,b:=endpointExistMap[v.Endpoint];b {
+			continue
+		}
+		endpointExistMap[v.Endpoint] = 1
 		if !strings.Contains(v.Endpoint, "_") {
 			continue
 		}
 		tmpEndpointType := v.Endpoint[strings.LastIndex(v.Endpoint, "_")+1:]
-		if vv, b := endpointTypeMap[tmpEndpointType]; b {
-			vv = append(vv, v.Endpoint)
+		if _, b := endpointTypeMap[tmpEndpointType]; b {
+			endpointTypeMap[tmpEndpointType] = append(endpointTypeMap[tmpEndpointType], v.Endpoint)
 		} else {
 			endpointTypeMap[tmpEndpointType] = []string{v.Endpoint}
 		}
 		endpointList = append(endpointList, v.Endpoint)
 	}
 	log.Logger.Info("UpdateServiceConfigWithEndpoint", log.String("serviceGroup", serviceGroup), log.StringList("endpointList", endpointList))
-	err := UpdateLogMetricConfigByServiceGroup(serviceGroup, endpointTypeMap)
+	err = UpdateLogMetricConfigByServiceGroup(serviceGroup, endpointTypeMap)
 	if err != nil {
 		log.Logger.Error("UpdateLogMetricConfigByServiceGroup fail", log.Error(err))
 	}
@@ -314,6 +324,13 @@ func UpdateLogMetricConfigByServiceGroup(serviceGroup string, endpointTypeMap ma
 }
 
 func UpdateLogMetricConfigAction(logMonitor *models.LogMetricMonitorTable, endpointTypeMap map[string][]string, hostEndpoint []string, hostEndpointIpMap map[string]string) {
+	log.Logger.Info("UpdateLogMetricConfigAction", log.String("guid",logMonitor.Guid), log.String("monitorType",logMonitor.MonitorType),log.StringList("hostEndpoint",hostEndpoint))
+	for k,v := range endpointTypeMap {
+		log.Logger.Info("endpointTypeMap", log.String("k",k), log.StringList("v", v))
+	}
+	for k,v := range hostEndpointIpMap {
+		log.Logger.Info("hostEndpointIpMap", log.String("k", k), log.String("v", v))
+	}
 	var updateHostEndpointList []string
 	var actions []*Action
 	var logMetricRelTable []*models.LogMetricEndpointRelTable
@@ -329,6 +346,7 @@ func UpdateLogMetricConfigAction(logMonitor *models.LogMetricMonitorTable, endpo
 	}
 	sourceTargetMap := make(map[string]string)
 	for _, vv := range logMetricRelTable {
+		log.Logger.Info("sourceTargetMap", log.String("source", vv.SourceEndpoint),log.String("target", vv.TargetEndpoint))
 		sourceTargetMap[vv.SourceEndpoint] = vv.TargetEndpoint
 	}
 	for _, host := range hostEndpoint {
