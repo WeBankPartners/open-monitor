@@ -553,6 +553,6 @@ alter table metric add column log_metric_monitor varchar(64);
 alter table metric add column db_metric_monitor varchar(64);
 delete from panel where title='DataMonitor';
 delete from prom_metric where metric='process_alive_count';
-delete from agent_strategy where metric like '%process_alive_count%';
-insert into agent_strategy(guid,endpoint_group,metric,`condition`,last,priority,content,notify_enable) value ('old_10','default_process_group','process_alive_count__process','==0','60s','high','process down',1);
+delete from alarm_strategy where metric like '%process_alive_count%';
+insert into alarm_strategy(guid,endpoint_group,metric,`condition`,last,priority,content,notify_enable) value ('old_25','default_process_group','process_alive_count__process','==0','60s','high','process down',1);
 #@v1.13.0.18-begin@;
