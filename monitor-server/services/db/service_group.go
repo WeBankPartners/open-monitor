@@ -38,6 +38,7 @@ func buildGlobalServiceGroupLink(serviceGroupTable []*models.ServiceGroupTable) 
 			}
 		}
 	}
+	displayGlobalServiceGroup()
 }
 
 func fetchGlobalServiceGroupChildGuidList(rootKey string) (result []string, err error) {
@@ -96,7 +97,11 @@ func deleteGlobalServiceGroupNode(guid string) {
 
 func displayGlobalServiceGroup()  {
 	for k,v := range globalServiceGroupMap {
-		log.Logger.Info("globalServiceGroupMap", log.String("k", k), log.String("parent", v.Parent.Guid))
+		if v.Parent != nil {
+			log.Logger.Info("globalServiceGroupMap", log.String("k", k), log.String("parent", v.Parent.Guid))
+		}else {
+			log.Logger.Info("globalServiceGroupMap", log.String("k", k))
+		}
 	}
 }
 
