@@ -131,7 +131,9 @@ func buildNewAlarm(param *m.AMRespAlert,nowTime time.Time) (alarm m.AlarmHandleO
 
 func getNewAlarmEndpoint(param *m.AMRespAlert) (result m.EndpointNewTable,err error) {
 	result = m.EndpointNewTable{}
-	if param.Labels["t_endpoint"] != "" {
+	if param.Labels["process_guid"] != "" {
+		result.Guid = param.Labels["process_guid"]
+	}else if param.Labels["t_endpoint"] != "" {
 		result.Guid = param.Labels["t_endpoint"]
 	}else if param.Labels["guid"] != "" {
 		result.Guid = param.Labels["guid"]
