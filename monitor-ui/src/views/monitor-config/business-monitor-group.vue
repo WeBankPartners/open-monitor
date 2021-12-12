@@ -28,7 +28,7 @@
     <Modal
       v-model="addAndEditModal.isShow"
       :title="addAndEditModal.isAdd ? $t('button.add') : $t('button.edit')"
-      :width="720"
+      :width="740"
       >
       <div :style="{ 'max-height': MODALHEIGHT + 'px', overflow: 'auto' }">
         <div>
@@ -66,7 +66,7 @@
           <span>{{$t('tableKey.path')}}:</span>
           <Input style="width: 640px" disabled v-model="addAndEditModal.dataConfig.log_path" />
         </div>
-        <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
+        <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;width:96%">
           <template v-for="(item, index) in addAndEditModal.dataConfig.endpoint_rel">
             <p :key="index + 'c'">
               <Button
@@ -119,7 +119,7 @@
           </FormItem>
         </Form>
         <RegTest v-if="showRegConfig" @updateReg="updateReg" @cancelReg="cancelReg"></RegTest>
-        <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
+        <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;width:96%">
           <template v-for="(item, index) in ruleModelConfig.addRow.metric_list">
             <p :key="index + 3">
               <Button
@@ -295,7 +295,7 @@
     <Modal
       v-model="dbModelConfig.isShow"
       :title="$t('m_db')"
-      width="680"
+      width="700"
       >
       <div :style="{ 'max-height': MODALHEIGHT + 'px', overflow: 'auto' }">
         <Form :label-width="100">
@@ -319,7 +319,7 @@
             </Select>
           </FormItem>
         </Form>
-        <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;">
+        <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;width:96%">
           <template v-for="(item, index) in dbModelConfig.addRow.endpoint_rel">
             <p :key="index + 'S'">
               <Button
@@ -788,6 +788,8 @@ export default {
       }
     },
     async getEndpoint (val, type) {
+      this.addAndEditModal.dataConfig.endpoint_rel = []
+      this.dbModelConfig.addRow.endpoint_rel = []
       await this.getDefaultConfig(val, type)
       // get source Endpoint
       const sourceApi = this.$root.apiCenter.getEndpointsByType + '/' + this.targrtId + '/endpoint/' + type
