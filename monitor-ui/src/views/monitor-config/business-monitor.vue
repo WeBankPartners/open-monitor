@@ -59,7 +59,7 @@ export default {
   name: '',
   data() {
     return {
-      type: 'endpoint',
+      type: 'group',
       typeList: [
         {label: this.$t('tableKey.endpoint'), value: 'endpoint'},
         {label: this.$t('field.resourceLevel'), value: 'group'}
