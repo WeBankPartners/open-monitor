@@ -21,7 +21,7 @@ type ServiceGroupLinkNode struct {
 	Children []*ServiceGroupLinkNode `json:"children"`
 }
 
-func (s *ServiceGroupLinkNode) FetchChildGuid() []string {
+func (s ServiceGroupLinkNode) FetchChildGuid() []string {
 	result := []string{s.Guid}
 	for _,v := range s.Children {
 		result = append(result, v.FetchChildGuid()...)
