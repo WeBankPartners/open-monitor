@@ -76,7 +76,6 @@ func addGlobalServiceGroupNode(param models.ServiceGroupTable) {
 
 func deleteGlobalServiceGroupNode(guid string) {
 	log.Logger.Info("start deleteGlobalServiceGroupNode", log.String("guid", guid))
-	displayGlobalServiceGroup()
 	if v, b := globalServiceGroupMap[guid]; b {
 		if v.Parent != nil {
 			newChildList := []*models.ServiceGroupLinkNode{}
@@ -87,15 +86,10 @@ func deleteGlobalServiceGroupNode(guid string) {
 			}
 			v.Parent.Children = newChildList
 		}
-		fetchChild := v.FetchChildGuid()
-		log.Logger.Info("fetchChild", log.StringList("fetchChild", fetchChild))
-		for _, key := range fetchChild {
-			if _,bb:=globalServiceGroupMap[key];bb {
-				delete(globalServiceGroupMap, key)
-			}
+		for _, key := range v.FetchChildGuid() {
+			delete(globalServiceGroupMap, key)
 		}
 	}
-	displayGlobalServiceGroup()
 }
 
 func displayGlobalServiceGroup()  {
