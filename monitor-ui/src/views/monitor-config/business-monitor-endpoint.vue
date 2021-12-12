@@ -506,7 +506,7 @@ export default {
         })
         this.showManagement = true
         this.$root.$store.commit('changeTableExtendActive', -1)
-      }, {isNeedloading:false})
+      }, {isNeedloading:true})
     }
   },
   mounted () {
