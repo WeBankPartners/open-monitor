@@ -26,7 +26,7 @@
         <!-- 操作区 -->
         <div v-if="showConfigTab || isAddMetric">
           <Tabs value="name1">
-            <TabPane :label="$t('m_acquisition_configuration')" name="name1">
+            <TabPane :label="$t('title.metricConfiguration')" name="name1">
               <div >
                 <Form :label-width="80">
                   <FormItem :label="$t('field.metric')">
@@ -40,6 +40,7 @@
                       </Option>
                     </Select>
                   </FormItem>
+                  <Divider />
                   <FormItem :label="$t('tableKey.name')">
                     <Input v-model="metricConfigData.metric"></Input>
                   </FormItem>
@@ -49,7 +50,7 @@
                     </Select>
                   </FormItem>
                   <FormItem :label="$t('m_recommend')">
-                    <Select v-model="templatePl" @on-change="changeTemplatePl">
+                    <Select v-model="templatePl" @on-clear="clearTemplatePl" @on-change="changeTemplatePl">
                       <Option v-for="item in metricTemplate" :value="item.prom_ql" :key="item.prom_ql">{{ item.name }}</Option>
                     </Select>
                   </FormItem>
@@ -296,6 +297,10 @@ export default {
     this.getEndpointType()
   },
   methods: {
+    clearTemplatePl () {
+      this.templatePl = ''
+      this.metricTemplateParams = []
+    },
     getMetricTemplate () {
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v2/sys/parameter/metric_template', '', (res) => {
         this.metricTemplate = res
@@ -324,6 +329,7 @@ export default {
       this.metricId = ''
     },
     changeMetricOptions (val) {
+      this.clearTemplatePl()
       if (val !== '') {
         const findMetricConfig = this.metricOptions.find(m => m.id === this.metricId)
         this.metricConfigData = {
