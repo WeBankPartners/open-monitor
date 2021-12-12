@@ -18,7 +18,7 @@ import (
 
 func QueryAlarmStrategyByGroup(endpointGroup string) (result []*models.EndpointStrategyObj, err error) {
 	result = []*models.EndpointStrategyObj{}
-	var strategy []*models.GroupStrategyObj
+	strategy := []*models.GroupStrategyObj{}
 	var alarmStrategyTable []*models.AlarmStrategyMetricObj
 	err = x.SQL("select t1.*,t2.metric as 'metric_name' from alarm_strategy t1 left join metric t2 on t1.metric=t2.guid where t1.endpoint_group=?", endpointGroup).Find(&alarmStrategyTable)
 	if err != nil {
@@ -61,7 +61,7 @@ func QueryAlarmStrategyByEndpoint(endpoint string) (result []*models.EndpointStr
 func QueryAlarmStrategyByServiceGroup(serviceGroup string) (result []*models.EndpointStrategyObj, err error) {
 	result = []*models.EndpointStrategyObj{}
 	var endpointGroupTable []*models.EndpointGroupTable
-	err = x.SQL("select guid,service_group from endpoint_group where service_group=?", serviceGroup).Find(&endpointGroupTable)
+	err = x.SQL("select guid,monitor_type,service_group from endpoint_group where service_group=?", serviceGroup).Find(&endpointGroupTable)
 	if err != nil {
 		return
 	}
@@ -72,6 +72,7 @@ func QueryAlarmStrategyByServiceGroup(serviceGroup string) (result []*models.End
 			break
 		}
 		tmpEndpointStrategyList[0].ServiceGroup = v.ServiceGroup
+		tmpEndpointStrategyList[0].MonitorType = v.MonitorType
 		result = append(result, tmpEndpointStrategyList[0])
 	}
 	return
