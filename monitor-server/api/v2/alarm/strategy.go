@@ -17,13 +17,22 @@ func QueryAlarmStrategy(c *gin.Context) {
 		} else {
 			middleware.ReturnSuccessData(c, result)
 		}
-	} else {
+	} else if queryType == "group" {
 		result, err := db.QueryAlarmStrategyByGroup(guid)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		} else {
 			middleware.ReturnSuccessData(c, result)
 		}
+	} else if queryType == "service" {
+		result, err := db.QueryAlarmStrategyByServiceGroup(guid)
+		if err != nil {
+			middleware.ReturnHandleError(c, err.Error(), err)
+		} else {
+			middleware.ReturnSuccessData(c, result)
+		}
+	} else {
+		middleware.ReturnValidateError(c, "queryType illegal")
 	}
 }
 
@@ -40,7 +49,7 @@ func CreateAlarmStrategy(c *gin.Context) {
 		err = db.SyncPrometheusRuleFile(param.EndpointGroup, false)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
-		}else {
+		} else {
 			middleware.ReturnSuccess(c)
 		}
 	}
@@ -59,7 +68,7 @@ func UpdateAlarmStrategy(c *gin.Context) {
 		err = db.SyncPrometheusRuleFile(param.EndpointGroup, false)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
-		}else {
+		} else {
 			middleware.ReturnSuccess(c)
 		}
 	}
@@ -67,14 +76,14 @@ func UpdateAlarmStrategy(c *gin.Context) {
 
 func DeleteAlarmStrategy(c *gin.Context) {
 	strategyGuid := c.Param("strategyGuid")
-	endpointGroup,err := db.DeleteAlarmStrategy(strategyGuid)
+	endpointGroup, err := db.DeleteAlarmStrategy(strategyGuid)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
 		err = db.SyncPrometheusRuleFile(endpointGroup, false)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
-		}else {
+		} else {
 			middleware.ReturnSuccess(c)
 		}
 	}
@@ -91,8 +100,10 @@ func ListStrategyQueryOptions(c *gin.Context) {
 	var data []*models.OptionModel
 	if searchType == "endpoint" {
 		data, err = db.ListEndpointOptions(searchMsg)
-	} else {
+	} else if searchType == "group" {
 		data, err = db.ListEndpointGroupOptions(searchMsg)
+	} else if searchType == "service" {
+		data, err = db.ListServiceGroupOptions(searchMsg)
 	}
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
@@ -104,11 +115,11 @@ func ListStrategyQueryOptions(c *gin.Context) {
 	middleware.ReturnSuccessData(c, data)
 }
 
-func ListCallbackEvent(c *gin.Context)  {
-	eventList,err := db.GetCoreEventList()
+func ListCallbackEvent(c *gin.Context) {
+	eventList, err := db.GetCoreEventList()
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
-	}else{
+	} else {
 		middleware.ReturnSuccessData(c, eventList.Data)
 	}
 }
