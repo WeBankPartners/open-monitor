@@ -75,14 +75,14 @@
                 type="error"
                 icon="md-close"
               ></Button>
-              <Tooltip :content="$t('m_log_server')" :delay="1000">
-                <Select v-model="item.source_endpoint" style="width: 215px" :placeholder="$t('m_log_server')">
-                  <Option v-for="type in sourceEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
-                </Select>
-              </Tooltip>
               <Tooltip :content="$t('m_business_object')" :delay="1000">
                 <Select v-model="item.target_endpoint" style="width: 215px" :placeholder="$t('m_business_object')">
                   <Option v-for="type in targetEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
+                </Select>
+              </Tooltip>
+              <Tooltip :content="$t('m_log_server')" :delay="1000">
+                <Select v-model="item.source_endpoint" style="width: 215px" :placeholder="$t('m_log_server')">
+                  <Option v-for="type in sourceEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
                 </Select>
               </Tooltip>
             </p>
@@ -128,6 +128,9 @@
                 type="error"
                 icon="md-close"
               ></Button>
+              <Tooltip :content="$t('m_key')" :delay="1000">
+                <Input v-model="item.json_key" style="width: 190px" :placeholder="$t('m_key') + ' e.g:[.*][.*]'" />
+              </Tooltip>
               <Tooltip :content="$t('field.metric') + ' , e.g:code'" :delay="1000">
                 <Input v-model="item.metric" style="width: 190px" :placeholder="$t('field.metric') + ' , e.g:code'" />
               </Tooltip>
@@ -142,7 +145,7 @@
                 <Input v-model="item.display_name" style="width: 160px" :placeholder="$t('field.displayName')" />
               </Tooltip>
               <Tooltip :content="$t('m_collection_interval')" :delay="1000">
-                <Select v-model="item.step" style="width: 100px" :placeholder="$t('m_collection_interval')">
+                <Select v-model="item.step" style="width: 80px" :placeholder="$t('m_collection_interval')">
                   <Option v-for="type in stepOptions" :key="type.value" :value="type.value">{{type.label}}</Option>
                 </Select>
               </Tooltip>
@@ -164,11 +167,11 @@
                       }}</Option>
                     </Select>
                   </Tooltip>
-                  <Tooltip :content="$t('m_log_server')" :delay="1000">
-                    <Input v-model="stringMapItem.source_value" style="width: 230px" :placeholder="$t('m_log_server')" />
-                  </Tooltip>
                   <Tooltip :content="$t('m_business_object')" :delay="1000">
                     <Input v-model="stringMapItem.target_value" style="width: 230px" :placeholder="$t('m_business_object')" />
+                  </Tooltip>
+                  <Tooltip :content="$t('m_log_server')" :delay="1000">
+                    <Input v-model="stringMapItem.source_value" style="width: 230px" :placeholder="$t('m_log_server')" />
                   </Tooltip>
                 </p>
               </template>
@@ -259,11 +262,11 @@
                     }}</Option>
                   </Select>
                 </Tooltip>
-                <Tooltip :content="$t('m_log_server')" :delay="1000">
-                  <Input v-model="item.source_value" style="width: 150px" :placeholder="$t('m_log_server')" />
-                </Tooltip>
                 <Tooltip :content="$t('m_business_object')" :delay="1000">
                   <Input v-model="item.target_value" style="width: 150px" :placeholder="$t('m_business_object')" />
+                </Tooltip>
+                <Tooltip :content="$t('m_log_server')" :delay="1000">
+                  <Input v-model="item.source_value" style="width: 150px" :placeholder="$t('m_log_server')" />
                 </Tooltip>
               </p>
             </template>
@@ -325,7 +328,7 @@
                 type="error"
                 icon="md-close"
               ></Button>
-              <Tooltip :content="$t('m_business_object')" :delay="1000">
+              <Tooltip :content="$t('m_db')" :delay="1000">
                 <Select v-model="item.target_endpoint" style="width: 255px" :placeholder="$t('m_business_object')">
                   <Option v-for="type in targetEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
                 </Select>
