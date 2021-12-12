@@ -256,7 +256,7 @@ type PromMetricUpdateChartParam struct {
 }
 
 type PromMetricTable struct {
-	Id         int    `json:"id"`
+	Id         string `json:"id"`
 	Metric     string `json:"metric" binding:"required"`
 	MetricType string `json:"metric_type"`
 	PromQl     string `json:"prom_ql" binding:"required"`
@@ -264,21 +264,22 @@ type PromMetricTable struct {
 }
 
 type EndpointTable struct {
-	Id              int    `json:"id"`
-	Guid            string `json:"guid"`
-	Name            string `json:"name"`
-	Ip              string `json:"ip"`
-	EndpointVersion string `json:"endpoint_version"`
-	ExportType      string `json:"export_type"`
-	ExportVersion   string `json:"export_version"`
-	Step            int    `json:"step"`
-	Address         string `json:"address"`
-	OsType          string `json:"os_type"`
-	CreateAt        string `json:"create_at"`
-	StopAlarm       int    `json:"stop_alarm"`
-	AddressAgent    string `json:"address_agent"`
-	Cluster         string `json:"cluster"`
-	Tags            string `json:"tags"`
+	Id              int       `json:"id"`
+	Guid            string    `json:"guid"`
+	Name            string    `json:"name"`
+	Ip              string    `json:"ip"`
+	EndpointVersion string    `json:"endpoint_version"`
+	ExportType      string    `json:"export_type"`
+	ExportVersion   string    `json:"export_version"`
+	Step            int       `json:"step"`
+	Address         string    `json:"address"`
+	OsType          string    `json:"os_type"`
+	CreateAt        string    `json:"create_at"`
+	StopAlarm       int       `json:"stop_alarm"`
+	AddressAgent    string    `json:"address_agent"`
+	Cluster         string    `json:"cluster"`
+	Tags            string    `json:"tags"`
+	UpdateAt        time.Time `json:"update_at"`
 }
 
 type EndpointMetricTable struct {
