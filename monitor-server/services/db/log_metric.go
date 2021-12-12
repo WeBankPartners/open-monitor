@@ -82,8 +82,13 @@ func ListLogMetricEndpointRelWithServiceGroup(serviceGroup, logMetricMonitor str
 
 func GetServiceGroupEndpointRel(serviceGroup, sourceType, targetType string) (result []*models.LogMetricEndpointRelTable, err error) {
 	result = []*models.LogMetricEndpointRelTable{}
+	var guidList []string
+	guidList, err = fetchGlobalServiceGroupChildGuidList(serviceGroup)
+	if err != nil {
+		return
+	}
 	var endpointTable []*models.EndpointNewTable
-	err = x.SQL("select guid,monitor_type,ip from endpoint_new where guid in (select endpoint from endpoint_service_rel where service_group=?)", serviceGroup).Find(&endpointTable)
+	err = x.SQL("select guid,monitor_type,ip from endpoint_new where guid in (select endpoint from endpoint_service_rel where service_group in ('"+strings.Join(guidList,"','")+"'))").Find(&endpointTable)
 	if err != nil {
 		return
 	}
