@@ -32,11 +32,14 @@
       </ul>
     </section> 
     <section v-show="showTargetManagement" style="margin-top: 16px;">
-      <template v-if="type === 'grp'">
-        <groupManagement ref="grp"></groupManagement>
+      <template v-if="type === 'group'">
+        <groupManagement ref="group"></groupManagement>
       </template>
       <template v-if="type === 'endpoint'">
         <endpointManagement ref="endpoint"></endpointManagement>
+      </template>
+      <template v-if="type === 'service'">
+        <serviceManagement ref="service"></serviceManagement>
       </template>
     </section>
   </div>
@@ -45,14 +48,16 @@
 <script>
 import endpointManagement from './threshold-management-endpoint.vue'
 import groupManagement from './threshold-management-group.vue'
+import serviceManagement from './threshold-management-service.vue'
 export default {
   name: '',
   data() {
     return {
-      type: 'grp',
+      type: 'service',
       typeList: [
         {label: 'field.endpoint', value: 'endpoint'},
-        {label: 'field.group', value: 'grp'}
+        {label: 'field.resourceLevel', value: 'service'},
+        {label: 'field.group', value: 'group'}
       ],
       targrtId: '',
       targetOptions: [],
@@ -92,7 +97,8 @@ export default {
   },
   components: {
     endpointManagement,
-    groupManagement
+    groupManagement,
+    serviceManagement
   },
 }
 </script>
