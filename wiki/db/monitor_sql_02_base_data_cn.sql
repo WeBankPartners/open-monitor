@@ -551,4 +551,5 @@ alter table log_metric_monitor drop foreign key log_monitor_service_group;
 alter table db_metric_monitor drop foreign key db_monitor_service_group;
 alter table metric add column log_metric_monitor varchar(64);
 alter table metric add column db_metric_monitor varchar(64);
+delete from panel where title='DataMonitor';
 #@v1.13.0.8-begin@;
