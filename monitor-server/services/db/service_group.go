@@ -186,6 +186,7 @@ func getDeleteServiceGroupAction(serviceGroupGuid string) (actions []*Action) {
 	for _, v := range endpointGroup {
 		actions = append(actions, getDeleteEndpointGroupAction(v.Guid)...)
 	}
+	actions = append(actions, &Action{Sql: fmt.Sprintf("delete from endpoint_service_rel where service_group in ('%s')", strings.Join(guidList, "','"))})
 	actions = append(actions, &Action{Sql: fmt.Sprintf("DELETE FROM service_group WHERE guid in ('%s')", strings.Join(guidList, "','"))})
 	return actions
 }
