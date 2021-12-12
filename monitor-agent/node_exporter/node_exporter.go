@@ -190,7 +190,6 @@ func main() {
 			</html>`))
 	})
 	// Init new collector logger and store
-	collector.InitNewLogger(logger)
 	collector.InitMonitorLogger(logger)
 	//collector.BusinessCollectorStore.Load()
 	collector.LogCollectorStore.Load()
