@@ -28,7 +28,7 @@
     <Modal
       v-model="addAndEditModal.isShow"
       :title="addAndEditModal.isAdd ? $t('button.add') : $t('button.edit')"
-      :width="740"
+      :width="730"
       >
       <div :style="{ 'max-height': MODALHEIGHT + 'px', overflow: 'auto' }">
         <div>
@@ -66,7 +66,7 @@
           <span>{{$t('tableKey.path')}}:</span>
           <Input style="width: 640px" disabled v-model="addAndEditModal.dataConfig.log_path" />
         </div>
-        <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;width:96%">
+        <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;width:680px">
           <template v-for="(item, index) in addAndEditModal.dataConfig.endpoint_rel">
             <p :key="index + 'c'">
               <Button
@@ -77,12 +77,12 @@
                 icon="md-close"
               ></Button>
               <Tooltip :content="$t('m_business_object')" :delay="1000">
-                <Select v-model="item.target_endpoint" style="width: 315px" :placeholder="$t('m_business_object')">
+                <Select v-model="item.target_endpoint" style="width: 310px" :placeholder="$t('m_business_object')">
                   <Option v-for="type in targetEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
                 </Select>
               </Tooltip>
               <Tooltip :content="$t('m_log_server')" :delay="1000">
-                <Select v-model="item.source_endpoint" style="width: 315px" :placeholder="$t('m_log_server')">
+                <Select v-model="item.source_endpoint" style="width: 310px" :placeholder="$t('m_log_server')">
                   <Option v-for="type in sourceEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
                 </Select>
               </Tooltip>
@@ -92,7 +92,7 @@
             @click="addEmptyItem('relate')"
             type="success"
             size="small"
-            style="background-color: #0080FF;border-color: #0080FF;"
+            style="background-color: #0080FF;border-color: #0080FF;width:650px"
             long
             >{{$t('addStringMap')}}</Button
           >
@@ -119,7 +119,7 @@
           </FormItem>
         </Form>
         <RegTest v-if="showRegConfig" @updateReg="updateReg" @cancelReg="cancelReg"></RegTest>
-        <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;width:96%">
+        <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;">
           <template v-for="(item, index) in ruleModelConfig.addRow.metric_list">
             <p :key="index + 3">
               <Button
@@ -319,7 +319,7 @@
             </Select>
           </FormItem>
         </Form>
-        <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;width:96%">
+        <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
           <template v-for="(item, index) in dbModelConfig.addRow.endpoint_rel">
             <p :key="index + 'S'">
               <Button
@@ -914,7 +914,7 @@ export default {
         this.targetDetail = responseData
         this.pageConfig.table.tableData = responseData.config
         this.$root.$store.commit('changeTableExtendActive', -1)
-      }, {isNeedloading:false})
+      }, {isNeedloading:true})
       this.getDbDetail(targrtId)
     }
   },

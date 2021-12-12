@@ -285,7 +285,7 @@ export default {
             groupNotify: item.notify
           })
         })
-      }, {isNeedloading:false})
+      }, {isNeedloading:true})
     }
   },
   components: {},
