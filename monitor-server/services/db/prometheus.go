@@ -96,8 +96,14 @@ func QueryExporterMetric(param models.QueryPrometheusMetricParam) (err error, re
 		err = fmt.Errorf("Can not find cluster address with cluster:%s ", param.Cluster)
 		return
 	}
+	queryPromQl := fmt.Sprintf("{instance=\"%s:%s\"}", param.Ip, param.Port)
+	if param.ProcessGuid != "" {
+		queryPromQl = fmt.Sprintf("{process_guid=\"%s\"}", param.ProcessGuid)
+	}else if param.EndpointGuid != "" {
+		queryPromQl = fmt.Sprintf("{e_guid=\"%s\"}", param.EndpointGuid)
+	}
 	nowTime := time.Now().Unix()
-	metricList, queryErr := datasource.QueryPromQLMetric(fmt.Sprintf("{instance=\"%s:%s\"}", param.Ip, param.Port), clusterAddress, nowTime-120, nowTime)
+	metricList, queryErr := datasource.QueryPromQLMetric(queryPromQl, clusterAddress, nowTime-120, nowTime)
 	if queryErr != nil {
 		err = fmt.Errorf("Try to query remote cluster data fail,%s ", queryErr.Error())
 		return
