@@ -103,10 +103,10 @@ func GetPromMetric(endpoint []string, metric string) (error, string) {
 		tmpMetric = metric[:strings.Index(metric, "/")]
 		tmpTag = metric[strings.Index(metric, "/")+1:]
 	}
-	var query []*m.PromMetricTable
-	err := x.SQL("SELECT * FROM prom_metric WHERE metric=?", tmpMetric).Find(&query)
+	var query []*m.MetricTable
+	err := x.SQL("SELECT * FROM metric WHERE metric=?", tmpMetric).Find(&query)
 	if err != nil {
-		log.Logger.Error("Query prom_metric fail", log.Error(err))
+		log.Logger.Error("Query metric fail", log.Error(err))
 	}
 	if len(query) > 0 {
 		host := m.EndpointTable{Guid: endpoint[0]}
@@ -117,8 +117,8 @@ func GetPromMetric(endpoint []string, metric string) (error, string) {
 		}
 		var reg string
 		for _, v := range query {
-			if v.MetricType == host.ExportType {
-				reg = v.PromQl
+			if v.MonitorType == host.ExportType {
+				reg = v.PromExpr
 				break
 			}
 		}
