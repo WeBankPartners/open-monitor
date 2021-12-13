@@ -165,15 +165,12 @@ export default {
       })
     },
     dateToTimestamp (date) {
-      console.log('原始时间', '[' + date + ']')
       if (!date) return 0
       let timestamp = Date.parse(new Date(date))
-      console.log('时间戳', '[' + timestamp + ']')
       timestamp = timestamp / 1000;
       return timestamp
     },
     initPanals () {
-      console.log('原始参数', this.viewCondition)
       let tmp = []
       this.viewData.forEach((item) => {
         let params = {
