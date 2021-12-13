@@ -467,6 +467,13 @@ func UpdateDbMetricConfigByServiceGroup(serviceGroup string, endpointTypeMap map
 	return
 }
 
+func DeleteServiceWithChildConfig(serviceGroup string)  {
+	guidList,_ := fetchGlobalServiceGroupChildGuidList(serviceGroup)
+	for _,v := range guidList {
+		DeleteServiceConfig(v)
+	}
+}
+
 func DeleteServiceConfig(serviceGroup string) {
 	var logMetricTable []*models.LogMetricMonitorTable
 	x.SQL("select guid from log_metric_monitor where service_group=?", serviceGroup).Find(&logMetricTable)
