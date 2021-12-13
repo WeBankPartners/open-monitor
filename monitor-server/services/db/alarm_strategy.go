@@ -413,7 +413,7 @@ func GetAlarmObj(query *models.AlarmTable) (result models.AlarmTable, err error)
 	}
 	err = x.SQL(baseSql, queryParams...).Find(&alarmList)
 	if len(alarmList) > 0 {
-		result = *alarmList[0]
+		result = *alarmList[len(alarmList)-1]
 	}
 	return
 }
