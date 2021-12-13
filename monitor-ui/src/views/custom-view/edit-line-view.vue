@@ -235,6 +235,9 @@ export default {
       this.templateQuery.metricToColor = []
       if (!val) return 
       let tmp = JSON.parse(JSON.stringify(this.templateQuery))
+      if (tmp.endpoint_type !== '') {
+        tmp.app_object = tmp.endpoint
+      }
       tmp.aggregate = 'none'
       tmp.chartType = 'line'
       let params = {
@@ -398,7 +401,6 @@ export default {
       }
       const find = this.options.find(item => item.option_value === tmp.endpoint)
       tmp.endpointName = find.option_text
-      console.log(tmp)
       this.chartQueryList.push(tmp)
       this.templateQuery = {
         endpoint: '',
