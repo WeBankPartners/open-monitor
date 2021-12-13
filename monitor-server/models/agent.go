@@ -144,4 +144,7 @@ type QueryPrometheusMetricParam struct {
 	Cluster string   `json:"cluster"`
 	Prefix  []string `json:"prefix"`
 	Keyword []string `json:"keyword"`
+	ProcessGuid string `json:"process_guid"`
+	EndpointGuid string `json:"endpoint_guid"`
+	IsConfigQuery bool `json:"is_config_query"`
 }
