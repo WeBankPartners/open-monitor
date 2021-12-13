@@ -204,7 +204,7 @@ func CheckLogKeyword()  {
 		return
 	}
 	var alarmTable []*m.AlarmTable
-	err = x.SQL("SELECT * FROM alarm WHERE s_metric='log_monitor' ORDER BY id DESC").Find(&alarmTable)
+	err = x.SQL("SELECT * FROM alarm WHERE s_metric='log_monitor' and status='firing' ORDER BY id DESC").Find(&alarmTable)
 	if err != nil {
 		log.Logger.Error("Check log keyword,get alarm data fail", log.Error(err))
 		return
