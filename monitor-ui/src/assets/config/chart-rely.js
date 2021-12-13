@@ -40,12 +40,11 @@ export const readyToDraw = function(that, responseData, viewIndex, chartConfig, 
     }
     let color = ''
     const find = metricToColor.find(m => m.metric === item.name)
-    if (find) {
+    if (find.color !== '') {
       color = find.color
     } else {
       color = colorSet[index] ? colorSet[index] : '#666699'
     }
-    
     // 堆叠区域图开启
     // item.areaStyle = {}
 
