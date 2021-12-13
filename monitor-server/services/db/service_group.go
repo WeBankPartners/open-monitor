@@ -50,6 +50,15 @@ func fetchGlobalServiceGroupChildGuidList(rootKey string) (result []string, err 
 	return
 }
 
+func fetchGlobalServiceGroupParentGuidList(childKey string) (result []string, err error) {
+	if v, b := globalServiceGroupMap[childKey]; b {
+		result = v.FetchParentGuid()
+	} else {
+		err = fmt.Errorf("Can not find service group with guid:%s ", childKey)
+	}
+	return
+}
+
 func addGlobalServiceGroupNode(param models.ServiceGroupTable) {
 	displayGlobalServiceGroup()
 	if _, b := globalServiceGroupMap[param.Guid]; !b {
@@ -94,11 +103,11 @@ func deleteGlobalServiceGroupNode(guid string) {
 	displayGlobalServiceGroup()
 }
 
-func displayGlobalServiceGroup()  {
-	for k,v := range globalServiceGroupMap {
+func displayGlobalServiceGroup() {
+	for k, v := range globalServiceGroupMap {
 		if v.Parent != nil {
 			log.Logger.Info("globalServiceGroupMap", log.String("k", k), log.String("parent", v.Parent.Guid))
-		}else {
+		} else {
 			log.Logger.Info("globalServiceGroupMap", log.String("k", k))
 		}
 	}
@@ -111,12 +120,12 @@ func ListServiceGroupOptions(searchText string) (result []*models.OptionModel, e
 	}
 	searchText = "%" + searchText + "%"
 	var serviceGroupTable []*models.ServiceGroupTable
-	err = x.SQL("select guid,service_type from service_group where guid like ?", searchText).Find(&serviceGroupTable)
+	err = x.SQL("select * from service_group where guid like ?", searchText).Find(&serviceGroupTable)
 	if err != nil {
 		return
 	}
 	for _, v := range serviceGroupTable {
-		result = append(result, &models.OptionModel{OptionValue: v.Guid, OptionText: v.Guid, OptionType: v.ServiceType, OptionTypeName: v.ServiceType})
+		result = append(result, &models.OptionModel{OptionValue: v.Guid, OptionText: v.DisplayName, OptionType: v.ServiceType, OptionTypeName: v.ServiceType})
 	}
 	return
 }
@@ -167,6 +176,21 @@ func getUpdateServiceEndpointAction(serviceGroupGuid, nowTime string, endpoint [
 	if len(endpoint) == 0 {
 		return actions
 	}
+	for _, v := range endpoint {
+		if !strings.Contains(v, "_") {
+			continue
+		}
+		actions = append(actions, &Action{Sql: "insert into endpoint_service_rel(guid,endpoint,service_group) value (?,?,?)", Param: []interface{}{guid.CreateGuid(), v, serviceGroupGuid}})
+	}
+	guidList, _ := fetchGlobalServiceGroupParentGuidList(serviceGroupGuid)
+	for _, v := range guidList {
+		actions = append(actions, getCreateEndpointGroupByServiceAction(v, nowTime, endpoint)...)
+	}
+	return actions
+}
+
+func getCreateEndpointGroupByServiceAction(serviceGroupGuid, nowTime string, endpoint []string) (actions []*Action) {
+	actions = []*Action{}
 	var endpointGroup []*models.EndpointGroupTable
 	x.SQL("select guid,monitor_type from endpoint_group where service_group=?", serviceGroupGuid).Find(&endpointGroup)
 	tmpMonitorTypeMap := make(map[string]int)
@@ -178,7 +202,6 @@ func getUpdateServiceEndpointAction(serviceGroupGuid, nowTime string, endpoint [
 			continue
 		}
 		tmpMonitorType := v[strings.LastIndex(v, "_")+1:]
-		actions = append(actions, &Action{Sql: "insert into endpoint_service_rel(guid,endpoint,service_group) value (?,?,?)", Param: []interface{}{guid.CreateGuid(), v, serviceGroupGuid}})
 		if _, b := tmpMonitorTypeMap[tmpMonitorType]; !b {
 			endpointGroupGuid := fmt.Sprintf("service_%s_%s", serviceGroupGuid, tmpMonitorType)
 			actions = append(actions, &Action{Sql: "insert into endpoint_group(guid,display_name,monitor_type,service_group,update_time) value (?,?,?,?,?)", Param: []interface{}{endpointGroupGuid, endpointGroupGuid, tmpMonitorType, serviceGroupGuid, nowTime}})
@@ -263,17 +286,17 @@ func MatchServicePanel(endpointGuid string) (result models.PanelModel, err error
 
 func UpdateServiceConfigWithEndpoint(serviceGroup string) {
 	serviceGroupList := []string{serviceGroup}
-	fetchServiceGroupList,err := fetchGlobalServiceGroupChildGuidList(serviceGroup)
+	fetchServiceGroupList, err := fetchGlobalServiceGroupChildGuidList(serviceGroup)
 	if err == nil {
 		serviceGroupList = fetchServiceGroupList
 	}
 	var endpointServiceRel []*models.EndpointServiceRelTable
-	x.SQL("select * from endpoint_service_rel where service_group in ('"+strings.Join(serviceGroupList,"','")+"')").Find(&endpointServiceRel)
+	x.SQL("select * from endpoint_service_rel where service_group in ('" + strings.Join(serviceGroupList, "','") + "')").Find(&endpointServiceRel)
 	var endpointList []string
 	endpointExistMap := make(map[string]int)
 	endpointTypeMap := make(map[string][]string)
 	for _, v := range endpointServiceRel {
-		if _,b:=endpointExistMap[v.Endpoint];b {
+		if _, b := endpointExistMap[v.Endpoint]; b {
 			continue
 		}
 		endpointExistMap[v.Endpoint] = 1
@@ -324,11 +347,11 @@ func UpdateLogMetricConfigByServiceGroup(serviceGroup string, endpointTypeMap ma
 }
 
 func UpdateLogMetricConfigAction(logMonitor *models.LogMetricMonitorTable, endpointTypeMap map[string][]string, hostEndpoint []string, hostEndpointIpMap map[string]string) {
-	log.Logger.Info("UpdateLogMetricConfigAction", log.String("guid",logMonitor.Guid), log.String("monitorType",logMonitor.MonitorType),log.StringList("hostEndpoint",hostEndpoint))
-	for k,v := range endpointTypeMap {
-		log.Logger.Info("endpointTypeMap", log.String("k",k), log.StringList("v", v))
+	log.Logger.Info("UpdateLogMetricConfigAction", log.String("guid", logMonitor.Guid), log.String("monitorType", logMonitor.MonitorType), log.StringList("hostEndpoint", hostEndpoint))
+	for k, v := range endpointTypeMap {
+		log.Logger.Info("endpointTypeMap", log.String("k", k), log.StringList("v", v))
 	}
-	for k,v := range hostEndpointIpMap {
+	for k, v := range hostEndpointIpMap {
 		log.Logger.Info("hostEndpointIpMap", log.String("k", k), log.String("v", v))
 	}
 	var updateHostEndpointList []string
@@ -346,7 +369,7 @@ func UpdateLogMetricConfigAction(logMonitor *models.LogMetricMonitorTable, endpo
 	}
 	sourceTargetMap := make(map[string]string)
 	for _, vv := range logMetricRelTable {
-		log.Logger.Info("sourceTargetMap", log.String("source", vv.SourceEndpoint),log.String("target", vv.TargetEndpoint))
+		log.Logger.Info("sourceTargetMap", log.String("source", vv.SourceEndpoint), log.String("target", vv.TargetEndpoint))
 		sourceTargetMap[vv.SourceEndpoint] = vv.TargetEndpoint
 	}
 	for _, host := range hostEndpoint {
