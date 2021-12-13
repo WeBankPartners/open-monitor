@@ -88,7 +88,7 @@ func GetServiceGroupEndpointRel(serviceGroup, sourceType, targetType string) (re
 		return
 	}
 	var endpointTable []*models.EndpointNewTable
-	err = x.SQL("select guid,monitor_type,ip from endpoint_new where guid in (select endpoint from endpoint_service_rel where service_group in ('"+strings.Join(guidList,"','")+"'))").Find(&endpointTable)
+	err = x.SQL("select guid,monitor_type,ip from endpoint_new where guid in (select endpoint from endpoint_service_rel where service_group in ('" + strings.Join(guidList, "','") + "'))").Find(&endpointTable)
 	if err != nil {
 		return
 	}
@@ -380,7 +380,7 @@ func getCreateLogMetricConfigAction(param *models.LogMetricConfigObj, nowTime st
 	} else {
 		actions = append(actions, &Action{Sql: "insert into log_metric_config(guid,log_metric_monitor,metric,display_name,json_key,regular,agg_type,step,update_time) value (?,?,?,?,?,?,?,?,?)", Param: []interface{}{param.Guid, param.LogMetricMonitor, param.Metric, param.DisplayName, param.JsonKey, param.Regular, param.AggType, param.Step, nowTime}})
 	}
-	monitorType := getLogMetricMonitorType(param.LogMetricJson, param.LogMetricMonitor)
+	monitorType := getLogMetricMonitorType("", param.LogMetricMonitor)
 	actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,log_metric_monitor,update_time) value (?,?,?,?,?,?)", Param: []interface{}{fmt.Sprintf("%s__%s__%s", param.Metric, monitorType, param.LogMetricMonitor), param.Metric, monitorType, fmt.Sprintf("%s{key=\"%s\",agg=\"%s\",t_endpoint=\"$guid\"}", models.LogMetricName, param.Metric, param.AggType), param.LogMetricMonitor, nowTime}})
 	guidList := guid.CreateGuidList(len(param.StringMap))
 	for i, v := range param.StringMap {
