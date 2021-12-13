@@ -165,7 +165,7 @@ export default {
           'POST',this.$root.apiCenter.metricConfigView.api, params,
           responseData => {
             responseData.yaxis.unit =  this.panalUnit  
-            const chartConfig = {eye: false, lineBarSwitch: true, chartType: this.panalData.chartType}
+            const chartConfig = {eye: false, lineBarSwitch: true, chartType: this.panalData.chartType, params: params}
             readyToDraw(this,responseData, 1, chartConfig)
           }
         );
