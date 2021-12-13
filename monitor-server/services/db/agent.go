@@ -156,7 +156,7 @@ func DeleteEndpoint(guid string) error {
 			SyncPrometheusRuleFile(v.EndpointGroup, false)
 		}
 		for _,v := range serviceGroup {
-			UpdateServiceConfigWithEndpoint(v.ServiceGroup)
+			UpdateServiceConfigWithParent(v.ServiceGroup)
 		}
 	}
 	return nil
@@ -218,7 +218,7 @@ func UpdateRecursivePanel(param m.PanelRecursiveTable) error {
 				}
 			}
 			if err == nil {
-				UpdateServiceConfigWithEndpoint(param.Guid)
+				UpdateServiceConfigWithParent(param.Guid)
 			}
 		}
 	} else {
