@@ -231,7 +231,12 @@ func SyncPrometheusRuleFile(endpointGroup string, fromPeer bool) error {
 	}
 	ruleFileName := "g_" + endpointGroup
 	var endpointList []*models.EndpointNewTable
-	err = x.SQL("select * from endpoint_new where monitor_type=? and guid in (select endpoint from endpoint_group_rel where endpoint_group=? union select endpoint from endpoint_service_rel where service_group in (select service_group from endpoint_group where guid=?))", endpointGroupObj.MonitorType, endpointGroup, endpointGroup).Find(&endpointList)
+	if endpointGroupObj.ServiceGroup == "" {
+		err = x.SQL("select * from endpoint_new where monitor_type=? and guid in (select endpoint from endpoint_group_rel where endpoint_group=?)", endpointGroupObj.MonitorType, endpointGroup).Find(&endpointList)
+	}else{
+		serviceGroupGuidList,_ := fetchGlobalServiceGroupChildGuidList(endpointGroupObj.ServiceGroup)
+		err = x.SQL("select * from endpoint_new where monitor_type=? and guid in (select endpoint from endpoint_service_rel where service_group in ('"+strings.Join(serviceGroupGuidList,"','")+"'))", endpointGroupObj.MonitorType).Find(&endpointList)
+	}
 	if err != nil {
 		return err
 	}
