@@ -297,7 +297,7 @@ func UpdateOrgEndpoint(param m.UpdateOrgPanelEndpointParam) error {
 			}
 		}
 		if err == nil {
-			UpdateServiceConfigWithEndpoint(param.Guid)
+			UpdateServiceConfigWithParent(param.Guid)
 		}
 	}
 	return err

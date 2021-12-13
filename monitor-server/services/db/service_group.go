@@ -284,6 +284,13 @@ func MatchServicePanel(endpointGuid string) (result models.PanelModel, err error
 	return
 }
 
+func UpdateServiceConfigWithParent(serviceGroup string)  {
+	guidList,_ := fetchGlobalServiceGroupParentGuidList(serviceGroup)
+	for _,v := range guidList {
+		UpdateServiceConfigWithEndpoint(v)
+	}
+}
+
 func UpdateServiceConfigWithEndpoint(serviceGroup string) {
 	serviceGroupList := []string{serviceGroup}
 	fetchServiceGroupList, err := fetchGlobalServiceGroupChildGuidList(serviceGroup)
