@@ -732,7 +732,7 @@ export default {
     },
     filterMoreBtn(rowData) {
       // let moreBtnGroup = ['thresholdConfig', 'historyAlarm', 'maintenanceWindow', 'deleteConfirmModal']
-      let moreBtnGroup = ['historyAlarm', 'groupManagement', 'maintenanceWindow', 'deleteConfirmModal']
+      let moreBtnGroup = ['historyAlarm', 'maintenanceWindow', 'deleteConfirmModal']
       if (rowData.type === 'host') {
         // moreBtnGroup.push('processManagement', 'businessManagement', 'logManagement', 'portManagement')
         moreBtnGroup.push('portManagement')
