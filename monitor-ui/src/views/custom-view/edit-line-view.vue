@@ -97,6 +97,7 @@
                       filterable
                       clearable
                       :label-in-value="true"
+                      @on-change="changeMetric"
                       @on-open-change="metricSelectOpen(templateQuery.endpoint)"
                     >
                       <Option
@@ -107,16 +108,23 @@
                     </Select>
                   </div>
                 </li>
-                <!-- <li>
-                  <div class="condition condition-title">{{$t('field.title')}}</div>
+                <li v-if="templateQuery.metricToColor.length >0">
+                  <div class="condition condition-title" style="vertical-align: top;">{{$t('个性化配置')}}</div>
                   <div class="condition">
-                    <Input
-                      v-model="panalTitle"
-                      placeholder=""
-                      style="width: 300px"
-                    />
+                    <template v-for="mc in templateQuery.metricToColor">
+                      <div :key="mc.metric">
+                        <Tooltip :content="mc.metric" max-width="300">
+                          <Tag>{{mc.metric.length > 50 ? mc.metric.substring(0,50) + '...' : mc.metric}}</Tag>
+                          <div slot="content" style="white-space: normal;">
+                            <p>{{mc.metric}}</p>
+                          </div>
+                        </Tooltip>
+                        <ColorPicker v-model="mc.color" />
+                        {{mc.color}}
+                      </div>
+                    </template>
                   </div>
-                </li> -->
+                </li>
                 <li>
                   <div class="condition condition-title">{{$t('field.unit')}}</div>
                   <div class="condition">
@@ -153,7 +161,8 @@ export default {
         chartType: '',
         aggregate: '',
         endpoint_type: '',
-        app_object: ''
+        app_object: '',
+        metricToColor: []
       },
       chartTypeOption: [
         {label: '线性图', value: 'line'},
@@ -201,7 +210,7 @@ export default {
           'POST',this.$root.apiCenter.metricConfigView.api, params,
           responseData => {
             responseData.yaxis.unit = this.panalUnit
-            readyToDraw(this,responseData, 1, { eye: false, chartType: this.templateQuery.chartType, clear: true})
+            readyToDraw(this,responseData, 1, { eye: false, chartType: this.templateQuery.chartType, clear: true, params: params })
           }
         )
       },
@@ -222,6 +231,33 @@ export default {
   mounted() {
   },
   methods: {
+    changeMetric (val) {
+      this.templateQuery.metricToColor = []
+      if (!val) return 
+      let tmp = JSON.parse(JSON.stringify(this.templateQuery))
+      tmp.aggregate = 'none'
+      tmp.chartType = 'line'
+      let params = {
+        aggregate: 'none',
+        time_second: -1800,
+        start: 0,
+        end: 0,
+        title: '',
+        unit: '',
+        data: [tmp]
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance(
+        'POST',this.$root.apiCenter.metricConfigView.api, params,
+        responseData => {
+          this.templateQuery.metricToColor = responseData.legend.map(r => {
+            return {
+              metric: r,
+              color: ''
+            }
+          })
+        }
+      )
+    },
     selectEndpoint (val) {
       this.showRecursiveType = false
       this.templateQuery.endpoint_type = ''
@@ -367,10 +403,11 @@ export default {
       this.templateQuery = {
         endpoint: '',
         metric: '',
-        chartType: this.templateQuery.chartType,
-        aggregate: this.templateQuery.aggregate,
+        chartType: tmp.chartType,
+        aggregate: tmp.aggregate,
         endpoint_type: '',
-        app_object: ''
+        app_object: '',
+        metricToColor: []
       }
       this.options = []
       this.metricList = []

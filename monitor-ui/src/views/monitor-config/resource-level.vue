@@ -88,7 +88,6 @@ export default {
       let params = {
         search: query
       }
-      console.log(params)
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v1/dashboard/search', params, (responseData) => {
         this.allObject = []
         responseData.forEach((item) => {
