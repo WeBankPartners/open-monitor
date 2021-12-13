@@ -737,9 +737,9 @@ export default {
         // moreBtnGroup.push('processManagement', 'businessManagement', 'logManagement', 'portManagement')
         moreBtnGroup.push('portManagement')
       }
-      if (rowData.type === 'mysql') {
-        moreBtnGroup.push('dataMonitor')
-      }
+      // if (rowData.type === 'mysql') {
+      //   moreBtnGroup.push('dataMonitor')
+      // }
       // if (this.showGroupMsg) {
       //   moreBtnGroup.push('deleteConfirm')
       // }
