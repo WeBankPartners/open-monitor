@@ -138,10 +138,26 @@ func DeleteEndpoint(guid string) error {
 		ids = ids[:len(ids)-1]
 		actions = append(actions, &Action{Sql: fmt.Sprintf("UPDATE alarm SET STATUS='closed' WHERE id IN (%s)", ids), Param: []interface{}{}})
 	}
+	var endpointGroup []*m.EndpointGroupRelTable
+	x.SQL("select * from endpoint_group_rel where endpoint=?", guid).Find(&endpointGroup)
+	var serviceGroup []*m.EndpointServiceRelTable
+	x.SQL("select * from endpoint_service_rel where endpoint=?", guid).Find(&serviceGroup)
+	actions = append(actions, &Action{Sql: "delete from endpoint_group_rel where endpoint=?",Param: []interface{}{guid}})
+	actions = append(actions, &Action{Sql: "delete from endpoint_service_rel where endpoint=?",Param: []interface{}{guid}})
+	actions = append(actions, &Action{Sql: "delete from from log_metric_endpoint_rel where source_endpoint=? or target_endpoint=?",Param: []interface{}{guid,guid}})
+	actions = append(actions, &Action{Sql: "delete from db_metric_endpoint_rel where source_endpoint=? or target_endpoint=?",Param: []interface{}{guid,guid}})
+	actions = append(actions, &Action{Sql: "delete from endpoint_new where guid=?",Param: []interface{}{guid}})
 	err := Transaction(actions)
 	if err != nil {
 		log.Logger.Error("Delete endpoint fail", log.Error(err))
 		return err
+	}else{
+		for _,v := range endpointGroup {
+			SyncPrometheusRuleFile(v.EndpointGroup, false)
+		}
+		for _,v := range serviceGroup {
+			UpdateServiceConfigWithEndpoint(v.ServiceGroup)
+		}
 	}
 	return nil
 }
