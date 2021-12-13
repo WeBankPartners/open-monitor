@@ -270,8 +270,8 @@ func DeleteRecursivePanel(guid string) (err error) {
 	actions = append(actions, getDeleteServiceGroupAction(guid)...)
 	err = Transaction(actions)
 	if err == nil {
-		deleteGlobalServiceGroupNode(guid)
 		DeleteServiceWithChildConfig(guid)
+		deleteGlobalServiceGroupNode(guid)
 	}
 	return err
 }
