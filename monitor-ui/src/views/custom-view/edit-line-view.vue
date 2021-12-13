@@ -206,7 +206,6 @@ export default {
         data.forEach(item => {
           params.data.push(item)
         })
-        console.log(params)
         this.$root.$httpRequestEntrance.httpRequestEntrance(
           'POST',this.$root.apiCenter.metricConfigView.api, params,
           responseData => {
