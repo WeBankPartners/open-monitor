@@ -12,12 +12,15 @@ require('echarts/lib/component/legendScroll');
 const echarts = require('echarts/lib/echarts');
 
 export const readyToDraw = function(that, responseData, viewIndex, chartConfig, elId) {
+  console.log(chartConfig, 1212)
   var legend = []
+  console.log(responseData.series)
   if (responseData.series.length === 0) {
     that.chartTitle = responseData.title
     that.noDataTip = true
     return
   }
+  console.log(responseData.series.length)
   const colorX = ['#33CCCC','#666699','#66CC66','#996633','#9999CC','#339933','#339966','#663333','#6666CC','#336699','#3399CC','#33CC66','#CC3333','#CC6666','#996699','#CC9933']
   let colorSet = []
   for (let i=0;i<colorX.length;i++) {
@@ -25,7 +28,9 @@ export const readyToDraw = function(that, responseData, viewIndex, chartConfig, 
     tmpIndex = tmpIndex%colorX.length
     colorSet.push(colorX[tmpIndex])
   }
+  console.log(responseData.series.length)
   responseData.series.forEach((item, index)=>{
+    console.log(item)
     legend.push(item.name)
     item.symbol = 'none'
     item.smooth = false
