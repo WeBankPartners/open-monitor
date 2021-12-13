@@ -555,4 +555,13 @@ delete from panel where title='DataMonitor';
 delete from prom_metric where metric='process_alive_count';
 delete from alarm_strategy where metric like '%process_alive_count%';
 insert into alarm_strategy(guid,endpoint_group,metric,`condition`,last,priority,content,notify_enable) value ('old_25','default_process_group','process_alive_count__process','==0','60s','high','process down',1);
-#@v1.13.0.18-begin@;
+#@v1.13.0.18-end@;
+
+#@v1.13.0.21-begin@;
+update prom_metric set prom_ql='node_process_monitor_count_current{process_guid="$guid"}' where metric_type='process' and metric='process_alive_count';
+update prom_metric set prom_ql='node_process_monitor_cpu{process_guid="$guid"}' where metric_type='process' and metric='process_cpu_used_percent';
+update prom_metric set prom_ql='node_process_monitor_mem{process_guid="$guid"}' where metric_type='process' and metric='process_mem_byte';
+update metric set prom_expr='node_process_monitor_count_current{process_guid="$guid"}' where monitor_type='process' and metric='process_alive_count';
+update metric set prom_expr='node_process_monitor_cpu{process_guid="$guid"}' where monitor_type='process' and metric='process_cpu_used_percent';
+update metric set prom_expr='node_process_monitor_mem{process_guid="$guid"}' where monitor_type='process' and metric='process_mem_byte';
+#@v1.13.0.21-end@;
