@@ -43,7 +43,7 @@
                 :name="queryIndex"
                 closable
                 @on-close="removeQuery(queryIndex)"
-              >{{$t('field.endpoint')}}：{{query.endpoint}}; {{$t('field.metric')}}：{{query.metric}}</Tag>
+              >{{$t('field.endpoint')}}：{{query.endpointName || query.endpoint}}; {{$t('field.metric')}}：{{query.metric}}</Tag>
             </div>
             <div class="condition-zone">
               <ul>
@@ -360,6 +360,9 @@ export default {
       if (tmp.endpoint_type !== '') {
         tmp.app_object = tmp.endpoint
       }
+      const find = this.options.find(item => item.option_value === tmp.endpoint)
+      tmp.endpointName = find.option_text
+      console.log(tmp)
       this.chartQueryList.push(tmp)
       this.templateQuery = {
         endpoint: '',
