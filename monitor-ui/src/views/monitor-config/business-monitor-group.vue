@@ -37,7 +37,7 @@
             <Option v-for="type in monitorTypeOptions" :key="type.value" :value="type.label">{{type.label}}</Option>
           </Select>
         </div>
-        <div v-if="addAndEditModal.isAdd" style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
+        <div v-if="addAndEditModal.isAdd" style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;width:680px">
           <template v-for="(item, index) in addAndEditModal.pathOptions">
             <p :key="index + 5">
               <Button
@@ -49,7 +49,7 @@
                 icon="md-close"
               ></Button>
               <Tooltip :content="$t('tableKey.logPath')" :delay="1000">
-                <Input v-model="item.path" style="width: 632px" :placeholder="$t('tableKey.logPath')" />
+                <Input v-model="item.path" style="width: 620px" :placeholder="$t('tableKey.logPath')" />
               </Tooltip>
             </p>
           </template>
@@ -57,7 +57,7 @@
             @click="addEmptyItem('path')"
             type="success"
             size="small"
-            style="background-color: #0080FF;border-color: #0080FF;"
+            style="background-color: #0080FF;border-color: #0080FF;width:650px"
             long
             >{{ $t('button.add') }}{{$t('tableKey.logPath')}}</Button
           >
