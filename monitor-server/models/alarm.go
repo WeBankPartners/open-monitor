@@ -59,6 +59,9 @@ type AlarmTable struct {
 	Start         time.Time `json:"start"`
 	EndValue      float64   `json:"end_value"`
 	End           time.Time `json:"end"`
+	CloseType     string    `json:"close_type"`
+	CloseMsg      string    `json:"close_msg"`
+	CloseUser     string    `json:"close_user"`
 	CustomMessage string    `json:"custom_message"`
 	EndpointTags  string    `json:"endpoint_tags"`
 	AlarmStrategy string    `json:"alarm_strategy"`
@@ -92,6 +95,9 @@ type AlarmProblemQuery struct {
 	Path          string    `json:"path"`
 	Keyword       string    `json:"keyword"`
 	IsCustom      bool      `json:"is_custom"`
+	CloseType     string    `json:"close_type"`
+	CloseMsg      string    `json:"close_msg"`
+	CloseUser     string    `json:"close_user"`
 	CustomMessage string    `json:"custom_message"`
 	EndpointTags  string    `json:"endpoint_tags"`
 	AlarmStrategy string    `json:"alarm_strategy"`
