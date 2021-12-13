@@ -19,9 +19,11 @@ export const readyToDraw = function(that, responseData, viewIndex, chartConfig, 
     return
   }
   let metricToColor = []
-  chartConfig.params.data.forEach(item => {
-    metricToColor = metricToColor.concat(item.metricToColor)
-  })
+  if (chartConfig.params) {
+    chartConfig.params.data.forEach(item => {
+      metricToColor = metricToColor.concat(item.metricToColor)
+    })
+  }
   const colorX = ['#33CCCC','#666699','#66CC66','#996633','#9999CC','#339933','#339966','#663333','#6666CC','#336699','#3399CC','#33CC66','#CC3333','#CC6666','#996699','#CC9933']
   let colorSet = []
   for (let i=0;i<colorX.length;i++) {
@@ -30,7 +32,6 @@ export const readyToDraw = function(that, responseData, viewIndex, chartConfig, 
     colorSet.push(colorX[tmpIndex])
   }
   responseData.series.forEach((item, index)=>{
-    console.log(item, index)
     legend.push(item.name)
     item.symbol = 'none'
     item.smooth = false
@@ -41,14 +42,17 @@ export const readyToDraw = function(that, responseData, viewIndex, chartConfig, 
     const find = metricToColor.find(m => m.metric === item.name)
     if (find) {
       color = find.color
+    } else {
+      color = colorSet[index] ? colorSet[index] : '#666699'
     }
+    
     // 堆叠区域图开启
     // item.areaStyle = {}
 
     // 渐变图像开启
     item.itemStyle = {
       normal:{
-        color: color !== '' 
+        color: color
         // color: colorSet[index] ? colorSet[index] : '#666699'
       }
     }
@@ -56,7 +60,7 @@ export const readyToDraw = function(that, responseData, viewIndex, chartConfig, 
       normal: {
         color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
             offset: 0,
-            color: 'red'
+            color: color
             // color: colorSet[index] ? colorSet[index] : '#666699' 
         }, {
             offset: 1,
