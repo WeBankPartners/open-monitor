@@ -545,7 +545,7 @@ insert into sys_parameter(guid,param_key,param_value) value ('metric_template_04
 insert into sys_parameter(guid,param_key,param_value) value ('metric_template_05','metric_template','{"name":"percent04","prom_ql":"100*((sum($a)-sum($b))/(sum($a) > 0) or vector(0))","param":"$a,$b"}');
 #@v1.13.0.6-end@;
 
-#@v1.13.0.8-begin@;
+#@v1.13.0.18-begin@;
 alter table service_group drop foreign key service_group_parent;
 alter table log_metric_monitor drop foreign key log_monitor_service_group;
 alter table db_metric_monitor drop foreign key db_monitor_service_group;
@@ -553,6 +553,6 @@ alter table metric add column log_metric_monitor varchar(64);
 alter table metric add column db_metric_monitor varchar(64);
 delete from panel where title='DataMonitor';
 delete from prom_metric where metric='process_alive_count';
-delete from agent_strategy where metric like '%process_alive_count%';
-insert into agent_strategy(guid,endpoint_group,metric,`condition`,last,priority,content,notify_enable) value ('old_10','default_process_group','process_alive_count__process','==0','60s','high','process down',1);
-#@v1.13.0.8-begin@;
+delete from alarm_strategy where metric like '%process_alive_count%';
+insert into alarm_strategy(guid,endpoint_group,metric,`condition`,last,priority,content,notify_enable) value ('old_25','default_process_group','process_alive_count__process','==0','60s','high','process down',1);
+#@v1.13.0.18-begin@;
