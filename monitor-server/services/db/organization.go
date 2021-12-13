@@ -172,7 +172,7 @@ func UpdateOrganization(operation string, param m.UpdateOrgPanelParam) (err erro
 		err = Transaction(actions)
 		if err == nil {
 			deleteGlobalServiceGroupNode(param.Guid)
-			DeleteServiceConfig(param.Guid)
+			DeleteServiceWithChildConfig(param.Guid)
 		}
 	}
 	return err
