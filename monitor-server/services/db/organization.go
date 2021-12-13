@@ -171,8 +171,8 @@ func UpdateOrganization(operation string, param m.UpdateOrgPanelParam) (err erro
 		actions = append(actions, &Action{Sql: fmt.Sprintf("DELETE FROM service_group WHERE guid in ('%s')", strings.Join(guidList, "','"))})
 		err = Transaction(actions)
 		if err == nil {
-			deleteGlobalServiceGroupNode(param.Guid)
 			DeleteServiceWithChildConfig(param.Guid)
+			deleteGlobalServiceGroupNode(param.Guid)
 		}
 	}
 	return err
