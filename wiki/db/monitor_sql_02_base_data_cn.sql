@@ -564,4 +564,5 @@ update prom_metric set prom_ql='node_process_monitor_mem{process_guid="$guid"}' 
 update metric set prom_expr='node_process_monitor_count_current{process_guid="$guid"}' where monitor_type='process' and metric='process_alive_count';
 update metric set prom_expr='node_process_monitor_cpu{process_guid="$guid"}' where monitor_type='process' and metric='process_cpu_used_percent';
 update metric set prom_expr='node_process_monitor_mem{process_guid="$guid"}' where monitor_type='process' and metric='process_mem_byte';
+delete from strategy where id<=24;
 #@v1.13.0.21-end@;
