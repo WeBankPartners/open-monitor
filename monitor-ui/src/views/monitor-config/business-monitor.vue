@@ -61,8 +61,8 @@ export default {
     return {
       type: 'group',
       typeList: [
-        {label: this.$t('tableKey.endpoint'), value: 'endpoint'},
-        {label: this.$t('field.resourceLevel'), value: 'group'}
+        {label: this.$t('field.resourceLevel'), value: 'group'},
+        {label: this.$t('tableKey.endpoint'), value: 'endpoint'}
       ],
       targrtId: '',
       targetOptions: [],
