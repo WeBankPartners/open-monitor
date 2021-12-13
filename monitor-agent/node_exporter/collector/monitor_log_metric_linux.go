@@ -255,6 +255,7 @@ func (c *logMetricMonitorNeObj) update(input *logMetricMonitorNeObj) {
 		newMetricConfigList = append(newMetricConfigList, metricObj)
 	}
 	c.MetricConfig = newMetricConfigList
+	c.TargetEndpoint = input.TargetEndpoint
 	c.Lock.Unlock()
 }
 
