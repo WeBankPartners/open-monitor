@@ -416,7 +416,7 @@ func recursiveData(guid string, prt []*m.PanelRecursiveTable, length, depth int)
 				for mk, mv := range tmpMap {
 					chartTables := getChartsByEndpointType(mk)
 					for _, cv := range chartTables {
-						obj.Charts = append(obj.Charts, &m.ChartModel{Id: cv.Id, Endpoint: mv, Metric: strings.Split(cv.Metric, "^"), Aggregate: cv.AggType})
+						obj.Charts = append(obj.Charts, &m.ChartModel{Id: cv.Id, Endpoint: mv, Metric: strings.Split(cv.Metric, "^"), Aggregate: cv.AggType,MonitorType: mk})
 					}
 					for _, extendChart := range getExtendPanelCharts(mv, mk, v.Guid) {
 						obj.Charts = append(obj.Charts, extendChart)
