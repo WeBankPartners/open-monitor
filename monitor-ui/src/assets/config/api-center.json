@@ -119,7 +119,7 @@
     },
     "metricList": {
         "_des": "指标列表",
-        "api": "/monitor/api/v1/dashboard/config/metric/list"
+        "api": "/monitor/api/v2/monitor/metric/list"
     },
     "originMetricList": {
         "_des": "原始指标列表",
