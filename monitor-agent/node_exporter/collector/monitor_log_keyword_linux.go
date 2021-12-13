@@ -239,6 +239,43 @@ func (c *logCollectorStore) Load() {
 
 var LogCollectorStore logCollectorStore
 
+type logKeywordHttpResponse struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
+}
+
+func LogKeywordHttpHandle(w http.ResponseWriter, r *http.Request)  {
+	var err error
+	defer func(returnErr error) {
+		logMetricHttpLock.Unlock()
+		responseObj := logKeywordHttpResponse{Status: "OK", Message: "success"}
+		if returnErr != nil {
+			returnErr = fmt.Errorf("Handel log keyword monitor http request fail,%s ", returnErr.Error())
+			responseObj = logKeywordHttpResponse{Status: "ERROR", Message: returnErr.Error()}
+			level.Error(monitorLogger).Log("error", returnErr.Error())
+		}
+		b, _ := json.Marshal(responseObj)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write(b)
+	}(err)
+	var requestParamBuff []byte
+	requestParamBuff, err = ioutil.ReadAll(r.Body)
+	if err != nil {
+		return
+	}
+	err = logKeywordHttpAction(requestParamBuff)
+}
+
+func logKeywordHttpAction(requestParamBuff []byte) error {
+	var param []*logHttpDto
+	err := json.Unmarshal(requestParamBuff, &param)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func LogMonitorHttpHandle(w http.ResponseWriter, r *http.Request) {
 	buff, err := ioutil.ReadAll(r.Body)
 	var errorMsg string
