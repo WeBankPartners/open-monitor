@@ -7,33 +7,33 @@ import (
 	"time"
 )
 
-func MetricList(id int, endpointType string) (result []*models.PromMetricTable, err error) {
+func MetricList(id string, endpointType string) (result []*models.PromMetricTable, err error) {
 	params := []interface{}{}
-	baseSql := "select * from prom_metric where 1=1 "
-	if id > 0 {
-		baseSql += " and id=? "
+	baseSql := "select guid as id,metric,monitor_type as metric_type,prom_expr as prom_ql from metric where 1=1 "
+	if id != "" {
+		baseSql += " and guid=? "
 		params = append(params, id)
 	}
 	if endpointType != "" {
-		baseSql += " and metric_type=? "
+		baseSql += " and monitor_type=? "
 		params = append(params, endpointType)
 	}
 	result = []*models.PromMetricTable{}
 	err = x.SQL(baseSql, params...).Find(&result)
-	if err != nil {
-		return
-	}
+	//if err != nil {
+	//	return
+	//}
 	// append service metric
-	var logMetricTable []*models.LogMetricConfigTable
-	x.SQL("select guid,metric,display_name,agg_type from log_metric_config where log_metric_monitor in (select guid from log_metric_monitor where monitor_type=?) or log_metric_json in (select guid from log_metric_json where log_metric_monitor in (select guid from log_metric_monitor where monitor_type=?))", endpointType, endpointType).Find(&logMetricTable)
-	for _, v := range logMetricTable {
-		result = append(result, &models.PromMetricTable{Id: 0, MetricType: endpointType, Metric: v.Metric, PromQl: fmt.Sprintf("%s{key=\"%s\",agg=\"%s\",t_endpoint=\"$guid\"}", models.LogMetricName, v.Metric, v.AggType)})
-	}
-	var dbMetricTable []*models.DbMetricMonitorTable
-	x.SQL("select guid,metric,display_name from db_metric_monitor where monitor_type=?", endpointType).Find(&dbMetricTable)
-	for _, v := range dbMetricTable {
-		result = append(result, &models.PromMetricTable{Id: 0, MetricType: endpointType, Metric: v.Metric, PromQl: fmt.Sprintf("%s{key=\"%s\",t_endpoint=\"$guid\"}", models.DBMonitorMetricName, v.Metric)})
-	}
+	//var logMetricTable []*models.LogMetricConfigTable
+	//x.SQL("select guid,metric,display_name,agg_type from log_metric_config where log_metric_monitor in (select guid from log_metric_monitor where monitor_type=?) or log_metric_json in (select guid from log_metric_json where log_metric_monitor in (select guid from log_metric_monitor where monitor_type=?))", endpointType, endpointType).Find(&logMetricTable)
+	//for _, v := range logMetricTable {
+	//	result = append(result, &models.PromMetricTable{Id: 0, MetricType: endpointType, Metric: v.Metric, PromQl: fmt.Sprintf("%s{key=\"%s\",agg=\"%s\",t_endpoint=\"$guid\"}", models.LogMetricName, v.Metric, v.AggType)})
+	//}
+	//var dbMetricTable []*models.DbMetricMonitorTable
+	//x.SQL("select guid,metric,display_name from db_metric_monitor where monitor_type=?", endpointType).Find(&dbMetricTable)
+	//for _, v := range dbMetricTable {
+	//	result = append(result, &models.PromMetricTable{Id: 0, MetricType: endpointType, Metric: v.Metric, PromQl: fmt.Sprintf("%s{key=\"%s\",t_endpoint=\"$guid\"}", models.DBMonitorMetricName, v.Metric)})
+	//}
 	return
 }
 
@@ -41,7 +41,7 @@ func MetricCreate(param []*models.PromMetricTable) error {
 	var actions []*Action
 	nowTime := time.Now().Format(models.DatetimeFormat)
 	for _, metric := range param {
-		actions = append(actions, &Action{Sql: "insert into prom_metric(metric,metric_type,prom_ql) value (?,?,?)", Param: []interface{}{metric.Metric, metric.MetricType, metric.PromQl}})
+		//actions = append(actions, &Action{Sql: "insert into prom_metric(metric,metric_type,prom_ql) value (?,?,?)", Param: []interface{}{metric.Metric, metric.MetricType, metric.PromQl}})
 		actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,update_time) value (?,?,?,?,?)", Param: []interface{}{fmt.Sprintf("%s__%s", metric.Metric, metric.MetricType), metric.Metric, metric.MetricType, metric.PromQl, nowTime}})
 	}
 	return Transaction(actions)
@@ -51,14 +51,7 @@ func MetricUpdate(param []*models.PromMetricTable) error {
 	var actions []*Action
 	nowTime := time.Now().Format(models.DatetimeFormat)
 	for _, metric := range param {
-		tmpPromMetric := []*models.PromMetricTable{}
-		x.SQL("select * from prom_metric where id=?", metric.Id).Find(&tmpPromMetric)
-		if len(tmpPromMetric) == 0 {
-			continue
-		}
-		actions = append(actions, &Action{Sql: "update prom_metric set metric=?,prom_ql=? where id=?", Param: []interface{}{metric.Metric, metric.PromQl, metric.Id}})
-		newMetricObj := models.MetricTable{Guid: fmt.Sprintf("%s__%s", metric.Metric, metric.MetricType), Metric: metric.Metric, MonitorType: metric.MetricType, PromExpr: metric.PromQl, UpdateTime: nowTime}
-		actions = append(actions, getMetricUpdateAction(fmt.Sprintf("%s__%s", tmpPromMetric[0].Metric, tmpPromMetric[0].MetricType), &newMetricObj)...)
+		actions = append(actions, &Action{Sql: "update metric set prom_expr=?,update_time=? where guid=?", Param: []interface{}{metric.PromQl, nowTime, metric.Id}})
 	}
 	return Transaction(actions)
 }
@@ -74,7 +67,7 @@ func getMetricUpdateAction(oldGuid string, newMetricObj *models.MetricTable) (ac
 	return actions
 }
 
-func MetricDelete(id int) error {
+func MetricDelete(id string) error {
 	metricQuery, err := MetricList(id, "")
 	if err != nil {
 		return fmt.Errorf("Try to query prom metric table fail,%s ", err.Error())
@@ -84,8 +77,8 @@ func MetricDelete(id int) error {
 	}
 	metric := metricQuery[0].Metric
 	var actions []*Action
-	actions = append(actions, &Action{Sql: "delete from prom_metric where id=?", Param: []interface{}{id}})
-	actions = append(actions, &Action{Sql: "delete from metric where guid=?", Param: []interface{}{fmt.Sprintf("%s__%s", metricQuery[0].Metric, metricQuery[0].MetricType)}})
+	//actions = append(actions, &Action{Sql: "delete from prom_metric where id=?", Param: []interface{}{id}})
+	actions = append(actions, &Action{Sql: "delete from metric where guid=?", Param: []interface{}{id}})
 	var charts []*models.ChartTable
 	err = x.SQL("select id,metric from chart where metric like ? and group_id in (select chart_group from panel where group_id in (select panels_group from dashboard where dashboard_type=?))", "%"+metric+"%", metricQuery[0].MetricType).Find(&charts)
 	if err != nil {
