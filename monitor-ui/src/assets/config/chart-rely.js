@@ -12,15 +12,16 @@ require('echarts/lib/component/legendScroll');
 const echarts = require('echarts/lib/echarts');
 
 export const readyToDraw = function(that, responseData, viewIndex, chartConfig, elId) {
-  console.log(chartConfig, 1212)
   var legend = []
-  console.log(responseData.series)
   if (responseData.series.length === 0) {
     that.chartTitle = responseData.title
     that.noDataTip = true
     return
   }
-  console.log(responseData.series.length)
+  let metricToColor = []
+  chartConfig.params.data.forEach(item => {
+    metricToColor = metricToColor.concat(item.metricToColor)
+  })
   const colorX = ['#33CCCC','#666699','#66CC66','#996633','#9999CC','#339933','#339966','#663333','#6666CC','#336699','#3399CC','#33CC66','#CC3333','#CC6666','#996699','#CC9933']
   let colorSet = []
   for (let i=0;i<colorX.length;i++) {
@@ -28,14 +29,18 @@ export const readyToDraw = function(that, responseData, viewIndex, chartConfig, 
     tmpIndex = tmpIndex%colorX.length
     colorSet.push(colorX[tmpIndex])
   }
-  console.log(responseData.series.length)
   responseData.series.forEach((item, index)=>{
-    console.log(item)
+    console.log(item, index)
     legend.push(item.name)
     item.symbol = 'none'
     item.smooth = false
     item.lineStyle = {
       width: 1
+    }
+    let color = ''
+    const find = metricToColor.find(m => m.metric === item.name)
+    if (find) {
+      color = find.color
     }
     // 堆叠区域图开启
     // item.areaStyle = {}
@@ -43,14 +48,16 @@ export const readyToDraw = function(that, responseData, viewIndex, chartConfig, 
     // 渐变图像开启
     item.itemStyle = {
       normal:{
-        color: colorSet[index] ? colorSet[index] : '#666699' 
+        color: color !== '' 
+        // color: colorSet[index] ? colorSet[index] : '#666699'
       }
     }
     item.areaStyle = {
       normal: {
         color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
             offset: 0,
-            color: colorSet[index] ? colorSet[index] : '#666699' 
+            color: 'red'
+            // color: colorSet[index] ? colorSet[index] : '#666699' 
         }, {
             offset: 1,
             color: 'white'
