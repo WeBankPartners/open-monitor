@@ -75,6 +75,7 @@ type ChartModel struct {
 	Metric    []string `json:"metric"`
 	Url       string   `json:"url"`
 	Aggregate string   `json:"aggregate"`
+	MonitorType string `json:"monitor_type"`
 }
 
 type PanelModel struct {
