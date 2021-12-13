@@ -113,17 +113,17 @@ func MetricListNew(guid, monitorType, serviceGroup string) (result []*models.Met
 	if guid != "" {
 		baseSql += " and guid=? "
 		params = append(params, guid)
-	}
-	if monitorType != "" {
-		baseSql += " and monitor_type=? "
-		params = append(params, monitorType)
-	}
-	if serviceGroup != "" {
-		if monitorType == "" {
-			return result, fmt.Errorf("serviceGroup is disable when monitorType is null ")
+	}else {
+		if serviceGroup != "" {
+			if monitorType == "" {
+				return result, fmt.Errorf("serviceGroup is disable when monitorType is null ")
+			}
+			baseSql = "select * from metric where monitor_type=? and log_metric_monitor is null and db_metric_monitor is null union select * from metric where monitor_type=? and (log_metric_monitor in (select guid from log_metric_monitor where service_group=?) or db_metric_monitor in (select guid from db_metric_monitor where service_group=?))"
+			params = []interface{}{monitorType, monitorType, serviceGroup, serviceGroup}
+		} else {
+			baseSql = "select * from metric where monitor_type=? and log_metric_monitor is null and db_metric_monitor is null"
+			params = []interface{}{monitorType}
 		}
-		baseSql = "select * from metric where monitor_type=? and log_metric_monitor is null and db_metric_monitor is null union select * from metric where monitor_type=? and (log_metric_monitor in (select guid from log_metric_monitor where service_group=?) or db_metric_monitor in (select guid from db_metric_monitor where service_group=?))"
-		params = []interface{}{monitorType, monitorType, serviceGroup, serviceGroup}
 	}
 	result = []*models.MetricTable{}
 	err = x.SQL(baseSql, params...).Find(&result)
