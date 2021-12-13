@@ -67,9 +67,9 @@ func handleAcceptConfig(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(respMessage))
 		return
 	}
-	taskLock.Lock()
+	//taskLock.Lock()
 	taskList = param
-	taskLock.Unlock()
+	//taskLock.Unlock()
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("success"))
 }
