@@ -556,7 +556,11 @@ func GetEndpointMetric(id int) (err error, result []*m.OptionModel) {
 			log.Logger.Warn("endpoint address illegal ", log.String("endpoint", endpointObj.Guid))
 			return nil, result
 		}
-		err, strList = QueryExporterMetric(m.QueryPrometheusMetricParam{Ip: ip, Port: port, Cluster: endpointObj.Cluster, Prefix: []string{}, Keyword: []string{}})
+		metricQueryParam := m.QueryPrometheusMetricParam{Ip: ip, Port: port, Cluster: endpointObj.Cluster, Prefix: []string{}, Keyword: []string{}, EndpointGuid: endpointObj.Guid, IsConfigQuery: true}
+		if endpointObj.ExportType == "process" {
+			metricQueryParam.ProcessGuid = endpointObj.Guid
+		}
+		err, strList = QueryExporterMetric(metricQueryParam)
 	}
 	if err != nil {
 		return err, result
