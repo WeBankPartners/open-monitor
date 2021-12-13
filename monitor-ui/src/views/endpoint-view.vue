@@ -117,8 +117,6 @@ export default {
     refreshConfig () {
       if (this.$refs.search) {
         this.$refs.search.getChartsConfig() 
-      } else {
-        console.log(123)
       } 
     },
     manageCharts (chartsConfig, params) {
