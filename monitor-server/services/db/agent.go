@@ -322,6 +322,15 @@ func GetRecursiveEndpointByType(guid, endpointType string) (result []*m.Endpoint
 	return
 }
 
+func GetRecursiveEndpointByTypeNew(guid, endpointType string) (result []*m.EndpointTable, err error) {
+	guidList, tmpErr := fetchGlobalServiceGroupChildGuidList(guid)
+	if tmpErr != nil {
+		return result, tmpErr
+	}
+	err = x.SQL("select guid from endpoint_new where monitor_type=? and guid in (select endpoint from endpoint_service_rel where service_group in ('"+strings.Join(guidList, "','")+"'))", endpointType).Find(&result)
+	return
+}
+
 func getRecursiveEndpointList(guid string) []string {
 	result := []string{}
 	resultMap := make(map[string]int)
