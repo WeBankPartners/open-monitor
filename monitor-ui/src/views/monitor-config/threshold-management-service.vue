@@ -420,7 +420,7 @@ export default {
           })
           this.totalPageConfig.push({
             table:config,
-            endpoint_group: item.endpoint_group,
+            endpoint_group: item.display_name,
             monitor_type: item.monitor_type,
             groupNotify: item.notify
           })
