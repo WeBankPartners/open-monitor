@@ -87,9 +87,11 @@ func initPrometheusRuleConfig() {
 }
 
 func QueryExporterMetric(param models.QueryPrometheusMetricParam) (err error, result []string) {
-	if param.Cluster == "" || param.Cluster == "default" {
-		err, result = prom.GetEndpointData(param)
-		return
+	if !param.IsConfigQuery {
+		if param.Cluster == "" || param.Cluster == "default" {
+			err, result = prom.GetEndpointData(param)
+			return
+		}
 	}
 	clusterAddress := GetClusterAddress(param.Cluster)
 	if clusterAddress == "" {
