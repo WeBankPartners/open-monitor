@@ -132,3 +132,11 @@ func ListEndpointOptions(searchText string) (result []*models.OptionModel, err e
 	}
 	return
 }
+
+func CheckEndpointInAgentManager(guid string) bool {
+	queryRows,_ := x.QueryString("select endpoint_guid from agent_manager where endpoint_guid=?", guid)
+	if len(queryRows) > 0 {
+		return true
+	}
+	return false
+}
