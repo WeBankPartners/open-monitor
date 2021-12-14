@@ -28,7 +28,7 @@ func QueryClusterConfig(id string) (result []*m.ClusterTable, err error) {
 
 func GetClusterAddress(cluster string) string {
 	if cluster == "default" || cluster == "" {
-		return ""
+		return "127.0.0.1:9090"
 	}
 	var clusterTable []*m.ClusterTable
 	x.SQL("select * from cluster where id=?", cluster).Find(&clusterTable)
