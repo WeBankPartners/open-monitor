@@ -3,7 +3,7 @@
     <template v-for="(tableItem, tableIndex) in totalPageConfig">
       <section :key="tableIndex + 'f'">
         <div class="section-table-tip">
-          <Tag color="blue" :key="tableIndex + 'a'" v-if="tableItem.endpoint_group">{{tableItem.endpoint_group}}</Tag>
+          <Tag color="blue" :key="tableIndex + 'a'" v-if="tableItem.endpoint_group">{{tableItem.display_name}}</Tag>
         </div>
         <PageTable :pageConfig="tableItem"></PageTable>
       </section>
@@ -282,6 +282,7 @@ export default {
           this.totalPageConfig.push({
             table:config, 
             endpoint_group: item.endpoint_group,
+            display_name: item.display_name,
             groupNotify: item.notify
           })
         })
