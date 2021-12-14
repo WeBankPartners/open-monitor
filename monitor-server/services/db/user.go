@@ -581,6 +581,27 @@ func GetGrpRole(grpId int) (err error, result []*m.OptionModel) {
 	return nil,result
 }
 
+func GetRoleMap() (roleMap map[string]string) {
+	SyncCoreRoleList()
+	roleMap = make(map[string]string)
+	var roleTable []*m.RoleNewTable
+	x.SQL("select * from role_new").Find(&roleTable)
+	for _,v := range roleTable {
+		roleMap[v.Guid] = v.Email
+	}
+	return roleMap
+}
+
+func CheckRoleIllegal(roleListString string, roleMap map[string]string) (err error) {
+	for _,v := range strings.Split(roleListString, ",") {
+		if _,b:= roleMap[v];!b {
+			err = fmt.Errorf("role:%s illegal")
+			break
+		}
+	}
+	return err
+}
+
 func CheckRoleList(param string) string {
 	if param == "" {
 		return ""
@@ -589,6 +610,8 @@ func CheckRoleList(param string) string {
 	for _,v := range strings.Split(param, ",") {
 		tmpMap[v] = 0
 	}
+	var roleTable []*m.RoleNewTable
+	x.SQL("select guid from role_new").Find(&roleTable)
 	for k,_ := range tmpMap {
 		var tableData []*m.RoleTable
 		x.SQL("SELECT id FROM role WHERE name=?", k).Find(&tableData)
