@@ -87,6 +87,7 @@ func initPrometheusRuleConfig() {
 }
 
 func QueryExporterMetric(param models.QueryPrometheusMetricParam) (err error, result []string) {
+	log.Logger.Info("QueryExporterMetric", log.JsonObj("param", param))
 	if !param.IsConfigQuery {
 		if param.Cluster == "" || param.Cluster == "default" {
 			err, result = prom.GetEndpointData(param)
