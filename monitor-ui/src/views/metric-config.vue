@@ -628,7 +628,7 @@ export default {
           label: p
         }
       })
-      this.metricConfigData.prom_ql += ' ' + val
+      this.metricConfigData.prom_ql = val
     },
     changeCollectedMetric (val) {
       if (val.value) {
