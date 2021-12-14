@@ -17,7 +17,7 @@ import (
 const defaultStep = 10
 const longStep = 60
 
-var agentManagerServer string
+var AgentManagerServer string
 
 type returnData struct {
 	endpoint        m.EndpointTable
@@ -54,23 +54,23 @@ func RegisterAgentNew(c *gin.Context) {
 func InitAgentManager() {
 	for _, v := range m.Config().Dependence {
 		if v.Name == "agent_manager" {
-			agentManagerServer = v.Server
+			AgentManagerServer = v.Server
 			break
 		}
 	}
-	if agentManagerServer != "" {
+	if AgentManagerServer != "" {
 		param, err := db.GetAgentManager("")
 		if err != nil {
 			log.Logger.Error("Get agent manager table fail", log.Error(err))
 			return
 		}
-		go prom.InitAgentManager(param, agentManagerServer)
-		go prom.StartSyncAgentManagerJob(param, agentManagerServer)
+		go prom.InitAgentManager(param, AgentManagerServer)
+		go prom.StartSyncAgentManagerJob(param, AgentManagerServer)
 	}
 }
 
 func AgentRegister(param m.RegisterParamNew) (validateMessage, guid string, err error) {
-	if agentManagerServer == "" && param.AgentManager {
+	if AgentManagerServer == "" && param.AgentManager {
 		return validateMessage, guid, fmt.Errorf("agent manager server not found,can not enable agent manager ")
 	}
 	if param.Type == "tomcat" {
@@ -247,7 +247,7 @@ func mysqlRegister(param m.RegisterParamNew) returnData {
 			result.err = fmt.Errorf("Mysql agnet bin can not found in config ")
 			return result
 		}
-		address, err = prom.DeployAgent(param.Type, param.Name, binPath, param.Ip, param.Port, param.User, param.Password, agentManagerServer, configFile)
+		address, err = prom.DeployAgent(param.Type, param.Name, binPath, param.Ip, param.Port, param.User, param.Password, AgentManagerServer, configFile)
 		if err != nil {
 			result.err = err
 			return result
@@ -325,7 +325,7 @@ func redisRegister(param m.RegisterParamNew) returnData {
 			result.err = fmt.Errorf("Redis agnet bin can not found in config ")
 			return result
 		}
-		address, err = prom.DeployAgent(param.Type, param.Name, binPath, param.Ip, param.Port, param.User, param.Password, agentManagerServer, "")
+		address, err = prom.DeployAgent(param.Type, param.Name, binPath, param.Ip, param.Port, param.User, param.Password, AgentManagerServer, "")
 		if err != nil {
 			result.err = err
 			return result
@@ -400,7 +400,7 @@ func javaRegister(param m.RegisterParamNew) returnData {
 			result.err = fmt.Errorf("Java agnet bin can not found in config ")
 			return result
 		}
-		address, err = prom.DeployAgent(param.Type, param.Name, binPath, param.Ip, param.Port, param.User, param.Password, agentManagerServer, configFile)
+		address, err = prom.DeployAgent(param.Type, param.Name, binPath, param.Ip, param.Port, param.User, param.Password, AgentManagerServer, configFile)
 		if err != nil {
 			result.err = err
 			return result
@@ -474,7 +474,7 @@ func nginxRegister(param m.RegisterParamNew) returnData {
 			result.err = fmt.Errorf("Nginx agnet bin can not found in config ")
 			return result
 		}
-		address, err = prom.DeployAgent(param.Type, param.Name, binPath, param.Ip, param.Port, param.User, param.Password, agentManagerServer, "")
+		address, err = prom.DeployAgent(param.Type, param.Name, binPath, param.Ip, param.Port, param.User, param.Password, AgentManagerServer, "")
 		if err != nil {
 			result.err = err
 			return result
@@ -712,7 +712,7 @@ func processMonitorRegister(param m.RegisterParamNew) returnData {
 	newEndpointObj := m.EndpointNewTable{Guid: result.endpoint.Guid, Name: result.endpoint.Name, Ip: result.endpoint.Ip, MonitorType: result.endpoint.ExportType, AgentAddress: result.endpoint.Address}
 	b, _ := json.Marshal(result.extendParam)
 	newEndpointObj.ExtendParam = string(b)
-	err := db.SyncNodeExporterProcessConfig(param.Ip, []*m.EndpointNewTable{&newEndpointObj})
+	err := db.SyncNodeExporterProcessConfig(param.Ip, []*m.EndpointNewTable{&newEndpointObj}, false)
 	if err != nil {
 		result.err = err
 	}
