@@ -220,13 +220,17 @@ func getDeleteServiceGroupAction(serviceGroupGuid string) (actions []*Action) {
 	if sNode, b := globalServiceGroupMap[serviceGroupGuid]; b {
 		guidList = sNode.FetchChildGuid()
 	}
+	guidFilterString := strings.Join(guidList, "','")
 	var endpointGroup []*models.EndpointGroupTable
-	x.SQL(fmt.Sprintf("select guid from endpoint_group where service_group in ('%s')", strings.Join(guidList, "','"))).Find(&endpointGroup)
+	x.SQL(fmt.Sprintf("select guid from endpoint_group where service_group in ('%s')", guidFilterString)).Find(&endpointGroup)
 	for _, v := range endpointGroup {
 		actions = append(actions, getDeleteEndpointGroupAction(v.Guid)...)
 	}
-	actions = append(actions, &Action{Sql: fmt.Sprintf("delete from endpoint_service_rel where service_group in ('%s')", strings.Join(guidList, "','"))})
-	actions = append(actions, &Action{Sql: fmt.Sprintf("DELETE FROM service_group WHERE guid in ('%s')", strings.Join(guidList, "','"))})
+	actions = append(actions, &Action{Sql: fmt.Sprintf("delete from endpoint_service_rel where service_group in ('%s')", guidFilterString)})
+	actions = append(actions, &Action{Sql: fmt.Sprintf("delete from service_group_role_rel where service_group in ('%s')", guidFilterString)})
+	actions = append(actions, &Action{Sql: fmt.Sprintf("delete from notify_role_rel where notify in (select guid from notify where service_group in ('%s'))", guidFilterString)})
+	actions = append(actions, &Action{Sql: fmt.Sprintf("delete from notify where service_group in ('%s')", guidFilterString)})
+	actions = append(actions, &Action{Sql: fmt.Sprintf("DELETE FROM service_group WHERE guid in ('%s')", guidFilterString)})
 	return actions
 }
 
@@ -523,4 +527,26 @@ func DeleteServiceConfig(serviceGroup string) {
 			log.Logger.Error("Try to SyncDbMetric fail", log.Error(err))
 		}
 	}
+}
+
+func getUpdateServiceGroupNotifyActions(serviceGroup,firingCallback,recoverCallback string,roleList []string) (actions []*Action) {
+	actions = append(actions, &Action{Sql: "delete from notify_role_rel where notify in (select guid from notify where service_group=?)",Param: []interface{}{serviceGroup}})
+	actions = append(actions, &Action{Sql: "delete from notify where service_group=?",Param: []interface{}{serviceGroup}})
+	if firingCallback != "" {
+		firingActionGuid := guid.CreateGuid()
+		actions = append(actions, &Action{Sql: "insert into notify(guid,service_group,alarm_action,proc_callback_key) value (?,?,?,?)",Param: []interface{}{firingActionGuid,serviceGroup,"firing",firingCallback}})
+		roleNotifyGuidList := guid.CreateGuidList(len(roleList))
+		for i,v := range roleList {
+			actions = append(actions, &Action{Sql: "insert into notify_role_rel(guid,notify,`role`) value (?,?,?)",Param: []interface{}{roleNotifyGuidList[i],firingActionGuid,v}})
+		}
+	}
+	if recoverCallback != "" {
+		recoverActionGuid := guid.CreateGuid()
+		actions = append(actions, &Action{Sql: "insert into notify(guid,service_group,alarm_action,proc_callback_key) value (?,?,?,?)",Param: []interface{}{recoverActionGuid,serviceGroup,"ok",recoverCallback}})
+		roleNotifyGuidList := guid.CreateGuidList(len(roleList))
+		for i,v := range roleList {
+			actions = append(actions, &Action{Sql: "insert into notify_role_rel(guid,notify,`role`) value (?,?,?)",Param: []interface{}{roleNotifyGuidList[i],recoverActionGuid,v}})
+		}
+	}
+	return actions
 }

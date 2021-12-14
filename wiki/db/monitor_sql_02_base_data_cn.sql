@@ -567,3 +567,13 @@ update metric set prom_expr='node_process_monitor_mem{process_guid="$guid"}' whe
 delete from strategy where id<=24;
 delete from metric where metric='app.metric';
 #@v1.13.0.21-end@;
+
+#@v1.13.0.24-begin@;
+CREATE TABLE `service_group_role_rel` (
+  `guid` varchar(64) NOT NULL PRIMARY KEY,
+  `service_group` varchar(64) NOT NULL,
+  `role` varchar(64) NOT NULL,
+  CONSTRAINT `service_role_s` FOREIGN KEY (`service_group`) REFERENCES `service_group` (`guid`),
+  CONSTRAINT `service_role_r` FOREIGN KEY (`role`) REFERENCES `role_new` (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+#@v1.13.0.24-end@;

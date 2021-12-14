@@ -203,9 +203,9 @@ func chartCompare(param *models.ChartQueryParam) error {
 func getChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.QueryMonitorData, err error) {
 	param.Compare = &models.ChartQueryCompareParam{CompareFirstLegend: ""}
 	queryList = []*models.QueryMonitorData{}
-	var endpointList []*models.EndpointTable
+	var endpointList []*models.EndpointNewTable
 	for _, dataConfig := range param.Data {
-		endpointList = []*models.EndpointTable{}
+		endpointList = []*models.EndpointNewTable{}
 		tmpMonitorType := dataConfig.EndpointType
 		// check endpoint if is service group
 		if dataConfig.AppObject != "" {
@@ -219,14 +219,15 @@ func getChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.
 			}
 			param.Data[0].Endpoint = endpointList[0].Guid
 		} else {
-			endpointObj := models.EndpointTable{Guid: dataConfig.Endpoint}
-			db.GetEndpoint(&endpointObj)
-			if endpointObj.Id <= 0 {
+			//endpointObj := models.EndpointTable{Guid: dataConfig.Endpoint}
+			//db.GetEndpoint(&endpointObj)
+			endpointObj,_ := db.GetEndpointNew(&models.EndpointNewTable{Guid: dataConfig.Endpoint})
+			if endpointObj.MonitorType == "" {
 				err = fmt.Errorf("Param data endpoint:%s can not find ", dataConfig.Endpoint)
 				break
 			}
 			endpointList = append(endpointList, &endpointObj)
-			tmpMonitorType = endpointObj.ExportType
+			tmpMonitorType = endpointObj.MonitorType
 		}
 		metricLegend := "$custom"
 		if dataConfig.Metric != "" {
@@ -251,7 +252,7 @@ func getChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.
 			}
 		}
 		for _, endpoint := range endpointList {
-			tmpPromQL := db.ReplacePromQlKeyword(dataConfig.PromQl, dataConfig.Metric, *endpoint)
+			tmpPromQL := db.ReplacePromQlKeyword(dataConfig.PromQl, dataConfig.Metric, endpoint)
 			queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQL, Legend: metricLegend, Metric: []string{dataConfig.Metric}, Endpoint: []string{endpoint.Guid}, Step: endpoint.Step, Cluster: endpoint.Cluster})
 		}
 	}
