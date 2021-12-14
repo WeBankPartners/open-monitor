@@ -43,6 +43,8 @@ type EndpointExtendParamObj struct {
 	HttpUrl     string `json:"http_url,omitempty"`
 	ProcessName string `json:"process_name,omitempty"`
 	ProcessTags string `json:"process_tags,omitempty"`
+	ExportAddress    string `json:"export_address"`
+	ProxyExporter string `json:"proxy_exporter"`
 }
 
 type MetricTable struct {

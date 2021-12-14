@@ -10,6 +10,7 @@ type RegisterParam struct {
 }
 
 type RegisterParamNew struct {
+	Guid             string `json:"guid"`
 	Type             string `json:"type" binding:"required"`
 	Name             string `json:"name"`
 	Ip               string `json:"ip"`
