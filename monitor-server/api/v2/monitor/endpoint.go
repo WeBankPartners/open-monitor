@@ -253,7 +253,7 @@ func telnetEndpointUpdate(param *models.RegisterParamNew,endpoint *models.Endpoi
 }
 
 func httpEndpointUpdate(param *models.RegisterParamNew,endpoint *models.EndpointNewTable) (newEndpoint models.EndpointNewTable,err error) {
-	
+
 	return
 }
 
