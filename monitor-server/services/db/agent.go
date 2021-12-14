@@ -210,7 +210,8 @@ func UpdateRecursivePanel(param m.PanelRecursiveTable) error {
 		err = Transaction(actions)
 		if err == nil {
 			var endpointGroup []*m.EndpointGroupTable
-			x.SQL("select guid from endpoint_group where service_group=?", param.Guid).Find(&endpointGroup)
+			parentGuidList,_ := fetchGlobalServiceGroupParentGuidList(param.Guid)
+			x.SQL("select guid from endpoint_group where service_group in ('"+strings.Join(parentGuidList,"','")+"')").Find(&endpointGroup)
 			for _, v := range endpointGroup {
 				err = SyncPrometheusRuleFile(v.Guid, false)
 				if err != nil {

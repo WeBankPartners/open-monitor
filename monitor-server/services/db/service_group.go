@@ -475,7 +475,26 @@ func UpdateDbMetricConfigByServiceGroup(serviceGroup string, endpointTypeMap map
 }
 
 func DeleteServiceWithChildConfig(serviceGroup string)  {
-	guidList,_ := fetchGlobalServiceGroupChildGuidList(serviceGroup)
+	var parentGuidList []string
+	guidList,_ := fetchGlobalServiceGroupParentGuidList(serviceGroup)
+	for _,v := range guidList {
+		if v == serviceGroup {
+			continue
+		}
+		parentGuidList = append(parentGuidList, v)
+		UpdateServiceConfigWithEndpoint(v)
+	}
+	if len(parentGuidList) > 0 {
+		var endpointGroup []*models.EndpointGroupTable
+		x.SQL("select guid from endpoint_group where service_group in ('"+strings.Join(parentGuidList,"','")+"')").Find(&endpointGroup)
+		for _,v := range endpointGroup {
+			tmpErr := SyncPrometheusRuleFile(v.Guid, false)
+			if tmpErr != nil {
+				log.Logger.Error("DeleteServiceWithChildConfig SyncPrometheusRuleFile fail", log.Error(tmpErr))
+			}
+		}
+	}
+	guidList,_ = fetchGlobalServiceGroupChildGuidList(serviceGroup)
 	for _,v := range guidList {
 		DeleteServiceConfig(v)
 	}
