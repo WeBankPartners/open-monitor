@@ -166,9 +166,15 @@ func UpdateDbMonitorSysName(param m.DbMonitorSysNameDto) error {
 	return err
 }
 
-type logHttpDto struct {
-	Path     string   `json:"path"`
-	Keywords []string `json:"keywords"`
+type logKeywordHttpRuleObj struct {
+	RegularEnable bool    `json:"regular_enable"`
+	Keyword       string  `json:"keyword"`
+	Count         float64 `json:"count"`
+}
+
+type logKeywordHttpDto struct {
+	Path     string                   `json:"path"`
+	Keywords []*logKeywordHttpRuleObj `json:"keywords"`
 }
 
 func SendLogConfig(endpointId, grpId, tplId int) error {
@@ -190,8 +196,6 @@ func SendLogConfig(endpointId, grpId, tplId int) error {
 		endpoints = append(endpoints, &endpointQuery)
 	}
 	log.Logger.Info("SendLogConfig", log.JsonObj("endpoints", endpoints))
-	var postParam []logHttpDto
-	var tmpList []string
 	var tmpPath string
 	for _, v := range endpoints {
 		err, logMonitors := GetLogMonitorByEndpointNew(v.Id)
@@ -202,20 +206,21 @@ func SendLogConfig(endpointId, grpId, tplId int) error {
 		if len(logMonitors) == 0 {
 			continue
 		}
-		postParam = []logHttpDto{}
-		tmpList = []string{}
+		postParam := []*logKeywordHttpDto{}
+		keywordList := []*logKeywordHttpRuleObj{}
 		tmpPath = logMonitors[0].Path
 		for _, v := range logMonitors {
 			if v.Path != tmpPath {
-				postParam = append(postParam, logHttpDto{Path: tmpPath, Keywords: tmpList})
+				postParam = append(postParam, &logKeywordHttpDto{Path: tmpPath, Keywords: keywordList})
 				tmpPath = v.Path
-				tmpList = []string{}
+				keywordList = []*logKeywordHttpRuleObj{}
 			}
-			tmpList = append(tmpList, v.Keyword)
+			keywordList = append(keywordList, &logKeywordHttpRuleObj{Keyword: v.Keyword})
 		}
-		postParam = append(postParam, logHttpDto{Path: logMonitors[len(logMonitors)-1].Path, Keywords: tmpList})
+		postParam = append(postParam, &logKeywordHttpDto{Path: logMonitors[len(logMonitors)-1].Path, Keywords: keywordList})
 		postData, err := json.Marshal(postParam)
 		if err == nil {
+			log.Logger.Info("Sync log keyword config", log.String("endpoint", v.Address), log.String("param", string(postData)))
 			url := fmt.Sprintf("http://%s/log/config", v.Address)
 			resp, err := http.Post(url, "application/json", strings.NewReader(string(postData)))
 			if err != nil {
