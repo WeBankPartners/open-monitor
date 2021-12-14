@@ -3,7 +3,7 @@
     <template v-for="(tableItem, tableIndex) in totalPageConfig">
       <section :key="tableIndex + 'f'">
         <div class="section-table-tip">
-          <Tag color="blue" :key="tableIndex + 'a'" v-if="tableItem.endpoint_group">{{tableItem.endpoint_group}}</Tag>
+          <Tag color="blue" :key="tableIndex + 'a'" v-if="tableItem.endpoint_group">{{tableItem.display_name}}</Tag>
           <button @click="add(tableItem)" type="button" class="btn btn-sm success-btn">
             <i class="fa fa-plus"></i>
             {{$t('button.add')}}
@@ -420,7 +420,8 @@ export default {
           })
           this.totalPageConfig.push({
             table:config,
-            endpoint_group: item.display_name,
+            endpoint_group: item.endpoint_group,
+            display_name: item.display_name,
             monitor_type: item.monitor_type,
             groupNotify: item.notify
           })
