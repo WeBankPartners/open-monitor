@@ -140,3 +140,11 @@ func CheckEndpointInAgentManager(guid string) bool {
 	}
 	return false
 }
+
+func UpdateAgentManager(param *models.AgentManagerTable) error {
+	_,err := x.Exec("update agent_manager set `user`=?,`password`=?,instance_address=?,agent_address=? where endpoint_guid=?", param.User, param.Password, param.InstanceAddress, param.AgentAddress, param.EndpointGuid)
+	if err != nil {
+		err = fmt.Errorf("Update agent manager fail,%s ", err.Error())
+	}
+	return err
+}

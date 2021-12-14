@@ -50,9 +50,17 @@ func UpdateNodeExporterProcessConfig(endpointId int) error {
 	return nil
 }
 
-func SyncNodeExporterProcessConfig(hostIp string, newEndpoints []*m.EndpointNewTable) error {
+func SyncNodeExporterProcessConfig(hostIp string, newEndpoints []*m.EndpointNewTable, updateFlag bool) (err error) {
 	var endpointTable []*m.EndpointNewTable
-	err := x.SQL("select * from endpoint_new where monitor_type='process' and ip=?", hostIp).Find(&endpointTable)
+	if updateFlag {
+		updateGuidList := []string{}
+		for _,v := range newEndpoints {
+			updateGuidList = append(updateGuidList, v.Guid)
+		}
+		err = x.SQL("select * from endpoint_new where monitor_type='process' and ip=? and guid not in ('"+strings.Join(updateGuidList,"','")+"')", hostIp).Find(&endpointTable)
+	}else {
+		err = x.SQL("select * from endpoint_new where monitor_type='process' and ip=?", hostIp).Find(&endpointTable)
+	}
 	if err != nil {
 		return fmt.Errorf("Query table endpoint_new fail,%s ", err.Error())
 	}
