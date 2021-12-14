@@ -41,10 +41,12 @@ func ExportPanelAdd(c *gin.Context) {
 			c.JSON(http.StatusOK, result)
 			return
 		}
+		roleMap := db.GetRoleMap()
 		var tmpResult []resultOutputObj
 		successFlag := "0"
 		errorMessage := "Done"
 		for _, v := range param.Inputs {
+			var tmpMessage string
 			v.Endpoint = trimListString(v.Endpoint)
 			v.Parent = trimListString(v.Parent)
 			v.Email = trimListString(v.Email)
@@ -52,14 +54,13 @@ func ExportPanelAdd(c *gin.Context) {
 			v.Role = trimListString(v.Role)
 			tmpEndpoint := strings.Split(v.Endpoint, ",")
 			tmpParent := strings.Split(v.Parent, ",")
-			tmpRole := db.CheckRoleList(v.Role)
-			var tmpMessage string
+			checkRoleErr := db.CheckRoleIllegal(v.Role, roleMap)
+			if checkRoleErr != nil {
+				tmpMessage = checkRoleErr.Error()
+			}
 			if v.Guid == "" {
 				tmpMessage = fmt.Sprintf(mid.GetMessageMap(c).ParamEmptyError, "guid")
 			}
-			//if len(v.Parent) == 0 && v.Endpoint == "" {
-			//	tmpMessage = fmt.Sprintf("Index:%s children and endpoint both null", v.CallbackParameter)
-			//}
 			if tmpMessage != "" {
 				errorMessage = tmpMessage
 				tmpResult = append(tmpResult, resultOutputObj{CallbackParameter: v.CallbackParameter, ErrorCode: "1", ErrorMessage: tmpMessage})
@@ -101,7 +102,7 @@ func ExportPanelAdd(c *gin.Context) {
 				successFlag = "1"
 				continue
 			}
-			err := db.UpdateRecursivePanel(m.PanelRecursiveTable{Guid: v.Guid, DisplayName: v.DisplayName, Parent: strings.Join(tmpParent, "^"), Endpoint: strings.Join(endpointStringList, "^"), Email: v.Email, Phone: v.Phone, Role: tmpRole, FiringCallbackKey: v.FiringCallback, RecoverCallbackKey: v.RecoverCallback, ObjType: v.Type})
+			err := db.UpdateRecursivePanel(m.PanelRecursiveTable{Guid: v.Guid, DisplayName: v.DisplayName, Parent: strings.Join(tmpParent, "^"), Endpoint: strings.Join(endpointStringList, "^"), Email: v.Email, Phone: v.Phone, Role: v.Role, FiringCallbackKey: v.FiringCallback, RecoverCallbackKey: v.RecoverCallback, ObjType: v.Type})
 			if err != nil {
 				tmpMessage = fmt.Sprintf(mid.GetMessageMap(c).UpdateTableError, "recursive_panel")
 				errorMessage = tmpMessage
