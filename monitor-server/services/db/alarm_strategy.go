@@ -29,7 +29,7 @@ func QueryAlarmStrategyByGroup(endpointGroup string) (result []*models.EndpointS
 		tmpStrategyObj.NotifyList = getNotifyList(v.Guid, "", "")
 		strategy = append(strategy, &tmpStrategyObj)
 	}
-	resultObj := models.EndpointStrategyObj{EndpointGroup: endpointGroup, Strategy: strategy}
+	resultObj := models.EndpointStrategyObj{EndpointGroup: endpointGroup, Strategy: strategy, DisplayName: endpointGroup}
 	notify, tmpErr := GetGroupEndpointNotify(endpointGroup)
 	if tmpErr != nil {
 		return result, tmpErr
@@ -46,6 +46,12 @@ func QueryAlarmStrategyByEndpoint(endpoint string) (result []*models.EndpointStr
 	if err != nil {
 		return
 	}
+	var serviceGroupTable []*models.ServiceGroupTable
+	x.SQL("select guid,display_name from service_group").Find(&serviceGroupTable)
+	serviceGroupMap := make(map[string]string)
+	for _, v := range serviceGroupTable {
+		serviceGroupMap[v.Guid] = v.DisplayName
+	}
 	for _, v := range endpointGroupTable {
 		tmpEndpointStrategyList, tmpErr := QueryAlarmStrategyByGroup(v.Guid)
 		if tmpErr != nil || len(tmpEndpointStrategyList) == 0 {
@@ -53,6 +59,11 @@ func QueryAlarmStrategyByEndpoint(endpoint string) (result []*models.EndpointStr
 			break
 		}
 		tmpEndpointStrategyList[0].ServiceGroup = v.ServiceGroup
+		if sName,b:=serviceGroupMap[v.ServiceGroup];b {
+			tmpEndpointStrategyList[0].DisplayName = sName
+		}else{
+			tmpEndpointStrategyList[0].DisplayName = v.ServiceGroup
+		}
 		result = append(result, tmpEndpointStrategyList[0])
 	}
 	return
@@ -73,6 +84,7 @@ func QueryAlarmStrategyByServiceGroup(serviceGroup string) (result []*models.End
 		}
 		tmpEndpointStrategyList[0].ServiceGroup = v.ServiceGroup
 		tmpEndpointStrategyList[0].MonitorType = v.MonitorType
+		tmpEndpointStrategyList[0].DisplayName = v.MonitorType
 		result = append(result, tmpEndpointStrategyList[0])
 	}
 	return
@@ -413,7 +425,7 @@ func GetAlarmObj(query *models.AlarmTable) (result models.AlarmTable, err error)
 	}
 	err = x.SQL(baseSql, queryParams...).Find(&alarmList)
 	if len(alarmList) > 0 {
-		result = *alarmList[0]
+		result = *alarmList[len(alarmList)-1]
 	}
 	return
 }
