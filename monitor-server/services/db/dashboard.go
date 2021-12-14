@@ -557,9 +557,6 @@ func GetEndpointMetric(id int) (err error, result []*m.OptionModel) {
 			return nil, result
 		}
 		metricQueryParam := m.QueryPrometheusMetricParam{Ip: ip, Port: port, Cluster: endpointObj.Cluster, Prefix: []string{}, Keyword: []string{}, EndpointGuid: endpointObj.Guid, IsConfigQuery: true}
-		if endpointObj.ExportType == "process" {
-			metricQueryParam.ProcessGuid = endpointObj.Guid
-		}
 		err, strList = QueryExporterMetric(metricQueryParam)
 	}
 	if err != nil {
