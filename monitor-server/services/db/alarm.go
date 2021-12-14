@@ -52,10 +52,15 @@ func ListAlarmEndpoints(query *m.AlarmEndpointQuery) error {
 		x.SQL("select * from endpoint_group").Find(&groupTableData)
 		for _, v := range result {
 			if v.GroupsIds != "" {
+				tmpExistMap := make(map[string]int)
 				for _, tmpGroupId := range strings.Split(v.GroupsIds, ",") {
 					if tmpGroupId == "" {
 						continue
 					}
+					if _, b := tmpExistMap[tmpGroupId]; b {
+						continue
+					}
+					tmpExistMap[tmpGroupId] = 1
 					for _, groupObj := range groupTableData {
 						if groupObj.Guid == tmpGroupId {
 							v.Groups = append(v.Groups, &m.GrpTable{Name: groupObj.Guid})
@@ -455,7 +460,11 @@ func GetAlarms(query m.AlarmTable, limit int, extLogMonitor, extOpenAlarm bool) 
 			v.IsLogMonitor = true
 			if v.EndValue > 0 {
 				v.Start, v.End = v.End, v.Start
-				v.StartValue = v.EndValue - v.StartValue + 1
+				if v.EndValue < v.StartValue {
+					v.StartValue = v.EndValue
+				} else {
+					v.StartValue = v.EndValue - v.StartValue + 1
+				}
 				if strings.Contains(v.Content, "^^") {
 					v.Content = fmt.Sprintf("%s: %s <br/>%s: %s", v.StartString, v.Content[:strings.Index(v.Content, "^^")], v.EndString, v.Content[strings.Index(v.Content, "^^")+2:])
 				}
