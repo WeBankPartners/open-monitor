@@ -12,7 +12,7 @@
     <div class="zone zone-config c-dark">
       <div class="tool-save">
         <div class="condition">
-          <Select filterable v-model="templateQuery.aggregate" @on-change="switchChartType">
+          <Select filterable  class="select-option" v-model="templateQuery.aggregate" @on-change="switchChartType">
             <Option
               v-for="(type) in ['min', 'max', 'avg', 'p95', 'sum', 'none']"
               :value="type"
@@ -21,7 +21,7 @@
           </Select>
         </div>
         <div class="condition">
-          <Select filterable clearable v-model="templateQuery.chartType" @on-change="switchChartType">
+          <Select filterable class="select-option" v-model="templateQuery.chartType" @on-change="switchChartType">
             <Option
               v-for="(option, index) in chartTypeOption"
               :value="option.value"
@@ -312,14 +312,15 @@ export default {
           endpoint: item.endpoint,
           metric: item.metric,
           app_object: item.app_object,
-          endpoint_type: item.endpoint_type
+          endpoint_type: item.endpoint_type,
+          metricToColor: item.metricToColor
         })
       })
       this.$root.$httpRequestEntrance.httpRequestEntrance(
         'POST',this.$root.apiCenter.metricConfigView.api, params,
         responseData => {
           responseData.yaxis.unit = this.panalUnit
-          readyToDraw(this,responseData, 1, { eye: false, chartType: this.templateQuery.chartType})
+          readyToDraw(this,responseData, 1, { eye: false, chartType: this.templateQuery.chartType, params: params})
         }
       )
     },
@@ -542,6 +543,9 @@ li {
   border: 1px solid @blue-2;
   padding: 4px;
   margin: 4px;
+}
+.select-option /deep/ .ivu-select-dropdown-list {
+  text-align: left;
 }
 </style>
 
