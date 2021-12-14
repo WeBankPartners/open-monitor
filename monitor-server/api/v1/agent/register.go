@@ -538,6 +538,7 @@ func pingRegister(param m.RegisterParamNew) returnData {
 		param.ExportAddress = formatExportAddress(param.ExportAddress)
 		result.endpoint.AddressAgent = param.ExportAddress
 		result.fetchMetric = true
+		result.extendParam = m.EndpointExtendParamObj{Enable: true, ExportAddress: param.ExportAddress}
 	}
 	return result
 }
@@ -558,6 +559,7 @@ func telnetRegister(param m.RegisterParamNew) returnData {
 		param.ExportAddress = formatExportAddress(param.ExportAddress)
 		result.endpoint.AddressAgent = param.ExportAddress
 		result.fetchMetric = true
+		result.extendParam = m.EndpointExtendParamObj{Enable: true, ExportAddress: param.ExportAddress}
 	}
 	result.defaultGroup = "default_telnet_group"
 	result.addDefaultGroup = true
@@ -585,10 +587,12 @@ func httpRegister(param m.RegisterParamNew) returnData {
 	result.endpoint.Address = fmt.Sprintf("%s:%s", param.Ip, param.Port)
 	result.endpoint.ExportType = param.Type
 	result.endpoint.Step = defaultStep
+	result.extendParam = m.EndpointExtendParamObj{Enable: true, HttpMethod: param.Method, HttpUrl: param.Url}
 	if param.ExportAddress != "" {
 		param.ExportAddress = formatExportAddress(param.ExportAddress)
 		result.endpoint.AddressAgent = param.ExportAddress
 		result.fetchMetric = true
+		result.extendParam.ExportAddress = param.ExportAddress
 	}
 	result.defaultGroup = "default_http_group"
 	result.addDefaultGroup = true
@@ -599,7 +603,6 @@ func httpRegister(param m.RegisterParamNew) returnData {
 	if err != nil {
 		result.err = err
 	}
-	result.extendParam = m.EndpointExtendParamObj{Enable: true, HttpMethod: param.Method, HttpUrl: param.Url}
 	return result
 }
 
@@ -678,6 +681,7 @@ func snmpExporterRegister(param m.RegisterParamNew) returnData {
 	if err != nil {
 		result.err = err
 	}
+	result.extendParam = m.EndpointExtendParamObj{Enable: true, ProxyExporter: param.ProxyExporter}
 	return result
 }
 

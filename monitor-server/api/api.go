@@ -233,6 +233,8 @@ func init() {
 		&handlerFuncObj{Url: "/monitor/endpoint/query", Method: http.MethodGet, HandlerFunc: monitor.ListEndpoint},
 		&handlerFuncObj{Url: "/monitor/metric/list", Method: http.MethodGet, HandlerFunc: monitor.ListMetric},
 		&handlerFuncObj{Url: "/sys/parameter/metric_template", Method: http.MethodGet, HandlerFunc: monitor.GetSysMetricTemplate},
+		&handlerFuncObj{Url: "/monitor/endpoint/get/:guid", Method: http.MethodGet, HandlerFunc: monitor.GetEndpoint},
+		&handlerFuncObj{Url: "/monitor/endpoint/update/:guid", Method: http.MethodPost, HandlerFunc: monitor.UpdateEndpoint},
 	)
 }
 

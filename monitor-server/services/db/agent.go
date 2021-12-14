@@ -45,6 +45,11 @@ func UpdateEndpoint(endpoint *m.EndpointTable, extendParam string) (stepList []i
 			log.Logger.Error("Update endpoint fail", log.Error(err))
 			return
 		}
+		tmpAgentAddress := endpoint.Address
+		if endpoint.AddressAgent != "" {
+			tmpAgentAddress = endpoint.AddressAgent
+		}
+		x.Exec("update endpoint_new set agent_address=?,step=?,endpoint_version=?,endpoint_address=?,extend_param=?,update_time=? where guid=?", tmpAgentAddress,endpoint.Step,endpoint.EndpointVersion,endpoint.Address,extendParam,time.Now().Format(m.DatetimeFormat),endpoint.Guid)
 		endpoint.Id = host.Id
 	}
 	return
