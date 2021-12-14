@@ -235,15 +235,21 @@ func GetOrgRole(guid string) (result []*m.OptionModel, err error) {
 	return result, nil
 }
 
-func UpdateOrgRole(param m.UpdateOrgPanelRoleParam) error {
+func UpdateOrgRole(param m.UpdateOrgPanelRoleParam) (err error) {
+	var actions []*Action
 	var idString string
+	var idStringList []string
 	for _, v := range param.RoleId {
 		idString += fmt.Sprintf("%d,", v)
+		idStringList = append(idStringList, fmt.Sprintf("%d",v))
 	}
 	if idString != "" {
 		idString = idString[:len(idString)-1]
 	}
-	_, err := x.Exec("UPDATE panel_recursive SET role=? WHERE guid=?", idString, param.Guid)
+	actions = append(actions, &Action{Sql: "UPDATE panel_recursive SET role=? WHERE guid=?",Param: []interface{}{idString,param.Guid}})
+	//var roleTable []*m.RoleTable
+
+	err = Transaction(actions)
 	if err != nil {
 		log.Logger.Error("Update organization role error", log.Error(err))
 	}
@@ -316,8 +322,17 @@ func GetOrgCallback(guid string) (result m.PanelRecursiveTable, err error) {
 	return *tableData[0], nil
 }
 
-func UpdateOrgCallback(param m.UpdateOrgPanelEventParam) error {
-	_, err := x.Exec("UPDATE panel_recursive SET firing_callback_name=?,firing_callback_key=?,recover_callback_name=?,recover_callback_key=? WHERE guid=?", param.FiringCallbackName, param.FiringCallbackKey, param.RecoverCallbackName, param.RecoverCallbackKey, param.Guid)
+func UpdateOrgCallback(param m.UpdateOrgPanelEventParam) (err error) {
+	var actions []*Action
+	var roleList []string
+	var serviceRoleTable []*m.ServiceGroupRoleRelTable
+	x.SQL("select * from service_group_role_rel where service_group=?", param.Guid).Find(&serviceRoleTable)
+	for _,v := range serviceRoleTable {
+		roleList = append(roleList, v.Role)
+	}
+	actions = append(actions, &Action{Sql: "UPDATE panel_recursive SET firing_callback_name=?,firing_callback_key=?,recover_callback_name=?,recover_callback_key=? WHERE guid=?",Param: []interface{}{param.FiringCallbackName, param.FiringCallbackKey, param.RecoverCallbackName, param.RecoverCallbackKey, param.Guid}})
+	actions = append(actions, getUpdateServiceGroupNotifyActions(param.Guid, param.FiringCallbackKey, param.RecoverCallbackKey, roleList)...)
+	err = Transaction(actions)
 	if err != nil {
 		log.Logger.Error("Update organization callback error", log.Error(err))
 	}
