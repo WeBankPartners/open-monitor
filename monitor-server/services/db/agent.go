@@ -207,6 +207,7 @@ func UpdateRecursivePanel(param m.PanelRecursiveTable) error {
 		actions = append(actions, &Action{Sql: "update service_group set display_name=?,service_type=? where guid=?", Param: []interface{}{param.DisplayName, param.ObjType, param.Guid}})
 		endpointList := strings.Split(tmpEndpoint, "^")
 		actions = append(actions, getUpdateServiceEndpointAction(param.Guid, nowTime, endpointList)...)
+		actions = append(actions, getUpdateServiceGroupNotifyActions(param.Guid, param.FiringCallbackKey, param.RecoverCallbackKey, strings.Split(param.Role, ","))...)
 		err = Transaction(actions)
 		if err == nil {
 			var endpointGroup []*m.EndpointGroupTable
@@ -227,6 +228,7 @@ func UpdateRecursivePanel(param m.PanelRecursiveTable) error {
 		actions = append(actions, &Action{Sql: "INSERT INTO panel_recursive(guid,display_name,parent,endpoint,email,phone,role,firing_callback_key,recover_callback_key,obj_type) VALUE (?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{param.Guid, param.DisplayName, param.Parent, param.Endpoint, param.Email, param.Phone, param.Role, param.FiringCallbackKey, param.RecoverCallbackKey, param.ObjType}})
 		actions = append(actions, getCreateServiceGroupAction(&m.ServiceGroupTable{Guid: param.Guid, DisplayName: param.DisplayName, Description: "", Parent: param.Parent, ServiceType: param.ObjType, UpdateTime: nowTime})...)
 		actions = append(actions, getUpdateServiceEndpointAction(param.Guid, nowTime, strings.Split(param.Endpoint, "^"))...)
+		actions = append(actions, getUpdateServiceGroupNotifyActions(param.Guid, param.FiringCallbackKey, param.RecoverCallbackKey, strings.Split(param.Role, ","))...)
 		err = Transaction(actions)
 		if err == nil {
 			addGlobalServiceGroupNode(m.ServiceGroupTable{Guid: param.Guid, Parent: param.Parent})
@@ -339,12 +341,12 @@ func GetRecursiveEndpointByType(guid, endpointType string) (result []*m.Endpoint
 	return
 }
 
-func GetRecursiveEndpointByTypeNew(guid, endpointType string) (result []*m.EndpointTable, err error) {
+func GetRecursiveEndpointByTypeNew(guid, endpointType string) (result []*m.EndpointNewTable, err error) {
 	guidList, tmpErr := fetchGlobalServiceGroupChildGuidList(guid)
 	if tmpErr != nil {
 		return result, tmpErr
 	}
-	err = x.SQL("select guid from endpoint_new where monitor_type=? and guid in (select endpoint from endpoint_service_rel where service_group in ('"+strings.Join(guidList, "','")+"'))", endpointType).Find(&result)
+	err = x.SQL("select * from endpoint_new where monitor_type=? and guid in (select endpoint from endpoint_service_rel where service_group in ('"+strings.Join(guidList, "','")+"'))", endpointType).Find(&result)
 	return
 }
 
