@@ -1,6 +1,6 @@
 version: '2'
 services:
-  consul:
+  open-monitor:
     image: open-monitor:{{version}}
     container_name: open-monitor-{{version}}
     restart: always
