@@ -41,3 +41,9 @@ type ServiceGroupEndpointListObj struct {
 	Guid        string `json:"guid"`
 	DisplayName string `json:"display_name"`
 }
+
+type ServiceGroupRoleRelTable struct {
+	Guid         string `json:"guid" xorm:"guid"`
+	ServiceGroup string `json:"service_group" xorm:"service_group"`
+	Role         string `json:"role" xorm:"role"`
+}
