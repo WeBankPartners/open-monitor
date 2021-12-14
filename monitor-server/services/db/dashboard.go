@@ -162,7 +162,7 @@ func GetPromMetric(endpoint []string, metric string) (error, string) {
 	return err, promQL
 }
 
-func ReplacePromQlKeyword(promQl, metric string, host m.EndpointTable) string {
+func ReplacePromQlKeyword(promQl, metric string, host *m.EndpointNewTable) string {
 	var tmpTag string
 	if strings.Contains(metric, "/") {
 		tmpTag = metric[strings.Index(metric, "/")+1:]
@@ -181,11 +181,7 @@ func ReplacePromQlKeyword(promQl, metric string, host m.EndpointTable) string {
 			}
 			promQl = strings.ReplaceAll(promQl, "\"$address\"", fmt.Sprintf("\"$address\"%s", tagAppendString))
 		}
-		if host.AddressAgent != "" {
-			promQl = strings.Replace(promQl, "$address", host.AddressAgent, -1)
-		} else {
-			promQl = strings.Replace(promQl, "$address", host.Address, -1)
-		}
+		promQl = strings.Replace(promQl, "$address", host.AgentAddress, -1)
 	}
 	if strings.Contains(promQl, `$guid`) {
 		promQl = strings.Replace(promQl, "$guid", host.Guid, -1)
@@ -193,12 +189,12 @@ func ReplacePromQlKeyword(promQl, metric string, host m.EndpointTable) string {
 	if strings.Contains(promQl, "$pod") {
 		promQl = strings.Replace(promQl, "$pod", host.Name, -1)
 	}
-	if strings.Contains(promQl, "$k8s_namespace") {
-		promQl = strings.Replace(promQl, "$k8s_namespace", host.ExportVersion, -1)
-	}
-	if strings.Contains(promQl, "$k8s_cluster") {
-		promQl = strings.Replace(promQl, "$k8s_cluster", host.OsType, -1)
-	}
+	//if strings.Contains(promQl, "$k8s_namespace") {
+	//	promQl = strings.Replace(promQl, "$k8s_namespace", host.ExportVersion, -1)
+	//}
+	//if strings.Contains(promQl, "$k8s_cluster") {
+	//	promQl = strings.Replace(promQl, "$k8s_cluster", host.OsType, -1)
+	//}
 	if strings.Contains(promQl, "$") {
 		re, _ := regexp.Compile("=\"[\\$]+[^\"]+\"")
 		fetchTag := re.FindAll([]byte(promQl), -1)
@@ -590,11 +586,20 @@ func GetEndpointMetricByEndpointType(endpointType string) (err error, result []*
 }
 
 func GetMainCustomDashboard(roleList []string) (err error, result []*m.CustomDashboardTable) {
+	result = []*m.CustomDashboardTable{}
+	var queryRows []*m.CustomDashboardTable
 	sql := "SELECT t2.* FROM role t1 LEFT JOIN custom_dashboard t2 ON t1.main_dashboard=t2.id WHERE t1.name IN ('" + strings.Join(roleList, "','") + "') and t1.main_dashboard>0"
 	log.Logger.Debug("Get main dashboard", log.String("sql", sql))
-	err = x.SQL(sql).Find(&result)
-	if len(result) == 0 {
-		result = []*m.CustomDashboardTable{}
+	err = x.SQL(sql).Find(&queryRows)
+	if len(queryRows) > 0 {
+		existMap := make(map[int]int)
+		for _,v := range queryRows {
+			if _,b:=existMap[v.Id];b {
+				continue
+			}
+			existMap[v.Id] = 1
+			result = append(result, v)
+		}
 	}
 	return err, result
 }
