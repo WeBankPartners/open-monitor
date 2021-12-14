@@ -1,7 +1,7 @@
 <template>
   <div class=" ">
     <section v-if="showManagement" style="margin-top: 16px;">
-      <Tag color="blue">{{targetDetail.endpoint_group || ''}}</Tag>
+      <Tag color="blue">{{targetDetail.display_name || ''}}</Tag>
       <button @click="add" type="button" class="btn btn-sm success-btn">
         <i class="fa fa-plus"></i>
         {{$t('button.add')}}
