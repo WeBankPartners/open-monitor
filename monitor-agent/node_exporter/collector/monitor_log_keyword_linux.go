@@ -1,8 +1,6 @@
 package collector
 
 import (
-	"bytes"
-	"encoding/gob"
 	"encoding/json"
 	"fmt"
 	"github.com/glenn-brown/golang-pkg-pcre/src/pkg/pcre"
@@ -12,7 +10,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"strings"
 	"sync"
 	"time"
@@ -25,8 +22,10 @@ type logMonitorCollector struct {
 
 const (
 	logMonitorCollectorName = "log_monitor"
-	logMonitorFilePath      = "data/log_monitor_cache.data"
+	logMonitorFilePath      = "data/log_monitor_cache.json"
 )
+
+var logKeywordCollectorJobs []*logKeywordCollector
 
 func init() {
 	registerCollector("log_monitor", defaultEnabled, NewLogMonitorCollector)
@@ -44,7 +43,7 @@ func NewLogMonitorCollector(logger log.Logger) (Collector, error) {
 }
 
 func (c *logMonitorCollector) Update(ch chan<- prometheus.Metric) error {
-	for _, v := range logCollectorJobs {
+	for _, v := range logKeywordCollectorJobs {
 		for _, vv := range v.get() {
 			ch <- prometheus.MustNewConstMetric(c.logMonitor,
 				prometheus.GaugeValue,
@@ -54,34 +53,10 @@ func (c *logMonitorCollector) Update(ch chan<- prometheus.Metric) error {
 	return nil
 }
 
-type logKeywordFetchObj struct {
-	Index   float64 `json:"index"`
-	Content string  `json:"content"`
-}
-
-type logKeywordObj struct {
-	Keyword  string
-	RegExp   *pcre.Regexp
-	Count    float64
-	FetchRow []logKeywordFetchObj
-}
-
-type logCollectorObj struct {
-	Path        string
-	Rule        []*logKeywordObj
-	TailSession *tail.Tail
-	Lock        *sync.RWMutex
-}
-
 type logMetricObj struct {
 	Path    string
 	Keyword string
 	Value   float64
-}
-
-type logHttpDto struct {
-	Path     string   `json:"path"`
-	Keywords []string `json:"keywords"`
 }
 
 type logRowsHttpDto struct {
@@ -91,20 +66,33 @@ type logRowsHttpDto struct {
 	LastValue float64 `json:"last_value"`
 }
 
-type logRowsHttpResult struct {
-	Status  string               `json:"status"`
-	Message string               `json:"message"`
-	Data    []logKeywordFetchObj `json:"data"`
+type logKeywordFetchObj struct {
+	Index   float64 `json:"index"`
+	Content string  `json:"content"`
 }
 
-var logCollectorJobs []*logCollectorObj
+type logKeywordObj struct {
+	Keyword      string
+	RegExp       *pcre.Regexp
+	Count        float64
+	LastMatchRow string
+}
 
-func (c *logCollectorObj) update(rule []*logKeywordObj) {
+type logKeywordCollector struct {
+	Path        string
+	Rule        []*logKeywordObj
+	TailSession *tail.Tail
+	Lock        *sync.RWMutex
+}
+
+func (c *logKeywordCollector) update(rule []*logKeywordObj) {
 	c.Lock.Lock()
-	for _, v := range rule {
-		for _, vv := range c.Rule {
-			if v.Keyword == vv.Keyword {
-				v.Count = vv.Count
+	for _, inputRule := range rule {
+		for _, existRule := range c.Rule {
+			if inputRule.Keyword == existRule.Keyword {
+				inputRule.Count = existRule.Count
+				inputRule.LastMatchRow = existRule.LastMatchRow
+				break
 			}
 		}
 	}
@@ -112,12 +100,12 @@ func (c *logCollectorObj) update(rule []*logKeywordObj) {
 	c.Lock.Unlock()
 }
 
-func (c *logCollectorObj) start() {
-	level.Info(monitorLogger).Log("start", c.Path)
+func (c *logKeywordCollector) start() {
+	level.Info(monitorLogger).Log("logKeywordCollectorStart", c.Path)
 	var err error
 	c.TailSession, err = tail.TailFile(c.Path, tail.Config{Follow: true, ReOpen: true})
 	if err != nil {
-		level.Error(monitorLogger).Log("msg", fmt.Sprintf("start log collector fail, path: %s, error: %v", c.Path, err))
+		level.Error(monitorLogger).Log("error", fmt.Sprintf("start log keyword collector fail, path: %s, error: %v", c.Path, err))
 		return
 	}
 	firstFlag := true
@@ -132,16 +120,16 @@ func (c *logCollectorObj) start() {
 		}
 		c.Lock.Lock()
 		for _, v := range c.Rule {
-			level.Info(monitorLogger).Log("rule", fmt.Sprintf("k:%s regExp:%v ", v.Keyword, v.RegExp))
+			level.Info(monitorLogger).Log("rule", fmt.Sprintf("k:%s ", v.Keyword))
 			if v.RegExp != nil {
 				if len(v.RegExp.FindIndex([]byte(line.Text), 0)) > 0 {
 					v.Count++
-					v.FetchRow = append(v.FetchRow, logKeywordFetchObj{Content: line.Text, Index: v.Count})
+					v.LastMatchRow = line.Text
 				}
 			} else {
 				if strings.Contains(line.Text, v.Keyword) {
 					v.Count++
-					v.FetchRow = append(v.FetchRow, logKeywordFetchObj{Content: line.Text, Index: v.Count})
+					v.LastMatchRow = line.Text
 				}
 			}
 		}
@@ -149,165 +137,191 @@ func (c *logCollectorObj) start() {
 	}
 }
 
-func (c *logCollectorObj) destroy() {
+func (c *logKeywordCollector) destroy() {
+	c.Lock.Lock()
 	c.TailSession.Stop()
 	c.Rule = []*logKeywordObj{}
+	c.Lock.Unlock()
 }
 
-func (c *logCollectorObj) get() []logMetricObj {
-	var data []logMetricObj
+func (c *logKeywordCollector) get() (data []*logMetricObj) {
 	c.Lock.RLock()
 	for _, v := range c.Rule {
-		data = append(data, logMetricObj{Path: c.Path, Keyword: v.Keyword, Value: v.Count})
+		data = append(data, &logMetricObj{Path: c.Path, Keyword: v.Keyword, Value: v.Count})
 	}
 	c.Lock.RUnlock()
 	return data
 }
 
-func (c *logCollectorObj) getRows(keyword string, value, lastValue float64) []logKeywordFetchObj {
-	var data []logKeywordFetchObj
-	//nowTimestamp := time.Now().Unix()
+func (c *logKeywordCollector) getRows(keyword string) (data []*logKeywordFetchObj) {
+	data = []*logKeywordFetchObj{}
 	c.Lock.RLock()
 	for _, v := range c.Rule {
 		if v.Keyword == keyword {
-			if len(v.FetchRow) == 0 {
-				continue
-			}
-			data = append(data, logKeywordFetchObj{Content: v.FetchRow[len(v.FetchRow)-1].Content})
+			data = append(data, &logKeywordFetchObj{Content: v.LastMatchRow, Index: v.Count})
+			break
 		}
 	}
 	c.Lock.RUnlock()
 	return data
 }
 
-type logCollectorStore struct {
-	Data []*logCollectorStoreObj
+type logKeywordHttpRuleObj struct {
+	RegularEnable bool    `json:"regular_enable"`
+	Keyword       string  `json:"keyword"`
+	Count         float64 `json:"count"`
 }
 
-type logCollectorStoreObj struct {
-	Path string
-	Rule []*logKeywordObj
+type logKeywordHttpDto struct {
+	Path     string                   `json:"path"`
+	Keywords []*logKeywordHttpRuleObj `json:"keywords"`
 }
 
-func (c *logCollectorStore) Save() {
-	c.Data = []*logCollectorStoreObj{}
-	for _, v := range logCollectorJobs {
-		lmo := v.get()
-		if len(lmo) == 0 {
-			continue
+type logKeywordHttpResult struct {
+	Status  string                `json:"status"`
+	Message string                `json:"message"`
+	Data    []*logKeywordFetchObj `json:"data"`
+}
+
+func LogKeywordHttpHandle(w http.ResponseWriter, r *http.Request) {
+	var err error
+	defer func(returnErr error) {
+		logMetricHttpLock.Unlock()
+		responseObj := logKeywordHttpResult{Status: "OK", Message: "success"}
+		if returnErr != nil {
+			returnErr = fmt.Errorf("Handel log keyword monitor http request fail,%s ", returnErr.Error())
+			responseObj = logKeywordHttpResult{Status: "ERROR", Message: returnErr.Error()}
+			level.Error(monitorLogger).Log("error", returnErr.Error())
 		}
-		tmpLogStoreObj := logCollectorStoreObj{Path: lmo[0].Path}
-		tmpRule := []*logKeywordObj{}
-		for _, vv := range lmo {
-			tmpRule = append(tmpRule, &logKeywordObj{Keyword: vv.Keyword, Count: vv.Value})
-		}
-		tmpLogStoreObj.Rule = tmpRule
-		c.Data = append(c.Data, &tmpLogStoreObj)
-	}
-	var tmpBuffer bytes.Buffer
-	enc := gob.NewEncoder(&tmpBuffer)
-	err := enc.Encode(c.Data)
+		b, _ := json.Marshal(responseObj)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write(b)
+	}(err)
+	var requestParamBuff []byte
+	requestParamBuff, err = ioutil.ReadAll(r.Body)
 	if err != nil {
-		level.Error(monitorLogger).Log("msg", fmt.Sprintf("gob encode log monitor error : %v ", err))
-	} else {
-		ioutil.WriteFile(logMonitorFilePath, tmpBuffer.Bytes(), 0644)
-		level.Info(monitorLogger).Log("msg", fmt.Sprintf("write %s succeed ", logMonitorFilePath))
-	}
-}
-
-func (c *logCollectorStore) Load() {
-	file, err := os.Open(logMonitorFilePath)
-	if err != nil {
-		level.Info(monitorLogger).Log("msg", fmt.Sprintf("read %s file error %v ", logMonitorFilePath, err))
-	} else {
-		dec := gob.NewDecoder(file)
-		err = dec.Decode(&c.Data)
-		if err != nil {
-			level.Error(monitorLogger).Log("msg", fmt.Sprintf("gob decode %s error %v ", logMonitorFilePath, err))
-		} else {
-			level.Info(monitorLogger).Log("msg", fmt.Sprintf("load %s file succeed ", logMonitorFilePath))
-		}
-	}
-	for _, v := range c.Data {
-		lco := logCollectorObj{Path: v.Path}
-		lco.Lock = new(sync.RWMutex)
-		lco.Rule = v.Rule
-		logCollectorJobs = append(logCollectorJobs, &lco)
-		go lco.start()
-	}
-}
-
-var LogCollectorStore logCollectorStore
-
-func LogMonitorHttpHandle(w http.ResponseWriter, r *http.Request) {
-	buff, err := ioutil.ReadAll(r.Body)
-	var errorMsg string
-	if err != nil {
-		errorMsg = fmt.Sprintf("Handel log monitor http request fail,read body error: %v ", err)
-		level.Error(monitorLogger).Log("msg", errorMsg)
-		w.Write([]byte(errorMsg))
 		return
 	}
-	level.Info(monitorLogger).Log("config", string(buff))
-	var param []logHttpDto
-	err = json.Unmarshal(buff, &param)
+	err = logKeywordHttpAction(requestParamBuff)
+	if err == nil {
+		logKeywordSaveConfig(requestParamBuff)
+	}
+}
+
+func logKeywordHttpAction(requestParamBuff []byte) (err error) {
+	var param []*logKeywordHttpDto
+	err = json.Unmarshal(requestParamBuff, &param)
 	if err != nil {
-		errorMsg = fmt.Sprintf("Handel log monitor http request fail,json unmarshal error: %v ", err)
-		level.Error(monitorLogger).Log("msg", errorMsg)
-		w.Write([]byte(errorMsg))
 		return
 	}
-	for _, v := range logCollectorJobs {
+	var newCollectorList []*logKeywordCollector
+	var removePathList []string
+	for _, existCollector := range logKeywordCollectorJobs {
 		exist := false
-		for _, vv := range param {
-			if v.Path == vv.Path {
+		for _, inputParam := range param {
+			if existCollector.Path == inputParam.Path {
+				// Update collector
 				exist = true
-				var tmp []*logKeywordObj
-				for _, vvv := range vv.Keywords {
-					//tmpRegExp,_ := regexp.Compile("("+vvv+")")
-					tmpRegExp, tmpRegErr := pcre.Compile(vvv, 0)
-					if tmpRegErr != nil {
-						level.Error(monitorLogger).Log("reg compile error", fmt.Sprintf("%v", tmpRegErr))
+				var tmpKeywordList []*logKeywordObj
+				for _, inputKeyword := range inputParam.Keywords {
+					if inputKeyword.RegularEnable {
+						tmpRegExp, tmpRegErr := pcre.Compile(inputKeyword.Keyword, 0)
+						if tmpRegErr != nil {
+							err = fmt.Errorf("path:%s pcre regexp compile %s fail:%s", inputParam.Path, inputKeyword.Keyword, tmpRegErr.String())
+							continue
+						}
+						tmpKeywordList = append(tmpKeywordList, &logKeywordObj{Keyword: inputKeyword.Keyword, RegExp: &tmpRegExp})
+					} else {
+						tmpKeywordList = append(tmpKeywordList, &logKeywordObj{Keyword: inputKeyword.Keyword})
 					}
-					tmp = append(tmp, &logKeywordObj{Keyword: vvv, RegExp: &tmpRegExp})
 				}
-				v.update(tmp)
+				existCollector.update(tmpKeywordList)
 			}
 		}
 		if !exist {
-			v.destroy()
+			// Remove collector
+			existCollector.destroy()
+			removePathList = append(removePathList, existCollector.Path)
 		}
 	}
-	for _, v := range param {
+	if err != nil {
+		return
+	}
+	if len(removePathList) > 0 {
+		for _, collector := range logKeywordCollectorJobs {
+			deleteFlag := false
+			for _, v := range removePathList {
+				if collector.Path == v {
+					deleteFlag = true
+					break
+				}
+			}
+			if !deleteFlag {
+				newCollectorList = append(newCollectorList, collector)
+			}
+		}
+		logKeywordCollectorJobs = newCollectorList
+	}
+	for _, inputParam := range param {
 		exist := false
-		for _, vv := range logCollectorJobs {
-			if v.Path == vv.Path {
+		for _, existCollector := range logKeywordCollectorJobs {
+			if inputParam.Path == existCollector.Path {
 				exist = true
 				break
 			}
 		}
-		if !exist {
-			lco := logCollectorObj{Path: v.Path}
-			lco.Lock = new(sync.RWMutex)
-			var tmp []*logKeywordObj
-			for _, vv := range v.Keywords {
-				//tmpRegExp,_ := regexp.Compile("("+vv+")")
-				tmpRegExp, tmpRegErr := pcre.Compile(vv, 0)
+		if exist {
+			continue
+		}
+		// Add collector
+		newCollector := logKeywordCollector{Path: inputParam.Path}
+		newCollector.Lock = new(sync.RWMutex)
+		var tmpKeywordList []*logKeywordObj
+		for _, inputKeyword := range inputParam.Keywords {
+			if inputKeyword.RegularEnable {
+				tmpRegExp, tmpRegErr := pcre.Compile(inputKeyword.Keyword, 0)
 				if tmpRegErr != nil {
-					level.Error(monitorLogger).Log("reg compile error", fmt.Sprintf("%v", tmpRegErr))
+					err = fmt.Errorf("path:%s pcre regexp compile %s fail:%s", inputParam.Path, inputKeyword.Keyword, tmpRegErr.String())
+					continue
 				}
-				tmp = append(tmp, &logKeywordObj{Keyword: vv, RegExp: &tmpRegExp, Count: 0})
+				tmpKeywordList = append(tmpKeywordList, &logKeywordObj{Keyword: inputKeyword.Keyword, RegExp: &tmpRegExp, Count: inputKeyword.Count})
+			} else {
+				tmpKeywordList = append(tmpKeywordList, &logKeywordObj{Keyword: inputKeyword.Keyword, Count: inputKeyword.Count})
 			}
-			lco.Rule = tmp
-			logCollectorJobs = append(logCollectorJobs, &lco)
-			go lco.start()
+		}
+		newCollector.Rule = tmpKeywordList
+		logKeywordCollectorJobs = append(logKeywordCollectorJobs, &newCollector)
+		go newCollector.start()
+	}
+	return err
+}
+
+func logKeywordSaveConfig(requestParamBuff []byte) {
+	err := ioutil.WriteFile(logMonitorFilePath, requestParamBuff, 0644)
+	if err != nil {
+		level.Error(monitorLogger).Log("logKeywordSaveConfig", err.Error())
+	} else {
+		level.Info(monitorLogger).Log("logKeywordSaveConfig", "success")
+	}
+}
+
+func LogKeyWordLoadConfig() {
+	b, err := ioutil.ReadFile(logMonitorFilePath)
+	if err != nil {
+		level.Error(monitorLogger).Log("logKeywordLoadConfig", err.Error())
+	} else {
+		err = logKeywordHttpAction(b)
+		if err != nil {
+			level.Error(monitorLogger).Log("logKeywordLoadConfigAction", err.Error())
+		} else {
+			level.Info(monitorLogger).Log("logKeywordLoadConfig", "success")
 		}
 	}
-	w.Write([]byte("success"))
 }
 
 func LogMonitorRowsHttpHandle(w http.ResponseWriter, r *http.Request) {
-	var result logRowsHttpResult
+	var result logKeywordHttpResult
 	defer func() {
 		w.Header().Set("Content-Type", "application/json")
 		d, _ := json.Marshal(result)
@@ -332,9 +346,10 @@ func LogMonitorRowsHttpHandle(w http.ResponseWriter, r *http.Request) {
 		result.Message = errorMsg
 		return
 	}
-	for _, v := range logCollectorJobs {
+	for _, v := range logKeywordCollectorJobs {
 		if v.Path == param.Path {
-			result.Data = v.getRows(param.Keyword, param.Value, param.LastValue)
+			result.Data = v.getRows(param.Keyword)
+			break
 		}
 	}
 	result.Status = "ok"

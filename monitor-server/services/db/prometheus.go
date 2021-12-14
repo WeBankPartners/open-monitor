@@ -87,20 +87,38 @@ func initPrometheusRuleConfig() {
 }
 
 func QueryExporterMetric(param models.QueryPrometheusMetricParam) (err error, result []string) {
-	if param.Cluster == "" || param.Cluster == "default" {
-		err, result = prom.GetEndpointData(param)
-		return
+	log.Logger.Info("QueryExporterMetric", log.JsonObj("param", param))
+	if !param.IsConfigQuery {
+		if param.Cluster == "" || param.Cluster == "default" {
+			err, result = prom.GetEndpointData(param)
+			return
+		}
 	}
 	clusterAddress := GetClusterAddress(param.Cluster)
 	if clusterAddress == "" {
 		err = fmt.Errorf("Can not find cluster address with cluster:%s ", param.Cluster)
 		return
 	}
+	var metricList,tmpMetricList []string
+	var queryPromQl string
 	nowTime := time.Now().Unix()
-	metricList, queryErr := datasource.QueryPromQLMetric(fmt.Sprintf("{instance=\"%s:%s\"}", param.Ip, param.Port), clusterAddress, nowTime-120, nowTime)
-	if queryErr != nil {
-		err = fmt.Errorf("Try to query remote cluster data fail,%s ", queryErr.Error())
+	if param.TargetGuid != "" {
+		queryPromQl = fmt.Sprintf("{t_guid=\"%s\"}", param.TargetGuid)
+		tmpMetricList, err = datasource.QueryPromQLMetric(queryPromQl, clusterAddress, nowTime-120, nowTime)
+		if err != nil {
+			log.Logger.Error("Try go get tGuid fail", log.String("tGuid", param.TargetGuid), log.Error(err))
+		}else{
+			log.Logger.Info("tGuid tmpMetricList", log.StringList("tmpMetricList", tmpMetricList))
+		}
+	}
+	queryPromQl = fmt.Sprintf("{instance=\"%s:%s\"}", param.Ip, param.Port)
+	metricList, err = datasource.QueryPromQLMetric(queryPromQl, clusterAddress, nowTime-120, nowTime)
+	if err != nil {
+		err = fmt.Errorf("Try to query remote cluster data fail,%s ", err.Error())
 		return
+	}
+	if len(tmpMetricList) > 0 {
+		metricList = append(metricList, tmpMetricList...)
 	}
 	metricMap := make(map[string]int)
 	prefixLen := len(param.Prefix)
