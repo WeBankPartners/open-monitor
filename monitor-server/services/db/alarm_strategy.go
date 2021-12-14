@@ -442,7 +442,16 @@ func NotifyStrategyAlarm(alarmObj *models.AlarmHandleObj) {
 		return
 	}
 	if len(notifyTable) == 0 {
-		x.SQL("select * from notify where alarm_action=? and endpoint_group in (select endpoint_group from alarm_strategy where guid=?) or service_group in (select service_group from endpoint_service_rel where endpoint=?)", alarmObj.Status, alarmObj.AlarmStrategy, alarmObj.Endpoint).Find(&notifyTable)
+		var affectServiceGroupList []string
+		var serviceGroup []*models.EndpointServiceRelTable
+		x.SQL("select distinct service_group from endpoint_service_rel where endpoint=?", alarmObj.Endpoint).Find(&serviceGroup)
+		for _,v := range serviceGroup {
+			tmpGuidList,_ := fetchGlobalServiceGroupParentGuidList(v.ServiceGroup)
+			for _,vv := range tmpGuidList {
+				affectServiceGroupList = append(affectServiceGroupList, vv)
+			}
+		}
+		x.SQL("select * from notify where alarm_action=? and endpoint_group in (select endpoint_group from alarm_strategy where guid=?) or service_group in ('"+strings.Join(affectServiceGroupList,"','")+"')", alarmObj.Status, alarmObj.AlarmStrategy).Find(&notifyTable)
 	}
 	if len(notifyTable) == 0 {
 		return
