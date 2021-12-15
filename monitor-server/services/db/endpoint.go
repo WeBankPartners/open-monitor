@@ -5,6 +5,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"strings"
+	"time"
 )
 
 func GetEndpointTypeList() (result []string, err error) {
@@ -147,4 +148,12 @@ func UpdateAgentManager(param *models.AgentManagerTable) error {
 		err = fmt.Errorf("Update agent manager fail,%s ", err.Error())
 	}
 	return err
+}
+
+func UpdateEndpointData(endpoint *models.EndpointNewTable) (err error) {
+	_,err = x.Exec("update endpoint_new set agent_address=?,step=?,endpoint_address=?,extend_param=?,update_time=? where guid=?", endpoint.AgentAddress,endpoint.Step,endpoint.EndpointAddress,endpoint.ExtendParam,time.Now().Format(models.DatetimeFormat),endpoint.Guid)
+	if err != nil {
+		err = fmt.Errorf("Update endpoint table failj,%s ", err.Error())
+	}
+	return
 }
