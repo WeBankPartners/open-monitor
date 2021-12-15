@@ -36,7 +36,7 @@ func NewLogMonitorCollector(logger log.Logger) (Collector, error) {
 		logMonitor: prometheus.NewDesc(
 			prometheus.BuildFQName(namespace, logMonitorCollectorName, "count_total"),
 			"Count the keyword from log file.",
-			[]string{"file", "keyword"}, nil,
+			[]string{"file", "keyword", "t_guid"}, nil,
 		),
 		logger: logger,
 	}, nil
@@ -47,16 +47,17 @@ func (c *logMonitorCollector) Update(ch chan<- prometheus.Metric) error {
 		for _, vv := range v.get() {
 			ch <- prometheus.MustNewConstMetric(c.logMonitor,
 				prometheus.GaugeValue,
-				vv.Value, vv.Path, vv.Keyword)
+				vv.Value, vv.Path, vv.Keyword, vv.TargetEndpoint)
 		}
 	}
 	return nil
 }
 
 type logMetricObj struct {
-	Path    string
-	Keyword string
-	Value   float64
+	Path           string
+	Keyword        string
+	TargetEndpoint string
+	Value          float64
 }
 
 type logRowsHttpDto struct {
@@ -72,10 +73,11 @@ type logKeywordFetchObj struct {
 }
 
 type logKeywordObj struct {
-	Keyword      string
-	RegExp       *pcre.Regexp
-	Count        float64
-	LastMatchRow string
+	Keyword        string
+	RegExp         *pcre.Regexp
+	Count          float64
+	LastMatchRow   string
+	TargetEndpoint string
 }
 
 type logKeywordCollector struct {
@@ -147,7 +149,7 @@ func (c *logKeywordCollector) destroy() {
 func (c *logKeywordCollector) get() (data []*logMetricObj) {
 	c.Lock.RLock()
 	for _, v := range c.Rule {
-		data = append(data, &logMetricObj{Path: c.Path, Keyword: v.Keyword, Value: v.Count})
+		data = append(data, &logMetricObj{Path: c.Path, Keyword: v.Keyword, Value: v.Count, TargetEndpoint: v.TargetEndpoint})
 	}
 	c.Lock.RUnlock()
 	return data
@@ -167,9 +169,10 @@ func (c *logKeywordCollector) getRows(keyword string) (data []*logKeywordFetchOb
 }
 
 type logKeywordHttpRuleObj struct {
-	RegularEnable bool    `json:"regular_enable"`
-	Keyword       string  `json:"keyword"`
-	Count         float64 `json:"count"`
+	RegularEnable  bool    `json:"regular_enable"`
+	Keyword        string  `json:"keyword"`
+	Count          float64 `json:"count"`
+	TargetEndpoint string  `json:"target_endpoint"`
 }
 
 type logKeywordHttpDto struct {
@@ -231,9 +234,9 @@ func logKeywordHttpAction(requestParamBuff []byte) (err error) {
 							err = fmt.Errorf("path:%s pcre regexp compile %s fail:%s", inputParam.Path, inputKeyword.Keyword, tmpRegErr.String())
 							continue
 						}
-						tmpKeywordList = append(tmpKeywordList, &logKeywordObj{Keyword: inputKeyword.Keyword, RegExp: &tmpRegExp})
+						tmpKeywordList = append(tmpKeywordList, &logKeywordObj{Keyword: inputKeyword.Keyword, RegExp: &tmpRegExp, TargetEndpoint: inputKeyword.TargetEndpoint})
 					} else {
-						tmpKeywordList = append(tmpKeywordList, &logKeywordObj{Keyword: inputKeyword.Keyword})
+						tmpKeywordList = append(tmpKeywordList, &logKeywordObj{Keyword: inputKeyword.Keyword, TargetEndpoint: inputKeyword.TargetEndpoint})
 					}
 				}
 				existCollector.update(tmpKeywordList)
@@ -285,9 +288,9 @@ func logKeywordHttpAction(requestParamBuff []byte) (err error) {
 					err = fmt.Errorf("path:%s pcre regexp compile %s fail:%s", inputParam.Path, inputKeyword.Keyword, tmpRegErr.String())
 					continue
 				}
-				tmpKeywordList = append(tmpKeywordList, &logKeywordObj{Keyword: inputKeyword.Keyword, RegExp: &tmpRegExp, Count: inputKeyword.Count})
+				tmpKeywordList = append(tmpKeywordList, &logKeywordObj{Keyword: inputKeyword.Keyword, RegExp: &tmpRegExp, Count: inputKeyword.Count, TargetEndpoint: inputKeyword.TargetEndpoint})
 			} else {
-				tmpKeywordList = append(tmpKeywordList, &logKeywordObj{Keyword: inputKeyword.Keyword, Count: inputKeyword.Count})
+				tmpKeywordList = append(tmpKeywordList, &logKeywordObj{Keyword: inputKeyword.Keyword, Count: inputKeyword.Count, TargetEndpoint: inputKeyword.TargetEndpoint})
 			}
 		}
 		newCollector.Rule = tmpKeywordList
