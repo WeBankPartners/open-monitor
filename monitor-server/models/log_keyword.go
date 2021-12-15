@@ -38,3 +38,12 @@ type LogKeywordMonitorObj struct {
 	KeywordList []*LogKeywordConfigTable `json:"keyword_list"`
 	EndpointRel []*LogKeywordEndpointRelTable `json:"endpoint_rel"`
 }
+
+type LogKeywordMonitorCreateObj struct {
+	Guid string `json:"guid"`
+	ServiceGroup string `json:"service_group"`
+	LogPath []string `json:"log_path"`
+	MonitorType string `json:"monitor_type"`
+	KeywordList []*LogKeywordConfigTable `json:"keyword_list"`
+	EndpointRel []*LogKeywordEndpointRelTable `json:"endpoint_rel"`
+}

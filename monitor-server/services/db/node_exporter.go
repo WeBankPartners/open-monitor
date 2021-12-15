@@ -11,7 +11,7 @@ import (
 	"strconv"
 )
 
-func UpdateNodeExportConfig(endpoints []string) error {
+func SyncLogMetricExporterConfig(endpoints []string) error {
 	log.Logger.Info("UpdateNodeExportConfig", log.StringList("endpoints", endpoints))
 	var err error
 	existMap := make(map[string]int)
@@ -111,4 +111,8 @@ func transLogMetricConfigToJob(logMetricConfig []*models.LogMetricQueryObj, endp
 		}
 	}
 	return syncParam
+}
+
+func SyncLogKeywordExporterConfig(endpoints []string) error {
+	return nil
 }
