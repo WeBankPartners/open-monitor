@@ -361,6 +361,13 @@ export default {
       })
       await this.getAllRole()
       await this.getWorkFlow()
+      this.modelConfig.addRow = {
+        metric: null,
+        content: null,
+        notify_enable: 1,
+        notify_delay_second: 0,
+        notify: []
+      }
       this.modelConfig.isAdd = true
       this.$root.JQ('#add_edit_Modal').modal('show')
     },
