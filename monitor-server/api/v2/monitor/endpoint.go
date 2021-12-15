@@ -129,11 +129,14 @@ func UpdateEndpoint(c *gin.Context)  {
 		return
 	}
 	if newEndpoint.Guid == "" {
-		// no change
-		return
+		if endpointObj.Step == param.Step {
+			// no change
+			return
+		}else{
+			newEndpoint = models.EndpointNewTable{Guid: endpointObj.Guid,AgentAddress: endpointObj.AgentAddress,EndpointAddress: endpointObj.EndpointAddress,Step: param.Step,ExtendParam: endpointObj.ExtendParam}
+		}
 	}
 	log.Logger.Info("new endpoint", log.JsonObj("endpoint", newEndpoint))
-	newEndpoint.Step = param.Step
 	// update endpoint table
 	err = db.UpdateEndpointData(&newEndpoint)
 	if err != nil {
