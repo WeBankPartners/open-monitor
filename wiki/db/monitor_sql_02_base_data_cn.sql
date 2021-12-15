@@ -576,4 +576,34 @@ CREATE TABLE `service_group_role_rel` (
   CONSTRAINT `service_role_s` FOREIGN KEY (`service_group`) REFERENCES `service_group` (`guid`),
   CONSTRAINT `service_role_r` FOREIGN KEY (`role`) REFERENCES `role_new` (`guid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `log_keyword_monitor` (
+  `guid` varchar(64) NOT NULL PRIMARY KEY,
+  `service_group` varchar(64) NOT NULL,
+  `log_path` varchar(255) NOT NULL,
+  `monitor_type` varchar(32) NOT NULL,
+  `update_time` varchar(32),
+  CONSTRAINT `log_keyword_monitor_type` FOREIGN KEY (`monitor_type`) REFERENCES `monitor_type` (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `log_keyword_config` (
+  `guid` varchar(64) NOT NULL PRIMARY KEY,
+  `log_keyword_monitor` varchar(64) NOT NULL,
+  `keyword` varchar(255) NOT NULL,
+  `regulative` tinyint default 0,
+  `notify_enable` tinyint default 1,
+  `priority` varchar(16) default 'low',
+  `update_time` varchar(32),
+  CONSTRAINT `log_keyword_config_monitor` FOREIGN KEY (`log_keyword_monitor`) REFERENCES `log_keyword_monitor` (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `log_keyword_endpoint_rel` (
+  `guid` varchar(64) NOT NULL PRIMARY KEY,
+  `log_keyword_monitor` varchar(64) NOT NULL,
+  `source_endpoint` varchar(128),
+  `target_endpoint` varchar(128),
+  CONSTRAINT `log_keyword_endpoint_monitor` FOREIGN KEY (`log_keyword_monitor`) REFERENCES `log_keyword_monitor` (`guid`),
+  CONSTRAINT `log_keyword_endpoint_source` FOREIGN KEY (`source_endpoint`) REFERENCES `endpoint_new` (`guid`),
+  CONSTRAINT `log_keyword_endpoint_target` FOREIGN KEY (`target_endpoint`) REFERENCES `endpoint_new` (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 #@v1.13.0.24-end@;

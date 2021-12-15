@@ -8,6 +8,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"reflect"
 	"strings"
 )
 
@@ -21,10 +22,10 @@ type panelRequestObj struct {
 	Guid              string `json:"guid"`
 	DisplayName       string `json:"display_name"`
 	Parent            string `json:"parent"`
-	Endpoint          string `json:"endpoint"`
+	Endpoint          interface{} `json:"endpoint"`
 	Email             string `json:"email"`
 	Phone             string `json:"phone"`
-	Role              string `json:"role"`
+	Role              interface{} `json:"role"`
 	FiringCallback    string `json:"firing_callback"`
 	RecoverCallback   string `json:"recover_callback"`
 	Type              string `json:"type"`
@@ -47,14 +48,13 @@ func ExportPanelAdd(c *gin.Context) {
 		errorMessage := "Done"
 		for _, v := range param.Inputs {
 			var tmpMessage string
-			v.Endpoint = trimListString(v.Endpoint)
 			v.Parent = trimListString(v.Parent)
 			v.Email = trimListString(v.Email)
 			v.Phone = trimListString(v.Phone)
-			v.Role = trimListString(v.Role)
-			tmpEndpoint := strings.Split(v.Endpoint, ",")
+			inputRoleList := transMultiStringParam(v.Role)
+			tmpEndpoint := transMultiStringParam(v.Endpoint)
 			tmpParent := strings.Split(v.Parent, ",")
-			checkRoleErr := db.CheckRoleIllegal(v.Role, roleMap)
+			checkRoleErr := db.CheckRoleIllegal(inputRoleList, roleMap)
 			if checkRoleErr != nil {
 				tmpMessage = checkRoleErr.Error()
 			}
@@ -102,7 +102,7 @@ func ExportPanelAdd(c *gin.Context) {
 				successFlag = "1"
 				continue
 			}
-			err := db.UpdateRecursivePanel(m.PanelRecursiveTable{Guid: v.Guid, DisplayName: v.DisplayName, Parent: strings.Join(tmpParent, "^"), Endpoint: strings.Join(endpointStringList, "^"), Email: v.Email, Phone: v.Phone, Role: v.Role, FiringCallbackKey: v.FiringCallback, RecoverCallbackKey: v.RecoverCallback, ObjType: v.Type})
+			err := db.UpdateRecursivePanel(m.PanelRecursiveTable{Guid: v.Guid, DisplayName: v.DisplayName, Parent: strings.Join(tmpParent, "^"), Endpoint: strings.Join(endpointStringList, "^"), Email: v.Email, Phone: v.Phone, Role: strings.Join(inputRoleList,","), FiringCallbackKey: v.FiringCallback, RecoverCallbackKey: v.RecoverCallback, ObjType: v.Type})
 			if err != nil {
 				tmpMessage = fmt.Sprintf(mid.GetMessageMap(c).UpdateTableError, "recursive_panel")
 				errorMessage = tmpMessage
@@ -130,6 +130,32 @@ func trimListString(input string) string {
 		input = input[:len(input)-1]
 	}
 	return input
+}
+
+func transMultiStringParam(input interface{}) []string {
+	var result []string
+	rn := reflect.TypeOf(input).String()
+	if rn == "[]string" {
+		for _,v := range input.([]string) {
+			if v != "" {
+				result = append(result, v)
+			}
+		}
+	}else{
+		tmpString := fmt.Sprintf("%s", input)
+		if strings.HasPrefix(tmpString, "[") {
+			tmpString = tmpString[1:]
+		}
+		if strings.HasSuffix(tmpString, "]") {
+			tmpString = tmpString[:len(tmpString)-1]
+		}
+		for _,v := range strings.Split(tmpString, ",") {
+			if v != "" {
+				result = append(result, v)
+			}
+		}
+	}
+	return result
 }
 
 func GetPanelRecursive(c *gin.Context) {
@@ -182,8 +208,7 @@ func ExportPanelDelete(c *gin.Context) {
 			if strings.ToLower(v.DeleteAll) == "y" || strings.ToLower(v.DeleteAll) == "yes" {
 				cErr = db.DeleteRecursivePanel(v.Guid)
 			} else {
-				v.Endpoint = trimListString(v.Endpoint)
-				tmpEndpoint := strings.Split(v.Endpoint, ",")
+				tmpEndpoint := transMultiStringParam(v.Endpoint)
 				var endpointStringList []string
 				for _, vv := range tmpEndpoint {
 					if vv == "" {
