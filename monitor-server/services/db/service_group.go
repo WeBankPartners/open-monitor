@@ -417,7 +417,7 @@ func UpdateLogMetricConfigAction(logMonitor *models.LogMetricMonitorTable, endpo
 	if len(actions) > 0 {
 		err := Transaction(actions)
 		if err == nil {
-			err = UpdateNodeExportConfig(updateHostEndpointList)
+			err = SyncLogMetricExporterConfig(updateHostEndpointList)
 			if err != nil {
 				log.Logger.Error("UpdateNodeExportConfig fail", log.String("logMetricMonitor", logMonitor.Guid), log.Error(err))
 			}
