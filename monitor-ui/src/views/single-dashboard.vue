@@ -192,7 +192,8 @@ export default {
       let tmp = []
       this.viewData.forEach((item) => {
         let params = {
-          aggregate: 'none',
+          aggregate: item.aggregate,
+          lineType: item.lineType,
           time_second: this.viewCondition.timeTnterval,
           start: this.dateToTimestamp(this.viewCondition.dateRange[0]),
           end: this.dateToTimestamp(this.viewCondition.dateRange[1]),
