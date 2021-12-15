@@ -19,7 +19,9 @@ export const readyToDraw = function(that, responseData, viewIndex, chartConfig, 
     return
   }
   let metricToColor = []
+  var lineType = 1
   if (chartConfig.params) {
+    lineType = chartConfig.params.lineType
     chartConfig.params.data.forEach(item => {
       metricToColor = metricToColor.concat(item.metricToColor)
     })
@@ -52,19 +54,20 @@ export const readyToDraw = function(that, responseData, viewIndex, chartConfig, 
     item.itemStyle = {
       normal:{
         color: color
-        // color: colorSet[index] ? colorSet[index] : '#666699'
       }
     }
-    item.areaStyle = {
-      normal: {
-        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
-            offset: 0,
-            color: color
-            // color: colorSet[index] ? colorSet[index] : '#666699' 
-        }, {
-            offset: 1,
-            color: 'white'
-        }])
+    item.areaStyle = null
+    if (lineType === 0) {
+      item.areaStyle = {
+        normal: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+              offset: 0,
+              color: color
+          }, {
+              offset: 1,
+              color: 'white'
+          }])
+        }
       }
     }
   }) 
