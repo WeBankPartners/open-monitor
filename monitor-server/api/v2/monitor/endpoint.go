@@ -123,7 +123,7 @@ func UpdateEndpoint(c *gin.Context)  {
 	case "process":
 		newEndpoint,err = processEndpointUpdate(&param,&endpointObj)
 	default:
-		newEndpoint = models.EndpointNewTable{Guid: param.Guid}
+		newEndpoint,err = otherEndpointUpdate(&param, &endpointObj)
 	}
 	if err != nil {
 		return
@@ -133,6 +133,7 @@ func UpdateEndpoint(c *gin.Context)  {
 		return
 	}
 	log.Logger.Info("new endpoint", log.JsonObj("endpoint", newEndpoint))
+	newEndpoint.Step = param.Step
 	// update endpoint table
 	err = db.UpdateEndpointData(&newEndpoint)
 	if err != nil {
@@ -270,6 +271,18 @@ func httpEndpointUpdate(param *models.RegisterParamNew,endpoint *models.Endpoint
 }
 
 func snmpEndpointUpdate(param *models.RegisterParamNew,endpoint *models.EndpointNewTable) (newEndpoint models.EndpointNewTable,err error) {
+	return
+}
+
+func otherEndpointUpdate(param *models.RegisterParamNew,endpoint *models.EndpointNewTable) (newEndpoint models.EndpointNewTable,err error) {
+	if strings.Contains(endpoint.AgentAddress, ":") {
+		if param.Port == endpoint.AgentAddress[strings.LastIndex(endpoint.AgentAddress,":")+1:] {
+			return
+		}else{
+			newAddress := fmt.Sprintf("%s:%s", param.Ip, param.Port)
+			newEndpoint = models.EndpointNewTable{Guid: endpoint.Guid, AgentAddress: newAddress,EndpointAddress: newAddress}
+		}
+	}
 	return
 }
 
