@@ -134,7 +134,10 @@ func UpdateEndpoint(c *gin.Context)  {
 	}
 	log.Logger.Info("new endpoint", log.JsonObj("endpoint", newEndpoint))
 	// update endpoint table
-
+	err = db.UpdateEndpointData(&newEndpoint)
+	if err != nil {
+		return
+	}
 	// update sd file if step change
 	if endpointObj.Step != param.Step || endpointObj.AgentAddress != newEndpoint.AgentAddress {
 		stepList := []int{endpointObj.Step}
@@ -230,11 +233,10 @@ func pingEndpointUpdate(param *models.RegisterParamNew,endpoint *models.Endpoint
 	}
 	if param.ProxyExporter == extParamObj.ProxyExporter {
 		return
-	}else{
-		newExtParamObj := models.EndpointExtendParamObj{Enable: true, ProxyExporter: param.ProxyExporter}
-		b, _ := json.Marshal(newExtParamObj)
-		newEndpoint = models.EndpointNewTable{Guid: endpoint.Guid, EndpointAddress: endpoint.EndpointAddress,AgentAddress: endpoint.AgentAddress,ExtendParam: string(b)}
 	}
+	newExtParamObj := models.EndpointExtendParamObj{Enable: true, ProxyExporter: param.ProxyExporter}
+	b, _ := json.Marshal(newExtParamObj)
+	newEndpoint = models.EndpointNewTable{Guid: endpoint.Guid, EndpointAddress: endpoint.EndpointAddress,AgentAddress: endpoint.AgentAddress,ExtendParam: string(b)}
 	return
 }
 
@@ -253,7 +255,17 @@ func telnetEndpointUpdate(param *models.RegisterParamNew,endpoint *models.Endpoi
 }
 
 func httpEndpointUpdate(param *models.RegisterParamNew,endpoint *models.EndpointNewTable) (newEndpoint models.EndpointNewTable,err error) {
-
+	var extParamObj models.EndpointExtendParamObj
+	err = json.Unmarshal([]byte(endpoint.ExtendParam), &extParamObj)
+	if err != nil {
+		return newEndpoint,fmt.Errorf("json unmarhsal extendParam fail,%s ", err.Error())
+	}
+	if extParamObj.HttpUrl == param.Url && extParamObj.HttpMethod == param.Method {
+		return
+	}
+	newExtParamObj := models.EndpointExtendParamObj{Enable: true, HttpUrl: param.Url, HttpMethod: param.Method}
+	b, _ := json.Marshal(newExtParamObj)
+	newEndpoint = models.EndpointNewTable{Guid: endpoint.Guid, EndpointAddress: endpoint.EndpointAddress,AgentAddress: endpoint.AgentAddress,ExtendParam: string(b)}
 	return
 }
 
