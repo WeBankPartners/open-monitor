@@ -29,6 +29,15 @@
             >{{option.label}}</Option>
           </Select>
         </div>
+        <div class="condition" v-if="templateQuery.chartType === 'line'">
+          <Select filterable class="select-option" v-model="templateQuery.lineType" @on-change="switchChartType">
+            <Option
+              v-for="(option, index) in lineOption"
+              :value="option.value"
+              :key="index"
+            >{{option.label}}</Option>
+          </Select>
+        </div>
         <button class="btn btn-sm btn-confirm-f" @click="saveConfig">{{$t('button.saveConfig')}}</button>
         <button class="btn btn-sm btn-cancel-f" @click="goback()">{{$t('button.cancel')}}</button>
       </div>
@@ -159,6 +168,7 @@ export default {
         endpoint: '',
         metric: '',
         chartType: '',
+        lineType: 1,
         aggregate: '',
         endpoint_type: '',
         app_object: '',
@@ -167,6 +177,10 @@ export default {
       chartTypeOption: [
         {label: '线性图', value: 'line'},
         {label: '柱状图', value: 'bar'}
+      ],
+      lineOption: [
+        {label: '折线图', value: 1},
+        {label: '面积图', value: 0}
       ],
       chartQueryList: [
         // {
@@ -192,6 +206,7 @@ export default {
         this.noDataTip = false
         let params = {
           aggregate: this.templateQuery.aggregate || 'none',
+          lineType: this.templateQuery.lineType,
           time_second: -1800,
           start: 0,
           end: 0,
@@ -285,6 +300,7 @@ export default {
         this.viewData.forEach((itemx, index) => {
           if (itemx.viewConfig.id === params.panal.id) {
             this.templateQuery.chartType = itemx.chartType
+            this.templateQuery.lineType = itemx.lineType || 0
             this.templateQuery.aggregate = itemx.aggregate || 'none'
             this.panalIndex = index
             this.panalData = itemx
@@ -300,6 +316,7 @@ export default {
       }
       let params = {
           aggregate: this.templateQuery.aggregate || 'none',
+          lineType: this.templateQuery.lineType,
           time_second: -1800,
           start: 0,
           end: 0,
@@ -329,6 +346,7 @@ export default {
       this.panalUnit = this.panalData.panalUnit
       let params = {
         aggregate: this.templateQuery.aggregate || 'none',
+        lineType: this.templateQuery.lineType,
         time_second: -1800,
         start: 0,
         end: 0,
@@ -351,7 +369,7 @@ export default {
           'POST',this.$root.apiCenter.metricConfigView.api, params,
           responseData => {
             responseData.yaxis.unit = this.panalUnit
-            readyToDraw(this,responseData, 1, { eye: false, lineBarSwitch: true, chartType: this.templateQuery.chartType})
+            readyToDraw(this,responseData, 1, { eye: false, lineBarSwitch: true, chartType: this.templateQuery.chartType, params: params })
           }
         )
       }
@@ -407,6 +425,7 @@ export default {
         endpoint: '',
         metric: '',
         chartType: tmp.chartType,
+        lineType: tmp.lineType,
         aggregate: tmp.aggregate,
         endpoint_type: '',
         app_object: '',
@@ -444,6 +463,7 @@ export default {
         panalTitle: this.panalTitle,
         panalUnit: this.panalUnit,
         chartType: this.templateQuery.chartType,
+        lineType: this.templateQuery.lineType,
         aggregate: this.templateQuery.aggregate,
         query: query,
         viewConfig: panal
