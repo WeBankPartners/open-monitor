@@ -107,26 +107,26 @@ func SyncRemoteSdConfigFile(cluster string, params []*m.SdConfigSyncObj) error {
 }
 
 func GetSdFileListByStep(step int, cluster string) (result m.ServiceDiscoverFileList, err error) {
-	var endpointTables []*m.EndpointTable
-	err = x.SQL("select guid,address,export_type,address_agent,step,cluster from endpoint where step=? and cluster=?", step, cluster).Find(&endpointTables)
+	if cluster == "" {
+		cluster = "default"
+	}
+	var endpointTables []*m.EndpointNewTable
+	err = x.SQL("select * from endpoint_new where step=? and cluster=?", step, cluster).Find(&endpointTables)
 	if err != nil {
 		err = fmt.Errorf("Try to query endpoint table fail,%s ", err.Error())
 		return
 	}
 	result = m.ServiceDiscoverFileList{}
 	for _, v := range endpointTables {
-		if v.ExportType == "snmp" || v.ExportType == "process" {
+		if v.MonitorType == "snmp" || v.MonitorType == "process" {
 			continue
 		}
-		if v.ExportType == "ping" || v.ExportType == "telnet" || v.ExportType == "http" {
-			if v.AddressAgent == "" {
+		if v.MonitorType == "ping" || v.MonitorType == "telnet" || v.MonitorType == "http" {
+			if v.AgentAddress == "" {
 				continue
 			}
 		}
-		tmpSdFileObj := m.ServiceDiscoverFileObj{Guid: v.Guid, Step: v.Step, Cluster: v.Cluster, Address: v.Address}
-		if v.AddressAgent != "" {
-			tmpSdFileObj.Address = v.AddressAgent
-		}
+		tmpSdFileObj := m.ServiceDiscoverFileObj{Guid: v.Guid, Step: v.Step, Cluster: v.Cluster, Address: v.AgentAddress}
 		log.Logger.Info("add endpoint", log.String("guid", v.Guid))
 		result = append(result, &tmpSdFileObj)
 	}
