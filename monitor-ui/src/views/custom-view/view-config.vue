@@ -292,6 +292,7 @@ export default {
       this.viewData.forEach((item) => {
         let params = {
           aggregate: item.aggregate,
+          lineType: item.lineType,
           time_second: -1800,
           start: 0,
           end: 0,
@@ -310,7 +311,8 @@ export default {
           elId: item.viewConfig.id,
           chartParams: params,
           chartType: item.chartType,
-          aggregate: item.aggregate                                              
+          aggregate: item.aggregate,
+          lineType: item.lineType                                       
         })
         item.viewConfig._activeCharts = _activeCharts
         tmp.push(item.viewConfig)
@@ -434,6 +436,7 @@ export default {
             temp.query = i.query
             temp.chartType = i.chartType
             temp.aggregate = i.aggregate
+            temp.lineType = i.lineType
           }
         })
         resViewData.push(temp)
@@ -454,6 +457,7 @@ export default {
               query: i.query,
               chartType: i.chartType,
               aggregate: i.aggregate,
+              lineType: i.lineType,
               viewConfig: layoutDataItem
             })
           }
