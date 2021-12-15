@@ -592,8 +592,8 @@ func GetRoleMap() (roleMap map[string]string) {
 	return roleMap
 }
 
-func CheckRoleIllegal(roleListString string, roleMap map[string]string) (err error) {
-	for _,v := range strings.Split(roleListString, ",") {
+func CheckRoleIllegal(roleList []string, roleMap map[string]string) (err error) {
+	for _,v := range roleList {
 		if _,b:= roleMap[v];!b {
 			err = fmt.Errorf("role:%s illegal")
 			break

@@ -416,10 +416,8 @@
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">display_name</parameter>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="">parent</parameter>
-                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="">endpoint</parameter>
-                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="">email</parameter>
-                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="">phone</parameter>
-                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="">role</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="" multiple="Y">endpoint</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="" multiple="Y">role</parameter>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_FIRING_CALLBACK">firing_callback</parameter>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_ALARM_RECOVER_CALLBACK">recover_callback</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">type</parameter>
@@ -433,7 +431,7 @@
             <interface action="delete" path="/monitor/api/v1/dashboard/system/delete" filterRule="">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">guid</parameter>
-                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="">endpoint</parameter>
+                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="" multiple="Y">endpoint</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="system_variable" mappingSystemVariableName="MONITOR_DASHBOARD_DELETE_ALL">delete_all</parameter>
                 </inputParameters>
                 <outputParameters>
