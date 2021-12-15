@@ -92,7 +92,7 @@ func UpdateEndpoint(c *gin.Context)  {
 			middleware.ReturnSuccess(c)
 		}
 	}(err)
-	guid := c.Param("guid")
+	guid := param.Guid
 	endpointObj,queryErr := db.GetEndpointNew(&models.EndpointNewTable{Guid: guid})
 	if queryErr != nil {
 		err = queryErr
