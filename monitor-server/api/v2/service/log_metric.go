@@ -13,7 +13,7 @@ func ListLogMetricMonitor(c *gin.Context) {
 	queryType := c.Param("queryType")
 	guid := c.Param("guid")
 	if queryType == "endpoint" {
-		result, err := db.GetLogMetricByEndpoint(guid)
+		result, err := db.GetLogMetricByEndpoint(guid, false)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		} else {
@@ -49,7 +49,7 @@ func CreateLogMetricMonitor(c *gin.Context) {
 	if len(param.LogPath) == 0 {
 		err = fmt.Errorf("Param log_path is empty ")
 	}
-	for _,v := range param.LogPath {
+	for _, v := range param.LogPath {
 		if !strings.HasPrefix(v, "/") {
 			err = fmt.Errorf("Path:%s illegal ", v)
 			break

@@ -30,19 +30,18 @@ func SyncLogMetricExporterConfig(endpoints []string) error {
 }
 
 func updateEndpointLogMetric(endpointGuid string) error {
-	logMetricConfig, err := GetLogMetricByEndpoint(endpointGuid)
+	logMetricConfig, err := GetLogMetricByEndpoint(endpointGuid, true)
 	if err != nil {
 		return fmt.Errorf("Query endpoint:%s log metric config fail,%s ", endpointGuid, err.Error())
 	}
 	syncParam := transLogMetricConfigToJob(logMetricConfig, endpointGuid)
 	endpointObj := models.EndpointNewTable{Guid: endpointGuid}
 	endpointObj, err = GetEndpointNew(&endpointObj)
-	log.Logger.Info("get endpoint new", log.JsonObj("endpoint", endpointObj), log.Error(err))
 	if err != nil || endpointObj.AgentAddress == "" {
 		return err
 	}
 	b, _ := json.Marshal(syncParam)
-	log.Logger.Info("sync log metric data", log.String("body", string(b)))
+	log.Logger.Info("sync log metric data", log.String("endpoint", endpointGuid), log.String("body", string(b)))
 	req, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("http://%s/log_metric/config", endpointObj.AgentAddress), bytes.NewReader(b))
 	req.Header.Set("Content-Type", "application/json")
 	resp, respErr := http.DefaultClient.Do(req)
@@ -114,5 +113,111 @@ func transLogMetricConfigToJob(logMetricConfig []*models.LogMetricQueryObj, endp
 }
 
 func SyncLogKeywordExporterConfig(endpoints []string) error {
-	return nil
+	log.Logger.Info("UpdateNodeExportConfig", log.StringList("endpoints", endpoints))
+	var err error
+	existMap := make(map[string]int)
+	for _, v := range endpoints {
+		if _, b := existMap[v]; b {
+			continue
+		}
+		err = updateEndpointLogKeyword(v)
+		if err != nil {
+			err = fmt.Errorf("Sync endpoint:%s log keyword config fail,%s ", v, err.Error())
+			break
+		}
+		existMap[v] = 1
+	}
+	return err
+}
+
+func updateEndpointLogKeyword(endpoint string) error {
+	syncParam, err := getLogKeywordExporterConfig(endpoint)
+	if err != nil {
+		return err
+	}
+	endpointObj := models.EndpointNewTable{Guid: endpoint}
+	endpointObj, err = GetEndpointNew(&endpointObj)
+	if err != nil || endpointObj.AgentAddress == "" {
+		return err
+	}
+	b, _ := json.Marshal(syncParam)
+	log.Logger.Info("sync log keyword data", log.String("endpoint", endpoint), log.String("body", string(b)))
+	req, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("http://%s/log_keyword/config", endpointObj.AgentAddress), bytes.NewReader(b))
+	req.Header.Set("Content-Type", "application/json")
+	resp, respErr := http.DefaultClient.Do(req)
+	if respErr != nil {
+		return fmt.Errorf("Do http request to %s fail,%s ", endpointObj.AgentAddress, respErr.Error())
+	}
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("Do http request to %s fail,status code:%d ", endpointObj.AgentAddress, resp.StatusCode)
+	}
+	b, _ = ioutil.ReadAll(resp.Body)
+	var response models.LogKeywordHttpResult
+	err = json.Unmarshal(b, &response)
+	log.Logger.Info("response", log.String("body", string(b)))
+	if err == nil {
+		if response.Status == "OK" {
+			return nil
+		} else {
+			return fmt.Errorf(response.Message)
+		}
+	}
+	return fmt.Errorf("json unmarhsal reponse body fail,%s ", err.Error())
+}
+
+func getLogKeywordExporterConfig(endpoint string) (result []*models.LogKeywordHttpDto, err error) {
+	serviceGroupKeywordList, queryConfigErr := GetLogKeywordByEndpoint(endpoint, true)
+	if queryConfigErr != nil {
+		return result, queryConfigErr
+	}
+	result = []*models.LogKeywordHttpDto{}
+	var pathList []string
+	pathMap := make(map[string][]*models.LogKeywordHttpRuleObj)
+	for _, serviceGroupConfig := range serviceGroupKeywordList {
+		for _, logKeywordMonitor := range serviceGroupConfig.Config {
+			targetEndpoint := ""
+			for _, endpointRel := range logKeywordMonitor.EndpointRel {
+				if endpointRel.SourceEndpoint == endpoint {
+					targetEndpoint = endpointRel.TargetEndpoint
+					break
+				}
+			}
+			if existKeywordList, b := pathMap[logKeywordMonitor.LogPath]; b {
+				existKeywordMap := make(map[string]string)
+				for _, existKeywordObj := range existKeywordList {
+					existKeywordMap[existKeywordObj.Keyword] = existKeywordObj.TargetEndpoint
+				}
+				tmpKeywordList := existKeywordList
+				for _, logKeywordConfig := range logKeywordMonitor.KeywordList {
+					if existTarget, sameFlag := existKeywordMap[logKeywordConfig.Keyword]; sameFlag {
+						if existTarget == targetEndpoint {
+							// path keyword target is same
+							continue
+						}
+					}
+					tmpKeywordObj := models.LogKeywordHttpRuleObj{Keyword: logKeywordConfig.Keyword, TargetEndpoint: targetEndpoint, RegularEnable: false}
+					if logKeywordConfig.Regulative > 0 {
+						tmpKeywordObj.RegularEnable = true
+					}
+					tmpKeywordList = append(tmpKeywordList, &tmpKeywordObj)
+				}
+				pathMap[logKeywordMonitor.LogPath] = tmpKeywordList
+			} else {
+				pathList = append(pathList, logKeywordMonitor.LogPath)
+				tmpKeywordList := []*models.LogKeywordHttpRuleObj{}
+				for _, logKeywordConfig := range logKeywordMonitor.KeywordList {
+					tmpKeywordObj := models.LogKeywordHttpRuleObj{Keyword: logKeywordConfig.Keyword, TargetEndpoint: targetEndpoint, RegularEnable: false}
+					if logKeywordConfig.Regulative > 0 {
+						tmpKeywordObj.RegularEnable = true
+					}
+					tmpKeywordList = append(tmpKeywordList, &tmpKeywordObj)
+				}
+				pathMap[logKeywordMonitor.LogPath] = tmpKeywordList
+			}
+		}
+	}
+	for _, path := range pathList {
+		result = append(result, &models.LogKeywordHttpDto{Path: path, Keywords: pathMap[path]})
+	}
+	return
 }

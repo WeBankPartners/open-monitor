@@ -7,11 +7,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func ListLogKeywordMonitor(c *gin.Context)  {
+func ListLogKeywordMonitor(c *gin.Context) {
 	queryType := c.Param("queryType")
 	guid := c.Param("guid")
 	if queryType == "endpoint" {
-		result, err := db.GetLogKeywordByEndpoint(guid)
+		result, err := db.GetLogKeywordByEndpoint(guid, false)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		} else {
@@ -27,7 +27,7 @@ func ListLogKeywordMonitor(c *gin.Context)  {
 	}
 }
 
-func CreateLogKeywordMonitor(c *gin.Context)  {
+func CreateLogKeywordMonitor(c *gin.Context) {
 	var param models.LogKeywordMonitorCreateObj
 	if err := c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnValidateError(c, err.Error())
@@ -41,17 +41,17 @@ func CreateLogKeywordMonitor(c *gin.Context)  {
 	}
 }
 
-func UpdateLogKeywordMonitor(c *gin.Context)  {
+func UpdateLogKeywordMonitor(c *gin.Context) {
 	var param models.LogKeywordMonitorObj
 	if err := c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
 	var endpointList []string
-	for _,v := range db.ListLogKeywordEndpointRel(param.Guid) {
+	for _, v := range db.ListLogKeywordEndpointRel(param.Guid) {
 		endpointList = append(endpointList, v.SourceEndpoint)
 	}
-	for _,v := range param.EndpointRel {
+	for _, v := range param.EndpointRel {
 		endpointList = append(endpointList, v.SourceEndpoint)
 	}
 	err := db.UpdateLogKeywordMonitor(&param)
@@ -61,32 +61,23 @@ func UpdateLogKeywordMonitor(c *gin.Context)  {
 		err = syncLogKeywordNodeExporterConfig(endpointList)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
-		}else {
+		} else {
 			middleware.ReturnSuccess(c)
 		}
 	}
 }
 
-func DeleteLogKeywordMonitor(c *gin.Context)  {
+func DeleteLogKeywordMonitor(c *gin.Context) {
 	logKeywordMonitorGuid := c.Param("logKeywordMonitorGuid")
-	var endpointList []string
-	for _,v := range db.ListLogKeywordEndpointRel(logKeywordMonitorGuid) {
-		endpointList = append(endpointList, v.SourceEndpoint)
-	}
 	err := db.DeleteLogKeywordMonitor(logKeywordMonitorGuid)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
-		err = syncLogKeywordNodeExporterConfig(endpointList)
-		if err != nil {
-			middleware.ReturnHandleError(c, err.Error(), err)
-		}else {
-			middleware.ReturnSuccess(c)
-		}
+		middleware.ReturnSuccess(c)
 	}
 }
 
-func CreateLogKeyword(c *gin.Context)  {
+func CreateLogKeyword(c *gin.Context) {
 	var param models.LogKeywordConfigTable
 	if err := c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnValidateError(c, err.Error())
@@ -99,13 +90,13 @@ func CreateLogKeyword(c *gin.Context)  {
 		err = syncLogKeywordMonitorConfig(param.LogKeywordMonitor)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
-		}else {
+		} else {
 			middleware.ReturnSuccess(c)
 		}
 	}
 }
 
-func UpdateLogKeyword(c *gin.Context)  {
+func UpdateLogKeyword(c *gin.Context) {
 	var param models.LogKeywordConfigTable
 	if err := c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnValidateError(c, err.Error())
@@ -118,13 +109,13 @@ func UpdateLogKeyword(c *gin.Context)  {
 		err = syncLogKeywordMonitorConfig(param.LogKeywordMonitor)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
-		}else {
+		} else {
 			middleware.ReturnSuccess(c)
 		}
 	}
 }
 
-func DeleteLogKeyword(c *gin.Context)  {
+func DeleteLogKeyword(c *gin.Context) {
 	logKeywordGuid := c.Param("logKeywordGuid")
 	err := db.DeleteLogKeyword(logKeywordGuid)
 	if err != nil {
@@ -133,7 +124,7 @@ func DeleteLogKeyword(c *gin.Context)  {
 		err = syncLogKeywordMonitorConfig(logKeywordGuid)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
-		}else {
+		} else {
 			middleware.ReturnSuccess(c)
 		}
 	}
