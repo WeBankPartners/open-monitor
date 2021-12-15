@@ -9,7 +9,7 @@
               <Tag :color="choiceColor(item.type)" class="tag-width">{{item.type}}</Tag>
             </div>
             <div>
-              <button class="btn-cancel-f btn-small" @click="alarmReceivers(item)">{{$t('button.receiversConfiguration')}}</button>
+              <!-- <button class="btn-cancel-f btn-small" @click="alarmReceivers(item)">{{$t('button.receiversConfiguration')}}</button> -->
               <button class="btn-cancel-f btn-small" @click="associatedRole(item)">{{$t('resourceLevel.addAssociatedRole')}}</button>
               <button class="btn-cancel-f btn-small" @click="associatedObject(item)">{{$t('resourceLevel.addAssociatedObject')}}</button>
               <button class="btn-cancel-f btn-small" v-if="isPlugin" @click="alarmCallback(item)">{{$t('resourceLevel.alarmCallback')}}</button>
