@@ -1,10 +1,12 @@
 package service
 
 import (
+	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
+	"strings"
 )
 
 func ListLogMetricMonitor(c *gin.Context) {
@@ -43,7 +45,21 @@ func CreateLogMetricMonitor(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	err := db.CreateLogMetricMonitor(&param)
+	var err error
+	if len(param.LogPath) == 0 {
+		err = fmt.Errorf("Param log_path is empty ")
+	}
+	for _,v := range param.LogPath {
+		if !strings.HasPrefix(v, "/") {
+			err = fmt.Errorf("Path:%s illegal ", v)
+			break
+		}
+	}
+	if err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	err = db.CreateLogMetricMonitor(&param)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
@@ -107,7 +123,7 @@ func UpdateLogMetricMonitor(c *gin.Context) {
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
-		err = syncNodeExporterConfig(hostEndpointList)
+		err = syncLogMetricNodeExporterConfig(hostEndpointList)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		} else {
@@ -268,12 +284,12 @@ func syncLogMetricMonitorConfig(logMetricMonitor string) error {
 			endpointList = append(endpointList, v.SourceEndpoint)
 		}
 	}
-	err := syncNodeExporterConfig(endpointList)
+	err := syncLogMetricNodeExporterConfig(endpointList)
 	return err
 }
 
-func syncNodeExporterConfig(endpointList []string) error {
-	err := db.UpdateNodeExportConfig(endpointList)
+func syncLogMetricNodeExporterConfig(endpointList []string) error {
+	err := db.SyncLogMetricExporterConfig(endpointList)
 	return err
 }
 
