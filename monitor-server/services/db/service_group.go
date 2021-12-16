@@ -295,7 +295,7 @@ func UpdateServiceConfigWithParent(serviceGroup string) {
 	}
 }
 
-func UpdateServiceConfigWithEndpoint(serviceGroup string) {
+func getServiceGroupEndpointWithChild(serviceGroup string) map[string][]string {
 	serviceGroupList := []string{serviceGroup}
 	fetchServiceGroupList, err := fetchGlobalServiceGroupChildGuidList(serviceGroup)
 	if err == nil {
@@ -303,7 +303,6 @@ func UpdateServiceConfigWithEndpoint(serviceGroup string) {
 	}
 	var endpointServiceRel []*models.EndpointServiceRelTable
 	x.SQL("select * from endpoint_service_rel where service_group in ('" + strings.Join(serviceGroupList, "','") + "')").Find(&endpointServiceRel)
-	var endpointList []string
 	endpointExistMap := make(map[string]int)
 	endpointTypeMap := make(map[string][]string)
 	for _, v := range endpointServiceRel {
@@ -320,9 +319,14 @@ func UpdateServiceConfigWithEndpoint(serviceGroup string) {
 		} else {
 			endpointTypeMap[tmpEndpointType] = []string{v.Endpoint}
 		}
-		endpointList = append(endpointList, v.Endpoint)
 	}
-	log.Logger.Info("UpdateServiceConfigWithEndpoint", log.String("serviceGroup", serviceGroup), log.StringList("endpointList", endpointList))
+	return endpointTypeMap
+}
+
+func UpdateServiceConfigWithEndpoint(serviceGroup string) {
+	var err error
+	endpointTypeMap := getServiceGroupEndpointWithChild(serviceGroup)
+	log.Logger.Info("UpdateServiceConfigWithEndpoint", log.String("serviceGroup", serviceGroup))
 	err = UpdateLogMetricConfigByServiceGroup(serviceGroup, endpointTypeMap)
 	if err != nil {
 		log.Logger.Error("UpdateLogMetricConfigByServiceGroup fail", log.Error(err))

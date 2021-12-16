@@ -222,6 +222,8 @@ func init() {
 		&handlerFuncObj{Url: "/service/log_keyword/log_keyword_config", Method: http.MethodPost, HandlerFunc: service.CreateLogKeyword},
 		&handlerFuncObj{Url: "/service/log_keyword/log_keyword_config", Method: http.MethodPut, HandlerFunc: service.UpdateLogKeyword},
 		&handlerFuncObj{Url: "/service/log_keyword/log_keyword_config/:logKeywordGuid", Method: http.MethodDelete, HandlerFunc: service.DeleteLogKeyword},
+		// service plugin
+		&handlerFuncObj{Url: "/service/plugin/update/path", Method: http.MethodPost, HandlerFunc: service.PluginUpdateServicePath},
 		// alarm
 		&handlerFuncObj{Url: "/alarm/endpoint_group/query", Method: http.MethodGet, HandlerFunc: alarmv2.ListEndpointGroup},
 		&handlerFuncObj{Url: "/alarm/endpoint_group", Method: http.MethodPost, HandlerFunc: alarmv2.CreateEndpointGroup},
