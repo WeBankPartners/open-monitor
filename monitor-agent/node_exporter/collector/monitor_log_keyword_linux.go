@@ -206,6 +206,7 @@ func LogKeywordHttpHandle(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
+	level.Info(monitorLogger).Log("logKeywordConfig", string(requestParamBuff))
 	err = logKeywordHttpAction(requestParamBuff)
 	if err == nil {
 		logKeywordSaveConfig(requestParamBuff)
