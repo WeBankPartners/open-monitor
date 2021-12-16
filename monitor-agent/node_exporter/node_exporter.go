@@ -192,7 +192,7 @@ func main() {
 	go collector.StartCalcLogMetricCron()
 	// Add log monitor handle http config
 	http.HandleFunc("/log_keyword/config", collector.LogKeywordHttpHandle)
-	http.HandleFunc("/log/rows/query", collector.LogMonitorRowsHttpHandle)
+	http.HandleFunc("/log_keyword/rows", collector.LogMonitorRowsHttpHandle)
 	// Add process monitor handle http config
 	http.HandleFunc("/process/config", collector.ProcessHttpHandle)
 	// Add business monitor handle http config
