@@ -70,3 +70,27 @@ type LogKeywordHttpResult struct {
 	Message string                `json:"message"`
 	Data    []*LogKeywordFetchObj `json:"data"`
 }
+
+type LogKeywordCronJobQuery struct {
+	Guid           string `xorm:"guid"`
+	ServiceGroup   string `xorm:"service_group"`
+	LogPath        string `xorm:"log_path"`
+	MonitorType    string `xorm:"monitor_type"`
+	Keyword        string `xorm:"keyword"`
+	NotifyEnable   int    `xorm:"notify_enable"`
+	Priority       string `xorm:"priority"`
+	SourceEndpoint string `xorm:"source_endpoint"`
+	TargetEndpoint string `xorm:"target_endpoint"`
+	AgentAddress string `xorm:"agent_address"`
+}
+
+type LogKeywordRowsHttpDto struct {
+	Path      string  `json:"path"`
+	Keyword   string  `json:"keyword"`
+}
+
+type LogKeywordRowsHttpResult struct {
+	Status  string               `json:"status"`
+	Message string               `json:"message"`
+	Data    []*LogKeywordFetchObj `json:"data"`
+}
