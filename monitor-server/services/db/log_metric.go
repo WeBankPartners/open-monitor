@@ -212,18 +212,22 @@ func DeleteLogMetricMonitor(logMetricMonitorGuid string) (err error) {
 			hostEndpointList = append(hostEndpointList, v.SourceEndpoint)
 		}
 	}
+	err = Transaction(getDeleteLogMetricMonitorAction(logMetricMonitorGuid))
+	if err != nil {
+		return err
+	}
+	err = SyncLogMetricExporterConfig(hostEndpointList)
+	return
+}
+
+func getDeleteLogMetricMonitorAction(logMetricMonitorGuid string) []*Action {
 	var actions []*Action
 	actions = append(actions, &Action{Sql: "delete from log_metric_endpoint_rel where log_metric_monitor=?", Param: []interface{}{logMetricMonitorGuid}})
 	actions = append(actions, &Action{Sql: "delete from log_metric_string_map where log_metric_config in (select guid from log_metric_config where log_metric_monitor=? or log_metric_json in (select guid from log_metric_json where log_metric_monitor=?))", Param: []interface{}{logMetricMonitorGuid, logMetricMonitorGuid}})
 	actions = append(actions, &Action{Sql: "delete from log_metric_config where log_metric_monitor=? or log_metric_json in (select guid from log_metric_json where log_metric_monitor=?)", Param: []interface{}{logMetricMonitorGuid, logMetricMonitorGuid}})
 	actions = append(actions, &Action{Sql: "delete from log_metric_json where log_metric_monitor=?", Param: []interface{}{logMetricMonitorGuid}})
 	actions = append(actions, &Action{Sql: "delete from log_metric_monitor where guid=?", Param: []interface{}{logMetricMonitorGuid}})
-	err = Transaction(actions)
-	if err != nil {
-		return err
-	}
-	err = SyncLogMetricExporterConfig(hostEndpointList)
-	return
+	return actions
 }
 
 func GetLogMetricJson(logMetricJsonGuid string) (result models.LogMetricJsonObj, err error) {
