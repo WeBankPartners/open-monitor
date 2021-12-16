@@ -125,7 +125,7 @@ func ListServiceGroupOptions(searchText string) (result []*models.OptionModel, e
 		return
 	}
 	for _, v := range serviceGroupTable {
-		result = append(result, &models.OptionModel{OptionValue: v.Guid, OptionText: fmt.Sprintf("(%s)%s", v.ServiceType, v.DisplayName), OptionType: v.ServiceType, OptionTypeName: v.ServiceType})
+		result = append(result, &models.OptionModel{OptionValue: v.Guid, OptionText: v.DisplayName, OptionType: v.ServiceType, OptionTypeName: v.ServiceType})
 	}
 	return
 }
@@ -140,15 +140,15 @@ func GetServiceGroupEndpointList(searchType string) (result []*models.ServiceGro
 	result = []*models.ServiceGroupEndpointListObj{}
 	if searchType == "endpoint" {
 		var endpointTable []*models.EndpointNewTable
-		err = x.SQL("select guid from endpoint_new").Find(&endpointTable)
+		err = x.SQL("select guid,monitor_type from endpoint_new").Find(&endpointTable)
 		for _, v := range endpointTable {
-			result = append(result, &models.ServiceGroupEndpointListObj{Guid: v.Guid, DisplayName: v.Guid})
+			result = append(result, &models.ServiceGroupEndpointListObj{Guid: v.Guid, DisplayName: v.Guid,Type: v.MonitorType})
 		}
 	} else {
 		var serviceGroupTable []*models.ServiceGroupTable
 		err = x.SQL("select guid,display_name,service_type from service_group").Find(&serviceGroupTable)
 		for _, v := range serviceGroupTable {
-			result = append(result, &models.ServiceGroupEndpointListObj{Guid: v.Guid, DisplayName: fmt.Sprintf("(%s)%s", v.ServiceType, v.DisplayName)})
+			result = append(result, &models.ServiceGroupEndpointListObj{Guid: v.Guid, DisplayName: v.DisplayName, Type: v.ServiceType})
 		}
 	}
 	return
