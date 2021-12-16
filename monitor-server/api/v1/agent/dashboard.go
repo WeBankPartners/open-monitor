@@ -8,7 +8,6 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"reflect"
 	"strings"
 )
 
@@ -51,8 +50,8 @@ func ExportPanelAdd(c *gin.Context) {
 			v.Parent = trimListString(v.Parent)
 			v.Email = trimListString(v.Email)
 			v.Phone = trimListString(v.Phone)
-			inputRoleList := transMultiStringParam(v.Role)
-			tmpEndpoint := transMultiStringParam(v.Endpoint)
+			inputRoleList := m.TransPluginMultiStringParam(v.Role)
+			tmpEndpoint := m.TransPluginMultiStringParam(v.Endpoint)
 			tmpParent := strings.Split(v.Parent, ",")
 			checkRoleErr := db.CheckRoleIllegal(inputRoleList, roleMap)
 			if checkRoleErr != nil {
@@ -132,32 +131,6 @@ func trimListString(input string) string {
 	return input
 }
 
-func transMultiStringParam(input interface{}) []string {
-	var result []string
-	rn := reflect.TypeOf(input).String()
-	if rn == "[]string" {
-		for _,v := range input.([]string) {
-			if v != "" {
-				result = append(result, v)
-			}
-		}
-	}else{
-		tmpString := fmt.Sprintf("%s", input)
-		if strings.HasPrefix(tmpString, "[") {
-			tmpString = tmpString[1:]
-		}
-		if strings.HasSuffix(tmpString, "]") {
-			tmpString = tmpString[:len(tmpString)-1]
-		}
-		for _,v := range strings.Split(tmpString, ",") {
-			if v != "" {
-				result = append(result, v)
-			}
-		}
-	}
-	return result
-}
-
 func GetPanelRecursive(c *gin.Context) {
 	guid := c.Query("guid")
 	if guid == "" {
@@ -208,7 +181,7 @@ func ExportPanelDelete(c *gin.Context) {
 			if strings.ToLower(v.DeleteAll) == "y" || strings.ToLower(v.DeleteAll) == "yes" {
 				cErr = db.DeleteRecursivePanel(v.Guid)
 			} else {
-				tmpEndpoint := transMultiStringParam(v.Endpoint)
+				tmpEndpoint := m.TransPluginMultiStringParam(v.Endpoint)
 				var endpointStringList []string
 				for _, vv := range tmpEndpoint {
 					if vv == "" {
