@@ -53,7 +53,7 @@ func (c *logMonitorCollector) Update(ch chan<- prometheus.Metric) error {
 	return nil
 }
 
-type logMetricObj struct {
+type logKeywordMetricObj struct {
 	Path           string
 	Keyword        string
 	TargetEndpoint string
@@ -146,10 +146,10 @@ func (c *logKeywordCollector) destroy() {
 	c.Lock.Unlock()
 }
 
-func (c *logKeywordCollector) get() (data []*logMetricObj) {
+func (c *logKeywordCollector) get() (data []*logKeywordMetricObj) {
 	c.Lock.RLock()
 	for _, v := range c.Rule {
-		data = append(data, &logMetricObj{Path: c.Path, Keyword: v.Keyword, Value: v.Count, TargetEndpoint: v.TargetEndpoint})
+		data = append(data, &logKeywordMetricObj{Path: c.Path, Keyword: v.Keyword, Value: v.Count, TargetEndpoint: v.TargetEndpoint})
 	}
 	c.Lock.RUnlock()
 	return data
@@ -189,7 +189,6 @@ type logKeywordHttpResult struct {
 func LogKeywordHttpHandle(w http.ResponseWriter, r *http.Request) {
 	var err error
 	defer func(returnErr error) {
-		logMetricHttpLock.Unlock()
 		responseObj := logKeywordHttpResult{Status: "OK", Message: "success"}
 		if returnErr != nil {
 			returnErr = fmt.Errorf("Handel log keyword monitor http request fail,%s ", returnErr.Error())
