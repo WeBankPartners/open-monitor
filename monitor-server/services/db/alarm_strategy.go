@@ -171,6 +171,19 @@ func getNotifyList(alarmStrategy, endpointGroup, serviceGroup string) (result []
 	return result
 }
 
+func getSimpleNotify(notifyGuid string) (result models.NotifyTable,err error) {
+	var notifyTable []*models.NotifyTable
+	err = x.SQL("select * from notify where guid=?", notifyGuid).Find(&notifyTable)
+	if err != nil {
+		return result,fmt.Errorf("Query notify table tail,%s ", err.Error())
+	}
+	if len(notifyTable) == 0 {
+		return result,fmt.Errorf("Can not find notify with guid:%s ", notifyGuid)
+	}
+	result = *notifyTable[0]
+	return
+}
+
 func getNotifyRoles(notifyId string) []string {
 	roles := []string{}
 	var notifyRoleRel []*models.NotifyRoleRelTable
@@ -430,6 +443,20 @@ func GetAlarmObj(query *models.AlarmTable) (result models.AlarmTable, err error)
 	return
 }
 
+func NotifyServiceGroup(serviceGroup string,alarmObj *models.AlarmHandleObj)  {
+	var notifyList []*models.NotifyTable
+	err := x.SQL("select * from notify where service_group=?", serviceGroup).Find(&notifyList)
+	if err != nil {
+		log.Logger.Error("Notify serviceGroup fail,query notify data error", log.Error(err))
+	}
+	for _,v := range notifyList {
+		err = notifyAction(v, alarmObj)
+		if err != nil {
+			log.Logger.Error("Notify error", log.Error(err))
+		}
+	}
+}
+
 func NotifyStrategyAlarm(alarmObj *models.AlarmHandleObj) {
 	if alarmObj.AlarmStrategy == "" {
 		log.Logger.Error("Notify strategy alarm fail,alarmStrategy is empty", log.JsonObj("alarm", alarmObj))
@@ -521,10 +548,19 @@ func notifyEventAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleO
 }
 
 func getNotifyEventMessage(notifyGuid string, alarm models.AlarmTable) (result models.AlarmEntityObj) {
+	notifyObj,err := getSimpleNotify(notifyGuid)
+	if err != nil {
+		log.Logger.Error("getNotifyEventMessage fail", log.Error(err))
+		return
+	}
 	result = models.AlarmEntityObj{}
 	result.Subject, result.Content = getNotifyMessage(&models.AlarmHandleObj{AlarmTable: alarm})
 	var roles []*models.RoleNewTable
-	x.SQL("select guid,email,phone from `role_new` where guid in (select `role` from notify_role_rel where notify=?)", notifyGuid).Find(&roles)
+	if notifyObj.ServiceGroup != "" {
+		x.SQL("select guid,email from role_new where guid in (select `role` from service_group_role_rel where service_group=?)", notifyObj.ServiceGroup).Find(&roles)
+	}else {
+		x.SQL("select guid,email,phone from `role_new` where guid in (select `role` from notify_role_rel where notify=?)", notifyGuid).Find(&roles)
+	}
 	var email, phone, role []string
 	emailExistMap := make(map[string]int)
 	phoneExistMap := make(map[string]int)
@@ -543,7 +579,10 @@ func getNotifyEventMessage(notifyGuid string, alarm models.AlarmTable) (result m
 		}
 		role = append(role, v.Guid)
 	}
-	email = getRoleMail(role)
+	tmpEmailList := getRoleMail(role)
+	if len(tmpEmailList) > 0 {
+		email = tmpEmailList
+	}
 	result.To = strings.Join(email, ",")
 	result.ToMail = result.To
 	result.ToPhone = strings.Join(phone, ",")
