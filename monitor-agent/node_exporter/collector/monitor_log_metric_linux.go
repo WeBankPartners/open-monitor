@@ -20,7 +20,7 @@ import (
 
 const (
 	log_metricCollectorName   = "log_metric_monitor"
-	log_metricMonitorFilePath = "data/log_metric_monitor_cache.data"
+	log_metricMonitorFilePath = "data/log_metric_monitor_cache.json"
 )
 
 var (
