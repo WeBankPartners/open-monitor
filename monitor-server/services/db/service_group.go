@@ -142,7 +142,7 @@ func GetServiceGroupEndpointList(searchType string) (result []*models.ServiceGro
 		var endpointTable []*models.EndpointNewTable
 		err = x.SQL("select guid,monitor_type from endpoint_new").Find(&endpointTable)
 		for _, v := range endpointTable {
-			result = append(result, &models.ServiceGroupEndpointListObj{Guid: v.Guid, DisplayName: v.Guid,Type: v.MonitorType})
+			result = append(result, &models.ServiceGroupEndpointListObj{Guid: v.Guid, DisplayName: v.Guid, Type: v.MonitorType})
 		}
 	} else {
 		var serviceGroupTable []*models.ServiceGroupTable
@@ -213,6 +213,49 @@ func getCreateEndpointGroupByServiceAction(serviceGroupGuid, nowTime string, end
 
 func DeleteServiceGroup(serviceGroupGuid string) {
 
+}
+
+func GetDeleteServiceGroupAffectList(serviceGroup string) (result []string, err error) {
+	guidList, _ := fetchGlobalServiceGroupChildGuidList(serviceGroup)
+	for _, sg := range guidList {
+		logMetricConfig, tmpErr := GetLogMetricByServiceGroup(sg)
+		if tmpErr != nil {
+			err = tmpErr
+			break
+		}
+		for _, logMetricMonitor := range logMetricConfig.Config {
+			for _, logMetricJson := range logMetricMonitor.JsonConfigList {
+				for _, logMetricConfig := range logMetricJson.MetricList {
+					result = append(result, fmt.Sprintf("logMetric  path:%s metric:%s", logMetricMonitor.LogPath, logMetricConfig.Metric))
+				}
+			}
+			for _, logMetricConfig := range logMetricMonitor.MetricConfigList {
+				result = append(result, fmt.Sprintf("logMetric  path:%s metric:%s", logMetricMonitor.LogPath, logMetricConfig.Metric))
+			}
+		}
+		dbMetricConfig, tmpErr := GetDbMetricByServiceGroup(sg)
+		if tmpErr != nil {
+			err = tmpErr
+			break
+		}
+		for _, dbMetric := range dbMetricConfig {
+			result = append(result, fmt.Sprintf("dbMetric metric:%s", dbMetric.Metric))
+		}
+		keyWordConfigList, tmpErr := GetLogKeywordByServiceGroup(sg)
+		if tmpErr != nil {
+			err = tmpErr
+			break
+		}
+		if len(keyWordConfigList) == 0 {
+			continue
+		}
+		for _, keywordConfig := range keyWordConfigList[0].Config {
+			for _, keyword := range keywordConfig.KeywordList {
+				result = append(result, fmt.Sprintf("logKeywrod path:%s keyword:%s", keywordConfig.LogPath, keyword.Keyword))
+			}
+		}
+	}
+	return
 }
 
 func getDeleteServiceGroupAction(serviceGroupGuid string) (actions []*Action) {
@@ -646,10 +689,25 @@ func getUpdateServiceGroupNotifyActions(serviceGroup, firingCallback, recoverCal
 		recoverActionGuid := guid.CreateGuid()
 		actions = append(actions, &Action{Sql: "insert into notify(guid,service_group,alarm_action,proc_callback_key) value (?,?,?,?)", Param: []interface{}{recoverActionGuid, serviceGroup, "ok", recoverCallback}})
 	}
-	actions = append(actions, &Action{Sql: "delete from service_group_role_rel where service_group=?",Param: []interface{}{serviceGroup}})
+	actions = append(actions, &Action{Sql: "delete from service_group_role_rel where service_group=?", Param: []interface{}{serviceGroup}})
 	tmpGuidList := guid.CreateGuidList(len(roleList))
-	for i,role := range roleList {
-		actions = append(actions, &Action{Sql: "insert into service_group_role_rel(guid,service_group,`role`) value (?,?,?)",Param: []interface{}{tmpGuidList[i],serviceGroup,role}})
+	for i, role := range roleList {
+		actions = append(actions, &Action{Sql: "insert into service_group_role_rel(guid,service_group,`role`) value (?,?,?)", Param: []interface{}{tmpGuidList[i], serviceGroup, role}})
+	}
+	return actions
+}
+
+func getUpdateServiceGroupNotifyRoles(serviceGroup string, roleList []string) (actions []*Action) {
+	actions = append(actions, &Action{Sql: "delete from service_group_role_rel where service_group=?", Param: []interface{}{serviceGroup}})
+	tmpGuidList := guid.CreateGuidList(len(roleList))
+	for i, role := range roleList {
+		actions = append(actions, &Action{Sql: "insert into service_group_role_rel(guid,service_group,`role`) value (?,?,?)", Param: []interface{}{tmpGuidList[i], serviceGroup, role}})
+	}
+	var notifyTable []*models.NotifyTable
+	x.SQL("select guid from notify where service_group=?", serviceGroup).Find(&notifyTable)
+	if len(notifyTable) == 0 {
+		actions = append(actions, &Action{Sql: "insert into notify(guid,service_group,alarm_action) value (?,?,?)", Param: []interface{}{guid.CreateGuid(), serviceGroup, "firing"}})
+		actions = append(actions, &Action{Sql: "insert into notify(guid,service_group,alarm_action) value (?,?,?)", Param: []interface{}{guid.CreateGuid(), serviceGroup, "ok"}})
 	}
 	return actions
 }
