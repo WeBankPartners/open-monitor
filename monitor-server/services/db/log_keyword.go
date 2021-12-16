@@ -107,16 +107,20 @@ func DeleteLogKeywordMonitor(logKeywordMonitorGuid string) (err error) {
 	for _, v := range ListLogKeywordEndpointRel(logKeywordMonitorGuid) {
 		hostEndpointList = append(hostEndpointList, v.SourceEndpoint)
 	}
-	var actions []*Action
-	actions = append(actions, &Action{Sql: "delete from log_keyword_endpoint_rel where log_keyword_monitor=?", Param: []interface{}{logKeywordMonitorGuid}})
-	actions = append(actions, &Action{Sql: "delete from log_keyword_config where log_keyword_monitor=?", Param: []interface{}{logKeywordMonitorGuid}})
-	actions = append(actions, &Action{Sql: "delete from log_keyword_monitor where guid=?", Param: []interface{}{logKeywordMonitorGuid}})
-	err = Transaction(actions)
+	err = Transaction(getDeleteLogKeywordMonitorAction(logKeywordMonitorGuid))
 	if err != nil {
 		return err
 	}
 	err = SyncLogKeywordExporterConfig(hostEndpointList)
 	return
+}
+
+func getDeleteLogKeywordMonitorAction(logKeywordMonitorGuid string) []*Action {
+	var actions []*Action
+	actions = append(actions, &Action{Sql: "delete from log_keyword_endpoint_rel where log_keyword_monitor=?", Param: []interface{}{logKeywordMonitorGuid}})
+	actions = append(actions, &Action{Sql: "delete from log_keyword_config where log_keyword_monitor=?", Param: []interface{}{logKeywordMonitorGuid}})
+	actions = append(actions, &Action{Sql: "delete from log_keyword_monitor where guid=?", Param: []interface{}{logKeywordMonitorGuid}})
+	return actions
 }
 
 func ListLogKeyword(logKeywordMonitor string) (result []*models.LogKeywordConfigTable) {
