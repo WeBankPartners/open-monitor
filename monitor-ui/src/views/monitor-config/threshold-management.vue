@@ -9,15 +9,17 @@
         </li>
         <li class="search-li">
           <Select
-            style="width:300px"
+            style="width:300px;"
             v-model="targrtId"
             filterable
-            clearable
+            clearable 
+            remote
             ref="select"
-            @on-open-change="getTargrtList"
-            @on-clear="clearTargrt"
+            :remote-method="getTargrtList"
             >
-            <Option v-for="(option, index) in targetOptions" :value="option.option_value" :key="index">{{option.option_text}}
+            <Option v-for="(option, index) in targetOptions" :value="option.option_value" :key="index">
+              <TagShow :tagName="option.type" :index="index"></TagShow> 
+              {{option.option_text}}
             </Option>
           </Select>
         </li>
@@ -49,6 +51,7 @@
 import endpointManagement from './threshold-management-endpoint.vue'
 import groupManagement from './threshold-management-group.vue'
 import serviceManagement from './threshold-management-service.vue'
+import TagShow from '@/components/Tag-show.vue'
 export default {
   name: '',
   data() {
@@ -66,7 +69,7 @@ export default {
   },
   
   async mounted () {
-   
+   this.getTargrtList()
   },
   beforeDestroy () {
     this.$root.$store.commit('changeTableExtendActive', -1)
@@ -74,6 +77,7 @@ export default {
   methods: {
     typeChange () {
       this.clearTargrt()
+      this.getTargrtList()
     },
     getTargrtList () {
       const api = `/monitor/api/v2/alarm/strategy/search?type=${this.type}&search=`
@@ -98,7 +102,8 @@ export default {
   components: {
     endpointManagement,
     groupManagement,
-    serviceManagement
+    serviceManagement,
+    TagShow
   },
 }
 </script>
