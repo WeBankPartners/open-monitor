@@ -637,18 +637,15 @@ func getUpdateServiceGroupNotifyActions(serviceGroup, firingCallback, recoverCal
 	if firingCallback != "" {
 		firingActionGuid := guid.CreateGuid()
 		actions = append(actions, &Action{Sql: "insert into notify(guid,service_group,alarm_action,proc_callback_key) value (?,?,?,?)", Param: []interface{}{firingActionGuid, serviceGroup, "firing", firingCallback}})
-		roleNotifyGuidList := guid.CreateGuidList(len(roleList))
-		for i, v := range roleList {
-			actions = append(actions, &Action{Sql: "insert into notify_role_rel(guid,notify,`role`) value (?,?,?)", Param: []interface{}{roleNotifyGuidList[i], firingActionGuid, v}})
-		}
 	}
 	if recoverCallback != "" {
 		recoverActionGuid := guid.CreateGuid()
 		actions = append(actions, &Action{Sql: "insert into notify(guid,service_group,alarm_action,proc_callback_key) value (?,?,?,?)", Param: []interface{}{recoverActionGuid, serviceGroup, "ok", recoverCallback}})
-		roleNotifyGuidList := guid.CreateGuidList(len(roleList))
-		for i, v := range roleList {
-			actions = append(actions, &Action{Sql: "insert into notify_role_rel(guid,notify,`role`) value (?,?,?)", Param: []interface{}{roleNotifyGuidList[i], recoverActionGuid, v}})
-		}
+	}
+	actions = append(actions, &Action{Sql: "delete from service_group_role_rel where service_group=?",Param: []interface{}{serviceGroup}})
+	tmpGuidList := guid.CreateGuidList(len(roleList))
+	for i,role := range roleList {
+		actions = append(actions, &Action{Sql: "insert into service_group_role_rel(guid,service_group,`role`) value (?,?,?)",Param: []interface{}{tmpGuidList[i],serviceGroup,role}})
 	}
 	return actions
 }
