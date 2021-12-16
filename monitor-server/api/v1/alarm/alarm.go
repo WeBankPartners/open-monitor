@@ -26,7 +26,7 @@ func AcceptAlert(c *gin.Context)  {
 		mid.ReturnSuccess(c)
 		return
 	}
-	log.Logger.Info("accept", log.JsonObj("body", param))
+	log.Logger.Debug("accept", log.JsonObj("body", param))
 	nowTime := time.Now()
 	var alarms []*m.AlarmHandleObj
 	for _,v := range param.Alerts {

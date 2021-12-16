@@ -554,8 +554,12 @@ func getNotifyEventMessage(notifyGuid string, alarm models.AlarmTable) (result m
 
 func notifyMailAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleObj) error {
 	var roles []*models.RoleNewTable
-	x.SQL("select guid,email from `role_new` where guid in (select `role` from notify_role_rel where notify=?)", notify.Guid).Find(&roles)
 	var toAddress, roleList []string
+	if notify.ServiceGroup != "" {
+		x.SQL("select guid,email from role_new where guid in (select `role` from service_group_role_rel where service_group=?)", notify.ServiceGroup).Find(&roles)
+	}else {
+		x.SQL("select guid,email from `role_new` where guid in (select `role` from notify_role_rel where notify=?)", notify.Guid).Find(&roles)
+	}
 	for _, v := range roles {
 		if v.Email != "" {
 			toAddress = append(toAddress, v.Email)
@@ -563,7 +567,10 @@ func notifyMailAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleOb
 		roleList = append(roleList, v.Guid)
 	}
 	if models.CoreUrl != "" {
-		toAddress = getRoleMail(roleList)
+		tmpToAddress := getRoleMail(roleList)
+		if len(tmpToAddress) > 0 {
+			toAddress = tmpToAddress
+		}
 	}
 	if len(toAddress) == 0 {
 		log.Logger.Warn("notifyMailAction toAddress empty", log.String("notify", notify.Guid), log.StringList("roleList", roleList))
