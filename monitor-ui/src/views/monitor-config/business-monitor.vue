@@ -9,15 +9,17 @@
         </li>
         <li class="search-li">
           <Select
-            style="width:300px"
+            style="width:300px;"
             v-model="targrtId"
             filterable
-            clearable
+            clearable 
+            remote
             ref="select"
-            @on-open-change="getTargrtList"
-            @on-clear="clearTargrt"
+            :remote-method="getTargrtList"
             >
-            <Option v-for="(option, index) in targetOptions" :value="option.guid" :key="index">{{option.display_name}}
+            <Option v-for="(option, index) in targetOptions" :value="option.guid" :key="index">
+              <TagShow :tagName="option.type" :index="index"></TagShow> 
+              {{option.display_name}}
             </Option>
           </Select>
         </li>
@@ -55,6 +57,7 @@
 <script>
 import endpointManagement from './business-monitor-endpoint.vue'
 import groupManagement from './business-monitor-group.vue'
+import TagShow from '@/components/Tag-show.vue'
 export default {
   name: '',
   data() {
@@ -71,7 +74,7 @@ export default {
   },
   
   async mounted () {
-   
+   this.getTargrtList()
   },
   beforeDestroy () {
     this.$root.$store.commit('changeTableExtendActive', -1)
@@ -79,6 +82,7 @@ export default {
   methods: {
     typeChange () {
       this.clearTargrt()
+      this.getTargrtList()
     },
     getTargrtList () {
       const api = this.$root.apiCenter.getTargetByEndpoint + '/' + this.type
@@ -104,7 +108,8 @@ export default {
   },
   components: {
     endpointManagement,
-    groupManagement
+    groupManagement,
+    TagShow
   },
 }
 </script>
