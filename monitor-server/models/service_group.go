@@ -46,6 +46,7 @@ func (s *ServiceGroupLinkNode) FetchParentGuid() []string {
 type ServiceGroupEndpointListObj struct {
 	Guid        string `json:"guid"`
 	DisplayName string `json:"display_name"`
+	Type        string `json:"type"`
 }
 
 type ServiceGroupRoleRelTable struct {
