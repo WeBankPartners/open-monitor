@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/WeBankPartners/go-common-lib/guid"
-	m "github.com/WeBankPartners/open-monitor/monitor-agent/transgateway/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
@@ -165,9 +164,9 @@ func StartLogKeywordMonitorCronJob() {
 	}
 }
 
-func doLogKeywordMonitorJob()  {
+func doLogKeywordMonitorJob() {
 	http.DefaultClient.CloseIdleConnections()
-	dataMap,err := datasource.QueryLogKeywordData()
+	dataMap, err := datasource.QueryLogKeywordData()
 	if err != nil {
 		log.Logger.Error("Check log keyword break with get prometheus data", log.Error(err))
 		return
@@ -188,52 +187,51 @@ func doLogKeywordMonitorJob()  {
 		return
 	}
 	alarmMap := make(map[string]*models.AlarmTable)
-	for _,v := range alarmTable {
-		if _,b:=alarmMap[v.Content];b {
+	for _, v := range alarmTable {
+		if _, b := alarmMap[v.Tags]; b {
 			continue
 		}
-		alarmMap[v.Content] = v
+		alarmMap[v.Tags] = v
 	}
 	var addAlarmRows []*models.AlarmTable
-	var newValue,oldValue float64
+	var newValue, oldValue float64
 	notifyMap := make(map[string]string)
 	nowTime := time.Now()
-	for _,config := range logKeywordConfigs {
+	for _, config := range logKeywordConfigs {
 		key := fmt.Sprintf("e_guid:%s^t_guid:%s^file:%s^keyword:%s", config.SourceEndpoint, config.TargetEndpoint, config.LogPath, config.Keyword)
-		newValue,oldValue = 0,0
-		if dataValue,b:=dataMap[key];b {
+		newValue, oldValue = 0, 0
+		if dataValue, b := dataMap[key]; b {
 			newValue = dataValue
-		}else{
+		} else {
 			continue
 		}
 		if newValue == 0 {
 			continue
 		}
 		addFlag := false
-		if existAlarm,b:=alarmMap[key];b {
+		if existAlarm, b := alarmMap[key]; b {
 			if existAlarm.EndValue > 0 {
 				oldValue = existAlarm.EndValue
-			}else{
+			} else {
 				oldValue = existAlarm.StartValue
 			}
 			if newValue == oldValue {
-				log.Logger.Debug("logKeyword compare", log.Float64("newValue",newValue), log.Float64("oldValue",oldValue))
 				continue
 			}
 			if existAlarm.Status == "firing" {
-				existAlarm.Content = strings.Split(existAlarm.Content, "^^")[0] + getLogKeywordLastRow(config.AgentAddress,config.LogPath,config.Keyword)
-				addAlarmRows = append(addAlarmRows, &models.AlarmTable{Id: existAlarm.Id,Status: existAlarm.Status,EndValue: newValue,Content: existAlarm.Content,End: nowTime})
-			}else{
+				existAlarm.Content = strings.Split(existAlarm.Content, "^^")[0] + "^^" + getLogKeywordLastRow(config.AgentAddress, config.LogPath, config.Keyword)
+				addAlarmRows = append(addAlarmRows, &models.AlarmTable{Id: existAlarm.Id, Status: existAlarm.Status, EndValue: newValue, Content: existAlarm.Content, End: nowTime})
+			} else {
 				addFlag = true
 			}
-		}else{
+		} else {
 			addFlag = true
 		}
 		if addFlag {
 			if config.NotifyEnable > 0 {
 				notifyMap[key] = config.ServiceGroup
 			}
-			addAlarmRows = append(addAlarmRows, &models.AlarmTable{StrategyId: 0, Endpoint: config.TargetEndpoint, Status: "firing", SMetric: "log_monitor", SExpr: "node_log_monitor_count_total", SCond: ">0", SLast: "10s", SPriority: config.Priority, Content: getLogKeywordLastRow(config.AgentAddress,config.LogPath,config.Keyword), Tags: key, StartValue: newValue, Start: nowTime})
+			addAlarmRows = append(addAlarmRows, &models.AlarmTable{StrategyId: 0, Endpoint: config.TargetEndpoint, Status: "firing", SMetric: "log_monitor", SExpr: "node_log_monitor_count_total", SCond: ">0", SLast: "10s", SPriority: config.Priority, Content: getLogKeywordLastRow(config.AgentAddress, config.LogPath, config.Keyword), Tags: key, StartValue: newValue, Start: nowTime})
 		}
 	}
 	if len(addAlarmRows) == 0 {
@@ -244,10 +242,10 @@ func doLogKeywordMonitorJob()  {
 		tmpAction := Action{}
 		if v.Id > 0 {
 			tmpAction.Sql = "UPDATE alarm SET content=?,end_value=?,end=? WHERE id=?"
-			tmpAction.Param = []interface{}{v.Content, v.EndValue, v.End.Format(m.DatetimeFormat), v.Id}
+			tmpAction.Param = []interface{}{v.Content, v.EndValue, v.End.Format(models.DatetimeFormat), v.Id}
 		} else {
 			tmpAction.Sql = "INSERT INTO alarm(strategy_id,endpoint,status,s_metric,s_expr,s_cond,s_last,s_priority,content,start_value,start,tags) VALUE (?,?,?,?,?,?,?,?,?,?,?,?)"
-			tmpAction.Param = []interface{}{v.StrategyId, v.Endpoint, v.Status, v.SMetric, v.SExpr, v.SCond, v.SLast, v.SPriority, v.Content, v.StartValue, v.Start.Format(m.DatetimeFormat), v.Tags}
+			tmpAction.Param = []interface{}{v.StrategyId, v.Endpoint, v.Status, v.SMetric, v.SExpr, v.SCond, v.SLast, v.SPriority, v.Content, v.StartValue, v.Start.Format(models.DatetimeFormat), v.Tags}
 		}
 		actions = append(actions, &tmpAction)
 	}
@@ -260,12 +258,26 @@ func doLogKeywordMonitorJob()  {
 		if v.Id > 0 {
 			continue
 		}
-		if _,b:=notifyMap[v.Tags];!b {
+		if _, b := notifyMap[v.Tags]; !b {
 			log.Logger.Warn("Log keyword monitor notify disable,ignore", log.String("tags", v.Tags))
 			continue
 		}
-		NotifyServiceGroup(notifyMap[v.Tags], &models.AlarmHandleObj{AlarmTable:*v})
+		tmpAlarmObj := getSimpleAlarmByLogKeywordTags(v.Tags)
+		if tmpAlarmObj.Id <= 0 {
+			log.Logger.Warn("Log keyword monitor notify fail,query alarm with tags fail", log.String("tags", v.Tags))
+			continue
+		}
+		NotifyServiceGroup(notifyMap[v.Tags], &models.AlarmHandleObj{AlarmTable: tmpAlarmObj})
 	}
+}
+
+func getSimpleAlarmByLogKeywordTags(tags string) (result models.AlarmTable) {
+	var alarmTable []*models.AlarmTable
+	x.SQL("select * from alarm where tags=? and status='firing' order by id desc limit 1", tags).Find(&alarmTable)
+	if len(alarmTable) > 0 {
+		result = *alarmTable[0]
+	}
+	return
 }
 
 func getLogKeywordLastRow(address, path, keyword string) string {
