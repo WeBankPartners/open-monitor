@@ -1,5 +1,11 @@
 package models
 
+import (
+	"fmt"
+	"reflect"
+	"strings"
+)
+
 type ServiceGroupTable struct {
 	Guid        string `json:"guid" xorm:"guid"`
 	DisplayName string `json:"display_name" xorm:"display_name"`
@@ -49,41 +55,62 @@ type ServiceGroupRoleRelTable struct {
 }
 
 type PluginUpdateServicePathRequest struct {
-	RequestId      string                        `json:"requestId"`
-	DueDate        string                        `json:"dueDate"`
-	AllowedOptions []string                      `json:"allowedOptions"`
+	RequestId      string                               `json:"requestId"`
+	DueDate        string                               `json:"dueDate"`
+	AllowedOptions []string                             `json:"allowedOptions"`
 	Inputs         []*PluginUpdateServicePathRequestObj `json:"inputs"`
 }
 
 type PluginUpdateServicePathRequestObj struct {
-	CallbackParameter string `json:"callbackParameter"`
-	ProcInstId        string `json:"procInstId"`
-	CallbackUrl       string `json:"callbackUrl"`
-	Reporter          string `json:"reporter"`
-	Handler           string `json:"handler"`
-	RoleName          string `json:"roleName"`
-	TaskName          string `json:"taskName"`
-	TaskDescription   string `json:"taskDescription"`
-	TaskFormInput     string `json:"taskFormInput"`
+	CallbackParameter string      `json:"callbackParameter"`
+	Guid              string      `json:"guid"`
+	SystemName        string      `json:"systemName"`
+	LogPathList       interface{} `json:"logPathList"`
+	MonitorType       string      `json:"monitorType"`
 }
 
 type PluginUpdateServicePathResp struct {
-	ResultCode    string                 `json:"resultCode"`
-	ResultMessage string                 `json:"resultMessage"`
+	ResultCode    string                        `json:"resultCode"`
+	ResultMessage string                        `json:"resultMessage"`
 	Results       PluginUpdateServicePathOutput `json:"results"`
 }
 
 type PluginUpdateServicePathOutput struct {
-	RequestId      string                       `json:"requestId"`
-	AllowedOptions []string                     `json:"allowedOptions,omitempty"`
+	RequestId      string                              `json:"requestId"`
+	AllowedOptions []string                            `json:"allowedOptions,omitempty"`
 	Outputs        []*PluginUpdateServicePathOutputObj `json:"outputs"`
 }
 
 type PluginUpdateServicePathOutputObj struct {
 	CallbackParameter string `json:"callbackParameter"`
-	Comment           string `json:"comment"`
-	TaskFormOutput    string `json:"taskFormOutput"`
+	Guid              string `json:"guid"`
 	ErrorCode         string `json:"errorCode"`
 	ErrorMessage      string `json:"errorMessage"`
 	ErrorDetail       string `json:"errorDetail,omitempty"`
+}
+
+func TransPluginMultiStringParam(input interface{}) []string {
+	var result []string
+	rn := reflect.TypeOf(input).String()
+	if rn == "[]string" {
+		for _,v := range input.([]string) {
+			if v != "" {
+				result = append(result, v)
+			}
+		}
+	}else{
+		tmpString := fmt.Sprintf("%s", input)
+		if strings.HasPrefix(tmpString, "[") {
+			tmpString = tmpString[1:]
+		}
+		if strings.HasSuffix(tmpString, "]") {
+			tmpString = tmpString[:len(tmpString)-1]
+		}
+		for _,v := range strings.Split(tmpString, ",") {
+			if v != "" {
+				result = append(result, v)
+			}
+		}
+	}
+	return result
 }
