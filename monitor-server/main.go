@@ -38,7 +38,7 @@ func main() {
 	go db.InitServiceGroup()
 	go db.StartCronJob()
 	go db.StartCheckCron()
-	go db.StartCheckLogKeyword()
+	go db.StartLogKeywordMonitorCronJob()
 	go db.SendConfigToDbManager()
 	go db.StartCallCronJob()
 	go db.StartNotifyPingExport()
