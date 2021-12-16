@@ -236,6 +236,7 @@ func ProcessHttpHandle(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
+	level.Info(monitorLogger).Log("processConfig", string(requestParamBuff))
 	isCheck := false
 	isCheck, err = HandleProcessAction(requestParamBuff)
 	if isCheck == false && err == nil {
