@@ -156,7 +156,7 @@
         </Tag>
       </template>
     </Modal>
-    <Modal
+    <!-- <Modal
       v-model="isShowWarning"
       :title="$t('delConfirm.title')"
       @on-ok="ok"
@@ -165,6 +165,38 @@
         <div style="text-align:center">
           <p style="color: red">{{$t('delConfirm.tip')}}</p>
         </div>
+      </div>
+    </Modal> -->
+    <Modal v-model="confirmModal.isShowConfirmModal" width="900">
+      <div>
+        <Icon :size="28" :color="'#f90'" type="md-help-circle" />
+        <span class="confirm-msg">{{ $t('delConfirm.title') }}</span>
+      </div>
+      <div>
+        <p style="margin-left: 10px;margin-top: 22px;">{{ $t(this.confirmModal.message) }}</p>
+      </div>
+      <div slot="footer">
+        <span style="color:#ed4014;float: left;text-align:left">
+          <Checkbox v-model="confirmModal.check">{{ $t('dangerous_confirm_tip') }}</Checkbox>
+        </span>
+        <Button @click="cancelConfirmModal">{{$t('button.cancel')}}</Button>
+        <Button
+          @click="getDeleteData"
+          :disabled="!confirmModal.check"
+          type="warning"
+          style="background-color: #0080FF;border-color: #0080FF;"
+          >{{ $t('button.confirm') }}</Button
+        >
+      </div>
+    </Modal>
+    <Modal
+      v-model="doubleConfirm.isShow"
+      :title="$t('delConfirm.title')"
+      @on-ok="ok"
+      @on-cancel="cancel">
+      <div class="modal-body" style="padding:10px">
+        <div style="color:#ed4014">{{$t('delete_follow')}}:</div>
+        <p v-for="msg in doubleConfirm.warningData" :key="msg">{{msg}}</p>
       </div>
     </Modal>
   </div>
@@ -206,7 +238,16 @@ export default {
       inputRole: '',
       selectRole: [],
       roleList: [],
-      tagInfo: []
+      tagInfo: [],
+      confirmModal: {
+        isShowConfirmModal: false,
+        check: false,
+        message: 'resource_delete_tip',
+      },
+      doubleConfirm: {
+        isShow: false,
+        warningData: []
+      }
     }
   },
   props:{
@@ -241,6 +282,10 @@ export default {
     // }) 
   },
   methods: {
+    cancelConfirmModal () {
+      this.confirmModal.isShowConfirmModal = false
+      this.confirmModal.check = false
+    },
     addTag (fetch_search) {
       if (fetch_search) {
         return {'background': '#c9dded'}
@@ -376,13 +421,29 @@ export default {
     },
     deleteConfirmModal (rowData) {
       this.selectedData = rowData
-      this.isShowWarning = true
+      // this.isShowWarning = true
+      this.confirmModal.isShowConfirmModal = true
+    },
+    getDeleteData () {
+      const params = {
+        guid: this.selectedData.guid,
+        force: 'no'
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/alarm/org/panel/delete', params, (res) => {
+        this.confirmModal.isShowConfirmModal = false
+        if (res.length > 0) {
+          this.doubleConfirm.isShow= true
+          this.doubleConfirm.warningData= res
+        } else {
+          this.$root.$eventBus.$emit('updateResource', '')
+        }
+      })
     },
     ok () {
       this.deletePanal(this.selectedData)
     },
     cancel () {
-      this.isShowWarning = false
+      this.doubleConfirm.isShow= false
     },
     // deleteConfirm (panalData) {
     //   this.parentPanal =  panalData.guid
@@ -395,11 +456,12 @@ export default {
     // },
     deletePanal () {
       const params = {
-        guid: this.selectedData.guid
+        guid: this.selectedData.guid,
+        force: 'yes'
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/alarm/org/panel/delete', params, () => {
         // this.$root.$eventBus.$emit('hideConfirmModal')
-        this.$Message.success(this.$t('tips.success'))
+        this.doubleConfirm.isShow= false
         this.$root.$eventBus.$emit('updateResource', '')
       })
     },
