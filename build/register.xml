@@ -552,7 +552,7 @@
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">host_ip</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">process_name</parameter>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="">process_tag</parameter>
-                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="">display_name</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">display_name</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
@@ -567,12 +567,32 @@
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">host_ip</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">process_name</parameter>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="">process_tag</parameter>
-                    <parameter datatype="string" required="N" sensitiveData="N" mappingType="entity" mappingEntityExpression="">display_name</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">display_name</parameter>
                 </inputParameters>
                 <outputParameters>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                     <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
+                </outputParameters>
+            </interface>
+            <interface action="start-alarm" path="/monitor/api/v1/agent/export/start/process" filterRule="">
+                <inputParameters>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">host_ip</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">display_name</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
+                </outputParameters>
+            </interface>
+            <interface action="stop-alarm" path="/monitor/api/v1/agent/export/stop/process" filterRule="">
+                <inputParameters>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">host_ip</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="entity" mappingEntityExpression="">display_name</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
         </plugin>
