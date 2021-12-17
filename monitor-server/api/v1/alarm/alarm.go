@@ -145,6 +145,16 @@ func getNewAlarmEndpoint(param *m.AMRespAlert) (result m.EndpointNewTable,err er
 		return result,fmt.Errorf("alert labels have no endpoint message ")
 	}
 	result,err = db.GetEndpointNew(&result)
+	if err != nil {
+		return
+	}
+	if result.AlarmEnable == 0 {
+		err = fmt.Errorf("Endpoint %s alarm is disable ", result.Guid)
+		return
+	}
+	if !db.CheckEndpointActiveAlert(result.Guid) {
+		err = fmt.Errorf("Endpoint %s in alert window ", result.Guid)
+	}
 	return
 }
 
