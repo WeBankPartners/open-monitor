@@ -108,6 +108,8 @@ func UpdateDbMetric(param *models.DbMetricMonitorObj) error {
 func DeleteDbMetric(dbMetricGuid string) error {
 	var actions []*Action
 	actions = append(actions, &Action{Sql: "delete from db_metric_endpoint_rel where db_metric_monitor=?", Param: []interface{}{dbMetricGuid}})
+	actions = append(actions, &Action{Sql: "delete from alarm_strategy where metric in (select guid from metric where db_metric_monitor=?)", Param: []interface{}{dbMetricGuid}})
+	actions = append(actions, &Action{Sql: "delete from metric where db_metric_monitor=?", Param: []interface{}{dbMetricGuid}})
 	actions = append(actions, &Action{Sql: "delete from db_metric_monitor where guid=?", Param: []interface{}{dbMetricGuid}})
 	return Transaction(actions)
 }
