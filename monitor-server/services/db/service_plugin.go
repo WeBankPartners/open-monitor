@@ -22,9 +22,7 @@ func PluginUpdateServicePathAction(input *models.PluginUpdateServicePathRequestO
 		err = fmt.Errorf("System:%s can not find,%s ", input.SystemName, getErr.Error())
 		return
 	}
-	log.Logger.Info("TransPluginMultiStringParam input", log.String("input", fmt.Sprintf("%s", input.LogPathList)))
 	pathList := models.TransPluginMultiStringParam(input.LogPathList)
-	log.Logger.Info("TransPluginMultiStringParam output", log.StringList("output", pathList))
 	endpointTypeMap := getServiceGroupEndpointWithChild(input.SystemName)
 	sourceTargetMap := make(map[string]string)
 	var hostEndpoint,targetEndpoint []string
