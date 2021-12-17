@@ -168,9 +168,9 @@ func DeleteEndpoint(guid string) error {
 }
 
 func UpdateEndpointAlarmFlag(isStop bool, exportType, instance, ip, port, pod, k8sCluster string) error {
-	var endpoints []*m.EndpointTable
+	var endpoints []*m.EndpointNewTable
 	if exportType == "host" {
-		x.SQL("SELECT id FROM endpoint WHERE export_type=? AND ip=?", exportType, ip).Find(&endpoints)
+		x.SQL("SELECT guid FROM endpoint_new WHERE monitor_type=? AND ip=?", exportType, ip).Find(&endpoints)
 	} else if exportType == "pod" {
 		if k8sCluster != "" {
 			x.SQL("select * from endpoint where name=? and os_type=? and export_type='pod'", pod, k8sCluster).Find(&endpoints)
@@ -179,18 +179,21 @@ func UpdateEndpointAlarmFlag(isStop bool, exportType, instance, ip, port, pod, k
 		}
 	} else {
 		if port != "" {
-			x.SQL("SELECT id FROM endpoint WHERE export_type=? AND address=? AND name=?", exportType, fmt.Sprintf("%s:%s", ip, port), instance).Find(&endpoints)
+			x.SQL("SELECT guid FROM endpoint_new WHERE monitor_type=? AND endpoint_address=? AND name=?", exportType, fmt.Sprintf("%s:%s", ip, port), instance).Find(&endpoints)
 		} else {
-			x.SQL("SELECT id FROM endpoint WHERE export_type=? AND ip=? AND name=?", exportType, ip, instance).Find(&endpoints)
+			x.SQL("SELECT guid FROM endpoint_new WHERE monitor_type=? AND ip=? AND name=?", exportType, ip, instance).Find(&endpoints)
 		}
 	}
 	if len(endpoints) > 0 {
-		stopAlarm := "0"
+		var actions []*Action
 		if isStop {
-			stopAlarm = "1"
+			actions = append(actions, &Action{Sql: "UPDATE endpoint SET stop_alarm=1 WHERE guid=?", Param: []interface{}{endpoints[0].Guid}})
+			actions = append(actions, &Action{Sql: "UPDATE endpoint_new SET alarm_enable=0 WHERE guid=?", Param: []interface{}{endpoints[0].Guid}})
+		}else{
+			actions = append(actions, &Action{Sql: "UPDATE endpoint SET stop_alarm=0 WHERE guid=?", Param: []interface{}{endpoints[0].Guid}})
+			actions = append(actions, &Action{Sql: "UPDATE endpoint_new SET alarm_enable=1 WHERE guid=?", Param: []interface{}{endpoints[0].Guid}})
 		}
-		_, err := x.Exec(fmt.Sprintf("UPDATE endpoint SET stop_alarm=%s WHERE id=%d", stopAlarm, endpoints[0].Id))
-		return err
+		return Transaction(actions)
 	} else {
 		return fmt.Errorf("Can not find this monitor object with %s %s %s %s \n", exportType, instance, ip, port)
 	}
