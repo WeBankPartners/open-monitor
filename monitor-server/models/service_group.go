@@ -93,10 +93,11 @@ type PluginUpdateServicePathOutputObj struct {
 func TransPluginMultiStringParam(input interface{}) []string {
 	var result []string
 	rn := reflect.TypeOf(input).String()
-	if rn == "[]string" {
-		for _,v := range input.([]string) {
-			if v != "" {
-				result = append(result, v)
+	if strings.Contains(rn, "[]interface") {
+		for _,v := range input.([]interface{}) {
+			tmpV := fmt.Sprintf("%s", v)
+			if tmpV != "" {
+				result = append(result, tmpV)
 			}
 		}
 	}else{
