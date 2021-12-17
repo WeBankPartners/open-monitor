@@ -33,7 +33,7 @@ func UpdateOrgPanel(c *gin.Context) {
 					if err != nil {
 						mid.ReturnUpdateTableError(c, "panel_recursive", err)
 					} else {
-						mid.ReturnSuccess(c)
+						mid.ReturnSuccessData(c, []string{})
 					}
 				} else {
 					mid.ReturnSuccessData(c, result)
