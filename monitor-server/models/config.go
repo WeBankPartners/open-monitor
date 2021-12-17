@@ -42,7 +42,7 @@ type SessionRedisConfig struct {
 }
 
 type SessionConfig struct {
-	Enable       bool               `json:"enable"`
+	Enable       string               `json:"enable"`
 	Expire       int64              `json:"expire"`
 	ServerEnable bool               `json:"server_enable"`
 	ServerToken  string             `json:"server_token"`
@@ -64,7 +64,7 @@ type StoreConfig struct {
 	Name     string `json:"name"`
 	Type     string `json:"type"`
 	Server   string `json:"server"`
-	Port     int    `json:"port"`
+	Port     string    `json:"port"`
 	User     string `json:"user"`
 	Pwd      string `json:"pwd"`
 	DataBase string `json:"database"`
@@ -178,7 +178,7 @@ type GlobalConfig struct {
 	ArchiveMysql     ArchiveMysqlConfig  `json:"archive_mysql"`
 	ProcessCheckList []string            `json:"process_check_list"`
 	DefaultAdminRole string              `json:"default_admin_role"`
-	AlarmAliveMaxDay int                 `json:"alarm_alive_max_day"`
+	AlarmAliveMaxDay string                 `json:"alarm_alive_max_day"`
 }
 
 var (
