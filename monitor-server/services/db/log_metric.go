@@ -226,6 +226,8 @@ func getDeleteLogMetricMonitorAction(logMetricMonitorGuid string) []*Action {
 	actions = append(actions, &Action{Sql: "delete from log_metric_string_map where log_metric_config in (select guid from log_metric_config where log_metric_monitor=? or log_metric_json in (select guid from log_metric_json where log_metric_monitor=?))", Param: []interface{}{logMetricMonitorGuid, logMetricMonitorGuid}})
 	actions = append(actions, &Action{Sql: "delete from log_metric_config where log_metric_monitor=? or log_metric_json in (select guid from log_metric_json where log_metric_monitor=?)", Param: []interface{}{logMetricMonitorGuid, logMetricMonitorGuid}})
 	actions = append(actions, &Action{Sql: "delete from log_metric_json where log_metric_monitor=?", Param: []interface{}{logMetricMonitorGuid}})
+	actions = append(actions, &Action{Sql: "delete from alarm_strategy where metric in (select guid from metric where log_metric_monitor=?)", Param: []interface{}{logMetricMonitorGuid}})
+	actions = append(actions, &Action{Sql: "delete from metric where log_metric_monitor=?", Param: []interface{}{logMetricMonitorGuid}})
 	actions = append(actions, &Action{Sql: "delete from log_metric_monitor where guid=?", Param: []interface{}{logMetricMonitorGuid}})
 	return actions
 }
