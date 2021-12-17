@@ -280,7 +280,7 @@ func GetOrgEndpoint(guid string) (result []*m.OptionModel, err error) {
 	for _, v := range strings.Split(tableData[0].Endpoint, "^") {
 		for _, vv := range endpointData {
 			if vv.Guid == v {
-				result = append(result, &m.OptionModel{OptionText: fmt.Sprintf("%s:%s", vv.Name, vv.Ip), OptionValue: vv.Guid, OptionType: vv.ExportType})
+				result = append(result, &m.OptionModel{OptionText: vv.Guid, OptionValue: vv.Guid, OptionType: vv.ExportType})
 				break
 			}
 		}
