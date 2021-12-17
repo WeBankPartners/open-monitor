@@ -3,6 +3,7 @@ package db
 import (
 	"fmt"
 	"github.com/WeBankPartners/go-common-lib/guid"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"regexp"
 	"strings"
@@ -284,6 +285,7 @@ func UpdateLogMetricJson(param *models.LogMetricJsonObj) error {
 		}
 		actions = append(actions, getUpdateLogMetricConfigAction(v, nowTime)...)
 	}
+	var affectEndpointGroup []string
 	for _, v := range logMetricConfigTable {
 		existFlag := false
 		for _, vv := range param.MetricList {
@@ -293,22 +295,38 @@ func UpdateLogMetricJson(param *models.LogMetricJsonObj) error {
 			}
 		}
 		if !existFlag {
-			actions = append(actions, getDeleteLogMetricConfigAction(v.Guid)...)
+			deleteActions,tmpEndpointGroup := getDeleteLogMetricConfigAction(v.Guid,param.LogMetricMonitor)
+			actions = append(actions, deleteActions...)
+			affectEndpointGroup = append(affectEndpointGroup, tmpEndpointGroup...)
 		}
 	}
-	return Transaction(actions)
+	err := Transaction(actions)
+	if err == nil && len(affectEndpointGroup) > 0 {
+		for _,v := range affectEndpointGroup {
+			SyncPrometheusRuleFile(v, false)
+		}
+	}
+	return err
 }
 
 func DeleteLogMetricJson(logMetricJsonGuid string) (logMetricMonitorGuid string, err error) {
 	logMetricMonitorGuid, err = getLogMetricJsonMonitor(logMetricJsonGuid)
 	var actions []*Action
 	var logMetricConfigTable []*models.LogMetricConfigTable
+	var affectEndpointGroup []string
 	x.SQL("select * from log_metric_config where log_metric_json=?", logMetricJsonGuid).Find(&logMetricConfigTable)
 	for _, v := range logMetricConfigTable {
-		actions = append(actions, getDeleteLogMetricConfigAction(v.Guid)...)
+		deleteActions,tmpEndpointGroup :=getDeleteLogMetricConfigAction(v.Guid,logMetricMonitorGuid)
+		actions = append(actions, deleteActions...)
+		affectEndpointGroup = append(affectEndpointGroup, tmpEndpointGroup...)
 	}
 	actions = append(actions, &Action{Sql: "delete from log_metric_json where guid=?", Param: []interface{}{logMetricJsonGuid}})
 	err = Transaction(actions)
+	if err == nil && len(affectEndpointGroup) > 0 {
+		for _,v := range affectEndpointGroup {
+			SyncPrometheusRuleFile(v, false)
+		}
+	}
 	return
 }
 
@@ -359,8 +377,13 @@ func UpdateLogMetricConfig(param *models.LogMetricConfigObj) error {
 
 func DeleteLogMetricConfig(logMetricConfigGuid string) (logMetricMonitorGuid string, err error) {
 	logMetricMonitorGuid, err = getLogMetricConfigMonitor(logMetricConfigGuid)
-	actions := getDeleteLogMetricConfigAction(logMetricConfigGuid)
+	actions,affectEndpointGroup := getDeleteLogMetricConfigAction(logMetricConfigGuid,logMetricMonitorGuid)
 	err = Transaction(actions)
+	if err == nil && len(affectEndpointGroup) > 0 {
+		for _,v := range affectEndpointGroup {
+			SyncPrometheusRuleFile(v, false)
+		}
+	}
 	return
 }
 
@@ -437,11 +460,35 @@ func getUpdateLogMetricConfigAction(param *models.LogMetricConfigObj, nowTime st
 	return actions
 }
 
-func getDeleteLogMetricConfigAction(logMetricConfigGuid string) []*Action {
-	var actions []*Action
+func getDeleteLogMetricConfigAction(logMetricConfigGuid,logMetricMonitorGuid string) (actions []*Action,endpointGroup []string) {
+	lmObj,err := getSimpleLogMetricConfig(logMetricConfigGuid)
+	if err != nil {
+		log.Logger.Error("getDeleteLogMetricConfigAction", log.Error(err))
+		return
+	}
+	var alarmStrategyTable []*models.AlarmStrategyTable
+	x.SQL("select guid,endpoint_group from alarm_strategy where metric in (select guid from metric where log_metric_monitor=? and metric=?)", logMetricMonitorGuid, lmObj.Metric).Find(&alarmStrategyTable)
+	for _,v := range alarmStrategyTable {
+		endpointGroup = append(endpointGroup, v.EndpointGroup)
+	}
+	actions  =append(actions, &Action{Sql: "delete from alarm_strategy where metric in (select guid from metric where log_metric_monitor=? and metric=?)", Param: []interface{}{logMetricMonitorGuid, lmObj.Metric}})
+	actions  =append(actions, &Action{Sql: "delete from metric where log_metric_monitor=? and metric=?", Param: []interface{}{logMetricMonitorGuid, lmObj.Metric}})
 	actions = append(actions, &Action{Sql: "delete from log_metric_string_map where log_metric_config=?", Param: []interface{}{logMetricConfigGuid}})
 	actions = append(actions, &Action{Sql: "delete from log_metric_config where guid=?", Param: []interface{}{logMetricConfigGuid}})
-	return actions
+	return
+}
+
+func getSimpleLogMetricConfig(logMetricConfigGuid string) (result models.LogMetricConfigTable,err error) {
+	var queryTable []*models.LogMetricConfigTable
+	err = x.SQL("select * from log_metric_config where guid=?", logMetricConfigGuid).Find(&queryTable)
+	if err != nil {
+		return result,err
+	}
+	if len(queryTable) == 0 {
+		return result,fmt.Errorf("Can not find logMetricConfig with guid:%s ", logMetricConfigGuid)
+	}
+	result = *queryTable[0]
+	return
 }
 
 func GetServiceGroupByLogMetricMonitor(logMetricMonitorGuid string) string {
