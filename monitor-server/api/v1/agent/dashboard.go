@@ -17,6 +17,7 @@ type requestPanelObj struct {
 }
 
 type panelRequestObj struct {
+	ConfirmToken      string `json:"confirmToken"`
 	CallbackParameter string `json:"callbackParameter"`
 	Guid              string `json:"guid"`
 	DisplayName       string `json:"display_name"`
