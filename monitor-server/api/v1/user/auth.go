@@ -182,7 +182,7 @@ func AuthRequired() gin.HandlerFunc {
 		if strings.Contains(c.Request.RequestURI, "/export/ping/source") {
 			c.Next()
 		} else {
-			if !m.Config().Http.Session.Enable {
+			if m.Config().Http.Session.Enable != "true" {
 				auToken := c.GetHeader("Authorization")
 				if auToken != "" {
 					coreToken, err := mid.DecodeCoreToken(auToken, m.CoreJwtKey)
