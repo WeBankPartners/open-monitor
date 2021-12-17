@@ -59,9 +59,9 @@ func QueryAlarmStrategyByEndpoint(endpoint string) (result []*models.EndpointStr
 			break
 		}
 		tmpEndpointStrategyList[0].ServiceGroup = v.ServiceGroup
-		if sName,b:=serviceGroupMap[v.ServiceGroup];b {
+		if sName, b := serviceGroupMap[v.ServiceGroup]; b {
 			tmpEndpointStrategyList[0].DisplayName = sName
-		}else{
+		} else {
 			tmpEndpointStrategyList[0].DisplayName = v.ServiceGroup
 		}
 		result = append(result, tmpEndpointStrategyList[0])
@@ -171,6 +171,19 @@ func getNotifyList(alarmStrategy, endpointGroup, serviceGroup string) (result []
 	return result
 }
 
+func getSimpleNotify(notifyGuid string) (result models.NotifyTable, err error) {
+	var notifyTable []*models.NotifyTable
+	err = x.SQL("select * from notify where guid=?", notifyGuid).Find(&notifyTable)
+	if err != nil {
+		return result, fmt.Errorf("Query notify table tail,%s ", err.Error())
+	}
+	if len(notifyTable) == 0 {
+		return result, fmt.Errorf("Can not find notify with guid:%s ", notifyGuid)
+	}
+	result = *notifyTable[0]
+	return
+}
+
 func getNotifyRoles(notifyId string) []string {
 	roles := []string{}
 	var notifyRoleRel []*models.NotifyRoleRelTable
@@ -245,9 +258,9 @@ func SyncPrometheusRuleFile(endpointGroup string, fromPeer bool) error {
 	var endpointList []*models.EndpointNewTable
 	if endpointGroupObj.ServiceGroup == "" {
 		err = x.SQL("select * from endpoint_new where monitor_type=? and guid in (select endpoint from endpoint_group_rel where endpoint_group=?)", endpointGroupObj.MonitorType, endpointGroup).Find(&endpointList)
-	}else{
-		serviceGroupGuidList,_ := fetchGlobalServiceGroupChildGuidList(endpointGroupObj.ServiceGroup)
-		err = x.SQL("select * from endpoint_new where monitor_type=? and guid in (select endpoint from endpoint_service_rel where service_group in ('"+strings.Join(serviceGroupGuidList,"','")+"'))", endpointGroupObj.MonitorType).Find(&endpointList)
+	} else {
+		serviceGroupGuidList, _ := fetchGlobalServiceGroupChildGuidList(endpointGroupObj.ServiceGroup)
+		err = x.SQL("select * from endpoint_new where monitor_type=? and guid in (select endpoint from endpoint_service_rel where service_group in ('"+strings.Join(serviceGroupGuidList, "','")+"'))", endpointGroupObj.MonitorType).Find(&endpointList)
 	}
 	if err != nil {
 		return err
@@ -430,6 +443,20 @@ func GetAlarmObj(query *models.AlarmTable) (result models.AlarmTable, err error)
 	return
 }
 
+func NotifyServiceGroup(serviceGroup string, alarmObj *models.AlarmHandleObj) {
+	var notifyList []*models.NotifyTable
+	err := x.SQL("select * from notify where service_group=?", serviceGroup).Find(&notifyList)
+	if err != nil {
+		log.Logger.Error("Notify serviceGroup fail,query notify data error", log.Error(err))
+	}
+	for _, v := range notifyList {
+		err = notifyAction(v, alarmObj)
+		if err != nil {
+			log.Logger.Error("Notify error", log.Error(err))
+		}
+	}
+}
+
 func NotifyStrategyAlarm(alarmObj *models.AlarmHandleObj) {
 	if alarmObj.AlarmStrategy == "" {
 		log.Logger.Error("Notify strategy alarm fail,alarmStrategy is empty", log.JsonObj("alarm", alarmObj))
@@ -445,13 +472,13 @@ func NotifyStrategyAlarm(alarmObj *models.AlarmHandleObj) {
 		var affectServiceGroupList []string
 		var serviceGroup []*models.EndpointServiceRelTable
 		x.SQL("select distinct service_group from endpoint_service_rel where endpoint=?", alarmObj.Endpoint).Find(&serviceGroup)
-		for _,v := range serviceGroup {
-			tmpGuidList,_ := fetchGlobalServiceGroupParentGuidList(v.ServiceGroup)
-			for _,vv := range tmpGuidList {
+		for _, v := range serviceGroup {
+			tmpGuidList, _ := fetchGlobalServiceGroupParentGuidList(v.ServiceGroup)
+			for _, vv := range tmpGuidList {
 				affectServiceGroupList = append(affectServiceGroupList, vv)
 			}
 		}
-		x.SQL("select * from notify where alarm_action=? and endpoint_group in (select endpoint_group from alarm_strategy where guid=?) or service_group in ('"+strings.Join(affectServiceGroupList,"','")+"')", alarmObj.Status, alarmObj.AlarmStrategy).Find(&notifyTable)
+		x.SQL("select * from notify where alarm_action=? and endpoint_group in (select endpoint_group from alarm_strategy where guid=?) or service_group in ('"+strings.Join(affectServiceGroupList, "','")+"')", alarmObj.Status, alarmObj.AlarmStrategy).Find(&notifyTable)
 	}
 	if len(notifyTable) == 0 {
 		return
@@ -465,6 +492,7 @@ func NotifyStrategyAlarm(alarmObj *models.AlarmHandleObj) {
 }
 
 func notifyAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleObj) error {
+	log.Logger.Info("Start notify action", log.String("procCallKey", notify.ProcCallbackKey), log.String("notify", notify.Guid), log.Int("alarm", alarmObj.Id))
 	if notify.ProcCallbackKey == "" {
 		return notifyMailAction(notify, alarmObj)
 	}
@@ -521,10 +549,19 @@ func notifyEventAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleO
 }
 
 func getNotifyEventMessage(notifyGuid string, alarm models.AlarmTable) (result models.AlarmEntityObj) {
+	notifyObj, err := getSimpleNotify(notifyGuid)
+	if err != nil {
+		log.Logger.Error("getNotifyEventMessage fail", log.Error(err))
+		return
+	}
 	result = models.AlarmEntityObj{}
 	result.Subject, result.Content = getNotifyMessage(&models.AlarmHandleObj{AlarmTable: alarm})
 	var roles []*models.RoleNewTable
-	x.SQL("select guid,email,phone from `role_new` where guid in (select `role` from notify_role_rel where notify=?)", notifyGuid).Find(&roles)
+	if notifyObj.ServiceGroup != "" {
+		x.SQL("select guid,email from role_new where guid in (select `role` from service_group_role_rel where service_group=?)", notifyObj.ServiceGroup).Find(&roles)
+	} else {
+		x.SQL("select guid,email,phone from `role_new` where guid in (select `role` from notify_role_rel where notify=?)", notifyGuid).Find(&roles)
+	}
 	var email, phone, role []string
 	emailExistMap := make(map[string]int)
 	phoneExistMap := make(map[string]int)
@@ -543,7 +580,10 @@ func getNotifyEventMessage(notifyGuid string, alarm models.AlarmTable) (result m
 		}
 		role = append(role, v.Guid)
 	}
-	email = getRoleMail(role)
+	tmpEmailList := getRoleMail(role)
+	if len(tmpEmailList) > 0 {
+		email = tmpEmailList
+	}
 	result.To = strings.Join(email, ",")
 	result.ToMail = result.To
 	result.ToPhone = strings.Join(phone, ",")
@@ -557,7 +597,7 @@ func notifyMailAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleOb
 	var toAddress, roleList []string
 	if notify.ServiceGroup != "" {
 		x.SQL("select guid,email from role_new where guid in (select `role` from service_group_role_rel where service_group=?)", notify.ServiceGroup).Find(&roles)
-	}else {
+	} else {
 		x.SQL("select guid,email from `role_new` where guid in (select `role` from notify_role_rel where notify=?)", notify.Guid).Find(&roles)
 	}
 	for _, v := range roles {
