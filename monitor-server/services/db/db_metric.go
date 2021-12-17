@@ -107,11 +107,23 @@ func UpdateDbMetric(param *models.DbMetricMonitorObj) error {
 
 func DeleteDbMetric(dbMetricGuid string) error {
 	var actions []*Action
+	var endpointGroup []string
+	var alarmStrategyTable []*models.AlarmStrategyTable
+	x.SQL("select guid,endpoint_group from alarm_strategy where metric in (select guid from metric where db_metric_monitor=?)", dbMetricGuid).Find(&alarmStrategyTable)
+	for _,v := range alarmStrategyTable {
+		endpointGroup = append(endpointGroup, v.EndpointGroup)
+	}
 	actions = append(actions, &Action{Sql: "delete from db_metric_endpoint_rel where db_metric_monitor=?", Param: []interface{}{dbMetricGuid}})
 	actions = append(actions, &Action{Sql: "delete from alarm_strategy where metric in (select guid from metric where db_metric_monitor=?)", Param: []interface{}{dbMetricGuid}})
 	actions = append(actions, &Action{Sql: "delete from metric where db_metric_monitor=?", Param: []interface{}{dbMetricGuid}})
 	actions = append(actions, &Action{Sql: "delete from db_metric_monitor where guid=?", Param: []interface{}{dbMetricGuid}})
-	return Transaction(actions)
+	err := Transaction(actions)
+	if err == nil && len(endpointGroup) > 0 {
+		for _,v := range endpointGroup {
+			SyncPrometheusRuleFile(v, false)
+		}
+	}
+	return err
 }
 
 func getDbMetricEndpointRel(dbMetricMonitorGuid string) (result []*models.DbMetricEndpointRelTable) {
