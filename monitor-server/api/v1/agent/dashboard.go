@@ -169,6 +169,17 @@ func ExportPanelDelete(c *gin.Context) {
 		errorMessage := "Done"
 		for _, v := range param.Inputs {
 			var tmpMessage string
+			affectList,affectErr := db.GetDeleteServiceGroupAffectList(v.Guid)
+			if affectErr != nil {
+				tmpMessage = fmt.Sprintf("Try to get affect object list fail,%s ", affectErr.Error())
+			}
+			if v.ConfirmToken != "Y" && len(affectList) > 0 {
+				tmpMessage = fmt.Sprintf("This action will delete these config:%s ", strings.Join(affectList, " \n "))
+				errorMessage = tmpMessage
+				tmpResult = append(tmpResult, resultOutputObj{Guid: v.Guid, CallbackParameter: v.CallbackParameter, ErrorCode: "-1", ErrorMessage: tmpMessage})
+				successFlag = "1"
+				continue
+			}
 			if v.Guid == "" {
 				tmpMessage = fmt.Sprintf(mid.GetMessageMap(c).ParamEmptyError, "guid")
 			}
