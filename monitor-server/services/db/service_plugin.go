@@ -12,6 +12,7 @@ import (
 func PluginUpdateServicePathAction(input *models.PluginUpdateServicePathRequestObj) (result *models.PluginUpdateServicePathOutputObj, err error) {
 	log.Logger.Info("PluginUpdateServicePathAction", log.JsonObj("input", input))
 	result = &models.PluginUpdateServicePathOutputObj{CallbackParameter: input.CallbackParameter, ErrorCode: "0", ErrorMessage: "", Guid: input.Guid}
+	input.SystemName = input.Guid
 	monitorTypeQuery,_ := x.QueryString("select guid from monitor_type where guid=?", input.MonitorType)
 	if len(monitorTypeQuery) == 0 {
 		err = fmt.Errorf("MonitorType:%s illegal ", input.MonitorType)
