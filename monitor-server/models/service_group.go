@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"reflect"
 	"strings"
 )
@@ -91,6 +92,7 @@ type PluginUpdateServicePathOutputObj struct {
 }
 
 func TransPluginMultiStringParam(input interface{}) []string {
+	log.Logger.Info("TransPluginMultiStringParam input", log.String("input", fmt.Sprintf("%s", input)))
 	var result []string
 	rn := reflect.TypeOf(input).String()
 	if rn == "[]string" {
@@ -113,5 +115,6 @@ func TransPluginMultiStringParam(input interface{}) []string {
 			}
 		}
 	}
+	log.Logger.Info("TransPluginMultiStringParam output", log.StringList("output", result))
 	return result
 }

@@ -167,7 +167,6 @@ func UpdateOrganization(operation string, param m.UpdateOrgPanelParam) (err erro
 		}
 		actions = append(actions, &Action{Sql: fmt.Sprintf("DELETE FROM panel_recursive WHERE guid in ('%s')", strings.Join(guidList, "','"))})
 		actions = append(actions, getDeleteServiceGroupAction(param.Guid)...)
-		actions = append(actions, &Action{Sql: fmt.Sprintf("DELETE FROM service_group WHERE guid in ('%s')", strings.Join(guidList, "','"))})
 		err = Transaction(actions)
 		if err == nil {
 			DeleteServiceWithChildConfig(param.Guid)
