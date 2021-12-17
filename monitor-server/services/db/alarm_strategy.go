@@ -494,7 +494,18 @@ func NotifyStrategyAlarm(alarmObj *models.AlarmHandleObj) {
 func notifyAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleObj) error {
 	log.Logger.Info("Start notify action", log.String("procCallKey", notify.ProcCallbackKey), log.String("notify", notify.Guid), log.Int("alarm", alarmObj.Id))
 	if notify.ProcCallbackKey == "" {
-		return notifyMailAction(notify, alarmObj)
+		if alarmObj.Status == "firing" {
+			if models.FiringCallback != "" && models.FiringCallback != "default_firing_callback" {
+				notify.ProcCallbackKey = models.FiringCallback
+			}
+		}else{
+			if models.RecoverCallback != "" && models.RecoverCallback != "default_recover_callback" {
+				notify.ProcCallbackKey = models.RecoverCallback
+			}
+		}
+		if notify.ProcCallbackKey == "" {
+			return notifyMailAction(notify, alarmObj)
+		}
 	}
 	var err error
 	for i := 0; i < 3; i++ {
@@ -584,6 +595,9 @@ func getNotifyEventMessage(notifyGuid string, alarm models.AlarmTable) (result m
 	if len(tmpEmailList) > 0 {
 		email = tmpEmailList
 	}
+	if len(email) == 0 {
+		email = models.DefaultMailReceiver
+	}
 	result.To = strings.Join(email, ",")
 	result.ToMail = result.To
 	result.ToPhone = strings.Join(phone, ",")
@@ -611,6 +625,9 @@ func notifyMailAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleOb
 		if len(tmpToAddress) > 0 {
 			toAddress = tmpToAddress
 		}
+	}
+	if len(toAddress) == 0 {
+		toAddress = models.DefaultMailReceiver
 	}
 	if len(toAddress) == 0 {
 		log.Logger.Warn("notifyMailAction toAddress empty", log.String("notify", notify.Guid), log.StringList("roleList", roleList))
