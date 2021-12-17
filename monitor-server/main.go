@@ -25,7 +25,7 @@ func main() {
 	m.InitConfig(*cfgFile)
 	log.InitLogger()
 	db.InitDatabase()
-	if m.Config().Http.Session.Enable {
+	if m.Config().Http.Session.Enable == "true" {
 		middleware.InitSession()
 	}
 	ds.InitPrometheusDatasource()

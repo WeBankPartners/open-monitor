@@ -11,3 +11,6 @@ Update business monitor config,support custom metric regular config.
 
 v1.13.0.1
 Update process monitor with process guid
+
+v2.0.0
+Update log keyword and log metric monitor
