@@ -16,7 +16,7 @@
       "attributes": ["name", "mail", "telephoneNumber"]
     },
     "session": {
-      "enable": {{MONITOR_SESSION_ENABLE}},
+      "enable": "{{MONITOR_SESSION_ENABLE}}",
       "expire": 3600,
       "server_enable": true,
       "server_token": "default-token-used-in-server-side",
@@ -43,7 +43,7 @@
       "name": "default",
       "type": "mysql",
       "server": "{{MONITOR_DB_HOST}}",
-      "port": {{MONITOR_DB_PORT}},
+      "port": "{{MONITOR_DB_PORT}}",
       "user": "{{MONITOR_DB_USER}}",
       "pwd": "{{MONITOR_DB_PWD}}",
       "database": "monitor",
@@ -183,5 +183,5 @@
   },
   "process_check_list": ["ping_exporter", "agent_manager"],
   "default_admin_role": "SUPER_ADMIN",
-  "alarm_alive_max_day": {{MONITOR_ALARM_ALIVE_MAX_DAY}}
+  "alarm_alive_max_day": "{{MONITOR_ALARM_ALIVE_MAX_DAY}}"
 }
