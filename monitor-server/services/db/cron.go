@@ -377,7 +377,7 @@ func getLogMonitorRows(ip, path, keyword string, lastValue, oldValue float64) st
 }
 
 func StartCleanAlarmTable() {
-	if m.Config().AlarmAliveMaxDay <= 0 {
+	if m.Config().AlarmAliveMaxDay == "" {
 		return
 	}
 	t, err := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s 00:00:00 "+m.DefaultLocalTimeZone, time.Now().Format("2006-01-02 ")))
@@ -400,7 +400,11 @@ func StartCleanAlarmTable() {
 
 func cleanAlarmTableJob() {
 	log.Logger.Info("Start to clean alarm table")
-	maxDay := int64(m.Config().AlarmAliveMaxDay)
+	aliveInt,_ := strconv.Atoi(m.Config().AlarmAliveMaxDay)
+	if aliveInt <= 0 {
+		return
+	}
+	maxDay := int64(aliveInt)
 	lastDayString := time.Unix(time.Now().Unix()-maxDay*86400, 0).Format("2006-01-02")
 	execResult, err := x.Exec(fmt.Sprintf("delete from alarm where (status='ok' or status='closed') and start<='%s 00:00:00'", lastDayString))
 	if err != nil {
