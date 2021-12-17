@@ -42,6 +42,7 @@ type endpointRequestObj struct {
 	Guid              string `json:"guid"`
 	CallbackParameter string `json:"callbackParameter"`
 	HostIp            string `json:"host_ip"`
+	DisplayName       string `json:"display_name"`
 	InstanceIp        string `json:"instance_ip"`
 	Group             string `json:"group"`
 	Port              string `json:"port"`
@@ -200,15 +201,20 @@ func AlarmControl(c *gin.Context) {
 			if agentType != "host" {
 				tmpIp = v.InstanceIp
 			}
-			err := db.UpdateEndpointAlarmFlag(isStop, agentType, v.Instance, tmpIp, v.Port, v.Pod, v.KubernetesCluster)
+			instanceName := v.Instance
+			if agentType == "process" {
+				tmpIp = v.HostIp
+				instanceName = v.DisplayName
+			}
+			err := db.UpdateEndpointAlarmFlag(isStop, agentType, instanceName, tmpIp, v.Port, v.Pod, v.KubernetesCluster)
 			var msg string
 			if err != nil {
-				msg = fmt.Sprintf("%s %s:%s %s fail,error %v", action, agentType, v.HostIp, v.Instance, err)
+				msg = fmt.Sprintf("%s %s:%s %s fail,error %v", action, agentType, v.HostIp, instanceName, err)
 				resultMessage = fmt.Sprintf(mid.GetMessageMap(c).HandleError, msg)
 				tmpResult = append(tmpResult, resultOutputObj{CallbackParameter: v.CallbackParameter, ErrorCode: "1", ErrorMessage: fmt.Sprintf(mid.GetMessageMap(c).HandleError, msg)})
 				successFlag = "1"
 			} else {
-				msg = fmt.Sprintf("%s %s:%s %s succeed", action, agentType, v.HostIp, v.Instance)
+				msg = fmt.Sprintf("%s %s:%s %s succeed", action, agentType, v.HostIp, instanceName)
 				tmpResult = append(tmpResult, resultOutputObj{CallbackParameter: v.CallbackParameter, ErrorCode: "0", ErrorMessage: ""})
 			}
 			log.Logger.Info(msg)
