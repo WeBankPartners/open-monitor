@@ -61,13 +61,14 @@ func GetDbMetric(dbMetricGuid string) (result models.DbMetricMonitorObj, err err
 }
 
 func CreateDbMetric(param *models.DbMetricMonitorObj) error {
+	param.Step = 10
 	nowTime := time.Now().Format(models.DatetimeFormat)
 	param.Guid = guid.CreateGuid()
 	var actions []*Action
 	insertAction := Action{Sql: "insert into db_metric_monitor(guid,service_group,metric_sql,metric,display_name,step,monitor_type,update_time) value (?,?,?,?,?,?,?,?)"}
 	insertAction.Param = []interface{}{param.Guid, param.ServiceGroup, param.MetricSql, param.Metric, param.DisplayName, param.Step, param.MonitorType, nowTime}
 	actions = append(actions, &insertAction)
-	actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,db_metric_monitor,update_time) value (?,?,?,?,?,?)", Param: []interface{}{fmt.Sprintf("%s__%s__%s", param.Metric, param.MonitorType, param.Guid), param.Metric, param.MonitorType, fmt.Sprintf("%s{key=\"%s\",t_endpoint=\"$guid\"}", models.DBMonitorMetricName, param.Metric), param.Guid, nowTime}})
+	actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,update_time) value (?,?,?,?,?,?)", Param: []interface{}{fmt.Sprintf("%s__%s", param.Metric, param.ServiceGroup), param.Metric, param.MonitorType, getDbMetricExpr(param.Metric, param.ServiceGroup), param.ServiceGroup, nowTime}})
 	guidList := guid.CreateGuidList(len(param.EndpointRel))
 	for i, v := range param.EndpointRel {
 		if v.TargetEndpoint == "" {
@@ -78,21 +79,35 @@ func CreateDbMetric(param *models.DbMetricMonitorObj) error {
 	return Transaction(actions)
 }
 
+func getDbMetricExpr(metric, serviceGroup string) (result string) {
+	result = fmt.Sprintf("%s{key=\"%s\",service_group=\"%s\"}", models.DBMonitorMetricName, metric, serviceGroup)
+	return result
+}
+
 func UpdateDbMetric(param *models.DbMetricMonitorObj) error {
+	param.Step = 10
 	var dbMetricTable []*models.DbMetricMonitorTable
 	x.SQL("select * from db_metric_monitor where guid=?", param.Guid).Find(&dbMetricTable)
 	if len(dbMetricTable) == 0 {
 		return fmt.Errorf("Can not find db_metric_monitor with guid:%s ", param.Guid)
 	}
+	var affectEndpointGroup []string
 	var actions []*Action
 	updateAction := Action{Sql: "update db_metric_monitor set metric_sql=?,metric=?,display_name=?,step=?,monitor_type=?,update_time=? where guid=?"}
 	updateAction.Param = []interface{}{param.MetricSql, param.Metric, param.DisplayName, param.Step, param.MonitorType, time.Now().Format(models.DatetimeFormat), param.Guid}
 	actions = append(actions, &updateAction)
-	if dbMetricTable[0].Metric != param.Metric || dbMetricTable[0].MonitorType != param.MonitorType {
-		oldMetric := fmt.Sprintf("%s__%s", dbMetricTable[0].Metric, dbMetricTable[0].MonitorType)
-		newMetric := fmt.Sprintf("%s__%s", param.Metric, param.MonitorType)
-		actions = append(actions, &Action{Sql: "update metric set guid=?,metric=?,prom_expr=? where guid=?", Param: []interface{}{newMetric, param.Metric, fmt.Sprintf("%s{key=\"%s\",t_endpoint=\"$guid\"}", models.DBMonitorMetricName, param.Metric), oldMetric}})
-		actions = append(actions, &Action{Sql: "update alarm_strategy set metric=? where metric=?", Param: []interface{}{newMetric, oldMetric}})
+	if dbMetricTable[0].Metric != param.Metric {
+		oldMetricGuid := fmt.Sprintf("%s__%s", dbMetricTable[0].Metric, dbMetricTable[0].ServiceGroup)
+		newMetricGuid := fmt.Sprintf("%s__%s", param.Metric, dbMetricTable[0].ServiceGroup)
+		actions = append(actions, &Action{Sql: "update metric set guid=?,metric=?,monitor_type=?,prom_expr=? where guid=?", Param: []interface{}{newMetricGuid, param.Metric, param.MonitorType, getDbMetricExpr(param.Metric, dbMetricTable[0].ServiceGroup), oldMetricGuid}})
+		var alarmStrategyTable []*models.AlarmStrategyTable
+		x.SQL("select guid,endpoint_group from alarm_strategy where metric=?", oldMetricGuid).Find(&alarmStrategyTable)
+		if len(alarmStrategyTable) > 0 {
+			for _, v := range alarmStrategyTable {
+				affectEndpointGroup = append(affectEndpointGroup, v.EndpointGroup)
+			}
+			actions = append(actions, &Action{Sql: "update alarm_strategy set metric=? where metric=?", Param: []interface{}{newMetricGuid, oldMetricGuid}})
+		}
 	}
 	actions = append(actions, &Action{Sql: "delete from db_metric_endpoint_rel where db_metric_monitor=?", Param: []interface{}{param.Guid}})
 	guidList := guid.CreateGuidList(len(param.EndpointRel))
@@ -102,24 +117,36 @@ func UpdateDbMetric(param *models.DbMetricMonitorObj) error {
 		}
 		actions = append(actions, &Action{Sql: "insert into db_metric_endpoint_rel(guid,db_metric_monitor,source_endpoint,target_endpoint) value (?,?,?,?)", Param: []interface{}{guidList[i], param.Guid, v.SourceEndpoint, v.TargetEndpoint}})
 	}
-	return Transaction(actions)
+	err := Transaction(actions)
+	if err == nil && len(affectEndpointGroup) > 0 {
+		for _, v := range affectEndpointGroup {
+			SyncPrometheusRuleFile(v, false)
+		}
+	}
+	return err
 }
 
 func DeleteDbMetric(dbMetricGuid string) error {
+	var dbMetricTable []*models.DbMetricMonitorTable
+	x.SQL("select * from db_metric_monitor where guid=?", dbMetricGuid).Find(&dbMetricTable)
+	if len(dbMetricTable) == 0 {
+		return nil
+	}
 	var actions []*Action
 	var endpointGroup []string
 	var alarmStrategyTable []*models.AlarmStrategyTable
-	x.SQL("select guid,endpoint_group from alarm_strategy where metric in (select guid from metric where db_metric_monitor=?)", dbMetricGuid).Find(&alarmStrategyTable)
-	for _,v := range alarmStrategyTable {
+	alarmMetricGuid := fmt.Sprintf("%s__%s", dbMetricTable[0].Metric, dbMetricTable[0].ServiceGroup)
+	x.SQL("select guid,endpoint_group from alarm_strategy where metric=?", alarmMetricGuid).Find(&alarmStrategyTable)
+	for _, v := range alarmStrategyTable {
 		endpointGroup = append(endpointGroup, v.EndpointGroup)
 	}
 	actions = append(actions, &Action{Sql: "delete from db_metric_endpoint_rel where db_metric_monitor=?", Param: []interface{}{dbMetricGuid}})
-	actions = append(actions, &Action{Sql: "delete from alarm_strategy where metric in (select guid from metric where db_metric_monitor=?)", Param: []interface{}{dbMetricGuid}})
-	actions = append(actions, &Action{Sql: "delete from metric where db_metric_monitor=?", Param: []interface{}{dbMetricGuid}})
+	actions = append(actions, &Action{Sql: "delete from alarm_strategy where metric=?", Param: []interface{}{alarmMetricGuid}})
+	actions = append(actions, &Action{Sql: "delete from metric where guid=?", Param: []interface{}{alarmMetricGuid}})
 	actions = append(actions, &Action{Sql: "delete from db_metric_monitor where guid=?", Param: []interface{}{dbMetricGuid}})
 	err := Transaction(actions)
 	if err == nil && len(endpointGroup) > 0 {
-		for _,v := range endpointGroup {
+		for _, v := range endpointGroup {
 			SyncPrometheusRuleFile(v, false)
 		}
 	}
@@ -170,7 +197,7 @@ func SyncDbMetric() error {
 	var postData []*models.DbMonitorTaskObj
 	for _, v := range dbMonitorQuery {
 		if extConfig, b := endpointExtMap[v.SourceEndpoint]; b {
-			taskObj := models.DbMonitorTaskObj{DbType: "mysql", Name: v.Metric, Step: v.Step, Sql: v.MetricSql, Server: extConfig.Ip, Port: extConfig.Port, User: extConfig.User, Password: extConfig.Password, Endpoint: v.SourceEndpoint}
+			taskObj := models.DbMonitorTaskObj{DbType: "mysql", Name: v.Metric, Step: v.Step, Sql: v.MetricSql, Server: extConfig.Ip, Port: extConfig.Port, User: extConfig.User, Password: extConfig.Password, Endpoint: v.SourceEndpoint, ServiceGroup: v.ServiceGroup}
 			if v.TargetEndpoint != "" {
 				taskObj.Endpoint = v.TargetEndpoint
 			}

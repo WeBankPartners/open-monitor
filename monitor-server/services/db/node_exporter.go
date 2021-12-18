@@ -69,7 +69,7 @@ func transLogMetricConfigToJob(logMetricConfig []*models.LogMetricQueryObj, endp
 	syncParam = []*models.LogMetricMonitorNeObj{}
 	for _, serviceGroupConfig := range logMetricConfig {
 		for _, lmMonitorObj := range serviceGroupConfig.Config {
-			tmpMonitorJob := models.LogMetricMonitorNeObj{Path: lmMonitorObj.LogPath, JsonConfig: []*models.LogMetricJsonNeObj{}, MetricConfig: []*models.LogMetricNeObj{}}
+			tmpMonitorJob := models.LogMetricMonitorNeObj{Path: lmMonitorObj.LogPath, JsonConfig: []*models.LogMetricJsonNeObj{}, MetricConfig: []*models.LogMetricNeObj{}, ServiceGroup: serviceGroupConfig.Guid}
 			for _, v := range lmMonitorObj.EndpointRel {
 				if v.SourceEndpoint == endpointGuid {
 					tmpMonitorJob.TargetEndpoint = v.TargetEndpoint

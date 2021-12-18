@@ -206,31 +206,51 @@ func DeleteLogMetricMonitor(logMetricMonitorGuid string) (err error) {
 	if len(logMetricMonitorTable) == 0 {
 		return
 	}
-	logMetricEndpointRel := ListLogMetricEndpointRel(logMetricMonitorGuid)
-	hostEndpointList := []string{}
-	for _, v := range logMetricEndpointRel {
-		if v.TargetEndpoint != "" {
-			hostEndpointList = append(hostEndpointList, v.SourceEndpoint)
-		}
-	}
-	err = Transaction(getDeleteLogMetricMonitorAction(logMetricMonitorGuid))
+	actions, affectHost, affectEndpointGroup := getDeleteLogMetricMonitor(logMetricMonitorGuid)
+	err = Transaction(actions)
 	if err != nil {
 		return err
 	}
-	err = SyncLogMetricExporterConfig(hostEndpointList)
-	return
+	if len(affectHost) > 0 {
+		err = SyncLogMetricExporterConfig(affectHost)
+		if err != nil {
+			log.Logger.Error("SyncLogMetricExporterConfig fail", log.Error(err))
+		}
+	}
+	if len(affectEndpointGroup) > 0 {
+		for _, v := range affectEndpointGroup {
+			err = SyncPrometheusRuleFile(v, false)
+			if err != nil {
+				log.Logger.Error("SyncPrometheusRuleFile fail", log.Error(err))
+			}
+		}
+	}
+	return nil
 }
 
-func getDeleteLogMetricMonitorAction(logMetricMonitorGuid string) []*Action {
-	var actions []*Action
+func getDeleteLogMetricMonitor(logMetricMonitorGuid string) (actions []*Action, affectHost, affectEndpointGroup []string) {
+	endpointRel := ListLogMetricEndpointRel(logMetricMonitorGuid)
+	jsonConfigList := ListLogMetricJson(logMetricMonitorGuid)
+	metricConfigList := ListLogMetricConfig("", logMetricMonitorGuid)
+	for _, v := range endpointRel {
+		affectHost = append(affectHost, v.SourceEndpoint)
+	}
 	actions = append(actions, &Action{Sql: "delete from log_metric_endpoint_rel where log_metric_monitor=?", Param: []interface{}{logMetricMonitorGuid}})
-	actions = append(actions, &Action{Sql: "delete from log_metric_string_map where log_metric_config in (select guid from log_metric_config where log_metric_monitor=? or log_metric_json in (select guid from log_metric_json where log_metric_monitor=?))", Param: []interface{}{logMetricMonitorGuid, logMetricMonitorGuid}})
-	actions = append(actions, &Action{Sql: "delete from log_metric_config where log_metric_monitor=? or log_metric_json in (select guid from log_metric_json where log_metric_monitor=?)", Param: []interface{}{logMetricMonitorGuid, logMetricMonitorGuid}})
-	actions = append(actions, &Action{Sql: "delete from log_metric_json where log_metric_monitor=?", Param: []interface{}{logMetricMonitorGuid}})
-	actions = append(actions, &Action{Sql: "delete from alarm_strategy where metric in (select guid from metric where log_metric_monitor=?)", Param: []interface{}{logMetricMonitorGuid}})
-	actions = append(actions, &Action{Sql: "delete from metric where log_metric_monitor=?", Param: []interface{}{logMetricMonitorGuid}})
+	for _, v := range jsonConfigList {
+		for _, vv := range v.MetricList {
+			deleteActions, tmpEndpointGroup := getDeleteLogMetricConfigAction(vv.Guid, logMetricMonitorGuid)
+			actions = append(actions, deleteActions...)
+			affectEndpointGroup = append(affectEndpointGroup, tmpEndpointGroup...)
+		}
+		actions = append(actions, &Action{Sql: "delete from log_metric_json where guid=?", Param: []interface{}{v.Guid}})
+	}
+	for _, v := range metricConfigList {
+		deleteActions, tmpEndpointGroup := getDeleteLogMetricConfigAction(v.Guid, logMetricMonitorGuid)
+		actions = append(actions, deleteActions...)
+		affectEndpointGroup = append(affectEndpointGroup, tmpEndpointGroup...)
+	}
 	actions = append(actions, &Action{Sql: "delete from log_metric_monitor where guid=?", Param: []interface{}{logMetricMonitorGuid}})
-	return actions
+	return
 }
 
 func GetLogMetricJson(logMetricJsonGuid string) (result models.LogMetricJsonObj, err error) {
@@ -276,6 +296,7 @@ func UpdateLogMetricJson(param *models.LogMetricJsonObj) error {
 	actions = append(actions, &Action{Sql: "update log_metric_json set json_regular=?,tags=?,update_time=? where guid=?", Param: []interface{}{param.JsonRegular, param.Tags, nowTime, param.Guid}})
 	var logMetricConfigTable []*models.LogMetricConfigTable
 	x.SQL("select * from log_metric_config where log_metric_json=?", param.Guid).Find(&logMetricConfigTable)
+	var affectEndpointGroup []string
 	for _, v := range param.MetricList {
 		v.LogMetricJson = param.Guid
 		v.LogMetricMonitor = param.LogMetricMonitor
@@ -283,9 +304,10 @@ func UpdateLogMetricJson(param *models.LogMetricJsonObj) error {
 			actions = append(actions, getCreateLogMetricConfigAction(v, nowTime)...)
 			continue
 		}
-		actions = append(actions, getUpdateLogMetricConfigAction(v, nowTime)...)
+		tmpUpdateActions, tmpEndpointGroup := getUpdateLogMetricConfigAction(v, nowTime)
+		actions = append(actions, tmpUpdateActions...)
+		affectEndpointGroup = append(affectEndpointGroup, tmpEndpointGroup...)
 	}
-	var affectEndpointGroup []string
 	for _, v := range logMetricConfigTable {
 		existFlag := false
 		for _, vv := range param.MetricList {
@@ -295,14 +317,14 @@ func UpdateLogMetricJson(param *models.LogMetricJsonObj) error {
 			}
 		}
 		if !existFlag {
-			deleteActions,tmpEndpointGroup := getDeleteLogMetricConfigAction(v.Guid,param.LogMetricMonitor)
+			deleteActions, tmpEndpointGroup := getDeleteLogMetricConfigAction(v.Guid, param.LogMetricMonitor)
 			actions = append(actions, deleteActions...)
 			affectEndpointGroup = append(affectEndpointGroup, tmpEndpointGroup...)
 		}
 	}
 	err := Transaction(actions)
 	if err == nil && len(affectEndpointGroup) > 0 {
-		for _,v := range affectEndpointGroup {
+		for _, v := range affectEndpointGroup {
 			SyncPrometheusRuleFile(v, false)
 		}
 	}
@@ -316,14 +338,14 @@ func DeleteLogMetricJson(logMetricJsonGuid string) (logMetricMonitorGuid string,
 	var affectEndpointGroup []string
 	x.SQL("select * from log_metric_config where log_metric_json=?", logMetricJsonGuid).Find(&logMetricConfigTable)
 	for _, v := range logMetricConfigTable {
-		deleteActions,tmpEndpointGroup :=getDeleteLogMetricConfigAction(v.Guid,logMetricMonitorGuid)
+		deleteActions, tmpEndpointGroup := getDeleteLogMetricConfigAction(v.Guid, logMetricMonitorGuid)
 		actions = append(actions, deleteActions...)
 		affectEndpointGroup = append(affectEndpointGroup, tmpEndpointGroup...)
 	}
 	actions = append(actions, &Action{Sql: "delete from log_metric_json where guid=?", Param: []interface{}{logMetricJsonGuid}})
 	err = Transaction(actions)
 	if err == nil && len(affectEndpointGroup) > 0 {
-		for _,v := range affectEndpointGroup {
+		for _, v := range affectEndpointGroup {
 			SyncPrometheusRuleFile(v, false)
 		}
 	}
@@ -371,16 +393,22 @@ func UpdateLogMetricConfig(param *models.LogMetricConfigObj) error {
 		}
 		param.LogMetricMonitor = logMetricMonitorGuid
 	}
-	actions := getUpdateLogMetricConfigAction(param, time.Now().Format(models.DatetimeFormat))
-	return Transaction(actions)
+	actions, affectEndpointGroup := getUpdateLogMetricConfigAction(param, time.Now().Format(models.DatetimeFormat))
+	err := Transaction(actions)
+	if err == nil {
+		for _, v := range affectEndpointGroup {
+			SyncPrometheusRuleFile(v, false)
+		}
+	}
+	return err
 }
 
 func DeleteLogMetricConfig(logMetricConfigGuid string) (logMetricMonitorGuid string, err error) {
 	logMetricMonitorGuid, err = getLogMetricConfigMonitor(logMetricConfigGuid)
-	actions,affectEndpointGroup := getDeleteLogMetricConfigAction(logMetricConfigGuid,logMetricMonitorGuid)
+	actions, affectEndpointGroup := getDeleteLogMetricConfigAction(logMetricConfigGuid, logMetricMonitorGuid)
 	err = Transaction(actions)
 	if err == nil && len(affectEndpointGroup) > 0 {
-		for _,v := range affectEndpointGroup {
+		for _, v := range affectEndpointGroup {
 			SyncPrometheusRuleFile(v, false)
 		}
 	}
@@ -405,16 +433,14 @@ func getCreateLogMetricConfigAction(param *models.LogMetricConfigObj, nowTime st
 	if param.Guid == "" {
 		param.Guid = guid.CreateGuid()
 	}
-	if param.Step == 0 {
-		param.Step = 10
-	}
+	param.Step = 10
 	if param.LogMetricJson != "" {
 		actions = append(actions, &Action{Sql: "insert into log_metric_config(guid,log_metric_json,metric,display_name,json_key,regular,agg_type,step,update_time) value (?,?,?,?,?,?,?,?,?)", Param: []interface{}{param.Guid, param.LogMetricJson, param.Metric, param.DisplayName, param.JsonKey, param.Regular, param.AggType, param.Step, nowTime}})
 	} else {
 		actions = append(actions, &Action{Sql: "insert into log_metric_config(guid,log_metric_monitor,metric,display_name,json_key,regular,agg_type,step,update_time) value (?,?,?,?,?,?,?,?,?)", Param: []interface{}{param.Guid, param.LogMetricMonitor, param.Metric, param.DisplayName, param.JsonKey, param.Regular, param.AggType, param.Step, nowTime}})
 	}
-	monitorType := getLogMetricMonitorType("", param.LogMetricMonitor)
-	actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,log_metric_monitor,update_time) value (?,?,?,?,?,?)", Param: []interface{}{fmt.Sprintf("%s__%s__%s", param.Metric, monitorType, param.LogMetricMonitor), param.Metric, monitorType, fmt.Sprintf("%s{key=\"%s\",agg=\"%s\",t_endpoint=\"$guid\"}", models.LogMetricName, param.Metric, param.AggType), param.LogMetricMonitor, nowTime}})
+	serviceGroup, monitorType := getLogMetricServiceGroup(param.LogMetricMonitor)
+	actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,update_time) value (?,?,?,?,?,?)", Param: []interface{}{fmt.Sprintf("%s__%s", param.Metric, serviceGroup), param.Metric, monitorType, getLogMetricExprByAggType(param.Metric, param.AggType, serviceGroup), serviceGroup, nowTime}})
 	guidList := guid.CreateGuidList(len(param.StringMap))
 	for i, v := range param.StringMap {
 		actions = append(actions, &Action{Sql: "insert into log_metric_string_map(guid,log_metric_config,source_value,regulative,target_value,update_time) value (?,?,?,?,?,?)", Param: []interface{}{guidList[i], param.Guid, v.SourceValue, v.Regulative, v.TargetValue, nowTime}})
@@ -422,33 +448,52 @@ func getCreateLogMetricConfigAction(param *models.LogMetricConfigObj, nowTime st
 	return actions
 }
 
-func getLogMetricMonitorType(logMetricJson, logMetricMonitor string) string {
-	var logMetricMonitorTable []*models.LogMetricMonitorTable
-	if logMetricJson != "" {
-		x.SQL("select guid,monitor_type from log_metric_monitor where guid in (select log_metric_monitor from log_metric_json where guid=?)", logMetricJson).Find(&logMetricMonitorTable)
-	} else {
-		x.SQL("select guid,monitor_type from log_metric_monitor where guid=?", logMetricMonitor).Find(&logMetricMonitorTable)
+func getLogMetricExprByAggType(metric, aggType, serviceGroup string) (result string) {
+	switch aggType {
+	case "sum":
+		result = fmt.Sprintf("sum(%s{key=\"%s\",agg=\"%s\",service_group=\"%s\"}) by (key,agg,service_group)", models.LogMetricName, metric, aggType, serviceGroup)
+	case "count":
+		result = fmt.Sprintf("sum(%s{key=\"%s\",agg=\"%s\",service_group=\"%s\"}) by (key,agg,service_group)", models.LogMetricName, metric, aggType, serviceGroup)
+	case "max":
+		result = fmt.Sprintf("max(%s{key=\"%s\",agg=\"%s\",service_group=\"%s\"}) by (key,agg,service_group)", models.LogMetricName, metric, aggType, serviceGroup)
+	case "min":
+		result = fmt.Sprintf("min(%s{key=\"%s\",agg=\"%s\",service_group=\"%s\"}) by (key,agg,service_group)", models.LogMetricName, metric, aggType, serviceGroup)
+	case "avg":
+		result = fmt.Sprintf("sum(%s{key=\"%s\",agg=\"sum\",service_group=\"%s\"}) by (key,service_group)/sum(%s{key=\"%s\",agg=\"count\",service_group=\"%s\"}) by (key,service_group) > 0 or (0*sum(%s{key=\"%s\",agg=\"sum\",service_group=\"%s\"}) by (key,service_group))", models.LogMetricName, metric, serviceGroup, models.LogMetricName, metric, serviceGroup, models.LogMetricName, metric, serviceGroup)
+	default:
+		result = fmt.Sprintf("%s{key=\"%s\",agg=\"%s\",service_group=\"%s\"}", models.LogMetricName, metric, aggType, serviceGroup)
 	}
-	if len(logMetricMonitorTable) > 0 {
-		return logMetricMonitorTable[0].MonitorType
-	}
-	return ""
+	return result
 }
 
-func getUpdateLogMetricConfigAction(param *models.LogMetricConfigObj, nowTime string) []*Action {
-	var actions []*Action
-	if param.Step == 0 {
-		param.Step = 10
+func getLogMetricServiceGroup(logMetricMonitor string) (serviceGroup, monitorType string) {
+	var logMetricMonitorTable []*models.LogMetricMonitorTable
+	x.SQL("select guid,service_group,monitor_type from log_metric_monitor where guid=?", logMetricMonitor).Find(&logMetricMonitorTable)
+	if len(logMetricMonitorTable) > 0 {
+		serviceGroup = logMetricMonitorTable[0].ServiceGroup
+		monitorType = logMetricMonitorTable[0].MonitorType
 	}
+	return
+}
+
+func getUpdateLogMetricConfigAction(param *models.LogMetricConfigObj, nowTime string) (actions []*Action, affectEndpointGroup []string) {
+	param.Step = 10
 	var logMetricConfigTable []*models.LogMetricConfigTable
 	x.SQL("select * from log_metric_config where guid=?", param.Guid).Find(&logMetricConfigTable)
 	if len(logMetricConfigTable) > 0 {
 		if logMetricConfigTable[0].Metric != param.Metric || logMetricConfigTable[0].AggType != param.AggType {
-			monitorType := getLogMetricMonitorType(param.LogMetricJson, param.LogMetricMonitor)
-			oldMetric := fmt.Sprintf("%s__%s", logMetricConfigTable[0].Metric, monitorType)
-			newMetric := fmt.Sprintf("%s__%s", param.Metric, monitorType)
-			actions = append(actions, &Action{Sql: "update metric set guid=?,metric=?,prom_expr=? where guid=?", Param: []interface{}{newMetric, param.Metric, fmt.Sprintf("%s{key=\"%s\",agg=\"%s\",t_endpoint=\"$guid\"}", models.LogMetricName, param.Metric, param.AggType), oldMetric}})
-			actions = append(actions, &Action{Sql: "update alarm_strategy set metric=? where metric=?", Param: []interface{}{newMetric, oldMetric}})
+			serviceGroup, _ := getLogMetricServiceGroup(param.LogMetricMonitor)
+			oldMetricGuid := fmt.Sprintf("%s__%s", logMetricConfigTable[0].Metric, serviceGroup)
+			newMetricGuid := fmt.Sprintf("%s__%s", param.Metric, serviceGroup)
+			actions = append(actions, &Action{Sql: "update metric set guid=?,metric=?,prom_expr=? where guid=?", Param: []interface{}{newMetricGuid, param.Metric, getLogMetricExprByAggType(param.Metric, param.AggType, serviceGroup), oldMetricGuid}})
+			var alarmStrategyTable []*models.AlarmStrategyTable
+			x.SQL("select guid,endpoint_group from alarm_strategy where metric=?", oldMetricGuid).Find(&alarmStrategyTable)
+			if len(alarmStrategyTable) > 0 {
+				for _, v := range alarmStrategyTable {
+					affectEndpointGroup = append(affectEndpointGroup, v.EndpointGroup)
+				}
+				actions = append(actions, &Action{Sql: "update alarm_strategy set metric=? where metric=?", Param: []interface{}{newMetricGuid, oldMetricGuid}})
+			}
 		}
 	}
 	actions = append(actions, &Action{Sql: "update log_metric_config set metric=?,display_name=?,json_key=?,regular=?,agg_type=?,step=?,update_time=? where guid=?", Param: []interface{}{param.Metric, param.DisplayName, param.JsonKey, param.Regular, param.AggType, param.Step, nowTime, param.Guid}})
@@ -457,35 +502,37 @@ func getUpdateLogMetricConfigAction(param *models.LogMetricConfigObj, nowTime st
 	for i, v := range param.StringMap {
 		actions = append(actions, &Action{Sql: "insert into log_metric_string_map(guid,log_metric_config,source_value,regulative,target_value,update_time) value (?,?,?,?,?,?)", Param: []interface{}{guidList[i], param.Guid, v.SourceValue, v.Regulative, v.TargetValue, nowTime}})
 	}
-	return actions
+	return
 }
 
-func getDeleteLogMetricConfigAction(logMetricConfigGuid,logMetricMonitorGuid string) (actions []*Action,endpointGroup []string) {
-	lmObj,err := getSimpleLogMetricConfig(logMetricConfigGuid)
+func getDeleteLogMetricConfigAction(logMetricConfigGuid, logMetricMonitorGuid string) (actions []*Action, endpointGroup []string) {
+	lmObj, err := getSimpleLogMetricConfig(logMetricConfigGuid)
 	if err != nil {
 		log.Logger.Error("getDeleteLogMetricConfigAction", log.Error(err))
 		return
 	}
+	serviceGroup, _ := getLogMetricServiceGroup(logMetricMonitorGuid)
+	alarmMetricGuid := fmt.Sprintf("%s__%s", lmObj.Metric, serviceGroup)
 	var alarmStrategyTable []*models.AlarmStrategyTable
-	x.SQL("select guid,endpoint_group from alarm_strategy where metric in (select guid from metric where log_metric_monitor=? and metric=?)", logMetricMonitorGuid, lmObj.Metric).Find(&alarmStrategyTable)
-	for _,v := range alarmStrategyTable {
+	x.SQL("select guid,endpoint_group from alarm_strategy where metric=?", alarmMetricGuid).Find(&alarmStrategyTable)
+	for _, v := range alarmStrategyTable {
 		endpointGroup = append(endpointGroup, v.EndpointGroup)
 	}
-	actions  =append(actions, &Action{Sql: "delete from alarm_strategy where metric in (select guid from metric where log_metric_monitor=? and metric=?)", Param: []interface{}{logMetricMonitorGuid, lmObj.Metric}})
-	actions  =append(actions, &Action{Sql: "delete from metric where log_metric_monitor=? and metric=?", Param: []interface{}{logMetricMonitorGuid, lmObj.Metric}})
+	actions = append(actions, &Action{Sql: "delete from alarm_strategy where metric=?", Param: []interface{}{alarmMetricGuid}})
+	actions = append(actions, &Action{Sql: "delete from metric where guid=?", Param: []interface{}{alarmMetricGuid}})
 	actions = append(actions, &Action{Sql: "delete from log_metric_string_map where log_metric_config=?", Param: []interface{}{logMetricConfigGuid}})
 	actions = append(actions, &Action{Sql: "delete from log_metric_config where guid=?", Param: []interface{}{logMetricConfigGuid}})
 	return
 }
 
-func getSimpleLogMetricConfig(logMetricConfigGuid string) (result models.LogMetricConfigTable,err error) {
+func getSimpleLogMetricConfig(logMetricConfigGuid string) (result models.LogMetricConfigTable, err error) {
 	var queryTable []*models.LogMetricConfigTable
 	err = x.SQL("select * from log_metric_config where guid=?", logMetricConfigGuid).Find(&queryTable)
 	if err != nil {
-		return result,err
+		return result, err
 	}
 	if len(queryTable) == 0 {
-		return result,fmt.Errorf("Can not find logMetricConfig with guid:%s ", logMetricConfigGuid)
+		return result, fmt.Errorf("Can not find logMetricConfig with guid:%s ", logMetricConfigGuid)
 	}
 	result = *queryTable[0]
 	return
