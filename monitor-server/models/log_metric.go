@@ -99,6 +99,7 @@ type LogMetricNodeExporterResponse struct {
 type LogMetricMonitorNeObj struct {
 	Path           string                `json:"path"`
 	TargetEndpoint string                `json:"target_endpoint"`
+	ServiceGroup   string                `json:"service_group"`
 	JsonConfig     []*LogMetricJsonNeObj `json:"config"`
 	MetricConfig   []*LogMetricNeObj     `json:"custom"`
 }

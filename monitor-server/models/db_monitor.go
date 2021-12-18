@@ -17,15 +17,16 @@ type DbMonitorUpdateDto struct {
 }
 
 type DbMonitorTaskObj struct {
-	DbType   string `json:"db_type"`
-	Endpoint string `json:"endpoint"`
-	Name     string `json:"name"`
-	Server   string `json:"server"`
-	Port     string `json:"port"`
-	User     string `json:"user"`
-	Password string `json:"password"`
-	Sql      string `json:"sql"`
-	Step     int64  `json:"step"`
+	DbType       string `json:"db_type"`
+	Endpoint     string `json:"endpoint"`
+	Name         string `json:"name"`
+	Server       string `json:"server"`
+	Port         string `json:"port"`
+	User         string `json:"user"`
+	Password     string `json:"password"`
+	Sql          string `json:"sql"`
+	Step         int64  `json:"step"`
+	ServiceGroup string `json:"service_group"`
 }
 
 type DbMonitorConfigQuery struct {
