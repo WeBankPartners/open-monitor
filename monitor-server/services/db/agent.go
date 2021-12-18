@@ -49,7 +49,7 @@ func UpdateEndpoint(endpoint *m.EndpointTable, extendParam string) (stepList []i
 		if endpoint.AddressAgent != "" {
 			tmpAgentAddress = endpoint.AddressAgent
 		}
-		x.Exec("update endpoint_new set agent_address=?,step=?,endpoint_version=?,endpoint_address=?,extend_param=?,update_time=? where guid=?", tmpAgentAddress,endpoint.Step,endpoint.EndpointVersion,endpoint.Address,extendParam,time.Now().Format(m.DatetimeFormat),endpoint.Guid)
+		x.Exec("update endpoint_new set agent_address=?,step=?,endpoint_version=?,endpoint_address=?,extend_param=?,update_time=? where guid=?", tmpAgentAddress, endpoint.Step, endpoint.EndpointVersion, endpoint.Address, extendParam, time.Now().Format(m.DatetimeFormat), endpoint.Guid)
 		endpoint.Id = host.Id
 	}
 	return
@@ -147,20 +147,20 @@ func DeleteEndpoint(guid string) error {
 	x.SQL("select * from endpoint_group_rel where endpoint=?", guid).Find(&endpointGroup)
 	var serviceGroup []*m.EndpointServiceRelTable
 	x.SQL("select * from endpoint_service_rel where endpoint=?", guid).Find(&serviceGroup)
-	actions = append(actions, &Action{Sql: "delete from endpoint_group_rel where endpoint=?",Param: []interface{}{guid}})
-	actions = append(actions, &Action{Sql: "delete from endpoint_service_rel where endpoint=?",Param: []interface{}{guid}})
-	actions = append(actions, &Action{Sql: "delete from log_metric_endpoint_rel where source_endpoint=? or target_endpoint=?",Param: []interface{}{guid,guid}})
-	actions = append(actions, &Action{Sql: "delete from db_metric_endpoint_rel where source_endpoint=? or target_endpoint=?",Param: []interface{}{guid,guid}})
-	actions = append(actions, &Action{Sql: "delete from endpoint_new where guid=?",Param: []interface{}{guid}})
+	actions = append(actions, &Action{Sql: "delete from endpoint_group_rel where endpoint=?", Param: []interface{}{guid}})
+	actions = append(actions, &Action{Sql: "delete from endpoint_service_rel where endpoint=?", Param: []interface{}{guid}})
+	actions = append(actions, &Action{Sql: "delete from log_metric_endpoint_rel where source_endpoint=? or target_endpoint=?", Param: []interface{}{guid, guid}})
+	actions = append(actions, &Action{Sql: "delete from db_metric_endpoint_rel where source_endpoint=? or target_endpoint=?", Param: []interface{}{guid, guid}})
+	actions = append(actions, &Action{Sql: "delete from endpoint_new where guid=?", Param: []interface{}{guid}})
 	err := Transaction(actions)
 	if err != nil {
 		log.Logger.Error("Delete endpoint fail", log.Error(err))
 		return err
-	}else{
-		for _,v := range endpointGroup {
+	} else {
+		for _, v := range endpointGroup {
 			SyncPrometheusRuleFile(v.EndpointGroup, false)
 		}
-		for _,v := range serviceGroup {
+		for _, v := range serviceGroup {
 			UpdateServiceConfigWithParent(v.ServiceGroup)
 		}
 	}
@@ -189,7 +189,7 @@ func UpdateEndpointAlarmFlag(isStop bool, exportType, instance, ip, port, pod, k
 		if isStop {
 			actions = append(actions, &Action{Sql: "UPDATE endpoint SET stop_alarm=1 WHERE guid=?", Param: []interface{}{endpoints[0].Guid}})
 			actions = append(actions, &Action{Sql: "UPDATE endpoint_new SET alarm_enable=0 WHERE guid=?", Param: []interface{}{endpoints[0].Guid}})
-		}else{
+		} else {
 			actions = append(actions, &Action{Sql: "UPDATE endpoint SET stop_alarm=0 WHERE guid=?", Param: []interface{}{endpoints[0].Guid}})
 			actions = append(actions, &Action{Sql: "UPDATE endpoint_new SET alarm_enable=1 WHERE guid=?", Param: []interface{}{endpoints[0].Guid}})
 		}
@@ -219,8 +219,8 @@ func UpdateRecursivePanel(param m.PanelRecursiveTable) error {
 		err = Transaction(actions)
 		if err == nil {
 			var endpointGroup []*m.EndpointGroupTable
-			parentGuidList,_ := fetchGlobalServiceGroupParentGuidList(param.Guid)
-			x.SQL("select guid from endpoint_group where service_group in ('"+strings.Join(parentGuidList,"','")+"')").Find(&endpointGroup)
+			parentGuidList, _ := fetchGlobalServiceGroupParentGuidList(param.Guid)
+			x.SQL("select guid from endpoint_group where service_group in ('" + strings.Join(parentGuidList, "','") + "')").Find(&endpointGroup)
 			for _, v := range endpointGroup {
 				err = SyncPrometheusRuleFile(v.Guid, false)
 				if err != nil {
@@ -239,7 +239,7 @@ func UpdateRecursivePanel(param m.PanelRecursiveTable) error {
 		actions = append(actions, getUpdateServiceGroupNotifyActions(param.Guid, param.FiringCallbackKey, param.RecoverCallbackKey, strings.Split(param.Role, ","))...)
 		err = Transaction(actions)
 		if err == nil {
-			addGlobalServiceGroupNode(m.ServiceGroupTable{Guid: param.Guid, Parent: param.Parent})
+			addGlobalServiceGroupNode(m.ServiceGroupTable{Guid: param.Guid, Parent: param.Parent, DisplayName: param.DisplayName})
 		}
 	}
 	return err
@@ -427,7 +427,7 @@ func recursiveData(guid string, prt []*m.PanelRecursiveTable, length, depth int)
 				for mk, mv := range tmpMap {
 					chartTables := getChartsByEndpointType(mk)
 					for _, cv := range chartTables {
-						obj.Charts = append(obj.Charts, &m.ChartModel{Id: cv.Id, Endpoint: mv, Metric: strings.Split(cv.Metric, "^"), Aggregate: cv.AggType,MonitorType: mk})
+						obj.Charts = append(obj.Charts, &m.ChartModel{Id: cv.Id, Endpoint: mv, Metric: strings.Split(cv.Metric, "^"), Aggregate: cv.AggType, MonitorType: mk})
 					}
 					for _, extendChart := range getExtendPanelCharts(mv, mk, v.Guid) {
 						obj.Charts = append(obj.Charts, extendChart)

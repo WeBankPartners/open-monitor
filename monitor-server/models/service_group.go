@@ -6,6 +6,8 @@ import (
 	"strings"
 )
 
+var GlobalSGDisplayNameMap = make(map[string]string)
+
 type ServiceGroupTable struct {
 	Guid        string `json:"guid" xorm:"guid"`
 	DisplayName string `json:"display_name" xorm:"display_name"`
@@ -94,13 +96,13 @@ func TransPluginMultiStringParam(input interface{}) []string {
 	var result []string
 	rn := reflect.TypeOf(input).String()
 	if strings.Contains(rn, "[]interface") {
-		for _,v := range input.([]interface{}) {
+		for _, v := range input.([]interface{}) {
 			tmpV := fmt.Sprintf("%s", v)
 			if tmpV != "" {
 				result = append(result, tmpV)
 			}
 		}
-	}else{
+	} else {
 		tmpString := fmt.Sprintf("%s", input)
 		if strings.HasPrefix(tmpString, "[") {
 			tmpString = tmpString[1:]
@@ -108,7 +110,7 @@ func TransPluginMultiStringParam(input interface{}) []string {
 		if strings.HasSuffix(tmpString, "]") {
 			tmpString = tmpString[:len(tmpString)-1]
 		}
-		for _,v := range strings.Split(tmpString, ",") {
+		for _, v := range strings.Split(tmpString, ",") {
 			if v != "" {
 				result = append(result, v)
 			}

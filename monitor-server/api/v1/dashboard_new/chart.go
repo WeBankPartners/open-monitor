@@ -207,6 +207,7 @@ func getChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.
 	for _, dataConfig := range param.Data {
 		endpointList = []*models.EndpointNewTable{}
 		tmpMonitorType := dataConfig.EndpointType
+		metricLegend := "$custom"
 		// check endpoint if is service group
 		if dataConfig.AppObject != "" {
 			endpointList, err = db.GetRecursiveEndpointByTypeNew(dataConfig.AppObject, dataConfig.EndpointType)
@@ -218,10 +219,11 @@ func getChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.
 				continue
 			}
 			param.Data[0].Endpoint = endpointList[0].Guid
+			metricLegend = "$app_metric"
 		} else {
 			//endpointObj := models.EndpointTable{Guid: dataConfig.Endpoint}
 			//db.GetEndpoint(&endpointObj)
-			endpointObj,_ := db.GetEndpointNew(&models.EndpointNewTable{Guid: dataConfig.Endpoint})
+			endpointObj, _ := db.GetEndpointNew(&models.EndpointNewTable{Guid: dataConfig.Endpoint})
 			if endpointObj.MonitorType == "" {
 				err = fmt.Errorf("Param data endpoint:%s can not find ", dataConfig.Endpoint)
 				break
@@ -229,7 +231,6 @@ func getChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.
 			endpointList = append(endpointList, &endpointObj)
 			tmpMonitorType = endpointObj.MonitorType
 		}
-		metricLegend := "$custom"
 		if dataConfig.Metric != "" {
 			if strings.HasPrefix(dataConfig.Metric, models.LogMetricName) || strings.HasPrefix(dataConfig.Metric, models.DBMonitorMetricName) {
 				metricLegend = "$app_metric"
