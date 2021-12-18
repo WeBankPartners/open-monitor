@@ -133,7 +133,7 @@ func UpdateOrganization(operation string, param m.UpdateOrgPanelParam) (err erro
 		actions = append(actions, getCreateServiceGroupAction(&m.ServiceGroupTable{Guid: param.Guid, DisplayName: param.DisplayName, Description: "", Parent: param.Parent, ServiceType: param.Type, UpdateTime: nowTime})...)
 		err = Transaction(actions)
 		if err == nil {
-			addGlobalServiceGroupNode(m.ServiceGroupTable{Guid: param.Guid, Parent: param.Parent})
+			addGlobalServiceGroupNode(m.ServiceGroupTable{Guid: param.Guid, Parent: param.Parent, DisplayName: param.DisplayName})
 		}
 	} else if operation == "edit" {
 		if param.Guid == "" || param.DisplayName == "" {
@@ -146,6 +146,9 @@ func UpdateOrganization(operation string, param m.UpdateOrgPanelParam) (err erro
 		actions = append(actions, &Action{Sql: "UPDATE panel_recursive SET display_name=?,obj_type=? WHERE guid=?", Param: []interface{}{param.DisplayName, param.Type, param.Guid}})
 		actions = append(actions, &Action{Sql: "update service_group set display_name=?,service_type=? where guid=?", Param: []interface{}{param.DisplayName, param.Type, param.Guid}})
 		err = Transaction(actions)
+		if err == nil {
+			m.GlobalSGDisplayNameMap[param.Guid] = param.DisplayName
+		}
 	} else if operation == "delete" {
 		if param.Guid == "" {
 			return fmt.Errorf("param guid cat not be empty")
