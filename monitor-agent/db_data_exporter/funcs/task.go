@@ -12,25 +12,27 @@ import (
 )
 
 type DbMonitorTaskObj struct {
-	DbType   string       `json:"db_type"`
-	Endpoint string       `json:"endpoint"`
-	Name     string       `json:"name"`
-	Server   string       `json:"server"`
-	Port     string       `json:"port"`
-	User     string       `json:"user"`
-	Password string       `json:"password"`
-	Sql      string       `json:"sql"`
-	Step     int64        `json:"step"`
-	LastTime int64        `json:"last_time"`
-	Session  *xorm.Engine `json:"session"`
+	DbType       string       `json:"db_type"`
+	Endpoint     string       `json:"endpoint"`
+	Name         string       `json:"name"`
+	Server       string       `json:"server"`
+	Port         string       `json:"port"`
+	User         string       `json:"user"`
+	Password     string       `json:"password"`
+	Sql          string       `json:"sql"`
+	Step         int64        `json:"step"`
+	LastTime     int64        `json:"last_time"`
+	ServiceGroup string       `json:"service_group"`
+	Session      *xorm.Engine `json:"session"`
 }
 
 type DbMonitorResultObj struct {
-	Name     string  `json:"name"`
-	Endpoint string  `json:"endpoint"`
-	Server   string  `json:"server"`
-	Port     string  `json:"port"`
-	Value    float64 `json:"value"`
+	Name         string  `json:"name"`
+	Endpoint     string  `json:"endpoint"`
+	Server       string  `json:"server"`
+	Port         string  `json:"port"`
+	Value        float64 `json:"value"`
+	ServiceGroup string  `json:"service_group"`
 }
 
 var (
@@ -70,7 +72,7 @@ func doTask() {
 		if taskObj.DbType == "mysql" {
 			resultValue = mysqlTask(taskObj)
 		}
-		newResultList = append(newResultList, &DbMonitorResultObj{Name: taskObj.Name, Endpoint: taskObj.Endpoint, Server: taskObj.Server, Port: taskObj.Port, Value: resultValue})
+		newResultList = append(newResultList, &DbMonitorResultObj{Name: taskObj.Name, Endpoint: taskObj.Endpoint, Server: taskObj.Server, Port: taskObj.Port, Value: resultValue, ServiceGroup: taskObj.ServiceGroup})
 		taskObj.LastTime = nowTime
 	}
 	taskLock.RUnlock()
