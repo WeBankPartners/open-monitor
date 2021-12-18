@@ -479,6 +479,15 @@ func GetAlarms(query m.AlarmTable, limit int, extLogMonitor, extOpenAlarm bool) 
 		if strings.Contains(v.Content, "\n") {
 			v.Content = strings.ReplaceAll(v.Content, "\n", "<br/>")
 		}
+		if strings.HasPrefix(v.Endpoint, "sg__") {
+			v.Endpoint = v.Endpoint[4:]
+			if serviceGroupName, b := m.GlobalSGDisplayNameMap[v.Endpoint]; b {
+				v.Endpoint = serviceGroupName
+			}
+		}
+		if strings.HasPrefix(v.Endpoint, "eg__") {
+			v.Endpoint = v.Endpoint[4:]
+		}
 	}
 	if query.SMetric == "" || query.SMetric == "custom" {
 		if extOpenAlarm {

@@ -607,3 +607,10 @@ CREATE TABLE `log_keyword_endpoint_rel` (
   CONSTRAINT `log_keyword_endpoint_target` FOREIGN KEY (`target_endpoint`) REFERENCES `endpoint_new` (`guid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 #@v1.13.0.24-end@;
+
+#@v1.13.0.25-begin@;
+alter table metric drop column log_metric_monitor;
+alter table metric drop column db_metric_monitor;
+alter table metric add column service_group varchar(64);
+alter table metric drop foreign key metric_monitor_type;
+#@v1.13.0.25-end@;
