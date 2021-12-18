@@ -49,7 +49,7 @@ func LogMetricMonitorCollector(logger log.Logger) (Collector, error) {
 		logMetricMonitor: prometheus.NewDesc(
 			prometheus.BuildFQName(namespace, log_metricCollectorName, "value"),
 			"Show log_metric data from log file.",
-			[]string{"key", "tags", "path", "agg", "t_endpoint"}, nil,
+			[]string{"key", "tags", "path", "agg", "t_endpoint", "service_group"}, nil,
 		),
 		logger: logger,
 	}, nil
@@ -63,7 +63,7 @@ func (c *logMetricMonitorCollector) Update(ch chan<- prometheus.Metric) error {
 		}
 		ch <- prometheus.MustNewConstMetric(c.logMetricMonitor,
 			prometheus.GaugeValue,
-			v.Value, v.Metric, v.TagsString, v.Path, v.Agg, v.TEndpoint)
+			v.Value, v.Metric, v.TagsString, v.Path, v.Agg, v.TEndpoint, v.ServiceGroup)
 	}
 	logMetricMonitorMetricLock.RUnlock()
 	return nil
@@ -79,6 +79,7 @@ type logMetricMonitorNeObj struct {
 	Lock           *sync.RWMutex         `json:"-"`
 	Path           string                `json:"path"`
 	TargetEndpoint string                `json:"target_endpoint"`
+	ServiceGroup   string                `json:"service_group"`
 	JsonConfig     []*logMetricJsonNeObj `json:"config"`
 	MetricConfig   []*logMetricNeObj     `json:"custom"`
 }
@@ -112,17 +113,18 @@ type logMetricStringMapNeObj struct {
 }
 
 type logMetricDisplayObj struct {
-	Metric     string            `json:"metric"`
-	Path       string            `json:"path"`
-	Agg        string            `json:"agg"`
-	TEndpoint  string            `json:"t_endpoint"`
-	Tags       []string          `json:"tags"`
-	TagsString string            `json:"tags_string"`
-	Value      float64           `json:"value"`
-	ValueObj   logMetricValueObj `json:"value_obj"`
-	Step       int64             `json:"step"`
-	Display    bool              `json:"display"`
-	UpdateTime int64             `json:"update_time"`
+	Metric       string            `json:"metric"`
+	Path         string            `json:"path"`
+	Agg          string            `json:"agg"`
+	TEndpoint    string            `json:"t_endpoint"`
+	ServiceGroup string            `json:"service_group"`
+	Tags         []string          `json:"tags"`
+	TagsString   string            `json:"tags_string"`
+	Value        float64           `json:"value"`
+	ValueObj     logMetricValueObj `json:"value_obj"`
+	Step         int64             `json:"step"`
+	Display      bool              `json:"display"`
+	UpdateTime   int64             `json:"update_time"`
 }
 
 type logMetricValueObj struct {
@@ -195,10 +197,11 @@ func (c *logMetricMonitorNeObj) start() {
 func (c *logMetricMonitorNeObj) new(input *logMetricMonitorNeObj) {
 	level.Info(monitorLogger).Log("newLogMetricMonitorNeObj", c.Path)
 	c.TargetEndpoint = input.TargetEndpoint
+	c.ServiceGroup = input.ServiceGroup
 	c.JsonConfig = []*logMetricJsonNeObj{}
 	var err error
 	for _, jsonObj := range input.JsonConfig {
-		jsonObj.Regexp,err = regexp.Compile(jsonObj.Regular)
+		jsonObj.Regexp, err = regexp.Compile(jsonObj.Regular)
 		if err != nil {
 			level.Error(monitorLogger).Log("newLogMetricMonitorNeObj", fmt.Sprintf("regexpError:%s ", err.Error()))
 			continue
@@ -223,7 +226,7 @@ func (c *logMetricMonitorNeObj) update(input *logMetricMonitorNeObj) {
 	newJsonConfigList := []*logMetricJsonNeObj{}
 	var err error
 	for _, jsonObj := range input.JsonConfig {
-		jsonObj.Regexp,err = regexp.Compile(jsonObj.Regular)
+		jsonObj.Regexp, err = regexp.Compile(jsonObj.Regular)
 		if err != nil {
 			level.Error(monitorLogger).Log("newLogMetricMonitorNeObj", fmt.Sprintf("regexpError:%s ", err.Error()))
 			continue
@@ -256,16 +259,17 @@ func (c *logMetricMonitorNeObj) update(input *logMetricMonitorNeObj) {
 	}
 	c.MetricConfig = newMetricConfigList
 	c.TargetEndpoint = input.TargetEndpoint
+	c.ServiceGroup = input.ServiceGroup
 	c.Lock.Unlock()
 }
 
 func initLogMetricNeObj(metricObj *logMetricNeObj) {
 	var err error
 	if metricObj.ValueRegular != "" {
-		metricObj.RegExp,err = regexp.Compile(metricObj.ValueRegular)
+		metricObj.RegExp, err = regexp.Compile(metricObj.ValueRegular)
 		if err != nil {
 			level.Error(monitorLogger).Log("newLogMetricMonitorNeObj", fmt.Sprintf("regexpError:%s ", err.Error()))
-			metricObj.RegExp,_ = regexp.Compile(".*")
+			metricObj.RegExp, _ = regexp.Compile(".*")
 		}
 		if metricObj.DataChannel == nil {
 			metricObj.DataChannel = make(chan string, 10000)
@@ -439,23 +443,33 @@ func calcLogMetricData() {
 								valueExistObj.ValueObj.Min = metricValueFloat
 							}
 						} else {
-							valueCountMap[tmpMetricKey] = &logMetricDisplayObj{Metric: metricConfig.Metric, Path: lmObj.Path, Agg: metricConfig.AggType, TEndpoint: lmObj.TargetEndpoint, TagsString: tmpTagString, Step: metricConfig.Step, ValueObj: logMetricValueObj{Sum: metricValueFloat, Max: metricValueFloat, Min: metricValueFloat, Count: 1}}
+							valueCountMap[tmpMetricKey] = &logMetricDisplayObj{Metric: metricConfig.Metric, Path: lmObj.Path, Agg: metricConfig.AggType, TEndpoint: lmObj.TargetEndpoint, ServiceGroup: lmObj.ServiceGroup, TagsString: tmpTagString, Step: metricConfig.Step, ValueObj: logMetricValueObj{Sum: metricValueFloat, Max: metricValueFloat, Min: metricValueFloat, Count: 1}}
 						}
 					}
 				}
 				if !isMatchNewDataFlag {
-					appendDisplayMap[fmt.Sprintf("%s^%s^%s", lmObj.Path, metricConfig.Metric, metricConfig.AggType)] = 1
+					if metricConfig.AggType == "avg" {
+						appendDisplayMap[fmt.Sprintf("%s^%s^sum", lmObj.Path, metricConfig.Metric)] = 1
+						appendDisplayMap[fmt.Sprintf("%s^%s^count", lmObj.Path, metricConfig.Metric)] = 1
+					} else {
+						appendDisplayMap[fmt.Sprintf("%s^%s^%s", lmObj.Path, metricConfig.Metric, metricConfig.AggType)] = 1
+					}
 				}
 			}
 		}
 		for _, metricObj := range lmObj.MetricConfig {
 			dataLength := len(metricObj.DataChannel)
 			if dataLength == 0 {
-				appendDisplayMap[fmt.Sprintf("%s^%s^%s", lmObj.Path, metricObj.Metric, metricObj.AggType)] = 1
+				if metricObj.AggType == "avg" {
+					appendDisplayMap[fmt.Sprintf("%s^%s^sum", lmObj.Path, metricObj.Metric)] = 1
+					appendDisplayMap[fmt.Sprintf("%s^%s^count", lmObj.Path, metricObj.Metric)] = 1
+				} else {
+					appendDisplayMap[fmt.Sprintf("%s^%s^%s", lmObj.Path, metricObj.Metric, metricObj.AggType)] = 1
+				}
 				continue
 			}
 			tmpMetricKey := fmt.Sprintf("%s^%s^%s^%s", lmObj.Path, metricObj.Metric, metricObj.AggType, "")
-			tmpMetricObj := logMetricDisplayObj{Metric: metricObj.Metric, Path: lmObj.Path, Agg: metricObj.AggType, TEndpoint: lmObj.TargetEndpoint, TagsString: "", Step: metricObj.Step, ValueObj: logMetricValueObj{Sum: 0, Max: 0, Min: 0, Count: 0}}
+			tmpMetricObj := logMetricDisplayObj{Metric: metricObj.Metric, Path: lmObj.Path, Agg: metricObj.AggType, TEndpoint: lmObj.TargetEndpoint, ServiceGroup: lmObj.ServiceGroup, TagsString: "", Step: metricObj.Step, ValueObj: logMetricValueObj{Sum: 0, Max: 0, Min: 0, Count: 0}}
 			for i := 0; i < dataLength; i++ {
 				customFetchString := <-metricObj.DataChannel
 				metricValueFloat := transLogMetricStringMapValue(metricObj.StringMap, customFetchString)
@@ -520,6 +534,7 @@ func buildLogMetricDisplayMetrics(valueCountMap, existMetricMap map[string]*logM
 				v.Display = false
 			}
 		}
+		avgFlag := false
 		if v.Display {
 			v.UpdateTime = nowTime
 			// match value
@@ -533,16 +548,17 @@ func buildLogMetricDisplayMetrics(valueCountMap, existMetricMap map[string]*logM
 			case "min":
 				v.Value = v.ValueObj.Min
 			case "avg":
-				if v.ValueObj.Count > 0 {
-					v.Value = v.ValueObj.Sum / v.ValueObj.Count
-				} else {
-					v.Value = 0
-				}
+				avgFlag = true
 			}
 		} else {
 			v.UpdateTime = lastTimestamp
 		}
-		tmpLogMetricMetrics = append(tmpLogMetricMetrics, v)
+		if avgFlag {
+			tmpLogMetricMetrics = append(tmpLogMetricMetrics, &logMetricDisplayObj{Metric: v.Metric, Path: v.Path, Agg: "sum", TEndpoint: v.TEndpoint, ServiceGroup: v.ServiceGroup, Tags: v.Tags, TagsString: v.TagsString, Value: v.ValueObj.Sum, Step: v.Step, Display: v.Display, UpdateTime: v.UpdateTime})
+			tmpLogMetricMetrics = append(tmpLogMetricMetrics, &logMetricDisplayObj{Metric: v.Metric, Path: v.Path, Agg: "count", TEndpoint: v.TEndpoint, ServiceGroup: v.ServiceGroup, Tags: v.Tags, TagsString: v.TagsString, Value: v.ValueObj.Count, Step: v.Step, Display: v.Display, UpdateTime: v.UpdateTime})
+		} else {
+			tmpLogMetricMetrics = append(tmpLogMetricMetrics, v)
+		}
 	}
 	return tmpLogMetricMetrics
 }

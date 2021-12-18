@@ -13,12 +13,12 @@ func PluginUpdateServicePathAction(input *models.PluginUpdateServicePathRequestO
 	log.Logger.Info("PluginUpdateServicePathAction", log.JsonObj("input", input))
 	result = &models.PluginUpdateServicePathOutputObj{CallbackParameter: input.CallbackParameter, ErrorCode: "0", ErrorMessage: "", Guid: input.Guid}
 	input.SystemName = input.Guid
-	monitorTypeQuery,_ := x.QueryString("select guid from monitor_type where guid=?", input.MonitorType)
+	monitorTypeQuery, _ := x.QueryString("select guid from monitor_type where guid=?", input.MonitorType)
 	if len(monitorTypeQuery) == 0 {
 		err = fmt.Errorf("MonitorType:%s illegal ", input.MonitorType)
 		return
 	}
-	serviceGroupObj,getErr := getSimpleServiceGroup(input.SystemName)
+	serviceGroupObj, getErr := getSimpleServiceGroup(input.SystemName)
 	if getErr != nil {
 		err = fmt.Errorf("System:%s can not find,%s ", input.SystemName, getErr.Error())
 		return
@@ -26,7 +26,7 @@ func PluginUpdateServicePathAction(input *models.PluginUpdateServicePathRequestO
 	pathList := models.TransPluginMultiStringParam(input.LogPathList)
 	endpointTypeMap := getServiceGroupEndpointWithChild(input.SystemName)
 	sourceTargetMap := make(map[string]string)
-	var hostEndpoint,targetEndpoint []string
+	var hostEndpoint, targetEndpoint []string
 	if hostListValue, b := endpointTypeMap["host"]; b {
 		hostEndpoint = hostListValue
 	}
@@ -36,9 +36,9 @@ func PluginUpdateServicePathAction(input *models.PluginUpdateServicePathRequestO
 	if len(hostEndpoint) > 0 && len(targetEndpoint) > 0 {
 		var endpointTable []*models.EndpointNewTable
 		x.SQL("select guid,ip from endpoint_new where guid in ('" + strings.Join(hostEndpoint, "','") + "')").Find(&endpointTable)
-		for _,target := range targetEndpoint {
+		for _, target := range targetEndpoint {
 			matchHost := ""
-			for _,host := range endpointTable {
+			for _, host := range endpointTable {
 				if strings.Contains(target, fmt.Sprintf("_%s_", host.Ip)) {
 					matchHost = host.Guid
 					break
@@ -61,7 +61,7 @@ func PluginUpdateServicePathAction(input *models.PluginUpdateServicePathRequestO
 	return
 }
 
-func updateServiceLogMetricPath(pathList []string,serviceGroup,monitorType string,sourceTargetMap map[string]string) (err error) {
+func updateServiceLogMetricPath(pathList []string, serviceGroup, monitorType string, sourceTargetMap map[string]string) (err error) {
 	var logMetricTable []*models.LogMetricMonitorTable
 	err = x.SQL("select * from log_metric_monitor where service_group=?", serviceGroup).Find(&logMetricTable)
 	if err != nil {
@@ -69,14 +69,14 @@ func updateServiceLogMetricPath(pathList []string,serviceGroup,monitorType strin
 	}
 	nowTime := time.Now().Format(models.DatetimeFormat)
 	var actions []*Action
-	var affectHostList []string
+	var affectHostList, affectEndpointGroup []string
 	existPathTypeMap := make(map[string]string)
 	existPathGuidMap := make(map[string]string)
-	for _,v := range logMetricTable {
+	for _, v := range logMetricTable {
 		existPathTypeMap[v.LogPath] = v.MonitorType
 		existPathGuidMap[v.LogPath] = v.Guid
 		deleteFlag := true
-		for _,path := range pathList {
+		for _, path := range pathList {
 			if v.LogPath == path {
 				deleteFlag = false
 				break
@@ -84,23 +84,24 @@ func updateServiceLogMetricPath(pathList []string,serviceGroup,monitorType strin
 		}
 		if deleteFlag {
 			// delete path
-			tmpAffectList,tmpActions := getLogMetricPathDeleteAction(v.Guid)
-			affectHostList = append(affectHostList, tmpAffectList...)
+			tmpActions, tmpAffectHost, tmpAffectEndpointGroup := getDeleteLogMetricMonitor(v.Guid)
+			affectHostList = append(affectHostList, tmpAffectHost...)
+			affectEndpointGroup = append(affectEndpointGroup, tmpAffectEndpointGroup...)
 			actions = append(actions, tmpActions...)
 		}
 	}
-	for _,path := range pathList {
-		if existMonitorType,b:=existPathTypeMap[path];b {
+	for _, path := range pathList {
+		if existMonitorType, b := existPathTypeMap[path]; b {
 			if existMonitorType != monitorType {
 				// change monitor type
-				tmpAffectList,tmpActions := getLogMetricPathChangeTypeAction(existPathGuidMap[path],monitorType,nowTime,sourceTargetMap)
+				tmpAffectList, tmpActions := getLogMetricPathChangeTypeAction(existPathGuidMap[path], monitorType, nowTime, sourceTargetMap)
 				affectHostList = append(affectHostList, tmpAffectList...)
 				actions = append(actions, tmpActions...)
 			}
 			continue
 		}
 		// add path
-		tmpAffectList,tmpActions := getLogMetricPathAddAction(path,serviceGroup,monitorType,nowTime,sourceTargetMap)
+		tmpAffectList, tmpActions := getLogMetricPathAddAction(path, serviceGroup, monitorType, nowTime, sourceTargetMap)
 		affectHostList = append(affectHostList, tmpAffectList...)
 		actions = append(actions, tmpActions...)
 	}
@@ -113,44 +114,40 @@ func updateServiceLogMetricPath(pathList []string,serviceGroup,monitorType strin
 	if len(affectHostList) > 0 {
 		err = SyncLogMetricExporterConfig(affectHostList)
 	}
+	if len(affectEndpointGroup) > 0 {
+		for _, v := range affectEndpointGroup {
+			SyncPrometheusRuleFile(v, false)
+		}
+	}
 	return err
 }
 
-func getLogMetricPathDeleteAction(logMetricMonitor string) (hostList []string,actions []*Action) {
-	logMetricEndpointRel := ListLogMetricEndpointRel(logMetricMonitor)
-	for _,v := range logMetricEndpointRel {
-		hostList = append(hostList, v.SourceEndpoint)
-	}
-	actions = getDeleteLogMetricMonitorAction(logMetricMonitor)
-	return
-}
-
-func getLogMetricPathAddAction(path,serviceGroup,monitorType,nowTime string,sourceTargetMap map[string]string) (hostList []string,actions []*Action) {
+func getLogMetricPathAddAction(path, serviceGroup, monitorType, nowTime string, sourceTargetMap map[string]string) (hostList []string, actions []*Action) {
 	newLogMetricGuid := guid.CreateGuid()
 	path = strings.TrimSpace(path)
 	actions = append(actions, &Action{Sql: "insert into log_metric_monitor(guid,service_group,log_path,monitor_type,update_time) value (?,?,?,?,?)", Param: []interface{}{newLogMetricGuid, serviceGroup, path, monitorType, nowTime}})
-	for k,v := range sourceTargetMap {
+	for k, v := range sourceTargetMap {
 		hostList = append(hostList, k)
 		actions = append(actions, &Action{Sql: "insert into log_metric_endpoint_rel(guid,log_metric_monitor,source_endpoint,target_endpoint) value (?,?,?,?)", Param: []interface{}{guid.CreateGuid(), newLogMetricGuid, k, v}})
 	}
 	return
 }
 
-func getLogMetricPathChangeTypeAction(logMetricMonitor,monitorType,nowTime string,sourceTargetMap map[string]string) (hostList []string,actions []*Action) {
+func getLogMetricPathChangeTypeAction(logMetricMonitor, monitorType, nowTime string, sourceTargetMap map[string]string) (hostList []string, actions []*Action) {
 	logMetricEndpointRel := ListLogMetricEndpointRel(logMetricMonitor)
-	for _,v := range logMetricEndpointRel {
+	for _, v := range logMetricEndpointRel {
 		hostList = append(hostList, v.SourceEndpoint)
 	}
-	actions = append(actions, &Action{Sql: "update log_metric_monitor set monitor_type=?,update_time=? where guid=?",Param: []interface{}{monitorType,nowTime,logMetricMonitor}})
-	actions = append(actions, &Action{Sql: "delete from log_metric_endpoint_rel where log_metric_monitor=?",Param: []interface{}{logMetricMonitor}})
-	for k,v := range sourceTargetMap {
+	actions = append(actions, &Action{Sql: "update log_metric_monitor set monitor_type=?,update_time=? where guid=?", Param: []interface{}{monitorType, nowTime, logMetricMonitor}})
+	actions = append(actions, &Action{Sql: "delete from log_metric_endpoint_rel where log_metric_monitor=?", Param: []interface{}{logMetricMonitor}})
+	for k, v := range sourceTargetMap {
 		hostList = append(hostList, k)
 		actions = append(actions, &Action{Sql: "insert into log_metric_endpoint_rel(guid,log_metric_monitor,source_endpoint,target_endpoint) value (?,?,?,?)", Param: []interface{}{guid.CreateGuid(), logMetricMonitor, k, v}})
 	}
 	return
 }
 
-func updateServiceLogKeywordPath(pathList []string,serviceGroup,monitorType string,sourceTargetMap map[string]string) (err error)  {
+func updateServiceLogKeywordPath(pathList []string, serviceGroup, monitorType string, sourceTargetMap map[string]string) (err error) {
 	var logKeywordTable []*models.LogKeywordMonitorTable
 	err = x.SQL("select * from log_keyword_monitor where service_group=?", serviceGroup).Find(&logKeywordTable)
 	if err != nil {
@@ -161,11 +158,11 @@ func updateServiceLogKeywordPath(pathList []string,serviceGroup,monitorType stri
 	var affectHostList []string
 	existPathTypeMap := make(map[string]string)
 	existPathGuidMap := make(map[string]string)
-	for _,v := range logKeywordTable {
+	for _, v := range logKeywordTable {
 		existPathTypeMap[v.LogPath] = v.MonitorType
 		existPathGuidMap[v.LogPath] = v.Guid
 		deleteFlag := true
-		for _,path := range pathList {
+		for _, path := range pathList {
 			if v.LogPath == path {
 				deleteFlag = false
 				break
@@ -173,23 +170,23 @@ func updateServiceLogKeywordPath(pathList []string,serviceGroup,monitorType stri
 		}
 		if deleteFlag {
 			// delete path
-			tmpAffectList,tmpActions := getLogKeywordPathDeleteAction(v.Guid)
+			tmpAffectList, tmpActions := getLogKeywordPathDeleteAction(v.Guid)
 			affectHostList = append(affectHostList, tmpAffectList...)
 			actions = append(actions, tmpActions...)
 		}
 	}
-	for _,path := range pathList {
-		if existMonitorType,b:=existPathTypeMap[path];b {
+	for _, path := range pathList {
+		if existMonitorType, b := existPathTypeMap[path]; b {
 			if existMonitorType != monitorType {
 				// change monitor type
-				tmpAffectList,tmpActions := getLogKeywordPathChangeTypeAction(existPathGuidMap[path],monitorType,nowTime,sourceTargetMap)
+				tmpAffectList, tmpActions := getLogKeywordPathChangeTypeAction(existPathGuidMap[path], monitorType, nowTime, sourceTargetMap)
 				affectHostList = append(affectHostList, tmpAffectList...)
 				actions = append(actions, tmpActions...)
 			}
 			continue
 		}
 		// add path
-		tmpAffectList,tmpActions := getLogKeywordPathAddAction(path,serviceGroup,monitorType,nowTime,sourceTargetMap)
+		tmpAffectList, tmpActions := getLogKeywordPathAddAction(path, serviceGroup, monitorType, nowTime, sourceTargetMap)
 		affectHostList = append(affectHostList, tmpAffectList...)
 		actions = append(actions, tmpActions...)
 	}
@@ -205,34 +202,34 @@ func updateServiceLogKeywordPath(pathList []string,serviceGroup,monitorType stri
 	return err
 }
 
-func getLogKeywordPathDeleteAction(logKeywordMonitor string) (hostList []string,actions []*Action) {
+func getLogKeywordPathDeleteAction(logKeywordMonitor string) (hostList []string, actions []*Action) {
 	logKeywordEndpointRel := ListLogKeywordEndpointRel(logKeywordMonitor)
-	for _,v := range logKeywordEndpointRel {
+	for _, v := range logKeywordEndpointRel {
 		hostList = append(hostList, v.SourceEndpoint)
 	}
 	actions = getDeleteLogKeywordMonitorAction(logKeywordMonitor)
 	return
 }
 
-func getLogKeywordPathAddAction(path,serviceGroup,monitorType,nowTime string,sourceTargetMap map[string]string) (hostList []string,actions []*Action) {
+func getLogKeywordPathAddAction(path, serviceGroup, monitorType, nowTime string, sourceTargetMap map[string]string) (hostList []string, actions []*Action) {
 	newLogKeywordGuid := guid.CreateGuid()
 	path = strings.TrimSpace(path)
 	actions = append(actions, &Action{Sql: "insert into log_keyword_monitor(guid,service_group,log_path,monitor_type,update_time) value (?,?,?,?,?)", Param: []interface{}{newLogKeywordGuid, serviceGroup, path, monitorType, nowTime}})
-	for k,v := range sourceTargetMap {
+	for k, v := range sourceTargetMap {
 		hostList = append(hostList, k)
 		actions = append(actions, &Action{Sql: "insert into log_keyword_endpoint_rel(guid,log_keyword_monitor,source_endpoint,target_endpoint) value (?,?,?,?)", Param: []interface{}{guid.CreateGuid(), newLogKeywordGuid, k, v}})
 	}
 	return
 }
 
-func getLogKeywordPathChangeTypeAction(logKeywordMonitor,monitorType,nowTime string,sourceTargetMap map[string]string) (hostList []string,actions []*Action) {
+func getLogKeywordPathChangeTypeAction(logKeywordMonitor, monitorType, nowTime string, sourceTargetMap map[string]string) (hostList []string, actions []*Action) {
 	logKeywordEndpointRel := ListLogKeywordEndpointRel(logKeywordMonitor)
-	for _,v := range logKeywordEndpointRel {
+	for _, v := range logKeywordEndpointRel {
 		hostList = append(hostList, v.SourceEndpoint)
 	}
-	actions = append(actions, &Action{Sql: "update log_keyword_monitor set monitor_type=?,update_time=? where guid=?",Param: []interface{}{monitorType,nowTime,logKeywordMonitor}})
-	actions = append(actions, &Action{Sql: "delete from log_keyword_endpoint_rel where log_keyword_monitor=?",Param: []interface{}{logKeywordMonitor}})
-	for k,v := range sourceTargetMap {
+	actions = append(actions, &Action{Sql: "update log_keyword_monitor set monitor_type=?,update_time=? where guid=?", Param: []interface{}{monitorType, nowTime, logKeywordMonitor}})
+	actions = append(actions, &Action{Sql: "delete from log_keyword_endpoint_rel where log_keyword_monitor=?", Param: []interface{}{logKeywordMonitor}})
+	for k, v := range sourceTargetMap {
 		hostList = append(hostList, k)
 		actions = append(actions, &Action{Sql: "insert into log_keyword_endpoint_rel(guid,log_keyword_monitor,source_endpoint,target_endpoint) value (?,?,?,?)", Param: []interface{}{guid.CreateGuid(), logKeywordMonitor, k, v}})
 	}

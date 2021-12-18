@@ -10,7 +10,7 @@ func GetExportMetric() []byte {
 	buff.WriteString("# HELP ping check 0 -> alive, 1 -> dead, 2 -> problem. \n")
 	resultLock.RLock()
 	for _, v := range resultList {
-		buff.WriteString(fmt.Sprintf("%s{key=\"%s\",t_endpoint=\"%s\",address=\"%s:%s\"} %s \n", metricString, v.Name, v.Endpoint, v.Server, v.Port, transFloatValueToString(v.Value)))
+		buff.WriteString(fmt.Sprintf("%s{key=\"%s\",t_endpoint=\"%s\",address=\"%s:%s\",service_group=\"%s\"} %s \n", metricString, v.Name, v.Endpoint, v.Server, v.Port, v.ServiceGroup, transFloatValueToString(v.Value)))
 	}
 	resultLock.RUnlock()
 	return buff.Bytes()
