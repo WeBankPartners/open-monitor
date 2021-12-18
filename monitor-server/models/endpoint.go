@@ -32,28 +32,27 @@ type EndpointNewTable struct {
 }
 
 type EndpointExtendParamObj struct {
-	Enable      bool   `json:"-"`
-	Ip          string `json:"ip,omitempty"`
-	Port        string `json:"port,omitempty"`
-	User        string `json:"user,omitempty"`
-	Password    string `json:"password,omitempty"`
-	BinPath     string `json:"bin_path,omitempty"`
-	ConfigPath  string `json:"config_path,omitempty"`
-	HttpMethod  string `json:"http_method,omitempty"`
-	HttpUrl     string `json:"http_url,omitempty"`
-	ProcessName string `json:"process_name,omitempty"`
-	ProcessTags string `json:"process_tags,omitempty"`
-	ExportAddress    string `json:"export_address"`
+	Enable        bool   `json:"-"`
+	Ip            string `json:"ip,omitempty"`
+	Port          string `json:"port,omitempty"`
+	User          string `json:"user,omitempty"`
+	Password      string `json:"password,omitempty"`
+	BinPath       string `json:"bin_path,omitempty"`
+	ConfigPath    string `json:"config_path,omitempty"`
+	HttpMethod    string `json:"http_method,omitempty"`
+	HttpUrl       string `json:"http_url,omitempty"`
+	ProcessName   string `json:"process_name,omitempty"`
+	ProcessTags   string `json:"process_tags,omitempty"`
+	ExportAddress string `json:"export_address"`
 	ProxyExporter string `json:"proxy_exporter"`
 }
 
 type MetricTable struct {
-	Guid             string `json:"guid" xorm:"guid"`
-	Metric           string `json:"metric" xorm:"metric"`
-	MonitorType      string `json:"monitor_type" xorm:"monitor_type"`
-	PromExpr         string `json:"prom_expr" xorm:"prom_expr"`
-	TagOwner         string `json:"tag_owner" xorm:"tag_owner"`
-	LogMetricMonitor string `json:"log_metric_monitor" xorm:"log_metric_monitor"`
-	DbMetricMonitor  string `json:"db_metric_monitor" xorm:"db_metric_monitor"`
-	UpdateTime       string `json:"update_time" xorm:"update_time"`
+	Guid         string `json:"guid" xorm:"guid"`
+	Metric       string `json:"metric" xorm:"metric"`
+	MonitorType  string `json:"monitor_type" xorm:"monitor_type"`
+	PromExpr     string `json:"prom_expr" xorm:"prom_expr"`
+	TagOwner     string `json:"tag_owner" xorm:"tag_owner"`
+	ServiceGroup string `json:"service_group" xorm:"service_group"`
+	UpdateTime   string `json:"update_time" xorm:"update_time"`
 }

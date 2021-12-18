@@ -28,6 +28,7 @@ func InitServiceGroup() {
 func buildGlobalServiceGroupLink(serviceGroupTable []*models.ServiceGroupTable) {
 	globalServiceGroupMap = make(map[string]*models.ServiceGroupLinkNode)
 	for _, v := range serviceGroupTable {
+		models.GlobalSGDisplayNameMap[v.Guid] = v.DisplayName
 		globalServiceGroupMap[v.Guid] = &models.ServiceGroupLinkNode{Guid: v.Guid}
 	}
 	for _, v := range serviceGroupTable {
@@ -63,6 +64,7 @@ func addGlobalServiceGroupNode(param models.ServiceGroupTable) {
 	displayGlobalServiceGroup()
 	if _, b := globalServiceGroupMap[param.Guid]; !b {
 		globalServiceGroupMap[param.Guid] = &models.ServiceGroupLinkNode{Guid: param.Guid}
+		models.GlobalSGDisplayNameMap[param.Guid] = param.DisplayName
 		if param.Parent != "" {
 			if _, bb := globalServiceGroupMap[param.Parent]; bb {
 				globalServiceGroupMap[param.Guid] = &models.ServiceGroupLinkNode{Guid: param.Guid, Parent: globalServiceGroupMap[param.Parent]}
@@ -308,25 +310,28 @@ func getSimpleServiceGroup(serviceGroupGuid string) (result models.ServiceGroupT
 func MatchServicePanel(endpointGuid string) (result models.PanelModel, err error) {
 	result = models.PanelModel{Title: "service", Tags: models.TagsModel{Enable: false, Option: []*models.OptionModel{}}}
 	var logMetricEndpointRel []*models.LogMetricEndpointRelTable
-	err = x.SQL("select * from log_metric_endpoint_rel where target_endpoint=?", endpointGuid).Find(&logMetricEndpointRel)
+	err = x.SQL("select distinct log_metric_monitor from log_metric_endpoint_rel where target_endpoint=?", endpointGuid).Find(&logMetricEndpointRel)
 	if err != nil {
 		return result, fmt.Errorf("Query table log_metric_endpoint_rel fail,%s ", err.Error())
 	}
 	if len(logMetricEndpointRel) > 0 {
-		logMetricMonitorList := []string{}
-		for _, v := range logMetricEndpointRel {
-			logMetricMonitorList = append(logMetricMonitorList, v.LogMetricMonitor)
-		}
-		var logMetricTable []*models.LogMetricConfigTable
-		x.SQL("select metric,display_name,agg_type from log_metric_config where log_metric_monitor in ('" + strings.Join(logMetricMonitorList, "','") + "') or log_metric_json in (select guid from log_metric_json where log_metric_monitor in ('" + strings.Join(logMetricMonitorList, "','") + "'))").Find(&logMetricTable)
-		for _, v := range logMetricTable {
-			result.Charts = append(result.Charts, &models.ChartModel{Id: 0, Title: v.DisplayName, Endpoint: []string{endpointGuid}, Metric: []string{fmt.Sprintf("%s/key=%s,t_endpoint=%s,agg=%s", models.LogMetricName, v.Metric, endpointGuid, v.AggType)}})
+		for _, endpointRel := range logMetricEndpointRel {
+			logMetricMonitor := endpointRel.LogMetricMonitor
+			serviceGroup, _ := getLogMetricServiceGroup(logMetricMonitor)
+			for _, jsonConfig := range ListLogMetricJson(logMetricMonitor) {
+				for _, metricConfig := range jsonConfig.MetricList {
+					result.Charts = append(result.Charts, &models.ChartModel{Id: 0, Title: metricConfig.DisplayName, Endpoint: []string{endpointGuid}, Metric: []string{fmt.Sprintf("%s/key=%s,t_endpoint=%s,agg=%s,service_group=%s", models.LogMetricName, metricConfig.Metric, endpointGuid, metricConfig.AggType, serviceGroup)}})
+				}
+			}
+			for _, metricConfig := range ListLogMetricConfig("", logMetricMonitor) {
+				result.Charts = append(result.Charts, &models.ChartModel{Id: 0, Title: metricConfig.DisplayName, Endpoint: []string{endpointGuid}, Metric: []string{fmt.Sprintf("%s/key=%s,t_endpoint=%s,agg=%s,service_group=%s", models.LogMetricName, metricConfig.Metric, endpointGuid, metricConfig.AggType, serviceGroup)}})
+			}
 		}
 	}
 	var dbMetricMonitor []*models.DbMetricMonitorTable
 	x.SQL("select * from db_metric_monitor where guid in (select db_metric_monitor from db_metric_endpoint_rel where target_endpoint=?)", endpointGuid).Find(&dbMetricMonitor)
 	for _, v := range dbMetricMonitor {
-		result.Charts = append(result.Charts, &models.ChartModel{Id: 0, Title: v.DisplayName, Endpoint: []string{endpointGuid}, Metric: []string{fmt.Sprintf("%s/key=%s,t_endpoint=%s", models.DBMonitorMetricName, v.Metric, endpointGuid)}})
+		result.Charts = append(result.Charts, &models.ChartModel{Id: 0, Title: v.DisplayName, Endpoint: []string{endpointGuid}, Metric: []string{fmt.Sprintf("%s/key=%s,t_endpoint=%s,service_group=%s", models.DBMonitorMetricName, v.Metric, endpointGuid, v.ServiceGroup)}})
 	}
 	return
 }
