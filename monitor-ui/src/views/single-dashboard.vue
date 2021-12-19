@@ -193,6 +193,7 @@ export default {
       this.viewData.forEach((item) => {
         let params = {
           aggregate: item.aggregate,
+          agg_step: item.agg_step,
           lineType: item.lineType,
           time_second: this.viewCondition.timeTnterval,
           start: this.dateToTimestamp(this.viewCondition.dateRange[0]),
@@ -213,6 +214,7 @@ export default {
           chartParams: params,
           chartType: item.chartType                                                     
         })
+        console.log(_activeCharts)
         item.viewConfig._activeCharts = _activeCharts
         tmp.push(item.viewConfig)
       })
