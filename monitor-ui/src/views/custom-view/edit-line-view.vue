@@ -12,31 +12,48 @@
     <div class="zone zone-config c-dark">
       <div class="tool-save">
         <div class="condition">
-          <Select filterable  class="select-option" v-model="templateQuery.aggregate" @on-change="switchChartType">
-            <Option
-              v-for="(type) in ['min', 'max', 'avg', 'p95', 'sum', 'none']"
-              :value="type"
-              :key="type"
-            >{{type}}</Option>
-          </Select>
+          <Tooltip :content="$t('field.aggType')" :delay="1000">
+            <Select filterable  class="select-option" v-model="templateQuery.aggregate" style="width:100px" @on-change="switchChartType">
+              <Option
+                v-for="(type) in ['min', 'max', 'avg', 'p95', 'sum', 'none']"
+                :value="type"
+                :key="type"
+              >{{type}}</Option>
+            </Select>
+          </Tooltip>
         </div>
         <div class="condition">
-          <Select filterable class="select-option" v-model="templateQuery.chartType" @on-change="switchChartType">
-            <Option
-              v-for="(option, index) in chartTypeOption"
-              :value="option.value"
-              :key="index"
-            >{{option.label}}</Option>
-          </Select>
+          <Tooltip :content="$t('field.aggStep')" :delay="1000">
+            <Select filterable  class="select-option" v-model="templateQuery.agg_step" style="width:100px" @on-change="switchChartType">
+              <Option
+                v-for="agg in aggStepOptions"
+                :value="agg.value"
+                :key="agg.value"
+              >{{agg.label}}</Option>
+            </Select>
+          </Tooltip>
+        </div>
+        <div class="condition">
+          <Tooltip :content="$t('m_chart_type')" :delay="1000">
+            <Select filterable class="select-option" v-model="templateQuery.chartType" style="width:160px" @on-change="switchChartType">
+              <Option
+                v-for="(option, index) in chartTypeOption"
+                :value="option.value"
+                :key="index"
+              >{{option.label}}</Option>
+            </Select>
+          </Tooltip>
         </div>
         <div class="condition" v-if="templateQuery.chartType === 'line'">
-          <Select filterable class="select-option" v-model="templateQuery.lineType" @on-change="switchChartType">
-            <Option
-              v-for="(option, index) in lineOption"
-              :value="option.value"
-              :key="index"
-            >{{option.label}}</Option>
-          </Select>
+          <Tooltip :content="$t('m_line_type')" :delay="1000">
+            <Select filterable class="select-option" v-model="templateQuery.lineType" style="width:160px" @on-change="switchChartType">
+              <Option
+                v-for="(option, index) in lineOption"
+                :value="option.value"
+                :key="index"
+              >{{option.label}}</Option>
+            </Select>
+          </Tooltip>
         </div>
         <button class="btn btn-sm btn-confirm-f" @click="saveConfig">{{$t('button.saveConfig')}}</button>
         <button class="btn btn-sm btn-cancel-f" @click="goback()">{{$t('button.cancel')}}</button>
@@ -170,17 +187,25 @@ export default {
         chartType: '',
         lineType: 1,
         aggregate: '',
+        agg_step: 60,
         endpoint_type: '',
         app_object: '',
         metricToColor: []
       },
+      aggStepOptions: [
+        {label: '60S', value: 60},
+        {label: '300S', value: 300},
+        {label: '600S', value: 600},
+        {label: '1800S', value: 1800},
+        {label: '3600S', value: 3600}
+      ],
       chartTypeOption: [
-        {label: '线性图', value: 'line'},
-        {label: '柱状图', value: 'bar'}
+        {label: this.$t('m_line_chart'), value: 'line'},
+        {label: this.$t('m_bar_chart'), value: 'bar'}
       ],
       lineOption: [
-        {label: '折线图', value: 1},
-        {label: '面积图', value: 0}
+        {label: this.$t('m_line_chart_s'), value: 1},
+        {label: this.$t('m_area_chart'), value: 0}
       ],
       chartQueryList: [
         // {
@@ -206,6 +231,7 @@ export default {
         this.noDataTip = false
         let params = {
           aggregate: this.templateQuery.aggregate || 'none',
+          agg_step: this.templateQuery.agg_step || 60,
           lineType: this.templateQuery.lineType,
           time_second: -1800,
           start: 0,
@@ -254,9 +280,11 @@ export default {
         tmp.app_object = tmp.endpoint
       }
       tmp.aggregate = 'none'
+      tmp.agg_step = 60
       tmp.chartType = 'line'
       let params = {
         aggregate: 'none',
+        agg_step: 60,
         time_second: -1800,
         start: 0,
         end: 0,
@@ -302,6 +330,7 @@ export default {
             this.templateQuery.chartType = itemx.chartType
             this.templateQuery.lineType = itemx.lineType || 0
             this.templateQuery.aggregate = itemx.aggregate || 'none'
+            this.templateQuery.agg_step = itemx.agg_step || 60
             this.panalIndex = index
             this.panalData = itemx
             this.initPanal()
@@ -316,6 +345,7 @@ export default {
       }
       let params = {
           aggregate: this.templateQuery.aggregate || 'none',
+          agg_step: this.templateQuery.agg_step || 60,
           lineType: this.templateQuery.lineType,
           time_second: -1800,
           start: 0,
@@ -346,6 +376,7 @@ export default {
       this.panalUnit = this.panalData.panalUnit
       let params = {
         aggregate: this.templateQuery.aggregate || 'none',
+        agg_step: this.templateQuery.agg_step || 60,
         lineType: this.templateQuery.lineType,
         time_second: -1800,
         start: 0,
@@ -427,6 +458,7 @@ export default {
         chartType: tmp.chartType,
         lineType: tmp.lineType,
         aggregate: tmp.aggregate,
+        agg_step: tmp.agg_step,
         endpoint_type: '',
         app_object: '',
         metricToColor: []
@@ -465,6 +497,7 @@ export default {
         chartType: this.templateQuery.chartType,
         lineType: this.templateQuery.lineType,
         aggregate: this.templateQuery.aggregate,
+        agg_step: this.templateQuery.agg_step,
         query: query,
         viewConfig: panal
       }

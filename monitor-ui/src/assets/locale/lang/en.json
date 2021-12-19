@@ -42,7 +42,8 @@
     "comparedTimeInterval": "Time Interval",
     "port": "Port",
     "ip": "IP",
-    "aggType": "Aggregation type",
+    "aggType": "Aggregation Type",
+    "aggStep": "Aggregation Step",
     "title": "Title",
     "unit": "Unit",
     "instance": "Instance",
@@ -283,5 +284,11 @@
   "alarm_action": "Alarm Action",
   "dangerous_confirm_tip": "I AM AWARE OF THE HIGH RISK OF THIS OPERATION AND HAVE EVALUATED ALL THE RISKS, CONFIRMED TO CONTINUE EXECUTION AND BEAR THE CONSEQUENCES.",
   "resource_delete_tip": "RISK WARNING: DELETING A HIERARCHICAL OBJECT WILL DELETE ALL ITS CHILD NODES AND ALL THEIR ASSOCIATED BUSINESS LOG INDICATORS, BUSINESS DATABASE INDICATORS, BUSINESS KEYWORD CONFIGURATION, APPLIED INDICATORS AND ALARM CONFIGURATION, ETC.",
-  "delete_follow": "The following data will be deleted"
+  "delete_follow": "The following data will be deleted",
+  "m_line_chart": "Line Chart",
+  "m_bar_chart": "Bar Chart",
+  "m_line_chart_s": "Line Chart",
+  "m_area_chart": "Area Chart",
+  "m_chart_type": "Chart Type",
+  "m_line_type": "Line Type"
 }
