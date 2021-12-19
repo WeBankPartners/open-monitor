@@ -10,7 +10,8 @@ func ListMetric(c *gin.Context) {
 	guid := c.Query("guid")
 	monitorType := c.Query("monitorType")
 	serviceGroup := c.Query("serviceGroup")
-	result, err := db.MetricListNew(guid, monitorType, serviceGroup)
+	onlyService := c.Query("onlyService")
+	result, err := db.MetricListNew(guid, monitorType, serviceGroup, onlyService)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
