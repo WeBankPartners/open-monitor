@@ -127,7 +127,7 @@ func getChartConfigByChartId(param *models.ChartQueryParam, result *models.EChar
 	if err != nil {
 		return
 	}
-	param.Aggregate = chartList[0].AggType
+	//param.Aggregate = chartList[0].AggType
 	param.Unit = chartList[0].Unit
 	result.Id = param.ChartId
 	result.Title = chartList[0].Title
@@ -219,7 +219,9 @@ func getChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.
 				continue
 			}
 			param.Data[0].Endpoint = endpointList[0].Guid
-			metricLegend = "$app_metric"
+			if db.CheckMetricIsServiceMetric(dataConfig.Metric, dataConfig.AppObject) {
+				metricLegend = "$app_metric"
+			}
 		} else {
 			//endpointObj := models.EndpointTable{Guid: dataConfig.Endpoint}
 			//db.GetEndpoint(&endpointObj)
@@ -252,9 +254,16 @@ func getChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.
 				}
 			}
 		}
-		for _, endpoint := range endpointList {
-			tmpPromQL := db.ReplacePromQlKeyword(dataConfig.PromQl, dataConfig.Metric, endpoint)
-			queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQL, Legend: metricLegend, Metric: []string{dataConfig.Metric}, Endpoint: []string{endpoint.Guid}, Step: endpoint.Step, Cluster: endpoint.Cluster})
+		if len(endpointList) > 0 && metricLegend == "$app_metric" {
+			tmpPromQL := db.ReplacePromQlKeyword(dataConfig.PromQl, dataConfig.Metric, endpointList[0])
+			if tmpPromQL == dataConfig.PromQl {
+				queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQL, Legend: metricLegend, Metric: []string{dataConfig.Metric}, Endpoint: []string{endpointList[0].Guid}, Step: endpointList[0].Step, Cluster: endpointList[0].Cluster})
+			}
+		} else {
+			for _, endpoint := range endpointList {
+				tmpPromQL := db.ReplacePromQlKeyword(dataConfig.PromQl, dataConfig.Metric, endpoint)
+				queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQL, Legend: metricLegend, Metric: []string{dataConfig.Metric}, Endpoint: []string{endpoint.Guid}, Step: endpoint.Step, Cluster: endpoint.Cluster})
+			}
 		}
 	}
 	return
@@ -318,10 +327,10 @@ func getChartQueryData(queryList []*models.QueryMonitorData, param *models.Chart
 		serials = append(serials, tmpSerials...)
 	}
 	// handle serials data
-	agg := 0
-	if param.Aggregate != "none" {
-		agg = db.CheckAggregate(param.Start, param.End, "", param.Step, len(serials))
-	}
+	//agg := 0
+	//if param.Aggregate != "none" {
+	//	agg = db.CheckAggregate(param.Start, param.End, "", param.Step, len(serials))
+	//}
 	var processDisplayMap = make(map[string]string)
 	if strings.HasPrefix(param.Data[0].Metric, "process_") {
 		processDisplayMap = db.GetProcessDisplayMap(param.Data[0].Endpoint)
@@ -341,9 +350,13 @@ func getChartQueryData(queryList []*models.QueryMonitorData, param *models.Chart
 		if result.Title == "${auto}" {
 			result.Title = s.Name[:strings.Index(s.Name, "{")]
 		}
-		if agg > 1 && len(s.Data) > 300 {
-			s.Data = db.Aggregate(s.Data, agg, param.Aggregate)
+		if param.Aggregate != "none" && param.AggStep >= 30 {
+			log.Logger.Debug("AggregateNew", log.Int64("aggStep", param.AggStep), log.String("agg", param.Aggregate))
+			s.Data = db.AggregateNew(s.Data, param.AggStep, param.Aggregate)
 		}
+		//if agg > 1 && len(s.Data) > 300 {
+		//	s.Data = db.Aggregate(s.Data, agg, param.Aggregate)
+		//}
 		if param.Compare.CompareSubTime > 0 {
 			if strings.Contains(s.Name, param.Compare.CompareSecondLegend) {
 				s.Data = db.CompareSubData(s.Data, float64(param.Compare.CompareSubTime)*1000)
