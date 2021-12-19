@@ -516,12 +516,12 @@ func UpdatePanelChartMetric(data []m.PromMetricUpdateParam) error {
 	return Transaction(updateChartAction)
 }
 
-func GetEndpointMetric(id int) (err error, result []*m.OptionModel) {
+func GetEndpointMetric(endpointGuid,serviceGroup string) (err error, result []*m.OptionModel) {
 	result = []*m.OptionModel{}
-	endpointObj := m.EndpointTable{Id: id}
+	endpointObj := m.EndpointTable{Guid: endpointGuid}
 	GetEndpoint(&endpointObj)
 	if endpointObj.Guid == "" {
-		return fmt.Errorf("endpoint id: %d can not find ", id), result
+		return fmt.Errorf("endpoint guid: %s can not find ", endpointGuid), result
 	}
 	if endpointObj.ExportType == "ping" || endpointObj.ExportType == "telnet" || endpointObj.ExportType == "http" {
 		return nil, result
@@ -558,17 +558,38 @@ func GetEndpointMetric(id int) (err error, result []*m.OptionModel) {
 	if err != nil {
 		return err, result
 	}
+	serviceTag := fmt.Sprintf("service_group=\"%s\"", serviceGroup)
 	for _, v := range strList {
 		if strings.HasPrefix(v, "go_") || v == "" {
 			continue
 		}
-		if v[len(v)-1:] == "}" {
-			result = append(result, &m.OptionModel{OptionText: v, OptionValue: fmt.Sprintf("%s,instance=\"$address\"}", v[:len(v)-1])})
-		} else {
-			result = append(result, &m.OptionModel{OptionText: v, OptionValue: fmt.Sprintf("%s{instance=\"$address\"}", v)})
+		if serviceGroup == "" {
+			if v[len(v)-1:] == "}" {
+				result = append(result, &m.OptionModel{OptionText: v, OptionValue: fmt.Sprintf("%s,instance=\"$address\"}", v[:len(v)-1])})
+			} else {
+				result = append(result, &m.OptionModel{OptionText: v, OptionValue: fmt.Sprintf("%s{instance=\"$address\"}", v)})
+			}
+		}else{
+			if strings.Contains(v, serviceTag) {
+				tmpPromExpr := v
+				if strings.Contains(v, "t_endpoint") {
+					tmpPromExpr = trimTEndpointTag(tmpPromExpr)
+				}
+				result = append(result, &m.OptionModel{OptionText: tmpPromExpr, OptionValue: tmpPromExpr})
+			}
 		}
 	}
 	return nil, result
+}
+
+func trimTEndpointTag(input string) string {
+	tIndex := strings.Index(input, "t_endpoint=\"")
+	tailPart := input[tIndex+12:]
+	tailPart = tailPart[strings.Index(tailPart, "\"")+1:]
+	input = input[:tIndex] + tailPart
+	input = strings.ReplaceAll(input, ",,", ",")
+	input = strings.ReplaceAll(input, ",}", "}")
+	return input
 }
 
 func GetEndpointMetricByEndpointType(endpointType string) (err error, result []*m.OptionModel) {

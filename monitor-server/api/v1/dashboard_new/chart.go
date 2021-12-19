@@ -350,7 +350,7 @@ func getChartQueryData(queryList []*models.QueryMonitorData, param *models.Chart
 		if result.Title == "${auto}" {
 			result.Title = s.Name[:strings.Index(s.Name, "{")]
 		}
-		if param.Aggregate != "none" && param.AggStep >= 30 {
+		if param.Aggregate != "none" && param.AggStep > 10 {
 			log.Logger.Debug("AggregateNew", log.Int64("aggStep", param.AggStep), log.String("agg", param.Aggregate))
 			s.Data = db.AggregateNew(s.Data, param.AggStep, param.Aggregate)
 		}
