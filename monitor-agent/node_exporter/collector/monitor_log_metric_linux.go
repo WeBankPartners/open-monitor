@@ -451,9 +451,8 @@ func calcLogMetricData() {
 					if metricConfig.AggType == "avg" {
 						appendDisplayMap[fmt.Sprintf("%s^%s^sum", lmObj.Path, metricConfig.Metric)] = 1
 						appendDisplayMap[fmt.Sprintf("%s^%s^count", lmObj.Path, metricConfig.Metric)] = 1
-					} else {
-						appendDisplayMap[fmt.Sprintf("%s^%s^%s", lmObj.Path, metricConfig.Metric, metricConfig.AggType)] = 1
 					}
+					appendDisplayMap[fmt.Sprintf("%s^%s^%s", lmObj.Path, metricConfig.Metric, metricConfig.AggType)] = 1
 				}
 			}
 		}
@@ -463,9 +462,8 @@ func calcLogMetricData() {
 				if metricObj.AggType == "avg" {
 					appendDisplayMap[fmt.Sprintf("%s^%s^sum", lmObj.Path, metricObj.Metric)] = 1
 					appendDisplayMap[fmt.Sprintf("%s^%s^count", lmObj.Path, metricObj.Metric)] = 1
-				} else {
-					appendDisplayMap[fmt.Sprintf("%s^%s^%s", lmObj.Path, metricObj.Metric, metricObj.AggType)] = 1
 				}
+				appendDisplayMap[fmt.Sprintf("%s^%s^%s", lmObj.Path, metricObj.Metric, metricObj.AggType)] = 1
 				continue
 			}
 			tmpMetricKey := fmt.Sprintf("%s^%s^%s^%s", lmObj.Path, metricObj.Metric, metricObj.AggType, "")
@@ -554,6 +552,12 @@ func buildLogMetricDisplayMetrics(valueCountMap, existMetricMap map[string]*logM
 			v.UpdateTime = lastTimestamp
 		}
 		if avgFlag {
+			if v.ValueObj.Count > 0 {
+				v.Value = v.ValueObj.Sum / v.ValueObj.Count
+			} else {
+				v.Value = 0
+			}
+			tmpLogMetricMetrics = append(tmpLogMetricMetrics, &logMetricDisplayObj{Metric: v.Metric, Path: v.Path, Agg: "avg", TEndpoint: v.TEndpoint, ServiceGroup: v.ServiceGroup, Tags: v.Tags, TagsString: v.TagsString, Value: v.Value, Step: v.Step, Display: v.Display, UpdateTime: v.UpdateTime})
 			tmpLogMetricMetrics = append(tmpLogMetricMetrics, &logMetricDisplayObj{Metric: v.Metric, Path: v.Path, Agg: "sum", TEndpoint: v.TEndpoint, ServiceGroup: v.ServiceGroup, Tags: v.Tags, TagsString: v.TagsString, Value: v.ValueObj.Sum, Step: v.Step, Display: v.Display, UpdateTime: v.UpdateTime})
 			tmpLogMetricMetrics = append(tmpLogMetricMetrics, &logMetricDisplayObj{Metric: v.Metric, Path: v.Path, Agg: "count", TEndpoint: v.TEndpoint, ServiceGroup: v.ServiceGroup, Tags: v.Tags, TagsString: v.TagsString, Value: v.ValueObj.Count, Step: v.Step, Display: v.Display, UpdateTime: v.UpdateTime})
 		} else {
