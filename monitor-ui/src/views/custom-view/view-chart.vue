@@ -148,6 +148,7 @@ export default {
       }
       let params = {
         aggregate: this.viewCondition.agg,
+        agg_step: this.viewCondition.agg_step,
         time_second: this.viewCondition.timeTnterval,
         start: this.viewCondition.dateRange[0] ===''? 
           0 :Date.parse(this.viewCondition.dateRange[0].replace(/-/g, '/'))/1000,
