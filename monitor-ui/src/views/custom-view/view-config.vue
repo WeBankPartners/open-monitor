@@ -297,6 +297,7 @@ export default {
       this.viewData.forEach((item) => {
         let params = {
           aggregate: item.aggregate,
+          agg_step: item.agg_step,
           lineType: item.lineType,
           time_second: this.viewCondition.timeTnterval,
           start: this.dateToTimestamp(this.viewCondition.dateRange[0]),
@@ -317,6 +318,7 @@ export default {
           chartParams: params,
           chartType: item.chartType,
           aggregate: item.aggregate,
+          agg_step: item.agg_step,
           lineType: item.lineType                                       
         })
         item.viewConfig._activeCharts = _activeCharts
@@ -380,13 +382,16 @@ export default {
         parentRouteData.cfg = JSON.parse(parentRouteData.cfg)
         const oriConfig = JSON.parse(JSON.stringify(cfg))
         let aggregate = 'none'
+        let agg_step = 60
         if (item) {
           const find = oriConfig.find(xItem => xItem.panalTitle === item.i)
           if (find) {
             aggregate = find.aggregate || 'none'
+            agg_step = find.agg_step || 60
           }
           let findEditData = parentRouteData.cfg.find(xItem => xItem.panalTitle === item.i)
           findEditData.aggregate = aggregate
+          findEditData.agg_step = agg_step
         } else {
           parentRouteData.cfg = resViewData
         }
@@ -441,6 +446,7 @@ export default {
             temp.query = i.query
             temp.chartType = i.chartType
             temp.aggregate = i.aggregate
+            temp.agg_step = i.agg_step
             temp.lineType = i.lineType
           }
         })
@@ -462,6 +468,7 @@ export default {
               query: i.query,
               chartType: i.chartType,
               aggregate: i.aggregate,
+              agg_step: i.agg_step,
               lineType: i.lineType,
               viewConfig: layoutDataItem
             })
