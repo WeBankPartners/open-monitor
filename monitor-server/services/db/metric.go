@@ -118,7 +118,7 @@ func MetricListNew(guid, monitorType, serviceGroup string) (result []*models.Met
 			if monitorType == "" {
 				return result, fmt.Errorf("serviceGroup is disable when monitorType is null ")
 			}
-			baseSql = "select * from metric where monitor_type=? and service_group=?"
+			baseSql = "select * from metric where monitor_type=? and (service_group is null or service_group=?)"
 			params = []interface{}{monitorType, serviceGroup}
 		} else {
 			baseSql = "select * from metric where monitor_type=? and log_metric_monitor is null and db_metric_monitor is null"
