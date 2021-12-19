@@ -67,11 +67,6 @@
                   <Tooltip :content="$t('m_log_server')" :delay="1000">
                     <Input disabled v-model="stringMapItem.source_value" style="width: 230px" :placeholder="$t('m_log_server')" />
                   </Tooltip>
-                  <Tooltip :content="$t('m_collection_interval')" :delay="1000">
-                    <Select disabled v-model="item.step" style="width: 90px" :placeholder="$t('m_collection_interval')">
-                      <Option v-for="type in stepOptions" :key="type.value" :value="type.value">{{type.label}}</Option>
-                    </Select>
-                  </Tooltip>
                 </p>
               </template>
             </div>
@@ -92,12 +87,6 @@
               agg
             }}</Option>
           </Select>
-        </div>
-        <div class="marginbottom params-each">
-          <label class="col-md-2 label-name">{{$t('m_collection_interval')}}:</label>
-          <Select disabled v-model="customMetricsModelConfig.addRow.step" style="width: 375px">
-              <Option v-for="type in stepOptions" :key="type.value" :value="type.value">{{type.label}}</Option>
-            </Select>
         </div>
         <div class="marginbottom params-each">
           <div style="margin: 4px 12px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
@@ -144,11 +133,6 @@
           </FormItem>
           <FormItem label="SQL">
             <Input disabled v-model="dbModelConfig.addRow.metric_sql" type="textarea" style="width:520px" />
-          </FormItem>
-          <FormItem :label="$t('m_collection_interval')">
-            <Select disabled v-model="dbModelConfig.addRow.step" style="width: 520px">
-              <Option v-for="type in stepOptions" :key="type.value" :value="type.value">{{type.label}}</Option>
-            </Select>
           </FormItem>
           <FormItem :label="$t('field.type')">
             <Select disabled v-model="dbModelConfig.addRow.monitor_type" @on-change="getEndpoint(dbModelConfig.addRow.monitor_type, 'mysql')" style="width: 520px">
@@ -226,8 +210,7 @@ const btn = [
 let tableDbEle = [
   {title: 'field.displayName', value: 'display_name', display: true},
   {title: 'field.metric', value: 'metric', display: true},
-  {title: 'field.type', value: 'monitor_type', display: true},
-  {title: 'm_collection_interval', value: 'step', display: true}
+  {title: 'field.type', value: 'monitor_type', display: true}
 ]
 const btnDb = [
   {btn_name: 'button.view', btn_func: 'editDbItem'}
@@ -306,7 +289,6 @@ export default {
           metric_sql: '',
           metric: '',
           display_name: '',
-          step: 10,
           monitor_type: '',
           endpoint_rel: []
         }
@@ -316,14 +298,6 @@ export default {
         {label: 'java', value: 'java'},
         {label: 'nginx', value: 'nginx'},
         {label: 'http', value: 'http'}
-      ],
-      stepOptions: [
-        {label: '10S', value: 10},
-        {label: '30S', value: 30},
-        {label: '60S', value: 60},
-        {label: '600S', value: 600},
-        {label: '1800S', value: 1800},
-        {label: '3600S', value: 3600}
       ],
       sourceEndpoints: [],
       targetEndpoints: [],
@@ -470,7 +444,6 @@ export default {
                   config: [
                     {title: 'tableKey.regular', value: 'json_regular', display: true},
                     {title: 'tableKey.tags', value: 'tags', display: true},
-                    {title: 'm_collection_interval', value: 'step', display: true},
                     {title: 'table.action',btn:[
                       {btn_name: 'button.view', btn_func: 'editRuleItem'}
                     ]}
@@ -490,7 +463,6 @@ export default {
                   config: [
                     {title: 'tableKey.regular', value: 'regular', display: true},
                     {title: 'field.metric', value: 'metric', display: true},
-                    {title: 'm_collection_interval', value: 'step', display: true},
                     {title: 'field.aggType', value: 'agg_type', display: true},
                     {title: 'table.action',btn:[
                       {btn_name: 'button.view', btn_func: 'editCustomMetricItem'}
