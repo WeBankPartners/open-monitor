@@ -145,11 +145,6 @@
               <Tooltip :content="$t('field.displayName')" :delay="1000">
                 <Input v-model="item.display_name" style="width: 160px" :placeholder="$t('field.displayName')" />
               </Tooltip>
-              <Tooltip :content="$t('m_collection_interval')" :delay="1000">
-                <Select v-model="item.step" style="width: 80px" :placeholder="$t('m_collection_interval')">
-                  <Option v-for="type in stepOptions" :key="type.value" :value="type.value">{{type.label}}</Option>
-                </Select>
-              </Tooltip>
             </p>
             <div :key="index + 1" style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;text-align: end;">
               <template v-for="(stringMapItem, stringMapIndex) in item.string_map">
@@ -240,12 +235,6 @@
           </Select>
         </div>
         <div class="marginbottom params-each">
-          <label class="col-md-2 label-name">{{$t('m_collection_interval')}}:</label>
-          <Select v-model="customMetricsModelConfig.addRow.step" style="width: 375px">
-              <Option v-for="type in stepOptions" :key="type.value" :value="type.value">{{type.label}}</Option>
-            </Select>
-        </div>
-        <div class="marginbottom params-each">
           <div style="margin: 4px 12px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
             <template v-for="(item, index) in customMetricsModelConfig.addRow.string_map">
               <p :key="index">
@@ -308,11 +297,6 @@
           <FormItem label="SQL">
             <Input v-model="dbModelConfig.addRow.metric_sql" type="textarea" style="width:520px" />
           </FormItem>
-          <FormItem :label="$t('m_collection_interval')">
-            <Select v-model="dbModelConfig.addRow.step" style="width: 520px">
-              <Option v-for="type in stepOptions" :key="type.value" :value="type.value">{{type.label}}</Option>
-            </Select>
-          </FormItem>
           <FormItem :label="$t('field.type')">
             <Select v-model="dbModelConfig.addRow.monitor_type" @on-change="getEndpoint(dbModelConfig.addRow.monitor_type, 'mysql')" style="width: 520px">
               <Option v-for="type in monitorTypeOptions" :key="type.value" :value="type.label">{{type.label}}</Option>
@@ -374,8 +358,7 @@ const btn = [
 let tableDbEle = [
   {title: 'field.displayName', value: 'display_name', display: true},
   {title: 'field.metric', value: 'metric', display: true},
-  {title: 'field.type', value: 'monitor_type', display: true},
-  {title: 'm_collection_interval', value: 'step', display: true}
+  {title: 'field.type', value: 'monitor_type', display: true}
 ]
 const btnDb = [
   {btn_name: 'button.edit', btn_func: 'editDbItem'},
@@ -408,7 +391,6 @@ export default {
               title: '',
               config: [
                 {title: 'tableKey.regular', value: 'json_regular', display: true},
-                {title: 'm_collection_interval', value: 'step', display: true},
                 {title: 'tableKey.tags', value: 'tags', display: true},
                 {title: 'table.action',btn:[
                   {btn_name: 'button.edit', btn_func: 'editRuleItem'},
@@ -430,7 +412,6 @@ export default {
               config: [
                 {title: 'tableKey.regular', value: 'regular', display: true},
                 {title: 'field.metric', value: 'metric', display: true},
-                {title: 'm_collection_interval', value: 'step', display: true},
                 {title: 'field.aggType', value: 'agg_type', display: true},
                 {title: 'table.action',btn:[
                   {btn_name: 'button.edit', btn_func: 'editCustomMetricItem'},
@@ -495,7 +476,6 @@ export default {
           log_metric_monitor: '',
           display_name: '',
           agg_type: 'min',
-          step: 10,
           metric: null,
           regular: '',
           string_map: []
@@ -531,7 +511,6 @@ export default {
           metric_sql: '',
           metric: '',
           display_name: '',
-          step: 10,
           monitor_type: '',
           endpoint_rel: []
         }
@@ -542,14 +521,6 @@ export default {
         {label: 'nginx', value: 'nginx'},
         {label: 'http', value: 'http'},
         {label: 'mysql', value: 'mysql'}
-      ],
-      stepOptions: [
-        {label: '10S', value: 10},
-        {label: '30S', value: 30},
-        {label: '60S', value: 60},
-        {label: '600S', value: 600},
-        {label: '1800S', value: 1800},
-        {label: '3600S', value: 3600}
       ]
     }
   },
@@ -591,7 +562,6 @@ export default {
         metric_sql: '',
         metric: '',
         display_name: '',
-        step: 10,
         monitor_type: '',
         endpoint_rel: []
       }
@@ -831,7 +801,6 @@ export default {
             display_name: '',
             metric: '',
             agg_type: 'avg',
-            step: 10,
             string_map: []
           })
           break
