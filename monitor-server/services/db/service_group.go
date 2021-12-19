@@ -718,3 +718,12 @@ func getUpdateServiceGroupNotifyRoles(serviceGroup string, roleList []string) (a
 	}
 	return actions
 }
+
+func CheckMetricIsServiceMetric(metric, serviceGroup string) bool {
+	serviceGroupGuidList, _ := fetchGlobalServiceGroupChildGuidList(serviceGroup)
+	queryRows, _ := x.QueryString("select guid from metric where metric=? and service_group in ('"+strings.Join(serviceGroupGuidList, "','")+"')", metric)
+	if len(queryRows) > 0 {
+		return true
+	}
+	return false
+}
