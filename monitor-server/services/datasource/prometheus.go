@@ -170,7 +170,9 @@ func appendTagString(name string, metricMap map[string]string, tagList []string)
 		tmpName += fmt.Sprintf("%s=%s,", v.Key, v.Value)
 	}
 	tmpName = tmpName[:len(tmpName)-1]
-	tmpName += "}"
+	if tmpName != name {
+		tmpName += "}"
+	}
 	return tmpName
 }
 
