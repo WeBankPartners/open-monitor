@@ -68,14 +68,14 @@ type Dashboard struct {
 }
 
 type ChartModel struct {
-	Id        int      `json:"id"`
-	Col       int      `json:"col"`
-	Title     string   `json:"title"`
-	Endpoint  []string `json:"endpoint"`
-	Metric    []string `json:"metric"`
-	Url       string   `json:"url"`
-	Aggregate string   `json:"aggregate"`
-	MonitorType string `json:"monitor_type"`
+	Id          int      `json:"id"`
+	Col         int      `json:"col"`
+	Title       string   `json:"title"`
+	Endpoint    []string `json:"endpoint"`
+	Metric      []string `json:"metric"`
+	Url         string   `json:"url"`
+	Aggregate   string   `json:"aggregate"`
+	MonitorType string   `json:"monitor_type"`
 }
 
 type PanelModel struct {
@@ -215,6 +215,7 @@ type ChartQueryParam struct {
 	End        int64                   `json:"end"`
 	TimeSecond int64                   `json:"time_second"`
 	Aggregate  string                  `json:"aggregate"`
+	AggStep    int64                   `json:"agg_step"`
 	Step       int                     `json:"step"`
 	Data       []*ChartQueryConfigObj  `json:"data"`
 	Compare    *ChartQueryCompareParam `json:"compare"`
