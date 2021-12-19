@@ -21,7 +21,8 @@ func GetEndpointList(c *gin.Context)  {
 		middleware.ReturnParamEmptyError(c, "type")
 		return
 	}
-	result,err := db.GetEndpointByType(endpointType)
+	serviceGroup := c.Query("serviceGroup")
+	result,err := db.GetEndpointByType(endpointType,serviceGroup)
 	if err != nil {
 		middleware.ReturnQueryTableError(c, "endpoint", err)
 	}else{
