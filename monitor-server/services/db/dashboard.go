@@ -525,11 +525,6 @@ func UpdatePanelChartMetric(data []m.PromMetricUpdateParam) error {
 	return Transaction(updateChartAction)
 }
 
-func GetServiceGroupPromMetric(serviceGroup string) (err error, result []*m.OptionModel) {
-	result = []*m.OptionModel{}
-
-}
-
 func GetEndpointMetric(endpointGuid,serviceGroup string) (err error, result []*m.OptionModel) {
 	result = []*m.OptionModel{}
 	endpointObj := m.EndpointTable{Guid: endpointGuid}
