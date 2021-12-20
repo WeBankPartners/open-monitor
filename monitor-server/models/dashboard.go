@@ -270,7 +270,7 @@ type PromMetricObj struct {
 	Id         string `json:"id"`
 	Metric     string `json:"metric" binding:"required"`
 	MetricType string `json:"metric_type"`
-	PromQl     string `json:"prom_ql" binding:"required"`
+	PromQl     string `json:"prom_expr" binding:"required"`
 	PromMain   string `json:"prom_main"`
 	ServiceGroup string `json:"service_group"`
 }
