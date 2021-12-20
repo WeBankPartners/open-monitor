@@ -26,14 +26,14 @@ func PluginCloseAlarmAction(input *models.PluginCloseAlarmRequestObj) (result *m
 				return
 			}
 			_, err = x.Exec("UPDATE alarm_custom SET closed=1,custom_message=?,closed_at=NOW() WHERE id=?", input.Message, alarmId)
-		}
-	}else {
-		queryRows,_ := x.QueryString("SELECT id FROM alarm WHERE id=?", alarmId)
-		if len(queryRows) == 0 {
-			err = fmt.Errorf("Can not find alarm with id:%s ", input.AlarmId)
 			return
 		}
-		_, err = x.Exec("UPDATE alarm SET status='closed',close_msg=?,custom_message=?,close_user='system',end=NOW() WHERE id=?", input.Message, input.Message, alarmId)
 	}
+	queryRows,_ := x.QueryString("SELECT id FROM alarm WHERE id=?", alarmId)
+	if len(queryRows) == 0 {
+		err = fmt.Errorf("Can not find alarm with id:%s ", input.AlarmId)
+		return
+	}
+	_, err = x.Exec("UPDATE alarm SET status='closed',close_msg=?,custom_message=?,close_user='system',end=NOW() WHERE id=?", input.Message, input.Message, alarmId)
 	return
 }
