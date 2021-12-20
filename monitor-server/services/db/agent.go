@@ -449,7 +449,7 @@ func getServiceGroupCharts(endpoints []string, monitorType, serviceGroup string)
 	result = []*m.ChartModel{}
 	serviceGroupList, _ := fetchGlobalServiceGroupParentGuidList(serviceGroup)
 	var chartTable []*m.ChartTable
-	x.SQL("select * from chart where group_id in (select chart_group from panel where group_id in (select panels_group from dashboard where dashboard_type='host') and service_group in ('"+strings.Join(serviceGroupList,"','")+"'))").Find(&chartTable)
+	x.SQL("select * from chart where group_id in (select chart_group from panel where group_id in (select panels_group from dashboard where dashboard_type=?) and service_group in ('"+strings.Join(serviceGroupList,"','")+"'))", monitorType).Find(&chartTable)
 	if len(chartTable) == 0 {
 		return
 	}
