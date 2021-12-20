@@ -203,7 +203,7 @@ func NotifyCoreEvent(endpoint string, strategyId int, alarmId int, customAlarmId
 		requestParam.EventType = "alarm"
 		requestParam.SourceSubSystem = "SYS_MONITOR"
 		requestParam.OperationKey = keySplit[1]
-		requestParam.OperationData = fmt.Sprintf("%d-%s", alarmId, keySplit[0])
+		requestParam.OperationData = fmt.Sprintf("%d-%s-%s", alarmId, alarmStatus, keySplit[0])
 		requestParam.OperationUser = ""
 		log.Logger.Info(fmt.Sprintf("notify request data --> eventSeqNo:%s operationKey:%s operationData:%s", requestParam.EventSeqNo, requestParam.OperationKey, requestParam.OperationData))
 		b, _ := json.Marshal(requestParam)
