@@ -15,7 +15,8 @@ func PanelList(c *gin.Context)  {
 		id,_ = strconv.Atoi(c.Query("id"))
 	}
 	endpointType := c.Query("endpointType")
-	result,err := db.PanelList(id,endpointType)
+	serviceGroup := c.Query("serviceGroup")
+	result,err := db.PanelList(id,endpointType,serviceGroup)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	}else{

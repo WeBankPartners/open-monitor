@@ -148,4 +148,5 @@ type QueryPrometheusMetricParam struct {
 	TargetGuid string `json:"target_guid"`
 	EndpointGuid string `json:"endpoint_guid"`
 	IsConfigQuery bool `json:"is_config_query"`
+	ServiceGroup string `json:"service_group"`
 }
