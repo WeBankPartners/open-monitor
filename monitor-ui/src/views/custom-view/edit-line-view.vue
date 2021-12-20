@@ -22,7 +22,7 @@
             </Select>
           </Tooltip>
         </div>
-        <div class="condition">
+        <div class="condition" v-if="templateQuery.aggregate !== 'none'">
           <Tooltip :content="$t('field.aggStep')" :delay="1000">
             <Select filterable  class="select-option" v-model="templateQuery.agg_step" style="width:100px" @on-change="switchChartType">
               <Option
