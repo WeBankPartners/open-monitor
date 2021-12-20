@@ -846,18 +846,17 @@ func UpdatePromMetric(c *gin.Context) {
 }
 
 func GetEndpointMetric(c *gin.Context) {
-	id, _ := strconv.Atoi(c.Query("id"))
-	endpointType := c.Query("endpoint_type")
-	if id <= 0 {
-		mid.ReturnSuccessData(c, []string{})
+	var param m.GetEndpointMetricParam
+	if err:=c.ShouldBindJSON(&param);err!=nil {
+		mid.ReturnValidateError(c, err.Error())
 		return
 	}
 	var err error
 	var data []*m.OptionModel
-	if id > 0 {
-		err, data = db.GetEndpointMetric(id)
+	if param.Guid != "" {
+		err, data = db.GetEndpointMetric(param.Guid, param.ServiceGroup)
 	} else {
-		err, data = db.GetEndpointMetricByEndpointType(endpointType)
+		err, data = db.GetEndpointMetricByEndpointType(param.MonitorType)
 	}
 	if err != nil {
 		mid.ReturnHandleError(c, "Get endpoint metric failed", err)
