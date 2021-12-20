@@ -290,5 +290,8 @@
   "m_line_chart_s": "Line Chart",
   "m_area_chart": "Area Chart",
   "m_chart_type": "Chart Type",
-  "m_line_type": "Line Type"
+  "m_line_type": "Line Type",
+  "m_scope": "Scope",
+  "m_all_object": "All Object",
+  "m_any_object": "Any Object"
 }

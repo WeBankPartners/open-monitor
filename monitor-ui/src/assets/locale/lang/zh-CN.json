@@ -289,5 +289,8 @@
   "m_line_chart_s": "折线图",
   "m_area_chart": "面积图",
   "m_chart_type": "图形类型",
-  "m_line_type": "展示形式"
+  "m_line_type": "展示形式",
+  "m_scope": "作用域",
+  "m_all_object": "全部对象",
+  "m_any_object": "任一对象"
 }
