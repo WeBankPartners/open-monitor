@@ -22,12 +22,12 @@ const javaType = "java"
 const otherType = "other"
 
 func DeregisterAgent(c *gin.Context) {
-	guid := c.Query("guid")
-	if guid == "" {
-		mid.ReturnParamEmptyError(c, "guid")
+	var param m.EndpointTable
+	if err:=c.ShouldBindJSON(&param);err!=nil {
+		mid.ReturnValidateError(c, err.Error())
 		return
 	}
-	endpointObj := m.EndpointTable{Guid: guid}
+	endpointObj := m.EndpointTable{Guid: param.Guid}
 	err := db.GetEndpoint(&endpointObj)
 	if err != nil {
 		mid.ReturnHandleError(c, err.Error(), err)
