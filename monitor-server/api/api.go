@@ -85,7 +85,7 @@ func init() {
 	// Agent 对象管理
 	httpHandlerFuncList = append(httpHandlerFuncList,
 		&handlerFuncObj{Url: "/agent/register", Method: http.MethodPost, HandlerFunc: agent.RegisterAgentNew},
-		&handlerFuncObj{Url: "/agent/deregister", Method: http.MethodGet, HandlerFunc: agent.DeregisterAgent},
+		&handlerFuncObj{Url: "/agent/deregister", Method: http.MethodPost, HandlerFunc: agent.DeregisterAgent},
 		&handlerFuncObj{Url: "/agent/custom/endpoint/add", Method: http.MethodPost, HandlerFunc: agent.CustomRegister},
 		&handlerFuncObj{Url: "/agent/custom/metric/add", Method: http.MethodPost, HandlerFunc: agent.CustomMetricPush},
 		&handlerFuncObj{Url: "/agent/endpoint/telnet/get", Method: http.MethodGet, HandlerFunc: agent.GetEndpointTelnet},

@@ -37,7 +37,7 @@ func MetricList(id string, endpointType string) (result []*models.PromMetricTabl
 	return
 }
 
-func MetricCreate(param []*models.PromMetricTable) error {
+func MetricCreate(param []*models.PromMetricObj) error {
 	var actions []*Action
 	nowTime := time.Now().Format(models.DatetimeFormat)
 	for _, metric := range param {
@@ -47,7 +47,7 @@ func MetricCreate(param []*models.PromMetricTable) error {
 	return Transaction(actions)
 }
 
-func MetricUpdate(param []*models.PromMetricTable) error {
+func MetricUpdate(param []*models.PromMetricObj) error {
 	var actions []*Action
 	nowTime := time.Now().Format(models.DatetimeFormat)
 	for _, metric := range param {
@@ -107,7 +107,7 @@ func MetricDelete(id string) error {
 	return err
 }
 
-func MetricListNew(guid, monitorType, serviceGroup string) (result []*models.MetricTable, err error) {
+func MetricListNew(guid, monitorType, serviceGroup, onlyService string) (result []*models.MetricTable, err error) {
 	params := []interface{}{}
 	baseSql := "select * from metric where 1=1 "
 	if guid != "" {
@@ -118,10 +118,15 @@ func MetricListNew(guid, monitorType, serviceGroup string) (result []*models.Met
 			if monitorType == "" {
 				return result, fmt.Errorf("serviceGroup is disable when monitorType is null ")
 			}
-			baseSql = "select * from metric where monitor_type=? and (service_group is null or service_group=?)"
-			params = []interface{}{monitorType, serviceGroup}
+			if onlyService == "Y" {
+				baseSql = "select * from metric where monitor_type=? and service_group=?"
+				params = []interface{}{monitorType, serviceGroup}
+			}else {
+				baseSql = "select * from metric where monitor_type=? and (service_group is null or service_group=?)"
+				params = []interface{}{monitorType, serviceGroup}
+			}
 		} else {
-			baseSql = "select * from metric where monitor_type=? and log_metric_monitor is null and db_metric_monitor is null"
+			baseSql = "select * from metric where monitor_type=? and service_group is null"
 			params = []interface{}{monitorType}
 		}
 	}
