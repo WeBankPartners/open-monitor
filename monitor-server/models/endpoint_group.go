@@ -157,6 +157,6 @@ type SysAlertMailParameter struct {
 
 type SysMetricTemplateParameter struct {
 	Name   string `json:"name"`
-	PromQl string `json:"prom_ql"`
+	PromExpr string `json:"prom_expr"`
 	Param  string `json:"param"`
 }
