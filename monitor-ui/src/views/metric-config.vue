@@ -382,6 +382,15 @@ export default {
       this.showConfigTab = false
     },
     changeMetricOptions (val) {
+      this.metricConfigData = {
+        guid: null,
+        metric: '',
+        monitor_type: '',
+        panel_id: null,
+        prom_expr: '',
+        endpoint: ''
+      }
+      if (!val) return
       this.isAddMetric = false
       this.hideMetricZone = false
       this.isRequestChartData = false
@@ -650,7 +659,6 @@ export default {
         type: this.monitorType,
         serviceGroup: this.serviceGroup
       }
-      console.log(params)
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.getEndpoint, params, responseData => {
         this.endpointOptions = responseData
       })
