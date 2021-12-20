@@ -401,7 +401,7 @@ export default {
       this.isShowWarning = false
     },
     deleteMetric (metric) {
-      this.deleteConfirm.id = metric.id
+      this.deleteConfirm.id = metric.guid
       this.deleteConfirm.method = 'removeMetric'
       this.isShowWarning = true
     },
