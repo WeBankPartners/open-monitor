@@ -68,7 +68,7 @@ func init() {
 		// 指标配置
 		&handlerFuncObj{Url: "/dashboard/endpoint/type", Method: http.MethodGet, HandlerFunc: dashboard.GetEndpointTypeList},
 		&handlerFuncObj{Url: "/dashboard/endpoint", Method: http.MethodGet, HandlerFunc: dashboard.GetEndpointList},
-		&handlerFuncObj{Url: "/dashboard/endpoint/metric/list", Method: http.MethodGet, HandlerFunc: dashboard.GetEndpointMetric},
+		&handlerFuncObj{Url: "/dashboard/endpoint/metric/list", Method: http.MethodPost, HandlerFunc: dashboard.GetEndpointMetric},
 		&handlerFuncObj{Url: "/dashboard/new/metric", Method: http.MethodGet, HandlerFunc: dashboard_new.MetricList},
 		&handlerFuncObj{Url: "/dashboard/new/metric", Method: http.MethodPost, HandlerFunc: dashboard_new.MetricCreate},
 		&handlerFuncObj{Url: "/dashboard/new/metric", Method: http.MethodPut, HandlerFunc: dashboard_new.MetricUpdate},
