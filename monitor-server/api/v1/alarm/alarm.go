@@ -543,48 +543,6 @@ func OpenAlarmApi(c *gin.Context) {
 	}
 }
 
-func GetEntityAlarm(c *gin.Context) {
-	var result m.AlarmEntity
-	result.Data = []*m.AlarmEntityObj{}
-	idSplit := strings.Split(c.Query("filter"), ",")
-	if len(idSplit) < 2 {
-		result.Status = "ERROR"
-		result.Message = fmt.Sprintf("Parameter %s -> filter validation failed", c.Query("filter"))
-		mid.ReturnData(c, result)
-		return
-	}
-	var id int
-	var guid, alarmStatus string
-	value := idSplit[1]
-	if strings.Contains(value, "-") {
-		tmpSplit := strings.Split(value, "-")
-		id, _ = strconv.Atoi(tmpSplit[0])
-		if len(tmpSplit) > 1 {
-			alarmStatus = tmpSplit[1]
-		}
-		guid = value[len(tmpSplit[0])+1:]
-	} else {
-		id, _ = strconv.Atoi(value)
-	}
-	if id <= 0 {
-		result.Status = "ERROR"
-		result.Message = fmt.Sprintf("Parameter %s -> filter validation failed", c.Query("filter"))
-		mid.ReturnData(c, result)
-		return
-	}
-	alarmObj, err := db.GetAlarmEvent("alarm", guid, id, alarmStatus)
-	if err != nil {
-		result.Status = "ERROR"
-		result.Message = fmt.Sprintf("error: %v", err)
-		mid.ReturnData(c, result)
-		return
-	}
-	result.Data = append(result.Data, &alarmObj)
-	result.Status = "OK"
-	result.Message = "Success"
-	mid.ReturnData(c, result)
-}
-
 func QueryEntityAlarm(c *gin.Context) {
 	var param m.EntityQueryParam
 	var result m.AlarmEntity
@@ -599,7 +557,7 @@ func QueryEntityAlarm(c *gin.Context) {
 		return
 	}
 	var id int
-	var guid, alarmStatus string
+	var notifyGuid, alarmStatus string
 	value := param.Criteria.Condition
 	if strings.Contains(value, "monitor-check") {
 		alarmObj := db.GetCheckProgressContent(value)
@@ -608,12 +566,15 @@ func QueryEntityAlarm(c *gin.Context) {
 		result.Data = append(result.Data, &alarmObj)
 	} else {
 		if strings.Contains(value, "-") {
+			// id-firing-notifyGuid
 			tmpSplit := strings.Split(value, "-")
 			id, _ = strconv.Atoi(tmpSplit[0])
 			if len(tmpSplit) > 1 {
 				alarmStatus = tmpSplit[1]
 			}
-			guid = value[len(tmpSplit[0])+1:]
+			if len(tmpSplit) > 2 {
+				notifyGuid = tmpSplit[2]
+			}
 		} else {
 			id, _ = strconv.Atoi(value)
 		}
@@ -623,7 +584,7 @@ func QueryEntityAlarm(c *gin.Context) {
 			log.Logger.Warn("Can not find alarm with empty id,get last one firing alarm", log.String("request param", string(data)))
 			alarmObj, err = db.GetAlarmEvent("alarm", "", 0, "firing")
 		} else {
-			alarmObj, err = db.GetAlarmEvent("alarm", guid, id, alarmStatus)
+			alarmObj, err = db.GetAlarmEvent("alarm", notifyGuid, id, alarmStatus)
 		}
 		if err != nil {
 			result.Status = "ERROR"
