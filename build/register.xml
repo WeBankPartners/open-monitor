@@ -788,5 +788,18 @@
                 </outputParameters>
             </interface>
         </plugin>
+        <plugin name="alarm_close" targetPackage="" targetEntity="" registerName="" targetEntityFilterRule="">
+            <interface action="close" path="/monitor/entities/alarm/close" filterRule="">
+                <inputParameters>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">alarmId</parameter>
+                    <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">message</parameter>
+                </inputParameters>
+                <outputParameters>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorCode</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
+                    <parameter datatype="string" sensitiveData="N" mappingType="context">alarmId</parameter>
+                </outputParameters>
+            </interface>
+        </plugin>
     </plugins>
 </package>
