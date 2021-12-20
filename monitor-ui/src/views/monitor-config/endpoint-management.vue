@@ -857,24 +857,11 @@ export default {
       })
     },
     delF(rowData) {
-      let endpoints = []
-      this.pageConfig.table.tableData.forEach((item) => {
-        endpoints.push(item.guid.split(':')[0])
-      })
       let params = {
-        guid: rowData.guid,
-        endpoints: [parseInt(rowData.id)]
+        guid: rowData.guid
       }
       let url = this.$root.apiCenter.endpointManagement.deregister.api
-      let methodType = 'GET'
-      if (this.groupMsg.id) {
-        url = this.$root.apiCenter.endpointManagement.update.api
-        params.grp = this.groupMsg.id
-        params.operation = 'delete'
-        methodType = 'POST'
-      }
-      this.$root.$httpRequestEntrance.httpRequestEntrance(methodType, url, params, () => {
-        // this.$root.$eventBus.$emit('hideConfirmModal')
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', url, params, () => {
         this.$Message.success(this.$t('tips.success'))
         this.initData(this.pageConfig.CRUD, this.pageConfig)
       })
