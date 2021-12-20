@@ -32,7 +32,7 @@
                   </Tooltip>
                   <Tooltip :content="$t('proc_callback_key')" :delay="1000">
                     <Select v-model="item.proc_callback_key" style="width: 160px" :placeholder="$t('proc_callback_key')">
-                      <Option v-for="(flow, flowIndex) in flows" :key="flowIndex" :value="flow.procDefId">{{flow.procDefName}}</Option>
+                      <Option v-for="(flow, flowIndex) in flows" :key="flowIndex" :value="flow.procDefKey">{{flow.procDefName}}</Option>
                     </Select>
                   </Tooltip>
                   <Tooltip :content="$t('resourceLevel.role')" :delay="1000">
@@ -140,7 +140,7 @@
               </Tooltip>
               <Tooltip :content="$t('proc_callback_key')" :delay="1000">
                 <Select v-model="item.proc_callback_key" style="width: 160px" :placeholder="$t('proc_callback_key')">
-                  <Option v-for="(flow, flowIndex) in flows" :key="flowIndex" :value="flow.procDefId">{{flow.procDefName}}</Option>
+                  <Option v-for="(flow, flowIndex) in flows" :key="flowIndex" :value="flow.procDefKey">{{flow.procDefName}}</Option>
                 </Select>
               </Tooltip>
               <Tooltip :content="$t('field.role')" :delay="1000">
