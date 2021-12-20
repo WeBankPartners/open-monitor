@@ -55,7 +55,11 @@ func MetricUpdate(param []*models.PromMetricObj) error {
 	var actions []*Action
 	nowTime := time.Now().Format(models.DatetimeFormat)
 	for _, metric := range param {
-		actions = append(actions, &Action{Sql: "update metric set prom_expr=?,update_time=? where guid=?", Param: []interface{}{metric.PromQl, nowTime, metric.Id}})
+		if metric.ServiceGroup != "" {
+			actions = append(actions, &Action{Sql: "update metric set prom_expr=?,service_group=?,workspace=?,update_time=? where guid=?", Param: []interface{}{metric.PromQl, metric.ServiceGroup, metric.Workspace, nowTime, metric.Id}})
+		}else {
+			actions = append(actions, &Action{Sql: "update metric set prom_expr=?,update_time=? where guid=?", Param: []interface{}{metric.PromQl, nowTime, metric.Id}})
+		}
 	}
 	return Transaction(actions)
 }
