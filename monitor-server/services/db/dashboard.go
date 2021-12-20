@@ -525,7 +525,7 @@ func UpdatePanelChartMetric(data []m.PromMetricUpdateParam) error {
 	return Transaction(updateChartAction)
 }
 
-func GetServiceGroupPromMetric(serviceGroup,workspace string) (err error, result []*m.OptionModel) {
+func GetServiceGroupPromMetric(serviceGroup,workspace,monitorType string) (err error, result []*m.OptionModel) {
 	result = []*m.OptionModel{}
 	var metricList []string
 	nowTime := time.Now().Unix()
@@ -540,9 +540,14 @@ func GetServiceGroupPromMetric(serviceGroup,workspace string) (err error, result
 			continue
 		}
 		tmpPromExpr := v
-		if workspace == m.MetricWorkspaceService {
-			if strings.Contains(v, "t_endpoint") {
-				tmpPromExpr = trimTEndpointTag(tmpPromExpr)
+		tmpTEndpoint := ""
+		if strings.Contains(v, "t_endpoint") {
+			tmpPromExpr,tmpTEndpoint = trimTEndpointTag(tmpPromExpr)
+			if !strings.HasSuffix(tmpTEndpoint, monitorType) {
+				continue
+			}
+			if workspace != m.MetricWorkspaceService {
+				tmpPromExpr = tmpPromExpr[:len(tmpPromExpr)-1] + ",t_endpoint=\"$guid\"}"
 			}
 		}
 		if _,b:=existMap[tmpPromExpr];b {
@@ -611,7 +616,7 @@ func GetEndpointMetric(endpointGuid,serviceGroup string) (err error, result []*m
 			if strings.Contains(v, serviceTag) {
 				tmpPromExpr := v
 				if strings.Contains(v, "t_endpoint") {
-					tmpPromExpr = trimTEndpointTag(tmpPromExpr)
+					tmpPromExpr,_ = trimTEndpointTag(tmpPromExpr)
 				}
 				result = append(result, &m.OptionModel{OptionText: tmpPromExpr, OptionValue: tmpPromExpr})
 			}
@@ -620,14 +625,16 @@ func GetEndpointMetric(endpointGuid,serviceGroup string) (err error, result []*m
 	return nil, result
 }
 
-func trimTEndpointTag(input string) string {
+func trimTEndpointTag(input string) (output,tEndpoint string) {
 	tIndex := strings.Index(input, "t_endpoint=\"")
 	tailPart := input[tIndex+12:]
+	tEndpoint = tailPart[:strings.Index(tailPart, "\"")]
 	tailPart = tailPart[strings.Index(tailPart, "\"")+1:]
 	input = input[:tIndex] + tailPart
 	input = strings.ReplaceAll(input, ",,", ",")
 	input = strings.ReplaceAll(input, ",}", "}")
-	return input
+	output = input
+	return
 }
 
 func GetEndpointMetricByEndpointType(endpointType string) (err error, result []*m.OptionModel) {
