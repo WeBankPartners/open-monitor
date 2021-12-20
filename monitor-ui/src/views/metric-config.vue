@@ -636,7 +636,8 @@ export default {
     getEndpoint () {
       this.metricConfigData.endpoint = ''
       const params = {
-        type: this.monitorType
+        type: this.monitorType,
+        serviceGroup: this.serviceGroup
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.getEndpoint, params, responseData => {
         this.endpointOptions = responseData
@@ -649,6 +650,7 @@ export default {
         type: this.monitorType,
         serviceGroup: this.serviceGroup
       }
+      console.log(params)
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.getEndpoint, params, responseData => {
         this.endpointOptions = responseData
       })
@@ -710,7 +712,7 @@ export default {
     },
     changeCollectedMetric (val) {
       if (val.value) {
-        this.metricConfigData.prom_expr = this.metricConfigData.prom_expr.replace(val.label, val.value)
+        this.metricConfigData.prom_expr = this.metricConfigData.prom_expr.replaceAll(val.label, val.value)
       }
     },
     clearData () {
