@@ -534,6 +534,7 @@ func GetServiceGroupPromMetric(serviceGroup,workspace string) (err error, result
 	if err != nil {
 		return
 	}
+	existMap := make(map[string]int)
 	for _,v := range metricList {
 		if strings.HasPrefix(v, "go_") || v == "" {
 			continue
@@ -544,7 +545,11 @@ func GetServiceGroupPromMetric(serviceGroup,workspace string) (err error, result
 				tmpPromExpr = trimTEndpointTag(tmpPromExpr)
 			}
 		}
+		if _,b:=existMap[tmpPromExpr];b {
+			continue
+		}
 		result = append(result, &m.OptionModel{OptionText: tmpPromExpr, OptionValue: tmpPromExpr})
+		existMap[tmpPromExpr] = 1
 	}
 	return
 }
