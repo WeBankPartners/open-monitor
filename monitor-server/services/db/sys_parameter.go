@@ -54,10 +54,10 @@ func UpdateSysAlertMailConfig(param *models.SysAlertMailParameter) {
 	}
 }
 
-func GetSysMetricTemplateConfig(serviceGroup string) (result []*models.SysMetricTemplateParameter,err error) {
+func GetSysMetricTemplateConfig(workspace string) (result []*models.SysMetricTemplateParameter,err error) {
 	result = []*models.SysMetricTemplateParameter{}
 	paramKey := models.SPMetricTemplate
-	if serviceGroup != "" {
+	if workspace == models.MetricWorkspaceService {
 		paramKey = models.SPServiceMetricTemplate
 	}
 	queryRow,tmpErr := getSysParameterTableData(paramKey)
