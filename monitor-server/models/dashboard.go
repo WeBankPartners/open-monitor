@@ -273,6 +273,7 @@ type PromMetricObj struct {
 	PromQl     string `json:"prom_expr" binding:"required"`
 	PromMain   string `json:"prom_main"`
 	ServiceGroup string `json:"service_group"`
+	Workspace string `json:"workspace"`
 }
 
 type EndpointTable struct {
@@ -408,4 +409,5 @@ type GetEndpointMetricParam struct {
 	Guid string `json:"guid"`
 	MonitorType string `json:"monitor_type" binding:"required"`
 	ServiceGroup string `json:"service_group"`
+	Workspace string `json:"workspace"`
 }
