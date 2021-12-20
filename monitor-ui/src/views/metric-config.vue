@@ -49,11 +49,11 @@
         <div v-if="showConfigTab || isAddMetric">
           <Tabs value="name1">
             <TabPane :label="$t('title.metricConfiguration')" name="name1">
-              <div >
+              <div style="min-height:300px">
                 <Form :label-width="80">
                   <FormItem :label="$t('field.metric')">
-                    <Select v-model="metricId" filterable clearable @on-open-change="getMetricOptions" @on-change="changeMetricOptions" ref="metricSelect" :disabled="!monitorType">
-                      <Button type="success" style="width:92%;background-color:#19be6b" @click="addMetric" size="small">
+                    <Select v-model="metricId" filterable clearable @on-clear="clearMetric" @on-open-change="getMetricOptions" @on-change="changeMetricOptions" ref="metricSelect" :disabled="!monitorType">
+                      <Button type="success" style="width:95%;background-color:#19be6b" @click="addMetric" size="small">
                         <Icon type="ios-add" size="24"></Icon>
                       </Button>
                       <Option v-for="metric in metricOptions" :value="metric.guid" :key="metric.guid">{{ metric.metric }}<span style="float:right">
@@ -62,46 +62,48 @@
                       </Option>
                     </Select>
                   </FormItem>
-                  <Divider />
-                  <FormItem :label="$t('tableKey.name')">
-                    <Input v-model="metricConfigData.metric"></Input>
-                  </FormItem>
-                  <FormItem :label="$t('m_scope')">
-                    <Select v-model="workspace" @on-change="getMetricTemplate">
-                      <Option v-if="serviceGroup" value="all_object">{{ $t('m_all_object') }}</Option>
-                      <Option value="any_object">{{ $t('m_any_object') }}</Option>
-                    </Select>
-                  </FormItem>
-                  <FormItem :label="$t('m_recommend')">
-                    <Select v-model="templatePl" clearable @on-clear="clearTemplatePl" @on-change="changeTemplatePl">
-                      <Option v-for="item in metricTemplate" :value="item.prom_expr" :key="item.prom_expr">{{ item.name }}</Option>
-                    </Select>
-                  </FormItem>
-                  <FormItem v-if="templatePl !== ''" :label="$t('m_collected_data')">
-                    {{templatePl}}
-                    <template v-for="param in metricTemplateParams">
-                      <Select
-                        filterable
-                        :key="param.label"
-                        clearable
-                        v-model="param.value"
-                        @on-open-change="getCollectedMetric"
-                        @on-change="changeCollectedMetric(param)"
-                        :placeholder="param.label"
-                        class="select-dropdown">
-                        <Option 
-                          style="white-space: normal;"
-                          v-for="(item, itemIndex) in collectedMetricOptions" 
-                          :value="item.option_value" 
-                          :key="item.option_value + itemIndex">
-                          {{ item.option_text }}
-                        </Option>
+                  <template v-if="metricId || hideMetricZone">
+                    <Divider />
+                    <FormItem :label="$t('tableKey.name')">
+                      <Input v-model="metricConfigData.metric"></Input>
+                    </FormItem>
+                    <FormItem :label="$t('m_scope')">
+                      <Select v-model="workspace" @on-change="getMetricTemplate">
+                        <Option v-if="serviceGroup" value="all_object">{{ $t('m_all_object') }}</Option>
+                        <Option value="any_object">{{ $t('m_any_object') }}</Option>
                       </Select>
-                    </template>
-                  </FormItem>
-                  <FormItem :label="$t('field.metric')">
-                    <Input v-model="metricConfigData.prom_expr" type="textarea" :rows="6" />
-                  </FormItem>
+                    </FormItem>
+                    <FormItem :label="$t('m_recommend')">
+                      <Select v-model="templatePl" clearable @on-clear="clearTemplatePl" @on-change="changeTemplatePl">
+                        <Option v-for="item in metricTemplate" :value="item.prom_expr" :key="item.prom_expr">{{ item.name }}</Option>
+                      </Select>
+                    </FormItem>
+                    <FormItem v-if="templatePl !== ''" :label="$t('m_collected_data')">
+                      {{templatePl}}
+                      <template v-for="param in metricTemplateParams">
+                        <Select
+                          filterable
+                          :key="param.label"
+                          clearable
+                          v-model="param.value"
+                          @on-open-change="getCollectedMetric"
+                          @on-change="changeCollectedMetric(param)"
+                          :placeholder="param.label"
+                          class="select-dropdown">
+                          <Option 
+                            style="white-space: normal;"
+                            v-for="(item, itemIndex) in collectedMetricOptions" 
+                            :value="item.option_value" 
+                            :key="item.option_value + itemIndex">
+                            {{ item.option_text }}
+                          </Option>
+                        </Select>
+                      </template>
+                    </FormItem>
+                    <FormItem :label="$t('field.metric')">
+                      <Input v-model="metricConfigData.prom_expr" type="textarea" :rows="6" />
+                    </FormItem>
+                  </template>
                 </Form>
 
                 <div v-if="isRequestChartData" class="metric-section">
@@ -243,6 +245,7 @@ export default {
         id: '',
         method: ''
       },
+      hideMetricZone: false,
       monitorType: 'host',
       monitorTypeOptions: [],
       serviceGroup: '',
@@ -329,6 +332,9 @@ export default {
     this.getRecursiveList()
   },
   methods: {
+    clearMetric () {
+      this.metricConfigData.metric = ''
+    },
     clearServiceGroup () {
       this.workspace = 'all_object'
       this.showConfigTab = false
@@ -375,12 +381,12 @@ export default {
       this.showConfigTab = false
     },
     changeMetricOptions (val) {
+      this.hideMetricZone = false
+      this.isRequestChartData = false
       this.clearTemplatePl()
       if (val !== '') {
         const findMetricConfig = this.metricOptions.find(m => m.guid === this.metricId)
-        console.log(findMetricConfig)
-        this.workspace = findMetricConfig.workspace || 'all_object'
-        console.log(this.workspace)
+        this.workspace = (findMetricConfig && findMetricConfig.workspace) || 'all_object'
         this.metricConfigData = {
           ...findMetricConfig
         }
@@ -417,7 +423,9 @@ export default {
       }
     },
     addMetric () {
+      this.hideMetricZone = true
       this.$refs.metricSelect.visible = false
+      this.isRequestChartData = false
       this.metricId = ''
       this.metricConfigData = {
         id: null,
@@ -578,7 +586,9 @@ export default {
       }
       const find = this.endpointOptions.find(e => e.guid === this.metricConfigData.endpoint)
       params.data = [{
-        endpoint: find.guid,
+        endpoint: (find && find.guid) || '',
+        app_object: this.serviceGroup,
+        endpoint_type: this.monitorType,
         prom_ql: this.metricConfigData.prom_expr,
         metric: this.metricConfigData.prom_expr === '' ? this.metricConfigData.metric : ''
       }]
@@ -642,8 +652,12 @@ export default {
       })
     },
     preview (previewPosition) {
-      this.previewPosition = previewPosition
-      this.getEndpoint()
+      if (previewPosition === 'acquisitionConfiguration' && this.workspace === 'all_object') {
+        this.getChartData()
+      } else {
+        this.previewPosition = previewPosition
+        this.getEndpoint()
+      }
     },
     saveMetric () {
       const type = this.metricConfigData.id === null ? 'POST' : 'PUT'
@@ -652,7 +666,7 @@ export default {
       this.metricConfigData.workspace = this.workspace
       this.$root.$httpRequestEntrance.httpRequestEntrance(type, this.$root.apiCenter.metricManagement, [this.metricConfigData], () => {
         this.$Message.success(this.$t('tips.success'))
-        this.showConfigTab = false
+        // this.showConfigTab = false
         // this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.metricManagement, {monitorType: this.monitorType, service_group: this.serviceGroup}, (res) => {
         //   this.metricOptions = res
         //   const newMetric = res.find(el => el.metric === this.metricConfigData.metric)
