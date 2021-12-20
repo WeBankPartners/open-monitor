@@ -51,17 +51,25 @@ func MetricCreate(param []*models.MetricTable) error {
 	return Transaction(actions)
 }
 
-func MetricUpdate(param []*models.MetricTable) error {
+func MetricUpdate(param []*models.MetricTable) (err error) {
 	var actions []*Action
 	nowTime := time.Now().Format(models.DatetimeFormat)
 	for _, metric := range param {
+		if metric.Guid == "" {
+			err = fmt.Errorf("Guid can not empty ")
+			break
+		}
 		if metric.ServiceGroup != "" {
 			actions = append(actions, &Action{Sql: "update metric set prom_expr=?,service_group=?,workspace=?,update_time=? where guid=?", Param: []interface{}{metric.PromExpr, metric.ServiceGroup, metric.Workspace, nowTime, metric.Guid}})
 		}else {
 			actions = append(actions, &Action{Sql: "update metric set prom_expr=?,update_time=? where guid=?", Param: []interface{}{metric.PromExpr, nowTime, metric.Guid}})
 		}
 	}
-	return Transaction(actions)
+	if err != nil {
+		return err
+	}
+	err = Transaction(actions)
+	return err
 }
 
 func getMetricUpdateAction(oldGuid string, newMetricObj *models.MetricTable) (actions []*Action) {
