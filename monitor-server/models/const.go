@@ -13,6 +13,9 @@ const (
 	DBMonitorMetricName = "db_monitor_value"
 	SPAlertMailKey           = "alert_mail"
 	SPMetricTemplate    = "metric_template"
+	SPServiceMetricTemplate    = "service_metric_template"
+	MetricWorkspaceService  = "all_object"
+	MetricWorkspaceAll  = "any_object"
 )
 
 var (

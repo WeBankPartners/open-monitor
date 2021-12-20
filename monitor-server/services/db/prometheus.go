@@ -102,11 +102,11 @@ func QueryExporterMetric(param models.QueryPrometheusMetricParam) (err error, re
 	var metricList,tmpMetricList []string
 	var queryPromQl string
 	nowTime := time.Now().Unix()
-	if param.TargetGuid != "" {
-		queryPromQl = fmt.Sprintf("{t_guid=\"%s\"}", param.TargetGuid)
+	if param.ServiceGroup != "" {
+		queryPromQl = fmt.Sprintf("{service_group=\"%s\"}", param.ServiceGroup)
 		tmpMetricList, err = datasource.QueryPromQLMetric(queryPromQl, clusterAddress, nowTime-120, nowTime)
 		if err != nil {
-			log.Logger.Error("Try go get tGuid fail", log.String("tGuid", param.TargetGuid), log.Error(err))
+			log.Logger.Error("Try go get tGuid fail", log.String("service_group", param.ServiceGroup), log.Error(err))
 		}else{
 			log.Logger.Info("tGuid tmpMetricList", log.StringList("tmpMetricList", tmpMetricList))
 		}

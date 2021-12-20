@@ -171,6 +171,7 @@ type PanelTable struct {
 	TagsKey     string `json:"tags_key"`
 	ChartGroup  int    `json:"chart_group"`
 	AutoDisplay int    `json:"auto_display"`
+	ServiceGroup string `json:"service_group"`
 }
 
 type ChartTable struct {
@@ -269,9 +270,10 @@ type PromMetricObj struct {
 	Id         string `json:"id"`
 	Metric     string `json:"metric" binding:"required"`
 	MetricType string `json:"metric_type"`
-	PromQl     string `json:"prom_ql" binding:"required"`
+	PromQl     string `json:"prom_expr" binding:"required"`
 	PromMain   string `json:"prom_main"`
 	ServiceGroup string `json:"service_group"`
+	Workspace string `json:"workspace"`
 }
 
 type EndpointTable struct {
@@ -407,4 +409,5 @@ type GetEndpointMetricParam struct {
 	Guid string `json:"guid"`
 	MonitorType string `json:"monitor_type" binding:"required"`
 	ServiceGroup string `json:"service_group"`
+	Workspace string `json:"workspace"`
 }

@@ -54,5 +54,6 @@ type MetricTable struct {
 	PromExpr     string `json:"prom_expr" xorm:"prom_expr"`
 	TagOwner     string `json:"tag_owner" xorm:"tag_owner"`
 	ServiceGroup string `json:"service_group" xorm:"service_group"`
+	Workspace    string `json:"workspace" xorm:"workspace"`
 	UpdateTime   string `json:"update_time" xorm:"update_time"`
 }

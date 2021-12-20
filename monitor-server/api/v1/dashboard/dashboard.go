@@ -96,7 +96,7 @@ func GetPanels(c *gin.Context) {
 		mid.ReturnParamTypeError(c, "group", "int")
 		return
 	}
-	err, panels := db.GetPanels(groupId)
+	err, panels := db.GetPanels(groupId, endpoint)
 	if err != nil {
 		mid.ReturnQueryTableError(c, "panel", err)
 		return
@@ -853,7 +853,9 @@ func GetEndpointMetric(c *gin.Context) {
 	}
 	var err error
 	var data []*m.OptionModel
-	if param.Guid != "" {
+	if param.ServiceGroup != "" {
+		err, data = db.GetServiceGroupPromMetric(param.ServiceGroup, param.Workspace)
+	}else if param.Guid != "" {
 		err, data = db.GetEndpointMetric(param.Guid, param.ServiceGroup)
 	} else {
 		err, data = db.GetEndpointMetricByEndpointType(param.MonitorType)
