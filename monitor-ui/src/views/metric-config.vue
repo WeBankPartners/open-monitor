@@ -712,14 +712,19 @@ export default {
           label: p
         }
       })
-      if (val === '$a') {
-        this.metricConfigData.prom_expr += val
+      if (find && find.name === 'custom') {
+        // this.metricConfigData.prom_expr += val
       } else {
         this.metricConfigData.prom_expr = val
       }
     },
     changeCollectedMetric (val) {
       if (val.value) {
+        const find = this.metricTemplate.find(m => m.prom_expr === this.templatePl)
+        if (find && find.name === 'custom') {
+          this.metricConfigData.prom_expr += val.value 
+        }
+        this.metricConfigData.prom_expr = this.metricConfigData.prom_expr.replaceAll('undefined', '')
         this.metricConfigData.prom_expr = this.metricConfigData.prom_expr.replaceAll(val.label, val.value)
       }
     },
