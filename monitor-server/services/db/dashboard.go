@@ -525,7 +525,7 @@ func UpdatePanelChartMetric(data []m.PromMetricUpdateParam) error {
 	return Transaction(updateChartAction)
 }
 
-func GetServiceGroupPromMetric(serviceGroup string) (err error, result []*m.OptionModel) {
+func GetServiceGroupPromMetric(serviceGroup,workspace string) (err error, result []*m.OptionModel) {
 	result = []*m.OptionModel{}
 	var metricList []string
 	nowTime := time.Now().Unix()
@@ -539,8 +539,10 @@ func GetServiceGroupPromMetric(serviceGroup string) (err error, result []*m.Opti
 			continue
 		}
 		tmpPromExpr := v
-		if strings.Contains(v, "t_endpoint") {
-			tmpPromExpr = trimTEndpointTag(tmpPromExpr)
+		if workspace == m.MetricWorkspaceService {
+			if strings.Contains(v, "t_endpoint") {
+				tmpPromExpr = trimTEndpointTag(tmpPromExpr)
+			}
 		}
 		result = append(result, &m.OptionModel{OptionText: tmpPromExpr, OptionValue: tmpPromExpr})
 	}
