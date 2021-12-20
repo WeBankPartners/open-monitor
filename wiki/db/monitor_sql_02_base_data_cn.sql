@@ -626,6 +626,6 @@ insert into sys_parameter(guid,param_key,param_value) value ('metric_template_07
 insert into sys_parameter(guid,param_key,param_value) value ('metric_template_08','service_metric_template','{"name":"max(a)","prom_expr":"max($a)","param":"$a"}');
 insert into sys_parameter(guid,param_key,param_value) value ('metric_template_09','service_metric_template','{"name":"min(a)","prom_expr":"min($a)","param":"$a"}');
 insert into sys_parameter(guid,param_key,param_value) value ('metric_template_10','service_metric_template','{"name":"percent[sum(a)/sum(b)]","prom_expr":"100*(sum($a)/(sum($b) > 0) or vector(0))","param":"$a,$b"}');
-insert into sys_parameter(guid,param_key,param_value) value ('metric_template_11','service_metric_template','{"name":"percent[1-sum(a)/sum(b)]","prom_expr":"100*(1-(sum($a)/(sum($b) > 0) or vector(0)))","param":"$a,$b"}');
-insert into sys_parameter(guid,param_key,param_value) value ('metric_template_12','service_metric_template','{"name":"percent[sum(a)/(sum(a)/sum(b))]","prom_expr":"100*(sum($a)/((sum($a)+sum($b)) > 0) or vector(0))","param":"$a,$b"}');
+insert into sys_parameter(guid,param_key,param_value) value ('metric_template_11','service_metric_template','{"name":"percent[(sum(a)-sum(b))/sum(b)]","prom_expr":"100*((sum($a)-sum($b))/(sum($b) > 0) or vector(0))","param":"$a,$b"}');
+insert into sys_parameter(guid,param_key,param_value) value ('metric_template_12','service_metric_template','{"name":"percent[sum(a)/(sum(a)+sum(b))]","prom_expr":"100*(sum($a)/((sum($a)+sum($b)) > 0) or vector(0))","param":"$a,$b"}');
 #@v1.13.0.25-end@;
