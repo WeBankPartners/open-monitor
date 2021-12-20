@@ -614,5 +614,4 @@ alter table metric drop column db_metric_monitor;
 alter table metric add column service_group varchar(64);
 alter table metric drop foreign key metric_monitor_type;
 alter table panel add column service_group varchar(64) default null;
-alter table metric add column workspace varchar(16) default 'all';
 #@v1.13.0.25-end@;
