@@ -62,9 +62,18 @@ func GetButton(bGroup int) (error, []*m.ButtonModel) {
 	}
 }
 
-func GetPanels(pGroup int) (error, []*m.PanelTable) {
+func GetPanels(pGroup int,endpoint string) (error, []*m.PanelTable) {
+	var serviceGroupList []string
+	var endpointServiceRel []*m.EndpointServiceRelTable
+	x.SQL("select distinct service_group from endpoint_service_rel where endpoint=?", endpoint).Find(&endpointServiceRel)
+	if len(endpointServiceRel) > 0 {
+		for _,v := range endpointServiceRel {
+			tmpParentList, _ := fetchGlobalServiceGroupParentGuidList(v.ServiceGroup)
+			serviceGroupList = append(serviceGroupList, tmpParentList...)
+		}
+	}
 	var panels []*m.PanelTable
-	sql := `select * from panel where group_id=?`
+	sql := "select * from panel where group_id=? and (service_group is null or service_group in ('"+strings.Join(serviceGroupList,"','")+"'))"
 	err := x.SQL(sql, pGroup).Find(&panels)
 	if err != nil {
 		log.Logger.Error("Query panels fail", log.Error(err))
@@ -516,6 +525,30 @@ func UpdatePanelChartMetric(data []m.PromMetricUpdateParam) error {
 	return Transaction(updateChartAction)
 }
 
+func GetServiceGroupPromMetric(serviceGroup,workspace string) (err error, result []*m.OptionModel) {
+	result = []*m.OptionModel{}
+	var metricList []string
+	nowTime := time.Now().Unix()
+	queryPromQl := fmt.Sprintf("{service_group=\"%s\"}", serviceGroup)
+	metricList, err = datasource.QueryPromQLMetric(queryPromQl, GetClusterAddress(""), nowTime-120, nowTime)
+	if err != nil {
+		return
+	}
+	for _,v := range metricList {
+		if strings.HasPrefix(v, "go_") || v == "" {
+			continue
+		}
+		tmpPromExpr := v
+		if workspace == m.MetricWorkspaceService {
+			if strings.Contains(v, "t_endpoint") {
+				tmpPromExpr = trimTEndpointTag(tmpPromExpr)
+			}
+		}
+		result = append(result, &m.OptionModel{OptionText: tmpPromExpr, OptionValue: tmpPromExpr})
+	}
+	return
+}
+
 func GetEndpointMetric(endpointGuid,serviceGroup string) (err error, result []*m.OptionModel) {
 	result = []*m.OptionModel{}
 	endpointObj := m.EndpointTable{Guid: endpointGuid}
@@ -552,7 +585,7 @@ func GetEndpointMetric(endpointGuid,serviceGroup string) (err error, result []*m
 			log.Logger.Warn("endpoint address illegal ", log.String("endpoint", endpointObj.Guid))
 			return nil, result
 		}
-		metricQueryParam := m.QueryPrometheusMetricParam{Ip: ip, Port: port, Cluster: endpointObj.Cluster, Prefix: []string{}, Keyword: []string{}, TargetGuid: endpointObj.Guid, IsConfigQuery: true}
+		metricQueryParam := m.QueryPrometheusMetricParam{Ip: ip, Port: port, Cluster: endpointObj.Cluster, Prefix: []string{}, Keyword: []string{}, TargetGuid: endpointObj.Guid, IsConfigQuery: true, ServiceGroup: serviceGroup}
 		err, strList = QueryExporterMetric(metricQueryParam)
 	}
 	if err != nil {
