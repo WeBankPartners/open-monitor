@@ -63,9 +63,18 @@ func GetButton(bGroup int) (error, []*m.ButtonModel) {
 }
 
 func GetPanels(pGroup int,endpoint string) (error, []*m.PanelTable) {
+	var serviceGroupList []string
+	var endpointServiceRel []*m.EndpointServiceRelTable
+	x.SQL("select distinct service_group from endpoint_service_rel where endpoint=?", endpoint).Find(&endpointServiceRel)
+	if len(endpointServiceRel) > 0 {
+		for _,v := range endpointServiceRel {
+			tmpParentList, _ := fetchGlobalServiceGroupParentGuidList(v.ServiceGroup)
+			serviceGroupList = append(serviceGroupList, tmpParentList...)
+		}
+	}
 	var panels []*m.PanelTable
-	sql := `select * from panel where group_id=? and (service_group is null or service_group in (select service_group from endpoint_service_rel where endpoint=?))`
-	err := x.SQL(sql, pGroup, endpoint).Find(&panels)
+	sql := "select * from panel where group_id=? and (service_group is null or service_group in ('"+strings.Join(serviceGroupList,"','")+"'))"
+	err := x.SQL(sql, pGroup).Find(&panels)
 	if err != nil {
 		log.Logger.Error("Query panels fail", log.Error(err))
 	}
@@ -514,6 +523,11 @@ func UpdatePanelChartMetric(data []m.PromMetricUpdateParam) error {
 		return nil
 	}
 	return Transaction(updateChartAction)
+}
+
+func GetServiceGroupPromMetric(serviceGroup string) (err error, result []*m.OptionModel) {
+	result = []*m.OptionModel{}
+
 }
 
 func GetEndpointMetric(endpointGuid,serviceGroup string) (err error, result []*m.OptionModel) {
