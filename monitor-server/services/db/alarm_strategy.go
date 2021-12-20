@@ -531,7 +531,7 @@ func notifyEventAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleO
 	requestParam.EventType = "alarm"
 	requestParam.SourceSubSystem = "SYS_MONITOR"
 	requestParam.OperationKey = notify.ProcCallbackKey
-	requestParam.OperationData = fmt.Sprintf("%d-%s", alarmObj.Id, notify.Guid)
+	requestParam.OperationData = fmt.Sprintf("%d-%s-%s", alarmObj.Id, alarmObj.Status, notify.Guid)
 	requestParam.OperationUser = ""
 	log.Logger.Info(fmt.Sprintf("new notify request data --> eventSeqNo:%s operationKey:%s operationData:%s", requestParam.EventSeqNo, requestParam.OperationKey, requestParam.OperationData))
 	b, _ := json.Marshal(requestParam)
