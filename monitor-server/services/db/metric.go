@@ -37,28 +37,28 @@ func MetricList(id string, endpointType string) (result []*models.PromMetricTabl
 	return
 }
 
-func MetricCreate(param []*models.PromMetricObj) error {
+func MetricCreate(param []*models.MetricTable) error {
 	var actions []*Action
 	nowTime := time.Now().Format(models.DatetimeFormat)
 	for _, metric := range param {
 		//actions = append(actions, &Action{Sql: "insert into prom_metric(metric,metric_type,prom_ql) value (?,?,?)", Param: []interface{}{metric.Metric, metric.MetricType, metric.PromQl}})
 		if metric.ServiceGroup != "" {
-			actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time) value (?,?,?,?,?,?,?)", Param: []interface{}{fmt.Sprintf("%s__%s", metric.Metric, metric.MetricType), metric.Metric, metric.MetricType, metric.PromQl, metric.ServiceGroup, models.MetricWorkspaceService, nowTime}})
+			actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time) value (?,?,?,?,?,?,?)", Param: []interface{}{fmt.Sprintf("%s__%s", metric.Metric, metric.MonitorType), metric.Metric, metric.MonitorType, metric.PromExpr, metric.ServiceGroup, models.MetricWorkspaceService, nowTime}})
 		}else {
-			actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,update_time) value (?,?,?,?,?)", Param: []interface{}{fmt.Sprintf("%s__%s", metric.Metric, metric.MetricType), metric.Metric, metric.MetricType, metric.PromQl, nowTime}})
+			actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,update_time) value (?,?,?,?,?)", Param: []interface{}{fmt.Sprintf("%s__%s", metric.Metric, metric.MonitorType), metric.Metric, metric.MonitorType, metric.PromExpr, nowTime}})
 		}
 	}
 	return Transaction(actions)
 }
 
-func MetricUpdate(param []*models.PromMetricObj) error {
+func MetricUpdate(param []*models.MetricTable) error {
 	var actions []*Action
 	nowTime := time.Now().Format(models.DatetimeFormat)
 	for _, metric := range param {
 		if metric.ServiceGroup != "" {
-			actions = append(actions, &Action{Sql: "update metric set prom_expr=?,service_group=?,workspace=?,update_time=? where guid=?", Param: []interface{}{metric.PromQl, metric.ServiceGroup, metric.Workspace, nowTime, metric.Id}})
+			actions = append(actions, &Action{Sql: "update metric set prom_expr=?,service_group=?,workspace=?,update_time=? where guid=?", Param: []interface{}{metric.PromExpr, metric.ServiceGroup, metric.Workspace, nowTime, metric.Guid}})
 		}else {
-			actions = append(actions, &Action{Sql: "update metric set prom_expr=?,update_time=? where guid=?", Param: []interface{}{metric.PromQl, nowTime, metric.Id}})
+			actions = append(actions, &Action{Sql: "update metric set prom_expr=?,update_time=? where guid=?", Param: []interface{}{metric.PromExpr, nowTime, metric.Guid}})
 		}
 	}
 	return Transaction(actions)
