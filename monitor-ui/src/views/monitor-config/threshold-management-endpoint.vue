@@ -19,7 +19,7 @@
                     <Option v-for="type in ['firing', 'ok']" :key="type" :value="type">{{type}}</Option>
                   </Select>
                   <Select disabled v-model="item.proc_callback_key" style="width: 160px" :placeholder="$t('proc_callback_key')">
-                    <Option v-for="(flow, flowIndex) in flows" :key="flowIndex" :value="flow.procDefId">{{flow.procDefName}}</Option>
+                    <Option v-for="(flow, flowIndex) in flows" :key="flowIndex" :value="flow.procDefKey">{{flow.procDefName}}</Option>
                   </Select>
                   <Select disabled v-model="item.notify_roles" :max-tag-count="2" style="width: 360px" multiple filterable>
                     <Option v-for="item in allRole" :value="item.name" :key="item.value">{{ item.name }}</Option>
@@ -119,7 +119,7 @@
               </Tooltip>
               <Tooltip :content="$t('proc_callback_key')" :delay="1000">
                 <Select v-model="item.proc_callback_key" style="width: 160px" :placeholder="$t('proc_callback_key')">
-                  <Option v-for="(flow, flowIndex) in flows" :key="flowIndex" :value="flow.procDefId">{{flow.procDefName}}</Option>
+                  <Option v-for="(flow, flowIndex) in flows" :key="flowIndex" :value="flow.procDefKey">{{flow.procDefName}}</Option>
                 </Select>
               </Tooltip>
               <Tooltip :content="$t('field.role')" :delay="1000">
