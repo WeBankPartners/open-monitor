@@ -62,7 +62,7 @@
                       </Option>
                     </Select>
                   </FormItem>
-                  <template v-if="metricId || hideMetricZone">
+                  <template v-if="metricId!== '' || hideMetricZone">
                     <Divider />
                     <FormItem :label="$t('tableKey.name')">
                       <Input v-model="metricConfigData.metric"></Input>
@@ -84,7 +84,6 @@
                         <Select
                           filterable
                           :key="param.label"
-                          clearable
                           v-model="param.value"
                           @on-open-change="getCollectedMetric"
                           @on-change="changeCollectedMetric(param)"
@@ -250,7 +249,7 @@ export default {
       monitorTypeOptions: [],
       serviceGroup: '',
       recursiveOptions: [],
-      workspace: 'all_object',
+      workspace: '',
       workspaceOptions: [
         {label: 'm_all_object', value: 'all_object'}, // 层级对象
         {label: 'm_any_object', value: 'any_object'}  // 全部对象
@@ -261,9 +260,9 @@ export default {
       showConfigTab: false,
       endpoint: '',
       metricConfigData: {
-        id: null,
+        guid: null,
         metric: '',
-        metric_type: '',
+        monitor_type: '',
         panel_id: null,
         prom_expr: '',
         endpoint: ''
@@ -336,7 +335,6 @@ export default {
       this.metricConfigData.metric = ''
     },
     clearServiceGroup () {
-      this.workspace = 'all_object'
       this.showConfigTab = false
     },
     getRecursiveList () {
@@ -350,6 +348,9 @@ export default {
       this.metricTemplateParams = []
     },
     getMetricTemplate () {
+      this.templatePl = ''
+      this.metricTemplateParams = []
+      this.metricConfigData.prom_expr = ''
       const params = {
         workspace: this.workspace
       }
@@ -361,9 +362,9 @@ export default {
       this.showConfigTab = false
       this.metricId = ''
       this.metricConfigData = {
-        id: null,
+        guid: null,
         metric: '',
-        metric_type: '',
+        monitor_type: '',
         panel_id: null,
         prom_expr: '',
         endpoint: ''
@@ -381,12 +382,13 @@ export default {
       this.showConfigTab = false
     },
     changeMetricOptions (val) {
+      this.isAddMetric = false
       this.hideMetricZone = false
       this.isRequestChartData = false
       this.clearTemplatePl()
       if (val !== '') {
         const findMetricConfig = this.metricOptions.find(m => m.guid === this.metricId)
-        this.workspace = (findMetricConfig && findMetricConfig.workspace) || 'all_object'
+        this.workspace = (findMetricConfig && findMetricConfig.workspace)
         this.metricConfigData = {
           ...findMetricConfig
         }
@@ -428,7 +430,7 @@ export default {
       this.isRequestChartData = false
       this.metricId = ''
       this.metricConfigData = {
-        id: null,
+        guid: null,
         metric: '',
         panel_id: null,
         prom_expr: '',
@@ -660,8 +662,8 @@ export default {
       }
     },
     saveMetric () {
-      const type = this.metricConfigData.id === null ? 'POST' : 'PUT'
-      this.metricConfigData.metric_type = this.monitorType
+      const type = this.metricConfigData.guid === null ? 'POST' : 'PUT'
+      this.metricConfigData.monitor_type = this.monitorType
       this.metricConfigData.service_group = this.serviceGroup
       this.metricConfigData.workspace = this.workspace
       this.$root.$httpRequestEntrance.httpRequestEntrance(type, this.$root.apiCenter.metricManagement, [this.metricConfigData], () => {
@@ -720,7 +722,7 @@ export default {
       this.metricId = ''
       this.metricConfigData.metric = ''
       this.templatePl = ''
-      this.workspace = 'all_object'
+      this.workspace = ''
       this.clearTemplatePl()
       this.templatePl = ''
       this.metricTemplateParams = []
@@ -729,6 +731,7 @@ export default {
     },
     configMetric () {
       this.isAddMetric = false
+      this.hideMetricZone = false
       this.clearData()
 
       this.changeGraph('')
