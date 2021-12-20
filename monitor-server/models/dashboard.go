@@ -171,6 +171,7 @@ type PanelTable struct {
 	TagsKey     string `json:"tags_key"`
 	ChartGroup  int    `json:"chart_group"`
 	AutoDisplay int    `json:"auto_display"`
+	ServiceGroup string `json:"service_group"`
 }
 
 type ChartTable struct {
