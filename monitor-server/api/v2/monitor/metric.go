@@ -20,8 +20,8 @@ func ListMetric(c *gin.Context) {
 }
 
 func GetSysMetricTemplate(c *gin.Context) {
-	serviceGroup := c.Query("service_group")
-	result, err := db.GetSysMetricTemplateConfig(serviceGroup)
+	workspace := c.Query("workspace")
+	result, err := db.GetSysMetricTemplateConfig(workspace)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
