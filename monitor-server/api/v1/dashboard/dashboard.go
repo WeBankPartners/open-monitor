@@ -854,9 +854,8 @@ func GetEndpointMetric(c *gin.Context) {
 	var err error
 	var data []*m.OptionModel
 	if param.ServiceGroup != "" {
-
-	}
-	if param.Guid != "" {
+		err, data = db.GetServiceGroupPromMetric(param.ServiceGroup)
+	}else if param.Guid != "" {
 		err, data = db.GetEndpointMetric(param.Guid, param.ServiceGroup)
 	} else {
 		err, data = db.GetEndpointMetricByEndpointType(param.MonitorType)
