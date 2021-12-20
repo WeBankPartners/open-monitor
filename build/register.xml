@@ -788,7 +788,7 @@
                 </outputParameters>
             </interface>
         </plugin>
-        <plugin name="alarm_close" targetPackage="" targetEntity="" registerName="" targetEntityFilterRule="">
+        <plugin name="alarm" targetPackage="" targetEntity="" registerName="" targetEntityFilterRule="">
             <interface action="close" path="/monitor/entities/alarm/close" filterRule="">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">alarmId</parameter>
