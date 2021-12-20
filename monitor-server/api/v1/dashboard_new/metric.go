@@ -19,7 +19,7 @@ func MetricList(c *gin.Context) {
 }
 
 func MetricCreate(c *gin.Context) {
-	var param []*models.PromMetricObj
+	var param []*models.MetricTable
 	if err := c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnValidateError(c, err.Error())
 		return
@@ -33,7 +33,7 @@ func MetricCreate(c *gin.Context) {
 }
 
 func MetricUpdate(c *gin.Context) {
-	var param []*models.PromMetricObj
+	var param []*models.MetricTable
 	if err := c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnValidateError(c, err.Error())
 		return
