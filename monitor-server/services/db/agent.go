@@ -429,7 +429,7 @@ func recursiveData(guid string, prt []*m.PanelRecursiveTable, length, depth int)
 					for _, cv := range chartTables {
 						obj.Charts = append(obj.Charts, &m.ChartModel{Id: cv.Id, Endpoint: mv, Metric: strings.Split(cv.Metric, "^"), Aggregate: cv.AggType, MonitorType: mk})
 					}
-					for _, extendChart := range getExtendPanelCharts(mv, mk, v.Guid) {
+					for _, extendChart := range getServiceGroupCharts(mv, mk, v.Guid) {
 						obj.Charts = append(obj.Charts, extendChart)
 					}
 				}
@@ -443,6 +443,20 @@ func recursiveData(guid string, prt []*m.PanelRecursiveTable, length, depth int)
 		}
 	}
 	return obj
+}
+
+func getServiceGroupCharts(endpoints []string, monitorType, serviceGroup string) (result []*m.ChartModel) {
+	result = []*m.ChartModel{}
+	serviceGroupList, _ := fetchGlobalServiceGroupParentGuidList(serviceGroup)
+	var chartTable []*m.ChartTable
+	x.SQL("select * from chart where group_id in (select chart_group from panel where group_id in (select panels_group from dashboard where dashboard_type=?) and service_group in ('"+strings.Join(serviceGroupList,"','")+"'))", monitorType).Find(&chartTable)
+	if len(chartTable) == 0 {
+		return
+	}
+	for _,chart := range chartTable {
+		result = append(result, &m.ChartModel{Id: chart.Id,Col: chart.Col,Title: chart.Title,Endpoint: endpoints,Metric: []string{chart.Metric},MonitorType: monitorType,Aggregate: chart.AggType})
+	}
+	return result
 }
 
 func getExtendPanelCharts(endpoints []string, exportType, guid string) []*m.ChartModel {
