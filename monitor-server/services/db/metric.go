@@ -43,7 +43,7 @@ func MetricCreate(param []*models.PromMetricObj) error {
 	for _, metric := range param {
 		//actions = append(actions, &Action{Sql: "insert into prom_metric(metric,metric_type,prom_ql) value (?,?,?)", Param: []interface{}{metric.Metric, metric.MetricType, metric.PromQl}})
 		if metric.ServiceGroup != "" {
-			actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,update_time) value (?,?,?,?,?,?)", Param: []interface{}{fmt.Sprintf("%s__%s", metric.Metric, metric.MetricType), metric.Metric, metric.MetricType, metric.PromQl, metric.ServiceGroup, nowTime}})
+			actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time) value (?,?,?,?,?,?,?)", Param: []interface{}{fmt.Sprintf("%s__%s", metric.Metric, metric.MetricType), metric.Metric, metric.MetricType, metric.PromQl, metric.ServiceGroup, models.MetricWorkspaceService, nowTime}})
 		}else {
 			actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,update_time) value (?,?,?,?,?)", Param: []interface{}{fmt.Sprintf("%s__%s", metric.Metric, metric.MetricType), metric.Metric, metric.MetricType, metric.PromQl, nowTime}})
 		}
