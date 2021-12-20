@@ -54,9 +54,13 @@ func UpdateSysAlertMailConfig(param *models.SysAlertMailParameter) {
 	}
 }
 
-func GetSysMetricTemplateConfig() (result []*models.SysMetricTemplateParameter,err error) {
+func GetSysMetricTemplateConfig(serviceGroup string) (result []*models.SysMetricTemplateParameter,err error) {
 	result = []*models.SysMetricTemplateParameter{}
-	queryRow,tmpErr := getSysParameterTableData(models.SPMetricTemplate)
+	paramKey := models.SPMetricTemplate
+	if serviceGroup != "" {
+		paramKey = models.SPServiceMetricTemplate
+	}
+	queryRow,tmpErr := getSysParameterTableData(paramKey)
 	if tmpErr != nil {
 		return result,tmpErr
 	}
@@ -68,7 +72,7 @@ func GetSysMetricTemplateConfig() (result []*models.SysMetricTemplateParameter,e
 		tmpErr := json.Unmarshal([]byte(v.ParamValue), &tmpObj)
 		if tmpErr != nil {
 			err = tmpErr
-			log.Logger.Error("Json unmarshal value fail", log.String("key",models.SPMetricTemplate),log.String("value",v.ParamValue),log.Error(tmpErr))
+			log.Logger.Error("Json unmarshal value fail", log.String("key",paramKey),log.String("value",v.ParamValue),log.Error(tmpErr))
 			break
 		}else{
 			result = append(result, &tmpObj)
