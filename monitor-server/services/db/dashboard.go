@@ -62,10 +62,10 @@ func GetButton(bGroup int) (error, []*m.ButtonModel) {
 	}
 }
 
-func GetPanels(pGroup int) (error, []*m.PanelTable) {
+func GetPanels(pGroup int,endpoint string) (error, []*m.PanelTable) {
 	var panels []*m.PanelTable
-	sql := `select * from panel where group_id=?`
-	err := x.SQL(sql, pGroup).Find(&panels)
+	sql := `select * from panel where group_id=? and (service_group is null or service_group in (select service_group from endpoint_service_rel where endpoint=?))`
+	err := x.SQL(sql, pGroup, endpoint).Find(&panels)
 	if err != nil {
 		log.Logger.Error("Query panels fail", log.Error(err))
 	}
@@ -552,7 +552,7 @@ func GetEndpointMetric(endpointGuid,serviceGroup string) (err error, result []*m
 			log.Logger.Warn("endpoint address illegal ", log.String("endpoint", endpointObj.Guid))
 			return nil, result
 		}
-		metricQueryParam := m.QueryPrometheusMetricParam{Ip: ip, Port: port, Cluster: endpointObj.Cluster, Prefix: []string{}, Keyword: []string{}, TargetGuid: endpointObj.Guid, IsConfigQuery: true}
+		metricQueryParam := m.QueryPrometheusMetricParam{Ip: ip, Port: port, Cluster: endpointObj.Cluster, Prefix: []string{}, Keyword: []string{}, TargetGuid: endpointObj.Guid, IsConfigQuery: true, ServiceGroup: serviceGroup}
 		err, strList = QueryExporterMetric(metricQueryParam)
 	}
 	if err != nil {
