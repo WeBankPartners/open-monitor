@@ -265,6 +265,15 @@ type PromMetricTable struct {
 	PromMain   string `json:"prom_main"`
 }
 
+type PromMetricObj struct {
+	Id         string `json:"id"`
+	Metric     string `json:"metric" binding:"required"`
+	MetricType string `json:"metric_type"`
+	PromQl     string `json:"prom_ql" binding:"required"`
+	PromMain   string `json:"prom_main"`
+	ServiceGroup string `json:"service_group"`
+}
+
 type EndpointTable struct {
 	Id              int       `json:"id"`
 	Guid            string    `json:"guid"`
@@ -392,4 +401,10 @@ type PanelResultChartObj struct {
 	Title  string `json:"title"`
 	Unit   string `json:"unit"`
 	Active bool   `json:"active"`
+}
+
+type GetEndpointMetricParam struct {
+	Guid string `json:"guid"`
+	MonitorType string `json:"monitor_type" binding:"required"`
+	ServiceGroup string `json:"service_group"`
 }
