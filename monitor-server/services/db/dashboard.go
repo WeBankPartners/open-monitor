@@ -525,6 +525,28 @@ func UpdatePanelChartMetric(data []m.PromMetricUpdateParam) error {
 	return Transaction(updateChartAction)
 }
 
+func GetServiceGroupPromMetric(serviceGroup string) (err error, result []*m.OptionModel) {
+	result = []*m.OptionModel{}
+	var metricList []string
+	nowTime := time.Now().Unix()
+	queryPromQl := fmt.Sprintf("{service_group=\"%s\"}", serviceGroup)
+	metricList, err = datasource.QueryPromQLMetric(queryPromQl, GetClusterAddress(""), nowTime-120, nowTime)
+	if err != nil {
+		return
+	}
+	for _,v := range metricList {
+		if strings.HasPrefix(v, "go_") || v == "" {
+			continue
+		}
+		tmpPromExpr := v
+		if strings.Contains(v, "t_endpoint") {
+			tmpPromExpr = trimTEndpointTag(tmpPromExpr)
+		}
+		result = append(result, &m.OptionModel{OptionText: tmpPromExpr, OptionValue: tmpPromExpr})
+	}
+	return
+}
+
 func GetEndpointMetric(endpointGuid,serviceGroup string) (err error, result []*m.OptionModel) {
 	result = []*m.OptionModel{}
 	endpointObj := m.EndpointTable{Guid: endpointGuid}
