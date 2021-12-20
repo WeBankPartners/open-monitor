@@ -491,3 +491,34 @@ type EventTreeventResponse struct {
 	Status string `json:"status"`
 	Msg    string `json:"message"`
 }
+
+type PluginCloseAlarmRequest struct {
+	RequestId string                        `json:"requestId"`
+	Inputs    []*PluginCloseAlarmRequestObj `json:"inputs"`
+}
+
+type PluginCloseAlarmRequestObj struct {
+	CallbackParameter string `json:"callbackParameter"`
+	AlarmId           string `json:"alarmId"`
+	Message           string `json:"message"`
+}
+
+type PluginCloseAlarmResp struct {
+	ResultCode    string                 `json:"resultCode"`
+	ResultMessage string                 `json:"resultMessage"`
+	Results       PluginCloseAlarmOutput `json:"results"`
+}
+
+type PluginCloseAlarmOutput struct {
+	RequestId      string                       `json:"requestId"`
+	AllowedOptions []string                     `json:"allowedOptions,omitempty"`
+	Outputs        []*PluginCloseAlarmOutputObj `json:"outputs"`
+}
+
+type PluginCloseAlarmOutputObj struct {
+	CallbackParameter string `json:"callbackParameter"`
+	AlarmId           string `json:"alarmId"`
+	ErrorCode         string `json:"errorCode"`
+	ErrorMessage      string `json:"errorMessage"`
+	ErrorDetail       string `json:"errorDetail,omitempty"`
+}
