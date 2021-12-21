@@ -28,7 +28,7 @@ func QueryClusterConfig(id string) (result []*m.ClusterTable, err error) {
 
 func GetClusterAddress(cluster string) string {
 	if cluster == "default" || cluster == "" {
-		return ""
+		return "127.0.0.1:9090"
 	}
 	var clusterTable []*m.ClusterTable
 	x.SQL("select * from cluster where id=?", cluster).Find(&clusterTable)
@@ -40,7 +40,7 @@ func GetClusterAddress(cluster string) string {
 
 // Service discover functions
 func SyncSdEndpointNew(steps []int, cluster string, fromPeer bool) error {
-	log.Logger.Info("Add sd endpoint", log.String("steps", fmt.Sprintf("%v", steps)), log.String("cluster",cluster))
+	log.Logger.Info("Add sd endpoint", log.String("steps", fmt.Sprintf("%v", steps)), log.String("cluster", cluster))
 	var syncList []*m.SdConfigSyncObj
 	var err error
 	for _, step := range steps {
@@ -107,26 +107,26 @@ func SyncRemoteSdConfigFile(cluster string, params []*m.SdConfigSyncObj) error {
 }
 
 func GetSdFileListByStep(step int, cluster string) (result m.ServiceDiscoverFileList, err error) {
-	var endpointTables []*m.EndpointTable
-	err = x.SQL("select guid,address,export_type,address_agent,step,cluster from endpoint where step=? and cluster=?", step, cluster).Find(&endpointTables)
+	if cluster == "" {
+		cluster = "default"
+	}
+	var endpointTables []*m.EndpointNewTable
+	err = x.SQL("select * from endpoint_new where step=? and cluster=?", step, cluster).Find(&endpointTables)
 	if err != nil {
 		err = fmt.Errorf("Try to query endpoint table fail,%s ", err.Error())
 		return
 	}
 	result = m.ServiceDiscoverFileList{}
 	for _, v := range endpointTables {
-		if v.ExportType == "snmp" {
+		if v.MonitorType == "snmp" || v.MonitorType == "process" {
 			continue
 		}
-		if v.ExportType == "ping" || v.ExportType == "telnet" || v.ExportType == "http" {
-			if v.AddressAgent == "" {
+		if v.MonitorType == "ping" || v.MonitorType == "telnet" || v.MonitorType == "http" {
+			if v.AgentAddress == "" {
 				continue
 			}
 		}
-		tmpSdFileObj := m.ServiceDiscoverFileObj{Guid: v.Guid, Step: v.Step, Cluster: v.Cluster, Address: v.Address}
-		if v.AddressAgent != "" {
-			tmpSdFileObj.Address = v.AddressAgent
-		}
+		tmpSdFileObj := m.ServiceDiscoverFileObj{Guid: v.Guid, Step: v.Step, Cluster: v.Cluster, Address: v.AgentAddress}
 		log.Logger.Info("add endpoint", log.String("guid", v.Guid))
 		result = append(result, &tmpSdFileObj)
 	}

@@ -217,18 +217,22 @@ func SyncPodToEndpoint() bool {
 		result = true
 		var tmpGuidList []string
 		endpointSql := "insert into endpoint(guid,name,ip,export_type,step,os_type) values "
+		newEndpointSql := "insert into endpoint_new(guid,name,ip,monitor_type,step,tags) values "
 		for i,v := range endpointTables {
 			tmpGuidList = append(tmpGuidList, v.Guid)
 			log.Logger.Info("add kubernetes pod endpoint", log.String("guid", v.Guid))
 			endpointSql += fmt.Sprintf("('%s','%s','%s','%s',%d,'%s')", v.Guid, v.Name, v.Ip, v.ExportType, v.Step, v.OsType)
+			newEndpointSql += fmt.Sprintf("('%s','%s','%s','%s',%d,'%s')", v.Guid, v.Name, v.Ip, v.ExportType, v.Step, v.OsType)
 			if i < len(endpointTables)-1 {
 				endpointSql += ","
+				newEndpointSql += ","
 			}
 		}
 		_,err := x.Exec(endpointSql)
 		if err != nil {
 			log.Logger.Error("Update kubernetes pod to endpoint table fail", log.String("sql", endpointSql), log.Error(err))
 		}
+		x.Exec(newEndpointSql)
 		if len(endpointGroup) > 0 {
 			var tmpEndpointTables []*m.EndpointTable
 			x.SQL("select id from endpoint where guid in ('"+strings.Join(tmpGuidList, "','")+"')").Find(&tmpEndpointTables)

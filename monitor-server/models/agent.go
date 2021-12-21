@@ -10,6 +10,7 @@ type RegisterParam struct {
 }
 
 type RegisterParamNew struct {
+	Guid             string `json:"guid"`
 	Type             string `json:"type" binding:"required"`
 	Name             string `json:"name"`
 	Ip               string `json:"ip"`
@@ -26,6 +27,7 @@ type RegisterParamNew struct {
 	ExportAddress    string `json:"export_address"`
 	Cluster          string `json:"cluster"`
 	ProxyExporter    string `json:"proxy_exporter"`
+	ProcessName      string `json:"process_name"`
 	Tags             string `json:"tags"`
 }
 
@@ -143,4 +145,8 @@ type QueryPrometheusMetricParam struct {
 	Cluster string   `json:"cluster"`
 	Prefix  []string `json:"prefix"`
 	Keyword []string `json:"keyword"`
+	TargetGuid string `json:"target_guid"`
+	EndpointGuid string `json:"endpoint_guid"`
+	IsConfigQuery bool `json:"is_config_query"`
+	ServiceGroup string `json:"service_group"`
 }
