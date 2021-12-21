@@ -42,6 +42,7 @@ type endpointRequestObj struct {
 	Guid              string `json:"guid"`
 	CallbackParameter string `json:"callbackParameter"`
 	HostIp            string `json:"host_ip"`
+	DisplayName       string `json:"display_name"`
 	InstanceIp        string `json:"instance_ip"`
 	Group             string `json:"group"`
 	Port              string `json:"port"`
@@ -60,6 +61,7 @@ type endpointRequestObj struct {
 	ProxyExporter     string `json:"proxy_exporter"`
 	Cluster           string `json:"cluster"`
 	Tags              string `json:"tags"`
+	ProcessName       string `json:"process_name"`
 }
 
 func ExportAgentNew(c *gin.Context) {
@@ -115,7 +117,7 @@ func ExportAgentNew(c *gin.Context) {
 		} else if tmpAgentType == "snmp" {
 			param = m.RegisterParamNew{Type: tmpAgentType, Name: v.Instance, Ip: v.InstanceIp, Cluster: v.Cluster, AddDefaultGroup: true, AgentManager: false, FetchMetric: false, DefaultGroupName: v.Group, Step: tmpStep, ProxyExporter: v.ProxyExporter}
 		} else {
-			param = m.RegisterParamNew{Type: tmpAgentType, Ip: v.InstanceIp, Cluster: v.Cluster, Port: v.Port, Name: v.Instance, User: v.User, Password: v.Password, AgentManager: true, AddDefaultGroup: true, FetchMetric: true, DefaultGroupName: v.Group, Step: tmpStep}
+			param = m.RegisterParamNew{Type: tmpAgentType, Ip: v.InstanceIp, Cluster: v.Cluster, Port: v.Port, Name: v.Instance, User: v.User, Password: v.Password, AgentManager: true, AddDefaultGroup: true, FetchMetric: true, DefaultGroupName: v.Group, Step: tmpStep, ProcessName: v.ProcessName}
 			param.Url = v.Url
 			param.Method = v.Method
 		}
@@ -199,15 +201,20 @@ func AlarmControl(c *gin.Context) {
 			if agentType != "host" {
 				tmpIp = v.InstanceIp
 			}
-			err := db.UpdateEndpointAlarmFlag(isStop, agentType, v.Instance, tmpIp, v.Port, v.Pod, v.KubernetesCluster)
+			instanceName := v.Instance
+			if agentType == "process" {
+				tmpIp = v.HostIp
+				instanceName = v.DisplayName
+			}
+			err := db.UpdateEndpointAlarmFlag(isStop, agentType, instanceName, tmpIp, v.Port, v.Pod, v.KubernetesCluster)
 			var msg string
 			if err != nil {
-				msg = fmt.Sprintf("%s %s:%s %s fail,error %v", action, agentType, v.HostIp, v.Instance, err)
+				msg = fmt.Sprintf("%s %s:%s %s fail,error %v", action, agentType, v.HostIp, instanceName, err)
 				resultMessage = fmt.Sprintf(mid.GetMessageMap(c).HandleError, msg)
 				tmpResult = append(tmpResult, resultOutputObj{CallbackParameter: v.CallbackParameter, ErrorCode: "1", ErrorMessage: fmt.Sprintf(mid.GetMessageMap(c).HandleError, msg)})
 				successFlag = "1"
 			} else {
-				msg = fmt.Sprintf("%s %s:%s %s succeed", action, agentType, v.HostIp, v.Instance)
+				msg = fmt.Sprintf("%s %s:%s %s succeed", action, agentType, v.HostIp, instanceName)
 				tmpResult = append(tmpResult, resultOutputObj{CallbackParameter: v.CallbackParameter, ErrorCode: "0", ErrorMessage: ""})
 			}
 			log.Logger.Info(msg)
@@ -294,6 +301,7 @@ type processResultOutput struct {
 type processResultOutputObj struct {
 	CallbackParameter string `json:"callbackParameter"`
 	Guid              string `json:"guid"`
+	MonitorKey        string `json:"monitor_key"`
 	ErrorCode         string `json:"errorCode"`
 	ErrorMessage      string `json:"errorMessage"`
 	ErrorDetail       string `json:"errorDetail,omitempty"`
@@ -339,7 +347,7 @@ func AutoUpdateProcessMonitor(c *gin.Context) {
 			return
 		}
 		for _, input := range param.Inputs {
-			subResult, subError := updateProcess(input, operation)
+			subResult, subError := updateProcessNew(input, operation)
 			results = append(results, subResult)
 			if subError != nil {
 				log.Logger.Error("Handle auto update process fail", log.JsonObj("input", input), log.Error(subError))
@@ -349,6 +357,43 @@ func AutoUpdateProcessMonitor(c *gin.Context) {
 	} else {
 		return
 	}
+}
+
+func updateProcessNew(input processRequestObj, operation string) (result processResultOutputObj, err error) {
+	result.Guid = input.Guid
+	result.CallbackParameter = input.CallbackParameter
+	defer func() {
+		if err != nil {
+			result.ErrorCode = "1"
+			result.ErrorMessage = err.Error()
+		} else {
+			result.ErrorCode = "0"
+			result.ErrorMessage = ""
+		}
+	}()
+	if input.HostIp == "" {
+		err = fmt.Errorf("Param host_ip is empty ")
+		return result, err
+	}
+	if input.ProcessName == "" {
+		err = fmt.Errorf("Param process_name is empty ")
+		return result, err
+	}
+	if strings.Contains(input.ProcessName, ",") && input.ProcessTag == "" {
+		err = fmt.Errorf("Param process_tag cat not empty when process_name is multiple ")
+		return result, err
+	}
+	registerParam := m.RegisterParamNew{Name: input.DisplayName, Ip: input.HostIp, ProcessName: input.ProcessName, Tags: input.ProcessTag, Type: "process", DefaultGroupName: "default_process_group", AddDefaultGroup: true, Step: 10}
+	validateMessage,guid,tmpErr := AgentRegister(registerParam)
+	if validateMessage != "" {
+		return result,fmt.Errorf("Param validate error,%s ", validateMessage)
+	}
+	if tmpErr != nil {
+		return result,tmpErr
+	}
+	result.Guid = input.Guid
+	result.MonitorKey = guid
+	return
 }
 
 func updateProcess(input processRequestObj, operation string) (result processResultOutputObj, err error) {

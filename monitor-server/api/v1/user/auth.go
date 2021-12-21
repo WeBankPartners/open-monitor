@@ -182,7 +182,7 @@ func AuthRequired() gin.HandlerFunc {
 		if strings.Contains(c.Request.RequestURI, "/export/ping/source") {
 			c.Next()
 		} else {
-			if !m.Config().Http.Session.Enable {
+			if m.Config().Http.Session.Enable != "true" {
 				auToken := c.GetHeader("Authorization")
 				if auToken != "" {
 					coreToken, err := mid.DecodeCoreToken(auToken, m.CoreJwtKey)
@@ -290,6 +290,7 @@ func ListRole(c *gin.Context) {
 		size = 10
 	}
 	db.SyncCoreRole()
+	db.SyncCoreRoleList()
 	err, data := db.ListRole(search, page, size)
 	if err != nil {
 		mid.ReturnQueryTableError(c, "role", err)
