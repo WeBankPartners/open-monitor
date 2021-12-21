@@ -54,7 +54,9 @@ export default {
       }
     },
     getchartdata () {
-      console.log(this.chartInfo.chartParams)
+      if (this.chartInfo.chartParams.data.length === 0) {
+        return
+      }
       this.isAutoRefresh()
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.metricConfigView.api, this.chartInfo.chartParams, responseData => {
         responseData.yaxis.unit =  this.chartInfo.panalUnit  
