@@ -15,8 +15,7 @@ import (
 
 type LogConfig struct {
 	Level            string `json:"level"`
-	File             string `json:"file"`
-	AccessFile       string `json:"access_file"`
+	LogDir             string `json:"log_dir"`
 	ArchiveMaxSize   int    `json:"archive_max_size"`
 	ArchiveMaxBackup int    `json:"archive_max_backup"`
 	ArchiveMaxDay    int    `json:"archive_max_day"`
@@ -43,7 +42,7 @@ type SessionRedisConfig struct {
 }
 
 type SessionConfig struct {
-	Enable       bool               `json:"enable"`
+	Enable       string               `json:"enable"`
 	Expire       int64              `json:"expire"`
 	ServerEnable bool               `json:"server_enable"`
 	ServerToken  string             `json:"server_token"`
@@ -57,7 +56,6 @@ type HttpConfig struct {
 	ReturnError     bool           `json:"return_error"`
 	Alive           int64          `json:"alive"`
 	Ldap            *LdapConfig    `json:"ldap"`
-	Log             *LogConfig     `json:"log"`
 	Session         *SessionConfig `json:"session"`
 	DefaultLanguage string         `json:"default_language"`
 }
@@ -66,7 +64,7 @@ type StoreConfig struct {
 	Name     string `json:"name"`
 	Type     string `json:"type"`
 	Server   string `json:"server"`
-	Port     int    `json:"port"`
+	Port     string    `json:"port"`
 	User     string `json:"user"`
 	Pwd      string `json:"pwd"`
 	DataBase string `json:"database"`
@@ -162,9 +160,15 @@ type ArchiveMysqlConfig struct {
 	FiveMinStartDay    int64  `json:"five_min_start_day"`
 }
 
+type CapacityServerConfig struct {
+	Server             string `json:"server"`
+	Port               string `json:"port"`
+}
+
 type GlobalConfig struct {
 	IsPluginMode     string              `json:"is_plugin_mode"`
 	Http             *HttpConfig         `json:"http"`
+	Log              LogConfig           `json:"log"`
 	Store            StoreConfig         `json:"store"`
 	Datasource       DataSourceConfig    `json:"datasource"`
 	LimitIp          []string            `json:"limitIp"`
@@ -179,7 +183,7 @@ type GlobalConfig struct {
 	ArchiveMysql     ArchiveMysqlConfig  `json:"archive_mysql"`
 	ProcessCheckList []string            `json:"process_check_list"`
 	DefaultAdminRole string              `json:"default_admin_role"`
-	AlarmAliveMaxDay int                 `json:"alarm_alive_max_day"`
+	AlarmAliveMaxDay string                 `json:"alarm_alive_max_day"`
 }
 
 var (

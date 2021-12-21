@@ -34,10 +34,10 @@
         </Select>
       </FormItem>
       <FormItem :label="$t('tableKey.name')">
-        <Input v-model="activeSysPanal.name" placeholder=""></Input>
+        <Input v-model="activeSysPanal.name" placeholder="" style="width:400px"></Input>
       </FormItem>
       <FormItem label="sql">
-        <Input v-model="activeSysPanal.sql" type="textarea" placeholder=""></Input>
+        <Input v-model="activeSysPanal.sql" type="textarea" style="width:400px"></Input>
       </FormItem>
     </Form>
   </Modal>
