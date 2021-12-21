@@ -2,7 +2,7 @@
   <div class="page" id="endpointView">
     <Title :title="$t('menu.endpointView')"></Title>
     <Search ref="search" />
-    <Charts v-if="showCharts" :charts='charts' ref="parentCharts" />
+    <Charts v-if="showCharts" :charts='charts' @refreshConfig="refreshConfig" ref="parentCharts" />
     <div v-if="recursiveViewConfig.length && showRecursive">
       <Recursive :recursiveViewConfig="recursiveViewConfig" :params="params"></Recursive>
     </div>
@@ -106,14 +106,19 @@ export default {
       this.zoomChart(data)
     })
     this.$root.$eventBus.$on('refreshRecursive', () => {
-      this.$refs.search.getChartsConfig() 
+      this.refreshConfig()
     })
     this.zoneWidth = window.screen.width * 0.65
   },
   mounted() {
-    this.$refs.search.getChartsConfig() 
+    this.refreshConfig()
   },
   methods: {
+    refreshConfig () {
+      if (this.$refs.search) {
+        this.$refs.search.getChartsConfig() 
+      } 
+    },
     manageCharts (chartsConfig, params) {
       if (params.sys) {
         this.params = params

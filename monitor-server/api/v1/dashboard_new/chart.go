@@ -127,7 +127,7 @@ func getChartConfigByChartId(param *models.ChartQueryParam, result *models.EChar
 	if err != nil {
 		return
 	}
-	param.Aggregate = chartList[0].AggType
+	//param.Aggregate = chartList[0].AggType
 	param.Unit = chartList[0].Unit
 	result.Id = param.ChartId
 	result.Title = chartList[0].Title
@@ -203,11 +203,14 @@ func chartCompare(param *models.ChartQueryParam) error {
 func getChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.QueryMonitorData, err error) {
 	param.Compare = &models.ChartQueryCompareParam{CompareFirstLegend: ""}
 	queryList = []*models.QueryMonitorData{}
-	var endpointList []*models.EndpointTable
+	var endpointList []*models.EndpointNewTable
 	for _, dataConfig := range param.Data {
-		endpointList = []*models.EndpointTable{}
+		endpointList = []*models.EndpointNewTable{}
+		tmpMonitorType := dataConfig.EndpointType
+		metricLegend := "$custom"
+		// check endpoint if is service group
 		if dataConfig.AppObject != "" {
-			endpointList,err = db.GetRecursiveEndpointByType(dataConfig.AppObject, dataConfig.EndpointType)
+			endpointList, err = db.GetRecursiveEndpointByTypeNew(dataConfig.AppObject, dataConfig.EndpointType)
 			if err != nil {
 				err = fmt.Errorf("Try to get endpoints from object:%s fail,%s ", dataConfig.AppObject, err.Error())
 				break
@@ -216,28 +219,58 @@ func getChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.
 				continue
 			}
 			param.Data[0].Endpoint = endpointList[0].Guid
+			log.Logger.Debug("getChartConfigByCustom", log.String("app", dataConfig.AppObject), log.String("metric", dataConfig.Metric))
+			if db.CheckMetricIsServiceMetric(dataConfig.Metric, dataConfig.AppObject) {
+				log.Logger.Debug("getChartConfigByCustom $app_metric")
+				metricLegend = "$app_metric"
+			}
 		} else {
-			endpointObj := models.EndpointTable{Guid: dataConfig.Endpoint}
-			db.GetEndpoint(&endpointObj)
-			if endpointObj.Id <= 0 {
+			//endpointObj := models.EndpointTable{Guid: dataConfig.Endpoint}
+			//db.GetEndpoint(&endpointObj)
+			endpointObj, _ := db.GetEndpointNew(&models.EndpointNewTable{Guid: dataConfig.Endpoint})
+			if endpointObj.MonitorType == "" {
 				err = fmt.Errorf("Param data endpoint:%s can not find ", dataConfig.Endpoint)
 				break
 			}
 			endpointList = append(endpointList, &endpointObj)
+			tmpMonitorType = endpointObj.MonitorType
 		}
 		if dataConfig.Metric != "" {
-			tmpPromQL, _ := db.GetPromQLByMetric(dataConfig.Metric)
-			if tmpPromQL == "" {
+			if strings.HasPrefix(dataConfig.Metric, models.LogMetricName) || strings.HasPrefix(dataConfig.Metric, models.DBMonitorMetricName) {
+				metricLegend = "$app_metric"
 				if dataConfig.PromQl == "" {
-					continue
+					tmpSplitIndex := strings.Index(dataConfig.Metric, "/")
+					tmpTags := dataConfig.Metric[tmpSplitIndex+1:]
+					tmpTags = strings.ReplaceAll(tmpTags, ",", "\",")
+					tmpTags = strings.ReplaceAll(tmpTags, "=", "=\"")
+					dataConfig.PromQl = fmt.Sprintf("%s{%s\"}", dataConfig.Metric[:tmpSplitIndex], tmpTags)
 				}
 			} else {
-				dataConfig.PromQl = tmpPromQL
+				tmpPromQL, _ := db.GetPromQLByMetric(dataConfig.Metric, tmpMonitorType)
+				if tmpPromQL == "" {
+					if dataConfig.PromQl == "" {
+						continue
+					}
+				} else {
+					dataConfig.PromQl = tmpPromQL
+				}
 			}
 		}
-		for _, endpoint := range endpointList {
-			tmpPromQL := db.ReplacePromQlKeyword(dataConfig.PromQl, dataConfig.Metric, *endpoint)
-			queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQL, Legend: "$custom", Metric: []string{dataConfig.Metric}, Endpoint: []string{endpoint.Guid}, Step: endpoint.Step, Cluster: endpoint.Cluster})
+		queryAppendFlag := false
+		if len(endpointList) > 0 && metricLegend == "$app_metric" {
+			tmpPromQL := db.ReplacePromQlKeyword(dataConfig.PromQl, dataConfig.Metric, endpointList[0])
+			log.Logger.Debug("check prom is same", log.String("tmpPromQl", tmpPromQL), log.String("dataProm", dataConfig.PromQl))
+			if tmpPromQL == dataConfig.PromQl {
+				queryAppendFlag = true
+				log.Logger.Debug("prom is same")
+				queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQL, Legend: metricLegend, Metric: []string{dataConfig.Metric}, Endpoint: []string{endpointList[0].Guid}, Step: endpointList[0].Step, Cluster: endpointList[0].Cluster})
+			}
+		}
+		if !queryAppendFlag {
+			for _, endpoint := range endpointList {
+				tmpPromQL := db.ReplacePromQlKeyword(dataConfig.PromQl, dataConfig.Metric, endpoint)
+				queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQL, Legend: metricLegend, Metric: []string{dataConfig.Metric}, Endpoint: []string{endpoint.Guid}, Step: endpoint.Step, Cluster: endpoint.Cluster})
+			}
 		}
 	}
 	return
@@ -301,10 +334,10 @@ func getChartQueryData(queryList []*models.QueryMonitorData, param *models.Chart
 		serials = append(serials, tmpSerials...)
 	}
 	// handle serials data
-	agg := 0
-	if param.Aggregate != "none" {
-		agg = db.CheckAggregate(param.Start, param.End, "", param.Step, len(serials))
-	}
+	//agg := 0
+	//if param.Aggregate != "none" {
+	//	agg = db.CheckAggregate(param.Start, param.End, "", param.Step, len(serials))
+	//}
 	var processDisplayMap = make(map[string]string)
 	if strings.HasPrefix(param.Data[0].Metric, "process_") {
 		processDisplayMap = db.GetProcessDisplayMap(param.Data[0].Endpoint)
@@ -324,9 +357,13 @@ func getChartQueryData(queryList []*models.QueryMonitorData, param *models.Chart
 		if result.Title == "${auto}" {
 			result.Title = s.Name[:strings.Index(s.Name, "{")]
 		}
-		if agg > 1 && len(s.Data) > 300 {
-			s.Data = db.Aggregate(s.Data, agg, param.Aggregate)
+		if param.Aggregate != "none" && param.AggStep > 10 {
+			log.Logger.Debug("AggregateNew", log.Int64("aggStep", param.AggStep), log.String("agg", param.Aggregate))
+			s.Data = db.AggregateNew(s.Data, param.AggStep, param.Aggregate)
 		}
+		//if agg > 1 && len(s.Data) > 300 {
+		//	s.Data = db.Aggregate(s.Data, agg, param.Aggregate)
+		//}
 		if param.Compare.CompareSubTime > 0 {
 			if strings.Contains(s.Name, param.Compare.CompareSecondLegend) {
 				s.Data = db.CompareSubData(s.Data, float64(param.Compare.CompareSubTime)*1000)
@@ -336,6 +373,9 @@ func getChartQueryData(queryList []*models.QueryMonitorData, param *models.Chart
 		if tmpJsonMarshalErr == nil {
 			result.Series = append(result.Series, s)
 		}
+	}
+	if param.ChartId == 0 && param.Title != "" {
+		result.Title = param.Title
 	}
 	result.Xaxis = make(map[string]interface{})
 	result.Yaxis = models.YaxisModel{Unit: param.Unit}
