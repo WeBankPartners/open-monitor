@@ -48,6 +48,7 @@
                     <Radio label="max">Max</Radio>
                     <Radio label="avg">Average </Radio>
                     <Radio label="p95">P95</Radio>
+                    <Radio label="sum">Sum</Radio>
                     <Radio label="none">Original</Radio>
                   </RadioGroup>
                 </div>
@@ -136,7 +137,7 @@ export default {
           time_second: Number(this.chartCondition.timeTnterval),
           start: 0,
           end: 0,
-          title: '',
+          title: this.chartItem.title,
           unit: '',
           chart_id: this.chartItem.id,
           data: []

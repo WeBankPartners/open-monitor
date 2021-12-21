@@ -5,25 +5,21 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
-	"strconv"
 )
 
-func MetricList(c *gin.Context)  {
-	var id int
-	if c.Query("id") != "" {
-		id,_ = strconv.Atoi(c.Query("id"))
-	}
+func MetricList(c *gin.Context) {
+	id := c.Query("id")
 	endpointType := c.Query("endpointType")
-	result,err := db.MetricList(id,endpointType)
+	result, err := db.MetricList(id, endpointType)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
-	}else{
+	} else {
 		middleware.ReturnSuccessData(c, result)
 	}
 }
 
-func MetricCreate(c *gin.Context)  {
-	var param []*models.PromMetricTable
+func MetricCreate(c *gin.Context) {
+	var param []*models.MetricTable
 	if err := c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnValidateError(c, err.Error())
 		return
@@ -31,13 +27,13 @@ func MetricCreate(c *gin.Context)  {
 	err := db.MetricCreate(param)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
-	}else{
+	} else {
 		middleware.ReturnSuccess(c)
 	}
 }
 
-func MetricUpdate(c *gin.Context)  {
-	var param []*models.PromMetricTable
+func MetricUpdate(c *gin.Context) {
+	var param []*models.MetricTable
 	if err := c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnValidateError(c, err.Error())
 		return
@@ -45,21 +41,17 @@ func MetricUpdate(c *gin.Context)  {
 	err := db.MetricUpdate(param)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
-	}else{
+	} else {
 		middleware.ReturnSuccess(c)
 	}
 }
 
-func MetricDelete(c *gin.Context)  {
-	id,_ := strconv.Atoi(c.Query("id"))
-	if id <= 0 {
-		middleware.ReturnValidateError(c, "Param id is illegal")
-		return
-	}
+func MetricDelete(c *gin.Context) {
+	id := c.Query("id")
 	err := db.MetricDelete(id)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
-	}else{
+	} else {
 		middleware.ReturnSuccess(c)
 	}
 }

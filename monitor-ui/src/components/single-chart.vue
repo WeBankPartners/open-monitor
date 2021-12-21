@@ -70,7 +70,7 @@ export default {
         time_second: this.params.time,
         start: start ? 0 : this.params.start || 0,
         end: end ? 0 : this.params.end || 0,
-        title: '',
+        title: this.chartInfo.title,
         unit: '',
         chart_id: this.chartInfo.id,
         data: []
