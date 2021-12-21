@@ -14,16 +14,16 @@
     "groupManagement": {
         "_des": "组管理",
         "list": {
-            "api": "/monitor/api/v1/alarm/grp/list"
+            "api": "/monitor/api/v2/alarm/endpoint_group/query"
         },
         "add": {
-            "api": "/monitor/api/v1/alarm/grp/add"
+            "api": "/monitor/api/v2/alarm/endpoint_group"
         },
         "update": {
-            "api": "/monitor/api/v1/alarm/grp/update"
+            "api": "/monitor/api/v2/alarm/endpoint_group"
         },
         "delete": {
-            "api": "/monitor/api/v1/alarm/grp/delete"
+            "api": "/monitor/api/v2/alarm/endpoint_group"
         },
         "upload": {
             "api": "/monitor/api/v1/alarm/grp/import"
@@ -119,7 +119,7 @@
     },
     "metricList": {
         "_des": "指标列表",
-        "api": "/monitor/api/v1/dashboard/config/metric/list"
+        "api": "/monitor/api/v2/monitor/metric/list"
     },
     "originMetricList": {
         "_des": "原始指标列表",
@@ -195,5 +195,16 @@
     "getMetricByEndpointType": "/monitor/api/v1/dashboard/new/metric",
     "cluster": "/monitor/api/v1/cluster/config",
     "recursiveType": "/monitor/api/v1/dashboard/recursive/endpoint_type/list",
-    "remarkAlarm": "/monitor/api/v1/alarm/problem/message"
+    "remarkAlarm": "/monitor/api/v1/alarm/problem/message",
+    "getTargetByEndpoint": "/monitor/api/v2/service_endpoint/search",
+    "getTargetDetail": "/monitor/api/v2/service/log_metric/list",
+    "getEndpointsByType": "/monitor/api/v2/service/service_group",
+    "logMetricMonitor": "/monitor/api/v2/service/log_metric/log_metric_monitor",
+    "deletePath": "/monitor/api/v2/service/log_metric/log_metric_monitor",
+    "logMetricJson": "/monitor/api/v2/service/log_metric/log_metric_json",
+    "logMetricReg": "/monitor/api/v2/service/log_metric/log_metric_config",
+    "getTargetDbDetail": "/monitor/api/v2/service/db_metric/list",
+    "saveTargetDb": "/monitor/api/v2/service/db_metric",
+    "getThresholdEndpointDetail": "/monitor/api/v2/alarm/strategy/list/endpoint",
+    "getThresholdGroupDetail": "/monitor/api/v2/alarm/strategy/list/group"
 }

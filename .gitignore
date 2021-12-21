@@ -29,3 +29,5 @@ monitor-agent/db_data_exporter/db_data_exporter
 
 #tmp
 monitor-ui/.history/*
+build/node_exporter/node_exporter_new
+build/node_exporter/VERSION

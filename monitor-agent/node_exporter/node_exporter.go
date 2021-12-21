@@ -15,23 +15,19 @@ package main
 
 import (
 	"fmt"
-	"net/http"
-	"os"
-	"os/exec"
-	"os/signal"
-	"sort"
-	"syscall"
-
 	"github.com/prometheus/common/promlog"
 	"github.com/prometheus/common/promlog/flag"
+	"net/http"
+	"os"
+	"sort"
 
+	"github.com/WeBankPartners/open-monitor/monitor-agent/node_exporter/collector"
+	"github.com/WeBankPartners/open-monitor/monitor-agent/node_exporter/https"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/common/version"
-	"github.com/WeBankPartners/open-monitor/monitor-agent/node_exporter/collector"
-	"github.com/WeBankPartners/open-monitor/monitor-agent/node_exporter/https"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -190,51 +186,22 @@ func main() {
 			</html>`))
 	})
 	// Init new collector logger and store
-	collector.InitNewLogger(logger)
-	collector.BusinessCollectorStore.Load()
-	collector.LogCollectorStore.Load()
-	collector.ProcessCacheObj.Init()
-	go collector.StartBusinessAggCron()
+	collector.InitMonitorLogger(logger)
+	go collector.LogKeyWordLoadConfig()
+	go collector.StartProcessMonitorCron()
+	go collector.StartCalcLogMetricCron()
 	// Add log monitor handle http config
-	http.HandleFunc("/log/config", collector.LogMonitorHttpHandle)
-	http.HandleFunc("/log/rows/query", collector.LogMonitorRowsHttpHandle)
+	http.HandleFunc("/log_keyword/config", collector.LogKeywordHttpHandle)
+	http.HandleFunc("/log_keyword/rows", collector.LogMonitorRowsHttpHandle)
 	// Add process monitor handle http config
-	http.HandleFunc("/process/config", collector.ProcessMonitorHttpHandle)
+	http.HandleFunc("/process/config", collector.ProcessHttpHandle)
 	// Add business monitor handle http config
-	http.HandleFunc("/business/config", collector.BusinessMonitorHttpHandle)
+	http.HandleFunc("/log_metric/config", collector.LogMetricMonitorHttpHandle)
 
 	level.Info(logger).Log("msg", "Listening on", "address", *listenAddress)
-	go func(address,configFile string,logger2 log.Logger) {
-		server := &http.Server{Addr: address}
-		if err := https.Listen(server, configFile, logger2); err != nil {
-			level.Error(logger2).Log("err", err)
-			os.Exit(1)
-		}
-	}(*listenAddress,*configFile,logger)
-	startSignal(os.Getpid(), logger)
-}
-
-func startSignal(pid int,tmpLog log.Logger) {
-	_,mkErr := exec.Command("mkdir", "-p", "data").Output()
-	if mkErr != nil {
-		level.Error(tmpLog).Log("mkdir_error", mkErr.Error())
-	}
-	sigs := make(chan os.Signal, 1)
-	level.Info(tmpLog).Log("register", "signal notify")
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
-	for {
-		s := <-sigs
-		level.Info(tmpLog).Log("receive signal ", s)
-		switch s {
-		case syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT:
-			level.Info(tmpLog).Log("shutdown , start save file")
-			// do something
-			collector.ProcessCacheObj.Save()
-			collector.LogCollectorStore.Save()
-			collector.BusinessCollectorStore.Save()
-			level.Info(tmpLog).Log("shutdown , done")
-			level.Info(tmpLog).Log("exit ", pid)
-			os.Exit(0)
-		}
+	server := &http.Server{Addr: *listenAddress}
+	if err := https.Listen(server, *configFile, logger); err != nil {
+		level.Error(logger).Log("err", err)
+		os.Exit(1)
 	}
 }

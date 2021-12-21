@@ -24,27 +24,27 @@ import (
 // @Param type query string true "页面类型，主机页面type=host"
 // @Success 200
 // @Router /api/v1/dashboard/main [get]
-func MainDashboard(c *gin.Context)  {
+func MainDashboard(c *gin.Context) {
 	dType := c.Query("type")
 	if dType == "" {
 		mid.ReturnParamEmptyError(c, "type")
 		return
 	}
-	err,dashboard := db.GetDashboard(dType)
+	err, dashboard := db.GetDashboard(dType)
 	if err != nil {
 		mid.ReturnQueryTableError(c, "dashboard", err)
 		return
 	}
 	var dashboardDto m.Dashboard
 	if dashboard.SearchEnable {
-		err,search := db.GetSearch(dashboard.SearchId)
+		err, search := db.GetSearch(dashboard.SearchId)
 		if err == nil {
 			search.Enable = true
 			dashboardDto.Search = search
 		}
 	}
 	if dashboard.ButtonEnable {
-		err,button := db.GetButton(dashboard.ButtonGroup)
+		err, button := db.GetButton(dashboard.ButtonGroup)
 		if err == nil {
 			dashboardDto.Buttons = button
 		}
@@ -64,10 +64,10 @@ func MainDashboard(c *gin.Context)  {
 		if dashboard.PanelsParam != "" {
 			panels.Url = panels.Url + `&` + dashboard.PanelsParam
 			if dashboard.SearchEnable == false && len(dashboardDto.Buttons) > 0 {
-				defaultBV := dashboard.PanelsParam[strings.Index(dashboard.PanelsParam, "{")+1:strings.Index(dashboard.PanelsParam, "}")]
-				for _,v := range dashboardDto.Buttons {
+				defaultBV := dashboard.PanelsParam[strings.Index(dashboard.PanelsParam, "{")+1 : strings.Index(dashboard.PanelsParam, "}")]
+				for _, v := range dashboardDto.Buttons {
 					if v.Name == defaultBV {
-						panels.Url = strings.Replace(panels.Url, fmt.Sprintf("{%s}", defaultBV) ,v.Options[0].OptionValue, -1)
+						panels.Url = strings.Replace(panels.Url, fmt.Sprintf("{%s}", defaultBV), v.Options[0].OptionValue, -1)
 					}
 				}
 			}
@@ -84,25 +84,25 @@ func MainDashboard(c *gin.Context)  {
 // @Param endpoint query string true "需要在panels url上把{endpoint}替换"
 // @Success 200
 // @Router /api/v1/dashboard/panels [get]
-func GetPanels(c *gin.Context)  {
+func GetPanels(c *gin.Context) {
 	group := c.Query("group")
 	endpoint := c.Query("endpoint")
 	if group == "" {
 		mid.ReturnParamEmptyError(c, "group")
 		return
 	}
-	groupId,err := strconv.Atoi(group)
+	groupId, err := strconv.Atoi(group)
 	if err != nil {
 		mid.ReturnParamTypeError(c, "group", "int")
 		return
 	}
-	err,panels := db.GetPanels(groupId)
+	err, panels := db.GetPanels(groupId, endpoint)
 	if err != nil {
 		mid.ReturnQueryTableError(c, "panel", err)
 		return
 	}
 	var panelsDto []*m.PanelModel
-	for _,panel := range panels {
+	for _, panel := range panels {
 		//if panel.AutoDisplay > 0 && !endpointBusinessShow {
 		//	continue
 		//}
@@ -117,18 +117,18 @@ func GetPanels(c *gin.Context)  {
 			continue
 		}
 		panelDto.Other = false
-		err,charts := db.GetCharts(panel.ChartGroup, 0, 0)
-		if err!=nil {
+		err, charts := db.GetCharts(panel.ChartGroup, 0, 0)
+		if err != nil {
 			continue
 		}
-		tagsDto := m.TagsModel{Enable:false, Option:[]*m.OptionModel{}}
+		tagsDto := m.TagsModel{Enable: false, Option: []*m.OptionModel{}}
 		tagsValue := ""
-		if panel.TagsEnable && endpoint!="" {
+		if panel.TagsEnable && endpoint != "" {
 			var options []*m.OptionModel
 			tagsDto.Enable = true
 			tagsDto.Url = fmt.Sprintf(`%s?panel_id=%d&endpoint=%s&tag=`, panel.TagsUrl, panel.Id, endpoint)
-			err,options = db.GetTags(endpoint, panel.TagsKey, charts[0].Metric)
-			if err==nil {
+			err, options = db.GetTags(endpoint, panel.TagsKey, charts[0].Metric)
+			if err == nil {
 				tagsDto.Option = options
 				if len(options) > 0 {
 					tagsValue = options[0].OptionText
@@ -157,70 +157,41 @@ func GetPanels(c *gin.Context)  {
 		panelDto.Charts = chartsDto
 		panelsDto = append(panelsDto, &panelDto)
 	}
-	err,businessPanel := fetchBusinessPanel(endpoint)
-	if err != nil {
-		log.Logger.Error("Fetch business panel fail", log.Error(err))
+	businessPanel, matchErr := db.MatchServicePanel(endpoint)
+	//err,businessPanel := fetchBusinessPanel(endpoint)
+	if matchErr != nil {
+		log.Logger.Error("Fetch business panel fail", log.Error(matchErr))
 	}
 	if len(businessPanel.Charts) > 0 {
 		panelsDto = append(panelsDto, &businessPanel)
 	}
-	//_,businessMonitor := db.GetBusinessList(0, endpoint)
-	//if len(businessMonitor) > 0 {
-	//	businessMonitorMap := make(map[int][]string)
-	//	for _,v := range businessMonitor {
-	//		if _,b := businessMonitorMap[v.EndpointId];b {
-	//			exist := false
-	//			for _,vv := range businessMonitorMap[v.EndpointId] {
-	//				if vv == v.Path {
-	//					exist = true
-	//					break
-	//				}
-	//			}
-	//			if !exist {
-	//				businessMonitorMap[v.EndpointId] = append(businessMonitorMap[v.EndpointId], v.Path)
-	//			}
-	//		}else{
-	//			businessMonitorMap[v.EndpointId] = []string{v.Path}
-	//		}
-	//	}
-	//	businessCharts,businessPanels := db.GetBusinessPanelChart()
-	//	if len(businessCharts) > 0 {
-	//		chartsDto, _ := db.GetAutoDisplay(businessMonitorMap, businessPanels[0].TagsKey, businessCharts)
-	//		var panelDto m.PanelModel
-	//		panelDto.Title = businessPanels[0].Title
-	//		panelDto.Other = false
-	//		panelDto.Tags = m.TagsModel{Enable: false, Option: []*m.OptionModel{}}
-	//		panelDto.Charts = chartsDto
-	//		panelsDto = append(panelsDto, &panelDto)
-	//	}
-	//}
 	mid.ReturnSuccessData(c, panelsDto)
 }
 
-func fetchBusinessPanel(endpoint string) (err error,result m.PanelModel) {
+func fetchBusinessPanel(endpoint string) (err error, result m.PanelModel) {
 	result.Tags = m.TagsModel{Enable: false, Option: []*m.OptionModel{}}
 	var businessList m.BusinessUpdateDto
 	realEndpoint := endpoint
 	endpointObj := m.EndpointTable{Guid: endpoint}
 	db.GetEndpoint(&endpointObj)
 	if endpointObj.ExportType == "host" {
-		err,businessList = db.GetBusinessListNew(endpointObj.Id, "")
-	}else{
-		err,businessList = db.GetBusinessListNew(0, endpoint)
+		err, businessList = db.GetBusinessListNew(endpointObj.Id, "")
+	} else {
+		err, businessList = db.GetBusinessListNew(0, endpoint)
 		realEndpoint = db.GetBusinessRealEndpoint(endpoint)
 	}
 	if err != nil || len(businessList.PathList) == 0 {
-		return err,result
+		return err, result
 	}
-	chartTable,panelTable := db.GetBusinessPanelChart()
+	chartTable, panelTable := db.GetBusinessPanelChart()
 	if len(panelTable) == 0 || len(chartTable) == 0 {
-		return err,result
+		return err, result
 	}
 	result.Title = panelTable[0].Title
 	//var promMetricKeys []string
-	for _,path := range businessList.PathList {
-		for _,rule := range path.Rules {
-			for _,metricConfig := range rule.MetricConfig {
+	for _, path := range businessList.PathList {
+		for _, rule := range path.Rules {
+			for _, metricConfig := range rule.MetricConfig {
 				//promMetricKeys = append(promMetricKeys, metricConfig.Metric)
 				tmpChartObj := m.ChartModel{Id: chartTable[0].Id, Endpoint: []string{realEndpoint}, Url: chartTable[0].Url}
 				tmpChartObj.Title = metricConfig.Title
@@ -228,7 +199,7 @@ func fetchBusinessPanel(endpoint string) (err error,result m.PanelModel) {
 				result.Charts = append(result.Charts, &tmpChartObj)
 			}
 		}
-		for _,custom := range path.CustomMetrics {
+		for _, custom := range path.CustomMetrics {
 			tmpChartObj := m.ChartModel{Id: chartTable[0].Id, Endpoint: []string{realEndpoint}, Url: chartTable[0].Url}
 			tmpChartObj.Title = custom.Metric
 			tmpChartObj.Metric = []string{fmt.Sprintf("%s/path=%s,key=%s", chartTable[0].Metric, path.Path, custom.Metric)}
@@ -242,19 +213,23 @@ func fetchBusinessPanel(endpoint string) (err error,result m.PanelModel) {
 	//	tmpChartObj.Title = v.Metric
 	//	result.Charts = append(result.Charts, &tmpChartObj)
 	//}
-	return err,result
+	return err, result
 }
 
-func UpdateChartsTitle(c *gin.Context)  {
+func UpdateChartsTitle(c *gin.Context) {
 	var param m.UpdateChartTitleParam
-	if err := c.ShouldBindJSON(&param);err == nil {
-		err = db.UpdateChartTitle(param)
+	if err := c.ShouldBindJSON(&param); err == nil {
+		if param.ChartId > 0 {
+			err = db.UpdateChartTitle(param)
+		} else {
+			err = db.UpdateServiceMetricTitle(param)
+		}
 		if err != nil {
 			mid.ReturnUpdateTableError(c, "chart", err)
-		}else{
+		} else {
 			mid.ReturnSuccess(c)
 		}
-	}else{
+	} else {
 		mid.ReturnValidateError(c, err.Error())
 	}
 }
@@ -267,7 +242,7 @@ func UpdateChartsTitle(c *gin.Context)  {
 // @Param tag query string true "tag button里面的option_value"
 // @Success 200
 // @Router /api/v1/dashboard/tags [get]
-func GetTags(c *gin.Context)  {
+func GetTags(c *gin.Context) {
 	panelIdStr := c.Query("panel_id")
 	endpoint := c.Query("endpoint")
 	tag := c.Query("tag")
@@ -275,23 +250,23 @@ func GetTags(c *gin.Context)  {
 		mid.ReturnParamEmptyError(c, "tag")
 		return
 	}
-	panelId,err := strconv.Atoi(panelIdStr)
+	panelId, err := strconv.Atoi(panelIdStr)
 	if err != nil {
 		mid.ReturnParamTypeError(c, "panel_id", "int")
 		return
 	}
-	err,charts := db.GetCharts(0, 0, panelId)
+	err, charts := db.GetCharts(0, 0, panelId)
 	var chartsDto []*m.ChartModel
-	for _,chart := range charts {
-		chartDto := m.ChartModel{Id:chart.Id, Col:chart.Col}
+	for _, chart := range charts {
+		chartDto := m.ChartModel{Id: chart.Id, Col: chart.Col}
 		chartDto.Url = `/dashboard/chart`
-		if endpoint!="" {
+		if endpoint != "" {
 			chartDto.Endpoint = []string{endpoint}
 		}
 		metricList := strings.Split(chart.Metric, "^")
 		var newMetricList []string
-		for _,m := range metricList {
-			newMetric := m+`/`+tag
+		for _, m := range metricList {
+			newMetric := m + `/` + tag
 			newMetricList = append(newMetricList, newMetric)
 		}
 		chartDto.Metric = newMetricList
@@ -311,8 +286,8 @@ func GetTags(c *gin.Context)  {
 // @Param aggregate query string false "聚合类型 枚举 min max avg p95 none"
 // @Success 200
 // @Router /api/v1/dashboard/chart [get]
-func GetChartOld(c *gin.Context)  {
-	paramId,err := strconv.Atoi(c.Query("id"))
+func GetChartOld(c *gin.Context) {
+	paramId, err := strconv.Atoi(c.Query("id"))
 	if err != nil || paramId <= 0 {
 		mid.ReturnParamTypeError(c, "id", "int")
 		return
@@ -329,7 +304,7 @@ func GetChartOld(c *gin.Context)  {
 	eOption.Title = chart.Title
 	if chart.Endpoint == "" {
 		query.Endpoint = c.QueryArray("endpoint[]")
-	}else{
+	} else {
 		query.Endpoint = strings.Split(chart.Endpoint, "^")
 	}
 	if len(query.Endpoint) <= 0 {
@@ -348,11 +323,11 @@ func GetChartOld(c *gin.Context)  {
 	if paramTime != "" && paramStart == "" {
 		paramStart = paramTime
 	}
-	start,err := strconv.ParseInt(paramStart, 10, 64)
+	start, err := strconv.ParseInt(paramStart, 10, 64)
 	if err != nil {
 		mid.ReturnParamTypeError(c, "start", "int")
 		return
-	}else{
+	} else {
 		if start < 0 {
 			start = time.Now().Unix() + start
 		}
@@ -360,18 +335,18 @@ func GetChartOld(c *gin.Context)  {
 	}
 	query.End = time.Now().Unix()
 	if paramEnd != "" {
-		end,err := strconv.ParseInt(paramEnd, 10, 64)
+		end, err := strconv.ParseInt(paramEnd, 10, 64)
 		if err == nil && end <= query.End {
 			query.End = end
 		}
 	}
-	err,query.PromQ = db.GetPromMetric(query.Endpoint, query.Metric[0])
-	if err!=nil {
+	err, query.PromQ = db.GetPromMetric(query.Endpoint, query.Metric[0])
+	if err != nil {
 		mid.ReturnQueryTableError(c, "prom_ql", err)
 		return
 	}
 	query.Legend = chart.Legend
-	log.Logger.Debug("Query param", log.StringList("endpoint",query.Endpoint), log.StringList("metric",query.Metric), log.Int64("start", query.Start), log.Int64("end", query.End), log.String("promQl", query.PromQ))
+	log.Logger.Debug("Query param", log.StringList("endpoint", query.Endpoint), log.StringList("metric", query.Metric), log.Int64("start", query.Start), log.Int64("end", query.End), log.String("promQl", query.PromQ))
 	serials := ds.PrometheusData(&query)
 	agg := db.CheckAggregate(query.Start, query.End, query.Endpoint[0], 0, len(serials))
 	for _, s := range serials {
@@ -393,14 +368,14 @@ func GetChartOld(c *gin.Context)  {
 	eOption.Yaxis = m.YaxisModel{Unit: chart.Unit}
 	if len(serials) > 0 {
 		eOption.Series = serials
-	}else{
+	} else {
 		eOption.Series = []*m.SerialModel{}
 	}
 	mid.ReturnSuccessData(c, eOption)
 }
 
-func GetChart(c *gin.Context)  {
-	requestBody,err := ioutil.ReadAll(c.Request.Body)
+func GetChart(c *gin.Context) {
+	requestBody, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
 		mid.ReturnBodyError(c, err)
 		return
@@ -420,30 +395,30 @@ func GetChart(c *gin.Context)  {
 	var compareLegend string
 	var sameEndpoint bool
 	var aggType string
-	var subStartSecond,subEndSecond int64
+	var subStartSecond, subEndSecond int64
 	// validate config time
 	if paramConfig[0].CompareFirstStart != "" && paramConfig[0].CompareFirstEnd != "" {
-		st,err := time.Parse(m.DateFormatWithZone, fmt.Sprintf("%s 00:00:00 "+m.DefaultLocalTimeZone, paramConfig[0].CompareFirstStart))
+		st, err := time.Parse(m.DateFormatWithZone, fmt.Sprintf("%s 00:00:00 "+m.DefaultLocalTimeZone, paramConfig[0].CompareFirstStart))
 		if err != nil {
 			mid.ReturnParamTypeError(c, "compare_first_start", "2006-01-02")
 			return
 		}
-		et,err := time.Parse(m.DateFormatWithZone, fmt.Sprintf("%s 23:59:59 "+m.DefaultLocalTimeZone, paramConfig[0].CompareFirstEnd))
+		et, err := time.Parse(m.DateFormatWithZone, fmt.Sprintf("%s 23:59:59 "+m.DefaultLocalTimeZone, paramConfig[0].CompareFirstEnd))
 		if err != nil {
 			mid.ReturnParamTypeError(c, "compare_first_end", "2006-01-02")
 			return
 		}
 		if paramConfig[0].Start != "" && paramConfig[0].End != "" {
-			query.Start,_ = strconv.ParseInt(paramConfig[0].Start, 10, 64)
-			query.End,_ = strconv.ParseInt(paramConfig[0].End, 10, 64)
+			query.Start, _ = strconv.ParseInt(paramConfig[0].Start, 10, 64)
+			query.End, _ = strconv.ParseInt(paramConfig[0].End, 10, 64)
 			subStartSecond = query.Start - st.Unix()
 			subEndSecond = query.End - st.Unix()
-		}else {
+		} else {
 			query.Start = st.Unix()
 			query.End = et.Unix()
 		}
 		compareLegend = fmt.Sprintf("%s_%s", paramConfig[0].CompareFirstStart, paramConfig[0].CompareFirstEnd)
-	}else {
+	} else {
 		if paramConfig[0].Time != "" && paramConfig[0].Start == "" {
 			paramConfig[0].Start = paramConfig[0].Time
 		}
@@ -468,19 +443,19 @@ func GetChart(c *gin.Context)  {
 	// custom or from mysql
 	var querys []m.QueryMonitorData
 	step := 10
-	var firstEndpoint,unit,clusterAddress string
+	var firstEndpoint, unit, clusterAddress string
 	var compareSubTime int64
 	var compareSecondLegend string
 	if paramConfig[0].Id > 0 {
 		// Handle config dashboard
 		sameEndpoint = true
 		recordMap := make(map[string]bool)
-		firstEndpointObj := m.EndpointTable{Guid:paramConfig[0].Endpoint}
+		firstEndpointObj := m.EndpointTable{Guid: paramConfig[0].Endpoint}
 		db.GetEndpoint(&firstEndpointObj)
 		step = firstEndpointObj.Step
 		clusterAddress = db.GetClusterAddress(firstEndpointObj.Cluster)
 		// one endpoint -> metrics
-		for _,tmpParamConfig := range paramConfig {
+		for _, tmpParamConfig := range paramConfig {
 			err, charts := db.GetCharts(0, tmpParamConfig.Id, 0)
 			if err != nil || len(charts) <= 0 {
 				mid.ReturnQueryTableError(c, "chart", err)
@@ -488,7 +463,7 @@ func GetChart(c *gin.Context)  {
 			}
 			chart := *charts[0]
 			tmpIndex := fmt.Sprintf("%d^%s", tmpParamConfig.Id, tmpParamConfig.Endpoint)
-			if _,b := recordMap[tmpIndex];b {
+			if _, b := recordMap[tmpIndex]; b {
 				if chart.Metric != "db_monitor_count" {
 					continue
 				}
@@ -515,7 +490,7 @@ func GetChart(c *gin.Context)  {
 				var tmpPromQl string
 				if chart.Metric == "db_monitor_count" && tmpParamConfig.Metric != "db_monitor_count" {
 					err, tmpPromQl = db.GetDbPromMetric(tmpParamConfig.Endpoint, tmpParamConfig.Metric, chart.Legend)
-				}else {
+				} else {
 					err, tmpPromQl = db.GetPromMetric([]string{tmpParamConfig.Endpoint}, v)
 				}
 				if err != nil {
@@ -526,45 +501,45 @@ func GetChart(c *gin.Context)  {
 				if len(paramConfig) > 1 && strings.Contains(chart.Legend, "metric") {
 					tmpLegend = "$custom"
 				}
-				querys = append(querys, m.QueryMonitorData{Start: query.Start, End: query.End, PromQ: tmpPromQl, Legend: tmpLegend, Metric: []string{v}, Endpoint: []string{tmpParamConfig.Endpoint}, CompareLegend:compareLegend, SameEndpoint:sameEndpoint, Step:step, Cluster: clusterAddress})
+				querys = append(querys, m.QueryMonitorData{Start: query.Start, End: query.End, PromQ: tmpPromQl, Legend: tmpLegend, Metric: []string{v}, Endpoint: []string{tmpParamConfig.Endpoint}, CompareLegend: compareLegend, SameEndpoint: sameEndpoint, Step: step, Cluster: clusterAddress})
 				if paramConfig[0].CompareSecondStart != "" && paramConfig[0].CompareSecondEnd != "" {
-					st,sErr := time.Parse(m.DateFormatWithZone, fmt.Sprintf("%s 00:00:00 "+m.DefaultLocalTimeZone, paramConfig[0].CompareSecondStart))
-					et,eErr := time.Parse(m.DateFormatWithZone, fmt.Sprintf("%s 23:59:59 "+m.DefaultLocalTimeZone, paramConfig[0].CompareSecondEnd))
+					st, sErr := time.Parse(m.DateFormatWithZone, fmt.Sprintf("%s 00:00:00 "+m.DefaultLocalTimeZone, paramConfig[0].CompareSecondStart))
+					et, eErr := time.Parse(m.DateFormatWithZone, fmt.Sprintf("%s 23:59:59 "+m.DefaultLocalTimeZone, paramConfig[0].CompareSecondEnd))
 					stTimestamp := st.Unix()
 					etTimestamp := et.Unix()
 					if sErr == nil && eErr == nil {
 						if subStartSecond > 0 && subEndSecond > 0 {
 							stTimestamp = st.Unix() + subStartSecond
 							etTimestamp = st.Unix() + subEndSecond
-						}else{
+						} else {
 							if (et.Unix() - st.Unix()) != (query.End - query.Start) {
 								etTimestamp = stTimestamp + (query.End - query.Start)
 							}
 						}
-						compareSubTime = stTimestamp-query.Start
+						compareSubTime = stTimestamp - query.Start
 						compareSecondLegend = fmt.Sprintf("%s_%s", paramConfig[0].CompareSecondStart, paramConfig[0].CompareSecondEnd)
-						querys = append(querys, m.QueryMonitorData{Start: stTimestamp, End: etTimestamp, PromQ: tmpPromQl, Legend: tmpLegend, Metric: []string{v}, Endpoint: []string{tmpParamConfig.Endpoint}, CompareLegend:compareSecondLegend, SameEndpoint:sameEndpoint, Step:step, Cluster: clusterAddress})
+						querys = append(querys, m.QueryMonitorData{Start: stTimestamp, End: etTimestamp, PromQ: tmpPromQl, Legend: tmpLegend, Metric: []string{v}, Endpoint: []string{tmpParamConfig.Endpoint}, CompareLegend: compareSecondLegend, SameEndpoint: sameEndpoint, Step: step, Cluster: clusterAddress})
 					}
 				}
 			}
 		}
-	}else{
+	} else {
 		// Handle custom dashboard
-		var customLegend,tmpEndpointParam,tmpMetricParam string
-		var diffEndpoint,diffMetric bool
-		for i,v := range paramConfig {
+		var customLegend, tmpEndpointParam, tmpMetricParam string
+		var diffEndpoint, diffMetric bool
+		for i, v := range paramConfig {
 			if v.PromQl == "" {
-				_,tmpPromQL := db.GetPromMetric([]string{v.Endpoint}, v.Metric)
+				_, tmpPromQL := db.GetPromMetric([]string{v.Endpoint}, v.Metric)
 				if tmpPromQL == "" {
 					continue
-				}else{
+				} else {
 					paramConfig[i].PromQl = tmpPromQL
 				}
 			}
 			if i == 0 {
 				tmpEndpointParam = v.Endpoint
 				tmpMetricParam = v.Metric
-			}else{
+			} else {
 				if tmpEndpointParam != v.Endpoint {
 					diffEndpoint = true
 				}
@@ -582,11 +557,11 @@ func GetChart(c *gin.Context)  {
 		if diffEndpoint == diffMetric {
 			customLegend = "$custom"
 		}
-		for _,v := range paramConfig {
+		for _, v := range paramConfig {
 			if v.PromQl == "" {
 				continue
 			}
-			endpointObj := m.EndpointTable{Guid:v.Endpoint}
+			endpointObj := m.EndpointTable{Guid: v.Endpoint}
 			if v.Endpoint != "" {
 				db.GetEndpoint(&endpointObj)
 				clusterAddress = db.GetClusterAddress(endpointObj.Cluster)
@@ -600,7 +575,7 @@ func GetChart(c *gin.Context)  {
 				}
 				if endpointObj.AddressAgent != "" {
 					v.PromQl = strings.Replace(v.PromQl, "$address", endpointObj.AddressAgent, -1)
-				}else {
+				} else {
 					v.PromQl = strings.Replace(v.PromQl, "$address", endpointObj.Address, -1)
 				}
 				step = endpointObj.Step
@@ -620,11 +595,11 @@ func GetChart(c *gin.Context)  {
 			if strings.Contains(v.PromQl, "$") {
 				re, _ := regexp.Compile("=\"[\\$]+[^\"]+\"")
 				fetchTag := re.FindAll([]byte(v.PromQl), -1)
-				for _,vv := range fetchTag {
+				for _, vv := range fetchTag {
 					v.PromQl = strings.Replace(v.PromQl, string(vv), "=~\".*\"", -1)
 				}
 			}
-			querys = append(querys, m.QueryMonitorData{Start:query.Start, End:query.End, PromQ:v.PromQl, Legend:customLegend, Metric:[]string{v.Metric}, Endpoint:[]string{v.Endpoint}, Step:step, Cluster: clusterAddress})
+			querys = append(querys, m.QueryMonitorData{Start: query.Start, End: query.End, PromQ: v.PromQl, Legend: customLegend, Metric: []string{v.Metric}, Endpoint: []string{v.Endpoint}, Step: step, Cluster: clusterAddress})
 		}
 	}
 	if len(querys) == 0 {
@@ -637,19 +612,19 @@ func GetChart(c *gin.Context)  {
 		archiveQueryFlag = true
 	}
 	appendDataFlag := false
-	for _,v := range querys {
-		log.Logger.Debug("Query param", log.StringList("endpoint",v.Endpoint), log.StringList("metric",v.Metric), log.Int64("start", v.Start), log.Int64("end", v.End), log.String("promQl", v.PromQ))
+	for _, v := range querys {
+		log.Logger.Debug("Query param", log.StringList("endpoint", v.Endpoint), log.StringList("metric", v.Metric), log.Int64("start", v.Start), log.Int64("end", v.End), log.String("promQl", v.PromQ))
 		if !archiveQueryFlag {
 			tmpSerials := ds.PrometheusData(&v)
 			if len(tmpSerials) > 0 {
 				if len(tmpSerials[0].Data) > 0 {
-					tmpSerialEnd := int64(tmpSerials[0].Data[0][0])/1000
-					if tmpSerialEnd > (query.Start+120) {
-						_,_,tmpArchiveSerials := db.GetArchiveData(&m.QueryMonitorData{Start:v.Start, End:tmpSerialEnd, Endpoint:v.Endpoint, Metric:v.Metric, Legend:v.Legend, CompareLegend:v.CompareLegend, SameEndpoint:v.SameEndpoint}, paramConfig[0].Aggregate)
-						for _,tmpSerial := range tmpArchiveSerials {
+					tmpSerialEnd := int64(tmpSerials[0].Data[0][0]) / 1000
+					if tmpSerialEnd > (query.Start + 120) {
+						_, _, tmpArchiveSerials := db.GetArchiveData(&m.QueryMonitorData{Start: v.Start, End: tmpSerialEnd, Endpoint: v.Endpoint, Metric: v.Metric, Legend: v.Legend, CompareLegend: v.CompareLegend, SameEndpoint: v.SameEndpoint}, paramConfig[0].Aggregate)
+						for _, tmpSerial := range tmpArchiveSerials {
 							if len(tmpSerial.Data) > 0 {
 								appendDataFlag = true
-								for si,vv := range tmpSerials {
+								for si, vv := range tmpSerials {
 									if tmpSerial.Name == vv.Name {
 										tmpSerials[si].Data = append(tmpSerial.Data, vv.Data...)
 									}
@@ -658,8 +633,8 @@ func GetChart(c *gin.Context)  {
 						}
 					}
 				}
-			}else{
-				err,step,tmpSerials = db.GetArchiveData(&m.QueryMonitorData{Start:v.Start, End:v.End, Endpoint:v.Endpoint, Metric:v.Metric, Legend:v.Legend, CompareLegend:v.CompareLegend, SameEndpoint:v.SameEndpoint}, paramConfig[0].Aggregate)
+			} else {
+				err, step, tmpSerials = db.GetArchiveData(&m.QueryMonitorData{Start: v.Start, End: v.End, Endpoint: v.Endpoint, Metric: v.Metric, Legend: v.Legend, CompareLegend: v.CompareLegend, SameEndpoint: v.SameEndpoint}, paramConfig[0].Aggregate)
 				if err != nil {
 					log.Logger.Error("Prometheus no data,try to get archive data error", log.Error(err))
 				}
@@ -667,8 +642,8 @@ func GetChart(c *gin.Context)  {
 			for _, vv := range tmpSerials {
 				serials = append(serials, vv)
 			}
-		}else{
-			err,tmpStep,tmpSerials := db.GetArchiveData(&v, paramConfig[0].Aggregate)
+		} else {
+			err, tmpStep, tmpSerials := db.GetArchiveData(&v, paramConfig[0].Aggregate)
 			if err != nil {
 				mid.ReturnQueryTableError(c, "prometheus_archive", err)
 				return
@@ -691,11 +666,11 @@ func GetChart(c *gin.Context)  {
 		if strings.Contains(s.Name, "$metric") {
 			queryIndex := i
 			if i >= len(querys) {
-				queryIndex = len(querys)-1
+				queryIndex = len(querys) - 1
 			}
 			s.Name = strings.Replace(s.Name, "$metric", querys[queryIndex].Metric[0], -1)
 		}
-		if processName,b:=processDisplayMap[s.Name];b{
+		if processName, b := processDisplayMap[s.Name]; b {
 			s.Name = processName
 		}
 		eOption.Legend = append(eOption.Legend, s.Name)
@@ -718,7 +693,7 @@ func GetChart(c *gin.Context)  {
 				s.Data = db.CompareSubData(s.Data, float64(compareSubTime)*1000)
 			}
 		}
-		_,tmpJsonMarshalErr := json.Marshal(s)
+		_, tmpJsonMarshalErr := json.Marshal(s)
 		if tmpJsonMarshalErr == nil {
 			eOption.Series = append(eOption.Series, s)
 		}
@@ -728,8 +703,8 @@ func GetChart(c *gin.Context)  {
 	mid.ReturnSuccessData(c, eOption)
 }
 
-func GetPieChart(c *gin.Context)  {
-	requestBody,err := ioutil.ReadAll(c.Request.Body)
+func GetPieChart(c *gin.Context) {
+	requestBody, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
 		mid.ReturnBodyError(c, err)
 		return
@@ -745,21 +720,21 @@ func GetPieChart(c *gin.Context)  {
 		mid.ReturnParamEmptyError(c, "endpoint and metric")
 		return
 	}
-	endpointObj := m.EndpointTable{Guid:paramConfig.Endpoint}
+	endpointObj := m.EndpointTable{Guid: paramConfig.Endpoint}
 	db.GetEndpoint(&endpointObj)
 	if endpointObj.Id <= 0 {
 		mid.ReturnFetchDataError(c, "endpoint", "guid", paramConfig.Endpoint)
 		return
 	}
-	query.Start = time.Now().Unix()-120
+	query.Start = time.Now().Unix() - 120
 	query.End = time.Now().Unix()
 	// fetch promQL
 	if paramConfig.PromQl == "" {
-		_,tmpPromQL := db.GetPromMetric([]string{paramConfig.Endpoint}, paramConfig.Metric)
+		_, tmpPromQL := db.GetPromMetric([]string{paramConfig.Endpoint}, paramConfig.Metric)
 		if tmpPromQL == "" {
 			mid.ReturnFetchDataError(c, "prom_ql", "endpoint,metric", paramConfig.Endpoint+","+paramConfig.Metric)
 			return
-		}else{
+		} else {
 			paramConfig.PromQl = tmpPromQL
 		}
 	}
@@ -770,7 +745,7 @@ func GetPieChart(c *gin.Context)  {
 		}
 		paramConfig.PromQl = strings.Replace(paramConfig.PromQl, "$address", tmpAddress, -1)
 	}
-	queryResult := m.QueryMonitorData{Start:query.Start, End:query.End, PromQ:paramConfig.PromQl, Metric:[]string{paramConfig.Metric}, Endpoint:[]string{paramConfig.Endpoint}, ChartType: "pie"}
+	queryResult := m.QueryMonitorData{Start: query.Start, End: query.End, PromQ: paramConfig.PromQl, Metric: []string{paramConfig.Metric}, Endpoint: []string{paramConfig.Endpoint}, ChartType: "pie"}
 	ds.PrometheusData(&queryResult)
 	mid.ReturnSuccessData(c, queryResult.PieData)
 }
@@ -782,7 +757,7 @@ func GetPieChart(c *gin.Context)  {
 // @Param limit query string false "数量限制"
 // @Success 200
 // @Router /api/v1/dashboard/search [get]
-func MainSearch(c *gin.Context)  {
+func MainSearch(c *gin.Context) {
 	endpoint := c.Query("search")
 	//limit := c.Query("limit")
 	if endpoint == "" {
@@ -794,12 +769,12 @@ func MainSearch(c *gin.Context)  {
 		endpoint = strings.Split(endpoint, `:`)[1]
 		tmpFlag = true
 	}
-	err,result := db.SearchHost(endpoint)
+	err, result := db.SearchHost(endpoint)
 	if err != nil {
 		mid.ReturnQueryTableError(c, "endpoint", err)
 		return
 	}
-	for _,v := range result {
+	for _, v := range result {
 		v.OptionTypeName = v.OptionType
 	}
 	sysResult := db.SearchRecursivePanel(endpoint)
@@ -808,7 +783,7 @@ func MainSearch(c *gin.Context)  {
 	}
 	if tmpFlag {
 		var tmpResult []*m.OptionModel
-		for _,v := range result {
+		for _, v := range result {
 			if v.OptionText == c.Query("search") {
 				tmpResult = append(tmpResult, v)
 				break
@@ -824,9 +799,9 @@ func MainSearch(c *gin.Context)  {
 	mid.ReturnSuccessData(c, sortOptionList)
 }
 
-func GetPromMetric(c *gin.Context)  {
+func GetPromMetric(c *gin.Context) {
 	metricType := c.Query("type")
-	err,data := db.GetPromMetricTable(metricType)
+	err, data := db.GetPromMetricTable(metricType)
 	if err != nil {
 		mid.ReturnQueryTableError(c, "prom_metric", err)
 		return
@@ -834,9 +809,9 @@ func GetPromMetric(c *gin.Context)  {
 	mid.ReturnSuccessData(c, data)
 }
 
-func UpdatePanelChartMetric(c *gin.Context)  {
+func UpdatePanelChartMetric(c *gin.Context) {
 	var param []m.PromMetricUpdateParam
-	if err := c.ShouldBindJSON(&param);err == nil {
+	if err := c.ShouldBindJSON(&param); err == nil {
 		if len(param) == 0 {
 			mid.ReturnParamEmptyError(c, "")
 			return
@@ -847,14 +822,14 @@ func UpdatePanelChartMetric(c *gin.Context)  {
 			return
 		}
 		mid.ReturnSuccess(c)
-	}else{
+	} else {
 		mid.ReturnValidateError(c, err.Error())
 	}
 }
 
 func UpdatePromMetric(c *gin.Context) {
 	var param []*m.PromMetricTable
-	if err := c.ShouldBindJSON(&param);err == nil {
+	if err := c.ShouldBindJSON(&param); err == nil {
 		if len(param) == 0 {
 			mid.ReturnParamEmptyError(c, "")
 			return
@@ -865,24 +840,25 @@ func UpdatePromMetric(c *gin.Context) {
 			return
 		}
 		mid.ReturnSuccess(c)
-	}else{
+	} else {
 		mid.ReturnValidateError(c, err.Error())
 	}
 }
 
-func GetEndpointMetric(c *gin.Context)  {
-	id,_ := strconv.Atoi(c.Query("id"))
-	endpointType := c.Query("endpoint_type")
-	if id <= 0 {
-		mid.ReturnSuccessData(c, []string{})
+func GetEndpointMetric(c *gin.Context) {
+	var param m.GetEndpointMetricParam
+	if err:=c.ShouldBindJSON(&param);err!=nil {
+		mid.ReturnValidateError(c, err.Error())
 		return
 	}
 	var err error
 	var data []*m.OptionModel
-	if id > 0 {
-		err, data = db.GetEndpointMetric(id)
-	}else{
-		err, data = db.GetEndpointMetricByEndpointType(endpointType)
+	if param.ServiceGroup != "" {
+		err, data = db.GetServiceGroupPromMetric(param.ServiceGroup, param.Workspace, param.MonitorType)
+	}else if param.Guid != "" {
+		err, data = db.GetEndpointMetric(param.Guid, param.ServiceGroup)
+	} else {
+		err, data = db.GetEndpointMetricByEndpointType(param.MonitorType)
 	}
 	if err != nil {
 		mid.ReturnHandleError(c, "Get endpoint metric failed", err)
@@ -891,7 +867,7 @@ func GetEndpointMetric(c *gin.Context)  {
 	mid.ReturnSuccessData(c, data)
 }
 
-func GetChartsByEndpoint(c *gin.Context)  {
+func GetChartsByEndpoint(c *gin.Context) {
 	// Validate ip and metric
 	ip := c.Query("ip")
 	metric := c.Query("metric")
@@ -899,13 +875,13 @@ func GetChartsByEndpoint(c *gin.Context)  {
 		mid.ReturnParamEmptyError(c, "ip or metric")
 		return
 	}
-	endpointObj := m.EndpointTable{Ip:ip, ExportType:"host"}
+	endpointObj := m.EndpointTable{Ip: ip, ExportType: "host"}
 	db.GetEndpoint(&endpointObj)
 	if endpointObj.Id <= 0 {
 		mid.ReturnFetchDataError(c, "endpoint", "ip", ip)
 		return
 	}
-	err,promQL := db.GetPromMetric([]string{endpointObj.Guid}, metric)
+	err, promQL := db.GetPromMetric([]string{endpointObj.Guid}, metric)
 	if err != nil || promQL == "" {
 		mid.ReturnFetchDataError(c, "prom_ql", "endpoint,metric", endpointObj.Guid+","+metric)
 		return
@@ -923,11 +899,11 @@ func GetChartsByEndpoint(c *gin.Context)  {
 	if paramTime != "" && paramStart == "" {
 		paramStart = paramTime
 	}
-	start,err := strconv.ParseInt(paramStart, 10, 64)
+	start, err := strconv.ParseInt(paramStart, 10, 64)
 	if err != nil {
 		mid.ReturnParamTypeError(c, "start", "intString")
 		return
-	}else{
+	} else {
 		if start < 0 {
 			start = time.Now().Unix() + start
 		}
@@ -935,13 +911,13 @@ func GetChartsByEndpoint(c *gin.Context)  {
 	}
 	query.End = time.Now().Unix()
 	if paramEnd != "" {
-		end,err := strconv.ParseInt(paramEnd, 10, 64)
+		end, err := strconv.ParseInt(paramEnd, 10, 64)
 		if err == nil && end <= query.End {
 			query.End = end
 		}
 	}
 	// Query data
-	log.Logger.Debug("Query param", log.StringList("endpoint",query.Endpoint), log.StringList("metric",query.Metric), log.Int64("start", query.Start), log.Int64("end", query.End), log.String("promQl", query.PromQ))
+	log.Logger.Debug("Query param", log.StringList("endpoint", query.Endpoint), log.StringList("metric", query.Metric), log.Int64("start", query.Start), log.Int64("end", query.End), log.String("promQl", query.PromQ))
 	serials := ds.PrometheusData(&query)
 	for _, s := range serials {
 		if strings.Contains(s.Name, "$metric") {
@@ -957,13 +933,13 @@ func GetChartsByEndpoint(c *gin.Context)  {
 	eOption.Yaxis = m.YaxisModel{Unit: unit}
 	if len(serials) > 0 {
 		eOption.Series = serials
-	}else{
+	} else {
 		eOption.Series = []*m.SerialModel{}
 	}
 	mid.ReturnSuccessData(c, eOption)
 }
 
-func GetMainPage(c *gin.Context)  {
+func GetMainPage(c *gin.Context) {
 	var roleList []string
 	var user string
 	token := mid.GetCoreToken(c)
@@ -976,14 +952,14 @@ func GetMainPage(c *gin.Context)  {
 			roleList = append(roleList, v.Name)
 		}
 	}
-	err,result := db.GetMainCustomDashboard(roleList)
+	err, result := db.GetMainCustomDashboard(roleList)
 	if err != nil {
 		log.Logger.Error("Get main page failed", log.Error(err))
 	}
 	mid.ReturnSuccessData(c, result)
 }
 
-func ListMainPageRole(c *gin.Context)  {
+func ListMainPageRole(c *gin.Context) {
 	var roleList []string
 	var user string
 	token := mid.GetCoreToken(c)
@@ -996,10 +972,10 @@ func ListMainPageRole(c *gin.Context)  {
 			roleList = append(roleList, v.Name)
 		}
 	}
-	err,result := db.ListMainPageRole(user, roleList)
+	err, result := db.ListMainPageRole(user, roleList)
 	if err != nil {
 		mid.ReturnHandleError(c, err.Error(), err)
-	}else{
+	} else {
 		if result == nil {
 			result = []*m.MainPageRoleQuery{}
 		}
@@ -1007,27 +983,27 @@ func ListMainPageRole(c *gin.Context)  {
 	}
 }
 
-func UpdateMainPage(c *gin.Context)  {
+func UpdateMainPage(c *gin.Context) {
 	var param []m.MainPageRoleQuery
-	if err := c.ShouldBindJSON(&param);err == nil {
+	if err := c.ShouldBindJSON(&param); err == nil {
 		err := db.UpdateMainPageRole(param)
 		if err != nil {
 			mid.ReturnHandleError(c, err.Error(), err)
 			return
 		}
 		mid.ReturnSuccess(c)
-	}else{
+	} else {
 		mid.ReturnValidateError(c, err.Error())
 	}
 }
 
-func GetEndpointsByIp(c *gin.Context)  {
+func GetEndpointsByIp(c *gin.Context) {
 	ipList := c.QueryArray("ip")
 	if len(ipList) <= 0 {
 		mid.ReturnParamEmptyError(c, "ip")
 		return
 	}
-	err,endpoints := db.GetEndpointsByIp(ipList, "host")
+	err, endpoints := db.GetEndpointsByIp(ipList, "host")
 	if err != nil {
 		mid.ReturnQueryTableError(c, "endpoint", err)
 		return
@@ -1035,8 +1011,8 @@ func GetEndpointsByIp(c *gin.Context)  {
 	mid.ReturnSuccessData(c, endpoints)
 }
 
-func DisplayWatermark(c *gin.Context)  {
-	result := m.DisplayDemoFlagDto{Display:true}
+func DisplayWatermark(c *gin.Context) {
+	result := m.DisplayDemoFlagDto{Display: true}
 	isDisplay := strings.ToLower(os.Getenv("DEMO_FLAG"))
 	if isDisplay == "n" || isDisplay == "no" || isDisplay == "false" {
 		result.Display = false
@@ -1044,7 +1020,7 @@ func DisplayWatermark(c *gin.Context)  {
 	mid.ReturnSuccessData(c, result)
 }
 
-func GetDashboardPanelList(c *gin.Context)  {
+func GetDashboardPanelList(c *gin.Context) {
 	endpointType := c.Query("type")
 	metric := c.Query("metric")
 	if endpointType == "" || metric == "" {

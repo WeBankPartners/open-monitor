@@ -140,7 +140,8 @@ export default {
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.editTitle.api, params, () => {
         this.$root.JQ('#edit_Modal').modal('hide')
-        this.refreshCharts()
+        // this.refreshCharts()
+        this.$emit('refreshConfig')
       })
     },
 

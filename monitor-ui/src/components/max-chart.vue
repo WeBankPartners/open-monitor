@@ -137,7 +137,7 @@ export default {
           time_second: Number(this.chartCondition.timeTnterval),
           start: 0,
           end: 0,
-          title: '',
+          title: this.chartItem.title,
           unit: '',
           chart_id: this.chartItem.id,
           data: []
