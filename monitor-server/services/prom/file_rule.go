@@ -57,5 +57,6 @@ func consumeRuleConfig(input models.RFGroup) error {
 }
 
 func SyncLocalRuleConfig(input models.RuleLocalConfigJob)  {
+	log.Logger.Info("SyncLocalRuleConfig", log.JsonObj("input", input))
 	consumeRuleConfigChan <- input
 }

@@ -5,7 +5,7 @@
         <div>
           <div class="search-zone">
             <span class="params-title">{{$t('field.relativeTime')}}：</span>
-            <Select filterable clearable v-model="viewCondition.timeTnterval" :disabled="disableTime" style="width:80px"  @on-change="initPanal">
+            <Select filterable v-model="viewCondition.timeTnterval" :disabled="disableTime" style="width:80px"  @on-change="initPanal">
               <Option v-for="item in dataPick" :value="item.value" :key="item.value">{{ item.label }}</Option>
             </Select>
           </div>
@@ -148,6 +148,7 @@ export default {
       }
       let params = {
         aggregate: this.viewCondition.agg,
+        agg_step: this.viewCondition.agg_step,
         time_second: this.viewCondition.timeTnterval,
         start: this.viewCondition.dateRange[0] ===''? 
           0 :Date.parse(this.viewCondition.dateRange[0].replace(/-/g, '/'))/1000,
@@ -165,7 +166,7 @@ export default {
           'POST',this.$root.apiCenter.metricConfigView.api, params,
           responseData => {
             responseData.yaxis.unit =  this.panalUnit  
-            const chartConfig = {eye: false, lineBarSwitch: true, chartType: this.panalData.chartType}
+            const chartConfig = {eye: false, lineBarSwitch: true, chartType: this.panalData.chartType, params: params}
             readyToDraw(this,responseData, 1, chartConfig)
           }
         );
