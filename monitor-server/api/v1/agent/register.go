@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"encoding/json"
 	"fmt"
 	mid "github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
@@ -16,7 +17,7 @@ import (
 const defaultStep = 10
 const longStep = 60
 
-var agentManagerServer string
+var AgentManagerServer string
 
 type returnData struct {
 	endpoint        m.EndpointTable
@@ -28,6 +29,7 @@ type returnData struct {
 	addDefaultGroup bool
 	agentManager    bool
 	err             error
+	extendParam     m.EndpointExtendParamObj
 }
 
 func RegisterAgentNew(c *gin.Context) {
@@ -52,23 +54,23 @@ func RegisterAgentNew(c *gin.Context) {
 func InitAgentManager() {
 	for _, v := range m.Config().Dependence {
 		if v.Name == "agent_manager" {
-			agentManagerServer = v.Server
+			AgentManagerServer = v.Server
 			break
 		}
 	}
-	if agentManagerServer != "" {
+	if AgentManagerServer != "" {
 		param, err := db.GetAgentManager("")
 		if err != nil {
 			log.Logger.Error("Get agent manager table fail", log.Error(err))
 			return
 		}
-		go prom.InitAgentManager(param, agentManagerServer)
-		go prom.StartSyncAgentManagerJob(param, agentManagerServer)
+		go prom.InitAgentManager(param, AgentManagerServer)
+		go prom.StartSyncAgentManagerJob(param, AgentManagerServer)
 	}
 }
 
 func AgentRegister(param m.RegisterParamNew) (validateMessage, guid string, err error) {
-	if agentManagerServer == "" && param.AgentManager {
+	if AgentManagerServer == "" && param.AgentManager {
 		return validateMessage, guid, fmt.Errorf("agent manager server not found,can not enable agent manager ")
 	}
 	if param.Type == "tomcat" {
@@ -97,6 +99,8 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage, guid string, err 
 		rData = windowsRegister(param)
 	case "snmp":
 		rData = snmpExporterRegister(param)
+	case "process":
+		rData = processMonitorRegister(param)
 	default:
 		rData = otherExporterRegister(param)
 	}
@@ -106,7 +110,12 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage, guid string, err 
 	if rData.validateMessage != "" || rData.err != nil {
 		return rData.validateMessage, guid, rData.err
 	}
-	stepList, err = db.UpdateEndpoint(&rData.endpoint)
+	extendString := ""
+	if rData.extendParam.Enable {
+		tmpExtendBytes, _ := json.Marshal(rData.extendParam)
+		extendString = string(tmpExtendBytes)
+	}
+	stepList, err = db.UpdateEndpoint(&rData.endpoint, extendString)
 	if err != nil {
 		return validateMessage, guid, err
 	}
@@ -128,21 +137,15 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage, guid string, err 
 			rData.defaultGroup = param.DefaultGroupName
 		}
 		if rData.defaultGroup != "" {
-			err, grpObj := db.GetSingleGrp(0, rData.defaultGroup)
-			if err != nil || grpObj.Id <= 0 {
-				return validateMessage, guid, fmt.Errorf("Add group %s fail,id:%d err:%v ", rData.defaultGroup, grpObj.Id, err)
-			}
-			err, _ = db.UpdateGrpEndpoint(m.GrpEndpointParamNew{Grp: grpObj.Id, Endpoints: []int{rData.endpoint.Id}, Operation: "add"})
-			if err != nil {
-				return validateMessage, guid, err
-			}
-			_, tplObj := db.GetTpl(0, grpObj.Id, 0)
-			if tplObj.Id > 0 {
-				//err := alarm.SaveConfigFile(tplObj.Id, false)
-				err := db.SyncRuleConfigFile(tplObj.Id, []string{}, false)
-				if err != nil {
-					log.Logger.Error("Register interface update prometheus config fail", log.String("group", rData.defaultGroup), log.Error(err))
-					return validateMessage, guid, err
+			_,tmpErr := db.GetSimpleEndpointGroup(rData.defaultGroup)
+			if tmpErr != nil {
+				log.Logger.Error("add default group fail", log.String("group", rData.defaultGroup), log.Error(err))
+			}else{
+				tmpErr = db.UpdateGroupEndpoint(&m.UpdateGroupEndpointParam{GroupGuid: rData.defaultGroup,EndpointGuidList: []string{rData.endpoint.Guid}}, true)
+				if tmpErr != nil {
+					log.Logger.Error("append default group endpoint fail", log.String("group", rData.defaultGroup), log.Error(err))
+				}else{
+					db.SyncPrometheusRuleFile(rData.defaultGroup, false)
 				}
 			}
 		}
@@ -244,11 +247,12 @@ func mysqlRegister(param m.RegisterParamNew) returnData {
 			result.err = fmt.Errorf("Mysql agnet bin can not found in config ")
 			return result
 		}
-		address, err = prom.DeployAgent(param.Type, param.Name, binPath, param.Ip, param.Port, param.User, param.Password, agentManagerServer, configFile)
+		address, err = prom.DeployAgent(param.Type, param.Name, binPath, param.Ip, param.Port, param.User, param.Password, AgentManagerServer, configFile)
 		if err != nil {
 			result.err = err
 			return result
 		}
+		result.extendParam = m.EndpointExtendParamObj{Enable: true, Ip: param.Ip, Port: param.Port, User: param.User, Password: param.Password, BinPath: binPath, ConfigPath: configFile}
 	}
 	var mysqlVersion, exportVersion string
 	if param.FetchMetric {
@@ -321,11 +325,12 @@ func redisRegister(param m.RegisterParamNew) returnData {
 			result.err = fmt.Errorf("Redis agnet bin can not found in config ")
 			return result
 		}
-		address, err = prom.DeployAgent(param.Type, param.Name, binPath, param.Ip, param.Port, param.User, param.Password, agentManagerServer, "")
+		address, err = prom.DeployAgent(param.Type, param.Name, binPath, param.Ip, param.Port, param.User, param.Password, AgentManagerServer, "")
 		if err != nil {
 			result.err = err
 			return result
 		}
+		result.extendParam = m.EndpointExtendParamObj{Enable: true, Ip: param.Ip, Port: param.Port, User: param.User, Password: param.Password, BinPath: binPath}
 	}
 	var redisVersion, exportVersion string
 	if param.FetchMetric {
@@ -395,11 +400,12 @@ func javaRegister(param m.RegisterParamNew) returnData {
 			result.err = fmt.Errorf("Java agnet bin can not found in config ")
 			return result
 		}
-		address, err = prom.DeployAgent(param.Type, param.Name, binPath, param.Ip, param.Port, param.User, param.Password, agentManagerServer, configFile)
+		address, err = prom.DeployAgent(param.Type, param.Name, binPath, param.Ip, param.Port, param.User, param.Password, AgentManagerServer, configFile)
 		if err != nil {
 			result.err = err
 			return result
 		}
+		result.extendParam = m.EndpointExtendParamObj{Enable: true, Ip: param.Ip, Port: param.Port, User: param.User, Password: param.Password, BinPath: binPath, ConfigPath: configFile}
 	}
 	var jvmVersion, exportVersion string
 	if param.FetchMetric {
@@ -468,11 +474,12 @@ func nginxRegister(param m.RegisterParamNew) returnData {
 			result.err = fmt.Errorf("Nginx agnet bin can not found in config ")
 			return result
 		}
-		address, err = prom.DeployAgent(param.Type, param.Name, binPath, param.Ip, param.Port, param.User, param.Password, agentManagerServer, "")
+		address, err = prom.DeployAgent(param.Type, param.Name, binPath, param.Ip, param.Port, param.User, param.Password, AgentManagerServer, "")
 		if err != nil {
 			result.err = err
 			return result
 		}
+		result.extendParam = m.EndpointExtendParamObj{Enable: true, Ip: param.Ip, Port: param.Port, User: param.User, Password: param.Password, BinPath: binPath}
 	}
 	if param.FetchMetric {
 		tmpIp, tmpPort := param.Ip, param.Port
@@ -531,6 +538,7 @@ func pingRegister(param m.RegisterParamNew) returnData {
 		param.ExportAddress = formatExportAddress(param.ExportAddress)
 		result.endpoint.AddressAgent = param.ExportAddress
 		result.fetchMetric = true
+		result.extendParam = m.EndpointExtendParamObj{Enable: true, ExportAddress: param.ExportAddress}
 	}
 	return result
 }
@@ -551,6 +559,7 @@ func telnetRegister(param m.RegisterParamNew) returnData {
 		param.ExportAddress = formatExportAddress(param.ExportAddress)
 		result.endpoint.AddressAgent = param.ExportAddress
 		result.fetchMetric = true
+		result.extendParam = m.EndpointExtendParamObj{Enable: true, ExportAddress: param.ExportAddress}
 	}
 	result.defaultGroup = "default_telnet_group"
 	result.addDefaultGroup = true
@@ -562,6 +571,7 @@ func telnetRegister(param m.RegisterParamNew) returnData {
 	if err != nil {
 		result.err = err
 	}
+	result.extendParam = m.EndpointExtendParamObj{Enable: true, Ip: param.Ip, Port: param.Port}
 	return result
 }
 
@@ -577,10 +587,12 @@ func httpRegister(param m.RegisterParamNew) returnData {
 	result.endpoint.Address = fmt.Sprintf("%s:%s", param.Ip, param.Port)
 	result.endpoint.ExportType = param.Type
 	result.endpoint.Step = defaultStep
+	result.extendParam = m.EndpointExtendParamObj{Enable: true, HttpMethod: param.Method, HttpUrl: param.Url}
 	if param.ExportAddress != "" {
 		param.ExportAddress = formatExportAddress(param.ExportAddress)
 		result.endpoint.AddressAgent = param.ExportAddress
 		result.fetchMetric = true
+		result.extendParam.ExportAddress = param.ExportAddress
 	}
 	result.defaultGroup = "default_http_group"
 	result.addDefaultGroup = true
@@ -666,6 +678,41 @@ func snmpExporterRegister(param m.RegisterParamNew) returnData {
 	result.fetchMetric = false
 	result.agentManager = false
 	err := db.SnmpEndpointAdd(param.ProxyExporter, result.endpoint.Guid, param.Ip)
+	if err != nil {
+		result.err = err
+	}
+	result.extendParam = m.EndpointExtendParamObj{Enable: true, ProxyExporter: param.ProxyExporter}
+	return result
+}
+
+func processMonitorRegister(param m.RegisterParamNew) returnData {
+	var result returnData
+	result.endpoint.Step = defaultStep
+	if param.Ip == "" {
+		result.validateMessage = "Process host ip can not empty"
+		return result
+	}
+	if param.Name == "" {
+		result.validateMessage = "Process displayName can not empty"
+		return result
+	}
+	result.endpoint.Guid = fmt.Sprintf("%s_%s_%s", param.Name, param.Ip, param.Type)
+	result.endpoint.Name = param.Name
+	result.endpoint.Ip = param.Ip
+	endpointObj := m.EndpointTable{Ip: param.Ip, ExportType: "host"}
+	db.GetEndpoint(&endpointObj)
+	result.endpoint.ExportType = param.Type
+	result.endpoint.Address = endpointObj.Address
+	result.defaultGroup = "default_process_group"
+	result.addDefaultGroup = true
+	result.storeMetric = false
+	result.fetchMetric = false
+	result.agentManager = false
+	result.extendParam = m.EndpointExtendParamObj{Enable: true, ProcessName: param.ProcessName, ProcessTags: param.Tags}
+	newEndpointObj := m.EndpointNewTable{Guid: result.endpoint.Guid, Name: result.endpoint.Name, Ip: result.endpoint.Ip, MonitorType: result.endpoint.ExportType, AgentAddress: result.endpoint.Address}
+	b, _ := json.Marshal(result.extendParam)
+	newEndpointObj.ExtendParam = string(b)
+	err := db.SyncNodeExporterProcessConfig(param.Ip, []*m.EndpointNewTable{&newEndpointObj}, false)
 	if err != nil {
 		result.err = err
 	}
