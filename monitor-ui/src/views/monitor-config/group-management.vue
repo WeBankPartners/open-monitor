@@ -18,14 +18,6 @@
       </div>
     </PageTable>
     <ModalComponent :modelConfig="modelConfig">
-      <div slot="slotEndpointType">
-        <label class="col-md-2 label-name">{{$t('tableKey.endpoint_type')}}:</label>
-        <Select v-model="modelConfig.addRow.endpoint_type" filterable style="width:338px">
-            <Option v-for="item in modelConfig.endpointTypeList" :value="item.id" :key="item.id">
-            {{item.name}}</Option>
-        </Select>
-        <label class="required-tip" style="margin-left: 3px;">*</label>
-      </div>
     </ModalComponent>
     <ModalComponent :modelConfig="authorizationModel">
       <div slot="authorization">  
@@ -67,9 +59,9 @@
   import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
   import {baseURL_config} from '@/assets/js/baseURL'
   let tableEle = [
-    {title: 'tableKey.name', value: 'name', display: true},
+    {title: 'tableKey.name', value: 'display_name', display: true},
     {title: 'tableKey.description', value: 'description', display: true},
-    {title: 'tableKey.endpoint_type', value: 'endpoint_type', display: true}
+    {title: 'tableKey.endpoint_type', value: 'monitor_type', display: true}
   ]
   const btn = [
     {btn_name: 'field.endpoint', btn_func: 'editEndpoints'},
@@ -119,7 +111,7 @@
           }
         },
         modelTip: {
-          key: 'name',
+          key: 'display_name',
           value: null
         },
         modelConfig: {
@@ -127,18 +119,22 @@
           modalTitle: 'field.group',
           isAdd: true,
           config: [
-            {label: 'tableKey.name', value: 'name', placeholder: 'tips.inputRequired', v_validate: 'required:true|min:2|max:60', disabled: false, type: 'text'},
+            {label: 'm_guid', value: 'guid', placeholder: 'tips.inputRequired', v_validate: 'required:true|min:2|max:60', disabled: false, type: 'text'},
             {label: 'tableKey.description', value: 'description', placeholder: '', disabled: false, type: 'text'},
             //{name: 'slotEndpointType', type:'slot'}
-            {label: 'tableKey.endpoint_type', value: 'endpoint_type', option: 'endpoint_type',v_validate: 'required:true', disabled: false, type: 'select'}
+            {label: 'tableKey.endpoint_type', value: 'monitor_type', option: 'monitor_type',v_validate: 'required:true', disabled: false, type: 'select'},
+            {label: 'field.resourceLevel', value: 'service_group', option: 'service_group', disabled: false, type: 'select'}
           ],
           addRow: { // [通用]-保存用户新增、编辑时数据
-            name: null,
+            display_name: null,
+            guid: '',
             description: null,
-            endpoint_type: null,
+            monitor_type: null,
+            service_group: null
           },
           v_select_configs: {
-            endpoint_type: []
+            monitor_type: [],
+            service_group: [],
           }
         },
         endpointModel: {
@@ -192,8 +188,9 @@
           page: 1,
           size: 10000,
         }
+        await this.getServeGroup()
         await this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.getEndpointType, params, res => {
-          this.modelConfig.v_select_configs.endpoint_type = res.map(item => {
+          this.modelConfig.v_select_configs.monitor_type = res.map(item => {
             return {
               label: item,
               value: item
@@ -201,6 +198,16 @@
           })
         })
         this.$root.JQ('#add_edit_Modal').modal('show')
+      },
+      async getServeGroup () {
+        await this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v2/service_endpoint/search/group', '', res => {
+          this.modelConfig.v_select_configs.service_group = res.map(item => {
+            return {
+              label: item.display_name,
+              value: item.guid
+            }
+          })
+        })
       },
       addPost () {
         let params= this.$root.$validate.isEmptyReturn_JSON(this.modelConfig.addRow)
@@ -214,7 +221,7 @@
       editPost () {
         let params= this.$root.$validate.isEmptyReturn_JSON(this.modelConfig.addRow)
         params.id = this.id
-        this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.groupManagement.update.api, params, () => {
+        this.$root.$httpRequestEntrance.httpRequestEntrance('PUT', this.$root.apiCenter.groupManagement.update.api, params, () => {
           this.$root.$validate.emptyJson(this.modelConfig.addRow)
           this.$root.JQ('#add_edit_Modal').modal('hide')
           this.$Message.success(this.$t('tips.success'))
@@ -224,13 +231,14 @@
       async editF (rowData) {
         this.modelConfig.isAdd = false
         this.modelTip.value = rowData[this.modelTip.key]
-        this.id = rowData.id
+        this.id = rowData.guid
         let params = {
           page: 1,
           size: 10000,
         }
+        await this.getServeGroup()
         await this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.getEndpointType, params, res => {
-          this.modelConfig.v_select_configs.endpoint_type = res.map(item => {
+          this.modelConfig.v_select_configs.monitor_type = res.map(item => {
             return {
               label: item,
               value: item
@@ -241,23 +249,17 @@
         this.$root.JQ('#add_edit_Modal').modal('show')
       },
       async editEndpoints (rowData) {
-        this.id = rowData.id
-        // this.$router.push({name: 'endpointManagement', params: {group: rowData}})
-        let params = {
-          page: 1,
-          size: 10000,
-        }
-        await this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.endpointManagement.list.api, params, res => {
+        this.id = rowData.guid
+        await this.$root.$httpRequestEntrance.httpRequestEntrance('GET', `/monitor/api/v2/monitor/endpoint/query?monitorType=${rowData.monitor_type}`, '', res => {
           this.endpointModel.endpointOptions = res.data.map(item => {
             return {
               label: item.guid,
-              key: item.id
+              key: item.guid
             }
           })
         })
-        params.grp = rowData.id
-        this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.endpointManagement.list.api, params, res => {
-          this.endpointModel.endpoint = res.data.map(item => item.id)
+        this.$root.$httpRequestEntrance.httpRequestEntrance('GET', `/monitor/api/v2/alarm/endpoint_group/${rowData.guid}/endpoint/list`, '', res => {
+          this.endpointModel.endpoint = res.map(item => item.endpoint)
           this.$root.JQ('#endpoint_Modal').modal('show')
         })
       },
@@ -266,11 +268,10 @@
       },
       managementEndpoint() {
         let params = {
-          grp: this.id,
-          endpoints: this.endpointModel.endpoint.map(Number),
-          operation: 'update'
+          group_guid: this.id,
+          endpoint_guid_list: this.endpointModel.endpoint,
         }
-        this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.endpointManagement.update.api, params, () => {
+        this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v2/alarm/endpoint_group/{groupGuid}/endpoint/update', params, () => {
           this.$Message.success(this.$t('tips.success'))
           this.$root.JQ('#endpoint_Modal').modal('hide')
           this.initData(this.pageConfig.CRUD, this.pageConfig)
@@ -288,15 +289,15 @@
       },
       deleteConfirm (rowData) {
         this.$delConfirm({
-          msg: rowData.name,
+          msg: rowData.display_name,
           callback: () => {
             this.delF(rowData)
           }
         })
       },
       delF (rowData) {
-        let params = {id: rowData.id}
-        this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.groupManagement.delete.api, params, () => {
+        const api = this.$root.apiCenter.groupManagement.delete.api + '/' + rowData.guid
+        this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', api, '', () => {
           // this.$root.$eventBus.$emit('hideConfirmModal')
           this.$Message.success(this.$t('tips.success'))
           this.initData(this.pageConfig.CRUD, this.pageConfig)
@@ -304,10 +305,10 @@
         })
       },
       thresholdConfig (rowData) {
-        this.$router.push({name: 'thresholdManagement', params: {id: rowData.id, type: 'grp'}})
+        this.$router.push({name: 'thresholdManagement', params: {id: rowData.guid, type: 'grp'}})
       },
       logManagement (rowData) {
-        this.$router.push({name: 'logManagement', params: {id: rowData.id, type: 'grp'}})
+        this.$router.push({name: 'logManagement', params: {id: rowData.guid, type: 'grp'}})
       },
       exportThreshold () {
         if (!this.$validate.isEmpty(this.selectedData.checkedIds)) {
@@ -359,7 +360,7 @@
         this.$Message.warning(this.$t('tips.failed'))
       },
       authorizeF (rowData) {
-        this.id = rowData.id
+        this.id = rowData.guid
         this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.groupManagement.allRoles.api, '', (responseData) => {
           this.authorizationModel.roleList = responseData.data
           this.existRole()

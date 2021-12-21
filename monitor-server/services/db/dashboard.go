@@ -62,9 +62,18 @@ func GetButton(bGroup int) (error, []*m.ButtonModel) {
 	}
 }
 
-func GetPanels(pGroup int) (error, []*m.PanelTable) {
+func GetPanels(pGroup int,endpoint string) (error, []*m.PanelTable) {
+	var serviceGroupList []string
+	var endpointServiceRel []*m.EndpointServiceRelTable
+	x.SQL("select distinct service_group from endpoint_service_rel where endpoint=?", endpoint).Find(&endpointServiceRel)
+	if len(endpointServiceRel) > 0 {
+		for _,v := range endpointServiceRel {
+			tmpParentList, _ := fetchGlobalServiceGroupParentGuidList(v.ServiceGroup)
+			serviceGroupList = append(serviceGroupList, tmpParentList...)
+		}
+	}
 	var panels []*m.PanelTable
-	sql := `select * from panel where group_id=?`
+	sql := "select * from panel where group_id=? and (service_group is null or service_group in ('"+strings.Join(serviceGroupList,"','")+"'))"
 	err := x.SQL(sql, pGroup).Find(&panels)
 	if err != nil {
 		log.Logger.Error("Query panels fail", log.Error(err))
@@ -103,10 +112,10 @@ func GetPromMetric(endpoint []string, metric string) (error, string) {
 		tmpMetric = metric[:strings.Index(metric, "/")]
 		tmpTag = metric[strings.Index(metric, "/")+1:]
 	}
-	var query []*m.PromMetricTable
-	err := x.SQL("SELECT prom_ql FROM prom_metric WHERE metric=?", tmpMetric).Find(&query)
+	var query []*m.MetricTable
+	err := x.SQL("SELECT * FROM metric WHERE metric=?", tmpMetric).Find(&query)
 	if err != nil {
-		log.Logger.Error("Query prom_metric fail", log.Error(err))
+		log.Logger.Error("Query metric fail", log.Error(err))
 	}
 	if len(query) > 0 {
 		host := m.EndpointTable{Guid: endpoint[0]}
@@ -115,7 +124,16 @@ func GetPromMetric(endpoint []string, metric string) (error, string) {
 			log.Logger.Error("Find endpoint fail", log.String("endpoint", endpoint[0]), log.Error(err))
 			return err, promQL
 		}
-		reg := query[0].PromQl
+		var reg string
+		for _, v := range query {
+			if v.MonitorType == host.ExportType {
+				reg = v.PromExpr
+				break
+			}
+		}
+		if reg == "" {
+			return fmt.Errorf("Can not match promQl with metric:%s and type:%s ", metric, host.ExportType), promQL
+		}
 		if strings.Contains(reg, `$ip`) {
 			reg = strings.Replace(reg, "$ip", host.Ip, -1)
 		}
@@ -153,7 +171,7 @@ func GetPromMetric(endpoint []string, metric string) (error, string) {
 	return err, promQL
 }
 
-func ReplacePromQlKeyword(promQl, metric string, host m.EndpointTable) string {
+func ReplacePromQlKeyword(promQl, metric string, host *m.EndpointNewTable) string {
 	var tmpTag string
 	if strings.Contains(metric, "/") {
 		tmpTag = metric[strings.Index(metric, "/")+1:]
@@ -172,11 +190,7 @@ func ReplacePromQlKeyword(promQl, metric string, host m.EndpointTable) string {
 			}
 			promQl = strings.ReplaceAll(promQl, "\"$address\"", fmt.Sprintf("\"$address\"%s", tagAppendString))
 		}
-		if host.AddressAgent != "" {
-			promQl = strings.Replace(promQl, "$address", host.AddressAgent, -1)
-		} else {
-			promQl = strings.Replace(promQl, "$address", host.Address, -1)
-		}
+		promQl = strings.Replace(promQl, "$address", host.AgentAddress, -1)
 	}
 	if strings.Contains(promQl, `$guid`) {
 		promQl = strings.Replace(promQl, "$guid", host.Guid, -1)
@@ -184,12 +198,12 @@ func ReplacePromQlKeyword(promQl, metric string, host m.EndpointTable) string {
 	if strings.Contains(promQl, "$pod") {
 		promQl = strings.Replace(promQl, "$pod", host.Name, -1)
 	}
-	if strings.Contains(promQl, "$k8s_namespace") {
-		promQl = strings.Replace(promQl, "$k8s_namespace", host.ExportVersion, -1)
-	}
-	if strings.Contains(promQl, "$k8s_cluster") {
-		promQl = strings.Replace(promQl, "$k8s_cluster", host.OsType, -1)
-	}
+	//if strings.Contains(promQl, "$k8s_namespace") {
+	//	promQl = strings.Replace(promQl, "$k8s_namespace", host.ExportVersion, -1)
+	//}
+	//if strings.Contains(promQl, "$k8s_cluster") {
+	//	promQl = strings.Replace(promQl, "$k8s_cluster", host.OsType, -1)
+	//}
 	if strings.Contains(promQl, "$") {
 		re, _ := regexp.Compile("=\"[\\$]+[^\"]+\"")
 		fetchTag := re.FindAll([]byte(promQl), -1)
@@ -285,12 +299,6 @@ func GetEndpoint(query *m.EndpointTable) error {
 	return nil
 }
 
-func ListEndpoint() []*m.EndpointTable {
-	var result []*m.EndpointTable
-	x.SQL("SELECT * FROM endpoint").Find(&result)
-	return result
-}
-
 func GetTags(endpoint string, key string, metric string) (error, []*m.OptionModel) {
 	var options []*m.OptionModel
 	var endpointObj []*m.EndpointTable
@@ -380,13 +388,24 @@ func GetPromMetricTable(metricType string) (err error, result []*m.PromMetricUpd
 	if err != nil {
 		log.Logger.Error("Get prom metric table fail", log.Error(err))
 	}
+	// append service metric
+	var logMetricTable []*m.LogMetricConfigTable
+	x.SQL("select guid,metric,display_name,agg_type from log_metric_config where log_metric_monitor in (select guid from log_metric_monitor where monitor_type=?) or log_metric_json in (select guid from log_metric_json where log_metric_monitor in (select guid from log_metric_monitor where monitor_type=?))", metricType, metricType).Find(&logMetricTable)
+	for _, v := range logMetricTable {
+		result = append(result, &m.PromMetricUpdateParam{Id: 0, MetricType: metricType, Metric: v.Metric, PromQl: fmt.Sprintf("%s{key=\"%s\",agg=\"%s\",t_endpoint=\"$guid\"}", m.LogMetricName, v.Metric, v.AggType)})
+	}
+	var dbMetricTable []*m.DbMetricMonitorTable
+	x.SQL("select guid,metric,display_name from db_metric_monitor where monitor_type=?", metricType).Find(&dbMetricTable)
+	for _, v := range dbMetricTable {
+		result = append(result, &m.PromMetricUpdateParam{Id: 0, MetricType: metricType, Metric: v.Metric, PromQl: fmt.Sprintf("%s{key=\"%s\",t_endpoint=\"$guid\"}", m.DBMonitorMetricName, v.Metric)})
+	}
 	return err, result
 }
 
 func UpdatePromMetric(data []*m.PromMetricTable) error {
 	var actions []*Action
 	for _, v := range data {
-		if v.Id > 0 {
+		if v.Id != "" {
 			actions = append(actions, &Action{Sql: "update prom_metric set metric=?,prom_ql=? where id=?", Param: []interface{}{v.Metric, v.PromQl, v.Id}})
 		} else {
 			actions = append(actions, &Action{Sql: "insert into prom_metric(metric,metric_type,prom_ql) value (?,?,?)", Param: []interface{}{v.Metric, v.MetricType, v.PromQl}})
@@ -506,12 +525,46 @@ func UpdatePanelChartMetric(data []m.PromMetricUpdateParam) error {
 	return Transaction(updateChartAction)
 }
 
-func GetEndpointMetric(id int) (err error, result []*m.OptionModel) {
+func GetServiceGroupPromMetric(serviceGroup,workspace,monitorType string) (err error, result []*m.OptionModel) {
 	result = []*m.OptionModel{}
-	endpointObj := m.EndpointTable{Id: id}
+	var metricList []string
+	nowTime := time.Now().Unix()
+	queryPromQl := fmt.Sprintf("{service_group=\"%s\"}", serviceGroup)
+	metricList, err = datasource.QueryPromQLMetric(queryPromQl, GetClusterAddress(""), nowTime-120, nowTime)
+	if err != nil {
+		return
+	}
+	existMap := make(map[string]int)
+	for _,v := range metricList {
+		if strings.HasPrefix(v, "go_") || v == "" {
+			continue
+		}
+		tmpPromExpr := v
+		tmpTEndpoint := ""
+		if strings.Contains(v, "t_endpoint") {
+			tmpPromExpr,tmpTEndpoint = trimTEndpointTag(tmpPromExpr)
+			if !strings.HasSuffix(tmpTEndpoint, monitorType) {
+				continue
+			}
+			if workspace != m.MetricWorkspaceService {
+				tmpPromExpr = tmpPromExpr[:len(tmpPromExpr)-1] + ",t_endpoint=\"$guid\"}"
+			}
+		}
+		if _,b:=existMap[tmpPromExpr];b {
+			continue
+		}
+		result = append(result, &m.OptionModel{OptionText: tmpPromExpr, OptionValue: tmpPromExpr})
+		existMap[tmpPromExpr] = 1
+	}
+	return
+}
+
+func GetEndpointMetric(endpointGuid,serviceGroup string) (err error, result []*m.OptionModel) {
+	result = []*m.OptionModel{}
+	endpointObj := m.EndpointTable{Guid: endpointGuid}
 	GetEndpoint(&endpointObj)
 	if endpointObj.Guid == "" {
-		return fmt.Errorf("endpoint id: %d can not find ", id), result
+		return fmt.Errorf("endpoint guid: %s can not find ", endpointGuid), result
 	}
 	if endpointObj.ExportType == "ping" || endpointObj.ExportType == "telnet" || endpointObj.ExportType == "http" {
 		return nil, result
@@ -542,22 +595,46 @@ func GetEndpointMetric(id int) (err error, result []*m.OptionModel) {
 			log.Logger.Warn("endpoint address illegal ", log.String("endpoint", endpointObj.Guid))
 			return nil, result
 		}
-		err, strList = QueryExporterMetric(m.QueryPrometheusMetricParam{Ip: ip, Port: port, Cluster: endpointObj.Cluster, Prefix: []string{}, Keyword: []string{}})
+		metricQueryParam := m.QueryPrometheusMetricParam{Ip: ip, Port: port, Cluster: endpointObj.Cluster, Prefix: []string{}, Keyword: []string{}, TargetGuid: endpointObj.Guid, IsConfigQuery: true, ServiceGroup: serviceGroup}
+		err, strList = QueryExporterMetric(metricQueryParam)
 	}
 	if err != nil {
 		return err, result
 	}
+	serviceTag := fmt.Sprintf("service_group=\"%s\"", serviceGroup)
 	for _, v := range strList {
 		if strings.HasPrefix(v, "go_") || v == "" {
 			continue
 		}
-		if v[len(v)-1:] == "}" {
-			result = append(result, &m.OptionModel{OptionText: v, OptionValue: fmt.Sprintf("%s,instance=\"$address\"}", v[:len(v)-1])})
-		} else {
-			result = append(result, &m.OptionModel{OptionText: v, OptionValue: fmt.Sprintf("%s{instance=\"$address\"}", v)})
+		if serviceGroup == "" {
+			if v[len(v)-1:] == "}" {
+				result = append(result, &m.OptionModel{OptionText: v, OptionValue: fmt.Sprintf("%s,instance=\"$address\"}", v[:len(v)-1])})
+			} else {
+				result = append(result, &m.OptionModel{OptionText: v, OptionValue: fmt.Sprintf("%s{instance=\"$address\"}", v)})
+			}
+		}else{
+			if strings.Contains(v, serviceTag) {
+				tmpPromExpr := v
+				if strings.Contains(v, "t_endpoint") {
+					tmpPromExpr,_ = trimTEndpointTag(tmpPromExpr)
+				}
+				result = append(result, &m.OptionModel{OptionText: tmpPromExpr, OptionValue: tmpPromExpr})
+			}
 		}
 	}
 	return nil, result
+}
+
+func trimTEndpointTag(input string) (output,tEndpoint string) {
+	tIndex := strings.Index(input, "t_endpoint=\"")
+	tailPart := input[tIndex+12:]
+	tEndpoint = tailPart[:strings.Index(tailPart, "\"")]
+	tailPart = tailPart[strings.Index(tailPart, "\"")+1:]
+	input = input[:tIndex] + tailPart
+	input = strings.ReplaceAll(input, ",,", ",")
+	input = strings.ReplaceAll(input, ",}", "}")
+	output = input
+	return
 }
 
 func GetEndpointMetricByEndpointType(endpointType string) (err error, result []*m.OptionModel) {
@@ -575,11 +652,20 @@ func GetEndpointMetricByEndpointType(endpointType string) (err error, result []*
 }
 
 func GetMainCustomDashboard(roleList []string) (err error, result []*m.CustomDashboardTable) {
+	result = []*m.CustomDashboardTable{}
+	var queryRows []*m.CustomDashboardTable
 	sql := "SELECT t2.* FROM role t1 LEFT JOIN custom_dashboard t2 ON t1.main_dashboard=t2.id WHERE t1.name IN ('" + strings.Join(roleList, "','") + "') and t1.main_dashboard>0"
 	log.Logger.Debug("Get main dashboard", log.String("sql", sql))
-	err = x.SQL(sql).Find(&result)
-	if len(result) == 0 {
-		result = []*m.CustomDashboardTable{}
+	err = x.SQL(sql).Find(&queryRows)
+	if len(queryRows) > 0 {
+		existMap := make(map[int]int)
+		for _,v := range queryRows {
+			if _,b:=existMap[v.Id];b {
+				continue
+			}
+			existMap[v.Id] = 1
+			result = append(result, v)
+		}
 	}
 	return err, result
 }
@@ -631,6 +717,48 @@ func UpdateChartTitle(param m.UpdateChartTitleParam) error {
 		}
 	} else {
 		_, err = x.Exec("UPDATE chart SET title=? WHERE id=?", param.Name, param.ChartId)
+	}
+	return err
+}
+
+func UpdateServiceMetricTitle(param m.UpdateChartTitleParam) error {
+	var err error
+	var key, endpoint string
+	var matchMetricGuidList []string
+	if !strings.Contains(param.Metric, "/") {
+		return fmt.Errorf("Try to match service metric fail,metric illegal ")
+	}
+	tags := param.Metric[strings.Index(param.Metric, "/")+1:]
+	for _, v := range strings.Split(tags, ",") {
+		if strings.HasPrefix(v, "key=") {
+			key = v[4:]
+			continue
+		}
+		if strings.HasPrefix(v, "t_endpoint=") {
+			endpoint = v[11:]
+			continue
+		}
+	}
+	if strings.HasPrefix(param.Metric, m.LogMetricName) {
+		var logMetricTable []*m.LogMetricConfigTable
+		x.SQL("select guid,display_name from log_metric_config where metric=? and log_metric_monitor in (select log_metric_monitor from log_metric_endpoint_rel where target_endpoint=?) union select guid,display_name from log_metric_config where metric=? and log_metric_json in (select guid from log_metric_json where log_metric_monitor in (select log_metric_monitor from log_metric_endpoint_rel where target_endpoint=?))", key, endpoint, key, endpoint).Find(&logMetricTable)
+		if len(logMetricTable) > 0 {
+			for _, v := range logMetricTable {
+				matchMetricGuidList = append(matchMetricGuidList, v.Guid)
+			}
+			_, err = x.Exec("update log_metric_config set display_name=? where guid in ('"+strings.Join(matchMetricGuidList, "','")+"')", param.Name)
+		}
+	} else if strings.HasPrefix(param.Metric, m.DBMonitorMetricName) {
+		var dbMetricTable []*m.DbMetricMonitorTable
+		x.SQL("select guid,display_name from db_metric_monitor where metric=? and guid in (select db_metric_monitor from db_metric_endpoint_rel where target_endpoint=?)", key, endpoint).Find(&dbMetricTable)
+		if len(dbMetricTable) > 0 {
+			for _, v := range dbMetricTable {
+				matchMetricGuidList = append(matchMetricGuidList, v.Guid)
+			}
+			_, err = x.Exec("update db_metric_monitor set display_name=? where guid in ('"+strings.Join(matchMetricGuidList, "','")+"')", param.Name)
+		}
+	} else {
+		err = fmt.Errorf("Can not match service metric ")
 	}
 	return err
 }

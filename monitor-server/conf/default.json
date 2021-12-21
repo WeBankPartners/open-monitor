@@ -15,17 +15,8 @@
       "filter": "(sAMAccountName=%s)",
       "attributes": ["name", "mail", "telephoneNumber"]
     },
-    "log": {
-      "level": "debug",
-      "file": "logs/open-monitor.log",
-      "access_file": "logs/open-monitor-access.log",
-      "archive_max_size": 64,
-      "archive_max_backup": 10,
-      "archive_max_day": 15,
-      "compress": true
-    },
     "session": {
-      "enable": true,
+      "enable": "true",
       "expire": 3600,
       "server_enable": true,
       "server_token": "default-token-used-in-server-side",
@@ -40,11 +31,19 @@
     },
     "default_language": "en"
   },
+  "log": {
+    "level": "debug",
+    "log_dir": "logs",
+    "archive_max_size": 64,
+    "archive_max_backup": 10,
+    "archive_max_day": 15,
+    "compress": true
+  },
   "store": {
     "name": "default",
     "type": "mysql",
     "server": "127.0.0.1",
-    "port": 3306,
+    "port": "3306",
     "user": "root",
     "pwd": "wecube",
     "database": "monitor",
@@ -184,9 +183,5 @@
   },
   "process_check_list": ["ping_exporter", "agent_manager"],
   "default_admin_role": "SUPER_ADMIN",
-  "alarm_alive_max_day": 100,
-  "capacity_server": {
-    "server": "127.0.0.1",
-    "port": "9096"
-  }
+  "alarm_alive_max_day": "100"
 }

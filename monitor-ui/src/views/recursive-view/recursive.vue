@@ -1,5 +1,5 @@
 <template>
-  <div class=" ">
+  <div>
     <ul>
       <li v-for="(item, itemIndex) in recursiveViewConfig" class="tree-border" :key="itemIndex">
         <div @click="hide(itemIndex)" class="tree-title" :style="stylePadding">
@@ -8,23 +8,28 @@
           </span>
         </div>
         <transition name="fade">
-          <div v-show="item._isShow">
+          <div v-show="item._isShow"  style="text-align:left">
             <recursive
             :increment="count"
             :params="params"
             v-if="item.children"
             :recursiveViewConfig="item.children"></recursive>
-            <div class="box">
-              <div v-for="(chartInfo,chartIndex) in item.charts" :key="chartIndex" class="list">
-                <SingleChart 
-                  :chartInfo="chartInfo" 
-                  :chartIndex="chartIndex" 
-                  :params="params"
-                  @editTitle="editTitle"
-                  @sendConfig="receiveConfig"
-                  > </SingleChart>
-              </div>
-              <div v-for="(ph, phIndex) in item.phZone" class="list" :key="ph+phIndex"></div>
+            <div class="box xxx">
+              <template v-for="(type, typeIndex) in monitorTypes">
+                <Divider :key="type.type + typeIndex">{{type.type}}</Divider>
+                <template v-for="(chartInfo,chartIndex) in item.charts">
+                  <div :key="chartIndex + type" v-if="chartInfo.monitor_type === type.type" class="list">
+                    <SingleChart
+                      :chartInfo="chartInfo" 
+                      :chartIndex="chartIndex" 
+                      :params="params"
+                      @editTitle="editTitle"
+                      @sendConfig="receiveConfig"
+                      > </SingleChart>
+                  </div>
+                </template>
+                <div v-for="(ep, epIndex) in type.empty" class="list" :key="ep+epIndex+Math.random()"></div>
+              </template>
             </div>
           </div>
         </transition>
@@ -68,6 +73,29 @@ export default {
     }
   },
   computed:{
+    monitorTypes () {
+      let types = {}
+      this.recursiveViewConfig.forEach(recursice => {
+        if (Array.isArray(recursice.charts)) {
+          recursice.charts.forEach(chart => {
+            if (chart.monitor_type in types) {
+              types[chart.monitor_type] = types[chart.monitor_type] + 1
+            } else {
+              types[chart.monitor_type] = 1
+            }
+          })
+        }
+      })
+      let monitorTypes = []
+      const keys = Object.keys(types)
+      keys.forEach(key => {
+        monitorTypes.push({
+          type: key,
+          empty: 6 - types[key]%6
+        })
+      })
+      return monitorTypes
+    },
     count () {
       var c = this.increment
       return ++c
