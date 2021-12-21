@@ -42,7 +42,7 @@ func QueryAlarmStrategyByGroup(endpointGroup string) (result []*models.EndpointS
 func QueryAlarmStrategyByEndpoint(endpoint string) (result []*models.EndpointStrategyObj, err error) {
 	endpointObj,getErr := GetEndpointNew(&models.EndpointNewTable{Guid: endpoint})
 	if getErr != nil {
-		return result,err
+		return result,getErr
 	}
 	result = []*models.EndpointStrategyObj{}
 	var endpointGroupTable []*models.EndpointGroupTable
