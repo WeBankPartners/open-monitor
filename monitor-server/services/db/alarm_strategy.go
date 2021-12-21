@@ -40,17 +40,15 @@ func QueryAlarmStrategyByGroup(endpointGroup string) (result []*models.EndpointS
 }
 
 func QueryAlarmStrategyByEndpoint(endpoint string) (result []*models.EndpointStrategyObj, err error) {
+	endpointObj,getErr := GetEndpointNew(&models.EndpointNewTable{Guid: endpoint})
+	if getErr != nil {
+		return result,err
+	}
 	result = []*models.EndpointStrategyObj{}
 	var endpointGroupTable []*models.EndpointGroupTable
-	err = x.SQL("select guid,service_group from endpoint_group where guid in (select endpoint_group from endpoint_group_rel where endpoint=?) or service_group in (select service_group from endpoint_service_rel where endpoint=?)", endpoint, endpoint).Find(&endpointGroupTable)
+	err = x.SQL("select guid,service_group from endpoint_group where monitor_type=? and guid in (select endpoint_group from endpoint_group_rel where endpoint=?) or service_group in (select service_group from endpoint_service_rel where endpoint=?)", endpointObj.MonitorType, endpoint, endpoint).Find(&endpointGroupTable)
 	if err != nil {
 		return
-	}
-	var serviceGroupTable []*models.ServiceGroupTable
-	x.SQL("select guid,display_name from service_group").Find(&serviceGroupTable)
-	serviceGroupMap := make(map[string]string)
-	for _, v := range serviceGroupTable {
-		serviceGroupMap[v.Guid] = v.DisplayName
 	}
 	for _, v := range endpointGroupTable {
 		tmpEndpointStrategyList, tmpErr := QueryAlarmStrategyByGroup(v.Guid)
@@ -58,11 +56,9 @@ func QueryAlarmStrategyByEndpoint(endpoint string) (result []*models.EndpointStr
 			err = tmpErr
 			break
 		}
-		tmpEndpointStrategyList[0].ServiceGroup = v.ServiceGroup
-		if sName, b := serviceGroupMap[v.ServiceGroup]; b {
-			tmpEndpointStrategyList[0].DisplayName = sName
-		} else {
-			tmpEndpointStrategyList[0].DisplayName = v.ServiceGroup
+		if v.ServiceGroup != "" {
+			tmpEndpointStrategyList[0].ServiceGroup = v.ServiceGroup
+			tmpEndpointStrategyList[0].DisplayName = models.GlobalSGDisplayNameMap[v.ServiceGroup]
 		}
 		result = append(result, tmpEndpointStrategyList[0])
 	}
