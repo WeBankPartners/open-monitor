@@ -141,12 +141,20 @@ func PrometheusData(query *m.QueryMonitorData) []*m.SerialModel {
 	return serials
 }
 
-func appendTagString(name string, metricMap map[string]string) string {
+func appendTagString(name string, metricMap map[string]string, tagList []string) string {
 	var tmpList m.DefaultSortList
-	for k, v := range metricMap {
-		tmpList = append(tmpList, &m.DefaultSortObj{Key: k, Value: v})
+	if len(tagList) == 0 {
+		for k, v := range metricMap {
+			tmpList = append(tmpList, &m.DefaultSortObj{Key: k, Value: v})
+		}
+		sort.Sort(tmpList)
+	} else {
+		for _, v := range tagList {
+			if tagValue, b := metricMap[v]; b {
+				tmpList = append(tmpList, &m.DefaultSortObj{Key: v, Value: tagValue})
+			}
+		}
 	}
-	sort.Sort(tmpList)
 	tmpName := name + "{"
 	for _, v := range tmpList {
 		ignoreFlag := false
@@ -162,7 +170,9 @@ func appendTagString(name string, metricMap map[string]string) string {
 		tmpName += fmt.Sprintf("%s=%s,", v.Key, v.Value)
 	}
 	tmpName = tmpName[:len(tmpName)-1]
-	tmpName += "}"
+	if tmpName != name {
+		tmpName += "}"
+	}
 	return tmpName
 }
 
@@ -188,21 +198,21 @@ func GetSerialName(query *m.QueryMonitorData, tagMap map[string]string, dataLeng
 		if legend == "$custom" {
 			tmpName = fmt.Sprintf("%s:%s", endpoint, metric)
 			if dataLength > 1 {
-				tmpName = appendTagString(tmpName, tagMap)
+				tmpName = appendTagString(tmpName, tagMap, []string{})
 			}
 		} else if legend == "$custom_metric" {
 			tmpName = metric
 			if dataLength > 1 {
-				tmpName = appendTagString(tmpName, tagMap)
+				tmpName = appendTagString(tmpName, tagMap, []string{})
 			}
 		} else if legend == "$custom_endpoint" {
 			tmpName = endpoint
 			if dataLength > 1 {
-				tmpName = appendTagString(tmpName, tagMap)
+				tmpName = appendTagString(tmpName, tagMap, []string{})
 			}
 		} else if legend == "$custom_all" {
 			tmpName = fmt.Sprintf("%s:%s", endpoint, metric)
-			tmpName = appendTagString(tmpName, tagMap)
+			tmpName = appendTagString(tmpName, tagMap, []string{})
 		}
 	}
 	if legend == "$metric" || legend == "$custom_metric" {
@@ -211,12 +221,13 @@ func GetSerialName(query *m.QueryMonitorData, tagMap map[string]string, dataLeng
 		}
 	}
 	if legend == "$app_metric" {
-		if _, b := tagMap["key"]; b {
-			if tagMap["tags"] != "" {
-				tmpName = fmt.Sprintf("%s{agg=%s,%s}", tagMap["key"], tagMap["agg"], tagMap["tags"])
+		if serviceGroup, b := tagMap["service_group"]; b {
+			if serviceGroupName, bb := m.GlobalSGDisplayNameMap[serviceGroup]; bb {
+				tmpName = fmt.Sprintf("%s:%s", serviceGroupName, tagMap["key"])
 			} else {
-				tmpName = fmt.Sprintf("%s{agg=%s}", tagMap["key"], tagMap["agg"])
+				tmpName = fmt.Sprintf("%s:%s", serviceGroup, tagMap["key"])
 			}
+			tmpName = appendTagString(tmpName, tagMap, []string{"agg", "t_endpoint", "instance"})
 		} else {
 			tmpName = metric
 		}
@@ -275,6 +286,53 @@ func QueryPromQLMetric(promQl, address string, start, end int64) (metricList []s
 			tmpMapSort = append(tmpMapSort, &m.SimpleMapObj{Key: k, Value: v})
 		}
 		metricList = append(metricList, tmpMapSort.String())
+	}
+	return
+}
+
+func QueryLogKeywordData() (result map[string]float64, err error) {
+	result = make(map[string]float64)
+	requestUrl, urlParseErr := url.Parse(fmt.Sprintf("http://%s/api/v1/query_range", promDS.Host))
+	if urlParseErr != nil {
+		return result, fmt.Errorf("Url parse fail,%s ", urlParseErr.Error())
+	}
+	nowTime := time.Now().Unix()
+	urlParams := url.Values{}
+	urlParams.Set("start", strconv.FormatInt(nowTime-10, 10))
+	urlParams.Set("end", strconv.FormatInt(nowTime, 10))
+	urlParams.Set("step", "10")
+	urlParams.Set("query", "node_log_monitor_count_total")
+	requestUrl.RawQuery = urlParams.Encode()
+	req, _ := http.NewRequest(http.MethodGet, requestUrl.String(), nil)
+	req.Header.Set("Content-Type", "application/json")
+	httpClient, getClientErr := promDS.DataSource.GetHttpClient()
+	if getClientErr != nil {
+		return result, fmt.Errorf("Get httpClient fail,%s ", getClientErr.Error())
+	}
+	res, reqErr := ctxhttp.Do(context.Background(), httpClient, req)
+	if reqErr != nil {
+		return result, fmt.Errorf("http do request fail,%s ", reqErr.Error())
+	}
+	body, _ := ioutil.ReadAll(res.Body)
+	res.Body.Close()
+	if res.StatusCode/100 != 2 {
+		return result, fmt.Errorf("Request fail with bad status:%d ", res.StatusCode)
+	}
+	var data m.PrometheusResponse
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		return result, fmt.Errorf("Json unmarshal response fail,%s ", err.Error())
+	}
+	if data.Status != "success" {
+		return result, fmt.Errorf("Query prometheus data fail,status:%s ", data.Status)
+	}
+	for _, otr := range data.Data.Result {
+		key := fmt.Sprintf("e_guid:%s^t_guid:%s^file:%s^keyword:%s", otr.Metric["e_guid"], otr.Metric["t_guid"], otr.Metric["file"], otr.Metric["keyword"])
+		tmpValue := float64(0)
+		if len(otr.Values) > 0 {
+			tmpValue, _ = strconv.ParseFloat(otr.Values[len(otr.Values)-1][1].(string), 64)
+		}
+		result[key] = tmpValue
 	}
 	return
 }

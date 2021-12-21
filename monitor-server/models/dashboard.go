@@ -68,13 +68,14 @@ type Dashboard struct {
 }
 
 type ChartModel struct {
-	Id        int      `json:"id"`
-	Col       int      `json:"col"`
-	Title     string   `json:"title"`
-	Endpoint  []string `json:"endpoint"`
-	Metric    []string `json:"metric"`
-	Url       string   `json:"url"`
-	Aggregate string   `json:"aggregate"`
+	Id          int      `json:"id"`
+	Col         int      `json:"col"`
+	Title       string   `json:"title"`
+	Endpoint    []string `json:"endpoint"`
+	Metric      []string `json:"metric"`
+	Url         string   `json:"url"`
+	Aggregate   string   `json:"aggregate"`
+	MonitorType string   `json:"monitor_type"`
 }
 
 type PanelModel struct {
@@ -170,6 +171,7 @@ type PanelTable struct {
 	TagsKey     string `json:"tags_key"`
 	ChartGroup  int    `json:"chart_group"`
 	AutoDisplay int    `json:"auto_display"`
+	ServiceGroup string `json:"service_group"`
 }
 
 type ChartTable struct {
@@ -214,6 +216,7 @@ type ChartQueryParam struct {
 	End        int64                   `json:"end"`
 	TimeSecond int64                   `json:"time_second"`
 	Aggregate  string                  `json:"aggregate"`
+	AggStep    int64                   `json:"agg_step"`
 	Step       int                     `json:"step"`
 	Data       []*ChartQueryConfigObj  `json:"data"`
 	Compare    *ChartQueryCompareParam `json:"compare"`
@@ -256,29 +259,40 @@ type PromMetricUpdateChartParam struct {
 }
 
 type PromMetricTable struct {
-	Id         int    `json:"id"`
+	Id         string `json:"id"`
 	Metric     string `json:"metric" binding:"required"`
 	MetricType string `json:"metric_type"`
 	PromQl     string `json:"prom_ql" binding:"required"`
 	PromMain   string `json:"prom_main"`
 }
 
+type PromMetricObj struct {
+	Id         string `json:"id"`
+	Metric     string `json:"metric" binding:"required"`
+	MetricType string `json:"metric_type"`
+	PromQl     string `json:"prom_expr" binding:"required"`
+	PromMain   string `json:"prom_main"`
+	ServiceGroup string `json:"service_group"`
+	Workspace string `json:"workspace"`
+}
+
 type EndpointTable struct {
-	Id              int    `json:"id"`
-	Guid            string `json:"guid"`
-	Name            string `json:"name"`
-	Ip              string `json:"ip"`
-	EndpointVersion string `json:"endpoint_version"`
-	ExportType      string `json:"export_type"`
-	ExportVersion   string `json:"export_version"`
-	Step            int    `json:"step"`
-	Address         string `json:"address"`
-	OsType          string `json:"os_type"`
-	CreateAt        string `json:"create_at"`
-	StopAlarm       int    `json:"stop_alarm"`
-	AddressAgent    string `json:"address_agent"`
-	Cluster         string `json:"cluster"`
-	Tags            string `json:"tags"`
+	Id              int       `json:"id"`
+	Guid            string    `json:"guid"`
+	Name            string    `json:"name"`
+	Ip              string    `json:"ip"`
+	EndpointVersion string    `json:"endpoint_version"`
+	ExportType      string    `json:"export_type"`
+	ExportVersion   string    `json:"export_version"`
+	Step            int       `json:"step"`
+	Address         string    `json:"address"`
+	OsType          string    `json:"os_type"`
+	CreateAt        string    `json:"create_at"`
+	StopAlarm       int       `json:"stop_alarm"`
+	AddressAgent    string    `json:"address_agent"`
+	Cluster         string    `json:"cluster"`
+	Tags            string    `json:"tags"`
+	UpdateAt        time.Time `json:"update_at"`
 }
 
 type EndpointMetricTable struct {
@@ -337,7 +351,7 @@ type MainPageRoleQuery struct {
 }
 
 type UpdateChartTitleParam struct {
-	ChartId int    `json:"chart_id" binding:"required"`
+	ChartId int    `json:"chart_id"`
 	Metric  string `json:"metric"`
 	Name    string `json:"name" binding:"required"`
 }
@@ -389,4 +403,11 @@ type PanelResultChartObj struct {
 	Title  string `json:"title"`
 	Unit   string `json:"unit"`
 	Active bool   `json:"active"`
+}
+
+type GetEndpointMetricParam struct {
+	Guid string `json:"guid"`
+	MonitorType string `json:"monitor_type" binding:"required"`
+	ServiceGroup string `json:"service_group"`
+	Workspace string `json:"workspace"`
 }

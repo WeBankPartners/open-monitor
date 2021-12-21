@@ -54,12 +54,14 @@ export default {
       }
     },
     getchartdata () {
+      if (this.chartInfo.chartParams.data.length === 0) {
+        return
+      }
       this.isAutoRefresh()
-
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.metricConfigView.api, this.chartInfo.chartParams, responseData => {
         responseData.yaxis.unit =  this.chartInfo.panalUnit  
         this.elId = this.chartInfo.elId
-        const chartConfig = {eye: false,dataZoom:false, lineBarSwitch: true, chartType: this.chartInfo.chartType}
+        const chartConfig = {eye: false,dataZoom:false, lineBarSwitch: true, chartType: this.chartInfo.chartType, params: this.chartInfo.chartParams}
         this.$nextTick( () => {
           readyToDraw(this,responseData, this.chartIndex, chartConfig)
         })

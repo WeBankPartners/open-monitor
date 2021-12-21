@@ -8,6 +8,8 @@
       class="col-md-2"
       filterable
       clearable
+      ref="selectObject"
+      @on-change="clearObject"
        :placeholder="$t('resourceLevel.level_search_endpoint')"
       :remote-method="getAllObject"
       >
@@ -78,6 +80,10 @@ export default {
     this.getAllObject()
   },
   methods: {
+    clearObject () {
+      this.searchParams.endpoint = ''
+      this.getAllObject()
+    },
     getAllObject (query='.') {
       let params = {
         search: query

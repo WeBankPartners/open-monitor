@@ -38,9 +38,14 @@
             </li>
             <li v-if="alarmItem.custom_message">
               <label class="alarm-item-label">{{$t('m_remark')}}:</label>
-              <div class="col-md-9" style="display: inline-block;padding:0">
-                <Tag type="border" color="primary">{{alarmItem.custom_message}}</Tag>
-              </div>
+              <Tooltip max-width="300">
+                <div style="border: 1px solid #2d8cf0;padding:2px;border-radius:4px; color: #2d8cf0">
+                {{alarmItem.custom_message.length > 60 ? alarmItem.custom_message.substring(0,60) + '...' : alarmItem.custom_message}}
+                </div>
+                <div slot="content" style="white-space: normal;">
+                  <p>{{alarmItem.custom_message}}</p>
+                </div>
+              </Tooltip>
             </li>
             <li>
               <label class="alarm-item-label">{{$t('tableKey.start')}}:</label><span>{{alarmItem.start_string}}</span>
@@ -98,7 +103,7 @@ export default {
         saveFunc: 'remarkAlarm',
         isAdd: true,
         config: [
-          {label: 'm_remark', value: 'message', placeholder: '', v_validate: '', disabled: false, type: 'text'}
+          {label: 'm_remark', value: 'message', placeholder: '', v_validate: '', disabled: false, type: 'textarea'}
         ],
         addRow: { // [通用]-保存用户新增、编辑时数据
           id: '',
