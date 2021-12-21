@@ -6,6 +6,7 @@ import (
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func GetOrganizationList(nameText, endpointText string) (result []*m.OrganizationPanel, err error) {
@@ -114,9 +115,11 @@ func recursiveOrganization(data []*m.PanelRecursiveTable, parent string, tmpNode
 	return tmpNode
 }
 
-func UpdateOrganization(operation string, param m.UpdateOrgPanelParam) error {
-	var err error
+func UpdateOrganization(operation string, param m.UpdateOrgPanelParam) (err error) {
+	log.Logger.Info("start UpdateOrganization", log.String("operation", operation), log.String("guid", param.Guid))
 	var tableData []*m.PanelRecursiveTable
+	var actions []*Action
+	nowTime := time.Now().Format(m.DatetimeFormat)
 	if operation == "add" {
 		if param.Guid == "" || param.DisplayName == "" {
 			return fmt.Errorf("param guid and display_name cat not be empty")
@@ -125,7 +128,13 @@ func UpdateOrganization(operation string, param m.UpdateOrgPanelParam) error {
 		if len(tableData) > 0 {
 			return fmt.Errorf("guid already exist")
 		}
-		_, err = x.Exec("INSERT INTO panel_recursive(guid,display_name,parent,obj_type) VALUE (?,?,?,?)", param.Guid, param.DisplayName, param.Parent, param.Type)
+		//_, err = x.Exec("INSERT INTO panel_recursive(guid,display_name,parent,obj_type) VALUE (?,?,?,?)", param.Guid, param.DisplayName, param.Parent, param.Type)
+		actions = append(actions, &Action{Sql: "INSERT INTO panel_recursive(guid,display_name,parent,obj_type) VALUE (?,?,?,?)", Param: []interface{}{param.Guid, param.DisplayName, param.Parent, param.Type}})
+		actions = append(actions, getCreateServiceGroupAction(&m.ServiceGroupTable{Guid: param.Guid, DisplayName: param.DisplayName, Description: "", Parent: param.Parent, ServiceType: param.Type, UpdateTime: nowTime})...)
+		err = Transaction(actions)
+		if err == nil {
+			addGlobalServiceGroupNode(m.ServiceGroupTable{Guid: param.Guid, Parent: param.Parent, DisplayName: param.DisplayName})
+		}
 	} else if operation == "edit" {
 		if param.Guid == "" || param.DisplayName == "" {
 			return fmt.Errorf("param guid and display_name cat not be empty")
@@ -134,7 +143,12 @@ func UpdateOrganization(operation string, param m.UpdateOrgPanelParam) error {
 		if len(tableData) == 0 {
 			return fmt.Errorf("guid: %s can not find any record", param.Guid)
 		}
-		_, err = x.Exec("UPDATE panel_recursive SET display_name=?,obj_type=? WHERE guid=?", param.DisplayName, param.Type, param.Guid)
+		actions = append(actions, &Action{Sql: "UPDATE panel_recursive SET display_name=?,obj_type=? WHERE guid=?", Param: []interface{}{param.DisplayName, param.Type, param.Guid}})
+		actions = append(actions, &Action{Sql: "update service_group set display_name=?,service_type=? where guid=?", Param: []interface{}{param.DisplayName, param.Type, param.Guid}})
+		err = Transaction(actions)
+		if err == nil {
+			m.GlobalSGDisplayNameMap[param.Guid] = param.DisplayName
+		}
 	} else if operation == "delete" {
 		if param.Guid == "" {
 			return fmt.Errorf("param guid cat not be empty")
@@ -154,7 +168,13 @@ func UpdateOrganization(operation string, param m.UpdateOrgPanelParam) error {
 				guidList = append(guidList, k)
 			}
 		}
-		_, err = x.Exec(fmt.Sprintf("DELETE FROM panel_recursive WHERE guid in ('%s')", strings.Join(guidList, "','")))
+		actions = append(actions, &Action{Sql: fmt.Sprintf("DELETE FROM panel_recursive WHERE guid in ('%s')", strings.Join(guidList, "','"))})
+		actions = append(actions, getDeleteServiceGroupAction(param.Guid)...)
+		err = Transaction(actions)
+		if err == nil {
+			DeleteServiceWithChildConfig(param.Guid)
+			deleteGlobalServiceGroupNode(param.Guid)
+		}
 	}
 	return err
 }
@@ -216,15 +236,26 @@ func GetOrgRole(guid string) (result []*m.OptionModel, err error) {
 	return result, nil
 }
 
-func UpdateOrgRole(param m.UpdateOrgPanelRoleParam) error {
+func UpdateOrgRole(param m.UpdateOrgPanelRoleParam) (err error) {
+	var actions []*Action
 	var idString string
+	var idStringList, roleStringList []string
 	for _, v := range param.RoleId {
 		idString += fmt.Sprintf("%d,", v)
+		idStringList = append(idStringList, fmt.Sprintf("%d", v))
 	}
 	if idString != "" {
 		idString = idString[:len(idString)-1]
 	}
-	_, err := x.Exec("UPDATE panel_recursive SET role=? WHERE guid=?", idString, param.Guid)
+	var roleTable []*m.RoleTable
+	x.SQL("select name from role where id in ('" + strings.Join(idStringList, "','") + "')").Find(&roleTable)
+	for _, v := range roleTable {
+		roleStringList = append(roleStringList, v.Name)
+	}
+	actions = append(actions, &Action{Sql: "UPDATE panel_recursive SET role=? WHERE guid=?", Param: []interface{}{idString, param.Guid}})
+	//var roleTable []*m.RoleTable
+	actions = append(actions, getUpdateServiceGroupNotifyRoles(param.Guid, roleStringList)...)
+	err = Transaction(actions)
 	if err != nil {
 		log.Logger.Error("Update organization role error", log.Error(err))
 	}
@@ -252,7 +283,7 @@ func GetOrgEndpoint(guid string) (result []*m.OptionModel, err error) {
 	for _, v := range strings.Split(tableData[0].Endpoint, "^") {
 		for _, vv := range endpointData {
 			if vv.Guid == v {
-				result = append(result, &m.OptionModel{OptionText: fmt.Sprintf("%s:%s", vv.Name, vv.Ip), OptionValue: vv.Guid, OptionType: vv.ExportType})
+				result = append(result, &m.OptionModel{OptionText: vv.Guid, OptionValue: vv.Guid, OptionType: vv.ExportType})
 				break
 			}
 		}
@@ -261,11 +292,26 @@ func GetOrgEndpoint(guid string) (result []*m.OptionModel, err error) {
 }
 
 func UpdateOrgEndpoint(param m.UpdateOrgPanelEndpointParam) error {
+	var actions []*Action
 	var endpointString string
+	nowTime := time.Now().Format(m.DatetimeFormat)
 	endpointString = strings.Join(param.Endpoint, "^")
-	_, err := x.Exec("UPDATE panel_recursive SET endpoint=? WHERE guid=?", endpointString, param.Guid)
-	if err != nil {
-		log.Logger.Error("Update organization endpoint error", log.Error(err))
+	actions = append(actions, &Action{Sql: "UPDATE panel_recursive SET endpoint=? WHERE guid=?", Param: []interface{}{endpointString, param.Guid}})
+	actions = append(actions, getUpdateServiceEndpointAction(param.Guid, nowTime, param.Endpoint)...)
+	err := Transaction(actions)
+	if err == nil {
+		var endpointGroup []*m.EndpointGroupTable
+		parentGuidList, _ := fetchGlobalServiceGroupParentGuidList(param.Guid)
+		x.SQL("select guid from endpoint_group where service_group in ('" + strings.Join(parentGuidList, "','") + "')").Find(&endpointGroup)
+		for _, v := range endpointGroup {
+			err = SyncPrometheusRuleFile(v.Guid, false)
+			if err != nil {
+				break
+			}
+		}
+		if err == nil {
+			UpdateServiceConfigWithParent(param.Guid)
+		}
 	}
 	return err
 }
@@ -282,8 +328,17 @@ func GetOrgCallback(guid string) (result m.PanelRecursiveTable, err error) {
 	return *tableData[0], nil
 }
 
-func UpdateOrgCallback(param m.UpdateOrgPanelEventParam) error {
-	_, err := x.Exec("UPDATE panel_recursive SET firing_callback_name=?,firing_callback_key=?,recover_callback_name=?,recover_callback_key=? WHERE guid=?", param.FiringCallbackName, param.FiringCallbackKey, param.RecoverCallbackName, param.RecoverCallbackKey, param.Guid)
+func UpdateOrgCallback(param m.UpdateOrgPanelEventParam) (err error) {
+	var actions []*Action
+	var roleList []string
+	var serviceRoleTable []*m.ServiceGroupRoleRelTable
+	x.SQL("select * from service_group_role_rel where service_group=?", param.Guid).Find(&serviceRoleTable)
+	for _, v := range serviceRoleTable {
+		roleList = append(roleList, v.Role)
+	}
+	actions = append(actions, &Action{Sql: "UPDATE panel_recursive SET firing_callback_name=?,firing_callback_key=?,recover_callback_name=?,recover_callback_key=? WHERE guid=?", Param: []interface{}{param.FiringCallbackName, param.FiringCallbackKey, param.RecoverCallbackName, param.RecoverCallbackKey, param.Guid}})
+	actions = append(actions, getUpdateServiceGroupNotifyActions(param.Guid, param.FiringCallbackKey, param.RecoverCallbackKey, roleList)...)
+	err = Transaction(actions)
 	if err != nil {
 		log.Logger.Error("Update organization callback error", log.Error(err))
 	}

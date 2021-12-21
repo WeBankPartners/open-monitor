@@ -23,8 +23,8 @@
   <ModalComponent :modelConfig="endpointRejectModel">
     <div slot="endpointReject">
       <div class="marginbottom params-each">
-        <label class="col-md-2 label-name">{{$t('field.endpoint')}}:</label>
-        <Select filterable clearable v-model="endpointRejectModel.addRow.type" style="width:338px" @on-change="typeChange">
+        <label class="col-md-2 label-name">{{$t('field.type')}}:</label>
+        <Select filterable clearable :disabled="!endpointRejectModel.isAdd" v-model="endpointRejectModel.addRow.type" style="width:338px" @on-change="typeChange">
           <Option v-for="item in endpointRejectModel.endpointType" :value="item.value" :key="item.value">
             {{item.label}}
           </Option>
@@ -40,7 +40,7 @@
       </div>
       <div class="marginbottom params-each" v-if="!(['host','windows'].includes(endpointRejectModel.addRow.type))">
         <label class="col-md-2 label-name">{{$t('field.instance')}}:</label>
-        <input v-validate="'required'" v-model="endpointRejectModel.addRow.name" name="name" :class="{ 'red-border': veeErrors.has('name') }" type="text" class="col-md-7 form-control model-input c-dark" />
+        <input v-validate="'required'" :disabled="!endpointRejectModel.isAdd" v-model="endpointRejectModel.addRow.name" name="name" :class="{ 'red-border': veeErrors.has('name') }" type="text" class="col-md-7 form-control model-input c-dark" />
         <label class="required-tip">*</label>
         <label v-show="veeErrors.has('name')" class="is-danger">{{ veeErrors.first('name')}}</label>
       </div>
@@ -82,7 +82,7 @@
         <label class="required-tip">*</label>
         <label v-show="veeErrors.has('exporter_type')" class="is-danger">{{ veeErrors.first('exporter_type')}}</label>
       </div>
-      <div class="marginbottom params-each" v-if="!(['ping','http', 'snmp'].includes(endpointRejectModel.addRow.type))">
+      <div class="marginbottom params-each" v-if="!(['ping','http', 'snmp', 'process'].includes(endpointRejectModel.addRow.type))">
         <label class="col-md-2 label-name">{{$t('button.port')}}:</label>
         <input v-validate="'required|isNumber'" v-model="endpointRejectModel.addRow.port" name="port" :class="{ 'red-border': veeErrors.has('port') }" type="text" class="col-md-7 form-control model-input c-dark" />
         <label class="required-tip">*</label>
@@ -98,6 +98,18 @@
         <label class="required-tip">*</label>
         <label v-show="veeErrors.has('export_address')" class="is-danger">{{ veeErrors.first('export_address')}}</label>
       </div>
+      <template v-if="endpointRejectModel.addRow.type === 'process'">
+        <div>
+          <label class="col-md-2 label-name">{{$t('processName')}}:</label>
+          <input v-validate="'required'" :placeholder="$t('processName')" v-model="endpointRejectModel.addRow.process_name" name="process_name" :class="{ 'red-border': veeErrors.has('process_name') }" type="text" class="col-md-7 form-control model-input c-dark" />
+          <label class="required-tip">*</label>
+          <label v-show="veeErrors.has('process_name')" class="is-danger">{{ veeErrors.first('process_name')}}</label>
+        </div>
+        <div>
+          <label class="col-md-2 label-name">{{$t('processTags')}}:</label>
+          <input :placeholder="$t('processTags')" v-model="endpointRejectModel.addRow.tags" type="text" class="col-md-7 form-control model-input c-dark" />
+        </div>
+      </template>
     </div>
   </ModalComponent>
   <ModalComponent :modelConfig="processConfigModel">
@@ -259,6 +271,10 @@ let tableEle = [{
 const btn = [{
     btn_name: 'button.thresholdManagement',
     btn_func: 'thresholdConfig'
+  },
+  {
+    btn_name: 'button.edit',
+    btn_func: 'editF'
   },
   {
     btn_name: 'button.historicalAlert',
@@ -425,7 +441,7 @@ export default {
       },
       endpointRejectModel: {
         modalId: 'endpoint_reject_model',
-        modalTitle: 'title.endpointAdd',
+        modalTitle: this.$t('field.endpoint'),
         supportStep: true,
         isAdd: true,
         saveFunc: 'endpointRejectSave',
@@ -438,7 +454,7 @@ export default {
             value: 'ip',
             placeholder: 'tips.required',
             v_validate: 'required:true|isIP',
-            disabled: false,
+            disabled: 'true',
             type: 'text'
           },
           {label: 'field.proxy_exporter', value: 'proxy_exporter', option: 'proxy_exporter', hide: true, disabled: false, type: 'select'}
@@ -458,6 +474,8 @@ export default {
           exporter: false,
           export_address: '',
           proxy_exporter: null,
+          process_name: '',
+          tags: ''
         },
         v_select_configs: {
             proxy_exporter: []
@@ -478,6 +496,10 @@ export default {
           {
             label: 'java',
             value: 'java'
+          },
+          {
+            label: 'process',
+            value: 'process'
           },
           {
             label: 'nginx',
@@ -559,6 +581,10 @@ export default {
           height: '400px'
         }
       },
+      modelTip: {
+        key: 'guid',
+        value: null
+      },
     }
   },
   mounted() {
@@ -597,6 +623,63 @@ export default {
     }
   },
   methods: {
+    editF (rowData) {
+      this.endpointRejectModel.endpointType = [{
+            label: 'host',
+            value: 'host'
+          },
+          {
+            label: 'mysql',
+            value: 'mysql'
+          },
+          {
+            label: 'redis',
+            value: 'redis'
+          },
+          {
+            label: 'java',
+            value: 'java'
+          },
+          {
+            label: 'process',
+            value: 'process'
+          },
+          {
+            label: 'nginx',
+            value: 'nginx'
+          },
+          {
+            label: 'windows',
+            value: 'windows'
+          },
+          {
+            label: 'ping',
+            value: 'ping'
+          },
+          {
+            label: 'telnet',
+            value: 'telnet'
+          },
+          {
+            label: 'http',
+            value: 'http'
+          },
+          {
+            label: 'snmp',
+            value: 'snmp'
+          },
+          {
+            label: 'other',
+            value: 'other'
+        }]
+      this.modelTip.value = rowData.guid
+      this.endpointRejectModel.isAdd = false
+      const api = `/monitor/api/v2/monitor/endpoint/get/${rowData.guid}`
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', (res) => {
+        this.endpointRejectModel.addRow = res
+        this.$root.JQ('#endpoint_reject_model').modal('show')
+      })
+    },
     managementEndpoint() {
       let params = {
         endpoint_id: Number(this.id),
@@ -714,14 +797,14 @@ export default {
     },
     filterMoreBtn(rowData) {
       // let moreBtnGroup = ['thresholdConfig', 'historyAlarm', 'maintenanceWindow', 'deleteConfirmModal']
-      let moreBtnGroup = ['historyAlarm', 'groupManagement', 'maintenanceWindow', 'deleteConfirmModal']
+      let moreBtnGroup = ['historyAlarm', 'editF', 'maintenanceWindow', 'deleteConfirmModal']
       if (rowData.type === 'host') {
         // moreBtnGroup.push('processManagement', 'businessManagement', 'logManagement', 'portManagement')
-        moreBtnGroup.push('processManagement', 'portManagement')
+        moreBtnGroup.push('portManagement')
       }
-      if (rowData.type === 'mysql') {
-        moreBtnGroup.push('dataMonitor')
-      }
+      // if (rowData.type === 'mysql') {
+      //   moreBtnGroup.push('dataMonitor')
+      // }
       // if (this.showGroupMsg) {
       //   moreBtnGroup.push('deleteConfirm')
       // }
@@ -774,24 +857,11 @@ export default {
       })
     },
     delF(rowData) {
-      let endpoints = []
-      this.pageConfig.table.tableData.forEach((item) => {
-        endpoints.push(item.guid.split(':')[0])
-      })
       let params = {
-        guid: rowData.guid,
-        endpoints: [parseInt(rowData.id)]
+        guid: rowData.guid
       }
       let url = this.$root.apiCenter.endpointManagement.deregister.api
-      let methodType = 'GET'
-      if (this.groupMsg.id) {
-        url = this.$root.apiCenter.endpointManagement.update.api
-        params.grp = this.groupMsg.id
-        params.operation = 'delete'
-        methodType = 'POST'
-      }
-      this.$root.$httpRequestEntrance.httpRequestEntrance(methodType, url, params, () => {
-        // this.$root.$eventBus.$emit('hideConfirmModal')
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', url, params, () => {
         this.$Message.success(this.$t('tips.success'))
         this.initData(this.pageConfig.CRUD, this.pageConfig)
       })
@@ -825,6 +895,7 @@ export default {
       this.historyAlarmModel = true
     },
     endpointReject() {
+      this.endpointRejectModel.isAdd = true
       this.endpointRejectModel.addRow.type = 'host'
       this.endpointRejectModel.addRow.step = 10
       this.endpointRejectModel.addRow.port = 9100
@@ -843,7 +914,9 @@ export default {
             params.type = this.endpointRejectModel.addRow.exporter_type
           }
         }
-        this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.endpointManagement.register.api, params, () => {
+        const methodType = this.endpointRejectModel.isAdd ? 'POST' : 'PUT'
+        const api = this.endpointRejectModel.isAdd ? this.$root.apiCenter.endpointManagement.register.api : '/monitor/api/v2/monitor/endpoint/update'
+        this.$root.$httpRequestEntrance.httpRequestEntrance(methodType, api, params, () => {
           this.$root.$validate.emptyJson(this.endpointRejectModel.addRow)
           this.$root.JQ('#endpoint_reject_model').modal('hide')
           this.$Message.success(this.$t('tips.success'))

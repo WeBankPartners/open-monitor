@@ -12,13 +12,48 @@
     <div class="zone zone-config c-dark">
       <div class="tool-save">
         <div class="condition">
-          <Select filterable clearable v-model="templateQuery.chartType" @on-change="switchChartType">
-            <Option
-              v-for="(option, index) in chartTypeOption"
-              :value="option.value"
-              :key="index"
-            >{{option.label}}</Option>
-          </Select>
+          <Tooltip :content="$t('field.aggType')" :delay="1000">
+            <Select filterable  class="select-option" v-model="templateQuery.aggregate" style="width:100px" @on-change="switchChartType">
+              <Option
+                v-for="(type) in ['min', 'max', 'avg', 'p95', 'sum', 'none']"
+                :value="type"
+                :key="type"
+              >{{type}}</Option>
+            </Select>
+          </Tooltip>
+        </div>
+        <div class="condition" v-if="templateQuery.aggregate !== 'none'">
+          <Tooltip :content="$t('field.aggStep')" :delay="1000">
+            <Select filterable  class="select-option" v-model="templateQuery.agg_step" style="width:100px" @on-change="switchChartType">
+              <Option
+                v-for="agg in aggStepOptions"
+                :value="agg.value"
+                :key="agg.value"
+              >{{agg.label}}</Option>
+            </Select>
+          </Tooltip>
+        </div>
+        <div class="condition">
+          <Tooltip :content="$t('m_chart_type')" :delay="1000">
+            <Select filterable class="select-option" v-model="templateQuery.chartType" style="width:160px" @on-change="switchChartType">
+              <Option
+                v-for="(option, index) in chartTypeOption"
+                :value="option.value"
+                :key="index"
+              >{{option.label}}</Option>
+            </Select>
+          </Tooltip>
+        </div>
+        <div class="condition" v-if="templateQuery.chartType === 'line'">
+          <Tooltip :content="$t('m_line_type')" :delay="1000">
+            <Select filterable class="select-option" v-model="templateQuery.lineType" style="width:160px" @on-change="switchChartType">
+              <Option
+                v-for="(option, index) in lineOption"
+                :value="option.value"
+                :key="index"
+              >{{option.label}}</Option>
+            </Select>
+          </Tooltip>
         </div>
         <button class="btn btn-sm btn-confirm-f" @click="saveConfig">{{$t('button.saveConfig')}}</button>
         <button class="btn btn-sm btn-cancel-f" @click="goback()">{{$t('button.cancel')}}</button>
@@ -34,7 +69,7 @@
                 :name="queryIndex"
                 closable
                 @on-close="removeQuery(queryIndex)"
-              >{{$t('field.endpoint')}}：{{query.endpoint}}; {{$t('field.metric')}}：{{query.metric}}</Tag>
+              >{{$t('field.endpoint')}}：{{query.endpointName || query.endpoint}}; {{$t('field.metric')}}：{{query.metric}}</Tag>
             </div>
             <div class="condition-zone">
               <ul>
@@ -88,6 +123,7 @@
                       filterable
                       clearable
                       :label-in-value="true"
+                      @on-change="changeMetric"
                       @on-open-change="metricSelectOpen(templateQuery.endpoint)"
                     >
                       <Option
@@ -98,14 +134,21 @@
                     </Select>
                   </div>
                 </li>
-                <li>
-                  <div class="condition condition-title">{{$t('field.title')}}</div>
+                <li v-if="templateQuery.metricToColor.length >0">
+                  <div class="condition condition-title" style="vertical-align: top;">{{$t('个性化配置')}}</div>
                   <div class="condition">
-                    <Input
-                      v-model="panalTitle"
-                      placeholder=""
-                      style="width: 300px"
-                    />
+                    <template v-for="mc in templateQuery.metricToColor">
+                      <div :key="mc.metric">
+                        <Tooltip :content="mc.metric" max-width="300">
+                          <Tag>{{mc.metric.length > 50 ? mc.metric.substring(0,50) + '...' : mc.metric}}</Tag>
+                          <div slot="content" style="white-space: normal;">
+                            <p>{{mc.metric}}</p>
+                          </div>
+                        </Tooltip>
+                        <ColorPicker v-model="mc.color" />
+                        {{mc.color}}
+                      </div>
+                    </template>
                   </div>
                 </li>
                 <li>
@@ -142,12 +185,27 @@ export default {
         endpoint: '',
         metric: '',
         chartType: '',
+        lineType: 1,
+        aggregate: '',
+        agg_step: 60,
         endpoint_type: '',
-        app_object: ''
+        app_object: '',
+        metricToColor: []
       },
+      aggStepOptions: [
+        {label: '60S', value: 60},
+        {label: '300S', value: 300},
+        {label: '600S', value: 600},
+        {label: '1800S', value: 1800},
+        {label: '3600S', value: 3600}
+      ],
       chartTypeOption: [
-        {label: '线性图', value: 'line'},
-        {label: '柱状图', value: 'bar'}
+        {label: this.$t('m_line_chart'), value: 'line'},
+        {label: this.$t('m_bar_chart'), value: 'bar'}
+      ],
+      lineOption: [
+        {label: this.$t('m_line_chart_s'), value: 1},
+        {label: this.$t('m_area_chart'), value: 0}
       ],
       chartQueryList: [
         // {
@@ -172,7 +230,9 @@ export default {
       handler(data) {
         this.noDataTip = false
         let params = {
-          aggregate: 'none',
+          aggregate: this.templateQuery.aggregate || 'none',
+          agg_step: this.templateQuery.agg_step || 60,
+          lineType: this.templateQuery.lineType,
           time_second: -1800,
           start: 0,
           end: 0,
@@ -191,7 +251,7 @@ export default {
           'POST',this.$root.apiCenter.metricConfigView.api, params,
           responseData => {
             responseData.yaxis.unit = this.panalUnit
-            readyToDraw(this,responseData, 1, { eye: false, chartType: this.templateQuery.chartType})
+            readyToDraw(this,responseData, 1, { eye: false, chartType: this.templateQuery.chartType, clear: true, params: params })
           }
         )
       },
@@ -212,6 +272,38 @@ export default {
   mounted() {
   },
   methods: {
+    changeMetric (val) {
+      this.templateQuery.metricToColor = []
+      if (!val) return 
+      let tmp = JSON.parse(JSON.stringify(this.templateQuery))
+      if (tmp.endpoint_type !== '') {
+        tmp.app_object = tmp.endpoint
+      }
+      tmp.aggregate = 'none'
+      tmp.agg_step = 60
+      tmp.chartType = 'line'
+      let params = {
+        aggregate: 'none',
+        agg_step: 60,
+        time_second: -1800,
+        start: 0,
+        end: 0,
+        title: '',
+        unit: '',
+        data: [tmp]
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance(
+        'POST',this.$root.apiCenter.metricConfigView.api, params,
+        responseData => {
+          this.templateQuery.metricToColor = responseData.legend.map(r => {
+            return {
+              metric: r,
+              color: ''
+            }
+          })
+        }
+      )
+    },
     selectEndpoint (val) {
       this.showRecursiveType = false
       this.templateQuery.endpoint_type = ''
@@ -223,7 +315,6 @@ export default {
         }
         this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.recursiveType, params, responseData => {
           this.templateQuery.endpoint_type = responseData[0]
-          console.log(responseData)
           this.recursiveTypeOptions = responseData
         }
       )}
@@ -237,6 +328,9 @@ export default {
         this.viewData.forEach((itemx, index) => {
           if (itemx.viewConfig.id === params.panal.id) {
             this.templateQuery.chartType = itemx.chartType
+            this.templateQuery.lineType = itemx.lineType || 0
+            this.templateQuery.aggregate = itemx.aggregate || 'none'
+            this.templateQuery.agg_step = itemx.agg_step || 60
             this.panalIndex = index
             this.panalData = itemx
             this.initPanal()
@@ -246,8 +340,13 @@ export default {
       }
     },
     switchChartType () {
+      if (this.chartQueryList.length === 0) {
+        return
+      }
       let params = {
-          aggregate: 'none',
+          aggregate: this.templateQuery.aggregate || 'none',
+          agg_step: this.templateQuery.agg_step || 60,
+          lineType: this.templateQuery.lineType,
           time_second: -1800,
           start: 0,
           end: 0,
@@ -260,14 +359,15 @@ export default {
           endpoint: item.endpoint,
           metric: item.metric,
           app_object: item.app_object,
-          endpoint_type: item.endpoint_type
+          endpoint_type: item.endpoint_type,
+          metricToColor: item.metricToColor
         })
       })
       this.$root.$httpRequestEntrance.httpRequestEntrance(
         'POST',this.$root.apiCenter.metricConfigView.api, params,
         responseData => {
           responseData.yaxis.unit = this.panalUnit
-          readyToDraw(this,responseData, 1, { eye: false, chartType: this.templateQuery.chartType})
+          readyToDraw(this,responseData, 1, { eye: false, chartType: this.templateQuery.chartType, params: params})
         }
       )
     },
@@ -275,7 +375,9 @@ export default {
       this.panalTitle = this.panalData.panalTitle
       this.panalUnit = this.panalData.panalUnit
       let params = {
-        aggregate: 'none',
+        aggregate: this.templateQuery.aggregate || 'none',
+        agg_step: this.templateQuery.agg_step || 60,
+        lineType: this.templateQuery.lineType,
         time_second: -1800,
         start: 0,
         end: 0,
@@ -298,7 +400,7 @@ export default {
           'POST',this.$root.apiCenter.metricConfigView.api, params,
           responseData => {
             responseData.yaxis.unit = this.panalUnit
-            readyToDraw(this,responseData, 1, { eye: false, lineBarSwitch: true, chartType: this.templateQuery.chartType})
+            readyToDraw(this,responseData, 1, { eye: false, lineBarSwitch: true, chartType: this.templateQuery.chartType, params: params })
           }
         )
       }
@@ -327,7 +429,7 @@ export default {
           this.$t("tableKey.s_metric") + this.$t("tips.required")
         )
       } else {
-        let params = { type: this.showRecursiveType ? this.templateQuery.endpoint_type : this.endpointType }
+        let params = { monitorType: this.showRecursiveType ? this.templateQuery.endpoint_type : this.endpointType, serviceGroup: this.showRecursiveType ? this.templateQuery.endpoint : '' }
         this.$root.$httpRequestEntrance.httpRequestEntrance(
           'GET',
           this.$root.apiCenter.metricList.api,
@@ -347,13 +449,19 @@ export default {
       if (tmp.endpoint_type !== '') {
         tmp.app_object = tmp.endpoint
       }
+      const find = this.options.find(item => item.option_value === tmp.endpoint)
+      tmp.endpointName = find.option_text
       this.chartQueryList.push(tmp)
       this.templateQuery = {
         endpoint: '',
         metric: '',
-        chartType: this.templateQuery.chartType,
+        chartType: tmp.chartType,
+        lineType: tmp.lineType,
+        aggregate: tmp.aggregate,
+        agg_step: tmp.agg_step,
         endpoint_type: '',
-        app_object: ''
+        app_object: '',
+        metricToColor: []
       }
       this.options = []
       this.metricList = []
@@ -387,6 +495,9 @@ export default {
         panalTitle: this.panalTitle,
         panalUnit: this.panalUnit,
         chartType: this.templateQuery.chartType,
+        lineType: this.templateQuery.lineType,
+        aggregate: this.templateQuery.aggregate,
+        agg_step: this.templateQuery.agg_step,
         query: query,
         viewConfig: panal
       }
@@ -485,6 +596,9 @@ li {
   border: 1px solid @blue-2;
   padding: 4px;
   margin: 4px;
+}
+.select-option /deep/ .ivu-select-dropdown-list {
+  text-align: left;
 }
 </style>
 
