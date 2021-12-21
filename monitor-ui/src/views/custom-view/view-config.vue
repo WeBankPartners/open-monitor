@@ -16,56 +16,55 @@
         </template>
       </div>
       <div class="search-container">
-          <div>
-            <div class="search-zone">
-              <span class="params-title">{{$t('field.relativeTime')}}：</span>
-              <Select filterable clearable v-model="viewCondition.timeTnterval" disabled style="width:80px"  @on-change="initPanals">
-                <Option v-for="item in dataPick" :value="item.value" :key="item.value">{{ item.label }}</Option>
-              </Select>
-            </div>
-            <div class="search-zone">
-              <span class="params-title">{{$t('placeholder.refresh')}}：</span>
-              <Select filterable clearable v-model="viewCondition.autoRefresh" disabled style="width:100px" @on-change="initPanals" :placeholder="$t('placeholder.refresh')">
-                <Option v-for="item in autoRefreshConfig" :value="item.value" :key="item.value">{{ item.label }}</Option>
-              </Select>
-            </div>
-            <div class="search-zone">
-              <span class="params-title">{{$t('field.timeInterval')}}：</span>
-              <DatePicker 
-                disabled
-                type="datetimerange" 
-                :value="viewCondition.dateRange" 
-                format="yyyy-MM-dd HH:mm:ss" 
-                placement="bottom-start" 
-                @on-change="datePick" 
-                :placeholder="$t('placeholder.datePicker')" 
-                style="width: 320px">
-              </DatePicker>
-            </div>
-            <!-- <div class="search-zone">
-              <span class="params-title">{{$t('field.aggType')}}：</span>
-              <RadioGroup v-model="viewCondition.agg" @on-change="initPanals" size="small" type="button">
-                <Radio disabled label="min">Min</Radio>
-                <Radio disabled label="max">Max</Radio>
-                <Radio disabled label="avg">Average </Radio>
-                <Radio disabled label="p95">P95</Radio>
-                <Radio disabled label="sum">Sum</Radio>
-                <Radio disabled label="none">Original</Radio>
-              </RadioGroup>
-            </div> -->
+        <div>
+          <div class="search-zone">
+            <span class="params-title">{{$t('field.relativeTime')}}：</span>
+            <Select filterable v-model="viewCondition.timeTnterval" :disabled="disableTime" style="width:80px"  @on-change="initPanals">
+              <Option v-for="item in dataPick" :value="item.value" :key="item.value">{{ item.label }}</Option>
+            </Select>
           </div>
+          <div class="search-zone">
+            <span class="params-title">{{$t('placeholder.refresh')}}：</span>
+            <Select filterable clearable v-model="viewCondition.autoRefresh" :disabled="disableTime" style="width:100px" @on-change="initPanals" :placeholder="$t('placeholder.refresh')">
+              <Option v-for="item in autoRefreshConfig" :value="item.value" :key="item.value">{{ item.label }}</Option>
+            </Select>
+          </div>
+          <div class="search-zone">
+            <span class="params-title">{{$t('field.timeInterval')}}：</span>
+            <DatePicker 
+              type="datetimerange" 
+              :value="viewCondition.dateRange" 
+              format="yyyy-MM-dd HH:mm:ss" 
+              placement="bottom-start" 
+              @on-change="datePick" 
+              :placeholder="$t('placeholder.datePicker')" 
+              style="width: 320px">
+            </DatePicker>
+          </div>
+          <!-- <div class="search-zone">
+            <span class="params-title">{{$t('field.aggType')}}：</span>
+            <RadioGroup v-model="viewCondition.agg" @on-change="initPanals" size="small" type="button">
+              <Radio disabled label="min">Min</Radio>
+              <Radio disabled label="max">Max</Radio>
+              <Radio disabled label="avg">Average </Radio>
+              <Radio disabled label="p95">P95</Radio>
+              <Radio disabled label="sum">Sum</Radio>
+              <Radio disabled label="none">Original</Radio>
+            </RadioGroup>
+          </div> -->
+        </div>
 
-          <div class="header-tools"> 
-            <button class="btn btn-sm btn-cancel-f" style="margin-right:60px" @click="addItem">{{$t('m_new_graph')}}</button>
-            <button class="btn btn-sm btn-confirm-f" @click="saveEdit">{{$t('button.saveConfig')}}</button>
-            <button class="btn btn-sm btn-cancel-f" @click="goBack()">{{$t('button.back')}}</button>
-            <button v-if="!showAlarm" class="btn btn-sm btn-cancel-f" @click="openAlarmDisplay()">
-              <i style="font-size: 18px;color: #0080FF;" class="fa fa-eye-slash" aria-hidden="true"></i>
-            </button>
-            <button v-else class="btn btn-sm btn-cancel-f" @click="closeAlarmDisplay()">
-              <i style="font-size: 18px;color: #0080FF;" class="fa fa-eye" aria-hidden="true"></i>
-            </button>
-          </div>
+        <div class="header-tools"> 
+          <button class="btn btn-sm btn-cancel-f" style="margin-right:60px" @click="addItem">{{$t('m_new_graph')}}</button>
+          <button class="btn btn-sm btn-confirm-f" @click="saveEdit">{{$t('button.saveConfig')}}</button>
+          <button class="btn btn-sm btn-cancel-f" @click="goBack()">{{$t('button.back')}}</button>
+          <button v-if="!showAlarm" class="btn btn-sm btn-cancel-f" @click="openAlarmDisplay()">
+            <i style="font-size: 18px;color: #0080FF;" class="fa fa-eye-slash" aria-hidden="true"></i>
+          </button>
+          <button v-else class="btn btn-sm btn-cancel-f" @click="closeAlarmDisplay()">
+            <i style="font-size: 18px;color: #0080FF;" class="fa fa-eye" aria-hidden="true"></i>
+          </button>
+        </div>
       </div>
     </header>
     <div style="display:flex">
@@ -287,14 +286,22 @@ export default {
         this.viewCondition.autoRefresh = 0
       }
     },
+    dateToTimestamp (date) {
+      if (!date) return 0
+      let timestamp = Date.parse(new Date(date))
+      timestamp = timestamp / 1000;
+      return timestamp
+    },
     initPanals () {
       let tmp = []
       this.viewData.forEach((item) => {
         let params = {
           aggregate: item.aggregate,
-          time_second: -1800,
-          start: 0,
-          end: 0,
+          agg_step: item.agg_step,
+          lineType: item.lineType,
+          time_second: this.viewCondition.timeTnterval,
+          start: this.dateToTimestamp(this.viewCondition.dateRange[0]),
+          end: this.dateToTimestamp(this.viewCondition.dateRange[1]),
           title: '',
           unit: '',
           data: []
@@ -310,7 +317,9 @@ export default {
           elId: item.viewConfig.id,
           chartParams: params,
           chartType: item.chartType,
-          aggregate: item.aggregate                                              
+          aggregate: item.aggregate,
+          agg_step: item.agg_step,
+          lineType: item.lineType                                       
         })
         item.viewConfig._activeCharts = _activeCharts
         tmp.push(item.viewConfig)
@@ -373,13 +382,16 @@ export default {
         parentRouteData.cfg = JSON.parse(parentRouteData.cfg)
         const oriConfig = JSON.parse(JSON.stringify(cfg))
         let aggregate = 'none'
+        let agg_step = 60
         if (item) {
           const find = oriConfig.find(xItem => xItem.panalTitle === item.i)
           if (find) {
             aggregate = find.aggregate || 'none'
+            agg_step = find.agg_step || 60
           }
           let findEditData = parentRouteData.cfg.find(xItem => xItem.panalTitle === item.i)
           findEditData.aggregate = aggregate
+          findEditData.agg_step = agg_step
         } else {
           parentRouteData.cfg = resViewData
         }
@@ -434,6 +446,8 @@ export default {
             temp.query = i.query
             temp.chartType = i.chartType
             temp.aggregate = i.aggregate
+            temp.agg_step = i.agg_step
+            temp.lineType = i.lineType
           }
         })
         resViewData.push(temp)
@@ -454,6 +468,8 @@ export default {
               query: i.query,
               chartType: i.chartType,
               aggregate: i.aggregate,
+              agg_step: i.agg_step,
+              lineType: i.lineType,
               viewConfig: layoutDataItem
             })
           }
