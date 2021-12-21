@@ -24,8 +24,8 @@ func main() {
 	flag.Parse()
 	m.InitConfig(*cfgFile)
 	log.InitLogger()
-	db.InitDbConn()
-	if m.Config().Http.Session.Enable {
+	db.InitDatabase()
+	if m.Config().Http.Session.Enable == "true" {
 		middleware.InitSession()
 	}
 	ds.InitPrometheusDatasource()
@@ -34,9 +34,11 @@ func main() {
 	}
 	go api.InitClusterApi()
 	go db.InitPrometheusConfig()
+	go db.InitSysParameter()
+	go db.InitServiceGroup()
 	go db.StartCronJob()
 	go db.StartCheckCron()
-	go db.StartCheckLogKeyword()
+	go db.StartLogKeywordMonitorCronJob()
 	go db.SendConfigToDbManager()
 	go db.StartCallCronJob()
 	go db.StartNotifyPingExport()
