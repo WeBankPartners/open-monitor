@@ -1,24 +1,24 @@
 package funcs
 
 import (
-	"net/http"
+	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
-	"fmt"
-	"encoding/json"
+	"net/http"
 )
 
-func StartHttpServer(port int)  {
+func StartHttpServer(port int) {
 	http.Handle("/db/check", http.HandlerFunc(handleCheckIllegal))
 	http.Handle("/db/config", http.HandlerFunc(handleAcceptConfig))
 	http.Handle("/metrics", http.HandlerFunc(handlePrometheus))
 	http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 }
 
-func handleCheckIllegal(w http.ResponseWriter,r *http.Request)  {
+func handleCheckIllegal(w http.ResponseWriter, r *http.Request) {
 	var param DbMonitorTaskObj
 	var respMessage string
-	requestByte,err := ioutil.ReadAll(r.Body)
+	requestByte, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		respMessage = fmt.Sprintf("handle config read body error : %s \n", err.Error())
 		log.Printf(respMessage)
@@ -26,6 +26,7 @@ func handleCheckIllegal(w http.ResponseWriter,r *http.Request)  {
 		w.Write([]byte(respMessage))
 		return
 	}
+	log.Printf("check illegal param:%s\n", string(requestByte))
 	err = json.Unmarshal(requestByte, &param)
 	if err != nil {
 		respMessage = fmt.Sprintf("handle config json unmarshal error : %s \n", err.Error())
@@ -46,10 +47,10 @@ func handleCheckIllegal(w http.ResponseWriter,r *http.Request)  {
 	w.Write([]byte("success"))
 }
 
-func handleAcceptConfig(w http.ResponseWriter,r *http.Request)  {
+func handleAcceptConfig(w http.ResponseWriter, r *http.Request) {
 	var param []*DbMonitorTaskObj
 	var respMessage string
-	requestByte,err := ioutil.ReadAll(r.Body)
+	requestByte, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		respMessage = fmt.Sprintf("handle config read body error : %s \n", err.Error())
 		log.Printf(respMessage)
@@ -57,6 +58,7 @@ func handleAcceptConfig(w http.ResponseWriter,r *http.Request)  {
 		w.Write([]byte(respMessage))
 		return
 	}
+	log.Printf("accept config param:%s\n", string(requestByte))
 	err = json.Unmarshal(requestByte, &param)
 	if err != nil {
 		respMessage = fmt.Sprintf("handle config json unmarshal error : %s \n", err.Error())
@@ -65,13 +67,13 @@ func handleAcceptConfig(w http.ResponseWriter,r *http.Request)  {
 		w.Write([]byte(respMessage))
 		return
 	}
-	taskLock.Lock()
+	//taskLock.Lock()
 	taskList = param
-	taskLock.Unlock()
+	//taskLock.Unlock()
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("success"))
 }
 
-func handlePrometheus(w http.ResponseWriter,r *http.Request)  {
+func handlePrometheus(w http.ResponseWriter, r *http.Request) {
 	w.Write(GetExportMetric())
 }
