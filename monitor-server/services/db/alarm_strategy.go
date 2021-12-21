@@ -46,7 +46,7 @@ func QueryAlarmStrategyByEndpoint(endpoint string) (result []*models.EndpointStr
 	}
 	result = []*models.EndpointStrategyObj{}
 	var endpointGroupTable []*models.EndpointGroupTable
-	err = x.SQL("select guid,service_group from endpoint_group where monitor_type=? and guid in (select endpoint_group from endpoint_group_rel where endpoint=?) or service_group in (select service_group from endpoint_service_rel where endpoint=?)", endpointObj.MonitorType, endpoint, endpoint).Find(&endpointGroupTable)
+	err = x.SQL("select guid,service_group from endpoint_group where monitor_type=? and (guid in (select endpoint_group from endpoint_group_rel where endpoint=?) or service_group in (select service_group from endpoint_service_rel where endpoint=?))", endpointObj.MonitorType, endpoint, endpoint).Find(&endpointGroupTable)
 	if err != nil {
 		return
 	}

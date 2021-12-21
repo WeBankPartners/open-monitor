@@ -102,7 +102,7 @@ func ListEndpointGroupOptions(searchText string) (result []*models.OptionModel, 
 	}
 	searchText = "%" + searchText + "%"
 	var endpointGroupTable []*models.EndpointGroupTable
-	err = x.SQL("select guid,monitor_type from endpoint_group where guid like ?", searchText).Find(&endpointGroupTable)
+	err = x.SQL("select guid,monitor_type from endpoint_group where service_group is null and (guid like ?)", searchText).Find(&endpointGroupTable)
 	if err != nil {
 		return
 	}
