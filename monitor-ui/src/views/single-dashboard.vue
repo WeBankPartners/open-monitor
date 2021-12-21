@@ -214,7 +214,6 @@ export default {
           chartParams: params,
           chartType: item.chartType                                                     
         })
-        console.log(_activeCharts)
         item.viewConfig._activeCharts = _activeCharts
         tmp.push(item.viewConfig)
       })
