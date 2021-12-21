@@ -17,14 +17,15 @@ type requestPanelObj struct {
 }
 
 type panelRequestObj struct {
+	ConfirmToken      string `json:"confirmToken"`
 	CallbackParameter string `json:"callbackParameter"`
 	Guid              string `json:"guid"`
 	DisplayName       string `json:"display_name"`
 	Parent            string `json:"parent"`
-	Endpoint          string `json:"endpoint"`
+	Endpoint          interface{} `json:"endpoint"`
 	Email             string `json:"email"`
 	Phone             string `json:"phone"`
-	Role              string `json:"role"`
+	Role              interface{} `json:"role"`
 	FiringCallback    string `json:"firing_callback"`
 	RecoverCallback   string `json:"recover_callback"`
 	Type              string `json:"type"`
@@ -41,25 +42,25 @@ func ExportPanelAdd(c *gin.Context) {
 			c.JSON(http.StatusOK, result)
 			return
 		}
+		roleMap := db.GetRoleMap()
 		var tmpResult []resultOutputObj
 		successFlag := "0"
 		errorMessage := "Done"
 		for _, v := range param.Inputs {
-			v.Endpoint = trimListString(v.Endpoint)
+			var tmpMessage string
 			v.Parent = trimListString(v.Parent)
 			v.Email = trimListString(v.Email)
 			v.Phone = trimListString(v.Phone)
-			v.Role = trimListString(v.Role)
-			tmpEndpoint := strings.Split(v.Endpoint, ",")
+			inputRoleList := m.TransPluginMultiStringParam(v.Role)
+			tmpEndpoint := m.TransPluginMultiStringParam(v.Endpoint)
 			tmpParent := strings.Split(v.Parent, ",")
-			tmpRole := db.CheckRoleList(v.Role)
-			var tmpMessage string
+			checkRoleErr := db.CheckRoleIllegal(inputRoleList, roleMap)
+			if checkRoleErr != nil {
+				tmpMessage = checkRoleErr.Error()
+			}
 			if v.Guid == "" {
 				tmpMessage = fmt.Sprintf(mid.GetMessageMap(c).ParamEmptyError, "guid")
 			}
-			//if len(v.Parent) == 0 && v.Endpoint == "" {
-			//	tmpMessage = fmt.Sprintf("Index:%s children and endpoint both null", v.CallbackParameter)
-			//}
 			if tmpMessage != "" {
 				errorMessage = tmpMessage
 				tmpResult = append(tmpResult, resultOutputObj{CallbackParameter: v.CallbackParameter, ErrorCode: "1", ErrorMessage: tmpMessage})
@@ -101,7 +102,7 @@ func ExportPanelAdd(c *gin.Context) {
 				successFlag = "1"
 				continue
 			}
-			err := db.UpdateRecursivePanel(m.PanelRecursiveTable{Guid: v.Guid, DisplayName: v.DisplayName, Parent: strings.Join(tmpParent, "^"), Endpoint: strings.Join(endpointStringList, "^"), Email: v.Email, Phone: v.Phone, Role: tmpRole, FiringCallbackKey: v.FiringCallback, RecoverCallbackKey: v.RecoverCallback, ObjType: v.Type})
+			err := db.UpdateRecursivePanel(m.PanelRecursiveTable{Guid: v.Guid, DisplayName: v.DisplayName, Parent: strings.Join(tmpParent, "^"), Endpoint: strings.Join(endpointStringList, "^"), Email: v.Email, Phone: v.Phone, Role: strings.Join(inputRoleList,","), FiringCallbackKey: v.FiringCallback, RecoverCallbackKey: v.RecoverCallback, ObjType: v.Type})
 			if err != nil {
 				tmpMessage = fmt.Sprintf(mid.GetMessageMap(c).UpdateTableError, "recursive_panel")
 				errorMessage = tmpMessage
@@ -168,6 +169,17 @@ func ExportPanelDelete(c *gin.Context) {
 		errorMessage := "Done"
 		for _, v := range param.Inputs {
 			var tmpMessage string
+			affectList,affectErr := db.GetDeleteServiceGroupAffectList(v.Guid)
+			if affectErr != nil {
+				tmpMessage = fmt.Sprintf("Try to get affect object list fail,%s ", affectErr.Error())
+			}
+			if v.ConfirmToken != "Y" && len(affectList) > 0 {
+				tmpMessage = fmt.Sprintf("This action will delete these config:%s ", strings.Join(affectList, " \n "))
+				errorMessage = tmpMessage
+				tmpResult = append(tmpResult, resultOutputObj{Guid: v.Guid, CallbackParameter: v.CallbackParameter, ErrorCode: "-1", ErrorMessage: tmpMessage})
+				successFlag = "1"
+				continue
+			}
 			if v.Guid == "" {
 				tmpMessage = fmt.Sprintf(mid.GetMessageMap(c).ParamEmptyError, "guid")
 			}
@@ -181,8 +193,7 @@ func ExportPanelDelete(c *gin.Context) {
 			if strings.ToLower(v.DeleteAll) == "y" || strings.ToLower(v.DeleteAll) == "yes" {
 				cErr = db.DeleteRecursivePanel(v.Guid)
 			} else {
-				v.Endpoint = trimListString(v.Endpoint)
-				tmpEndpoint := strings.Split(v.Endpoint, ",")
+				tmpEndpoint := m.TransPluginMultiStringParam(v.Endpoint)
 				var endpointStringList []string
 				for _, vv := range tmpEndpoint {
 					if vv == "" {

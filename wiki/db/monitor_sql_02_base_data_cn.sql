@@ -302,3 +302,330 @@ alter table alarm add column endpoint_tags varchar(255);
 alter table business_monitor_cfg add column config_type varchar(16) default 'json';
 alter table business_monitor_cfg add column agg_type varchar(16) default 'avg';
 #@v1.12.3.1-end@;
+
+#@v1.13.0.1-begin@;
+CREATE TABLE `service_group` (
+  `guid` varchar(64) NOT NULL PRIMARY KEY,
+  `display_name` varchar(255) NOT NULL,
+  `description` varchar(255),
+  `parent` varchar(64) DEFAULT NULL,
+  `service_type` varchar(32) NOT NULL,
+  `update_time` varchar(32),
+  CONSTRAINT `service_group_parent` FOREIGN KEY (`parent`) REFERENCES `service_group` (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `cluster_new` (
+  `guid` varchar(128) NOT NULL PRIMARY KEY,
+  `display_name` varchar(255),
+  `remote_agent_address` varchar(255),
+  `prometheus_address` varchar(255)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+insert into cluster_new(guid,display_name) value ('default','default');
+
+CREATE TABLE `monitor_type` (
+  `guid` varchar(32) NOT NULL PRIMARY KEY,
+  `display_name` varchar(255),
+  `description` varchar(255)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+insert into monitor_type(guid,display_name) value ('host','host'),('mysql','mysql'),('redis','redis'),('java','java'),('nginx','nginx'),('ping','ping'),('telnet','telnet'),('http','http'),('windows','windows'),('snmp','snmp'),('process','process'),('pod','pod');
+
+CREATE TABLE `endpoint_new` (
+  `guid` varchar(128) NOT NULL PRIMARY KEY,
+  `name` varchar(64) NOT NULL,
+  `ip` varchar(32),
+  `monitor_type` varchar(32) NOT NULL,
+  `agent_version` varchar(64),
+  `agent_address` varchar(64),
+  `step` int default 10,
+  `endpoint_version` varchar(64),
+  `endpoint_address` varchar(64),
+  `cluster` varchar(128) NOT NULL,
+  `alarm_enable` tinyint default 1,
+  `tags` varchar(255),
+  `extend_param` text,
+  `description` varchar(255),
+  `update_time` varchar(32),
+  CONSTRAINT `endpoint_cluster` FOREIGN KEY (`cluster`) REFERENCES `cluster_new` (`guid`),
+  CONSTRAINT `endpoint_monitor_type` FOREIGN KEY (`monitor_type`) REFERENCES `monitor_type` (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `endpoint_service_rel` (
+  `guid` varchar(64) NOT NULL PRIMARY KEY,
+  `endpoint` varchar(128) NOT NULL,
+  `service_group` varchar(64) NOT NULL,
+  CONSTRAINT `e_service_rel_e` FOREIGN KEY (`endpoint`) REFERENCES `endpoint_new` (`guid`),
+  CONSTRAINT `e_service_rel_s` FOREIGN KEY (`service_group`) REFERENCES `service_group` (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `log_metric_monitor` (
+  `guid` varchar(64) NOT NULL PRIMARY KEY,
+  `service_group` varchar(64) NOT NULL,
+  `log_path` varchar(255) NOT NULL,
+  `metric_type` varchar(16) default 'json',
+  `monitor_type` varchar(32) DEFAULT NULL,
+  `update_time` varchar(32),
+  CONSTRAINT `log_monitor_service_group` FOREIGN KEY (`service_group`) REFERENCES `service_group` (`guid`),
+  CONSTRAINT `log_monitor_monitor_type` FOREIGN KEY (`monitor_type`) REFERENCES `monitor_type` (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `log_metric_json` (
+  `guid` varchar(64) NOT NULL PRIMARY KEY,
+  `log_metric_monitor` varchar(64) NOT NULL,
+  `json_regular` varchar(255),
+  `tags` varchar(64),
+  `update_time` varchar(32),
+  CONSTRAINT `log_monitor_json_monitor` FOREIGN KEY (`log_metric_monitor`) REFERENCES `log_metric_monitor` (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `log_metric_config` (
+  `guid` varchar(64) NOT NULL PRIMARY KEY,
+  `log_metric_monitor` varchar(64) DEFAULT NULL,
+  `log_metric_json` varchar(64) DEFAULT NULL,
+  `metric` varchar(64) NOT NULL,
+  `display_name` varchar(255),
+  `json_key` varchar(255),
+  `regular` varchar(255),
+  `step` int default 10,
+  `agg_type` varchar(16) DEFAULT 'avg',
+  `update_time` varchar(32),
+  CONSTRAINT `log_monitor_config_monitor` FOREIGN KEY (`log_metric_monitor`) REFERENCES `log_metric_monitor` (`guid`),
+  CONSTRAINT `log_monitor_config_json` FOREIGN KEY (`log_metric_json`) REFERENCES `log_metric_json` (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `log_metric_string_map` (
+  `guid` varchar(64) NOT NULL PRIMARY KEY,
+  `log_metric_config` varchar(64) NOT NULL,
+  `source_value` varchar(255),
+  `regulative` tinyint default 0,
+  `target_value` varchar(64),
+  `update_time` varchar(32),
+  CONSTRAINT `log_monitor_string_config` FOREIGN KEY (`log_metric_config`) REFERENCES `log_metric_config` (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `log_metric_endpoint_rel` (
+  `guid` varchar(64) NOT NULL PRIMARY KEY,
+  `log_metric_monitor` varchar(64) NOT NULL,
+  `source_endpoint` varchar(128),
+  `target_endpoint` varchar(128),
+  CONSTRAINT `log_monitor_endpoint_metric` FOREIGN KEY (`log_metric_monitor`) REFERENCES `log_metric_monitor` (`guid`),
+  CONSTRAINT `log_monitor_endpoint_source` FOREIGN KEY (`source_endpoint`) REFERENCES `endpoint_new` (`guid`),
+  CONSTRAINT `log_monitor_endpoint_target` FOREIGN KEY (`target_endpoint`) REFERENCES `endpoint_new` (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `db_metric_monitor` (
+  `guid` varchar(64) NOT NULL PRIMARY KEY,
+  `service_group` varchar(64) NOT NULL,
+  `metric_sql` text,
+  `metric` varchar(64) NOT NULL,
+  `display_name` varchar(255),
+  `step` int default 10,
+  `monitor_type` varchar(32) DEFAULT NULL,
+  `update_time` varchar(32),
+  CONSTRAINT `db_monitor_service_group` FOREIGN KEY (`service_group`) REFERENCES `service_group` (`guid`),
+  CONSTRAINT `db_monitor_monitor_type` FOREIGN KEY (`monitor_type`) REFERENCES `monitor_type` (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `db_metric_endpoint_rel` (
+  `guid` varchar(64) NOT NULL PRIMARY KEY,
+  `db_metric_monitor` varchar(64) NOT NULL,
+  `source_endpoint` varchar(128),
+  `target_endpoint` varchar(128),
+  CONSTRAINT `db_monitor_endpoint_metric` FOREIGN KEY (`db_metric_monitor`) REFERENCES `db_metric_monitor` (`guid`),
+  CONSTRAINT `db_monitor_endpoint_source` FOREIGN KEY (`source_endpoint`) REFERENCES `endpoint_new` (`guid`),
+  CONSTRAINT `db_monitor_endpoint_target` FOREIGN KEY (`target_endpoint`) REFERENCES `endpoint_new` (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+insert into grp(name,endpoint_type) value ('default_process_group','process');
+insert  into `dashboard`(`dashboard_type`,`search_enable`,`search_id`,`button_enable`,`button_group`,`message_enable`,`message_group`,`message_url`,`panels_enable`,`panels_type`,`panels_group`,`panels_param`) values ('process',1,1,1,1,0,0,'',1,'tabs',11,'endpoint={endpoint}');
+insert  into `panel`(`group_id`,`title`,`tags_enable`,`tags_url`,`tags_key`,`chart_group`,`auto_display`) values (11,'process',0,'','',18,0);
+insert  into `chart`(`group_id`,`endpoint`,`metric`,`col`,`url`,`unit`,`title`,`grid_type`,`series_name`,`rate`,`agg_type`,`legend`) values (18,'','process_cpu_used_percent',6,'/dashboard/chart','','process.cpu.used','line','metric',0,'avg','$metric'),(18,'','process_mem_byte',6,'/dashboard/chart','','process.mem.used','line','metric',0,'avg','$metric');
+insert  into `prom_metric`(`metric`,`metric_type`,`prom_ql`,`prom_main`) values ('process_alive_count','process','node_process_monitor_count_current{instance=\"$address\",process_guid=\"$guid\"}',''),('process_cpu_used_percent','process','node_process_monitor_cpu{instance=\"$address\",process_guid=\"$guid\"}',''),('process_mem_byte','process','node_process_monitor_mem{instance=\"$address\",process_guid=\"$guid\"}','');
+#@v1.13.0.1-end@;
+
+#@v1.13.0.2-begin@;
+CREATE TABLE `endpoint_group` (
+  `guid` varchar(64) NOT NULL PRIMARY KEY,
+  `display_name` varchar(255) NOT NULL,
+  `description` varchar(255),
+  `monitor_type` varchar(32) NOT NULL,
+  `service_group` varchar(64),
+  `alarm_window` varchar(255),
+  `update_time` varchar(32),
+  CONSTRAINT `endpoint_group_monitor_type` FOREIGN KEY (`monitor_type`) REFERENCES `monitor_type` (`guid`),
+  CONSTRAINT `endpoint_group_service_group` FOREIGN KEY (`service_group`) REFERENCES `service_group` (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `endpoint_group_rel` (
+  `guid` varchar(64) NOT NULL PRIMARY KEY,
+  `endpoint` varchar(128) NOT NULL,
+  `endpoint_group` varchar(64),
+  CONSTRAINT `endpoint_group_e` FOREIGN KEY (`endpoint`) REFERENCES `endpoint_new` (`guid`),
+  CONSTRAINT `endpoint_group_g` FOREIGN KEY (`endpoint_group`) REFERENCES `endpoint_group` (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `role_new` (
+  `guid` varchar(64) NOT NULL PRIMARY KEY,
+  `display_name` varchar(255) NOT NULL,
+  `email` varchar(255),
+  `phone` varchar(32),
+  `update_time` varchar(32)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `metric` (
+  `guid` varchar(128) NOT NULL PRIMARY KEY,
+  `metric` varchar(64) NOT NULL,
+  `monitor_type` varchar(32) NOT NULL,
+  `prom_expr` text,
+  `tag_owner` varchar(64),
+  `update_time` varchar(32),
+  CONSTRAINT `metric_monitor_type` FOREIGN KEY (`monitor_type`) REFERENCES `monitor_type` (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `alarm_strategy` (
+  `guid` varchar(64) NOT NULL PRIMARY KEY,
+  `endpoint_group` varchar(64) NOT NULL,
+  `metric` varchar(128) NOT NULL,
+  `condition` varchar(32) NOT NULL,
+  `last` varchar(16) NOT NULL,
+  `priority` varchar(16) DEFAULT 'low',
+  `content` text,
+  `notify_enable` tinyint default 1,
+  `notify_delay_second` int default 0,
+  `update_time` varchar(32),
+  CONSTRAINT `strategy_endpoint_group` FOREIGN KEY (`endpoint_group`) REFERENCES `endpoint_group` (`guid`),
+  CONSTRAINT `strategy_metric` FOREIGN KEY (`metric`) REFERENCES `metric` (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `notify` (
+  `guid` varchar(64) NOT NULL PRIMARY KEY,
+  `endpoint_group` varchar(64),
+  `service_group` varchar(64),
+  `alarm_strategy` varchar(64),
+  `alarm_action` varchar(32) default 'firing',
+  `alarm_priority` varchar(32),
+  `notify_num` int default 1,
+  `proc_callback_name` varchar(64),
+  `proc_callback_key` varchar(64),
+  `callback_url` varchar(255),
+  `callback_param` varchar(255),
+  CONSTRAINT `notify_endpoint_group` FOREIGN KEY (`endpoint_group`) REFERENCES `endpoint_group` (`guid`),
+  CONSTRAINT `notify_service_group` FOREIGN KEY (`service_group`) REFERENCES `service_group` (`guid`),
+  CONSTRAINT `notify_alarm_strategy` FOREIGN KEY (`alarm_strategy`) REFERENCES `alarm_strategy` (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `notify_role_rel` (
+  `guid` varchar(64) NOT NULL PRIMARY KEY,
+  `notify` varchar(64) NOT NULL,
+  `role` varchar(64) NOT NULL,
+  CONSTRAINT `notify_role_n` FOREIGN KEY (`notify`) REFERENCES `notify` (`guid`),
+  CONSTRAINT `notify_role_r` FOREIGN KEY (`role`) REFERENCES `role_new` (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+alter table alarm add column alarm_strategy varchar(64);
+insert into role_new(guid,display_name,email) select name,display_name,email from role;
+insert into endpoint_group(guid,display_name,description,monitor_type) select name,name,description,endpoint_type from grp where endpoint_type is not null;
+insert into metric(guid,metric,monitor_type,prom_expr,tag_owner) select t1.* from (select CONCAT(metric,'__',metric_type),metric,metric_type,prom_ql,prom_main from prom_metric where metric_type<>'tomcat' union select CONCAT(metric,'__java'),metric,'java',prom_ql,prom_main from prom_metric where metric_type='tomcat') t1;
+insert into alarm_strategy select CONCAT('old_',t1.id),t3.name,t4.guid ,t1.cond,t1.`last`,t1.priority,t1.content,t1.notify_enable,t1.notify_delay,'' as update_time from strategy t1 left join tpl t2 on t1.tpl_id=t2.id left join grp t3 on t2.grp_id=t3.id left join metric t4 on (t1.metric=t4.metric and t3.endpoint_type=t4.monitor_type) where t2.grp_id>0 and t4.guid is not null;
+insert into endpoint_group_rel select concat(t1.endpoint_id,'__',t1.grp_id),t2.guid,t3.name from grp_endpoint t1 left join endpoint t2 on t1.endpoint_id=t2.id left join grp t3 on t1.grp_id=t3.id;
+#@v1.13.0.2-end@;
+
+#@v1.13.0.6-begin@;
+CREATE TABLE `sys_parameter` (
+  `guid` varchar(64) NOT NULL PRIMARY KEY,
+  `param_key` varchar(64) NOT NULL,
+  `param_value` text
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+alter table alarm_strategy drop foreign key strategy_metric;
+insert into sys_parameter(guid,param_key,param_value) value ('metric_template_01','metric_template','{"name":"custom","prom_ql":"$a","param":"$a"}');
+insert into sys_parameter(guid,param_key,param_value) value ('metric_template_02','metric_template','{"name":"percent01","prom_ql":"100*(sum($a)/(sum($b) > 0) or vector(0))","param":"$a,$b"}');
+insert into sys_parameter(guid,param_key,param_value) value ('metric_template_03','metric_template','{"name":"percent02","prom_ql":"100*(1-(sum($a)/(sum($b) > 0) or vector(0)))","param":"$a,$b"}');
+insert into sys_parameter(guid,param_key,param_value) value ('metric_template_04','metric_template','{"name":"percent03","prom_ql":"100*(sum($a)/((sum($a)+sum($b)) > 0) or vector(0))","param":"$a,$b"}');
+insert into sys_parameter(guid,param_key,param_value) value ('metric_template_05','metric_template','{"name":"percent04","prom_ql":"100*((sum($a)-sum($b))/(sum($a) > 0) or vector(0))","param":"$a,$b"}');
+#@v1.13.0.6-end@;
+
+#@v1.13.0.18-begin@;
+alter table service_group drop foreign key service_group_parent;
+alter table log_metric_monitor drop foreign key log_monitor_service_group;
+alter table db_metric_monitor drop foreign key db_monitor_service_group;
+alter table metric add column log_metric_monitor varchar(64);
+alter table metric add column db_metric_monitor varchar(64);
+delete from panel where title='DataMonitor';
+delete from prom_metric where metric='process_alive_count';
+delete from alarm_strategy where metric like '%process_alive_count%';
+insert into alarm_strategy(guid,endpoint_group,metric,`condition`,last,priority,content,notify_enable) value ('old_25','default_process_group','process_alive_count__process','==0','60s','high','process down',1);
+#@v1.13.0.18-end@;
+
+#@v1.13.0.21-begin@;
+update prom_metric set prom_ql='node_process_monitor_count_current{process_guid="$guid"}' where metric_type='process' and metric='process_alive_count';
+update prom_metric set prom_ql='node_process_monitor_cpu{process_guid="$guid"}' where metric_type='process' and metric='process_cpu_used_percent';
+update prom_metric set prom_ql='node_process_monitor_mem{process_guid="$guid"}' where metric_type='process' and metric='process_mem_byte';
+update metric set prom_expr='node_process_monitor_count_current{process_guid="$guid"}' where monitor_type='process' and metric='process_alive_count';
+update metric set prom_expr='node_process_monitor_cpu{process_guid="$guid"}' where monitor_type='process' and metric='process_cpu_used_percent';
+update metric set prom_expr='node_process_monitor_mem{process_guid="$guid"}' where monitor_type='process' and metric='process_mem_byte';
+delete from strategy where id<=24;
+delete from metric where metric='app.metric';
+#@v1.13.0.21-end@;
+
+#@v1.13.0.24-begin@;
+CREATE TABLE `service_group_role_rel` (
+  `guid` varchar(64) NOT NULL PRIMARY KEY,
+  `service_group` varchar(64) NOT NULL,
+  `role` varchar(64) NOT NULL,
+  CONSTRAINT `service_role_s` FOREIGN KEY (`service_group`) REFERENCES `service_group` (`guid`),
+  CONSTRAINT `service_role_r` FOREIGN KEY (`role`) REFERENCES `role_new` (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `log_keyword_monitor` (
+  `guid` varchar(64) NOT NULL PRIMARY KEY,
+  `service_group` varchar(64) NOT NULL,
+  `log_path` varchar(255) NOT NULL,
+  `monitor_type` varchar(32) NOT NULL,
+  `update_time` varchar(32),
+  CONSTRAINT `log_keyword_monitor_type` FOREIGN KEY (`monitor_type`) REFERENCES `monitor_type` (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `log_keyword_config` (
+  `guid` varchar(64) NOT NULL PRIMARY KEY,
+  `log_keyword_monitor` varchar(64) NOT NULL,
+  `keyword` varchar(255) NOT NULL,
+  `regulative` tinyint default 0,
+  `notify_enable` tinyint default 1,
+  `priority` varchar(16) default 'low',
+  `update_time` varchar(32),
+  CONSTRAINT `log_keyword_config_monitor` FOREIGN KEY (`log_keyword_monitor`) REFERENCES `log_keyword_monitor` (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `log_keyword_endpoint_rel` (
+  `guid` varchar(64) NOT NULL PRIMARY KEY,
+  `log_keyword_monitor` varchar(64) NOT NULL,
+  `source_endpoint` varchar(128),
+  `target_endpoint` varchar(128),
+  CONSTRAINT `log_keyword_endpoint_monitor` FOREIGN KEY (`log_keyword_monitor`) REFERENCES `log_keyword_monitor` (`guid`),
+  CONSTRAINT `log_keyword_endpoint_source` FOREIGN KEY (`source_endpoint`) REFERENCES `endpoint_new` (`guid`),
+  CONSTRAINT `log_keyword_endpoint_target` FOREIGN KEY (`target_endpoint`) REFERENCES `endpoint_new` (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+#@v1.13.0.24-end@;
+
+#@v1.13.0.25-begin@;
+alter table metric drop column log_metric_monitor;
+alter table metric drop column db_metric_monitor;
+alter table metric add column service_group varchar(64);
+alter table metric drop foreign key metric_monitor_type;
+alter table panel add column service_group varchar(64) default null;
+alter table metric add column workspace varchar(16) default 'any_object';
+delete from sys_parameter;
+insert into sys_parameter(guid,param_key,param_value) value ('metric_template_01','metric_template','{"name":"custom","prom_expr":"@a","param":"@a"}');
+insert into sys_parameter(guid,param_key,param_value) value ('metric_template_02','metric_template','{"name":"percent[a/b]","prom_expr":"100*(sum(@a)/sum(@b) > 0 or vector(0))","param":"@a,@b"}');
+insert into sys_parameter(guid,param_key,param_value) value ('metric_template_03','metric_template','{"name":"percent[(a-b)/a]","prom_expr":"100*((sum(@a)-sum(@b))/sum(@a) > 0 or vector(0))","param":"@a,@b"}');
+insert into sys_parameter(guid,param_key,param_value) value ('metric_template_04','metric_template','{"name":"percent[a/(a+b)]","prom_expr":"100*(sum(@a)/((sum(@a)+sum(@b)) > 0) or vector(0))","param":"@a,@b"}');
+insert into sys_parameter(guid,param_key,param_value) value ('metric_template_05','service_metric_template','{"name":"custom","prom_expr":"@a","param":"@a"}');
+insert into sys_parameter(guid,param_key,param_value) value ('metric_template_06','service_metric_template','{"name":"sum(a)","prom_expr":"sum(@a)","param":"@a"}');
+insert into sys_parameter(guid,param_key,param_value) value ('metric_template_07','service_metric_template','{"name":"avg(a)","prom_expr":"avg(@a)","param":"@a"}');
+insert into sys_parameter(guid,param_key,param_value) value ('metric_template_08','service_metric_template','{"name":"max(a)","prom_expr":"max(@a)","param":"@a"}');
+insert into sys_parameter(guid,param_key,param_value) value ('metric_template_09','service_metric_template','{"name":"min(a)","prom_expr":"min(@a)","param":"@a"}');
+insert into sys_parameter(guid,param_key,param_value) value ('metric_template_10','service_metric_template','{"name":"percent[sum(a)/sum(b)]","prom_expr":"100*(sum(@a)/(sum(@b) > 0) or vector(0))","param":"@a,@b"}');
+insert into sys_parameter(guid,param_key,param_value) value ('metric_template_11','service_metric_template','{"name":"percent[(sum(a)-sum(b))/sum(a)]","prom_expr":"100*((sum(@a)-sum(@b))/(sum(@a) > 0) or vector(0))","param":"@a,@b"}');
+insert into sys_parameter(guid,param_key,param_value) value ('metric_template_12','service_metric_template','{"name":"percent[sum(a)/(sum(a)+sum(b))]","prom_expr":"100*(sum(@a)/((sum(@a)+sum(@b)) > 0) or vector(0))","param":"@a,@b"}');
+#@v1.13.0.25-end@;
