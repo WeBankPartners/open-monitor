@@ -82,7 +82,7 @@ func GetOperateUser(c *gin.Context) string {
 	if operator != "" {
 		return operator
 	}
-	if !m.Config().Http.Session.Enable {
+	if m.Config().Http.Session.Enable != "true" {
 		coreToken := GetCoreToken(c)
 		return coreToken.User
 	}

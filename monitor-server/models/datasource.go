@@ -18,6 +18,7 @@ type QueryMonitorData struct {
 	SameEndpoint  bool      `json:"same_endpoint"`
 	Step          int       `json:"step"`
 	Cluster       string    `json:"cluster"`
+	ServiceGroupName string `json:"service_group_name"`
 }
 
 type PrometheusParam struct {

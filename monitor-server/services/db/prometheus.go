@@ -59,35 +59,66 @@ func InitPrometheusServiceDiscoverConfig() {
 
 func initPrometheusRuleConfig() {
 	// Sync rule file
-	var tplList []*models.TplTable
-	err := x.SQL("SELECT * FROM tpl").Find(&tplList)
+	//var tplList []*models.TplTable
+	//err := x.SQL("SELECT * FROM tpl").Find(&tplList)
+	//if err != nil {
+	//	log.Logger.Error("init prometheus rule config fail,query tpl table fail", log.Error(err))
+	//	return
+	//}
+	//for _, tpl := range tplList {
+	//	tmpErr := SyncRuleConfigFile(tpl.Id, []string{}, false)
+	//	if tmpErr != nil {
+	//		log.Logger.Error("init prometheus rule config fail", log.Error(tmpErr))
+	//	}
+	//}
+
+	var endpointGroup []*models.EndpointGroupTable
+	err := x.SQL("select guid from endpoint_group").Find(&endpointGroup)
 	if err != nil {
-		log.Logger.Error("init prometheus rule config fail,query tpl table fail", log.Error(err))
+		log.Logger.Error("Init prometheus rule config fail,query endpoint group fail", log.Error(err))
 		return
 	}
-	for _, tpl := range tplList {
-		tmpErr := SyncRuleConfigFile(tpl.Id, []string{}, false)
+	for _,v := range endpointGroup {
+		tmpErr := SyncPrometheusRuleFile(v.Guid, false)
 		if tmpErr != nil {
-			log.Logger.Error("init prometheus rule config fail", log.Error(tmpErr))
+			log.Logger.Error("init prometheus rule config fail", log.String("endpointGroup", v.Guid), log.Error(tmpErr))
 		}
 	}
 }
 
 func QueryExporterMetric(param models.QueryPrometheusMetricParam) (err error, result []string) {
-	if param.Cluster == "" || param.Cluster == "default" {
-		err, result = prom.GetEndpointData(param)
-		return
+	log.Logger.Info("QueryExporterMetric", log.JsonObj("param", param))
+	if !param.IsConfigQuery {
+		if param.Cluster == "" || param.Cluster == "default" {
+			err, result = prom.GetEndpointData(param)
+			return
+		}
 	}
 	clusterAddress := GetClusterAddress(param.Cluster)
 	if clusterAddress == "" {
 		err = fmt.Errorf("Can not find cluster address with cluster:%s ", param.Cluster)
 		return
 	}
+	var metricList,tmpMetricList []string
+	var queryPromQl string
 	nowTime := time.Now().Unix()
-	metricList, queryErr := datasource.QueryPromQLMetric(fmt.Sprintf("{instance=\"%s:%s\"}", param.Ip, param.Port), clusterAddress, nowTime-120, nowTime)
-	if queryErr != nil {
-		err = fmt.Errorf("Try to query remote cluster data fail,%s ", queryErr.Error())
+	if param.ServiceGroup != "" {
+		queryPromQl = fmt.Sprintf("{service_group=\"%s\"}", param.ServiceGroup)
+		tmpMetricList, err = datasource.QueryPromQLMetric(queryPromQl, clusterAddress, nowTime-120, nowTime)
+		if err != nil {
+			log.Logger.Error("Try go get tGuid fail", log.String("service_group", param.ServiceGroup), log.Error(err))
+		}else{
+			log.Logger.Info("tGuid tmpMetricList", log.StringList("tmpMetricList", tmpMetricList))
+		}
+	}
+	queryPromQl = fmt.Sprintf("{instance=\"%s:%s\"}", param.Ip, param.Port)
+	metricList, err = datasource.QueryPromQLMetric(queryPromQl, clusterAddress, nowTime-120, nowTime)
+	if err != nil {
+		err = fmt.Errorf("Try to query remote cluster data fail,%s ", err.Error())
 		return
+	}
+	if len(tmpMetricList) > 0 {
+		metricList = append(metricList, tmpMetricList...)
 	}
 	metricMap := make(map[string]int)
 	prefixLen := len(param.Prefix)

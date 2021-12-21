@@ -7,7 +7,7 @@ import (
 	"strconv"
 )
 
-func PanelList(id int,endpointType string) (result []*models.PanelTable,err error) {
+func PanelList(id int,endpointType,serviceGroup string) (result []*models.PanelTable,err error) {
 	groupId := 0
 	result = []*models.PanelTable{}
 	if endpointType != "" {
@@ -35,6 +35,12 @@ func PanelList(id int,endpointType string) (result []*models.PanelTable,err erro
 	if endpointType == "host" {
 		baseSql += " and title<>'Business' "
 	}
+	if serviceGroup != "" {
+		baseSql += " and service_group=? "
+		params = append(params, serviceGroup)
+	}else{
+		baseSql += " and service_group is null "
+	}
 	err = x.SQL(baseSql, params...).Find(&result)
 	return
 }
@@ -55,7 +61,11 @@ func PanelCreate(endpointType string,param []*models.PanelTable) error {
 			panel.TagsEnable = true
 			panel.TagsUrl = "/dashboard/tags"
 		}
-		actions = append(actions, &Action{Sql: "insert into panel(group_id,title,tags_enable,tags_url,tags_key,chart_group) value (?,?,?,?,?,?)", Param: []interface{}{groupId,panel.Title,panel.TagsEnable,panel.TagsUrl,panel.TagsKey,maxGroupId}})
+		if panel.ServiceGroup != "" {
+			actions = append(actions, &Action{Sql: "insert into panel(group_id,title,tags_enable,tags_url,tags_key,chart_group,service_group) value (?,?,?,?,?,?,?)", Param: []interface{}{groupId,panel.Title,panel.TagsEnable,panel.TagsUrl,panel.TagsKey,maxGroupId,panel.ServiceGroup}})
+		}else {
+			actions = append(actions, &Action{Sql: "insert into panel(group_id,title,tags_enable,tags_url,tags_key,chart_group) value (?,?,?,?,?,?)", Param: []interface{}{groupId, panel.Title, panel.TagsEnable, panel.TagsUrl, panel.TagsKey, maxGroupId}})
+		}
 	}
 	return Transaction(actions)
 }
@@ -94,7 +104,11 @@ func PanelUpdate(param []*models.PanelTable) error {
 			panel.TagsEnable = true
 			panel.TagsUrl = "/dashboard/tags"
 		}
-		actions = append(actions, &Action{Sql: "update panel set title=?,tags_enable=?,tags_url=?,tags_key=? where id=?", Param: []interface{}{panel.Title,panel.TagsEnable,panel.TagsUrl,panel.TagsKey,panel.Id}})
+		if panel.ServiceGroup != "" {
+			actions = append(actions, &Action{Sql: "update panel set title=?,tags_enable=?,tags_url=?,tags_key=?,service_group=? where id=?", Param: []interface{}{panel.Title, panel.TagsEnable, panel.TagsUrl, panel.TagsKey, panel.ServiceGroup, panel.Id}})
+		}else {
+			actions = append(actions, &Action{Sql: "update panel set title=?,tags_enable=?,tags_url=?,tags_key=? where id=?", Param: []interface{}{panel.Title, panel.TagsEnable, panel.TagsUrl, panel.TagsKey, panel.Id}})
+		}
 	}
 	return Transaction(actions)
 }

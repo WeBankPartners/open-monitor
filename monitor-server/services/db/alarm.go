@@ -16,9 +16,8 @@ import (
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 )
 
-
 func ListAlarmEndpoints(query *m.AlarmEndpointQuery) error {
-	var queryParams,countParams []interface{}
+	var queryParams, countParams []interface{}
 	whereSql := ""
 	if query.Search != "" {
 		whereSql += ` AND t1.guid LIKE ? `
@@ -29,16 +28,16 @@ func ListAlarmEndpoints(query *m.AlarmEndpointQuery) error {
 		countParams = append(countParams, query.Grp)
 	}
 	querySql := `SELECT t5.* FROM (
-            SELECT t4.id,t4.guid,GROUP_CONCAT(t4.grp_id) groups_ids,t4.type,t4.tags FROM (
-			SELECT t1.id,t1.guid,t2.grp_id,t1.export_type as type,t1.tags FROM endpoint t1 
-			LEFT JOIN grp_endpoint t2 ON t1.id=t2.endpoint_id 
+			SELECT t4.id,t4.guid,GROUP_CONCAT(t4.endpoint_group) groups_ids,t4.type,t4.tags FROM (
+			SELECT t1.id,t1.guid,t2.endpoint_group,t1.export_type as type,t1.tags FROM endpoint t1 
+			LEFT JOIN endpoint_group_rel t2 ON t1.guid=t2.endpoint 
 			WHERE 1=1 ` + whereSql + `
 			) t4 GROUP BY t4.guid
 			) t5 ORDER BY t5.guid LIMIT ?,?`
 	countSql := `SELECT COUNT(1) num FROM (
-			SELECT t4.guid,GROUP_CONCAT(t4.grp_id) groups_ids FROM (
-			SELECT t1.guid,t2.grp_id FROM endpoint t1 
-			LEFT JOIN grp_endpoint t2 ON t1.id=t2.endpoint_id 
+			SELECT t4.id,t4.guid,GROUP_CONCAT(t4.endpoint_group) groups_ids,t4.type,t4.tags FROM (
+			SELECT t1.id,t1.guid,t2.endpoint_group,t1.export_type as type,t1.tags FROM endpoint t1 
+			LEFT JOIN endpoint_group_rel t2 ON t1.guid=t2.endpoint
 			WHERE 1=1 ` + whereSql + `
 			) t4 GROUP BY t4.guid
 			) t5`
@@ -49,18 +48,22 @@ func ListAlarmEndpoints(query *m.AlarmEndpointQuery) error {
 	err := x.SQL(querySql, queryParams...).Find(&result)
 	err = x.SQL(countSql, countParams...).Find(&count)
 	if len(result) > 0 {
-		groupTableData := []*m.GrpTable{}
-		x.SQL("select * from grp").Find(&groupTableData)
+		groupTableData := []*m.EndpointGroupTable{}
+		x.SQL("select * from endpoint_group").Find(&groupTableData)
 		for _, v := range result {
 			if v.GroupsIds != "" {
-				for _,tmpGroupId := range strings.Split(v.GroupsIds, ",") {
+				tmpExistMap := make(map[string]int)
+				for _, tmpGroupId := range strings.Split(v.GroupsIds, ",") {
 					if tmpGroupId == "" {
 						continue
 					}
-					groupId,_ := strconv.Atoi(tmpGroupId)
-					for _,groupObj := range groupTableData {
-						if groupObj.Id == groupId {
-							v.Groups = append(v.Groups, groupObj)
+					if _, b := tmpExistMap[tmpGroupId]; b {
+						continue
+					}
+					tmpExistMap[tmpGroupId] = 1
+					for _, groupObj := range groupTableData {
+						if groupObj.Guid == tmpGroupId {
+							v.Groups = append(v.Groups, &m.GrpTable{Name: groupObj.Guid})
 							break
 						}
 					}
@@ -278,10 +281,10 @@ func GetTpl(tplId, grpId, endpointId int) (error, m.TplTable) {
 	var result []*m.TplTable
 	err := x.SQL(sql, param...).Find(&result)
 	if err != nil {
-		return fmt.Errorf("Query tpl table fail,%s ", err.Error()),m.TplTable{}
+		return fmt.Errorf("Query tpl table fail,%s ", err.Error()), m.TplTable{}
 	}
 	if len(result) == 0 {
-		return fmt.Errorf("Can not find any tpl obj with id=%d or grp_id=%d and endpoint_id=%d ", tplId,grpId,endpointId),m.TplTable{}
+		return fmt.Errorf("Can not find any tpl obj with id=%d or grp_id=%d and endpoint_id=%d ", tplId, grpId, endpointId), m.TplTable{}
 	}
 	return nil, *result[0]
 }
@@ -456,26 +459,39 @@ func GetAlarms(query m.AlarmTable, limit int, extLogMonitor, extOpenAlarm bool) 
 		if v.SMetric == "log_monitor" {
 			v.IsLogMonitor = true
 			if v.EndValue > 0 {
-				v.Start,v.End = v.End,v.Start
-				v.StartValue = v.EndValue - v.StartValue + 1
+				v.Start, v.End = v.End, v.Start
+				if v.EndValue < v.StartValue {
+					v.StartValue = v.EndValue
+				} else {
+					v.StartValue = v.EndValue - v.StartValue + 1
+				}
 				if strings.Contains(v.Content, "^^") {
 					v.Content = fmt.Sprintf("%s: %s <br/>%s: %s", v.StartString, v.Content[:strings.Index(v.Content, "^^")], v.EndString, v.Content[strings.Index(v.Content, "^^")+2:])
 				}
 				v.StartString = v.EndString
-			}else{
+			} else {
 				v.StartValue = 1
 				if strings.HasSuffix(v.Content, "^^") {
-					v.Content = v.StartString +": " + v.Content[:len(v.Content)-2]
+					v.Content = v.StartString + ": " + v.Content[:len(v.Content)-2]
 				}
 			}
 		}
 		if strings.Contains(v.Content, "\n") {
 			v.Content = strings.ReplaceAll(v.Content, "\n", "<br/>")
 		}
+		if strings.HasPrefix(v.Endpoint, "sg__") {
+			v.Endpoint = v.Endpoint[4:]
+			if serviceGroupName, b := m.GlobalSGDisplayNameMap[v.Endpoint]; b {
+				v.Endpoint = serviceGroupName
+			}
+		}
+		if strings.HasPrefix(v.Endpoint, "eg__") {
+			v.Endpoint = v.Endpoint[4:]
+		}
 	}
 	if query.SMetric == "" || query.SMetric == "custom" {
 		if extOpenAlarm {
-			for _, v := range GetOpenAlarm(m.CustomAlarmQueryParam{Enable: true, Status: "problem", Start: "", End: "",Level: query.SPriority}) {
+			for _, v := range GetOpenAlarm(m.CustomAlarmQueryParam{Enable: true, Status: "problem", Start: "", End: "", Level: query.SPriority}) {
 				result = append(result, v)
 			}
 		}
@@ -506,22 +522,22 @@ func UpdateAlarms(alarms []*m.AlarmHandleObj) []*m.AlarmHandleObj {
 			action.Sql = "UPDATE alarm SET status=?,end_value=?,end=? WHERE id=? AND status='firing'"
 			execResult, cErr = x.Exec(action.Sql, v.Status, v.EndValue, v.End.Format(m.DatetimeFormat), v.Id)
 		} else {
-			action.Sql = "INSERT INTO alarm(strategy_id,endpoint,status,s_metric,s_expr,s_cond,s_last,s_priority,content,start_value,start,tags,endpoint_tags) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?)"
-			execResult, cErr = x.Exec(action.Sql, v.StrategyId, v.Endpoint, v.Status, v.SMetric, v.SExpr, v.SCond, v.SLast, v.SPriority, v.Content, v.StartValue, v.Start.Format(m.DatetimeFormat), v.Tags, v.EndpointTags)
+			action.Sql = "INSERT INTO alarm(strategy_id,endpoint,status,s_metric,s_expr,s_cond,s_last,s_priority,content,start_value,start,tags,endpoint_tags,alarm_strategy) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+			execResult, cErr = x.Exec(action.Sql, v.StrategyId, v.Endpoint, v.Status, v.SMetric, v.SExpr, v.SCond, v.SLast, v.SPriority, v.Content, v.StartValue, v.Start.Format(m.DatetimeFormat), v.Tags, v.EndpointTags, v.AlarmStrategy)
 		}
 		if cErr != nil {
 			log.Logger.Error("Update alarm fail", log.Error(cErr))
-		}else{
-			rowAffected,_ = execResult.RowsAffected()
+		} else {
+			rowAffected, _ = execResult.RowsAffected()
 			if rowAffected > 0 {
 				if v.Id <= 0 {
-					lastInsertId,_ := execResult.LastInsertId()
+					lastInsertId, _ := execResult.LastInsertId()
 					if lastInsertId > 0 {
 						v.Id = int(lastInsertId)
 					}
 				}
 				successAlarms = append(successAlarms, v)
-			}else{
+			} else {
 				log.Logger.Warn("Update alarm done but not any rows affected")
 			}
 		}
@@ -807,7 +823,7 @@ func UpdateAlarmCustomMessage(param m.UpdateAlarmCustomMessageDto) error {
 	var err error
 	if param.IsCustom {
 		_, err = x.Exec("UPDATE alarm_custom SET custom_message=? WHERE id=?", param.Message, param.Id)
-	}else {
+	} else {
 		_, err = x.Exec("UPDATE alarm SET custom_message=? WHERE id=?", param.Message, param.Id)
 	}
 	return err
@@ -923,7 +939,7 @@ func SaveOpenAlarm(param m.OpenAlarmRequest) error {
 		if len(v.AlertInfo) > 1024 {
 			v.AlertInfo = v.AlertInfo[:1024]
 		}
- 		var customAlarmId int
+		var customAlarmId int
 		var query []*m.OpenAlarmObj
 		x.SQL("SELECT * FROM alarm_custom WHERE alert_title=? AND closed=0", v.AlertTitle).Find(&query)
 		if v.AlertLevel == "0" {
@@ -938,11 +954,11 @@ func SaveOpenAlarm(param m.OpenAlarmRequest) error {
 				if cErr != nil {
 					log.Logger.Error("Update custom alarm close fail", log.String("ids", tmpIds), log.Error(cErr))
 				}
-			}else{
+			} else {
 				log.Logger.Warn("Get recover custom alarm,but not found in table", log.JsonObj("input", v))
 				continue
 			}
-		}else {
+		} else {
 			if len(query) > 0 {
 				continue
 			}
@@ -955,7 +971,7 @@ func SaveOpenAlarm(param m.OpenAlarmRequest) error {
 				break
 			}
 			x.SQL("SELECT * FROM alarm_custom WHERE alert_title=? AND closed=0", v.AlertTitle).Find(&query)
-			for _,vv := range query {
+			for _, vv := range query {
 				customAlarmId = vv.Id
 			}
 		}
@@ -976,7 +992,7 @@ func GetOpenAlarm(param m.CustomAlarmQueryParam) []*m.AlarmProblemQuery {
 	//sql := fmt.Sprintf("SELECT * FROM alarm_custom WHERE closed<>1 and update_at>'%s' ORDER BY id ASC", time.Unix(time.Now().Unix()-300,0).Format(m.DatetimeFormat))
 	if param.Status == "problem" {
 		sql = "SELECT * FROM alarm_custom WHERE closed<>1 "
-	}else{
+	} else {
 		if param.Start != "" && param.End != "" {
 			sql = fmt.Sprintf("SELECT * FROM alarm_custom WHERE update_at<='%s' AND update_at>'%s' ", param.End, param.Start)
 		}
@@ -985,9 +1001,9 @@ func GetOpenAlarm(param m.CustomAlarmQueryParam) []*m.AlarmProblemQuery {
 		levelFilterSql := ""
 		if param.Level == "high" {
 			levelFilterSql = " AND alert_level in (1,2) "
-		}else if param.Level == "medium" {
+		} else if param.Level == "medium" {
 			levelFilterSql = " AND alert_level in (3,4) "
-		}else{
+		} else {
 			levelFilterSql = " AND alert_level>=5 "
 		}
 		sql += levelFilterSql
@@ -1122,7 +1138,7 @@ func getActionOptions(tplId int) []*m.OptionModel {
 	return result
 }
 
-func QueryAlarmBySql(sql string, params []interface{},customQueryParam m.CustomAlarmQueryParam) (err error, result m.AlarmProblemQueryResult) {
+func QueryAlarmBySql(sql string, params []interface{}, customQueryParam m.CustomAlarmQueryParam) (err error, result m.AlarmProblemQueryResult) {
 	result = m.AlarmProblemQueryResult{High: 0, Mid: 0, Low: 0, Data: []*m.AlarmProblemQuery{}}
 	alarmQuery := []*m.AlarmProblemQuery{}
 	err = x.SQL(sql, params...).Find(&alarmQuery)
@@ -1153,7 +1169,7 @@ func QueryAlarmBySql(sql string, params []interface{},customQueryParam m.CustomA
 		}
 	}
 	if customQueryParam.Enable {
-		for _,v := range GetOpenAlarm(customQueryParam) {
+		for _, v := range GetOpenAlarm(customQueryParam) {
 			alarmQuery = append(alarmQuery, v)
 		}
 	}
@@ -1167,14 +1183,14 @@ func QueryAlarmBySql(sql string, params []interface{},customQueryParam m.CustomA
 			result.Low += 1
 		}
 		tmpMetricLevel := fmt.Sprintf("%s^%s", v.SMetric, v.SPriority)
-		if _,b:=metricMap[tmpMetricLevel];b {
+		if _, b := metricMap[tmpMetricLevel]; b {
 			metricMap[tmpMetricLevel] += 1
-		}else{
+		} else {
 			metricMap[tmpMetricLevel] = 1
 		}
 	}
 	var resultCount m.AlarmProblemCountList
-	for k,v := range metricMap {
+	for k, v := range metricMap {
 		tmpSplit := strings.Split(k, "^")
 		resultCount = append(resultCount, &m.AlarmProblemCountObj{Name: tmpSplit[0], Type: tmpSplit[1], Value: v, FilterType: "metric"})
 	}
@@ -1225,8 +1241,8 @@ func NotifyAlarm(alarmObj *m.AlarmHandleObj) {
 		if alarmObj.Status == "ok" {
 			x.SQL("select * from alarm where id=?", alarmObj.Id).Find(&alarmRows)
 			if len(alarmRows) > 0 {
-				if (alarmRows[0].End.Unix()-alarmRows[0].Start.Unix()) <= int64(alarmObj.NotifyDelay) {
-					log.Logger.Info("Abort recover alarm notify", log.Int("id", alarmObj.Id), log.String("start",alarmRows[0].Start.Format(m.DatetimeFormat)),log.String("end",alarmRows[0].End.Format(m.DatetimeFormat)))
+				if (alarmRows[0].End.Unix() - alarmRows[0].Start.Unix()) <= int64(alarmObj.NotifyDelay) {
+					log.Logger.Info("Abort recover alarm notify", log.Int("id", alarmObj.Id), log.String("start", alarmRows[0].Start.Format(m.DatetimeFormat)), log.String("end", alarmRows[0].End.Format(m.DatetimeFormat)))
 					abortNotify = true
 				}
 			}
@@ -1235,7 +1251,7 @@ func NotifyAlarm(alarmObj *m.AlarmHandleObj) {
 			x.SQL("select * from alarm where strategy_id=? and endpoint=? and start=?", alarmObj.StrategyId, alarmObj.Endpoint, alarmObj.Start.Format(m.DatetimeFormat)).Find(&alarmRows)
 			if len(alarmRows) > 0 {
 				if alarmRows[0].Status == "ok" {
-					log.Logger.Info("Abort firing alarm notify", log.String("endpoint",alarmObj.Endpoint), log.Int("strategyId",alarmObj.StrategyId), log.String("start",alarmObj.Start.Format(m.DatetimeFormat)))
+					log.Logger.Info("Abort firing alarm notify", log.String("endpoint", alarmObj.Endpoint), log.Int("strategyId", alarmObj.StrategyId), log.String("start", alarmObj.Start.Format(m.DatetimeFormat)))
 					abortNotify = true
 				}
 			}
@@ -1249,7 +1265,7 @@ func NotifyAlarm(alarmObj *m.AlarmHandleObj) {
 		if notifyErr != nil {
 			log.Logger.Error("notify core event fail", log.Error(notifyErr))
 		}
-	}else{
+	} else {
 		if m.Config().Alert.Enable {
 			var sao m.SendAlertObj
 			accept := GetMailByStrategy(alarmObj.StrategyId)
@@ -1262,7 +1278,7 @@ func NotifyAlarm(alarmObj *m.AlarmHandleObj) {
 			}
 			sao.Accept = accept
 			sao.Subject = fmt.Sprintf("[%s][%s] Endpoint:%s Metric:%s", alarmObj.Status, alarmObj.SPriority, alarmObj.Endpoint, alarmObj.SMetric)
-			sao.Content = fmt.Sprintf("Endpoint:%s \r\nStatus:%s\r\nMetric:%s\r\nEvent:%.3f%s\r\nLast:%s\r\nPriority:%s\r\nNote:%s\r\nTime:%s",alarmObj.Endpoint,alarmObj.Status,alarmObj.SMetric,alarmObj.StartValue,alarmObj.SCond,alarmObj.SLast,alarmObj.SPriority,alarmObj.Content,timeString)
+			sao.Content = fmt.Sprintf("Endpoint:%s \r\nStatus:%s\r\nMetric:%s\r\nEvent:%.3f%s\r\nLast:%s\r\nPriority:%s\r\nNote:%s\r\nTime:%s", alarmObj.Endpoint, alarmObj.Status, alarmObj.SMetric, alarmObj.StartValue, alarmObj.SCond, alarmObj.SLast, alarmObj.SPriority, alarmObj.Content, timeString)
 			other.SendSmtpMail(sao)
 		}
 	}
@@ -1273,7 +1289,7 @@ func NotifyTreevent(param m.EventTreeventNotifyDto) {
 	if m.CoreUrl == "" || len(param.Data) == 0 {
 		return
 	}
-	postBytes,_ := json.Marshal(param)
+	postBytes, _ := json.Marshal(param)
 	request, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/treevent/api/v1/event/send", m.CoreUrl), strings.NewReader(string(postBytes)))
 	request.Header.Set("Authorization", m.GetCoreToken())
 	request.Header.Set("Content-Type", "application/json")
@@ -1296,7 +1312,7 @@ func NotifyTreevent(param m.EventTreeventNotifyDto) {
 	}
 	if responseData.Code > 0 {
 		log.Logger.Error("Notify treevent fail", log.String("message", responseData.Msg))
-	}else{
+	} else {
 		log.Logger.Info("Notify treevent success", log.Int("event length", len(param.Data)))
 	}
 }

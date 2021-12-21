@@ -301,7 +301,6 @@ func SyncCoreRole()  {
 	}
 	b,_ := ioutil.ReadAll(res.Body)
 	defer res.Body.Close()
-	log.Logger.Info("Get core role response", log.String("body", string(b)))
 	var result m.CoreRoleDto
 	err = json.Unmarshal(b, &result)
 	if err != nil {
@@ -495,16 +494,19 @@ func UpdateGrpRole(param m.RoleGrpDto) error {
 func UpdateRoleNew(param m.UpdateRoleDto) error {
 	var rowData []*m.RoleTable
 	var err error
+	var actions []*Action
 	if param.Operation == "add" {
 		if param.Name == "" {
 			return fmt.Errorf("Role name can not emtpy")
 		}
 		x.SQL("select * from role where name=?", param.Name).Find(&rowData)
 		if len(rowData) > 0 {
-			_,err = x.Exec("update role set disable=0 where name=?", param.Name)
+			actions = append(actions, &Action{Sql: "update role set disable=0 where name=?", Param: []interface{}{param.Name}})
 		}else{
-			_,err = x.Exec("insert into role(name,display_name,email,creator,created) value (?,?,?,?,?)", param.Name,param.DisplayName,param.Email,param.Operator,time.Now())
+			actions = append(actions, &Action{Sql: "insert into role(name,display_name,email,creator,created) value (?,?,?,?,?)", Param: []interface{}{param.Name,param.DisplayName,param.Email,param.Operator,time.Now()}})
+			actions = append(actions, &Action{Sql: "insert into role_new(guid,display_name,email) value (?,?,?)",Param: []interface{}{param.Name,param.DisplayName,param.Email}})
 		}
+		err = Transaction(actions)
 	}else if param.Operation == "update" {
 		if param.RoleId <= 0 {
 			return fmt.Errorf("Role id can not emtpy ")
@@ -579,6 +581,27 @@ func GetGrpRole(grpId int) (err error, result []*m.OptionModel) {
 	return nil,result
 }
 
+func GetRoleMap() (roleMap map[string]string) {
+	SyncCoreRoleList()
+	roleMap = make(map[string]string)
+	var roleTable []*m.RoleNewTable
+	x.SQL("select * from role_new").Find(&roleTable)
+	for _,v := range roleTable {
+		roleMap[v.Guid] = v.Email
+	}
+	return roleMap
+}
+
+func CheckRoleIllegal(roleList []string, roleMap map[string]string) (err error) {
+	for _,v := range roleList {
+		if _,b:= roleMap[v];!b {
+			err = fmt.Errorf("role:%s illegal")
+			break
+		}
+	}
+	return err
+}
+
 func CheckRoleList(param string) string {
 	if param == "" {
 		return ""
@@ -587,6 +610,8 @@ func CheckRoleList(param string) string {
 	for _,v := range strings.Split(param, ",") {
 		tmpMap[v] = 0
 	}
+	var roleTable []*m.RoleNewTable
+	x.SQL("select guid from role_new").Find(&roleTable)
 	for k,_ := range tmpMap {
 		var tableData []*m.RoleTable
 		x.SQL("SELECT id FROM role WHERE name=?", k).Find(&tableData)
