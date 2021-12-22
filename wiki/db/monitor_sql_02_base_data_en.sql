@@ -329,7 +329,7 @@ CREATE TABLE `monitor_type` (
   `description` varchar(255)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-insert into monitor_type(guid,display_name) value ('host','host'),('mysql','mysql'),('redis','redis'),('java','java'),('nginx','nginx'),('ping','ping'),('telnet','telnet'),('http','http'),('windows','windows'),('snmp','snmp'),('process','process'),('pod','pod');
+insert into monitor_type(guid,display_name) select t1.* from (select distinct export_type as guid,export_type as display_name from endpoint union select dashboard_type as guid,dashboard_type as display_name from dashboard) t1;
 
 CREATE TABLE `endpoint_new` (
   `guid` varchar(128) NOT NULL PRIMARY KEY,
@@ -629,3 +629,12 @@ insert into sys_parameter(guid,param_key,param_value) value ('metric_template_10
 insert into sys_parameter(guid,param_key,param_value) value ('metric_template_11','service_metric_template','{"name":"percent[(sum(a)-sum(b))/sum(a)]","prom_expr":"100*((sum(@a)-sum(@b))/(sum(@a) > 0) or vector(0))","param":"@a,@b"}');
 insert into sys_parameter(guid,param_key,param_value) value ('metric_template_12','service_metric_template','{"name":"percent[sum(a)/(sum(a)+sum(b))]","prom_expr":"100*(sum(@a)/((sum(@a)+sum(@b)) > 0) or vector(0))","param":"@a,@b"}');
 #@v1.13.0.25-end@;
+
+#@v2.0.0-begin@;
+insert into notify(guid,endpoint_group,alarm_action) select concat(guid,'_firing'),guid,'firing' from endpoint_group;
+insert into notify(guid,endpoint_group,alarm_action) select concat(guid,'_ok'),guid,'ok' from endpoint_group;
+insert into endpoint_new(guid,name,ip,monitor_type,agent_address,step,endpoint_address,cluster) select guid,name,ip,export_type,address_agent,step,address,cluster from endpoint where address_agent<>'';
+insert into endpoint_new(guid,name,ip,monitor_type,agent_address,step,endpoint_address,cluster) select guid,name,ip,export_type,address,step,address,cluster from endpoint where address_agent='';
+insert into service_group(guid,display_name,service_type) select guid,display_name,obj_type from panel_recursive where parent='';
+insert into service_group(guid,display_name,service_type,parent) select guid,display_name,obj_type,parent from panel_recursive where parent<>'';
+#@v2.0.0-end@;
