@@ -528,6 +528,8 @@ insert into role_new(guid,display_name,email) select distinct name,display_name,
 insert into endpoint_group(guid,display_name,description,monitor_type) select name,name,description,endpoint_type from grp where endpoint_type is not null;
 insert into metric(guid,metric,monitor_type,prom_expr,tag_owner) select t1.* from (select CONCAT(metric,'__',metric_type),metric,metric_type,prom_ql,prom_main from prom_metric where metric_type<>'tomcat' union select CONCAT(metric,'__java'),metric,'java',prom_ql,prom_main from prom_metric where metric_type='tomcat') t1;
 insert into alarm_strategy select CONCAT('old_',t1.id),t3.name,t4.guid ,t1.cond,t1.`last`,t1.priority,t1.content,t1.notify_enable,t1.notify_delay,'' as update_time from strategy t1 left join tpl t2 on t1.tpl_id=t2.id left join grp t3 on t2.grp_id=t3.id left join metric t4 on (t1.metric=t4.metric and t3.endpoint_type=t4.monitor_type) where t2.grp_id>0 and t4.guid is not null;
+insert into endpoint_new(guid,name,ip,monitor_type,agent_address,step,endpoint_address,cluster) select guid,name,ip,export_type,address_agent,step,address,cluster from endpoint where address_agent<>'';
+insert into endpoint_new(guid,name,ip,monitor_type,agent_address,step,endpoint_address,cluster) select guid,name,ip,export_type,address,step,address,cluster from endpoint where address_agent='';
 insert into endpoint_group_rel select concat(t1.endpoint_id,'__',t1.grp_id),t2.guid,t3.name from grp_endpoint t1 left join endpoint t2 on t1.endpoint_id=t2.id left join grp t3 on t1.grp_id=t3.id where t2.guid is not null and t3.name is not null;
 #@v1.13.0.2-end@;
 
@@ -633,8 +635,6 @@ insert into sys_parameter(guid,param_key,param_value) value ('metric_template_12
 #@v2.0.0-begin@;
 insert into notify(guid,endpoint_group,alarm_action) select concat(guid,'_firing'),guid,'firing' from endpoint_group;
 insert into notify(guid,endpoint_group,alarm_action) select concat(guid,'_ok'),guid,'ok' from endpoint_group;
-insert into endpoint_new(guid,name,ip,monitor_type,agent_address,step,endpoint_address,cluster) select guid,name,ip,export_type,address_agent,step,address,cluster from endpoint where address_agent<>'';
-insert into endpoint_new(guid,name,ip,monitor_type,agent_address,step,endpoint_address,cluster) select guid,name,ip,export_type,address,step,address,cluster from endpoint where address_agent='';
 insert into service_group(guid,display_name,service_type) select guid,display_name,obj_type from panel_recursive where parent='';
 insert into service_group(guid,display_name,service_type,parent) select guid,display_name,obj_type,parent from panel_recursive where parent<>'';
 #@v2.0.0-end@;
