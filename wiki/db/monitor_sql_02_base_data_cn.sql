@@ -304,6 +304,12 @@ alter table business_monitor_cfg add column agg_type varchar(16) default 'avg';
 #@v1.12.3.1-end@;
 
 #@v1.13.0.1-begin@;
+insert into grp(name,endpoint_type) value ('default_process_group','process');
+insert  into `dashboard`(`dashboard_type`,`search_enable`,`search_id`,`button_enable`,`button_group`,`message_enable`,`message_group`,`message_url`,`panels_enable`,`panels_type`,`panels_group`,`panels_param`) values ('process',1,1,1,1,0,0,'',1,'tabs',11,'endpoint={endpoint}');
+insert  into `panel`(`group_id`,`title`,`tags_enable`,`tags_url`,`tags_key`,`chart_group`,`auto_display`) values (11,'process',0,'','',18,0);
+insert  into `chart`(`group_id`,`endpoint`,`metric`,`col`,`url`,`unit`,`title`,`grid_type`,`series_name`,`rate`,`agg_type`,`legend`) values (18,'','process_cpu_used_percent',6,'/dashboard/chart','','process.cpu.used','line','metric',0,'avg','$metric'),(18,'','process_mem_byte',6,'/dashboard/chart','','process.mem.used','line','metric',0,'avg','$metric');
+insert  into `prom_metric`(`metric`,`metric_type`,`prom_ql`,`prom_main`) values ('process_alive_count','process','node_process_monitor_count_current{instance=\"$address\",process_guid=\"$guid\"}',''),('process_cpu_used_percent','process','node_process_monitor_cpu{instance=\"$address\",process_guid=\"$guid\"}',''),('process_mem_byte','process','node_process_monitor_mem{instance=\"$address\",process_guid=\"$guid\"}','');
+
 CREATE TABLE `service_group` (
   `guid` varchar(64) NOT NULL PRIMARY KEY,
   `display_name` varchar(255) NOT NULL,
@@ -329,7 +335,7 @@ CREATE TABLE `monitor_type` (
   `description` varchar(255)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-insert into monitor_type(guid,display_name) select t1.* from (select distinct export_type as guid,export_type as display_name from endpoint union select dashboard_type as guid,dashboard_type as display_name from dashboard) t1;
+insert into monitor_type(guid,display_name) value ('host','host'),('mysql','mysql'),('redis','redis'),('java','java'),('tomcat','tomcat'),('nginx','nginx'),('ping','ping'),('pingext','pingext'),('telnet','telnet'),('telnetext','telnetext'),('http','http'),('httpext','httpext'),('windows','windows'),('snmp','snmp'),('process','process'),('pod','pod');
 
 CREATE TABLE `endpoint_new` (
   `guid` varchar(128) NOT NULL PRIMARY KEY,
@@ -436,12 +442,6 @@ CREATE TABLE `db_metric_endpoint_rel` (
   CONSTRAINT `db_monitor_endpoint_source` FOREIGN KEY (`source_endpoint`) REFERENCES `endpoint_new` (`guid`),
   CONSTRAINT `db_monitor_endpoint_target` FOREIGN KEY (`target_endpoint`) REFERENCES `endpoint_new` (`guid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-insert into grp(name,endpoint_type) value ('default_process_group','process');
-insert  into `dashboard`(`dashboard_type`,`search_enable`,`search_id`,`button_enable`,`button_group`,`message_enable`,`message_group`,`message_url`,`panels_enable`,`panels_type`,`panels_group`,`panels_param`) values ('process',1,1,1,1,0,0,'',1,'tabs',11,'endpoint={endpoint}');
-insert  into `panel`(`group_id`,`title`,`tags_enable`,`tags_url`,`tags_key`,`chart_group`,`auto_display`) values (11,'process',0,'','',18,0);
-insert  into `chart`(`group_id`,`endpoint`,`metric`,`col`,`url`,`unit`,`title`,`grid_type`,`series_name`,`rate`,`agg_type`,`legend`) values (18,'','process_cpu_used_percent',6,'/dashboard/chart','','process.cpu.used','line','metric',0,'avg','$metric'),(18,'','process_mem_byte',6,'/dashboard/chart','','process.mem.used','line','metric',0,'avg','$metric');
-insert  into `prom_metric`(`metric`,`metric_type`,`prom_ql`,`prom_main`) values ('process_alive_count','process','node_process_monitor_count_current{instance=\"$address\",process_guid=\"$guid\"}',''),('process_cpu_used_percent','process','node_process_monitor_cpu{instance=\"$address\",process_guid=\"$guid\"}',''),('process_mem_byte','process','node_process_monitor_mem{instance=\"$address\",process_guid=\"$guid\"}','');
 #@v1.13.0.1-end@;
 
 #@v1.13.0.2-begin@;
@@ -556,7 +556,7 @@ alter table metric add column db_metric_monitor varchar(64);
 delete from panel where title='DataMonitor';
 delete from prom_metric where metric='process_alive_count';
 delete from alarm_strategy where metric like '%process_alive_count%';
-insert into alarm_strategy(guid,endpoint_group,metric,`condition`,last,priority,content,notify_enable) value ('old_25','default_process_group','process_alive_count__process','==0','60s','high','process down',1);
+insert into alarm_strategy(guid,endpoint_group,metric,`condition`,last,priority,content,notify_enable) value ('old_process_group','default_process_group','process_alive_count__process','==0','60s','high','process down',1);
 #@v1.13.0.18-end@;
 
 #@v1.13.0.21-begin@;
