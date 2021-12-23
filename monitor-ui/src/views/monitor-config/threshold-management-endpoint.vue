@@ -271,6 +271,7 @@ export default {
       })
     },
     getDetail (targrtId, type) {
+      this.totalPageConfig = []
       this.targrtId = targrtId
       this.type = type
       const api = this.$root.apiCenter.getThresholdEndpointDetail + '/' + targrtId
