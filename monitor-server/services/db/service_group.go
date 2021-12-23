@@ -343,6 +343,12 @@ func UpdateServiceConfigWithParent(serviceGroup string) {
 	}
 }
 
+func getServiceGroupEndpointWithType(serviceGroup,monitorType string) (result []*models.EndpointNewTable) {
+	result = []*models.EndpointNewTable{}
+	x.SQL("select guid,name,ip,monitor_type from endpoint_new where monitor_type=? and guid in (select endpoint from endpoint_service_rel where service_group=?)", monitorType, serviceGroup).Find(&result)
+	return result
+}
+
 func getServiceGroupEndpointWithChild(serviceGroup string) map[string][]string {
 	serviceGroupList := []string{serviceGroup}
 	fetchServiceGroupList, err := fetchGlobalServiceGroupChildGuidList(serviceGroup)
