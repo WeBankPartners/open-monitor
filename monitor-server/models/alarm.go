@@ -499,6 +499,7 @@ type PluginCloseAlarmRequest struct {
 
 type PluginCloseAlarmRequestObj struct {
 	CallbackParameter string `json:"callbackParameter"`
+	Guid              string `json:"guid"`
 	AlarmId           string `json:"alarmId"`
 	Message           string `json:"message"`
 }
@@ -517,6 +518,7 @@ type PluginCloseAlarmOutput struct {
 
 type PluginCloseAlarmOutputObj struct {
 	CallbackParameter string `json:"callbackParameter"`
+	Guid              string `json:"guid"`
 	AlarmId           string `json:"alarmId"`
 	ErrorCode         string `json:"errorCode"`
 	ErrorMessage      string `json:"errorMessage"`
