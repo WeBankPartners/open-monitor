@@ -128,7 +128,8 @@ func GetCustomDashboardAlarms(id int) (err error,result m.AlarmProblemQueryResul
 		for _,vv := range v.Query {
 			if vv.AppObject != "" {
 				endpointList = append(endpointList, "sg__"+vv.AppObject)
-				serviceGroupEndpoint := getServiceGroupEndpointWithType(vv.AppObject, vv.EndpointType)
+				serviceGuidList,_ := fetchGlobalServiceGroupChildGuidList(vv.AppObject)
+				serviceGroupEndpoint := getServiceGroupEndpointWithType(vv.EndpointType, serviceGuidList)
 				for _,sgEndpoint := range serviceGroupEndpoint {
 					endpointList = append(endpointList, sgEndpoint.Guid)
 				}
