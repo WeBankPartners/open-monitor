@@ -373,6 +373,8 @@ type CustomDashboardConfigQueryObj struct {
 	Endpoint    string `json:"endpoint"`
 	MetricLabel string `json:"metricLabel"`
 	Metric      string `json:"metric"`
+	AppObject   string `json:"app_object"`
+	EndpointType string `json:"endpoint_type"`
 }
 
 type PanelChartQueryObj struct {
