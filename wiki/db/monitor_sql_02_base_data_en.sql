@@ -638,3 +638,7 @@ insert into notify(guid,endpoint_group,alarm_action) select concat(guid,'_ok'),g
 insert into service_group(guid,display_name,service_type) select guid,display_name,obj_type from panel_recursive where parent='';
 insert into service_group(guid,display_name,service_type,parent) select guid,display_name,obj_type,parent from panel_recursive where parent<>'';
 #@v2.0.0-end@;
+
+#@v2.0.0.5-begin@;
+alter table prom_metric modify prom_ql varchar(4096);
+#@v2.0.0.5-end@;
