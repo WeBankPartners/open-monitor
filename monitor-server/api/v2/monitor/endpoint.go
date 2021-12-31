@@ -178,25 +178,21 @@ func agentManagerEndpointUpdate(param *models.RegisterParamNew,endpoint *models.
 		if err != nil {
 			return newEndpoint,fmt.Errorf("json unmarhsal extendParam fail,%s ", err.Error())
 		}
-		if param.Port == extParamObj.Port && param.User == extParamObj.User && param.Password == extParamObj.Password {
-			return
-		}else{
-			err = prom.StopAgent(endpoint.MonitorType, endpoint.Name, endpoint.Ip, agent.AgentManagerServer)
-			if err != nil {
-				return newEndpoint,fmt.Errorf("stop agent manager instance fail,%s ", err.Error())
-			}
-			agentConfig := getAgentMangerInstanceConfig(endpoint.MonitorType)
-			address, deployErr := prom.DeployAgent(param.Type, param.Name, agentConfig.AgentBin, param.Ip, param.Port, param.User, param.Password, agent.AgentManagerServer, agentConfig.ConfigFile)
-			if deployErr != nil {
-				return newEndpoint,fmt.Errorf("deploy agent manager instance fail,%s ", deployErr.Error())
-			}
-			newEndpoint = models.EndpointNewTable{Guid: endpoint.Guid, EndpointAddress: fmt.Sprintf("%s:%s",param.Ip,param.Port),AgentAddress: address}
-			newParamObj := models.EndpointExtendParamObj{Enable: true, Ip: param.Ip, Port: param.Port, User: param.User, Password: param.Password, BinPath: agentConfig.AgentBin, ConfigPath: agentConfig.ConfigFile}
-			b,_ := json.Marshal(newParamObj)
-			newEndpoint.ExtendParam = string(b)
-			err = db.UpdateAgentManager(&models.AgentManagerTable{EndpointGuid: endpoint.Guid,User: param.User,Password: param.Password,InstanceAddress: newEndpoint.EndpointAddress,AgentAddress: address})
-			return
+		err = prom.StopAgent(endpoint.MonitorType, endpoint.Name, endpoint.Ip, agent.AgentManagerServer)
+		if err != nil {
+			return newEndpoint,fmt.Errorf("stop agent manager instance fail,%s ", err.Error())
 		}
+		agentConfig := getAgentMangerInstanceConfig(endpoint.MonitorType)
+		address, deployErr := prom.DeployAgent(param.Type, param.Name, agentConfig.AgentBin, param.Ip, param.Port, param.User, param.Password, agent.AgentManagerServer, agentConfig.ConfigFile)
+		if deployErr != nil {
+			return newEndpoint,fmt.Errorf("deploy agent manager instance fail,%s ", deployErr.Error())
+		}
+		newEndpoint = models.EndpointNewTable{Guid: endpoint.Guid, EndpointAddress: fmt.Sprintf("%s:%s",param.Ip,param.Port),AgentAddress: address}
+		newParamObj := models.EndpointExtendParamObj{Enable: true, Ip: param.Ip, Port: param.Port, User: param.User, Password: param.Password, BinPath: agentConfig.AgentBin, ConfigPath: agentConfig.ConfigFile}
+		b,_ := json.Marshal(newParamObj)
+		newEndpoint.ExtendParam = string(b)
+		err = db.UpdateAgentManager(&models.AgentManagerTable{EndpointGuid: endpoint.Guid,User: param.User,Password: param.Password,InstanceAddress: newEndpoint.EndpointAddress,AgentAddress: address})
+		return
 	}else{
 		if strings.Contains(endpoint.AgentAddress, ":") {
 			if param.Port == endpoint.AgentAddress[strings.LastIndex(endpoint.AgentAddress,":")+1:] {
@@ -214,9 +210,6 @@ func processEndpointUpdate(param *models.RegisterParamNew,endpoint *models.Endpo
 	err = json.Unmarshal([]byte(endpoint.ExtendParam), &extParamObj)
 	if err != nil {
 		return newEndpoint,fmt.Errorf("json unmarhsal extendParam fail,%s ", err.Error())
-	}
-	if param.ProcessName == extParamObj.ProcessName && param.Tags == extParamObj.ProcessTags {
-		return
 	}
 	newExtParamObj := models.EndpointExtendParamObj{Enable: true, ProcessName: param.ProcessName, ProcessTags: param.Tags}
 	b, _ := json.Marshal(newExtParamObj)
