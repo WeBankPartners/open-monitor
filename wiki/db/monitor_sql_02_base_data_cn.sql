@@ -338,8 +338,8 @@ CREATE TABLE `monitor_type` (
 insert into monitor_type(guid,display_name) value ('host','host'),('mysql','mysql'),('redis','redis'),('java','java'),('tomcat','tomcat'),('nginx','nginx'),('ping','ping'),('pingext','pingext'),('telnet','telnet'),('telnetext','telnetext'),('http','http'),('httpext','httpext'),('windows','windows'),('snmp','snmp'),('process','process'),('pod','pod');
 
 CREATE TABLE `endpoint_new` (
-  `guid` varchar(255) NOT NULL PRIMARY KEY,
-  `name` varchar(192) NOT NULL,
+  `guid` varchar(160) NOT NULL PRIMARY KEY,
+  `name` varchar(96) NOT NULL,
   `ip` varchar(32),
   `monitor_type` varchar(32) NOT NULL,
   `agent_version` varchar(64),
@@ -359,7 +359,7 @@ CREATE TABLE `endpoint_new` (
 
 CREATE TABLE `endpoint_service_rel` (
   `guid` varchar(64) NOT NULL PRIMARY KEY,
-  `endpoint` varchar(255) NOT NULL,
+  `endpoint` varchar(160) NOT NULL,
   `service_group` varchar(64) NOT NULL,
   CONSTRAINT `e_service_rel_e` FOREIGN KEY (`endpoint`) REFERENCES `endpoint_new` (`guid`),
   CONSTRAINT `e_service_rel_s` FOREIGN KEY (`service_group`) REFERENCES `service_group` (`guid`)
@@ -413,8 +413,8 @@ CREATE TABLE `log_metric_string_map` (
 CREATE TABLE `log_metric_endpoint_rel` (
   `guid` varchar(64) NOT NULL PRIMARY KEY,
   `log_metric_monitor` varchar(64) NOT NULL,
-  `source_endpoint` varchar(255),
-  `target_endpoint` varchar(255),
+  `source_endpoint` varchar(160),
+  `target_endpoint` varchar(160),
   CONSTRAINT `log_monitor_endpoint_metric` FOREIGN KEY (`log_metric_monitor`) REFERENCES `log_metric_monitor` (`guid`),
   CONSTRAINT `log_monitor_endpoint_source` FOREIGN KEY (`source_endpoint`) REFERENCES `endpoint_new` (`guid`),
   CONSTRAINT `log_monitor_endpoint_target` FOREIGN KEY (`target_endpoint`) REFERENCES `endpoint_new` (`guid`)
@@ -436,8 +436,8 @@ CREATE TABLE `db_metric_monitor` (
 CREATE TABLE `db_metric_endpoint_rel` (
   `guid` varchar(64) NOT NULL PRIMARY KEY,
   `db_metric_monitor` varchar(64) NOT NULL,
-  `source_endpoint` varchar(255),
-  `target_endpoint` varchar(255),
+  `source_endpoint` varchar(160),
+  `target_endpoint` varchar(160),
   CONSTRAINT `db_monitor_endpoint_metric` FOREIGN KEY (`db_metric_monitor`) REFERENCES `db_metric_monitor` (`guid`),
   CONSTRAINT `db_monitor_endpoint_source` FOREIGN KEY (`source_endpoint`) REFERENCES `endpoint_new` (`guid`),
   CONSTRAINT `db_monitor_endpoint_target` FOREIGN KEY (`target_endpoint`) REFERENCES `endpoint_new` (`guid`)
@@ -459,7 +459,7 @@ CREATE TABLE `endpoint_group` (
 
 CREATE TABLE `endpoint_group_rel` (
   `guid` varchar(64) NOT NULL PRIMARY KEY,
-  `endpoint` varchar(255) NOT NULL,
+  `endpoint` varchar(160) NOT NULL,
   `endpoint_group` varchar(64),
   CONSTRAINT `endpoint_group_e` FOREIGN KEY (`endpoint`) REFERENCES `endpoint_new` (`guid`),
   CONSTRAINT `endpoint_group_g` FOREIGN KEY (`endpoint_group`) REFERENCES `endpoint_group` (`guid`)
@@ -602,8 +602,8 @@ CREATE TABLE `log_keyword_config` (
 CREATE TABLE `log_keyword_endpoint_rel` (
   `guid` varchar(64) NOT NULL PRIMARY KEY,
   `log_keyword_monitor` varchar(64) NOT NULL,
-  `source_endpoint` varchar(255),
-  `target_endpoint` varchar(255),
+  `source_endpoint` varchar(160),
+  `target_endpoint` varchar(160),
   CONSTRAINT `log_keyword_endpoint_monitor` FOREIGN KEY (`log_keyword_monitor`) REFERENCES `log_keyword_monitor` (`guid`),
   CONSTRAINT `log_keyword_endpoint_source` FOREIGN KEY (`source_endpoint`) REFERENCES `endpoint_new` (`guid`),
   CONSTRAINT `log_keyword_endpoint_target` FOREIGN KEY (`target_endpoint`) REFERENCES `endpoint_new` (`guid`)
