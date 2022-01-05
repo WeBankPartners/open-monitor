@@ -166,6 +166,7 @@ func DeleteEndpoint(guid string) error {
 	actions = append(actions, &Action{Sql: "delete from endpoint_service_rel where endpoint=?", Param: []interface{}{guid}})
 	actions = append(actions, &Action{Sql: "delete from log_metric_endpoint_rel where source_endpoint=? or target_endpoint=?", Param: []interface{}{guid, guid}})
 	actions = append(actions, &Action{Sql: "delete from db_metric_endpoint_rel where source_endpoint=? or target_endpoint=?", Param: []interface{}{guid, guid}})
+	actions = append(actions, &Action{Sql: "delete from log_keyword_endpoint_rel where source_endpoint=? or target_endpoint=?", Param: []interface{}{guid, guid}})
 	actions = append(actions, &Action{Sql: "delete from endpoint_new where guid=?", Param: []interface{}{guid}})
 	err := Transaction(actions)
 	if err != nil {
