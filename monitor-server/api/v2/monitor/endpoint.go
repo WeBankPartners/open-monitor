@@ -136,6 +136,8 @@ func UpdateEndpoint(c *gin.Context) {
 		} else {
 			newEndpoint = models.EndpointNewTable{Guid: endpointObj.Guid, AgentAddress: endpointObj.AgentAddress, EndpointAddress: endpointObj.EndpointAddress, Step: param.Step, ExtendParam: endpointObj.ExtendParam}
 		}
+	}else{
+		newEndpoint.Step = param.Step
 	}
 	log.Logger.Info("new endpoint", log.JsonObj("endpoint", newEndpoint))
 	// update endpoint table
@@ -174,11 +176,6 @@ func hostEndpointUpdate(param *models.RegisterParamNew, endpoint *models.Endpoin
 
 func agentManagerEndpointUpdate(param *models.RegisterParamNew, endpoint *models.EndpointNewTable) (newEndpoint models.EndpointNewTable, err error) {
 	if param.AgentManager {
-		var extParamObj models.EndpointExtendParamObj
-		err = json.Unmarshal([]byte(endpoint.ExtendParam), &extParamObj)
-		if err != nil {
-			return newEndpoint, fmt.Errorf("json unmarhsal extendParam fail,%s ", err.Error())
-		}
 		err = prom.StopAgent(endpoint.MonitorType, endpoint.Name, endpoint.Ip, agent.AgentManagerServer)
 		if err != nil {
 			return newEndpoint, fmt.Errorf("stop agent manager instance fail,%s ", err.Error())
