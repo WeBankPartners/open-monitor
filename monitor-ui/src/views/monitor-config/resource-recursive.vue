@@ -77,8 +77,8 @@
       label-colon
       v-model="isAssociatedObject"
       :title="$t('resourceLevel.associatedObject')">
-      <Form :model="currentData" label-position="right" style="max-height:400px;overflow:auto" label-colon :label-width="100">
-        <FormItem :label="$t('m_selected_object')">
+      <Form :model="currentData" label-position="right" label-colon :label-width="100">
+        <FormItem :label="$t('m_selected_object')" style="max-height:300px;overflow:auto">
           <Tag
             v-for="(obj, objIndex) in selectedObject"
             :key="objIndex"
