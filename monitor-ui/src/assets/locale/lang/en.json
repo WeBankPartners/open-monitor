@@ -293,5 +293,7 @@
   "m_line_type": "Line Type",
   "m_scope": "Scope",
   "m_all_object": "All Object",
-  "m_any_object": "Any Object"
+  "m_any_object": "Any Object",
+  "m_selected_object": "Selected Object",
+  "m_add_object": "Add Object"
 }
