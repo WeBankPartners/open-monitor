@@ -442,7 +442,7 @@ export default {
     },
     addQuery() {
       if (this.templateQuery.endpoint === '' || this.templateQuery.metric === '' || this.templateQuery.endpoint === undefined || this.templateQuery.metric === undefined) {
-        this.$Message.warning("配置完整方可保存！")
+        this.$Message.warning(this.$t('m_tip_for_save'))
         return
       }
       let tmp = JSON.parse(JSON.stringify(this.templateQuery))
