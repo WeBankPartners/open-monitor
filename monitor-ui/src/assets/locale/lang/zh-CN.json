@@ -292,5 +292,7 @@
   "m_line_type": "展示形式",
   "m_scope": "作用域",
   "m_all_object": "全部对象",
-  "m_any_object": "任一对象"
+  "m_any_object": "任一对象",
+  "m_selected_object": "已选对象",
+  "m_add_object": "添加对象"
 }
