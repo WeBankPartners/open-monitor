@@ -295,5 +295,6 @@
   "m_all_object": "All Object",
   "m_any_object": "Any Object",
   "m_selected_object": "Selected Object",
-  "m_add_object": "Add Object"
+  "m_add_object": "Add Object",
+  "m_tip_for_save": "The Configuration Is Complete Before Saving !"
 }
