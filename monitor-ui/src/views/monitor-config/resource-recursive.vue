@@ -77,18 +77,34 @@
       label-colon
       v-model="isAssociatedObject"
       :title="$t('resourceLevel.associatedObject')">
-      <Form :model="currentData" label-position="left" :label-width="60">
-        <FormItem :label="$t('resourceLevel.endpoint')">
+      <Form :model="currentData" label-position="right" style="max-height:400px;overflow:auto" label-colon :label-width="100">
+        <FormItem :label="$t('m_selected_object')">
+          <Tag
+            v-for="(obj, objIndex) in selectedObject"
+            :key="objIndex"
+            type="border"
+            closable
+            @on-close="removeObj(objIndex)"
+            color="primary">
+              <span style="color:red">{{obj.type}}:</span>
+              {{obj.option_text}}
+            </Tag>
+        </FormItem>
+        <FormItem :label="$t('m_add_object')">
           <Select
-            v-model="selectedObject"
+            v-model="addObject"
             filterable
             clearable
             multiple
+            style="width:300px"
+            :placeholder="$t('requestMoreData')"
             :remote-method="getAllObject"
             >
-            <Option v-for="item in allObject" :value="item.option_value" :key="item.option_value">{{ item.option_text }}</Option>
+            <Option v-for="(item, index) in allObject" :value="item.option_value" :key="item.option_value">
+              <TagShow :tagName="item.type" :index="index"></TagShow> 
+              {{ item.option_text }}</Option>
           </Select>
-
+          <Button @click="addObjectItem">{{$t('button.add')}}</Button>
         </FormItem>
       </Form>
       <div slot="footer">
@@ -204,6 +220,7 @@
 
 <script>
 import {randomColor} from '@/assets/config/common-config'
+import TagShow from '@/components/Tag-show.vue'
 export default {
   name: 'recursive',
   data() {
@@ -247,7 +264,8 @@ export default {
       doubleConfirm: {
         isShow: false,
         warningData: []
-      }
+      },
+      addObject: []
     }
   },
   props:{
@@ -282,6 +300,19 @@ export default {
     // }) 
   },
   methods: {
+    addObjectItem () {
+      this.addObject.forEach(obj => {
+        const isExist = this.selectedObject.find(s => s.option_value === obj)
+        if (!isExist) {
+           const find = this.allObject.find(a => a.option_value === obj)
+          this.selectedObject.push(find)
+        }
+      })
+      this.addObject = []
+    },
+    removeObj (index) {
+      this.selectedObject.splice(index, 1)
+    },
     cancelConfirmModal () {
       this.confirmModal.isShowConfirmModal = false
       this.confirmModal.check = false
@@ -523,10 +554,7 @@ export default {
         guid: panalData.guid
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v1/alarm/org/endpoint/get', params, (responseData) => {
-        this.selectedObject = []
-        responseData.forEach((_) => {
-          this.selectedObject.push(_.option_value)
-        })
+        this.selectedObject = responseData
         this.getAllObject()
       })
     },
@@ -550,7 +578,7 @@ export default {
     saveAssociatedObject () {
       let params = {
         "guid": this.parentPanal,
-        "endpoint": this.selectedObject
+        "endpoint": this.selectedObject.map(item => item.option_value)
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/alarm/org/endpoint/update', params, () => {
         this.$Message.success(this.$t('tips.success'))
@@ -598,6 +626,7 @@ export default {
     }
   },
   components: {
+    TagShow
   }
 }
 </script>
