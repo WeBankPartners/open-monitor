@@ -450,7 +450,10 @@ export default {
         tmp.app_object = tmp.endpoint
       }
       const find = this.options.find(item => item.option_value === tmp.endpoint)
-      tmp.endpointName = find.option_text
+      tmp.endpointName = ''
+      if (find) {
+        tmp.endpointName = find.option_text
+      }
       this.chartQueryList.push(tmp)
       this.templateQuery = {
         endpoint: '',
