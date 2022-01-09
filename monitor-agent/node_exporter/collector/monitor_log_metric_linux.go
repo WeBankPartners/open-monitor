@@ -29,6 +29,7 @@ var (
 	logMetricMonitorMetrics    []*logMetricDisplayObj
 	logMetricMonitorMetricLock = new(sync.RWMutex)
 	monitorLogger              log.Logger
+	logMetricChanLength        = 100000
 )
 
 type logMetricMonitorCollector struct {
@@ -82,6 +83,7 @@ type logMetricMonitorNeObj struct {
 	ServiceGroup   string                `json:"service_group"`
 	JsonConfig     []*logMetricJsonNeObj `json:"config"`
 	MetricConfig   []*logMetricNeObj     `json:"custom"`
+	DataChan       chan string           `json:"-"`
 }
 
 type logMetricJsonNeObj struct {
@@ -134,31 +136,15 @@ type logMetricValueObj struct {
 	Min   float64
 }
 
-func (c *logMetricMonitorNeObj) start() {
-	level.Info(monitorLogger).Log("startLogMetricMonitorNeObj", c.Path)
-	var err error
-	c.TailSession, err = tail.TailFile(c.Path, tail.Config{Follow: true, ReOpen: true})
-	if err != nil {
-		level.Error(monitorLogger).Log("msg", fmt.Sprintf("start log metric collector fail, path: %s, error: %v", c.Path, err))
-		return
-	}
-	firstFlag := true
-	timeNow := time.Now()
-	for line := range c.TailSession.Lines {
-		if firstFlag {
-			// load log file wait 5 sec to ignore exist log context
-			if time.Now().Sub(timeNow).Seconds() >= 5 {
-				firstFlag = false
-			} else {
-				continue
-			}
-		}
+func (c *logMetricMonitorNeObj) startHandleTailData() {
+	for {
+		lineText := <-c.DataChan
 		c.Lock.RLock()
 		for _, rule := range c.JsonConfig {
 			if rule.Regexp == nil {
 				continue
 			}
-			fetchList := rule.Regexp.FindStringSubmatch(line.Text)
+			fetchList := rule.Regexp.FindStringSubmatch(lineText)
 			if len(fetchList) <= 1 {
 				continue
 			}
@@ -183,7 +169,7 @@ func (c *logMetricMonitorNeObj) start() {
 			if custom.RegExp == nil {
 				continue
 			}
-			fetchList := custom.RegExp.FindStringSubmatch(line.Text)
+			fetchList := custom.RegExp.FindStringSubmatch(lineText)
 			if len(fetchList) > 1 {
 				if fetchList[1] != "" {
 					custom.DataChannel <- fetchList[1]
@@ -191,6 +177,34 @@ func (c *logMetricMonitorNeObj) start() {
 			}
 		}
 		c.Lock.RUnlock()
+	}
+}
+
+func (c *logMetricMonitorNeObj) start() {
+	level.Info(monitorLogger).Log("startLogMetricMonitorNeObj", c.Path)
+	var err error
+	c.TailSession, err = tail.TailFile(c.Path, tail.Config{Follow: true, ReOpen: true})
+	if err != nil {
+		level.Error(monitorLogger).Log("msg", fmt.Sprintf("start log metric collector fail, path: %s, error: %v", c.Path, err))
+		return
+	}
+	c.DataChan = make(chan string, logMetricChanLength)
+	go c.startHandleTailData()
+	firstFlag := true
+	timeNow := time.Now()
+	for line := range c.TailSession.Lines {
+		if firstFlag {
+			// load log file wait 5 sec to ignore exist log context
+			if time.Now().Sub(timeNow).Seconds() >= 5 {
+				firstFlag = false
+			} else {
+				continue
+			}
+		}
+		if len(c.DataChan) == logMetricChanLength {
+			level.Info(monitorLogger).Log("Log metric queue is full,file:", c.Path)
+		}
+		c.DataChan <- line.Text
 	}
 }
 
@@ -206,7 +220,7 @@ func (c *logMetricMonitorNeObj) new(input *logMetricMonitorNeObj) {
 			level.Error(monitorLogger).Log("newLogMetricMonitorNeObj", fmt.Sprintf("regexpError:%s ", err.Error()))
 			continue
 		}
-		jsonObj.DataChannel = make(chan map[string]interface{}, 10000)
+		jsonObj.DataChannel = make(chan map[string]interface{}, logMetricChanLength)
 		for _, metricObj := range jsonObj.MetricConfig {
 			initLogMetricNeObj(metricObj)
 		}
@@ -238,7 +252,7 @@ func (c *logMetricMonitorNeObj) update(input *logMetricMonitorNeObj) {
 			}
 		}
 		if jsonObj.DataChannel == nil {
-			jsonObj.DataChannel = make(chan map[string]interface{}, 10000)
+			jsonObj.DataChannel = make(chan map[string]interface{}, logMetricChanLength)
 		}
 		for _, metricObj := range jsonObj.MetricConfig {
 			initLogMetricNeObj(metricObj)
@@ -272,7 +286,7 @@ func initLogMetricNeObj(metricObj *logMetricNeObj) {
 			metricObj.RegExp, _ = regexp.Compile(".*")
 		}
 		if metricObj.DataChannel == nil {
-			metricObj.DataChannel = make(chan string, 10000)
+			metricObj.DataChannel = make(chan string, logMetricChanLength)
 		}
 	}
 	for _, stringMapObj := range metricObj.StringMap {
