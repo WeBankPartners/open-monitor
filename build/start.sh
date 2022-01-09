@@ -50,6 +50,16 @@ else
 sed -i "s~{{PLUGIN_MODE}}~no~g" monitor/conf/default.json
 fi
 
+if [ -n "$MONITOR_LOCAL_DNS_MAP" ]
+then
+  dns_map=${MONITOR_LOCAL_DNS_MAP}
+  set ${dns_map//,/ }
+  for v in "$@"
+  do
+    echo "${v//=/ }" >> /etc/hosts
+  done
+fi
+
 cd alertmanager
 mkdir -p logs
 nohup ./alertmanager --config.file=alertmanager.yml --web.listen-address=":9093"  --cluster.listen-address=":9094" > logs/alertmanager.log 2>&1 &
