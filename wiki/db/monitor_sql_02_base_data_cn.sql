@@ -642,3 +642,7 @@ insert into service_group(guid,display_name,service_type,parent) select guid,dis
 #@v2.0.0.5-begin@;
 alter table prom_metric modify prom_ql varchar(4096);
 #@v2.0.0.5-end@;
+
+#@v2.0.0.11-begin@;
+alter table alarm modify content text;
+#@v2.0.0.11-end@;

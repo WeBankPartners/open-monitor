@@ -14,3 +14,6 @@ Update process monitor with process guid
 
 v2.0.0
 Update log keyword and log metric monitor,avg to sum/count
+
+v2.0.0.11
+Fix log tail error
