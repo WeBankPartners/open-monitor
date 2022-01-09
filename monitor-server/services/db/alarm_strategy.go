@@ -384,7 +384,7 @@ func buildRuleFileContentNew(ruleFileName, guidExpr, addressExpr, ipExpr string,
 				strategy.MetricExpr = strings.ReplaceAll(strategy.MetricExpr, "$ip", ipExpr)
 			}
 		}
-		tmpRfu.Expr = fmt.Sprintf("%s %s", strategy.MetricExpr, strategy.Condition)
+		tmpRfu.Expr = fmt.Sprintf("(%s) %s", strategy.MetricExpr, strategy.Condition)
 		tmpRfu.For = strategy.Last
 		tmpRfu.Labels = make(map[string]string)
 		tmpRfu.Labels["strategy_guid"] = strategy.Guid
