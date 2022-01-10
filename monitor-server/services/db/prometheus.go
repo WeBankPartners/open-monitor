@@ -105,7 +105,7 @@ func checkRuleConfigTime(refreshAll bool) {
 	var endpointGroup []*models.EndpointGroupTable
 	querySql := "select guid from endpoint_group"
 	if !refreshAll {
-		nowTime := time.Unix(sdConfigSyncTime, 0).Format(models.DatetimeFormat)
+		nowTime := time.Unix(ruleConfigSyncTime, 0).Format(models.DatetimeFormat)
 		querySql = fmt.Sprintf("select endpoint_group as 'guid' from alarm_strategy where update_time>'%s' union select endpoint_group as 'guid' from endpoint_group_rel where update_time>'%s' union select guid from endpoint_group where service_group in (select service_group from endpoint_service_rel where update_time>'%s')", nowTime, nowTime, nowTime)
 	}
 	err := x.SQL(querySql).Find(&endpointGroup)
