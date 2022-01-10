@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"time"
 )
 
 var GlobalSGDisplayNameMap = make(map[string]string)
@@ -21,6 +22,7 @@ type EndpointServiceRelTable struct {
 	Guid         string `json:"guid" xorm:"guid"`
 	Endpoint     string `json:"endpoint" xorm:"endpoint"`
 	ServiceGroup string `json:"service_group" xorm:"service_group"`
+	UpdateTime  time.Time `json:"update_time" xorm:"update_time"`
 }
 
 type ServiceGroupLinkNode struct {

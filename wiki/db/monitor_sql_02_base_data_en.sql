@@ -646,3 +646,14 @@ alter table prom_metric modify prom_ql varchar(4096);
 #@v2.0.0.11-begin@;
 alter table alarm modify content text;
 #@v2.0.0.11-end@;
+
+#@v2.0.0.12-begin@;
+update alarm_strategy set update_time=now() where update_time='' or update_time is null;
+alter table alarm_strategy modify update_time datetime;
+update endpoint_new set update_time=now() where update_time='' or update_time is null;
+alter table endpoint_new modify update_time datetime;
+alter table endpoint_group_rel add column update_time datetime;
+update endpoint_group_rel set update_time=now() where update_time is null;
+alter table endpoint_service_rel add column update_time datetime;
+update endpoint_service_rel set update_time=now() where update_time is null;
+#@v2.0.0.12-end@;
