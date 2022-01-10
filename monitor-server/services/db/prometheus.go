@@ -10,14 +10,23 @@ import (
 	"time"
 )
 
+var (
+	sdConfigSyncTime int64
+	ruleConfigSyncTime int64
+)
+
 func InitPrometheusConfig() {
 	var err error
 	// init sd config
 	go prom.StartConsumeSdConfig()
-	InitPrometheusServiceDiscoverConfig()
+	sdConfigSyncTime = time.Now().Unix()
+	checkSdConfigTime(true)
 	// init rule config
 	go prom.StartConsumeRuleConfig()
-	initPrometheusRuleConfig()
+	ruleConfigSyncTime = time.Now().Unix()
+	checkRuleConfigTime(true)
+	// start cron check
+	go startCheckPrometheusConfig()
 	// init kubernetes config
 	err = SyncKubernetesConfig()
 	if err != nil {
@@ -31,14 +40,48 @@ func InitPrometheusConfig() {
 	select {}
 }
 
-func InitPrometheusServiceDiscoverConfig() {
-	var endpointTable []*models.EndpointTable
-	err := x.SQL("select step,cluster from endpoint group by step,cluster order by cluster,step").Find(&endpointTable)
+func startCheckPrometheusConfig()  {
+	tMin, err := time.ParseInLocation("2006-01-02 15:04:05", fmt.Sprintf("%s00", time.Now().Format("2006-01-02 15:04:")), time.Local)
 	if err != nil {
-		log.Logger.Error("Init prometheus sd config fail,query endpoint table fail", log.Error(err))
+		log.Logger.Error("Start check prometheus config job init fail", log.Error(err))
+		return
+	}
+	sleepTime := tMin.Unix() + 60 - time.Now().Unix()
+	if sleepTime < 0 {
+		log.Logger.Warn("Start check prometheus config job fail,calc sleep time fail", log.Int64("sleep time", sleepTime))
+		return
+	}
+	time.Sleep(time.Duration(sleepTime) * time.Second)
+	jobCount := 0
+	refreshAll := false
+	t := time.NewTicker(time.Second*time.Duration(60)).C
+	for {
+		<- t
+		if jobCount == 1440 {
+			refreshAll = true
+			jobCount = 0
+		}else{
+			refreshAll = false
+		}
+		go checkSdConfigTime(refreshAll)
+		go checkRuleConfigTime(refreshAll)
+		jobCount = jobCount + 1
+	}
+}
+
+func checkSdConfigTime(refreshAll bool)  {
+	querySql := "select step,cluster from endpoint_new group by step,cluster order by cluster,step"
+	if !refreshAll {
+		querySql = "select step,cluster from endpoint_new where update_time>'"+time.Unix(sdConfigSyncTime, 0).Format(models.DatetimeFormat)+"' group by step,cluster order by cluster,step"
+	}
+	var endpointTable []*models.EndpointNewTable
+	err := x.SQL(querySql).Find(&endpointTable)
+	if err != nil {
+		log.Logger.Error("checkSdConfigTime query endpoint fail", log.Error(err))
 		return
 	}
 	if len(endpointTable) == 0 {
+		sdConfigSyncTime = time.Now().Unix()
 		return
 	}
 	var clusterStepMap = make(map[string][]int)
@@ -52,38 +95,36 @@ func InitPrometheusServiceDiscoverConfig() {
 	for k, v := range clusterStepMap {
 		tmpErr := SyncSdEndpointNew(v, k, true)
 		if tmpErr != nil {
-			log.Logger.Error("Init sd config fail", log.String("cluster", k), log.Error(tmpErr))
+			log.Logger.Error("Sync sd config fail", log.String("cluster", k), log.String("steps", fmt.Sprintf("%v", v)), log.Error(tmpErr))
 		}
 	}
+	sdConfigSyncTime = time.Now().Unix()
 }
 
-func initPrometheusRuleConfig() {
-	// Sync rule file
-	//var tplList []*models.TplTable
-	//err := x.SQL("SELECT * FROM tpl").Find(&tplList)
-	//if err != nil {
-	//	log.Logger.Error("init prometheus rule config fail,query tpl table fail", log.Error(err))
-	//	return
-	//}
-	//for _, tpl := range tplList {
-	//	tmpErr := SyncRuleConfigFile(tpl.Id, []string{}, false)
-	//	if tmpErr != nil {
-	//		log.Logger.Error("init prometheus rule config fail", log.Error(tmpErr))
-	//	}
-	//}
-
+func checkRuleConfigTime(refreshAll bool) {
 	var endpointGroup []*models.EndpointGroupTable
-	err := x.SQL("select guid from endpoint_group").Find(&endpointGroup)
+	querySql := "select guid from endpoint_group"
+	if !refreshAll {
+		nowTime := time.Unix(ruleConfigSyncTime, 0).Format(models.DatetimeFormat)
+		querySql = fmt.Sprintf("select endpoint_group as 'guid' from alarm_strategy where update_time>'%s' union select endpoint_group as 'guid' from endpoint_group_rel where update_time>'%s' union select guid from endpoint_group where service_group in (select service_group from endpoint_service_rel where update_time>'%s')", nowTime, nowTime, nowTime)
+	}
+	err := x.SQL(querySql).Find(&endpointGroup)
 	if err != nil {
 		log.Logger.Error("Init prometheus rule config fail,query endpoint group fail", log.Error(err))
 		return
 	}
+	existMap := make(map[string]int)
 	for _,v := range endpointGroup {
+		if _,b:=existMap[v.Guid];b {
+			continue
+		}
+		existMap[v.Guid] = 1
 		tmpErr := SyncPrometheusRuleFile(v.Guid, false)
 		if tmpErr != nil {
 			log.Logger.Error("init prometheus rule config fail", log.String("endpointGroup", v.Guid), log.Error(tmpErr))
 		}
 	}
+	ruleConfigSyncTime = time.Now().Unix()
 }
 
 func QueryExporterMetric(param models.QueryPrometheusMetricParam) (err error, result []string) {
