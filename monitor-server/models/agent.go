@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 type RegisterParam struct {
 	Type         string `json:"type" form:"type" binding:"required"`
 	ExporterIp   string `json:"exporter_ip" form:"exporter_ip" binding:"required"`
@@ -58,6 +60,7 @@ type PanelRecursiveTable struct {
 	RecoverCallbackName string `json:"recover_callback_name"`
 	RecoverCallbackKey  string `json:"recover_callback_key"`
 	ObjType             string `json:"obj_type"`
+	UpdateAt            time.Time `json:"update_at"`
 }
 
 type RecursivePanelObj struct {
