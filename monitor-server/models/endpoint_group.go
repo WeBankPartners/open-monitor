@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 type EndpointGroupTable struct {
 	Guid         string `json:"guid" xorm:"guid"`
 	DisplayName  string `json:"display_name" xorm:"display_name"`
@@ -14,6 +16,7 @@ type EndpointGroupRelTable struct {
 	Guid          string `json:"guid" xorm:"guid"`
 	Endpoint      string `json:"endpoint" xorm:"endpoint"`
 	EndpointGroup string `json:"endpoint_group" xorm:"endpoint_group"`
+	UpdateTime    time.Time `json:"update_time" xorm:"update_time"`
 }
 
 type NotifyTable struct {
