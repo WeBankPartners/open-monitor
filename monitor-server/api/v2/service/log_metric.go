@@ -79,45 +79,11 @@ func UpdateLogMetricMonitor(c *gin.Context) {
 		return
 	}
 	hostEndpointList := []string{}
-	if param.LogPath != result.LogPath {
-		for _, v := range param.EndpointRel {
-			hostEndpointList = append(hostEndpointList, v.SourceEndpoint)
-		}
-	} else {
-		for _, v := range result.EndpointRel {
-			existFlag, changeFlag := false, false
-			for _, vv := range param.EndpointRel {
-				if vv.SourceEndpoint == v.SourceEndpoint {
-					existFlag = true
-					if vv.TargetEndpoint != v.TargetEndpoint {
-						changeFlag = true
-					}
-					break
-				}
-			}
-			if !existFlag {
-				// remove endpoint
-				hostEndpointList = append(hostEndpointList, v.SourceEndpoint)
-			} else {
-				if changeFlag {
-					// update endpoint rel
-					hostEndpointList = append(hostEndpointList, v.SourceEndpoint)
-				}
-			}
-		}
-		for _, v := range param.EndpointRel {
-			existFlag := false
-			for _, vv := range result.EndpointRel {
-				if vv.SourceEndpoint == v.SourceEndpoint {
-					existFlag = true
-					break
-				}
-			}
-			if !existFlag {
-				// add endpoint
-				hostEndpointList = append(hostEndpointList, v.SourceEndpoint)
-			}
-		}
+	for _,v := range result.EndpointRel {
+		hostEndpointList = append(hostEndpointList, v.SourceEndpoint)
+	}
+	for _,v := range param.EndpointRel {
+		hostEndpointList = append(hostEndpointList, v.SourceEndpoint)
 	}
 	err = db.UpdateLogMetricMonitor(&param)
 	if err != nil {
