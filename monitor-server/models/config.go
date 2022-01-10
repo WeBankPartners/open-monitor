@@ -15,7 +15,7 @@ import (
 
 type LogConfig struct {
 	Level            string `json:"level"`
-	LogDir             string `json:"log_dir"`
+	LogDir           string `json:"log_dir"`
 	ArchiveMaxSize   int    `json:"archive_max_size"`
 	ArchiveMaxBackup int    `json:"archive_max_backup"`
 	ArchiveMaxDay    int    `json:"archive_max_day"`
@@ -42,7 +42,7 @@ type SessionRedisConfig struct {
 }
 
 type SessionConfig struct {
-	Enable       string               `json:"enable"`
+	Enable       string             `json:"enable"`
 	Expire       int64              `json:"expire"`
 	ServerEnable bool               `json:"server_enable"`
 	ServerToken  string             `json:"server_token"`
@@ -64,7 +64,7 @@ type StoreConfig struct {
 	Name     string `json:"name"`
 	Type     string `json:"type"`
 	Server   string `json:"server"`
-	Port     string    `json:"port"`
+	Port     string `json:"port"`
 	User     string `json:"user"`
 	Pwd      string `json:"pwd"`
 	DataBase string `json:"database"`
@@ -161,24 +161,26 @@ type ArchiveMysqlConfig struct {
 }
 
 type GlobalConfig struct {
-	IsPluginMode     string              `json:"is_plugin_mode"`
-	Http             *HttpConfig         `json:"http"`
-	Log              LogConfig           `json:"log"`
-	Store            StoreConfig         `json:"store"`
-	Datasource       DataSourceConfig    `json:"datasource"`
-	LimitIp          []string            `json:"limitIp"`
-	Dependence       []*DependenceConfig `json:"dependence"`
-	Prometheus       PrometheusConfig    `json:"prometheus"`
-	TagBlacklist     []string            `json:"tag_blacklist"`
-	Agent            []*AgentConfig      `json:"agent"`
-	Alert            AlertConfig         `json:"alert"`
-	Peer             PeerConfig          `json:"peer"`
-	CronJob          CronJobConfig       `json:"cron_job"`
-	SdFile           SdFileConfig        `json:"sd_file"`
-	ArchiveMysql     ArchiveMysqlConfig  `json:"archive_mysql"`
-	ProcessCheckList []string            `json:"process_check_list"`
-	DefaultAdminRole string              `json:"default_admin_role"`
-	AlarmAliveMaxDay string                 `json:"alarm_alive_max_day"`
+	IsPluginMode                 string              `json:"is_plugin_mode"`
+	Http                         *HttpConfig         `json:"http"`
+	Log                          LogConfig           `json:"log"`
+	Store                        StoreConfig         `json:"store"`
+	Datasource                   DataSourceConfig    `json:"datasource"`
+	LimitIp                      []string            `json:"limitIp"`
+	Dependence                   []*DependenceConfig `json:"dependence"`
+	Prometheus                   PrometheusConfig    `json:"prometheus"`
+	TagBlacklist                 []string            `json:"tag_blacklist"`
+	Agent                        []*AgentConfig      `json:"agent"`
+	Alert                        AlertConfig         `json:"alert"`
+	Peer                         PeerConfig          `json:"peer"`
+	CronJob                      CronJobConfig       `json:"cron_job"`
+	SdFile                       SdFileConfig        `json:"sd_file"`
+	ArchiveMysql                 ArchiveMysqlConfig  `json:"archive_mysql"`
+	ProcessCheckList             []string            `json:"process_check_list"`
+	DefaultAdminRole             string              `json:"default_admin_role"`
+	AlarmAliveMaxDay             string              `json:"alarm_alive_max_day"`
+	MonitorAlarmMailEnable       string              `json:"monitor_alarm_mail_enable"`
+	MonitorAlarmCallbackLevelMin string              `json:"monitor_alarm_callback_level_min"`
 }
 
 var (
@@ -195,6 +197,7 @@ var (
 	DefaultLocalTimeZone string
 	PluginRunningMode    bool
 	SmsParamMaxLength    int
+	AlarmMailEnable      bool
 )
 
 func Config() *GlobalConfig {
@@ -239,6 +242,15 @@ func InitConfig(cfg string) {
 	defer lock.Unlock()
 
 	config = &c
+	config.MonitorAlarmMailEnable = strings.ToLower(config.MonitorAlarmMailEnable)
+	if config.MonitorAlarmMailEnable == "y" || config.MonitorAlarmMailEnable == "yes" || config.MonitorAlarmMailEnable == "true" {
+		AlarmMailEnable = true
+	}else{
+		AlarmMailEnable = false
+	}
+	if config.MonitorAlarmCallbackLevelMin == "" {
+		config.MonitorAlarmCallbackLevelMin = "high"
+	}
 	for _, v := range config.Dependence {
 		if v.Name == "core" {
 			CoreUrl = v.Server
