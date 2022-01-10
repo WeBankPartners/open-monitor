@@ -78,18 +78,6 @@
       v-model="isAssociatedObject"
       :title="$t('resourceLevel.associatedObject')">
       <Form :model="currentData" label-position="right" label-colon :label-width="100">
-        <FormItem :label="$t('m_selected_object')" style="max-height:300px;overflow:auto">
-          <Tag
-            v-for="(obj, objIndex) in selectedObject"
-            :key="objIndex"
-            type="border"
-            closable
-            @on-close="removeObj(objIndex)"
-            color="primary">
-              <span style="color:red">{{obj.type}}:</span>
-              {{obj.option_text}}
-            </Tag>
-        </FormItem>
         <FormItem :label="$t('m_add_object')">
           <Select
             v-model="addObject"
@@ -105,6 +93,24 @@
               {{ item.option_text }}</Option>
           </Select>
           <Button @click="addObjectItem">{{$t('button.add')}}</Button>
+        </FormItem>
+        <FormItem :label="$t('m_selected_object')" style="max-height:500px;overflow:auto">
+          <template v-for="(obj, objIndex) in selectedObject">
+            <Tooltip :key="objIndex" transfer>
+              <Tag
+                :key="objIndex"
+                type="border"
+                closable
+                @on-close="removeObj(objIndex)"
+                color="primary">
+                  <span style="color:red">{{obj.type}}:</span>
+                  {{obj.option_text.length > 40 ? obj.option_text.substring(0,40)+'...' : obj.option_text}}
+              </Tag>
+              <div slot="content" style="white-space: normal;max-width:200px;word-break: break-all;">
+                {{obj.option_text}}
+              </div>
+            </Tooltip>
+          </template>
         </FormItem>
       </Form>
       <div slot="footer">
@@ -564,6 +570,16 @@ export default {
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v1/dashboard/search', params, (responseData) => {
         this.allObject = []
+        // responseData = [
+        //   {
+        //     active: false,
+        //     id: 0,
+        //     option_text: 'UAT_IMEG_PRE_APP_imegpre_127.0.0.1:18086:127.0.0.1',
+        //     option_type_name: '',
+        //     option_value: 'UAT_IMEG_PRE_APP_imegpre_127.0.0.1:18086:127.0.0.1_process',
+        //     type: 'process'
+        //   }
+        // ]
         responseData.forEach((item) => {
             if (item.id !== -1) {
               this.allObject.push({
