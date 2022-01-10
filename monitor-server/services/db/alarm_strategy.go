@@ -250,6 +250,7 @@ func SyncPrometheusRuleFile(endpointGroup string, fromPeer bool) error {
 	if err != nil {
 		return fmt.Errorf("Sync prometheus rule fail,%s ", err.Error())
 	}
+	log.Logger.Info("SyncPrometheusRuleFile", log.String("endpointGroup", endpointGroup))
 	ruleFileName := "g_" + endpointGroup
 	var endpointList []*models.EndpointNewTable
 	if endpointGroupObj.ServiceGroup == "" {
@@ -447,10 +448,7 @@ func NotifyServiceGroup(serviceGroup string, alarmObj *models.AlarmHandleObj) {
 		log.Logger.Error("Notify serviceGroup fail,query notify data error", log.Error(err))
 	}
 	for _, v := range notifyList {
-		err = notifyAction(v, alarmObj)
-		if err != nil {
-			log.Logger.Error("Notify error", log.Error(err))
-		}
+		notifyAction(v, alarmObj)
 	}
 }
 
@@ -481,15 +479,68 @@ func NotifyStrategyAlarm(alarmObj *models.AlarmHandleObj) {
 		return
 	}
 	for _, v := range notifyTable {
-		err = notifyAction(v, alarmObj)
+		notifyAction(v, alarmObj)
+	}
+}
+
+func notifyAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleObj) {
+	log.Logger.Info("Start notify action", log.String("procCallKey", notify.ProcCallbackKey), log.String("notify", notify.Guid), log.Int("alarm", alarmObj.Id))
+	// alarmMailEnable==Y
+	var err,mailErr error
+	if models.AlarmMailEnable {
+		mailErr = notifyMailAction(notify, alarmObj)
+		if mailErr != nil {
+			log.Logger.Error("Notify mail fail", log.String("notifyGuid", notify.Guid), log.Error(mailErr))
+		}
+	}
+	if alarmObj.SPriority == "" {
+		tmpAlarmRows,_ := x.QueryString("select s_priority from alarm where id=?", alarmObj.Id)
+		if len(tmpAlarmRows) > 0 {
+			alarmObj.SPriority = tmpAlarmRows[0]["s_priority"]
+		}
+	}
+	for i := 0; i < 3; i++ {
+		err = notifyEventAction(notify, alarmObj)
+		if err == nil {
+			break
+		} else {
+			log.Logger.Error("Notify event fail", log.String("notifyGuid", notify.Guid), log.Int("try", i), log.Error(err))
+		}
+	}
+	if err != nil {
+		if models.AlarmMailEnable && mailErr == nil {
+			log.Logger.Info("Event three times fail,but already send mail success ")
+			return
+		}
+		err = notifyMailAction(notify, alarmObj)
 		if err != nil {
-			log.Logger.Error("Notify mail fail", log.String("notifyGuid", v.Guid), log.Error(err))
+			log.Logger.Error("Event three times fail,and notify mail fail", log.String("notifyGuid", notify.Guid), log.Error(err))
+		}else{
+			log.Logger.Info("Event three times fail,send mail success ")
 		}
 	}
 }
 
-func notifyAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleObj) error {
-	log.Logger.Info("Start notify action", log.String("procCallKey", notify.ProcCallbackKey), log.String("notify", notify.Guid), log.Int("alarm", alarmObj.Id))
+func compareNotifyEventLevel(level string) bool {
+	result := true
+	if level == "medium" {
+		if models.Config().MonitorAlarmCallbackLevelMin == "high" {
+			result = false
+		}
+	}else if level == "low" {
+		if models.Config().MonitorAlarmCallbackLevelMin == "high" || models.Config().MonitorAlarmCallbackLevelMin == "medium" {
+			result = false
+		}
+	}
+	return result
+}
+
+func notifyEventAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleObj) error {
+	if !compareNotifyEventLevel(alarmObj.SPriority) {
+		log.Logger.Info("notify event disable", log.String("level",alarmObj.SPriority),log.String("minLevel",models.Config().MonitorAlarmCallbackLevelMin))
+		err := notifyMailAction(notify, alarmObj)
+		return err
+	}
 	if notify.ProcCallbackKey == "" {
 		if alarmObj.Status == "firing" {
 			if models.FiringCallback != "" && models.FiringCallback != "default_firing_callback" {
@@ -501,27 +552,8 @@ func notifyAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleObj) e
 			}
 		}
 		if notify.ProcCallbackKey == "" {
-			return notifyMailAction(notify, alarmObj)
+			return fmt.Errorf("Notify:%s procCallbackKey is empty ", notify.Guid)
 		}
-	}
-	var err error
-	for i := 0; i < 3; i++ {
-		err = notifyEventAction(notify, alarmObj)
-		if err == nil {
-			break
-		} else {
-			log.Logger.Error("Notify event fail", log.String("notifyGuid", notify.Guid), log.Int("try", i), log.Error(err))
-		}
-	}
-	if err != nil {
-		return notifyMailAction(notify, alarmObj)
-	}
-	return nil
-}
-
-func notifyEventAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleObj) error {
-	if notify.ProcCallbackKey == "" {
-		return fmt.Errorf("Notify:%s procCallbackKey is empty ", notify.Guid)
 	}
 	var requestParam models.CoreNotifyRequest
 	requestParam.EventSeqNo = fmt.Sprintf("%d-%s-%d-%s", alarmObj.Id, alarmObj.Status, time.Now().Unix(), notify.Guid)
