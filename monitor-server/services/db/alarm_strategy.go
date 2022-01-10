@@ -485,9 +485,13 @@ func NotifyStrategyAlarm(alarmObj *models.AlarmHandleObj) {
 
 func notifyAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleObj) {
 	log.Logger.Info("Start notify action", log.String("procCallKey", notify.ProcCallbackKey), log.String("notify", notify.Guid), log.Int("alarm", alarmObj.Id))
-	mailErr := notifyMailAction(notify, alarmObj)
-	if mailErr != nil {
-		log.Logger.Error("Notify mail fail", log.String("notifyGuid", notify.Guid), log.Error(mailErr))
+	// alarmMailEnable==Y
+	var err,mailErr error
+	if models.AlarmMailEnable {
+		mailErr = notifyMailAction(notify, alarmObj)
+		if mailErr != nil {
+			log.Logger.Error("Notify mail fail", log.String("notifyGuid", notify.Guid), log.Error(mailErr))
+		}
 	}
 	if alarmObj.SPriority == "" {
 		tmpAlarmRows,_ := x.QueryString("select s_priority from alarm where id=?", alarmObj.Id)
@@ -495,13 +499,24 @@ func notifyAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleObj) {
 			alarmObj.SPriority = tmpAlarmRows[0]["s_priority"]
 		}
 	}
-	var err error
 	for i := 0; i < 3; i++ {
 		err = notifyEventAction(notify, alarmObj)
 		if err == nil {
 			break
 		} else {
 			log.Logger.Error("Notify event fail", log.String("notifyGuid", notify.Guid), log.Int("try", i), log.Error(err))
+		}
+	}
+	if err != nil {
+		if models.AlarmMailEnable && mailErr == nil {
+			log.Logger.Info("Event three times fail,but already send mail success ")
+			return
+		}
+		err = notifyMailAction(notify, alarmObj)
+		if err != nil {
+			log.Logger.Error("Event three times fail,and notify mail fail", log.String("notifyGuid", notify.Guid), log.Error(err))
+		}else{
+			log.Logger.Info("Event three times fail,send mail success ")
 		}
 	}
 }
@@ -523,7 +538,8 @@ func compareNotifyEventLevel(level string) bool {
 func notifyEventAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleObj) error {
 	if !compareNotifyEventLevel(alarmObj.SPriority) {
 		log.Logger.Info("notify event disable", log.String("level",alarmObj.SPriority),log.String("minLevel",models.Config().MonitorAlarmCallbackLevelMin))
-		return nil
+		err := notifyMailAction(notify, alarmObj)
+		return err
 	}
 	if notify.ProcCallbackKey == "" {
 		if alarmObj.Status == "firing" {
@@ -620,10 +636,6 @@ func getNotifyEventMessage(notifyGuid string, alarm models.AlarmTable) (result m
 }
 
 func notifyMailAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleObj) error {
-	if !models.AlarmMailEnable {
-		log.Logger.Info("notify mail disable ")
-		return nil
-	}
 	var roles []*models.RoleNewTable
 	var toAddress, roleList, tmpToAddress []string
 	if notify.ServiceGroup != "" {
