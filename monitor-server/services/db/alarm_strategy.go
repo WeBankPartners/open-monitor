@@ -250,6 +250,7 @@ func SyncPrometheusRuleFile(endpointGroup string, fromPeer bool) error {
 	if err != nil {
 		return fmt.Errorf("Sync prometheus rule fail,%s ", err.Error())
 	}
+	log.Logger.Info("SyncPrometheusRuleFile", log.String("endpointGroup", endpointGroup))
 	ruleFileName := "g_" + endpointGroup
 	var endpointList []*models.EndpointNewTable
 	if endpointGroupObj.ServiceGroup == "" {
@@ -447,10 +448,7 @@ func NotifyServiceGroup(serviceGroup string, alarmObj *models.AlarmHandleObj) {
 		log.Logger.Error("Notify serviceGroup fail,query notify data error", log.Error(err))
 	}
 	for _, v := range notifyList {
-		err = notifyAction(v, alarmObj)
-		if err != nil {
-			log.Logger.Error("Notify error", log.Error(err))
-		}
+		notifyAction(v, alarmObj)
 	}
 }
 
@@ -481,27 +479,20 @@ func NotifyStrategyAlarm(alarmObj *models.AlarmHandleObj) {
 		return
 	}
 	for _, v := range notifyTable {
-		err = notifyAction(v, alarmObj)
-		if err != nil {
-			log.Logger.Error("Notify mail fail", log.String("notifyGuid", v.Guid), log.Error(err))
-		}
+		notifyAction(v, alarmObj)
 	}
 }
 
-func notifyAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleObj) error {
+func notifyAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleObj) {
 	log.Logger.Info("Start notify action", log.String("procCallKey", notify.ProcCallbackKey), log.String("notify", notify.Guid), log.Int("alarm", alarmObj.Id))
-	if notify.ProcCallbackKey == "" {
-		if alarmObj.Status == "firing" {
-			if models.FiringCallback != "" && models.FiringCallback != "default_firing_callback" {
-				notify.ProcCallbackKey = models.FiringCallback
-			}
-		}else{
-			if models.RecoverCallback != "" && models.RecoverCallback != "default_recover_callback" {
-				notify.ProcCallbackKey = models.RecoverCallback
-			}
-		}
-		if notify.ProcCallbackKey == "" {
-			return notifyMailAction(notify, alarmObj)
+	mailErr := notifyMailAction(notify, alarmObj)
+	if mailErr != nil {
+		log.Logger.Error("Notify mail fail", log.String("notifyGuid", notify.Guid), log.Error(mailErr))
+	}
+	if alarmObj.SPriority == "" {
+		tmpAlarmRows,_ := x.QueryString("select s_priority from alarm where id=?", alarmObj.Id)
+		if len(tmpAlarmRows) > 0 {
+			alarmObj.SPriority = tmpAlarmRows[0]["s_priority"]
 		}
 	}
 	var err error
@@ -513,15 +504,40 @@ func notifyAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleObj) e
 			log.Logger.Error("Notify event fail", log.String("notifyGuid", notify.Guid), log.Int("try", i), log.Error(err))
 		}
 	}
-	if err != nil {
-		return notifyMailAction(notify, alarmObj)
+}
+
+func compareNotifyEventLevel(level string) bool {
+	result := true
+	if level == "medium" {
+		if models.Config().MonitorAlarmCallbackLevelMin == "high" {
+			result = false
+		}
+	}else if level == "low" {
+		if models.Config().MonitorAlarmCallbackLevelMin == "high" || models.Config().MonitorAlarmCallbackLevelMin == "medium" {
+			result = false
+		}
 	}
-	return nil
+	return result
 }
 
 func notifyEventAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleObj) error {
+	if !compareNotifyEventLevel(alarmObj.SPriority) {
+		log.Logger.Info("notify event disable", log.String("level",alarmObj.SPriority),log.String("minLevel",models.Config().MonitorAlarmCallbackLevelMin))
+		return nil
+	}
 	if notify.ProcCallbackKey == "" {
-		return fmt.Errorf("Notify:%s procCallbackKey is empty ", notify.Guid)
+		if alarmObj.Status == "firing" {
+			if models.FiringCallback != "" && models.FiringCallback != "default_firing_callback" {
+				notify.ProcCallbackKey = models.FiringCallback
+			}
+		}else{
+			if models.RecoverCallback != "" && models.RecoverCallback != "default_recover_callback" {
+				notify.ProcCallbackKey = models.RecoverCallback
+			}
+		}
+		if notify.ProcCallbackKey == "" {
+			return fmt.Errorf("Notify:%s procCallbackKey is empty ", notify.Guid)
+		}
 	}
 	var requestParam models.CoreNotifyRequest
 	requestParam.EventSeqNo = fmt.Sprintf("%d-%s-%d-%s", alarmObj.Id, alarmObj.Status, time.Now().Unix(), notify.Guid)
@@ -604,6 +620,10 @@ func getNotifyEventMessage(notifyGuid string, alarm models.AlarmTable) (result m
 }
 
 func notifyMailAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleObj) error {
+	if !models.AlarmMailEnable {
+		log.Logger.Info("notify mail disable ")
+		return nil
+	}
 	var roles []*models.RoleNewTable
 	var toAddress, roleList, tmpToAddress []string
 	if notify.ServiceGroup != "" {
