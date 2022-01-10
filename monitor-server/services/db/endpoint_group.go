@@ -76,8 +76,9 @@ func UpdateGroupEndpoint(param *models.UpdateGroupEndpointParam, appendFlag bool
 	guidList := guid.CreateGuidList(len(param.EndpointGuidList))
 	nowTime := time.Now().Format(models.DatetimeFormat)
 	for i, v := range param.EndpointGuidList {
-		actions = append(actions, &Action{Sql: "insert into endpoint_group_rel(guid,endpoint,endpoint_group,update_time) value (?,?,?,?)", Param: []interface{}{guidList[i], v, param.GroupGuid, nowTime}})
+		actions = append(actions, &Action{Sql: "insert into endpoint_group_rel(guid,endpoint,endpoint_group) value (?,?,?)", Param: []interface{}{guidList[i], v, param.GroupGuid}})
 	}
+	actions = append(actions, &Action{Sql: "update endpoint_group set update_time=? where guid=?",Param: []interface{}{nowTime, param.GroupGuid}})
 	err := Transaction(actions)
 	return err
 }
