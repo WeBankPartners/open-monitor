@@ -13,6 +13,9 @@ import (
 
 func ReloadConfig() error {
 	_,err := http.Post(m.Config().Prometheus.ConfigReload, "application/json", strings.NewReader(""))
+	if err != nil {
+		log.Logger.Error("Reload prometheus config fail", log.Error(err))
+	}
 	return err
 }
 
