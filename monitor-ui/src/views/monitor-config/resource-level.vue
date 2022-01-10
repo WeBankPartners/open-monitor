@@ -15,7 +15,7 @@
       >
       <Option v-for="item in allObject" :value="item.option_value" :key="item.option_value">{{ item.option_text }}</Option>
     </Select>
-    <button type="button" class="btn btn-confirm-f" @click="getAllResource(true)">{{$t('button.search')}}</button>
+    <button type="button" class="btn btn-confirm-f" @click="getAllResource(false)">{{$t('button.search')}}</button>
     
     <template v-if="extend">
       <recursive :recursiveViewConfig="resourceRecursive"></recursive>
