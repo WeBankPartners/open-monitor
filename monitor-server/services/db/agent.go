@@ -15,24 +15,18 @@ func UpdateEndpoint(endpoint *m.EndpointTable, extendParam string) (stepList []i
 	}
 	host := m.EndpointTable{Guid: endpoint.Guid}
 	GetEndpoint(&host)
+	nowTime := time.Now().Format(m.DatetimeFormat)
 	var actions []*Action
 	if host.Id == 0 {
 		insert := fmt.Sprintf("INSERT INTO endpoint(guid,name,ip,endpoint_version,export_type,export_version,step,address,os_type,create_at,address_agent,cluster,tags) VALUE ('%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%s','%s','%s')",
-			endpoint.Guid, endpoint.Name, endpoint.Ip, endpoint.EndpointVersion, endpoint.ExportType, endpoint.ExportVersion, endpoint.Step, endpoint.Address, endpoint.OsType, time.Now().Format(m.DatetimeFormat), endpoint.AddressAgent, endpoint.Cluster, endpoint.Tags)
+			endpoint.Guid, endpoint.Name, endpoint.Ip, endpoint.EndpointVersion, endpoint.ExportType, endpoint.ExportVersion, endpoint.Step, endpoint.Address, endpoint.OsType, nowTime, endpoint.AddressAgent, endpoint.Cluster, endpoint.Tags)
 		actions = append(actions, &Action{Sql: insert})
-		log.Logger.Debug("Insert", log.String("sql", insert))
-		//_, err = x.Exec(insert)
-		//if err != nil {
-		//	log.Logger.Error("Insert endpoint fail", log.Error(err))
-		//	return
-		//}
 		// V2
 		tmpAgentAddress := endpoint.Address
 		if endpoint.AddressAgent != "" {
 			tmpAgentAddress = endpoint.AddressAgent
 		}
-		//x.Exec("insert into endpoint_new(guid,name,ip,monitor_type,agent_version,agent_address,step,endpoint_version,endpoint_address,cluster,extend_param) value (?,?,?,?,?,?,?,?,?,?,?)", endpoint.Guid, endpoint.Name, endpoint.Ip, endpoint.ExportType, endpoint.ExportVersion, tmpAgentAddress, endpoint.Step, endpoint.EndpointVersion, endpoint.Address, endpoint.Cluster, extendParam)
-		actions = append(actions, &Action{Sql: "insert into endpoint_new(guid,name,ip,monitor_type,agent_version,agent_address,step,endpoint_version,endpoint_address,cluster,extend_param) value (?,?,?,?,?,?,?,?,?,?,?)",Param: []interface{}{endpoint.Guid, endpoint.Name, endpoint.Ip, endpoint.ExportType, endpoint.ExportVersion, tmpAgentAddress, endpoint.Step, endpoint.EndpointVersion, endpoint.Address, endpoint.Cluster, extendParam}})
+		actions = append(actions, &Action{Sql: "insert into endpoint_new(guid,name,ip,monitor_type,agent_version,agent_address,step,endpoint_version,endpoint_address,cluster,extend_param,update_time) value (?,?,?,?,?,?,?,?,?,?,?,?)",Param: []interface{}{endpoint.Guid, endpoint.Name, endpoint.Ip, endpoint.ExportType, endpoint.ExportVersion, tmpAgentAddress, endpoint.Step, endpoint.EndpointVersion, endpoint.Address, endpoint.Cluster, extendParam, nowTime}})
 		err = Transaction(actions)
 		if err != nil {
 			log.Logger.Error("Insert endpoint fail", log.Error(err))
@@ -48,18 +42,11 @@ func UpdateEndpoint(endpoint *m.EndpointTable, extendParam string) (stepList []i
 		update := fmt.Sprintf("UPDATE endpoint SET name='%s',ip='%s',endpoint_version='%s',export_type='%s',export_version='%s',step=%d,address='%s',os_type='%s',address_agent='%s',cluster='%s',tags='%s' WHERE id=%d",
 			endpoint.Name, endpoint.Ip, endpoint.EndpointVersion, endpoint.ExportType, endpoint.ExportVersion, endpoint.Step, endpoint.Address, endpoint.OsType, endpoint.AddressAgent, endpoint.Cluster, endpoint.Tags, host.Id)
 		actions = append(actions, &Action{Sql: update})
-		log.Logger.Debug("Update", log.String("sql", update))
-		//_, err = x.Exec(update)
-		//if err != nil {
-		//	log.Logger.Error("Update endpoint fail", log.Error(err))
-		//	return
-		//}
 		tmpAgentAddress := endpoint.Address
 		if endpoint.AddressAgent != "" {
 			tmpAgentAddress = endpoint.AddressAgent
 		}
-		//x.Exec("update endpoint_new set agent_address=?,step=?,endpoint_version=?,endpoint_address=?,extend_param=?,update_time=? where guid=?", tmpAgentAddress, endpoint.Step, endpoint.EndpointVersion, endpoint.Address, extendParam, time.Now().Format(m.DatetimeFormat), endpoint.Guid)
-		actions = append(actions, &Action{Sql: "update endpoint_new set agent_address=?,step=?,endpoint_version=?,endpoint_address=?,extend_param=?,update_time=? where guid=?",Param: []interface{}{tmpAgentAddress, endpoint.Step, endpoint.EndpointVersion, endpoint.Address, extendParam, time.Now().Format(m.DatetimeFormat), endpoint.Guid}})
+		actions = append(actions, &Action{Sql: "update endpoint_new set agent_address=?,step=?,endpoint_version=?,endpoint_address=?,extend_param=?,update_time=? where guid=?",Param: []interface{}{tmpAgentAddress, endpoint.Step, endpoint.EndpointVersion, endpoint.Address, extendParam, nowTime, endpoint.Guid}})
 		err = Transaction(actions)
 		if err != nil {
 			log.Logger.Error("Update endpoint fail", log.Error(err))
