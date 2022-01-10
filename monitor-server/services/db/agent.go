@@ -133,6 +133,7 @@ func AddCustomMetric(param m.TransGatewayMetricDto) error {
 
 func DeleteEndpoint(guid string) error {
 	var actions []*Action
+	nowTime := time.Now().Format(m.DatetimeFormat)
 	actions = append(actions, &Action{Sql: "DELETE FROM endpoint_metric WHERE endpoint_id IN (SELECT id FROM endpoint WHERE guid=?)", Param: []interface{}{guid}})
 	actions = append(actions, &Action{Sql: "DELETE FROM endpoint WHERE guid=?", Param: []interface{}{guid}})
 	var alarms []*m.AlarmTable
@@ -150,7 +151,13 @@ func DeleteEndpoint(guid string) error {
 	var serviceGroup []*m.EndpointServiceRelTable
 	x.SQL("select * from endpoint_service_rel where endpoint=?", guid).Find(&serviceGroup)
 	actions = append(actions, &Action{Sql: "delete from endpoint_group_rel where endpoint=?", Param: []interface{}{guid}})
+	for _,v := range endpointGroup {
+		actions = append(actions, &Action{Sql: "update endpoint_group set update_time=? where guid=?",Param: []interface{}{nowTime, v.EndpointGroup}})
+	}
 	actions = append(actions, &Action{Sql: "delete from endpoint_service_rel where endpoint=?", Param: []interface{}{guid}})
+	for _,v := range serviceGroup {
+		actions = append(actions, &Action{Sql: "update service_group set update_time=? where guid=?",Param: []interface{}{nowTime, v.ServiceGroup}})
+	}
 	actions = append(actions, &Action{Sql: "delete from log_metric_endpoint_rel where source_endpoint=? or target_endpoint=?", Param: []interface{}{guid, guid}})
 	actions = append(actions, &Action{Sql: "delete from db_metric_endpoint_rel where source_endpoint=? or target_endpoint=?", Param: []interface{}{guid, guid}})
 	actions = append(actions, &Action{Sql: "delete from log_keyword_endpoint_rel where source_endpoint=? or target_endpoint=?", Param: []interface{}{guid, guid}})
@@ -215,7 +222,7 @@ func UpdateRecursivePanel(param m.PanelRecursiveTable) error {
 		tmpEndpoint := unionList(param.Endpoint, prt[0].Endpoint, "^")
 		//_, err = x.Exec("UPDATE panel_recursive SET display_name=?,parent=?,endpoint=?,email=?,phone=?,role=?,firing_callback_key=?,recover_callback_key=?,obj_type=? WHERE guid=?", param.DisplayName, tmpParent, tmpEndpoint, param.Email, param.Phone, param.Role, param.FiringCallbackKey, param.RecoverCallbackKey, param.ObjType, param.Guid)
 		actions = append(actions, &Action{Sql: "UPDATE panel_recursive SET display_name=?,parent=?,endpoint=?,email=?,phone=?,role=?,firing_callback_key=?,recover_callback_key=?,obj_type=? WHERE guid=?", Param: []interface{}{param.DisplayName, tmpParent, tmpEndpoint, param.Email, param.Phone, param.Role, param.FiringCallbackKey, param.RecoverCallbackKey, param.ObjType, param.Guid}})
-		actions = append(actions, &Action{Sql: "update service_group set display_name=?,service_type=? where guid=?", Param: []interface{}{param.DisplayName, param.ObjType, param.Guid}})
+		actions = append(actions, &Action{Sql: "update service_group set display_name=?,service_type=?,update_time=? where guid=?", Param: []interface{}{param.DisplayName, param.ObjType, nowTime, param.Guid}})
 		endpointList := strings.Split(tmpEndpoint, "^")
 		actions = append(actions, getUpdateServiceEndpointAction(param.Guid, nowTime, endpointList)...)
 		actions = append(actions, getUpdateServiceGroupNotifyActions(param.Guid, param.FiringCallbackKey, param.RecoverCallbackKey, strings.Split(param.Role, ","))...)
