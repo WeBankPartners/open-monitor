@@ -83,7 +83,7 @@
         <systemParameter name="MONITOR_SNMP_GROUP" scopeType="plugins" defaultValue="default_snmp_group"/>
         <systemParameter name="MONITOR_SMS_PARAM_LENGTH" scopeType="plugins" defaultValue="0"/>
         <systemParameter name="MONITOR_LOCAL_DNS_MAP" scopeType="global" defaultValue=""/>
-        <systemParameter name="MONITOR_ALARM_MAIL_ENABLE" scopeType="global" defaultValue="Y"/>
+        <systemParameter name="MONITOR_ALARM_MAIL_ENABLE" scopeType="global" defaultValue="N"/>
         <systemParameter name="MONITOR_ALARM_CALLBACK_LEVEL_MIN" scopeType="global" defaultValue="high"/>
     </systemParameters>
 
