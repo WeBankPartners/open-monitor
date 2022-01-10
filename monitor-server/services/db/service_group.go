@@ -182,11 +182,12 @@ func getUpdateServiceEndpointAction(serviceGroupGuid, nowTime string, endpoint [
 		if !strings.Contains(v, "_") {
 			continue
 		}
-		actions = append(actions, &Action{Sql: "insert into endpoint_service_rel(guid,endpoint,service_group,update_time) value (?,?,?,?)", Param: []interface{}{guid.CreateGuid(), v, serviceGroupGuid, nowTime}})
+		actions = append(actions, &Action{Sql: "insert into endpoint_service_rel(guid,endpoint,service_group) value (?,?,?)", Param: []interface{}{guid.CreateGuid(), v, serviceGroupGuid}})
 	}
 	guidList, _ := fetchGlobalServiceGroupParentGuidList(serviceGroupGuid)
 	for _, v := range guidList {
 		actions = append(actions, getCreateEndpointGroupByServiceAction(v, nowTime, endpoint)...)
+		actions = append(actions, &Action{Sql: "update service_group set update_time=? where guid=?",Param: []interface{}{nowTime,v}})
 	}
 	return actions
 }
