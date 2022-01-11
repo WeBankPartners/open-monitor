@@ -652,8 +652,8 @@ update alarm_strategy set update_time=now() where update_time='' or update_time 
 alter table alarm_strategy modify update_time datetime;
 update endpoint_new set update_time=now() where update_time='' or update_time is null;
 alter table endpoint_new modify update_time datetime;
-alter table endpoint_group_rel add column update_time datetime;
-update endpoint_group_rel set update_time=now() where update_time is null;
-alter table endpoint_service_rel add column update_time datetime;
-update endpoint_service_rel set update_time=now() where update_time is null;
+update endpoint_group set update_time=now() where update_time='' or update_time is null;
+alter table endpoint_group modify update_time datetime;
+update service_group set update_time=now() where update_time='' or update_time is null;
+alter table service_group modify update_time datetime;
 #@v2.0.0.12-end@;
