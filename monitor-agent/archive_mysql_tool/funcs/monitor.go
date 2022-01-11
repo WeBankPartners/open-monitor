@@ -102,6 +102,8 @@ func getMonitorServiceMetricMap() (endpointMetricMap map[string][]*MonitorPromMe
 			serviceMetricMap[v.ServiceGroup] = []*MonitorPromMetricTable{&tmpServiceMetricObj}
 		}
 	}
-
+	for k,v := range serviceMetricMap {
+		serviceMetricList = append(serviceMetricList, &MonitorArchiveObj{Endpoint: k, Metrics: v})
+	}
 	return
 }
