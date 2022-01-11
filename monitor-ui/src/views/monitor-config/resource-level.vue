@@ -118,9 +118,9 @@ export default {
       return this.activedLevel.includes(guid) || false
     },
     getAllResource (extend = false) {
-      this.extend = extend
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.resourceLevel.getAll, this.searchParams, (responseData) => {
         this.resourceRecursive = responseData
+        this.extend = extend
       })
     },
     addPanel () {
