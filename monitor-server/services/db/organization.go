@@ -10,6 +10,8 @@ import (
 )
 
 func GetOrganizationList(nameText, endpointText string) (result []*m.OrganizationPanel, err error) {
+	nameText = strings.ToLower(nameText)
+	endpointText = strings.ToLower(endpointText)
 	var data []*m.PanelRecursiveTable
 	err = x.SQL("SELECT * FROM panel_recursive").Find(&data)
 	if err != nil {
@@ -47,13 +49,13 @@ func GetOrganizationList(nameText, endpointText string) (result []*m.Organizatio
 	for _, v := range headers {
 		tmpHeaderObj := m.OrganizationPanel{Guid: v, DisplayName: tmpMap[v], Type: objTypeMap[v]}
 		if nameText != "" {
-			if strings.Contains(tmpMap[v], nameText) {
+			if strings.Contains(strings.ToLower(tmpMap[v]), nameText) {
 				tmpHeaderObj.FetchSearch = true
 				tmpHeaderObj.FetchOriginFlag = true
 			}
 		}
 		if endpointText != "" {
-			if strings.Contains(endpointMap[v], endpointText) {
+			if strings.Contains(strings.ToLower(endpointMap[v]), endpointText) {
 				tmpHeaderObj.FetchSearch = true
 				tmpHeaderObj.FetchOriginFlag = true
 			}
@@ -84,13 +86,13 @@ func recursiveOrganization(data []*m.PanelRecursiveTable, parent string, tmpNode
 		if tmpFlag {
 			tmpOrganizationObj := m.OrganizationPanel{Guid: v.Guid, DisplayName: v.DisplayName, Type: v.ObjType}
 			if endpointText != "" {
-				if strings.Contains(v.Endpoint, endpointText) {
+				if strings.Contains(strings.ToLower(v.Endpoint), endpointText) {
 					tmpOrganizationObj.FetchSearch = true
 					tmpOrganizationObj.FetchOriginFlag = true
 				}
 			}
 			if nameText != "" {
-				if strings.Contains(v.DisplayName, nameText) {
+				if strings.Contains(strings.ToLower(v.DisplayName), nameText) {
 					tmpOrganizationObj.FetchSearch = true
 					tmpOrganizationObj.FetchOriginFlag = true
 				}
