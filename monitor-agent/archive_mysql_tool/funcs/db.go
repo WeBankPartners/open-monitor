@@ -40,7 +40,7 @@ func InitDbEngine(databaseName string) (err error) {
 		// 使用驼峰式映射
 		mysqlEngine.SetMapper(core.SnakeMapper{})
 		if !strings.HasPrefix(databaseName, Config().Mysql.DatabasePrefix) {
-			err = ChangeDatabase()
+			err = ChangeDatabase("")
 		} else {
 			databaseSelect = databaseName
 			log.Printf("init mysql %s success \n", databaseSelect)
@@ -148,7 +148,7 @@ func createTable(start int64, isFiveArchive bool) (err error, tableName string) 
 	if isFiveArchive {
 		tableName = tableName + "_5min"
 	}
-	err = ChangeDatabase()
+	err = ChangeDatabase(time.Unix(start, 0).Format("2006"))
 	if err != nil {
 		return err, tableName
 	}
@@ -182,8 +182,11 @@ func checkTableExists(tableName string) bool {
 	return false
 }
 
-func ChangeDatabase() error {
-	databaseName := Config().Mysql.DatabasePrefix + time.Now().Format("2006")
+func ChangeDatabase(year string) error {
+	if year == "" {
+		year = time.Now().Format("2006")
+	}
+	databaseName := Config().Mysql.DatabasePrefix + year
 	if databaseName == databaseSelect {
 		return nil
 	}
