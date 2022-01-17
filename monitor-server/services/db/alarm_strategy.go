@@ -457,6 +457,28 @@ func NotifyStrategyAlarm(alarmObj *models.AlarmHandleObj) {
 		log.Logger.Error("Notify strategy alarm fail,alarmStrategy is empty", log.JsonObj("alarm", alarmObj))
 		return
 	}
+	if alarmObj.NotifyDelay > 0 {
+		if alarmObj.Status == "firing" {
+			time.Sleep(time.Duration(alarmObj.NotifyDelay) * time.Second)
+			var nowAlarms []*models.AlarmTable
+			x.SQL("select id,status from alarm where id=?", alarmObj.Id).Find(&nowAlarms)
+			if len(nowAlarms) > 0 {
+				if nowAlarms[0].Status == "ok" {
+					log.Logger.Info("Notify firing alarm break in delay time ", log.Int("alarmId", alarmObj.Id))
+					return
+				}
+			}
+		}else if alarmObj.Status == "ok" {
+			var nowAlarms []*models.AlarmTable
+			x.SQL("select id,`start` from alarm where id=?", alarmObj.Id).Find(&nowAlarms)
+			if len(nowAlarms) > 0 {
+				if (time.Now().Unix()-nowAlarms[0].Start.Unix()) < int64(alarmObj.NotifyDelay) {
+					log.Logger.Info("Notify ok alarm break in delay time ", log.Int("alarmId", alarmObj.Id))
+					return
+				}
+			}
+		}
+	}
 	var notifyTable []*models.NotifyTable
 	err := x.SQL("select * from notify where alarm_action=? and alarm_strategy=?", alarmObj.Status, alarmObj.AlarmStrategy).Find(&notifyTable)
 	if err != nil {
