@@ -787,7 +787,7 @@ func GetArchiveData(query *m.QueryMonitorData, agg string) (err error, step int,
 		log.Logger.Error("", log.Error(err))
 		return err, step, result
 	}
-	log.Logger.Info("Start to get archive data", log.StringList("endpoint", query.Endpoint), log.StringList("metric", query.Metric), log.Int64("start", query.Start), log.Int64("end", query.End))
+	log.Logger.Debug("Start to get archive data", log.StringList("endpoint", query.Endpoint), log.StringList("metric", query.Metric), log.Int64("start", query.Start), log.Int64("end", query.End))
 	if agg == "" || agg == "none" {
 		agg = "avg"
 	}
