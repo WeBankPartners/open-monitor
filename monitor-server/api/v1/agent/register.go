@@ -59,13 +59,8 @@ func InitAgentManager() {
 		}
 	}
 	if AgentManagerServer != "" {
-		param, err := db.GetAgentManager("")
-		if err != nil {
-			log.Logger.Error("Get agent manager table fail", log.Error(err))
-			return
-		}
-		go prom.InitAgentManager(param, AgentManagerServer)
-		go prom.StartSyncAgentManagerJob(param, AgentManagerServer)
+		prom.InitAgentManager(AgentManagerServer)
+		prom.StartSyncAgentManagerJob(AgentManagerServer)
 	}
 }
 
