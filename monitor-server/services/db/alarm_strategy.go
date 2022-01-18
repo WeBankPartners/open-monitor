@@ -755,3 +755,119 @@ func getRoleMail(roleList []string) (mailList []string) {
 	}
 	return
 }
+
+func ImportAlarmStrategy(queryType,inputGuid string,param []*models.EndpointStrategyObj) (err error) {
+	if len(param) == 0 {
+		return fmt.Errorf("import content empty ")
+	}
+	var actions []*Action
+	var metricTable []*models.MetricTable
+	err = x.SQL("select guid,monitor_type,service_group from metric").Find(&metricTable)
+	if err != nil {
+		return fmt.Errorf("query metric table fail,%s ", err.Error())
+	}
+	var endpointGroupList []string
+	metricMap := make(map[string]*models.MetricTable)
+	for _,v := range metricTable {
+		metricMap[v.Guid] = v
+	}
+	nowTime := time.Now().Format(models.DatetimeFormat)
+	if queryType == "group" {
+		var endpointGroupTable []*models.EndpointGroupTable
+		err = x.SQL("select guid,monitor_type,service_group from endpoint_group where guid=?", inputGuid).Find(&endpointGroupTable)
+		if err != nil {
+			return fmt.Errorf("query endpoint group table fail,%s ", err.Error())
+		}
+		if len(endpointGroupTable) == 0 {
+			return fmt.Errorf("can not find endpoint group with guid:%s ", inputGuid)
+		}
+		endpointGroupList = append(endpointGroupList, inputGuid)
+		tmpActions,tmpErr := getAlarmStrategyImportActions(inputGuid,"",endpointGroupTable[0].MonitorType,nowTime,param[0],metricMap)
+		if tmpErr != nil {
+			return tmpErr
+		}
+		actions = append(actions, tmpActions...)
+	}else if queryType == "service" {
+		var endpointGroupTable []*models.EndpointGroupTable
+		err = x.SQL("select guid,monitor_type,service_group from endpoint_group where service_group=?", inputGuid).Find(&endpointGroupTable)
+		if err != nil {
+			return fmt.Errorf("query endpoint group table fail,%s ", err.Error())
+		}
+		for _,v := range param {
+			tmpEndpointGroupExistFlag := false
+			tmpMonitorType := ""
+			for _,vv := range endpointGroupTable {
+				if v.EndpointGroup == vv.Guid {
+					tmpEndpointGroupExistFlag = true
+					tmpMonitorType = vv.MonitorType
+					break
+				}
+			}
+			if !tmpEndpointGroupExistFlag {
+				continue
+			}
+			endpointGroupList = append(endpointGroupList, v.EndpointGroup)
+			tmpActions,tmpErr := getAlarmStrategyImportActions(v.EndpointGroup,inputGuid,tmpMonitorType,nowTime,v,metricMap)
+			if tmpErr != nil {
+				err = fmt.Errorf("handle endpointGroup:%s fail,%s ", v.EndpointGroup, tmpErr.Error())
+				break
+			}
+			actions = append(actions, tmpActions...)
+		}
+		if err != nil {
+			return
+		}
+	}
+	if len(actions) == 0 {
+		return fmt.Errorf("no alarm strategy match in exist data,do nothing ")
+	}
+	err = Transaction(actions)
+	if err == nil {
+		for _,v := range endpointGroupList {
+			err = SyncPrometheusRuleFile(v, false)
+			if err != nil {
+				break
+			}
+		}
+	}
+	return err
+}
+
+func getAlarmStrategyImportActions(endpointGroup,serviceGroup,monitorType,nowTime string,param *models.EndpointStrategyObj,metricMap map[string]*models.MetricTable) (actions []*Action,err error) {
+	var existStrategyTable []*models.AlarmStrategyTable
+	err = x.SQL("select guid,metric from alarm_strategy where endpoint_group=?", endpointGroup).Find(&existStrategyTable)
+	if err != nil {
+		return actions,fmt.Errorf("query alarm strategy table fail,%s ", err.Error())
+	}
+	existStrategyMap := make(map[string]int)
+	for _,v := range existStrategyTable {
+		existStrategyMap[v.Guid] = 1
+	}
+	for _,strategy := range param.Strategy {
+		if fMetric,b:=metricMap[strategy.Metric];b {
+			if fMetric.MonitorType != monitorType {
+				err = fmt.Errorf("Metric:%s is in type:%s ", strategy.Metric, fMetric.MonitorType)
+				break
+			}
+			if serviceGroup != "" {
+				if fMetric.ServiceGroup != serviceGroup {
+					err = fmt.Errorf("Metric:%s is in serviceGroup:%s ", strategy.Metric, fMetric.ServiceGroup)
+					break
+				}
+			}
+		}else{
+			err = fmt.Errorf("Metric:%s is not exist ", strategy.Metric)
+			break
+		}
+		if _,b:=existStrategyMap[strategy.Guid];b {
+			updateAction := Action{Sql: "update alarm_strategy set metric=?,`condition`=?,`last`=?,priority=?,content=?,notify_enable=?,notify_delay_second=?,update_time=? where guid=?"}
+			updateAction.Param = []interface{}{strategy.Metric, strategy.Condition, strategy.Last, strategy.Priority, strategy.Content, strategy.NotifyEnable, strategy.NotifyDelaySecond, nowTime, strategy.Guid}
+			actions = append(actions, &updateAction)
+		}else{
+			insertAction := Action{Sql: "insert into alarm_strategy(guid,endpoint_group,metric,`condition`,`last`,priority,content,notify_enable,notify_delay_second,update_time) value (?,?,?,?,?,?,?,?,?,?)"}
+			insertAction.Param = []interface{}{strategy.Guid, strategy.EndpointGroup, strategy.Metric, strategy.Condition, strategy.Last, strategy.Priority, strategy.Content, strategy.NotifyEnable, strategy.NotifyDelaySecond, nowTime}
+			actions = append(actions, &insertAction)
+		}
+	}
+	return
+}
