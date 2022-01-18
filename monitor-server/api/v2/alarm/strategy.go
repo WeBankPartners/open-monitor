@@ -151,7 +151,7 @@ func ImportAlarmStrategy(c *gin.Context)  {
 	guid := c.Param("guid")
 	err = db.ImportAlarmStrategy(queryType, guid, paramObj)
 	if err != nil {
-		middleware.ReturnHandleError(c, "save alarm strategy error", err)
+		middleware.ReturnHandleError(c, "import alarm strategy error:"+err.Error(), err)
 	}else {
 		middleware.ReturnSuccess(c)
 	}
