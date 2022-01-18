@@ -32,7 +32,7 @@
       </div>
       <div v-if="endpointRejectModel.supportStep" class="marginbottom params-each">
         <label class="col-md-2 label-name">{{$t('m_collection_interval')}}:</label>
-        <Select filterable clearable v-model="endpointRejectModel.addRow.step" style="width:338px">
+        <Select filterable clearable v-model="endpointRejectModel.addRow.step" style="width:338px" :disabled="['ping','telnet','http','process'].includes(endpointRejectModel.addRow.type)">
           <Option v-for="item in endpointRejectModel.stepOptions" :value="item.value" :key="item.value">
             {{item.label}}
           </Option>
@@ -108,6 +108,22 @@
         <div>
           <label class="col-md-2 label-name">{{$t('processTags')}}:</label>
           <input :placeholder="$t('processTags')" v-model="endpointRejectModel.addRow.tags" type="text" class="col-md-7 form-control model-input c-dark" />
+        </div>
+      </template>
+      <template>
+        <div v-if="endpointRejectModel.addRow.type !== 'process'">
+          <label class="col-md-2 label-name">{{$t('field.ip')}}:</label>
+          <input v-validate="'required'" :placeholder="$t('field.ip')" v-model="endpointRejectModel.addRow.ip" name="ip" :class="{ 'red-border': veeErrors.has('ip') }" type="text" class="col-md-7 form-control model-input c-dark" />
+          <label class="required-tip">*</label>
+          <label v-show="veeErrors.has('ip')" class="is-danger">{{ veeErrors.first('ip')}}</label>
+        </div>
+        <div v-else>
+          <label class="col-md-2 label-name">{{$t('field.ip')}}:</label>
+          <Select filterable v-model="endpointRejectModel.addRow.ip" @on-change="changeIp" style="width:338px">
+            <Option v-for="item in endpointRejectModel.ipOptions" :value="item.ip" :key="item.ip">
+              {{item.guid}}
+            </Option>
+          </Select>
         </div>
       </template>
     </div>
@@ -449,14 +465,6 @@ export default {
             name: 'endpointReject',
             type: 'slot'
           },
-          {
-            label: 'field.ip',
-            value: 'ip',
-            placeholder: 'tips.required',
-            v_validate: 'required:true|isIP',
-            disabled: 'true',
-            type: 'text'
-          },
           {label: 'field.proxy_exporter', value: 'proxy_exporter', option: 'proxy_exporter', hide: true, disabled: false, type: 'select'}
         ],
         addRow: {
@@ -481,6 +489,7 @@ export default {
             proxy_exporter: []
         },
         stepOptions: collectionInterval,
+        ipOptions: [],
         endpointType: [{
             label: 'host',
             value: 'host'
@@ -616,6 +625,7 @@ export default {
       }
     }
     this.initData(this.pageConfig.CRUD, this.pageConfig)
+    this.getIpList()
   },
   filters: {
     interceptParams(val) {
@@ -623,6 +633,16 @@ export default {
     }
   },
   methods: {
+    changeIp (val) {
+      const process = this.endpointRejectModel.ipOptions.find(i => i.ip === val)
+      this.endpointRejectModel.addRow.step = process.step
+    },
+    getIpList () {
+      const api = '/monitor/api/v2/monitor/endpoint/query?monitorType=host'
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', (res) => {
+        this.endpointRejectModel.ipOptions = res.data
+      })
+    },
     editF (rowData) {
       this.endpointRejectModel.endpointType = [{
             label: 'host',
@@ -758,10 +778,12 @@ export default {
 
     },
     typeChange(type) {
+      // 
       this.endpointRejectModel.addRow = Object.assign(this.endpointRejectModel.addRow, {
         name: '',
         type,
         ip: null,
+        step: 10,
         port: 9100,
         agent_manager: false,
         user: '',
@@ -770,6 +792,9 @@ export default {
         url: '',
         exporter_type: ''
       })
+      if (['ping', 'telnet', 'http'].includes(type)) {
+        this.endpointRejectModel.addRow.step = 30 
+      }
       const typeToPort = {
         host: 9100,
         mysql: 9104,
