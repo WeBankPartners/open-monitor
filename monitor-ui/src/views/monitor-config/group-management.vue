@@ -1,7 +1,7 @@
 <template>
   <div class="main-content">
     <PageTable :pageConfig="pageConfig" ref="child">
-      <div slot="extraBtn">
+      <!-- <div slot="extraBtn">
         <button type="button" class="btn-cancel-f" @click="exportThreshold">{{$t("button.export")}}</button>
         <div style="display: inline-block;margin-bottom: 3px;vertical-align: bottom;"> 
           <Upload 
@@ -15,7 +15,7 @@
             <Button icon="ios-cloud-upload-outline">{{$t('button.upload')}}</Button>
           </Upload>
         </div>
-      </div>
+      </div> -->
     </PageTable>
     <ModalComponent :modelConfig="modelConfig">
     </ModalComponent>
