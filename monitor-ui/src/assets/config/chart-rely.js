@@ -131,10 +131,19 @@ export const drawChart = function(that,config,userConfig, elId) {
         let seconds = date.getSeconds()>=10?date.getSeconds():'0'+date.getSeconds()
         str=hours+':'+minutes+':'+seconds
         var res = `<div>${str}</div>`
-        params.forEach(item=>{
+        params.forEach(item => {
+          let str = item.seriesName
+          let step = 100
+          let strLen = str.length
+          let arr = []
+          for(var i=0; i<strLen; i=i+step){
+              arr.push(str.substr(i, step));
+          }
+          arr.join(" ");
+          const seriesName = arr.join('<br>')
           res = res+`<div><div style=' display: inline-block;width: 10px; 
           height: 10px;border: 1px solid transparent;border-radius:50%;
-          background-color:${item.color};'  ></div> ${item.seriesName}
+          background-color:${item.color};'  ></div> ${seriesName}
           ${Math.floor(item.data[1] * 1000) / 1000}</div>`
         })
         return res
