@@ -59,8 +59,29 @@ func InitAgentManager() {
 		}
 	}
 	if AgentManagerServer != "" {
-		prom.InitAgentManager(AgentManagerServer)
-		prom.StartSyncAgentManagerJob(AgentManagerServer)
+		param, err := db.GetAgentManager("")
+		if err != nil {
+			log.Logger.Error("Get agent manager table fail", log.Error(err))
+		}else {
+			prom.InitAgentManager(param, AgentManagerServer)
+		}
+		startSyncAgentManagerJob(AgentManagerServer)
+	}
+}
+
+func startSyncAgentManagerJob(url string)  {
+	intervalSecond := 86400
+	timeStartValue, _ := time.ParseInLocation("2006-01-02 15:04:05", fmt.Sprintf("%s 00:00:00", time.Now().Format("2006-01-02")), time.Local)
+	time.Sleep(time.Duration(timeStartValue.Unix()+86400-time.Now().Unix()) * time.Second)
+	t := time.NewTicker(time.Duration(intervalSecond) * time.Second).C
+	for {
+		param, tmpErr := db.GetAgentManager("")
+		if tmpErr != nil {
+			log.Logger.Error("Sync agent manager job fail with get config", log.Error(tmpErr))
+		}else {
+			prom.DoSyncAgentManagerJob(param, url)
+		}
+		<- t
 	}
 }
 
