@@ -212,7 +212,8 @@ export default {
           panalUnit: item.panalUnit,
           elId: item.viewConfig.id,
           chartParams: params,
-          chartType: item.chartType                                                     
+          chartType: item.chartType,
+          aggregate: item.aggregate                                                      
         })
         item.viewConfig._activeCharts = _activeCharts
         tmp.push(item.viewConfig)

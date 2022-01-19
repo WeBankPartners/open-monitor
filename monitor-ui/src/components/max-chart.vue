@@ -48,6 +48,7 @@
                     <Radio label="max">Max</Radio>
                     <Radio label="avg">Average </Radio>
                     <Radio label="p95">P95</Radio>
+                    <Radio label="sum">Sum</Radio>
                     <Radio label="none">Original</Radio>
                   </RadioGroup>
                 </div>

@@ -160,6 +160,11 @@ type ArchiveMysqlConfig struct {
 	FiveMinStartDay    int64  `json:"five_min_start_day"`
 }
 
+type CapacityServerConfig struct {
+	Server             string `json:"server"`
+	Port               string `json:"port"`
+}
+
 type GlobalConfig struct {
 	IsPluginMode                 string              `json:"is_plugin_mode"`
 	Http                         *HttpConfig         `json:"http"`
