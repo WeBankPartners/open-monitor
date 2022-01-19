@@ -25,7 +25,10 @@ const (
 	logMonitorFilePath      = "data/log_monitor_cache.json"
 )
 
-var logKeywordCollectorJobs []*logKeywordCollector
+var (
+	logKeywordCollectorJobs []*logKeywordCollector
+	logKeywordChanLength    = 100000
+)
 
 func init() {
 	registerCollector("log_monitor", defaultEnabled, NewLogMonitorCollector)
@@ -85,6 +88,7 @@ type logKeywordCollector struct {
 	Rule        []*logKeywordObj
 	TailSession *tail.Tail
 	Lock        *sync.RWMutex
+	DataChan    chan string
 }
 
 func (c *logKeywordCollector) update(rule []*logKeywordObj) {
@@ -102,14 +106,37 @@ func (c *logKeywordCollector) update(rule []*logKeywordObj) {
 	c.Lock.Unlock()
 }
 
+func (c *logKeywordCollector) startHandleTailData() {
+	for {
+		lineText := <-c.DataChan
+		c.Lock.Lock()
+		for _, v := range c.Rule {
+			if v.RegExp != nil {
+				if len(v.RegExp.FindIndex([]byte(lineText), 0)) > 0 {
+					v.Count++
+					v.LastMatchRow = lineText
+				}
+			} else {
+				if strings.Contains(lineText, v.Keyword) {
+					v.Count++
+					v.LastMatchRow = lineText
+				}
+			}
+		}
+		c.Lock.Unlock()
+	}
+}
+
 func (c *logKeywordCollector) start() {
 	level.Info(monitorLogger).Log("logKeywordCollectorStart", c.Path)
 	var err error
-	c.TailSession, err = tail.TailFile(c.Path, tail.Config{Follow: true, ReOpen: true})
+	c.TailSession, err = tail.TailFile(c.Path, tail.Config{Follow: true, ReOpen: true, Poll: true})
 	if err != nil {
 		level.Error(monitorLogger).Log("error", fmt.Sprintf("start log keyword collector fail, path: %s, error: %v", c.Path, err))
 		return
 	}
+	c.DataChan = make(chan string, logKeywordChanLength)
+	go c.startHandleTailData()
 	firstFlag := true
 	timeNow := time.Now()
 	for line := range c.TailSession.Lines {
@@ -120,22 +147,10 @@ func (c *logKeywordCollector) start() {
 				continue
 			}
 		}
-		c.Lock.Lock()
-		for _, v := range c.Rule {
-			level.Info(monitorLogger).Log("rule", fmt.Sprintf("k:%s ", v.Keyword))
-			if v.RegExp != nil {
-				if len(v.RegExp.FindIndex([]byte(line.Text), 0)) > 0 {
-					v.Count++
-					v.LastMatchRow = line.Text
-				}
-			} else {
-				if strings.Contains(line.Text, v.Keyword) {
-					v.Count++
-					v.LastMatchRow = line.Text
-				}
-			}
+		if len(c.DataChan) == logMetricChanLength {
+			level.Info(monitorLogger).Log("Log keyword queue is full,file:", c.Path)
 		}
-		c.Lock.Unlock()
+		c.DataChan <- line.Text
 	}
 }
 
@@ -147,24 +162,21 @@ func (c *logKeywordCollector) destroy() {
 }
 
 func (c *logKeywordCollector) get() (data []*logKeywordMetricObj) {
-	c.Lock.RLock()
 	for _, v := range c.Rule {
 		data = append(data, &logKeywordMetricObj{Path: c.Path, Keyword: v.Keyword, Value: v.Count, TargetEndpoint: v.TargetEndpoint})
 	}
-	c.Lock.RUnlock()
 	return data
 }
 
 func (c *logKeywordCollector) getRows(keyword string) (data []*logKeywordFetchObj) {
 	data = []*logKeywordFetchObj{}
-	c.Lock.RLock()
 	for _, v := range c.Rule {
 		if v.Keyword == keyword {
+			level.Info(monitorLogger).Log("getRows:", keyword, " count:", v.Count)
 			data = append(data, &logKeywordFetchObj{Content: v.LastMatchRow, Index: v.Count})
 			break
 		}
 	}
-	c.Lock.RUnlock()
 	return data
 }
 
@@ -339,7 +351,6 @@ func LogMonitorRowsHttpHandle(w http.ResponseWriter, r *http.Request) {
 		result.Message = errorMsg
 		return
 	}
-	level.Info(monitorLogger).Log("getRows", string(buff))
 	var param logRowsHttpDto
 	err = json.Unmarshal(buff, &param)
 	if err != nil {
