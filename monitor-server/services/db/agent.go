@@ -15,21 +15,23 @@ func UpdateEndpoint(endpoint *m.EndpointTable, extendParam string) (stepList []i
 	}
 	host := m.EndpointTable{Guid: endpoint.Guid}
 	GetEndpoint(&host)
+	nowTime := time.Now().Format(m.DatetimeFormat)
+	var actions []*Action
 	if host.Id == 0 {
 		insert := fmt.Sprintf("INSERT INTO endpoint(guid,name,ip,endpoint_version,export_type,export_version,step,address,os_type,create_at,address_agent,cluster,tags) VALUE ('%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%s','%s','%s')",
-			endpoint.Guid, endpoint.Name, endpoint.Ip, endpoint.EndpointVersion, endpoint.ExportType, endpoint.ExportVersion, endpoint.Step, endpoint.Address, endpoint.OsType, time.Now().Format(m.DatetimeFormat), endpoint.AddressAgent, endpoint.Cluster, endpoint.Tags)
-		log.Logger.Debug("Insert", log.String("sql", insert))
-		_, err = x.Exec(insert)
-		if err != nil {
-			log.Logger.Error("Insert endpoint fail", log.Error(err))
-			return
-		}
+			endpoint.Guid, endpoint.Name, endpoint.Ip, endpoint.EndpointVersion, endpoint.ExportType, endpoint.ExportVersion, endpoint.Step, endpoint.Address, endpoint.OsType, nowTime, endpoint.AddressAgent, endpoint.Cluster, endpoint.Tags)
+		actions = append(actions, &Action{Sql: insert})
 		// V2
 		tmpAgentAddress := endpoint.Address
 		if endpoint.AddressAgent != "" {
 			tmpAgentAddress = endpoint.AddressAgent
 		}
-		x.Exec("insert into endpoint_new(guid,name,ip,monitor_type,agent_version,agent_address,step,endpoint_version,endpoint_address,cluster,extend_param) value (?,?,?,?,?,?,?,?,?,?,?)", endpoint.Guid, endpoint.Name, endpoint.Ip, endpoint.ExportType, endpoint.ExportVersion, tmpAgentAddress, endpoint.Step, endpoint.EndpointVersion, endpoint.Address, endpoint.Cluster, extendParam)
+		actions = append(actions, &Action{Sql: "insert into endpoint_new(guid,name,ip,monitor_type,agent_version,agent_address,step,endpoint_version,endpoint_address,cluster,extend_param,update_time) value (?,?,?,?,?,?,?,?,?,?,?,?)",Param: []interface{}{endpoint.Guid, endpoint.Name, endpoint.Ip, endpoint.ExportType, endpoint.ExportVersion, tmpAgentAddress, endpoint.Step, endpoint.EndpointVersion, endpoint.Address, endpoint.Cluster, extendParam, nowTime}})
+		err = Transaction(actions)
+		if err != nil {
+			log.Logger.Error("Insert endpoint fail", log.Error(err))
+			return
+		}
 		host := m.EndpointTable{Guid: endpoint.Guid}
 		GetEndpoint(&host)
 		endpoint.Id = host.Id
@@ -39,17 +41,17 @@ func UpdateEndpoint(endpoint *m.EndpointTable, extendParam string) (stepList []i
 		}
 		update := fmt.Sprintf("UPDATE endpoint SET name='%s',ip='%s',endpoint_version='%s',export_type='%s',export_version='%s',step=%d,address='%s',os_type='%s',address_agent='%s',cluster='%s',tags='%s' WHERE id=%d",
 			endpoint.Name, endpoint.Ip, endpoint.EndpointVersion, endpoint.ExportType, endpoint.ExportVersion, endpoint.Step, endpoint.Address, endpoint.OsType, endpoint.AddressAgent, endpoint.Cluster, endpoint.Tags, host.Id)
-		log.Logger.Debug("Update", log.String("sql", update))
-		_, err = x.Exec(update)
-		if err != nil {
-			log.Logger.Error("Update endpoint fail", log.Error(err))
-			return
-		}
+		actions = append(actions, &Action{Sql: update})
 		tmpAgentAddress := endpoint.Address
 		if endpoint.AddressAgent != "" {
 			tmpAgentAddress = endpoint.AddressAgent
 		}
-		x.Exec("update endpoint_new set agent_address=?,step=?,endpoint_version=?,endpoint_address=?,extend_param=?,update_time=? where guid=?", tmpAgentAddress, endpoint.Step, endpoint.EndpointVersion, endpoint.Address, extendParam, time.Now().Format(m.DatetimeFormat), endpoint.Guid)
+		actions = append(actions, &Action{Sql: "update endpoint_new set agent_address=?,step=?,endpoint_version=?,endpoint_address=?,extend_param=?,update_time=? where guid=?",Param: []interface{}{tmpAgentAddress, endpoint.Step, endpoint.EndpointVersion, endpoint.Address, extendParam, nowTime, endpoint.Guid}})
+		err = Transaction(actions)
+		if err != nil {
+			log.Logger.Error("Update endpoint fail", log.Error(err))
+			return
+		}
 		endpoint.Id = host.Id
 	}
 	return
@@ -131,6 +133,7 @@ func AddCustomMetric(param m.TransGatewayMetricDto) error {
 
 func DeleteEndpoint(guid string) error {
 	var actions []*Action
+	nowTime := time.Now().Format(m.DatetimeFormat)
 	actions = append(actions, &Action{Sql: "DELETE FROM endpoint_metric WHERE endpoint_id IN (SELECT id FROM endpoint WHERE guid=?)", Param: []interface{}{guid}})
 	actions = append(actions, &Action{Sql: "DELETE FROM endpoint WHERE guid=?", Param: []interface{}{guid}})
 	var alarms []*m.AlarmTable
@@ -148,9 +151,16 @@ func DeleteEndpoint(guid string) error {
 	var serviceGroup []*m.EndpointServiceRelTable
 	x.SQL("select * from endpoint_service_rel where endpoint=?", guid).Find(&serviceGroup)
 	actions = append(actions, &Action{Sql: "delete from endpoint_group_rel where endpoint=?", Param: []interface{}{guid}})
+	for _,v := range endpointGroup {
+		actions = append(actions, &Action{Sql: "update endpoint_group set update_time=? where guid=?",Param: []interface{}{nowTime, v.EndpointGroup}})
+	}
 	actions = append(actions, &Action{Sql: "delete from endpoint_service_rel where endpoint=?", Param: []interface{}{guid}})
+	for _,v := range serviceGroup {
+		actions = append(actions, &Action{Sql: "update service_group set update_time=? where guid=?",Param: []interface{}{nowTime, v.ServiceGroup}})
+	}
 	actions = append(actions, &Action{Sql: "delete from log_metric_endpoint_rel where source_endpoint=? or target_endpoint=?", Param: []interface{}{guid, guid}})
 	actions = append(actions, &Action{Sql: "delete from db_metric_endpoint_rel where source_endpoint=? or target_endpoint=?", Param: []interface{}{guid, guid}})
+	actions = append(actions, &Action{Sql: "delete from log_keyword_endpoint_rel where source_endpoint=? or target_endpoint=?", Param: []interface{}{guid, guid}})
 	actions = append(actions, &Action{Sql: "delete from endpoint_new where guid=?", Param: []interface{}{guid}})
 	err := Transaction(actions)
 	if err != nil {
@@ -212,7 +222,7 @@ func UpdateRecursivePanel(param m.PanelRecursiveTable) error {
 		tmpEndpoint := unionList(param.Endpoint, prt[0].Endpoint, "^")
 		//_, err = x.Exec("UPDATE panel_recursive SET display_name=?,parent=?,endpoint=?,email=?,phone=?,role=?,firing_callback_key=?,recover_callback_key=?,obj_type=? WHERE guid=?", param.DisplayName, tmpParent, tmpEndpoint, param.Email, param.Phone, param.Role, param.FiringCallbackKey, param.RecoverCallbackKey, param.ObjType, param.Guid)
 		actions = append(actions, &Action{Sql: "UPDATE panel_recursive SET display_name=?,parent=?,endpoint=?,email=?,phone=?,role=?,firing_callback_key=?,recover_callback_key=?,obj_type=? WHERE guid=?", Param: []interface{}{param.DisplayName, tmpParent, tmpEndpoint, param.Email, param.Phone, param.Role, param.FiringCallbackKey, param.RecoverCallbackKey, param.ObjType, param.Guid}})
-		actions = append(actions, &Action{Sql: "update service_group set display_name=?,service_type=? where guid=?", Param: []interface{}{param.DisplayName, param.ObjType, param.Guid}})
+		actions = append(actions, &Action{Sql: "update service_group set display_name=?,service_type=?,update_time=? where guid=?", Param: []interface{}{param.DisplayName, param.ObjType, nowTime, param.Guid}})
 		endpointList := strings.Split(tmpEndpoint, "^")
 		actions = append(actions, getUpdateServiceEndpointAction(param.Guid, nowTime, endpointList)...)
 		actions = append(actions, getUpdateServiceGroupNotifyActions(param.Guid, param.FiringCallbackKey, param.RecoverCallbackKey, strings.Split(param.Role, ","))...)

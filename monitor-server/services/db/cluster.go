@@ -40,7 +40,7 @@ func GetClusterAddress(cluster string) string {
 
 // Service discover functions
 func SyncSdEndpointNew(steps []int, cluster string, fromPeer bool) error {
-	log.Logger.Info("Add sd endpoint", log.String("steps", fmt.Sprintf("%v", steps)), log.String("cluster", cluster))
+	log.Logger.Info("Start sync sd endpoint", log.String("steps", fmt.Sprintf("%v", steps)), log.String("cluster", cluster))
 	var syncList []*m.SdConfigSyncObj
 	var err error
 	for _, step := range steps {
