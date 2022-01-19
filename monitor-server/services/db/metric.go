@@ -54,6 +54,7 @@ func MetricCreate(param []*models.MetricTable) error {
 func MetricUpdate(param []*models.MetricTable) (err error) {
 	var actions []*Action
 	nowTime := time.Now().Format(models.DatetimeFormat)
+	var metricGuidList []string
 	for _, metric := range param {
 		if metric.Guid == "" {
 			err = fmt.Errorf("Guid can not empty ")
@@ -64,11 +65,25 @@ func MetricUpdate(param []*models.MetricTable) (err error) {
 		}else {
 			actions = append(actions, &Action{Sql: "update metric set prom_expr=?,update_time=? where guid=?", Param: []interface{}{metric.PromExpr, nowTime, metric.Guid}})
 		}
+		metricGuidList = append(metricGuidList, metric.Guid)
 	}
 	if err != nil {
 		return err
 	}
 	err = Transaction(actions)
+	if err != nil {
+		return err
+	}
+	var alarmStrategyTable []*models.AlarmStrategyTable
+	err = x.SQL("select distinct endpoint_group from alarm_strategy where metric in ('"+strings.Join(metricGuidList,"','")+"')").Find(&alarmStrategyTable)
+	if len(alarmStrategyTable) > 0 {
+		for _,v := range alarmStrategyTable {
+			err = SyncPrometheusRuleFile(v.EndpointGroup, false)
+			if err != nil {
+				break
+			}
+		}
+	}
 	return err
 }
 
