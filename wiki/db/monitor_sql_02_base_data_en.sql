@@ -304,6 +304,12 @@ alter table business_monitor_cfg add column agg_type varchar(16) default 'avg';
 #@v1.12.3.1-end@;
 
 #@v1.13.0.1-begin@;
+insert into grp(name,endpoint_type) value ('default_process_group','process');
+insert  into `dashboard`(`dashboard_type`,`search_enable`,`search_id`,`button_enable`,`button_group`,`message_enable`,`message_group`,`message_url`,`panels_enable`,`panels_type`,`panels_group`,`panels_param`) values ('process',1,1,1,1,0,0,'',1,'tabs',11,'endpoint={endpoint}');
+insert  into `panel`(`group_id`,`title`,`tags_enable`,`tags_url`,`tags_key`,`chart_group`,`auto_display`) values (11,'process',0,'','',18,0);
+insert  into `chart`(`group_id`,`endpoint`,`metric`,`col`,`url`,`unit`,`title`,`grid_type`,`series_name`,`rate`,`agg_type`,`legend`) values (18,'','process_cpu_used_percent',6,'/dashboard/chart','','process.cpu.used','line','metric',0,'avg','$metric'),(18,'','process_mem_byte',6,'/dashboard/chart','','process.mem.used','line','metric',0,'avg','$metric');
+insert  into `prom_metric`(`metric`,`metric_type`,`prom_ql`,`prom_main`) values ('process_alive_count','process','node_process_monitor_count_current{instance=\"$address\",process_guid=\"$guid\"}',''),('process_cpu_used_percent','process','node_process_monitor_cpu{instance=\"$address\",process_guid=\"$guid\"}',''),('process_mem_byte','process','node_process_monitor_mem{instance=\"$address\",process_guid=\"$guid\"}','');
+
 CREATE TABLE `service_group` (
   `guid` varchar(64) NOT NULL PRIMARY KEY,
   `display_name` varchar(255) NOT NULL,
@@ -329,11 +335,11 @@ CREATE TABLE `monitor_type` (
   `description` varchar(255)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-insert into monitor_type(guid,display_name) value ('host','host'),('mysql','mysql'),('redis','redis'),('java','java'),('nginx','nginx'),('ping','ping'),('telnet','telnet'),('http','http'),('windows','windows'),('snmp','snmp'),('process','process'),('pod','pod');
+insert into monitor_type(guid,display_name) value ('host','host'),('mysql','mysql'),('redis','redis'),('java','java'),('tomcat','tomcat'),('nginx','nginx'),('ping','ping'),('pingext','pingext'),('telnet','telnet'),('telnetext','telnetext'),('http','http'),('httpext','httpext'),('windows','windows'),('snmp','snmp'),('process','process'),('pod','pod');
 
 CREATE TABLE `endpoint_new` (
-  `guid` varchar(128) NOT NULL PRIMARY KEY,
-  `name` varchar(64) NOT NULL,
+  `guid` varchar(160) NOT NULL PRIMARY KEY,
+  `name` varchar(96) NOT NULL,
   `ip` varchar(32),
   `monitor_type` varchar(32) NOT NULL,
   `agent_version` varchar(64),
@@ -353,7 +359,7 @@ CREATE TABLE `endpoint_new` (
 
 CREATE TABLE `endpoint_service_rel` (
   `guid` varchar(64) NOT NULL PRIMARY KEY,
-  `endpoint` varchar(128) NOT NULL,
+  `endpoint` varchar(160) NOT NULL,
   `service_group` varchar(64) NOT NULL,
   CONSTRAINT `e_service_rel_e` FOREIGN KEY (`endpoint`) REFERENCES `endpoint_new` (`guid`),
   CONSTRAINT `e_service_rel_s` FOREIGN KEY (`service_group`) REFERENCES `service_group` (`guid`)
@@ -407,8 +413,8 @@ CREATE TABLE `log_metric_string_map` (
 CREATE TABLE `log_metric_endpoint_rel` (
   `guid` varchar(64) NOT NULL PRIMARY KEY,
   `log_metric_monitor` varchar(64) NOT NULL,
-  `source_endpoint` varchar(128),
-  `target_endpoint` varchar(128),
+  `source_endpoint` varchar(160),
+  `target_endpoint` varchar(160),
   CONSTRAINT `log_monitor_endpoint_metric` FOREIGN KEY (`log_metric_monitor`) REFERENCES `log_metric_monitor` (`guid`),
   CONSTRAINT `log_monitor_endpoint_source` FOREIGN KEY (`source_endpoint`) REFERENCES `endpoint_new` (`guid`),
   CONSTRAINT `log_monitor_endpoint_target` FOREIGN KEY (`target_endpoint`) REFERENCES `endpoint_new` (`guid`)
@@ -430,18 +436,12 @@ CREATE TABLE `db_metric_monitor` (
 CREATE TABLE `db_metric_endpoint_rel` (
   `guid` varchar(64) NOT NULL PRIMARY KEY,
   `db_metric_monitor` varchar(64) NOT NULL,
-  `source_endpoint` varchar(128),
-  `target_endpoint` varchar(128),
+  `source_endpoint` varchar(160),
+  `target_endpoint` varchar(160),
   CONSTRAINT `db_monitor_endpoint_metric` FOREIGN KEY (`db_metric_monitor`) REFERENCES `db_metric_monitor` (`guid`),
   CONSTRAINT `db_monitor_endpoint_source` FOREIGN KEY (`source_endpoint`) REFERENCES `endpoint_new` (`guid`),
   CONSTRAINT `db_monitor_endpoint_target` FOREIGN KEY (`target_endpoint`) REFERENCES `endpoint_new` (`guid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-insert into grp(name,endpoint_type) value ('default_process_group','process');
-insert  into `dashboard`(`dashboard_type`,`search_enable`,`search_id`,`button_enable`,`button_group`,`message_enable`,`message_group`,`message_url`,`panels_enable`,`panels_type`,`panels_group`,`panels_param`) values ('process',1,1,1,1,0,0,'',1,'tabs',11,'endpoint={endpoint}');
-insert  into `panel`(`group_id`,`title`,`tags_enable`,`tags_url`,`tags_key`,`chart_group`,`auto_display`) values (11,'process',0,'','',18,0);
-insert  into `chart`(`group_id`,`endpoint`,`metric`,`col`,`url`,`unit`,`title`,`grid_type`,`series_name`,`rate`,`agg_type`,`legend`) values (18,'','process_cpu_used_percent',6,'/dashboard/chart','','process.cpu.used','line','metric',0,'avg','$metric'),(18,'','process_mem_byte',6,'/dashboard/chart','','process.mem.used','line','metric',0,'avg','$metric');
-insert  into `prom_metric`(`metric`,`metric_type`,`prom_ql`,`prom_main`) values ('process_alive_count','process','node_process_monitor_count_current{instance=\"$address\",process_guid=\"$guid\"}',''),('process_cpu_used_percent','process','node_process_monitor_cpu{instance=\"$address\",process_guid=\"$guid\"}',''),('process_mem_byte','process','node_process_monitor_mem{instance=\"$address\",process_guid=\"$guid\"}','');
 #@v1.13.0.1-end@;
 
 #@v1.13.0.2-begin@;
@@ -459,7 +459,7 @@ CREATE TABLE `endpoint_group` (
 
 CREATE TABLE `endpoint_group_rel` (
   `guid` varchar(64) NOT NULL PRIMARY KEY,
-  `endpoint` varchar(128) NOT NULL,
+  `endpoint` varchar(160) NOT NULL,
   `endpoint_group` varchar(64),
   CONSTRAINT `endpoint_group_e` FOREIGN KEY (`endpoint`) REFERENCES `endpoint_new` (`guid`),
   CONSTRAINT `endpoint_group_g` FOREIGN KEY (`endpoint_group`) REFERENCES `endpoint_group` (`guid`)
@@ -528,7 +528,9 @@ insert into role_new(guid,display_name,email) select name,display_name,email fro
 insert into endpoint_group(guid,display_name,description,monitor_type) select name,name,description,endpoint_type from grp where endpoint_type is not null;
 insert into metric(guid,metric,monitor_type,prom_expr,tag_owner) select t1.* from (select CONCAT(metric,'__',metric_type),metric,metric_type,prom_ql,prom_main from prom_metric where metric_type<>'tomcat' union select CONCAT(metric,'__java'),metric,'java',prom_ql,prom_main from prom_metric where metric_type='tomcat') t1;
 insert into alarm_strategy select CONCAT('old_',t1.id),t3.name,t4.guid ,t1.cond,t1.`last`,t1.priority,t1.content,t1.notify_enable,t1.notify_delay,'' as update_time from strategy t1 left join tpl t2 on t1.tpl_id=t2.id left join grp t3 on t2.grp_id=t3.id left join metric t4 on (t1.metric=t4.metric and t3.endpoint_type=t4.monitor_type) where t2.grp_id>0 and t4.guid is not null;
-insert into endpoint_group_rel select concat(t1.endpoint_id,'__',t1.grp_id),t2.guid,t3.name from grp_endpoint t1 left join endpoint t2 on t1.endpoint_id=t2.id left join grp t3 on t1.grp_id=t3.id;
+insert into endpoint_new(guid,name,ip,monitor_type,agent_address,step,endpoint_address,cluster) select guid,name,ip,export_type,address_agent,step,address,cluster from endpoint where address_agent<>'';
+insert into endpoint_new(guid,name,ip,monitor_type,agent_address,step,endpoint_address,cluster) select guid,name,ip,export_type,address,step,address,cluster from endpoint where address_agent='';
+insert into endpoint_group_rel select concat(t1.endpoint_id,'__',t1.grp_id),t2.guid,t3.name from grp_endpoint t1 left join endpoint t2 on t1.endpoint_id=t2.id left join grp t3 on t1.grp_id=t3.id where t2.guid is not null and t3.name is not null;
 #@v1.13.0.2-end@;
 
 #@v1.13.0.6-begin@;
@@ -554,7 +556,7 @@ alter table metric add column db_metric_monitor varchar(64);
 delete from panel where title='DataMonitor';
 delete from prom_metric where metric='process_alive_count';
 delete from alarm_strategy where metric like '%process_alive_count%';
-insert into alarm_strategy(guid,endpoint_group,metric,`condition`,last,priority,content,notify_enable) value ('old_25','default_process_group','process_alive_count__process','==0','60s','high','process down',1);
+insert into alarm_strategy(guid,endpoint_group,metric,`condition`,last,priority,content,notify_enable) value ('old_process_group','default_process_group','process_alive_count__process','==0','60s','high','process down',1);
 #@v1.13.0.18-end@;
 
 #@v1.13.0.21-begin@;
@@ -600,8 +602,8 @@ CREATE TABLE `log_keyword_config` (
 CREATE TABLE `log_keyword_endpoint_rel` (
   `guid` varchar(64) NOT NULL PRIMARY KEY,
   `log_keyword_monitor` varchar(64) NOT NULL,
-  `source_endpoint` varchar(128),
-  `target_endpoint` varchar(128),
+  `source_endpoint` varchar(160),
+  `target_endpoint` varchar(160),
   CONSTRAINT `log_keyword_endpoint_monitor` FOREIGN KEY (`log_keyword_monitor`) REFERENCES `log_keyword_monitor` (`guid`),
   CONSTRAINT `log_keyword_endpoint_source` FOREIGN KEY (`source_endpoint`) REFERENCES `endpoint_new` (`guid`),
   CONSTRAINT `log_keyword_endpoint_target` FOREIGN KEY (`target_endpoint`) REFERENCES `endpoint_new` (`guid`)
@@ -629,3 +631,29 @@ insert into sys_parameter(guid,param_key,param_value) value ('metric_template_10
 insert into sys_parameter(guid,param_key,param_value) value ('metric_template_11','service_metric_template','{"name":"percent[(sum(a)-sum(b))/sum(a)]","prom_expr":"100*((sum(@a)-sum(@b))/(sum(@a) > 0) or vector(0))","param":"@a,@b"}');
 insert into sys_parameter(guid,param_key,param_value) value ('metric_template_12','service_metric_template','{"name":"percent[sum(a)/(sum(a)+sum(b))]","prom_expr":"100*(sum(@a)/((sum(@a)+sum(@b)) > 0) or vector(0))","param":"@a,@b"}');
 #@v1.13.0.25-end@;
+
+#@v2.0.0-begin@;
+insert into notify(guid,endpoint_group,alarm_action) select concat(guid,'_firing'),guid,'firing' from endpoint_group;
+insert into notify(guid,endpoint_group,alarm_action) select concat(guid,'_ok'),guid,'ok' from endpoint_group;
+insert into service_group(guid,display_name,service_type) select guid,display_name,obj_type from panel_recursive where parent='';
+insert into service_group(guid,display_name,service_type,parent) select guid,display_name,obj_type,parent from panel_recursive where parent<>'';
+#@v2.0.0-end@;
+
+#@v2.0.0.5-begin@;
+alter table prom_metric modify prom_ql varchar(4096);
+#@v2.0.0.5-end@;
+
+#@v2.0.0.11-begin@;
+alter table alarm modify content text;
+#@v2.0.0.11-end@;
+
+#@v2.0.0.12-begin@;
+update alarm_strategy set update_time=now() where update_time='' or update_time is null;
+alter table alarm_strategy modify update_time datetime;
+update endpoint_new set update_time=now() where update_time='' or update_time is null;
+alter table endpoint_new modify update_time datetime;
+update endpoint_group set update_time=now() where update_time='' or update_time is null;
+alter table endpoint_group modify update_time datetime;
+update service_group set update_time=now() where update_time='' or update_time is null;
+alter table service_group modify update_time datetime;
+#@v2.0.0.12-end@;

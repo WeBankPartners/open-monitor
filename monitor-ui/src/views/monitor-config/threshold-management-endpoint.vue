@@ -11,7 +11,7 @@
         <div style="margin: 16px 0">
           <h5 style="display:inline-block">{{$t('button.receiversConfiguration')}}:</h5>
           <div class="receiver-config-set" style="margin: 8px 0">
-          <template>
+          <template v-if="tableItem.groupNotify.length > 0">
             <div style="margin: 4px 0px;padding:8px 12px;width:680px">
               <template v-for="(item, index) in tableItem.groupNotify">
                 <p :key="index + 'S'">
@@ -30,6 +30,7 @@
           </template>
           </div>
         </div>
+        <hr style="background: #3bbe6b;" />
       </section>
     </template>
     <ModalComponent :modelConfig="modelConfig">
