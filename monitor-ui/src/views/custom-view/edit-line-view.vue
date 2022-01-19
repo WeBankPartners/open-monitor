@@ -442,7 +442,7 @@ export default {
     },
     addQuery() {
       if (this.templateQuery.endpoint === '' || this.templateQuery.metric === '' || this.templateQuery.endpoint === undefined || this.templateQuery.metric === undefined) {
-        this.$Message.warning("配置完整方可保存！")
+        this.$Message.warning(this.$t('m_tip_for_save'))
         return
       }
       let tmp = JSON.parse(JSON.stringify(this.templateQuery))
@@ -450,7 +450,10 @@ export default {
         tmp.app_object = tmp.endpoint
       }
       const find = this.options.find(item => item.option_value === tmp.endpoint)
-      tmp.endpointName = find.option_text
+      tmp.endpointName = ''
+      if (find) {
+        tmp.endpointName = find.option_text
+      }
       this.chartQueryList.push(tmp)
       this.templateQuery = {
         endpoint: '',

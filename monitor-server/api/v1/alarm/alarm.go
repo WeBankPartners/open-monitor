@@ -145,6 +145,9 @@ func getNewAlarmEndpoint(param *m.AMRespAlert, strategyObj *m.AlarmStrategyMetri
 		result.Guid = param.Labels["e_guid"]
 	} else if param.Labels["instance"] != "" {
 		result.AgentAddress = param.Labels["instance"]
+		if strings.Contains(result.AgentAddress, "9100") {
+			result.MonitorType = "host"
+		}
 	} else if param.Labels["strategy_guid"] != "" {
 		endpointGroupObj, tmpErr := db.GetSimpleEndpointGroup(strategyObj.EndpointGroup)
 		if tmpErr != nil {

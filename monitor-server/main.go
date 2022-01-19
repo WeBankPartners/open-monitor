@@ -42,7 +42,7 @@ func main() {
 	go db.SendConfigToDbManager()
 	go db.StartCallCronJob()
 	go db.StartNotifyPingExport()
-	api.InitDependenceParam()
+	go api.InitDependenceParam()
 	middleware.InitErrorMessageList()
 	api.InitHttpServer()
 }
