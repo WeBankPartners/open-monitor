@@ -76,6 +76,7 @@
     <Modal
       label-colon
       v-model="isAssociatedObject"
+      :width="550"
       :title="$t('resourceLevel.associatedObject')">
       <Form :model="currentData" label-position="right" label-colon :label-width="100">
         <FormItem :label="$t('m_add_object')">
@@ -570,16 +571,16 @@ export default {
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v1/dashboard/search', params, (responseData) => {
         this.allObject = []
-        // responseData = [
-        //   {
-        //     active: false,
-        //     id: 0,
-        //     option_text: 'UAT_IMEG_PRE_APP_imegpre_***REMOVED***:18086:***REMOVED***',
-        //     option_type_name: '',
-        //     option_value: 'UAT_IMEG_PRE_APP_imegpre_***REMOVED***:18086:***REMOVED***_process',
-        //     type: 'process'
-        //   }
-        // ]
+        responseData = [
+          {
+            active: false,
+            id: 0,
+            option_text: 'UAT_IMEG_PRE_APP_imegpre_***REMOVED***:18086:***REMOVED***',
+            option_type_name: '',
+            option_value: 'UAT_IMEG_PRE_APP_imegpre_***REMOVED***:18086:***REMOVED***_process',
+            type: 'process'
+          }
+        ]
         responseData.forEach((item) => {
             if (item.id !== -1) {
               this.allObject.push({
