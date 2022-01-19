@@ -1,8 +1,9 @@
 <template>
   <div class="">
     <button class="btn-confirm-f btn-small" @click="addPanel">{{$t('resourceLevel.addPanel')}}</button>
-    <i class="fa fa-refresh" aria-hidden="true" @click="getAllResource" style="margin-right:16px"></i>
-    <Input v-model="searchParams.name" :placeholder="$t('resourceLevel.level_search_name')" style="width: 300px" />
+    <i class="fa fa-refresh" aria-hidden="true" @click="getAllResource(false)" style="margin-right:16px"></i>
+    <Input v-model="searchParams.name" :placeholder="$t('resourceLevel.level_search_name')" style="width: 300px;margin-right:8px" />
+    <span> OR</span>
     <Select
       v-model="searchParams.endpoint"
       class="col-md-2"
@@ -15,7 +16,7 @@
       >
       <Option v-for="item in allObject" :value="item.option_value" :key="item.option_value">{{ item.option_text }}</Option>
     </Select>
-    <button type="button" class="btn btn-confirm-f" @click="getAllResource(true)">{{$t('button.search')}}</button>
+    <button type="button" :disabled="disabledSearchBtn" class="btn btn-confirm-f" @click="getAllResource(true)">{{$t('button.search')}}</button>
     
     <template v-if="extend">
       <recursive :recursiveViewConfig="resourceRecursive"></recursive>
@@ -70,6 +71,11 @@ export default {
       id: null
     }
   },
+  computed: {
+    disabledSearchBtn: function() {
+      return !this.searchParams.name && !this.searchParams.endpoint
+    }
+  },
   created () {
     this.$root.$eventBus.$on('updateResource', () => {
       this.getAllResource()
@@ -81,7 +87,6 @@ export default {
   },
   methods: {
     clearObject () {
-      this.searchParams.endpoint = ''
       this.getAllObject()
     },
     getAllObject (query='.') {
@@ -113,9 +118,9 @@ export default {
       return this.activedLevel.includes(guid) || false
     },
     getAllResource (extend = false) {
-      this.extend = extend
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.resourceLevel.getAll, this.searchParams, (responseData) => {
         this.resourceRecursive = responseData
+        this.extend = extend
       })
     },
     addPanel () {
