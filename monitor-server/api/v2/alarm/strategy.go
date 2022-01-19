@@ -1,10 +1,15 @@
 package alarm
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
+	"io/ioutil"
+	"net/http"
+	"time"
 )
 
 func QueryAlarmStrategy(c *gin.Context) {
@@ -86,6 +91,69 @@ func DeleteAlarmStrategy(c *gin.Context) {
 		} else {
 			middleware.ReturnSuccess(c)
 		}
+	}
+}
+
+func ExportAlarmStrategy(c *gin.Context)  {
+	queryType := c.Param("queryType")
+	guid := c.Param("guid")
+	var result []*models.EndpointStrategyObj
+	var err error
+	if queryType == "group" {
+		result, err = db.QueryAlarmStrategyByGroup(guid)
+		if err != nil {
+			middleware.ReturnHandleError(c, err.Error(), err)
+			return
+		}
+	} else if queryType == "service" {
+		result, err = db.QueryAlarmStrategyByServiceGroup(guid)
+		if err != nil {
+			middleware.ReturnHandleError(c, err.Error(), err)
+			return
+		}
+	}else {
+		middleware.ReturnHandleError(c, "queryType:"+queryType+" can not export strategy ", nil)
+		return
+	}
+	b,err := json.Marshal(result)
+	if err != nil {
+		middleware.ReturnHandleError(c, "export alarm strategy fail, json marshal object error", err)
+		return
+	}
+	c.Writer.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=%s_%s.json", "monitor_strategy_", time.Now().Format("20060102150405")))
+	c.Data(http.StatusOK, "application/octet-stream", b)
+}
+
+func ImportAlarmStrategy(c *gin.Context)  {
+	file,err := c.FormFile("file")
+	if err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	f,err := file.Open()
+	if err != nil {
+		middleware.ReturnHandleError(c, "file open error ", err)
+		return
+	}
+	var paramObj []*models.EndpointStrategyObj
+	b,err := ioutil.ReadAll(f)
+	defer f.Close()
+	if err != nil {
+		middleware.ReturnHandleError(c, "read content fail error ", err)
+		return
+	}
+	err = json.Unmarshal(b, &paramObj)
+	if err != nil {
+		middleware.ReturnHandleError(c, "json unmarshal fail error ", err)
+		return
+	}
+	queryType := c.Param("queryType")
+	guid := c.Param("guid")
+	err = db.ImportAlarmStrategy(queryType, guid, paramObj)
+	if err != nil {
+		middleware.ReturnHandleError(c, "import alarm strategy error:"+err.Error(), err)
+	}else {
+		middleware.ReturnSuccess(c)
 	}
 }
 
