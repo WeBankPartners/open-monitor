@@ -64,7 +64,7 @@
                   </FormItem>
                   <template v-if="metricId!== '' || hideMetricZone">
                     <Divider />
-                    <FormItem :label="$t('tableKey.name')">
+                    <FormItem v-if="isAddMetric" :label="$t('tableKey.name')">
                       <Input v-model="metricConfigData.metric"></Input>
                     </FormItem>
                     <FormItem :label="$t('m_scope')">
