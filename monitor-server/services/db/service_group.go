@@ -187,6 +187,7 @@ func getUpdateServiceEndpointAction(serviceGroupGuid, nowTime string, endpoint [
 	guidList, _ := fetchGlobalServiceGroupParentGuidList(serviceGroupGuid)
 	for _, v := range guidList {
 		actions = append(actions, getCreateEndpointGroupByServiceAction(v, nowTime, endpoint)...)
+		actions = append(actions, &Action{Sql: "update service_group set update_time=? where guid=?",Param: []interface{}{nowTime,v}})
 	}
 	return actions
 }
@@ -341,6 +342,12 @@ func UpdateServiceConfigWithParent(serviceGroup string) {
 	for _, v := range guidList {
 		UpdateServiceConfigWithEndpoint(v)
 	}
+}
+
+func getServiceGroupEndpointWithType(monitorType string,serviceGroupList []string) (result []*models.EndpointNewTable) {
+	result = []*models.EndpointNewTable{}
+	x.SQL("select guid,name,ip,monitor_type from endpoint_new where monitor_type=? and guid in (select endpoint from endpoint_service_rel where service_group in ('"+strings.Join(serviceGroupList,"','")+"'))", monitorType).Find(&result)
+	return result
 }
 
 func getServiceGroupEndpointWithChild(serviceGroup string) map[string][]string {

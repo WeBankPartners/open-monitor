@@ -4,7 +4,7 @@
       <section :key="tableIndex + 'f'">
         <div class="section-table-tip">
           <Tag color="blue" :key="tableIndex + 'a'" v-if="tableItem.endpoint_group">{{tableItem.display_name}}</Tag>
-          <button @click="add(tableItem)" type="button" class="btn btn-sm success-btn">
+          <button @click="add(tableItem)" type="button" class="btn btn-small success-btn">
             <i class="fa fa-plus"></i>
             {{$t('button.add')}}
           </button>
@@ -16,7 +16,7 @@
             <button @click="addEmptyItem('group', tableItem)" class="btn btn-small success-btn">{{$t('button.add')}}</button>
             <button @click="updateNotify(tableItem)" class="btn btn-small btn-cancel-f">{{$t('button.save')}}</button>
             <div class="receiver-config-set" style="margin: 8px 0">
-            <template>
+            <template v-if="tableItem.groupNotify.length > 0">
               <div style="margin: 4px 0px;padding:8px 12px;width:680px">
                 <template v-for="(item, index) in tableItem.groupNotify">
                   <p :key="index + 'S'">
@@ -49,7 +49,7 @@
             </div>
           </div>
         </section>
-        <Divider />
+        <hr style="background: #3bbe6b;" />
       </section>
     </template>
     <ModalComponent :modelConfig="modelConfig">
