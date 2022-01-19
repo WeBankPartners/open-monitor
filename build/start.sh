@@ -30,6 +30,8 @@ sed -i "s~{{MONITOR_ARCHIVE_MYSQL_HOST}}~$MONITOR_ARCHIVE_MYSQL_HOST~g" archive_
 sed -i "s~{{MONITOR_ARCHIVE_MYSQL_PORT}}~$MONITOR_ARCHIVE_MYSQL_PORT~g" archive_mysql_tool/default.json
 sed -i "s~{{MONITOR_ARCHIVE_MYSQL_USER}}~$MONITOR_ARCHIVE_MYSQL_USER~g" archive_mysql_tool/default.json
 sed -i "s~{{MONITOR_ARCHIVE_MYSQL_PWD}}~$MONITOR_ARCHIVE_MYSQL_PWD~g" archive_mysql_tool/default.json
+sed -i "s~{{MONITOR_ALARM_MAIL_ENABLE}}~$MONITOR_ALARM_MAIL_ENABLE~g" monitor/conf/default.json
+sed -i "s~{{MONITOR_ALARM_CALLBACK_LEVEL_MIN}}~$MONITOR_ALARM_CALLBACK_LEVEL_MIN~g" monitor/conf/default.json
 if [ $GATEWAY_URL ]
 then
 sed -i "s~{{CORE_ADDR}}~$GATEWAY_URL~g" monitor/conf/default.json
@@ -48,6 +50,16 @@ then
 sed -i "s~{{PLUGIN_MODE}}~yes~g" monitor/conf/default.json
 else
 sed -i "s~{{PLUGIN_MODE}}~no~g" monitor/conf/default.json
+fi
+
+if [ -n "$MONITOR_LOCAL_DNS_MAP" ]
+then
+  dns_map=${MONITOR_LOCAL_DNS_MAP}
+  set ${dns_map//,/ }
+  for v in "$@"
+  do
+    echo "${v//=/ }" >> /etc/hosts
+  done
 fi
 
 cd alertmanager

@@ -35,14 +35,14 @@ func ListEndpoint(c *gin.Context) {
 	}
 }
 
-func GetEndpoint(c *gin.Context)  {
+func GetEndpoint(c *gin.Context) {
 	guid := c.Param("guid")
-	endpointObj,err := db.GetEndpointNew(&models.EndpointNewTable{Guid: guid})
+	endpointObj, err := db.GetEndpointNew(&models.EndpointNewTable{Guid: guid})
 	if err != nil {
 		middleware.ReturnValidateError(c, fmt.Sprintf("Endpoint:%s query error:%s ", guid, err.Error()))
 		return
 	}
-	result := models.RegisterParamNew{Guid: guid,Type: endpointObj.MonitorType,Name: endpointObj.Name,Ip: endpointObj.Ip}
+	result := models.RegisterParamNew{Guid: guid, Type: endpointObj.MonitorType, Name: endpointObj.Name, Ip: endpointObj.Ip}
 	result.Cluster = endpointObj.Cluster
 	result.Step = endpointObj.Step
 	if strings.Contains(endpointObj.EndpointAddress, ":") {
@@ -70,14 +70,14 @@ func GetEndpoint(c *gin.Context)  {
 	middleware.ReturnSuccessData(c, result)
 }
 
-func AddEndpoint(c *gin.Context)  {
+func AddEndpoint(c *gin.Context) {
 
 }
 
-func UpdateEndpoint(c *gin.Context)  {
+func UpdateEndpoint(c *gin.Context) {
 	var param models.RegisterParamNew
 	var err error
-	if err=c.ShouldBindJSON(&param);err!=nil {
+	if err = c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
@@ -85,15 +85,15 @@ func UpdateEndpoint(c *gin.Context)  {
 		middleware.ReturnValidateError(c, "Param guid can not empty")
 		return
 	}
-	defer func(resultErr error) {
-		if resultErr != nil {
-			middleware.ReturnHandleError(c, resultErr.Error(), resultErr)
-		}else{
+	defer func() {
+		if err != nil {
+			middleware.ReturnHandleError(c, err.Error(), err)
+		} else {
 			middleware.ReturnSuccess(c)
 		}
-	}(err)
+	}()
 	guid := param.Guid
-	endpointObj,queryErr := db.GetEndpointNew(&models.EndpointNewTable{Guid: guid})
+	endpointObj, queryErr := db.GetEndpointNew(&models.EndpointNewTable{Guid: guid})
 	if queryErr != nil {
 		err = queryErr
 		return
@@ -101,40 +101,43 @@ func UpdateEndpoint(c *gin.Context)  {
 	var newEndpoint models.EndpointNewTable
 	switch param.Type {
 	case "host":
-		newEndpoint,err = hostEndpointUpdate(&param,&endpointObj)
+		newEndpoint, err = hostEndpointUpdate(&param, &endpointObj)
 	case "mysql":
-		newEndpoint,err = agentManagerEndpointUpdate(&param,&endpointObj)
+		newEndpoint, err = agentManagerEndpointUpdate(&param, &endpointObj)
 	case "redis":
-		newEndpoint,err = agentManagerEndpointUpdate(&param,&endpointObj)
+		newEndpoint, err = agentManagerEndpointUpdate(&param, &endpointObj)
 	case "java":
-		newEndpoint,err = agentManagerEndpointUpdate(&param,&endpointObj)
+		newEndpoint, err = agentManagerEndpointUpdate(&param, &endpointObj)
 	case "nginx":
-		newEndpoint,err = agentManagerEndpointUpdate(&param,&endpointObj)
+		newEndpoint, err = agentManagerEndpointUpdate(&param, &endpointObj)
 	case "ping":
-		newEndpoint,err = pingEndpointUpdate(&param,&endpointObj)
+		newEndpoint, err = pingEndpointUpdate(&param, &endpointObj)
 	case "telnet":
-		newEndpoint,err = telnetEndpointUpdate(&param,&endpointObj)
+		newEndpoint, err = telnetEndpointUpdate(&param, &endpointObj)
 	case "http":
-		newEndpoint,err = httpEndpointUpdate(&param,&endpointObj)
+		newEndpoint, err = httpEndpointUpdate(&param, &endpointObj)
 	case "windows":
-		newEndpoint,err = windowsEndpointUpdate(&param,&endpointObj)
+		newEndpoint, err = windowsEndpointUpdate(&param, &endpointObj)
 	case "snmp":
-		newEndpoint,err = snmpEndpointUpdate(&param,&endpointObj)
+		newEndpoint, err = snmpEndpointUpdate(&param, &endpointObj)
 	case "process":
-		newEndpoint,err = processEndpointUpdate(&param,&endpointObj)
+		newEndpoint, err = processEndpointUpdate(&param, &endpointObj)
 	default:
-		newEndpoint,err = otherEndpointUpdate(&param, &endpointObj)
+		newEndpoint, err = otherEndpointUpdate(&param, &endpointObj)
 	}
 	if err != nil {
+		log.Logger.Error("Update endpoint fail", log.Error(err))
 		return
 	}
 	if newEndpoint.Guid == "" {
 		if endpointObj.Step == param.Step {
 			// no change
 			return
-		}else{
-			newEndpoint = models.EndpointNewTable{Guid: endpointObj.Guid,AgentAddress: endpointObj.AgentAddress,EndpointAddress: endpointObj.EndpointAddress,Step: param.Step,ExtendParam: endpointObj.ExtendParam}
+		} else {
+			newEndpoint = models.EndpointNewTable{Guid: endpointObj.Guid, AgentAddress: endpointObj.AgentAddress, EndpointAddress: endpointObj.EndpointAddress, Step: param.Step, ExtendParam: endpointObj.ExtendParam}
 		}
+	}else{
+		newEndpoint.Step = param.Step
 	}
 	log.Logger.Info("new endpoint", log.JsonObj("endpoint", newEndpoint))
 	// update endpoint table
@@ -155,100 +158,83 @@ func UpdateEndpoint(c *gin.Context)  {
 	}
 }
 
-func DeleteEndpoint(c *gin.Context)  {
+func DeleteEndpoint(c *gin.Context) {
 
 }
 
-func hostEndpointUpdate(param *models.RegisterParamNew,endpoint *models.EndpointNewTable) (newEndpoint models.EndpointNewTable,err error) {
+func hostEndpointUpdate(param *models.RegisterParamNew, endpoint *models.EndpointNewTable) (newEndpoint models.EndpointNewTable, err error) {
 	if strings.Contains(endpoint.AgentAddress, ":") {
-		if param.Port == endpoint.AgentAddress[strings.LastIndex(endpoint.AgentAddress,":")+1:] {
+		if param.Port == endpoint.AgentAddress[strings.LastIndex(endpoint.AgentAddress, ":")+1:] {
 			return
-		}else{
+		} else {
 			newAddress := fmt.Sprintf("%s:%s", param.Ip, param.Port)
-			newEndpoint = models.EndpointNewTable{Guid: endpoint.Guid, AgentAddress: newAddress,EndpointAddress: newAddress}
+			newEndpoint = models.EndpointNewTable{Guid: endpoint.Guid, AgentAddress: newAddress, EndpointAddress: newAddress}
 		}
 	}
 	return
 }
 
-func agentManagerEndpointUpdate(param *models.RegisterParamNew,endpoint *models.EndpointNewTable) (newEndpoint models.EndpointNewTable,err error) {
+func agentManagerEndpointUpdate(param *models.RegisterParamNew, endpoint *models.EndpointNewTable) (newEndpoint models.EndpointNewTable, err error) {
 	if param.AgentManager {
-		var extParamObj models.EndpointExtendParamObj
-		err = json.Unmarshal([]byte(endpoint.ExtendParam), &extParamObj)
+		err = prom.StopAgent(endpoint.MonitorType, endpoint.Name, endpoint.Ip, agent.AgentManagerServer)
 		if err != nil {
-			return newEndpoint,fmt.Errorf("json unmarhsal extendParam fail,%s ", err.Error())
+			return newEndpoint, fmt.Errorf("stop agent manager instance fail,%s ", err.Error())
 		}
-		if param.Port == extParamObj.Port && param.User == extParamObj.User && param.Password == extParamObj.Password {
-			return
-		}else{
-			err = prom.StopAgent(endpoint.MonitorType, endpoint.Name, endpoint.Ip, agent.AgentManagerServer)
-			if err != nil {
-				return newEndpoint,fmt.Errorf("stop agent manager instance fail,%s ", err.Error())
-			}
-			agentConfig := getAgentMangerInstanceConfig(endpoint.MonitorType)
-			address, deployErr := prom.DeployAgent(param.Type, param.Name, agentConfig.AgentBin, param.Ip, param.Port, param.User, param.Password, agent.AgentManagerServer, agentConfig.ConfigFile)
-			if deployErr != nil {
-				return newEndpoint,fmt.Errorf("deploy agent manager instance fail,%s ", deployErr.Error())
-			}
-			newEndpoint = models.EndpointNewTable{Guid: endpoint.Guid, EndpointAddress: fmt.Sprintf("%s:%s",param.Ip,param.Port),AgentAddress: address}
-			newParamObj := models.EndpointExtendParamObj{Enable: true, Ip: param.Ip, Port: param.Port, User: param.User, Password: param.Password, BinPath: agentConfig.AgentBin, ConfigPath: agentConfig.ConfigFile}
-			b,_ := json.Marshal(newParamObj)
-			newEndpoint.ExtendParam = string(b)
-			err = db.UpdateAgentManager(&models.AgentManagerTable{EndpointGuid: endpoint.Guid,User: param.User,Password: param.Password,InstanceAddress: newEndpoint.EndpointAddress,AgentAddress: address})
-			return
+		agentConfig := getAgentMangerInstanceConfig(endpoint.MonitorType)
+		address, deployErr := prom.DeployAgent(param.Type, param.Name, agentConfig.AgentBin, param.Ip, param.Port, param.User, param.Password, agent.AgentManagerServer, agentConfig.ConfigFile)
+		if deployErr != nil {
+			return newEndpoint, fmt.Errorf("deploy agent manager instance fail,%s ", deployErr.Error())
 		}
-	}else{
+		newEndpoint = models.EndpointNewTable{Guid: endpoint.Guid, EndpointAddress: fmt.Sprintf("%s:%s", param.Ip, param.Port), AgentAddress: address}
+		newParamObj := models.EndpointExtendParamObj{Enable: true, Ip: param.Ip, Port: param.Port, User: param.User, Password: param.Password, BinPath: agentConfig.AgentBin, ConfigPath: agentConfig.ConfigFile}
+		b, _ := json.Marshal(newParamObj)
+		newEndpoint.ExtendParam = string(b)
+		err = db.UpdateAgentManager(&models.AgentManagerTable{EndpointGuid: endpoint.Guid, User: param.User, Password: param.Password, InstanceAddress: newEndpoint.EndpointAddress, AgentAddress: address})
+		return
+	} else {
 		if strings.Contains(endpoint.AgentAddress, ":") {
-			if param.Port == endpoint.AgentAddress[strings.LastIndex(endpoint.AgentAddress,":")+1:] {
+			if param.Port == endpoint.AgentAddress[strings.LastIndex(endpoint.AgentAddress, ":")+1:] {
 				return
 			}
-		}else{
+		} else {
 			newEndpoint = models.EndpointNewTable{Guid: param.Guid, AgentAddress: fmt.Sprintf("%s:%s", param.Ip, param.Port)}
 		}
 	}
 	return
 }
 
-func processEndpointUpdate(param *models.RegisterParamNew,endpoint *models.EndpointNewTable) (newEndpoint models.EndpointNewTable,err error) {
-	var extParamObj models.EndpointExtendParamObj
-	err = json.Unmarshal([]byte(endpoint.ExtendParam), &extParamObj)
-	if err != nil {
-		return newEndpoint,fmt.Errorf("json unmarhsal extendParam fail,%s ", err.Error())
-	}
-	if param.ProcessName == extParamObj.ProcessName && param.Tags == extParamObj.ProcessTags {
-		return
-	}
+func processEndpointUpdate(param *models.RegisterParamNew, endpoint *models.EndpointNewTable) (newEndpoint models.EndpointNewTable, err error) {
 	newExtParamObj := models.EndpointExtendParamObj{Enable: true, ProcessName: param.ProcessName, ProcessTags: param.Tags}
 	b, _ := json.Marshal(newExtParamObj)
-	newEndpoint = models.EndpointNewTable{Guid: endpoint.Guid, EndpointAddress: endpoint.EndpointAddress,AgentAddress: endpoint.AgentAddress,ExtendParam: string(b)}
+	newEndpoint = models.EndpointNewTable{Guid: endpoint.Guid, EndpointAddress: endpoint.EndpointAddress, AgentAddress: endpoint.AgentAddress, ExtendParam: string(b)}
 	err = db.SyncNodeExporterProcessConfig(endpoint.Ip, []*models.EndpointNewTable{&newEndpoint}, true)
 	return
 }
 
-func windowsEndpointUpdate(param *models.RegisterParamNew,endpoint *models.EndpointNewTable) (newEndpoint models.EndpointNewTable,err error) {
+func windowsEndpointUpdate(param *models.RegisterParamNew, endpoint *models.EndpointNewTable) (newEndpoint models.EndpointNewTable, err error) {
 	return
 }
 
-func pingEndpointUpdate(param *models.RegisterParamNew,endpoint *models.EndpointNewTable) (newEndpoint models.EndpointNewTable,err error) {
+func pingEndpointUpdate(param *models.RegisterParamNew, endpoint *models.EndpointNewTable) (newEndpoint models.EndpointNewTable, err error) {
 	var extParamObj models.EndpointExtendParamObj
 	err = json.Unmarshal([]byte(endpoint.ExtendParam), &extParamObj)
 	if err != nil {
-		return newEndpoint,fmt.Errorf("json unmarhsal extendParam fail,%s ", err.Error())
+		return newEndpoint, fmt.Errorf("json unmarhsal extendParam fail,%s ", err.Error())
 	}
 	if param.ProxyExporter == extParamObj.ProxyExporter {
 		return
 	}
 	newExtParamObj := models.EndpointExtendParamObj{Enable: true, ProxyExporter: param.ProxyExporter}
 	b, _ := json.Marshal(newExtParamObj)
-	newEndpoint = models.EndpointNewTable{Guid: endpoint.Guid, EndpointAddress: endpoint.EndpointAddress,AgentAddress: endpoint.AgentAddress,ExtendParam: string(b)}
+	newEndpoint = models.EndpointNewTable{Guid: endpoint.Guid, EndpointAddress: endpoint.EndpointAddress, AgentAddress: endpoint.AgentAddress, ExtendParam: string(b)}
 	return
 }
 
-func telnetEndpointUpdate(param *models.RegisterParamNew,endpoint *models.EndpointNewTable) (newEndpoint models.EndpointNewTable,err error) {
+func telnetEndpointUpdate(param *models.RegisterParamNew, endpoint *models.EndpointNewTable) (newEndpoint models.EndpointNewTable, err error) {
 	if strings.Contains(endpoint.EndpointAddress, ":") {
-		if param.Port == endpoint.EndpointAddress[strings.LastIndex(endpoint.EndpointAddress,":")+1:] {
+		if param.Port == endpoint.EndpointAddress[strings.LastIndex(endpoint.EndpointAddress, ":")+1:] {
 			return
-		}else{
+		} else {
 			newAddress := fmt.Sprintf("%s:%s", param.Ip, param.Port)
 			newExtParamObj := models.EndpointExtendParamObj{Enable: true, Ip: param.Ip, Port: param.Port}
 			b, _ := json.Marshal(newExtParamObj)
@@ -258,32 +244,32 @@ func telnetEndpointUpdate(param *models.RegisterParamNew,endpoint *models.Endpoi
 	return
 }
 
-func httpEndpointUpdate(param *models.RegisterParamNew,endpoint *models.EndpointNewTable) (newEndpoint models.EndpointNewTable,err error) {
+func httpEndpointUpdate(param *models.RegisterParamNew, endpoint *models.EndpointNewTable) (newEndpoint models.EndpointNewTable, err error) {
 	var extParamObj models.EndpointExtendParamObj
 	err = json.Unmarshal([]byte(endpoint.ExtendParam), &extParamObj)
 	if err != nil {
-		return newEndpoint,fmt.Errorf("json unmarhsal extendParam fail,%s ", err.Error())
+		return newEndpoint, fmt.Errorf("json unmarhsal extendParam fail,%s ", err.Error())
 	}
 	if extParamObj.HttpUrl == param.Url && extParamObj.HttpMethod == param.Method {
 		return
 	}
 	newExtParamObj := models.EndpointExtendParamObj{Enable: true, HttpUrl: param.Url, HttpMethod: param.Method}
 	b, _ := json.Marshal(newExtParamObj)
-	newEndpoint = models.EndpointNewTable{Guid: endpoint.Guid, EndpointAddress: endpoint.EndpointAddress,AgentAddress: endpoint.AgentAddress,ExtendParam: string(b)}
+	newEndpoint = models.EndpointNewTable{Guid: endpoint.Guid, EndpointAddress: endpoint.EndpointAddress, AgentAddress: endpoint.AgentAddress, ExtendParam: string(b)}
 	return
 }
 
-func snmpEndpointUpdate(param *models.RegisterParamNew,endpoint *models.EndpointNewTable) (newEndpoint models.EndpointNewTable,err error) {
+func snmpEndpointUpdate(param *models.RegisterParamNew, endpoint *models.EndpointNewTable) (newEndpoint models.EndpointNewTable, err error) {
 	return
 }
 
-func otherEndpointUpdate(param *models.RegisterParamNew,endpoint *models.EndpointNewTable) (newEndpoint models.EndpointNewTable,err error) {
+func otherEndpointUpdate(param *models.RegisterParamNew, endpoint *models.EndpointNewTable) (newEndpoint models.EndpointNewTable, err error) {
 	if strings.Contains(endpoint.AgentAddress, ":") {
-		if param.Port == endpoint.AgentAddress[strings.LastIndex(endpoint.AgentAddress,":")+1:] {
+		if param.Port == endpoint.AgentAddress[strings.LastIndex(endpoint.AgentAddress, ":")+1:] {
 			return
-		}else{
+		} else {
 			newAddress := fmt.Sprintf("%s:%s", param.Ip, param.Port)
-			newEndpoint = models.EndpointNewTable{Guid: endpoint.Guid, AgentAddress: newAddress,EndpointAddress: newAddress}
+			newEndpoint = models.EndpointNewTable{Guid: endpoint.Guid, AgentAddress: newAddress, EndpointAddress: newAddress}
 		}
 	}
 	return

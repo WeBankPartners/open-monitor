@@ -144,14 +144,16 @@
           <template v-for="(item, index) in dbModelConfig.addRow.endpoint_rel">
             <p :key="index + '3'" style="text-align: center;">
               <Tooltip :content="$t('m_db')" :delay="1000">
-                <Select disabled v-model="item.target_endpoint" style="width: 290px" :placeholder="$t('m_business_object')">
+                <Input disabled v-model="item.target_endpoint" style="width:290px" />
+                <!-- <Select disabled v-model="item.target_endpoint" style="width: 290px" :placeholder="$t('m_business_object')">
                   <Option v-for="type in targetEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
-                </Select>
+                </Select> -->
               </Tooltip>
               <Tooltip :content="$t('m_log_server')" :delay="1000">
-                <Select disabled v-model="item.source_endpoint" style="width: 290px" :placeholder="$t('m_log_server')">
+                <Input disabled v-model="item.source_endpoint" style="width:290px" />
+                <!-- <Select disabled v-model="item.source_endpoint" style="width: 290px" :placeholder="$t('m_log_server')">
                   <Option v-for="type in sourceEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
-                </Select>
+                </Select> -->
               </Tooltip>
             </p>
           </template>
@@ -178,14 +180,16 @@
           <template v-for="(item, index) in addAndEditModal.dataConfig.endpoint_rel">
             <p :key="index + 'c'">
               <Tooltip :content="$t('m_business_object')" :delay="1000">
-                <Select v-model="item.target_endpoint" disabled style="width: 315px" :placeholder="$t('m_business_object')">
+                <Input disabled v-model="item.source_endpoint" style="width:315px" />
+                <!-- <Select v-model="item.target_endpoint" disabled style="width: 315px" :placeholder="$t('m_business_object')">
                   <Option v-for="type in targetEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
-                </Select>
+                </Select> -->
               </Tooltip>
               <Tooltip :content="$t('m_log_server')" :delay="1000">
-                <Select v-model="item.source_endpoint" disabled style="width: 315px" :placeholder="$t('m_log_server')">
+                <Input disabled v-model="item.source_endpoint" style="width:315px" />
+                <!-- <Select v-model="item.source_endpoint" disabled style="width: 315px" :placeholder="$t('m_log_server')">
                   <Option v-for="type in sourceEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
-                </Select>
+                </Select> -->
               </Tooltip>
             </p>
           </template>
@@ -330,7 +334,7 @@ export default {
       this.dbModelConfig.isShow = true
     },
     async getEndpoint (val, type, targrtId) {
-      await this.getDefaultConfig(val, type)
+      // await this.getDefaultConfig(val, type)
       // get source Endpoint
       const sourceApi = this.$root.apiCenter.getEndpointsByType + '/' + targrtId + '/endpoint/' + type
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', sourceApi, '', (responseData) => {

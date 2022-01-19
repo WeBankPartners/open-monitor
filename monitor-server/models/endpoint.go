@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 type ClusterTableNew struct {
 	Guid               string `json:"guid" xorm:"guid" binding:"required"`
 	DisplayName        string `json:"display_name" xorm:"display_name" binding:"required"`
@@ -28,7 +30,7 @@ type EndpointNewTable struct {
 	Tags            string `json:"tags" xorm:"tags"`
 	ExtendParam     string `json:"extend_param" xorm:"extend_param"`
 	Description     string `json:"description" xorm:"description"`
-	UpdateTime      string `json:"update_time" xorm:"update_time"`
+	UpdateTime      time.Time `json:"update_time" xorm:"update_time"`
 }
 
 type EndpointExtendParamObj struct {

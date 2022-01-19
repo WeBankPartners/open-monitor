@@ -56,13 +56,23 @@ type MonitorEndpointTable struct {
 	ExportType  string  `json:"export_type"`
 	Step  int  `json:"step"`
 	Address  string  `json:"address"`
-	AddressAgent  string  `json:"address_agent"`
 }
 
 type MonitorPromMetricTable struct {
 	Metric  string  `json:"metric"`
 	MetricType  string  `json:"metric_type"`
 	PromQl  string  `json:"prom_ql"`
+}
+
+type MonitorMetricTable struct {
+	Guid         string `json:"guid" xorm:"guid"`
+	Metric       string `json:"metric" xorm:"metric"`
+	MonitorType  string `json:"monitor_type" xorm:"monitor_type"`
+	PromExpr     string `json:"prom_expr" xorm:"prom_expr"`
+	TagOwner     string `json:"tag_owner" xorm:"tag_owner"`
+	ServiceGroup string `json:"service_group" xorm:"service_group"`
+	Workspace    string `json:"workspace" xorm:"workspace"`
+	UpdateTime   string `json:"update_time" xorm:"update_time"`
 }
 
 type MonitorArchiveObj struct {
