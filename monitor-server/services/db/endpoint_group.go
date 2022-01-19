@@ -74,9 +74,11 @@ func UpdateGroupEndpoint(param *models.UpdateGroupEndpointParam, appendFlag bool
 		actions = append(actions, &Action{Sql: "delete from endpoint_group_rel where endpoint_group=?", Param: []interface{}{param.GroupGuid}})
 	}
 	guidList := guid.CreateGuidList(len(param.EndpointGuidList))
+	nowTime := time.Now().Format(models.DatetimeFormat)
 	for i, v := range param.EndpointGuidList {
 		actions = append(actions, &Action{Sql: "insert into endpoint_group_rel(guid,endpoint,endpoint_group) value (?,?,?)", Param: []interface{}{guidList[i], v, param.GroupGuid}})
 	}
+	actions = append(actions, &Action{Sql: "update endpoint_group set update_time=? where guid=?",Param: []interface{}{nowTime, param.GroupGuid}})
 	err := Transaction(actions)
 	return err
 }
@@ -102,7 +104,7 @@ func ListEndpointGroupOptions(searchText string) (result []*models.OptionModel, 
 	}
 	searchText = "%" + searchText + "%"
 	var endpointGroupTable []*models.EndpointGroupTable
-	err = x.SQL("select guid,monitor_type from endpoint_group where guid like ?", searchText).Find(&endpointGroupTable)
+	err = x.SQL("select guid,monitor_type from endpoint_group where service_group is null and (guid like ?)", searchText).Find(&endpointGroupTable)
 	if err != nil {
 		return
 	}
