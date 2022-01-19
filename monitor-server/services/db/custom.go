@@ -126,7 +126,16 @@ func GetCustomDashboardAlarms(id int) (err error,result m.AlarmProblemQueryResul
 	var endpointList []string
 	for _,v := range customConfig {
 		for _,vv := range v.Query {
-			endpointList = append(endpointList, vv.Endpoint)
+			if vv.AppObject != "" {
+				endpointList = append(endpointList, "sg__"+vv.AppObject)
+				serviceGuidList,_ := fetchGlobalServiceGroupChildGuidList(vv.AppObject)
+				serviceGroupEndpoint := getServiceGroupEndpointWithType(vv.EndpointType, serviceGuidList)
+				for _,sgEndpoint := range serviceGroupEndpoint {
+					endpointList = append(endpointList, sgEndpoint.Guid)
+				}
+			}else {
+				endpointList = append(endpointList, vv.Endpoint)
+			}
 		}
 	}
 	if len(endpointList) > 0 {

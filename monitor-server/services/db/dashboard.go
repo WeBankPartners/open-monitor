@@ -240,7 +240,7 @@ func SearchHost(endpoint string) (error, []*m.OptionModel) {
 	options := []*m.OptionModel{}
 	var hosts []*m.EndpointTable
 	endpoint = `%` + endpoint + `%`
-	err := x.SQL("SELECT * FROM endpoint WHERE (ip LIKE ? OR name LIKE ?) and export_type<>'custom' order by export_type,ip limit 100", endpoint, endpoint).Find(&hosts)
+	err := x.SQL("SELECT * FROM endpoint WHERE (ip LIKE ? OR name LIKE ?) and export_type<>'custom' order by export_type,ip LIMIT 100", endpoint, endpoint).Find(&hosts)
 	if err != nil {
 		log.Logger.Error("Search host fail", log.Error(err))
 		return err, options
@@ -559,10 +559,18 @@ func GetServiceGroupPromMetric(serviceGroup,workspace,monitorType string) (err e
 	return
 }
 
-func GetEndpointMetric(endpointGuid,serviceGroup string) (err error, result []*m.OptionModel) {
+func GetEndpointMetric(endpointGuid,monitorType string) (err error, result []*m.OptionModel) {
 	result = []*m.OptionModel{}
 	endpointObj := m.EndpointTable{Guid: endpointGuid}
-	GetEndpoint(&endpointObj)
+	if endpointGuid == "" && monitorType != "" {
+		var endpointList []*m.EndpointTable
+		x.SQL("select * from endpoint where export_type=? limit 1", monitorType).Find(&endpointList)
+		if len(endpointList) > 0 {
+			endpointObj = *endpointList[0]
+		}
+	}else {
+		GetEndpoint(&endpointObj)
+	}
 	if endpointObj.Guid == "" {
 		return fmt.Errorf("endpoint guid: %s can not find ", endpointGuid), result
 	}
@@ -595,32 +603,26 @@ func GetEndpointMetric(endpointGuid,serviceGroup string) (err error, result []*m
 			log.Logger.Warn("endpoint address illegal ", log.String("endpoint", endpointObj.Guid))
 			return nil, result
 		}
-		metricQueryParam := m.QueryPrometheusMetricParam{Ip: ip, Port: port, Cluster: endpointObj.Cluster, Prefix: []string{}, Keyword: []string{}, TargetGuid: endpointObj.Guid, IsConfigQuery: true, ServiceGroup: serviceGroup}
+		metricQueryParam := m.QueryPrometheusMetricParam{Ip: ip, Port: port, Cluster: endpointObj.Cluster, Prefix: []string{}, Keyword: []string{}, TargetGuid: endpointObj.Guid, IsConfigQuery: true, ServiceGroup: ""}
 		err, strList = QueryExporterMetric(metricQueryParam)
 	}
 	if err != nil {
 		return err, result
 	}
-	serviceTag := fmt.Sprintf("service_group=\"%s\"", serviceGroup)
+	resultExistMap := make(map[string]int)
 	for _, v := range strList {
 		if strings.HasPrefix(v, "go_") || v == "" {
 			continue
 		}
-		if serviceGroup == "" {
-			if v[len(v)-1:] == "}" {
-				result = append(result, &m.OptionModel{OptionText: v, OptionValue: fmt.Sprintf("%s,instance=\"$address\"}", v[:len(v)-1])})
-			} else {
-				result = append(result, &m.OptionModel{OptionText: v, OptionValue: fmt.Sprintf("%s{instance=\"$address\"}", v)})
-			}
-		}else{
-			if strings.Contains(v, serviceTag) {
-				tmpPromExpr := v
-				if strings.Contains(v, "t_endpoint") {
-					tmpPromExpr,_ = trimTEndpointTag(tmpPromExpr)
-				}
-				result = append(result, &m.OptionModel{OptionText: tmpPromExpr, OptionValue: tmpPromExpr})
-			}
+		tmpText := v
+		if strings.Contains(v, "{") {
+			tmpText = v[:strings.Index(tmpText, "{")]
 		}
+		if _,b:=resultExistMap[tmpText];b {
+			continue
+		}
+		result = append(result, &m.OptionModel{OptionText: tmpText, OptionValue: fmt.Sprintf("%s{instance=\"$address\"}", tmpText)})
+		resultExistMap[tmpText] = 1
 	}
 	return nil, result
 }
@@ -787,7 +789,7 @@ func GetArchiveData(query *m.QueryMonitorData, agg string) (err error, step int,
 		log.Logger.Error("", log.Error(err))
 		return err, step, result
 	}
-	log.Logger.Info("Start to get archive data", log.StringList("endpoint", query.Endpoint), log.StringList("metric", query.Metric), log.Int64("start", query.Start), log.Int64("end", query.End))
+	log.Logger.Debug("Start to get archive data", log.StringList("endpoint", query.Endpoint), log.StringList("metric", query.Metric), log.Int64("start", query.Start), log.Int64("end", query.End))
 	if agg == "" || agg == "none" {
 		agg = "avg"
 	}

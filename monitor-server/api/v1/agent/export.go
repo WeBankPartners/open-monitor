@@ -211,11 +211,11 @@ func AlarmControl(c *gin.Context) {
 			if err != nil {
 				msg = fmt.Sprintf("%s %s:%s %s fail,error %v", action, agentType, v.HostIp, instanceName, err)
 				resultMessage = fmt.Sprintf(mid.GetMessageMap(c).HandleError, msg)
-				tmpResult = append(tmpResult, resultOutputObj{CallbackParameter: v.CallbackParameter, ErrorCode: "1", ErrorMessage: fmt.Sprintf(mid.GetMessageMap(c).HandleError, msg)})
+				tmpResult = append(tmpResult, resultOutputObj{CallbackParameter: v.CallbackParameter, ErrorCode: "1", Guid: v.Guid, ErrorMessage: fmt.Sprintf(mid.GetMessageMap(c).HandleError, msg)})
 				successFlag = "1"
 			} else {
 				msg = fmt.Sprintf("%s %s:%s %s succeed", action, agentType, v.HostIp, instanceName)
-				tmpResult = append(tmpResult, resultOutputObj{CallbackParameter: v.CallbackParameter, ErrorCode: "0", ErrorMessage: ""})
+				tmpResult = append(tmpResult, resultOutputObj{CallbackParameter: v.CallbackParameter, ErrorCode: "0", Guid: v.Guid, ErrorMessage: ""})
 			}
 			log.Logger.Info(msg)
 		}
@@ -383,16 +383,26 @@ func updateProcessNew(input processRequestObj, operation string) (result process
 		err = fmt.Errorf("Param process_tag cat not empty when process_name is multiple ")
 		return result, err
 	}
-	registerParam := m.RegisterParamNew{Name: input.DisplayName, Ip: input.HostIp, ProcessName: input.ProcessName, Tags: input.ProcessTag, Type: "process", DefaultGroupName: "default_process_group", AddDefaultGroup: true, Step: 10}
-	validateMessage,guid,tmpErr := AgentRegister(registerParam)
-	if validateMessage != "" {
-		return result,fmt.Errorf("Param validate error,%s ", validateMessage)
+	if operation == "add" {
+		registerParam := m.RegisterParamNew{Name: input.DisplayName, Ip: input.HostIp, ProcessName: input.ProcessName, Tags: input.ProcessTag, Type: "process", DefaultGroupName: "default_process_group", AddDefaultGroup: true, Step: 10}
+		validateMessage, guid, tmpErr := AgentRegister(registerParam)
+		if validateMessage != "" {
+			return result, fmt.Errorf("Param validate error,%s ", validateMessage)
+		}
+		if tmpErr != nil {
+			return result, tmpErr
+		}
+		result.Guid = input.Guid
+		result.MonitorKey = guid
+	}else if operation == "delete" {
+		tmpEndpointObj := m.EndpointTable{Ip: input.HostIp, Name: input.DisplayName, ExportType: "process"}
+		db.GetEndpoint(&tmpEndpointObj)
+		if tmpEndpointObj.Guid == "" {
+			return
+		}
+		err = DeregisterJob(tmpEndpointObj)
+		return
 	}
-	if tmpErr != nil {
-		return result,tmpErr
-	}
-	result.Guid = input.Guid
-	result.MonitorKey = guid
 	return
 }
 

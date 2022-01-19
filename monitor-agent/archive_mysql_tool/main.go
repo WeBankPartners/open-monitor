@@ -27,7 +27,7 @@ func main() {
 		log.Printf("init mysql connect fail : %v \n", err)
 		return
 	}
-	err = funcs.ChangeDatabase()
+	err = funcs.ChangeDatabase("")
 	if err != nil {
 		log.Printf("change mysql database connect fail : %v \n", err)
 		return

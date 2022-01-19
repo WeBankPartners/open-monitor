@@ -1,15 +1,15 @@
 package prom
 
 import (
-	"fmt"
 	"encoding/json"
+	"fmt"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
+	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"io/ioutil"
 	"net/http"
 	"strings"
-	"io/ioutil"
-	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"sync"
 	"time"
-	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 )
 
 var (
@@ -105,22 +105,16 @@ func InitAgentManager(param []*m.AgentManagerTable, url string) {
 	AgentManagerInitFlag = true
 }
 
-func StartSyncAgentManagerJob(param []*m.AgentManagerTable, url string)  {
-	intervalSecond := 86400
-	timeStartValue, _ := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s 00:00:00 "+m.DefaultLocalTimeZone, time.Now().Format("2006-01-02")))
-	time.Sleep(time.Duration(timeStartValue.Unix()+86400-time.Now().Unix()) * time.Second)
-	t := time.NewTicker(time.Duration(intervalSecond) * time.Second).C
-	for {
-		resp, err := requestAgentMonitor(param, url, "init")
-		if err != nil {
-			log.Logger.Error("Init agent manager, request error", log.Error(err))
-		}
-		if resp.Code == 200 {
-			log.Logger.Info("Init agent manager success")
-		}else{
-			log.Logger.Warn("Init agent manager, response error", log.String("message", resp.Message))
-		}
-		<- t
+func DoSyncAgentManagerJob(param []*m.AgentManagerTable, url string)  {
+	log.Logger.Info("Start init agent manager ")
+	resp, err := requestAgentMonitor(param, url, "init")
+	if err != nil {
+		log.Logger.Error("Init agent manager, request error", log.Error(err))
+	}
+	if resp.Code == 200 {
+		log.Logger.Info("Init agent manager success")
+	}else{
+		log.Logger.Warn("Init agent manager, response error", log.String("message", resp.Message))
 	}
 }
 
