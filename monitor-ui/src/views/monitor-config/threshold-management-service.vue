@@ -230,7 +230,7 @@ export default {
           content: null,
           notify_enable: 1,
           notify_delay_second: 0,
-          active_window: [ '00:01', '23:59' ],
+          active_window: [ '00:00', '23:59' ],
           notify: []
         },
         metricName: '',
@@ -376,7 +376,7 @@ export default {
         content: null,
         notify_enable: 1,
         notify_delay_second: 0,
-        active_window: [ '00:01', '23:59' ],
+        active_window: [ '00:00', '23:59' ],
         notify: []
       }
       this.$root.JQ('#add_edit_Modal').modal('show')
