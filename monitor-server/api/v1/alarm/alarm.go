@@ -127,10 +127,44 @@ func buildNewAlarm(param *m.AMRespAlert, nowTime time.Time) (alarm m.AlarmHandle
 		alarm.EndValue = alertValue
 		alarm.End = nowTime
 	} else if operation == "add" {
+		if !checkIsInActiveWindow(strategyObj.ActiveWindow) {
+			return alarm, fmt.Errorf("Alarm:%s not in active window:%s ", strategyObj.Guid, strategyObj.ActiveWindow)
+		}
 		alarm.StartValue = alertValue
 		alarm.Start = nowTime
 	}
 	return
+}
+
+func checkIsInActiveWindow(input string) bool {
+	if input == "" {
+		return true
+	}
+	timeSplit := strings.Split(input,"-")
+	if len(timeSplit) != 2 {
+		log.Logger.Error("Active window illegal", log.String("input", input))
+		return false
+	}
+	nowTime := time.Now()
+	dayPrefix := nowTime.Format("2006-01-02")
+	st,sErr := time.ParseInLocation("2006-01-02 15:04:05", fmt.Sprintf("%s %s:00", dayPrefix, timeSplit[0]), time.Local)
+	if sErr != nil {
+		log.Logger.Error("Active window start illegal", log.String("start", timeSplit[0]))
+		return false
+	}
+	endString := timeSplit[1]+":00"
+	if strings.HasSuffix(timeSplit[1], "59") {
+		endString = timeSplit[1]+":59"
+	}
+	et,eErr := time.ParseInLocation("2006-01-02 15:04:05", fmt.Sprintf("%s %s", dayPrefix, endString), time.Local)
+	if eErr != nil {
+		log.Logger.Error("Active window end illegal", log.String("end", timeSplit[1]))
+		return false
+	}
+	if nowTime.Unix() >= st.Unix() && nowTime.Unix() <= et.Unix() {
+		return true
+	}
+	return false
 }
 
 func getNewAlarmEndpoint(param *m.AMRespAlert, strategyObj *m.AlarmStrategyMetricObj) (result m.EndpointNewTable, err error) {
@@ -171,7 +205,7 @@ func getNewAlarmEndpoint(param *m.AMRespAlert, strategyObj *m.AlarmStrategyMetri
 		return
 	}
 	if !db.CheckEndpointActiveAlert(result.Guid) {
-		err = fmt.Errorf("Endpoint %s in alert window ", result.Guid)
+		err = fmt.Errorf("Endpoint %s in alert maintain window ", result.Guid)
 	}
 	return
 }
