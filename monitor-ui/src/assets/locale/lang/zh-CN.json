@@ -295,5 +295,6 @@
   "m_any_object": "任一对象",
   "m_selected_object": "已选对象",
   "m_add_object": "添加对象",
-  "m_tip_for_save": "配置完整方可保存!"
+  "m_tip_for_save": "配置完整方可保存!",
+  "m_active_window": "告警时间段"
 }
