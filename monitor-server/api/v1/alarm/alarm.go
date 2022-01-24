@@ -68,9 +68,6 @@ func buildNewAlarm(param *m.AMRespAlert, nowTime time.Time) (alarm m.AlarmHandle
 			return alarm, fmt.Errorf("Try to get alarm strategy with strategy_guid:%s fail,%s ", param.Labels["strategy_guid"], err.Error())
 		}
 		log.Logger.Debug("getNewAlarmWithStrategyGuid", log.String("query guid", strategyObj.Guid))
-		if !checkIsInActiveWindow(strategyObj.ActiveWindow) {
-			return alarm, fmt.Errorf("Alarm:%s not in active window:%s ", strategyObj.Guid, strategyObj.ActiveWindow)
-		}
 	}
 	var endpointObj m.EndpointNewTable
 	endpointObj, err = getNewAlarmEndpoint(param, &strategyObj)
@@ -130,6 +127,9 @@ func buildNewAlarm(param *m.AMRespAlert, nowTime time.Time) (alarm m.AlarmHandle
 		alarm.EndValue = alertValue
 		alarm.End = nowTime
 	} else if operation == "add" {
+		if !checkIsInActiveWindow(strategyObj.ActiveWindow) {
+			return alarm, fmt.Errorf("Alarm:%s not in active window:%s ", strategyObj.Guid, strategyObj.ActiveWindow)
+		}
 		alarm.StartValue = alertValue
 		alarm.Start = nowTime
 	}
