@@ -25,7 +25,7 @@ func QueryAlarmStrategyByGroup(endpointGroup string) (result []*models.EndpointS
 		return
 	}
 	for _, v := range alarmStrategyTable {
-		tmpStrategyObj := models.GroupStrategyObj{Guid: v.Guid, EndpointGroup: v.EndpointGroup, Metric: v.Metric, MetricName: v.MetricName, Condition: v.Condition, Last: v.Last, Priority: v.Priority, Content: v.Content, NotifyEnable: v.NotifyEnable, NotifyDelaySecond: v.NotifyDelaySecond}
+		tmpStrategyObj := models.GroupStrategyObj{Guid: v.Guid, EndpointGroup: v.EndpointGroup, Metric: v.Metric, MetricName: v.MetricName, Condition: v.Condition, Last: v.Last, Priority: v.Priority, Content: v.Content, NotifyEnable: v.NotifyEnable, NotifyDelaySecond: v.NotifyDelaySecond, ActiveWindow: v.ActiveWindow}
 		tmpStrategyObj.NotifyList = getNotifyList(v.Guid, "", "")
 		strategy = append(strategy, &tmpStrategyObj)
 	}
