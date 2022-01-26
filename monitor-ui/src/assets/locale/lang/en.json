@@ -297,5 +297,6 @@
   "m_selected_object": "Selected Object",
   "m_add_object": "Add Object",
   "m_tip_for_save": "The Configuration Is Complete Before Saving !",
-  "m_active_window": "Active Window"
+  "m_active_window": "Active Window",
+  "m_clear": "Clear"
 }
