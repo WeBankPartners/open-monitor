@@ -326,7 +326,7 @@ export const drawChart = function(that,config,userConfig, elId) {
 }
 
 export const drawPieChart = function(that, responseData) {
-  let option = option = {
+  let option = {
     title: {
         // text: panalUnit,
         left: 'center'
