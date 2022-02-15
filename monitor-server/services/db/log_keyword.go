@@ -244,8 +244,8 @@ func doLogKeywordMonitorJob() {
 			tmpAction.Sql = "UPDATE alarm SET content=?,end_value=?,end=? WHERE id=?"
 			tmpAction.Param = []interface{}{v.Content, v.EndValue, v.End.Format(models.DatetimeFormat), v.Id}
 		} else {
-			tmpAction.Sql = "INSERT INTO alarm(strategy_id,endpoint,status,s_metric,s_expr,s_cond,s_last,s_priority,content,start_value,start,tags) VALUE (?,?,?,?,?,?,?,?,?,?,?,?)"
-			tmpAction.Param = []interface{}{v.StrategyId, v.Endpoint, v.Status, v.SMetric, v.SExpr, v.SCond, v.SLast, v.SPriority, v.Content, v.StartValue, v.Start.Format(models.DatetimeFormat), v.Tags}
+			tmpAction.Sql = "INSERT INTO alarm(strategy_id,endpoint,status,s_metric,s_expr,s_cond,s_last,s_priority,content,start_value,start,tags,alarm_strategy) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?)"
+			tmpAction.Param = []interface{}{v.StrategyId, v.Endpoint, v.Status, v.SMetric, v.SExpr, v.SCond, v.SLast, v.SPriority, v.Content, v.StartValue, v.Start.Format(models.DatetimeFormat), v.Tags, "log_keyword_strategy"}
 		}
 		actions = append(actions, &tmpAction)
 	}
