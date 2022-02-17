@@ -511,7 +511,9 @@ func NotifyStrategyAlarm(alarmObj *models.AlarmHandleObj) {
 			newNotifyTable = append(newNotifyTable, v)
 			existMap[tmpKey] = 1
 		}
-		notifyTable = newNotifyTable
+		if len(newNotifyTable) > 0 {
+			notifyTable = newNotifyTable
+		}
 	}
 	for _, v := range notifyTable {
 		notifyAction(v, alarmObj)
