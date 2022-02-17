@@ -500,6 +500,18 @@ func NotifyStrategyAlarm(alarmObj *models.AlarmHandleObj) {
 	if len(notifyTable) == 0 {
 		log.Logger.Info("can not find notify config,use default notify", log.Int("alarmId", alarmObj.Id), log.String("strategy", alarmObj.AlarmStrategy))
 		notifyTable = []*models.NotifyTable{&models.NotifyTable{Guid: "defaultNotify", AlarmAction: alarmObj.Status, NotifyNum: 1}}
+	} else if len(notifyTable) > 1 {
+		var newNotifyTable []*models.NotifyTable
+		existMap := make(map[string]int)
+		for _, v := range notifyTable {
+			tmpKey := fmt.Sprintf("%s_%s_%s_%s", v.ProcCallbackName, v.ProcCallbackKey, v.CallbackUrl, v.CallbackParam)
+			if _, b := existMap[tmpKey]; b {
+				continue
+			}
+			newNotifyTable = append(newNotifyTable, v)
+			existMap[tmpKey] = 1
+		}
+		notifyTable = newNotifyTable
 	}
 	for _, v := range notifyTable {
 		notifyAction(v, alarmObj)
