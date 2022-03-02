@@ -491,9 +491,9 @@ export default {
     initQueryList(query) {
       this.chartQueryList = query
     },
-    getEndpointList() {
+    getEndpointList(query) {
       let params = {
-        search: '.',
+        search: query,
         page: 1,
         size: 10000
       }
