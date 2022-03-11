@@ -26,7 +26,7 @@ func UpdateEndpoint(endpoint *m.EndpointTable, extendParam string) (stepList []i
 		if endpoint.AddressAgent != "" {
 			tmpAgentAddress = endpoint.AddressAgent
 		}
-		actions = append(actions, &Action{Sql: "insert into endpoint_new(guid,name,ip,monitor_type,agent_version,agent_address,step,endpoint_version,endpoint_address,cluster,extend_param,update_time) value (?,?,?,?,?,?,?,?,?,?,?,?)",Param: []interface{}{endpoint.Guid, endpoint.Name, endpoint.Ip, endpoint.ExportType, endpoint.ExportVersion, tmpAgentAddress, endpoint.Step, endpoint.EndpointVersion, endpoint.Address, endpoint.Cluster, extendParam, nowTime}})
+		actions = append(actions, &Action{Sql: "insert into endpoint_new(guid,name,ip,monitor_type,agent_version,agent_address,step,endpoint_version,endpoint_address,cluster,extend_param,update_time) value (?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{endpoint.Guid, endpoint.Name, endpoint.Ip, endpoint.ExportType, endpoint.ExportVersion, tmpAgentAddress, endpoint.Step, endpoint.EndpointVersion, endpoint.Address, endpoint.Cluster, extendParam, nowTime}})
 		err = Transaction(actions)
 		if err != nil {
 			log.Logger.Error("Insert endpoint fail", log.Error(err))
@@ -46,7 +46,7 @@ func UpdateEndpoint(endpoint *m.EndpointTable, extendParam string) (stepList []i
 		if endpoint.AddressAgent != "" {
 			tmpAgentAddress = endpoint.AddressAgent
 		}
-		actions = append(actions, &Action{Sql: "update endpoint_new set agent_address=?,step=?,endpoint_version=?,endpoint_address=?,extend_param=?,update_time=? where guid=?",Param: []interface{}{tmpAgentAddress, endpoint.Step, endpoint.EndpointVersion, endpoint.Address, extendParam, nowTime, endpoint.Guid}})
+		actions = append(actions, &Action{Sql: "update endpoint_new set agent_address=?,step=?,endpoint_version=?,endpoint_address=?,extend_param=?,update_time=? where guid=?", Param: []interface{}{tmpAgentAddress, endpoint.Step, endpoint.EndpointVersion, endpoint.Address, extendParam, nowTime, endpoint.Guid}})
 		err = Transaction(actions)
 		if err != nil {
 			log.Logger.Error("Update endpoint fail", log.Error(err))
@@ -151,12 +151,12 @@ func DeleteEndpoint(guid string) error {
 	var serviceGroup []*m.EndpointServiceRelTable
 	x.SQL("select * from endpoint_service_rel where endpoint=?", guid).Find(&serviceGroup)
 	actions = append(actions, &Action{Sql: "delete from endpoint_group_rel where endpoint=?", Param: []interface{}{guid}})
-	for _,v := range endpointGroup {
-		actions = append(actions, &Action{Sql: "update endpoint_group set update_time=? where guid=?",Param: []interface{}{nowTime, v.EndpointGroup}})
+	for _, v := range endpointGroup {
+		actions = append(actions, &Action{Sql: "update endpoint_group set update_time=? where guid=?", Param: []interface{}{nowTime, v.EndpointGroup}})
 	}
 	actions = append(actions, &Action{Sql: "delete from endpoint_service_rel where endpoint=?", Param: []interface{}{guid}})
-	for _,v := range serviceGroup {
-		actions = append(actions, &Action{Sql: "update service_group set update_time=? where guid=?",Param: []interface{}{nowTime, v.ServiceGroup}})
+	for _, v := range serviceGroup {
+		actions = append(actions, &Action{Sql: "update service_group set update_time=? where guid=?", Param: []interface{}{nowTime, v.ServiceGroup}})
 	}
 	actions = append(actions, &Action{Sql: "delete from log_metric_endpoint_rel where source_endpoint=? or target_endpoint=?", Param: []interface{}{guid, guid}})
 	actions = append(actions, &Action{Sql: "delete from db_metric_endpoint_rel where source_endpoint=? or target_endpoint=?", Param: []interface{}{guid, guid}})
@@ -281,7 +281,11 @@ func UpdateRecursiveEndpoint(guid string, endpoint []string) error {
 			newEndpoint = append(newEndpoint, v)
 		}
 	}
-	_, err = x.Exec("UPDATE panel_recursive SET endpoint=? WHERE guid=?", strings.Join(newEndpoint, "^"), guid)
+	nowTime := time.Now().Format(m.DatetimeFormat)
+	var actions []*Action
+	actions = append(actions, &Action{Sql: "UPDATE panel_recursive SET endpoint=? WHERE guid=?", Param: []interface{}{strings.Join(newEndpoint, "^"), guid}})
+	actions = append(actions, getUpdateServiceEndpointAction(guid, nowTime, newEndpoint)...)
+	err = Transaction(actions)
 	return err
 }
 
@@ -459,12 +463,12 @@ func getServiceGroupCharts(endpoints []string, monitorType, serviceGroup string)
 	result = []*m.ChartModel{}
 	serviceGroupList, _ := fetchGlobalServiceGroupParentGuidList(serviceGroup)
 	var chartTable []*m.ChartTable
-	x.SQL("select * from chart where group_id in (select chart_group from panel where group_id in (select panels_group from dashboard where dashboard_type=?) and service_group in ('"+strings.Join(serviceGroupList,"','")+"'))", monitorType).Find(&chartTable)
+	x.SQL("select * from chart where group_id in (select chart_group from panel where group_id in (select panels_group from dashboard where dashboard_type=?) and service_group in ('"+strings.Join(serviceGroupList, "','")+"'))", monitorType).Find(&chartTable)
 	if len(chartTable) == 0 {
 		return
 	}
-	for _,chart := range chartTable {
-		result = append(result, &m.ChartModel{Id: chart.Id,Col: chart.Col,Title: chart.Title,Endpoint: endpoints,Metric: []string{chart.Metric},MonitorType: monitorType,Aggregate: chart.AggType})
+	for _, chart := range chartTable {
+		result = append(result, &m.ChartModel{Id: chart.Id, Col: chart.Col, Title: chart.Title, Endpoint: endpoints, Metric: []string{chart.Metric}, MonitorType: monitorType, Aggregate: chart.AggType})
 	}
 	return result
 }
