@@ -132,7 +132,12 @@ func getChartConfigByChartId(param *models.ChartQueryParam, result *models.EChar
 	result.Id = param.ChartId
 	result.Title = chartList[0].Title
 	queryList = []*models.QueryMonitorData{}
+	existEndointMap := make(map[string]int)
 	for _, dataConfig := range param.Data {
+		if _, b := existEndointMap[dataConfig.Endpoint]; b {
+			continue
+		}
+		existEndointMap[dataConfig.Endpoint] = 1
 		endpointObj := models.EndpointTable{Guid: dataConfig.Endpoint}
 		db.GetEndpoint(&endpointObj)
 		if endpointObj.Id <= 0 {
