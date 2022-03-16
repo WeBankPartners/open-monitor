@@ -1,6 +1,5 @@
 <template>
   <div class="">
-    11111
        <div class="c-dark max-chart">
         <div class="condition-zone">
           <ul>
