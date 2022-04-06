@@ -25,7 +25,7 @@ func InitPrometheusDatasource() {
 	promDS = DataSourceParam{DataSource: opentsdbDS, Host: cfg.Host, Token: cfg.Token}
 }
 
-var PieLegendBlackName = []string{"job", "instance"}
+var PieLegendBlackName = []string{"job", "instance", "__name__", "e_guid"}
 
 func PrometheusData(query *m.QueryMonitorData) []*m.SerialModel {
 	serials := []*m.SerialModel{}
@@ -111,7 +111,7 @@ func PrometheusData(query *m.QueryMonitorData) []*m.SerialModel {
 			}
 			tmpName := strings.Join(tmpNameList, ",")
 			if tmpName == "" {
-				tmpName = query.Metric[0]
+				tmpName = query.Endpoint[0] + "__" + query.Metric[0]
 			}
 			pieData.Legend = append(pieData.Legend, tmpName)
 			if len(otr.Values) > 0 {
