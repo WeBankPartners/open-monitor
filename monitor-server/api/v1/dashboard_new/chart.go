@@ -132,7 +132,12 @@ func getChartConfigByChartId(param *models.ChartQueryParam, result *models.EChar
 	result.Id = param.ChartId
 	result.Title = chartList[0].Title
 	queryList = []*models.QueryMonitorData{}
+	existEndpointMap := make(map[string]int)
 	for _, dataConfig := range param.Data {
+		if _, b := existEndpointMap[dataConfig.Endpoint]; b {
+			continue
+		}
+		existEndpointMap[dataConfig.Endpoint] = 1
 		endpointObj := models.EndpointTable{Guid: dataConfig.Endpoint}
 		db.GetEndpoint(&endpointObj)
 		if endpointObj.Id <= 0 {
@@ -153,9 +158,13 @@ func getChartConfigByChartId(param *models.ChartQueryParam, result *models.EChar
 			if err != nil {
 				break
 			}
-			queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQl, Legend: chartList[0].Legend, Metric: []string{metric}, Endpoint: []string{dataConfig.Endpoint}, CompareLegend: param.Compare.CompareFirstLegend, SameEndpoint: true, Step: param.Step, Cluster: endpointObj.Cluster})
+			tmpLegend := chartList[0].Legend
+			if len(param.Data) > 1 && strings.HasPrefix(tmpLegend, "$custom_") {
+				tmpLegend = "$custom"
+			}
+			queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQl, Legend: tmpLegend, Metric: []string{metric}, Endpoint: []string{dataConfig.Endpoint}, CompareLegend: param.Compare.CompareFirstLegend, SameEndpoint: true, Step: param.Step, Cluster: endpointObj.Cluster})
 			if param.Compare.CompareFirstLegend != "" {
-				queryList = append(queryList, &models.QueryMonitorData{Start: param.Compare.CompareSecondStartTimestamp, End: param.Compare.CompareSecondEndTimestamp, PromQ: tmpPromQl, Legend: chartList[0].Legend, Metric: []string{metric}, Endpoint: []string{dataConfig.Endpoint}, CompareLegend: param.Compare.CompareSecondLegend, SameEndpoint: true, Step: param.Step, Cluster: endpointObj.Cluster})
+				queryList = append(queryList, &models.QueryMonitorData{Start: param.Compare.CompareSecondStartTimestamp, End: param.Compare.CompareSecondEndTimestamp, PromQ: tmpPromQl, Legend: tmpLegend, Metric: []string{metric}, Endpoint: []string{dataConfig.Endpoint}, CompareLegend: param.Compare.CompareSecondLegend, SameEndpoint: true, Step: param.Step, Cluster: endpointObj.Cluster})
 			}
 		}
 		if err != nil {
