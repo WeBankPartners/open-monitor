@@ -47,6 +47,14 @@ func CreateAlarmStrategy(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
+	if param.ActiveWindow != "" {
+		if !middleware.ValidateActiveWindowString(param.ActiveWindow) {
+			middleware.ReturnValidateError(c, "Param active_window validate fail")
+			return
+		}
+	}else {
+		param.ActiveWindow = models.DefaultActiveWindow
+	}
 	err := db.CreateAlarmStrategy(&param)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
@@ -65,6 +73,14 @@ func UpdateAlarmStrategy(c *gin.Context) {
 	if err := c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnValidateError(c, err.Error())
 		return
+	}
+	if param.ActiveWindow != "" {
+		if !middleware.ValidateActiveWindowString(param.ActiveWindow) {
+			middleware.ReturnValidateError(c, "Param active_window validate fail")
+			return
+		}
+	}else {
+		param.ActiveWindow = models.DefaultActiveWindow
 	}
 	err := db.UpdateAlarmStrategy(&param)
 	if err != nil {
