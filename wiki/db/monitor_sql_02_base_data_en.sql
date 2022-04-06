@@ -657,3 +657,7 @@ alter table endpoint_group modify update_time datetime;
 update service_group set update_time=now() where update_time='' or update_time is null;
 alter table service_group modify update_time datetime;
 #@v2.0.0.12-end@;
+
+#@v2.0.0.16-begin@;
+alter table alarm_strategy add column active_window varchar(32) default '00:00-23:59';
+#@v2.0.0.16-end@;
