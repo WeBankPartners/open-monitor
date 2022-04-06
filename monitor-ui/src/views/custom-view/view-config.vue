@@ -354,6 +354,7 @@ export default {
         this.$root.JQ('#set_chart_type_Modal').modal('show')
       } else {
         this.activeChartType = find._activeCharts[0].chartType
+        this.chartType = find._activeCharts[0].chartType
         this.editGrid(item)
       }
     },

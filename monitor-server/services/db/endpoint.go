@@ -21,12 +21,12 @@ func GetEndpointTypeList() (result []string, err error) {
 	return
 }
 
-func GetEndpointByType(endpointType,serviceGroup string) (result []*models.EndpointNewTable, err error) {
+func GetEndpointByType(endpointType, serviceGroup string) (result []*models.EndpointNewTable, err error) {
 	result = []*models.EndpointNewTable{}
 	if serviceGroup != "" {
-		serviceGroupList,_ := fetchGlobalServiceGroupChildGuidList(serviceGroup)
-		err = x.SQL("select guid from endpoint_new where monitor_type=? and guid in (select endpoint from endpoint_service_rel where service_group in ('"+strings.Join(serviceGroupList,"','")+"'))", endpointType).Find(&result)
-	}else {
+		serviceGroupList, _ := fetchGlobalServiceGroupChildGuidList(serviceGroup)
+		err = x.SQL("select guid from endpoint_new where monitor_type=? and guid in (select endpoint from endpoint_service_rel where service_group in ('"+strings.Join(serviceGroupList, "','")+"'))", endpointType).Find(&result)
+	} else {
 		err = x.SQL("select guid from endpoint_new where monitor_type=?", endpointType).Find(&result)
 	}
 	return
@@ -93,7 +93,7 @@ func GetEndpointNew(param *models.EndpointNewTable) (result models.EndpointNewTa
 		if param.MonitorType != "" {
 			err = x.SQL("select * from endpoint_new where agent_address=? and monitor_type=?", param.AgentAddress, param.MonitorType).Find(&endpointNew)
 			filterMessage = fmt.Sprintf("agent_address=%s and monitor_type=%s ", param.AgentAddress, param.MonitorType)
-		}else {
+		} else {
 			err = x.SQL("select * from endpoint_new where agent_address=?", param.AgentAddress).Find(&endpointNew)
 			filterMessage = fmt.Sprintf("agent_address=%s", param.AgentAddress)
 		}
@@ -145,7 +145,7 @@ func ListEndpointOptions(searchText string) (result []*models.OptionModel, err e
 }
 
 func CheckEndpointInAgentManager(guid string) bool {
-	queryRows,_ := x.QueryString("select endpoint_guid from agent_manager where endpoint_guid=?", guid)
+	queryRows, _ := x.QueryString("select endpoint_guid from agent_manager where endpoint_guid=?", guid)
 	if len(queryRows) > 0 {
 		return true
 	}
@@ -153,7 +153,7 @@ func CheckEndpointInAgentManager(guid string) bool {
 }
 
 func UpdateAgentManager(param *models.AgentManagerTable) error {
-	_,err := x.Exec("update agent_manager set `user`=?,`password`=?,instance_address=?,agent_address=? where endpoint_guid=?", param.User, param.Password, param.InstanceAddress, param.AgentAddress, param.EndpointGuid)
+	_, err := x.Exec("update agent_manager set `user`=?,`password`=?,instance_address=?,agent_address=? where endpoint_guid=?", param.User, param.Password, param.InstanceAddress, param.AgentAddress, param.EndpointGuid)
 	if err != nil {
 		err = fmt.Errorf("Update agent manager fail,%s ", err.Error())
 	}
@@ -161,9 +161,16 @@ func UpdateAgentManager(param *models.AgentManagerTable) error {
 }
 
 func UpdateEndpointData(endpoint *models.EndpointNewTable) (err error) {
-	_,err = x.Exec("update endpoint_new set agent_address=?,step=?,endpoint_address=?,extend_param=?,update_time=? where guid=?", endpoint.AgentAddress,endpoint.Step,endpoint.EndpointAddress,endpoint.ExtendParam,time.Now().Format(models.DatetimeFormat),endpoint.Guid)
+	nowTimeString := time.Now().Format(models.DatetimeFormat)
+	_, err = x.Exec("update endpoint_new set agent_address=?,step=?,endpoint_address=?,extend_param=?,update_time=? where guid=?", endpoint.AgentAddress, endpoint.Step, endpoint.EndpointAddress, endpoint.ExtendParam, nowTimeString, endpoint.Guid)
 	if err != nil {
 		err = fmt.Errorf("Update endpoint table failj,%s ", err.Error())
+	} else {
+		if endpoint.AgentAddress != endpoint.EndpointAddress {
+			x.Exec("update endpoint set address_agent=?,address=?,step=? where guid=?", endpoint.AgentAddress, endpoint.EndpointAddress, endpoint.Step, endpoint.Guid)
+		} else {
+			x.Exec("update endpoint set address=?,step=? where guid=?", endpoint.EndpointAddress, endpoint.Step, endpoint.Guid)
+		}
 	}
 	return
 }
