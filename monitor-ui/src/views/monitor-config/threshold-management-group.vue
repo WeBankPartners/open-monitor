@@ -121,6 +121,10 @@
             <Option v-for="item in modelConfig.notifyDelayOption" :value="item.value" :key="item.value">{{ item.label }}</Option>
           </Select>
         </div>
+        <div class="marginbottom params-each">
+          <label class="col-md-2 label-name">{{$t('m_active_window')}}:</label>
+          <TimePicker v-model="modelConfig.addRow.active_window" :clearable="false" format="HH:mm" type="timerange" placement="bottom-end" style="width: 168px"></TimePicker>
+        </div>
       </div>
       <div slot="noticeConfig" class="extentClass">  
         <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;">
@@ -221,6 +225,7 @@ export default {
           content: null,
           notify_enable: 1,
           notify_delay_second: 0,
+          active_window: [ '00:00', '23:59' ],
           notify: []
         },
         metricName: '',
@@ -284,7 +289,8 @@ export default {
           this.$Message.warning(this.$t('tableKey.content')+this.$t('tips.required'))
           return
         }
-        let params = this.paramsPrepare()
+        let params = JSON.parse(JSON.stringify(this.paramsPrepare()))
+        params.active_window = params.active_window.join('-')
         this.$root.$httpRequestEntrance.httpRequestEntrance('PUT', '/monitor/api/v2/alarm/strategy', params, () => {
           this.$Message.success(this.$t('tips.success'))
           this.$root.JQ('#add_edit_Modal').modal('hide')
@@ -318,6 +324,7 @@ export default {
         this.id = rowData.id
         this.modelTip.value = rowData.metric
         this.modelConfig.addRow = this.$root.$tableUtil.manageEditParams(this.modelConfig.addRow, rowData)
+        this.modelConfig.addRow.active_window = rowData.active_window === '' ? ['00:00', '23:59'] : rowData.active_window.split('-')
         let condition = rowData.condition.split('')
         if (condition.indexOf('=') >= 0) {
           this.modelConfig.threshold = condition.slice(0,2).join('')
@@ -366,6 +373,7 @@ export default {
         content: null,
         notify_enable: 1,
         notify_delay_second: 0,
+        active_window: [ '00:00', '23:59' ],
         notify: []
       }
       this.modelConfig.isAdd = true
@@ -393,7 +401,8 @@ export default {
           this.$Message.warning(this.$t('tableKey.content')+this.$t('tips.required'))
           return
         }
-        let params = this.paramsPrepare()
+        let params = JSON.parse(JSON.stringify(this.paramsPrepare()))
+        params.active_window = params.active_window.join('-')
         this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v2/alarm/strategy', params, () => {
           this.$Message.success(this.$t('tips.success'))
           this.$root.JQ('#add_edit_Modal').modal('hide')
