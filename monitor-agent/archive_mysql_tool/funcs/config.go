@@ -50,9 +50,22 @@ type HttpConfig struct {
 	Port   int  `json:"port"`
 }
 
+type HdfsConfig struct {
+	Krb5         string `json:"krb5"`
+	Keytab       string `json:"keytab"`
+	Username     string `json:"username"`
+	Realm        string `json:"realm"`
+	DestDir      string `json:"dest_dir"`
+	ConfDir      string `json:"conf_dir"`
+	LocalTempDir string `json:"local_temp_dir"`
+	MaxFileOpen  string `json:"max_file_open"`
+}
+
 type GlobalConfig struct {
 	Enable     string           `json:"enable"`
+	ArchType   string           `json:"type"`
 	Mysql      MysqlConfig      `json:"mysql"`
+	Hdfs       HdfsConfig       `json:"hdfs"`
 	Prometheus PrometheusConfig `json:"prometheus"`
 	Monitor    MonitorConfig    `json:"monitor"`
 	Trans      TransConfig      `json:"trans"`
