@@ -1,5 +1,6 @@
 {
   "enable": "Y",
+  "type": "hdfs",
   "mysql": {
     "server": "127.0.0.1",
     "port": "3306",
@@ -9,6 +10,16 @@
     "max_open": 150,
     "max_idle": 10,
     "timeout": 60
+  },
+  "hdfs":{
+    "krb5":"/app/monitor/archive_mysql_tool/conf/krb5.conf",
+    "keytab":"/app/monitor/archive_mysql_tool/keytab/hduser3001.keytab",
+    "username":"hduser3001",
+    "realm":"WEBANK.COM",
+    "dest_dir":"/apps-data/hduser3001",
+    "conf_dir":"/app/monitor/archive_mysql_tool/conf",
+    "local_temp_dir":"/app/monitor/archive_mysql_tool/data",
+    "max_file_open": "5"
   },
   "prometheus": {
     "server": "127.0.0.1",
