@@ -2,14 +2,15 @@ package funcs
 
 import (
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/go-xorm/core"
-	"github.com/go-xorm/xorm"
 	"log"
 	"math/rand"
 	"strconv"
 	"strings"
 	"time"
+
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/go-xorm/core"
+	"github.com/go-xorm/xorm"
 )
 
 var (
@@ -50,13 +51,16 @@ func InitDbEngine(databaseName string) (err error) {
 	return err
 }
 
-func ResetDbEngine()  {
+func ResetDbEngine() {
 	err := mysqlEngine.Close()
 	if err != nil {
 		log.Printf("close mysql engine fail,%s \n", err.Error())
 	}
-	time.Sleep(30*time.Second)
+	time.Sleep(30 * time.Second)
 	databaseName := Config().Mysql.DatabasePrefix + time.Now().Format("2006")
+	if Config().ArchType == "hdfs" {
+		databaseName = Config().Mysql.DatabasePrefix + "2022"
+	}
 	connectStr := fmt.Sprintf("%s:%s@%s(%s:%s)/%s?collation=utf8mb4_unicode_ci&allowNativePasswords=true",
 		Config().Mysql.User, Config().Mysql.Password, "tcp", Config().Mysql.Server, Config().Mysql.Port, databaseName)
 	mysqlEngine, err = xorm.NewEngine("mysql", connectStr)
@@ -159,11 +163,14 @@ func createTable(start int64, isFiveArchive bool) (err error, tableName string) 
 	if isFiveArchive {
 		tableDate = tableDate + "_5m"
 	}
-	createSql := fmt.Sprintf("CREATE TABLE IF NOT EXISTS `%s` (`id` int(11) unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY,`endpoint` VARCHAR(255) NOT NULL,`metric` VARCHAR(255) NOT NULL,`tags` VARCHAR(500) NOT NULL DEFAULT '',`unix_time` INT(11) NOT NULL,`avg` DOUBLE NOT NULL DEFAULT 0,`min` DOUBLE NOT NULL DEFAULT 0,`max` DOUBLE NOT NULL DEFAULT 0,`p95` DOUBLE NOT NULL DEFAULT 0,INDEX idx_%s_endpoint (`endpoint`),INDEX idx_%s_metric (`metric`)) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8", tableName, tableDate, tableDate)
-	_, err = mysqlEngine.Exec(createSql)
-	if err != nil {
-		log.Printf("create table %s error: %v \n", tableName, err)
+	if Config().ArchType == "mysql" {
+		createSql := fmt.Sprintf("CREATE TABLE IF NOT EXISTS `%s` (`id` int(11) unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY,`endpoint` VARCHAR(255) NOT NULL,`metric` VARCHAR(255) NOT NULL,`tags` VARCHAR(500) NOT NULL DEFAULT '',`unix_time` INT(11) NOT NULL,`avg` DOUBLE NOT NULL DEFAULT 0,`min` DOUBLE NOT NULL DEFAULT 0,`max` DOUBLE NOT NULL DEFAULT 0,`p95` DOUBLE NOT NULL DEFAULT 0,INDEX idx_%s_endpoint (`endpoint`),INDEX idx_%s_metric (`metric`)) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8", tableName, tableDate, tableDate)
+		_, err = mysqlEngine.Exec(createSql)
+		if err != nil {
+			log.Printf("create table %s error: %v \n", tableName, err)
+		}
 	}
+
 	return err, tableName
 }
 
@@ -183,10 +190,14 @@ func checkTableExists(tableName string) bool {
 }
 
 func ChangeDatabase(year string) error {
+
 	if year == "" {
 		year = time.Now().Format("2006")
 	}
 	databaseName := Config().Mysql.DatabasePrefix + year
+	if Config().ArchType == "hdfs" {
+		databaseName = Config().Mysql.DatabasePrefix + "2022"
+	}
 	if databaseName == databaseSelect {
 		return nil
 	}
