@@ -118,6 +118,9 @@
                 </section>
               </template>
             </div>
+            <div style="margin: 4px 0; text-align:right">
+              <Page :total="paginationInfo.total" @on-change="pageIndexChange" @on-page-size-change="pageSizeChange" show-elevator show-sizer show-total />
+            </div>
           </div>
         </div>
       </TabPane>
@@ -165,6 +168,11 @@ export default {
           message: '',
           is_custom: false
         }
+      },
+      paginationInfo: {
+        total: 0,
+        startIndex: 1,
+        pageSize: 10
       }
     }
   },
@@ -204,8 +212,22 @@ export default {
       // const news = this.$router.resolve({name: 'endpointView'})
       // window.open(news.href, '_blank')
     },
+    pageIndexChange(pageIndex) {
+      this.paginationInfo.startIndex = pageIndex
+      this.getAlarm()
+    },
+    pageSizeChange(pageSize) {
+      this.paginationInfo.startIndex = 1
+      this.paginationInfo.pageSize = pageSize
+      this.getAlarm()
+    },
     getAlarm() {
-      let params = {}
+      let params = {
+        page: {
+          startIndex: this.paginationInfo.startIndex,
+          pageSize: this.paginationInfo.pageSize
+        }
+      }
       let keys = Object.keys(this.filters)
       this.filtersForShow = []
       for (let i = 0; i< keys.length ;i++) {
@@ -216,8 +238,11 @@ export default {
       this.timeForDataAchieve = new Date().toLocaleString()
       this.timeForDataAchieve = this.timeForDataAchieve.replace('上午', 'AM ')
       this.timeForDataAchieve = this.timeForDataAchieve.replace('下午', 'PM ')
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/alarm/problem/query', params, (responseData) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/alarm/problem/page', params, (responseData) => {
         this.resultData = responseData.data
+        this.paginationInfo.total = responseData.page.totalRows
+        this.paginationInfo.startIndex = responseData.page.startIndex
+        this.paginationInfo.pageSize = responseData.page.pageSize
         this.low = responseData.low
         this.mid = responseData.mid
         this.high = responseData.high
@@ -414,7 +439,7 @@ export default {
 
 <style scoped lang="less">
 .echart {
-  height: ~"calc(100vh - 180px)";
+  height: ~"calc(100vh - 200px)";
   width: ~"calc(100vw * 0.4)";
   background:#ffffff;
 }
@@ -441,7 +466,7 @@ label {
   font-size: 18px;
 }
 .alarm-list {
-  height: ~"calc(100vh - 180px)";
+  height: ~"calc(100vh - 250px)";
   width: 100%;
   overflow-y: auto;
 }
