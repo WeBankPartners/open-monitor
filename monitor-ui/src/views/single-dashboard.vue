@@ -111,7 +111,7 @@ export default {
         //   {'x':1,'y':1,'w':2,'h':2,'i':'1'},
       ],
 
-      showAlarm: true, // 显示告警信息
+      showAlarm: false, // 显示告警信息
       cutsomViewId: null
     }
   },
