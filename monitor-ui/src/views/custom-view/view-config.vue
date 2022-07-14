@@ -237,7 +237,7 @@ export default {
       activeGridConfig: null,
       activeChartType: 'line',
 
-      showAlarm: true, // 显示告警信息
+      showAlarm: false, // 显示告警信息
       cutsomViewId: null,
 
       showMaxChart: false,

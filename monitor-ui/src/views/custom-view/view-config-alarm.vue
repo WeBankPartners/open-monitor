@@ -224,7 +224,7 @@ label {
   font-size: 18px;
 }
 .alarm-list {
-  height: ~"calc(100vh - 220px)";
+  height: ~"calc(100vh - 250px)";
   width: 100%;
   overflow-y: auto;
 }
