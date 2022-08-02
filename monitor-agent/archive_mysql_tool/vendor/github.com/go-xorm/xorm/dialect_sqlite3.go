@@ -270,68 +270,6 @@ func (db *sqlite3) IsColumnExist(tableName, colName string) (bool, error) {
 	return false, nil
 }
 
-// splitColStr splits a sqlite col strings as fields
-func splitColStr(colStr string) []string {
-	colStr = strings.TrimSpace(colStr)
-	var results = make([]string, 0, 10)
-	var lastIdx int
-	var hasC, hasQuote bool
-	for i, c := range colStr {
-		if c == ' ' && !hasQuote {
-			if hasC {
-				results = append(results, colStr[lastIdx:i])
-				hasC = false
-			}
-		} else {
-			if c == '\'' {
-				hasQuote = !hasQuote
-			}
-			if !hasC {
-				lastIdx = i
-			}
-			hasC = true
-			if i == len(colStr)-1 {
-				results = append(results, colStr[lastIdx:i+1])
-			}
-		}
-	}
-	return results
-}
-
-func parseString(colStr string) (*core.Column, error) {
-	fields := splitColStr(colStr)
-	col := new(core.Column)
-	col.Indexes = make(map[string]int)
-	col.Nullable = true
-	col.DefaultIsEmpty = true
-
-	for idx, field := range fields {
-		if idx == 0 {
-			col.Name = strings.Trim(strings.Trim(field, "`[] "), `"`)
-			continue
-		} else if idx == 1 {
-			col.SQLType = core.SQLType{Name: field, DefaultLength: 0, DefaultLength2: 0}
-			continue
-		}
-		switch field {
-		case "PRIMARY":
-			col.IsPrimaryKey = true
-		case "AUTOINCREMENT":
-			col.IsAutoIncrement = true
-		case "NULL":
-			if fields[idx-1] == "NOT" {
-				col.Nullable = false
-			} else {
-				col.Nullable = true
-			}
-		case "DEFAULT":
-			col.Default = fields[idx+1]
-			col.DefaultIsEmpty = false
-		}
-	}
-	return col, nil
-}
-
 func (db *sqlite3) GetColumns(tableName string) ([]string, map[string]*core.Column, error) {
 	args := []interface{}{tableName}
 	s := "SELECT sql FROM sqlite_master WHERE type='table' and name = ?"
@@ -361,7 +299,6 @@ func (db *sqlite3) GetColumns(tableName string) ([]string, map[string]*core.Colu
 	colCreates := reg.FindAllString(name[nStart+1:nEnd], -1)
 	cols := make(map[string]*core.Column)
 	colSeq := make([]string, 0)
-
 	for _, colStr := range colCreates {
 		reg = regexp.MustCompile(`,\s`)
 		colStr = reg.ReplaceAllString(colStr, ",")
@@ -378,11 +315,38 @@ func (db *sqlite3) GetColumns(tableName string) ([]string, map[string]*core.Colu
 			continue
 		}
 
-		col, err := parseString(colStr)
-		if err != nil {
-			return colSeq, cols, err
-		}
+		fields := strings.Fields(strings.TrimSpace(colStr))
+		col := new(core.Column)
+		col.Indexes = make(map[string]int)
+		col.Nullable = true
+		col.DefaultIsEmpty = true
 
+		for idx, field := range fields {
+			if idx == 0 {
+				col.Name = strings.Trim(strings.Trim(field, "`[] "), `"`)
+				continue
+			} else if idx == 1 {
+				col.SQLType = core.SQLType{Name: field, DefaultLength: 0, DefaultLength2: 0}
+			}
+			switch field {
+			case "PRIMARY":
+				col.IsPrimaryKey = true
+			case "AUTOINCREMENT":
+				col.IsAutoIncrement = true
+			case "NULL":
+				if fields[idx-1] == "NOT" {
+					col.Nullable = false
+				} else {
+					col.Nullable = true
+				}
+			case "DEFAULT":
+				col.Default = fields[idx+1]
+				col.DefaultIsEmpty = false
+			}
+		}
+		if !col.SQLType.IsNumeric() && !col.DefaultIsEmpty {
+			col.Default = "'" + col.Default + "'"
+		}
 		cols[col.Name] = col
 		colSeq = append(colSeq, col.Name)
 	}
