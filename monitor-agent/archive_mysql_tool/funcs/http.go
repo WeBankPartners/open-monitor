@@ -25,12 +25,7 @@ func handleCustomJob(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		returnJson(r, w, err, nil)
 	} else {
-		if Config().ArchType == "hdfs" {
-			log.Println("start to write row data to local file")
-			ConsumeRowDataToFile()
-		}
 		CreateJob(dateString)
-
 		returnJson(r, w, err, "start 1min job success")
 	}
 }

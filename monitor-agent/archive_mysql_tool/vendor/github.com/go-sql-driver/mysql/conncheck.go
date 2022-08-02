@@ -6,7 +6,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this file,
 // You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// +build linux darwin dragonfly freebsd netbsd openbsd solaris illumos
+// +build !windows,!appengine
 
 package mysql
 
@@ -19,36 +19,35 @@ import (
 
 var errUnexpectedRead = errors.New("unexpected read from socket")
 
-func connCheck(conn net.Conn) error {
-	var sysErr error
+func connCheck(c net.Conn) error {
+	var (
+		n    int
+		err  error
+		buff [1]byte
+	)
 
-	sysConn, ok := conn.(syscall.Conn)
+	sconn, ok := c.(syscall.Conn)
 	if !ok {
 		return nil
 	}
-	rawConn, err := sysConn.SyscallConn()
+	rc, err := sconn.SyscallConn()
 	if err != nil {
 		return err
 	}
-
-	err = rawConn.Read(func(fd uintptr) bool {
-		var buf [1]byte
-		n, err := syscall.Read(int(fd), buf[:])
-		switch {
-		case n == 0 && err == nil:
-			sysErr = io.EOF
-		case n > 0:
-			sysErr = errUnexpectedRead
-		case err == syscall.EAGAIN || err == syscall.EWOULDBLOCK:
-			sysErr = nil
-		default:
-			sysErr = err
-		}
+	rerr := rc.Read(func(fd uintptr) bool {
+		n, err = syscall.Read(int(fd), buff[:])
 		return true
 	})
-	if err != nil {
+	switch {
+	case rerr != nil:
+		return rerr
+	case n == 0 && err == nil:
+		return io.EOF
+	case n > 0:
+		return errUnexpectedRead
+	case err == syscall.EAGAIN || err == syscall.EWOULDBLOCK:
+		return nil
+	default:
 		return err
 	}
-
-	return sysErr
 }

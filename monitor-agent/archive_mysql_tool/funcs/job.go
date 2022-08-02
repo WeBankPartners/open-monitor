@@ -8,15 +8,7 @@ import (
 	"time"
 )
 
-var (
-	jobChannelList chan ArchiveActionList
-	archType       string // value: "mysql", "hdfs"
-)
-
-const (
-	ARCHTYPEMYSQL = "mysql"
-	ARCHTYPEHDFS  = "hdfs"
-)
+var jobChannelList chan ArchiveActionList
 
 func StartCronJob() {
 	concurrentInsertNum = 50
@@ -35,8 +27,6 @@ func StartCronJob() {
 	if Config().Trans.JobTimeout > 0 {
 		jobTimeout = Config().Trans.JobTimeout
 	}
-	archType = Config().ArchType
-	log.Printf("archive data type : %s", archType)
 	jobChannelList = make(chan ArchiveActionList, Config().Prometheus.MaxHttpOpen)
 	go consumeJob()
 	t, _ := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s 00:00:00 "+DefaultLocalTimeZone, time.Now().Format("2006-01-02")))
@@ -45,10 +35,6 @@ func StartCronJob() {
 	c := time.NewTicker(24 * time.Hour).C
 	for {
 		go func() {
-			if archType == "hdfs" {
-				log.Println("start to write row data to local file")
-				ConsumeRowDataToFile()
-			}
 			if checkJobState() {
 				CreateJob("")
 				time.Sleep(10 * time.Minute)
@@ -159,7 +145,6 @@ func consumeJob() {
 			ResetDbEngine()
 		}
 		gTransport.CloseIdleConnections()
-
 	}
 }
 
@@ -169,12 +154,6 @@ func checkJobStatus() {
 		log.Printf("job channel list length --> %d \n", len(jobChannelList))
 		if len(jobChannelList) == 0 {
 			log.Printf("archive job done \n")
-			// notify file write complete
-			NotifyJobComplete()
-
-			fileName := MergeTmpFile()
-			log.Printf("start to copy local file %s to hdfs", fileName)
-			CopyLocalToHdfs(fileName)
 			break
 		}
 		time.Sleep(30 * time.Second)
@@ -237,16 +216,9 @@ func archiveAction(param ArchiveActionList) {
 		log.Printf("acrhive action: endpoint->%s unit_num->%d row data is empty \n", param[0].Endpoint, len(param))
 		return
 	}
-
-	if archType == ARCHTYPEMYSQL {
-		err = insertMysql(rowData, param[0].TableName)
-		if err != nil {
-			log.Printf("acrhive action: endpoint->%s unit_num->%d row_num->%d insert to mysql error-> %v \n", param[0].Endpoint, len(param), len(rowData), err)
-		}
-	}
-
-	if archType == ARCHTYPEHDFS {
-		rowDataChan <- rowData
+	err = insertMysql(rowData, param[0].TableName)
+	if err != nil {
+		log.Printf("acrhive action: endpoint->%s unit_num->%d row_num->%d insert to mysql error-> %v \n", param[0].Endpoint, len(param), len(rowData), err)
 	}
 }
 
