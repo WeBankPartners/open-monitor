@@ -125,7 +125,6 @@ func DefaultTagHandler(ctx *tagContext) error {
 		ctx.col.Default = ctx.nextTag
 		ctx.ignoreNext = true
 	}
-	ctx.col.DefaultIsEmpty = false
 	return nil
 }
 

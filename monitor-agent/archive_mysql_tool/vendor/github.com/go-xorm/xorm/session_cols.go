@@ -12,6 +12,49 @@ import (
 	"xorm.io/core"
 )
 
+type incrParam struct {
+	colName string
+	arg     interface{}
+}
+
+type decrParam struct {
+	colName string
+	arg     interface{}
+}
+
+type exprParam struct {
+	colName string
+	expr    string
+}
+
+type columnMap []string
+
+func (m columnMap) contain(colName string) bool {
+	if len(m) == 0 {
+		return false
+	}
+
+	n := len(colName)
+	for _, mk := range m {
+		if len(mk) != n {
+			continue
+		}
+		if strings.EqualFold(mk, colName) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (m *columnMap) add(colName string) bool {
+	if m.contain(colName) {
+		return false
+	}
+	*m = append(*m, colName)
+	return true
+}
+
 func setColumnInt(bean interface{}, col *core.Column, t int64) {
 	v, err := col.ValueOf(bean)
 	if err != nil {
@@ -89,7 +132,7 @@ func (session *Session) Decr(column string, arg ...interface{}) *Session {
 }
 
 // SetExpr provides a query string like "column = {expression}"
-func (session *Session) SetExpr(column string, expression interface{}) *Session {
+func (session *Session) SetExpr(column string, expression string) *Session {
 	session.statement.SetExpr(column, expression)
 	return session
 }
