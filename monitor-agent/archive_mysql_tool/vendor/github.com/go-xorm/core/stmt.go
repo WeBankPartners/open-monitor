@@ -11,7 +11,6 @@ import (
 	"reflect"
 )
 
-// Stmt reprents a stmt objects
 type Stmt struct {
 	*sql.Stmt
 	db    *DB

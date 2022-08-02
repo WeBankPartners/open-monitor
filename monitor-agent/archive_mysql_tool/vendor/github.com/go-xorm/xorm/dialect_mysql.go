@@ -345,9 +345,9 @@ func (db *mysql) GetColumns(tableName string) ([]string, map[string]*core.Column
 
 		if colDefault != nil {
 			col.Default = *colDefault
-			col.DefaultIsEmpty = false
-		} else {
-			col.DefaultIsEmpty = true
+			if col.Default == "" {
+				col.DefaultIsEmpty = true
+			}
 		}
 
 		cts := strings.Split(colType, "(")
@@ -411,11 +411,13 @@ func (db *mysql) GetColumns(tableName string) ([]string, map[string]*core.Column
 			col.IsAutoIncrement = true
 		}
 
-		if !col.DefaultIsEmpty {
-			if col.SQLType.IsText() {
+		if col.SQLType.IsText() || col.SQLType.IsTime() {
+			if col.Default != "" {
 				col.Default = "'" + col.Default + "'"
-			} else if col.SQLType.IsTime() && col.Default != "CURRENT_TIMESTAMP" {
-				col.Default = "'" + col.Default + "'"
+			} else {
+				if col.DefaultIsEmpty {
+					col.Default = "''"
+				}
 			}
 		}
 		cols[col.Name] = col

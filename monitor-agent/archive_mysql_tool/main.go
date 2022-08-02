@@ -2,10 +2,9 @@ package main
 
 import (
 	"flag"
+	"github.com/WeBankPartners/open-monitor/monitor-agent/archive_mysql_tool/funcs"
 	"log"
 	"strings"
-
-	"github.com/WeBankPartners/open-monitor/monitor-agent/archive_mysql_tool/funcs"
 )
 
 func main() {
@@ -23,7 +22,6 @@ func main() {
 		log.Println("enable flag false,stop... ")
 		return
 	}
-	log.Println("use db to archive metrics")
 	err = funcs.InitDbEngine("")
 	if err != nil {
 		log.Printf("init mysql connect fail : %v \n", err)
