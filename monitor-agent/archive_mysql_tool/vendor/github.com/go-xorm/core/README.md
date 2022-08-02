@@ -1,8 +1,6 @@
 Core is a lightweight wrapper of sql.DB.
 
-[![Build Status](https://drone.gitea.com/api/badges/xorm/core/status.svg)](https://drone.gitea.com/xorm/core)
-[![](http://gocover.io/_badge/xorm.io/core)](http://gocover.io/xorm.io/core)
-[![Go Report Card](https://goreportcard.com/badge/code.gitea.io/gitea)](https://goreportcard.com/report/xorm.io/core)
+[![CircleCI](https://circleci.com/gh/go-xorm/core/tree/master.svg?style=svg)](https://circleci.com/gh/go-xorm/core/tree/master)
 
 # Open
 ```Go
