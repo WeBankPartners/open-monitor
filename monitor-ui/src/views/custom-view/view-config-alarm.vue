@@ -119,7 +119,7 @@ export default {
   },
   mounted () {},
   destroyed() {
-    clearInterval(this.interval)
+    this.clearAlarmInterval()
   },
   methods: {
     clearAlarmInterval () {

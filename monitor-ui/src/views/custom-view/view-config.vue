@@ -263,7 +263,7 @@ export default {
           this.viewData = JSON.parse(params.cfg)
           this.initPanals()
           this.cutsomViewId = params.id
-          this.$refs.cutsomViewId.getAlarm(this.cutsomViewId, this.viewCondition)
+          // this.$refs.cutsomViewId.getAlarm(this.cutsomViewId, this.viewCondition)
         }
       }
     },
