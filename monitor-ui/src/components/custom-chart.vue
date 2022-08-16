@@ -40,11 +40,34 @@ export default {
   },
   mounted() {
     this.getchartdata()
+    window.addEventListener("scroll", this.scrollHandle, true)
   },
   destroyed() {
-    clearInterval(this.interval)
+    this.clearInterval()
+    window.removeEventListener('scroll', this.scrollHandle, true)
   },
   methods: {
+    clearInterval () {
+      clearInterval(this.interval)
+      this.interval = null
+    },
+    scrollHandle() {
+      const offset = this.$el.getBoundingClientRect()
+      const offsetTop = offset.top
+      const offsetBottom = offset.bottom
+      // const offsetHeight = offset.height;
+      // 进入可视区域
+      // console.log(offsetTop,offsetBottom)
+      // console.log(offsetTop, window.innerHeight, offsetBottom, offsetTop <= window.innerHeight && offsetBottom >= 0)
+      if (offsetTop <= window.innerHeight && offsetBottom >= 0) {
+        if (this.interval === null) {
+          this.isAutoRefresh()
+        }
+      } else {
+        clearInterval(this.interval)
+        this.interval = null
+      }
+    },
     isAutoRefresh () {
       clearInterval(this.interval)
       if (this.params.autoRefresh > 0 && this.params.dateRange[0] === '') {
@@ -64,6 +87,7 @@ export default {
         const chartConfig = {eye: false,dataZoom:false, lineBarSwitch: true, chartType: this.chartInfo.chartType, params: this.chartInfo.chartParams}
         this.$nextTick( () => {
           readyToDraw(this,responseData, this.chartIndex, chartConfig)
+          this.scrollHandle()
         })
       }, { isNeedloading: false })
     }
