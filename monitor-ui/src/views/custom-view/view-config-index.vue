@@ -21,13 +21,16 @@
                   <Tag color="blue" :key="roleIndex">{{role}}</Tag>
                 </template>
               </p>
-              <a slot="extra">
-                <button class="btn btn-sm btn-confirm-f" @click="goToPanal(panalItem)">{{$t('m_configuration')}}</button>
-                <button class="btn btn-sm btn-cancel-f" @click="authorization(panalItem)">{{$t('button.authorization')}}</button>
-                <button class="btn btn-sm btn-cancel-f" @click="deleteConfirmModal(panalItem)">{{$t('button.remove')}}</button>
-              </a>
               <ul class="panal-content">
                 <li>
+                  <Button type="primary" class="btn-confirm-f" style="height:24px" size="small" @click="goToPanal(panalItem)">{{$t('m_configuration')}}</Button>
+                  <Button class="btn-cancel-f" style="height:24px" size="small" @click="authorization(panalItem)">{{$t('button.authorization')}}</Button>
+                  <Button class="btn-cancel-f" style="height:24px" size="small" @click="deleteConfirmModal(panalItem)">{{$t('button.remove')}}</Button>
+                  <!-- <button class="btn btn-sm btn-confirm-f" @click="goToPanal(panalItem)">{{$t('m_configuration')}}</button>
+                  <button class="btn btn-sm btn-cancel-f" @click="authorization(panalItem)">{{$t('button.authorization')}}</button>
+                  <button class="btn btn-sm btn-cancel-f" @click="deleteConfirmModal(panalItem)">{{$t('button.remove')}}</button> -->
+                </li>
+                <li style="margin-top:8px">
                   {{$t('title.updateTime')}}: {{panalItem.update_at}}
                 </li>
               </ul>
@@ -293,10 +296,12 @@ li {
   list-style: none;
 } 
 .operational-zone {
-  margin-bottom: 16px;
+  margin: 0 16px 16px 16px;
 }
 .panal-list {
- margin-bottom: 16px;
+  margin: 16px;
+  width: 370px;
+  display: inline-block;
 }
 .panal-title {
   color: @blue-2;
