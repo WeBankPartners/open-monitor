@@ -14,22 +14,19 @@
           <div :key="panalIndex" class="panal-list">
             <Card class="c-dark">
               <p slot="title" class="panal-title">
-                {{$t('title.templateName')}}:{{panalItem.name}}
-                  <i class="fa fa-star" style="margin-right:16px;" v-if="panalItem.main === 1" aria-hidden="true"></i>
-
-                <template v-for="(role,roleIndex) in panalItem.main_page">
-                  <Tag color="blue" :key="roleIndex">{{role}}</Tag>
-                </template>
+                {{panalItem.name}}
               </p>
               <ul class="panal-content">
                 <li>
                   <Button type="primary" class="btn-confirm-f" style="height:24px" size="small" @click="goToPanal(panalItem)">{{$t('m_configuration')}}</Button>
                   <Button class="btn-cancel-f" style="height:24px" size="small" @click="authorization(panalItem)">{{$t('button.authorization')}}</Button>
                   <Button class="btn-cancel-f" style="height:24px" size="small" @click="deleteConfirmModal(panalItem)">{{$t('button.remove')}}</Button>
-                  <!-- <button class="btn btn-sm btn-confirm-f" @click="goToPanal(panalItem)">{{$t('m_configuration')}}</button>
-                  <button class="btn btn-sm btn-cancel-f" @click="authorization(panalItem)">{{$t('button.authorization')}}</button>
-                  <button class="btn btn-sm btn-cancel-f" @click="deleteConfirmModal(panalItem)">{{$t('button.remove')}}</button> -->
                 </li>
+                <Divider />
+                <i class="fa fa-star" style="margin-right:16px;" v-if="panalItem.main === 1" aria-hidden="true"></i>
+                <template v-for="(role,roleIndex) in panalItem.main_page">
+                  <Tag color="blue" :key="roleIndex">{{role}}</Tag>
+                </template>
                 <li style="margin-top:8px">
                   {{$t('title.updateTime')}}: {{panalItem.update_at}}
                 </li>
