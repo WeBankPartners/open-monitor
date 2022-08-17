@@ -41,12 +41,21 @@ export default {
   mounted() {
     this.getchartdata()
     window.addEventListener("scroll", this.scrollHandle, true)
+    window.addEventListener("visibilitychange", this.isTabActive, true)
   },
   destroyed() {
     this.clearInterval()
     window.removeEventListener('scroll', this.scrollHandle, true)
+    window.removeEventListener("visibilitychange", this.isTabActive, true)
   },
   methods: {
+    isTabActive () {
+       if (document.hidden) {
+        this.clearInterval()
+      } else {
+        this.isAutoRefresh()
+      }
+    },
     clearInterval () {
       clearInterval(this.interval)
       this.interval = null
