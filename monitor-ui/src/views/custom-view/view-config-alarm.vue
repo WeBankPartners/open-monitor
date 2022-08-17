@@ -117,11 +117,23 @@ export default {
       }
     }
   },
-  mounted () {},
+  mounted () {
+    window.addEventListener("visibilitychange", this.isTabActive, true)
+  },
   destroyed() {
     this.clearAlarmInterval()
+    window.removeEventListener("visibilitychange", this.isTabActive, true)
   },
   methods: {
+    isTabActive () {
+       if (document.hidden) {
+        this.clearAlarmInterval()
+      } else {
+        if (this.cacheParams.id) {
+          this.getAlarm(this.cacheParams.id, this.cacheParams.viewCondition)
+        }
+      }
+    },
     clearAlarmInterval () {
       clearInterval(this.interval)
     },
