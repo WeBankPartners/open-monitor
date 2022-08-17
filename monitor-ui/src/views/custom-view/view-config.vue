@@ -208,7 +208,7 @@ export default {
       viewCondition: {
         timeTnterval: -1800,
         dateRange: ['', ''],
-        autoRefresh: 10,
+        autoRefresh: 5,
         agg: 'none' // 聚合类型
       },
       disableTime: false,
