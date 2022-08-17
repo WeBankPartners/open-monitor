@@ -163,14 +163,14 @@ type MessageTable struct {
 }
 
 type PanelTable struct {
-	Id          int    `json:"id"`
-	GroupId     int    `json:"group_id"`
-	Title       string `json:"title"`
-	TagsEnable  bool   `json:"tags_enable"`
-	TagsUrl     string `json:"tags_url"`
-	TagsKey     string `json:"tags_key"`
-	ChartGroup  int    `json:"chart_group"`
-	AutoDisplay int    `json:"auto_display"`
+	Id           int    `json:"id"`
+	GroupId      int    `json:"group_id"`
+	Title        string `json:"title"`
+	TagsEnable   bool   `json:"tags_enable"`
+	TagsUrl      string `json:"tags_url"`
+	TagsKey      string `json:"tags_key"`
+	ChartGroup   int    `json:"chart_group"`
+	AutoDisplay  int    `json:"auto_display"`
 	ServiceGroup string `json:"service_group"`
 }
 
@@ -267,13 +267,13 @@ type PromMetricTable struct {
 }
 
 type PromMetricObj struct {
-	Id         string `json:"id"`
-	Metric     string `json:"metric" binding:"required"`
-	MetricType string `json:"metric_type"`
-	PromQl     string `json:"prom_expr" binding:"required"`
-	PromMain   string `json:"prom_main"`
+	Id           string `json:"id"`
+	Metric       string `json:"metric" binding:"required"`
+	MetricType   string `json:"metric_type"`
+	PromQl       string `json:"prom_expr" binding:"required"`
+	PromMain     string `json:"prom_main"`
 	ServiceGroup string `json:"service_group"`
-	Workspace string `json:"workspace"`
+	Workspace    string `json:"workspace"`
 }
 
 type EndpointTable struct {
@@ -360,9 +360,22 @@ type DisplayDemoFlagDto struct {
 	Display bool `json:"display"`
 }
 
+type CustomerDashboardRoleQuery struct {
+	Id          int    `json:"id"`
+	Name        string `json:"name"`
+	DisplayName string `json:"display_name"`
+	Permission  string `json:"permission"`
+}
+
 type CustomDashboardRoleDto struct {
-	DashboardId int   `json:"dashboard_id" binding:"required"`
-	RoleId      []int `json:"role_id"`
+	DashboardId int `json:"dashboard_id" binding:"required"`
+	//RoleId      []int `json:"role_id"`
+	PermissionList []*CustomDashboardRoleObj `json:"permission_list"`
+}
+
+type CustomDashboardRoleObj struct {
+	RoleId     int    `json:"role_id"`
+	Permission string `json:"permission"`
 }
 
 type CustomDashboardConfigObj struct {
@@ -370,10 +383,10 @@ type CustomDashboardConfigObj struct {
 }
 
 type CustomDashboardConfigQueryObj struct {
-	Endpoint    string `json:"endpoint"`
-	MetricLabel string `json:"metricLabel"`
-	Metric      string `json:"metric"`
-	AppObject   string `json:"app_object"`
+	Endpoint     string `json:"endpoint"`
+	MetricLabel  string `json:"metricLabel"`
+	Metric       string `json:"metric"`
+	AppObject    string `json:"app_object"`
 	EndpointType string `json:"endpoint_type"`
 }
 
@@ -408,8 +421,8 @@ type PanelResultChartObj struct {
 }
 
 type GetEndpointMetricParam struct {
-	Guid string `json:"guid"`
-	MonitorType string `json:"monitor_type" binding:"required"`
+	Guid         string `json:"guid"`
+	MonitorType  string `json:"monitor_type" binding:"required"`
 	ServiceGroup string `json:"service_group"`
-	Workspace string `json:"workspace"`
+	Workspace    string `json:"workspace"`
 }
