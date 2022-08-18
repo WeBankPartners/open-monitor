@@ -23,9 +23,9 @@ func ListCustomDashboard(user string, coreToken m.CoreJwtToken) (err error, resu
 	}
 	roleString := strings.Join(roleList, "','")
 	sql = `SELECT * FROM (
-		SELECT DISTINCT t1.* FROM custom_dashboard t1 LEFT JOIN rel_role_custom_dashboard t2 ON t1.id=t2.custom_dashboard_id LEFT JOIN role t3 ON t2.role_id=t3.id WHERE t3.name IN ('` + roleString + `')
+		SELECT DISTINCT t1.id,t1.name,t1.panels_group,t1.cfg,t1.main,t1.create_user,t1.update_user,t1.create_at,t1.update_at,t2.permission FROM custom_dashboard t1 LEFT JOIN rel_role_custom_dashboard t2 ON t1.id=t2.custom_dashboard_id LEFT JOIN role t3 ON t2.role_id=t3.id WHERE t1.create_user<>'` + user + `' and t3.name IN ('` + roleString + `')
 		UNION
-		SELECT * FROM custom_dashboard WHERE create_user='` + user + `'
+		SELECT id,name,panels_group,cfg,main,create_user,update_user,create_at,update_at,'mgmt' FROM custom_dashboard WHERE create_user='` + user + `'
 		) t ORDER BY t.name`
 	err = x.SQL(sql).Find(&result)
 	if err != nil {
@@ -88,15 +88,11 @@ func DeleteCustomDashboard(query *m.CustomDashboardTable) error {
 	return err
 }
 
-func GetCustomDashboardRole(id int) (err error, result []*m.OptionModel) {
+func GetCustomDashboardRole(id int) (err error, result []*m.CustomDashboardRoleObj) {
 	var roleTables []*m.CustomerDashboardRoleQuery
 	err = x.SQL("SELECT DISTINCT t1.id,t1.name,t1.display_name,t2.permission FROM role t1 LEFT JOIN rel_role_custom_dashboard t2 ON t1.id=t2.role_id WHERE t2.custom_dashboard_id=?", id).Find(&roleTables)
 	for _, v := range roleTables {
-		tmpName := v.Name
-		if v.DisplayName != "" {
-			tmpName = v.DisplayName
-		}
-		result = append(result, &m.OptionModel{OptionText: tmpName, OptionValue: fmt.Sprintf("%d", v.Id), Id: v.Id, OptionType: v.Permission})
+		result = append(result, &m.CustomDashboardRoleObj{RoleId: v.Id, Permission: v.Permission})
 	}
 	return err, result
 }
@@ -152,10 +148,10 @@ func ListMainPageRole(user string, roleList []string) (err error, result []*m.Ma
 	var customDashboards []*m.CustomDashboardQuery
 	roleString := strings.Join(roleList, "','")
 	sql := `SELECT * FROM (
-		SELECT DISTINCT t1.* FROM custom_dashboard t1 LEFT JOIN rel_role_custom_dashboard t2 ON t1.id=t2.custom_dashboard_id LEFT JOIN role t3 ON t2.role_id=t3.id WHERE t3.name IN ('` + roleString + `')
+		SELECT DISTINCT t1.id,t1.name,t1.panels_group,t1.cfg,t1.main,t1.create_user,t1.update_user,t1.create_at,t1.update_at,t2.permission FROM custom_dashboard t1 LEFT JOIN rel_role_custom_dashboard t2 ON t1.id=t2.custom_dashboard_id LEFT JOIN role t3 ON t2.role_id=t3.id WHERE t1.create_user<>'` + user + `' and t3.name IN ('` + roleString + `')
 		UNION
-		SELECT * FROM custom_dashboard WHERE create_user='` + user + `'
-		) t ORDER BY t.id`
+		SELECT id,name,panels_group,cfg,main,create_user,update_user,create_at,update_at,'mgmt' FROM custom_dashboard WHERE create_user='` + user + `'
+		) t ORDER BY t.name`
 	err = x.SQL(sql).Find(&customDashboards)
 	if err != nil {
 		return err, result
