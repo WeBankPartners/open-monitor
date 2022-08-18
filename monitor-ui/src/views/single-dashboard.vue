@@ -100,7 +100,7 @@ export default {
       viewCondition: {
         timeTnterval: -1800,
         dateRange: ['', ''],
-        autoRefresh: 10,
+        autoRefresh: 5,
       },
       disableTime: false,
       dataPick: dataPick,
@@ -150,7 +150,7 @@ export default {
           this.viewData = JSON.parse(responseData.cfg) 
           this.initPanals()
           this.cutsomViewId = responseData.id
-          this.$refs.cutsomViewId.getAlarm(this.cutsomViewId, this.viewCondition)
+          // this.$refs.cutsomViewId.getAlarm(this.cutsomViewId, this.viewCondition)
         }
       })
     },
