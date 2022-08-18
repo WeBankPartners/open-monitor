@@ -13,10 +13,10 @@
               <Icon type="ios-stats" size="18" class="fa-operate" v-if="!alarmItem.is_custom" @click="goToEndpointView(alarmItem)"/>
             </Tooltip>
             <Tooltip :content="$t('close')">
-              <Icon type="ios-eye-off" size="18" class="fa-operate" @click="deleteConfirmModal(alarmItem)"/>
+              <Icon type="ios-eye-off" size="18" class="fa-operate" v-if="permission === 'edit'" @click="deleteConfirmModal(alarmItem)"/>
             </Tooltip>
             <Tooltip :content="$t('m_remark')">
-              <Icon type="ios-pricetags-outline" size="18" class="fa-operate" @click="remarkModal(alarmItem)" />
+              <Icon type="ios-pricetags-outline" size="18" class="fa-operate" slot="" v-if="permission === 'edit'" @click="remarkModal(alarmItem)" />
             </Tooltip>
           </div>
           <ul>
@@ -137,7 +137,8 @@ export default {
     clearAlarmInterval () {
       clearInterval(this.interval)
     },
-    getAlarm (id, viewCondition) {
+    getAlarm (id, viewCondition, permission) {
+      this.permission = permission
       this.cacheParams.id = id
       this.cacheParams.viewCondition = viewCondition
       this.getAlarmdata(id)
