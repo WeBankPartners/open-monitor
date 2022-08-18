@@ -341,6 +341,7 @@ type CustomDashboardQuery struct {
 	CreateAt    time.Time `json:"create_at"`
 	UpdateAt    time.Time `json:"update_at"`
 	MainPage    []string  `json:"main_page"`
+	Permission  string    `json:"permission"`
 }
 
 type MainPageRoleQuery struct {
