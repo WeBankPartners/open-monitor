@@ -2,8 +2,8 @@ package main
 
 import (
 	"flag"
-	"log"
 	"github.com/WeBankPartners/open-monitor/monitor-agent/archive_mysql_tool/funcs"
+	"log"
 	"strings"
 )
 
@@ -18,7 +18,7 @@ func main() {
 	enable := strings.ToLower(funcs.Config().Enable)
 	if enable == "y" || enable == "yes" || enable == "true" {
 		log.Println("enable flag true,start... ")
-	}else{
+	} else {
 		log.Println("enable flag false,stop... ")
 		return
 	}
