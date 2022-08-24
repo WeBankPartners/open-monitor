@@ -50,12 +50,12 @@ func InitDbEngine(databaseName string) (err error) {
 	return err
 }
 
-func ResetDbEngine()  {
+func ResetDbEngine() {
 	err := mysqlEngine.Close()
 	if err != nil {
 		log.Printf("close mysql engine fail,%s \n", err.Error())
 	}
-	time.Sleep(30*time.Second)
+	time.Sleep(30 * time.Second)
 	databaseName := Config().Mysql.DatabasePrefix + time.Now().Format("2006")
 	connectStr := fmt.Sprintf("%s:%s@%s(%s:%s)/%s?collation=utf8mb4_unicode_ci&allowNativePasswords=true",
 		Config().Mysql.User, Config().Mysql.Password, "tcp", Config().Mysql.Server, Config().Mysql.Port, databaseName)
