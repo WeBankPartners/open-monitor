@@ -126,7 +126,7 @@ func PrometheusData(query *m.QueryMonitorData) []*m.SerialModel {
 	for _, otr := range data.Data.Result {
 		var serial m.SerialModel
 		serial.Type = "line"
-		serial.Name = GetSerialName(query, otr.Metric, len(data.Data.Result))
+		serial.Name = GetSerialName(query, otr.Metric, len(data.Data.Result), query.CustomDashboard)
 		var sdata m.DataSort
 		for _, v := range otr.Values {
 			tmpTime := v[0].(float64) * 1000
@@ -176,7 +176,7 @@ func appendTagString(name string, metricMap map[string]string, tagList []string)
 	return tmpName
 }
 
-func GetSerialName(query *m.QueryMonitorData, tagMap map[string]string, dataLength int) string {
+func GetSerialName(query *m.QueryMonitorData, tagMap map[string]string, dataLength int, metricFirst bool) string {
 	tmpName := query.Legend
 	legend := query.Legend
 	var endpoint, metric string
@@ -196,7 +196,11 @@ func GetSerialName(query *m.QueryMonitorData, tagMap map[string]string, dataLeng
 	}
 	if strings.Contains(legend, "$custom") {
 		if legend == "$custom" {
-			tmpName = fmt.Sprintf("%s:%s", endpoint, metric)
+			if metricFirst {
+				tmpName = fmt.Sprintf("%s:%s", metric, endpoint)
+			} else {
+				tmpName = fmt.Sprintf("%s:%s", endpoint, metric)
+			}
 			if dataLength > 1 {
 				tmpName = appendTagString(tmpName, tagMap, []string{})
 			}
@@ -211,7 +215,11 @@ func GetSerialName(query *m.QueryMonitorData, tagMap map[string]string, dataLeng
 				tmpName = appendTagString(tmpName, tagMap, []string{})
 			}
 		} else if legend == "$custom_all" {
-			tmpName = fmt.Sprintf("%s:%s", endpoint, metric)
+			if metricFirst {
+				tmpName = fmt.Sprintf("%s:%s", metric, endpoint)
+			} else {
+				tmpName = fmt.Sprintf("%s:%s", endpoint, metric)
+			}
 			tmpName = appendTagString(tmpName, tagMap, []string{})
 		}
 	}
@@ -223,9 +231,17 @@ func GetSerialName(query *m.QueryMonitorData, tagMap map[string]string, dataLeng
 	if legend == "$app_metric" {
 		if serviceGroup, b := tagMap["service_group"]; b {
 			if serviceGroupName, bb := m.GlobalSGDisplayNameMap[serviceGroup]; bb {
-				tmpName = fmt.Sprintf("%s:%s", serviceGroupName, tagMap["key"])
+				if metricFirst {
+					tmpName = fmt.Sprintf("%s:%s", tagMap["key"], serviceGroupName)
+				} else {
+					tmpName = fmt.Sprintf("%s:%s", serviceGroupName, tagMap["key"])
+				}
 			} else {
-				tmpName = fmt.Sprintf("%s:%s", serviceGroup, tagMap["key"])
+				if metricFirst {
+					tmpName = fmt.Sprintf("%s:%s", tagMap["key"], serviceGroup)
+				} else {
+					tmpName = fmt.Sprintf("%s:%s", serviceGroup, tagMap["key"])
+				}
 			}
 			tmpName = appendTagString(tmpName, tagMap, []string{"agg", "t_endpoint", "instance"})
 		} else {
