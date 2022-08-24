@@ -1,0 +1,310 @@
+basePath: /v1
+host: monitor.test.com
+info:
+  contact: {}
+  description: 监控门户后台服务.
+  termsOfService: http://swagger.io/terms/
+  title: Monitor Server API
+  version: "1.0"
+paths:
+  /api/v1/alarm/log/monitor/add:
+    post:
+      parameters:
+      - description: 组Id，和对象id二选一
+        in: query
+        name: grp_id
+        type: integer
+      - description: 对象Id，和组id二选一
+        in: query
+        name: endpoint_id
+        type: integer
+      - description: 表单输入的日志路径
+        in: query
+        name: path
+        required: true
+        type: string
+      - description: 对象数组类型[{'keyword':'关键字','cond':'条件,如 >1','last':'时间范围,如 5min','priority':'优先级,如
+          high'}]
+        in: query
+        name: strategy
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{"message": "Success"}'
+          schema:
+            type: string
+      summary: '日志告警配置接口 : 新增'
+  /api/v1/alarm/log/monitor/delete:
+    get:
+      parameters:
+      - description: id
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{"message": "Success"}'
+          schema:
+            type: string
+      summary: '日志告警配置接口 : 删除'
+  /api/v1/alarm/log/monitor/delete_path:
+    get:
+      parameters:
+      - description: strategy_id
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{"message": "Success"}'
+          schema:
+            type: string
+      summary: '日志告警配置接口 : 删除'
+  /api/v1/alarm/log/monitor/list:
+    get:
+      description: 获取配置好的对象或组的日志告警列表
+      parameters:
+      - description: 类型，区分是单个对象还是组，枚举endpoint、grp
+        in: query
+        name: type
+        required: true
+        type: string
+      - description: 对象或组的id
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      summary: '日志告警配置接口 : 获取列表'
+  /api/v1/alarm/log/monitor/update:
+    post:
+      parameters:
+      - description: 列表获取中的tpl_id
+        in: query
+        name: tpl_id
+        required: true
+        type: integer
+      - description: 表单输入的日志路径
+        in: query
+        name: path
+        required: true
+        type: string
+      - description: 对象数组类型[{'id':int类型, 'strategy_id':int类型,'keyword':'关键字','cond':'条件,如
+          >1','last':'时间范围,如 5min','priority':'优先级,如 high'}]
+        in: query
+        name: strategy
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{"message": "Success"}'
+          schema:
+            type: string
+      summary: '日志告警配置接口 : 修改'
+  /api/v1/alarm/log/monitor/update_path:
+    post:
+      parameters:
+      - description: 列表获取中的id
+        in: query
+        name: id
+        required: true
+        type: integer
+      - description: 列表获取中的tpl_id
+        in: query
+        name: tpl_id
+        required: true
+        type: integer
+      - description: 新的日志路径
+        in: query
+        name: path
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{"message": "Success"}'
+          schema:
+            type: string
+      summary: '日志告警配置接口 : 修改日志路径'
+  /api/v1/alarm/problem/close:
+    get:
+      parameters:
+      - description: 告警id
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{"message": "Success"}'
+          schema:
+            type: string
+      summary: 手动关闭告警接口
+  /api/v1/dashboard/chart:
+    get:
+      description: 获取chart数据
+      parameters:
+      - description: panel里的chart id
+        in: query
+        name: id
+        required: true
+        type: integer
+      - description: endpoint数组, ['88B525B4-43E8-4A7A-8E11-0E664B5CB8D0']
+        in: query
+        items:
+          type: string
+        name: endpoint
+        required: true
+        type: array
+      - description: metric数组, ['cpmid.busy']
+        in: query
+        items:
+          type: string
+        name: metric
+        required: true
+        type: array
+      - description: 开始时间
+        in: query
+        name: start
+        required: true
+        type: string
+      - description: 结束时间
+        in: query
+        name: end
+        type: string
+      - description: 聚合类型 枚举 min max avg p95 none
+        in: query
+        name: aggregate
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+      summary: '页面通用接口 : 获取chart数据'
+  /api/v1/dashboard/main:
+    get:
+      description: 获取主视图，有主机、网络等
+      parameters:
+      - description: 页面类型，主机页面type=host
+        in: query
+        name: type
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+      summary: '页面通用接口 : 视图'
+  /api/v1/dashboard/panels:
+    get:
+      description: 获取panels
+      parameters:
+      - description: panels url 上自带该id
+        in: query
+        name: group
+        required: true
+        type: integer
+      - description: 需要在panels url上把{endpoint}替换
+        in: query
+        name: endpoint
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+      summary: '页面通用接口 : 获取panels'
+  /api/v1/dashboard/search:
+    get:
+      description: 模糊搜索
+      parameters:
+      - description: 放弃search_col,直接把用户输入拼到url后面请求
+        in: query
+        name: search
+        required: true
+        type: string
+      - description: 数量限制
+        in: query
+        name: limit
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+      summary: '主页面接口 : 模糊搜索'
+  /api/v1/dashboard/tags:
+    get:
+      description: 根据tag获取charts组
+      parameters:
+      - description: url上自带该id
+        in: query
+        name: panel_id
+        required: true
+        type: integer
+      - description: url上自带该endpoint
+        in: query
+        name: endpoint
+        required: true
+        type: string
+      - description: tag button里面的option_value
+        in: query
+        name: tag
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+      summary: '页面通用接口 : 根据tag获取charts组'
+  /login:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{"message": "successfully logout"}'
+          schema:
+            type: string
+      summary: 登出
+    post:
+      parameters:
+      - description: username
+        in: query
+        name: username
+        required: true
+        type: string
+      - description: password
+        in: query
+        name: password
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: '{"message": "login success"}'
+          schema:
+            type: string
+      summary: 登录
+swagger: "2.0"

@@ -661,3 +661,7 @@ alter table service_group modify update_time datetime;
 #@v2.0.0.16-begin@;
 alter table alarm_strategy add column active_window varchar(32) default '00:00-23:59';
 #@v2.0.0.16-end@;
+
+#@v2.0.0.29-begin@;
+alter table rel_role_custom_dashboard add column permission varchar(32) default 'mgmt';
+#@v2.0.0.29-end@;
