@@ -11,16 +11,6 @@
     "max_idle": 10,
     "timeout": 60
   },
-  "hdfs":{
-    "krb5":"/app/monitor/archive_mysql_tool/conf/krb5.conf",
-    "keytab":"/app/monitor/archive_mysql_tool/keytab/{{MONITOR_ARCHIVE_HDFS_USER}}.keytab",
-    "username":"{{MONITOR_ARCHIVE_HDFS_USER}}",
-    "realm":"{{MONITOR_ARCHIVE_KRB_REALM}}",
-    "dest_dir":"{{MONITOR_ARCHIVE_HDFS_DEST_DIR}}",
-    "conf_dir":"/app/monitor/archive_mysql_tool/conf",
-    "local_temp_dir":"/app/monitor/archive_mysql_tool/data",
-    "max_file_open": "{{MONITOR_ARCHIVE_MAX_FILE_OPEN}}"
-  },
   "prometheus": {
     "server": "127.0.0.1",
     "port": 9090,
@@ -43,9 +33,9 @@
     }
   },
   "trans": {
-    "max_unit_speed": 5,
+    "max_unit_speed": {{MONITOR_ARCHIVE_UNIT_SPEED}},
     "five_min_start_day": 90,
-    "concurrent_insert_num": 100,
+    "concurrent_insert_num": {{MONITOR_ARCHIVE_CONCURRENT_NUM}},
     "retry_wait_second": 60
   },
   "http": {
