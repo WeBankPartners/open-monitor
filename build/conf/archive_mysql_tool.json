@@ -1,5 +1,6 @@
 {
   "enable": "{{MONITOR_ARCHIVE_ENABLE}}",
+  "type": "{{MONITOR_ARCHIVE_TYPE}}",
   "mysql": {
     "server": "{{MONITOR_ARCHIVE_MYSQL_HOST}}",
     "port": "{{MONITOR_ARCHIVE_MYSQL_PORT}}",
@@ -32,9 +33,9 @@
     }
   },
   "trans": {
-    "max_unit_speed": 5,
+    "max_unit_speed": {{MONITOR_ARCHIVE_UNIT_SPEED}},
     "five_min_start_day": 90,
-    "concurrent_insert_num": 100,
+    "concurrent_insert_num": {{MONITOR_ARCHIVE_CONCURRENT_NUM}},
     "retry_wait_second": 60
   },
   "http": {
