@@ -130,6 +130,7 @@ func init() {
 		&handlerFuncObj{Url: "/alarm/history", Method: http.MethodGet, HandlerFunc: alarm.GetHistoryAlarm},
 		&handlerFuncObj{Url: "/alarm/problem/list", Method: http.MethodGet, HandlerFunc: alarm.GetProblemAlarm},
 		&handlerFuncObj{Url: "/alarm/problem/query", Method: http.MethodPost, HandlerFunc: alarm.QueryProblemAlarm},
+		&handlerFuncObj{Url: "/alarm/problem/page", Method: http.MethodPost, HandlerFunc: alarm.QueryProblemAlarmByPage},
 		&handlerFuncObj{Url: "/alarm/problem/close", Method: http.MethodGet, HandlerFunc: alarm.CloseAlarm},
 		&handlerFuncObj{Url: "/alarm/problem/history", Method: http.MethodPost, HandlerFunc: alarm.QueryHistoryAlarm},
 		&handlerFuncObj{Url: "/alarm/problem/message", Method: http.MethodPost, HandlerFunc: alarm.UpdateAlarmCustomMessage},

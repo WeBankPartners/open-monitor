@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e -x
+set -x
 npm -v
 if [ $? -eq 0 ]
 then
