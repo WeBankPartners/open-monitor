@@ -32,19 +32,10 @@ sed -i "s~{{MONITOR_ARCHIVE_MYSQL_USER}}~$MONITOR_ARCHIVE_MYSQL_USER~g" archive_
 sed -i "s~{{MONITOR_ARCHIVE_MYSQL_PWD}}~$MONITOR_ARCHIVE_MYSQL_PWD~g" archive_mysql_tool/default.json
 sed -i "s~{{MONITOR_ALARM_MAIL_ENABLE}}~$MONITOR_ALARM_MAIL_ENABLE~g" monitor/conf/default.json
 sed -i "s~{{MONITOR_ALARM_CALLBACK_LEVEL_MIN}}~$MONITOR_ALARM_CALLBACK_LEVEL_MIN~g" monitor/conf/default.json
-sed -i "s~{{MONITOR_ARCHIVE_KRB_REALM}}~$MONITOR_ARCHIVE_KRB_REALM~g" archive_mysql_tool/conf/krb5.conf
-sed -i "s~{{MONITOR_ARCHIVE_KRB_KDC1}}~$MONITOR_ARCHIVE_KRB_KDC1~g" archive_mysql_tool/conf/krb5.conf
-sed -i "s~{{MONITOR_ARCHIVE_KRB_KDC2}}~$MONITOR_ARCHIVE_KRB_KDC2~g" archive_mysql_tool/conf/krb5.conf
-sed -i "s~{{MONITOR_ARCHIVE_KRB_DOMAIN_REALM}}~$MONITOR_ARCHIVE_KRB_DOMAIN_REALM~g" archive_mysql_tool/conf/krb5.conf
-sed -i "s~{{MONITOR_ARCHIVE_FS_DEFAULTFS}}~$MONITOR_ARCHIVE_FS_DEFAULTFS~g" archive_mysql_tool/conf/core-site.xml
-sed -i "s~{{MONITOR_ARCHIVE_FS_DEFAULTFS}}~$MONITOR_ARCHIVE_FS_DEFAULTFS~g" archive_mysql_tool/conf/hdfs-site.xml
-sed -i "s~{{MONITOR_ARCHIVE_FS_NN1}}~$MONITOR_ARCHIVE_FS_NN1~g" archive_mysql_tool/conf/hdfs-site.xml
-sed -i "s~{{MONITOR_ARCHIVE_FS_NN2}}~$MONITOR_ARCHIVE_FS_NN2~g" archive_mysql_tool/conf/hdfs-site.xml
-sed -i "s~{{MONITOR_ARCHIVE_TYPE}}~$MONITOR_ARCHIVE_TYPE~g" archive_mysql_tool/default.json
-sed -i "s~{{MONITOR_ARCHIVE_HDFS_USER}}~$MONITOR_ARCHIVE_HDFS_USER~g" archive_mysql_tool/default.json
-sed -i "s~{{MONITOR_ARCHIVE_KRB_REALM}}~$MONITOR_ARCHIVE_KRB_REALM~g" archive_mysql_tool/default.json
-sed -i "s~{{MONITOR_ARCHIVE_MAX_FILE_OPEN}}~$MONITOR_ARCHIVE_MAX_FILE_OPEN~g" archive_mysql_tool/default.json
-sed -i "s~{{MONITOR_ARCHIVE_HDFS_DEST_DIR}}~$MONITOR_ARCHIVE_HDFS_DEST_DIR~g" archive_mysql_tool/default.json
+sed -i "s~{{MONITOR_ALARM_CALLBACK_LEVEL_MIN}}~$MONITOR_ALARM_CALLBACK_LEVEL_MIN~g" monitor/conf/default.json
+sed -i "s~{{MONITOR_ARCHIVE_UNIT_SPEED}}~$MONITOR_ARCHIVE_UNIT_SPEED~g" monitor/conf/default.json
+sed -i "s~{{MONITOR_ARCHIVE_CONCURRENT_NUM}}~$MONITOR_ARCHIVE_CONCURRENT_NUM~g" monitor/conf/default.json
+
 
 if [ $GATEWAY_URL ]
 then
