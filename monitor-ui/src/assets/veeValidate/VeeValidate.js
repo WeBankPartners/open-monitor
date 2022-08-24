@@ -55,7 +55,7 @@ Validator.extend('isIP', {
 Validator.extend('isNumber', {
   getMessage: () => '输入必须为数字',
   validate: value => {
-    return (/^\d{1,}$/.test(value))
+    return (/^(-?[1-9]\\d*\\.?\\d*)|(-?0\\.\\d*[1-9])|(-?[0])|(-?[0]\\.\\d*)$/.test(value) || /^\d{1,}$/.test(value))
   }
 })
 
