@@ -31,6 +31,7 @@ func ListCustomDashboard(user string, coreToken m.CoreJwtToken) (err error, resu
 	if err != nil {
 		return err, result
 	}
+	result = distinctCustomDashboard(result)
 	var roleTables []*m.RoleTable
 	x.SQL("SELECT * FROM role WHERE name IN ('" + roleString + "')").Find(&roleTables)
 	for _, v := range result {
@@ -44,6 +45,29 @@ func ListCustomDashboard(user string, coreToken m.CoreJwtToken) (err error, resu
 		}
 	}
 	return err, result
+}
+
+func distinctCustomDashboard(input []*m.CustomDashboardQuery) (output []*m.CustomDashboardQuery) {
+	permissionMap := make(map[int]string)
+	for _, v := range input {
+		if vv, b := permissionMap[v.Id]; b {
+			if vv == "mgmt" {
+				continue
+			}
+			if v.Permission == "mgmt" {
+				permissionMap[v.Id] = "mgmt"
+			}
+		} else {
+			permissionMap[v.Id] = v.Permission
+		}
+	}
+	for _, v := range input {
+		if permissionMap[v.Id] != v.Permission {
+			continue
+		}
+		output = append(output, v)
+	}
+	return
 }
 
 func GetCustomDashboard(query *m.CustomDashboardTable) error {
@@ -156,6 +180,7 @@ func ListMainPageRole(user string, roleList []string) (err error, result []*m.Ma
 	if err != nil {
 		return err, result
 	}
+	customDashboards = distinctCustomDashboard(customDashboards)
 	var options []*m.OptionModel
 	options = append(options, &m.OptionModel{Id: 0, OptionValue: "0", OptionText: "null"})
 	for _, v := range customDashboards {
