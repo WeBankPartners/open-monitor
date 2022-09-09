@@ -324,6 +324,23 @@ func ImportLogMetric(c *gin.Context) {
 		middleware.ReturnHandleError(c, "json unmarshal fail error ", err)
 		return
 	}
+	serviceGroup := c.Query("serviceGroup")
+	if serviceGroup == "" {
+		middleware.ReturnValidateError(c, "serviceGroup can not empty")
+		return
+	}
+	paramObj.Guid = serviceGroup
+	for _, logMonitor := range paramObj.Config {
+		logMonitor.ServiceGroup = serviceGroup
+		for _, logMetric := range logMonitor.MetricConfigList {
+			logMetric.ServiceGroup = serviceGroup
+		}
+		for _, logJson := range logMonitor.JsonConfigList {
+			for _, logMetric := range logJson.MetricList {
+				logMetric.ServiceGroup = serviceGroup
+			}
+		}
+	}
 	if err = db.ImportLogMetric(&paramObj); err != nil {
 		middleware.ReturnHandleError(c, "import log metric fail", err)
 	} else {
