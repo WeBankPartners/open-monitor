@@ -1,6 +1,7 @@
 package db
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"github.com/WeBankPartners/go-common-lib/guid"
@@ -244,8 +245,9 @@ func doLogKeywordMonitorJob() {
 			tmpAction.Sql = "UPDATE alarm SET content=?,end_value=?,end=? WHERE id=?"
 			tmpAction.Param = []interface{}{v.Content, v.EndValue, v.End.Format(models.DatetimeFormat), v.Id}
 		} else {
-			tmpAction.Sql = "INSERT INTO alarm(strategy_id,endpoint,status,s_metric,s_expr,s_cond,s_last,s_priority,content,start_value,start,tags,alarm_strategy) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?)"
-			tmpAction.Param = []interface{}{v.StrategyId, v.Endpoint, v.Status, v.SMetric, v.SExpr, v.SCond, v.SLast, v.SPriority, v.Content, v.StartValue, v.Start.Format(models.DatetimeFormat), v.Tags, "log_keyword_strategy"}
+			calcAlarmUniqueFlag(v)
+			tmpAction.Sql = "INSERT INTO alarm(strategy_id,endpoint,status,s_metric,s_expr,s_cond,s_last,s_priority,content,start_value,start,tags,alarm_strategy,endpoint_tags) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+			tmpAction.Param = []interface{}{v.StrategyId, v.Endpoint, v.Status, v.SMetric, v.SExpr, v.SCond, v.SLast, v.SPriority, v.Content, v.StartValue, v.Start.Format(models.DatetimeFormat), v.Tags, "log_keyword_strategy", v.EndpointTags}
 		}
 		actions = append(actions, &tmpAction)
 	}
@@ -269,6 +271,10 @@ func doLogKeywordMonitorJob() {
 		}
 		NotifyServiceGroup(notifyMap[v.Tags], &models.AlarmHandleObj{AlarmTable: tmpAlarmObj})
 	}
+}
+
+func calcAlarmUniqueFlag(input *models.AlarmTable) {
+	input.EndpointTags = fmt.Sprintf("%x", sha256.Sum256([]byte(fmt.Sprintf("%d_%s_%s_%d_%s", input.StrategyId, input.Endpoint, input.SMetric, input.Start.Unix(), input.Tags))))
 }
 
 func getSimpleAlarmByLogKeywordTags(tags string) (result models.AlarmTable) {
@@ -314,4 +320,37 @@ func getLogKeywordLastRow(address, path, keyword string) string {
 		result = v.Content
 	}
 	return result
+}
+
+func ImportLogKeyword(param *models.LogKeywordServiceGroupObj) (err error) {
+	existSGs, getExistDataErr := GetLogKeywordByServiceGroup(param.Guid)
+	if getExistDataErr != nil {
+		return fmt.Errorf("get exist log keyword data fail,%s ", getExistDataErr.Error())
+	}
+	if len(existSGs) == 0 {
+		return fmt.Errorf("get empty log keyword data,please check service group")
+	}
+	var actions []*Action
+	var affectHostList []string
+	existSGConfig := existSGs[0]
+	for _, existKeywordConfig := range existSGConfig.Config {
+		actions = append(actions, getDeleteLogKeywordMonitorAction(existKeywordConfig.Guid)...)
+		for _, v := range existKeywordConfig.EndpointRel {
+			affectHostList = append(affectHostList, v.SourceEndpoint)
+		}
+	}
+	nowTime := time.Now().Format(models.DatetimeFormat)
+	for _, inputKeywordConfig := range param.Config {
+		actions = append(actions, &Action{Sql: "insert into log_keyword_monitor(guid,service_group,log_path,monitor_type,update_time) value (?,?,?,?,?)", Param: []interface{}{inputKeywordConfig.Guid, inputKeywordConfig.ServiceGroup, inputKeywordConfig.LogPath, inputKeywordConfig.MonitorType, nowTime}})
+		for _, keywordObj := range inputKeywordConfig.KeywordList {
+			actions = append(actions, &Action{Sql: "insert into log_keyword_config(guid,log_keyword_monitor,keyword,regulative,notify_enable,priority,update_time) value (?,?,?,?,?,?,?)", Param: []interface{}{keywordObj.Guid, keywordObj.LogKeywordMonitor, keywordObj.Keyword, keywordObj.Regulative, keywordObj.NotifyEnable, keywordObj.Priority, nowTime}})
+		}
+	}
+	err = Transaction(actions)
+	if len(affectHostList) > 0 && err == nil {
+		if syncErr := SyncLogKeywordExporterConfig(affectHostList); syncErr != nil {
+			log.Logger.Error("import log keyword fail with sync host keyword config", log.Error(syncErr), log.StringList("hosts", affectHostList))
+		}
+	}
+	return
 }
