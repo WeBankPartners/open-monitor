@@ -190,6 +190,7 @@ func MetricImport(serviceGroup string, inputMetrics []*models.MetricTable) (err 
 	if err = x.SQL("select endpoint_group,metric from alarm_strategy").Find(&alarmStrategyRows); err != nil {
 		return fmt.Errorf("query alarm strategy fail,%s ", err.Error())
 	}
+	oldServerGroup := inputMetrics[0].ServiceGroup
 	strategyMap := make(map[string]string)
 	for _, v := range alarmStrategyRows {
 		strategyMap[v.Metric] = v.EndpointGroup
@@ -206,6 +207,7 @@ func MetricImport(serviceGroup string, inputMetrics []*models.MetricTable) (err 
 				break
 			}
 		}
+		inputMetric.PromExpr = strings.ReplaceAll(inputMetric.PromExpr, oldServerGroup, serviceGroup)
 		if matchMetric.Guid != "" {
 			if v, b := strategyMap[matchMetric.Guid]; b {
 				affectEndpointGroupList = append(affectEndpointGroupList, v)
