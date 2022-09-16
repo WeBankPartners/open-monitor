@@ -297,5 +297,7 @@
   "m_add_object": "添加对象",
   "m_tip_for_save": "配置完整方可保存!",
   "m_active_window": "告警时间段",
-  "m_clear": "清空"
+  "m_clear": "清空",
+  "m_import": "导入",
+  "m_export": "导出"
 }
