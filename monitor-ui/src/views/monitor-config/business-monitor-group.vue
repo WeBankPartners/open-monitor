@@ -6,6 +6,21 @@
         <i class="fa fa-plus"></i>
         {{$t('button.add')}}
       </button>
+      
+      <button type="button" style="margin-left:16px" class="btn-cancel-f" @click="exportData">{{$t("m_export")}}</button>
+      <div style="display: inline-block;margin-bottom: 3px;"> 
+        <Upload 
+        :action="uploadUrl" 
+        :show-upload-list="false"
+        :max-size="1000"
+        with-credentials
+        :headers="{'X-Auth-Token': token,'Authorization': token}"
+        :on-success="uploadSucess"
+        :on-error="uploadFailed">
+          <Button icon="ios-cloud-upload-outline">{{$t('m_import')}}</Button>
+        </Upload>
+      </div>
+
       <PageTable :pageConfig="pageConfig">
         <div slot='tableExtend'>
           <div style="margin:8px;border:1px solid #2db7f5">
@@ -344,8 +359,11 @@
 </template>
 
 <script>
+import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
+import {baseURL_config} from '@/assets/js/baseURL'
 import RegTest from '@/components/reg-test'
 import extendTable from '@/components/table-page/extend-table'
+import axios from 'axios'
 let tableEle = [
   {title: 'tableKey.logPath', value: 'log_path', display: true},
   {title: 'field.type', value: 'monitor_type', display: true},
@@ -368,6 +386,7 @@ export default {
   name: '',
   data () {
     return {
+      token: null,
       MODALHEIGHT: 300,
       isShowWarning: false,
       targrtId: '',
@@ -524,10 +543,60 @@ export default {
       ]
     }
   },
+  computed: {
+    uploadUrl: function() {
+      return baseURL_config + `${this.$root.apiCenter.keywordImport}?serviceGroup=${this.targrtId}`
+    }
+  },
   mounted () {
     this.MODALHEIGHT = document.body.scrollHeight - 300
+    this.token = (window.request ? 'Bearer ' + getPlatFormToken() : getToken())|| null
   },
   methods: {
+    exportData () {
+      const api = `${this.$root.apiCenter.keywordExport}?serviceGroup=${this.targrtId}`
+      axios({
+        method: 'GET',
+        url: api,
+        headers: {
+          'X-Auth-Token': this.token,
+          'Authorization': this.token
+        }
+      }).then((response) => {
+        if (response.status < 400) {
+          let content = JSON.stringify(response.data)
+          let fileName = `${response.headers['content-disposition'].split(';')[1].trim().split('=')[1]}`
+          let blob = new Blob([content])
+          if('msSaveOrOpenBlob' in navigator){
+            // Microsoft Edge and Microsoft Internet Explorer 10-11
+          window.navigator.msSaveOrOpenBlob(blob, fileName)
+        } else {
+          if ('download' in document.createElement('a')) { // 非IE下载
+            let elink = document.createElement('a')
+            elink.download = fileName
+            elink.style.display = 'none'
+            elink.href = URL.createObjectURL(blob)  
+            document.body.appendChild(elink)
+            elink.click()
+            URL.revokeObjectURL(elink.href) // 释放URL 对象
+            document.body.removeChild(elink)
+          } else { // IE10+下载
+            navigator.msSaveOrOpenBlob(blob, fileName)
+          }
+        }
+        }
+      })
+      .catch(() => {
+        this.$Message.warning(this.$t('tips.failed'))
+      });
+    },
+    uploadSucess () {
+      this.$Message.success(this.$t('tips.success'))
+      this.getDetail(this.targrtId)
+    },
+    uploadFailed (error, file) {
+      this.$Message.warning(file.message)
+    },
     // BD config
     delDbItem (rowData) {
       const api = this.$root.apiCenter.saveTargetDb + '/' + rowData.guid
