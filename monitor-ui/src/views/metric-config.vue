@@ -386,7 +386,6 @@ export default {
             navigator.msSaveOrOpenBlob(blob, fileName)
           }
         }
-        }
       })
       .catch(() => {
         this.$Message.warning(this.$t('tips.failed'))
