@@ -43,15 +43,28 @@
           </div>
           <div>
             <button class="btn btn-sm btn-confirm-f" @click="configMetric">{{$t('button.search')}}</button>
-            <button class="btn-cancel-f" @click.stop="exportData">{{$t("m_export")}}</button>
           </div>
         </div>
         <!-- 操作区 -->
         <div v-if="showConfigTab || isAddMetric">
           <Tabs value="name1">
             <TabPane :label="$t('title.metricConfiguration')" name="name1">
-              <button class="btn-cancel-f" @click.stop="exportData">{{$t("m_export")}}</button>
               <div style="min-height:300px">
+                <div style="text-align:right;margin-bottom:16px">
+                  <button class="btn-cancel-f" @click.stop="exportData">{{$t("m_export")}}{{$t("m_metric")}}</button>
+                  <div style="display: inline-block;"> 
+                    <Upload 
+                    :action="uploadUrl" 
+                    :show-upload-list="false"
+                    :max-size="1000"
+                    with-credentials
+                    :headers="{'Authorization': token}"
+                    :on-success="uploadSucess"
+                    :on-error="uploadFailed">
+                      <Button icon="ios-cloud-upload-outline">{{$t('m_import')}}{{$t("m_metric")}}</Button>
+                    </Upload>
+                  </div>
+                </div>
                 <Form :label-width="80">
                   <FormItem :label="$t('field.metric')">
                     <Select v-model="metricId" filterable clearable @on-clear="clearMetric" @on-open-change="getMetricOptions" @on-change="changeMetricOptions" ref="metricSelect" :disabled="!monitorType">
@@ -63,21 +76,6 @@
                         </span>
                       </Option>
                     </Select>
-                    <div style="text-align:right;margin-top:16px">
-                      <button class="btn-cancel-f" @click.stop="exportData">{{$t("m_export")}}</button>
-                      <div style="display: inline-block;"> 
-                        <Upload 
-                        :action="uploadUrl" 
-                        :show-upload-list="false"
-                        :max-size="1000"
-                        with-credentials
-                        :headers="{'Authorization': token}"
-                        :on-success="uploadSucess"
-                        :on-error="uploadFailed">
-                          <Button icon="ios-cloud-upload-outline">{{$t('m_import')}}</Button>
-                        </Upload>
-                      </div>
-                    </div>
                   </FormItem>
                   <template v-if="metricId!== '' || hideMetricZone">
                     <Divider />
