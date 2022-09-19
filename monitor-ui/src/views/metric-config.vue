@@ -62,7 +62,7 @@
                       </Option>
                     </Select>
                     <div style="text-align:right;margin-top:16px">
-                      <button class="btn-cancel-f" @click="exportData">{{$t("m_export")}}</button>
+                      <button class="btn-cancel-f" @click.stop="exportData">{{$t("m_export")}}</button>
                       <div style="display: inline-block;"> 
                         <Upload 
                         :action="uploadUrl" 
