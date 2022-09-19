@@ -299,5 +299,6 @@
   "m_active_window": "告警时间段",
   "m_clear": "清空",
   "m_import": "导入",
-  "m_export": "导出"
+  "m_export": "导出",
+  "m_metric": "指标"
 }
