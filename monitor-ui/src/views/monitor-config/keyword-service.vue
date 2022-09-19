@@ -72,7 +72,7 @@
         </div>
         <div v-else style="margin: 8px 0">
           <span>{{$t('tableKey.path')}}:</span>
-          <Input style="width: 640px" disabled v-model="addAndEditModal.dataConfig.log_path" />
+          <Input style="width: 640px" v-model="addAndEditModal.dataConfig.log_path" />
         </div>
         <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;width:680px">
           <template v-for="(item, index) in addAndEditModal.dataConfig.endpoint_rel">
