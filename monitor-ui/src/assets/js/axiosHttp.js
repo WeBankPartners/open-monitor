@@ -11,7 +11,7 @@ export default function ajax (options) {
     // params: options.params || '',
     headers: {
       'Content-type': 'application/json;charset=UTF-8',
-      'X-Auth-Token': getToken() || null
+      // 'X-Auth-Token': getToken() || null
     },
     // data: JSON.stringify(options.data || '')
     data: JSON.stringify(options.data)
