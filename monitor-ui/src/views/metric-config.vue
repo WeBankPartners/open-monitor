@@ -43,12 +43,14 @@
           </div>
           <div>
             <button class="btn btn-sm btn-confirm-f" @click="configMetric">{{$t('button.search')}}</button>
+            <button class="btn-cancel-f" @click.stop="exportData">{{$t("m_export")}}</button>
           </div>
         </div>
         <!-- 操作区 -->
         <div v-if="showConfigTab || isAddMetric">
           <Tabs value="name1">
             <TabPane :label="$t('title.metricConfiguration')" name="name1">
+              <button class="btn-cancel-f" @click.stop="exportData">{{$t("m_export")}}</button>
               <div style="min-height:300px">
                 <Form :label-width="80">
                   <FormItem :label="$t('field.metric')">
@@ -371,19 +373,20 @@ export default {
           let blob = new Blob([content])
           if('msSaveOrOpenBlob' in navigator){
             // Microsoft Edge and Microsoft Internet Explorer 10-11
-          window.navigator.msSaveOrOpenBlob(blob, fileName)
-        } else {
-          if ('download' in document.createElement('a')) { // 非IE下载
-            let elink = document.createElement('a')
-            elink.download = fileName
-            elink.style.display = 'none'
-            elink.href = URL.createObjectURL(blob)  
-            document.body.appendChild(elink)
-            elink.click()
-            URL.revokeObjectURL(elink.href) // 释放URL 对象
-            document.body.removeChild(elink)
-          } else { // IE10+下载
-            navigator.msSaveOrOpenBlob(blob, fileName)
+            window.navigator.msSaveOrOpenBlob(blob, fileName)
+          } else {
+            if ('download' in document.createElement('a')) { // 非IE下载
+              let elink = document.createElement('a')
+              elink.download = fileName
+              elink.style.display = 'none'
+              elink.href = URL.createObjectURL(blob)  
+              document.body.appendChild(elink)
+              elink.click()
+              URL.revokeObjectURL(elink.href) // 释放URL 对象
+              document.body.removeChild(elink)
+            } else { // IE10+下载
+              navigator.msSaveOrOpenBlob(blob, fileName)
+            }
           }
         }
       })
