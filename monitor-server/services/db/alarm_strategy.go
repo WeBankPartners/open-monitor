@@ -445,7 +445,10 @@ func NotifyServiceGroup(serviceGroup string, alarmObj *models.AlarmHandleObj) {
 	var notifyList []*models.NotifyTable
 	err := x.SQL("select * from notify where service_group=?", serviceGroup).Find(&notifyList)
 	if err != nil {
-		log.Logger.Error("Notify serviceGroup fail,query notify data error", log.Error(err))
+		log.Logger.Warn("Notify serviceGroup fail,query notify data error", log.Error(err))
+	}
+	if len(notifyList) == 0 {
+		notifyList = []*models.NotifyTable{&models.NotifyTable{Guid: "defaultNotify", AlarmAction: alarmObj.Status, NotifyNum: 1}}
 	}
 	for _, v := range notifyList {
 		notifyAction(v, alarmObj)
