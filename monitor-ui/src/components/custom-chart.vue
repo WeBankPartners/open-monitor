@@ -86,6 +86,7 @@ export default {
       }
     },
     getchartdata () {
+      this.noDataTip = true
       if (this.chartInfo.chartParams.data.length === 0) {
         return
       }
@@ -93,6 +94,7 @@ export default {
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.metricConfigView.api, this.chartInfo.chartParams, responseData => {
         responseData.yaxis.unit =  this.chartInfo.panalUnit  
         this.elId = this.chartInfo.elId
+        this.noDataTip = false
         const chartConfig = {eye: false,dataZoom:false, lineBarSwitch: true, chartType: this.chartInfo.chartType, params: this.chartInfo.chartParams}
         this.$nextTick( () => {
           readyToDraw(this,responseData, this.chartIndex, chartConfig)
