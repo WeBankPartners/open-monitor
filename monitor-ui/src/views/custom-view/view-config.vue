@@ -210,7 +210,7 @@ export default {
       permission: '',
       panalName: this.$route.params.panalItem.name,
       viewCondition: {
-        timeTnterval: -1800,
+        timeTnterval: -3600,
         dateRange: ['', ''],
         autoRefresh: 5,
         agg: 'none' // 聚合类型

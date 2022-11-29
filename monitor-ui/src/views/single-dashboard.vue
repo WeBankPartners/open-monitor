@@ -98,7 +98,7 @@ export default {
     return {
       isPlugin: false,
       viewCondition: {
-        timeTnterval: -1800,
+        timeTnterval: -3600,
         dateRange: ['', ''],
         autoRefresh: 5,
       },
