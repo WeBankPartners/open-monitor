@@ -289,6 +289,7 @@ export default {
         this.disableTime = true
         this.viewCondition.autoRefresh = 0
       }
+      this.initPanals()
     },
     dateToTimestamp (date) {
       if (!date) return 0

@@ -1,9 +1,10 @@
 <template>
   <div class="single-chart">
-    <div v-if="!noDataTip" :id="elId" class="echart" :style="chartInfo.style">
+    <div v-if="!noDataTip">
+      <div :id="elId" class="echart" :style="chartInfo.style">
+    </div>
     </div>
     <div v-if="noDataTip" class="echart echart-no-data-tip">
-      {{chartTitle}}:
       <span>~~~No Data!~~~</span>
     </div>
   </div>
