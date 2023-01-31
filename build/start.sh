@@ -96,4 +96,10 @@ nohup ./db_data_exporter > logs/app.log 2>&1 &
 cd ../monitor/
 mkdir -p logs
 sleep 2
-./monitor-server
+Exit_actions (){
+  kill `ps aux|grep -E "prometheus"|grep -v "grep"|awk '{print $1}'`
+  wait $!
+}
+trap Exit_actions INT TERM EXIT
+nohup ./monitor-server > logs/app.log 2>&1 &
+wait $!
