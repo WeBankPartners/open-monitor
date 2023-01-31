@@ -132,6 +132,17 @@ func calc(data []float64, method string) float64 {
 			sum = sum + v
 		}
 		result = sum / float64(len(data))
+	} else if method == "avg_nonzero" {
+		var sum, pointNum float64
+		for _, v := range data {
+			if v != 0 {
+				sum = sum + v
+				pointNum += 1
+			}
+		}
+		if pointNum > 0 {
+			result = sum / pointNum
+		}
 	} else if method == "max" {
 		result = data[0]
 		for _, v := range data {
