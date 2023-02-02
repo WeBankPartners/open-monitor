@@ -672,3 +672,7 @@ alter table alarm modify endpoint_tags varchar(64);
 update alarm set endpoint_tags=null where endpoint_tags='';
 create unique index `alarm_tags_unique_idx` on alarm (`endpoint_tags`);
 #@v2.0.0.35-end@;
+
+#@v2.0.0.46-begin@;
+alter table log_keyword_config add column content text default null;
+#@v2.0.0.46-end@;

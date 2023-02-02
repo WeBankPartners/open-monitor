@@ -62,15 +62,15 @@ func InitAgentManager() {
 		param, err := db.GetAgentManager("")
 		if err != nil {
 			log.Logger.Error("Get agent manager table fail", log.Error(err))
-		}else {
+		} else {
 			prom.InitAgentManager(param, AgentManagerServer)
 		}
 		startSyncAgentManagerJob(AgentManagerServer)
 	}
 }
 
-func startSyncAgentManagerJob(url string)  {
-	intervalSecond := 86400
+func startSyncAgentManagerJob(url string) {
+	intervalSecond := 3600
 	timeStartValue, _ := time.ParseInLocation("2006-01-02 15:04:05", fmt.Sprintf("%s 00:00:00", time.Now().Format("2006-01-02")), time.Local)
 	time.Sleep(time.Duration(timeStartValue.Unix()+86400-time.Now().Unix()) * time.Second)
 	t := time.NewTicker(time.Duration(intervalSecond) * time.Second).C
@@ -78,10 +78,10 @@ func startSyncAgentManagerJob(url string)  {
 		param, tmpErr := db.GetAgentManager("")
 		if tmpErr != nil {
 			log.Logger.Error("Sync agent manager job fail with get config", log.Error(tmpErr))
-		}else {
+		} else {
 			prom.DoSyncAgentManagerJob(param, url)
 		}
-		<- t
+		<-t
 	}
 }
 
@@ -153,14 +153,14 @@ func AgentRegister(param m.RegisterParamNew) (validateMessage, guid string, err 
 			rData.defaultGroup = param.DefaultGroupName
 		}
 		if rData.defaultGroup != "" {
-			_,tmpErr := db.GetSimpleEndpointGroup(rData.defaultGroup)
+			_, tmpErr := db.GetSimpleEndpointGroup(rData.defaultGroup)
 			if tmpErr != nil {
 				log.Logger.Error("add default group fail", log.String("group", rData.defaultGroup), log.Error(err))
-			}else{
-				tmpErr = db.UpdateGroupEndpoint(&m.UpdateGroupEndpointParam{GroupGuid: rData.defaultGroup,EndpointGuidList: []string{rData.endpoint.Guid}}, true)
+			} else {
+				tmpErr = db.UpdateGroupEndpoint(&m.UpdateGroupEndpointParam{GroupGuid: rData.defaultGroup, EndpointGuidList: []string{rData.endpoint.Guid}}, true)
 				if tmpErr != nil {
 					log.Logger.Error("append default group endpoint fail", log.String("group", rData.defaultGroup), log.Error(err))
-				}else{
+				} else {
 					db.SyncPrometheusRuleFile(rData.defaultGroup, false)
 				}
 			}
