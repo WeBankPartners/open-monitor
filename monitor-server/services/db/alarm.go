@@ -466,13 +466,23 @@ func GetAlarms(query m.AlarmTable, limit int, extLogMonitor, extOpenAlarm bool) 
 					v.StartValue = v.EndValue - v.StartValue + 1
 				}
 				if strings.Contains(v.Content, "^^") {
+					if brIndex := strings.Index(v.Content, "<br/>"); brIndex > 0 {
+						v.StartString = v.Content[:brIndex+5] + v.StartString
+						v.Content = v.Content[brIndex+5:]
+					}
 					v.Content = fmt.Sprintf("%s: %s <br/>%s: %s", v.StartString, v.Content[:strings.Index(v.Content, "^^")], v.EndString, v.Content[strings.Index(v.Content, "^^")+2:])
 				}
 				v.StartString = v.EndString
 			} else {
 				v.StartValue = 1
+				if brIndex := strings.Index(v.Content, "<br/>"); brIndex > 0 {
+					v.StartString = v.Content[:brIndex+5] + v.StartString
+					v.Content = v.Content[brIndex+5:]
+				}
 				if strings.HasSuffix(v.Content, "^^") {
 					v.Content = v.StartString + ": " + v.Content[:len(v.Content)-2]
+				} else {
+					v.Content = v.StartString + ": " + v.Content
 				}
 			}
 		}
@@ -815,8 +825,12 @@ func getLastFromExpr(expr string) string {
 	return last
 }
 
-func CloseAlarm(id int) error {
-	_, err := x.Exec("UPDATE alarm SET STATUS='closed',end=NOW() WHERE id=?", id)
+func CloseAlarm(param m.AlarmCloseParam) (err error) {
+	if param.Metric != "" {
+		_, err = x.Exec("UPDATE alarm SET STATUS='closed',end=NOW() WHERE status='firing' and s_metric=?", param.Metric)
+	} else {
+		_, err = x.Exec("UPDATE alarm SET STATUS='closed',end=NOW() WHERE id=?", param.Id)
+	}
 	return err
 }
 
