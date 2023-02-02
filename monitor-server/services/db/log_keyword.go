@@ -137,12 +137,12 @@ func ListLogKeyword(logKeywordMonitor string) (result []*models.LogKeywordConfig
 }
 
 func CreateLogKeyword(param *models.LogKeywordConfigTable) (err error) {
-	_, err = x.Exec("insert into log_keyword_config(guid,log_keyword_monitor,keyword,regulative,notify_enable,priority,update_time) value (?,?,?,?,?,?,?)", guid.CreateGuid(), param.LogKeywordMonitor, param.Keyword, param.Regulative, param.NotifyEnable, param.Priority, time.Now().Format(models.DatetimeFormat))
+	_, err = x.Exec("insert into log_keyword_config(guid,log_keyword_monitor,keyword,regulative,notify_enable,priority,update_time,content) value (?,?,?,?,?,?,?,?)", guid.CreateGuid(), param.LogKeywordMonitor, param.Keyword, param.Regulative, param.NotifyEnable, param.Priority, time.Now().Format(models.DatetimeFormat), param.Content)
 	return
 }
 
 func UpdateLogKeyword(param *models.LogKeywordConfigTable) (err error) {
-	_, err = x.Exec("update log_keyword_config set keyword=?,regulative=?,notify_enable=?,priority=?,update_time=? where guid=?", param.Keyword, param.Regulative, param.NotifyEnable, param.Priority, time.Now().Format(models.DatetimeFormat), param.Guid)
+	_, err = x.Exec("update log_keyword_config set keyword=?,regulative=?,notify_enable=?,priority=?,update_time=?,content=? where guid=?", param.Keyword, param.Regulative, param.NotifyEnable, param.Priority, time.Now().Format(models.DatetimeFormat), param.Content, param.Guid)
 	return
 }
 
@@ -176,7 +176,7 @@ func doLogKeywordMonitorJob() {
 		return
 	}
 	var logKeywordConfigs []*models.LogKeywordCronJobQuery
-	x.SQL("select t1.guid,t1.service_group,t1.log_path,t1.monitor_type,t2.keyword,t2.notify_enable,t2.priority,t3.source_endpoint,t3.target_endpoint,t4.agent_address from log_keyword_monitor t1 left join log_keyword_config t2 on t1.guid=t2.log_keyword_monitor left join log_keyword_endpoint_rel t3 on t1.guid=t3.log_keyword_monitor left join endpoint_new t4 on t3.source_endpoint=t4.guid where t3.source_endpoint is not null").Find(&logKeywordConfigs)
+	x.SQL("select t1.guid,t1.service_group,t1.log_path,t1.monitor_type,t2.keyword,t2.notify_enable,t2.priority,t2.content,t3.source_endpoint,t3.target_endpoint,t4.agent_address from log_keyword_monitor t1 left join log_keyword_config t2 on t1.guid=t2.log_keyword_monitor left join log_keyword_endpoint_rel t3 on t1.guid=t3.log_keyword_monitor left join endpoint_new t4 on t3.source_endpoint=t4.guid where t3.source_endpoint is not null").Find(&logKeywordConfigs)
 	if len(logKeywordConfigs) == 0 {
 		log.Logger.Debug("Check log keyword break with empty config ")
 		return
@@ -232,7 +232,11 @@ func doLogKeywordMonitorJob() {
 			if config.NotifyEnable > 0 {
 				notifyMap[key] = config.ServiceGroup
 			}
-			addAlarmRows = append(addAlarmRows, &models.AlarmTable{StrategyId: 0, Endpoint: config.TargetEndpoint, Status: "firing", SMetric: "log_monitor", SExpr: "node_log_monitor_count_total", SCond: ">0", SLast: "10s", SPriority: config.Priority, Content: getLogKeywordLastRow(config.AgentAddress, config.LogPath, config.Keyword), Tags: key, StartValue: newValue, Start: nowTime})
+			alarmContent := config.Content
+			if alarmContent != "" {
+				alarmContent = alarmContent + "<br/>"
+			}
+			addAlarmRows = append(addAlarmRows, &models.AlarmTable{StrategyId: 0, Endpoint: config.TargetEndpoint, Status: "firing", SMetric: "log_monitor", SExpr: "node_log_monitor_count_total", SCond: ">0", SLast: "10s", SPriority: config.Priority, Content: alarmContent + getLogKeywordLastRow(config.AgentAddress, config.LogPath, config.Keyword), Tags: key, StartValue: newValue, Start: nowTime})
 		}
 	}
 	if len(addAlarmRows) == 0 {
