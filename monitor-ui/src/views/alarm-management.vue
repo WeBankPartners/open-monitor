@@ -52,6 +52,7 @@
                 <Tag color="primary">{{$t('table.noDataTip')}}！</Tag>
               </template>
               <button @click="alarmHistory" style="float: right;margin-right: 25px;" class="btn btn-sm btn-cancel-f">{{$t('alarmHistory')}}</button>
+              <button :disabled="!filtersForShow.some(f => f.key === 'metric')" @click="deleteConfirmModal({}, true)" style="float: right;margin-right: 25px;" class="btn btn-sm btn-cancel-f">{{$t('m_batch_close')}}</button>
             </section>
             <div class="alarm-list">
               <template v-for="(alarmItem, alarmIndex) in resultData">
@@ -61,7 +62,7 @@
                       <Icon type="ios-stats" size="18" class="fa-operate" v-if="!alarmItem.is_custom" @click="goToEndpointView(alarmItem)"/>
                     </Tooltip>
                     <Tooltip :content="$t('close')">
-                      <Icon type="ios-eye-off" size="18" class="fa-operate" @click="deleteConfirmModal(alarmItem)"/>
+                      <Icon type="ios-eye-off" size="18" class="fa-operate" @click="deleteConfirmModal(alarmItem, false)"/>
                     </Tooltip>
                     <Tooltip :content="$t('m_remark')">
                       <Icon type="ios-pricetags-outline" size="18" class="fa-operate" @click="remarkModal(alarmItem)" />
@@ -173,7 +174,8 @@ export default {
         total: 0,
         startIndex: 1,
         pageSize: 10
-      }
+      },
+      isBatch: false
     }
   },
   mounted(){
@@ -396,7 +398,8 @@ export default {
       this.filters[key] = value
       this.getAlarm()
     },
-    deleteConfirmModal (rowData) {
+    deleteConfirmModal (rowData, isBatch) {
+      this.isBatch = isBatch
       this.selectedData = rowData
       this.isShowWarning = true
     },
@@ -408,13 +411,22 @@ export default {
     },
     removeAlarm(alarmItem) {
       let params = {
-        id: alarmItem.id,
-        custom: true
+        id: 0,
+        custom: true,
+        metric: ""
+      }
+      if (this.isBatch) {
+        let find = this.filtersForShow.find(f => f.key === 'metric')
+        if (find) {
+          params.metric = find.value
+        }
+      } else {
+        params.id = alarmItem.id
       }
       if (!alarmItem.is_custom) {
         params.custom = false
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.alarmManagement.close.api, params, () => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.alarmManagement.close.api, params, () => {
         // this.$root.$eventBus.$emit('hideConfirmModal')
         this.getAlarm()
       })
