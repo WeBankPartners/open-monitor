@@ -301,5 +301,6 @@
   "m_clear": "Clear",
   "m_import": "Import",
   "m_export": "Export",
-  "m_regular_tip": "The regular expression must contain parentheses !"
+  "m_regular_tip": "The regular expression must contain parentheses !",
+  "m_content": "Content"
 }
