@@ -9,7 +9,6 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -368,7 +367,7 @@ func ImportLogMetricExcel(c *gin.Context) {
 		return
 	}
 	defer f.Close()
-	b, readFileErr := io.ReadAll(f)
+	b, readFileErr := ioutil.ReadAll(f)
 	if readFileErr != nil {
 		middleware.ReturnHandleError(c, "read content fail error ", readFileErr)
 		return
