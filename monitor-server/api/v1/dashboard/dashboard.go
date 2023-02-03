@@ -709,7 +709,7 @@ func GetPieChart(c *gin.Context) {
 		mid.ReturnBodyError(c, err)
 		return
 	}
-	var paramConfig []*m.ChartConfigObj
+	var paramConfig []*m.PieChartConfigObj
 	err = json.Unmarshal(requestBody, &paramConfig)
 	if err != nil {
 		mid.ReturnRequestJsonError(c, err)
@@ -717,8 +717,8 @@ func GetPieChart(c *gin.Context) {
 	}
 	var queryResultList []*m.QueryMonitorData
 	var resultPieData m.EChartPie
-	for _,paramObj := range paramConfig {
-		tmpQueryResult,tmpErr := getPieData(paramObj)
+	for _, paramObj := range paramConfig {
+		tmpQueryResult, tmpErr := getPieData(paramObj)
 		if tmpErr != nil {
 			err = tmpErr
 			break
@@ -729,16 +729,16 @@ func GetPieChart(c *gin.Context) {
 		mid.ReturnHandleError(c, err.Error(), err)
 		return
 	}
-	for _,v := range queryResultList {
+	for _, v := range queryResultList {
 		resultPieData.Legend = append(resultPieData.Legend, v.PieData.Legend...)
 		resultPieData.Data = append(resultPieData.Data, v.PieData.Data...)
 	}
 	mid.ReturnSuccessData(c, resultPieData)
 }
 
-func getPieData(paramConfig *m.ChartConfigObj) (result []*m.QueryMonitorData,err error) {
+func getPieData(paramConfig *m.PieChartConfigObj) (result []*m.QueryMonitorData, err error) {
 	result = []*m.QueryMonitorData{}
-	if  paramConfig.Metric == "" {
+	if paramConfig.Metric == "" {
 		err = fmt.Errorf("metric can not empty")
 		return
 	}
@@ -750,8 +750,8 @@ func getPieData(paramConfig *m.ChartConfigObj) (result []*m.QueryMonitorData,err
 			return
 		}
 
-	}else if paramConfig.Endpoint != "" {
-		endpointObj,tmpErr := db.GetEndpointNew(&m.EndpointNewTable{Guid: paramConfig.Endpoint})
+	} else if paramConfig.Endpoint != "" {
+		endpointObj, tmpErr := db.GetEndpointNew(&m.EndpointNewTable{Guid: paramConfig.Endpoint})
 		if tmpErr != nil {
 			err = tmpErr
 			return
@@ -777,10 +777,41 @@ func getPieData(paramConfig *m.ChartConfigObj) (result []*m.QueryMonitorData,err
 	}
 	for _, endpoint := range endpointList {
 		tmpPromQL := db.ReplacePromQlKeyword(paramConfig.PromQl, paramConfig.Metric, endpoint)
-		result = append(result, &m.QueryMonitorData{ChartType: "pie", Start: queryStart, End: queryEnd, PromQ: tmpPromQL, Legend: "", Metric: []string{paramConfig.Metric}, Endpoint: []string{endpoint.Guid}, Step: endpoint.Step, Cluster: endpoint.Cluster})
+		result = append(result, &m.QueryMonitorData{ChartType: "pie", Start: queryStart, End: queryEnd, PromQ: tmpPromQL, Legend: "", Metric: []string{paramConfig.Metric}, Endpoint: []string{endpoint.Guid}, Step: endpoint.Step, Cluster: endpoint.Cluster, PieMetricType: paramConfig.PieMetricType})
 	}
-	for _,queryObj := range result {
-		ds.PrometheusData(queryObj)
+	if paramConfig.PieMetricType == "value" {
+		if len(result) == 0 {
+			return
+		}
+		if paramConfig.Start > 0 && paramConfig.End > 0 {
+			result[0].End = paramConfig.End
+			result[0].Start = paramConfig.Start
+		} else if paramConfig.TimeSecond < 0 {
+			result[0].End = time.Now().Unix()
+			result[0].Start = result[0].End + paramConfig.TimeSecond
+		}
+		serialList := ds.PrometheusData(result[0])
+		if len(serialList) > 0 {
+			valueMap := make(map[float64]int)
+			for _, v := range serialList[0].Data {
+				if count, b := valueMap[v[1]]; b {
+					valueMap[v[1]] = count + 1
+				} else {
+					valueMap[v[1]] = 1
+				}
+			}
+			pieData := m.EChartPie{}
+			for k, v := range valueMap {
+				tmpName := fmt.Sprintf("%.3f", k)
+				pieData.Legend = append(pieData.Legend, tmpName)
+				pieData.Data = append(pieData.Data, &m.EChartPieObj{Name: tmpName, Value: float64(v)})
+			}
+			result[0].PieData = pieData
+		}
+	} else {
+		for _, queryObj := range result {
+			ds.PrometheusData(queryObj)
+		}
 	}
 	return
 }
@@ -882,7 +913,7 @@ func UpdatePromMetric(c *gin.Context) {
 
 func GetEndpointMetric(c *gin.Context) {
 	var param m.GetEndpointMetricParam
-	if err:=c.ShouldBindJSON(&param);err!=nil {
+	if err := c.ShouldBindJSON(&param); err != nil {
 		mid.ReturnValidateError(c, err.Error())
 		return
 	}
@@ -890,7 +921,7 @@ func GetEndpointMetric(c *gin.Context) {
 	var data []*m.OptionModel
 	if param.ServiceGroup != "" {
 		err, data = db.GetServiceGroupPromMetric(param.ServiceGroup, param.Workspace, param.MonitorType)
-	}else {
+	} else {
 		err, data = db.GetEndpointMetric(param.Guid, param.MonitorType)
 	}
 	if err != nil {
