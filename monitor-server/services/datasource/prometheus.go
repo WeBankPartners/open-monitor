@@ -92,7 +92,7 @@ func PrometheusData(query *m.QueryMonitorData) []*m.SerialModel {
 		log.Logger.Warn("Query prometheus data fail", log.String("status", data.Status))
 		return serials
 	}
-	if query.ChartType == "pie" {
+	if query.ChartType == "pie" && query.PieMetricType != "value" {
 		var pieData m.EChartPie
 		for _, otr := range data.Data.Result {
 			var tmpNameList []string

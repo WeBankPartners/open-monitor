@@ -526,3 +526,9 @@ type PluginCloseAlarmOutputObj struct {
 	ErrorMessage      string `json:"errorMessage"`
 	ErrorDetail       string `json:"errorDetail,omitempty"`
 }
+
+type AlarmCloseParam struct {
+	Id     int    `json:"id"`
+	Custom bool   `json:"custom"`
+	Metric string `json:"metric"`
+}
