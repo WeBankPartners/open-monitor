@@ -1,37 +1,38 @@
 package funcs
 
 import (
-	"time"
-	"sync"
-	"os"
-	"io/ioutil"
-	"strings"
 	"fmt"
-	"os/exec"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
+	"os/exec"
 	"regexp"
 	"strconv"
+	"strings"
+	"sync"
+	"time"
 )
 
-type ProcessObj  struct {
-	Pid  int  `json:"pid"`
-	Guid  string  `json:"guid"`
-	Name  string  `json:"name"`
-	Port  int  `json:"port"`
-	Cmd  string  `json:"cmd"`
-	RunCmd  string  `json:"run_cmd"`
-	StartTime  time.Time  `json:"start_time"`
-	StopTime   time.Time  `json:"stop_time"`
-	Retry  int  `json:"retry"`
-	Path  string  `json:"path"`
-	Status  string  `json:"status"`
-	Deploy  bool  `json:"deploy"`
-	Lock  *sync.RWMutex
-	Process  *os.Process
+type ProcessObj struct {
+	Pid        int       `json:"pid"`
+	Guid       string    `json:"guid"`
+	Name       string    `json:"name"`
+	Port       int       `json:"port"`
+	Cmd        string    `json:"cmd"`
+	RunCmd     string    `json:"run_cmd"`
+	StartTime  time.Time `json:"start_time"`
+	StopTime   time.Time `json:"stop_time"`
+	Retry      int       `json:"retry"`
+	Path       string    `json:"path"`
+	Status     string    `json:"status"`
+	Deploy     bool      `json:"deploy"`
+	ConfigHash string    `json:"config_hash"`
+	Lock       *sync.RWMutex
+	Process    *os.Process
 }
 
-func (p *ProcessObj)init(name,path,cmd string)  {
+func (p *ProcessObj) init(name, path, cmd string) {
 	p.Lock = new(sync.RWMutex)
 	p.Retry = 0
 	p.Name = name
@@ -45,7 +46,7 @@ func (p *ProcessObj)init(name,path,cmd string)  {
 	p.Pid = 0
 }
 
-func (p *ProcessObj)start(configFile,startFile,guid string,port int,param map[string]string) error {
+func (p *ProcessObj) start(configFile, startFile, guid string, port int, param map[string]string) error {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
 	if guid != "" {
@@ -88,17 +89,17 @@ func (p *ProcessObj)start(configFile,startFile,guid string,port int,param map[st
 	}
 	p.Process = cmd.Process
 	var pids []int
-	for i:=0;i<5;i++ {
+	for i := 0; i < 5; i++ {
 		pids = getSystemProcessPid("", p.Path)
 		if len(pids) > 0 {
 			break
 		}
-		time.Sleep(time.Second*time.Duration(1))
+		time.Sleep(time.Second * time.Duration(1))
 	}
-	time.Sleep(time.Second*time.Duration(1))
+	time.Sleep(time.Second * time.Duration(1))
 	if len(pids) > 0 {
 		p.Pid = pids[0]
-	}else {
+	} else {
 		//p.Pid = p.Process.Pid
 		p.Status = "stop"
 		return fmt.Errorf("start timeout")
@@ -115,7 +116,7 @@ func (p *ProcessObj)start(configFile,startFile,guid string,port int,param map[st
 	return nil
 }
 
-func (p *ProcessObj)stop() error {
+func (p *ProcessObj) stop() error {
 	log.Println("start stop")
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
@@ -135,48 +136,48 @@ func (p *ProcessObj)stop() error {
 	return nil
 }
 
-func (p *ProcessObj)restart() error {
+func (p *ProcessObj) restart() error {
 	err := p.stop()
 	if err != nil {
 		return err
 	}
-	err = p.start("","", "", 0, make(map[string]string))
+	err = p.start("", "", "", 0, make(map[string]string))
 	return err
 }
 
-func (p *ProcessObj)print() string {
+func (p *ProcessObj) print() string {
 	p.Lock.RLock()
-	result := fmt.Sprintf("{\"pid\":%d,\"guid\":\"%s\",\"port\":%d,\"name\":\"%s\",\"cmd\":\"%s\",\"run_cmd\":\"%s\",\"path\":\"%s\",\"status\":\"%s\"}", p.Pid,p.Guid,p.Port,p.Name,p.Cmd,p.RunCmd,p.Path,p.Status)
+	result := fmt.Sprintf("{\"pid\":%d,\"guid\":\"%s\",\"port\":%d,\"name\":\"%s\",\"cmd\":\"%s\",\"run_cmd\":\"%s\",\"path\":\"%s\",\"status\":\"%s\"}", p.Pid, p.Guid, p.Port, p.Name, p.Cmd, p.RunCmd, p.Path, p.Status)
 	p.Lock.RUnlock()
 	return result
 }
 
-func (p *ProcessObj)message() (pid int,n string,status string,retry int) {
+func (p *ProcessObj) message() (pid int, n string, status string, retry int) {
 	p.Lock.RLock()
 	pid = p.Pid
 	n = p.Name
 	status = p.Status
 	retry = p.Retry
 	p.Lock.RUnlock()
-	return pid,n,status,retry
+	return pid, n, status, retry
 }
 
-func (p *ProcessObj)update(signal int) {
+func (p *ProcessObj) update(signal int) {
 	p.Lock.Lock()
 	if signal == 1 {
 		pids := getSystemProcessPid(p.Name, "")
 		if len(pids) > 0 {
 			p.Pid = pids[0]
 		}
-	}else if signal == 2 {
+	} else if signal == 2 {
 		p.Status = "dead"
-	}else if signal == 3 {
+	} else if signal == 3 {
 		p.Retry = p.Retry + 1
 	}
 	p.Lock.Unlock()
 }
 
-func (p *ProcessObj)destroy() error {
+func (p *ProcessObj) destroy() error {
 	var err error
 	if p.Status == "running" || p.Status == "broken" {
 		err = p.stop()
@@ -196,27 +197,27 @@ func (p *ProcessObj)destroy() error {
 	return nil
 }
 
-func getSystemProcessPid(name,path string) []int {
+func getSystemProcessPid(name, path string) []int {
 	//log.Printf("name : %s \n", name)
 	result := []int{}
-	cmdString := "ps aux|grep -v '\\['|awk '{print "+ osPsPidIndex +"}'"
+	cmdString := "ps aux|grep -v '\\['|awk '{print " + osPsPidIndex + "}'"
 	if name != "" {
 		cmdString = fmt.Sprintf("ps a|grep %s|grep -v 'bash'|grep -v 'grep'|grep -v 'nohup'|grep -v 'start.sh'|awk '{print $1}'", name)
 	}
 	if path != "" {
-		cmdString = fmt.Sprintf("ps aux|grep %s|grep -v 'bash'|grep -v 'grep'|grep -v 'nohup'|grep -v 'start.sh'|awk '{print "+ osPsPidIndex +"}'", path)
+		cmdString = fmt.Sprintf("ps aux|grep %s|grep -v 'bash'|grep -v 'grep'|grep -v 'nohup'|grep -v 'start.sh'|awk '{print "+osPsPidIndex+"}'", path)
 	}
 	//log.Println(cmdString)
-	b,err := exec.Command(osBashCommand, "-c", cmdString).Output()
+	b, err := exec.Command(osBashCommand, "-c", cmdString).Output()
 	if err != nil {
 		log.Printf("get system process pid fail with command %s : %v \n", cmdString, err)
 		return result
 	}
-	for _,v := range strings.Split(string(b), "\n") {
+	for _, v := range strings.Split(string(b), "\n") {
 		if v != "" {
 			findList := regexp.MustCompile(`(\d+)`).FindAllString(v, -1)
 			if len(findList) > 0 {
-				tmpPid,_ := strconv.Atoi(findList[0])
+				tmpPid, _ := strconv.Atoi(findList[0])
 				if tmpPid > 0 {
 					result = append(result, tmpPid)
 				}
@@ -226,7 +227,7 @@ func getSystemProcessPid(name,path string) []int {
 	return result
 }
 
-func replaceParam(filePath string,paramMap map[string]string) error {
+func replaceParam(filePath string, paramMap map[string]string) error {
 	log.Printf("filePath: %s \n", filePath)
 	_, err := os.Stat(filePath)
 	if os.IsExist(err) {
@@ -237,7 +238,7 @@ func replaceParam(filePath string,paramMap map[string]string) error {
 		return err
 	}
 	configString := string(b)
-	for k,v := range paramMap {
+	for k, v := range paramMap {
 		if strings.Contains(configString, fmt.Sprintf("{{%s}}", k)) {
 			configString = strings.Replace(configString, fmt.Sprintf("{{%s}}", k), v, -1)
 		}
@@ -263,7 +264,7 @@ func checkExporterAlive(name string, port int) error {
 	if scrapeKey == "" {
 		return nil
 	}
-	resp,err := http.Get(fmt.Sprintf("http://127.0.0.1:%d/metrics", port))
+	resp, err := http.Get(fmt.Sprintf("http://127.0.0.1:%d/metrics", port))
 	if err != nil {
 		fmt.Printf("http get error %v \n", err)
 		return err
@@ -278,7 +279,7 @@ func checkExporterAlive(name string, port int) error {
 		fmt.Printf("response http code %v \n", resp.StatusCode)
 		return err
 	}
-	for _,v := range strings.Split(string(body), "\n") {
+	for _, v := range strings.Split(string(body), "\n") {
 		if strings.Contains(v, scrapeKey) {
 			if strings.Contains(v, "1") {
 				if !strings.Contains(v, "#") {
