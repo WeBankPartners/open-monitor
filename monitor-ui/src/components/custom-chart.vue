@@ -1,9 +1,10 @@
 <template>
   <div class="single-chart">
-    <div v-if="!noDataTip" :id="elId" class="echart" :style="chartInfo.style">
+    <div v-if="!noDataTip">
+      <div :id="elId" class="echart" :style="chartInfo.style">
+    </div>
     </div>
     <div v-if="noDataTip" class="echart echart-no-data-tip">
-      {{chartTitle}}:
       <span>~~~No Data!~~~</span>
     </div>
   </div>
@@ -66,8 +67,6 @@ export default {
       const offsetBottom = offset.bottom
       // const offsetHeight = offset.height;
       // 进入可视区域
-      // console.log(offsetTop,offsetBottom)
-      // console.log(offsetTop, window.innerHeight, offsetBottom, offsetTop <= window.innerHeight && offsetBottom >= 0)
       if (offsetTop <= window.innerHeight && offsetBottom >= 0) {
         if (this.interval === null) {
           this.isAutoRefresh()
@@ -86,20 +85,24 @@ export default {
       }
     },
     getchartdata () {
-      this.noDataTip = true
       if (this.chartInfo.chartParams.data.length === 0) {
         return
       }
       this.isAutoRefresh()
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.metricConfigView.api, this.chartInfo.chartParams, responseData => {
-        responseData.yaxis.unit =  this.chartInfo.panalUnit  
-        this.elId = this.chartInfo.elId
-        this.noDataTip = false
-        const chartConfig = {eye: false,dataZoom:false, lineBarSwitch: true, chartType: this.chartInfo.chartType, params: this.chartInfo.chartParams}
-        this.$nextTick( () => {
-          readyToDraw(this,responseData, this.chartIndex, chartConfig)
-          this.scrollHandle()
-        })
+        if (responseData.legend.length === 0) {
+          this.noDataTip = true
+        } else {
+          responseData.yaxis.unit =  this.chartInfo.panalUnit  
+          this.elId = this.chartInfo.elId
+          this.noDataTip = false
+          const chartConfig = {eye: false,dataZoom:false, lineBarSwitch: true, chartType: this.chartInfo.chartType, params: this.chartInfo.chartParams}
+          this.$nextTick( () => {
+            readyToDraw(this,responseData, this.chartIndex, chartConfig)
+            this.scrollHandle()
+          })
+        }
+        
       }, { isNeedloading: false })
     }
   },

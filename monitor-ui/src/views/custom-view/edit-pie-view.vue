@@ -10,7 +10,19 @@
       </div>
     </div>
     <div class="zone zone-config c-dark">
+
       <div class="tool-save">
+        <div class="condition">
+          <Tooltip :content="$t('field.type')" :delay="1000">
+            <Select v-model="templateQuery.pie_metric_type"
+              style="width:160px"
+               @on-change="switchType"
+            >
+              <Option value="tag">标签</Option>
+              <Option value="value">值</Option>
+            </Select>
+          </Tooltip>
+        </div>
         <button class="btn btn-sm btn-confirm-f" @click="saveConfig">{{$t('button.saveConfig')}}</button>
         <!-- <button class="btn btn-sm btn-cancel-f" @click="goback()">{{$t('button.back')}}</button> -->
         <button class="btn btn-sm btn-cancel-f" @click="goback()">{{$t('button.cancel')}}</button>
@@ -120,7 +132,8 @@ export default {
         metricLabel: '',
         metric: '',
         app_object_endpoint_type: '',
-        app_object: ''
+        app_object: '',
+        pie_metric_type: 'tag'
       },
 
       options: [],
@@ -141,6 +154,20 @@ export default {
   mounted() {
   },
   methods: {
+    switchType (val) {
+      if (this.chartQueryList.length === 0) {
+        return
+      }
+      this.chartQueryList.forEach(item => {
+        item.pie_metric_type = val
+      })
+      this.$root.$httpRequestEntrance.httpRequestEntrance(
+        'POST',this.$root.apiCenter.metricConfigPieView.api, this.chartQueryList,
+        responseData => {
+          drawPieChart(this, responseData)
+        }
+      )
+    },
     async test (a, b) {
       this.editIndex = b
       this.templateQuery = {
@@ -225,12 +252,14 @@ export default {
       })
     },
     clearParams () {
+      const pie_metric_type = this.templateQuery.pie_metric_type
       this.templateQuery = {
         endpoint: '',
         metricLabel: '',
         metric: '',
         app_object_endpoint_type: '',
-        app_object: ''
+        app_object: '',
+        pie_metric_type: pie_metric_type
       }
     },
     async initChart (params) {
