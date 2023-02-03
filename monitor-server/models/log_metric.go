@@ -81,6 +81,8 @@ type LogMetricConfigObj struct {
 	AggType          string                     `json:"agg_type" xorm:"agg_type"`
 	Step             int64                      `json:"step" xorm:"step"`
 	StringMap        []*LogMetricStringMapTable `json:"string_map"`
+	ServiceGroup     string                     `json:"service_group"`
+	MonitorType      string                     `json:"monitor_type"`
 }
 
 type LogMetricMonitorCreateDto struct {
