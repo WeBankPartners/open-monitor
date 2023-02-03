@@ -16,6 +16,7 @@ type LogKeywordConfigTable struct {
 	NotifyEnable      int    `json:"notify_enable"`
 	Priority          string `json:"priority"`
 	UpdateTime        string `json:"update_time"`
+	Content           string `json:"content"`
 }
 
 type LogKeywordEndpointRelTable struct {
@@ -81,16 +82,17 @@ type LogKeywordCronJobQuery struct {
 	Priority       string `xorm:"priority"`
 	SourceEndpoint string `xorm:"source_endpoint"`
 	TargetEndpoint string `xorm:"target_endpoint"`
-	AgentAddress string `xorm:"agent_address"`
+	AgentAddress   string `xorm:"agent_address"`
+	Content        string `xorm:"content"`
 }
 
 type LogKeywordRowsHttpDto struct {
-	Path      string  `json:"path"`
-	Keyword   string  `json:"keyword"`
+	Path    string `json:"path"`
+	Keyword string `json:"keyword"`
 }
 
 type LogKeywordRowsHttpResult struct {
-	Status  string               `json:"status"`
-	Message string               `json:"message"`
+	Status  string                `json:"status"`
+	Message string                `json:"message"`
 	Data    []*LogKeywordFetchObj `json:"data"`
 }
