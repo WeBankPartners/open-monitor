@@ -300,5 +300,8 @@
   "m_clear": "清空",
   "m_import": "导入",
   "m_export": "导出",
+  "m_regular_tip": "正则表达式需包含括号！",
+  "m_content": "内容",
+  "m_batch_close": "批量关闭",
   "m_metric": "指标"
 }
