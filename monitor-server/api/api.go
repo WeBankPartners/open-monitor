@@ -208,6 +208,7 @@ func init() {
 		&handlerFuncObj{Url: "/service/log_metric/log_metric_config", Method: http.MethodPost, HandlerFunc: service.CreateLogMetricConfig},
 		&handlerFuncObj{Url: "/service/log_metric/log_metric_config", Method: http.MethodPut, HandlerFunc: service.UpdateLogMetricConfig},
 		&handlerFuncObj{Url: "/service/log_metric/log_metric_config/:logMonitorConfigGuid", Method: http.MethodDelete, HandlerFunc: service.DeleteLogMetricConfig},
+		&handlerFuncObj{Url: "/service/log_metric/log_metric_import/excel/:logMonitorGuid", Method: http.MethodPost, HandlerFunc: service.ImportLogMetricExcel},
 		&handlerFuncObj{Url: "/service/service_group/:serviceGroup/endpoint/:monitorType", Method: http.MethodGet, HandlerFunc: service.ListServiceGroupEndpoint},
 
 		&handlerFuncObj{Url: "/service/db_metric/list/:queryType/:guid", Method: http.MethodGet, HandlerFunc: service.ListDbMetricMonitor},
