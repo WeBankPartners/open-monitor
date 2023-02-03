@@ -792,3 +792,35 @@ func getDeleteLogMetricConfigByImport(existLogMetric *models.LogMetricConfigObj)
 	actions = append(actions, &Action{Sql: "delete from log_metric_config where guid=?", Param: []interface{}{existLogMetric.Guid}})
 	return
 }
+
+func ImportLogMetricExcel(logMonitorGuid string, param []*models.LogMetricConfigObj) (err error) {
+	var actions []*Action
+	var affectEndpointGroupList, affectHostList []string
+	for _, v := range ListLogMetricEndpointRel(logMonitorGuid) {
+		affectHostList = append(affectHostList, v.SourceEndpoint)
+	}
+	for _, existLogConfig := range ListLogMetricConfig("", logMonitorGuid) {
+		tmpActions, tmpAffectEndpointGroup := getDeleteLogMetricConfigAction(existLogConfig.Guid, logMonitorGuid)
+		actions = append(actions, tmpActions...)
+		affectEndpointGroupList = append(affectEndpointGroupList, tmpAffectEndpointGroup...)
+	}
+	nowTime := time.Now().Format(models.DatetimeFormat)
+	for _, inputLogConfig := range param {
+		inputLogConfig.LogMetricMonitor = logMonitorGuid
+		actions = append(actions, getCreateLogMetricConfigAction(inputLogConfig, nowTime)...)
+	}
+	err = Transaction(actions)
+	if err != nil {
+		log.Logger.Error("import log metric from excel exec database fail", log.Error(err))
+		return
+	}
+	if tmpErr := SyncLogMetricExporterConfig(affectHostList); tmpErr != nil {
+		log.Logger.Error("sync log metric to affect host fail", log.Error(tmpErr))
+	}
+	for _, v := range affectEndpointGroupList {
+		if tmpErr := SyncPrometheusRuleFile(v, false); tmpErr != nil {
+			log.Logger.Error("sync prometheus rule file fail", log.Error(tmpErr))
+		}
+	}
+	return
+}
