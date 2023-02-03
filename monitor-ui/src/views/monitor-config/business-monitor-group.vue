@@ -690,6 +690,10 @@ export default {
     saveCustomMetric () {
       let params = JSON.parse(JSON.stringify(this.customMetricsModelConfig.addRow))
       params.log_metric_monitor = this.activeData.guid
+      if (!(params.regular.includes('(') && params.regular.includes(')'))) {
+        this.$Message.error(this.$t('m_regular_tip'))
+        return
+      }
       const requestType = this.customMetricsModelConfig.isAdd ? 'POST' : 'PUT'
       this.$root.$httpRequestEntrance.httpRequestEntrance(requestType, this.$root.apiCenter.logMetricReg, params, () => {
         this.$Message.success(this.$t('tips.success'))
