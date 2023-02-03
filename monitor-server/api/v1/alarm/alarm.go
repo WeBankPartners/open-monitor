@@ -560,16 +560,20 @@ func QueryProblemAlarmByPage(c *gin.Context) {
 // @Success 200 {string} json "{"message": "Success"}"
 // @Router /api/v1/alarm/problem/close [get]
 func CloseAlarm(c *gin.Context) {
-	id, err := strconv.Atoi(c.Query("id"))
-	isCustom := strings.ToLower(c.Query("custom"))
-	if err != nil || id <= 0 {
-		mid.ReturnParamTypeError(c, "id", "int")
+	var param m.AlarmCloseParam
+	var err error
+	if err = c.ShouldBindJSON(&param); err != nil {
+		mid.ReturnValidateError(c, err.Error())
 		return
 	}
-	if isCustom == "true" {
-		err = db.CloseOpenAlarm(id)
+	if param.Metric == "" && param.Id == 0 {
+		mid.ReturnValidateError(c, "param can not empty")
+		return
+	}
+	if param.Custom {
+		err = db.CloseOpenAlarm(param.Id)
 	} else {
-		err = db.CloseAlarm(id)
+		err = db.CloseAlarm(param)
 	}
 	if err != nil {
 		mid.ReturnHandleError(c, err.Error(), err)
