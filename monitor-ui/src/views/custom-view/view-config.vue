@@ -289,6 +289,7 @@ export default {
         this.disableTime = true
         this.viewCondition.autoRefresh = 0
       }
+      this.initPanals()
     },
     dateToTimestamp (date) {
       if (!date) return 0
@@ -323,7 +324,10 @@ export default {
           chartType: item.chartType,
           aggregate: item.aggregate,
           agg_step: item.agg_step,
-          lineType: item.lineType                                       
+          lineType: item.lineType,
+          time_second: this.viewCondition.timeTnterval,
+          start: this.dateToTimestamp(this.viewCondition.dateRange[0]),
+          end: this.dateToTimestamp(this.viewCondition.dateRange[1])                                  
         })
         item.viewConfig._activeCharts = _activeCharts
         tmp.push(item.viewConfig)
