@@ -50,6 +50,21 @@
           <Tabs value="name1">
             <TabPane :label="$t('title.metricConfiguration')" name="name1">
               <div style="min-height:300px">
+                <div style="text-align:right;margin-bottom:16px">
+                  <button class="btn-cancel-f" @click.stop="exportData">{{$t("m_export")}}{{$t("m_metric")}}</button>
+                  <div style="display: inline-block;"> 
+                    <Upload 
+                    :action="uploadUrl" 
+                    :show-upload-list="false"
+                    :max-size="1000"
+                    with-credentials
+                    :headers="{'Authorization': token}"
+                    :on-success="uploadSucess"
+                    :on-error="uploadFailed">
+                      <Button icon="ios-cloud-upload-outline">{{$t('m_import')}}{{$t("m_metric")}}</Button>
+                    </Upload>
+                  </div>
+                </div>
                 <Form :label-width="80">
                   <FormItem :label="$t('field.metric')">
                     <Select v-model="metricId" filterable clearable @on-clear="clearMetric" @on-open-change="getMetricOptions" @on-change="changeMetricOptions" ref="metricSelect" :disabled="!monitorType">
@@ -61,21 +76,6 @@
                         </span>
                       </Option>
                     </Select>
-                    <div style="text-align:right;margin-top:16px">
-                      <button class="btn-cancel-f" @click="exportData">{{$t("m_export")}}</button>
-                      <div style="display: inline-block;"> 
-                        <Upload 
-                        :action="uploadUrl" 
-                        :show-upload-list="false"
-                        :max-size="1000"
-                        with-credentials
-                        :headers="{'X-Auth-Token': token,'Authorization': token}"
-                        :on-success="uploadSucess"
-                        :on-error="uploadFailed">
-                          <Button icon="ios-cloud-upload-outline">{{$t('m_import')}}</Button>
-                        </Upload>
-                      </div>
-                    </div>
                   </FormItem>
                   <template v-if="metricId!== '' || hideMetricZone">
                     <Divider />
@@ -362,7 +362,6 @@ export default {
         method: 'GET',
         url: api,
         headers: {
-          'X-Auth-Token': this.token,
           'Authorization': this.token
         }
       }).then((response) => {
@@ -372,21 +371,21 @@ export default {
           let blob = new Blob([content])
           if('msSaveOrOpenBlob' in navigator){
             // Microsoft Edge and Microsoft Internet Explorer 10-11
-          window.navigator.msSaveOrOpenBlob(blob, fileName)
-        } else {
-          if ('download' in document.createElement('a')) { // 非IE下载
-            let elink = document.createElement('a')
-            elink.download = fileName
-            elink.style.display = 'none'
-            elink.href = URL.createObjectURL(blob)  
-            document.body.appendChild(elink)
-            elink.click()
-            URL.revokeObjectURL(elink.href) // 释放URL 对象
-            document.body.removeChild(elink)
-          } else { // IE10+下载
-            navigator.msSaveOrOpenBlob(blob, fileName)
+            window.navigator.msSaveOrOpenBlob(blob, fileName)
+          } else {
+            if ('download' in document.createElement('a')) { // 非IE下载
+              let elink = document.createElement('a')
+              elink.download = fileName
+              elink.style.display = 'none'
+              elink.href = URL.createObjectURL(blob)  
+              document.body.appendChild(elink)
+              elink.click()
+              URL.revokeObjectURL(elink.href) // 释放URL 对象
+              document.body.removeChild(elink)
+            } else { // IE10+下载
+              navigator.msSaveOrOpenBlob(blob, fileName)
+            }
           }
-        }
         }
       })
       .catch(() => {

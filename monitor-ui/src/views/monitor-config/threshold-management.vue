@@ -38,7 +38,7 @@
               :show-upload-list="false"
               :max-size="1000"
               with-credentials
-              :headers="{'X-Auth-Token': token,'Authorization': token}"
+              :headers="{'Authorization': token}"
               :on-success="uploadSucess"
               :on-error="uploadFailed">
                 <Button icon="ios-cloud-upload-outline">{{$t('button.upload')}}</Button>
@@ -105,7 +105,6 @@ export default {
         method: 'GET',
         url: api,
         headers: {
-          'X-Auth-Token': this.token,
           'Authorization': this.token
         }
       }).then((response) => {
