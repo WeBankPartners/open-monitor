@@ -67,7 +67,7 @@ export default {
       this.$root.$httpRequestEntrance.httpRequestEntrance(
         'POST',this.$root.apiCenter.metricConfigPieView.api, params,
         responseData => {
-          if (responseData.legend.length === 0) {
+          if (responseData.legend && responseData.legend.length === 0) {
             this.noDataTip = true
           } else {
             this.noDataTip = false
