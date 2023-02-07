@@ -12,7 +12,7 @@
     <div class="zone zone-config c-dark">
 
       <div class="tool-save">
-        <div class="condition">
+        <div class="condition" style="text-align: left">
           <Tooltip :content="$t('field.type')" :delay="1000">
             <Select v-model="templateQuery.pie_metric_type"
               style="width:160px"
