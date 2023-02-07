@@ -355,6 +355,28 @@
         <Button @click="saveDb" type="primary">{{$t('button.save')}}</Button>
       </div>
     </Modal>
+
+    <Modal
+      v-model="isShowGroupMetricUpload"
+      :title="$t('m_import')"
+      @on-ok="isShowGroupMetricUpload = false"
+      @on-cancel="isShowGroupMetricUpload = false">
+      <div class="modal-body" style="padding:30px">
+        <div style="display: inline-block;margin-bottom: 3px;"> 
+          <Upload 
+          :action="uploadGroupMetricUrl" 
+          accept=".xlsx,.csv"
+          :show-upload-list="false"
+          :max-size="1000"
+          with-credentials
+          :headers="{'X-Auth-Token': token,'Authorization': token}"
+          :on-success="uploadSucess"
+          :on-error="uploadFailed">
+            <Button icon="ios-cloud-upload-outline">{{$t('m_import')}}</Button>
+          </Upload>
+        </div>
+      </div>
+    </Modal>
   </div>
 </template>
 
@@ -370,7 +392,8 @@ let tableEle = [
 ]
 const btn = [
   {btn_name: 'button.edit', btn_func: 'editF'},
-  {btn_name: 'button.remove', btn_func: 'deleteConfirmModal'}
+  {btn_name: 'button.remove', btn_func: 'deleteConfirmModal'},
+  {btn_name: 'm_import', btn_func: 'importConfig'},
 ]
 
 let tableDbEle = [
@@ -540,12 +563,17 @@ export default {
         {label: 'nginx', value: 'nginx'},
         {label: 'http', value: 'http'},
         {label: 'mysql', value: 'mysql'}
-      ]
+      ],
+      isShowGroupMetricUpload: false,
+      groupMetricId: ''
     }
   },
   computed: {
     uploadUrl: function() {
       return baseURL_config + `${this.$root.apiCenter.keywordImport}?serviceGroup=${this.targrtId}`
+    },
+    uploadGroupMetricUrl: function() {
+      return baseURL_config + `/monitor/api/v2/service/log_metric/log_metric_import/excel/${this.groupMetricId}`
     }
   },
   mounted () {
@@ -553,6 +581,10 @@ export default {
     this.token = (window.request ? 'Bearer ' + getPlatFormToken() : getToken())|| null
   },
   methods: {
+    importConfig (rowData) {
+      this.groupMetricId = rowData.guid
+      this.isShowGroupMetricUpload = true
+    },
     exportData () {
       const api = `${this.$root.apiCenter.keywordExport}?serviceGroup=${this.targrtId}`
       axios({
