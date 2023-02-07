@@ -665,3 +665,14 @@ alter table alarm_strategy add column active_window varchar(32) default '00:00-2
 #@v2.0.0.29-begin@;
 alter table rel_role_custom_dashboard add column permission varchar(32) default 'mgmt';
 #@v2.0.0.29-end@;
+
+#@v2.0.0.35-begin@;
+alter table alarm drop index `alarm_unique_index_sec`;
+alter table alarm modify endpoint_tags varchar(64);
+update alarm set endpoint_tags=null where endpoint_tags='';
+create unique index `alarm_tags_unique_idx` on alarm (`endpoint_tags`);
+#@v2.0.0.35-end@;
+
+#@v2.0.0.46-begin@;
+alter table log_keyword_config add column content text default null;
+#@v2.0.0.46-end@;
