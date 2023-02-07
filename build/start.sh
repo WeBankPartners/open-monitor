@@ -33,8 +33,9 @@ sed -i "s~{{MONITOR_ARCHIVE_MYSQL_PWD}}~$MONITOR_ARCHIVE_MYSQL_PWD~g" archive_my
 sed -i "s~{{MONITOR_ALARM_MAIL_ENABLE}}~$MONITOR_ALARM_MAIL_ENABLE~g" monitor/conf/default.json
 sed -i "s~{{MONITOR_ALARM_CALLBACK_LEVEL_MIN}}~$MONITOR_ALARM_CALLBACK_LEVEL_MIN~g" monitor/conf/default.json
 sed -i "s~{{MONITOR_ALARM_CALLBACK_LEVEL_MIN}}~$MONITOR_ALARM_CALLBACK_LEVEL_MIN~g" monitor/conf/default.json
-sed -i "s~{{MONITOR_ARCHIVE_UNIT_SPEED}}~$MONITOR_ARCHIVE_UNIT_SPEED~g" monitor/conf/default.json
-sed -i "s~{{MONITOR_ARCHIVE_CONCURRENT_NUM}}~$MONITOR_ARCHIVE_CONCURRENT_NUM~g" monitor/conf/default.json
+sed -i "s~{{MONITOR_ARCHIVE_UNIT_SPEED}}~$MONITOR_ARCHIVE_UNIT_SPEED~g" archive_mysql_tool/default.json
+sed -i "s~{{MONITOR_ARCHIVE_CONCURRENT_NUM}}~$MONITOR_ARCHIVE_CONCURRENT_NUM~g" archive_mysql_tool/default.json
+sed -i "s~{{MONITOR_ARCHIVE_MAX_HTTP_OPEN}}~$MONITOR_ARCHIVE_MAX_HTTP_OPEN~g" archive_mysql_tool/default.json
 
 
 if [ $GATEWAY_URL ]
@@ -95,4 +96,10 @@ nohup ./db_data_exporter > logs/app.log 2>&1 &
 cd ../monitor/
 mkdir -p logs
 sleep 2
-./monitor-server
+Exit_actions (){
+  kill `ps aux|grep -E "prometheus"|grep -v "grep"|awk '{print $1}'`
+  wait $!
+}
+trap Exit_actions INT TERM EXIT
+nohup ./monitor-server > logs/app.log 2>&1 &
+wait $!
