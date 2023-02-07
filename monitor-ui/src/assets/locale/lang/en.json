@@ -303,5 +303,6 @@
   "m_export": "Export",
   "m_regular_tip": "The regular expression must contain parentheses !",
   "m_content": "Content",
-  "m_batch_close": "Batch Close"
+  "m_batch_close": "Batch Close",
+  "m_metric": "Metric"
 }
