@@ -131,7 +131,7 @@ func init() {
 		&handlerFuncObj{Url: "/alarm/problem/list", Method: http.MethodGet, HandlerFunc: alarm.GetProblemAlarm},
 		&handlerFuncObj{Url: "/alarm/problem/query", Method: http.MethodPost, HandlerFunc: alarm.QueryProblemAlarm},
 		&handlerFuncObj{Url: "/alarm/problem/page", Method: http.MethodPost, HandlerFunc: alarm.QueryProblemAlarmByPage},
-		&handlerFuncObj{Url: "/alarm/problem/close", Method: http.MethodGet, HandlerFunc: alarm.CloseAlarm},
+		&handlerFuncObj{Url: "/alarm/problem/close", Method: http.MethodPost, HandlerFunc: alarm.CloseAlarm},
 		&handlerFuncObj{Url: "/alarm/problem/history", Method: http.MethodPost, HandlerFunc: alarm.QueryHistoryAlarm},
 		&handlerFuncObj{Url: "/alarm/problem/message", Method: http.MethodPost, HandlerFunc: alarm.UpdateAlarmCustomMessage},
 		// 关键字监控配置
@@ -196,6 +196,8 @@ func init() {
 		&handlerFuncObj{Url: "/service/log_metric/log_metric_monitor", Method: http.MethodPut, HandlerFunc: service.UpdateLogMetricMonitor},
 		&handlerFuncObj{Url: "/service/log_metric/log_metric_monitor/:logMonitorGuid", Method: http.MethodDelete, HandlerFunc: service.DeleteLogMetricMonitor},
 		&handlerFuncObj{Url: "/service/service_group/endpoint_rel", Method: http.MethodGet, HandlerFunc: service.GetServiceGroupEndpointRel},
+		&handlerFuncObj{Url: "/service/log_metric/export", Method: http.MethodGet, HandlerFunc: service.ExportLogMetric},
+		&handlerFuncObj{Url: "/service/log_metric/import", Method: http.MethodPost, HandlerFunc: service.ImportLogMetric},
 
 		&handlerFuncObj{Url: "/service/log_metric/log_metric_json/:logMonitorJsonGuid", Method: http.MethodGet, HandlerFunc: service.GetLogMetricJson},
 		&handlerFuncObj{Url: "/service/log_metric/log_metric_json", Method: http.MethodPost, HandlerFunc: service.CreateLogMetricJson},
@@ -206,6 +208,7 @@ func init() {
 		&handlerFuncObj{Url: "/service/log_metric/log_metric_config", Method: http.MethodPost, HandlerFunc: service.CreateLogMetricConfig},
 		&handlerFuncObj{Url: "/service/log_metric/log_metric_config", Method: http.MethodPut, HandlerFunc: service.UpdateLogMetricConfig},
 		&handlerFuncObj{Url: "/service/log_metric/log_metric_config/:logMonitorConfigGuid", Method: http.MethodDelete, HandlerFunc: service.DeleteLogMetricConfig},
+		&handlerFuncObj{Url: "/service/log_metric/log_metric_import/excel/:logMonitorGuid", Method: http.MethodPost, HandlerFunc: service.ImportLogMetricExcel},
 		&handlerFuncObj{Url: "/service/service_group/:serviceGroup/endpoint/:monitorType", Method: http.MethodGet, HandlerFunc: service.ListServiceGroupEndpoint},
 
 		&handlerFuncObj{Url: "/service/db_metric/list/:queryType/:guid", Method: http.MethodGet, HandlerFunc: service.ListDbMetricMonitor},
@@ -219,6 +222,8 @@ func init() {
 		&handlerFuncObj{Url: "/service/log_keyword/log_keyword_monitor", Method: http.MethodPost, HandlerFunc: service.CreateLogKeywordMonitor},
 		&handlerFuncObj{Url: "/service/log_keyword/log_keyword_monitor", Method: http.MethodPut, HandlerFunc: service.UpdateLogKeywordMonitor},
 		&handlerFuncObj{Url: "/service/log_keyword/log_keyword_monitor/:logKeywordMonitorGuid", Method: http.MethodDelete, HandlerFunc: service.DeleteLogKeywordMonitor},
+		&handlerFuncObj{Url: "/service/log_keyword/export", Method: http.MethodGet, HandlerFunc: service.ExportLogKeyword},
+		&handlerFuncObj{Url: "/service/log_keyword/import", Method: http.MethodPost, HandlerFunc: service.ImportLogKeyword},
 
 		&handlerFuncObj{Url: "/service/log_keyword/log_keyword_config", Method: http.MethodPost, HandlerFunc: service.CreateLogKeyword},
 		&handlerFuncObj{Url: "/service/log_keyword/log_keyword_config", Method: http.MethodPut, HandlerFunc: service.UpdateLogKeyword},
@@ -249,6 +254,8 @@ func init() {
 		&handlerFuncObj{Url: "/sys/parameter/metric_template", Method: http.MethodGet, HandlerFunc: monitor.GetSysMetricTemplate},
 		&handlerFuncObj{Url: "/monitor/endpoint/get/:guid", Method: http.MethodGet, HandlerFunc: monitor.GetEndpoint},
 		&handlerFuncObj{Url: "/monitor/endpoint/update", Method: http.MethodPut, HandlerFunc: monitor.UpdateEndpoint},
+		&handlerFuncObj{Url: "/monitor/metric/export", Method: http.MethodGet, HandlerFunc: monitor.ExportMetric},
+		&handlerFuncObj{Url: "/monitor/metric/import", Method: http.MethodPost, HandlerFunc: monitor.ImportMetric},
 	)
 }
 
