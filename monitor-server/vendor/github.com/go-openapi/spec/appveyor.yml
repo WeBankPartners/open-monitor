@@ -1,0 +1,32 @@
+version: "0.1.{build}"
+
+clone_folder: C:\go-openapi\spec
+shallow_clone: true # for startup speed
+pull_requests:
+  do_not_increment_build_number: true
+
+#skip_tags: true
+#skip_branch_with_pr: true
+
+# appveyor.yml
+build: off
+
+environment:
+  GOPATH: c:\gopath
+
+stack: go 1.15
+
+test_script:
+  - go test -v -timeout 20m ./...
+
+deploy: off
+
+notifications:
+  - provider: Slack
+    incoming_webhook: https://hooks.slack.com/services/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
+    auth_token:
+***REMOVED***
+    channel: bots
+    on_build_success: false
+    on_build_failure: true
+    on_build_status_changed: true
