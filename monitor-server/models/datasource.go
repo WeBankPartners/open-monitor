@@ -20,6 +20,7 @@ type QueryMonitorData struct {
 	Cluster          string    `json:"cluster"`
 	ServiceGroupName string    `json:"service_group_name"`
 	CustomDashboard  bool      `json:"custom_dashboard"`
+	PieMetricType    string    `json:"pie_metric_type"`
 }
 
 type PrometheusParam struct {
