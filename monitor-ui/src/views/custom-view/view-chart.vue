@@ -80,7 +80,8 @@ export default {
       elId: null,
       noDataTip: false,
       panalTitle: '',
-      panalUnit: ''
+      panalUnit: '',
+      interval: null
     };
   },
   created() {
@@ -108,6 +109,9 @@ export default {
     //     });
     //   }
     // }
+  },
+  destroyed () {
+    clearInterval(this.interval)
   },
   methods: {
     initChart (params) {
