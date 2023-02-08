@@ -351,6 +351,9 @@ func getChartQueryData(queryList []*models.QueryMonitorData, param *models.Chart
 	if strings.HasPrefix(param.Data[0].Metric, "process_") {
 		processDisplayMap = db.GetProcessDisplayMap(param.Data[0].Endpoint)
 	}
+	if len(serials) > 0 && param.Aggregate != "none" && param.AggStep <= 0 {
+		param.AggStep = int64(db.CheckAggregate(param.Start, param.End, "", 10, len(serials)))
+	}
 	for i, s := range serials {
 		if strings.Contains(s.Name, "$metric") {
 			queryIndex := i
