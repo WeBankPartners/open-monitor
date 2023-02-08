@@ -15,7 +15,7 @@
           <Tooltip :content="$t('field.aggType')" :delay="1000">
             <Select filterable  class="select-option" v-model="templateQuery.aggregate" style="width:100px" @on-change="switchChartType">
               <Option
-                v-for="(type) in ['min', 'max', 'avg', 'p95', 'sum', 'none']"
+                v-for="(type) in ['min', 'max', 'avg', 'p95', 'sum', 'none', 'avg_nonzero']"
                 :value="type"
                 :key="type"
               >{{type}}</Option>
