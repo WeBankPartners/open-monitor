@@ -1,39 +1,39 @@
 package manager
 
 import (
-	"net/http"
-	"io/ioutil"
-	"log"
 	"encoding/json"
 	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-agent/agent_manager/funcs"
+	"io/ioutil"
+	"log"
+	"net/http"
 	"regexp"
 )
 
-func AddDeploy(w http.ResponseWriter,r *http.Request)  {
+func AddDeploy(w http.ResponseWriter, r *http.Request) {
 	var resp httpResponse
-	b,err := ioutil.ReadAll(r.Body)
+	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Printf("error : %v \n", err)
 		resp.Code = 500
-		resp.Message = fmt.Sprintf("error:%v",err)
-	}else{
+		resp.Message = fmt.Sprintf("error:%v", err)
+	} else {
 		var tmpParamMap map[string]string
 		err = json.Unmarshal(b, &tmpParamMap)
 		if err != nil {
 			resp.Code = 500
-			resp.Message = fmt.Sprintf("error:%v",err)
-		}else{
-			var exporter,configFile,guid string
-			if _,b := tmpParamMap["guid"]; !b {
+			resp.Message = fmt.Sprintf("error:%v", err)
+		} else {
+			var exporter, configFile, guid string
+			if _, b := tmpParamMap["guid"]; !b {
 				resp.Code = 400
 				resp.Message = "param guid can not find!"
 			}
 			guid = tmpParamMap["guid"]
-			if v,b := tmpParamMap["exporter"]; !b {
+			if v, b := tmpParamMap["exporter"]; !b {
 				resp.Code = 400
 				resp.Message = "param exporter can not find!"
-			}else {
+			} else {
 				exporter = v
 				if v, b := tmpParamMap["config"]; b {
 					configFile = v
@@ -51,7 +51,8 @@ func AddDeploy(w http.ResponseWriter,r *http.Request)  {
 					resp.Message = "param guid illegal "
 				}
 				if resp.Code < 200 {
-					port, err := funcs.AddDeploy(exporter, configFile, guid, tmpParamMap)
+					configHash := fmt.Sprintf("%s:%s_%s_%s", tmpParamMap["instance_server"], tmpParamMap["instance_port"], tmpParamMap["auth_user"], tmpParamMap["auth_password"])
+					port, err := funcs.AddDeploy(exporter, configFile, guid, tmpParamMap, configHash)
 					if err != nil {
 						resp.Code = 500
 						resp.Message = fmt.Sprintf("error:%v", err)
@@ -72,30 +73,30 @@ func AddDeploy(w http.ResponseWriter,r *http.Request)  {
 	w.Write(resp.byte())
 }
 
-func DelDeploy(w http.ResponseWriter,r *http.Request)  {
+func DelDeploy(w http.ResponseWriter, r *http.Request) {
 	var resp httpResponse
-	b,err := ioutil.ReadAll(r.Body)
+	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Printf("error : %v \n", err)
 		resp.Code = 500
-		resp.Message = fmt.Sprintf("error:%v",err)
-	}else {
+		resp.Message = fmt.Sprintf("error:%v", err)
+	} else {
 		var tmpParamMap map[string]string
 		err = json.Unmarshal(b, &tmpParamMap)
 		if err != nil {
 			resp.Code = 500
 			resp.Message = fmt.Sprintf("error:%v", err)
 		} else {
-			if v,b := tmpParamMap["guid"];b {
+			if v, b := tmpParamMap["guid"]; b {
 				err = funcs.DeleteDeploy(v)
 				if err != nil {
 					resp.Code = 500
 					resp.Message = fmt.Sprintf("error:%v", err)
-				}else{
+				} else {
 					resp.Code = 200
 					resp.Message = "success"
 				}
-			}else{
+			} else {
 				resp.Code = 400
 				resp.Message = "Param guid not exist"
 			}
@@ -105,15 +106,15 @@ func DelDeploy(w http.ResponseWriter,r *http.Request)  {
 	w.Write(resp.byte())
 }
 
-func InitDeploy(w http.ResponseWriter,r *http.Request)  {
+func InitDeploy(w http.ResponseWriter, r *http.Request) {
 	log.Println("start init deploy")
 	var resp httpResponse
-	b,err := ioutil.ReadAll(r.Body)
+	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Printf("error : %v \n", err)
 		resp.Code = 500
-		resp.Message = fmt.Sprintf("error:%v",err)
-	}else {
+		resp.Message = fmt.Sprintf("error:%v", err)
+	} else {
 		var param []*funcs.AgentManagerTable
 		err = json.Unmarshal(b, &param)
 		if err != nil {
@@ -124,7 +125,7 @@ func InitDeploy(w http.ResponseWriter,r *http.Request)  {
 			if err != nil {
 				resp.Code = 500
 				resp.Message = fmt.Sprintf("error:%v", err)
-			}else{
+			} else {
 				resp.Code = 200
 				resp.Message = "success"
 			}
@@ -133,21 +134,21 @@ func InitDeploy(w http.ResponseWriter,r *http.Request)  {
 	w.Write(resp.byte())
 }
 
-func DisplayProcess(w http.ResponseWriter,r *http.Request)  {
+func DisplayProcess(w http.ResponseWriter, r *http.Request) {
 	w.Write(funcs.PrintProcessList())
 }
 
 type httpResponse struct {
-	Code  int  `json:"code"`
-	Message  string  `json:"message"`
-	Data  interface{}  `json:"data"`
+	Code    int         `json:"code"`
+	Message string      `json:"message"`
+	Data    interface{} `json:"data"`
 }
 
 func (h *httpResponse) byte() []byte {
-	d,err := json.Marshal(h)
+	d, err := json.Marshal(h)
 	if err == nil {
 		return d
-	}else{
+	} else {
 		return []byte(fmt.Sprintf("{\"code\":%d,\"message\":\"%s\",\"data\":%v}", h.Code, h.Message, h.Data))
 	}
 }

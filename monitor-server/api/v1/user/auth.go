@@ -201,13 +201,17 @@ func AuthRequired() gin.HandlerFunc {
 			} else {
 				auToken := c.GetHeader("X-Auth-Token")
 				if auToken != "" {
-					isOk, operator := mid.IsActive(auToken, c.ClientIP())
-					if isOk {
-						c.Set("operatorName", operator)
+					if auToken == m.Config().Http.Session.ServerToken {
 						c.Next()
 					} else {
-						mid.ReturnTokenError(c)
-						c.Abort()
+						isOk, operator := mid.IsActive(auToken, c.ClientIP())
+						if isOk {
+							c.Set("operatorName", operator)
+							c.Next()
+						} else {
+							mid.ReturnTokenError(c)
+							c.Abort()
+						}
 					}
 				} else {
 					mid.ReturnTokenError(c)

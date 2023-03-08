@@ -10,70 +10,101 @@
       </div>
     </div>
     <div class="zone zone-config c-dark">
+
       <div class="tool-save">
+        <div class="condition" style="text-align: left">
+          <Tooltip :content="$t('field.type')" :delay="1000">
+            <Select v-model="templateQuery.pie_metric_type"
+              style="width:160px"
+               @on-change="switchType"
+            >
+              <Option value="tag">标签</Option>
+              <Option value="value">值</Option>
+            </Select>
+          </Tooltip>
+        </div>
         <button class="btn btn-sm btn-confirm-f" @click="saveConfig">{{$t('button.saveConfig')}}</button>
         <!-- <button class="btn btn-sm btn-cancel-f" @click="goback()">{{$t('button.back')}}</button> -->
         <button class="btn btn-sm btn-cancel-f" @click="goback()">{{$t('button.cancel')}}</button>
       </div>
       <div>
         <section class="zone-config-operation">
-            <div class="condition-zone">
-              <ul>
-                <li>
-                  <div class="condition condition-title c-black-gray">{{$t('field.endpoint')}}</div>
+          <div class="tag-display"  v-for="(query, queryIndex) in chartQueryList" :key="queryIndex">
+            <Tag
+              color="primary"
+              type="border"
+              :name="queryIndex"
+              closable
+              @click.native="test(query, queryIndex)"
+              @on-close="removeQuery(queryIndex)"
+            >{{$t('field.endpoint')}}：{{query.endpoint}}; {{$t('field.metric')}}：{{query.metric}}</Tag>
+          </div>
+          <div class="condition-zone">
+            <ul>
+              <li>
+                <div class="condition condition-title c-black-gray">{{$t('field.endpoint')}}</div>
+                <div class="condition">
+                  <Select
+                    style="width:300px"
+                    v-model="templateQuery.endpoint"
+                    filterable
+                    clearable
+                    remote
+                    @on-change="changeEndpoint"
+                    :placeholder="$t('requestMoreData')"
+                    @on-open-change="getEndpointList('.')"
+                    :remote-method="getEndpointList"
+                  >
+                    <Option
+                      v-for="(option, index) in options"
+                      :value="option.option_value"
+                      :key="index"
+                    >
+                      <TagShow :tagName="option.option_type_name" :index="index"></TagShow>{{option.option_text}}</Option>
+                    <Option value="moreTips" disabled>{{$t('tips.requestMoreData')}}</Option>
+                  </Select>
+                </div>
+              </li>
+              <li v-if="showRecursiveType">
+                <div class="condition condition-title c-black-gray">{{$t('field.type')}}</div>
                   <div class="condition">
                     <Select
+                      v-model="templateQuery.app_object_endpoint_type"
                       style="width:300px"
-                      v-model="templateQuery.endpoint"
                       filterable
                       clearable
-                      remote
-                      :placeholder="$t('requestMoreData')"
-                      @on-open-change="getEndpointList('.')"
-                      :remote-method="getEndpointList"
                     >
                       <Option
-                        v-for="(option, index) in options"
-                        :value="option.option_value"
-                        :key="index"
-                      >
-                        <TagShow :tagName="option.option_type_name" :index="index"></TagShow>{{option.option_text}}</Option>
-                      <Option value="moreTips" disabled>{{$t('tips.requestMoreData')}}</Option>
+                        v-for="(item,index) in recursiveTypeOptions"
+                        :value="item"
+                        :key="item+index"
+                      >{{ item }}</Option>
                     </Select>
                   </div>
                 </li>
-                <li>
-                  <div class="condition condition-title c-black-gray">{{$t('field.metric')}}</div>
-                  <div class="condition">
-                    <Select
-                      v-model="templateQuery.metric"
-                      filterable
-                      clearable
-                      style="width:300px"
-                      :label-in-value="true"
-                      @on-change="v=>{ setMetric(v)}"
-                      @on-open-change="metricSelectOpen(templateQuery.endpoint)"
-                    >
-                      <Option
-                        v-for="(item,index) in metricList"
-                        :value="item.metric"
-                        :key="item.prom_ql+index"
-                      >{{ item.metric }}</Option>
-                    </Select>
-                  </div>
-                </li>
-                <li>
-                  <div class="condition condition-title">{{$t('field.title')}}</div>
-                  <div class="condition">
-                    <Input
-                      v-model="panalTitle"
-                      placeholder=""
-                      style="width: 300px"
-                    />
-                  </div>
-                </li>
-              </ul>
-            </div>
+              <li>
+                <div class="condition condition-title c-black-gray">{{$t('field.metric')}}</div>
+                <div class="condition">
+                  <Select
+                    v-model="templateQuery.metric"
+                    filterable
+                    clearable
+                    style="width:300px"
+                    :label-in-value="true"
+                    @on-change="v=>{ setMetric(v)}"
+                    @on-open-change="metricSelectOpen(templateQuery.endpoint)"
+                  >
+                    <Option
+                      v-for="(item,index) in metricList"
+                      :value="item.metric"
+                      :key="item.prom_ql+index"
+                    >{{ item.metric }}</Option>
+                  </Select>
+                </div>
+                <button class="btn btn-cancel-f" @click="addQuery">{{$t('button.addConfig')}}</button>
+              </li>
+            </ul>
+          </div>
         </section>
       </div>
     </div>
@@ -95,10 +126,14 @@ export default {
       elId: null,
       noDataTip: false,
       endpointType: null,
+      chartQueryList: [],
       templateQuery: {
-        endpoint: "",
-        metricLabel: "",
-        metric: ""
+        endpoint: '',
+        metricLabel: '',
+        metric: '',
+        app_object_endpoint_type: '',
+        app_object: '',
+        pie_metric_type: 'tag'
       },
 
       options: [],
@@ -107,33 +142,10 @@ export default {
       panalTitle: "Default title",
 
       oriParams: null,
-      params: '' // 保存增加及返回时参数，返回时直接取该值
-    }
-  },
-  watch: {
-    templateQuery: {
-      handler (val) {
-        if (
-          val.endpoint === "" ||
-          val.metricLabel === ""
-        ) {
-          return
-        }
-        const params = {
-          endpoint: val.endpoint,
-          metric: val.metricLabel, 
-        }
-        this.$root.$httpRequestEntrance.httpRequestEntrance(
-          'POST',this.$root.apiCenter.metricConfigPieView.api, params,
-          responseData => {
-            drawPieChart(this, responseData)
-          }
-        )
-      },
-      deep: true
-    },
-    'templateQuery.endpoint': function (val) {
-      this.endpointType = this.options.find(item => item.option_value === val).type
+      params: '', // 保存增加及返回时参数，返回时直接取该值
+      editIndex: -1,
+      showRecursiveType: false,
+      recursiveTypeOptions: []
     }
   },
   created() {
@@ -142,10 +154,118 @@ export default {
   mounted() {
   },
   methods: {
+    switchType (val) {
+      if (this.chartQueryList.length === 0) {
+        return
+      }
+      this.chartQueryList.forEach(item => {
+        item.pie_metric_type = val
+      })
+      this.$root.$httpRequestEntrance.httpRequestEntrance(
+        'POST',this.$root.apiCenter.metricConfigPieView.api, this.chartQueryList,
+        responseData => {
+          drawPieChart(this, responseData)
+        }
+      )
+    },
+    async test (a, b) {
+      this.editIndex = b
+      this.templateQuery = {
+        ...a
+      }
+      let params = {
+        search: '.',
+        page: 1,
+        size: 10000
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance(
+        'GET',
+        this.$root.apiCenter.resourceSearch.api,
+        params,
+        responseData => {
+          this.options = responseData
+          const find = this.options.find(item => item.option_value === a.endpoint)
+          if (find) {
+            this.endpointType = find.type
+          }
+          if (find && find.id === -1) {
+            this.showRecursiveType = true
+            let params = {
+              guid: find.option_value
+            }
+            this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.recursiveType, params, responseData => {
+              this.templateQuery.app_object_endpoint_type = responseData[0]
+              this.recursiveTypeOptions = responseData
+            })
+          } else {
+            this.showRecursiveType = false
+          }
+          this.metricSelectOpen(a.metric)
+        }
+      )
+    },
+    changeEndpoint (val) {
+      if (val) {
+        this.endpointType = this.options.find(item => item.option_value === val).type
+        this.showRecursiveType = false
+        this.templateQuery.app_object_endpoint_type = ''
+        const find = this.options.find(item => item.option_value === val)
+        if (find && find.id === -1) {
+          this.showRecursiveType = true
+          let params = {
+            guid: find.option_value
+          }
+          this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.recursiveType, params, responseData => {
+            this.templateQuery.app_object_endpoint_type = responseData[0]
+            this.recursiveTypeOptions = responseData
+          }
+        )}
+      }
+    },
+    removeQuery(queryIndex) {
+      this.chartQueryList.splice(queryIndex, 1)
+      this.clearParams()
+      this.finalPaint()
+    },
+    addQuery () {
+      if (this.templateQuery.endpoint === '' || this.templateQuery.metric === '' || this.templateQuery.endpoint === undefined || this.templateQuery.metric === undefined) {
+        this.$Message.warning(this.$t('m_tip_for_save'))
+        return
+      }
+      let tmp = JSON.parse(JSON.stringify(this.templateQuery))
+      if (tmp.endpoint_type !== '') {
+        tmp.app_object = tmp.endpoint
+      }
+      if (this.editIndex !== -1) {
+        this.chartQueryList[this.editIndex ] = tmp
+      } else {
+        this.chartQueryList.push(tmp)
+      }
+      this.clearParams()
+      this.finalPaint()
+    },
+    finalPaint () {
+      this.$root.$httpRequestEntrance.httpRequestEntrance(
+        'POST',this.$root.apiCenter.metricConfigPieView.api, this.chartQueryList,
+        responseData => {
+          drawPieChart(this, responseData)
+      })
+    },
+    clearParams () {
+      const pie_metric_type = this.templateQuery.pie_metric_type
+      this.templateQuery = {
+        endpoint: '',
+        metricLabel: '',
+        metric: '',
+        app_object_endpoint_type: '',
+        app_object: '',
+        pie_metric_type: pie_metric_type
+      }
+    },
     async initChart (params) {
       this.oriParams = params
+      this.elId = params.panal.id + '1'
       if (!this.$root.$validate.isEmpty_reset(params.templateData.cfg)) {
-        this.elId = params.panal.id
         this.getEndpointList()
         this.viewData = JSON.parse(params.templateData.cfg)
         this.viewData.forEach((itemx, index) => {
@@ -166,23 +286,15 @@ export default {
       if (this.$root.$validate.isEmpty_reset(this.panalData.query)) {
         return
       }
-      let {endpoint, metric} =  this.panalData.query[0]
-      this.templateQuery.endpoint = endpoint
-      this.templateQuery.metric = metric
-      this.templateQuery.metricLabel = metric
-      this.metricSelectOpen(metric)
-      let params = {
-        endpoint,
-        metric
-      }
-      if (params !== {}) {
-        this.$root.$httpRequestEntrance.httpRequestEntrance(
+      let params =  this.panalData.query
+      this.chartQueryList = this.panalData.query
+      // this.metricSelectOpen(metric)
+
+      this.$root.$httpRequestEntrance.httpRequestEntrance(
         'POST',this.$root.apiCenter.metricConfigPieView.api, params,
         responseData => {
           drawPieChart(this, responseData)
-        }
-      )
-      }
+      })
     },
     getEndpointList(query='.') {
       let params = {
@@ -195,12 +307,7 @@ export default {
         this.$root.apiCenter.resourceSearch.api,
         params,
         responseData => {
-          this.options = []
-          responseData.forEach((item) => {
-            if (item.id !== -1) {
-              this.options.push(item)
-            }
-          })
+          this.options = responseData
         }
       )
     },
@@ -210,7 +317,8 @@ export default {
           this.$t("tableKey.s_metric") + this.$t("tips.required")
         )
       } else {
-        let params = { endpointType: this.endpointType }
+        let params = { monitorType: this.showRecursiveType ? this.templateQuery.app_object_endpoint_type : this.endpointType, serviceGroup: this.showRecursiveType ? this.templateQuery.endpoint : '' }
+        // let params = { endpointType: this.endpointType }
         this.$root.$httpRequestEntrance.httpRequestEntrance(
           'GET',
           this.$root.apiCenter.getMetricByEndpointType,
@@ -240,17 +348,18 @@ export default {
       }
     },
     pp() {
+      let query = []
+      this.chartQueryList.forEach(item => {
+        item.chartType = 'pie'
+        query.push(item)
+      })
       let panal = this.oriParams.panal
       panal.i = this.panalTitle
       const temp = {
         panalTitle: this.panalTitle,
         panalUnit: this.panalUnit,
         chartType: 'pie',
-        query: [{
-          chartType: 'pie',
-          endpoint: this.templateQuery.endpoint,
-          metric: this.templateQuery.metricLabel,  
-        }],
+        query: query,
         viewConfig: panal
       }
       this.viewData[this.panalIndex] = temp

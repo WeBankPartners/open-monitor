@@ -1,0 +1,464 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "监控门户后台服务.",
+        "title": "Monitor Server API",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "monitor.test.com",
+    "basePath": "/v1",
+    "paths": {
+        "/api/v1/alarm/log/monitor/add": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "日志告警配置接口 : 新增",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "组Id，和对象id二选一",
+                        "name": "grp_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "对象Id，和组id二选一",
+                        "name": "endpoint_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "表单输入的日志路径",
+                        "name": "path",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "对象数组类型[{'keyword':'关键字','cond':'条件,如 \u003e1','last':'时间范围,如 5min','priority':'优先级,如 high'}]",
+                        "name": "strategy",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "{\"message\": \"Success\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/alarm/log/monitor/delete": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "日志告警配置接口 : 删除",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "id",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "{\"message\": \"Success\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/alarm/log/monitor/delete_path": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "日志告警配置接口 : 删除",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "strategy_id",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "{\"message\": \"Success\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/alarm/log/monitor/list": {
+            "get": {
+                "description": "获取配置好的对象或组的日志告警列表",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "日志告警配置接口 : 获取列表",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "类型，区分是单个对象还是组，枚举endpoint、grp",
+                        "name": "type",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "对象或组的id",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/api/v1/alarm/log/monitor/update": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "日志告警配置接口 : 修改",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "列表获取中的tpl_id",
+                        "name": "tpl_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "表单输入的日志路径",
+                        "name": "path",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "对象数组类型[{'id':int类型, 'strategy_id':int类型,'keyword':'关键字','cond':'条件,如 \u003e1','last':'时间范围,如 5min','priority':'优先级,如 high'}]",
+                        "name": "strategy",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "{\"message\": \"Success\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/alarm/log/monitor/update_path": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "日志告警配置接口 : 修改日志路径",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "列表获取中的id",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "列表获取中的tpl_id",
+                        "name": "tpl_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "新的日志路径",
+                        "name": "path",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "{\"message\": \"Success\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/alarm/problem/close": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "手动关闭告警接口",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "告警id",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "{\"message\": \"Success\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/dashboard/chart": {
+            "get": {
+                "description": "获取chart数据",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "页面通用接口 : 获取chart数据",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "panel里的chart id",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "endpoint数组, ['88B525B4-43E8-4A7A-8E11-0E664B5CB8D0']",
+                        "name": "endpoint",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "metric数组, ['cpmid.busy']",
+                        "name": "metric",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "开始时间",
+                        "name": "start",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "结束时间",
+                        "name": "end",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "聚合类型 枚举 min max avg p95 none",
+                        "name": "aggregate",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/dashboard/main": {
+            "get": {
+                "description": "获取主视图，有主机、网络等",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "页面通用接口 : 视图",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "页面类型，主机页面type=host",
+                        "name": "type",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/dashboard/panels": {
+            "get": {
+                "description": "获取panels",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "页面通用接口 : 获取panels",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "panels url 上自带该id",
+                        "name": "group",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "需要在panels url上把{endpoint}替换",
+                        "name": "endpoint",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/dashboard/search": {
+            "get": {
+                "description": "模糊搜索",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "主页面接口 : 模糊搜索",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "放弃search_col,直接把用户输入拼到url后面请求",
+                        "name": "search",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "数量限制",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/v1/dashboard/tags": {
+            "get": {
+                "description": "根据tag获取charts组",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "页面通用接口 : 根据tag获取charts组",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "url上自带该id",
+                        "name": "panel_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "url上自带该endpoint",
+                        "name": "endpoint",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "tag button里面的option_value",
+                        "name": "tag",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/login": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "登出",
+                "responses": {
+                    "200": {
+                        "description": "{\"message\": \"successfully logout\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "登录",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "username",
+                        "name": "username",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "password",
+                        "name": "password",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "{\"message\": \"login success\"}",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
