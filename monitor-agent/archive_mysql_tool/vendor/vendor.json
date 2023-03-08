@@ -3,6 +3,12 @@
 	"ignore": "test",
 	"package": [
 		{
+			"checksumSHA1": "+IcD5HKs0mYbh+93jgDhhSzyFDs=",
+			"path": "github.com/WeBankPartners/go-common-lib/cipher",
+			"revision": "9aecb03981adde2bfc03917fef625a4688fea1e6",
+			"revisionTime": "2022-06-10T05:01:56Z"
+		},
+		{
 			"checksumSHA1": "aNZPEOjiyAgS+Y0n19AF8vimMc4=",
 			"path": "github.com/go-sql-driver/mysql",
 			"revision": ""

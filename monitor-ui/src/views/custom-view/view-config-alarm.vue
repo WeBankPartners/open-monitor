@@ -13,10 +13,10 @@
               <Icon type="ios-stats" size="18" class="fa-operate" v-if="!alarmItem.is_custom" @click="goToEndpointView(alarmItem)"/>
             </Tooltip>
             <Tooltip :content="$t('close')">
-              <Icon type="ios-eye-off" size="18" class="fa-operate" @click="deleteConfirmModal(alarmItem)"/>
+              <Icon type="ios-eye-off" size="18" class="fa-operate" v-if="permission === 'edit'" @click="deleteConfirmModal(alarmItem)"/>
             </Tooltip>
             <Tooltip :content="$t('m_remark')">
-              <Icon type="ios-pricetags-outline" size="18" class="fa-operate" @click="remarkModal(alarmItem)" />
+              <Icon type="ios-pricetags-outline" size="18" class="fa-operate" slot="" v-if="permission === 'edit'" @click="remarkModal(alarmItem)" />
             </Tooltip>
           </div>
           <ul>
@@ -117,15 +117,28 @@ export default {
       }
     }
   },
-  mounted () {},
+  mounted () {
+    window.addEventListener("visibilitychange", this.isTabActive, true)
+  },
   destroyed() {
-    clearInterval(this.interval)
+    this.clearAlarmInterval()
+    window.removeEventListener("visibilitychange", this.isTabActive, true)
   },
   methods: {
+    isTabActive () {
+       if (document.hidden) {
+        this.clearAlarmInterval()
+      } else {
+        if (this.cacheParams.id) {
+          this.getAlarm(this.cacheParams.id, this.cacheParams.viewCondition)
+        }
+      }
+    },
     clearAlarmInterval () {
       clearInterval(this.interval)
     },
-    getAlarm (id, viewCondition) {
+    getAlarm (id, viewCondition, permission) {
+      this.permission = permission
       this.cacheParams.id = id
       this.cacheParams.viewCondition = viewCondition
       this.getAlarmdata(id)
@@ -224,7 +237,7 @@ label {
   font-size: 18px;
 }
 .alarm-list {
-  height: ~"calc(100vh - 220px)";
+  height: ~"calc(100vh - 250px)";
   width: 100%;
   overflow-y: auto;
 }

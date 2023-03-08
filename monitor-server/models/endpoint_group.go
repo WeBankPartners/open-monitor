@@ -101,6 +101,7 @@ type AlarmStrategyTable struct {
 	Content           string `json:"content" xorm:"content"`
 	NotifyEnable      int    `json:"notify_enable" xorm:"notify_enable"`
 	NotifyDelaySecond int    `json:"notify_delay_second" xorm:"notify_delay_second"`
+	ActiveWindow      string `json:"active_window" xorm:"active_window"`
 	UpdateTime        string `json:"update_time" xorm:"update_time"`
 }
 
@@ -118,6 +119,7 @@ type AlarmStrategyMetricObj struct {
 	MetricName        string `json:"metric_name" json:"metric_name"`
 	MetricExpr        string `json:"metric_expr" json:"metric_expr"`
 	MetricType        string `json:"metric_type" json:"metric_type"`
+	ActiveWindow      string `json:"active_window" xorm:"active_window"`
 }
 
 type GroupStrategyObj struct {
@@ -131,6 +133,7 @@ type GroupStrategyObj struct {
 	Content           string       `json:"content"`
 	NotifyEnable      int          `json:"notify_enable"`
 	NotifyDelaySecond int          `json:"notify_delay_second"`
+	ActiveWindow      string `json:"active_window"`
 	NotifyList        []*NotifyObj `json:"notify"`
 }
 

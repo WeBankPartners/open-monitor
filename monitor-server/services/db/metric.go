@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"strings"
 	"time"
@@ -44,7 +45,7 @@ func MetricCreate(param []*models.MetricTable) error {
 		//actions = append(actions, &Action{Sql: "insert into prom_metric(metric,metric_type,prom_ql) value (?,?,?)", Param: []interface{}{metric.Metric, metric.MetricType, metric.PromQl}})
 		if metric.ServiceGroup != "" {
 			actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time) value (?,?,?,?,?,?,?)", Param: []interface{}{fmt.Sprintf("%s__%s", metric.Metric, metric.MonitorType), metric.Metric, metric.MonitorType, metric.PromExpr, metric.ServiceGroup, metric.Workspace, nowTime}})
-		}else {
+		} else {
 			actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,update_time) value (?,?,?,?,?)", Param: []interface{}{fmt.Sprintf("%s__%s", metric.Metric, metric.MonitorType), metric.Metric, metric.MonitorType, metric.PromExpr, nowTime}})
 		}
 	}
@@ -62,7 +63,7 @@ func MetricUpdate(param []*models.MetricTable) (err error) {
 		}
 		if metric.ServiceGroup != "" {
 			actions = append(actions, &Action{Sql: "update metric set prom_expr=?,service_group=?,workspace=?,update_time=? where guid=?", Param: []interface{}{metric.PromExpr, metric.ServiceGroup, metric.Workspace, nowTime, metric.Guid}})
-		}else {
+		} else {
 			actions = append(actions, &Action{Sql: "update metric set prom_expr=?,update_time=? where guid=?", Param: []interface{}{metric.PromExpr, nowTime, metric.Guid}})
 		}
 		metricGuidList = append(metricGuidList, metric.Guid)
@@ -75,9 +76,9 @@ func MetricUpdate(param []*models.MetricTable) (err error) {
 		return err
 	}
 	var alarmStrategyTable []*models.AlarmStrategyTable
-	err = x.SQL("select distinct endpoint_group from alarm_strategy where metric in ('"+strings.Join(metricGuidList,"','")+"')").Find(&alarmStrategyTable)
+	err = x.SQL("select distinct endpoint_group from alarm_strategy where metric in ('" + strings.Join(metricGuidList, "','") + "')").Find(&alarmStrategyTable)
 	if len(alarmStrategyTable) > 0 {
-		for _,v := range alarmStrategyTable {
+		for _, v := range alarmStrategyTable {
 			err = SyncPrometheusRuleFile(v.EndpointGroup, false)
 			if err != nil {
 				break
@@ -152,7 +153,7 @@ func MetricListNew(guid, monitorType, serviceGroup, onlyService string) (result 
 			if onlyService == "Y" {
 				baseSql = "select * from metric where monitor_type=? and service_group=?"
 				params = []interface{}{monitorType, serviceGroup}
-			}else {
+			} else {
 				baseSql = "select * from metric where monitor_type=? and (service_group is null or service_group=?)"
 				params = []interface{}{monitorType, serviceGroup}
 			}
@@ -177,5 +178,78 @@ func MetricListNew(guid, monitorType, serviceGroup, onlyService string) (result 
 	//for _, v := range dbMetricTable {
 	//	result = append(result, &models.MetricTable{Guid: v.Guid, MonitorType: monitorType, Metric: v.Metric, PromExpr: fmt.Sprintf("%s{key=\"%s\",t_endpoint=\"$guid\"}", models.DBMonitorMetricName, v.Metric)})
 	//}
+	return
+}
+
+func MetricImport(serviceGroup string, inputMetrics []*models.MetricTable) (err error) {
+	existMetrics, getExistErr := MetricListNew("", inputMetrics[0].MonitorType, serviceGroup, "Y")
+	if getExistErr != nil {
+		return fmt.Errorf("get serviceGroup:%s exist metric list fail,%s ", serviceGroup, getExistErr.Error())
+	}
+	var alarmStrategyRows []*models.AlarmStrategyTable
+	if err = x.SQL("select endpoint_group,metric from alarm_strategy").Find(&alarmStrategyRows); err != nil {
+		return fmt.Errorf("query alarm strategy fail,%s ", err.Error())
+	}
+	oldServerGroup := inputMetrics[0].ServiceGroup
+	strategyMap := make(map[string]string)
+	for _, v := range alarmStrategyRows {
+		strategyMap[v.Metric] = v.EndpointGroup
+	}
+	var actions []*Action
+	var affectEndpointGroupList []string
+	nowTime := time.Now().Format(models.DatetimeFormat)
+	for _, inputMetric := range inputMetrics {
+		inputMetric.Guid = fmt.Sprintf("%s__%s", inputMetric.Metric, serviceGroup)
+		matchMetric := &models.MetricTable{}
+		for _, existMetric := range existMetrics {
+			if existMetric.Guid == inputMetric.Guid {
+				matchMetric = existMetric
+				break
+			}
+		}
+		inputMetric.PromExpr = strings.ReplaceAll(inputMetric.PromExpr, oldServerGroup, serviceGroup)
+		if matchMetric.Guid != "" {
+			if v, b := strategyMap[matchMetric.Guid]; b {
+				affectEndpointGroupList = append(affectEndpointGroupList, v)
+			}
+			actions = append(actions, &Action{Sql: "update metric set prom_expr=?,workspace=?,update_time=? where guid=?", Param: []interface{}{inputMetric.PromExpr, inputMetric.Workspace, nowTime, matchMetric.Guid}})
+		} else {
+			actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time) value (?,?,?,?,?,?,?)", Param: []interface{}{inputMetric.Guid, inputMetric.Metric, inputMetric.MonitorType, inputMetric.PromExpr, serviceGroup, inputMetric.Workspace, nowTime}})
+		}
+	}
+	for _, existMetric := range existMetrics {
+		deleteFlag := true
+		for _, inputMetric := range inputMetrics {
+			if inputMetric.Metric == existMetric.Metric {
+				deleteFlag = false
+				break
+			}
+		}
+		if deleteFlag {
+			if v, b := strategyMap[existMetric.Guid]; b {
+				affectEndpointGroupList = append(affectEndpointGroupList, v)
+				actions = append(actions, &Action{Sql: "delete from alarm_strategy where metric=?", Param: []interface{}{existMetric.Guid}})
+			}
+			actions = append(actions, &Action{Sql: "delete from metric where guid=?", Param: []interface{}{existMetric.Guid}})
+		}
+	}
+	log.Logger.Info("import metric", log.Int("actionLen", len(actions)))
+	if len(actions) > 0 {
+		if err = Transaction(actions); err != nil {
+			return fmt.Errorf("import metric fail with exec database,%s ", err.Error())
+		}
+	}
+	if len(affectEndpointGroupList) > 0 {
+		egMap := make(map[string]int)
+		for _, v := range affectEndpointGroupList {
+			if _, b := egMap[v]; b {
+				continue
+			}
+			egMap[v] = 1
+			if tmpErr := SyncPrometheusRuleFile(v, false); tmpErr != nil {
+				log.Logger.Error("sync prometheus endpoint group fail", log.Error(tmpErr))
+			}
+		}
+	}
 	return
 }
