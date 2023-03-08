@@ -16,6 +16,7 @@ const (
 	SPServiceMetricTemplate    = "service_metric_template"
 	MetricWorkspaceService  = "all_object"
 	MetricWorkspaceAll  = "any_object"
+	DefaultActiveWindow = "00:00-23:59"
 )
 
 var (

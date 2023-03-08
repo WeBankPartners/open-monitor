@@ -206,5 +206,14 @@
     "getTargetDbDetail": "/monitor/api/v2/service/db_metric/list",
     "saveTargetDb": "/monitor/api/v2/service/db_metric",
     "getThresholdEndpointDetail": "/monitor/api/v2/alarm/strategy/list/endpoint",
-    "getThresholdGroupDetail": "/monitor/api/v2/alarm/strategy/list/group"
+    "getThresholdGroupDetail": "/monitor/api/v2/alarm/strategy/list/group",
+
+    "bussinessMonitorExport": "/monitor/api/v2/service/log_keyword/export",
+    "bussinessMonitorImport": "/monitor/api/v2/service/log_keyword/import",
+
+    "keywordExport": "/monitor/api/v2/service/log_metric/export",
+    "keywordImport": "/monitor/api/v2/service/log_metric/import",
+
+    "metricExport": "/monitor/api/v2/monitor/metric/export",
+    "metricImport": "/monitor/api/v2/monitor/metric/import"
 }

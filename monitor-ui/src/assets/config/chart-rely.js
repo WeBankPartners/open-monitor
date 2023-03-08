@@ -143,8 +143,8 @@ export const drawChart = function(that,config,userConfig, elId) {
           const seriesName = arr.join('<br>')
           res = res+`<div><div style=' display: inline-block;width: 10px; 
           height: 10px;border: 1px solid transparent;border-radius:50%;
-          background-color:${item.color};'  ></div> ${seriesName}
-          ${Math.floor(item.data[1] * 1000) / 1000}</div>`
+          background-color:${item.color};'  ></div>${Math.floor(item.data[1] * 1000) / 1000} ${seriesName}
+          </div>`
         })
         return res
       },
@@ -326,7 +326,7 @@ export const drawChart = function(that,config,userConfig, elId) {
 }
 
 export const drawPieChart = function(that, responseData) {
-  let option = option = {
+  let option = {
     title: {
         // text: panalUnit,
         left: 'center'

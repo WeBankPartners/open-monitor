@@ -15,7 +15,7 @@
           <Tooltip :content="$t('field.aggType')" :delay="1000">
             <Select filterable  class="select-option" v-model="templateQuery.aggregate" style="width:100px" @on-change="switchChartType">
               <Option
-                v-for="(type) in ['min', 'max', 'avg', 'p95', 'sum', 'none']"
+                v-for="(type) in ['min', 'max', 'avg', 'p95', 'sum', 'none', 'avg_nonzero']"
                 :value="type"
                 :key="type"
               >{{type}}</Option>
@@ -60,14 +60,13 @@
       </div>
       <div>
         <section class="zone-config-operation">
-            <div class="tag-display">
+            <div class="tag-display"  v-for="(query, queryIndex) in chartQueryList" :key="queryIndex">
               <Tag
-                v-for="(query, queryIndex) in chartQueryList"
                 color="primary"
                 type="border"
-                :key="queryIndex"
                 :name="queryIndex"
                 closable
+                @click.native="test(query, queryIndex)"
                 @on-close="removeQuery(queryIndex)"
               >{{$t('field.endpoint')}}：{{query.endpointName || query.endpoint}}; {{$t('field.metric')}}：{{query.metric}}</Tag>
             </div>
@@ -157,6 +156,7 @@
                     <Input v-model="panalUnit" placeholder="" style="width: 300px" />
                   </div>
                   <button class="btn btn-cancel-f" @click="addQuery()">{{$t('button.addConfig')}}</button>
+                  <button class="btn btn-cancel-f" @click="clearParams">{{$t('m_clear')}}</button>
                 </li>
               </ul>
             </div>
@@ -222,44 +222,46 @@ export default {
       panalUnit: "",
 
       oriParams: null,
-      params: '' // 保存增加及返回时参数，返回时直接取该值
+      params: '', // 保存增加及返回时参数，返回时直接取该值,
+      editIndex: -1
     }
   },
   watch: {
-    chartQueryList: {
-      handler(data) {
-        this.noDataTip = false
-        let params = {
-          aggregate: this.templateQuery.aggregate || 'none',
-          agg_step: this.templateQuery.agg_step || 60,
-          lineType: this.templateQuery.lineType,
-          time_second: -1800,
-          start: 0,
-          end: 0,
-          title: '',
-          unit: '',
-          data: []
-        }
-        if (this.$root.$validate.isEmpty_reset(data)) {
-          this.noDataTip = true
-          return
-        }
-        data.forEach(item => {
-          params.data.push(item)
-        })
-        this.$root.$httpRequestEntrance.httpRequestEntrance(
-          'POST',this.$root.apiCenter.metricConfigView.api, params,
-          responseData => {
-            responseData.yaxis.unit = this.panalUnit
-            readyToDraw(this,responseData, 1, { eye: false, chartType: this.templateQuery.chartType, clear: true, params: params })
-          }
-        )
-      },
-      deep: true
-      // immediate: true
-    },
-    'templateQuery.endpoint': function (val) {
-      if (val) {
+    // chartQueryList: {
+    //   handler(data) {
+    //     console.log(111)
+    //     this.noDataTip = false
+    //     let params = {
+    //       aggregate: this.templateQuery.aggregate || 'none',
+    //       agg_step: this.templateQuery.agg_step || 60,
+    //       lineType: this.templateQuery.lineType,
+    //       time_second: -1800,
+    //       start: 0,
+    //       end: 0,
+    //       title: '',
+    //       unit: '',
+    //       data: []
+    //     }
+    //     if (this.$root.$validate.isEmpty_reset(data)) {
+    //       this.noDataTip = true
+    //       return
+    //     }
+    //     data.forEach(item => {
+    //       params.data.push(item)
+    //     })
+    //     this.$root.$httpRequestEntrance.httpRequestEntrance(
+    //       'POST',this.$root.apiCenter.metricConfigView.api, params,
+    //       responseData => {
+    //         responseData.yaxis.unit = this.panalUnit
+    //         readyToDraw(this,responseData, 1, { eye: false, chartType: this.templateQuery.chartType, clear: true, params: params })
+    //       }
+    //     )
+    //   },
+    //   deep: true,
+    //   immediate: true
+    // },
+    'templateQuery.endpoint': async function (val) {
+      if (val && this.options.length > 0) {
         this.endpointType = this.options.find(item => item.option_value === val).type  
       }
     }
@@ -272,6 +274,73 @@ export default {
   mounted() {
   },
   methods: {
+    requestAgain () {
+      this.noDataTip = false
+        let params = {
+          aggregate: this.templateQuery.aggregate || 'none',
+          agg_step: this.templateQuery.agg_step || 60,
+          lineType: this.templateQuery.lineType,
+          time_second: -1800,
+          start: 0,
+          end: 0,
+          title: '',
+          unit: '',
+          data: []
+        }
+        if (this.$root.$validate.isEmpty_reset(this.chartQueryList)) {
+          this.noDataTip = true
+          return
+        }
+        this.chartQueryList.forEach(item => {
+          params.data.push(item)
+        })
+        this.$root.$httpRequestEntrance.httpRequestEntrance(
+          'POST',this.$root.apiCenter.metricConfigView.api, params,
+          responseData => {
+            responseData.yaxis.unit = this.panalUnit
+            readyToDraw(this,responseData, 1, { eye: false, chartType: this.templateQuery.chartType, clear: true, params: params })
+          }
+        )
+    },
+    async test (a, b) {
+      await this.bb(a,b)
+    },
+    async bb (a, b) {
+      this.editIndex = b
+      this.templateQuery = {
+        ...a
+      }
+      let params = {
+        search: '.',
+        page: 1,
+        size: 10000
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance(
+        'GET',
+        this.$root.apiCenter.resourceSearch.api,
+        params,
+        responseData => {
+          this.options = responseData
+          const find = this.options.find(item => item.option_value === a.endpoint)
+          if (find) {
+            this.endpointType = find.type
+          }
+          if (find && find.id === -1) {
+            this.showRecursiveType = true
+            let params = {
+              guid: find.option_value
+            }
+            this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.recursiveType, params, responseData => {
+              this.templateQuery.endpoint_type = responseData[0]
+              this.recursiveTypeOptions = responseData
+            })
+          } else {
+            this.showRecursiveType = false
+          }
+          this.metricSelectOpen(a.metric)
+        }
+      )
+    },
     changeMetric (val) {
       this.templateQuery.metricToColor = []
       if (!val) return 
@@ -319,11 +388,25 @@ export default {
         }
       )}
     },
+    clearParams () {
+      this.templateQuery = {
+        endpoint: '',
+        metric: '',
+        chartType: '',
+        lineType: 1,
+        aggregate: '',
+        agg_step: 60,
+        endpoint_type: '',
+        app_object: '',
+        metricToColor: []
+      }
+    },
     initChart (params) {
       this.oriParams = params
       this.chartQueryList = []
+      this.clearParams()
       if (!this.$root.$validate.isEmpty_reset(params.templateData.cfg)) {
-        this.getEndpointList()
+        this.getEndpointList('.')
         this.viewData = JSON.parse(params.templateData.cfg)
         this.viewData.forEach((itemx, index) => {
           if (itemx.viewConfig.id === params.panal.id) {
@@ -408,11 +491,11 @@ export default {
     initQueryList(query) {
       this.chartQueryList = query
     },
-    getEndpointList(query='.') {
+    getEndpointList(query) {
       let params = {
         search: query,
         page: 1,
-        size: 1000
+        size: 10000
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance(
         'GET',
@@ -454,7 +537,13 @@ export default {
       if (find) {
         tmp.endpointName = find.option_text
       }
-      this.chartQueryList.push(tmp)
+      if (this.editIndex !== -1) {
+        this.chartQueryList[this.editIndex ] = tmp
+      } else {
+        this.chartQueryList.push(tmp)
+      }
+      this.requestAgain()
+      this.editIndex = -1
       this.templateQuery = {
         endpoint: '',
         metric: '',
@@ -472,6 +561,8 @@ export default {
     },
     removeQuery(queryIndex) {
       this.chartQueryList.splice(queryIndex, 1)
+      this.clearParams()
+      this.requestAgain()
     },
     saveConfig() {
       this.pp()

@@ -1,9 +1,10 @@
 <template>
   <div class="single-chart">
-    <div v-if="!noDataTip" :id="elId" class="echart" :style="chartInfo.style">
+    <div v-if="!noDataTip">
+      <div :id="elId" class="echart" :style="chartInfo.style">
+    </div>
     </div>
     <div v-if="noDataTip" class="echart echart-no-data-tip">
-      {{chartTitle}}:
       <span>~~~No Data!~~~</span>
     </div>
   </div>
@@ -40,11 +41,41 @@ export default {
   },
   mounted() {
     this.getchartdata()
+    window.addEventListener("scroll", this.scrollHandle, true)
+    window.addEventListener("visibilitychange", this.isTabActive, true)
   },
   destroyed() {
-    clearInterval(this.interval)
+    this.clearInterval()
+    window.removeEventListener('scroll', this.scrollHandle, true)
+    window.removeEventListener("visibilitychange", this.isTabActive, true)
   },
   methods: {
+    isTabActive () {
+       if (document.hidden) {
+        this.clearInterval()
+      } else {
+        this.isAutoRefresh()
+      }
+    },
+    clearInterval () {
+      clearInterval(this.interval)
+      this.interval = null
+    },
+    scrollHandle() {
+      const offset = this.$el.getBoundingClientRect()
+      const offsetTop = offset.top
+      const offsetBottom = offset.bottom
+      // const offsetHeight = offset.height;
+      // 进入可视区域
+      if (offsetTop <= window.innerHeight && offsetBottom >= 0) {
+        if (this.interval === null) {
+          this.isAutoRefresh()
+        }
+      } else {
+        clearInterval(this.interval)
+        this.interval = null
+      }
+    },
     isAutoRefresh () {
       clearInterval(this.interval)
       if (this.params.autoRefresh > 0 && this.params.dateRange[0] === '') {
@@ -59,12 +90,19 @@ export default {
       }
       this.isAutoRefresh()
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.metricConfigView.api, this.chartInfo.chartParams, responseData => {
-        responseData.yaxis.unit =  this.chartInfo.panalUnit  
-        this.elId = this.chartInfo.elId
-        const chartConfig = {eye: false,dataZoom:false, lineBarSwitch: true, chartType: this.chartInfo.chartType, params: this.chartInfo.chartParams}
-        this.$nextTick( () => {
-          readyToDraw(this,responseData, this.chartIndex, chartConfig)
-        })
+        if (responseData.legend.length === 0) {
+          this.noDataTip = true
+        } else {
+          responseData.yaxis.unit =  this.chartInfo.panalUnit  
+          this.elId = this.chartInfo.elId
+          this.noDataTip = false
+          const chartConfig = {eye: false,dataZoom:false, lineBarSwitch: true, chartType: this.chartInfo.chartType, params: this.chartInfo.chartParams}
+          this.$nextTick( () => {
+            readyToDraw(this,responseData, this.chartIndex, chartConfig)
+            this.scrollHandle()
+          })
+        }
+        
       }, { isNeedloading: false })
     }
   },

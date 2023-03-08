@@ -132,7 +132,12 @@ func getChartConfigByChartId(param *models.ChartQueryParam, result *models.EChar
 	result.Id = param.ChartId
 	result.Title = chartList[0].Title
 	queryList = []*models.QueryMonitorData{}
+	existEndpointMap := make(map[string]int)
 	for _, dataConfig := range param.Data {
+		if _, b := existEndpointMap[dataConfig.Endpoint]; b {
+			continue
+		}
+		existEndpointMap[dataConfig.Endpoint] = 1
 		endpointObj := models.EndpointTable{Guid: dataConfig.Endpoint}
 		db.GetEndpoint(&endpointObj)
 		if endpointObj.Id <= 0 {
@@ -153,9 +158,13 @@ func getChartConfigByChartId(param *models.ChartQueryParam, result *models.EChar
 			if err != nil {
 				break
 			}
-			queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQl, Legend: chartList[0].Legend, Metric: []string{metric}, Endpoint: []string{dataConfig.Endpoint}, CompareLegend: param.Compare.CompareFirstLegend, SameEndpoint: true, Step: param.Step, Cluster: endpointObj.Cluster})
+			tmpLegend := chartList[0].Legend
+			if len(param.Data) > 1 && strings.HasPrefix(tmpLegend, "$custom_") {
+				tmpLegend = "$custom"
+			}
+			queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQl, Legend: tmpLegend, Metric: []string{metric}, Endpoint: []string{dataConfig.Endpoint}, CompareLegend: param.Compare.CompareFirstLegend, SameEndpoint: true, Step: param.Step, Cluster: endpointObj.Cluster})
 			if param.Compare.CompareFirstLegend != "" {
-				queryList = append(queryList, &models.QueryMonitorData{Start: param.Compare.CompareSecondStartTimestamp, End: param.Compare.CompareSecondEndTimestamp, PromQ: tmpPromQl, Legend: chartList[0].Legend, Metric: []string{metric}, Endpoint: []string{dataConfig.Endpoint}, CompareLegend: param.Compare.CompareSecondLegend, SameEndpoint: true, Step: param.Step, Cluster: endpointObj.Cluster})
+				queryList = append(queryList, &models.QueryMonitorData{Start: param.Compare.CompareSecondStartTimestamp, End: param.Compare.CompareSecondEndTimestamp, PromQ: tmpPromQl, Legend: tmpLegend, Metric: []string{metric}, Endpoint: []string{dataConfig.Endpoint}, CompareLegend: param.Compare.CompareSecondLegend, SameEndpoint: true, Step: param.Step, Cluster: endpointObj.Cluster})
 			}
 		}
 		if err != nil {
@@ -263,13 +272,13 @@ func getChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.
 			if tmpPromQL == dataConfig.PromQl {
 				queryAppendFlag = true
 				log.Logger.Debug("prom is same")
-				queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQL, Legend: metricLegend, Metric: []string{dataConfig.Metric}, Endpoint: []string{endpointList[0].Guid}, Step: endpointList[0].Step, Cluster: endpointList[0].Cluster})
+				queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQL, Legend: metricLegend, Metric: []string{dataConfig.Metric}, Endpoint: []string{endpointList[0].Guid}, Step: endpointList[0].Step, Cluster: endpointList[0].Cluster, CustomDashboard: true})
 			}
 		}
 		if !queryAppendFlag {
 			for _, endpoint := range endpointList {
 				tmpPromQL := db.ReplacePromQlKeyword(dataConfig.PromQl, dataConfig.Metric, endpoint)
-				queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQL, Legend: metricLegend, Metric: []string{dataConfig.Metric}, Endpoint: []string{endpoint.Guid}, Step: endpoint.Step, Cluster: endpoint.Cluster})
+				queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQL, Legend: metricLegend, Metric: []string{dataConfig.Metric}, Endpoint: []string{endpoint.Guid}, Step: endpoint.Step, Cluster: endpoint.Cluster, CustomDashboard: true})
 			}
 		}
 	}
@@ -341,6 +350,9 @@ func getChartQueryData(queryList []*models.QueryMonitorData, param *models.Chart
 	var processDisplayMap = make(map[string]string)
 	if strings.HasPrefix(param.Data[0].Metric, "process_") {
 		processDisplayMap = db.GetProcessDisplayMap(param.Data[0].Endpoint)
+	}
+	if len(serials) > 0 && param.Aggregate != "none" && param.AggStep <= 0 {
+		param.AggStep = int64(db.CheckAggregate(param.Start, param.End, "", 10, len(serials)))
 	}
 	for i, s := range serials {
 		if strings.Contains(s.Name, "$metric") {
