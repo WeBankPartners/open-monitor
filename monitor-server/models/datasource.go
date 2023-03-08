@@ -6,19 +6,21 @@ import (
 )
 
 type QueryMonitorData struct {
-	Start         int64     `json:"start"`
-	End           int64     `json:"end"`
-	Endpoint      []string  `json:"endpoint"`
-	Metric        []string  `json:"metric"`
-	PromQ         string    `json:"prom_q"`
-	Legend        string    `json:"legend"`
-	CompareLegend string    `json:"compare_legend"`
-	ChartType     string    `json:"chart_type"`
-	PieData       EChartPie `json:"pie_data"`
-	SameEndpoint  bool      `json:"same_endpoint"`
-	Step          int       `json:"step"`
-	Cluster       string    `json:"cluster"`
-	ServiceGroupName string `json:"service_group_name"`
+	Start            int64     `json:"start"`
+	End              int64     `json:"end"`
+	Endpoint         []string  `json:"endpoint"`
+	Metric           []string  `json:"metric"`
+	PromQ            string    `json:"prom_q"`
+	Legend           string    `json:"legend"`
+	CompareLegend    string    `json:"compare_legend"`
+	ChartType        string    `json:"chart_type"`
+	PieData          EChartPie `json:"pie_data"`
+	SameEndpoint     bool      `json:"same_endpoint"`
+	Step             int       `json:"step"`
+	Cluster          string    `json:"cluster"`
+	ServiceGroupName string    `json:"service_group_name"`
+	CustomDashboard  bool      `json:"custom_dashboard"`
+	PieMetricType    string    `json:"pie_metric_type"`
 }
 
 type PrometheusParam struct {

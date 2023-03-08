@@ -43,6 +43,7 @@ func main() {
 	go db.StartCallCronJob()
 	go db.StartNotifyPingExport()
 	go api.InitDependenceParam()
+	go db.StartInitAlarmUniqueTags()
 	middleware.InitErrorMessageList()
 	api.InitHttpServer()
 }

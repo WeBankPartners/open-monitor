@@ -37,6 +37,9 @@ COPY monitor-agent/ping_exporter/ping_exporter $PING_EXPORTER/
 COPY build/conf/ping_exporter.json $PING_EXPORTER/cfg.json
 COPY monitor-agent/archive_mysql_tool/archive_mysql_tool $ARCHIVE_TOOL/
 COPY build/conf/archive_mysql_tool.json $ARCHIVE_TOOL/default.json
+COPY build/conf/core-site.xml $ARCHIVE_TOOL/conf/core-site.xml
+COPY build/conf/hdfs-site.xml $ARCHIVE_TOOL/conf/hdfs-site.xml
+COPY build/conf/krb5.conf $ARCHIVE_TOOL/conf/krb5.conf
 COPY monitor-agent/db_data_exporter/db_data_exporter $DB_DATA_EXPORTER/
 
 RUN chmod +x $PROMETHEUS_HOME/prometheus $PROMETHEUS_HOME/promtool $ALERTMANAGER_HOME/alertmanager $AGENT_MANAGER_HOME/agent_manager $TRANS_GATEWAY/transgateway $MONITOR_HOME/monitor-server $BASE_HOME/*.sh $PING_EXPORTER/ping_exporter $ARCHIVE_TOOL/archive_mysql_tool $DB_DATA_EXPORTER/db_data_exporter

@@ -17,6 +17,7 @@ var (
 	regPath = regexp.MustCompile(`^\/([\w|\.|\-]+\/?)+$`)
 	regNormal = regexp.MustCompile(`^[\w|\.|\-|\~|\!|\@|\#|\$|\%|\^|\[|\]|\{|\}|\(|\)|\,|\s]+$`)
 	regIp = regexp.MustCompile(`^((25[0-5]|2[0-4]\d|((1\d{2})|([1-9]?\d)))\.){3}(25[0-5]|2[0-4]\d|((1\d{2})|([1-9]?\d)))$`)
+	regActiveWindow = regexp.MustCompile(`^\d{2}:\d{2}-\d{2}:\d{2}$`)
 	roleEndpointMap  []map[string]int
 	roleEndpointLock  sync.RWMutex
 )
@@ -109,6 +110,10 @@ func IsIllegalNormalInput(str string) bool {
 
 func IsIllegalIp(str string) bool {
 	return !regIp.MatchString(str)
+}
+
+func ValidateActiveWindowString(str string) bool {
+	return regActiveWindow.MatchString(str)
 }
 
 func InitRoleEndpointMap()  {

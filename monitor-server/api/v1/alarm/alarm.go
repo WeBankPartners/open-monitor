@@ -127,10 +127,44 @@ func buildNewAlarm(param *m.AMRespAlert, nowTime time.Time) (alarm m.AlarmHandle
 		alarm.EndValue = alertValue
 		alarm.End = nowTime
 	} else if operation == "add" {
+		if !checkIsInActiveWindow(strategyObj.ActiveWindow) {
+			return alarm, fmt.Errorf("Alarm:%s not in active window:%s ", strategyObj.Guid, strategyObj.ActiveWindow)
+		}
 		alarm.StartValue = alertValue
 		alarm.Start = nowTime
 	}
 	return
+}
+
+func checkIsInActiveWindow(input string) bool {
+	if input == "" {
+		return true
+	}
+	timeSplit := strings.Split(input, "-")
+	if len(timeSplit) != 2 {
+		log.Logger.Error("Active window illegal", log.String("input", input))
+		return false
+	}
+	nowTime := time.Now()
+	dayPrefix := nowTime.Format("2006-01-02")
+	st, sErr := time.ParseInLocation("2006-01-02 15:04:05", fmt.Sprintf("%s %s:00", dayPrefix, timeSplit[0]), time.Local)
+	if sErr != nil {
+		log.Logger.Error("Active window start illegal", log.String("start", timeSplit[0]))
+		return false
+	}
+	endString := timeSplit[1] + ":00"
+	if strings.HasSuffix(timeSplit[1], "59") {
+		endString = timeSplit[1] + ":59"
+	}
+	et, eErr := time.ParseInLocation("2006-01-02 15:04:05", fmt.Sprintf("%s %s", dayPrefix, endString), time.Local)
+	if eErr != nil {
+		log.Logger.Error("Active window end illegal", log.String("end", timeSplit[1]))
+		return false
+	}
+	if nowTime.Unix() >= st.Unix() && nowTime.Unix() <= et.Unix() {
+		return true
+	}
+	return false
 }
 
 func getNewAlarmEndpoint(param *m.AMRespAlert, strategyObj *m.AlarmStrategyMetricObj) (result m.EndpointNewTable, err error) {
@@ -171,7 +205,7 @@ func getNewAlarmEndpoint(param *m.AMRespAlert, strategyObj *m.AlarmStrategyMetri
 		return
 	}
 	if !db.CheckEndpointActiveAlert(result.Guid) {
-		err = fmt.Errorf("Endpoint %s in alert window ", result.Guid)
+		err = fmt.Errorf("Endpoint %s in alert maintain window ", result.Guid)
 	}
 	return
 }
@@ -460,22 +494,86 @@ func QueryProblemAlarm(c *gin.Context) {
 	}
 }
 
+func QueryProblemAlarmByPage(c *gin.Context) {
+	var param m.QueryProblemAlarmDto
+	if err := c.ShouldBindJSON(&param); err != nil {
+		mid.ReturnValidateError(c, err.Error())
+		return
+	}
+	if param.Page == nil {
+		param.Page = &m.PageInfo{StartIndex: 0, PageSize: 0}
+	}
+	query := m.AlarmTable{Status: "firing", Endpoint: param.Endpoint, SMetric: param.Metric, SPriority: param.Priority}
+	err, data := db.GetAlarms(query, 0, true, true)
+	if err != nil {
+		mid.ReturnQueryTableError(c, "alarm", err)
+		return
+	}
+	param.Page.TotalRows = len(data)
+	var highCount, mediumCount, lowCount int
+	metricMap := make(map[string]int)
+	for _, v := range data {
+		if v.SPriority == "high" {
+			highCount += 1
+		}
+		if v.SPriority == "medium" {
+			mediumCount += 1
+		}
+		if v.SPriority == "low" {
+			lowCount += 1
+		}
+		tmpMetricLevel := fmt.Sprintf("%s^%s", v.SMetric, v.SPriority)
+		if _, b := metricMap[tmpMetricLevel]; b {
+			metricMap[tmpMetricLevel] += 1
+		} else {
+			metricMap[tmpMetricLevel] = 1
+		}
+	}
+	if len(data) == 0 {
+		data = []*m.AlarmProblemQuery{}
+	}
+	var resultCount m.AlarmProblemCountList
+	for k, v := range metricMap {
+		tmpSplit := strings.Split(k, "^")
+		resultCount = append(resultCount, &m.AlarmProblemCountObj{Name: tmpSplit[0], Type: tmpSplit[1], Value: v, FilterType: "metric"})
+	}
+	sort.Sort(resultCount)
+	// page
+	if param.Page.PageSize > 0 {
+		si := (param.Page.StartIndex - 1) * param.Page.PageSize
+		ei := param.Page.StartIndex*param.Page.PageSize - 1
+		pageResult := []*m.AlarmProblemQuery{}
+		for i, v := range data {
+			if i >= si && i <= ei {
+				pageResult = append(pageResult, v)
+			}
+		}
+		data = pageResult
+	}
+	result := m.AlarmProblemQueryResult{Data: data, High: highCount, Mid: mediumCount, Low: lowCount, Count: resultCount, Page: param.Page}
+	mid.ReturnSuccessData(c, result)
+}
+
 // @Summary 手动关闭告警接口
 // @Produce  json
 // @Param id query int true "告警id"
 // @Success 200 {string} json "{"message": "Success"}"
 // @Router /api/v1/alarm/problem/close [get]
 func CloseAlarm(c *gin.Context) {
-	id, err := strconv.Atoi(c.Query("id"))
-	isCustom := strings.ToLower(c.Query("custom"))
-	if err != nil || id <= 0 {
-		mid.ReturnParamTypeError(c, "id", "int")
+	var param m.AlarmCloseParam
+	var err error
+	if err = c.ShouldBindJSON(&param); err != nil {
+		mid.ReturnValidateError(c, err.Error())
 		return
 	}
-	if isCustom == "true" {
-		err = db.CloseOpenAlarm(id)
+	if param.Metric == "" && param.Id == 0 {
+		mid.ReturnValidateError(c, "param can not empty")
+		return
+	}
+	if param.Custom {
+		err = db.CloseOpenAlarm(param.Id)
 	} else {
-		err = db.CloseAlarm(id)
+		err = db.CloseAlarm(param)
 	}
 	if err != nil {
 		mid.ReturnHandleError(c, err.Error(), err)
