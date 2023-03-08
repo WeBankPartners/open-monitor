@@ -1,6 +1,7 @@
 package funcs
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"sort"
@@ -161,18 +162,17 @@ func checkJobStatus() {
 }
 
 func archiveTimeoutAction(param ArchiveActionList) {
-	timeoutChan := make(chan int, 1)
-	go func(tmpC chan int, p ArchiveActionList) {
+	ctx, cancel := context.WithCancel(context.Background())
+	go func(p ArchiveActionList, c context.CancelFunc) {
 		archiveAction(p)
-		timeoutChan <- 1
-	}(timeoutChan, param)
+		c()
+	}(param, cancel)
 	select {
-	case <-timeoutChan:
+	case <-ctx.Done():
 		log.Printf("done archive action,job length:%d \n", len(param))
 	case <-time.After(time.Duration(jobTimeout) * time.Second):
 		log.Printf("timeout archive action in %d s,job length:%d \n", jobTimeout, len(param))
 	}
-	close(timeoutChan)
 }
 
 func archiveAction(param ArchiveActionList) {

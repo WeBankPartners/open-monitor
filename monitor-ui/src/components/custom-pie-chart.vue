@@ -3,8 +3,7 @@
     <div v-if="!noDataTip" :id="elId" class="echart" :style="chartInfo.style">
     </div>
     <div v-if="noDataTip" class="echart echart-no-data-tip">
-      <!-- {{chartTitle}}:
-      <span>~~~No Data!~~~</span> -->
+      <span>~~~No Data!~~~</span>
     </div>
   </div>
 </template>
@@ -54,13 +53,26 @@ export default {
       }
     },
     getchartdata () {
+      if (this.chartInfo.chartParams.data.length === 0) {
+        return
+      }
       this.isAutoRefresh()
-      let params = this.chartInfo.chartParams.data[0]
+      let params = this.chartInfo.chartParams.data
+      params.forEach(p => {
+        p.start = this.chartInfo.start
+        p.end = this.chartInfo.end
+        p.time_second = this.chartInfo.time_second
+      });
       this.elId = this.chartInfo.elId
       this.$root.$httpRequestEntrance.httpRequestEntrance(
         'POST',this.$root.apiCenter.metricConfigPieView.api, params,
         responseData => {
-          drawPieChart(this, responseData)
+          if (responseData.legend && responseData.legend.length === 0) {
+            this.noDataTip = true
+          } else {
+            this.noDataTip = false
+            drawPieChart(this, responseData)
+          }
         },
         { isNeedloading: false }
       )

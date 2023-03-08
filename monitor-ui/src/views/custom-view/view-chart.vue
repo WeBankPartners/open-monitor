@@ -36,6 +36,7 @@
               <Radio label="p95">P95</Radio>
               <Radio label="sum">Sum</Radio>
               <Radio label="none">Original</Radio>
+              <Radio label="avg_nonzero">AverageNZ</Radio>
             </RadioGroup>
           </div>
         </div>
@@ -79,7 +80,8 @@ export default {
       elId: null,
       noDataTip: false,
       panalTitle: '',
-      panalUnit: ''
+      panalUnit: '',
+      interval: null
     };
   },
   created() {
@@ -107,6 +109,9 @@ export default {
     //     });
     //   }
     // }
+  },
+  destroyed () {
+    clearInterval(this.interval)
   },
   methods: {
     initChart (params) {
