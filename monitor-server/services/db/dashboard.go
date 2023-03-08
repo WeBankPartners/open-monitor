@@ -62,18 +62,18 @@ func GetButton(bGroup int) (error, []*m.ButtonModel) {
 	}
 }
 
-func GetPanels(pGroup int,endpoint string) (error, []*m.PanelTable) {
+func GetPanels(pGroup int, endpoint string) (error, []*m.PanelTable) {
 	var serviceGroupList []string
 	var endpointServiceRel []*m.EndpointServiceRelTable
 	x.SQL("select distinct service_group from endpoint_service_rel where endpoint=?", endpoint).Find(&endpointServiceRel)
 	if len(endpointServiceRel) > 0 {
-		for _,v := range endpointServiceRel {
+		for _, v := range endpointServiceRel {
 			tmpParentList, _ := fetchGlobalServiceGroupParentGuidList(v.ServiceGroup)
 			serviceGroupList = append(serviceGroupList, tmpParentList...)
 		}
 	}
 	var panels []*m.PanelTable
-	sql := "select * from panel where group_id=? and (service_group is null or service_group in ('"+strings.Join(serviceGroupList,"','")+"'))"
+	sql := "select * from panel where group_id=? and (service_group is null or service_group in ('" + strings.Join(serviceGroupList, "','") + "'))"
 	err := x.SQL(sql, pGroup).Find(&panels)
 	if err != nil {
 		log.Logger.Error("Query panels fail", log.Error(err))
@@ -525,7 +525,7 @@ func UpdatePanelChartMetric(data []m.PromMetricUpdateParam) error {
 	return Transaction(updateChartAction)
 }
 
-func GetServiceGroupPromMetric(serviceGroup,workspace,monitorType string) (err error, result []*m.OptionModel) {
+func GetServiceGroupPromMetric(serviceGroup, workspace, monitorType string) (err error, result []*m.OptionModel) {
 	result = []*m.OptionModel{}
 	var metricList []string
 	nowTime := time.Now().Unix()
@@ -535,14 +535,14 @@ func GetServiceGroupPromMetric(serviceGroup,workspace,monitorType string) (err e
 		return
 	}
 	existMap := make(map[string]int)
-	for _,v := range metricList {
+	for _, v := range metricList {
 		if strings.HasPrefix(v, "go_") || v == "" {
 			continue
 		}
 		tmpPromExpr := v
 		tmpTEndpoint := ""
 		if strings.Contains(v, "t_endpoint") {
-			tmpPromExpr,tmpTEndpoint = trimTEndpointTag(tmpPromExpr)
+			tmpPromExpr, tmpTEndpoint = trimTEndpointTag(tmpPromExpr)
 			if !strings.HasSuffix(tmpTEndpoint, monitorType) {
 				continue
 			}
@@ -550,7 +550,7 @@ func GetServiceGroupPromMetric(serviceGroup,workspace,monitorType string) (err e
 				tmpPromExpr = tmpPromExpr[:len(tmpPromExpr)-1] + ",t_endpoint=\"$guid\"}"
 			}
 		}
-		if _,b:=existMap[tmpPromExpr];b {
+		if _, b := existMap[tmpPromExpr]; b {
 			continue
 		}
 		result = append(result, &m.OptionModel{OptionText: tmpPromExpr, OptionValue: tmpPromExpr})
@@ -559,7 +559,7 @@ func GetServiceGroupPromMetric(serviceGroup,workspace,monitorType string) (err e
 	return
 }
 
-func GetEndpointMetric(endpointGuid,monitorType string) (err error, result []*m.OptionModel) {
+func GetEndpointMetric(endpointGuid, monitorType string) (err error, result []*m.OptionModel) {
 	result = []*m.OptionModel{}
 	endpointObj := m.EndpointTable{Guid: endpointGuid}
 	if endpointGuid == "" && monitorType != "" {
@@ -568,7 +568,7 @@ func GetEndpointMetric(endpointGuid,monitorType string) (err error, result []*m.
 		if len(endpointList) > 0 {
 			endpointObj = *endpointList[0]
 		}
-	}else {
+	} else {
 		GetEndpoint(&endpointObj)
 	}
 	if endpointObj.Guid == "" {
@@ -618,7 +618,7 @@ func GetEndpointMetric(endpointGuid,monitorType string) (err error, result []*m.
 		if strings.Contains(v, "{") {
 			tmpText = v[:strings.Index(tmpText, "{")]
 		}
-		if _,b:=resultExistMap[tmpText];b {
+		if _, b := resultExistMap[tmpText]; b {
 			continue
 		}
 		result = append(result, &m.OptionModel{OptionText: tmpText, OptionValue: fmt.Sprintf("%s{instance=\"$address\"}", tmpText)})
@@ -627,7 +627,7 @@ func GetEndpointMetric(endpointGuid,monitorType string) (err error, result []*m.
 	return nil, result
 }
 
-func trimTEndpointTag(input string) (output,tEndpoint string) {
+func trimTEndpointTag(input string) (output, tEndpoint string) {
 	tIndex := strings.Index(input, "t_endpoint=\"")
 	tailPart := input[tIndex+12:]
 	tEndpoint = tailPart[:strings.Index(tailPart, "\"")]
@@ -661,8 +661,8 @@ func GetMainCustomDashboard(roleList []string) (err error, result []*m.CustomDas
 	err = x.SQL(sql).Find(&queryRows)
 	if len(queryRows) > 0 {
 		existMap := make(map[int]int)
-		for _,v := range queryRows {
-			if _,b:=existMap[v.Id];b {
+		for _, v := range queryRows {
+			if _, b := existMap[v.Id]; b {
 				continue
 			}
 			existMap[v.Id] = 1
@@ -897,7 +897,7 @@ func queryArchiveTables(endpoint, metric, tag, agg string, dateList []string, qu
 				if _, b := recordTagMap[rowData.Tags]; !b {
 					recordTagMap[rowData.Tags] = getKVMapFromArchiveTags(rowData.Tags)
 				}
-				recordNameMap[rowData.Tags] = datasource.GetSerialName(query, recordTagMap[rowData.Tags], tagLength)
+				recordNameMap[rowData.Tags] = datasource.GetSerialName(query, recordTagMap[rowData.Tags], tagLength, query.CustomDashboard)
 			}
 			tmpRowName := recordNameMap[rowData.Tags]
 			if _, b := resultMap[tmpRowName]; !b {

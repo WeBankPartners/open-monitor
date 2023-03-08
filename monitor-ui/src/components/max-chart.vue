@@ -50,6 +50,7 @@
                     <Radio label="p95">P95</Radio>
                     <Radio label="sum">Sum</Radio>
                     <Radio label="none">Original</Radio>
+                    <Radio label="avg_nonzero">AverageNZ</Radio>
                   </RadioGroup>
                 </div>
               </li>
@@ -128,6 +129,7 @@ export default {
       this.chartCondition.compareSecondDate = data
     },
     getChartData (chartItem, start, end) {
+
       // 为兼容放大区域调用
       if (chartItem) {
         this.chartItem = chartItem
@@ -142,14 +144,26 @@ export default {
           chart_id: this.chartItem.id,
           data: []
         }
-      params.data = [{
-        endpoint: this.chartItem.endpoint[0],
-        metric: this.chartItem.metric[0],
-        compare_first_start: this.chartCondition.compareFirstDate[0],
-        compare_first_end: this.chartCondition.compareFirstDate[1],
-        compare_second_start: this.chartCondition.compareSecondDate[0],
-        compare_second_end: this.chartCondition.compareSecondDate[1]
-      }]
+      this.chartItem.endpoint.forEach((ep) => {
+        this.chartItem.metric.forEach((me) => {
+          params.data.push({
+            endpoint: ep,
+            metric: me,
+            compare_first_start: this.chartCondition.compareFirstDate[0],
+            compare_first_end: this.chartCondition.compareFirstDate[1],
+            compare_second_start: this.chartCondition.compareSecondDate[0],
+            compare_second_end: this.chartCondition.compareSecondDate[1]
+          })
+        })
+      })
+      // params.data = [{
+      //   endpoint: this.chartItem.endpoint[0],
+      //   metric: this.chartItem.metric[0],
+      //   compare_first_start: this.chartCondition.compareFirstDate[0],
+      //   compare_first_end: this.chartCondition.compareFirstDate[1],
+      //   compare_second_start: this.chartCondition.compareSecondDate[0],
+      //   compare_second_end: this.chartCondition.compareSecondDate[1]
+      // }]
       // 外部有时间传入(放大)，以传入时间为准
       if (this.chartCondition.dateRange.length !==0) {
         params.start = start ? start : (this.chartCondition.dateRange[0] ===''? 
