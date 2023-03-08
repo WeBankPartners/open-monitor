@@ -295,5 +295,13 @@
   "m_any_object": "任一对象",
   "m_selected_object": "已选对象",
   "m_add_object": "添加对象",
-  "m_tip_for_save": "配置完整方可保存!"
+  "m_tip_for_save": "配置完整方可保存!",
+  "m_active_window": "告警时间段",
+  "m_clear": "清空",
+  "m_import": "导入",
+  "m_export": "导出",
+  "m_regular_tip": "正则表达式需包含括号！",
+  "m_content": "内容",
+  "m_batch_close": "批量关闭",
+  "m_metric": "指标"
 }
