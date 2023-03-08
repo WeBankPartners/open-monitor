@@ -709,45 +709,111 @@ func GetPieChart(c *gin.Context) {
 		mid.ReturnBodyError(c, err)
 		return
 	}
-	var paramConfig m.ChartConfigObj
+	var paramConfig []*m.PieChartConfigObj
 	err = json.Unmarshal(requestBody, &paramConfig)
 	if err != nil {
 		mid.ReturnRequestJsonError(c, err)
 		return
 	}
-	var query m.QueryMonitorData
-	if paramConfig.Endpoint == "" || paramConfig.Metric == "" {
-		mid.ReturnParamEmptyError(c, "endpoint and metric")
+	var queryResultList []*m.QueryMonitorData
+	var resultPieData m.EChartPie
+	for _, paramObj := range paramConfig {
+		tmpQueryResult, tmpErr := getPieData(paramObj)
+		if tmpErr != nil {
+			err = tmpErr
+			break
+		}
+		queryResultList = append(queryResultList, tmpQueryResult...)
+	}
+	if err != nil {
+		mid.ReturnHandleError(c, err.Error(), err)
 		return
 	}
-	endpointObj := m.EndpointTable{Guid: paramConfig.Endpoint}
-	db.GetEndpoint(&endpointObj)
-	if endpointObj.Id <= 0 {
-		mid.ReturnFetchDataError(c, "endpoint", "guid", paramConfig.Endpoint)
+	for _, v := range queryResultList {
+		resultPieData.Legend = append(resultPieData.Legend, v.PieData.Legend...)
+		resultPieData.Data = append(resultPieData.Data, v.PieData.Data...)
+	}
+	mid.ReturnSuccessData(c, resultPieData)
+}
+
+func getPieData(paramConfig *m.PieChartConfigObj) (result []*m.QueryMonitorData, err error) {
+	result = []*m.QueryMonitorData{}
+	if paramConfig.Metric == "" {
+		err = fmt.Errorf("metric can not empty")
 		return
 	}
-	query.Start = time.Now().Unix() - 120
-	query.End = time.Now().Unix()
+	var endpointList []*m.EndpointNewTable
+	if paramConfig.AppObject != "" && paramConfig.AppObjectEndpointType != "" {
+		endpointList, err = db.GetRecursiveEndpointByTypeNew(paramConfig.AppObject, paramConfig.AppObjectEndpointType)
+		if err != nil {
+			err = fmt.Errorf("get service group endpoint fail,%s ", err.Error())
+			return
+		}
+
+	} else if paramConfig.Endpoint != "" {
+		endpointObj, tmpErr := db.GetEndpointNew(&m.EndpointNewTable{Guid: paramConfig.Endpoint})
+		if tmpErr != nil {
+			err = tmpErr
+			return
+		}
+		paramConfig.AppObjectEndpointType = endpointObj.MonitorType
+		endpointList = append(endpointList, &endpointObj)
+	}
+	if len(endpointList) == 0 {
+		err = fmt.Errorf("endpoint can not empty ")
+		return
+	}
+	queryEnd := time.Now().Unix()
+	queryStart := queryEnd - 120
 	// fetch promQL
 	if paramConfig.PromQl == "" {
-		_, tmpPromQL := db.GetPromMetric([]string{paramConfig.Endpoint}, paramConfig.Metric)
+		tmpPromQL, _ := db.GetPromQLByMetric(paramConfig.Metric, paramConfig.AppObjectEndpointType)
 		if tmpPromQL == "" {
-			mid.ReturnFetchDataError(c, "prom_ql", "endpoint,metric", paramConfig.Endpoint+","+paramConfig.Metric)
+			err = fmt.Errorf("metric:%s can not get any prom_ql ", paramConfig.Metric)
 			return
 		} else {
 			paramConfig.PromQl = tmpPromQL
 		}
 	}
-	if strings.Contains(paramConfig.PromQl, "$address") {
-		tmpAddress := endpointObj.Address
-		if endpointObj.AddressAgent != "" {
-			tmpAddress = endpointObj.AddressAgent
-		}
-		paramConfig.PromQl = strings.Replace(paramConfig.PromQl, "$address", tmpAddress, -1)
+	for _, endpoint := range endpointList {
+		tmpPromQL := db.ReplacePromQlKeyword(paramConfig.PromQl, paramConfig.Metric, endpoint)
+		result = append(result, &m.QueryMonitorData{ChartType: "pie", Start: queryStart, End: queryEnd, PromQ: tmpPromQL, Legend: "", Metric: []string{paramConfig.Metric}, Endpoint: []string{endpoint.Guid}, Step: endpoint.Step, Cluster: endpoint.Cluster, PieMetricType: paramConfig.PieMetricType})
 	}
-	queryResult := m.QueryMonitorData{Start: query.Start, End: query.End, PromQ: paramConfig.PromQl, Metric: []string{paramConfig.Metric}, Endpoint: []string{paramConfig.Endpoint}, ChartType: "pie"}
-	ds.PrometheusData(&queryResult)
-	mid.ReturnSuccessData(c, queryResult.PieData)
+	if paramConfig.PieMetricType == "value" {
+		if len(result) == 0 {
+			return
+		}
+		if paramConfig.Start > 0 && paramConfig.End > 0 {
+			result[0].End = paramConfig.End
+			result[0].Start = paramConfig.Start
+		} else if paramConfig.TimeSecond < 0 {
+			result[0].End = time.Now().Unix()
+			result[0].Start = result[0].End + paramConfig.TimeSecond
+		}
+		serialList := ds.PrometheusData(result[0])
+		if len(serialList) > 0 {
+			valueMap := make(map[float64]int)
+			for _, v := range serialList[0].Data {
+				if count, b := valueMap[v[1]]; b {
+					valueMap[v[1]] = count + 1
+				} else {
+					valueMap[v[1]] = 1
+				}
+			}
+			pieData := m.EChartPie{}
+			for k, v := range valueMap {
+				tmpName := fmt.Sprintf("%.3f", k)
+				pieData.Legend = append(pieData.Legend, tmpName)
+				pieData.Data = append(pieData.Data, &m.EChartPieObj{Name: tmpName, Value: float64(v)})
+			}
+			result[0].PieData = pieData
+		}
+	} else {
+		for _, queryObj := range result {
+			ds.PrometheusData(queryObj)
+		}
+	}
+	return
 }
 
 // @Summary 主页面接口 : 模糊搜索
@@ -847,7 +913,7 @@ func UpdatePromMetric(c *gin.Context) {
 
 func GetEndpointMetric(c *gin.Context) {
 	var param m.GetEndpointMetricParam
-	if err:=c.ShouldBindJSON(&param);err!=nil {
+	if err := c.ShouldBindJSON(&param); err != nil {
 		mid.ReturnValidateError(c, err.Error())
 		return
 	}
@@ -855,7 +921,7 @@ func GetEndpointMetric(c *gin.Context) {
 	var data []*m.OptionModel
 	if param.ServiceGroup != "" {
 		err, data = db.GetServiceGroupPromMetric(param.ServiceGroup, param.Workspace, param.MonitorType)
-	}else {
+	} else {
 		err, data = db.GetEndpointMetric(param.Guid, param.MonitorType)
 	}
 	if err != nil {

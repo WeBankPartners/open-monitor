@@ -50,6 +50,21 @@
           <Tabs value="name1">
             <TabPane :label="$t('title.metricConfiguration')" name="name1">
               <div style="min-height:300px">
+                <div style="text-align:right;margin-bottom:16px">
+                  <button class="btn-cancel-f" @click.stop="exportData">{{$t("m_export")}}{{$t("m_metric")}}</button>
+                  <div style="display: inline-block;"> 
+                    <Upload 
+                    :action="uploadUrl" 
+                    :show-upload-list="false"
+                    :max-size="1000"
+                    with-credentials
+                    :headers="{'Authorization': token}"
+                    :on-success="uploadSucess"
+                    :on-error="uploadFailed">
+                      <Button icon="ios-cloud-upload-outline">{{$t('m_import')}}{{$t("m_metric")}}</Button>
+                    </Upload>
+                  </div>
+                </div>
                 <Form :label-width="80">
                   <FormItem :label="$t('field.metric')">
                     <Select v-model="metricId" filterable clearable @on-clear="clearMetric" @on-open-change="getMetricOptions" @on-change="changeMetricOptions" ref="metricSelect" :disabled="!monitorType">
@@ -228,14 +243,18 @@
   </div>
 </template>
 <script>
+import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
+import {baseURL_config} from '@/assets/js/baseURL'
 import TagShow from '@/components/Tag-show.vue'
 import {generateUuid} from '@/assets/js/utils'
+import axios from 'axios'
 // 引入 ECharts 主模块
 import {readyToDraw} from '@/assets/config/chart-rely'
 export default {
   name: '',
   data() {
     return {
+      token: null,
       templatePl: '',
       paramsA: '',
       paramsB: '',
@@ -326,11 +345,60 @@ export default {
       metricTemplateParams: []
     }
   },
+  computed: {
+    uploadUrl: function() {
+      return baseURL_config + `${this.$root.apiCenter.metricImport}?serviceGroup=${this.serviceGroup}&monitorType=${this.monitorType}`
+    }
+  },
   mounted() {
     this.getEndpointType()
     this.getRecursiveList()
+    this.token = (window.request ? 'Bearer ' + getPlatFormToken() : getToken())|| null
   },
   methods: {
+    exportData () {
+      const api = `${this.$root.apiCenter.metricExport}?serviceGroup=${this.serviceGroup}&monitorType=${this.monitorType}`
+      axios({
+        method: 'GET',
+        url: api,
+        headers: {
+          'Authorization': this.token
+        }
+      }).then((response) => {
+        if (response.status < 400) {
+          let content = JSON.stringify(response.data)
+          let fileName = `${response.headers['content-disposition'].split(';')[1].trim().split('=')[1]}`
+          let blob = new Blob([content])
+          if('msSaveOrOpenBlob' in navigator){
+            // Microsoft Edge and Microsoft Internet Explorer 10-11
+            window.navigator.msSaveOrOpenBlob(blob, fileName)
+          } else {
+            if ('download' in document.createElement('a')) { // 非IE下载
+              let elink = document.createElement('a')
+              elink.download = fileName
+              elink.style.display = 'none'
+              elink.href = URL.createObjectURL(blob)  
+              document.body.appendChild(elink)
+              elink.click()
+              URL.revokeObjectURL(elink.href) // 释放URL 对象
+              document.body.removeChild(elink)
+            } else { // IE10+下载
+              navigator.msSaveOrOpenBlob(blob, fileName)
+            }
+          }
+        }
+      })
+      .catch(() => {
+        this.$Message.warning(this.$t('tips.failed'))
+      });
+    },
+    uploadSucess () {
+      this.$Message.success(this.$t('tips.success'))
+      this.getMetricOptions()
+    },
+    uploadFailed (error, file) {
+      this.$Message.warning(file.message)
+    },
     clearMetric () {
       this.metricConfigData.metric = ''
     },
