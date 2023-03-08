@@ -296,5 +296,13 @@
   "m_any_object": "Any Object",
   "m_selected_object": "Selected Object",
   "m_add_object": "Add Object",
-  "m_tip_for_save": "The Configuration Is Complete Before Saving !"
+  "m_tip_for_save": "The Configuration Is Complete Before Saving !",
+  "m_active_window": "Active Window",
+  "m_clear": "Clear",
+  "m_import": "Import",
+  "m_export": "Export",
+  "m_regular_tip": "The regular expression must contain parentheses !",
+  "m_content": "Content",
+  "m_batch_close": "Batch Close",
+  "m_metric": "Metric"
 }

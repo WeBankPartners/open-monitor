@@ -1,156 +1,159 @@
 <template>
-<div>
-  <div class=" ">
-    <Title :title="$t('menu.templateManagement')"></Title>
-    <header>
-      <div class="header-name">
-        <i class="fa fa-th-large fa-18" aria-hidden="true"></i>
-        <template v-if="isEditPanal">
-          <Input v-model.trim="panalName" style="width: 100px" type="text"></Input>
-          <Icon class="panal-edit-icon" @click="savePanalEdit" type="md-checkmark" />
-          <Icon class="panal-edit-icon" @click="canclePanalEdit" type="md-close" />
-        </template>
-        <template v-else>
-          <span> {{panalName}}</span>
-          <Icon class="panal-edit-icon" @click="isEditPanal=true" type="md-create" />
-        </template>
-      </div>
-      <div class="search-container">
-        <div>
-          <div class="search-zone">
-            <span class="params-title">{{$t('field.relativeTime')}}：</span>
-            <Select filterable v-model="viewCondition.timeTnterval" :disabled="disableTime" style="width:80px"  @on-change="initPanals">
-              <Option v-for="item in dataPick" :value="item.value" :key="item.value">{{ item.label }}</Option>
-            </Select>
-          </div>
-          <div class="search-zone">
-            <span class="params-title">{{$t('placeholder.refresh')}}：</span>
-            <Select filterable clearable v-model="viewCondition.autoRefresh" :disabled="disableTime" style="width:100px" @on-change="initPanals" :placeholder="$t('placeholder.refresh')">
-              <Option v-for="item in autoRefreshConfig" :value="item.value" :key="item.value">{{ item.label }}</Option>
-            </Select>
-          </div>
-          <div class="search-zone">
-            <span class="params-title">{{$t('field.timeInterval')}}：</span>
-            <DatePicker 
-              type="datetimerange" 
-              :value="viewCondition.dateRange" 
-              format="yyyy-MM-dd HH:mm:ss" 
-              placement="bottom-start" 
-              @on-change="datePick" 
-              :placeholder="$t('placeholder.datePicker')" 
-              style="width: 320px">
-            </DatePicker>
-          </div>
-          <!-- <div class="search-zone">
-            <span class="params-title">{{$t('field.aggType')}}：</span>
-            <RadioGroup v-model="viewCondition.agg" @on-change="initPanals" size="small" type="button">
-              <Radio disabled label="min">Min</Radio>
-              <Radio disabled label="max">Max</Radio>
-              <Radio disabled label="avg">Average </Radio>
-              <Radio disabled label="p95">P95</Radio>
-              <Radio disabled label="sum">Sum</Radio>
-              <Radio disabled label="none">Original</Radio>
-            </RadioGroup>
-          </div> -->
+  <div>
+    <div class=" ">
+      <Title :title="$t('menu.templateManagement')"></Title>
+      <header>
+        <div class="header-name">
+          <i class="fa fa-th-large fa-18" aria-hidden="true"></i>
+          <template v-if="isEditPanal">
+            <Input v-model.trim="panalName" style="width: 100px" type="text"></Input>
+            <Icon class="panal-edit-icon" @click="savePanalEdit" type="md-checkmark" />
+            <Icon class="panal-edit-icon" @click="canclePanalEdit" type="md-close" />
+          </template>
+          <template v-else>
+            <span> {{panalName}}</span>
+            <Icon class="panal-edit-icon" @click="isEditPanal=true" v-if="permission === 'edit'" type="md-create" />
+          </template>
         </div>
-
-        <div class="header-tools"> 
-          <button class="btn btn-sm btn-cancel-f" style="margin-right:60px" @click="addItem">{{$t('m_new_graph')}}</button>
-          <button class="btn btn-sm btn-confirm-f" @click="saveEdit">{{$t('button.saveConfig')}}</button>
-          <button class="btn btn-sm btn-cancel-f" @click="goBack()">{{$t('button.back')}}</button>
-          <button v-if="!showAlarm" class="btn btn-sm btn-cancel-f" @click="openAlarmDisplay()">
-            <i style="font-size: 18px;color: #0080FF;" class="fa fa-eye-slash" aria-hidden="true"></i>
-          </button>
-          <button v-else class="btn btn-sm btn-cancel-f" @click="closeAlarmDisplay()">
-            <i style="font-size: 18px;color: #0080FF;" class="fa fa-eye" aria-hidden="true"></i>
-          </button>
-        </div>
-      </div>
-    </header>
-    <div style="display:flex">
-      <div class="grid-style">
-        <grid-layout 
-        :layout.sync="layoutData"
-        :col-num="12"
-        :row-height="30"
-        :is-draggable="true"
-        :is-resizable="true"
-        :is-mirrored="false"
-        :vertical-compact="true"
-        :use-css-transforms="true"
-        >
-          <grid-item v-for="(item,index) in layoutData"
-            class="c-dark"
-            :x="item.x"
-            :y="item.y"
-            :w="item.w"
-            :h="item.h"
-            :i="item.i"
-            :key="index"
-            @resize="resizeEvent"
-            @resized="resizeEvent">
-                      
-            <div class="c-dark" style="display:flex;padding:0 32px;">
-              <div class="header-grid header-grid-name">
-                <span v-if="editChartId !== item.id">{{item.i}}</span>
-                <Input v-else v-model="item.i" class="editChartId" style="width:100px" @on-blur="editChartId = null" size="small" placeholder="small size" />
-                <Tooltip :content="$t('placeholder.editTitle')" theme="light" transfer placement="top">
-                  <i class="fa fa-pencil-square" style="font-size: 16px;"  @click="editChartId = item.id" aria-hidden="true"></i>
-                </Tooltip>
-              </div>
-              <div class="header-grid header-grid-tools"> 
-                <Tooltip :content="$t('button.chart.dataView')" theme="light" transfer placement="top">
-                  <i class="fa fa-eye" style="font-size: 16px;" v-if="isShowGridPlus(item)" aria-hidden="true" @click="gridPlus(item)"></i>
-                </Tooltip>
-                <Tooltip :content="$t('placeholder.chartConfiguration')" theme="light" transfer placement="top">
-                  <i class="fa fa-cog" style="font-size: 16px;"  @click="setChartType(item)" aria-hidden="true"></i>
-                </Tooltip>
-                <Tooltip :content="$t('placeholder.deleteChart')" theme="light" transfer placement="top">
-                  <i class="fa fa-trash" style="font-size: 16px;"  @click="removeGrid(item)" aria-hidden="true"></i>
-                </Tooltip>
-              </div>
+        <div class="search-container">
+          <div>
+            <div class="search-zone">
+              <span class="params-title">{{$t('field.relativeTime')}}：</span>
+              <Select filterable v-model="viewCondition.timeTnterval" :disabled="disableTime" style="width:80px"  @on-change="initPanals">
+                <Option v-for="item in dataPick" :value="item.value" :key="item.value">{{ item.label }}</Option>
+              </Select>
             </div>
-            <section>
-              <div v-for="(chartInfo,chartIndex) in item._activeCharts" :key="chartIndex">
-                <CustomChart v-if="['line','bar'].includes(chartInfo.chartType)" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomChart>
-                <CustomPieChart v-if="chartInfo.chartType === 'pie'" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomPieChart>
+            <div class="search-zone">
+              <span class="params-title">{{$t('placeholder.refresh')}}：</span>
+              <Select filterable clearable v-model="viewCondition.autoRefresh" :disabled="disableTime" style="width:100px" @on-change="initPanals" :placeholder="$t('placeholder.refresh')">
+                <Option v-for="item in autoRefreshConfig" :value="item.value" :key="item.value">{{ item.label }}</Option>
+              </Select>
+            </div>
+            <div class="search-zone">
+              <span class="params-title">{{$t('field.timeInterval')}}：</span>
+              <DatePicker 
+                type="datetimerange" 
+                :value="viewCondition.dateRange" 
+                format="yyyy-MM-dd HH:mm:ss" 
+                placement="bottom-start" 
+                @on-change="datePick" 
+                :placeholder="$t('placeholder.datePicker')" 
+                style="width: 320px">
+              </DatePicker>
+            </div>
+            <!-- <div class="search-zone">
+              <span class="params-title">{{$t('field.aggType')}}：</span>
+              <RadioGroup v-model="viewCondition.agg" @on-change="initPanals" size="small" type="button">
+                <Radio disabled label="min">Min</Radio>
+                <Radio disabled label="max">Max</Radio>
+                <Radio disabled label="avg">Average </Radio>
+                <Radio disabled label="p95">P95</Radio>
+                <Radio disabled label="sum">Sum</Radio>
+                <Radio disabled label="none">Original</Radio>
+              </RadioGroup>
+            </div> -->
+          </div>
+
+          <div class="header-tools">
+            <template v-if="permission === 'edit'">
+              <button class="btn btn-sm btn-cancel-f" style="margin-right:60px" @click="addItem">{{$t('m_new_graph')}}</button>
+              <button class="btn btn-sm btn-confirm-f" @click="saveEdit">{{$t('button.saveConfig')}}</button>
+            </template> 
+            
+            <button class="btn btn-sm btn-cancel-f" @click="goBack()">{{$t('button.back')}}</button>
+            <button v-if="!showAlarm" class="btn btn-sm btn-cancel-f" @click="openAlarmDisplay()">
+              <i style="font-size: 18px;color: #0080FF;" class="fa fa-eye-slash" aria-hidden="true"></i>
+            </button>
+            <button v-else class="btn btn-sm btn-cancel-f" @click="closeAlarmDisplay()">
+              <i style="font-size: 18px;color: #0080FF;" class="fa fa-eye" aria-hidden="true"></i>
+            </button>
+          </div>
+        </div>
+      </header>
+      <div style="display:flex">
+        <div class="grid-style">
+          <grid-layout 
+          :layout.sync="layoutData"
+          :col-num="12"
+          :row-height="30"
+          :is-draggable="true"
+          :is-resizable="true"
+          :is-mirrored="false"
+          :vertical-compact="true"
+          :use-css-transforms="true"
+          >
+            <grid-item v-for="(item,index) in layoutData"
+              class="c-dark"
+              :x="item.x"
+              :y="item.y"
+              :w="item.w"
+              :h="item.h"
+              :i="item.i"
+              :key="index"
+              @resize="resizeEvent"
+              @resized="resizeEvent">
+                        
+              <div class="c-dark" style="display:flex;padding:0 32px;">
+                <div class="header-grid header-grid-name">
+                  <span v-if="editChartId !== item.id">{{item.i}}</span>
+                  <Input v-else v-model="item.i" class="editChartId" style="width:100px" @on-blur="editChartId = null" size="small" placeholder="small size" />
+                  <Tooltip :content="$t('placeholder.editTitle')" theme="light" transfer placement="top">
+                    <i class="fa fa-pencil-square" style="font-size: 16px;" v-if="permission === 'edit'" @click="editChartId = item.id" aria-hidden="true"></i>
+                  </Tooltip>
+                </div>
+                <div class="header-grid header-grid-tools"> 
+                  <Tooltip :content="$t('button.chart.dataView')" theme="light" transfer placement="top">
+                    <i class="fa fa-eye" style="font-size: 16px;" v-if="isShowGridPlus(item)" aria-hidden="true" @click="gridPlus(item)"></i>
+                  </Tooltip>
+                  <Tooltip :content="$t('placeholder.chartConfiguration')" theme="light" transfer placement="top">
+                    <i class="fa fa-cog" style="font-size: 16px;" v-if="permission === 'edit'" @click="setChartType(item)" aria-hidden="true"></i>
+                  </Tooltip>
+                  <Tooltip :content="$t('placeholder.deleteChart')" theme="light" transfer placement="top">
+                    <i class="fa fa-trash" style="font-size: 16px;" v-if="permission === 'edit'" @click="removeGrid(item)" aria-hidden="true"></i>
+                  </Tooltip>
+                </div>
               </div>
-            </section>
-          </grid-item>
-        </grid-layout>
-      </div>
-      <div v-show="showAlarm" class="alarm-style">
-        <ViewConfigAlarm ref="cutsomViewId"></ViewConfigAlarm>
+              <section>
+                <div v-for="(chartInfo,chartIndex) in item._activeCharts" :key="chartIndex">
+                  <CustomChart v-if="['line','bar'].includes(chartInfo.chartType)" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomChart>
+                  <CustomPieChart v-if="chartInfo.chartType === 'pie'" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomPieChart>
+                </div>
+              </section>
+            </grid-item>
+          </grid-layout>
+        </div>
+        <div v-show="showAlarm" class="alarm-style">
+          <ViewConfigAlarm ref="cutsomViewId"></ViewConfigAlarm>
+        </div>
       </div>
     </div>
+    <Drawer title="View details" :width="zoneWidth" v-model="showMaxChart">
+      <ViewChart ref="viewChart"></ViewChart>
+    </Drawer>
+    <Drawer :title="$t('placeholder.chartConfiguration')" :width="zoneWidth" :mask-closable="false" v-model="showChartConfig">
+      <editPieView v-if="chartType === 'pie'" ref="editPieView"></editPieView>
+      <editLineView v-else ref="editLineView"></editLineView>
+    </Drawer>
+    <ModalComponent :modelConfig="setChartTypeModel">
+      <div slot="setChartType">
+        <div style="display:flex;justify-content:center">
+          <i @dblclick="dblChartType('line')" @click="choiceChartType('line')" :class="['fa', 'fa-line-chart', activeChartType==='line' ? 'active-tag': '']" aria-hidden="true"></i>
+          <i @dblclick="dblChartType('pie')" @click="choiceChartType('pie')" :class="['fa', 'fa-pie-chart', activeChartType==='pie' ? 'active-tag': '']" aria-hidden="true"></i>
+        </div>
+      </div>
+    </ModalComponent>
+    <Modal
+      v-model="isShowWarning"
+      :title="$t('delConfirm.title')"
+      @on-ok="confirmRemoveGrid"
+      @on-cancel="cancel">
+      <div class="modal-body" style="padding:30px">
+        <div style="text-align:center">
+          <p style="color: red">{{$t('delConfirm.tip')}}</p>
+        </div>
+      </div>
+    </Modal>
   </div>
-  <Drawer title="View details" :width="zoneWidth" v-model="showMaxChart">
-    <ViewChart ref="viewChart"></ViewChart>
-  </Drawer>
-  <Drawer :title="$t('placeholder.chartConfiguration')" :width="zoneWidth" :mask-closable="false" v-model="showChartConfig">
-    <editPieView v-if="chartType === 'pie'" ref="editPieView"></editPieView>
-    <editLineView v-else ref="editLineView"></editLineView>
-  </Drawer>
-  <ModalComponent :modelConfig="setChartTypeModel">
-    <div slot="setChartType">
-      <div style="display:flex;justify-content:center">
-        <i @dblclick="dblChartType('line')" @click="choiceChartType('line')" :class="['fa', 'fa-line-chart', activeChartType==='line' ? 'active-tag': '']" aria-hidden="true"></i>
-        <i @dblclick="dblChartType('pie')" @click="choiceChartType('pie')" :class="['fa', 'fa-pie-chart', activeChartType==='pie' ? 'active-tag': '']" aria-hidden="true"></i>
-      </div>
-    </div>
-  </ModalComponent>
-  <Modal
-    v-model="isShowWarning"
-    :title="$t('delConfirm.title')"
-    @on-ok="confirmRemoveGrid"
-    @on-cancel="cancel">
-    <div class="modal-body" style="padding:30px">
-      <div style="text-align:center">
-        <p style="color: red">{{$t('delConfirm.tip')}}</p>
-      </div>
-    </div>
-  </Modal>
-</div>
 
 </template>
 <style lang="less" scoped>
@@ -204,11 +207,12 @@ export default {
         method: ''
       },
       isEditPanal: false,
-      panalName: this.$route.params.name,
+      permission: '',
+      panalName: this.$route.params.panalItem.name,
       viewCondition: {
-        timeTnterval: -1800,
+        timeTnterval: -3600,
         dateRange: ['', ''],
-        autoRefresh: 10,
+        autoRefresh: 5,
         agg: 'none' // 聚合类型
       },
       disableTime: false,
@@ -237,7 +241,7 @@ export default {
       activeGridConfig: null,
       activeChartType: 'line',
 
-      showAlarm: true, // 显示告警信息
+      showAlarm: false, // 显示告警信息
       cutsomViewId: null,
 
       showMaxChart: false,
@@ -250,11 +254,11 @@ export default {
     this.zoneWidth = window.screen.width * 0.65
   },
   mounted() {
-    this.reloadPanal(this.$route.params)
-    // this.reloadPanal(this.editData)
+    this.reloadPanal(this.$route.params.panalItem)
   },
   methods: {
     reloadPanal (params) {
+      this.permission = this.$route.params.permission
       this.editData = params
       if(this.$root.$validate.isEmpty_reset(params)) {
         this.$router.push({path:'viewConfigIndex'})
@@ -263,13 +267,13 @@ export default {
           this.viewData = JSON.parse(params.cfg)
           this.initPanals()
           this.cutsomViewId = params.id
-          this.$refs.cutsomViewId.getAlarm(this.cutsomViewId, this.viewCondition)
+          // this.$refs.cutsomViewId.getAlarm(this.cutsomViewId, this.viewCondition)
         }
       }
     },
     openAlarmDisplay () {
       this.showAlarm = !this.showAlarm
-      this.$refs.cutsomViewId.getAlarm(this.cutsomViewId, this.viewCondition)
+      this.$refs.cutsomViewId.getAlarm(this.cutsomViewId, this.viewCondition, this.permission)
     },
     closeAlarmDisplay () {
       this.showAlarm = !this.showAlarm
@@ -285,6 +289,7 @@ export default {
         this.disableTime = true
         this.viewCondition.autoRefresh = 0
       }
+      this.initPanals()
     },
     dateToTimestamp (date) {
       if (!date) return 0
@@ -319,7 +324,10 @@ export default {
           chartType: item.chartType,
           aggregate: item.aggregate,
           agg_step: item.agg_step,
-          lineType: item.lineType                                       
+          lineType: item.lineType,
+          time_second: this.viewCondition.timeTnterval,
+          start: this.dateToTimestamp(this.viewCondition.dateRange[0]),
+          end: this.dateToTimestamp(this.viewCondition.dateRange[1])                                  
         })
         item.viewConfig._activeCharts = _activeCharts
         tmp.push(item.viewConfig)
@@ -354,6 +362,7 @@ export default {
         this.$root.JQ('#set_chart_type_Modal').modal('show')
       } else {
         this.activeChartType = find._activeCharts[0].chartType
+        this.chartType = find._activeCharts[0].chartType
         this.editGrid(item)
       }
     },
@@ -376,7 +385,6 @@ export default {
     },
     editGrid(item) {
       this.modifyLayoutData().then((resViewData)=>{
-        // let parentRouteData = this.$route.params
         let parentRouteData = this.editData
         const cfg = JSON.parse(parentRouteData.cfg)
         parentRouteData.cfg = JSON.parse(parentRouteData.cfg)
@@ -422,11 +430,9 @@ export default {
     },
     async gridPlus(item) {
       const resViewData = await this.modifyLayoutData()
-      // let parentRouteData = this.$route.params
       let parentRouteData = this.editData
       parentRouteData.cfg = JSON.stringify(resViewData)
       this.showMaxChart = true
-      // this.$refs.viewChart.initChart({templateData: parentRouteData, panal:item, parentData: this.$route.params})
       this.$refs.viewChart.initChart({templateData: parentRouteData, panal:item, parentData: this.editData})
     },
     async modifyLayoutData() {
@@ -477,7 +483,6 @@ export default {
       })
       let params = {
         name: this.panalName,
-        // id: this.$route.params.id,
         id: this.editData.id,
         cfg: JSON.stringify(res)
       }

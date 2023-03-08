@@ -115,6 +115,7 @@ type AlarmProblemQueryResult struct {
 	Mid   int                     `json:"mid"`
 	Low   int                     `json:"low"`
 	Count []*AlarmProblemCountObj `json:"count"`
+	Page  *PageInfo               `json:"page"`
 }
 
 type AlarmProblemCountObj struct {
@@ -430,9 +431,10 @@ type LogMonitorTags struct {
 }
 
 type QueryProblemAlarmDto struct {
-	Endpoint string `json:"endpoint"`
-	Metric   string `json:"metric"`
-	Priority string `json:"priority"`
+	Endpoint string    `json:"endpoint"`
+	Metric   string    `json:"metric"`
+	Priority string    `json:"priority"`
+	Page     *PageInfo `json:"page"`
 }
 
 type QueryHistoryAlarmParam struct {
@@ -523,4 +525,10 @@ type PluginCloseAlarmOutputObj struct {
 	ErrorCode         string `json:"errorCode"`
 	ErrorMessage      string `json:"errorMessage"`
 	ErrorDetail       string `json:"errorDetail,omitempty"`
+}
+
+type AlarmCloseParam struct {
+	Id     int    `json:"id"`
+	Custom bool   `json:"custom"`
+	Metric string `json:"metric"`
 }

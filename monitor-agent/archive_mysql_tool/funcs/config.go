@@ -2,6 +2,7 @@ package funcs
 
 import (
 	"encoding/json"
+	"github.com/WeBankPartners/go-common-lib/cipher"
 	"io/ioutil"
 	"log"
 	"os"
@@ -92,6 +93,12 @@ func InitConfig(cfg string) error {
 		log.Println("parse config file:", cfg, "fail:", err)
 		return err
 	}
+	rsaPemByte, readRsaErr := ioutil.ReadFile("/data/certs/rsa_key")
+	if readRsaErr != nil {
+		log.Printf("Read rsa pem file fail,%s ", readRsaErr.Error())
+	}
+	c.Mysql.Password, _ = cipher.DecryptRsa(c.Mysql.Password, string(rsaPemByte))
+	c.Monitor.Mysql.Password, _ = cipher.DecryptRsa(c.Monitor.Mysql.Password, string(rsaPemByte))
 	lock.Lock()
 	config = &c
 	log.Println("read config file:", cfg, "successfully")
