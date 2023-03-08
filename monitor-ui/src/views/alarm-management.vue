@@ -52,6 +52,7 @@
                 <Tag color="primary">{{$t('table.noDataTip')}}！</Tag>
               </template>
               <button @click="alarmHistory" style="float: right;margin-right: 25px;" class="btn btn-sm btn-cancel-f">{{$t('alarmHistory')}}</button>
+              <button :disabled="!filtersForShow.some(f => f.key === 'metric')" @click="deleteConfirmModal({}, true)" style="float: right;margin-right: 25px;" class="btn btn-sm btn-cancel-f">{{$t('m_batch_close')}}</button>
             </section>
             <div class="alarm-list">
               <template v-for="(alarmItem, alarmIndex) in resultData">
@@ -61,7 +62,7 @@
                       <Icon type="ios-stats" size="18" class="fa-operate" v-if="!alarmItem.is_custom" @click="goToEndpointView(alarmItem)"/>
                     </Tooltip>
                     <Tooltip :content="$t('close')">
-                      <Icon type="ios-eye-off" size="18" class="fa-operate" @click="deleteConfirmModal(alarmItem)"/>
+                      <Icon type="ios-eye-off" size="18" class="fa-operate" @click="deleteConfirmModal(alarmItem, false)"/>
                     </Tooltip>
                     <Tooltip :content="$t('m_remark')">
                       <Icon type="ios-pricetags-outline" size="18" class="fa-operate" @click="remarkModal(alarmItem)" />
@@ -118,6 +119,9 @@
                 </section>
               </template>
             </div>
+            <div style="margin: 4px 0; text-align:right">
+              <Page :total="paginationInfo.total" @on-change="pageIndexChange" @on-page-size-change="pageSizeChange" show-elevator show-sizer show-total />
+            </div>
           </div>
         </div>
       </TabPane>
@@ -165,7 +169,13 @@ export default {
           message: '',
           is_custom: false
         }
-      }
+      },
+      paginationInfo: {
+        total: 0,
+        startIndex: 1,
+        pageSize: 10
+      },
+      isBatch: false
     }
   },
   mounted(){
@@ -204,8 +214,22 @@ export default {
       // const news = this.$router.resolve({name: 'endpointView'})
       // window.open(news.href, '_blank')
     },
+    pageIndexChange(pageIndex) {
+      this.paginationInfo.startIndex = pageIndex
+      this.getAlarm()
+    },
+    pageSizeChange(pageSize) {
+      this.paginationInfo.startIndex = 1
+      this.paginationInfo.pageSize = pageSize
+      this.getAlarm()
+    },
     getAlarm() {
-      let params = {}
+      let params = {
+        page: {
+          startIndex: this.paginationInfo.startIndex,
+          pageSize: this.paginationInfo.pageSize
+        }
+      }
       let keys = Object.keys(this.filters)
       this.filtersForShow = []
       for (let i = 0; i< keys.length ;i++) {
@@ -216,8 +240,11 @@ export default {
       this.timeForDataAchieve = new Date().toLocaleString()
       this.timeForDataAchieve = this.timeForDataAchieve.replace('上午', 'AM ')
       this.timeForDataAchieve = this.timeForDataAchieve.replace('下午', 'PM ')
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/alarm/problem/query', params, (responseData) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/alarm/problem/page', params, (responseData) => {
         this.resultData = responseData.data
+        this.paginationInfo.total = responseData.page.totalRows
+        this.paginationInfo.startIndex = responseData.page.startIndex
+        this.paginationInfo.pageSize = responseData.page.pageSize
         this.low = responseData.low
         this.mid = responseData.mid
         this.high = responseData.high
@@ -371,7 +398,8 @@ export default {
       this.filters[key] = value
       this.getAlarm()
     },
-    deleteConfirmModal (rowData) {
+    deleteConfirmModal (rowData, isBatch) {
+      this.isBatch = isBatch
       this.selectedData = rowData
       this.isShowWarning = true
     },
@@ -383,13 +411,22 @@ export default {
     },
     removeAlarm(alarmItem) {
       let params = {
-        id: alarmItem.id,
-        custom: true
+        id: 0,
+        custom: true,
+        metric: ""
+      }
+      if (this.isBatch) {
+        let find = this.filtersForShow.find(f => f.key === 'metric')
+        if (find) {
+          params.metric = find.value
+        }
+      } else {
+        params.id = alarmItem.id
       }
       if (!alarmItem.is_custom) {
         params.custom = false
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.alarmManagement.close.api, params, () => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.alarmManagement.close.api, params, () => {
         // this.$root.$eventBus.$emit('hideConfirmModal')
         this.getAlarm()
       })
@@ -414,7 +451,7 @@ export default {
 
 <style scoped lang="less">
 .echart {
-  height: ~"calc(100vh - 180px)";
+  height: ~"calc(100vh - 200px)";
   width: ~"calc(100vw * 0.4)";
   background:#ffffff;
 }
@@ -441,7 +478,7 @@ label {
   font-size: 18px;
 }
 .alarm-list {
-  height: ~"calc(100vh - 180px)";
+  height: ~"calc(100vh - 250px)";
   width: 100%;
   overflow-y: auto;
 }

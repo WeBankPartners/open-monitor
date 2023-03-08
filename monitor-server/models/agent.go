@@ -13,7 +13,7 @@ type RegisterParam struct {
 
 type RegisterParamNew struct {
 	Guid             string `json:"guid"`
-	Type             string `json:"type" binding:"required"`
+	Type             string `json:"type"`
 	Name             string `json:"name"`
 	Ip               string `json:"ip"`
 	Port             string `json:"port"`
@@ -48,18 +48,18 @@ type RegisterConsulCheck struct {
 }
 
 type PanelRecursiveTable struct {
-	Guid                string `json:"guid"`
-	DisplayName         string `json:"display_name"`
-	Parent              string `json:"parent"`
-	Endpoint            string `json:"endpoint"`
-	Email               string `json:"email"`
-	Phone               string `json:"phone"`
-	Role                string `json:"role"`
-	FiringCallbackName  string `json:"firing_callback_name"`
-	FiringCallbackKey   string `json:"firing_callback_key"`
-	RecoverCallbackName string `json:"recover_callback_name"`
-	RecoverCallbackKey  string `json:"recover_callback_key"`
-	ObjType             string `json:"obj_type"`
+	Guid                string    `json:"guid"`
+	DisplayName         string    `json:"display_name"`
+	Parent              string    `json:"parent"`
+	Endpoint            string    `json:"endpoint"`
+	Email               string    `json:"email"`
+	Phone               string    `json:"phone"`
+	Role                string    `json:"role"`
+	FiringCallbackName  string    `json:"firing_callback_name"`
+	FiringCallbackKey   string    `json:"firing_callback_key"`
+	RecoverCallbackName string    `json:"recover_callback_name"`
+	RecoverCallbackKey  string    `json:"recover_callback_key"`
+	ObjType             string    `json:"obj_type"`
 	UpdateAt            time.Time `json:"update_at"`
 }
 
@@ -143,13 +143,13 @@ type AgentManagerTable struct {
 }
 
 type QueryPrometheusMetricParam struct {
-	Ip      string   `json:"ip"`
-	Port    string   `json:"port"`
-	Cluster string   `json:"cluster"`
-	Prefix  []string `json:"prefix"`
-	Keyword []string `json:"keyword"`
-	TargetGuid string `json:"target_guid"`
-	EndpointGuid string `json:"endpoint_guid"`
-	IsConfigQuery bool `json:"is_config_query"`
-	ServiceGroup string `json:"service_group"`
+	Ip            string   `json:"ip"`
+	Port          string   `json:"port"`
+	Cluster       string   `json:"cluster"`
+	Prefix        []string `json:"prefix"`
+	Keyword       []string `json:"keyword"`
+	TargetGuid    string   `json:"target_guid"`
+	EndpointGuid  string   `json:"endpoint_guid"`
+	IsConfigQuery bool     `json:"is_config_query"`
+	ServiceGroup  string   `json:"service_group"`
 }

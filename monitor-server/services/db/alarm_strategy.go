@@ -25,7 +25,7 @@ func QueryAlarmStrategyByGroup(endpointGroup string) (result []*models.EndpointS
 		return
 	}
 	for _, v := range alarmStrategyTable {
-		tmpStrategyObj := models.GroupStrategyObj{Guid: v.Guid, EndpointGroup: v.EndpointGroup, Metric: v.Metric, MetricName: v.MetricName, Condition: v.Condition, Last: v.Last, Priority: v.Priority, Content: v.Content, NotifyEnable: v.NotifyEnable, NotifyDelaySecond: v.NotifyDelaySecond}
+		tmpStrategyObj := models.GroupStrategyObj{Guid: v.Guid, EndpointGroup: v.EndpointGroup, Metric: v.Metric, MetricName: v.MetricName, Condition: v.Condition, Last: v.Last, Priority: v.Priority, Content: v.Content, NotifyEnable: v.NotifyEnable, NotifyDelaySecond: v.NotifyDelaySecond, ActiveWindow: v.ActiveWindow}
 		tmpStrategyObj.NotifyList = getNotifyList(v.Guid, "", "")
 		strategy = append(strategy, &tmpStrategyObj)
 	}
@@ -40,9 +40,9 @@ func QueryAlarmStrategyByGroup(endpointGroup string) (result []*models.EndpointS
 }
 
 func QueryAlarmStrategyByEndpoint(endpoint string) (result []*models.EndpointStrategyObj, err error) {
-	endpointObj,getErr := GetEndpointNew(&models.EndpointNewTable{Guid: endpoint})
+	endpointObj, getErr := GetEndpointNew(&models.EndpointNewTable{Guid: endpoint})
 	if getErr != nil {
-		return result,getErr
+		return result, getErr
 	}
 	result = []*models.EndpointStrategyObj{}
 	var endpointGroupTable []*models.EndpointGroupTable
@@ -103,8 +103,8 @@ func CreateAlarmStrategy(param *models.GroupStrategyObj) error {
 	nowTime := time.Now().Format(models.DatetimeFormat)
 	param.Guid = guid.CreateGuid()
 	var actions []*Action
-	insertAction := Action{Sql: "insert into alarm_strategy(guid,endpoint_group,metric,`condition`,`last`,priority,content,notify_enable,notify_delay_second,update_time) value (?,?,?,?,?,?,?,?,?,?)"}
-	insertAction.Param = []interface{}{param.Guid, param.EndpointGroup, param.Metric, param.Condition, param.Last, param.Priority, param.Content, param.NotifyEnable, param.NotifyDelaySecond, nowTime}
+	insertAction := Action{Sql: "insert into alarm_strategy(guid,endpoint_group,metric,`condition`,`last`,priority,content,notify_enable,notify_delay_second,active_window,update_time) value (?,?,?,?,?,?,?,?,?,?,?)"}
+	insertAction.Param = []interface{}{param.Guid, param.EndpointGroup, param.Metric, param.Condition, param.Last, param.Priority, param.Content, param.NotifyEnable, param.NotifyDelaySecond, param.ActiveWindow, nowTime}
 	actions = append(actions, &insertAction)
 	if len(param.NotifyList) > 0 {
 		for _, v := range param.NotifyList {
@@ -118,8 +118,8 @@ func CreateAlarmStrategy(param *models.GroupStrategyObj) error {
 func UpdateAlarmStrategy(param *models.GroupStrategyObj) error {
 	nowTime := time.Now().Format(models.DatetimeFormat)
 	var actions []*Action
-	updateAction := Action{Sql: "update alarm_strategy set metric=?,`condition`=?,`last`=?,priority=?,content=?,notify_enable=?,notify_delay_second=?,update_time=? where guid=?"}
-	updateAction.Param = []interface{}{param.Metric, param.Condition, param.Last, param.Priority, param.Content, param.NotifyEnable, param.NotifyDelaySecond, nowTime, param.Guid}
+	updateAction := Action{Sql: "update alarm_strategy set metric=?,`condition`=?,`last`=?,priority=?,content=?,notify_enable=?,notify_delay_second=?,active_window=?,update_time=? where guid=?"}
+	updateAction.Param = []interface{}{param.Metric, param.Condition, param.Last, param.Priority, param.Content, param.NotifyEnable, param.NotifyDelaySecond, param.ActiveWindow, nowTime, param.Guid}
 	actions = append(actions, &updateAction)
 	for _, v := range param.NotifyList {
 		v.AlarmStrategy = param.Guid
@@ -445,7 +445,10 @@ func NotifyServiceGroup(serviceGroup string, alarmObj *models.AlarmHandleObj) {
 	var notifyList []*models.NotifyTable
 	err := x.SQL("select * from notify where service_group=?", serviceGroup).Find(&notifyList)
 	if err != nil {
-		log.Logger.Error("Notify serviceGroup fail,query notify data error", log.Error(err))
+		log.Logger.Warn("Notify serviceGroup fail,query notify data error", log.Error(err))
+	}
+	if len(notifyList) == 0 {
+		notifyList = []*models.NotifyTable{&models.NotifyTable{Guid: "defaultNotify", AlarmAction: alarmObj.Status, NotifyNum: 1}}
 	}
 	for _, v := range notifyList {
 		notifyAction(v, alarmObj)
@@ -468,11 +471,11 @@ func NotifyStrategyAlarm(alarmObj *models.AlarmHandleObj) {
 					return
 				}
 			}
-		}else if alarmObj.Status == "ok" {
+		} else if alarmObj.Status == "ok" {
 			var nowAlarms []*models.AlarmTable
 			x.SQL("select id,`start` from alarm where id=?", alarmObj.Id).Find(&nowAlarms)
 			if len(nowAlarms) > 0 {
-				if (time.Now().Unix()-nowAlarms[0].Start.Unix()) < int64(alarmObj.NotifyDelay) {
+				if (time.Now().Unix() - nowAlarms[0].Start.Unix()) < int64(alarmObj.NotifyDelay) {
 					log.Logger.Info("Notify ok alarm break in delay time ", log.Int("alarmId", alarmObj.Id))
 					return
 				}
@@ -498,7 +501,22 @@ func NotifyStrategyAlarm(alarmObj *models.AlarmHandleObj) {
 		x.SQL("select * from notify where alarm_action=? and endpoint_group in (select endpoint_group from alarm_strategy where guid=?) or service_group in ('"+strings.Join(affectServiceGroupList, "','")+"')", alarmObj.Status, alarmObj.AlarmStrategy).Find(&notifyTable)
 	}
 	if len(notifyTable) == 0 {
-		return
+		log.Logger.Info("can not find notify config,use default notify", log.Int("alarmId", alarmObj.Id), log.String("strategy", alarmObj.AlarmStrategy))
+		notifyTable = []*models.NotifyTable{&models.NotifyTable{Guid: "defaultNotify", AlarmAction: alarmObj.Status, NotifyNum: 1}}
+	} else if len(notifyTable) > 1 {
+		var newNotifyTable []*models.NotifyTable
+		existMap := make(map[string]int)
+		for _, v := range notifyTable {
+			tmpKey := fmt.Sprintf("%s_%s_%s_%s", v.ProcCallbackName, v.ProcCallbackKey, v.CallbackUrl, v.CallbackParam)
+			if _, b := existMap[tmpKey]; b {
+				continue
+			}
+			newNotifyTable = append(newNotifyTable, v)
+			existMap[tmpKey] = 1
+		}
+		if len(newNotifyTable) > 0 {
+			notifyTable = newNotifyTable
+		}
 	}
 	for _, v := range notifyTable {
 		notifyAction(v, alarmObj)
@@ -508,7 +526,7 @@ func NotifyStrategyAlarm(alarmObj *models.AlarmHandleObj) {
 func notifyAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleObj) {
 	log.Logger.Info("Start notify action", log.String("procCallKey", notify.ProcCallbackKey), log.String("notify", notify.Guid), log.Int("alarm", alarmObj.Id))
 	// alarmMailEnable==Y
-	var err,mailErr error
+	var err, mailErr error
 	if models.AlarmMailEnable {
 		mailErr = notifyMailAction(notify, alarmObj)
 		if mailErr != nil {
@@ -516,7 +534,7 @@ func notifyAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleObj) {
 		}
 	}
 	if alarmObj.SPriority == "" {
-		tmpAlarmRows,_ := x.QueryString("select s_priority from alarm where id=?", alarmObj.Id)
+		tmpAlarmRows, _ := x.QueryString("select s_priority from alarm where id=?", alarmObj.Id)
 		if len(tmpAlarmRows) > 0 {
 			alarmObj.SPriority = tmpAlarmRows[0]["s_priority"]
 		}
@@ -537,7 +555,7 @@ func notifyAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleObj) {
 		err = notifyMailAction(notify, alarmObj)
 		if err != nil {
 			log.Logger.Error("Event three times fail,and notify mail fail", log.String("notifyGuid", notify.Guid), log.Error(err))
-		}else{
+		} else {
 			log.Logger.Info("Event three times fail,send mail success ")
 		}
 	}
@@ -549,7 +567,7 @@ func compareNotifyEventLevel(level string) bool {
 		if models.Config().MonitorAlarmCallbackLevelMin == "high" {
 			result = false
 		}
-	}else if level == "low" {
+	} else if level == "low" {
 		if models.Config().MonitorAlarmCallbackLevelMin == "high" || models.Config().MonitorAlarmCallbackLevelMin == "medium" {
 			result = false
 		}
@@ -559,7 +577,7 @@ func compareNotifyEventLevel(level string) bool {
 
 func notifyEventAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleObj) error {
 	if !compareNotifyEventLevel(alarmObj.SPriority) {
-		log.Logger.Info("notify event disable", log.String("level",alarmObj.SPriority),log.String("minLevel",models.Config().MonitorAlarmCallbackLevelMin))
+		log.Logger.Info("notify event disable", log.String("level", alarmObj.SPriority), log.String("minLevel", models.Config().MonitorAlarmCallbackLevelMin))
 		err := notifyMailAction(notify, alarmObj)
 		return err
 	}
@@ -568,7 +586,7 @@ func notifyEventAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleO
 			if models.FiringCallback != "" && models.FiringCallback != "default_firing_callback" {
 				notify.ProcCallbackKey = models.FiringCallback
 			}
-		}else{
+		} else {
 			if models.RecoverCallback != "" && models.RecoverCallback != "default_recover_callback" {
 				notify.ProcCallbackKey = models.RecoverCallback
 			}
@@ -613,8 +631,9 @@ func notifyEventAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleO
 func getNotifyEventMessage(notifyGuid string, alarm models.AlarmTable) (result models.AlarmEntityObj) {
 	notifyObj, err := getSimpleNotify(notifyGuid)
 	if err != nil {
-		log.Logger.Error("getNotifyEventMessage fail", log.Error(err))
-		return
+		log.Logger.Warn("getNotifyEventMessage fail", log.Error(err))
+	} else {
+		notifyObj = models.NotifyTable{}
 	}
 	result = models.AlarmEntityObj{}
 	result.Subject, result.Content = getNotifyMessage(&models.AlarmHandleObj{AlarmTable: alarm})
@@ -684,8 +703,8 @@ func notifyMailAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleOb
 		log.Logger.Warn("notifyMailAction toAddress empty", log.String("notify", notify.Guid), log.StringList("roleList", roleList))
 		return nil
 	}
-	for _,v := range toAddress {
-		for _,vv := range strings.Split(v, ",") {
+	for _, v := range toAddress {
+		for _, vv := range strings.Split(v, ",") {
 			if vv != "" {
 				tmpToAddress = append(tmpToAddress, vv)
 			}
@@ -756,7 +775,7 @@ func getRoleMail(roleList []string) (mailList []string) {
 	return
 }
 
-func ImportAlarmStrategy(queryType,inputGuid string,param []*models.EndpointStrategyObj) (err error) {
+func ImportAlarmStrategy(queryType, inputGuid string, param []*models.EndpointStrategyObj) (err error) {
 	if len(param) == 0 {
 		return fmt.Errorf("import content empty ")
 	}
@@ -768,7 +787,7 @@ func ImportAlarmStrategy(queryType,inputGuid string,param []*models.EndpointStra
 	}
 	var endpointGroupList []string
 	metricMap := make(map[string]*models.MetricTable)
-	for _,v := range metricTable {
+	for _, v := range metricTable {
 		metricMap[v.Guid] = v
 	}
 	nowTime := time.Now().Format(models.DatetimeFormat)
@@ -782,21 +801,21 @@ func ImportAlarmStrategy(queryType,inputGuid string,param []*models.EndpointStra
 			return fmt.Errorf("can not find endpoint group with guid:%s ", inputGuid)
 		}
 		endpointGroupList = append(endpointGroupList, inputGuid)
-		tmpActions,tmpErr := getAlarmStrategyImportActions(inputGuid,"",endpointGroupTable[0].MonitorType,nowTime,param[0],metricMap)
+		tmpActions, tmpErr := getAlarmStrategyImportActions(inputGuid, "", endpointGroupTable[0].MonitorType, nowTime, param[0], metricMap)
 		if tmpErr != nil {
 			return tmpErr
 		}
 		actions = append(actions, tmpActions...)
-	}else if queryType == "service" {
+	} else if queryType == "service" {
 		var endpointGroupTable []*models.EndpointGroupTable
 		err = x.SQL("select guid,monitor_type,service_group from endpoint_group where service_group=?", inputGuid).Find(&endpointGroupTable)
 		if err != nil {
 			return fmt.Errorf("query endpoint group table fail,%s ", err.Error())
 		}
-		for _,v := range param {
+		for _, v := range param {
 			tmpEndpointGroupExistFlag := false
 			tmpMonitorType := ""
-			for _,vv := range endpointGroupTable {
+			for _, vv := range endpointGroupTable {
 				if v.EndpointGroup == vv.Guid {
 					tmpEndpointGroupExistFlag = true
 					tmpMonitorType = vv.MonitorType
@@ -807,7 +826,7 @@ func ImportAlarmStrategy(queryType,inputGuid string,param []*models.EndpointStra
 				continue
 			}
 			endpointGroupList = append(endpointGroupList, v.EndpointGroup)
-			tmpActions,tmpErr := getAlarmStrategyImportActions(v.EndpointGroup,inputGuid,tmpMonitorType,nowTime,v,metricMap)
+			tmpActions, tmpErr := getAlarmStrategyImportActions(v.EndpointGroup, inputGuid, tmpMonitorType, nowTime, v, metricMap)
 			if tmpErr != nil {
 				err = fmt.Errorf("handle endpointGroup:%s fail,%s ", v.EndpointGroup, tmpErr.Error())
 				break
@@ -823,7 +842,7 @@ func ImportAlarmStrategy(queryType,inputGuid string,param []*models.EndpointStra
 	}
 	err = Transaction(actions)
 	if err == nil {
-		for _,v := range endpointGroupList {
+		for _, v := range endpointGroupList {
 			err = SyncPrometheusRuleFile(v, false)
 			if err != nil {
 				break
@@ -833,18 +852,18 @@ func ImportAlarmStrategy(queryType,inputGuid string,param []*models.EndpointStra
 	return err
 }
 
-func getAlarmStrategyImportActions(endpointGroup,serviceGroup,monitorType,nowTime string,param *models.EndpointStrategyObj,metricMap map[string]*models.MetricTable) (actions []*Action,err error) {
+func getAlarmStrategyImportActions(endpointGroup, serviceGroup, monitorType, nowTime string, param *models.EndpointStrategyObj, metricMap map[string]*models.MetricTable) (actions []*Action, err error) {
 	var existStrategyTable []*models.AlarmStrategyTable
 	err = x.SQL("select guid,metric from alarm_strategy where endpoint_group=?", endpointGroup).Find(&existStrategyTable)
 	if err != nil {
-		return actions,fmt.Errorf("query alarm strategy table fail,%s ", err.Error())
+		return actions, fmt.Errorf("query alarm strategy table fail,%s ", err.Error())
 	}
 	existStrategyMap := make(map[string]int)
-	for _,v := range existStrategyTable {
+	for _, v := range existStrategyTable {
 		existStrategyMap[v.Guid] = 1
 	}
-	for _,strategy := range param.Strategy {
-		if fMetric,b:=metricMap[strategy.Metric];b {
+	for _, strategy := range param.Strategy {
+		if fMetric, b := metricMap[strategy.Metric]; b {
 			if fMetric.MonitorType != monitorType {
 				err = fmt.Errorf("Metric:%s is in type:%s ", strategy.Metric, fMetric.MonitorType)
 				break
@@ -855,15 +874,15 @@ func getAlarmStrategyImportActions(endpointGroup,serviceGroup,monitorType,nowTim
 					break
 				}
 			}
-		}else{
+		} else {
 			err = fmt.Errorf("Metric:%s is not exist ", strategy.Metric)
 			break
 		}
-		if _,b:=existStrategyMap[strategy.Guid];b {
+		if _, b := existStrategyMap[strategy.Guid]; b {
 			updateAction := Action{Sql: "update alarm_strategy set metric=?,`condition`=?,`last`=?,priority=?,content=?,notify_enable=?,notify_delay_second=?,update_time=? where guid=?"}
 			updateAction.Param = []interface{}{strategy.Metric, strategy.Condition, strategy.Last, strategy.Priority, strategy.Content, strategy.NotifyEnable, strategy.NotifyDelaySecond, nowTime, strategy.Guid}
 			actions = append(actions, &updateAction)
-		}else{
+		} else {
 			insertAction := Action{Sql: "insert into alarm_strategy(guid,endpoint_group,metric,`condition`,`last`,priority,content,notify_enable,notify_delay_second,update_time) value (?,?,?,?,?,?,?,?,?,?)"}
 			insertAction.Param = []interface{}{strategy.Guid, strategy.EndpointGroup, strategy.Metric, strategy.Condition, strategy.Last, strategy.Priority, strategy.Content, strategy.NotifyEnable, strategy.NotifyDelaySecond, nowTime}
 			actions = append(actions, &insertAction)

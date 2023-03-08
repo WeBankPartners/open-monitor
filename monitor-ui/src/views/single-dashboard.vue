@@ -98,9 +98,9 @@ export default {
     return {
       isPlugin: false,
       viewCondition: {
-        timeTnterval: -1800,
+        timeTnterval: -3600,
         dateRange: ['', ''],
-        autoRefresh: 10,
+        autoRefresh: 5,
       },
       disableTime: false,
       dataPick: dataPick,
@@ -111,7 +111,7 @@ export default {
         //   {'x':1,'y':1,'w':2,'h':2,'i':'1'},
       ],
 
-      showAlarm: true, // 显示告警信息
+      showAlarm: false, // 显示告警信息
       cutsomViewId: null
     }
   },
@@ -150,7 +150,7 @@ export default {
           this.viewData = JSON.parse(responseData.cfg) 
           this.initPanals()
           this.cutsomViewId = responseData.id
-          this.$refs.cutsomViewId.getAlarm(this.cutsomViewId, this.viewCondition)
+          // this.$refs.cutsomViewId.getAlarm(this.cutsomViewId, this.viewCondition)
         }
       })
     },
