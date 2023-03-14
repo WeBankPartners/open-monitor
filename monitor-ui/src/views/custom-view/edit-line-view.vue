@@ -306,12 +306,13 @@ export default {
       await this.bb(a,b)
     },
     async bb (a, b) {
+      const search = a.endpointName || '.'
       this.editIndex = b
       this.templateQuery = {
         ...a
       }
       let params = {
-        search: '.',
+        search: search,
         page: 1,
         size: 10000
       }
