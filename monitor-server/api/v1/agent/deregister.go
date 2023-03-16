@@ -23,7 +23,7 @@ const otherType = "other"
 
 func DeregisterAgent(c *gin.Context) {
 	var param m.EndpointTable
-	if err:=c.ShouldBindJSON(&param);err!=nil {
+	if err := c.ShouldBindJSON(&param); err != nil {
 		mid.ReturnValidateError(c, err.Error())
 		return
 	}
@@ -116,6 +116,8 @@ func CustomRegister(c *gin.Context) {
 			if len(sm) > 0 {
 				log.Logger.Debug("", log.String("sm0", fmt.Sprintf(" -> %s  %s  %v", sm[0].Name, sm[0].Type, sm[0].Data)))
 				TransGateWayAddress = strings.Split(strings.Split(sm[0].Name, "instance=")[1], ",job")[0]
+				TransGateWayAddress = strings.ReplaceAll(TransGateWayAddress, "{", "")
+				TransGateWayAddress = strings.ReplaceAll(TransGateWayAddress, "}", "")
 				log.Logger.Debug("", log.String("TransGateWayAddress", TransGateWayAddress))
 			}
 		}
