@@ -97,7 +97,7 @@ cd ../monitor/
 mkdir -p logs
 sleep 2
 Exit_actions (){
-  kill `ps aux|grep -E "prometheus"|grep -v "grep"|awk '{print $1}'`
+  kill `ps aux|grep -E "prometheus"|grep -v "grep"|awk '{print $1}'` `ps aux|grep -E "transgateway"|grep -v "grep"|awk '{print $1}'`
   wait $!
 }
 trap Exit_actions INT TERM EXIT
