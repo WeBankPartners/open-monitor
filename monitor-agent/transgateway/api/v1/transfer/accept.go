@@ -8,6 +8,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
 	"net/http"
+	"reflect"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -55,7 +57,7 @@ func AcceptPostData(c *gin.Context) {
 					tmpFlag = true
 					m.DataCache[tmpIndex].Metrics[ii].Metric = v.AttrName
 					m.DataCache[tmpIndex].Metrics[ii].AttrName = v.AttrName
-					m.DataCache[tmpIndex].Metrics[ii].Value = v.MetricValue
+					m.DataCache[tmpIndex].Metrics[ii].Value = formatMetricValueData(v.MetricValue)
 					m.DataCache[tmpIndex].Metrics[ii].HostIp = v.HostIp
 					m.DataCache[tmpIndex].Metrics[ii].InterfaceName = v.InterfaceName
 					m.DataCache[tmpIndex].Metrics[ii].LastUpdate = tNow
@@ -64,13 +66,25 @@ func AcceptPostData(c *gin.Context) {
 				}
 			}
 			if !tmpFlag {
-				m.DataCache[tmpIndex].Metrics = append(m.DataCache[tmpIndex].Metrics, &m.MetricObj{Metric: v.AttrName, AttrName: v.AttrName, Value: v.MetricValue, HostIp: v.HostIp, InterfaceName: v.InterfaceName, LastUpdate: tNow, Active: true})
+				m.DataCache[tmpIndex].Metrics = append(m.DataCache[tmpIndex].Metrics, &m.MetricObj{Metric: v.AttrName, AttrName: v.AttrName, Value: formatMetricValueData(v.MetricValue), HostIp: v.HostIp, InterfaceName: v.InterfaceName, LastUpdate: tNow, Active: true})
 			}
 		}
 		util.ReturnMessage(c, util.RespJson{Code: 0, Msg: "Success"})
 	} else {
 		util.ReturnMessage(c, util.RespJson{Code: 1, Msg: fmt.Sprintf("fail : %v", err)})
 	}
+}
+
+func formatMetricValueData(input interface{}) (output float64) {
+	rn := reflect.TypeOf(input).Name()
+	if rn == "string" {
+		output, _ = strconv.ParseFloat(input.(string), 64)
+	} else if rn == "float64" {
+		output = input.(float64)
+	} else if rn == "int64" {
+		output = float64(input.(int64))
+	}
+	return
 }
 
 func AddMember(c *gin.Context) {
