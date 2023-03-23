@@ -118,7 +118,7 @@ func GetSdFileListByStep(step int, cluster string) (result m.ServiceDiscoverFile
 	}
 	result = m.ServiceDiscoverFileList{}
 	for _, v := range endpointTables {
-		if v.MonitorType == "snmp" || v.MonitorType == "process" {
+		if v.MonitorType == "snmp" || v.MonitorType == "process" || v.MonitorType == "custom" {
 			continue
 		}
 		if v.MonitorType == "ping" || v.MonitorType == "telnet" || v.MonitorType == "http" {
