@@ -51,6 +51,7 @@ func AcceptPostData(c *gin.Context) {
 		m.DataCache[tmpIndex].LastUpdate = tNow
 		m.DataCache[tmpIndex].Active = true
 		for _, v := range param.MetricDataList {
+			v.AttrName = strings.ReplaceAll(v.AttrName, ".", "_")
 			tmpFlag := false
 			for ii, vv := range m.DataCache[tmpIndex].Metrics {
 				if vv.AttrName == v.AttrName {
