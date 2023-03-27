@@ -68,6 +68,12 @@ then
   done
 fi
 
+archive_day="30d"
+if [ "$MONITOR_PROMETHEUS_ARCHIVE_DAY" -gt 0 ] 2>/dev/null;
+then
+  archive_day="${MONITOR_PROMETHEUS_ARCHIVE_DAY}d"
+fi
+
 cd alertmanager
 mkdir -p logs
 nohup ./alertmanager --config.file=alertmanager.yml --web.listen-address=":9093"  --cluster.listen-address=":9094" > logs/alertmanager.log 2>&1 &
@@ -75,7 +81,7 @@ cd ../prometheus/
 mkdir -p rules
 mkdir -p logs
 /bin/cp -f base.yml rules/
-nohup ./prometheus --config.file=prometheus.yml --web.enable-lifecycle --storage.tsdb.retention.time=30d > logs/prometheus.log 2>&1 &
+nohup ./prometheus --config.file=prometheus.yml --web.enable-lifecycle --storage.tsdb.retention.time=${archive_day} > logs/prometheus.log 2>&1 &
 cd ../agent_manager/
 mkdir -p logs
 tar zxf exporters.tar.gz
