@@ -187,6 +187,9 @@ func GetSerialName(query *m.QueryMonitorData, tagMap map[string]string, dataLeng
 		metric = query.Metric[0]
 	}
 	for k, v := range tagMap {
+		if metric == "" && k == "__name__" {
+			metric = v
+		}
 		if strings.Contains(legend, "$"+k) {
 			tmpName = strings.Replace(tmpName, "$"+k, k+"="+v, -1)
 			if !query.SameEndpoint {
