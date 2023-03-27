@@ -225,6 +225,7 @@ type PieChartConfigObj struct {
 	AppObject             string `form:"app_object" json:"app_object"`
 	AppObjectEndpointType string `form:"app_object_endpoint_type" json:"app_object_endpoint_type"`
 	PieMetricType         string `form:"pie_metric_type" json:"pie_metric_type"`
+	PieAggType            string `form:"pie_agg_type" json:"pie_agg_type"`
 }
 
 type ChartQueryParam struct {
