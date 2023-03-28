@@ -124,8 +124,9 @@ type EChartPie struct {
 }
 
 type EChartPieObj struct {
-	Name  string  `json:"name"`
-	Value float64 `json:"value"`
+	Name        string    `json:"name"`
+	Value       float64   `json:"value"`
+	SourceValue []float64 `json:"-"`
 }
 
 type Chart struct {
