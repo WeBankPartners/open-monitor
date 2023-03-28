@@ -300,9 +300,32 @@ func GetPieChart(c *gin.Context) {
 		mid.ReturnHandleError(c, err.Error(), err)
 		return
 	}
+	pieMap := make(map[string]*m.EChartPieObj)
+	var legendList []string
 	for _, v := range queryResultList {
-		resultPieData.Legend = append(resultPieData.Legend, v.PieData.Legend...)
-		resultPieData.Data = append(resultPieData.Data, v.PieData.Data...)
+		for i, tmpLegend := range v.PieData.Legend {
+			if existData, ok := pieMap[tmpLegend]; ok {
+				if v.PieAggType == "new" {
+					v.PieAggType = "avg"
+				}
+				existData.SourceValue = append(existData.SourceValue, v.PieData.Data[i].SourceValue...)
+				existData.Value = m.CalcData(existData.SourceValue, v.PieAggType)
+			} else {
+				pieMap[tmpLegend] = v.PieData.Data[i]
+				legendList = append(legendList, tmpLegend)
+			}
+		}
+		//resultPieData.Legend = append(resultPieData.Legend, v.PieData.Legend...)
+		//resultPieData.Data = append(resultPieData.Data, v.PieData.Data...)
+	}
+	resultPieData.Legend = legendList
+	for _, legend := range legendList {
+		if v, b := pieMap[legend]; b {
+			v.SourceValue = []float64{}
+			resultPieData.Data = append(resultPieData.Data, v)
+		} else {
+			resultPieData.Data = append(resultPieData.Data, &m.EChartPieObj{Name: legend, Value: 0})
+		}
 	}
 	mid.ReturnSuccessData(c, resultPieData)
 }
@@ -348,6 +371,9 @@ func getPieData(paramConfig *m.PieChartConfigObj) (result []*m.QueryMonitorData,
 		} else if paramConfig.TimeSecond < 0 {
 			queryEnd = time.Now().Unix()
 			queryStart = queryEnd + paramConfig.TimeSecond
+		} else {
+			queryEnd = time.Now().Unix()
+			queryStart = queryEnd - 3600
 		}
 	}
 	// fetch promQL
@@ -360,8 +386,13 @@ func getPieData(paramConfig *m.PieChartConfigObj) (result []*m.QueryMonitorData,
 			paramConfig.PromQl = tmpPromQL
 		}
 	}
+	promMap := make(map[string]bool)
 	for _, endpoint := range endpointList {
 		tmpPromQL := db.ReplacePromQlKeyword(paramConfig.PromQl, paramConfig.Metric, endpoint)
+		if _, b := promMap[tmpPromQL]; b {
+			continue
+		}
+		promMap[tmpPromQL] = true
 		result = append(result, &m.QueryMonitorData{ChartType: "pie", Start: queryStart, End: queryEnd, PromQ: tmpPromQL, Legend: "", Metric: []string{paramConfig.Metric}, Endpoint: []string{endpoint.Guid}, Step: endpoint.Step, Cluster: endpoint.Cluster, PieMetricType: paramConfig.PieMetricType, PieAggType: paramConfig.PieAggType})
 	}
 	if paramConfig.PieMetricType == "value" {
@@ -388,6 +419,7 @@ func getPieData(paramConfig *m.PieChartConfigObj) (result []*m.QueryMonitorData,
 		}
 	} else {
 		for _, queryObj := range result {
+			log.Logger.Info("queryObj", log.JsonObj("data", queryObj))
 			ds.PrometheusData(queryObj)
 		}
 	}
