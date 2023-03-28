@@ -115,8 +115,7 @@ func PrometheusData(query *m.QueryMonitorData) []*m.SerialModel {
 }
 
 func buildPieData(query *m.QueryMonitorData, dataList []m.PrometheusResult) {
-	var pieData m.EChartPie
-	pieMap := make(map[string]*m.EChartPieObj)
+	pieData := m.EChartPie{}
 	for _, otr := range dataList {
 		var tmpNameList []string
 		for k, v := range otr.Metric {
@@ -154,15 +153,18 @@ func buildPieData(query *m.QueryMonitorData, dataList []m.PrometheusResult) {
 					tmpValue, _ := strconv.ParseFloat(v[1].(string), 64)
 					valueDataList = append(valueDataList, tmpValue)
 				}
+				pieObj.SourceValue = valueDataList
 				pieObj.Value = m.CalcData(valueDataList, query.PieAggType)
 			}
 		}
-		if existPie, ok := pieMap[pieObj.Name]; ok {
-			existPie.Value = m.CalcData([]float64{existPie.Value, pieObj.Value}, query.PieAggType)
-			continue
-		} else {
-			pieMap[pieObj.Name] = &pieObj
-		}
+		//log.Logger.Info("buildPidData otr", log.String("name", pieObj.Name), log.Float64("value", pieObj.Value))
+		//if existPie, ok := pieMap[pieObj.Name]; ok {
+		//	existPie.Value = m.CalcData([]float64{existPie.Value, pieObj.Value}, query.PieAggType)
+		//	continue
+		//} else {
+		//	pieMap[pieObj.Name] = &pieObj
+		//}
+		//log.Logger.Info("buildPidData otr append", log.String("name", pieObj.Name))
 		pieData.Legend = append(pieData.Legend, pieObj.Name)
 		pieData.Data = append(pieData.Data, &pieObj)
 	}
