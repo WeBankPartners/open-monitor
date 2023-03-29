@@ -64,6 +64,7 @@ type MemberStore struct {
 }
 
 type MetricObj struct {
+	Id            string
 	Metric        string
 	Value         float64
 	InterfaceName string
@@ -111,7 +112,7 @@ func SaveCacheData() {
 	for _, v := range DataCache {
 		var tmpMetrics []MetricObj
 		for _, vv := range v.Metrics {
-			tmpMetrics = append(tmpMetrics, MetricObj{Metric: vv.Metric, Value: vv.Value, InterfaceName: vv.InterfaceName, AttrName: vv.AttrName, HostIp: vv.HostIp, LastUpdate: vv.LastUpdate, Active: vv.Active})
+			tmpMetrics = append(tmpMetrics, MetricObj{Id: vv.Id, Metric: vv.Metric, Value: vv.Value, InterfaceName: vv.InterfaceName, AttrName: vv.AttrName, HostIp: vv.HostIp, LastUpdate: vv.LastUpdate, Active: vv.Active})
 		}
 		DataStore = append(DataStore, &MemberStore{Id: v.Id, Name: v.Name, Token: v.Token, Metrics: tmpMetrics, LastUpdate: v.LastUpdate, Active: v.Active})
 	}
@@ -172,7 +173,7 @@ func LoadCacheData(dataDir string) {
 				member.LastUpdate = v.LastUpdate
 				var tmpMetrics []*MetricObj
 				for _, vv := range v.Metrics {
-					tmpMetrics = append(tmpMetrics, &MetricObj{Metric: vv.Metric, Value: vv.Value, InterfaceName: vv.InterfaceName, AttrName: vv.AttrName, HostIp: vv.HostIp, LastUpdate: vv.LastUpdate, Active: vv.Active})
+					tmpMetrics = append(tmpMetrics, &MetricObj{Id: vv.Id, Metric: vv.Metric, Value: vv.Value, InterfaceName: vv.InterfaceName, AttrName: vv.AttrName, HostIp: vv.HostIp, LastUpdate: vv.LastUpdate, Active: vv.Active})
 				}
 				member.Metrics = tmpMetrics
 				member.Lock = *new(sync.RWMutex)
