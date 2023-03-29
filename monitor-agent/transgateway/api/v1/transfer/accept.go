@@ -46,15 +46,15 @@ func AcceptPostData(c *gin.Context) {
 			}
 		}
 		m.DataCache[tmpIndex].Lock.Lock()
-		defer m.DataCache[tmpIndex].Lock.Unlock()
 		tNow := time.Now()
 		m.DataCache[tmpIndex].LastUpdate = tNow
 		m.DataCache[tmpIndex].Active = true
 		for _, v := range param.MetricDataList {
 			v.AttrName = strings.ReplaceAll(v.AttrName, ".", "_")
+			attrId := v.AttrName + "__" + v.InterfaceName
 			tmpFlag := false
 			for ii, vv := range m.DataCache[tmpIndex].Metrics {
-				if vv.AttrName == v.AttrName {
+				if vv.Id == attrId {
 					tmpFlag = true
 					m.DataCache[tmpIndex].Metrics[ii].Metric = v.AttrName
 					m.DataCache[tmpIndex].Metrics[ii].AttrName = v.AttrName
@@ -67,9 +67,10 @@ func AcceptPostData(c *gin.Context) {
 				}
 			}
 			if !tmpFlag {
-				m.DataCache[tmpIndex].Metrics = append(m.DataCache[tmpIndex].Metrics, &m.MetricObj{Metric: v.AttrName, AttrName: v.AttrName, Value: formatMetricValueData(v.MetricValue), HostIp: v.HostIp, InterfaceName: v.InterfaceName, LastUpdate: tNow, Active: true})
+				m.DataCache[tmpIndex].Metrics = append(m.DataCache[tmpIndex].Metrics, &m.MetricObj{Id: attrId, Metric: v.AttrName, AttrName: v.AttrName, Value: formatMetricValueData(v.MetricValue), HostIp: v.HostIp, InterfaceName: v.InterfaceName, LastUpdate: tNow, Active: true})
 			}
 		}
+		m.DataCache[tmpIndex].Lock.Unlock()
 		util.ReturnMessage(c, util.RespJson{Code: 0, Msg: "Success"})
 	} else {
 		util.ReturnMessage(c, util.RespJson{Code: 1, Msg: fmt.Sprintf("fail : %v", err)})
