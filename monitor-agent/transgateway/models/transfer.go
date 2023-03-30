@@ -36,6 +36,7 @@ type RequestMetricData struct {
 	CollectTimestamp int64       `json:"collectTimestamp" form:"collectTimestamp"`
 	MetricValue      interface{} `json:"metricValue" form:"metricValue" binding:"required"`
 	HostIp           string      `json:"hostIp" form:"hostIp" binding:"required"`
+	Object           interface{} `json:"object" form:"object"`
 }
 
 type TransResult struct {
@@ -68,6 +69,7 @@ type MetricObj struct {
 	Metric        string
 	Value         float64
 	InterfaceName string
+	Object        string
 	AttrName      string
 	HostIp        string
 	LastUpdate    time.Time
@@ -112,7 +114,7 @@ func SaveCacheData() {
 	for _, v := range DataCache {
 		var tmpMetrics []MetricObj
 		for _, vv := range v.Metrics {
-			tmpMetrics = append(tmpMetrics, MetricObj{Id: vv.Id, Metric: vv.Metric, Value: vv.Value, InterfaceName: vv.InterfaceName, AttrName: vv.AttrName, HostIp: vv.HostIp, LastUpdate: vv.LastUpdate, Active: vv.Active})
+			tmpMetrics = append(tmpMetrics, MetricObj{Id: vv.Id, Metric: vv.Metric, Value: vv.Value, InterfaceName: vv.InterfaceName, Object: vv.Object, AttrName: vv.AttrName, HostIp: vv.HostIp, LastUpdate: vv.LastUpdate, Active: vv.Active})
 		}
 		DataStore = append(DataStore, &MemberStore{Id: v.Id, Name: v.Name, Token: v.Token, Metrics: tmpMetrics, LastUpdate: v.LastUpdate, Active: v.Active})
 	}
@@ -176,7 +178,7 @@ func LoadCacheData(dataDir string) {
 					if vv.Id == "" {
 						continue
 					}
-					tmpMetrics = append(tmpMetrics, &MetricObj{Id: vv.Id, Metric: vv.Metric, Value: vv.Value, InterfaceName: vv.InterfaceName, AttrName: vv.AttrName, HostIp: vv.HostIp, LastUpdate: vv.LastUpdate, Active: vv.Active})
+					tmpMetrics = append(tmpMetrics, &MetricObj{Id: vv.Id, Metric: vv.Metric, Value: vv.Value, InterfaceName: vv.InterfaceName, Object: vv.Object, AttrName: vv.AttrName, HostIp: vv.HostIp, LastUpdate: vv.LastUpdate, Active: vv.Active})
 				}
 				member.Metrics = tmpMetrics
 				member.Lock = *new(sync.RWMutex)
