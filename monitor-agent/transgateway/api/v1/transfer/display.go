@@ -19,7 +19,7 @@ func DisplayMetrics(c *gin.Context) {
 				continue
 			}
 			outputString += fmt.Sprintf("# TYPE %s gauge\n", vv.Metric)
-			outputString += fmt.Sprintf("%s{system=\"%s\",host=\"%s\",interface=\"%s\"} %.3f \n", vv.Metric, v.Name, vv.HostIp, vv.InterfaceName, vv.Value)
+			outputString += fmt.Sprintf("%s{system=\"%s\",host=\"%s\",interface=\"%s\",object=\"%s\"} %.3f \n", vv.Metric, v.Name, vv.HostIp, vv.InterfaceName, vv.Object, vv.Value)
 		}
 		v.Lock.RUnlock()
 	}

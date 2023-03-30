@@ -51,7 +51,11 @@ func AcceptPostData(c *gin.Context) {
 		m.DataCache[tmpIndex].Active = true
 		for _, v := range param.MetricDataList {
 			v.AttrName = strings.ReplaceAll(v.AttrName, ".", "_")
-			attrId := v.AttrName + "__" + v.InterfaceName
+			objectString := ""
+			if v.Object != nil {
+				objectString = fmt.Sprintf("%s", v.Object)
+			}
+			attrId := v.AttrName + "__" + v.InterfaceName + "__" + objectString
 			tmpFlag := false
 			for ii, vv := range m.DataCache[tmpIndex].Metrics {
 				if vv.Id == attrId {
@@ -61,13 +65,14 @@ func AcceptPostData(c *gin.Context) {
 					m.DataCache[tmpIndex].Metrics[ii].Value = formatMetricValueData(v.MetricValue)
 					m.DataCache[tmpIndex].Metrics[ii].HostIp = v.HostIp
 					m.DataCache[tmpIndex].Metrics[ii].InterfaceName = v.InterfaceName
+					m.DataCache[tmpIndex].Metrics[ii].Object = objectString
 					m.DataCache[tmpIndex].Metrics[ii].LastUpdate = tNow
 					m.DataCache[tmpIndex].Metrics[ii].Active = true
 					break
 				}
 			}
 			if !tmpFlag {
-				m.DataCache[tmpIndex].Metrics = append(m.DataCache[tmpIndex].Metrics, &m.MetricObj{Id: attrId, Metric: v.AttrName, AttrName: v.AttrName, Value: formatMetricValueData(v.MetricValue), HostIp: v.HostIp, InterfaceName: v.InterfaceName, LastUpdate: tNow, Active: true})
+				m.DataCache[tmpIndex].Metrics = append(m.DataCache[tmpIndex].Metrics, &m.MetricObj{Id: attrId, Metric: v.AttrName, AttrName: v.AttrName, Value: formatMetricValueData(v.MetricValue), HostIp: v.HostIp, InterfaceName: v.InterfaceName, Object: objectString, LastUpdate: tNow, Active: true})
 			}
 		}
 		m.DataCache[tmpIndex].Lock.Unlock()
