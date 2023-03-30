@@ -173,6 +173,9 @@ func LoadCacheData(dataDir string) {
 				member.LastUpdate = v.LastUpdate
 				var tmpMetrics []*MetricObj
 				for _, vv := range v.Metrics {
+					if vv.Id == "" {
+						continue
+					}
 					tmpMetrics = append(tmpMetrics, &MetricObj{Id: vv.Id, Metric: vv.Metric, Value: vv.Value, InterfaceName: vv.InterfaceName, AttrName: vv.AttrName, HostIp: vv.HostIp, LastUpdate: vv.LastUpdate, Active: vv.Active})
 				}
 				member.Metrics = tmpMetrics
