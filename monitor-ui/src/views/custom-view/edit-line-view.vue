@@ -120,6 +120,7 @@
                       v-model="templateQuery.metric"
                       style="width:300px"
                       filterable
+                      multiple
                       clearable
                       :label-in-value="true"
                       @on-change="changeMetric"
@@ -183,7 +184,7 @@ export default {
       endpointType: null,
       templateQuery: {
         endpoint: '',
-        metric: '',
+        metric: [],
         chartType: '',
         lineType: 1,
         aggregate: '',
@@ -223,7 +224,8 @@ export default {
 
       oriParams: null,
       params: '', // 保存增加及返回时参数，返回时直接取该值,
-      editIndex: -1
+      editIndex: -1,
+      oldMetricToColor: []
     }
   },
   watch: {
@@ -291,6 +293,10 @@ export default {
           this.noDataTip = true
           return
         }
+        if (this.chartQueryList.length === 0) {
+          this.noDataTip = true
+          return
+        }
         this.chartQueryList.forEach(item => {
           params.data.push(item)
         })
@@ -316,6 +322,7 @@ export default {
         page: 1,
         size: 10000
       }
+      this.oldMetricToColor = JSON.parse(JSON.stringify(this.templateQuery.metricToColor || []))
       this.$root.$httpRequestEntrance.httpRequestEntrance(
         'GET',
         this.$root.apiCenter.resourceSearch.api,
@@ -343,6 +350,7 @@ export default {
       )
     },
     changeMetric (val) {
+      if (val.length === 0) return
       this.templateQuery.metricToColor = []
       if (!val) return 
       let tmp = JSON.parse(JSON.stringify(this.templateQuery))
@@ -352,6 +360,7 @@ export default {
       tmp.aggregate = 'none'
       tmp.agg_step = 60
       tmp.chartType = 'line'
+      const tmpQuery = JSON.parse(JSON.stringify(tmp))
       let params = {
         aggregate: 'none',
         agg_step: 60,
@@ -360,15 +369,25 @@ export default {
         end: 0,
         title: '',
         unit: '',
-        data: [tmp]
+        data: tmpQuery.metric.map(m => {
+          return {
+            ...tmpQuery,
+            metric: m
+          }
+        })
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance(
         'POST',this.$root.apiCenter.metricConfigView.api, params,
         responseData => {
           this.templateQuery.metricToColor = responseData.legend.map(r => {
+            const findColor = this.oldMetricToColor.find(o => o.metric === r)
+            let color = ''
+            if (findColor) {
+              color = findColor.color
+            }
             return {
               metric: r,
-              color: ''
+              color: color
             }
           })
         }
@@ -538,11 +557,24 @@ export default {
       if (find) {
         tmp.endpointName = find.option_text
       }
+      const tmpQuery = JSON.parse(JSON.stringify(tmp))
+      let params = tmpQuery.metric.map(m => {
+          return {
+            ...tmpQuery,
+            metric: m,
+            metricToColor: tmpQuery.metricToColor.filter(x => x.metric.startsWith(m))
+          }
+        })
+      // if (this.editIndex !== -1) {
+      //   this.chartQueryList[this.editIndex ] = tmp
+      // } else {
+      //   this.chartQueryList.push(tmp)
+      // }
       if (this.editIndex !== -1) {
-        this.chartQueryList[this.editIndex ] = tmp
-      } else {
-        this.chartQueryList.push(tmp)
+        // this.removeQuery(this.editIndex)
+        this.chartQueryList.splice(this.editIndex, 1)
       }
+      this.chartQueryList = this.chartQueryList.concat(params)
       this.requestAgain()
       this.editIndex = -1
       this.templateQuery = {
