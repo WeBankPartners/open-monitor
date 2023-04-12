@@ -258,6 +258,7 @@ func InitDeployDir(param []*AgentManagerTable) error {
 	for _, v := range tmpDeleteList {
 		DeleteDeploy(v)
 	}
+	var err error
 	for _, v := range param {
 		isExist := false
 		for _, vv := range GlobalProcessMap {
@@ -277,22 +278,30 @@ func InitDeployDir(param []*AgentManagerTable) error {
 				tmpParam["instance_server"] = v.InstanceAddress[:strings.Index(v.InstanceAddress, ":")]
 				tmpParam["instance_port"] = v.InstanceAddress[strings.Index(v.InstanceAddress, ":")+1:]
 			} else {
-				return fmt.Errorf("guid: %s instance address illegal: %s ", v.EndpointGuid, v.InstanceAddress)
+				err = fmt.Errorf("guid: %s instance address illegal: %s ", v.EndpointGuid, v.InstanceAddress)
+				continue
 			}
 			if strings.Contains(v.AgentAddress, ":") {
 				tmpParam["port"] = v.AgentAddress[strings.Index(v.AgentAddress, ":")+1:]
 			} else {
-				return fmt.Errorf("guid: %s agent address illegal: %s ", v.EndpointGuid, v.AgentAddress)
+				err = fmt.Errorf("guid: %s agent address illegal: %s ", v.EndpointGuid, v.AgentAddress)
+				continue
 			}
 			tmpParam["auth_user"] = v.User
 			tmpParam["auth_password"] = v.Password
 			configHash := fmt.Sprintf("%s_%s_%s", v.InstanceAddress, v.User, v.Password)
-			_, err := AddDeploy(v.BinPath, v.ConfigFile, v.EndpointGuid, tmpParam, configHash)
-			if err != nil {
-				return err
+			_, deployErr := AddDeploy(v.BinPath, v.ConfigFile, v.EndpointGuid, tmpParam, configHash)
+			if deployErr != nil {
+				err = deployErr
+				continue
 			}
 		}
 	}
+	if err != nil {
+		log.Printf("init deploy dir meet error but continue,message:%s  \n", err.Error())
+	} else {
+		log.Printf("init deploy dir done \n")
+	}
 	SaveDeployProcess()
-	return nil
+	return err
 }
