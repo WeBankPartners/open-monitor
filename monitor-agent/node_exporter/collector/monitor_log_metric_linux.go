@@ -104,6 +104,13 @@ type logMetricNeObj struct {
 	AggType      string                     `json:"agg_type"`
 	Step         int64                      `json:"step"`
 	StringMap    []*logMetricStringMapNeObj `json:"string_map"`
+	TagConfig    []*LogMetricConfigTag      `json:"tag_config"`
+}
+
+type LogMetricConfigTag struct {
+	Key     string         `json:"key"`
+	Regular string         `json:"regular"`
+	RegExp  *regexp.Regexp `json:"-"`
 }
 
 type logMetricStringMapNeObj struct {
@@ -300,6 +307,13 @@ func initLogMetricNeObj(metricObj *logMetricNeObj) {
 			}
 		}
 	}
+	for _, tagConfigObj := range metricObj.TagConfig {
+		tagConfigObj.RegExp, err = regexp.Compile(tagConfigObj.Regular)
+		if err != nil {
+			level.Error(monitorLogger).Log("newLogMetricMonitorTagConfig", fmt.Sprintf("regexpError:%s ", err.Error()))
+			tagConfigObj.RegExp = nil
+		}
+	}
 }
 
 func (c *logMetricMonitorNeObj) destroy() {
@@ -484,6 +498,14 @@ func calcLogMetricData() {
 			tmpMetricObj := logMetricDisplayObj{Metric: metricObj.Metric, Path: lmObj.Path, Agg: metricObj.AggType, TEndpoint: lmObj.TargetEndpoint, ServiceGroup: lmObj.ServiceGroup, TagsString: "", Step: metricObj.Step, ValueObj: logMetricValueObj{Sum: 0, Max: 0, Min: 0, Count: 0}}
 			for i := 0; i < dataLength; i++ {
 				customFetchString := <-metricObj.DataChannel
+				// check if tag match
+				if len(metricObj.TagConfig) > 0 {
+					tmpTagString := getLogMetricTags(customFetchString, metricObj.TagConfig)
+					if tmpTagString != "" {
+						tmpMetricKey += tmpTagString
+						tmpMetricObj.TagsString = tmpTagString
+					}
+				}
 				metricValueFloat := transLogMetricStringMapValue(metricObj.StringMap, customFetchString)
 				tmpMetricObj.ValueObj.Sum += metricValueFloat
 				tmpMetricObj.ValueObj.Count++
@@ -635,4 +657,21 @@ func getLogMetricJsonMapTags(input map[string]interface{}, tagKey []string) (tag
 		tagString = tagString[:len(tagString)-1]
 	}
 	return tagString
+}
+
+func getLogMetricTags(lineText string, tagConfigList []*LogMetricConfigTag) (tagString string) {
+	var tagList []string
+	for _, rule := range tagConfigList {
+		if rule.RegExp == nil {
+			continue
+		}
+		fetchList := rule.RegExp.FindStringSubmatch(lineText)
+		if len(fetchList) > 1 {
+			if fetchList[1] != "" {
+				tagList = append(tagList, fmt.Sprintf("%s=%s", rule.Key, fetchList[1]))
+			}
+		}
+	}
+	tagString = strings.Join(tagList, ",")
+	return
 }
