@@ -27,6 +27,7 @@ type LogMetricConfigTable struct {
 	Regular          string `json:"regular" xorm:"regular"`
 	AggType          string `json:"agg_type" xorm:"agg_type"`
 	Step             int64  `json:"step" xorm:"step"`
+	TagConfig        string `json:"tag_config" xorm:"tag_config"`
 	UpdateTime       string `json:"update_time" xorm:"update_time"`
 }
 
@@ -83,6 +84,12 @@ type LogMetricConfigObj struct {
 	StringMap        []*LogMetricStringMapTable `json:"string_map"`
 	ServiceGroup     string                     `json:"service_group"`
 	MonitorType      string                     `json:"monitor_type"`
+	TagConfig        []*LogMetricConfigTag      `json:"tag_config" xorm:"tag_config"`
+}
+
+type LogMetricConfigTag struct {
+	Key     string `json:"key"`
+	Regular string `json:"regular"`
 }
 
 type LogMetricMonitorCreateDto struct {
