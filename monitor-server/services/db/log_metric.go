@@ -1,6 +1,7 @@
 package db
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/WeBankPartners/go-common-lib/guid"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
@@ -147,7 +148,13 @@ func ListLogMetricConfig(logMetricJson, logMetricMonitor string) (result []*mode
 		x.SQL("select * from log_metric_config where log_metric_monitor=?", logMetricMonitor).Find(&logMetricConfigTable)
 	}
 	for _, v := range logMetricConfigTable {
-		result = append(result, &models.LogMetricConfigObj{Guid: v.Guid, LogMetricMonitor: v.LogMetricMonitor, LogMetricJson: v.LogMetricJson, Metric: v.Metric, DisplayName: v.DisplayName, JsonKey: v.JsonKey, Regular: v.Regular, AggType: v.AggType, Step: v.Step, StringMap: ListLogMetricStringMap(v.Guid)})
+		tmpTagConfig := []*models.LogMetricConfigTag{}
+		if v.TagConfig != "" {
+			if tmpErr := json.Unmarshal([]byte(v.TagConfig), &tmpTagConfig); tmpErr != nil {
+				log.Logger.Warn("query log metric config warning with json unmarshal error", log.String("tagConfig", v.TagConfig), log.Error(tmpErr))
+			}
+		}
+		result = append(result, &models.LogMetricConfigObj{Guid: v.Guid, LogMetricMonitor: v.LogMetricMonitor, LogMetricJson: v.LogMetricJson, Metric: v.Metric, DisplayName: v.DisplayName, JsonKey: v.JsonKey, Regular: v.Regular, AggType: v.AggType, Step: v.Step, StringMap: ListLogMetricStringMap(v.Guid), TagConfig: tmpTagConfig})
 	}
 	return result
 }
@@ -443,11 +450,16 @@ func getCreateLogMetricConfigAction(param *models.LogMetricConfigObj, nowTime st
 	if param.Guid == "" {
 		param.Guid = guid.CreateGuid()
 	}
+	tagString := ""
+	if len(param.TagConfig) > 0 {
+		tagBytes, _ := json.Marshal(param.TagConfig)
+		tagString = string(tagBytes)
+	}
 	param.Step = 10
 	if param.LogMetricJson != "" {
-		actions = append(actions, &Action{Sql: "insert into log_metric_config(guid,log_metric_json,metric,display_name,json_key,regular,agg_type,step,update_time) value (?,?,?,?,?,?,?,?,?)", Param: []interface{}{param.Guid, param.LogMetricJson, param.Metric, param.DisplayName, param.JsonKey, param.Regular, param.AggType, param.Step, nowTime}})
+		actions = append(actions, &Action{Sql: "insert into log_metric_config(guid,log_metric_json,metric,display_name,json_key,regular,agg_type,step,update_time,tag_config) value (?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{param.Guid, param.LogMetricJson, param.Metric, param.DisplayName, param.JsonKey, param.Regular, param.AggType, param.Step, nowTime, tagString}})
 	} else {
-		actions = append(actions, &Action{Sql: "insert into log_metric_config(guid,log_metric_monitor,metric,display_name,json_key,regular,agg_type,step,update_time) value (?,?,?,?,?,?,?,?,?)", Param: []interface{}{param.Guid, param.LogMetricMonitor, param.Metric, param.DisplayName, param.JsonKey, param.Regular, param.AggType, param.Step, nowTime}})
+		actions = append(actions, &Action{Sql: "insert into log_metric_config(guid,log_metric_monitor,metric,display_name,json_key,regular,agg_type,step,update_time,tag_config) value (?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{param.Guid, param.LogMetricMonitor, param.Metric, param.DisplayName, param.JsonKey, param.Regular, param.AggType, param.Step, nowTime, tagString}})
 	}
 	if param.ServiceGroup == "" || param.MonitorType == "" {
 		param.ServiceGroup, param.MonitorType = getLogMetricServiceGroup(param.LogMetricMonitor)
@@ -508,7 +520,12 @@ func getUpdateLogMetricConfigAction(param *models.LogMetricConfigObj, nowTime st
 			}
 		}
 	}
-	actions = append(actions, &Action{Sql: "update log_metric_config set metric=?,display_name=?,json_key=?,regular=?,agg_type=?,step=?,update_time=? where guid=?", Param: []interface{}{param.Metric, param.DisplayName, param.JsonKey, param.Regular, param.AggType, param.Step, nowTime, param.Guid}})
+	tagString := ""
+	if len(param.TagConfig) > 0 {
+		tagBytes, _ := json.Marshal(param.TagConfig)
+		tagString = string(tagBytes)
+	}
+	actions = append(actions, &Action{Sql: "update log_metric_config set metric=?,display_name=?,json_key=?,regular=?,agg_type=?,step=?,update_time=?,tag_config=? where guid=?", Param: []interface{}{param.Metric, param.DisplayName, param.JsonKey, param.Regular, param.AggType, param.Step, nowTime, tagString, param.Guid}})
 	actions = append(actions, &Action{Sql: "delete from log_metric_string_map where log_metric_config=?", Param: []interface{}{param.Guid}})
 	guidList := guid.CreateGuidList(len(param.StringMap))
 	for i, v := range param.StringMap {
