@@ -304,5 +304,6 @@
   "m_regular_tip": "The regular expression must contain parentheses !",
   "m_content": "Content",
   "m_batch_close": "Batch Close",
-  "m_metric": "Metric"
+  "m_metric": "Metric",
+  "m_add_tags": "Add Tags"
 }
