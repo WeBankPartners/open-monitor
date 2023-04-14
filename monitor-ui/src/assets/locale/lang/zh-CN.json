@@ -304,5 +304,7 @@
   "m_content": "内容",
   "m_batch_close": "批量关闭",
   "m_metric": "指标",
-  "m_add_tags": "新增标签"
+  "m_add_tags": "新增标签",
+  "m_target_value": "目标值",
+  "m_source_value": "源值"
 }

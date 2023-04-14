@@ -305,5 +305,7 @@
   "m_content": "Content",
   "m_batch_close": "Batch Close",
   "m_metric": "Metric",
-  "m_add_tags": "Add Tags"
+  "m_add_tags": "Add Tags",
+  "m_target_value": "Target Value",
+  "m_source_value": "Source Value"
 }
