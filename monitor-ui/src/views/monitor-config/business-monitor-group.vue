@@ -730,10 +730,12 @@ export default {
       this.$root.$httpRequestEntrance.httpRequestEntrance(requestType, this.$root.apiCenter.logMetricReg, params, () => {
         this.$Message.success(this.$t('tips.success'))
         this.$root.JQ('#custom_metrics').modal('hide')
-        this.getDetail(this.targrtId)
+        this.reloadMetricData(this.activeData.log_metric_monitor || this.activeData.guid)
+        // this.getDetail(this.targrtId)
       })
     },
     editCustomMetricItem (rowData) {
+      this.activeData = rowData
       this.customMetricsModelConfig.isAdd = false
       this.modelTip.value = rowData.display_name
       this.customMetricsModelConfig.addRow = JSON.parse(JSON.stringify(rowData))
@@ -773,7 +775,8 @@ export default {
       const api = this.$root.apiCenter.logMetricReg + '/' + rowData.guid
       this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', api, '', () => {
         this.$Message.success(this.$t('tips.success'))
-        this.getDetail(this.targrtId)
+        // this.getDetail(this.targrtId)
+        this.reloadMetricData(rowData.log_metric_monitor)
       })
     },
     cancleDelRow () {
@@ -784,7 +787,8 @@ export default {
       this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', api, '', () => {
         this.$Message.success(this.$t('tips.success'))
         this.isShowWarningDelete = false
-        this.getDetail(this.targrtId)
+        this.reloadMetricData(rowData.log_metric_monitor)
+        // this.getDetail(this.targrtId)
       })
     },
     cancelRule () {
@@ -802,7 +806,15 @@ export default {
       this.$root.$httpRequestEntrance.httpRequestEntrance(requestType, this.$root.apiCenter.logMetricJson, this.ruleModelConfig.addRow, () => {
         this.$Message.success(this.$t('tips.success'))
         this.ruleModelConfig.isShow = false
-        this.getDetail(this.targrtId)
+        this.reloadMetricData(this.activeData.guid)
+        // this.getDetail(this.targrtId)
+      })
+    },
+    reloadMetricData (guid) {
+      const path = `${this.$root.apiCenter.getLogMetricByPath}/${guid}`
+      this.$root.$httpRequestEntrance.httpRequestEntrance("GET", path, {}, (responseData) => {
+        this.pageConfig.table.isExtend.detailConfig[0].data = responseData.json_config_list
+        this.pageConfig.table.isCustomMetricExtend.detailConfig[0].data = responseData.metric_config_list
       })
     },
     singleAddF (rowData) {
