@@ -194,6 +194,9 @@
                 >{{ $t('addStringMap') }}</Button
               >
             </div>
+            
+
+
             <Divider :key="index + 'Q'" />
           </template>
           <Button
@@ -282,6 +285,36 @@
               style="background-color: #0080FF;border-color: #0080FF;"
               long
               >{{ $t('addStringMap') }}</Button
+            >
+          </div>
+        </div>
+        <!-- 新增标签 -->
+        <div class="marginbottom params-each">
+          <div style="margin: 4px 12px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
+            <template v-for="(item, index) in customMetricsModelConfig.addRow.tag_config">
+              <p :key="index">
+                <Button
+                  @click="deleteCustomMetric('tag_config', index)"
+                  size="small"
+                  style="background-color: #ff9900;border-color: #ff9900;"
+                  type="error"
+                  icon="md-close"
+                ></Button>
+                <Tooltip :content="$t('tableKey.tags')" :delay="1000">
+                  <Input v-model="item.key" style="width: 150px" :placeholder="$t('tableKey.tags')" />
+                </Tooltip>
+                <Tooltip :content="$t('tableKey.regular')" :delay="1000">
+                  <Input v-model="item.regular" style="width: 300px" :placeholder="$t('tableKey.regular')" />
+                </Tooltip>
+              </p>
+            </template>
+            <Button
+              @click="addCustomMetricEmpty('tag_config')"
+              type="success"
+              size="small"
+              style="background-color: #0080FF;border-color: #0080FF;"
+              long
+              >{{ $t('m_add_tags') }}</Button
             >
           </div>
         </div>
@@ -520,7 +553,8 @@ export default {
           agg_type: 'min',
           metric: null,
           regular: '',
-          string_map: []
+          string_map: [],
+          tag_config: []
         },
         slotConfig: {
           aggOption: ['sum', 'avg', 'count', 'max', 'min'],
@@ -917,7 +951,8 @@ export default {
             display_name: '',
             metric: '',
             agg_type: 'avg',
-            string_map: []
+            string_map: [],
+            tag_config: []
           })
           break
         }
@@ -926,6 +961,13 @@ export default {
             source_value: '',
             regulative: 1,
             target_value: ''
+          })
+          break
+        }
+        case 'tag_config': {
+          this.ruleModelConfig.addRow.tag_config[index][type].push({
+            key: '',
+            regular: ''
           })
           break
         }
@@ -953,6 +995,10 @@ export default {
         }
         case 'string_map': {
           this.ruleModelConfig.addRow.metric_list[index][type].splice(index, 1)
+          break
+        }
+        case 'tag_config': {
+          this.ruleModelConfig.addRow.tag_config[index][type].splice(index, 1)
           break
         }
         case 'endpoint_rel': {
