@@ -840,7 +840,7 @@ export default {
       this.$root.$httpRequestEntrance.httpRequestEntrance(requestType, this.$root.apiCenter.logMetricJson, this.ruleModelConfig.addRow, () => {
         this.$Message.success(this.$t('tips.success'))
         this.ruleModelConfig.isShow = false
-        this.reloadMetricData(this.activeData.guid)
+        this.reloadMetricData(this.activeData.guid || this.ruleModelConfig.addRow.pId)
         // this.getDetail(this.targrtId)
       })
     },
