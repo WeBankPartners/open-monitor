@@ -91,13 +91,13 @@
                 type="error"
                 icon="md-close"
               ></Button>
-              <Tooltip :content="$t('m_business_object')" :delay="1000">
-                <Select v-model="item.target_endpoint" style="width: 310px" :placeholder="$t('m_business_object')">
+              <Tooltip :content="$t('m_target_value')" :delay="1000">
+                <Select v-model="item.target_endpoint" style="width: 310px" :placeholder="$t('m_target_value')">
                   <Option v-for="type in targetEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
                 </Select>
               </Tooltip>
-              <Tooltip :content="$t('m_log_server')" :delay="1000">
-                <Select v-model="item.source_endpoint" style="width: 310px" :placeholder="$t('m_log_server')">
+              <Tooltip :content="$t('m_source_value')" :delay="1000">
+                <Select v-model="item.source_endpoint" style="width: 310px" :placeholder="$t('m_source_value')">
                   <Option v-for="type in sourceEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
                 </Select>
               </Tooltip>
@@ -178,11 +178,11 @@
                       }}</Option>
                     </Select>
                   </Tooltip>
-                  <Tooltip :content="$t('m_business_object')" :delay="1000">
-                    <Input v-model="stringMapItem.target_value" style="width: 230px" :placeholder="$t('m_business_object')" />
+                  <Tooltip :content="$t('m_target_value')" :delay="1000">
+                    <Input v-model="stringMapItem.target_value" style="width: 230px" :placeholder="$t('m_target_value')" />
                   </Tooltip>
-                  <Tooltip :content="$t('m_log_server')" :delay="1000">
-                    <Input v-model="stringMapItem.source_value" style="width: 230px" :placeholder="$t('m_log_server')" />
+                  <Tooltip :content="$t('m_source_value')" :delay="1000">
+                    <Input v-model="stringMapItem.source_value" style="width: 230px" :placeholder="$t('m_source_value')" />
                   </Tooltip>
                 </p>
               </template>
@@ -194,6 +194,9 @@
                 >{{ $t('addStringMap') }}</Button
               >
             </div>
+            
+
+
             <Divider :key="index + 'Q'" />
           </template>
           <Button
@@ -267,11 +270,11 @@
                     }}</Option>
                   </Select>
                 </Tooltip>
-                <Tooltip :content="$t('m_business_object')" :delay="1000">
-                  <Input v-model="item.target_value" style="width: 150px" :placeholder="$t('m_business_object')" />
+                <Tooltip :content="$t('m_target_value')" :delay="1000">
+                  <Input v-model="item.target_value" style="width: 150px" :placeholder="$t('m_target_value')" />
                 </Tooltip>
-                <Tooltip :content="$t('m_log_server')" :delay="1000">
-                  <Input v-model="item.source_value" style="width: 150px" :placeholder="$t('m_log_server')" />
+                <Tooltip :content="$t('m_source_value')" :delay="1000">
+                  <Input v-model="item.source_value" style="width: 150px" :placeholder="$t('m_source_value')" />
                 </Tooltip>
               </p>
             </template>
@@ -282,6 +285,36 @@
               style="background-color: #0080FF;border-color: #0080FF;"
               long
               >{{ $t('addStringMap') }}</Button
+            >
+          </div>
+        </div>
+        <!-- 新增标签 -->
+        <div class="marginbottom params-each">
+          <div style="margin: 4px 12px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
+            <template v-for="(item, index) in customMetricsModelConfig.addRow.tag_config">
+              <p :key="index">
+                <Button
+                  @click="deleteCustomMetric('tag_config', index)"
+                  size="small"
+                  style="background-color: #ff9900;border-color: #ff9900;"
+                  type="error"
+                  icon="md-close"
+                ></Button>
+                <Tooltip :content="$t('tableKey.tags')" :delay="1000">
+                  <Input v-model="item.key" style="width: 150px" :placeholder="$t('tableKey.tags')" />
+                </Tooltip>
+                <Tooltip :content="$t('tableKey.regular')" :delay="1000">
+                  <Input v-model="item.regular" style="width: 300px" :placeholder="$t('tableKey.regular')" />
+                </Tooltip>
+              </p>
+            </template>
+            <Button
+              @click="addCustomMetricEmpty('tag_config')"
+              type="success"
+              size="small"
+              style="background-color: #0080FF;border-color: #0080FF;"
+              long
+              >{{ $t('m_add_tags') }}</Button
             >
           </div>
         </div>
@@ -329,12 +362,12 @@
                 icon="md-close"
               ></Button>
               <Tooltip :content="$t('m_db')" :delay="1000">
-                <Select v-model="item.target_endpoint" style="width: 290px" :placeholder="$t('m_business_object')">
+                <Select v-model="item.target_endpoint" style="width: 290px" :placeholder="$t('m_target_value')">
                   <Option v-for="type in targetEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
                 </Select>
               </Tooltip>
-              <Tooltip :content="$t('m_log_server')" :delay="1000">
-                <Select v-model="item.source_endpoint" style="width: 290px" :placeholder="$t('m_log_server')">
+              <Tooltip :content="$t('m_source_value')" :delay="1000">
+                <Select v-model="item.source_endpoint" style="width: 290px" :placeholder="$t('m_source_value')">
                   <Option v-for="type in sourceEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
                 </Select>
               </Tooltip>
@@ -520,7 +553,8 @@ export default {
           agg_type: 'min',
           metric: null,
           regular: '',
-          string_map: []
+          string_map: [],
+          tag_config: []
         },
         slotConfig: {
           aggOption: ['sum', 'avg', 'count', 'max', 'min'],
@@ -730,10 +764,12 @@ export default {
       this.$root.$httpRequestEntrance.httpRequestEntrance(requestType, this.$root.apiCenter.logMetricReg, params, () => {
         this.$Message.success(this.$t('tips.success'))
         this.$root.JQ('#custom_metrics').modal('hide')
-        this.getDetail(this.targrtId)
+        this.reloadMetricData(this.activeData.log_metric_monitor || this.activeData.guid)
+        // this.getDetail(this.targrtId)
       })
     },
     editCustomMetricItem (rowData) {
+      this.activeData = rowData
       this.customMetricsModelConfig.isAdd = false
       this.modelTip.value = rowData.display_name
       this.customMetricsModelConfig.addRow = JSON.parse(JSON.stringify(rowData))
@@ -773,7 +809,8 @@ export default {
       const api = this.$root.apiCenter.logMetricReg + '/' + rowData.guid
       this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', api, '', () => {
         this.$Message.success(this.$t('tips.success'))
-        this.getDetail(this.targrtId)
+        // this.getDetail(this.targrtId)
+        this.reloadMetricData(rowData.log_metric_monitor)
       })
     },
     cancleDelRow () {
@@ -784,7 +821,8 @@ export default {
       this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', api, '', () => {
         this.$Message.success(this.$t('tips.success'))
         this.isShowWarningDelete = false
-        this.getDetail(this.targrtId)
+        this.reloadMetricData(rowData.log_metric_monitor)
+        // this.getDetail(this.targrtId)
       })
     },
     cancelRule () {
@@ -802,7 +840,15 @@ export default {
       this.$root.$httpRequestEntrance.httpRequestEntrance(requestType, this.$root.apiCenter.logMetricJson, this.ruleModelConfig.addRow, () => {
         this.$Message.success(this.$t('tips.success'))
         this.ruleModelConfig.isShow = false
-        this.getDetail(this.targrtId)
+        this.reloadMetricData(this.activeData.guid || this.ruleModelConfig.addRow.pId)
+        // this.getDetail(this.targrtId)
+      })
+    },
+    reloadMetricData (guid) {
+      const path = `${this.$root.apiCenter.getLogMetricByPath}/${guid}`
+      this.$root.$httpRequestEntrance.httpRequestEntrance("GET", path, {}, (responseData) => {
+        this.pageConfig.table.isExtend.detailConfig[0].data = responseData.json_config_list
+        this.pageConfig.table.isCustomMetricExtend.detailConfig[0].data = responseData.metric_config_list
       })
     },
     singleAddF (rowData) {
@@ -905,7 +951,8 @@ export default {
             display_name: '',
             metric: '',
             agg_type: 'avg',
-            string_map: []
+            string_map: [],
+            tag_config: []
           })
           break
         }
@@ -914,6 +961,13 @@ export default {
             source_value: '',
             regulative: 1,
             target_value: ''
+          })
+          break
+        }
+        case 'tag_config': {
+          this.ruleModelConfig.addRow.tag_config[index][type].push({
+            key: '',
+            regular: ''
           })
           break
         }
@@ -941,6 +995,10 @@ export default {
         }
         case 'string_map': {
           this.ruleModelConfig.addRow.metric_list[index][type].splice(index, 1)
+          break
+        }
+        case 'tag_config': {
+          this.ruleModelConfig.addRow.tag_config[index][type].splice(index, 1)
           break
         }
         case 'endpoint_rel': {
