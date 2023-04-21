@@ -1,47 +1,50 @@
 <template>
   <div>
-    <Title :title="$t('alarmHistory')"></Title>
-    <div>
-      <ul>
-        <li class="filter-li">
-          <DatePicker 
-            type="date" 
-            :value="startDate" 
-            @on-change="changeStartDate"
-            format="yyyy-MM-dd HH:mm:ss" 
-            placement="bottom-start" 
-            :placeholder="$t('startDatePlaceholder')" 
-            style="width: 220px">
-          </DatePicker>
-        </li>
-        <li class="filter-li">
-          <DatePicker 
-            type="date" 
-            :value="endDate" 
-            @on-change="changeEndDate"
-            format="yyyy-MM-dd HH:mm:ss" 
-            placement="bottom-start" 
-            :placeholder="$t('endDatePlaceholder')" 
-            style="width: 220px">
-          </DatePicker>
-        </li>
-        <li class="filter-li">
-          <Select filterable clearable v-model="filter" style="width:80px">
-            <Option v-for="item in filterList" :value="item.value" :key="item.value">{{ item.label }}</Option>
-          </Select>
-        </li>
-        <li class="filter-li">
-          <button class="btn btn-sm btn-confirm-f" @click="getAlarm">
-            <i class="fa fa-search"></i>
-            {{$t('button.search')}}
-          </button>
-        </li>
-        <li class="filter-li">
-          <button class="btn btn-sm btn-cancel-f" @click="realTimeAlarm">
-            {{$t('realTimeAlarm')}}
-          </button>
-        </li>
-      </ul>
+    <div class="title-wrapper">
+      <Title :title="$t('alarmHistory')">
+      </Title>
+      <div class="title-form">
+        <ul>
+          <li class="filter-li">
+            <DatePicker 
+              type="date" 
+              :value="startDate" 
+              @on-change="changeStartDate"
+              format="yyyy-MM-dd HH:mm:ss" 
+              placement="bottom-start" 
+              :placeholder="$t('startDatePlaceholder')" 
+              style="width: 220px">
+            </DatePicker>
+          </li>
+          <li class="filter-li">
+            <DatePicker 
+              type="date" 
+              :value="endDate" 
+              @on-change="changeEndDate"
+              format="yyyy-MM-dd HH:mm:ss" 
+              placement="bottom-start" 
+              :placeholder="$t('endDatePlaceholder')" 
+              style="width: 220px">
+            </DatePicker>
+          </li>
+          <li class="filter-li">
+            <Select filterable clearable v-model="filter" style="width:80px">
+              <Option v-for="item in filterList" :value="item.value" :key="item.value">{{ item.label }}</Option>
+            </Select>
+          </li>
+          <li class="filter-li">
+            <button class="btn btn-sm btn-confirm-f" @click="getAlarm">
+              <i class="fa fa-search"></i>
+              {{$t('button.search')}}
+            </button>
+          </li>
+          <li class="filter-li">
+            <button class="btn btn-sm btn-cancel-f" @click="realTimeAlarm">
+              {{$t('realTimeAlarm')}}
+            </button>
+          </li>
+        </ul>
+      </div>
     </div>
     <div class="flex-container">
       <template v-if="!resultData.length">
@@ -63,14 +66,14 @@
       </transition>
       <div class="flex-item" style="width: 100%">
         <section style="margin-left:8px" class="c-dark-exclude-color">
-          <template v-for="(filterItem, filterIndex) in filtersForShow">
-            <Tag color="success" type="border" closable @on-close="exclude(filterItem.key)" :key="filterIndex">{{filterItem.key}}：{{filterItem.value}}</Tag>
+          <template>
+            <Tag v-for="(filterItem, filterIndex) in filtersForShow" color="success" type="border" closable @on-close="exclude(filterItem.key)" :key="filterIndex">{{filterItem.key}}：{{filterItem.value}}</Tag>
           </template>
           <button v-if="filtersForShow.length" @click="clearAll" class="btn btn-small btn-cancel-f">{{$t('clearAll')}}</button>
         </section>
         <div class="alarm-list">
-          <template v-for="(alarmItem, alarmIndex) in resultData">
-            <section :key="alarmIndex" class="alarm-item c-dark-exclude-color" :class="'alarm-item-border-'+ alarmItem.s_priority">
+          <template>
+            <section v-for="(alarmItem, alarmIndex) in resultData" :key="alarmIndex" class="alarm-item c-dark-exclude-color" :class="'alarm-item-border-'+ alarmItem.s_priority">
               <ul>
                 <li>
                   <label class="col-md-2">{{$t('field.endpoint')}}:</label>
@@ -362,6 +365,17 @@ export default {
   padding:50px;
   color: #2d8cf0;
 }
+
+.title-wrapper {
+  display: flex;
+  align-items: flex-end;
+
+  .title-form {
+    margin-left: 21px;
+    padding: 10px 0;
+  }
+}
+
 .flex-container {
   margin: 8px;
   display: flex;
