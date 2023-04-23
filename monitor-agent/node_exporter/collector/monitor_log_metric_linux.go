@@ -494,29 +494,29 @@ func calcLogMetricData() {
 				appendDisplayMap[fmt.Sprintf("%s^%s^%s", lmObj.Path, metricObj.Metric, metricObj.AggType)] = 1
 				continue
 			}
-			tmpMetricKey := fmt.Sprintf("%s^%s^%s^%s", lmObj.Path, metricObj.Metric, metricObj.AggType, "")
-			tmpMetricObj := logMetricDisplayObj{Metric: metricObj.Metric, Path: lmObj.Path, Agg: metricObj.AggType, TEndpoint: lmObj.TargetEndpoint, ServiceGroup: lmObj.ServiceGroup, TagsString: "", Step: metricObj.Step, ValueObj: logMetricValueObj{Sum: 0, Max: 0, Min: 0, Count: 0}}
+			//tmpMetricKey := fmt.Sprintf("%s^%s^%s^%s", lmObj.Path, metricObj.Metric, metricObj.AggType, "")
+			//tmpMetricObj := logMetricDisplayObj{Metric: metricObj.Metric, Path: lmObj.Path, Agg: metricObj.AggType, TEndpoint: lmObj.TargetEndpoint, ServiceGroup: lmObj.ServiceGroup, TagsString: "", Step: metricObj.Step, ValueObj: logMetricValueObj{Sum: 0, Max: 0, Min: 0, Count: 0}}
 			for i := 0; i < dataLength; i++ {
 				customFetchString := <-metricObj.DataChannel
+				//tmpMetricObj := logMetricDisplayObj{Metric: metricObj.Metric, Path: lmObj.Path, Agg: metricObj.AggType, TEndpoint: lmObj.TargetEndpoint, ServiceGroup: lmObj.ServiceGroup, TagsString: "", Step: metricObj.Step, ValueObj: logMetricValueObj{Sum: 0, Max: 0, Min: 0, Count: 0}}
 				// check if tag match
-				if len(metricObj.TagConfig) > 0 {
-					tmpTagString := getLogMetricTags(customFetchString, metricObj.TagConfig)
-					if tmpTagString != "" {
-						tmpMetricKey += tmpTagString
-						tmpMetricObj.TagsString = tmpTagString
-					}
-				}
+				tmpTagString := getLogMetricTags(customFetchString, metricObj.TagConfig)
+				tmpMetricKey := fmt.Sprintf("%s^%s^%s^%s", lmObj.Path, metricObj.Metric, metricObj.AggType, tmpTagString)
 				metricValueFloat := transLogMetricStringMapValue(metricObj.StringMap, customFetchString)
-				tmpMetricObj.ValueObj.Sum += metricValueFloat
-				tmpMetricObj.ValueObj.Count++
-				if tmpMetricObj.ValueObj.Max < metricValueFloat {
-					tmpMetricObj.ValueObj.Max = metricValueFloat
-				}
-				if tmpMetricObj.ValueObj.Min > metricValueFloat {
-					tmpMetricObj.ValueObj.Min = metricValueFloat
+				if valueExistObj, keyExist := valueCountMap[tmpMetricKey]; keyExist {
+					valueExistObj.ValueObj.Sum += metricValueFloat
+					valueExistObj.ValueObj.Count++
+					if valueExistObj.ValueObj.Max < metricValueFloat {
+						valueExistObj.ValueObj.Max = metricValueFloat
+					}
+					if valueExistObj.ValueObj.Min > metricValueFloat {
+						valueExistObj.ValueObj.Min = metricValueFloat
+					}
+				} else {
+					valueCountMap[tmpMetricKey] = &logMetricDisplayObj{Metric: metricObj.Metric, Path: lmObj.Path, Agg: metricObj.AggType, TEndpoint: lmObj.TargetEndpoint, ServiceGroup: lmObj.ServiceGroup, TagsString: tmpTagString, Step: metricObj.Step, ValueObj: logMetricValueObj{Sum: 0, Max: 0, Min: 0, Count: 0}}
 				}
 			}
-			valueCountMap[tmpMetricKey] = &tmpMetricObj
+			//valueCountMap[tmpMetricKey] = &tmpMetricObj
 		}
 	}
 	if len(appendDisplayMap) > 0 {
@@ -660,6 +660,9 @@ func getLogMetricJsonMapTags(input map[string]interface{}, tagKey []string) (tag
 }
 
 func getLogMetricTags(lineText string, tagConfigList []*LogMetricConfigTag) (tagString string) {
+	if len(tagConfigList) == 0 {
+		return
+	}
 	var tagList []string
 	for _, rule := range tagConfigList {
 		if rule.RegExp == nil {
