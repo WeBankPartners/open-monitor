@@ -676,3 +676,7 @@ create unique index `alarm_tags_unique_idx` on alarm (`endpoint_tags`);
 #@v2.0.0.46-begin@;
 alter table log_keyword_config add column content text default null;
 #@v2.0.0.46-end@;
+
+#@v2.0.1.11-begin@;
+alter table log_metric_config add column tag_config text default null;
+#@v2.0.1.11-end@;
