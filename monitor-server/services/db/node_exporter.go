@@ -104,6 +104,7 @@ func transLogMetricConfigToJob(logMetricConfig []*models.LogMetricQueryObj, endp
 					}
 					tmpMetricJob.StringMap = append(tmpMetricJob.StringMap, &tmpStringMapJob)
 				}
+				tmpMetricJob.TagConfig = v.TagConfig
 				tmpMonitorJob.MetricConfig = append(tmpMonitorJob.MetricConfig, &tmpMetricJob)
 			}
 			syncParam = append(syncParam, &tmpMonitorJob)
