@@ -96,7 +96,11 @@
               </div>
             </div>
             <div class="metrics-bar">
-              <div class="bar-item" v-for="(mtc, idx) in outerMetrics" :key="mtc.name + mtc.type" :style="{ background: barColors[idx % 13], height: '15px', width: `${100 * mtc.value / outerTotal}%` }"></div>
+              <div class="bar-item" v-for="(mtc, idx) in outerMetrics" :key="mtc.name + mtc.type" :style="{ background: barColors[idx % 13], height: '15px', width: `${100 * mtc.value / outerTotal}%` }">
+                <Tooltip :content="`${mtc.name}: ${mtc.value}`" placement="top">
+                  <div class="content">&nbsp;&nbsp;</div>
+                </Tooltip>
+              </div>
             </div>
           </div>
           <div class="right">
@@ -556,6 +560,18 @@ export default {
         border-radius: 15px;
         display: flex;
         padding: 8px 10px;
+
+        .bar-item {
+          height: 15px;
+
+          /deep/ .ivu-tooltip {
+            width: 100%;
+          }
+
+          .content {
+            width: 100%;
+          }
+        }
 
         .bar-item:nth-child(1) {
           border-radius: 7px 0 0 7px;
