@@ -45,27 +45,60 @@
       </div>
     </div>
     <div class="data-stats-container" v-if="showGraph && resultData.length">
+      <div class="top-stats-container">
+        <div class="left">
+          <div class="metics-metal">
+            <div class="col">
+              <div class="title">{{$t('realTimeAlarm')}}</div>
+              <img class="time-icon" src="../assets/img/icon_rltm.png" />
+            </div>
+          </div>
+          <circle-item type="total" :title="$t('m_total')" :total="total" :value="total" :icon="totalIcon" />
+          <circle-item type="low" :title="$t('m_low')" :total="total" :value="low" :icon="lowIcon" />
+          <circle-item type="medium" :title="$t('m_medium')" :total="total" :value="mid" :icon="midIcon" />
+          <circle-item type="high" :title="$t('m_high')" :total="total" :value="high" :icon="highIcon" />
+        </div>
+        <div class="right">
+          <div class="metics-metal">
+            <div class="col">
+              <div class="title">{{$t('todayAlarm')}}</div>
+              <img class="time-icon" src="../assets/img/icon_rltm.png" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="data-stats-container" v-if="showGraph && resultData.length">
       <transition name="slide-fade">
-        <div class="top-stats-container">
+        <div class="content-stats-container">
           <div class="left">
-            <div class="metics-metal">
-              <div class="col">
-                <div class="title">{{$t('realTimeAlarm')}}</div>
-                <img class="time-icon" src="../assets/img/icon_rltm.png" />
+            <img class="bg" src="../assets/img/bgd_main_cube.png" />
+            <img class="cube" width="640" height="640" src="../assets/img/the_cube.png" />
+            <img class="low" width="200" height="200" src="../assets/img/peichart_L.png" />
+            <img class="mid" width="200" height="200" src="../assets/img/peichart_M.png" />
+            <img class="high" width="200" height="200" src="../assets/img/peichart_H.png" />
+            <div class="cir low">
+              <div class="text">
+                <div class="title">{{ $t('m_low') }}</div>
+                <div class="value">{{ getPercentage(low, total) }}%</div>
               </div>
             </div>
-            <circle-item type="total" :title="$t('m_total')" :total="total" :value="total" :icon="totalIcon" />
-            <circle-item type="low" :title="$t('m_low')" :total="total" :value="low" :icon="lowIcon" />
-            <circle-item type="medium" :title="$t('m_medium')" :total="total" :value="mid" :icon="midIcon" />
-            <circle-item type="high" :title="$t('m_high')" :total="total" :value="high" :icon="highIcon" />
+            <div class="cir mid">
+              <div class="text">
+                <div class="title">{{ $t('m_medium') }}</div>
+                <div class="value">{{ getPercentage(mid, total) }}%</div>
+              </div>
+            </div>
+            <div class="cir high">
+              <div class="text">
+                <div class="title">{{ $t('m_high') }}</div>
+                <div class="value">{{ getPercentage(high, total) }}%</div>
+              </div>
+            </div>
+            <div></div>
           </div>
           <div class="right">
-            <div class="metics-metal">
-              <div class="col">
-                <div class="title">{{$t('todayAlarm')}}</div>
-                <img class="time-icon" src="../assets/img/icon_rltm.png" />
-              </div>
-            </div>
+            
           </div>
         </div>
       </transition>
@@ -382,6 +415,9 @@ export default {
       delete this.filters[key]
       this.getAlarm()
     },
+    getPercentage(val, total) {
+      return (parseInt(val, 10) * 100 / parseInt(total, 10)).toFixed(2)
+    }
   }
 }
 </script>
@@ -420,11 +456,6 @@ export default {
 
     /deep/.ivu-input {
       border: 1px solid #F2F3F7;
-    }
-
-    /deep/.ivu-icon-ios-calendar-outline::before {
-      // content: "";
-      // background: url('../assets/img/icon_clndr.png') no-repeat;
     }
 
     .btn-sm {
@@ -481,6 +512,97 @@ export default {
       flex-basis: 60%;
       height: 100%;
       display: flex;
+    }
+    .right {
+      flex-basis: 40%;
+      height: 100%;
+    }
+  }
+
+  .content-stats-container {
+    width: 100%;
+    display: flex;
+    margin: 12px 0;
+
+    .left {
+      position: relative;
+      flex-basis: 60%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding-top: 53.5px;
+      .bg {
+        position: absolute;
+        top: 0;
+      }
+      .low {
+        position: absolute;
+        transform: translate(-86.6px, -50px);
+      }
+      .mid {
+        position: absolute;
+        transform: translate(86.6px, -50px);
+      }
+      .high {
+        position: absolute;
+        transform: translate(0, 100px);
+      }
+
+      .cir {
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        background: #FFFFFF;
+        border-radius: 50%;
+
+        .text {
+          .title {
+            font-size: 16px;
+            color: #404144;
+          }
+          .value {
+            font-size: 36px;
+            font-weight: 500;
+          }
+        }
+
+        &.low {
+          border: 2px solid #6ED06D;
+          transform: translate(-173px, -100px);
+
+          .text {
+            margin-left: -135px;
+
+            .value {
+              color: #6ED06D;
+            }
+          }
+        }
+        &.mid {
+          border: 2px solid #F19D38;
+          transform: translate(173px, -100px);
+
+          .text {
+            margin-left: 85px;
+
+            .value {
+              color: #F19D38;
+            }
+          }
+        }
+        &.high {
+          border: 2px solid #DA4E2B;
+          transform: translate(0, 200px);
+
+          .text {
+            margin-top: 75px;
+
+            .value {
+              color: #DA4E2B;
+            }
+          }
+        }
+      }
     }
     .right {
       flex-basis: 40%;
