@@ -95,7 +95,9 @@
                 <div class="value">{{ getPercentage(high, total) }}%</div>
               </div>
             </div>
-            <div></div>
+            <div class="metrics-bar">
+              <div class="bar-item" v-for="(mtc, idx) in outerMetrics" :key="mtc.name + mtc.type" :style="{ background: barColors[idx % 13], height: '15px', width: `${100 * mtc.value / outerTotal}%` }"></div>
+            </div>
           </div>
           <div class="right">
             
@@ -207,6 +209,10 @@ export default {
       low: 0,
       mid: 0,
       high: 0,
+
+      outerMetrics: [],
+      outerTotal: 0,
+      barColors: ['#DE4B7D', '#E57A50', '#D8CF6B', '#AFC8E4', '#002B55', '#EC6820', '#98B63F', '#0199D3', '#03519F', '#535557', '#60C7C4', '#A7D9BF', '#FFDB3B'],
 
       totalIcon: require('../assets/img/icon_alarm_ttl.png'),
       lowIcon: require('../assets/img/icon_alarm_L.png'),
@@ -338,6 +344,8 @@ export default {
         set.add(item.name)
       })
       pieOuter = metricInfo.sort(this.compare('type'))
+      this.outerMetrics = pieOuter
+      this.outerTotal = pieOuter.reduce((n, m) => (n + m.value), 0)
       let option = {
         backgroundColor: '#ffffff',
           tooltip: {
@@ -531,6 +539,7 @@ export default {
       justify-content: center;
       align-items: center;
       padding-top: 53.5px;
+      padding-bottom: 94px;
       .bg {
         position: absolute;
         top: 0;
@@ -595,12 +604,32 @@ export default {
           transform: translate(0, 200px);
 
           .text {
-            margin-top: 75px;
+            margin-left: 10px;
+            margin-top: 65px;
 
             .value {
               color: #DA4E2B;
             }
           }
+        }
+      }
+
+      .metrics-bar {
+        position: absolute;
+        top: 719px;
+        width: 750px;
+        height: 31px;
+        background: #FFFFFF;
+        box-shadow: 0px 8px 15px 0px rgba(17,110,249,0.15);
+        border-radius: 15px;
+        display: flex;
+        padding: 8px 10px;
+
+        .bar-item:nth-child(1) {
+          border-radius: 7px 0 0 7px;
+        }
+        .bar-item:last-child {
+          border-radius: 0 7px 7px 0;
         }
       }
     }
