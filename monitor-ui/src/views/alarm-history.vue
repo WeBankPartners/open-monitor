@@ -38,13 +38,77 @@
               {{$t('button.search')}}
             </button>
           </li>
-          <li class="filter-li">
-            <button class="btn btn-sm btn-cancel-f" @click="realTimeAlarm">
-              {{$t('realTimeAlarm')}}
-            </button>
-          </li>
         </ul>
+        <button class="btn btn-sm btn-confirm-f" @click="realTimeAlarm">
+          {{$t('realTimeAlarm')}}
+        </button>
       </div>
+    </div>
+    <div class="data-stats-container">
+      <transition name="slide-fade">
+        <div class="top-stats-container">
+          <div class="left">
+            <div class="metics-metal">
+              <div class="col">
+                <div class="title">{{$t('realTimeAlarm')}}</div>
+                <img class="time-icon" src="../assets/img/icon_rltm.png" />
+              </div>
+            </div>
+            <div class="m-item">
+              <div class="circle">
+                <div class="inner-circle total">
+                  <img class="circle-icon" src="../assets/img/icon_alarm_ttl.png" />
+                </div>
+              </div>
+              <div class="item">
+                <div class="title">{{$t('m_total')}}</div>
+                <div class="value text-total">{{this.low + this.mid + this.high}}</div>
+              </div>
+            </div>
+            <div class="m-item">
+              <div class="circle">
+                <div class="inner-circle low">
+                  <img class="circle-icon" src="../assets/img/icon_alarm_L.png" />
+                </div>
+              </div>
+              <div class="item">
+                <div class="title">{{$t('m_low')}}</div>
+                <div class="value text-low">{{this.low}}</div>
+              </div>
+            </div>
+            <div class="m-item">
+              <div class="circle">
+                <div class="inner-circle medium">
+                  <img class="circle-icon" src="../assets/img/icon_alarm_M.png" />
+                </div>
+              </div>
+              <div class="item">
+                <div class="title">{{$t('m_medium')}}</div>
+                <div class="value text-medium">{{this.mid}}</div>
+              </div>
+            </div>
+            <div class="m-item">
+              <div class="circle">
+                <div class="inner-circle high">
+                  <img class="circle-icon" src="../assets/img/icon_alarm_M.png" />
+                </div>
+              </div>
+              <div class="item">
+                <div class="title">{{$t('m_high')}}</div>
+                <div class="value text-high">{{this.high}}</div>
+              </div>
+            </div>
+          </div>
+          <div class="right">
+            <div class="metics-metal">
+              <div class="col">
+                <div class="title">{{$t('todayAlarm')}}</div>
+                <img class="time-icon" src="../assets/img/icon_rltm.png" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </transition>
     </div>
     <div class="flex-container">
       <template v-if="!resultData.length">
@@ -369,10 +433,186 @@ export default {
 .title-wrapper {
   display: flex;
   align-items: flex-end;
+  margin-bottom: 24px;
 
-  .title-form {
+  .title-form  {
     margin-left: 21px;
     padding: 10px 0;
+    flex: auto;
+    border: 2px solid #F2F3F7;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+
+    /deep/.ivu-input {
+      border: 1px solid #F2F3F7;
+    }
+
+    /deep/.ivu-icon-ios-calendar-outline::before {
+      // content: "";
+      // background: url('../assets/img/icon_clndr.png') no-repeat;
+    }
+
+    .btn-sm {
+      background: #116EF9;
+    }
+  }
+}
+
+.data-stats-container {
+  
+  .top-stats-container {
+    width: 100%;
+    height: 90px;
+    background: #FFFFFF;
+    border: 2px solid #F2F3F7;
+    border-radius: 4px;
+    display: flex;
+
+    .metics-metal {
+      height: 100%;
+      background: linear-gradient(90deg, #F5F8FE 0%, rgba(234,242,253,0) 100%);
+      
+      .col {
+        position: relative;
+        width: 180px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
+
+        .title {
+          font-size: 16px;
+        }
+
+        .time-icon {
+          width: 32px;
+          height: 32px;
+          margin-top: 14px;
+        }
+
+        &::after {
+          content: "";
+          position: absolute;
+          width: 2px;
+          height: 63px;
+          right: 0;
+          background: #F2F3F7;
+        }
+      }
+    }
+
+    .m-item {
+      display: flex;
+      align-items: center;
+      width: 104px;
+      margin: auto 40px;
+
+      .circle {
+        flex-shrink: 0;
+        flex-grow: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 60px;
+        width: 60px;
+        background: #F2F3F7;
+        border-radius: 50%;
+        padding: 3px;
+        .inner-circle {
+          position: relative;
+          height: 53px;
+          width: 53px;
+          flex-shrink: 0;
+          flex-grow: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 50%;
+          
+          &.total {
+            background: linear-gradient(135deg, #116EF9 0%, #C1D8FA 100%);
+          }
+
+          &.low {
+            background: conic-gradient(
+              #66CC66 0, #9CE89C 27%, 
+              transparent 27.2%, transparent
+            );
+          }
+
+          &.medium {
+            background: conic-gradient(
+              #F19D38 0, #F1C188 27%, 
+              transparent 27.2%, transparent
+            );
+          }
+
+          &.high {
+            background: conic-gradient(
+              #DA4E2B 0, #F19881 27%, 
+              transparent 27.2%, transparent
+            );
+          }
+
+          &::before {
+            content: "";
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 47px;
+            height: 47px;
+            border-radius: 50%;
+            background: #fff;
+          }
+        }
+  
+        .circle-icon {
+          position: absolute;
+          width: 24px;
+          height: 24px;
+        }
+      }
+
+      .item {
+        margin-left: 10px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+
+        .title {
+          font-size: 14px;
+          color: #404144;
+        }
+        .value {
+          font-size: 30px;
+          &.text-total {
+            color: #116EF9;
+          }
+          &.text-low {
+            color: #6FD16E;
+          }
+          &.text-medium {
+            color: #F19D38;
+          }
+          &.text-high {
+            color: #DA4E2B;
+          }
+        }
+      }
+    }
+
+    .left {
+      flex-basis: 60%;
+      height: 100%;
+      display: flex;
+    }
+    .right {
+      flex-basis: 40%;
+      height: 100%;
+    }
   }
 }
 
