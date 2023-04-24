@@ -44,7 +44,7 @@
         </button>
       </div>
     </div>
-    <div class="data-stats-container">
+    <div class="data-stats-container" v-if="showGraph && resultData.length">
       <transition name="slide-fade">
         <div class="top-stats-container">
           <div class="left">
@@ -54,50 +54,10 @@
                 <img class="time-icon" src="../assets/img/icon_rltm.png" />
               </div>
             </div>
-            <div class="m-item">
-              <div class="circle">
-                <div class="inner-circle total">
-                  <img class="circle-icon" src="../assets/img/icon_alarm_ttl.png" />
-                </div>
-              </div>
-              <div class="item">
-                <div class="title">{{$t('m_total')}}</div>
-                <div class="value text-total">{{this.low + this.mid + this.high}}</div>
-              </div>
-            </div>
-            <div class="m-item">
-              <div class="circle">
-                <div class="inner-circle low">
-                  <img class="circle-icon" src="../assets/img/icon_alarm_L.png" />
-                </div>
-              </div>
-              <div class="item">
-                <div class="title">{{$t('m_low')}}</div>
-                <div class="value text-low">{{this.low}}</div>
-              </div>
-            </div>
-            <div class="m-item">
-              <div class="circle">
-                <div class="inner-circle medium">
-                  <img class="circle-icon" src="../assets/img/icon_alarm_M.png" />
-                </div>
-              </div>
-              <div class="item">
-                <div class="title">{{$t('m_medium')}}</div>
-                <div class="value text-medium">{{this.mid}}</div>
-              </div>
-            </div>
-            <div class="m-item">
-              <div class="circle">
-                <div class="inner-circle high">
-                  <img class="circle-icon" src="../assets/img/icon_alarm_M.png" />
-                </div>
-              </div>
-              <div class="item">
-                <div class="title">{{$t('m_high')}}</div>
-                <div class="value text-high">{{this.high}}</div>
-              </div>
-            </div>
+            <circle-item type="total" :title="$t('m_total')" :total="total" :value="total" :icon="totalIcon" />
+            <circle-item type="low" :title="$t('m_low')" :total="total" :value="low" :icon="lowIcon" />
+            <circle-item type="medium" :title="$t('m_medium')" :total="total" :value="mid" :icon="midIcon" />
+            <circle-item type="high" :title="$t('m_high')" :total="total" :value="high" :icon="highIcon" />
           </div>
           <div class="right">
             <div class="metics-metal">
@@ -183,8 +143,13 @@
 
 <script>
 import echarts from 'echarts'
+import CircleItem from "../components/circle-item.vue";
+
 export default {
   name: '',
+  components: {
+    CircleItem
+  },
   data() {
     return {
       startDate: '',
@@ -208,7 +173,17 @@ export default {
 
       low: 0,
       mid: 0,
-      high: 0
+      high: 0,
+
+      totalIcon: require('../assets/img/icon_alarm_ttl.png'),
+      lowIcon: require('../assets/img/icon_alarm_L.png'),
+      midIcon: require('../assets/img/icon_alarm_M.png'),
+      highIcon: require('../assets/img/icon_alarm_H.png')
+    }
+  },
+  computed: {
+    total() {
+      return this.low + this.mid + this.high
     }
   },
   mounted(){
@@ -407,8 +382,7 @@ export default {
       delete this.filters[key]
       this.getAlarm()
     },
-  },
-  components: {},
+  }
 }
 </script>
 
@@ -499,107 +473,6 @@ export default {
           height: 63px;
           right: 0;
           background: #F2F3F7;
-        }
-      }
-    }
-
-    .m-item {
-      display: flex;
-      align-items: center;
-      width: 104px;
-      margin: auto 40px;
-
-      .circle {
-        flex-shrink: 0;
-        flex-grow: 0;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 60px;
-        width: 60px;
-        background: #F2F3F7;
-        border-radius: 50%;
-        padding: 3px;
-        .inner-circle {
-          position: relative;
-          height: 53px;
-          width: 53px;
-          flex-shrink: 0;
-          flex-grow: 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 50%;
-          
-          &.total {
-            background: linear-gradient(135deg, #116EF9 0%, #C1D8FA 100%);
-          }
-
-          &.low {
-            background: conic-gradient(
-              #66CC66 0, #9CE89C 27%, 
-              transparent 27.2%, transparent
-            );
-          }
-
-          &.medium {
-            background: conic-gradient(
-              #F19D38 0, #F1C188 27%, 
-              transparent 27.2%, transparent
-            );
-          }
-
-          &.high {
-            background: conic-gradient(
-              #DA4E2B 0, #F19881 27%, 
-              transparent 27.2%, transparent
-            );
-          }
-
-          &::before {
-            content: "";
-            position: absolute;
-            top: 3px;
-            left: 3px;
-            width: 47px;
-            height: 47px;
-            border-radius: 50%;
-            background: #fff;
-          }
-        }
-  
-        .circle-icon {
-          position: absolute;
-          width: 24px;
-          height: 24px;
-        }
-      }
-
-      .item {
-        margin-left: 10px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-
-        .title {
-          font-size: 14px;
-          color: #404144;
-        }
-        .value {
-          font-size: 30px;
-          &.text-total {
-            color: #116EF9;
-          }
-          &.text-low {
-            color: #6FD16E;
-          }
-          &.text-medium {
-            color: #F19D38;
-          }
-          &.text-high {
-            color: #DA4E2B;
-          }
         }
       }
     }
