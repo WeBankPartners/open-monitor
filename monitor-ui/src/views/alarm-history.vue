@@ -44,7 +44,7 @@
         </button>
       </div>
     </div>
-    <div class="data-stats-container" v-if="showGraph && resultData.length">
+    <div class="data-stats-container" v-if="showGraph">
       <div class="top-stats-container">
         <div class="left">
           <div class="metics-metal">
@@ -65,10 +65,14 @@
               <img class="time-icon" src="../assets/img/icon_rltm.png" />
             </div>
           </div>
+          <circle-item type="total" :title="$t('m_total')" :total="total" :value="total" />
+          <circle-item type="low" :title="$t('m_low')" :total="total" :value="low" />
+          <circle-item type="medium" :title="$t('m_medium')" :total="total" :value="mid" />
+          <circle-item type="high" :title="$t('m_high')" :total="total" :value="high" />
         </div>
       </div>
     </div>
-    <div class="data-stats-container" v-if="showGraph && resultData.length">
+    <div class="data-stats-container" v-if="showGraph">
       <transition name="slide-fade">
         <div class="content-stats-container">
           <div class="left">
@@ -95,7 +99,7 @@
                 <div class="value">{{ getPercentage(high, total) }}%</div>
               </div>
             </div>
-            <div class="metrics-bar">
+            <div class="metrics-bar" v-show="outerMetrics && outerMetrics.length > 0">
               <div class="bar-item" v-for="(mtc, idx) in outerMetrics" :key="mtc.name + mtc.type" :style="{ background: barColors[idx % 13], height: '15px', width: `${100 * mtc.value / outerTotal}%` }">
                 <Tooltip :content="`${mtc.name}: ${mtc.value}`" placement="top">
                   <div class="content">&nbsp;&nbsp;</div>
@@ -144,6 +148,10 @@ export default {
       mid: 0,
       high: 0,
 
+      tlow: 0,
+      tmid: 0,
+      thigh: 0,
+
       outerMetrics: [],
       outerTotal: 0,
       barColors: ['#DE4B7D', '#E57A50', '#D8CF6B', '#AFC8E4', '#002B55', '#EC6820', '#98B63F', '#0199D3', '#03519F', '#535557', '#60C7C4', '#A7D9BF', '#FFDB3B'],
@@ -159,12 +167,29 @@ export default {
       return this.low + this.mid + this.high
     }
   },
+  mounted() {
+    this.getTodayAlarm()
+  },
   methods: {
     changeStartDate (data) {
       this.startDate = data
     },
     changeEndDate (data) {
       this.endDate = data
+    },
+    getTodayAlarm() {
+      const start = new Date(new Date().toLocaleDateString()).getTime();
+      const end = new Date(new Date().toLocaleDateString()).getTime() + 24 * 60 * 60 * 1000 - 1;
+      const params = {
+        start: parseInt(start / 1000, 10),
+        end: parseInt(end / 1000, 10),
+        filter: this.filter
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/alarm/problem/history', params, (responseData) => {
+        this.tlow = responseData.low
+        this.tmid = responseData.mid
+        this.thigh = responseData.high
+      })
     },
     getAlarm() {
       if (!this.startDate || !this.endDate || Date.parse(new Date(this.startDate)) > Date.parse(new Date(this.endDate))) {
@@ -293,7 +318,7 @@ export default {
       this.getAlarm()
     },
     getPercentage(val, total) {
-      return (parseInt(val, 10) * 100 / parseInt(total, 10)).toFixed(2)
+      return ((parseInt(val, 10) * 100 / parseInt(total, 10)) || 0).toFixed(2)
     }
   }
 }
@@ -393,6 +418,9 @@ export default {
     .right {
       flex-basis: 40%;
       height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
   }
 
