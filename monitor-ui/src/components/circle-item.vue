@@ -1,6 +1,6 @@
 <template>
   <div class="m-item">
-    <div class="circle">
+    <div class="circle" v-if="$attrs.icon">
       <div
         class="inner-circle"
         :style="circleStyle"
@@ -60,8 +60,7 @@ export default {
 .m-item {
   display: flex;
   align-items: center;
-  width: 104px;
-  margin: auto 40px;
+  margin: auto 30px;
 
   .circle {
     flex-shrink: 0;
