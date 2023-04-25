@@ -78,29 +78,16 @@
           <div class="left">
             <img class="bg" src="../assets/img/bgd_main_cube.png" />
             <img class="cube" width="640" height="640" src="../assets/img/the_cube.png" />
+
             <circle-rotate
-              :icon="lowCircle"
-              :value="low"
-              :total="total"
-              :deg="'-60deg'"
-              :tx="0"
-              :ty="-0.5"
-            />
-            <circle-rotate
-              :icon="midCircle"
-              :value="mid"
-              :total="total"
-              :deg="'60deg'"
-              :tx="0"
-              :ty="-0.5"
-            />
-            <circle-rotate
-              :icon="highCircle"
-              :value="high"
-              :total="total"
-              :deg="'0'"
-              :tx="0"
-              :ty="0.5"
+              v-for="cr in circles"
+              :key="cr.type"
+              :icon="cr.icon"
+              :value="cr.value"
+              :total="cr.total"
+              :deg="cr.deg"
+              :tx="cr.tx"
+              :ty="cr.ty"
             />
             <div class="cir low">
               <div class="text">
@@ -185,17 +172,43 @@ export default {
       lowIcon: require('../assets/img/icon_alarm_L.png'),
       midIcon: require('../assets/img/icon_alarm_M.png'),
       highIcon: require('../assets/img/icon_alarm_H.png'),
-
-      lowCircle: require('../assets/img/peichart_L.png'),
-      midCircle: require('../assets/img/peichart_M.png'),
-      highCircle: require('../assets/img/peichart_H.png'),
     }
   },
   computed: {
     total() {
       return this.low + this.mid + this.high
     },
-
+    circles() {
+      return [
+        {
+          type: 'low',
+          icon: require('../assets/img/peichart_L.png'),
+          value: this.low,
+          total: this.total,
+          deg: '-60deg',
+          tx: 0,
+          ty: -0.5
+        },
+        {
+          type: 'mid',
+          icon: require('../assets/img/peichart_M.png'),
+          value: this.mid,
+          total: this.total,
+          deg: '60deg',
+          tx: 0,
+          ty: -0.5
+        },
+        {
+          type: 'high',
+          icon: require('../assets/img/peichart_H.png'),
+          value: this.high,
+          total: this.total,
+          deg: '0',
+          tx: 0,
+          ty: 0.5
+        }
+      ]
+    }
   },
   mounted() {
     this.getTodayAlarm()
