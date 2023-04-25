@@ -17,7 +17,6 @@ module.exports = {
       }
     }
   },
-	publicPath: './',
 	assetsDir: process.env.PLUGIN === 'plugin'? '':'monitor',
 	outputDir: process.env.PLUGIN === 'plugin'? 'plugin':'dist',
 	productionSourceMap: process.env.PLUGIN !== 'plugin',
