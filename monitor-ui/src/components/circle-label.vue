@@ -42,7 +42,7 @@ export default {
     },
     circleWidth() {
       const { value, total } = this.$attrs.data
-      return this.L * ((parseInt(value, 10) / parseInt(total, 10)) || 0)
+      return Math.max(this.L * ((parseInt(value, 10) / parseInt(total, 10)) || 0), 30)
     },
   }
 }
