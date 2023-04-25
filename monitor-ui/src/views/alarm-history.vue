@@ -113,7 +113,6 @@
 </template>
 
 <script>
-import echarts from 'echarts'
 import CircleItem from "../components/circle-item.vue";
 
 export default {
@@ -133,7 +132,6 @@ export default {
 
       showGraph: true,
       alramEmpty: true,
-      myChart: null,
       interval: null,
       timeForDataAchieve: null,
       filters: {},
@@ -160,9 +158,6 @@ export default {
     total() {
       return this.low + this.mid + this.high
     }
-  },
-  mounted(){
-    this.myChart = echarts.init(document.getElementById('elId'))
   },
   methods: {
     changeStartDate (data) {
@@ -219,7 +214,6 @@ export default {
       } 
     },
     showSunburst (originData) {
-      this.myChart.off()
       let legendData = []
       let pieInner = []
       if (originData.high) {
@@ -282,67 +276,6 @@ export default {
       pieOuter = metricInfo.sort(this.compare('type'))
       this.outerMetrics = pieOuter
       this.outerTotal = pieOuter.reduce((n, m) => (n + m.value), 0)
-      let option = {
-        backgroundColor: '#ffffff',
-          tooltip: {
-              trigger: 'item',
-              formatter: '{b}: {c}'
-          },
-          legend: {
-            bottom: '15%',
-            selectedMode: false,
-            data: legendData
-          },
-          series: [
-              {
-                  type: 'pie',
-                  selectedMode: 'single',
-                  radius: [0, '30%'],
-                  center: ['50%', '40%'],
-                  label: {
-                    formatter: '{b}:{c}',
-                    position: 'inner',
-                    rich: {
-                      b: {
-                        fontSize: 16,
-                        lineHeight: 33
-                      }
-                    }
-                  },
-                  labelLine: {
-                      show: false
-                  },
-                  data: pieInner
-              },
-              {
-                  type: 'pie',
-                  radius: ['40%', '55%'],
-                  center: ['50%', '40%'],
-                  label: {
-                      formatter: ' {b|{b}:}{c} ',
-                      backgroundColor: '#ffffff',
-                      borderColor: '#2d8cf0',
-                      borderWidth: 1,
-                      borderRadius: 4,
-                      position: 'outer',
-                      alignTo: 'edge',
-                      margin: 8,
-                      rich: {
-                        b: {
-                          fontSize: 12,
-                          lineHeight: 28
-                        }
-                      }
-                  },
-                  data: pieOuter
-              }
-          ]
-      }
-
-      this.myChart.setOption(option)
-      this.myChart.on('click', params => {
-        this.addParams(params.data.filterType, params.data.name)
-      })
     },
     realTimeAlarm () {
       this.$router.push('/alarmManagement')
