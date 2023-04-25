@@ -37,5 +37,6 @@ export default {
 <style scoped lang="less">
 .circle-img {
   position: absolute;
+  z-index: 100;
 }
 </style>

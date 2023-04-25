@@ -79,26 +79,9 @@
             <img class="bg" src="../assets/img/bgd_main_cube.png" />
             <img class="cube" width="640" height="640" src="../assets/img/the_cube.png" />
 
-            <circle-rotate v-for="cr in circles" :key="cr.type" :data="cr" />
-            
-            <div class="cir low">
-              <div class="text">
-                <div class="title">{{ $t('m_low') }}</div>
-                <div class="value">{{ getPercentage(low, total) }}%</div>
-              </div>
-            </div>
-            <div class="cir mid">
-              <div class="text">
-                <div class="title">{{ $t('m_medium') }}</div>
-                <div class="value">{{ getPercentage(mid, total) }}%</div>
-              </div>
-            </div>
-            <div class="cir high">
-              <div class="text">
-                <div class="title">{{ $t('m_high') }}</div>
-                <div class="value">{{ getPercentage(high, total) }}%</div>
-              </div>
-            </div>
+            <circle-label v-for="cr in circles" :key="cr.type" :data="cr" />
+            <circle-rotate v-for="cr in circles" :key="cr.label" :data="cr" />
+
             <div class="metrics-bar" v-show="outerMetrics && outerMetrics.length > 0">
               <div class="bar-item" v-for="(mtc, idx) in outerMetrics" :key="mtc.name + mtc.type" :style="{ background: barColors[idx % 13], height: '15px', width: `${100 * mtc.value / outerTotal}%` }">
                 <Tooltip :content="`${mtc.name}: ${mtc.value}`" placement="top">
@@ -119,12 +102,14 @@
 <script>
 import CircleItem from "../components/circle-item.vue";
 import CircleRotate from "../components/circle-rotate.vue";
+import CircleLabel from "../components/circle-label.vue";
 
 export default {
   name: '',
   components: {
     CircleItem,
-    CircleRotate
+    CircleRotate,
+    CircleLabel
   },
   data() {
     return {
@@ -177,6 +162,7 @@ export default {
       return [
         {
           type: 'low',
+          label: this.$t('m_low'),
           icon: require('../assets/img/peichart_L.png'),
           value: this.low,
           total: this.total,
@@ -186,6 +172,7 @@ export default {
         },
         {
           type: 'mid',
+          label: this.$t('m_medium'),
           icon: require('../assets/img/peichart_M.png'),
           value: this.mid,
           total: this.total,
@@ -195,6 +182,7 @@ export default {
         },
         {
           type: 'high',
+          label: this.$t('m_high'),
           icon: require('../assets/img/peichart_H.png'),
           value: this.high,
           total: this.total,
@@ -478,63 +466,6 @@ export default {
       .bg {
         position: absolute;
         top: 0;
-      }
-
-      .cir {
-        position: absolute;
-        width: 16px;
-        height: 16px;
-        background: #FFFFFF;
-        border-radius: 50%;
-
-        .text {
-          .title {
-            font-size: 16px;
-            color: #404144;
-          }
-          .value {
-            font-size: 36px;
-            font-weight: 500;
-          }
-        }
-
-        &.low {
-          border: 2px solid #6ED06D;
-          transform: translate(-173px, -100px);
-
-          .text {
-            margin-left: -135px;
-
-            .value {
-              color: #6ED06D;
-            }
-          }
-        }
-        &.mid {
-          border: 2px solid #F19D38;
-          transform: translate(173px, -100px);
-
-          .text {
-            margin-left: 85px;
-
-            .value {
-              color: #F19D38;
-            }
-          }
-        }
-        &.high {
-          border: 2px solid #DA4E2B;
-          transform: translate(0, 200px);
-
-          .text {
-            margin-left: 10px;
-            margin-top: 65px;
-
-            .value {
-              color: #DA4E2B;
-            }
-          }
-        }
       }
 
       .metrics-bar {
