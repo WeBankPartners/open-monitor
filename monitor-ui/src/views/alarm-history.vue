@@ -62,7 +62,7 @@
           <div class="metics-metal">
             <div class="col">
               <div class="title">{{$t('todayAlarm')}}</div>
-              <img class="time-icon" src="../assets/img/icon_rltm.png" />
+              <img class="time-icon" src="../assets/img/icon_today.png" />
             </div>
           </div>
           <circle-item type="total" :title="$t('m_total')" :total="ttotal" :value="ttotal" />
