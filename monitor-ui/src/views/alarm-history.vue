@@ -84,7 +84,7 @@
 
             <div class="metrics-bar" v-show="outerMetrics && outerMetrics.length > 0">
               <div class="bar-item" v-for="(mtc, idx) in outerMetrics" :key="mtc.name + mtc.type" :style="{ background: barColors[idx % 13], height: '15px', width: `${100 * mtc.value / outerTotal}%` }">
-                <Tooltip :content="`${mtc.name}: ${mtc.value}`" placement="top">
+                <Tooltip :content="`${mtc.name}: ${mtc.value}`" placement="top" theme="light">
                   <div class="content">&nbsp;&nbsp;</div>
                 </Tooltip>
               </div>
