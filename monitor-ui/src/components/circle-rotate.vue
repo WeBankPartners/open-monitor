@@ -3,7 +3,7 @@
     class="circle-img"
     :width="imgWidth"
     :height="imgHeight"
-    :src="$attrs.icon"
+    :src="$attrs.data.icon"
     :style="{
       transform: transformStyle
     }"
@@ -20,14 +20,14 @@ export default {
   },
   computed: {
     imgWidth() {
-      const { value, total } = this.$attrs
+      const { value, total } = this.$attrs.data
       return this.L * ((parseInt(value, 10) / parseInt(total, 10)) || 0)
     },
     imgHeight() {
       return this.imgWidth
     },
     transformStyle() {
-      const { deg, tx, ty } = this.$attrs
+      const { deg, tx, ty } = this.$attrs.data
       return `rotate(${deg}) translate(${tx * this.imgWidth}px, ${ty * this.imgHeight}px)`
     }
   }

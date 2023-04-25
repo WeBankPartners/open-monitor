@@ -79,16 +79,8 @@
             <img class="bg" src="../assets/img/bgd_main_cube.png" />
             <img class="cube" width="640" height="640" src="../assets/img/the_cube.png" />
 
-            <circle-rotate
-              v-for="cr in circles"
-              :key="cr.type"
-              :icon="cr.icon"
-              :value="cr.value"
-              :total="cr.total"
-              :deg="cr.deg"
-              :tx="cr.tx"
-              :ty="cr.ty"
-            />
+            <circle-rotate v-for="cr in circles" :key="cr.type" :data="cr" />
+            
             <div class="cir low">
               <div class="text">
                 <div class="title">{{ $t('m_low') }}</div>
