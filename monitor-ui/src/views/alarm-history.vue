@@ -471,16 +471,6 @@ export default {
         position: absolute;
         top: 0;
       }
-      .low {
-        position: absolute;
-      }
-      .mid {
-        position: absolute;
-        transform: translate(86.6px, -50px);
-      }
-      .high {
-        position: absolute;
-      }
 
       .cir {
         position: absolute;
