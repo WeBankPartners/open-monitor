@@ -65,10 +65,10 @@
               <img class="time-icon" src="../assets/img/icon_rltm.png" />
             </div>
           </div>
-          <circle-item type="total" :title="$t('m_total')" :total="total" :value="total" />
-          <circle-item type="low" :title="$t('m_low')" :total="total" :value="low" />
-          <circle-item type="medium" :title="$t('m_medium')" :total="total" :value="mid" />
-          <circle-item type="high" :title="$t('m_high')" :total="total" :value="high" />
+          <circle-item type="total" :title="$t('m_total')" :total="ttotal" :value="ttotal" />
+          <circle-item type="low" :title="$t('m_low')" :total="ttotal" :value="tlow" />
+          <circle-item type="medium" :title="$t('m_medium')" :total="ttotal" :value="tmid" />
+          <circle-item type="high" :title="$t('m_high')" :total="ttotal" :value="thigh" />
         </div>
       </div>
     </div>
@@ -177,6 +177,9 @@ export default {
   computed: {
     total() {
       return this.low + this.mid + this.high
+    },
+    ttotal() {
+      return this.tlow + this.tmid + this.thigh
     },
     circles() {
       return [
