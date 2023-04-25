@@ -78,9 +78,30 @@
           <div class="left">
             <img class="bg" src="../assets/img/bgd_main_cube.png" />
             <img class="cube" width="640" height="640" src="../assets/img/the_cube.png" />
-            <img class="low" width="200" height="200" src="../assets/img/peichart_L.png" />
-            <img class="mid" width="200" height="200" src="../assets/img/peichart_M.png" />
-            <img class="high" width="200" height="200" src="../assets/img/peichart_H.png" />
+            <circle-rotate
+              :icon="lowCircle"
+              :value="low"
+              :total="total"
+              :deg="'-60deg'"
+              :tx="0"
+              :ty="-0.5"
+            />
+            <circle-rotate
+              :icon="midCircle"
+              :value="mid"
+              :total="total"
+              :deg="'60deg'"
+              :tx="0"
+              :ty="-0.5"
+            />
+            <circle-rotate
+              :icon="highCircle"
+              :value="high"
+              :total="total"
+              :deg="'0'"
+              :tx="0"
+              :ty="0.5"
+            />
             <div class="cir low">
               <div class="text">
                 <div class="title">{{ $t('m_low') }}</div>
@@ -118,11 +139,13 @@
 
 <script>
 import CircleItem from "../components/circle-item.vue";
+import CircleRotate from "../components/circle-rotate.vue";
 
 export default {
   name: '',
   components: {
-    CircleItem
+    CircleItem,
+    CircleRotate
   },
   data() {
     return {
@@ -152,6 +175,8 @@ export default {
       tmid: 0,
       thigh: 0,
 
+      full_len: 280,
+
       outerMetrics: [],
       outerTotal: 0,
       barColors: ['#DE4B7D', '#E57A50', '#D8CF6B', '#AFC8E4', '#002B55', '#EC6820', '#98B63F', '#0199D3', '#03519F', '#535557', '#60C7C4', '#A7D9BF', '#FFDB3B'],
@@ -159,13 +184,18 @@ export default {
       totalIcon: require('../assets/img/icon_alarm_ttl.png'),
       lowIcon: require('../assets/img/icon_alarm_L.png'),
       midIcon: require('../assets/img/icon_alarm_M.png'),
-      highIcon: require('../assets/img/icon_alarm_H.png')
+      highIcon: require('../assets/img/icon_alarm_H.png'),
+
+      lowCircle: require('../assets/img/peichart_L.png'),
+      midCircle: require('../assets/img/peichart_M.png'),
+      highCircle: require('../assets/img/peichart_H.png'),
     }
   },
   computed: {
     total() {
       return this.low + this.mid + this.high
-    }
+    },
+
   },
   mounted() {
     this.getTodayAlarm()
@@ -443,7 +473,6 @@ export default {
       }
       .low {
         position: absolute;
-        transform: translate(-86.6px, -50px);
       }
       .mid {
         position: absolute;
@@ -451,7 +480,6 @@ export default {
       }
       .high {
         position: absolute;
-        transform: translate(0, 100px);
       }
 
       .cir {
