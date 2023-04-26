@@ -115,7 +115,7 @@ export default {
     return {
       startDate: '',
       endDate: '',
-      filter:'start',
+      filter:'all',
       filterList: [
         {label: 'all', value: 'all'},
         {label: 'start', value: 'start'}
