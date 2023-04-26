@@ -1,37 +1,37 @@
 package funcs
 
 import (
-	"sync"
+	"context"
+	"encoding/json"
+	"golang.org/x/net/context/ctxhttp"
 	"io/ioutil"
 	"log"
-	"strings"
-	"time"
 	"net/http"
-	"encoding/json"
 	"strconv"
-	"golang.org/x/net/context/ctxhttp"
-	"context"
+	"strings"
+	"sync"
+	"time"
 )
 
 var (
-	sourceMap map[string]int
-	sourceLock sync.RWMutex
-	sourceRemoteMap  map[string][]string
-	sourceGuidLock sync.RWMutex
+	sourceMap       map[string]int
+	sourceLock      sync.RWMutex
+	sourceRemoteMap map[string][]string
+	sourceGuidLock  sync.RWMutex
 )
 
 type RemoteResponse struct {
-	Config  []*PingExportSourceObj  `json:"config"`
+	Config []*PingExportSourceObj `json:"config"`
 }
 
 type PingExportSourceObj struct {
-	Ip  string  `json:"ip"`
-	Guid  string  `json:"guid"`
+	Ip   string `json:"ip"`
+	Guid string `json:"guid"`
 }
 
-//Note: weight参数是为了在众多数据源中识别当前数据源的数据并更新,weight越小权重越高,各数据源之间的关系是并集
-//Note: 比如说remote的weight是3,file的weight是2,remote数据更新后不会覆盖file的数据
-func InitSourceList()  {
+// Note: weight参数是为了在众多数据源中识别当前数据源的数据并更新,weight越小权重越高,各数据源之间的关系是并集
+// Note: 比如说remote的weight是3,file的weight是2,remote数据更新后不会覆盖file的数据
+func InitSourceList() {
 	sourceLock = *new(sync.RWMutex)
 	sourceMap = make(map[string]int)
 	sourceRemoteMap = make(map[string][]string)
@@ -42,7 +42,7 @@ func InitSourceList()  {
 		if Config().Source.Const.Weight > 0 {
 			weight = Config().Source.Const.Weight
 		}
-		for _,v := range Config().Source.Const.Ips {
+		for _, v := range Config().Source.Const.Ips {
 			sourceMap[strings.TrimSpace(v)] = weight
 		}
 	}
@@ -51,18 +51,18 @@ func InitSourceList()  {
 		if Config().Source.File.Weight > 0 {
 			weight = Config().Source.File.Weight
 		}
-		ips,err := ioutil.ReadFile(Config().Source.File.Path)
+		ips, err := ioutil.ReadFile(Config().Source.File.Path)
 		if err != nil {
 			log.Printf("read file %s error: %v \n", Config().Source.File.Path, err)
-		}else{
+		} else {
 			var tmpSourceRemoteData []*PingExportSourceObj
-			for _,v := range strings.Split(string(ips), "\n") {
+			for _, v := range strings.Split(string(ips), "\n") {
 				tmpMessage := strings.TrimSpace(v)
 				if strings.Contains(tmpMessage, "^") {
 					tmpSplit := strings.Split(tmpMessage, "^")
 					sourceMap[tmpSplit[0]] = weight
-					tmpSourceRemoteData = append(tmpSourceRemoteData, &PingExportSourceObj{Ip:tmpSplit[0], Guid:tmpSplit[1]})
-				}else {
+					tmpSourceRemoteData = append(tmpSourceRemoteData, &PingExportSourceObj{Ip: tmpSplit[0], Guid: tmpSplit[1]})
+				} else {
 					sourceMap[tmpMessage] = weight
 				}
 			}
@@ -74,7 +74,7 @@ func InitSourceList()  {
 	}
 }
 
-func startRemoteCurl()  {
+func startRemoteCurl() {
 	interval := 120
 	if Config().Source.Remote.Interval > 0 {
 		interval = Config().Source.Remote.Interval
@@ -87,11 +87,10 @@ func startRemoteCurl()  {
 	if Config().Source.Remote.GroupTag != "" {
 		url = url + "?" + Config().Source.Remote.GroupTag
 	}
-	t := time.NewTicker(time.Second*time.Duration(interval)).C
+	t := time.NewTicker(time.Second * time.Duration(interval)).C
 	for {
-		<- t
-		req,_ := http.NewRequest(http.MethodGet, url, strings.NewReader(""))
-		for _,v := range Config().Source.Remote.Header {
+		req, _ := http.NewRequest(http.MethodGet, url, strings.NewReader(""))
+		for _, v := range Config().Source.Remote.Header {
 			if strings.Contains(v, "=") {
 				tmpSplit := strings.Split(v, "=")
 				if len(tmpSplit) > 1 {
@@ -99,22 +98,22 @@ func startRemoteCurl()  {
 				}
 			}
 		}
-		resp,err := ctxhttp.Do(context.Background(), http.DefaultClient, req)
+		resp, err := ctxhttp.Do(context.Background(), http.DefaultClient, req)
 		if err != nil {
 			log.Printf("curl %s fail,error: %v \n", url, err)
-		}else{
-			b,_ := ioutil.ReadAll(resp.Body)
+		} else {
+			b, _ := ioutil.ReadAll(resp.Body)
 			if resp.StatusCode >= 300 {
 				log.Printf("curl %s fail,resp code %d %s \n", url, resp.StatusCode, string(b))
-			}else{
+			} else {
 				var responseData RemoteResponse
 				err = json.Unmarshal(b, &responseData)
 				if err != nil {
 					log.Printf("curl %s fail,body unmarshal fail: %s", url, err)
-				}else{
+				} else {
 					var tmpIps []string
 					UpdateSourceRemoteData(responseData.Config)
-					for _,vv := range responseData.Config {
+					for _, vv := range responseData.Config {
 						tmpIps = append(tmpIps, vv.Ip)
 					}
 					UpdateIpList(tmpIps, weight)
@@ -122,16 +121,17 @@ func startRemoteCurl()  {
 			}
 			resp.Body.Close()
 		}
+		<-t
 	}
 }
 
-func UpdateIpList(ips []string,sourceType int) {
+func UpdateIpList(ips []string, sourceType int) {
 	if len(ips) == 0 {
 		return
 	}
 	sourceLock.Lock()
-	for _,v := range ips {
-		if vv,b := sourceMap[strings.TrimSpace(v)];b {
+	for _, v := range ips {
+		if vv, b := sourceMap[strings.TrimSpace(v)]; b {
 			if vv <= sourceType {
 				continue
 			}
@@ -139,10 +139,10 @@ func UpdateIpList(ips []string,sourceType int) {
 		sourceMap[strings.TrimSpace(v)] = sourceType
 	}
 	var tmpList []string
-	for k,v := range sourceMap {
+	for k, v := range sourceMap {
 		if v == sourceType {
 			alive := false
-			for _,vv := range ips {
+			for _, vv := range ips {
 				if k == vv {
 					alive = true
 					break
@@ -153,21 +153,21 @@ func UpdateIpList(ips []string,sourceType int) {
 			}
 		}
 	}
-	for _,v := range tmpList {
+	for _, v := range tmpList {
 		delete(sourceMap, v)
 	}
 	sourceLock.Unlock()
 }
 
-func UpdateSourceRemoteData(input []*PingExportSourceObj)  {
+func UpdateSourceRemoteData(input []*PingExportSourceObj) {
 	if len(input) == 0 {
 		return
 	}
 	sourceGuidLock.Lock()
-	for _,v := range input {
-		if _,b := sourceRemoteMap[v.Ip];b {
+	for _, v := range input {
+		if _, b := sourceRemoteMap[v.Ip]; b {
 			existFlag := false
-			for _,vv := range sourceRemoteMap[v.Ip] {
+			for _, vv := range sourceRemoteMap[v.Ip] {
 				if vv == v.Guid {
 					existFlag = true
 					break
@@ -176,7 +176,7 @@ func UpdateSourceRemoteData(input []*PingExportSourceObj)  {
 			if !existFlag {
 				sourceRemoteMap[v.Ip] = append(sourceRemoteMap[v.Ip], v.Guid)
 			}
-		}else{
+		} else {
 			sourceRemoteMap[v.Ip] = []string{v.Guid}
 		}
 	}
@@ -186,7 +186,7 @@ func UpdateSourceRemoteData(input []*PingExportSourceObj)  {
 func GetIpList() []string {
 	var tmpList []string
 	sourceLock.RLock()
-	for k,_ := range sourceMap {
+	for k, _ := range sourceMap {
 		if k == "" || strings.Contains(k, ":") || strings.Contains(k, "http") {
 			continue
 		}
@@ -199,13 +199,13 @@ func GetIpList() []string {
 func GetTelnetList() []*TelnetObj {
 	var tmpList []*TelnetObj
 	sourceLock.RLock()
-	for k,_ := range sourceMap {
+	for k, _ := range sourceMap {
 		if strings.Contains(k, ":") && !strings.Contains(k, "http") {
 			tmpSplit := strings.Split(k, ":")
 			if len(tmpSplit) > 1 {
-				i,_ := strconv.Atoi(tmpSplit[1])
+				i, _ := strconv.Atoi(tmpSplit[1])
 				if i > 0 {
-					tmpList = append(tmpList, &TelnetObj{Ip:tmpSplit[0], Port:i})
+					tmpList = append(tmpList, &TelnetObj{Ip: tmpSplit[0], Port: i})
 				}
 			}
 		}
@@ -217,7 +217,7 @@ func GetTelnetList() []*TelnetObj {
 func GetHttpCheckList() []*HttpCheckObj {
 	var tmpHttpCheckList []*HttpCheckObj
 	sourceLock.RLock()
-	for k,_ := range sourceMap {
+	for k, _ := range sourceMap {
 		if strings.Contains(k, "http") {
 			tmpMethod := "GET"
 			tmpUrl := k
@@ -229,7 +229,7 @@ func GetHttpCheckList() []*HttpCheckObj {
 				log.Printf("get http check list,url:%s is illegal", tmpUrl)
 				continue
 			}
-			tmpHttpCheckList = append(tmpHttpCheckList, &HttpCheckObj{Method:tmpMethod, Url:tmpUrl})
+			tmpHttpCheckList = append(tmpHttpCheckList, &HttpCheckObj{Method: tmpMethod, Url: tmpUrl})
 		}
 	}
 	sourceLock.RUnlock()
