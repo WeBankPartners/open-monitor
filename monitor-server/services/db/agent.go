@@ -592,35 +592,10 @@ func UpdateEndpointHttp(param []*m.EndpointHttpTable) error {
 
 func GetPingExporterSource() []*m.PingExportSourceObj {
 	result := []*m.PingExportSourceObj{}
-	pingMetric := "ping_alive"
-	var tplTables []*m.TplTable
-	x.SQL(fmt.Sprintf("SELECT t2.id,t2.grp_id,t2.endpoint_id FROM strategy t1 LEFT JOIN tpl t2 ON t1.tpl_id=t2.id WHERE t1.metric='%s'", pingMetric)).Find(&tplTables)
-	if len(tplTables) > 0 {
-		var grpIds, endpointIds string
-		var endpointTable []*m.EndpointTable
-		for _, v := range tplTables {
-			if v.GrpId > 0 {
-				grpIds += fmt.Sprintf("%d,", v.GrpId)
-			}
-			if v.EndpointId > 0 {
-				endpointIds += fmt.Sprintf("%d,", v.EndpointId)
-			}
-		}
-		if grpIds != "" {
-			grpIds = grpIds[:len(grpIds)-1]
-			x.SQL(fmt.Sprintf("SELECT t2.guid,t2.ip FROM grp_endpoint t1 LEFT JOIN endpoint t2 ON t1.endpoint_id=t2.id WHERE t1.grp_id IN (%s) AND t2.address_agent=''", grpIds)).Find(&endpointTable)
-			for _, v := range endpointTable {
-				result = append(result, &m.PingExportSourceObj{Ip: v.Ip, Guid: v.Guid})
-			}
-		}
-		if endpointIds != "" {
-			endpointTable = []*m.EndpointTable{}
-			endpointIds = endpointIds[:len(endpointIds)-1]
-			x.SQL(fmt.Sprintf("SELECT guid,ip FROM endpoint WHERE id IN (%s) AND address_agent=''", endpointIds)).Find(&endpointTable)
-			for _, v := range endpointTable {
-				result = append(result, &m.PingExportSourceObj{Ip: v.Ip, Guid: v.Guid})
-			}
-		}
+	var endpointTable []*m.EndpointTable
+	x.SQL("select guid,ip from endpoint where address_agent='' and guid in (select endpoint from endpoint_group_rel where endpoint_group in (select endpoint_group from alarm_strategy where metric like 'ping_alive%'))").Find(&endpointTable)
+	for _, v := range endpointTable {
+		result = append(result, &m.PingExportSourceObj{Ip: v.Ip, Guid: v.Guid})
 	}
 	var telnetQuery []*m.TelnetSourceQuery
 	x.SQL("SELECT t2.guid,t1.port,t2.ip FROM endpoint_telnet t1 JOIN endpoint t2 ON t1.endpoint_guid=t2.guid WHERE t2.address_agent=''").Find(&telnetQuery)
