@@ -20,80 +20,81 @@ type TransferConfig struct {
 }
 
 type OpenFalconConfig struct {
-	Enabled  bool     `json:"enabled"`
-	Transfer      *TransferConfig   `json:"transfer"`
+	Enabled  bool            `json:"enabled"`
+	Transfer *TransferConfig `json:"transfer"`
 }
 
 type PrometheusCOnfig struct {
-	Enabled  bool     `json:"enabled"`
-	Port  string  `json:"port"`
-	Path  string  `json:"path"`
+	Enabled bool   `json:"enabled"`
+	Port    string `json:"port"`
+	Path    string `json:"path"`
 }
 
 type SourceConfig struct {
 	Const  SourceConstConfig  `json:"const"`
-	File  SourceFileConfig  `json:"file"`
-	Remote  SourceRemoteConfig  `json:"remote"`
-	Listen  SourceListenConfig  `json:"listen"`
+	File   SourceFileConfig   `json:"file"`
+	Remote SourceRemoteConfig `json:"remote"`
+	Listen SourceListenConfig `json:"listen"`
 }
 
 type SourceConstConfig struct {
-	Enabled  bool     `json:"enabled"`
-	Ips  []string  `json:"ips"`
-	Weight  int  `json:"weight"`
+	Enabled bool     `json:"enabled"`
+	Ips     []string `json:"ips"`
+	Weight  int      `json:"weight"`
 }
 
 type SourceFileConfig struct {
-	Enabled  bool     `json:"enabled"`
-	Path  string  `json:"path"`
-	Weight  int  `json:"weight"`
+	Enabled bool   `json:"enabled"`
+	Path    string `json:"path"`
+	Weight  int    `json:"weight"`
 }
 
-type SourceRemoteConfig  struct {
+type SourceRemoteConfig struct {
 	Enabled  bool     `json:"enabled"`
-	Header  []string  `json:"header"`
-	GroupTag  string  `json:"group_tag"`
-	Url  string  `json:"url"`
-	Interval  int  `json:"interval"`
-	Weight  int  `json:"weight"`
+	Header   []string `json:"header"`
+	GroupTag string   `json:"group_tag"`
+	Url      string   `json:"url"`
+	Interval int      `json:"interval"`
+	Weight   int      `json:"weight"`
 }
 
-type SourceListenConfig  struct {
-	Enabled  bool     `json:"enabled"`
-	Port  string  `json:"port"`
-	Path  string  `json:"path"`
-	Weight  int  `json:"weight"`
+type SourceListenConfig struct {
+	Enabled bool   `json:"enabled"`
+	Port    string `json:"port"`
+	Path    string `json:"path"`
+	Weight  int    `json:"weight"`
 }
 
-type MetricConfig  struct {
-	Ping  string  `json:"ping"`
-	PingUseTime  string  `json:"ping_use_time"`
-	PingCountNum  string  `json:"ping_count_num"`
-	PingCountSuccess  string  `json:"ping_count_success"`
-	PingCountFail  string  `json:"ping_count_fail"`
-	Telnet  string  `json:"telnet"`
-	TelnetCountNum  string  `json:"telnet_count_num"`
-	TelnetCountSuccess  string  `json:"telnet_count_success"`
-	TelnetCountFail  string  `json:"telnet_count_fail"`
-	HttpCheck  string  `json:"http_check"`
-	HttpCheckCountNum  string  `json:"http_check_count_num"`
-	HttpCheckCountSuccess  string  `json:"http_check_count_success"`
-	HttpCheckCountFail  string  `json:"http_check_count_fail"`
+type MetricConfig struct {
+	Ping                  string `json:"ping"`
+	PingUseTime           string `json:"ping_use_time"`
+	PingCountNum          string `json:"ping_count_num"`
+	PingCountSuccess      string `json:"ping_count_success"`
+	PingCountFail         string `json:"ping_count_fail"`
+	Telnet                string `json:"telnet"`
+	TelnetCountNum        string `json:"telnet_count_num"`
+	TelnetCountSuccess    string `json:"telnet_count_success"`
+	TelnetCountFail       string `json:"telnet_count_fail"`
+	HttpCheck             string `json:"http_check"`
+	HttpCheckCountNum     string `json:"http_check_count_num"`
+	HttpCheckCountSuccess string `json:"http_check_count_success"`
+	HttpCheckCountFail    string `json:"http_check_count_fail"`
+	PingLossPercent       string `json:"ping_loss_percent"`
 }
 
 type GlobalConfig struct {
-	Debug         bool              `json:"debug"`
-	Interval      int               `json:"interval"`
-	PingEnable    bool              `json:"ping_enable"`
-	TelnetEnable  bool              `json:"telnet_enable"`
-	HttpCheckEnable  bool           `json:"http_check_enable"`
-	HttpProxyEnable  bool           `json:"http_proxy_enable"`
-	HttpProxyAddress  string           `json:"http_proxy"`
-	OpenFalcon    OpenFalconConfig  `json:"open-falcon"`
-	Prometheus    PrometheusCOnfig  `json:"prometheus"`
-	Source      SourceConfig    `json:"source"`
-	Metrics       MetricConfig      `json:"metrics"`
-	HttpCheckTimeout  int           `json:"http_check_timeout"`
+	Debug            bool             `json:"debug"`
+	Interval         int              `json:"interval"`
+	PingEnable       bool             `json:"ping_enable"`
+	TelnetEnable     bool             `json:"telnet_enable"`
+	HttpCheckEnable  bool             `json:"http_check_enable"`
+	HttpProxyEnable  bool             `json:"http_proxy_enable"`
+	HttpProxyAddress string           `json:"http_proxy"`
+	OpenFalcon       OpenFalconConfig `json:"open-falcon"`
+	Prometheus       PrometheusCOnfig `json:"prometheus"`
+	Source           SourceConfig     `json:"source"`
+	Metrics          MetricConfig     `json:"metrics"`
+	HttpCheckTimeout int              `json:"http_check_timeout"`
 }
 
 var (
@@ -117,7 +118,7 @@ func ParseConfig(cfg string) error {
 		log.Fatalln("config file not found")
 		return err
 	}
-	b,err := ioutil.ReadFile(cfg)
+	b, err := ioutil.ReadFile(cfg)
 	if err != nil {
 		log.Printf("read file %s error %v \n", cfg, err)
 		return err
@@ -136,7 +137,7 @@ func ParseConfig(cfg string) error {
 	return nil
 }
 
-func Uuid() (string) {
+func Uuid() string {
 	commandName := "/usr/sbin/dmidecode"
 	params := []string{"|", "grep UUID"}
 	cmd := exec.Command(commandName, params...)
