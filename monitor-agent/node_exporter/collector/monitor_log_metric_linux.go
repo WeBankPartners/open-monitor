@@ -500,9 +500,9 @@ func calcLogMetricData() {
 				customFetchString := <-metricObj.DataChannel
 				//tmpMetricObj := logMetricDisplayObj{Metric: metricObj.Metric, Path: lmObj.Path, Agg: metricObj.AggType, TEndpoint: lmObj.TargetEndpoint, ServiceGroup: lmObj.ServiceGroup, TagsString: "", Step: metricObj.Step, ValueObj: logMetricValueObj{Sum: 0, Max: 0, Min: 0, Count: 0}}
 				// check if tag match
-				tmpTagString := getLogMetricTags(customFetchString, metricObj.TagConfig)
+				tmpTagString := getLogMetricTags(customFetchString, metricObj.TagConfig, metricObj.StringMap)
 				tmpMetricKey := fmt.Sprintf("%s^%s^%s^%s", lmObj.Path, metricObj.Metric, metricObj.AggType, tmpTagString)
-				metricValueFloat := transLogMetricStringMapValue(metricObj.StringMap, customFetchString)
+				_, metricValueFloat := transLogMetricStringMapValue(metricObj.StringMap, customFetchString)
 				if valueExistObj, keyExist := valueCountMap[tmpMetricKey]; keyExist {
 					valueExistObj.ValueObj.Sum += metricValueFloat
 					valueExistObj.ValueObj.Count++
@@ -603,25 +603,27 @@ func buildLogMetricDisplayMetrics(valueCountMap, existMetricMap map[string]*logM
 	return tmpLogMetricMetrics
 }
 
-func transLogMetricStringMapValue(config []*logMetricStringMapNeObj, input string) (output float64) {
+func transLogMetricStringMapValue(config []*logMetricStringMapNeObj, input string) (matchFlag bool, output float64) {
 	if len(config) == 0 {
 		output, _ = strconv.ParseFloat(input, 64)
-		return output
+		return
 	}
 	for _, v := range config {
 		if !v.RegEnable {
 			if v.StringValue == input {
+				matchFlag = true
 				output = v.IntValue
 				break
 			}
 			continue
 		}
 		if len(v.Regexp.FindIndex([]byte(input), 0)) > 0 {
+			matchFlag = true
 			output = v.IntValue
 			break
 		}
 	}
-	return output
+	return
 }
 
 func getLogMetricJsonMapValue(input map[string]interface{}, smConfig []*logMetricStringMapNeObj) (output map[string]float64) {
@@ -634,7 +636,7 @@ func getLogMetricJsonMapValue(input map[string]interface{}, smConfig []*logMetri
 		typeString := reflect.TypeOf(v).String()
 		if strings.Contains(typeString, "string") {
 			valueString := fmt.Sprintf("%s", v)
-			newValue = transLogMetricStringMapValue(smConfig, valueString)
+			_, newValue = transLogMetricStringMapValue(smConfig, valueString)
 		} else if strings.Contains(typeString, "int") {
 			newValue, _ = strconv.ParseFloat(fmt.Sprintf("%d", v), 64)
 		} else if strings.Contains(typeString, "float") {
@@ -659,7 +661,7 @@ func getLogMetricJsonMapTags(input map[string]interface{}, tagKey []string) (tag
 	return tagString
 }
 
-func getLogMetricTags(lineText string, tagConfigList []*LogMetricConfigTag) (tagString string) {
+func getLogMetricTags(lineText string, tagConfigList []*LogMetricConfigTag, stringMap []*logMetricStringMapNeObj) (tagString string) {
 	if len(tagConfigList) == 0 {
 		return
 	}
@@ -670,8 +672,14 @@ func getLogMetricTags(lineText string, tagConfigList []*LogMetricConfigTag) (tag
 		}
 		fetchList := rule.RegExp.FindStringSubmatch(lineText)
 		if len(fetchList) > 1 {
-			if fetchList[1] != "" {
-				tagList = append(tagList, fmt.Sprintf("%s=%s", rule.Key, fetchList[1]))
+			tmpFetchString := fetchList[1]
+			if tmpFetchString != "" {
+				if len(stringMap) > 0 {
+					if tmpMatchFlag, tmpMatchData := transLogMetricStringMapValue(stringMap, tmpFetchString); tmpMatchFlag {
+						tmpFetchString = fmt.Sprintf("%.0f", tmpMatchData)
+					}
+				}
+				tagList = append(tagList, fmt.Sprintf("%s=%s", rule.Key, tmpFetchString))
 			}
 		}
 	}

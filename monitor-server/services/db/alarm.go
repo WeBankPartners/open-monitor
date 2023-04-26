@@ -1063,22 +1063,33 @@ func GetOpenAlarm(param m.CustomAlarmQueryParam) []*m.AlarmProblemQuery {
 	return result
 }
 
-func CloseOpenAlarm(id int) error {
-	var query, secQuery []*m.OpenAlarmObj
-	x.SQL("SELECT * FROM alarm_custom WHERE id=?", id).Find(&query)
-	if len(query) == 0 {
-		return fmt.Errorf("alarm id %d cat not find", id)
+func CloseOpenAlarm(param m.AlarmCloseParam) error {
+	var query []*m.OpenAlarmObj
+	if strings.ToLower(param.Metric) == "custom" && param.Id == 0 {
+		x.SQL("SELECT * FROM alarm_custom WHERE closed=0").Find(&query)
+	} else {
+		x.SQL("SELECT * FROM alarm_custom WHERE id=?", param.Id).Find(&query)
 	}
-	err := x.SQL(fmt.Sprintf("SELECT id FROM alarm_custom WHERE alert_ip='%s' AND alert_title='%s' AND alert_obj='%s'", query[0].AlertIp, query[0].AlertTitle, query[0].AlertObj)).Find(&secQuery)
-	if len(secQuery) > 0 {
-		tmpIds := ""
-		for _, vv := range secQuery {
-			tmpIds += fmt.Sprintf("%d,", vv.Id)
+	if len(query) == 0 {
+		return fmt.Errorf("alarm id %d cat not find", param.Id)
+	}
+	var err error
+	for _, v := range query {
+		subQueryList := []*m.OpenAlarmObj{}
+		err = x.SQL("SELECT id FROM alarm_custom WHERE alert_ip=? AND alert_title=? AND alert_obj=?", v.AlertIp, v.AlertTitle, v.AlertObj).Find(&subQueryList)
+		if len(subQueryList) > 0 {
+			tmpIds := ""
+			for _, vv := range subQueryList {
+				tmpIds += fmt.Sprintf("%d,", vv.Id)
+			}
+			tmpIds = tmpIds[:len(tmpIds)-1]
+			_, err = x.Exec(fmt.Sprintf("UPDATE alarm_custom SET closed=1,closed_at=NOW() WHERE id in (%s)", tmpIds))
+			if err != nil {
+				log.Logger.Error("Update custom alarm close fail", log.String("ids", tmpIds), log.Error(err))
+			}
 		}
-		tmpIds = tmpIds[:len(tmpIds)-1]
-		_, err = x.Exec(fmt.Sprintf("UPDATE alarm_custom SET closed=1,closed_at=NOW() WHERE id in (%s)", tmpIds))
 		if err != nil {
-			log.Logger.Error("Update custom alarm close fail", log.String("ids", tmpIds), log.Error(err))
+			break
 		}
 	}
 	return err
