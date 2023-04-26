@@ -14,7 +14,59 @@
             </div>
           </div>
         </Modal>
-        <div class="flex-container">
+        <div class="data-stats-container" v-if="showGraph">
+          <div class="top-stats-container">
+            <div class="left">
+              <div class="metics-metal">
+                <div class="col">
+                  <div class="title">{{$t('realTimeAlarm')}}</div>
+                  <img class="time-icon" src="../assets/img/icon_rltm.png" />
+                </div>
+              </div>
+              <circle-item type="total" :title="$t('m_total')" :total="total" :value="total" :icon="totalIcon" />
+              <circle-item type="low" :title="$t('m_low')" :total="total" :value="low" :icon="lowIcon" />
+              <circle-item type="medium" :title="$t('m_medium')" :total="total" :value="mid" :icon="midIcon" />
+              <circle-item type="high" :title="$t('m_high')" :total="total" :value="high" :icon="highIcon" />
+            </div>
+            <div class="right">
+              <div class="metics-metal">
+                <div class="col">
+                  <div class="title">{{$t('todayAlarm')}}</div>
+                  <img class="time-icon" src="../assets/img/icon_today.png" />
+                </div>
+              </div>
+              <circle-item type="total" :title="$t('m_total')" :total="ttotal" :value="ttotal" />
+              <circle-item type="low" :title="$t('m_low')" :total="ttotal" :value="tlow" />
+              <circle-item type="medium" :title="$t('m_medium')" :total="ttotal" :value="tmid" />
+              <circle-item type="high" :title="$t('m_high')" :total="ttotal" :value="thigh" />
+            </div>
+          </div>
+        </div>
+        <div class="data-stats-container" v-if="showGraph">
+          <transition name="slide-fade">
+            <div class="content-stats-container">
+              <div class="left">
+                <img class="bg" src="../assets/img/bgd_main_cube.png" />
+                <img class="cube" width="640" height="640" src="../assets/img/the_cube.png" />
+
+                <circle-label v-for="cr in circles" :key="cr.type" :data="cr" />
+                <circle-rotate v-for="cr in circles" :key="cr.label" :data="cr" />
+
+                <div class="metrics-bar" v-show="outerMetrics && outerMetrics.length > 0">
+                  <div class="bar-item" v-for="(mtc, idx) in outerMetrics" :key="mtc.name + mtc.type" :style="{ background: barColors[idx % 13], height: '15px', width: `${100 * mtc.value / outerTotal}%` }">
+                    <Tooltip :content="`${mtc.name}: ${mtc.value}`" placement="top" theme="light">
+                      <div class="content">&nbsp;&nbsp;</div>
+                    </Tooltip>
+                  </div>
+                </div>
+              </div>
+              <div class="right">
+                
+              </div>
+            </div>
+          </transition>
+        </div>
+        <!-- <div class="flex-container">
           <transition name="slide-fade">
             <div class="flex-item" v-show="showGraph">
               <div>
@@ -123,7 +175,7 @@
               <Page :total="paginationInfo.total" @on-change="pageIndexChange" @on-page-size-change="pageSizeChange" show-elevator show-sizer show-total />
             </div>
           </div>
-        </div>
+        </div> -->
       </TabPane>
       <TabPane :label="$t('classic_mode')" name="classic">
         <ClassicAlarm ref="classicAlarm"></ClassicAlarm>
@@ -134,15 +186,23 @@
 </template>
 
 <script>
-import echarts from 'echarts'
+import CircleItem from "../components/circle-item.vue"
+import CircleRotate from "../components/circle-rotate.vue"
+import CircleLabel from "../components/circle-label.vue"
 import ClassicAlarm from '@/views/alarm-management-classic'
+
 export default {
   name: '',
+  components: {
+    CircleItem,
+    CircleRotate,
+    CircleLabel,
+    ClassicAlarm
+  },
   data() {
     return {
       showGraph: true,
       alramEmpty: true,
-      myChart: null,
       isShowWarning: false,
       interval: null,
       timeForDataAchieve: null,
@@ -150,11 +210,24 @@ export default {
       filtersForShow: [],
       actveAlarmIndex: null,
       resultData: [],
+      outerMetrics: [],
       selectedData: '', // 存放选中数据
 
       low: 0,
       mid: 0,
       high: 0,
+
+      tlow: 0,
+      tmid: 0,
+      thigh: 0,
+
+      outerTotal: 0,
+      barColors: ['#DE4B7D', '#E57A50', '#D8CF6B', '#AFC8E4', '#002B55', '#EC6820', '#98B63F', '#0199D3', '#03519F', '#535557', '#60C7C4', '#A7D9BF', '#FFDB3B'],
+
+      totalIcon: require('../assets/img/icon_alarm_ttl.png'),
+      lowIcon: require('../assets/img/icon_alarm_L.png'),
+      midIcon: require('../assets/img/icon_alarm_M.png'),
+      highIcon: require('../assets/img/icon_alarm_H.png'),
 
       modelConfig: {
         modalId: 'remark_Modal',
@@ -178,8 +251,50 @@ export default {
       isBatch: false
     }
   },
+  computed: {
+    total() {
+      return this.low + this.mid + this.high
+    },
+    ttotal() {
+      return this.tlow + this.tmid + this.thigh
+    },
+    circles() {
+      return [
+        {
+          type: 'low',
+          label: this.$t('m_low'),
+          icon: require('../assets/img/peichart_L.png'),
+          value: this.low,
+          total: this.total,
+          deg: '-60deg',
+          tx: 0,
+          ty: -0.5
+        },
+        {
+          type: 'mid',
+          label: this.$t('m_medium'),
+          icon: require('../assets/img/peichart_M.png'),
+          value: this.mid,
+          total: this.total,
+          deg: '60deg',
+          tx: 0,
+          ty: -0.5
+        },
+        {
+          type: 'high',
+          label: this.$t('m_high'),
+          icon: require('../assets/img/peichart_H.png'),
+          value: this.high,
+          total: this.total,
+          deg: '0',
+          tx: 0,
+          ty: 0.5
+        }
+      ]
+    }
+  },
   mounted(){
-    this.myChart = echarts.init(document.getElementById('elId'))
+    this.getTodayAlarm()
     this.getAlarm()
     this.interval = setInterval(()=>{
       this.getAlarm()
@@ -189,6 +304,20 @@ export default {
     })
   },
   methods: {
+    getTodayAlarm() {
+      const start = new Date(new Date().toLocaleDateString()).getTime();
+      const end = new Date(new Date().toLocaleDateString()).getTime() + 24 * 60 * 60 * 1000 - 1;
+      const params = {
+        start: parseInt(start / 1000, 10),
+        end: parseInt(end / 1000, 10),
+        filter: 'start'
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/alarm/problem/history', params, (responseData) => {
+        this.tlow = responseData.low
+        this.tmid = responseData.mid
+        this.thigh = responseData.high
+      })
+    },
     remarkModal (item) {
       this.modelConfig.addRow = {
         id: item.id,
@@ -271,7 +400,6 @@ export default {
       } 
     },
     showSunburst (originData) {
-      this.myChart.off()
       let legendData = []
       let pieInner = []
       if (originData.high) {
@@ -332,67 +460,9 @@ export default {
         set.add(item.name)
       })
       pieOuter = metricInfo.sort(this.compare('type'))
-      let option = {
-        backgroundColor: '#ffffff',
-          tooltip: {
-              trigger: 'item',
-              formatter: '{b}: {c}'
-          },
-          legend: {
-            bottom: '15%',
-            selectedMode: false,
-            data: legendData
-          },
-          series: [
-              {
-                  type: 'pie',
-                  selectedMode: 'single',
-                  radius: [0, '30%'],
-                  center: ['50%', '40%'],
-                  label: {
-                    formatter: '{b}:{c}',
-                    position: 'inner',
-                    rich: {
-                      b: {
-                        fontSize: 16,
-                        lineHeight: 33
-                      }
-                    }
-                  },
-                  labelLine: {
-                      show: false
-                  },
-                  data: pieInner
-              },
-              {
-                  type: 'pie',
-                  radius: ['40%', '55%'],
-                  center: ['50%', '40%'],
-                  label: {
-                      formatter: ' {b|{b}:}{c} ',
-                      backgroundColor: '#ffffff',
-                      borderColor: '#2d8cf0',
-                      borderWidth: 1,
-                      borderRadius: 4,
-                      position: 'outer',
-                      alignTo: 'edge',
-                      margin: 8,
-                      rich: {
-                        b: {
-                          fontSize: 12,
-                          lineHeight: 28
-                        }
-                      }
-                  },
-                  data: pieOuter
-              }
-          ]
-      }
 
-      this.myChart.setOption(option)
-      this.myChart.on('click', params => {
-        this.addParams(params.data.filterType, params.data.name)
-      })
+      this.outerMetrics = pieOuter
+      this.outerTotal = pieOuter.reduce((n, m) => (n + m.value), 0)
     },
     addParams (key, value) {
       this.filters[key] = value
@@ -442,9 +512,6 @@ export default {
     alarmHistory () {
       this.$router.push({name: 'alarmHistory'})
     }
-  },
-  components: {
-    ClassicAlarm
   }
 }
 </script>
@@ -462,6 +529,121 @@ export default {
   padding:50px;
   color: #2d8cf0;
 }
+
+.data-stats-container {
+  
+  .top-stats-container {
+    width: 100%;
+    height: 90px;
+    background: #FFFFFF;
+    border: 2px solid #F2F3F7;
+    border-radius: 4px;
+    display: flex;
+
+    .metics-metal {
+      height: 100%;
+      background: linear-gradient(90deg, #F5F8FE 0%, rgba(234,242,253,0) 100%);
+      
+      .col {
+        position: relative;
+        width: 180px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
+
+        .title {
+          font-size: 16px;
+        }
+
+        .time-icon {
+          width: 32px;
+          height: 32px;
+          margin-top: 14px;
+        }
+
+        &::after {
+          content: "";
+          position: absolute;
+          width: 2px;
+          height: 63px;
+          right: 0;
+          background: #F2F3F7;
+        }
+      }
+    }
+
+    .left {
+      flex-basis: 60%;
+      height: 100%;
+      display: flex;
+    }
+    .right {
+      flex-basis: 40%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+  }
+
+  .content-stats-container {
+    width: 100%;
+    display: flex;
+    margin: 12px 0;
+
+    .left {
+      position: relative;
+      flex-basis: 60%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding-top: 53.5px;
+      padding-bottom: 94px;
+      .bg {
+        position: absolute;
+        top: 0;
+      }
+
+      .metrics-bar {
+        position: absolute;
+        top: 719px;
+        width: 750px;
+        height: 31px;
+        background: #FFFFFF;
+        box-shadow: 0px 8px 15px 0px rgba(17,110,249,0.15);
+        border-radius: 15px;
+        display: flex;
+        padding: 8px 10px;
+
+        .bar-item {
+          height: 15px;
+
+          /deep/ .ivu-tooltip {
+            width: 100%;
+          }
+
+          .content {
+            width: 100%;
+          }
+        }
+
+        .bar-item:nth-child(1) {
+          border-radius: 7px 0 0 7px;
+        }
+        .bar-item:last-child {
+          border-radius: 0 7px 7px 0;
+        }
+      }
+    }
+    .right {
+      flex-basis: 40%;
+      height: 100%;
+    }
+  }
+}
+
 .flex-container {
   display: flex;
 }
