@@ -571,7 +571,7 @@ func CloseAlarm(c *gin.Context) {
 		return
 	}
 	if param.Custom {
-		err = db.CloseOpenAlarm(param.Id)
+		err = db.CloseOpenAlarm(param)
 	} else {
 		err = db.CloseAlarm(param)
 	}
