@@ -4,23 +4,23 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"github.com/WeBankPartners/open-monitor/monitor-agent/ping_exporter/funcs"
 	"net"
 	"time"
-	"github.com/WeBankPartners/open-monitor/monitor-agent/ping_exporter/funcs"
 )
 
 // icmp报头,8byte
 type ICMP struct {
-	Type        uint8	// 类型,8是请求,0是应答
-	Code        uint8	// 代码,它与类型字段一起共同标识了ICMP报文的详细类型,比如说类型为3表示不可达,此时代码为0表示网络不可达,为1表示满意主机不可达等
-	Checksum    uint16	// 校验和,对包括ICMP报文数据部分在内的整个ICMP数据报的校验和,以检验报文在传输过程中是否出现了差错,和IP报头中校验和计算方法一样
-	Identifier  uint16	// 标识,用于标识本ICMP进程,但仅适用于回显请求和应答ICMP报文,对于目标不可达和超时,该字段为0
-	SequenceNum uint16	// 序列号
+	Type        uint8  // 类型,8是请求,0是应答
+	Code        uint8  // 代码,它与类型字段一起共同标识了ICMP报文的详细类型,比如说类型为3表示不可达,此时代码为0表示网络不可达,为1表示满意主机不可达等
+	Checksum    uint16 // 校验和,对包括ICMP报文数据部分在内的整个ICMP数据报的校验和,以检验报文在传输过程中是否出现了差错,和IP报头中校验和计算方法一样
+	Identifier  uint16 // 标识,用于标识本ICMP进程,但仅适用于回显请求和应答ICMP报文,对于目标不可达和超时,该字段为0
+	SequenceNum uint16 // 序列号
 }
 
 var (
-	icmpData  ICMP
-	icmpBytes  []byte
+	icmpData     ICMP
+	icmpBytes    []byte
 	localAddress net.IPAddr = net.IPAddr{IP: net.ParseIP("0.0.0.0")}
 )
 
@@ -50,7 +50,7 @@ func InitIcmpBytes() {
 	//icmpData.SequenceNum = 0
 	icmpData.Identifier = 1
 	icmpData.SequenceNum = 1
-	var	buffer bytes.Buffer
+	var buffer bytes.Buffer
 	// 先在buffer中写入icmp数据报求去校验和
 	binary.Write(&buffer, binary.BigEndian, icmpData)
 	icmpData.Checksum = checkSum(buffer.Bytes())
@@ -60,47 +60,71 @@ func InitIcmpBytes() {
 	icmpBytes = buffer.Bytes()
 }
 
-func StartPing(distIp string, timeout int) (int,float64,bool) {
+// 统计一分钟的丢包率，ping 20个包，每个包3秒
+func StartPingLossPacket(distIp string) float64 {
+	raddr := net.IPAddr{IP: net.ParseIP(distIp)}
+	//如果你要使用网络层的其他协议还可以设置成 ip:ospf、ip:arp 等
+	conn, err := net.DialIP("ip4:icmp", &localAddress, &raddr)
+	if err != nil {
+		fmt.Println(err.Error())
+		return 100
+	}
+	defer conn.Close()
+	step := time.NewTicker(3 * time.Second).C
+	var lossCount float64
+	for i := 0; i < 20; i++ {
+		r := doping(*conn, distIp, 3)
+		if r == 0 {
+			lossCount += 1
+		}
+		if i < 19 {
+			<-step
+		}
+	}
+	return (lossCount / 20) * 100
+}
+
+func StartPing(distIp string, timeout int) (int, float64, bool) {
 	var raddr net.IPAddr = net.IPAddr{IP: net.ParseIP(distIp)}
 	isConfused := false
 	//如果你要使用网络层的其他协议还可以设置成 ip:ospf、ip:arp 等
 	conn, err := net.DialIP("ip4:icmp", &localAddress, &raddr)
 	if err != nil {
 		fmt.Println(err.Error())
-		return 3,0,isConfused
+		return 3, 0, isConfused
 	}
 	defer conn.Close()
 	re := 0
 	tq := 0
 	startTime := time.Now()
-	for i:=0;i<5;i++ {
+	for i := 0; i < 5; i++ {
 		r := doping(*conn, distIp, timeout)
-		if r==2 {
+		if r == 2 {
 			tq++
 			r = 0
 		}
 		re += r
 	}
 	useTime := float64(time.Now().Sub(startTime).Nanoseconds()) / 1e6
-	if re >= 2 {  // 发5个ICMP包,如果有2个回复成功则算ping通
+	if re >= 2 { // 发5个ICMP包,如果有2个回复成功则算ping通
 		addSuccessIp(distIp)
-		return 0,useTime/float64(re),isConfused
-	}else{
+		return 0, useTime / float64(re), isConfused
+	} else {
 		isConfused = true
 		if tq == 5 {
 			//addSuccessIp(distIp)
-			return 0,useTime,isConfused
+			return 0, useTime, isConfused
 		}
 		if re == 1 && tq == 4 {
 			//addSuccessIp(distIp)
-			return 0,useTime,isConfused
+			return 0, useTime, isConfused
 		}
-		if re == 2 && tq >= 1 {  // 如果有2个回复成功和3个太快回复(下面把这当做了一种异常,有时候主机不通也会出现这种情况),也算主机是通的
+		if re == 2 && tq >= 1 { // 如果有2个回复成功和3个太快回复(下面把这当做了一种异常,有时候主机不通也会出现这种情况),也算主机是通的
 			//addSuccessIp(distIp)
-			return 0,useTime/2,false
+			return 0, useTime / 2, false
 		}
 		funcs.DebugLog("%s ping fail,%.3f ms, renum : %d ## ", distIp, useTime, re)
-		return 1,useTime,false
+		return 1, useTime, false
 		//if useTime < 6100 {  // 如果4个包不是全部2秒超时,则算异常需要重试
 		//	funcs.DebugLog("%s ping retry,%.3f ms, renum : %d ## ", distIp, useTime, re)
 		//	t := GetRetryMap(distIp, re)
@@ -130,16 +154,16 @@ func doping(conn net.IPConn, distIp string, timeout int) int {
 	// 设置超时时间
 	conn.SetReadDeadline(time.Now().Add(time.Second * time.Duration(timeout)))
 	// 读取返回报文
-	_,err := conn.Read(receiveByte)
+	_, err := conn.Read(receiveByte)
 	useTime := float64(time.Now().Sub(startTime).Nanoseconds()) / 1e6
 	if err != nil {
 		//fmt.Printf("%s ping time out, use time %.3f \n", distIp, use_time)
 		isOk = 0
-	}else{
+	} else {
 		if len(receiveByte) < 23 {
 			funcs.DebugLog("icmp响应报文格式错误,无法解析")
 			isOk = 0
-		}else {
+		} else {
 			var typeint uint8
 			// IP报头20字节,ICMP报头8字节,从21到28,这里是取返回的ICMP类型1字节
 			responseBuffer := bytes.NewBuffer(receiveByte[20:21])
@@ -149,7 +173,7 @@ func doping(conn net.IPConn, distIp string, timeout int) int {
 					// 返回太快了,无效
 					funcs.DebugLog("%s ping fail,%.3f ms, to quick !! ", distIp, useTime)
 					isOk = 2
-				}else {
+				} else {
 					funcs.DebugLog("%s ping success,%.3f ms, ok !! ", distIp, useTime)
 				}
 			} else {

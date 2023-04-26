@@ -28,8 +28,10 @@ func StartTask() {
 
 	if TestModel {
 		doTask()
+		doPacketLossCheck()
 		return
 	}
+	go startPacketLossTask()
 	t := time.NewTicker(time.Second * time.Duration(interval)).C
 	for {
 		go doTask()
@@ -37,8 +39,41 @@ func StartTask() {
 	}
 }
 
-func doPacketLossTask() {
+func startPacketLossTask() {
+	t := time.NewTicker(time.Minute * 2).C
+	for {
+		doPacketLossCheck()
+		<-t
+	}
+}
 
+func doPacketLossCheck() {
+	log.Println("start do packet loss check")
+	startTime := time.Now()
+	wg := sync.WaitGroup{}
+	ipList := funcs.GetIpList()
+	clearLossResultMap(ipList)
+	for _, ip := range ipList {
+		funcs.DebugLog("start loss packent ping check %s ", ip)
+		if containString(ip, localIp) {
+			funcs.DebugLog("%s is local ip", ip)
+			writeLossResultMap(ip, 0)
+			continue
+		}
+		wg.Add(1)
+		go func(ip string) {
+			funcs.DebugLog("start loss packent ping %s ", ip)
+			lossPercent := StartPingLossPacket(ip)
+			writeLossResultMap(ip, lossPercent)
+			funcs.DebugLog("end loss packent ping %s result %.0f ", ip, lossPercent)
+			wg.Done()
+		}(ip)
+	}
+	wg.Wait()
+	useTime := float64(time.Now().Sub(startTime).Nanoseconds()) / 1e6
+	log.Printf("end packet loss check, check ip num %d, use time %.3f ms \n", len(ipList), useTime)
+	result := readLossResultMap()
+	funcs.UpdateLossPingExportMetric(result)
 }
 
 func doTask() {
