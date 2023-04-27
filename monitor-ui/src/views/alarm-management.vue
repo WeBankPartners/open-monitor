@@ -1,6 +1,11 @@
 <template>
   <div>
-    <Title :title="$t('menu.alert')"></Title>
+    <div class="title-wrapper">
+      <Title :title="$t('menu.alert')"></Title>
+      <div class="title-form">
+        <button @click="alarmHistory" class="btn btn-sm btn-confirm-f">{{$t('alarmHistory')}}</button>
+      </div>
+    </div>
     <Tabs value="default">
       <TabPane :label="$t('recommended_mode')" name="default">
         <Modal
@@ -14,7 +19,29 @@
             </div>
           </div>
         </Modal>
-        <div class="flex-container">
+        <div class="data-stats-container" v-if="showGraph">
+          <top-stats :lstats="leftStats" :rstats="rightStats" :noData="noData" />
+        </div>
+        <div class="data-stats-container" v-if="showGraph">
+          <transition name="slide-fade">
+            <div class="content-stats-container">
+              <div class="left" :class="{ 'cover': total === 0 }">
+                <alarm-assets-basic :total="total" :noData="noData" />
+
+                <template v-if="!noData">
+                  <circle-label v-for="cr in circles" :key="cr.type" :data="cr" />
+                  <circle-rotate v-for="cr in circles" :key="cr.label" :data="cr" />
+                </template>
+
+                <metrics-bar :metrics="outerMetrics" :total="outerTotal" />
+              </div>
+              <div class="right" v-if="total > 0">
+                
+              </div>
+            </div>
+          </transition>
+        </div>
+        <!-- <div class="flex-container">
           <transition name="slide-fade">
             <div class="flex-item" v-show="showGraph">
               <div>
@@ -44,8 +71,8 @@
                 </i-switch>
               </div>
               <Tag color="warning">{{$t('title.updateTime')}}：{{timeForDataAchieve}}</Tag>
-              <template v-for="(filterItem, filterIndex) in filtersForShow">
-                <Tag color="success" type="border" closable @on-close="exclude(filterItem.key)" :key="filterIndex">{{filterItem.key}}：{{filterItem.value}}</Tag>
+              <template>
+                <Tag v-for="(filterItem, filterIndex) in filtersForShow" color="success" type="border" closable @on-close="exclude(filterItem.key)" :key="filterIndex">{{filterItem.key}}：{{filterItem.value}}</Tag>
               </template>
               <button v-if="filtersForShow.length" @click="clearAll" class="btn btn-small btn-cancel-f">{{$t('clearAll')}}</button>
               <template v-if="!resultData.length">
@@ -55,8 +82,8 @@
               <button :disabled="!filtersForShow.some(f => f.key === 'metric')" @click="deleteConfirmModal({}, true)" style="float: right;margin-right: 25px;" class="btn btn-sm btn-cancel-f">{{$t('m_batch_close')}}</button>
             </section>
             <div class="alarm-list">
-              <template v-for="(alarmItem, alarmIndex) in resultData">
-                <section :key="alarmIndex" class="alarm-item c-dark-exclude-color" :class="'alarm-item-border-'+ alarmItem.s_priority">
+              <template>
+                <section v-for="(alarmItem, alarmIndex) in resultData" :key="alarmIndex" class="alarm-item c-dark-exclude-color" :class="'alarm-item-border-'+ alarmItem.s_priority">
                   <div style="float:right">
                     <Tooltip :content="$t('menu.endpointView')">
                       <Icon type="ios-stats" size="18" class="fa-operate" v-if="!alarmItem.is_custom" @click="goToEndpointView(alarmItem)"/>
@@ -123,7 +150,7 @@
               <Page :total="paginationInfo.total" @on-change="pageIndexChange" @on-page-size-change="pageSizeChange" show-elevator show-sizer show-total />
             </div>
           </div>
-        </div>
+        </div> -->
       </TabPane>
       <TabPane :label="$t('classic_mode')" name="classic">
         <ClassicAlarm ref="classicAlarm"></ClassicAlarm>
@@ -134,15 +161,28 @@
 </template>
 
 <script>
-import echarts from 'echarts'
+import TopStats from "@/components/top-stats.vue"
+import MetricsBar from "@/components/metrics-bar.vue"
+import CircleRotate from "@/components/circle-rotate.vue"
+import CircleLabel from "@/components/circle-label.vue"
+import AlarmAssetsBasic from "@/components/alarm-assets-basic.vue"
 import ClassicAlarm from '@/views/alarm-management-classic'
+
 export default {
   name: '',
+  components: {
+    TopStats,
+    MetricsBar,
+    CircleRotate,
+    CircleLabel,
+    AlarmAssetsBasic,
+    ClassicAlarm
+  },
   data() {
     return {
+      noData: false,
       showGraph: true,
       alramEmpty: true,
-      myChart: null,
       isShowWarning: false,
       interval: null,
       timeForDataAchieve: null,
@@ -150,11 +190,18 @@ export default {
       filtersForShow: [],
       actveAlarmIndex: null,
       resultData: [],
+      outerMetrics: [],
       selectedData: '', // 存放选中数据
 
       low: 0,
       mid: 0,
       high: 0,
+
+      tlow: 0,
+      tmid: 0,
+      thigh: 0,
+
+      outerTotal: 0,
 
       modelConfig: {
         modalId: 'remark_Modal',
@@ -178,8 +225,118 @@ export default {
       isBatch: false
     }
   },
+  computed: {
+    total() {
+      return this.low + this.mid + this.high
+    },
+    ttotal() {
+      return this.tlow + this.tmid + this.thigh
+    },
+    leftStats() {
+      return [
+        {
+          key: 'l_total',
+          type: 'total',
+          title: this.$t('m_total'),
+          total: this.total,
+          value: this.total,
+          icon: require("../assets/img/icon_alarm_ttl.png")
+        },
+        {
+          key: 'l_low',
+          type: 'low',
+          title: this.$t('m_low'),
+          total: this.total,
+          value: this.low,
+          icon: require("../assets/img/icon_alarm_L.png")
+        },
+        {
+          key: 'l_medium',
+          type: 'medium',
+          title: this.$t('m_medium'),
+          total: this.total,
+          value: this.mid,
+          icon: require("../assets/img/icon_alarm_M.png")
+        },
+        {
+          key: 'l_high',
+          type: 'high',
+          title: this.$t('m_high'),
+          total: this.total,
+          value: this.high,
+          icon: require("../assets/img/icon_alarm_H.png")
+        }
+      ]
+    },
+    rightStats() {
+      return [
+        {
+          key: 'r_total',
+          type: 'total',
+          title: this.$t('m_total'),
+          total: this.ttotal,
+          value: this.ttotal
+        },
+        {
+          key: 'r_low',
+          type: 'low',
+          title: this.$t('m_low'),
+          total: this.ttotal,
+          value: this.tlow
+        },
+        {
+          key: 'r_medium',
+          type: 'medium',
+          title: this.$t('m_medium'),
+          total: this.ttotal,
+          value: this.tmid
+        },
+        {
+          key: 'r_high',
+          type: 'high',
+          title: this.$t('m_high'),
+          total: this.ttotal,
+          value: this.thigh
+        }
+      ]
+    },
+    circles() {
+      return [
+        {
+          type: 'low',
+          label: this.$t('m_low'),
+          icon: require('../assets/img/peichart_L.png'),
+          value: this.low,
+          total: this.total,
+          deg: '-60deg',
+          tx: 0,
+          ty: -0.5
+        },
+        {
+          type: 'mid',
+          label: this.$t('m_medium'),
+          icon: require('../assets/img/peichart_M.png'),
+          value: this.mid,
+          total: this.total,
+          deg: '60deg',
+          tx: 0,
+          ty: -0.5
+        },
+        {
+          type: 'high',
+          label: this.$t('m_high'),
+          icon: require('../assets/img/peichart_H.png'),
+          value: this.high,
+          total: this.total,
+          deg: '0',
+          tx: 0,
+          ty: 0.5
+        }
+      ]
+    }
+  },
   mounted(){
-    this.myChart = echarts.init(document.getElementById('elId'))
+    this.getTodayAlarm()
     this.getAlarm()
     this.interval = setInterval(()=>{
       this.getAlarm()
@@ -189,6 +346,29 @@ export default {
     })
   },
   methods: {
+    getTodayAlarm() {
+      const start = new Date(new Date().toLocaleDateString()).getTime();
+      const end = new Date(new Date().toLocaleDateString()).getTime() + 24 * 60 * 60 * 1000 - 1;
+      const params = {
+        start: parseInt(start / 1000, 10),
+        end: parseInt(end / 1000, 10),
+        filter: 'all'
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance(
+        "POST",
+        "/monitor/api/v1/alarm/problem/history",
+        params,
+        (responseData) => {
+          this.noData = false;
+          this.tlow = responseData.low;
+          this.tmid = responseData.mid;
+          this.thigh = responseData.high;
+        },
+        () => {
+          this.noData = true;
+        }
+      );
+    },
     remarkModal (item) {
       this.modelConfig.addRow = {
         id: item.id,
@@ -240,18 +420,28 @@ export default {
       this.timeForDataAchieve = new Date().toLocaleString()
       this.timeForDataAchieve = this.timeForDataAchieve.replace('上午', 'AM ')
       this.timeForDataAchieve = this.timeForDataAchieve.replace('下午', 'PM ')
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/alarm/problem/page', params, (responseData) => {
-        this.resultData = responseData.data
-        this.paginationInfo.total = responseData.page.totalRows
-        this.paginationInfo.startIndex = responseData.page.startIndex
-        this.paginationInfo.pageSize = responseData.page.pageSize
-        this.low = responseData.low
-        this.mid = responseData.mid
-        this.high = responseData.high
-        this.alramEmpty = !!this.low || !!this.mid ||!!this.high
-        this.showSunburst(responseData)
-        this.$refs.classicAlarm.getAlarm(this.resultData)
-      }, {isNeedloading: false})
+      this.$root.$httpRequestEntrance.httpRequestEntrance(
+        'POST',
+        '/monitor/api/v1/alarm/problem/page',
+        params,
+        (responseData) => {
+          this.noData = false;
+          this.resultData = responseData.data
+          this.paginationInfo.total = responseData.page.totalRows
+          this.paginationInfo.startIndex = responseData.page.startIndex
+          this.paginationInfo.pageSize = responseData.page.pageSize
+          this.low = responseData.low
+          this.mid = responseData.mid
+          this.high = responseData.high
+          this.alramEmpty = !!this.low || !!this.mid ||!!this.high
+          this.showSunburst(responseData)
+          this.$refs.classicAlarm.getAlarm(this.resultData)
+        },
+        {isNeedloading: false},
+        () => {
+          this.noData = true;
+        }
+      )
     },
     compare (prop) {
       return function (obj1, obj2) {
@@ -271,7 +461,6 @@ export default {
       } 
     },
     showSunburst (originData) {
-      this.myChart.off()
       let legendData = []
       let pieInner = []
       if (originData.high) {
@@ -332,67 +521,9 @@ export default {
         set.add(item.name)
       })
       pieOuter = metricInfo.sort(this.compare('type'))
-      let option = {
-        backgroundColor: '#ffffff',
-          tooltip: {
-              trigger: 'item',
-              formatter: '{b}: {c}'
-          },
-          legend: {
-            bottom: '15%',
-            selectedMode: false,
-            data: legendData
-          },
-          series: [
-              {
-                  type: 'pie',
-                  selectedMode: 'single',
-                  radius: [0, '30%'],
-                  center: ['50%', '40%'],
-                  label: {
-                    formatter: '{b}:{c}',
-                    position: 'inner',
-                    rich: {
-                      b: {
-                        fontSize: 16,
-                        lineHeight: 33
-                      }
-                    }
-                  },
-                  labelLine: {
-                      show: false
-                  },
-                  data: pieInner
-              },
-              {
-                  type: 'pie',
-                  radius: ['40%', '55%'],
-                  center: ['50%', '40%'],
-                  label: {
-                      formatter: ' {b|{b}:}{c} ',
-                      backgroundColor: '#ffffff',
-                      borderColor: '#2d8cf0',
-                      borderWidth: 1,
-                      borderRadius: 4,
-                      position: 'outer',
-                      alignTo: 'edge',
-                      margin: 8,
-                      rich: {
-                        b: {
-                          fontSize: 12,
-                          lineHeight: 28
-                        }
-                      }
-                  },
-                  data: pieOuter
-              }
-          ]
-      }
 
-      this.myChart.setOption(option)
-      this.myChart.on('click', params => {
-        this.addParams(params.data.filterType, params.data.name)
-      })
+      this.outerMetrics = pieOuter
+      this.outerTotal = pieOuter.reduce((n, m) => (n + m.value), 0)
     },
     addParams (key, value) {
       this.filters[key] = value
@@ -442,9 +573,6 @@ export default {
     alarmHistory () {
       this.$router.push({name: 'alarmHistory'})
     }
-  },
-  components: {
-    ClassicAlarm
   }
 }
 </script>
@@ -462,6 +590,109 @@ export default {
   padding:50px;
   color: #2d8cf0;
 }
+
+.title-wrapper {
+  display: flex;
+  align-items: flex-end;
+  margin-bottom: 24px;
+
+  .title-form  {
+    margin-left: 21px;
+    padding: 10px 0;
+    flex: auto;
+    border-radius: 4px;
+    display: flex;
+    justify-content: flex-end;
+
+    .btn-sm {
+      background: #116EF9;
+    }
+  }
+}
+
+.data-stats-container {
+  
+  .top-stats-container {
+    width: 100%;
+    height: 90px;
+    background: #FFFFFF;
+    border: 2px solid #F2F3F7;
+    border-radius: 4px;
+    display: flex;
+
+    .metics-metal {
+      height: 100%;
+      background: linear-gradient(90deg, #F5F8FE 0%, rgba(234,242,253,0) 100%);
+      
+      .col {
+        position: relative;
+        width: 180px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
+
+        .title {
+          font-size: 16px;
+        }
+
+        .time-icon {
+          width: 32px;
+          height: 32px;
+          margin-top: 14px;
+        }
+
+        &::after {
+          content: "";
+          position: absolute;
+          width: 2px;
+          height: 63px;
+          right: 0;
+          background: #F2F3F7;
+        }
+      }
+    }
+
+    .left {
+      flex-basis: 60%;
+      height: 100%;
+      display: flex;
+    }
+    .right {
+      flex-basis: 40%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+  }
+
+  .content-stats-container {
+    width: 100%;
+    display: flex;
+    margin: 12px 0;
+
+    .left {
+      position: relative;
+      flex-basis: 60%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding-top: 53.5px;
+      padding-bottom: 94px;
+
+      &.cover {
+        flex-basis: 100%;
+      }
+    }
+    .right {
+      flex-basis: 40%;
+      height: 100%;
+    }
+  }
+}
+
 .flex-container {
   display: flex;
 }
