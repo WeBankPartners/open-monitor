@@ -126,10 +126,12 @@
       <transition name="slide-fade">
         <div class="content-stats-container">
           <div class="left" :class="{ 'cover': total === 0 }">
-            <alarm-assets-basic :total="total" />
+            <alarm-assets-basic :total="total" :noData="noData" />
 
-            <circle-label v-for="cr in circles" :key="cr.type" :data="cr" />
-            <circle-rotate v-for="cr in circles" :key="cr.label" :data="cr" />
+            <template v-if="!noData">
+              <circle-label v-for="cr in circles" :key="cr.type" :data="cr" />
+              <circle-rotate v-for="cr in circles" :key="cr.label" :data="cr" />
+            </template>
 
             <div
               class="metrics-bar"
@@ -302,7 +304,7 @@ export default {
         { label: "all", value: "all" },
         { label: "start", value: "start" },
       ],
-
+      noData: false,
       showGraph: true,
       alramEmpty: true,
       interval: null,
@@ -415,9 +417,13 @@ export default {
         "/monitor/api/v1/alarm/problem/history",
         params,
         (responseData) => {
+          this.noData = false;
           this.tlow = responseData.low;
           this.tmid = responseData.mid;
           this.thigh = responseData.high;
+        },
+        () => {
+          this.noData = true;
         }
       );
     },
@@ -455,12 +461,16 @@ export default {
         "/monitor/api/v1/alarm/problem/history",
         params,
         (responseData) => {
+          this.noData = false;
           this.resultData = responseData.data;
           this.low = responseData.low;
           this.mid = responseData.mid;
           this.high = responseData.high;
           this.alramEmpty = !!this.low || !!this.mid || !!this.high;
           this.showSunburst(responseData);
+        },
+        () => {
+          this.noData = true;
         }
       );
     },
@@ -725,7 +735,7 @@ export default {
       &.cover {
         flex-basis: 100%;
       }
-      
+
       .bg {
         position: absolute;
         top: 0;
