@@ -40,7 +40,7 @@ func StartTask() {
 }
 
 func startPacketLossTask() {
-	t := time.NewTicker(time.Minute * 2).C
+	t := time.NewTicker(time.Minute * 30).C
 	for {
 		doPacketLossCheck()
 		<-t
