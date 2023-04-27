@@ -125,14 +125,8 @@
     <div class="data-stats-container" v-if="showGraph">
       <transition name="slide-fade">
         <div class="content-stats-container">
-          <div class="left">
-            <img class="bg" src="../assets/img/bgd_main_cube.png" />
-            <img
-              class="cube"
-              width="640"
-              height="640"
-              src="../assets/img/the_cube.png"
-            />
+          <div class="left" :class="{ 'cover': total === 0 }">
+            <alarm-assets-basic :total="total" />
 
             <circle-label v-for="cr in circles" :key="cr.type" :data="cr" />
             <circle-rotate v-for="cr in circles" :key="cr.label" :data="cr" />
@@ -161,7 +155,7 @@
               </div>
             </div>
           </div>
-          <div class="right">
+          <div class="right" v-if="total > 0">
             <Card
               v-for="(alarmItem, alarmIndex) in resultData"
               :key="alarmIndex"
@@ -289,6 +283,7 @@
 import CircleItem from "../components/circle-item.vue";
 import CircleRotate from "../components/circle-rotate.vue";
 import CircleLabel from "../components/circle-label.vue";
+import AlarmAssetsBasic from "@/components/alarm-assets-basic.vue";
 
 export default {
   name: "",
@@ -296,6 +291,7 @@ export default {
     CircleItem,
     CircleRotate,
     CircleLabel,
+    AlarmAssetsBasic,
   },
   data() {
     return {
@@ -725,6 +721,11 @@ export default {
       align-items: center;
       padding-top: 53.5px;
       padding-bottom: 94px;
+
+      &.cover {
+        flex-basis: 100%;
+      }
+      
       .bg {
         position: absolute;
         top: 0;
