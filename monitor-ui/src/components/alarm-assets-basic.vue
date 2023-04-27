@@ -2,9 +2,16 @@
   <div class="basic-container">
     <img class="bg" src="../assets/img/bgd_main_cube.png" />
     <img class="cube" width="640" height="640" src="../assets/img/the_cube.png" />
-    <img class="radar" v-if="$attrs.total === 0" width="373" height="373" src="../assets/img/corePRunning.png" />
-    <div class="radar-text perfect-text" v-if="$attrs.total === 0">PERFECT</div>
-    <div class="radar-text running-text" v-if="$attrs.total === 0">RUNNING...</div>
+    <template v-if="$attrs.noData">
+      <img class="nodata" v-if="$attrs.total === 0" width="373" height="373" src="../assets/img/nodata.png" />
+      <div class="nodata-text left" v-if="$attrs.total === 0">NO DATA</div>
+      <div class="nodata-text right" v-if="$attrs.total === 0">RESPOND...</div>
+    </template>
+    <template v-else>
+      <img class="radar" v-if="$attrs.total === 0" width="373" height="373" src="../assets/img/corePRunning.png" />
+      <div class="radar-text left" v-if="$attrs.total === 0">PERFECT</div>
+      <div class="radar-text right" v-if="$attrs.total === 0">RUNNING...</div>
+    </template>
   </div>
 </template>
 
@@ -25,10 +32,28 @@ export default {
     top: 0;
   }
 
+  .nodata {
+    position: absolute;
+  }
+
   .radar {
     position: absolute;
     animation: radar-beam 5s infinite;
     animation-timing-function: linear;
+  }
+
+  .nodata-text {
+    position: absolute;
+    color: #F2F3F7;
+    font-size: 72px;
+    font-weight: 800;
+
+    &.left {
+      padding-right: 800px;
+    }
+    &.right{
+      padding-left: 900px;
+    }
   }
 
   .radar-text {
@@ -37,10 +62,10 @@ export default {
     font-size: 72px;
     font-weight: 800;
 
-    &.perfect-text {
+    &.left {
       padding-right: 800px;
     }
-    &.running-text {
+    &.right{
       padding-left: 900px;
     }
   }
