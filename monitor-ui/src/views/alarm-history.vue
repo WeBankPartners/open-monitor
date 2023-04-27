@@ -1,46 +1,52 @@
 <template>
   <div>
     <div class="title-wrapper">
-      <Title :title="$t('alarmHistory')">
-      </Title>
+      <Title :title="$t('alarmHistory')"> </Title>
       <div class="title-form">
         <ul>
           <li class="filter-li">
-            <DatePicker 
-              type="date" 
-              :value="startDate" 
+            <DatePicker
+              type="date"
+              :value="startDate"
               @on-change="changeStartDate"
-              format="yyyy-MM-dd HH:mm:ss" 
-              placement="bottom-start" 
-              :placeholder="$t('startDatePlaceholder')" 
-              style="width: 220px">
+              format="yyyy-MM-dd HH:mm:ss"
+              placement="bottom-start"
+              :placeholder="$t('startDatePlaceholder')"
+              style="width: 220px"
+            >
             </DatePicker>
           </li>
           <li class="filter-li">
-            <DatePicker 
-              type="date" 
-              :value="endDate" 
+            <DatePicker
+              type="date"
+              :value="endDate"
               @on-change="changeEndDate"
-              format="yyyy-MM-dd HH:mm:ss" 
-              placement="bottom-start" 
-              :placeholder="$t('endDatePlaceholder')" 
-              style="width: 220px">
+              format="yyyy-MM-dd HH:mm:ss"
+              placement="bottom-start"
+              :placeholder="$t('endDatePlaceholder')"
+              style="width: 220px"
+            >
             </DatePicker>
           </li>
           <li class="filter-li">
-            <Select filterable clearable v-model="filter" style="width:80px">
-              <Option v-for="item in filterList" :value="item.value" :key="item.value">{{ item.label }}</Option>
+            <Select filterable clearable v-model="filter" style="width: 80px">
+              <Option
+                v-for="item in filterList"
+                :value="item.value"
+                :key="item.value"
+                >{{ item.label }}</Option
+              >
             </Select>
           </li>
           <li class="filter-li">
             <button class="btn btn-sm btn-confirm-f" @click="getAlarm">
               <i class="fa fa-search"></i>
-              {{$t('button.search')}}
+              {{ $t("button.search") }}
             </button>
           </li>
         </ul>
         <button class="btn btn-sm btn-confirm-f" @click="realTimeAlarm">
-          {{$t('realTimeAlarm')}}
+          {{ $t("realTimeAlarm") }}
         </button>
       </div>
     </div>
@@ -49,26 +55,70 @@
         <div class="left">
           <div class="metics-metal">
             <div class="col">
-              <div class="title">{{$t('realTimeAlarm')}}</div>
+              <div class="title">{{ $t("realTimeAlarm") }}</div>
               <img class="time-icon" src="../assets/img/icon_rltm.png" />
             </div>
           </div>
-          <circle-item type="total" :title="$t('m_total')" :total="total" :value="total" :icon="totalIcon" />
-          <circle-item type="low" :title="$t('m_low')" :total="total" :value="low" :icon="lowIcon" />
-          <circle-item type="medium" :title="$t('m_medium')" :total="total" :value="mid" :icon="midIcon" />
-          <circle-item type="high" :title="$t('m_high')" :total="total" :value="high" :icon="highIcon" />
+          <circle-item
+            type="total"
+            :title="$t('m_total')"
+            :total="total"
+            :value="total"
+            :icon="totalIcon"
+          />
+          <circle-item
+            type="low"
+            :title="$t('m_low')"
+            :total="total"
+            :value="low"
+            :icon="lowIcon"
+          />
+          <circle-item
+            type="medium"
+            :title="$t('m_medium')"
+            :total="total"
+            :value="mid"
+            :icon="midIcon"
+          />
+          <circle-item
+            type="high"
+            :title="$t('m_high')"
+            :total="total"
+            :value="high"
+            :icon="highIcon"
+          />
         </div>
         <div class="right">
           <div class="metics-metal">
             <div class="col">
-              <div class="title">{{$t('todayAlarm')}}</div>
+              <div class="title">{{ $t("todayAlarm") }}</div>
               <img class="time-icon" src="../assets/img/icon_today.png" />
             </div>
           </div>
-          <circle-item type="total" :title="$t('m_total')" :total="ttotal" :value="ttotal" />
-          <circle-item type="low" :title="$t('m_low')" :total="ttotal" :value="tlow" />
-          <circle-item type="medium" :title="$t('m_medium')" :total="ttotal" :value="tmid" />
-          <circle-item type="high" :title="$t('m_high')" :total="ttotal" :value="thigh" />
+          <circle-item
+            type="total"
+            :title="$t('m_total')"
+            :total="ttotal"
+            :value="ttotal"
+          />
+          <circle-item
+            type="low"
+            :title="$t('m_low')"
+            :total="ttotal"
+            :value="tlow"
+          />
+          <circle-item
+            type="medium"
+            :title="$t('m_medium')"
+            :total="ttotal"
+            :value="tmid"
+          />
+          <circle-item
+            type="high"
+            :title="$t('m_high')"
+            :total="ttotal"
+            :value="thigh"
+          />
         </div>
       </div>
     </div>
@@ -77,21 +127,157 @@
         <div class="content-stats-container">
           <div class="left">
             <img class="bg" src="../assets/img/bgd_main_cube.png" />
-            <img class="cube" width="640" height="640" src="../assets/img/the_cube.png" />
+            <img
+              class="cube"
+              width="640"
+              height="640"
+              src="../assets/img/the_cube.png"
+            />
 
             <circle-label v-for="cr in circles" :key="cr.type" :data="cr" />
             <circle-rotate v-for="cr in circles" :key="cr.label" :data="cr" />
 
-            <div class="metrics-bar" v-show="outerMetrics && outerMetrics.length > 0">
-              <div class="bar-item" v-for="(mtc, idx) in outerMetrics" :key="mtc.name + mtc.type" :style="{ background: barColors[idx % 13], height: '15px', width: `${100 * mtc.value / outerTotal}%` }">
-                <Tooltip :content="`${mtc.name}: ${mtc.value}`" placement="top" theme="light">
+            <div
+              class="metrics-bar"
+              v-show="outerMetrics && outerMetrics.length > 0"
+            >
+              <div
+                class="bar-item"
+                v-for="(mtc, idx) in outerMetrics"
+                :key="mtc.name + mtc.type"
+                :style="{
+                  background: barColors[idx % 13],
+                  height: '15px',
+                  width: `${(100 * mtc.value) / outerTotal}%`,
+                }"
+              >
+                <Tooltip
+                  :content="`${mtc.name}: ${mtc.value}`"
+                  placement="top"
+                  theme="light"
+                >
                   <div class="content">&nbsp;&nbsp;</div>
                 </Tooltip>
               </div>
             </div>
           </div>
           <div class="right">
-            
+            <Card
+              v-for="(alarmItem, alarmIndex) in resultData"
+              :key="alarmIndex"
+              style="margin-bottom: 15px"
+            >
+              <template #title>
+                <div
+                  class="col-md-10"
+                  style="padding: 0; color: #404144; font-size: 16px"
+                >
+                  <img class="bg" src="../assets/img/icon_alarm_H_cube.png" />
+                  {{ alarmItem.content }}
+                </div>
+                <div
+                  class="col-md-2"
+                  style="padding: 0; text-align: right; color: #7e8086"
+                >
+                  {{ alarmItem.start_string }}
+                </div>
+              </template>
+              <div style="position: absolute; top: 10px; right: 10px">
+                <Tooltip :content="$t('menu.endpointView')">
+                  <Icon
+                    type="ios-stats"
+                    size="18"
+                    class="fa-operate"
+                    v-if="!alarmItem.is_custom"
+                    @click="goToEndpointView(alarmItem)"
+                  />
+                </Tooltip>
+                <Tooltip :content="$t('close')">
+                  <Icon
+                    type="ios-eye-off"
+                    size="18"
+                    class="fa-operate"
+                    @click="deleteConfirmModal(alarmItem, false)"
+                  />
+                </Tooltip>
+                <Tooltip :content="$t('m_remark')">
+                  <Icon
+                    type="ios-pricetags-outline"
+                    size="18"
+                    class="fa-operate"
+                    @click="remarkModal(alarmItem)"
+                  />
+                </Tooltip>
+              </div>
+              <ul>
+                <li>
+                  <label
+                    class="card-label"
+                    v-html="$t('field.endpoint')"
+                  ></label>
+                  <div class="card-content">
+                    {{ alarmItem.endpoint }}
+                    <img
+                      class="filter-icon"
+                      :click="addParams('endpoint', alarmItem.endpoint)"
+                      src="../assets/img/icon_filter.png"
+                    />
+                  </div>
+                </li>
+                <li>
+                  <label class="card-label" v-html="$t('field.metric')"></label>
+                  <div class="card-content">
+                    {{ alarmItem.s_metric }}
+                    <img
+                      class="filter-icon"
+                      src="../assets/img/icon_filter.png"
+                    />
+                  </div>
+                </li>
+                <li>
+                  <label
+                    class="card-label"
+                    v-html="$t('tableKey.tags')"
+                  ></label>
+                  <div class="card-content">
+                    <div class="tags-box">
+                      <template v-if="alarmItem.tags">
+                        <Tag
+                          type="border"
+                          v-for="(t, tIndex) in alarmItem.tags.split('^')"
+                          :key="tIndex"
+                          >{{ t }}</Tag
+                        >
+                      </template>
+                    </div>
+                  </div>
+                </li>
+                <li>
+                  <label class="card-label" v-html="$t('details')"></label>
+                  <div class="card-content">
+                    <Tag color="default"
+                      >{{ $t("tableKey.start_value") }}:{{
+                        alarmItem.start_value
+                      }}</Tag
+                    >
+                    <Tag color="default" v-if="alarmItem.s_cond"
+                      >{{ $t("tableKey.threshold") }}:{{
+                        alarmItem.s_cond
+                      }}</Tag
+                    >
+                    <Tag color="default" v-if="alarmItem.s_last"
+                      >{{ $t("tableKey.s_last") }}:{{ alarmItem.s_last }}</Tag
+                    >
+                    <Tag color="default" v-if="alarmItem.path"
+                      >{{ $t("tableKey.path") }}:{{ alarmItem.path }}</Tag
+                    >
+                    <Tag color="default" v-if="alarmItem.keyword"
+                      >{{ $t("tableKey.keyword") }}:{{ alarmItem.keyword }}</Tag
+                    >
+                  </div>
+                </li>
+              </ul>
+            </Card>
           </div>
         </div>
       </transition>
@@ -105,20 +291,20 @@ import CircleRotate from "../components/circle-rotate.vue";
 import CircleLabel from "../components/circle-label.vue";
 
 export default {
-  name: '',
+  name: "",
   components: {
     CircleItem,
     CircleRotate,
-    CircleLabel
+    CircleLabel,
   },
   data() {
     return {
-      startDate: '',
-      endDate: '',
-      filter:'all',
+      startDate: "",
+      endDate: "",
+      filter: "all",
       filterList: [
-        {label: 'all', value: 'all'},
-        {label: 'start', value: 'start'}
+        { label: "all", value: "all" },
+        { label: "start", value: "start" },
       ],
 
       showGraph: true,
@@ -129,7 +315,7 @@ export default {
       filtersForShow: [],
       actveAlarmIndex: null,
       resultData: [],
-      selectedData: '', // 存放选中数据
+      selectedData: "", // 存放选中数据
 
       low: 0,
       mid: 0,
@@ -143,111 +329,146 @@ export default {
 
       outerMetrics: [],
       outerTotal: 0,
-      barColors: ['#DE4B7D', '#E57A50', '#D8CF6B', '#AFC8E4', '#002B55', '#EC6820', '#98B63F', '#0199D3', '#03519F', '#535557', '#60C7C4', '#A7D9BF', '#FFDB3B'],
+      barColors: [
+        "#DE4B7D",
+        "#E57A50",
+        "#D8CF6B",
+        "#AFC8E4",
+        "#002B55",
+        "#EC6820",
+        "#98B63F",
+        "#0199D3",
+        "#03519F",
+        "#535557",
+        "#60C7C4",
+        "#A7D9BF",
+        "#FFDB3B",
+      ],
 
-      totalIcon: require('../assets/img/icon_alarm_ttl.png'),
-      lowIcon: require('../assets/img/icon_alarm_L.png'),
-      midIcon: require('../assets/img/icon_alarm_M.png'),
-      highIcon: require('../assets/img/icon_alarm_H.png'),
-    }
+      totalIcon: require("../assets/img/icon_alarm_ttl.png"),
+      lowIcon: require("../assets/img/icon_alarm_L.png"),
+      midIcon: require("../assets/img/icon_alarm_M.png"),
+      highIcon: require("../assets/img/icon_alarm_H.png"),
+    };
   },
   computed: {
     total() {
-      return this.low + this.mid + this.high
+      return this.low + this.mid + this.high;
     },
     ttotal() {
-      return this.tlow + this.tmid + this.thigh
+      return this.tlow + this.tmid + this.thigh;
     },
     circles() {
       return [
         {
-          type: 'low',
-          label: this.$t('m_low'),
-          icon: require('../assets/img/peichart_L.png'),
+          type: "low",
+          label: this.$t("m_low"),
+          icon: require("../assets/img/peichart_L.png"),
           value: this.low,
           total: this.total,
-          deg: '-60deg',
+          deg: "-60deg",
           tx: 0,
-          ty: -0.5
+          ty: -0.5,
         },
         {
-          type: 'mid',
-          label: this.$t('m_medium'),
-          icon: require('../assets/img/peichart_M.png'),
+          type: "mid",
+          label: this.$t("m_medium"),
+          icon: require("../assets/img/peichart_M.png"),
           value: this.mid,
           total: this.total,
-          deg: '60deg',
+          deg: "60deg",
           tx: 0,
-          ty: -0.5
+          ty: -0.5,
         },
         {
-          type: 'high',
-          label: this.$t('m_high'),
-          icon: require('../assets/img/peichart_H.png'),
+          type: "high",
+          label: this.$t("m_high"),
+          icon: require("../assets/img/peichart_H.png"),
           value: this.high,
           total: this.total,
-          deg: '0',
+          deg: "0",
           tx: 0,
-          ty: 0.5
-        }
-      ]
-    }
+          ty: 0.5,
+        },
+      ];
+    },
   },
   mounted() {
-    this.getTodayAlarm()
+    this.getTodayAlarm();
   },
   methods: {
-    changeStartDate (data) {
-      this.startDate = data
+    changeStartDate(data) {
+      this.startDate = data;
     },
-    changeEndDate (data) {
-      this.endDate = data
+    changeEndDate(data) {
+      this.endDate = data;
     },
     getTodayAlarm() {
       const start = new Date(new Date().toLocaleDateString()).getTime();
-      const end = new Date(new Date().toLocaleDateString()).getTime() + 24 * 60 * 60 * 1000 - 1;
+      const end =
+        new Date(new Date().toLocaleDateString()).getTime() +
+        24 * 60 * 60 * 1000 -
+        1;
       const params = {
         start: parseInt(start / 1000, 10),
         end: parseInt(end / 1000, 10),
-        filter: this.filter
-      }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/alarm/problem/history', params, (responseData) => {
-        this.tlow = responseData.low
-        this.tmid = responseData.mid
-        this.thigh = responseData.high
-      })
+        filter: this.filter,
+      };
+      this.$root.$httpRequestEntrance.httpRequestEntrance(
+        "POST",
+        "/monitor/api/v1/alarm/problem/history",
+        params,
+        (responseData) => {
+          this.tlow = responseData.low;
+          this.tmid = responseData.mid;
+          this.thigh = responseData.high;
+        }
+      );
     },
     getAlarm() {
-      if (!this.startDate || !this.endDate || Date.parse(new Date(this.startDate)) > Date.parse(new Date(this.endDate))) {
-        this.$Message.error(this.$t('timeIntervalWarn'))
-        return
+      if (
+        !this.startDate ||
+        !this.endDate ||
+        Date.parse(new Date(this.startDate)) >
+          Date.parse(new Date(this.endDate))
+      ) {
+        this.$Message.error(this.$t("timeIntervalWarn"));
+        return;
       }
       if (this.startDate === this.endDate) {
-        this.endDate = this.endDate.replace('00:00:00', '23:59:59')
+        this.endDate = this.endDate.replace("00:00:00", "23:59:59");
       }
-      const start = Date.parse(this.startDate)/1000
-      const end = Date.parse(this.endDate)/1000
+      const start = Date.parse(this.startDate) / 1000;
+      const end = Date.parse(this.endDate) / 1000;
       let params = {
         start,
         end,
-        filter: this.filter
+        filter: this.filter,
+      };
+      let keys = Object.keys(this.filters);
+      this.filtersForShow = [];
+      for (let i = 0; i < keys.length; i++) {
+        params[keys[i]] = this.filters[keys[i]];
+        this.filtersForShow.push({
+          key: keys[i],
+          value: this.filters[keys[i]],
+        });
       }
-      let keys = Object.keys(this.filters)
-      this.filtersForShow = []
-      for (let i = 0; i< keys.length ;i++) {
-        params[keys[i]] = this.filters[keys[i]]
-        this.filtersForShow.push({key:keys[i], value:this.filters[keys[i]]})
-      }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/alarm/problem/history', params, (responseData) => {
-        this.resultData = responseData.data
-        this.low = responseData.low
-        this.mid = responseData.mid
-        this.high = responseData.high
-        this.alramEmpty = !!this.low || !!this.mid ||!!this.high
-        this.showSunburst(responseData)
-      })
+      this.$root.$httpRequestEntrance.httpRequestEntrance(
+        "POST",
+        "/monitor/api/v1/alarm/problem/history",
+        params,
+        (responseData) => {
+          this.resultData = responseData.data;
+          this.low = responseData.low;
+          this.mid = responseData.mid;
+          this.high = responseData.high;
+          this.alramEmpty = !!this.low || !!this.mid || !!this.high;
+          this.showSunburst(responseData);
+        }
+      );
     },
-    compare (prop) {
+    compare(prop) {
       return function (obj1, obj2) {
         var val1 = obj1[prop];
         var val2 = obj2[prop];
@@ -261,110 +482,148 @@ export default {
           return 1;
         } else {
           return 0;
-        }  
-      } 
+        }
+      };
     },
-    showSunburst (originData) {
-      let legendData = []
-      let pieInner = []
+    showSunburst(originData) {
+      let legendData = [];
+      let pieInner = [];
       if (originData.high) {
         let high = {
-          name: 'high',
+          name: "high",
           value: originData.high,
-          filterType: 'priority',
+          filterType: "priority",
           itemStyle: {
-            color: '#ed4014'
-          }
-        }
-        legendData.push('high')
-        pieInner.push(high)
+            color: "#ed4014",
+          },
+        };
+        legendData.push("high");
+        pieInner.push(high);
       }
       if (originData.low) {
         let low = {
-          name: 'low',
+          name: "low",
           value: originData.low,
-          filterType: 'priority',
+          filterType: "priority",
           itemStyle: {
-            color: '#19be6b'
-          }
-        }
-        legendData.push('low')
-        pieInner.push(low)
+            color: "#19be6b",
+          },
+        };
+        legendData.push("low");
+        pieInner.push(low);
       }
       if (originData.mid) {
         let mid = {
-          name: 'medium',
+          name: "medium",
           value: originData.mid,
-          filterType: 'priority',
+          filterType: "priority",
           itemStyle: {
-            color: '#2d8cf0'
-          }
-        }
-        legendData.push('medium')
-        pieInner.push(mid)
+            color: "#2d8cf0",
+          },
+        };
+        legendData.push("medium");
+        pieInner.push(mid);
       }
 
-      const colorX = ['#33CCCC','#666699','#66CC66','#996633','#9999CC','#339933','#339966','#663333','#6666CC','#336699','#3399CC','#33CC66','#CC3333','#CC6666','#996699','#CC9933']
-      let index = 0
-      let pieOuter = []
-      let itemStyleSet = {}
-      const metricInfo = originData.count
-      let set = new Set()
-      metricInfo.forEach(item => {
+      const colorX = [
+        "#33CCCC",
+        "#666699",
+        "#66CC66",
+        "#996633",
+        "#9999CC",
+        "#339933",
+        "#339966",
+        "#663333",
+        "#6666CC",
+        "#336699",
+        "#3399CC",
+        "#33CC66",
+        "#CC3333",
+        "#CC6666",
+        "#996699",
+        "#CC9933",
+      ];
+      let index = 0;
+      let pieOuter = [];
+      let itemStyleSet = {};
+      const metricInfo = originData.count;
+      let set = new Set();
+      metricInfo.forEach((item) => {
         if (set.has(item.name)) {
-          item.itemStyle = itemStyleSet[item.name]
+          item.itemStyle = itemStyleSet[item.name];
         } else {
-          legendData.push(item.name)
-          index++
+          legendData.push(item.name);
+          index++;
           const itemStyle = {
-            color: colorX[index]
-          }
-          itemStyleSet[item.name] = itemStyle
-          item.itemStyle = itemStyle
+            color: colorX[index],
+          };
+          itemStyleSet[item.name] = itemStyle;
+          item.itemStyle = itemStyle;
         }
-        set.add(item.name)
-      })
-      pieOuter = metricInfo.sort(this.compare('type'))
-      this.outerMetrics = pieOuter
-      this.outerTotal = pieOuter.reduce((n, m) => (n + m.value), 0)
+        set.add(item.name);
+      });
+      pieOuter = metricInfo.sort(this.compare("type"));
+      this.outerMetrics = pieOuter;
+      this.outerTotal = pieOuter.reduce((n, m) => n + m.value, 0);
     },
-    realTimeAlarm () {
-      this.$router.push('/alarmManagement')
+    realTimeAlarm() {
+      this.$router.push("/alarmManagement");
     },
-    addParams (key, value) {
-      this.filters[key] = value
-      this.getAlarm()
+    addParams(key, value) {
+      this.filters[key] = value;
+      this.getAlarm();
     },
-    clearAll () {
-      this.filters = []
-      this.getAlarm()
+    clearAll() {
+      this.filters = [];
+      this.getAlarm();
     },
-    exclude (key) {
-      delete this.filters[key]
-      this.getAlarm()
+    exclude(key) {
+      delete this.filters[key];
+      this.getAlarm();
     },
     getPercentage(val, total) {
-      return ((parseInt(val, 10) * 100 / parseInt(total, 10)) || 0).toFixed(2)
-    }
-  }
-}
+      return ((parseInt(val, 10) * 100) / parseInt(total, 10) || 0).toFixed(2);
+    },
+    goToEndpointView(alarmItem) {
+      const endpointObject = {
+        option_value: alarmItem.endpoint,
+        type: alarmItem.endpoint.split("_").slice(-1)[0],
+      };
+      localStorage.setItem("jumpCallData", JSON.stringify(endpointObject));
+      this.$router.push({ path: "/endpointView" });
+    },
+    deleteConfirmModal(rowData, isBatch) {
+      this.isBatch = isBatch;
+      this.selectedData = rowData;
+      this.isShowWarning = true;
+    },
+    remarkModal(item) {
+      this.modelConfig.addRow = {
+        id: item.id,
+        message: item.custom_message,
+        is_custom: false,
+      };
+      this.$root.JQ("#remark_Modal").modal("show");
+    },
+  },
+};
 </script>
 
 <style scoped lang="less">
- .filter-li {
-   display: inline-block;
-   margin-left: 8px;
- }
+.filter-li {
+  display: inline-block;
+  margin-left: 8px;
+}
 .echart {
   height: ~"calc(100vh - 180px)";
   width: ~"calc(100vw * 0.4)";
-  background:#ffffff;
+  background: #ffffff;
 }
 .alarm-empty {
   height: ~"calc(100vh - 180px)";
   width: ~"calc(100vw * 0.4)";
   text-align: center;
-  padding:50px;
+  padding: 50px;
   color: #2d8cf0;
 }
 
@@ -373,39 +632,42 @@ export default {
   align-items: flex-end;
   margin-bottom: 24px;
 
-  .title-form  {
+  .title-form {
     margin-left: 21px;
     padding: 10px 0;
     flex: auto;
-    border: 2px solid #F2F3F7;
+    border: 2px solid #f2f3f7;
     border-radius: 4px;
     display: flex;
     justify-content: space-between;
 
     /deep/.ivu-input {
-      border: 1px solid #F2F3F7;
+      border: 1px solid #f2f3f7;
     }
 
     .btn-sm {
-      background: #116EF9;
+      background: #116ef9;
     }
   }
 }
 
 .data-stats-container {
-  
   .top-stats-container {
     width: 100%;
     height: 90px;
-    background: #FFFFFF;
-    border: 2px solid #F2F3F7;
+    background: #ffffff;
+    border: 2px solid #f2f3f7;
     border-radius: 4px;
     display: flex;
 
     .metics-metal {
       height: 100%;
-      background: linear-gradient(90deg, #F5F8FE 0%, rgba(234,242,253,0) 100%);
-      
+      background: linear-gradient(
+        90deg,
+        #f5f8fe 0%,
+        rgba(234, 242, 253, 0) 100%
+      );
+
       .col {
         position: relative;
         width: 180px;
@@ -431,7 +693,7 @@ export default {
           width: 2px;
           height: 63px;
           right: 0;
-          background: #F2F3F7;
+          background: #f2f3f7;
         }
       }
     }
@@ -473,8 +735,8 @@ export default {
         top: 719px;
         width: 750px;
         height: 31px;
-        background: #FFFFFF;
-        box-shadow: 0px 8px 15px 0px rgba(17,110,249,0.15);
+        background: #ffffff;
+        box-shadow: 0px 8px 15px 0px rgba(17, 110, 249, 0.15);
         border-radius: 15px;
         display: flex;
         padding: 8px 10px;
@@ -501,7 +763,58 @@ export default {
     }
     .right {
       flex-basis: 40%;
-      height: 100%;
+      height: ~"calc(100vh - 180px)";
+      overflow-y: auto;
+
+      &::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+
+      &::-webkit-scrollbar-thumb {
+        // border-radius: 1em;
+        background-color: rgba(0, 21, 41, 0.2);
+      }
+
+      &::-webkit-scrollbar-track {
+        // border-radius: 1em;
+        background-color: rgba(181, 164, 164, 0.2);
+      }
+
+      /deep/ .ivu-card-head {
+        background: #f2f3f7;
+        display: flex;
+        align-items: center;
+      }
+
+      /deep/ .ivu-card-body {
+        position: relative;
+        line-height: 32px;
+      }
+
+      li {
+        display: flex;
+      }
+      .card-label {
+        width: 80px;
+        color: #7e8086;
+        font-size: 12px;
+        text-align: left;
+      }
+      .card-content {
+        width: ~"calc(100% - 80px)";
+        color: #404144;
+        overflow: hidden;
+        .tags-box {
+          width: max-content;
+        }
+      }
+      .filter-icon {
+        position: relative;
+        top: -2px;
+        margin-left: 6px;
+        cursor: pointer;
+      }
     }
   }
 }
@@ -512,7 +825,7 @@ export default {
 }
 li {
   list-style: none;
-} 
+}
 
 label {
   margin-bottom: 0;
@@ -566,10 +879,10 @@ label {
 /* 可以设置不同的进入和离开动画 */
 /* 设置持续时间和动画函数 */
 .slide-fade-enter-active {
-  transition: all .3s ease;
+  transition: all 0.3s ease;
 }
 .slide-fade-leave-active {
-  transition: all .8s cubic-bezier(1.0, 0.5, 0.8, 1.0);
+  transition: all 0.8s cubic-bezier(1, 0.5, 0.8, 1);
 }
 .slide-fade-enter, .slide-fade-leave-to
 /* .slide-fade-leave-active for below version 2.1.8 */ {
