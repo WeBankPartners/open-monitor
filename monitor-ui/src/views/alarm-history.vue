@@ -219,7 +219,7 @@
                     {{ alarmItem.endpoint }}
                     <img
                       class="filter-icon"
-                      :click="addParams('endpoint', alarmItem.endpoint)"
+                      @click="addParams('endpoint', alarmItem.endpoint)"
                       src="../assets/img/icon_filter.png"
                     />
                   </div>
