@@ -70,58 +70,63 @@ func InitSourceList() {
 		}
 	}
 	if Config().Source.Remote.Enabled && Config().Source.Remote.Url != "" {
-		go startRemoteCurl()
+		weight = 3
+		if Config().Source.Remote.Weight > 0 {
+			weight = Config().Source.Remote.Weight
+		}
+		startRemoteCurl(weight)
+		go startRemoteCurlJob(weight)
 	}
 }
 
-func startRemoteCurl() {
+func startRemoteCurlJob(weight int) {
 	interval := 120
 	if Config().Source.Remote.Interval > 0 {
 		interval = Config().Source.Remote.Interval
 	}
-	weight := 3
-	if Config().Source.Remote.Weight > 0 {
-		weight = Config().Source.Remote.Weight
+	t := time.NewTicker(time.Second * time.Duration(interval)).C
+	for {
+		<-t
+		startRemoteCurl(weight)
 	}
+}
+
+func startRemoteCurl(weight int) {
 	url := Config().Source.Remote.Url
 	if Config().Source.Remote.GroupTag != "" {
 		url = url + "?" + Config().Source.Remote.GroupTag
 	}
-	t := time.NewTicker(time.Second * time.Duration(interval)).C
-	for {
-		req, _ := http.NewRequest(http.MethodGet, url, strings.NewReader(""))
-		for _, v := range Config().Source.Remote.Header {
-			if strings.Contains(v, "=") {
-				tmpSplit := strings.Split(v, "=")
-				if len(tmpSplit) > 1 {
-					req.Header.Set(tmpSplit[0], tmpSplit[1])
-				}
+	req, _ := http.NewRequest(http.MethodGet, url, strings.NewReader(""))
+	for _, v := range Config().Source.Remote.Header {
+		if strings.Contains(v, "=") {
+			tmpSplit := strings.Split(v, "=")
+			if len(tmpSplit) > 1 {
+				req.Header.Set(tmpSplit[0], tmpSplit[1])
 			}
 		}
-		resp, err := ctxhttp.Do(context.Background(), http.DefaultClient, req)
-		if err != nil {
-			log.Printf("curl %s fail,error: %v \n", url, err)
+	}
+	resp, err := ctxhttp.Do(context.Background(), http.DefaultClient, req)
+	if err != nil {
+		log.Printf("curl %s fail,error: %v \n", url, err)
+	} else {
+		b, _ := ioutil.ReadAll(resp.Body)
+		if resp.StatusCode >= 300 {
+			log.Printf("curl %s fail,resp code %d %s \n", url, resp.StatusCode, string(b))
 		} else {
-			b, _ := ioutil.ReadAll(resp.Body)
-			if resp.StatusCode >= 300 {
-				log.Printf("curl %s fail,resp code %d %s \n", url, resp.StatusCode, string(b))
+			var responseData RemoteResponse
+			err = json.Unmarshal(b, &responseData)
+			if err != nil {
+				log.Printf("curl %s fail,body unmarshal fail: %s", url, err)
 			} else {
-				var responseData RemoteResponse
-				err = json.Unmarshal(b, &responseData)
-				if err != nil {
-					log.Printf("curl %s fail,body unmarshal fail: %s", url, err)
-				} else {
-					var tmpIps []string
-					UpdateSourceRemoteData(responseData.Config)
-					for _, vv := range responseData.Config {
-						tmpIps = append(tmpIps, vv.Ip)
-					}
-					UpdateIpList(tmpIps, weight)
+				var tmpIps []string
+				UpdateSourceRemoteData(responseData.Config)
+				for _, vv := range responseData.Config {
+					tmpIps = append(tmpIps, vv.Ip)
 				}
+				UpdateIpList(tmpIps, weight)
 			}
-			resp.Body.Close()
 		}
-		<-t
+		resp.Body.Close()
 	}
 }
 
