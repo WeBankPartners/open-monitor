@@ -46,7 +46,7 @@ function errorMessage(content) {
  *
  * @param 你懂得
  */
-function httpRequestEntrance (method, url, data, callback, customHttpConfig) {
+function httpRequestEntrance (method, url, data, callback, customHttpConfig, errCallback) {
   // 处理接口http请求个性化配置
   let config = mergeObj(customHttpConfig)
   if (config.isNeedloading) {
@@ -86,6 +86,13 @@ function httpRequestEntrance (method, url, data, callback, customHttpConfig) {
     // if (!window.request && error.response && error.response.status === 401) {
     //   router.push({path: '/login'})
     // }
+    
+    if (typeof customHttpConfig === 'function') {
+      errCallback = customHttpConfig
+    }
+    if (typeof errCallback === 'function') {
+      return errCallback(new Error(error.response && error.response.data ? error.response.data.message : ''));
+    }
   })
 }
 
