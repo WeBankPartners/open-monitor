@@ -51,10 +51,12 @@
           <transition name="slide-fade">
             <div class="content-stats-container">
               <div class="left" :class="{ 'cover': total === 0 }">
-                <alarm-assets-basic :total="total" />
+                <alarm-assets-basic :total="total" :noData="noData" />
 
-                <circle-label v-for="cr in circles" :key="cr.type" :data="cr" />
-                <circle-rotate v-for="cr in circles" :key="cr.label" :data="cr" />
+                <template v-if="!noData">
+                  <circle-label v-for="cr in circles" :key="cr.type" :data="cr" />
+                  <circle-rotate v-for="cr in circles" :key="cr.label" :data="cr" />
+                </template>
 
                 <div class="metrics-bar" v-show="outerMetrics && outerMetrics.length > 0">
                   <div class="bar-item" v-for="(mtc, idx) in outerMetrics" :key="mtc.name + mtc.type" :style="{ background: barColors[idx % 13], height: '15px', width: `${100 * mtc.value / outerTotal}%` }">
@@ -207,6 +209,7 @@ export default {
   },
   data() {
     return {
+      noData: false,
       showGraph: true,
       alramEmpty: true,
       isShowWarning: false,
@@ -318,11 +321,20 @@ export default {
         end: parseInt(end / 1000, 10),
         filter: 'all'
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/alarm/problem/history', params, (responseData) => {
-        this.tlow = responseData.low
-        this.tmid = responseData.mid
-        this.thigh = responseData.high
-      })
+      this.$root.$httpRequestEntrance.httpRequestEntrance(
+        "POST",
+        "/monitor/api/v1/alarm/problem/history",
+        params,
+        (responseData) => {
+          this.noData = false;
+          this.tlow = responseData.low;
+          this.tmid = responseData.mid;
+          this.thigh = responseData.high;
+        },
+        () => {
+          this.noData = true;
+        }
+      );
     },
     remarkModal (item) {
       this.modelConfig.addRow = {
@@ -375,18 +387,28 @@ export default {
       this.timeForDataAchieve = new Date().toLocaleString()
       this.timeForDataAchieve = this.timeForDataAchieve.replace('上午', 'AM ')
       this.timeForDataAchieve = this.timeForDataAchieve.replace('下午', 'PM ')
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/alarm/problem/page', params, (responseData) => {
-        this.resultData = responseData.data
-        this.paginationInfo.total = responseData.page.totalRows
-        this.paginationInfo.startIndex = responseData.page.startIndex
-        this.paginationInfo.pageSize = responseData.page.pageSize
-        this.low = responseData.low
-        this.mid = responseData.mid
-        this.high = responseData.high
-        this.alramEmpty = !!this.low || !!this.mid ||!!this.high
-        this.showSunburst(responseData)
-        this.$refs.classicAlarm.getAlarm(this.resultData)
-      }, {isNeedloading: false})
+      this.$root.$httpRequestEntrance.httpRequestEntrance(
+        'POST',
+        '/monitor/api/v1/alarm/problem/page',
+        params,
+        (responseData) => {
+          this.noData = false;
+          this.resultData = responseData.data
+          this.paginationInfo.total = responseData.page.totalRows
+          this.paginationInfo.startIndex = responseData.page.startIndex
+          this.paginationInfo.pageSize = responseData.page.pageSize
+          this.low = responseData.low
+          this.mid = responseData.mid
+          this.high = responseData.high
+          this.alramEmpty = !!this.low || !!this.mid ||!!this.high
+          this.showSunburst(responseData)
+          this.$refs.classicAlarm.getAlarm(this.resultData)
+        },
+        {isNeedloading: false},
+        () => {
+          this.noData = true;
+        }
+      )
     },
     compare (prop) {
       return function (obj1, obj2) {
