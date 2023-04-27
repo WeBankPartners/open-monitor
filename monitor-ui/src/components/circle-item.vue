@@ -86,7 +86,7 @@ export default {
 .m-item {
   display: flex;
   align-items: center;
-  margin: auto 30px;
+  margin: auto 40px;
 
   .circle {
     flex-shrink: 0;
@@ -133,6 +133,24 @@ export default {
         color: #da4e2b;
       }
     }
+  }
+}
+
+@media (max-width: 1680px) {
+  .m-item {
+    margin: auto 30px;
+  }
+}
+
+@media (max-width: 1480px) {
+  .m-item {
+    margin: auto 20px;
+  }
+}
+
+@media (max-width: 1280px) {
+  .m-item {
+    margin: auto 10px;
   }
 }
 </style>
