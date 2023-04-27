@@ -53,10 +53,7 @@ export default {
   components: { VueEllipseProgress },
   computed: {
     progressValue() {
-      const { type, value, total } = this.$attrs;
-      if (type === "total") {
-        return 100;
-      }
+      const { value, total } = this.$attrs;
       if (isNaN(total) || total == 0) {
         return 0;
       }
