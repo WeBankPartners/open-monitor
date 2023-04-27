@@ -64,29 +64,7 @@
               <circle-rotate v-for="cr in circles" :key="cr.label" :data="cr" />
             </template>
 
-            <div
-              class="metrics-bar"
-              v-show="outerMetrics && outerMetrics.length > 0"
-            >
-              <div
-                class="bar-item"
-                v-for="(mtc, idx) in outerMetrics"
-                :key="mtc.name + mtc.type"
-                :style="{
-                  background: barColors[idx % 13],
-                  height: '15px',
-                  width: `${(100 * mtc.value) / outerTotal}%`,
-                }"
-              >
-                <Tooltip
-                  :content="`${mtc.name}: ${mtc.value}`"
-                  placement="top"
-                  theme="light"
-                >
-                  <div class="content">&nbsp;&nbsp;</div>
-                </Tooltip>
-              </div>
-            </div>
+            <metrics-bar :metrics="outerMetrics" :total="outerTotal" />
           </div>
           <div class="right" v-if="total > 0">
             <Card
@@ -214,6 +192,7 @@
 
 <script>
 import TopStats from "@/components/top-stats.vue";
+import MetricsBar from "@/components/metrics-bar.vue";
 import CircleRotate from "@/components/circle-rotate.vue";
 import CircleLabel from "@/components/circle-label.vue";
 import AlarmAssetsBasic from "@/components/alarm-assets-basic.vue";
@@ -222,6 +201,7 @@ export default {
   name: "",
   components: {
     TopStats,
+    MetricsBar,
     CircleRotate,
     CircleLabel,
     AlarmAssetsBasic,
@@ -258,21 +238,6 @@ export default {
 
       outerMetrics: [],
       outerTotal: 0,
-      barColors: [
-        "#DE4B7D",
-        "#E57A50",
-        "#D8CF6B",
-        "#AFC8E4",
-        "#002B55",
-        "#EC6820",
-        "#98B63F",
-        "#0199D3",
-        "#03519F",
-        "#535557",
-        "#60C7C4",
-        "#A7D9BF",
-        "#FFDB3B",
-      ],
     };
   },
   computed: {
@@ -674,37 +639,6 @@ export default {
       .bg {
         position: absolute;
         top: 0;
-      }
-
-      .metrics-bar {
-        position: absolute;
-        top: 719px;
-        width: 750px;
-        height: 31px;
-        background: #ffffff;
-        box-shadow: 0px 8px 15px 0px rgba(17, 110, 249, 0.15);
-        border-radius: 15px;
-        display: flex;
-        padding: 8px 10px;
-
-        .bar-item {
-          height: 15px;
-
-          /deep/ .ivu-tooltip {
-            width: 100%;
-          }
-
-          .content {
-            width: 100%;
-          }
-        }
-
-        .bar-item:nth-child(1) {
-          border-radius: 7px 0 0 7px;
-        }
-        .bar-item:last-child {
-          border-radius: 0 7px 7px 0;
-        }
       }
     }
     .right {
