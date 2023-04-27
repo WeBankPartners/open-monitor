@@ -19,6 +19,8 @@ export default {
 
 <style scoped lang="less">
   h3 {
+    color: #116EF9;
+    font-size: 36px;
     padding: 10px 0;  
   }
 </style>
