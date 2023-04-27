@@ -1,6 +1,11 @@
 <template>
   <div>
-    <Title :title="$t('menu.alert')"></Title>
+    <div class="title-wrapper">
+      <Title :title="$t('menu.alert')"></Title>
+      <div class="title-form">
+        <button @click="alarmHistory" class="btn btn-sm btn-confirm-f">{{$t('alarmHistory')}}</button>
+      </div>
+    </div>
     <Tabs value="default">
       <TabPane :label="$t('recommended_mode')" name="default">
         <Modal
@@ -45,9 +50,12 @@
         <div class="data-stats-container" v-if="showGraph">
           <transition name="slide-fade">
             <div class="content-stats-container">
-              <div class="left">
+              <div class="left" :class="{ 'cover': total === 0 }">
                 <img class="bg" src="../assets/img/bgd_main_cube.png" />
                 <img class="cube" width="640" height="640" src="../assets/img/the_cube.png" />
+                <img class="radar" v-if="total === 0" width="373" height="373" src="../assets/img/corePRunning.png" />
+                <div class="radar-text perfect-text" v-if="total === 0">PERFECT</div>
+                <div class="radar-text running-text" v-if="total === 0">RUNNING...</div>
 
                 <circle-label v-for="cr in circles" :key="cr.type" :data="cr" />
                 <circle-rotate v-for="cr in circles" :key="cr.label" :data="cr" />
@@ -60,7 +68,7 @@
                   </div>
                 </div>
               </div>
-              <div class="right">
+              <div class="right" v-if="total > 0">
                 
               </div>
             </div>
@@ -530,6 +538,25 @@ export default {
   color: #2d8cf0;
 }
 
+.title-wrapper {
+  display: flex;
+  align-items: flex-end;
+  margin-bottom: 24px;
+
+  .title-form  {
+    margin-left: 21px;
+    padding: 10px 0;
+    flex: auto;
+    border-radius: 4px;
+    display: flex;
+    justify-content: flex-end;
+
+    .btn-sm {
+      background: #116EF9;
+    }
+  }
+}
+
 .data-stats-container {
   
   .top-stats-container {
@@ -601,9 +628,33 @@ export default {
       align-items: center;
       padding-top: 53.5px;
       padding-bottom: 94px;
+
+      &.cover {
+        flex-basis: 100%;
+      }
       .bg {
         position: absolute;
         top: 0;
+      }
+
+      .radar {
+        position: absolute;
+        animation: radar-beam 5s infinite;
+        animation-timing-function: linear;
+      }
+
+      .radar-text {
+        position: absolute;
+        color: #C5DCFE;
+        font-size: 72px;
+        font-weight: 800;
+
+        &.perfect-text {
+          padding-right: 800px;
+        }
+        &.running-text {
+          padding-left: 900px;
+        }
       }
 
       .metrics-bar {
@@ -712,5 +763,14 @@ label {
 /* .slide-fade-leave-active for below version 2.1.8 */ {
   transform: translateX(10px);
   opacity: 0;
+}
+
+@keyframes radar-beam {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 </style>
