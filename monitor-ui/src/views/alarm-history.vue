@@ -51,76 +51,7 @@
       </div>
     </div>
     <div class="data-stats-container" v-if="showGraph">
-      <div class="top-stats-container">
-        <div class="left">
-          <div class="metics-metal">
-            <div class="col">
-              <div class="title">{{ $t("realTimeAlarm") }}</div>
-              <img class="time-icon" src="../assets/img/icon_rltm.png" />
-            </div>
-          </div>
-          <circle-item
-            type="total"
-            :title="$t('m_total')"
-            :total="total"
-            :value="total"
-            :icon="totalIcon"
-          />
-          <circle-item
-            type="low"
-            :title="$t('m_low')"
-            :total="total"
-            :value="low"
-            :icon="lowIcon"
-          />
-          <circle-item
-            type="medium"
-            :title="$t('m_medium')"
-            :total="total"
-            :value="mid"
-            :icon="midIcon"
-          />
-          <circle-item
-            type="high"
-            :title="$t('m_high')"
-            :total="total"
-            :value="high"
-            :icon="highIcon"
-          />
-        </div>
-        <div class="right">
-          <div class="metics-metal">
-            <div class="col">
-              <div class="title">{{ $t("todayAlarm") }}</div>
-              <img class="time-icon" src="../assets/img/icon_today.png" />
-            </div>
-          </div>
-          <circle-item
-            type="total"
-            :title="$t('m_total')"
-            :total="ttotal"
-            :value="ttotal"
-          />
-          <circle-item
-            type="low"
-            :title="$t('m_low')"
-            :total="ttotal"
-            :value="tlow"
-          />
-          <circle-item
-            type="medium"
-            :title="$t('m_medium')"
-            :total="ttotal"
-            :value="tmid"
-          />
-          <circle-item
-            type="high"
-            :title="$t('m_high')"
-            :total="ttotal"
-            :value="thigh"
-          />
-        </div>
-      </div>
+      <top-stats :lstats="leftStats" :rstats="rightStats" :noData="noData" />
     </div>
     <div class="data-stats-container" v-if="showGraph">
       <transition name="slide-fade">
@@ -282,15 +213,15 @@
 </template>
 
 <script>
-import CircleItem from "../components/circle-item.vue";
-import CircleRotate from "../components/circle-rotate.vue";
-import CircleLabel from "../components/circle-label.vue";
+import TopStats from "@/components/top-stats.vue";
+import CircleRotate from "@/components/circle-rotate.vue";
+import CircleLabel from "@/components/circle-label.vue";
 import AlarmAssetsBasic from "@/components/alarm-assets-basic.vue";
 
 export default {
   name: "",
   components: {
-    CircleItem,
+    TopStats,
     CircleRotate,
     CircleLabel,
     AlarmAssetsBasic,
@@ -342,11 +273,6 @@ export default {
         "#A7D9BF",
         "#FFDB3B",
       ],
-
-      totalIcon: require("../assets/img/icon_alarm_ttl.png"),
-      lowIcon: require("../assets/img/icon_alarm_L.png"),
-      midIcon: require("../assets/img/icon_alarm_M.png"),
-      highIcon: require("../assets/img/icon_alarm_H.png"),
     };
   },
   computed: {
@@ -355,6 +281,74 @@ export default {
     },
     ttotal() {
       return this.tlow + this.tmid + this.thigh;
+    },
+    leftStats() {
+      return [
+        {
+          key: 'l_total',
+          type: 'total',
+          title: this.$t('m_total'),
+          total: this.total,
+          value: this.total,
+          icon: require("../assets/img/icon_alarm_ttl.png")
+        },
+        {
+          key: 'l_low',
+          type: 'low',
+          title: this.$t('m_low'),
+          total: this.total,
+          value: this.low,
+          icon: require("../assets/img/icon_alarm_L.png")
+        },
+        {
+          key: 'l_medium',
+          type: 'medium',
+          title: this.$t('m_medium'),
+          total: this.total,
+          value: this.mid,
+          icon: require("../assets/img/icon_alarm_M.png")
+        },
+        {
+          key: 'l_high',
+          type: 'high',
+          title: this.$t('m_high'),
+          total: this.total,
+          value: this.high,
+          icon: require("../assets/img/icon_alarm_H.png")
+        }
+      ]
+    },
+    rightStats() {
+      return [
+        {
+          key: 'r_total',
+          type: 'total',
+          title: this.$t('m_total'),
+          total: this.ttotal,
+          value: this.ttotal
+        },
+        {
+          key: 'r_low',
+          type: 'low',
+          title: this.$t('m_low'),
+          total: this.ttotal,
+          value: this.tlow
+        },
+        {
+          key: 'r_medium',
+          type: 'medium',
+          title: this.$t('m_medium'),
+          total: this.ttotal,
+          value: this.tmid
+        },
+        {
+          key: 'r_high',
+          type: 'high',
+          title: this.$t('m_high'),
+          total: this.ttotal,
+          value: this.thigh
+        }
+      ]
     },
     circles() {
       return [
@@ -658,65 +652,6 @@ export default {
 }
 
 .data-stats-container {
-  .top-stats-container {
-    width: 100%;
-    height: 90px;
-    background: #ffffff;
-    border: 2px solid #f2f3f7;
-    border-radius: 4px;
-    display: flex;
-
-    .metics-metal {
-      height: 100%;
-      background: linear-gradient(
-        90deg,
-        #f5f8fe 0%,
-        rgba(234, 242, 253, 0) 100%
-      );
-
-      .col {
-        position: relative;
-        width: 180px;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        justify-content: center;
-
-        .title {
-          font-size: 16px;
-        }
-
-        .time-icon {
-          width: 32px;
-          height: 32px;
-          margin-top: 14px;
-        }
-
-        &::after {
-          content: "";
-          position: absolute;
-          width: 2px;
-          height: 63px;
-          right: 0;
-          background: #f2f3f7;
-        }
-      }
-    }
-
-    .left {
-      flex-basis: 60%;
-      height: 100%;
-      display: flex;
-    }
-    .right {
-      flex-basis: 40%;
-      height: 100%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-  }
 
   .content-stats-container {
     width: 100%;
