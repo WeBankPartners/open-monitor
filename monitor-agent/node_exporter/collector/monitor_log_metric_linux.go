@@ -500,7 +500,10 @@ func calcLogMetricData() {
 				customFetchString := <-metricObj.DataChannel
 				//tmpMetricObj := logMetricDisplayObj{Metric: metricObj.Metric, Path: lmObj.Path, Agg: metricObj.AggType, TEndpoint: lmObj.TargetEndpoint, ServiceGroup: lmObj.ServiceGroup, TagsString: "", Step: metricObj.Step, ValueObj: logMetricValueObj{Sum: 0, Max: 0, Min: 0, Count: 0}}
 				// check if tag match
-				tmpTagString := getLogMetricTags(customFetchString, metricObj.TagConfig, metricObj.StringMap)
+				illegalFlag, tmpTagString := getLogMetricTags(customFetchString, metricObj.TagConfig, metricObj.StringMap)
+				if illegalFlag {
+					continue
+				}
 				tmpMetricKey := fmt.Sprintf("%s^%s^%s^%s", lmObj.Path, metricObj.Metric, metricObj.AggType, tmpTagString)
 				_, metricValueFloat := transLogMetricStringMapValue(metricObj.StringMap, customFetchString)
 				if valueExistObj, keyExist := valueCountMap[tmpMetricKey]; keyExist {
@@ -661,7 +664,7 @@ func getLogMetricJsonMapTags(input map[string]interface{}, tagKey []string) (tag
 	return tagString
 }
 
-func getLogMetricTags(lineText string, tagConfigList []*LogMetricConfigTag, stringMap []*logMetricStringMapNeObj) (tagString string) {
+func getLogMetricTags(lineText string, tagConfigList []*LogMetricConfigTag, stringMap []*logMetricStringMapNeObj) (illegalFlag bool, tagString string) {
 	if len(tagConfigList) == 0 {
 		return
 	}
@@ -671,8 +674,9 @@ func getLogMetricTags(lineText string, tagConfigList []*LogMetricConfigTag, stri
 			continue
 		}
 		fetchList := rule.RegExp.FindStringSubmatch(lineText)
+		tmpFetchString := ""
 		if len(fetchList) > 1 {
-			tmpFetchString := fetchList[1]
+			tmpFetchString = fetchList[1]
 			if tmpFetchString != "" {
 				if len(stringMap) > 0 {
 					if tmpMatchFlag, tmpMatchData := transLogMetricStringMapValue(stringMap, tmpFetchString); tmpMatchFlag {
@@ -681,6 +685,10 @@ func getLogMetricTags(lineText string, tagConfigList []*LogMetricConfigTag, stri
 				}
 				tagList = append(tagList, fmt.Sprintf("%s=%s", rule.Key, tmpFetchString))
 			}
+		}
+		if tmpFetchString == "" {
+			illegalFlag = true
+			break
 		}
 	}
 	tagString = strings.Join(tagList, ",")
