@@ -3,159 +3,64 @@
     <div class="title-wrapper">
       <Title :title="$t('menu.alert')"></Title>
       <div class="title-form">
+        <ul>
+          <li class="filter-li">
+            <span class="label">{{$t('title.updateTime')}}：</span>{{timeForDataAchieve}}
+          </li>
+          <li class="filter-li">
+            <span class="label">{{$t('alarmStatistics')}}：</span>
+            <i-switch size="large" v-model="showGraph">
+              <span slot="open">ON</span>
+              <span slot="close">OFF</span>
+            </i-switch>
+          </li>
+          <li class="filter-li">
+            <span class="label">{{$t('classic_mode')}}：</span>
+            <i-switch size="large" v-model="isClassicModel">
+              <span slot="open">ON</span>
+              <span slot="close">OFF</span>
+            </i-switch>
+          </li>
+        </ul>
         <button @click="alarmHistory" class="btn btn-sm btn-confirm-f">{{$t('alarmHistory')}}</button>
       </div>
     </div>
-    <Tabs value="default">
-      <TabPane :label="$t('recommended_mode')" name="default">
-        <Modal
-          v-model="isShowWarning"
-          :title="$t('closeConfirm.title')"
-          @on-ok="ok"
-          @on-cancel="cancel">
-          <div class="modal-body" style="padding:30px">
-            <div style="text-align:center">
-              <p style="color: red">{{$t('closeConfirm.tip')}}</p>
-            </div>
-          </div>
-        </Modal>
-        <div class="data-stats-container" v-if="showGraph">
-          <top-stats :lstats="leftStats" :rstats="rightStats" :noData="noData" />
-        </div>
-        <div class="data-stats-container" v-if="showGraph">
-          <transition name="slide-fade">
-            <div class="content-stats-container">
-              <div class="left" :class="{ 'cover': total === 0 }">
-                <alarm-assets-basic :total="total" :noData="noData" />
+    <div class="data-stats-container">
+      <top-stats :lstats="leftStats" :rstats="rightStats" :noData="noData" />
+    </div>
+    <div class="data-stats-container" v-if="!isClassicModel">
+      <transition name="slide-fade">
+        <div class="content-stats-container">
+          <div class="left" :class="{ 'cover': total === 0 }" v-if="showGraph">
+            <alarm-assets-basic :total="total" :noData="noData" />
 
-                <template v-if="!noData">
-                  <circle-label v-for="cr in circles" :key="cr.type" :data="cr" />
-                  <circle-rotate v-for="cr in circles" :key="cr.label" :data="cr" />
-                </template>
+            <template v-if="!noData">
+              <circle-label v-for="cr in circles" :key="cr.type" :data="cr" />
+              <circle-rotate v-for="cr in circles" :key="cr.label" :data="cr" />
+            </template>
 
-                <metrics-bar :metrics="outerMetrics" :total="outerTotal" />
-              </div>
-              <div class="right" v-if="total > 0">
-                
-              </div>
-            </div>
-          </transition>
-        </div>
-        <!-- <div class="flex-container">
-          <transition name="slide-fade">
-            <div class="flex-item" v-show="showGraph">
-              <div>
-                <Tag color="success"><span style="font-size:14px">{{$t('m_low')}}:{{this.low}}</span></Tag>
-                <Tag color="warning"><span style="font-size:14px">{{$t('m_medium')}}:{{this.mid}}</span></Tag>
-                <Tag color="error"><span style="font-size:14px">{{$t('m_high')}}:{{this.high}}</span></Tag>
-                <button v-if="filtersForShow.length" @click="clearAll" style="float:right;margin-right:50px" class="btn btn-small btn-cancel-f">{{$t('m_reset_condition')}}</button>
-                <div v-show="alramEmpty" style="display:none" id="elId" class="echart"></div>
-                <div v-if="!alramEmpty"  class="alarm-empty">
-                  <span style="font-size:14px"></span>
-                </div>
-              </div>
-            </div>
-          </transition>
-          <div class="flex-item" style="width: 100%">
-            <div class="alarm-total" v-if="!showGraph">
-              <Tag color="success"><span style="font-size:14px">{{$t('m_low')}}:{{this.low}}</span></Tag>
-              <Tag color="warning"><span style="font-size:14px">{{$t('m_medium')}}:{{this.mid}}</span></Tag>
-              <Tag color="error"><span style="font-size:14px">{{$t('m_high')}}:{{this.high}}</span></Tag>
-            </div>
-            <section style="margin-left:8px" class="c-dark-exclude-color">
-              <div style="display: inline-block;margin-right:16px">
-                <span>{{$t('alarmStatistics')}}：</span>
-                <i-switch size="large" v-model="showGraph">
-                  <span slot="open">ON</span>
-                  <span slot="close">OFF</span>
-                </i-switch>
-              </div>
-              <Tag color="warning">{{$t('title.updateTime')}}：{{timeForDataAchieve}}</Tag>
-              <template>
-                <Tag v-for="(filterItem, filterIndex) in filtersForShow" color="success" type="border" closable @on-close="exclude(filterItem.key)" :key="filterIndex">{{filterItem.key}}：{{filterItem.value}}</Tag>
-              </template>
-              <button v-if="filtersForShow.length" @click="clearAll" class="btn btn-small btn-cancel-f">{{$t('clearAll')}}</button>
-              <template v-if="!resultData.length">
-                <Tag color="primary">{{$t('table.noDataTip')}}！</Tag>
-              </template>
-              <button @click="alarmHistory" style="float: right;margin-right: 25px;" class="btn btn-sm btn-cancel-f">{{$t('alarmHistory')}}</button>
-              <button :disabled="!filtersForShow.some(f => f.key === 'metric')" @click="deleteConfirmModal({}, true)" style="float: right;margin-right: 25px;" class="btn btn-sm btn-cancel-f">{{$t('m_batch_close')}}</button>
-            </section>
-            <div class="alarm-list">
-              <template>
-                <section v-for="(alarmItem, alarmIndex) in resultData" :key="alarmIndex" class="alarm-item c-dark-exclude-color" :class="'alarm-item-border-'+ alarmItem.s_priority">
-                  <div style="float:right">
-                    <Tooltip :content="$t('menu.endpointView')">
-                      <Icon type="ios-stats" size="18" class="fa-operate" v-if="!alarmItem.is_custom" @click="goToEndpointView(alarmItem)"/>
-                    </Tooltip>
-                    <Tooltip :content="$t('close')">
-                      <Icon type="ios-eye-off" size="18" class="fa-operate" @click="deleteConfirmModal(alarmItem, false)"/>
-                    </Tooltip>
-                    <Tooltip :content="$t('m_remark')">
-                      <Icon type="ios-pricetags-outline" size="18" class="fa-operate" @click="remarkModal(alarmItem)" />
-                    </Tooltip>
-                  </div>
-                  <ul>
-                    <li>
-                      <label class="col-md-2" style="vertical-align: top;line-height: 24px;">{{$t('field.endpoint')}}&{{$t('tableKey.s_priority')}}:</label>
-                      <Tag type="border" closable @on-close="addParams('endpoint',alarmItem.endpoint)" color="primary">{{alarmItem.endpoint}}</Tag>
-                      <Tag type="border" closable @on-close="addParams('priority',alarmItem.s_priority)" color="primary">{{alarmItem.s_priority}}</Tag>
-                      <Tag type="border" color="warning">{{alarmItem.start_string}}</Tag>
-                    </li>
-                    <li v-if="!alarmItem.is_custom">
-                      <label class="col-md-2" style="vertical-align: top;line-height: 24px;">
-                        <span>{{$t('field.metric')}}</span>
-                        <span v-if="alarmItem.tags">&{{$t('tableKey.tags')}}</span>
-                        :</label>
-                        <Tag type="border" closable @on-close="addParams('metric',alarmItem.s_metric)" color="primary">{{alarmItem.s_metric}}</Tag>
-                        <template v-if="alarmItem.tags">
-                          <Tag type="border" v-for="(t,tIndex) in alarmItem.tags.split('^')" :key="tIndex" color="cyan">{{t}}</Tag>
-                        </template>
-                    </li>
-                    <li v-if="alarmItem.custom_message">
-                      <label class="col-md-2" style="vertical-align: top;line-height: 24px;">
-                        <span>{{$t('m_remark')}}:</span></label>
-                        <Tooltip max-width="300">
-                          <div style="border: 1px solid #2d8cf0;padding:2px;border-radius:4px; color: #2d8cf0">
-                          {{alarmItem.custom_message.length > 100 ? alarmItem.custom_message.substring(0,100) + '...' : alarmItem.custom_message}}
-                          </div>
-                          <div slot="content" style="white-space: normal;">
-                            <p>{{alarmItem.custom_message}}</p>
-                          </div>
-                        </Tooltip>
-                    </li>
-                    <li  v-if="!alarmItem.is_custom">
-                      <label class="col-md-2" style="vertical-align: top;line-height: 24px;">{{$t('details')}}:</label>
-                      <div class="col-md-9" style="display: inline-block;padding:0">
-                        <span>
-                          <Tag color="default">{{$t('tableKey.start_value')}}:{{alarmItem.start_value}}</Tag>
-                          <Tag color="default" v-if="alarmItem.s_cond">{{$t('tableKey.threshold')}}:{{alarmItem.s_cond}}</Tag>
-                          <Tag color="default" v-if="alarmItem.s_last">{{$t('tableKey.s_last')}}:{{alarmItem.s_last}}</Tag>
-                          <Tag color="default" v-if="alarmItem.path">{{$t('tableKey.path')}}:{{alarmItem.path}}</Tag>
-                          <Tag color="default" v-if="alarmItem.keyword">{{$t('tableKey.keyword')}}:{{alarmItem.keyword}}</Tag>
-                        </span>
-                      </div>
-                    </li>
-                    <li>
-                      <label class="col-md-2" style="vertical-align: top;">{{$t('alarmContent')}}:</label>
-                      <div class="col-md-9" style="display: inline-block;padding:0">
-                        <span style="word-break: break-all;" v-html="alarmItem.content"></span>
-                      </div>
-                    </li>
-                  </ul>
-                </section>
-              </template>
-            </div>
-            <div style="margin: 4px 0; text-align:right">
-              <Page :total="paginationInfo.total" @on-change="pageIndexChange" @on-page-size-change="pageSizeChange" show-elevator show-sizer show-total />
-            </div>
+            <metrics-bar :metrics="outerMetrics" :total="outerTotal" />
           </div>
-        </div> -->
-      </TabPane>
-      <TabPane :label="$t('classic_mode')" name="classic">
-        <ClassicAlarm ref="classicAlarm"></ClassicAlarm>
-      </TabPane>
-    </Tabs>
+          <div class="right" :class="{ 'cover': !showGraph }" v-if="total > 0">
+            
+          </div>
+        </div>
+      </transition>
+    </div>
+    <div v-show="isClassicModel">
+      <ClassicAlarm ref="classicAlarm"></ClassicAlarm>
+    </div>
+    <Modal
+      v-model="isShowWarning"
+      :title="$t('closeConfirm.title')"
+      @on-ok="ok"
+      @on-cancel="cancel">
+      <div class="modal-body" style="padding:30px">
+        <div style="text-align:center">
+          <p style="color: red">{{$t('closeConfirm.tip')}}</p>
+        </div>
+      </div>
+    </Modal>
     <ModalComponent :modelConfig="modelConfig"></ModalComponent>
   </div>
 </template>
@@ -184,6 +89,7 @@ export default {
       showGraph: true,
       alramEmpty: true,
       isShowWarning: false,
+      isClassicModel: false,
       interval: null,
       timeForDataAchieve: null,
       filters: {},
@@ -359,13 +265,9 @@ export default {
         "/monitor/api/v1/alarm/problem/history",
         params,
         (responseData) => {
-          this.noData = false;
           this.tlow = responseData.low;
           this.tmid = responseData.mid;
           this.thigh = responseData.high;
-        },
-        () => {
-          this.noData = true;
         }
       );
     },
@@ -598,11 +500,28 @@ export default {
 
   .title-form  {
     margin-left: 21px;
-    padding: 10px 0;
+    padding: 10px 18px;
     flex: auto;
     border-radius: 4px;
+    border: 2px solid #f2f3f7;
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
+    align-items: center;
+
+    .label {
+      color: #116EF9;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    ul {
+      display: flex;
+      li {
+        color: #7E8086;
+        font-size: 12px;
+        margin-right: 28px;
+      }
+    }
 
     .btn-sm {
       background: #116EF9;
@@ -689,6 +608,10 @@ export default {
     .right {
       flex-basis: 40%;
       height: 100%;
+
+      &.cover {
+        flex-basis: 100%;
+      }
     }
   }
 }
