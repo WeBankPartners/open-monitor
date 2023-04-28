@@ -28,7 +28,7 @@
     <div class="data-stats-container">
       <top-stats :lstats="leftStats" :rstats="rightStats" :noData="noData" />
     </div>
-    <div class="data-stats-container" v-if="!isClassicModel">
+    <div class="data-stats-container" v-show="!isClassicModel">
       <transition name="slide-fade">
         <div class="content-stats-container">
           <div class="left" :class="{ 'cover': total === 0 }" v-if="showGraph">
@@ -47,9 +47,7 @@
         </div>
       </transition>
     </div>
-    <div v-show="isClassicModel">
-      <ClassicAlarm ref="classicAlarm"></ClassicAlarm>
-    </div>
+    <ClassicAlarm ref="classicAlarm" v-show="isClassicModel"></ClassicAlarm>
     <Modal
       v-model="isShowWarning"
       :title="$t('closeConfirm.title')"
