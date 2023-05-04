@@ -67,122 +67,13 @@
             <metrics-bar :metrics="outerMetrics" :total="outerTotal" />
           </div>
           <div class="right" v-if="total > 0">
-            <Card
-              v-for="(alarmItem, alarmIndex) in resultData"
-              :key="alarmIndex"
-              style="margin-bottom: 15px"
-            >
-              <template #title>
-                <div
-                  class="col-md-10"
-                  style="padding: 0; color: #404144; font-size: 16px"
-                >
-                  <img class="bg" src="../assets/img/icon_alarm_H_cube.png" />
-                  {{ alarmItem.content }}
-                </div>
-                <div
-                  class="col-md-2"
-                  style="padding: 0; text-align: right; color: #7e8086"
-                >
-                  {{ alarmItem.start_string }}
-                </div>
+            <section style="margin-left:8px;margin-bottom:10px" class="c-dark-exclude-color">
+              <template v-for="(filterItem, filterIndex) in filtersForShow">
+                <Tag color="success" type="border" closable @on-close="exclude(filterItem.key)" :key="filterIndex">{{filterItem.key}}：{{filterItem.value}}</Tag>
               </template>
-              <div style="position: absolute; top: 10px; right: 10px">
-                <Tooltip :content="$t('menu.endpointView')">
-                  <Icon
-                    type="ios-stats"
-                    size="18"
-                    class="fa-operate"
-                    v-if="!alarmItem.is_custom"
-                    @click="goToEndpointView(alarmItem)"
-                  />
-                </Tooltip>
-                <Tooltip :content="$t('close')">
-                  <Icon
-                    type="ios-eye-off"
-                    size="18"
-                    class="fa-operate"
-                    @click="deleteConfirmModal(alarmItem, false)"
-                  />
-                </Tooltip>
-                <Tooltip :content="$t('m_remark')">
-                  <Icon
-                    type="ios-pricetags-outline"
-                    size="18"
-                    class="fa-operate"
-                    @click="remarkModal(alarmItem)"
-                  />
-                </Tooltip>
-              </div>
-              <ul>
-                <li>
-                  <label
-                    class="card-label"
-                    v-html="$t('field.endpoint')"
-                  ></label>
-                  <div class="card-content">
-                    {{ alarmItem.endpoint }}
-                    <img
-                      class="filter-icon"
-                      @click="addParams('endpoint', alarmItem.endpoint)"
-                      src="../assets/img/icon_filter.png"
-                    />
-                  </div>
-                </li>
-                <li>
-                  <label class="card-label" v-html="$t('field.metric')"></label>
-                  <div class="card-content">
-                    {{ alarmItem.s_metric }}
-                    <img
-                      class="filter-icon"
-                      src="../assets/img/icon_filter.png"
-                    />
-                  </div>
-                </li>
-                <li>
-                  <label
-                    class="card-label"
-                    v-html="$t('tableKey.tags')"
-                  ></label>
-                  <div class="card-content">
-                    <div class="tags-box">
-                      <template v-if="alarmItem.tags">
-                        <Tag
-                          type="border"
-                          v-for="(t, tIndex) in alarmItem.tags.split('^')"
-                          :key="tIndex"
-                          >{{ t }}</Tag
-                        >
-                      </template>
-                    </div>
-                  </div>
-                </li>
-                <li>
-                  <label class="card-label" v-html="$t('details')"></label>
-                  <div class="card-content">
-                    <Tag color="default"
-                      >{{ $t("tableKey.start_value") }}:{{
-                        alarmItem.start_value
-                      }}</Tag
-                    >
-                    <Tag color="default" v-if="alarmItem.s_cond"
-                      >{{ $t("tableKey.threshold") }}:{{
-                        alarmItem.s_cond
-                      }}</Tag
-                    >
-                    <Tag color="default" v-if="alarmItem.s_last"
-                      >{{ $t("tableKey.s_last") }}:{{ alarmItem.s_last }}</Tag
-                    >
-                    <Tag color="default" v-if="alarmItem.path"
-                      >{{ $t("tableKey.path") }}:{{ alarmItem.path }}</Tag
-                    >
-                    <Tag color="default" v-if="alarmItem.keyword"
-                      >{{ $t("tableKey.keyword") }}:{{ alarmItem.keyword }}</Tag
-                    >
-                  </div>
-                </li>
-              </ul>
-            </Card>
+              <button v-if="filtersForShow.length" @click="clearAll" class="btn btn-small btn-cancel-f">{{$t('clearAll')}}</button>
+            </section>
+            <alarm-card v-for="(item, alarmIndex) in resultData" :key="alarmIndex" :data="item"></alarm-card>
           </div>
         </div>
       </transition>
@@ -196,6 +87,7 @@ import MetricsBar from "@/components/metrics-bar.vue";
 import CircleRotate from "@/components/circle-rotate.vue";
 import CircleLabel from "@/components/circle-label.vue";
 import AlarmAssetsBasic from "@/components/alarm-assets-basic.vue";
+import AlarmCard from "@/components/alarm-card.vue"
 
 export default {
   name: "",
@@ -205,6 +97,7 @@ export default {
     CircleRotate,
     CircleLabel,
     AlarmAssetsBasic,
+    AlarmCard
   },
   data() {
     return {
@@ -549,27 +442,6 @@ export default {
     getPercentage(val, total) {
       return ((parseInt(val, 10) * 100) / parseInt(total, 10) || 0).toFixed(2);
     },
-    goToEndpointView(alarmItem) {
-      const endpointObject = {
-        option_value: alarmItem.endpoint,
-        type: alarmItem.endpoint.split("_").slice(-1)[0],
-      };
-      localStorage.setItem("jumpCallData", JSON.stringify(endpointObject));
-      this.$router.push({ path: "/endpointView" });
-    },
-    deleteConfirmModal(rowData, isBatch) {
-      this.isBatch = isBatch;
-      this.selectedData = rowData;
-      this.isShowWarning = true;
-    },
-    remarkModal(item) {
-      this.modelConfig.addRow = {
-        id: item.id,
-        message: item.custom_message,
-        is_custom: false,
-      };
-      this.$root.JQ("#remark_Modal").modal("show");
-    },
   },
 };
 </script>
@@ -660,41 +532,6 @@ export default {
         // border-radius: 1em;
         background-color: rgba(181, 164, 164, 0.2);
       }
-
-      /deep/ .ivu-card-head {
-        background: #f2f3f7;
-        display: flex;
-        align-items: center;
-      }
-
-      /deep/ .ivu-card-body {
-        position: relative;
-        line-height: 32px;
-      }
-
-      li {
-        display: flex;
-      }
-      .card-label {
-        width: 80px;
-        color: #7e8086;
-        font-size: 12px;
-        text-align: left;
-      }
-      .card-content {
-        width: ~"calc(100% - 80px)";
-        color: #404144;
-        overflow: hidden;
-        .tags-box {
-          width: max-content;
-        }
-      }
-      .filter-icon {
-        position: relative;
-        top: -2px;
-        margin-left: 6px;
-        cursor: pointer;
-      }
     }
   }
 }
@@ -747,13 +584,6 @@ label {
 
 .alarm-item /deep/.ivu-icon-ios-close:before {
   content: "\F102";
-}
-
-.fa-operate {
-  margin: 8px;
-  float: right;
-  font-size: 16px;
-  cursor: pointer;
 }
 
 /* 可以设置不同的进入和离开动画 */
