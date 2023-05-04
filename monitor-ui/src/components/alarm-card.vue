@@ -17,7 +17,7 @@
         {{ data.start_string }}
       </div>
     </template>
-    <div style="position: absolute; top: 10px; right: 10px">
+    <div v-if="$attrs.button" style="position: absolute; top: 10px; right: 10px">
       <Tooltip :content="$t('menu.endpointView')">
         <Icon
           type="ios-stats"
