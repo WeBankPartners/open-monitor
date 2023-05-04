@@ -518,6 +518,7 @@ export default {
     }
     .right {
       flex-basis: 40%;
+      overflow-x: auto;
 
       .alarm-card-container {
         height: ~"calc(100vh - 300px)";
@@ -539,9 +540,6 @@ export default {
         }
       }
 
-      &.cover {
-        flex-basis: 100%;
-      }
     }
   }
 }
