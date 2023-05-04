@@ -57,9 +57,9 @@
       <transition name="slide-fade">
         <div class="content-stats-container">
           <div class="left" :class="{ 'cover': total === 0 }">
-            <alarm-assets-basic :total="total" :noData="noData" />
+            <alarm-assets-basic :total="total" :noData="true" />
 
-            <template v-if="!noData">
+            <template v-if="!noData && total > 0">
               <circle-label v-for="cr in circles" :key="cr.type" :data="cr" />
               <circle-rotate v-for="cr in circles" :key="cr.label" :data="cr" />
             </template>
@@ -101,8 +101,8 @@ export default {
   },
   data() {
     return {
-      startDate: "",
-      endDate: "",
+      startDate: new Date(new Date().toLocaleDateString()),
+      endDate: new Date(),
       filter: "all",
       filterList: [
         { label: "all", value: "all" },
@@ -244,6 +244,7 @@ export default {
     },
   },
   mounted() {
+    this.getAlarm();
     this.getTodayAlarm();
   },
   methods: {
