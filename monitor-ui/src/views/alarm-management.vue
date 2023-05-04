@@ -48,7 +48,12 @@
               </template>
               <button v-if="filtersForShow.length" @click="clearAll" class="btn btn-small btn-cancel-f">{{$t('clearAll')}}</button>
             </section>
-            <alarm-card v-for="(item, alarmIndex) in resultData" :key="alarmIndex" :data="item"></alarm-card>
+            <section class="alarm-card-container">
+              <alarm-card v-for="(item, alarmIndex) in resultData" :key="alarmIndex" :data="item" :button="true"></alarm-card>
+            </section>
+            <div style="margin: 4px 0; text-align:right">
+              <Page :total="paginationInfo.total" @on-change="pageIndexChange" @on-page-size-change="pageSizeChange" show-elevator show-sizer show-total />
+            </div>
           </div>
         </div>
       </transition>
@@ -613,26 +618,29 @@ export default {
     }
     .right {
       flex-basis: 40%;
-      height: ~"calc(100vh - 180px)";
-      overflow-y: auto;
+
+      .alarm-card-container {
+        height: ~"calc(100vh - 300px)";
+        overflow-y: auto;
+
+        &::-webkit-scrollbar {
+          width: 6px;
+          height: 6px;
+        }
+
+        &::-webkit-scrollbar-thumb {
+          // border-radius: 1em;
+          background-color: rgba(0, 21, 41, 0.2);
+        }
+
+        &::-webkit-scrollbar-track {
+          // border-radius: 1em;
+          background-color: rgba(181, 164, 164, 0.2);
+        }
+      }
 
       &.cover {
         flex-basis: 100%;
-      }
-
-      &::-webkit-scrollbar {
-        width: 6px;
-        height: 6px;
-      }
-
-      &::-webkit-scrollbar-thumb {
-        // border-radius: 1em;
-        background-color: rgba(0, 21, 41, 0.2);
-      }
-
-      &::-webkit-scrollbar-track {
-        // border-radius: 1em;
-        background-color: rgba(181, 164, 164, 0.2);
       }
     }
   }
