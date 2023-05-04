@@ -101,7 +101,7 @@ export default {
     flex-basis: 40%;
     height: 100%;
     display: flex;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
   }
 }
