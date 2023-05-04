@@ -5,7 +5,9 @@
         class="col-md-10"
         style="padding: 0; color: #404144; font-size: 16px"
       >
-        <img class="bg" src="../assets/img/icon_alarm_H_cube.png" />
+        <img v-if="data.s_priority=='high'" class="bg" src="../assets/img/icon_alarm_H_cube.png" style="margin-right:8px" />
+        <img v-else-if="data.s_priority=='medium'" class="bg" src="../assets/img/icon_alarm_M_cube.png" style="margin-right:8px" />
+        <img v-else class="bg" src="../assets/img/icon_alarm_L_cube.png" style="margin-right:8px" />
         {{ data.content }}
       </div>
       <div
@@ -119,12 +121,12 @@ export default {
       this.$router.push({ path: "/endpointView" });
     },
     deleteConfirmModal(rowData, isBatch) {
-      this.isBatch = isBatch;
-      this.selectedData = rowData;
-      this.isShowWarning = true;
+      this.$parent.isBatch = isBatch;
+      this.$parent.selectedData = rowData;
+      this.$parent.isShowWarning = true;
     },
     remarkModal(item) {
-      this.modelConfig.addRow = {
+      this.$parent.modelConfig.addRow = {
         id: item.id,
         message: item.custom_message,
         is_custom: false,
