@@ -31,7 +31,7 @@
     <div class="data-stats-container" v-show="!isClassicModel">
       <transition name="slide-fade">
         <div class="content-stats-container">
-          <div class="left" :class="{ 'cover': total === 0 }" v-if="showGraph">
+          <div class="left" :class="{ 'cover': total === 0 || noData }" v-if="showGraph">
             <alarm-assets-basic :total="total" :noData="noData" />
 
             <template v-if="!noData">
@@ -39,9 +39,9 @@
               <circle-rotate v-for="cr in circles" :key="cr.label" :data="cr" />
             </template>
 
-            <metrics-bar :metrics="outerMetrics" :total="outerTotal" />
+            <metrics-bar :metrics="outerMetrics" :total="outerTotal" v-if="!noData" />
           </div>
-          <div class="right" :class="{ 'cover': !showGraph }" v-if="total > 0">
+          <div class="right" :class="{ 'cover': !showGraph }" v-if="total > 0 && !noData">
             <section style="margin-left:8px;margin-bottom:10px" class="c-dark-exclude-color">
               <template v-for="(filterItem, filterIndex) in filtersForShow">
                 <Tag color="success" type="border" closable @on-close="exclude(filterItem.key)" :key="filterIndex">{{filterItem.key}}：{{filterItem.value}}</Tag>
@@ -223,7 +223,7 @@ export default {
           type: 'low',
           label: this.$t('m_low'),
           icon: require('../assets/img/peichart_L.png'),
-          value: this.low,
+          value: this.noData ? 0 : this.low,
           total: this.total,
           deg: '-60deg',
           tx: 0,
@@ -233,7 +233,7 @@ export default {
           type: 'mid',
           label: this.$t('m_medium'),
           icon: require('../assets/img/peichart_M.png'),
-          value: this.mid,
+          value: this.noData ? 0 : this.mid,
           total: this.total,
           deg: '60deg',
           tx: 0,
@@ -243,7 +243,7 @@ export default {
           type: 'high',
           label: this.$t('m_high'),
           icon: require('../assets/img/peichart_H.png'),
-          value: this.high,
+          value: this.noData ? 0 : this.high,
           total: this.total,
           deg: '0',
           tx: 0,

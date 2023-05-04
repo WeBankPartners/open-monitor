@@ -56,7 +56,7 @@
     <div class="data-stats-container" v-if="showGraph">
       <transition name="slide-fade">
         <div class="content-stats-container">
-          <div class="left" :class="{ 'cover': total === 0 }">
+          <div class="left" :class="{ 'cover': total === 0 || noData }">
             <alarm-assets-basic :total="total" :noData="total === 0 ? true : noData" />
 
             <template v-if="!noData">
@@ -66,7 +66,7 @@
 
             <metrics-bar :metrics="outerMetrics" :total="outerTotal" />
           </div>
-          <div class="right" v-if="total > 0">
+          <div class="right" v-if="total > 0 && !noData">
             <section style="margin-left:8px;margin-bottom:10px" class="c-dark-exclude-color">
               <template v-for="(filterItem, filterIndex) in filtersForShow">
                 <Tag color="success" type="border" closable @on-close="exclude(filterItem.key)" :key="filterIndex">{{filterItem.key}}：{{filterItem.value}}</Tag>
