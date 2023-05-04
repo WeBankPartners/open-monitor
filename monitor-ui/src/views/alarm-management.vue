@@ -42,7 +42,13 @@
             <metrics-bar :metrics="outerMetrics" :total="outerTotal" />
           </div>
           <div class="right" :class="{ 'cover': !showGraph }" v-if="total > 0">
-            
+            <section style="margin-left:8px;margin-bottom:10px" class="c-dark-exclude-color">
+              <template v-for="(filterItem, filterIndex) in filtersForShow">
+                <Tag color="success" type="border" closable @on-close="exclude(filterItem.key)" :key="filterIndex">{{filterItem.key}}：{{filterItem.value}}</Tag>
+              </template>
+              <button v-if="filtersForShow.length" @click="clearAll" class="btn btn-small btn-cancel-f">{{$t('clearAll')}}</button>
+            </section>
+            <alarm-card v-for="(item, alarmIndex) in resultData" :key="alarmIndex" :data="item"></alarm-card>
           </div>
         </div>
       </transition>
@@ -70,6 +76,7 @@ import CircleRotate from "@/components/circle-rotate.vue"
 import CircleLabel from "@/components/circle-label.vue"
 import AlarmAssetsBasic from "@/components/alarm-assets-basic.vue"
 import ClassicAlarm from '@/views/alarm-management-classic'
+import AlarmCard from "@/components/alarm-card.vue"
 
 export default {
   name: '',
@@ -79,7 +86,8 @@ export default {
     CircleRotate,
     CircleLabel,
     AlarmAssetsBasic,
-    ClassicAlarm
+    ClassicAlarm,
+    AlarmCard
   },
   data() {
     return {
@@ -605,10 +613,26 @@ export default {
     }
     .right {
       flex-basis: 40%;
-      height: 100%;
+      height: ~"calc(100vh - 180px)";
+      overflow-y: auto;
 
       &.cover {
         flex-basis: 100%;
+      }
+
+      &::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+
+      &::-webkit-scrollbar-thumb {
+        // border-radius: 1em;
+        background-color: rgba(0, 21, 41, 0.2);
+      }
+
+      &::-webkit-scrollbar-track {
+        // border-radius: 1em;
+        background-color: rgba(181, 164, 164, 0.2);
       }
     }
   }
