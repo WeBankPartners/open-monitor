@@ -57,9 +57,9 @@
       <transition name="slide-fade">
         <div class="content-stats-container">
           <div class="left" :class="{ 'cover': total === 0 }">
-            <alarm-assets-basic :total="total" :noData="true" />
+            <alarm-assets-basic :total="total" :noData="total === 0 ? true : noData" />
 
-            <template v-if="!noData && total > 0">
+            <template v-if="!noData">
               <circle-label v-for="cr in circles" :key="cr.type" :data="cr" />
               <circle-rotate v-for="cr in circles" :key="cr.label" :data="cr" />
             </template>
@@ -148,32 +148,32 @@ export default {
           key: 'l_total',
           type: 'total',
           title: this.$t('m_total'),
-          total: this.total,
-          value: this.total,
+          total: this.ttotal,
+          value: this.ttotal,
           icon: require("../assets/img/icon_alarm_ttl.png")
         },
         {
           key: 'l_low',
           type: 'low',
           title: this.$t('m_low'),
-          total: this.total,
-          value: this.low,
+          total: this.ttotal,
+          value: this.tlow,
           icon: require("../assets/img/icon_alarm_L.png")
         },
         {
           key: 'l_medium',
           type: 'medium',
           title: this.$t('m_medium'),
-          total: this.total,
-          value: this.mid,
+          total: this.ttotal,
+          value: this.tmid,
           icon: require("../assets/img/icon_alarm_M.png")
         },
         {
           key: 'l_high',
           type: 'high',
           title: this.$t('m_high'),
-          total: this.total,
-          value: this.high,
+          total: this.ttotal,
+          value: this.thigh,
           icon: require("../assets/img/icon_alarm_H.png")
         }
       ]
@@ -184,29 +184,29 @@ export default {
           key: 'r_total',
           type: 'total',
           title: this.$t('m_total'),
-          total: this.ttotal,
-          value: this.ttotal
+          total: this.total,
+          value: this.total
         },
         {
           key: 'r_low',
           type: 'low',
           title: this.$t('m_low'),
-          total: this.ttotal,
-          value: this.tlow
+          total: this.total,
+          value: this.low
         },
         {
           key: 'r_medium',
           type: 'medium',
           title: this.$t('m_medium'),
-          total: this.ttotal,
-          value: this.tmid
+          total: this.total,
+          value: this.mid
         },
         {
           key: 'r_high',
           type: 'high',
           title: this.$t('m_high'),
-          total: this.ttotal,
-          value: this.thigh
+          total: this.total,
+          value: this.high
         }
       ]
     },
@@ -247,7 +247,7 @@ export default {
   },
   mounted() {
     this.getAlarm();
-    this.getTodayAlarm();
+    this.getRealTimeAlarm();
   },
   methods: {
     changeStartDate(data) {
@@ -256,20 +256,16 @@ export default {
     changeEndDate(data) {
       this.endDate = data;
     },
-    getTodayAlarm() {
-      const start = new Date(new Date().toLocaleDateString()).getTime();
-      const end =
-        new Date(new Date().toLocaleDateString()).getTime() +
-        24 * 60 * 60 * 1000 -
-        1;
+    getRealTimeAlarm() {
       const params = {
-        start: parseInt(start / 1000, 10),
-        end: parseInt(end / 1000, 10),
-        filter: this.filter,
-      };
+        page: {
+          startIndex: 1,
+          pageSize: 10
+        }
+      }
       this.$root.$httpRequestEntrance.httpRequestEntrance(
         "POST",
-        "/monitor/api/v1/alarm/problem/history",
+        "/monitor/api/v1/alarm/problem/page",
         params,
         (responseData) => {
           this.noData = false;
