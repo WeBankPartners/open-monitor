@@ -20,7 +20,7 @@
     <div class="right">
       <div class="metics-metal">
         <div class="col">
-          <div class="title">{{ $attrs.title }}</div>
+          <div class="title">{{ $attrs.rtitle }}</div>
           <img class="time-icon" src="../assets/img/icon_today.png" />
         </div>
       </div>
