@@ -39,7 +39,7 @@
               <circle-rotate v-for="cr in circles" :key="cr.label" :data="cr" />
             </template>
 
-            <metrics-bar :metrics="outerMetrics" :total="outerTotal" v-if="!noData" />
+            <metrics-bar :metrics="outerMetrics" :total="outerTotal" v-if="total > 0 && !noData" />
           </div>
           <div class="right" :class="{ 'cover': !showGraph }" v-if="total > 0 && !noData">
             <section style="margin-left:8px;margin-bottom:10px" class="c-dark-exclude-color">
