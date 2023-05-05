@@ -51,7 +51,7 @@
       </div>
     </div>
     <div class="data-stats-container" v-if="showGraph">
-      <top-stats :lstats="leftStats" :rstats="rightStats" :title="$t('alarmHistory')" :noData="noData" />
+      <top-stats :lstats="leftStats" :rstats="rightStats" :rtitle="$t('alarmHistory')" :noData="noData" />
     </div>
     <div class="data-stats-container" v-if="showGraph">
       <transition name="slide-fade">
