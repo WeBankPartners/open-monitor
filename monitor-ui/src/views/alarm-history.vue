@@ -51,13 +51,13 @@
       </div>
     </div>
     <div class="data-stats-container" v-if="showGraph">
-      <top-stats :lstats="leftStats" :rstats="rightStats" :noData="noData" />
+      <top-stats :lstats="leftStats" :rstats="rightStats" :title="$t('alarmHistory')" :noData="noData" />
     </div>
     <div class="data-stats-container" v-if="showGraph">
       <transition name="slide-fade">
         <div class="content-stats-container">
           <div class="left" :class="{ 'cover': total === 0 || noData }">
-            <alarm-assets-basic :total="total" :noData="total === 0 ? true : noData" />
+            <alarm-assets-basic :total="total" :noData="total === 0 ? true : noData" :isRunning="false" />
 
             <template v-if="!noData">
               <circle-label v-for="cr in circles" :key="cr.type" :data="cr" />
