@@ -210,7 +210,7 @@
   "endDatePlaceholder": "请选择结束时间",
   "timeIntervalWarn": "时间区间选择错误",
   "realTimeAlarm": "实时告警",
-  "todayAlarm": "历史告警",
+  "todayAlarm": "今日告警",
   "clearAll": "清空",
   "alarmContent": "告警内容",
   "exporter": "扩展",
