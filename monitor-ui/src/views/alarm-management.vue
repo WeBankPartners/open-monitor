@@ -26,7 +26,7 @@
       </div>
     </div>
     <div class="data-stats-container">
-      <top-stats :lstats="leftStats" :rstats="rightStats" :title="$t('todayAlarm')" :noData="noData" />
+      <top-stats :lstats="leftStats" :rstats="rightStats" :rtitle="$t('todayAlarm')" :noData="noData" />
     </div>
     <div class="data-stats-container" v-show="!isClassicModel">
       <transition name="slide-fade">
