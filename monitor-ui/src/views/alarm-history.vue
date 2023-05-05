@@ -521,7 +521,7 @@ export default {
       overflow-x: auto;
 
       .alarm-card-container {
-        height: ~"calc(100vh - 240px)";
+        height: 760px;
         overflow-y: auto;
 
         &::-webkit-scrollbar {
