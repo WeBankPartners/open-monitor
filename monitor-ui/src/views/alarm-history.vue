@@ -59,7 +59,7 @@
           <div class="left" :class="{ 'cover': total === 0 || noData }">
             <alarm-assets-basic :total="total" :noData="total === 0 ? true : noData" :isRunning="false" />
 
-            <template v-if="!noData">
+            <template v-if="!noData && !loading">
               <circle-label v-for="cr in circles" :key="cr.type" :data="cr" />
               <circle-rotate v-for="cr in circles" :key="cr.label" :data="cr" />
             </template>
@@ -110,6 +110,7 @@ export default {
         { label: "all", value: "all" },
         { label: "start", value: "start" },
       ],
+      loading: true,
       noData: false,
       showGraph: true,
       alramEmpty: true,
@@ -307,11 +308,13 @@ export default {
           value: this.filters[keys[i]],
         });
       }
+      this.loading = true
       this.$root.$httpRequestEntrance.httpRequestEntrance(
         "POST",
         "/monitor/api/v1/alarm/problem/history",
         params,
         (responseData) => {
+          this.loading = false;
           this.noData = false;
           this.resultData = responseData.data;
           this.low = responseData.low;
@@ -321,6 +324,7 @@ export default {
           this.showSunburst(responseData);
         },
         () => {
+          this.loading = false;
           this.noData = true;
         }
       );
