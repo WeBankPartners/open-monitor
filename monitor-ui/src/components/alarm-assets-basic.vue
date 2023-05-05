@@ -9,8 +9,8 @@
     </template>
     <template v-else>
       <img class="radar" v-if="!$attrs.noData && $attrs.isRunning" width="373" height="373" src="../assets/img/corePRunning.png" />
-      <div class="radar-text left" v-if="$attrs.total === 0">PERFECT</div>
-      <div class="radar-text right" v-if="$attrs.total === 0">RUNNING...</div>
+      <div class="radar-text left" v-if="$attrs.total === 0">RUNNING</div>
+      <div class="radar-text right" v-if="$attrs.total === 0">NORMALLY</div>
     </template>
   </div>
 </template>
@@ -63,7 +63,7 @@ export default {
     font-weight: 800;
 
     &.left {
-      padding-right: 800px;
+      padding-right: 850px;
     }
     &.right{
       padding-left: 900px;
