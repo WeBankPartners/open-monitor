@@ -74,7 +74,7 @@ export default {
       window.open(news.href, '_blank')
     },
     remarkModal (item) {
-      this.$parent.$parent.$parent.remarkModal(item)
+      this.$parent.remarkModal(item)
     },
     deleteConfirmModal (rowData) {
       this.selectedData = rowData
