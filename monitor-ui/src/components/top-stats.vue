@@ -30,7 +30,7 @@
         :type="stat.type"
         :title="stat.title"
         :total="stat.total"
-        :value="$attrs.noData ? '--' : stat.value"
+        :value="stat.value"
       />
     </div>
   </div>
