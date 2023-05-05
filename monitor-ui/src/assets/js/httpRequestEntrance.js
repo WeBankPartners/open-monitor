@@ -90,7 +90,7 @@ function httpRequestEntrance (method, url, data, callback, customHttpConfig, err
     if (typeof customHttpConfig === 'function') {
       errCallback = customHttpConfig
     }
-    if (typeof errCallback === 'function') {
+    if (typeof errCallback === 'function' && error.response && error.response.data) {
       return errCallback(new Error(error.response && error.response.data ? error.response.data.message : ''));
     }
   })
