@@ -8,7 +8,7 @@
       <div class="nodata-text right" v-if="$attrs.total === 0">RESPOND...</div>
     </template>
     <template v-else>
-      <img class="radar" v-if="$attrs.total === 0" width="373" height="373" src="../assets/img/corePRunning.png" />
+      <img class="radar" v-if="!$attrs.noData && $attrs.isRunning" width="373" height="373" src="../assets/img/corePRunning.png" />
       <div class="radar-text left" v-if="$attrs.total === 0">PERFECT</div>
       <div class="radar-text right" v-if="$attrs.total === 0">RUNNING...</div>
     </template>

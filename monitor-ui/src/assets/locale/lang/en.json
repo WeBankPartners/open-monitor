@@ -210,7 +210,7 @@
   "endDatePlaceholder": "End Date",
   "timeIntervalWarn": "Wrong Time Interval Selection",
   "realTimeAlarm": "Real-time Alarm",
-  "todayAlarm": "History Alarm",
+  "todayAlarm": "Today's Alarm",
   "clearAll": "Clear All",
   "alarmContent": "Alarm Content",
   "exporter": "Exporter",
