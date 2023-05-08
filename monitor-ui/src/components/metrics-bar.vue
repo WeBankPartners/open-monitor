@@ -1,5 +1,5 @@
 <template>
-  <div class="metrics-bar" v-show="$attrs.metrics && $attrs.metrics.length > 0">
+  <div class="metrics-bar" :class="{ 'single': $attrs.metrics && $attrs.metrics.length === 1 }" v-show="$attrs.metrics && $attrs.metrics.length > 0">
     <div
       class="bar-item"
       v-for="(mtc, idx) in $attrs.metrics"
@@ -9,6 +9,7 @@
         height: '15px',
         width: `${(100 * mtc.value) / $attrs.total}%`,
       }"
+      @click="handleClick(mtc)"
     >
       <Tooltip
         :content="`${mtc.name}: ${mtc.value}`"
@@ -42,6 +43,13 @@ export default {
       ],
     };
   },
+  methods: {
+    handleClick({ name, value }) {
+      if (+value > 0) {
+        this.$emit('onFilter', { key: 'metric', value: name })
+      }
+    }
+  }
 };
 </script>
 
@@ -56,6 +64,12 @@ export default {
   border-radius: 15px;
   display: flex;
   padding: 8px 10px;
+
+  &.single {
+    .bar-item {
+      border-radius: 7px !important;
+    }
+  }
 
   .bar-item {
     height: 15px;
