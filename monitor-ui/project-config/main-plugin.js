@@ -69,7 +69,7 @@ const implicitRoute = {
   },
   'alarmHistory': {
     parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
-    childBreadcrumb: { 'zh-CN': '历史监控', 'en-US': 'History' }
+    childBreadcrumb: { 'zh-CN': '历史告警', 'en-US': 'History Alarm' }
   }
 }
 window.addImplicitRoute(implicitRoute)
