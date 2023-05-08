@@ -16,20 +16,20 @@ type MonitorTypeTable struct {
 }
 
 type EndpointNewTable struct {
-	Guid            string `json:"guid" xorm:"guid"`
-	Name            string `json:"name" xorm:"name"`
-	Ip              string `json:"ip" xorm:"ip"`
-	MonitorType     string `json:"monitor_type" xorm:"monitor_type"`
-	AgentVersion    string `json:"agent_version" xorm:"agent_version"`
-	AgentAddress    string `json:"agent_address" xorm:"agent_address"`
-	Step            int    `json:"step" xorm:"step"`
-	EndpointVersion string `json:"endpoint_version" xorm:"endpoint_version"`
-	EndpointAddress string `json:"endpoint_address" xorm:"endpoint_address"`
-	Cluster         string `json:"cluster" xorm:"cluster"`
-	AlarmEnable     int    `json:"alarm_enable" xorm:"alarm_enable"`
-	Tags            string `json:"tags" xorm:"tags"`
-	ExtendParam     string `json:"extend_param" xorm:"extend_param"`
-	Description     string `json:"description" xorm:"description"`
+	Guid            string    `json:"guid" xorm:"guid"`
+	Name            string    `json:"name" xorm:"name"`
+	Ip              string    `json:"ip" xorm:"ip"`
+	MonitorType     string    `json:"monitor_type" xorm:"monitor_type"`
+	AgentVersion    string    `json:"agent_version" xorm:"agent_version"`
+	AgentAddress    string    `json:"agent_address" xorm:"agent_address"`
+	Step            int       `json:"step" xorm:"step"`
+	EndpointVersion string    `json:"endpoint_version" xorm:"endpoint_version"`
+	EndpointAddress string    `json:"endpoint_address" xorm:"endpoint_address"`
+	Cluster         string    `json:"cluster" xorm:"cluster"`
+	AlarmEnable     int       `json:"alarm_enable" xorm:"alarm_enable"`
+	Tags            string    `json:"tags" xorm:"tags"`
+	ExtendParam     string    `json:"extend_param" xorm:"extend_param"`
+	Description     string    `json:"description" xorm:"description"`
 	UpdateTime      time.Time `json:"update_time" xorm:"update_time"`
 }
 
@@ -45,8 +45,8 @@ type EndpointExtendParamObj struct {
 	HttpUrl       string `json:"http_url,omitempty"`
 	ProcessName   string `json:"process_name,omitempty"`
 	ProcessTags   string `json:"process_tags,omitempty"`
-	ExportAddress string `json:"export_address"`
-	ProxyExporter string `json:"proxy_exporter"`
+	ExportAddress string `json:"export_address,omitempty"`
+	ProxyExporter string `json:"proxy_exporter,omitempty"`
 }
 
 type MetricTable struct {

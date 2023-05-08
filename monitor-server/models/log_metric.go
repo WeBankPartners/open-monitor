@@ -127,6 +127,7 @@ type LogMetricNeObj struct {
 	AggType      string                     `json:"agg_type"`
 	Step         int64                      `json:"step"`
 	StringMap    []*LogMetricStringMapNeObj `json:"string_map"`
+	TagConfig    []*LogMetricConfigTag      `json:"tag_config"`
 }
 
 type LogMetricStringMapNeObj struct {
