@@ -594,7 +594,7 @@ export default {
     },
     removeQuery(queryIndex) {
       this.chartQueryList.splice(queryIndex, 1)
-      this.clearParams()
+      // this.clearParams()
       this.requestAgain()
     },
     saveConfig() {
