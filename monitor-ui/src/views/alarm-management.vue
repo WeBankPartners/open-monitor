@@ -22,13 +22,11 @@
             </i-switch>
           </li>
           <li class="filter-li" v-if="filtersForShow.length">
-            <button @click="clearAll" class="btn btn-small btn-confirm-f">{{$t('m_reset_condition')}}</button>
-          </li>
-          <li class="filter-li">
-            <button :disabled="!filtersForShow.some(f => f.key === 'metric')" @click="deleteConfirmModal({}, true)" class="btn btn-small btn-confirm-f">{{$t('m_batch_close')}}</button>
+            <button @click="clearAll" class="btn btn-sm btn-cancel-f">{{$t('m_reset_condition')}}</button>
           </li>
         </ul>
         <div>
+          <button :disabled="!filtersForShow.some(f => f.key === 'metric')" @click="deleteConfirmModal({}, true)" class="btn btn-sm btn-cancel-f">{{$t('m_batch_close')}}</button>
           <button @click="alarmHistory" class="btn btn-sm btn-confirm-f">{{$t('alarmHistory')}}</button>
         </div>
       </div>
@@ -543,7 +541,7 @@ export default {
       }
     }
 
-    .btn-sm {
+    .btn-confirm-f {
       background: #116EF9;
     }
   }
