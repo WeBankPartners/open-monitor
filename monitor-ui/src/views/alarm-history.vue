@@ -29,20 +29,13 @@
             </DatePicker>
           </li>
           <li class="filter-li">
-            <Select filterable clearable v-model="filter" style="width: 80px">
-              <Option
-                v-for="item in filterList"
-                :value="item.value"
-                :key="item.value"
-                >{{ item.label }}</Option
-              >
-            </Select>
-          </li>
-          <li class="filter-li">
             <button class="btn btn-sm btn-confirm-f" @click="getAlarm">
               <i class="fa fa-search"></i>
               {{ $t("button.search") }}
             </button>
+          </li>
+          <li class="filter-li" v-if="filtersForShow.length">
+            <button @click="clearAll" class="btn btn-sm btn-cancel-f">{{$t('m_reset_condition')}}</button>
           </li>
         </ul>
         <button class="btn btn-sm btn-confirm-f" @click="realTimeAlarm">
@@ -61,10 +54,10 @@
 
             <template v-if="!noData && !loading">
               <circle-label v-for="cr in circles" :key="cr.type" :data="cr" />
-              <circle-rotate v-for="cr in circles" :key="cr.label" :data="cr" />
+              <circle-rotate v-for="cr in circles" :key="cr.label" :data="cr" @onFilter="addParams" />
             </template>
 
-            <metrics-bar :metrics="outerMetrics" :total="outerTotal" v-if="total > 0 && !noData" />
+            <metrics-bar :metrics="outerMetrics" :total="outerTotal" v-if="total > 0 && !noData" @onFilter="addParams" />
           </div>
           <div class="right" v-if="total > 0 && !noData">
             <section style="margin-left:8px;margin-bottom:10px" class="c-dark-exclude-color">
@@ -106,10 +99,6 @@ export default {
       startDate: new Date(new Date().toLocaleDateString()),
       endDate: new Date(),
       filter: "all",
-      filterList: [
-        { label: "all", value: "all" },
-        { label: "start", value: "start" },
-      ],
       loading: true,
       noData: false,
       showGraph: true,
@@ -430,9 +419,9 @@ export default {
     realTimeAlarm() {
       this.$router.push("/alarmManagement");
     },
-    addParams(key, value) {
-      this.filters[key] = value;
-      this.getAlarm();
+    addParams ({key, value}) {
+      this.filters[key] = value
+      this.getAlarm()
     },
     clearAll() {
       this.filters = [];
@@ -485,7 +474,7 @@ export default {
       border: 1px solid #f2f3f7;
     }
 
-    .btn-sm {
+    .btn-confirm-f {
       background: #116ef9;
     }
   }
