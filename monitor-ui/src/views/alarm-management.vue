@@ -21,8 +21,16 @@
               <span slot="close">OFF</span>
             </i-switch>
           </li>
+          <li class="filter-li" v-if="filtersForShow.length">
+            <button @click="clearAll" class="btn btn-small btn-confirm-f">{{$t('m_reset_condition')}}</button>
+          </li>
+          <li class="filter-li">
+            <button :disabled="!filtersForShow.some(f => f.key === 'metric')" @click="deleteConfirmModal({}, true)" class="btn btn-small btn-confirm-f">{{$t('m_batch_close')}}</button>
+          </li>
         </ul>
-        <button @click="alarmHistory" class="btn btn-sm btn-confirm-f">{{$t('alarmHistory')}}</button>
+        <div>
+          <button @click="alarmHistory" class="btn btn-sm btn-confirm-f">{{$t('alarmHistory')}}</button>
+        </div>
       </div>
     </div>
     <div class="data-stats-container">
@@ -36,10 +44,10 @@
 
             <template v-if="!noData">
               <circle-label v-for="cr in circles" :key="cr.type" :data="cr" />
-              <circle-rotate v-for="cr in circles" :key="cr.label" :data="cr" />
+              <circle-rotate v-for="cr in circles" :key="cr.label" :data="cr" @onFilter="addParams" />
             </template>
 
-            <metrics-bar :metrics="outerMetrics" :total="outerTotal" v-if="total > 0 && !noData" />
+            <metrics-bar :metrics="outerMetrics" :total="outerTotal" v-if="total > 0 && !noData" @onFilter="addParams" />
           </div>
           <div class="right" :class="{ 'cover': !showGraph }" v-if="total > 0 && !noData">
             <section style="margin-left:8px;margin-bottom:10px" class="c-dark-exclude-color">
@@ -438,7 +446,7 @@ export default {
       this.outerMetrics = pieOuter
       this.outerTotal = pieOuter.reduce((n, m) => (n + m.value), 0)
     },
-    addParams (key, value) {
+    addParams ({key, value}) {
       this.filters[key] = value
       this.getAlarm()
     },
@@ -527,6 +535,7 @@ export default {
 
     ul {
       display: flex;
+      align-items: center;
       li {
         color: #7E8086;
         font-size: 12px;
