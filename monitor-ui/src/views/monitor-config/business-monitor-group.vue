@@ -246,7 +246,7 @@
         <RegTest v-if="showCustomRegConfig" @updateReg="updateCustomReg" @cancelReg="cancelCustomReg"></RegTest>
         <div class="marginbottom params-each">
           <label class="col-md-2 label-name">{{$t('field.aggType')}}:</label>
-          <Select v-model="customMetricsModelConfig.addRow.agg_type" filterable clearable style="width:375px">
+          <Select v-model="customMetricsModelConfig.addRow.agg_type" filterable clearable style="width:510px">
             <Option v-for="agg in customMetricsModelConfig.slotConfig.aggOption" :value="agg" :key="agg">{{
               agg
             }}</Option>
@@ -271,10 +271,10 @@
                   </Select>
                 </Tooltip>
                 <Tooltip :content="$t('m_target_value')" :delay="1000">
-                  <Input v-model="item.target_value" style="width: 150px" :placeholder="$t('m_target_value')" />
+                  <Input v-model="item.target_value" style="width: 250px" :placeholder="$t('m_target_value')" />
                 </Tooltip>
                 <Tooltip :content="$t('m_source_value')" :delay="1000">
-                  <Input v-model="item.source_value" style="width: 150px" :placeholder="$t('m_source_value')" />
+                  <Input v-model="item.source_value" style="width: 250px" :placeholder="$t('m_source_value')" />
                 </Tooltip>
               </p>
             </template>
@@ -301,10 +301,10 @@
                   icon="md-close"
                 ></Button>
                 <Tooltip :content="$t('tableKey.tags')" :delay="1000">
-                  <Input v-model="item.key" style="width: 150px" :placeholder="$t('tableKey.tags')" />
+                  <Input v-model="item.key" style="width: 250px" :placeholder="$t('tableKey.tags')" />
                 </Tooltip>
                 <Tooltip :content="$t('tableKey.regular')" :delay="1000">
-                  <Input v-model="item.regular" style="width: 300px" :placeholder="$t('tableKey.regular')" />
+                  <Input v-model="item.regular" style="width: 400px" :placeholder="$t('tableKey.regular')" />
                 </Tooltip>
               </p>
             </template>
@@ -538,7 +538,7 @@ export default {
       customMetricsModelConfig: {
         modalId: 'custom_metrics',
         isAdd: true,
-        modalStyle: 'min-width:550px',
+        modalStyle: 'min-width:750px',
         modalTitle: 'm_metric_regular',
         saveFunc: 'saveCustomMetric',
         config: [
