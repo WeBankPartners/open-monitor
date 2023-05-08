@@ -403,15 +403,13 @@ func CreateLogMetricConfig(param *models.LogMetricConfigObj) error {
 }
 
 func UpdateLogMetricConfig(param *models.LogMetricConfigObj) error {
-	if param.LogMetricMonitor == "" {
-		logMetricMonitorGuid, err := getLogMetricConfigMonitor(param.Guid)
-		if err != nil {
-			return fmt.Errorf("Query table log_metric_config fail,%s ", err.Error())
-		}
-		param.LogMetricMonitor = logMetricMonitorGuid
+	logMetricMonitorGuid, err := getLogMetricConfigMonitor(param.Guid)
+	if err != nil {
+		return fmt.Errorf("Query table log_metric_config fail,%s ", err.Error())
 	}
+	param.LogMetricMonitor = logMetricMonitorGuid
 	actions, affectEndpointGroup := getUpdateLogMetricConfigAction(param, time.Now().Format(models.DatetimeFormat))
-	err := Transaction(actions)
+	err = Transaction(actions)
 	if err == nil {
 		for _, v := range affectEndpointGroup {
 			SyncPrometheusRuleFile(v, false)
