@@ -64,7 +64,13 @@
         </div>
       </transition>
     </div>
-    <ClassicAlarm ref="classicAlarm" v-show="isClassicModel"></ClassicAlarm>
+    <ClassicAlarm ref="classicAlarm" v-show="isClassicModel">
+      <template v-slot:pagination>
+        <div class="page-left">
+          <Page :total="paginationInfo.total" @on-change="pageIndexChange" @on-page-size-change="pageSizeChange" show-elevator show-sizer show-total />
+        </div>
+      </template>
+    </ClassicAlarm>
     <Modal
       v-model="isShowWarning"
       :title="$t('closeConfirm.title')"
@@ -711,6 +717,13 @@ label {
   float: right;
   font-size: 16px;
   cursor: pointer;
+}
+
+.page-left {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+  margin-bottom: 10px;
 }
 
 /* 可以设置不同的进入和离开动画 */
