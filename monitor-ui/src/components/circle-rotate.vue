@@ -34,9 +34,9 @@ export default {
   },
   methods: {
     handleClick() {
-      const { type, value } = this.$attrs.data
+      const { key, value } = this.$attrs.data
       if (+value > 0) {
-        this.$emit('onFilter', { key: 'priority', value: type })
+        this.$emit('onFilter', { key: 'priority', value: key })
       }
     }
   }
