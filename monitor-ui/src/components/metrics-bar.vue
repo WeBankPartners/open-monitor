@@ -56,7 +56,7 @@ export default {
 <style scoped lang="less">
 .metrics-bar {
   position: absolute;
-  top: 719px;
+  top: 732px;
   width: 750px;
   height: 31px;
   background: #ffffff;
