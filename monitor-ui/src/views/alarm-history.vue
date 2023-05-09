@@ -204,6 +204,7 @@ export default {
       return [
         {
           type: "low",
+          key: "low",
           label: this.$t("m_low"),
           icon: require("../assets/img/peichart_L.png"),
           value: this.low,
@@ -214,6 +215,7 @@ export default {
         },
         {
           type: "mid",
+          key: "medium",
           label: this.$t("m_medium"),
           icon: require("../assets/img/peichart_M.png"),
           value: this.mid,
@@ -224,6 +226,7 @@ export default {
         },
         {
           type: "high",
+          key: "high",
           label: this.$t("m_high"),
           icon: require("../assets/img/peichart_H.png"),
           value: this.high,
@@ -244,7 +247,9 @@ export default {
       this.startDate = data;
     },
     changeEndDate(data) {
-      this.endDate = data;
+      if (data && data.indexOf("00:00:00") !== -1) {
+        this.endDate = data.replace("00:00:00", "23:59:59");
+      }
     },
     getRealTimeAlarm() {
       const params = {
