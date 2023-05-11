@@ -1,6 +1,7 @@
 <template>
   <div class="classic-table">
     <PageTable :pageConfig="pageConfig"></PageTable>
+    <slot name="pagination"></slot>
     <Modal
       v-model="isShowWarning"
       :title="$t('closeConfirm.title')"
