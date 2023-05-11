@@ -21,8 +21,14 @@
               <span slot="close">OFF</span>
             </i-switch>
           </li>
+          <li class="filter-li" v-if="filtersForShow.length">
+            <button @click="clearAll" class="btn btn-sm btn-cancel-f">{{$t('m_reset_condition')}}</button>
+          </li>
         </ul>
-        <button @click="alarmHistory" class="btn btn-sm btn-confirm-f">{{$t('alarmHistory')}}</button>
+        <div>
+          <button :disabled="!filtersForShow.some(f => f.key === 'metric')" @click="deleteConfirmModal({}, true)" class="btn btn-sm btn-cancel-f">{{$t('m_batch_close')}}</button>
+          <button @click="alarmHistory" class="btn btn-sm btn-confirm-f">{{$t('alarmHistory')}}</button>
+        </div>
       </div>
     </div>
     <div class="data-stats-container">
@@ -36,10 +42,10 @@
 
             <template v-if="!noData">
               <circle-label v-for="cr in circles" :key="cr.type" :data="cr" />
-              <circle-rotate v-for="cr in circles" :key="cr.label" :data="cr" />
+              <circle-rotate v-for="cr in circles" :key="cr.label" :data="cr" @onFilter="addParams" />
             </template>
 
-            <metrics-bar :metrics="outerMetrics" :total="outerTotal" v-if="total > 0 && !noData" />
+            <metrics-bar :metrics="outerMetrics" :total="outerTotal" v-if="total > 0 && !noData" @onFilter="addParams" />
           </div>
           <div class="right" :class="{ 'cover': !showGraph }" v-if="total > 0 && !noData">
             <section style="margin-left:8px;margin-bottom:10px" class="c-dark-exclude-color">
@@ -58,7 +64,13 @@
         </div>
       </transition>
     </div>
-    <ClassicAlarm ref="classicAlarm" v-show="isClassicModel"></ClassicAlarm>
+    <ClassicAlarm ref="classicAlarm" v-show="isClassicModel">
+      <template v-slot:pagination>
+        <div class="page-left">
+          <Page :total="paginationInfo.total" @on-change="pageIndexChange" @on-page-size-change="pageSizeChange" show-elevator show-sizer show-total />
+        </div>
+      </template>
+    </ClassicAlarm>
     <Modal
       v-model="isShowWarning"
       :title="$t('closeConfirm.title')"
@@ -221,6 +233,7 @@ export default {
       return [
         {
           type: 'low',
+          key: 'low',
           label: this.$t('m_low'),
           icon: require('../assets/img/peichart_L.png'),
           value: this.noData ? 0 : this.low,
@@ -231,6 +244,7 @@ export default {
         },
         {
           type: 'mid',
+          key: 'medium',
           label: this.$t('m_medium'),
           icon: require('../assets/img/peichart_M.png'),
           value: this.noData ? 0 : this.mid,
@@ -241,6 +255,7 @@ export default {
         },
         {
           type: 'high',
+          key: 'high',
           label: this.$t('m_high'),
           icon: require('../assets/img/peichart_H.png'),
           value: this.noData ? 0 : this.high,
@@ -438,7 +453,7 @@ export default {
       this.outerMetrics = pieOuter
       this.outerTotal = pieOuter.reduce((n, m) => (n + m.value), 0)
     },
-    addParams (key, value) {
+    addParams ({key, value}) {
       this.filters[key] = value
       this.getAlarm()
     },
@@ -527,6 +542,7 @@ export default {
 
     ul {
       display: flex;
+      align-items: center;
       li {
         color: #7E8086;
         font-size: 12px;
@@ -534,7 +550,7 @@ export default {
       }
     }
 
-    .btn-sm {
+    .btn-confirm-f {
       background: #116EF9;
     }
   }
@@ -701,6 +717,13 @@ label {
   float: right;
   font-size: 16px;
   cursor: pointer;
+}
+
+.page-left {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+  margin-bottom: 10px;
 }
 
 /* 可以设置不同的进入和离开动画 */
