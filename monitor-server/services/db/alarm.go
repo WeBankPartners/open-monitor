@@ -1255,7 +1255,9 @@ func QueryHistoryAlarm(param m.QueryHistoryAlarmParam) (err error, result m.Alar
 	if param.Page == nil {
 		param.Page = &m.PageInfo{}
 	}
+	totalNum := 0
 	if param.Page.PageSize > 0 {
+		totalNum = queryCount(sql)
 		sql += fmt.Sprintf(" limit %d,%d", (param.Page.StartIndex-1)*param.Page.PageSize, param.Page.PageSize)
 	}
 	customQueryParam := m.CustomAlarmQueryParam{Enable: true, Level: param.Priority, Start: startString, End: endString, Status: "all"}
@@ -1265,7 +1267,7 @@ func QueryHistoryAlarm(param m.QueryHistoryAlarmParam) (err error, result m.Alar
 	err, result = QueryAlarmBySql(sql, []interface{}{}, customQueryParam)
 	if err == nil {
 		result.Page = param.Page
-		result.Page.TotalRows = len(result.Data)
+		result.Page.TotalRows = totalNum
 	}
 	return err, result
 }
