@@ -7,6 +7,7 @@
     :style="{
       transform: transformStyle
     }"
+    @click="handleClick"
   />
 </template>
 
@@ -30,12 +31,21 @@ export default {
       const { deg, tx, ty } = this.$attrs.data
       return `rotate(${deg}) translate(${tx * this.imgWidth}px, ${ty * this.imgHeight}px)`
     }
+  },
+  methods: {
+    handleClick() {
+      const { key, value } = this.$attrs.data
+      if (+value > 0) {
+        this.$emit('onFilter', { key: 'priority', value: key })
+      }
+    }
   }
 }
 </script>
 
 <style scoped lang="less">
 .circle-img {
+  cursor: pointer;
   position: absolute;
   z-index: 100;
 }
