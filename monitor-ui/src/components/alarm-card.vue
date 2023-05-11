@@ -5,9 +5,27 @@
         class="col-md-10"
         style="padding: 0; color: #404144; font-size: 16px"
       >
-        <img v-if="data.s_priority=='high'" class="bg" src="../assets/img/icon_alarm_H_cube.png" style="margin-right:8px" />
-        <img v-else-if="data.s_priority=='medium'" class="bg" src="../assets/img/icon_alarm_M_cube.png" style="margin-right:8px" />
-        <img v-else class="bg" src="../assets/img/icon_alarm_L_cube.png" style="margin-right:8px" />
+        <img
+          v-if="data.s_priority == 'high'"
+          class="bg"
+          src="../assets/img/icon_alarm_H_cube.png"
+          style="margin-right: 8px; cursor: pointer"
+          @click="addParams('priority', data.s_priority)"
+        />
+        <img
+          v-else-if="data.s_priority == 'medium'"
+          class="bg"
+          src="../assets/img/icon_alarm_M_cube.png"
+          style="margin-right: 8px; cursor: pointer"
+          @click="addParams('priority', data.s_priority)"
+        />
+        <img
+          v-else
+          class="bg"
+          src="../assets/img/icon_alarm_L_cube.png"
+          style="margin-right: 8px; cursor: pointer"
+          @click="addParams('priority', data.s_priority)"
+        />
         {{ data.content }}
       </div>
       <div
@@ -17,7 +35,10 @@
         {{ data.start_string }}
       </div>
     </template>
-    <div v-if="$attrs.button" style="position: absolute; top: 10px; right: 10px">
+    <div
+      v-if="$attrs.button"
+      style="position: absolute; top: 10px; right: 10px"
+    >
       <Tooltip :content="$t('menu.endpointView')">
         <Icon
           type="ios-stats"
