@@ -284,7 +284,7 @@ export default {
       const params = {
         start: parseInt(start / 1000, 10),
         end: parseInt(end / 1000, 10),
-        filter: 'start'
+        filter: 'all'
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance(
         "POST",
