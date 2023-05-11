@@ -69,6 +69,9 @@
             <section class="alarm-card-container">
               <alarm-card v-for="(item, alarmIndex) in resultData" :key="alarmIndex" :data="item"></alarm-card>
             </section>
+            <div style="margin: 4px 0; text-align:right">
+              <Page :total="paginationInfo.total" @on-change="pageIndexChange" @on-page-size-change="pageSizeChange" show-elevator show-sizer show-total />
+            </div>
           </div>
         </div>
       </transition>
@@ -123,6 +126,12 @@ export default {
 
       outerMetrics: [],
       outerTotal: 0,
+      
+      paginationInfo: {
+        total: 0,
+        startIndex: 1,
+        pageSize: 10
+      },
     };
   },
   computed: {
@@ -273,6 +282,15 @@ export default {
         }
       );
     },
+    pageIndexChange(pageIndex) {
+      this.paginationInfo.startIndex = pageIndex
+      this.getAlarm()
+    },
+    pageSizeChange(pageSize) {
+      this.paginationInfo.startIndex = 1
+      this.paginationInfo.pageSize = pageSize
+      this.getAlarm()
+    },
     getAlarm() {
       if (
         !this.startDate ||
@@ -292,6 +310,10 @@ export default {
         start,
         end,
         filter: this.filter,
+        page: {
+          startIndex: this.paginationInfo.startIndex,
+          pageSize: this.paginationInfo.pageSize
+        }
       };
       let keys = Object.keys(this.filters);
       this.filtersForShow = [];
@@ -314,6 +336,9 @@ export default {
           this.low = responseData.low;
           this.mid = responseData.mid;
           this.high = responseData.high;
+          this.paginationInfo.total = responseData.page.totalRows
+          this.paginationInfo.startIndex = responseData.page.startIndex
+          this.paginationInfo.pageSize = responseData.page.pageSize
           this.alramEmpty = !!this.low || !!this.mid || !!this.high;
           this.showSunburst(responseData);
         },
@@ -515,7 +540,7 @@ export default {
       overflow-x: auto;
 
       .alarm-card-container {
-        height: 760px;
+        height: 740px;
         overflow-y: auto;
 
         &::-webkit-scrollbar {
