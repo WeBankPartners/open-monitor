@@ -1164,8 +1164,8 @@ func getActionOptions(tplId int) []*m.OptionModel {
 	return result
 }
 
-func QueryAlarmBySql(sql string, params []interface{}, customQueryParam m.CustomAlarmQueryParam) (err error, result m.AlarmProblemQueryResult) {
-	result = m.AlarmProblemQueryResult{High: 0, Mid: 0, Low: 0, Data: []*m.AlarmProblemQuery{}}
+func QueryAlarmBySql(sql string, params []interface{}, customQueryParam m.CustomAlarmQueryParam, page *m.PageInfo) (err error, result m.AlarmProblemQueryResult) {
+	result = m.AlarmProblemQueryResult{High: 0, Mid: 0, Low: 0, Data: []*m.AlarmProblemQuery{}, Page: &m.PageInfo{}}
 	alarmQuery := []*m.AlarmProblemQuery{}
 	err = x.SQL(sql, params...).Find(&alarmQuery)
 	if len(alarmQuery) > 0 {
@@ -1221,8 +1221,23 @@ func QueryAlarmBySql(sql string, params []interface{}, customQueryParam m.Custom
 		resultCount = append(resultCount, &m.AlarmProblemCountObj{Name: tmpSplit[0], Type: tmpSplit[1], Value: v, FilterType: "metric"})
 	}
 	sort.Sort(resultCount)
-	result.Data = alarmQuery
 	result.Count = resultCount
+	if page != nil && page.PageSize > 0 {
+		si := (page.StartIndex - 1) * page.PageSize
+		ei := page.StartIndex*page.PageSize - 1
+		pageResult := []*m.AlarmProblemQuery{}
+		for i, v := range alarmQuery {
+			if i >= si && i <= ei {
+				pageResult = append(pageResult, v)
+			}
+		}
+		result.Data = pageResult
+		result.Page.StartIndex = page.StartIndex
+		result.Page.PageSize = page.PageSize
+		result.Page.TotalRows = len(alarmQuery)
+	} else {
+		result.Data = alarmQuery
+	}
 	return err, result
 }
 
@@ -1255,20 +1270,11 @@ func QueryHistoryAlarm(param m.QueryHistoryAlarmParam) (err error, result m.Alar
 	if param.Page == nil {
 		param.Page = &m.PageInfo{}
 	}
-	totalNum := 0
-	if param.Page.PageSize > 0 {
-		totalNum = queryCount(sql)
-		sql += fmt.Sprintf(" limit %d,%d", (param.Page.StartIndex-1)*param.Page.PageSize, param.Page.PageSize)
-	}
 	customQueryParam := m.CustomAlarmQueryParam{Enable: true, Level: param.Priority, Start: startString, End: endString, Status: "all"}
 	if param.Metric != "" && param.Metric != "custom" {
 		customQueryParam.Enable = false
 	}
-	err, result = QueryAlarmBySql(sql, []interface{}{}, customQueryParam)
-	if err == nil {
-		result.Page = param.Page
-		result.Page.TotalRows = totalNum
-	}
+	err, result = QueryAlarmBySql(sql, []interface{}{}, customQueryParam, param.Page)
 	return err, result
 }
 
