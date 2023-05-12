@@ -163,7 +163,7 @@ func GetCustomDashboardAlarms(id int) (err error, result m.AlarmProblemQueryResu
 	}
 	if len(endpointList) > 0 {
 		sql := "SELECT * FROM alarm WHERE status='firing' AND endpoint IN ('" + strings.Join(endpointList, "','") + "') ORDER BY id DESC"
-		err, result = QueryAlarmBySql(sql, []interface{}{}, m.CustomAlarmQueryParam{Enable: false})
+		err, result = QueryAlarmBySql(sql, []interface{}{}, m.CustomAlarmQueryParam{Enable: false}, &m.PageInfo{})
 	}
 	return err, result
 }
