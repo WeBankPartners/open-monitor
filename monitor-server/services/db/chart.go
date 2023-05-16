@@ -68,9 +68,13 @@ func ChartDelete(ids []string) error {
 	return Transaction(actions)
 }
 
-func GetPromQLByMetric(metric, monitorType string) (result string, err error) {
+func GetPromQLByMetric(metric, monitorType, serviceGroup string) (result string, err error) {
 	var metricTable []*models.MetricTable
-	err = x.SQL("select * from metric where metric=? and monitor_type=?", metric, monitorType).Find(&metricTable)
+	if serviceGroup != "" {
+		err = x.SQL("select * from metric where metric=? and monitor_type=? and service_group=?", metric, monitorType, serviceGroup).Find(&metricTable)
+	} else {
+		err = x.SQL("select * from metric where metric=? and monitor_type=?", metric, monitorType).Find(&metricTable)
+	}
 	if len(metricTable) > 0 {
 		result = metricTable[0].PromExpr
 	}
