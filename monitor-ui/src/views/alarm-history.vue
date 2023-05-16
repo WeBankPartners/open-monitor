@@ -52,7 +52,7 @@
           <div class="left" :class="{ 'cover': total === 0 || noData }">
             <alarm-assets-basic :total="total" :noData="total === 0 ? true : noData" :isRunning="false" />
 
-            <template v-if="!noData && !loading">
+            <template v-if="!noData && !loading && total > 0">
               <circle-label v-for="cr in circles" :key="cr.type" :data="cr" />
               <circle-rotate v-for="cr in circles" :key="cr.label" :data="cr" @onFilter="addParams" />
             </template>
@@ -284,14 +284,14 @@ export default {
     },
     pageIndexChange(pageIndex) {
       this.paginationInfo.startIndex = pageIndex
-      this.getAlarm()
+      this.getAlarm('keep')
     },
     pageSizeChange(pageSize) {
       this.paginationInfo.startIndex = 1
       this.paginationInfo.pageSize = pageSize
-      this.getAlarm()
+      this.getAlarm('keep')
     },
-    getAlarm() {
+    getAlarm(ifPageKeep) {
       if (
         !this.startDate ||
         !this.endDate ||
@@ -303,6 +303,13 @@ export default {
       }
       if (this.startDate === this.endDate) {
         this.endDate = this.endDate.replace("00:00:00", "23:59:59");
+      }
+      if (ifPageKeep != 'keep') {
+        this.paginationInfo = {
+          total: 0,
+          startIndex: 1,
+          pageSize: 10
+        }
       }
       const start = Date.parse(this.startDate) / 1000;
       const end = Date.parse(this.endDate) / 1000;
