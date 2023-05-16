@@ -301,7 +301,7 @@ func GetPieChart(c *gin.Context) {
 		return
 	}
 	pieMap := make(map[string]*m.EChartPieObj)
-	var legendList []string
+	var legendList, newLegendList []string
 	for _, v := range queryResultList {
 		for i, tmpLegend := range v.PieData.Legend {
 			if existData, ok := pieMap[tmpLegend]; ok {
@@ -318,15 +318,20 @@ func GetPieChart(c *gin.Context) {
 		//resultPieData.Legend = append(resultPieData.Legend, v.PieData.Legend...)
 		//resultPieData.Data = append(resultPieData.Data, v.PieData.Data...)
 	}
-	resultPieData.Legend = legendList
 	for _, legend := range legendList {
 		if v, b := pieMap[legend]; b {
+			if v.Value <= 0 {
+				continue
+			}
+			newLegendList = append(newLegendList, legend)
 			v.SourceValue = []float64{}
 			resultPieData.Data = append(resultPieData.Data, v)
-		} else {
-			resultPieData.Data = append(resultPieData.Data, &m.EChartPieObj{Name: legend, Value: 0})
 		}
+		//} else {
+		//	resultPieData.Data = append(resultPieData.Data, &m.EChartPieObj{Name: legend, Value: 0})
+		//}
 	}
+	resultPieData.Legend = newLegendList
 	mid.ReturnSuccessData(c, resultPieData)
 }
 
