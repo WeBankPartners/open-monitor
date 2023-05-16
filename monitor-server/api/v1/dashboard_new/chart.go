@@ -255,7 +255,7 @@ func getChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.
 					dataConfig.PromQl = fmt.Sprintf("%s{%s\"}", dataConfig.Metric[:tmpSplitIndex], tmpTags)
 				}
 			} else {
-				tmpPromQL, _ := db.GetPromQLByMetric(dataConfig.Metric, tmpMonitorType)
+				tmpPromQL, _ := db.GetPromQLByMetric(dataConfig.Metric, tmpMonitorType, dataConfig.AppObject)
 				if tmpPromQL == "" {
 					if dataConfig.PromQl == "" {
 						continue
