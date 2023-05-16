@@ -11,7 +11,8 @@ import (
 func MetricList(c *gin.Context) {
 	id := c.Query("id")
 	endpointType := c.Query("endpointType")
-	result, err := db.MetricList(id, endpointType)
+	serviceGroup := c.Query("serviceGroup")
+	result, err := db.MetricList(id, endpointType, serviceGroup)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
