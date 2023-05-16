@@ -378,7 +378,7 @@ func getPieData(paramConfig *m.PieChartConfigObj) (result []*m.QueryMonitorData,
 	}
 	// fetch promQL
 	if paramConfig.PromQl == "" {
-		tmpPromQL, _ := db.GetPromQLByMetric(paramConfig.Metric, paramConfig.AppObjectEndpointType)
+		tmpPromQL, _ := db.GetPromQLByMetric(paramConfig.Metric, paramConfig.AppObjectEndpointType, paramConfig.AppObject)
 		if tmpPromQL == "" {
 			err = fmt.Errorf("metric:%s can not get any prom_ql ", paramConfig.Metric)
 			return
