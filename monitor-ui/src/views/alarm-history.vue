@@ -52,7 +52,7 @@
           <div class="left" :class="{ 'cover': total === 0 || noData }">
             <alarm-assets-basic :total="total" :noData="total === 0 ? true : noData" :isRunning="false" />
 
-            <template v-if="!noData && !loading">
+            <template v-if="!noData && !loading && total > 0">
               <circle-label v-for="cr in circles" :key="cr.type" :data="cr" />
               <circle-rotate v-for="cr in circles" :key="cr.label" :data="cr" @onFilter="addParams" />
             </template>
