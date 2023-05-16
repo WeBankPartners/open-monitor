@@ -516,7 +516,7 @@ func calcLogMetricData() {
 						valueExistObj.ValueObj.Min = metricValueFloat
 					}
 				} else {
-					valueCountMap[tmpMetricKey] = &logMetricDisplayObj{Metric: metricObj.Metric, Path: lmObj.Path, Agg: metricObj.AggType, TEndpoint: lmObj.TargetEndpoint, ServiceGroup: lmObj.ServiceGroup, TagsString: tmpTagString, Step: metricObj.Step, ValueObj: logMetricValueObj{Sum: 0, Max: 0, Min: 0, Count: 0}}
+					valueCountMap[tmpMetricKey] = &logMetricDisplayObj{Metric: metricObj.Metric, Path: lmObj.Path, Agg: metricObj.AggType, TEndpoint: lmObj.TargetEndpoint, ServiceGroup: lmObj.ServiceGroup, TagsString: tmpTagString, Step: metricObj.Step, ValueObj: logMetricValueObj{Sum: metricValueFloat, Max: metricValueFloat, Min: metricValueFloat, Count: 1}}
 				}
 			}
 			//valueCountMap[tmpMetricKey] = &tmpMetricObj
