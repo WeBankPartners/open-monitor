@@ -324,14 +324,21 @@ export default {
     },
     pageIndexChange(pageIndex) {
       this.paginationInfo.startIndex = pageIndex
-      this.getAlarm()
+      this.getAlarm('keep')
     },
     pageSizeChange(pageSize) {
       this.paginationInfo.startIndex = 1
       this.paginationInfo.pageSize = pageSize
-      this.getAlarm()
+      this.getAlarm('keep')
     },
-    getAlarm() {
+    getAlarm(ifPageKeep) {
+      if (ifPageKeep != 'keep') {
+        this.paginationInfo = {
+          total: 0,
+          startIndex: 1,
+          pageSize: 10
+        }
+      }
       let params = {
         page: {
           startIndex: this.paginationInfo.startIndex,
