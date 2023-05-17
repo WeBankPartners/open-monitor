@@ -242,8 +242,12 @@ func mysqlRegister(param m.RegisterParamNew) returnData {
 	var result returnData
 	result.endpoint.Step = defaultStep
 	var err error
-	if param.Name == "" || param.Ip == "" || param.Port == "" {
-		result.validateMessage = "Mysql instance name and ip and post can not empty "
+	if mid.IsIllegalName(param.Name) {
+		result.validateMessage = "param instance name illegal"
+		return result
+	}
+	if param.Ip == "" || param.Port == "" {
+		result.validateMessage = "Mysql ip and post can not empty "
 		return result
 	}
 	var binPath, address, configFile string
@@ -321,8 +325,12 @@ func redisRegister(param m.RegisterParamNew) returnData {
 	var result returnData
 	result.endpoint.Step = defaultStep
 	var err error
-	if param.Name == "" || param.Ip == "" || param.Port == "" {
-		result.validateMessage = "Redis instance name and ip and post can not empty "
+	if mid.IsIllegalName(param.Name) {
+		result.validateMessage = "param instance name illegal"
+		return result
+	}
+	if param.Ip == "" || param.Port == "" {
+		result.validateMessage = "Redis ip and post can not empty "
 		return result
 	}
 	var binPath, address string
@@ -399,8 +407,12 @@ func javaRegister(param m.RegisterParamNew) returnData {
 	var result returnData
 	result.endpoint.Step = defaultStep
 	var err error
-	if param.Name == "" || param.Ip == "" || param.Port == "" {
-		result.validateMessage = "Java instance name and ip and post can not empty "
+	if mid.IsIllegalName(param.Name) {
+		result.validateMessage = "param instance name illegal"
+		return result
+	}
+	if param.Ip == "" || param.Port == "" {
+		result.validateMessage = "Java ip and post can not empty "
 		return result
 	}
 	var binPath, address, configFile string
@@ -474,8 +486,12 @@ func nginxRegister(param m.RegisterParamNew) returnData {
 	var result returnData
 	result.endpoint.Step = defaultStep
 	var err error
-	if param.Name == "" || param.Ip == "" || param.Port == "" {
-		result.validateMessage = "Nginx instance name and ip and post can not empty "
+	if mid.IsIllegalName(param.Name) {
+		result.validateMessage = "param instance name illegal"
+		return result
+	}
+	if param.Ip == "" || param.Port == "" {
+		result.validateMessage = "Nginx ip and post can not empty "
 		return result
 	}
 	var binPath, address string
@@ -533,8 +549,12 @@ func nginxRegister(param m.RegisterParamNew) returnData {
 
 func pingRegister(param m.RegisterParamNew) returnData {
 	var result returnData
-	if param.Name == "" || param.Ip == "" {
-		result.validateMessage = "Ping instance name and ip can not empty "
+	if mid.IsIllegalName(param.Name) {
+		result.validateMessage = "param instance name illegal"
+		return result
+	}
+	if param.Ip == "" {
+		result.validateMessage = "Ping ip can not empty "
 		return result
 	}
 	result.endpoint.Guid = fmt.Sprintf("%s_%s_%s", param.Name, param.Ip, param.Type)
@@ -561,8 +581,12 @@ func pingRegister(param m.RegisterParamNew) returnData {
 
 func telnetRegister(param m.RegisterParamNew) returnData {
 	var result returnData
-	if param.Name == "" || param.Ip == "" {
-		result.validateMessage = "Telnet instance name and ip can not empty "
+	if mid.IsIllegalName(param.Name) {
+		result.validateMessage = "param instance name illegal"
+		return result
+	}
+	if param.Ip == "" {
+		result.validateMessage = "Telnet ip can not empty "
 		return result
 	}
 	result.endpoint.Guid = fmt.Sprintf("%s_%s_%s", param.Name, param.Ip, param.Type)
@@ -593,8 +617,12 @@ func telnetRegister(param m.RegisterParamNew) returnData {
 
 func httpRegister(param m.RegisterParamNew) returnData {
 	var result returnData
-	if param.Name == "" || param.Ip == "" || param.Url == "" || param.Method == "" {
-		result.validateMessage = "Http check name/ip/url/method can not empty "
+	if mid.IsIllegalName(param.Name) {
+		result.validateMessage = "param instance name illegal"
+		return result
+	}
+	if param.Ip == "" || param.Url == "" || param.Method == "" {
+		result.validateMessage = "Http check ip/url/method can not empty "
 		return result
 	}
 	result.endpoint.Guid = fmt.Sprintf("%s_%s_%s", param.Name, param.Ip, param.Type)
@@ -675,12 +703,12 @@ func windowsRegister(param m.RegisterParamNew) returnData {
 func snmpExporterRegister(param m.RegisterParamNew) returnData {
 	var result returnData
 	result.endpoint.Step = defaultStep
-	if param.Ip == "" {
-		result.validateMessage = "Snmp target ip can not empty"
+	if mid.IsIllegalName(param.Name) {
+		result.validateMessage = "param instance name illegal"
 		return result
 	}
-	if param.Name == "" {
-		result.validateMessage = "Snmp target name can not empty"
+	if param.Ip == "" {
+		result.validateMessage = "Snmp target ip can not empty"
 		return result
 	}
 	result.endpoint.Guid = fmt.Sprintf("%s_%s_%s", param.Name, param.Ip, param.Type)
@@ -708,7 +736,7 @@ func processMonitorRegister(param m.RegisterParamNew) returnData {
 		result.validateMessage = "Process host ip can not empty"
 		return result
 	}
-	if param.Name == "" {
+	if mid.IsIllegalName(param.Name) {
 		result.validateMessage = "Process displayName can not empty"
 		return result
 	}
@@ -738,8 +766,12 @@ func processMonitorRegister(param m.RegisterParamNew) returnData {
 func otherExporterRegister(param m.RegisterParamNew) returnData {
 	var result returnData
 	result.endpoint.Step = defaultStep
-	if param.Name == "" || param.Ip == "" {
-		result.validateMessage = "Default endpoint name and ip can not empty "
+	if mid.IsIllegalName(param.Name) {
+		result.validateMessage = "param instance name illegal"
+		return result
+	}
+	if param.Ip == "" {
+		result.validateMessage = "Default ip can not empty "
 		return result
 	}
 	if param.FetchMetric {

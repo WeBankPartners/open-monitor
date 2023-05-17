@@ -85,6 +85,7 @@ func UpdateEndpoint(c *gin.Context) {
 		middleware.ReturnValidateError(c, "Param guid can not empty")
 		return
 	}
+
 	defer func() {
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
@@ -218,7 +219,7 @@ func windowsEndpointUpdate(param *models.RegisterParamNew, endpoint *models.Endp
 func pingEndpointUpdate(param *models.RegisterParamNew, endpoint *models.EndpointNewTable) (newEndpoint models.EndpointNewTable, err error) {
 	newExtParamObj := models.EndpointExtendParamObj{Enable: true, ExportAddress: param.ExportAddress}
 	b, _ := json.Marshal(newExtParamObj)
-	newEndpoint = models.EndpointNewTable{Guid: endpoint.Guid, EndpointAddress: endpoint.EndpointAddress, AgentAddress: param.ExportAddress, ExtendParam: string(b)}
+	newEndpoint = models.EndpointNewTable{Guid: endpoint.Guid, Ip: param.Ip, EndpointAddress: endpoint.EndpointAddress, AgentAddress: param.ExportAddress, ExtendParam: string(b)}
 	return
 }
 
