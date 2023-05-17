@@ -737,7 +737,7 @@ func processMonitorRegister(param m.RegisterParamNew) returnData {
 		return result
 	}
 	if mid.IsIllegalName(param.Name) {
-		result.validateMessage = "Process displayName can not empty"
+		result.validateMessage = "param instance name illegal"
 		return result
 	}
 	result.endpoint.Guid = fmt.Sprintf("%s_%s_%s", param.Name, param.Ip, param.Type)
