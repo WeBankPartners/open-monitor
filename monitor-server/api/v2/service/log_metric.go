@@ -132,7 +132,7 @@ func CreateLogMetricJson(c *gin.Context) {
 	}
 	var err error
 	for _, v := range param.MetricList {
-		if middleware.IsIllegalMetricName(v.Metric) {
+		if middleware.IsIllegalName(v.Metric) {
 			err = fmt.Errorf("metric name illegal")
 			break
 		}
@@ -162,7 +162,7 @@ func UpdateLogMetricJson(c *gin.Context) {
 	}
 	var err error
 	for _, v := range param.MetricList {
-		if middleware.IsIllegalMetricName(v.Metric) {
+		if middleware.IsIllegalName(v.Metric) {
 			err = fmt.Errorf("metric name illegal")
 			break
 		}
@@ -219,7 +219,7 @@ func CreateLogMetricConfig(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	if middleware.IsIllegalMetricName(param.Metric) {
+	if middleware.IsIllegalName(param.Metric) {
 		middleware.ReturnValidateError(c, "metric name illegal")
 		return
 	}
@@ -242,7 +242,7 @@ func UpdateLogMetricConfig(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	if middleware.IsIllegalMetricName(param.Metric) {
+	if middleware.IsIllegalName(param.Metric) {
 		middleware.ReturnValidateError(c, "metric name illegal")
 		return
 	}
