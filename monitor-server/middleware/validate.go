@@ -18,7 +18,7 @@ var (
 	regNormal        = regexp.MustCompile(`^[\w|\.|\-|\~|\!|\@|\#|\$|\%|\^|\[|\]|\{|\}|\(|\)|\,|\s]+$`)
 	regIp            = regexp.MustCompile(`^((25[0-5]|2[0-4]\d|((1\d{2})|([1-9]?\d)))\.){3}(25[0-5]|2[0-4]\d|((1\d{2})|([1-9]?\d)))$`)
 	regActiveWindow  = regexp.MustCompile(`^\d{2}:\d{2}-\d{2}:\d{2}$`)
-	regMetricName    = regexp.MustCompile(`^[\w|\-]+$`)
+	regName          = regexp.MustCompile(`^[\w|\-|\.]+$`)
 	roleEndpointMap  []map[string]int
 	roleEndpointLock sync.RWMutex
 )
@@ -82,17 +82,6 @@ func ValidatePost(c *gin.Context, obj interface{}, ex ...string) bool {
 	return isOk
 }
 
-func IsIllegalName(str string) bool {
-	re := false
-	if len(str) > 50 {
-		re = true
-	}
-	if strings.TrimSpace(str) == "" {
-		re = true
-	}
-	return re
-}
-
 func IsIllegalCond(str string) bool {
 	return regCond.MatchString(str)
 }
@@ -113,11 +102,11 @@ func IsIllegalIp(str string) bool {
 	return !regIp.MatchString(str)
 }
 
-func IsIllegalMetricName(str string) bool {
+func IsIllegalName(str string) bool {
 	if len(str) > 50 {
 		return true
 	}
-	return !regMetricName.MatchString(str)
+	return !regName.MatchString(str)
 }
 
 func ValidateActiveWindowString(str string) bool {
