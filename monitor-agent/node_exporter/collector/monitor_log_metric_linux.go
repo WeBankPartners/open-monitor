@@ -114,11 +114,12 @@ type LogMetricConfigTag struct {
 }
 
 type logMetricStringMapNeObj struct {
-	Regexp      pcre.Regexp `json:"-"`
-	RegEnable   bool        `json:"reg_enable"`
-	Regulation  string      `json:"regulation"`
-	StringValue string      `json:"string_value"`
-	IntValue    float64     `json:"int_value"`
+	Regexp            pcre.Regexp `json:"-"`
+	RegEnable         bool        `json:"reg_enable"`
+	Regulation        string      `json:"regulation"`
+	StringValue       string      `json:"string_value"`
+	IntValue          float64     `json:"int_value"`
+	TargetStringValue string      `json:"target_string_value"`
 }
 
 type logMetricDisplayObj struct {
@@ -606,6 +607,29 @@ func buildLogMetricDisplayMetrics(valueCountMap, existMetricMap map[string]*logM
 	return tmpLogMetricMetrics
 }
 
+func transLogMetricTagString(config []*logMetricStringMapNeObj, input string) (matchFlag bool, output string) {
+	output = input
+	if len(config) == 0 {
+		return
+	}
+	for _, v := range config {
+		if !v.RegEnable {
+			if v.StringValue == input {
+				matchFlag = true
+				output = v.TargetStringValue
+				break
+			}
+			continue
+		}
+		if len(v.Regexp.FindIndex([]byte(input), 0)) > 0 {
+			matchFlag = true
+			output = v.TargetStringValue
+			break
+		}
+	}
+	return
+}
+
 func transLogMetricStringMapValue(config []*logMetricStringMapNeObj, input string) (matchFlag bool, output float64) {
 	if len(config) == 0 {
 		output, _ = strconv.ParseFloat(input, 64)
@@ -679,8 +703,8 @@ func getLogMetricTags(lineText string, tagConfigList []*LogMetricConfigTag, stri
 			tmpFetchString = fetchList[1]
 			if tmpFetchString != "" {
 				if len(stringMap) > 0 {
-					if tmpMatchFlag, tmpMatchData := transLogMetricStringMapValue(stringMap, tmpFetchString); tmpMatchFlag {
-						tmpFetchString = fmt.Sprintf("%.0f", tmpMatchData)
+					if tmpMatchFlag, tmpMatchData := transLogMetricTagString(stringMap, tmpFetchString); tmpMatchFlag {
+						tmpFetchString = tmpMatchData
 					}
 				}
 				tagList = append(tagList, fmt.Sprintf("%s=%s", rule.Key, tmpFetchString))

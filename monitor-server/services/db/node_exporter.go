@@ -82,7 +82,7 @@ func transLogMetricConfigToJob(logMetricConfig []*models.LogMetricQueryObj, endp
 					tmpMetricJob := models.LogMetricNeObj{Metric: vv.Metric, Key: vv.JsonKey, AggType: vv.AggType, Step: vv.Step, StringMap: []*models.LogMetricStringMapNeObj{}}
 					for _, vvv := range vv.StringMap {
 						targetFloatValue, _ := strconv.ParseFloat(vvv.TargetValue, 64)
-						tmpStringMapJob := models.LogMetricStringMapNeObj{StringValue: vvv.SourceValue, IntValue: targetFloatValue, RegEnable: false}
+						tmpStringMapJob := models.LogMetricStringMapNeObj{StringValue: vvv.SourceValue, IntValue: targetFloatValue, RegEnable: false, TargetStringValue: vvv.TargetValue}
 						if vvv.Regulative > 0 {
 							tmpStringMapJob.RegEnable = true
 							tmpStringMapJob.Regulation = vvv.SourceValue
@@ -97,7 +97,7 @@ func transLogMetricConfigToJob(logMetricConfig []*models.LogMetricQueryObj, endp
 				tmpMetricJob := models.LogMetricNeObj{Metric: v.Metric, ValueRegular: v.Regular, AggType: v.AggType, Step: v.Step, StringMap: []*models.LogMetricStringMapNeObj{}}
 				for _, vv := range v.StringMap {
 					targetFloatValue, _ := strconv.ParseFloat(vv.TargetValue, 64)
-					tmpStringMapJob := models.LogMetricStringMapNeObj{StringValue: vv.SourceValue, IntValue: targetFloatValue, RegEnable: false}
+					tmpStringMapJob := models.LogMetricStringMapNeObj{StringValue: vv.SourceValue, IntValue: targetFloatValue, RegEnable: false, TargetStringValue: vv.TargetValue}
 					if vv.Regulative > 0 {
 						tmpStringMapJob.RegEnable = true
 						tmpStringMapJob.Regulation = vv.SourceValue
