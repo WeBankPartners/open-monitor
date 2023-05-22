@@ -2,7 +2,7 @@
   <div class=" ">
     <section v-if="showManagement" style="margin-top: 16px;">
       <Tag color="blue">{{$t('m_log_file')}}</Tag>
-      <button @click="add" type="button" class="btn btn-small success-btn">
+      <button @click="add" type="button" class="btn btn-small success-btn" style="padding: 0 10px">
         <i class="fa fa-plus"></i>
         {{$t('button.add')}}
       </button>
@@ -24,14 +24,14 @@
       <PageTable :pageConfig="pageConfig">
         <div slot='tableExtend'>
           <div style="margin:8px;border:1px solid #2db7f5">
-            <button @click="singleAddF(pageConfig.table.isExtend.parentData)" type="button" style="margin-top:8px" class="btn btn-small success-btn">
+            <button @click="singleAddF(pageConfig.table.isExtend.parentData)" type="button" style="margin-top:8px;padding: 0 10px" class="btn btn-small success-btn">
               <i class="fa fa-plus"></i>
               {{$t('m_add_json_regular')}}
             </button>
             <extendTable :detailConfig="pageConfig.table.isExtend.detailConfig"></extendTable>
           </div>
           <div style="margin:8px;border:1px solid #19be6b">
-            <button @click="addCustomMetric(pageConfig.table.isCustomMetricExtend.parentData)" type="button" style="margin-top:8px" class="btn btn-small success-btn">
+            <button @click="addCustomMetric(pageConfig.table.isCustomMetricExtend.parentData)" type="button" style="margin-top:8px;padding: 0 10px" class="btn btn-small success-btn">
               <i class="fa fa-plus"></i>
               {{$t('m_add_metric_regular')}}
             </button>
@@ -323,7 +323,7 @@
     <!-- DB config -->
     <section v-if="showManagement" style="margin-top: 16px;">
       <Tag color="blue">{{$t('m_db')}}</Tag>
-      <button @click="addDb" type="button" class="btn btn-small success-btn">
+      <button @click="addDb" type="button" class="btn btn-small success-btn" style="padding: 0 10px">
         <i class="fa fa-plus"></i>
         {{$t('button.add')}}
       </button>
