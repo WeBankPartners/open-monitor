@@ -2,7 +2,7 @@
   <div class=" ">
     <section v-if="showManagement" style="margin-top: 16px;">
       <Tag color="blue">{{targetDetail.display_name || ''}}</Tag>
-      <button @click="add" type="button" class="btn btn-small success-btn">
+      <button @click="add" type="button" class="btn btn-small success-btn" style="padding: 0 10px">
         <i class="fa fa-plus"></i>
         {{$t('button.add')}}
       </button>
@@ -11,7 +11,7 @@
       <section class="receiver-config">
         <div style="margin: 16px 0">
           <h5 style="display:inline-block">{{$t('button.receiversConfiguration')}}:</h5>
-          <button @click="addEmptyItem('group')" class="btn btn-small success-btn">{{$t('button.add')}}</button>
+          <button @click="addEmptyItem('group')" class="btn btn-small success-btn" style="padding: 0 10px">{{$t('button.add')}}</button>
           <button @click="updateNotify" class="btn btn-small btn-cancel-f">{{$t('button.save')}}</button>
           <div class="receiver-config-set" style="margin: 8px 0">
           <template>
