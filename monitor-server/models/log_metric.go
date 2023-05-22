@@ -131,10 +131,11 @@ type LogMetricNeObj struct {
 }
 
 type LogMetricStringMapNeObj struct {
-	Regulation  string  `json:"regulation"`
-	StringValue string  `json:"string_value"`
-	IntValue    float64 `json:"int_value"`
-	RegEnable   bool    `json:"reg_enable"`
+	Regulation        string  `json:"regulation"`
+	StringValue       string  `json:"string_value"`
+	IntValue          float64 `json:"int_value"`
+	RegEnable         bool    `json:"reg_enable"`
+	TargetStringValue string  `json:"target_string_value"`
 }
 
 type CheckRegExpParam struct {
