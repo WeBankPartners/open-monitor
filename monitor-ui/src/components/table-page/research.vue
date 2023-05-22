@@ -14,11 +14,12 @@
 
         </div>
       </div> -->
+      <!-- @keyup.enter="goToAction('search', pageConfig.researchConfig.filters)" -->
       <form style="font-size:0;line-height:32px;">
         <template v-for="(input_condition, index_input_condition) in pageConfig.researchConfig.input_conditions" >
           <div :key="index_input_condition" class="research-div" >
             <input v-if="input_condition.type === 'input'" v-model.trim="pageConfig.researchConfig.filters[input_condition.value]"
-                  @keyup.enter.stop.prevent="goToAction('search', pageConfig.researchConfig.filters)" :placeholder="$t(input_condition.placeholder)"
+                  :placeholder="$t(input_condition.placeholder)"
                   type="text"
                   class="form-control research-input c-dark"
                   @mouseover="activeInput(input_condition, index_input_condition)">
