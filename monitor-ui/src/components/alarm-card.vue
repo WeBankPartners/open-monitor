@@ -3,7 +3,7 @@
     <template #title>
       <div
         class="col-md-10"
-        style="padding: 0; color: #404144; font-size: 16px"
+        style="padding: 0; color: #404144; font-size: 16px;display:flex;align-items:center;"
       >
         <img
           v-if="data.s_priority == 'high'"
@@ -26,7 +26,8 @@
           style="margin-right: 8px; cursor: pointer"
           @click="addParams('priority', data.s_priority)"
         />
-        {{ data.content }}
+        <span v-if="data.is_custom" v-html="data.title"></span>
+        <span v-else v-html="data.content"></span>
       </div>
       <div
         class="col-md-2"
@@ -131,6 +132,11 @@
 export default {
   props: {
     data: Object,
+  },
+  data() {
+    return {
+      test: "system_id:5006 <br/> title:bdphdp010001: JournalNode10分钟之内ops次数大于10000 <br/> object: <br/> info:bdphdp010001在2022.05.16-00:14:14触发JournalNode10分钟之内ops次数大于10000 <br/> 【告警主机】 127.0.0.1[bdphdp010001] <br/> 【告警集群】 international_cluster <br/> 【附加信息】 请联系值班人:[admin]，资源池[admin]"
+    }
   },
   methods: {
     goToEndpointView(alarmItem) {
