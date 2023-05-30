@@ -21,6 +21,7 @@ var (
 	portLock         = new(sync.RWMutex)
 	portList         = []int{}
 	autoRestartTime  = 0
+	RemoteMode       = false
 )
 
 func StartManager() {
@@ -180,6 +181,11 @@ func LoadDeployProcess() {
 		err = dec.Decode(&processList)
 		if err != nil {
 			log.Printf("gob decode process.data error : %v \n", err)
+			return
+		}
+		agentMangerLocalMode := strings.ToLower(os.Getenv("MONITOR_AGENT_MANAGER_REMOTE_MODE"))
+		if agentMangerLocalMode == "y" || agentMangerLocalMode == "yes" || agentMangerLocalMode == "true" {
+			RemoteMode = true
 			return
 		}
 		for _, v := range processList {

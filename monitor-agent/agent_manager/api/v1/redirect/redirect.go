@@ -43,10 +43,12 @@ func Init(param *funcs.InitDeployParam) (err error) {
 	_, err = requestAgentMonitor(&newParam, fmt.Sprintf("http://%s", param.AgentManagerRemoteIp), "init")
 	for _, v := range param.Config {
 		if splitIndex := strings.LastIndex(v.AgentAddress, ":"); splitIndex > 0 {
-			if addressPort, _ := strconv.Atoi(v.AgentAddress[splitIndex:]); addressPort > 0 {
+			if addressPort, _ := strconv.Atoi(v.AgentAddress[splitIndex+1:]); addressPort > 0 {
+				log.Printf("port: %d \n", addressPort)
 				if _, ok := redirectHttpMap.Load(addressPort); !ok {
 					rhObj := redirectHttpObj{ListenPort: addressPort, RemoteAgentManagerIp: param.AgentManagerRemoteIp}
-					rhObj.Init()
+					go rhObj.Init()
+					log.Printf("remoteHttp init,remoteIP: %s , port:%d \n", rhObj.RemoteAgentManagerIp, rhObj.ListenPort)
 					redirectHttpMap.Store(addressPort, &rhObj)
 					log.Printf("start listen port:%d \n", addressPort)
 				}
@@ -68,12 +70,12 @@ func Add(remoteAddress string, param map[string]string) (port int, err error) {
 		return
 	}
 	if splitIndex := strings.LastIndex(resp.Message, ":"); splitIndex > 0 {
-		port, _ = strconv.Atoi(resp.Message[splitIndex:])
+		port, _ = strconv.Atoi(resp.Message[splitIndex+1:])
 	}
 	if port > 0 {
 		if _, ok := redirectHttpMap.Load(port); !ok {
 			rhObj := redirectHttpObj{ListenPort: port, RemoteAgentManagerIp: remoteAddress}
-			rhObj.Init()
+			go rhObj.Init()
 			redirectHttpMap.Store(port, &rhObj)
 			log.Printf("start listen port:%d \n", port)
 		}
@@ -100,7 +102,7 @@ func requestAgentMonitor(param interface{}, url, method string) (resp funcs.Http
 		log.Printf("Failed marshalling data:%s ", err.Error())
 		return resp, err
 	}
-	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/deploy/%s", url, method), strings.NewReader(string(postData)))
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s:19999/deploy/%s", url, method), strings.NewReader(string(postData)))
 	if err != nil {
 		log.Printf("Curl agent_monitor http request error:%s ", err.Error())
 		return resp, err
