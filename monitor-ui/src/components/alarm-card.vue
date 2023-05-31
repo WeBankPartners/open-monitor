@@ -124,6 +124,10 @@
           >
         </div>
       </li>
+      <li v-if="data.is_custom">
+        <label class="card-label" v-html="$t('m_content')"></label>
+        <div class="card-content" v-html="data.content"></div>
+      </li>
     </ul>
   </Card>
 </template>
