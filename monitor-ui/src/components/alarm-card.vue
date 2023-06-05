@@ -67,6 +67,12 @@
       </Tooltip>
     </div>
     <ul>
+      <li v-if="data.system_id">
+        <label class="card-label" v-html="$t('tableKey.system_id')"></label>
+        <div class="card-content">
+          {{ data.system_id }}
+        </div>
+      </li>
       <li>
         <label class="card-label" v-html="$t('field.endpoint')"></label>
         <div class="card-content">
