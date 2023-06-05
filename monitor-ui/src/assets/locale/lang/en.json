@@ -158,7 +158,8 @@
     "logPath": "Log Path",
     "regular": "Regular",
     "tags": "Tags",
-    "endpoint_type": "Endpoint Type"
+    "endpoint_type": "Endpoint Type",
+    "system_id": "System ID"
   },
   "tips": {
     "required": " Required!",
