@@ -158,7 +158,8 @@
     "logPath": "日志路径",
     "regular": "正则表达式",
     "tags": "标签",
-    "endpoint_type": "对象类型"
+    "endpoint_type": "对象类型",
+    "system_id": "系统ID"
   },
   "tips": {
     "required": " 必填",
