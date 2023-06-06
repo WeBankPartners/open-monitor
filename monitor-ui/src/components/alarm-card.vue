@@ -204,7 +204,10 @@ li {
   color: #404144;
   overflow: hidden;
   .tags-box {
-    width: max-content;
+    // width: max-content;
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
   }
 }
 .filter-icon {

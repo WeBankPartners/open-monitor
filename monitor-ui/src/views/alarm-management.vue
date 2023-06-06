@@ -271,7 +271,7 @@ export default {
     this.getTodayAlarm()
     this.getAlarm()
     this.interval = setInterval(()=>{
-      this.getAlarm()
+      this.getAlarm('keep')
     }, 10000)
     this.$once('hook:beforeDestroy', () => {
       clearInterval(this.interval)
