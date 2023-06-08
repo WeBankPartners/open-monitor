@@ -426,6 +426,7 @@ export default {
       this.chartQueryList = []
       this.clearParams()
       if (!this.$root.$validate.isEmpty_reset(params.templateData.cfg)) {
+        this.panalTitle = params.panal.i
         this.getEndpointList('.')
         this.viewData = JSON.parse(params.templateData.cfg)
         this.viewData.forEach((itemx, index) => {
@@ -475,7 +476,6 @@ export default {
       )
     },
     initPanal() {
-      this.panalTitle = this.panalData.panalTitle
       this.panalUnit = this.panalData.panalUnit
       let params = {
         aggregate: this.templateQuery.aggregate || 'none',
