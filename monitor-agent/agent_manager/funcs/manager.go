@@ -21,6 +21,7 @@ var (
 	portLock         = new(sync.RWMutex)
 	portList         = []int{}
 	autoRestartTime  = 0
+	RemoteMode       = false
 )
 
 func StartManager() {
@@ -68,33 +69,47 @@ func StartManager() {
 func GetPort() int {
 	portLock.Lock()
 	defer portLock.Unlock()
-	var tmpPort int
-	maxNum := 0
+	var resultPort int
+	existMaxPort := 0
+	configMinPort := Config().Deploy.StartPort
+	configMaxPort := configMinPort + 10000
 	if len(portList) == 0 {
-		tmpPort = Config().Deploy.StartPort
+		resultPort = configMinPort
 	} else {
-		maxNum = portList[len(portList)-1]
-		tmpPort = maxNum + 1
+		existMaxPort = portList[len(portList)-1]
+		for _, v := range portList {
+			if existMaxPort < v {
+				existMaxPort = v
+			}
+		}
+		resultPort = existMaxPort + 1
 	}
 	b, err := exec.Command(osBashCommand, "-c", "netstat -ltn | awk '{print $4}'").Output()
 	if err != nil {
-		portList = append(portList, tmpPort)
-		return tmpPort
+		portList = append(portList, resultPort)
+		return resultPort
 	}
+	sysPortMap := make(map[int]int)
 	for _, v := range strings.Split(string(b), "\n") {
 		if strings.Contains(v, ":") {
 			portString := strings.Split(v, ":")[strings.Count(v, ":")]
-			sysMaxPort, _ := strconv.Atoi(portString)
-			if sysMaxPort > tmpPort {
-				tmpPort = sysMaxPort
+			sysPort, _ := strconv.Atoi(portString)
+			if sysPort >= configMaxPort && sysPort < configMinPort {
+				continue
+			}
+			sysPortMap[sysPort] = 1
+		}
+	}
+	if _, ok := sysPortMap[resultPort]; ok {
+		for i := resultPort; i < configMaxPort; i++ {
+			if _, existFlag := sysPortMap[i]; !existFlag {
+				resultPort = i
+				break
 			}
 		}
 	}
-	if tmpPort != maxNum+1 {
-		tmpPort = tmpPort + 1
-	}
-	portList = append(portList, tmpPort)
-	return tmpPort
+	portList = append(portList, resultPort)
+	return resultPort
 }
 
 func containsInt(i int, l []int) bool {
@@ -166,6 +181,11 @@ func LoadDeployProcess() {
 		err = dec.Decode(&processList)
 		if err != nil {
 			log.Printf("gob decode process.data error : %v \n", err)
+			return
+		}
+		agentMangerLocalMode := strings.ToLower(os.Getenv("MONITOR_AGENT_MANAGER_REMOTE_MODE"))
+		if agentMangerLocalMode == "y" || agentMangerLocalMode == "yes" || agentMangerLocalMode == "true" {
+			RemoteMode = true
 			return
 		}
 		for _, v := range processList {
