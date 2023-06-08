@@ -142,6 +142,11 @@ type AgentManagerTable struct {
 	BinPath         string `json:"bin_path"`
 }
 
+type InitDeployParam struct {
+	AgentManagerRemoteIp string               `json:"agentManagerRemoteIp"`
+	Config               []*AgentManagerTable `json:"config"`
+}
+
 type QueryPrometheusMetricParam struct {
 	Ip            string   `json:"ip"`
 	Port          string   `json:"port"`
