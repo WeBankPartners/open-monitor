@@ -1039,11 +1039,12 @@ func GetOpenAlarm(param m.CustomAlarmQueryParam) []*m.AlarmProblemQuery {
 				priority = "medium"
 			}
 			query[i-1].AlertInfo = strings.Replace(query[i-1].AlertInfo, "\n", " <br/> ", -1)
-			tmpDisplayEndpoint := fmt.Sprintf("%s(%s)", query[i-1].AlertObj, query[i-1].AlertIp)
-			if query[i-1].AlertObj == "" && query[i-1].AlertIp == "" {
-				tmpDisplayEndpoint = "custom_alarm"
-			}
-			result = append(result, &m.AlarmProblemQuery{IsCustom: true, Id: query[i-1].Id, Endpoint: tmpDisplayEndpoint, Status: "firing", Content: fmt.Sprintf("system_id:%s <br/> title:%s <br/> object:%s <br/> info:%s ", query[i-1].SubSystemId, query[i-1].AlertTitle, query[i-1].AlertObj, query[i-1].AlertInfo), Start: query[i-1].UpdateAt, StartString: query[i-1].UpdateAt.Format(m.DatetimeFormat), SPriority: priority, SMetric: "custom", CustomMessage: query[i-1].CustomMessage})
+			//tmpDisplayEndpoint := fmt.Sprintf("%s(%s)", query[i-1].AlertObj, query[i-1].AlertIp)
+			//if query[i-1].AlertObj == "" && query[i-1].AlertIp == "" {
+			//	tmpDisplayEndpoint = "custom_alarm"
+			//}
+			tmpDisplayEndpoint := "custom_alarm"
+			result = append(result, &m.AlarmProblemQuery{IsCustom: true, Id: query[i-1].Id, Endpoint: tmpDisplayEndpoint, Status: "firing", Content: query[i-1].AlertInfo, Start: query[i-1].UpdateAt, StartString: query[i-1].UpdateAt.Format(m.DatetimeFormat), SPriority: priority, SMetric: "custom", CustomMessage: query[i-1].CustomMessage, Title: query[i-1].AlertTitle, SystemId: query[i-1].SubSystemId})
 		}
 	}
 	priority := "high"
@@ -1055,11 +1056,12 @@ func GetOpenAlarm(param m.CustomAlarmQueryParam) []*m.AlarmProblemQuery {
 		priority = "medium"
 	}
 	query[lastIndex].AlertInfo = strings.Replace(query[lastIndex].AlertInfo, "\n", " <br/> ", -1)
-	tmpDisplayEndpoint := fmt.Sprintf("%s(%s)", query[lastIndex].AlertObj, query[lastIndex].AlertIp)
-	if query[lastIndex].AlertObj == "" && query[lastIndex].AlertIp == "" {
-		tmpDisplayEndpoint = "custom_alarm"
-	}
-	result = append(result, &m.AlarmProblemQuery{IsCustom: true, Id: query[lastIndex].Id, Endpoint: tmpDisplayEndpoint, Status: "firing", IsLogMonitor: false, Content: fmt.Sprintf("system_id:%s <br/> title:%s <br/> object:%s <br/> info:%s ", query[lastIndex].SubSystemId, query[lastIndex].AlertTitle, query[lastIndex].AlertObj, query[lastIndex].AlertInfo), Start: query[lastIndex].UpdateAt, StartString: query[lastIndex].UpdateAt.Format(m.DatetimeFormat), SPriority: priority, SMetric: "custom", CustomMessage: query[lastIndex].CustomMessage})
+	//tmpDisplayEndpoint := fmt.Sprintf("%s(%s)", query[lastIndex].AlertObj, query[lastIndex].AlertIp)
+	//if query[lastIndex].AlertObj == "" && query[lastIndex].AlertIp == "" {
+	//	tmpDisplayEndpoint = "custom_alarm"
+	//}
+	tmpDisplayEndpoint := "custom_alarm"
+	result = append(result, &m.AlarmProblemQuery{IsCustom: true, Id: query[lastIndex].Id, Endpoint: tmpDisplayEndpoint, Status: "firing", IsLogMonitor: false, Content: query[lastIndex].AlertInfo, Start: query[lastIndex].UpdateAt, StartString: query[lastIndex].UpdateAt.Format(m.DatetimeFormat), SPriority: priority, SMetric: "custom", CustomMessage: query[lastIndex].CustomMessage, Title: query[lastIndex].AlertTitle, SystemId: query[lastIndex].SubSystemId})
 	return result
 }
 
