@@ -1,54 +1,54 @@
 package funcs
 
 import (
-	"sync"
-	"log"
 	"encoding/json"
 	"io/ioutil"
-	"strings"
+	"log"
 	"os"
+	"strings"
+	"sync"
 )
 
 type HttpConfig struct {
-	Port  int  `json:"port"`
+	Port int `json:"port"`
 }
 
 type DeployConfig struct {
-	Enable  bool  `json:"enable"`
-	StartPort  int  `json:"start_port"`
-	PackagePath  []string  `json:"package_path"`
-	DeployDir  string  `json:"deploy_dir"`
-	EachMaxProcess  int  `json:"each_max_process"`
+	Enable         bool     `json:"enable"`
+	StartPort      int      `json:"start_port"`
+	PackagePath    []string `json:"package_path"`
+	DeployDir      string   `json:"deploy_dir"`
+	EachMaxProcess int      `json:"each_max_process"`
 }
 
 type ManagerConfig struct {
-	AliveCheck  int  `json:"alive_check"`
-	AutoRestart  bool  `json:"auto_restart"`
-	Retry  int  `json:"retry"`
-	SaveFile  string  `json:"save_file"`
+	AliveCheck  int    `json:"alive_check"`
+	AutoRestart bool   `json:"auto_restart"`
+	Retry       int    `json:"retry"`
+	SaveFile    string `json:"save_file"`
 }
 
-type ProcessConfig  struct {
-	Name  string  `json:"name"`
-	Cmd  string  `json:"cmd"`
+type ProcessConfig struct {
+	Name string `json:"name"`
+	Cmd  string `json:"cmd"`
 }
 
 type AgentsConfig struct {
-	Process  []*ProcessConfig  `json:"process"`
-	HttpRegisterEnable  bool  `json:"http_register_enable"`
+	Process            []*ProcessConfig `json:"process"`
+	HttpRegisterEnable bool             `json:"http_register_enable"`
 }
 
 type GlobalConfig struct {
-	Http  *HttpConfig  `json:"http"`
+	Http    *HttpConfig    `json:"http"`
 	Deploy  *DeployConfig  `json:"deploy"`
-	Manager  *ManagerConfig  `json:"manager"`
+	Manager *ManagerConfig `json:"manager"`
 	Agents  *AgentsConfig  `json:"agents"`
-	OsBash  []string  `json:"os_bash"`
+	OsBash  []string       `json:"os_bash"`
 }
 
 var (
-	config     *GlobalConfig
-	lock       = new(sync.RWMutex)
+	config *GlobalConfig
+	lock   = new(sync.RWMutex)
 )
 
 func Config() *GlobalConfig {
@@ -66,7 +66,7 @@ func InitConfig(cfg string) error {
 		log.Println("config file not found")
 		return err
 	}
-	b,err := ioutil.ReadFile(cfg)
+	b, err := ioutil.ReadFile(cfg)
 	if err != nil {
 		log.Printf("read file %s error %v \n", cfg, err)
 		return err
@@ -86,12 +86,17 @@ func InitConfig(cfg string) error {
 }
 
 type AgentManagerTable struct {
-	EndpointGuid  string  `json:"endpoint_guid"`
-	Name  string  `json:"name"`
-	User  string  `json:"user"`
-	Password  string  `json:"password"`
-	InstanceAddress  string  `json:"instance_address"`
-	AgentAddress  string  `json:"agent_address"`
-	ConfigFile  string  `json:"config_file"`
-	BinPath  string  `json:"bin_path"`
+	EndpointGuid    string `json:"endpoint_guid"`
+	Name            string `json:"name"`
+	User            string `json:"user"`
+	Password        string `json:"password"`
+	InstanceAddress string `json:"instance_address"`
+	AgentAddress    string `json:"agent_address"`
+	ConfigFile      string `json:"config_file"`
+	BinPath         string `json:"bin_path"`
+}
+
+type InitDeployParam struct {
+	AgentManagerRemoteIp string               `json:"agentManagerRemoteIp"`
+	Config               []*AgentManagerTable `json:"config"`
 }
