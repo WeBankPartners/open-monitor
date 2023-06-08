@@ -161,8 +161,8 @@ type ArchiveMysqlConfig struct {
 }
 
 type CapacityServerConfig struct {
-	Server             string `json:"server"`
-	Port               string `json:"port"`
+	Server string `json:"server"`
+	Port   string `json:"port"`
 }
 
 type GlobalConfig struct {
@@ -203,6 +203,7 @@ var (
 	PluginRunningMode    bool
 	SmsParamMaxLength    int
 	AlarmMailEnable      bool
+	AgentManagerRemoteIp string
 )
 
 func Config() *GlobalConfig {
@@ -250,7 +251,7 @@ func InitConfig(cfg string) {
 	config.MonitorAlarmMailEnable = strings.ToLower(config.MonitorAlarmMailEnable)
 	if config.MonitorAlarmMailEnable == "y" || config.MonitorAlarmMailEnable == "yes" || config.MonitorAlarmMailEnable == "true" {
 		AlarmMailEnable = true
-	}else{
+	} else {
 		AlarmMailEnable = false
 	}
 	if config.MonitorAlarmCallbackLevelMin == "" {
@@ -270,6 +271,10 @@ func InitConfig(cfg string) {
 	SubSystemKey = os.Getenv("SUB_SYSTEM_KEY")
 	FiringCallback = os.Getenv("ALARM_FIRING_CALLBACK")
 	RecoverCallback = os.Getenv("ALARM_RECOVER_CALLBACK")
+	agentMangerLocalMode := strings.ToLower(os.Getenv("MONITOR_AGENT_MANAGER_REMOTE_MODE"))
+	if agentMangerLocalMode == "y" || agentMangerLocalMode == "yes" || agentMangerLocalMode == "true" {
+		AgentManagerRemoteIp = os.Getenv("MONITOR_HOST_IP")
+	}
 	log.Println("read config file:", cfg, "successfully")
 	if CoreUrl != "" && SubSystemCode != "" && SubSystemKey != "" {
 		InitCoreToken()
