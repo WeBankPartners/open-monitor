@@ -18,7 +18,7 @@ var (
 	regNormal        = regexp.MustCompile(`^[\w|\.|\-|\~|\!|\@|\#|\$|\%|\^|\[|\]|\{|\}|\(|\)|\,|\s]+$`)
 	regIp            = regexp.MustCompile(`^((25[0-5]|2[0-4]\d|((1\d{2})|([1-9]?\d)))\.){3}(25[0-5]|2[0-4]\d|((1\d{2})|([1-9]?\d)))$`)
 	regActiveWindow  = regexp.MustCompile(`^\d{2}:\d{2}-\d{2}:\d{2}$`)
-	regName          = regexp.MustCompile(`^[\w|\-|\.]+$`)
+	regName          = regexp.MustCompile(`^[\w|\-|\.|:]+$`)
 	roleEndpointMap  []map[string]int
 	roleEndpointLock sync.RWMutex
 )
