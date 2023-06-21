@@ -43,6 +43,7 @@
     <Modal
       v-model="addAndEditModal.isShow"
       :title="addAndEditModal.isAdd ? $t('button.add') : $t('button.edit')"
+      :mask-closable="false"
       :width="730"
       >
       <div :style="{ 'max-height': MODALHEIGHT + 'px', overflow: 'auto' }">
@@ -122,6 +123,7 @@
       v-model="ruleModelConfig.isShow"
       :title="$t('m_json_regular')"
       width="840"
+      :mask-closable="false"
       >
       <div :style="{ 'max-height': MODALHEIGHT + 'px', overflow: 'auto' }">
         <Form :label-width="100">
@@ -217,6 +219,7 @@
     <Modal
       v-model="isShowWarning"
       :title="$t('delConfirm.title')"
+      :mask-closable="false"
       @on-ok="ok"
       @on-cancel="cancel">
       <div class="modal-body" style="padding:30px">
@@ -228,6 +231,7 @@
     <Modal
       v-model="isShowWarningDelete"
       :title="$t('delConfirm.title')"
+      :mask-closable="false"
       @on-ok="okDelRow"
       @on-cancel="cancleDelRow">
       <div class="modal-body" style="padding:30px">
@@ -333,6 +337,7 @@
       v-model="dbModelConfig.isShow"
       :title="$t('m_db')"
       width="700"
+      :mask-closable="false"
       >
       <div :style="{ 'max-height': MODALHEIGHT + 'px', overflow: 'auto' }">
         <Form :label-width="100">
@@ -392,6 +397,7 @@
     <Modal
       v-model="isShowGroupMetricUpload"
       :title="$t('m_import')"
+      :mask-closable="false"
       @on-ok="isShowGroupMetricUpload = false"
       @on-cancel="isShowGroupMetricUpload = false">
       <div class="modal-body" style="padding:30px">
