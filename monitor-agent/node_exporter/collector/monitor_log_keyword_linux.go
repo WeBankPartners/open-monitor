@@ -324,7 +324,7 @@ func logKeywordSaveConfig(requestParamBuff []byte) {
 func LogKeyWordLoadConfig() {
 	b, err := ioutil.ReadFile(logMonitorFilePath)
 	if err != nil {
-		level.Error(monitorLogger).Log("logKeywordLoadConfig", err.Error())
+		level.Warn(monitorLogger).Log("logKeywordLoadConfig", err.Error())
 	} else {
 		err = logKeywordHttpAction(b)
 		if err != nil {
