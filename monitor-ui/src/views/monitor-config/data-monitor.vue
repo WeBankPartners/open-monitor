@@ -22,7 +22,7 @@
   </section>
   <Modal
    v-model="db_add_Modal"
-    mask-closable
+   :mask-closable="false"
     :title="$t('button.dataMonitoring')" 
     @on-ok="addDbConfig"
     @on-cancel="cancelAddDbConfig"
@@ -43,7 +43,7 @@
   </Modal>
   <Modal
    v-model="db_edit_Modal"
-    mask-closable
+   :mask-closable="false"
     :title="$t('button.dataMonitoring')" 
     @on-ok="editDbConfig"
     @on-cancel="cancelEditDbConfig"

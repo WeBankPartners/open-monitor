@@ -1,5 +1,5 @@
 <template>
-  <Modal v-model="ModelDelConfig.deleteWarning" width="360">
+  <Modal v-model="ModelDelConfig.deleteWarning" width="360" :mask-closable="false">
     <p slot="header" style="color:#f60;text-align:center">
       <Icon type="ios-information-circle"></Icon>
       <span>Delete confirmation ({{ModelDelConfig.msg}})</span>
