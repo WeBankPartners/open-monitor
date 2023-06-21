@@ -92,13 +92,13 @@
                 type="error"
                 icon="md-close"
               ></Button>
-              <Tooltip :content="$t('m_target_value')" :delay="1000">
-                <Select v-model="item.target_endpoint" style="width: 310px" :placeholder="$t('m_target_value')">
+              <Tooltip :content="$t('m_type_object')" :delay="1000">
+                <Select v-model="item.target_endpoint" style="width: 310px" :placeholder="$t('m_type_object')">
                   <Option v-for="type in targetEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
                 </Select>
               </Tooltip>
-              <Tooltip :content="$t('m_source_value')" :delay="1000">
-                <Select v-model="item.source_endpoint" style="width: 310px" :placeholder="$t('m_source_value')">
+              <Tooltip :content="$t('m_host_object')" :delay="1000">
+                <Select v-model="item.source_endpoint" style="width: 310px" :placeholder="$t('m_host_object')">
                   <Option v-for="type in sourceEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
                 </Select>
               </Tooltip>
