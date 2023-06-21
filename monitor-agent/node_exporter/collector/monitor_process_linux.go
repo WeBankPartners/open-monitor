@@ -187,7 +187,7 @@ func matchProcess(processList []*processUsedResource, config *processConfigObj) 
 		if !strings.Contains(v.Cmd, config.ProcessTags) {
 			continue
 		}
-		matchObj := processMonitorObj{Pid: float64(v.Pid), Value: 1, CpuUsedPercent: v.Cpu, MemUsedByte: v.Mem, DisplayName: config.ProcessName,EndpointGuid: config.ProcessGuid}
+		matchObj := processMonitorObj{Pid: float64(v.Pid), Value: 1, CpuUsedPercent: v.Cpu, MemUsedByte: v.Mem, DisplayName: config.ProcessName, EndpointGuid: config.ProcessGuid}
 		if config.ProcessTags != "" {
 			matchObj.DisplayName = fmt.Sprintf("%s(%s)", v.Name, config.ProcessTags)
 		}
@@ -270,7 +270,7 @@ func saveProcessConfig(requestParamBuff []byte) {
 func loadProcessConfig() {
 	b, err := ioutil.ReadFile(processFilePath)
 	if err != nil {
-		level.Error(monitorLogger).Log("processLoadConfig", err.Error())
+		level.Warn(monitorLogger).Log("processLoadConfig", err.Error())
 	} else {
 		_, err = HandleProcessAction(b)
 		if err != nil {
