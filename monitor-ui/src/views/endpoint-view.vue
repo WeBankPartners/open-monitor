@@ -12,6 +12,7 @@
     <Modal
       v-model="historyAlarmModel"
       width="1200"
+      :mask-closable="false"
       :footer-hide="true"
       :title="$t('button.historicalAlert')">
       <Table height="500" row-key="id" :columns="historyAlarmPageConfig.table.tableEle" :data="historyAlarmPageConfig.table.tableData"></Table>

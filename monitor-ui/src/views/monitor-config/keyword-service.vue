@@ -36,6 +36,7 @@
     <Modal
       v-model="addAndEditModal.isShow"
       :title="addAndEditModal.isAdd ? $t('button.add') : $t('button.edit')"
+      :mask-closable="false"
       :width="730"
       >
       <div :style="{ 'max-height': MODALHEIGHT + 'px', overflow: 'auto' }">
