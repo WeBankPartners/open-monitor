@@ -37,6 +37,7 @@
     <Modal
       label-colon
       v-model="isEditPanal"
+      :mask-closable="false"
       :title="$t('resourceLevel.levelMsg')">
       <Form :model="currentData" label-position="left" :label-width="60">
         <FormItem :label="$t('field.guid')">
@@ -58,6 +59,7 @@
     <Modal
       label-colon
       v-model="isAssociatedRole"
+      :mask-closable="false"
       :title="$t('resourceLevel.associatedRole')">
       <Form :model="currentData" label-position="left" :label-width="60">
         <FormItem :label="$t('resourceLevel.role')">
@@ -76,6 +78,7 @@
     <Modal
       label-colon
       v-model="isAssociatedObject"
+      :mask-closable="false"
       :width="550"
       :title="$t('resourceLevel.associatedObject')">
       <Form :model="currentData" label-position="right" label-colon :label-width="100">
@@ -123,6 +126,7 @@
     <Modal
       label-colon
       v-model="isAlarmCallback"
+      :mask-closable="false"
       :title="$t('resourceLevel.alarmCallback')">
       <Form label-position="left" :label-width="80">
         <FormItem :label="$t('resourceLevel.alarmFiring')">
@@ -145,6 +149,7 @@
     <Modal
       label-colon
       v-model="isAlarmReceivers"
+      :mask-closable="false"
       :title="$t('button.receivers')">
         <div>
           <label style="width:110px">{{$t('button.receiversSelect')}}:</label>
