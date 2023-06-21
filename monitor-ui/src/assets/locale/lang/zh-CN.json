@@ -309,5 +309,7 @@
   "m_metric": "指标",
   "m_add_tags": "新增标签",
   "m_target_value": "目标值",
-  "m_source_value": "源值"
+  "m_source_value": "源值",
+  "m_type_object": "类型对象",
+  "m_host_object": "主机对象"
 }
