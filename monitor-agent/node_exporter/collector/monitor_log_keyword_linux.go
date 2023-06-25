@@ -3,7 +3,7 @@ package collector
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/glenn-brown/golang-pkg-pcre/src/pkg/pcre"
+	"github.com/dlclark/regexp2"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/hpcloud/tail"
@@ -12,7 +12,6 @@ import (
 	"net/http"
 	"strings"
 	"sync"
-	"time"
 )
 
 type logMonitorCollector struct {
@@ -77,7 +76,7 @@ type logKeywordFetchObj struct {
 
 type logKeywordObj struct {
 	Keyword        string
-	RegExp         *pcre.Regexp
+	RegExp         *regexp2.Regexp
 	Count          float64
 	LastMatchRow   string
 	TargetEndpoint string
@@ -112,7 +111,7 @@ func (c *logKeywordCollector) startHandleTailData() {
 		c.Lock.Lock()
 		for _, v := range c.Rule {
 			if v.RegExp != nil {
-				if len(v.RegExp.FindIndex([]byte(lineText), 0)) > 0 {
+				if ok, _ := v.RegExp.MatchString(lineText); ok {
 					v.Count++
 					v.LastMatchRow = lineText
 				}
@@ -130,23 +129,14 @@ func (c *logKeywordCollector) startHandleTailData() {
 func (c *logKeywordCollector) start() {
 	level.Info(monitorLogger).Log("logKeywordCollectorStart", c.Path)
 	var err error
-	c.TailSession, err = tail.TailFile(c.Path, tail.Config{Follow: true, ReOpen: true, Poll: true})
+	c.TailSession, err = tail.TailFile(c.Path, tail.Config{Follow: true, ReOpen: true, Poll: true, Location: &tail.SeekInfo{Offset: 0, Whence: 2}})
 	if err != nil {
 		level.Error(monitorLogger).Log("error", fmt.Sprintf("start log keyword collector fail, path: %s, error: %v", c.Path, err))
 		return
 	}
 	c.DataChan = make(chan string, logKeywordChanLength)
 	go c.startHandleTailData()
-	firstFlag := true
-	timeNow := time.Now()
 	for line := range c.TailSession.Lines {
-		if firstFlag {
-			if time.Now().Sub(timeNow).Seconds() >= 5 {
-				firstFlag = false
-			} else {
-				continue
-			}
-		}
 		if len(c.DataChan) == logMetricChanLength {
 			level.Info(monitorLogger).Log("Log keyword queue is full,file:", c.Path)
 		}
@@ -241,12 +231,12 @@ func logKeywordHttpAction(requestParamBuff []byte) (err error) {
 				var tmpKeywordList []*logKeywordObj
 				for _, inputKeyword := range inputParam.Keywords {
 					if inputKeyword.RegularEnable {
-						tmpRegExp, tmpRegErr := pcre.Compile(inputKeyword.Keyword, 0)
+						tmpRegExp, tmpRegErr := regexp2.Compile(inputKeyword.Keyword, 0)
 						if tmpRegErr != nil {
-							err = fmt.Errorf("path:%s pcre regexp compile %s fail:%s", inputParam.Path, inputKeyword.Keyword, tmpRegErr.String())
+							err = fmt.Errorf("path:%s regexp2 regexp compile %s fail:%s", inputParam.Path, inputKeyword.Keyword, tmpRegErr.Error())
 							continue
 						}
-						tmpKeywordList = append(tmpKeywordList, &logKeywordObj{Keyword: inputKeyword.Keyword, RegExp: &tmpRegExp, TargetEndpoint: inputKeyword.TargetEndpoint})
+						tmpKeywordList = append(tmpKeywordList, &logKeywordObj{Keyword: inputKeyword.Keyword, RegExp: tmpRegExp, TargetEndpoint: inputKeyword.TargetEndpoint})
 					} else {
 						tmpKeywordList = append(tmpKeywordList, &logKeywordObj{Keyword: inputKeyword.Keyword, TargetEndpoint: inputKeyword.TargetEndpoint})
 					}
@@ -295,12 +285,12 @@ func logKeywordHttpAction(requestParamBuff []byte) (err error) {
 		var tmpKeywordList []*logKeywordObj
 		for _, inputKeyword := range inputParam.Keywords {
 			if inputKeyword.RegularEnable {
-				tmpRegExp, tmpRegErr := pcre.Compile(inputKeyword.Keyword, 0)
+				tmpRegExp, tmpRegErr := regexp2.Compile(inputKeyword.Keyword, 0)
 				if tmpRegErr != nil {
-					err = fmt.Errorf("path:%s pcre regexp compile %s fail:%s", inputParam.Path, inputKeyword.Keyword, tmpRegErr.String())
+					err = fmt.Errorf("path:%s regexp2 regexp compile %s fail:%s", inputParam.Path, inputKeyword.Keyword, tmpRegErr.Error())
 					continue
 				}
-				tmpKeywordList = append(tmpKeywordList, &logKeywordObj{Keyword: inputKeyword.Keyword, RegExp: &tmpRegExp, Count: inputKeyword.Count, TargetEndpoint: inputKeyword.TargetEndpoint})
+				tmpKeywordList = append(tmpKeywordList, &logKeywordObj{Keyword: inputKeyword.Keyword, RegExp: tmpRegExp, Count: inputKeyword.Count, TargetEndpoint: inputKeyword.TargetEndpoint})
 			} else {
 				tmpKeywordList = append(tmpKeywordList, &logKeywordObj{Keyword: inputKeyword.Keyword, Count: inputKeyword.Count, TargetEndpoint: inputKeyword.TargetEndpoint})
 			}
