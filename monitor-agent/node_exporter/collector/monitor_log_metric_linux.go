@@ -215,24 +215,14 @@ func regexp2FindStringMatch(re *regexp2.Regexp, lineText string) (matchString st
 func (c *logMetricMonitorNeObj) start() {
 	level.Info(monitorLogger).Log("startLogMetricMonitorNeObj", c.Path)
 	var err error
-	c.TailSession, err = tail.TailFile(c.Path, tail.Config{Follow: true, ReOpen: true})
+	c.TailSession, err = tail.TailFile(c.Path, tail.Config{Follow: true, ReOpen: true, Location: &tail.SeekInfo{Offset: 0, Whence: 2}})
 	if err != nil {
 		level.Error(monitorLogger).Log("msg", fmt.Sprintf("start log metric collector fail, path: %s, error: %v", c.Path, err))
 		return
 	}
 	c.DataChan = make(chan string, logMetricChanLength)
 	go c.startHandleTailData()
-	firstFlag := true
-	timeNow := time.Now()
 	for line := range c.TailSession.Lines {
-		if firstFlag {
-			// load log file wait 5 sec to ignore exist log context
-			if time.Now().Sub(timeNow).Seconds() >= 5 {
-				firstFlag = false
-			} else {
-				continue
-			}
-		}
 		if len(c.DataChan) == logMetricChanLength {
 			level.Info(monitorLogger).Log("Log metric queue is full,file:", c.Path)
 		}
