@@ -103,10 +103,14 @@ func IsIllegalIp(str string) bool {
 }
 
 func IsIllegalName(str string) bool {
-	if len(str) > 50 {
+	if str == "" {
 		return true
 	}
-	return !regName.MatchString(str)
+	return false
+	//if len(str) > 50 {
+	//	return true
+	//}
+	//return !regName.MatchString(str)
 }
 
 func ValidateActiveWindowString(str string) bool {
