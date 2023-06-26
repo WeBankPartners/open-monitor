@@ -2,7 +2,7 @@
   <div class="">
     <button class="btn-confirm-f btn-small" @click="addPanel">{{$t('resourceLevel.addPanel')}}</button>
     <i class="fa fa-refresh" aria-hidden="true" @click="getAllResource(false)" style="margin-right:16px"></i>
-    <Input v-model="searchParams.name" :placeholder="$t('resourceLevel.level_search_name')" style="width: 300px;margin-right:8px" />
+    <Input v-model="searchParams.name" @on-enter="getAllResource(true)" :placeholder="$t('resourceLevel.level_search_name')" style="width: 300px;margin-right:8px" />
     <span> OR</span>
     <Select
       v-model="searchParams.endpoint"
@@ -88,6 +88,7 @@ export default {
   methods: {
     clearObject () {
       this.getAllObject()
+      this.getAllResource(true)
     },
     getAllObject (query='.') {
       let params = {
