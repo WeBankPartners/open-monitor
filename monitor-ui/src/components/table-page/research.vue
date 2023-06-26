@@ -14,8 +14,7 @@
 
         </div>
       </div> -->
-      <!-- @keyup.enter="goToAction('search', pageConfig.researchConfig.filters)" -->
-      <form style="font-size:0;line-height:32px;">
+      <form style="font-size:0;line-height:32px;" @submit.prevent>
         <template v-for="(input_condition, index_input_condition) in pageConfig.researchConfig.input_conditions" >
           <div :key="index_input_condition" class="research-div" >
             <input v-if="input_condition.type === 'input'" v-model.trim="pageConfig.researchConfig.filters[input_condition.value]"
