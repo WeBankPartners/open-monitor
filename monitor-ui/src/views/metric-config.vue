@@ -406,6 +406,7 @@ export default {
     },
     clearServiceGroup () {
       this.showConfigTab = false
+      this.configMetric()
     },
     getRecursiveList () {
       const api = this.$root.apiCenter.getTargetByEndpoint + '/group'
