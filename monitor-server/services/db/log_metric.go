@@ -6,7 +6,7 @@ import (
 	"github.com/WeBankPartners/go-common-lib/guid"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
-	"regexp"
+	"github.com/dlclark/regexp2"
 	"strings"
 	"time"
 )
@@ -578,18 +578,33 @@ func GetServiceGroupByLogMetricMonitor(logMetricMonitorGuid string) string {
 }
 
 func CheckRegExpMatch(param models.CheckRegExpParam) (message string) {
-	re, tmpErr := regexp.Compile(param.RegString)
+	re, tmpErr := regexp2.Compile(param.RegString, 0)
 	if tmpErr != nil {
 		return fmt.Sprintf("reg compile fail,%s ", tmpErr.Error())
 	}
-	fetchList := re.FindStringSubmatch(param.TestContext)
-	if len(fetchList) <= 1 {
+	matchString := regexp2FindStringMatch(re, param.TestContext)
+	if matchString == "" {
 		return fmt.Sprintf("can not match any data")
 	}
-	if len(fetchList) > 2 {
-		return fmt.Sprintf("match more then one data:%s ", fetchList[2:])
+	return fmt.Sprintf("success match:%s", matchString)
+}
+func regexp2FindStringMatch(re *regexp2.Regexp, lineText string) (matchString string) {
+	if re == nil {
+		return
 	}
-	return fmt.Sprintf("success match:%s", fetchList[1])
+	mat, err := re.FindStringMatch(lineText)
+	if err != nil || mat == nil {
+		return
+	}
+	for i, v := range mat.Groups() {
+		groupString := v.String()
+		if (i == 0 && groupString == lineText) || groupString == "" {
+			continue
+		}
+		matchString = groupString
+		break
+	}
+	return
 }
 
 func ImportLogMetric(param *models.LogMetricQueryObj) (err error) {

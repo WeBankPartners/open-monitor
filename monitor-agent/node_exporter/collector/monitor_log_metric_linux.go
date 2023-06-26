@@ -3,7 +3,7 @@ package collector
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/glenn-brown/golang-pkg-pcre/src/pkg/pcre"
+	"github.com/dlclark/regexp2"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/hpcloud/tail"
@@ -95,7 +95,7 @@ type logMetricJsonNeObj struct {
 }
 
 type logMetricNeObj struct {
-	RegExp       *regexp.Regexp             `json:"-"`
+	RegExp       *regexp2.Regexp            `json:"-"`
 	DataChannel  chan string                `json:"-"`
 	Key          string                     `json:"key"`
 	Metric       string                     `json:"metric"`
@@ -114,12 +114,12 @@ type LogMetricConfigTag struct {
 }
 
 type logMetricStringMapNeObj struct {
-	Regexp            pcre.Regexp `json:"-"`
-	RegEnable         bool        `json:"reg_enable"`
-	Regulation        string      `json:"regulation"`
-	StringValue       string      `json:"string_value"`
-	IntValue          float64     `json:"int_value"`
-	TargetStringValue string      `json:"target_string_value"`
+	Regexp            *regexp2.Regexp `json:"-"`
+	RegEnable         bool            `json:"reg_enable"`
+	Regulation        string          `json:"regulation"`
+	StringValue       string          `json:"string_value"`
+	IntValue          float64         `json:"int_value"`
+	TargetStringValue string          `json:"target_string_value"`
 }
 
 type logMetricDisplayObj struct {
@@ -174,41 +174,55 @@ func (c *logMetricMonitorNeObj) startHandleTailData() {
 			}
 		}
 		for _, custom := range c.MetricConfig {
-			if custom.RegExp == nil {
-				continue
+			if matchString := regexp2FindStringMatch(custom.RegExp, lineText); matchString != "" {
+				custom.DataChannel <- matchString
 			}
-			fetchList := custom.RegExp.FindStringSubmatch(lineText)
-			if len(fetchList) > 1 {
-				if fetchList[1] != "" {
-					custom.DataChannel <- fetchList[1]
-				}
-			}
+			//if custom.RegExp == nil {
+			//	continue
+			//}
+			//fetchList := custom.RegExp.FindStringMatch(lineText)
+			//if len(fetchList) > 1 {
+			//	if fetchList[1] != "" {
+			//		custom.DataChannel <- fetchList[1]
+			//	}
+			//}
 		}
 		c.Lock.RUnlock()
 	}
 }
 
+func regexp2FindStringMatch(re *regexp2.Regexp, lineText string) (matchString string) {
+	if re == nil {
+		return
+	}
+	mat, err := re.FindStringMatch(lineText)
+	if err != nil || mat == nil {
+		//level.Info(monitorLogger).Log("regexp2 find string match fail ", err)
+		return
+	}
+	for i, v := range mat.Groups() {
+		groupString := v.String()
+		if (i == 0 && groupString == lineText) || groupString == "" {
+			continue
+		}
+		matchString = groupString
+		break
+	}
+	//level.Info(monitorLogger).Log("regexp2 find string match success ", matchString)
+	return
+}
+
 func (c *logMetricMonitorNeObj) start() {
 	level.Info(monitorLogger).Log("startLogMetricMonitorNeObj", c.Path)
 	var err error
-	c.TailSession, err = tail.TailFile(c.Path, tail.Config{Follow: true, ReOpen: true})
+	c.TailSession, err = tail.TailFile(c.Path, tail.Config{Follow: true, ReOpen: true, Location: &tail.SeekInfo{Offset: 0, Whence: 2}})
 	if err != nil {
 		level.Error(monitorLogger).Log("msg", fmt.Sprintf("start log metric collector fail, path: %s, error: %v", c.Path, err))
 		return
 	}
 	c.DataChan = make(chan string, logMetricChanLength)
 	go c.startHandleTailData()
-	firstFlag := true
-	timeNow := time.Now()
 	for line := range c.TailSession.Lines {
-		if firstFlag {
-			// load log file wait 5 sec to ignore exist log context
-			if time.Now().Sub(timeNow).Seconds() >= 5 {
-				firstFlag = false
-			} else {
-				continue
-			}
-		}
 		if len(c.DataChan) == logMetricChanLength {
 			level.Info(monitorLogger).Log("Log metric queue is full,file:", c.Path)
 		}
@@ -288,10 +302,9 @@ func (c *logMetricMonitorNeObj) update(input *logMetricMonitorNeObj) {
 func initLogMetricNeObj(metricObj *logMetricNeObj) {
 	var err error
 	if metricObj.ValueRegular != "" {
-		metricObj.RegExp, err = regexp.Compile(metricObj.ValueRegular)
+		metricObj.RegExp, err = regexp2.Compile(metricObj.ValueRegular, 0)
 		if err != nil {
 			level.Error(monitorLogger).Log("newLogMetricMonitorNeObj", fmt.Sprintf("regexpError:%s ", err.Error()))
-			metricObj.RegExp, _ = regexp.Compile(".*")
 		}
 		if metricObj.DataChannel == nil {
 			metricObj.DataChannel = make(chan string, logMetricChanLength)
@@ -299,12 +312,12 @@ func initLogMetricNeObj(metricObj *logMetricNeObj) {
 	}
 	for _, stringMapObj := range metricObj.StringMap {
 		if stringMapObj.RegEnable {
-			tmpExp, tmpErr := pcre.Compile(stringMapObj.StringValue, 0)
+			tmpExp, tmpErr := regexp2.Compile(stringMapObj.StringValue, 0)
 			if tmpErr == nil {
 				stringMapObj.Regexp = tmpExp
 			} else {
 				stringMapObj.RegEnable = false
-				level.Error(monitorLogger).Log("string map regexp format fail", tmpErr.Message)
+				level.Error(monitorLogger).Log("string map regexp format fail", tmpErr.Error())
 			}
 		}
 	}
@@ -408,7 +421,7 @@ func LogMetricSaveConfig(requestParamBuff []byte) {
 func LogMetricLoadConfig() {
 	b, err := ioutil.ReadFile(log_metricMonitorFilePath)
 	if err != nil {
-		level.Error(monitorLogger).Log("logMetricLoadConfig", err.Error())
+		level.Warn(monitorLogger).Log("logMetricLoadConfig", err.Error())
 	} else {
 		err = LogMetricMonitorHandleAction(b)
 		if err != nil {
@@ -621,7 +634,7 @@ func transLogMetricTagString(config []*logMetricStringMapNeObj, input string) (m
 			}
 			continue
 		}
-		if len(v.Regexp.FindIndex([]byte(input), 0)) > 0 {
+		if ok, _ := v.Regexp.MatchString(input); ok {
 			matchFlag = true
 			output = v.TargetStringValue
 			break
@@ -644,7 +657,7 @@ func transLogMetricStringMapValue(config []*logMetricStringMapNeObj, input strin
 			}
 			continue
 		}
-		if len(v.Regexp.FindIndex([]byte(input), 0)) > 0 {
+		if ok, _ := v.Regexp.MatchString(input); ok {
 			matchFlag = true
 			output = v.IntValue
 			break
