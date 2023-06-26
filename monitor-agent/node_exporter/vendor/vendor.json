@@ -3,6 +3,18 @@
 	"ignore": "",
 	"package": [
 		{
+			"checksumSHA1": "Yk2Lpe9FhL+V+6CP9ivn9dsbTCE=",
+			"path": "github.com/dlclark/regexp2",
+			"revision": "03d34d8ad254ae4e2fb4f58e0723420efa1c7c07",
+			"revisionTime": "2023-05-15T01:07:18Z"
+		},
+		{
+			"checksumSHA1": "yo02K4G5iW76nBNWlKbYGD+/FAA=",
+			"path": "github.com/dlclark/regexp2/syntax",
+			"revision": "03d34d8ad254ae4e2fb4f58e0723420efa1c7c07",
+			"revisionTime": "2023-05-15T01:07:18Z"
+		},
+		{
 			"checksumSHA1": "8FDQ7WcMpu8u+/kcoeKYvnZB3SU=",
 			"path": "github.com/glenn-brown/golang-pkg-pcre/src/pkg/pcre",
 			"revision": ""
