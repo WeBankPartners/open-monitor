@@ -25,6 +25,7 @@ func AddDeploy(w http.ResponseWriter, r *http.Request) {
 			resp.Code = 500
 			resp.Message = fmt.Sprintf("error:%v", err)
 		} else {
+			log.Printf("add deploy obj : param -> %s \n", string(b))
 			var exporter, configFile, guid string
 			if _, b := tmpParamMap["guid"]; !b {
 				resp.Code = 400
@@ -93,6 +94,7 @@ func DelDeploy(w http.ResponseWriter, r *http.Request) {
 			resp.Code = 500
 			resp.Message = fmt.Sprintf("error:%v", err)
 		} else {
+			log.Printf("delete deploy obj : param -> %s \n", string(b))
 			if v, b := tmpParamMap["guid"]; b {
 				if tmpParamMap["agentManagerRemoteIp"] != "" {
 					err = redirect.Delete(tmpParamMap["agentManagerRemoteIp"], tmpParamMap)
