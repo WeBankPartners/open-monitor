@@ -676,3 +676,13 @@ create unique index `alarm_tags_unique_idx` on alarm (`endpoint_tags`);
 #@v2.0.0.46-begin@;
 alter table log_keyword_config add column content text default null;
 #@v2.0.0.46-end@;
+
+#@v2.0.1.11-begin@;
+alter table log_metric_config add column tag_config text default null;
+INSERT INTO metric (guid,metric,monitor_type,prom_expr,tag_owner,update_time,service_group,workspace) VALUES ('ping_loss__host','ping_loss','host','ping_loss_percent{guid="$guid",e_guid="$guid"}','',NULL,NULL,'any_object'),('ping_loss__ping','ping_loss','ping','ping_loss_percent{guid="$guid",e_guid="$guid"}','',NULL,NULL,'any_object');
+INSERT INTO alarm_strategy (guid,endpoint_group,metric,`condition`,`last`,priority,content,notify_enable,notify_delay_second,update_time,active_window) VALUES ('new_host_ping_loss','default_host_group','ping_loss__host','>70','60s','high','ping packet loss',1,0,'2023-04-23 10:11:34','00:00-23:59'),('new_ping_ping_loss','default_ping_group','ping_loss__ping','>70','60s','high','ping packet loss',1,0,'2023-04-23 10:11:34','00:00-23:59');
+#@v2.0.1.11-end@;
+
+#@v2.0.2.35-begin@;
+alter table agent_manager add column agent_remote_port varchar(255) default null;
+#@v2.0.2.35-end@;

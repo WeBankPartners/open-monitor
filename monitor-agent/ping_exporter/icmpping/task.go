@@ -1,11 +1,11 @@
 package icmpping
 
 import (
-	"log"
-	"time"
-	"sync"
 	"github.com/WeBankPartners/open-monitor/monitor-agent/ping_exporter/funcs"
+	"log"
 	"net"
+	"sync"
+	"time"
 )
 
 func StartTask() {
@@ -16,11 +16,11 @@ func StartTask() {
 		interval = 30
 	}
 	if timeout > interval/12 {
-		log.Printf("timeout %d > interval/12,max 3 try and 4 packages,reset to interval/12=%d \n",timeout,interval/12)
-		timeout = interval/12
+		log.Printf("timeout %d > interval/12,max 3 try and 4 packages,reset to interval/12=%d \n", timeout, interval/12)
+		timeout = interval / 12
 	}
-	InitIcmpBytes()  // 初始化ICMP数据包的bytes
-	localIp = getIntranetIp()  // 初始化本机IP列表
+	InitIcmpBytes()           // 初始化ICMP数据包的bytes
+	localIp = getIntranetIp() // 初始化本机IP列表
 
 	if funcs.Config().OpenFalcon.Enabled {
 		funcs.InitTransfer()
@@ -28,16 +28,55 @@ func StartTask() {
 
 	if TestModel {
 		doTask()
+		doPacketLossCheck()
 		return
 	}
-	t := time.NewTicker(time.Second*time.Duration(interval)).C
+	go startPacketLossTask()
+	t := time.NewTicker(time.Second * time.Duration(interval)).C
 	for {
 		go doTask()
-		<- t
+		<-t
 	}
 }
 
-func doTask()  {
+func startPacketLossTask() {
+	t := time.NewTicker(time.Minute * 30).C
+	for {
+		doPacketLossCheck()
+		<-t
+	}
+}
+
+func doPacketLossCheck() {
+	log.Println("start do packet loss check")
+	startTime := time.Now()
+	wg := sync.WaitGroup{}
+	ipList := funcs.GetIpList()
+	clearLossResultMap(ipList)
+	for _, ip := range ipList {
+		funcs.DebugLog("start loss packent ping check %s ", ip)
+		if containString(ip, localIp) {
+			funcs.DebugLog("%s is local ip", ip)
+			writeLossResultMap(ip, 0)
+			continue
+		}
+		wg.Add(1)
+		go func(ip string) {
+			funcs.DebugLog("start loss packent ping %s ", ip)
+			lossPercent := StartPingLossPacket(ip)
+			writeLossResultMap(ip, lossPercent)
+			funcs.DebugLog("end loss packent ping %s result %.0f ", ip, lossPercent)
+			wg.Done()
+		}(ip)
+	}
+	wg.Wait()
+	useTime := float64(time.Now().Sub(startTime).Nanoseconds()) / 1e6
+	log.Printf("end packet loss check, check ip num %d, use time %.3f ms \n", len(ipList), useTime)
+	result := readLossResultMap()
+	funcs.UpdateLossPingExportMetric(result)
+}
+
+func doTask() {
 	// 清空上次数据，把resultMap数据保存到lastResultMap
 	//ClearRetryIp()
 	ClearSuccessIp()
@@ -56,34 +95,34 @@ func doTask()  {
 	ipList := funcs.GetIpList()
 	clearResultMap(ipList)
 	// first check
-	for _,ip := range ipList {
+	for _, ip := range ipList {
 		if containString(ip, localIp) {
 			funcs.DebugLog("%s is local ip", ip)
 			writeResultMap(ip, 0, 0)
 			successCounter += 1
 			continue
 		}
-		if lv,ok:=lastResultMap[ip];ok {
+		if lv, ok := lastResultMap[ip]; ok {
 			lastValue = lv.UpDown
 			lastExist = true
-		}else{
+		} else {
 			lastValue = 0
 			lastExist = false
 		}
 		wg.Add(1)
-		go func(ip string,timeout int,lv int,le bool) {
-			d,ut,isConfused := StartPing(ip, timeout)
+		go func(ip string, timeout int, lv int, le bool) {
+			d, ut, isConfused := StartPing(ip, timeout)
 			if isConfused {
 				if le == true && lv == 1 {
 					d = 1
-				}else{
+				} else {
 					addSuccessIp(ip)
 				}
 			}
-			writeResultMap(ip ,d, ut)
+			writeResultMap(ip, d, ut)
 			funcs.DebugLog("ping %s result %d ", ip, d)
 			wg.Done()
-		}(ip,timeout,lastValue,lastExist)
+		}(ip, timeout, lastValue, lastExist)
 	}
 	wg.Wait()
 
@@ -154,7 +193,7 @@ func doTask()  {
 	dealResult(successCounter)
 }
 
-func dealResult(successCounter int)  {
+func dealResult(successCounter int) {
 	result := readResultMap()
 	if funcs.Config().Prometheus.Enabled {
 		go funcs.UpdatePingExportMetric(result, successCounter)
@@ -162,11 +201,11 @@ func dealResult(successCounter int)  {
 	if funcs.Config().OpenFalcon.Enabled {
 		go funcs.HandleTransferResult(result, successCounter)
 	}
-	if TestModel{
+	if TestModel {
 		successOutput := "alive ip : \n"
-		for k,v := range result {
+		for k, v := range result {
 			if v.UpDown == 0 {
-				successOutput = successOutput  + k + ","
+				successOutput = successOutput + k + ","
 			}
 		}
 		log.Println(successOutput)
