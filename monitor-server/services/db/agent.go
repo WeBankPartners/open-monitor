@@ -621,7 +621,11 @@ func UpdateAgentManagerTable(endpoint m.EndpointTable, user, password, configFil
 	var actions []*Action
 	actions = append(actions, &Action{Sql: fmt.Sprintf("DELETE FROM agent_manager WHERE endpoint_guid='%s'", endpoint.Guid)})
 	if isAdd {
-		actions = append(actions, &Action{Sql: fmt.Sprintf("INSERT INTO agent_manager(endpoint_guid,name,user,password,instance_address,agent_address,config_file,bin_path) VALUE ('%s','%s','%s','%s','%s','%s','%s','%s')", endpoint.Guid, endpoint.Name, user, password, endpoint.Address, endpoint.AddressAgent, configFile, binPath)})
+		var agentRemotePort string
+		if splitIndex := strings.Index(endpoint.AddressAgent, ":"); splitIndex >= 0 {
+			agentRemotePort = endpoint.AddressAgent[splitIndex+1:]
+		}
+		actions = append(actions, &Action{Sql: fmt.Sprintf("INSERT INTO agent_manager(endpoint_guid,name,user,password,instance_address,agent_address,config_file,bin_path,agent_remote_port) VALUE ('%s','%s','%s','%s','%s','%s','%s','%s','%s')", endpoint.Guid, endpoint.Name, user, password, endpoint.Address, endpoint.AddressAgent, configFile, binPath, agentRemotePort)})
 	}
 	return Transaction(actions)
 }
