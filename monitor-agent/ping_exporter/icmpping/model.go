@@ -1,14 +1,14 @@
 package icmpping
 
 import (
-	"sync"
 	"github.com/WeBankPartners/open-monitor/monitor-agent/ping_exporter/funcs"
+	"sync"
 )
 
 var (
 	TestModel bool
-	localIp    []string   // 存储本机IP
-	timeout int
+	localIp   []string // 存储本机IP
+	timeout   int
 	//lastResultMap = make(map[string]funcs.PingResultObj)  // 保存上次结果，和本次进行对比
 
 	//resultMap = make(map[string]funcs.PingResultObj)   // 保存本次结果
@@ -19,9 +19,11 @@ var (
 	//retryMap = make(map[string]int)   // 保存需要重试的IP
 	//retryMapLock = new(sync.RWMutex)
 
-	successIpList []string
+	successIpList   []string
 	successListLock = new(sync.RWMutex)
 
+	lossCalcMapLock = new(sync.RWMutex)
+	lossCalcList    []*funcs.PingResultObj
 	//retryIpList  []string
 	//retryListLock = new(sync.RWMutex)
 )
@@ -80,7 +82,7 @@ func writeResultMap(ip string, re int, useTime float64) {
 	//defer resultMapLock.Unlock()
 	//resultMap[ip] = funcs.PingResultObj{UpDown:re, UseTime:useTime}
 	resultMapLock.Lock()
-	for _,v := range resultListNew {
+	for _, v := range resultListNew {
 		if v.Ip == ip {
 			v.UpDown = re
 			v.UseTime = useTime
@@ -96,21 +98,51 @@ func readResultMap() map[string]funcs.PingResultObj {
 	//return resultMap
 	tmpResultMap := make(map[string]funcs.PingResultObj)
 	resultMapLock.RLock()
-	for _,v := range resultListNew {
-		tmpResultMap[v.Ip] = funcs.PingResultObj{UpDown:v.UpDown, UseTime:v.UseTime}
+	for _, v := range resultListNew {
+		tmpResultMap[v.Ip] = funcs.PingResultObj{UpDown: v.UpDown, UseTime: v.UseTime}
 	}
 	resultMapLock.RUnlock()
 	return tmpResultMap
 }
 
-func clearResultMap(param []string)  {
+func clearResultMap(param []string) {
 	resultMapLock.Lock()
 	//resultMap = make(map[string]funcs.PingResultObj)
 	resultListNew = []*funcs.PingResultObj{}
-	for _,v := range param {
+	for _, v := range param {
 		resultListNew = append(resultListNew, &funcs.PingResultObj{Ip: v, UpDown: 1, UseTime: 0})
 	}
 	resultMapLock.Unlock()
+}
+
+func writeLossResultMap(ip string, lossPercent float64) {
+	lossCalcMapLock.Lock()
+	for _, v := range lossCalcList {
+		if v.Ip == ip {
+			v.LossPercent = lossPercent
+			break
+		}
+	}
+	lossCalcMapLock.Unlock()
+}
+
+func readLossResultMap() map[string]funcs.PingResultObj {
+	tmpResultMap := make(map[string]funcs.PingResultObj)
+	lossCalcMapLock.RLock()
+	for _, v := range lossCalcList {
+		tmpResultMap[v.Ip] = funcs.PingResultObj{LossPercent: v.LossPercent}
+	}
+	lossCalcMapLock.RUnlock()
+	return tmpResultMap
+}
+
+func clearLossResultMap(param []string) {
+	lossCalcMapLock.Lock()
+	lossCalcList = []*funcs.PingResultObj{}
+	for _, v := range param {
+		lossCalcList = append(lossCalcList, &funcs.PingResultObj{Ip: v, LossPercent: 0})
+	}
+	lossCalcMapLock.Unlock()
 }
 
 //func GetRetryMap(ip string, n int) int {
@@ -134,7 +166,7 @@ func clearResultMap(param []string)  {
 //}
 
 func containString(ip string, ips []string) bool {
-	for _,v := range ips {
+	for _, v := range ips {
 		if ip == v {
 			return true
 		}
