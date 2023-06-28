@@ -183,7 +183,8 @@ func LoadDeployProcess() {
 			log.Printf("gob decode process.data error : %v \n", err)
 			return
 		}
-		agentMangerLocalMode := strings.ToLower(os.Getenv("MONITOR_AGENT_MANAGER_REMOTE_MODE"))
+		//agentMangerLocalMode := strings.ToLower(os.Getenv("MONITOR_AGENT_MANAGER_REMOTE_MODE"))
+		agentMangerLocalMode := Config().RemoteMode
 		if agentMangerLocalMode == "y" || agentMangerLocalMode == "yes" || agentMangerLocalMode == "true" {
 			RemoteMode = true
 			return
