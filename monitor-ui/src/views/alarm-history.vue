@@ -1,190 +1,361 @@
 <template>
   <div>
-    <Title :title="$t('alarmHistory')"></Title>
-    <div>
-      <ul>
-        <li class="filter-li">
-          <DatePicker 
-            type="date" 
-            :value="startDate" 
-            @on-change="changeStartDate"
-            format="yyyy-MM-dd HH:mm:ss" 
-            placement="bottom-start" 
-            :placeholder="$t('startDatePlaceholder')" 
-            style="width: 220px">
-          </DatePicker>
-        </li>
-        <li class="filter-li">
-          <DatePicker 
-            type="date" 
-            :value="endDate" 
-            @on-change="changeEndDate"
-            format="yyyy-MM-dd HH:mm:ss" 
-            placement="bottom-start" 
-            :placeholder="$t('endDatePlaceholder')" 
-            style="width: 220px">
-          </DatePicker>
-        </li>
-        <li class="filter-li">
-          <Select filterable clearable v-model="filter" style="width:80px">
-            <Option v-for="item in filterList" :value="item.value" :key="item.value">{{ item.label }}</Option>
-          </Select>
-        </li>
-        <li class="filter-li">
-          <button class="btn btn-sm btn-confirm-f" @click="getAlarm">
-            <i class="fa fa-search"></i>
-            {{$t('button.search')}}
-          </button>
-        </li>
-        <li class="filter-li">
-          <button class="btn btn-sm btn-cancel-f" @click="realTimeAlarm">
-            {{$t('realTimeAlarm')}}
-          </button>
-        </li>
-      </ul>
+    <div class="title-wrapper">
+      <Title :title="$t('alarmHistory')"> </Title>
+      <div class="title-form">
+        <ul>
+          <li class="filter-li">
+            <DatePicker
+              type="date"
+              :value="startDate"
+              @on-change="changeStartDate"
+              format="yyyy-MM-dd HH:mm:ss"
+              placement="bottom-start"
+              :placeholder="$t('startDatePlaceholder')"
+              style="width: 220px"
+            >
+            </DatePicker>
+          </li>
+          <li class="filter-li">
+            <DatePicker
+              type="date"
+              :value="endDate"
+              @on-change="changeEndDate"
+              format="yyyy-MM-dd HH:mm:ss"
+              placement="bottom-start"
+              :placeholder="$t('endDatePlaceholder')"
+              style="width: 220px"
+            >
+            </DatePicker>
+          </li>
+          <li class="filter-li">
+            <button class="btn btn-sm btn-confirm-f" @click="getAlarm">
+              <i class="fa fa-search"></i>
+              {{ $t("button.search") }}
+            </button>
+          </li>
+          <li class="filter-li" v-if="filtersForShow.length">
+            <button @click="clearAll" class="btn btn-sm btn-cancel-f">{{$t('m_reset_condition')}}</button>
+          </li>
+        </ul>
+        <button class="btn btn-sm btn-confirm-f" @click="realTimeAlarm">
+          {{ $t("realTimeAlarm") }}
+        </button>
+      </div>
     </div>
-    <div class="flex-container">
-      <template v-if="!resultData.length">
-        <Tag color="primary">{{$t('table.noDataTip')}}！</Tag>
-      </template>
+    <div class="data-stats-container" v-if="showGraph">
+      <top-stats :lstats="leftStats" :rstats="rightStats" :rtitle="$t('alarmHistory')" :noData="noData" />
+    </div>
+    <div class="data-stats-container" v-if="showGraph">
       <transition name="slide-fade">
-        <div class="flex-item" v-show="showGraph && resultData.length">
-          <div>
-            <Tag color="success"><span style="font-size:14px">{{$t('m_low')}}:{{this.low}}</span></Tag>
-            <Tag color="warning"><span style="font-size:14px">{{$t('m_medium')}}:{{this.mid}}</span></Tag>
-            <Tag color="error"><span style="font-size:14px">{{$t('m_high')}}:{{this.high}}</span></Tag>
-            <button v-if="filtersForShow.length" @click="clearAll" style="float:right;margin-right:50px" class="btn btn-small btn-cancel-f">{{$t('m_reset_condition')}}</button>
-            <div v-show="alramEmpty" style="display:none" id="elId" class="echart"></div>
-            <div v-if="!alramEmpty"  class="alarm-empty">
-              <span style="font-size:14px"></span>
+        <div class="content-stats-container">
+          <div class="left" :class="{ 'cover': total === 0 || noData }">
+            <alarm-assets-basic :total="total" :noData="total === 0 ? true : noData" :isRunning="false" />
+
+            <template v-if="!noData && !loading && total > 0">
+              <circle-label v-for="cr in circles" :key="cr.type" :data="cr" />
+              <circle-rotate v-for="cr in circles" :key="cr.label" :data="cr" @onFilter="addParams" />
+            </template>
+
+            <metrics-bar :metrics="outerMetrics" :total="outerTotal" v-if="total > 0 && !noData" @onFilter="addParams" />
+          </div>
+          <div class="right" v-if="total > 0 && !noData">
+            <section style="margin-left:8px;margin-bottom:10px" class="c-dark-exclude-color">
+              <template v-for="(filterItem, filterIndex) in filtersForShow">
+                <Tag color="success" type="border" closable @on-close="exclude(filterItem.key)" :key="filterIndex">{{filterItem.key}}：{{filterItem.value}}</Tag>
+              </template>
+              <button v-if="filtersForShow.length" @click="clearAll" class="btn btn-small btn-cancel-f">{{$t('clearAll')}}</button>
+            </section>
+            <section class="alarm-card-container">
+              <alarm-card v-for="(item, alarmIndex) in resultData" :key="alarmIndex" :data="item"></alarm-card>
+            </section>
+            <div style="margin: 4px 0; text-align:right">
+              <Page :total="paginationInfo.total" @on-change="pageIndexChange" @on-page-size-change="pageSizeChange" show-elevator show-sizer show-total />
             </div>
           </div>
         </div>
       </transition>
-      <div class="flex-item" style="width: 100%">
-        <section style="margin-left:8px" class="c-dark-exclude-color">
-          <template v-for="(filterItem, filterIndex) in filtersForShow">
-            <Tag color="success" type="border" closable @on-close="exclude(filterItem.key)" :key="filterIndex">{{filterItem.key}}：{{filterItem.value}}</Tag>
-          </template>
-          <button v-if="filtersForShow.length" @click="clearAll" class="btn btn-small btn-cancel-f">{{$t('clearAll')}}</button>
-        </section>
-        <div class="alarm-list">
-          <template v-for="(alarmItem, alarmIndex) in resultData">
-            <section :key="alarmIndex" class="alarm-item c-dark-exclude-color" :class="'alarm-item-border-'+ alarmItem.s_priority">
-              <ul>
-                <li>
-                  <label class="col-md-2">{{$t('field.endpoint')}}:</label>
-                  <Tag type="border" closable @on-close="addParams('endpoint',alarmItem.endpoint)" color="primary">{{alarmItem.endpoint}}</Tag>
-                </li>
-                <li v-if="!alarmItem.is_custom">
-                  <label class="col-md-2">{{$t('field.metric')}}:</label>
-                  <Tag type="border" closable @on-close="addParams('metric',alarmItem.s_metric)" color="primary">{{alarmItem.s_metric}}</Tag>
-                </li>
-                <li>
-                  <label class="col-md-2">{{$t('tableKey.s_priority')}}:</label>
-                  <Tag type="border" closable @on-close="addParams('priority',alarmItem.s_priority)" color="primary">{{alarmItem.s_priority}}</Tag>
-                </li>
-                <li v-if="!alarmItem.is_custom && alarmItem.tags">
-                  <label class="col-md-2">{{$t('tableKey.tags')}}:</label>
-                  <Tag type="border" v-for="(t,tIndex) in alarmItem.tags.split('^')" :key="tIndex" color="cyan">{{t}}</Tag>
-                </li>
-                <li>
-                  <label class="col-md-2">{{$t('tableKey.start')}}:</label><span>{{alarmItem.start_string}}</span>
-                </li>
-                <li>
-                  <label class="col-md-2">{{$t('details')}}:</label>
-                  <span>
-                    <Tag color="default">{{$t('tableKey.start_value')}}:{{alarmItem.start_value}}</Tag>
-                    <Tag color="default" v-if="alarmItem.s_cond">{{$t('tableKey.threshold')}}:{{alarmItem.s_cond}}</Tag>
-                    <Tag color="default" v-if="alarmItem.s_last">{{$t('tableKey.s_last')}}:{{alarmItem.s_last}}</Tag>
-                    <Tag color="default" v-if="alarmItem.path">{{$t('tableKey.path')}}:{{alarmItem.path}}</Tag>
-                    <Tag color="default" v-if="alarmItem.keyword">{{$t('tableKey.keyword')}}:{{alarmItem.keyword}}</Tag>
-                  </span>
-                </li>
-                <li>
-                  <label class="col-md-2" style="vertical-align: top;">{{$t('alarmContent')}}:</label>
-                  <div class="col-md-9" style="display: inline-block;padding:0" v-html="alarmItem.content"></div>
-                </li>
-              </ul>
-            </section>
-          </template>
-        </div>
-      </div>
     </div>
   </div>
 </template>
 
 <script>
-import echarts from 'echarts'
+import TopStats from "@/components/top-stats.vue";
+import MetricsBar from "@/components/metrics-bar.vue";
+import CircleRotate from "@/components/circle-rotate.vue";
+import CircleLabel from "@/components/circle-label.vue";
+import AlarmAssetsBasic from "@/components/alarm-assets-basic.vue";
+import AlarmCard from "@/components/alarm-card.vue"
+
 export default {
-  name: '',
+  name: "",
+  components: {
+    TopStats,
+    MetricsBar,
+    CircleRotate,
+    CircleLabel,
+    AlarmAssetsBasic,
+    AlarmCard
+  },
   data() {
     return {
-      startDate: '',
-      endDate: '',
-      filter:'start',
-      filterList: [
-        {label: 'all', value: 'all'},
-        {label: 'start', value: 'start'}
-      ],
-
+      startDate: new Date(new Date().toLocaleDateString()),
+      endDate: new Date(),
+      filter: "all",
+      loading: true,
+      noData: false,
       showGraph: true,
       alramEmpty: true,
-      myChart: null,
       interval: null,
       timeForDataAchieve: null,
       filters: {},
       filtersForShow: [],
       actveAlarmIndex: null,
       resultData: [],
-      selectedData: '', // 存放选中数据
+      selectedData: "", // 存放选中数据
 
       low: 0,
       mid: 0,
-      high: 0
-    }
+      high: 0,
+
+      tlow: 0,
+      tmid: 0,
+      thigh: 0,
+
+      full_len: 280,
+
+      outerMetrics: [],
+      outerTotal: 0,
+      
+      paginationInfo: {
+        total: 0,
+        startIndex: 1,
+        pageSize: 10
+      },
+    };
   },
-  mounted(){
-    this.myChart = echarts.init(document.getElementById('elId'))
+  computed: {
+    total() {
+      return this.low + this.mid + this.high;
+    },
+    ttotal() {
+      return this.tlow + this.tmid + this.thigh;
+    },
+    leftStats() {
+      return [
+        {
+          key: 'l_total',
+          type: 'total',
+          title: this.$t('m_total'),
+          total: this.ttotal,
+          value: this.ttotal,
+          icon: require("../assets/img/icon_alarm_ttl.png")
+        },
+        {
+          key: 'l_low',
+          type: 'low',
+          title: this.$t('m_low'),
+          total: this.ttotal,
+          value: this.tlow,
+          icon: require("../assets/img/icon_alarm_L.png")
+        },
+        {
+          key: 'l_medium',
+          type: 'medium',
+          title: this.$t('m_medium'),
+          total: this.ttotal,
+          value: this.tmid,
+          icon: require("../assets/img/icon_alarm_M.png")
+        },
+        {
+          key: 'l_high',
+          type: 'high',
+          title: this.$t('m_high'),
+          total: this.ttotal,
+          value: this.thigh,
+          icon: require("../assets/img/icon_alarm_H.png")
+        }
+      ]
+    },
+    rightStats() {
+      return [
+        {
+          key: 'r_total',
+          type: 'total',
+          title: this.$t('m_total'),
+          total: this.total,
+          value: this.total
+        },
+        {
+          key: 'r_low',
+          type: 'low',
+          title: this.$t('m_low'),
+          total: this.total,
+          value: this.low
+        },
+        {
+          key: 'r_medium',
+          type: 'medium',
+          title: this.$t('m_medium'),
+          total: this.total,
+          value: this.mid
+        },
+        {
+          key: 'r_high',
+          type: 'high',
+          title: this.$t('m_high'),
+          total: this.total,
+          value: this.high
+        }
+      ]
+    },
+    circles() {
+      return [
+        {
+          type: "low",
+          key: "low",
+          label: this.$t("m_low"),
+          icon: require("../assets/img/peichart_L.png"),
+          value: this.low,
+          total: this.total,
+          deg: "-60deg",
+          tx: 0,
+          ty: -0.5,
+        },
+        {
+          type: "mid",
+          key: "medium",
+          label: this.$t("m_medium"),
+          icon: require("../assets/img/peichart_M.png"),
+          value: this.mid,
+          total: this.total,
+          deg: "60deg",
+          tx: 0,
+          ty: -0.5,
+        },
+        {
+          type: "high",
+          key: "high",
+          label: this.$t("m_high"),
+          icon: require("../assets/img/peichart_H.png"),
+          value: this.high,
+          total: this.total,
+          deg: "0",
+          tx: 0,
+          ty: 0.5,
+        },
+      ];
+    },
+  },
+  mounted() {
+    this.getAlarm();
+    this.getRealTimeAlarm();
   },
   methods: {
-    changeStartDate (data) {
-      this.startDate = data
+    changeStartDate(data) {
+      this.startDate = data;
     },
-    changeEndDate (data) {
-      this.endDate = data
+    changeEndDate(data) {
+      if (data && data.indexOf("00:00:00") !== -1) {
+        this.endDate = data.replace("00:00:00", "23:59:59");
+      }
     },
-    getAlarm() {
-      if (!this.startDate || !this.endDate || Date.parse(new Date(this.startDate)) > Date.parse(new Date(this.endDate))) {
-        this.$Message.error(this.$t('timeIntervalWarn'))
-        return
+    getRealTimeAlarm() {
+      const params = {
+        page: {
+          startIndex: 1,
+          pageSize: 10
+        }
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance(
+        "POST",
+        "/monitor/api/v1/alarm/problem/page",
+        params,
+        (responseData) => {
+          this.noData = false;
+          this.tlow = responseData.low;
+          this.tmid = responseData.mid;
+          this.thigh = responseData.high;
+        },
+        () => {
+          this.noData = true;
+        }
+      );
+    },
+    pageIndexChange(pageIndex) {
+      this.paginationInfo.startIndex = pageIndex
+      this.getAlarm('keep')
+    },
+    pageSizeChange(pageSize) {
+      this.paginationInfo.startIndex = 1
+      this.paginationInfo.pageSize = pageSize
+      this.getAlarm('keep')
+    },
+    getAlarm(ifPageKeep) {
+      if (
+        !this.startDate ||
+        !this.endDate ||
+        Date.parse(new Date(this.startDate)) >
+          Date.parse(new Date(this.endDate))
+      ) {
+        this.$Message.error(this.$t("timeIntervalWarn"));
+        return;
       }
       if (this.startDate === this.endDate) {
-        this.endDate = this.endDate.replace('00:00:00', '23:59:59')
+        this.endDate = this.endDate.replace("00:00:00", "23:59:59");
       }
-      const start = Date.parse(this.startDate)/1000
-      const end = Date.parse(this.endDate)/1000
+      if (ifPageKeep != 'keep') {
+        this.paginationInfo = {
+          total: 0,
+          startIndex: 1,
+          pageSize: 10
+        }
+      }
+      const start = Date.parse(this.startDate) / 1000;
+      const end = Date.parse(this.endDate) / 1000;
       let params = {
         start,
         end,
-        filter: this.filter
+        filter: this.filter,
+        page: {
+          startIndex: this.paginationInfo.startIndex,
+          pageSize: this.paginationInfo.pageSize
+        }
+      };
+      let keys = Object.keys(this.filters);
+      this.filtersForShow = [];
+      for (let i = 0; i < keys.length; i++) {
+        params[keys[i]] = this.filters[keys[i]];
+        this.filtersForShow.push({
+          key: keys[i],
+          value: this.filters[keys[i]],
+        });
       }
-      let keys = Object.keys(this.filters)
-      this.filtersForShow = []
-      for (let i = 0; i< keys.length ;i++) {
-        params[keys[i]] = this.filters[keys[i]]
-        this.filtersForShow.push({key:keys[i], value:this.filters[keys[i]]})
-      }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/alarm/problem/history', params, (responseData) => {
-        this.resultData = responseData.data
-        this.low = responseData.low
-        this.mid = responseData.mid
-        this.high = responseData.high
-        this.alramEmpty = !!this.low || !!this.mid ||!!this.high
-        this.showSunburst(responseData)
-      })
+      this.loading = true
+      this.$root.$httpRequestEntrance.httpRequestEntrance(
+        "POST",
+        "/monitor/api/v1/alarm/problem/history",
+        params,
+        (responseData) => {
+          this.loading = false;
+          this.noData = false;
+          this.resultData = responseData.data;
+          this.low = responseData.low;
+          this.mid = responseData.mid;
+          this.high = responseData.high;
+          this.paginationInfo.total = responseData.page.totalRows
+          this.paginationInfo.startIndex = responseData.page.startIndex
+          this.paginationInfo.pageSize = responseData.page.pageSize
+          this.alramEmpty = !!this.low || !!this.mid || !!this.high;
+          this.showSunburst(responseData);
+        },
+        () => {
+          this.loading = false;
+          this.noData = true;
+        }
+      );
     },
-    compare (prop) {
+    compare(prop) {
       return function (obj1, obj2) {
         var val1 = obj1[prop];
         var val2 = obj2[prop];
@@ -198,177 +369,214 @@ export default {
           return 1;
         } else {
           return 0;
-        }  
-      } 
+        }
+      };
     },
-    showSunburst (originData) {
-      this.myChart.off()
-      let legendData = []
-      let pieInner = []
+    showSunburst(originData) {
+      let legendData = [];
+      let pieInner = [];
       if (originData.high) {
         let high = {
-          name: 'high',
+          name: "high",
           value: originData.high,
-          filterType: 'priority',
+          filterType: "priority",
           itemStyle: {
-            color: '#ed4014'
-          }
-        }
-        legendData.push('high')
-        pieInner.push(high)
+            color: "#ed4014",
+          },
+        };
+        legendData.push("high");
+        pieInner.push(high);
       }
       if (originData.low) {
         let low = {
-          name: 'low',
+          name: "low",
           value: originData.low,
-          filterType: 'priority',
+          filterType: "priority",
           itemStyle: {
-            color: '#19be6b'
-          }
-        }
-        legendData.push('low')
-        pieInner.push(low)
+            color: "#19be6b",
+          },
+        };
+        legendData.push("low");
+        pieInner.push(low);
       }
       if (originData.mid) {
         let mid = {
-          name: 'medium',
+          name: "medium",
           value: originData.mid,
-          filterType: 'priority',
+          filterType: "priority",
           itemStyle: {
-            color: '#2d8cf0'
-          }
-        }
-        legendData.push('medium')
-        pieInner.push(mid)
+            color: "#2d8cf0",
+          },
+        };
+        legendData.push("medium");
+        pieInner.push(mid);
       }
 
-      const colorX = ['#33CCCC','#666699','#66CC66','#996633','#9999CC','#339933','#339966','#663333','#6666CC','#336699','#3399CC','#33CC66','#CC3333','#CC6666','#996699','#CC9933']
-      let index = 0
-      let pieOuter = []
-      let itemStyleSet = {}
-      const metricInfo = originData.count
-      let set = new Set()
-      metricInfo.forEach(item => {
+      const colorX = [
+        "#33CCCC",
+        "#666699",
+        "#66CC66",
+        "#996633",
+        "#9999CC",
+        "#339933",
+        "#339966",
+        "#663333",
+        "#6666CC",
+        "#336699",
+        "#3399CC",
+        "#33CC66",
+        "#CC3333",
+        "#CC6666",
+        "#996699",
+        "#CC9933",
+      ];
+      let index = 0;
+      let pieOuter = [];
+      let itemStyleSet = {};
+      const metricInfo = originData.count;
+      let set = new Set();
+      metricInfo.forEach((item) => {
         if (set.has(item.name)) {
-          item.itemStyle = itemStyleSet[item.name]
+          item.itemStyle = itemStyleSet[item.name];
         } else {
-          legendData.push(item.name)
-          index++
+          legendData.push(item.name);
+          index++;
           const itemStyle = {
-            color: colorX[index]
-          }
-          itemStyleSet[item.name] = itemStyle
-          item.itemStyle = itemStyle
+            color: colorX[index],
+          };
+          itemStyleSet[item.name] = itemStyle;
+          item.itemStyle = itemStyle;
         }
-        set.add(item.name)
-      })
-      pieOuter = metricInfo.sort(this.compare('type'))
-      let option = {
-        backgroundColor: '#ffffff',
-          tooltip: {
-              trigger: 'item',
-              formatter: '{b}: {c}'
-          },
-          legend: {
-            bottom: '15%',
-            selectedMode: false,
-            data: legendData
-          },
-          series: [
-              {
-                  type: 'pie',
-                  selectedMode: 'single',
-                  radius: [0, '30%'],
-                  center: ['50%', '40%'],
-                  label: {
-                    formatter: '{b}:{c}',
-                    position: 'inner',
-                    rich: {
-                      b: {
-                        fontSize: 16,
-                        lineHeight: 33
-                      }
-                    }
-                  },
-                  labelLine: {
-                      show: false
-                  },
-                  data: pieInner
-              },
-              {
-                  type: 'pie',
-                  radius: ['40%', '55%'],
-                  center: ['50%', '40%'],
-                  label: {
-                      formatter: ' {b|{b}:}{c} ',
-                      backgroundColor: '#ffffff',
-                      borderColor: '#2d8cf0',
-                      borderWidth: 1,
-                      borderRadius: 4,
-                      position: 'outer',
-                      alignTo: 'edge',
-                      margin: 8,
-                      rich: {
-                        b: {
-                          fontSize: 12,
-                          lineHeight: 28
-                        }
-                      }
-                  },
-                  data: pieOuter
-              }
-          ]
-      }
-
-      this.myChart.setOption(option)
-      this.myChart.on('click', params => {
-        this.addParams(params.data.filterType, params.data.name)
-      })
+        set.add(item.name);
+      });
+      pieOuter = metricInfo.sort(this.compare("type"));
+      this.outerMetrics = pieOuter;
+      this.outerTotal = pieOuter.reduce((n, m) => n + m.value, 0);
     },
-    realTimeAlarm () {
-      this.$router.push('/alarmManagement')
+    realTimeAlarm() {
+      this.$router.push("/alarmManagement");
     },
-    addParams (key, value) {
+    addParams ({key, value}) {
       this.filters[key] = value
       this.getAlarm()
     },
-    clearAll () {
-      this.filters = []
-      this.getAlarm()
+    clearAll() {
+      this.filters = [];
+      this.getAlarm();
     },
-    exclude (key) {
-      delete this.filters[key]
-      this.getAlarm()
+    exclude(key) {
+      delete this.filters[key];
+      this.getAlarm();
+    },
+    getPercentage(val, total) {
+      return ((parseInt(val, 10) * 100) / parseInt(total, 10) || 0).toFixed(2);
     },
   },
-  components: {},
-}
+};
 </script>
 
 <style scoped lang="less">
- .filter-li {
-   display: inline-block;
-   margin-left: 8px;
- }
+.filter-li {
+  display: inline-block;
+  margin-left: 8px;
+}
 .echart {
   height: ~"calc(100vh - 180px)";
   width: ~"calc(100vw * 0.4)";
-  background:#ffffff;
+  background: #ffffff;
 }
 .alarm-empty {
   height: ~"calc(100vh - 180px)";
   width: ~"calc(100vw * 0.4)";
   text-align: center;
-  padding:50px;
+  padding: 50px;
   color: #2d8cf0;
 }
+
+.title-wrapper {
+  display: flex;
+  align-items: flex-end;
+  margin-bottom: 24px;
+
+  .title-form {
+    margin-left: 21px;
+    padding: 10px 0;
+    flex: auto;
+    border: 2px solid #f2f3f7;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+
+    /deep/.ivu-input {
+      border: 1px solid #f2f3f7;
+    }
+
+    .btn-confirm-f {
+      background: #116ef9;
+    }
+  }
+}
+
+.data-stats-container {
+
+  .content-stats-container {
+    width: 100%;
+    display: flex;
+    margin: 12px 0;
+
+    .left {
+      position: relative;
+      flex-basis: 60%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding-top: 53.5px;
+      padding-bottom: 94px;
+
+      &.cover {
+        flex-basis: 100%;
+      }
+
+      .bg {
+        position: absolute;
+        top: 0;
+      }
+    }
+    .right {
+      flex-basis: 40%;
+      overflow-x: auto;
+
+      .alarm-card-container {
+        height: 740px;
+        overflow-y: auto;
+
+        &::-webkit-scrollbar {
+          width: 6px;
+          height: 6px;
+        }
+
+        &::-webkit-scrollbar-thumb {
+          // border-radius: 1em;
+          background-color: rgba(0, 21, 41, 0.2);
+        }
+
+        &::-webkit-scrollbar-track {
+          // border-radius: 1em;
+          background-color: rgba(181, 164, 164, 0.2);
+        }
+      }
+
+    }
+  }
+}
+
 .flex-container {
   margin: 8px;
   display: flex;
 }
 li {
   list-style: none;
-} 
+}
 
 label {
   margin-bottom: 0;
@@ -412,20 +620,13 @@ label {
   content: "\F102";
 }
 
-.fa-operate {
-  margin: 8px;
-  float: right;
-  font-size: 16px;
-  cursor: pointer;
-}
-
 /* 可以设置不同的进入和离开动画 */
 /* 设置持续时间和动画函数 */
 .slide-fade-enter-active {
-  transition: all .3s ease;
+  transition: all 0.3s ease;
 }
 .slide-fade-leave-active {
-  transition: all .8s cubic-bezier(1.0, 0.5, 0.8, 1.0);
+  transition: all 0.8s cubic-bezier(1, 0.5, 0.8, 1);
 }
 .slide-fade-enter, .slide-fade-leave-to
 /* .slide-fade-leave-active for below version 2.1.8 */ {

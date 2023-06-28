@@ -36,6 +36,7 @@ sed -i "s~{{MONITOR_ALARM_CALLBACK_LEVEL_MIN}}~$MONITOR_ALARM_CALLBACK_LEVEL_MIN
 sed -i "s~{{MONITOR_ARCHIVE_UNIT_SPEED}}~$MONITOR_ARCHIVE_UNIT_SPEED~g" archive_mysql_tool/default.json
 sed -i "s~{{MONITOR_ARCHIVE_CONCURRENT_NUM}}~$MONITOR_ARCHIVE_CONCURRENT_NUM~g" archive_mysql_tool/default.json
 sed -i "s~{{MONITOR_ARCHIVE_MAX_HTTP_OPEN}}~$MONITOR_ARCHIVE_MAX_HTTP_OPEN~g" archive_mysql_tool/default.json
+sed -i "s~{{MONITOR_AGENT_MANAGER_REMOTE_MODE}}~$MONITOR_AGENT_MANAGER_REMOTE_MODE~g" agent_manager/conf.json
 
 
 if [ $GATEWAY_URL ]
@@ -68,6 +69,12 @@ then
   done
 fi
 
+archive_day="30d"
+if [ "$MONITOR_PROMETHEUS_ARCHIVE_DAY" -gt 0 ] 2>/dev/null;
+then
+  archive_day="${MONITOR_PROMETHEUS_ARCHIVE_DAY}d"
+fi
+
 cd alertmanager
 mkdir -p logs
 nohup ./alertmanager --config.file=alertmanager.yml --web.listen-address=":9093"  --cluster.listen-address=":9094" > logs/alertmanager.log 2>&1 &
@@ -75,7 +82,7 @@ cd ../prometheus/
 mkdir -p rules
 mkdir -p logs
 /bin/cp -f base.yml rules/
-nohup ./prometheus --config.file=prometheus.yml --web.enable-lifecycle --storage.tsdb.retention.time=30d > logs/prometheus.log 2>&1 &
+nohup ./prometheus --config.file=prometheus.yml --web.enable-lifecycle --storage.tsdb.retention.time=${archive_day} > logs/prometheus.log 2>&1 &
 cd ../agent_manager/
 mkdir -p logs
 tar zxf exporters.tar.gz
@@ -97,7 +104,7 @@ cd ../monitor/
 mkdir -p logs
 sleep 2
 Exit_actions (){
-  kill `ps aux|grep -E "prometheus"|grep -v "grep"|awk '{print $1}'`
+  kill `ps aux|grep -E "prometheus"|grep -v "grep"|awk '{print $1}'` `ps aux|grep -E "transgateway"|grep -v "grep"|awk '{print $1}'`
   wait $!
 }
 trap Exit_actions INT TERM EXIT

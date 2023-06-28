@@ -153,7 +153,11 @@ func CheckEndpointInAgentManager(guid string) bool {
 }
 
 func UpdateAgentManager(param *models.AgentManagerTable) error {
-	_, err := x.Exec("update agent_manager set `user`=?,`password`=?,instance_address=?,agent_address=? where endpoint_guid=?", param.User, param.Password, param.InstanceAddress, param.AgentAddress, param.EndpointGuid)
+	var agentRemotePort string
+	if splitIndex := strings.Index(param.AgentAddress, ":"); splitIndex >= 0 {
+		agentRemotePort = param.AgentAddress[splitIndex+1:]
+	}
+	_, err := x.Exec("update agent_manager set `user`=?,`password`=?,instance_address=?,agent_address=?,agent_remote_port=? where endpoint_guid=?", param.User, param.Password, param.InstanceAddress, param.AgentAddress, agentRemotePort, param.EndpointGuid)
 	if err != nil {
 		err = fmt.Errorf("Update agent manager fail,%s ", err.Error())
 	}
@@ -162,7 +166,12 @@ func UpdateAgentManager(param *models.AgentManagerTable) error {
 
 func UpdateEndpointData(endpoint *models.EndpointNewTable) (err error) {
 	nowTimeString := time.Now().Format(models.DatetimeFormat)
-	_, err = x.Exec("update endpoint_new set agent_address=?,step=?,endpoint_address=?,extend_param=?,update_time=? where guid=?", endpoint.AgentAddress, endpoint.Step, endpoint.EndpointAddress, endpoint.ExtendParam, nowTimeString, endpoint.Guid)
+	if endpoint.Ip != "" {
+		_, err = x.Exec("update endpoint_new set ip=?,agent_address=?,step=?,endpoint_address=?,extend_param=?,update_time=? where guid=?", endpoint.Ip, endpoint.AgentAddress, endpoint.Step, endpoint.EndpointAddress, endpoint.ExtendParam, nowTimeString, endpoint.Guid)
+		x.Exec("update endpoint set ip=? where guid=?", endpoint.Ip, endpoint.Guid)
+	} else {
+		_, err = x.Exec("update endpoint_new set agent_address=?,step=?,endpoint_address=?,extend_param=?,update_time=? where guid=?", endpoint.AgentAddress, endpoint.Step, endpoint.EndpointAddress, endpoint.ExtendParam, nowTimeString, endpoint.Guid)
+	}
 	if err != nil {
 		err = fmt.Errorf("Update endpoint table failj,%s ", err.Error())
 	} else {

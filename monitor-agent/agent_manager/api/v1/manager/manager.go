@@ -3,6 +3,7 @@ package manager
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/WeBankPartners/open-monitor/monitor-agent/agent_manager/api/v1/redirect"
 	"github.com/WeBankPartners/open-monitor/monitor-agent/agent_manager/funcs"
 	"io/ioutil"
 	"log"
@@ -11,7 +12,7 @@ import (
 )
 
 func AddDeploy(w http.ResponseWriter, r *http.Request) {
-	var resp httpResponse
+	var resp funcs.HttpResponse
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Printf("error : %v \n", err)
@@ -24,6 +25,7 @@ func AddDeploy(w http.ResponseWriter, r *http.Request) {
 			resp.Code = 500
 			resp.Message = fmt.Sprintf("error:%v", err)
 		} else {
+			log.Printf("add deploy obj : param -> %s \n", string(b))
 			var exporter, configFile, guid string
 			if _, b := tmpParamMap["guid"]; !b {
 				resp.Code = 400
@@ -51,8 +53,13 @@ func AddDeploy(w http.ResponseWriter, r *http.Request) {
 					resp.Message = "param guid illegal "
 				}
 				if resp.Code < 200 {
-					configHash := fmt.Sprintf("%s:%s_%s_%s", tmpParamMap["instance_server"], tmpParamMap["instance_port"], tmpParamMap["auth_user"], tmpParamMap["auth_password"])
-					port, err := funcs.AddDeploy(exporter, configFile, guid, tmpParamMap, configHash)
+					var port int
+					if tmpParamMap["agentManagerRemoteIp"] != "" {
+						port, err = redirect.Add(tmpParamMap["agentManagerRemoteIp"], tmpParamMap)
+					} else {
+						configHash := fmt.Sprintf("%s:%s_%s_%s", tmpParamMap["instance_server"], tmpParamMap["instance_port"], tmpParamMap["auth_user"], tmpParamMap["auth_password"])
+						port, err = funcs.AddDeploy(exporter, configFile, guid, tmpParamMap, configHash)
+					}
 					if err != nil {
 						resp.Code = 500
 						resp.Message = fmt.Sprintf("error:%v", err)
@@ -70,11 +77,11 @@ func AddDeploy(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Printf("response code:%d message:%s \n", resp.Code, resp.Message)
 	funcs.SaveDeployProcess()
-	w.Write(resp.byte())
+	w.Write(resp.Byte())
 }
 
 func DelDeploy(w http.ResponseWriter, r *http.Request) {
-	var resp httpResponse
+	var resp funcs.HttpResponse
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Printf("error : %v \n", err)
@@ -87,8 +94,13 @@ func DelDeploy(w http.ResponseWriter, r *http.Request) {
 			resp.Code = 500
 			resp.Message = fmt.Sprintf("error:%v", err)
 		} else {
+			log.Printf("delete deploy obj : param -> %s \n", string(b))
 			if v, b := tmpParamMap["guid"]; b {
-				err = funcs.DeleteDeploy(v)
+				if tmpParamMap["agentManagerRemoteIp"] != "" {
+					err = redirect.Delete(tmpParamMap["agentManagerRemoteIp"], tmpParamMap)
+				} else {
+					err = funcs.DeleteDeploy(v)
+				}
 				if err != nil {
 					resp.Code = 500
 					resp.Message = fmt.Sprintf("error:%v", err)
@@ -103,25 +115,30 @@ func DelDeploy(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	funcs.SaveDeployProcess()
-	w.Write(resp.byte())
+	w.Write(resp.Byte())
 }
 
 func InitDeploy(w http.ResponseWriter, r *http.Request) {
 	log.Println("start init deploy")
-	var resp httpResponse
+	var resp funcs.HttpResponse
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Printf("error : %v \n", err)
 		resp.Code = 500
 		resp.Message = fmt.Sprintf("error:%v", err)
 	} else {
-		var param []*funcs.AgentManagerTable
+		var param funcs.InitDeployParam
 		err = json.Unmarshal(b, &param)
 		if err != nil {
 			resp.Code = 500
 			resp.Message = fmt.Sprintf("error:%v", err)
 		} else {
-			err = funcs.InitDeployDir(param)
+			log.Printf("init deploy dir : param -> %s \n", string(b))
+			if param.AgentManagerRemoteIp != "" {
+				err = redirect.Init(&param)
+			} else {
+				err = funcs.InitDeployDir(param.Config)
+			}
 			if err != nil {
 				resp.Code = 500
 				resp.Message = fmt.Sprintf("error:%v", err)
@@ -131,26 +148,11 @@ func InitDeploy(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	w.Write(resp.byte())
+	w.Write(resp.Byte())
 }
 
 func DisplayProcess(w http.ResponseWriter, r *http.Request) {
 	w.Write(funcs.PrintProcessList())
-}
-
-type httpResponse struct {
-	Code    int         `json:"code"`
-	Message string      `json:"message"`
-	Data    interface{} `json:"data"`
-}
-
-func (h *httpResponse) byte() []byte {
-	d, err := json.Marshal(h)
-	if err == nil {
-		return d
-	} else {
-		return []byte(fmt.Sprintf("{\"code\":%d,\"message\":\"%s\",\"data\":%v}", h.Code, h.Message, h.Data))
-	}
 }
 
 func illegalPath(input string) bool {
