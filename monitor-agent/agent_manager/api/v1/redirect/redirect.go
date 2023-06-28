@@ -96,7 +96,7 @@ func Add(remoteAddress string, param map[string]string) (port int, err error) {
 	}
 	if port > 0 {
 		if _, ok := redirectHttpMap.Load(port); !ok {
-			rhObj := redirectHttpObj{ListenPort: port, RemoteAgentManagerIp: remoteAddress}
+			rhObj := redirectHttpObj{ListenPort: port, RemoteAgentManagerIp: remoteAddress, RemoteAgentPort: port}
 			go rhObj.Init()
 			redirectHttpMap.Store(port, &rhObj)
 			log.Printf("start listen port:%d \n", port)
