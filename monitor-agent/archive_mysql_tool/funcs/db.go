@@ -100,7 +100,7 @@ func insertMysql(rows []*ArchiveTable, tableName string) error {
 	sqlString := fmt.Sprintf("INSERT INTO %s(endpoint,metric,tags,unix_time,`avg`,`min`,`max`,`p95`) VALUES ", tableName)
 	for i, v := range rows {
 		tmpCount += 1
-		sqlString += fmt.Sprintf("('%s','%s','%s',%d,%.3f,%.3f,%.3f,%.3f)", v.Endpoint, v.Metric, v.Tags, v.UnixTime, v.Avg, v.Min, v.Max, v.P95)
+		sqlString += fmt.Sprintf("('%s','%s','%s',%d,%.3f,%.3f,%.3f,%.3f)", strings.ReplaceAll(v.Endpoint, "'", ""), strings.ReplaceAll(v.Metric, "'", ""), strings.ReplaceAll(v.Tags, "'", ""), v.UnixTime, v.Avg, v.Min, v.Max, v.P95)
 		if (i+1)%concurrentInsertNum == 0 || i == len(rows)-1 {
 			rowCountList = append(rowCountList, tmpCount)
 			tmpCount = 0
@@ -127,7 +127,7 @@ func insertMysql(rows []*ArchiveTable, tableName string) error {
 			}
 		}
 		if tmpErr != nil {
-			log.Printf("Exec sql error:%s \n", tmpErr.Error())
+			log.Printf("Exec sql error:%s sql:%s \n", tmpErr.Error(), v)
 			tmpErrorString := tmpErr.Error()
 			if len(tmpErrorString) > 200 {
 				tmpErrorString = tmpErrorString[:200]
