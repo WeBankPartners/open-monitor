@@ -1,160 +1,137 @@
 <template>
   <div>
-    <Title :title="$t('menu.alert')"></Title>
-    <Tabs value="default">
-      <TabPane :label="$t('recommended_mode')" name="default">
-        <Modal
-          v-model="isShowWarning"
-          :title="$t('closeConfirm.title')"
-          @on-ok="ok"
-          @on-cancel="cancel">
-          <div class="modal-body" style="padding:30px">
-            <div style="text-align:center">
-              <p style="color: red">{{$t('closeConfirm.tip')}}</p>
-            </div>
+    <div class="title-wrapper">
+      <Title :title="$t('menu.alert')"></Title>
+      <div class="title-form">
+        <ul>
+          <li class="filter-li">
+            <span class="label">{{$t('title.updateTime')}}：</span>{{timeForDataAchieve}}
+          </li>
+          <li class="filter-li">
+            <span class="label">{{$t('alarmStatistics')}}：</span>
+            <i-switch size="large" v-model="showGraph">
+              <span slot="open">ON</span>
+              <span slot="close">OFF</span>
+            </i-switch>
+          </li>
+          <li class="filter-li">
+            <span class="label">{{$t('classic_mode')}}：</span>
+            <i-switch size="large" v-model="isClassicModel">
+              <span slot="open">ON</span>
+              <span slot="close">OFF</span>
+            </i-switch>
+          </li>
+          <li class="filter-li" v-if="filtersForShow.length">
+            <button @click="clearAll" class="btn btn-sm btn-cancel-f">{{$t('m_reset_condition')}}</button>
+          </li>
+        </ul>
+        <div>
+          <Button :disabled="!filtersForShow.some(f => f.key === 'metric')" @click="deleteConfirmModal({}, true)" class="btn btn-sm btn-cancel-f">{{$t('m_batch_close')}}</Button>
+          <button @click="alarmHistory" class="btn btn-sm btn-confirm-f">{{$t('alarmHistory')}}</button>
+        </div>
+      </div>
+    </div>
+    <div class="data-stats-container">
+      <top-stats :lstats="leftStats" :rstats="rightStats" :rtitle="$t('todayAlarm')" :noData="noData" />
+    </div>
+    <div class="data-stats-container" v-show="!isClassicModel">
+      <transition name="slide-fade">
+        <div class="content-stats-container">
+          <div class="left" :class="{ 'cover': total === 0 || noData }" v-if="showGraph">
+            <alarm-assets-basic :total="total" :noData="noData" :isRunning="true" />
+
+            <template v-if="!noData">
+              <circle-label v-for="cr in circles" :key="cr.type" :data="cr" />
+              <circle-rotate v-for="cr in circles" :key="cr.label" :data="cr" @onFilter="addParams" />
+            </template>
+
+            <metrics-bar :metrics="outerMetrics" :total="outerTotal" v-if="total > 0 && !noData" @onFilter="addParams" />
           </div>
-        </Modal>
-        <div class="flex-container">
-          <transition name="slide-fade">
-            <div class="flex-item" v-show="showGraph">
-              <div>
-                <Tag color="success"><span style="font-size:14px">{{$t('m_low')}}:{{this.low}}</span></Tag>
-                <Tag color="warning"><span style="font-size:14px">{{$t('m_medium')}}:{{this.mid}}</span></Tag>
-                <Tag color="error"><span style="font-size:14px">{{$t('m_high')}}:{{this.high}}</span></Tag>
-                <button v-if="filtersForShow.length" @click="clearAll" style="float:right;margin-right:50px" class="btn btn-small btn-cancel-f">{{$t('m_reset_condition')}}</button>
-                <div v-show="alramEmpty" style="display:none" id="elId" class="echart"></div>
-                <div v-if="!alramEmpty"  class="alarm-empty">
-                  <span style="font-size:14px"></span>
-                </div>
-              </div>
-            </div>
-          </transition>
-          <div class="flex-item" style="width: 100%">
-            <div class="alarm-total" v-if="!showGraph">
-              <Tag color="success"><span style="font-size:14px">{{$t('m_low')}}:{{this.low}}</span></Tag>
-              <Tag color="warning"><span style="font-size:14px">{{$t('m_medium')}}:{{this.mid}}</span></Tag>
-              <Tag color="error"><span style="font-size:14px">{{$t('m_high')}}:{{this.high}}</span></Tag>
-            </div>
-            <section style="margin-left:8px" class="c-dark-exclude-color">
-              <div style="display: inline-block;margin-right:16px">
-                <span>{{$t('alarmStatistics')}}：</span>
-                <i-switch size="large" v-model="showGraph">
-                  <span slot="open">ON</span>
-                  <span slot="close">OFF</span>
-                </i-switch>
-              </div>
-              <Tag color="warning">{{$t('title.updateTime')}}：{{timeForDataAchieve}}</Tag>
+          <div class="right" :class="{ 'cover': !showGraph }" v-if="total > 0 && !noData">
+            <section style="margin-left:8px;margin-bottom:10px" class="c-dark-exclude-color">
               <template v-for="(filterItem, filterIndex) in filtersForShow">
                 <Tag color="success" type="border" closable @on-close="exclude(filterItem.key)" :key="filterIndex">{{filterItem.key}}：{{filterItem.value}}</Tag>
               </template>
               <button v-if="filtersForShow.length" @click="clearAll" class="btn btn-small btn-cancel-f">{{$t('clearAll')}}</button>
-              <template v-if="!resultData.length">
-                <Tag color="primary">{{$t('table.noDataTip')}}！</Tag>
-              </template>
-              <button @click="alarmHistory" style="float: right;margin-right: 25px;" class="btn btn-sm btn-cancel-f">{{$t('alarmHistory')}}</button>
-              <button :disabled="!filtersForShow.some(f => f.key === 'metric')" @click="deleteConfirmModal({}, true)" style="float: right;margin-right: 25px;" class="btn btn-sm btn-cancel-f">{{$t('m_batch_close')}}</button>
             </section>
-            <div class="alarm-list">
-              <template v-for="(alarmItem, alarmIndex) in resultData">
-                <section :key="alarmIndex" class="alarm-item c-dark-exclude-color" :class="'alarm-item-border-'+ alarmItem.s_priority">
-                  <div style="float:right">
-                    <Tooltip :content="$t('menu.endpointView')">
-                      <Icon type="ios-stats" size="18" class="fa-operate" v-if="!alarmItem.is_custom" @click="goToEndpointView(alarmItem)"/>
-                    </Tooltip>
-                    <Tooltip :content="$t('close')">
-                      <Icon type="ios-eye-off" size="18" class="fa-operate" @click="deleteConfirmModal(alarmItem, false)"/>
-                    </Tooltip>
-                    <Tooltip :content="$t('m_remark')">
-                      <Icon type="ios-pricetags-outline" size="18" class="fa-operate" @click="remarkModal(alarmItem)" />
-                    </Tooltip>
-                  </div>
-                  <ul>
-                    <li>
-                      <label class="col-md-2" style="vertical-align: top;line-height: 24px;">{{$t('field.endpoint')}}&{{$t('tableKey.s_priority')}}:</label>
-                      <Tag type="border" closable @on-close="addParams('endpoint',alarmItem.endpoint)" color="primary">{{alarmItem.endpoint}}</Tag>
-                      <Tag type="border" closable @on-close="addParams('priority',alarmItem.s_priority)" color="primary">{{alarmItem.s_priority}}</Tag>
-                      <Tag type="border" color="warning">{{alarmItem.start_string}}</Tag>
-                    </li>
-                    <li v-if="!alarmItem.is_custom">
-                      <label class="col-md-2" style="vertical-align: top;line-height: 24px;">
-                        <span>{{$t('field.metric')}}</span>
-                        <span v-if="alarmItem.tags">&{{$t('tableKey.tags')}}</span>
-                        :</label>
-                        <Tag type="border" closable @on-close="addParams('metric',alarmItem.s_metric)" color="primary">{{alarmItem.s_metric}}</Tag>
-                        <template v-if="alarmItem.tags">
-                          <Tag type="border" v-for="(t,tIndex) in alarmItem.tags.split('^')" :key="tIndex" color="cyan">{{t}}</Tag>
-                        </template>
-                    </li>
-                    <li v-if="alarmItem.custom_message">
-                      <label class="col-md-2" style="vertical-align: top;line-height: 24px;">
-                        <span>{{$t('m_remark')}}:</span></label>
-                        <Tooltip max-width="300">
-                          <div style="border: 1px solid #2d8cf0;padding:2px;border-radius:4px; color: #2d8cf0">
-                          {{alarmItem.custom_message.length > 100 ? alarmItem.custom_message.substring(0,100) + '...' : alarmItem.custom_message}}
-                          </div>
-                          <div slot="content" style="white-space: normal;">
-                            <p>{{alarmItem.custom_message}}</p>
-                          </div>
-                        </Tooltip>
-                    </li>
-                    <li  v-if="!alarmItem.is_custom">
-                      <label class="col-md-2" style="vertical-align: top;line-height: 24px;">{{$t('details')}}:</label>
-                      <div class="col-md-9" style="display: inline-block;padding:0">
-                        <span>
-                          <Tag color="default">{{$t('tableKey.start_value')}}:{{alarmItem.start_value}}</Tag>
-                          <Tag color="default" v-if="alarmItem.s_cond">{{$t('tableKey.threshold')}}:{{alarmItem.s_cond}}</Tag>
-                          <Tag color="default" v-if="alarmItem.s_last">{{$t('tableKey.s_last')}}:{{alarmItem.s_last}}</Tag>
-                          <Tag color="default" v-if="alarmItem.path">{{$t('tableKey.path')}}:{{alarmItem.path}}</Tag>
-                          <Tag color="default" v-if="alarmItem.keyword">{{$t('tableKey.keyword')}}:{{alarmItem.keyword}}</Tag>
-                        </span>
-                      </div>
-                    </li>
-                    <li>
-                      <label class="col-md-2" style="vertical-align: top;">{{$t('alarmContent')}}:</label>
-                      <div class="col-md-9" style="display: inline-block;padding:0">
-                        <span style="word-break: break-all;" v-html="alarmItem.content"></span>
-                      </div>
-                    </li>
-                  </ul>
-                </section>
-              </template>
-            </div>
+            <section class="alarm-card-container">
+              <alarm-card v-for="(item, alarmIndex) in resultData" :key="alarmIndex" :data="item" :button="true"></alarm-card>
+            </section>
             <div style="margin: 4px 0; text-align:right">
               <Page :total="paginationInfo.total" @on-change="pageIndexChange" @on-page-size-change="pageSizeChange" show-elevator show-sizer show-total />
             </div>
           </div>
         </div>
-      </TabPane>
-      <TabPane :label="$t('classic_mode')" name="classic">
-        <ClassicAlarm ref="classicAlarm"></ClassicAlarm>
-      </TabPane>
-    </Tabs>
+      </transition>
+    </div>
+    <ClassicAlarm ref="classicAlarm" v-show="isClassicModel">
+      <template v-slot:pagination>
+        <div class="page-left">
+          <Page :total="paginationInfo.total" @on-change="pageIndexChange" @on-page-size-change="pageSizeChange" show-elevator show-sizer show-total />
+        </div>
+      </template>
+    </ClassicAlarm>
+    <Modal
+      v-model="isShowWarning"
+      :title="$t('closeConfirm.title')"
+      :mask-closable="false"
+      @on-ok="ok"
+      @on-cancel="cancel">
+      <div class="modal-body" style="padding:30px">
+        <div style="text-align:center">
+          <p style="color: red">{{$t('closeConfirm.tip')}}</p>
+        </div>
+      </div>
+    </Modal>
     <ModalComponent :modelConfig="modelConfig"></ModalComponent>
   </div>
 </template>
 
 <script>
-import echarts from 'echarts'
+import TopStats from "@/components/top-stats.vue"
+import MetricsBar from "@/components/metrics-bar.vue"
+import CircleRotate from "@/components/circle-rotate.vue"
+import CircleLabel from "@/components/circle-label.vue"
+import AlarmAssetsBasic from "@/components/alarm-assets-basic.vue"
 import ClassicAlarm from '@/views/alarm-management-classic'
+import AlarmCard from "@/components/alarm-card.vue"
+
 export default {
   name: '',
+  components: {
+    TopStats,
+    MetricsBar,
+    CircleRotate,
+    CircleLabel,
+    AlarmAssetsBasic,
+    ClassicAlarm,
+    AlarmCard
+  },
   data() {
     return {
+      noData: false,
       showGraph: true,
       alramEmpty: true,
-      myChart: null,
       isShowWarning: false,
+      isClassicModel: false,
       interval: null,
       timeForDataAchieve: null,
       filters: {},
       filtersForShow: [],
       actveAlarmIndex: null,
       resultData: [],
+      outerMetrics: [],
       selectedData: '', // 存放选中数据
 
       low: 0,
       mid: 0,
       high: 0,
+
+      tlow: 0,
+      tmid: 0,
+      thigh: 0,
+
+      outerTotal: 0,
 
       modelConfig: {
         modalId: 'remark_Modal',
@@ -178,17 +155,149 @@ export default {
       isBatch: false
     }
   },
+  computed: {
+    total() {
+      return this.low + this.mid + this.high
+    },
+    ttotal() {
+      return this.tlow + this.tmid + this.thigh
+    },
+    leftStats() {
+      return [
+        {
+          key: 'l_total',
+          type: 'total',
+          title: this.$t('m_total'),
+          total: this.total,
+          value: this.total,
+          icon: require("../assets/img/icon_alarm_ttl.png")
+        },
+        {
+          key: 'l_low',
+          type: 'low',
+          title: this.$t('m_low'),
+          total: this.total,
+          value: this.low,
+          icon: require("../assets/img/icon_alarm_L.png")
+        },
+        {
+          key: 'l_medium',
+          type: 'medium',
+          title: this.$t('m_medium'),
+          total: this.total,
+          value: this.mid,
+          icon: require("../assets/img/icon_alarm_M.png")
+        },
+        {
+          key: 'l_high',
+          type: 'high',
+          title: this.$t('m_high'),
+          total: this.total,
+          value: this.high,
+          icon: require("../assets/img/icon_alarm_H.png")
+        }
+      ]
+    },
+    rightStats() {
+      return [
+        {
+          key: 'r_total',
+          type: 'total',
+          title: this.$t('m_total'),
+          total: this.ttotal,
+          value: this.ttotal
+        },
+        {
+          key: 'r_low',
+          type: 'low',
+          title: this.$t('m_low'),
+          total: this.ttotal,
+          value: this.tlow
+        },
+        {
+          key: 'r_medium',
+          type: 'medium',
+          title: this.$t('m_medium'),
+          total: this.ttotal,
+          value: this.tmid
+        },
+        {
+          key: 'r_high',
+          type: 'high',
+          title: this.$t('m_high'),
+          total: this.ttotal,
+          value: this.thigh
+        }
+      ]
+    },
+    circles() {
+      return [
+        {
+          type: 'low',
+          key: 'low',
+          label: this.$t('m_low'),
+          icon: require('../assets/img/peichart_L.png'),
+          value: this.noData ? 0 : this.low,
+          total: this.total,
+          deg: '-60deg',
+          tx: 0,
+          ty: -0.5
+        },
+        {
+          type: 'mid',
+          key: 'medium',
+          label: this.$t('m_medium'),
+          icon: require('../assets/img/peichart_M.png'),
+          value: this.noData ? 0 : this.mid,
+          total: this.total,
+          deg: '60deg',
+          tx: 0,
+          ty: -0.5
+        },
+        {
+          type: 'high',
+          key: 'high',
+          label: this.$t('m_high'),
+          icon: require('../assets/img/peichart_H.png'),
+          value: this.noData ? 0 : this.high,
+          total: this.total,
+          deg: '0',
+          tx: 0,
+          ty: 0.5
+        }
+      ]
+    }
+  },
   mounted(){
-    this.myChart = echarts.init(document.getElementById('elId'))
+    this.getTodayAlarm()
     this.getAlarm()
     this.interval = setInterval(()=>{
-      this.getAlarm()
+      this.getAlarm('keep')
     }, 10000)
     this.$once('hook:beforeDestroy', () => {
       clearInterval(this.interval)
     })
   },
   methods: {
+    getTodayAlarm() {
+      const start = new Date(new Date().toLocaleDateString()).getTime();
+      const end = new Date(new Date().toLocaleDateString()).getTime() + 24 * 60 * 60 * 1000 - 1;
+      const params = {
+        start: parseInt(start / 1000, 10),
+        end: parseInt(end / 1000, 10),
+        filter: 'all'
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance(
+        "POST",
+        "/monitor/api/v1/alarm/problem/history",
+        params,
+        (responseData) => {
+          this.tlow = responseData.low;
+          this.tmid = responseData.mid;
+          this.thigh = responseData.high;
+        }
+      );
+    },
     remarkModal (item) {
       this.modelConfig.addRow = {
         id: item.id,
@@ -216,14 +325,21 @@ export default {
     },
     pageIndexChange(pageIndex) {
       this.paginationInfo.startIndex = pageIndex
-      this.getAlarm()
+      this.getAlarm('keep')
     },
     pageSizeChange(pageSize) {
       this.paginationInfo.startIndex = 1
       this.paginationInfo.pageSize = pageSize
-      this.getAlarm()
+      this.getAlarm('keep')
     },
-    getAlarm() {
+    getAlarm(ifPageKeep) {
+      if (ifPageKeep != 'keep') {
+        this.paginationInfo = {
+          total: 0,
+          startIndex: 1,
+          pageSize: 10
+        }
+      }
       let params = {
         page: {
           startIndex: this.paginationInfo.startIndex,
@@ -240,18 +356,28 @@ export default {
       this.timeForDataAchieve = new Date().toLocaleString()
       this.timeForDataAchieve = this.timeForDataAchieve.replace('上午', 'AM ')
       this.timeForDataAchieve = this.timeForDataAchieve.replace('下午', 'PM ')
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/alarm/problem/page', params, (responseData) => {
-        this.resultData = responseData.data
-        this.paginationInfo.total = responseData.page.totalRows
-        this.paginationInfo.startIndex = responseData.page.startIndex
-        this.paginationInfo.pageSize = responseData.page.pageSize
-        this.low = responseData.low
-        this.mid = responseData.mid
-        this.high = responseData.high
-        this.alramEmpty = !!this.low || !!this.mid ||!!this.high
-        this.showSunburst(responseData)
-        this.$refs.classicAlarm.getAlarm(this.resultData)
-      }, {isNeedloading: false})
+      this.$root.$httpRequestEntrance.httpRequestEntrance(
+        'POST',
+        '/monitor/api/v1/alarm/problem/page',
+        params,
+        (responseData) => {
+          this.noData = false;
+          this.resultData = responseData.data
+          this.paginationInfo.total = responseData.page.totalRows
+          this.paginationInfo.startIndex = responseData.page.startIndex
+          this.paginationInfo.pageSize = responseData.page.pageSize
+          this.low = responseData.low
+          this.mid = responseData.mid
+          this.high = responseData.high
+          this.alramEmpty = !!this.low || !!this.mid ||!!this.high
+          this.showSunburst(responseData)
+          this.$refs.classicAlarm.getAlarm(this.resultData)
+        },
+        {isNeedloading: false},
+        () => {
+          this.noData = true;
+        }
+      )
     },
     compare (prop) {
       return function (obj1, obj2) {
@@ -271,7 +397,6 @@ export default {
       } 
     },
     showSunburst (originData) {
-      this.myChart.off()
       let legendData = []
       let pieInner = []
       if (originData.high) {
@@ -332,69 +457,11 @@ export default {
         set.add(item.name)
       })
       pieOuter = metricInfo.sort(this.compare('type'))
-      let option = {
-        backgroundColor: '#ffffff',
-          tooltip: {
-              trigger: 'item',
-              formatter: '{b}: {c}'
-          },
-          legend: {
-            bottom: '15%',
-            selectedMode: false,
-            data: legendData
-          },
-          series: [
-              {
-                  type: 'pie',
-                  selectedMode: 'single',
-                  radius: [0, '30%'],
-                  center: ['50%', '40%'],
-                  label: {
-                    formatter: '{b}:{c}',
-                    position: 'inner',
-                    rich: {
-                      b: {
-                        fontSize: 16,
-                        lineHeight: 33
-                      }
-                    }
-                  },
-                  labelLine: {
-                      show: false
-                  },
-                  data: pieInner
-              },
-              {
-                  type: 'pie',
-                  radius: ['40%', '55%'],
-                  center: ['50%', '40%'],
-                  label: {
-                      formatter: ' {b|{b}:}{c} ',
-                      backgroundColor: '#ffffff',
-                      borderColor: '#2d8cf0',
-                      borderWidth: 1,
-                      borderRadius: 4,
-                      position: 'outer',
-                      alignTo: 'edge',
-                      margin: 8,
-                      rich: {
-                        b: {
-                          fontSize: 12,
-                          lineHeight: 28
-                        }
-                      }
-                  },
-                  data: pieOuter
-              }
-          ]
-      }
 
-      this.myChart.setOption(option)
-      this.myChart.on('click', params => {
-        this.addParams(params.data.filterType, params.data.name)
-      })
+      this.outerMetrics = pieOuter
+      this.outerTotal = pieOuter.reduce((n, m) => (n + m.value), 0)
     },
-    addParams (key, value) {
+    addParams ({key, value}) {
       this.filters[key] = value
       this.getAlarm()
     },
@@ -442,9 +509,6 @@ export default {
     alarmHistory () {
       this.$router.push({name: 'alarmHistory'})
     }
-  },
-  components: {
-    ClassicAlarm
   }
 }
 </script>
@@ -462,6 +526,151 @@ export default {
   padding:50px;
   color: #2d8cf0;
 }
+
+.title-wrapper {
+  display: flex;
+  align-items: flex-end;
+  margin-bottom: 24px;
+
+  .title-form  {
+    margin-left: 21px;
+    padding: 10px 18px;
+    flex: auto;
+    border-radius: 4px;
+    border: 2px solid #f2f3f7;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .label {
+      color: #116EF9;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    ul {
+      display: flex;
+      align-items: center;
+      li {
+        color: #7E8086;
+        font-size: 12px;
+        margin-right: 28px;
+      }
+    }
+
+    .btn-confirm-f {
+      background: #116EF9;
+    }
+  }
+}
+
+.data-stats-container {
+  
+  .top-stats-container {
+    width: 100%;
+    height: 90px;
+    background: #FFFFFF;
+    border: 2px solid #F2F3F7;
+    border-radius: 4px;
+    display: flex;
+
+    .metics-metal {
+      height: 100%;
+      background: linear-gradient(90deg, #F5F8FE 0%, rgba(234,242,253,0) 100%);
+      
+      .col {
+        position: relative;
+        width: 180px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
+
+        .title {
+          font-size: 16px;
+        }
+
+        .time-icon {
+          width: 32px;
+          height: 32px;
+          margin-top: 14px;
+        }
+
+        &::after {
+          content: "";
+          position: absolute;
+          width: 2px;
+          height: 63px;
+          right: 0;
+          background: #F2F3F7;
+        }
+      }
+    }
+
+    .left {
+      flex-basis: 60%;
+      height: 100%;
+      display: flex;
+    }
+    .right {
+      flex-basis: 40%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+  }
+
+  .content-stats-container {
+    width: 100%;
+    display: flex;
+    margin: 12px 0;
+
+    .left {
+      position: relative;
+      flex-basis: 60%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding-top: 53.5px;
+      padding-bottom: 94px;
+
+      &.cover {
+        flex-basis: 100%;
+      }
+    }
+    .right {
+      flex-basis: 40%;
+      overflow-x: auto;
+
+      .alarm-card-container {
+        height: 740px;
+        overflow-y: auto;
+
+        &::-webkit-scrollbar {
+          width: 6px;
+          height: 6px;
+        }
+
+        &::-webkit-scrollbar-thumb {
+          // border-radius: 1em;
+          background-color: rgba(0, 21, 41, 0.2);
+        }
+
+        &::-webkit-scrollbar-track {
+          // border-radius: 1em;
+          background-color: rgba(181, 164, 164, 0.2);
+        }
+      }
+
+      &.cover {
+        flex-basis: 100%;
+      }
+    }
+  }
+}
+
 .flex-container {
   display: flex;
 }
@@ -516,6 +725,13 @@ label {
   float: right;
   font-size: 16px;
   cursor: pointer;
+}
+
+.page-left {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+  margin-bottom: 10px;
 }
 
 /* 可以设置不同的进入和离开动画 */

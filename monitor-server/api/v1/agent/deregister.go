@@ -23,7 +23,7 @@ const otherType = "other"
 
 func DeregisterAgent(c *gin.Context) {
 	var param m.EndpointTable
-	if err:=c.ShouldBindJSON(&param);err!=nil {
+	if err := c.ShouldBindJSON(&param); err != nil {
 		mid.ReturnValidateError(c, err.Error())
 		return
 	}
@@ -68,6 +68,13 @@ func DeregisterJob(endpointObj m.EndpointTable) error {
 	if deleteErr != nil {
 		return deleteErr
 	}
+
+	log.Logger.Debug("Start delete endpoint", log.String("guid", guid))
+	err = db.DeleteEndpoint(guid)
+	if err != nil {
+		log.Logger.Error("Delete endpoint failed", log.Error(err))
+		return err
+	}
 	// Update sd file
 	err = db.SyncSdEndpointNew([]int{endpointObj.Step}, endpointObj.Cluster, false)
 	if err != nil {
@@ -86,13 +93,6 @@ func DeregisterJob(endpointObj m.EndpointTable) error {
 		}
 	}
 	if err != nil {
-		return err
-	}
-
-	log.Logger.Debug("Start delete endpoint", log.String("guid", guid))
-	err = db.DeleteEndpoint(guid)
-	if err != nil {
-		log.Logger.Error("Delete endpoint failed", log.Error(err))
 		return err
 	}
 	if endpointObj.ExportType == "snmp" {
@@ -116,6 +116,8 @@ func CustomRegister(c *gin.Context) {
 			if len(sm) > 0 {
 				log.Logger.Debug("", log.String("sm0", fmt.Sprintf(" -> %s  %s  %v", sm[0].Name, sm[0].Type, sm[0].Data)))
 				TransGateWayAddress = strings.Split(strings.Split(sm[0].Name, "instance=")[1], ",job")[0]
+				TransGateWayAddress = strings.ReplaceAll(TransGateWayAddress, "{", "")
+				TransGateWayAddress = strings.ReplaceAll(TransGateWayAddress, "}", "")
 				log.Logger.Debug("", log.String("TransGateWayAddress", TransGateWayAddress))
 			}
 		}

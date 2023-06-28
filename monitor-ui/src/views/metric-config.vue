@@ -203,6 +203,7 @@
           </Tabs>
           <Modal
             v-model="showEndpointSelect"
+            :mask-closable="false"
             @on-ok="checkEndpoint"
             @on-cancel="metricConfigData.endpoint = ''"
             :title="$t('m_select_endpoint')">
@@ -217,6 +218,7 @@
 
           <Modal
             v-model="titleManagement.show"
+            :mask-closable="false"
             @on-ok="saveTitle"
             @on-cancel="titleManagement.title = ''"
             :title="titleManagement.isAdd ? $t('button.add') : $t('button.edit')">
@@ -404,6 +406,7 @@ export default {
     },
     clearServiceGroup () {
       this.showConfigTab = false
+      this.configMetric()
     },
     getRecursiveList () {
       const api = this.$root.apiCenter.getTargetByEndpoint + '/group'

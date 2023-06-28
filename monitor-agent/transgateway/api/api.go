@@ -1,13 +1,13 @@
 package api
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/gin-contrib/cors"
 	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-agent/transgateway/api/v1/transfer"
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 )
 
-func InitHttpServer(port string)  {
+func InitHttpServer(port string) {
 	urlPrefix := "/monitor-gateway"
 	r := gin.Default()
 	corsConfig := cors.DefaultConfig()
@@ -25,6 +25,8 @@ func InitHttpServer(port string)  {
 	authApi := r.Group(fmt.Sprintf("%s/api/v1", urlPrefix))
 	{
 		authApi.POST("/push", transfer.AcceptPostData)
+		authApi.POST("/push/:first", transfer.AcceptPostData)
+		authApi.POST("/push/:first/:second", transfer.AcceptPostData)
 		authApi.GET("/register", transfer.AddMember)
 	}
 	r.GET("/metrics", transfer.DisplayMetrics)
