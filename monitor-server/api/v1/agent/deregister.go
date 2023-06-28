@@ -68,6 +68,13 @@ func DeregisterJob(endpointObj m.EndpointTable) error {
 	if deleteErr != nil {
 		return deleteErr
 	}
+
+	log.Logger.Debug("Start delete endpoint", log.String("guid", guid))
+	err = db.DeleteEndpoint(guid)
+	if err != nil {
+		log.Logger.Error("Delete endpoint failed", log.Error(err))
+		return err
+	}
 	// Update sd file
 	err = db.SyncSdEndpointNew([]int{endpointObj.Step}, endpointObj.Cluster, false)
 	if err != nil {
@@ -86,13 +93,6 @@ func DeregisterJob(endpointObj m.EndpointTable) error {
 		}
 	}
 	if err != nil {
-		return err
-	}
-
-	log.Logger.Debug("Start delete endpoint", log.String("guid", guid))
-	err = db.DeleteEndpoint(guid)
-	if err != nil {
-		log.Logger.Error("Delete endpoint failed", log.Error(err))
 		return err
 	}
 	if endpointObj.ExportType == "snmp" {
