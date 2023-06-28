@@ -1,6 +1,7 @@
 package redirect
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-agent/agent_manager/funcs"
@@ -13,16 +14,30 @@ import (
 )
 
 type redirectHttpObj struct {
+	Server               *http.Server
 	ListenPort           int    `json:"listenPort"`
 	RemoteAgentManagerIp string `json:"remoteAgentManagerIp"`
 	RemoteAgentPort      int    `json:"remoteAgentPort"`
 }
 
-func (h redirectHttpObj) Init() {
-	http.ListenAndServe(fmt.Sprintf(":%d", h.ListenPort), http.HandlerFunc(h.httpHandleFunc))
+func (h *redirectHttpObj) Init() {
+	log.Printf("start remoteHttp init,remoteIP: %s , port:%d \n", h.RemoteAgentManagerIp, h.ListenPort)
+	h.Server = &http.Server{Addr: fmt.Sprintf(":%d", h.ListenPort), Handler: http.HandlerFunc(h.httpHandleFunc)}
+	go h.Server.ListenAndServe()
 }
 
-func (h redirectHttpObj) httpHandleFunc(w http.ResponseWriter, r *http.Request) {
+func (h *redirectHttpObj) Destroy() {
+	if h.Server != nil {
+		err := h.Server.Shutdown(context.Background())
+		if err != nil {
+			log.Printf("listen server shutdown err:%s \n", err.Error())
+		}
+	} else {
+		log.Printf("listen server %d already shutdown \n", h.ListenPort)
+	}
+}
+
+func (h *redirectHttpObj) httpHandleFunc(w http.ResponseWriter, r *http.Request) {
 	resp, err := http.Get(fmt.Sprintf("http://%s:%d%s", h.RemoteAgentManagerIp, h.RemoteAgentPort, r.RequestURI))
 	if err != nil {
 		log.Printf("reqeust error: %s \n", err.Error())
@@ -63,17 +78,21 @@ func Init(param *funcs.InitDeployParam) (err error) {
 		if splitIndex := strings.LastIndex(v.AgentAddress, ":"); splitIndex > 0 {
 			if addressPort, _ := strconv.Atoi(v.AgentAddress[splitIndex+1:]); addressPort > 0 {
 				log.Printf("port: %d \n", addressPort)
-				if _, ok := redirectHttpMap.Load(addressPort); !ok {
-					remoteAgentPort, _ := strconv.Atoi(v.AgentRemotePort)
-					if remoteAgentPort == 0 {
-						remoteAgentPort = addressPort
+				if existRh, ok := redirectHttpMap.Load(v.EndpointGuid); ok {
+					rhObj := existRh.(*redirectHttpObj)
+					if rhObj != nil {
+						rhObj.Destroy()
+						redirectHttpMap.Delete(v.EndpointGuid)
 					}
-					rhObj := redirectHttpObj{ListenPort: addressPort, RemoteAgentManagerIp: param.AgentManagerRemoteIp, RemoteAgentPort: remoteAgentPort}
-					go rhObj.Init()
-					log.Printf("remoteHttp init,remoteIP: %s , port:%d \n", rhObj.RemoteAgentManagerIp, rhObj.ListenPort)
-					redirectHttpMap.Store(addressPort, &rhObj)
-					log.Printf("start listen port:%d \n", addressPort)
 				}
+				remoteAgentPort, _ := strconv.Atoi(v.AgentRemotePort)
+				if remoteAgentPort == 0 {
+					remoteAgentPort = addressPort
+				}
+				rhObj := redirectHttpObj{ListenPort: addressPort, RemoteAgentManagerIp: param.AgentManagerRemoteIp, RemoteAgentPort: remoteAgentPort}
+				rhObj.Init()
+				redirectHttpMap.Store(v.EndpointGuid, &rhObj)
+				log.Printf("start listen port:%d \n", addressPort)
 			}
 		}
 	}
@@ -95,12 +114,18 @@ func Add(remoteAddress string, param map[string]string) (port int, err error) {
 		port, _ = strconv.Atoi(resp.Message[splitIndex+1:])
 	}
 	if port > 0 {
-		if _, ok := redirectHttpMap.Load(port); !ok {
-			rhObj := redirectHttpObj{ListenPort: port, RemoteAgentManagerIp: remoteAddress, RemoteAgentPort: port}
-			go rhObj.Init()
-			redirectHttpMap.Store(port, &rhObj)
-			log.Printf("start listen port:%d \n", port)
+		endpointGuid := param["guid"]
+		if existRh, ok := redirectHttpMap.Load(endpointGuid); ok {
+			rhObj := existRh.(*redirectHttpObj)
+			if rhObj != nil {
+				rhObj.Destroy()
+				redirectHttpMap.Delete(endpointGuid)
+			}
 		}
+		rhObj := redirectHttpObj{ListenPort: port, RemoteAgentManagerIp: remoteAddress, RemoteAgentPort: port}
+		rhObj.Init()
+		redirectHttpMap.Store(endpointGuid, &rhObj)
+		log.Printf("start listen port:%d \n", port)
 	}
 	return
 }
@@ -114,6 +139,18 @@ func Delete(remoteAddress string, param map[string]string) (err error) {
 	}
 	if resp.Code != 200 {
 		err = fmt.Errorf(resp.Message)
+	}
+	if err == nil {
+		endpointGuid := param["guid"]
+		if v, ok := redirectHttpMap.Load(endpointGuid); ok {
+			rhObj := v.(*redirectHttpObj)
+			if rhObj != nil {
+				log.Printf("rhObj -> port:%d rap:%d rami:%s\n", rhObj.ListenPort, rhObj.RemoteAgentPort, rhObj.RemoteAgentManagerIp)
+				rhObj.Destroy()
+				redirectHttpMap.Delete(endpointGuid)
+				log.Printf("delete redirect http done,guid:%s \n", endpointGuid)
+			}
+		}
 	}
 	return
 }
