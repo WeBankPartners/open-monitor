@@ -14,12 +14,13 @@
 
         </div>
       </div> -->
-      <form style="font-size:0;line-height:32px;">
+      <form style="font-size:0;line-height:32px;" @submit.prevent>
         <template v-for="(input_condition, index_input_condition) in pageConfig.researchConfig.input_conditions" >
           <div :key="index_input_condition" class="research-div" >
             <input v-if="input_condition.type === 'input'" v-model.trim="pageConfig.researchConfig.filters[input_condition.value]"
-                  @keyup.enter="goToAction('search', pageConfig.researchConfig.filters)" :placeholder="$t(input_condition.placeholder)"
+                  :placeholder="$t(input_condition.placeholder)"
                   type="text"
+                  @keyup.enter.stop="goToAction('search', pageConfig.researchConfig.filters, $event)"
                   class="form-control research-input c-dark"
                   @mouseover="activeInput(input_condition, index_input_condition)">
             <i class="fa fa-plus-circle clearIcon" style="font-size:12px;"
@@ -32,7 +33,7 @@
         <div class="button-div" style="font-size:12px;">
           <template v-for="(btn, index) in pageConfig.researchConfig.btn_group">
               <button :key='index' type="button" class="btn btn-sm"
-                    @click="goToAction(btn.btn_func, pageConfig.researchConfig.filters)" :class="btn.class">
+                    @click="goToAction(btn.btn_func, pageConfig.researchConfig.filters, $event)" :class="btn.class">
               <i :class="btn.btn_icon" ></i>
               {{$t(btn.btn_name)}}
             </button>
@@ -101,7 +102,8 @@
         this.cancleActiveInput()
         this.$parent.search()
       },
-      goToAction (func, filters) {
+      goToAction (func, filters, event) {
+        event.stopPropagation()
         if (func === 'search') {
           if (this.pageConfig.researchConfig.superSearch) {
             this.$refs.superSearch.search()

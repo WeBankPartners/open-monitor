@@ -20,6 +20,7 @@
     <Modal
       v-model="ruleModelConfig.isShow"
       :title="$t('m_json_regular')"
+      :mask-closable="false"
       width="840"
       >
       <div :style="{ 'max-height': MODALHEIGHT + 'px', overflow: 'auto' }">
@@ -121,6 +122,7 @@
       v-model="dbModelConfig.isShow"
       :title="$t('m_db')"
       width="680"
+      :mask-closable="false"
       footer-hide
       >
       <div :style="{ 'max-height': MODALHEIGHT + 'px', overflow: 'auto' }">
@@ -163,6 +165,7 @@
     <Modal
       v-model="addAndEditModal.isShow"
       :title="$t('button.view')"
+      :mask-closable="false"
       :width="720"
       >
       <div :style="{ 'max-height': MODALHEIGHT + 'px', overflow: 'auto' }">
