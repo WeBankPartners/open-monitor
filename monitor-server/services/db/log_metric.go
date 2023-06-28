@@ -1,11 +1,12 @@
 package db
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/WeBankPartners/go-common-lib/guid"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
-	"regexp"
+	"github.com/dlclark/regexp2"
 	"strings"
 	"time"
 )
@@ -147,7 +148,13 @@ func ListLogMetricConfig(logMetricJson, logMetricMonitor string) (result []*mode
 		x.SQL("select * from log_metric_config where log_metric_monitor=?", logMetricMonitor).Find(&logMetricConfigTable)
 	}
 	for _, v := range logMetricConfigTable {
-		result = append(result, &models.LogMetricConfigObj{Guid: v.Guid, LogMetricMonitor: v.LogMetricMonitor, LogMetricJson: v.LogMetricJson, Metric: v.Metric, DisplayName: v.DisplayName, JsonKey: v.JsonKey, Regular: v.Regular, AggType: v.AggType, Step: v.Step, StringMap: ListLogMetricStringMap(v.Guid)})
+		tmpTagConfig := []*models.LogMetricConfigTag{}
+		if v.TagConfig != "" {
+			if tmpErr := json.Unmarshal([]byte(v.TagConfig), &tmpTagConfig); tmpErr != nil {
+				log.Logger.Warn("query log metric config warning with json unmarshal error", log.String("tagConfig", v.TagConfig), log.Error(tmpErr))
+			}
+		}
+		result = append(result, &models.LogMetricConfigObj{Guid: v.Guid, LogMetricMonitor: v.LogMetricMonitor, LogMetricJson: v.LogMetricJson, Metric: v.Metric, DisplayName: v.DisplayName, JsonKey: v.JsonKey, Regular: v.Regular, AggType: v.AggType, Step: v.Step, StringMap: ListLogMetricStringMap(v.Guid), TagConfig: tmpTagConfig})
 	}
 	return result
 }
@@ -396,15 +403,13 @@ func CreateLogMetricConfig(param *models.LogMetricConfigObj) error {
 }
 
 func UpdateLogMetricConfig(param *models.LogMetricConfigObj) error {
-	if param.LogMetricMonitor == "" {
-		logMetricMonitorGuid, err := getLogMetricConfigMonitor(param.Guid)
-		if err != nil {
-			return fmt.Errorf("Query table log_metric_config fail,%s ", err.Error())
-		}
-		param.LogMetricMonitor = logMetricMonitorGuid
+	logMetricMonitorGuid, err := getLogMetricConfigMonitor(param.Guid)
+	if err != nil {
+		return fmt.Errorf("Query table log_metric_config fail,%s ", err.Error())
 	}
+	param.LogMetricMonitor = logMetricMonitorGuid
 	actions, affectEndpointGroup := getUpdateLogMetricConfigAction(param, time.Now().Format(models.DatetimeFormat))
-	err := Transaction(actions)
+	err = Transaction(actions)
 	if err == nil {
 		for _, v := range affectEndpointGroup {
 			SyncPrometheusRuleFile(v, false)
@@ -443,11 +448,16 @@ func getCreateLogMetricConfigAction(param *models.LogMetricConfigObj, nowTime st
 	if param.Guid == "" {
 		param.Guid = guid.CreateGuid()
 	}
+	tagString := ""
+	if len(param.TagConfig) > 0 {
+		tagBytes, _ := json.Marshal(param.TagConfig)
+		tagString = string(tagBytes)
+	}
 	param.Step = 10
 	if param.LogMetricJson != "" {
-		actions = append(actions, &Action{Sql: "insert into log_metric_config(guid,log_metric_json,metric,display_name,json_key,regular,agg_type,step,update_time) value (?,?,?,?,?,?,?,?,?)", Param: []interface{}{param.Guid, param.LogMetricJson, param.Metric, param.DisplayName, param.JsonKey, param.Regular, param.AggType, param.Step, nowTime}})
+		actions = append(actions, &Action{Sql: "insert into log_metric_config(guid,log_metric_json,metric,display_name,json_key,regular,agg_type,step,update_time,tag_config) value (?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{param.Guid, param.LogMetricJson, param.Metric, param.DisplayName, param.JsonKey, param.Regular, param.AggType, param.Step, nowTime, tagString}})
 	} else {
-		actions = append(actions, &Action{Sql: "insert into log_metric_config(guid,log_metric_monitor,metric,display_name,json_key,regular,agg_type,step,update_time) value (?,?,?,?,?,?,?,?,?)", Param: []interface{}{param.Guid, param.LogMetricMonitor, param.Metric, param.DisplayName, param.JsonKey, param.Regular, param.AggType, param.Step, nowTime}})
+		actions = append(actions, &Action{Sql: "insert into log_metric_config(guid,log_metric_monitor,metric,display_name,json_key,regular,agg_type,step,update_time,tag_config) value (?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{param.Guid, param.LogMetricMonitor, param.Metric, param.DisplayName, param.JsonKey, param.Regular, param.AggType, param.Step, nowTime, tagString}})
 	}
 	if param.ServiceGroup == "" || param.MonitorType == "" {
 		param.ServiceGroup, param.MonitorType = getLogMetricServiceGroup(param.LogMetricMonitor)
@@ -508,7 +518,12 @@ func getUpdateLogMetricConfigAction(param *models.LogMetricConfigObj, nowTime st
 			}
 		}
 	}
-	actions = append(actions, &Action{Sql: "update log_metric_config set metric=?,display_name=?,json_key=?,regular=?,agg_type=?,step=?,update_time=? where guid=?", Param: []interface{}{param.Metric, param.DisplayName, param.JsonKey, param.Regular, param.AggType, param.Step, nowTime, param.Guid}})
+	tagString := ""
+	if len(param.TagConfig) > 0 {
+		tagBytes, _ := json.Marshal(param.TagConfig)
+		tagString = string(tagBytes)
+	}
+	actions = append(actions, &Action{Sql: "update log_metric_config set metric=?,display_name=?,json_key=?,regular=?,agg_type=?,step=?,update_time=?,tag_config=? where guid=?", Param: []interface{}{param.Metric, param.DisplayName, param.JsonKey, param.Regular, param.AggType, param.Step, nowTime, tagString, param.Guid}})
 	actions = append(actions, &Action{Sql: "delete from log_metric_string_map where log_metric_config=?", Param: []interface{}{param.Guid}})
 	guidList := guid.CreateGuidList(len(param.StringMap))
 	for i, v := range param.StringMap {
@@ -563,18 +578,33 @@ func GetServiceGroupByLogMetricMonitor(logMetricMonitorGuid string) string {
 }
 
 func CheckRegExpMatch(param models.CheckRegExpParam) (message string) {
-	re, tmpErr := regexp.Compile(param.RegString)
+	re, tmpErr := regexp2.Compile(param.RegString, 0)
 	if tmpErr != nil {
 		return fmt.Sprintf("reg compile fail,%s ", tmpErr.Error())
 	}
-	fetchList := re.FindStringSubmatch(param.TestContext)
-	if len(fetchList) <= 1 {
+	matchString := regexp2FindStringMatch(re, param.TestContext)
+	if matchString == "" {
 		return fmt.Sprintf("can not match any data")
 	}
-	if len(fetchList) > 2 {
-		return fmt.Sprintf("match more then one data:%s ", fetchList[2:])
+	return fmt.Sprintf("success match:%s", matchString)
+}
+func regexp2FindStringMatch(re *regexp2.Regexp, lineText string) (matchString string) {
+	if re == nil {
+		return
 	}
-	return fmt.Sprintf("success match:%s", fetchList[1])
+	mat, err := re.FindStringMatch(lineText)
+	if err != nil || mat == nil {
+		return
+	}
+	for i, v := range mat.Groups() {
+		groupString := v.String()
+		if (i == 0 && groupString == lineText) || groupString == "" {
+			continue
+		}
+		matchString = groupString
+		break
+	}
+	return
 }
 
 func ImportLogMetric(param *models.LogMetricQueryObj) (err error) {

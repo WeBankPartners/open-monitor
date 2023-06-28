@@ -392,12 +392,12 @@ export default {
         let aggregate = 'none'
         let agg_step = 60
         if (item) {
-          const find = oriConfig.find(xItem => xItem.panalTitle === item.i)
+          const find = oriConfig.find(xItem => xItem.viewConfig.id === item.id)
           if (find) {
             aggregate = find.aggregate || 'none'
             agg_step = find.agg_step || 60
           }
-          let findEditData = parentRouteData.cfg.find(xItem => xItem.panalTitle === item.i)
+          let findEditData = parentRouteData.cfg.find(xItem => xItem.viewConfig.id === item.id)
           findEditData.aggregate = aggregate
           findEditData.agg_step = agg_step
         } else {

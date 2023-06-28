@@ -11,6 +11,7 @@
           ref="select"
           :placeholder="$t('requestMoreData')"
           :remote-method="getEndpointList"
+          @on-change="updateData"
           >
           <Option v-for="(option, index) in endpointList" :value="option.option_value" :key="index">
             <TagShow :tagName="option.option_type_name" :index="index"></TagShow> 
@@ -178,6 +179,11 @@ export default {
       }
       await this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.resourceSearch.api, params, (responseData) => {
         this.endpointList = responseData
+      })
+    },
+    updateData () {
+      this.$nextTick(() => {
+        this.getChartsConfig()
       })
     },
     async getChartsConfig () {

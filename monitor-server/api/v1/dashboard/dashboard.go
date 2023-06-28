@@ -11,7 +11,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
 	"os"
-	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -275,434 +274,6 @@ func GetTags(c *gin.Context) {
 	mid.ReturnSuccessData(c, chartsDto)
 }
 
-// @Summary 页面通用接口 : 获取chart数据
-// @Description 获取chart数据
-// @Produce  json
-// @Param id query int true "panel里的chart id"
-// @Param endpoint query []string true "endpoint数组, ['88B525B4-43E8-4A7A-8E11-0E664B5CB8D0']"
-// @Param metric query []string true "metric数组, ['cpmid.busy']"
-// @Param start query string true "开始时间"
-// @Param end query string false "结束时间"
-// @Param aggregate query string false "聚合类型 枚举 min max avg p95 none"
-// @Success 200
-// @Router /api/v1/dashboard/chart [get]
-func GetChartOld(c *gin.Context) {
-	paramId, err := strconv.Atoi(c.Query("id"))
-	if err != nil || paramId <= 0 {
-		mid.ReturnParamTypeError(c, "id", "int")
-		return
-	}
-	err, charts := db.GetCharts(0, paramId, 0)
-	if err != nil || len(charts) <= 0 {
-		mid.ReturnQueryTableError(c, "chart", err)
-		return
-	}
-	chart := *charts[0]
-	var eOption m.EChartOption
-	var query m.QueryMonitorData
-	eOption.Id = paramId
-	eOption.Title = chart.Title
-	if chart.Endpoint == "" {
-		query.Endpoint = c.QueryArray("endpoint[]")
-	} else {
-		query.Endpoint = strings.Split(chart.Endpoint, "^")
-	}
-	if len(query.Endpoint) <= 0 {
-		mid.ReturnValidateError(c, "Parameter \"endpoint\" validation failed")
-		return
-	}
-	query.Metric = c.QueryArray("metric[]")
-	if chart.Metric != "" && len(query.Metric) > 0 {
-		if !strings.Contains(query.Metric[0], "/") {
-			query.Metric = strings.Split(chart.Metric, "^")
-		}
-	}
-	paramTime := c.Query("time")
-	paramStart := c.Query("start")
-	paramEnd := c.Query("end")
-	if paramTime != "" && paramStart == "" {
-		paramStart = paramTime
-	}
-	start, err := strconv.ParseInt(paramStart, 10, 64)
-	if err != nil {
-		mid.ReturnParamTypeError(c, "start", "int")
-		return
-	} else {
-		if start < 0 {
-			start = time.Now().Unix() + start
-		}
-		query.Start = start
-	}
-	query.End = time.Now().Unix()
-	if paramEnd != "" {
-		end, err := strconv.ParseInt(paramEnd, 10, 64)
-		if err == nil && end <= query.End {
-			query.End = end
-		}
-	}
-	err, query.PromQ = db.GetPromMetric(query.Endpoint, query.Metric[0])
-	if err != nil {
-		mid.ReturnQueryTableError(c, "prom_ql", err)
-		return
-	}
-	query.Legend = chart.Legend
-	log.Logger.Debug("Query param", log.StringList("endpoint", query.Endpoint), log.StringList("metric", query.Metric), log.Int64("start", query.Start), log.Int64("end", query.End), log.String("promQl", query.PromQ))
-	serials := ds.PrometheusData(&query)
-	agg := db.CheckAggregate(query.Start, query.End, query.Endpoint[0], 0, len(serials))
-	for _, s := range serials {
-		if strings.Contains(s.Name, "$metric") {
-			s.Name = strings.Replace(s.Name, "$metric", query.Metric[0], -1)
-		}
-		eOption.Legend = append(eOption.Legend, s.Name)
-		if agg > 1 {
-			aggType := chart.AggType
-			if c.Query("agg") != "" {
-				aggType = c.Query("agg")
-			}
-			if aggType != "none" && aggType != "" {
-				s.Data = db.Aggregate(s.Data, agg, aggType)
-			}
-		}
-	}
-	eOption.Xaxis = make(map[string]interface{})
-	eOption.Yaxis = m.YaxisModel{Unit: chart.Unit}
-	if len(serials) > 0 {
-		eOption.Series = serials
-	} else {
-		eOption.Series = []*m.SerialModel{}
-	}
-	mid.ReturnSuccessData(c, eOption)
-}
-
-func GetChart(c *gin.Context) {
-	requestBody, err := ioutil.ReadAll(c.Request.Body)
-	if err != nil {
-		mid.ReturnBodyError(c, err)
-		return
-	}
-	var paramConfig []m.ChartConfigObj
-	err = json.Unmarshal(requestBody, &paramConfig)
-	if err != nil {
-		mid.ReturnRequestJsonError(c, err)
-		return
-	}
-	if len(paramConfig) == 0 {
-		mid.ReturnParamEmptyError(c, "")
-		return
-	}
-	var eOption m.EChartOption
-	var query m.QueryMonitorData
-	var compareLegend string
-	var sameEndpoint bool
-	var aggType string
-	var subStartSecond, subEndSecond int64
-	// validate config time
-	if paramConfig[0].CompareFirstStart != "" && paramConfig[0].CompareFirstEnd != "" {
-		st, err := time.Parse(m.DateFormatWithZone, fmt.Sprintf("%s 00:00:00 "+m.DefaultLocalTimeZone, paramConfig[0].CompareFirstStart))
-		if err != nil {
-			mid.ReturnParamTypeError(c, "compare_first_start", "2006-01-02")
-			return
-		}
-		et, err := time.Parse(m.DateFormatWithZone, fmt.Sprintf("%s 23:59:59 "+m.DefaultLocalTimeZone, paramConfig[0].CompareFirstEnd))
-		if err != nil {
-			mid.ReturnParamTypeError(c, "compare_first_end", "2006-01-02")
-			return
-		}
-		if paramConfig[0].Start != "" && paramConfig[0].End != "" {
-			query.Start, _ = strconv.ParseInt(paramConfig[0].Start, 10, 64)
-			query.End, _ = strconv.ParseInt(paramConfig[0].End, 10, 64)
-			subStartSecond = query.Start - st.Unix()
-			subEndSecond = query.End - st.Unix()
-		} else {
-			query.Start = st.Unix()
-			query.End = et.Unix()
-		}
-		compareLegend = fmt.Sprintf("%s_%s", paramConfig[0].CompareFirstStart, paramConfig[0].CompareFirstEnd)
-	} else {
-		if paramConfig[0].Time != "" && paramConfig[0].Start == "" {
-			paramConfig[0].Start = paramConfig[0].Time
-		}
-		start, err := strconv.ParseInt(paramConfig[0].Start, 10, 64)
-		if err != nil {
-			mid.ReturnParamTypeError(c, "start", "intString")
-			return
-		} else {
-			if start < 0 {
-				start = time.Now().Unix() + start
-			}
-			query.Start = start
-		}
-		query.End = time.Now().Unix()
-		if paramConfig[0].End != "" {
-			end, err := strconv.ParseInt(paramConfig[0].End, 10, 64)
-			if err == nil && end <= query.End {
-				query.End = end
-			}
-		}
-	}
-	// custom or from mysql
-	var querys []m.QueryMonitorData
-	step := 10
-	var firstEndpoint, unit, clusterAddress string
-	var compareSubTime int64
-	var compareSecondLegend string
-	if paramConfig[0].Id > 0 {
-		// Handle config dashboard
-		sameEndpoint = true
-		recordMap := make(map[string]bool)
-		firstEndpointObj := m.EndpointTable{Guid: paramConfig[0].Endpoint}
-		db.GetEndpoint(&firstEndpointObj)
-		step = firstEndpointObj.Step
-		clusterAddress = db.GetClusterAddress(firstEndpointObj.Cluster)
-		// one endpoint -> metrics
-		for _, tmpParamConfig := range paramConfig {
-			err, charts := db.GetCharts(0, tmpParamConfig.Id, 0)
-			if err != nil || len(charts) <= 0 {
-				mid.ReturnQueryTableError(c, "chart", err)
-				return
-			}
-			chart := *charts[0]
-			tmpIndex := fmt.Sprintf("%d^%s", tmpParamConfig.Id, tmpParamConfig.Endpoint)
-			if _, b := recordMap[tmpIndex]; b {
-				if chart.Metric != "db_monitor_count" {
-					continue
-				}
-			}
-			recordMap[tmpIndex] = true
-			aggType = chart.AggType
-			eOption.Id = chart.Id
-			eOption.Title = chart.Title
-			if tmpParamConfig.Title != "" {
-				eOption.Title = tmpParamConfig.Title
-			}
-			unit = chart.Unit
-			if tmpParamConfig.Endpoint == "" {
-				mid.ReturnParamEmptyError(c, "endpoint")
-				return
-			}
-			if strings.Contains(tmpParamConfig.Metric, "/") {
-				chart.Metric = tmpParamConfig.Metric
-			}
-			if chart.Metric == "app.metric" {
-				chart.Metric = tmpParamConfig.Metric
-			}
-			for _, v := range strings.Split(chart.Metric, "^") {
-				var tmpPromQl string
-				if chart.Metric == "db_monitor_count" && tmpParamConfig.Metric != "db_monitor_count" {
-					err, tmpPromQl = db.GetDbPromMetric(tmpParamConfig.Endpoint, tmpParamConfig.Metric, chart.Legend)
-				} else {
-					err, tmpPromQl = db.GetPromMetric([]string{tmpParamConfig.Endpoint}, v)
-				}
-				if err != nil {
-					log.Logger.Error("Get prometheus metric failed", log.Error(err))
-					continue
-				}
-				tmpLegend := chart.Legend
-				if len(paramConfig) > 1 && strings.Contains(chart.Legend, "metric") {
-					tmpLegend = "$custom"
-				}
-				querys = append(querys, m.QueryMonitorData{Start: query.Start, End: query.End, PromQ: tmpPromQl, Legend: tmpLegend, Metric: []string{v}, Endpoint: []string{tmpParamConfig.Endpoint}, CompareLegend: compareLegend, SameEndpoint: sameEndpoint, Step: step, Cluster: clusterAddress})
-				if paramConfig[0].CompareSecondStart != "" && paramConfig[0].CompareSecondEnd != "" {
-					st, sErr := time.Parse(m.DateFormatWithZone, fmt.Sprintf("%s 00:00:00 "+m.DefaultLocalTimeZone, paramConfig[0].CompareSecondStart))
-					et, eErr := time.Parse(m.DateFormatWithZone, fmt.Sprintf("%s 23:59:59 "+m.DefaultLocalTimeZone, paramConfig[0].CompareSecondEnd))
-					stTimestamp := st.Unix()
-					etTimestamp := et.Unix()
-					if sErr == nil && eErr == nil {
-						if subStartSecond > 0 && subEndSecond > 0 {
-							stTimestamp = st.Unix() + subStartSecond
-							etTimestamp = st.Unix() + subEndSecond
-						} else {
-							if (et.Unix() - st.Unix()) != (query.End - query.Start) {
-								etTimestamp = stTimestamp + (query.End - query.Start)
-							}
-						}
-						compareSubTime = stTimestamp - query.Start
-						compareSecondLegend = fmt.Sprintf("%s_%s", paramConfig[0].CompareSecondStart, paramConfig[0].CompareSecondEnd)
-						querys = append(querys, m.QueryMonitorData{Start: stTimestamp, End: etTimestamp, PromQ: tmpPromQl, Legend: tmpLegend, Metric: []string{v}, Endpoint: []string{tmpParamConfig.Endpoint}, CompareLegend: compareSecondLegend, SameEndpoint: sameEndpoint, Step: step, Cluster: clusterAddress})
-					}
-				}
-			}
-		}
-	} else {
-		// Handle custom dashboard
-		var customLegend, tmpEndpointParam, tmpMetricParam string
-		var diffEndpoint, diffMetric bool
-		for i, v := range paramConfig {
-			if v.PromQl == "" {
-				_, tmpPromQL := db.GetPromMetric([]string{v.Endpoint}, v.Metric)
-				if tmpPromQL == "" {
-					continue
-				} else {
-					paramConfig[i].PromQl = tmpPromQL
-				}
-			}
-			if i == 0 {
-				tmpEndpointParam = v.Endpoint
-				tmpMetricParam = v.Metric
-			} else {
-				if tmpEndpointParam != v.Endpoint {
-					diffEndpoint = true
-				}
-				if tmpMetricParam != v.Metric {
-					diffMetric = true
-				}
-			}
-		}
-		if diffEndpoint && !diffMetric {
-			customLegend = "$custom_endpoint"
-		}
-		if !diffEndpoint && diffMetric {
-			customLegend = "$custom_metric"
-		}
-		if diffEndpoint == diffMetric {
-			customLegend = "$custom"
-		}
-		for _, v := range paramConfig {
-			if v.PromQl == "" {
-				continue
-			}
-			endpointObj := m.EndpointTable{Guid: v.Endpoint}
-			if v.Endpoint != "" {
-				db.GetEndpoint(&endpointObj)
-				clusterAddress = db.GetClusterAddress(endpointObj.Cluster)
-			}
-			if strings.Contains(v.PromQl, "$address") {
-				if v.Endpoint == "" {
-					continue
-				}
-				if endpointObj.Address == "" {
-					continue
-				}
-				if endpointObj.AddressAgent != "" {
-					v.PromQl = strings.Replace(v.PromQl, "$address", endpointObj.AddressAgent, -1)
-				} else {
-					v.PromQl = strings.Replace(v.PromQl, "$address", endpointObj.Address, -1)
-				}
-				step = endpointObj.Step
-			}
-			if strings.Contains(v.PromQl, "$guid") {
-				v.PromQl = strings.Replace(v.PromQl, "$guid", v.Endpoint, -1)
-			}
-			if strings.Contains(v.PromQl, "$pod") {
-				v.PromQl = strings.Replace(v.PromQl, "$pod", endpointObj.Name[len(endpointObj.ExportVersion)+1:], -1)
-			}
-			if strings.Contains(v.PromQl, "$k8s_namespace") {
-				v.PromQl = strings.Replace(v.PromQl, "$k8s_namespace", endpointObj.ExportVersion, -1)
-			}
-			if strings.Contains(v.PromQl, "$k8s_cluster") {
-				v.PromQl = strings.Replace(v.PromQl, "$k8s_cluster", endpointObj.OsType, -1)
-			}
-			if strings.Contains(v.PromQl, "$") {
-				re, _ := regexp.Compile("=\"[\\$]+[^\"]+\"")
-				fetchTag := re.FindAll([]byte(v.PromQl), -1)
-				for _, vv := range fetchTag {
-					v.PromQl = strings.Replace(v.PromQl, string(vv), "=~\".*\"", -1)
-				}
-			}
-			querys = append(querys, m.QueryMonitorData{Start: query.Start, End: query.End, PromQ: v.PromQl, Legend: customLegend, Metric: []string{v.Metric}, Endpoint: []string{v.Endpoint}, Step: step, Cluster: clusterAddress})
-		}
-	}
-	if len(querys) == 0 {
-		mid.ReturnHandleError(c, "Query list is empty", nil)
-		return
-	}
-	var serials []*m.SerialModel
-	archiveQueryFlag := false
-	if query.Start < (time.Now().Unix()-m.Config().ArchiveMysql.LocalStorageMaxDay*86400) && db.ArchiveEnable {
-		archiveQueryFlag = true
-	}
-	appendDataFlag := false
-	for _, v := range querys {
-		log.Logger.Debug("Query param", log.StringList("endpoint", v.Endpoint), log.StringList("metric", v.Metric), log.Int64("start", v.Start), log.Int64("end", v.End), log.String("promQl", v.PromQ))
-		if !archiveQueryFlag {
-			tmpSerials := ds.PrometheusData(&v)
-			if len(tmpSerials) > 0 {
-				if len(tmpSerials[0].Data) > 0 {
-					tmpSerialEnd := int64(tmpSerials[0].Data[0][0]) / 1000
-					if tmpSerialEnd > (query.Start + 120) {
-						_, _, tmpArchiveSerials := db.GetArchiveData(&m.QueryMonitorData{Start: v.Start, End: tmpSerialEnd, Endpoint: v.Endpoint, Metric: v.Metric, Legend: v.Legend, CompareLegend: v.CompareLegend, SameEndpoint: v.SameEndpoint}, paramConfig[0].Aggregate)
-						for _, tmpSerial := range tmpArchiveSerials {
-							if len(tmpSerial.Data) > 0 {
-								appendDataFlag = true
-								for si, vv := range tmpSerials {
-									if tmpSerial.Name == vv.Name {
-										tmpSerials[si].Data = append(tmpSerial.Data, vv.Data...)
-									}
-								}
-							}
-						}
-					}
-				}
-			} else {
-				err, step, tmpSerials = db.GetArchiveData(&m.QueryMonitorData{Start: v.Start, End: v.End, Endpoint: v.Endpoint, Metric: v.Metric, Legend: v.Legend, CompareLegend: v.CompareLegend, SameEndpoint: v.SameEndpoint}, paramConfig[0].Aggregate)
-				if err != nil {
-					log.Logger.Error("Prometheus no data,try to get archive data error", log.Error(err))
-				}
-			}
-			for _, vv := range tmpSerials {
-				serials = append(serials, vv)
-			}
-		} else {
-			err, tmpStep, tmpSerials := db.GetArchiveData(&v, paramConfig[0].Aggregate)
-			if err != nil {
-				mid.ReturnQueryTableError(c, "prometheus_archive", err)
-				return
-			}
-			for _, vv := range tmpSerials {
-				serials = append(serials, vv)
-			}
-			step = tmpStep
-		}
-	}
-	// agg
-	agg := 0
-	if !appendDataFlag {
-		agg = db.CheckAggregate(query.Start, query.End, firstEndpoint, step, len(serials))
-	}
-	//var firstSerialTime float64
-	eOption.Series = []*m.SerialModel{}
-	processDisplayMap := db.GetProcessDisplayMap(paramConfig[0].Endpoint)
-	for i, s := range serials {
-		if strings.Contains(s.Name, "$metric") {
-			queryIndex := i
-			if i >= len(querys) {
-				queryIndex = len(querys) - 1
-			}
-			s.Name = strings.Replace(s.Name, "$metric", querys[queryIndex].Metric[0], -1)
-		}
-		if processName, b := processDisplayMap[s.Name]; b {
-			s.Name = processName
-		}
-		eOption.Legend = append(eOption.Legend, s.Name)
-		if eOption.Title == "${auto}" {
-			eOption.Title = s.Name[:strings.Index(s.Name, "{")]
-		}
-		if agg > 1 && len(s.Data) > 300 {
-			if paramConfig[0].Aggregate != "" {
-				aggType = paramConfig[0].Aggregate
-			}
-			if aggType == "" {
-				aggType = "avg"
-			}
-			if aggType != "none" {
-				s.Data = db.Aggregate(s.Data, agg, aggType)
-			}
-		}
-		if compareSubTime > 0 {
-			if strings.Contains(s.Name, compareSecondLegend) {
-				s.Data = db.CompareSubData(s.Data, float64(compareSubTime)*1000)
-			}
-		}
-		_, tmpJsonMarshalErr := json.Marshal(s)
-		if tmpJsonMarshalErr == nil {
-			eOption.Series = append(eOption.Series, s)
-		}
-	}
-	eOption.Xaxis = make(map[string]interface{})
-	eOption.Yaxis = m.YaxisModel{Unit: unit}
-	mid.ReturnSuccessData(c, eOption)
-}
-
 func GetPieChart(c *gin.Context) {
 	requestBody, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
@@ -729,10 +300,38 @@ func GetPieChart(c *gin.Context) {
 		mid.ReturnHandleError(c, err.Error(), err)
 		return
 	}
+	pieMap := make(map[string]*m.EChartPieObj)
+	var legendList, newLegendList []string
 	for _, v := range queryResultList {
-		resultPieData.Legend = append(resultPieData.Legend, v.PieData.Legend...)
-		resultPieData.Data = append(resultPieData.Data, v.PieData.Data...)
+		for i, tmpLegend := range v.PieData.Legend {
+			if existData, ok := pieMap[tmpLegend]; ok {
+				if v.PieAggType == "new" {
+					v.PieAggType = "avg"
+				}
+				existData.SourceValue = append(existData.SourceValue, v.PieData.Data[i].SourceValue...)
+				existData.Value = m.CalcData(existData.SourceValue, v.PieAggType)
+			} else {
+				pieMap[tmpLegend] = v.PieData.Data[i]
+				legendList = append(legendList, tmpLegend)
+			}
+		}
+		//resultPieData.Legend = append(resultPieData.Legend, v.PieData.Legend...)
+		//resultPieData.Data = append(resultPieData.Data, v.PieData.Data...)
 	}
+	for _, legend := range legendList {
+		if v, b := pieMap[legend]; b {
+			if v.Value <= 0 {
+				continue
+			}
+			newLegendList = append(newLegendList, legend)
+			v.SourceValue = []float64{}
+			resultPieData.Data = append(resultPieData.Data, v)
+		}
+		//} else {
+		//	resultPieData.Data = append(resultPieData.Data, &m.EChartPieObj{Name: legend, Value: 0})
+		//}
+	}
+	resultPieData.Legend = newLegendList
 	mid.ReturnSuccessData(c, resultPieData)
 }
 
@@ -741,6 +340,9 @@ func getPieData(paramConfig *m.PieChartConfigObj) (result []*m.QueryMonitorData,
 	if paramConfig.Metric == "" {
 		err = fmt.Errorf("metric can not empty")
 		return
+	}
+	if paramConfig.PieAggType == "" {
+		paramConfig.PieAggType = "sum"
 	}
 	var endpointList []*m.EndpointNewTable
 	if paramConfig.AppObject != "" && paramConfig.AppObjectEndpointType != "" {
@@ -763,11 +365,25 @@ func getPieData(paramConfig *m.PieChartConfigObj) (result []*m.QueryMonitorData,
 		err = fmt.Errorf("endpoint can not empty ")
 		return
 	}
-	queryEnd := time.Now().Unix()
-	queryStart := queryEnd - 120
+	var queryStart, queryEnd int64
+	if paramConfig.PieAggType == "new" {
+		queryEnd = time.Now().Unix()
+		queryStart = queryEnd - 120
+	} else {
+		if paramConfig.Start > 0 && paramConfig.End > 0 {
+			queryEnd = paramConfig.End
+			queryStart = paramConfig.Start
+		} else if paramConfig.TimeSecond < 0 {
+			queryEnd = time.Now().Unix()
+			queryStart = queryEnd + paramConfig.TimeSecond
+		} else {
+			queryEnd = time.Now().Unix()
+			queryStart = queryEnd - 3600
+		}
+	}
 	// fetch promQL
 	if paramConfig.PromQl == "" {
-		tmpPromQL, _ := db.GetPromQLByMetric(paramConfig.Metric, paramConfig.AppObjectEndpointType)
+		tmpPromQL, _ := db.GetPromQLByMetric(paramConfig.Metric, paramConfig.AppObjectEndpointType, paramConfig.AppObject)
 		if tmpPromQL == "" {
 			err = fmt.Errorf("metric:%s can not get any prom_ql ", paramConfig.Metric)
 			return
@@ -775,20 +391,18 @@ func getPieData(paramConfig *m.PieChartConfigObj) (result []*m.QueryMonitorData,
 			paramConfig.PromQl = tmpPromQL
 		}
 	}
+	promMap := make(map[string]bool)
 	for _, endpoint := range endpointList {
 		tmpPromQL := db.ReplacePromQlKeyword(paramConfig.PromQl, paramConfig.Metric, endpoint)
-		result = append(result, &m.QueryMonitorData{ChartType: "pie", Start: queryStart, End: queryEnd, PromQ: tmpPromQL, Legend: "", Metric: []string{paramConfig.Metric}, Endpoint: []string{endpoint.Guid}, Step: endpoint.Step, Cluster: endpoint.Cluster, PieMetricType: paramConfig.PieMetricType})
+		if _, b := promMap[tmpPromQL]; b {
+			continue
+		}
+		promMap[tmpPromQL] = true
+		result = append(result, &m.QueryMonitorData{ChartType: "pie", Start: queryStart, End: queryEnd, PromQ: tmpPromQL, Legend: "", Metric: []string{paramConfig.Metric}, Endpoint: []string{endpoint.Guid}, Step: endpoint.Step, Cluster: endpoint.Cluster, PieMetricType: paramConfig.PieMetricType, PieAggType: paramConfig.PieAggType})
 	}
 	if paramConfig.PieMetricType == "value" {
 		if len(result) == 0 {
 			return
-		}
-		if paramConfig.Start > 0 && paramConfig.End > 0 {
-			result[0].End = paramConfig.End
-			result[0].Start = paramConfig.Start
-		} else if paramConfig.TimeSecond < 0 {
-			result[0].End = time.Now().Unix()
-			result[0].Start = result[0].End + paramConfig.TimeSecond
 		}
 		serialList := ds.PrometheusData(result[0])
 		if len(serialList) > 0 {
@@ -810,6 +424,7 @@ func getPieData(paramConfig *m.PieChartConfigObj) (result []*m.QueryMonitorData,
 		}
 	} else {
 		for _, queryObj := range result {
+			log.Logger.Info("queryObj", log.JsonObj("data", queryObj))
 			ds.PrometheusData(queryObj)
 		}
 	}
