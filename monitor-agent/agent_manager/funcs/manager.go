@@ -184,7 +184,7 @@ func LoadDeployProcess() {
 			return
 		}
 		//agentMangerLocalMode := strings.ToLower(os.Getenv("MONITOR_AGENT_MANAGER_REMOTE_MODE"))
-		agentMangerLocalMode := Config().RemoteMode
+		agentMangerLocalMode := strings.ToLower(Config().RemoteMode)
 		if agentMangerLocalMode == "y" || agentMangerLocalMode == "yes" || agentMangerLocalMode == "true" {
 			RemoteMode = true
 			return
@@ -255,8 +255,6 @@ func CleanDeployDir() {
 }
 
 func InitDeployDir(param []*AgentManagerTable) error {
-	paramByte, _ := json.Marshal(param)
-	log.Printf("init deploy dir : param -> %s \n", string(paramByte))
 	var tmpDeleteList []string
 	for k, v := range GlobalProcessMap {
 		alive := false
