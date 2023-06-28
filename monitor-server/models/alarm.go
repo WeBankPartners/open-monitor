@@ -101,6 +101,8 @@ type AlarmProblemQuery struct {
 	CustomMessage string    `json:"custom_message"`
 	EndpointTags  string    `json:"endpoint_tags"`
 	AlarmStrategy string    `json:"alarm_strategy"`
+	Title         string    `json:"title"`
+	SystemId      string    `json:"system_id"`
 }
 
 type UpdateAlarmCustomMessageDto struct {
@@ -438,12 +440,13 @@ type QueryProblemAlarmDto struct {
 }
 
 type QueryHistoryAlarmParam struct {
-	Start    int64  `json:"start" binding:"required"`
-	End      int64  `json:"end" binding:"required"`
-	Filter   string `json:"filter" binding:"required"`
-	Endpoint string `json:"endpoint"`
-	Metric   string `json:"metric"`
-	Priority string `json:"priority"`
+	Start    int64     `json:"start" binding:"required"`
+	End      int64     `json:"end" binding:"required"`
+	Filter   string    `json:"filter" binding:"required"`
+	Endpoint string    `json:"endpoint"`
+	Metric   string    `json:"metric"`
+	Priority string    `json:"priority"`
+	Page     *PageInfo `json:"page"`
 }
 
 type AlertWindowTable struct {

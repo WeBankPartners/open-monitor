@@ -85,6 +85,7 @@ func UpdateEndpoint(c *gin.Context) {
 		middleware.ReturnValidateError(c, "Param guid can not empty")
 		return
 	}
+
 	defer func() {
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
@@ -136,7 +137,7 @@ func UpdateEndpoint(c *gin.Context) {
 		} else {
 			newEndpoint = models.EndpointNewTable{Guid: endpointObj.Guid, AgentAddress: endpointObj.AgentAddress, EndpointAddress: endpointObj.EndpointAddress, Step: param.Step, ExtendParam: endpointObj.ExtendParam}
 		}
-	}else{
+	} else {
 		newEndpoint.Step = param.Step
 	}
 	log.Logger.Info("new endpoint", log.JsonObj("endpoint", newEndpoint))
@@ -216,17 +217,9 @@ func windowsEndpointUpdate(param *models.RegisterParamNew, endpoint *models.Endp
 }
 
 func pingEndpointUpdate(param *models.RegisterParamNew, endpoint *models.EndpointNewTable) (newEndpoint models.EndpointNewTable, err error) {
-	var extParamObj models.EndpointExtendParamObj
-	err = json.Unmarshal([]byte(endpoint.ExtendParam), &extParamObj)
-	if err != nil {
-		return newEndpoint, fmt.Errorf("json unmarhsal extendParam fail,%s ", err.Error())
-	}
-	if param.ProxyExporter == extParamObj.ProxyExporter {
-		return
-	}
-	newExtParamObj := models.EndpointExtendParamObj{Enable: true, ProxyExporter: param.ProxyExporter}
+	newExtParamObj := models.EndpointExtendParamObj{Enable: true, ExportAddress: param.ExportAddress}
 	b, _ := json.Marshal(newExtParamObj)
-	newEndpoint = models.EndpointNewTable{Guid: endpoint.Guid, EndpointAddress: endpoint.EndpointAddress, AgentAddress: endpoint.AgentAddress, ExtendParam: string(b)}
+	newEndpoint = models.EndpointNewTable{Guid: endpoint.Guid, Ip: param.Ip, EndpointAddress: endpoint.EndpointAddress, AgentAddress: param.ExportAddress, ExtendParam: string(b)}
 	return
 }
 
@@ -236,26 +229,18 @@ func telnetEndpointUpdate(param *models.RegisterParamNew, endpoint *models.Endpo
 			return
 		} else {
 			newAddress := fmt.Sprintf("%s:%s", param.Ip, param.Port)
-			newExtParamObj := models.EndpointExtendParamObj{Enable: true, Ip: param.Ip, Port: param.Port}
+			newExtParamObj := models.EndpointExtendParamObj{Enable: true, Ip: param.Ip, Port: param.Port, ExportAddress: param.ExportAddress}
 			b, _ := json.Marshal(newExtParamObj)
-			newEndpoint = models.EndpointNewTable{Guid: endpoint.Guid, AgentAddress: newAddress, EndpointAddress: newAddress, ExtendParam: string(b)}
+			newEndpoint = models.EndpointNewTable{Guid: endpoint.Guid, AgentAddress: param.ExportAddress, EndpointAddress: newAddress, ExtendParam: string(b)}
 		}
 	}
 	return
 }
 
 func httpEndpointUpdate(param *models.RegisterParamNew, endpoint *models.EndpointNewTable) (newEndpoint models.EndpointNewTable, err error) {
-	var extParamObj models.EndpointExtendParamObj
-	err = json.Unmarshal([]byte(endpoint.ExtendParam), &extParamObj)
-	if err != nil {
-		return newEndpoint, fmt.Errorf("json unmarhsal extendParam fail,%s ", err.Error())
-	}
-	if extParamObj.HttpUrl == param.Url && extParamObj.HttpMethod == param.Method {
-		return
-	}
-	newExtParamObj := models.EndpointExtendParamObj{Enable: true, HttpUrl: param.Url, HttpMethod: param.Method}
+	newExtParamObj := models.EndpointExtendParamObj{Enable: true, HttpUrl: param.Url, HttpMethod: param.Method, ExportAddress: param.ExportAddress}
 	b, _ := json.Marshal(newExtParamObj)
-	newEndpoint = models.EndpointNewTable{Guid: endpoint.Guid, EndpointAddress: endpoint.EndpointAddress, AgentAddress: endpoint.AgentAddress, ExtendParam: string(b)}
+	newEndpoint = models.EndpointNewTable{Guid: endpoint.Guid, EndpointAddress: endpoint.EndpointAddress, AgentAddress: param.ExportAddress, ExtendParam: string(b)}
 	return
 }
 

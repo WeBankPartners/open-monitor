@@ -21,6 +21,7 @@ var (
 	portLock         = new(sync.RWMutex)
 	portList         = []int{}
 	autoRestartTime  = 0
+	RemoteMode       = false
 )
 
 func StartManager() {
@@ -68,33 +69,47 @@ func StartManager() {
 func GetPort() int {
 	portLock.Lock()
 	defer portLock.Unlock()
-	var tmpPort int
-	maxNum := 0
+	var resultPort int
+	existMaxPort := 0
+	configMinPort := Config().Deploy.StartPort
+	configMaxPort := configMinPort + 10000
 	if len(portList) == 0 {
-		tmpPort = Config().Deploy.StartPort
+		resultPort = configMinPort
 	} else {
-		maxNum = portList[len(portList)-1]
-		tmpPort = maxNum + 1
+		existMaxPort = portList[len(portList)-1]
+		for _, v := range portList {
+			if existMaxPort < v {
+				existMaxPort = v
+			}
+		}
+		resultPort = existMaxPort + 1
 	}
 	b, err := exec.Command(osBashCommand, "-c", "netstat -ltn | awk '{print $4}'").Output()
 	if err != nil {
-		portList = append(portList, tmpPort)
-		return tmpPort
+		portList = append(portList, resultPort)
+		return resultPort
 	}
+	sysPortMap := make(map[int]int)
 	for _, v := range strings.Split(string(b), "\n") {
 		if strings.Contains(v, ":") {
 			portString := strings.Split(v, ":")[strings.Count(v, ":")]
-			sysMaxPort, _ := strconv.Atoi(portString)
-			if sysMaxPort > tmpPort {
-				tmpPort = sysMaxPort
+			sysPort, _ := strconv.Atoi(portString)
+			if sysPort >= configMaxPort && sysPort < configMinPort {
+				continue
+			}
+			sysPortMap[sysPort] = 1
+		}
+	}
+	if _, ok := sysPortMap[resultPort]; ok {
+		for i := resultPort; i < configMaxPort; i++ {
+			if _, existFlag := sysPortMap[i]; !existFlag {
+				resultPort = i
+				break
 			}
 		}
 	}
-	if tmpPort != maxNum+1 {
-		tmpPort = tmpPort + 1
-	}
-	portList = append(portList, tmpPort)
-	return tmpPort
+	portList = append(portList, resultPort)
+	return resultPort
 }
 
 func containsInt(i int, l []int) bool {
@@ -168,6 +183,12 @@ func LoadDeployProcess() {
 			log.Printf("gob decode process.data error : %v \n", err)
 			return
 		}
+		//agentMangerLocalMode := strings.ToLower(os.Getenv("MONITOR_AGENT_MANAGER_REMOTE_MODE"))
+		agentMangerLocalMode := strings.ToLower(Config().RemoteMode)
+		if agentMangerLocalMode == "y" || agentMangerLocalMode == "yes" || agentMangerLocalMode == "true" {
+			RemoteMode = true
+			return
+		}
 		for _, v := range processList {
 			var p ProcessObj
 			err = json.Unmarshal([]byte(v), &p)
@@ -234,8 +255,6 @@ func CleanDeployDir() {
 }
 
 func InitDeployDir(param []*AgentManagerTable) error {
-	paramByte, _ := json.Marshal(param)
-	log.Printf("init deploy dir : param -> %s \n", string(paramByte))
 	var tmpDeleteList []string
 	for k, v := range GlobalProcessMap {
 		alive := false
@@ -258,6 +277,7 @@ func InitDeployDir(param []*AgentManagerTable) error {
 	for _, v := range tmpDeleteList {
 		DeleteDeploy(v)
 	}
+	var err error
 	for _, v := range param {
 		isExist := false
 		for _, vv := range GlobalProcessMap {
@@ -277,22 +297,30 @@ func InitDeployDir(param []*AgentManagerTable) error {
 				tmpParam["instance_server"] = v.InstanceAddress[:strings.Index(v.InstanceAddress, ":")]
 				tmpParam["instance_port"] = v.InstanceAddress[strings.Index(v.InstanceAddress, ":")+1:]
 			} else {
-				return fmt.Errorf("guid: %s instance address illegal: %s ", v.EndpointGuid, v.InstanceAddress)
+				err = fmt.Errorf("guid: %s instance address illegal: %s ", v.EndpointGuid, v.InstanceAddress)
+				continue
 			}
 			if strings.Contains(v.AgentAddress, ":") {
 				tmpParam["port"] = v.AgentAddress[strings.Index(v.AgentAddress, ":")+1:]
 			} else {
-				return fmt.Errorf("guid: %s agent address illegal: %s ", v.EndpointGuid, v.AgentAddress)
+				err = fmt.Errorf("guid: %s agent address illegal: %s ", v.EndpointGuid, v.AgentAddress)
+				continue
 			}
 			tmpParam["auth_user"] = v.User
 			tmpParam["auth_password"] = v.Password
 			configHash := fmt.Sprintf("%s_%s_%s", v.InstanceAddress, v.User, v.Password)
-			_, err := AddDeploy(v.BinPath, v.ConfigFile, v.EndpointGuid, tmpParam, configHash)
-			if err != nil {
-				return err
+			_, deployErr := AddDeploy(v.BinPath, v.ConfigFile, v.EndpointGuid, tmpParam, configHash)
+			if deployErr != nil {
+				err = deployErr
+				continue
 			}
 		}
 	}
+	if err != nil {
+		log.Printf("init deploy dir meet error but continue,message:%s  \n", err.Error())
+	} else {
+		log.Printf("init deploy dir done \n")
+	}
 	SaveDeployProcess()
-	return nil
+	return err
 }

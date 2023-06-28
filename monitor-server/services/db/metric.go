@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func MetricList(id string, endpointType string) (result []*models.PromMetricTable, err error) {
+func MetricList(id string, endpointType, serviceGroup string) (result []*models.PromMetricTable, err error) {
 	params := []interface{}{}
 	baseSql := "select guid as id,metric,monitor_type as metric_type,prom_expr as prom_ql from metric where 1=1 "
 	if id != "" {
@@ -18,6 +18,10 @@ func MetricList(id string, endpointType string) (result []*models.PromMetricTabl
 	if endpointType != "" {
 		baseSql += " and monitor_type=? "
 		params = append(params, endpointType)
+	}
+	if serviceGroup != "" {
+		baseSql += " and service_group=? "
+		params = append(params, serviceGroup)
 	}
 	result = []*models.PromMetricTable{}
 	err = x.SQL(baseSql, params...).Find(&result)
@@ -100,7 +104,7 @@ func getMetricUpdateAction(oldGuid string, newMetricObj *models.MetricTable) (ac
 }
 
 func MetricDelete(id string) error {
-	metricQuery, err := MetricList(id, "")
+	metricQuery, err := MetricList(id, "", "")
 	if err != nil {
 		return fmt.Errorf("Try to query prom metric table fail,%s ", err.Error())
 	}

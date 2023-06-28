@@ -255,7 +255,7 @@ func getChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.
 					dataConfig.PromQl = fmt.Sprintf("%s{%s\"}", dataConfig.Metric[:tmpSplitIndex], tmpTags)
 				}
 			} else {
-				tmpPromQL, _ := db.GetPromQLByMetric(dataConfig.Metric, tmpMonitorType)
+				tmpPromQL, _ := db.GetPromQLByMetric(dataConfig.Metric, tmpMonitorType, dataConfig.AppObject)
 				if tmpPromQL == "" {
 					if dataConfig.PromQl == "" {
 						continue
@@ -371,7 +371,7 @@ func getChartQueryData(queryList []*models.QueryMonitorData, param *models.Chart
 		}
 		if param.Aggregate != "none" && param.AggStep > 10 {
 			log.Logger.Debug("AggregateNew", log.Int64("aggStep", param.AggStep), log.String("agg", param.Aggregate))
-			s.Data = db.AggregateNew(s.Data, param.AggStep, param.Aggregate)
+			s.Data = models.Aggregate(s.Data, param.AggStep, param.Aggregate)
 		}
 		//if agg > 1 && len(s.Data) > 300 {
 		//	s.Data = db.Aggregate(s.Data, agg, param.Aggregate)

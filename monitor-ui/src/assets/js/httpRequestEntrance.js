@@ -46,7 +46,7 @@ function errorMessage(content) {
  *
  * @param 你懂得
  */
-function httpRequestEntrance (method, url, data, callback, customHttpConfig) {
+function httpRequestEntrance (method, url, data, callback, customHttpConfig, errCallback) {
   // 处理接口http请求个性化配置
   let config = mergeObj(customHttpConfig)
   if (config.isNeedloading) {
@@ -68,7 +68,10 @@ function httpRequestEntrance (method, url, data, callback, customHttpConfig) {
       },0)
     }
     if (window.request) {
-      return callback(response.data)
+      // return callback(response.data)
+      if (response.status === 'OK' && callback !== undefined) {
+        return callback(response.data,response.message)
+      }
     } else {
       if (response.status < 400 && callback !== undefined) {
         return callback(response.data.data,response.data.message)
@@ -86,6 +89,13 @@ function httpRequestEntrance (method, url, data, callback, customHttpConfig) {
     // if (!window.request && error.response && error.response.status === 401) {
     //   router.push({path: '/login'})
     // }
+    
+    if (typeof customHttpConfig === 'function') {
+      errCallback = customHttpConfig
+    }
+    if (typeof errCallback === 'function' && error.response && error.response.data) {
+      return errCallback(new Error(error.response && error.response.data ? error.response.data.message : ''));
+    }
   })
 }
 

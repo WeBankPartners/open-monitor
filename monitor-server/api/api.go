@@ -42,7 +42,6 @@ func init() {
 		&handlerFuncObj{Url: "/dashboard/panels", Method: http.MethodGet, HandlerFunc: dashboard.GetPanels},
 		&handlerFuncObj{Url: "/dashboard/tags", Method: http.MethodGet, HandlerFunc: dashboard.GetTags},
 		&handlerFuncObj{Url: "/dashboard/search", Method: http.MethodGet, HandlerFunc: dashboard.MainSearch},
-		&handlerFuncObj{Url: "/dashboard/newchart", Method: http.MethodPost, HandlerFunc: dashboard.GetChart},
 		&handlerFuncObj{Url: "/dashboard/chart", Method: http.MethodPost, HandlerFunc: dashboard_new.GetChartData},
 		&handlerFuncObj{Url: "/dashboard/config/chart/title", Method: http.MethodPost, HandlerFunc: dashboard.UpdateChartsTitle},
 		// 自定义视图
@@ -86,7 +85,7 @@ func init() {
 	httpHandlerFuncList = append(httpHandlerFuncList,
 		&handlerFuncObj{Url: "/agent/register", Method: http.MethodPost, HandlerFunc: agent.RegisterAgentNew},
 		&handlerFuncObj{Url: "/agent/deregister", Method: http.MethodPost, HandlerFunc: agent.DeregisterAgent},
-		&handlerFuncObj{Url: "/agent/custom/endpoint/add", Method: http.MethodPost, HandlerFunc: agent.CustomRegister},
+		&handlerFuncObj{Url: "/agent/export/custom/endpoint/add", Method: http.MethodPost, HandlerFunc: agent.CustomRegister},
 		&handlerFuncObj{Url: "/agent/custom/metric/add", Method: http.MethodPost, HandlerFunc: agent.CustomMetricPush},
 		&handlerFuncObj{Url: "/agent/endpoint/telnet/get", Method: http.MethodGet, HandlerFunc: agent.GetEndpointTelnet},
 		&handlerFuncObj{Url: "/agent/endpoint/telnet/update", Method: http.MethodPost, HandlerFunc: agent.UpdateEndpointTelnet},
