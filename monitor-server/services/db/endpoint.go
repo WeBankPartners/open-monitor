@@ -153,7 +153,11 @@ func CheckEndpointInAgentManager(guid string) bool {
 }
 
 func UpdateAgentManager(param *models.AgentManagerTable) error {
-	_, err := x.Exec("update agent_manager set `user`=?,`password`=?,instance_address=?,agent_address=? where endpoint_guid=?", param.User, param.Password, param.InstanceAddress, param.AgentAddress, param.EndpointGuid)
+	var agentRemotePort string
+	if splitIndex := strings.Index(param.AgentAddress, ":"); splitIndex >= 0 {
+		agentRemotePort = param.AgentAddress[splitIndex+1:]
+	}
+	_, err := x.Exec("update agent_manager set `user`=?,`password`=?,instance_address=?,agent_address=?,agent_remote_port=? where endpoint_guid=?", param.User, param.Password, param.InstanceAddress, param.AgentAddress, agentRemotePort, param.EndpointGuid)
 	if err != nil {
 		err = fmt.Errorf("Update agent manager fail,%s ", err.Error())
 	}
