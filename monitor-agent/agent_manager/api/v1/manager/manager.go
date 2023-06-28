@@ -131,6 +131,7 @@ func InitDeploy(w http.ResponseWriter, r *http.Request) {
 			resp.Code = 500
 			resp.Message = fmt.Sprintf("error:%v", err)
 		} else {
+			log.Printf("init deploy dir : param -> %s \n", string(b))
 			if param.AgentManagerRemoteIp != "" {
 				err = redirect.Init(&param)
 			} else {
