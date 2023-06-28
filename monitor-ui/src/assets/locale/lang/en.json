@@ -12,7 +12,7 @@
     "customViews": "Customize Views",
     "templateManagement": "Template Management",
     "configuration": "Configuration",
-    "alert": "Alerting"
+    "alert": "Alarm"
   },
   "placeholder": {
     "input": "Please input",
@@ -158,7 +158,8 @@
     "logPath": "Log Path",
     "regular": "Regular",
     "tags": "Tags",
-    "endpoint_type": "Endpoint Type"
+    "endpoint_type": "Endpoint Type",
+    "system_id": "System ID"
   },
   "tips": {
     "required": " Required!",
@@ -210,6 +211,7 @@
   "endDatePlaceholder": "End Date",
   "timeIntervalWarn": "Wrong Time Interval Selection",
   "realTimeAlarm": "Real-time Alarm",
+  "todayAlarm": "Today's Alarm",
   "clearAll": "Clear All",
   "alarmContent": "Alarm Content",
   "exporter": "Exporter",
@@ -231,6 +233,7 @@
   "m_irregular_matching": "Irregular Matching",
   "m_key": "Key",
   "m_value": "Value",
+  "m_total": "Total",
   "m_low": "Low",
   "m_medium": "Medium",
   "m_high": "High",
@@ -304,5 +307,10 @@
   "m_regular_tip": "The regular expression must contain parentheses !",
   "m_content": "Content",
   "m_batch_close": "Batch Close",
-  "m_metric": "Metric"
+  "m_metric": "Metric",
+  "m_add_tags": "Add Tags",
+  "m_target_value": "Target Value",
+  "m_source_value": "Source Value",
+  "m_type_object": "Type Object",
+  "m_host_object": "Host Object"
 }
