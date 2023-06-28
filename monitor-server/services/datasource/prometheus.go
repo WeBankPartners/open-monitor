@@ -92,35 +92,8 @@ func PrometheusData(query *m.QueryMonitorData) []*m.SerialModel {
 		log.Logger.Warn("Query prometheus data fail", log.String("status", data.Status))
 		return serials
 	}
-	if query.ChartType == "pie" && query.PieMetricType != "value" {
-		var pieData m.EChartPie
-		for _, otr := range data.Data.Result {
-			var tmpNameList []string
-			for k, v := range otr.Metric {
-				isBlack := false
-				for _, vv := range PieLegendBlackName {
-					if k == vv {
-						isBlack = true
-						break
-					}
-				}
-				if isBlack {
-					continue
-				}
-				tmpNameList = append(tmpNameList, fmt.Sprintf("%s=%s", k, v))
-			}
-			tmpName := strings.Join(tmpNameList, ",")
-			if tmpName == "" {
-				tmpName = query.Endpoint[0] + "__" + query.Metric[0]
-			}
-			pieData.Legend = append(pieData.Legend, tmpName)
-			if len(otr.Values) > 0 {
-				tmpValue, _ := strconv.ParseFloat(otr.Values[len(otr.Values)-1][1].(string), 64)
-				tmpValue, _ = strconv.ParseFloat(fmt.Sprintf("%.3f", tmpValue), 64)
-				pieData.Data = append(pieData.Data, &m.EChartPieObj{Name: tmpName, Value: tmpValue})
-			}
-		}
-		query.PieData = pieData
+	if query.ChartType == "pie" {
+		buildPieData(query, data.Data.Result)
 		return serials
 	}
 	for _, otr := range data.Data.Result {
@@ -139,6 +112,63 @@ func PrometheusData(query *m.QueryMonitorData) []*m.SerialModel {
 		serials = append(serials, &serial)
 	}
 	return serials
+}
+
+func buildPieData(query *m.QueryMonitorData, dataList []m.PrometheusResult) {
+	pieData := m.EChartPie{}
+	for _, otr := range dataList {
+		var tmpNameList []string
+		for k, v := range otr.Metric {
+			// 标签黑名单
+			ignoreFlag := false
+			for _, vv := range PieLegendBlackName {
+				if k == vv {
+					ignoreFlag = true
+					break
+				}
+			}
+			if ignoreFlag {
+				continue
+			}
+			tmpName := v
+			if k != "tags" {
+				tmpName = fmt.Sprintf("%s=%s", k, v)
+			}
+			tmpNameList = append(tmpNameList, tmpName)
+		}
+		pieObj := m.EChartPieObj{}
+		pieObj.Name = strings.Join(tmpNameList, ",")
+		if pieObj.Name == "" {
+			pieObj.Name = query.Endpoint[0] + "__" + query.Metric[0]
+		}
+		if len(otr.Values) > 0 {
+			if query.PieAggType == "new" {
+				// 取最新值
+				pieObj.Value, _ = strconv.ParseFloat(otr.Values[len(otr.Values)-1][1].(string), 64)
+				pieObj.Value, _ = strconv.ParseFloat(fmt.Sprintf("%.3f", pieObj.Value), 64)
+			} else {
+				// 按合并规则取值
+				var valueDataList []float64
+				for _, v := range otr.Values {
+					tmpValue, _ := strconv.ParseFloat(v[1].(string), 64)
+					valueDataList = append(valueDataList, tmpValue)
+				}
+				pieObj.SourceValue = valueDataList
+				pieObj.Value = m.CalcData(valueDataList, query.PieAggType)
+			}
+		}
+		//log.Logger.Info("buildPidData otr", log.String("name", pieObj.Name), log.Float64("value", pieObj.Value))
+		//if existPie, ok := pieMap[pieObj.Name]; ok {
+		//	existPie.Value = m.CalcData([]float64{existPie.Value, pieObj.Value}, query.PieAggType)
+		//	continue
+		//} else {
+		//	pieMap[pieObj.Name] = &pieObj
+		//}
+		//log.Logger.Info("buildPidData otr append", log.String("name", pieObj.Name))
+		pieData.Legend = append(pieData.Legend, pieObj.Name)
+		pieData.Data = append(pieData.Data, &pieObj)
+	}
+	query.PieData = pieData
 }
 
 func appendTagString(name string, metricMap map[string]string, tagList []string) string {
@@ -187,6 +217,9 @@ func GetSerialName(query *m.QueryMonitorData, tagMap map[string]string, dataLeng
 		metric = query.Metric[0]
 	}
 	for k, v := range tagMap {
+		if metric == "" && k == "__name__" {
+			metric = v
+		}
 		if strings.Contains(legend, "$"+k) {
 			tmpName = strings.Replace(tmpName, "$"+k, k+"="+v, -1)
 			if !query.SameEndpoint {

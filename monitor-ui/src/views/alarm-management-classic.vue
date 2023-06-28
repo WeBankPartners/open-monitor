@@ -1,9 +1,11 @@
 <template>
-  <div class="">
+  <div class="classic-table">
     <PageTable :pageConfig="pageConfig"></PageTable>
+    <slot name="pagination"></slot>
     <Modal
       v-model="isShowWarning"
       :title="$t('closeConfirm.title')"
+      :mask-closable="false"
       @on-ok="ok"
       @on-cancel="cancel">
       <div class="modal-body" style="padding:30px">
@@ -74,7 +76,7 @@ export default {
       window.open(news.href, '_blank')
     },
     remarkModal (item) {
-      this.$parent.$parent.$parent.remarkModal(item)
+      this.$parent.remarkModal(item)
     },
     deleteConfirmModal (rowData) {
       this.selectedData = rowData
@@ -104,4 +106,11 @@ export default {
 </script>
 
 <style scoped lang="less">
+.classic-table {
+  /deep/ .table {
+    .th-border-bottom {
+      border-top: 0;
+    }
+  }
+}
 </style>

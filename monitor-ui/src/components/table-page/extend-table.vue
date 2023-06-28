@@ -391,7 +391,7 @@ h4 {
     width: 100%;
     table-layout: fixed;
     display: block;
-    max-height: 120px;
+    max-height: 560px;
     overflow-y: scroll;
     tr {
       display: table;

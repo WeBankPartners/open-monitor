@@ -332,12 +332,14 @@ export const drawPieChart = function(that, responseData) {
         left: 'center'
     },
     tooltip: {
+        confine: true, // tip控制在图像区内
         trigger: 'item',
         formatter: '{b} : {c} ({d}%)'
     },
     legend: {
         // orient: 'vertical',
         // top: 'middle',
+        type: 'scroll',
         bottom: 5,
         left: 'center',
         data: responseData.legend

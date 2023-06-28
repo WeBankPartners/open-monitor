@@ -215,5 +215,6 @@
     "keywordImport": "/monitor/api/v2/service/log_metric/import",
 
     "metricExport": "/monitor/api/v2/monitor/metric/export",
-    "metricImport": "/monitor/api/v2/monitor/metric/import"
+    "metricImport": "/monitor/api/v2/monitor/metric/import",
+    "getLogMetricByPath": "/monitor/api/v2/service/log_metric/log_metric_monitor"
 }

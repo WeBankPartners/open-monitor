@@ -158,7 +158,8 @@
     "logPath": "日志路径",
     "regular": "正则表达式",
     "tags": "标签",
-    "endpoint_type": "对象类型"
+    "endpoint_type": "对象类型",
+    "system_id": "系统ID"
   },
   "tips": {
     "required": " 必填",
@@ -210,6 +211,7 @@
   "endDatePlaceholder": "请选择结束时间",
   "timeIntervalWarn": "时间区间选择错误",
   "realTimeAlarm": "实时告警",
+  "todayAlarm": "今日告警",
   "clearAll": "清空",
   "alarmContent": "告警内容",
   "exporter": "扩展",
@@ -231,6 +233,7 @@
   "m_irregular_matching": "非正则匹配",
   "m_key": "键",
   "m_value": "值",
+  "m_total": "总计",
   "m_low": "低",
   "m_medium": "中",
   "m_high": "高",
@@ -303,5 +306,10 @@
   "m_regular_tip": "正则表达式需包含括号！",
   "m_content": "内容",
   "m_batch_close": "批量关闭",
-  "m_metric": "指标"
+  "m_metric": "指标",
+  "m_add_tags": "新增标签",
+  "m_target_value": "目标值",
+  "m_source_value": "源值",
+  "m_type_object": "类型对象",
+  "m_host_object": "主机对象"
 }

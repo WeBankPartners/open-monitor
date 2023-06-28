@@ -1,6 +1,7 @@
 package dashboard_new
 
 import (
+	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
@@ -10,7 +11,8 @@ import (
 func MetricList(c *gin.Context) {
 	id := c.Query("id")
 	endpointType := c.Query("endpointType")
-	result, err := db.MetricList(id, endpointType)
+	serviceGroup := c.Query("serviceGroup")
+	result, err := db.MetricList(id, endpointType, serviceGroup)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
@@ -24,7 +26,18 @@ func MetricCreate(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	err := db.MetricCreate(param)
+	var err error
+	for _, v := range param {
+		if middleware.IsIllegalName(v.Metric) {
+			err = fmt.Errorf("metric name illegal")
+			break
+		}
+	}
+	if err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	err = db.MetricCreate(param)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
@@ -38,7 +51,18 @@ func MetricUpdate(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	err := db.MetricUpdate(param)
+	var err error
+	for _, v := range param {
+		if middleware.IsIllegalName(v.Metric) {
+			err = fmt.Errorf("metric name illegal")
+			break
+		}
+	}
+	if err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	err = db.MetricUpdate(param)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
