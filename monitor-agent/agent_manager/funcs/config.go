@@ -39,11 +39,12 @@ type AgentsConfig struct {
 }
 
 type GlobalConfig struct {
-	Http    *HttpConfig    `json:"http"`
-	Deploy  *DeployConfig  `json:"deploy"`
-	Manager *ManagerConfig `json:"manager"`
-	Agents  *AgentsConfig  `json:"agents"`
-	OsBash  []string       `json:"os_bash"`
+	Http       *HttpConfig    `json:"http"`
+	Deploy     *DeployConfig  `json:"deploy"`
+	Manager    *ManagerConfig `json:"manager"`
+	Agents     *AgentsConfig  `json:"agents"`
+	OsBash     []string       `json:"os_bash"`
+	RemoteMode string         `json:"remote_mode"`
 }
 
 var (
@@ -94,6 +95,7 @@ type AgentManagerTable struct {
 	AgentAddress    string `json:"agent_address"`
 	ConfigFile      string `json:"config_file"`
 	BinPath         string `json:"bin_path"`
+	AgentRemotePort string `json:"agent_remote_port"`
 }
 
 type InitDeployParam struct {
