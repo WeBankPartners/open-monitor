@@ -15,6 +15,7 @@ import (
 type redirectHttpObj struct {
 	ListenPort           int    `json:"listenPort"`
 	RemoteAgentManagerIp string `json:"remoteAgentManagerIp"`
+	RemoteAgentPort      int    `json:"remoteAgentPort"`
 }
 
 func (h redirectHttpObj) Init() {
@@ -22,7 +23,7 @@ func (h redirectHttpObj) Init() {
 }
 
 func (h redirectHttpObj) httpHandleFunc(w http.ResponseWriter, r *http.Request) {
-	resp, err := http.Get(fmt.Sprintf("http://%s:%d%s", h.RemoteAgentManagerIp, h.ListenPort, r.RequestURI))
+	resp, err := http.Get(fmt.Sprintf("http://%s:%d%s", h.RemoteAgentManagerIp, h.RemoteAgentPort, r.RequestURI))
 	if err != nil {
 		log.Printf("reqeust error: %s \n", err.Error())
 		return
@@ -39,14 +40,35 @@ func (h redirectHttpObj) httpHandleFunc(w http.ResponseWriter, r *http.Request) 
 var redirectHttpMap = new(sync.Map)
 
 func Init(param *funcs.InitDeployParam) (err error) {
-	newParam := funcs.InitDeployParam{Config: param.Config}
+	newParam := funcs.InitDeployParam{}
+	for _, v := range param.Config {
+		newConfigObj := funcs.AgentManagerTable{
+			EndpointGuid:    v.EndpointGuid,
+			Name:            v.Name,
+			User:            v.User,
+			Password:        v.Password,
+			InstanceAddress: v.InstanceAddress,
+			AgentAddress:    v.AgentAddress,
+			ConfigFile:      v.ConfigFile,
+			BinPath:         v.BinPath,
+			AgentRemotePort: v.AgentRemotePort,
+		}
+		if remoteAgentPort, _ := strconv.Atoi(v.AgentRemotePort); remoteAgentPort > 0 {
+			newConfigObj.AgentAddress = fmt.Sprintf("%s:%d", strings.Split(v.AgentAddress, ":")[0], remoteAgentPort)
+		}
+		newParam.Config = append(newParam.Config, &newConfigObj)
+	}
 	_, err = requestAgentMonitor(&newParam, fmt.Sprintf("http://%s", param.AgentManagerRemoteIp), "init")
 	for _, v := range param.Config {
 		if splitIndex := strings.LastIndex(v.AgentAddress, ":"); splitIndex > 0 {
 			if addressPort, _ := strconv.Atoi(v.AgentAddress[splitIndex+1:]); addressPort > 0 {
 				log.Printf("port: %d \n", addressPort)
 				if _, ok := redirectHttpMap.Load(addressPort); !ok {
-					rhObj := redirectHttpObj{ListenPort: addressPort, RemoteAgentManagerIp: param.AgentManagerRemoteIp}
+					remoteAgentPort, _ := strconv.Atoi(v.AgentRemotePort)
+					if remoteAgentPort == 0 {
+						remoteAgentPort = addressPort
+					}
+					rhObj := redirectHttpObj{ListenPort: addressPort, RemoteAgentManagerIp: param.AgentManagerRemoteIp, RemoteAgentPort: remoteAgentPort}
 					go rhObj.Init()
 					log.Printf("remoteHttp init,remoteIP: %s , port:%d \n", rhObj.RemoteAgentManagerIp, rhObj.ListenPort)
 					redirectHttpMap.Store(addressPort, &rhObj)
