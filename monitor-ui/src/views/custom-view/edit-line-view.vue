@@ -10,53 +10,64 @@
       </div>
     </div>
     <div class="zone zone-config c-dark">
-      <div class="tool-save">
-        <div class="condition">
-          <Tooltip :content="$t('field.aggType')" :delay="1000">
-            <Select filterable  class="select-option" v-model="templateQuery.aggregate" style="width:100px" @on-change="switchChartType">
-              <Option
-                v-for="(type) in ['min', 'max', 'avg', 'p95', 'sum', 'none', 'avg_nonzero']"
-                :value="type"
-                :key="type"
-              >{{type}}</Option>
-            </Select>
-          </Tooltip>
+      <div class="flex">
+        <div class="left">
+          <Select class="select-option" filterable v-model="quickQueryValue" style="width:250px" @on-change="syncCondition">
+            <Option
+              v-for="agg in quickOptions"
+              :value="agg.label"
+              :key="agg.label"
+            >{{agg.label}}</Option>
+          </Select>
         </div>
-        <div class="condition" v-if="templateQuery.aggregate !== 'none'">
-          <Tooltip :content="$t('field.aggStep')" :delay="1000">
-            <Select filterable  class="select-option" v-model="templateQuery.agg_step" style="width:100px" @on-change="switchChartType">
-              <Option
-                v-for="agg in aggStepOptions"
-                :value="agg.value"
-                :key="agg.value"
-              >{{agg.label}}</Option>
-            </Select>
-          </Tooltip>
+        <div class="tool-save">
+          <div class="condition">
+            <Tooltip :content="$t('field.aggType')" :delay="1000">
+              <Select filterable  class="select-option" v-model="templateQuery.aggregate" style="width:100px" @on-change="switchChartType">
+                <Option
+                  v-for="(type) in ['min', 'max', 'avg', 'p95', 'sum', 'none', 'avg_nonzero']"
+                  :value="type"
+                  :key="type"
+                >{{type}}</Option>
+              </Select>
+            </Tooltip>
+          </div>
+          <div class="condition" v-if="templateQuery.aggregate !== 'none'">
+            <Tooltip :content="$t('field.aggStep')" :delay="1000">
+              <Select filterable  class="select-option" v-model="templateQuery.agg_step" style="width:120px" @on-change="switchChartType">
+                <Option
+                  v-for="agg in aggStepOptions"
+                  :value="agg.value"
+                  :key="agg.value"
+                >{{agg.label}}</Option>
+              </Select>
+            </Tooltip>
+          </div>
+          <div class="condition">
+            <Tooltip :content="$t('m_chart_type')" :delay="1000">
+              <Select filterable class="select-option" v-model="templateQuery.chartType" style="width:120px" @on-change="switchChartType">
+                <Option
+                  v-for="(option, index) in chartTypeOption"
+                  :value="option.value"
+                  :key="index"
+                >{{option.label}}</Option>
+              </Select>
+            </Tooltip>
+          </div>
+          <div class="condition" v-if="templateQuery.chartType === 'line'">
+            <Tooltip :content="$t('m_line_type')" :delay="1000">
+              <Select filterable class="select-option" v-model="templateQuery.lineType" style="width:120px" @on-change="switchChartType">
+                <Option
+                  v-for="(option, index) in lineOption"
+                  :value="option.value"
+                  :key="index"
+                >{{option.label}}</Option>
+              </Select>
+            </Tooltip>
+          </div>
+          <button class="btn btn-sm btn-confirm-f" @click="saveConfig">{{$t('button.saveConfig')}}</button>
+          <button class="btn btn-sm btn-cancel-f" @click="goback()">{{$t('button.cancel')}}</button>
         </div>
-        <div class="condition">
-          <Tooltip :content="$t('m_chart_type')" :delay="1000">
-            <Select filterable class="select-option" v-model="templateQuery.chartType" style="width:160px" @on-change="switchChartType">
-              <Option
-                v-for="(option, index) in chartTypeOption"
-                :value="option.value"
-                :key="index"
-              >{{option.label}}</Option>
-            </Select>
-          </Tooltip>
-        </div>
-        <div class="condition" v-if="templateQuery.chartType === 'line'">
-          <Tooltip :content="$t('m_line_type')" :delay="1000">
-            <Select filterable class="select-option" v-model="templateQuery.lineType" style="width:160px" @on-change="switchChartType">
-              <Option
-                v-for="(option, index) in lineOption"
-                :value="option.value"
-                :key="index"
-              >{{option.label}}</Option>
-            </Select>
-          </Tooltip>
-        </div>
-        <button class="btn btn-sm btn-confirm-f" @click="saveConfig">{{$t('button.saveConfig')}}</button>
-        <button class="btn btn-sm btn-cancel-f" @click="goback()">{{$t('button.cancel')}}</button>
       </div>
       <div>
         <section class="zone-config-operation">
@@ -193,6 +204,39 @@ export default {
         app_object: '',
         metricToColor: []
       },
+      quickQueryValue: null,
+      quickOptions: Object.freeze([
+        {
+          label: `${this.$t('volume')}: sum-60s-${this.$t('m_bar_chart')}`,
+          value: {
+            'aggregate': 'sum',
+            'agg_step': 60,
+            'chartType': 'bar',
+          }
+        },
+        {
+          label: `${this.$t('t_avg_consumed')}: avg-60s-${this.$t('m_line_chart')}-${this.$t('m_line_chart_s')}`,
+          value: {
+            'aggregate': 'avg',
+            'agg_step': 60,
+            'chartType': 'line',
+            'lineType': 1
+          }
+        },
+        {
+          label: `${this.$t('t_max_consumed')}: max-60s-${this.$t('m_line_chart')}-${this.$t('m_line_chart_s')}`,
+          value: {
+            'aggregate': 'max',
+            'agg_step': 60,
+            'chartType': 'line',
+            'lineType': 1
+          }
+        },
+        {
+          label: this.$t('other'),
+          value: ''
+        },
+      ]),
       aggStepOptions: [
         {label: '60S', value: 60},
         {label: '300S', value: 300},
@@ -437,6 +481,7 @@ export default {
             this.templateQuery.agg_step = itemx.agg_step || 60
             this.panalIndex = index
             this.panalData = itemx
+            this.rsyncQuick()
             this.initPanal()
             return
           }
@@ -447,6 +492,7 @@ export default {
       if (this.chartQueryList.length === 0) {
         return
       }
+      this.updateQuick()
       let params = {
           aggregate: this.templateQuery.aggregate || 'none',
           agg_step: this.templateQuery.agg_step || 60,
@@ -474,6 +520,36 @@ export default {
           readyToDraw(this,responseData, 1, { eye: false, chartType: this.templateQuery.chartType, params: params})
         }
       )
+    },
+    updateQuick () {
+      this.rsyncQuick()
+    },
+    rsyncQuick () {
+      let passed = false
+      for (let i = 0; i < this.quickOptions.length; i++) {
+        const item = this.quickOptions[i]
+        const keys = Object.keys(item.value)
+        passed = keys.every(p => item.value[p] === this.templateQuery[p])
+
+        if (passed) {
+          this.quickQueryValue = item.label
+          break
+        }
+      }
+      !passed && (this.quickQueryValue = this.$t('other'))
+    },
+    syncCondition (val) {
+      const selected = this.quickOptions.find(item => item.label === val)
+      if (selected) {
+        const { aggregate, agg_step, chartType, lineType } = selected.value
+
+        this.templateQuery.aggregate = aggregate || ''
+        this.templateQuery.agg_step = agg_step || 60
+        this.templateQuery.chartType = chartType || ''
+        this.templateQuery.lineType = lineType || 1
+
+        this.switchChartType()
+      }
     },
     initPanal() {
       this.panalUnit = this.panalData.panalUnit
@@ -703,6 +779,18 @@ li {
 }
 .tag-display /deep/ .ivu-tag-primary {
   display: table;
+}
+.zone-config {
+  .flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-left: 24px;
+    
+    .left {
+      text-align: left;
+    }
+  }
 }
 </style>
 
