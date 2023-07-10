@@ -348,6 +348,15 @@ func ListRecursiveEndpointType(guid string) (result []string, err error) {
 			resultMap[tmpType] = 1
 		}
 	}
+	if _, ok := resultMap["process"]; ok {
+		newResult := []string{"process"}
+		for _, v := range result {
+			if v != "process" {
+				newResult = append(newResult, v)
+			}
+		}
+		result = newResult
+	}
 	return
 }
 
