@@ -826,7 +826,9 @@ func getLastFromExpr(expr string) string {
 }
 
 func CloseAlarm(param m.AlarmCloseParam) (err error) {
-	if param.Metric != "" {
+	if param.Priority != "" {
+		_, err = x.Exec("UPDATE alarm SET STATUS='closed',end=NOW() WHERE status='firing' and s_priority=?", param.Priority)
+	} else if param.Metric != "" {
 		_, err = x.Exec("UPDATE alarm SET STATUS='closed',end=NOW() WHERE status='firing' and s_metric=?", param.Metric)
 	} else {
 		_, err = x.Exec("UPDATE alarm SET STATUS='closed',end=NOW() WHERE id=?", param.Id)
@@ -1069,6 +1071,16 @@ func CloseOpenAlarm(param m.AlarmCloseParam) error {
 	var query []*m.OpenAlarmObj
 	if strings.ToLower(param.Metric) == "custom" && param.Id == 0 {
 		x.SQL("SELECT * FROM alarm_custom WHERE closed=0").Find(&query)
+	} else if param.Priority != "" {
+		var levelFilterSql string
+		if param.Priority == "high" {
+			levelFilterSql = " AND alert_level in (1,2) "
+		} else if param.Priority == "medium" {
+			levelFilterSql = " AND alert_level in (3,4) "
+		} else {
+			levelFilterSql = " AND alert_level>=5 "
+		}
+		x.SQL("SELECT * FROM alarm_custom WHERE closed=0 " + levelFilterSql).Find(&query)
 	} else {
 		x.SQL("SELECT * FROM alarm_custom WHERE id=?", param.Id).Find(&query)
 	}
