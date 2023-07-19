@@ -1085,7 +1085,7 @@ func CloseOpenAlarm(param m.AlarmCloseParam) error {
 		x.SQL("SELECT * FROM alarm_custom WHERE id=?", param.Id).Find(&query)
 	}
 	if len(query) == 0 {
-		return fmt.Errorf("alarm id %d cat not find", param.Id)
+		return nil
 	}
 	var err error
 	for _, v := range query {
