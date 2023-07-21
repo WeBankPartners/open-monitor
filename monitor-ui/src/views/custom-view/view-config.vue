@@ -137,7 +137,7 @@
     <ModalComponent :modelConfig="setChartTypeModel">
       <div slot="setChartType">
         <div style="display:flex;justify-content:center">
-          <i @dblclick="dblChartType('line')" @click="choiceChartType('line')" :class="['fa', 'fa-line-chart', activeChartType==='line' ? 'active-tag': '']" aria-hidden="true"></i>
+          <i @dblclick="dblChartType('bar')" @click="choiceChartType('bar')" :class="['fa', 'fa-line-chart', activeChartType==='bar' ? 'active-tag': '']" aria-hidden="true"></i>
           <i @dblclick="dblChartType('pie')" @click="choiceChartType('pie')" :class="['fa', 'fa-pie-chart', activeChartType==='pie' ? 'active-tag': '']" aria-hidden="true"></i>
         </div>
       </div>
