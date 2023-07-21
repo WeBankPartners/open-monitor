@@ -477,7 +477,7 @@ export default {
           if (itemx.viewConfig.id === params.panal.id) {
             this.templateQuery.chartType = itemx.chartType
             this.templateQuery.lineType = itemx.lineType || 0
-            this.templateQuery.aggregate = itemx.aggregate || 'none'
+            this.templateQuery.aggregate = itemx.aggregate || 'sum'
             this.templateQuery.agg_step = itemx.agg_step || 60
             this.panalIndex = index
             this.panalData = itemx
