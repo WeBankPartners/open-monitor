@@ -239,7 +239,7 @@ export default {
         ]
       },
       activeGridConfig: null,
-      activeChartType: 'line',
+      activeChartType: 'bar',
 
       showAlarm: false, // 显示告警信息
       cutsomViewId: null,
