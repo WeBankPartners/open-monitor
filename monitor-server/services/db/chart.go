@@ -70,7 +70,7 @@ func ChartDelete(ids []string) error {
 
 func GetPromQLByMetric(metric, monitorType, serviceGroup string) (result string, err error) {
 	var metricTable []*models.MetricTable
-	if serviceGroup != "" {
+	if serviceGroup != "" && monitorType == "process" {
 		err = x.SQL("select * from metric where metric=? and monitor_type=? and service_group=?", metric, monitorType, serviceGroup).Find(&metricTable)
 	} else {
 		err = x.SQL("select * from metric where metric=? and monitor_type=?", metric, monitorType).Find(&metricTable)
