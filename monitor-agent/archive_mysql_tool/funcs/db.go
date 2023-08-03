@@ -97,15 +97,15 @@ func insertMysql(rows []*ArchiveTable, tableName string) error {
 	var sqlList []string
 	var rowCountList []int
 	tmpCount := 0
-	sqlString := fmt.Sprintf("INSERT INTO %s(endpoint,metric,tags,unix_time,`avg`,`min`,`max`,`p95`) VALUES ", tableName)
+	sqlString := fmt.Sprintf("INSERT INTO %s(endpoint,metric,tags,unix_time,`avg`,`min`,`max`,`p95`,`sum`,`create_time`) VALUES ", tableName)
 	for i, v := range rows {
 		tmpCount += 1
-		sqlString += fmt.Sprintf("('%s','%s','%s',%d,%.3f,%.3f,%.3f,%.3f)", strings.ReplaceAll(v.Endpoint, "'", ""), strings.ReplaceAll(v.Metric, "'", ""), strings.ReplaceAll(v.Tags, "'", ""), v.UnixTime, v.Avg, v.Min, v.Max, v.P95)
+		sqlString += fmt.Sprintf("('%s','%s','%s',%d,%.3f,%.3f,%.3f,%.3f,%.3f,'%s')", strings.ReplaceAll(v.Endpoint, "'", ""), strings.ReplaceAll(v.Metric, "'", ""), strings.ReplaceAll(v.Tags, "'", ""), v.UnixTime, v.Avg, v.Min, v.Max, v.P95, v.Sum, transUnixTime(v.UnixTime))
 		if (i+1)%concurrentInsertNum == 0 || i == len(rows)-1 {
 			rowCountList = append(rowCountList, tmpCount)
 			tmpCount = 0
 			sqlList = append(sqlList, sqlString)
-			sqlString = fmt.Sprintf("INSERT INTO %s(endpoint,metric,tags,unix_time,`avg`,`min`,`max`,`p95`) VALUES ", tableName)
+			sqlString = fmt.Sprintf("INSERT INTO %s(endpoint,metric,tags,unix_time,`avg`,`min`,`max`,`p95`,`sum`,`create_time`) VALUES ", tableName)
 		} else {
 			sqlString += ","
 		}
@@ -159,7 +159,7 @@ func createTable(start int64, isFiveArchive bool) (err error, tableName string) 
 	if isFiveArchive {
 		tableDate = tableDate + "_5m"
 	}
-	createSql := fmt.Sprintf("CREATE TABLE IF NOT EXISTS `%s` (`id` int(11) unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY,`endpoint` VARCHAR(255) NOT NULL,`metric` VARCHAR(255) NOT NULL,`tags` VARCHAR(500) NOT NULL DEFAULT '',`unix_time` INT(11) NOT NULL,`avg` DOUBLE NOT NULL DEFAULT 0,`min` DOUBLE NOT NULL DEFAULT 0,`max` DOUBLE NOT NULL DEFAULT 0,`p95` DOUBLE NOT NULL DEFAULT 0,INDEX idx_%s_endpoint (`endpoint`),INDEX idx_%s_metric (`metric`)) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8", tableName, tableDate, tableDate)
+	createSql := fmt.Sprintf("CREATE TABLE IF NOT EXISTS `%s` (`id` int(11) unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY,`endpoint` VARCHAR(255) NOT NULL,`metric` VARCHAR(255) NOT NULL,`tags` VARCHAR(500) NOT NULL DEFAULT '',`unix_time` INT(11) NOT NULL,`avg` DOUBLE NOT NULL DEFAULT 0,`min` DOUBLE NOT NULL DEFAULT 0,`max` DOUBLE NOT NULL DEFAULT 0,`p95` DOUBLE NOT NULL DEFAULT 0,`sum` DOUBLE NOT NULL DEFAULT 0,`create_time` VARCHAR(64) DEFAULT NULL,INDEX idx_%s_endpoint (`endpoint`),INDEX idx_%s_metric (`metric`)) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8", tableName, tableDate, tableDate)
 	_, err = mysqlEngine.Exec(createSql)
 	if err != nil {
 		log.Printf("create table %s error: %v \n", tableName, err)
@@ -207,7 +207,7 @@ func getArchiveTableCountData(tableName string) (err error, result []*ArchiveCou
 func archiveOneToFive(oldTable, newTable, endpoint, metric string) error {
 	var oldTableData []*ArchiveTable
 	var newTableData []*ArchiveTable
-	err := mysqlEngine.SQL(fmt.Sprintf("SELECT tags,unix_time,`avg`,`min`,`max`,`p95` FROM %s WHERE endpoint='%s' AND metric='%s' ORDER BY tags,unix_time", oldTable, endpoint, metric)).Find(&oldTableData)
+	err := mysqlEngine.SQL(fmt.Sprintf("SELECT tags,unix_time,`avg`,`min`,`max`,`p95`,`sum` FROM %s WHERE endpoint='%s' AND metric='%s' ORDER BY tags,unix_time", oldTable, endpoint, metric)).Find(&oldTableData)
 	if err != nil {
 		return err
 	}
@@ -225,13 +225,14 @@ func archiveOneToFive(oldTable, newTable, endpoint, metric string) error {
 			tmpCountIndex = 0
 		}
 		if tmpCountIndex == 0 {
-			tmpRowObj = ArchiveFiveRowObj{Endpoint: endpoint, Metric: metric, Tags: v.Tags, UnixTime: v.UnixTime, Avg: []float64{}, Min: []float64{}, Max: []float64{}, P95: []float64{}}
+			tmpRowObj = ArchiveFiveRowObj{Endpoint: endpoint, Metric: metric, Tags: v.Tags, UnixTime: v.UnixTime, Avg: []float64{}, Min: []float64{}, Max: []float64{}, P95: []float64{}, Sum: []float64{}}
 		}
 		tmpCountIndex += 1
 		tmpRowObj.Avg = append(tmpRowObj.Avg, v.Avg)
 		tmpRowObj.Min = append(tmpRowObj.Min, v.Min)
 		tmpRowObj.Max = append(tmpRowObj.Max, v.Max)
 		tmpRowObj.P95 = append(tmpRowObj.P95, v.P95)
+		tmpRowObj.Sum = append(tmpRowObj.Sum, v.Sum)
 		if tmpCountIndex == 5 || i == len(oldTableData)-1 {
 			newArchiveRowData := tmpRowObj.CalcArchiveTable()
 			newTableData = append(newTableData, &newArchiveRowData)
@@ -276,4 +277,9 @@ func checkJobState() bool {
 		log.Printf("update job_record table with host:%s error: %v \n", hostIp, err)
 	}
 	return true
+}
+
+func transUnixTime(input int64) (output string) {
+	output = time.Unix(input, 0).Format("2006-01-02 15:04:05")
+	return
 }
