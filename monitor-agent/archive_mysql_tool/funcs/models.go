@@ -32,14 +32,16 @@ type PrometheusQueryParam struct {
 }
 
 type ArchiveTable struct {
-	Endpoint string  `json:"endpoint"`
-	Metric   string  `json:"metric"`
-	Tags     string  `json:"tags"`
-	UnixTime int64   `json:"unix_time"`
-	Avg      float64 `json:"avg"`
-	Min      float64 `json:"min"`
-	Max      float64 `json:"max"`
-	P95      float64 `json:"p_95"`
+	Endpoint   string  `json:"endpoint"`
+	Metric     string  `json:"metric"`
+	Tags       string  `json:"tags"`
+	UnixTime   int64   `json:"unix_time"`
+	Avg        float64 `json:"avg"`
+	Min        float64 `json:"min"`
+	Max        float64 `json:"max"`
+	P95        float64 `json:"p_95"`
+	Sum        float64 `json:"sum"`
+	CreateTime string  `json:"create_time"`
 }
 
 type ArchiveCountQueryObj struct {
@@ -136,14 +138,16 @@ type ArchiveFiveRowObj struct {
 	Min      []float64 `json:"min"`
 	Max      []float64 `json:"max"`
 	P95      []float64 `json:"p_95"`
+	Sum      []float64 `json:"sum"`
 }
 
 func (a ArchiveFiveRowObj) CalcArchiveTable() ArchiveTable {
-	tmpAvg, _, _, _ := calcData(a.Avg)
-	_, tmpMin, _, _ := calcData(a.Min)
-	_, _, tmpMax, _ := calcData(a.Max)
-	_, _, _, tmpP95 := calcData(a.P95)
-	return ArchiveTable{Endpoint: a.Endpoint, Metric: a.Metric, Tags: a.Tags, UnixTime: a.UnixTime, Avg: tmpAvg, Min: tmpMin, Max: tmpMax, P95: tmpP95}
+	tmpAvg, _, _, _, _ := calcData(a.Avg)
+	_, tmpMin, _, _, _ := calcData(a.Min)
+	_, _, tmpMax, _, _ := calcData(a.Max)
+	_, _, _, tmpP95, _ := calcData(a.P95)
+	_, _, _, _, tmpSum := calcData(a.Sum)
+	return ArchiveTable{Endpoint: a.Endpoint, Metric: a.Metric, Tags: a.Tags, UnixTime: a.UnixTime, Avg: tmpAvg, Min: tmpMin, Max: tmpMax, P95: tmpP95, Sum: tmpSum}
 }
 
 type JobRecordTable struct {
