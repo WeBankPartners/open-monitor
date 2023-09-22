@@ -310,7 +310,7 @@ export default {
         this.paginationInfo = {
           total: 0,
           startIndex: 1,
-          pageSize: 10
+          pageSize: this.paginationInfo.pageSize
         }
       }
       const start = Date.parse(this.startDate) / 1000;
