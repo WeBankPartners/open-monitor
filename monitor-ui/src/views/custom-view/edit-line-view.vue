@@ -430,7 +430,6 @@ export default {
           })
         }
       })
-      console.log(this.metricDefaultColor, val)
       
       let tmp = JSON.parse(JSON.stringify(this.templateQuery))
       if (tmp.endpoint_type !== '') {
@@ -669,9 +668,7 @@ export default {
         tmp.endpointName = find.option_text
       }
 
-      console.log(this.metricDefaultColor)
       const tmpQuery = JSON.parse(JSON.stringify(tmp))
-      console.log(55, tmpQuery)
       let params = tmpQuery.metric.map(m => {
         return {
           ...tmpQuery,
@@ -680,7 +677,6 @@ export default {
           defaultColor: this.metricDefaultColor.find(x => x.metric.startsWith(m)).defaultColor || ''
         }
       })
-      console.log(33, params)
       
       // if (this.editIndex !== -1) {
       //   this.chartQueryList[this.editIndex ] = tmp
@@ -692,9 +688,9 @@ export default {
         this.chartQueryList.splice(this.editIndex, 1)
       }
       this.chartQueryList = this.chartQueryList.concat(params)
-      console.log(44, this.chartQueryList)
       this.requestAgain()
       this.editIndex = -1
+      this.metricDefaultColor = []
       this.templateQuery = {
         endpoint: '',
         metric: '',
@@ -717,7 +713,6 @@ export default {
     },
     saveConfig() {
       this.pp()
-      console.log(77, this.params)
       this.$root.$httpRequestEntrance.httpRequestEntrance(
         'POST',
         this.$root.apiCenter.template.save,
@@ -735,7 +730,6 @@ export default {
       this.chartQueryList.forEach(item => {
         query.push(item)
       })
-      console.log(88, query)
       let panal = this.oriParams.panal
       panal.i = this.panalTitle
       const temp = {
