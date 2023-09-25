@@ -77,7 +77,7 @@
                 type="border"
                 :name="queryIndex"
                 closable
-                @click.native="test(query, queryIndex)"
+                @click.native="editQueryParams(query, queryIndex)"
                 @on-close="removeQuery(queryIndex)"
               >{{$t('field.endpoint')}}：{{query.endpointName || query.endpoint}}; {{$t('field.metric')}}：{{query.metric}}</Tag>
             </div>
@@ -145,8 +145,25 @@
                     </Select>
                   </div>
                 </li>
+                <li>
+                  <div class="condition condition-title c-black-gray">{{$t('m_default_color')}}</div>
+                  <div class="condition">
+                    <template v-for="mdc in metricDefaultColor">
+                      <div :key="mdc.metric">
+                        <Tooltip :content="mdc.metric" max-width="300">
+                          <Tag>{{mdc.metric.length > 50 ? mdc.metric.substring(0,50) + '...' : mdc.metric}}</Tag>
+                          <div slot="content" style="white-space: normal;">
+                            <p>{{mdc.metric}}</p>
+                          </div>
+                        </Tooltip>
+                        <ColorPicker v-model="mdc.defaultColor" />
+                        {{mdc.defaultColor}}
+                      </div>
+                    </template>
+                  </div>
+                </li>
                 <li v-if="templateQuery.metricToColor.length >0">
-                  <div class="condition condition-title" style="vertical-align: top;">{{$t('个性化配置')}}</div>
+                  <div class="condition condition-title" style="vertical-align: top;">{{$t('m_custom_config')}}</div>
                   <div class="condition">
                     <template v-for="mc in templateQuery.metricToColor">
                       <div :key="mc.metric">
@@ -204,6 +221,7 @@ export default {
         app_object: '',
         metricToColor: []
       },
+      metricDefaultColor: [],
       quickQueryValue: null,
       quickOptions: Object.freeze([
         {
@@ -352,14 +370,19 @@ export default {
           }
         )
     },
-    async test (a, b) {
-      await this.bb(a,b)
+    async editQueryParams (queryParams, queryIndex) {
+      await this.bb(queryParams, queryIndex)
     },
-    async bb (a, b) {
-      const search = a.endpointName || '.'
-      this.editIndex = b
+    async bb (queryParams, queryIndex) {
+      this.metricDefaultColor = []
+      this.metricDefaultColor.push({
+        metric: queryParams.metric,
+        defaultColor: queryParams.defaultColor || '',
+      })
+      const search = queryParams.endpointName || '.'
+      this.editIndex = queryIndex
       this.templateQuery = {
-        ...a
+        ...queryParams
       }
       let params = {
         search: search,
@@ -373,7 +396,7 @@ export default {
         params,
         responseData => {
           this.options = responseData
-          const find = this.options.find(item => item.option_value === a.endpoint)
+          const find = this.options.find(item => item.option_value === queryParams.endpoint)
           if (find) {
             this.endpointType = find.type
           }
@@ -389,14 +412,26 @@ export default {
           } else {
             this.showRecursiveType = false
           }
-          this.metricSelectOpen(a.metric)
+          this.metricSelectOpen(queryParams.metric)
         }
       )
     },
     changeMetric (val) {
       if (val.length === 0) return
       this.templateQuery.metricToColor = []
-      if (!val) return 
+      // this.metricDefaultColor = []
+      if (!val) return
+      val.forEach(v => {
+        const findIndex = this.metricDefaultColor.findIndex(m=> m.metric === v.value)
+        if (findIndex === -1) {
+          this.metricDefaultColor.push({
+            metric: v.value,
+            defaultColor: ''
+          })
+        }
+      })
+      console.log(this.metricDefaultColor, val)
+      
       let tmp = JSON.parse(JSON.stringify(this.templateQuery))
       if (tmp.endpoint_type !== '') {
         tmp.app_object = tmp.endpoint
@@ -633,14 +668,20 @@ export default {
       if (find) {
         tmp.endpointName = find.option_text
       }
+
+      console.log(this.metricDefaultColor)
       const tmpQuery = JSON.parse(JSON.stringify(tmp))
+      console.log(55, tmpQuery)
       let params = tmpQuery.metric.map(m => {
-          return {
-            ...tmpQuery,
-            metric: m,
-            metricToColor: tmpQuery.metricToColor.filter(x => x.metric.startsWith(m))
-          }
-        })
+        return {
+          ...tmpQuery,
+          metric: m,
+          metricToColor: tmpQuery.metricToColor.filter(x => x.metric.startsWith(m)),
+          defaultColor: this.metricDefaultColor.find(x => x.metric.startsWith(m)).defaultColor || ''
+        }
+      })
+      console.log(33, params)
+      
       // if (this.editIndex !== -1) {
       //   this.chartQueryList[this.editIndex ] = tmp
       // } else {
@@ -651,6 +692,7 @@ export default {
         this.chartQueryList.splice(this.editIndex, 1)
       }
       this.chartQueryList = this.chartQueryList.concat(params)
+      console.log(44, this.chartQueryList)
       this.requestAgain()
       this.editIndex = -1
       this.templateQuery = {
@@ -675,6 +717,7 @@ export default {
     },
     saveConfig() {
       this.pp()
+      console.log(77, this.params)
       this.$root.$httpRequestEntrance.httpRequestEntrance(
         'POST',
         this.$root.apiCenter.template.save,
@@ -692,6 +735,7 @@ export default {
       this.chartQueryList.forEach(item => {
         query.push(item)
       })
+      console.log(88, query)
       let panal = this.oriParams.panal
       panal.i = this.panalTitle
       const temp = {
