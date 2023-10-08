@@ -182,7 +182,7 @@ func doLogKeywordMonitorJob() {
 		return
 	}
 	var alarmTable []*models.AlarmTable
-	err = x.SQL("SELECT * FROM alarm WHERE s_metric='log_monitor' ORDER BY id DESC").Find(&alarmTable)
+	err = x.SQL("SELECT * FROM alarm WHERE s_metric='log_monitor' and status='firing'").Find(&alarmTable)
 	if err != nil {
 		log.Logger.Error("Check log keyword break with query exist alarm fail", log.Error(err))
 		return
