@@ -301,7 +301,7 @@ func CheckRegExpMatch(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	result := db.CheckRegExpMatch(param)
+	result := db.CheckRegExpMatchPCRE(param)
 	middleware.ReturnSuccessData(c, result)
 }
 

@@ -3,7 +3,9 @@ package collector
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/dlclark/regexp2"
+	"regexp"
+
+	//"github.com/dlclark/regexp2"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/hpcloud/tail"
@@ -11,7 +13,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"reflect"
-	"regexp"
+	//"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -87,7 +89,7 @@ type logMetricMonitorNeObj struct {
 }
 
 type logMetricJsonNeObj struct {
-	Regexp       *regexp.Regexp              `json:"-"`
+	Regexp       *Regexp                     `json:"-"`
 	DataChannel  chan map[string]interface{} `json:"-"`
 	Regular      string                      `json:"regular"`
 	Tags         string                      `json:"tags"`
@@ -95,7 +97,7 @@ type logMetricJsonNeObj struct {
 }
 
 type logMetricNeObj struct {
-	RegExp       *regexp2.Regexp            `json:"-"`
+	RegExp       *Regexp                    `json:"-"`
 	DataChannel  chan string                `json:"-"`
 	Key          string                     `json:"key"`
 	Metric       string                     `json:"metric"`
@@ -114,12 +116,12 @@ type LogMetricConfigTag struct {
 }
 
 type logMetricStringMapNeObj struct {
-	Regexp            *regexp2.Regexp `json:"-"`
-	RegEnable         bool            `json:"reg_enable"`
-	Regulation        string          `json:"regulation"`
-	StringValue       string          `json:"string_value"`
-	IntValue          float64         `json:"int_value"`
-	TargetStringValue string          `json:"target_string_value"`
+	Regexp            *Regexp `json:"-"`
+	RegEnable         bool    `json:"reg_enable"`
+	Regulation        string  `json:"regulation"`
+	StringValue       string  `json:"string_value"`
+	IntValue          float64 `json:"int_value"`
+	TargetStringValue string  `json:"target_string_value"`
 }
 
 type logMetricDisplayObj struct {
@@ -148,11 +150,12 @@ func (c *logMetricMonitorNeObj) startHandleTailData() {
 	for {
 		lineText := <-c.DataChan
 		c.Lock.RLock()
+		//level.Info(monitorLogger).Log("get a new line:", lineText)
 		for _, rule := range c.JsonConfig {
 			if rule.Regexp == nil {
 				continue
 			}
-			fetchList := rule.Regexp.FindStringSubmatch(lineText)
+			fetchList := pcreMatchSubString(rule.Regexp, lineText)
 			if len(fetchList) <= 1 {
 				continue
 			}
@@ -174,8 +177,9 @@ func (c *logMetricMonitorNeObj) startHandleTailData() {
 			}
 		}
 		for _, custom := range c.MetricConfig {
-			if matchString := regexp2FindStringMatch(custom.RegExp, lineText); matchString != "" {
-				custom.DataChannel <- matchString
+			if matchList := pcreMatchSubString(custom.RegExp, lineText); len(matchList) > 0 {
+				//level.Info(monitorLogger).Log("get a match line:", lineText)
+				custom.DataChannel <- matchList[0]
 			}
 			//if custom.RegExp == nil {
 			//	continue
@@ -191,24 +195,41 @@ func (c *logMetricMonitorNeObj) startHandleTailData() {
 	}
 }
 
-func regexp2FindStringMatch(re *regexp2.Regexp, lineText string) (matchString string) {
+//func regexp2FindStringMatch(re *regexp2.Regexp, lineText string) (matchString string) {
+//	if re == nil {
+//		return
+//	}
+//	mat, err := re.FindStringMatch(lineText)
+//	if err != nil || mat == nil {
+//		return
+//	}
+//	level.Info(monitorLogger).Log("regexp2FindStringMatch:", len(mat.Groups()))
+//	for i, v := range mat.Groups() {
+//		groupString := v.String()
+//		level.Info(monitorLogger).Log("mat.Groups:", groupString)
+//		if (i == 0 && groupString == lineText) || groupString == "" {
+//			continue
+//		}
+//		matchString = groupString
+//		break
+//	}
+//	return
+//}
+
+func pcreMatchSubString(re *Regexp, lineText string) (matchList []string) {
 	if re == nil {
 		return
 	}
-	mat, err := re.FindStringMatch(lineText)
-	if err != nil || mat == nil {
-		//level.Info(monitorLogger).Log("regexp2 find string match fail ", err)
-		return
-	}
-	for i, v := range mat.Groups() {
-		groupString := v.String()
-		if (i == 0 && groupString == lineText) || groupString == "" {
-			continue
+	mat := re.MatcherString(lineText, 0)
+	if mat != nil {
+		for i := 0; i <= mat.Groups(); i++ {
+			groupString := mat.GroupString(i)
+			if (i == 0 && groupString == lineText) || groupString == "" {
+				continue
+			}
+			matchList = append(matchList, groupString)
 		}
-		matchString = groupString
-		break
 	}
-	//level.Info(monitorLogger).Log("regexp2 find string match success ", matchString)
 	return
 }
 
@@ -237,11 +258,13 @@ func (c *logMetricMonitorNeObj) new(input *logMetricMonitorNeObj) {
 	c.JsonConfig = []*logMetricJsonNeObj{}
 	var err error
 	for _, jsonObj := range input.JsonConfig {
-		jsonObj.Regexp, err = regexp.Compile(jsonObj.Regular)
-		if err != nil {
+		tmpReg, tmpErr := PcreCompile(jsonObj.Regular, 0)
+		if tmpErr != nil {
+			err = fmt.Errorf(tmpErr.Message)
 			level.Error(monitorLogger).Log("newLogMetricMonitorNeObj", fmt.Sprintf("regexpError:%s ", err.Error()))
 			continue
 		}
+		jsonObj.Regexp = &tmpReg
 		jsonObj.DataChannel = make(chan map[string]interface{}, logMetricChanLength)
 		for _, metricObj := range jsonObj.MetricConfig {
 			initLogMetricNeObj(metricObj)
@@ -262,11 +285,13 @@ func (c *logMetricMonitorNeObj) update(input *logMetricMonitorNeObj) {
 	newJsonConfigList := []*logMetricJsonNeObj{}
 	var err error
 	for _, jsonObj := range input.JsonConfig {
-		jsonObj.Regexp, err = regexp.Compile(jsonObj.Regular)
-		if err != nil {
+		tmpExp, tmpErr := PcreCompile(jsonObj.Regular, 0)
+		if tmpErr != nil {
+			err = fmt.Errorf(tmpErr.Message)
 			level.Error(monitorLogger).Log("newLogMetricMonitorNeObj", fmt.Sprintf("regexpError:%s ", err.Error()))
 			continue
 		}
+		jsonObj.Regexp = &tmpExp
 		for _, existJson := range c.JsonConfig {
 			if jsonObj.Regular == existJson.Regular {
 				jsonObj.DataChannel = existJson.DataChannel
@@ -302,23 +327,33 @@ func (c *logMetricMonitorNeObj) update(input *logMetricMonitorNeObj) {
 func initLogMetricNeObj(metricObj *logMetricNeObj) {
 	var err error
 	if metricObj.ValueRegular != "" {
-		metricObj.RegExp, err = regexp2.Compile(metricObj.ValueRegular, 0)
-		if err != nil {
-			level.Error(monitorLogger).Log("newLogMetricMonitorNeObj", fmt.Sprintf("regexpError:%s ", err.Error()))
+		if newRegExp, compileErr := PcreCompile(metricObj.ValueRegular, 0); compileErr != nil {
+			level.Error(monitorLogger).Log("newLogMetricMonitorNeObj", fmt.Sprintf("regexpError:%s ", compileErr.Message))
+		} else {
+			metricObj.RegExp = &newRegExp
 		}
+		//metricObj.RegExp, err = PcreCompile(metricObj.ValueRegular, 0)
+		//if err != nil {
+		//	level.Error(monitorLogger).Log("newLogMetricMonitorNeObj", fmt.Sprintf("regexpError:%s ", err.Error()))
+		//}
 		if metricObj.DataChannel == nil {
 			metricObj.DataChannel = make(chan string, logMetricChanLength)
 		}
 	}
 	for _, stringMapObj := range metricObj.StringMap {
 		if stringMapObj.RegEnable {
-			tmpExp, tmpErr := regexp2.Compile(stringMapObj.StringValue, 0)
-			if tmpErr == nil {
-				stringMapObj.Regexp = tmpExp
-			} else {
+			if tmpExp, tmpErr := PcreCompile(stringMapObj.StringValue, 0); tmpErr != nil {
 				stringMapObj.RegEnable = false
-				level.Error(monitorLogger).Log("string map regexp format fail", tmpErr.Error())
+				level.Error(monitorLogger).Log("string map regexp format fail", tmpErr.Message)
+			} else {
+				stringMapObj.Regexp = &tmpExp
 			}
+			//if tmpErr == nil {
+			//	stringMapObj.Regexp = tmpExp
+			//} else {
+			//	stringMapObj.RegEnable = false
+			//	level.Error(monitorLogger).Log("string map regexp format fail", tmpErr.Error())
+			//}
 		}
 	}
 	for _, tagConfigObj := range metricObj.TagConfig {
@@ -634,10 +669,12 @@ func transLogMetricTagString(config []*logMetricStringMapNeObj, input string) (m
 			}
 			continue
 		}
-		if ok, _ := v.Regexp.MatchString(input); ok {
-			matchFlag = true
-			output = v.TargetStringValue
-			break
+		if mat := v.Regexp.MatcherString(input, 0); mat != nil {
+			if mat.Matches() {
+				matchFlag = true
+				output = v.TargetStringValue
+				break
+			}
 		}
 	}
 	return
@@ -657,10 +694,12 @@ func transLogMetricStringMapValue(config []*logMetricStringMapNeObj, input strin
 			}
 			continue
 		}
-		if ok, _ := v.Regexp.MatchString(input); ok {
-			matchFlag = true
-			output = v.IntValue
-			break
+		if mat := v.Regexp.MatcherString(input, 0); mat != nil {
+			if mat.Matches() {
+				matchFlag = true
+				output = v.IntValue
+				break
+			}
 		}
 	}
 	return
