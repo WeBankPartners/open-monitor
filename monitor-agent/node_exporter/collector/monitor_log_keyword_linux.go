@@ -3,7 +3,6 @@ package collector
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/dlclark/regexp2"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/hpcloud/tail"
@@ -76,7 +75,7 @@ type logKeywordFetchObj struct {
 
 type logKeywordObj struct {
 	Keyword        string
-	RegExp         *regexp2.Regexp
+	RegExp         *Regexp
 	Count          float64
 	LastMatchRow   string
 	TargetEndpoint string
@@ -111,10 +110,14 @@ func (c *logKeywordCollector) startHandleTailData() {
 		c.Lock.Lock()
 		for _, v := range c.Rule {
 			if v.RegExp != nil {
-				if ok, _ := v.RegExp.MatchString(lineText); ok {
+				if pcreMatch(v.RegExp, lineText) {
 					v.Count++
 					v.LastMatchRow = lineText
 				}
+				//if ok, _ := v.RegExp.MatchString(lineText); ok {
+				//	v.Count++
+				//	v.LastMatchRow = lineText
+				//}
 			} else {
 				if strings.Contains(lineText, v.Keyword) {
 					v.Count++
@@ -231,12 +234,12 @@ func logKeywordHttpAction(requestParamBuff []byte) (err error) {
 				var tmpKeywordList []*logKeywordObj
 				for _, inputKeyword := range inputParam.Keywords {
 					if inputKeyword.RegularEnable {
-						tmpRegExp, tmpRegErr := regexp2.Compile(inputKeyword.Keyword, 0)
+						tmpRegExp, tmpRegErr := PcreCompile(inputKeyword.Keyword, 0)
 						if tmpRegErr != nil {
-							err = fmt.Errorf("path:%s regexp2 regexp compile %s fail:%s", inputParam.Path, inputKeyword.Keyword, tmpRegErr.Error())
+							err = fmt.Errorf("path:%s pcre regexp compile %s fail:%s", inputParam.Path, inputKeyword.Keyword, tmpRegErr.Message)
 							continue
 						}
-						tmpKeywordList = append(tmpKeywordList, &logKeywordObj{Keyword: inputKeyword.Keyword, RegExp: tmpRegExp, TargetEndpoint: inputKeyword.TargetEndpoint})
+						tmpKeywordList = append(tmpKeywordList, &logKeywordObj{Keyword: inputKeyword.Keyword, RegExp: &tmpRegExp, TargetEndpoint: inputKeyword.TargetEndpoint})
 					} else {
 						tmpKeywordList = append(tmpKeywordList, &logKeywordObj{Keyword: inputKeyword.Keyword, TargetEndpoint: inputKeyword.TargetEndpoint})
 					}
@@ -285,12 +288,12 @@ func logKeywordHttpAction(requestParamBuff []byte) (err error) {
 		var tmpKeywordList []*logKeywordObj
 		for _, inputKeyword := range inputParam.Keywords {
 			if inputKeyword.RegularEnable {
-				tmpRegExp, tmpRegErr := regexp2.Compile(inputKeyword.Keyword, 0)
+				tmpRegExp, tmpRegErr := PcreCompile(inputKeyword.Keyword, 0)
 				if tmpRegErr != nil {
-					err = fmt.Errorf("path:%s regexp2 regexp compile %s fail:%s", inputParam.Path, inputKeyword.Keyword, tmpRegErr.Error())
+					err = fmt.Errorf("path:%s regexp2 regexp compile %s fail:%s", inputParam.Path, inputKeyword.Keyword, tmpRegErr.Message)
 					continue
 				}
-				tmpKeywordList = append(tmpKeywordList, &logKeywordObj{Keyword: inputKeyword.Keyword, RegExp: tmpRegExp, Count: inputKeyword.Count, TargetEndpoint: inputKeyword.TargetEndpoint})
+				tmpKeywordList = append(tmpKeywordList, &logKeywordObj{Keyword: inputKeyword.Keyword, RegExp: &tmpRegExp, Count: inputKeyword.Count, TargetEndpoint: inputKeyword.TargetEndpoint})
 			} else {
 				tmpKeywordList = append(tmpKeywordList, &logKeywordObj{Keyword: inputKeyword.Keyword, Count: inputKeyword.Count, TargetEndpoint: inputKeyword.TargetEndpoint})
 			}
@@ -358,4 +361,15 @@ func LogMonitorRowsHttpHandle(w http.ResponseWriter, r *http.Request) {
 	}
 	result.Status = "ok"
 	result.Message = "success"
+}
+
+func pcreMatch(re *Regexp, lineText string) (match bool) {
+	if re == nil {
+		return
+	}
+	mat := re.MatcherString(lineText, 0)
+	if mat != nil {
+		match = mat.Matches()
+	}
+	return
 }
