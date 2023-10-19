@@ -114,6 +114,40 @@ func PrometheusData(query *m.QueryMonitorData) []*m.SerialModel {
 	return serials
 }
 
+func CheckPrometheusQL(promQl string) error {
+	hostAddress := promDS.Host
+	requestUrl, _ := url.Parse(fmt.Sprintf("http://%s/api/v1/query_range", hostAddress))
+	nowTime := time.Now().Unix()
+	urlParams := url.Values{}
+	urlParams.Set("start", strconv.FormatInt(nowTime-10, 10))
+	urlParams.Set("end", strconv.FormatInt(nowTime, 10))
+	urlParams.Set("step", "10")
+	urlParams.Set("query", promQl)
+	requestUrl.RawQuery = urlParams.Encode()
+	req, err := http.NewRequest(http.MethodGet, requestUrl.String(), strings.NewReader(""))
+	if err != nil {
+		return fmt.Errorf("Failed to create request:%s ", err.Error())
+	}
+	req.Header.Set("Content-Type", "application/json")
+	httpClient, getClientErr := promDS.DataSource.GetHttpClient()
+	if getClientErr != nil {
+		return fmt.Errorf("Get httpClient fail:%s ", getClientErr.Error())
+	}
+	res, doHttpErr := ctxhttp.Do(context.Background(), httpClient, req)
+	if doHttpErr != nil {
+		return fmt.Errorf("Http request fail:%s ", doHttpErr.Error())
+	}
+	_, err = ioutil.ReadAll(res.Body)
+	defer res.Body.Close()
+	if err != nil {
+		return fmt.Errorf("Http request body read fail:%s ", err.Error())
+	}
+	if res.StatusCode/100 != 2 {
+		return fmt.Errorf("Request fail with bad statusCode: %d ", res.StatusCode)
+	}
+	return nil
+}
+
 func buildPieData(query *m.QueryMonitorData, dataList []m.PrometheusResult) {
 	pieData := m.EChartPie{}
 	for _, otr := range dataList {
