@@ -3,6 +3,7 @@ package collector
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"regexp"
 
 	//"github.com/dlclark/regexp2"
@@ -78,14 +79,17 @@ type logMetricNodeExporterResponse struct {
 }
 
 type logMetricMonitorNeObj struct {
-	TailSession    *tail.Tail            `json:"-"`
-	Lock           *sync.RWMutex         `json:"-"`
-	Path           string                `json:"path"`
-	TargetEndpoint string                `json:"target_endpoint"`
-	ServiceGroup   string                `json:"service_group"`
-	JsonConfig     []*logMetricJsonNeObj `json:"config"`
-	MetricConfig   []*logMetricNeObj     `json:"custom"`
-	DataChan       chan string           `json:"-"`
+	TailSession       *tail.Tail            `json:"-"`
+	Lock              *sync.RWMutex         `json:"-"`
+	Path              string                `json:"path"`
+	TargetEndpoint    string                `json:"target_endpoint"`
+	ServiceGroup      string                `json:"service_group"`
+	JsonConfig        []*logMetricJsonNeObj `json:"config"`
+	MetricConfig      []*logMetricNeObj     `json:"custom"`
+	DataChan          chan string           `json:"-"`
+	ReOpenHandlerChan chan int              `json:"-"`
+	TailTimeLock      *sync.RWMutex         `json:"-"`
+	TailLastUnixTime  int64                 `json:"-"`
 }
 
 type logMetricJsonNeObj struct {
@@ -234,7 +238,7 @@ func pcreMatchSubString(re *Regexp, lineText string) (matchList []string) {
 }
 
 func (c *logMetricMonitorNeObj) start() {
-	level.Info(monitorLogger).Log("startLogMetricMonitorNeObj", c.Path)
+	level.Info(monitorLogger).Log("log_metric -> startLogMetricMonitorNeObj__start", c.Path)
 	var err error
 	c.TailSession, err = tail.TailFile(c.Path, tail.Config{Follow: true, ReOpen: true, Location: &tail.SeekInfo{Offset: 0, Whence: 2}})
 	if err != nil {
@@ -243,11 +247,56 @@ func (c *logMetricMonitorNeObj) start() {
 	}
 	c.DataChan = make(chan string, logMetricChanLength)
 	go c.startHandleTailData()
-	for line := range c.TailSession.Lines {
-		if len(c.DataChan) == logMetricChanLength {
-			level.Info(monitorLogger).Log("Log metric queue is full,file:", c.Path)
+	go c.startFileHandlerCheck()
+	breakFlag := false
+	for {
+		select {
+		case <-c.ReOpenHandlerChan:
+			breakFlag = true
+		case line := <-c.TailSession.Lines:
+			if line == nil {
+				continue
+			}
+			c.DataChan <- line.Text
 		}
-		c.DataChan <- line.Text
+		if breakFlag {
+			break
+		} else {
+			c.TailTimeLock.Lock()
+			c.TailLastUnixTime = time.Now().Unix()
+			c.TailTimeLock.Unlock()
+		}
+	}
+	c.TailSession.Stop()
+	c.TailSession.Cleanup()
+	level.Info(monitorLogger).Log("log_metric -> startLogMetricMonitorNeObj__end", c.Path)
+	time.Sleep(2 * time.Second)
+	go c.start()
+}
+
+func (c *logMetricMonitorNeObj) startFileHandlerCheck() {
+	t := time.NewTicker(1 * time.Minute).C
+	for {
+		<-t
+		if fileLastTime, err := getFileLastUpdatedTime(c.Path); err == nil {
+			c.TailTimeLock.RLock()
+			tailLastTime := c.TailLastUnixTime
+			c.TailTimeLock.RUnlock()
+			if tailLastTime == 0 {
+				c.TailTimeLock.Lock()
+				c.TailLastUnixTime = fileLastTime
+				c.TailTimeLock.Unlock()
+				tailLastTime = fileLastTime
+			}
+			if fileLastTime-tailLastTime > 60 {
+				c.ReOpenHandlerChan <- 1
+				level.Info(monitorLogger).Log(fmt.Sprintf("log_metric -> reopen_tail_with_time_check_fail,path:%s,fileLastTime:%d,tailLastTime:%d ", c.Path, fileLastTime, tailLastTime))
+			} else {
+				level.Info(monitorLogger).Log(fmt.Sprintf("log_metric -> reopen_tail_with_time_check_ok,path:%s,fileLastTime:%d,tailLastTime:%d ", c.Path, fileLastTime, tailLastTime))
+			}
+		} else {
+			level.Error(monitorLogger).Log(fmt.Sprintf("log_metric -> check_file_handler_fail,path:%s,err:%s ", c.Path, err.Error()))
+		}
 	}
 }
 
@@ -256,6 +305,8 @@ func (c *logMetricMonitorNeObj) new(input *logMetricMonitorNeObj) {
 	c.TargetEndpoint = input.TargetEndpoint
 	c.ServiceGroup = input.ServiceGroup
 	c.JsonConfig = []*logMetricJsonNeObj{}
+	c.TailTimeLock = new(sync.RWMutex)
+	c.ReOpenHandlerChan = make(chan int, 1)
 	var err error
 	for _, jsonObj := range input.JsonConfig {
 		tmpReg, tmpErr := PcreCompile(jsonObj.Regular, 0)
@@ -768,5 +819,15 @@ func getLogMetricTags(lineText string, tagConfigList []*LogMetricConfigTag, stri
 		}
 	}
 	tagString = strings.Join(tagList, ",")
+	return
+}
+
+func getFileLastUpdatedTime(filePath string) (unixTime int64, err error) {
+	f, statErr := os.Stat(filePath)
+	if statErr != nil {
+		err = fmt.Errorf("check file update time fail with stat file:%s %s ", filePath, statErr.Error())
+		return
+	}
+	unixTime = f.ModTime().Unix()
 	return
 }
