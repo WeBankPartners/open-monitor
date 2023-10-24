@@ -81,8 +81,9 @@
                 @on-close="removeQuery(queryIndex)"
               >{{$t('field.endpoint')}}：{{query.endpointName || query.endpoint}}; {{$t('field.metric')}}：{{query.metric}}</Tag>
             </div>
-            <div class="condition-zone">
+            <div v-if="fixSelect" class="condition-zone">
               <ul>
+                <!--对象-->
                 <li>
                   <div class="condition condition-title c-black-gray">{{$t('field.endpoint')}}</div>
                   <div class="condition">
@@ -91,15 +92,15 @@
                       v-model="templateQuery.endpoint"
                       filterable
                       clearable
-                      remote
                       :placeholder="$t('requestMoreData')"
-                      @on-open-change="getEndpointList('.')"
+                      @on-open-change="getEndpointList('.', $event)"
                       @on-change="selectEndpoint"
-                      :remote-method="getEndpointList"
+                      @on-query-change="handleRemoteEndpoint"
                     >
                       <Option
                         v-for="(option, index) in options"
                         :value="option.option_value"
+                        :label="option.option_text"
                         :key="index"
                       >
                         <TagShow :tagName="option.option_type_name" :index="index"></TagShow>{{option.option_text}}</Option>
@@ -107,6 +108,7 @@
                     </Select>
                   </div>
                 </li>
+                <!--类型-->
                 <li v-if="showRecursiveType">
                   <div class="condition condition-title c-black-gray">{{$t('field.type')}}</div>
                   <div class="condition">
@@ -124,6 +126,7 @@
                     </Select>
                   </div>
                 </li>
+                <!--指标-->
                 <li>
                   <div class="condition condition-title c-black-gray">{{$t('field.metric')}}</div>
                   <div class="condition">
@@ -145,11 +148,12 @@
                     </Select>
                   </div>
                 </li>
+                <!--颜色配置-->
                 <li v-if="templateQuery.metricToColor.length >0">
                   <div class="condition condition-title" style="vertical-align: top;">{{$t('个性化配置')}}</div>
                   <div class="condition">
-                    <template v-for="mc in templateQuery.metricToColor">
-                      <div :key="mc.metric">
+                    <template v-for="(mc, index) in templateQuery.metricToColor">
+                      <div :key="index">
                         <Tooltip :content="mc.metric" max-width="300">
                           <Tag>{{mc.metric.length > 50 ? mc.metric.substring(0,50) + '...' : mc.metric}}</Tag>
                           <div slot="content" style="white-space: normal;">
@@ -162,6 +166,7 @@
                     </template>
                   </div>
                 </li>
+                <!--单位-->
                 <li>
                   <div class="condition condition-title">{{$t('field.unit')}}</div>
                   <div class="condition">
@@ -172,6 +177,9 @@
                 </li>
               </ul>
             </div>
+            <!-- <div class="loading-zone" v-else>
+              <Spin fix></Spin>
+            </div> -->
         </section>
       </div>
     </div>
@@ -182,14 +190,25 @@
 import { generateUuid } from "@/assets/js/utils"
 import { readyToDraw } from "@/assets/config/chart-rely"
 import TagShow from '@/components/Tag-show.vue'
+import lodash from 'lodash'
 export default {
   name: "",
+  props: {
+    activeGridConfig: {
+      type: Object,
+      default: () => {}
+    },
+    parentRouteData: {
+      type: Object,
+      default: () => {}
+    }
+  },
   data() {
     return {
+      fixSelect: true, // 修复点击tag标签，数据回显不出来问题,等下拉列表数据全部请求完成，再重新加载下拉组件
       viewData: null,
       panalIndex: null,
       panalData: null,
-
       elId: null,
       noDataTip: false,
       endpointType: null,
@@ -234,7 +253,12 @@ export default {
         },
         {
           label: this.$t('other'),
-          value: ''
+          value: {
+            'aggregate': 'min',
+            'agg_step': 60,
+            'chartType': 'line',
+            'lineType': 1
+          }
         },
       ]),
       aggStepOptions: [
@@ -308,9 +332,32 @@ export default {
     // },
     'templateQuery.endpoint': async function (val) {
       if (val && this.options.length > 0) {
-        this.endpointType = this.options.find(item => item.option_value === val).type  
+        const find = this.options.find(item => item.option_value === val)
+        if (find) {
+            this.endpointType = find.type
+          }
       }
-    }
+    },
+    // // 解决emplateQuery.endpoint值改变，但是接口查询this.options还未获取到问题
+    // options: {
+    //   handler(val) {
+    //     if (val && val.length > 0) {
+    //       const find = this.options.find(item => item.option_value === this.templateQuery.endpoint)
+    //       if (find) {
+    //         this.endpointType = find.type
+    //       }
+    //     }
+    //   },
+    //   deep: true
+    // },
+    templateQuery: {
+      handler(val) {
+        if (val.metric && typeof(val.metric) === 'string') {
+          this.templateQuery.metric = [val.metric]
+        }
+      }
+    },
+    deep: true
   },
   created() {
     generateUuid().then(elId => {
@@ -318,6 +365,7 @@ export default {
     })
   },
   mounted() {
+    this.initChart()
   },
   methods: {
     requestAgain () {
@@ -352,10 +400,12 @@ export default {
           }
         )
     },
+    // 点击tag配置标签
     async test (a, b) {
       await this.bb(a,b)
     },
     async bb (a, b) {
+      this.fixSelect = false
       const search = a.endpointName || '.'
       this.editIndex = b
       this.templateQuery = {
@@ -377,6 +427,7 @@ export default {
           if (find) {
             this.endpointType = find.type
           }
+          // id为-1展示类型
           if (find && find.id === -1) {
             this.showRecursiveType = true
             let params = {
@@ -385,18 +436,18 @@ export default {
             this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.recursiveType, params, responseData => {
               this.templateQuery.endpoint_type = responseData[0]
               this.recursiveTypeOptions = responseData
+              this.metricSelectOpen(a.metric)
             })
           } else {
             this.showRecursiveType = false
+            this.metricSelectOpen(a.metric)
           }
-          this.metricSelectOpen(a.metric)
         }
       )
     },
     changeMetric (val) {
-      if (val.length === 0) return
       this.templateQuery.metricToColor = []
-      if (!val) return 
+      if (!val || val.length === 0) return 
       let tmp = JSON.parse(JSON.stringify(this.templateQuery))
       if (tmp.endpoint_type !== '') {
         tmp.app_object = tmp.endpoint
@@ -437,9 +488,12 @@ export default {
         }
       )
     },
+    // 选择对象
     selectEndpoint (val) {
       this.showRecursiveType = false
       this.templateQuery.endpoint_type = ''
+      this.templateQuery.metricToColor = []
+      this.templateQuery.metric = []
       const find = this.options.find(item => item.option_value === val)
       if (find && find.id === -1) {
         this.showRecursiveType = true
@@ -465,7 +519,11 @@ export default {
         metricToColor: []
       }
     },
-    initChart (params) {
+    initChart () {
+      let params = {
+        templateData: this.parentRouteData,
+        panal: this.activeGridConfig
+      }
       this.oriParams = params
       this.chartQueryList = []
       this.clearParams()
@@ -587,7 +645,9 @@ export default {
     initQueryList(query) {
       this.chartQueryList = query
     },
-    getEndpointList(query) {
+    getEndpointList(query, flag) {
+      if (flag === false) return // 下拉框收缩不调用
+      if (this.templateQuery.endpoint) return
       let params = {
         search: query,
         page: 1,
@@ -602,6 +662,10 @@ export default {
         }
       )
     },
+    handleRemoteEndpoint: lodash.debounce(function(val) {
+      this.getEndpointList(val || '.')
+    }, 500),
+    // 指标下拉查询
     metricSelectOpen(metric) {
       if (this.$root.$validate.isEmpty_reset(metric)) {
         this.$Message.warning(
@@ -615,12 +679,18 @@ export default {
           params,
           responseData => {
             this.metricList = responseData
+            this.fixSelect = true
           }
         )
       }
     },
     addQuery() {
-      if (this.templateQuery.endpoint === '' || this.templateQuery.metric === '' || this.templateQuery.endpoint === undefined || this.templateQuery.metric === undefined) {
+      if (this.templateQuery.endpoint === '' ||
+        this.templateQuery.metric === '' ||
+        this.templateQuery.endpoint === undefined ||
+        this.templateQuery.metric === undefined ||
+        (Array.isArray(this.templateQuery.metric) && this.templateQuery.metric.length === 0))
+      {
         this.$Message.warning(this.$t('m_tip_for_save'))
         return
       }
@@ -811,6 +881,14 @@ li {
   border: 1px solid @blue-2;
   padding: 4px;
   margin: 4px;
+}
+.loading-zone {
+  display: inline-block;
+  width: 100%;
+  position: relative;
+  height: 200px;
+  margin: 4px;
+  border: 1px solid @blue-2;
 }
 .select-option /deep/ .ivu-select-dropdown-list {
   text-align: left;
