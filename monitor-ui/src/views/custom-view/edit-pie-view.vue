@@ -117,6 +117,16 @@ import { drawPieChart} from "@/assets/config/chart-rely"
 import TagShow from '@/components/Tag-show.vue'
 export default {
   name: "",
+  props: {
+    activeGridConfig: {
+      type: Object,
+      default: () => {}
+    },
+    parentRouteData: {
+      type: Object,
+      default: () => {}
+    }
+  },
   data() {
     return {
       viewData: [],
@@ -152,6 +162,7 @@ export default {
 
   },
   mounted() {
+    this.initChart()
   },
   methods: {
     switchType (val) {
@@ -262,7 +273,11 @@ export default {
         pie_metric_type: pie_metric_type
       }
     },
-    async initChart (params) {
+    async initChart () {
+      let params = {
+        templateData: this.parentRouteData,
+        panal: this.activeGridConfig
+      }
       this.oriParams = params
       this.elId = params.panal.id + '1'
       if (!this.$root.$validate.isEmpty_reset(params.templateData.cfg)) {
