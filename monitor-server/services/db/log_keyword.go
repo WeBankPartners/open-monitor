@@ -10,6 +10,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
 	"io/ioutil"
 	"net/http"
+	"sort"
 	"strings"
 	"time"
 )
@@ -181,33 +182,40 @@ func doLogKeywordMonitorJob() {
 		log.Logger.Debug("Check log keyword break with empty config ")
 		return
 	}
-	var firingAlarmTable, closeAlarmTable []*models.AlarmTable
-	err = x.SQL("SELECT * FROM alarm WHERE s_metric='log_monitor' and status='firing'").Find(&firingAlarmTable)
-	if err != nil {
-		log.Logger.Error("Check log keyword break with query exist firing alarm fail", log.Error(err))
-		return
-	}
-	err = x.SQL("select id,endpoint,tags,start_value,end_value,`start` from alarm where id in (select max(id) as id from alarm where s_metric='log_monitor' and status='closed' group by tags)").Find(&closeAlarmTable)
+	var alarmTable []*models.AlarmTable
+	err = x.SQL("SELECT * FROM alarm WHERE s_metric='log_monitor'").Find(&alarmTable)
+	//var firingAlarmTable, closeAlarmTable []*models.AlarmTable
+	//err = x.SQL("SELECT * FROM alarm WHERE s_metric='log_monitor' and status='firing'").Find(&firingAlarmTable)
+	//if err != nil {
+	//	log.Logger.Error("Check log keyword break with query exist firing alarm fail", log.Error(err))
+	//	return
+	//}
+	//err = x.SQL("select id,endpoint,tags,start_value,end_value,`start` from alarm where id in (select max(id) as id from alarm where s_metric='log_monitor' and status='closed' group by tags)").Find(&closeAlarmTable)
 	if err != nil {
 		log.Logger.Error("Check log keyword break with query exist closed alarm fail", log.Error(err))
 		return
 	}
+	sortAlarmList := models.SortAlarmList{}
+	for _, v := range alarmTable {
+		sortAlarmList = append(sortAlarmList, v)
+	}
+	sort.Sort(sortAlarmList)
 	alarmMap := make(map[string]*models.AlarmTable)
-	for _, v := range firingAlarmTable {
+	for _, v := range sortAlarmList {
 		if _, b := alarmMap[v.Tags]; b {
 			continue
 		}
 		alarmMap[v.Tags] = v
 	}
-	for _, v := range closeAlarmTable {
-		if firingExistAlarm, b := alarmMap[v.Tags]; b {
-			if firingExistAlarm.Start.Unix() < v.Start.Unix() {
-				alarmMap[v.Tags] = v
-			}
-		} else {
-			alarmMap[v.Tags] = v
-		}
-	}
+	//for _, v := range closeAlarmTable {
+	//	if firingExistAlarm, b := alarmMap[v.Tags]; b {
+	//		if firingExistAlarm.Start.Unix() < v.Start.Unix() {
+	//			alarmMap[v.Tags] = v
+	//		}
+	//	} else {
+	//		alarmMap[v.Tags] = v
+	//	}
+	//}
 	var addAlarmRows []*models.AlarmTable
 	var newValue, oldValue float64
 	notifyMap := make(map[string]string)
