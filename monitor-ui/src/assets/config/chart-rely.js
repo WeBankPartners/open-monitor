@@ -9,6 +9,7 @@ require('echarts/lib/component/legend');
 require('echarts/lib/component/toolbox');
 require('echarts/lib/component/legendScroll');
 
+import { generateAdjacentColors } from './random-color'
 const echarts = require('echarts/lib/echarts');
 
 export const readyToDraw = function(that, responseData, viewIndex, chartConfig, elId) {
@@ -23,6 +24,18 @@ export const readyToDraw = function(that, responseData, viewIndex, chartConfig, 
   if (chartConfig.params) {
     lineType = chartConfig.params.lineType
     chartConfig.params.data.forEach(item => {
+      let nullColorIndex = []
+      item.metricToColor.forEach((m, mIndex) => {
+        if (m.color === '') {
+          nullColorIndex.push(mIndex)
+        }
+      })
+      if (nullColorIndex.length > 0 && item.defaultColor && item.defaultColor!== '') {
+        let colors = generateAdjacentColors(item.defaultColor, nullColorIndex.length, 20)
+        nullColorIndex.forEach((n, nIndex) => {
+          item.metricToColor[n].color = colors[nIndex]
+        })
+      }
       metricToColor = metricToColor.concat(item.metricToColor)
     })
   }
