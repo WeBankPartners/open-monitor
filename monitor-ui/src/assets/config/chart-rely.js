@@ -317,8 +317,8 @@ export const drawChart = function(that,config,userConfig, elId) {
       // TODO 多次放大后缩小无法恢复到最初状态，单次放大可以
       // 尚不知如何判断为放大还是缩小
       if (params.batch[0].endValue > 110) {
-        startValue = parseInt(myChart.getModel().option.dataZoom[0].startValue/1000)+''
-        endValue = parseInt(myChart.getModel().option.dataZoom[0].endValue/1000)+''
+        startValue = parseInt(myChart.getModel().option.dataZoom[0].startValue/1000)
+        endValue = parseInt(myChart.getModel().option.dataZoom[0].endValue/1000)
       }
       that.getChartData(null,startValue, endValue)
     })
