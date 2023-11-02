@@ -318,5 +318,6 @@
   "m_type_object": "Type Object",
   "m_host_object": "Host Object",
   "m_default_color": "Default Color",
-  "m_custom_config": "Custom Config"
+  "m_custom_config": "Custom Config",
+  "m_same_exists": "Same configuration already exists!"
 }
