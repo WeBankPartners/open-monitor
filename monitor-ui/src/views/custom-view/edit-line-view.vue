@@ -96,6 +96,7 @@
                       @on-open-change="getEndpointList('.', $event)"
                       @on-change="selectEndpoint"
                       @on-query-change="handleRemoteEndpoint"
+                      @on-clear="metricDefaultColor=[]"
                     >
                       <Option
                         v-for="(option, index) in options"
@@ -117,6 +118,7 @@
                       style="width:300px"
                       filterable
                       clearable
+                      @on-clear="metricDefaultColor=[]"
                     >
                       <Option
                         v-for="(item,index) in recursiveTypeOptions"
@@ -746,7 +748,6 @@ export default {
           defaultColor: this.metricDefaultColor.find(x => x.metric.startsWith(m)).defaultColor || ''
         }
       })
-      
       // if (this.editIndex !== -1) {
       //   this.chartQueryList[this.editIndex ] = tmp
       // } else {
@@ -755,7 +756,22 @@ export default {
       if (this.editIndex !== -1) {
         // this.removeQuery(this.editIndex)
         this.chartQueryList.splice(this.editIndex, 1)
+      } else {
+        let illegalIndex = []
+        params.forEach((p, pIndex) => {
+          const findIndex = this.chartQueryList.findIndex(query => query.endpointName === p.endpointName && query.metric === p.metric)
+          if (findIndex !== -1) {
+            illegalIndex.push(pIndex)
+          }
+        })
+        if (illegalIndex.length > 0) {
+          this.$Message.warning(
+            this.$t("m_same_exists")
+          )
+          return
+        }
       }
+
       this.chartQueryList = this.chartQueryList.concat(params)
       this.requestAgain()
       this.editIndex = -1
