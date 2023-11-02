@@ -316,39 +316,11 @@ export default {
     }
   },
   watch: {
-    // chartQueryList: {
-    //   handler(data) {
-    //     console.log(111)
-    //     this.noDataTip = false
-    //     let params = {
-    //       aggregate: this.templateQuery.aggregate || 'none',
-    //       agg_step: this.templateQuery.agg_step || 60,
-    //       lineType: this.templateQuery.lineType,
-    //       time_second: -1800,
-    //       start: 0,
-    //       end: 0,
-    //       title: '',
-    //       unit: '',
-    //       data: []
-    //     }
-    //     if (this.$root.$validate.isEmpty_reset(data)) {
-    //       this.noDataTip = true
-    //       return
-    //     }
-    //     data.forEach(item => {
-    //       params.data.push(item)
-    //     })
-    //     this.$root.$httpRequestEntrance.httpRequestEntrance(
-    //       'POST',this.$root.apiCenter.metricConfigView.api, params,
-    //       responseData => {
-    //         responseData.yaxis.unit = this.panalUnit
-    //         readyToDraw(this,responseData, 1, { eye: false, chartType: this.templateQuery.chartType, clear: true, params: params })
-    //       }
-    //     )
-    //   },
-    //   deep: true,
-    //   immediate: true
-    // },
+    'templateQuery.metric': {
+      handler(data) {
+        this.metricDefaultColor = this.metricDefaultColor.filter(params => data.includes(params.metric))
+      }
+    },
     'templateQuery.endpoint': async function (val) {
       if (val && this.options.length > 0) {
         const find = this.options.find(item => item.option_value === val)
