@@ -317,5 +317,6 @@
   "m_type_object": "类型对象",
   "m_host_object": "主机对象",
   "m_default_color": "默认色系",
-  "m_custom_config": "个性化配置"
+  "m_custom_config": "个性化配置",
+  "m_same_exists": "相同配置已存在！"
 }
