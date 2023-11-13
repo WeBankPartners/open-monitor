@@ -223,7 +223,7 @@ func CreateLogMetricConfig(c *gin.Context) {
 		middleware.ReturnValidateError(c, "metric name illegal")
 		return
 	}
-	if strings.Contains(param.Regular, "\\n") {
+	if strings.Contains(param.Regular, "\n") {
 		middleware.ReturnValidateError(c, "regular illegal")
 		return
 	}
@@ -250,7 +250,7 @@ func UpdateLogMetricConfig(c *gin.Context) {
 		middleware.ReturnValidateError(c, "metric name illegal")
 		return
 	}
-	if strings.Contains(param.Regular, "\\n") {
+	if strings.Contains(param.Regular, "\n") {
 		middleware.ReturnValidateError(c, "regular illegal")
 		return
 	}
