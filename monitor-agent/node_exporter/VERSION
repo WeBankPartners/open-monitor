@@ -23,3 +23,6 @@ Update log metric tag support
 
 v2.0.2.34
 Update log regexp rule && Fix log tail index
+
+v2.0.4.3
+Update log regexp to pcre exp && Add tail handler recover

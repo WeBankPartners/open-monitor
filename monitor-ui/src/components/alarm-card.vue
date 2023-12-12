@@ -76,12 +76,18 @@
       <li>
         <label class="card-label" v-html="$t('field.endpoint')"></label>
         <div class="card-content">
-          {{ data.endpoint }}
-          <img
-            class="filter-icon"
-            @click="addParams('endpoint', data.endpoint)"
-            src="../assets/img/icon_filter.png"
-          />
+          <div style="display:flex;align-items:center;width:100%;">
+            <div class="ellipsis">
+              <Tooltip :content="data.endpoint">
+                {{ data.endpoint }}
+              </Tooltip>
+            </div>
+            <img
+              class="filter-icon-flex"
+              @click="addParams('endpoint', data.endpoint)"
+              src="../assets/img/icon_filter.png"
+            />
+          </div>
         </div>
       </li>
       <li>
@@ -217,10 +223,21 @@ li {
   cursor: pointer;
 }
 
+.filter-icon-flex {
+  margin-left: 6px;
+  cursor: pointer;
+}
+
 .fa-operate {
   margin: 8px;
   float: right;
   font-size: 16px;
   cursor: pointer;
+}
+.ellipsis {
+  max-width: ~"calc(100% - 120px)";
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
 }
 </style>
