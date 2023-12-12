@@ -9,6 +9,7 @@ require('echarts/lib/component/legend');
 require('echarts/lib/component/toolbox');
 require('echarts/lib/component/legendScroll');
 
+import { generateAdjacentColors } from './random-color'
 const echarts = require('echarts/lib/echarts');
 
 export const readyToDraw = function(that, responseData, viewIndex, chartConfig, elId) {
@@ -19,13 +20,73 @@ export const readyToDraw = function(that, responseData, viewIndex, chartConfig, 
     return
   }
   let metricToColor = []
-  var lineType = 1
+  let lineType = 1
+  let isHostOrSys = false
+  let metricEndpointColorInChartConfig = {}
+  let metricSysColorInChartConfig = {}
   if (chartConfig.params) {
     lineType = chartConfig.params.lineType
     chartConfig.params.data.forEach(item => {
+      // 通过endpoint中‘.’的个数，判定是主机还是层级对象
+      if (item.endpoint.split('.').length >= 3) {
+        isHostOrSys = true
+      } 
+      metricEndpointColorInChartConfig[`${item.metric}:${item.endpoint}`] = item.defaultColor
+      metricSysColorInChartConfig[`${item.metric}`] = item.defaultColor
+      let nullColorIndex = []
+      item.metricToColor.forEach((m, mIndex) => {
+        if (m.color === '') {
+          nullColorIndex.push(mIndex)
+        }
+      })
+
+      if (nullColorIndex.length > 0 && item.defaultColor && item.defaultColor!== '') {
+        let colors = generateAdjacentColors(item.defaultColor, nullColorIndex.length, 20)
+        nullColorIndex.forEach((n, nIndex) => {
+          item.metricToColor[n].color = colors[nIndex]
+        })
+      }
       metricToColor = metricToColor.concat(item.metricToColor)
     })
+
+    // 处理在最初没数据，后面来数据 metricToColor 为空时的指标颜色处理
+    if (isHostOrSys) {
+      responseData.series.forEach((item, itemIndex) => {
+        const findIndex = metricToColor.findIndex(m => m.metric === item.name)
+        if (findIndex === -1) {
+          const keys = Object.keys(metricEndpointColorInChartConfig)
+          keys.forEach(key => {
+            if (item.name.startsWith(key)) {
+              let color = generateAdjacentColors(metricEndpointColorInChartConfig[key], 1, 20 * (itemIndex - 0.3) )
+              metricToColor.push({
+                metric: item.name,
+                color: color[0]
+              })
+            }
+          })
+        }
+      })
+    } else {
+      responseData.series.forEach((item, itemIndex) => {
+        const findIndex = metricToColor.findIndex(m => m.metric === item.name)
+        if (findIndex === -1) {
+          const keys = Object.keys(metricSysColorInChartConfig)
+          keys.forEach(key => {
+            if (item.name.startsWith(key)) {
+              let color = generateAdjacentColors(metricSysColorInChartConfig[key], 1, 20 * (itemIndex*0.1) )
+
+              metricToColor.push({
+                metric: item.name,
+                color: color[0]
+              })
+            }
+          })
+        }
+      })
+      console.log(metricToColor)
+    }
   }
+  
   const colorX = ['#33CCCC','#666699','#66CC66','#996633','#9999CC','#339933','#339966','#663333','#6666CC','#336699','#3399CC','#33CC66','#CC3333','#CC6666','#996699','#CC9933']
   let colorSet = []
   for (let i=0;i<colorX.length;i++) {
@@ -317,8 +378,8 @@ export const drawChart = function(that,config,userConfig, elId) {
       // TODO 多次放大后缩小无法恢复到最初状态，单次放大可以
       // 尚不知如何判断为放大还是缩小
       if (params.batch[0].endValue > 110) {
-        startValue = parseInt(myChart.getModel().option.dataZoom[0].startValue/1000)+''
-        endValue = parseInt(myChart.getModel().option.dataZoom[0].endValue/1000)+''
+        startValue = parseInt(myChart.getModel().option.dataZoom[0].startValue/1000)
+        endValue = parseInt(myChart.getModel().option.dataZoom[0].endValue/1000)
       }
       that.getChartData(null,startValue, endValue)
     })
