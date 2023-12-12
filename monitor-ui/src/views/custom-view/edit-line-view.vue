@@ -10,53 +10,64 @@
       </div>
     </div>
     <div class="zone zone-config c-dark">
-      <div class="tool-save">
-        <div class="condition">
-          <Tooltip :content="$t('field.aggType')" :delay="1000">
-            <Select filterable  class="select-option" v-model="templateQuery.aggregate" style="width:100px" @on-change="switchChartType">
-              <Option
-                v-for="(type) in ['min', 'max', 'avg', 'p95', 'sum', 'none', 'avg_nonzero']"
-                :value="type"
-                :key="type"
-              >{{type}}</Option>
-            </Select>
-          </Tooltip>
+      <div class="flex">
+        <div class="left">
+          <Select class="select-option" filterable v-model="quickQueryValue" style="width:250px" @on-change="syncCondition">
+            <Option
+              v-for="agg in quickOptions"
+              :value="agg.label"
+              :key="agg.label"
+            >{{agg.label}}</Option>
+          </Select>
         </div>
-        <div class="condition" v-if="templateQuery.aggregate !== 'none'">
-          <Tooltip :content="$t('field.aggStep')" :delay="1000">
-            <Select filterable  class="select-option" v-model="templateQuery.agg_step" style="width:100px" @on-change="switchChartType">
-              <Option
-                v-for="agg in aggStepOptions"
-                :value="agg.value"
-                :key="agg.value"
-              >{{agg.label}}</Option>
-            </Select>
-          </Tooltip>
+        <div class="tool-save">
+          <div class="condition">
+            <Tooltip :content="$t('field.aggType')" :delay="1000">
+              <Select filterable  class="select-option" v-model="templateQuery.aggregate" style="width:100px" @on-change="switchChartType">
+                <Option
+                  v-for="(type) in ['min', 'max', 'avg', 'p95', 'sum', 'none', 'avg_nonzero']"
+                  :value="type"
+                  :key="type"
+                >{{type}}</Option>
+              </Select>
+            </Tooltip>
+          </div>
+          <div class="condition" v-if="templateQuery.aggregate !== 'none'">
+            <Tooltip :content="$t('field.aggStep')" :delay="1000">
+              <Select filterable  class="select-option" v-model="templateQuery.agg_step" style="width:120px" @on-change="switchChartType">
+                <Option
+                  v-for="agg in aggStepOptions"
+                  :value="agg.value"
+                  :key="agg.value"
+                >{{agg.label}}</Option>
+              </Select>
+            </Tooltip>
+          </div>
+          <div class="condition">
+            <Tooltip :content="$t('m_chart_type')" :delay="1000">
+              <Select filterable class="select-option" v-model="templateQuery.chartType" style="width:120px" @on-change="switchChartType">
+                <Option
+                  v-for="(option, index) in chartTypeOption"
+                  :value="option.value"
+                  :key="index"
+                >{{option.label}}</Option>
+              </Select>
+            </Tooltip>
+          </div>
+          <div class="condition" v-if="templateQuery.chartType === 'line'">
+            <Tooltip :content="$t('m_line_type')" :delay="1000">
+              <Select filterable class="select-option" v-model="templateQuery.lineType" style="width:120px" @on-change="switchChartType">
+                <Option
+                  v-for="(option, index) in lineOption"
+                  :value="option.value"
+                  :key="index"
+                >{{option.label}}</Option>
+              </Select>
+            </Tooltip>
+          </div>
+          <button class="btn btn-sm btn-confirm-f" @click="saveConfig">{{$t('button.saveConfig')}}</button>
+          <button class="btn btn-sm btn-cancel-f" @click="goback()">{{$t('button.cancel')}}</button>
         </div>
-        <div class="condition">
-          <Tooltip :content="$t('m_chart_type')" :delay="1000">
-            <Select filterable class="select-option" v-model="templateQuery.chartType" style="width:160px" @on-change="switchChartType">
-              <Option
-                v-for="(option, index) in chartTypeOption"
-                :value="option.value"
-                :key="index"
-              >{{option.label}}</Option>
-            </Select>
-          </Tooltip>
-        </div>
-        <div class="condition" v-if="templateQuery.chartType === 'line'">
-          <Tooltip :content="$t('m_line_type')" :delay="1000">
-            <Select filterable class="select-option" v-model="templateQuery.lineType" style="width:160px" @on-change="switchChartType">
-              <Option
-                v-for="(option, index) in lineOption"
-                :value="option.value"
-                :key="index"
-              >{{option.label}}</Option>
-            </Select>
-          </Tooltip>
-        </div>
-        <button class="btn btn-sm btn-confirm-f" @click="saveConfig">{{$t('button.saveConfig')}}</button>
-        <button class="btn btn-sm btn-cancel-f" @click="goback()">{{$t('button.cancel')}}</button>
       </div>
       <div>
         <section class="zone-config-operation">
@@ -66,12 +77,13 @@
                 type="border"
                 :name="queryIndex"
                 closable
-                @click.native="test(query, queryIndex)"
+                @click.native="editQueryParams(query, queryIndex)"
                 @on-close="removeQuery(queryIndex)"
               >{{$t('field.endpoint')}}：{{query.endpointName || query.endpoint}}; {{$t('field.metric')}}：{{query.metric}}</Tag>
             </div>
-            <div class="condition-zone">
+            <div v-if="fixSelect" class="condition-zone">
               <ul>
+                <!--对象-->
                 <li>
                   <div class="condition condition-title c-black-gray">{{$t('field.endpoint')}}</div>
                   <div class="condition">
@@ -80,15 +92,16 @@
                       v-model="templateQuery.endpoint"
                       filterable
                       clearable
-                      remote
                       :placeholder="$t('requestMoreData')"
-                      @on-open-change="getEndpointList('.')"
+                      @on-open-change="getEndpointList('.', $event)"
                       @on-change="selectEndpoint"
-                      :remote-method="getEndpointList"
+                      @on-query-change="handleRemoteEndpoint"
+                      @on-clear="metricDefaultColor=[]"
                     >
                       <Option
                         v-for="(option, index) in options"
                         :value="option.option_value"
+                        :label="option.option_text"
                         :key="index"
                       >
                         <TagShow :tagName="option.option_type_name" :index="index"></TagShow>{{option.option_text}}</Option>
@@ -96,6 +109,7 @@
                     </Select>
                   </div>
                 </li>
+                <!--类型-->
                 <li v-if="showRecursiveType">
                   <div class="condition condition-title c-black-gray">{{$t('field.type')}}</div>
                   <div class="condition">
@@ -104,6 +118,7 @@
                       style="width:300px"
                       filterable
                       clearable
+                      @on-clear="metricDefaultColor=[]"
                     >
                       <Option
                         v-for="(item,index) in recursiveTypeOptions"
@@ -113,6 +128,7 @@
                     </Select>
                   </div>
                 </li>
+                <!--指标-->
                 <li>
                   <div class="condition condition-title c-black-gray">{{$t('field.metric')}}</div>
                   <div class="condition">
@@ -134,11 +150,28 @@
                     </Select>
                   </div>
                 </li>
-                <li v-if="templateQuery.metricToColor.length >0">
-                  <div class="condition condition-title" style="vertical-align: top;">{{$t('个性化配置')}}</div>
+                <li>
+                  <div class="condition condition-title c-black-gray">{{$t('m_default_color')}}</div>
                   <div class="condition">
-                    <template v-for="mc in templateQuery.metricToColor">
-                      <div :key="mc.metric">
+                    <template v-for="mdc in metricDefaultColor">
+                      <div :key="mdc.metric">
+                        <Tooltip :content="mdc.metric" max-width="300">
+                          <Tag>{{mdc.metric.length > 50 ? mdc.metric.substring(0,50) + '...' : mdc.metric}}</Tag>
+                          <div slot="content" style="white-space: normal;">
+                            <p>{{mdc.metric}}</p>
+                          </div>
+                        </Tooltip>
+                        <ColorPicker v-model="mdc.defaultColor" />
+                        {{mdc.defaultColor}}
+                      </div>
+                    </template>
+                  </div>
+                </li>
+                <li v-if="templateQuery.metricToColor.length >0">
+                  <div class="condition condition-title" style="vertical-align: top;">{{$t('m_custom_config')}}</div>
+                  <div class="condition">
+                    <template v-for="(mc, index) in templateQuery.metricToColor">
+                      <div :key="index">
                         <Tooltip :content="mc.metric" max-width="300">
                           <Tag>{{mc.metric.length > 50 ? mc.metric.substring(0,50) + '...' : mc.metric}}</Tag>
                           <div slot="content" style="white-space: normal;">
@@ -151,6 +184,7 @@
                     </template>
                   </div>
                 </li>
+                <!--单位-->
                 <li>
                   <div class="condition condition-title">{{$t('field.unit')}}</div>
                   <div class="condition">
@@ -161,6 +195,9 @@
                 </li>
               </ul>
             </div>
+            <!-- <div class="loading-zone" v-else>
+              <Spin fix></Spin>
+            </div> -->
         </section>
       </div>
     </div>
@@ -171,14 +208,25 @@
 import { generateUuid } from "@/assets/js/utils"
 import { readyToDraw } from "@/assets/config/chart-rely"
 import TagShow from '@/components/Tag-show.vue'
+import lodash from 'lodash'
 export default {
   name: "",
+  props: {
+    activeGridConfig: {
+      type: Object,
+      default: () => {}
+    },
+    parentRouteData: {
+      type: Object,
+      default: () => {}
+    }
+  },
   data() {
     return {
+      fixSelect: true, // 修复点击tag标签，数据回显不出来问题,等下拉列表数据全部请求完成，再重新加载下拉组件
       viewData: null,
       panalIndex: null,
       panalData: null,
-
       elId: null,
       noDataTip: false,
       endpointType: null,
@@ -193,6 +241,45 @@ export default {
         app_object: '',
         metricToColor: []
       },
+      metricDefaultColor: [],
+      quickQueryValue: null,
+      quickOptions: Object.freeze([
+        {
+          label: `${this.$t('volume')}: sum-60s-${this.$t('m_bar_chart')}`,
+          value: {
+            'aggregate': 'sum',
+            'agg_step': 60,
+            'chartType': 'bar',
+          }
+        },
+        {
+          label: `${this.$t('t_avg_consumed')}: avg-60s-${this.$t('m_line_chart')}-${this.$t('m_line_chart_s')}`,
+          value: {
+            'aggregate': 'avg',
+            'agg_step': 60,
+            'chartType': 'line',
+            'lineType': 1
+          }
+        },
+        {
+          label: `${this.$t('t_max_consumed')}: max-60s-${this.$t('m_line_chart')}-${this.$t('m_line_chart_s')}`,
+          value: {
+            'aggregate': 'max',
+            'agg_step': 60,
+            'chartType': 'line',
+            'lineType': 1
+          }
+        },
+        {
+          label: this.$t('other'),
+          value: {
+            'aggregate': 'min',
+            'agg_step': 60,
+            'chartType': 'line',
+            'lineType': 1
+          }
+        },
+      ]),
       aggStepOptions: [
         {label: '60S', value: 60},
         {label: '300S', value: 300},
@@ -229,44 +316,39 @@ export default {
     }
   },
   watch: {
-    // chartQueryList: {
-    //   handler(data) {
-    //     console.log(111)
-    //     this.noDataTip = false
-    //     let params = {
-    //       aggregate: this.templateQuery.aggregate || 'none',
-    //       agg_step: this.templateQuery.agg_step || 60,
-    //       lineType: this.templateQuery.lineType,
-    //       time_second: -1800,
-    //       start: 0,
-    //       end: 0,
-    //       title: '',
-    //       unit: '',
-    //       data: []
-    //     }
-    //     if (this.$root.$validate.isEmpty_reset(data)) {
-    //       this.noDataTip = true
-    //       return
-    //     }
-    //     data.forEach(item => {
-    //       params.data.push(item)
-    //     })
-    //     this.$root.$httpRequestEntrance.httpRequestEntrance(
-    //       'POST',this.$root.apiCenter.metricConfigView.api, params,
-    //       responseData => {
-    //         responseData.yaxis.unit = this.panalUnit
-    //         readyToDraw(this,responseData, 1, { eye: false, chartType: this.templateQuery.chartType, clear: true, params: params })
-    //       }
-    //     )
-    //   },
-    //   deep: true,
-    //   immediate: true
-    // },
+    'templateQuery.metric': {
+      handler(data) {
+        this.metricDefaultColor = this.metricDefaultColor.filter(params => data.includes(params.metric))
+      }
+    },
     'templateQuery.endpoint': async function (val) {
       if (val && this.options.length > 0) {
-        this.endpointType = this.options.find(item => item.option_value === val).type  
+        const find = this.options.find(item => item.option_value === val)
+        if (find) {
+            this.endpointType = find.type
+          }
       }
-    }
+    },
+    // // 解决emplateQuery.endpoint值改变，但是接口查询this.options还未获取到问题
+    // options: {
+    //   handler(val) {
+    //     if (val && val.length > 0) {
+    //       const find = this.options.find(item => item.option_value === this.templateQuery.endpoint)
+    //       if (find) {
+    //         this.endpointType = find.type
+    //       }
+    //     }
+    //   },
+    //   deep: true
+    // },
+    templateQuery: {
+      handler(val) {
+        if (val.metric && typeof(val.metric) === 'string') {
+          this.templateQuery.metric = [val.metric]
+        }
+      }
+    },
+    deep: true
   },
   created() {
     generateUuid().then(elId => {
@@ -274,6 +356,7 @@ export default {
     })
   },
   mounted() {
+    this.initChart()
   },
   methods: {
     requestAgain () {
@@ -308,14 +391,20 @@ export default {
           }
         )
     },
-    async test (a, b) {
-      await this.bb(a,b)
+    async editQueryParams (queryParams, queryIndex) {
+      await this.bb(queryParams, queryIndex)
     },
-    async bb (a, b) {
-      const search = a.endpointName || '.'
-      this.editIndex = b
+    async bb (queryParams, queryIndex) {
+      this.metricDefaultColor = []
+      this.metricDefaultColor.push({
+        metric: queryParams.metric,
+        defaultColor: queryParams.defaultColor || '',
+      })
+      this.fixSelect = false
+      const search = queryParams.endpointName || '.'
+      this.editIndex = queryIndex
       this.templateQuery = {
-        ...a
+        ...queryParams
       }
       let params = {
         search: search,
@@ -329,10 +418,11 @@ export default {
         params,
         responseData => {
           this.options = responseData
-          const find = this.options.find(item => item.option_value === a.endpoint)
+          const find = this.options.find(item => item.option_value === queryParams.endpoint)
           if (find) {
             this.endpointType = find.type
           }
+          // id为-1展示类型
           if (find && find.id === -1) {
             this.showRecursiveType = true
             let params = {
@@ -341,18 +431,29 @@ export default {
             this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.recursiveType, params, responseData => {
               this.templateQuery.endpoint_type = responseData[0]
               this.recursiveTypeOptions = responseData
+              this.metricSelectOpen(queryParams.metric)
             })
           } else {
             this.showRecursiveType = false
+            this.metricSelectOpen(queryParams.metric)
           }
-          this.metricSelectOpen(a.metric)
         }
       )
     },
     changeMetric (val) {
-      if (val.length === 0) return
       this.templateQuery.metricToColor = []
-      if (!val) return 
+      if (!val || val.length === 0) return
+
+      val.forEach(v => {
+        const findIndex = this.metricDefaultColor.findIndex(m=> m.metric === v.value)
+        if (findIndex === -1) {
+          this.metricDefaultColor.push({
+            metric: v.value,
+            defaultColor: ''
+          })
+        }
+      })
+
       let tmp = JSON.parse(JSON.stringify(this.templateQuery))
       if (tmp.endpoint_type !== '') {
         tmp.app_object = tmp.endpoint
@@ -376,6 +477,7 @@ export default {
           }
         })
       }
+
       this.$root.$httpRequestEntrance.httpRequestEntrance(
         'POST',this.$root.apiCenter.metricConfigView.api, params,
         responseData => {
@@ -393,9 +495,12 @@ export default {
         }
       )
     },
+    // 选择对象
     selectEndpoint (val) {
       this.showRecursiveType = false
       this.templateQuery.endpoint_type = ''
+      this.templateQuery.metricToColor = []
+      this.templateQuery.metric = []
       const find = this.options.find(item => item.option_value === val)
       if (find && find.id === -1) {
         this.showRecursiveType = true
@@ -421,7 +526,11 @@ export default {
         metricToColor: []
       }
     },
-    initChart (params) {
+    initChart () {
+      let params = {
+        templateData: this.parentRouteData,
+        panal: this.activeGridConfig
+      }
       this.oriParams = params
       this.chartQueryList = []
       this.clearParams()
@@ -433,10 +542,11 @@ export default {
           if (itemx.viewConfig.id === params.panal.id) {
             this.templateQuery.chartType = itemx.chartType
             this.templateQuery.lineType = itemx.lineType || 0
-            this.templateQuery.aggregate = itemx.aggregate || 'none'
+            this.templateQuery.aggregate = itemx.aggregate || 'sum'
             this.templateQuery.agg_step = itemx.agg_step || 60
             this.panalIndex = index
             this.panalData = itemx
+            this.rsyncQuick()
             this.initPanal()
             return
           }
@@ -447,6 +557,7 @@ export default {
       if (this.chartQueryList.length === 0) {
         return
       }
+      this.updateQuick()
       let params = {
           aggregate: this.templateQuery.aggregate || 'none',
           agg_step: this.templateQuery.agg_step || 60,
@@ -474,6 +585,36 @@ export default {
           readyToDraw(this,responseData, 1, { eye: false, chartType: this.templateQuery.chartType, params: params})
         }
       )
+    },
+    updateQuick () {
+      this.rsyncQuick()
+    },
+    rsyncQuick () {
+      let passed = false
+      for (let i = 0; i < this.quickOptions.length; i++) {
+        const item = this.quickOptions[i]
+        const keys = Object.keys(item.value)
+        passed = keys.every(p => item.value[p] === this.templateQuery[p])
+
+        if (passed) {
+          this.quickQueryValue = item.label
+          break
+        }
+      }
+      !passed && (this.quickQueryValue = this.$t('other'))
+    },
+    syncCondition (val) {
+      const selected = this.quickOptions.find(item => item.label === val)
+      if (selected) {
+        const { aggregate, agg_step, chartType, lineType } = selected.value
+
+        this.templateQuery.aggregate = aggregate || ''
+        this.templateQuery.agg_step = agg_step || 60
+        this.templateQuery.chartType = chartType || ''
+        this.templateQuery.lineType = lineType || 1
+
+        this.switchChartType()
+      }
     },
     initPanal() {
       this.panalUnit = this.panalData.panalUnit
@@ -511,7 +652,9 @@ export default {
     initQueryList(query) {
       this.chartQueryList = query
     },
-    getEndpointList(query) {
+    getEndpointList(query, flag) {
+      if (flag === false) return // 下拉框收缩不调用
+      if (this.templateQuery.endpoint) return
       let params = {
         search: query,
         page: 1,
@@ -526,6 +669,10 @@ export default {
         }
       )
     },
+    handleRemoteEndpoint: lodash.debounce(function(val) {
+      this.getEndpointList(val || '.')
+    }, 500),
+    // 指标下拉查询
     metricSelectOpen(metric) {
       if (this.$root.$validate.isEmpty_reset(metric)) {
         this.$Message.warning(
@@ -539,12 +686,18 @@ export default {
           params,
           responseData => {
             this.metricList = responseData
+            this.fixSelect = true
           }
         )
       }
     },
     addQuery() {
-      if (this.templateQuery.endpoint === '' || this.templateQuery.metric === '' || this.templateQuery.endpoint === undefined || this.templateQuery.metric === undefined) {
+      if (this.templateQuery.endpoint === '' ||
+        this.templateQuery.metric === '' ||
+        this.templateQuery.endpoint === undefined ||
+        this.templateQuery.metric === undefined ||
+        (Array.isArray(this.templateQuery.metric) && this.templateQuery.metric.length === 0))
+      {
         this.$Message.warning(this.$t('m_tip_for_save'))
         return
       }
@@ -557,14 +710,16 @@ export default {
       if (find) {
         tmp.endpointName = find.option_text
       }
+
       const tmpQuery = JSON.parse(JSON.stringify(tmp))
       let params = tmpQuery.metric.map(m => {
-          return {
-            ...tmpQuery,
-            metric: m,
-            metricToColor: tmpQuery.metricToColor.filter(x => x.metric.startsWith(m))
-          }
-        })
+        return {
+          ...tmpQuery,
+          metric: m,
+          metricToColor: tmpQuery.metricToColor.filter(x => x.metric.startsWith(m)),
+          defaultColor: this.metricDefaultColor.find(x => x.metric.startsWith(m)).defaultColor || ''
+        }
+      })
       // if (this.editIndex !== -1) {
       //   this.chartQueryList[this.editIndex ] = tmp
       // } else {
@@ -573,10 +728,26 @@ export default {
       if (this.editIndex !== -1) {
         // this.removeQuery(this.editIndex)
         this.chartQueryList.splice(this.editIndex, 1)
+      } else {
+        let illegalIndex = []
+        params.forEach((p, pIndex) => {
+          const findIndex = this.chartQueryList.findIndex(query => query.endpointName === p.endpointName && query.metric === p.metric)
+          if (findIndex !== -1) {
+            illegalIndex.push(pIndex)
+          }
+        })
+        if (illegalIndex.length > 0) {
+          this.$Message.warning(
+            this.$t("m_same_exists")
+          )
+          return
+        }
       }
+
       this.chartQueryList = this.chartQueryList.concat(params)
       this.requestAgain()
       this.editIndex = -1
+      this.metricDefaultColor = []
       this.templateQuery = {
         endpoint: '',
         metric: '',
@@ -704,6 +875,18 @@ li {
 .tag-display /deep/ .ivu-tag-primary {
   display: table;
 }
+.zone-config {
+  .flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-left: 24px;
+    
+    .left {
+      text-align: left;
+    }
+  }
+}
 </style>
 
 <style scoped lang="less">
@@ -723,6 +906,14 @@ li {
   border: 1px solid @blue-2;
   padding: 4px;
   margin: 4px;
+}
+.loading-zone {
+  display: inline-block;
+  width: 100%;
+  position: relative;
+  height: 200px;
+  margin: 4px;
+  border: 1px solid @blue-2;
 }
 .select-option /deep/ .ivu-select-dropdown-list {
   text-align: left;

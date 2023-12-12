@@ -223,6 +223,10 @@ func CreateLogMetricConfig(c *gin.Context) {
 		middleware.ReturnValidateError(c, "metric name illegal")
 		return
 	}
+	if strings.Contains(param.Regular, "\n") {
+		middleware.ReturnValidateError(c, "regular illegal")
+		return
+	}
 	err := db.CreateLogMetricConfig(&param)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
@@ -244,6 +248,10 @@ func UpdateLogMetricConfig(c *gin.Context) {
 	}
 	if middleware.IsIllegalName(param.Metric) {
 		middleware.ReturnValidateError(c, "metric name illegal")
+		return
+	}
+	if strings.Contains(param.Regular, "\n") {
+		middleware.ReturnValidateError(c, "regular illegal")
 		return
 	}
 	err := db.UpdateLogMetricConfig(&param)
@@ -301,7 +309,7 @@ func CheckRegExpMatch(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	result := db.CheckRegExpMatch(param)
+	result := db.CheckRegExpMatchPCRE(param)
 	middleware.ReturnSuccessData(c, result)
 }
 

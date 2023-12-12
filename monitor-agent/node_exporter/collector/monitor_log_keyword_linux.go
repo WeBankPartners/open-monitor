@@ -3,7 +3,6 @@ package collector
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/dlclark/regexp2"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/hpcloud/tail"
@@ -12,6 +11,7 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	"time"
 )
 
 type logMonitorCollector struct {
@@ -76,18 +76,21 @@ type logKeywordFetchObj struct {
 
 type logKeywordObj struct {
 	Keyword        string
-	RegExp         *regexp2.Regexp
+	RegExp         *Regexp
 	Count          float64
 	LastMatchRow   string
 	TargetEndpoint string
 }
 
 type logKeywordCollector struct {
-	Path        string
-	Rule        []*logKeywordObj
-	TailSession *tail.Tail
-	Lock        *sync.RWMutex
-	DataChan    chan string
+	Path              string
+	Rule              []*logKeywordObj
+	TailSession       *tail.Tail
+	Lock              *sync.RWMutex
+	DataChan          chan string
+	ReOpenHandlerChan chan int      `json:"-"`
+	TailTimeLock      *sync.RWMutex `json:"-"`
+	TailLastUnixTime  int64         `json:"-"`
 }
 
 func (c *logKeywordCollector) update(rule []*logKeywordObj) {
@@ -111,10 +114,14 @@ func (c *logKeywordCollector) startHandleTailData() {
 		c.Lock.Lock()
 		for _, v := range c.Rule {
 			if v.RegExp != nil {
-				if ok, _ := v.RegExp.MatchString(lineText); ok {
+				if pcreMatch(v.RegExp, lineText) {
 					v.Count++
 					v.LastMatchRow = lineText
 				}
+				//if ok, _ := v.RegExp.MatchString(lineText); ok {
+				//	v.Count++
+				//	v.LastMatchRow = lineText
+				//}
 			} else {
 				if strings.Contains(lineText, v.Keyword) {
 					v.Count++
@@ -126,8 +133,15 @@ func (c *logKeywordCollector) startHandleTailData() {
 	}
 }
 
+func (c *logKeywordCollector) init() {
+	c.TailTimeLock = new(sync.RWMutex)
+	c.ReOpenHandlerChan = make(chan int, 1)
+	c.TailLastUnixTime = 0
+	go c.start()
+}
+
 func (c *logKeywordCollector) start() {
-	level.Info(monitorLogger).Log("logKeywordCollectorStart", c.Path)
+	level.Info(monitorLogger).Log("log_keyword -> logKeywordCollectorStart", c.Path)
 	var err error
 	c.TailSession, err = tail.TailFile(c.Path, tail.Config{Follow: true, ReOpen: true, Poll: true, Location: &tail.SeekInfo{Offset: 0, Whence: 2}})
 	if err != nil {
@@ -136,11 +150,62 @@ func (c *logKeywordCollector) start() {
 	}
 	c.DataChan = make(chan string, logKeywordChanLength)
 	go c.startHandleTailData()
-	for line := range c.TailSession.Lines {
-		if len(c.DataChan) == logMetricChanLength {
-			level.Info(monitorLogger).Log("Log keyword queue is full,file:", c.Path)
+	go c.startFileHandlerCheck()
+	breakFlag := false
+	for {
+		select {
+		case <-c.ReOpenHandlerChan:
+			breakFlag = true
+		case line := <-c.TailSession.Lines:
+			if line == nil {
+				continue
+			}
+			c.DataChan <- line.Text
 		}
-		c.DataChan <- line.Text
+		if breakFlag {
+			break
+		} else {
+			c.TailTimeLock.Lock()
+			c.TailLastUnixTime = time.Now().Unix()
+			c.TailTimeLock.Unlock()
+		}
+	}
+	c.TailSession.Stop()
+	c.TailSession.Cleanup()
+	level.Info(monitorLogger).Log("log_keyword -> startLogMetricMonitorNeObj__end", c.Path)
+	time.Sleep(2 * time.Second)
+	go c.start()
+	//for line := range c.TailSession.Lines {
+	//	if len(c.DataChan) == logMetricChanLength {
+	//		level.Info(monitorLogger).Log("Log keyword queue is full,file:", c.Path)
+	//	}
+	//	c.DataChan <- line.Text
+	//}
+}
+
+func (c *logKeywordCollector) startFileHandlerCheck() {
+	t := time.NewTicker(1 * time.Minute).C
+	for {
+		<-t
+		if fileLastTime, err := getFileLastUpdatedTime(c.Path); err == nil {
+			c.TailTimeLock.RLock()
+			tailLastTime := c.TailLastUnixTime
+			c.TailTimeLock.RUnlock()
+			if tailLastTime == 0 {
+				c.TailTimeLock.Lock()
+				c.TailLastUnixTime = fileLastTime
+				c.TailTimeLock.Unlock()
+				tailLastTime = fileLastTime
+			}
+			if fileLastTime-tailLastTime > 60 {
+				c.ReOpenHandlerChan <- 1
+				level.Info(monitorLogger).Log(fmt.Sprintf("log_keyword -> reopen_tail_with_time_check_fail,path:%s,fileLastTime:%d,tailLastTime:%d ", c.Path, fileLastTime, tailLastTime))
+			} else {
+				level.Info(monitorLogger).Log(fmt.Sprintf("log_keyword -> reopen_tail_with_time_check_ok,path:%s,fileLastTime:%d,tailLastTime:%d ", c.Path, fileLastTime, tailLastTime))
+			}
+		} else {
+			level.Error(monitorLogger).Log(fmt.Sprintf("log_keyword -> check_file_handler_fail,path:%s,err:%s ", c.Path, err.Error()))
+		}
 	}
 }
 
@@ -231,12 +296,12 @@ func logKeywordHttpAction(requestParamBuff []byte) (err error) {
 				var tmpKeywordList []*logKeywordObj
 				for _, inputKeyword := range inputParam.Keywords {
 					if inputKeyword.RegularEnable {
-						tmpRegExp, tmpRegErr := regexp2.Compile(inputKeyword.Keyword, 0)
+						tmpRegExp, tmpRegErr := PcreCompile(inputKeyword.Keyword, 0)
 						if tmpRegErr != nil {
-							err = fmt.Errorf("path:%s regexp2 regexp compile %s fail:%s", inputParam.Path, inputKeyword.Keyword, tmpRegErr.Error())
+							err = fmt.Errorf("path:%s pcre regexp compile %s fail:%s", inputParam.Path, inputKeyword.Keyword, tmpRegErr.Message)
 							continue
 						}
-						tmpKeywordList = append(tmpKeywordList, &logKeywordObj{Keyword: inputKeyword.Keyword, RegExp: tmpRegExp, TargetEndpoint: inputKeyword.TargetEndpoint})
+						tmpKeywordList = append(tmpKeywordList, &logKeywordObj{Keyword: inputKeyword.Keyword, RegExp: &tmpRegExp, TargetEndpoint: inputKeyword.TargetEndpoint})
 					} else {
 						tmpKeywordList = append(tmpKeywordList, &logKeywordObj{Keyword: inputKeyword.Keyword, TargetEndpoint: inputKeyword.TargetEndpoint})
 					}
@@ -285,19 +350,19 @@ func logKeywordHttpAction(requestParamBuff []byte) (err error) {
 		var tmpKeywordList []*logKeywordObj
 		for _, inputKeyword := range inputParam.Keywords {
 			if inputKeyword.RegularEnable {
-				tmpRegExp, tmpRegErr := regexp2.Compile(inputKeyword.Keyword, 0)
+				tmpRegExp, tmpRegErr := PcreCompile(inputKeyword.Keyword, 0)
 				if tmpRegErr != nil {
-					err = fmt.Errorf("path:%s regexp2 regexp compile %s fail:%s", inputParam.Path, inputKeyword.Keyword, tmpRegErr.Error())
+					err = fmt.Errorf("path:%s regexp2 regexp compile %s fail:%s", inputParam.Path, inputKeyword.Keyword, tmpRegErr.Message)
 					continue
 				}
-				tmpKeywordList = append(tmpKeywordList, &logKeywordObj{Keyword: inputKeyword.Keyword, RegExp: tmpRegExp, Count: inputKeyword.Count, TargetEndpoint: inputKeyword.TargetEndpoint})
+				tmpKeywordList = append(tmpKeywordList, &logKeywordObj{Keyword: inputKeyword.Keyword, RegExp: &tmpRegExp, Count: inputKeyword.Count, TargetEndpoint: inputKeyword.TargetEndpoint})
 			} else {
 				tmpKeywordList = append(tmpKeywordList, &logKeywordObj{Keyword: inputKeyword.Keyword, Count: inputKeyword.Count, TargetEndpoint: inputKeyword.TargetEndpoint})
 			}
 		}
 		newCollector.Rule = tmpKeywordList
 		logKeywordCollectorJobs = append(logKeywordCollectorJobs, &newCollector)
-		go newCollector.start()
+		newCollector.init()
 	}
 	return err
 }
@@ -358,4 +423,15 @@ func LogMonitorRowsHttpHandle(w http.ResponseWriter, r *http.Request) {
 	}
 	result.Status = "ok"
 	result.Message = "success"
+}
+
+func pcreMatch(re *Regexp, lineText string) (match bool) {
+	if re == nil {
+		return
+	}
+	mat := re.MatcherString(lineText, 0)
+	if mat != nil {
+		match = mat.Matches()
+	}
+	return
 }
