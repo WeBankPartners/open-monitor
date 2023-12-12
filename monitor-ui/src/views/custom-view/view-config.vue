@@ -131,13 +131,13 @@
       <ViewChart ref="viewChart"></ViewChart>
     </Drawer>
     <Drawer :title="$t('placeholder.chartConfiguration')" :width="zoneWidth" :mask-closable="false" v-model="showChartConfig">
-      <editPieView v-if="chartType === 'pie'" ref="editPieView"></editPieView>
-      <editLineView v-else ref="editLineView"></editLineView>
+      <editPieView v-if="chartType === 'pie' && showChartConfig" ref="editPieView" :activeGridConfig="activeGridConfig" :parentRouteData="parentRouteData"></editPieView>
+      <editLineView v-if="chartType !== 'pie' && showChartConfig" ref="editLineView" :activeGridConfig="activeGridConfig" :parentRouteData="parentRouteData"></editLineView>
     </Drawer>
     <ModalComponent :modelConfig="setChartTypeModel">
       <div slot="setChartType">
         <div style="display:flex;justify-content:center">
-          <i @dblclick="dblChartType('line')" @click="choiceChartType('line')" :class="['fa', 'fa-line-chart', activeChartType==='line' ? 'active-tag': '']" aria-hidden="true"></i>
+          <i @dblclick="dblChartType('bar')" @click="choiceChartType('bar')" :class="['fa', 'fa-line-chart', activeChartType==='bar' ? 'active-tag': '']" aria-hidden="true"></i>
           <i @dblclick="dblChartType('pie')" @click="choiceChartType('pie')" :class="['fa', 'fa-pie-chart', activeChartType==='pie' ? 'active-tag': '']" aria-hidden="true"></i>
         </div>
       </div>
@@ -200,6 +200,7 @@ export default {
   name: '',
   data() {
     return {
+      parentRouteData: {},
       editData: null,
       isShowWarning: false,
       deleteConfirm: {
@@ -239,7 +240,7 @@ export default {
         ]
       },
       activeGridConfig: null,
-      activeChartType: 'line',
+      activeChartType: 'bar',
 
       showAlarm: false, // 显示告警信息
       cutsomViewId: null,
@@ -404,12 +405,13 @@ export default {
           parentRouteData.cfg = resViewData
         }
         parentRouteData.cfg = JSON.stringify(parentRouteData.cfg)
+        this.parentRouteData = parentRouteData
         if (['line','bar'].includes(this.activeChartType)) {
           this.chartType = 'line'
-          this.$refs.editLineView.initChart({templateData: parentRouteData, panal:this.activeGridConfig})
+          // this.$refs.editLineView.initChart({templateData: parentRouteData, panal:this.activeGridConfig})
         } else {
           this.chartType = 'pie'
-          this.$refs.editPieView.initChart({templateData: parentRouteData, panal:this.activeGridConfig})
+          // this.$refs.editPieView.initChart({templateData: parentRouteData, panal:this.activeGridConfig})
         }
         this.showChartConfig = true
       })

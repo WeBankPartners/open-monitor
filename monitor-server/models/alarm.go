@@ -67,6 +67,20 @@ type AlarmTable struct {
 	AlarmStrategy string    `json:"alarm_strategy"`
 }
 
+type SortAlarmList []*AlarmTable
+
+func (a SortAlarmList) Len() int {
+	return len(a)
+}
+
+func (a SortAlarmList) Less(i, j int) bool {
+	return a[i].Id > a[j].Id
+}
+
+func (a SortAlarmList) Swap(i, j int) {
+	a[i], a[j] = a[j], a[i]
+}
+
 type AlarmHandleObj struct {
 	AlarmTable
 	NotifyEnable int `json:"notify_enable"`
@@ -531,7 +545,8 @@ type PluginCloseAlarmOutputObj struct {
 }
 
 type AlarmCloseParam struct {
-	Id     int    `json:"id"`
-	Custom bool   `json:"custom"`
-	Metric string `json:"metric"`
+	Id       int    `json:"id"`
+	Custom   bool   `json:"custom"`
+	Metric   string `json:"metric"`
+	Priority string `json:"priority"`
 }
