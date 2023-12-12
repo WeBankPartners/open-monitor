@@ -26,7 +26,7 @@
           </li>
         </ul>
         <div>
-          <Button :disabled="!filtersForShow.some(f => f.key === 'metric')" @click="deleteConfirmModal({}, true)" class="btn btn-sm btn-cancel-f">{{$t('m_batch_close')}}</Button>
+          <Button :disabled="!filtersForShow.some(f => f.key === 'metric'||f.key === 'priority')" @click="deleteConfirmModal({}, true)" class="btn btn-sm btn-cancel-f">{{$t('m_batch_close')}}</Button>
           <button @click="alarmHistory" class="btn btn-sm btn-confirm-f">{{$t('alarmHistory')}}</button>
         </div>
       </div>
@@ -480,12 +480,17 @@ export default {
       let params = {
         id: 0,
         custom: true,
-        metric: ""
+        metric: "",
+        priority: ""
       }
       if (this.isBatch) {
         let find = this.filtersForShow.find(f => f.key === 'metric')
         if (find) {
           params.metric = find.value
+        }
+        let priority = this.filtersForShow.find(f => f.key === 'priority')
+        if (priority) {
+          params.priority = priority.value
         }
       } else {
         params.id = alarmItem.id
@@ -495,7 +500,7 @@ export default {
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.alarmManagement.close.api, params, () => {
         // this.$root.$eventBus.$emit('hideConfirmModal')
-        this.getAlarm()
+        this.clearAll()
       })
     },
     clearAll () {

@@ -258,6 +258,8 @@ export default {
     changeEndDate(data) {
       if (data && data.indexOf("00:00:00") !== -1) {
         this.endDate = data.replace("00:00:00", "23:59:59");
+      } else {
+        this.endDate = data
       }
     },
     getRealTimeAlarm() {
@@ -308,7 +310,7 @@ export default {
         this.paginationInfo = {
           total: 0,
           startIndex: 1,
-          pageSize: 10
+          pageSize: this.paginationInfo.pageSize
         }
       }
       const start = Date.parse(this.startDate) / 1000;

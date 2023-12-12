@@ -96,7 +96,7 @@ export default {
           responseData.yaxis.unit =  this.chartInfo.panalUnit  
           this.elId = this.chartInfo.elId
           this.noDataTip = false
-          const chartConfig = {eye: false,dataZoom:false, lineBarSwitch: true, chartType: this.chartInfo.chartType, params: this.chartInfo.chartParams}
+          const chartConfig = {eye: false,clear: true,dataZoom:false, lineBarSwitch: true, chartType: this.chartInfo.chartType, params: this.chartInfo.chartParams}
           this.$nextTick( () => {
             readyToDraw(this,responseData, this.chartIndex, chartConfig)
             this.scrollHandle()

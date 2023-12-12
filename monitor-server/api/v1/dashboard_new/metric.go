@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
 )
@@ -32,6 +33,10 @@ func MetricCreate(c *gin.Context) {
 			err = fmt.Errorf("metric name illegal")
 			break
 		}
+		if err = datasource.CheckPrometheusQL(v.PromExpr); err != nil {
+			err = fmt.Errorf("表达式语法校验失败,%s", err.Error())
+			break
+		}
 	}
 	if err != nil {
 		middleware.ReturnValidateError(c, err.Error())
@@ -55,6 +60,10 @@ func MetricUpdate(c *gin.Context) {
 	for _, v := range param {
 		if middleware.IsIllegalName(v.Metric) {
 			err = fmt.Errorf("metric name illegal")
+			break
+		}
+		if err = datasource.CheckPrometheusQL(v.PromExpr); err != nil {
+			err = fmt.Errorf("表达式语法校验失败,%s", err.Error())
 			break
 		}
 	}

@@ -566,14 +566,20 @@ func CloseAlarm(c *gin.Context) {
 		mid.ReturnValidateError(c, err.Error())
 		return
 	}
-	if param.Metric == "" && param.Id == 0 {
+	if param.Metric == "" && param.Id == 0 && param.Priority == "" {
 		mid.ReturnValidateError(c, "param can not empty")
 		return
+	}
+	if strings.ToLower(param.Metric) == "custom" {
+		param.Custom = true
 	}
 	if param.Custom {
 		err = db.CloseOpenAlarm(param)
 	} else {
 		err = db.CloseAlarm(param)
+		if err == nil && param.Priority != "" {
+			err = db.CloseOpenAlarm(param)
+		}
 	}
 	if err != nil {
 		mid.ReturnHandleError(c, err.Error(), err)
