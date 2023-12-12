@@ -288,6 +288,10 @@
   "dangerous_confirm_tip": "I AM AWARE OF THE HIGH RISK OF THIS OPERATION AND HAVE EVALUATED ALL THE RISKS, CONFIRMED TO CONTINUE EXECUTION AND BEAR THE CONSEQUENCES.",
   "resource_delete_tip": "RISK WARNING: DELETING A HIERARCHICAL OBJECT WILL DELETE ALL ITS CHILD NODES AND ALL THEIR ASSOCIATED BUSINESS LOG INDICATORS, BUSINESS DATABASE INDICATORS, BUSINESS KEYWORD CONFIGURATION, APPLIED INDICATORS AND ALARM CONFIGURATION, ETC.",
   "delete_follow": "The following data will be deleted",
+  "volume": "Volume",
+  "t_avg_consumed": "Average Time Consumed",
+  "t_max_consumed": "Maximum Time Spent",
+  "other": "Other",
   "m_line_chart": "Line Chart",
   "m_bar_chart": "Bar Chart",
   "m_line_chart_s": "Line Chart",
@@ -312,5 +316,8 @@
   "m_target_value": "Target Value",
   "m_source_value": "Source Value",
   "m_type_object": "Type Object",
-  "m_host_object": "Host Object"
+  "m_host_object": "Host Object",
+  "m_default_color": "Default Color",
+  "m_custom_config": "Custom Config",
+  "m_same_exists": "Same configuration already exists!"
 }

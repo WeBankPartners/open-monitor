@@ -195,20 +195,25 @@ func archiveAction(param ArchiveActionList) {
 			tmpStartTime := vv.Start + 60
 			var tmpFloatList []float64
 			for _, vvv := range vv.Values {
-				if vvv[0] < float64(tmpStartTime) {
+				pointTime := int64(vvv[0])
+				if pointTime < tmpStartTime {
 					tmpFloatList = append(tmpFloatList, vvv[1])
 				} else {
 					if len(tmpFloatList) > 0 {
-						avg, min, max, p95 := calcData(tmpFloatList)
-						rowData = append(rowData, &ArchiveTable{Endpoint: v.Endpoint, Metric: v.Metric, Tags: tmpTagString, UnixTime: tmpStartTime - 60, Avg: avg, Min: min, Max: max, P95: p95})
+						avg, min, max, p95, sum := calcData(tmpFloatList)
+						rowData = append(rowData, &ArchiveTable{Endpoint: v.Endpoint, Metric: v.Metric, Tags: tmpTagString, UnixTime: tmpStartTime - 60, Avg: avg, Min: min, Max: max, P95: p95, Sum: sum})
+					}
+					pointStepTime := pointTime - 60
+					for tmpStartTime < pointStepTime {
+						tmpStartTime += 60
 					}
 					tmpStartTime += 60
 					tmpFloatList = []float64{vvv[1]}
 				}
 			}
 			if len(tmpFloatList) > 0 && tmpStartTime <= v.End {
-				avg, min, max, p95 := calcData(tmpFloatList)
-				rowData = append(rowData, &ArchiveTable{Endpoint: v.Endpoint, Metric: v.Metric, Tags: tmpTagString, UnixTime: tmpStartTime - 60, Avg: avg, Min: min, Max: max, P95: p95})
+				avg, min, max, p95, sum := calcData(tmpFloatList)
+				rowData = append(rowData, &ArchiveTable{Endpoint: v.Endpoint, Metric: v.Metric, Tags: tmpTagString, UnixTime: tmpStartTime - 60, Avg: avg, Min: min, Max: max, P95: p95, Sum: sum})
 			}
 		}
 	}
@@ -222,20 +227,19 @@ func archiveAction(param ArchiveActionList) {
 	}
 }
 
-func calcData(data []float64) (avg, min, max, p95 float64) {
+func calcData(data []float64) (avg, min, max, p95, sum float64) {
 	if len(data) == 1 {
-		return data[0], data[0], data[0], data[0]
+		return data[0], data[0], data[0], data[0], data[0]
 	}
 	sort.Float64s(data)
 	min = data[0]
 	max = data[len(data)-1]
 	p95 = data[len(data)-2]
-	var sum float64
 	for _, v := range data {
 		sum += v
 	}
 	avg = sum / float64(len(data))
-	return avg, min, max, p95
+	return avg, min, max, p95, sum
 }
 
 func ArchiveFromMysql(tableUnixTime int64) {

@@ -42,6 +42,7 @@
                        type="text"
                        v-validate="item.v_validate"
                        :name="item.value"
+                       :maxlength="item.max"
                        :class="{ 'red-border': veeErrors.has(item.value) }"
                        class="col-md-7 form-control model-input">
                 <input v-if="item.type === 'number' && isHide(item.hide)"

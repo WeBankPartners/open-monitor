@@ -548,7 +548,7 @@ export default {
         modalTitle: 'm_metric_regular',
         saveFunc: 'saveCustomMetric',
         config: [
-          {label: 'field.metric', value: 'metric', placeholder: '', disabled: false, type: 'text'},
+          {label: 'field.metric', value: 'metric', placeholder: '', disabled: false, type: 'text', max: 50},
           {label: 'field.displayName', value: 'display_name', placeholder: '', disabled: false, type: 'text'},
           // {label: 'tableKey.regular', value: 'regular', placeholder: 'tips.required', v_validate: 'required:true', disabled: false, type: 'text'},
           {name:'ruleConfig',type:'slot'}

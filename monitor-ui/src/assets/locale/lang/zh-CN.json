@@ -287,6 +287,10 @@
   "dangerous_confirm_tip": "我已知悉该操作高危并评估过所有的风险，确认继续执行并承担所带来的后果。",
   "resource_delete_tip": "风险提示：删除层级对象会删除其所有子节点与它们所有相关联的 业务日志指标、业务数据库指标、业务关键字配置和已应用的指标与告警配置等。",
   "delete_follow": "即将删除如下数据",
+  "volume": "量",
+  "t_avg_consumed": "平均耗时",
+  "t_max_consumed": "最大耗时",
+  "other": "其他",
   "m_line_chart": "线性图",
   "m_bar_chart": "柱状图",
   "m_line_chart_s": "折线图",
@@ -311,5 +315,8 @@
   "m_target_value": "目标值",
   "m_source_value": "源值",
   "m_type_object": "类型对象",
-  "m_host_object": "主机对象"
+  "m_host_object": "主机对象",
+  "m_default_color": "默认色系",
+  "m_custom_config": "个性化配置",
+  "m_same_exists": "相同配置已存在！"
 }
