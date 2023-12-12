@@ -3,7 +3,10 @@ package collector
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/dlclark/regexp2"
+	"os"
+	"regexp"
+
+	//"github.com/dlclark/regexp2"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/hpcloud/tail"
@@ -11,7 +14,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"reflect"
-	"regexp"
+	//"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -76,18 +79,21 @@ type logMetricNodeExporterResponse struct {
 }
 
 type logMetricMonitorNeObj struct {
-	TailSession    *tail.Tail            `json:"-"`
-	Lock           *sync.RWMutex         `json:"-"`
-	Path           string                `json:"path"`
-	TargetEndpoint string                `json:"target_endpoint"`
-	ServiceGroup   string                `json:"service_group"`
-	JsonConfig     []*logMetricJsonNeObj `json:"config"`
-	MetricConfig   []*logMetricNeObj     `json:"custom"`
-	DataChan       chan string           `json:"-"`
+	TailSession       *tail.Tail            `json:"-"`
+	Lock              *sync.RWMutex         `json:"-"`
+	Path              string                `json:"path"`
+	TargetEndpoint    string                `json:"target_endpoint"`
+	ServiceGroup      string                `json:"service_group"`
+	JsonConfig        []*logMetricJsonNeObj `json:"config"`
+	MetricConfig      []*logMetricNeObj     `json:"custom"`
+	DataChan          chan string           `json:"-"`
+	ReOpenHandlerChan chan int              `json:"-"`
+	TailTimeLock      *sync.RWMutex         `json:"-"`
+	TailLastUnixTime  int64                 `json:"-"`
 }
 
 type logMetricJsonNeObj struct {
-	Regexp       *regexp.Regexp              `json:"-"`
+	Regexp       *Regexp                     `json:"-"`
 	DataChannel  chan map[string]interface{} `json:"-"`
 	Regular      string                      `json:"regular"`
 	Tags         string                      `json:"tags"`
@@ -95,7 +101,7 @@ type logMetricJsonNeObj struct {
 }
 
 type logMetricNeObj struct {
-	RegExp       *regexp2.Regexp            `json:"-"`
+	RegExp       *Regexp                    `json:"-"`
 	DataChannel  chan string                `json:"-"`
 	Key          string                     `json:"key"`
 	Metric       string                     `json:"metric"`
@@ -114,12 +120,12 @@ type LogMetricConfigTag struct {
 }
 
 type logMetricStringMapNeObj struct {
-	Regexp            *regexp2.Regexp `json:"-"`
-	RegEnable         bool            `json:"reg_enable"`
-	Regulation        string          `json:"regulation"`
-	StringValue       string          `json:"string_value"`
-	IntValue          float64         `json:"int_value"`
-	TargetStringValue string          `json:"target_string_value"`
+	Regexp            *Regexp `json:"-"`
+	RegEnable         bool    `json:"reg_enable"`
+	Regulation        string  `json:"regulation"`
+	StringValue       string  `json:"string_value"`
+	IntValue          float64 `json:"int_value"`
+	TargetStringValue string  `json:"target_string_value"`
 }
 
 type logMetricDisplayObj struct {
@@ -148,11 +154,12 @@ func (c *logMetricMonitorNeObj) startHandleTailData() {
 	for {
 		lineText := <-c.DataChan
 		c.Lock.RLock()
+		//level.Info(monitorLogger).Log("get a new line:", lineText)
 		for _, rule := range c.JsonConfig {
 			if rule.Regexp == nil {
 				continue
 			}
-			fetchList := rule.Regexp.FindStringSubmatch(lineText)
+			fetchList := pcreMatchSubString(rule.Regexp, lineText)
 			if len(fetchList) <= 1 {
 				continue
 			}
@@ -174,8 +181,9 @@ func (c *logMetricMonitorNeObj) startHandleTailData() {
 			}
 		}
 		for _, custom := range c.MetricConfig {
-			if matchString := regexp2FindStringMatch(custom.RegExp, lineText); matchString != "" {
-				custom.DataChannel <- matchString
+			if matchList := pcreMatchSubString(custom.RegExp, lineText); len(matchList) > 0 {
+				//level.Info(monitorLogger).Log("get a match line:", lineText)
+				custom.DataChannel <- matchList[0]
 			}
 			//if custom.RegExp == nil {
 			//	continue
@@ -191,29 +199,46 @@ func (c *logMetricMonitorNeObj) startHandleTailData() {
 	}
 }
 
-func regexp2FindStringMatch(re *regexp2.Regexp, lineText string) (matchString string) {
+//func regexp2FindStringMatch(re *regexp2.Regexp, lineText string) (matchString string) {
+//	if re == nil {
+//		return
+//	}
+//	mat, err := re.FindStringMatch(lineText)
+//	if err != nil || mat == nil {
+//		return
+//	}
+//	level.Info(monitorLogger).Log("regexp2FindStringMatch:", len(mat.Groups()))
+//	for i, v := range mat.Groups() {
+//		groupString := v.String()
+//		level.Info(monitorLogger).Log("mat.Groups:", groupString)
+//		if (i == 0 && groupString == lineText) || groupString == "" {
+//			continue
+//		}
+//		matchString = groupString
+//		break
+//	}
+//	return
+//}
+
+func pcreMatchSubString(re *Regexp, lineText string) (matchList []string) {
 	if re == nil {
 		return
 	}
-	mat, err := re.FindStringMatch(lineText)
-	if err != nil || mat == nil {
-		//level.Info(monitorLogger).Log("regexp2 find string match fail ", err)
-		return
-	}
-	for i, v := range mat.Groups() {
-		groupString := v.String()
-		if (i == 0 && groupString == lineText) || groupString == "" {
-			continue
+	mat := re.MatcherString(lineText, 0)
+	if mat != nil {
+		for i := 0; i <= mat.Groups(); i++ {
+			groupString := mat.GroupString(i)
+			if (i == 0 && groupString == lineText) || groupString == "" {
+				continue
+			}
+			matchList = append(matchList, groupString)
 		}
-		matchString = groupString
-		break
 	}
-	//level.Info(monitorLogger).Log("regexp2 find string match success ", matchString)
 	return
 }
 
 func (c *logMetricMonitorNeObj) start() {
-	level.Info(monitorLogger).Log("startLogMetricMonitorNeObj", c.Path)
+	level.Info(monitorLogger).Log("log_metric -> startLogMetricMonitorNeObj__start", c.Path)
 	var err error
 	c.TailSession, err = tail.TailFile(c.Path, tail.Config{Follow: true, ReOpen: true, Location: &tail.SeekInfo{Offset: 0, Whence: 2}})
 	if err != nil {
@@ -222,11 +247,56 @@ func (c *logMetricMonitorNeObj) start() {
 	}
 	c.DataChan = make(chan string, logMetricChanLength)
 	go c.startHandleTailData()
-	for line := range c.TailSession.Lines {
-		if len(c.DataChan) == logMetricChanLength {
-			level.Info(monitorLogger).Log("Log metric queue is full,file:", c.Path)
+	go c.startFileHandlerCheck()
+	breakFlag := false
+	for {
+		select {
+		case <-c.ReOpenHandlerChan:
+			breakFlag = true
+		case line := <-c.TailSession.Lines:
+			if line == nil {
+				continue
+			}
+			c.DataChan <- line.Text
 		}
-		c.DataChan <- line.Text
+		if breakFlag {
+			break
+		} else {
+			c.TailTimeLock.Lock()
+			c.TailLastUnixTime = time.Now().Unix()
+			c.TailTimeLock.Unlock()
+		}
+	}
+	c.TailSession.Stop()
+	c.TailSession.Cleanup()
+	level.Info(monitorLogger).Log("log_metric -> startLogMetricMonitorNeObj__end", c.Path)
+	time.Sleep(2 * time.Second)
+	go c.start()
+}
+
+func (c *logMetricMonitorNeObj) startFileHandlerCheck() {
+	t := time.NewTicker(1 * time.Minute).C
+	for {
+		<-t
+		if fileLastTime, err := getFileLastUpdatedTime(c.Path); err == nil {
+			c.TailTimeLock.RLock()
+			tailLastTime := c.TailLastUnixTime
+			c.TailTimeLock.RUnlock()
+			if tailLastTime == 0 {
+				c.TailTimeLock.Lock()
+				c.TailLastUnixTime = fileLastTime
+				c.TailTimeLock.Unlock()
+				tailLastTime = fileLastTime
+			}
+			if fileLastTime-tailLastTime > 60 {
+				c.ReOpenHandlerChan <- 1
+				level.Info(monitorLogger).Log(fmt.Sprintf("log_metric -> reopen_tail_with_time_check_fail,path:%s,fileLastTime:%d,tailLastTime:%d ", c.Path, fileLastTime, tailLastTime))
+			} else {
+				level.Info(monitorLogger).Log(fmt.Sprintf("log_metric -> reopen_tail_with_time_check_ok,path:%s,fileLastTime:%d,tailLastTime:%d ", c.Path, fileLastTime, tailLastTime))
+			}
+		} else {
+			level.Error(monitorLogger).Log(fmt.Sprintf("log_metric -> check_file_handler_fail,path:%s,err:%s ", c.Path, err.Error()))
+		}
 	}
 }
 
@@ -235,13 +305,17 @@ func (c *logMetricMonitorNeObj) new(input *logMetricMonitorNeObj) {
 	c.TargetEndpoint = input.TargetEndpoint
 	c.ServiceGroup = input.ServiceGroup
 	c.JsonConfig = []*logMetricJsonNeObj{}
+	c.TailTimeLock = new(sync.RWMutex)
+	c.ReOpenHandlerChan = make(chan int, 1)
 	var err error
 	for _, jsonObj := range input.JsonConfig {
-		jsonObj.Regexp, err = regexp.Compile(jsonObj.Regular)
-		if err != nil {
+		tmpReg, tmpErr := PcreCompile(jsonObj.Regular, 0)
+		if tmpErr != nil {
+			err = fmt.Errorf(tmpErr.Message)
 			level.Error(monitorLogger).Log("newLogMetricMonitorNeObj", fmt.Sprintf("regexpError:%s ", err.Error()))
 			continue
 		}
+		jsonObj.Regexp = &tmpReg
 		jsonObj.DataChannel = make(chan map[string]interface{}, logMetricChanLength)
 		for _, metricObj := range jsonObj.MetricConfig {
 			initLogMetricNeObj(metricObj)
@@ -262,11 +336,13 @@ func (c *logMetricMonitorNeObj) update(input *logMetricMonitorNeObj) {
 	newJsonConfigList := []*logMetricJsonNeObj{}
 	var err error
 	for _, jsonObj := range input.JsonConfig {
-		jsonObj.Regexp, err = regexp.Compile(jsonObj.Regular)
-		if err != nil {
+		tmpExp, tmpErr := PcreCompile(jsonObj.Regular, 0)
+		if tmpErr != nil {
+			err = fmt.Errorf(tmpErr.Message)
 			level.Error(monitorLogger).Log("newLogMetricMonitorNeObj", fmt.Sprintf("regexpError:%s ", err.Error()))
 			continue
 		}
+		jsonObj.Regexp = &tmpExp
 		for _, existJson := range c.JsonConfig {
 			if jsonObj.Regular == existJson.Regular {
 				jsonObj.DataChannel = existJson.DataChannel
@@ -302,23 +378,33 @@ func (c *logMetricMonitorNeObj) update(input *logMetricMonitorNeObj) {
 func initLogMetricNeObj(metricObj *logMetricNeObj) {
 	var err error
 	if metricObj.ValueRegular != "" {
-		metricObj.RegExp, err = regexp2.Compile(metricObj.ValueRegular, 0)
-		if err != nil {
-			level.Error(monitorLogger).Log("newLogMetricMonitorNeObj", fmt.Sprintf("regexpError:%s ", err.Error()))
+		if newRegExp, compileErr := PcreCompile(metricObj.ValueRegular, 0); compileErr != nil {
+			level.Error(monitorLogger).Log("newLogMetricMonitorNeObj", fmt.Sprintf("regexpError:%s ", compileErr.Message))
+		} else {
+			metricObj.RegExp = &newRegExp
 		}
+		//metricObj.RegExp, err = PcreCompile(metricObj.ValueRegular, 0)
+		//if err != nil {
+		//	level.Error(monitorLogger).Log("newLogMetricMonitorNeObj", fmt.Sprintf("regexpError:%s ", err.Error()))
+		//}
 		if metricObj.DataChannel == nil {
 			metricObj.DataChannel = make(chan string, logMetricChanLength)
 		}
 	}
 	for _, stringMapObj := range metricObj.StringMap {
 		if stringMapObj.RegEnable {
-			tmpExp, tmpErr := regexp2.Compile(stringMapObj.StringValue, 0)
-			if tmpErr == nil {
-				stringMapObj.Regexp = tmpExp
-			} else {
+			if tmpExp, tmpErr := PcreCompile(stringMapObj.StringValue, 0); tmpErr != nil {
 				stringMapObj.RegEnable = false
-				level.Error(monitorLogger).Log("string map regexp format fail", tmpErr.Error())
+				level.Error(monitorLogger).Log("string map regexp format fail", tmpErr.Message)
+			} else {
+				stringMapObj.Regexp = &tmpExp
 			}
+			//if tmpErr == nil {
+			//	stringMapObj.Regexp = tmpExp
+			//} else {
+			//	stringMapObj.RegEnable = false
+			//	level.Error(monitorLogger).Log("string map regexp format fail", tmpErr.Error())
+			//}
 		}
 	}
 	for _, tagConfigObj := range metricObj.TagConfig {
@@ -634,10 +720,12 @@ func transLogMetricTagString(config []*logMetricStringMapNeObj, input string) (m
 			}
 			continue
 		}
-		if ok, _ := v.Regexp.MatchString(input); ok {
-			matchFlag = true
-			output = v.TargetStringValue
-			break
+		if mat := v.Regexp.MatcherString(input, 0); mat != nil {
+			if mat.Matches() {
+				matchFlag = true
+				output = v.TargetStringValue
+				break
+			}
 		}
 	}
 	return
@@ -657,10 +745,12 @@ func transLogMetricStringMapValue(config []*logMetricStringMapNeObj, input strin
 			}
 			continue
 		}
-		if ok, _ := v.Regexp.MatchString(input); ok {
-			matchFlag = true
-			output = v.IntValue
-			break
+		if mat := v.Regexp.MatcherString(input, 0); mat != nil {
+			if mat.Matches() {
+				matchFlag = true
+				output = v.IntValue
+				break
+			}
 		}
 	}
 	return
@@ -729,5 +819,15 @@ func getLogMetricTags(lineText string, tagConfigList []*LogMetricConfigTag, stri
 		}
 	}
 	tagString = strings.Join(tagList, ",")
+	return
+}
+
+func getFileLastUpdatedTime(filePath string) (unixTime int64, err error) {
+	f, statErr := os.Stat(filePath)
+	if statErr != nil {
+		err = fmt.Errorf("check file update time fail with stat file:%s %s ", filePath, statErr.Error())
+		return
+	}
+	unixTime = f.ModTime().Unix()
 	return
 }

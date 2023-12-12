@@ -30,6 +30,7 @@ Vue.component('ModalComponent', ModalComponent)
 Vue.use(VeeValidate)
 
 Vue.config.productionTip = false
+Vue.config.devtools = true
 
 import DelConfirm from '@/components/del-confirm/index.js'
 Vue.use(DelConfirm)
