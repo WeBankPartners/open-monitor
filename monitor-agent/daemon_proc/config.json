@@ -7,7 +7,7 @@
   ],
   "maxTry": 100,
   "workDir": "/app/monitor/alertmanager",
-  "stdOutLog": "alertmanager.log",
+  "stdOutLog": "logs/alertmanager.log",
   "localBin": true,
   "withBash": false
 },{
@@ -15,15 +15,7 @@
   "args": [],
   "maxTry": 100,
   "workDir": "/app/monitor/agent_manager",
-  "stdOutLog": "app.log",
-  "localBin": true,
-  "withBash": false
-},{
-  "name": "agent_manager",
-  "args": [],
-  "maxTry": 100,
-  "workDir": "/app/monitor/agent_manager",
-  "stdOutLog": "app.log",
+  "stdOutLog": "logs/app.log",
   "localBin": true,
   "withBash": false
 },{
@@ -31,7 +23,7 @@
   "args": [],
   "maxTry": 100,
   "workDir": "/app/monitor/ping_exporter",
-  "stdOutLog": "app.log",
+  "stdOutLog": "logs/app.log",
   "localBin": true,
   "withBash": false
 },{
@@ -39,15 +31,15 @@
   "args": ["-d data","-m http://127.0.0.1:8080"],
   "maxTry": 100,
   "workDir": "/app/monitor/transgateway",
-  "stdOutLog": "app.log",
+  "stdOutLog": "logs/app.log",
   "localBin": true,
   "withBash": false
 },{
   "name": "archive_mysql_tool",
   "args": [],
-  "maxTry": 100,
+  "maxTry": 10,
   "workDir": "/app/monitor/archive_mysql_tool",
-  "stdOutLog": "app.log",
+  "stdOutLog": "logs/app.log",
   "localBin": true,
   "withBash": false
 },{
@@ -55,7 +47,7 @@
   "args": [],
   "maxTry": 100,
   "workDir": "/app/monitor/db_data_exporter",
-  "stdOutLog": "app.log",
+  "stdOutLog": "logs/app.log",
   "localBin": true,
   "withBash": false
 }]
