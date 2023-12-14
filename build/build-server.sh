@@ -15,4 +15,4 @@ go build -ldflags "-linkmode external -extldflags -static -s"
 cd ../db_data_exporter
 go build -ldflags "-linkmode external -extldflags -static -s"
 cd ../daemon_proc
-go build -ldflags "-linkmode external -extldflags -static -s" -o daemon_proc
+go build -o daemon_proc
