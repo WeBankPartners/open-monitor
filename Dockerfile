@@ -13,8 +13,9 @@ ENV TRANS_GATEWAY=$BASE_HOME/transgateway
 ENV PING_EXPORTER=$BASE_HOME/ping_exporter
 ENV ARCHIVE_TOOL=$BASE_HOME/archive_mysql_tool
 ENV DB_DATA_EXPORTER=$BASE_HOME/db_data_exporter
+ENV DAEMON_PROC=$BASE_HOME/daemon_proc
 
-RUN mkdir -p $BASE_HOME $PROMETHEUS_HOME $PROMETHEUS_HOME/rules $PROMETHEUS_HOME/token $ALERTMANAGER_HOME $MONITOR_HOME $MONITOR_HOME/conf $AGENT_MANAGER_HOME $PING_EXPORTER $AGENT_MANAGER_DEPLOY $TRANS_GATEWAY $ARCHIVE_TOOL $DB_DATA_EXPORTER
+RUN mkdir -p $BASE_HOME $PROMETHEUS_HOME $PROMETHEUS_HOME/rules $PROMETHEUS_HOME/token $ALERTMANAGER_HOME $MONITOR_HOME $MONITOR_HOME/conf $AGENT_MANAGER_HOME $PING_EXPORTER $AGENT_MANAGER_DEPLOY $TRANS_GATEWAY $ARCHIVE_TOOL $DB_DATA_EXPORTER $DAEMON_PROC
 
 COPY build/start.sh $BASE_HOME/
 COPY build/stop.sh $BASE_HOME/
@@ -41,8 +42,10 @@ COPY build/conf/core-site.xml $ARCHIVE_TOOL/conf/core-site.xml
 COPY build/conf/hdfs-site.xml $ARCHIVE_TOOL/conf/hdfs-site.xml
 COPY build/conf/krb5.conf $ARCHIVE_TOOL/conf/krb5.conf
 COPY monitor-agent/db_data_exporter/db_data_exporter $DB_DATA_EXPORTER/
+COPY monitor-agent/daemon_proc/daemon_proc $DAEMON_PROC/
+COPY monitor-agent/daemon_proc/config.json $DAEMON_PROC/
 
-RUN chmod +x $PROMETHEUS_HOME/prometheus $PROMETHEUS_HOME/promtool $ALERTMANAGER_HOME/alertmanager $AGENT_MANAGER_HOME/agent_manager $TRANS_GATEWAY/transgateway $MONITOR_HOME/monitor-server $BASE_HOME/*.sh $PING_EXPORTER/ping_exporter $ARCHIVE_TOOL/archive_mysql_tool $DB_DATA_EXPORTER/db_data_exporter
+RUN chmod +x $PROMETHEUS_HOME/prometheus $PROMETHEUS_HOME/promtool $ALERTMANAGER_HOME/alertmanager $AGENT_MANAGER_HOME/agent_manager $TRANS_GATEWAY/transgateway $MONITOR_HOME/monitor-server $BASE_HOME/*.sh $PING_EXPORTER/ping_exporter $ARCHIVE_TOOL/archive_mysql_tool $DB_DATA_EXPORTER/db_data_exporter $DAEMON_PROC/daemon_proc
 
 WORKDIR $BASE_HOME
 
