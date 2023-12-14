@@ -686,3 +686,7 @@ INSERT INTO alarm_strategy (guid,endpoint_group,metric,`condition`,`last`,priori
 #@v2.0.2.35-begin@;
 alter table agent_manager add column agent_remote_port varchar(255) default null;
 #@v2.0.2.35-end@;
+
+#@v2.0.4.7-begin@;
+INSERT INTO metric (guid,metric,monitor_type,prom_expr,tag_owner,update_time,service_group,workspace) VALUES ('file.handler.free.percent__host','file.handler.free.percent','host','node_filesystem_files_free{instance="$address",mountpoint ="/",fstype="rootfs"} / node_filesystem_files{instance="$address",mountpoint ="/",fstype="rootfs"} * 100',NULL,'2023-12-12 17:22:09',NULL,'any_object');
+#@v2.0.4.7-end@;
