@@ -75,31 +75,33 @@ then
   archive_day="${MONITOR_PROMETHEUS_ARCHIVE_DAY}d"
 fi
 
-cd alertmanager
+cd agent_manager
 mkdir -p logs
-nohup ./alertmanager --config.file=alertmanager.yml --web.listen-address=":9093"  --cluster.listen-address=":9094" > logs/alertmanager.log 2>&1 &
+tar zxf exporters.tar.gz
+#nohup ./agent_manager > logs/app.log 2>&1 &
+cd ../daemon_proc
+nohup ./daemon_proc > app.log 2>&1 &
+cd ../alertmanager
+mkdir -p logs
+#nohup ./alertmanager --config.file=alertmanager.yml --web.listen-address=":9093"  --cluster.listen-address=":9094" > logs/alertmanager.log 2>&1 &
 cd ../prometheus/
 mkdir -p rules
 mkdir -p logs
 /bin/cp -f base.yml rules/
 nohup ./prometheus --config.file=prometheus.yml --web.enable-lifecycle --storage.tsdb.retention.time=${archive_day} > logs/prometheus.log 2>&1 &
-cd ../agent_manager/
-mkdir -p logs
-tar zxf exporters.tar.gz
-nohup ./agent_manager > logs/app.log 2>&1 &
 cd ../ping_exporter/
 mkdir -p logs
-nohup ./ping_exporter > logs/app.log 2>&1 &
+#nohup ./ping_exporter > logs/app.log 2>&1 &
 cd ../transgateway/
 mkdir -p logs
 mkdir -p data
-nohup ./transgateway -d data -m http://127.0.0.1:8080 > logs/app.log 2>&1 &
+#nohup ./transgateway -d data -m http://127.0.0.1:8080 > logs/app.log 2>&1 &
 cd ../archive_mysql_tool
 mkdir -p logs
-nohup ./archive_mysql_tool > logs/app.log 2>&1 &
+#nohup ./archive_mysql_tool > logs/app.log 2>&1 &
 cd ../db_data_exporter
 mkdir -p logs
-nohup ./db_data_exporter > logs/app.log 2>&1 &
+#nohup ./db_data_exporter > logs/app.log 2>&1 &
 cd ../monitor/
 mkdir -p logs
 sleep 2
