@@ -1,0 +1,61 @@
+[{
+  "name": "alertmanager",
+  "args": [
+    "--config.file=alertmanager.yml",
+    "--web.listen-address=\":9093\"",
+    "--cluster.listen-address=\":9094\""
+  ],
+  "maxTry": 100,
+  "workDir": "/app/monitor/alertmanager",
+  "stdOutLog": "alertmanager.log",
+  "localBin": true,
+  "withBash": false
+},{
+  "name": "agent_manager",
+  "args": [],
+  "maxTry": 100,
+  "workDir": "/app/monitor/agent_manager",
+  "stdOutLog": "app.log",
+  "localBin": true,
+  "withBash": false
+},{
+  "name": "agent_manager",
+  "args": [],
+  "maxTry": 100,
+  "workDir": "/app/monitor/agent_manager",
+  "stdOutLog": "app.log",
+  "localBin": true,
+  "withBash": false
+},{
+  "name": "ping_exporter",
+  "args": [],
+  "maxTry": 100,
+  "workDir": "/app/monitor/ping_exporter",
+  "stdOutLog": "app.log",
+  "localBin": true,
+  "withBash": false
+},{
+  "name": "transgateway",
+  "args": ["-d data","-m http://127.0.0.1:8080"],
+  "maxTry": 100,
+  "workDir": "/app/monitor/transgateway",
+  "stdOutLog": "app.log",
+  "localBin": true,
+  "withBash": false
+},{
+  "name": "archive_mysql_tool",
+  "args": [],
+  "maxTry": 100,
+  "workDir": "/app/monitor/archive_mysql_tool",
+  "stdOutLog": "app.log",
+  "localBin": true,
+  "withBash": false
+},{
+  "name": "db_data_exporter",
+  "args": [],
+  "maxTry": 100,
+  "workDir": "/app/monitor/db_data_exporter",
+  "stdOutLog": "app.log",
+  "localBin": true,
+  "withBash": false
+}]
