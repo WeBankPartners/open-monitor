@@ -1,4 +1,4 @@
-package daemon_proc
+package main
 
 import (
 	"encoding/json"
