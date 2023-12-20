@@ -172,7 +172,8 @@ export default {
           0 :Date.parse(this.chartCondition.dateRange[1].replace(/-/g, '/'))/1000)
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.metricConfigView.api, params, responseData => {
-        const chartConfig = {eye: false,clear:true, zoomCallback: true}
+        // const chartConfig = {eye: false,clear:true, zoomCallback: true}
+        const chartConfig = {eye: false,clear:true}
         readyToDraw(this,responseData, 1, chartConfig)
       })
     },
