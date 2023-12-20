@@ -26,6 +26,7 @@ monitor-agent/ping_exporter/ping_exporter
 monitor-agent/archive_mysql_tool/archive_mysql_tool
 monitor-agent/transgateway/transgateway
 monitor-agent/db_data_exporter/db_data_exporter
+monitor-agent/daemon_proc/daemon_proc
 
 #tmp
 monitor-ui/.history/*
