@@ -31,8 +31,8 @@ export const readyToDraw = function(that, responseData, viewIndex, chartConfig, 
       if (item.endpoint.split('.').length >= 3) {
         isHostOrSys = true
       } 
-      metricEndpointColorInChartConfig[`${item.metric}:${item.endpoint}`] = item.defaultColor
-      metricSysColorInChartConfig[`${item.metric}`] = item.defaultColor
+      metricEndpointColorInChartConfig[`${item.metric}:${item.endpoint}`] = item.defaultColor || ''
+      metricSysColorInChartConfig[`${item.metric}`] = item.defaultColor || ''
       let nullColorIndex = []
       item.metricToColor.forEach((m, mIndex) => {
         if (m.color === '') {
