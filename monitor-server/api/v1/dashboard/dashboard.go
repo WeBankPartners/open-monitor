@@ -95,6 +95,10 @@ func GetPanels(c *gin.Context) {
 		mid.ReturnParamTypeError(c, "group", "int")
 		return
 	}
+	if groupId == 0 {
+		mid.ReturnSuccessData(c, []string{})
+		return
+	}
 	err, panels := db.GetPanels(groupId, endpoint)
 	if err != nil {
 		mid.ReturnQueryTableError(c, "panel", err)
