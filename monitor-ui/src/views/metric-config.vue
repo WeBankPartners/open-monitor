@@ -675,7 +675,8 @@ export default {
         metric: this.metricConfigData.prom_expr === '' ? this.metricConfigData.metric : ''
       }]
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.metricConfigView.api, params, responseData => {
-        const chartConfig = {eye: false,clear:true, zoomCallback: true}
+        // const chartConfig = {eye: false,clear:true, zoomCallback: true}
+        const chartConfig = {eye: false,clear:true}
         readyToDraw(this,responseData, 1, chartConfig, this.acquisitionConfigurationElId)
       }, {isNeedloading: false})
     },
@@ -702,7 +703,8 @@ export default {
       })
       this.isRequestChartData = true
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.metricConfigView.api, params, responseData => {
-        const chartConfig = {eye: false,clear:true, zoomCallback: true}
+        // const chartConfig = {eye: false,clear:true, zoomCallback: true}
+        const chartConfig = {eye: false,clear:true}
         readyToDraw(this,responseData, 1, chartConfig, this.displayGroupElId)
       }, {isNeedloading: false})
     },

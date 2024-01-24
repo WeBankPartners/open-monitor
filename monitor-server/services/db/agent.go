@@ -18,6 +18,17 @@ func UpdateEndpoint(endpoint *m.EndpointTable, extendParam string) (stepList []i
 	nowTime := time.Now().Format(m.DatetimeFormat)
 	var actions []*Action
 	if host.Id == 0 {
+		existMonitorTypeList, _ := GetEndpointTypeList()
+		addMonitorTypeFlag := true
+		for _, v := range existMonitorTypeList {
+			if endpoint.ExportType == v {
+				addMonitorTypeFlag = false
+				break
+			}
+		}
+		if addMonitorTypeFlag {
+			actions = append(actions, &Action{Sql: "INSERT INTO monitor_type (guid,display_name) VALUES (?,?)", Param: []interface{}{endpoint.ExportType, endpoint.ExportType}})
+		}
 		insert := fmt.Sprintf("INSERT INTO endpoint(guid,name,ip,endpoint_version,export_type,export_version,step,address,os_type,create_at,address_agent,cluster,tags) VALUE ('%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%s','%s','%s')",
 			endpoint.Guid, endpoint.Name, endpoint.Ip, endpoint.EndpointVersion, endpoint.ExportType, endpoint.ExportVersion, endpoint.Step, endpoint.Address, endpoint.OsType, nowTime, endpoint.AddressAgent, endpoint.Cluster, endpoint.Tags)
 		actions = append(actions, &Action{Sql: insert})
