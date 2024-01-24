@@ -121,7 +121,7 @@
         <div v-else>
           <label class="col-md-2 label-name">{{$t('field.ip')}}:</label>
           <Select filterable v-model="endpointRejectModel.addRow.ip" @on-change="changeIp" style="width:338px">
-            <Option v-for="item in endpointRejectModel.ipOptions" :value="item.ip" :key="item.ip">
+            <Option v-for="item in endpointRejectModel.ipOptions" :value="item.ip" :key="item.guid">
               {{item.guid}}
             </Option>
           </Select>
