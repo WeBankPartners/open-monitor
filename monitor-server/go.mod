@@ -13,7 +13,7 @@ require (
 	github.com/swaggo/swag v1.8.10
 	github.com/toolkits/file v0.0.0-20160325033739-a5b3c5147e07
 	go.uber.org/zap v1.18.1
-	golang.org/x/net v0.0.0-20220722155237-a158d28d115b
+	golang.org/x/net v0.7.0
 	gopkg.in/yaml.v2 v2.4.0
 	xorm.io/core v0.7.3
 	xorm.io/xorm v1.2.0
