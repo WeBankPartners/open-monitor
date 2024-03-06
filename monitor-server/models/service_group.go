@@ -94,6 +94,9 @@ type PluginUpdateServicePathOutputObj struct {
 
 func TransPluginMultiStringParam(input interface{}) []string {
 	var result []string
+	if input == nil {
+		return result
+	}
 	rn := reflect.TypeOf(input).String()
 	if strings.Contains(rn, "[]interface") {
 		for _, v := range input.([]interface{}) {
