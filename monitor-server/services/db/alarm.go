@@ -826,14 +826,29 @@ func getLastFromExpr(expr string) string {
 }
 
 func CloseAlarm(param m.AlarmCloseParam) (err error) {
+	var alarmRows []*m.AlarmTable
 	if param.Priority != "" {
-		_, err = x.Exec("UPDATE alarm SET STATUS='closed',end=NOW() WHERE status='firing' and s_priority=?", param.Priority)
+		err = x.SQL("select id,s_metric from alarm WHERE status='firing' and s_priority=?", param.Priority).Find(&alarmRows)
 	} else if param.Metric != "" {
-		_, err = x.Exec("UPDATE alarm SET STATUS='closed',end=NOW() WHERE status='firing' and s_metric=?", param.Metric)
+		err = x.SQL("select id,s_metric from alarm WHERE status='firing' and s_metric=?", param.Metric).Find(&alarmRows)
 	} else {
-		_, err = x.Exec("UPDATE alarm SET STATUS='closed',end=NOW() WHERE id=?", param.Id)
+		err = x.SQL("select id,s_metric from alarm WHERE id=?", param.Id).Find(&alarmRows)
 	}
-	return err
+	if err != nil {
+		err = fmt.Errorf("query alarm table fail,%s ", err.Error())
+		return
+	}
+	var actions []*Action
+	for _, v := range alarmRows {
+		actions = append(actions, &Action{Sql: "UPDATE alarm SET STATUS='closed',end=NOW() WHERE id=?", Param: []interface{}{v.Id}})
+		if v.SMetric == "log_monitor" {
+			actions = append(actions, &Action{Sql: "update log_keyword_alarm set status='closed',updated_time=NOW() WHERE alarm_id=?", Param: []interface{}{v.Id}})
+		}
+	}
+	if len(actions) > 0 {
+		err = Transaction(actions)
+	}
+	return
 }
 
 func UpdateAlarmCustomMessage(param m.UpdateAlarmCustomMessageDto) error {
