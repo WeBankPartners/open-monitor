@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 type LogKeywordMonitorTable struct {
 	Guid         string `json:"guid"`
 	ServiceGroup string `json:"service_group"`
@@ -95,4 +97,16 @@ type LogKeywordRowsHttpResult struct {
 	Status  string                `json:"status"`
 	Message string                `json:"message"`
 	Data    []*LogKeywordFetchObj `json:"data"`
+}
+
+type LogKeywordAlarmTable struct {
+	Id          int       `json:"id" xorm:"id"`
+	AlarmId     int       `json:"alarmId" xorm:"alarm_id"`
+	Endpoint    string    `json:"endpoint" xorm:"endpoint"`
+	Status      string    `json:"status" xorm:"status"`
+	Content     string    `json:"content" xorm:"content"`
+	Tags        string    `json:"tags" xorm:"tags"`
+	StartValue  float64   `json:"startValue" xorm:"start_value"`
+	EndValue    float64   `json:"endValue" xorm:"end_value"`
+	UpdatedTime time.Time `json:"updatedTime" xorm:"updated_time"`
 }

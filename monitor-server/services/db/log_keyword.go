@@ -10,7 +10,6 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
 	"io/ioutil"
 	"net/http"
-	"sort"
 	"strings"
 	"time"
 )
@@ -182,40 +181,19 @@ func doLogKeywordMonitorJob() {
 		log.Logger.Debug("Check log keyword break with empty config ")
 		return
 	}
-	var alarmTable []*models.AlarmTable
-	err = x.SQL("SELECT * FROM alarm WHERE s_metric='log_monitor'").Find(&alarmTable)
-	//var firingAlarmTable, closeAlarmTable []*models.AlarmTable
-	//err = x.SQL("SELECT * FROM alarm WHERE s_metric='log_monitor' and status='firing'").Find(&firingAlarmTable)
-	//if err != nil {
-	//	log.Logger.Error("Check log keyword break with query exist firing alarm fail", log.Error(err))
-	//	return
-	//}
-	//err = x.SQL("select id,endpoint,tags,start_value,end_value,`start` from alarm where id in (select max(id) as id from alarm where s_metric='log_monitor' and status='closed' group by tags)").Find(&closeAlarmTable)
+	var alarmTable []*models.LogKeywordAlarmTable
+	err = x.SQL("select * from log_keyword_alarm").Find(&alarmTable)
 	if err != nil {
 		log.Logger.Error("Check log keyword break with query exist closed alarm fail", log.Error(err))
 		return
 	}
-	sortAlarmList := models.SortAlarmList{}
+	alarmMap := make(map[string]*models.LogKeywordAlarmTable)
 	for _, v := range alarmTable {
-		sortAlarmList = append(sortAlarmList, v)
-	}
-	sort.Sort(sortAlarmList)
-	alarmMap := make(map[string]*models.AlarmTable)
-	for _, v := range sortAlarmList {
 		if _, b := alarmMap[v.Tags]; b {
 			continue
 		}
 		alarmMap[v.Tags] = v
 	}
-	//for _, v := range closeAlarmTable {
-	//	if firingExistAlarm, b := alarmMap[v.Tags]; b {
-	//		if firingExistAlarm.Start.Unix() < v.Start.Unix() {
-	//			alarmMap[v.Tags] = v
-	//		}
-	//	} else {
-	//		alarmMap[v.Tags] = v
-	//	}
-	//}
 	var addAlarmRows []*models.AlarmTable
 	var newValue, oldValue float64
 	notifyMap := make(map[string]string)
@@ -243,7 +221,7 @@ func doLogKeywordMonitorJob() {
 			}
 			if existAlarm.Status == "firing" {
 				existAlarm.Content = strings.Split(existAlarm.Content, "^^")[0] + "^^" + getLogKeywordLastRow(config.AgentAddress, config.LogPath, config.Keyword)
-				addAlarmRows = append(addAlarmRows, &models.AlarmTable{Id: existAlarm.Id, Status: existAlarm.Status, EndValue: newValue, Content: existAlarm.Content, End: nowTime})
+				addAlarmRows = append(addAlarmRows, &models.AlarmTable{Id: existAlarm.AlarmId, Status: existAlarm.Status, EndValue: newValue, Content: existAlarm.Content, End: nowTime})
 			} else {
 				addFlag = true
 			}
@@ -264,38 +242,23 @@ func doLogKeywordMonitorJob() {
 	if len(addAlarmRows) == 0 {
 		return
 	}
-	var actions []*Action
 	for _, v := range addAlarmRows {
-		tmpAction := Action{}
-		if v.Id > 0 {
-			tmpAction.Sql = "UPDATE alarm SET content=?,end_value=?,end=? WHERE id=?"
-			tmpAction.Param = []interface{}{v.Content, v.EndValue, v.End.Format(models.DatetimeFormat), v.Id}
+		if tmpErr := doLogKeywordDBAction(v); tmpErr != nil {
+			log.Logger.Error("Update log keyword alarm table fail", log.String("tags", v.Tags), log.Error(tmpErr))
 		} else {
-			calcAlarmUniqueFlag(v)
-			tmpAction.Sql = "INSERT INTO alarm(strategy_id,endpoint,status,s_metric,s_expr,s_cond,s_last,s_priority,content,start_value,start,tags,alarm_strategy,endpoint_tags) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
-			tmpAction.Param = []interface{}{v.StrategyId, v.Endpoint, v.Status, v.SMetric, v.SExpr, v.SCond, v.SLast, v.SPriority, v.Content, v.StartValue, v.Start.Format(models.DatetimeFormat), v.Tags, "log_keyword_strategy", v.EndpointTags}
+			if v.Id <= 0 {
+				if _, b := notifyMap[v.Tags]; !b {
+					log.Logger.Warn("Log keyword monitor notify disable,ignore", log.String("tags", v.Tags))
+					continue
+				}
+				tmpAlarmObj := getSimpleAlarmByLogKeywordTags(v.Tags)
+				if tmpAlarmObj.Id <= 0 {
+					log.Logger.Warn("Log keyword monitor notify fail,query alarm with tags fail", log.String("tags", v.Tags))
+					continue
+				}
+				NotifyServiceGroup(notifyMap[v.Tags], &models.AlarmHandleObj{AlarmTable: tmpAlarmObj})
+			}
 		}
-		actions = append(actions, &tmpAction)
-	}
-	err = Transaction(actions)
-	if err != nil {
-		log.Logger.Error("Update log keyword alarm table fail", log.Error(err))
-		return
-	}
-	for _, v := range addAlarmRows {
-		if v.Id > 0 {
-			continue
-		}
-		if _, b := notifyMap[v.Tags]; !b {
-			log.Logger.Warn("Log keyword monitor notify disable,ignore", log.String("tags", v.Tags))
-			continue
-		}
-		tmpAlarmObj := getSimpleAlarmByLogKeywordTags(v.Tags)
-		if tmpAlarmObj.Id <= 0 {
-			log.Logger.Warn("Log keyword monitor notify fail,query alarm with tags fail", log.String("tags", v.Tags))
-			continue
-		}
-		NotifyServiceGroup(notifyMap[v.Tags], &models.AlarmHandleObj{AlarmTable: tmpAlarmObj})
 	}
 }
 
@@ -377,6 +340,53 @@ func ImportLogKeyword(param *models.LogKeywordServiceGroupObj) (err error) {
 		if syncErr := SyncLogKeywordExporterConfig(affectHostList); syncErr != nil {
 			log.Logger.Error("import log keyword fail with sync host keyword config", log.Error(syncErr), log.StringList("hosts", affectHostList))
 		}
+	}
+	return
+}
+
+func doLogKeywordDBAction(alarmObj *models.AlarmTable) (err error) {
+	session := x.NewSession()
+	if err = session.Begin(); err != nil {
+		return
+	}
+	defer func() {
+		if err != nil {
+			session.Rollback()
+		} else {
+			session.Commit()
+		}
+		session.Close()
+	}()
+	if alarmObj.Id > 0 {
+		_, err = session.Exec("UPDATE alarm SET content=?,end_value=?,end=? WHERE id=?", alarmObj.Content, alarmObj.EndValue, alarmObj.End.Format(models.DatetimeFormat), alarmObj.Id)
+		if err != nil {
+			return
+		}
+		execResult, execErr := session.Exec("UPDATE log_keyword_alarm SET content=?,end_value=?,updated_time=? WHERE alarm_id=?", alarmObj.Content, alarmObj.EndValue, alarmObj.End.Format(models.DatetimeFormat), alarmObj.Id)
+		if execErr != nil {
+			err = execErr
+		} else {
+			if affectRowNum, _ := execResult.RowsAffected(); affectRowNum <= 0 {
+				err = fmt.Errorf("update log keyword alarm table fail,affect row 0 with alarm_id=%d ", alarmObj.Id)
+			}
+		}
+		return
+	} else {
+		calcAlarmUniqueFlag(alarmObj)
+		execResult, execErr := session.Exec("INSERT INTO alarm(strategy_id,endpoint,status,s_metric,s_expr,s_cond,s_last,s_priority,content,start_value,start,tags,alarm_strategy,endpoint_tags) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+			alarmObj.StrategyId, alarmObj.Endpoint, alarmObj.Status, alarmObj.SMetric, alarmObj.SExpr, alarmObj.SCond, alarmObj.SLast, alarmObj.SPriority, alarmObj.Content, alarmObj.StartValue, alarmObj.Start.Format(models.DatetimeFormat), alarmObj.Tags, "log_keyword_strategy", alarmObj.EndpointTags)
+		if execErr != nil {
+			err = execErr
+			return
+		}
+		lastInsertId, _ := execResult.LastInsertId()
+		if lastInsertId <= 0 {
+			err = fmt.Errorf("insert alarm table get 0 alarm id,tags:%s ", alarmObj.Tags)
+			return
+		}
+		session.Exec("delete from log_keyword_alarm where tags=?", alarmObj.Tags)
+		_, err = session.Exec("insert into log_keyword_alarm(alarm_id,endpoint,status,content,tags,start_value,updated_time) values (?,?,?,?,?,?,?)",
+			lastInsertId, alarmObj.Endpoint, alarmObj.Status, alarmObj.Content, alarmObj.Tags, alarmObj.StartValue, alarmObj.Start.Format(models.DatetimeFormat))
 	}
 	return
 }
