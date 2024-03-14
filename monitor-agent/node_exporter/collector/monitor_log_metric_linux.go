@@ -160,10 +160,6 @@ func (c *logMetricMonitorNeObj) startHandleTailData() {
 				continue
 			}
 			fetchList := pcreMatchSubString(rule.Regexp, lineText)
-			if len(fetchList) <= 1 {
-				continue
-			}
-			fetchList = fetchList[1:]
 			fetchKeyMap := make(map[string]interface{})
 			for _, v := range fetchList {
 				tmpKeyMap := make(map[string]interface{})
