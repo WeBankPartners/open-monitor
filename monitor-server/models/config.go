@@ -186,6 +186,7 @@ type GlobalConfig struct {
 	AlarmAliveMaxDay             string              `json:"alarm_alive_max_day"`
 	MonitorAlarmMailEnable       string              `json:"monitor_alarm_mail_enable"`
 	MonitorAlarmCallbackLevelMin string              `json:"monitor_alarm_callback_level_min"`
+	MonitorNotifyTreeventEnable  string              `json:"monitor_notify_treevent_enable"`
 }
 
 var (
@@ -204,6 +205,7 @@ var (
 	SmsParamMaxLength    int
 	AlarmMailEnable      bool
 	AgentManagerRemoteIp string
+	NotifyTreeventEnable bool
 )
 
 func Config() *GlobalConfig {
@@ -253,6 +255,12 @@ func InitConfig(cfg string) {
 		AlarmMailEnable = true
 	} else {
 		AlarmMailEnable = false
+	}
+	config.MonitorNotifyTreeventEnable = strings.ToLower(config.MonitorNotifyTreeventEnable)
+	if config.MonitorNotifyTreeventEnable == "y" || config.MonitorNotifyTreeventEnable == "yes" || config.MonitorNotifyTreeventEnable == "true" {
+		NotifyTreeventEnable = true
+	} else {
+		NotifyTreeventEnable = false
 	}
 	if config.MonitorAlarmCallbackLevelMin == "" {
 		config.MonitorAlarmCallbackLevelMin = "high"
