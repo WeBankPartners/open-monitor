@@ -566,7 +566,11 @@ func NotifyStrategyAlarm(alarmObj *models.AlarmHandleObj) {
 		//}
 	}
 	if alarmObj.Status == "firing" {
-
+		if notifyTable[0].ProcCallbackMode == models.AlarmNotifyManualMode && notifyTable[0].ProcCallbackKey != "" {
+			if _, execErr := x.Exec("update alarm set notify_id=? where id=?", notifyTable[0].Guid, alarmObj.Id); execErr != nil {
+				log.Logger.Error("update alarm table notify id fail", log.Int("alarmId", alarmObj.Id), log.Error(execErr))
+			}
+		}
 	}
 	for _, v := range notifyTable {
 		notifyAction(v, alarmObj)

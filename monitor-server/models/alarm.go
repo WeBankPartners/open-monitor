@@ -65,6 +65,7 @@ type AlarmTable struct {
 	CustomMessage string    `json:"custom_message"`
 	EndpointTags  string    `json:"endpoint_tags"`
 	AlarmStrategy string    `json:"alarm_strategy"`
+	NotifyId      string    `json:"notify_id"`
 }
 
 type SortAlarmList []*AlarmTable
@@ -117,6 +118,8 @@ type AlarmProblemQuery struct {
 	AlarmStrategy string    `json:"alarm_strategy"`
 	Title         string    `json:"title"`
 	SystemId      string    `json:"system_id"`
+	NotifyId      string    `json:"notify_id"`
+	NotifyMessage string    `json:"notify_message"`
 }
 
 type UpdateAlarmCustomMessageDto struct {
