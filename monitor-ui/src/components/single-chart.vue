@@ -73,6 +73,7 @@ export default {
         title: this.chartInfo.title,
         unit: '',
         chart_id: this.chartInfo.id,
+        compare: {},
         data: []
       }
       if (this.params.sys) {
@@ -85,6 +86,12 @@ export default {
           })
         })
       } else {
+        params.compare = {
+          compare_first_start: this.params.compare_first_start,
+          compare_first_end: this.params.compare_first_end,
+          compare_second_start: this.params.compare_second_start,
+          compare_second_end: this.params.compare_second_end
+        }
         params.data.push({
           endpoint: this.chartInfo.endpoint[0],
           metric: this.chartInfo.metric[0],
@@ -96,7 +103,6 @@ export default {
         })
       }
       this.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.metricConfigView.api, params, responseData => {
-        // const chartConfig = {clear: true,editTitle: true, zoomCallback: true}
         const chartConfig = {clear: true,editTitle: true}
         responseData.metric = this.chartInfo.metric[0]
         readyToDraw(this,responseData, this.chartIndex, chartConfig)
