@@ -40,6 +40,15 @@
       v-if="$attrs.button"
       style="position: absolute; top: 10px; right: 10px"
     >
+      <Tooltip :content="$t('123123123')">
+        <Icon
+          type="ios-megaphone"
+          size="18"
+          class="fa-operate"
+          v-if="!data.is_custom"
+          @click="goToEndpointView(data)"
+        />
+      </Tooltip>
       <Tooltip :content="$t('menu.endpointView')">
         <Icon
           type="ios-stats"
@@ -161,7 +170,9 @@ export default {
         type: alarmItem.endpoint.split("_").slice(-1)[0],
       };
       localStorage.setItem("jumpCallData", JSON.stringify(endpointObject));
-      this.$router.push({ path: "/endpointView" });
+      // this.$router.push({ path: "/endpointView" });
+      const news = this.$router.resolve({name: 'endpointView'})
+      window.open(news.href, '_blank')
     },
     deleteConfirmModal(rowData, isBatch) {
       this.$parent.isBatch = isBatch;

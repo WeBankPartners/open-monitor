@@ -15,9 +15,9 @@
           <button @click="updateNotify" class="btn btn-small btn-cancel-f">{{$t('button.save')}}</button>
           <div class="receiver-config-set" style="margin: 8px 0">
           <template>
-            <div style="margin: 4px 0px;padding:8px 12px;width:680px">
+            <div style="margin: 4px 0px;padding:8px 12px;">
               <template v-for="(item, index) in groupNotify">
-                <p :key="index + 'S'">
+                <p :key="index + 'S'" class="receiver-config-item" style="margin-bottom: 8px;">
                   <Button
                     @click="deleteItem('group', index)"
                     size="small"
@@ -36,9 +36,22 @@
                     </Select>
                   </Tooltip>
                   <Tooltip :content="$t('resourceLevel.role')" :delay="1000">
-                    <Select v-model="item.notify_roles" :max-tag-count="2" style="width: 360px" multiple filterable :placeholder="$t('field.role')">
+                    <Select v-model="item.notify_roles" :max-tag-count="2" style="width: 200px" multiple filterable :placeholder="$t('field.role')">
                       <Option v-for="item in allRole" :value="item.name" :key="item.value">{{ item.name }}</Option>
                     </Select>
+                  </Tooltip>
+                  <Tooltip :content="$t('m_callback_mode')" :delay="1000">
+                    <Select v-model="item.proc_callback_mode" style="width: 200px" :placeholder="$t('m_callback_mode')">
+                      <Option v-for="item in callbackMode" :value="item.value" :key="item.value">{{ $t(item.label) }}</Option>
+                    </Select>
+                  </Tooltip>
+                  <Tooltip :content="$t('tableKey.description')" :delay="1000">
+                    <input 
+                      v-model="item.description" 
+                      style="width: 200px"
+                      type="text" 
+                      :placeholder="$t('tableKey.description')"
+                      class="form-control model-input search-input c-dark"/>
                   </Tooltip>
                 </p>
               </template>
@@ -190,6 +203,7 @@ const btn = [
   {btn_name: 'button.edit', btn_func: 'editF'},
   {btn_name: 'button.remove', btn_func: 'deleteConfirmModal'},
 ]
+
 import {thresholdList, lastList, priorityList} from '@/assets/config/common-config.js'
 export default {
   name: '',
@@ -267,7 +281,11 @@ export default {
       isShowWarningDelete: false,
       selectedData: {},
 
-      groupNotify: []
+      groupNotify: [],
+      callbackMode: [
+        {label: 'm_manual', value: 'manual'},
+        {label: 'm_auto', value: 'auto'}
+      ]
     }
   },
   mounted () {
@@ -353,7 +371,9 @@ export default {
       const tmp = {
         alarm_action: 'firing',
         proc_callback_key: '',
-        notify_roles: []
+        notify_roles: [],
+        proc_callback_mode: 'manual',
+        description: ''
       }
       if (type === 'group') { 
         this.groupNotify.push(tmp)
@@ -442,11 +462,6 @@ export default {
 </script>
 
 <style scoped lang="less">
-  .search-li {
-    display: inline-block;
-  }
-</style>
-<style scoped lang="less">
   .search-input {
     height: 32px;
     padding: 4px 7px;
@@ -503,6 +518,15 @@ export default {
     color: #fff;
     background-color: #19be6b;
     border-color: #19be6b;
+  }
+
+  .receiver-config-item > * {
+    margin-left: 8px;
+  }
+
+  input::placeholder {
+    color: #c9ccd2;
+    font-size: 12px;
   }
 </style>
 
