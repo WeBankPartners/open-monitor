@@ -216,5 +216,6 @@
 
     "metricExport": "/monitor/api/v2/monitor/metric/export",
     "metricImport": "/monitor/api/v2/monitor/metric/import",
-    "getLogMetricByPath": "/monitor/api/v2/service/log_metric/log_metric_monitor"
+    "getLogMetricByPath": "/monitor/api/v2/service/log_metric/log_metric_monitor",
+    "startNotify": "/monitor/api/v1/alarm/problem/notify"
 }
