@@ -142,6 +142,12 @@ export default {
           title: this.chartItem.title,
           unit: '',
           chart_id: this.chartItem.id,
+          compare: {
+            compare_first_start: this.chartCondition.compareFirstDate[0],
+            compare_first_end: this.chartCondition.compareFirstDate[1],
+            compare_second_start: this.chartCondition.compareSecondDate[0],
+            compare_second_end: this.chartCondition.compareSecondDate[1]
+          },
           data: []
         }
       this.chartItem.endpoint.forEach((ep) => {
