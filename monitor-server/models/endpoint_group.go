@@ -3,12 +3,12 @@ package models
 import "time"
 
 type EndpointGroupTable struct {
-	Guid         string `json:"guid" xorm:"guid"`
-	DisplayName  string `json:"display_name" xorm:"display_name"`
-	Description  string `json:"description" xorm:"description"`
-	MonitorType  string `json:"monitor_type" xorm:"monitor_type"`
-	ServiceGroup string `json:"service_group" xorm:"service_group"`
-	AlarmWindow  string `json:"alarm_window" xorm:"alarm_window"`
+	Guid         string    `json:"guid" xorm:"guid"`
+	DisplayName  string    `json:"display_name" xorm:"display_name"`
+	Description  string    `json:"description" xorm:"description"`
+	MonitorType  string    `json:"monitor_type" xorm:"monitor_type"`
+	ServiceGroup string    `json:"service_group" xorm:"service_group"`
+	AlarmWindow  string    `json:"alarm_window" xorm:"alarm_window"`
 	UpdateTime   time.Time `json:"update_time" xorm:"update_time"`
 }
 
@@ -30,6 +30,8 @@ type NotifyTable struct {
 	ProcCallbackKey  string `json:"proc_callback_key" xorm:"proc_callback_key"`
 	CallbackUrl      string `json:"callback_url" xorm:"callback_url"`
 	CallbackParam    string `json:"callback_param" xorm:"callback_param"`
+	ProcCallbackMode string `json:"proc_callback_mode" xorm:"proc_callback_mode"` // 回调模式 -> manual(手动) | auto(自动)
+	Description      string `json:"description" xorm:"description"`
 }
 
 type NotifyRoleRelTable struct {
@@ -51,6 +53,8 @@ type NotifyObj struct {
 	CallbackUrl      string   `json:"callback_url" xorm:"callback_url"`
 	CallbackParam    string   `json:"callback_param" xorm:"callback_param"`
 	NotifyRoles      []string `json:"notify_roles"`
+	ProcCallbackMode string   `json:"proc_callback_mode" xorm:"proc_callback_mode"` // 回调模式 -> manual(手动) | auto(自动)
+	Description      string   `json:"description" xorm:"description"`
 }
 
 type PageInfo struct {
@@ -133,14 +137,14 @@ type GroupStrategyObj struct {
 	Content           string       `json:"content"`
 	NotifyEnable      int          `json:"notify_enable"`
 	NotifyDelaySecond int          `json:"notify_delay_second"`
-	ActiveWindow      string `json:"active_window"`
+	ActiveWindow      string       `json:"active_window"`
 	NotifyList        []*NotifyObj `json:"notify"`
 }
 
 type EndpointStrategyObj struct {
 	EndpointGroup string              `json:"endpoint_group"`
-	DisplayName string          `json:"display_name"`
-	MonitorType string `json:"monitor_type"`
+	DisplayName   string              `json:"display_name"`
+	MonitorType   string              `json:"monitor_type"`
 	ServiceGroup  string              `json:"service_group"`
 	Strategy      []*GroupStrategyObj `json:"strategy"`
 	NotifyList    []*NotifyObj        `json:"notify"`
@@ -161,7 +165,7 @@ type SysAlertMailParameter struct {
 }
 
 type SysMetricTemplateParameter struct {
-	Name   string `json:"name"`
+	Name     string `json:"name"`
 	PromExpr string `json:"prom_expr"`
-	Param  string `json:"param"`
+	Param    string `json:"param"`
 }

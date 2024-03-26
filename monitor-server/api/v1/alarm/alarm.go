@@ -47,7 +47,9 @@ func AcceptAlert(c *gin.Context) {
 		//go db.NotifyAlarm(v)
 		go db.NotifyStrategyAlarm(v)
 	}
-	go db.NotifyTreevent(treeventSendObj)
+	if m.NotifyTreeventEnable {
+		go db.NotifyTreevent(treeventSendObj)
+	}
 	mid.ReturnSuccess(c)
 }
 
