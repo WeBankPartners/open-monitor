@@ -319,5 +319,8 @@
   "m_host_object": "Host Object",
   "m_default_color": "Default Color",
   "m_custom_config": "Custom Config",
-  "m_same_exists": "Same configuration already exists!"
+  "m_same_exists": "Same configuration already exists!",
+  "m_callback_mode": "Callback Mode",
+  "m_manual": "Manual",
+  "m_auto": "Auto"
 }
