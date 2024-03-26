@@ -340,29 +340,33 @@ type MaintainDto struct {
 }
 
 type CustomDashboardTable struct {
-	Id          int       `json:"id"`
-	Name        string    `json:"name"`
-	PanelsGroup int       `json:"panels_group"`
-	Cfg         string    `json:"cfg"`
-	Main        int       `json:"main"`
-	CreateUser  string    `json:"create_user"`
-	UpdateUser  string    `json:"update_user"`
-	CreateAt    time.Time `json:"create_at"`
-	UpdateAt    time.Time `json:"update_at"`
+	Id             int       `json:"id"`
+	Name           string    `json:"name"`
+	PanelsGroup    int       `json:"panels_group"`
+	Cfg            string    `json:"cfg"`
+	Main           int       `json:"main"`
+	CreateUser     string    `json:"create_user"`
+	UpdateUser     string    `json:"update_user"`
+	CreateAt       time.Time `json:"create_at"`
+	UpdateAt       time.Time `json:"update_at"`
+	PanelGroups    string    `json:"panel_groups"`
+	PanelGroupList []string  `json:"panel_group_list"`
 }
 
 type CustomDashboardQuery struct {
-	Id          int       `json:"id"`
-	Name        string    `json:"name"`
-	PanelsGroup int       `json:"panels_group"`
-	Cfg         string    `json:"cfg"`
-	Main        int       `json:"main"`
-	CreateUser  string    `json:"create_user"`
-	UpdateUser  string    `json:"update_user"`
-	CreateAt    time.Time `json:"create_at"`
-	UpdateAt    time.Time `json:"update_at"`
-	MainPage    []string  `json:"main_page"`
-	Permission  string    `json:"permission"`
+	Id             int       `json:"id"`
+	Name           string    `json:"name"`
+	PanelsGroup    int       `json:"panels_group"`
+	Cfg            string    `json:"cfg"`
+	Main           int       `json:"main"`
+	CreateUser     string    `json:"create_user"`
+	UpdateUser     string    `json:"update_user"`
+	CreateAt       time.Time `json:"create_at"`
+	UpdateAt       time.Time `json:"update_at"`
+	MainPage       []string  `json:"main_page"`
+	Permission     string    `json:"permission"`
+	PanelGroups    string    `json:"panel_groups"`
+	PanelGroupList []string  `json:"panel_group_list"`
 }
 
 type MainPageRoleQuery struct {
