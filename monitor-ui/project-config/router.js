@@ -232,6 +232,13 @@ const router = new Router({
       component: () => import("@/views/endpoint-view-external-call")
     },
     {
+      path: "/callCustomViewExternal",
+      name: "callCustomViewExternal",
+      title: "自定义视图外链调用",
+      meta: {},
+      component: () => import("@/views/call-custom-view-external")
+    },
+    {
       path: "/test",
       name: "test",
       component: () => import("@/views/test"),
@@ -241,7 +248,11 @@ const router = new Router({
 });
 
 router.beforeEach((to, from, next) => {
-  if (!getToken()&& to.name != 'login'&& to.name != 'register'&& to.name != 'endpointViewExternalCall') {
+  if (['login', 'callCustomViewExternal'].includes(to.name)) {
+    next()
+    return
+  }
+  if (!getToken()&& !['login', 'register', 'endpointViewExternalCall', 'callCustomViewExternal'].includes(to.name)) {
     next({name:'login'})
   } else {
     next()
