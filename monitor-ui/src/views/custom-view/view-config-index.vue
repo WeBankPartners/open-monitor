@@ -14,7 +14,8 @@
           <div :key="panalIndex" class="panal-list">
             <Card class="c-dark">
               <p slot="title" class="panal-title">
-                {{panalItem.name}}
+                <span>{{ $t('tableKey.name') }}:{{ panalItem.name }}</span>
+                <span style="float: right;">{{ $t('field.id') }}:{{ panalItem.id }}</span>
               </p>
               <ul class="panal-content">
                 <li>
