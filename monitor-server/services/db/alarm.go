@@ -1455,7 +1455,7 @@ func ManualNotifyAlarm(alarmId int) (err error) {
 		err = fmt.Errorf("can not find notify with guid:%s ", alarmObj.NotifyId)
 		return
 	}
-	if err = notifyEventAction(notifyRows[0], &alarmObj); err != nil {
+	if err = notifyEventAction(notifyRows[0], &alarmObj, false); err != nil {
 		err = fmt.Errorf("notify event action fail:%s ", err.Error())
 	}
 	return
