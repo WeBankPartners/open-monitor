@@ -6,6 +6,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
 	"strconv"
+	"strings"
 )
 
 func ListCustomDashboard(c *gin.Context) {
@@ -36,6 +37,7 @@ func SaveCustomDashboard(c *gin.Context) {
 	var param m.CustomDashboardTable
 	if err := c.ShouldBindJSON(&param); err == nil {
 		param.UpdateUser = mid.GetOperateUser(c)
+		param.PanelGroups = strings.Join(param.PanelGroupList, ",")
 		err = db.SaveCustomDashboard(&param)
 		if err != nil {
 			mid.ReturnUpdateTableError(c, "custom_dashboard", err)
