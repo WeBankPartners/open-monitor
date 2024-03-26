@@ -598,7 +598,7 @@ func notifyAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleObj) {
 		}
 	}
 	for i := 0; i < 3; i++ {
-		err = notifyEventAction(notify, alarmObj)
+		err = notifyEventAction(notify, alarmObj, true)
 		if err == nil {
 			break
 		} else {
@@ -634,8 +634,8 @@ func compareNotifyEventLevel(level string) bool {
 	return result
 }
 
-func notifyEventAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleObj) error {
-	if !compareNotifyEventLevel(alarmObj.SPriority) {
+func notifyEventAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleObj, compareLevel bool) error {
+	if compareLevel && !compareNotifyEventLevel(alarmObj.SPriority) {
 		log.Logger.Info("notify event disable", log.String("level", alarmObj.SPriority), log.String("minLevel", models.Config().MonitorAlarmCallbackLevelMin))
 		err := notifyMailAction(notify, alarmObj)
 		return err
