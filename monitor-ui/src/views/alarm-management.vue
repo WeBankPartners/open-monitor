@@ -313,16 +313,16 @@ export default {
         this.$root.JQ('#remark_Modal').modal('hide')
       })
     },
-    goToEndpointView (alarmItem) {
-      const endpointObject = {
-        option_value: alarmItem.endpoint,
-        type: alarmItem.endpoint.split('_').slice(-1)[0]
-      }
-      localStorage.setItem('jumpCallData', JSON.stringify(endpointObject))
-      this.$router.push({path: '/endpointView'})
-      // const news = this.$router.resolve({name: 'endpointView'})
-      // window.open(news.href, '_blank')
-    },
+    // goToEndpointView (alarmItem) {
+    //   const endpointObject = {
+    //     option_value: alarmItem.endpoint,
+    //     type: alarmItem.endpoint.split('_').slice(-1)[0]
+    //   }
+    //   localStorage.setItem('jumpCallData', JSON.stringify(endpointObject))
+    //   this.$router.push({path: '/endpointView'})
+    //   // const news = this.$router.resolve({name: 'endpointView'})
+    //   // window.open(news.href, '_blank')
+    // },
     pageIndexChange(pageIndex) {
       this.paginationInfo.startIndex = pageIndex
       this.getAlarm('keep')
