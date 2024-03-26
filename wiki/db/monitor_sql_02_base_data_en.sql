@@ -712,4 +712,5 @@ insert into log_keyword_alarm(alarm_id,endpoint,status,content,tags,start_value,
 alter table notify add column proc_callback_mode varchar(16) default 'manual' comment '回调模式 -> manual(手动) | auto(自动)';
 alter table notify add column description text default null;
 alter table alarm add column notify_id varchar(64) default null;
+alter table custom_dashboard add column panel_groups text default null;
 #@v2.0.6.1-end@;
