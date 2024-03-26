@@ -33,7 +33,7 @@
           </button>
           <template v-if="type !== 'endpoint' && targrtId">
             <button type="button" class="btn-cancel-f" @click="exportThreshold">{{$t("button.export")}}</button>
-            <div style="display: inline-block;margin-bottom: 3px;vertical-align: bottom;"> 
+            <div style="display: inline-block;margin-bottom: 1px;vertical-align: bottom;line-height: 32px;"> 
               <Upload 
               :action="uploadUrl" 
               :show-upload-list="false"
