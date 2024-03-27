@@ -322,5 +322,9 @@
   "m_same_exists": "Same configuration already exists!",
   "m_callback_mode": "Callback Mode",
   "m_manual": "Manual",
-  "m_auto": "Auto"
+  "m_auto": "Auto",
+  "m_group_name": "Group Name",
+  "m_group_mgmt": "Group Management",
+  "m_group_name_exist": "The group name already exists.",
+  "m_add_chart_to_group": "Add chart to group"
 }
