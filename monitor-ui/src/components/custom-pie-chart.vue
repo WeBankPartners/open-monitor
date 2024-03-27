@@ -27,7 +27,8 @@ export default {
   props: {
     chartInfo: Object,
     params: Object,
-    chartIndex: Number
+    chartIndex: Number,
+    refreshNow: Boolean
   },
   watch: {
     params: {
@@ -35,6 +36,11 @@ export default {
         this.getchartdata()
       },
       deep: true
+    },
+    refreshNow: {
+      handler () {
+        this.getchartdata()
+      }
     }
   },
   mounted() {
