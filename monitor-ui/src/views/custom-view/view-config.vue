@@ -151,8 +151,8 @@
                 </div>
                 <section>
                   <div v-for="(chartInfo,chartIndex) in item._activeCharts" :key="chartIndex">
-                    <CustomChart v-if="['line','bar'].includes(chartInfo.chartType)" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomChart>
-                    <CustomPieChart v-if="chartInfo.chartType === 'pie'" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomPieChart>
+                    <CustomChart v-if="['line','bar'].includes(chartInfo.chartType)" :refreshNow="refreshNow" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomChart>
+                    <CustomPieChart v-if="chartInfo.chartType === 'pie'" :refreshNow="refreshNow" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomPieChart>
                   </div>
                 </section>
               </template>       
@@ -215,7 +215,6 @@
       </template>
     </Modal>
   </div>
-
 </template>
 <style lang="less" scoped>
   .grid-style {
@@ -261,6 +260,7 @@ export default {
   name: '',
   data() {
     return {
+      refreshNow: false,
       parentRouteData: {},
       editData: null,
       isShowWarning: false,
@@ -589,6 +589,10 @@ export default {
     //#region 组管理
     selectGroup (item) {
       this.activeGroup = item
+      this.refreshNow = true
+      this.$nextTick(() => {
+        this.refreshNow = false
+      })
     },
     addGroup () {
       this.groupName = ''
