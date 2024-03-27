@@ -713,4 +713,5 @@ alter table notify add column proc_callback_mode varchar(16) default 'manual' co
 alter table notify add column description text default null;
 alter table alarm add column notify_id varchar(64) default null;
 alter table custom_dashboard add column panel_groups text default null;
+alter table endpoint_metric modify column metric varchar(1024) default null;
 #@v2.0.6.1-end@;
