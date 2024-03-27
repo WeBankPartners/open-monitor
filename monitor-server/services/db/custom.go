@@ -25,7 +25,7 @@ func ListCustomDashboard(user string, coreToken m.CoreJwtToken) (err error, resu
 	sql = `SELECT * FROM (
 		SELECT DISTINCT t1.id,t1.name,t1.panels_group,t1.cfg,t1.main,t1.create_user,t1.update_user,t1.create_at,t1.update_at,t2.permission,t1.panel_groups FROM custom_dashboard t1 LEFT JOIN rel_role_custom_dashboard t2 ON t1.id=t2.custom_dashboard_id LEFT JOIN role t3 ON t2.role_id=t3.id WHERE t1.create_user<>'` + user + `' and t3.name IN ('` + roleString + `')
 		UNION
-		SELECT id,name,panels_group,cfg,main,create_user,update_user,create_at,update_at,'mgmt' FROM custom_dashboard WHERE create_user='` + user + `'
+		SELECT id,name,panels_group,cfg,main,create_user,update_user,create_at,update_at,'mgmt',panel_groups FROM custom_dashboard WHERE create_user='` + user + `'
 		) t ORDER BY t.name`
 	err = x.SQL(sql).Find(&result)
 	if err != nil {
@@ -43,7 +43,11 @@ func ListCustomDashboard(user string, coreToken m.CoreJwtToken) (err error, resu
 				v.Main = 1
 			}
 		}
-		v.PanelGroupList = strings.Split(v.PanelGroups, ",")
+		if v.PanelGroups != "" {
+			v.PanelGroupList = strings.Split(v.PanelGroups, ",")
+		} else {
+			v.PanelGroupList = []string{}
+		}
 	}
 	return err, result
 }
@@ -71,28 +75,31 @@ func distinctCustomDashboard(input []*m.CustomDashboardQuery) (output []*m.Custo
 	return
 }
 
-func GetCustomDashboard(query *m.CustomDashboardTable) error {
-	var err error
-	var result []*m.CustomDashboardTable
-	if query.Id > 0 {
-		err = x.SQL("SELECT * FROM custom_dashboard WHERE id=?", query.Id).Find(&result)
-		if len(result) > 0 {
-			query.Id = result[0].Id
-			query.Name = result[0].Name
-			query.Cfg = result[0].Cfg
-			query.CreateUser = result[0].CreateUser
-			query.UpdateUser = result[0].UpdateUser
-			query.CreateAt = result[0].CreateAt
-			query.UpdateAt = result[0].UpdateAt
-			query.PanelGroupList = strings.Split(result[0].PanelGroups, ",")
-		} else {
-			return fmt.Errorf("can not find dashboard with id:%d ", query.Id)
-		}
+func GetCustomDashboard(id int) (result *m.CustomDashboardObj, err error) {
+	if id == 0 {
+		err = fmt.Errorf("custom dashboard id:%d illegal", id)
+		return
 	}
-	return err
+	var customRows []*m.CustomDashboardTable
+	err = x.SQL("SELECT * FROM custom_dashboard WHERE id=?", id).Find(&customRows)
+	if err != nil {
+		err = fmt.Errorf("query custom dashboard table fail,%s ", err.Error())
+		return
+	}
+	if len(customRows) == 0 {
+		err = fmt.Errorf("can not find custom dashboard with id:%d", id)
+		return
+	}
+	result = &m.CustomDashboardObj{CustomDashboardTable: *customRows[0]}
+	if result.PanelGroups != "" {
+		result.PanelGroupList = strings.Split(result.PanelGroups, ",")
+	} else {
+		result.PanelGroupList = []string{}
+	}
+	return
 }
 
-func SaveCustomDashboard(query *m.CustomDashboardTable) error {
+func SaveCustomDashboard(query *m.CustomDashboardObj) error {
 	param := make([]interface{}, 0)
 	if query.Id > 0 {
 		param = append(param, fmt.Sprintf("UPDATE custom_dashboard SET name=?,cfg=?,update_user=?,panel_groups=? WHERE id=?"))
@@ -141,9 +148,8 @@ func SaveCustomeDashboardRole(param m.CustomDashboardRoleDto) error {
 
 func GetCustomDashboardAlarms(id int) (err error, result m.AlarmProblemQueryResult) {
 	result = m.AlarmProblemQueryResult{High: 0, Mid: 0, Low: 0, Data: []*m.AlarmProblemQuery{}}
-	var customQuery m.CustomDashboardTable
-	customQuery.Id = id
-	err = GetCustomDashboard(&customQuery)
+	customQuery := &m.CustomDashboardObj{}
+	customQuery, err = GetCustomDashboard(id)
 	if err != nil || customQuery.Cfg == "" {
 		return err, result
 	}
