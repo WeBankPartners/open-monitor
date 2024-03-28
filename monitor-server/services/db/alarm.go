@@ -452,7 +452,9 @@ func GetAlarms(query m.AlarmTable, limit int, extLogMonitor, extOpenAlarm bool) 
 	err := x.SQL(sql, params...).Find(&result)
 	if err != nil {
 		log.Logger.Error("Get alarms fail", log.Error(err))
+		return err, result
 	}
+	var notifyIdList []string
 	for _, v := range result {
 		v.StartString = v.Start.Format(m.DatetimeFormat)
 		v.EndString = v.End.Format(m.DatetimeFormat)
@@ -498,6 +500,9 @@ func GetAlarms(query m.AlarmTable, limit int, extLogMonitor, extOpenAlarm bool) 
 		if strings.HasPrefix(v.Endpoint, "eg__") {
 			v.Endpoint = v.Endpoint[4:]
 		}
+		if v.NotifyId != "" {
+			notifyIdList = append(notifyIdList, v.NotifyId)
+		}
 	}
 	if query.SMetric == "" || query.SMetric == "custom" {
 		if extOpenAlarm {
@@ -513,6 +518,24 @@ func GetAlarms(query m.AlarmTable, limit int, extLogMonitor, extOpenAlarm bool) 
 	}
 	if len(result) == 0 {
 		sortResult = []*m.AlarmProblemQuery{}
+	}
+	if len(notifyIdList) > 0 {
+		var notifyRows []*m.NotifyTable
+		filterSql, filterParams := createListParams(notifyIdList, "")
+		err = x.SQL("select guid,description from notify where guid in ("+filterSql+")", filterParams...).Find(&notifyRows)
+		if err != nil {
+			err = fmt.Errorf("query notify table fail,%s ", err.Error())
+			return err, result
+		}
+		notifyMsgMap := make(map[string]string)
+		for _, row := range notifyRows {
+			notifyMsgMap[row.Guid] = row.Description
+		}
+		for _, v := range sortResult {
+			if notifyMsg, ok := notifyMsgMap[v.NotifyId]; ok {
+				v.NotifyMessage = notifyMsg
+			}
+		}
 	}
 	return err, sortResult
 }
@@ -1404,4 +1427,36 @@ func StartInitAlarmUniqueTags() {
 		calcAlarmUniqueFlag(row)
 		x.Exec("update alarm set endpoint_tags=? where id=?", row.EndpointTags, row.Id)
 	}
+}
+
+func ManualNotifyAlarm(alarmId int) (err error) {
+	var alarmRows []*m.AlarmTable
+	err = x.SQL("select * from alarm where id=?", alarmId).Find(&alarmRows)
+	if err != nil {
+		err = fmt.Errorf("query alarm table with id:%d error:%s ", alarmId, err.Error())
+		return
+	}
+	if len(alarmRows) == 0 {
+		err = fmt.Errorf("can not find alarm with id:%d ", alarmId)
+		return
+	}
+	alarmObj := m.AlarmHandleObj{AlarmTable: *alarmRows[0]}
+	if alarmObj.NotifyId == "" {
+		err = fmt.Errorf("alarm notify id is empty")
+		return
+	}
+	var notifyRows []*m.NotifyTable
+	err = x.SQL("select * from notify where guid=?", alarmObj.NotifyId).Find(&notifyRows)
+	if err != nil {
+		err = fmt.Errorf("query alarm table with id:%d error:%s ", alarmId, err.Error())
+		return
+	}
+	if len(notifyRows) == 0 {
+		err = fmt.Errorf("can not find notify with guid:%s ", alarmObj.NotifyId)
+		return
+	}
+	if err = notifyEventAction(notifyRows[0], &alarmObj, false); err != nil {
+		err = fmt.Errorf("notify event action fail:%s ", err.Error())
+	}
+	return
 }
