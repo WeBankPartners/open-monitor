@@ -40,6 +40,18 @@
       v-if="$attrs.button"
       style="position: absolute; top: 10px; right: 10px"
     >
+      <Tooltip>
+        <div slot="content" style="white-space: normal;">
+          <p>{{ data.notify_message }}</p>
+        </div>
+        <Icon
+          type="ios-megaphone"
+          size="18"
+          class="fa-operate"
+          v-if="data.notify_id !==''"
+          @click="goToNotify(data)"
+        />
+      </Tooltip>
       <Tooltip :content="$t('menu.endpointView')">
         <Icon
           type="ios-stats"
@@ -161,7 +173,17 @@ export default {
         type: alarmItem.endpoint.split("_").slice(-1)[0],
       };
       localStorage.setItem("jumpCallData", JSON.stringify(endpointObject));
-      this.$router.push({ path: "/endpointView" });
+      // this.$router.push({ path: "/endpointView" });
+      const news = this.$router.resolve({name: 'endpointView'})
+      window.open(news.href, '_blank')
+    },
+    goToNotify (item) {
+      let params = {
+        id: item.id
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.startNotify, params, () => {
+        this.$Message.success(this.$t('tips.success'))
+      },{isNeedloading: false})
     },
     deleteConfirmModal(rowData, isBatch) {
       this.$parent.isBatch = isBatch;
