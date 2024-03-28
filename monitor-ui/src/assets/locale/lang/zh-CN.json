@@ -321,5 +321,9 @@
   "m_same_exists": "相同配置已存在！",
   "m_callback_mode": "回调模式",
   "m_manual": "手动触发",
-  "m_auto": "自动触发"
+  "m_auto": "自动触发",
+  "m_group_name": "分组",
+  "m_group_mgmt": "组管理",
+  "m_group_name_exist": "该分组名已存在",
+  "m_add_chart_to_group": "将图表加入分组"
 }
