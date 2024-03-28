@@ -115,7 +115,7 @@
     <!-- 7.插件列表 - 描述插件包中单个插件的输入和输出 -->
     <plugins>
         <plugin name="host" targetPackage="" targetEntity="" registerName="" targetEntityFilterRule="">
-            <interface action="register" path="/monitor/api/v1/agent/export/register/host" filterRule="">
+            <interface action="register" path="/monitor/api/v1/agent/export/register/host" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">host_ip</parameter>
@@ -129,7 +129,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">monitor_key</parameter>
                 </outputParameters>
             </interface>
-            <interface action="deregister" path="/monitor/api/v1/agent/export/deregister/host" filterRule="">
+            <interface action="deregister" path="/monitor/api/v1/agent/export/deregister/host" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">host_ip</parameter>
@@ -140,7 +140,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="start-alarm" path="/monitor/api/v1/agent/export/start/host" filterRule="">
+            <interface action="start-alarm" path="/monitor/api/v1/agent/export/start/host" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">host_ip</parameter>
@@ -151,7 +151,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="stop-alarm" path="/monitor/api/v1/agent/export/stop/host" filterRule="">
+            <interface action="stop-alarm" path="/monitor/api/v1/agent/export/stop/host" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">host_ip</parameter>
@@ -164,7 +164,7 @@
             </interface>
         </plugin>
         <plugin name="mysql" targetPackage="" targetEntity="" registerName="" targetEntityFilterRule="">
-            <interface action="register" path="/monitor/api/v1/agent/export/register/mysql" filterRule="">
+            <interface action="register" path="/monitor/api/v1/agent/export/register/mysql" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">instance_ip</parameter>
@@ -182,7 +182,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">monitor_key</parameter>
                 </outputParameters>
             </interface>
-            <interface action="deregister" path="/monitor/api/v1/agent/export/deregister/mysql" filterRule="">
+            <interface action="deregister" path="/monitor/api/v1/agent/export/deregister/mysql" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">instance_ip</parameter>
@@ -195,7 +195,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="start-alarm" path="/monitor/api/v1/agent/export/start/mysql" filterRule="">
+            <interface action="start-alarm" path="/monitor/api/v1/agent/export/start/mysql" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">instance_ip</parameter>
@@ -208,7 +208,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="stop-alarm" path="/monitor/api/v1/agent/export/stop/mysql" filterRule="">
+            <interface action="stop-alarm" path="/monitor/api/v1/agent/export/stop/mysql" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">instance_ip</parameter>
@@ -223,7 +223,7 @@
             </interface>
         </plugin>
         <plugin name="redis" targetPackage="" targetEntity="" registerName="" targetEntityFilterRule="">
-            <interface action="register" path="/monitor/api/v1/agent/export/register/redis" filterRule="">
+            <interface action="register" path="/monitor/api/v1/agent/export/register/redis" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">instance_ip</parameter>
@@ -243,7 +243,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">monitor_key</parameter>
                 </outputParameters>
             </interface>
-            <interface action="deregister" path="/monitor/api/v1/agent/export/deregister/redis" filterRule="">
+            <interface action="deregister" path="/monitor/api/v1/agent/export/deregister/redis" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">instance_ip</parameter>
@@ -256,7 +256,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="start-alarm" path="/monitor/api/v1/agent/export/start/redis" filterRule="">
+            <interface action="start-alarm" path="/monitor/api/v1/agent/export/start/redis" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">instance_ip</parameter>
@@ -269,7 +269,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="stop-alarm" path="/monitor/api/v1/agent/export/stop/redis" filterRule="">
+            <interface action="stop-alarm" path="/monitor/api/v1/agent/export/stop/redis" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">instance_ip</parameter>
@@ -284,7 +284,7 @@
             </interface>
         </plugin>
         <plugin name="java" targetPackage="" targetEntity="" registerName="" targetEntityFilterRule="">
-            <interface action="register" path="/monitor/api/v1/agent/export/register/java" filterRule="">
+            <interface action="register" path="/monitor/api/v1/agent/export/register/java" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">instance_ip</parameter>
@@ -303,7 +303,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">monitor_key</parameter>
                 </outputParameters>
             </interface>
-            <interface action="deregister" path="/monitor/api/v1/agent/export/deregister/java" filterRule="">
+            <interface action="deregister" path="/monitor/api/v1/agent/export/deregister/java" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">instance_ip</parameter>
@@ -316,7 +316,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="start-alarm" path="/monitor/api/v1/agent/export/start/java" filterRule="">
+            <interface action="start-alarm" path="/monitor/api/v1/agent/export/start/java" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">instance_ip</parameter>
@@ -329,7 +329,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="stop-alarm" path="/monitor/api/v1/agent/export/stop/java" filterRule="">
+            <interface action="stop-alarm" path="/monitor/api/v1/agent/export/stop/java" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">instance_ip</parameter>
@@ -344,7 +344,7 @@
             </interface>
         </plugin>
         <plugin name="ping" targetPackage="" targetEntity="" registerName="" targetEntityFilterRule="">
-            <interface action="register" path="/monitor/api/v1/agent/export/register/ping" filterRule="">
+            <interface action="register" path="/monitor/api/v1/agent/export/register/ping" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">instance_ip</parameter>
@@ -358,7 +358,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">monitor_key</parameter>
                 </outputParameters>
             </interface>
-            <interface action="deregister" path="/monitor/api/v1/agent/export/deregister/ping" filterRule="">
+            <interface action="deregister" path="/monitor/api/v1/agent/export/deregister/ping" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">instance_ip</parameter>
@@ -370,7 +370,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="start-alarm" path="/monitor/api/v1/agent/export/start/ping" filterRule="">
+            <interface action="start-alarm" path="/monitor/api/v1/agent/export/start/ping" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">instance_ip</parameter>
@@ -382,7 +382,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="stop-alarm" path="/monitor/api/v1/agent/export/stop/ping" filterRule="">
+            <interface action="stop-alarm" path="/monitor/api/v1/agent/export/stop/ping" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">instance_ip</parameter>
@@ -396,7 +396,7 @@
             </interface>
         </plugin>
         <plugin name="telnet" targetPackage="" targetEntity="" registerName="" targetEntityFilterRule="">
-            <interface action="register" path="/monitor/api/v1/agent/export/register/telnet" filterRule="">
+            <interface action="register" path="/monitor/api/v1/agent/export/register/telnet" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">instance_ip</parameter>
@@ -411,7 +411,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">monitor_key</parameter>
                 </outputParameters>
             </interface>
-            <interface action="deregister" path="/monitor/api/v1/agent/export/deregister/telnet" filterRule="">
+            <interface action="deregister" path="/monitor/api/v1/agent/export/deregister/telnet" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">instance_ip</parameter>
@@ -424,7 +424,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="start-alarm" path="/monitor/api/v1/agent/export/start/telnet" filterRule="">
+            <interface action="start-alarm" path="/monitor/api/v1/agent/export/start/telnet" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">instance_ip</parameter>
@@ -437,7 +437,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="stop-alarm" path="/monitor/api/v1/agent/export/stop/telnet" filterRule="">
+            <interface action="stop-alarm" path="/monitor/api/v1/agent/export/stop/telnet" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">instance_ip</parameter>
@@ -452,7 +452,7 @@
             </interface>
         </plugin>
         <plugin name="dashboard" targetPackage="" targetEntity="" registerName="" targetEntityFilterRule="">
-            <interface action="add" path="/monitor/api/v1/dashboard/system/add" filterRule="">
+            <interface action="add" path="/monitor/api/v1/dashboard/system/add" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">display_name</parameter>
@@ -469,7 +469,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
-            <interface action="delete" path="/monitor/api/v1/dashboard/system/delete" filterRule="">
+            <interface action="delete" path="/monitor/api/v1/dashboard/system/delete" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="" multiple="Y">endpoint</parameter>
@@ -483,7 +483,7 @@
             </interface>
         </plugin>
         <plugin name="nginx" targetPackage="" targetEntity="" registerName="" targetEntityFilterRule="">
-            <interface action="register" path="/monitor/api/v1/agent/export/register/nginx" filterRule="">
+            <interface action="register" path="/monitor/api/v1/agent/export/register/nginx" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">instance_ip</parameter>
@@ -499,7 +499,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">monitor_key</parameter>
                 </outputParameters>
             </interface>
-            <interface action="deregister" path="/monitor/api/v1/agent/export/deregister/nginx" filterRule="">
+            <interface action="deregister" path="/monitor/api/v1/agent/export/deregister/nginx" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">instance_ip</parameter>
@@ -512,7 +512,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="start-alarm" path="/monitor/api/v1/agent/export/start/nginx" filterRule="">
+            <interface action="start-alarm" path="/monitor/api/v1/agent/export/start/nginx" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">instance_ip</parameter>
@@ -525,7 +525,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="stop-alarm" path="/monitor/api/v1/agent/export/stop/nginx" filterRule="">
+            <interface action="stop-alarm" path="/monitor/api/v1/agent/export/stop/nginx" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">instance_ip</parameter>
@@ -540,7 +540,7 @@
             </interface>
         </plugin>
         <plugin name="http" targetPackage="" targetEntity="" registerName="" targetEntityFilterRule="">
-            <interface action="register" path="/monitor/api/v1/agent/export/register/http" filterRule="">
+            <interface action="register" path="/monitor/api/v1/agent/export/register/http" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">instance</parameter>
@@ -556,7 +556,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">monitor_key</parameter>
                 </outputParameters>
             </interface>
-            <interface action="deregister" path="/monitor/api/v1/agent/export/deregister/http" filterRule="">
+            <interface action="deregister" path="/monitor/api/v1/agent/export/deregister/http" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">instance</parameter>
@@ -571,7 +571,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="start-alarm" path="/monitor/api/v1/agent/export/start/http" filterRule="">
+            <interface action="start-alarm" path="/monitor/api/v1/agent/export/start/http" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">instance_ip</parameter>
@@ -584,7 +584,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="stop-alarm" path="/monitor/api/v1/agent/export/stop/http" filterRule="">
+            <interface action="stop-alarm" path="/monitor/api/v1/agent/export/stop/http" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">instance_ip</parameter>
@@ -598,7 +598,7 @@
                 </outputParameters>
             </interface>
         </plugin>
-        <plugin name="process" targetPackage="" targetEntity="" registerName="" targetEntityFilterRule="">
+        <plugin name="process" targetPackage="" targetEntity="" registerName="" targetEntityFilterRule="" type="EXECUTION">
             <interface action="add" path="/monitor/api/v1/agent/export/process/add" filterRule="">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
@@ -614,7 +614,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">monitor_key</parameter>
                 </outputParameters>
             </interface>
-            <interface action="delete" path="/monitor/api/v1/agent/export/process/delete" filterRule="">
+            <interface action="delete" path="/monitor/api/v1/agent/export/process/delete" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">host_ip</parameter>
@@ -628,7 +628,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
-            <interface action="start-alarm" path="/monitor/api/v1/agent/export/start/process" filterRule="">
+            <interface action="start-alarm" path="/monitor/api/v1/agent/export/start/process" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">host_ip</parameter>
@@ -640,7 +640,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="stop-alarm" path="/monitor/api/v1/agent/export/stop/process" filterRule="">
+            <interface action="stop-alarm" path="/monitor/api/v1/agent/export/stop/process" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">host_ip</parameter>
@@ -654,7 +654,7 @@
             </interface>
         </plugin>
         <plugin name="log_monitor" targetPackage="" targetEntity="" registerName="" targetEntityFilterRule="">
-            <interface action="add" path="/monitor/api/v1/agent/export/log_monitor/add" filterRule="">
+            <interface action="add" path="/monitor/api/v1/agent/export/log_monitor/add" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">host_ip</parameter>
@@ -668,7 +668,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
-            <interface action="delete" path="/monitor/api/v1/agent/export/log_monitor/delete" filterRule="">
+            <interface action="delete" path="/monitor/api/v1/agent/export/log_monitor/delete" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">host_ip</parameter>
@@ -684,7 +684,7 @@
             </interface>
         </plugin>
         <plugin name="kubernetes_cluster" targetPackage="" targetEntity="" registerName="" targetEntityFilterRule="">
-            <interface action="add" path="/monitor/api/v1/agent/export/kubernetes/cluster/add" filterRule="">
+            <interface action="add" path="/monitor/api/v1/agent/export/kubernetes/cluster/add" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">clusterName</parameter>
@@ -698,7 +698,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
-            <interface action="delete" path="/monitor/api/v1/agent/export/kubernetes/cluster/delete" filterRule="">
+            <interface action="delete" path="/monitor/api/v1/agent/export/kubernetes/cluster/delete" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">clusterName</parameter>
@@ -711,7 +711,7 @@
             </interface>
         </plugin>
         <plugin name="kubernetes_pod" targetPackage="" targetEntity="" registerName="" targetEntityFilterRule="">
-            <interface action="add" path="/monitor/api/v1/agent/export/kubernetes/pod/add" filterRule="">
+            <interface action="add" path="/monitor/api/v1/agent/export/kubernetes/pod/add" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">clusterName</parameter>
@@ -726,7 +726,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">podMonitorKey</parameter>
                 </outputParameters>
             </interface>
-            <interface action="delete" path="/monitor/api/v1/agent/export/kubernetes/pod/delete" filterRule="">
+            <interface action="delete" path="/monitor/api/v1/agent/export/kubernetes/pod/delete" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">podMonitorKey</parameter>
@@ -737,7 +737,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">guid</parameter>
                 </outputParameters>
             </interface>
-            <interface action="start-alarm" path="/monitor/api/v1/agent/export/start/pod" filterRule="">
+            <interface action="start-alarm" path="/monitor/api/v1/agent/export/start/pod" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">pod</parameter>
@@ -749,7 +749,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="stop-alarm" path="/monitor/api/v1/agent/export/stop/pod" filterRule="">
+            <interface action="stop-alarm" path="/monitor/api/v1/agent/export/stop/pod" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">pod</parameter>
@@ -763,7 +763,7 @@
             </interface>
         </plugin>
         <plugin name="snmp_exporter" targetPackage="" targetEntity="" registerName="" targetEntityFilterRule="">
-            <interface action="add" path="/monitor/api/v1/agent/export/snmp/exporter/add" filterRule="">
+            <interface action="add" path="/monitor/api/v1/agent/export/snmp/exporter/add" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">id</parameter>
@@ -778,7 +778,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">podMonitorKey</parameter>
                 </outputParameters>
             </interface>
-            <interface action="add" path="/monitor/api/v1/agent/export/snmp/exporter/delete" filterRule="">
+            <interface action="add" path="/monitor/api/v1/agent/export/snmp/exporter/delete" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">id</parameter>
@@ -793,7 +793,7 @@
             </interface>
         </plugin>
         <plugin name="snmp_target" targetPackage="" targetEntity="" registerName="" targetEntityFilterRule="">
-            <interface action="register" path="/monitor/api/v1/agent/export/register/snmp" filterRule="">
+            <interface action="register" path="/monitor/api/v1/agent/export/register/snmp" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">instance_ip</parameter>
@@ -808,7 +808,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">monitor_key</parameter>
                 </outputParameters>
             </interface>
-            <interface action="deregister" path="/monitor/api/v1/agent/export/deregister/snmp" filterRule="">
+            <interface action="deregister" path="/monitor/api/v1/agent/export/deregister/snmp" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">instance_ip</parameter>
@@ -820,7 +820,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="start-alarm" path="/monitor/api/v1/agent/export/start/snmp" filterRule="">
+            <interface action="start-alarm" path="/monitor/api/v1/agent/export/start/snmp" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">instance_ip</parameter>
@@ -832,7 +832,7 @@
                     <parameter datatype="string" sensitiveData="N" mappingType="context">errorMessage</parameter>
                 </outputParameters>
             </interface>
-            <interface action="stop-alarm" path="/monitor/api/v1/agent/export/stop/snmp" filterRule="">
+            <interface action="stop-alarm" path="/monitor/api/v1/agent/export/stop/snmp" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">instance_ip</parameter>
@@ -846,7 +846,7 @@
             </interface>
         </plugin>
         <plugin name="service_log" targetPackage="" targetEntity="" registerName="" targetEntityFilterRule="">
-            <interface action="update" path="/monitor/api/v2/service/plugin/update/path" filterRule="">
+            <interface action="update" path="/monitor/api/v2/service/plugin/update/path" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">monitorType</parameter>
@@ -860,7 +860,7 @@
             </interface>
         </plugin>
         <plugin name="alarm" targetPackage="" targetEntity="" registerName="" targetEntityFilterRule="">
-            <interface action="close" path="/monitor/entities/alarm/close" filterRule="">
+            <interface action="close" path="/monitor/entities/alarm/close" filterRule="" type="EXECUTION">
                 <inputParameters>
                     <parameter datatype="string" required="N" sensitiveData="N" mappingType="constant" mappingEntityExpression="">guid</parameter>
                     <parameter datatype="string" required="Y" sensitiveData="N" mappingType="constant" mappingEntityExpression="">alarmId</parameter>
