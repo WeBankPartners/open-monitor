@@ -47,7 +47,9 @@ func AcceptAlert(c *gin.Context) {
 		//go db.NotifyAlarm(v)
 		go db.NotifyStrategyAlarm(v)
 	}
-	go db.NotifyTreevent(treeventSendObj)
+	if m.NotifyTreeventEnable {
+		go db.NotifyTreevent(treeventSendObj)
+	}
 	mid.ReturnSuccess(c)
 }
 
@@ -778,4 +780,31 @@ func UpdateAlertWindow(c *gin.Context) {
 	} else {
 		mid.ReturnValidateError(c, err.Error())
 	}
+}
+
+// @Summary 手动触发告警回调事件接口
+// @Produce  json
+// @Param id query int true "告警id"
+// @Success 200 {string} json "{"message": "Success"}"
+// @Router /api/v1/alarm/problem/notify [post]
+func NotifyAlarm(c *gin.Context) {
+	var param m.AlarmCloseParam
+	var err error
+	if err = c.ShouldBindJSON(&param); err != nil {
+		mid.ReturnValidateError(c, err.Error())
+		return
+	}
+	if param.Id == 0 {
+		mid.ReturnValidateError(c, "param can not empty")
+		return
+	}
+	if strings.ToLower(param.Metric) == "custom" {
+		param.Custom = true
+	}
+	err = db.ManualNotifyAlarm(param.Id)
+	if err != nil {
+		mid.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	mid.ReturnSuccess(c)
 }
