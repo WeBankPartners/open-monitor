@@ -5,15 +5,7 @@
       <header>
         <div class="header-name">
           <i class="fa fa-th-large fa-18" aria-hidden="true"></i>
-          <template v-if="isEditPanal">
-            <Input v-model.trim="panalName" style="width: 160px;margin:0 4px" type="text"></Input>
-            <Icon class="panal-edit-icon" @click="savePanalEdit" type="md-checkmark" />
-            <Icon class="panal-edit-icon" @click="canclePanalEdit" type="md-close" />
-          </template>
-          <template v-else>
-            <span style="margin:0 4px"> {{panalName}}</span>
-            <Icon class="panal-edit-icon" @click="isEditPanal=true" v-if="permission === 'edit'" type="md-create" />
-          </template>
+          <span style="margin:0 4px"> {{panalName}}</span>
         </div>
         <div class="search-container">
           <div>
@@ -55,12 +47,6 @@
           </div>
 
           <div class="header-tools">
-            <template v-if="permission === 'edit'">
-              <button class="btn btn-sm btn-cancel-f" style="margin-right:60px" @click="addItem">{{$t('m_new_graph')}}</button>
-              <button class="btn btn-sm btn-confirm-f" @click="saveEdit">{{$t('button.saveConfig')}}</button>
-            </template> 
-            
-            <!-- <button class="btn btn-sm btn-cancel-f" @click="goBack()">{{$t('button.back')}}</button> -->
             <button v-if="!showAlarm" class="btn btn-sm btn-cancel-f" @click="openAlarmDisplay()">
               <i style="font-size: 18px;color: #0080FF;" class="fa fa-eye-slash" aria-hidden="true"></i>
             </button>
@@ -84,23 +70,10 @@
             class="radio-group-radio radio-group-optional"
             :style="item === activeGroup ? 'background: rgba(129, 179, 55, 0.6)' : 'background: #fff'"
           >
-            <Icon v-if="permission === 'edit'" @click="editGroup(item, index)" type="md-create" color="#2d8cf0" :size="20" />
             <span @click="selectGroup(item)" style="vertical-align: text-bottom;">
               {{ `${item}` }}
             </span>
-            <Icon v-if="permission === 'edit'" @click="removeGroup(item, index)" type="md-close" color="#ed4014" :size="20" />
           </div>
-          <span>
-            <Button
-              v-if="permission === 'edit'"
-              @click="addGroup"
-              class="primary-btn"
-              style="margin-top: -5px;"
-              type="primary"
-              shape="circle"
-              icon="md-add"
-            ></Button>
-          </span>
         </div>
       </div>
       <div style="display:flex">
@@ -109,8 +82,8 @@
           :layout.sync="tmpLayoutData"
           :col-num="12"
           :row-height="30"
-          :is-draggable="true"
-          :is-resizable="true"
+          :is-draggable="false"
+          :is-resizable="false"
           :is-mirrored="false"
           :vertical-compact="true"
           :use-css-transforms="true"
@@ -128,24 +101,14 @@
                         
               <div class="c-dark" style="display:flex;padding:0 32px;">
                 <div class="header-grid header-grid-name">
-                  <span v-if="editChartId !== item.id">{{item.i}}</span>
-                  <Input v-else v-model="item.i" class="editChartId" style="width:100px" @on-blur="editChartId = null" size="small" placeholder="small size" />
-                  <Tooltip :content="$t('placeholder.editTitle')" theme="light" transfer placement="top">
-                    <i class="fa fa-pencil-square" style="font-size: 16px;" v-if="permission === 'edit'" @click="editChartId = item.id" aria-hidden="true"></i>
-                  </Tooltip>
+                  <span>{{item.i}}</span>
                 </div>
                 <div class="header-grid header-grid-tools"> 
-                  <Select v-model="item.group" style="width:100px;" size="small" v-if="permission === 'edit'" clearable filterable :placeholder="$t('m_group_name')">
+                  <Select v-model="item.group" style="width:100px;" disabled size="small" clearable filterable :placeholder="$t('m_group_name')">
                     <Option v-for="item in panel_group_list" :value="item" :key="item" style="float: left;">{{ item }}</Option>
                   </Select>
                   <Tooltip :content="$t('button.chart.dataView')" theme="light" transfer placement="top">
                     <i class="fa fa-eye" style="font-size: 16px;" v-if="isShowGridPlus(item)" aria-hidden="true" @click="gridPlus(item)"></i>
-                  </Tooltip>
-                  <Tooltip :content="$t('placeholder.chartConfiguration')" theme="light" transfer placement="top">
-                    <i class="fa fa-cog" style="font-size: 16px;" v-if="permission === 'edit'" @click="setChartType(item)" aria-hidden="true"></i>
-                  </Tooltip>
-                  <Tooltip :content="$t('placeholder.deleteChart')" theme="light" transfer placement="top">
-                    <i class="fa fa-trash" style="font-size: 16px;" v-if="permission === 'edit'" @click="removeGrid(item)" aria-hidden="true"></i>
                   </Tooltip>
                 </div>
               </div>
