@@ -42,10 +42,32 @@
           </div>
         </div>
       </header>
+      <div>
+        <div class="radio-group">
+          <div
+            class="radio-group-radio radio-group-optional"
+            :style="activeGroup === 'All' ? 'background: rgba(129, 179, 55, 0.6)' : 'background: #fff'"
+          >
+            <span @click="selectGroup('All')" style="vertical-align: text-bottom;">All</span>
+          </div>
+          <div
+            v-for="(item, index) in panel_group_list"
+            :key="index"
+            class="radio-group-radio radio-group-optional"
+            :style="item === activeGroup ? 'background: rgba(129, 179, 55, 0.6)' : 'background: #fff'"
+          >
+            <Icon v-if="permission === 'edit'" @click="editGroup(item, index)" type="md-create" color="#2d8cf0" :size="20" />
+            <span @click="selectGroup(item)" style="vertical-align: text-bottom;">
+              {{ `${item}` }}
+            </span>
+            <Icon v-if="permission === 'edit'" @click="removeGroup(item, index)" type="md-close" color="#ed4014" :size="20" />
+          </div>
+        </div>
+      </div>
       <div style="display:flex">
         <div class="grid-style">
           <grid-layout
-            :layout.sync="layoutData"
+            :layout.sync="tmpLayoutData"
             :col-num="12"
             :row-height="30"
             :is-draggable="false"
@@ -54,7 +76,7 @@
             :vertical-compact="true"
             :use-css-transforms="true"
             >
-            <grid-item v-for="(item,index) in layoutData"
+            <grid-item v-for="(item,index) in tmpLayoutData"
               class="c-dark"
               :x="item.x"
               :y="item.y"
@@ -67,11 +89,16 @@
                 <div class="header-grid header-grid-name">
                   {{item.i}}
                 </div>
+                <div class="header-grid">
+                  <Select v-model="item.group" style="width:100px;" size="small" disabled clearable filterable :placeholder="$t('m_group_name')">
+                    <Option v-for="item in panel_group_list" :value="item" :key="item" style="float: left;">{{ item }}</Option>
+                  </Select>
+                </div>
               </div>
               <section>
                 <div v-for="(chartInfo,chartIndex) in item._activeCharts" :key="chartIndex">
-                  <CustomChart v-if="['line','bar'].includes(chartInfo.chartType)" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomChart>
-                  <CustomPieChart v-if="chartInfo.chartType === 'pie'" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomPieChart>
+                  <CustomChart v-if="['line','bar'].includes(chartInfo.chartType)" :refreshNow="refreshNow" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomChart>
+                  <CustomPieChart v-if="chartInfo.chartType === 'pie'" :refreshNow="refreshNow" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomPieChart>
                 </div>
               </section>
             </grid-item>
@@ -96,6 +123,7 @@ export default {
   name: '',
   data() {
     return {
+      refreshNow: false,
       isPlugin: false,
       viewCondition: {
         timeTnterval: -3600,
@@ -112,7 +140,9 @@ export default {
       ],
 
       showAlarm: false, // 显示告警信息
-      cutsomViewId: null
+      cutsomViewId: null,
+      activeGroup: 'All',
+      panel_group_list: [] // 存放视图拥有的组信息
     }
   },
   mounted() {
@@ -126,6 +156,15 @@ export default {
         if (val) {
           this.getDashData(val)
         }
+      }
+    }
+  },
+  computed: {
+    tmpLayoutData() { // 缓存切换分组后数据
+      if (this.activeGroup === 'All') {
+        return this.layoutData
+      } else {
+        return this.layoutData.filter(d => d.group === this.activeGroup)
       }
     }
   },
@@ -147,7 +186,9 @@ export default {
             this.$router.push({path: 'portal'})
           }
         }else {
-          this.viewData = JSON.parse(responseData.cfg) 
+          this.viewData = JSON.parse(responseData.cfg)
+          this.activeGroup = 'All'
+          this.panel_group_list = responseData.panel_group_list || []
           this.initPanals()
           this.cutsomViewId = responseData.id
           // this.$refs.cutsomViewId.getAlarm(this.cutsomViewId, this.viewCondition)
@@ -222,7 +263,16 @@ export default {
     },
     resizeEvent: function(i, newH, newW, newHPx, newWPx){
       resizeEvent(this, i, newH, newW, newHPx, newWPx)
-    }
+    },
+    //#region 组管理
+    selectGroup (item) {
+      this.activeGroup = item
+      this.refreshNow = true
+      this.$nextTick(() => {
+        this.refreshNow = false
+      })
+    },
+    //#endregion
   },
   components: {
     GridLayout: VueGridLayout.GridLayout,
@@ -257,7 +307,7 @@ header {
 
 .header-grid {
   flex-grow: 1;
-  text-align: center;
+  text-align: right;
   line-height: 32px;
   i {
     margin: 0 4px;
@@ -270,5 +320,22 @@ header {
 .vue-grid-item:not(.vue-grid-placeholder) {
     background: @gray-f;
     border: 1px solid @gray-f;
+}
+
+.radio-group {
+  margin-bottom: 15px;
+}
+.radio-group-radio {
+  padding: 5px 15px;
+  border-radius: 32px;
+  font-size: 12px;
+  cursor: pointer;
+  margin: 4px;
+  display: inline-block;
+}
+
+.radio-group-optional {
+  border: 1px solid #81b337;
+  color: #81b337;
 }
 </style>
