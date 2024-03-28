@@ -18,12 +18,13 @@ export default {
   mounted() {
     const query = this.$route.query
     this.paramsCheck(query)
-    this.refreshToken()
+    // this.refreshToken()
+    this.$refs.callCustomViewExternalPanelRef.getDashData(this.viewId)
   },
   methods: {
     paramsCheck (query) {
       this.viewId = Number(query.viewId)
-      this.token = query.token
+      // this.token = query.token
     },
     refreshToken () {
       fetch('/auth/v1/api/token', {
