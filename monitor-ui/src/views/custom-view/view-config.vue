@@ -421,6 +421,7 @@ export default {
       return true
     },
     addItem() {
+      this.activeGroup = 'All'
       generateUuid().then((elId)=>{
         const key = ((new Date()).valueOf()).toString().substring(10)
         let item = {
