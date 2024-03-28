@@ -47,21 +47,21 @@ http {
     location = /favicon.ico {
       root /root/app;
     }
-    location ^~ /manual {
+    location ^~ /monitor/manual {
       index index.html;
       alias /root/wecube-docs/;
     }
-    location ^~ /css {
-      alias /root/app/css/;
+    location ^~ /monitor/css {
+      alias /root/app/monitor/css/;
     }
-    location ^~ /fonts {
-      alias /root/app/fonts/;
+    location ^~ /monitor/fonts {
+      alias /root/app/monitor/fonts/;
     }
-    location ^~ /img {
-      alias /root/app/img/;
+    location ^~ /monitor/img {
+      alias /root/app/monitor/img/;
     }
-    location ^~ /js {
-      alias /root/app/js/;
+    location ^~ /monitor/js {
+      alias /root/app/monitor/js/;
     }
     location / {
       proxy_set_header Host ${PUBLIC_DOMAIN};
