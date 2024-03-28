@@ -6,6 +6,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
 	"strconv"
+	"strings"
 )
 
 func ListCustomDashboard(c *gin.Context) {
@@ -23,19 +24,19 @@ func GetCustomDashboard(c *gin.Context) {
 		mid.ReturnParamTypeError(c, "id", "int")
 		return
 	}
-	query := m.CustomDashboardTable{Id: id}
-	err = db.GetCustomDashboard(&query)
-	if err != nil {
+	result, getErr := db.GetCustomDashboard(id)
+	if getErr != nil {
 		mid.ReturnFetchDataError(c, "custom_dashboard", "id", strconv.Itoa(id))
 		return
 	}
-	mid.ReturnSuccessData(c, query)
+	mid.ReturnSuccessData(c, result)
 }
 
 func SaveCustomDashboard(c *gin.Context) {
-	var param m.CustomDashboardTable
+	var param m.CustomDashboardObj
 	if err := c.ShouldBindJSON(&param); err == nil {
 		param.UpdateUser = mid.GetOperateUser(c)
+		param.PanelGroups = strings.Join(param.PanelGroupList, ",")
 		err = db.SaveCustomDashboard(&param)
 		if err != nil {
 			mid.ReturnUpdateTableError(c, "custom_dashboard", err)
