@@ -1,17 +1,17 @@
 <template>
   <div>
-    <div class=" ">
-      <Title :title="$t('menu.templateManagement')"></Title>
+    <div style="margin-top: 12px;">
+      <!-- <Title :title="$t('menu.templateManagement')"></Title> -->
       <header>
         <div class="header-name">
           <i class="fa fa-th-large fa-18" aria-hidden="true"></i>
           <template v-if="isEditPanal">
-            <Input v-model.trim="panalName" style="width: 100px" type="text"></Input>
+            <Input v-model.trim="panalName" style="width: 160px;margin:0 4px" type="text"></Input>
             <Icon class="panal-edit-icon" @click="savePanalEdit" type="md-checkmark" />
             <Icon class="panal-edit-icon" @click="canclePanalEdit" type="md-close" />
           </template>
           <template v-else>
-            <span> {{panalName}}</span>
+            <span style="margin:0 4px"> {{panalName}}</span>
             <Icon class="panal-edit-icon" @click="isEditPanal=true" v-if="permission === 'edit'" type="md-create" />
           </template>
         </div>
@@ -60,7 +60,7 @@
               <button class="btn btn-sm btn-confirm-f" @click="saveEdit">{{$t('button.saveConfig')}}</button>
             </template> 
             
-            <button class="btn btn-sm btn-cancel-f" @click="goBack()">{{$t('button.back')}}</button>
+            <!-- <button class="btn btn-sm btn-cancel-f" @click="goBack()">{{$t('button.back')}}</button> -->
             <button v-if="!showAlarm" class="btn btn-sm btn-cancel-f" @click="openAlarmDisplay()">
               <i style="font-size: 18px;color: #0080FF;" class="fa fa-eye-slash" aria-hidden="true"></i>
             </button>
@@ -125,37 +125,36 @@
               :key="index"
               @resize="resizeEvent"
               @resized="resizeEvent">
-              <template v-if="item.group === activeGroup ||activeGroup === 'All' ">
-                <div class="c-dark" style="display:flex;padding:0 32px;">
-                  <div class="header-grid header-grid-name">
-                    <span v-if="editChartId !== item.id">{{item.i}}</span>
-                    <Input v-else v-model="item.i" class="editChartId" style="width:100px" @on-blur="editChartId = null" size="small" placeholder="" />
-                    <Tooltip :content="$t('placeholder.editTitle')" theme="light" transfer placement="top">
-                      <i class="fa fa-pencil-square" style="font-size: 16px;" v-if="permission === 'edit'" @click="editChartId = item.id" aria-hidden="true"></i>
-                    </Tooltip>
-                  </div>
-                  <div class="header-grid header-grid-tools">
-                    <Select v-model="item.group" style="width:100px;" size="small" v-if="permission === 'edit'" clearable filterable :placeholder="$t('m_group_name')">
-                      <Option v-for="item in panel_group_list" :value="item" :key="item" style="float: left;">{{ item }}</Option>
-                    </Select>
-                    <Tooltip :content="$t('button.chart.dataView')" theme="light" transfer placement="top">
-                      <i class="fa fa-eye" style="font-size: 16px;" v-if="isShowGridPlus(item)" aria-hidden="true" @click="gridPlus(item)"></i>
-                    </Tooltip>
-                    <Tooltip :content="$t('placeholder.chartConfiguration')" theme="light" transfer placement="top">
-                      <i class="fa fa-cog" style="font-size: 16px;" v-if="permission === 'edit'" @click="setChartType(item)" aria-hidden="true"></i>
-                    </Tooltip>
-                    <Tooltip :content="$t('placeholder.deleteChart')" theme="light" transfer placement="top">
-                      <i class="fa fa-trash" style="font-size: 16px;" v-if="permission === 'edit'" @click="removeGrid(item)" aria-hidden="true"></i>
-                    </Tooltip>
-                  </div>
+                        
+              <div class="c-dark" style="display:flex;padding:0 32px;">
+                <div class="header-grid header-grid-name">
+                  <span v-if="editChartId !== item.id">{{item.i}}</span>
+                  <Input v-else v-model="item.i" class="editChartId" style="width:100px" @on-blur="editChartId = null" size="small" placeholder="small size" />
+                  <Tooltip :content="$t('placeholder.editTitle')" theme="light" transfer placement="top">
+                    <i class="fa fa-pencil-square" style="font-size: 16px;" v-if="permission === 'edit'" @click="editChartId = item.id" aria-hidden="true"></i>
+                  </Tooltip>
                 </div>
-                <section>
-                  <div v-for="(chartInfo,chartIndex) in item._activeCharts" :key="chartIndex">
-                    <CustomChart v-if="['line','bar'].includes(chartInfo.chartType)" :refreshNow="refreshNow" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomChart>
-                    <CustomPieChart v-if="chartInfo.chartType === 'pie'" :refreshNow="refreshNow" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomPieChart>
-                  </div>
-                </section>
-              </template>       
+                <div class="header-grid header-grid-tools"> 
+                  <Select v-model="item.group" style="width:100px;" size="small" v-if="permission === 'edit'" clearable filterable :placeholder="$t('m_group_name')">
+                    <Option v-for="item in panel_group_list" :value="item" :key="item" style="float: left;">{{ item }}</Option>
+                  </Select>
+                  <Tooltip :content="$t('button.chart.dataView')" theme="light" transfer placement="top">
+                    <i class="fa fa-eye" style="font-size: 16px;" v-if="isShowGridPlus(item)" aria-hidden="true" @click="gridPlus(item)"></i>
+                  </Tooltip>
+                  <Tooltip :content="$t('placeholder.chartConfiguration')" theme="light" transfer placement="top">
+                    <i class="fa fa-cog" style="font-size: 16px;" v-if="permission === 'edit'" @click="setChartType(item)" aria-hidden="true"></i>
+                  </Tooltip>
+                  <Tooltip :content="$t('placeholder.deleteChart')" theme="light" transfer placement="top">
+                    <i class="fa fa-trash" style="font-size: 16px;" v-if="permission === 'edit'" @click="removeGrid(item)" aria-hidden="true"></i>
+                  </Tooltip>
+                </div>
+              </div>
+              <section>
+                <div v-for="(chartInfo,chartIndex) in item._activeCharts" :key="chartIndex">
+                  <CustomChart v-if="['line','bar'].includes(chartInfo.chartType)" :panel_group_list="panel_group_list" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomChart>
+                  <CustomPieChart v-if="chartInfo.chartType === 'pie'" :panel_group_list="panel_group_list" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomPieChart>
+                </div>
+              </section>
             </grid-item>
           </grid-layout>
         </div>
@@ -168,8 +167,8 @@
       <ViewChart ref="viewChart"></ViewChart>
     </Drawer>
     <Drawer :title="$t('placeholder.chartConfiguration')" :width="zoneWidth" :mask-closable="false" v-model="showChartConfig">
-      <editPieView v-if="chartType === 'pie' && showChartConfig" ref="editPieView" :panel_group_list="panel_group_list" :activeGridConfig="activeGridConfig" :parentRouteData="parentRouteData"></editPieView>
-      <editLineView v-if="chartType !== 'pie' && showChartConfig" ref="editLineView" :panel_group_list="panel_group_list" :activeGridConfig="activeGridConfig" :parentRouteData="parentRouteData"></editLineView>
+      <editPieView v-if="chartType === 'pie' && showChartConfig" ref="editPieView" :activeGridConfig="activeGridConfig" :parentRouteData="parentRouteData"></editPieView>
+      <editLineView v-if="chartType !== 'pie' && showChartConfig" ref="editLineView" :activeGridConfig="activeGridConfig" :parentRouteData="parentRouteData"></editLineView>
     </Drawer>
     <ModalComponent :modelConfig="setChartTypeModel">
       <div slot="setChartType">
@@ -190,7 +189,6 @@
         </div>
       </div>
     </Modal>
-
     <Modal v-model="showGroupMgmt" :title="$t('m_group_mgmt')" :mask-closable="false">
       <div style="margin: 40px 0 60px 0">
         <Form :label-width="100">
@@ -215,6 +213,7 @@
       </template>
     </Modal>
   </div>
+
 </template>
 <style lang="less" scoped>
   .grid-style {
@@ -260,7 +259,6 @@ export default {
   name: '',
   data() {
     return {
-      refreshNow: false,
       parentRouteData: {},
       editData: null,
       isShowWarning: false,
@@ -269,8 +267,9 @@ export default {
         method: ''
       },
       isEditPanal: false,
-      permission: '',
-      panalName: this.$route.params.panalItem.name,
+      permission: 'edit',
+      viewId: null,
+      panalName: '',
       viewCondition: {
         timeTnterval: -3600,
         dateRange: ['', ''],
@@ -318,6 +317,10 @@ export default {
       chartType: ''
     }
   },
+  props: ['id'],
+  created () {
+    this.zoneWidth = window.screen.width * 0.65
+  },
   computed: {
     tmpLayoutData() { // 缓存切换分组后数据
       if (this.activeGroup === 'All') {
@@ -327,28 +330,20 @@ export default {
       }
     }
   },
-  created () {
-    this.zoneWidth = window.screen.width * 0.65
-  },
   mounted() {
-    this.reloadPanal(this.$route.params.panalItem)
   },
   methods: {
-    reloadPanal (params) {
-      this.permission = this.$route.params.permission
-      this.editData = params
-      if(this.$root.$validate.isEmpty_reset(params)) {
-        this.$router.push({path:'viewConfigIndex'})
-      } else {
+    getDashData (viewId) {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.template.singleDash, {id: viewId}, responseData => {
+        this.viewId = responseData.id
+        this.panalName = responseData.name
+        this.editData = responseData
+        this.viewData = JSON.parse(responseData.cfg) 
         this.activeGroup = 'All'
-        this.panel_group_list = params.panel_group_list || []
-        if (!this.$root.$validate.isEmpty_reset(params.cfg)) {
-          this.viewData = JSON.parse(params.cfg)
-          this.initPanals()
-          this.cutsomViewId = params.id
-          // this.$refs.cutsomViewId.getAlarm(this.cutsomViewId, this.viewCondition)
-        }
-      }
+        this.panel_group_list = responseData.panel_group_list || []
+        this.initPanals()
+        this.cutsomViewId = responseData.id
+      })
     },
     openAlarmDisplay () {
       this.showAlarm = !this.showAlarm
@@ -563,9 +558,11 @@ export default {
         })
       })
       let params = {
+        // name: this.panalName,
+        // id: this.editData.id,
         name: this.panalName,
-        id: this.editData.id,
         panel_group_list: this.panel_group_list || [],
+        id: this.viewId,
         cfg: JSON.stringify(res)
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.template.save, params, () => {
@@ -682,9 +679,12 @@ export default {
 .panal-edit-icon {
   margin-left:4px;
   padding: 4px;
+  cursor: pointer;
 }
 .header-name {
-  font-size: 16px; 
+  font-size: 16px;
+  margin: 0 8px;
+  font-weight: 600;
 }
 .search-container {
   display: flex;
@@ -718,7 +718,6 @@ export default {
 .echart-no-data-tip {
   text-align: center;
 }
-
 .radio-group {
   margin-bottom: 15px;
 }
