@@ -78,7 +78,7 @@ func UpdateGroupEndpoint(param *models.UpdateGroupEndpointParam, appendFlag bool
 	for i, v := range param.EndpointGuidList {
 		actions = append(actions, &Action{Sql: "insert into endpoint_group_rel(guid,endpoint,endpoint_group) value (?,?,?)", Param: []interface{}{guidList[i], v, param.GroupGuid}})
 	}
-	actions = append(actions, &Action{Sql: "update endpoint_group set update_time=? where guid=?",Param: []interface{}{nowTime, param.GroupGuid}})
+	actions = append(actions, &Action{Sql: "update endpoint_group set update_time=? where guid=?", Param: []interface{}{nowTime, param.GroupGuid}})
 	err := Transaction(actions)
 	return err
 }
@@ -92,8 +92,9 @@ func UpdateGroupEndpointNotify(endpointGroupGuid string, param []*models.NotifyO
 	for _, v := range param {
 		v.EndpointGroup = endpointGroupGuid
 	}
-	actions := getNotifyListDeleteAction("", endpointGroupGuid, "")
-	actions = append(actions, getNotifyListInsertAction(param)...)
+	//actions := getNotifyListDeleteAction("", endpointGroupGuid, "")
+	//actions = append(actions, getNotifyListInsertAction(param)...)
+	actions := getNotifyListUpdateAction(param)
 	return Transaction(actions)
 }
 
