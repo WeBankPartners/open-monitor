@@ -9,6 +9,18 @@
       <template v-for="(alarmItem, alarmIndex) in resultData">
         <section :key="alarmIndex" class="alarm-item c-dark-exclude-color" :class="'alarm-item-border-'+ alarmItem.s_priority">
           <div style="float:right">
+            <Tooltip>
+              <div slot="content" style="white-space: normal;">
+                <p>{{ data.notify_message }}</p>
+              </div>
+              <Icon
+                type="ios-megaphone"
+                size="18"
+                class="fa-operate"
+                v-if="data.notify_id !==''"
+                @click="goToNotify(data)"
+              />
+            </Tooltip>
             <Tooltip :content="$t('menu.endpointView')">
               <Icon type="ios-stats" size="18" class="fa-operate" v-if="!alarmItem.is_custom" @click="goToEndpointView(alarmItem)"/>
             </Tooltip>
@@ -162,9 +174,17 @@ export default {
         type: alarmItem.endpoint.split('_').slice(-1)[0]
       }
       localStorage.setItem('jumpCallData', JSON.stringify(endpointObject))
-      // this.$router.push({path: '/endpointView'})
-      const news = this.$router.resolve({name: 'endpointView'})
-      window.open(news.href, '_blank')
+      this.$router.push({path: '/endpointView'})
+      // const news = this.$router.resolve({name: 'endpointView'})
+      // window.open(news.href, '_blank')
+    },
+    goToNotify (item) {
+      let params = {
+        id: item.id
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.startNotify, params, () => {
+        this.$Message.success(this.$t('tips.success'))
+      },{isNeedloading: false})
     },
     deleteConfirmModal (rowData) {
       this.selectedData = rowData

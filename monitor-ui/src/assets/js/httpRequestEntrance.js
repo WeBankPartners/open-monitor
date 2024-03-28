@@ -6,6 +6,9 @@
  */
 // import router from '../../../project-config/router'
 import httpRequest from '@/assets/js/axiosHttp'
+import { setLocalstorage, clearLocalstorage } from '@/assets/js/localStorage.js'
+import Vue from 'vue'
+import axios from 'axios'
 import $ from 'jquery'
 import {Message} from 'view-design'
 
@@ -41,6 +44,13 @@ function errorMessage(content) {
   })
 }
 
+const throwError = res => {
+  Vue.prototype.$Notice.warning({
+    title: 'Error',
+    desc: (res.data && 'status:' + res.data.status + '<br/> message:' + res.data.message) || 'error',
+    duration: 10
+  })
+}
 /*
  * Func: http统一处理
  *
@@ -77,15 +87,85 @@ function httpRequestEntrance (method, url, data, callback, customHttpConfig, err
         return callback(response.data.data,response.data.message)
       }
     }
-  }).catch(function (error) {
+  }).catch(function (err) {
     if (config.isNeedloading) {
       setTimeout(() => {
         loadingCount--
         loading.end()
       },0)
     }
+    const { response } = err
+    console.log(response)
+    if (response.status === 401 && err.config.url !== '/auth/v1/api/login') {
+      let refreshToken = localStorage.getItem('monitor-refreshToken')
+      if (refreshToken.length > 0) {
+        let refreshRequest = axios.get('/auth/v1/api/token', {
+          headers: {
+            Authorization: 'Bearer ' + refreshToken
+          }
+        })
+        return refreshRequest.then(
+          resRefresh => {
+            setLocalstorage(resRefresh.data.data)
+            // replace token with new one and replay request
+            err.config.headers.Authorization = 'Bearer ' + localStorage.getItem('monitor-accessToken')
+            let retryRequest = axios(err.config)
+            return retryRequest.then(
+              res => {
+                if (res.status === 200) {
+                  // do request success again
+                  if (res.data.status === 'ERROR') {
+                    const errorMes = Array.isArray(res.data.data)
+                      ? res.data.data.map(_ => _.message || _.errorMessage).join('<br/>')
+                      : res.data.message
+                    Vue.prototype.$Notice.warning({
+                      title: 'Error',
+                      desc: errorMes,
+                      duration: 10
+                    })
+                  }
+                  return res.data instanceof Array ? res.data : { ...res.data }
+                } else {
+                  return {
+                    data: throwError(res)
+                  }
+                }
+              },
+              err => {
+                const { response } = err
+                return new Promise((resolve) => {
+                  resolve({
+                    data: throwError(response)
+                  })
+                })
+              }
+            )
+          },
+          // eslint-disable-next-line handle-callback-err
+          () => {
+            clearLocalstorage()
+            window.location.href = window.location.origin + window.location.pathname + '#/login'
+            return {
+              data: {} // throwError(errRefresh.response)
+            }
+          }
+        )
+      } else {
+        window.location.href = window.location.origin + window.location.pathname + '#/login'
+        if (response.config.url === '/auth/v1/api/login') {
+          Vue.prototype.$Notice.warning({
+            title: 'Error',
+            desc: response.data.message || '401',
+            duration: 10
+          })
+        }
+        // throwInfo(response)
+        return response
+      }
+    }
+
     // errorMessage(error.response.data.message)
-    error.response&&error.response.data&&errorMessage(error.response.data.message)
+    err.response&&err.response.data&&errorMessage(err.response.data.message)
     // if (!window.request && error.response && error.response.status === 401) {
     //   router.push({path: '/login'})
     // }
@@ -93,8 +173,8 @@ function httpRequestEntrance (method, url, data, callback, customHttpConfig, err
     if (typeof customHttpConfig === 'function') {
       errCallback = customHttpConfig
     }
-    if (typeof errCallback === 'function' && error.response && error.response.data) {
-      return errCallback(new Error(error.response && error.response.data ? error.response.data.message : ''));
+    if (typeof errCallback === 'function' && err.response && err.response.data) {
+      return errCallback(new Error(err.response && err.response.data ? err.response.data.message : ''));
     }
   })
 }
