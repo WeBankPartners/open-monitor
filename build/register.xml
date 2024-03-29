@@ -30,6 +30,15 @@
             <attribute name="toPhone" datatype="str" description="接收手机号"/>
             <attribute name="toRole" datatype="str" description="接收角色"/>
         </entity>
+        <entity name="alarm_event" displayName="问题事件" description="问题事件模型">
+            <attribute name="id" datatype="str" description="唯一ID"/>
+            <attribute name="handler" datatype="str" description="处理人"/>
+            <attribute name="handleRole" datatype="str" description="处理角色"/>
+            <attribute name="content" datatype="str" description="告警描述"/>
+            <attribute name="priority" datatype="str" description="告警级别"/>
+            <attribute name="message" datatype="str" description="告警信息"/>
+            <attribute name="startTime" datatype="str" description="告警时间"/>
+        </entity>
     </dataModel>
 
     <!-- 4.系统参数 - 描述运行本插件包需要的系统参数 -->
