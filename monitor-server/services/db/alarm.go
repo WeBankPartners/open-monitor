@@ -1429,7 +1429,7 @@ func StartInitAlarmUniqueTags() {
 	}
 }
 
-func ManualNotifyAlarm(alarmId int) (err error) {
+func ManualNotifyAlarm(alarmId int, operator string) (err error) {
 	var alarmRows []*m.AlarmTable
 	err = x.SQL("select * from alarm where id=?", alarmId).Find(&alarmRows)
 	if err != nil {
@@ -1455,7 +1455,7 @@ func ManualNotifyAlarm(alarmId int) (err error) {
 		err = fmt.Errorf("can not find notify with guid:%s ", alarmObj.NotifyId)
 		return
 	}
-	if err = notifyEventAction(notifyRows[0], &alarmObj, false); err != nil {
+	if err = notifyEventAction(notifyRows[0], &alarmObj, false, operator); err != nil {
 		err = fmt.Errorf("notify event action fail:%s ", err.Error())
 	}
 	return
