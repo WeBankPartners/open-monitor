@@ -63,7 +63,7 @@ func GetCoreEventList() (result m.CoreProcessResult, err error) {
 		log.Logger.Warn("Get core process key fail, core url is null")
 		return result, fmt.Errorf("get core process key fail, core url is null")
 	}
-	request, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/platform/v1/process/definitions?includeDraft=0&permission=USE", m.CoreUrl), strings.NewReader(""))
+	request, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/platform/v1/public/process/definitions?tag=monitor&permission=USE&all=N", m.CoreUrl), strings.NewReader(""))
 	if err != nil {
 		log.Logger.Error("Get core process key new request fail", log.Error(err))
 		return result, err
