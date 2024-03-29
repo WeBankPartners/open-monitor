@@ -75,14 +75,30 @@ type AlarmEntity struct {
 }
 
 type AlarmEntityObj struct {
-	Id         string `json:"id"`
+	Id          string `json:"id"`
 	DisplayName string `json:"displayName"`
-	Status     string `json:"status"`
-	Subject    string `json:"subject"`
+	Status      string `json:"status"`
+	Subject     string `json:"subject"`
+	Content     string `json:"content"`
+	SmsContent  string `json:"smsContent"`
+	To          string `json:"to"`
+	ToMail      string `json:"toMail"`
+	ToPhone     string `json:"toPhone"`
+	ToRole      string `json:"toRole"`
+}
+
+type AlarmEventEntity struct {
+	Status  string                 `json:"status"`
+	Message string                 `json:"message"`
+	Data    []*AlarmEventEntityObj `json:"data"`
+}
+
+type AlarmEventEntityObj struct {
+	Id         string `json:"id"`
+	Handler    string `json:"handler"`
+	HandleRole string `json:"handleRole"`
 	Content    string `json:"content"`
-	SmsContent string `json:"smsContent"`
-	To         string `json:"to"`
-	ToMail     string `json:"toMail"`
-	ToPhone    string `json:"toPhone"`
-	ToRole     string `json:"toRole"`
+	Priority   string `json:"priority"`
+	Message    string `json:"message"`
+	StartTime  string `json:"startTime"`
 }

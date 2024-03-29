@@ -598,7 +598,7 @@ func notifyAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleObj) {
 		}
 	}
 	for i := 0; i < 3; i++ {
-		err = notifyEventAction(notify, alarmObj, true)
+		err = notifyEventAction(notify, alarmObj, true, "system")
 		if err == nil {
 			break
 		} else {
@@ -634,7 +634,7 @@ func compareNotifyEventLevel(level string) bool {
 	return result
 }
 
-func notifyEventAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleObj, compareLevel bool) error {
+func notifyEventAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleObj, compareLevel bool, operator string) error {
 	if compareLevel && !compareNotifyEventLevel(alarmObj.SPriority) {
 		log.Logger.Info("notify event disable", log.String("level", alarmObj.SPriority), log.String("minLevel", models.Config().MonitorAlarmCallbackLevelMin))
 		err := notifyMailAction(notify, alarmObj)
@@ -659,7 +659,7 @@ func notifyEventAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleO
 	requestParam.EventType = "alarm"
 	requestParam.SourceSubSystem = "SYS_MONITOR"
 	requestParam.OperationKey = notify.ProcCallbackKey
-	requestParam.OperationData = fmt.Sprintf("%d-%s-%s", alarmObj.Id, alarmObj.Status, notify.Guid)
+	requestParam.OperationData = fmt.Sprintf("%d-%s-%s-%s", alarmObj.Id, alarmObj.Status, notify.Guid, operator)
 	requestParam.OperationUser = ""
 	log.Logger.Info(fmt.Sprintf("new notify request data --> eventSeqNo:%s operationKey:%s operationData:%s", requestParam.EventSeqNo, requestParam.OperationKey, requestParam.OperationData))
 	b, _ := json.Marshal(requestParam)

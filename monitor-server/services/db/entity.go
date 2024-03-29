@@ -57,7 +57,7 @@ func getCoreProcessKey() string {
 func GetCoreEventList() (result m.CoreProcessResult, err error) {
 	if !m.PluginRunningMode {
 		result = m.CoreProcessResult{Data: []*m.CoreProcessDataObj{}}
-		return result,nil
+		return result, nil
 	}
 	if m.CoreUrl == "" {
 		log.Logger.Warn("Get core process key fail, core url is null")
@@ -238,8 +238,8 @@ func GetAlarmEvent(alarmType, inputGuid string, id int, alarmStatus string) (res
 		return result, err
 	}
 	if id == 0 {
-		tmpQueryMapList,_ := x.QueryString("select max(id) as id from alarm")
-		id,_ = strconv.Atoi(tmpQueryMapList[0]["id"])
+		tmpQueryMapList, _ := x.QueryString("select max(id) as id from alarm")
+		id, _ = strconv.Atoi(tmpQueryMapList[0]["id"])
 		if id == 0 {
 			result = m.AlarmEntityObj{Id: ""}
 			return
@@ -467,4 +467,23 @@ func getSmsAlarmContent(alarm *m.AlarmTable) string {
 		}
 	}
 	return strings.Join(contentList, ";")
+}
+
+func GetAlarmEventEntityData(alarmId int) (result *m.AlarmEventEntityObj, err error) {
+	result = &m.AlarmEventEntityObj{}
+	var alarmRows []*m.AlarmTable
+	err = x.SQL("select endpoint,status,s_metric,s_cond,s_last,s_priority,content,`start` from alarm where id=?", alarmId).Find(&alarmRows)
+	if err != nil {
+		err = fmt.Errorf("query alarm table fail,%s ", err.Error())
+		return
+	}
+	if len(alarmRows) > 0 {
+		alarmObj := alarmRows[0]
+		result.Content = alarmObj.Content
+		result.Priority = alarmObj.SPriority
+		result.StartTime = alarmObj.Start.Format(m.DatetimeFormat)
+		alarmObjBytes, _ := json.Marshal(alarmObj)
+		result.Message = string(alarmObjBytes)
+	}
+	return
 }
