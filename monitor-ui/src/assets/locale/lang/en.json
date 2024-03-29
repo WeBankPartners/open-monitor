@@ -87,7 +87,7 @@
     "rePassword": "Confirm password",
     "thresholdManagement": "Threshold",
     "receivers": "Receivers",
-    "receiversConfiguration": "Receivers Configuration",
+    "receiversConfiguration": "Threshold Alert Trigger Notification and Orchestration",
     "receiversSelect": "Select Receivers",
     "receiversInput": "Input Receiver",
     "receiversInputTip": "email or phone number",
