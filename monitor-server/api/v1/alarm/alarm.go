@@ -823,8 +823,16 @@ func QueryEntityAlarmEvent(c *gin.Context) {
 		return
 	}
 	var id int
-	var operator string
-	value := param.Criteria.Condition
+	var operator, value string
+	if param.Criteria.AttrName == "id" {
+		value = param.Criteria.Condition
+	} else {
+		for _, v := range param.AdditionalFilters {
+			if v.AttrName == "id" {
+				value = v.Condition
+			}
+		}
+	}
 	if strings.Contains(value, "-") {
 		// id-firing-notifyGuid-operator
 		tmpSplit := strings.Split(value, "-")
