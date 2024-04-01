@@ -150,7 +150,7 @@ func GetOrgPanelEventList(c *gin.Context) {
 		mid.ReturnParamEmptyError(c, "guid")
 		return
 	}
-	eventList, err := db.GetCoreEventList()
+	eventList, err := db.GetCoreEventList(c.GetHeader(m.AuthTokenHeader))
 	if err != nil {
 		mid.ReturnHandleError(c, "get core event list fail", err)
 		return

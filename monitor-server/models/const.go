@@ -20,6 +20,8 @@ const (
 
 	AlarmNotifyAutoMode   = "auto"
 	AlarmNotifyManualMode = "manual"
+
+	AuthTokenHeader = "Authorization"
 )
 
 var (
