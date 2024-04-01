@@ -555,8 +555,8 @@ func GetAlarms(query m.AlarmTable, limit int, extLogMonitor, extOpenAlarm bool) 
 				} else {
 					v.NotifyStatus = "notStart"
 				}
-				v.AlarmObjName = fmt.Sprintf("%d-%s-%s", v.Id, v.Endpoint, v.SMetric)
 			}
+			v.AlarmObjName = fmt.Sprintf("%d-%s-%s", v.Id, v.Endpoint, v.SMetric)
 		}
 	}
 	return err, sortResult
