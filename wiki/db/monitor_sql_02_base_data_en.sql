@@ -715,3 +715,22 @@ alter table alarm add column notify_id varchar(64) default null;
 alter table custom_dashboard add column panel_groups text default null;
 alter table endpoint_metric modify column metric varchar(1024) default null;
 #@v2.0.6.1-end@;
+
+#@v2.0.6.10-begin@;
+CREATE TABLE `alarm_notify` (
+    `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+    `alarm_id` int(11) NOT NULL,
+    `notify_id` varchar(64) NOT NULL,
+    `endpoint` varchar(255) DEFAULT NULL,
+    `metric` varchar(255) DEFAULT NULL,
+    `status` varchar(20) NOT NULL,
+    `proc_def_key` varchar(255) DEFAULT NULL,
+    `proc_def_name` varchar(255) DEFAULT NULL,
+    `notify_description` text DEFAULT NULL,
+    `proc_ins_id` varchar(64) DEFAULT NULL,
+    `created_user` varchar(64) DEFAULT NULL,
+    `created_time` datetime DEFAULT NULL,
+    `updated_time` datetime DEFAULT NULL,
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+#@v2.0.6.10-end@;
