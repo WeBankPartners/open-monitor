@@ -522,18 +522,19 @@ func GetAlarms(query m.AlarmTable, limit int, extLogMonitor, extOpenAlarm bool) 
 	if len(notifyIdList) > 0 {
 		var notifyRows []*m.NotifyTable
 		filterSql, filterParams := createListParams(notifyIdList, "")
-		err = x.SQL("select guid,description from notify where guid in ("+filterSql+")", filterParams...).Find(&notifyRows)
+		err = x.SQL("select guid,proc_callback_name,proc_callback_key,description from notify where guid in ("+filterSql+")", filterParams...).Find(&notifyRows)
 		if err != nil {
 			err = fmt.Errorf("query notify table fail,%s ", err.Error())
 			return err, result
 		}
-		notifyMsgMap := make(map[string]string)
+		notifyMsgMap := make(map[string]*m.NotifyTable)
 		for _, row := range notifyRows {
-			notifyMsgMap[row.Guid] = row.Description
+			notifyMsgMap[row.Guid] = row
 		}
 		for _, v := range sortResult {
-			if notifyMsg, ok := notifyMsgMap[v.NotifyId]; ok {
-				v.NotifyMessage = notifyMsg
+			if notifyRowObj, ok := notifyMsgMap[v.NotifyId]; ok {
+				v.NotifyMessage = notifyRowObj.Description
+				v.NotifyCallbackName = notifyRowObj.ProcCallbackName
 			}
 		}
 	}
