@@ -121,6 +121,8 @@ type AlarmProblemQuery struct {
 	NotifyId           string    `json:"notify_id"`
 	NotifyMessage      string    `json:"notify_message"`
 	NotifyCallbackName string    `json:"notify_callback_name"`
+	NotifyStatus       string    `json:"notify_status"`
+	AlarmObjName       string    `json:"alarm_obj_name"`
 }
 
 type UpdateAlarmCustomMessageDto struct {
