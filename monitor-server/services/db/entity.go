@@ -54,7 +54,7 @@ func getCoreProcessKey() string {
 	return coreProcessKey
 }
 
-func GetCoreEventList() (result m.CoreProcessResult, err error) {
+func GetCoreEventList(userToken string) (result m.CoreProcessResult, err error) {
 	if !m.PluginRunningMode {
 		result = m.CoreProcessResult{Data: []*m.CoreProcessDataObj{}}
 		return result, nil
@@ -63,12 +63,13 @@ func GetCoreEventList() (result m.CoreProcessResult, err error) {
 		log.Logger.Warn("Get core process key fail, core url is null")
 		return result, fmt.Errorf("get core process key fail, core url is null")
 	}
-	request, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/platform/v1/public/process/definitions?tag=monitor&permission=USE&all=N", m.CoreUrl), strings.NewReader(""))
+	request, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/platform/v1/public/process/definitions?plugin=monitor&permission=USE&all=N", m.CoreUrl), strings.NewReader(""))
 	if err != nil {
 		log.Logger.Error("Get core process key new request fail", log.Error(err))
 		return result, err
 	}
-	request.Header.Set("Authorization", m.GetCoreToken())
+	//request.Header.Set("Authorization", m.GetCoreToken())
+	request.Header.Set("Authorization", userToken)
 	res, err := ctxhttp.Do(context.Background(), http.DefaultClient, request)
 	if err != nil {
 		log.Logger.Error("Get core process key ctxhttp request fail", log.Error(err))
@@ -482,6 +483,7 @@ func GetAlarmEventEntityData(alarmId int) (result *m.AlarmEventEntityObj, err er
 		result.Content = alarmObj.Content
 		result.Priority = alarmObj.SPriority
 		result.StartTime = alarmObj.Start.Format(m.DatetimeFormat)
+		result.DisplayName = fmt.Sprintf("%d-%s-%s", alarmId, alarmObj.Endpoint, alarmObj.SMetric)
 		alarmObjBytes, _ := json.Marshal(alarmObj)
 		result.Message = string(alarmObjBytes)
 	}
