@@ -284,6 +284,7 @@
   "m_recommend": "推荐配置",
   "proc_callback_key": "编排",
   "m_initiate_orchestration": "发起编排",
+  "m_reinitiate_orchestration": "重新发起编排",
   "alarm_action": "触发类型",
   "dangerous_confirm_tip": "我已知悉该操作高危并评估过所有的风险，确认继续执行并承担所带来的后果。",
   "resource_delete_tip": "风险提示：删除层级对象会删除其所有子节点与它们所有相关联的 业务日志指标、业务数据库指标、业务关键字配置和已应用的指标与告警配置等。",
@@ -328,7 +329,7 @@
   "m_group_name_exist": "该分组名已存在",
   "m_add_chart_to_group": "将图表加入分组",
   "m_copied_to_clipboard": "已复制至剪切板",
-  "m_duplicate_alert_object": "复制告警对象"
-
-  
+  "m_duplicate_alert_object": "复制告警对象",
+  "m_delete_tip": "即将删除：",
+  "m_already_initiated": "该告警已经发起过编排"
 }
