@@ -326,5 +326,9 @@
   "m_group_name": "分组",
   "m_group_mgmt": "组管理",
   "m_group_name_exist": "该分组名已存在",
-  "m_add_chart_to_group": "将图表加入分组"
+  "m_add_chart_to_group": "将图表加入分组",
+  "m_copied_to_clipboard": "已复制至剪切板",
+  "m_duplicate_alert_object": "复制告警对象"
+
+  
 }
