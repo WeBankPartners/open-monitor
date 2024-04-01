@@ -214,6 +214,18 @@
         <Button @click="confirmGroupMgmt" :disabled="!groupName" type="primary" class="primary-btn">{{ $t('button.save') }}</Button>
       </template>
     </Modal>
+    <!-- 删除组 -->
+    <Modal
+      v-model="isShowDeleteGroupWarning"
+      :title="$t('delConfirm.title')"
+      @on-ok="confirmDeleteGroup"
+      @on-cancel="isShowDeleteGroupWarning = false">
+      <div class="modal-body" style="padding:30px">
+        <div style="text-align:center">
+          <p style="color: red">{{$t('m_delete_tip')}}: {{ deleteGroup }}</p>
+        </div>
+      </div>
+    </Modal>
   </div>
 </template>
 <style lang="less" scoped>
@@ -260,6 +272,9 @@ export default {
   name: '',
   data() {
     return {
+      isShowDeleteGroupWarning: false,
+      deleteGroup: null,
+      deleteGroupIndex: -1,
       refreshNow: false,
       parentRouteData: {},
       editData: null,
@@ -621,17 +636,14 @@ export default {
       })
     },
     removeGroup (item, index) {
-      this.$delConfirm({
-        msg: item,
-        callback: () => {
-          this.delF(item, index)
-        }
-      })
+      this.isShowDeleteGroupWarning = true
+      this.deleteGroup = item
+      this.deleteGroupIndex = index
     },
-    delF (item, index) {
-      this.panel_group_list.splice(index, 1)
+    confirmDeleteGroup () {
+      this.panel_group_list.splice(this.deleteGroupIndex, 1)
       this.layoutData.forEach(d => {
-        if (d.group === item) {
+        if (d.group === this.deleteGroup) {
           d.group = ''
         }
       })

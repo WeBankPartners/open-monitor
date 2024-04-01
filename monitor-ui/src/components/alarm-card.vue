@@ -160,7 +160,7 @@
       @on-cancel="isShowStartFlow = false">
       <div class="modal-body" style="padding:30px">
         <div style="text-align:center">
-          <p style="color: red">{{startFlowTip}}</p>
+          <p style="color: red;text-align: left;">{{startFlowTip}}</p>
         </div>
       </div>
     </Modal>
@@ -192,7 +192,11 @@ export default {
       // window.open(news.href, '_blank')
     },
     goToNotify (item) {
-      this.startFlowTip = `${this.$t('button.confirm')} ${this.$t('m_initiate_orchestration')}: [${item.notify_callback_name}]`
+      if (item.notify_status === 'notStart') {
+        this.startFlowTip = `${this.$t('button.confirm')} ${this.$t('m_initiate_orchestration')}: [${item.notify_callback_name}]`
+      } else if (item.notify_status === 'started') {
+        this.startFlowTip = `${this.$t('m_already_initiated')}，${this.$t('button.confirm')} ${this.$t('m_reinitiate_orchestration')}: 【${item.notify_callback_name}】`
+      }
       this.alertId = item.id
       this.isShowStartFlow = true
     },
@@ -223,7 +227,7 @@ export default {
     },
     copyEndpoint (data) {
       let inputElement = document.createElement('input')
-      inputElement.value = data.start_string
+      inputElement.value = data.alarm_obj_name
       document.body.appendChild(inputElement)
       inputElement.select()
       document.execCommand('Copy')
