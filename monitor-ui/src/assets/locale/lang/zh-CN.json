@@ -283,6 +283,7 @@
   "m_guid": "唯一名称",
   "m_recommend": "推荐配置",
   "proc_callback_key": "编排",
+  "m_initiate_orchestration": "发起编排",
   "alarm_action": "触发类型",
   "dangerous_confirm_tip": "我已知悉该操作高危并评估过所有的风险，确认继续执行并承担所带来的后果。",
   "resource_delete_tip": "风险提示：删除层级对象会删除其所有子节点与它们所有相关联的 业务日志指标、业务数据库指标、业务关键字配置和已应用的指标与告警配置等。",
