@@ -47,13 +47,7 @@
         <div slot="content" style="white-space: normal;padding:16px">
           <p>{{ $t('tableKey.description') }}: {{ data.notify_message }}</p>
         </div>
-        <Icon
-          type="ios-megaphone"
-          size="18"
-          class="fa-operate"
-          v-if="data.notify_id !==''"
-          @click="goToNotify(data)"
-        />
+        <img v-if="data.notify_id !==''" @click="goToNotify(data)" style="vertical-align: super;padding:3px 8px;cursor:pointer" src="../assets/img/icon_start_flow.png" />
       </Poptip>
       <Tooltip :content="$t('menu.endpointView')">
         <Icon
@@ -156,6 +150,17 @@
         <div class="card-content" v-html="data.content"></div>
       </li>
     </ul>
+    <Modal
+      v-model="isShowStartFlow"
+      :title="$t('m_initiate_orchestration')"
+      @on-ok="confirmStartFlow"
+      @on-cancel="isShowStartFlow = false">
+      <div class="modal-body" style="padding:30px">
+        <div style="text-align:center">
+          <p style="color: red">{{startFlowTip}}</p>
+        </div>
+      </div>
+    </Modal>
   </Card>
 </template>
 
@@ -166,6 +171,9 @@ export default {
   },
   data() {
     return {
+      isShowStartFlow: false,
+      startFlowTip: '',
+      alertId: '',
       test: "system_id:5006 <br/> title:bdphdp010001: JournalNode10分钟之内ops次数大于10000 <br/> object: <br/> info:bdphdp010001在2022.05.16-00:14:14触发JournalNode10分钟之内ops次数大于10000 <br/> 【告警主机】 127.0.0.1[bdphdp010001] <br/> 【告警集群】 international_cluster <br/> 【附加信息】 请联系值班人:[admin]，资源池[admin]"
     }
   },
@@ -181,8 +189,13 @@ export default {
       // window.open(news.href, '_blank')
     },
     goToNotify (item) {
+      this.startFlowTip = `${this.$t('button.confirm')} ${this.$t('m_initiate_orchestration')}: [${item.notify_callback_name}]`
+      this.alertId = item.id
+      this.isShowStartFlow = true
+    },
+    confirmStartFlow () {
       let params = {
-        id: item.id
+        id: this.alertId
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.startNotify, params, () => {
         this.$Message.success(this.$t('tips.success'))
