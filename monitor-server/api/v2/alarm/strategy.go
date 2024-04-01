@@ -52,7 +52,7 @@ func CreateAlarmStrategy(c *gin.Context) {
 			middleware.ReturnValidateError(c, "Param active_window validate fail")
 			return
 		}
-	}else {
+	} else {
 		param.ActiveWindow = models.DefaultActiveWindow
 	}
 	err := db.CreateAlarmStrategy(&param)
@@ -79,7 +79,7 @@ func UpdateAlarmStrategy(c *gin.Context) {
 			middleware.ReturnValidateError(c, "Param active_window validate fail")
 			return
 		}
-	}else {
+	} else {
 		param.ActiveWindow = models.DefaultActiveWindow
 	}
 	err := db.UpdateAlarmStrategy(&param)
@@ -110,7 +110,7 @@ func DeleteAlarmStrategy(c *gin.Context) {
 	}
 }
 
-func ExportAlarmStrategy(c *gin.Context)  {
+func ExportAlarmStrategy(c *gin.Context) {
 	queryType := c.Param("queryType")
 	guid := c.Param("guid")
 	var result []*models.EndpointStrategyObj
@@ -127,11 +127,11 @@ func ExportAlarmStrategy(c *gin.Context)  {
 			middleware.ReturnHandleError(c, err.Error(), err)
 			return
 		}
-	}else {
+	} else {
 		middleware.ReturnHandleError(c, "queryType:"+queryType+" can not export strategy ", nil)
 		return
 	}
-	b,err := json.Marshal(result)
+	b, err := json.Marshal(result)
 	if err != nil {
 		middleware.ReturnHandleError(c, "export alarm strategy fail, json marshal object error", err)
 		return
@@ -140,19 +140,19 @@ func ExportAlarmStrategy(c *gin.Context)  {
 	c.Data(http.StatusOK, "application/octet-stream", b)
 }
 
-func ImportAlarmStrategy(c *gin.Context)  {
-	file,err := c.FormFile("file")
+func ImportAlarmStrategy(c *gin.Context) {
+	file, err := c.FormFile("file")
 	if err != nil {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	f,err := file.Open()
+	f, err := file.Open()
 	if err != nil {
 		middleware.ReturnHandleError(c, "file open error ", err)
 		return
 	}
 	var paramObj []*models.EndpointStrategyObj
-	b,err := ioutil.ReadAll(f)
+	b, err := ioutil.ReadAll(f)
 	defer f.Close()
 	if err != nil {
 		middleware.ReturnHandleError(c, "read content fail error ", err)
@@ -168,7 +168,7 @@ func ImportAlarmStrategy(c *gin.Context)  {
 	err = db.ImportAlarmStrategy(queryType, guid, paramObj)
 	if err != nil {
 		middleware.ReturnHandleError(c, "import alarm strategy error:"+err.Error(), err)
-	}else {
+	} else {
 		middleware.ReturnSuccess(c)
 	}
 }
@@ -200,7 +200,7 @@ func ListStrategyQueryOptions(c *gin.Context) {
 }
 
 func ListCallbackEvent(c *gin.Context) {
-	eventList, err := db.GetCoreEventList()
+	eventList, err := db.GetCoreEventList(c.GetHeader(models.AuthTokenHeader))
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {

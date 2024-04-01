@@ -22,14 +22,15 @@ type CoreProcessResult struct {
 }
 
 type CoreProcessDataObj struct {
-	ProcDefId      string `json:"procDefId"`
-	ProcDefKey     string `json:"procDefKey"`
-	ProcDefName    string `json:"procDefName"`
-	ProcDefVersion string `json:"procDefVersion"`
-	ProcDefData    string `json:"procDefData"`
-	RootEntity     string `json:"rootEntity"`
-	Status         string `json:"status"`
-	CreatedTime    string `json:"createdTime"`
+	ProcDefId            string      `json:"procDefId"`
+	ProcDefKey           string      `json:"procDefKey"`
+	ProcDefName          string      `json:"procDefName"`
+	ProcDefVersion       string      `json:"procDefVersion"`
+	ProcDefData          string      `json:"procDefData"`
+	RootEntity           interface{} `json:"rootEntity"`
+	Status               string      `json:"status"`
+	CreatedTime          string      `json:"createdTime"`
+	RootEntityExpression string      `json:"rootEntityExpression"`
 }
 
 type CoreProcessResultData []*CoreProcessDataObj
@@ -94,11 +95,12 @@ type AlarmEventEntity struct {
 }
 
 type AlarmEventEntityObj struct {
-	Id         string `json:"id"`
-	Handler    string `json:"handler"`
-	HandleRole string `json:"handleRole"`
-	Content    string `json:"content"`
-	Priority   string `json:"priority"`
-	Message    string `json:"message"`
-	StartTime  string `json:"startTime"`
+	Id          string `json:"id"`
+	DisplayName string `json:"displayName"`
+	Handler     string `json:"handler"`
+	HandleRole  string `json:"handleRole"`
+	Content     string `json:"content"`
+	Priority    string `json:"priority"`
+	Message     string `json:"message"`
+	StartTime   string `json:"startTime"`
 }
