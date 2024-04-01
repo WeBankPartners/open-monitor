@@ -40,9 +40,12 @@
       v-if="$attrs.button"
       style="position: absolute; top: 10px; right: 10px"
     >
-      <Tooltip>
-        <div slot="content" style="white-space: normal;">
-          <p>{{ data.notify_message }}</p>
+      <Poptip trigger="hover">
+        <div slot="title" style="white-space: normal;color: #2d8cf0">
+          <p>{{ $t('m_initiate_orchestration') }}: {{ data.notify_callback_name }}</p>
+        </div>
+        <div slot="content" style="white-space: normal;padding:16px">
+          <p>{{ $t('tableKey.description') }}: {{ data.notify_message }}</p>
         </div>
         <Icon
           type="ios-megaphone"
@@ -51,7 +54,7 @@
           v-if="data.notify_id !==''"
           @click="goToNotify(data)"
         />
-      </Tooltip>
+      </Poptip>
       <Tooltip :content="$t('menu.endpointView')">
         <Icon
           type="ios-stats"

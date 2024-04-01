@@ -9,9 +9,12 @@
       <template v-for="(alarmItem, alarmIndex) in resultData">
         <section :key="alarmIndex" class="alarm-item c-dark-exclude-color" :class="'alarm-item-border-'+ alarmItem.s_priority">
           <div style="float:right">
-            <Tooltip>
-              <div slot="content" style="white-space: normal;">
-                <p>{{ data.notify_message }}</p>
+            <Poptip trigger="hover">
+              <div slot="title" style="white-space: normal;color: #2d8cf0">
+                <p>{{ $t('m_initiate_orchestration') }}: {{ data.notify_callback_name }}</p>
+              </div>
+              <div slot="content" style="white-space: normal;padding:16px">
+                <p>{{ $t('tableKey.description') }}: {{ data.notify_message }}</p>
               </div>
               <Icon
                 type="ios-megaphone"
@@ -20,7 +23,7 @@
                 v-if="data.notify_id !==''"
                 @click="goToNotify(data)"
               />
-            </Tooltip>
+            </Poptip>
             <Tooltip :content="$t('menu.endpointView')">
               <Icon type="ios-stats" size="18" class="fa-operate" v-if="!alarmItem.is_custom" @click="goToEndpointView(alarmItem)"/>
             </Tooltip>
