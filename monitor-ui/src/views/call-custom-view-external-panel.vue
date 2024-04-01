@@ -584,16 +584,19 @@ export default {
       this.$delConfirm({
         msg: item,
         callback: () => {
-          this.panel_group_list.splice(index, 1)
-          this.layoutData.forEach(d => {
-            if (d.group === item) {
-              d.group = ''
-            }
-          })
-          this.savePanalEdit()
-          this.activeGroup = 'All'
+          this.delF(item, index)
         }
       })
+    },
+    delF (item, index) {
+      this.panel_group_list.splice(index, 1)
+      this.layoutData.forEach(d => {
+        if (d.group === item) {
+          d.group = ''
+        }
+      })
+      this.savePanalEdit()
+      this.activeGroup = 'All'
     },
     confirmGroupMgmt () {
       if (this.panel_group_list.includes(this.groupName)) {
