@@ -36,7 +36,7 @@
                     </Select>
                   </Tooltip>
                   <Tooltip :content="$t('proc_callback_key')" :delay="1000">
-                    <Select v-model="item.proc_callback_key" style="width: 160px" :placeholder="$t('proc_callback_key')">
+                    <Select v-model="item.proc_callback_key" @on-change="procCallbackKeyChange(item.proc_callback_key, index)" style="width: 160px" :placeholder="$t('proc_callback_key')">
                       <Option v-for="(flow, flowIndex) in flows" :key="flowIndex" :value="flow.procDefId" :label="flow.procDefName + ' [' + flow.procDefVersion + ']'"><span>{{ flow.procDefName }} [{{ flow.procDefVersion }}]</span></Option>
                     </Select>
                   </Tooltip>
@@ -365,6 +365,14 @@ export default {
         this.groupNotify.splice(index, 1)
       } else {
         this.modelConfig.addRow.notify.splice(index, 1)
+      }
+    },
+    procCallbackKeyChange(proc_callback_key, index) {
+      const findFlow = this.flows.find(f => f.procDefId === proc_callback_key)
+      if (findFlow) {
+        this.groupNotify[index].proc_callback_name = `${findFlow.procDefName}[${findFlow.procDefVersion}]`
+      } else {
+        this.groupNotify[index].proc_callback_name = ''
       }
     },
     addEmptyItem (type) {
