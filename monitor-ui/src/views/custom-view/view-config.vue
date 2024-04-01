@@ -135,7 +135,7 @@
                     </Tooltip>
                   </div>
                   <div class="header-grid header-grid-tools">
-                    <Select v-model="item.group" style="width:100px;" size="small" v-if="permission === 'edit'" clearable filterable :placeholder="$t('m_group_name')">
+                    <Select v-model="item.group" style="width:100px;" size="small" :disabled="permission !== 'edit'" clearable filterable :placeholder="$t('m_group_name')">
                       <Option v-for="item in panel_group_list" :value="item" :key="item" style="float: left;">{{ item }}</Option>
                     </Select>
                     <Tooltip :content="$t('button.chart.dataView')" theme="light" transfer placement="top">
@@ -145,7 +145,7 @@
                       <i class="fa fa-cog" style="font-size: 16px;" v-if="permission === 'edit'" @click="setChartType(item)" aria-hidden="true"></i>
                     </Tooltip>
                     <Tooltip :content="$t('placeholder.deleteChart')" theme="light" transfer placement="top">
-                      <i class="fa fa-trash" style="font-size: 16px;" v-if="permission === 'edit'" @click="removeGrid(item)" aria-hidden="true"></i>
+                      <i class="fa fa-trash" style="font-size: 16px;color:red" v-if="permission === 'edit'" @click="removeGrid(item)" aria-hidden="true"></i>
                     </Tooltip>
                   </div>
                 </div>
@@ -624,16 +624,19 @@ export default {
       this.$delConfirm({
         msg: item,
         callback: () => {
-          this.panel_group_list.splice(index, 1)
-          this.layoutData.forEach(d => {
-            if (d.group === item) {
-              d.group = ''
-            }
-          })
-          this.savePanalEdit()
-          this.activeGroup = 'All'
+          this.delF(item, index)
         }
       })
+    },
+    delF (item, index) {
+      this.panel_group_list.splice(index, 1)
+      this.layoutData.forEach(d => {
+        if (d.group === item) {
+          d.group = ''
+        }
+      })
+      this.savePanalEdit()
+      this.activeGroup = 'All'
     },
     confirmGroupMgmt () {
       if (this.panel_group_list.includes(this.groupName)) {
