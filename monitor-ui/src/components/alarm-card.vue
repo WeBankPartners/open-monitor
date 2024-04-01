@@ -33,6 +33,9 @@
         class="col-md-2"
         style="padding: 0; text-align: right; color: #7e8086"
       >
+        <Tooltip :content="$t('m_duplicate_alert_object')">
+          <Icon :size="18" class="copy-data" type="ios-copy-outline" @click="copyEndpoint(data)" />
+        </Tooltip>
         {{ data.start_string }}
       </div>
     </template>
@@ -218,6 +221,15 @@ export default {
       this.$parent.filters[key] = value;
       this.$parent.getAlarm();
     },
+    copyEndpoint (data) {
+      let inputElement = document.createElement('input')
+      inputElement.value = data.start_string
+      document.body.appendChild(inputElement)
+      inputElement.select()
+      document.execCommand('Copy')
+      inputElement.remove()
+      this.$Message.success(this.$t('m_copied_to_clipboard'))
+    }
   },
 };
 </script>
@@ -277,5 +289,9 @@ li {
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
+}
+.copy-data {
+  font-size: 16px;
+  cursor: pointer
 }
 </style>
