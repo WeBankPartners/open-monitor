@@ -169,3 +169,19 @@ type SysMetricTemplateParameter struct {
 	PromExpr string `json:"prom_expr"`
 	Param    string `json:"param"`
 }
+
+type AlarmNotifyTable struct {
+	Id                int       `json:"id" xorm:"id"`
+	AlarmId           int       `json:"alarm_id" xorm:"alarm_id"`
+	NotifyId          string    `json:"notify_id" xorm:"notify_id"`
+	Endpoint          string    `json:"endpoint" xorm:"endpoint"`
+	Metric            string    `json:"metric" xorm:"metric"`
+	Status            string    `json:"status" xorm:"status"`
+	ProcDefKey        string    `json:"proc_def_key" xorm:"proc_def_key"`
+	ProcDefName       string    `json:"proc_def_name" xorm:"proc_def_name"`
+	NotifyDescription string    `json:"notify_description" xorm:"notify_description"`
+	ProcInsId         string    `json:"proc_ins_id" xorm:"proc_ins_id"`
+	CreatedUser       string    `json:"created_user" xorm:"created_user"`
+	CreatedTime       time.Time `json:"created_time" xorm:"created_time"`
+	UpdatedTime       time.Time `json:"updated_time" xorm:"updated_time"`
+}
