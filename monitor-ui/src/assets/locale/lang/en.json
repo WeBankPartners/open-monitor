@@ -284,7 +284,8 @@
   "m_guid": "Guid",
   "m_recommend": "Recommend",
   "proc_callback_key": "Process Key",
-  "m_initiate_orchestration": "Initiate Orchestration",
+  "m_initiate_orchestration": " Initiate Orchestration ",
+  "m_reinitiate_orchestration": " Reinitiate Orchestration ",
   "alarm_action": "Alarm Action",
   "dangerous_confirm_tip": "I AM AWARE OF THE HIGH RISK OF THIS OPERATION AND HAVE EVALUATED ALL THE RISKS, CONFIRMED TO CONTINUE EXECUTION AND BEAR THE CONSEQUENCES.",
   "resource_delete_tip": "RISK WARNING: DELETING A HIERARCHICAL OBJECT WILL DELETE ALL ITS CHILD NODES AND ALL THEIR ASSOCIATED BUSINESS LOG INDICATORS, BUSINESS DATABASE INDICATORS, BUSINESS KEYWORD CONFIGURATION, APPLIED INDICATORS AND ALARM CONFIGURATION, ETC.",
@@ -329,5 +330,7 @@
   "m_group_name_exist": "The group name already exists.",
   "m_add_chart_to_group": "Add chart to group",
   "m_copied_to_clipboard": "Copied to clipboard.",
-  "m_duplicate_alert_object": "Duplicate alert object"
+  "m_duplicate_alert_object": "Duplicate alert object",
+  "m_delete_tip": "About to delete: ",
+  "m_already_initiated": "The alert has already initiated orchestration."
 }
