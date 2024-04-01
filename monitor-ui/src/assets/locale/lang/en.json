@@ -327,5 +327,7 @@
   "m_group_name": "Group Name",
   "m_group_mgmt": "Group Management",
   "m_group_name_exist": "The group name already exists.",
-  "m_add_chart_to_group": "Add chart to group"
+  "m_add_chart_to_group": "Add chart to group",
+  "m_copied_to_clipboard": "Copied to clipboard.",
+  "m_duplicate_alert_object": "Duplicate alert object"
 }
