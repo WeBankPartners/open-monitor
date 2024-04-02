@@ -613,26 +613,35 @@ export default {
     addGroup () {
       this.groupName = ''
       this.groupNameIndex = -1
-      this.getPanelGroupInfo()
+      this.getPanelGroupInfo('')
       this.showGroupMgmt = true
     },
     editGroup (item ,index) {
       this.oriGroupName = item
       this.groupName = item
       this.groupNameIndex = index
-      this.getPanelGroupInfo()
+      this.getPanelGroupInfo(item)
       this.showGroupMgmt = true
     },
-    getPanelGroupInfo () {
+    getPanelGroupInfo (groupName) {
       this.panelGroupInfo = []
       this.layoutData.forEach((d, dIndex) => {
-        this.panelGroupInfo.push({
+        let group = {
           index: dIndex,
           label: d.i,
-          group: d.group,
+          group: d.group || '',
           hasGroup: !!d.group,
           setGroup: false
-        })
+        }
+        // 未绑定组
+        if (!d.group) {
+          group.hasGroup = false
+          group.setGroup = false
+        } else { // 已绑定
+          group.hasGroup = d.group === groupName ? false : true
+          group.setGroup = d.group === groupName ? true : false
+        }
+        this.panelGroupInfo.push(group)
       })
     },
     removeGroup (item, index) {
@@ -670,8 +679,12 @@ export default {
           }
         })
         this.panelGroupInfo.forEach(p => {
-          if (p.setGroup) {
-            this.layoutData[p.index].group = this.groupName
+          if (p.hasGroup === false) {
+            if (p.setGroup && p.group === '') {
+              this.layoutData[p.index].group = this.groupName
+            } else if (!p.setGroup ) {
+              this.layoutData[p.index].group = ''
+            }
           }
         })
       }
