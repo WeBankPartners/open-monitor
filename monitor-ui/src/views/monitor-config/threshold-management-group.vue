@@ -25,19 +25,19 @@
                     type="error"
                     icon="md-close"
                   ></Button>
-                  <Tooltip :content="$t('resourceLevel.role')" :delay="1000">
-                    <Select v-model="item.notify_roles" :max-tag-count="2" style="width: 200px" multiple filterable :placeholder="$t('field.role')">
-                      <Option v-for="item in allRole" :value="item.name" :key="item.value">{{ item.name }}</Option>
-                    </Select>
-                  </Tooltip>
                   <Tooltip :content="$t('alarm_action')" :delay="1000">
                     <Select v-model="item.alarm_action" style="width: 100px" :placeholder="$t('alarm_action')">
                       <Option v-for="type in ['firing', 'ok']" :key="type" :value="type">{{type}}</Option>
                     </Select>
                   </Tooltip>
+                  <Tooltip :content="$t('resourceLevel.role')" :delay="1000">
+                    <Select v-model="item.notify_roles" :max-tag-count="2" style="width: 200px" multiple filterable :placeholder="$t('field.role')">
+                      <Option v-for="item in allRole" :value="item.name" :key="item.value">{{ item.name }}</Option>
+                    </Select>
+                  </Tooltip>
                   <Tooltip :content="$t('proc_callback_key')" :delay="1000">
                     <Select v-model="item.proc_callback_key" @on-change="procCallbackKeyChange(item.proc_callback_key, index)" style="width: 160px" :placeholder="$t('proc_callback_key')">
-                      <Option v-for="(flow, flowIndex) in flows" :key="flowIndex" :value="flow.procDefId" :label="flow.procDefName + ' [' + flow.procDefVersion + ']'"><span>{{ flow.procDefName }} [{{ flow.procDefVersion }}]</span></Option>
+                      <Option v-for="(flow, flowIndex) in flows" :key="flowIndex" :value="flow.procDefKey" :label="flow.procDefName + ' [' + flow.procDefVersion + ']'"><span>{{ flow.procDefName }} [{{ flow.procDefVersion }}]</span></Option>
                     </Select>
                   </Tooltip>
                   <Tooltip :content="$t('m_callback_mode')" :delay="1000">
@@ -157,7 +157,7 @@
               </Tooltip>
               <Tooltip :content="$t('proc_callback_key')" :delay="1000">
                 <Select v-model="item.proc_callback_key" style="width: 160px" :placeholder="$t('proc_callback_key')">
-                  <Option v-for="(flow, flowIndex) in flows" :key="flowIndex" :value="flow.procDefId" :label="flow.procDefName + ' [' + flow.procDefVersion + ']'"><span>{{ flow.procDefName }} [{{ flow.procDefVersion }}]</span></Option>
+                  <Option v-for="(flow, flowIndex) in flows" :key="flowIndex" :value="flow.procDefKey" :label="flow.procDefName + ' [' + flow.procDefVersion + ']'"><span>{{ flow.procDefName }} [{{ flow.procDefVersion }}]</span></Option>
                 </Select>
               </Tooltip>
               <Tooltip :content="$t('field.role')" :delay="1000">
@@ -368,7 +368,7 @@ export default {
       }
     },
     procCallbackKeyChange(proc_callback_key, index) {
-      const findFlow = this.flows.find(f => f.procDefId === proc_callback_key)
+      const findFlow = this.flows.find(f => f.procDefKey === proc_callback_key)
       if (findFlow) {
         this.groupNotify[index].proc_callback_name = `${findFlow.procDefName}[${findFlow.procDefVersion}]`
       } else {
