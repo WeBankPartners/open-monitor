@@ -651,7 +651,7 @@ export default {
       this.activeGroup = 'All'
     },
     confirmGroupMgmt () {
-      if (this.panel_group_list.includes(this.groupName)) {
+      if (this.groupNameIndex === -1 && this.panel_group_list.includes(this.groupName)) {
         this.$Message.warning(this.$t('m_group_name_exist'))
         return
       }
@@ -677,6 +677,7 @@ export default {
       }
       this.showGroupMgmt = false
       this.savePanalEdit()
+      this.activeGroup = this.groupName
     },
     //#endregion
   },
