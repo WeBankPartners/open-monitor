@@ -379,6 +379,7 @@ export default {
       const tmp = {
         alarm_action: 'firing',
         proc_callback_key: '',
+        proc_callback_name: '',
         notify_roles: [],
         proc_callback_mode: 'manual',
         description: ''
