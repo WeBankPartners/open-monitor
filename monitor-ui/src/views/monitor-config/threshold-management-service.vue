@@ -13,11 +13,11 @@
         <section class="receiver-config">
           <div style="margin: 16px 0">
             <h5 style="display:inline-block">{{$t('button.receiversConfiguration')}}:</h5>
-            <button @click="addEmptyItem('group', tableItem)" class="btn btn-small success-btn" style="padding: 0 10px">{{$t('button.add')}}</button>
+            <button @click="addEmptyItem('group', tableItem)"  class="btn btn-small success-btn" style="padding: 0 10px">{{$t('button.add')}}</button>
             <button @click="updateNotify(tableItem)" class="btn btn-small btn-cancel-f">{{$t('button.save')}}</button>
             <div class="receiver-config-set" style="margin: 8px 0">
             <template v-if="tableItem.groupNotify.length > 0">
-              <div style="margin: 4px 0px;padding:8px 12px;width:680px">
+              <div style="margin: 4px 0px;padding:8px 12px;">
                 <template v-for="(item, index) in tableItem.groupNotify">
                   <p :key="index + 'S'">
                     <Button
@@ -32,15 +32,28 @@
                         <Option v-for="type in ['firing', 'ok']" :key="type" :value="type">{{type}}</Option>
                       </Select>
                     </Tooltip>
-                    <Tooltip :content="$t('proc_callback_key')" :delay="1000">
-                      <Select v-model="item.proc_callback_key" style="width: 160px" :placeholder="$t('proc_callback_key')">
-                        <Option v-for="(flow, flowIndex) in flows" :key="flowIndex" :value="flow.procDefKey">{{flow.procDefName}}</Option>
-                      </Select>
-                    </Tooltip>
                     <Tooltip :content="$t('resourceLevel.role')" :delay="1000">
-                      <Select v-model="item.notify_roles" :max-tag-count="2" style="width: 360px" multiple filterable :placeholder="$t('field.role')">
+                      <Select v-model="item.notify_roles" :max-tag-count="2" style="width: 200px" multiple filterable :placeholder="$t('field.role')">
                         <Option v-for="item in allRole" :value="item.name" :key="item.value">{{ item.name }}</Option>
                       </Select>
+                    </Tooltip>
+                    <Tooltip :content="$t('proc_callback_key')" :delay="1000">
+                      <Select v-model="item.proc_callback_key" @on-change="procCallbackKeyChange(item.proc_callback_key, tableIndex, index)" style="width: 160px" :placeholder="$t('proc_callback_key')">
+                        <Option v-for="(flow, flowIndex) in flows" :key="flowIndex" :value="flow.procDefKey" :label="flow.procDefName + ' [' + flow.procDefVersion + ']'"><span>{{ flow.procDefName }} [{{ flow.procDefVersion }}]</span></Option>
+                      </Select>
+                    </Tooltip>
+                    <Tooltip :content="$t('m_callback_mode')" :delay="1000">
+                      <Select v-model="item.proc_callback_mode" style="width: 200px" :placeholder="$t('m_callback_mode')">
+                        <Option v-for="item in callbackMode" :value="item.value" :key="item.value">{{ $t(item.label) }}</Option>
+                      </Select>
+                    </Tooltip>
+                    <Tooltip :content="$t('tableKey.description')" :delay="1000">
+                      <input 
+                        v-model="item.description" 
+                        style="width: 200px"
+                        type="text" 
+                        :placeholder="$t('tableKey.description')"
+                        class="form-control model-input search-input c-dark"/>
                     </Tooltip>
                   </p>
                 </template>
@@ -272,7 +285,11 @@ export default {
       isShowWarningDelete: false,
       selectedData: {},
 
-      groupNotify: []
+      groupNotify: [],
+      callbackMode: [
+        {label: 'm_manual', value: 'manual'},
+        {label: 'm_auto', value: 'auto'}
+      ]
     }
   },
   methods: {
@@ -290,11 +307,22 @@ export default {
         this.modelConfig.addRow.notify.splice(index, 1)
       }
     },
+    procCallbackKeyChange(proc_callback_key, tableIndex, index) {
+      const findFlow = this.flows.find(f => f.procDefKey === proc_callback_key)
+      if (findFlow) {
+        this.totalPageConfig[tableIndex].groupNotify[index].proc_callback_name = `${findFlow.procDefName}[${findFlow.procDefVersion}]`
+      } else {
+        this.totalPageConfig[tableIndex].groupNotify[index].proc_callback_name = ''
+      }
+    },
     addEmptyItem (type, tableItem) {
       const tmp = {
         alarm_action: 'firing',
         proc_callback_key: '',
-        notify_roles: []
+        proc_callback_name: '',
+        notify_roles: [],
+        proc_callback_mode: 'manual',
+        description: ''
       }
       if (type === 'group') { 
         tableItem.groupNotify.push(tmp)
