@@ -278,7 +278,7 @@
   "m_db": "DB",
   "m_log_file": "Log File",
   "m_regular": "Regular",
-  "m_text": "Text",
+  "m_log_sample": "Log Sample",
   "m_match": "Match",
   "m_background_trial": "Background Trial",
   "m_guid": "Guid",
@@ -332,5 +332,9 @@
   "m_copied_to_clipboard": "Copied to clipboard.",
   "m_duplicate_alert_object": "Duplicate alert object",
   "m_delete_tip": "About to delete: ",
-  "m_already_initiated": "The alert has already initiated orchestration."
+  "m_already_initiated": "The alert has already initiated orchestration.",
+  "m_tag_name": "Tag name",
+  "m_service_code_regex": "Service Code Regex",
+  "m_return_code_regex": "Return Code Regex",
+  "m_time_regex": "Time Regex"
 }

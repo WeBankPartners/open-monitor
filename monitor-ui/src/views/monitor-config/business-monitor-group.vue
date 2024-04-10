@@ -37,6 +37,13 @@
             </button>
             <extendTable :detailConfig="pageConfig.table.isCustomMetricExtend.detailConfig"></extendTable>
           </div>
+          <div style="margin:8px;border:1px solid #2db7f5">
+            <button @click="addNewMetric(pageConfig.table.isNewMetricExtend.parentData)" type="button" style="margin-top:8px;padding: 0 10px" class="btn btn-small success-btn">
+              <i class="fa fa-plus"></i>
+              {{$t('新增不知道名称的正则')}}
+            </button>
+            <extendTable :detailConfig="pageConfig.table.isNewMetricExtend.detailConfig"></extendTable>
+          </div>
         </div>
       </PageTable>
     </section>
@@ -119,6 +126,7 @@
         <Button @click="okAddAndEdit" type="primary">{{$t('button.save')}}</Button>
       </div>
     </Modal>
+    <!-- 新增JSON正则 -->
     <Modal
       v-model="ruleModelConfig.isShow"
       :title="$t('m_json_regular')"
@@ -127,16 +135,12 @@
       >
       <div :style="{ 'max-height': MODALHEIGHT + 'px', overflow: 'auto' }">
         <Form :label-width="100">
-          <FormItem :label="$t('tableKey.tags')">
-            <Input v-model="ruleModelConfig.addRow.tags" style="width:100%" />
-          </FormItem>
-          <FormItem :label="$t('tableKey.regular')">
-            <Input type="textarea" v-model="ruleModelConfig.addRow.json_regular" style="width: 580px"/>
-            <Button v-if="!showRegConfig" @click="showRegConfig = !showRegConfig">{{$t('menu.configuration')}}</Button>
+          <FormItem :label="$t('tableKey.name')">
+            <Input v-model="ruleModelConfig.addRow.name" style="width:100%" />
           </FormItem>
         </Form>
-        <RegTest v-if="showRegConfig" @updateReg="updateReg" @cancelReg="cancelReg"></RegTest>
-        <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;">
+        <RegTestDirectDisplay @setRegResult="getRegResult" @updateReg="updateReg" @cancelReg="cancelReg"></RegTestDirectDisplay>
+        <div v-if="ruleModelConfig.addRow.trialCalculationResult.length>0" style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;">
           <template v-for="(item, index) in ruleModelConfig.addRow.metric_list">
             <p :key="index + 3">
               <Button
@@ -147,7 +151,11 @@
                 icon="md-close"
               ></Button>
               <Tooltip :content="$t('m_key')" :delay="1000">
-                <Input v-model="item.json_key" style="width: 190px" :placeholder="$t('m_key') + ' e.g:[.*][.*]'" />
+                <Select v-model="item.json_key" filterable clearable style="width:120px" :placeholder="$t('m_key')">
+                  <Option v-for="res in ruleModelConfig.addRow.trialCalculationResult" :value="res" :key="res">{{
+                    res
+                  }}</Option>
+                </Select>
               </Tooltip>
               <Tooltip :content="$t('field.metric') + ' , e.g:code'" :delay="1000">
                 <Input v-model="item.metric" style="width: 190px" :placeholder="$t('field.metric') + ' , e.g:code'" />
@@ -161,6 +169,13 @@
               </Tooltip>
               <Tooltip :content="$t('field.displayName')" :delay="1000">
                 <Input v-model="item.display_name" style="width: 160px" :placeholder="$t('field.displayName')" />
+              </Tooltip>
+              <Tooltip :content="$t('m_tag_name')" :delay="1000">
+                <Select v-model="item.tag_config" multiple filterable clearable style="width:120px" :placeholder="$t('m_tag_name')">
+                  <Option v-for="res in ruleModelConfig.addRow.trialCalculationResult" :value="res" :key="res">{{
+                    res
+                  }}</Option>
+                </Select>
               </Tooltip>
             </p>
             <div :key="index + 1" style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;text-align: end;">
@@ -196,9 +211,6 @@
                 >{{ $t('addStringMap') }}</Button
               >
             </div>
-            
-
-
             <Divider :key="index + 'Q'" />
           </template>
           <Button
@@ -416,6 +428,22 @@
         </div>
       </div>
     </Modal>
+
+    <!-- 最后新增的正则配置 -->
+    <Modal
+      v-model="newMetricModelConfig.isShow"
+      :title="$t('新的正则')"
+      width="840"
+      :mask-closable="false"
+      >
+      <div :style="{ 'max-height': MODALHEIGHT + 'px', overflow: 'auto' }">
+        <MultiRegTest @setRegResult="getRegResult" @updateReg="updateReg" @cancelReg="cancelReg"></MultiRegTest>
+      </div>
+      <div slot="footer">
+        <Button @click="cancelRule">{{$t('button.cancel')}}</Button>
+        <Button @click="saveRule" type="primary">{{$t('button.save')}}</Button>
+      </div>
+    </Modal>
   </div>
 </template>
 
@@ -423,6 +451,8 @@
 import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
 import {baseURL_config} from '@/assets/js/baseURL'
 import RegTest from '@/components/reg-test'
+import MultiRegTest from '@/components/multiple-reg-test'
+import RegTestDirectDisplay from '@/components/reg-test-direct-display'
 import extendTable from '@/components/table-page/extend-table'
 import axios from 'axios'
 let tableEle = [
@@ -502,6 +532,27 @@ export default {
               data: [1],
               scales: ['25%', '20%', '15%', '20%', '20%']
             }]
+          },
+          isNewMetricExtend: {
+            parentData: null,
+            func: 'getExtendInfo',
+            data: {},
+            slot: 'newMetricTableExtend',
+            detailConfig: [{
+              isExtendF: true,
+              title: '',
+              config: [
+                {title: 'tableKey.regular', value: 'regular', display: true},
+                {title: 'field.metric', value: 'metric', display: true},
+                {title: 'field.aggType', value: 'agg_type', display: true},
+                {title: 'table.action',btn:[
+                  {btn_name: 'button.edit', btn_func: 'editNewMetricItem'},
+                  {btn_name: 'button.remove', btn_func: 'delNewCustomMetricConfirmModal'}
+                ]}
+              ],
+              data: [1],
+              scales: ['25%', '20%', '15%', '20%', '20%']
+            }]
           }
         }
       },
@@ -530,8 +581,23 @@ export default {
         isAdd: true,
         addRow: {
           log_metric_monitor: null,
-          json_regular: null,
-          tags: null,
+          json_regular: null, // 正则表达式
+          log_sample: '', // 日志样例
+          name: '',
+          trialCalculationResult: [], // 试算结果
+          metric_list: []
+        },
+        aggOption: ['sum', 'avg', 'count', 'max', 'min']
+      },
+      newMetricModelConfig: {
+        isShow: false,
+        isAdd: true,
+        addRow: {
+          log_metric_monitor: null,
+          json_regular: null, // 正则表达式
+          log_sample: '', // 日志样例
+          name: '',
+          trialCalculationResult: [], // 试算结果
           metric_list: []
         },
         aggOption: ['sum', 'avg', 'count', 'max', 'min']
@@ -727,6 +793,12 @@ export default {
       this.addAndEditModal.dataConfig.endpoint_rel = rowData.endpoint_rel
       this.addAndEditModal.isShow = true
     },
+    getRegResult (result, logSample, regular) {
+      this.ruleModelConfig.addRow.metric_list = []
+      this.$set(this.ruleModelConfig.addRow, 'trialCalculationResult', result || [])
+      this.ruleModelConfig.addRow.json_regular = regular
+      this.ruleModelConfig.addRow.log_sample = logSample
+    },
     updateReg (reg) {
       this.ruleModelConfig.addRow.json_regular = reg
       this.showRegConfig = false
@@ -835,7 +907,9 @@ export default {
       this.ruleModelConfig.addRow = {
         log_metric_monitor: null,
         json_regular: null,
-        tags: null,
+        log_sample: '',
+        name: '',
+        trialCalculationResult: [],
         metric_list: []
       }
       this.ruleModelConfig.isShow = false
@@ -1053,11 +1127,22 @@ export default {
         this.$root.$store.commit('changeTableExtendActive', -1)
       }, {isNeedloading:true})
       this.getDbDetail(targrtId)
-    }
+    },
+    //#region 日志文件下的新增正则
+    addNewMetric (rowData) {
+      // this.cancelReg()
+      // this.cancelRule()
+      this.activeData = rowData
+      this.newMetricModelConfig.isAdd = true
+      this.newMetricModelConfig.isShow = true
+    },
+    //#endregion
   },
   components: {
     extendTable,
-    RegTest
+    RegTest,
+    RegTestDirectDisplay,
+    MultiRegTest
   },
 }
 </script>

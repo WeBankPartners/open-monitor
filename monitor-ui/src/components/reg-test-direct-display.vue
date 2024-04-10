@@ -1,8 +1,8 @@
 <template>
-  <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
-    <Form :label-width="80">
-      <FormItem :label="$t('m_log_sample')">
-        <Input type="textarea" v-model="textString">
+  <div style="margin: 4px 0px;">
+    <Form :label-width="100">
+      <FormItem :label="$t('m_log_sample')" style="margin-bottom:12px">
+        <Input type="textarea" v-model="textString" :rows="4">
         </Input>
       </FormItem>
       <FormItem :label="$t('tableKey.regular')">
@@ -12,15 +12,11 @@
       <FormItem :label="$t('m_match')">
         <div v-html="regRes" style="word-break: break-all;"></div>
       </FormItem>
-      <FormItem>
-        <Button type="primary" size="small" @click="apiTest">{{$t('m_background_trial')}}</Button>
+      <FormItem style="text-align: right;">
+        <Button type="primary" size="small" :disabled="textString==='' || regx===''" @click="apiTest">{{$t('m_background_trial')}}</Button>
       </FormItem>
       <FormItem>
         {{apiRes}}
-      </FormItem>
-      <FormItem style="text-align: right">
-        <Button size="small" @click="cancelReg">{{$t('button.cancel')}}</Button>
-        <Button size="small" @click="saveReg" type="info">{{$t('button.save')}}</Button>
       </FormItem>
     </Form>
   </div>
@@ -31,8 +27,8 @@ export default {
   name: '',
   data () {
     return {
-      regx: '',
-      textString: '',
+      regx: '3245',
+      textString: 'eqrwgtsf',
       // regRes: '',
       apiRes: ''
     }
@@ -68,6 +64,7 @@ export default {
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v2/regexp/test/match', params, (responseData) => {
         this.apiRes = responseData
+        this.$emit('setRegResult', ['aaa', 'bbb'], this.textString, this.regx)
       }, {isNeedloading:false})
     }
   },

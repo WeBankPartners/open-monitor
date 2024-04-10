@@ -277,7 +277,7 @@
   "m_db": "数据库",
   "m_log_file": "日志文件",
   "m_regular": "正则",
-  "m_text": "文本",
+  "m_log_sample": "日志样例",
   "m_match": "匹配",
   "m_background_trial": "后台试算",
   "m_guid": "唯一名称",
@@ -331,5 +331,9 @@
   "m_copied_to_clipboard": "已复制至剪切板",
   "m_duplicate_alert_object": "复制告警对象",
   "m_delete_tip": "即将删除：",
-  "m_already_initiated": "该告警已经发起过编排"
+  "m_already_initiated": "该告警已经发起过编排",
+  "m_tag_name": "标签名",
+  "m_service_code_regex": "服务码正则",
+  "m_return_code_regex": "返回码正则",
+  "m_time_regex": "耗时正则"
 }
