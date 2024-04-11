@@ -866,7 +866,6 @@ export default {
       this.ruleModelConfig.isShow = true
     },
     getExtendInfo(item){
-      console.log(1.4, item)
       item.json_config_list.forEach(xx => xx.pId = item.guid)
       this.pageConfig.table.isExtend.detailConfig[0].data = item.json_config_list
       this.pageConfig.table.isExtend.parentData = item
