@@ -753,12 +753,15 @@
         return count
       },
       loadDetail(item, index) {
+        console.log(1.1)
         this.currentActive = this.currentActive === index ? -1 : index
+        console.log(1.2, this.currentActive)
         this.$root.$store.commit('changeTableExtendActive',this.currentActive)
         if(this.currentActive === -1){
           return
         }
         let func = this.pageConfig.table.isExtend.func
+        console.log(1.3, func)
         this.$parent.$parent[func](item,index)
       },
       // 控制编辑按钮是否显示
