@@ -23,6 +23,7 @@
 
       <PageTable :pageConfig="pageConfig">
         <div slot='tableExtend'>
+          123456
           <div style="margin:8px;border:1px solid #2db7f5">
             <button @click="singleAddF(pageConfig.table.isExtend.parentData)" type="button" style="margin-top:8px;padding: 0 10px" class="btn btn-small success-btn">
               <i class="fa fa-plus"></i>
