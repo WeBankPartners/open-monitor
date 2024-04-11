@@ -74,15 +74,15 @@ export default {
         option_value: this.$route.query.endpoint,
         type: this.$route.query.type
       }
-      this.$root.$store.commit('storeip', this.endpointObject)
+      this.$root.$monitorStore.commit('storeip', this.endpointObject)
       this.getMainConfig()
     }
   },
   methods: {
     getMainConfig () {
-      if (this.$root.$validate.isEmpty_reset(this.endpointObject) && !this.$root.$validate.isEmpty_reset(this.$root.$store.state.ip)) {
-        this.endpointObject = this.$root.$store.state.ip
-        this.$root.$store.commit('storeip', {})
+      if (this.$root.$validate.isEmpty_reset(this.endpointObject) && !this.$root.$validate.isEmpty_reset(this.$root.$monitorStore.state.ip)) {
+        this.endpointObject = this.$root.$monitorStore.state.ip
+        this.$root.$monitorStore.commit('storeip', {})
       }
       this.getChartsConfig()
       // const type = this.endpointObject.type
@@ -111,9 +111,9 @@ export default {
       if (this.$root.$validate.isEmpty_reset(this.endpoint)) {
         return
       }
-      if (this.$root.$validate.isEmpty_reset(this.endpointObject) && !this.$root.$validate.isEmpty_reset(this.$root.$store.state.ip)) {
-        this.endpointObject = this.$root.$store.state.ip
-        this.$root.$store.commit('storeip', {})
+      if (this.$root.$validate.isEmpty_reset(this.endpointObject) && !this.$root.$validate.isEmpty_reset(this.$root.$monitorStore.state.ip)) {
+        this.endpointObject = this.$root.$monitorStore.state.ip
+        this.$root.$monitorStore.commit('storeip', {})
       }
       let params = {}
       if (this.endpointObject.type === 'sys' ) {

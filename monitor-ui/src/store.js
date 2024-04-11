@@ -2,7 +2,7 @@ import Vue from "vue";
 import vuex from "vuex";
 Vue.use(vuex);
 
-export default new vuex.Store({
+const store = new vuex.Store({
   state: {
     ip: {},
     tableExtendActive: -1, //table组件扩展状态
@@ -20,3 +20,4 @@ export default new vuex.Store({
     }
   }
 });
+export { store as monitorStore }

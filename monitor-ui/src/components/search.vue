@@ -130,7 +130,7 @@ export default {
     }
     if (this.$root.$validate.isEmpty_reset(outerData) && !this.$root.$validate.isEmpty_reset(this.$route.query)) {
       this.endpoint = this.$route.query.endpoint
-      this.$root.$store.commit('storeip', {
+      this.$root.$monitorStore.commit('storeip', {
         id: '',
         option_value: this.$route.query.endpoint,
         type: this.$route.query.type
@@ -139,9 +139,9 @@ export default {
   },
   methods: {
     getMainConfig () {
-      if (this.$root.$validate.isEmpty_reset(this.endpointObject) && !this.$root.$validate.isEmpty_reset(this.$root.$store.state.ip)) {
-        this.endpointObject = this.$root.$store.state.ip
-        this.$root.$store.commit('storeip', {})
+      if (this.$root.$validate.isEmpty_reset(this.endpointObject) && !this.$root.$validate.isEmpty_reset(this.$root.$monitorStore.state.ip)) {
+        this.endpointObject = this.$root.$monitorStore.state.ip
+        this.$root.$monitorStore.commit('storeip', {})
       }
       const type = this.endpointObject.type
       return new Promise(resolve => {
@@ -190,9 +190,9 @@ export default {
       if (this.$root.$validate.isEmpty_reset(this.endpoint)) {
         return
       }
-      if (this.$root.$validate.isEmpty_reset(this.endpointObject) && !this.$root.$validate.isEmpty_reset(this.$root.$store.state.ip)) {
-        this.endpointObject = this.$root.$store.state.ip
-        this.$root.$store.commit('storeip', {})
+      if (this.$root.$validate.isEmpty_reset(this.endpointObject) && !this.$root.$validate.isEmpty_reset(this.$root.$monitorStore.state.ip)) {
+        this.endpointObject = this.$root.$monitorStore.state.ip
+        this.$root.$monitorStore.commit('storeip', {})
       }
       if (this.is_mom_yoy) {
         if (this.compareFirstDate[0] === '' || this.compareSecondDate[0] === '') {

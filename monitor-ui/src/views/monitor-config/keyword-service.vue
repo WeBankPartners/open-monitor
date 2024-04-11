@@ -552,7 +552,7 @@ export default {
         this.showManagement = true
         this.targetDetail = responseData[0]
         this.pageConfig.table.tableData = responseData[0].config
-        this.$root.$store.commit('changeTableExtendActive', -1)
+        this.$root.$monitorStore.commit('changeTableExtendActive', -1)
       }, {isNeedloading:true})
     }
   },

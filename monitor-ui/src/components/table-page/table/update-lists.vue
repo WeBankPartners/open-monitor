@@ -86,7 +86,7 @@
         }
         this.$parent.changeTdNumber()
         // this.tdNumber = this.gettdsLength()
-        this.$root.$store.commit('catchColumn', column)
+        this.$root.$monitorStore.commit('catchColumn', column)
         this.$root.JQ('#custom_th_Modal').modal('hide')
       },
     },

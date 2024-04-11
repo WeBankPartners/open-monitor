@@ -484,7 +484,7 @@ export default {
           return tmp
         })
         this.showManagement = true
-        this.$root.$store.commit('changeTableExtendActive', -1)
+        this.$root.$monitorStore.commit('changeTableExtendActive', -1)
       }, {isNeedloading:true})
     }
   },

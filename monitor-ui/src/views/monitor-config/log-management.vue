@@ -68,7 +68,7 @@ export default {
    this.getTargrtList()
   },
   beforeDestroy () {
-    this.$root.$store.commit('changeTableExtendActive', -1)
+    this.$root.$monitorStore.commit('changeTableExtendActive', -1)
   },
   methods: {
     typeChange () {

@@ -2,7 +2,7 @@ import 'babel-polyfill'
 import Vue from 'vue'
 import App from '@/App.vue'
 import router from './router'
-import store from '@/store.js'
+import { monitorStore } from '@/store.js'
 import '@/assets/css/local.bootstrap.css'
 import 'bootstrap/dist/js/bootstrap.min.js'
 import 'font-awesome/css/font-awesome.css'
@@ -98,10 +98,9 @@ Vue.component('tdSlot', {
     }
   }
 })
-
+Vue.prototype.$monitorStore = monitorStore
 new Vue({
   render: h => h(App),
-  store,
   router,
   i18n
 }).$mount('#app')

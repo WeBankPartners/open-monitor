@@ -1,5 +1,5 @@
 import Vue from 'vue'
-import store from '@/store.js'
+import monitorStore from '@/store.js'
 import router from './router-plugin'
 import routerP from './router-plugin-p'
 import '@/assets/css/local.bootstrap.css'
@@ -19,7 +19,7 @@ window.use(vuex)
 window.addOptions({
   $httpRequestEntrance: httpRequestEntrance,
   JQ: jquery,
-  $store: store,
+  $monitorStore: monitorStore,
   $validate: validate,
   $tableUtil: tableUtil,
   apiCenter: apiCenter,

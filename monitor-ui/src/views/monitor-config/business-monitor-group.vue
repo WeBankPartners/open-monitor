@@ -1052,7 +1052,7 @@ export default {
         this.showManagement = true
         this.targetDetail = responseData
         this.pageConfig.table.tableData = responseData.config
-        this.$root.$store.commit('changeTableExtendActive', -1)
+        this.$root.$monitorStore.commit('changeTableExtendActive', -1)
       }, {isNeedloading:true})
       this.getDbDetail(targrtId)
     }

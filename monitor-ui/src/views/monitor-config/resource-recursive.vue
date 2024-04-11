@@ -431,7 +431,7 @@ export default {
       })
     },
     choiceColor (type) {
-      let cacheColor = this.$root.$store.state.cacheTagColor
+      let cacheColor = this.$root.$monitorStore.state.cacheTagColor
       let color = ''
       // eslint-disable-next-line no-prototype-builtins
       if (Object.keys(cacheColor).includes(type)) {
@@ -439,7 +439,7 @@ export default {
       } else {
         color = randomColor[this.count]
         cacheColor[type] = randomColor[this.count]
-        this.$root.$store.commit('cacheTagColor', cacheColor)
+        this.$root.$monitorStore.commit('cacheTagColor', cacheColor)
       }
       return color
     },
