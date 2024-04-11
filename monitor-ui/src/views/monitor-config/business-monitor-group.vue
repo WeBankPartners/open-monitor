@@ -561,7 +561,7 @@ export default {
         isAdd: false,
         dataConfig: {
           service_group: '',
-          log_path: [],
+          log_path: '',
           monitor_type: '',
           endpoint_rel: []
         },
