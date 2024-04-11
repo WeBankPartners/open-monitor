@@ -510,7 +510,7 @@ export default {
         isAdd: false,
         dataConfig: {
           service_group: '',
-          log_path: [],
+          log_path: '',
           monitor_type: '',
           endpoint_rel: []
         },
@@ -865,6 +865,7 @@ export default {
       this.ruleModelConfig.isShow = true
     },
     getExtendInfo(item){
+      console.log(1.4, item)
       item.json_config_list.forEach(xx => xx.pId = item.guid)
       this.pageConfig.table.isExtend.detailConfig[0].data = item.json_config_list
       this.pageConfig.table.isExtend.parentData = item
