@@ -117,7 +117,6 @@
             <template  v-for="(val,i) in table.tableEle">
               <td class="c-dark" v-if="val.display" :key="i" :class="ellipsis(value, val)?'tdoverflow':''"><!--ellipsis是否显示省略-->
                 <div class="extendStyle" v-if='table.isExtend && i==firstShow'>
-                  {{ tableDataIndex }}--{{ currentActive }}
                     <a v-show="tableDataIndex != currentActive" @click="loadDetail(value,tableDataIndex)"><i class="ivu-icon ivu-icon-ios-arrow-forward" style="font-size: 20px;"></i></a>
                     <a v-show="tableDataIndex === currentActive" @click="loadDetail(value,tableDataIndex)" class="active"><i class="ivu-icon ivu-icon-ios-arrow-forward" style="font-size: 20px;"></i></a>
                 </div>
@@ -754,15 +753,12 @@
         return count
       },
       loadDetail(item, index) {
-        console.log(1.1)
         this.currentActive = this.currentActive === index ? -1 : index
-        console.log(1.2, this.currentActive)
         this.$root.$store.commit('changeTableExtendActive',this.currentActive)
         if(this.currentActive === -1){
           return
         }
         let func = this.pageConfig.table.isExtend.func
-        console.log(1.3, func)
         this.$parent.$parent[func](item,index)
       },
       // 控制编辑按钮是否显示
