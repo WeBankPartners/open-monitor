@@ -117,6 +117,7 @@
             <template  v-for="(val,i) in table.tableEle">
               <td class="c-dark" v-if="val.display" :key="i" :class="ellipsis(value, val)?'tdoverflow':''"><!--ellipsis是否显示省略-->
                 <div class="extendStyle" v-if='table.isExtend && i==firstShow'>
+                  {{ tableDataIndex }}--{{ currentActive }}
                     <a v-show="tableDataIndex != currentActive" @click="loadDetail(value,tableDataIndex)"><i class="ivu-icon ivu-icon-ios-arrow-forward" style="font-size: 20px;"></i></a>
                     <a v-show="tableDataIndex === currentActive" @click="loadDetail(value,tableDataIndex)" class="active"><i class="ivu-icon ivu-icon-ios-arrow-forward" style="font-size: 20px;"></i></a>
                 </div>
