@@ -47,6 +47,7 @@ export default {
       },
       exect() {
         this.confirmInfo.callback()
+        this.$root.JQ('#deleteConfirmId').modal('hide')
       }
     }
 }
