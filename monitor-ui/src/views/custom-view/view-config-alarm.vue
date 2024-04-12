@@ -9,6 +9,21 @@
       <template v-for="(alarmItem, alarmIndex) in resultData">
         <section :key="alarmIndex" class="alarm-item c-dark-exclude-color" :class="'alarm-item-border-'+ alarmItem.s_priority">
           <div style="float:right">
+            <Poptip trigger="hover">
+              <div slot="title" style="white-space: normal;color: #2d8cf0">
+                <p>{{ $t('m_initiate_orchestration') }}: {{ data.notify_callback_name }}</p>
+              </div>
+              <div slot="content" style="white-space: normal;padding:16px">
+                <p>{{ $t('tableKey.description') }}: {{ data.notify_message }}</p>
+              </div>
+              <Icon
+                type="ios-megaphone"
+                size="18"
+                class="fa-operate"
+                v-if="data.notify_id !==''"
+                @click="goToNotify(data)"
+              />
+            </Poptip>
             <Tooltip :content="$t('menu.endpointView')">
               <Icon type="ios-stats" size="18" class="fa-operate" v-if="!alarmItem.is_custom" @click="goToEndpointView(alarmItem)"/>
             </Tooltip>
@@ -165,6 +180,14 @@ export default {
       this.$router.push({path: '/endpointView'})
       // const news = this.$router.resolve({name: 'endpointView'})
       // window.open(news.href, '_blank')
+    },
+    goToNotify (item) {
+      let params = {
+        id: item.id
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.startNotify, params, () => {
+        this.$Message.success(this.$t('tips.success'))
+      },{isNeedloading: false})
     },
     deleteConfirmModal (rowData) {
       this.selectedData = rowData

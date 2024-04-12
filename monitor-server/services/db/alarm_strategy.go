@@ -124,8 +124,9 @@ func UpdateAlarmStrategy(param *models.GroupStrategyObj) error {
 	for _, v := range param.NotifyList {
 		v.AlarmStrategy = param.Guid
 	}
-	actions = append(actions, getNotifyListDeleteAction(param.Guid, "", "")...)
-	actions = append(actions, getNotifyListInsertAction(param.NotifyList)...)
+	//actions = append(actions, getNotifyListDeleteAction(param.Guid, "", "")...)
+	//actions = append(actions, getNotifyListInsertAction(param.NotifyList)...)
+	actions = append(actions, getNotifyListUpdateAction(param.NotifyList)...)
 	return Transaction(actions)
 }
 
@@ -160,7 +161,7 @@ func getNotifyList(alarmStrategy, endpointGroup, serviceGroup string) (result []
 	}
 	x.SQL(fmt.Sprintf("select * from notify where %s=?", refColumn), refValue).Find(&notifyTable)
 	for _, v := range notifyTable {
-		tmpNotifyObj := models.NotifyObj{Guid: v.Guid, EndpointGroup: v.EndpointGroup, ServiceGroup: v.ServiceGroup, AlarmStrategy: v.AlarmStrategy, AlarmAction: v.AlarmAction, AlarmPriority: v.AlarmPriority, NotifyNum: v.NotifyNum, ProcCallbackName: v.ProcCallbackName, ProcCallbackKey: v.ProcCallbackKey, CallbackUrl: v.CallbackUrl, CallbackParam: v.CallbackParam}
+		tmpNotifyObj := models.NotifyObj{Guid: v.Guid, EndpointGroup: v.EndpointGroup, ServiceGroup: v.ServiceGroup, AlarmStrategy: v.AlarmStrategy, AlarmAction: v.AlarmAction, AlarmPriority: v.AlarmPriority, NotifyNum: v.NotifyNum, ProcCallbackName: v.ProcCallbackName, ProcCallbackKey: v.ProcCallbackKey, CallbackUrl: v.CallbackUrl, CallbackParam: v.CallbackParam, ProcCallbackMode: v.ProcCallbackMode, Description: v.Description}
 		tmpNotifyObj.NotifyRoles = getNotifyRoles(v.Guid)
 		result = append(result, &tmpNotifyObj)
 	}
@@ -210,13 +211,54 @@ func getNotifyListInsertAction(notifyList []*models.NotifyObj) (actions []*Actio
 		if v.NotifyNum == 0 {
 			v.NotifyNum = 1
 		}
-		tmpAction := Action{Sql: fmt.Sprintf("insert into notify(guid,%s,alarm_action,alarm_priority,notify_num,proc_callback_name,proc_callback_key,callback_url,callback_param) value (?,'%s',?,?,?,?,?,?,?)", refColumn, refValue)}
-		tmpAction.Param = []interface{}{notifyGuidList[i], v.AlarmAction, v.AlarmPriority, v.NotifyNum, v.ProcCallbackName, v.ProcCallbackKey, v.CallbackUrl, v.CallbackParam}
+		tmpAction := Action{Sql: fmt.Sprintf("insert into notify(guid,%s,alarm_action,alarm_priority,notify_num,proc_callback_name,proc_callback_key,callback_url,callback_param,proc_callback_mode,description) value (?,'%s',?,?,?,?,?,?,?,?,?)", refColumn, refValue)}
+		tmpAction.Param = []interface{}{"notify_" + notifyGuidList[i], v.AlarmAction, v.AlarmPriority, v.NotifyNum, v.ProcCallbackName, v.ProcCallbackKey, v.CallbackUrl, v.CallbackParam, v.ProcCallbackMode, v.Description}
 		actions = append(actions, &tmpAction)
 		if len(v.NotifyRoles) > 0 {
 			tmpNotifyRoleGuidList := guid.CreateGuidList(len(v.NotifyRoles))
 			for ii, vv := range v.NotifyRoles {
 				actions = append(actions, &Action{Sql: "insert into notify_role_rel(guid,notify,`role`) value (?,?,?)", Param: []interface{}{tmpNotifyRoleGuidList[ii], notifyGuidList[i], vv}})
+			}
+		}
+	}
+	return actions
+}
+
+func getNotifyListUpdateAction(notifyList []*models.NotifyObj) (actions []*Action) {
+	actions = []*Action{}
+	if len(notifyList) == 0 {
+		return actions
+	}
+	var refColumn, refValue string
+	if notifyList[0].AlarmStrategy != "" {
+		refColumn, refValue = "alarm_strategy", notifyList[0].AlarmStrategy
+	} else if notifyList[0].EndpointGroup != "" {
+		refColumn, refValue = "endpoint_group", notifyList[0].EndpointGroup
+	} else if notifyList[0].ServiceGroup != "" {
+		refColumn, refValue = "service_group", notifyList[0].ServiceGroup
+	} else {
+		return actions
+	}
+	notifyGuidList := guid.CreateGuidList(len(notifyList))
+	for i, v := range notifyList {
+		if v.NotifyNum == 0 {
+			v.NotifyNum = 1
+		}
+		if v.Guid != "" {
+			tmpAction := Action{Sql: fmt.Sprintf("update notify set alarm_action=?,notify_num=?,proc_callback_name=?,proc_callback_key=?,callback_url=?,callback_param=?,proc_callback_mode=?,description=? where guid=?")}
+			tmpAction.Param = []interface{}{v.AlarmAction, v.NotifyNum, v.ProcCallbackName, v.ProcCallbackKey, v.CallbackUrl, v.CallbackParam, v.ProcCallbackMode, v.Description, v.Guid}
+			actions = append(actions, &tmpAction)
+			actions = append(actions, &Action{Sql: "delete from notify_role_rel where notify=?", Param: []interface{}{v.Guid}})
+		} else {
+			v.Guid = "notify_" + notifyGuidList[i]
+			tmpAction := Action{Sql: fmt.Sprintf("insert into notify(guid,%s,alarm_action,alarm_priority,notify_num,proc_callback_name,proc_callback_key,callback_url,callback_param,proc_callback_mode,description) value (?,'%s',?,?,?,?,?,?,?,?,?)", refColumn, refValue)}
+			tmpAction.Param = []interface{}{v.Guid, v.AlarmAction, v.AlarmPriority, v.NotifyNum, v.ProcCallbackName, v.ProcCallbackKey, v.CallbackUrl, v.CallbackParam, v.ProcCallbackMode, v.Description}
+			actions = append(actions, &tmpAction)
+		}
+		if len(v.NotifyRoles) > 0 {
+			tmpNotifyRoleGuidList := guid.CreateGuidList(len(v.NotifyRoles))
+			for ii, vv := range v.NotifyRoles {
+				actions = append(actions, &Action{Sql: "insert into notify_role_rel(guid,notify,`role`) value (?,?,?)", Param: []interface{}{tmpNotifyRoleGuidList[ii], v.Guid, vv}})
 			}
 		}
 	}
@@ -460,6 +502,7 @@ func NotifyStrategyAlarm(alarmObj *models.AlarmHandleObj) {
 		log.Logger.Error("Notify strategy alarm fail,alarmStrategy is empty", log.JsonObj("alarm", alarmObj))
 		return
 	}
+	// 延迟发送通知，在延迟时间内如果告警恢复，则不发送通知，避免那种频繁告警恢复的场景
 	if alarmObj.NotifyDelay > 0 {
 		if alarmObj.Status == "firing" {
 			time.Sleep(time.Duration(alarmObj.NotifyDelay) * time.Second)
@@ -482,12 +525,14 @@ func NotifyStrategyAlarm(alarmObj *models.AlarmHandleObj) {
 			}
 		}
 	}
+	// 1.先去单条阈值配置里找通知配置(单条阈值配置里的通知配置)，优先找这颗粒度最小的配置
 	var notifyTable []*models.NotifyTable
 	err := x.SQL("select * from notify where alarm_action=? and alarm_strategy=?", alarmObj.Status, alarmObj.AlarmStrategy).Find(&notifyTable)
 	if err != nil {
 		log.Logger.Error("Query notify table fail", log.Error(err))
 		return
 	}
+	// 2.如果没有再去找策略所属endpoint_group组的策略(就是界面上阈值配置给某类对象组某种对象配的接收人设置)
 	if len(notifyTable) == 0 {
 		var affectServiceGroupList []string
 		var serviceGroup []*models.EndpointServiceRelTable
@@ -500,22 +545,31 @@ func NotifyStrategyAlarm(alarmObj *models.AlarmHandleObj) {
 		}
 		x.SQL("select * from notify where alarm_action=? and endpoint_group in (select endpoint_group from alarm_strategy where guid=?) or service_group in ('"+strings.Join(affectServiceGroupList, "','")+"')", alarmObj.Status, alarmObj.AlarmStrategy).Find(&notifyTable)
 	}
+	// 3.如果都没有，则构造一条通知配置defaultNotify，尝试使用全局接收人接收通知
 	if len(notifyTable) == 0 {
 		log.Logger.Info("can not find notify config,use default notify", log.Int("alarmId", alarmObj.Id), log.String("strategy", alarmObj.AlarmStrategy))
 		notifyTable = []*models.NotifyTable{&models.NotifyTable{Guid: "defaultNotify", AlarmAction: alarmObj.Status, NotifyNum: 1}}
 	} else if len(notifyTable) > 1 {
-		var newNotifyTable []*models.NotifyTable
-		existMap := make(map[string]int)
-		for _, v := range notifyTable {
-			tmpKey := fmt.Sprintf("%s_%s_%s_%s", v.ProcCallbackName, v.ProcCallbackKey, v.CallbackUrl, v.CallbackParam)
-			if _, b := existMap[tmpKey]; b {
-				continue
+		// 按触发的编排信息去重
+		//var newNotifyTable []*models.NotifyTable
+		//existMap := make(map[string]int)
+		//for _, v := range notifyTable {
+		//	tmpKey := fmt.Sprintf("%s_%s_%s_%s", v.ProcCallbackName, v.ProcCallbackKey, v.CallbackUrl, v.CallbackParam)
+		//	if _, b := existMap[tmpKey]; b {
+		//		continue
+		//	}
+		//	newNotifyTable = append(newNotifyTable, v)
+		//	existMap[tmpKey] = 1
+		//}
+		//if len(newNotifyTable) > 0 {
+		//	notifyTable = newNotifyTable
+		//}
+	}
+	if alarmObj.Status == "firing" {
+		if notifyTable[0].ProcCallbackMode == models.AlarmNotifyManualMode && notifyTable[0].ProcCallbackKey != "" {
+			if _, execErr := x.Exec("update alarm set notify_id=? where id=?", notifyTable[0].Guid, alarmObj.Id); execErr != nil {
+				log.Logger.Error("update alarm table notify id fail", log.Int("alarmId", alarmObj.Id), log.Error(execErr))
 			}
-			newNotifyTable = append(newNotifyTable, v)
-			existMap[tmpKey] = 1
-		}
-		if len(newNotifyTable) > 0 {
-			notifyTable = newNotifyTable
 		}
 	}
 	for _, v := range notifyTable {
@@ -533,6 +587,10 @@ func notifyAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleObj) {
 			log.Logger.Error("Notify mail fail", log.String("notifyGuid", notify.Guid), log.Error(mailErr))
 		}
 	}
+	if notify.ProcCallbackMode != models.AlarmNotifyAutoMode {
+		log.Logger.Info("notify proc callback mode is not auto,done", log.Int("alarmId", alarmObj.Id), log.String("notifyId", notify.Guid), log.String("mode", notify.ProcCallbackMode))
+		return
+	}
 	if alarmObj.SPriority == "" {
 		tmpAlarmRows, _ := x.QueryString("select s_priority from alarm where id=?", alarmObj.Id)
 		if len(tmpAlarmRows) > 0 {
@@ -540,7 +598,7 @@ func notifyAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleObj) {
 		}
 	}
 	for i := 0; i < 3; i++ {
-		err = notifyEventAction(notify, alarmObj)
+		err = notifyEventAction(notify, alarmObj, true, "system")
 		if err == nil {
 			break
 		} else {
@@ -552,6 +610,7 @@ func notifyAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleObj) {
 			log.Logger.Info("Event three times fail,but already send mail success ")
 			return
 		}
+		// 如果上面编排触发失败又没发自身通知邮件，尝试发邮件通知
 		err = notifyMailAction(notify, alarmObj)
 		if err != nil {
 			log.Logger.Error("Event three times fail,and notify mail fail", log.String("notifyGuid", notify.Guid), log.Error(err))
@@ -575,8 +634,8 @@ func compareNotifyEventLevel(level string) bool {
 	return result
 }
 
-func notifyEventAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleObj) error {
-	if !compareNotifyEventLevel(alarmObj.SPriority) {
+func notifyEventAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleObj, compareLevel bool, operator string) error {
+	if compareLevel && !compareNotifyEventLevel(alarmObj.SPriority) {
 		log.Logger.Info("notify event disable", log.String("level", alarmObj.SPriority), log.String("minLevel", models.Config().MonitorAlarmCallbackLevelMin))
 		err := notifyMailAction(notify, alarmObj)
 		return err
@@ -600,8 +659,8 @@ func notifyEventAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleO
 	requestParam.EventType = "alarm"
 	requestParam.SourceSubSystem = "SYS_MONITOR"
 	requestParam.OperationKey = notify.ProcCallbackKey
-	requestParam.OperationData = fmt.Sprintf("%d-%s-%s", alarmObj.Id, alarmObj.Status, notify.Guid)
-	requestParam.OperationUser = ""
+	requestParam.OperationData = fmt.Sprintf("%d-%s-%s-%s", alarmObj.Id, alarmObj.Status, notify.Guid, operator)
+	requestParam.OperationUser = operator
 	log.Logger.Info(fmt.Sprintf("new notify request data --> eventSeqNo:%s operationKey:%s operationData:%s", requestParam.EventSeqNo, requestParam.OperationKey, requestParam.OperationData))
 	b, _ := json.Marshal(requestParam)
 	request, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/platform/v1/operation-events", models.CoreUrl), strings.NewReader(string(b)))
@@ -684,18 +743,21 @@ func notifyMailAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleOb
 	} else {
 		x.SQL("select guid,email from `role_new` where guid in (select `role` from notify_role_rel where notify=?)", notify.Guid).Find(&roles)
 	}
+	// 先拿自己角色表的邮箱，独立运行的情况下有用
 	for _, v := range roles {
 		if v.Email != "" {
 			toAddress = append(toAddress, v.Email)
 		}
 		roleList = append(roleList, v.Guid)
 	}
+	// 尝试去拿平台角色的邮箱
 	if models.CoreUrl != "" {
-		tmpToAddress := getRoleMail(roleList)
+		tmpToAddress = getRoleMail(roleList)
 		if len(tmpToAddress) > 0 {
 			toAddress = tmpToAddress
 		}
 	}
+	// 如果都没有，那就尝试用全局默认接收人
 	if len(toAddress) == 0 {
 		toAddress = models.DefaultMailReceiver
 	}
