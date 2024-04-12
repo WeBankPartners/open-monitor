@@ -544,14 +544,18 @@ func calcLogMetricData() {
 				tmpMapData := <-jsonObj.DataChannel
 				jsonDataList = append(jsonDataList, tmpMapData)
 			}
-			tmpTagsKey := []string{}
-			if jsonObj.Tags != "" {
-				tmpTagsKey = strings.Split(jsonObj.Tags, ",")
-			}
+			//tmpTagsKey := []string{}
+			//if jsonObj.Tags != "" {
+			//	tmpTagsKey = strings.Split(jsonObj.Tags, ",")
+			//}
 			for _, metricConfig := range jsonObj.MetricConfig {
 				isMatchNewDataFlag := false
 				for _, tmpMapData := range jsonDataList {
 					// Get metric tags
+					tmpTagsKey := []string{}
+					for _, tmpJsonTagItem := range metricConfig.TagConfig {
+						tmpTagsKey = append(tmpTagsKey, tmpJsonTagItem.Key)
+					}
 					tmpTagString := getLogMetricJsonMapTags(tmpMapData, tmpTagsKey)
 					changedMapData := getLogMetricJsonMapValue(tmpMapData, metricConfig.StringMap)
 					if metricValueFloat, b := changedMapData[metricConfig.Key]; b {
