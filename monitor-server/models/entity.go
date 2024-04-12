@@ -22,14 +22,15 @@ type CoreProcessResult struct {
 }
 
 type CoreProcessDataObj struct {
-	ProcDefId      string `json:"procDefId"`
-	ProcDefKey     string `json:"procDefKey"`
-	ProcDefName    string `json:"procDefName"`
-	ProcDefVersion string `json:"procDefVersion"`
-	ProcDefData    string `json:"procDefData"`
-	RootEntity     string `json:"rootEntity"`
-	Status         string `json:"status"`
-	CreatedTime    string `json:"createdTime"`
+	ProcDefId            string      `json:"procDefId"`
+	ProcDefKey           string      `json:"procDefKey"`
+	ProcDefName          string      `json:"procDefName"`
+	ProcDefVersion       string      `json:"procDefVersion"`
+	ProcDefData          string      `json:"procDefData"`
+	RootEntity           interface{} `json:"rootEntity"`
+	Status               string      `json:"status"`
+	CreatedTime          string      `json:"createdTime"`
+	RootEntityExpression string      `json:"rootEntityExpression"`
 }
 
 type CoreProcessResultData []*CoreProcessDataObj
@@ -75,14 +76,31 @@ type AlarmEntity struct {
 }
 
 type AlarmEntityObj struct {
-	Id         string `json:"id"`
+	Id          string `json:"id"`
 	DisplayName string `json:"displayName"`
-	Status     string `json:"status"`
-	Subject    string `json:"subject"`
-	Content    string `json:"content"`
-	SmsContent string `json:"smsContent"`
-	To         string `json:"to"`
-	ToMail     string `json:"toMail"`
-	ToPhone    string `json:"toPhone"`
-	ToRole     string `json:"toRole"`
+	Status      string `json:"status"`
+	Subject     string `json:"subject"`
+	Content     string `json:"content"`
+	SmsContent  string `json:"smsContent"`
+	To          string `json:"to"`
+	ToMail      string `json:"toMail"`
+	ToPhone     string `json:"toPhone"`
+	ToRole      string `json:"toRole"`
+}
+
+type AlarmEventEntity struct {
+	Status  string                 `json:"status"`
+	Message string                 `json:"message"`
+	Data    []*AlarmEventEntityObj `json:"data"`
+}
+
+type AlarmEventEntityObj struct {
+	Id          string `json:"id"`
+	DisplayName string `json:"displayName"`
+	Handler     string `json:"handler"`
+	HandleRole  string `json:"handleRole"`
+	Content     string `json:"content"`
+	Priority    string `json:"priority"`
+	Message     string `json:"message"`
+	StartTime   string `json:"startTime"`
 }
