@@ -15,7 +15,7 @@
               <button class="btn-cancel-f btn-small" v-if="isPlugin" @click="alarmCallback(item)">{{$t('resourceLevel.alarmCallback')}}</button>
               <i class="fa fa-plus" aria-hidden="true" @click="addPanel(item)"> </i>
               <i class="fa fa-pencil" @click="editPanal(item)" aria-hidden="true"></i>
-              <i class="fa fa-trash-o" @click="deleteConfirmModal(item)" aria-hidden="true"></i>
+              <i class="fa fa-trash-o" style="color:red" @click="deleteConfirmModal(item)" aria-hidden="true"></i>
             </div>
           </div>
         </div>

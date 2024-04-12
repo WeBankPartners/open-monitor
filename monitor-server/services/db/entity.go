@@ -54,21 +54,22 @@ func getCoreProcessKey() string {
 	return coreProcessKey
 }
 
-func GetCoreEventList() (result m.CoreProcessResult, err error) {
+func GetCoreEventList(userToken string) (result m.CoreProcessResult, err error) {
 	if !m.PluginRunningMode {
 		result = m.CoreProcessResult{Data: []*m.CoreProcessDataObj{}}
-		return result,nil
+		return result, nil
 	}
 	if m.CoreUrl == "" {
 		log.Logger.Warn("Get core process key fail, core url is null")
 		return result, fmt.Errorf("get core process key fail, core url is null")
 	}
-	request, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/platform/v1/process/definitions?includeDraft=0&permission=USE", m.CoreUrl), strings.NewReader(""))
+	request, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/platform/v1/public/process/definitions?plugin=monitor&permission=USE&all=N", m.CoreUrl), strings.NewReader(""))
 	if err != nil {
 		log.Logger.Error("Get core process key new request fail", log.Error(err))
 		return result, err
 	}
-	request.Header.Set("Authorization", m.GetCoreToken())
+	//request.Header.Set("Authorization", m.GetCoreToken())
+	request.Header.Set("Authorization", userToken)
 	res, err := ctxhttp.Do(context.Background(), http.DefaultClient, request)
 	if err != nil {
 		log.Logger.Error("Get core process key ctxhttp request fail", log.Error(err))
@@ -238,8 +239,8 @@ func GetAlarmEvent(alarmType, inputGuid string, id int, alarmStatus string) (res
 		return result, err
 	}
 	if id == 0 {
-		tmpQueryMapList,_ := x.QueryString("select max(id) as id from alarm")
-		id,_ = strconv.Atoi(tmpQueryMapList[0]["id"])
+		tmpQueryMapList, _ := x.QueryString("select max(id) as id from alarm")
+		id, _ = strconv.Atoi(tmpQueryMapList[0]["id"])
 		if id == 0 {
 			result = m.AlarmEntityObj{Id: ""}
 			return
@@ -467,4 +468,24 @@ func getSmsAlarmContent(alarm *m.AlarmTable) string {
 		}
 	}
 	return strings.Join(contentList, ";")
+}
+
+func GetAlarmEventEntityData(alarmId int) (result *m.AlarmEventEntityObj, err error) {
+	result = &m.AlarmEventEntityObj{}
+	var alarmRows []*m.AlarmTable
+	err = x.SQL("select endpoint,status,s_metric,s_cond,s_last,s_priority,content,`start` from alarm where id=?", alarmId).Find(&alarmRows)
+	if err != nil {
+		err = fmt.Errorf("query alarm table fail,%s ", err.Error())
+		return
+	}
+	if len(alarmRows) > 0 {
+		alarmObj := alarmRows[0]
+		result.Content = alarmObj.Content
+		result.Priority = alarmObj.SPriority
+		result.StartTime = alarmObj.Start.Format(m.DatetimeFormat)
+		result.DisplayName = fmt.Sprintf("%d-%s-%s", alarmId, alarmObj.Endpoint, alarmObj.SMetric)
+		alarmObjBytes, _ := json.Marshal(alarmObj)
+		result.Message = string(alarmObjBytes)
+	}
+	return
 }
