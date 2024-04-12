@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
 	"net/http"
+	"sort"
 	"strings"
 	"time"
 )
@@ -309,7 +310,17 @@ func CheckRegExpMatch(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	result := db.CheckRegExpMatchPCRE(param)
+	result := models.CheckRegExpResult{}
+	result.MatchText = db.CheckRegExpMatchPCRE(param)
+	if strings.HasPrefix(result.MatchText, "{") {
+		resultJsonMap := make(map[string]interface{})
+		if unmarshalErr := json.Unmarshal([]byte(result.MatchText), &resultJsonMap); unmarshalErr == nil {
+			for k, _ := range resultJsonMap {
+				result.JsonKeyList = append(result.JsonKeyList, k)
+			}
+			sort.Strings(result.JsonKeyList)
+		}
+	}
 	middleware.ReturnSuccessData(c, result)
 }
 
