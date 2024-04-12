@@ -33,6 +33,9 @@
         class="col-md-2"
         style="padding: 0; text-align: right; color: #7e8086"
       >
+        <Tooltip :content="$t('m_duplicate_alert_object')">
+          <Icon :size="18" class="copy-data" type="ios-copy-outline" @click="copyEndpoint(data)" />
+        </Tooltip>
         {{ data.start_string }}
       </div>
     </template>
@@ -40,6 +43,15 @@
       v-if="$attrs.button"
       style="position: absolute; top: 10px; right: 10px"
     >
+      <Poptip trigger="hover">
+        <div slot="title" style="white-space: normal;color: #2d8cf0">
+          <p>{{ $t('m_initiate_orchestration') }}: {{ data.notify_callback_name }}</p>
+        </div>
+        <div slot="content" style="white-space: normal;padding:16px">
+          <p>{{ $t('tableKey.description') }}: {{ data.notify_message }}</p>
+        </div>
+        <img v-if="data.notify_id !==''" @click="goToNotify(data)" style="vertical-align: super;padding:3px 8px;cursor:pointer" src="../assets/img/icon_start_flow.png" />
+      </Poptip>
       <Tooltip :content="$t('menu.endpointView')">
         <Icon
           type="ios-stats"
@@ -141,6 +153,17 @@
         <div class="card-content" v-html="data.content"></div>
       </li>
     </ul>
+    <Modal
+      v-model="isShowStartFlow"
+      :title="$t('m_initiate_orchestration')"
+      @on-ok="confirmStartFlow"
+      @on-cancel="isShowStartFlow = false">
+      <div class="modal-body" style="padding:30px">
+        <div style="text-align:center">
+          <p style="color: red;text-align: left;">{{startFlowTip}}</p>
+        </div>
+      </div>
+    </Modal>
   </Card>
 </template>
 
@@ -151,6 +174,9 @@ export default {
   },
   data() {
     return {
+      isShowStartFlow: false,
+      startFlowTip: '',
+      alertId: '',
       test: "system_id:5006 <br/> title:bdphdp010001: JournalNode10分钟之内ops次数大于10000 <br/> object: <br/> info:bdphdp010001在2022.05.16-00:14:14触发JournalNode10分钟之内ops次数大于10000 <br/> 【告警主机】 ***REMOVED***[bdphdp010001] <br/> 【告警集群】 international_cluster <br/> 【附加信息】 请联系值班人:[admin]，资源池[admin]"
     }
   },
@@ -162,6 +188,25 @@ export default {
       };
       localStorage.setItem("jumpCallData", JSON.stringify(endpointObject));
       this.$router.push({ path: "/endpointView" });
+      // const news = this.$router.resolve({name: 'endpointView'})
+      // window.open(news.href, '_blank')
+    },
+    goToNotify (item) {
+      if (item.notify_status === 'notStart') {
+        this.startFlowTip = `${this.$t('button.confirm')} ${this.$t('m_initiate_orchestration')}: [${item.notify_callback_name}]`
+      } else if (item.notify_status === 'started') {
+        this.startFlowTip = `${this.$t('m_already_initiated')}，${this.$t('button.confirm')} ${this.$t('m_reinitiate_orchestration')}: 【${item.notify_callback_name}】`
+      }
+      this.alertId = item.id
+      this.isShowStartFlow = true
+    },
+    confirmStartFlow () {
+      let params = {
+        id: this.alertId
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.startNotify, params, () => {
+        this.$Message.success(this.$t('tips.success'))
+      },{isNeedloading: false})
     },
     deleteConfirmModal(rowData, isBatch) {
       this.$parent.isBatch = isBatch;
@@ -180,6 +225,15 @@ export default {
       this.$parent.filters[key] = value;
       this.$parent.getAlarm();
     },
+    copyEndpoint (data) {
+      let inputElement = document.createElement('input')
+      inputElement.value = data.alarm_obj_name
+      document.body.appendChild(inputElement)
+      inputElement.select()
+      document.execCommand('Copy')
+      inputElement.remove()
+      this.$Message.success(this.$t('m_copied_to_clipboard'))
+    }
   },
 };
 </script>
@@ -239,5 +293,9 @@ li {
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
+}
+.copy-data {
+  font-size: 16px;
+  cursor: pointer
 }
 </style>
