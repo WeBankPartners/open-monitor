@@ -133,6 +133,7 @@ func init() {
 		&handlerFuncObj{Url: "/alarm/problem/close", Method: http.MethodPost, HandlerFunc: alarm.CloseAlarm},
 		&handlerFuncObj{Url: "/alarm/problem/history", Method: http.MethodPost, HandlerFunc: alarm.QueryHistoryAlarm},
 		&handlerFuncObj{Url: "/alarm/problem/message", Method: http.MethodPost, HandlerFunc: alarm.UpdateAlarmCustomMessage},
+		&handlerFuncObj{Url: "/alarm/problem/notify", Method: http.MethodPost, HandlerFunc: alarm.NotifyAlarm},
 		// 关键字监控配置
 		&handlerFuncObj{Url: "/alarm/log/monitor/list", Method: http.MethodGet, HandlerFunc: alarm.ListLogTpl},
 		&handlerFuncObj{Url: "/alarm/log/monitor/add", Method: http.MethodPost, HandlerFunc: alarm.AddLogStrategy},
@@ -304,6 +305,7 @@ func InitHttpServer() {
 	{
 		entityApi.POST("/alarm/query", alarm.QueryEntityAlarm)
 		entityApi.POST("/alarm/close", alarmv2.PluginCloseAlarm)
+		entityApi.POST("/alarm_event/query", alarm.QueryEntityAlarmEvent)
 	}
 	// register handler func with auth
 	authRouter := r.Group(urlPrefix+"/api/v1", user.AuthRequired())

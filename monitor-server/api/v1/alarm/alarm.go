@@ -47,7 +47,9 @@ func AcceptAlert(c *gin.Context) {
 		//go db.NotifyAlarm(v)
 		go db.NotifyStrategyAlarm(v)
 	}
-	go db.NotifyTreevent(treeventSendObj)
+	if m.NotifyTreeventEnable {
+		go db.NotifyTreevent(treeventSendObj)
+	}
 	mid.ReturnSuccess(c)
 }
 
@@ -778,4 +780,91 @@ func UpdateAlertWindow(c *gin.Context) {
 	} else {
 		mid.ReturnValidateError(c, err.Error())
 	}
+}
+
+// @Summary 手动触发告警回调事件接口
+// @Produce  json
+// @Param id query int true "告警id"
+// @Success 200 {string} json "{"message": "Success"}"
+// @Router /api/v1/alarm/problem/notify [post]
+func NotifyAlarm(c *gin.Context) {
+	var param m.AlarmCloseParam
+	var err error
+	if err = c.ShouldBindJSON(&param); err != nil {
+		mid.ReturnValidateError(c, err.Error())
+		return
+	}
+	if param.Id == 0 {
+		mid.ReturnValidateError(c, "param can not empty")
+		return
+	}
+	if strings.ToLower(param.Metric) == "custom" {
+		param.Custom = true
+	}
+	err = db.ManualNotifyAlarm(param.Id, mid.GetOperateUser(c))
+	if err != nil {
+		mid.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	mid.ReturnSuccess(c)
+}
+
+func QueryEntityAlarmEvent(c *gin.Context) {
+	var param m.EntityQueryParam
+	var result m.AlarmEventEntity
+	result.Data = []*m.AlarmEventEntityObj{}
+	data, _ := ioutil.ReadAll(c.Request.Body)
+	c.Request.Body.Close()
+	err := json.Unmarshal(data, &param)
+	if err != nil {
+		result.Status = "ERROR"
+		result.Message = fmt.Sprintf("Request body json unmarshal failed: %v", err)
+		mid.ReturnData(c, result)
+		return
+	}
+	var id int
+	var operator, value string
+	if param.Criteria.AttrName == "id" {
+		value = param.Criteria.Condition
+	} else {
+		for _, v := range param.AdditionalFilters {
+			if v.AttrName == "id" {
+				value = v.Condition
+			}
+		}
+	}
+	if strings.Contains(value, "-") {
+		// id-firing-notifyGuid-operator
+		tmpSplit := strings.Split(value, "-")
+		id, _ = strconv.Atoi(tmpSplit[0])
+		//if len(tmpSplit) > 1 {
+		//	alarmStatus = tmpSplit[1]
+		//}
+		//if len(tmpSplit) > 2 {
+		//	notifyGuid = tmpSplit[2]
+		//}
+		if len(tmpSplit) > 3 {
+			operator = tmpSplit[3]
+		}
+	} else {
+		id, _ = strconv.Atoi(value)
+	}
+	if id <= 0 {
+		result.Status = "ERROR"
+		result.Message = fmt.Sprintf("condition alarm id parse int fail, id:%s", value)
+		mid.ReturnData(c, result)
+		return
+	}
+	resultData, getErr := db.GetAlarmEventEntityData(id)
+	if getErr != nil {
+		result.Status = "ERROR"
+		result.Message = fmt.Sprintf("get alarm_event entity data fail: %s", getErr.Error())
+	} else {
+		result.Status = "OK"
+		result.Message = "Success"
+		resultData.Id = value
+		resultData.Handler = operator
+		result.Data = append(result.Data, resultData)
+	}
+	mid.ReturnData(c, result)
 }

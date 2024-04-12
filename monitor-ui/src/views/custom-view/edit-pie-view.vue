@@ -125,6 +125,10 @@ export default {
     parentRouteData: {
       type: Object,
       default: () => {}
+    },
+    panel_group_list: {
+      type: Object,
+      default: () => {}
     }
   },
   data() {
@@ -381,6 +385,7 @@ export default {
       let params = {
         name: this.oriParams.templateData.name,
         id: this.oriParams.templateData.id,
+        panel_group_list: this.panel_group_list || [],
         cfg: JSON.stringify(this.viewData)
       }
       this.params = params

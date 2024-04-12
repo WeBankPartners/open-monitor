@@ -227,7 +227,7 @@ func (c *logKeywordCollector) getRows(keyword string) (data []*logKeywordFetchOb
 	data = []*logKeywordFetchObj{}
 	for _, v := range c.Rule {
 		if v.Keyword == keyword {
-			level.Info(monitorLogger).Log("getRows:", keyword, " count:", v.Count)
+			//level.Info(monitorLogger).Log("getRows:", keyword, " count:", v.Count)
 			data = append(data, &logKeywordFetchObj{Content: v.LastMatchRow, Index: v.Count})
 			break
 		}
