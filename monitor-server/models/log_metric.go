@@ -11,10 +11,13 @@ type LogMetricMonitorTable struct {
 
 type LogMetricJsonTable struct {
 	Guid             string `json:"guid" xorm:"guid"`
+	Name             string `json:"name" xorm:"name"`
 	LogMetricMonitor string `json:"log_metric_monitor" xorm:"log_metric_monitor"`
 	JsonRegular      string `json:"json_regular" xorm:"json_regular"`
 	Tags             string `json:"tags" xorm:"tags"`
 	UpdateTime       string `json:"update_time" xorm:"update_time"`
+	DemoLog          string `json:"demo_log" xorm:"demo_log"`
+	CalcResult       string `json:"calc_result" xorm:"calc_result"`
 }
 
 type LogMetricConfigTable struct {
@@ -64,11 +67,15 @@ type LogMetricMonitorObj struct {
 }
 
 type LogMetricJsonObj struct {
-	Guid             string                `json:"guid" xorm:"guid"`
-	LogMetricMonitor string                `json:"log_metric_monitor" xorm:"log_metric_monitor"`
-	JsonRegular      string                `json:"json_regular" xorm:"json_regular"`
-	Tags             string                `json:"tags" xorm:"tags"`
-	MetricList       []*LogMetricConfigObj `json:"metric_list"`
+	Guid                   string                `json:"guid" xorm:"guid"`
+	Name                   string                `json:"name" xorm:"name"`
+	LogMetricMonitor       string                `json:"log_metric_monitor" xorm:"log_metric_monitor"`
+	JsonRegular            string                `json:"json_regular" xorm:"json_regular"`
+	Tags                   string                `json:"tags" xorm:"tags"`
+	MetricList             []*LogMetricConfigObj `json:"metric_list"`
+	DemoLog                string                `json:"log_sample" xorm:"demo_log"`
+	CalcResult             string                `json:"calc_result" xorm:"calc_result"`
+	TrialCalculationResult []string              `json:"trialCalculationResult"`
 }
 
 type LogMetricConfigObj struct {
@@ -85,6 +92,7 @@ type LogMetricConfigObj struct {
 	ServiceGroup     string                     `json:"service_group"`
 	MonitorType      string                     `json:"monitor_type"`
 	TagConfig        []*LogMetricConfigTag      `json:"tag_config" xorm:"tag_config"`
+	JsonTagList      []string                   `json:"json_tag_list"`
 }
 
 type LogMetricConfigTag struct {
@@ -141,4 +149,9 @@ type LogMetricStringMapNeObj struct {
 type CheckRegExpParam struct {
 	RegString   string `json:"reg_string" binding:"required"`
 	TestContext string `json:"test_context" binding:"required"`
+}
+
+type CheckRegExpResult struct {
+	MatchText   string   `json:"match_text"`
+	JsonKeyList []string `json:"json_key_list"`
 }
