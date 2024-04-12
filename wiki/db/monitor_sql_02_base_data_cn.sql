@@ -690,3 +690,47 @@ alter table agent_manager add column agent_remote_port varchar(255) default null
 #@v2.0.4.7-begin@;
 INSERT INTO metric (guid,metric,monitor_type,prom_expr,tag_owner,update_time,service_group,workspace) VALUES ('file.handler.free.percent__host','file.handler.free.percent','host','node_filesystem_files_free{instance="$address",mountpoint ="/",fstype="rootfs"} / node_filesystem_files{instance="$address",mountpoint ="/",fstype="rootfs"} * 100',NULL,'2023-12-12 17:22:09',NULL,'any_object');
 #@v2.0.4.7-end@;
+
+#@v2.0.5.3-begin@;
+CREATE TABLE `log_keyword_alarm` (
+     `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+     `alarm_id` int(11) NOT NULL,
+     `endpoint` varchar(255) NOT NULL,
+     `status` varchar(20) NOT NULL,
+     `content` text,
+     `tags` varchar(1024) DEFAULT '',
+     `start_value` double DEFAULT NULL,
+     `end_value` double DEFAULT NULL,
+     `updated_time` datetime DEFAULT NULL,
+     PRIMARY KEY (`id`),
+     KEY `idx_log_keyword_alarm_id` (`alarm_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+insert into log_keyword_alarm(alarm_id,endpoint,status,content,tags,start_value,end_value,updated_time) select id,endpoint,status,content,tags,start_value,end_value,`start` from alarm where s_metric='log_monitor' and id in (select max(id) from alarm where s_metric='log_monitor' group by tags);
+#@v2.0.5.3-end@;
+
+#@v2.0.6.1-begin@;
+alter table notify add column proc_callback_mode varchar(16) default 'manual' comment '回调模式 -> manual(手动) | auto(自动)';
+alter table notify add column description text default null;
+alter table alarm add column notify_id varchar(64) default null;
+alter table custom_dashboard add column panel_groups text default null;
+alter table endpoint_metric modify column metric varchar(1024) default null;
+#@v2.0.6.1-end@;
+
+#@v2.0.6.10-begin@;
+CREATE TABLE `alarm_notify` (
+    `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+    `alarm_id` int(11) NOT NULL,
+    `notify_id` varchar(64) NOT NULL,
+    `endpoint` varchar(255) DEFAULT NULL,
+    `metric` varchar(255) DEFAULT NULL,
+    `status` varchar(20) NOT NULL,
+    `proc_def_key` varchar(255) DEFAULT NULL,
+    `proc_def_name` varchar(255) DEFAULT NULL,
+    `notify_description` text DEFAULT NULL,
+    `proc_ins_id` varchar(64) DEFAULT NULL,
+    `created_user` varchar(64) DEFAULT NULL,
+    `created_time` datetime DEFAULT NULL,
+    `updated_time` datetime DEFAULT NULL,
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+#@v2.0.6.10-end@;
