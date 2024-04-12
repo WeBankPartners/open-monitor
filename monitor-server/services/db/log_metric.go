@@ -155,7 +155,11 @@ func ListLogMetricConfig(logMetricJson, logMetricMonitor string) (result []*mode
 				log.Logger.Warn("query log metric config warning with json unmarshal error", log.String("tagConfig", v.TagConfig), log.Error(tmpErr))
 			}
 		}
-		result = append(result, &models.LogMetricConfigObj{Guid: v.Guid, LogMetricMonitor: v.LogMetricMonitor, LogMetricJson: v.LogMetricJson, Metric: v.Metric, DisplayName: v.DisplayName, JsonKey: v.JsonKey, Regular: v.Regular, AggType: v.AggType, Step: v.Step, StringMap: ListLogMetricStringMap(v.Guid), TagConfig: tmpTagConfig})
+		tmpJsonTagList := []string{}
+		for _, tagConfigItem := range tmpTagConfig {
+			tmpJsonTagList = append(tmpJsonTagList, tagConfigItem.Key)
+		}
+		result = append(result, &models.LogMetricConfigObj{Guid: v.Guid, LogMetricMonitor: v.LogMetricMonitor, LogMetricJson: v.LogMetricJson, Metric: v.Metric, DisplayName: v.DisplayName, JsonKey: v.JsonKey, Regular: v.Regular, AggType: v.AggType, Step: v.Step, StringMap: ListLogMetricStringMap(v.Guid), TagConfig: tmpTagConfig, JsonTagList: tmpJsonTagList})
 	}
 	return result
 }
@@ -280,7 +284,8 @@ func GetLogMetricJson(logMetricJsonGuid string) (result models.LogMetricJsonObj,
 	if len(logMetricJsonTable) == 0 {
 		return result, fmt.Errorf("Can not find log_metric_json with guid:%s ", logMetricJsonGuid)
 	}
-	result = models.LogMetricJsonObj{Guid: logMetricJsonTable[0].Guid, LogMetricMonitor: logMetricJsonTable[0].LogMetricMonitor, JsonRegular: logMetricJsonTable[0].JsonRegular, Tags: logMetricJsonTable[0].Tags}
+	result = models.LogMetricJsonObj{Guid: logMetricJsonTable[0].Guid, Name: logMetricJsonTable[0].Name, LogMetricMonitor: logMetricJsonTable[0].LogMetricMonitor, JsonRegular: logMetricJsonTable[0].JsonRegular, Tags: logMetricJsonTable[0].Tags, DemoLog: logMetricJsonTable[0].DemoLog, TrialCalculationResult: []string{}}
+	json.Unmarshal([]byte(logMetricJsonTable[0].CalcResult), &result.TrialCalculationResult)
 	result.MetricList = ListLogMetricConfig(logMetricJsonGuid, "")
 	return
 }
@@ -289,7 +294,8 @@ func CreateLogMetricJson(param *models.LogMetricJsonObj) error {
 	nowTime := time.Now().Format(models.DatetimeFormat)
 	var actions []*Action
 	param.Guid = guid.CreateGuid()
-	actions = append(actions, &Action{Sql: "insert into log_metric_json(guid,log_metric_monitor,json_regular,tags,update_time) value (?,?,?,?,?)", Param: []interface{}{param.Guid, param.LogMetricMonitor, param.JsonRegular, param.Tags, nowTime}})
+	calcResultBytes, _ := json.Marshal(param.TrialCalculationResult)
+	actions = append(actions, &Action{Sql: "insert into log_metric_json(guid,name,log_metric_monitor,json_regular,tags,demo_log,calc_result,update_time) value (?,?,?,?,?,?,?,?)", Param: []interface{}{param.Guid, param.Name, param.LogMetricMonitor, param.JsonRegular, param.Tags, param.DemoLog, string(calcResultBytes), nowTime}})
 	guidList := guid.CreateGuidList(len(param.MetricList))
 	for i, v := range param.MetricList {
 		v.LogMetricJson = param.Guid
@@ -311,7 +317,8 @@ func UpdateLogMetricJson(param *models.LogMetricJsonObj) error {
 	}
 	nowTime := time.Now().Format(models.DatetimeFormat)
 	var actions []*Action
-	actions = append(actions, &Action{Sql: "update log_metric_json set json_regular=?,tags=?,update_time=? where guid=?", Param: []interface{}{param.JsonRegular, param.Tags, nowTime, param.Guid}})
+	calcResultBytes, _ := json.Marshal(param.TrialCalculationResult)
+	actions = append(actions, &Action{Sql: "update log_metric_json set name=?,json_regular=?,tags=?,demo_log=?,calc_result=?,update_time=? where guid=?", Param: []interface{}{param.Name, param.JsonRegular, param.Tags, param.DemoLog, string(calcResultBytes), nowTime, param.Guid}})
 	var logMetricConfigTable []*models.LogMetricConfigTable
 	x.SQL("select * from log_metric_config where log_metric_json=?", param.Guid).Find(&logMetricConfigTable)
 	var affectEndpointGroup []string
@@ -450,6 +457,9 @@ func getCreateLogMetricConfigAction(param *models.LogMetricConfigObj, nowTime st
 		param.Guid = guid.CreateGuid()
 	}
 	tagString := ""
+	for _, jsonTagItem := range param.JsonTagList {
+		param.TagConfig = append(param.TagConfig, &models.LogMetricConfigTag{Key: jsonTagItem})
+	}
 	if len(param.TagConfig) > 0 {
 		tagBytes, _ := json.Marshal(param.TagConfig)
 		tagString = string(tagBytes)
@@ -520,6 +530,9 @@ func getUpdateLogMetricConfigAction(param *models.LogMetricConfigObj, nowTime st
 		}
 	}
 	tagString := ""
+	for _, jsonTagItem := range param.JsonTagList {
+		param.TagConfig = append(param.TagConfig, &models.LogMetricConfigTag{Key: jsonTagItem})
+	}
 	if len(param.TagConfig) > 0 {
 		tagBytes, _ := json.Marshal(param.TagConfig)
 		tagString = string(tagBytes)
