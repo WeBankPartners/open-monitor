@@ -444,3 +444,78 @@ func ImportLogMetricExcel(c *gin.Context) {
 		middleware.ReturnSuccess(c)
 	}
 }
+
+func ListLogMonitorTemplate(c *gin.Context) {
+	result, err := db.ListLogMonitorTemplate(middleware.GetOperateUserRoles(c))
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+	} else {
+		middleware.ReturnSuccessData(c, result)
+	}
+}
+
+func GetLogMonitorTemplate(c *gin.Context) {
+	logMonitorTemplateGuid := c.Param("logMonitorTemplateGuid")
+	result, err := db.GetLogMonitorTemplate(logMonitorTemplateGuid)
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+	} else {
+		middleware.ReturnSuccessData(c, result)
+	}
+}
+
+func CreateLogMonitorTemplate(c *gin.Context) {
+	var param models.LogMonitorTemplateDto
+	if err := c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	var err error
+	err = db.CreateLogMonitorTemplate(&param)
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+	} else {
+		middleware.ReturnSuccess(c)
+	}
+}
+
+func UpdateLogMonitorTemplate(c *gin.Context) {
+	var param models.LogMonitorTemplateDto
+	if err := c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	//result, err := db.GetLogMetricMonitor(param.Guid)
+	//if err != nil {
+	//	middleware.ReturnHandleError(c, err.Error(), err)
+	//	return
+	//}
+	//hostEndpointList := []string{}
+	//for _, v := range result.EndpointRel {
+	//	hostEndpointList = append(hostEndpointList, v.SourceEndpoint)
+	//}
+	//for _, v := range param.EndpointRel {
+	//	hostEndpointList = append(hostEndpointList, v.SourceEndpoint)
+	//}
+	err := db.UpdateLogMonitorTemplate(&param)
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+	} else {
+		//err = syncLogMetricNodeExporterConfig(hostEndpointList)
+		if err != nil {
+			middleware.ReturnHandleError(c, err.Error(), err)
+		} else {
+			middleware.ReturnSuccess(c)
+		}
+	}
+}
+
+func DeleteLogMonitorTemplate(c *gin.Context) {
+	logMonitorTemplateGuid := c.Param("logMonitorTemplateGuid")
+	err := db.DeleteLogMonitorTemplate(logMonitorTemplateGuid)
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+	} else {
+		middleware.ReturnSuccess(c)
+	}
+}
