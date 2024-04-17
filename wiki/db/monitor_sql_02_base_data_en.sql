@@ -734,3 +734,58 @@ CREATE TABLE `alarm_notify` (
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 #@v2.0.6.10-end@;
+
+#@v2.0.7.1-begin@;
+CREATE TABLE `log_monitor_template` (
+    `guid` varchar(64) NOT NULL COMMENT '唯一标识',
+    `name` varchar(255) NOT NULL COMMENT '名称',
+    `metric_type` varchar(32) NOT NULL COMMENT '指标类型->json(json格式) | regular(通用正则格式)',
+    `create_user` varchar(32) DEFAULT NULL COMMENT '创建人',
+    `update_user` varchar(32) DEFAULT NULL COMMENT '更新人',
+    `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+    `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+    PRIMARY KEY (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `log_monitor_template_role` (
+     `guid` varchar(64) NOT NULL COMMENT '唯一标识',
+     `log_monitor_template` varchar(64) NOT NULL COMMENT '业务监控模版',
+     `role` varchar(64) NOT NULL COMMENT '角色',
+     `permission` varchar(32) DEFAULT NULL COMMENT '权限->USE(使用) | MGMT(管理)',
+     PRIMARY KEY (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `log_json_template` (
+     `guid` varchar(64) NOT NULL COMMENT '唯一标识',
+     `log_monitor_template` varchar(64) NOT NULL COMMENT '业务监控模版',
+     `name` varchar(255) NOT NULL COMMENT '名称',
+     `json_regular` varchar(255) NOT NULL COMMENT '提取json正则',
+     `demo_log` text DEFAULT NULL COMMENT '样例日志',
+     `calc_result` text DEFAULT NULL COMMENT '试算结果',
+     `create_user` varchar(32) DEFAULT NULL COMMENT '创建人',
+     `update_user` varchar(32) DEFAULT NULL COMMENT '更新人',
+     `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+     `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+     PRIMARY KEY (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `log_metric_template` (
+       `guid` varchar(64) NOT NULL COMMENT '唯一标识',
+       `log_monitor_template` varchar(64) NOT NULL COMMENT '业务监控模版',
+       `log_json_template` varchar(64) DEFAULT NULL COMMENT 'json模版',
+       `metric` varchar(64) NOT NULL COMMENT '指标',
+       `display_name` varchar(255) DEFAULT NULL COMMENT '指标显示名',
+       `json_key` varchar(255) DEFAULT NULL COMMENT 'json的key',
+       `regular` varchar(255) DEFAULT NULL COMMENT '正则',
+       `demo_log` text DEFAULT NULL COMMENT '样例日志',
+       `calc_result` text DEFAULT NULL COMMENT '试算结果',
+       `step` int(11) DEFAULT 10 COMMENT '间隔',
+       `agg_type` varchar(16) DEFAULT 'agg' COMMENT '聚合类型',
+       `tag_config` text DEFAULT NULL COMMENT '标签配置',
+       `create_user` varchar(32) DEFAULT NULL COMMENT '创建人',
+       `update_user` varchar(32) DEFAULT NULL COMMENT '更新人',
+       `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+       `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+       PRIMARY KEY (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+#@v2.0.7.1-end@;
