@@ -52,9 +52,15 @@ type LogMetricTemplate struct {
 }
 
 type LogMonitorTemplateDto struct {
-	Guid       string               `json:"guid" xorm:"guid"`
-	Name       string               `json:"name" xorm:"name"`
-	MetricType string               `json:"metric_type" xorm:"metric_type"`
-	JsonConfig *LogJsonTemplate     `json:"json_config"`
-	Metrics    []*LogMetricTemplate `json:"metrics"`
+	Guid       string                        `json:"guid" xorm:"guid"`
+	Name       string                        `json:"name" xorm:"name"`
+	MetricType string                        `json:"metric_type" xorm:"metric_type"`
+	JsonConfig *LogJsonTemplate              `json:"json_config"`
+	Metrics    []*LogMetricTemplate          `json:"metrics"`
+	Permission *LogMonitorTemplatePermission `json:"permission"`
+}
+
+type LogMonitorTemplatePermission struct {
+	MgmtRoles []string `json:"mgmt_roles"`
+	UseRoles  []string `json:"use_roles"`
 }
