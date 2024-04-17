@@ -7,6 +7,10 @@ func ListLogMonitorTemplate(userRoles []string) (result []*models.LogMonitorTemp
 	return
 }
 
+func ListLogMonitorTemplateOptions(userRoles []string) {
+
+}
+
 func GetLogMonitorTemplate(guid string) (result []*models.LogMonitorTemplateDto, err error) {
 
 	return
