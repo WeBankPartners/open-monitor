@@ -161,3 +161,7 @@ type CheckRegExpResult struct {
 	JsonKeyList []string               `json:"json_key_list"`
 	JsonObj     map[string]interface{} `json:"json_obj"`
 }
+
+type LogMetricGroupObj struct {
+	LogMetricGroup
+}
