@@ -788,4 +788,33 @@ CREATE TABLE `log_metric_template` (
    `update_time` datetime DEFAULT NULL COMMENT '更新时间',
    PRIMARY KEY (`guid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `log_metric_group` (
+        `guid` varchar(64) NOT NULL COMMENT '唯一标识',
+        `name` varchar(64) NOT NULL COMMENT '名称',
+        `log_type` varchar(32) NOT NULL COMMENT '日志类型->json(json格式) | regular(通用正则格式) | custom(自定义)',
+        `log_metric_monitor` varchar(64) NOT NULL COMMENT '业务日志监控',
+        `log_monitor_template` varchar(64) DEFAULT NULL COMMENT '引用模版',
+        `demo_log` text DEFAULT NULL COMMENT '样例日志',
+        `calc_result` text DEFAULT NULL COMMENT '试算结果',
+        `create_user` varchar(32) DEFAULT NULL COMMENT '创建人',
+        `update_user` varchar(32) DEFAULT NULL COMMENT '更新人',
+        `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+        `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+        PRIMARY KEY (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `log_metric_param` (
+        `guid` varchar(64) NOT NULL COMMENT '唯一标识',
+        `name` varchar(64) NOT NULL COMMENT '名称',
+        `display_name` varchar(255) DEFAULT NULL COMMENT '参数名',
+        `log_metric_group` varchar(64) NOT NULL COMMENT '业务指标组',
+        `regular` varchar(255) DEFAULT NULL COMMENT '提取正则',
+        `demo_match_value` varchar(255) DEFAULT NULL COMMENT '匹配结果',
+        `create_user` varchar(32) DEFAULT NULL COMMENT '创建人',
+        `update_user` varchar(32) DEFAULT NULL COMMENT '更新人',
+        `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+        `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+        PRIMARY KEY (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 #@v2.0.7.1-end@;
