@@ -76,3 +76,32 @@ type LogMonitorRegMatchParam struct {
 	DemoLog   string              `json:"demo_log"`
 	ParamList []*LogParamTemplate `json:"param_list"`
 }
+
+type LogMetricGroup struct {
+	Guid               string    `json:"guid" xorm:"guid"`
+	Name               string    `json:"name" xorm:"name"`
+	LogType            string    `json:"log_type" xorm:"log_type"`
+	LogMetricMonitor   string    `json:"log_metric_monitor" xorm:"log_metric_monitor"`
+	LogMonitorTemplate string    `json:"log_monitor_template" xorm:"log_monitor_template"`
+	DemoLog            string    `json:"demo_log" xorm:"demo_log"`
+	CalcResult         string    `json:"calc_result" xorm:"calc_result"`
+	CreateUser         string    `json:"create_user" xorm:"create_user"`
+	UpdateUser         string    `json:"update_user" xorm:"update_user"`
+	CreateTime         time.Time `json:"create_time" xorm:"create_time"`
+	UpdateTime         time.Time `json:"update_time" xorm:"update_time"`
+}
+
+type LogMetricParam struct {
+	Guid           string    `json:"guid" xorm:"guid"`
+	Name           string    `json:"name" xorm:"name"`
+	DisplayName    string    `json:"display_name" xorm:"display_name"`
+	LogMetricGroup string    `json:"log_metric_group" xorm:"log_metric_group"`
+	Regular        string    `json:"regular" xorm:"regular"`
+	DemoMatchValue string    `json:"demo_match_value" xorm:"demo_match_value"`
+	DemoLog        string    `json:"demo_log" xorm:"demo_log"`
+	CalcResult     string    `json:"-" xorm:"calc_result"`
+	CreateUser     string    `json:"create_user" xorm:"create_user"`
+	UpdateUser     string    `json:"update_user" xorm:"update_user"`
+	CreateTime     time.Time `json:"create_time" xorm:"create_time"`
+	UpdateTime     time.Time `json:"update_time" xorm:"update_time"`
+}
