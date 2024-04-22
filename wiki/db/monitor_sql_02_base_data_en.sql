@@ -739,7 +739,10 @@ CREATE TABLE `alarm_notify` (
 CREATE TABLE `log_monitor_template` (
     `guid` varchar(64) NOT NULL COMMENT '唯一标识',
     `name` varchar(255) NOT NULL COMMENT '名称',
-    `metric_type` varchar(32) NOT NULL COMMENT '指标类型->json(json格式) | regular(通用正则格式)',
+    `log_type` varchar(32) NOT NULL COMMENT '日志类型->json(json格式) | regular(通用正则格式)',
+    `json_regular` varchar(255) NOT NULL COMMENT '提取json正则',
+    `demo_log` text DEFAULT NULL COMMENT '样例日志',
+    `calc_result` text DEFAULT NULL COMMENT '试算结果',
     `create_user` varchar(32) DEFAULT NULL COMMENT '创建人',
     `update_user` varchar(32) DEFAULT NULL COMMENT '更新人',
     `create_time` datetime DEFAULT NULL COMMENT '创建时间',
@@ -755,37 +758,34 @@ CREATE TABLE `log_monitor_template_role` (
      PRIMARY KEY (`guid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE `log_json_template` (
-     `guid` varchar(64) NOT NULL COMMENT '唯一标识',
-     `log_monitor_template` varchar(64) NOT NULL COMMENT '业务监控模版',
-     `name` varchar(255) NOT NULL COMMENT '名称',
-     `json_regular` varchar(255) NOT NULL COMMENT '提取json正则',
-     `demo_log` text DEFAULT NULL COMMENT '样例日志',
-     `calc_result` text DEFAULT NULL COMMENT '试算结果',
-     `create_user` varchar(32) DEFAULT NULL COMMENT '创建人',
-     `update_user` varchar(32) DEFAULT NULL COMMENT '更新人',
-     `create_time` datetime DEFAULT NULL COMMENT '创建时间',
-     `update_time` datetime DEFAULT NULL COMMENT '更新时间',
-     PRIMARY KEY (`guid`)
+CREATE TABLE `log_param_template` (
+      `guid` varchar(64) NOT NULL COMMENT '唯一标识',
+      `log_monitor_template` varchar(64) NOT NULL COMMENT '业务监控模版',
+      `name` varchar(64) NOT NULL COMMENT '名称',
+      `display_name` varchar(255) DEFAULT NULL COMMENT '指标显示名',
+      `json_key` varchar(64) DEFAULT NULL COMMENT 'json的key',
+      `regular` varchar(255) DEFAULT NULL COMMENT '正则',
+      `demo_match_value` varchar(255) DEFAULT NULL COMMENT '匹配结果',
+      `create_user` varchar(32) DEFAULT NULL COMMENT '创建人',
+      `update_user` varchar(32) DEFAULT NULL COMMENT '更新人',
+      `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+      `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+      PRIMARY KEY (`guid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `log_metric_template` (
-       `guid` varchar(64) NOT NULL COMMENT '唯一标识',
-       `log_monitor_template` varchar(64) NOT NULL COMMENT '业务监控模版',
-       `log_json_template` varchar(64) DEFAULT NULL COMMENT 'json模版',
-       `metric` varchar(64) NOT NULL COMMENT '指标',
-       `display_name` varchar(255) DEFAULT NULL COMMENT '指标显示名',
-       `json_key` varchar(255) DEFAULT NULL COMMENT 'json的key',
-       `regular` varchar(255) DEFAULT NULL COMMENT '正则',
-       `demo_log` text DEFAULT NULL COMMENT '样例日志',
-       `calc_result` text DEFAULT NULL COMMENT '试算结果',
-       `step` int(11) DEFAULT 10 COMMENT '间隔',
-       `agg_type` varchar(16) DEFAULT 'agg' COMMENT '聚合类型',
-       `tag_config` text DEFAULT NULL COMMENT '标签配置',
-       `create_user` varchar(32) DEFAULT NULL COMMENT '创建人',
-       `update_user` varchar(32) DEFAULT NULL COMMENT '更新人',
-       `create_time` datetime DEFAULT NULL COMMENT '创建时间',
-       `update_time` datetime DEFAULT NULL COMMENT '更新时间',
-       PRIMARY KEY (`guid`)
+   `guid` varchar(64) NOT NULL COMMENT '唯一标识',
+   `log_monitor_template` varchar(64) NOT NULL COMMENT '业务监控模版',
+   `log_param_name` varchar(64) DEFAULT NULL COMMENT '日志参数名',
+   `metric` varchar(64) NOT NULL COMMENT '指标',
+   `display_name` varchar(255) DEFAULT NULL COMMENT '指标显示名',
+   `step` int(11) DEFAULT 10 COMMENT '间隔',
+   `agg_type` varchar(16) DEFAULT 'agg' COMMENT '聚合类型',
+   `tag_config` text DEFAULT NULL COMMENT '标签配置',
+   `create_user` varchar(32) DEFAULT NULL COMMENT '创建人',
+   `update_user` varchar(32) DEFAULT NULL COMMENT '更新人',
+   `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+   `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+   PRIMARY KEY (`guid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 #@v2.0.7.1-end@;

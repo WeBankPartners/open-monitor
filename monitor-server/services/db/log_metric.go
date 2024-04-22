@@ -591,16 +591,16 @@ func GetServiceGroupByLogMetricMonitor(logMetricMonitorGuid string) string {
 	return ""
 }
 
-func CheckRegExpMatchPCRE(param models.CheckRegExpParam) (message string) {
+func CheckRegExpMatchPCRE(param models.CheckRegExpParam) (message, matchString string) {
 	re, tmpErr := pcre.Compile(param.RegString, 0)
 	if tmpErr != nil {
-		return fmt.Sprintf("reg compile fail,%s ", tmpErr.Message)
+		return fmt.Sprintf("reg compile fail,%s ", tmpErr.Message), matchString
 	}
-	matchString := pcreMatchSubString(&re, param.TestContext)
+	matchString = pcreMatchSubString(&re, param.TestContext)
 	if matchString == "" {
-		return fmt.Sprintf("can not match any data")
+		return fmt.Sprintf("can not match any data"), matchString
 	}
-	return fmt.Sprintf("success match:%s", matchString)
+	return fmt.Sprintf("success match:%s", matchString), matchString
 }
 
 func CheckRegExpMatch(param models.CheckRegExpParam) (message string) {
@@ -897,5 +897,10 @@ func ImportLogMetricExcel(logMonitorGuid string, param []*models.LogMetricConfig
 			log.Logger.Error("sync prometheus rule file fail", log.Error(tmpErr))
 		}
 	}
+	return
+}
+
+func GetLogMetricByServiceGroupNew(serviceGroup string) (result models.LogMetricQueryObj, err error) {
+
 	return
 }
