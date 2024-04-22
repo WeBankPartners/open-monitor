@@ -1,5 +1,10 @@
 package models
 
+const (
+	LogMonitorJsonType    = "json"
+	LogMonitorRegularType = "regular"
+)
+
 type LogMetricMonitorTable struct {
 	Guid         string `json:"guid" xorm:"guid"`
 	ServiceGroup string `json:"service_group" xorm:"service_group"`
@@ -152,6 +157,7 @@ type CheckRegExpParam struct {
 }
 
 type CheckRegExpResult struct {
-	MatchText   string   `json:"match_text"`
-	JsonKeyList []string `json:"json_key_list"`
+	MatchText   string                 `json:"match_text"`
+	JsonKeyList []string               `json:"json_key_list"`
+	JsonObj     map[string]interface{} `json:"json_obj"`
 }
