@@ -311,10 +311,12 @@ func CheckRegExpMatch(c *gin.Context) {
 		return
 	}
 	result := models.CheckRegExpResult{}
-	result.MatchText = db.CheckRegExpMatchPCRE(param)
-	if strings.HasPrefix(result.MatchText, "{") {
+	var matchString string
+	result.MatchText, matchString = db.CheckRegExpMatchPCRE(param)
+	if strings.HasPrefix(matchString, "{") {
 		resultJsonMap := make(map[string]interface{})
-		if unmarshalErr := json.Unmarshal([]byte(result.MatchText), &resultJsonMap); unmarshalErr == nil {
+		if unmarshalErr := json.Unmarshal([]byte(matchString), &resultJsonMap); unmarshalErr == nil {
+			result.JsonObj = resultJsonMap
 			for k, _ := range resultJsonMap {
 				result.JsonKeyList = append(result.JsonKeyList, k)
 			}
@@ -470,13 +472,72 @@ func CreateLogMonitorTemplate(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	var err error
-	err = db.CreateLogMonitorTemplate(&param)
+	err := validateLogMonitorTemplateParam(&param)
+	if err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	err = db.CreateLogMonitorTemplate(&param, middleware.GetOperateUser(c))
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
 		middleware.ReturnSuccess(c)
 	}
+}
+
+func validateLogMonitorTemplateParam(param *models.LogMonitorTemplateDto) (err error) {
+	if param.LogType != models.LogMonitorJsonType && param.LogType != models.LogMonitorRegularType {
+		err = fmt.Errorf("param json type illegal")
+		return
+	}
+	if param.CalcResultObj == nil {
+		err = fmt.Errorf("calc result can not empty")
+		return
+	}
+	calcResultBytes, _ := json.Marshal(param.CalcResultObj)
+	param.CalcResult = string(calcResultBytes)
+	for _, v := range param.ParamList {
+		if middleware.IsIllegalDisplayName(v.DisplayName) {
+			err = fmt.Errorf("log param display name:%s illegal", v.DisplayName)
+			return
+		}
+		if middleware.IsIllegalNameNew(v.Name) {
+			err = fmt.Errorf("log param name:%s illegal", v.Name)
+			return
+		}
+		if param.LogType == "json" && middleware.IsIllegalNameNew(v.JsonKey) {
+			err = fmt.Errorf("log param jsonKey:%s illegal", v.JsonKey)
+			return
+		}
+		if param.LogType == "regular" && v.Regular == "" {
+			err = fmt.Errorf("log param regular can not empty ")
+			return
+		}
+	}
+	for _, v := range param.MetricList {
+		if middleware.IsIllegalMetric(v.Metric) {
+			err = fmt.Errorf("metric : %s illegal", v.Metric)
+			return
+		}
+		if middleware.IsIllegalDisplayName(v.DisplayName) {
+			err = fmt.Errorf("metric: %s metric displayName: %s illegal", v.Metric, v.DisplayName)
+			return
+		}
+		tagConfigByte, _ := json.Marshal(v.TagConfigList)
+		v.TagConfig = string(tagConfigByte)
+		if v.LogParamName == "" {
+			err = fmt.Errorf("metric: %s log param name can not empty", v.Metric)
+			return
+		}
+		//if v.AggType != "avg" && v.AggType != "max" && v.AggType != "min" && v.AggType != "sum" && v.AggType != "count" {
+		//	err = fmt.Errorf("metric: %s  aggType: %s illegal", v.Metric, v.AggType)
+		//	return
+		//}
+		if v.Step == 0 {
+			v.Step = 10
+		}
+	}
+	return
 }
 
 func UpdateLogMonitorTemplate(c *gin.Context) {
@@ -485,19 +546,12 @@ func UpdateLogMonitorTemplate(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	//result, err := db.GetLogMetricMonitor(param.Guid)
-	//if err != nil {
-	//	middleware.ReturnHandleError(c, err.Error(), err)
-	//	return
-	//}
-	//hostEndpointList := []string{}
-	//for _, v := range result.EndpointRel {
-	//	hostEndpointList = append(hostEndpointList, v.SourceEndpoint)
-	//}
-	//for _, v := range param.EndpointRel {
-	//	hostEndpointList = append(hostEndpointList, v.SourceEndpoint)
-	//}
-	err := db.UpdateLogMonitorTemplate(&param)
+	err := validateLogMonitorTemplateParam(&param)
+	if err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	err = db.UpdateLogMonitorTemplate(&param, middleware.GetOperateUser(c))
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
@@ -518,4 +572,18 @@ func DeleteLogMonitorTemplate(c *gin.Context) {
 	} else {
 		middleware.ReturnSuccess(c)
 	}
+}
+
+func CheckLogMonitorRegExpMatch(c *gin.Context) {
+	var param models.LogMonitorRegMatchParam
+	if err := c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	result := []*models.LogParamTemplate{}
+	for _, v := range param.ParamList {
+		_, v.DemoMatchValue = db.CheckRegExpMatchPCRE(models.CheckRegExpParam{RegString: v.Regular, TestContext: param.DemoLog})
+		result = append(result, v)
+	}
+	middleware.ReturnSuccessData(c, result)
 }
