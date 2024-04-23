@@ -817,4 +817,23 @@ CREATE TABLE `log_metric_param` (
         `update_time` datetime DEFAULT NULL COMMENT '更新时间',
         PRIMARY KEY (`guid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+alter table log_metric_monitor add column `create_user` varchar(32) DEFAULT NULL COMMENT '创建人';
+alter table log_metric_monitor add column `update_user` varchar(32) DEFAULT NULL COMMENT '更新人';
+alter table log_metric_monitor add column `create_time` datetime DEFAULT NULL COMMENT '创建时间';
+alter table log_metric_monitor modify column `update_time` datetime DEFAULT NULL COMMENT '更新时间';
+
+alter table log_metric_config add column `log_metric_group` varchar(64) DEFAULT NULL COMMENT '业务指标组';
+alter table log_metric_config add column `log_param_name` varchar(64) DEFAULT NULL COMMENT '日志参数名';
+alter table log_metric_config add column `create_user` varchar(32) DEFAULT NULL COMMENT '创建人';
+alter table log_metric_config add column `update_user` varchar(32) DEFAULT NULL COMMENT '更新人';
+alter table log_metric_config add column `create_time` datetime DEFAULT NULL COMMENT '创建时间';
+
+alter table log_metric_string_map add column `log_metric_group` varchar(64) DEFAULT NULL COMMENT '业务指标组';
+alter table log_metric_string_map add column `log_param_name` varchar(64) DEFAULT NULL COMMENT '日志参数名';
+alter table log_metric_string_map add column `value_type` varchar(64) DEFAULT NULL COMMENT '值的类型,成功失败等';
+
+insert into log_metric_group(guid,name,log_type,log_metric_monitor,create_user,create_time) select concat('lmg_',guid),display_name,'custom',log_metric_monitor,'system',now() from log_metric_config where log_metric_json is null;
+insert into log_metric_param(guid,name,display_name,log_metric_group,regular,create_user,create_time) select concat('lmp_',guid),metric,display_name,concat('lmg_',guid),regular,'system',now() from log_metric_config where log_metric_json is null;
+ALTER TABLE log_metric_string_map DROP FOREIGN KEY log_monitor_string_config;
 #@v2.0.7.1-end@;
