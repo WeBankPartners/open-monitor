@@ -38,6 +38,11 @@ type LogParamTemplate struct {
 	UpdateTime         time.Time `json:"update_time" xorm:"update_time"`
 }
 
+type LogParamTemplateObj struct {
+	LogParamTemplate
+	StringMap []*LogMetricStringMapTable `json:"string_map"`
+}
+
 type LogMetricTemplate struct {
 	Guid               string    `json:"guid" xorm:"guid"`
 	LogMonitorTemplate string    `json:"log_monitor_template" xorm:"log_monitor_template"`
@@ -57,7 +62,7 @@ type LogMetricTemplate struct {
 type LogMonitorTemplateDto struct {
 	LogMonitorTemplate
 	CalcResultObj *CheckRegExpResult            `json:"calc_result"`
-	ParamList     []*LogParamTemplate           `json:"param_list"`
+	ParamList     []*LogParamTemplateObj        `json:"param_list"`
 	MetricList    []*LogMetricTemplate          `json:"metric_list"`
 	Permission    *LogMonitorTemplatePermission `json:"permission"`
 }
@@ -87,8 +92,10 @@ type LogMetricGroup struct {
 	CalcResult         string    `json:"calc_result" xorm:"calc_result"`
 	CreateUser         string    `json:"create_user" xorm:"create_user"`
 	UpdateUser         string    `json:"update_user" xorm:"update_user"`
-	CreateTime         time.Time `json:"create_time" xorm:"create_time"`
-	UpdateTime         time.Time `json:"update_time" xorm:"update_time"`
+	CreateTime         time.Time `json:"-" xorm:"create_time"`
+	CreateTimeString   string    `json:"create_time"`
+	UpdateTime         time.Time `json:"-" xorm:"update_time"`
+	UpdateTimeString   string    `json:"update_time"`
 }
 
 type LogMetricParam struct {
@@ -98,10 +105,14 @@ type LogMetricParam struct {
 	LogMetricGroup string    `json:"log_metric_group" xorm:"log_metric_group"`
 	Regular        string    `json:"regular" xorm:"regular"`
 	DemoMatchValue string    `json:"demo_match_value" xorm:"demo_match_value"`
-	DemoLog        string    `json:"demo_log" xorm:"demo_log"`
-	CalcResult     string    `json:"-" xorm:"calc_result"`
 	CreateUser     string    `json:"create_user" xorm:"create_user"`
 	UpdateUser     string    `json:"update_user" xorm:"update_user"`
 	CreateTime     time.Time `json:"create_time" xorm:"create_time"`
 	UpdateTime     time.Time `json:"update_time" xorm:"update_time"`
+}
+
+type LogMetricParamObj struct {
+	LogMetricParam
+	JsonKey   string                     `json:"json_key"`
+	StringMap []*LogMetricStringMapTable `json:"string_map"`
 }

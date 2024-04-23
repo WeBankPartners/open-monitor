@@ -587,3 +587,138 @@ func CheckLogMonitorRegExpMatch(c *gin.Context) {
 	}
 	middleware.ReturnSuccessData(c, result)
 }
+
+func GetLogMetricGroup(c *gin.Context) {
+	logMetricGroupGuid := c.Param("logMetricGroupGuid")
+	result, err := db.GetLogMetricGroup(logMetricGroupGuid)
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+	} else {
+		middleware.ReturnSuccessData(c, result)
+	}
+}
+
+func CreateLogMetricGroup(c *gin.Context) {
+	var param models.LogMetricGroupWithTemplate
+	if err := c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	if param.LogMetricMonitorGuid == "" || param.LogMonitorTemplateGuid == "" {
+		err := fmt.Errorf("LogMetricMonitorGuid and LogMonitorTemplateGuid can not empty")
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	err := db.CreateLogMetricGroup(&param, middleware.GetOperateUser(c))
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+	} else {
+		//err = syncLogMetricMonitorConfig(param.LogMetricMonitor)
+		if err != nil {
+			middleware.ReturnHandleError(c, err.Error(), err)
+		} else {
+			middleware.ReturnSuccess(c)
+		}
+	}
+}
+
+func UpdateLogMetricGroup(c *gin.Context) {
+	var param models.LogMetricGroupWithTemplate
+	if err := c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	if param.LogMetricGroupGuid == "" {
+		err := fmt.Errorf("LogMetricGroupGuid can not empty")
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	err := db.UpdateLogMetricGroup(&param, middleware.GetOperateUser(c))
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+	} else {
+		//err = syncLogMetricMonitorConfig(param.LogMetricMonitor)
+		if err != nil {
+			middleware.ReturnHandleError(c, err.Error(), err)
+		} else {
+			middleware.ReturnSuccess(c)
+		}
+	}
+}
+
+func DeleteLogMetricGroup(c *gin.Context) {
+	logMetricGroupGuid := c.Param("logMetricGroupGuid")
+	logMetricMonitor, err := db.DeleteLogMetricGroup(logMetricGroupGuid)
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+	} else {
+		if logMetricMonitor != "" {
+			//err = syncLogMetricMonitorConfig(logMetricMonitor)
+			if err != nil {
+				middleware.ReturnHandleError(c, err.Error(), err)
+			} else {
+				middleware.ReturnSuccess(c)
+			}
+		} else {
+			middleware.ReturnSuccess(c)
+		}
+	}
+}
+
+func GetLogMetricCustomGroup(c *gin.Context) {
+	logMetricGroupGuid := c.Param("logMetricGroupGuid")
+	result, err := db.GetLogMetricCustomGroup(logMetricGroupGuid)
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+	} else {
+		middleware.ReturnSuccessData(c, result)
+	}
+}
+
+func CreateLogMetricCustomGroup(c *gin.Context) {
+	var param models.LogMetricGroupObj
+	if err := c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	if param.LogMetricMonitor == "" {
+		err := fmt.Errorf("LogMetricMonitor can not empty")
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	err := db.CreateLogMetricCustomGroup(&param, middleware.GetOperateUser(c))
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+	} else {
+		//err = syncLogMetricMonitorConfig(param.LogMetricMonitor)
+		if err != nil {
+			middleware.ReturnHandleError(c, err.Error(), err)
+		} else {
+			middleware.ReturnSuccess(c)
+		}
+	}
+}
+
+func UpdateLogMetricCustomGroup(c *gin.Context) {
+	var param models.LogMetricGroupObj
+	if err := c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	if param.Guid == "" {
+		err := fmt.Errorf("guid can not empty")
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	err := db.UpdateLogMetricCustomGroup(&param, middleware.GetOperateUser(c))
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+	} else {
+		//err = syncLogMetricMonitorConfig(param.LogMetricMonitor)
+		if err != nil {
+			middleware.ReturnHandleError(c, err.Error(), err)
+		} else {
+			middleware.ReturnSuccess(c)
+		}
+	}
+}
