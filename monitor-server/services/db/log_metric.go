@@ -29,6 +29,7 @@ func GetLogMetricByServiceGroup(serviceGroup string) (result models.LogMetricQue
 		tmpConfig.EndpointRel = ListLogMetricEndpointRel(logMetricMonitor.Guid)
 		tmpConfig.JsonConfigList = ListLogMetricJson(logMetricMonitor.Guid)
 		tmpConfig.MetricConfigList = ListLogMetricConfig("", logMetricMonitor.Guid)
+		tmpConfig.MetricGroups = ListLogMetricGroups(logMetricMonitor.Guid)
 		for _, logJsonObj := range tmpConfig.JsonConfigList {
 			for _, logMetricObj := range logJsonObj.MetricList {
 				logMetricObj.ServiceGroup = serviceGroup
@@ -204,6 +205,7 @@ func GetLogMetricMonitor(logMetricMonitorGuid string) (result models.LogMetricMo
 	result.EndpointRel = ListLogMetricEndpointRel(logMetricMonitorTable[0].Guid)
 	result.JsonConfigList = ListLogMetricJson(logMetricMonitorTable[0].Guid)
 	result.MetricConfigList = ListLogMetricConfig("", logMetricMonitorTable[0].Guid)
+	result.MetricGroups = ListLogMetricGroups(logMetricMonitorTable[0].Guid)
 	return result, nil
 }
 
@@ -903,4 +905,258 @@ func ImportLogMetricExcel(logMonitorGuid string, param []*models.LogMetricConfig
 func GetLogMetricByServiceGroupNew(serviceGroup string) (result models.LogMetricQueryObj, err error) {
 
 	return
+}
+
+func GetSimpleLogMetricGroup(logMetricGroupGuid string) (result *models.LogMetricGroup, err error) {
+	var logMetricGroupRows []*models.LogMetricGroup
+	err = x.SQL("select * from log_metric_group where guid=?", logMetricGroupGuid).Find(&logMetricGroupRows)
+	if err != nil {
+		return result, fmt.Errorf("Query table log_metric_group fail,%s ", err.Error())
+	}
+	if len(logMetricGroupRows) == 0 {
+		return result, fmt.Errorf("Can not find log_metric_group with guid:%s ", logMetricGroupGuid)
+	}
+	result = logMetricGroupRows[0]
+	return
+}
+
+func GetLogMetricGroup(logMetricGroupGuid string) (result *models.LogMetricGroupWithTemplate, err error) {
+	metricGroupObj, getGroupErr := GetSimpleLogMetricGroup(logMetricGroupGuid)
+	if getGroupErr != nil {
+		err = getGroupErr
+		return
+	}
+	var logMetricStringMapRows []*models.LogMetricStringMapTable
+	err = x.SQL("select * from log_metric_string_map where log_metric_group=?", logMetricGroupGuid).Find(&logMetricStringMapRows)
+	if err != nil {
+		return result, fmt.Errorf("Query table log_metric_string_map fail,%s ", err.Error())
+	}
+	result = &models.LogMetricGroupWithTemplate{LogMetricGroupGuid: logMetricGroupGuid, LogMetricMonitorGuid: metricGroupObj.LogMetricMonitor, LogMonitorTemplateGuid: metricGroupObj.LogMonitorTemplate, CodeStringMap: []*models.LogMetricStringMapTable{}, RetCodeStringMap: []*models.LogMetricStringMapTable{}}
+	for _, row := range logMetricStringMapRows {
+		if row.LogParamName == "code" {
+			result.CodeStringMap = append(result.CodeStringMap, row)
+		} else if row.LogParamName == "retcode" {
+			result.RetCodeStringMap = append(result.RetCodeStringMap, row)
+		}
+	}
+	return
+}
+
+func CreateLogMetricGroup(param *models.LogMetricGroupWithTemplate, operator string) (err error) {
+	param.LogMetricGroupGuid = "lmg_" + guid.CreateGuid()
+	logMonitorTemplateRow, getErr := GetSimpleLogMonitorTemplate(param.LogMonitorTemplateGuid)
+	if getErr != nil {
+		err = getErr
+		return
+	}
+	nowTime := time.Now()
+	var actions []*Action
+	actions = append(actions, &Action{Sql: "insert into log_metric_group(guid,name,log_type,log_metric_monitor,log_monitor_template,create_user,create_time,update_user,update_time) values (?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+		param.LogMetricGroupGuid, logMonitorTemplateRow.Name, logMonitorTemplateRow.LogType, param.LogMetricMonitorGuid, param.LogMonitorTemplateGuid, operator, nowTime, operator, nowTime,
+	}})
+	actions = append(actions, getCreateLogMetricGroupMapAction(param, nowTime)...)
+	err = Transaction(actions)
+	return
+}
+
+func getCreateLogMetricGroupMapAction(param *models.LogMetricGroupWithTemplate, nowTime time.Time) (actions []*Action) {
+	codeGuidList := guid.CreateGuidList(len(param.CodeStringMap))
+	for i, v := range param.CodeStringMap {
+		actions = append(actions, &Action{Sql: "insert into log_metric_string_map(guid,log_metric_group,log_param_name,value_type,source_value,regulative,target_value,update_time) values (?,?,?,?,?,?,?,?)", Param: []interface{}{
+			"lmsm_" + codeGuidList[i], param.LogMetricGroupGuid, "code", v.ValueType, v.SourceValue, v.Regulative, v.TargetValue, nowTime.Format(models.DatetimeFormat),
+		}})
+	}
+	retCodeGuidList := guid.CreateGuidList(len(param.RetCodeStringMap))
+	for i, v := range param.RetCodeStringMap {
+		actions = append(actions, &Action{Sql: "insert into log_metric_string_map(guid,log_metric_group,log_param_name,value_type,source_value,regulative,target_value,update_time) values (?,?,?,?,?,?,?,?)", Param: []interface{}{
+			"lmsm_" + retCodeGuidList[i], param.LogMetricGroupGuid, "retcode", v.ValueType, v.SourceValue, v.Regulative, v.TargetValue, nowTime.Format(models.DatetimeFormat),
+		}})
+	}
+	return
+}
+
+func UpdateLogMetricGroup(param *models.LogMetricGroupWithTemplate, operator string) (err error) {
+	nowTime := time.Now()
+	var actions []*Action
+	actions = append(actions, &Action{Sql: "update log_metric_group set update_user=?,update_time=? where guid=?", Param: []interface{}{
+		operator, nowTime, param.LogMetricGroupGuid,
+	}})
+	actions = append(actions, &Action{Sql: "delete from log_metric_string_map where log_metric_group=?", Param: []interface{}{param.LogMetricGroupGuid}})
+	actions = append(actions, getCreateLogMetricGroupMapAction(param, nowTime)...)
+	err = Transaction(actions)
+	return err
+}
+
+func DeleteLogMetricGroup(logMetricGroupGuid string) (logMetricMonitorGuid string, err error) {
+	metricGroupObj, getGroupErr := GetSimpleLogMetricGroup(logMetricGroupGuid)
+	if getGroupErr != nil {
+		err = getGroupErr
+		return
+	}
+	logMetricMonitorGuid = metricGroupObj.LogMetricMonitor
+	var actions []*Action
+	actions = append(actions, &Action{Sql: "delete from log_metric_string_map where log_metric_group=?", Param: []interface{}{logMetricGroupGuid}})
+	actions = append(actions, &Action{Sql: "delete from log_metric_param where log_metric_group=?", Param: []interface{}{logMetricGroupGuid}})
+	actions = append(actions, &Action{Sql: "delete from log_metric_config where log_metric_group=?", Param: []interface{}{logMetricGroupGuid}})
+	actions = append(actions, &Action{Sql: "delete from log_metric_group where guid=?", Param: []interface{}{logMetricGroupGuid}})
+	err = Transaction(actions)
+	return
+}
+
+func ListLogMetricGroups(logMetricMonitor string) (result []*models.LogMetricGroupObj) {
+	result = []*models.LogMetricGroupObj{}
+	var logMetricGroupTable []*models.LogMetricGroup
+	x.SQL("select * from log_metric_group where log_metric_monitor=?", logMetricMonitor).Find(&logMetricGroupTable)
+	var templateGuidList []string
+	for _, v := range logMetricGroupTable {
+		if v.LogMonitorTemplate != "" {
+			templateGuidList = append(templateGuidList, v.LogMonitorTemplate)
+		}
+		v.CreateTimeString = v.CreateTime.Format(models.DatetimeFormat)
+		v.UpdateTimeString = v.UpdateTime.Format(models.DatetimeFormat)
+		result = append(result, &models.LogMetricGroupObj{LogMetricGroup: *v})
+	}
+	templateNameMap := make(map[string]string)
+	if len(templateGuidList) > 0 {
+		var logMonitorTemplateRows []*models.LogMonitorTemplate
+		filterSql, filterParam := createListParams(templateGuidList, "")
+		x.SQL("select guid,name from log_monitor_template where guid in ("+filterSql+")", filterParam...).Find(&logMonitorTemplateRows)
+		for _, row := range logMonitorTemplateRows {
+			templateNameMap[row.Guid] = row.Name
+		}
+	}
+	log.Logger.Debug("ListLogMetricGroups", log.JsonObj("templateNameMap", templateNameMap))
+	for _, v := range result {
+		if templateName, ok := templateNameMap[v.LogMonitorTemplate]; ok {
+			log.Logger.Debug("ListLogMetricGroups match template name", log.JsonObj("templateName", templateName))
+			v.LogMonitorTemplateName = templateName
+		}
+	}
+	return result
+}
+
+func GetLogMetricCustomGroup(logMetricGroupGuid string) (result *models.LogMetricGroupObj, err error) {
+	metricGroupObj, getGroupErr := GetSimpleLogMetricGroup(logMetricGroupGuid)
+	if getGroupErr != nil {
+		err = getGroupErr
+		return
+	}
+	result = &models.LogMetricGroupObj{LogMetricGroup: *metricGroupObj, ParamList: []*models.LogMetricParamObj{}, MetricList: []*models.LogMetricConfigTable{}}
+	var logMetricStringMapRows []*models.LogMetricStringMapTable
+	err = x.SQL("select * from log_metric_string_map where log_metric_group=?", logMetricGroupGuid).Find(&logMetricStringMapRows)
+	if err != nil {
+		return result, fmt.Errorf("Query table log_metric_string_map fail,%s ", err.Error())
+	}
+	var logMetricParamRows []*models.LogMetricParam
+	err = x.SQL("select * from log_metric_param where log_metric_group=?", logMetricGroupGuid).Find(&logMetricParamRows)
+	if err != nil {
+		return result, fmt.Errorf("Query table log_metric_param fail,%s ", err.Error())
+	}
+	for _, row := range logMetricParamRows {
+		tmpParamObj := models.LogMetricParamObj{LogMetricParam: *row, StringMap: []*models.LogMetricStringMapTable{}}
+		for _, stringMapRow := range logMetricStringMapRows {
+			if stringMapRow.LogParamName == row.Name {
+				tmpParamObj.StringMap = append(tmpParamObj.StringMap, stringMapRow)
+			}
+		}
+		result.ParamList = append(result.ParamList, &tmpParamObj)
+	}
+	var logMetricConfigRows []*models.LogMetricConfigTable
+	err = x.SQL("select * from log_metric_config where log_metric_group=?", logMetricGroupGuid).Find(&logMetricConfigRows)
+	if err != nil {
+		return result, fmt.Errorf("Query table log_metric_param fail,%s ", err.Error())
+	}
+	for _, row := range logMetricConfigRows {
+		result.MetricList = append(result.MetricList, row)
+	}
+	return
+}
+
+func CreateLogMetricCustomGroup(param *models.LogMetricGroupObj, operator string) (err error) {
+	param.LogType = "custom"
+	param.Guid = "lmg_" + guid.CreateGuid()
+	nowTime := time.Now()
+	var actions []*Action
+	actions = append(actions, &Action{Sql: "insert into log_metric_group(guid,name,log_type,log_metric_monitor,demo_log,calc_result,create_user,create_time,update_user,update_time) values (?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+		param.Guid, param.Name, param.LogType, param.LogMetricMonitor, param.DemoLog, param.CalcResult, operator, nowTime, operator, nowTime,
+	}})
+	paramGuidList := guid.CreateGuidList(len(param.ParamList))
+	for i, v := range param.ParamList {
+		actions = append(actions, &Action{Sql: "insert into log_metric_param(guid,name,display_name,log_metric_group,regular,demo_match_value,create_user,create_time) values (?,?,?,?,?,?,?,?)", Param: []interface{}{
+			"lmp_" + paramGuidList[i], v.Name, v.DisplayName, param.Guid, v.Regular, v.DemoMatchValue, operator, nowTime,
+		}})
+	}
+	metricGuidList := guid.CreateGuidList(len(param.MetricList))
+	for i, v := range param.MetricList {
+		tmpTagListBytes, _ := json.Marshal(v.TagConfigList)
+		actions = append(actions, &Action{Sql: "insert into log_metric_config(guid,log_metric_monitor,log_metric_group,log_param_name,metric,display_name,regular,step,agg_type,tag_config,create_user,create_time) values (?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+			"lmc_" + metricGuidList[i], param.LogMetricMonitor, param.Guid, v.LogParamName, v.Metric, v.DisplayName, v.Regular, v.Step, v.AggType, string(tmpTagListBytes), operator, nowTime,
+		}})
+	}
+	err = Transaction(actions)
+	return
+}
+
+func UpdateLogMetricCustomGroup(param *models.LogMetricGroupObj, operator string) (err error) {
+	existLogGroupData, getExistErr := GetLogMetricCustomGroup(param.Guid)
+	if getExistErr != nil {
+		err = getExistErr
+		return
+	}
+	nowTime := time.Now()
+	var actions []*Action
+	actions = append(actions, &Action{Sql: "update log_metric_group set name=?,demo_log=?,calc_result=?,update_user=?,update_time=? where guid=?", Param: []interface{}{
+		param.Name, param.DemoLog, param.CalcResult, operator, nowTime, param.Guid,
+	}})
+	paramGuidList := guid.CreateGuidList(len(param.ParamList))
+	for i, inputParamObj := range param.ParamList {
+		if inputParamObj.Guid == "" {
+			actions = append(actions, &Action{Sql: "insert into log_metric_param(guid,name,display_name,log_metric_group,regular,demo_match_value,create_user,create_time) values (?,?,?,?,?,?,?,?)", Param: []interface{}{
+				"lmp_" + paramGuidList[i], inputParamObj.Name, inputParamObj.DisplayName, param.Guid, inputParamObj.Regular, inputParamObj.DemoMatchValue, operator, nowTime,
+			}})
+		} else {
+			actions = append(actions, &Action{Sql: "update log_metric_param set name=?,display_name=?,regular=?,demo_match_value=?,update_user=?,update_time=? where guid=?", Param: []interface{}{
+				inputParamObj.Name, inputParamObj.DisplayName, inputParamObj.Regular, inputParamObj.DemoMatchValue, operator, nowTime, inputParamObj.Guid,
+			}})
+		}
+	}
+	for _, existParamObj := range existLogGroupData.ParamList {
+		deleteFlag := true
+		for _, inputParamObj := range param.ParamList {
+			if inputParamObj.Guid == existParamObj.Guid {
+				deleteFlag = false
+				break
+			}
+		}
+		if deleteFlag {
+			actions = append(actions, &Action{Sql: "delete from log_metric_param where guid=?", Param: []interface{}{existParamObj.Guid}})
+		}
+	}
+	metricGuidList := guid.CreateGuidList(len(param.MetricList))
+	for i, inputMetricObj := range param.MetricList {
+		tmpTagListBytes, _ := json.Marshal(inputMetricObj.TagConfigList)
+		if inputMetricObj.Guid == "" {
+			actions = append(actions, &Action{Sql: "insert into log_metric_config(guid,log_metric_monitor,log_metric_group,log_param_name,metric,display_name,regular,step,agg_type,tag_config,create_user,create_time) values (?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+				"lmc_" + metricGuidList[i], existLogGroupData.LogMetricMonitor, param.Guid, inputMetricObj.LogParamName, inputMetricObj.Metric, inputMetricObj.DisplayName, inputMetricObj.Regular, inputMetricObj.Step, inputMetricObj.AggType, string(tmpTagListBytes), operator, nowTime,
+			}})
+		} else {
+			actions = append(actions, &Action{Sql: "update log_metric_config set log_param_name=?,metric=?,display_name=?,regular=?,step=?,agg_type=?,tag_config=?,update_user=?,update_time=? where guid=?", Param: []interface{}{
+				inputMetricObj.LogParamName, inputMetricObj.Metric, inputMetricObj.DisplayName, inputMetricObj.Regular, inputMetricObj.Step, inputMetricObj.AggType, string(tmpTagListBytes), operator, nowTime, inputMetricObj.Guid,
+			}})
+		}
+	}
+	for _, existMetricObj := range existLogGroupData.MetricList {
+		deleteFlag := true
+		for _, inputMetricObj := range param.MetricList {
+			if inputMetricObj.Guid == existMetricObj.Guid {
+				deleteFlag = false
+				break
+			}
+		}
+		if deleteFlag {
+			actions = append(actions, &Action{Sql: "delete from log_metric_config where guid=?", Param: []interface{}{existMetricObj.Guid}})
+		}
+	}
+	err = Transaction(actions)
+	return err
 }
