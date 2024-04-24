@@ -613,7 +613,7 @@ func CreateLogMetricGroup(c *gin.Context) {
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
-		//err = syncLogMetricMonitorConfig(param.LogMetricMonitor)
+		err = syncLogMetricMonitorConfig(param.LogMetricMonitorGuid)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		} else {
@@ -628,8 +628,8 @@ func UpdateLogMetricGroup(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	if param.LogMetricGroupGuid == "" {
-		err := fmt.Errorf("LogMetricGroupGuid can not empty")
+	if param.LogMetricGroupGuid == "" || param.LogMetricMonitorGuid == "" {
+		err := fmt.Errorf("LogMetricGroupGuid and LogMetricMonitorGuid can not empty")
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
@@ -637,7 +637,7 @@ func UpdateLogMetricGroup(c *gin.Context) {
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
-		//err = syncLogMetricMonitorConfig(param.LogMetricMonitor)
+		err = syncLogMetricMonitorConfig(param.LogMetricMonitorGuid)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		} else {
@@ -690,7 +690,7 @@ func CreateLogMetricCustomGroup(c *gin.Context) {
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
-		//err = syncLogMetricMonitorConfig(param.LogMetricMonitor)
+		err = syncLogMetricMonitorConfig(param.LogMetricMonitor)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		} else {
