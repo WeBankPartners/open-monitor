@@ -8,9 +8,23 @@ import (
 	"time"
 )
 
-func ListLogMonitorTemplate(userRoles []string) (result *models.LogMonitorTemplateListResp, err error) {
+func ListLogMonitorTemplate(param *models.LogMonitorTemplateListParam, userRoles []string) (result *models.LogMonitorTemplateListResp, err error) {
 	var rows []*models.LogMonitorTemplate
-	err = x.SQL("select * from log_monitor_template order by update_time desc").Find(&rows)
+	var filterSql string
+	var filterParams []interface{}
+	if param.Name != "" {
+		filterSql += " and name like ?"
+		filterParams = append(filterParams, fmt.Sprintf("%%%s%%", param.Name))
+	}
+	if param.UpdateUser != "" {
+		filterSql += " and update_user like ?"
+		filterParams = append(filterParams, fmt.Sprintf("%%%s%%", param.UpdateUser))
+	}
+	if len(filterParams) > 0 {
+		err = x.SQL("select * from log_monitor_template where 1=1 "+filterSql+" order by update_time desc", filterParams...).Find(&rows)
+	} else {
+		err = x.SQL("select * from log_monitor_template order by update_time desc").Find(&rows)
+	}
 	if err != nil {
 		err = fmt.Errorf("query log_monitor_template table fail,%s ", err.Error())
 		return
@@ -183,5 +197,13 @@ func DeleteLogMonitorTemplate(logMonitorTemplateGuid string) (err error) {
 	actions = append(actions, &Action{Sql: "delete from log_param_template where log_monitor_template=?", Param: []interface{}{logMonitorTemplateGuid}})
 	actions = append(actions, &Action{Sql: "delete from log_monitor_template where guid=?", Param: []interface{}{logMonitorTemplateGuid}})
 	err = Transaction(actions)
+	return
+}
+
+func GetLogMonitorTemplateServiceGroup(logMonitorTemplateGuid string) (result []*models.ServiceGroupTable, err error) {
+	err = x.SQL("select * from service_group where guid in (select service_group from log_metric_monitor where guid in (select log_metric_monitor from log_metric_group where log_monitor_template=?))", logMonitorTemplateGuid).Find(&result)
+	if err != nil {
+		err = fmt.Errorf("query service_group table fail,%s ", err.Error())
+	}
 	return
 }
