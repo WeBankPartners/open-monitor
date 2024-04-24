@@ -956,10 +956,10 @@ func CreateLogMetricGroup(param *models.LogMetricGroupWithTemplate, operator str
 	}})
 	actions = append(actions, getCreateLogMetricGroupMapAction(param, nowTime)...)
 	// 自动添加增加 metric
-	serviceGroup, monitorType := getLogMetricServiceGroup(param.LogMetricMonitorGuid)
-	for _, v := range logMonitorTemplateObj.MetricList {
-		actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time) value (?,?,?,?,?,?,?)", Param: []interface{}{fmt.Sprintf("%s__%s", v.Metric, serviceGroup), v.Metric, monitorType, getLogMetricExprByAggType(v.Metric, v.AggType, serviceGroup, v.TagConfigList), serviceGroup, models.MetricWorkspaceService, nowTime}})
-	}
+	//serviceGroup, monitorType := getLogMetricServiceGroup(param.LogMetricMonitorGuid)
+	//for _, v := range logMonitorTemplateObj.MetricList {
+	//	actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time) value (?,?,?,?,?,?,?)", Param: []interface{}{fmt.Sprintf("%s__%s", v.Metric, serviceGroup), v.Metric, monitorType, getLogMetricExprByAggType(v.Metric, v.AggType, serviceGroup, v.TagConfigList), serviceGroup, models.MetricWorkspaceService, nowTime}})
+	//}
 	err = Transaction(actions)
 	return
 }
