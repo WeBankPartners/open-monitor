@@ -48,6 +48,11 @@ func (l *LogParamTemplate) TransToLogParam() (output *LogMetricParamObj) {
 	return
 }
 
+type LogParamTemplateObj struct {
+	LogParamTemplate
+	StringMap []*LogMetricStringMapTable `json:"string_map"`
+}
+
 type LogMetricTemplate struct {
 	Guid               string    `json:"guid" xorm:"guid"`
 	LogMonitorTemplate string    `json:"log_monitor_template" xorm:"log_monitor_template"`
@@ -90,14 +95,19 @@ type LogMonitorTemplatePermission struct {
 	UseRoles  []string `json:"use_roles"`
 }
 
+type LogMonitorTemplateListParam struct {
+	Name       string `json:"name"`
+	UpdateUser string `json:"update_user"`
+}
+
 type LogMonitorTemplateListResp struct {
 	JsonList    []*LogMonitorTemplate `json:"json_list"`
 	RegularList []*LogMonitorTemplate `json:"regular_list"`
 }
 
 type LogMonitorRegMatchParam struct {
-	DemoLog   string              `json:"demo_log"`
-	ParamList []*LogParamTemplate `json:"param_list"`
+	DemoLog   string                 `json:"demo_log"`
+	ParamList []*LogParamTemplateObj `json:"param_list"`
 }
 
 type LogMetricGroup struct {
