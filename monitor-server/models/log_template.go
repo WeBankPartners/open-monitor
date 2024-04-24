@@ -38,9 +38,14 @@ type LogParamTemplate struct {
 	UpdateTime         time.Time `json:"update_time" xorm:"update_time"`
 }
 
-type LogParamTemplateObj struct {
-	LogParamTemplate
-	StringMap []*LogMetricStringMapTable `json:"string_map"`
+func (l *LogParamTemplate) TransToLogParam() (output *LogMetricParamObj) {
+	output = &LogMetricParamObj{}
+	output.Guid = l.Guid
+	output.Name = l.Name
+	output.DisplayName = l.DisplayName
+	output.Regular = l.Regular
+	output.JsonKey = l.JsonKey
+	return
 }
 
 type LogMetricTemplate struct {
@@ -62,7 +67,7 @@ type LogMetricTemplate struct {
 type LogMonitorTemplateDto struct {
 	LogMonitorTemplate
 	CalcResultObj *CheckRegExpResult            `json:"calc_result"`
-	ParamList     []*LogParamTemplateObj        `json:"param_list"`
+	ParamList     []*LogParamTemplate           `json:"param_list"`
 	MetricList    []*LogMetricTemplate          `json:"metric_list"`
 	Permission    *LogMonitorTemplatePermission `json:"permission"`
 }
