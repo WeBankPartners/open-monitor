@@ -36,7 +36,7 @@ func GetLogMonitorTemplate(logMonitorTemplateGuid string) (result *models.LogMon
 	}
 	logMonitorTemplateRow.CreateTimeString = logMonitorTemplateRow.CreateTime.Format(models.DatetimeFormat)
 	logMonitorTemplateRow.UpdateTimeString = logMonitorTemplateRow.UpdateTime.Format(models.DatetimeFormat)
-	result = &models.LogMonitorTemplateDto{LogMonitorTemplate: *logMonitorTemplateRow, CalcResultObj: &models.CheckRegExpResult{}, ParamList: []*models.LogParamTemplateObj{}, MetricList: []*models.LogMetricTemplate{}}
+	result = &models.LogMonitorTemplateDto{LogMonitorTemplate: *logMonitorTemplateRow, CalcResultObj: &models.CheckRegExpResult{}, ParamList: []*models.LogParamTemplate{}, MetricList: []*models.LogMetricTemplate{}}
 	if result.CalcResult != "" {
 		if err = json.Unmarshal([]byte(result.CalcResult), result.CalcResultObj); err != nil {
 			err = fmt.Errorf("json unmarhsal calc result:%s fail:%s ", result.CalcResult, err.Error())
@@ -50,8 +50,7 @@ func GetLogMonitorTemplate(logMonitorTemplateGuid string) (result *models.LogMon
 		return
 	}
 	for _, row := range logParamRows {
-		tmpParamObj := models.LogParamTemplateObj{LogParamTemplate: *row, StringMap: []*models.LogMetricStringMapTable{}}
-		result.ParamList = append(result.ParamList, &tmpParamObj)
+		result.ParamList = append(result.ParamList, row)
 	}
 	var logMetricRows []*models.LogMetricTemplate
 	err = x.SQL("select * from log_metric_template where log_monitor_template=?", logMonitorTemplateGuid).Find(&logMetricRows)
