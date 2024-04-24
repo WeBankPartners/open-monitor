@@ -67,6 +67,19 @@ type LogMonitorTemplateDto struct {
 	Permission    *LogMonitorTemplatePermission `json:"permission"`
 }
 
+//func (l *LogMonitorTemplateDto) GetMetrics() (metricConfigList []*LogMetricConfigTable) {
+//	for _, metric := range l.MetricList {
+//		metricObj := LogMetricConfigTable{Metric: metric.Metric, DisplayName: metric.DisplayName, AggType: metric.AggType, TagConfigList: metric.TagConfigList}
+//		for _, param := range l.ParamList {
+//			if param.Name == metric.LogParamName {
+//				metricObj.JsonKey = param.JsonKey
+//				metricObj.Regular = param.Regular
+//			}
+//		}
+//	}
+//	return
+//}
+
 type LogMonitorTemplatePermission struct {
 	MgmtRoles []string `json:"mgmt_roles"`
 	UseRoles  []string `json:"use_roles"`
