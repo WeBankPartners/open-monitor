@@ -475,7 +475,7 @@ func getCreateLogMetricConfigAction(param *models.LogMetricConfigObj, nowTime st
 	if param.ServiceGroup == "" || param.MonitorType == "" {
 		param.ServiceGroup, param.MonitorType = getLogMetricServiceGroup(param.LogMetricMonitor)
 	}
-	actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time) value (?,?,?,?,?,?,?)", Param: []interface{}{fmt.Sprintf("%s__%s", param.Metric, param.ServiceGroup), param.Metric, param.MonitorType, getLogMetricExprByAggType(param.Metric, param.AggType, param.ServiceGroup), param.ServiceGroup, models.MetricWorkspaceService, nowTime}})
+	actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time) value (?,?,?,?,?,?,?)", Param: []interface{}{fmt.Sprintf("%s__%s", param.Metric, param.ServiceGroup), param.Metric, param.MonitorType, getLogMetricExprByAggType(param.Metric, param.AggType, param.ServiceGroup, []string{}), param.ServiceGroup, models.MetricWorkspaceService, nowTime}})
 	guidList := guid.CreateGuidList(len(param.StringMap))
 	for i, v := range param.StringMap {
 		actions = append(actions, &Action{Sql: "insert into log_metric_string_map(guid,log_metric_config,source_value,regulative,target_value,update_time) value (?,?,?,?,?,?)", Param: []interface{}{guidList[i], param.Guid, v.SourceValue, v.Regulative, v.TargetValue, nowTime}})
@@ -483,7 +483,7 @@ func getCreateLogMetricConfigAction(param *models.LogMetricConfigObj, nowTime st
 	return actions
 }
 
-func getLogMetricExprByAggType(metric, aggType, serviceGroup string) (result string) {
+func getLogMetricExprByAggType(metric, aggType, serviceGroup string, tagList []string) (result string) {
 	switch aggType {
 	case "sum":
 		result = fmt.Sprintf("sum(%s{key=\"%s\",agg=\"%s\",service_group=\"%s\"}) by (key,agg,service_group)", models.LogMetricName, metric, aggType, serviceGroup)
@@ -520,7 +520,7 @@ func getUpdateLogMetricConfigAction(param *models.LogMetricConfigObj, nowTime st
 			serviceGroup, _ := getLogMetricServiceGroup(param.LogMetricMonitor)
 			oldMetricGuid := fmt.Sprintf("%s__%s", logMetricConfigTable[0].Metric, serviceGroup)
 			newMetricGuid := fmt.Sprintf("%s__%s", param.Metric, serviceGroup)
-			actions = append(actions, &Action{Sql: "update metric set guid=?,metric=?,prom_expr=? where guid=?", Param: []interface{}{newMetricGuid, param.Metric, getLogMetricExprByAggType(param.Metric, param.AggType, serviceGroup), oldMetricGuid}})
+			actions = append(actions, &Action{Sql: "update metric set guid=?,metric=?,prom_expr=? where guid=?", Param: []interface{}{newMetricGuid, param.Metric, getLogMetricExprByAggType(param.Metric, param.AggType, serviceGroup, []string{}), oldMetricGuid}})
 			var alarmStrategyTable []*models.AlarmStrategyTable
 			x.SQL("select guid,endpoint_group from alarm_strategy where metric=?", oldMetricGuid).Find(&alarmStrategyTable)
 			if len(alarmStrategyTable) > 0 {
@@ -837,7 +837,7 @@ func getUpdateLogMetricConfigByImport(inputLogMetric, existLogMetric *models.Log
 	if existLogMetric.Metric != inputLogMetric.Metric || existLogMetric.AggType != inputLogMetric.AggType {
 		oldMetricGuid := fmt.Sprintf("%s__%s", existLogMetric.Metric, inputLogMetric.ServiceGroup)
 		newMetricGuid := fmt.Sprintf("%s__%s", inputLogMetric.Metric, inputLogMetric.ServiceGroup)
-		actions = append(actions, &Action{Sql: "update metric set guid=?,metric=?,prom_expr=? where guid=?", Param: []interface{}{newMetricGuid, inputLogMetric.Metric, getLogMetricExprByAggType(inputLogMetric.Metric, inputLogMetric.AggType, inputLogMetric.ServiceGroup), oldMetricGuid}})
+		actions = append(actions, &Action{Sql: "update metric set guid=?,metric=?,prom_expr=? where guid=?", Param: []interface{}{newMetricGuid, inputLogMetric.Metric, getLogMetricExprByAggType(inputLogMetric.Metric, inputLogMetric.AggType, inputLogMetric.ServiceGroup, []string{}), oldMetricGuid}})
 		var alarmStrategyTable []*models.AlarmStrategyTable
 		x.SQL("select guid,endpoint_group from alarm_strategy where metric=?", oldMetricGuid).Find(&alarmStrategyTable)
 		if len(alarmStrategyTable) > 0 {
@@ -944,7 +944,7 @@ func GetLogMetricGroup(logMetricGroupGuid string) (result *models.LogMetricGroup
 
 func CreateLogMetricGroup(param *models.LogMetricGroupWithTemplate, operator string) (err error) {
 	param.LogMetricGroupGuid = "lmg_" + guid.CreateGuid()
-	logMonitorTemplateRow, getErr := GetSimpleLogMonitorTemplate(param.LogMonitorTemplateGuid)
+	logMonitorTemplateObj, getErr := GetLogMonitorTemplate(param.LogMonitorTemplateGuid)
 	if getErr != nil {
 		err = getErr
 		return
@@ -952,9 +952,14 @@ func CreateLogMetricGroup(param *models.LogMetricGroupWithTemplate, operator str
 	nowTime := time.Now()
 	var actions []*Action
 	actions = append(actions, &Action{Sql: "insert into log_metric_group(guid,name,log_type,log_metric_monitor,log_monitor_template,create_user,create_time,update_user,update_time) values (?,?,?,?,?,?,?,?,?)", Param: []interface{}{
-		param.LogMetricGroupGuid, logMonitorTemplateRow.Name, logMonitorTemplateRow.LogType, param.LogMetricMonitorGuid, param.LogMonitorTemplateGuid, operator, nowTime, operator, nowTime,
+		param.LogMetricGroupGuid, logMonitorTemplateObj.Name, logMonitorTemplateObj.LogType, param.LogMetricMonitorGuid, param.LogMonitorTemplateGuid, operator, nowTime, operator, nowTime,
 	}})
 	actions = append(actions, getCreateLogMetricGroupMapAction(param, nowTime)...)
+	// 自动添加增加 metric
+	serviceGroup, monitorType := getLogMetricServiceGroup(param.LogMetricMonitorGuid)
+	for _, v := range logMonitorTemplateObj.MetricList {
+		actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time) value (?,?,?,?,?,?,?)", Param: []interface{}{fmt.Sprintf("%s__%s", v.Metric, serviceGroup), v.Metric, monitorType, getLogMetricExprByAggType(v.Metric, v.AggType, serviceGroup, v.TagConfigList), serviceGroup, models.MetricWorkspaceService, nowTime}})
+	}
 	err = Transaction(actions)
 	return
 }
