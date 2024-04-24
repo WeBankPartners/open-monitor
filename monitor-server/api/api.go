@@ -262,6 +262,7 @@ func init() {
 		&handlerFuncObj{Url: "/service/log_metric/log_monitor_template", Method: http.MethodPost, HandlerFunc: service.CreateLogMonitorTemplate},
 		&handlerFuncObj{Url: "/service/log_metric/log_monitor_template", Method: http.MethodPut, HandlerFunc: service.UpdateLogMonitorTemplate},
 		&handlerFuncObj{Url: "/service/log_metric/log_monitor_template/:logMonitorTemplateGuid", Method: http.MethodDelete, HandlerFunc: service.DeleteLogMonitorTemplate},
+		&handlerFuncObj{Url: "/service/log_metric/affect_service_group/:logMonitorTemplateGuid", Method: http.MethodGet, HandlerFunc: service.GetLogMonitorTemplateServiceGroup},
 		&handlerFuncObj{Url: "/service/log_metric/regexp/match", Method: http.MethodPost, HandlerFunc: service.CheckLogMonitorRegExpMatch},
 
 		&handlerFuncObj{Url: "/service/log_metric/log_metric_group/:logMetricGroupGuid", Method: http.MethodGet, HandlerFunc: service.GetLogMetricGroup},
