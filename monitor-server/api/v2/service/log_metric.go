@@ -448,7 +448,12 @@ func ImportLogMetricExcel(c *gin.Context) {
 }
 
 func ListLogMonitorTemplate(c *gin.Context) {
-	result, err := db.ListLogMonitorTemplate(middleware.GetOperateUserRoles(c))
+	var param models.LogMonitorTemplateListParam
+	if err := c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	result, err := db.ListLogMonitorTemplate(&param, middleware.GetOperateUserRoles(c))
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
@@ -580,7 +585,7 @@ func CheckLogMonitorRegExpMatch(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	result := []*models.LogParamTemplate{}
+	result := []*models.LogParamTemplateObj{}
 	for _, v := range param.ParamList {
 		_, v.DemoMatchValue = db.CheckRegExpMatchPCRE(models.CheckRegExpParam{RegString: v.Regular, TestContext: param.DemoLog})
 		result = append(result, v)
@@ -720,5 +725,15 @@ func UpdateLogMetricCustomGroup(c *gin.Context) {
 		} else {
 			middleware.ReturnSuccess(c)
 		}
+	}
+}
+
+func GetLogMonitorTemplateServiceGroup(c *gin.Context) {
+	logMonitorTemplateGuid := c.Param("logMonitorTemplateGuid")
+	result, err := db.GetLogMonitorTemplateServiceGroup(logMonitorTemplateGuid)
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+	} else {
+		middleware.ReturnSuccessData(c, result)
 	}
 }
