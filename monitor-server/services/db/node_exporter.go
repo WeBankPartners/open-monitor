@@ -34,7 +34,7 @@ func updateEndpointLogMetric(endpointGuid string) error {
 	if err != nil {
 		return fmt.Errorf("Query endpoint:%s log metric config fail,%s ", endpointGuid, err.Error())
 	}
-	syncParam := transLogMetricConfigToJob(logMetricConfig, endpointGuid)
+	syncParam := transLogMetricConfigToJobNew(logMetricConfig, endpointGuid)
 	endpointObj := models.EndpointNewTable{Guid: endpointGuid}
 	endpointObj, err = GetEndpointNew(&endpointObj)
 	if err != nil || endpointObj.AgentAddress == "" {
@@ -93,6 +93,81 @@ func transLogMetricConfigToJob(logMetricConfig []*models.LogMetricQueryObj, endp
 				}
 				tmpMonitorJob.JsonConfig = append(tmpMonitorJob.JsonConfig, &tmpJsonJob)
 			}
+			for _, v := range lmMonitorObj.MetricConfigList {
+				tmpMetricJob := models.LogMetricNeObj{Metric: v.Metric, ValueRegular: v.Regular, AggType: v.AggType, Step: v.Step, StringMap: []*models.LogMetricStringMapNeObj{}}
+				for _, vv := range v.StringMap {
+					targetFloatValue, _ := strconv.ParseFloat(vv.TargetValue, 64)
+					tmpStringMapJob := models.LogMetricStringMapNeObj{StringValue: vv.SourceValue, IntValue: targetFloatValue, RegEnable: false, TargetStringValue: vv.TargetValue}
+					if vv.Regulative > 0 {
+						tmpStringMapJob.RegEnable = true
+						tmpStringMapJob.Regulation = vv.SourceValue
+					}
+					tmpMetricJob.StringMap = append(tmpMetricJob.StringMap, &tmpStringMapJob)
+				}
+				tmpMetricJob.TagConfig = v.TagConfig
+				tmpMonitorJob.MetricConfig = append(tmpMonitorJob.MetricConfig, &tmpMetricJob)
+			}
+			syncParam = append(syncParam, &tmpMonitorJob)
+		}
+	}
+	return syncParam
+}
+
+func transLogMetricConfigToJobNew(logMetricConfig []*models.LogMetricQueryObj, endpointGuid string) (syncParam []*models.LogMetricMonitorNeObj) {
+	syncParam = []*models.LogMetricMonitorNeObj{}
+	for _, serviceGroupConfig := range logMetricConfig {
+		for _, lmMonitorObj := range serviceGroupConfig.Config {
+			tmpMonitorJob := models.LogMetricMonitorNeObj{Path: lmMonitorObj.LogPath, JsonConfig: []*models.LogMetricJsonNeObj{}, MetricConfig: []*models.LogMetricNeObj{}, MetricGroupConfig: []*models.LogMetricGroupNeObj{}, ServiceGroup: serviceGroupConfig.Guid}
+			for _, v := range lmMonitorObj.EndpointRel {
+				if v.SourceEndpoint == endpointGuid {
+					tmpMonitorJob.TargetEndpoint = v.TargetEndpoint
+					break
+				}
+			}
+			for _, v := range lmMonitorObj.MetricGroups {
+				if v.CreateUser == "old_data" {
+					continue
+				}
+				tmpGroupJob := models.LogMetricGroupNeObj{LogMetricGroup: v.Guid, LogType: v.LogType, JsonRegular: v.JsonRegular, ParamList: []*models.LogMetricParamNeObj{}, MetricConfig: []*models.LogMetricNeObj{}}
+				for _, groupParam := range v.ParamList {
+					tmpGroupParamObj := models.LogMetricParamNeObj{Name: groupParam.Name, JsonKey: groupParam.JsonKey, Regular: groupParam.Regular, StringMap: []*models.LogMetricStringMapNeObj{}}
+					for _, vv := range groupParam.StringMap {
+						targetFloatValue, _ := strconv.ParseFloat(vv.TargetValue, 64)
+						tmpStringMapJob := models.LogMetricStringMapNeObj{StringValue: vv.SourceValue, IntValue: targetFloatValue, RegEnable: false, TargetStringValue: vv.TargetValue}
+						if vv.Regulative > 0 {
+							tmpStringMapJob.RegEnable = true
+							tmpStringMapJob.Regulation = vv.SourceValue
+						}
+						tmpGroupParamObj.StringMap = append(tmpGroupParamObj.StringMap, &tmpStringMapJob)
+					}
+					tmpGroupJob.ParamList = append(tmpGroupJob.ParamList, &tmpGroupParamObj)
+				}
+				for _, groupMetric := range v.MetricList {
+					tmpGroupMetricObj := models.LogMetricNeObj{Metric: groupMetric.Metric, LogParamName: groupMetric.LogParamName, AggType: groupMetric.AggType, Step: groupMetric.Step, TagConfig: []*models.LogMetricConfigTag{}}
+					for _, vv := range groupMetric.TagConfigList {
+						tmpGroupMetricObj.TagConfig = append(tmpGroupMetricObj.TagConfig, &models.LogMetricConfigTag{LogParamName: vv})
+					}
+					tmpGroupJob.MetricConfig = append(tmpGroupJob.MetricConfig, &tmpGroupMetricObj)
+				}
+				tmpMonitorJob.MetricGroupConfig = append(tmpMonitorJob.MetricGroupConfig, &tmpGroupJob)
+			}
+			//for _, v := range lmMonitorObj.JsonConfigList {
+			//	tmpJsonJob := models.LogMetricJsonNeObj{Regular: v.JsonRegular, Tags: v.Tags, MetricConfig: []*models.LogMetricNeObj{}}
+			//	for _, vv := range v.MetricList {
+			//		tmpMetricJob := models.LogMetricNeObj{Metric: vv.Metric, Key: vv.JsonKey, AggType: vv.AggType, Step: vv.Step, StringMap: []*models.LogMetricStringMapNeObj{}}
+			//		for _, vvv := range vv.StringMap {
+			//			targetFloatValue, _ := strconv.ParseFloat(vvv.TargetValue, 64)
+			//			tmpStringMapJob := models.LogMetricStringMapNeObj{StringValue: vvv.SourceValue, IntValue: targetFloatValue, RegEnable: false, TargetStringValue: vvv.TargetValue}
+			//			if vvv.Regulative > 0 {
+			//				tmpStringMapJob.RegEnable = true
+			//				tmpStringMapJob.Regulation = vvv.SourceValue
+			//			}
+			//			tmpMetricJob.StringMap = append(tmpMetricJob.StringMap, &tmpStringMapJob)
+			//		}
+			//		tmpJsonJob.MetricConfig = append(tmpJsonJob.MetricConfig, &tmpMetricJob)
+			//	}
+			//	tmpMonitorJob.JsonConfig = append(tmpMonitorJob.JsonConfig, &tmpJsonJob)
+			//}
 			for _, v := range lmMonitorObj.MetricConfigList {
 				tmpMetricJob := models.LogMetricNeObj{Metric: v.Metric, ValueRegular: v.Regular, AggType: v.AggType, Step: v.Step, StringMap: []*models.LogMetricStringMapNeObj{}}
 				for _, vv := range v.StringMap {
