@@ -337,12 +337,15 @@
   "m_updatedBy": "更新人",
   "m_standard_json": "标准JSON",
   "m_standard_regex": "标准正则",
+  "m_custom_regex": "自定义正则",
   "m_noData": "暂无数据",
   "m_view_associated": "查看关联层级对象",
   "m_template": "模版",
   "m_log_example": "日志示例(一条)",
   "m_parameter_collection": "参数采集",
   "m_compute_metrics": "指标计算",
+  "m_add_parameter_collection": "新增参数采集",
+  "m_add_compute_metrics": "新增指标计算",
   "m_parameter_key": "参数key",
   "m_json_key": "JSON key",
   "m_matching_result": "匹配结果",
@@ -361,6 +364,14 @@
   "m_max_costtime": "最大耗时",
   "m_is_start_match": "是否执行匹配",
   "m_is_start_match_tip": "匹配会清除采集参数中的JSON key 和匹配结果, 是否确定匹配？",
-  "m_extract_regular": "提取正则"
+  "m_extract_regular": "提取正则",
+  "m_select_template": "选择模版",
+  "m_tag_mapping": "标签映射",
+  "m_match_type": "匹配类型",
+  "m_match_value": "映射值(字符、数字)",
+  "m_expand_template": "展开模版",
+  "m_hide_template": "收起模版",
+  "m_associated_template": "关联模版",
+  "m_configuration_information": "配置信息"
   
 }

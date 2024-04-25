@@ -222,5 +222,11 @@
     "logTemplateConfig": "/monitor/api/v2/service/log_metric/log_monitor_template",
     "getConfigDetailByGuid": "/monitor/api/v2/service/log_metric/log_monitor_template/",
     "standardLogRegexMatch": "/monitor/api/v2/service/log_metric/regexp/match",
-    "deleteLogTemplate": "/monitor/api/v2/service/log_metric/log_monitor_template/"
+    "deleteLogTemplate": "/monitor/api/v2/service/log_metric/log_monitor_template/",
+    "logMetricGroup": "/monitor/api/v2/service/log_metric/log_metric_group",
+    "deleteLogMetricGroup": "/monitor/api/v2/service/log_metric/log_metric_group/",
+    "getLogMetricConfig": "/monitor/api/v2/service/log_metric/log_metric_group/",
+    "customLogMetricConfig": "/monitor/api/v2/service/log_metric/custom/log_metric_group",
+    "getAffectServiceGroupByGuid": "/monitor/api/v2/service/log_metric/affect_service_group/"
+
 }
