@@ -69,6 +69,20 @@ type LogMetricTemplate struct {
 	UpdateTime         time.Time `json:"update_time" xorm:"update_time"`
 }
 
+func (l *LogMetricTemplate) TransToLogMetric() (output *LogMetricConfigTable) {
+	output = &LogMetricConfigTable{
+		Guid:          l.Guid,
+		Metric:        l.Metric,
+		DisplayName:   l.DisplayName,
+		AggType:       l.AggType,
+		Step:          int64(l.Step),
+		TagConfig:     l.TagConfig,
+		TagConfigList: l.TagConfigList,
+		LogParamName:  l.LogParamName,
+	}
+	return
+}
+
 type LogMonitorTemplateDto struct {
 	LogMonitorTemplate
 	CalcResultObj *CheckRegExpResult            `json:"calc_result"`
