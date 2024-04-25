@@ -11,6 +11,7 @@ import logManagement from "@/views/monitor-config/log-management";
 import resourceLevel from "@/views/monitor-config/resource-level";
 import exporter from "@/views/monitor-config/exporter";
 import businessMonitor from "@/views/monitor-config/business-monitor";
+import logTemplate from "@/views/monitor-config/log-template";
 import metricConfig from "@/views/metric-config";
 import viewConfigIndex from "@/views/custom-view/view-config-index";
 import viewConfig from "@/views/custom-view/view-config";
@@ -106,6 +107,13 @@ const router = [
         title: "businessMonitor",
         meta: {},
         component: businessMonitor
+      },
+      {
+        path: "logTemplate",
+        name: "logTemplate",
+        title: "日志模版",
+        meta: {},
+        component: logTemplate
       }
     ]
   },
