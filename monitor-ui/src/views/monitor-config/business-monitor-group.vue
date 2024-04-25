@@ -23,24 +23,25 @@
 
       <PageTable :pageConfig="pageConfig">
         <div slot='tableExtend'>
-          123456
+          <Button type="primary" @click="addMetricConfig(pageConfig.table.isExtend.parentData)" ghost size="small">{{ $t('addMetricConfig') }}</Button>
           <div style="margin:8px;border:1px solid #2db7f5">
-            <button @click="singleAddF(pageConfig.table.isExtend.parentData)" type="button" style="margin-top:8px;padding: 0 10px" class="btn btn-small success-btn">
+            <!-- <button @click="singleAddF(pageConfig.table.isExtend.parentData)" type="button" style="margin-top:8px;padding: 0 10px" class="btn btn-small success-btn">
               <i class="fa fa-plus"></i>
               {{$t('m_add_json_regular')}}
-            </button>
+            </button> -->
             <extendTable :detailConfig="pageConfig.table.isExtend.detailConfig"></extendTable>
           </div>
-          <div style="margin:8px;border:1px solid #19be6b">
+          <!-- <div style="margin:8px;border:1px solid #19be6b">
             <button @click="addCustomMetric(pageConfig.table.isCustomMetricExtend.parentData)" type="button" style="margin-top:8px;padding: 0 10px" class="btn btn-small success-btn">
               <i class="fa fa-plus"></i>
               {{$t('m_add_metric_regular')}}
             </button>
             <extendTable :detailConfig="pageConfig.table.isCustomMetricExtend.detailConfig"></extendTable>
-          </div>
+          </div> -->
         </div>
       </PageTable>
     </section>
+
     <Modal
       v-model="addAndEditModal.isShow"
       :title="addAndEditModal.isAdd ? $t('button.add') : $t('button.edit')"
@@ -417,6 +418,31 @@
         </div>
       </div>
     </Modal>
+
+    <!-- 新增指标配置 -->
+    <Modal v-model="showTemplateSelect" :title="$t('m_select_template')" :mask-closable="false">
+      <Form :label-width="120">
+        <FormItem :label="$t('m_log_template')">
+          <Select style="width: 80%" v-model="selectedTemp" filterable ref="selectRef" @on-open-change="clearQuery">
+            <OptionGroup :label="$t('m_standard_json')">
+              <Option v-for="item in templateList.json_list" :value="item.guid" :key="item.guid">{{ item.name }}</Option>
+            </OptionGroup>
+            <OptionGroup :label="$t('m_standard_regex')">
+              <Option v-for="item in templateList.regular_list" :value="item.guid" :key="item.guid">{{ item.name }}</Option>
+            </OptionGroup>
+            <OptionGroup :label="$t('m_custom_regex')">
+              <Option value="customGuid" key="customGuid">{{ $t('m_custom_regex')}}</Option>
+            </OptionGroup>
+          </Select>
+        </FormItem>
+      </Form>
+      <template #footer>
+        <Button @click="showTemplateSelect = false">{{ $t('button.cancel') }}</Button>
+        <Button @click="okTempSelect" :disabled="selectedTemp === ''" type="primary">{{ $t('button.confirm') }}</Button>
+      </template>
+    </Modal>
+    <CustomRegex ref="customRegexRef" @reloadMetricData="reloadMetricData"></CustomRegex>
+    <BusinessMonitorGroupConfig ref="businessMonitorGroupConfigRef" @reloadMetricData="reloadMetricData"></BusinessMonitorGroupConfig>
   </div>
 </template>
 
@@ -424,6 +450,8 @@
 import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
 import {baseURL_config} from '@/assets/js/baseURL'
 import RegTest from '@/components/reg-test'
+import CustomRegex from '@/views/monitor-config/log-template-config/custom-regex.vue'
+import BusinessMonitorGroupConfig from '@/views/monitor-config/business-monitor-group-config.vue'
 import extendTable from '@/components/table-page/extend-table'
 import axios from 'axios'
 let tableEle = [
@@ -449,6 +477,13 @@ export default {
   name: '',
   data () {
     return {
+      showTemplateSelect: false,
+      selectedTemp: '', // 新增选中的模版
+      parentGuid: '', // 新增在该数据下
+      templateList: {
+        json_list: [],
+        regular_list: []
+      },
       token: null,
       MODALHEIGHT: 300,
       isShowWarning: false,
@@ -472,8 +507,10 @@ export default {
               isExtendF: true,
               title: '',
               config: [
-                {title: 'tableKey.regular', value: 'json_regular', display: true},
-                {title: 'tableKey.tags', value: 'tags', display: true},
+                {title: 'tableKey.name', value: 'name', display: true},
+                {title: 'm_associated_template', value: 'log_monitor_template_name', display: true},
+                {title: 'm_updatedBy', value: 'update_user', display: true},
+                {title: 'title.updateTime', value: 'update_time', display: true},
                 {title: 'table.action',btn:[
                   {btn_name: 'button.edit', btn_func: 'editRuleItem'},
                   {btn_name: 'button.remove', btn_func: 'delRuleconfirmModal'}
@@ -788,10 +825,16 @@ export default {
       this.deleteType = 'custom_metrics'
     },
     editRuleItem (rowData) {
-      this.cancelReg()
-      this.ruleModelConfig.isAdd = false
-      this.ruleModelConfig.addRow = JSON.parse(JSON.stringify(rowData))
-      this.ruleModelConfig.isShow = true
+      // this.cancelReg()
+      // this.ruleModelConfig.isAdd = false
+      // this.ruleModelConfig.addRow = JSON.parse(JSON.stringify(rowData))
+      // this.ruleModelConfig.isShow = true
+
+      if (rowData.log_type === 'custom') {
+        this.$refs.customRegexRef.loadPage('edit', '', rowData.log_metric_monitor, rowData.guid)
+      } else {
+        this.$refs.businessMonitorGroupConfigRef.loadPage('edit', rowData.log_monitor_template, rowData.log_metric_monitor, rowData.guid)
+      }
     },
     deleteDbConfirmModal (rowData) {
       this.selectedData = rowData
@@ -824,7 +867,7 @@ export default {
       this.isShowWarningDelete = false
     },
     delRuleItem (rowData) {
-      const api = this.$root.apiCenter.logMetricJson + '/' + rowData.guid
+      const api = this.$root.apiCenter.deleteLogMetricGroup + '/' + rowData.guid
       this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', api, '', () => {
         this.$Message.success(this.$t('tips.success'))
         this.isShowWarningDelete = false
@@ -854,8 +897,7 @@ export default {
     reloadMetricData (guid) {
       const path = `${this.$root.apiCenter.getLogMetricByPath}/${guid}`
       this.$root.$httpRequestEntrance.httpRequestEntrance("GET", path, {}, (responseData) => {
-        this.pageConfig.table.isExtend.detailConfig[0].data = responseData.json_config_list
-        this.pageConfig.table.isCustomMetricExtend.detailConfig[0].data = responseData.metric_config_list
+        this.pageConfig.table.isExtend.detailConfig[0].data = responseData.metric_groups
       })
     },
     singleAddF (rowData) {
@@ -866,13 +908,9 @@ export default {
       this.ruleModelConfig.isShow = true
     },
     getExtendInfo(item){
-      item.json_config_list.forEach(xx => xx.pId = item.guid)
-      this.pageConfig.table.isExtend.detailConfig[0].data = item.json_config_list
+      item.metric_groups.forEach(xx => xx.pId = item.guid)
+      this.pageConfig.table.isExtend.detailConfig[0].data = item.metric_groups
       this.pageConfig.table.isExtend.parentData = item
-
-      item.metric_config_list.forEach(xx => xx.pId = item.guid)
-      this.pageConfig.table.isCustomMetricExtend.detailConfig[0].data = item.metric_config_list
-      this.pageConfig.table.isCustomMetricExtend.parentData = item
     },
     deleteConfirmModal (rowData) {
       this.selectedData = rowData
@@ -1054,11 +1092,37 @@ export default {
         this.$root.$store.commit('changeTableExtendActive', -1)
       }, {isNeedloading:true})
       this.getDbDetail(targrtId)
-    }
+    },
+    // 新增指标配置--开始
+    addMetricConfig (item) {
+      this.parentGuid = item.guid
+      this.selectedTemp = ''
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.logTemplateTableData, {}, (resp) => {
+        this.templateList.json_list = resp.json_list
+        this.templateList.regular_list = resp.regular_list
+        this.showTemplateSelect = true
+      })
+    },
+    okTempSelect () {
+      this.showTemplateSelect = false
+      if (this.selectedTemp === 'customGuid') {
+        this.$refs.customRegexRef.loadPage('add', '', this.parentGuid, '')
+      } else {
+        const tmpList = this.templateList.json_list.concat(this.templateList.regular_list);
+        const findTarget = tmpList.find(tmp => tmp.guid === this.selectedTemp)
+        this.$refs.businessMonitorGroupConfigRef.loadPage('add', findTarget.guid, this.parentGuid, '')
+      }
+    },
+    clearQuery () {
+      this.$refs.selectRef.query = ''
+    },
+    // 新增指标配置--结束
   },
   components: {
     extendTable,
-    RegTest
+    RegTest,
+    CustomRegex,
+    BusinessMonitorGroupConfig
   },
 }
 </script>
