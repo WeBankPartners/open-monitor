@@ -43,11 +43,10 @@
               <FormItem :label="$t('m_json_regular')" style="margin-bottom: 12px;">
                 <Input
                   v-model="configInfo.json_regular"
-                  maxlength="200"
-                  show-word-limit
                   type="textarea"
                   style="width: 96%"
                 />
+                <span style="color: red">*</span>
                 <div v-if="isParmasChanged && configInfo.json_regular.length > 200" style="color: red">
                   {{ $t('m_json_regular') }}{{ $t('tw_limit_200') }}
                 </div>
@@ -288,7 +287,7 @@ export default {
               agg_type: '100-100*{req_suc_count}/{req_count}',
               tag_config: [
                 'code',
-                'etcode'
+                'retcode'
               ]
             },
             {
@@ -317,8 +316,43 @@ export default {
         this.isAdd = true
       }
     },
+    paramsValidate (tmpData) {
+      if (tmpData.name === '') {
+        this.$Message.warning(`${this.$t('m_template_name')}${this.$t('m_cannot_be_empty')}`)
+        return true
+      }
+      if (tmpData.json_regular === '') {
+        this.$Message.warning(`${this.$t('m_json_regular')}${this.$t('m_cannot_be_empty')}`)
+        return true
+      }
+      const isJsonKeyEmpty = tmpData.param_list.some((element) => {
+        return element.json_key === ''
+      })
+      if (isJsonKeyEmpty) {
+        this.$Message.warning(`${this.$t('m_json_key')}${this.$t('m_cannot_be_empty')}`)
+        return true
+      }
+      const is_demo_match_value = tmpData.param_list.some((element) => {
+        return element.demo_match_value === ''
+      })
+      if (is_demo_match_value) {
+        this.$Message.warning(`${this.$t('m_matching_result')}${this.$t('m_cannot_be_empty')}`)
+        return true
+      }
+      
+      const hasDuplicatesJsonKey = tmpData.param_list.some((element, index) => {
+        return tmpData.param_list.findIndex((item) => item.json_key === element.json_key) !== index
+      })
+      if (hasDuplicatesJsonKey) {
+        this.$Message.warning(`${this.$t('m_json_key')}${this.$t('m_cannot_be_repeated')}`)
+        return true
+      }
+      return false
+    },
+
     saveConfig () {
       let tmpData = JSON.parse(JSON.stringify(this.configInfo))
+      if (this.paramsValidate(tmpData)) return
       delete tmpData.create_user
       delete tmpData.create_time
       delete tmpData.update_user
