@@ -1058,6 +1058,9 @@ func ListLogMetricGroups(logMetricMonitor string) (result []*models.LogMetricGro
 					tmpLogMetricParamObj.StringMap = logMetricStringMapData[tmpLogMetricParamObj.Name]
 					logMetricGroupData.ParamList = append(logMetricGroupData.ParamList, tmpLogMetricParamObj)
 				}
+				for _, tplMetric := range tmpTemplateObj.MetricList {
+					logMetricGroupData.MetricList = append(logMetricGroupData.MetricList, tplMetric.TransToLogMetric())
+				}
 			}
 		} else {
 			customGroupData, getCustomErr := GetLogMetricCustomGroup(v.Guid)
