@@ -90,10 +90,19 @@
     <!-- 查看管理层级对象 -->
     <Modal
       v-model="showServiceGroup"
+      :fullscreen="isfullscreen"
       :title="$t('field.resourceLevel')">
-      <div style="min-height: 200px;">
+      <div slot="header" class="custom-modal-header">
+        <span>
+          {{$t('field.resourceLevel')}}
+        </span>
+        <Icon v-if="isfullscreen" @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-contract" />
+        <Icon v-else @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-expand" />
+      </div>
+      <Input v-model="filterServiceGroup" :placeholder="$t('m_filtering_info')" style="margin-bottom: 12px;"></Input>
+      <div  :class="isfullscreen? 'modal-container-fullscreen':'modal-container-normal'">
         <template v-if="serviceGroup.length > 0">
-          <Tag size="large" v-for="item in serviceGroup" :key="item.guid">{{ item.display_name }}</Tag>
+          <Tag size="large" v-for="(item, index) in serviceGroup.filter(data => data.display_name.includes(filterServiceGroup))" :key="index">{{ item.display_name }}</Tag>
         </template>
         <template v-else>
           <Alert type="warning">{{ $t('m_noData') }}</Alert>
@@ -115,6 +124,7 @@ export default {
   data() {
     return {
       spinShow: false,
+      isfullscreen: false,
       searchParams: {
         name: '',
         update_user: ''
@@ -198,6 +208,7 @@ export default {
       toBeDeleted: '', // 将被删除的模版名
       toBeDeletedGuid: '', // 待删除数据
       showServiceGroup: false,
+      filterServiceGroup: '',
       serviceGroup: [] // 层级对象
     }
   },
@@ -218,6 +229,7 @@ export default {
         name: '',
         update_user: ''
       }
+      this.getTemplateList()
     },
     changeRegexTableStatus (index, type) {
       if (type === 'in') {
@@ -245,6 +257,7 @@ export default {
     },
     // 查看关联层级对象
     viewAction (row) {
+      this.filterServiceGroup = ''
       const api = this.$root.apiCenter.getAffectServiceGroupByGuid + row.guid
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, {}, (resp) => {
         this.serviceGroup = resp || []
@@ -300,5 +313,27 @@ export default {
       box-sizing: content-box;
     }
   }
+}
+
+.custom-modal-header {
+  line-height: 20px;
+  font-size: 16px;
+  color: #17233d;
+  font-weight: 500;
+  .fullscreen-icon {
+    float: right;
+    margin-right: 28px;
+    font-size: 18px;
+    cursor: pointer;
+  }
+}
+
+.modal-container-normal {
+  max-height: ~"calc(100vh - 400px)";
+  overflow: auto;
+}
+.modal-container-fullscreen {
+  max-height: ~"calc(100vh - 200px)";
+  overflow: auto;
 }
 </style>
