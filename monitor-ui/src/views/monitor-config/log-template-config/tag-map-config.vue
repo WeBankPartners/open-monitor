@@ -1,6 +1,6 @@
 <template>
   <div>
-    <Modal v-model="showModel" :title="$t('data_set')" :mask-closable="false" :closable="false" :width="500">
+    <Modal v-model="showModel" :title="$t('m_tag_mapping')" :mask-closable="false" :closable="false" :width="500">
       <div>
         <Row>
           <Col span="7">{{ $t('m_match_type') }}</Col>
