@@ -739,7 +739,10 @@ CREATE TABLE `alarm_notify` (
 CREATE TABLE `log_monitor_template` (
     `guid` varchar(64) NOT NULL COMMENT '唯一标识',
     `name` varchar(255) NOT NULL COMMENT '名称',
-    `metric_type` varchar(32) NOT NULL COMMENT '指标类型->json(json格式) | regular(通用正则格式)',
+    `log_type` varchar(32) NOT NULL COMMENT '日志类型->json(json格式) | regular(通用正则格式)',
+    `json_regular` varchar(255) NOT NULL COMMENT '提取json正则',
+    `demo_log` text DEFAULT NULL COMMENT '样例日志',
+    `calc_result` text DEFAULT NULL COMMENT '试算结果',
     `create_user` varchar(32) DEFAULT NULL COMMENT '创建人',
     `update_user` varchar(32) DEFAULT NULL COMMENT '更新人',
     `create_time` datetime DEFAULT NULL COMMENT '创建时间',
@@ -755,13 +758,14 @@ CREATE TABLE `log_monitor_template_role` (
      PRIMARY KEY (`guid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE `log_json_template` (
+CREATE TABLE `log_param_template` (
      `guid` varchar(64) NOT NULL COMMENT '唯一标识',
      `log_monitor_template` varchar(64) NOT NULL COMMENT '业务监控模版',
-     `name` varchar(255) NOT NULL COMMENT '名称',
-     `json_regular` varchar(255) NOT NULL COMMENT '提取json正则',
-     `demo_log` text DEFAULT NULL COMMENT '样例日志',
-     `calc_result` text DEFAULT NULL COMMENT '试算结果',
+     `name` varchar(64) NOT NULL COMMENT '名称',
+     `display_name` varchar(255) DEFAULT NULL COMMENT '指标显示名',
+     `json_key` varchar(64) DEFAULT NULL COMMENT 'json的key',
+     `regular` varchar(255) DEFAULT NULL COMMENT '正则',
+     `demo_match_value` varchar(255) DEFAULT NULL COMMENT '匹配结果',
      `create_user` varchar(32) DEFAULT NULL COMMENT '创建人',
      `update_user` varchar(32) DEFAULT NULL COMMENT '更新人',
      `create_time` datetime DEFAULT NULL COMMENT '创建时间',
@@ -772,15 +776,11 @@ CREATE TABLE `log_json_template` (
 CREATE TABLE `log_metric_template` (
    `guid` varchar(64) NOT NULL COMMENT '唯一标识',
    `log_monitor_template` varchar(64) NOT NULL COMMENT '业务监控模版',
-   `log_json_template` varchar(64) DEFAULT NULL COMMENT 'json模版',
+   `log_param_name` varchar(64) DEFAULT NULL COMMENT '日志参数名',
    `metric` varchar(64) NOT NULL COMMENT '指标',
    `display_name` varchar(255) DEFAULT NULL COMMENT '指标显示名',
-   `json_key` varchar(255) DEFAULT NULL COMMENT 'json的key',
-   `regular` varchar(255) DEFAULT NULL COMMENT '正则',
-   `demo_log` text DEFAULT NULL COMMENT '样例日志',
-   `calc_result` text DEFAULT NULL COMMENT '试算结果',
    `step` int(11) DEFAULT 10 COMMENT '间隔',
-   `agg_type` varchar(16) DEFAULT 'agg' COMMENT '聚合类型',
+   `agg_type` varchar(255) DEFAULT 'avg' COMMENT '聚合类型',
    `tag_config` text DEFAULT NULL COMMENT '标签配置',
    `create_user` varchar(32) DEFAULT NULL COMMENT '创建人',
    `update_user` varchar(32) DEFAULT NULL COMMENT '更新人',
@@ -788,4 +788,53 @@ CREATE TABLE `log_metric_template` (
    `update_time` datetime DEFAULT NULL COMMENT '更新时间',
    PRIMARY KEY (`guid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `log_metric_group` (
+        `guid` varchar(64) NOT NULL COMMENT '唯一标识',
+        `name` varchar(64) NOT NULL COMMENT '名称',
+        `log_type` varchar(32) NOT NULL COMMENT '日志类型->json(json格式) | regular(通用正则格式) | custom(自定义)',
+        `log_metric_monitor` varchar(64) NOT NULL COMMENT '业务日志监控',
+        `log_monitor_template` varchar(64) DEFAULT NULL COMMENT '引用模版',
+        `demo_log` text DEFAULT NULL COMMENT '样例日志',
+        `calc_result` text DEFAULT NULL COMMENT '试算结果',
+        `create_user` varchar(32) DEFAULT NULL COMMENT '创建人',
+        `update_user` varchar(32) DEFAULT NULL COMMENT '更新人',
+        `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+        `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+        PRIMARY KEY (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `log_metric_param` (
+        `guid` varchar(64) NOT NULL COMMENT '唯一标识',
+        `name` varchar(64) NOT NULL COMMENT '名称',
+        `display_name` varchar(255) DEFAULT NULL COMMENT '参数名',
+        `log_metric_group` varchar(64) NOT NULL COMMENT '业务指标组',
+        `regular` varchar(255) DEFAULT NULL COMMENT '提取正则',
+        `demo_match_value` varchar(255) DEFAULT NULL COMMENT '匹配结果',
+        `create_user` varchar(32) DEFAULT NULL COMMENT '创建人',
+        `update_user` varchar(32) DEFAULT NULL COMMENT '更新人',
+        `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+        `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+        PRIMARY KEY (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+alter table log_metric_monitor add column `create_user` varchar(32) DEFAULT NULL COMMENT '创建人';
+alter table log_metric_monitor add column `update_user` varchar(32) DEFAULT NULL COMMENT '更新人';
+alter table log_metric_monitor add column `create_time` datetime DEFAULT NULL COMMENT '创建时间';
+alter table log_metric_monitor modify column `update_time` datetime DEFAULT NULL COMMENT '更新时间';
+
+alter table log_metric_config add column `log_metric_group` varchar(64) DEFAULT NULL COMMENT '业务指标组';
+alter table log_metric_config add column `log_param_name` varchar(64) DEFAULT NULL COMMENT '日志参数名';
+alter table log_metric_config add column `create_user` varchar(32) DEFAULT NULL COMMENT '创建人';
+alter table log_metric_config add column `update_user` varchar(32) DEFAULT NULL COMMENT '更新人';
+alter table log_metric_config add column `create_time` datetime DEFAULT NULL COMMENT '创建时间';
+
+alter table log_metric_string_map add column `log_metric_group` varchar(64) DEFAULT NULL COMMENT '业务指标组';
+alter table log_metric_string_map add column `log_param_name` varchar(64) DEFAULT NULL COMMENT '日志参数名';
+alter table log_metric_string_map add column `value_type` varchar(64) DEFAULT NULL COMMENT '值的类型,成功失败等';
+
+insert into log_metric_group(guid,name,log_type,log_metric_monitor,create_user,create_time) select concat('lmg_',guid),display_name,'custom',log_metric_monitor,'old_data',now() from log_metric_config where log_metric_json is null;
+insert into log_metric_param(guid,name,display_name,log_metric_group,regular,create_user,create_time) select concat('lmp_',guid),metric,display_name,concat('lmg_',guid),regular,'old_data',now() from log_metric_config where log_metric_json is null;
+update log_metric_config set log_metric_group=concat('lmg_',guid),update_user='old_data' where log_metric_group is null and log_metric_json is null;
+ALTER TABLE log_metric_string_map DROP FOREIGN KEY log_monitor_string_config;
 #@v2.0.7.1-end@;
