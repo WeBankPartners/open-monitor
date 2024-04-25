@@ -2,14 +2,14 @@
   <div>
     <div>
       <Input
-        v-model="searchParams.templatefName"
+        v-model="searchParams.name"
         :placeholder="$t('m_template_name')"
         class="search-item"
         clearable
         @on-change="getTemplateList"
       ></Input>
       <Input
-        v-model="searchParams.updatedBy"
+        v-model="searchParams.update_user"
         :placeholder="$t('m_updatedBy')"
         class="search-item"
         clearable
@@ -87,6 +87,22 @@
         </div>
       </div>
     </Modal>
+    <!-- 查看管理层级对象 -->
+    <Modal
+      v-model="showServiceGroup"
+      :title="$t('field.resourceLevel')">
+      <div style="min-height: 200px;">
+        <template v-if="serviceGroup.length > 0">
+          <Tag size="large" v-for="item in serviceGroup" :key="item.guid">{{ item.display_name }}</Tag>
+        </template>
+        <template v-else>
+          <Alert type="warning">{{ $t('m_noData') }}</Alert>
+        </template>
+      </div>
+      <div slot="footer">
+        <Button type="primary" @click="showServiceGroup=false">{{ $t('close') }}</Button>
+      </div>
+    </Modal>
   </div>
 </template>
 
@@ -100,8 +116,8 @@ export default {
     return {
       spinShow: false,
       searchParams: {
-        templatefName: '',
-        updatedBy: ''
+        name: '',
+        update_user: ''
       },
       hideRegex: [],
       data: [
@@ -180,7 +196,9 @@ export default {
       ],
       isShowDeleteWarning: false,
       toBeDeleted: '', // 将被删除的模版名
-      toBeDeletedGuid: '' // 待删除数据
+      toBeDeletedGuid: '', // 待删除数据
+      showServiceGroup: false,
+      serviceGroup: [] // 层级对象
     }
   },
   mounted () {
@@ -189,7 +207,7 @@ export default {
   methods: {
     getTemplateList () {
       this.spinShow = true
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.logTemplateTableData, {}, (resp) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.logTemplateTableData, this.searchParams, (resp) => {
         this.data[0].tableData = resp.json_list
         this.data[1].tableData = resp.regular_list
       })
@@ -197,8 +215,8 @@ export default {
     },
     handleReset () {
       this.searchParams = {
-        templatefName: '',
-        updatedBy: ''
+        name: '',
+        update_user: ''
       }
     },
     changeRegexTableStatus (index, type) {
@@ -224,11 +242,14 @@ export default {
       } else {
         this.$refs.standardRegexRef.loadPage(row.guid)
       }
-      console.log(row)
     },
     // 查看关联层级对象
     viewAction (row) {
-      console.log(row)
+      const api = this.$root.apiCenter.getAffectServiceGroupByGuid + row.guid
+      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, {}, (resp) => {
+        this.serviceGroup = resp || []
+        this.showServiceGroup = true
+      })
     },
     // 删除模版
     removeAction (row) {
