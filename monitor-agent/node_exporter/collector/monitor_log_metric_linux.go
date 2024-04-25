@@ -53,7 +53,7 @@ func LogMetricMonitorCollector(logger log.Logger) (Collector, error) {
 		logMetricMonitor: prometheus.NewDesc(
 			prometheus.BuildFQName(namespace, log_metricCollectorName, "value"),
 			"Show log_metric data from log file.",
-			[]string{"key", "tags", "path", "agg", "t_endpoint", "service_group"}, nil,
+			[]string{"key", "tags", "path", "agg", "t_endpoint", "service_group", "code", "retcode"}, nil,
 		),
 		logger: logger,
 	}, nil
@@ -67,7 +67,7 @@ func (c *logMetricMonitorCollector) Update(ch chan<- prometheus.Metric) error {
 		}
 		ch <- prometheus.MustNewConstMetric(c.logMetricMonitor,
 			prometheus.GaugeValue,
-			v.Value, v.Metric, v.TagsString, v.Path, v.Agg, v.TEndpoint, v.ServiceGroup)
+			v.Value, v.Metric, v.TagsString, v.Path, v.Agg, v.TEndpoint, v.ServiceGroup, v.Code, v.RetCode)
 	}
 	logMetricMonitorMetricLock.RUnlock()
 	return nil
@@ -134,9 +134,10 @@ type logMetricNeObj struct {
 }
 
 type LogMetricConfigTag struct {
-	Key     string         `json:"key"`
-	Regular string         `json:"regular"`
-	RegExp  *regexp.Regexp `json:"-"`
+	Key          string         `json:"key"`
+	Regular      string         `json:"regular"`
+	RegExp       *regexp.Regexp `json:"-"`
+	LogParamName string         `json:"log_param_name"`
 }
 
 type logMetricStringMapNeObj struct {
@@ -161,6 +162,8 @@ type logMetricDisplayObj struct {
 	Step         int64             `json:"step"`
 	Display      bool              `json:"display"`
 	UpdateTime   int64             `json:"update_time"`
+	Code         string            `json:"code"`
+	RetCode      string            `json:"ret_code"`
 }
 
 type logMetricValueObj struct {
@@ -200,6 +203,55 @@ func (c *logMetricMonitorNeObj) startHandleTailData() {
 			if matchList := pcreMatchSubString(custom.RegExp, lineText); len(matchList) > 0 {
 				//level.Info(monitorLogger).Log("get a match line:", lineText)
 				custom.DataChannel <- matchList[0]
+			}
+		}
+		for _, metricGroup := range c.MetricGroupConfig {
+			fetchParamValueMap := make(map[string]interface{})
+			if metricGroup.LogType == "json" {
+				if metricGroup.JsonRegexp != nil {
+					// 先用匹配出json串,可以匹配多段json
+					fetchList := pcreMatchSubString(metricGroup.JsonRegexp, lineText)
+					fetchJsonDataMap := make(map[string]interface{})
+					for _, v := range fetchList {
+						tmpKeyMap := make(map[string]interface{})
+						tmpErr := json.Unmarshal([]byte(v), &tmpKeyMap)
+						if tmpErr != nil {
+							level.Error(monitorLogger).Log("line fetch regexp fail", fmt.Sprintf("line:%s error:%s", v, tmpErr.Error()))
+						} else {
+							for tmpKeyMapKey, tmpKeyMapValue := range tmpKeyMap {
+								fetchJsonDataMap[tmpKeyMapKey] = tmpKeyMapValue
+							}
+						}
+					}
+					// 再检测参数里的key是否都有,必须都有
+					allMatchFlag := true
+					for _, metricParam := range metricGroup.ParamList {
+						if fetchValue, ok := fetchJsonDataMap[metricParam.JsonKey]; !ok {
+							allMatchFlag = false
+							break
+						} else {
+							fetchParamValueMap[metricParam.Name] = fetchValue
+						}
+					}
+					if allMatchFlag {
+						metricGroup.DataChannel <- fetchParamValueMap
+					}
+				}
+			} else {
+				allMatchFlag := true
+				for _, metricParam := range metricGroup.ParamList {
+					if metricParam.RegExp != nil {
+						if matchList := pcreMatchSubString(metricParam.RegExp, lineText); len(matchList) > 0 {
+							fetchParamValueMap[metricParam.Name] = matchList[0]
+						} else {
+							allMatchFlag = false
+							break
+						}
+					}
+				}
+				if allMatchFlag {
+					metricGroup.DataChannel <- fetchParamValueMap
+				}
 			}
 		}
 		c.Lock.RUnlock()
@@ -334,9 +386,14 @@ func (c *logMetricMonitorNeObj) new(input *logMetricMonitorNeObj) {
 		initLogMetricNeObj(metricObj)
 		c.MetricConfig = append(c.MetricConfig, metricObj)
 	}
+	for _, metricGroupObj := range input.MetricGroupConfig {
+		initLogMetricGroupNeObj(metricGroupObj)
+		c.MetricGroupConfig = append(c.MetricGroupConfig, metricGroupObj)
+	}
 	go c.start()
 }
 
+// 把所有正则初始化
 func (c *logMetricMonitorNeObj) update(input *logMetricMonitorNeObj) {
 	c.Lock.Lock()
 	level.Info(monitorLogger).Log("updateLogMetricMonitorNeObj", c.Path)
@@ -376,10 +433,56 @@ func (c *logMetricMonitorNeObj) update(input *logMetricMonitorNeObj) {
 		initLogMetricNeObj(metricObj)
 		newMetricConfigList = append(newMetricConfigList, metricObj)
 	}
+	newMetricGroupList := []*logMetricGroupNeObj{}
+	for _, metricGroupObj := range input.MetricGroupConfig {
+		for _, existMetricGroupObj := range c.MetricGroupConfig {
+			if metricGroupObj.LogMetricGroup == existMetricGroupObj.LogMetricGroup {
+				metricGroupObj.DataChannel = existMetricGroupObj.DataChannel
+				break
+			}
+		}
+		initLogMetricGroupNeObj(metricGroupObj)
+		newMetricGroupList = append(newMetricGroupList, metricGroupObj)
+	}
 	c.MetricConfig = newMetricConfigList
 	c.TargetEndpoint = input.TargetEndpoint
 	c.ServiceGroup = input.ServiceGroup
 	c.Lock.Unlock()
+}
+
+func initLogMetricGroupNeObj(metricGroupObj *logMetricGroupNeObj) {
+	if metricGroupObj.DataChannel == nil {
+		metricGroupObj.DataChannel = make(chan map[string]interface{}, logMetricChanLength)
+	}
+	if metricGroupObj.LogType == "json" {
+		tmpExp, tmpErr := PcreCompile(metricGroupObj.JsonRegular, 0)
+		if tmpErr != nil {
+			err := fmt.Errorf(tmpErr.Message)
+			level.Error(monitorLogger).Log("newLogMetricMonitorNeObj", fmt.Sprintf("logType:json regexpError:%s ", err.Error()))
+			return
+		}
+		metricGroupObj.JsonRegexp = &tmpExp
+	} else {
+		for _, metricParamObj := range metricGroupObj.ParamList {
+			if newRegExp, compileErr := PcreCompile(metricParamObj.Regular, 0); compileErr != nil {
+				level.Error(monitorLogger).Log("newLogMetricMonitorNeObj", fmt.Sprintf("logParam:%s regexpError:%s ", metricParamObj.Name, compileErr.Message))
+			} else {
+				metricParamObj.RegExp = &newRegExp
+			}
+		}
+	}
+	for _, metricParamObj := range metricGroupObj.ParamList {
+		for _, stringMapObj := range metricParamObj.StringMap {
+			if stringMapObj.RegEnable {
+				if tmpExp, tmpErr := PcreCompile(stringMapObj.StringValue, 0); tmpErr != nil {
+					stringMapObj.RegEnable = false
+					level.Error(monitorLogger).Log("string map regexp format fail", tmpErr.Message)
+				} else {
+					stringMapObj.Regexp = &tmpExp
+				}
+			}
+		}
+	}
 }
 
 func initLogMetricNeObj(metricObj *logMetricNeObj) {
@@ -390,10 +493,6 @@ func initLogMetricNeObj(metricObj *logMetricNeObj) {
 		} else {
 			metricObj.RegExp = &newRegExp
 		}
-		//metricObj.RegExp, err = PcreCompile(metricObj.ValueRegular, 0)
-		//if err != nil {
-		//	level.Error(monitorLogger).Log("newLogMetricMonitorNeObj", fmt.Sprintf("regexpError:%s ", err.Error()))
-		//}
 		if metricObj.DataChannel == nil {
 			metricObj.DataChannel = make(chan string, logMetricChanLength)
 		}
@@ -406,12 +505,6 @@ func initLogMetricNeObj(metricObj *logMetricNeObj) {
 			} else {
 				stringMapObj.Regexp = &tmpExp
 			}
-			//if tmpErr == nil {
-			//	stringMapObj.Regexp = tmpExp
-			//} else {
-			//	stringMapObj.RegEnable = false
-			//	level.Error(monitorLogger).Log("string map regexp format fail", tmpErr.Error())
-			//}
 		}
 	}
 	for _, tagConfigObj := range metricObj.TagConfig {
@@ -567,7 +660,7 @@ func calcLogMetricData() {
 					for _, tmpJsonTagItem := range metricConfig.TagConfig {
 						tmpTagsKey = append(tmpTagsKey, tmpJsonTagItem.Key)
 					}
-					tmpTagString := getLogMetricJsonMapTags(tmpMapData, tmpTagsKey)
+					_, _, _, tmpTagString := getLogMetricJsonMapTags(tmpMapData, tmpTagsKey)
 					changedMapData := getLogMetricJsonMapValue(tmpMapData, metricConfig.StringMap)
 					if metricValueFloat, b := changedMapData[metricConfig.Key]; b {
 						isMatchNewDataFlag = true
@@ -632,6 +725,16 @@ func calcLogMetricData() {
 			}
 			//valueCountMap[tmpMetricKey] = &tmpMetricObj
 		}
+		for _, metricGroupObj := range lmObj.MetricGroupConfig {
+			// pull channel data list
+			matchDataList := []map[string]interface{}{}
+			dataLength := len(metricGroupObj.DataChannel)
+			for i := 0; i < dataLength; i++ {
+				tmpMapData := <-metricGroupObj.DataChannel
+				matchDataList = append(matchDataList, tmpMapData)
+			}
+			calcMetricGroupFunc(lmObj.Path, lmObj.TargetEndpoint, lmObj.ServiceGroup, matchDataList, metricGroupObj.MetricConfig, appendDisplayMap, valueCountMap)
+		}
 	}
 	if len(appendDisplayMap) > 0 {
 		for k, v := range existMetricMap {
@@ -649,6 +752,70 @@ func calcLogMetricData() {
 	logMetricMonitorMetricLock.Lock()
 	logMetricMonitorMetrics = tmpLogMetricMetrics
 	logMetricMonitorMetricLock.Unlock()
+}
+
+func transMetricGroupData(input interface{}, stringMap []*logMetricStringMapNeObj) (output interface{}) {
+	if len(stringMap) == 0 {
+		output = input
+		return
+	}
+	output = input
+	inputString := transInterfaceValue(input)
+	for _, v := range stringMap {
+		if !v.RegEnable {
+			if v.StringValue == inputString {
+				output = v.TargetStringValue
+				break
+			}
+			continue
+		}
+		if mat := v.Regexp.MatcherString(inputString, 0); mat != nil {
+			if mat.Matches() {
+				output = v.TargetStringValue
+				break
+			}
+		}
+	}
+	return
+}
+
+func calcMetricGroupFunc(logPath, endpoint, serviceGroup string, dataList []map[string]interface{}, metricConfigList []*logMetricNeObj, appendDisplayMap map[string]int, valueCountMap map[string]*logMetricDisplayObj) {
+	for _, metricConfig := range metricConfigList {
+		isMatchNewDataFlag := false
+		for _, tmpMapData := range dataList {
+			// Get metric tags
+			tagsNameList := []string{}
+			for _, tmpJsonTagItem := range metricConfig.TagConfig {
+				tagsNameList = append(tagsNameList, tmpJsonTagItem.LogParamName)
+			}
+			tmpCode, tmpRetCode, tmpOtherTag, tmpTagString := getLogMetricJsonMapTags(tmpMapData, tagsNameList)
+			level.Info(monitorLogger).Log("log_metric_group -> ", fmt.Sprintf("code:%s, retCode:%s, otherTag:%s, tagString:%s", tmpCode, tmpRetCode, tmpOtherTag, tmpTagString))
+			metricValueMap := getLogMetricJsonMapValue(tmpMapData, metricConfig.StringMap)
+			if metricValueFloat, b := metricValueMap[metricConfig.LogParamName]; b {
+				isMatchNewDataFlag = true
+				tmpMetricKey := fmt.Sprintf("%s^%s^%s^%s", logPath, metricConfig.Metric, metricConfig.AggType, tmpTagString)
+				if valueExistObj, keyExist := valueCountMap[tmpMetricKey]; keyExist {
+					valueExistObj.ValueObj.Sum += metricValueFloat
+					valueExistObj.ValueObj.Count++
+					if valueExistObj.ValueObj.Max < metricValueFloat {
+						valueExistObj.ValueObj.Max = metricValueFloat
+					}
+					if valueExistObj.ValueObj.Min > metricValueFloat {
+						valueExistObj.ValueObj.Min = metricValueFloat
+					}
+				} else {
+					valueCountMap[tmpMetricKey] = &logMetricDisplayObj{Metric: metricConfig.Metric, Path: logPath, Agg: metricConfig.AggType, TEndpoint: endpoint, ServiceGroup: serviceGroup, TagsString: tmpOtherTag, Step: metricConfig.Step, ValueObj: logMetricValueObj{Sum: metricValueFloat, Max: metricValueFloat, Min: metricValueFloat, Count: 1}, Code: tmpCode, RetCode: tmpRetCode}
+				}
+			}
+		}
+		if !isMatchNewDataFlag {
+			if metricConfig.AggType == "avg" {
+				appendDisplayMap[fmt.Sprintf("%s^%s^sum", logPath, metricConfig.Metric)] = 1
+				appendDisplayMap[fmt.Sprintf("%s^%s^count", logPath, metricConfig.Metric)] = 1
+			}
+			appendDisplayMap[fmt.Sprintf("%s^%s^%s", logPath, metricConfig.Metric, metricConfig.AggType)] = 1
+		}
+	}
 }
 
 func buildLogMetricDisplayMetrics(valueCountMap, existMetricMap map[string]*logMetricDisplayObj) (tmpLogMetricMetrics []*logMetricDisplayObj) {
@@ -707,9 +874,9 @@ func buildLogMetricDisplayMetrics(valueCountMap, existMetricMap map[string]*logM
 			} else {
 				v.Value = 0
 			}
-			tmpLogMetricMetrics = append(tmpLogMetricMetrics, &logMetricDisplayObj{Metric: v.Metric, Path: v.Path, Agg: "avg", TEndpoint: v.TEndpoint, ServiceGroup: v.ServiceGroup, Tags: v.Tags, TagsString: v.TagsString, Value: v.Value, Step: v.Step, Display: v.Display, UpdateTime: v.UpdateTime})
-			tmpLogMetricMetrics = append(tmpLogMetricMetrics, &logMetricDisplayObj{Metric: v.Metric, Path: v.Path, Agg: "sum", TEndpoint: v.TEndpoint, ServiceGroup: v.ServiceGroup, Tags: v.Tags, TagsString: v.TagsString, Value: v.ValueObj.Sum, Step: v.Step, Display: v.Display, UpdateTime: v.UpdateTime})
-			tmpLogMetricMetrics = append(tmpLogMetricMetrics, &logMetricDisplayObj{Metric: v.Metric, Path: v.Path, Agg: "count", TEndpoint: v.TEndpoint, ServiceGroup: v.ServiceGroup, Tags: v.Tags, TagsString: v.TagsString, Value: v.ValueObj.Count, Step: v.Step, Display: v.Display, UpdateTime: v.UpdateTime})
+			tmpLogMetricMetrics = append(tmpLogMetricMetrics, &logMetricDisplayObj{Metric: v.Metric, Path: v.Path, Agg: "avg", TEndpoint: v.TEndpoint, ServiceGroup: v.ServiceGroup, Tags: v.Tags, TagsString: v.TagsString, Value: v.Value, Step: v.Step, Display: v.Display, UpdateTime: v.UpdateTime, Code: v.Code, RetCode: v.RetCode})
+			tmpLogMetricMetrics = append(tmpLogMetricMetrics, &logMetricDisplayObj{Metric: v.Metric, Path: v.Path, Agg: "sum", TEndpoint: v.TEndpoint, ServiceGroup: v.ServiceGroup, Tags: v.Tags, TagsString: v.TagsString, Value: v.ValueObj.Sum, Step: v.Step, Display: v.Display, UpdateTime: v.UpdateTime, Code: v.Code, RetCode: v.RetCode})
+			tmpLogMetricMetrics = append(tmpLogMetricMetrics, &logMetricDisplayObj{Metric: v.Metric, Path: v.Path, Agg: "count", TEndpoint: v.TEndpoint, ServiceGroup: v.ServiceGroup, Tags: v.Tags, TagsString: v.TagsString, Value: v.ValueObj.Count, Step: v.Step, Display: v.Display, UpdateTime: v.UpdateTime, Code: v.Code, RetCode: v.RetCode})
 		} else {
 			tmpLogMetricMetrics = append(tmpLogMetricMetrics, v)
 		}
@@ -767,6 +934,11 @@ func transLogMetricStringMapValue(config []*logMetricStringMapNeObj, input strin
 	return
 }
 
+func transInterfaceValue(input interface{}) (output string) {
+
+	return
+}
+
 func getLogMetricJsonMapValue(input map[string]interface{}, smConfig []*logMetricStringMapNeObj) (output map[string]float64) {
 	output = make(map[string]float64)
 	for k, v := range input {
@@ -789,17 +961,32 @@ func getLogMetricJsonMapValue(input map[string]interface{}, smConfig []*logMetri
 	return output
 }
 
-func getLogMetricJsonMapTags(input map[string]interface{}, tagKey []string) (tagString string) {
+func getLogMetricJsonMapTags(input map[string]interface{}, tagKey []string) (code, retCode, otherTag, tagString string) {
 	tagString = ""
 	for _, v := range tagKey {
 		if tmpTagValue, b := input[v]; b {
-			tagString += fmt.Sprintf("%s=%s,", v, tmpTagValue)
+			tmpValueString := fmt.Sprintf("%s", tmpTagValue)
+			rt := reflect.TypeOf(tmpTagValue)
+			if rt.String() == "float64" {
+				tmpValueString = fmt.Sprintf("%.0f", tmpTagValue.(float64))
+			}
+			tagString += fmt.Sprintf("%s=%s,", v, tmpValueString)
+			if v == "code" {
+				code = fmt.Sprintf("%s", tmpValueString)
+			} else if v == "retcode" {
+				retCode = fmt.Sprintf("%s", tmpValueString)
+			} else {
+				otherTag += fmt.Sprintf("%s=%s,", v, tmpValueString)
+			}
 		}
 	}
 	if tagString != "" {
 		tagString = tagString[:len(tagString)-1]
 	}
-	return tagString
+	if otherTag != "" {
+		otherTag = otherTag[:len(otherTag)-1]
+	}
+	return
 }
 
 func getLogMetricTags(lineText string, tagConfigList []*LogMetricConfigTag, stringMap []*logMetricStringMapNeObj) (illegalFlag bool, tagString string) {
