@@ -79,17 +79,36 @@ type logMetricNodeExporterResponse struct {
 }
 
 type logMetricMonitorNeObj struct {
-	TailSession       *tail.Tail            `json:"-"`
-	Lock              *sync.RWMutex         `json:"-"`
-	Path              string                `json:"path"`
-	TargetEndpoint    string                `json:"target_endpoint"`
-	ServiceGroup      string                `json:"service_group"`
-	JsonConfig        []*logMetricJsonNeObj `json:"config"`
-	MetricConfig      []*logMetricNeObj     `json:"custom"`
-	DataChan          chan string           `json:"-"`
-	ReOpenHandlerChan chan int              `json:"-"`
-	TailTimeLock      *sync.RWMutex         `json:"-"`
-	TailLastUnixTime  int64                 `json:"-"`
+	TailSession       *tail.Tail             `json:"-"`
+	Lock              *sync.RWMutex          `json:"-"`
+	Path              string                 `json:"path"`
+	TargetEndpoint    string                 `json:"target_endpoint"`
+	ServiceGroup      string                 `json:"service_group"`
+	JsonConfig        []*logMetricJsonNeObj  `json:"config"`
+	MetricConfig      []*logMetricNeObj      `json:"custom"`
+	MetricGroupConfig []*logMetricGroupNeObj `json:"metric_group_config"`
+	DataChan          chan string            `json:"-"`
+	ReOpenHandlerChan chan int               `json:"-"`
+	TailTimeLock      *sync.RWMutex          `json:"-"`
+	TailLastUnixTime  int64                  `json:"-"`
+}
+
+type logMetricGroupNeObj struct {
+	JsonRegexp     *Regexp                     `json:"-"`
+	DataChannel    chan map[string]interface{} `json:"-"`
+	LogMetricGroup string                      `json:"log_metric_group"`
+	LogType        string                      `json:"log_type"`
+	JsonRegular    string                      `json:"json_regular"`
+	ParamList      []*logMetricParamNeObj      `json:"param_list"`
+	MetricConfig   []*logMetricNeObj           `json:"custom"`
+}
+
+type logMetricParamNeObj struct {
+	RegExp    *Regexp                    `json:"-"`
+	Name      string                     `json:"name"`
+	JsonKey   string                     `json:"json_key"`
+	Regular   string                     `json:"regular"`
+	StringMap []*logMetricStringMapNeObj `json:"string_map"`
 }
 
 type logMetricJsonNeObj struct {
@@ -111,6 +130,7 @@ type logMetricNeObj struct {
 	Step         int64                      `json:"step"`
 	StringMap    []*logMetricStringMapNeObj `json:"string_map"`
 	TagConfig    []*LogMetricConfigTag      `json:"tag_config"`
+	LogParamName string                     `json:"log_param_name"`
 }
 
 type LogMetricConfigTag struct {
@@ -181,15 +201,6 @@ func (c *logMetricMonitorNeObj) startHandleTailData() {
 				//level.Info(monitorLogger).Log("get a match line:", lineText)
 				custom.DataChannel <- matchList[0]
 			}
-			//if custom.RegExp == nil {
-			//	continue
-			//}
-			//fetchList := custom.RegExp.FindStringMatch(lineText)
-			//if len(fetchList) > 1 {
-			//	if fetchList[1] != "" {
-			//		custom.DataChannel <- fetchList[1]
-			//	}
-			//}
 		}
 		c.Lock.RUnlock()
 	}
