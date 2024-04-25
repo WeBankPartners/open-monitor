@@ -15,7 +15,7 @@
       </div>
       <div>
         <Row>
-          <Col span="8" style="border-right: 2px solid rgb(232 234 236)">
+          <Col span="8" style="height: 550px;overflow: auto;">
             <Form :label-width="120">
               <FormItem :label="$t('m_template_name')">
                 <Input
@@ -53,7 +53,7 @@
               </FormItem>
             </Form>
           </Col>
-          <Col span="16">
+          <Col span="16" style="border-left: 2px solid rgb(232 234 236);">
             <div style="margin-left: 8px">
               <!-- 采集参数 -->
               <div>
@@ -99,108 +99,7 @@ export default {
       isfullscreen: false,
       isParmasChanged: false,
       isAdd: true,
-      configInfo: {
-        guid: '',
-        name: '',
-        log_type: 'regular',
-        demo_log: '',
-        calc_result: {
-          match_text: '',
-          json_key_list: [],
-          json_obj: {}
-        },
-        param_list: [
-          {
-            guid: '',
-            name: 'code',
-            display_name: this.$t('m_service_code'),
-            json_key: '',
-            regular: '',
-            demo_match_value: '',
-          },
-          {
-            guid: '',
-            name: 'retcode',
-            display_name: this.$t('m_return_code'),
-            json_key: '',
-            regular: '',
-            demo_match_value: '',
-          },
-          {
-            guid: '',
-            name: 'costtime',
-            display_name: this.$t('m_time_consuming'),
-            json_key: '',
-            regular: '',
-            demo_match_value: '',
-          }
-        ],
-        metric_list: [
-          {
-            log_param_name: 'code',
-            metric: 'req_count',
-            display_name: this.$t('m_request_volume'),
-            agg_type: 'count',
-            tag_config: [
-              'code'
-            ]
-          },
-          {
-            log_param_name: 'code',
-            metric: 'req_suc_count',
-            display_name: this.$t('m_success_volume'),
-            agg_type: 'count',
-            tag_config: [
-              'code',
-              'retcode'
-            ]
-          },
-          {
-            log_param_name: 'code',
-            metric: 'req_suc_rate',
-            display_name: this.$t('m_success_rate'),
-            agg_type: '100*{req_suc_count}/{req_count}',
-            tag_config: [
-              'code',
-              'retcode'
-            ]
-          },
-          {
-            log_param_name: 'code',
-            metric: 'req_fail_rate',
-            display_name: this.$t('m_failure_rate'),
-            agg_type: '100-100*{req_suc_count}/{req_count}',
-            tag_config: [
-              'code',
-              'etcode'
-            ]
-          },
-          {
-            log_param_name: 'costtime',
-            metric: 'req_costtime_avg',
-            display_name: this.$t('m_average_time'),
-            agg_type: 'avg',
-            tag_config: [
-              'code',
-              'retcode'
-            ]
-          },
-          {
-            log_param_name: 'costtime',
-            metric: 'req_costtime_max',
-            display_name: this.$t('m_max_costtime'),
-            agg_type: 'max',
-            tag_config: [
-              'code',
-              'retcode'
-            ]
-          }
-        ],
-        // create_user: '',
-        // create_time: '',
-        // update_user: '',
-        // update_time: ''
-      },
+      configInfo: {},
       columnsForParameterCollection: [
         {
           title: this.$t('field.displayName'),
@@ -268,9 +167,106 @@ export default {
         this.isAdd = false
         this.getConfigDetail(guid)
       } else {
+        this.configInfo = {
+          guid: '',
+          name: '',
+          log_type: 'regular',
+          demo_log: '',
+          calc_result: {
+            match_text: '',
+            json_key_list: [],
+            json_obj: {}
+          },
+          param_list: [
+            {
+              guid: '',
+              name: 'code',
+              display_name: this.$t('m_service_code'),
+              json_key: '',
+              regular: '',
+              demo_match_value: '',
+            },
+            {
+              guid: '',
+              name: 'retcode',
+              display_name: this.$t('m_return_code'),
+              json_key: '',
+              regular: '',
+              demo_match_value: '',
+            },
+            {
+              guid: '',
+              name: 'costtime',
+              display_name: this.$t('m_time_consuming'),
+              json_key: '',
+              regular: '',
+              demo_match_value: '',
+            }
+          ],
+          metric_list: [
+            {
+              log_param_name: 'code',
+              metric: 'req_count',
+              display_name: this.$t('m_request_volume'),
+              agg_type: 'count',
+              tag_config: [
+                'code'
+              ]
+            },
+            {
+              log_param_name: 'code',
+              metric: 'req_suc_count',
+              display_name: this.$t('m_success_volume'),
+              agg_type: 'count',
+              tag_config: [
+                'code',
+                'retcode'
+              ]
+            },
+            {
+              log_param_name: 'code',
+              metric: 'req_suc_rate',
+              display_name: this.$t('m_success_rate'),
+              agg_type: '100*{req_suc_count}/{req_count}',
+              tag_config: [
+                'code',
+                'retcode'
+              ]
+            },
+            {
+              log_param_name: 'code',
+              metric: 'req_fail_rate',
+              display_name: this.$t('m_failure_rate'),
+              agg_type: '100-100*{req_suc_count}/{req_count}',
+              tag_config: [
+                'code',
+                'etcode'
+              ]
+            },
+            {
+              log_param_name: 'costtime',
+              metric: 'req_costtime_avg',
+              display_name: this.$t('m_average_time'),
+              agg_type: 'avg',
+              tag_config: [
+                'code',
+                'retcode'
+              ]
+            },
+            {
+              log_param_name: 'costtime',
+              metric: 'req_costtime_max',
+              display_name: this.$t('m_max_costtime'),
+              agg_type: 'max',
+              tag_config: [
+                'code',
+                'retcode'
+              ]
+            }
+          ]
+        }
         this.showModal = true
         this.isAdd = true
-        console.log('新增')
       }
     },
     saveConfig () {
