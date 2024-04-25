@@ -230,7 +230,7 @@ func (c *logMetricMonitorNeObj) startHandleTailData() {
 							allMatchFlag = false
 							break
 						} else {
-							fetchParamValueMap[metricParam.Name] = fetchValue
+							fetchParamValueMap[metricParam.Name] = transMetricGroupData(fetchValue, metricParam.StringMap)
 						}
 					}
 					if allMatchFlag {
@@ -242,7 +242,7 @@ func (c *logMetricMonitorNeObj) startHandleTailData() {
 				for _, metricParam := range metricGroup.ParamList {
 					if metricParam.RegExp != nil {
 						if matchList := pcreMatchSubString(metricParam.RegExp, lineText); len(matchList) > 0 {
-							fetchParamValueMap[metricParam.Name] = matchList[0]
+							fetchParamValueMap[metricParam.Name] = transMetricGroupData(matchList[0], metricParam.StringMap)
 						} else {
 							allMatchFlag = false
 							break
@@ -754,13 +754,12 @@ func calcLogMetricData() {
 	logMetricMonitorMetricLock.Unlock()
 }
 
-func transMetricGroupData(input interface{}, stringMap []*logMetricStringMapNeObj) (output interface{}) {
+func transMetricGroupData(input interface{}, stringMap []*logMetricStringMapNeObj) interface{} {
 	if len(stringMap) == 0 {
-		output = input
-		return
+		return input
 	}
-	output = input
-	inputString := transInterfaceValue(input)
+	output := input
+	inputString := transInterfaceValueToString(input)
 	for _, v := range stringMap {
 		if !v.RegEnable {
 			if v.StringValue == inputString {
@@ -776,7 +775,7 @@ func transMetricGroupData(input interface{}, stringMap []*logMetricStringMapNeOb
 			}
 		}
 	}
-	return
+	return output
 }
 
 func calcMetricGroupFunc(logPath, endpoint, serviceGroup string, dataList []map[string]interface{}, metricConfigList []*logMetricNeObj, appendDisplayMap map[string]int, valueCountMap map[string]*logMetricDisplayObj) {
@@ -934,8 +933,27 @@ func transLogMetricStringMapValue(config []*logMetricStringMapNeObj, input strin
 	return
 }
 
-func transInterfaceValue(input interface{}) (output string) {
-
+func transInterfaceValueToString(input interface{}) (output string) {
+	if input == nil {
+		return
+	}
+	rt := reflect.TypeOf(input)
+	switch rt.String() {
+	case "string":
+		output = fmt.Sprintf("%s", input)
+		break
+	case "float64":
+		output = fmt.Sprintf("%.0f", input.(float64))
+		break
+	case "int64":
+		output = fmt.Sprintf("%d", input.(int64))
+		break
+	case "bool":
+		output = fmt.Sprintf("%t", input.(bool))
+		break
+	default:
+		output = fmt.Sprintf("%v", input)
+	}
 	return
 }
 

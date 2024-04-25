@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/WeBankPartners/go-common-lib/guid"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"time"
 )
@@ -123,7 +124,7 @@ func CreateLogMonitorTemplate(param *models.LogMonitorTemplateDto, operator stri
 	return
 }
 
-func UpdateLogMonitorTemplate(param *models.LogMonitorTemplateDto, operator string) (err error) {
+func UpdateLogMonitorTemplate(param *models.LogMonitorTemplateDto, operator string) (affectEndpoints []string, err error) {
 	existLogMonitorObj, getExistDataErr := GetLogMonitorTemplate(param.Guid)
 	if getExistDataErr != nil {
 		err = fmt.Errorf("get exist log monitor data fail,%s ", getExistDataErr.Error())
@@ -183,6 +184,17 @@ func UpdateLogMonitorTemplate(param *models.LogMonitorTemplateDto, operator stri
 		}
 	}
 	err = Transaction(actions)
+	if err == nil {
+		var endpointRelRows []*models.LogMetricEndpointRelTable
+		queryEndpointErr := x.SQL("select target_endpoint from log_metric_endpoint_rel where log_metric_monitor in (select log_metric_monitor from log_metric_group where log_monitor_template=?)", param.Guid).Find(&endpointRelRows)
+		if queryEndpointErr != nil {
+			log.Logger.Error("query log metric template affect endpoints fail", log.String("logMonitorTemplate", param.Guid), log.Error(queryEndpointErr))
+		} else {
+			for _, v := range endpointRelRows {
+				affectEndpoints = append(affectEndpoints, v.TargetEndpoint)
+			}
+		}
+	}
 	return
 }
 
@@ -190,6 +202,15 @@ func DeleteLogMonitorTemplate(logMonitorTemplateGuid string) (err error) {
 	_, getErr := GetSimpleLogMonitorTemplate(logMonitorTemplateGuid)
 	if getErr != nil {
 		err = getErr
+		return
+	}
+	refServiceGroup, getRefErr := GetLogMonitorTemplateServiceGroup(logMonitorTemplateGuid)
+	if getRefErr != nil {
+		err = getRefErr
+		return
+	}
+	if len(refServiceGroup) > 0 {
+		err = fmt.Errorf("template used by other service group! ")
 		return
 	}
 	var actions []*Action
