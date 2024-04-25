@@ -240,7 +240,7 @@ export default {
               agg_type: '100-100*{req_suc_count}/{req_count}',
               tag_config: [
                 'code',
-                'etcode'
+                'retcode'
               ]
             },
             {
@@ -269,8 +269,24 @@ export default {
         this.isAdd = true
       }
     },
+    paramsValidate (tmpData) {
+      if (tmpData.name === '') {
+        this.$Message.warning(`${this.$t('m_template_name')}${this.$t('m_cannot_be_empty')}`)
+        return true
+      }
+
+      const isRegularEmpty = tmpData.param_list.some((element) => {
+        return element.regular === ''
+      })
+      if (isRegularEmpty) {
+        this.$Message.warning(`${this.$t('m_extract_regular')}${this.$t('m_cannot_be_empty')}`)
+        return true
+      }
+      return false
+    },
     saveConfig () {
       let tmpData = JSON.parse(JSON.stringify(this.configInfo))
+      if (this.paramsValidate(tmpData)) return
       delete tmpData.create_user
       delete tmpData.create_time
       delete tmpData.update_user
@@ -293,6 +309,10 @@ export default {
       this.configInfo.param_list[index].regular = val
     },
     generateBackstageTrial () {
+      if (this.configInfo.demo_log === '') {
+        this.$Message.warning(`${this.$t('m_log_example')}${this.$t('m_cannot_be_empty')}`)
+        return
+      }
       const params = {
         demo_log: this.configInfo.demo_log,
         param_list: this.configInfo.param_list
