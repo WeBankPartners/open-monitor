@@ -26,3 +26,6 @@ Update log regexp rule && Fix log tail index
 
 v2.0.4.3
 Update log regexp to pcre exp && Add tail handler recover
+
+v2.0.7.2
+Update log metric monitor

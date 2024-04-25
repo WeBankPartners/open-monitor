@@ -257,11 +257,21 @@ func init() {
 		&handlerFuncObj{Url: "/monitor/metric/export", Method: http.MethodGet, HandlerFunc: monitor.ExportMetric},
 		&handlerFuncObj{Url: "/monitor/metric/import", Method: http.MethodPost, HandlerFunc: monitor.ImportMetric},
 		// log monitor template
-		&handlerFuncObj{Url: "/service/log_metric/log_monitor_template/list", Method: http.MethodGet, HandlerFunc: service.ListLogMonitorTemplate},
+		&handlerFuncObj{Url: "/service/log_metric/log_monitor_template/list", Method: http.MethodPost, HandlerFunc: service.ListLogMonitorTemplate},
 		&handlerFuncObj{Url: "/service/log_metric/log_monitor_template/:logMonitorTemplateGuid", Method: http.MethodGet, HandlerFunc: service.GetLogMonitorTemplate},
 		&handlerFuncObj{Url: "/service/log_metric/log_monitor_template", Method: http.MethodPost, HandlerFunc: service.CreateLogMonitorTemplate},
 		&handlerFuncObj{Url: "/service/log_metric/log_monitor_template", Method: http.MethodPut, HandlerFunc: service.UpdateLogMonitorTemplate},
 		&handlerFuncObj{Url: "/service/log_metric/log_monitor_template/:logMonitorTemplateGuid", Method: http.MethodDelete, HandlerFunc: service.DeleteLogMonitorTemplate},
+		&handlerFuncObj{Url: "/service/log_metric/affect_service_group/:logMonitorTemplateGuid", Method: http.MethodGet, HandlerFunc: service.GetLogMonitorTemplateServiceGroup},
+		&handlerFuncObj{Url: "/service/log_metric/regexp/match", Method: http.MethodPost, HandlerFunc: service.CheckLogMonitorRegExpMatch},
+
+		&handlerFuncObj{Url: "/service/log_metric/log_metric_group/:logMetricGroupGuid", Method: http.MethodGet, HandlerFunc: service.GetLogMetricGroup},
+		&handlerFuncObj{Url: "/service/log_metric/log_metric_group", Method: http.MethodPost, HandlerFunc: service.CreateLogMetricGroup},
+		&handlerFuncObj{Url: "/service/log_metric/log_metric_group", Method: http.MethodPut, HandlerFunc: service.UpdateLogMetricGroup},
+		&handlerFuncObj{Url: "/service/log_metric/log_metric_group/:logMetricGroupGuid", Method: http.MethodDelete, HandlerFunc: service.DeleteLogMetricGroup},
+		&handlerFuncObj{Url: "/service/log_metric/custom/log_metric_group/:logMetricGroupGuid", Method: http.MethodGet, HandlerFunc: service.GetLogMetricCustomGroup},
+		&handlerFuncObj{Url: "/service/log_metric/custom/log_metric_group", Method: http.MethodPost, HandlerFunc: service.CreateLogMetricCustomGroup},
+		&handlerFuncObj{Url: "/service/log_metric/custom/log_metric_group", Method: http.MethodPut, HandlerFunc: service.UpdateLogMetricCustomGroup},
 	)
 }
 
