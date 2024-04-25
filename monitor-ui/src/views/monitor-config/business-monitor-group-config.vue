@@ -1,6 +1,6 @@
 <template>
   <div>
-    <Modal v-model="showModel" :title="$t('menu.configuration')" :mask-closable="false" :closable="false" :width="1100" :fullscreen="isfullscreen">
+    <Modal v-model="showModel" :title="$t('menu.configuration')" :mask-closable="false" :width="1100" :fullscreen="isfullscreen">
       <div slot="header" class="custom-modal-header">
         <span>
           {{$t('menu.configuration')}}
@@ -170,8 +170,29 @@ export default {
         this.businessConfig = resp
       })
     },
+    paramsValidate (tmpData) {
+      const isCodeMapEmpty = tmpData.code_string_map.some((element) => {
+        return element.source_value === '' || element.target_value === ''
+      })
+      if (isCodeMapEmpty) {
+        this.$Message.warning(`${this.$t('m_service_code')}: ${this.$t('m_fields_cannot_be_empty')}`)
+        return true
+      }
+
+      const isRetcodeMapEmpty = tmpData.retcode_string_map.some((element) => {
+        return element.source_value === '' || element.target_value === ''
+      })
+      if (isRetcodeMapEmpty) {
+        this.$Message.warning(`${this.$t('m_return_code')}: ${this.$t('m_fields_cannot_be_empty')}`)
+        return true
+      }
+
+      return false
+    },
+
     saveConfig () {
       let tmpData = JSON.parse(JSON.stringify(this.businessConfig))
+      if (this.paramsValidate(tmpData)) return
       // delete tmpData.create_user
       // delete tmpData.create_time
       // delete tmpData.update_user

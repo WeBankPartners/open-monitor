@@ -17,7 +17,7 @@
         <Row>
           <Col span="8">
             <Form :label-width="120">
-              <FormItem :label="$t('m_template_name')">
+              <FormItem :label="$t('tableKey.name')">
                 <Input
                   v-model="configInfo.name"
                   maxlength="30"
@@ -36,7 +36,7 @@
                 <Input
                   v-model="configInfo.demo_log"
                   type="textarea"
-                  :rows="6"
+                  :rows="15"
                   style="width: 96%"
                 />
                 <div v-if="isParmasChanged && configInfo.demo_log.length === 0" style="color: red">
@@ -315,7 +315,6 @@ export default {
       // templateGuid, 模版id
       // parentGuid, 上级唯一标识
       // configGuid, 配置唯一标志 
-      this.configInfo.log_metric_monitor = parentGuid
       this.isAdd = actionType === 'add'
       if (configGuid) {
         this.getConfig(configGuid)
@@ -355,11 +354,58 @@ export default {
             // }
           ]
         }
+        this.configInfo.log_metric_monitor = parentGuid
       }
+
       this.showModal = true
+    },
+    paramsValidate (tmpData) {
+      if (tmpData.name === '') {
+        this.$Message.warning(`${this.$t('tableKey.name')}${this.$t('m_cannot_be_empty')}`)
+        return true
+      }
+      const is_param_list_empty = tmpData.param_list.some((element) => {
+        return element.name === '' || element.display_name === '' || element.regular === ''
+      })
+      if (is_param_list_empty) {
+        this.$Message.warning(`${this.$t('m_parameter_collection')}: ${this.$t('m_fields_cannot_be_empty')}`)
+        return true
+      }
+      const is_demo_match_value_empty = tmpData.param_list.some((element) => {
+        return element.demo_match_value === ''
+      })
+      if (is_demo_match_value_empty) {
+        this.$Message.warning(`${this.$t('m_matching_result')}: ${this.$t('m_cannot_be_empty')}`)
+        return true
+      }
+
+      const hasDuplicatesParamList = tmpData.param_list.some((element, index) => {
+        return tmpData.param_list.findIndex((item) => item.name === element.name) !== index
+      })
+      if (hasDuplicatesParamList) {
+        this.$Message.warning(`${this.$t('m_parameter_key')}${this.$t('m_cannot_be_repeated')}`)
+        return true
+      }
+
+      const is_metric_list_empty = tmpData.metric_list.some((element) => {
+        return element.display_name === '' || element.metric === '' || element.log_param_name === '' || element.agg_type === ''
+      })
+      if (is_metric_list_empty) {
+        this.$Message.warning(`${this.$t('m_compute_metrics')}: ${this.$t('m_fields_cannot_be_empty')}`)
+        return true
+      }
+      const hasDuplicatesMetricList = tmpData.metric_list.some((element, index) => {
+        return tmpData.metric_list.findIndex((item) => item.metric === element.metric) !== index
+      })
+      if (hasDuplicatesMetricList) {
+        this.$Message.warning(`${this.$t('m_metric_key')}${this.$t('m_cannot_be_repeated')}`)
+        return true
+      }
+      return false
     },
     saveConfig () {
       let tmpData = JSON.parse(JSON.stringify(this.configInfo))
+      if (this.paramsValidate(tmpData)) return
       delete tmpData.create_user
       delete tmpData.create_time
       delete tmpData.update_user
@@ -382,6 +428,10 @@ export default {
       this.configInfo[params][index][key] = val
     },
     generateBackstageTrial () {
+      if (this.configInfo.demo_log === '') {
+        this.$Message.warning(`${this.$t('m_log_example')}${this.$t('m_cannot_be_empty')}`)
+        return
+      }
       const params = {
         demo_log: this.configInfo.demo_log,
         param_list: this.configInfo.param_list

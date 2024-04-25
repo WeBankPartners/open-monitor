@@ -154,7 +154,7 @@ export default {
       //       agg_type: '100-100*{req_suc_count}/{req_count}',
       //       tag_config: [
       //         'code',
-      //         'etcode'
+      //         'retcode'
       //       ]
       //     },
       //     {
