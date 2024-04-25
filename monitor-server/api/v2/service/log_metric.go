@@ -556,11 +556,12 @@ func UpdateLogMonitorTemplate(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	err = db.UpdateLogMonitorTemplate(&param, middleware.GetOperateUser(c))
+	var affectEndpoints []string
+	affectEndpoints, err = db.UpdateLogMonitorTemplate(&param, middleware.GetOperateUser(c))
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
-		//err = syncLogMetricNodeExporterConfig(hostEndpointList)
+		err = syncLogMetricNodeExporterConfig(affectEndpoints)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		} else {
@@ -658,7 +659,7 @@ func DeleteLogMetricGroup(c *gin.Context) {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
 		if logMetricMonitor != "" {
-			//err = syncLogMetricMonitorConfig(logMetricMonitor)
+			err = syncLogMetricMonitorConfig(logMetricMonitor)
 			if err != nil {
 				middleware.ReturnHandleError(c, err.Error(), err)
 			} else {
@@ -719,7 +720,7 @@ func UpdateLogMetricCustomGroup(c *gin.Context) {
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
-		//err = syncLogMetricMonitorConfig(param.LogMetricMonitor)
+		err = syncLogMetricMonitorConfig(param.LogMetricMonitor)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
 		} else {
