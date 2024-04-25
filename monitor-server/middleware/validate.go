@@ -19,6 +19,8 @@ var (
 	regIp            = regexp.MustCompile(`^((25[0-5]|2[0-4]\d|((1\d{2})|([1-9]?\d)))\.){3}(25[0-5]|2[0-4]\d|((1\d{2})|([1-9]?\d)))$`)
 	regActiveWindow  = regexp.MustCompile(`^\d{2}:\d{2}-\d{2}:\d{2}$`)
 	regName          = regexp.MustCompile(`^[\w|\-|\.|:]+$`)
+	regMetric        = regexp.MustCompile(`^[a-zA-Z0-9_\.]+$`)
+	regDisplayName   = regexp.MustCompile(`.*`)
 	roleEndpointMap  []map[string]int
 	roleEndpointLock sync.RWMutex
 )
@@ -111,6 +113,27 @@ func IsIllegalName(str string) bool {
 	//	return true
 	//}
 	//return !regName.MatchString(str)
+}
+
+func IsIllegalNameNew(str string) bool {
+	if str == "" || len(str) > 50 {
+		return true
+	}
+	return !regName.MatchString(str)
+}
+
+func IsIllegalDisplayName(str string) bool {
+	if str == "" || len(str) > 250 {
+		return true
+	}
+	return !regDisplayName.MatchString(str)
+}
+
+func IsIllegalMetric(str string) bool {
+	if str == "" || len(str) > 50 {
+		return true
+	}
+	return !regMetric.MatchString(str)
 }
 
 func ValidateActiveWindowString(str string) bool {
