@@ -372,6 +372,9 @@
   "m_expand_template": "展开模版",
   "m_hide_template": "收起模版",
   "m_associated_template": "关联模版",
-  "m_configuration_information": "配置信息"
-  
+  "m_configuration_information": "配置信息",
+  "m_cannot_be_empty": "不能为空",
+  "m_cannot_be_repeated": "不能重复",
+  "m_fields_cannot_be_empty": "不能存在字段为空",
+  "m_filtering_info": "请输入过滤信息"
 }
