@@ -145,7 +145,7 @@ export default {
               regulative: 1,
               source_value: '',
               target_value: '',
-              value_type: 'succcess'
+              value_type: 'success'
             }
           ]
         }
