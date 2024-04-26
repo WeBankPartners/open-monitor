@@ -58,7 +58,7 @@
                   width="100%"
                 ></Table>
                 <Button type="primary" @click="addParameterCollection" ghost size="small" style="float:left;margin:12px">{{ $t('m_add_parameter_collection') }}</Button>
-                <Button type="primary" @click="generateBackstageTrial" ghost size="small" style="float:right;margin:12px">{{ $t('m_match') }}</Button>
+                <Button type="primary" :disabled="configInfo.demo_log==='' || configInfo.param_list.length === 0" @click="generateBackstageTrial" ghost size="small" style="float:right;margin:12px">{{ $t('m_match') }}</Button>
               </div>
               <!-- 计算指标 -->
               <div>
@@ -451,6 +451,7 @@ export default {
         param_list: this.configInfo.param_list
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.standardLogRegexMatch, params, (responseData) => {
+        this.$Message.success(this.$t('m_success'))
         this.configInfo.param_list = responseData
       }, {isNeedloading:false})
     },
@@ -483,7 +484,7 @@ export default {
       this.configInfo.param_list[this.editTagMappingIndex].string_map = arr
     },
     //#endregion
-    //#region 指标计算 
+    //#region 计算指标 
     addComputeMetrics () {
       this.configInfo.metric_list.push({
         log_param_name: '',
