@@ -22,8 +22,10 @@ func SyncLogMetricExporterConfig(endpoints []string) error {
 		err = updateEndpointLogMetric(v)
 		if err != nil {
 			err = fmt.Errorf("Sync endpoint:%s log metric config fail,%s ", v, err.Error())
+			log.Logger.Error("sync log metric data error", log.String("endpoint", v), log.Error(err))
 			break
 		}
+		log.Logger.Info("sync log metric data done", log.String("endpoint", v))
 		existMap[v] = 1
 	}
 	return err
@@ -34,6 +36,7 @@ func updateEndpointLogMetric(endpointGuid string) error {
 	if err != nil {
 		return fmt.Errorf("Query endpoint:%s log metric config fail,%s ", endpointGuid, err.Error())
 	}
+	log.Logger.Debug("sync log metric config data", log.String("endpoint", endpointGuid), log.JsonObj("logMetricConfig", logMetricConfig))
 	syncParam := transLogMetricConfigToJobNew(logMetricConfig, endpointGuid)
 	endpointObj := models.EndpointNewTable{Guid: endpointGuid}
 	endpointObj, err = GetEndpointNew(&endpointObj)
@@ -125,7 +128,7 @@ func transLogMetricConfigToJobNew(logMetricConfig []*models.LogMetricQueryObj, e
 				}
 			}
 			for _, v := range lmMonitorObj.MetricGroups {
-				if v.CreateUser == "old_data" {
+				if v.UpdateUser == "old_data" {
 					continue
 				}
 				tmpGroupJob := models.LogMetricGroupNeObj{LogMetricGroup: v.Guid, LogType: v.LogType, JsonRegular: v.JsonRegular, ParamList: []*models.LogMetricParamNeObj{}, MetricConfig: []*models.LogMetricNeObj{}}
@@ -143,6 +146,9 @@ func transLogMetricConfigToJobNew(logMetricConfig []*models.LogMetricQueryObj, e
 					tmpGroupJob.ParamList = append(tmpGroupJob.ParamList, &tmpGroupParamObj)
 				}
 				for _, groupMetric := range v.MetricList {
+					if groupMetric.AggType != "avg" && groupMetric.AggType != "count" && groupMetric.AggType != "sum" && groupMetric.AggType != "max" && groupMetric.AggType != "min" {
+						continue
+					}
 					tmpGroupMetricObj := models.LogMetricNeObj{Metric: groupMetric.Metric, LogParamName: groupMetric.LogParamName, AggType: groupMetric.AggType, Step: groupMetric.Step, TagConfig: []*models.LogMetricConfigTag{}}
 					for _, vv := range groupMetric.TagConfigList {
 						tmpGroupMetricObj.TagConfig = append(tmpGroupMetricObj.TagConfig, &models.LogMetricConfigTag{LogParamName: vv})
