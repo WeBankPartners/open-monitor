@@ -316,7 +316,7 @@
   "m_metric": "Metric",
   "m_add_tags": "Add Tags",
   "m_target_value": "Target Value",
-  "m_source_value": "Source Value",
+  "m_source_value": "Source Value/Regex",
   "m_type_object": "Type Object",
   "m_host_object": "Host Object",
   "m_default_color": "Default Color",
