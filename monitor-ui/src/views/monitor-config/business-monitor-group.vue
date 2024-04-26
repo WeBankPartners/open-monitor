@@ -867,7 +867,7 @@ export default {
       this.isShowWarningDelete = false
     },
     delRuleItem (rowData) {
-      const api = this.$root.apiCenter.deleteLogMetricGroup + '/' + rowData.guid
+      const api = this.$root.apiCenter.deleteLogMetricGroup + rowData.guid
       this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', api, '', () => {
         this.$Message.success(this.$t('tips.success'))
         this.isShowWarningDelete = false
