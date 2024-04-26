@@ -155,7 +155,7 @@ export default {
             const selectOptions = this.configInfo.calc_result.json_key_list
             return (
               <Select
-                style="'z-index: 1000'"
+                filterable
                 value={params.row.json_key}
                 on-on-change={(val) => {
                   this.changeJSONKey(params.index, val)

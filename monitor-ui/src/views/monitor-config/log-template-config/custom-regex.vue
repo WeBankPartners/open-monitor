@@ -220,11 +220,13 @@ export default {
           title: this.$t('m_statistical_parameters'),
           key: 'log_param_name',
           render: (h, params) => {
-            const selectOptions = this.configInfo.param_list.map(p => {
+            const keys = this.configInfo.param_list.map(p => {
               return p.name
             })
+            const selectOptions = [...new Set(keys)]
             return (
               <Select
+                filterable
                 value={params.row.log_param_name}
                 on-on-change={(v) => {
                   this.changeVal('metric_list', params.index, 'log_param_name', v)
@@ -243,11 +245,13 @@ export default {
           title: this.$t('m_filter_label'),
           key: 'tag_config',
           render: (h, params) => {
-            const selectOptions = this.configInfo.param_list.map(p => {
+            const keys = this.configInfo.param_list.map(p => {
               return p.name
             })
+            const selectOptions = [...new Set(keys)]
             return (
               <Select
+                filterable
                 value={params.row.tag_config}
                 multiple
                 on-on-change={(v) => {
@@ -270,6 +274,7 @@ export default {
             const selectOptions = ['avg', 'count', 'max', 'min', 'sum']
             return (
               <Select
+                filterable
                 value={params.row.agg_type}
                 on-on-change={(v) => {
                   this.changeVal('metric_list', params.index, 'agg_type', v)
@@ -305,7 +310,8 @@ export default {
           }
         }
       ],
-      editTagMappingIndex: -1 // 正在编辑的参数采集
+      editTagMappingIndex: -1, // 正在编辑的参数采集
+      
     }
   },
   methods: {
@@ -431,6 +437,13 @@ export default {
       if (this.configInfo.demo_log === '') {
         this.$Message.warning(`${this.$t('m_log_example')}${this.$t('m_cannot_be_empty')}`)
         return
+      }
+      const hasDuplicatesParamList = this.configInfo.param_list.some((element, index) => {
+        return this.configInfo.param_list.findIndex((item) => item.name === element.name) !== index
+      })
+      if (hasDuplicatesParamList) {
+        this.$Message.warning(`${this.$t('m_parameter_key')}${this.$t('m_cannot_be_repeated')}`)
+        return true
       }
       const params = {
         demo_log: this.configInfo.demo_log,
