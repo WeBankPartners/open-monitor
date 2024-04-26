@@ -73,7 +73,7 @@
                 <Input v-model.trim="item.target_value" style="width:90%"></Input>
               </Col>
               <Col span="6">
-                <Input disabled v-model.trim="item.value_type" style="width:90%"></Input>
+                <span style="line-height: 32px;">{{ $t('m_'+item.value_type) }}</span>
               </Col>
               <Col span="2">
                 <Button

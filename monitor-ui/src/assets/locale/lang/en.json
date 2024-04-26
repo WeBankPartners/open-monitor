@@ -377,5 +377,7 @@
   "m_cannot_be_empty": " cannot be empty",
   "m_cannot_be_repeated": " cannot be repeated",
   "m_fields_cannot_be_empty": " fields cannot be repeated",
-  "m_filtering_info": "Please enter the filtering information."
+  "m_filtering_info": "Please enter the filtering information.",
+  "m_success": "Success",
+  "m_fail": "Fail"
 }
