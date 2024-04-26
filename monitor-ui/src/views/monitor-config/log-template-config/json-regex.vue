@@ -172,8 +172,8 @@ export default {
         },
         {
           title: this.$t('m_matching_result'),
-          key: 'demo_match_value',
-        },
+          key: 'demo_match_value'
+        }
       ],
       columnsForComputeMetrics: [
         {
@@ -399,7 +399,7 @@ export default {
     },
     changeJSONKey (index, val) {
       this.configInfo.param_list[index].json_key = val
-      this.configInfo.param_list[index].demo_match_value = (this.configInfo.calc_result.json_obj[val] + '')
+      this.configInfo.param_list[index].demo_match_value = ((this.configInfo.calc_result.json_obj[val] || '') + '')
     }
   }
 }
