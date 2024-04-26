@@ -65,7 +65,7 @@
                   :data="configInfo.param_list"
                   width="100%"
                 ></Table>
-                <Button type="primary" @click="generateBackstageTrial" ghost size="small" style="float:right;margin:12px">{{ $t('m_match') }}</Button>
+                <Button type="primary" :disabled="configInfo.demo_log === ''" @click="generateBackstageTrial" ghost size="small" style="float:right;margin:12px">{{ $t('m_match') }}</Button>
               </div>
               <!-- 计算指标 -->
               <div>
@@ -282,6 +282,15 @@ export default {
         this.$Message.warning(`${this.$t('m_extract_regular')}${this.$t('m_cannot_be_empty')}`)
         return true
       }
+
+      const isMatchValueEmpty = tmpData.param_list.some((element) => {
+        return element.demo_match_value === ''
+      })
+      if (isMatchValueEmpty) {
+        this.$Message.warning(`${this.$t('m_matching_result')}${this.$t('m_cannot_be_empty')}`)
+        return true
+      }
+
       return false
     },
     saveConfig () {
@@ -319,6 +328,7 @@ export default {
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.standardLogRegexMatch, params, (responseData) => {
         this.configInfo.param_list = responseData
+        this.$Message.success(this.$t('m_success'))
       }, {isNeedloading:false})
     },
   }
