@@ -395,6 +395,7 @@ export default {
           item.json_key = ''
           item.demo_match_value = ''
         })
+        this.$Message.success(this.$t('m_success'))
       }, {isNeedloading:false})
     },
     changeJSONKey (index, val) {
