@@ -51,6 +51,10 @@ const implicitRoute = {
     parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
     childBreadcrumb: { 'zh-CN': '业务监控', 'en-US': 'Business Monitor' }
   },
+  'monitorConfigIndex/logTemplate': {
+    parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
+    childBreadcrumb: { 'zh-CN': '日志模版', 'en-US': 'Log Template' }
+  },
   'viewConfig': {
     parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
     childBreadcrumb: { 'zh-CN': '查看视图', 'en-US': 'View' }

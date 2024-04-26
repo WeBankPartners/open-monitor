@@ -152,9 +152,10 @@ export default {
           tooltip: true,
           key: 'string_map',
           render: (h, params) => {
+            const val = params.row.string_map.map(item => item.target_value).join(',')
             return (
               <div>
-                <Input disabled style="width:80%" value={JSON.stringify(params.row.string_map)}/>
+                <Input disabled style="width:80%" value={val}/>
                 <Button
                   size="small"
                   type="success"
