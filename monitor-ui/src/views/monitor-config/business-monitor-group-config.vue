@@ -9,6 +9,16 @@
         <Icon v-else @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-expand" />
       </div>
       <div :class="isfullscreen? 'modal-container-fullscreen':'modal-container-normal'">
+        <Form :label-width="120" inline>
+          <FormItem :label="$t('tableKey.name')">
+            <Input v-model.trim="businessConfig.name" maxlength="30" show-word-limit style="width:220px"></Input>
+            <span style="color: red">*</span>
+          </FormItem>
+          <FormItem :label="$t('m_metric_code')">
+            <Input v-model.trim="businessConfig.metric_prefix_code" maxlength="6" :disabled="!isAdd" show-word-limit style="width:220px"></Input>
+            <span style="color: red">*</span>
+          </FormItem>
+        </Form>
         <Divider orientation="left" size="small">{{ $t('m_associated_template') }}</Divider>
         <div>
           <StandardRegexDisplay v-if="configInfo.log_type==='regular'" :configInfo="configInfo"></StandardRegexDisplay>
@@ -131,6 +141,8 @@ export default {
         this.getConfig(configGuid)
       } else {
         this.businessConfig = {
+          name: '', // 名称
+          metric_prefix_code: '', // 指标编码 1到6个字符的字母、数字、下划线或短横线
           log_metric_monitor_guid: '',
           log_monitor_template_guid: '',
           code_string_map: [
@@ -171,6 +183,21 @@ export default {
       })
     },
     paramsValidate (tmpData) {
+      if (tmpData.name === '') {
+        this.$Message.warning(`${this.$t('tableKey.name')}: ${this.$t('m_cannot_be_empty')}`)
+        return true
+      }
+      if (tmpData.metric_prefix_code === '') {
+        this.$Message.warning(`${this.$t('m_metric_code')}: ${this.$t('m_cannot_be_empty')}`)
+        return true
+      }
+      // eslint-disable-next-line no-useless-escape
+      const regex = /^[a-zA-Z0-9_\-]{1,6}$/;
+      
+      if (!regex.test(tmpData.metric_prefix_code)) {
+        this.$Message.warning(`${this.$t('m_metric_code')}: ${this.$t('m_metric_prefix_code_validate')}`)
+        return true
+      }
       const isCodeMapEmpty = tmpData.code_string_map.some((element) => {
         return element.source_value === '' || element.target_value === ''
       })
