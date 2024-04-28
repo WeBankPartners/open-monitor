@@ -272,18 +272,41 @@ export default {
           title: this.$t('m_computed_type'),
           key: 'agg_type',
           render: (h, params) => {
-            const selectOptions = ['avg', 'count', 'max', 'min', 'sum']
+            const canOnlySelectCount = this.isNumericValue[params.row.log_param_name]
+            const selectOptions = [
+              {
+                labelAndValue: 'avg',
+                disabled: canOnlySelectCount
+              },
+              {
+                labelAndValue: 'count',
+                disabled: false
+              },
+              {
+                labelAndValue: 'max',
+                disabled: canOnlySelectCount
+              },
+              {
+                labelAndValue: 'min',
+                disabled: canOnlySelectCount
+              },
+              {
+                labelAndValue: 'sum',
+                disabled: canOnlySelectCount
+              }
+            ]
             return (
               <Select
                 filterable
+                disabled={params.row.log_param_name===''}
                 value={params.row.agg_type}
                 on-on-change={(v) => {
                   this.changeVal('metric_list', params.index, 'agg_type', v)
                 }}
               >
                 {selectOptions.map(option => (
-                  <Option key={option} value={option}>
-                    {option}
+                  <Option disabled={option.disabled} key={option.labelAndValue} value={option.labelAndValue}>
+                    {option.labelAndValue}
                   </Option>
                 ))}
               </Select>
@@ -312,7 +335,7 @@ export default {
         }
       ],
       editTagMappingIndex: -1, // 正在编辑的参数采集
-      
+      isNumericValue: {} // 缓存后参数key对应的匹配结果能否转成数字
     }
   },
   methods: {
@@ -424,15 +447,23 @@ export default {
         this.$emit('reloadMetricData', this.parentGuid)
       })
     },
-    getConfig(guid) {
+    getConfig (guid) {
       const api = this.$root.apiCenter.customLogMetricConfig + '/' + guid
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, {}, (resp) => {
         this.configInfo = resp
+        {/* 整理计算类型可选项 */}
+        const param_list = this.configInfo.param_list || []
+        param_list.forEach(item => {
+          this.isNumericValue[item.name] = !this.isNumericString(item.demo_match_value)
+        })
         this.showModal = true
       })
     },
-    changeVal (params, index, key , val) {
+    changeVal (params, index, key, val) {
       this.configInfo[params][index][key] = val
+      if (key === 'log_param_name') {
+        this.configInfo[params][index]['agg_type'] = ''
+      }
     },
     generateBackstageTrial () {
       if (this.configInfo.demo_log === '') {
@@ -452,8 +483,17 @@ export default {
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.standardLogRegexMatch, params, (responseData) => {
         this.$Message.success(this.$t('m_success'))
-        this.configInfo.param_list = responseData
+        this.configInfo.param_list = responseData || []
+        responseData.forEach(item => {
+          this.isNumericValue[item.name] = !this.isNumericString(item.demo_match_value)
+        })
+        this.configInfo.metric_list.forEach(item => {
+          item.agg_type = ''
+        })
       }, {isNeedloading:false})
+    },
+    isNumericString (str) {
+      return !isNaN(parseFloat(str)) && isFinite(str);
     },
     //#region 参数采集
     addParameterCollection () {
