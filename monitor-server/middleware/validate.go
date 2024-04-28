@@ -11,18 +11,19 @@ import (
 )
 
 var (
-	invalidData      = []string{"select", "insert", "update", "alter", "delete", "drop", "truncate", "show"}
-	regCond          = regexp.MustCompile(`^([<=|>=|!=|==|<|>]*)-?\d+(\.\d+)?$`)
-	regLast          = regexp.MustCompile(`^\d+[s|m|h]$`)
-	regPath          = regexp.MustCompile(`^\/([\w|\.|\-]+\/?)+$`)
-	regNormal        = regexp.MustCompile(`^[\w|\.|\-|\~|\!|\@|\#|\$|\%|\^|\[|\]|\{|\}|\(|\)|\,|\s]+$`)
-	regIp            = regexp.MustCompile(`^((25[0-5]|2[0-4]\d|((1\d{2})|([1-9]?\d)))\.){3}(25[0-5]|2[0-4]\d|((1\d{2})|([1-9]?\d)))$`)
-	regActiveWindow  = regexp.MustCompile(`^\d{2}:\d{2}-\d{2}:\d{2}$`)
-	regName          = regexp.MustCompile(`^[\w|\-|\.|:]+$`)
-	regMetric        = regexp.MustCompile(`^[a-zA-Z0-9_\.]+$`)
-	regDisplayName   = regexp.MustCompile(`.*`)
-	roleEndpointMap  []map[string]int
-	roleEndpointLock sync.RWMutex
+	invalidData         = []string{"select", "insert", "update", "alter", "delete", "drop", "truncate", "show"}
+	regCond             = regexp.MustCompile(`^([<=|>=|!=|==|<|>]*)-?\d+(\.\d+)?$`)
+	regLast             = regexp.MustCompile(`^\d+[s|m|h]$`)
+	regPath             = regexp.MustCompile(`^\/([\w|\.|\-]+\/?)+$`)
+	regNormal           = regexp.MustCompile(`^[\w|\.|\-|\~|\!|\@|\#|\$|\%|\^|\[|\]|\{|\}|\(|\)|\,|\s]+$`)
+	regIp               = regexp.MustCompile(`^((25[0-5]|2[0-4]\d|((1\d{2})|([1-9]?\d)))\.){3}(25[0-5]|2[0-4]\d|((1\d{2})|([1-9]?\d)))$`)
+	regActiveWindow     = regexp.MustCompile(`^\d{2}:\d{2}-\d{2}:\d{2}$`)
+	regName             = regexp.MustCompile(`^[\w|\-|\.|:]+$`)
+	regMetric           = regexp.MustCompile(`^[a-zA-Z0-9_\.]+$`)
+	regDisplayName      = regexp.MustCompile(`.*`)
+	regMetricPrefixCode = regexp.MustCompile(`^[a-zA-Z0-9_\-]{1,6}$`)
+	roleEndpointMap     []map[string]int
+	roleEndpointLock    sync.RWMutex
 )
 
 func ValidateGet(c *gin.Context) {
@@ -134,6 +135,13 @@ func IsIllegalMetric(str string) bool {
 		return true
 	}
 	return !regMetric.MatchString(str)
+}
+
+func IsIllegalMetricPrefixCode(str string) bool {
+	if str == "" {
+		return false
+	}
+	return !regMetricPrefixCode.MatchString(str)
 }
 
 func ValidateActiveWindowString(str string) bool {
