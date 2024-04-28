@@ -521,6 +521,7 @@ func (c *logMetricMonitorNeObj) destroy() {
 	c.TailSession.Stop()
 	c.JsonConfig = []*logMetricJsonNeObj{}
 	c.MetricConfig = []*logMetricNeObj{}
+	c.MetricGroupConfig = []*logMetricGroupNeObj{}
 	c.Lock.Unlock()
 }
 
