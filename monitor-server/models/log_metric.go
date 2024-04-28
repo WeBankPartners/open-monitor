@@ -188,11 +188,13 @@ type LogMetricGroupObj struct {
 }
 
 type LogMetricGroupWithTemplate struct {
+	Name                   string                     `json:"name"`
 	LogMetricMonitorGuid   string                     `json:"log_metric_monitor_guid"`
 	LogMetricGroupGuid     string                     `json:"log_metric_group_guid"`
 	LogMonitorTemplateGuid string                     `json:"log_monitor_template_guid"`
 	CodeStringMap          []*LogMetricStringMapTable `json:"code_string_map"`
 	RetCodeStringMap       []*LogMetricStringMapTable `json:"retcode_string_map"`
+	MetricPrefixCode       string                     `json:"metric_prefix_code"`
 }
 
 type LogMetricGroupNeObj struct {
