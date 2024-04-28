@@ -127,6 +127,7 @@ type LogMonitorRegMatchParam struct {
 type LogMetricGroup struct {
 	Guid               string    `json:"guid" xorm:"guid"`
 	Name               string    `json:"name" xorm:"name"`
+	MetricPrefixCode   string    `json:"metric_prefix_code" xorm:"metric_prefix_code"`
 	LogType            string    `json:"log_type" xorm:"log_type"`
 	LogMetricMonitor   string    `json:"log_metric_monitor" xorm:"log_metric_monitor"`
 	LogMonitorTemplate string    `json:"log_monitor_template" xorm:"log_monitor_template"`
@@ -157,4 +158,13 @@ type LogMetricParamObj struct {
 	LogMetricParam
 	JsonKey   string                     `json:"json_key"`
 	StringMap []*LogMetricStringMapTable `json:"string_map"`
+}
+
+type LogTemplateAffectGroupObj struct {
+	LogMetricGroupGuid   string
+	LogMetricGroupName   string
+	LogMetricGroupPrefix string
+	LogMetricMonitorGuid string
+	ServiceGroup         string
+	SucRetCode           string
 }
