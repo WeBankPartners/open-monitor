@@ -379,5 +379,7 @@
   "m_fields_cannot_be_empty": " fields cannot be repeated",
   "m_filtering_info": "Please enter the filtering information.",
   "m_success": "Success",
-  "m_fail": "Fail"
+  "m_fail": "Fail",
+  "m_metric_code": "Metric Code",
+  "m_metric_prefix_code_validate": "Please enter 1 to 6 characters consisting of letters, numbers, underscores, or hyphens."
 }
