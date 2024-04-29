@@ -615,6 +615,11 @@ func CreateLogMetricGroup(c *gin.Context) {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
+	if middleware.IsIllegalMetricPrefixCode(param.MetricPrefixCode) {
+		err := fmt.Errorf("param MetricPrefixCode validate fail")
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
 	err := db.CreateLogMetricGroup(&param, middleware.GetOperateUser(c))
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
