@@ -101,6 +101,14 @@ export default {
         {
           title: this.$t('field.displayName'),
           key: 'display_name',
+          renderHeader: () => {
+            return (
+              <span>
+                <span style="color:red">*</span>
+                <span>{this.$t('field.displayName')}</span>
+              </span>
+            )
+          },
           render: (h, params) => {
             return (
               <Input
@@ -115,6 +123,14 @@ export default {
         {
           title: this.$t('m_parameter_key'),
           key: 'name',
+          renderHeader: () => {
+            return (
+              <span>
+                <span style="color:red">*</span>
+                <span>{this.$t('m_parameter_key')}</span>
+              </span>
+            )
+          },
           render: (h, params) => {
             return (
               <Input
@@ -129,6 +145,14 @@ export default {
         {
           title: this.$t('m_extract_regular'),
           key: 'regular',
+          renderHeader: () => {
+            return (
+              <span>
+                <span style="color:red">*</span>
+                <span>{this.$t('m_extract_regular')}</span>
+              </span>
+            )
+          },
           render: (h, params) => {
             return (
               <Input
@@ -144,6 +168,14 @@ export default {
           title: this.$t('m_matching_result'),
           ellipsis: true,
           tooltip: true,
+          renderHeader: () => {
+            return (
+              <span>
+                <span style="color:red">*</span>
+                <span>{this.$t('m_matching_result')}</span>
+              </span>
+            )
+          },
           key: 'demo_match_value',
         },
         {
@@ -192,6 +224,14 @@ export default {
         {
           title: this.$t('field.displayName'),
           key: 'display_name',
+          renderHeader: () => {
+            return (
+              <span>
+                <span style="color:red">*</span>
+                <span>{this.$t('field.displayName')}</span>
+              </span>
+            )
+          },
           render: (h, params) => {
             return (
               <Input
@@ -206,6 +246,14 @@ export default {
         {
           title: this.$t('m_metric_key'),
           key: 'metric',
+          renderHeader: () => {
+            return (
+              <span>
+                <span style="color:red">*</span>
+                <span>{this.$t('m_metric_key')}</span>
+              </span>
+            )
+          },
           render: (h, params) => {
             return (
               <Input
@@ -220,6 +268,14 @@ export default {
         {
           title: this.$t('m_statistical_parameters'),
           key: 'log_param_name',
+          renderHeader: () => {
+            return (
+              <span>
+                <span style="color:red">*</span>
+                <span>{this.$t('m_statistical_parameters')}</span>
+              </span>
+            )
+          },
           render: (h, params) => {
             const keys = this.configInfo.param_list.map(p => {
               return p.name
@@ -271,6 +327,14 @@ export default {
         {
           title: this.$t('m_computed_type'),
           key: 'agg_type',
+          renderHeader: () => {
+            return (
+              <span>
+                <span style="color:red">*</span>
+                <span>{this.$t('m_computed_type')}</span>
+              </span>
+            )
+          },
           render: (h, params) => {
             const canOnlySelectCount = this.isNumericValue[params.row.log_param_name]
             const selectOptions = [
@@ -394,6 +458,10 @@ export default {
         this.$Message.warning(`${this.$t('tableKey.name')}${this.$t('m_cannot_be_empty')}`)
         return true
       }
+      if (tmpData.param_list.length === 0) {
+        this.$Message.warning(`${this.$t('m_add_one_tip')}: ${this.$t('m_parameter_collection')}`)
+        return true
+      }
       const is_param_list_empty = tmpData.param_list.some((element) => {
         return element.name === '' || element.display_name === '' || element.regular === ''
       })
@@ -414,6 +482,11 @@ export default {
       })
       if (hasDuplicatesParamList) {
         this.$Message.warning(`${this.$t('m_parameter_key')}${this.$t('m_cannot_be_repeated')}`)
+        return true
+      }
+
+      if (tmpData.metric_list.length === 0) {
+        this.$Message.warning(`${this.$t('m_add_one_tip')}: ${this.$t('m_compute_metrics')}`)
         return true
       }
 

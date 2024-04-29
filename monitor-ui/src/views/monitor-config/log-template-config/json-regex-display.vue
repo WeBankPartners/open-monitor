@@ -222,6 +222,14 @@ export default {
         {
           title: this.$t('m_json_key'),
           key: 'json_key',
+          renderHeader: () => {
+            return (
+              <span>
+                <span style="color:red">*</span>
+                <span>{this.$t('json_key')}</span>
+              </span>
+            )
+          },
           render: (h, params) => {
             const selectOptions = this.configInfo.calc_result.json_key_list
             return (
@@ -241,6 +249,16 @@ export default {
         },
         {
           title: this.$t('m_matching_result'),
+          ellipsis: true,
+          tooltip: true,
+          renderHeader: () => {
+            return (
+              <span>
+                <span style="color:red">*</span>
+                <span>{this.$t('m_matching_result')}</span>
+              </span>
+            )
+          },
           key: 'demo_match_value',
         },
       ],
@@ -279,10 +297,11 @@ export default {
   props: {
     configInfo: Object,
   },
-  mounted () {
-    this.showTemplate = false
-  },
+  mounted () {},
   methods: {
+    hideTemplate () {
+      this.showTemplate = false
+    }
   }
 }
 </script>

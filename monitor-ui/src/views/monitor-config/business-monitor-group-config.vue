@@ -3,7 +3,7 @@
     <Modal v-model="showModel" :title="$t('menu.configuration')" :mask-closable="false" :width="1100" :fullscreen="isfullscreen">
       <div slot="header" class="custom-modal-header">
         <span>
-          {{$t('menu.configuration')}}
+          {{(isAdd ? $t('button.add') : $t('button.edit')) + $t('menu.configuration')}}
         </span>
         <Icon v-if="isfullscreen" @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-contract" />
         <Icon v-else @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-expand" />
@@ -21,8 +21,8 @@
         </Form>
         <Divider orientation="left" size="small">{{ $t('m_associated_template') }}</Divider>
         <div>
-          <StandardRegexDisplay v-if="configInfo.log_type==='regular'" :configInfo="configInfo"></StandardRegexDisplay>
-          <JsonRegexDisplay v-if="configInfo.log_type==='json'" :configInfo="configInfo"></JsonRegexDisplay>
+          <StandardRegexDisplay ref="standardRegexDisplayRef" v-if="configInfo.log_type==='regular'" :configInfo="configInfo"></StandardRegexDisplay>
+          <JsonRegexDisplay ref="jsonRegexDisplayRef" v-if="configInfo.log_type==='json'" :configInfo="configInfo"></JsonRegexDisplay>
         </div>
         <div>
           <Divider orientation="left" size="small">{{ $t('m_configuration_information') }}</Divider>
@@ -30,8 +30,12 @@
           <div>
             <Row>
               <Col span="4">{{ $t('m_match_type') }}</Col>
-              <Col span="6">{{ $t('m_source_value') }}</Col>
-              <Col span="6">{{ $t('m_match_value') }}</Col>
+              <Col span="6">
+                <span style="color:red">*</span>
+                {{ $t('m_source_value_regular') }}</Col>
+              <Col span="6">
+                <span style="color:red">*</span>
+                {{ $t('m_match_value') }}</Col>
             </Row>
             <Row v-for="(item, itemIndex) in businessConfig.code_string_map" :key="itemIndex" style="margin:6px 0">
               <Col span="4">
@@ -65,9 +69,12 @@
           <div>
             <Row>
               <Col span="4">{{ $t('m_match_type') }}</Col>
-              <Col span="6">{{ $t('m_source_value') }}</Col>
-              <Col span="6">{{ $t('m_match_value') }}</Col>
-              <Col span="6">{{ $t('field.type') }}</Col>
+              <Col span="6">
+                <span style="color:red">*</span>
+                {{ $t('m_source_value') }}</Col>
+              <Col span="6">
+                <span style="color:red">*</span>
+                {{ $t('m_match_value') }}</Col>
             </Row>
             <Row v-for="(item, itemIndex) in businessConfig.retcode_string_map" :key="itemIndex" style="margin:6px 0">
               <Col span="4">
@@ -84,15 +91,13 @@
               </Col>
               <Col span="6">
                 <span style="line-height: 32px;">{{ $t('m_'+item.value_type) }}</span>
-              </Col>
-              <Col span="2">
                 <Button
                   type="error"
                   ghost
                   v-if="itemIndex!==0"
                   @click="deleteItem('retcode_string_map',itemIndex)"
                   size="small"
-                  style="vertical-align: sub;cursor: pointer"
+                  style="margin-left:24px; cursor: pointer"
                   icon="md-trash"
                 ></Button>
               </Col>
@@ -168,6 +173,9 @@ export default {
         this.businessConfig.log_metric_monitor_guid = parentGuid
         this.getTemplateDetail(templateGuid)
       }
+
+      this.$refs.standardRegexDisplayRef && this.$refs.standardRegexDisplayRef.hideTemplate()
+      this.$refs.jsonRegexDisplayRef && this.$refs.jsonRegexDisplayRef.hideTemplate()
       this.showModel = true
     },
     getTemplateDetail(guid) {
