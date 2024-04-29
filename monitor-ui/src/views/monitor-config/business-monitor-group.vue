@@ -198,9 +198,6 @@
                 >{{ $t('addStringMap') }}</Button
               >
             </div>
-            
-
-
             <Divider :key="index + 'Q'" />
           </template>
           <Button
@@ -226,7 +223,7 @@
       @on-cancel="cancel">
       <div class="modal-body" style="padding:30px">
         <div style="text-align:center">
-          <p style="color: red">{{$t('delConfirm.tip')}}</p>
+          <p style="color: red">{{$t('delConfirm.tip')}}: {{ selectedData.log_path || ''}}</p>
         </div>
       </div>
     </Modal>
@@ -238,7 +235,7 @@
       @on-cancel="cancleDelRow">
       <div class="modal-body" style="padding:30px">
         <div style="text-align:center">
-          <p style="color: red">{{$t('delConfirm.tip')}}</p>
+          <p style="color: red">{{$t('delConfirm.tip')}}: {{ selectedData.name || selectedData.display_name || '' }}</p>
         </div>
       </div>
     </Modal>
@@ -507,8 +504,9 @@ export default {
               isExtendF: true,
               title: '',
               config: [
-                {title: 'tableKey.name', value: 'name', display: true},
                 {title: 'm_associated_template', value: 'log_monitor_template_name', display: true},
+                {title: 'm_metric_config_type', value: 'log_type_display', display: true},
+                {title: 'm_metric_group', value: 'name', display: true},
                 {title: 'm_updatedBy', value: 'update_user', display: true},
                 {title: 'title.updateTime', value: 'update_time', display: true},
                 {title: 'table.action',btn:[
@@ -574,7 +572,7 @@ export default {
         },
         aggOption: ['sum', 'avg', 'count', 'max', 'min']
       },
-      selectedData: null,
+      selectedData: {},
       selectedIndex: null,
       isShowWarningDelete: false,
       deleteType: '',
@@ -909,10 +907,20 @@ export default {
     },
     getExtendInfo(item){
       item.metric_groups.forEach(xx => xx.pId = item.guid)
-      this.pageConfig.table.isExtend.detailConfig[0].data = item.metric_groups
+      this.pageConfig.table.isExtend.detailConfig[0].data = item.metric_groups.map(group => {
+        const typeToName = {
+          custom: this.$t('m_custom_regex'),
+          regular: this.$t('m_standard_regex'),
+          json: this.$t('m_standard_json'),
+        }
+        group.log_type_display = typeToName[group.log_type]
+        return group
+      })
+      console.log(123, this.pageConfig.table.isExtend.detailConfig[0].data)
       this.pageConfig.table.isExtend.parentData = item
     },
     deleteConfirmModal (rowData) {
+      console.log(1.1, rowData)
       this.selectedData = rowData
       this.isShowWarning = true
     },

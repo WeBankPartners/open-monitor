@@ -112,6 +112,14 @@ export default {
         {
           title: this.$t('m_extract_regular'),
           key: 'regular',
+          renderHeader: () => {
+            return (
+              <span>
+                <span style="color:red">*</span>
+                <span>{this.$t('m_extract_regular')}</span>
+              </span>
+            )
+          },
           render: (h, params) => {
             return (
               <Input
@@ -127,6 +135,14 @@ export default {
           title: this.$t('m_matching_result'),
           ellipsis: true,
           tooltip: true,
+          renderHeader: () => {
+            return (
+              <span>
+                <span style="color:red">*</span>
+                <span>{this.$t('m_matching_result')}</span>
+              </span>
+            )
+          },
           key: 'demo_match_value',
         },
       ],
