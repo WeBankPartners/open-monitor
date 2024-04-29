@@ -151,27 +151,45 @@ export default {
         {
           title: this.$t('m_json_key'),
           key: 'json_key',
+          renderHeader: () => {
+            return (
+              <span>
+                <span style="color:red">*</span>
+                <span>{this.$t('m_json_key')}</span>
+              </span>
+            )
+          },
           render: (h, params) => {
             const selectOptions = this.configInfo.calc_result.json_key_list
             return (
-              <Select
-                filterable
-                value={params.row.json_key}
-                on-on-change={(val) => {
-                  this.changeJSONKey(params.index, val)
-                }}
-              >
-                {selectOptions.map(option => (
-                  <Option key={option} value={option}>
-                    {option}
-                  </Option>
-                ))}
-              </Select>
-            )
+                <Select
+                  filterable
+                  value={params.row.json_key}
+                  on-on-change={(val) => {
+                    this.changeJSONKey(params.index, val)
+                  }}
+                >
+                  {selectOptions.map(option => (
+                    <Option key={option} value={option}>
+                      {option}
+                    </Option>
+                  ))}
+                </Select>
+                          )
           }
         },
         {
           title: this.$t('m_matching_result'),
+          ellipsis: true,
+          tooltip: true,
+          renderHeader: () => {
+            return (
+              <span>
+                <span style="color:red">*</span>
+                <span>{this.$t('m_matching_result')}</span>
+              </span>
+            )
+          },
           key: 'demo_match_value'
         }
       ],
