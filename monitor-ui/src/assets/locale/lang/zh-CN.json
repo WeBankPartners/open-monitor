@@ -315,7 +315,8 @@
   "m_metric": "指标",
   "m_add_tags": "新增标签",
   "m_target_value": "目标值",
-  "m_source_value": "源值/正则",
+  "m_source_value": "源值",
+  "m_source_value_regular": "源值/正则",
   "m_type_object": "类型对象",
   "m_host_object": "主机对象",
   "m_default_color": "默认色系",
@@ -349,8 +350,8 @@
   "m_parameter_key": "参数key",
   "m_json_key": "JSON key",
   "m_matching_result": "匹配结果",
-  "m_service_code": "服务码",
-  "m_return_code": "返回码",
+  "m_service_code": "服务码(code)",
+  "m_return_code": "返回码(retcode)",
   "m_time_consuming": "耗时",
   "m_metric_key": "指标key",
   "m_statistical_parameters": "统计参数(采集参数)",
@@ -380,5 +381,8 @@
   "m_success": "成功",
   "m_fail": "失败",
   "m_metric_code": "指标编码",
-  "m_metric_prefix_code_validate": "请输入1到6个字符的字母、数字、下划线或短横线"
+  "m_metric_prefix_code_validate": "请输入1到6个字符的字母、数字、下划线或短横线",
+  "m_metric_group": "指标组",
+  "m_metric_config_type": "指标配置类型",
+  "m_add_one_tip": "请至少添加一条"
 }
