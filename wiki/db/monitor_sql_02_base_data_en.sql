@@ -837,4 +837,5 @@ insert into log_metric_group(guid,name,log_type,log_metric_monitor,create_user,c
 insert into log_metric_param(guid,name,display_name,log_metric_group,regular,create_user,create_time) select concat('lmp_',guid),metric,display_name,concat('lmg_',guid),regular,'old_data',now() from log_metric_config where log_metric_json is null;
 update log_metric_config set log_metric_group=concat('lmg_',guid),log_param_name=metric,update_user='old_data' where log_metric_group is null and log_metric_json is null;
 ALTER TABLE log_metric_string_map DROP FOREIGN KEY log_monitor_string_config;
+alter table log_metric_group add column metric_prefix_code varchar(64) default null comment '指标前缀';
 #@v2.0.7.1-end@;
