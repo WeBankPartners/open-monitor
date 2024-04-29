@@ -316,7 +316,8 @@
   "m_metric": "Metric",
   "m_add_tags": "Add Tags",
   "m_target_value": "Target Value",
-  "m_source_value": "Source Value/Regex",
+  "m_source_value": "Source Value",
+  "m_source_value_regular": "Source Value/Regex",
   "m_type_object": "Type Object",
   "m_host_object": "Host Object",
   "m_default_color": "Default Color",
@@ -350,8 +351,8 @@
   "m_parameter_key": "Parameter Key",
   "m_json_key": "JSON key",
   "m_matching_result": "Matching Result",
-  "m_service_code": "Service Code",
-  "m_return_code": "Return Code",
+  "m_service_code": "Service Code(code)",
+  "m_return_code": "Return Code(retcode)",
   "m_time_consuming": "Time Consuming",
   "m_metric_key": "Metric key",
   "m_statistical_parameters": "Statistical Parameters",
@@ -381,5 +382,8 @@
   "m_success": "Success",
   "m_fail": "Fail",
   "m_metric_code": "Metric Code",
-  "m_metric_prefix_code_validate": "Please enter 1 to 6 characters consisting of letters, numbers, underscores, or hyphens."
+  "m_metric_prefix_code_validate": "Please enter 1 to 6 characters consisting of letters, numbers, underscores, or hyphens.",
+  "m_metric_group": "Metric Group",
+  "m_metric_config_type": "Metric configuration type",
+  "m_add_one_tip": "Please add at least one"
 }
