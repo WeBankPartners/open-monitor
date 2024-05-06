@@ -11,8 +11,10 @@
       <div :class="isfullscreen? 'modal-container-fullscreen':'modal-container-normal'">
         <Form :label-width="120" inline>
           <FormItem :label="$t('tableKey.name')">
-            <Input v-model.trim="businessConfig.name" maxlength="30" show-word-limit style="width:220px"></Input>
-            <span style="color: red">*</span>
+            <Tooltip :content="businessConfig.name" transfer :disabled="businessConfig.name === ''" max-width="200">
+              <Input v-model.trim="businessConfig.name" maxlength="30" show-word-limit style="width:220px"></Input>
+              <span style="color: red">*</span>
+            </Tooltip>
           </FormItem>
           <FormItem :label="$t('m_metric_code')">
             <Input v-model.trim="businessConfig.metric_prefix_code" maxlength="6" :disabled="!isAdd" show-word-limit style="width:220px"></Input>
