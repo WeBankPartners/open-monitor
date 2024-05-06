@@ -18,19 +18,15 @@
           <Col span="8" style="height: 550px;overflow: auto;">
             <Form :label-width="120">
               <FormItem :label="$t('m_template_name')">
-                <Input
-                  v-model="configInfo.name"
-                  maxlength="30"
-                  show-word-limit
-                  style="width: 96%"
-                />
-                <span style="color: red">*</span>
-                <div
-                  v-if="isParmasChanged && (configInfo.name.length === 0 || configInfo.name.length > 30)"
-                  style="color: red"
-                >
-                  {{ $t('m_template_name') }}{{ $t('tw_limit_30') }}
-                </div>
+                <Tooltip :content="configInfo.name" transfer :disabled="configInfo.name === ''" style="width: 100%;" max-width="200">
+                  <Input
+                    v-model="configInfo.name"
+                    maxlength="30"
+                    show-word-limit
+                    style="width: 96%"
+                  />
+                  <span style="color: red">*</span>
+                </Tooltip>
               </FormItem>
               <template v-if="!isAdd">
                 <FormItem :label="$t('m_updatedBy')">
