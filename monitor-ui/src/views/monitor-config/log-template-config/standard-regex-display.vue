@@ -3,20 +3,16 @@
     <Col span="8" style="border-right: 2px solid rgb(232 234 236)">
       <Form :label-width="120">
         <FormItem :label="$t('m_template_name')">
-          <Input
-            v-model="configInfo.name"
-            maxlength="30"
-            show-word-limit
-            style="width: 96%"
-            disabled
-          />
-          <span style="color: red">*</span>
-          <div
-            v-if="isParmasChanged && (configInfo.name.length === 0 || configInfo.name.length > 30)"
-            style="color: red"
-          >
-            {{ $t('m_template_name') }}{{ $t('tw_limit_30') }}
-          </div>
+          <Tooltip :content="configInfo.name" transfer :disabled="configInfo.name === ''" style="width: 100%;" max-width="200">
+            <Input
+              v-model="configInfo.name"
+              maxlength="30"
+              show-word-limit
+              style="width: 96%"
+              disabled
+            />
+            <span style="color: red">*</span>
+          </Tooltip>
         </FormItem>
         <FormItem>
           <Button type="primary" @click="showTemplate = !showTemplate" ghost size="small" style="float:right;margin:12px">{{showTemplate ? $t('m_hide_template'):$t('m_expand_template')}}</Button>
