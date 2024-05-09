@@ -384,5 +384,6 @@
   "m_metric_prefix_code_validate": "请输入1到6个字符的字母、数字、下划线或短横线",
   "m_metric_group": "指标组",
   "m_metric_config_type": "指标配置类型",
-  "m_add_one_tip": "请至少添加一条"
+  "m_add_one_tip": "请至少添加一条",
+  "m_modules": "模块"
 }
