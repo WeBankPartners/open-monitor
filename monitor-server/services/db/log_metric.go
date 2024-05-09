@@ -985,6 +985,20 @@ func GetLogMetricGroup(logMetricGroupGuid string) (result *models.LogMetricGroup
 	return
 }
 
+func ValidateLogMetricGroupName(logMetricMonitorGuid, inputName string) (legal bool, err error) {
+	queryResult, queryErr := x.QueryString("select name from log_metric_group where log_metric_monitor=? and name=?", logMetricMonitorGuid, inputName)
+	if queryErr != nil {
+		err = fmt.Errorf("query log metric group table fail,%s ", queryErr.Error())
+		return
+	}
+	if len(queryResult) > 0 {
+		legal = false
+	} else {
+		legal = true
+	}
+	return
+}
+
 func CreateLogMetricGroup(param *models.LogMetricGroupWithTemplate, operator string) (err error) {
 	param.LogMetricGroupGuid = "lmg_" + guid.CreateGuid()
 	logMonitorTemplateObj, getErr := GetLogMonitorTemplate(param.LogMonitorTemplateGuid)
