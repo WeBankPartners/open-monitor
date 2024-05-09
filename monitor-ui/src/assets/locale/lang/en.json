@@ -385,5 +385,6 @@
   "m_metric_prefix_code_validate": "Please enter 1 to 6 characters consisting of letters, numbers, underscores, or hyphens.",
   "m_metric_group": "Metric Group",
   "m_metric_config_type": "Metric configuration type",
-  "m_add_one_tip": "Please add at least one"
+  "m_add_one_tip": "Please add at least one",
+  "m_modules": "Modules"
 }
