@@ -236,7 +236,7 @@ export default {
       viewCondition: {
         timeTnterval: -3600,
         dateRange: ['', ''],
-        autoRefresh: 5,
+        autoRefresh: 10,
         agg: 'none' // 聚合类型
       },
       disableTime: false,
