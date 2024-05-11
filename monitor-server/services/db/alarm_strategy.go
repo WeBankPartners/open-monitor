@@ -25,8 +25,22 @@ func QueryAlarmStrategyByGroup(endpointGroup string) (result []*models.EndpointS
 		return
 	}
 	for _, v := range alarmStrategyTable {
-		tmpStrategyObj := models.GroupStrategyObj{Guid: v.Guid, EndpointGroup: v.EndpointGroup, Metric: v.Metric, MetricName: v.MetricName, Condition: v.Condition, Last: v.Last, Priority: v.Priority, Content: v.Content, NotifyEnable: v.NotifyEnable, NotifyDelaySecond: v.NotifyDelaySecond, ActiveWindow: v.ActiveWindow}
+		tmpStrategyObj := models.GroupStrategyObj{Guid: v.Guid, Name: v.Name, EndpointGroup: v.EndpointGroup, Metric: v.Metric, MetricName: v.MetricName, Condition: v.Condition, Last: v.Last, Priority: v.Priority, Content: v.Content, NotifyEnable: v.NotifyEnable, NotifyDelaySecond: v.NotifyDelaySecond, ActiveWindow: v.ActiveWindow}
 		tmpStrategyObj.NotifyList = getNotifyList(v.Guid, "", "")
+		if tmpStrategyConditions, tmpErr := getStrategyConditions(v.Guid); tmpErr != nil {
+			err = tmpErr
+			return
+		} else {
+			if len(tmpStrategyConditions) == 0 {
+				tmpStrategyConditions = append(tmpStrategyConditions, &models.StrategyConditionObj{
+					Metric:    v.Metric,
+					Condition: v.Condition,
+					Last:      v.Last,
+					Tags:      []*models.MetricTag{},
+				})
+			}
+			tmpStrategyObj.Conditions = tmpStrategyConditions
+		}
 		strategy = append(strategy, &tmpStrategyObj)
 	}
 	resultObj := models.EndpointStrategyObj{EndpointGroup: endpointGroup, Strategy: strategy, DisplayName: endpointGroup}
@@ -101,10 +115,10 @@ func GetAlarmStrategy(strategyGuid string) (result models.AlarmStrategyMetricObj
 
 func CreateAlarmStrategy(param *models.GroupStrategyObj) error {
 	nowTime := time.Now().Format(models.DatetimeFormat)
-	param.Guid = guid.CreateGuid()
+	param.Guid = "strategy_" + guid.CreateGuid()
 	var actions []*Action
-	insertAction := Action{Sql: "insert into alarm_strategy(guid,endpoint_group,metric,`condition`,`last`,priority,content,notify_enable,notify_delay_second,active_window,update_time) value (?,?,?,?,?,?,?,?,?,?,?)"}
-	insertAction.Param = []interface{}{param.Guid, param.EndpointGroup, param.Metric, param.Condition, param.Last, param.Priority, param.Content, param.NotifyEnable, param.NotifyDelaySecond, param.ActiveWindow, nowTime}
+	insertAction := Action{Sql: "insert into alarm_strategy(guid,name,endpoint_group,metric,`condition`,`last`,priority,content,notify_enable,notify_delay_second,active_window,update_time) value (?,?,?,?,?,?,?,?,?,?,?,?)"}
+	insertAction.Param = []interface{}{param.Guid, param.Name, param.EndpointGroup, param.Metric, param.Condition, param.Last, param.Priority, param.Content, param.NotifyEnable, param.NotifyDelaySecond, param.ActiveWindow, nowTime}
 	actions = append(actions, &insertAction)
 	if len(param.NotifyList) > 0 {
 		for _, v := range param.NotifyList {
@@ -112,14 +126,17 @@ func CreateAlarmStrategy(param *models.GroupStrategyObj) error {
 		}
 		actions = append(actions, getNotifyListInsertAction(param.NotifyList)...)
 	}
+	if len(param.Conditions) > 0 {
+		actions = append(actions, getStrategyConditionInsertAction(param.Guid, param.Conditions)...)
+	}
 	return Transaction(actions)
 }
 
 func UpdateAlarmStrategy(param *models.GroupStrategyObj) error {
 	nowTime := time.Now().Format(models.DatetimeFormat)
 	var actions []*Action
-	updateAction := Action{Sql: "update alarm_strategy set metric=?,`condition`=?,`last`=?,priority=?,content=?,notify_enable=?,notify_delay_second=?,active_window=?,update_time=? where guid=?"}
-	updateAction.Param = []interface{}{param.Metric, param.Condition, param.Last, param.Priority, param.Content, param.NotifyEnable, param.NotifyDelaySecond, param.ActiveWindow, nowTime, param.Guid}
+	updateAction := Action{Sql: "update alarm_strategy set name=?,priority=?,content=?,notify_enable=?,notify_delay_second=?,active_window=?,update_time=? where guid=?"}
+	updateAction.Param = []interface{}{param.Name, param.Priority, param.Content, param.NotifyEnable, param.NotifyDelaySecond, param.ActiveWindow, nowTime, param.Guid}
 	actions = append(actions, &updateAction)
 	for _, v := range param.NotifyList {
 		v.AlarmStrategy = param.Guid
@@ -127,6 +144,7 @@ func UpdateAlarmStrategy(param *models.GroupStrategyObj) error {
 	//actions = append(actions, getNotifyListDeleteAction(param.Guid, "", "")...)
 	//actions = append(actions, getNotifyListInsertAction(param.NotifyList)...)
 	actions = append(actions, getNotifyListUpdateAction(param.NotifyList)...)
+	actions = append(actions, getStrategyConditionUpdateAction(param.Guid, param.Conditions)...)
 	return Transaction(actions)
 }
 
@@ -143,6 +161,7 @@ func DeleteAlarmStrategy(strategyGuid string) (endpointGroup string, err error) 
 	endpointGroup = strategyTable[0].EndpointGroup
 	var actions []*Action
 	actions = append(actions, getNotifyListDeleteAction(strategyGuid, "", "")...)
+	actions = append(actions, getStrategyConditionDeleteAction(strategyGuid)...)
 	actions = append(actions, &Action{Sql: "delete from alarm_strategy where guid=?", Param: []interface{}{strategyGuid}})
 	err = Transaction(actions)
 	return
@@ -217,7 +236,7 @@ func getNotifyListInsertAction(notifyList []*models.NotifyObj) (actions []*Actio
 		if len(v.NotifyRoles) > 0 {
 			tmpNotifyRoleGuidList := guid.CreateGuidList(len(v.NotifyRoles))
 			for ii, vv := range v.NotifyRoles {
-				actions = append(actions, &Action{Sql: "insert into notify_role_rel(guid,notify,`role`) value (?,?,?)", Param: []interface{}{tmpNotifyRoleGuidList[ii], notifyGuidList[i], vv}})
+				actions = append(actions, &Action{Sql: "insert into notify_role_rel(guid,notify,`role`) value (?,?,?)", Param: []interface{}{tmpNotifyRoleGuidList[ii], "notify_" + notifyGuidList[i], vv}})
 			}
 		}
 	}
@@ -282,6 +301,86 @@ func getNotifyListDeleteAction(alarmStrategy, endpointGroup, serviceGroup string
 	actions = append(actions, &Action{Sql: fmt.Sprintf("delete from notify_role_rel where notify in (select guid from notify where %s=?)", refColumn), Param: actionParam})
 	actions = append(actions, &Action{Sql: fmt.Sprintf("delete from notify where %s=?", refColumn), Param: actionParam})
 	return actions
+}
+
+func getStrategyConditions(alarmStrategyGuid string) (conditions []*models.StrategyConditionObj, err error) {
+	conditions = []*models.StrategyConditionObj{}
+	var strategyMetricRows []*models.AlarmStrategyMetric
+	err = x.SQL("select * from alarm_strategy_metric where alarm_strategy=?", alarmStrategyGuid).Find(&strategyMetricRows)
+	if err != nil {
+		err = fmt.Errorf("query alarm strategy metric with strategyGuid:%s fail,%s ", alarmStrategyGuid, err.Error())
+		return
+	}
+	if len(strategyMetricRows) == 0 {
+		return
+	}
+	var strategyTagRows []*models.AlarmStrategyTag
+	err = x.SQL("select * from alarm_strategy_tag where alarm_strategy_metric in (select guid from alarm_strategy_metric where alarm_strategy=?)", alarmStrategyGuid).Find(&strategyTagRows)
+	if err != nil {
+		err = fmt.Errorf("query alarm strategy tag with strategyGuid:%s fail,%s ", alarmStrategyGuid, err.Error())
+		return
+	}
+	var tagValueRows []*models.AlarmStrategyTagValue
+	err = x.SQL("select * from alarm_strategy_tag_value where alarm_strategy_tag in (select guid from alarm_strategy_tag where alarm_strategy_metric in (select guid from alarm_strategy_metric where alarm_strategy=?))", alarmStrategyGuid).Find(&tagValueRows)
+	if err != nil {
+		err = fmt.Errorf("query alarm strategy tag value with strategyGuid:%s fail,%s ", alarmStrategyGuid, err.Error())
+		return
+	}
+	tagValueMap := make(map[string][]string)
+	for _, v := range tagValueRows {
+		if existList, ok := tagValueMap[v.AlarmStrategyTag]; ok {
+			tagValueMap[v.AlarmStrategyTag] = append(existList, v.Value)
+		} else {
+			tagValueMap[v.AlarmStrategyTag] = []string{v.Value}
+		}
+	}
+	for _, metricRow := range strategyMetricRows {
+		conditionRow := models.StrategyConditionObj{Metric: metricRow.Metric, Condition: metricRow.Condition, Last: metricRow.Last, Tags: []*models.MetricTag{}}
+		for _, tagRow := range strategyTagRows {
+			if tagRow.AlarmStrategyMetric == metricRow.Guid {
+				tmpTag := models.MetricTag{TagName: tagRow.Name, TagValue: []string{}}
+				if existList, ok := tagValueMap[tagRow.Guid]; ok {
+					tmpTag.TagValue = existList
+				}
+				conditionRow.Tags = append(conditionRow.Tags, &tmpTag)
+			}
+		}
+		conditions = append(conditions, &conditionRow)
+	}
+	return
+}
+
+func getStrategyConditionInsertAction(alarmStrategyGuid string, conditions []*models.StrategyConditionObj) (actions []*Action) {
+	nowTime := time.Now()
+	metricGuidList := guid.CreateGuidList(len(conditions))
+	for i, metricRow := range conditions {
+		actions = append(actions, &Action{Sql: "insert into alarm_strategy_metric(guid,alarm_strategy,metric,`condition`,`last`,create_time) values (?,?,?,?,?,?)", Param: []interface{}{
+			metricGuidList[i], alarmStrategyGuid, metricRow.Metric, metricRow.Condition, metricRow.Last, nowTime,
+		}})
+		if len(metricRow.Tags) > 0 {
+			tagGuidList := guid.CreateGuidList(len(metricRow.Tags))
+			for tagIndex, tagRow := range metricRow.Tags {
+				actions = append(actions, &Action{Sql: "insert into alarm_strategy_tag(guid,alarm_strategy_metric,name) values (?,?,?)", Param: []interface{}{tagGuidList[tagIndex], metricGuidList[i], tagRow.TagName}})
+				for _, tagValue := range tagRow.TagValue {
+					actions = append(actions, &Action{Sql: "insert into alarm_strategy_tag_value(alarm_strategy_tag,value) values (?,?)", Param: []interface{}{tagGuidList[tagIndex], tagValue}})
+				}
+			}
+		}
+	}
+	return
+}
+
+func getStrategyConditionUpdateAction(alarmStrategyGuid string, conditions []*models.StrategyConditionObj) (actions []*Action) {
+	actions = append(actions, getStrategyConditionDeleteAction(alarmStrategyGuid)...)
+	actions = append(actions, getStrategyConditionInsertAction(alarmStrategyGuid, conditions)...)
+	return
+}
+
+func getStrategyConditionDeleteAction(alarmStrategyGuid string) (actions []*Action) {
+	actions = append(actions, &Action{Sql: "delete from alarm_strategy_tag_value where alarm_strategy_tag in (select guid from alarm_strategy_tag where alarm_strategy_metric in (select guid from alarm_strategy_metric where alarm_strategy=?))", Param: []interface{}{alarmStrategyGuid}})
+	actions = append(actions, &Action{Sql: "delete from alarm_strategy_tag where alarm_strategy_metric in (select guid from alarm_strategy_metric where alarm_strategy=?)", Param: []interface{}{alarmStrategyGuid}})
+	actions = append(actions, &Action{Sql: "delete from alarm_strategy_metric where alarm_strategy=?", Param: []interface{}{alarmStrategyGuid}})
+	return
 }
 
 func SyncPrometheusRuleFile(endpointGroup string, fromPeer bool) error {
