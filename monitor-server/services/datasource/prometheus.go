@@ -419,3 +419,42 @@ func QueryLogKeywordData() (result map[string]float64, err error) {
 	}
 	return
 }
+
+func QueryPromSeries(procQL string) (result []map[string]string, err error) {
+	requestUrl, urlParseErr := url.Parse(fmt.Sprintf("http://%s/api/v1/query", promDS.Host))
+	if urlParseErr != nil {
+		return result, fmt.Errorf("Url parse fail,%s ", urlParseErr.Error())
+	}
+	nowTime := time.Now().Unix()
+	urlParams := url.Values{}
+	urlParams.Set("time", strconv.FormatInt(nowTime, 10))
+	urlParams.Set("query", procQL)
+	requestUrl.RawQuery = urlParams.Encode()
+	req, _ := http.NewRequest(http.MethodGet, requestUrl.String(), nil)
+	req.Header.Set("Content-Type", "application/json")
+	httpClient, getClientErr := promDS.DataSource.GetHttpClient()
+	if getClientErr != nil {
+		return result, fmt.Errorf("Get httpClient fail,%s ", getClientErr.Error())
+	}
+	res, reqErr := ctxhttp.Do(context.Background(), httpClient, req)
+	if reqErr != nil {
+		return result, fmt.Errorf("http do request fail,%s ", reqErr.Error())
+	}
+	body, _ := ioutil.ReadAll(res.Body)
+	res.Body.Close()
+	if res.StatusCode/100 != 2 {
+		return result, fmt.Errorf("Request fail with bad status:%d ", res.StatusCode)
+	}
+	var data m.PrometheusResponse
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		return result, fmt.Errorf("Json unmarshal response fail,%s ", err.Error())
+	}
+	if data.Status != "success" {
+		return result, fmt.Errorf("Query prometheus data fail,status:%s ", data.Status)
+	}
+	for _, otr := range data.Data.Result {
+		result = append(result, otr.Metric)
+	}
+	return
+}

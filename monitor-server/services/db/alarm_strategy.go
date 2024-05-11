@@ -526,6 +526,13 @@ func buildRuleFileContentNew(ruleFileName, guidExpr, addressExpr, ipExpr string,
 				strategy.MetricExpr = strings.ReplaceAll(strategy.MetricExpr, "$ip", ipExpr)
 			}
 		}
+		if strings.Contains(strategy.MetricExpr, "@") {
+			strategy.MetricExpr = strings.ReplaceAll(strategy.MetricExpr, "@", "")
+		}
+		if strategy.MetricExpr == "" {
+			log.Logger.Warn("metric expr empty", log.String("alertId", tmpRfu.Alert))
+			continue
+		}
 		tmpRfu.Expr = fmt.Sprintf("(%s) %s", strategy.MetricExpr, strategy.Condition)
 		tmpRfu.For = strategy.Last
 		tmpRfu.Labels = make(map[string]string)
