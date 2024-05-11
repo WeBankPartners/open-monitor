@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
@@ -110,11 +111,32 @@ func QueryMetricTagValue(c *gin.Context) {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
-	for _, v := range tagList {
-		result = append(result, &models.QueryMetricTagResultObj{Tag: v, Values: []string{}})
+	if len(tagList) == 0 {
+		middleware.ReturnData(c, result)
+		return
 	}
 	// 查标签值
-
-	//result := []*models.QueryMetricTagResultObj{{Tag: "code", Values: []string{"aa", "bb"}}}
+	seriesMapList, getSeriesErr := datasource.QueryPromSeries(metricRow.PromExpr)
+	if getSeriesErr != nil {
+		err = fmt.Errorf("query prom series fail,%s ", getSeriesErr)
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	for _, v := range tagList {
+		tmpValueList := []string{}
+		tmpValueDistinctMap := make(map[string]int)
+		for _, seriesMap := range seriesMapList {
+			if seriesMap == nil {
+				continue
+			}
+			if tmpTagValue, ok := seriesMap[v]; ok {
+				if _, existFlag := tmpValueDistinctMap[tmpTagValue]; !existFlag {
+					tmpValueList = append(tmpValueList, tmpTagValue)
+					tmpValueDistinctMap[tmpTagValue] = 1
+				}
+			}
+		}
+		result = append(result, &models.QueryMetricTagResultObj{Tag: v, Values: tmpValueList})
+	}
 	middleware.ReturnData(c, result)
 }
