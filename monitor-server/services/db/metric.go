@@ -1,6 +1,7 @@
 package db
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
@@ -254,6 +255,60 @@ func MetricImport(serviceGroup string, inputMetrics []*models.MetricTable) (err 
 				log.Logger.Error("sync prometheus endpoint group fail", log.Error(tmpErr))
 			}
 		}
+	}
+	return
+}
+
+func GetSimpleMetric(metricId string) (metricRow *models.MetricTable, err error) {
+	var metricRows []*models.MetricTable
+	err = x.SQL("select * from metric where guid=?", metricId).Find(&metricRows)
+	if err != nil {
+		err = fmt.Errorf("query metric table with guid:%s fail,%s ", metricId, err.Error())
+		return
+	}
+	if len(metricRows) == 0 {
+		err = fmt.Errorf("can not find metric with guid:%s ", metricId)
+	} else {
+		metricRow = metricRows[0]
+	}
+	return
+}
+
+func GetMetricTags(metricRow *models.MetricTable) (tags []string, err error) {
+	if metricRow == nil {
+		return
+	}
+	if metricRow.LogMetricConfig != "" {
+		var logMetricConfigRows []*models.LogMetricConfigTable
+		err = x.SQL("select metric,tag_config from log_metric_config where guid=?", metricRow.LogMetricConfig).Find(&logMetricConfigRows)
+		if err != nil {
+			err = fmt.Errorf("query log metric config with guid:%s fail,%s ", metricRow.LogMetricConfig, err.Error())
+		}
+		if len(logMetricConfigRows) > 0 {
+			tagConfigString := logMetricConfigRows[0].TagConfig
+			if tagConfigString != "" && tagConfigString != "null" && tagConfigString != "[]" {
+				if err = json.Unmarshal([]byte(logMetricConfigRows[0].TagConfig), &tags); err != nil {
+					err = fmt.Errorf("json unmarshal tag config: %s fail,%s ", tagConfigString, err.Error())
+				}
+			}
+		}
+		return
+	}
+	if metricRow.LogMetricTemplate != "" {
+		var logMetricTemplateRows []*models.LogMetricTemplate
+		err = x.SQL("select metric,tag_config from log_metric_template where guid=?", metricRow.LogMetricTemplate).Find(&logMetricTemplateRows)
+		if err != nil {
+			err = fmt.Errorf("query log metric template with guid:%s fail,%s ", metricRow.LogMetricTemplate, err.Error())
+		}
+		if len(logMetricTemplateRows) > 0 {
+			tagConfigString := logMetricTemplateRows[0].TagConfig
+			if tagConfigString != "" && tagConfigString != "null" && tagConfigString != "[]" {
+				if err = json.Unmarshal([]byte(logMetricTemplateRows[0].TagConfig), &tags); err != nil {
+					err = fmt.Errorf("json unmarshal tag config: %s fail,%s ", tagConfigString, err.Error())
+				}
+			}
+		}
+		return
 	}
 	return
 }
