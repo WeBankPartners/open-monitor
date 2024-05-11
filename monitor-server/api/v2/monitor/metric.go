@@ -90,3 +90,31 @@ func ImportMetric(c *gin.Context) {
 		middleware.ReturnSuccess(c)
 	}
 }
+
+func QueryMetricTagValue(c *gin.Context) {
+	var param models.QueryMetricTagParam
+	if err := c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	// 查指标有哪些标签
+	metricRow, err := db.GetSimpleMetric(param.MetricId)
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	result := []*models.QueryMetricTagResultObj{}
+	var tagList []string
+	tagList, err = db.GetMetricTags(metricRow)
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	for _, v := range tagList {
+		result = append(result, &models.QueryMetricTagResultObj{Tag: v, Values: []string{}})
+	}
+	// 查标签值
+
+	//result := []*models.QueryMetricTagResultObj{{Tag: "code", Values: []string{"aa", "bb"}}}
+	middleware.ReturnData(c, result)
+}
