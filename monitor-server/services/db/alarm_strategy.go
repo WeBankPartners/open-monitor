@@ -10,6 +10,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
 	"golang.org/x/net/context/ctxhttp"
+	"hash/crc64"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -354,8 +355,10 @@ func getStrategyConditionInsertAction(alarmStrategyGuid string, conditions []*mo
 	nowTime := time.Now()
 	metricGuidList := guid.CreateGuidList(len(conditions))
 	for i, metricRow := range conditions {
-		actions = append(actions, &Action{Sql: "insert into alarm_strategy_metric(guid,alarm_strategy,metric,`condition`,`last`,create_time) values (?,?,?,?,?,?)", Param: []interface{}{
-			metricGuidList[i], alarmStrategyGuid, metricRow.Metric, metricRow.Condition, metricRow.Last, nowTime,
+		tmpMetricRowString, _ := json.Marshal(metricRow)
+		tmpCrcHash := fmt.Sprintf("%d", crc64.Checksum(tmpMetricRowString, crc64.MakeTable(crc64.ECMA)))
+		actions = append(actions, &Action{Sql: "insert into alarm_strategy_metric(guid,alarm_strategy,metric,`condition`,`last`,create_time,crc_hash) values (?,?,?,?,?,?,?)", Param: []interface{}{
+			metricGuidList[i], alarmStrategyGuid, metricRow.Metric, metricRow.Condition, metricRow.Last, nowTime, tmpCrcHash,
 		}})
 		if len(metricRow.Tags) > 0 {
 			tagGuidList := guid.CreateGuidList(len(metricRow.Tags))
