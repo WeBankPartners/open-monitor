@@ -512,15 +512,15 @@ func getLogMetricExprByAggType(metric, aggType, serviceGroup string, tagList []s
 func getLogMetricRatePromExpr(metric, aggType, serviceGroup, sucRetCode string) (result string) {
 	aggType = "count"
 	if metric == "req_suc_count" {
-		result = fmt.Sprintf("sum(%s{key=\"req_suc_count\",agg=\"%s\",service_group=\"%s\",retcode=\"%s\"}) by (key,agg,service_group,code,retcode)", models.LogMetricName, aggType, serviceGroup, sucRetCode)
+		result = fmt.Sprintf("sum(%s{key=\"req_suc_count\",agg=\"%s\",service_group=\"%s\",retcode=\"%s\",code=\"$t_code\"}) by (key,agg,service_group,code,retcode)", models.LogMetricName, aggType, serviceGroup, sucRetCode)
 		return
 	}
 	if metric == "req_suc_rate" {
-		result = fmt.Sprintf("100*((sum(%s{key=\"req_suc_count\",agg=\"%s\",service_group=\"%s\",retcode=\"%s\"}) by (service_group,code))/(sum(%s{key=\"req_count\",agg=\"%s\",service_group=\"%s\"}) by (service_group,code)) > 0 or vector(1))",
+		result = fmt.Sprintf("100*((sum(%s{key=\"req_suc_count\",agg=\"%s\",service_group=\"%s\",retcode=\"%s\",code=\"$t_code\"}) by (service_group,code))/(sum(%s{key=\"req_count\",agg=\"%s\",service_group=\"%s\",code=\"$t_code\"}) by (service_group,code)) > 0 or vector(1))",
 			models.LogMetricName, aggType, serviceGroup, sucRetCode, models.LogMetricName, aggType, serviceGroup)
 	}
 	if metric == "req_fail_rate" {
-		result = fmt.Sprintf("100-100*((sum(%s{key=\"req_suc_count\",agg=\"%s\",service_group=\"%s\",retcode=\"%s\"}) by (service_group,code))/(sum(%s{key=\"req_count\",agg=\"%s\",service_group=\"%s\"}) by (service_group,code)) > 0 or vector(1))",
+		result = fmt.Sprintf("100-100*((sum(%s{key=\"req_suc_count\",agg=\"%s\",service_group=\"%s\",retcode=\"%s\",code=\"$t_code\"}) by (service_group,code))/(sum(%s{key=\"req_count\",agg=\"%s\",service_group=\"%s\",code=\"$t_code\"}) by (service_group,code)) > 0 or vector(1))",
 			models.LogMetricName, aggType, serviceGroup, sucRetCode, models.LogMetricName, aggType, serviceGroup)
 	}
 	return
