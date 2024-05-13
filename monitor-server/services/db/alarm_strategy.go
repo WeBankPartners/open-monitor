@@ -407,7 +407,7 @@ func SyncPrometheusRuleFile(endpointGroup string, fromPeer bool) error {
 		return err
 	}
 	// 获取strategy
-	strategyList, getStrategyErr := getAlarmStrategyWithExpr(endpointGroup)
+	strategyList, getStrategyErr := getAlarmStrategyWithExprNew(endpointGroup)
 	if getStrategyErr != nil {
 		return getStrategyErr
 	}
@@ -469,6 +469,87 @@ func getAlarmStrategyWithExpr(endpointGroup string) (result []*models.AlarmStrat
 	return
 }
 
+func getAlarmStrategyWithExprNew(endpointGroup string) (result []*models.AlarmStrategyMetricObj, err error) {
+	var strategyRows []*models.AlarmStrategyMetricObj
+	err = x.SQL("select t1.*,t2.metric as 'metric_name',t2.prom_expr as 'metric_expr',t2.monitor_type as 'metric_type' from alarm_strategy t1 left join metric t2 on t1.metric=t2.guid where endpoint_group=?", endpointGroup).Find(&strategyRows)
+	var strategyMetricRows []*models.AlarmStrategyMetricWithExpr
+	err = x.SQL("select t1.guid,t1.alarm_strategy,t1.metric,t1.`condition`,t1.`last`,t1.crc_hash,t2.metric as 'metric_name',t2.prom_expr as 'metric_expr',t2.monitor_type as 'metric_type' from alarm_strategy_metric t1 left join metric t2 on t1.metric=t2.guid where t1.alarm_strategy in (select guid from alarm_strategy where endpoint_group=?)", endpointGroup).Find(&strategyMetricRows)
+	if err != nil {
+		err = fmt.Errorf("query alarm strategy metric with endpointGroup:%s fail,%s ", endpointGroup, err.Error())
+		return
+	}
+	if len(strategyMetricRows) == 0 {
+		result = strategyRows
+		return
+	}
+	strategyRowMap := make(map[string]*models.AlarmStrategyMetricObj)
+	for _, strategyRow := range strategyRows {
+		strategyRowMap[strategyRow.Guid] = strategyRow
+		withConditionFlag := false
+		for _, metricRow := range strategyMetricRows {
+			if metricRow.AlarmStrategy == strategyRow.Guid {
+				withConditionFlag = true
+				break
+			}
+		}
+		if !withConditionFlag {
+			result = append(result, strategyRow)
+		}
+	}
+	var metricGuidList []string
+	for _, row := range strategyMetricRows {
+		metricGuidList = append(metricGuidList, row.Guid)
+	}
+	filterSql, filterParams := createListParams(metricGuidList, "")
+	var tagRows []*models.AlarmStrategyTag
+	err = x.SQL("select * from alarm_strategy_tag where alarm_strategy_metric in ("+filterSql+")", filterParams...).Find(&tagRows)
+	if err != nil {
+		err = fmt.Errorf("query alarm strategy tag fail,%s ", err.Error())
+		return
+	}
+	var tagValueRows []*models.AlarmStrategyTagValue
+	err = x.SQL("select * from alarm_strategy_tag_value where alarm_strategy_tag in (select guid from alarm_strategy_tag where alarm_strategy_metric in ("+filterSql+"))", filterParams...).Find(&tagValueRows)
+	if err != nil {
+		err = fmt.Errorf("query alarm strategy tag value fail,%s ", err.Error())
+		return
+	}
+	for _, metricRow := range strategyMetricRows {
+		if strategyRow, ok := strategyRowMap[metricRow.AlarmStrategy]; ok {
+			tmpStrategyObj := models.AlarmStrategyMetricObj{
+				Guid:              strategyRow.Guid,
+				Name:              strategyRow.Name,
+				EndpointGroup:     strategyRow.EndpointGroup,
+				Priority:          strategyRow.Priority,
+				Content:           strategyRow.Content,
+				NotifyEnable:      strategyRow.NotifyEnable,
+				NotifyDelaySecond: strategyRow.NotifyDelaySecond,
+				ActiveWindow:      strategyRow.ActiveWindow,
+			}
+			tmpStrategyObj.Metric = metricRow.Metric
+			tmpStrategyObj.Content = metricRow.Condition
+			tmpStrategyObj.Last = metricRow.Last
+			tmpStrategyObj.MetricName = metricRow.MetricName
+			tmpStrategyObj.MetricExpr = metricRow.MetricExpr
+			tmpStrategyObj.MetricType = metricRow.MetricType
+			tmpStrategyObj.ConditionCrc = metricRow.CrcHash
+			tmpStrategyObj.Tags = []*models.MetricTag{}
+			for _, tagRow := range tagRows {
+				if tagRow.AlarmStrategyMetric == metricRow.Guid {
+					tmpMetricTag := models.MetricTag{TagName: tagRow.Name}
+					for _, tagValueRow := range tagValueRows {
+						if tagValueRow.AlarmStrategyTag == tagRow.Guid {
+							tmpMetricTag.TagValue = append(tmpMetricTag.TagValue, tagValueRow.Value)
+						}
+					}
+					tmpStrategyObj.Tags = append(tmpStrategyObj.Tags, &tmpMetricTag)
+				}
+			}
+			result = append(result, &tmpStrategyObj)
+		}
+	}
+	return
+}
+
 func buildRuleReplaceExprNew(endpointList []*models.EndpointNewTable) (guidExpr, addressExpr, ipExpr string) {
 	for _, endpoint := range endpointList {
 		addressExpr += endpoint.AgentAddress + "|"
@@ -494,7 +575,11 @@ func buildRuleFileContentNew(ruleFileName, guidExpr, addressExpr, ipExpr string,
 	}
 	for _, strategy := range strategyList {
 		tmpRfu := models.RFRule{}
-		tmpRfu.Alert = fmt.Sprintf("%s_%s", strategy.Metric, strategy.Guid)
+		if strategy.ConditionCrc != "" {
+			tmpRfu.Alert = fmt.Sprintf("%s_%s", strategy.ConditionCrc, strategy.Guid)
+		} else {
+			tmpRfu.Alert = fmt.Sprintf("%s_%s", strategy.Metric, strategy.Guid)
+		}
 		if !strings.Contains(strategy.Condition, " ") && strategy.Condition != "" {
 			if strings.Contains(strategy.Condition, "=") {
 				strategy.Condition = strategy.Condition[:2] + " " + strategy.Condition[2:]
