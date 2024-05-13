@@ -207,6 +207,7 @@ type AlarmStrategyMetric struct {
 	Metric        string    `json:"metric" xorm:"metric"`                // 指标
 	Condition     string    `json:"condition" xorm:"condition"`          // 条件
 	Last          string    `json:"last" xorm:"last"`                    // 持续时间
+	CrcHash       string    `json:"crc_hash" xorm:"crc_hash"`            // hash
 	CreateTime    time.Time `json:"createTime" xorm:"create_time"`       // 创建时间
 	UpdateTime    time.Time `json:"updateTime" xorm:"update_time"`       // 更新时间
 }
