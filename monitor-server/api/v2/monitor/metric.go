@@ -112,7 +112,7 @@ func QueryMetricTagValue(c *gin.Context) {
 		return
 	}
 	if len(tagList) == 0 {
-		middleware.ReturnData(c, result)
+		middleware.ReturnSuccessData(c, result)
 		return
 	}
 	// 查标签值
@@ -138,5 +138,5 @@ func QueryMetricTagValue(c *gin.Context) {
 		}
 		result = append(result, &models.QueryMetricTagResultObj{Tag: v, Values: tmpValueList})
 	}
-	middleware.ReturnData(c, result)
+	middleware.ReturnSuccessData(c, result)
 }
