@@ -31,7 +31,7 @@ func QueryCustomDashboardList(condition models.CustomDashboardQueryParam, roles 
 	sql = sql + " order by update_at desc "
 	pageInfo.StartIndex = condition.StartIndex
 	pageInfo.PageSize = condition.PageSize
-	pageInfo.TotalRows = QueryCount(sql, params...)
+	pageInfo.TotalRows = queryCount(sql, params...)
 	sql = sql + " limit ?,? "
 	params = append(params, condition.StartIndex, condition.PageSize)
 	err = x.SQL(sql, params...).Find(&list)
