@@ -221,7 +221,7 @@ type AlarmStrategyTag struct {
 }
 
 type AlarmStrategyTagValue struct {
-	Guid             string `json:"guid" xorm:"guid"`                           // 唯一标识
+	Id               int    `json:"id" xorm:"id"`                               // 自增id
 	AlarmStrategyTag string `json:"alarmStrategyTag" xorm:"alarm_strategy_tag"` // 告警配置标签值
 	Value            string `json:"value" xorm:"value"`                         // 标签值
 }
