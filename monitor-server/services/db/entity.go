@@ -473,7 +473,7 @@ func getSmsAlarmContent(alarm *m.AlarmTable) string {
 func GetAlarmEventEntityData(alarmId int) (result *m.AlarmEventEntityObj, err error) {
 	result = &m.AlarmEventEntityObj{}
 	var alarmRows []*m.AlarmTable
-	err = x.SQL("select endpoint,status,s_metric,s_cond,s_last,s_priority,content,`start` from alarm where id=?", alarmId).Find(&alarmRows)
+	err = x.SQL("select endpoint,status,s_metric,s_cond,s_last,s_priority,content,`start`,tags from alarm where id=?", alarmId).Find(&alarmRows)
 	if err != nil {
 		err = fmt.Errorf("query alarm table fail,%s ", err.Error())
 		return
@@ -486,6 +486,8 @@ func GetAlarmEventEntityData(alarmId int) (result *m.AlarmEventEntityObj, err er
 		result.DisplayName = fmt.Sprintf("%d-%s-%s", alarmId, alarmObj.Endpoint, alarmObj.SMetric)
 		alarmObjBytes, _ := json.Marshal(alarmObj)
 		result.Message = string(alarmObjBytes)
+		result.Endpoint = alarmObj.Endpoint
+		result.Detail = fmt.Sprintf("metric:%s condition:%s lasts:%s tags:%s", alarmObj.SMetric, alarmObj.SCond, alarmObj.SLast, strings.ReplaceAll(alarmObj.Tags, "^", ","))
 	}
 	return
 }
