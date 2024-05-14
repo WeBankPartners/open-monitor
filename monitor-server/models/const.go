@@ -29,3 +29,10 @@ var (
 	LogParamIgnorePath    = []string{"/dashboard/newchart", "/dashboard/pie/chart", "/problem/query", "/problem/history"}
 	DashboardIgnoreTagKey = []string{"job", "__name__"}
 )
+
+type Permission string
+
+const (
+	PermissionMgmt Permission = "MGMT" //管理权限
+	PermissionUse  Permission = "USE"  //使用权限
+)
