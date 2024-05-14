@@ -456,3 +456,30 @@ type GetEndpointMetricParam struct {
 	ServiceGroup string `json:"service_group"`
 	Workspace    string `json:"workspace"`
 }
+
+type CustomDashboardQueryParam struct {
+	Id         int      `json:"id"`
+	Name       string   `json:"name"`
+	MgmtRoles  []string `json:"mgmtRoles"`
+	UseRoles   []string `json:"useRoles"`
+	UpdateUser string   `json:"updateUser"`
+	Permission string   `json:"permission"` //  MGMT 表示管理权限
+	StartIndex int      `json:"startIndex"`
+	PageSize   int      `json:"pageSize"`
+}
+
+type CustomDashboardResultDto struct {
+	Id         int      `json:"id"`
+	Name       string   `json:"name"`
+	MgmtRoles  []string `json:"mgmtRoles"`
+	UseRoles   []string `json:"useRoles"`
+	Permission string   `json:"permission"`
+	CreateUser string   `json:"createUser"`
+	UpdateUser string   `json:"updateUser"`
+	MainPage   []string `json:"mainPage"`
+}
+
+type CustomDashboardDto struct {
+	PanelGroupList []string          `json:"panelGroupList"`
+	Charts         []*CustomChartDto `json:"charts"`
+}
