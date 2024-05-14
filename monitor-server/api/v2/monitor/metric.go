@@ -136,7 +136,11 @@ func QueryMetricTagValue(c *gin.Context) {
 				}
 			}
 		}
-		result = append(result, &models.QueryMetricTagResultObj{Tag: v, Values: tmpValueList})
+		valueObjList := []*models.MetricTagValueObj{}
+		for _, tmpValue := range tmpValueList {
+			valueObjList = append(valueObjList, &models.MetricTagValueObj{Key: tmpValue, Value: tmpValue})
+		}
+		result = append(result, &models.QueryMetricTagResultObj{Tag: v, Values: valueObjList})
 	}
 	middleware.ReturnSuccessData(c, result)
 }
