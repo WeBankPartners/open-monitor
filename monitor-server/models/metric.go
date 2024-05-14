@@ -7,6 +7,11 @@ type QueryMetricTagParam struct {
 }
 
 type QueryMetricTagResultObj struct {
-	Tag    string   `json:"tag"`
-	Values []string `json:"values"`
+	Tag    string               `json:"tag"`
+	Values []*MetricTagValueObj `json:"values"`
+}
+
+type MetricTagValueObj struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
 }
