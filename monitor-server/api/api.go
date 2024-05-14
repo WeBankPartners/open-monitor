@@ -274,6 +274,10 @@ func init() {
 		&handlerFuncObj{Url: "/service/log_metric/custom/log_metric_group", Method: http.MethodPut, HandlerFunc: service.UpdateLogMetricCustomGroup},
 		// 标签
 		&handlerFuncObj{Url: "/metric/tag/value-list", Method: http.MethodPost, HandlerFunc: monitor.QueryMetricTagValue},
+
+		//自定义视图
+		&handlerFuncObj{Url: "/dashboard/custom/list", Method: http.MethodPost, HandlerFunc: monitor.QueryCustomDashboardList},
+		&handlerFuncObj{Url: "/dashboard/dashboard/custom", Method: http.MethodGet, HandlerFunc: monitor.GetCustomDashboard},
 	)
 }
 
