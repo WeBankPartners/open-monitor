@@ -627,7 +627,7 @@ func GetPingExporterSource() []*m.PingExportSourceObj {
 		}
 	}
 	var endpointHttpTable []*m.EndpointHttpTable
-	x.SQL("SELECT t1.* FROM endpoint_http t1 join endpoint t2 on t1.endpoint_guid=t2.guid where t2.address_agent=''").Find(&endpointHttpTable)
+	x.SQL("SELECT t1.id,t1.endpoint_guid,t1.`method`,t1.url FROM endpoint_http t1 join endpoint t2 on t1.endpoint_guid=t2.guid where t2.address_agent=''").Find(&endpointHttpTable)
 	if len(endpointHttpTable) > 0 {
 		for _, v := range endpointHttpTable {
 			tmpUrl := fmt.Sprintf("%s_%s", strings.ToUpper(v.Method), v.Url)
