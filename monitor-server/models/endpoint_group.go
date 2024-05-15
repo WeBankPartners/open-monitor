@@ -107,6 +107,7 @@ type AlarmStrategyTable struct {
 	NotifyDelaySecond int    `json:"notify_delay_second" xorm:"notify_delay_second"`
 	ActiveWindow      string `json:"active_window" xorm:"active_window"`
 	UpdateTime        string `json:"update_time" xorm:"update_time"`
+	Name              string `json:"name" xorm:"name"`
 }
 
 type AlarmStrategyMetricObj struct {
