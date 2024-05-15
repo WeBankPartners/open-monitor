@@ -37,19 +37,8 @@
         <div slot='tableExtend'>
           <Button type="primary" @click="addMetricConfig(pageConfig.table.isExtend.parentData)" ghost size="small">{{ $t('addMetricConfig') }}</Button>
           <div style="margin:8px;border:1px solid #2db7f5">
-            <!-- <button @click="singleAddF(pageConfig.table.isExtend.parentData)" type="button" style="margin-top:8px;padding: 0 10px" class="btn btn-small success-btn">
-              <i class="fa fa-plus"></i>
-              {{$t('m_add_json_regular')}}
-            </button> -->
             <extendTable :detailConfig="pageConfig.table.isExtend.detailConfig"></extendTable>
           </div>
-          <!-- <div style="margin:8px;border:1px solid #19be6b">
-            <button @click="addCustomMetric(pageConfig.table.isCustomMetricExtend.parentData)" type="button" style="margin-top:8px;padding: 0 10px" class="btn btn-small success-btn">
-              <i class="fa fa-plus"></i>
-              {{$t('m_add_metric_regular')}}
-            </button>
-            <extendTable :detailConfig="pageConfig.table.isCustomMetricExtend.detailConfig"></extendTable>
-          </div> -->
         </div>
       </PageTable>
     </section>
@@ -928,11 +917,9 @@ export default {
         group.log_type_display = typeToName[group.log_type]
         return group
       })
-      console.log(123, this.pageConfig.table.isExtend.detailConfig[0].data)
       this.pageConfig.table.isExtend.parentData = item
     },
     deleteConfirmModal (rowData) {
-      console.log(1.1, rowData)
       this.selectedData = rowData
       this.isShowWarning = true
     },
