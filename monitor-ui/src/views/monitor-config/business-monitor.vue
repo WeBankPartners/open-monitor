@@ -4,7 +4,7 @@
       <ul class="search-ul">
         <li class="search-li">
           <Select v-model="type" style="width:100px" @on-change="typeChange">
-            <Option v-for="item in typeList" :value="item.value" :key="item.value">{{ $t(item.label) }}</Option>
+            <Option v-for="item in typeList" :value="item.value" :key="item.value">{{ item.label }}</Option>
           </Select>
         </li>
         <li class="search-li">

@@ -92,7 +92,9 @@ export default {
       isParmasChanged: false,
       parentGuid: '', //上级唯一标识
       isAdd: true,
-      configInfo: {},
+      configInfo: {
+        param_list: []
+      },
       columnsForParameterCollection: [
         {
           title: this.$t('field.displayName'),
@@ -151,12 +153,17 @@ export default {
           },
           render: (h, params) => {
             return (
-              <Input
-                value={params.row.regular}
-                onInput={v => {
-                  this.changeVal('param_list', params.index, 'regular', v)
-                }}
-              />
+              <Tooltip transfer placement="bottom" theme="light" style="width: 100%;" max-width="400">
+                <div slot="content">
+                  <div domPropsInnerHTML={params.row.regular_font_result} style="word-break: break-all;"></div>
+                </div>
+                <Input
+                  value={params.row.regular}
+                  onInput={v => {
+                    this.changeVal('param_list', params.index, 'regular', v)
+                  }}
+                />
+              </Tooltip>
             )
           }
         },
@@ -526,13 +533,31 @@ export default {
         param_list.forEach(item => {
           this.isNumericValue[item.name] = !this.isNumericString(item.demo_match_value)
         })
+        this.configInfo.param_list.forEach((r) => {
+          r.regular_font_result = this.regRes(r.regular)
+        })
         this.showModal = true
       })
     },
     changeVal (params, index, key, val) {
       this.configInfo[params][index][key] = val
+      if (params === 'param_list' && key === 'regular') {
+        this.configInfo[params][index].regular_font_result = this.regRes(val)
+      }
       if (key === 'log_param_name') {
         this.configInfo[params][index]['agg_type'] = ''
+      }
+    },
+    regRes (val)  {
+      try {
+        const reg = new RegExp(val, 'g')
+        let execRes = this.configInfo.demo_log.match(reg)
+        if (execRes && execRes.length > 0) {
+          return this.configInfo.demo_log.replace(reg, "<span style='color:red'>" + execRes[0] + '</span>')
+        }
+        return ''
+      } catch (err) {
+        return ''
       }
     },
     generateBackstageTrial () {
