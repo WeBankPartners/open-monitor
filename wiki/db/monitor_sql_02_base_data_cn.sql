@@ -839,3 +839,72 @@ update log_metric_config set log_metric_group=concat('lmg_',guid),log_param_name
 ALTER TABLE log_metric_string_map DROP FOREIGN KEY log_monitor_string_config;
 alter table log_metric_group add column metric_prefix_code varchar(64) default null comment '指标前缀';
 #@v2.0.7.1-end@;
+
+#@v2.0.8.1-begin@;
+CREATE TABLE `alarm_strategy_metric` (
+     `guid` varchar(64) NOT null COMMENT '唯一标识',
+     `alarm_strategy` varchar(64) NOT NULL COMMENT '告警配置表',
+     `metric` varchar(128) NOT NULL COMMENT '指标',
+     `condition` varchar(32) NOT NULL COMMENT '条件',
+     `last` varchar(16) NOT NULL COMMENT '持续时间',
+     `crc_hash` varchar(64) DEFAULT NULL COMMENT 'hash',
+     `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+     `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+     PRIMARY KEY (`guid`),
+     KEY `idx__strategy_metric__metric` (`metric`),
+     CONSTRAINT `fk__strategy_metric__alarm_strategy` FOREIGN KEY (`alarm_strategy`) REFERENCES `alarm_strategy` (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `alarm_strategy_tag` (
+      `guid` varchar(64) NOT NULL COMMENT '唯一标识',
+      `alarm_strategy_metric` varchar(64) NOT NULL COMMENT '告警配置指标',
+      `name` varchar(64) NOT NULL COMMENT '标签名',
+      PRIMARY KEY (`guid`),
+      CONSTRAINT `fk__strategy_tag__metric` FOREIGN KEY (`alarm_strategy_metric`) REFERENCES `alarm_strategy_metric` (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `alarm_strategy_tag_value` (
+    `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+    `alarm_strategy_tag` varchar(64) NOT NULL COMMENT '告警配置标签值',
+    `value` varchar(255) DEFAULT NULL COMMENT '标签值',
+    PRIMARY KEY (`id`),
+    CONSTRAINT `fk__strategy_tag_value__tag` FOREIGN KEY (`alarm_strategy_tag`) REFERENCES `alarm_strategy_tag` (`guid`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
+alter table alarm_strategy add column name varchar(128) default null comment '名称';
+alter table rel_role_custom_dashboard rename to custom_dashboard_role_rel;
+alter table custom_dashboard modify column `name` varchar(255) NOT NULL;
+alter table metric add column log_metric_config varchar(64) default null;
+alter table metric add column log_metric_template varchar(64) default null;
+update alarm_strategy set name=substring_index(metric,'__',1) where name is null;
+
+CREATE TABLE `alarm_condition` (
+       `guid` varchar(64) NOT NULL COMMENT '唯一标识',
+       `alarm_strategy` varchar(64) DEFAULT NULL COMMENT '告警配置表',
+       `endpoint` varchar(255) NOT NULL COMMENT '监控对象',
+       `status` varchar(20) NOT NULL COMMENT '状态',
+       `metric` varchar(255) NOT NULL COMMENT '指标',
+       `expr` varchar(500) NOT NULL COMMENT '指标表达式',
+       `cond` varchar(50) NOT NULL COMMENT '条件',
+       `last` varchar(50) NOT NULL COMMENT '持续时间',
+       `priority` varchar(50) NOT NULL COMMENT '级别',
+       `crc_hash` varchar(64) DEFAULT NULL COMMENT '告警配置hash',
+       `tags` varchar(1024) DEFAULT NULL COMMENT '告警标签',
+       `start_value` double DEFAULT NULL COMMENT '异常值',
+       `start` datetime DEFAULT NULL COMMENT '异常时间',
+       `end_value` double DEFAULT NULL COMMENT '恢复值',
+       `end` datetime DEFAULT NULL COMMENT '恢复时间',
+       `unique_hash` varchar(64) DEFAULT NULL COMMENT '告警唯一hash',
+       PRIMARY KEY (`guid`),
+       UNIQUE KEY `alarm_condition_unique_idx` (`unique_hash`),
+       KEY `alarm_condition_endpoint_idx` (`endpoint`),
+       KEY `alarm_condition_metric_idx` (`metric`),
+       KEY `alarm_condition_status_idx` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `alarm_condition_rel` (
+       `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+       `alarm` int(11) unsigned NOT NULL COMMENT '告警id',
+       `alarm_condition` varchar(64) DEFAULT NULL COMMENT '条件id',
+       PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
+#@v2.0.8.1-end@;

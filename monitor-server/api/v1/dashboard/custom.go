@@ -71,7 +71,7 @@ func GetCustomDashboardRole(c *gin.Context) {
 	}
 	err, result := db.GetCustomDashboardRole(id)
 	if err != nil {
-		mid.ReturnQueryTableError(c, "rel_role_custom_dashboard", err)
+		mid.ReturnQueryTableError(c, "custom_dashboard_role_rel", err)
 	} else {
 		mid.ReturnSuccessData(c, result)
 	}
@@ -82,7 +82,7 @@ func SaveCustomDashboardRole(c *gin.Context) {
 	if err := c.ShouldBindJSON(&param); err == nil {
 		err = db.SaveCustomeDashboardRole(param)
 		if err != nil {
-			mid.ReturnUpdateTableError(c, "rel_role_custom_dashboard", err)
+			mid.ReturnUpdateTableError(c, "custom_dashboard_role_rel", err)
 			return
 		}
 		mid.ReturnSuccess(c)
