@@ -37,15 +37,17 @@
                 </FormItem>
               </template>
               <FormItem :label="$t('m_json_regular')" style="margin-bottom: 12px;">
-                <Input
-                  v-model="configInfo.json_regular"
-                  type="textarea"
-                  style="width: 96%"
-                />
-                <span style="color: red">*</span>
-                <div v-if="isParmasChanged && configInfo.json_regular.length > 200" style="color: red">
-                  {{ $t('m_json_regular') }}{{ $t('tw_limit_200') }}
-                </div>
+                <Tooltip theme="light" transfer placement="bottom" style="width: 100%;" max-width="400">
+                  <div slot="content">
+                    <div v-html="regRes" style="word-break: break-all;"></div>
+                  </div>
+                  <Input
+                    v-model="configInfo.json_regular"
+                    type="textarea"
+                    style="width: 96%"
+                  />
+                  <span style="color: red">*</span>
+                </Tooltip>
               </FormItem>
               <FormItem :label="$t('m_log_example')">
                 <Input
@@ -222,6 +224,20 @@ export default {
         }
       ],
       generateBackstageTrialWarning: false
+    }
+  },
+  computed: {
+    regRes: function () {
+      try {
+        const reg = new RegExp(this.configInfo.json_regular, 'g')
+        let execRes = this.configInfo.demo_log.match(reg)
+        if (execRes && execRes.length > 0) {
+          return this.configInfo.demo_log.replace(reg, "<span style='color:red'>" + execRes[0] + '</span>')
+        }
+        return ''
+      } catch (err) {
+        return ''
+      }
     }
   },
   methods: {

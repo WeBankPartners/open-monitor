@@ -40,6 +40,9 @@ func AcceptAlert(c *gin.Context) {
 	alarms = db.UpdateAlarms(alarms)
 	var treeventSendObj m.EventTreeventNotifyDto
 	for _, v := range alarms {
+		if v.AlarmConditionGuid != "" {
+			continue
+		}
 		treeventSendObj.Data = append(treeventSendObj.Data, &m.EventTreeventNodeParam{EventId: fmt.Sprintf("%d", v.Id), Status: v.Status, Endpoint: v.Endpoint, StartUnix: v.Start.Unix(), Message: fmt.Sprintf("%s \n %s \n %.3f %s", v.Endpoint, v.SMetric, v.StartValue, v.SCond)})
 		if v.NotifyEnable == 0 {
 			continue
@@ -63,12 +66,13 @@ func buildNewAlarm(param *m.AMRespAlert, nowTime time.Time) (alarm m.AlarmHandle
 	if len(summaryList) <= 3 {
 		return alarm, fmt.Errorf("summary:%s illegal ", param.Annotations["summary"])
 	}
-	var strategyGuid, conditionCrc string
+	var strategyGuid, conditionCrc, alarmConditionGuid string
 	var strategyObj m.AlarmStrategyMetricObj
 	var multipleConditionFlag bool
 	var strategyConditions []*m.AlarmStrategyMetric
 	strategyGuid = param.Labels["strategy_guid"]
 	conditionCrc = param.Labels["condition_crc"]
+	alarm.AlarmConditionCrcHash = conditionCrc
 	if strategyGuid != "" {
 		strategyObj, strategyConditions, err = db.GetAlarmStrategy(strategyGuid, conditionCrc)
 		if err != nil {
@@ -95,7 +99,7 @@ func buildNewAlarm(param *m.AMRespAlert, nowTime time.Time) (alarm m.AlarmHandle
 	existAlarm := m.AlarmTable{}
 	log.Logger.Debug("accept strategy_guid", log.String("strategy_guid", strategyGuid))
 	if strategyGuid != "" {
-		existAlarm, err = getNewAlarmWithStrategyGuid(&alarm, param, &endpointObj, &strategyObj, multipleConditionFlag)
+		existAlarm, alarmConditionGuid, err = getNewAlarmWithStrategyGuid(&alarm, param, &endpointObj, &strategyObj, multipleConditionFlag)
 	} else if param.Labels["strategy_id"] == "up" {
 		if endpointObj.MonitorType != "host" {
 			return alarm, fmt.Errorf("Up alarm break,endpoint:%s export type illegal ", endpointObj.Guid)
@@ -104,7 +108,7 @@ func buildNewAlarm(param *m.AMRespAlert, nowTime time.Time) (alarm m.AlarmHandle
 	} else {
 		existAlarm, err = getNewAlarmWithStrategyId(&alarm, param, &endpointObj)
 	}
-	log.Logger.Debug("exist alarm", log.JsonObj("existAlarm", existAlarm))
+	log.Logger.Debug("exist alarm", log.JsonObj("existAlarm", existAlarm), log.String("alarmConditionGuid", alarmConditionGuid))
 	alarm.Status = param.Status
 	operation := "add"
 	if existAlarm.Status != "" {
@@ -137,6 +141,7 @@ func buildNewAlarm(param *m.AMRespAlert, nowTime time.Time) (alarm m.AlarmHandle
 		alarm.Status = "ok"
 		alarm.EndValue = alertValue
 		alarm.End = nowTime
+		alarm.AlarmConditionGuid = alarmConditionGuid
 	} else if operation == "add" {
 		if !checkIsInActiveWindow(strategyObj.ActiveWindow) {
 			return alarm, fmt.Errorf("Alarm:%s not in active window:%s ", strategyObj.Guid, strategyObj.ActiveWindow)
@@ -254,7 +259,7 @@ func getNewAlarmTags(param *m.AMRespAlert) (tagString string, err error) {
 	return
 }
 
-func getNewAlarmWithStrategyGuid(alarm *m.AlarmHandleObj, param *m.AMRespAlert, endpointObj *m.EndpointNewTable, strategyObj *m.AlarmStrategyMetricObj, multipleConditionFlag bool) (existAlarm m.AlarmTable, err error) {
+func getNewAlarmWithStrategyGuid(alarm *m.AlarmHandleObj, param *m.AMRespAlert, endpointObj *m.EndpointNewTable, strategyObj *m.AlarmStrategyMetricObj, multipleConditionFlag bool) (existAlarm m.AlarmTable, alarmConditionGuid string, err error) {
 	existAlarm = m.AlarmTable{}
 	log.Logger.Info("getNewAlarmWithStrategyGuid", log.String("query guid", strategyObj.Guid))
 	alarm.AlarmStrategy = strategyObj.Guid
@@ -271,6 +276,10 @@ func getNewAlarmWithStrategyGuid(alarm *m.AlarmHandleObj, param *m.AMRespAlert, 
 			err = fmt.Errorf("Ignore check alive alarm,is self instance host,ip:%s ", endpointObj.Ip)
 			return
 		}
+	}
+	if multipleConditionFlag {
+		existAlarm, alarmConditionGuid, err = db.GetExistAlarmCondition(strategyObj.Guid, strategyObj.ConditionCrc, alarm.Tags)
+		return
 	}
 	existAlarmQuery := m.AlarmTable{Endpoint: alarm.Endpoint, Tags: alarm.Tags, AlarmStrategy: alarm.AlarmStrategy}
 	existAlarm, _ = db.GetAlarmObj(&existAlarmQuery)
