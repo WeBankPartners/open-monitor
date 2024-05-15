@@ -477,9 +477,19 @@ type CustomDashboardResultDto struct {
 	CreateUser string   `json:"createUser"`
 	UpdateUser string   `json:"updateUser"`
 	MainPage   []string `json:"mainPage"`
+	UpdateTime string   `json:"updateTime"`
 }
 
 type CustomDashboardDto struct {
 	PanelGroupList []string          `json:"panelGroupList"`
 	Charts         []*CustomChartDto `json:"charts"`
+}
+
+type AddCustomDashboardParam struct {
+	Name string `json:"name"`
+}
+
+type UpdateCustomDashboardParam struct {
+	Id     int               `json:"id"`
+	Charts []*CustomChartDto `json:"charts"`
 }
