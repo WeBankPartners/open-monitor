@@ -23,7 +23,7 @@ func ListCustomDashboard(user string, coreToken m.CoreJwtToken) (err error, resu
 	}
 	roleString := strings.Join(roleList, "','")
 	sql = `SELECT * FROM (
-		SELECT DISTINCT t1.id,t1.name,t1.panels_group,t1.cfg,t1.main,t1.create_user,t1.update_user,t1.create_at,t1.update_at,t2.permission,t1.panel_groups FROM custom_dashboard t1 LEFT JOIN rel_role_custom_dashboard t2 ON t1.id=t2.custom_dashboard_id LEFT JOIN role t3 ON t2.role_id=t3.id WHERE t1.create_user<>'` + user + `' and t3.name IN ('` + roleString + `')
+		SELECT DISTINCT t1.id,t1.name,t1.panels_group,t1.cfg,t1.main,t1.create_user,t1.update_user,t1.create_at,t1.update_at,t2.permission,t1.panel_groups FROM custom_dashboard t1 LEFT JOIN custom_dashboard_role_rel t2 ON t1.id=t2.custom_dashboard_id LEFT JOIN role t3 ON t2.role_id=t3.id WHERE t1.create_user<>'` + user + `' and t3.name IN ('` + roleString + `')
 		UNION
 		SELECT id,name,panels_group,cfg,main,create_user,update_user,create_at,update_at,'mgmt',panel_groups FROM custom_dashboard WHERE create_user='` + user + `'
 		) t ORDER BY t.name`
@@ -127,7 +127,7 @@ func DeleteCustomDashboard(query *m.CustomDashboardTable) error {
 
 func GetCustomDashboardRole(id int) (err error, result []*m.CustomDashboardRoleObj) {
 	var roleTables []*m.CustomerDashboardRoleQuery
-	err = x.SQL("SELECT DISTINCT t1.id,t1.name,t1.display_name,t2.permission FROM role t1 LEFT JOIN rel_role_custom_dashboard t2 ON t1.id=t2.role_id WHERE t2.custom_dashboard_id=?", id).Find(&roleTables)
+	err = x.SQL("SELECT DISTINCT t1.id,t1.name,t1.display_name,t2.permission FROM role t1 LEFT JOIN custom_dashboard_role_rel t2 ON t1.id=t2.role_id WHERE t2.custom_dashboard_id=?", id).Find(&roleTables)
 	for _, v := range roleTables {
 		result = append(result, &m.CustomDashboardRoleObj{RoleId: v.Id, Permission: v.Permission})
 	}
@@ -136,12 +136,12 @@ func GetCustomDashboardRole(id int) (err error, result []*m.CustomDashboardRoleO
 
 func SaveCustomeDashboardRole(param m.CustomDashboardRoleDto) error {
 	var actions []*Action
-	actions = append(actions, &Action{Sql: "DELETE FROM rel_role_custom_dashboard WHERE custom_dashboard_id=?", Param: []interface{}{param.DashboardId}})
+	actions = append(actions, &Action{Sql: "DELETE FROM custom_dashboard_role_rel WHERE custom_dashboard_id=?", Param: []interface{}{param.DashboardId}})
 	for _, v := range param.PermissionList {
 		if v.Permission != "use" && v.Permission != "mgmt" {
 			continue
 		}
-		actions = append(actions, &Action{Sql: "INSERT INTO rel_role_custom_dashboard(role_id,custom_dashboard_id,permission) VALUE (?,?,?)", Param: []interface{}{v.RoleId, param.DashboardId, v.Permission}})
+		actions = append(actions, &Action{Sql: "INSERT INTO custom_dashboard_role_rel(role_id,custom_dashboard_id,permission) VALUE (?,?,?)", Param: []interface{}{v.RoleId, param.DashboardId, v.Permission}})
 	}
 	return Transaction(actions)
 }
@@ -184,7 +184,7 @@ func ListMainPageRole(user string, roleList []string) (err error, result []*m.Ma
 	var customDashboards []*m.CustomDashboardQuery
 	roleString := strings.Join(roleList, "','")
 	sql := `SELECT * FROM (
-		SELECT DISTINCT t1.id,t1.name,t1.panels_group,t1.cfg,t1.main,t1.create_user,t1.update_user,t1.create_at,t1.update_at,t2.permission FROM custom_dashboard t1 LEFT JOIN rel_role_custom_dashboard t2 ON t1.id=t2.custom_dashboard_id LEFT JOIN role t3 ON t2.role_id=t3.id WHERE t1.create_user<>'` + user + `' and t3.name IN ('` + roleString + `')
+		SELECT DISTINCT t1.id,t1.name,t1.panels_group,t1.cfg,t1.main,t1.create_user,t1.update_user,t1.create_at,t1.update_at,t2.permission FROM custom_dashboard t1 LEFT JOIN custom_dashboard_role_rel t2 ON t1.id=t2.custom_dashboard_id LEFT JOIN role t3 ON t2.role_id=t3.id WHERE t1.create_user<>'` + user + `' and t3.name IN ('` + roleString + `')
 		UNION
 		SELECT id,name,panels_group,cfg,main,create_user,update_user,create_at,update_at,'mgmt' FROM custom_dashboard WHERE create_user='` + user + `'
 		) t ORDER BY t.name`
