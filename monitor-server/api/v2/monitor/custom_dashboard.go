@@ -1,11 +1,17 @@
 package monitor
 
 import (
+	"encoding/json"
+	"fmt"
+	"github.com/WeBankPartners/go-common-lib/guid"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
-	"strconv"
 )
 
 // QueryCustomDashboardList 查询自定义看板列表
@@ -79,6 +85,7 @@ func QueryCustomDashboardList(c *gin.Context) {
 				Permission: permission,
 				CreateUser: dashboard.CreateUser,
 				UpdateUser: dashboard.UpdateUser,
+				UpdateTime: dashboard.UpdateAt.Format(models.DatetimeFormat),
 				MainPage:   mainPages,
 			}
 			rowsData = append(rowsData, result)
@@ -133,7 +140,7 @@ func GetCustomDashboard(c *gin.Context) {
 				continue
 			}
 			groupMap[chartExtend.Group] = true
-			chart, err2 := createCustomChartDto(chartExtend, configMap, tagMap, tagValueMap)
+			chart, err2 := db.CreateCustomChartDto(chartExtend, configMap, tagMap, tagValueMap)
 			if err2 != nil {
 				middleware.ReturnServerHandleError(c, err)
 				return
@@ -147,88 +154,156 @@ func GetCustomDashboard(c *gin.Context) {
 	middleware.ReturnData(c, customDashboardDto)
 }
 
-func intToBool(num int) bool {
-	return num != 0
-}
-
-func createCustomChartDto(chartExtend *models.CustomChartExtend, configMap map[string][]*models.CustomChartSeriesConfig, tagMap map[string][]*models.CustomChartSeriesTag, tagValueMap map[string][]*models.CustomChartSeriesTagValue) (chart *models.CustomChartDto, err error) {
-	var list []*models.CustomChartSeries
-	var seriesConfigList []*models.CustomChartSeriesConfig
-	var chartSeriesTagList []*models.CustomChartSeriesTag
-	var chartSeriesTagValueList []*models.CustomChartSeriesTagValue
-	chart = &models.CustomChartDto{
-		Id:              chartExtend.CustomChart.Guid,
-		Public:          intToBool(chartExtend.CustomChart.Public),
-		SourceDashboard: chartExtend.CustomChart.SourceDashboard,
-		Name:            chartExtend.CustomChart.Name,
-		Unit:            chartExtend.CustomChart.Unit,
-		ChartType:       chartExtend.CustomChart.ChartType,
-		LineType:        chartExtend.CustomChart.LineType,
-		Aggregate:       chartExtend.CustomChart.Aggregate,
-		AggStep:         chartExtend.CustomChart.AggStep,
-		Query:           nil,
-		DisplayConfig:   chartExtend.DisplayConfig,
-		Group:           chartExtend.Group,
-	}
-	chart.Query = []*models.CustomChartSeriesDto{}
-	if list, err = db.QueryCustomChartSeriesByChart(chartExtend.CustomChart.Guid); err != nil {
+// AddCustomDashboard 新增自定义看板
+func AddCustomDashboard(c *gin.Context) {
+	var err error
+	var param models.AddCustomDashboardParam
+	if err = c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnServerHandleError(c, err)
 		return
 	}
-	if len(list) > 0 {
-		for _, series := range list {
-			seriesConfigList = []*models.CustomChartSeriesConfig{}
-			chartSeriesTagList = []*models.CustomChartSeriesTag{}
-			customChartSeriesDto := &models.CustomChartSeriesDto{
-				Endpoint:     series.Endpoint,
-				ServiceGroup: series.ServiceGroup,
-				EndpointName: series.EndpointName,
-				MonitorType:  series.MonitorType,
-				ColorGroup:   series.ColorGroup,
-			}
-			customChartSeriesDto.Metrics = []*models.MetricDto{}
-			if v, ok := configMap[series.Guid]; ok {
-				seriesConfigList = v
-			}
-			if v, ok := tagMap[series.Guid]; ok {
-				chartSeriesTagList = v
-			}
-			customChartSeriesDto.Metrics = append(customChartSeriesDto.Metrics, &models.MetricDto{
-				Metric:      series.Metric,
-				Tags:        make([]*models.TagDto, 0),
-				ColorConfig: make([]*models.ColorConfigDto, 0),
-			})
-			if len(chartSeriesTagList) > 0 {
-				for _, tag := range chartSeriesTagList {
-					chartSeriesTagValueList = []*models.CustomChartSeriesTagValue{}
-					if v, ok := tagValueMap[tag.Guid]; ok {
-						chartSeriesTagValueList = v
-					}
-					customChartSeriesDto.Metrics[0].Tags = append(customChartSeriesDto.Metrics[0].Tags, &models.TagDto{
-						TagName:  tag.Name,
-						TagValue: getChartSeriesTagValues(chartSeriesTagValueList),
-					})
-				}
-			}
-			if len(seriesConfigList) > 0 {
-				for _, config := range seriesConfigList {
-					customChartSeriesDto.Metrics[0].ColorConfig = append(customChartSeriesDto.Metrics[0].ColorConfig, &models.ColorConfigDto{
-						Metric: series.Metric,
-						Color:  config.Color,
-					})
-				}
-			}
-			chart.Query = append(chart.Query, customChartSeriesDto)
-		}
+	if strings.TrimSpace(param.Name) == "" {
+		middleware.ReturnParamEmptyError(c, "name")
+		return
 	}
-	return
+	now := time.Now()
+	user := middleware.GetOperateUser(c)
+	if err = db.AddCustomDashboard(&models.CustomDashboardTable{
+		Name:       param.Name,
+		CreateUser: user,
+		UpdateUser: user,
+		CreateAt:   now,
+		UpdateAt:   now,
+	}); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	middleware.ReturnSuccess(c)
 }
 
-func getChartSeriesTagValues(chartSeriesTagValueList []*models.CustomChartSeriesTagValue) []string {
-	var result []string
-	if len(chartSeriesTagValueList) > 0 {
-		for _, tagValue := range chartSeriesTagValueList {
-			result = append(result, tagValue.Value)
+// DeleteCustomDashboard 删除自定义看板
+func DeleteCustomDashboard(c *gin.Context) {
+	var permissionMap map[string]string
+	var err error
+	var userRoles = middleware.GetOperateUserRoles(c)
+	var hasDeletedPermission bool
+	var id int
+	id, err = strconv.Atoi(c.Query("id"))
+	if err != nil || id <= 0 {
+		middleware.ReturnParamTypeError(c, "id", "int")
+		return
+	}
+	if len(userRoles) == 0 {
+		middleware.ReturnValidateError(c, "user roles is empty")
+		return
+	}
+	// 判断是否拥有删除权限
+	if permissionMap, err = db.QueryCustomDashboardRoleRefListByDashboard(id); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if len(permissionMap) == 0 {
+		permissionMap = make(map[string]string)
+	}
+	for _, role := range userRoles {
+		if v, ok := permissionMap[role]; ok && v == string(models.PermissionMgmt) {
+			hasDeletedPermission = true
+			break
 		}
 	}
-	return result
+	if !hasDeletedPermission {
+		middleware.ReturnServerHandleError(c, fmt.Errorf("not has deleted permission"))
+		return
+	}
+	if err = db.DeleteCustomDashboardById(id); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	middleware.ReturnSuccess(c)
+}
+
+// UpdateCustomDashboard 修改自定义看板
+func UpdateCustomDashboard(c *gin.Context) {
+	var err error
+	var param models.UpdateCustomDashboardParam
+	var hasChartRelList, insertChartRelList, updateChartRelList []*models.CustomDashboardChartRel
+	var deleteChartRelIds []string
+	var insert, delete bool
+	var actions []*db.Action
+	user := middleware.GetOperateUser(c)
+	now := time.Now().Format(models.DatetimeFormat)
+	if err = c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if param.Id == 0 {
+		middleware.ReturnParamEmptyError(c, "id")
+		return
+	}
+	if hasChartRelList, err = db.QueryCustomDashboardChartRelListByDashboard(param.Id); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if len(param.Charts) == 0 {
+		param.Charts = []*models.CustomChartDto{}
+	}
+	if len(hasChartRelList) == 0 {
+		hasChartRelList = []*models.CustomDashboardChartRel{}
+	}
+	for _, chart := range param.Charts {
+		insert = true
+		for _, chartRel := range hasChartRelList {
+			if *chartRel.DashboardChart == chart.Id {
+				displayConfig, _ := json.Marshal(chart.DisplayConfig)
+				updateChartRelList = append(updateChartRelList, &models.CustomDashboardChartRel{
+					Guid:          chartRel.Guid,
+					Group:         chart.Group,
+					DisplayConfig: string(displayConfig),
+				})
+				insert = false
+				break
+			}
+		}
+		if insert {
+			displayConfig, _ := json.Marshal(chart.DisplayConfig)
+			insertChartRelList = append(insertChartRelList, &models.CustomDashboardChartRel{
+				Guid:            guid.CreateGuid(),
+				CustomDashboard: &param.Id,
+				DashboardChart:  &chart.Id,
+				Group:           chart.Group,
+				DisplayConfig:   string(displayConfig),
+				CreateUser:      user,
+				UpdateUser:      user,
+				CreateTime:      now,
+				UpdateTime:      now,
+			})
+		}
+	}
+
+	for _, chartRel := range hasChartRelList {
+		delete = true
+		for _, chart := range param.Charts {
+			if chart.Id == *chartRel.DashboardChart {
+				delete = false
+				break
+			}
+		}
+		if delete {
+			deleteChartRelIds = append(deleteChartRelIds, chartRel.Guid)
+		}
+	}
+	if len(insertChartRelList) > 0 {
+		actions = append(actions, db.GetAddCustomDashboardChartRelSQL(insertChartRelList)...)
+	}
+	if len(updateChartRelList) > 0 {
+		actions = append(actions, db.GetUpdateCustomDashboardChartRelSQL(updateChartRelList)...)
+	}
+	if len(deleteChartRelIds) > 0 {
+		actions = append(actions, db.GetDeleteCustomDashboardChartRelSQL(deleteChartRelIds)...)
+	}
+	if err = db.Transaction(actions); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	middleware.ReturnSuccess(c)
 }
