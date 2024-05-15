@@ -11,7 +11,7 @@
         <div class="modal-content c-dark">
           <div class="modal-header c-dark">
             <h4 class="modal-title" v-if="modelConfig.modalTitle">{{$t(modelConfig.modalTitle)}}
-              <template v-if="!modelConfig.isAdd">--
+              <template v-if="!modelConfig.isAdd && interceptParams()">--
               【<span style="color: red">{{interceptParams()}}</span>】
               </template>
             </h4>
@@ -123,11 +123,9 @@
                
                   <slot v-if="item.type === 'slot' && isHide(item.hide) && !item.ishide" :name="item.name"></slot>
                   <label class="required-tip  isRequired_s" v-if="isRequired_s(item.v_validate) && isHide(item.hide)">*</label>
-                
-                
+
                 <label class="required-tip" v-if="isRequired(item.v_validate) && isHide(item.hide)">*</label>
 
-               
                 <Poptip v-if="item.tips&& isHide(item.hide) && item.type !== 'switch'" word-wrap content="" trigger="hover" placement="bottom" :delay="500">
                   <i class="fa fa-question-circle-o question-circle" aria-hidden="true"></i>
                   <div slot="content" class="slot-content-question-circle">
@@ -148,7 +146,7 @@
           </div>
           <template v-if="!modelConfig.noBtn">
             <div class="model-footer-f c-dark" v-if="!modelConfig.modalFooter">
-              <button type="button" class="btn-cancel-f" data-dismiss="modal">{{$t('button.cancel')}}</button>
+              <button type="button" class="btn-cancel-f" data-dismiss="modal">{{$t('button.cancel')}}44</button>
               <button v-if="!modelConfig.saveFunc" @click="save(modelConfig.isAdd)" type="button" class="btn-confirm-f">{{$t('button.save')}}</button>
               <button v-if="modelConfig.saveFunc" @click="customFunc(modelConfig.saveFunc)" type="button" class="btn-confirm-f">{{$t('button.save')}}</button>
             </div>
