@@ -12,18 +12,14 @@ type CustomChartSeries struct {
 }
 
 type CustomChartSeriesDto struct {
-	Endpoint     string       `json:"endpoint"`      // 监控对象
-	ServiceGroup string       `json:"serviceGroup"`  // 层级对象
-	EndpointName string       `json:"endpointName" ` // 层级对象
-	MonitorType  string       `json:"monitorType" `  // 监控类型
-	ColorGroup   string       `json:"colorGroup" `   // 默认色系
-	Metrics      []*MetricDto `json:"metrics"`       // 指标
-}
-
-type MetricDto struct {
-	Metric      string            `json:"metric"` // 指标
-	Tags        []*TagDto         `json:"tags"`
-	ColorConfig []*ColorConfigDto `json:"colorConfig"`
+	Endpoint     string            `json:"endpoint"`      // 监控对象
+	ServiceGroup string            `json:"serviceGroup"`  // 层级对象
+	EndpointName string            `json:"endpointName" ` // 层级对象
+	MonitorType  string            `json:"monitorType" `  // 监控类型
+	ColorGroup   string            `json:"colorGroup" `   // 默认色系
+	Metric       string            `json:"metric"`        // 指标
+	Tags         []*TagDto         `json:"tags"`          // 标签
+	ColorConfig  []*ColorConfigDto `json:"colorConfig"`   // 颜色
 }
 
 type TagDto struct {
