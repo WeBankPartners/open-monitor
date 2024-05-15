@@ -907,4 +907,6 @@ CREATE TABLE `alarm_condition_rel` (
        `alarm_condition` varchar(64) DEFAULT NULL COMMENT '条件id',
        PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
+
+alter table alarm add column alarm_name varchar(64) default null comment '告警名称';
 #@v2.0.8.1-end@;
