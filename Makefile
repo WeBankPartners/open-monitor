@@ -54,3 +54,8 @@ upload: package
 	docker exec $(container_id) mc cp /package/wecube-plugins-monitor-$(version).zip wecubeS3/wecube-plugin-package-bucket
 	docker rm -f $(container_id)
 	rm -rf wecube-plugins-monitor-$(version).zip
+
+build_monitor_server:
+	rm -rf monitor-server/monitor-server
+	chmod +x ./build/*.sh
+	docker run --rm -v $(current_dir):/go/src/github.com/WeBankPartners/$(project_dir) --name build_monitor_server ccr.ccs.tencentyun.com/webankpartners/golang-ext:v1.15.6 /bin/bash /go/src/github.com/WeBankPartners/$(project_dir)/build/build-monitor-server.sh
