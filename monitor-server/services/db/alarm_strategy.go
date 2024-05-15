@@ -383,16 +383,7 @@ func getStrategyConditions(alarmStrategyGuid string) (conditions []*models.Strat
 func getStrategyConditionInsertAction(alarmStrategyGuid string, conditions []*models.StrategyConditionObj) (actions []*Action, err error) {
 	nowTime := time.Now()
 	metricGuidList := guid.CreateGuidList(len(conditions))
-	var existStrategyMetricRows []*models.AlarmStrategyMetric
-	err = x.SQL("select crc_hash from alarm_strategy_metric where alarm_strategy=?", alarmStrategyGuid).Find(&existStrategyMetricRows)
-	if err != nil {
-		err = fmt.Errorf("query alarm strategy metric table fail,%s ", err.Error())
-		return
-	}
 	existCrcMap := make(map[string]int)
-	for _, v := range existStrategyMetricRows {
-		existCrcMap[v.CrcHash] = 1
-	}
 	for i, metricRow := range conditions {
 		tmpMetricRowString, _ := json.Marshal(metricRow)
 		tmpCrcHash := fmt.Sprintf("%d", crc64.Checksum(tmpMetricRowString, crc64.MakeTable(crc64.ECMA)))
