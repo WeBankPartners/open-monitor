@@ -114,7 +114,14 @@ const router = [
         title: "日志模版",
         meta: {},
         component: logTemplate
-      }
+      },
+      {
+        path: "metricConfig",
+        name: "metricConfig",
+        title: "metricConfig",
+        meta: {},
+        component: metricConfig
+      },
     ]
   },
   {

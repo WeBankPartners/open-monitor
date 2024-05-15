@@ -12,7 +12,8 @@
     "customViews": "自定义视图",
     "templateManagement": "模板管理",
     "configuration": "配置",
-    "alert": "告警"
+    "alert": "告警",
+    "screenConfiguration": "看板配置"
   },
   "placeholder": {
     "input": "请输入",
@@ -385,5 +386,46 @@
   "m_metric_group": "指标组",
   "m_metric_config_type": "指标配置类型",
   "m_add_one_tip": "请至少添加一条",
-  "m_modules": "模块"
+  "m_modules": "模块",
+  "m_alarm_config": "告警配置",
+  "m_symbol": "符号",
+  "m_time_unit": "时间单位",
+  "firing": "告警发生时",
+  "ok": "告警恢复时",
+  "m_alarm_schedulingNotification": "编排与通知",
+  "m_alarmName": "告警名称",
+  "m_alarmPriority": "告警级别",
+  "m_alarm_open": "启用",
+  "m_alarm_close": "关闭",
+  "m_notification_role": "通知角色",
+  "m_trigger_arrange": "触发编排",
+  "m_current_alarm": "当前告警",
+  "m_alarm_tips": "此处配置对全部警告生效，如需单独配置，请进入[告警列表-告警-编辑-配置弹窗]，配置编排和通知",
+  "m_alarm_list": "告警列表",
+  "m_label_value": "标签值（多选)",
+  "m_screen": "看板",
+  "m_chart_library": "图表库",
+  "m_chart_all": "所有",
+  "m_pie_chart": "饼图",
+  "m_group_chart_name": "组名",
+  "m_use_charts": "使用图表",
+  "m_edit_screen_group": "编辑看板分组",
+
+  "m_object_design": "对象设计",
+  "m_object_group": "对象组",
+  "m_business_configuration": "业务配置",
+  "m_business_log_template": "业务日志模板",
+  "m_customize": "自定义",
+  "m_metric_threshold": "指标阈值",
+  "m_create": "新建",
+  "m_list": "列表",
+  "m_can_edit": "可编辑",
+  "m_name": "名称",
+  "m_id": "ID",
+  "m_use_role": "使用角色",
+  "m_manage_role": "管理角色",
+  "m_update_time": "更新时间",
+  "m_home_application": "首页应用"
+
+
 }

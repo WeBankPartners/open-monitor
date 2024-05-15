@@ -122,7 +122,21 @@ const router = new Router({
               meta: {},
               component: () =>
                 import("@/views/monitor-config/business-monitor")
-            }
+            },
+            {
+              path: "logTemplate",
+              name: "logTemplate",
+              title: "日志模版",
+              meta: {},
+              component: () => import("@/views/monitor-config/log-template")
+            },
+            {
+              path: "metricConfig",
+              name: "metricConfig",
+              title: "metricConfig",
+              meta: {},
+              component: () => import("@/views/metric-config")
+            },
           ]
         },
         {
@@ -172,8 +186,7 @@ const router = new Router({
           name: "viewConfigIndex",
           title: "自定义视图主页",
           meta: {},
-          component: () =>
-            import("@/views/custom-view/view-config-index")
+          component: () => import("@/views/custom-view/view-config-index")
         },
         {
           path: "viewConfig",
