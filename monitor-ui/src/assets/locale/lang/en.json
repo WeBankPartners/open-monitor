@@ -12,7 +12,8 @@
     "customViews": "Customize Views",
     "templateManagement": "Template Management",
     "configuration": "Configuration",
-    "alert": "Alarm"
+    "alert": "Alarm",
+    "screenConfiguration": "Screen Configuration"
   },
   "placeholder": {
     "input": "Please input",
@@ -386,5 +387,28 @@
   "m_metric_group": "Metric Group",
   "m_metric_config_type": "Metric configuration type",
   "m_add_one_tip": "Please add at least one",
-  "m_modules": "Modules"
+  "m_modules": "Modules",
+  "m_alarm_config": "Alarm Config",
+  "m_symbol": "Symbol",
+  "m_time_unit": "Time Unit",
+  "firing": "Alarm Firing",
+  "ok": "Alarm Recover",
+  "m_alarm_schedulingNotification": "Schedul And Notification",
+  "m_alarmName": "Alarm Name",
+  "m_alarmPriority": "Alarm Priority",
+  "m_alarm_open": "Open",
+  "m_alarm_close": "Close",
+  "m_notification_role": "Notification Role",
+  "m_trigger_arrange": "Trigger Arrange",
+  "m_current_alarm": "Current Alarm",
+  "m_alarm_tips": "The configuration here takes effect for all warnings. If you need to configure it individually, please enter [Alarm List-Alarm-Edit-Configuration Pop-up Window] to configure arrangement and notification.",
+  "m_alarm_list": "Alarm List",
+  "m_label_value": "Label Value（Multiple choice)",
+  "m_screen": "Screen",
+  "m_chart_library": "Chart Library",
+  "m_chart_all": "ALL Chart",
+  "m_pie_chart": "Pie Chart",
+  "m_group_chart_name": "Chart Group Name",
+  "m_use_charts": "Use Charts",
+  "m_edit_screen_group": "Edit Screen Group"
 }
