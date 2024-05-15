@@ -27,6 +27,7 @@
                 type="datetimerange" 
                 :value="viewCondition.dateRange" 
                 format="yyyy-MM-dd HH:mm:ss" 
+                split-panels
                 placement="bottom-start" 
                 @on-change="datePick" 
                 :placeholder="$t('placeholder.datePicker')" 
