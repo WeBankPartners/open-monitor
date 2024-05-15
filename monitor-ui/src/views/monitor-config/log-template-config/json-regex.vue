@@ -15,7 +15,7 @@
       </div>
       <div>
         <Row>
-          <Col span="8" style="height: 510px;overflow: auto;">
+          <Col span="8" :style="{ height: isfullscreen ? '' : '510px' }" style="overflow: auto;">
             <Form :label-width="120">
               <FormItem :label="$t('m_template_name')">
                 <Tooltip :content="configInfo.name" transfer :disabled="configInfo.name === ''" style="width: 100%;" max-width="200">
@@ -139,10 +139,12 @@ export default {
         {
           title: this.$t('field.displayName'),
           key: 'display_name',
+          width: 100
         },
         {
           title: this.$t('m_parameter_key'),
           key: 'name',
+          width: 100
         },
         {
           title: this.$t('m_json_key'),
@@ -193,6 +195,7 @@ export default {
         {
           title: this.$t('field.displayName'),
           key: 'display_name',
+          width: 100
         },
         {
           title: this.$t('m_metric_key'),
@@ -223,6 +226,7 @@ export default {
   },
   methods: {
     loadPage (guid) {
+      this.isfullscreen = false
       if (guid) {
         this.isAdd = false
         this.getConfigDetail(guid)
