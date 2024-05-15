@@ -69,6 +69,33 @@ func GetCustomDashboardById(id int) (customDashboard *models.CustomDashboardTabl
 	return
 }
 
+func AddCustomDashboard(customDashboard *models.CustomDashboardTable) (err error) {
+	_, err = x.Exec("insert into custom_dashboard (name,create_user,update_user,create_at,update_at) values(?,?,?,?,?)", customDashboard.Name,
+		customDashboard.CreateUser, customDashboard.UpdateUser, customDashboard.CreateAt.Format(models.DatetimeFormat), customDashboard.UpdateAt.Format(models.DatetimeFormat))
+	return
+}
+
+func QueryCustomDashboardRoleRefListByDashboard(dashboard int) (hashMap map[string]string, err error) {
+	var list []*models.CustomDashBoardRoleRel
+	hashMap = make(map[string]string)
+	err = x.SQL("select * from custom_dashboard_role_rel where custom_dashboard = ?", dashboard).Find(&list)
+	if len(list) > 0 {
+		for _, roleRel := range list {
+			hashMap[roleRel.RoleId] = roleRel.Permission
+		}
+	}
+	return
+}
+
+func DeleteCustomDashboardById(dashboard int) (err error) {
+	var actions []*Action
+	actions = append(actions, &Action{Sql: "delete from main_dashboard where custom_dashboard = ?", Param: []interface{}{dashboard}})
+	actions = append(actions, &Action{Sql: "delete from custom_dashboard_role_rel where custom_dashboard = ?", Param: []interface{}{dashboard}})
+	actions = append(actions, &Action{Sql: "delete from custom_dashboard_chart_rel where custom_dashboard = ?", Param: []interface{}{dashboard}})
+	actions = append(actions, &Action{Sql: "delete from custom_dashboard WHERE id=?", Param: []interface{}{dashboard}})
+	return Transaction(actions)
+}
+
 func getQueryIdsByPermission(condition models.CustomDashboardQueryParam, roles []string) (strArr []string, err error) {
 	var ids []int
 	var sql = "select custom_dashboard from custom_dashboard_role_rel "
