@@ -42,7 +42,7 @@
                     <!-- 不显示省略情况下 -->
                     <div class="cell" v-if="!key.toolTips && !ellipsis(item[key.value])">
                       <a @click="shadow(item, key)" v-if="'shadow' in key">{{item[key.value]}}</a>
-                      <span v-if="!('shadow' in key) && !key.isIcon"> {{item[key.value]}}</span>
+                      <span v-if="!('shadow' in key) && !key.isIcon"> {{item[key.value] || '-'}}</span>
                       <span v-if="!('shadow' in key) && key.isIcon" :class="[item[key.value] ? colorgreen : colorred]"><i class="fa fa-circle"></i></span>
                     </div>
                     <!-- 显示省略且未自己配置tip情况下，自动添加tip,tip内容为整体内容 -->
