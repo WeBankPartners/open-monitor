@@ -282,6 +282,9 @@ func init() {
 		&handlerFuncObj{Url: "/dashboard/custom", Method: http.MethodPut, HandlerFunc: monitor.UpdateCustomDashboard},
 		&handlerFuncObj{Url: "/dashboard/custom", Method: http.MethodDelete, HandlerFunc: monitor.DeleteCustomDashboard},
 		&handlerFuncObj{Url: "/chart/shared/list", Method: http.MethodGet, HandlerFunc: monitor.GetSharedChartList},
+		&handlerFuncObj{Url: "/dashboard/custom/chart", Method: http.MethodGet, HandlerFunc: monitor.GetCustomChart},
+		&handlerFuncObj{Url: "/dashboard/custom/chart", Method: http.MethodDelete, HandlerFunc: monitor.DeleteCustomChart},
+		&handlerFuncObj{Url: "/dashboard/shared/chart", Method: http.MethodPost, HandlerFunc: monitor.SharedCustomChart},
 	)
 }
 
