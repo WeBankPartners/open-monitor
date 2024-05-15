@@ -103,117 +103,16 @@ export default {
       isParmasChanged: false,
       isAdd: false,
       showTemplate: false,
-      // configInfo: {
-      //   guid: '',
-      //   name: '',
-      //   log_type: 'json',
-      //   demo_log: '',
-      //   json_regular: '',
-      //   calc_result: {
-      //     match_text: '',
-      //     json_key_list: [],
-      //     json_obj: {}
-      //   },
-      //   param_list: [
-      //     {
-      //       guid: '',
-      //       name: 'code',
-      //       display_name: this.$t('m_service_code'),
-      //       json_key: '',
-      //       regular: '',
-      //       demo_match_value: '',
-      //     },
-      //     {
-      //       guid: '',
-      //       name: 'retcode',
-      //       display_name: this.$t('m_return_code'),
-      //       json_key: '',
-      //       regular: '',
-      //       demo_match_value: '',
-      //     },
-      //     {
-      //       guid: '',
-      //       name: 'costtime',
-      //       display_name: this.$t('m_time_consuming'),
-      //       json_key: '',
-      //       regular: '',
-      //       demo_match_value: '',
-      //     }
-      //   ],
-      //   metric_list: [
-      //     {
-      //       log_param_name: 'code',
-      //       metric: 'req_count',
-      //       display_name: this.$t('m_request_volume'),
-      //       agg_type: 'count',
-      //       tag_config: [
-      //         'code'
-      //       ]
-      //     },
-      //     {
-      //       log_param_name: 'code',
-      //       metric: 'req_suc_count',
-      //       display_name: this.$t('m_success_volume'),
-      //       agg_type: 'count',
-      //       tag_config: [
-      //         'code',
-      //         'retcode'
-      //       ]
-      //     },
-      //     {
-      //       log_param_name: 'code',
-      //       metric: 'req_suc_rate',
-      //       display_name: this.$t('m_success_rate'),
-      //       agg_type: '100*{req_suc_count}/{req_count}',
-      //       tag_config: [
-      //         'code',
-      //         'retcode'
-      //       ]
-      //     },
-      //     {
-      //       log_param_name: 'code',
-      //       metric: 'req_fail_rate',
-      //       display_name: this.$t('m_failure_rate'),
-      //       agg_type: '100-100*{req_suc_count}/{req_count}',
-      //       tag_config: [
-      //         'code',
-      //         'retcode'
-      //       ]
-      //     },
-      //     {
-      //       log_param_name: 'costtime',
-      //       metric: 'req_costtime_avg',
-      //       display_name: this.$t('m_average_time'),
-      //       agg_type: 'avg',
-      //       tag_config: [
-      //         'code',
-      //         'retcode'
-      //       ]
-      //     },
-      //     {
-      //       log_param_name: 'costtime',
-      //       metric: 'req_costtime_max',
-      //       display_name: this.$t('m_max_costtime'),
-      //       agg_type: 'max',
-      //       tag_config: [
-      //         'code',
-      //         'retcode'
-      //       ]
-      //     }
-      //   ],
-      //   // create_user: '',
-      //   // create_time: '',
-      //   // update_user: '',
-      //   // update_time: ''
-      // },
       columnsForParameterCollection: [
         {
           title: this.$t('field.displayName'),
           key: 'display_name',
+          width: 100
         },
         {
           title: this.$t('m_parameter_key'),
           key: 'name',
+          width: 100
         },
         {
           title: this.$t('m_json_key'),
@@ -262,6 +161,7 @@ export default {
         {
           title: this.$t('field.displayName'),
           key: 'display_name',
+          width: 100
         },
         {
           title: this.$t('m_metric_key'),
@@ -297,6 +197,7 @@ export default {
   methods: {
     hideTemplate () {
       this.showTemplate = false
+      this.isfullscreen = false
     }
   }
 }
