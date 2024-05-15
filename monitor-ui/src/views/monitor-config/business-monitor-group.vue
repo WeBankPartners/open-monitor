@@ -7,17 +7,29 @@
         {{$t('button.add')}}
       </button>
       
-      <button type="button" style="margin-left:16px" class="btn-cancel-f" @click="exportData">{{$t("m_export")}}</button>
-      <div style="display: inline-block;margin-bottom: 3px;"> 
+      <Button
+        type="info"
+        class="btn-right"
+        @click="exportData"
+      >
+        <img src="../../assets/img/export.png" class="btn-img" alt="" />
+        {{ $t('m_export') }}
+      </Button>
+
+      <!-- <button type="button" style="margin-left:16px" class="btn-cancel-f" @click="exportData">{{$t("m_export")}}</button> -->
+      <div style="display: inline-block;margin-bottom: 3px;">
         <Upload 
-        :action="uploadUrl" 
-        :show-upload-list="false"
-        :max-size="1000"
-        with-credentials
-        :headers="{'Authorization': token}"
-        :on-success="uploadSucess"
-        :on-error="uploadFailed">
-          <Button icon="ios-cloud-upload-outline">{{$t('m_import')}}</Button>
+          :action="uploadUrl" 
+          :show-upload-list="false"
+          :max-size="1000"
+          with-credentials
+          :headers="{'Authorization': token}"
+          :on-success="uploadSucess"
+          :on-error="uploadFailed">
+            <Button type="primary" class="btn-right">
+              <img src="../../assets/img/import.png" class="btn-img" alt="" />
+              {{ $t('m_import') }}
+            </Button>
         </Upload>
       </div>
 
@@ -1143,5 +1155,9 @@ export default {
   color: #fff;
   background-color: #19be6b;
   border-color: #19be6b;
+}
+.btn-img {
+  width: 16px;
+  vertical-align: middle;
 }
 </style>
