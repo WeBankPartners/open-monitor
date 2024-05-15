@@ -137,6 +137,7 @@ export default {
   },
   methods: {
     loadPage (actionType, templateGuid, parentGuid, configGuid) {
+      this.isfullscreen = false
       this.parentGuid = parentGuid
       // actionType add/edit
       // templateGuid, 模版id
