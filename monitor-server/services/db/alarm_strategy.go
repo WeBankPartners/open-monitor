@@ -101,16 +101,37 @@ func QueryAlarmStrategyByServiceGroup(serviceGroup string) (result []*models.End
 	return
 }
 
-func GetAlarmStrategy(strategyGuid string) (result models.AlarmStrategyMetricObj, err error) {
+func GetAlarmStrategy(strategyGuid, conditionCrc string) (result models.AlarmStrategyMetricObj, conditions []*models.AlarmStrategyMetric, err error) {
 	var strategyTable []*models.AlarmStrategyMetricObj
 	err = x.SQL("select t1.*,t2.metric as 'metric_name',t2.prom_expr as 'metric_expr',t2.monitor_type as 'metric_type' from alarm_strategy t1 left join metric t2 on t1.metric=t2.guid where t1.guid=?", strategyGuid).Find(&strategyTable)
 	if err != nil {
-		return result, fmt.Errorf("Query alarm_strategy fail,%s ", err.Error())
+		err = fmt.Errorf("Query alarm_strategy fail,%s ", err.Error())
+		return
 	}
 	if len(strategyTable) == 0 {
-		return result, fmt.Errorf("Can not find alarm_strategy with guid:%s ", strategyGuid)
+		err = fmt.Errorf("Can not find alarm_strategy with guid:%s ", strategyGuid)
+		return
 	}
 	result = *strategyTable[0]
+	err = x.SQL("select guid,alarm_strategy,metric,`condition`,`last`,crc_hash from alarm_strategy_metric where alarm_strategy=?", strategyGuid).Find(&conditions)
+	if err != nil {
+		err = fmt.Errorf("Query alarm strategy metric table fail,%s ", err.Error())
+		return
+	}
+	if conditionCrc != "" && len(conditions) > 0 {
+		for _, conditionRow := range conditions {
+			if conditionRow.CrcHash == conditionCrc {
+				result.ConditionCrc = conditionRow.CrcHash
+				result.Metric = conditionRow.Metric
+				result.Condition = conditionRow.Condition
+				result.Last = conditionRow.Last
+				break
+			}
+		}
+		if result.ConditionCrc == "" {
+			err = fmt.Errorf("can not find condition crc:%s in alarmStrategy:%s ", conditionCrc, strategyGuid)
+		}
+	}
 	return
 }
 
@@ -128,7 +149,11 @@ func CreateAlarmStrategy(param *models.GroupStrategyObj) error {
 		actions = append(actions, getNotifyListInsertAction(param.NotifyList)...)
 	}
 	if len(param.Conditions) > 0 {
-		actions = append(actions, getStrategyConditionInsertAction(param.Guid, param.Conditions)...)
+		insertConditionActions, err := getStrategyConditionInsertAction(param.Guid, param.Conditions)
+		if err != nil {
+			return err
+		}
+		actions = append(actions, insertConditionActions...)
 	}
 	return Transaction(actions)
 }
@@ -145,7 +170,11 @@ func UpdateAlarmStrategy(param *models.GroupStrategyObj) error {
 	//actions = append(actions, getNotifyListDeleteAction(param.Guid, "", "")...)
 	//actions = append(actions, getNotifyListInsertAction(param.NotifyList)...)
 	actions = append(actions, getNotifyListUpdateAction(param.NotifyList)...)
-	actions = append(actions, getStrategyConditionUpdateAction(param.Guid, param.Conditions)...)
+	updateConditionActions, err := getStrategyConditionUpdateAction(param.Guid, param.Conditions)
+	if err != nil {
+		return err
+	}
+	actions = append(actions, updateConditionActions...)
 	return Transaction(actions)
 }
 
@@ -351,12 +380,27 @@ func getStrategyConditions(alarmStrategyGuid string) (conditions []*models.Strat
 	return
 }
 
-func getStrategyConditionInsertAction(alarmStrategyGuid string, conditions []*models.StrategyConditionObj) (actions []*Action) {
+func getStrategyConditionInsertAction(alarmStrategyGuid string, conditions []*models.StrategyConditionObj) (actions []*Action, err error) {
 	nowTime := time.Now()
 	metricGuidList := guid.CreateGuidList(len(conditions))
+	var existStrategyMetricRows []*models.AlarmStrategyMetric
+	err = x.SQL("select crc_hash from alarm_strategy_metric where alarm_strategy=?", alarmStrategyGuid).Find(&existStrategyMetricRows)
+	if err != nil {
+		err = fmt.Errorf("query alarm strategy metric table fail,%s ", err.Error())
+		return
+	}
+	existCrcMap := make(map[string]int)
+	for _, v := range existStrategyMetricRows {
+		existCrcMap[v.CrcHash] = 1
+	}
 	for i, metricRow := range conditions {
 		tmpMetricRowString, _ := json.Marshal(metricRow)
 		tmpCrcHash := fmt.Sprintf("%d", crc64.Checksum(tmpMetricRowString, crc64.MakeTable(crc64.ECMA)))
+		if _, existFlag := existCrcMap[tmpCrcHash]; existFlag {
+			err = fmt.Errorf("metric condition is duplicated")
+			return
+		}
+		existCrcMap[tmpCrcHash] = 1
 		actions = append(actions, &Action{Sql: "insert into alarm_strategy_metric(guid,alarm_strategy,metric,`condition`,`last`,create_time,crc_hash) values (?,?,?,?,?,?,?)", Param: []interface{}{
 			metricGuidList[i], alarmStrategyGuid, metricRow.Metric, metricRow.Condition, metricRow.Last, nowTime, tmpCrcHash,
 		}})
@@ -373,9 +417,14 @@ func getStrategyConditionInsertAction(alarmStrategyGuid string, conditions []*mo
 	return
 }
 
-func getStrategyConditionUpdateAction(alarmStrategyGuid string, conditions []*models.StrategyConditionObj) (actions []*Action) {
+func getStrategyConditionUpdateAction(alarmStrategyGuid string, conditions []*models.StrategyConditionObj) (actions []*Action, err error) {
 	actions = append(actions, getStrategyConditionDeleteAction(alarmStrategyGuid)...)
-	actions = append(actions, getStrategyConditionInsertAction(alarmStrategyGuid, conditions)...)
+	insertConditionActions, getErr := getStrategyConditionInsertAction(alarmStrategyGuid, conditions)
+	if getErr != nil {
+		err = getErr
+		return
+	}
+	actions = append(actions, insertConditionActions...)
 	return
 }
 
@@ -411,6 +460,7 @@ func SyncPrometheusRuleFile(endpointGroup string, fromPeer bool) error {
 	if getStrategyErr != nil {
 		return getStrategyErr
 	}
+	log.Logger.Debug("SyncPrometheusRuleFile alarm strategy data", log.JsonObj("strategyList", strategyList))
 	// 区分cluster，分别下发
 	var clusterList []string
 	var clusterEndpointMap = make(map[string][]*models.EndpointNewTable)
@@ -526,7 +576,7 @@ func getAlarmStrategyWithExprNew(endpointGroup string) (result []*models.AlarmSt
 				ActiveWindow:      strategyRow.ActiveWindow,
 			}
 			tmpStrategyObj.Metric = metricRow.Metric
-			tmpStrategyObj.Content = metricRow.Condition
+			tmpStrategyObj.Condition = metricRow.Condition
 			tmpStrategyObj.Last = metricRow.Last
 			tmpStrategyObj.MetricName = metricRow.MetricName
 			tmpStrategyObj.MetricExpr = metricRow.MetricExpr
@@ -625,6 +675,7 @@ func buildRuleFileContentNew(ruleFileName, guidExpr, addressExpr, ipExpr string,
 		tmpRfu.For = strategy.Last
 		tmpRfu.Labels = make(map[string]string)
 		tmpRfu.Labels["strategy_guid"] = strategy.Guid
+		tmpRfu.Labels["condition_crc"] = strategy.ConditionCrc
 		tmpRfu.Annotations = models.RFAnnotation{Summary: fmt.Sprintf("{{$labels.instance}}__%s__%s__{{$value}}", strategy.Priority, strategy.Metric), Description: strategy.Content}
 		result.Rules = append(result.Rules, &tmpRfu)
 	}
@@ -634,7 +685,7 @@ func buildRuleFileContentNew(ruleFileName, guidExpr, addressExpr, ipExpr string,
 func copyStrategyListNew(inputs []*models.AlarmStrategyMetricObj) (result []*models.AlarmStrategyMetricObj) {
 	result = []*models.AlarmStrategyMetricObj{}
 	for _, strategy := range inputs {
-		tmpStrategy := models.AlarmStrategyMetricObj{Guid: strategy.Guid, Metric: strategy.Metric, Condition: strategy.Condition, Last: strategy.Last, Priority: strategy.Priority, Content: strategy.Content, NotifyEnable: strategy.NotifyEnable, NotifyDelaySecond: strategy.NotifyDelaySecond, MetricName: strategy.MetricName, MetricExpr: strategy.MetricExpr, MetricType: strategy.MetricType}
+		tmpStrategy := models.AlarmStrategyMetricObj{Guid: strategy.Guid, Metric: strategy.Metric, Condition: strategy.Condition, Last: strategy.Last, Priority: strategy.Priority, Content: strategy.Content, NotifyEnable: strategy.NotifyEnable, NotifyDelaySecond: strategy.NotifyDelaySecond, MetricName: strategy.MetricName, MetricExpr: strategy.MetricExpr, MetricType: strategy.MetricType, ConditionCrc: strategy.ConditionCrc}
 		result = append(result, &tmpStrategy)
 	}
 	return result
@@ -760,8 +811,18 @@ func NotifyStrategyAlarm(alarmObj *models.AlarmHandleObj) {
 		//}
 	}
 	if alarmObj.Status == "firing" {
-		if notifyTable[0].ProcCallbackMode == models.AlarmNotifyManualMode && notifyTable[0].ProcCallbackKey != "" {
-			if _, execErr := x.Exec("update alarm set notify_id=? where id=?", notifyTable[0].Guid, alarmObj.Id); execErr != nil {
+		notifyObj := &models.NotifyTable{}
+		for _, v := range notifyTable {
+			if v.EndpointGroup != "" {
+				notifyObj = v
+				break
+			}
+		}
+		if notifyObj.Guid == "" {
+			notifyObj = notifyTable[0]
+		}
+		if notifyObj.ProcCallbackMode == models.AlarmNotifyManualMode && notifyObj.ProcCallbackKey != "" {
+			if _, execErr := x.Exec("update alarm set notify_id=? where id=?", notifyObj.Guid, alarmObj.Id); execErr != nil {
 				log.Logger.Error("update alarm table notify id fail", log.Int("alarmId", alarmObj.Id), log.Error(execErr))
 			}
 		}
