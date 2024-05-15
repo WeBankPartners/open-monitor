@@ -63,13 +63,22 @@ func buildNewAlarm(param *m.AMRespAlert, nowTime time.Time) (alarm m.AlarmHandle
 	if len(summaryList) <= 3 {
 		return alarm, fmt.Errorf("summary:%s illegal ", param.Annotations["summary"])
 	}
+	var strategyGuid, conditionCrc string
 	var strategyObj m.AlarmStrategyMetricObj
-	if param.Labels["strategy_guid"] != "" {
-		strategyObj, err = db.GetAlarmStrategy(param.Labels["strategy_guid"])
+	var multipleConditionFlag bool
+	var strategyConditions []*m.AlarmStrategyMetric
+	strategyGuid = param.Labels["strategy_guid"]
+	conditionCrc = param.Labels["condition_crc"]
+	if strategyGuid != "" {
+		strategyObj, strategyConditions, err = db.GetAlarmStrategy(strategyGuid, conditionCrc)
 		if err != nil {
-			return alarm, fmt.Errorf("Try to get alarm strategy with strategy_guid:%s fail,%s ", param.Labels["strategy_guid"], err.Error())
+			return alarm, fmt.Errorf("Try to get alarm strategy with strategy_guid:%s fail,%s ", strategyGuid, err.Error())
 		}
 		log.Logger.Debug("getNewAlarmWithStrategyGuid", log.String("query guid", strategyObj.Guid))
+		if len(strategyConditions) > 1 {
+			multipleConditionFlag = true
+			alarm.MultipleConditionFlag = true
+		}
 	}
 	var endpointObj m.EndpointNewTable
 	endpointObj, err = getNewAlarmEndpoint(param, &strategyObj)
@@ -80,13 +89,13 @@ func buildNewAlarm(param *m.AMRespAlert, nowTime time.Time) (alarm m.AlarmHandle
 	var alertValue float64
 	alertValue, _ = strconv.ParseFloat(summaryList[len(summaryList)-1], 64)
 	alertValue, _ = strconv.ParseFloat(fmt.Sprintf("%.3f", alertValue), 64)
-	if param.Labels["strategy_id"] == "" && param.Labels["strategy_guid"] == "" {
+	if param.Labels["strategy_id"] == "" && strategyGuid == "" {
 		return alarm, fmt.Errorf("labels strategy_id and strategy_guid is empty ")
 	}
 	existAlarm := m.AlarmTable{}
-	log.Logger.Debug("accept strategy_guid", log.String("strategy_guid", param.Labels["strategy_guid"]))
-	if param.Labels["strategy_guid"] != "" {
-		existAlarm, err = getNewAlarmWithStrategyGuid(&alarm, param, &endpointObj, &strategyObj)
+	log.Logger.Debug("accept strategy_guid", log.String("strategy_guid", strategyGuid))
+	if strategyGuid != "" {
+		existAlarm, err = getNewAlarmWithStrategyGuid(&alarm, param, &endpointObj, &strategyObj, multipleConditionFlag)
 	} else if param.Labels["strategy_id"] == "up" {
 		if endpointObj.MonitorType != "host" {
 			return alarm, fmt.Errorf("Up alarm break,endpoint:%s export type illegal ", endpointObj.Guid)
@@ -245,7 +254,7 @@ func getNewAlarmTags(param *m.AMRespAlert) (tagString string, err error) {
 	return
 }
 
-func getNewAlarmWithStrategyGuid(alarm *m.AlarmHandleObj, param *m.AMRespAlert, endpointObj *m.EndpointNewTable, strategyObj *m.AlarmStrategyMetricObj) (existAlarm m.AlarmTable, err error) {
+func getNewAlarmWithStrategyGuid(alarm *m.AlarmHandleObj, param *m.AMRespAlert, endpointObj *m.EndpointNewTable, strategyObj *m.AlarmStrategyMetricObj, multipleConditionFlag bool) (existAlarm m.AlarmTable, err error) {
 	existAlarm = m.AlarmTable{}
 	log.Logger.Info("getNewAlarmWithStrategyGuid", log.String("query guid", strategyObj.Guid))
 	alarm.AlarmStrategy = strategyObj.Guid
