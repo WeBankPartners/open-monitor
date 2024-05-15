@@ -32,15 +32,15 @@
           </Select>
         </li>
         <li class="search-li">
-          <DatePicker type="datetimerange" :value="dateRange" @on-change="datePick" format="yyyy-MM-dd HH:mm:ss" placement="bottom-start"  :placeholder="$t('placeholder.datePicker')" style="width: 320px"></DatePicker>
+          <DatePicker type="datetimerange" :value="dateRange" split-panels @on-change="datePick" format="yyyy-MM-dd HH:mm:ss" placement="bottom-start"  :placeholder="$t('placeholder.datePicker')" style="width: 320px"></DatePicker>
         </li>
       </template>
       <template v-else>
         <li class="search-li">
-          <DatePicker type="datetimerange" :value="compareFirstDate" @on-change="pickFirstDate" format="yyyy-MM-dd" placement="bottom-start" :placeholder="$t('placeholder.datePicker')" style="width: 250px"></DatePicker>
+          <DatePicker type="datetimerange" :value="compareFirstDate" split-panels @on-change="pickFirstDate" format="yyyy-MM-dd" placement="bottom-start" :placeholder="$t('placeholder.datePicker')" style="width: 250px"></DatePicker>
         </li>
         <li class="search-li">
-          <DatePicker type="datetimerange" :value="compareSecondDate" @on-change="pickSecondDate" format="yyyy-MM-dd" placement="bottom-start" :placeholder="$t('placeholder.comparedDatePicker')" style="width: 250px"></DatePicker>
+          <DatePicker type="datetimerange" :value="compareSecondDate" split-panels @on-change="pickSecondDate" format="yyyy-MM-dd" placement="bottom-start" :placeholder="$t('placeholder.comparedDatePicker')" style="width: 250px"></DatePicker>
         </li>
       </template>
       <li class="search-li">
