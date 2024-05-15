@@ -8,21 +8,21 @@ import (
 	"time"
 )
 
-func GetAlertWindowList(endpoint string) (result []*m.AlertWindowObj,err error) {
+func GetAlertWindowList(endpoint string) (result []*m.AlertWindowObj, err error) {
 	var tableData []*m.AlertWindowTable
-	err = x.SQL("select * from alert_window where endpoint=?", endpoint).Find(&tableData)
+	err = x.SQL("select id,endpoint,`start`,`end`,`weekday` from alert_window where endpoint=?", endpoint).Find(&tableData)
 	if err != nil {
 		err = fmt.Errorf("Query alert window table fail,%s ", err.Error())
 		log.Logger.Error(err.Error())
-		return result,err
+		return result, err
 	}
-	for _,v := range tableData {
-		result = append(result, &m.AlertWindowObj{Start: v.Start,End: v.End,Weekday: v.Weekday,TimeList: []string{v.Start,v.End}})
+	for _, v := range tableData {
+		result = append(result, &m.AlertWindowObj{Start: v.Start, End: v.End, Weekday: v.Weekday, TimeList: []string{v.Start, v.End}})
 	}
-	return result,err
+	return result, err
 }
 
-func UpdateAlertWindowList(endpoint,updateUser string,data []*m.AlertWindowObj) error {
+func UpdateAlertWindowList(endpoint, updateUser string, data []*m.AlertWindowObj) error {
 	var actions []*Action
 	actions = append(actions, &Action{Sql: "delete from alert_window where endpoint=?", Param: []interface{}{endpoint}})
 	if len(data) > 0 {
@@ -51,20 +51,20 @@ func UpdateAlertWindowList(endpoint,updateUser string,data []*m.AlertWindowObj) 
 
 func CheckEndpointActiveAlert(endpoint string) bool {
 	var tableData []*m.AlertWindowTable
-	x.SQL("select * from alert_window where endpoint=?", endpoint).Find(&tableData)
+	x.SQL("select id,endpoint,`start`,`end`,`weekday` from alert_window where endpoint=?", endpoint).Find(&tableData)
 	if len(tableData) == 0 {
 		return true
 	}
 	activeFlag := true
 	nTime := time.Now()
-	for _,v := range tableData {
+	for _, v := range tableData {
 		if strings.Contains(v.Weekday, "All") || strings.Contains(v.Weekday, time.Now().Weekday().String()) {
-			startTime,err := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s %s:00 "+m.DefaultLocalTimeZone, nTime.Format("2006-01-02"), v.Start))
+			startTime, err := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s %s:00 "+m.DefaultLocalTimeZone, nTime.Format("2006-01-02"), v.Start))
 			if err != nil {
 				log.Logger.Error("Check endpoint is in active alert window error", log.String("start", v.Start), log.Error(err))
 				continue
 			}
-			endTime,err := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s %s:00 "+m.DefaultLocalTimeZone, nTime.Format("2006-01-02"), v.End))
+			endTime, err := time.Parse("2006-01-02 15:04:05 MST", fmt.Sprintf("%s %s:00 "+m.DefaultLocalTimeZone, nTime.Format("2006-01-02"), v.End))
 			if err != nil {
 				log.Logger.Error("Check endpoint is in active alert window error", log.String("end", v.End), log.Error(err))
 				continue
