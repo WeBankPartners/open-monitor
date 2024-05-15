@@ -741,6 +741,7 @@ export default {
         data: this.maintenanceWindowModel.result
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.endpointManagement.maintenanceWindow.update, params, () => {
+        this.$Message.success(this.$t('tips.success'))
         this.$root.JQ('#maintenance_window_model').modal('hide')
       })
     },
