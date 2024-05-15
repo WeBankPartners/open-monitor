@@ -42,3 +42,9 @@ type ChartSharedDto struct {
 	SourceDashboard string `json:"sourceDashboard"` // 源看板
 	Name            string `json:"name"`            // 图表名称
 }
+
+type ChartSharedParam struct {
+	ChartId   string   `json:"chartId"`
+	UseRoles  []string `json:"useRoles"`
+	MgmtRoles []string `json:"mgmtRoles"`
+}
