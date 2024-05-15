@@ -277,7 +277,11 @@ func init() {
 
 		//自定义视图
 		&handlerFuncObj{Url: "/dashboard/custom/list", Method: http.MethodPost, HandlerFunc: monitor.QueryCustomDashboardList},
-		&handlerFuncObj{Url: "/dashboard/dashboard/custom", Method: http.MethodGet, HandlerFunc: monitor.GetCustomDashboard},
+		&handlerFuncObj{Url: "/dashboard/custom", Method: http.MethodGet, HandlerFunc: monitor.GetCustomDashboard},
+		&handlerFuncObj{Url: "/dashboard/custom", Method: http.MethodPost, HandlerFunc: monitor.AddCustomDashboard},
+		&handlerFuncObj{Url: "/dashboard/custom", Method: http.MethodPut, HandlerFunc: monitor.UpdateCustomDashboard},
+		&handlerFuncObj{Url: "/dashboard/custom", Method: http.MethodDelete, HandlerFunc: monitor.DeleteCustomDashboard},
+		&handlerFuncObj{Url: "/chart/shared/list", Method: http.MethodGet, HandlerFunc: monitor.GetSharedChartList},
 	)
 }
 
