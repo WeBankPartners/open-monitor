@@ -103,4 +103,6 @@ type AlarmEventEntityObj struct {
 	Priority    string `json:"priority"`
 	Message     string `json:"message"`
 	StartTime   string `json:"startTime"`
+	Endpoint    string `json:"endpoint"`
+	Detail      string `json:"detail"`
 }
