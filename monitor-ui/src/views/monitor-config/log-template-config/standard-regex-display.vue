@@ -264,6 +264,7 @@ export default {
   methods: {
     hideTemplate () {
       this.showTemplate = false
+      this.isfullscreen = false
     }
   }
 }
