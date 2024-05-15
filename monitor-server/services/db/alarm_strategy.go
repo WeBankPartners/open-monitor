@@ -664,6 +664,14 @@ func buildRuleFileContentNew(ruleFileName, guidExpr, addressExpr, ipExpr string,
 				strategy.MetricExpr = strings.ReplaceAll(strategy.MetricExpr, "$ip", ipExpr)
 			}
 		}
+		if len(strategy.Tags) > 0 {
+			for _, tagObj := range strategy.Tags {
+				tagSourceString := "$t_" + tagObj.TagName
+				if strings.Contains(strategy.MetricExpr, tagSourceString) {
+					strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\""+tagSourceString+"\"", "=~\""+strings.Join(tagObj.TagValue, "|")+"\"", -1)
+				}
+			}
+		}
 		if strings.Contains(strategy.MetricExpr, "@") {
 			strategy.MetricExpr = strings.ReplaceAll(strategy.MetricExpr, "@", "")
 		}
@@ -1205,5 +1213,37 @@ func getAlarmStrategyImportActions(endpointGroup, serviceGroup, monitorType, now
 			actions = append(actions, &insertAction)
 		}
 	}
+	return
+}
+
+func GetExistAlarmCondition(alarmStrategyGuid, crcHash, tags string) (existAlarm models.AlarmTable, alarmConditionGuid string, err error) {
+	var alarmConditionRows []*models.AlarmCondition
+	err = x.SQL("select * from alarm_condition where alarm_strategy=? and crc_hash=? and tags=? order by `start` desc limit 1", alarmStrategyGuid, crcHash, tags).Find(&alarmConditionRows)
+	if err != nil {
+		err = fmt.Errorf("query alarm condition table fail,%s ", err.Error())
+		return
+	}
+	existAlarm = models.AlarmTable{}
+	if len(alarmConditionRows) > 0 {
+		alarmConditionRow := alarmConditionRows[0]
+		alarmConditionGuid = alarmConditionRow.Guid
+		existAlarm.Status = alarmConditionRow.Status
+		existAlarm.AlarmStrategy = alarmStrategyGuid
+	}
+	return
+}
+
+func GetSimpleAlarmStrategy(alarmStrategyGuid string) (result *models.AlarmStrategyTable, err error) {
+	var alarmStrategyRows []*models.AlarmStrategyTable
+	err = x.SQL("select * from alarm_strategy where guid=?", alarmStrategyGuid).Find(&alarmStrategyRows)
+	if err != nil {
+		err = fmt.Errorf("query alarm strategy table fail,%s ", alarmStrategyGuid)
+		return
+	}
+	if len(alarmStrategyRows) == 0 {
+		err = fmt.Errorf("can not find alarm strategy with guid:%s ", alarmStrategyGuid)
+		return
+	}
+	result = alarmStrategyRows[0]
 	return
 }

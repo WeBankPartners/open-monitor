@@ -10,7 +10,7 @@
         <li class="search-li">
           <Select
             style="width:300px;"
-            v-model="targrtId"
+            v-model="targetId"
             filterable
             clearable 
             remote
@@ -26,13 +26,12 @@
         </li>
         <li class="search-li">
           <button type="button" class="btn btn-sm btn-confirm-f"
-          :disabled="targrtId === ''"
+          :disabled="targetId === ''"
           @click="search">
             <i class="fa fa-search" ></i>
             {{$t('button.search')}}
           </button>
-          <template v-if="type !== 'endpoint' && targrtId">
-            <button type="button" class="btn-cancel-f" @click="exportThreshold">{{$t("button.export")}}</button>
+          <template v-if="type !== 'endpoint' && targetId">
             <div style="display: inline-block;margin-bottom: 1px;vertical-align: bottom;line-height: 32px;"> 
               <Upload 
               :action="uploadUrl" 
@@ -42,22 +41,23 @@
               :headers="{'Authorization': token}"
               :on-success="uploadSucess"
               :on-error="uploadFailed">
-                <Button icon="ios-cloud-upload-outline">{{$t('button.upload')}}</Button>
+                <Button icon="ios-cloud-upload-outline">{{$t('m_import')}}</Button>
               </Upload>
             </div>
+            <button type="button" class="btn-cancel-f" @click="exportThreshold">{{$t("m_export")}}</button>
           </template>
         </li>
       </ul>
     </section> 
     <section v-show="showTargetManagement" style="margin-top: 16px;">
-      <template v-if="type === 'group'">
-        <groupManagement ref="group"></groupManagement>
-      </template>
-      <template v-if="type === 'endpoint'">
-        <endpointManagement ref="endpoint"></endpointManagement>
-      </template>
-      <template v-if="type === 'service'">
-        <serviceManagement ref="service"></serviceManagement>
+      <template v-for="(itemType, index) in thresholdTypes">
+        <thresholdDetail 
+          ref='thresholdDetail'
+          v-if="type === itemType"
+          :key=index
+          :type=type
+        >
+        </thresholdDetail>
       </template>
     </section>
   </div>
@@ -65,9 +65,7 @@
 
 <script>
 import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
-import endpointManagement from './threshold-management-endpoint.vue'
-import groupManagement from './threshold-management-group.vue'
-import serviceManagement from './threshold-management-service.vue'
+import thresholdDetail from './threshold/config-detail.vue'
 import TagShow from '@/components/Tag-show.vue'
 import {baseURL_config} from '@/assets/js/baseURL'
 import axios from 'axios'
@@ -82,14 +80,15 @@ export default {
         {label: 'field.group', value: 'group'},
         {label: 'field.endpoint', value: 'endpoint'}
       ],
-      targrtId: '',
+      targetId: '',
       targetOptions: [],
-      showTargetManagement: false
+      showTargetManagement: false,
+      thresholdTypes: ['group', 'endpoint', 'service']
     }
   },
   computed: {
     uploadUrl: function() {
-      return baseURL_config + `/monitor/api/v2/alarm/strategy/import/${this.type}/${this.targrtId}`
+      return baseURL_config + `/monitor/api/v2/alarm/strategy/import/${this.type}/${this.targetId}`
     }
   },
   async mounted () {
@@ -101,7 +100,7 @@ export default {
   },
   methods: {
     exportThreshold () {
-      const api = `/monitor/api/v2/alarm/strategy/export/${this.type}/${this.targrtId}`
+      const api = `/monitor/api/v2/alarm/strategy/export/${this.type}/${this.targetId}`
       axios({
         method: 'GET',
         url: api,
@@ -154,23 +153,22 @@ export default {
     },
     clearTargrt () {
       this.targetOptions = []
-      this.targrtId = ''
+      this.targetId = ''
       this.showTargetManagement = false
       this.$refs.select.query = ''
     },
     search () {
-      if (this.targrtId) {
+      if (this.targetId) {
         this.showTargetManagement = true
-        const find = this.targetOptions.find(item => item.option_value === this.targrtId)
-        this.$refs[this.type].getDetail(this.targrtId, find.type)
+        const find = this.targetOptions.find(item => item.option_value === this.targetId)
+        this.$refs.thresholdDetail[0].setMonitorType(find.type);
+        this.$refs.thresholdDetail[0].getDetail(this.targetId);
       }
     }
   },
   components: {
-    endpointManagement,
-    groupManagement,
-    serviceManagement,
-    TagShow
+    TagShow,
+    thresholdDetail
   },
 }
 </script>

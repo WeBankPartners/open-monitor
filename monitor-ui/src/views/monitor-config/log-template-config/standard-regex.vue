@@ -120,12 +120,17 @@ export default {
           },
           render: (h, params) => {
             return (
-              <Input
-                value={params.row.regular}
-                onInput={v => {
-                  this.changeRegex(params.index, v)
-                }}
-              />
+              <Tooltip transfer placement="bottom" theme="light" style="width: 100%;" max-width="400">
+                <div slot="content">
+                  <div domPropsInnerHTML={params.row.regular_font_result} style="word-break: break-all;"></div>
+                </div>
+                <Input
+                  value={params.row.regular}
+                  onInput={v => {
+                    this.changeRegex(params.index, v)
+                  }}
+                />
+              </Tooltip>
             )
           }
         },
@@ -327,11 +332,27 @@ export default {
       const api = this.$root.apiCenter.getConfigDetailByGuid + guid
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, {}, (resp) => {
         this.configInfo = resp
+        this.configInfo.param_list.forEach((r) => {
+          r.regular_font_result = this.regRes(r.regular)
+        })
         this.showModal = true
       })
     },
     changeRegex (index, val) {
       this.configInfo.param_list[index].regular = val
+      this.configInfo.param_list[index].regular_font_result = this.regRes(val)
+    },
+    regRes (val)  {
+      try {
+        const reg = new RegExp(val, 'g')
+        let execRes = this.configInfo.demo_log.match(reg)
+        if (execRes && execRes.length > 0) {
+          return this.configInfo.demo_log.replace(reg, "<span style='color:red'>" + execRes[0] + '</span>')
+        }
+        return ''
+      } catch (err) {
+        return ''
+      }
     },
     generateBackstageTrial () {
       if (this.configInfo.demo_log === '') {
