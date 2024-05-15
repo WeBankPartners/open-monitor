@@ -13,13 +13,13 @@
               <li>
                 <div class="condition condition-title c-black-gray">{{$t('field.timeInterval')}}</div>
                 <div class="condition">
-                  <DatePicker type="daterange" :value="chartCondition.compareFirstDate" placement="bottom-start" @on-change="pickFirstDate" :placeholder="$t('placeholder.datePicker')" style="width: 200px"></DatePicker>
+                  <DatePicker type="daterange" split-panels :value="chartCondition.compareFirstDate" placement="bottom-start" @on-change="pickFirstDate" :placeholder="$t('placeholder.datePicker')" style="width: 200px"></DatePicker>
                 </div>
               </li>
               <li>
                 <div class="condition condition-title c-black-gray">{{$t('field.comparedTimeInterval')}}</div>
                 <div class="condition">
-                  <DatePicker type="daterange" :value="chartCondition.compareSecondDate" placement="bottom-start" @on-change="pickSecondDate" :placeholder="$t('placeholder.comparedDatePicker')" style="width: 200px"></DatePicker>
+                  <DatePicker type="daterange" :value="chartCondition.compareSecondDate" split-panels placement="bottom-start" @on-change="pickSecondDate" :placeholder="$t('placeholder.comparedDatePicker')" style="width: 200px"></DatePicker>
                 </div>
               </li>
             </template>
@@ -37,7 +37,7 @@
               <li>
                 <div class="condition condition-title c-black-gray">{{$t('field.timeInterval')}}</div>
                 <div class="condition">
-                  <DatePicker type="daterange" :value="chartCondition.dateRange" placement="bottom-start" @on-change="datePick" :placeholder="$t('placeholder.datePicker')" style="width: 200px"></DatePicker>
+                  <DatePicker type="daterange" :value="chartCondition.dateRange" split-panels placement="bottom-start" @on-change="datePick" :placeholder="$t('placeholder.datePicker')" style="width: 200px"></DatePicker>
                 </div>
               </li>
               <li>
