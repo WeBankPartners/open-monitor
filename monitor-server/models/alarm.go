@@ -84,8 +84,10 @@ func (a SortAlarmList) Swap(i, j int) {
 
 type AlarmHandleObj struct {
 	AlarmTable
-	NotifyEnable int `json:"notify_enable"`
-	NotifyDelay  int `json:"notify_delay"`
+	NotifyEnable          int    `json:"notify_enable"`
+	NotifyDelay           int    `json:"notify_delay"`
+	AlarmConditionGuid    string `json:"alarm_condition_guid"`
+	MultipleConditionFlag bool   `json:"multiple_condition_flag"`
 }
 
 type AlarmProblemQuery struct {
