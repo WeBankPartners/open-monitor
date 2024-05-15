@@ -35,7 +35,7 @@
         </div>
       </Card>
     </Card>
-    <Card :key="'k8s'" :bordered="true" :dis-hover="true" style="margin-top: 10px">
+    <Card :key="'snmp'" :bordered="true" :dis-hover="true" style="margin-top: 10px">
       <p slot="title">SNMP</p>
       <template v-for="item in snmpList">
         <Card style="width:20%;display:inline-block;margin:16px;" :key="'snmp_'+item.id">
