@@ -66,6 +66,7 @@ type AlarmTable struct {
 	EndpointTags  string    `json:"endpoint_tags"`
 	AlarmStrategy string    `json:"alarm_strategy"`
 	NotifyId      string    `json:"notify_id"`
+	AlarmName     string    `json:"alarm_name"`
 }
 
 type SortAlarmList []*AlarmTable
@@ -88,6 +89,7 @@ type AlarmHandleObj struct {
 	NotifyDelay           int    `json:"notify_delay"`
 	AlarmConditionGuid    string `json:"alarm_condition_guid"`
 	MultipleConditionFlag bool   `json:"multiple_condition_flag"`
+	AlarmConditionCrcHash string `json:"alarm_condition_crc_hash"`
 }
 
 type AlarmProblemQuery struct {
@@ -557,4 +559,30 @@ type AlarmCloseParam struct {
 	Custom   bool   `json:"custom"`
 	Metric   string `json:"metric"`
 	Priority string `json:"priority"`
+}
+
+type AlarmCondition struct {
+	Guid          string    `json:"guid" xorm:"guid"`                    // 唯一标识
+	AlarmStrategy string    `json:"alarmStrategy" xorm:"alarm_strategy"` // 告警配置表
+	Endpoint      string    `json:"endpoint" xorm:"endpoint"`            // 监控对象
+	Status        string    `json:"status" xorm:"status"`                // 状态
+	Metric        string    `json:"metric" xorm:"metric"`                // 指标
+	Expr          string    `json:"expr" xorm:"expr"`                    // 指标表达式
+	Cond          string    `json:"cond" xorm:"cond"`                    // 条件
+	Last          string    `json:"last" xorm:"last"`                    // 持续时间
+	Priority      string    `json:"priority" xorm:"priority"`            // 级别
+	CrcHash       string    `json:"crcHash" xorm:"crc_hash"`             // 告警配置hash
+	Tags          string    `json:"tags" xorm:"tags"`                    // 告警标签
+	StartValue    float64   `json:"startValue" xorm:"start_value"`       // 异常值
+	Start         time.Time `json:"start" xorm:"start"`                  // 异常时间
+	EndValue      float64   `json:"endValue" xorm:"end_value"`           // 恢复值
+	End           time.Time `json:"end" xorm:"end"`                      // 恢复时间
+	UniqueHash    string    `json:"uniqueHash" xorm:"unique_hash"`       // 告警唯一hash
+	Key           int       `json:"key" xorm:"key"`
+}
+
+type AlarmConditionRel struct {
+	Id             int    `json:"id" xorm:"id"`
+	Alarm          int    `json:"alarm" xorm:"alarm"`                    // 告警id
+	AlarmCondition string `json:"alarmCondition" xorm:"alarm_condition"` // 条件id
 }
