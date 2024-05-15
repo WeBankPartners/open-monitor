@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
@@ -89,4 +90,57 @@ func ImportMetric(c *gin.Context) {
 	} else {
 		middleware.ReturnSuccess(c)
 	}
+}
+
+func QueryMetricTagValue(c *gin.Context) {
+	var param models.QueryMetricTagParam
+	if err := c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	// 查指标有哪些标签
+	metricRow, err := db.GetSimpleMetric(param.MetricId)
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	result := []*models.QueryMetricTagResultObj{}
+	var tagList []string
+	tagList, err = db.GetMetricTags(metricRow)
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	if len(tagList) == 0 {
+		middleware.ReturnSuccessData(c, result)
+		return
+	}
+	// 查标签值
+	seriesMapList, getSeriesErr := datasource.QueryPromSeries(metricRow.PromExpr)
+	if getSeriesErr != nil {
+		err = fmt.Errorf("query prom series fail,%s ", getSeriesErr)
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	for _, v := range tagList {
+		tmpValueList := []string{}
+		tmpValueDistinctMap := make(map[string]int)
+		for _, seriesMap := range seriesMapList {
+			if seriesMap == nil {
+				continue
+			}
+			if tmpTagValue, ok := seriesMap[v]; ok {
+				if _, existFlag := tmpValueDistinctMap[tmpTagValue]; !existFlag {
+					tmpValueList = append(tmpValueList, tmpTagValue)
+					tmpValueDistinctMap[tmpTagValue] = 1
+				}
+			}
+		}
+		valueObjList := []*models.MetricTagValueObj{}
+		for _, tmpValue := range tmpValueList {
+			valueObjList = append(valueObjList, &models.MetricTagValueObj{Key: tmpValue, Value: tmpValue})
+		}
+		result = append(result, &models.QueryMetricTagResultObj{Tag: v, Values: valueObjList})
+	}
+	middleware.ReturnSuccessData(c, result)
 }
