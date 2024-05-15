@@ -664,6 +664,14 @@ func buildRuleFileContentNew(ruleFileName, guidExpr, addressExpr, ipExpr string,
 				strategy.MetricExpr = strings.ReplaceAll(strategy.MetricExpr, "$ip", ipExpr)
 			}
 		}
+		if len(strategy.Tags) > 0 {
+			for _, tagObj := range strategy.Tags {
+				tagSourceString := "$t_" + tagObj.TagName
+				if strings.Contains(strategy.MetricExpr, tagSourceString) {
+					strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\""+tagSourceString+"\"", "=~\""+strings.Join(tagObj.TagValue, "|")+"\"", -1)
+				}
+			}
+		}
 		if strings.Contains(strategy.MetricExpr, "@") {
 			strategy.MetricExpr = strings.ReplaceAll(strategy.MetricExpr, "@", "")
 		}
