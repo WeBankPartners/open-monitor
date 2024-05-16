@@ -743,3 +743,63 @@ func GetLogMonitorTemplateServiceGroup(c *gin.Context) {
 		middleware.ReturnSuccessData(c, result)
 	}
 }
+
+func LogMonitorTemplateExport(c *gin.Context) {
+	var param models.LogTemplateExportParam
+	if err := c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	var err error
+	if len(param.TemplateGuidList) == 0 {
+		err = fmt.Errorf("param empty")
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	resultData := []*models.LogMonitorTemplateDto{}
+	for _, v := range param.TemplateGuidList {
+		templateObj, tmpErr := db.GetLogMonitorTemplate(v)
+		if tmpErr != nil {
+			err = tmpErr
+			break
+		}
+		resultData = append(resultData, templateObj)
+	}
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	b, marshalErr := json.Marshal(resultData)
+	if marshalErr != nil {
+		middleware.ReturnHandleError(c, "export log metric fail, json marshal object error", marshalErr)
+		return
+	}
+	c.Writer.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=%s_%s.json", "log_template_config_", time.Now().Format("20060102150405")))
+	c.Data(http.StatusOK, "application/octet-stream", b)
+}
+
+func LogMonitorTemplateImport(c *gin.Context) {
+	file, err := c.FormFile("file")
+	if err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	f, err := file.Open()
+	if err != nil {
+		middleware.ReturnHandleError(c, "file open error ", err)
+		return
+	}
+	var paramObj []*models.LogMonitorTemplateDto
+	b, err := ioutil.ReadAll(f)
+	defer f.Close()
+	if err != nil {
+		middleware.ReturnHandleError(c, "read content fail error ", err)
+		return
+	}
+	err = json.Unmarshal(b, &paramObj)
+	if err != nil {
+		middleware.ReturnHandleError(c, "json unmarshal fail error ", err)
+		return
+	}
+
+}
