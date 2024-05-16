@@ -3,7 +3,7 @@
     class="workbench-menu"
     :style="{
       width: expand ? '140px' : '0px',
-      top: scrollTop > 50 ? '0px' : 60 - scrollTop + 'px'
+      top: scrollTop > 50 ? '0px' : 50 - scrollTop + 'px'
     }"
   >
     <div v-show="expand" style="height:100%;">
@@ -59,7 +59,16 @@ export default {
         })
     },
     mounted () {
+        if (this.$eventBusP) {
+            this.$eventBusP.$emit('expand-menu', this.expand)
+        }
         window.addEventListener('scroll', this.getScrollTop)
+    },
+    beforeDestroy () {
+        if (this.$eventBusP) {
+            this.$eventBusP.$emit('expand-menu', false)
+        }
+        window.removeEventListener('scroll', this.getScrollTop)
     },
     methods: {
         getScrollTop () {
@@ -67,6 +76,9 @@ export default {
         },
         handleExpand () {
             this.expand = !this.expand
+            if (this.$eventBusP) {
+                this.$eventBusP.$emit('expand-menu', this.expand)
+            }
             this.$emit('menuStatusChange', this.expand);
         },
         handleSelectMenu (name) {
