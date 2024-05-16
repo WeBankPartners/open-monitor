@@ -389,7 +389,7 @@ func GetHistoryAlarm(c *gin.Context) {
 			return
 		}
 	}
-	var returnData []*m.AlarmHistoryReturnData
+	returnData := []*m.AlarmHistoryReturnData{}
 	for _, endpointGuid := range ids {
 		tmpErr, tmpData := getEndpointHistoryAlarm(endpointGuid, startTime, endTime)
 		if tmpErr != nil {
@@ -548,11 +548,22 @@ func QueryProblemAlarmByPage(c *gin.Context) {
 		if v.SPriority == "low" {
 			lowCount += 1
 		}
-		tmpMetricLevel := fmt.Sprintf("%s^%s", v.SMetric, v.SPriority)
-		if _, b := metricMap[tmpMetricLevel]; b {
-			metricMap[tmpMetricLevel] += 1
+		if len(v.AlarmMetricList) > 0 {
+			for _, subMetric := range v.AlarmMetricList {
+				tmpMetricLevel := fmt.Sprintf("%s^%s", subMetric, v.SPriority)
+				if _, b := metricMap[tmpMetricLevel]; b {
+					metricMap[tmpMetricLevel] += 1
+				} else {
+					metricMap[tmpMetricLevel] = 1
+				}
+			}
 		} else {
-			metricMap[tmpMetricLevel] = 1
+			tmpMetricLevel := fmt.Sprintf("%s^%s", v.SMetric, v.SPriority)
+			if _, b := metricMap[tmpMetricLevel]; b {
+				metricMap[tmpMetricLevel] += 1
+			} else {
+				metricMap[tmpMetricLevel] = 1
+			}
 		}
 	}
 	if len(data) == 0 {
