@@ -1519,7 +1519,7 @@ func UpdateAlarmWithConditions(alarmConditionObj *m.AlarmHandleObj) (alarmRow *m
 	alarmCrcMap := make(map[string]int)
 	alarmCrcMap[alarmConditionObj.AlarmConditionCrcHash] = 1
 	var alarmConditionRows []*m.AlarmCondition
-	err = x.SQL("select guid,status,crc_hash from alarm_condition where crc_hash in ('"+strings.Join(configCrcList, "','")+"') and alarm_strategy=? and status='firing'", alarmConditionObj.AlarmStrategy).Find(&alarmConditionRows)
+	err = x.SQL("select guid,status,crc_hash from alarm_condition where crc_hash in ('"+strings.Join(configCrcList, "','")+"') and alarm_strategy=? and endpoint=? and status='firing'", alarmConditionObj.AlarmStrategy, alarmConditionObj.Endpoint).Find(&alarmConditionRows)
 	if err != nil {
 		err = fmt.Errorf("query alarm condition table fail,%s ", err.Error())
 		return
@@ -1551,6 +1551,23 @@ func UpdateAlarmWithConditions(alarmConditionObj *m.AlarmHandleObj) (alarmRow *m
 		alarmConditionObj.AlarmConditionGuid = "ac_" + guid.CreateGuid()
 		conditionGuidList = append(conditionGuidList, alarmConditionObj.AlarmConditionGuid)
 		sort.Strings(conditionGuidList)
+		session := x.NewSession()
+		session.Begin()
+		defer func() {
+			if err != nil {
+				session.Rollback()
+			} else {
+				session.Commit()
+			}
+			session.Close()
+		}()
+		_, err = session.Exec("INSERT INTO alarm_condition(guid,alarm_strategy,endpoint,status,metric,expr,cond,`last`,priority,crc_hash,tags,start_value,`start`,unique_hash) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+			alarmConditionObj.AlarmConditionGuid, alarmConditionObj.AlarmStrategy, alarmConditionObj.Endpoint, alarmConditionObj.Status, alarmConditionObj.SMetric, alarmConditionObj.SExpr, alarmConditionObj.SCond, alarmConditionObj.SLast, alarmConditionObj.SPriority, alarmConditionObj.AlarmConditionCrcHash, alarmConditionObj.Tags, alarmConditionObj.StartValue, alarmConditionObj.Start.Format(m.DatetimeFormat), alarmConditionObj.EndpointTags)
+		if err != nil {
+			err = fmt.Errorf("insert alarm_condition fail,%s ", err.Error())
+			return
+		}
+		log.Logger.Debug("UpdateAlarmWithConditions", log.JsonObj("alarmCrcMap", alarmCrcMap), log.StringList("configCrcList", configCrcList))
 		if len(alarmCrcMap) == len(configCrcList) {
 			// 如果条件都满足
 			alarmStrategyObj, getStrategyErr := GetSimpleAlarmStrategy(alarmConditionObj.AlarmStrategy)
@@ -1571,22 +1588,6 @@ func UpdateAlarmWithConditions(alarmConditionObj *m.AlarmHandleObj) (alarmRow *m
 			alarmRow.AlarmStrategy = alarmConditionObj.AlarmStrategy
 			alarmRow.AlarmName = alarmStrategyObj.Name
 			alarmRow.EndpointTags = strings.Join(conditionGuidList, ",")
-			session := x.NewSession()
-			session.Begin()
-			defer func() {
-				if err != nil {
-					session.Rollback()
-				} else {
-					session.Commit()
-				}
-				session.Close()
-			}()
-			_, err = session.Exec("INSERT INTO alarm_condition(guid,alarm_strategy,endpoint,status,metric,expr,cond,`last`,priority,crc_hash,tags,start_value,`start`,unique_hash) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-				alarmConditionObj.AlarmConditionGuid, alarmConditionObj.AlarmStrategy, alarmConditionObj.Endpoint, alarmConditionObj.Status, alarmConditionObj.SMetric, alarmConditionObj.SExpr, alarmConditionObj.SCond, alarmConditionObj.SLast, alarmConditionObj.SPriority, alarmConditionObj.AlarmConditionCrcHash, alarmConditionObj.Tags, alarmConditionObj.StartValue, alarmConditionObj.Start.Format(m.DatetimeFormat), alarmConditionObj.EndpointTags)
-			if err != nil {
-				err = fmt.Errorf("insert alarm_condition fail,%s ", err.Error())
-				return
-			}
 			insertAlarmResult, insertErr := session.Exec("INSERT INTO alarm (endpoint,status,s_metric,s_expr,s_cond,s_last,s_priority,content,tags,start_value,`start`,endpoint_tags,alarm_strategy,alarm_name) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
 				alarmRow.Endpoint, alarmRow.Status, alarmRow.SMetric, alarmRow.SExpr, alarmRow.SCond, alarmRow.SLast, alarmRow.SPriority, alarmRow.Content, alarmRow.Tags, alarmRow.StartValue, alarmRow.Start, alarmRow.EndpointTags, alarmRow.AlarmStrategy, alarmRow.AlarmName)
 			if insertErr != nil {
