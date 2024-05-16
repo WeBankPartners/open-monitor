@@ -634,7 +634,7 @@ export default {
           render: (h, params) => {
             return (
               <div>
-                <Button size="small"  type="primary" on-click={() => this.editAlarmItem(params.row)}>
+                <Button size="small" class="mr-1"  type="primary" on-click={() => this.editAlarmItem(params.row)}>
                   <Icon type="md-create" />
                 </Button>
                 {
