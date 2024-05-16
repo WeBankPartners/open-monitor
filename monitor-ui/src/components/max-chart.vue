@@ -104,11 +104,11 @@ export default {
     }
   },
   created (){
-    generateUuid().then((elId)=>{
-      this.elId =  `id_${elId}`; 
-      this.chartStyle.width = window.screen.width * 0.6 + 'px'
-      this.chartStyle.height = window.screen.height * 0.4 + 'px'
-    })
+    // generateUuid().then((elId)=>{
+    //   this.elId =  `id_${elId}`; 
+    //   this.chartStyle.width = window.screen.width * 0.6 + 'px'
+    //   this.chartStyle.height = window.screen.height * 0.4 + 'px'
+    // })
 
   },
   methods: {
@@ -129,7 +129,11 @@ export default {
       this.chartCondition.compareSecondDate = data
     },
     getChartData (chartItem, start, end) {
-
+      generateUuid().then((elId)=>{
+        this.elId =  `id_${elId}`; 
+        this.chartStyle.width = window.screen.width * 0.6 + 'px'
+        this.chartStyle.height = window.screen.height * 0.4 + 'px'
+      })
       // 为兼容放大区域调用
       if (chartItem) {
         this.chartItem = chartItem
