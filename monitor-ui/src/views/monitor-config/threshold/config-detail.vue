@@ -867,7 +867,7 @@ export default {
     },
     getDetail (targetId) {
       this.targetId = targetId
-      const api = this.$root.apiCenter.getThresholdDetailMainPath + `/${this.type}/` + targetId
+      const api = '/monitor/api/v2/alarm/strategy/list' + `/${this.type}/` + targetId
       this.totalPageConfig = []
       this.request('GET', api, '', responseData => {
         const allConfigDetail = responseData;
