@@ -35,11 +35,13 @@ func AcceptAlert(c *gin.Context) {
 			log.Logger.Warn("Accept alert handle fail", log.Error(tmpErr))
 			continue
 		}
+		log.Logger.Debug("build alarm result", log.JsonObj("alarm", tmpAlarm))
 		alarms = append(alarms, &tmpAlarm)
 	}
 	alarms = db.UpdateAlarms(alarms)
 	var treeventSendObj m.EventTreeventNotifyDto
 	for _, v := range alarms {
+		log.Logger.Debug("update alarm result", log.JsonObj("alarm", v))
 		if v.AlarmConditionGuid != "" {
 			continue
 		}
@@ -69,16 +71,17 @@ func buildNewAlarm(param *m.AMRespAlert, nowTime time.Time) (alarm m.AlarmHandle
 	var strategyGuid, conditionCrc, alarmConditionGuid string
 	var strategyObj m.AlarmStrategyMetricObj
 	var multipleConditionFlag bool
-	var strategyConditions []*m.AlarmStrategyMetric
+	var strategyConditions []*m.AlarmStrategyMetricWithExpr
 	strategyGuid = param.Labels["strategy_guid"]
 	conditionCrc = param.Labels["condition_crc"]
+	log.Logger.Debug("start build alarm data", log.String("strategyGuid", strategyGuid), log.String("conditionCrc", conditionCrc))
 	alarm.AlarmConditionCrcHash = conditionCrc
 	if strategyGuid != "" {
 		strategyObj, strategyConditions, err = db.GetAlarmStrategy(strategyGuid, conditionCrc)
 		if err != nil {
 			return alarm, fmt.Errorf("Try to get alarm strategy with strategy_guid:%s fail,%s ", strategyGuid, err.Error())
 		}
-		log.Logger.Debug("getNewAlarmWithStrategyGuid", log.String("query guid", strategyObj.Guid))
+		log.Logger.Debug("getNewAlarmWithStrategyGuid", log.JsonObj("strategyObj", strategyObj), log.JsonObj("conditions", strategyConditions))
 		if len(strategyConditions) > 1 {
 			multipleConditionFlag = true
 			alarm.MultipleConditionFlag = true
@@ -107,6 +110,9 @@ func buildNewAlarm(param *m.AMRespAlert, nowTime time.Time) (alarm m.AlarmHandle
 		existAlarm, err = getNewAlarmWithUpCase(&alarm, param)
 	} else {
 		existAlarm, err = getNewAlarmWithStrategyId(&alarm, param, &endpointObj)
+	}
+	if err != nil {
+		return
 	}
 	log.Logger.Debug("exist alarm", log.JsonObj("existAlarm", existAlarm), log.String("alarmConditionGuid", alarmConditionGuid))
 	alarm.Status = param.Status
@@ -278,7 +284,7 @@ func getNewAlarmWithStrategyGuid(alarm *m.AlarmHandleObj, param *m.AMRespAlert, 
 		}
 	}
 	if multipleConditionFlag {
-		existAlarm, alarmConditionGuid, err = db.GetExistAlarmCondition(strategyObj.Guid, strategyObj.ConditionCrc, alarm.Tags)
+		existAlarm, alarmConditionGuid, err = db.GetExistAlarmCondition(alarm.Endpoint, strategyObj.Guid, strategyObj.ConditionCrc, alarm.Tags)
 		return
 	}
 	existAlarmQuery := m.AlarmTable{Endpoint: alarm.Endpoint, Tags: alarm.Tags, AlarmStrategy: alarm.AlarmStrategy}
