@@ -127,7 +127,7 @@ export default {
   data() {
     return {
       showModal: false,
-      isfullscreen: false,
+      isfullscreen: true,
       isParmasChanged: false,
       isAdd: true,
       configInfo: {
@@ -242,7 +242,7 @@ export default {
   },
   methods: {
     loadPage (guid) {
-      this.isfullscreen = false
+      this.isfullscreen = true
       if (guid) {
         this.isAdd = false
         this.getConfigDetail(guid)
