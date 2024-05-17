@@ -276,15 +276,21 @@ func init() {
 		&handlerFuncObj{Url: "/metric/tag/value-list", Method: http.MethodPost, HandlerFunc: monitor.QueryMetricTagValue},
 
 		//自定义视图
+		&handlerFuncObj{Url: "/dashboard/all", Method: http.MethodGet, HandlerFunc: monitor.GetAllCustomDashboardList},
 		&handlerFuncObj{Url: "/dashboard/custom/list", Method: http.MethodPost, HandlerFunc: monitor.QueryCustomDashboardList},
 		&handlerFuncObj{Url: "/dashboard/custom", Method: http.MethodGet, HandlerFunc: monitor.GetCustomDashboard},
 		&handlerFuncObj{Url: "/dashboard/custom", Method: http.MethodPost, HandlerFunc: monitor.AddCustomDashboard},
 		&handlerFuncObj{Url: "/dashboard/custom", Method: http.MethodPut, HandlerFunc: monitor.UpdateCustomDashboard},
 		&handlerFuncObj{Url: "/dashboard/custom", Method: http.MethodDelete, HandlerFunc: monitor.DeleteCustomDashboard},
 		&handlerFuncObj{Url: "/chart/shared/list", Method: http.MethodGet, HandlerFunc: monitor.GetSharedChartList},
-		&handlerFuncObj{Url: "/dashboard/custom/chart", Method: http.MethodGet, HandlerFunc: monitor.GetCustomChart},
-		&handlerFuncObj{Url: "/dashboard/custom/chart", Method: http.MethodDelete, HandlerFunc: monitor.DeleteCustomChart},
-		&handlerFuncObj{Url: "/dashboard/shared/chart", Method: http.MethodPost, HandlerFunc: monitor.SharedCustomChart},
+		&handlerFuncObj{Url: "/chart/custom", Method: http.MethodPost, HandlerFunc: monitor.AddCustomChart},
+		&handlerFuncObj{Url: "/chart/custom/copy", Method: http.MethodPost, HandlerFunc: monitor.CopyCustomChart},
+		&handlerFuncObj{Url: "/chart/custom", Method: http.MethodPut, HandlerFunc: monitor.UpdateCustomChart},
+		&handlerFuncObj{Url: "/chart/custom", Method: http.MethodGet, HandlerFunc: monitor.GetCustomChart},
+		&handlerFuncObj{Url: "/chart/custom", Method: http.MethodDelete, HandlerFunc: monitor.DeleteCustomChart},
+		&handlerFuncObj{Url: "/chart/custom/permission", Method: http.MethodPost, HandlerFunc: monitor.SharedCustomChart},
+		&handlerFuncObj{Url: "/chart/custom/permission", Method: http.MethodGet, HandlerFunc: monitor.GetSharedChartPermission},
+		&handlerFuncObj{Url: "/chart/manage/list", Method: http.MethodPost, HandlerFunc: monitor.QueryCustomChart},
 	)
 }
 

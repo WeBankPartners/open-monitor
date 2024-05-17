@@ -493,3 +493,8 @@ type UpdateCustomDashboardParam struct {
 	Id     int               `json:"id"`
 	Charts []*CustomChartDto `json:"charts"`
 }
+
+type SimpleCustomDashboardDto struct {
+	Id   int    `json:"id"`
+	Name string `json:"name"`
+}
