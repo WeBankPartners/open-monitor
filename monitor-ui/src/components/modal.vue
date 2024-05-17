@@ -146,7 +146,7 @@
           </div>
           <template v-if="!modelConfig.noBtn">
             <div class="model-footer-f c-dark" v-if="!modelConfig.modalFooter">
-              <button type="button" class="btn-cancel-f" data-dismiss="modal">{{$t('button.cancel')}}</button>
+              <button type="button" class="btn-cancel-f" data-dismiss="modal">{{$t('button.cancel')}}44</button>
               <button v-if="!modelConfig.saveFunc" @click="save(modelConfig.isAdd)" type="button" class="btn-confirm-f">{{$t('button.save')}}</button>
               <button v-if="modelConfig.saveFunc" @click="customFunc(modelConfig.saveFunc)" type="button" class="btn-confirm-f">{{$t('button.save')}}</button>
             </div>
