@@ -101,7 +101,7 @@ func QueryAlarmStrategyByServiceGroup(serviceGroup string) (result []*models.End
 	return
 }
 
-func GetAlarmStrategy(strategyGuid, conditionCrc string) (result models.AlarmStrategyMetricObj, conditions []*models.AlarmStrategyMetric, err error) {
+func GetAlarmStrategy(strategyGuid, conditionCrc string) (result models.AlarmStrategyMetricObj, conditions []*models.AlarmStrategyMetricWithExpr, err error) {
 	var strategyTable []*models.AlarmStrategyMetricObj
 	err = x.SQL("select t1.*,t2.metric as 'metric_name',t2.prom_expr as 'metric_expr',t2.monitor_type as 'metric_type' from alarm_strategy t1 left join metric t2 on t1.metric=t2.guid where t1.guid=?", strategyGuid).Find(&strategyTable)
 	if err != nil {
@@ -113,7 +113,8 @@ func GetAlarmStrategy(strategyGuid, conditionCrc string) (result models.AlarmStr
 		return
 	}
 	result = *strategyTable[0]
-	err = x.SQL("select guid,alarm_strategy,metric,`condition`,`last`,crc_hash from alarm_strategy_metric where alarm_strategy=?", strategyGuid).Find(&conditions)
+	conditions = []*models.AlarmStrategyMetricWithExpr{}
+	err = x.SQL("select t1.guid,t1.alarm_strategy,t1.metric,t1.`condition`,t1.`last`,t1.crc_hash,t2.metric as 'metric_name',t2.prom_expr as 'metric_expr',t2.monitor_type as 'metric_type' from alarm_strategy_metric t1 left join metric t2 on t1.metric=t2.guid where t1.alarm_strategy=?", strategyGuid).Find(&conditions)
 	if err != nil {
 		err = fmt.Errorf("Query alarm strategy metric table fail,%s ", err.Error())
 		return
@@ -123,6 +124,8 @@ func GetAlarmStrategy(strategyGuid, conditionCrc string) (result models.AlarmStr
 			if conditionRow.CrcHash == conditionCrc {
 				result.ConditionCrc = conditionRow.CrcHash
 				result.Metric = conditionRow.Metric
+				result.MetricName = conditionRow.MetricName
+				result.MetricExpr = conditionRow.MetricExpr
 				result.Condition = conditionRow.Condition
 				result.Last = conditionRow.Last
 				break
@@ -383,16 +386,7 @@ func getStrategyConditions(alarmStrategyGuid string) (conditions []*models.Strat
 func getStrategyConditionInsertAction(alarmStrategyGuid string, conditions []*models.StrategyConditionObj) (actions []*Action, err error) {
 	nowTime := time.Now()
 	metricGuidList := guid.CreateGuidList(len(conditions))
-	var existStrategyMetricRows []*models.AlarmStrategyMetric
-	err = x.SQL("select crc_hash from alarm_strategy_metric where alarm_strategy=?", alarmStrategyGuid).Find(&existStrategyMetricRows)
-	if err != nil {
-		err = fmt.Errorf("query alarm strategy metric table fail,%s ", err.Error())
-		return
-	}
 	existCrcMap := make(map[string]int)
-	for _, v := range existStrategyMetricRows {
-		existCrcMap[v.CrcHash] = 1
-	}
 	for i, metricRow := range conditions {
 		tmpMetricRowString, _ := json.Marshal(metricRow)
 		tmpCrcHash := fmt.Sprintf("%d", crc64.Checksum(tmpMetricRowString, crc64.MakeTable(crc64.ECMA)))
@@ -1216,9 +1210,9 @@ func getAlarmStrategyImportActions(endpointGroup, serviceGroup, monitorType, now
 	return
 }
 
-func GetExistAlarmCondition(alarmStrategyGuid, crcHash, tags string) (existAlarm models.AlarmTable, alarmConditionGuid string, err error) {
+func GetExistAlarmCondition(endpoint, alarmStrategyGuid, crcHash, tags string) (existAlarm models.AlarmTable, alarmConditionGuid string, err error) {
 	var alarmConditionRows []*models.AlarmCondition
-	err = x.SQL("select * from alarm_condition where alarm_strategy=? and crc_hash=? and tags=? order by `start` desc limit 1", alarmStrategyGuid, crcHash, tags).Find(&alarmConditionRows)
+	err = x.SQL("select * from alarm_condition where endpoint=? and alarm_strategy=? and crc_hash=? and tags=? order by `start` desc limit 1", endpoint, alarmStrategyGuid, crcHash, tags).Find(&alarmConditionRows)
 	if err != nil {
 		err = fmt.Errorf("query alarm condition table fail,%s ", err.Error())
 		return
