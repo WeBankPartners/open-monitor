@@ -88,7 +88,7 @@ export default {
   data() {
     return {
       showModal: false,
-      isfullscreen: false,
+      isfullscreen: true,
       isParmasChanged: false,
       parentGuid: '', //上级唯一标识
       isAdd: true,
@@ -407,7 +407,7 @@ export default {
   },
   methods: {
     loadPage (actionType, templateGuid, parentGuid, configGuid) {
-      this.isfullscreen = false
+      this.isfullscreen = true
       this.parentGuid = parentGuid
       // actionType add/edit
       // templateGuid, 模版id
