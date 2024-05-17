@@ -1,0 +1,123 @@
+<template>
+  <span>
+    <Button
+        v-if="isShowExportBtn"
+        type="info"
+        class="btn-left"
+        @click="exportData"
+      >
+        <img src="../assets/img/export.png" class="btn-img" alt="" />
+        {{ $t('m_export') }}
+      </Button>
+
+      <!-- <button type="button" style="margin-left:16px" class="btn-cancel-f" @click="exportData">{{$t("m_export")}}</button> -->
+      <div style="display: inline-block;margin-bottom: 3px;" v-if="isShowImportBtn">
+        <Upload 
+          :action="uploadUrl" 
+          :show-upload-list="false"
+          :max-size="1000"
+          with-credentials
+          :headers="{'Authorization': token}"
+          :on-success="uploadSucess"
+          :on-error="uploadFailed">
+            <Button type="primary" class="btn-left">
+              <img src="../assets/img/import.png" class="btn-img" alt="" />
+              {{ $t('m_import') }}
+            </Button>
+        </Upload>
+      </div>
+  </span>
+</template>
+<script>
+import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
+import axios from 'axios'
+export default {
+  name: '',
+  data () {
+    return {
+      token: ''
+    }
+  },
+  props: {
+    isShowExportBtn: {
+      type: Boolean,
+      required: false,
+      default: false
+    },
+    exportUrl: {
+      type: String,
+      required: false,
+      default: ''
+    },
+    isShowImportBtn: {
+      type: Boolean,
+      required: false,
+      default: false
+    },
+    uploadUrl: {
+      type: String,
+      required: false,
+      default: ''
+    }
+  }, 
+  mounted () {
+    this.MODALHEIGHT = document.body.scrollHeight - 300
+    this.token = (window.request ? 'Bearer ' + getPlatFormToken() : getToken())|| null
+  },
+  methods: {
+    exportData () {
+      axios({
+        method: 'GET',
+        url: this.exportUrl,
+        headers: {
+          'Authorization': this.token
+        }
+      }).then((response) => {
+        if (response.status < 400) {
+          let content = JSON.stringify(response.data)
+          let fileName = `${response.headers['content-disposition'].split(';')[1].trim().split('=')[1]}`
+          let blob = new Blob([content])
+          if('msSaveOrOpenBlob' in navigator){
+            // Microsoft Edge and Microsoft Internet Explorer 10-11
+          window.navigator.msSaveOrOpenBlob(blob, fileName)
+        } else {
+          if ('download' in document.createElement('a')) { // 非IE下载
+            let elink = document.createElement('a')
+            elink.download = fileName
+            elink.style.display = 'none'
+            elink.href = URL.createObjectURL(blob)  
+            document.body.appendChild(elink)
+            elink.click()
+            URL.revokeObjectURL(elink.href) // 释放URL 对象
+            document.body.removeChild(elink)
+          } else { // IE10+下载
+            navigator.msSaveOrOpenBlob(blob, fileName)
+          }
+        }
+        }
+      })
+      .catch(() => {
+        this.$Message.warning(this.$t('tips.failed'))
+      });
+    },
+    uploadSucess (callback) {
+      this.$Message.success(this.$t('tips.success'))
+      this.$emit('successCallBack')
+    },
+    uploadFailed (error, file) {
+      this.$Message.warning(file.message)
+    },
+  }
+}
+</script>
+<style  lang="less" scoped>
+.btn-img {
+  width: 16px;
+  vertical-align: middle;
+}
+
+.btn-left {
+  margin-left: 8px;
+}
+</style>
+
