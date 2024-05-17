@@ -127,7 +127,7 @@ export default {
     return {
       showModel: false,
       isAdd: true,
-      isfullscreen: false,
+      isfullscreen: true,
       parentGuid: '', //上级唯一标识
       configInfo: {
         log_type: ''
@@ -137,7 +137,7 @@ export default {
   },
   methods: {
     loadPage (actionType, templateGuid, parentGuid, configGuid) {
-      this.isfullscreen = false
+      this.isfullscreen = true
       this.parentGuid = parentGuid
       // actionType add/edit
       // templateGuid, 模版id
