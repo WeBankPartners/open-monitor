@@ -634,7 +634,7 @@ export default {
           render: (h, params) => {
             return (
               <div>
-                <Button size="small"  type="primary" on-click={() => this.editAlarmItem(params.row)}>
+                <Button size="small" class="mr-1"  type="primary" on-click={() => this.editAlarmItem(params.row)}>
                   <Icon type="md-create" />
                 </Button>
                 {
@@ -867,7 +867,7 @@ export default {
     },
     getDetail (targetId) {
       this.targetId = targetId
-      const api = this.$root.apiCenter.getThresholdDetailMainPath + `/${this.type}/` + targetId
+      const api = '/monitor/api/v2/alarm/strategy/list' + `/${this.type}/` + targetId
       this.totalPageConfig = []
       this.request('GET', api, '', responseData => {
         const allConfigDetail = responseData;
@@ -906,6 +906,7 @@ export default {
       this.closeAddEditModal();
     },
     handleMergeSpan ({ row, column, rowIndex, columnIndex }, index) {
+      console.log(column);
       if ([6,7,8].includes(columnIndex)) return;
       const mergeSpanMap = this.totalPageConfig[index].mergeSpanMap;
       const spanMap = mergeSpanMap[row.guid];
@@ -922,29 +923,6 @@ export default {
         metricId,
         endpoint: "",
         serviceGroup: ""
-      }
-
-      const a = {
-        "key1erv": [
-          {
-            name: "111",
-            value: "111"
-          },
-          {
-            name: "222",
-            value: "222"
-          }
-        ],
-        "key2": [
-          {
-            name: "333",
-            value: "333"
-          },
-          {
-            name: "444",
-            value: "444"
-          }
-        ]
       }
       
       return new Promise(resolve => {
