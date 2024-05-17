@@ -32,7 +32,30 @@
             {{$t('button.search')}}
           </button>
           <template v-if="type !== 'endpoint' && targetId">
-            <div style="display: inline-block;margin-bottom: 1px;vertical-align: bottom;line-height: 32px;"> 
+            <Button
+              type="info"
+              class="btn-left"
+              @click="exportThreshold"
+            >
+              <img src="../../assets/img/export.png" class="btn-img" alt="" />
+              {{ $t('m_export') }}
+            </Button>
+            <div style="display: inline-block;margin-bottom: 3px;">
+              <Upload 
+                :action="uploadUrl" 
+                :show-upload-list="false"
+                :max-size="1000"
+                with-credentials
+                :headers="{'Authorization': token}"
+                :on-success="uploadSucess"
+                :on-error="uploadFailed">
+                  <Button type="primary" class="btn-left">
+                    <img src="../../assets/img/import.png" class="btn-img" alt="" />
+                    {{ $t('m_import') }}
+                  </Button>
+              </Upload>
+            </div>
+            <!-- <div style="display: inline-block;margin-bottom: 1px;vertical-align: bottom;line-height: 32px;"> 
               <Upload 
               :action="uploadUrl" 
               :show-upload-list="false"
@@ -44,7 +67,7 @@
                 <Button icon="ios-cloud-upload-outline">{{$t('m_import')}}</Button>
               </Upload>
             </div>
-            <button type="button" class="btn-cancel-f" @click="exportThreshold">{{$t("m_export")}}</button>
+            <button type="button" class="btn-cancel-f" @click="exportThreshold">{{$t("m_export")}}</button> -->
           </template>
         </li>
       </ul>
@@ -211,5 +234,8 @@ export default {
     cursor: auto;
     width: 55px;
     text-align: center;
-  } 
+  }
+  .btn-left {
+    margin-left: 8px;
+  }
 </style>
