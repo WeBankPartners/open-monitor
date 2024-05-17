@@ -168,3 +168,7 @@ type LogTemplateAffectGroupObj struct {
 	ServiceGroup         string
 	SucRetCode           string
 }
+
+type LogTemplateExportParam struct {
+	TemplateGuidList []string `json:"templateGuidList"`
+}
