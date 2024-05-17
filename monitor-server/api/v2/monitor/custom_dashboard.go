@@ -3,16 +3,27 @@ package monitor
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/WeBankPartners/go-common-lib/guid"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/WeBankPartners/go-common-lib/guid"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
 )
+
+// GetAllCustomDashboardList 获取所有看板(包括源看板、应用看板)
+func GetAllCustomDashboardList(c *gin.Context) {
+	var list []*models.SimpleCustomDashboardDto
+	var err error
+	if list, err = db.QueryAllCustomDashboard(); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	middleware.ReturnData(c, list)
+}
 
 // QueryCustomDashboardList 查询自定义看板列表
 func QueryCustomDashboardList(c *gin.Context) {
