@@ -6,3 +6,8 @@ type CustomChartPermission struct {
 	RoleId         string `json:"roleId" xorm:"role_id"`                 // 角色id
 	Permission     string `json:"permission" xorm:"permission"`          // 权限,MGMT/USE
 }
+
+type SharedChartPermissionDto struct {
+	UseRoles  []string `json:"useRoles"`
+	MgmtRoles []string `json:"mgmtRoles"`
+}
