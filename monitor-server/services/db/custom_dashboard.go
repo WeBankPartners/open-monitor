@@ -38,6 +38,11 @@ func QueryCustomDashboardList(condition models.CustomDashboardQueryParam, roles 
 	return
 }
 
+func QueryAllCustomDashboard() (list []*models.SimpleCustomDashboardDto, err error) {
+	err = x.SQL("select id,name from custom_dashboard").Find(&list)
+	return
+}
+
 func QueryCustomDashboardRoleRelByCustomDashboard(dashboardId int) (list []*models.CustomDashBoardRoleRel, err error) {
 	err = x.SQL("select * from custom_dashboard_role_rel where custom_dashboard = ?", dashboardId).Find(&list)
 	return
@@ -72,6 +77,12 @@ func GetCustomDashboardById(id int) (customDashboard *models.CustomDashboardTabl
 func AddCustomDashboard(customDashboard *models.CustomDashboardTable) (err error) {
 	_, err = x.Exec("insert into custom_dashboard (name,create_user,update_user,create_at,update_at) values(?,?,?,?,?)", customDashboard.Name,
 		customDashboard.CreateUser, customDashboard.UpdateUser, customDashboard.CreateAt.Format(models.DatetimeFormat), customDashboard.UpdateAt.Format(models.DatetimeFormat))
+	return
+}
+
+func AddCustomDashboardChartRel(rel *models.CustomDashboardChartRel) (err error) {
+	_, err = x.Exec("insert into custom_dashboard_chart_rel values(?,?,?,?,?,?,?,?,?)", rel.Guid, rel.CustomDashboard,
+		rel.DashboardChart, rel.Group, rel.DisplayConfig, rel.CreateUser, rel.UpdateUser, rel.CreateTime, rel.UpdateTime)
 	return
 }
 
