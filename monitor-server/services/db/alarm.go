@@ -519,7 +519,7 @@ func GetAlarms(query m.AlarmTable, limit int, extLogMonitor, extOpenAlarm bool) 
 				return err, result
 			}
 			for _, alarmDetail := range alarmDetailList {
-				v.AlarmMetricList = append(v.AlarmMetricList, alarmDetail.MetricName)
+				v.AlarmMetricList = append(v.AlarmMetricList, alarmDetail.Metric)
 			}
 		} else {
 			alarmDetailList = append(alarmDetailList, &m.AlarmDetailData{Metric: v.SMetric, Cond: v.SCond, Last: v.SLast, Start: v.Start, StartValue: v.StartValue, End: v.End, EndValue: v.EndValue})
@@ -1378,7 +1378,7 @@ func QueryAlarmBySql(sql string, params []interface{}, customQueryParam m.Custom
 				return err, result
 			}
 			for _, alarmDetail := range alarmDetailList {
-				v.AlarmMetricList = append(v.AlarmMetricList, alarmDetail.MetricName)
+				v.AlarmMetricList = append(v.AlarmMetricList, alarmDetail.Metric)
 			}
 		} else {
 			alarmDetailList = append(alarmDetailList, &m.AlarmDetailData{Metric: v.SMetric, Cond: v.SCond, Last: v.SLast, Start: v.Start, StartValue: v.StartValue, End: v.End, EndValue: v.EndValue})
