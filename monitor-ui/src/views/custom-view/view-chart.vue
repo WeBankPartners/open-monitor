@@ -20,6 +20,7 @@
             <DatePicker 
               type="datetimerange" 
               :value="viewCondition.dateRange" 
+              split-panels
               format="yyyy-MM-dd HH:mm:ss" 
               placement="bottom-start" 
               @on-change="datePick" 
