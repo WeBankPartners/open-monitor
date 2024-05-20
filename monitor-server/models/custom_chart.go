@@ -34,7 +34,7 @@ type CustomChartDto struct {
 	LineType        string                  `json:"lineType"`        // 折线/柱状/面积,line/bar/area
 	Aggregate       string                  `json:"aggregate"`       // 聚合类型
 	AggStep         int                     `json:"aggStep"`         // 聚合间隔
-	Query           []*CustomChartSeriesDto `json:"query"`
+	ChartSeries     []*CustomChartSeriesDto `json:"chartSeries"`
 	DisplayConfig   interface{}             `json:"displayConfig"`
 	Group           string                  `json:"group"` // 所属分组
 }
