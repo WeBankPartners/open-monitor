@@ -92,6 +92,8 @@ func GetChartData(c *gin.Context) {
 	if param.ChartId > 0 {
 		// handle dashboard chart with config
 		queryList, err = getChartConfigByChartId(&param, &result)
+	} else if param.CustomChartGuid != "" {
+		queryList, err = getCustomChartConfig(&param, &result)
 	} else {
 		// handle custom chart
 		queryList, err = getChartConfigByCustom(&param)
@@ -114,6 +116,67 @@ func GetChartData(c *gin.Context) {
 }
 
 func getChartConfigByChartId(param *models.ChartQueryParam, result *models.EChartOption) (queryList []*models.QueryMonitorData, err error) {
+	chartList, queryChartErr := db.ChartList(param.ChartId, 0)
+	if queryChartErr != nil {
+		err = fmt.Errorf("Try to query chart table fail,%s ", queryChartErr.Error())
+		return
+	}
+	if len(chartList) == 0 {
+		err = fmt.Errorf("Can not find chart with id:%d ", param.ChartId)
+		return
+	}
+	err = chartCompare(param)
+	if err != nil {
+		return
+	}
+	//param.Aggregate = chartList[0].AggType
+	param.Unit = chartList[0].Unit
+	result.Id = param.ChartId
+	result.Title = chartList[0].Title
+	queryList = []*models.QueryMonitorData{}
+	existEndpointMap := make(map[string]int)
+	for _, dataConfig := range param.Data {
+		if _, b := existEndpointMap[dataConfig.Endpoint]; b {
+			continue
+		}
+		existEndpointMap[dataConfig.Endpoint] = 1
+		endpointObj := models.EndpointTable{Guid: dataConfig.Endpoint}
+		db.GetEndpoint(&endpointObj)
+		if endpointObj.Id <= 0 {
+			err = fmt.Errorf("Param data endpoint can not found with guid:%s ", dataConfig.Endpoint)
+			break
+		}
+		tmpMetric := chartList[0].Metric
+		if strings.Contains(dataConfig.Metric, "/") || tmpMetric == "app.metric" {
+			tmpMetric = dataConfig.Metric
+		}
+		for _, metric := range strings.Split(tmpMetric, "^") {
+			tmpPromQl := ""
+			if chartList[0].Metric == "db_monitor_count" && metric != "db_monitor_count" {
+				err, tmpPromQl = db.GetDbPromMetric(dataConfig.Endpoint, dataConfig.Metric, chartList[0].Legend)
+			} else {
+				err, tmpPromQl = db.GetPromMetric([]string{dataConfig.Endpoint}, metric)
+			}
+			if err != nil {
+				break
+			}
+			tmpLegend := chartList[0].Legend
+			if len(param.Data) > 1 && strings.HasPrefix(tmpLegend, "$custom_") {
+				tmpLegend = "$custom"
+			}
+			queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQl, Legend: tmpLegend, Metric: []string{metric}, Endpoint: []string{dataConfig.Endpoint}, CompareLegend: param.Compare.CompareFirstLegend, SameEndpoint: true, Step: param.Step, Cluster: endpointObj.Cluster})
+			if param.Compare.CompareFirstLegend != "" {
+				queryList = append(queryList, &models.QueryMonitorData{Start: param.Compare.CompareSecondStartTimestamp, End: param.Compare.CompareSecondEndTimestamp, PromQ: tmpPromQl, Legend: tmpLegend, Metric: []string{metric}, Endpoint: []string{dataConfig.Endpoint}, CompareLegend: param.Compare.CompareSecondLegend, SameEndpoint: true, Step: param.Step, Cluster: endpointObj.Cluster})
+			}
+		}
+		if err != nil {
+			break
+		}
+	}
+	return
+}
+
+func getCustomChartConfig(param *models.ChartQueryParam, result *models.EChartOption) (queryList []*models.QueryMonitorData, err error) {
 	chartList, queryChartErr := db.ChartList(param.ChartId, 0)
 	if queryChartErr != nil {
 		err = fmt.Errorf("Try to query chart table fail,%s ", queryChartErr.Error())
