@@ -1,8 +1,11 @@
 import Cookies from 'js-cookie'
 
 // User
-const tokenKey = 'Authorization'
-export const getToken = () => Cookies.get(tokenKey)
+const tokenKey = 'accessToken'
+export const getToken = () => {
+  const cookie = Cookies.get(tokenKey)
+  return cookie
+}
 const key = 'accessToken'
 export const getPlatFormToken = () =>  {
   // eslint-disable-next-line no-useless-escape
