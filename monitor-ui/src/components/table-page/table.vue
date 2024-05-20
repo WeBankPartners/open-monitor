@@ -133,7 +133,7 @@
                   </div>
                 </Tooltip>
                 <!-- 显示省略且未自己配置tip情况下，自动添加tip,tip内容为整体内容 -->
-                <Tooltip v-if="ellipsis(value, val) && !val.toolTips" :content="renderValue(value, val)" class="cell" :delay=1000  placement='bottom-start'>
+                <Tooltip v-if="ellipsis(value, val) && !val.toolTips && !val.renderContent" :content="renderValue(value, val)" class="cell" :delay=1000  placement='bottom-start'>
                   <a @click="shadow(value, val)" v-if="'shadow' in val" class="extend-shadow poplableSty">{{renderValue(value, val)}}</a>
                   <span v-if="!('shadow' in val)" class="poplableSty">{{renderValue(value, val)}}</span>
                   <div slot="content">
@@ -187,13 +187,16 @@
                   </span>
 
                 </div>
+                <template v-if="val.renderContent">
+                  <div class="render-content" v-html="renderValue(value, val)"></div>
+                </template>
              </td>
             </template>
             
 
             <!--操作区--开始-->
-            <td class="td-center td-operation c-dark" v-if="table.btn.length != 0">
-              <div style="width:140px">
+            <!-- <td class="td-center td-operation c-dark" v-if="table.btn.length != 0"> -->
+              <!-- <div style="width:140px"> -->
               <!-- <template v-for="(btn_val,btn_i) in table.btn">
                 <span :id="btn_val.btn_func" :key="btn_i"
                       v-if="btn_val.btn_name !='more' && !btn_val.render"
@@ -229,8 +232,8 @@
                   </div>
                 </Poptip>
               </template> -->
-              </div>
-            </td>
+              <!-- </div> -->
+            <!-- </td> -->
             <td class="td-center td-operation handleSty c-dark" v-if="table.btn.length != 0 && table.handleFloat" style="padding:10px 0px">
               <div style="width: 151px;padding-left: 8px;height: 21px;">
               <template v-if="operationsFormat(value, tableDataIndex)">   
