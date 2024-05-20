@@ -463,10 +463,11 @@ type LogMonitorTags struct {
 }
 
 type QueryProblemAlarmDto struct {
-	Endpoint string    `json:"endpoint"`
-	Metric   string    `json:"metric"`
-	Priority string    `json:"priority"`
-	Page     *PageInfo `json:"page"`
+	Endpoint  string    `json:"endpoint"`
+	Metric    string    `json:"metric"`
+	Priority  string    `json:"priority"`
+	Page      *PageInfo `json:"page"`
+	AlarmName string    `json:"alarm_name"`
 }
 
 type QueryHistoryAlarmParam struct {
@@ -602,6 +603,7 @@ type AlarmDetailData struct {
 	EndValue   float64   `json:"endValue" xorm:"end_value"`     // 恢复值
 	End        time.Time `json:"end" xorm:"end"`                // 恢复时间
 	MetricName string    `json:"metric_name" xorm:"metric_name"`
+	Tags       string    `json:"tags"`
 }
 
 type AlarmStrategyGroup struct {
