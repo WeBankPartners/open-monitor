@@ -235,6 +235,10 @@ export default {
     width: 55px;
     text-align: center;
   }
+  .btn-img {
+    width: 16px;
+    vertical-align: middle;
+  }
   .btn-left {
     margin-left: 8px;
   }
