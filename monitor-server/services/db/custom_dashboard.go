@@ -134,7 +134,7 @@ func getQueryIdsByPermission(condition models.CustomDashboardQueryParam, roles [
 		sql = sql + " and permission = ? "
 		params = append(params, models.PermissionMgmt)
 	}
-	if err = x.SQL(sql).Find(&ids); err != nil {
+	if err = x.SQL(sql).Find(&ids, params...); err != nil {
 		return
 	}
 	if len(ids) > 0 {
