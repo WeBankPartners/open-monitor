@@ -9,14 +9,12 @@
       
       <Button
         type="info"
-        class="btn-right"
+        class="btn-left"
         @click="exportData"
       >
         <img src="../../assets/img/export.png" class="btn-img" alt="" />
         {{ $t('m_export') }}
       </Button>
-
-      <!-- <button type="button" style="margin-left:16px" class="btn-cancel-f" @click="exportData">{{$t("m_export")}}</button> -->
       <div style="display: inline-block;margin-bottom: 3px;">
         <Upload 
           :action="uploadUrl" 
@@ -26,7 +24,7 @@
           :headers="{'Authorization': token}"
           :on-success="uploadSucess"
           :on-error="uploadFailed">
-            <Button type="primary" class="btn-right">
+            <Button type="primary" class="btn-left">
               <img src="../../assets/img/import.png" class="btn-img" alt="" />
               {{ $t('m_import') }}
             </Button>
@@ -1146,5 +1144,8 @@ export default {
 .btn-img {
   width: 16px;
   vertical-align: middle;
+}
+.btn-left {
+  margin-left: 8px;
 }
 </style>
