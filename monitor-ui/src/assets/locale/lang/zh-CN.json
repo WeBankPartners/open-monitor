@@ -425,7 +425,8 @@
   "m_use_role": "使用角色",
   "m_manage_role": "管理角色",
   "m_update_time": "更新时间",
-  "m_home_application": "首页应用"
+  "m_home_application": "首页应用",
+  "m_base_group": "基础组"
 
 
 }
