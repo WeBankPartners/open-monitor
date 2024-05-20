@@ -26,8 +26,17 @@
           style="margin-right: 8px; cursor: pointer"
           @click="addParams('priority', data.s_priority)"
         />
-        <span v-if="data.is_custom" v-html="data.title"></span>
-        <span v-else v-html="data.content"></span>
+        <div v-if="data.alarm_name">{{data.alarm_name}}
+          <img
+              class="filter-icon-flex"
+              @click="addParams('alarm_name', data.alarm_name)"
+              src="../assets/img/icon_filter.png"
+            />
+        </div>
+        <div v-else>
+          <span v-if="data.is_custom" v-html="data.title"></span>
+          <span v-else v-html="data.content"></span>
+        </div>
       </div>
       <div
         class="col-md-2"
@@ -79,6 +88,18 @@
       </Tooltip>
     </div>
     <ul>
+      <li>
+        <label class="card-label" v-html="$t('tableKey.content')"></label>
+        <div class="card-content">
+          <div style="display:flex;align-items:center;width:100%;">
+            <div class="ellipsis">
+              <Tooltip :content="data.content">
+                {{ data.content || '-' }}
+              </Tooltip>
+            </div>
+          </div>
+        </div>
+      </li>
       <li v-if="data.system_id">
         <label class="card-label" v-html="$t('tableKey.system_id')"></label>
         <div class="card-content">
@@ -104,48 +125,30 @@
       </li>
       <li>
         <label class="card-label" v-html="$t('field.metric')"></label>
-        <div class="card-content">
-          {{ data.s_metric }}
-          <img
-            class="filter-icon"
-            @click="addParams('metric', data.s_metric)"
-            src="../assets/img/icon_filter.png"
-          />
-        </div>
-      </li>
-      <li>
-        <label class="card-label" v-html="$t('tableKey.tags')"></label>
-        <div class="card-content">
-          <div class="tags-box">
-            <template v-if="data.tags">
-              <Tag
-                type="border"
-                v-for="(t, tIndex) in data.tags.split('^')"
-                :key="tIndex"
-                >{{ t }}</Tag
-              >
-            </template>
+        <div class="card-content" style="display: flex">
+           <div class="mr-2" v-for="(metric, index) in data.alarm_metric_list" :key=index>
+            {{ metric }}
+            <img
+              class="filter-icon"
+              @click="addParams('metric', metric)"
+              src="../assets/img/icon_filter.png"
+            />
           </div>
         </div>
       </li>
       <li>
-        <label class="card-label" v-html="$t('details')"></label>
+        <label class="card-label" v-html="$t('m_configuration')"></label>
         <div class="card-content">
-          <Tag color="default"
-            >{{ $t("tableKey.start_value") }}:{{ data.start_value }}</Tag
-          >
-          <Tag color="default" v-if="data.s_cond"
-            >{{ $t("tableKey.threshold") }}:{{ data.s_cond }}</Tag
-          >
-          <Tag color="default" v-if="data.s_last"
-            >{{ $t("tableKey.s_last") }}:{{ data.s_last }}</Tag
-          >
-          <Tag color="default" v-if="data.path"
-            >{{ $t("tableKey.path") }}:{{ data.path }}</Tag
-          >
-          <Tag color="default" v-if="data.keyword"
-            >{{ $t("tableKey.keyword") }}:{{ data.keyword }}</Tag
-          >
+          <span class="mr-2" v-for="(item, index) in data.strategy_groups" :key=index>
+            {{$t(strategyNameMaps[item.type])}}: {{item.name}}
+          </span>
+        </div>
+      </li>
+
+      <li>
+        <label class="card-label" v-html="$t('tableKey.threshold')"></label>
+        <div class="card-content">
+          <span v-html="data.alarm_detail"></span>
         </div>
       </li>
       <li v-if="data.is_custom">
@@ -177,7 +180,11 @@ export default {
       isShowStartFlow: false,
       startFlowTip: '',
       alertId: '',
-      test: "system_id:5006 <br/> title:bdphdp010001: JournalNode10分钟之内ops次数大于10000 <br/> object: <br/> info:bdphdp010001在2022.05.16-00:14:14触发JournalNode10分钟之内ops次数大于10000 <br/> 【告警主机】 127.0.0.1[bdphdp010001] <br/> 【告警集群】 international_cluster <br/> 【附加信息】 请联系值班人:[admin]，资源池[admin]"
+      test: "system_id:5006 <br/> title:bdphdp010001: JournalNode10分钟之内ops次数大于10000 <br/> object: <br/> info:bdphdp010001在2022.05.16-00:14:14触发JournalNode10分钟之内ops次数大于10000 <br/> 【告警主机】 127.0.0.1[bdphdp010001] <br/> 【告警集群】 international_cluster <br/> 【附加信息】 请联系值班人:[admin]，资源池[admin]",
+      strategyNameMaps: {
+        "endpointGroup": "m_base_group",
+        "serviceGroup": "field.resourceLevel"
+      }
     }
   },
   methods: {
