@@ -529,7 +529,7 @@ func QueryProblemAlarmByPage(c *gin.Context) {
 	if param.Page == nil {
 		param.Page = &m.PageInfo{StartIndex: 0, PageSize: 0}
 	}
-	query := m.AlarmTable{Status: "firing", Endpoint: param.Endpoint, SMetric: param.Metric, SPriority: param.Priority}
+	query := m.AlarmTable{Status: "firing", Endpoint: param.Endpoint, SMetric: param.Metric, SPriority: param.Priority, AlarmName: param.AlarmName}
 	err, data := db.GetAlarms(query, 0, true, true)
 	if err != nil {
 		mid.ReturnQueryTableError(c, "alarm", err)
