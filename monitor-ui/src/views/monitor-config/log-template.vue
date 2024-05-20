@@ -19,6 +19,12 @@
         <Button @click="getTemplateList" type="primary" style="background-color: #2d8cf0;">{{ $t('button.search') }}</Button>
         <Button @click="handleReset" style="margin-left: 5px">{{ $t('m_reset_condition') }}</Button>
       </span>
+      <ExportImport 
+        :isShowExportBtn="true"
+        exportUrl="/monitor/api/v2/service/log_metric/export?serviceGroup=app_guid_01"
+        :isShowImportBtn="true"
+        @successCallBack="getTemplateList"
+        ></ExportImport>
     </div>
     <div class="table-zone">
       <Spin v-if="spinShow" size="large">
@@ -56,12 +62,12 @@
                   :max-height="300"
                   :columns="tableColumn"
                   :data="item.tableData"
-                  width="100%"
-                ></Table>
-                <!-- @on-select-all="selection => onSelectAll(selection, itemIndex)"
+                  @on-select-all="selection => onSelectAll(selection, itemIndex)"
                   @on-select-all-cancel="selection => onSelectAllCancel(selection, itemIndex)"
                   @on-select="(selection, row) => onSelect(selection, row, itemIndex)"
-                  @on-select-cancel="(selection, row) => cancelSelect(selection, row, itemIndex)" -->
+                  @on-select-cancel="(selection, row) => cancelSelect(selection, row, itemIndex)"
+                  width="100%"
+                ></Table>
               </div>
             </Card>
           </div>
@@ -116,6 +122,7 @@
 </template>
 
 <script>
+import ExportImport from '@/components/export-import.vue'
 import JsonRegex from './log-template-config/json-regex.vue'
 import StandardRegex from './log-template-config/standard-regex.vue'
 
@@ -209,7 +216,8 @@ export default {
       toBeDeletedGuid: '', // 待删除数据
       showServiceGroup: false,
       filterServiceGroup: '',
-      serviceGroup: [] // 层级对象
+      serviceGroup: [], // 层级对象
+      selectedParams: [] // 待导出数据
     }
   },
   mounted () {
@@ -276,10 +284,43 @@ export default {
         this.$Message.success(this.$t('tips.success'))
         this.getTemplateList()
       })
-    }
+    },
+
+    //#region 导入导出
+    onSelectAll (selection, tableIndex) {
+      selection.forEach(se => {
+        const findIndex = this.selectedParams.findIndex(
+          param => param.guid === se.guid && param.tableIndex === tableIndex
+        )
+        if (findIndex === -1) {
+          this.selectedParams.push({
+            guid: se.guid,
+            tableIndex: tableIndex
+          })
+        }
+      })
+    },
+    onSelectAllCancel (selection, tableIndex) {
+      this.selectedParams = this.selectedParams.filter(param => param.tableIndex !== tableIndex)
+    },
+    onSelect (selection, row, tableIndex) {
+      console.log(row)
+      this.selectedParams.push({
+        guid: row.guid,
+        tableIndex
+      })
+    },
+    cancelSelect (selection, row, tableIndex) {
+      const findIndex = this.selectedParams.findIndex(
+        param => param.guid === row.guid && param.tableIndex === tableIndex
+      )
+      this.selectedParams.splice(findIndex, 1)
+    },
+    //#endregion
   },
   components: {
     JsonRegex,
+    ExportImport,
     StandardRegex
   }
 }
