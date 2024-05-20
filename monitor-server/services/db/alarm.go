@@ -417,8 +417,12 @@ func GetAlarms(query m.AlarmTable, limit int, extLogMonitor, extOpenAlarm bool) 
 		params = append(params, query.Endpoint)
 	}
 	if query.SMetric != "" {
-		whereSql += " and s_metric=? "
-		params = append(params, query.SMetric)
+		whereSql += " and s_metric like ? "
+		params = append(params, fmt.Sprintf("%%%s%%", query.SMetric))
+	}
+	if query.AlarmName != "" {
+		whereSql += " and (alarm_name=? or content=?) "
+		params = append(params, query.AlarmName, query.AlarmName)
 	}
 	if query.SCond != "" {
 		whereSql += " and s_cond=? "
@@ -1599,14 +1603,14 @@ func UpdateAlarmWithConditions(alarmConditionObj *m.AlarmHandleObj) (alarmRow *m
 		err = fmt.Errorf("alarm strategy:%s condition metric query with empty data", alarmConditionObj.AlarmStrategy)
 		return
 	}
-	var configCrcList, conditionGuidList []string
+	var configCrcList, conditionGuidList, conditionMetricList []string
 	for _, row := range strategyMetricRows {
 		configCrcList = append(configCrcList, row.CrcHash)
 	}
 	alarmCrcMap := make(map[string]int)
 	alarmCrcMap[alarmConditionObj.AlarmConditionCrcHash] = 1
 	var alarmConditionRows []*m.AlarmCondition
-	err = x.SQL("select guid,status,crc_hash from alarm_condition where crc_hash in ('"+strings.Join(configCrcList, "','")+"') and alarm_strategy=? and endpoint=? and status='firing'", alarmConditionObj.AlarmStrategy, alarmConditionObj.Endpoint).Find(&alarmConditionRows)
+	err = x.SQL("select guid,status,metric,crc_hash from alarm_condition where crc_hash in ('"+strings.Join(configCrcList, "','")+"') and alarm_strategy=? and endpoint=? and status='firing'", alarmConditionObj.AlarmStrategy, alarmConditionObj.Endpoint).Find(&alarmConditionRows)
 	if err != nil {
 		err = fmt.Errorf("query alarm condition table fail,%s ", err.Error())
 		return
@@ -1614,6 +1618,7 @@ func UpdateAlarmWithConditions(alarmConditionObj *m.AlarmHandleObj) (alarmRow *m
 	for _, row := range alarmConditionRows {
 		alarmCrcMap[row.CrcHash] = 1
 		conditionGuidList = append(conditionGuidList, row.Guid)
+		conditionMetricList = append(conditionMetricList, row.Metric)
 	}
 	if alarmConditionObj.AlarmConditionGuid != "" {
 		var alarmConditionRelRows []*m.AlarmConditionRel
@@ -1637,7 +1642,9 @@ func UpdateAlarmWithConditions(alarmConditionObj *m.AlarmHandleObj) (alarmRow *m
 	} else {
 		alarmConditionObj.AlarmConditionGuid = "ac_" + guid.CreateGuid()
 		conditionGuidList = append(conditionGuidList, alarmConditionObj.AlarmConditionGuid)
+		conditionMetricList = append(conditionMetricList, alarmConditionObj.SMetric)
 		sort.Strings(conditionGuidList)
+		sort.Strings(conditionMetricList)
 		session := x.NewSession()
 		session.Begin()
 		defer func() {
@@ -1665,7 +1672,7 @@ func UpdateAlarmWithConditions(alarmConditionObj *m.AlarmHandleObj) (alarmRow *m
 			alarmRow = &m.AlarmHandleObj{}
 			alarmRow.Endpoint = alarmConditionObj.Endpoint
 			alarmRow.Status = alarmConditionObj.Status
-			alarmRow.SMetric = strategyMetricRows[0].Metric
+			alarmRow.SMetric = strings.Join(conditionMetricList, ",")
 			alarmRow.SCond = strategyMetricRows[0].Condition
 			alarmRow.SLast = strategyMetricRows[0].Last
 			alarmRow.SPriority = alarmStrategyObj.Priority
@@ -1716,7 +1723,15 @@ func buildAlarmDetailData(inputList []*m.AlarmDetailData, splitChar string) stri
 	stringList := []string{}
 	for _, v := range inputList {
 		if v != nil {
-			stringList = append(stringList, fmt.Sprintf("%s %.3f %s %s %s ", v.Metric, v.StartValue, v.Cond, v.Last, v.Start.Format(m.DatetimeFormat)))
+			tagList := []string{}
+			for _, tagV := range strings.Split(v.Tags, "^") {
+				if strings.HasPrefix(tagV, "e_guid:") || strings.HasPrefix(tagV, "guid:") || strings.HasPrefix(tagV, "agg:") || strings.HasPrefix(tagV, "key:") {
+					continue
+				}
+				tagList = append(tagList, tagV)
+			}
+			//stringList = append(stringList, fmt.Sprintf("%s %.3f %s %s %s ", v.Metric, v.StartValue, v.Cond, v.Last, v.Start.Format(m.DatetimeFormat)))
+			stringList = append(stringList, fmt.Sprintf("Metric:%s Tag:%s %s Value:%.3f Duration:%s", v.Metric, strings.Join(tagList, ","), v.Cond, v.StartValue, v.Last))
 		}
 	}
 	return strings.Join(stringList, splitChar)
