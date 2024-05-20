@@ -546,7 +546,7 @@ func getChartQueryIdsByPermission(condition models.QueryChartParam, roles []stri
 		sql = sql + " and permission = ? "
 		params = append(params, models.PermissionMgmt)
 	}
-	if err = x.SQL(sql).Find(&ids); err != nil {
+	if err = x.SQL(sql).Find(&ids, params...); err != nil {
 		return
 	}
 	// 应用看板,需要做ID交集
