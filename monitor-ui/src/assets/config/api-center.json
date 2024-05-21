@@ -148,12 +148,15 @@
     },
     "template": {
         "list": "/monitor/api/v1/dashboard/custom/list",
+        "listV2": "/monitor/api/v2/dashboard/custom/list",
         "portalConfig": "/monitor/api/v1/dashboard/custom/main/list",
         "singleDash": "/monitor/api/v1/dashboard/custom/get",
+        "singleDashV2": "/monitor/api/v2/dashboard/custom",
         "get": "/monitor/api/v1/dashboard/custom/main/get",
         "templateSet": "/monitor/api/v1/dashboard/custom/main/set",
         "save": "/monitor/api/v1/dashboard/custom/save",
-        "delete": "/monitor/api/v1/dashboard/custom/delete"
+        "delete": "/monitor/api/v1/dashboard/custom/delete",
+        "deleteV2": "/monitor/api/v2/dashboard/custom"
     },
     "setup": {
         "userInformation": {
@@ -207,6 +210,8 @@
     "saveTargetDb": "/monitor/api/v2/service/db_metric",
     "getThresholdEndpointDetail": "/monitor/api/v2/alarm/strategy/list/endpoint",
     "getThresholdGroupDetail": "/monitor/api/v2/alarm/strategy/list/group",
+    "getThresholdServiceDetail": "/monitor/api/v2/alarm/strategy/list/service",
+    "getThresholdDetailMainPath": "/monitor/api/v2/alarm/strategy/list",
 
     "bussinessMonitorExport": "/monitor/api/v2/service/log_keyword/export",
     "bussinessMonitorImport": "/monitor/api/v2/service/log_keyword/import",
