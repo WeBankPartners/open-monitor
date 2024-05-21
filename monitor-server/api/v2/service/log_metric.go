@@ -499,6 +499,13 @@ func validateLogMonitorTemplateParam(param *models.LogMonitorTemplateDto) (err e
 		err = fmt.Errorf("calc result can not empty")
 		return
 	}
+	if existLogMonitorTemplate, getErr := db.GetLogMonitorTemplateByName(param.Name); getErr != nil {
+		err = getErr
+		return
+	} else if existLogMonitorTemplate != nil {
+		err = fmt.Errorf("log monitor template name:%s duplicate", param.Name)
+		return
+	}
 	calcResultBytes, _ := json.Marshal(param.CalcResultObj)
 	param.CalcResult = string(calcResultBytes)
 	for _, v := range param.ParamList {
@@ -751,13 +758,13 @@ func LogMonitorTemplateExport(c *gin.Context) {
 		return
 	}
 	var err error
-	if len(param.TemplateGuidList) == 0 {
+	if len(param.GuidList) == 0 {
 		err = fmt.Errorf("param empty")
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
 	resultData := []*models.LogMonitorTemplateDto{}
-	for _, v := range param.TemplateGuidList {
+	for _, v := range param.GuidList {
 		templateObj, tmpErr := db.GetLogMonitorTemplate(v)
 		if tmpErr != nil {
 			err = tmpErr

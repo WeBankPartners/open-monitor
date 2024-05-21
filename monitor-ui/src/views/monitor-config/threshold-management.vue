@@ -88,7 +88,7 @@
 
 <script>
 import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
-import thresholdDetail from './threshold/config-detail.vue'
+import thresholdDetail from './config-detail.vue'
 import TagShow from '@/components/Tag-show.vue'
 import {baseURL_config} from '@/assets/js/baseURL'
 import axios from 'axios'

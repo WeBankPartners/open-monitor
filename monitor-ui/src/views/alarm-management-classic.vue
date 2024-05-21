@@ -19,22 +19,23 @@
 
 <script>
   let tableEle = [
+    {title: 'm_alarmName', value: 'alarm_name', display: true},
+    {title: 'menu.configuration', value: 'strategyGroupsInfo', display: true, renderContent: true},
     {title: 'field.endpoint', value: 'endpoint', display: true},
     {title: 'alarmContent', value: 'content', display: true},
     {title: 'tableKey.s_priority', value: 's_priority', display: true},
+    {title: 'field.metric', value: 'alarm_metric_list_join', display: true},
+    {title: 'field.threshold', value: 'alarm_detail', display: true, renderContent: true},
     {title: 'tableKey.start', value: 'start_string', display: true},
-    {title: 'field.metric', value: 's_metric', display: true},
-    {title: 'tableKey.tags', value: 'tags', display: true},
-    {title: 'tableKey.start_value', value: 'start_value', display: true},
-    {title: 'tableKey.threshold', value: 's_cond', display: true},
-    {title: 'tableKey.s_last', value: 's_last', display: true},
-    {title: 'm_remark', value: 'custom_message', display: true}
+    {title: 'm_remark', value: 'custom_message', display: true},
   ]
   const btn = [
     {btn_name: 'button.view', btn_func: 'goToEndpointView'},
     {btn_name: 'm_remark', btn_func: 'remarkModal'},
     {btn_name: 'close', btn_func: 'deleteConfirmModal'}
   ]
+
+import isEmpty from 'lodash/isEmpty';
 export default {
   name: '',
   data () {
@@ -54,17 +55,39 @@ export default {
         pagination: false
       },
       isShowWarning: false,
-      selectedData: ''
+      selectedData: '',
+      strategyNameMaps: {
+        "endpointGroup": "m_base_group",
+        "serviceGroup": "field.resourceLevel"
+      }
     }
   },
   mounted(){
   },
   methods: {
+    changeResultData(dataList) {
+      if (dataList && !isEmpty(dataList)) {
+        dataList.forEach(item => {
+          item.strategyGroupsInfo = '-';
+          item.alarm_metric_list_join = '-';
+          if (!isEmpty(item.strategy_groups)) {
+            item.strategyGroupsInfo = item.strategy_groups.reduce((res, cur)=> {
+              return res + this.$t(this.strategyNameMaps[cur.type]) + ':' + cur.name + '<br/> '
+            }, '')
+          }
+
+          if (!isEmpty(item.alarm_metric_list)) {
+            item.alarm_metric_list_join = item.alarm_metric_list.join(';')
+          }
+        });
+      }
+      return dataList
+    },
     getAlarm(resultData) {
       this.timeForDataAchieve = new Date().toLocaleString()
       this.timeForDataAchieve = this.timeForDataAchieve.replace('上午', 'AM ')
       this.timeForDataAchieve = this.timeForDataAchieve.replace('下午', 'PM ')
-      this.pageConfig.table.tableData = resultData
+      this.pageConfig.table.tableData = this.changeResultData(resultData);
     },
     goToEndpointView (alarmItem) {
       const endpointObject = {
@@ -113,4 +136,27 @@ export default {
     }
   }
 }
+</style>
+
+<style lang="less">
+tr {
+  position: relative;
+  .td-operation {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+  }
+
+  .c-dark.tdoverflow {
+    max-width: 172px!important;
+  }
+  .render-content {
+    overflow: scroll;
+  }
+}
+
+
 </style>
