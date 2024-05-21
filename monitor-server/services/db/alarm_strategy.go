@@ -161,6 +161,18 @@ func CreateAlarmStrategy(param *models.GroupStrategyObj) error {
 	return Transaction(actions)
 }
 
+func ValidateAlarmStrategyName(param *models.GroupStrategyObj) (err error) {
+	queryResult, queryErr := x.QueryString("select guid from alarm_strategy where endpoint_group=? and name=?", param.EndpointGroup, param.Name)
+	if queryErr != nil {
+		err = fmt.Errorf("query alarm strategy table fail,%s ", queryErr.Error())
+		return
+	}
+	if len(queryResult) > 0 {
+		err = fmt.Errorf("alarm strategy name:%s duplicate", param.Name)
+	}
+	return
+}
+
 func UpdateAlarmStrategy(param *models.GroupStrategyObj) error {
 	nowTime := time.Now().Format(models.DatetimeFormat)
 	var actions []*Action
@@ -204,8 +216,11 @@ func getNotifyList(alarmStrategy, endpointGroup, serviceGroup string) (result []
 	result = []*models.NotifyObj{}
 	var notifyTable []*models.NotifyTable
 	var refColumn, refValue string
+	firingNotify, okNotify := &models.NotifyTable{AlarmAction: "firing", NotifyNum: 1}, &models.NotifyTable{AlarmAction: "ok", NotifyNum: 1}
 	if alarmStrategy != "" {
 		refColumn, refValue = "alarm_strategy", alarmStrategy
+		firingNotify.AlarmStrategy = alarmStrategy
+		okNotify.AlarmStrategy = alarmStrategy
 	} else if endpointGroup != "" {
 		refColumn, refValue = "endpoint_group", endpointGroup
 	} else if serviceGroup != "" {
@@ -213,10 +228,14 @@ func getNotifyList(alarmStrategy, endpointGroup, serviceGroup string) (result []
 	}
 	x.SQL(fmt.Sprintf("select * from notify where %s=?", refColumn), refValue).Find(&notifyTable)
 	for _, v := range notifyTable {
-		tmpNotifyObj := models.NotifyObj{Guid: v.Guid, EndpointGroup: v.EndpointGroup, ServiceGroup: v.ServiceGroup, AlarmStrategy: v.AlarmStrategy, AlarmAction: v.AlarmAction, AlarmPriority: v.AlarmPriority, NotifyNum: v.NotifyNum, ProcCallbackName: v.ProcCallbackName, ProcCallbackKey: v.ProcCallbackKey, CallbackUrl: v.CallbackUrl, CallbackParam: v.CallbackParam, ProcCallbackMode: v.ProcCallbackMode, Description: v.Description}
-		tmpNotifyObj.NotifyRoles = getNotifyRoles(v.Guid)
-		result = append(result, &tmpNotifyObj)
+		if v.AlarmAction == "firing" {
+			firingNotify = v
+		} else if v.AlarmAction == "ok" {
+			okNotify = v
+		}
 	}
+	result = append(result, &models.NotifyObj{Guid: firingNotify.Guid, NotifyRoles: getNotifyRoles(firingNotify.Guid), EndpointGroup: firingNotify.EndpointGroup, ServiceGroup: firingNotify.ServiceGroup, AlarmStrategy: firingNotify.AlarmStrategy, AlarmAction: firingNotify.AlarmAction, AlarmPriority: firingNotify.AlarmPriority, NotifyNum: firingNotify.NotifyNum, ProcCallbackName: firingNotify.ProcCallbackName, ProcCallbackKey: firingNotify.ProcCallbackKey, CallbackUrl: firingNotify.CallbackUrl, CallbackParam: firingNotify.CallbackParam, ProcCallbackMode: firingNotify.ProcCallbackMode, Description: firingNotify.Description})
+	result = append(result, &models.NotifyObj{Guid: okNotify.Guid, NotifyRoles: getNotifyRoles(okNotify.Guid), EndpointGroup: okNotify.EndpointGroup, ServiceGroup: okNotify.ServiceGroup, AlarmStrategy: okNotify.AlarmStrategy, AlarmAction: okNotify.AlarmAction, AlarmPriority: okNotify.AlarmPriority, NotifyNum: okNotify.NotifyNum, ProcCallbackName: okNotify.ProcCallbackName, ProcCallbackKey: okNotify.ProcCallbackKey, CallbackUrl: okNotify.CallbackUrl, CallbackParam: okNotify.CallbackParam, ProcCallbackMode: okNotify.ProcCallbackMode, Description: okNotify.Description})
 	return result
 }
 
