@@ -55,6 +55,14 @@ func CreateAlarmStrategy(c *gin.Context) {
 	} else {
 		param.ActiveWindow = models.DefaultActiveWindow
 	}
+	if err := validateStrategyCondition(param.Conditions); err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	if err := db.ValidateAlarmStrategyName(&param); err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
 	err := db.CreateAlarmStrategy(&param)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
@@ -82,6 +90,14 @@ func UpdateAlarmStrategy(c *gin.Context) {
 	} else {
 		param.ActiveWindow = models.DefaultActiveWindow
 	}
+	if err := validateStrategyCondition(param.Conditions); err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	if err := db.ValidateAlarmStrategyName(&param); err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
 	err := db.UpdateAlarmStrategy(&param)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
@@ -93,6 +109,16 @@ func UpdateAlarmStrategy(c *gin.Context) {
 			middleware.ReturnSuccess(c)
 		}
 	}
+}
+
+func validateStrategyCondition(strategyList []*models.StrategyConditionObj) (err error) {
+	for _, v := range strategyList {
+		if !middleware.IsIllegalCond(v.Condition) || !middleware.IsIllegalLast(v.Last) {
+			err = fmt.Errorf("condition: %s or last: %s illegal", v.Condition, v.Last)
+			return
+		}
+	}
+	return
 }
 
 func DeleteAlarmStrategy(c *gin.Context) {
