@@ -28,6 +28,6 @@ type TagDto struct {
 }
 
 type ColorConfigDto struct {
-	Metric string `json:"metric"`
-	Color  string `json:"color"`
+	SeriesName string `json:"seriesName"`
+	Color      string `json:"color"`
 }
