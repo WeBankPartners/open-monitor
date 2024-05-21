@@ -482,6 +482,7 @@ type CustomDashboardResultDto struct {
 }
 
 type CustomDashboardDto struct {
+	Name           string            `json:"name"`
 	PanelGroupList []string          `json:"panelGroupList"`
 	Charts         []*CustomChartDto `json:"charts"`
 }
@@ -494,6 +495,7 @@ type AddCustomDashboardParam struct {
 
 type UpdateCustomDashboardParam struct {
 	Id        int               `json:"id"`
+	Name      string            `json:"name"`
 	Charts    []*CustomChartDto `json:"charts"`
 	MgmtRoles []string          `json:"mgmtRoles"`
 	UseRoles  []string          `json:"useRoles"`
