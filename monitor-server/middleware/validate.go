@@ -124,7 +124,7 @@ func IsIllegalNameNew(str string) bool {
 }
 
 func IsIllegalDisplayName(str string) bool {
-	if str == "" || len(str) > 250 {
+	if str == "" || len(str) > 50 {
 		return true
 	}
 	return !regDisplayName.MatchString(str)
