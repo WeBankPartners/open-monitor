@@ -162,7 +162,7 @@ func CreateAlarmStrategy(param *models.GroupStrategyObj) error {
 }
 
 func ValidateAlarmStrategyName(param *models.GroupStrategyObj) (err error) {
-	queryResult, queryErr := x.QueryString("select guid from alarm_strategy where endpoint_group=? and name=?", param.EndpointGroup, param.Name)
+	queryResult, queryErr := x.QueryString("select guid from alarm_strategy where endpoint_group=? and name=? and guid!=?", param.EndpointGroup, param.Name, param.Guid)
 	if queryErr != nil {
 		err = fmt.Errorf("query alarm strategy table fail,%s ", queryErr.Error())
 		return
@@ -792,12 +792,20 @@ func NotifyStrategyAlarm(alarmObj *models.AlarmHandleObj) {
 		}
 	}
 	// 1.先去单条阈值配置里找通知配置(单条阈值配置里的通知配置)，优先找这颗粒度最小的配置
-	var notifyTable []*models.NotifyTable
+	var notifyTable, activeNotifyRows []*models.NotifyTable
 	err := x.SQL("select * from notify where alarm_action=? and alarm_strategy=?", alarmObj.Status, alarmObj.AlarmStrategy).Find(&notifyTable)
 	if err != nil {
 		log.Logger.Error("Query notify table fail", log.Error(err))
 		return
 	}
+	for _, v := range notifyTable {
+		notifyRoles := getNotifyRoles(v.Guid)
+		if len(notifyRoles) == 0 && v.ProcCallbackKey == "" {
+			continue
+		}
+		activeNotifyRows = append(activeNotifyRows, v)
+	}
+	notifyTable = activeNotifyRows
 	// 2.如果没有再去找策略所属endpoint_group组的策略(就是界面上阈值配置给某类对象组某种对象配的接收人设置)
 	if len(notifyTable) == 0 {
 		var affectServiceGroupList []string
