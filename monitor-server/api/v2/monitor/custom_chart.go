@@ -34,7 +34,7 @@ func GetSharedChartList(c *gin.Context) {
 			sharedResultMap[chart.LineType] = append(sharedResultMap[chart.LineType], sharedDto)
 		}
 	}
-	middleware.ReturnData(c, sharedResultMap)
+	middleware.ReturnSuccessData(c, sharedResultMap)
 }
 
 func AddCustomChart(c *gin.Context) {
@@ -197,11 +197,11 @@ func GetCustomChart(c *gin.Context) {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
-	if chartDto, err = db.CreateCustomChartDto(&models.CustomChartExtend{CustomChart: chart}, configMap, tagMap, tagValueMap); err != nil {
+	if chartDto, err = db.CreateCustomChartDto(models.ConvertCustomChartToExtend(chart), configMap, tagMap, tagValueMap); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
-	middleware.ReturnData(c, chartDto)
+	middleware.ReturnSuccessData(c, chartDto)
 }
 
 // DeleteCustomChart 删除图表
@@ -313,7 +313,7 @@ func GetSharedChartPermission(c *gin.Context) {
 			}
 		}
 	}
-	middleware.ReturnData(c, result)
+	middleware.ReturnSuccessData(c, result)
 }
 
 // QueryCustomChart 查询图表管理列表

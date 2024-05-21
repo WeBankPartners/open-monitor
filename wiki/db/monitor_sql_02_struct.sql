@@ -10,8 +10,8 @@ CONSTRAINT `fore_main_dashboard_custom_dashboard` FOREIGN KEY (`custom_dashboard
 DROP TABLE IF EXISTS `custom_chart`;
 CREATE TABLE IF NOT EXISTS `custom_chart` (
 `guid` varchar(64) NOT NULL,
-`source_dashboard` varchar(64) NOT NULL COMMENT '源看板',
-`public` bit(1) default 0 COMMENT '是否公共',
+`source_dashboard` int(11) NOT NULL COMMENT '源看板',
+`public` tinyint(1) default 0 COMMENT '是否公共',
 `name` varchar(255) default null COMMENT '图表名称',
 `chart_type` varchar(32) not null COMMENT '曲线图/饼图,line//pie',
 `line_type` varchar(32) not null COMMENT '折线/柱状/面积,line/bar/area',
@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS `custom_chart` (
 `updated_user` varchar(64) default null COMMENT '更新人',
 `create_time` datetime  default null COMMENT '创建时间',
 `update_time` datetime  default null COMMENT '更新时间',
+`chart_template` varchar(100)  default null COMMENT '图表模板',
 PRIMARY KEY (`guid`)
 )ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '自定义看板图表表';
 
