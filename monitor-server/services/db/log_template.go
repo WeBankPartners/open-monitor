@@ -228,3 +228,16 @@ func GetLogMonitorTemplateServiceGroup(logMonitorTemplateGuid string) (result []
 	}
 	return
 }
+
+func GetLogMonitorTemplateByName(name string) (logMonitorTemplate *models.LogMonitorTemplate, err error) {
+	var logMonitorTemplateRows []*models.LogMonitorTemplate
+	err = x.SQL("select * from log_monitor_template where name=?", name).Find(&logMonitorTemplateRows)
+	if err != nil {
+		err = fmt.Errorf("query log monitor template table fail,%s ", err.Error())
+		return
+	}
+	if len(logMonitorTemplateRows) > 0 {
+		logMonitorTemplate = logMonitorTemplateRows[0]
+	}
+	return
+}
