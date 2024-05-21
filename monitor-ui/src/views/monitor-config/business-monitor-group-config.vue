@@ -23,8 +23,15 @@
         </Form>
         <Divider orientation="left" size="small">{{ $t('m_associated_template') }}</Divider>
         <div>
-          <StandardRegexDisplay ref="standardRegexDisplayRef" v-if="configInfo.log_type==='regular'" :configInfo="configInfo"></StandardRegexDisplay>
-          <JsonRegexDisplay ref="jsonRegexDisplayRef" v-if="configInfo.log_type==='json'" :configInfo="configInfo"></JsonRegexDisplay>
+          <StandardRegexDisplay 
+            ref="standardRegexDisplayRef"
+            v-if="configInfo.log_type==='regular'"
+            :prefixCode="businessConfig.metric_prefix_code"
+            :configInfo="configInfo"></StandardRegexDisplay>
+          <JsonRegexDisplay ref="jsonRegexDisplayRef"
+            v-if="configInfo.log_type==='json'"
+            :prefixCode="businessConfig.metric_prefix_code"
+            :configInfo="configInfo"></JsonRegexDisplay>
         </div>
         <div>
           <Divider orientation="left" size="small">{{ $t('m_configuration_information') }}</Divider>
