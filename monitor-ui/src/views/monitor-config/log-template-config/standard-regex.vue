@@ -120,9 +120,9 @@ export default {
           },
           render: (h, params) => {
             return (
-              <Tooltip transfer placement="bottom" theme="light" style="width: 100%;" max-width="400">
+              <Tooltip transfer placement="bottom" theme="light" style="width: 100%;" max-width="500">
                 <div slot="content">
-                  <div domPropsInnerHTML={params.row.regular_font_result} style="word-break: break-all;"></div>
+                  <div domPropsInnerHTML={params.row.regular_font_result} style="word-break: break-all;max-height: 400px;overflow: auto;min-width:200px"></div>
                 </div>
                 <Input
                   value={params.row.regular}

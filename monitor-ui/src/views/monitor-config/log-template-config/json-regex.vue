@@ -37,9 +37,9 @@
                 </FormItem>
               </template>
               <FormItem :label="$t('m_json_regular')" style="margin-bottom: 12px;">
-                <Tooltip theme="light" transfer placement="bottom" style="width: 100%;" max-width="400">
+                <Tooltip theme="light" transfer placement="bottom" style="width: 100%;" max-width="500">
                   <div slot="content">
-                    <div v-html="regRes" style="word-break: break-all;"></div>
+                    <div v-html="regRes" style="word-break: break-all;max-height: 400px;overflow: auto;min-width:200px"></div>
                   </div>
                   <Input
                     v-model="configInfo.json_regular"
