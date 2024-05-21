@@ -119,8 +119,53 @@ func CopyCustomChart(c *gin.Context) {
 	middleware.ReturnSuccess(c)
 }
 
+// UpdateCustomChart 更新自定义图表,先删除图表配置再新增
 func UpdateCustomChart(c *gin.Context) {
-
+	var chartDto *models.CustomChartDto
+	var chart *models.CustomChart
+	var permissionMap map[string]string
+	var err error
+	var hasEditPermission bool
+	userRoles := middleware.GetOperateUserRoles(c)
+	if err = c.ShouldBindJSON(&chartDto); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if strings.TrimSpace(chartDto.Id) == "" {
+		middleware.ReturnParamEmptyError(c, "id")
+		return
+	}
+	if chart, err = db.GetCustomChartById(chartDto.Id); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if chart == nil {
+		middleware.ReturnValidateError(c, "id is invalid")
+		return
+	}
+	// 判断是否拥有编辑权限
+	if permissionMap, err = db.QueryCustomChartPermissionByChart(chartDto.Id); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if len(permissionMap) == 0 {
+		permissionMap = make(map[string]string)
+	}
+	for _, role := range userRoles {
+		if v, ok := permissionMap[role]; ok && v == string(models.PermissionMgmt) {
+			hasEditPermission = true
+			break
+		}
+	}
+	if !hasEditPermission {
+		middleware.ReturnServerHandleError(c, fmt.Errorf("not has edit permission"))
+		return
+	}
+	if err = db.UpdateCustomChart(chartDto, middleware.GetOperateUser(c)); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	middleware.ReturnSuccess(c)
 }
 
 // GetCustomChart 查询图表详情
