@@ -171,6 +171,7 @@ func init() {
 		&handlerFuncObj{Url: "/user/list", Method: http.MethodGet, HandlerFunc: user.ListUser},
 		&handlerFuncObj{Url: "/user/role/update", Method: http.MethodPost, HandlerFunc: user.UpdateRole},
 		&handlerFuncObj{Url: "/user/role/list", Method: http.MethodGet, HandlerFunc: user.ListRole},
+		&handlerFuncObj{Url: "/user/manage_role/list", Method: http.MethodGet, HandlerFunc: user.ListManageRole},
 		&handlerFuncObj{Url: "/user/role/user/update", Method: http.MethodPost, HandlerFunc: user.UpdateRoleUser},
 	)
 	// Export plugin interface
