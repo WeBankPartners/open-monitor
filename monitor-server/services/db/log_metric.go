@@ -1237,7 +1237,7 @@ func GetLogMetricCustomGroup(logMetricGroupGuid string) (result *models.LogMetri
 		return result, fmt.Errorf("Query table log_metric_param fail,%s ", err.Error())
 	}
 	for _, row := range logMetricConfigRows {
-		json.Unmarshal([]byte(row.TagConfig), row.TagConfigList)
+		json.Unmarshal([]byte(row.TagConfig), &row.TagConfigList)
 		result.MetricList = append(result.MetricList, row)
 	}
 	return
