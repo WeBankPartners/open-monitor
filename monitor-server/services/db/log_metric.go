@@ -1212,6 +1212,8 @@ func GetLogMetricCustomGroup(logMetricGroupGuid string) (result *models.LogMetri
 		return
 	}
 	result = &models.LogMetricGroupObj{LogMetricGroup: *metricGroupObj, ParamList: []*models.LogMetricParamObj{}, MetricList: []*models.LogMetricConfigTable{}}
+	result.CreateTimeString = result.CreateTime.Format(models.DatetimeFormat)
+	result.UpdateTimeString = result.UpdateTime.Format(models.DatetimeFormat)
 	logMetricStringMapData, getStringMapErr := getLogMetricGroupMapData(logMetricGroupGuid)
 	if getStringMapErr != nil {
 		err = getStringMapErr
@@ -1235,6 +1237,7 @@ func GetLogMetricCustomGroup(logMetricGroupGuid string) (result *models.LogMetri
 		return result, fmt.Errorf("Query table log_metric_param fail,%s ", err.Error())
 	}
 	for _, row := range logMetricConfigRows {
+		json.Unmarshal([]byte(row.TagConfig), row.TagConfigList)
 		result.MetricList = append(result.MetricList, row)
 	}
 	return
