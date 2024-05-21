@@ -170,5 +170,5 @@ type LogTemplateAffectGroupObj struct {
 }
 
 type LogTemplateExportParam struct {
-	TemplateGuidList []string `json:"templateGuidList"`
+	GuidList []string `json:"guidList"`
 }
