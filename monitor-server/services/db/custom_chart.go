@@ -17,9 +17,9 @@ func QueryAllPublicCustomChartList(roles []string) (list []*models.CustomChart, 
 	roleFilterSql, roleFilterParam := createListParams(roles, "")
 	var params []interface{}
 	var ids []string
-	var sql = "select dashboard_chart from custom_chart_permission where role_id  in (" + roleFilterSql + ") and permission = 'USE'"
-	params = append(params, roleFilterParam...)
-	if err = x.SQL(sql).Find(&ids); err != nil {
+	var sql = "select dashboard_chart from custom_chart_permission where role_id  in (" + roleFilterSql + ") and permission = ?"
+	params = append(append(params, roleFilterParam...), models.PermissionUse)
+	if err = x.SQL(sql, params...).Find(&ids); err != nil {
 		return
 	}
 	if len(ids) > 0 {
@@ -472,22 +472,21 @@ func CreateCustomChartDto(chartExtend *models.CustomChartExtend, configMap map[s
 	var chartSeriesTagList []*models.CustomChartSeriesTag
 	var chartSeriesTagValueList []*models.CustomChartSeriesTagValue
 	chart = &models.CustomChartDto{
-		Id:              chartExtend.CustomChart.Guid,
-		Public:          intToBool(chartExtend.CustomChart.Public),
-		SourceDashboard: chartExtend.CustomChart.SourceDashboard,
-		Name:            chartExtend.CustomChart.Name,
-		ChartTemplate:   chartExtend.CustomChart.ChartTemplate,
-		Unit:            chartExtend.CustomChart.Unit,
-		ChartType:       chartExtend.CustomChart.ChartType,
-		LineType:        chartExtend.CustomChart.LineType,
-		Aggregate:       chartExtend.CustomChart.Aggregate,
-		AggStep:         chartExtend.CustomChart.AggStep,
-		ChartSeries:     nil,
+		Id:              chartExtend.Guid,
+		Public:          intToBool(chartExtend.Public),
+		SourceDashboard: chartExtend.SourceDashboard,
+		Name:            chartExtend.Name,
+		ChartTemplate:   chartExtend.ChartTemplate,
+		Unit:            chartExtend.Unit,
+		ChartType:       chartExtend.ChartType,
+		LineType:        chartExtend.LineType,
+		Aggregate:       chartExtend.Aggregate,
+		AggStep:         chartExtend.AggStep,
 		DisplayConfig:   chartExtend.DisplayConfig,
 		Group:           chartExtend.Group,
 	}
 	chart.ChartSeries = []*models.CustomChartSeriesDto{}
-	if list, err = QueryCustomChartSeriesByChart(chartExtend.CustomChart.Guid); err != nil {
+	if list, err = QueryCustomChartSeriesByChart(chartExtend.Guid); err != nil {
 		return
 	}
 	if len(list) > 0 {
