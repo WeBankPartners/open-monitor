@@ -517,10 +517,6 @@ func validateLogMonitorTemplateParam(param *models.LogMonitorTemplateDto) (err e
 			err = fmt.Errorf("log param display name:%s illegal", v.DisplayName)
 			return
 		}
-		if middleware.IsIllegalNameNew(v.Name) {
-			err = fmt.Errorf("log param name:%s illegal", v.Name)
-			return
-		}
 		if param.LogType == "json" && middleware.IsIllegalNameNew(v.JsonKey) {
 			err = fmt.Errorf("log param jsonKey:%s illegal", v.JsonKey)
 			return
@@ -730,7 +726,7 @@ func CreateLogMetricCustomGroup(c *gin.Context) {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
-	if middleware.IsIllegalNameNew(param.Name) {
+	if middleware.IsIllegalDisplayName(param.Name) {
 		err := fmt.Errorf("name:%s illegal", param.Name)
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
@@ -763,7 +759,7 @@ func UpdateLogMetricCustomGroup(c *gin.Context) {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
-	if middleware.IsIllegalNameNew(param.Name) {
+	if middleware.IsIllegalDisplayName(param.Name) {
 		err := fmt.Errorf("name:%s illegal", param.Name)
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
