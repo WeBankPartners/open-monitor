@@ -190,8 +190,8 @@ func TransformArrayToMap(strArr []string) map[string]bool {
 func TransformMapToArray(hashMap map[string]bool) []string {
 	var res []string
 	if len(hashMap) > 0 {
-		for _, str := range res {
-			hashMap[str] = true
+		for key, _ := range hashMap {
+			res = append(res, key)
 		}
 	}
 	return res
