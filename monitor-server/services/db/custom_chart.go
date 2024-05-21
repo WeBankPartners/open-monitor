@@ -130,6 +130,29 @@ func GetAddCustomDashboardChartRelSQL(chartRelList []*models.CustomDashboardChar
 	return actions
 }
 
+func GetDeleteCustomDashboardRoleRelSQL(dashboardId int) []*Action {
+	var actions []*Action
+	actions = append(actions, &Action{Sql: "delete from custom_dashboard_role_rel where custom_dashboard = ?", Param: []interface{}{dashboardId}})
+	return actions
+}
+
+func GetInsertCustomDashboardRoleRelSQL(dashboardId int, mgmtRoles, useRoles []string) []*Action {
+	var actions []*Action
+	if len(mgmtRoles) > 0 {
+		for _, role := range mgmtRoles {
+			actions = append(actions, &Action{Sql: "insert into custom_dashboard_role_rel (custom_dashboard,permission,role_id)values(?,?,?)",
+				Param: []interface{}{dashboardId, models.PermissionMgmt, role}})
+		}
+	}
+	if len(useRoles) > 0 {
+		for _, role := range useRoles {
+			actions = append(actions, &Action{Sql: "insert into custom_dashboard_role_rel (custom_dashboard,permission,role_id)values(?,?,?)",
+				Param: []interface{}{dashboardId, models.PermissionUse, role}})
+		}
+	}
+	return actions
+}
+
 func GetUpdateCustomDashboardChartRelSQL(chartRelList []*models.CustomDashboardChartRel) []*Action {
 	var actions []*Action
 	if len(chartRelList) > 0 {
