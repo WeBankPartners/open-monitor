@@ -494,11 +494,15 @@ type AddCustomDashboardParam struct {
 }
 
 type UpdateCustomDashboardParam struct {
-	Id        int               `json:"id"`
-	Name      string            `json:"name"`
-	Charts    []*CustomChartDto `json:"charts"`
-	MgmtRoles []string          `json:"mgmtRoles"`
-	UseRoles  []string          `json:"useRoles"`
+	Id     int               `json:"id"`
+	Name   string            `json:"name"`
+	Charts []*CustomChartDto `json:"charts"`
+}
+
+type UpdateCustomDashboardPermissionParam struct {
+	Id        int      `json:"id"`
+	MgmtRoles []string `json:"mgmtRoles"`
+	UseRoles  []string `json:"useRoles"`
 }
 
 type SimpleCustomDashboardDto struct {
