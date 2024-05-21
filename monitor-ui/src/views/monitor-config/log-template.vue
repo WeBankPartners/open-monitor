@@ -21,8 +21,12 @@
       </span>
       <ExportImport 
         :isShowExportBtn="true"
-        exportUrl="/monitor/api/v2/service/log_metric/export?serviceGroup=app_guid_01"
+        exportUrl="/monitor/api/v2/service/log_metric/log_monitor_template/export"
+        exportMethod="POST"
+        :exportData="exportData"
+        :validateExportDataEmpty="true"
         :isShowImportBtn="true"
+        uploadUrl="/monitor/api/v2/service/log_metric/log_monitor_template/import"
         @successCallBack="getTemplateList"
         ></ExportImport>
     </div>
@@ -220,6 +224,11 @@ export default {
       selectedParams: [] // 待导出数据
     }
   },
+  computed: {
+    exportData () {
+      return this.selectedParams.map(p => p.guid)
+    }
+  },
   mounted () {
     this.getTemplateList()
   },
@@ -304,7 +313,6 @@ export default {
       this.selectedParams = this.selectedParams.filter(param => param.tableIndex !== tableIndex)
     },
     onSelect (selection, row, tableIndex) {
-      console.log(row)
       this.selectedParams.push({
         guid: row.guid,
         tableIndex

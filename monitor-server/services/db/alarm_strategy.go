@@ -161,6 +161,18 @@ func CreateAlarmStrategy(param *models.GroupStrategyObj) error {
 	return Transaction(actions)
 }
 
+func ValidateAlarmStrategyName(param *models.GroupStrategyObj) (err error) {
+	queryResult, queryErr := x.QueryString("select guid from alarm_strategy where endpoint_group=? and name=? and guid!=?", param.EndpointGroup, param.Name, param.Guid)
+	if queryErr != nil {
+		err = fmt.Errorf("query alarm strategy table fail,%s ", queryErr.Error())
+		return
+	}
+	if len(queryResult) > 0 {
+		err = fmt.Errorf("alarm strategy name:%s duplicate", param.Name)
+	}
+	return
+}
+
 func UpdateAlarmStrategy(param *models.GroupStrategyObj) error {
 	nowTime := time.Now().Format(models.DatetimeFormat)
 	var actions []*Action
@@ -204,8 +216,11 @@ func getNotifyList(alarmStrategy, endpointGroup, serviceGroup string) (result []
 	result = []*models.NotifyObj{}
 	var notifyTable []*models.NotifyTable
 	var refColumn, refValue string
+	firingNotify, okNotify := &models.NotifyTable{AlarmAction: "firing", NotifyNum: 1}, &models.NotifyTable{AlarmAction: "ok", NotifyNum: 1}
 	if alarmStrategy != "" {
 		refColumn, refValue = "alarm_strategy", alarmStrategy
+		firingNotify.AlarmStrategy = alarmStrategy
+		okNotify.AlarmStrategy = alarmStrategy
 	} else if endpointGroup != "" {
 		refColumn, refValue = "endpoint_group", endpointGroup
 	} else if serviceGroup != "" {
@@ -213,10 +228,14 @@ func getNotifyList(alarmStrategy, endpointGroup, serviceGroup string) (result []
 	}
 	x.SQL(fmt.Sprintf("select * from notify where %s=?", refColumn), refValue).Find(&notifyTable)
 	for _, v := range notifyTable {
-		tmpNotifyObj := models.NotifyObj{Guid: v.Guid, EndpointGroup: v.EndpointGroup, ServiceGroup: v.ServiceGroup, AlarmStrategy: v.AlarmStrategy, AlarmAction: v.AlarmAction, AlarmPriority: v.AlarmPriority, NotifyNum: v.NotifyNum, ProcCallbackName: v.ProcCallbackName, ProcCallbackKey: v.ProcCallbackKey, CallbackUrl: v.CallbackUrl, CallbackParam: v.CallbackParam, ProcCallbackMode: v.ProcCallbackMode, Description: v.Description}
-		tmpNotifyObj.NotifyRoles = getNotifyRoles(v.Guid)
-		result = append(result, &tmpNotifyObj)
+		if v.AlarmAction == "firing" {
+			firingNotify = v
+		} else if v.AlarmAction == "ok" {
+			okNotify = v
+		}
 	}
+	result = append(result, &models.NotifyObj{Guid: firingNotify.Guid, NotifyRoles: getNotifyRoles(firingNotify.Guid), EndpointGroup: firingNotify.EndpointGroup, ServiceGroup: firingNotify.ServiceGroup, AlarmStrategy: firingNotify.AlarmStrategy, AlarmAction: firingNotify.AlarmAction, AlarmPriority: firingNotify.AlarmPriority, NotifyNum: firingNotify.NotifyNum, ProcCallbackName: firingNotify.ProcCallbackName, ProcCallbackKey: firingNotify.ProcCallbackKey, CallbackUrl: firingNotify.CallbackUrl, CallbackParam: firingNotify.CallbackParam, ProcCallbackMode: firingNotify.ProcCallbackMode, Description: firingNotify.Description})
+	result = append(result, &models.NotifyObj{Guid: okNotify.Guid, NotifyRoles: getNotifyRoles(okNotify.Guid), EndpointGroup: okNotify.EndpointGroup, ServiceGroup: okNotify.ServiceGroup, AlarmStrategy: okNotify.AlarmStrategy, AlarmAction: okNotify.AlarmAction, AlarmPriority: okNotify.AlarmPriority, NotifyNum: okNotify.NotifyNum, ProcCallbackName: okNotify.ProcCallbackName, ProcCallbackKey: okNotify.ProcCallbackKey, CallbackUrl: okNotify.CallbackUrl, CallbackParam: okNotify.CallbackParam, ProcCallbackMode: okNotify.ProcCallbackMode, Description: okNotify.Description})
 	return result
 }
 
@@ -773,12 +792,20 @@ func NotifyStrategyAlarm(alarmObj *models.AlarmHandleObj) {
 		}
 	}
 	// 1.先去单条阈值配置里找通知配置(单条阈值配置里的通知配置)，优先找这颗粒度最小的配置
-	var notifyTable []*models.NotifyTable
+	var notifyTable, activeNotifyRows []*models.NotifyTable
 	err := x.SQL("select * from notify where alarm_action=? and alarm_strategy=?", alarmObj.Status, alarmObj.AlarmStrategy).Find(&notifyTable)
 	if err != nil {
 		log.Logger.Error("Query notify table fail", log.Error(err))
 		return
 	}
+	for _, v := range notifyTable {
+		notifyRoles := getNotifyRoles(v.Guid)
+		if len(notifyRoles) == 0 && v.ProcCallbackKey == "" {
+			continue
+		}
+		activeNotifyRows = append(activeNotifyRows, v)
+	}
+	notifyTable = activeNotifyRows
 	// 2.如果没有再去找策略所属endpoint_group组的策略(就是界面上阈值配置给某类对象组某种对象配的接收人设置)
 	if len(notifyTable) == 0 {
 		var affectServiceGroupList []string
