@@ -1,136 +1,232 @@
 <template>
-  <div class="">
-    <Title :title="$t('menu.customViews')"></Title>
-    <div class="operational-zone">
-      <button class="btn btn-sm btn-confirm-f" @click="addView">
-        <i class="fa fa-plus"></i>{{$t('button.addViewTemplate')}}
-      </button>
-      <button class="btn btn-sm btn-cancel-f" @click="setDashboard">
-        {{$t('button.setDashboard')}}
-      </button>
+  <div>
+    <div>
+      <Row>
+        <Tabs v-model="searchMap.permission" @on-click="onFilterConditionChange()">
+          <TabPane :label="$t('m_chart_all')" name="ALL"></TabPane>
+          <TabPane :label="$t('m_can_edit')" name="MGMT"></TabPane>
+        </Tabs>
+      </Row>
+      <Row>
+        <Col span="3">
+          <Input
+            v-model="searchMap.name"
+            style="width: 90%"
+            type="text"
+            :placeholder="$t('m_name')"
+            clearable
+            @on-change="onFilterConditionChange"
+          />
+        </Col>
+        <Col span="3">
+          <Input
+            v-model="searchMap.id"
+            style="width: 90%"
+            type="text"
+            :placeholder="$t('m_id')"
+            clearable
+            @on-change="onFilterConditionChange"
+          >
+          </Input>
+        </Col>
+        <Col span="4">
+          <Select
+            v-model="searchMap.useRoles"
+            clearable
+            :max-tag-count="1"
+            filterable
+            multiple
+            :placeholder="$t('m_use_role')"
+            style="width: 90%"
+            @on-change="onFilterConditionChange"
+          >
+            <Option v-for="item in userRolesOptions" :value="item.name" :key="item.name">{{ item.display_name }}</Option>
+          </Select>
+        </Col>
+        <Col span="4">
+          <Select
+            v-model="searchMap.mgmtRoles"
+            clearable
+            filterable
+            :max-tag-count="1"
+            multiple
+            :placeholder="$t('m_manage_role')"
+            style="width: 90%"
+            @on-change="onFilterConditionChange"
+          >
+            <Option v-for="item in mgmtRolesOptions" :value="item.name" :key="item.name">{{ item.display_name }}</Option>
+          </Select>
+        </Col>
+        <Col span="4">
+          <Input
+            v-model="searchMap.updateUser"
+            style="width: 90%"
+            type="text"
+            :placeholder="$t('m_updatedBy')"
+            clearable
+            @on-change="onFilterConditionChange"
+          >
+          </Input>
+        </Col>
+        <Col span="3">
+          <Button @click="getViewList" type="primary">{{ $t('m_search') }}</Button>
+        </Col>
+        <div style="display:flex;float:right;">
+          <button class="btn btn-sm btn-confirm-f" @click="addBoardItem">
+            <i class="fa fa-plus"></i>{{$t('button.add')}}
+          </button>
+          <button class="btn btn-sm btn-cancel-f" @click="setDashboard">
+            {{$t('button.setDashboard')}}
+          </button>
+        </div>
+      </Row>
     </div>
-    <section>
-        <template v-for="(panalItem,panalIndex) in dataList">
-          <div :key="panalIndex" class="panal-list">
-            <Card class="c-dark">
-              <p slot="title" class="panal-title">
-                <span>{{ $t('tableKey.name') }}:{{ panalItem.name }}</span>
-                <span style="float: right;">{{ $t('field.id') }}:{{ panalItem.id }}</span>
+
+    <div class="mt-3">
+      <section class="all-card-item">
+          <template v-for="(item,index) in dataList">
+            <div :key="index" class="panal-list" @click="goToPanal(item, 'view')">
+              <Card>
+                <div slot="title" class="panal-title">
+                  <h5>{{ item.name }}</h5>
+                  <div>
+                    <span>{{$t('m_updatedBy')}}: {{item.updateUser}}</span>
+                    <span>{{$t('m_update_time')}}: {{item.updateTime}}</span>
+                  </div>
+                </div>
+                <div>
+                  <div class="card-content mb-1" v-for="(keyItem, index) in cardContentList" :key="index"> 
+                      <span style="min-width: 80px">{{$t(keyItem.label)}}: </span>
+                      <div v-if="keyItem.type === 'string'">
+                        {{item[keyItem.key]}}
+                      </div>
+                      <div class="card-content-array" v-if="keyItem.type === 'array'">
+                          <Tag 
+                            v-for="(tag, tagIndex) in item[keyItem.key]"
+                            :key="tagIndex"
+                            color="blue">
+                            {{tag}}
+                          </Tag>
+                      </div>
+                  </div>
+                </div>
+                <div class="card-divider"></div>
+                <div class="card-content-footer">
+                  <template v-if="item.permission === 'mgmt'">
+                    <Button size="small"  type="primary" @click.stop="goToPanal(item, 'edit')">
+                      <Icon type="md-create" />
+                    </Button>
+                    <Button size="small"  type="warning" @click.stop="editBoardAuth(item)">
+                      <Icon type="md-person" />
+                    </Button>
+                    <Button size="small" type="error" @click.stop="deleteConfirmModal(item)">
+                      <Icon type="md-trash" />
+                    </Button>
+                  </template>
+                </div>
+              </Card>
+            </div>
+          </template>
+      </section>
+      <Page
+        style="float: right"
+        :total="pagination.totalRows"
+        @on-change="(e) => {pagination.currentPage = e; this.getViewList(e)}"
+        :current="pagination.currentPage"
+        :page-size="pagination.pageSize"
+        show-total
+      />
+
+      <ModalComponent :modelConfig="authorizationModel">
+        <template #authorization>
+          <div style="margin: 4px 12px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
+            <template v-for="(item, index) in authorizationModel.result">
+              <p :key="index" style="margin:6px 0">
+                <Button
+                  @click="deleteAuth(index)"
+                  size="small"
+                  style="background-color: #ff9900;border-color: #ff9900;"
+                  type="error"
+                  icon="md-close"
+                ></Button>
+                <Select v-model="item.role_id" filterable style="width:200px">
+                  <Option v-for="item in userRolesOptions" :value="item.id" :key="item.id">
+                  {{item.display_name}}</Option>
+                </Select>
+                <Select v-model="item.permission" filterable style="width:200px">
+                  <Option v-for="permission in ['mgmt', 'use']" :value="permission" :key="permission">{{
+                    $t(permission)
+                  }}</Option>
+                </Select>
               </p>
-              <ul class="panal-content">
-                <li>
-                  <Button class="btn-cancel-f" style="height:24px" size="small" @click="goToPanal(panalItem, 'view')">{{$t('button.view')}}</Button>
-                  <template v-if="panalItem.permission === 'mgmt'">
-                    <Button type="primary" class="btn-confirm-f" style="height:24px" size="small" @click="goToPanal(panalItem, 'edit')">{{$t('m_configuration')}}</Button>
-                    <Button class="btn-cancel-f" style="height:24px" size="small" @click="authorization(panalItem)">{{$t('button.authorization')}}</Button>
-                    <Button class="btn-cancel-f" style="height:24px" size="small" @click="deleteConfirmModal(panalItem)">{{$t('button.remove')}}</Button>
-                  </template>
-                </li>
-                <Divider />
-                
-                
-                <li style="margin-top:8px">
-                  <i class="fa fa-star" style="margin-right:16px;" v-if="panalItem.main === 1" aria-hidden="true"></i>
-                  <template v-for="(role,roleIndex) in panalItem.main_page">
-                    <Tag color="blue" :key="roleIndex">{{role}}</Tag>
-                  </template>
-                  <Tag style="visibility: hidden;"></Tag>
-                </li>
-              </ul>
-            </Card>
+            </template>
+            <Button
+              @click="addEmptyAuth"
+              type="success"
+              size="small"
+              style="background-color: #0080FF;border-color: #0080FF;"
+              long
+              >{{ $t('button.add') }}</Button
+            >
           </div>
         </template>
-      <!-- </ul> -->
-    </section>
-    <!-- <ModalComponent :modelConfig="authorizationModel">
-      <div slot="authorization">  
-        <div>
-          <label class="col-md-2 label-name">{{$t('field.role')}}:</label>
-          <Select v-model="authorizationModel.addRow.role" multiple filterable style="width:338px">
-              <Option v-for="item in authorizationModel.roleList" :value="item.id" :key="item.id">
-              {{item.display_name}}</Option>
-          </Select>
-        </div>
-      </div>
-    </ModalComponent> -->
+      </ModalComponent>
 
-    <ModalComponent :modelConfig="authorizationModel">
-      <template #authorization>
-        <div style="margin: 4px 12px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
-          <template v-for="(item, index) in authorizationModel.result">
-            <p :key="index" style="margin:6px 0">
-              <Button
-                @click="deleteAuth(index)"
-                size="small"
-                style="background-color: #ff9900;border-color: #ff9900;"
-                type="error"
-                icon="md-close"
-              ></Button>
-              <Select v-model="item.role_id" filterable style="width:200px">
-                <Option v-for="item in authorizationModel.roleList" :value="item.id" :key="item.id">
-                {{item.display_name}}</Option>
-              </Select>
-              <Select v-model="item.permission" filterable style="width:200px">
-                <Option v-for="permission in ['mgmt', 'use']" :value="permission" :key="permission">{{
-                  $t(permission)
-                }}</Option>
-              </Select>
-            </p>
-          </template>
-          <Button
-            @click="addEmptyAuth"
-            type="success"
-            size="small"
-            style="background-color: #0080FF;border-color: #0080FF;"
-            long
-            >{{ $t('button.add') }}</Button
-          >
-        </div>
-      </template>
-    </ModalComponent>
-
-    <ModalComponent :modelConfig="modelConfig"></ModalComponent>
-    <ModalComponent :modelConfig="processConfigModel">
-      <div slot="processConfig">
-        <section>
-          <div style="display: flex;">
-            <div class="port-title">
-              <span>{{$t('tableKey.role')}}:</span>
-            </div>
-            <div class="port-title">
-              <span>{{$t('menu.customViews')}}:</span>
-            </div>
+      <AuthDialog ref="authDialog" :useRolesRequired="true" @sendAuth="saveTemplate">
+        <template #content-top>
+          <div v-if="isAddViewType" class="auth-dialog-content">
+            <span class="mr-3">{{$t('m_name')}}:</span>
+            <Input style="width: 350px" v-model="addViewName"></Input>
           </div>
-        </section>
-        <section v-for="(pl, plIndex) in processConfigModel.dashboardConfig" :key="plIndex">
-          <div class="port-config">
-            <div style="width: 40%">
-              <label>{{pl.role_name}}：</label>
+        </template>
+      </AuthDialog>
+      <ModalComponent :modelConfig="processConfigModel">
+        <div slot="processConfig">
+          <section>
+            <div style="display: flex;">
+              <div class="port-title">
+                <span>{{$t('tableKey.role')}}:</span>
+              </div>
+              <div class="port-title">
+                <span>{{$t('menu.customViews')}}:</span>
+              </div>
             </div>
-            <div style="width: 55%">
-              <Select filterable clearable v-model="pl.main_page_id" style="width:200px" :placeholder="$t('placeholder.refresh')">
-                <Option v-for="item in pl.options" :value="item.id" :key="item.id">{{ item.option_text }}</Option>
-              </Select>
+          </section>
+          <section v-for="(pl, plIndex) in processConfigModel.dashboardConfig" :key="plIndex">
+            <div class="port-config">
+              <div style="width: 40%">
+                <label>{{pl.role_name}}：</label>
+              </div>
+              <div style="width: 55%">
+                <Select filterable clearable v-model="pl.main_page_id" style="width:200px" :placeholder="$t('placeholder.refresh')">
+                  <Option v-for="item in pl.options" :value="item.id" :key="item.id">{{ item.option_text }}</Option>
+                </Select>
+              </div>
             </div>
-          </div>
-        </section>
-      </div>
-    </ModalComponent>
-    <Modal
-      v-model="isShowWarning"
-      :title="$t('delConfirm.title')"
-      @on-ok="ok"
-      @on-cancel="cancel">
-      <div class="modal-body" style="padding:30px">
-        <div style="text-align:center">
-          <p style="color: red">{{$t('delConfirm.tip')}}</p>
+          </section>
         </div>
-      </div>
-    </Modal>
+      </ModalComponent>
+      <Modal
+        v-model="isShowWarning"
+        :title="$t('delConfirm.title')"
+        @on-ok="onDeleteConfirm"
+        @on-cancel="onCancelDelete">
+        <div class="modal-body" style="padding:30px">
+          <div style="text-align:center">
+            <p style="color: red">{{$t('delConfirm.tip')}}</p>
+          </div>
+        </div>
+      </Modal>
+    </div>
   </div>
 </template>
 
 <script>
+import debounce from 'lodash/debounce';
+import cloneDeep from 'lodash/cloneDeep'
+import isEmpty from 'lodash/isEmpty'
+import AuthDialog from '@/components/auth.vue'
+import { nextTick } from 'vue';
 export default {
   name: '',
   data() {
@@ -138,30 +234,6 @@ export default {
       isShowWarning: false,
       dataList: [
       ],
-      modelConfig: {
-        modalId: 'add_edit_Modal',
-        modalTitle: 'title.viewTemplate',
-        isAdd: true,
-        config: [
-          {label: 'tableKey.name', value: 'name', placeholder: 'tips.required', v_validate: 'required:true|min:2|max:60', disabled: false, type: 'text'}
-        ],
-        addRow: { // [通用]-保存用户新增、编辑时数据
-          name: null,
-        },
-      },
-      setDashboardModel: {
-        modalId: 'set_dashboard_modal',
-        modalTitle: 'button.setDashboard',
-        isAdd: true,
-        saveFunc: 'setDashboardSave',
-        config: [
-          {name:'setDashboard',type:'slot'}
-        ],
-        addRow: {
-          templateSelect: null
-        },
-        templateList: []
-      },
       processConfigModel: {
         modalId: 'set_dashboard_modal',
         modalTitle: 'button.setDashboard',
@@ -191,24 +263,55 @@ export default {
         result: []
       },
       dashboard_id: '',
-      // permissionModel: {
-      //   modalId: 'maintenance_window_model',
-      //   modalTitle: 'm_button_maintenanceWindow',
-      //   isAdd: true,
-      //   saveFunc: 'maintenanceWindowSave',
-      //   config: [{
-      //     name: 'maintenanceWindow',
-      //     type: 'slot'
-      //   }],
-      //   addRow: {
-      //     // businessSet: [],
-      //   },
-      //   result: []
-      // },
+      pathMap: {},
+      searchMap: {
+        permission: "",
+        name: "",
+        id: "",
+        useRoles: [],
+        mgmtRoles: [],
+        updateUser: ""
+      },
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      cardContentList: [
+        {
+          key: "id",
+          label: "m_id",
+          type: "string"
+        }, 
+        {
+          key: "mgmtRoles",
+          label: "m_manage_role",
+          type: "array"
+        },
+        {
+          key: "useRoles",
+          label: "m_use_role",
+          type: "array"
+        },
+        {
+          key: "mainPage",
+          label: "m_home_application",
+          type: "array"
+        }
+      ],
+      pagination: {
+        totalRows: 100,
+        currentPage: 2,
+        pageSize: 6
+      },
+      mgmtRoles: [],
+      userRoles: [],
+      mgmtRolesOptions: [], 
+      userRolesOptions: [],
+      addViewName: '',
+      isAddViewType: true,
+      boardId: null
     }
   },
   mounted(){
-    this.viewList()
+    this.pathMap = this.$root.apiCenter.template;
+    this.getViewList()
     this.getAllRoles()
   },
   methods: {
@@ -227,17 +330,17 @@ export default {
           main_page_id: item.main_page_id,
         })
       })
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST','/monitor/api/v1/dashboard/custom/main/set', params, () => {
+      this.request('POST','/monitor/api/v1/dashboard/custom/main/set', params, () => {
         this.$Message.success(this.$t('tips.success'))
         this.$root.JQ('#set_dashboard_modal').modal('hide')
       })
     },
-    authorization (panalItem) {
-      this.dashboard_id = panalItem.id
+    authorization (item) {
+      this.dashboard_id = item.id
       const params = {
-        dashboard_id: panalItem.id
+        dashboard_id: item.id
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET','/monitor/api/v1/dashboard/custom/role/get', params, (res) => {
+      this.request('GET','/monitor/api/v1/dashboard/custom/role/get', params, (res) => {
         this.authorizationModel.result = res
         this.$root.JQ('#authorization_model').modal('show')
       })
@@ -247,7 +350,7 @@ export default {
         dashboard_id: this.dashboard_id,
         permission_list: this.authorizationModel.result
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/dashboard/custom/role/save', params, () => {
+      this.request('POST', '/monitor/api/v1/dashboard/custom/role/save', params, () => {
         this.$Message.success(this.$t('tips.success'))
         this.$root.JQ('#authorization_model').modal('hide')
       })
@@ -257,93 +360,141 @@ export default {
         page: 1,
         size: 1000
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET','/monitor/api/v1/user/role/list?page=1&size=1000', params, (responseData) => {
-        this.authorizationModel.roleList = responseData.data
+      this.request('GET','/monitor/api/v1/user/role/list', params, res => {
+        this.userRolesOptions = this.processRolesList(res.data)
+      })
+      this.request('GET', '/monitor/api/v1/user/manage_role/list', {}, res => {
+        this.mgmtRolesOptions = this.processRolesList(res);
       })
     },
-    addPost () {
-      this.$root.JQ('#add_edit_Modal').modal('hide')
-      let params = {
-        name: this.modelConfig.addRow.name,
-        cfg: '[]'
-      }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.template.save, params, () => {
-        this.viewList()
+    processRolesList(list = []) {
+      if (isEmpty(list)) return [];
+      const resArr = cloneDeep(list).map(item => {
+        return {
+          ...item,
+          key: item.name,
+          label: item.displayName || item.display_name
+        }
       })
+      return resArr
     },
-    addView () {
-      this.modelConfig.isAdd = true
-      this.$root.JQ('#add_edit_Modal').modal('show')
+    addBoardItem () {
+      this.isAddViewType = true;
+      this.addViewName = '';
+      this.$refs.authDialog.startAuth([], [], this.mgmtRolesOptions, this.userRolesOptions);
     },
+    editBoardAuth(item) {
+      this.isAddViewType = false;
+      this.boardId = item.id;
+      this.$refs.authDialog.startAuth(item.mgmtRoles, item.useRoles, this.mgmtRolesOptions, this.userRolesOptions);
+    },
+    
     deleteConfirmModal (rowData) {
       this.selectedData = rowData
       this.isShowWarning = true
     },
-    ok () {
+    onDeleteConfirm () {
       this.removeTemplate(this.selectedData)
     },
-    cancel () {
+    onCancelDelete () {
       this.isShowWarning = false
-    },
-    deleteConfirm (item) {
-      this.$delConfirm({
-        msg: item.name,
-        callback: () => {
-          this.removeTemplate(item)
-        }
-      })
     },
     removeTemplate (item) {
       let params = {id: item.id}
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.template.delete, params, () => {
-        // this.$root.$eventBus.$emit('hideConfirmModal')
+      this.request('DELETE',this.pathMap.deleteV2, params, () => {
         this.$Message.success(this.$t('tips.success'))
-        this.viewList()
+        this.getViewList()
       })
     },
-    viewList () {
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.template.list, '', responseData => {
-        this.setDashboardModel.templateList = []
-        this.setDashboardModel.addRow.templateSelect = null
-        this.dataList = responseData
-        responseData.forEach((item) => {
-          this.setDashboardModel.templateList.push({
-            label: item.name,
-            value: item.id
-          })
-          if (item.main === 1) {
-            this.setDashboardModel.addRow.templateSelect = item.id
-          }
-        })
+    getViewList (page=1, pageSize=6) {
+      const params = Object.assign(cloneDeep(this.searchMap), {
+        pageSize,
+        startIndex: pageSize * (page - 1)
+      });
+
+      if (!params.id || isNaN(Number(params.id))) {
+        params.id = 0
+      } else {
+        params.id = Number(params.id)
+      }
+      if (params.permission === 'ALL') {
+        params.permission = ''
+      }
+      this.request('POST',this.pathMap.listV2, params, responseData => {
+        this.dataList = responseData.contents;
+        this.pagination.totalRows = responseData.pageInfo.totalRows;
       })
     },
     setDashboard () {
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.template.portalConfig, '', responseData => {
+      this.request('GET',this.pathMap.portalConfig, '', responseData => {
         this.processConfigModel.dashboardConfig = responseData
         this.$root.JQ('#set_dashboard_modal').modal('show')
-      })
-    },
-    setDashboardSave () {
-      let params = {id: this.setDashboardModel.addRow.templateSelect}
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET',this.$root.apiCenter.template.templateSet, params, () => {
-        this.$root.JQ('#set_dashboard_modal').modal('hide')
-        this.$Message.success(this.$t('tips.success'))
-        this.viewList()
       })
     },
     goToPanal(panalItem, type) {
       const params = {
         permission: type,
-        panalItem: panalItem
+        panalItem
       }
       this.$router.push({name:'viewConfig',params:params})
+    },
+
+    onFilterConditionChange: debounce(function () {
+      this.getViewList()
+    }, 300),
+
+    saveTemplate(mgmtRoles, useRoles) {
+      this.mgmtRoles = mgmtRoles;
+      this.userRoles = useRoles;
+      this.submitData()
+      if (this.isAddViewType && !this.addViewName ) {
+        nextTick(() => {
+          this.$refs.authDialog.flowRoleManageModal = true
+        })
+      }
+    },
+    submitData() {
+      const params = {
+        mgmtRoles: this.mgmtRoles,
+        useRoles: this.userRoles
+      }
+      let path = '';
+      if (this.isAddViewType) {
+        params.name = this.addViewName;
+        path = '/monitor/api/v2/dashboard/custom';
+      } else {
+        // 修改自定义看板权限
+        params.id = this.boardId;
+        path = '/monitor/api/v2/dashboard/custom/permission'
+      }
+      this.request('POST', path, params, () => {
+        this.getViewList();
+      })
     }
   },
-  components: {},
+  components: {
+    AuthDialog
+  }
 }
 </script>
 
+<style lang='less'>
+.screen-config-menu.ivu-menu-horizontal.ivu-menu-light:after {
+  height: 0px;
+}
+
+.panal-list {
+  .ivu-card-body {
+    padding-bottom: 5px
+  } 
+}
+
+</style>
+
 <style scoped lang="less">
+.screen-config-menu {
+  width: 150px;
+}
 .port-title {
   width: 40%;
   font-size: 14px;
@@ -361,19 +512,55 @@ li {
 .operational-zone {
   margin: 0 16px 16px 16px;
 }
+.all-card-item {
+  display: flex;
+  flex-wrap: wrap;
+}
 .panal-list {
   margin: 8px;
   width: 390px;
+  min-height: 240px;
   display: inline-block;
+  .panal-title {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    color: @blue-2;
+    height: 26px;
+  }
+  .panal-title > div {
+    display: flex;
+    flex-direction: column;
+  }
+  .card-divider {
+    height: 1px;
+    width: 100%;
+    background-color: #e8eaec;
+  }
+  .card-content-footer {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    height: 40px;
+  }
+  .card-content-array {
+    display: inline-block;
+    overflow: scroll;
+    white-space: nowrap
+  }
 }
-.panal-title {
-  color: @blue-2;
-  height: 26px;
-}
-.panal-content {
-  font-size: 12px;
-}
+
 .fa-star {
   color: @color-orange-F;
+}
+
+.card-content {
+  display: flex;
+}
+
+.auth-dialog-content {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px
 }
 </style>

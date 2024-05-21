@@ -426,7 +426,10 @@
   "m_update_time": "更新时间",
   "m_home_application": "首页应用",
   "m_select_data_tip": "请选择需要导出的数据!",
-  "m_base_group": "基础组"
-
-
+  "m_base_group": "基础组",
+  "m_mgmt_role": "属主角色",
+  "m_role_drawer_title": "选择角色",
+  "m_unselected_role": "未选中角色",
+  "m_selected_role": "选中角色",
+  "m_choose_one": "只能选择一个属主角色"
 }
