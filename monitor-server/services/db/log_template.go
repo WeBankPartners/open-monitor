@@ -229,9 +229,9 @@ func GetLogMonitorTemplateServiceGroup(logMonitorTemplateGuid string) (result []
 	return
 }
 
-func GetLogMonitorTemplateByName(name string) (logMonitorTemplate *models.LogMonitorTemplate, err error) {
+func GetLogMonitorTemplateByName(guid, name string) (logMonitorTemplate *models.LogMonitorTemplate, err error) {
 	var logMonitorTemplateRows []*models.LogMonitorTemplate
-	err = x.SQL("select * from log_monitor_template where name=?", name).Find(&logMonitorTemplateRows)
+	err = x.SQL("select * from log_monitor_template where name=? and guid!=?", name, guid).Find(&logMonitorTemplateRows)
 	if err != nil {
 		err = fmt.Errorf("query log monitor template table fail,%s ", err.Error())
 		return
