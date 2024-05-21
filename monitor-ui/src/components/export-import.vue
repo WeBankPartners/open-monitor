@@ -4,7 +4,7 @@
         v-if="isShowExportBtn"
         type="info"
         class="btn-left"
-        @click="exportData"
+        @click="exportHandler"
       >
         <img src="../assets/img/export.png" class="btn-img" alt="" />
         {{ $t('m_export') }}
@@ -49,6 +49,22 @@ export default {
       required: false,
       default: ''
     },
+    exportMethod: {
+      type: String,
+      required: false,
+      default: 'GET'
+    },
+    exportData: {
+      type: Array,
+      required: false,
+      // eslint-disable-next-line vue/require-valid-default-prop
+      default: []
+    },
+    validateExportDataEmpty: {
+      type: Boolean,
+      required: false,
+      default: false
+    },
     isShowImportBtn: {
       type: Boolean,
       required: false,
@@ -65,10 +81,17 @@ export default {
     this.token = (window.request ? 'Bearer ' + getPlatFormToken() : getToken())|| null
   },
   methods: {
-    exportData () {
+    exportHandler () {
+      if (this.validateExportDataEmpty && this.exportData.length === 0) {
+        this.$Message.warning(this.$t('m_select_data_tip'))
+        return
+      }
       axios({
-        method: 'GET',
+        method: this.exportMethod,
         url: this.exportUrl,
+        data: {
+          guidList: this.exportData // 后台会固定取guidList
+        },
         headers: {
           'Authorization': this.token
         }
@@ -98,7 +121,7 @@ export default {
       })
       .catch(() => {
         this.$Message.warning(this.$t('tips.failed'))
-      });
+      })
     },
     uploadSucess (callback) {
       this.$Message.success(this.$t('tips.success'))
