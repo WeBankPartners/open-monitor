@@ -262,7 +262,7 @@ func ListRole(search string, page, size int) (err error, data m.TableData) {
 func ListManageRole(roles []string) (result []*m.RoleTable, err error) {
 	var roleList []*m.RoleTable
 	result = []*m.RoleTable{}
-	if err = x.SQL("SELECT id,name,display_name FROM role").Find(&roleList); err != nil {
+	if err = x.SQL("SELECT id,name,display_name FROM role where disable=0").Find(&roleList); err != nil {
 		return
 	}
 	if len(roles) > 0 && len(roleList) > 0 {

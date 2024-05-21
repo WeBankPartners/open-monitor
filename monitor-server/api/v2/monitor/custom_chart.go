@@ -79,7 +79,7 @@ func CopyCustomChart(c *gin.Context) {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
-	if customDashboard == nil {
+	if customDashboard == nil || customDashboard.Id == 0 {
 		middleware.ReturnValidateError(c, "dashboardId is invalid")
 		return
 	}
@@ -144,7 +144,7 @@ func UpdateCustomChart(c *gin.Context) {
 		return
 	}
 	// 判断是否拥有编辑权限
-	if permissionMap, err = db.QueryCustomChartPermissionByChart(chartDto.Id); err != nil {
+	if permissionMap, err = db.QueryCustomChartManagePermissionByChart(chartDto.Id); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
@@ -220,7 +220,7 @@ func DeleteCustomChart(c *gin.Context) {
 		return
 	}
 	// 判断是否拥有删除权限
-	if permissionMap, err = db.QueryCustomChartPermissionByChart(chartId); err != nil {
+	if permissionMap, err = db.QueryCustomChartManagePermissionByChart(chartId); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
