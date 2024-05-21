@@ -109,7 +109,7 @@ func DeleteCustomDashboardById(dashboard int) (err error) {
 
 func getQueryIdsByPermission(condition models.CustomDashboardQueryParam, roles []string) (strArr []string, err error) {
 	var ids []int
-	var sql = "select custom_dashboard from custom_dashboard_role_rel "
+	var sql = "select custom_dashboard_id from custom_dashboard_role_rel "
 	var params []interface{}
 	strArr = []string{}
 	if len(roles) == 0 {
@@ -134,7 +134,7 @@ func getQueryIdsByPermission(condition models.CustomDashboardQueryParam, roles [
 		sql = sql + " and permission = ? "
 		params = append(params, models.PermissionMgmt)
 	}
-	if err = x.SQL(sql).Find(&ids); err != nil {
+	if err = x.SQL(sql, params...).Find(&ids); err != nil {
 		return
 	}
 	if len(ids) > 0 {
