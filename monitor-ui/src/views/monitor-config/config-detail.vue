@@ -69,7 +69,7 @@
     </template>
     <ModalComponent :modelConfig="modelConfig">
       <div slot="metricSelect" class="extentClass">  
-        <div class="left-content">
+        <div v-if="isModalShow" class="left-content">
           <div class="use-underline-title mb-3">
             {{$t('m_alarm_config')}}
             <span class="underline"></span>
@@ -747,7 +747,7 @@ export default {
             this.modelConfig.isAdd = false
             this.modelConfig.modalTitle = 'button.edit',
             this.formData = cloneDeep(initFormData);
-            this.manageEditParams(this.formData, rowData)
+            this.manageEditParams(this.formData, rowData);
             this.formData.active_window = rowData.active_window === '' ? ['00:00', '23:59'] : rowData.active_window.split('-');
             const conditions = this.formData.conditions;
             conditions.length && conditions.forEach(async item => {
@@ -831,7 +831,7 @@ export default {
     },
     validateDuplicateName(alarmName, guid = '') {
         const currentTableList =  this.totalPageConfig[this.currentAlarmListIndex].tableData;
-        if (isEmpty(currentTableList)) return false
+        if (isEmpty(currentTableList)) return true
         for(let i=0; i<currentTableList.length; i++) {
             const item = currentTableList[i];
             if (item.guid !== guid && item.name === alarmName) {
