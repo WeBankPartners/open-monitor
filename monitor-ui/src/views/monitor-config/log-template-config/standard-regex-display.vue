@@ -234,6 +234,13 @@ export default {
         {
           title: this.$t('m_metric_key'),
           key: 'metric',
+          render: (h, params) => {
+            return (
+              <span>
+                <span>{this.prefixCode}_{params.row.metric}</span>
+              </span>
+            )
+          }
         },
         {
           title: this.$t('m_statistical_parameters'),
@@ -258,7 +265,8 @@ export default {
     }
   },
   props: {
-    configInfo: Object
+    configInfo: Object,
+    prefixCode: String
   },
   mounted () {},
   methods: {
