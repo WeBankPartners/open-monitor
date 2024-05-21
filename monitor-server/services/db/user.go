@@ -259,6 +259,24 @@ func ListRole(search string, page, size int) (err error, data m.TableData) {
 	return err, data
 }
 
+func ListManageRole(roles []string) (result []*m.RoleTable, err error) {
+	var roleList []*m.RoleTable
+	result = []*m.RoleTable{}
+	if err = x.SQL("SELECT id,name,display_name FROM role where disable=0").Find(&roleList); err != nil {
+		return
+	}
+	if len(roles) > 0 && len(roleList) > 0 {
+		for _, roleTable := range roleList {
+			for _, role := range roles {
+				if roleTable.Name == role {
+					result = append(result, roleTable)
+				}
+			}
+		}
+	}
+	return
+}
+
 func StartCronJob() {
 	if !m.Config().CronJob.Enable {
 		return
