@@ -40,10 +40,10 @@ func QueryCustomChartSeriesByChart(chartId string) (list []*models.CustomChartSe
 	return
 }
 
-func QueryCustomChartPermissionByChart(chartId string) (hashMap map[string]string, err error) {
+func QueryCustomChartManagePermissionByChart(chartId string) (hashMap map[string]string, err error) {
 	var list []*models.CustomChartPermission
 	hashMap = make(map[string]string)
-	err = x.SQL("select * from custom_chart_permission where dashboard_chart = ?", chartId).Find(&list)
+	err = x.SQL("select * from custom_chart_permission where dashboard_chart = ? and permission = ?", chartId, models.PermissionMgmt).Find(&list)
 	if len(list) > 0 {
 		for _, roleRel := range list {
 			hashMap[roleRel.RoleId] = roleRel.Permission
@@ -132,7 +132,7 @@ func GetAddCustomDashboardChartRelSQL(chartRelList []*models.CustomDashboardChar
 
 func GetDeleteCustomDashboardRoleRelSQL(dashboardId int) []*Action {
 	var actions []*Action
-	actions = append(actions, &Action{Sql: "delete from custom_dashboard_role_rel where custom_dashboard = ?", Param: []interface{}{dashboardId}})
+	actions = append(actions, &Action{Sql: "delete from custom_dashboard_role_rel where custom_dashboard_id = ?", Param: []interface{}{dashboardId}})
 	return actions
 }
 
@@ -140,13 +140,13 @@ func GetInsertCustomDashboardRoleRelSQL(dashboardId int, mgmtRoles, useRoles []s
 	var actions []*Action
 	if len(mgmtRoles) > 0 {
 		for _, role := range mgmtRoles {
-			actions = append(actions, &Action{Sql: "insert into custom_dashboard_role_rel (custom_dashboard,permission,role_id)values(?,?,?)",
+			actions = append(actions, &Action{Sql: "insert into custom_dashboard_role_rel (custom_dashboard_id,permission,role_id)values(?,?,?)",
 				Param: []interface{}{dashboardId, models.PermissionMgmt, role}})
 		}
 	}
 	if len(useRoles) > 0 {
 		for _, role := range useRoles {
-			actions = append(actions, &Action{Sql: "insert into custom_dashboard_role_rel (custom_dashboard,permission,role_id)values(?,?,?)",
+			actions = append(actions, &Action{Sql: "insert into custom_dashboard_role_rel (custom_dashboard_id,permission,role_id)values(?,?,?)",
 				Param: []interface{}{dashboardId, models.PermissionUse, role}})
 		}
 	}
@@ -161,6 +161,12 @@ func GetUpdateCustomDashboardChartRelSQL(chartRelList []*models.CustomDashboardC
 				"update_time = ? where id =?", Param: []interface{}{rel.Group, rel.DisplayConfig, rel.UpdateUser, rel.UpdateTime, rel.Guid}})
 		}
 	}
+	return actions
+}
+
+func GetUpdateCustomDashboardSQL(name, user string, id int) []*Action {
+	var actions []*Action
+	actions = append(actions, &Action{Sql: "update custom_dashboard set name=?,update_user=?,update_at=? where id =?", Param: []interface{}{name, user, id}})
 	return actions
 }
 
