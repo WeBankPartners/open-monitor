@@ -316,3 +316,14 @@ func UpdateRoleUser(c *gin.Context) {
 		mid.ReturnValidateError(c, err.Error())
 	}
 }
+
+func ListManageRole(c *gin.Context) {
+	var result []*m.RoleTable
+	var err error
+	db.SyncCoreRole()
+	db.SyncCoreRoleList()
+	if result, err = db.ListManageRole(mid.GetOperateUserRoles(c)); err != nil {
+		mid.ReturnServerHandleError(c, err)
+	}
+	mid.ReturnSuccessData(c, result)
+}
