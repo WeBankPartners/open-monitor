@@ -631,7 +631,7 @@ func CreateLogMetricGroup(c *gin.Context) {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
-	if middleware.IsIllegalNameNew(param.Name) {
+	if middleware.IsIllegalDisplayName(param.Name) {
 		err := fmt.Errorf("name:%s illegal", param.Name)
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
@@ -664,7 +664,7 @@ func UpdateLogMetricGroup(c *gin.Context) {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
-	if middleware.IsIllegalNameNew(param.Name) {
+	if middleware.IsIllegalDisplayName(param.Name) {
 		err := fmt.Errorf("name:%s illegal", param.Name)
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
