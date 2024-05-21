@@ -1,6 +1,7 @@
 package db
 
 import (
+	"database/sql"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"strconv"
 	"strings"
@@ -44,7 +45,7 @@ func QueryAllCustomDashboard() (list []*models.SimpleCustomDashboardDto, err err
 }
 
 func QueryCustomDashboardRoleRelByCustomDashboard(dashboardId int) (list []*models.CustomDashBoardRoleRel, err error) {
-	err = x.SQL("select * from custom_dashboard_role_rel where custom_dashboard = ?", dashboardId).Find(&list)
+	err = x.SQL("select * from custom_dashboard_role_rel where custom_dashboard_id = ?", dashboardId).Find(&list)
 	return
 }
 
@@ -74,10 +75,31 @@ func GetCustomDashboardById(id int) (customDashboard *models.CustomDashboardTabl
 	return
 }
 
-func AddCustomDashboard(customDashboard *models.CustomDashboardTable) (err error) {
-	_, err = x.Exec("insert into custom_dashboard (name,create_user,update_user,create_at,update_at) values(?,?,?,?,?)", customDashboard.Name,
-		customDashboard.CreateUser, customDashboard.UpdateUser, customDashboard.CreateAt.Format(models.DatetimeFormat), customDashboard.UpdateAt.Format(models.DatetimeFormat))
-	return
+func AddCustomDashboard(customDashboard *models.CustomDashboardTable, mgmtRoles, useRoles []string) (err error) {
+	var actions []*Action
+	var result sql.Result
+	var insertId int64
+	result, err = x.Exec("insert into custom_dashboard(name,create_user,update_user,create_at,update_at) values(?,?,?,?,?)", customDashboard.Name, customDashboard.CreateUser, customDashboard.UpdateUser, customDashboard.CreateAt.Format(models.DatetimeFormat),
+		customDashboard.UpdateAt.Format(models.DatetimeFormat))
+	if err != nil {
+		return
+	}
+	if insertId, err = result.LastInsertId(); err != nil {
+		return
+	}
+	if len(mgmtRoles) > 0 {
+		for _, role := range mgmtRoles {
+			actions = append(actions, &Action{Sql: "insert into custom_dashboard_role_rel (custom_dashboard_id,permission,role_id)values(?,?,?)",
+				Param: []interface{}{insertId, models.PermissionMgmt, role}})
+		}
+	}
+	if len(useRoles) > 0 {
+		for _, role := range mgmtRoles {
+			actions = append(actions, &Action{Sql: "insert into custom_dashboard_role_rel (custom_dashboard_id,permission,role_id)values(?,?,?)",
+				Param: []interface{}{insertId, models.PermissionUse, role}})
+		}
+	}
+	return Transaction(actions)
 }
 
 func AddCustomDashboardChartRel(rel *models.CustomDashboardChartRel) (err error) {
@@ -89,7 +111,7 @@ func AddCustomDashboardChartRel(rel *models.CustomDashboardChartRel) (err error)
 func QueryCustomDashboardRoleRefListByDashboard(dashboard int) (hashMap map[string]string, err error) {
 	var list []*models.CustomDashBoardRoleRel
 	hashMap = make(map[string]string)
-	err = x.SQL("select * from custom_dashboard_role_rel where custom_dashboard = ?", dashboard).Find(&list)
+	err = x.SQL("select * from custom_dashboard_role_rel where custom_dashboard_id = ?", dashboard).Find(&list)
 	if len(list) > 0 {
 		for _, roleRel := range list {
 			hashMap[roleRel.RoleId] = roleRel.Permission
@@ -101,7 +123,7 @@ func QueryCustomDashboardRoleRefListByDashboard(dashboard int) (hashMap map[stri
 func DeleteCustomDashboardById(dashboard int) (err error) {
 	var actions []*Action
 	actions = append(actions, &Action{Sql: "delete from main_dashboard where custom_dashboard = ?", Param: []interface{}{dashboard}})
-	actions = append(actions, &Action{Sql: "delete from custom_dashboard_role_rel where custom_dashboard = ?", Param: []interface{}{dashboard}})
+	actions = append(actions, &Action{Sql: "delete from custom_dashboard_role_rel where custom_dashboard_id = ?", Param: []interface{}{dashboard}})
 	actions = append(actions, &Action{Sql: "delete from custom_dashboard_chart_rel where custom_dashboard = ?", Param: []interface{}{dashboard}})
 	actions = append(actions, &Action{Sql: "delete from custom_dashboard WHERE id=?", Param: []interface{}{dashboard}})
 	return Transaction(actions)
