@@ -186,12 +186,12 @@ func UpdateLogMonitorTemplate(param *models.LogMonitorTemplateDto, operator stri
 	err = Transaction(actions)
 	if err == nil {
 		var endpointRelRows []*models.LogMetricEndpointRelTable
-		queryEndpointErr := x.SQL("select target_endpoint from log_metric_endpoint_rel where log_metric_monitor in (select log_metric_monitor from log_metric_group where log_monitor_template=?)", param.Guid).Find(&endpointRelRows)
+		queryEndpointErr := x.SQL("select source_endpoint from log_metric_endpoint_rel where log_metric_monitor in (select log_metric_monitor from log_metric_group where log_monitor_template=?)", param.Guid).Find(&endpointRelRows)
 		if queryEndpointErr != nil {
 			log.Logger.Error("query log metric template affect endpoints fail", log.String("logMonitorTemplate", param.Guid), log.Error(queryEndpointErr))
 		} else {
 			for _, v := range endpointRelRows {
-				affectEndpoints = append(affectEndpoints, v.TargetEndpoint)
+				affectEndpoints = append(affectEndpoints, v.SourceEndpoint)
 			}
 		}
 	}

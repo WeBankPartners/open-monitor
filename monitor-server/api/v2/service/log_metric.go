@@ -508,13 +508,13 @@ func validateLogMonitorTemplateParam(param *models.LogMonitorTemplateDto) (err e
 	}
 	calcResultBytes, _ := json.Marshal(param.CalcResultObj)
 	param.CalcResult = string(calcResultBytes)
+	if len(param.CalcResult) > 50000 {
+		err = fmt.Errorf("calc result too long")
+		return
+	}
 	for _, v := range param.ParamList {
 		if middleware.IsIllegalDisplayName(v.DisplayName) {
 			err = fmt.Errorf("log param display name:%s illegal", v.DisplayName)
-			return
-		}
-		if middleware.IsIllegalNameNew(v.Name) {
-			err = fmt.Errorf("log param name:%s illegal", v.Name)
 			return
 		}
 		if param.LogType == "json" && middleware.IsIllegalNameNew(v.JsonKey) {
@@ -726,7 +726,7 @@ func CreateLogMetricCustomGroup(c *gin.Context) {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
-	if middleware.IsIllegalNameNew(param.Name) {
+	if middleware.IsIllegalDisplayName(param.Name) {
 		err := fmt.Errorf("name:%s illegal", param.Name)
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
@@ -759,7 +759,7 @@ func UpdateLogMetricCustomGroup(c *gin.Context) {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
-	if middleware.IsIllegalNameNew(param.Name) {
+	if middleware.IsIllegalDisplayName(param.Name) {
 		err := fmt.Errorf("name:%s illegal", param.Name)
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
