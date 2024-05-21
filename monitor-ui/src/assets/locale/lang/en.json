@@ -411,6 +411,7 @@
   "m_group_chart_name": "Chart Group Name",
   "m_use_charts": "Use Charts",
   "m_edit_screen_group": "Edit Screen Group",
+  "m_select_data_tip": "Please select the data you want to export.",
   "m_object_design": "Object Design",
   "m_object_group": "Object Group",
   "m_business_configuration": "Business Configuration",
