@@ -20,6 +20,7 @@
   </div>
 </template>
 <script>
+import isEmpty from 'lodash/isEmpty'
 import Search from '@/components/search'
 import Charts from '@/components/charts'
 import Recursive from '@/views/recursive-view/recursive'
@@ -37,7 +38,6 @@ export default {
       recursiveViewConfig: [],
       showMaxChart: false,
       zoneWidth: '800',
-      
       historyAlarmModel: false,
       historyAlarmPageConfig: {
         table: {
@@ -50,39 +50,35 @@ export default {
               tree: true
             },
             {
+              title: this.$t('m_alarmName'), 
+              width: 100,
+              key: 'alarm_name'
+            },
+            {
               title: this.$t('tableKey.status'),
               width: 80,
               key: 'status'
             },
+
             {
-              title: this.$t('tableKey.s_metric'),
-              width: 200,
-              key: 's_metric'
-            },
-            {
-              title: this.$t('tableKey.start_value'),
+              title: this.$t('menu.configuration'),
               width: 120,
-              key: 'start_value'
+              key: 'strategyGroupsInfo'
             },
             {
-              title: this.$t('tableKey.s_cond'),
-              width: 80,
-              key: 's_cond'
+              title: this.$t('alarmContent'), 
+              key: 'content',
+              width: 150
             },
             {
-              title: this.$t('tableKey.s_last'),
-              width: 100,
-              key: 's_last'
+              title: this.$t('tableKey.s_priority'), 
+              key: 's_priority', 
+              width: 80
             },
-            {
-              title: this.$t('tableKey.s_priority'),
-              width: 100,
-              key: 's_priority'
-            },
-            {
-              title: this.$t('tableKey.start'),
-              width: 120,
-              key: 'start_string'
+            { 
+              title: this.$t('tableKey.start'), 
+              key: 'start_string', 
+              width: 100
             },
             {
               title: this.$t('tableKey.end'),
@@ -95,11 +91,33 @@ export default {
                 }
                 return h('span', res);
               }
+            },
+            {
+              title: this.$t('field.metric'), 
+              key: 'alarm_metric_list', 
+              width: 150,
+              render: (h, params) => {
+                let res = '-'
+                if (!isEmpty(params.row.alarm_metric_list)) {
+                  res = params.row.alarm_metric_list.join(';')
+                }
+                return h('span', res);
+              }
+            },
+            { 
+              title: this.$t('field.threshold'), 
+              key: 'alarm_detail', 
+              width: 200,
+              renderContent: true
             }
           ],
           btn: [],
         },
       },
+      strategyNameMaps: {
+        "endpointGroup": "m_base_group",
+        "serviceGroup": "field.resourceLevel"
+      }
     }
   },
   created () {
@@ -168,6 +186,16 @@ export default {
           item.id = item.endpoint + '--'
           if (endpointObject.id !== -1) {
             item._showChildren = true
+          }
+          if (!isEmpty(item.children)) {
+            item.children.forEach(child => {
+              child.strategyGroupsInfo = '-'
+              if (!isEmpty(child.strategy_groups)) {
+                child.strategyGroupsInfo = item.strategy_groups.reduce((res, cur)=> {
+                  return res + this.$t(this.strategyNameMaps[cur.type]) + ':' + cur.name + '; '
+                }, '')
+              }
+            })
           }
           return item
         })
