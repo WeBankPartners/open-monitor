@@ -151,9 +151,6 @@ func GetCustomDashboard(c *gin.Context) {
 	if len(customChartExtendList) > 0 {
 		customDashboardDto.Charts = []*models.CustomChartDto{}
 		for _, chartExtend := range customChartExtendList {
-			if chartExtend.CustomChart == nil {
-				continue
-			}
 			groupMap[chartExtend.Group] = true
 			chart, err2 := db.CreateCustomChartDto(chartExtend, configMap, tagMap, tagValueMap)
 			if err2 != nil {
@@ -166,7 +163,7 @@ func GetCustomDashboard(c *gin.Context) {
 		}
 		customDashboardDto.PanelGroupList = db.TransformMapToArray(groupMap)
 	}
-	middleware.ReturnData(c, customDashboardDto)
+	middleware.ReturnSuccessData(c, customDashboardDto)
 }
 
 // AddCustomDashboard 新增自定义看板
@@ -207,37 +204,20 @@ func AddCustomDashboard(c *gin.Context) {
 
 // DeleteCustomDashboard 删除自定义看板
 func DeleteCustomDashboard(c *gin.Context) {
-	var permissionMap map[string]string
 	var err error
-	var userRoles = middleware.GetOperateUserRoles(c)
-	var hasDeletedPermission bool
 	var id int
+	var permission bool
 	id, err = strconv.Atoi(c.Query("id"))
 	if err != nil || id <= 0 {
 		middleware.ReturnParamTypeError(c, "id", "int")
 		return
 	}
-	if len(userRoles) == 0 {
-		middleware.ReturnValidateError(c, "user roles is empty")
-		return
-	}
-	// 判断是否拥有删除权限
-	if permissionMap, err = db.QueryCustomDashboardManagePermissionByDashboard(id); err != nil {
+	if permission, err = CheckHasManagePermission(id, middleware.GetOperateUserRoles(c)); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
-	if len(permissionMap) == 0 {
-		permissionMap = make(map[string]string)
-	}
-	for _, role := range userRoles {
-		if v, ok := permissionMap[role]; ok && v == string(models.PermissionMgmt) {
-			hasDeletedPermission = true
-			break
-		}
-	}
-	if !hasDeletedPermission {
+	if !permission {
 		middleware.ReturnServerHandleError(c, fmt.Errorf("not has deleted permission"))
-		return
 	}
 	if err = db.DeleteCustomDashboardById(id); err != nil {
 		middleware.ReturnServerHandleError(c, err)
@@ -252,8 +232,8 @@ func UpdateCustomDashboard(c *gin.Context) {
 	var param models.UpdateCustomDashboardParam
 	var hasChartRelList, insertChartRelList, updateChartRelList []*models.CustomDashboardChartRel
 	var deleteChartRelIds []string
-	var insert, delete bool
-	var actions, deleteActions, subActions []*db.Action
+	var insert, delete, permission bool
+	var actions []*db.Action
 	user := middleware.GetOperateUser(c)
 	now := time.Now().Format(models.DatetimeFormat)
 	if err = c.ShouldBindJSON(&param); err != nil {
@@ -268,13 +248,12 @@ func UpdateCustomDashboard(c *gin.Context) {
 		middleware.ReturnParamEmptyError(c, "name")
 		return
 	}
-	if len(param.MgmtRoles) != 1 {
-		middleware.ReturnValidateError(c, "mgmtRoles error")
+	if permission, err = CheckHasManagePermission(param.Id, middleware.GetOperateUserRoles(c)); err != nil {
+		middleware.ReturnServerHandleError(c, err)
 		return
 	}
-	if len(param.UseRoles) == 0 {
-		middleware.ReturnParamEmptyError(c, "useRoles is empty")
-		return
+	if !permission {
+		middleware.ReturnServerHandleError(c, fmt.Errorf("not has edit permission"))
 	}
 	if hasChartRelList, err = db.QueryCustomDashboardChartRelListByDashboard(param.Id); err != nil {
 		middleware.ReturnServerHandleError(c, err)
@@ -286,14 +265,7 @@ func UpdateCustomDashboard(c *gin.Context) {
 	if len(hasChartRelList) == 0 {
 		hasChartRelList = []*models.CustomDashboardChartRel{}
 	}
-	deleteActions = db.GetDeleteCustomDashboardRoleRelSQL(param.Id)
-	if len(deleteActions) > 0 {
-		actions = append(actions, deleteActions...)
-	}
-	subActions = db.GetInsertCustomDashboardRoleRelSQL(param.Id, param.MgmtRoles, param.UseRoles)
-	if len(subActions) > 0 {
-		actions = append(actions, subActions...)
-	}
+
 	for _, chart := range param.Charts {
 		insert = true
 		for _, chartRel := range hasChartRelList {
@@ -351,4 +323,60 @@ func UpdateCustomDashboard(c *gin.Context) {
 		return
 	}
 	middleware.ReturnSuccess(c)
+}
+
+// UpdateCustomDashboardPermission 修改自定义面板权限
+func UpdateCustomDashboardPermission(c *gin.Context) {
+	var err error
+	var param models.UpdateCustomDashboardPermissionParam
+	var actions, deleteActions, subActions []*db.Action
+	var permission bool
+	if err = c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if len(param.MgmtRoles) != 1 {
+		middleware.ReturnValidateError(c, "mgmtRoles error")
+		return
+	}
+	if len(param.UseRoles) == 0 {
+		middleware.ReturnParamEmptyError(c, "useRoles is empty")
+		return
+	}
+	if permission, err = CheckHasManagePermission(param.Id, middleware.GetOperateUserRoles(c)); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if !permission {
+		middleware.ReturnServerHandleError(c, fmt.Errorf("not has edit permission"))
+	}
+	deleteActions = db.GetDeleteCustomDashboardRoleRelSQL(param.Id)
+	if len(deleteActions) > 0 {
+		actions = append(actions, deleteActions...)
+	}
+	subActions = db.GetInsertCustomDashboardRoleRelSQL(param.Id, param.MgmtRoles, param.UseRoles)
+	if len(subActions) > 0 {
+		actions = append(actions, subActions...)
+	}
+}
+
+func CheckHasManagePermission(dashboard int, userRoles []string) (permission bool, err error) {
+	var permissionMap map[string]string
+	if len(userRoles) == 0 {
+		return
+	}
+	// 判断是否拥有删除权限
+	if permissionMap, err = db.QueryCustomDashboardManagePermissionByDashboard(dashboard); err != nil {
+		return
+	}
+	if len(permissionMap) == 0 {
+		permissionMap = make(map[string]string)
+	}
+	for _, role := range userRoles {
+		if v, ok := permissionMap[role]; ok && v == string(models.PermissionMgmt) {
+			permission = true
+			break
+		}
+	}
+	return
 }
