@@ -19,7 +19,7 @@ type CustomChartSeriesDto struct {
 	ColorGroup   string            `json:"colorGroup" `   // 默认色系
 	Metric       string            `json:"metric"`        // 指标
 	Tags         []*TagDto         `json:"tags"`          // 标签
-	ColorConfig  []*ColorConfigDto `json:"colorConfig"`   // 颜色
+	ColorConfig  []*ColorConfigDto `json:"series"`        // 颜色
 }
 
 type TagDto struct {
