@@ -59,6 +59,10 @@ func CreateAlarmStrategy(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
+	if err := db.ValidateAlarmStrategyName(&param); err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
 	err := db.CreateAlarmStrategy(&param)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
@@ -87,6 +91,10 @@ func UpdateAlarmStrategy(c *gin.Context) {
 		param.ActiveWindow = models.DefaultActiveWindow
 	}
 	if err := validateStrategyCondition(param.Conditions); err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	if err := db.ValidateAlarmStrategyName(&param); err != nil {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
