@@ -28,32 +28,36 @@ window.addOptions({
 
 const implicitRoute = {
   'monitorConfigIndex/groupManagement': {
-    parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
-    childBreadcrumb: { 'zh-CN': '组管理', 'en-US': 'Group' }
+    parentBreadcrumb: {'zh-CN': '对象设计', 'en-US': 'Object Design'},
+    childBreadcrumb: { 'zh-CN': '对象组', 'en-US': 'Object Group' }
   },
   'monitorConfigIndex/thresholdManagement': {
-    parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
-    childBreadcrumb: { 'zh-CN': '阀值', 'en-US': 'Threshold' }
+    parentBreadcrumb: {'zh-CN': '告警', 'en-US': 'Alarm'},
+    childBreadcrumb: { 'zh-CN': '指标阈值', 'en-US': 'Metric Threshold' }
   },
   'monitorConfigIndex/logManagement': {
-    parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
-    childBreadcrumb: { 'zh-CN': '关键字', 'en-US': 'Log' }
+    parentBreadcrumb: {'zh-CN': '告警', 'en-US': 'Alarm'},
+    childBreadcrumb: { 'zh-CN': '关键字', 'en-US': 'Keywords' }
   },
   'monitorConfigIndex/resourceLevel': {
-    parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
-    childBreadcrumb: { 'zh-CN': '层级对象', 'en-US': 'Resource Level' }
+    parentBreadcrumb: {'zh-CN': '对象设计', 'en-US': 'Object Design'},
+    childBreadcrumb: { 'zh-CN': '层级对象', 'en-US': 'Hierarchy Object' }
   },
   'monitorConfigIndex/exporter': {
-    parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
-    childBreadcrumb: { 'zh-CN': '采集器', 'en-US': 'Exporter'}
+    parentBreadcrumb: {'zh-CN': '其他', 'en-US': 'Other'},
+    childBreadcrumb: { 'zh-CN': '采集器', 'en-US': 'Collector'}
   },
   'monitorConfigIndex/businessMonitor': {
-    parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
-    childBreadcrumb: { 'zh-CN': '业务监控', 'en-US': 'Business Monitor' }
+    parentBreadcrumb: {'zh-CN': '指标', 'en-US': 'quota'},
+    childBreadcrumb: { 'zh-CN': '业务配置', 'en-US': 'Business Configuration' }
   },
   'monitorConfigIndex/logTemplate': {
-    parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
-    childBreadcrumb: { 'zh-CN': '日志模版', 'en-US': 'Log Template' }
+    parentBreadcrumb: {'zh-CN': '指标', 'en-US': 'quota'},
+    childBreadcrumb: { 'zh-CN': '业务日志模板', 'en-US': 'Business Log Template' }
+  },
+  'monitorConfigIndex/metricConfig': {
+    parentBreadcrumb: {'zh-CN': '指标', 'en-US': 'quota'},
+    childBreadcrumb: { 'zh-CN': '自定义', 'en-US': 'customize' }
   },
   'viewConfig': {
     parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
