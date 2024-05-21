@@ -8,7 +8,7 @@
         </div>
         <div>
           <h5 class="ml-3 mt-1 mb-2" style="display:inline-block">{{$t('m_alarm_list')}}</h5>
-          <button v-if="isEditState" @click="addAlarmItem(tableItem)" type="button" class="btn btn-small success-btn ml-2 mb-2">
+          <button v-if="isEditState" @click="addAlarmItem(tableItem, tableIndex)" type="button" class="btn btn-small success-btn ml-2 mb-2">
             <i class="fa fa-plus"></i>
             {{$t('button.add')}}
           </button>
@@ -393,7 +393,7 @@ export default {
           title: this.$t('m_label_value'),
           key: 'tags',
           align: 'left',
-          minWidth: 180,
+          width: 180,
           render: (h, params) => {
             return (
               <div>
@@ -402,6 +402,7 @@ export default {
                     <div class="tags-show" key={selectIndex + '' + JSON.stringify(i)}>
                       <span>{i.tagName}</span>
                       <Select
+                        style="maxWidth: 130px"
                         value={i.tagValue}
                         disabled={!this.isEditState}
                         on-on-change={v => {
@@ -414,8 +415,8 @@ export default {
                         {!isEmpty(this.formData.conditions[params.index].tagOptions) && 
                           !isEmpty(this.formData.conditions[params.index].tagOptions[i.tagName]) &&
                             this.formData.conditions[params.index].tagOptions[i.tagName].map((item, index) => (
-                            <Option value={item.value} key={item.name + index}>
-                              {item.name}
+                            <Option value={item.value} key={item.key + index}>
+                              {item.key}
                             </Option>
                           ))}
                       </Select>
@@ -461,6 +462,7 @@ export default {
               <Input
                 value={params.row.thresholdValue}
                 disabled={!this.isEditState}
+                maxlength="10"
                 on-on-change={v => {
                   this.formData.conditions[params.index].thresholdValue = v.target.value
                 }}
@@ -505,6 +507,7 @@ export default {
               <Input
                 value={params.row.lastValue}
                 disabled={!this.isEditState}
+                maxlength="10"
                 on-on-change={v => {
                   this.formData.conditions[params.index].lastValue = v.target.value
                 }}
@@ -585,13 +588,14 @@ export default {
           key: 'firing',
           align: 'left',
           render: (h, params) => {
-            return (
+            return !isEmpty(params.row.notify) ?
+            (
               <div>
                 <div>{this.$t('m_notification_role')}:{params.row.notify[0].notify_roles.join(';')} </div>
                 <div>{this.$t('m_trigger_arrange')}: {params.row.notify[0].proc_callback_key}{params.row.notify[0].proc_callback_mode ? '(' + this.$t(find(this.callbackMode, {value: params.row.notify[0].proc_callback_mode}).label) + ')' : ""}</div>
                 <div>{this.$t('tableKey.description')}:{params.row.notify[0].description} </div>
               </div>
-            )
+            ) : <div>--</div>
           }
         },
         {
@@ -599,13 +603,13 @@ export default {
           key: 'ok',
           align: 'left',
           render: (h, params) => {
-            return (
+            return !isEmpty(params.row.notify) && params.row.notify.length > 1 ? (
               <div>
                 <div>{this.$t('m_notification_role')}:{params.row.notify[1].notify_roles} </div>
                 <div>{this.$t('m_trigger_arrange')}: {params.row.notify[1].proc_callback_key}{params.row.notify[1].proc_callback_mode ? '(' + this.$t(find(this.callbackMode, {value: params.row.notify[1].proc_callback_mode}).label) + ')' : ""}</div>
                 <div>{this.$t('tableKey.description')}:{params.row.notify[1].description} </div>
               </div>
-            )
+            ) : <div>--</div>
           }
         },
         {
@@ -634,7 +638,7 @@ export default {
           render: (h, params) => {
             return (
               <div>
-                <Button size="small" class="mr-1"  type="primary" on-click={() => this.editAlarmItem(params.row)}>
+                <Button size="small" class="mr-1"  type="primary" on-click={() => this.editAlarmItem(params.row, params)}>
                   <Icon type="md-create" />
                 </Button>
                 {
@@ -653,7 +657,8 @@ export default {
       request: this.$root.$httpRequestEntrance.httpRequestEntrance,
       initialTags: [],
       initialTagOptions: {},
-      isModalShow: false // 为了解决select组件渲染出错问题
+      isModalShow: false, // 为了解决select组件渲染出错问题,
+      currentAlarmListIndex: null // 解决告警名称重名校验
     }
   },
   methods: {
@@ -733,56 +738,58 @@ export default {
         })
       })
     },
-    async editAlarmItem (rowData) {
-      this.selectedData = rowData
-      const api = this.getMetricListPath(rowData);
-      this.request('GET', api, '', (responseData) => {
-        this.modelConfig.metricList = responseData;
-        this.modelConfig.isAdd = false
-        this.modelConfig.modalTitle = 'button.edit',
-        this.formData = cloneDeep(initFormData);
-        this.manageEditParams(this.formData, rowData)
-        this.formData.active_window = rowData.active_window === '' ? ['00:00', '23:59'] : rowData.active_window.split('-');
-        const conditions = this.formData.conditions;
-        conditions.length && conditions.forEach(async item => {
-          const thresholdsAndSymbols = this.getSymbolAndValue(item.condition);
-          const lastValueAndSymbol = this.getSymbolAndValue(item.last);
-          const tagOptions = await this.findTagsByMetric(item.metric); // 指标下拉option获取
-          if (isEmpty(item.tags) && !isEmpty(tagOptions)) {
-            const tags = [];
-            for(let key in tagOptions) {
-              tags.push(
-                {
-                  tagName: key,
-                  tagValue: []
+    async editAlarmItem (rowData, allParams) {
+        this.currentAlarmListIndex = rowData.alarmListIndex;
+        this.selectedData = rowData
+        const api = this.getMetricListPath(rowData);
+        this.request('GET', api, '', (responseData) => {
+            this.modelConfig.metricList = responseData;
+            this.modelConfig.isAdd = false
+            this.modelConfig.modalTitle = 'button.edit',
+            this.formData = cloneDeep(initFormData);
+            this.manageEditParams(this.formData, rowData)
+            this.formData.active_window = rowData.active_window === '' ? ['00:00', '23:59'] : rowData.active_window.split('-');
+            const conditions = this.formData.conditions;
+            conditions.length && conditions.forEach(async item => {
+                const thresholdsAndSymbols = this.getSymbolAndValue(item.condition);
+                const lastValueAndSymbol = this.getSymbolAndValue(item.last);
+                const tagOptions = await this.findTagsByMetric(item.metric); // 指标下拉option获取
+                if (isEmpty(item.tags) && !isEmpty(tagOptions)) {
+                    const tags = [];
+                    for(let key in tagOptions) {
+                        tags.push(
+                            {
+                                tagName: key,
+                                tagValue: []
+                            }
+                        )
+                    }
+                    Vue.set(item, 'tags', tags)
                 }
-              )
-            }
-            Vue.set(item, 'tags', tags)
-          }
-          Vue.set(item, 'threshold', thresholdsAndSymbols.symbol)
-          Vue.set(item, 'thresholdValue', thresholdsAndSymbols.value)
-          Vue.set(item, 'lastSymbol', lastValueAndSymbol.symbol);
-          Vue.set(item, 'lastValue', lastValueAndSymbol.value);
-          Vue.set(item, 'tagOptions', tagOptions);
+                Vue.set(item, 'threshold', thresholdsAndSymbols.symbol)
+                Vue.set(item, 'thresholdValue', thresholdsAndSymbols.value)
+                Vue.set(item, 'lastSymbol', lastValueAndSymbol.symbol);
+                Vue.set(item, 'lastValue', lastValueAndSymbol.value);
+                Vue.set(item, 'tagOptions', tagOptions);
+            })
+            this.showAddEditModal();
         })
-        this.showAddEditModal();
-      })
     },
-    addAlarmItem (tableItem) {
-      this.selectedTableData = tableItem;
-      const api = this.getMetricListPath(tableItem);
-      this.request('GET', api, '', async responseData => {
-        this.modelConfig.metricList = responseData;
-        this.modelConfig.isAdd = true
-        this.modelConfig.modalTitle = 'button.add',
-        this.formData = cloneDeep(initFormData);
-        await this.getInitialTags();
-        this.formData.conditions[0].metric = this.modelConfig.metricList[0].guid; // 指标名
-        this.formData.conditions[0].tags = cloneDeep(this.initialTags);
-        this.formData.conditions[0].tagOptions = cloneDeep(this.initialTagOptions);
-        this.showAddEditModal();
-      })
+    addAlarmItem (tableItem, index) {
+        this.currentAlarmListIndex = index;
+        this.selectedTableData = tableItem;
+        const api = this.getMetricListPath(tableItem);
+        this.request('GET', api, '', async responseData => {
+            this.modelConfig.metricList = responseData;
+            this.modelConfig.isAdd = true
+            this.modelConfig.modalTitle = 'button.add',
+            this.formData = cloneDeep(initFormData);
+            await this.getInitialTags();
+            this.formData.conditions[0].metric = this.modelConfig.metricList[0].guid; // 指标名
+            this.formData.conditions[0].tags = cloneDeep(this.initialTags);
+            this.formData.conditions[0].tagOptions = cloneDeep(this.initialTagOptions);
+            this.showAddEditModal();
+        })
     },
     getWorkFlow () {
       this.request('GET', '/monitor/api/v2/alarm/event/callback/list', '', (responseData) => {
@@ -810,12 +817,41 @@ export default {
         })
       })
     },
+    validateConditions(conditions) {
+        if (!conditions || isEmpty(conditions)) return false;
+        const needValidateKey = ['metric', 'lastSymbol', 'lastValue', 'threshold', 'thresholdValue']
+        for(let i=0; i<conditions.length; i++) {
+            for(let k=0; k < needValidateKey.length; k++) {
+                if (!conditions[i][needValidateKey[k]]) {
+                    return false
+                }
+            } 
+        }
+        return true
+    },
+    validateDuplicateName(alarmName, guid = '') {
+        const currentTableList =  this.totalPageConfig[this.currentAlarmListIndex].tableData;
+        if (isEmpty(currentTableList)) return false
+        for(let i=0; i<currentTableList.length; i++) {
+            const item = currentTableList[i];
+            if (item.guid !== guid && item.name === alarmName) {
+                return false
+            }
+        }
+        return true
+    },
     submitContent() {
       this.$refs.formData.validate().then(result => {
         if (!result) return
         if (this.$root.$validate.isEmpty_reset(this.formData.content)) {
           this.$Message.warning(this.$t('tableKey.content')+this.$t('tips.required'))
           return
+        }
+        if (!this.validateConditions(this.formData.conditions)) {
+            return this.$Message.error(this.$t('m_metric_threshold') + this.$t('tips.emptyToSave'));
+        }
+        if (!this.validateDuplicateName(this.formData.name, this.selectedData.guid)) {
+            return this.$Message.error(this.$t('m_alarmName') + this.$t('m_cannot_be_repeated'));
         }
         let params = cloneDeep(this.formData);
         const needMergeParams = {
@@ -845,7 +881,7 @@ export default {
     setMonitorType(monitorType){
       this.monitorType = monitorType;
     },
-    handleTableData(tempTableData) {
+    handleTableData(tempTableData, alarmListIndex) {
       const initialData = cloneDeep(tempTableData);
       const resData = [];
       let startRowIndex = 0;
@@ -854,7 +890,7 @@ export default {
         item.notify = !isEmpty(item.notify) ? item.notify : cloneDeep(initFormData.notify);
         if(item.conditions && item.conditions.length) {
           item.conditions.forEach(metricItem => {
-            resData.push(Object.assign({}, item, metricItem))
+            resData.push(Object.assign({}, item, metricItem, {alarmListIndex}))
           })
           this.mergeSpanMap[item.guid] = {
             startRowIndex,
@@ -871,13 +907,12 @@ export default {
       this.totalPageConfig = []
       this.request('GET', api, '', responseData => {
         const allConfigDetail = responseData;
-        allConfigDetail.forEach(item => {
+        allConfigDetail.forEach((item, alarmIndex) => {
           let tempTableData = item.strategy.map(s => {
             s.monitor_type = item.monitor_type
             return s
           })
-
-          const tableData = this.handleTableData(tempTableData);
+          const tableData = this.handleTableData(tempTableData, alarmIndex);
           this.totalPageConfig.push({
             tableData,
             endpoint_group: item.endpoint_group,
@@ -905,8 +940,7 @@ export default {
     cancelModal () {
       this.closeAddEditModal();
     },
-    handleMergeSpan ({ row, column, rowIndex, columnIndex }, index) {
-      console.log(column);
+    handleMergeSpan ({ row, rowIndex, columnIndex }, index) {
       if ([6,7,8].includes(columnIndex)) return;
       const mergeSpanMap = this.totalPageConfig[index].mergeSpanMap;
       const spanMap = mergeSpanMap[row.guid];
@@ -994,6 +1028,11 @@ export default {
   overflow: scroll;
 }
 
+.tags-show .ivu-select-item.ivu-select-item-selected::after {
+    top: 6px;
+    right: -6px
+}
+
 .modal-button-save.modal-button-save {
   background-color: #2d8cf0!important;
 }
@@ -1061,7 +1100,7 @@ export default {
   .search-input {
     height: 32px;
     padding: 4px 7px;
-    font-size: 12px;
+    font-size: 14px;
     border: 1px solid #dcdee2;
     border-radius: 4px;
     width: 230px;

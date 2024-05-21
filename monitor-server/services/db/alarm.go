@@ -1731,7 +1731,11 @@ func buildAlarmDetailData(inputList []*m.AlarmDetailData, splitChar string) stri
 				tagList = append(tagList, tagV)
 			}
 			//stringList = append(stringList, fmt.Sprintf("%s %.3f %s %s %s ", v.Metric, v.StartValue, v.Cond, v.Last, v.Start.Format(m.DatetimeFormat)))
-			stringList = append(stringList, fmt.Sprintf("Metric:%s Tag:%s %s Value:%.3f Duration:%s", v.Metric, strings.Join(tagList, ","), v.Cond, v.StartValue, v.Last))
+			if len(tagList) > 0 {
+				stringList = append(stringList, fmt.Sprintf("Metric:%s Tag:%s %s Value:%.3f Duration:%s", v.Metric, strings.Join(tagList, ","), v.Cond, v.StartValue, v.Last))
+			} else {
+				stringList = append(stringList, fmt.Sprintf("Metric:%s %s Value:%.3f Duration:%s", v.Metric, v.Cond, v.StartValue, v.Last))
+			}
 		}
 	}
 	return strings.Join(stringList, splitChar)

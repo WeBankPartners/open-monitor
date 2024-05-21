@@ -75,6 +75,7 @@ CREATE TABLE IF NOT EXISTS `custom_chart_series_config` (
 `dashboard_chart_config` varchar(64) NOT NULL COMMENT '图表配置表',
 `tags` text  NULL COMMENT '标签',
 `color` varchar(32)  NULL COMMENT '颜色',
+`serie_name` varchar(255)  NULL COMMENT '指标+对象+标签值',
 PRIMARY KEY (`guid`),
 CONSTRAINT `fore_custom_chart_series_config_dashboard_chart_config` FOREIGN KEY (`dashboard_chart_config`) REFERENCES `custom_chart_series` (`guid`)
 )ENGINE= InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '自定义图表配置表'
