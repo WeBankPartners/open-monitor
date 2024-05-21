@@ -42,6 +42,9 @@ func QueryCustomDashboardList(c *gin.Context) {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
+	if param.PageSize == 0 {
+		param.PageSize = 10
+	}
 	if pageInfo, list, err = db.QueryCustomDashboardList(param, middleware.GetOperateUserRoles(c)); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
@@ -108,7 +111,7 @@ func QueryCustomDashboardList(c *gin.Context) {
 func GetCustomDashboard(c *gin.Context) {
 	var err error
 	var customDashboard *models.CustomDashboardTable
-	var customDashboardDto *models.CustomDashboardDto
+	var customDashboardDto = &models.CustomDashboardDto{}
 	var customChartExtendList []*models.CustomChartExtend
 	var groupMap = make(map[string]bool)
 	var configMap = make(map[string][]*models.CustomChartSeriesConfig)
@@ -124,10 +127,11 @@ func GetCustomDashboard(c *gin.Context) {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
-	if customDashboard == nil {
+	if customDashboard == nil || customDashboard.Id == 0 {
 		middleware.ReturnValidateError(c, "id is invalid")
 		return
 	}
+	customDashboardDto.Name = customDashboard.Name
 	if customChartExtendList, err = db.QueryCustomChartListByDashboard(customDashboard.Id); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
@@ -218,7 +222,7 @@ func DeleteCustomDashboard(c *gin.Context) {
 		return
 	}
 	// 判断是否拥有删除权限
-	if permissionMap, err = db.QueryCustomDashboardRoleRefListByDashboard(id); err != nil {
+	if permissionMap, err = db.QueryCustomDashboardManagePermissionByDashboard(id); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
@@ -258,6 +262,10 @@ func UpdateCustomDashboard(c *gin.Context) {
 	}
 	if param.Id == 0 {
 		middleware.ReturnParamEmptyError(c, "id")
+		return
+	}
+	if strings.TrimSpace(param.Name) == "" {
+		middleware.ReturnParamEmptyError(c, "name")
 		return
 	}
 	if len(param.MgmtRoles) != 1 {
@@ -337,6 +345,7 @@ func UpdateCustomDashboard(c *gin.Context) {
 	if len(deleteChartRelIds) > 0 {
 		actions = append(actions, db.GetDeleteCustomDashboardChartRelSQL(deleteChartRelIds)...)
 	}
+	actions = append(actions, db.GetUpdateCustomDashboardSQL(param.Name, middleware.GetOperateUser(c), param.Id)...)
 	if err = db.Transaction(actions); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
