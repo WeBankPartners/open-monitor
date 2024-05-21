@@ -33,6 +33,6 @@ var (
 type Permission string
 
 const (
-	PermissionMgmt Permission = "MGMT" //管理权限
-	PermissionUse  Permission = "USE"  //使用权限
+	PermissionMgmt Permission = "mgmt" //管理权限
+	PermissionUse  Permission = "use"  //使用权限
 )
