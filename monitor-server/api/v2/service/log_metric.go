@@ -499,7 +499,7 @@ func validateLogMonitorTemplateParam(param *models.LogMonitorTemplateDto) (err e
 		err = fmt.Errorf("calc result can not empty")
 		return
 	}
-	if existLogMonitorTemplate, getErr := db.GetLogMonitorTemplateByName(param.Name); getErr != nil {
+	if existLogMonitorTemplate, getErr := db.GetLogMonitorTemplateByName(param.Guid, param.Name); getErr != nil {
 		err = getErr
 		return
 	} else if existLogMonitorTemplate != nil {
@@ -627,6 +627,15 @@ func CreateLogMetricGroup(c *gin.Context) {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
+	if err := db.ValidateLogMetricGroupName("", param.Name, param.LogMetricMonitorGuid); err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	if middleware.IsIllegalNameNew(param.Name) {
+		err := fmt.Errorf("name:%s illegal", param.Name)
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
 	err := db.CreateLogMetricGroup(&param, middleware.GetOperateUser(c))
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
@@ -648,6 +657,15 @@ func UpdateLogMetricGroup(c *gin.Context) {
 	}
 	if param.LogMetricGroupGuid == "" || param.LogMetricMonitorGuid == "" {
 		err := fmt.Errorf("LogMetricGroupGuid and LogMetricMonitorGuid can not empty")
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	if err := db.ValidateLogMetricGroupName("", param.Name, param.LogMetricMonitorGuid); err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	if middleware.IsIllegalNameNew(param.Name) {
+		err := fmt.Errorf("name:%s illegal", param.Name)
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
@@ -704,6 +722,15 @@ func CreateLogMetricCustomGroup(c *gin.Context) {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
+	if err := db.ValidateLogMetricGroupName(param.Guid, param.Name, param.LogMetricMonitor); err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	if middleware.IsIllegalNameNew(param.Name) {
+		err := fmt.Errorf("name:%s illegal", param.Name)
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
 	err := db.CreateLogMetricCustomGroup(&param, middleware.GetOperateUser(c))
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
@@ -725,6 +752,15 @@ func UpdateLogMetricCustomGroup(c *gin.Context) {
 	}
 	if param.Guid == "" {
 		err := fmt.Errorf("guid can not empty")
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	if err := db.ValidateLogMetricGroupName(param.Guid, param.Name, param.LogMetricMonitor); err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	if middleware.IsIllegalNameNew(param.Name) {
+		err := fmt.Errorf("name:%s illegal", param.Name)
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
