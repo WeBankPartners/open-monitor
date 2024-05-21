@@ -177,15 +177,24 @@ func AddCustomDashboard(c *gin.Context) {
 		middleware.ReturnParamEmptyError(c, "name")
 		return
 	}
+	if len(param.MgmtRoles) != 1 {
+		middleware.ReturnValidateError(c, "mgmtRoles error")
+		return
+	}
+	if len(param.UseRoles) == 0 {
+		middleware.ReturnParamEmptyError(c, "useRoles")
+		return
+	}
 	now := time.Now()
 	user := middleware.GetOperateUser(c)
-	if err = db.AddCustomDashboard(&models.CustomDashboardTable{
+	dashboard := &models.CustomDashboardTable{
 		Name:       param.Name,
 		CreateUser: user,
 		UpdateUser: user,
 		CreateAt:   now,
 		UpdateAt:   now,
-	}); err != nil {
+	}
+	if err = db.AddCustomDashboard(dashboard, param.MgmtRoles, param.UseRoles); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
@@ -240,7 +249,7 @@ func UpdateCustomDashboard(c *gin.Context) {
 	var hasChartRelList, insertChartRelList, updateChartRelList []*models.CustomDashboardChartRel
 	var deleteChartRelIds []string
 	var insert, delete bool
-	var actions []*db.Action
+	var actions, deleteActions, subActions []*db.Action
 	user := middleware.GetOperateUser(c)
 	now := time.Now().Format(models.DatetimeFormat)
 	if err = c.ShouldBindJSON(&param); err != nil {
@@ -249,6 +258,14 @@ func UpdateCustomDashboard(c *gin.Context) {
 	}
 	if param.Id == 0 {
 		middleware.ReturnParamEmptyError(c, "id")
+		return
+	}
+	if len(param.MgmtRoles) != 1 {
+		middleware.ReturnValidateError(c, "mgmtRoles error")
+		return
+	}
+	if len(param.UseRoles) == 0 {
+		middleware.ReturnParamEmptyError(c, "useRoles is empty")
 		return
 	}
 	if hasChartRelList, err = db.QueryCustomDashboardChartRelListByDashboard(param.Id); err != nil {
@@ -260,6 +277,14 @@ func UpdateCustomDashboard(c *gin.Context) {
 	}
 	if len(hasChartRelList) == 0 {
 		hasChartRelList = []*models.CustomDashboardChartRel{}
+	}
+	deleteActions = db.GetDeleteCustomDashboardRoleRelSQL(param.Id)
+	if len(deleteActions) > 0 {
+		actions = append(actions, deleteActions...)
+	}
+	subActions = db.GetInsertCustomDashboardRoleRelSQL(param.Id, param.MgmtRoles, param.UseRoles)
+	if len(subActions) > 0 {
+		actions = append(actions, subActions...)
 	}
 	for _, chart := range param.Charts {
 		insert = true
