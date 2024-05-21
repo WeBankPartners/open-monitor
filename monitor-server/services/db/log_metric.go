@@ -985,20 +985,6 @@ func GetLogMetricGroup(logMetricGroupGuid string) (result *models.LogMetricGroup
 	return
 }
 
-func ValidateLogMetricGroupName(logMetricMonitorGuid, inputName string) (legal bool, err error) {
-	queryResult, queryErr := x.QueryString("select name from log_metric_group where log_metric_monitor=? and name=?", logMetricMonitorGuid, inputName)
-	if queryErr != nil {
-		err = fmt.Errorf("query log metric group table fail,%s ", queryErr.Error())
-		return
-	}
-	if len(queryResult) > 0 {
-		legal = false
-	} else {
-		legal = true
-	}
-	return
-}
-
 func CreateLogMetricGroup(param *models.LogMetricGroupWithTemplate, operator string) (err error) {
 	param.LogMetricGroupGuid = "lmg_" + guid.CreateGuid()
 	logMonitorTemplateObj, getErr := GetLogMonitorTemplate(param.LogMonitorTemplateGuid)
@@ -1288,6 +1274,19 @@ func CreateLogMetricCustomGroup(param *models.LogMetricGroupObj, operator string
 		actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,log_metric_config) value (?,?,?,?,?,?,?,?)", Param: []interface{}{fmt.Sprintf("%s__%s", v.Metric, serviceGroup), v.Metric, monitorType, getLogMetricExprByAggType(v.Metric, v.AggType, serviceGroup, v.TagConfigList), serviceGroup, models.MetricWorkspaceService, nowTime, tmpMetricConfigGuid}})
 	}
 	err = Transaction(actions)
+	return
+}
+
+func ValidateLogMetricGroupName(guid, name, logMetricMonitor string) (err error) {
+
+	queryResult, queryErr := x.QueryString("select guid from log_metric_group where log_metric_monitor=? and name=? and guid!=?", logMetricMonitor, name, guid)
+	if queryErr != nil {
+		err = fmt.Errorf("query log metric group table fail,%s ", queryErr.Error())
+		return
+	}
+	if len(queryResult) > 0 {
+		err = fmt.Errorf("log metric group name:%s duplicate", name)
+	}
 	return
 }
 
