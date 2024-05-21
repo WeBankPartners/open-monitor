@@ -358,6 +358,11 @@ func UpdateCustomDashboardPermission(c *gin.Context) {
 	if len(subActions) > 0 {
 		actions = append(actions, subActions...)
 	}
+	if err = db.Transaction(actions); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	middleware.ReturnSuccess(c)
 }
 
 func CheckHasManagePermission(dashboard int, userRoles []string) (permission bool, err error) {
