@@ -94,7 +94,7 @@ func AddCustomDashboard(customDashboard *models.CustomDashboardTable, mgmtRoles,
 		}
 	}
 	if len(useRoles) > 0 {
-		for _, role := range mgmtRoles {
+		for _, role := range useRoles {
 			actions = append(actions, &Action{Sql: "insert into custom_dashboard_role_rel (custom_dashboard_id,permission,role_id)values(?,?,?)",
 				Param: []interface{}{insertId, models.PermissionUse, role}})
 		}
@@ -108,10 +108,10 @@ func AddCustomDashboardChartRel(rel *models.CustomDashboardChartRel) (err error)
 	return
 }
 
-func QueryCustomDashboardRoleRefListByDashboard(dashboard int) (hashMap map[string]string, err error) {
+func QueryCustomDashboardManagePermissionByDashboard(dashboard int) (hashMap map[string]string, err error) {
 	var list []*models.CustomDashBoardRoleRel
 	hashMap = make(map[string]string)
-	err = x.SQL("select * from custom_dashboard_role_rel where custom_dashboard_id = ?", dashboard).Find(&list)
+	err = x.SQL("select * from custom_dashboard_role_rel where custom_dashboard_id = ? and permission = ?", dashboard, models.PermissionMgmt).Find(&list)
 	if len(list) > 0 {
 		for _, roleRel := range list {
 			hashMap[roleRel.RoleId] = roleRel.Permission
@@ -166,9 +166,13 @@ func getQueryIdsByPermission(condition models.CustomDashboardQueryParam, roles [
 }
 
 func TransformInToStrArray(ids []int) []string {
-	stringArray := make([]string, len(ids))
-	for i, v := range ids {
-		stringArray[i] = strconv.Itoa(v) // 将整数转换为字符串
+	var strMap = make(map[string]bool)
+	var stringArray []string
+	for _, v := range ids {
+		strMap[strconv.Itoa(v)] = true
+	}
+	for key, _ := range strMap {
+		stringArray = append(stringArray, key)
 	}
 	return stringArray
 }
