@@ -89,6 +89,7 @@ type QueryChartResultDto struct {
 	MgmtRoles       []string `json:"mgmtRoles"`       // 管理角色
 	UseRoles        []string `json:"useRoles"`        // 使用角色
 	UpdateUser      string   `json:"updateUser"`      // 更新人
+	CreatedTime     string   `json:"createdTime"`     // 创建时间
 	UpdatedTime     string   `json:"updatedTime"`     // 更新时间
 	Permission      string   `json:"permission"`      // MGMT表示可编辑,USE可使用
 }
