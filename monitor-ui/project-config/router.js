@@ -78,7 +78,7 @@ const router = new Router({
             {
               path: "groupManagement",
               name: "groupManagement",
-              title: "组管理",
+              title: "对象组",
               meta: {},
               component: () =>
                 import("@/views/monitor-config/group-management")
@@ -186,7 +186,18 @@ const router = new Router({
           name: "viewConfigIndex",
           title: "自定义视图主页",
           meta: {},
-          component: () => import("@/views/custom-view/view-config-index")
+          redirect: "/viewConfigIndex/boardList",
+          component: () => import("@/views/custom-view/index"),
+          children: [
+            {
+              path: "boardList",
+              name: "boardList",
+              title: "看板列表",
+              meta: {},
+              component: () =>
+                import("@/views/custom-view/view-config-index")
+            }
+          ]
         },
         {
           path: "viewConfig",
