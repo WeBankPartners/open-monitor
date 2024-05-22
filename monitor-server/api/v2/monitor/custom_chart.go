@@ -123,10 +123,7 @@ func CopyCustomChart(c *gin.Context) {
 func UpdateCustomChart(c *gin.Context) {
 	var chartDto *models.CustomChartDto
 	var chart *models.CustomChart
-	var permissionMap map[string]string
 	var err error
-	var hasEditPermission bool
-	userRoles := middleware.GetOperateUserRoles(c)
 	if err = c.ShouldBindJSON(&chartDto); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
@@ -141,24 +138,6 @@ func UpdateCustomChart(c *gin.Context) {
 	}
 	if chart == nil {
 		middleware.ReturnValidateError(c, "id is invalid")
-		return
-	}
-	// 判断是否拥有编辑权限
-	if permissionMap, err = db.QueryCustomChartManagePermissionByChart(chartDto.Id); err != nil {
-		middleware.ReturnServerHandleError(c, err)
-		return
-	}
-	if len(permissionMap) == 0 {
-		permissionMap = make(map[string]string)
-	}
-	for _, role := range userRoles {
-		if v, ok := permissionMap[role]; ok && v == string(models.PermissionMgmt) {
-			hasEditPermission = true
-			break
-		}
-	}
-	if !hasEditPermission {
-		middleware.ReturnServerHandleError(c, fmt.Errorf("not has edit permission"))
 		return
 	}
 	if err = db.UpdateCustomChart(chartDto, middleware.GetOperateUser(c)); err != nil {
@@ -295,7 +274,7 @@ func GetSharedChartPermission(c *gin.Context) {
 	var list []*models.CustomChartPermission
 	var err error
 	result := &models.SharedChartPermissionDto{UseRoles: []string{}, MgmtRoles: []string{}}
-	chartId := c.Param("chart_id")
+	chartId := c.Query("chart_id")
 	if strings.TrimSpace(chartId) == "" {
 		middleware.ReturnParamEmptyError(c, "chart_id")
 		return
@@ -334,6 +313,9 @@ func QueryCustomChart(c *gin.Context) {
 	if err = c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
+	}
+	if param.PageSize == 0 {
+		param.PageSize = 10
 	}
 	if pageInfo, customChartList, err = db.QueryCustomChartList(param, middleware.GetOperateUserRoles(c)); err != nil {
 		middleware.ReturnServerHandleError(c, err)
