@@ -2,6 +2,7 @@ package db
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
@@ -9,6 +10,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 func SyncLogMetricExporterConfig(endpoints []string) error {
@@ -46,6 +48,8 @@ func updateEndpointLogMetric(endpointGuid string) error {
 	b, _ := json.Marshal(syncParam)
 	log.Logger.Info("sync log metric data", log.String("endpoint", endpointGuid), log.String("body", string(b)))
 	req, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("http://%s/log_metric/config", endpointObj.AgentAddress), bytes.NewReader(b))
+	timeOutCtx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	req.WithContext(timeOutCtx)
 	req.Header.Set("Content-Type", "application/json")
 	resp, respErr := http.DefaultClient.Do(req)
 	if respErr != nil {
@@ -225,6 +229,8 @@ func updateEndpointLogKeyword(endpoint string) error {
 	b, _ := json.Marshal(syncParam)
 	log.Logger.Info("sync log keyword data", log.String("endpoint", endpoint), log.String("body", string(b)))
 	req, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("http://%s/log_keyword/config", endpointObj.AgentAddress), bytes.NewReader(b))
+	timeOutCtx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	req.WithContext(timeOutCtx)
 	req.Header.Set("Content-Type", "application/json")
 	resp, respErr := http.DefaultClient.Do(req)
 	if respErr != nil {
