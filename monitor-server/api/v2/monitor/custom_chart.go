@@ -376,17 +376,19 @@ func QueryCustomChart(c *gin.Context) {
 				}
 			}
 			resultDto := &models.QueryChartResultDto{
-				ChartId:         chart.Guid,
-				ChartName:       chart.Name,
-				ChartType:       chart.ChartType,
-				SourceDashboard: customDashboardMap[chart.SourceDashboard],
-				UseDashboard:    useDashboard,
-				MgmtRoles:       mgmtRoles,
-				UseRoles:        useRoles,
-				UpdateUser:      chart.UpdateUser,
-				CreatedTime:     chart.CreateTime,
-				UpdatedTime:     chart.UpdateTime,
-				Permission:      permission,
+				ChartId:          chart.Guid,
+				ChartName:        chart.Name,
+				ChartType:        chart.ChartType,
+				SourceDashboard:  customDashboardMap[chart.SourceDashboard],
+				UseDashboard:     useDashboard,
+				MgmtRoles:        mgmtRoles,
+				DisplayMgmtRoles: displayMgmtRoles,
+				UseRoles:         useRoles,
+				DisplayUseRoles:  displayUseRoles,
+				UpdateUser:       chart.UpdateUser,
+				CreatedTime:      chart.CreateTime,
+				UpdatedTime:      chart.UpdateTime,
+				Permission:       permission,
 			}
 			dataList = append(dataList, resultDto)
 		}
