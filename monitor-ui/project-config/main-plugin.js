@@ -28,7 +28,7 @@ window.addOptions({
 
 const implicitRoute = {
   'monitorConfigIndex/groupManagement': {
-    parentBreadcrumb: {'zh-CN': '对象设计', 'en-US': 'Object Design'},
+    parentBreadcrumb: {'zh-CN': '对象', 'en-US': 'Object'},
     childBreadcrumb: { 'zh-CN': '对象组', 'en-US': 'Object Group' }
   },
   'monitorConfigIndex/thresholdManagement': {
@@ -40,7 +40,7 @@ const implicitRoute = {
     childBreadcrumb: { 'zh-CN': '关键字', 'en-US': 'Keywords' }
   },
   'monitorConfigIndex/resourceLevel': {
-    parentBreadcrumb: {'zh-CN': '对象设计', 'en-US': 'Object Design'},
+    parentBreadcrumb: {'zh-CN': '对象', 'en-US': 'Object'},
     childBreadcrumb: { 'zh-CN': '层级对象', 'en-US': 'Hierarchy Object' }
   },
   'monitorConfigIndex/exporter': {
