@@ -663,7 +663,7 @@ func UpdateLogMetricGroup(c *gin.Context) {
 		return
 	}
 	param.Name = strings.TrimSpace(param.Name)
-	if err := db.ValidateLogMetricGroupName("", param.Name, param.LogMetricMonitorGuid); err != nil {
+	if err := db.ValidateLogMetricGroupName(param.LogMetricGroupGuid, param.Name, param.LogMetricMonitorGuid); err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
