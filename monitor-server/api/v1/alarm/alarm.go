@@ -93,6 +93,7 @@ func buildNewAlarm(param *m.AMRespAlert, nowTime time.Time) (alarm m.AlarmHandle
 		return
 	}
 	alarm.Endpoint = endpointObj.Guid
+	alarm.AlarmName = strategyObj.Name
 	var alertValue float64
 	alertValue, _ = strconv.ParseFloat(summaryList[len(summaryList)-1], 64)
 	alertValue, _ = strconv.ParseFloat(fmt.Sprintf("%.3f", alertValue), 64)
