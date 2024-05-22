@@ -1,25 +1,28 @@
 <template>
   <div>
-    <div>
-      <Input
-        v-model="searchParams.name"
-        :placeholder="$t('m_template_name')"
-        class="search-item"
-        clearable
-        @on-change="getTemplateList"
-      ></Input>
-      <Input
-        v-model="searchParams.update_user"
-        :placeholder="$t('m_updatedBy')"
-        class="search-item"
-        clearable
-        @on-change="getTemplateList"
-      ></Input>
-      <span style="margin-top: 8px;margin-left: 24px;">
-        <Button @click="getTemplateList" type="primary" style="background-color: #2d8cf0;">{{ $t('button.search') }}</Button>
-        <Button @click="handleReset" style="margin-left: 5px">{{ $t('m_reset_condition') }}</Button>
-      </span>
-      <ExportImport 
+    <div style="display: flex;justify-content: space-between;magin">
+      <div>
+        <Input
+          v-model="searchParams.name"
+          :placeholder="$t('m_template_name')"
+          class="search-item"
+          clearable
+          @on-change="getTemplateList"
+        ></Input>
+        <Input
+          v-model="searchParams.update_user"
+          :placeholder="$t('m_updatedBy')"
+          class="search-item"
+          clearable
+          @on-change="getTemplateList"
+        ></Input>
+        <span style="margin-top: 8px;margin-left: 24px;">
+          <Button @click="getTemplateList" type="primary" style="background-color: #2d8cf0;">{{ $t('button.search') }}</Button>
+          <Button @click="handleReset" style="margin-left: 5px">{{ $t('m_reset_condition') }}</Button>
+        </span>
+      </div>
+      <div>
+        <ExportImport 
         :isShowExportBtn="true"
         exportUrl="/monitor/api/v2/service/log_metric/log_monitor_template/export"
         exportMethod="POST"
@@ -29,6 +32,7 @@
         uploadUrl="/monitor/api/v2/service/log_metric/log_monitor_template/import"
         @successCallBack="getTemplateList"
         ></ExportImport>
+      </div>
     </div>
     <div class="table-zone">
       <Spin v-if="spinShow" size="large">
@@ -337,7 +341,7 @@ export default {
 .search-item {
   width: 200px;
   margin-right: 6px;
-  margin: 8px 6px 8px 0;
+  // margin: 8px 6px 8px 0;
 }
 .table-zone {
   overflow: auto;
