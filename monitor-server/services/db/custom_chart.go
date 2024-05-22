@@ -9,7 +9,8 @@ import (
 )
 
 func GetCustomChartById(id string) (chart *models.CustomChart, err error) {
-	_, err = x.SQL("select * from custom_chart where id = ?", id).Get(chart)
+	chart = &models.CustomChart{}
+	_, err = x.SQL("select * from custom_chart where guid = ?", id).Get(chart)
 	return
 }
 
@@ -17,14 +18,14 @@ func QueryAllPublicCustomChartList(roles []string) (list []*models.CustomChart, 
 	roleFilterSql, roleFilterParam := createListParams(roles, "")
 	var params []interface{}
 	var ids []string
-	var sql = "select dashboard_chart from custom_chart_permission where role_id  in (" + roleFilterSql + ") and permission = ?"
+	var sql = "select distinct dashboard_chart from custom_chart_permission where role_id  in (" + roleFilterSql + ") and permission = ?"
 	params = append(append(params, roleFilterParam...), models.PermissionUse)
 	if err = x.SQL(sql, params...).Find(&ids); err != nil {
 		return
 	}
 	if len(ids) > 0 {
 		idFilterSql, idFilterParam := createListParams(ids, "")
-		err = x.SQL("select * from custom_chart where public = 1 and guid in ( "+idFilterSql+")", idFilterParam).Find(&list)
+		err = x.SQL("select * from custom_chart where public = 1 and guid in ( "+idFilterSql+")", idFilterParam...).Find(&list)
 	}
 	return
 }
@@ -60,12 +61,10 @@ func QueryAllChartSeriesConfig() (configMap map[string][]*models.CustomChartSeri
 	}
 	if len(list) > 0 {
 		for _, config := range list {
-			if arr, ok := configMap[*config.DashboardChartConfig]; ok {
-				arr = append(arr, config)
-			} else {
+			if _, ok := configMap[*config.DashboardChartConfig]; !ok {
 				configMap[*config.DashboardChartConfig] = []*models.CustomChartSeriesConfig{}
-				configMap[*config.DashboardChartConfig] = append(configMap[*config.DashboardChartConfig], config)
 			}
+			configMap[*config.DashboardChartConfig] = append(configMap[*config.DashboardChartConfig], config)
 		}
 	}
 	return
@@ -79,12 +78,10 @@ func QueryAllChartSeriesTag() (tagMap map[string][]*models.CustomChartSeriesTag,
 	}
 	if len(list) > 0 {
 		for _, config := range list {
-			if arr, ok := tagMap[*config.DashboardChartConfig]; ok {
-				arr = append(arr, config)
-			} else {
+			if _, ok := tagMap[*config.DashboardChartConfig]; !ok {
 				tagMap[*config.DashboardChartConfig] = []*models.CustomChartSeriesTag{}
-				tagMap[*config.DashboardChartConfig] = append(tagMap[*config.DashboardChartConfig], config)
 			}
+			tagMap[*config.DashboardChartConfig] = append(tagMap[*config.DashboardChartConfig], config)
 		}
 	}
 	return
@@ -98,12 +95,10 @@ func QueryAllChartSeriesTagValue() (tagValueMap map[string][]*models.CustomChart
 	}
 	if len(list) > 0 {
 		for _, tagValue := range list {
-			if arr, ok := tagValueMap[*tagValue.DashboardChartTag]; ok {
-				arr = append(arr, tagValue)
-			} else {
+			if _, ok := tagValueMap[*tagValue.DashboardChartTag]; !ok {
 				tagValueMap[*tagValue.DashboardChartTag] = []*models.CustomChartSeriesTagValue{}
-				tagValueMap[*tagValue.DashboardChartTag] = append(tagValueMap[*tagValue.DashboardChartTag], tagValue)
 			}
+			tagValueMap[*tagValue.DashboardChartTag] = append(tagValueMap[*tagValue.DashboardChartTag], tagValue)
 		}
 	}
 	return
@@ -272,7 +267,7 @@ func UpdateCustomChart(chartDto *models.CustomChartDto, user string) (err error)
 	now := time.Now().Format(models.DatetimeFormat)
 	actions = append(actions, &Action{Sql: "update custom_chart set name =?,chart_type=?,line_type=?,aggregate=?," +
 		"agg_step=?,unit=?,update_user=?,update_time=? where guid=?", Param: []interface{}{chartDto.Name, chartDto.ChartType,
-		chartDto.LineType, chartDto.Aggregate, chartDto.Unit, user, now, chartDto.Id}})
+		chartDto.LineType, chartDto.Aggregate, chartDto.AggStep, chartDto.Unit, user, now, chartDto.Id}})
 	// 先删除图表配置
 	if subActions, err = DeleteCustomChartConfigSQL(chartDto.Id); err != nil {
 		return
@@ -291,10 +286,10 @@ func UpdateCustomChart(chartDto *models.CustomChartDto, user string) (err error)
 				for _, tag := range series.Tags {
 					tagId := guid.CreateGuid()
 					actions = append(actions, &Action{Sql: "insert into custom_chart_series_tag values(?,?,?)", Param: []interface{}{
-						tagId, seriesId, tag.TagValue}})
+						tagId, seriesId, tag.TagName}})
 					if len(tag.TagValue) > 0 {
 						for _, tagValue := range tag.TagValue {
-							actions = append(actions, &Action{Sql: "insert into custom_chart_series_tagvalue values(?,?,?)", Param: []interface{}{guid.CreateGuid(), tagId, tagValue}})
+							actions = append(actions, &Action{Sql: "insert into custom_chart_series_tagvalue(dashboard_chart_tag,value) values(?,?)", Param: []interface{}{tagId, tagValue}})
 						}
 					}
 				}
@@ -313,7 +308,6 @@ func UpdateCustomChart(chartDto *models.CustomChartDto, user string) (err error)
 			}
 		}
 	}
-	actions = append(actions, &Action{Sql: "insert into custom_chart_series values()"})
 	return Transaction(actions)
 }
 
@@ -378,8 +372,10 @@ func QueryCustomChartList(condition models.QueryChartParam, roles []string) (pag
 		sql = sql + " and update_time >= ? and update_time <= ?"
 		params = append(params, condition.UpdatedTimeStart, condition.UpdatedTimeEnd)
 	}
-	sql = sql + " and id in (" + strings.Join(ids, ",") + ")"
-	sql = sql + " order by update_at desc "
+	idsFilterSql, idsFilterParam := createListParams(ids, "")
+	sql = sql + " and guid  in (" + idsFilterSql + ")"
+	params = append(params, idsFilterParam...)
+	sql = sql + " order by update_time desc "
 	pageInfo.StartIndex = condition.StartIndex
 	pageInfo.PageSize = condition.PageSize
 	pageInfo.TotalRows = queryCount(sql, params...)
@@ -594,8 +590,23 @@ func getChartQueryIdsByPermission(condition models.QueryChartParam, roles []stri
 					}
 				}
 			}
-			return newIds, nil
+			return filterRepeatIds(newIds), nil
 		}
 	}
-	return
+	return filterRepeatIds(ids), nil
+}
+
+func filterRepeatIds(ids []string) []string {
+	var newIds []string
+	if len(ids) == 0 {
+		return newIds
+	}
+	var hashMap = make(map[string]bool)
+	for _, id := range ids {
+		hashMap[id] = true
+	}
+	for key, _ := range hashMap {
+		newIds = append(newIds, key)
+	}
+	return newIds
 }
