@@ -143,14 +143,14 @@ func getQueryIdsByPermission(condition models.CustomDashboardQueryParam, roles [
 
 	if len(condition.UseRoles) > 0 {
 		useRoleFilterSql, useRoleFilterParam := createListParams(condition.UseRoles, "")
-		sql = sql + " and role_id  in (" + useRoleFilterSql + ")"
-		params = append(params, useRoleFilterParam...)
+		sql = sql + " and (role_id  in (" + useRoleFilterSql + ") and permission = ?)"
+		params = append(append(params, useRoleFilterParam...), models.PermissionUse)
 	}
 
 	if len(condition.MgmtRoles) > 0 {
 		mgmtRoleFilterSql, mgmtRoleFilterParam := createListParams(condition.MgmtRoles, "")
-		sql = sql + " and role_id  in (" + mgmtRoleFilterSql + ")"
-		params = append(params, mgmtRoleFilterParam...)
+		sql = sql + " and (role_id  in (" + mgmtRoleFilterSql + ") and permission = ?)"
+		params = append(append(params, mgmtRoleFilterParam...), models.PermissionMgmt)
 	}
 	if condition.Permission == string(models.PermissionMgmt) {
 		sql = sql + " and permission = ? "
