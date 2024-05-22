@@ -81,17 +81,19 @@ type QueryChartParam struct {
 }
 
 type QueryChartResultDto struct {
-	ChartId         string   `json:"chartId"`
-	ChartName       string   `json:"chartName"`
-	ChartType       string   `json:"chartType"`
-	SourceDashboard string   `json:"sourceDashboard"` // 源看板名称
-	UseDashboard    []string `json:"useDashboard"`    // 应用看板
-	MgmtRoles       []string `json:"mgmtRoles"`       // 管理角色
-	UseRoles        []string `json:"useRoles"`        // 使用角色
-	UpdateUser      string   `json:"updateUser"`      // 更新人
-	CreatedTime     string   `json:"createdTime"`     // 创建时间
-	UpdatedTime     string   `json:"updatedTime"`     // 更新时间
-	Permission      string   `json:"permission"`      // MGMT表示可编辑,USE可使用
+	ChartId          string   `json:"chartId"`
+	ChartName        string   `json:"chartName"`
+	ChartType        string   `json:"chartType"`
+	SourceDashboard  string   `json:"sourceDashboard"`  // 源看板名称
+	UseDashboard     []string `json:"useDashboard"`     // 应用看板
+	MgmtRoles        []string `json:"mgmtRoles"`        // 管理角色
+	DisplayMgmtRoles []string `json:"displayMgmtRoles"` // 管理角色显示名
+	UseRoles         []string `json:"useRoles"`         // 使用角色
+	DisplayUseRoles  []string `json:"displayUseRoles"`  // 使用角色显示名
+	UpdateUser       string   `json:"updateUser"`       // 更新人
+	CreatedTime      string   `json:"createdTime"`      // 创建时间
+	UpdatedTime      string   `json:"updatedTime"`      // 更新时间
+	Permission       string   `json:"permission"`       // MGMT表示可编辑,USE可使用
 }
 
 type AddCustomChartParam struct {
