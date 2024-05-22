@@ -380,6 +380,7 @@ func QueryCustomChart(c *gin.Context) {
 				MgmtRoles:       mgmtRoles,
 				UseRoles:        useRoles,
 				UpdateUser:      chart.UpdateUser,
+				CreatedTime:     chart.CreateTime,
 				UpdatedTime:     chart.UpdateTime,
 				Permission:      permission,
 			}
