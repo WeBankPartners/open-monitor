@@ -499,6 +499,7 @@ func validateLogMonitorTemplateParam(param *models.LogMonitorTemplateDto) (err e
 		err = fmt.Errorf("calc result can not empty")
 		return
 	}
+	param.Name = strings.TrimSpace(param.Name)
 	if existLogMonitorTemplate, getErr := db.GetLogMonitorTemplateByName(param.Guid, param.Name); getErr != nil {
 		err = getErr
 		return
@@ -627,6 +628,7 @@ func CreateLogMetricGroup(c *gin.Context) {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
+	param.Name = strings.TrimSpace(param.Name)
 	if err := db.ValidateLogMetricGroupName("", param.Name, param.LogMetricMonitorGuid); err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
@@ -660,6 +662,7 @@ func UpdateLogMetricGroup(c *gin.Context) {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
+	param.Name = strings.TrimSpace(param.Name)
 	if err := db.ValidateLogMetricGroupName("", param.Name, param.LogMetricMonitorGuid); err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
