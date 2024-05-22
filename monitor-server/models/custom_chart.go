@@ -69,7 +69,7 @@ type QueryChartParam struct {
 	ChartName        string   `json:"chartName"`
 	ChartType        string   `json:"chartType"`
 	SourceDashboard  int      `json:"sourceDashboard"`  // 源看板
-	UseDashboard     []string `json:"useDashboard"`     // 应用看板
+	UseDashboard     []int    `json:"useDashboard"`     // 应用看板
 	MgmtRoles        []string `json:"mgmtRoles"`        // 管理角色
 	UseRoles         []string `json:"useRoles"`         // 使用角色
 	UpdateUser       string   `json:"updateUser"`       // 更新人
