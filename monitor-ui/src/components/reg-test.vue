@@ -43,7 +43,7 @@ export default {
         const reg = new RegExp(this.regx, 'g')
         let execRes = this.textString.match(reg)
         if (execRes && execRes.length > 0) {
-          return this.textString.replace(reg, "<span style='color:red'>" + execRes[0] + '</span>')
+          return this.textString.replace(execRes[0], "<span style='color:red'>" + execRes[0] + '</span>')
         }
         return ''
       } catch (err) {

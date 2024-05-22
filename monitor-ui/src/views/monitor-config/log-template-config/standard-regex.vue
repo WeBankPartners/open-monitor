@@ -153,7 +153,7 @@ export default {
         {
           title: this.$t('field.displayName'),
           key: 'display_name',
-          width: 100
+          width: 110
         },
         {
           title: this.$t('m_metric_key'),
@@ -347,7 +347,7 @@ export default {
         const reg = new RegExp(val, 'g')
         let execRes = this.configInfo.demo_log.match(reg)
         if (execRes && execRes.length > 0) {
-          return this.configInfo.demo_log.replace(reg, "<span style='color:red'>" + execRes[0] + '</span>')
+          return this.configInfo.demo_log.replace(execRes[0], "<span style='color:red'>" + execRes[0] + '</span>')
         }
         return ''
       } catch (err) {
