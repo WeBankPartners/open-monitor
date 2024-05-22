@@ -361,7 +361,7 @@ func (c *logMetricMonitorNeObj) startFileHandlerCheck() {
 				//level.Info(monitorLogger).Log(fmt.Sprintf("log_metric -> reopen_tail_with_time_check_ok,path:%s,fileLastTime:%d,tailLastTime:%d ", c.Path, fileLastTime, tailLastTime))
 			}
 		} else {
-			level.Error(monitorLogger).Log(fmt.Sprintf("log_metric -> check_file_handler_fail,path:%s,err:%s ", c.Path, err.Error()))
+			//level.Error(monitorLogger).Log(fmt.Sprintf("log_metric -> check_file_handler_fail,path:%s,err:%s ", c.Path, err.Error()))
 		}
 	}
 }
