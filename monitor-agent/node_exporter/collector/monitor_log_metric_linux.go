@@ -176,6 +176,8 @@ type logMetricValueObj struct {
 func (c *logMetricMonitorNeObj) startHandleTailData() {
 	for {
 		lineText := <-c.DataChan
+		//level.Info(monitorLogger).Log("log_metric_get_new_line ->", lineText)
+		//lineText = strings.ReplaceAll(lineText, "\\t", "    ")
 		c.Lock.RLock()
 		//level.Info(monitorLogger).Log("get a new line:", lineText)
 		for _, rule := range c.JsonConfig {
@@ -213,6 +215,7 @@ func (c *logMetricMonitorNeObj) startHandleTailData() {
 					fetchList := pcreMatchSubString(metricGroup.JsonRegexp, lineText)
 					fetchJsonDataMap := make(map[string]interface{})
 					for _, v := range fetchList {
+						//level.Info(monitorLogger).Log("log_json_group -> fetch", v)
 						tmpKeyMap := make(map[string]interface{})
 						tmpErr := json.Unmarshal([]byte(v), &tmpKeyMap)
 						if tmpErr != nil {
@@ -228,12 +231,15 @@ func (c *logMetricMonitorNeObj) startHandleTailData() {
 					for _, metricParam := range metricGroup.ParamList {
 						if fetchValue, ok := fetchJsonDataMap[metricParam.JsonKey]; !ok {
 							allMatchFlag = false
+							level.Info(monitorLogger).Log("log_json_group -> check key fail", metricParam.JsonKey)
 							break
 						} else {
 							fetchParamValueMap[metricParam.Name] = transMetricGroupData(fetchValue, metricParam.StringMap)
 						}
 					}
 					if allMatchFlag {
+						//fetchParamValueMapByte, _ := json.Marshal(fetchParamValueMap)
+						//level.Info(monitorLogger).Log("log_json_group -> add valueMap", string(fetchParamValueMapByte))
 						metricGroup.DataChannel <- fetchParamValueMap
 					}
 				}
@@ -304,6 +310,7 @@ func (c *logMetricMonitorNeObj) start() {
 		level.Error(monitorLogger).Log("msg", fmt.Sprintf("start log metric collector fail, path: %s, error: %v", c.Path, err))
 		return
 	}
+	c.TailLastUnixTime = 0
 	c.DataChan = make(chan string, logMetricChanLength)
 	go c.startHandleTailData()
 	go c.startFileHandlerCheck()
@@ -351,7 +358,7 @@ func (c *logMetricMonitorNeObj) startFileHandlerCheck() {
 				c.ReOpenHandlerChan <- 1
 				level.Info(monitorLogger).Log(fmt.Sprintf("log_metric -> reopen_tail_with_time_check_fail,path:%s,fileLastTime:%d,tailLastTime:%d ", c.Path, fileLastTime, tailLastTime))
 			} else {
-				level.Info(monitorLogger).Log(fmt.Sprintf("log_metric -> reopen_tail_with_time_check_ok,path:%s,fileLastTime:%d,tailLastTime:%d ", c.Path, fileLastTime, tailLastTime))
+				//level.Info(monitorLogger).Log(fmt.Sprintf("log_metric -> reopen_tail_with_time_check_ok,path:%s,fileLastTime:%d,tailLastTime:%d ", c.Path, fileLastTime, tailLastTime))
 			}
 		} else {
 			level.Error(monitorLogger).Log(fmt.Sprintf("log_metric -> check_file_handler_fail,path:%s,err:%s ", c.Path, err.Error()))
