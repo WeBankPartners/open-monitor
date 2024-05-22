@@ -305,7 +305,7 @@ func QueryCustomChart(c *gin.Context) {
 	var customDashboardList []*models.SimpleCustomDashboardDto
 	var chartRelList []*models.CustomDashboardChartRel
 	var customDashboardMap = make(map[int]string)
-	var mgmtRoles, useRoles, useDashboard []string
+	var mgmtRoles, displayMgmtRoles, useRoles, displayUseRoles, useDashboard []string
 	var displayNameRoleMap map[string]string
 	var userRoleMap map[string]bool
 	var permission string
@@ -339,7 +339,9 @@ func QueryCustomChart(c *gin.Context) {
 	if len(customChartList) > 0 {
 		for _, chart := range customChartList {
 			mgmtRoles = []string{}
+			displayMgmtRoles = []string{}
 			useRoles = []string{}
+			displayUseRoles = []string{}
 			useDashboard = []string{}
 			permission = string(models.PermissionUse)
 			if roleRelList, err = db.QueryChartPermissionByCustomChart(chart.Guid); err != nil {
@@ -353,12 +355,14 @@ func QueryCustomChart(c *gin.Context) {
 			if len(roleRelList) > 0 {
 				for _, roleRel := range roleRelList {
 					if roleRel.Permission == string(models.PermissionMgmt) {
+						mgmtRoles = append(mgmtRoles, roleRel.RoleId)
 						if v, ok := displayNameRoleMap[roleRel.RoleId]; ok {
-							mgmtRoles = append(mgmtRoles, v)
+							displayMgmtRoles = append(displayMgmtRoles, v)
 						}
 					} else if roleRel.Permission == string(models.PermissionUse) {
+						useRoles = append(useRoles, roleRel.RoleId)
 						if v, ok := displayNameRoleMap[roleRel.RoleId]; ok {
-							useRoles = append(useRoles, v)
+							displayUseRoles = append(displayUseRoles, v)
 						}
 					}
 					if userRoleMap[roleRel.RoleId] {
