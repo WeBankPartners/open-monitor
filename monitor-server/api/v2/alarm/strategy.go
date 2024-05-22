@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -55,6 +56,7 @@ func CreateAlarmStrategy(c *gin.Context) {
 	} else {
 		param.ActiveWindow = models.DefaultActiveWindow
 	}
+	param.Name = strings.TrimSpace(param.Name)
 	if err := validateStrategyCondition(param.Conditions); err != nil {
 		middleware.ReturnValidateError(c, err.Error())
 		return
@@ -90,6 +92,7 @@ func UpdateAlarmStrategy(c *gin.Context) {
 	} else {
 		param.ActiveWindow = models.DefaultActiveWindow
 	}
+	param.Name = strings.TrimSpace(param.Name)
 	if err := validateStrategyCondition(param.Conditions); err != nil {
 		middleware.ReturnValidateError(c, err.Error())
 		return
