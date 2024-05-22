@@ -2,6 +2,7 @@ package db
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/WeBankPartners/go-common-lib/guid"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"strings"
@@ -576,9 +577,8 @@ func getChartQueryIdsByPermission(condition models.QueryChartParam, roles []stri
 	// 应用看板,需要做ID交集
 	if len(condition.UseDashboard) > 0 {
 		var tempIds, newIds []string
-		userDashboardFilterSql, userDashboardFilterParam := createListParams(condition.UseDashboard, "")
-		if err = x.SQL("select dashboard_chart from custom_dashboard_chart_rel where custom_dashboard  in ("+
-			userDashboardFilterSql+")", userDashboardFilterParam).Find(&tempIds); err != nil {
+		strArr := strings.Join(convertIntArrToStr(condition.UseDashboard), ",")
+		if err = x.SQL("select dashboard_chart from custom_dashboard_chart_rel where custom_dashboard  in (" + strArr + ")").Find(&tempIds); err != nil {
 			return
 		}
 		if len(tempIds) > 0 {
@@ -591,6 +591,8 @@ func getChartQueryIdsByPermission(condition models.QueryChartParam, roles []stri
 				}
 			}
 			return filterRepeatIds(newIds), nil
+		} else {
+			return []string{}, nil
 		}
 	}
 	return filterRepeatIds(ids), nil
@@ -609,4 +611,15 @@ func filterRepeatIds(ids []string) []string {
 		newIds = append(newIds, key)
 	}
 	return newIds
+}
+
+func convertIntArrToStr(ids []int) []string {
+	var arr []string
+	if len(ids) == 0 {
+		return arr
+	}
+	for _, id := range ids {
+		arr = append(arr, fmt.Sprintf("%d", id))
+	}
+	return arr
 }
