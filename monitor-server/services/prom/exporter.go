@@ -15,7 +15,7 @@ func GetEndpointData(param models.QueryPrometheusMetricParam) (error, []string) 
 	resp, err := http.Get(fmt.Sprintf("http://%s:%s/metrics", param.Ip, param.Port))
 	if err != nil {
 		var tmpErr error
-		for i := 0; i < 6; i++ {
+		for i := 0; i < 3; i++ {
 			time.Sleep(10 * time.Second)
 			resp, tmpErr = http.Get(fmt.Sprintf("http://%s:%s/metrics", param.Ip, param.Port))
 			if tmpErr == nil {
@@ -23,7 +23,7 @@ func GetEndpointData(param models.QueryPrometheusMetricParam) (error, []string) 
 			}
 		}
 		if tmpErr != nil {
-			log.Logger.Error("Get agent metric data fail,retry 6 times", log.Error(tmpErr))
+			log.Logger.Error("Get agent metric data fail,retry 3 times", log.Error(tmpErr))
 			return tmpErr, strList
 		}
 	}
