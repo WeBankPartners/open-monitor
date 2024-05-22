@@ -22,7 +22,7 @@ func GetAllCustomDashboardList(c *gin.Context) {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
-	middleware.ReturnData(c, list)
+	middleware.ReturnSuccessData(c, list)
 }
 
 // QueryCustomDashboardList 查询自定义看板列表
