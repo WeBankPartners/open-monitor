@@ -110,6 +110,7 @@ func CopyCustomChart(c *gin.Context) {
 			return
 		}
 		middleware.ReturnSuccess(c)
+		return
 	}
 	// 复制图表,copy 图表的所有数据并且与看板关联
 	if err = db.CopyCustomChart(param.DashboardId, param.OriginChartId); err != nil {
