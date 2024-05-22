@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS `custom_chart` (
 `agg_step` int(11) default 0  COMMENT '聚合间隔',
 `unit` varchar(32) default null COMMENT '单位',
 `create_user` varchar(64)  default null COMMENT '创建人',
-`updated_user` varchar(64) default null COMMENT '更新人',
+`update_user` varchar(64) default null COMMENT '更新人',
 `create_time` datetime  default null COMMENT '创建时间',
 `update_time` datetime  default null COMMENT '更新时间',
 `chart_template` varchar(100)  default null COMMENT '图表模板',
@@ -64,7 +64,7 @@ CREATE TABLE IF NOT EXISTS `custom_chart_permission` (
 `guid` varchar(64) NOT NULL,
 `dashboard_chart` varchar(64) NOT NULL COMMENT '所属看板图表',
 `role_id` varchar(64) NOT NULL COMMENT '角色名',
-`permission` varchar(32)  NULL COMMENT '权限,MGMT/USE',
+`permission` varchar(32)  NULL COMMENT '权限,mgmt/use',
 PRIMARY KEY (`guid`),
 CONSTRAINT `fore_custom_chart_permission_dashboard_chart` FOREIGN KEY (`dashboard_chart`) REFERENCES `custom_chart` (`guid`)
 )ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '公共图表权限表';
@@ -76,7 +76,7 @@ CREATE TABLE IF NOT EXISTS `custom_chart_series_config` (
 `dashboard_chart_config` varchar(64) NOT NULL COMMENT '图表配置表',
 `tags` text  NULL COMMENT '标签',
 `color` varchar(32)  NULL COMMENT '颜色',
-`serie_name` varchar(255)  NULL COMMENT '指标+对象+标签值',
+`series_name` varchar(255)  NULL COMMENT '指标+对象+标签值',
 PRIMARY KEY (`guid`),
 CONSTRAINT `fore_custom_chart_series_config_dashboard_chart_config` FOREIGN KEY (`dashboard_chart_config`) REFERENCES `custom_chart_series` (`guid`)
 )ENGINE= InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '自定义图表配置表';
@@ -93,7 +93,7 @@ CONSTRAINT `fore_custom_chart_series_tag_dashboard_chart_config` FOREIGN KEY (`d
 
 DROP TABLE IF EXISTS `custom_chart_series_tagvalue`;
 CREATE TABLE IF NOT EXISTS `custom_chart_series_tagvalue` (
-`id` int(11) NOT NULL,
+`id` int(11) NOT NULL AUTO_INCREMENT,
 `dashboard_chart_tag` varchar(64) NOT NULL COMMENT '所属图表标签',
 `value` varchar(255)  NULL COMMENT '标签值',
 PRIMARY KEY (`id`),
