@@ -427,5 +427,14 @@
   "m_manage_role": "Manage Role",
   "m_update_time": "Update Time",
   "m_home_application": "Home Application",
-  "m_base_group": "Base Group"
+  "m_base_group": "Base Group",
+  "m_mgmt_role": "Manage Role",
+  "m_role_drawer_title": "Select Role",
+  "m_unselected_role": "No Role Selected",
+  "m_selected_role": "Selected Role",
+  "m_choose_one": "Only One Owner Character Can Be Selected",
+  "m_source_dashboard": "Source Dashboard",
+  "m_use_dashboard": "Application dashboard",
+  "m_reset": "Reset",
+  "m_create_time": "Create Time"
 }
