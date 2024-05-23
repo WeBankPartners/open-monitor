@@ -2,6 +2,7 @@ package db
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/WeBankPartners/go-common-lib/guid"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"strings"
@@ -206,24 +207,25 @@ func GetUpdateCustomChartPublicSQL(chartId string) []*Action {
 
 func DeleteCustomChartConfigSQL(chartId string) (actions []*Action, err error) {
 	actions = []*Action{}
-	var chartSeriesIds, seriesConfIds, seriesTagIds, seriesTagValueIds []string
+	var chartSeriesIds, seriesConfIds, seriesTagIds []string
+	var seriesTagValueIds []int
 	if err = x.SQL("select guid from custom_chart_series where dashboard_chart = ?", chartId).Find(&chartSeriesIds); err != nil {
 		return
 	}
 	if len(chartSeriesIds) > 0 {
 		chartSeriesSQL, chartSeriesParams := createListParams(chartSeriesIds, "")
 		if err = x.SQL("select guid from custom_chart_series_config where dashboard_chart_config in ("+chartSeriesSQL+")",
-			chartSeriesParams).Find(&seriesConfIds); err != nil {
+			chartSeriesParams...).Find(&seriesConfIds); err != nil {
 			return
 		}
 		if err = x.SQL("select guid from custom_chart_series_tag where dashboard_chart_config in ("+chartSeriesSQL+")",
-			chartSeriesParams).Find(&seriesTagIds); err != nil {
+			chartSeriesParams...).Find(&seriesTagIds); err != nil {
 			return
 		}
 		if len(seriesTagIds) > 0 {
 			seriesTagSQL, seriesTagParams := createListParams(seriesTagIds, "")
 			if err = x.SQL("select id from custom_chart_series_tagvalue where dashboard_chart_tag in ("+seriesTagSQL+")",
-				seriesTagParams).Find(&seriesTagValueIds); err != nil {
+				seriesTagParams...).Find(&seriesTagValueIds); err != nil {
 				return
 			}
 		}
@@ -241,7 +243,7 @@ func DeleteCustomChartConfigSQL(chartId string) (actions []*Action, err error) {
 	}
 	if len(seriesTagIds) > 0 {
 		for _, tagId := range seriesTagIds {
-			actions = append(actions, &Action{Sql: "delete from custom_chart_series_tag where id = ?", Param: []interface{}{tagId}})
+			actions = append(actions, &Action{Sql: "delete from custom_chart_series_tag where guid = ?", Param: []interface{}{tagId}})
 		}
 	}
 	actions = append(actions, &Action{Sql: "delete from custom_chart_series where dashboard_chart = ?", Param: []interface{}{chartId}})
@@ -258,7 +260,7 @@ func DeleteCustomDashboardChart(chartId string) (err error) {
 	}
 	actions = append(actions, &Action{Sql: "delete from custom_dashboard_chart_rel where dashboard_chart = ?", Param: []interface{}{chartId}})
 	actions = append(actions, &Action{Sql: "delete from custom_chart_permission where dashboard_chart = ?", Param: []interface{}{chartId}})
-	actions = append(actions, &Action{Sql: "delete from custom_chart WHERE id=?", Param: []interface{}{chartId}})
+	actions = append(actions, &Action{Sql: "delete from custom_chart WHERE guid = ?", Param: []interface{}{chartId}})
 	return Transaction(actions)
 }
 
@@ -389,20 +391,20 @@ func QueryCustomChartList(condition models.QueryChartParam, roles []string) (pag
 func CopyCustomChart(dashboardId int, customChart string) (err error) {
 	var chartSeriesList []*models.CustomChartSeries
 	var chartPermissionList []*models.CustomChartPermission
-	var chart *models.CustomChart
 	var configMap = make(map[string][]*models.CustomChartSeriesConfig)
 	var tagMap = make(map[string][]*models.CustomChartSeriesTag)
 	var tagValueMap = make(map[string][]*models.CustomChartSeriesTagValue)
 	var dashboardChartRelList []*models.CustomDashboardChartRel
 	var actions []*Action
 	newChartId := guid.CreateGuid()
+	chart := &models.CustomChart{}
 	if _, err = x.SQL("select * from custom_chart where guid = ?", customChart).Get(chart); err != nil {
 		return
 	}
 	if err = x.SQL("select * from custom_chart_series where dashboard_chart = ?", customChart).Find(&chartSeriesList); err != nil {
 		return
 	}
-	if err = x.SQL("select * from custom_chart_permission where dashboard_chart = ?").Find(&chartPermissionList); err != nil {
+	if err = x.SQL("select * from custom_chart_permission where dashboard_chart = ?", customChart).Find(&chartPermissionList); err != nil {
 		return
 	}
 	if err = x.SQL("select * from custom_dashboard_chart_rel where custom_dashboard = ? and dashboard_chart = ?", dashboardId, customChart).Find(&dashboardChartRelList); err != nil {
@@ -443,7 +445,7 @@ func CopyCustomChart(dashboardId int, customChart string) (err error) {
 					if tagValueArr, ok2 := tagValueMap[tag.Guid]; ok2 {
 						if len(tagValueArr) > 0 {
 							for _, tagValue := range tagValueArr {
-								actions = append(actions, &Action{Sql: "insert into custom_chart_series_tagvalue values(?,?,?)", Param: []interface{}{guid.CreateGuid(), newTagId, tagValue.Value}})
+								actions = append(actions, &Action{Sql: "insert into custom_chart_series_tagvalue(dashboard_chart_tag,value) values(?,?)", Param: []interface{}{newTagId, tagValue.Value}})
 							}
 						}
 					}
@@ -457,7 +459,7 @@ func CopyCustomChart(dashboardId int, customChart string) (err error) {
 	}
 	for _, rel := range dashboardChartRelList {
 		actions = append(actions, &Action{Sql: "insert into custom_dashboard_chart_rel values(?,?,?,?,?,?,?,?,?)", Param: []interface{}{guid.CreateGuid(),
-			rel.CustomDashboard, rel.DashboardChart, rel.Group, rel.DisplayConfig, rel.CreateUser, rel.UpdateUser, rel.CreateTime, rel.UpdateTime}})
+			rel.CustomDashboard, newChartId, rel.Group, rel.DisplayConfig, rel.CreateUser, rel.UpdateUser, rel.CreateTime, rel.UpdateTime}})
 	}
 	return Transaction(actions)
 }
@@ -576,9 +578,8 @@ func getChartQueryIdsByPermission(condition models.QueryChartParam, roles []stri
 	// 应用看板,需要做ID交集
 	if len(condition.UseDashboard) > 0 {
 		var tempIds, newIds []string
-		userDashboardFilterSql, userDashboardFilterParam := createListParams(condition.UseDashboard, "")
-		if err = x.SQL("select dashboard_chart from custom_dashboard_chart_rel where custom_dashboard  in ("+
-			userDashboardFilterSql+")", userDashboardFilterParam).Find(&tempIds); err != nil {
+		strArr := strings.Join(convertIntArrToStr(condition.UseDashboard), ",")
+		if err = x.SQL("select dashboard_chart from custom_dashboard_chart_rel where custom_dashboard  in (" + strArr + ")").Find(&tempIds); err != nil {
 			return
 		}
 		if len(tempIds) > 0 {
@@ -591,6 +592,8 @@ func getChartQueryIdsByPermission(condition models.QueryChartParam, roles []stri
 				}
 			}
 			return filterRepeatIds(newIds), nil
+		} else {
+			return []string{}, nil
 		}
 	}
 	return filterRepeatIds(ids), nil
@@ -609,4 +612,15 @@ func filterRepeatIds(ids []string) []string {
 		newIds = append(newIds, key)
 	}
 	return newIds
+}
+
+func convertIntArrToStr(ids []int) []string {
+	var arr []string
+	if len(ids) == 0 {
+		return arr
+	}
+	for _, id := range ids {
+		arr = append(arr, fmt.Sprintf("%d", id))
+	}
+	return arr
 }
