@@ -274,7 +274,7 @@ func SyncData() (err error) {
 			}
 		}
 	}
-	return
+	return Transaction(actions)
 }
 
 func convertLineTypeIntToString(lineType int) string {
