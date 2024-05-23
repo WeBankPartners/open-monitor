@@ -91,6 +91,7 @@ type logKeywordCollector struct {
 	ReOpenHandlerChan chan int      `json:"-"`
 	TailTimeLock      *sync.RWMutex `json:"-"`
 	TailLastUnixTime  int64         `json:"-"`
+	DestroyChan       chan int      `json:"-"`
 }
 
 func (c *logKeywordCollector) update(rule []*logKeywordObj) {
@@ -137,6 +138,7 @@ func (c *logKeywordCollector) init() {
 	c.TailTimeLock = new(sync.RWMutex)
 	c.ReOpenHandlerChan = make(chan int, 1)
 	c.TailLastUnixTime = 0
+	c.DestroyChan = make(chan int, 1)
 	go c.start()
 }
 
@@ -148,21 +150,25 @@ func (c *logKeywordCollector) start() {
 		level.Error(monitorLogger).Log("error", fmt.Sprintf("start log keyword collector fail, path: %s, error: %v", c.Path, err))
 		return
 	}
+	c.TailLastUnixTime = 0
 	c.DataChan = make(chan string, logKeywordChanLength)
 	go c.startHandleTailData()
 	go c.startFileHandlerCheck()
-	breakFlag := false
+	reopenFlag := false
+	destroyFlag := false
 	for {
 		select {
 		case <-c.ReOpenHandlerChan:
-			breakFlag = true
+			reopenFlag = true
+		case <-c.DestroyChan:
+			destroyFlag = true
 		case line := <-c.TailSession.Lines:
 			if line == nil {
 				continue
 			}
 			c.DataChan <- line.Text
 		}
-		if breakFlag {
+		if reopenFlag || destroyFlag {
 			break
 		} else {
 			c.TailTimeLock.Lock()
@@ -173,7 +179,10 @@ func (c *logKeywordCollector) start() {
 	c.TailSession.Stop()
 	c.TailSession.Cleanup()
 	level.Info(monitorLogger).Log("log_keyword -> startLogMetricMonitorNeObj__end", c.Path)
-	time.Sleep(2 * time.Second)
+	if destroyFlag {
+		return
+	}
+	time.Sleep(10 * time.Second)
 	go c.start()
 	//for line := range c.TailSession.Lines {
 	//	if len(c.DataChan) == logMetricChanLength {
@@ -201,19 +210,21 @@ func (c *logKeywordCollector) startFileHandlerCheck() {
 				c.ReOpenHandlerChan <- 1
 				level.Info(monitorLogger).Log(fmt.Sprintf("log_keyword -> reopen_tail_with_time_check_fail,path:%s,fileLastTime:%d,tailLastTime:%d ", c.Path, fileLastTime, tailLastTime))
 			} else {
-				level.Info(monitorLogger).Log(fmt.Sprintf("log_keyword -> reopen_tail_with_time_check_ok,path:%s,fileLastTime:%d,tailLastTime:%d ", c.Path, fileLastTime, tailLastTime))
+				//level.Info(monitorLogger).Log(fmt.Sprintf("log_keyword -> reopen_tail_with_time_check_ok,path:%s,fileLastTime:%d,tailLastTime:%d ", c.Path, fileLastTime, tailLastTime))
 			}
 		} else {
-			level.Error(monitorLogger).Log(fmt.Sprintf("log_keyword -> check_file_handler_fail,path:%s,err:%s ", c.Path, err.Error()))
+			//level.Error(monitorLogger).Log(fmt.Sprintf("log_keyword -> check_file_handler_fail,path:%s,err:%s ", c.Path, err.Error()))
 		}
 	}
 }
 
 func (c *logKeywordCollector) destroy() {
+	level.Info(monitorLogger).Log("start_log_keyword_destroy:", c.Path)
 	c.Lock.Lock()
-	c.TailSession.Stop()
+	c.DestroyChan <- 1
 	c.Rule = []*logKeywordObj{}
 	c.Lock.Unlock()
+	level.Info(monitorLogger).Log("done_log_keyword_destroy:", c.Path)
 }
 
 func (c *logKeywordCollector) get() (data []*logKeywordMetricObj) {
