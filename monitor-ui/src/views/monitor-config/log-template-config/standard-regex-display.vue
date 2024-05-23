@@ -29,7 +29,7 @@
           <Input
             v-model="configInfo.demo_log"
             type="textarea"
-            :rows="6"
+            :rows="11"
             style="width: 96%"
             disabled
           />
