@@ -196,6 +196,14 @@ const router = new Router({
               meta: {},
               component: () =>
                 import("@/views/custom-view/view-config-index")
+            },
+            {
+              path: "allChartList",
+              name: "allChartList",
+              title: "列表",
+              meta: {},
+              component: () =>
+                import("@/views/custom-view/chart-list")
             }
           ]
         },
