@@ -28,10 +28,10 @@ func GetSharedChartList(c *gin.Context) {
 				SourceDashboard: chart.SourceDashboard,
 				Name:            chart.Name,
 			}
-			if _, ok := sharedResultMap[chart.LineType]; !ok {
-				sharedResultMap[chart.LineType] = []*models.ChartSharedDto{}
+			if _, ok := sharedResultMap[chart.ChartType]; !ok {
+				sharedResultMap[chart.ChartType] = []*models.ChartSharedDto{}
 			}
-			sharedResultMap[chart.LineType] = append(sharedResultMap[chart.LineType], sharedDto)
+			sharedResultMap[chart.ChartType] = append(sharedResultMap[chart.ChartType], sharedDto)
 		}
 	}
 	middleware.ReturnSuccessData(c, sharedResultMap)
@@ -110,6 +110,7 @@ func CopyCustomChart(c *gin.Context) {
 			return
 		}
 		middleware.ReturnSuccess(c)
+		return
 	}
 	// 复制图表,copy 图表的所有数据并且与看板关联
 	if err = db.CopyCustomChart(param.DashboardId, param.OriginChartId); err != nil {
@@ -305,7 +306,7 @@ func QueryCustomChart(c *gin.Context) {
 	var customDashboardList []*models.SimpleCustomDashboardDto
 	var chartRelList []*models.CustomDashboardChartRel
 	var customDashboardMap = make(map[int]string)
-	var mgmtRoles, useRoles, useDashboard []string
+	var mgmtRoles, displayMgmtRoles, useRoles, displayUseRoles, useDashboard []string
 	var displayNameRoleMap map[string]string
 	var userRoleMap map[string]bool
 	var permission string
@@ -339,7 +340,9 @@ func QueryCustomChart(c *gin.Context) {
 	if len(customChartList) > 0 {
 		for _, chart := range customChartList {
 			mgmtRoles = []string{}
+			displayMgmtRoles = []string{}
 			useRoles = []string{}
+			displayUseRoles = []string{}
 			useDashboard = []string{}
 			permission = string(models.PermissionUse)
 			if roleRelList, err = db.QueryChartPermissionByCustomChart(chart.Guid); err != nil {
@@ -353,12 +356,14 @@ func QueryCustomChart(c *gin.Context) {
 			if len(roleRelList) > 0 {
 				for _, roleRel := range roleRelList {
 					if roleRel.Permission == string(models.PermissionMgmt) {
+						mgmtRoles = append(mgmtRoles, roleRel.RoleId)
 						if v, ok := displayNameRoleMap[roleRel.RoleId]; ok {
-							mgmtRoles = append(mgmtRoles, v)
+							displayMgmtRoles = append(displayMgmtRoles, v)
 						}
 					} else if roleRel.Permission == string(models.PermissionUse) {
+						useRoles = append(useRoles, roleRel.RoleId)
 						if v, ok := displayNameRoleMap[roleRel.RoleId]; ok {
-							useRoles = append(useRoles, v)
+							displayUseRoles = append(displayUseRoles, v)
 						}
 					}
 					if userRoleMap[roleRel.RoleId] {
@@ -372,17 +377,19 @@ func QueryCustomChart(c *gin.Context) {
 				}
 			}
 			resultDto := &models.QueryChartResultDto{
-				ChartId:         chart.Guid,
-				ChartName:       chart.Name,
-				ChartType:       chart.ChartType,
-				SourceDashboard: customDashboardMap[chart.SourceDashboard],
-				UseDashboard:    useDashboard,
-				MgmtRoles:       mgmtRoles,
-				UseRoles:        useRoles,
-				UpdateUser:      chart.UpdateUser,
-				CreatedTime:     chart.CreateTime,
-				UpdatedTime:     chart.UpdateTime,
-				Permission:      permission,
+				ChartId:          chart.Guid,
+				ChartName:        chart.Name,
+				ChartType:        chart.ChartType,
+				SourceDashboard:  customDashboardMap[chart.SourceDashboard],
+				UseDashboard:     useDashboard,
+				MgmtRoles:        mgmtRoles,
+				DisplayMgmtRoles: displayMgmtRoles,
+				UseRoles:         useRoles,
+				DisplayUseRoles:  displayUseRoles,
+				UpdateUser:       chart.UpdateUser,
+				CreatedTime:      chart.CreateTime,
+				UpdatedTime:      chart.UpdateTime,
+				Permission:       permission,
 			}
 			dataList = append(dataList, resultDto)
 		}

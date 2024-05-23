@@ -115,7 +115,7 @@ func buildNewAlarm(param *m.AMRespAlert, nowTime time.Time) (alarm m.AlarmHandle
 	if err != nil {
 		return
 	}
-	log.Logger.Debug("exist alarm", log.JsonObj("existAlarm", existAlarm), log.String("alarmConditionGuid", alarmConditionGuid))
+	log.Logger.Debug("exist alarm", log.JsonObj("existAlarm", existAlarm), log.String("alarmConditionGuid", alarmConditionGuid), log.JsonObj("alarm", alarm))
 	alarm.Status = param.Status
 	operation := "add"
 	if existAlarm.Status != "" {
@@ -268,7 +268,7 @@ func getNewAlarmTags(param *m.AMRespAlert) (tagString string, err error) {
 
 func getNewAlarmWithStrategyGuid(alarm *m.AlarmHandleObj, param *m.AMRespAlert, endpointObj *m.EndpointNewTable, strategyObj *m.AlarmStrategyMetricObj, multipleConditionFlag bool) (existAlarm m.AlarmTable, alarmConditionGuid string, err error) {
 	existAlarm = m.AlarmTable{}
-	log.Logger.Info("getNewAlarmWithStrategyGuid", log.String("query guid", strategyObj.Guid))
+	log.Logger.Debug("getNewAlarmWithStrategyGuid", log.JsonObj("strategyObj", strategyObj))
 	alarm.AlarmStrategy = strategyObj.Guid
 	alarm.SMetric = strategyObj.MetricName
 	alarm.SExpr = strategyObj.MetricExpr
