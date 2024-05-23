@@ -271,7 +271,7 @@
   "m_remark": "标记",
   "m_add_json_regular": "新增JSON正则",
   "m_add_metric_regular": "新增指标正则",
-  "m_json_regular": "JSON正则",
+  "m_json_regular": "JSON提取正则",
   "m_metric_regular": "指标正则",
   "m_log_server": "日志主机",
   "m_business_object": "业务对象",
@@ -431,5 +431,9 @@
   "m_role_drawer_title": "选择角色",
   "m_unselected_role": "未选中角色",
   "m_selected_role": "选中角色",
-  "m_choose_one": "只能选择一个属主角色"
+  "m_choose_one": "只能选择一个属主角色",
+  "m_source_dashboard": "源看板",
+  "m_use_dashboard": "应用看板",
+  "m_reset": "重置",
+  "m_create_time": "创建时间"
 }

@@ -3,8 +3,8 @@
     <div>
       <Row>
         <Tabs v-model="searchMap.permission" @on-click="onFilterConditionChange()">
-          <TabPane :label="$t('m_chart_all')" name="ALL"></TabPane>
-          <TabPane :label="$t('m_can_edit')" name="MGMT"></TabPane>
+          <TabPane :label="$t('m_chart_all')" name="all"></TabPane>
+          <TabPane :label="$t('m_can_edit')" name="mgmt"></TabPane>
         </Tabs>
       </Row>
       <Row>
@@ -313,6 +313,11 @@ export default {
     this.pathMap = this.$root.apiCenter.template;
     this.getViewList()
     this.getAllRoles()
+    if (this.$route.query.isCreate) {
+      setTimeout(() => {
+        this.addBoardItem()
+      }, 500)
+    }
   },
   methods: {
     deleteAuth (index) {
@@ -417,7 +422,7 @@ export default {
       } else {
         params.id = Number(params.id)
       }
-      if (params.permission === 'ALL') {
+      if (params.permission === 'all') {
         params.permission = ''
       }
       this.request('POST',this.pathMap.listV2, params, responseData => {
@@ -562,5 +567,14 @@ li {
   display: flex;
   align-items: center;
   margin-bottom: 10px
+}
+.auth-dialog-content::before {
+    content: '*';
+    display: inline-block;
+    margin-right: 4px;
+    line-height: 1;
+    font-family: SimSun;
+    font-size: 14px;
+    color: #ed4014;
 }
 </style>

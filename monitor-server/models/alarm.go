@@ -92,6 +92,7 @@ type AlarmHandleObj struct {
 	AlarmConditionGuid    string `json:"alarm_condition_guid"`
 	MultipleConditionFlag bool   `json:"multiple_condition_flag"`
 	AlarmConditionCrcHash string `json:"alarm_condition_crc_hash"`
+	CurIndex              int    `json:"cur_index"`
 }
 
 type AlarmProblemQuery struct {
@@ -603,7 +604,7 @@ type AlarmDetailData struct {
 	EndValue   float64   `json:"endValue" xorm:"end_value"`     // 恢复值
 	End        time.Time `json:"end" xorm:"end"`                // 恢复时间
 	MetricName string    `json:"metric_name" xorm:"metric_name"`
-	Tags       string    `json:"tags"`
+	Tags       string    `json:"tags" xorm:"tags"`
 }
 
 type AlarmStrategyGroup struct {
