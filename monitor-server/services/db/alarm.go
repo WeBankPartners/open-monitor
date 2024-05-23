@@ -1725,13 +1725,16 @@ func buildAlarmDetailData(inputList []*m.AlarmDetailData, splitChar string) stri
 		if v != nil {
 			tagList := []string{}
 			for _, tagV := range strings.Split(v.Tags, "^") {
-				if strings.HasPrefix(tagV, "e_guid:") || strings.HasPrefix(tagV, "guid:") || strings.HasPrefix(tagV, "agg:") || strings.HasPrefix(tagV, "key:") || tagV == "" {
+				if strings.HasPrefix(tagV, "e_guid:") || strings.HasPrefix(tagV, "guid:") || strings.HasPrefix(tagV, "agg:") || strings.HasPrefix(tagV, "key:") || strings.HasPrefix(tagV, "condition_crc:") {
 					continue
 				}
-				tagList = append(tagList, tagV)
+				if firstSplitIndex := strings.Index(tagV, ":"); firstSplitIndex > 0 {
+					tagV = tagV[:firstSplitIndex] + "=" + tagV[firstSplitIndex+1:]
+					tagList = append(tagList, tagV)
+				}
 			}
 			if len(tagList) > 0 {
-				stringList = append(stringList, fmt.Sprintf("Metric:%s Tag:%s %s Value:%.3f Duration:%s", v.Metric, strings.Join(tagList, ","), v.Cond, v.StartValue, v.Last))
+				stringList = append(stringList, fmt.Sprintf("Metric:%s Tag:[%s] %s Value:%.3f Duration:%s", v.Metric, strings.Join(tagList, ","), v.Cond, v.StartValue, v.Last))
 			} else {
 				stringList = append(stringList, fmt.Sprintf("Metric:%s %s Value:%.3f Duration:%s", v.Metric, v.Cond, v.StartValue, v.Last))
 			}
