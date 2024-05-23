@@ -102,3 +102,5 @@ CONSTRAINT `fore_custom_chart_series_tagvalue_dashboard_chart_tag` FOREIGN KEY (
 
 
 alter table custom_dashboard_role_rel MODIFY role_id varchar(64)  NOT NULL COMMENT '角色id';
+alter table metric add column log_metric_group varchar(64)  default NULL COMMENT '业务日志指标组配置Id';
+alter table metric ADD CONSTRAINT  `fore_metric_log_metric_group` FOREIGN KEY (log_metric_group) REFERENCES log_metric_group(guid);
