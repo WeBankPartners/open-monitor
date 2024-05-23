@@ -8,19 +8,19 @@ import (
 	"strings"
 )
 
-func PluginCloseAlarmAction(input *models.PluginCloseAlarmRequestObj) (result *models.PluginCloseAlarmOutputObj, err error)  {
+func PluginCloseAlarmAction(input *models.PluginCloseAlarmRequestObj) (result *models.PluginCloseAlarmOutputObj, err error) {
 	log.Logger.Info("PluginCloseAlarmAction", log.JsonObj("input", input))
 	result = &models.PluginCloseAlarmOutputObj{CallbackParameter: input.CallbackParameter, ErrorCode: "0", ErrorMessage: "", AlarmId: input.AlarmId, Guid: input.Guid}
 	// alarmId -> id-firing-notifyGuid
 	alarmSplit := strings.Split(input.AlarmId, "-")
-	alarmId,_ := strconv.Atoi(alarmSplit[0])
+	alarmId, _ := strconv.Atoi(alarmSplit[0])
 	if alarmId <= 0 {
 		err = fmt.Errorf("AlarmId:%s illegal ", input.AlarmId)
 		return
 	}
 	if len(alarmSplit) == 3 {
 		if alarmSplit[2] == "custom_alarm_guid" {
-			queryRows,_ := x.QueryString("SELECT id FROM alarm_custom WHERE id=?", alarmId)
+			queryRows, _ := x.QueryString("SELECT id FROM alarm_custom WHERE id=?", alarmId)
 			if len(queryRows) == 0 {
 				err = fmt.Errorf("Can not find custom alarm with id:%s ", input.AlarmId)
 				return
@@ -29,11 +29,25 @@ func PluginCloseAlarmAction(input *models.PluginCloseAlarmRequestObj) (result *m
 			return
 		}
 	}
-	queryRows,_ := x.QueryString("SELECT id FROM alarm WHERE id=?", alarmId)
+	queryRows, _ := x.QueryString("SELECT id,status,endpoint_tags FROM alarm WHERE id=?", alarmId)
 	if len(queryRows) == 0 {
 		err = fmt.Errorf("Can not find alarm with id:%s ", input.AlarmId)
 		return
 	}
-	_, err = x.Exec("UPDATE alarm SET status='closed',close_msg=?,custom_message=?,close_user='system',end=NOW() WHERE id=?", input.Message, input.Message, alarmId)
+	if queryRows[0]["status"] == "closed" {
+		return
+	}
+	var actions []*Action
+	actions = append(actions, &Action{Sql: "UPDATE alarm SET status='closed',close_msg=?,custom_message=?,close_user='system',end=NOW() WHERE id=?", Param: []interface{}{input.Message, input.Message, alarmId}})
+	//_, err = x.Exec("UPDATE alarm SET status='closed',close_msg=?,custom_message=?,close_user='system',end=NOW() WHERE id=?", input.Message, input.Message, alarmId)
+	endpointTags := queryRows[0]["endpoint_tags"]
+	if strings.HasPrefix(endpointTags, "ac_") {
+		for _, conditionGuid := range strings.Split(endpointTags, ",") {
+			if strings.HasPrefix(conditionGuid, "ac_") {
+				actions = append(actions, &Action{Sql: "UPDATE alarm_condition SET STATUS='closed',end=NOW() WHERE guid=?", Param: []interface{}{conditionGuid}})
+			}
+		}
+	}
+	err = Transaction(actions)
 	return
 }
