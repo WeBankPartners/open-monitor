@@ -91,6 +91,7 @@ type logMetricMonitorNeObj struct {
 	ReOpenHandlerChan chan int               `json:"-"`
 	TailTimeLock      *sync.RWMutex          `json:"-"`
 	TailLastUnixTime  int64                  `json:"-"`
+	DestroyChan       chan int               `json:"-"`
 }
 
 type logMetricGroupNeObj struct {
@@ -179,7 +180,6 @@ func (c *logMetricMonitorNeObj) startHandleTailData() {
 		//level.Info(monitorLogger).Log("log_metric_get_new_line ->", lineText)
 		//lineText = strings.ReplaceAll(lineText, "\\t", "    ")
 		c.Lock.RLock()
-		//level.Info(monitorLogger).Log("get a new line:", lineText)
 		for _, rule := range c.JsonConfig {
 			if rule.Regexp == nil {
 				continue
@@ -314,18 +314,21 @@ func (c *logMetricMonitorNeObj) start() {
 	c.DataChan = make(chan string, logMetricChanLength)
 	go c.startHandleTailData()
 	go c.startFileHandlerCheck()
-	breakFlag := false
+	reopenFlag := false
+	destroyFlag := false
 	for {
 		select {
 		case <-c.ReOpenHandlerChan:
-			breakFlag = true
+			reopenFlag = true
+		case <-c.DestroyChan:
+			destroyFlag = true
 		case line := <-c.TailSession.Lines:
 			if line == nil {
 				continue
 			}
 			c.DataChan <- line.Text
 		}
-		if breakFlag {
+		if reopenFlag || destroyFlag {
 			break
 		} else {
 			c.TailTimeLock.Lock()
@@ -336,7 +339,10 @@ func (c *logMetricMonitorNeObj) start() {
 	c.TailSession.Stop()
 	c.TailSession.Cleanup()
 	level.Info(monitorLogger).Log("log_metric -> startLogMetricMonitorNeObj__end", c.Path)
-	time.Sleep(2 * time.Second)
+	if destroyFlag {
+		return
+	}
+	time.Sleep(10 * time.Second)
 	go c.start()
 }
 
@@ -373,6 +379,7 @@ func (c *logMetricMonitorNeObj) new(input *logMetricMonitorNeObj) {
 	c.JsonConfig = []*logMetricJsonNeObj{}
 	c.TailTimeLock = new(sync.RWMutex)
 	c.ReOpenHandlerChan = make(chan int, 1)
+	c.DestroyChan = make(chan int, 1)
 	var err error
 	for _, jsonObj := range input.JsonConfig {
 		tmpReg, tmpErr := PcreCompile(jsonObj.Regular, 0)
@@ -524,12 +531,14 @@ func initLogMetricNeObj(metricObj *logMetricNeObj) {
 }
 
 func (c *logMetricMonitorNeObj) destroy() {
+	level.Info(monitorLogger).Log("start_log_metric_destroy:", c.Path)
 	c.Lock.Lock()
-	c.TailSession.Stop()
+	c.DestroyChan <- 1
 	c.JsonConfig = []*logMetricJsonNeObj{}
 	c.MetricConfig = []*logMetricNeObj{}
 	c.MetricGroupConfig = []*logMetricGroupNeObj{}
 	c.Lock.Unlock()
+	level.Info(monitorLogger).Log("done_log_metric_destroy:", c.Path)
 }
 
 func LogMetricMonitorHttpHandle(w http.ResponseWriter, r *http.Request) {
