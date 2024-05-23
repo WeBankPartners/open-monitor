@@ -206,11 +206,11 @@ func SyncData() (err error) {
 	var dashboardList []*models.CustomDashboardTable
 	var historyChartList []*models.HistoryChart
 	var dashboardChartRelList []*models.CustomDashboardChartRel
-	var actions []*Action
 	if err = x.SQL("select * from custom_dashboard").Find(&dashboardList); err != nil {
 		return
 	}
 	for _, dashboard := range dashboardList {
+		var actions []*Action
 		// cfg 为空,直接跳过
 		if strings.TrimSpace(dashboard.Cfg) == "" {
 			continue
@@ -275,8 +275,11 @@ func SyncData() (err error) {
 				}
 			}
 		}
+		if err = Transaction(actions); err != nil {
+			return
+		}
 	}
-	return Transaction(actions)
+	return
 }
 
 func convertLineTypeIntToString(lineType int) string {
