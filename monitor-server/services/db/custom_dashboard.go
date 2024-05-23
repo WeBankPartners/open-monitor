@@ -194,7 +194,9 @@ func TransformMapToArray(hashMap map[string]bool) []string {
 	var res []string
 	if len(hashMap) > 0 {
 		for key, _ := range hashMap {
-			res = append(res, key)
+			if strings.TrimSpace(key) != "" {
+				res = append(res, key)
+			}
 		}
 	}
 	return res
