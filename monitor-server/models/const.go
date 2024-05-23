@@ -36,3 +36,11 @@ const (
 	PermissionMgmt Permission = "mgmt" //管理权限
 	PermissionUse  Permission = "use"  //使用权限
 )
+
+type MetricType string
+
+const (
+	MetricTypeCommon   MetricType = "common"   //通用类型
+	MetricTypeBusiness MetricType = "business" //业务配置
+	MetricTypeCustom   MetricType = "custom"   // 自定义
+)
