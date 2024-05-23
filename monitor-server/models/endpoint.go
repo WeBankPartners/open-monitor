@@ -50,14 +50,17 @@ type EndpointExtendParamObj struct {
 }
 
 type MetricTable struct {
-	Guid              string `json:"guid" xorm:"guid"`
-	Metric            string `json:"metric" xorm:"metric"`
-	MonitorType       string `json:"monitor_type" xorm:"monitor_type"`
-	PromExpr          string `json:"prom_expr" xorm:"prom_expr"`
-	TagOwner          string `json:"tag_owner" xorm:"tag_owner"`
-	ServiceGroup      string `json:"service_group" xorm:"service_group"`
-	Workspace         string `json:"workspace" xorm:"workspace"`
-	UpdateTime        string `json:"update_time" xorm:"update_time"`
-	LogMetricConfig   string `json:"log_metric_config" xorm:"log_metric_config"`
-	LogMetricTemplate string `json:"log_metric_template" xorm:"log_metric_template"`
+	Guid               string `json:"guid" xorm:"guid"`
+	Metric             string `json:"metric" xorm:"metric"`
+	MonitorType        string `json:"monitor_type" xorm:"monitor_type"`
+	PromExpr           string `json:"prom_expr" xorm:"prom_expr"`
+	TagOwner           string `json:"tag_owner" xorm:"tag_owner"`
+	ServiceGroup       string `json:"service_group" xorm:"service_group"`
+	Workspace          string `json:"workspace" xorm:"workspace"`
+	UpdateTime         string `json:"update_time" xorm:"update_time"`
+	LogMetricConfig    string `json:"log_metric_config" xorm:"log_metric_config"`
+	LogMetricTemplate  string `json:"log_metric_template" xorm:"log_metric_template"`
+	LogMetricGroup     string `json:"log_metric_group" xorm:"log_metric_group"`
+	MetricType         string `json:"metric_type" xorm:"-"`           // 指标类型
+	LogMetricGroupName string `json:"log_metric_group_name" xorm:"-"` // 配置的模版名
 }

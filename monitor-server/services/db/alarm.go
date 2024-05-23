@@ -526,7 +526,7 @@ func GetAlarms(query m.AlarmTable, limit int, extLogMonitor, extOpenAlarm bool) 
 				v.AlarmMetricList = append(v.AlarmMetricList, alarmDetail.Metric)
 			}
 		} else {
-			alarmDetailList = append(alarmDetailList, &m.AlarmDetailData{Metric: v.SMetric, Cond: v.SCond, Last: v.SLast, Start: v.Start, StartValue: v.StartValue, End: v.End, EndValue: v.EndValue})
+			alarmDetailList = append(alarmDetailList, &m.AlarmDetailData{Metric: v.SMetric, Cond: v.SCond, Last: v.SLast, Start: v.Start, StartValue: v.StartValue, End: v.End, EndValue: v.EndValue, Tags: v.Tags})
 			v.AlarmMetricList = []string{v.SMetric}
 		}
 		v.AlarmDetail = buildAlarmDetailData(alarmDetailList, "<br/>")
@@ -929,11 +929,11 @@ func getLastFromExpr(expr string) string {
 func CloseAlarm(param m.AlarmCloseParam) (err error) {
 	var alarmRows []*m.AlarmTable
 	if param.Priority != "" {
-		err = x.SQL("select id,s_metric from alarm WHERE status='firing' and s_priority=?", param.Priority).Find(&alarmRows)
+		err = x.SQL("select id,s_metric,endpoint_tags from alarm WHERE status='firing' and s_priority=?", param.Priority).Find(&alarmRows)
 	} else if param.Metric != "" {
-		err = x.SQL("select id,s_metric from alarm WHERE status='firing' and s_metric=?", param.Metric).Find(&alarmRows)
+		err = x.SQL("select id,s_metric,endpoint_tags from alarm WHERE status='firing' and s_metric=?", param.Metric).Find(&alarmRows)
 	} else {
-		err = x.SQL("select id,s_metric from alarm WHERE id=?", param.Id).Find(&alarmRows)
+		err = x.SQL("select id,s_metric,endpoint_tags from alarm WHERE id=?", param.Id).Find(&alarmRows)
 	}
 	if err != nil {
 		err = fmt.Errorf("query alarm table fail,%s ", err.Error())
@@ -944,6 +944,13 @@ func CloseAlarm(param m.AlarmCloseParam) (err error) {
 		actions = append(actions, &Action{Sql: "UPDATE alarm SET STATUS='closed',end=NOW() WHERE id=?", Param: []interface{}{v.Id}})
 		if v.SMetric == "log_monitor" {
 			actions = append(actions, &Action{Sql: "update log_keyword_alarm set status='closed',updated_time=NOW() WHERE alarm_id=?", Param: []interface{}{v.Id}})
+		}
+		if strings.HasPrefix(v.EndpointTags, "ac_") {
+			for _, conditionGuid := range strings.Split(v.EndpointTags, ",") {
+				if strings.HasPrefix(conditionGuid, "ac_") {
+					actions = append(actions, &Action{Sql: "UPDATE alarm_condition SET STATUS='closed',end=NOW() WHERE guid=?", Param: []interface{}{conditionGuid}})
+				}
+			}
 		}
 	}
 	if len(actions) > 0 {
@@ -1385,7 +1392,7 @@ func QueryAlarmBySql(sql string, params []interface{}, customQueryParam m.Custom
 				v.AlarmMetricList = append(v.AlarmMetricList, alarmDetail.Metric)
 			}
 		} else {
-			alarmDetailList = append(alarmDetailList, &m.AlarmDetailData{Metric: v.SMetric, Cond: v.SCond, Last: v.SLast, Start: v.Start, StartValue: v.StartValue, End: v.End, EndValue: v.EndValue})
+			alarmDetailList = append(alarmDetailList, &m.AlarmDetailData{Metric: v.SMetric, Cond: v.SCond, Last: v.SLast, Start: v.Start, StartValue: v.StartValue, End: v.End, EndValue: v.EndValue, Tags: v.Tags})
 			v.AlarmMetricList = []string{v.SMetric}
 		}
 		v.AlarmDetail = buildAlarmDetailData(alarmDetailList, "<br/>")
@@ -1604,8 +1611,15 @@ func UpdateAlarmWithConditions(alarmConditionObj *m.AlarmHandleObj) (alarmRow *m
 		return
 	}
 	var configCrcList, conditionGuidList, conditionMetricList []string
-	for _, row := range strategyMetricRows {
+	var crcIndex int
+	for i, row := range strategyMetricRows {
 		configCrcList = append(configCrcList, row.CrcHash)
+		if row.CrcHash == alarmConditionObj.AlarmConditionCrcHash {
+			crcIndex = i
+		}
+	}
+	if crcIndex > 0 {
+		time.Sleep(time.Duration(crcIndex) * time.Second)
 	}
 	alarmCrcMap := make(map[string]int)
 	alarmCrcMap[alarmConditionObj.AlarmConditionCrcHash] = 1
@@ -1682,6 +1696,9 @@ func UpdateAlarmWithConditions(alarmConditionObj *m.AlarmHandleObj) (alarmRow *m
 			alarmRow.AlarmStrategy = alarmConditionObj.AlarmStrategy
 			alarmRow.AlarmName = alarmStrategyObj.Name
 			alarmRow.EndpointTags = strings.Join(conditionGuidList, ",")
+			alarmRow.NotifyEnable = alarmConditionObj.NotifyEnable
+			alarmRow.NotifyId = alarmConditionObj.NotifyId
+			alarmRow.NotifyDelay = alarmConditionObj.NotifyDelay
 			insertAlarmResult, insertErr := session.Exec("INSERT INTO alarm (endpoint,status,s_metric,s_expr,s_cond,s_last,s_priority,content,tags,start_value,`start`,endpoint_tags,alarm_strategy,alarm_name) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
 				alarmRow.Endpoint, alarmRow.Status, alarmRow.SMetric, alarmRow.SExpr, alarmRow.SCond, alarmRow.SLast, alarmRow.SPriority, alarmRow.Content, alarmRow.Tags, alarmRow.StartValue, alarmRow.Start, alarmRow.EndpointTags, alarmRow.AlarmStrategy, alarmRow.AlarmName)
 			if insertErr != nil {
@@ -1711,7 +1728,7 @@ func GetAlarmDetailList(alarmConditionGuidList []string) (alarmDetailList []*m.A
 		return
 	}
 	filterSql, filterParam := createListParams(alarmConditionGuidList, "")
-	err = x.SQL("select t1.metric,t1.cond,t1.`last`,t1.`start`,t1.start_value,t1.`end`,t1.end_value,t2.metric as 'metric_name' from alarm_condition t1 left join metric t2 on t1.metric=t2.guid where t1.guid in ("+filterSql+")", filterParam...).Find(&alarmDetailList)
+	err = x.SQL("select t1.metric,t1.cond,t1.`last`,t1.`start`,t1.start_value,t1.`end`,t1.end_value,t1.tags,t2.metric as 'metric_name' from alarm_condition t1 left join metric t2 on t1.metric=t2.guid where t1.guid in ("+filterSql+")", filterParam...).Find(&alarmDetailList)
 	if err != nil {
 		err = fmt.Errorf("GetAlarmDetailList -> query alarm condition table fail,%s ", err.Error())
 		return
@@ -1725,14 +1742,16 @@ func buildAlarmDetailData(inputList []*m.AlarmDetailData, splitChar string) stri
 		if v != nil {
 			tagList := []string{}
 			for _, tagV := range strings.Split(v.Tags, "^") {
-				if strings.HasPrefix(tagV, "e_guid:") || strings.HasPrefix(tagV, "guid:") || strings.HasPrefix(tagV, "agg:") || strings.HasPrefix(tagV, "key:") {
+				if strings.HasPrefix(tagV, "e_guid:") || strings.HasPrefix(tagV, "guid:") || strings.HasPrefix(tagV, "agg:") || strings.HasPrefix(tagV, "key:") || strings.HasPrefix(tagV, "condition_crc:") {
 					continue
 				}
-				tagList = append(tagList, tagV)
+				if firstSplitIndex := strings.Index(tagV, ":"); firstSplitIndex > 0 {
+					tagV = tagV[:firstSplitIndex] + "=" + tagV[firstSplitIndex+1:]
+					tagList = append(tagList, tagV)
+				}
 			}
-			//stringList = append(stringList, fmt.Sprintf("%s %.3f %s %s %s ", v.Metric, v.StartValue, v.Cond, v.Last, v.Start.Format(m.DatetimeFormat)))
 			if len(tagList) > 0 {
-				stringList = append(stringList, fmt.Sprintf("Metric:%s Tag:%s %s Value:%.3f Duration:%s", v.Metric, strings.Join(tagList, ","), v.Cond, v.StartValue, v.Last))
+				stringList = append(stringList, fmt.Sprintf("Metric:%s Tag:[%s] %s Value:%.3f Duration:%s", v.Metric, strings.Join(tagList, ","), v.Cond, v.StartValue, v.Last))
 			} else {
 				stringList = append(stringList, fmt.Sprintf("Metric:%s %s Value:%.3f Duration:%s", v.Metric, v.Cond, v.StartValue, v.Last))
 			}
