@@ -28,10 +28,10 @@ func GetSharedChartList(c *gin.Context) {
 				SourceDashboard: chart.SourceDashboard,
 				Name:            chart.Name,
 			}
-			if _, ok := sharedResultMap[chart.LineType]; !ok {
-				sharedResultMap[chart.LineType] = []*models.ChartSharedDto{}
+			if _, ok := sharedResultMap[chart.ChartType]; !ok {
+				sharedResultMap[chart.ChartType] = []*models.ChartSharedDto{}
 			}
-			sharedResultMap[chart.LineType] = append(sharedResultMap[chart.LineType], sharedDto)
+			sharedResultMap[chart.ChartType] = append(sharedResultMap[chart.ChartType], sharedDto)
 		}
 	}
 	middleware.ReturnSuccessData(c, sharedResultMap)
