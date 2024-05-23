@@ -682,6 +682,14 @@ export default {
         this.totalPageConfig[tableIndex].notify[index].proc_callback_name = ''
       }
     },
+    procCallbackKeyChangeForm(proc_callback_key, index) {
+      const findFlow = this.flows.find(f => f.procDefKey === proc_callback_key)
+      if (findFlow) {
+        this.formData.notify[index].proc_callback_name = `${findFlow.procDefName}[${findFlow.procDefVersion}]`
+      } else {
+        this.formData.notify[index].proc_callback_name = ''
+      }
+    },
     deleteAlarmItem (rowData) {
       const api = `/monitor/api/v2/alarm/strategy/${rowData.guid}`
       this.request('DELETE', api, '', () => {
