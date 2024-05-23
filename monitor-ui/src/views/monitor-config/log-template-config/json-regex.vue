@@ -53,7 +53,7 @@
                 <Input
                   v-model="configInfo.demo_log"
                   type="textarea"
-                  :rows="6"
+                  :rows="12"
                   style="width: 96%"
                 />
                 <div v-if="isParmasChanged && configInfo.demo_log.length === 0" style="color: red">
@@ -61,14 +61,14 @@
                 </div>
               </FormItem>
               <FormItem>
-                <Button type="primary" @click="confirmGenerateBackstageTrial" ghost size="small" style="float:right;margin:12px" :disabled="configInfo.demo_log===''||configInfo.json_regular===''">{{ $t('m_match') }}</Button>
+                <Button type="primary" @click="confirmGenerateBackstageTrial" ghost size="small" style="float:right;margin:12px;margin-right:4%" :disabled="configInfo.demo_log===''||configInfo.json_regular===''">{{ $t('m_match') }}</Button>
               </FormItem>
               <FormItem :label="$t('m_matching_result')">
                 <Input
                   disabled
                   v-model="configInfo.calc_result.match_text"
                   type="textarea"
-                  :rows="6"
+                  :rows="12"
                   style="width: 96%"
                 />
               </FormItem>
