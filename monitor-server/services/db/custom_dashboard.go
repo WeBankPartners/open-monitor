@@ -2,9 +2,12 @@ package db
 
 import (
 	"database/sql"
+	"encoding/json"
+	"github.com/WeBankPartners/go-common-lib/guid"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func QueryCustomDashboardList(condition models.CustomDashboardQueryParam, roles []string) (pageInfo models.PageInfo, list []*models.CustomDashboardTable, err error) {
@@ -191,8 +194,102 @@ func TransformMapToArray(hashMap map[string]bool) []string {
 	var res []string
 	if len(hashMap) > 0 {
 		for key, _ := range hashMap {
-			res = append(res, key)
+			if strings.TrimSpace(key) != "" {
+				res = append(res, key)
+			}
 		}
 	}
 	return res
+}
+
+func SyncData() (err error) {
+	var dashboardList []*models.CustomDashboardTable
+	var historyChartList []*models.HistoryChart
+	var dashboardChartRelList []*models.CustomDashboardChartRel
+	if err = x.SQL("select * from custom_dashboard").Find(&dashboardList); err != nil {
+		return
+	}
+	for _, dashboard := range dashboardList {
+		var actions []*Action
+		// cfg 为空,直接跳过
+		if strings.TrimSpace(dashboard.Cfg) == "" {
+			continue
+		}
+		if err = json.Unmarshal([]byte(dashboard.Cfg), &historyChartList); err != nil {
+			return
+		}
+		// 没数据直接跳过
+		if len(historyChartList) == 0 {
+			continue
+		}
+		dashboardChartRelList = []*models.CustomDashboardChartRel{}
+		if err = x.SQL("select * from custom_dashboard_chart_rel where custom_dashboard = ?", dashboard.Id).Find(&dashboardChartRelList); err != nil {
+			return
+		}
+		// 已经有看板和图表的关联关系,说明数据已经生成,本次不处理
+		if len(dashboardChartRelList) > 0 {
+			continue
+		}
+		now := time.Now().Format(models.DatetimeFormat)
+		for _, chart := range historyChartList {
+			newChartId := guid.CreateGuid()
+			group := ""
+			displayConfig := ""
+			if chart.ViewConfig != nil {
+				group = chart.ViewConfig.Group
+				config := models.NewDisplayConfig{
+					X: chart.ViewConfig.X,
+					Y: chart.ViewConfig.Y,
+					W: chart.ViewConfig.W,
+					H: chart.ViewConfig.H,
+				}
+				byteArr, _ := json.Marshal(config)
+				displayConfig = string(byteArr)
+			}
+			// 新增图表表
+			actions = append(actions, &Action{Sql: "insert into custom_chart(guid,source_dashboard,public,name,chart_type,line_type,aggregate,agg_step,unit," +
+				"create_user,update_user,create_time,update_time,chart_template) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+				newChartId, dashboard.Id, 0, chart.PanalTitle, chart.ChartType, convertLineTypeIntToString(chart.LineType), chart.Aggregate,
+				chart.AggStep, chart.PanalUnit, dashboard.CreateUser, dashboard.CreateUser, now, now, ""}})
+			// 新增看板图表关系表
+			actions = append(actions, &Action{Sql: "insert into custom_dashboard_chart_rel values(?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+				guid.CreateGuid(), dashboard.Id, newChartId, group, displayConfig, dashboard.CreateUser, dashboard.CreateUser, now, now}})
+			if len(chart.Query) > 0 {
+				for _, series := range chart.Query {
+					seriesId := guid.CreateGuid()
+					actions = append(actions, &Action{Sql: "insert into custom_chart_series values(?,?,?,?,?,?,?,?)", Param: []interface{}{
+						seriesId, newChartId, series.Endpoint, series.AppObject, series.EndpointName, series.EndpointType, series.Metric, series.DefaultColor,
+					}})
+					if len(series.MetricToColor) > 0 {
+						for _, colorConfig := range series.MetricToColor {
+							tags := ""
+							if strings.Contains(colorConfig.Metric, "{") {
+								start := strings.LastIndex(colorConfig.Metric, "{")
+								tags = colorConfig.Metric[start+1 : len(colorConfig.Metric)-1]
+							}
+							actions = append(actions, &Action{Sql: "insert into custom_chart_series_config values(?,?,?,?,?)", Param: []interface{}{
+								guid.CreateGuid(), seriesId, tags, colorConfig.Color, colorConfig.Metric,
+							}})
+						}
+					}
+				}
+			}
+		}
+		if err = Transaction(actions); err != nil {
+			return
+		}
+	}
+	return
+}
+
+func convertLineTypeIntToString(lineType int) string {
+	switch lineType {
+	case 1:
+		return "line"
+	case 0:
+		return "area"
+	default:
+		return "bar"
+	}
+	return ""
 }
