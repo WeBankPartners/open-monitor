@@ -385,3 +385,12 @@ func CheckHasManagePermission(dashboard int, userRoles []string) (permission boo
 	}
 	return
 }
+
+func SyncData(c *gin.Context) {
+	err := db.SyncData()
+	if err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	middleware.ReturnSuccess(c)
+}
