@@ -13,6 +13,7 @@ import exporter from "@/views/monitor-config/exporter";
 import businessMonitor from "@/views/monitor-config/business-monitor";
 import logTemplate from "@/views/monitor-config/log-template";
 import metricConfig from "@/views/metric-config";
+import groupBoard from "@/views/metric-config/group-board";
 import viewConfigIndex from "@/views/custom-view/view-config-index";
 import viewConfig from "@/views/custom-view/view-config";
 import editLineView from "@/views/custom-view/edit-line-view";
@@ -122,6 +123,13 @@ const router = [
         meta: {},
         component: metricConfig
       },
+      {
+        path: "groupBoard",
+        name: "groupBoard",
+        title: "对象看板",
+        meta: {},
+        component: groupBoard
+      }
     ]
   },
   {
