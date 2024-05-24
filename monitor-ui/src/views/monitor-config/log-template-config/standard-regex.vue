@@ -40,7 +40,7 @@
                 <Input
                   v-model="configInfo.demo_log"
                   type="textarea"
-                  :rows="6"
+                  :rows="24"
                   style="width: 96%"
                 />
                 <div v-if="isParmasChanged && configInfo.demo_log.length === 0" style="color: red">
@@ -100,7 +100,7 @@ export default {
         {
           title: this.$t('field.displayName'),
           key: 'display_name',
-          width: 100
+          width: 120
         },
         {
           title: this.$t('m_parameter_key'),

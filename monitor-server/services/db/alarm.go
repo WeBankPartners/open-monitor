@@ -929,11 +929,11 @@ func getLastFromExpr(expr string) string {
 func CloseAlarm(param m.AlarmCloseParam) (err error) {
 	var alarmRows []*m.AlarmTable
 	if param.Priority != "" {
-		err = x.SQL("select id,s_metric from alarm WHERE status='firing' and s_priority=?", param.Priority).Find(&alarmRows)
+		err = x.SQL("select id,s_metric,endpoint_tags from alarm WHERE status='firing' and s_priority=?", param.Priority).Find(&alarmRows)
 	} else if param.Metric != "" {
-		err = x.SQL("select id,s_metric from alarm WHERE status='firing' and s_metric=?", param.Metric).Find(&alarmRows)
+		err = x.SQL("select id,s_metric,endpoint_tags from alarm WHERE status='firing' and s_metric=?", param.Metric).Find(&alarmRows)
 	} else {
-		err = x.SQL("select id,s_metric from alarm WHERE id=?", param.Id).Find(&alarmRows)
+		err = x.SQL("select id,s_metric,endpoint_tags from alarm WHERE id=?", param.Id).Find(&alarmRows)
 	}
 	if err != nil {
 		err = fmt.Errorf("query alarm table fail,%s ", err.Error())
@@ -944,6 +944,13 @@ func CloseAlarm(param m.AlarmCloseParam) (err error) {
 		actions = append(actions, &Action{Sql: "UPDATE alarm SET STATUS='closed',end=NOW() WHERE id=?", Param: []interface{}{v.Id}})
 		if v.SMetric == "log_monitor" {
 			actions = append(actions, &Action{Sql: "update log_keyword_alarm set status='closed',updated_time=NOW() WHERE alarm_id=?", Param: []interface{}{v.Id}})
+		}
+		if strings.HasPrefix(v.EndpointTags, "ac_") {
+			for _, conditionGuid := range strings.Split(v.EndpointTags, ",") {
+				if strings.HasPrefix(conditionGuid, "ac_") {
+					actions = append(actions, &Action{Sql: "UPDATE alarm_condition SET STATUS='closed',end=NOW() WHERE guid=?", Param: []interface{}{conditionGuid}})
+				}
+			}
 		}
 	}
 	if len(actions) > 0 {
@@ -1604,8 +1611,15 @@ func UpdateAlarmWithConditions(alarmConditionObj *m.AlarmHandleObj) (alarmRow *m
 		return
 	}
 	var configCrcList, conditionGuidList, conditionMetricList []string
-	for _, row := range strategyMetricRows {
+	var crcIndex int
+	for i, row := range strategyMetricRows {
 		configCrcList = append(configCrcList, row.CrcHash)
+		if row.CrcHash == alarmConditionObj.AlarmConditionCrcHash {
+			crcIndex = i
+		}
+	}
+	if crcIndex > 0 {
+		time.Sleep(time.Duration(crcIndex) * time.Second)
 	}
 	alarmCrcMap := make(map[string]int)
 	alarmCrcMap[alarmConditionObj.AlarmConditionCrcHash] = 1
@@ -1682,6 +1696,9 @@ func UpdateAlarmWithConditions(alarmConditionObj *m.AlarmHandleObj) (alarmRow *m
 			alarmRow.AlarmStrategy = alarmConditionObj.AlarmStrategy
 			alarmRow.AlarmName = alarmStrategyObj.Name
 			alarmRow.EndpointTags = strings.Join(conditionGuidList, ",")
+			alarmRow.NotifyEnable = alarmConditionObj.NotifyEnable
+			alarmRow.NotifyId = alarmConditionObj.NotifyId
+			alarmRow.NotifyDelay = alarmConditionObj.NotifyDelay
 			insertAlarmResult, insertErr := session.Exec("INSERT INTO alarm (endpoint,status,s_metric,s_expr,s_cond,s_last,s_priority,content,tags,start_value,`start`,endpoint_tags,alarm_strategy,alarm_name) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
 				alarmRow.Endpoint, alarmRow.Status, alarmRow.SMetric, alarmRow.SExpr, alarmRow.SCond, alarmRow.SLast, alarmRow.SPriority, alarmRow.Content, alarmRow.Tags, alarmRow.StartValue, alarmRow.Start, alarmRow.EndpointTags, alarmRow.AlarmStrategy, alarmRow.AlarmName)
 			if insertErr != nil {
