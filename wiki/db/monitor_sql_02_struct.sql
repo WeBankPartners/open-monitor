@@ -105,3 +105,4 @@ alter table custom_dashboard_role_rel MODIFY role_id varchar(64)  NOT NULL COMME
 alter table metric add column log_metric_group varchar(64)  default NULL COMMENT '业务日志指标组配置Id';
 alter table metric ADD CONSTRAINT  `fore_metric_log_metric_group` FOREIGN KEY (log_metric_group) REFERENCES log_metric_group(guid);
 alter table custom_chart add column pie_type varchar(32)  default NULL COMMENT '饼图类型';
+alter table custom_chart_series add column pie_display_tag varchar(64)  default NULL COMMENT '饼图展示标签';
