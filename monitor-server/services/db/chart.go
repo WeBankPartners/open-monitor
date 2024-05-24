@@ -120,6 +120,7 @@ func GetCustomChartSeries(customChartGuid string) (series []*models.CustomChartS
 		for _, tagName := range tagNameList {
 			tmpSerieObj.Tags = append(tmpSerieObj.Tags, &models.TagDto{TagName: tagName, TagValue: tagValueMap[tagName]})
 		}
+		series = append(series, &tmpSerieObj)
 	}
 	return
 }
