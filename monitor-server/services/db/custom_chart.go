@@ -264,12 +264,12 @@ func DeleteCustomDashboardChart(chartId string) (err error) {
 	return Transaction(actions)
 }
 
-func UpdateCustomChart(chartDto *models.CustomChartDto, user string) (err error) {
+func UpdateCustomChart(chartDto models.CustomChartDto, user string) (err error) {
 	var actions, subActions []*Action
 	now := time.Now().Format(models.DatetimeFormat)
-	actions = append(actions, &Action{Sql: "update custom_chart set name =?,chart_type=?,line_type=?,aggregate=?," +
+	actions = append(actions, &Action{Sql: "update custom_chart set name =?,chart_type=?,line_type=?,pie_type=?,aggregate=?," +
 		"agg_step=?,unit=?,update_user=?,update_time=? where guid=?", Param: []interface{}{chartDto.Name, chartDto.ChartType,
-		chartDto.LineType, chartDto.Aggregate, chartDto.AggStep, chartDto.Unit, user, now, chartDto.Id}})
+		chartDto.LineType, chartDto.PieType, chartDto.Aggregate, chartDto.AggStep, chartDto.Unit, user, now, chartDto.Id}})
 	// 先删除图表配置
 	if subActions, err = DeleteCustomChartConfigSQL(chartDto.Id); err != nil {
 		return
@@ -324,6 +324,7 @@ func AddCustomChart(param models.AddCustomChartParam, user string) (err error) {
 		ChartTemplate:   param.ChartTemplate,
 		ChartType:       param.ChartType,
 		LineType:        param.LineType,
+		PieType:         param.PieType,
 		Aggregate:       param.Aggregate,
 		AggStep:         param.AggStep,
 		Unit:            param.Unit,
@@ -333,9 +334,9 @@ func AddCustomChart(param models.AddCustomChartParam, user string) (err error) {
 		UpdateTime:      now,
 	}
 	displayConfig, _ = json.Marshal(param.DisplayConfig)
-	actions = append(actions, &Action{Sql: "insert into custom_chart values(?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+	actions = append(actions, &Action{Sql: "insert into custom_chart values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
 		chart.Guid, chart.SourceDashboard, chart.Public, chart.Name, chart.ChartType, chart.LineType, chart.Aggregate,
-		chart.AggStep, chart.Unit, chart.CreateUser, chart.UpdateUser, chart.CreateTime, chart.UpdateTime, chart.ChartTemplate}})
+		chart.AggStep, chart.Unit, chart.CreateUser, chart.UpdateUser, chart.CreateTime, chart.UpdateTime, chart.ChartTemplate, chart.PieType}})
 	actions = append(actions, &Action{Sql: "insert into custom_dashboard_chart_rel values(?,?,?,?,?,?,?,?,?)", Param: []interface{}{
 		guid.CreateGuid(), param.DashboardId, chart.Guid, param.Group, string(displayConfig), user, user, now, now}})
 	return Transaction(actions)
@@ -388,7 +389,7 @@ func QueryCustomChartList(condition models.QueryChartParam, roles []string) (pag
 }
 
 // CopyCustomChart 复制图表
-func CopyCustomChart(dashboardId int, customChart string) (err error) {
+func CopyCustomChart(dashboardId int, customChart string, displayConfig interface{}) (err error) {
 	var chartSeriesList []*models.CustomChartSeries
 	var chartPermissionList []*models.CustomChartPermission
 	var configMap = make(map[string][]*models.CustomChartSeriesConfig)
@@ -398,6 +399,7 @@ func CopyCustomChart(dashboardId int, customChart string) (err error) {
 	var actions []*Action
 	newChartId := guid.CreateGuid()
 	chart := &models.CustomChart{}
+	byteConf, _ := json.Marshal(displayConfig)
 	if _, err = x.SQL("select * from custom_chart where guid = ?", customChart).Get(chart); err != nil {
 		return
 	}
@@ -419,9 +421,9 @@ func CopyCustomChart(dashboardId int, customChart string) (err error) {
 	if tagValueMap, err = QueryAllChartSeriesTagValue(); err != nil {
 		return
 	}
-	actions = append(actions, &Action{Sql: "insert into custom_chart values(?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+	actions = append(actions, &Action{Sql: "insert into custom_chart values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
 		newChartId, chart.SourceDashboard, chart.Public, chart.Name, chart.ChartType, chart.LineType, chart.Aggregate,
-		chart.AggStep, chart.Unit, chart.CreateUser, chart.UpdateUser, chart.CreateTime, chart.UpdateTime, chart.ChartTemplate}})
+		chart.AggStep, chart.Unit, chart.CreateUser, chart.UpdateUser, chart.CreateTime, chart.UpdateTime, chart.ChartTemplate, chart.PieType}})
 	for _, series := range chartSeriesList {
 		seriesId := guid.CreateGuid()
 		actions = append(actions, &Action{Sql: "insert into custom_chart_series values(?,?,?,?,?,?,?,?)", Param: []interface{}{
@@ -459,9 +461,14 @@ func CopyCustomChart(dashboardId int, customChart string) (err error) {
 	}
 	for _, rel := range dashboardChartRelList {
 		actions = append(actions, &Action{Sql: "insert into custom_dashboard_chart_rel values(?,?,?,?,?,?,?,?,?)", Param: []interface{}{guid.CreateGuid(),
-			rel.CustomDashboard, newChartId, rel.Group, rel.DisplayConfig, rel.CreateUser, rel.UpdateUser, rel.CreateTime, rel.UpdateTime}})
+			rel.CustomDashboard, newChartId, rel.Group, string(byteConf), rel.CreateUser, rel.UpdateUser, rel.CreateTime, rel.UpdateTime}})
 	}
 	return Transaction(actions)
+}
+
+func UpdateCustomChartName(chartId, name, user string) (err error) {
+	_, err = x.Exec("update custom_chart set name = ?,update_user = ? where guid = ?", name, user, chartId)
+	return
 }
 
 func CreateCustomChartDto(chartExtend *models.CustomChartExtend, configMap map[string][]*models.CustomChartSeriesConfig, tagMap map[string][]*models.CustomChartSeriesTag, tagValueMap map[string][]*models.CustomChartSeriesTagValue) (chart *models.CustomChartDto, err error) {
@@ -478,6 +485,7 @@ func CreateCustomChartDto(chartExtend *models.CustomChartExtend, configMap map[s
 		Unit:            chartExtend.Unit,
 		ChartType:       chartExtend.ChartType,
 		LineType:        chartExtend.LineType,
+		PieType:         chartExtend.PieType,
 		Aggregate:       chartExtend.Aggregate,
 		AggStep:         chartExtend.AggStep,
 		DisplayConfig:   chartExtend.DisplayConfig,
