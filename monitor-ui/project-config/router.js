@@ -135,8 +135,15 @@ const router = new Router({
               name: "metricConfig",
               title: "metricConfig",
               meta: {},
-              component: () => import("@/views/metric-config")
+              component: () => import("@/views/metric-config/index")
             },
+            {
+              path: "groupBoard",
+              name: "groupBoard",
+              title: "对象看板",
+              meta: {},
+              component: () => import("@/views/metric-config/group-board")
+            }
           ]
         },
         {
