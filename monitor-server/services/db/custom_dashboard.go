@@ -257,8 +257,8 @@ func SyncData() (err error) {
 			if len(chart.Query) > 0 {
 				for _, series := range chart.Query {
 					seriesId := guid.CreateGuid()
-					actions = append(actions, &Action{Sql: "insert into custom_chart_series values(?,?,?,?,?,?,?,?)", Param: []interface{}{
-						seriesId, newChartId, series.Endpoint, series.AppObject, series.EndpointName, series.EndpointType, series.Metric, series.DefaultColor,
+					actions = append(actions, &Action{Sql: "insert into custom_chart_series values(?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+						seriesId, newChartId, series.Endpoint, series.AppObject, series.EndpointName, series.EndpointType, series.Metric, series.DefaultColor, "",
 					}})
 					if len(series.MetricToColor) > 0 {
 						for _, colorConfig := range series.MetricToColor {
