@@ -281,8 +281,8 @@ func UpdateCustomChart(chartDto models.CustomChartDto, user string) (err error) 
 	if len(chartDto.ChartSeries) > 0 {
 		for _, series := range chartDto.ChartSeries {
 			seriesId := guid.CreateGuid()
-			actions = append(actions, &Action{Sql: "insert into custom_chart_series values(?,?,?,?,?,?,?,?)", Param: []interface{}{
-				seriesId, chartDto.Id, series.Endpoint, series.ServiceGroup, series.EndpointName, series.MonitorType, series.Metric, series.ColorGroup,
+			actions = append(actions, &Action{Sql: "insert into custom_chart_series values(?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+				seriesId, chartDto.Id, series.Endpoint, series.ServiceGroup, series.EndpointName, series.MonitorType, series.Metric, series.ColorGroup, series.PieDisplayTag,
 			}})
 			if len(series.Tags) > 0 {
 				for _, tag := range series.Tags {
@@ -426,8 +426,8 @@ func CopyCustomChart(dashboardId int, customChart string, displayConfig interfac
 		chart.AggStep, chart.Unit, chart.CreateUser, chart.UpdateUser, chart.CreateTime, chart.UpdateTime, chart.ChartTemplate, chart.PieType}})
 	for _, series := range chartSeriesList {
 		seriesId := guid.CreateGuid()
-		actions = append(actions, &Action{Sql: "insert into custom_chart_series values(?,?,?,?,?,?,?,?)", Param: []interface{}{
-			seriesId, newChartId, series.Endpoint, series.ServiceGroup, series.EndpointName, series.MonitorType, series.Metric, series.ColorGroup,
+		actions = append(actions, &Action{Sql: "insert into custom_chart_series values(?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+			seriesId, newChartId, series.Endpoint, series.ServiceGroup, series.EndpointName, series.MonitorType, series.Metric, series.ColorGroup, series.PieDisplayTag,
 		}})
 		if confArr, ok := configMap[series.Guid]; ok {
 			if len(confArr) > 0 {
@@ -500,14 +500,15 @@ func CreateCustomChartDto(chartExtend *models.CustomChartExtend, configMap map[s
 			seriesConfigList = []*models.CustomChartSeriesConfig{}
 			chartSeriesTagList = []*models.CustomChartSeriesTag{}
 			customChartSeriesDto := &models.CustomChartSeriesDto{
-				Endpoint:     series.Endpoint,
-				ServiceGroup: series.ServiceGroup,
-				EndpointName: series.EndpointName,
-				MonitorType:  series.MonitorType,
-				ColorGroup:   series.ColorGroup,
-				Metric:       series.Metric,
-				Tags:         make([]*models.TagDto, 0),
-				ColorConfig:  make([]*models.ColorConfigDto, 0),
+				Endpoint:      series.Endpoint,
+				ServiceGroup:  series.ServiceGroup,
+				EndpointName:  series.EndpointName,
+				MonitorType:   series.MonitorType,
+				ColorGroup:    series.ColorGroup,
+				PieDisplayTag: series.PieDisplayTag,
+				Metric:        series.Metric,
+				Tags:          make([]*models.TagDto, 0),
+				ColorConfig:   make([]*models.ColorConfigDto, 0),
 			}
 			if v, ok := configMap[series.Guid]; ok {
 				seriesConfigList = v
