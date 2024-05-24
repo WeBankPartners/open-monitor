@@ -149,7 +149,7 @@
                 </Select>
               </Tooltip>
               <Tooltip :content="$t('proc_callback_key')" :delay="1000">
-                <Select v-model="item.proc_callback_key" :disabled="!isEditState" style="width: 160px" :placeholder="$t('proc_callback_key')">
+                <Select v-model="item.proc_callback_key" :disabled="!isEditState" @on-change="procCallbackKeyChangeForm(item.proc_callback_key, index)" style="width: 160px" :placeholder="$t('proc_callback_key')">
                   <Option v-for="(flow, flowIndex) in flows" :key="flowIndex" :value="flow.procDefKey" :label="flow.procDefName + ' [' + flow.procDefVersion + ']'"><span>{{ flow.procDefName }} [{{ flow.procDefVersion }}]</span></Option>
                 </Select>
               </Tooltip>
