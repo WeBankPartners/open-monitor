@@ -412,9 +412,11 @@ func getChartQueryData(queryList []*models.QueryMonitorData, param *models.Chart
 	//if param.Aggregate != "none" {
 	//	agg = db.CheckAggregate(param.Start, param.End, "", param.Step, len(serials))
 	//}
-	var processDisplayMap = make(map[string]string)
-	if strings.HasPrefix(param.Data[0].Metric, "process_") {
-		processDisplayMap = db.GetProcessDisplayMap(param.Data[0].Endpoint)
+	processDisplayMap := make(map[string]string)
+	if len(param.Data) > 0 {
+		if strings.HasPrefix(param.Data[0].Metric, "process_") {
+			processDisplayMap = db.GetProcessDisplayMap(param.Data[0].Endpoint)
+		}
 	}
 	if len(serials) > 0 && param.Aggregate != "none" && param.AggStep <= 0 {
 		param.AggStep = int64(db.CheckAggregate(param.Start, param.End, "", 10, len(serials)))
