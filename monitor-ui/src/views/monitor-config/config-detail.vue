@@ -149,7 +149,7 @@
                 </Select>
               </Tooltip>
               <Tooltip :content="$t('proc_callback_key')" :delay="1000">
-                <Select v-model="item.proc_callback_key" :disabled="!isEditState" style="width: 160px" :placeholder="$t('proc_callback_key')">
+                <Select v-model="item.proc_callback_key" :disabled="!isEditState" @on-change="procCallbackKeyChangeForm(item.proc_callback_key, index)" style="width: 160px" :placeholder="$t('proc_callback_key')">
                   <Option v-for="(flow, flowIndex) in flows" :key="flowIndex" :value="flow.procDefKey" :label="flow.procDefName + ' [' + flow.procDefVersion + ']'"><span>{{ flow.procDefName }} [{{ flow.procDefVersion }}]</span></Option>
                 </Select>
               </Tooltip>
@@ -680,6 +680,14 @@ export default {
         this.totalPageConfig[tableIndex].notify[index].proc_callback_name = `${findFlow.procDefName}[${findFlow.procDefVersion}]`
       } else {
         this.totalPageConfig[tableIndex].notify[index].proc_callback_name = ''
+      }
+    },
+    procCallbackKeyChangeForm(proc_callback_key, index) {
+      const findFlow = this.flows.find(f => f.procDefKey === proc_callback_key)
+      if (findFlow) {
+        this.formData.notify[index].proc_callback_name = `${findFlow.procDefName}[${findFlow.procDefVersion}]`
+      } else {
+        this.formData.notify[index].proc_callback_name = ''
       }
     },
     deleteAlarmItem (rowData) {
