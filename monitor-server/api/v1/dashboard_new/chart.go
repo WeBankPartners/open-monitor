@@ -74,8 +74,8 @@ func GetChartData(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	if len(param.Data) == 0 {
-		middleware.ReturnValidateError(c, "Param data can not empty ")
+	if len(param.Data) == 0 && param.ChartId == 0 && param.CustomChartGuid == "" {
+		middleware.ReturnValidateError(c, "Param config can not empty ")
 		return
 	}
 	if param.Start == 0 && param.End == 0 && param.TimeSecond < 0 {
