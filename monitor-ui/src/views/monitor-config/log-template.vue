@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div style="display: flex;justify-content: space-between;magin">
+    <div style="display: flex;justify-content: space-between;margin-bottom: 8px">
       <div>
         <Input
           v-model="searchParams.name"
@@ -40,7 +40,7 @@
       </Spin>
       <template v-else>
         <template v-if="data.length > 0">
-          <div v-for="(item, itemIndex) in data" :key="itemIndex">
+          <div v-for="(item, itemIndex) in data" :key="itemIndex" style="margin-bottom: 16px;">
             <Card>
               <div class="w-header" slot="title">
                 <div class="title">
@@ -67,7 +67,6 @@
               <div v-show="!hideRegex.includes(itemIndex)">
                 <Table
                   size="small"
-                  :max-height="300"
                   :columns="tableColumn"
                   :data="item.tableData"
                   @on-select-all="selection => onSelectAll(selection, itemIndex)"
@@ -345,7 +344,7 @@ export default {
 }
 .table-zone {
   overflow: auto;
-  // height: calc(100vh - 270px);
+  height: ~"calc(100vh - 180px)";
 }
 .w-header {
   display: flex;
