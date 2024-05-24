@@ -8,6 +8,7 @@ type CustomChart struct {
 	ChartTemplate   string `json:"chartTemplate" xorm:"chart_template"`     // 图表模板
 	ChartType       string `json:"chartType" xorm:"chart_type"`             // 曲线图/饼图,line//pie
 	LineType        string `json:"lineType" xorm:"line_type"`               // 折线/柱状/面积,line/bar/area
+	PieType         string `json:"pieType" xorm:"pie_type"`                 // 饼图类型
 	Aggregate       string `json:"aggregate" xorm:"aggregate"`              // 聚合类型
 	AggStep         int    `json:"aggStep" xorm:"agg_step"`                 // 聚合间隔
 	Unit            string `json:"unit" xorm:"unit"`                        // 单位
@@ -23,8 +24,9 @@ type CustomChartExtend struct {
 	Public          int    `json:"public" xorm:"public"`                    // 是否公共
 	Name            string `json:"name" xorm:"name"`                        // 图表名称
 	ChartTemplate   string `json:"chartTemplate" xorm:"chart_template"`     // 图表模板
-	ChartType       string `json:"chartType" xorm:"chart_type"`             // 曲线图/饼图,line//pie
+	ChartType       string `json:"chartType" xorm:"chart_type"`             // 曲线图/饼图,line/pie
 	LineType        string `json:"lineType" xorm:"line_type"`               // 折线/柱状/面积,line/bar/area
+	PieType         string `json:"pieType" xorm:"pie_type"`                 // 饼图类型
 	Aggregate       string `json:"aggregate" xorm:"aggregate"`              // 聚合类型
 	AggStep         int    `json:"aggStep" xorm:"agg_step"`                 // 聚合间隔
 	Unit            string `json:"unit" xorm:"unit"`                        // 单位
@@ -39,14 +41,15 @@ type CustomChartExtend struct {
 type CustomChartDto struct {
 	Id              string                  `json:"id"`
 	Public          bool                    `json:"public"`
-	SourceDashboard int                     `json:"sourceDashboard"` // 源看板
-	Name            string                  `json:"name"`            // 图表名称
-	ChartTemplate   string                  `json:"chartTemplate"`   // 图表模板
-	Unit            string                  `json:"unit"`            // 单位
-	ChartType       string                  `json:"chartType"`       // 曲线图/饼图,line/pie
-	LineType        string                  `json:"lineType"`        // 折线/柱状/面积,line/bar/area
-	Aggregate       string                  `json:"aggregate"`       // 聚合类型
-	AggStep         int                     `json:"aggStep"`         // 聚合间隔
+	SourceDashboard int                     `json:"sourceDashboard"`         // 源看板
+	Name            string                  `json:"name"`                    // 图表名称
+	ChartTemplate   string                  `json:"chartTemplate"`           // 图表模板
+	Unit            string                  `json:"unit"`                    // 单位
+	ChartType       string                  `json:"chartType"`               // 曲线图/饼图,line/pie
+	LineType        string                  `json:"lineType"`                // 折线/柱状/面积,line/bar/area
+	PieType         string                  `json:"pieType" xorm:"pie_type"` // 饼图类型
+	Aggregate       string                  `json:"aggregate"`               // 聚合类型
+	AggStep         int                     `json:"aggStep"`                 // 聚合间隔
 	ChartSeries     []*CustomChartSeriesDto `json:"chartSeries"`
 	DisplayConfig   interface{}             `json:"displayConfig"`
 	Group           string                  `json:"group"` // 所属分组
@@ -62,6 +65,11 @@ type ChartSharedParam struct {
 	ChartId   string   `json:"chartId"`
 	UseRoles  []string `json:"useRoles"`
 	MgmtRoles []string `json:"mgmtRoles"`
+}
+
+type UpdateCustomChartNameParam struct {
+	ChartId string `json:"chartId"`
+	Name    string `json:"name"`
 }
 
 type QueryChartParam struct {
@@ -102,6 +110,7 @@ type AddCustomChartParam struct {
 	ChartTemplate string      `json:"chartTemplate"` // 图表模板
 	ChartType     string      `json:"chartType"`     // 曲线图/饼图,line/pie
 	LineType      string      `json:"lineType"`      // 折线/柱状/面积,line/bar/area
+	PieType       string      `json:"pieType"`       // 饼图类型
 	Aggregate     string      `json:"aggregate"`     // 聚合类型
 	AggStep       int         `json:"aggStep"`       // 聚合间隔
 	Unit          string      `json:"unit"`          // 单位
@@ -126,6 +135,7 @@ func ConvertCustomChartToExtend(chart *CustomChart) *CustomChartExtend {
 		ChartTemplate:   chart.ChartTemplate,
 		ChartType:       chart.ChartType,
 		LineType:        chart.LineType,
+		PieType:         chart.PieType,
 		Aggregate:       chart.Aggregate,
 		AggStep:         chart.AggStep,
 		Unit:            chart.Unit,
