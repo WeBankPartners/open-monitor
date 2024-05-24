@@ -29,7 +29,7 @@ export default {
                     { title: this.$t('m_endpoint'), path: '/monitorConfigIndex/endpointManagement', name: '1-1' },
                     { title: this.$t('m_object_group'), path: '/monitorConfigIndex/groupManagement', name: '1-2' },
                     { title: this.$t('field.resourceLevel'), path: '/monitorConfigIndex/resourceLevel', name: '1-3' },
-                    { title: '对象看板', path: '/monitorConfigIndex/groupBoard', name: '1-4' }
+                    { title: this.$t('m_group_board'), path: '/monitorConfigIndex/groupBoard', name: '1-4' }
                 ]
             },
             {
