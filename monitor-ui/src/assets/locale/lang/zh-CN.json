@@ -271,7 +271,7 @@
   "m_remark": "标记",
   "m_add_json_regular": "新增JSON正则",
   "m_add_metric_regular": "新增指标正则",
-  "m_json_regular": "JSON正则",
+  "m_json_regular": "JSON提取正则",
   "m_metric_regular": "指标正则",
   "m_log_server": "日志主机",
   "m_business_object": "业务对象",

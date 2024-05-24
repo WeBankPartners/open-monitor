@@ -65,6 +65,10 @@ const routerP = [
   {
     path: "/monitorConfigIndex/metricConfig",
     name: "/monitorConfigIndex/metricConfig"
+  },
+  {
+    path: "/monitorConfigIndex/groupBoard",
+    name: "/monitorConfigIndex/groupBoard"
   }
 ];
 

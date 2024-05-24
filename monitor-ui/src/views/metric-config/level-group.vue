@@ -1,0 +1,299 @@
+<template>
+  <div ref="maxheight" class="monitor-level-group">
+    <Row>
+      <Col :span="8">
+        <!--层级对象-->
+        <span style="font-size: 14px;">
+          {{$t('field.resourceLevel')}}:
+        </span>
+        <Select
+          style="width:300px;"
+          v-model="serviceGroup"
+          filterable 
+          @on-change="changeServiceGroup"
+          remote
+          ref="select"
+          :remote-method="getRecursiveList"
+          >
+          <Option v-for="(option, index) in recursiveOptions" :value="option.guid" :key="index">
+            <TagShow :tagName="option.type" :index="index"></TagShow> 
+            {{option.display_name}}
+          </Option>
+        </Select>
+      </Col>
+      <Col :span="16">
+        <div class="btn-group">
+          <Button @click.stop="exportData">{{$t("m_export")}}{{$t("m_metric")}}</Button>
+          <Upload 
+          :action="uploadUrl" 
+          :show-upload-list="false"
+          :max-size="1000"
+          with-credentials
+          :headers="{'Authorization': token}"
+          :on-success="uploadSucess"
+          :on-error="uploadFailed">
+            <Button icon="ios-cloud-upload-outline">{{$t('m_import')}}{{$t("m_metric")}}</Button>
+          </Upload>
+          <Button type="success" @click="handleAdd">新增</Button>
+        </div>
+      </Col>
+    </Row>
+    <Table size="small" :max-height="maxHeight" :columns="tableColumns" :data="tableData" class="table" />
+    <Modal
+      v-model="deleteVisible"
+      :title="$t('delConfirm.title')"
+      @on-ok="submitDelete"
+      @on-cancel="deleteVisible = false">
+      <div class="modal-body" style="padding:30px">
+        <div style="text-align:center">
+          <p style="color: red">{{$t('delConfirm.tip')}}</p>
+        </div>
+      </div>
+    </Modal>
+    <AddGroupDrawer
+      v-if="addVisible"
+      :visible.sync="addVisible"
+      :monitorType="monitorType"
+      :serviceGroup="serviceGroup"
+      :data="row"
+      :operator="type"
+      @fetchList="getList()"
+    ></AddGroupDrawer>
+  </div>
+</template>
+
+<script>
+import axios from 'axios'
+import {baseURL_config} from '@/assets/js/baseURL'
+import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
+import TagShow from '@/components/Tag-show.vue'
+import AddGroupDrawer from './components/add-group.vue'
+export default {
+  components: {
+    TagShow,
+    AddGroupDrawer
+  },
+  data () {
+    return {
+      token: null,
+      monitorType: 'process',
+      serviceGroup: '',
+      recursiveOptions: [],
+      maxHeight: 500,
+      tableData: [],
+      tableColumns: [
+        {
+          title: this.$t('field.metric'), // 指标
+          key: 'metric',
+          minWidth: 150
+        },
+        {
+          title: this.$t('m_scope'), // 作用域
+          key: 'workspace',
+          minWidth: 150,
+          render: (h, params) => {
+            return <Tag>{ this.workspaceMap[params.row.workspace] }</Tag>
+          }
+        },
+        {
+          title: '类型',
+          key: 'type',
+          minWidth: 150,
+          render: (h, params) => {
+            return <span>{ params.row.type || '-' }</span>
+          }
+        },
+        {
+          title: '表达式',
+          key: 'prom_expr',
+          minWidth: 150,
+          render: (h, params) => {
+            return (
+              <Tooltip max-width="300" content={params.row.prom_expr}>
+                <span style="overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">
+                  {params.row.prom_expr || '-'}
+                </span>
+              </Tooltip>
+            )
+          }
+        },
+        {
+          title: '操作',
+          key: 'action',
+          width: 100,
+          align: 'center',
+          fixed: 'right',
+          render: (h, params) => {
+            return (
+              <div style="display:flex;justify-content:center;">
+                {
+                  /* 编辑 */
+                  <Tooltip content={'编辑'} placement="bottom">
+                    <Button
+                      size="small"
+                      type="primary"
+                      onClick={() => {
+                        this.handleEdit(params.row)
+                      }}
+                      style="margin-right:5px;"
+                    >
+                      <Icon type="md-create" size="16"></Icon>
+                    </Button>
+                  </Tooltip>
+                }
+                {
+                  /* 删除 */
+                  <Tooltip content={'删除'} placement="bottom">
+                    <Button
+                      size="small"
+                      type="error"
+                      onClick={() => {
+                        this.handleDelete(params.row)
+                      }}
+                      style="margin-right:5px;"
+                    >
+                      <Icon type="md-trash" size="16"></Icon>
+                    </Button>
+                  </Tooltip>
+                }
+              </div>
+            )
+          }
+        }
+      ],
+      workspaceMap: {
+        all_object: this.$t('m_all_object'), // 全部对象
+        any_object: this.$t('m_any_object') // 层级对象
+      },
+      row: {},
+      type: '', // add、edit
+      addVisible: false,
+      deleteVisible: false
+    }
+  },
+  computed: {
+    uploadUrl: function() {
+      return baseURL_config + `${this.$root.apiCenter.metricImport}?serviceGroup=${this.serviceGroup}&monitorType=${this.monitorType}`
+    }
+  },
+  async mounted () {
+    await this.getRecursiveList()
+    this.serviceGroup = this.recursiveOptions[0].guid
+    this.getList()
+    this.token = (window.request ? 'Bearer ' + getPlatFormToken() : getToken())|| null
+    const clientHeight = document.documentElement.clientHeight
+    this.maxHeight = clientHeight - this.$refs.maxheight.getBoundingClientRect().top - 90
+  },
+  methods: {
+    changeServiceGroup () {
+      this.getList()
+    },
+    getList () {
+      const params = {
+        monitorType: this.monitorType,
+        onlyService: 'Y',
+        serviceGroup: this.serviceGroup
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance(
+        'GET',
+        '/monitor/api/v2/monitor/metric/list',
+        params,
+        responseData => {
+          this.tableData = responseData
+        },
+        { isNeedloading: true }
+      )
+    },
+    getRecursiveList () {
+      const api = this.$root.apiCenter.getTargetByEndpoint + '/group'
+      return this.$root.$httpRequestEntrance.httpRequestEntrance(
+        'GET',
+        api,
+        '',
+        responseData => {
+          this.recursiveOptions = responseData || []
+        },
+        { isNeedloading:false }
+      )
+    },
+    exportData () {
+      const api = `${this.$root.apiCenter.metricExport}?serviceGroup=${this.serviceGroup}&monitorType=${this.monitorType}`
+      axios({
+        method: 'GET',
+        url: api,
+        headers: {
+          'Authorization': this.token
+        }
+      }).then((response) => {
+        if (response.status < 400) {
+          let content = JSON.stringify(response.data)
+          let fileName = `${response.headers['content-disposition'].split(';')[1].trim().split('=')[1]}`
+          let blob = new Blob([content])
+          if('msSaveOrOpenBlob' in navigator){
+            // Microsoft Edge and Microsoft Internet Explorer 10-11
+            window.navigator.msSaveOrOpenBlob(blob, fileName)
+          } else {
+            if ('download' in document.createElement('a')) { // 非IE下载
+              let elink = document.createElement('a')
+              elink.download = fileName
+              elink.style.display = 'none'
+              elink.href = URL.createObjectURL(blob)  
+              document.body.appendChild(elink)
+              elink.click()
+              URL.revokeObjectURL(elink.href) // 释放URL 对象
+              document.body.removeChild(elink)
+            } else { // IE10+下载
+              navigator.msSaveOrOpenBlob(blob, fileName)
+            }
+          }
+        }
+      })
+      .catch(() => {
+        this.$Message.warning(this.$t('tips.failed'))
+      })
+    },
+    uploadSucess () {
+      this.$Message.success(this.$t('tips.success'))
+      this.getList()
+    },
+    uploadFailed (error, file) {
+      this.$Message.warning(file.message)
+    },
+    handleAdd () {
+      this.type = 'add'
+      this.addVisible = true
+    },
+    handleEdit (row) {
+      this.type = 'edit'
+      this.row = row
+      this.addVisible = true
+    },
+    handleDelete (row) {
+      this.row = row
+      this.deleteVisible = true
+    },
+    submitDelete () {
+      this.$root.$httpRequestEntrance.httpRequestEntrance(
+        'DELETE',
+        `${this.$root.apiCenter.metricManagement}?id=${this.row.guid}`,
+        '',
+        () => {
+          this.$Message.success(this.$t('tips.success'))
+          this.getList()
+        })
+    }
+  }
+}
+</script>
+
+<style lang="less" scoped>
+.monitor-level-group {
+  .btn-group {
+    display: flex;
+    justify-content: flex-end;
+  }
+  .table {
+    margin-top: 12px;
+  }
+}
+</style>
