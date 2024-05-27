@@ -71,7 +71,7 @@ func CreateAlarmStrategy(c *gin.Context) {
 	} else {
 		err = db.SyncPrometheusRuleFile(param.EndpointGroup, false)
 		if err != nil {
-			middleware.ReturnHandleError(c, err.Error(), err)
+			middleware.ReturnError(c, 200, middleware.GetMessageMap(c).SaveDoneButSyncFail, err)
 		} else {
 			middleware.ReturnSuccess(c)
 		}
@@ -107,7 +107,7 @@ func UpdateAlarmStrategy(c *gin.Context) {
 	} else {
 		err = db.SyncPrometheusRuleFile(param.EndpointGroup, false)
 		if err != nil {
-			middleware.ReturnHandleError(c, err.Error(), err)
+			middleware.ReturnError(c, 200, middleware.GetMessageMap(c).SaveDoneButSyncFail, err)
 		} else {
 			middleware.ReturnSuccess(c)
 		}
