@@ -290,6 +290,7 @@ func init() {
 		&handlerFuncObj{Url: "/chart/custom", Method: http.MethodPost, HandlerFunc: monitor.AddCustomChart},
 		&handlerFuncObj{Url: "/chart/custom/copy", Method: http.MethodPost, HandlerFunc: monitor.CopyCustomChart},
 		&handlerFuncObj{Url: "/chart/custom", Method: http.MethodPut, HandlerFunc: monitor.UpdateCustomChart},
+		&handlerFuncObj{Url: "/chart/custom/name", Method: http.MethodPut, HandlerFunc: monitor.UpdateCustomChartName},
 		&handlerFuncObj{Url: "/chart/custom", Method: http.MethodGet, HandlerFunc: monitor.GetCustomChart},
 		&handlerFuncObj{Url: "/chart/custom", Method: http.MethodDelete, HandlerFunc: monitor.DeleteCustomChart},
 		&handlerFuncObj{Url: "/chart/custom/permission", Method: http.MethodPost, HandlerFunc: monitor.SharedCustomChart},
