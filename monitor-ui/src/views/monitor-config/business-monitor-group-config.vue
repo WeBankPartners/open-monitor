@@ -3,7 +3,7 @@
     <Modal v-model="showModel" :title="$t('menu.configuration')" :mask-closable="false" :width="1100" :fullscreen="isfullscreen">
       <div slot="header" class="custom-modal-header">
         <span>
-          {{(isAdd ? $t('button.add') : $t('button.edit')) + $t('menu.configuration')}}
+          {{(view ? $t('button.view') : (isAdd ? $t('button.add') : $t('button.edit'))) + $t('menu.configuration')}}
         </span>
         <Icon v-if="isfullscreen" @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-contract" />
         <Icon v-else @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-expand" />
@@ -12,12 +12,12 @@
         <Form :label-width="120" inline>
           <FormItem :label="$t('tableKey.name')">
             <Tooltip :content="businessConfig.name" transfer :disabled="businessConfig.name === ''" max-width="200">
-              <Input v-model.trim="businessConfig.name" maxlength="30" show-word-limit style="width:220px"></Input>
+              <Input v-model.trim="businessConfig.name" :disabled="view" maxlength="30" show-word-limit style="width:220px"></Input>
               <span style="color: red">*</span>
             </Tooltip>
           </FormItem>
           <FormItem :label="$t('m_metric_code')">
-            <Input v-model.trim="businessConfig.metric_prefix_code" maxlength="6" :disabled="!isAdd" show-word-limit style="width:220px"></Input>
+            <Input v-model.trim="businessConfig.metric_prefix_code" maxlength="6" :disabled="!isAdd || view" show-word-limit style="width:220px"></Input>
             <span style="color: red">*</span>
           </FormItem>
         </Form>
@@ -48,16 +48,16 @@
             </Row>
             <Row v-for="(item, itemIndex) in businessConfig.code_string_map" :key="itemIndex" style="margin:6px 0">
               <Col span="4">
-                <Select v-model="item.regulative" style="width:90%">
+                <Select v-model="item.regulative" :disabled="view" style="width:90%">
                   <Option :value="1" key="m_regular_match">{{ $t('m_regular_match') }}</Option>
                   <Option :value="0" key="m_irregular_matching">{{ $t('m_irregular_matching') }}</Option>
                 </Select>
               </Col>
               <Col span="6">
-                <Input v-model.trim="item.source_value" style="width:90%"></Input>
+                <Input v-model.trim="item.source_value" :disabled="view" style="width:90%"></Input>
               </Col>
               <Col span="6">
-                <Input v-model.trim="item.target_value" style="width:90%"></Input>
+                <Input v-model.trim="item.target_value" :disabled="view" style="width:90%"></Input>
               </Col>
               <Col span="2">
                 <Button
@@ -67,11 +67,12 @@
                   size="small"
                   style="vertical-align: sub;cursor: pointer"
                   icon="md-trash"
+                  :disabled="view"
                 ></Button>
               </Col>
             </Row>
             <div style="text-align: right;margin-right: 8px;cursor: pointer">
-              <Button type="primary" ghost @click="addItem('code_string_map')" size="small" icon="md-add"></Button>
+              <Button type="primary" :disabled="view" ghost @click="addItem('code_string_map')" size="small" icon="md-add"></Button>
             </div>
           </div>
           <span style="color:#5cadff">{{ $t('m_return_code') }}</span>
@@ -87,16 +88,16 @@
             </Row>
             <Row v-for="(item, itemIndex) in businessConfig.retcode_string_map" :key="itemIndex" style="margin:6px 0">
               <Col span="4">
-                <Select v-model="item.regulative" style="width:90%">
+                <Select v-model="item.regulative" :disabled="view" style="width:90%">
                   <Option :value="1" key="m_regular_match">{{ $t('m_regular_match') }}</Option>
                   <Option :value="0" key="m_irregular_matching">{{ $t('m_irregular_matching') }}</Option>
                 </Select>
               </Col>
               <Col span="6">
-                <Input v-model.trim="item.source_value" style="width:90%"></Input>
+                <Input v-model.trim="item.source_value" :disabled="view" style="width:90%"></Input>
               </Col>
               <Col span="6">
-                <Input v-model.trim="item.target_value" style="width:90%"></Input>
+                <Input v-model.trim="item.target_value" :disabled="view" style="width:90%"></Input>
               </Col>
               <Col span="6">
                 <span style="line-height: 32px;">{{ $t('m_'+item.value_type) }}</span>
@@ -106,20 +107,21 @@
                   v-if="itemIndex!==0"
                   @click="deleteItem('retcode_string_map',itemIndex)"
                   size="small"
+                  :disabled="view"
                   style="margin-left:24px; cursor: pointer"
                   icon="md-trash"
                 ></Button>
               </Col>
             </Row>
             <div style="text-align: right;margin-right: 8px;cursor: pointer">
-              <Button type="primary" ghost @click="addItem('retcode_string_map')" size="small" icon="md-add"></Button>
+              <Button type="primary" :disabled="view" ghost @click="addItem('retcode_string_map')" size="small" icon="md-add"></Button>
             </div>
           </div>
         </div>
       </div>
       <template #footer>
         <Button @click="showModel=false">{{ $t('button.cancel') }}</Button>
-        <Button @click="saveConfig" type="primary">{{ $t('button.save') }}</Button>
+        <Button :disabled="view" @click="saveConfig" type="primary">{{ $t('button.save') }}</Button>
       </template>
     </Modal>
   </div>
@@ -134,6 +136,7 @@ export default {
     return {
       showModel: false,
       isAdd: true,
+      view: false,
       isfullscreen: true,
       parentGuid: '', //上级唯一标识
       configInfo: {
@@ -151,7 +154,7 @@ export default {
       // parentGuid, 上级唯一标识
       // configGuid, 配置唯一标志 
       this.isAdd = actionType === 'add'
-
+      this.view = actionType === 'view'
       if (configGuid) {
         this.getConfig(configGuid)
       } else {
@@ -162,14 +165,14 @@ export default {
           log_monitor_template_guid: '',
           code_string_map: [
             // {
-            //   regulative: 1,
+            //   regulative: 0,
             //   source_value: '',
             //   target_value: ''
             // }
           ],
           retcode_string_map: [
             {
-              regulative: 1,
+              regulative: 0,
               source_value: '',
               target_value: '',
               value_type: 'success'
@@ -251,11 +254,11 @@ export default {
     },
     addItem (key) {
       let params = key === 'code_string_map' ? {
-          regulative: 1,
+          regulative: 0,
           source_value: '',
           target_value: ''
         } : {
-          regulative: 1,
+          regulative: 0,
           source_value: '',
           target_value: '',
           value_type: 'fail'
