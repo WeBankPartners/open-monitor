@@ -153,8 +153,8 @@ func GetUpdateCustomDashboardChartRelSQL(chartRelList []*models.CustomDashboardC
 	var actions []*Action
 	if len(chartRelList) > 0 {
 		for _, rel := range chartRelList {
-			actions = append(actions, &Action{Sql: "update custom_dashboard_chart_rel set `group` = ?,display_config = ?,update_user = ?," +
-				"update_time = ? where id =?", Param: []interface{}{rel.Group, rel.DisplayConfig, rel.UpdateUser, rel.UpdateTime, rel.Guid}})
+			actions = append(actions, &Action{Sql: "update custom_dashboard_chart_rel set `group` = ?,display_config = ?,updated_user = ?," +
+				"update_time = ? where guid =?", Param: []interface{}{rel.Group, rel.DisplayConfig, rel.UpdateUser, rel.UpdateTime, rel.Guid}})
 		}
 	}
 	return actions
@@ -162,7 +162,7 @@ func GetUpdateCustomDashboardChartRelSQL(chartRelList []*models.CustomDashboardC
 
 func GetUpdateCustomDashboardSQL(name, user string, id int) []*Action {
 	var actions []*Action
-	actions = append(actions, &Action{Sql: "update custom_dashboard set name=?,update_user=?,update_at=? where id =?", Param: []interface{}{name, user, id}})
+	actions = append(actions, &Action{Sql: "update custom_dashboard set name=?,update_user=?,update_at=? where id =?", Param: []interface{}{name, user, time.Now().Format(models.DatetimeFormat), id}})
 	return actions
 }
 
@@ -170,7 +170,7 @@ func GetDeleteCustomDashboardChartRelSQL(ids []string) []*Action {
 	var actions []*Action
 	if len(ids) > 0 {
 		for _, id := range ids {
-			actions = append(actions, &Action{Sql: "delete from custom_dashboard_chart_rel where id = ?", Param: []interface{}{id}})
+			actions = append(actions, &Action{Sql: "delete from custom_dashboard_chart_rel where guid = ?", Param: []interface{}{id}})
 		}
 	}
 	return actions
