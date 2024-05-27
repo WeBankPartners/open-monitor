@@ -38,6 +38,7 @@
             <attribute name="priority" datatype="str" description="告警级别"/>
             <attribute name="message" datatype="str" description="告警信息"/>
             <attribute name="startTime" datatype="str" description="告警时间"/>
+            <attribute name="detail" datatype="str" description="告警详情"/>
         </entity>
     </dataModel>
 

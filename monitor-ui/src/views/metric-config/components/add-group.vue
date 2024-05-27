@@ -9,7 +9,7 @@
       class="monitor-add-group"
     >
       <div slot="header" class="w-header">
-        <div class="title">{{ operator === 'add' ? '新增指标' : '编辑指标' }}<span class="underline"></span></div>
+        <div class="title">{{ operator === 'add' ? $t('button.addMetric') : $t('m_edit_meric') }}<span class="underline"></span></div>
         <slot name="sub-title"></slot>
       </div>
       <div class="content" :style="{ maxHeight: maxHeight + 'px' }">
@@ -69,8 +69,8 @@
         </Form>
       </div>
       <div class="drawer-footer">
-        <Button style="margin-right: 8px" @click="handleCancel">{{ '取消' }}</Button>
-        <Button type="primary" class="primary" @click="handleSubmit">{{ '提交' }}</Button>
+        <Button style="margin-right: 8px" @click="handleCancel">{{ $t('button.cancel') }}</Button>
+        <Button type="primary" class="primary" @click="handleSubmit">{{ $t('button.save') }}</Button>
       </div>
     </Drawer>
   </div>
