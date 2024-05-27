@@ -9,7 +9,7 @@
       class="monitor-add-group"
     >
       <div slot="header" class="w-header">
-        <div class="title">{{ operator === 'add' ? $t('addMetric') : $t('m_edit_meric') }}<span class="underline"></span></div>
+        <div class="title">{{ operator === 'add' ? $t('button.addMetric') : $t('m_edit_meric') }}<span class="underline"></span></div>
         <slot name="sub-title"></slot>
       </div>
       <div class="content" :style="{ maxHeight: maxHeight + 'px' }">
