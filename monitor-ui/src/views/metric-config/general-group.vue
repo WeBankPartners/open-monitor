@@ -143,12 +143,12 @@ export default {
                     <Button
                       size="small"
                       type="error"
+                      icon="md-trash"
                       onClick={() => {
                         this.handleDelete(params.row)
                       }}
                       style="margin-right:5px;"
                     >
-                      <Icon type="md-trash" size="16"></Icon>
                     </Button>
                   </Tooltip>
                 }
