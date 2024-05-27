@@ -34,11 +34,11 @@
           :on-error="uploadFailed">
             <Button icon="ios-cloud-upload-outline">{{$t('m_import')}}{{$t("m_metric")}}</Button>
           </Upload>
-          <Button type="success" @click="handleAdd">新增</Button>
+          <Button type="success" @click="handleAdd">{{$t('button.add')}}</Button>
         </div>
       </Col>
     </Row>
-    <Table size="small" :max-height="maxHeight" :columns="tableColumns" :data="tableData" class="table" />
+    <Table size="small" :columns="tableColumns" :data="tableData" class="table" />
     <Modal
       v-model="deleteVisible"
       :title="$t('delConfirm.title')"
@@ -92,33 +92,45 @@ export default {
           key: 'workspace',
           minWidth: 150,
           render: (h, params) => {
-            return <Tag>{ this.workspaceMap[params.row.workspace] }</Tag>
+            return <Tag size="medium">{ this.workspaceMap[params.row.workspace] }</Tag>
           }
         },
         {
-          title: '类型',
-          key: 'type',
+          title: this.$t('field.type'), // 类型
+          key: 'metric_type',
           minWidth: 150,
           render: (h, params) => {
-            return <span>{ params.row.type || '-' }</span>
+            const typeList = [
+              { label: this.$t('m_general_type'), value: 'common', color: '#2d8cf0' },
+              { label: this.$t('m_business_configuration'), value: 'business', color: '#81b337' },
+              { label: this.$t('m_customize'), value: 'custom', color: '#b886f8' }
+            ]
+            const find = typeList.find(item => item.value === params.row.metric_type) || {}
+            return <Tag color={find.color} size="medium">{find.label || '-'}</Tag>
           }
         },
         {
-          title: '表达式',
+          title: this.$t('m_business_configuration'), // 业务配置
+          key: 'log_metric_template',
+          minWidth: 150,
+          render: (h, params) => {
+            return <span>{params.row.log_metric_template || '-'}</span>
+          }
+        },
+        {
+          title: this.$t('tableKey.expr'), // 表达式
           key: 'prom_expr',
           minWidth: 150,
           render: (h, params) => {
             return (
-              <Tooltip max-width="300" content={params.row.prom_expr}>
-                <span style="overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">
-                  {params.row.prom_expr || '-'}
-                </span>
+              <Tooltip max-width="300" content={params.row.prom_expr} transfer>
+                <span class="eclipse">{params.row.prom_expr || '-'}</span>
               </Tooltip>
             )
           }
         },
         {
-          title: '操作',
+          title: this.$t('table.action'),
           key: 'action',
           width: 100,
           align: 'center',
@@ -128,7 +140,7 @@ export default {
               <div style="display:flex;justify-content:center;">
                 {
                   /* 编辑 */
-                  <Tooltip content={'编辑'} placement="bottom">
+                  <Tooltip content={this.$t('button.edit')} placement="bottom" transfer>
                     <Button
                       size="small"
                       type="primary"
@@ -143,7 +155,7 @@ export default {
                 }
                 {
                   /* 删除 */
-                  <Tooltip content={'删除'} placement="bottom">
+                  <Tooltip content={this.$t('button.remove')} placement="bottom" transfer>
                     <Button
                       size="small"
                       type="error"
@@ -182,7 +194,7 @@ export default {
     this.getList()
     this.token = (window.request ? 'Bearer ' + getPlatFormToken() : getToken())|| null
     const clientHeight = document.documentElement.clientHeight
-    this.maxHeight = clientHeight - this.$refs.maxheight.getBoundingClientRect().top - 90
+    this.maxHeight = clientHeight - this.$refs.maxheight.getBoundingClientRect().top - 100
   },
   methods: {
     changeServiceGroup () {
@@ -286,8 +298,30 @@ export default {
 }
 </script>
 
+<style lang="less">
+.monitor-level-group {
+  .eclipse {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+  .table td, .table th {
+    vertical-align: center;
+    border-top: none;
+  }
+  .table td {
+    padding: 6px 0;
+  }
+  .table th {
+    padding: 10px 0;
+  }
+}
+</style>
 <style lang="less" scoped>
 .monitor-level-group {
+  padding-bottom: 20px;
   .btn-group {
     display: flex;
     justify-content: flex-end;
