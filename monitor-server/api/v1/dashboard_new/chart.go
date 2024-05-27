@@ -74,8 +74,8 @@ func GetChartData(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	if len(param.Data) == 0 {
-		middleware.ReturnValidateError(c, "Param data can not empty ")
+	if len(param.Data) == 0 && param.ChartId == 0 && param.CustomChartGuid == "" {
+		middleware.ReturnValidateError(c, "Param config can not empty ")
 		return
 	}
 	if param.Start == 0 && param.End == 0 && param.TimeSecond < 0 {
@@ -177,13 +177,18 @@ func getChartConfigByChartId(param *models.ChartQueryParam, result *models.EChar
 }
 
 func getCustomChartConfig(param *models.ChartQueryParam, result *models.EChartOption) (queryList []*models.QueryMonitorData, err error) {
-	chartList, queryChartErr := db.ChartList(param.ChartId, 0)
-	if queryChartErr != nil {
-		err = fmt.Errorf("Try to query chart table fail,%s ", queryChartErr.Error())
+	chartObj, getChartErr := db.GetCustomChartById(param.CustomChartGuid)
+	if getChartErr != nil {
+		err = fmt.Errorf("get custom chart with guid:%s fail,%s ", param.CustomChartGuid, getChartErr.Error())
 		return
 	}
-	if len(chartList) == 0 {
-		err = fmt.Errorf("Can not find chart with id:%d ", param.ChartId)
+	chartSeries, getErr := db.GetCustomChartSeries(param.CustomChartGuid)
+	if getErr != nil {
+		err = getErr
+		return
+	}
+	if len(chartSeries) == 0 {
+		err = fmt.Errorf("Can not find chart serie with guid:%d ", param.CustomChartGuid)
 		return
 	}
 	err = chartCompare(param)
@@ -191,47 +196,44 @@ func getCustomChartConfig(param *models.ChartQueryParam, result *models.EChartOp
 		return
 	}
 	//param.Aggregate = chartList[0].AggType
-	param.Unit = chartList[0].Unit
-	result.Id = param.ChartId
-	result.Title = chartList[0].Title
+	param.Unit = chartObj.Unit
+	result.Title = chartObj.Name
 	queryList = []*models.QueryMonitorData{}
-	existEndpointMap := make(map[string]int)
-	for _, dataConfig := range param.Data {
-		if _, b := existEndpointMap[dataConfig.Endpoint]; b {
-			continue
-		}
-		existEndpointMap[dataConfig.Endpoint] = 1
-		endpointObj := models.EndpointTable{Guid: dataConfig.Endpoint}
-		db.GetEndpoint(&endpointObj)
-		if endpointObj.Id <= 0 {
-			err = fmt.Errorf("Param data endpoint can not found with guid:%s ", dataConfig.Endpoint)
-			break
-		}
-		tmpMetric := chartList[0].Metric
-		if strings.Contains(dataConfig.Metric, "/") || tmpMetric == "app.metric" {
-			tmpMetric = dataConfig.Metric
-		}
-		for _, metric := range strings.Split(tmpMetric, "^") {
-			tmpPromQl := ""
-			if chartList[0].Metric == "db_monitor_count" && metric != "db_monitor_count" {
-				err, tmpPromQl = db.GetDbPromMetric(dataConfig.Endpoint, dataConfig.Metric, chartList[0].Legend)
-			} else {
-				err, tmpPromQl = db.GetPromMetric([]string{dataConfig.Endpoint}, metric)
-			}
-			if err != nil {
-				break
-			}
-			tmpLegend := chartList[0].Legend
-			if len(param.Data) > 1 && strings.HasPrefix(tmpLegend, "$custom_") {
-				tmpLegend = "$custom"
-			}
-			queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQl, Legend: tmpLegend, Metric: []string{metric}, Endpoint: []string{dataConfig.Endpoint}, CompareLegend: param.Compare.CompareFirstLegend, SameEndpoint: true, Step: param.Step, Cluster: endpointObj.Cluster})
-			if param.Compare.CompareFirstLegend != "" {
-				queryList = append(queryList, &models.QueryMonitorData{Start: param.Compare.CompareSecondStartTimestamp, End: param.Compare.CompareSecondEndTimestamp, PromQ: tmpPromQl, Legend: tmpLegend, Metric: []string{metric}, Endpoint: []string{dataConfig.Endpoint}, CompareLegend: param.Compare.CompareSecondLegend, SameEndpoint: true, Step: param.Step, Cluster: endpointObj.Cluster})
-			}
-		}
+	legend := "$custom"
+	for _, dataConfig := range chartSeries {
+		tmpPromQl := ""
+		tmpPromQl, err = db.GetPromQLByMetric(dataConfig.Metric, dataConfig.MonitorType, dataConfig.ServiceGroup)
 		if err != nil {
 			break
+		}
+		if db.CheckMetricIsServiceMetric(dataConfig.Metric, dataConfig.ServiceGroup) {
+			log.Logger.Debug("getChartConfigByCustom $app_metric")
+			legend = "$app_metric"
+			tmpPromQl = db.ReplacePromQlKeyword(tmpPromQl, dataConfig.Metric, &models.EndpointNewTable{})
+			queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQl, Legend: legend, Metric: []string{dataConfig.Metric}, Endpoint: []string{dataConfig.Endpoint}, CompareLegend: param.Compare.CompareFirstLegend, SameEndpoint: true, Step: param.Step, Cluster: "default"})
+		} else {
+			endpointList := []*models.EndpointNewTable{}
+			if dataConfig.ServiceGroup == "" {
+				endpointObj, _ := db.GetEndpointNew(&models.EndpointNewTable{Guid: dataConfig.Endpoint})
+				if endpointObj.MonitorType == "" {
+					err = fmt.Errorf("Param data endpoint:%s can not find ", dataConfig.Endpoint)
+					break
+				}
+				endpointList = append(endpointList, &endpointObj)
+			} else {
+				endpointList, err = db.GetRecursiveEndpointByTypeNew(dataConfig.ServiceGroup, dataConfig.MonitorType)
+				if err != nil {
+					err = fmt.Errorf("Try to get endpoints from serviceGroup:%s fail,%s ", dataConfig.ServiceGroup, err.Error())
+					break
+				}
+				if len(endpointList) == 0 {
+					continue
+				}
+			}
+			for _, endpoint := range endpointList {
+				tmpPromQL := db.ReplacePromQlKeyword(tmpPromQl, dataConfig.Metric, endpoint)
+				queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQL, Legend: legend, Metric: []string{dataConfig.Metric}, Endpoint: []string{endpoint.Guid}, Step: endpoint.Step, Cluster: endpoint.Cluster, CustomDashboard: true})
+			}
 		}
 	}
 	return
@@ -410,9 +412,11 @@ func getChartQueryData(queryList []*models.QueryMonitorData, param *models.Chart
 	//if param.Aggregate != "none" {
 	//	agg = db.CheckAggregate(param.Start, param.End, "", param.Step, len(serials))
 	//}
-	var processDisplayMap = make(map[string]string)
-	if strings.HasPrefix(param.Data[0].Metric, "process_") {
-		processDisplayMap = db.GetProcessDisplayMap(param.Data[0].Endpoint)
+	processDisplayMap := make(map[string]string)
+	if len(param.Data) > 0 {
+		if strings.HasPrefix(param.Data[0].Metric, "process_") {
+			processDisplayMap = db.GetProcessDisplayMap(param.Data[0].Endpoint)
+		}
 	}
 	if len(serials) > 0 && param.Aggregate != "none" && param.AggStep <= 0 {
 		param.AggStep = int64(db.CheckAggregate(param.Start, param.End, "", 10, len(serials)))
