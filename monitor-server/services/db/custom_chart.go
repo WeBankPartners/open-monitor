@@ -389,17 +389,17 @@ func QueryCustomChartList(condition models.QueryChartParam, roles []string) (pag
 }
 
 // CopyCustomChart 复制图表
-func CopyCustomChart(dashboardId int, customChart string, displayConfig interface{}) (err error) {
+func CopyCustomChart(dashboardId int, user, group, customChart string, displayConfig interface{}) (err error) {
 	var chartSeriesList []*models.CustomChartSeries
 	var chartPermissionList []*models.CustomChartPermission
 	var configMap = make(map[string][]*models.CustomChartSeriesConfig)
 	var tagMap = make(map[string][]*models.CustomChartSeriesTag)
 	var tagValueMap = make(map[string][]*models.CustomChartSeriesTagValue)
-	var dashboardChartRelList []*models.CustomDashboardChartRel
 	var actions []*Action
 	newChartId := guid.CreateGuid()
 	chart := &models.CustomChart{}
 	byteConf, _ := json.Marshal(displayConfig)
+	now := time.Now().Format(models.DatetimeFormat)
 	if _, err = x.SQL("select * from custom_chart where guid = ?", customChart).Get(chart); err != nil {
 		return
 	}
@@ -407,9 +407,6 @@ func CopyCustomChart(dashboardId int, customChart string, displayConfig interfac
 		return
 	}
 	if err = x.SQL("select * from custom_chart_permission where dashboard_chart = ?", customChart).Find(&chartPermissionList); err != nil {
-		return
-	}
-	if err = x.SQL("select * from custom_dashboard_chart_rel where custom_dashboard = ? and dashboard_chart = ?", dashboardId, customChart).Find(&dashboardChartRelList); err != nil {
 		return
 	}
 	if configMap, err = QueryAllChartSeriesConfig(); err != nil {
@@ -459,10 +456,8 @@ func CopyCustomChart(dashboardId int, customChart string, displayConfig interfac
 		actions = append(actions, &Action{Sql: "insert into custom_chart_permission values(?,?,?,?)", Param: []interface{}{
 			guid.CreateGuid(), newChartId, permission.RoleId, permission.Permission}})
 	}
-	for _, rel := range dashboardChartRelList {
-		actions = append(actions, &Action{Sql: "insert into custom_dashboard_chart_rel values(?,?,?,?,?,?,?,?,?)", Param: []interface{}{guid.CreateGuid(),
-			rel.CustomDashboard, newChartId, rel.Group, string(byteConf), rel.CreateUser, rel.UpdateUser, rel.CreateTime, rel.UpdateTime}})
-	}
+	actions = append(actions, &Action{Sql: "insert into custom_dashboard_chart_rel values(?,?,?,?,?,?,?,?,?)", Param: []interface{}{guid.CreateGuid(),
+		dashboardId, newChartId, group, string(byteConf), user, user, now, now}})
 	return Transaction(actions)
 }
 
