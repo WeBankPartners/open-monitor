@@ -59,6 +59,10 @@ const implicitRoute = {
     parentBreadcrumb: {'zh-CN': '指标', 'en-US': 'quota'},
     childBreadcrumb: { 'zh-CN': '自定义', 'en-US': 'customize' }
   },
+  'groupBoard': {
+    parentBreadcrumb: {'zh-CN': '对象', 'en-US': 'Object'},
+    childBreadcrumb: { 'zh-CN': '对象看板', 'en-US': 'Object Board' }
+  },
   'viewConfig': {
     parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
     childBreadcrumb: { 'zh-CN': '查看视图', 'en-US': 'View' }
