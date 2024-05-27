@@ -16,8 +16,9 @@
       <div :class="isfullscreen? 'modal-container-fullscreen':'modal-container-normal'">
         <Row>
           <Col span="8">
+            <Divider orientation="left" size="small">{{ $t('m_configuration_information') }}</Divider>
             <Form :label-width="120">
-              <FormItem :label="$t('tableKey.name')">
+              <FormItem :label="$t('m_configuration_name')">
                 <Tooltip :content="configInfo.name" transfer :disabled="configInfo.name === ''" style="width: 100%;" max-width="200">
                   <Input
                     v-model="configInfo.name"
@@ -55,8 +56,10 @@
                   :data="configInfo.param_list"
                   width="100%"
                 ></Table>
-                <Button type="primary" :disabled="view" @click="addParameterCollection" ghost size="small" style="float:left;margin:12px">{{ $t('m_add_parameter_collection') }}</Button>
-                <Button type="primary" :disabled="configInfo.demo_log==='' || configInfo.param_list.length === 0 || view" @click="generateBackstageTrial" ghost size="small" style="float:right;margin:12px">{{ $t('m_match') }}</Button>
+                <div style="text-align: right;margin: 0 33px;">
+                  <Button type="primary" :disabled="configInfo.demo_log==='' || configInfo.param_list.length === 0 || view" @click="generateBackstageTrial" ghost size="small" style="margin:12px">{{ $t('m_match') }}</Button>
+                  <Button type="success" :disabled="view" @click="addParameterCollection" ghost size="small" icon="md-add"></Button>
+                </div>
               </div>
               <!-- 计算指标 -->
               <div>
@@ -68,7 +71,9 @@
                   :data="configInfo.metric_list"
                   width="100%"
                 ></Table>
-                <Button type="primary" :disabled="view" @click="addComputeMetrics" ghost size="small" style="float:left;margin:12px">{{ $t('m_add_compute_metrics') }}</Button>
+                <div style="text-align: right;margin: 0 24px;">
+                  <Button type="success" :disabled="view" @click="addComputeMetrics" ghost size="small" icon="md-add" style="margin: 12px;"></Button>
+                </div>
               </div>
             </div>
           </Col>
@@ -188,7 +193,7 @@ export default {
           key: 'demo_match_value',
         },
         {
-          title: this.$t('m_tag_mapping'),
+          title: this.$t('m_match_value_pure'),
           ellipsis: true,
           tooltip: true,
           key: 'string_map',
@@ -199,11 +204,11 @@ export default {
                 <Input disabled style="width:80%" value={val}/>
                 <Button
                   size="small"
-                  type="success"
+                  type="primary"
                   disabled={this.view}
+                  icon="md-create"
                   onClick={() => this.editTagMapping(params.index)}
                 >
-                  <Icon type="ios-create-outline" size="16"></Icon>
                 </Button>
               </div>
             )
@@ -222,9 +227,9 @@ export default {
                   type="error"
                   style="margin-right:5px;"
                   disabled={this.view}
+                  icon="md-trash"
                   onClick={() => this.deleteAction('param_list', params.index)}
                 >
-                  <Icon type="md-trash" size="16"></Icon>
                 </Button>
               </div>
             )
@@ -406,9 +411,9 @@ export default {
                   type="error"
                   style="margin-right:5px;"
                   disabled={this.view}
+                  icon="md-trash"
                   onClick={() => this.deleteAction('metric_list', params.index)}
                 >
-                  <Icon type="md-trash" size="16"></Icon>
                 </Button>
               </div>
             )

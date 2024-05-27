@@ -63,7 +63,7 @@
                   style="cursor: pointer"
                 />
               </div>
-              <Button slot="extra" type="primary" size="small" @click.prevent="addTemplate(item.log_type)">{{ $t('button.add') }}</Button>
+              <Button slot="extra" type="success" size="small" @click.prevent="addTemplate(item.log_type)">{{ $t('button.add') }}</Button>
               <div v-show="!hideRegex.includes(itemIndex)">
                 <Table
                   size="small"
@@ -104,6 +104,7 @@
     <Modal
       v-model="showServiceGroup"
       :fullscreen="isfullscreen"
+      footer-hide
       :title="$t('field.resourceLevel')">
       <div slot="header" class="custom-modal-header">
         <span>
@@ -112,7 +113,7 @@
         <Icon v-if="isfullscreen" @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-contract" />
         <Icon v-else @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-expand" />
       </div>
-      <Input v-model="filterServiceGroup" :placeholder="$t('m_filtering_info')" style="margin-bottom: 12px;"></Input>
+      <Input v-model="filterServiceGroup" :placeholder="$t('field.resourceLevel') + $t('tableKey.name')" style="margin-bottom: 12px;"></Input>
       <div  :class="isfullscreen? 'modal-container-fullscreen':'modal-container-normal'">
         <template v-if="serviceGroup.length > 0">
           <Tag size="large" v-for="(item, index) in serviceGroup.filter(data => data.display_name.includes(filterServiceGroup))" :key="index">{{ item.display_name }}</Tag>
@@ -120,9 +121,6 @@
         <template v-else>
           <Alert type="warning">{{ $t('m_noData') }}</Alert>
         </template>
-      </div>
-      <div slot="footer">
-        <Button type="primary" @click="showServiceGroup=false">{{ $t('close') }}</Button>
       </div>
     </Modal>
   </div>
@@ -186,31 +184,31 @@ export default {
               <Tooltip content={this.$t('button.edit')} placement="top" transfer={true}>
                   <Button
                     size="small"
-                    type="success"
+                    type="primary"
                     onClick={() => this.editAction(params.row)}
                     style="margin-right:5px;"
                   >
-                    <Icon type="ios-create-outline" size="16"></Icon>
+                    <Icon type="md-create" size="16"></Icon>
                   </Button>
                 </Tooltip>
                 <Tooltip content={this.$t('m_view_associated')} placement="top" transfer={true}>
                   <Button
                     size="small"
-                    type="primary"
+                    type="warning"
                     onClick={() => this.viewAction(params.row)}
                     style="margin-right:5px;"
                   >
-                    <Icon type="md-eye" size="16"></Icon>
+                    <Icon type="md-cube" size="16"></Icon>
                   </Button>
                 </Tooltip>
                 <Tooltip content={this.$t('button.remove')} placement="top" transfer={true}>
                   <Button
                     size="small"
                     type="error"
+                    icon="md-trash"
                     onClick={() => this.removeAction(params.row)}
                     style="margin-right:5px;"
                   >
-                    <Icon type="ios-trash-outline" size="16"></Icon>
                   </Button>
                 </Tooltip>
               </div>

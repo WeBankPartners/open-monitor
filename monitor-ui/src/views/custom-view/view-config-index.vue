@@ -145,9 +145,8 @@
                 <Button
                   @click="deleteAuth(index)"
                   size="small"
-                  style="background-color: #ff9900;border-color: #ff9900;"
                   type="error"
-                  icon="md-close"
+                  icon="md-trash"
                 ></Button>
                 <Select v-model="item.role_id" filterable style="width:200px">
                   <Option v-for="item in userRolesOptions" :value="item.id" :key="item.id">
@@ -164,7 +163,6 @@
               @click="addEmptyAuth"
               type="success"
               size="small"
-              style="background-color: #0080FF;border-color: #0080FF;"
               long
               >{{ $t('button.add') }}</Button
             >
