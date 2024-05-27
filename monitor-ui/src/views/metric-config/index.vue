@@ -1,9 +1,11 @@
 <template>
   <div class="monitor-metric-config">
     <Tabs v-model="activeName">
-      <TabPane label="通用对象" name="1">
+      <!--通用对象-->
+      <TabPane :label="$t('m_general_object')" name="1">
       </TabPane>
-      <TabPane label="层级对象" name="2">
+      <!--层级对象-->
+      <TabPane :label="$t('field.resourceLevel')" name="2">
       </TabPane>
     </Tabs>
     <GeneralGroup v-if="activeName === '1'"></GeneralGroup>
