@@ -393,8 +393,11 @@ func ImportLogMetric(c *gin.Context) {
 				logMetric.ServiceGroup = serviceGroup
 			}
 		}
+		for _, metricGroup := range logMonitor.MetricGroups {
+			metricGroup.ServiceGroup = serviceGroup
+		}
 	}
-	if err = db.ImportLogMetric(&paramObj); err != nil {
+	if err = db.ImportLogMetric(&paramObj, middleware.GetOperateUser(c)); err != nil {
 		middleware.ReturnHandleError(c, "import log metric fail", err)
 	} else {
 		middleware.ReturnSuccess(c)
@@ -847,5 +850,16 @@ func LogMonitorTemplateImport(c *gin.Context) {
 		middleware.ReturnHandleError(c, "json unmarshal fail error ", err)
 		return
 	}
-
+	var affectEndpoints []string
+	affectEndpoints, err = db.ImportLogMonitorTemplate(paramObj, middleware.GetOperateUser(c))
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	err = syncLogMetricNodeExporterConfig(affectEndpoints)
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+	} else {
+		middleware.ReturnSuccess(c)
+	}
 }
