@@ -80,3 +80,47 @@ func GetPromQLByMetric(metric, monitorType, serviceGroup string) (result string,
 	}
 	return
 }
+
+func GetCustomChartSeries(customChartGuid string) (series []*models.CustomChartSeriesDto, err error) {
+	var seriesRows []*models.CustomChartSeries
+	err = x.SQL("select * from custom_chart_series where dashboard_chart=?", customChartGuid).Find(&seriesRows)
+	if err != nil {
+		err = fmt.Errorf("query custom_chart_series table fail,%s ", err.Error())
+		return
+	}
+	var tagValueRows []*models.CustomChartTagValueRow
+	err = x.SQL("select t2.dashboard_chart_config as `chart_guid`,t2.name,t1.value from custom_chart_series_tagvalue t1 left join custom_chart_series_tag t2 on t1.dashboard_chart_tag=t2.guid where t2.dashboard_chart_config in (select id from custom_chart_series where dashboard_chart=?)", customChartGuid).Find(&tagValueRows)
+	if err != nil {
+		err = fmt.Errorf("query custom_chart_tag_value fail,%s ", err.Error())
+		return
+	}
+	for _, row := range seriesRows {
+		tmpSerieObj := models.CustomChartSeriesDto{
+			Endpoint:      row.Endpoint,
+			ServiceGroup:  row.ServiceGroup,
+			EndpointName:  row.EndpointName,
+			MonitorType:   row.MonitorType,
+			ColorGroup:    row.ColorGroup,
+			PieDisplayTag: row.PieDisplayTag,
+			Metric:        row.Metric,
+			Tags:          []*models.TagDto{},
+		}
+		tagNameList := []string{}
+		tagValueMap := make(map[string][]string)
+		for _, tvRow := range tagValueRows {
+			if tvRow.ChartGuid == row.Guid {
+				if existValueList, ok := tagValueMap[tvRow.Name]; ok {
+					tagValueMap[tvRow.Name] = append(existValueList, tvRow.Value)
+				} else {
+					tagNameList = append(tagNameList, tvRow.Name)
+					tagValueMap[tvRow.Name] = []string{tvRow.Value}
+				}
+			}
+		}
+		for _, tagName := range tagNameList {
+			tmpSerieObj.Tags = append(tmpSerieObj.Tags, &models.TagDto{TagName: tagName, TagValue: tagValueMap[tagName]})
+		}
+		series = append(series, &tmpSerieObj)
+	}
+	return
+}
