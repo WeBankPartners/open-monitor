@@ -303,7 +303,8 @@ const btn = [{
   },
   {
     btn_name: 'button.remove',
-    btn_func: 'deleteConfirmModal'
+    btn_func: 'deleteConfirmModal',
+    color: 'red'
   },
   {
     btn_name: 'button.logConfiguration',
