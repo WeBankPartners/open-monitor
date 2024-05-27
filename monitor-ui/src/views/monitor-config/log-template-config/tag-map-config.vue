@@ -87,7 +87,7 @@ export default {
     addItem () {
       this.tagMap.push(
         {
-          regulative: 1,  //匹配类型： 0 是非正则，1是正则
+          regulative: 0,  //匹配类型： 0 是非正则，1是正则
           source_value: '', // 源值
           target_value: '', // 映射值
           value_type: '', //值类型： success 成功，fail 失败
