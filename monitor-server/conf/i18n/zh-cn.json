@@ -13,5 +13,6 @@
   "password_error": "密码错误",
   "token_error": "请求认证失败",
   "token_authority_error": "鉴权失败，权限不足",
-  "save_done_but_sync_fail": "监控配置保存成功，但下发配置到目标对象失败，请稍后重试"
+  "save_done_but_sync_fail": "监控配置保存成功，但下发配置到目标对象失败，请稍后重试",
+  "metric_duplicate_error": "指标 %s 重复"
 }
