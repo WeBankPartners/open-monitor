@@ -436,5 +436,7 @@
   "m_source_dashboard": "Source Dashboard",
   "m_use_dashboard": "Application dashboard",
   "m_reset": "Reset",
-  "m_create_time": "Create Time"
+  "m_create_time": "Create Time",
+  "m_configuration_name": "Configuration Name",
+  "m_use_template": "Use Template"
 }
