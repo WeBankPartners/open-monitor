@@ -647,7 +647,7 @@ func CreateLogMetricGroup(c *gin.Context) {
 	} else {
 		err = syncLogMetricMonitorConfig(param.LogMetricMonitorGuid)
 		if err != nil {
-			middleware.ReturnHandleError(c, err.Error(), err)
+			middleware.ReturnError(c, 200, middleware.GetMessageMap(c).SaveDoneButSyncFail, err)
 		} else {
 			middleware.ReturnSuccess(c)
 		}
@@ -681,7 +681,7 @@ func UpdateLogMetricGroup(c *gin.Context) {
 	} else {
 		err = syncLogMetricMonitorConfig(param.LogMetricMonitorGuid)
 		if err != nil {
-			middleware.ReturnHandleError(c, err.Error(), err)
+			middleware.ReturnError(c, 200, middleware.GetMessageMap(c).SaveDoneButSyncFail, err)
 		} else {
 			middleware.ReturnSuccess(c)
 		}
@@ -743,7 +743,7 @@ func CreateLogMetricCustomGroup(c *gin.Context) {
 	} else {
 		err = syncLogMetricMonitorConfig(param.LogMetricMonitor)
 		if err != nil {
-			middleware.ReturnHandleError(c, err.Error(), err)
+			middleware.ReturnError(c, 200, middleware.GetMessageMap(c).SaveDoneButSyncFail, err)
 		} else {
 			middleware.ReturnSuccess(c)
 		}
@@ -776,7 +776,7 @@ func UpdateLogMetricCustomGroup(c *gin.Context) {
 	} else {
 		err = syncLogMetricMonitorConfig(param.LogMetricMonitor)
 		if err != nil {
-			middleware.ReturnHandleError(c, err.Error(), err)
+			middleware.ReturnError(c, 200, middleware.GetMessageMap(c).SaveDoneButSyncFail, err)
 		} else {
 			middleware.ReturnSuccess(c)
 		}
