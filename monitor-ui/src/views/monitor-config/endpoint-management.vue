@@ -218,9 +218,8 @@
             <Button
               @click="deleteMaintenanceWindow(index)"
               size="small"
-              style="background-color: #ff9900;border-color: #ff9900;"
               type="error"
-              icon="md-close"
+              icon="md-trash"
             ></Button>
             <TimePicker format="HH:mm" type="timerange" v-model="item.time_list" :clearable="false" style="width: 200px"></TimePicker>
             <Select v-model="item.weekday" multiple filterable style="width:200px">
@@ -234,7 +233,6 @@
           @click="addEmptyMaintenanceWindow"
           type="success"
           size="small"
-          style="background-color: #0080FF;border-color: #0080FF;"
           long
           >{{ $t('button.add') }}</Button
         >
