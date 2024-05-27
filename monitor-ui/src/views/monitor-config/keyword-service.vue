@@ -179,7 +179,7 @@ let tableEle = [
 ]
 const btn = [
   {btn_name: 'button.edit', btn_func: 'editF'},
-  {btn_name: 'button.remove', btn_func: 'deleteConfirmModal'}
+  {btn_name: 'button.remove', btn_func: 'deleteConfirmModal', color: 'red'}
 ]
 
 export default {
@@ -214,7 +214,7 @@ export default {
                 {title: 'tableKey.tags', value: 'tags', display: true},
                 {title: 'table.action',btn:[
                   {btn_name: 'button.edit', btn_func: 'editRuleItem'},
-                  {btn_name: 'button.remove', btn_func: 'delRuleconfirmModal'}
+                  {btn_name: 'button.remove', btn_func: 'delRuleconfirmModal', color: 'red'}
                 ]}
               ],
               data: [1],
@@ -236,7 +236,7 @@ export default {
                 {title: 'm_regular', value: 'regulative', display: true},
                 {title: 'table.action',btn:[
                   {btn_name: 'button.edit', btn_func: 'editCustomMetricItem'},
-                  {btn_name: 'button.remove', btn_func: 'delCustomMetricConfirmModal'}
+                  {btn_name: 'button.remove', btn_func: 'delCustomMetricConfirmModal', color: 'red'}
                 ]}
               ],
               data: [1],
@@ -377,7 +377,7 @@ export default {
       }
       this.customMetricsModelConfig.addRow[type].push({
         source_value: '',
-        regulative: 1,
+        regulative: 0,
         target_value: ''
       })
     },
