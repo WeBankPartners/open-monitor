@@ -1,6 +1,6 @@
 <template>
   <div class=" ">
-    <section>
+    <div style="display: flex;justify-content: space-between;margin-bottom: 8px">
       <ul class="search-ul">
         <li class="search-li">
           <Select v-model="type" style="width:100px" @on-change="typeChange">
@@ -17,6 +17,7 @@
             ref="select"
             :remote-method="getTargrtList"
             @on-change="search"
+            @on-clear="typeChange"
             >
             <Option v-for="(option, index) in targetOptions" :value="option.guid" :key="index">
               <TagShow :tagName="option.type" :index="index"></TagShow> 
@@ -24,15 +25,15 @@
             </Option>
           </Select>
         </li>
-        <li class="search-li">
+        <!-- <li class="search-li">
           <button type="button" class="btn btn-sm btn-confirm-f"
           :disabled="targrtId === ''"
           @click="search">
             <i class="fa fa-search" ></i>
             {{$t('button.search')}}
           </button>
-        </li>
-        <li class="search-li" style="cursor: pointer;">
+        </li> -->
+        <!-- <li class="search-li" style="cursor: pointer;">
           <span @click="openDoc">
             <i 
               class="fa fa-book" 
@@ -41,9 +42,19 @@
             </i>
             {{$t('operationDoc')}}
           </span>
-        </li>
+        </li> -->
       </ul>
-    </section> 
+      <div style="margin-top: 4px;">
+        <span @click="openDoc">
+          <i 
+            class="fa fa-book" 
+            aria-hidden="true" 
+            style="font-size:20px;color:#58a0e6;vertical-align: middle;margin-left:20px">
+          </i>
+          {{$t('operationDoc')}}
+        </span>
+      </div>
+    </div> 
     <section v-show="showTargetManagement" style="margin-top: 16px;">
       <template v-if="type === 'group'">
         <groupManagement ref="group"></groupManagement>

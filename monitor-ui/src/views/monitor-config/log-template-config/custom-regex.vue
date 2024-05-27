@@ -8,7 +8,7 @@
     >
       <div slot="header" class="custom-modal-header">
         <span>
-          {{(isAdd ? $t('button.add') : $t('button.edit')) + $t('m_custom_regex')}}
+          {{(view ? $t('button.view') : (isAdd ? $t('button.add') : $t('button.edit'))) + $t('m_custom_regex')}}
         </span>
         <Icon v-if="isfullscreen" @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-contract" />
         <Icon v-else @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-expand" />
@@ -24,6 +24,7 @@
                     maxlength="30"
                     show-word-limit
                     style="width: 96%"
+                    :disabled="view"
                   />
                   <span style="color: red">*</span>
                 </Tooltip>
@@ -34,6 +35,7 @@
                   type="textarea"
                   :rows="15"
                   style="width: 96%"
+                  :disabled="view"
                 />
                 <div v-if="isParmasChanged && configInfo.demo_log.length === 0" style="color: red">
                   {{ $t('m_log_example') }} {{ $t('tips.required') }}
@@ -53,8 +55,8 @@
                   :data="configInfo.param_list"
                   width="100%"
                 ></Table>
-                <Button type="primary" @click="addParameterCollection" ghost size="small" style="float:left;margin:12px">{{ $t('m_add_parameter_collection') }}</Button>
-                <Button type="primary" :disabled="configInfo.demo_log==='' || configInfo.param_list.length === 0" @click="generateBackstageTrial" ghost size="small" style="float:right;margin:12px">{{ $t('m_match') }}</Button>
+                <Button type="primary" :disabled="view" @click="addParameterCollection" ghost size="small" style="float:left;margin:12px">{{ $t('m_add_parameter_collection') }}</Button>
+                <Button type="primary" :disabled="configInfo.demo_log==='' || configInfo.param_list.length === 0 || view" @click="generateBackstageTrial" ghost size="small" style="float:right;margin:12px">{{ $t('m_match') }}</Button>
               </div>
               <!-- 计算指标 -->
               <div>
@@ -66,7 +68,7 @@
                   :data="configInfo.metric_list"
                   width="100%"
                 ></Table>
-                <Button type="primary" @click="addComputeMetrics" ghost size="small" style="float:left;margin:12px">{{ $t('m_add_compute_metrics') }}</Button>
+                <Button type="primary" :disabled="view" @click="addComputeMetrics" ghost size="small" style="float:left;margin:12px">{{ $t('m_add_compute_metrics') }}</Button>
               </div>
             </div>
           </Col>
@@ -74,7 +76,7 @@
       </div>
       <div slot="footer">
         <Button @click="showModal = false">{{ $t('button.cancel') }}</Button>
-        <Button @click="saveConfig" type="primary">{{ $t('button.save') }}</Button>
+        <Button :disabled="view" @click="saveConfig" type="primary">{{ $t('button.save') }}</Button>
       </div>
     </Modal>
     <TagMapConfig ref="tagMapConfigRef" @setTagMap="setTagMap"></TagMapConfig>
@@ -92,6 +94,7 @@ export default {
       isParmasChanged: false,
       parentGuid: '', //上级唯一标识
       isAdd: true,
+      view: false, // 仅查看，供对象类型查看使用
       configInfo: {
         param_list: []
       },
@@ -111,6 +114,7 @@ export default {
             return (
               <Input
                 value={params.row.display_name}
+                disabled={this.view}
                 onInput={v => {
                   this.changeVal('param_list', params.index, 'display_name', v)
                 }}
@@ -133,6 +137,7 @@ export default {
             return (
               <Input
                 value={params.row.name}
+                disabled={this.view}
                 onInput={v => {
                   this.changeVal('param_list', params.index, 'name', v)
                 }}
@@ -159,6 +164,7 @@ export default {
                 </div>
                 <Input
                   value={params.row.regular}
+                  disabled={this.view}
                   onInput={v => {
                     this.changeVal('param_list', params.index, 'regular', v)
                   }}
@@ -194,6 +200,7 @@ export default {
                 <Button
                   size="small"
                   type="success"
+                  disabled={this.view}
                   onClick={() => this.editTagMapping(params.index)}
                 >
                   <Icon type="ios-create-outline" size="16"></Icon>
@@ -214,6 +221,7 @@ export default {
                   size="small"
                   type="error"
                   style="margin-right:5px;"
+                  disabled={this.view}
                   onClick={() => this.deleteAction('param_list', params.index)}
                 >
                   <Icon type="md-trash" size="16"></Icon>
@@ -239,6 +247,7 @@ export default {
             return (
               <Input
                 value={params.row.display_name}
+                disabled={this.view}
                 onInput={v => {
                   this.changeVal('metric_list', params.index, 'display_name', v)
                 }}
@@ -261,6 +270,7 @@ export default {
             return (
               <Input
                 value={params.row.metric}
+                disabled={this.view}
                 onInput={v => {
                   this.changeVal('metric_list', params.index, 'metric', v)
                 }}
@@ -288,6 +298,7 @@ export default {
               <Select
                 filterable
                 value={params.row.log_param_name}
+                disabled={this.view}
                 on-on-change={(v) => {
                   this.changeVal('metric_list', params.index, 'log_param_name', v)
                 }}
@@ -313,6 +324,7 @@ export default {
               <Select
                 filterable
                 value={params.row.tag_config}
+                disabled={this.view}
                 multiple
                 on-on-change={(v) => {
                   this.changeVal('metric_list', params.index, 'tag_config', v)
@@ -367,6 +379,7 @@ export default {
                 filterable
                 disabled={params.row.log_param_name===''}
                 value={params.row.agg_type}
+                disabled={this.view}
                 on-on-change={(v) => {
                   this.changeVal('metric_list', params.index, 'agg_type', v)
                 }}
@@ -392,6 +405,7 @@ export default {
                   size="small"
                   type="error"
                   style="margin-right:5px;"
+                  disabled={this.view}
                   onClick={() => this.deleteAction('metric_list', params.index)}
                 >
                   <Icon type="md-trash" size="16"></Icon>
@@ -414,6 +428,7 @@ export default {
       // parentGuid, 上级唯一标识
       // configGuid, 配置唯一标志 
       this.isAdd = actionType === 'add'
+      this.view = actionType === 'view'
       if (configGuid) {
         this.getConfig(configGuid)
       } else {

@@ -1,39 +1,52 @@
 <template>
   <div class=" ">
     <section v-if="showManagement" style="margin-top: 16px;">
-      <Tag color="blue">{{$t('m_log_file')}}</Tag>
-      <button @click="add" type="button" class="btn btn-small success-btn" style="padding: 0 10px">
-        <i class="fa fa-plus"></i>
-        {{$t('button.add')}}
-      </button>
-      
-      <Button
-        type="info"
-        class="btn-left"
-        @click="exportData"
-      >
-        <img src="../../assets/img/export.png" class="btn-img" alt="" />
-        {{ $t('m_export') }}
-      </Button>
-      <div style="display: inline-block;margin-bottom: 3px;">
-        <Upload 
-          :action="uploadUrl" 
-          :show-upload-list="false"
-          :max-size="1000"
-          with-credentials
-          :headers="{'Authorization': token}"
-          :on-success="uploadSucess"
-          :on-error="uploadFailed">
-            <Button type="primary" class="btn-left">
-              <img src="../../assets/img/import.png" class="btn-img" alt="" />
-              {{ $t('m_import') }}
-            </Button>
-        </Upload>
+      <div class="w-header" slot="title">
+        <div class="title">
+          {{$t('m_log_file')}}
+          <span class="underline"></span>
+        </div>
+      </div>
+      <div style="display: flex;justify-content: space-between;margin: 8px 0">
+        <div>
+          <Button type="success" class="btn-right" @click="add">
+            <Icon type="ios-add-circle-outline" size="16"></Icon>
+            {{ $t('button.add') }}
+          </Button>
+        </div>
+        <div style="position: relative;bottom: 82px;right: 80px;">
+          <Button
+            type="info"
+            class="btn-left"
+            @click="exportData"
+          >
+            <img src="../../assets/img/export.png" class="btn-img" alt="" />
+            {{ $t('m_export') }}
+          </Button>
+          <div style="display: inline-block;margin-bottom: 3px;">
+            <Upload 
+              :action="uploadUrl" 
+              :show-upload-list="false"
+              :max-size="1000"
+              with-credentials
+              :headers="{'Authorization': token}"
+              :on-success="uploadSucess"
+              :on-error="uploadFailed">
+                <Button type="primary" class="btn-left">
+                  <img src="../../assets/img/import.png" class="btn-img" alt="" />
+                  {{ $t('m_import') }}
+                </Button>
+            </Upload>
+          </div>
+        </div>
       </div>
 
       <PageTable :pageConfig="pageConfig">
         <div slot='tableExtend'>
-          <Button type="primary" @click="addMetricConfig(pageConfig.table.isExtend.parentData)" ghost size="small">{{ $t('addMetricConfig') }}</Button>
+          <div style="margin: 8px 4px">
+            <Button type="primary" @click="addByCustom" ghost size="small">{{ $t('button.add') }}</Button>
+            <Button type="primary" @click="addMetricConfig(pageConfig.table.isExtend.parentData)" ghost size="small">{{ $t('m_use_template') }}</Button>
+          </div>
           <div style="margin:8px;border:1px solid #2db7f5">
             <extendTable :detailConfig="pageConfig.table.isExtend.detailConfig"></extendTable>
           </div>
@@ -324,12 +337,17 @@
     </ModalComponent>
     <!-- DB config -->
     <section v-if="showManagement" style="margin-top: 16px;">
-      <Tag color="blue">{{$t('m_db')}}</Tag>
-      <button @click="addDb" type="button" class="btn btn-small success-btn" style="padding: 0 10px">
-        <i class="fa fa-plus"></i>
-        {{$t('button.add')}}
-      </button>
-      <PageTable :pageConfig="pageDbConfig"></PageTable>
+      <div class="w-header" slot="title">
+        <div class="title">
+          {{$t('m_db')}}
+          <span class="underline"></span>
+        </div>
+      </div>
+      <Button type="success" class="btn-right" @click="addDb" style="margin: 8px 0">
+        <Icon type="ios-add-circle-outline" size="16"></Icon>
+        {{ $t('button.add') }}
+      </Button>
+      <PageTable :pageConfig="pageDbConfig" style="margin-top:8px"></PageTable>
     </section>
     <Modal
       v-model="dbModelConfig.isShow"
@@ -426,9 +444,9 @@
             <OptionGroup :label="$t('m_standard_regex')">
               <Option v-for="item in templateList.regular_list" :value="item.guid" :key="item.guid">{{ item.name }}</Option>
             </OptionGroup>
-            <OptionGroup :label="$t('m_custom_regex')">
+            <!-- <OptionGroup :label="$t('m_custom_regex')">
               <Option value="customGuid" key="customGuid">{{ $t('m_custom_regex')}}</Option>
-            </OptionGroup>
+            </OptionGroup> -->
           </Select>
         </FormItem>
       </Form>
@@ -456,8 +474,8 @@ let tableEle = [
 ]
 const btn = [
   {btn_name: 'button.edit', btn_func: 'editF'},
-  {btn_name: 'button.remove', btn_func: 'deleteConfirmModal'},
-  {btn_name: 'm_import', btn_func: 'importConfig'},
+  {btn_name: 'button.remove', btn_func: 'deleteConfirmModal', color: 'red'},
+  // {btn_name: 'm_import', btn_func: 'importConfig'}
 ]
 
 let tableDbEle = [
@@ -467,7 +485,7 @@ let tableDbEle = [
 ]
 const btnDb = [
   {btn_name: 'button.edit', btn_func: 'editDbItem'},
-  {btn_name: 'button.remove', btn_func: 'deleteDbConfirmModal'}
+  {btn_name: 'button.remove', btn_func: 'deleteDbConfirmModal', color: 'red'}
 ]
 export default {
   name: '',
@@ -503,35 +521,14 @@ export default {
               isExtendF: true,
               title: '',
               config: [
+                {title: 'm_configuration_name', value: 'name', display: true},
                 {title: 'm_associated_template', value: 'log_monitor_template_name', display: true},
                 {title: 'm_metric_config_type', value: 'log_type_display', display: true},
-                {title: 'm_metric_group', value: 'name', display: true},
                 {title: 'm_updatedBy', value: 'update_user', display: true},
                 {title: 'title.updateTime', value: 'update_time', display: true},
                 {title: 'table.action',btn:[
                   {btn_name: 'button.edit', btn_func: 'editRuleItem'},
-                  {btn_name: 'button.remove', btn_func: 'delRuleconfirmModal'}
-                ]}
-              ],
-              data: [1],
-              scales: ['25%', '20%', '15%', '20%', '20%']
-            }]
-          },
-          isCustomMetricExtend: {
-            parentData: null,
-            func: 'getExtendInfo',
-            data: {},
-            slot: 'rulesTableExtend',
-            detailConfig: [{
-              isExtendF: true,
-              title: '',
-              config: [
-                {title: 'tableKey.regular', value: 'regular', display: true},
-                {title: 'field.metric', value: 'metric', display: true},
-                {title: 'field.aggType', value: 'agg_type', display: true},
-                {title: 'table.action',btn:[
-                  {btn_name: 'button.edit', btn_func: 'editCustomMetricItem'},
-                  {btn_name: 'button.remove', btn_func: 'delCustomMetricConfirmModal'}
+                  {btn_name: 'button.remove', btn_func: 'delRuleconfirmModal', color: 'red'}
                 ]}
               ],
               data: [1],
@@ -782,7 +779,7 @@ export default {
       }
       this.customMetricsModelConfig.addRow[type].push({
         source_value: '',
-        regulative: 1,
+        regulative: 0,
         target_value: ''
       })
     },
@@ -1009,7 +1006,7 @@ export default {
         case 'string_map': {
           this.ruleModelConfig.addRow.metric_list[index][type].push({
             source_value: '',
-            regulative: 1,
+            regulative: 0,
             target_value: ''
           })
           break
@@ -1108,6 +1105,11 @@ export default {
         this.showTemplateSelect = true
       })
     },
+    // 新增自定指标指标
+    addByCustom () {
+      this.selectedTemp = 'customGuid'
+      this.okTempSelect()
+    },
     okTempSelect () {
       this.showTemplateSelect = false
       if (this.selectedTemp === 'customGuid') {
@@ -1147,5 +1149,25 @@ export default {
 }
 .btn-left {
   margin-left: 8px;
+}
+.w-header {
+  display: flex;
+  align-items: center;
+  .title {
+    font-size: 16px;
+    font-weight: bold;
+    margin: 0 10px;
+    .underline {
+      display: block;
+      margin-top: -10px;
+      margin-left: -6px;
+      width: 100%;
+      padding: 0 6px;
+      height: 12px;
+      border-radius: 12px;
+      background-color: #c6eafe;
+      box-sizing: content-box;
+    }
+  }
 }
 </style>
