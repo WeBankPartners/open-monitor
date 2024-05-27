@@ -254,6 +254,7 @@ func UpdateCustomDashboard(c *gin.Context) {
 	}
 	if !permission {
 		middleware.ReturnServerHandleError(c, fmt.Errorf("not has edit permission"))
+		return
 	}
 	if hasChartRelList, err = db.QueryCustomDashboardChartRelListByDashboard(param.Id); err != nil {
 		middleware.ReturnServerHandleError(c, err)
