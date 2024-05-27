@@ -212,7 +212,6 @@
           @click="getDeleteData"
           :disabled="!confirmModal.check"
           type="warning"
-          style="background-color: #0080FF;border-color: #0080FF;"
           >{{ $t('button.confirm') }}</Button
         >
       </div>
