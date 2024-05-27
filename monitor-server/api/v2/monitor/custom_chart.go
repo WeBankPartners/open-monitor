@@ -113,7 +113,7 @@ func CopyCustomChart(c *gin.Context) {
 		return
 	}
 	// 复制图表,copy 图表的所有数据并且与看板关联
-	if err = db.CopyCustomChart(param.DashboardId, param.OriginChartId, param.DisplayConfig); err != nil {
+	if err = db.CopyCustomChart(param.DashboardId, middleware.GetOperateUser(c), param.Group, param.OriginChartId, param.DisplayConfig); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
@@ -125,12 +125,22 @@ func UpdateCustomChart(c *gin.Context) {
 	var chartDto models.CustomChartDto
 	var chart *models.CustomChart
 	var err error
+	var permission bool
 	if err = c.ShouldBindJSON(&chartDto); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
 	if strings.TrimSpace(chartDto.Id) == "" {
 		middleware.ReturnParamEmptyError(c, "id")
+		return
+	}
+	// 判断是否拥有删除权限
+	if permission, err = CheckHasChartManagePermission(chartDto.Id, middleware.GetOperateUser(c), middleware.GetOperateUserRoles(c)); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if !permission {
+		middleware.ReturnServerHandleError(c, fmt.Errorf("not has deleted permission"))
 		return
 	}
 	if chart, err = db.GetCustomChartById(chartDto.Id); err != nil {
@@ -187,6 +197,7 @@ func GetCustomChart(c *gin.Context) {
 // UpdateCustomChartName 更新图表名称
 func UpdateCustomChartName(c *gin.Context) {
 	var chartNameParam models.UpdateCustomChartNameParam
+	var permission bool
 	var err error
 	if err = c.ShouldBindJSON(&chartNameParam); err != nil {
 		middleware.ReturnServerHandleError(c, err)
@@ -194,6 +205,15 @@ func UpdateCustomChartName(c *gin.Context) {
 	}
 	if strings.TrimSpace(chartNameParam.ChartId) == "" || strings.TrimSpace(chartNameParam.Name) == "" {
 		middleware.ReturnParamEmptyError(c, "chartId or name")
+		return
+	}
+	// 判断是否拥有删除权限
+	if permission, err = CheckHasChartManagePermission(chartNameParam.ChartId, middleware.GetOperateUser(c), middleware.GetOperateUserRoles(c)); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if !permission {
+		middleware.ReturnServerHandleError(c, fmt.Errorf("not has deleted permission"))
 		return
 	}
 	if err = db.UpdateCustomChartName(chartNameParam.ChartId, chartNameParam.Name, middleware.GetOperateUser(c)); err != nil {
@@ -205,34 +225,19 @@ func UpdateCustomChartName(c *gin.Context) {
 
 // DeleteCustomChart 删除图表
 func DeleteCustomChart(c *gin.Context) {
-	var permissionMap map[string]string
 	var err error
-	var userRoles = middleware.GetOperateUserRoles(c)
-	var hasDeletedPermission bool
+	var permission bool
 	chartId := c.Query("chart_id")
 	if strings.TrimSpace(chartId) == "" {
 		middleware.ReturnParamEmptyError(c, "chart_id")
 		return
 	}
-	if len(userRoles) == 0 {
-		middleware.ReturnValidateError(c, "user roles is empty")
-		return
-	}
 	// 判断是否拥有删除权限
-	if permissionMap, err = db.QueryCustomChartManagePermissionByChart(chartId); err != nil {
+	if permission, err = CheckHasChartManagePermission(chartId, middleware.GetOperateUser(c), middleware.GetOperateUserRoles(c)); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
-	if len(permissionMap) == 0 {
-		permissionMap = make(map[string]string)
-	}
-	for _, role := range userRoles {
-		if v, ok := permissionMap[role]; ok && v == string(models.PermissionMgmt) {
-			hasDeletedPermission = true
-			break
-		}
-	}
-	if !hasDeletedPermission {
+	if !permission {
 		middleware.ReturnServerHandleError(c, fmt.Errorf("not has deleted permission"))
 		return
 	}
@@ -250,12 +255,22 @@ func SharedCustomChart(c *gin.Context) {
 	var param models.ChartSharedParam
 	var actions []*db.Action
 	var permissionList []*models.CustomChartPermission
+	var permission bool
 	if err = c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
 	if strings.TrimSpace(param.ChartId) == "" {
 		middleware.ReturnParamEmptyError(c, "chartId")
+		return
+	}
+	if permission, err = CheckHasChartManagePermission(param.ChartId, middleware.GetOperateUser(c), middleware.GetOperateUserRoles(c)); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if !permission {
+		middleware.ReturnServerHandleError(c, fmt.Errorf("not has edit permission"))
+		return
 	}
 	actions = append(actions, db.GetDeleteCustomChartPermissionSQL(param.ChartId)...)
 	if len(param.UseRoles) > 0 || len(param.MgmtRoles) > 0 {
@@ -414,4 +429,35 @@ func QueryCustomChart(c *gin.Context) {
 		}
 	}
 	middleware.ReturnPageData(c, pageInfo, dataList)
+}
+
+func CheckHasChartManagePermission(chartId, user string, userRoles []string) (permission bool, err error) {
+	var permissionMap map[string]string
+	var chart *models.CustomChart
+	if len(userRoles) == 0 {
+		return
+	}
+	// 判断是否拥有删除权限
+	if permissionMap, err = db.QueryCustomChartManagePermissionByChart(chartId); err != nil {
+		return
+	}
+	if len(permissionMap) == 0 {
+		permissionMap = make(map[string]string)
+	}
+	for _, role := range userRoles {
+		if v, ok := permissionMap[role]; ok && v == string(models.PermissionMgmt) {
+			permission = true
+			break
+		}
+	}
+	if !permission && user != "" {
+		if chart, err = db.GetCustomChartById(chartId); err != nil {
+			return
+		}
+		if chart != nil && user == chart.CreateUser {
+			permission = true
+			return
+		}
+	}
+	return
 }
