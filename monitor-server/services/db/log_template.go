@@ -102,9 +102,17 @@ func GetSimpleLogMonitorTemplate(guid string) (logMonitorTemplateRow *models.Log
 }
 
 func CreateLogMonitorTemplate(param *models.LogMonitorTemplateDto, operator string) (err error) {
-	param.Guid = "lmt_" + guid.CreateGuid()
+	param.Guid = ""
+	actions := getCreateLogMonitorTemplateActions(param, operator)
+	err = Transaction(actions)
+	return
+}
+
+func getCreateLogMonitorTemplateActions(param *models.LogMonitorTemplateDto, operator string) (actions []*Action) {
+	if param.Guid == "" {
+		param.Guid = "lmt_" + guid.CreateGuid()
+	}
 	nowTime := time.Now()
-	var actions []*Action
 	actions = append(actions, &Action{Sql: "insert into log_monitor_template(guid,name,log_type,json_regular,demo_log,calc_result,create_user,update_user,create_time,update_time) values (?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
 		param.Guid, param.Name, param.LogType, param.JsonRegular, param.DemoLog, param.CalcResult, operator, operator, nowTime, nowTime,
 	}})
@@ -120,18 +128,26 @@ func CreateLogMonitorTemplate(param *models.LogMonitorTemplateDto, operator stri
 			"lmet_" + logMetricGuidList[i], param.Guid, logMetricObj.LogParamName, logMetricObj.Metric, logMetricObj.DisplayName, logMetricObj.Step, logMetricObj.AggType, logMetricObj.TagConfig, operator, operator, nowTime, nowTime,
 		}})
 	}
-	err = Transaction(actions)
 	return
 }
 
 func UpdateLogMonitorTemplate(param *models.LogMonitorTemplateDto, operator string) (affectEndpoints []string, err error) {
+	var actions []*Action
+	actions, affectEndpoints, err = getUpdateLogMonitorTemplateActions(param, operator)
+	if err != nil {
+		return
+	}
+	err = Transaction(actions)
+	return
+}
+
+func getUpdateLogMonitorTemplateActions(param *models.LogMonitorTemplateDto, operator string) (actions []*Action, affectEndpoints []string, err error) {
 	existLogMonitorObj, getExistDataErr := GetLogMonitorTemplate(param.Guid)
 	if getExistDataErr != nil {
 		err = fmt.Errorf("get exist log monitor data fail,%s ", getExistDataErr.Error())
 		return
 	}
 	nowTime := time.Now()
-	var actions []*Action
 	actions = append(actions, &Action{Sql: "update log_monitor_template set name=?,json_regular=?,demo_log=?,calc_result=?,update_user=?,update_time=? where guid=?", Param: []interface{}{
 		param.Name, param.JsonRegular, param.DemoLog, param.CalcResult, operator, nowTime, param.Guid,
 	}})
@@ -183,22 +199,26 @@ func UpdateLogMonitorTemplate(param *models.LogMonitorTemplateDto, operator stri
 			actions = append(actions, &Action{Sql: "delete from log_metric_template where guid=?", Param: []interface{}{existMetricObj.Guid}})
 		}
 	}
-	err = Transaction(actions)
-	if err == nil {
-		var endpointRelRows []*models.LogMetricEndpointRelTable
-		queryEndpointErr := x.SQL("select source_endpoint from log_metric_endpoint_rel where log_metric_monitor in (select log_metric_monitor from log_metric_group where log_monitor_template=?)", param.Guid).Find(&endpointRelRows)
-		if queryEndpointErr != nil {
-			log.Logger.Error("query log metric template affect endpoints fail", log.String("logMonitorTemplate", param.Guid), log.Error(queryEndpointErr))
-		} else {
-			for _, v := range endpointRelRows {
-				affectEndpoints = append(affectEndpoints, v.SourceEndpoint)
-			}
+	var endpointRelRows []*models.LogMetricEndpointRelTable
+	queryEndpointErr := x.SQL("select source_endpoint from log_metric_endpoint_rel where log_metric_monitor in (select log_metric_monitor from log_metric_group where log_monitor_template=?)", param.Guid).Find(&endpointRelRows)
+	if queryEndpointErr != nil {
+		log.Logger.Error("query log metric template affect endpoints fail", log.String("logMonitorTemplate", param.Guid), log.Error(queryEndpointErr))
+	} else {
+		for _, v := range endpointRelRows {
+			affectEndpoints = append(affectEndpoints, v.SourceEndpoint)
 		}
 	}
 	return
 }
 
 func DeleteLogMonitorTemplate(logMonitorTemplateGuid string) (err error) {
+	var actions []*Action
+	actions, err = getDeleteLogMonitorTemplateActions(logMonitorTemplateGuid)
+	err = Transaction(actions)
+	return
+}
+
+func getDeleteLogMonitorTemplateActions(logMonitorTemplateGuid string) (actions []*Action, err error) {
 	_, getErr := GetSimpleLogMonitorTemplate(logMonitorTemplateGuid)
 	if getErr != nil {
 		err = getErr
@@ -213,11 +233,9 @@ func DeleteLogMonitorTemplate(logMonitorTemplateGuid string) (err error) {
 		err = fmt.Errorf("template used by other service group! ")
 		return
 	}
-	var actions []*Action
 	actions = append(actions, &Action{Sql: "delete from log_metric_template where log_monitor_template=?", Param: []interface{}{logMonitorTemplateGuid}})
 	actions = append(actions, &Action{Sql: "delete from log_param_template where log_monitor_template=?", Param: []interface{}{logMonitorTemplateGuid}})
 	actions = append(actions, &Action{Sql: "delete from log_monitor_template where guid=?", Param: []interface{}{logMonitorTemplateGuid}})
-	err = Transaction(actions)
 	return
 }
 
@@ -238,6 +256,54 @@ func GetLogMonitorTemplateByName(guid, name string) (logMonitorTemplate *models.
 	}
 	if len(logMonitorTemplateRows) > 0 {
 		logMonitorTemplate = logMonitorTemplateRows[0]
+	}
+	return
+}
+
+func ImportLogMonitorTemplate(params []*models.LogMonitorTemplateDto, operator string) (affectEndpoints []string, err error) {
+	var existTemplateRows []*models.LogMonitorTemplate
+	err = x.SQL("select guid,name from log_monitor_template").Find(&existTemplateRows)
+	if err != nil {
+		err = fmt.Errorf("query log monitor template table fail,%s ", err.Error())
+		return
+	}
+	var actions []*Action
+	for _, inputParam := range params {
+		addFlag := true
+		for _, existRow := range existTemplateRows {
+			if existRow.Guid == inputParam.Guid {
+				addFlag = false
+				break
+			}
+		}
+		if addFlag {
+			tmpActions := getCreateLogMonitorTemplateActions(inputParam, operator)
+			actions = append(actions, tmpActions...)
+		} else {
+			tmpActions, tmpAffect, tmpErr := getUpdateLogMonitorTemplateActions(inputParam, operator)
+			if tmpErr != nil {
+				err = tmpErr
+				return
+			}
+			actions = append(actions, tmpActions...)
+			affectEndpoints = append(affectEndpoints, tmpAffect...)
+		}
+	}
+	err = Transaction(actions)
+	if err == nil {
+		affectEndpoints = distinctStringList(affectEndpoints)
+	}
+	return
+}
+
+func distinctStringList(input []string) (output []string) {
+	dMap := make(map[string]int)
+	for _, v := range input {
+		if _, ok := dMap[v]; ok {
+			continue
+		}
+		output = append(output, v)
+		dMap[v] = 1
 	}
 	return
 }

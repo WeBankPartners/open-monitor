@@ -21,7 +21,7 @@ func QueryAlarmStrategyByGroup(endpointGroup string) (result []*models.EndpointS
 	result = []*models.EndpointStrategyObj{}
 	strategy := []*models.GroupStrategyObj{}
 	var alarmStrategyTable []*models.AlarmStrategyMetricObj
-	err = x.SQL("select t1.*,t2.metric as 'metric_name' from alarm_strategy t1 left join metric t2 on t1.metric=t2.guid where t1.endpoint_group=?", endpointGroup).Find(&alarmStrategyTable)
+	err = x.SQL("select t1.*,t2.metric as 'metric_name' from alarm_strategy t1 left join metric t2 on t1.metric=t2.guid where t1.endpoint_group=? order by t1.update_time desc", endpointGroup).Find(&alarmStrategyTable)
 	if err != nil {
 		return
 	}
@@ -140,8 +140,15 @@ func GetAlarmStrategy(strategyGuid, conditionCrc string) (result models.AlarmStr
 
 func CreateAlarmStrategy(param *models.GroupStrategyObj) error {
 	nowTime := time.Now().Format(models.DatetimeFormat)
+	actions, err := getCreateAlarmStrategyActions(param, nowTime)
+	if err != nil {
+		return err
+	}
+	return Transaction(actions)
+}
+
+func getCreateAlarmStrategyActions(param *models.GroupStrategyObj, nowTime string) (actions []*Action, err error) {
 	param.Guid = "strategy_" + guid.CreateGuid()
-	var actions []*Action
 	insertAction := Action{Sql: "insert into alarm_strategy(guid,name,endpoint_group,metric,`condition`,`last`,priority,content,notify_enable,notify_delay_second,active_window,update_time) value (?,?,?,?,?,?,?,?,?,?,?,?)"}
 	insertAction.Param = []interface{}{param.Guid, param.Name, param.EndpointGroup, param.Metric, param.Condition, param.Last, param.Priority, param.Content, param.NotifyEnable, param.NotifyDelaySecond, param.ActiveWindow, nowTime}
 	actions = append(actions, &insertAction)
@@ -152,13 +159,14 @@ func CreateAlarmStrategy(param *models.GroupStrategyObj) error {
 		actions = append(actions, getNotifyListInsertAction(param.NotifyList)...)
 	}
 	if len(param.Conditions) > 0 {
-		insertConditionActions, err := getStrategyConditionInsertAction(param.Guid, param.Conditions)
-		if err != nil {
-			return err
+		insertConditionActions, buildActionErr := getStrategyConditionInsertAction(param.Guid, param.Conditions)
+		if buildActionErr != nil {
+			err = buildActionErr
+			return
 		}
 		actions = append(actions, insertConditionActions...)
 	}
-	return Transaction(actions)
+	return
 }
 
 func ValidateAlarmStrategyName(param *models.GroupStrategyObj) (err error) {
@@ -1204,35 +1212,70 @@ func getAlarmStrategyImportActions(endpointGroup, serviceGroup, monitorType, now
 	if err != nil {
 		return actions, fmt.Errorf("query alarm strategy table fail,%s ", err.Error())
 	}
-	existStrategyMap := make(map[string]int)
+	//existStrategyMap := make(map[string]int)
 	for _, v := range existStrategyTable {
-		existStrategyMap[v.Guid] = 1
+		actions = append(actions, getNotifyListDeleteAction(v.Guid, "", "")...)
+		actions = append(actions, getStrategyConditionDeleteAction(v.Guid)...)
+		actions = append(actions, &Action{Sql: "delete from alarm_strategy where guid=?", Param: []interface{}{v.Guid}})
+		//existStrategyMap[v.Guid] = 1
 	}
 	for _, strategy := range param.Strategy {
-		if fMetric, b := metricMap[strategy.Metric]; b {
-			if fMetric.MonitorType != monitorType {
-				err = fmt.Errorf("Metric:%s is in type:%s ", strategy.Metric, fMetric.MonitorType)
-				break
+		// 检测策略上的指标在不在
+		strategyMetricList := []string{}
+		if len(strategy.Conditions) > 0 {
+			for _, v := range strategy.Conditions {
+				strategyMetricList = append(strategyMetricList, v.Metric)
 			}
-			if serviceGroup != "" {
-				if fMetric.ServiceGroup != serviceGroup {
-					err = fmt.Errorf("Metric:%s is in serviceGroup:%s ", strategy.Metric, fMetric.ServiceGroup)
+		} else {
+			strategyMetricList = append(strategyMetricList, strategy.Metric)
+		}
+		for _, metric := range strategyMetricList {
+			if fMetric, b := metricMap[metric]; b {
+				if fMetric.MonitorType != monitorType {
+					err = fmt.Errorf("Metric:%s is in type:%s ", metric, fMetric.MonitorType)
 					break
 				}
+				//if serviceGroup != "" {
+				//	if fMetric.ServiceGroup != serviceGroup {
+				//		err = fmt.Errorf("Metric:%s is in serviceGroup:%s ", metric, fMetric.ServiceGroup)
+				//		break
+				//	}
+				//}
+			} else {
+				err = fmt.Errorf("Metric:%s is not exist ", metric)
+				break
 			}
-		} else {
-			err = fmt.Errorf("Metric:%s is not exist ", strategy.Metric)
+		}
+		newAction, buildErr := getCreateAlarmStrategyActions(strategy, nowTime)
+		if buildErr != nil {
+			err = buildErr
 			break
 		}
-		if _, b := existStrategyMap[strategy.Guid]; b {
-			updateAction := Action{Sql: "update alarm_strategy set metric=?,`condition`=?,`last`=?,priority=?,content=?,notify_enable=?,notify_delay_second=?,update_time=? where guid=?"}
-			updateAction.Param = []interface{}{strategy.Metric, strategy.Condition, strategy.Last, strategy.Priority, strategy.Content, strategy.NotifyEnable, strategy.NotifyDelaySecond, nowTime, strategy.Guid}
-			actions = append(actions, &updateAction)
-		} else {
-			insertAction := Action{Sql: "insert into alarm_strategy(guid,endpoint_group,metric,`condition`,`last`,priority,content,notify_enable,notify_delay_second,update_time) value (?,?,?,?,?,?,?,?,?,?)"}
-			insertAction.Param = []interface{}{strategy.Guid, strategy.EndpointGroup, strategy.Metric, strategy.Condition, strategy.Last, strategy.Priority, strategy.Content, strategy.NotifyEnable, strategy.NotifyDelaySecond, nowTime}
-			actions = append(actions, &insertAction)
-		}
+		actions = append(actions, newAction...)
+		//if fMetric, b := metricMap[strategy.Metric]; b {
+		//	if fMetric.MonitorType != monitorType {
+		//		err = fmt.Errorf("Metric:%s is in type:%s ", strategy.Metric, fMetric.MonitorType)
+		//		break
+		//	}
+		//	if serviceGroup != "" {
+		//		if fMetric.ServiceGroup != serviceGroup {
+		//			err = fmt.Errorf("Metric:%s is in serviceGroup:%s ", strategy.Metric, fMetric.ServiceGroup)
+		//			break
+		//		}
+		//	}
+		//} else {
+		//	err = fmt.Errorf("Metric:%s is not exist ", strategy.Metric)
+		//	break
+		//}
+		//if _, b := existStrategyMap[strategy.Guid]; b {
+		//	updateAction := Action{Sql: "update alarm_strategy set metric=?,`condition`=?,`last`=?,priority=?,content=?,notify_enable=?,notify_delay_second=?,update_time=? where guid=?"}
+		//	updateAction.Param = []interface{}{strategy.Metric, strategy.Condition, strategy.Last, strategy.Priority, strategy.Content, strategy.NotifyEnable, strategy.NotifyDelaySecond, nowTime, strategy.Guid}
+		//	actions = append(actions, &updateAction)
+		//} else {
+		//	insertAction := Action{Sql: "insert into alarm_strategy(guid,endpoint_group,metric,`condition`,`last`,priority,content,notify_enable,notify_delay_second,update_time) value (?,?,?,?,?,?,?,?,?,?)"}
+		//	insertAction.Param = []interface{}{strategy.Guid, strategy.EndpointGroup, strategy.Metric, strategy.Condition, strategy.Last, strategy.Priority, strategy.Content, strategy.NotifyEnable, strategy.NotifyDelaySecond, nowTime}
+		//	actions = append(actions, &insertAction)
+		//}
 	}
 	return
 }

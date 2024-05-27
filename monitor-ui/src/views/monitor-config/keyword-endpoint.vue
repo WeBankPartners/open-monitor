@@ -246,7 +246,7 @@ export default {
       }
       this.customMetricsModelConfig.addRow[type].push({
         source_value: '',
-        regulative: 1,
+        regulative: 0,
         target_value: ''
       })
     },
