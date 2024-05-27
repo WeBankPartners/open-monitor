@@ -243,12 +243,14 @@
                   <span :id="btn_val.btn_func" :key="btn_i"
                         v-if="!btn_val.render"
                         class="btn-operation"
+                        :style="{color: btn_val.color}"
                         @click="goToOpe(btn_val,value)">
                     {{$t(btn_val.btn_name)}}
                   </span>
                   <span :id="btn_val.btn_func" :key="btn_i + '2'"
                         v-if="btn_val.render"
                         class="btn-operation"
+                        :style="{color: btn_val.color}"
                         @click="goToOpe(btn_val,value)">
                         {{renderValue(value, btn_val)}}
                   </span>
@@ -285,7 +287,7 @@
                   <div slot="content" class="ui-ul-list" v-if="isShowMoreBtnTip">
                     <ul v-if="showMoreNumber === tableDataIndex">
                       <template v-for="(btn, moreIndex) in table.tableData[tableDataIndex]._operatons">
-                        <li class="filters-li" :key="moreIndex" v-if="moreIndex != 0" @click="goToOpe(btn,value)">{{$t(btn.btn_name)}}</li>
+                        <li class="filters-li" :key="moreIndex" v-if="moreIndex != 0" @click="goToOpe(btn,value)" :style="{color: btn.color}">{{$t(btn.btn_name)}}</li>
                       </template>
                       <li v-if="isNoActions" style="color: red" @click="noActions">无可用操作</li>
                     </ul>
