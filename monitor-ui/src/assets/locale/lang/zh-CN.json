@@ -436,6 +436,8 @@
   "m_use_dashboard": "应用看板",
   "m_reset": "重置",
   "m_create_time": "创建时间",
+  "m_configuration_name": "配置名",
+  "m_use_template": "引用模版",
   "m_group_board": "对象看板",
   "m_edit_meric": "编辑指标",
   "m_general_type": "通用类型",
