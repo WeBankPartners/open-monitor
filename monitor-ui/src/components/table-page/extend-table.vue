@@ -60,18 +60,21 @@
                   <span :id="btn_val.btn_func"
                       v-if="!item.hide && btn_val.btn_name !='more' && !btn_val.render"
                       class="btn-operation"
+                      :style="{color: btn_val.color}"
                       @click="goToOpe(btn_val,item,index,indexx)">
                     {{$t(btn_val.btn_name)}}
                   </span>
                   <span :id="btn_val.btn_func"
                       v-if="item.hide && btn_val.btn_name !='more' && !btn_val.render && !item.hide[btn_i]"
                       class="btn-operation"
+                      :style="{color: btn_val.color}"
                       @click="goToOpe(btn_val,item,index,indexx)">
                     {{$t(btn_val.btn_name)}}
                   </span>
                 <span :id="btn_val.btn_func"
                       v-if="btn_val.btn_name !='more' && btn_val.render"
                       class="btn-operation"
+                      :style="{color: btn_val.color}"
                       @click="goToOpe(btn_val,item,index,indexx)">
                       {{renderValue(item, btn_val)}}
                 </span>
@@ -93,7 +96,7 @@
                   <div slot="content" class="ui-ul-list">
                     <ul v-if="showMoreNumber === index">
                       <template v-for="(btn, moreIndex) in btn_val.more" >
-                        <li @click="goToOpe(btn,item,index,indexx)" :key="moreIndex">{{$t(btn_val.btn_name)}}</li>
+                        <li @click="goToOpe(btn,item,index,indexx)" :key="moreIndex" :style="{color: btn.color}">{{$t(btn_val.btn_name)}}</li>
                       </template>
                     </ul>
                   </div>
@@ -257,7 +260,7 @@
   margin-bottom: 10px;
 }
 .table th {
-  text-align: center;
+  text-align: left;
   vertical-align: middle;
 }
 .table td {
@@ -266,7 +269,7 @@
   font-size: 12px;
   color: #333333;
   letter-spacing: 0.7px;
-  text-align: center;
+  text-align: left;
   vertical-align: middle;
   padding: 2px 6px;
 }
@@ -336,11 +339,12 @@ h4 {
   position: absolute;
 }
 .td-operation {
-    button {
-      margin-top: 3px;
-      font-size: .2rem;
-    }
+  text-align: left;
+  button {
+    margin-top: 3px;
+    font-size: .2rem;
   }
+}
 .btn-operation {
     font-family: PingFangSC-Regular;
     font-size: 14px;
@@ -372,7 +376,7 @@ h4 {
     line-height: 20px;
   }
   .styleEX th{
-    padding: 0.25rem;
+    padding: 0.25rem 0;
   }
   .styleEX{
   thead {
