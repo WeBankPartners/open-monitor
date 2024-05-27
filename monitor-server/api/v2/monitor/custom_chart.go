@@ -113,7 +113,7 @@ func CopyCustomChart(c *gin.Context) {
 		return
 	}
 	// 复制图表,copy 图表的所有数据并且与看板关联
-	if err = db.CopyCustomChart(param.DashboardId, param.OriginChartId); err != nil {
+	if err = db.CopyCustomChart(param.DashboardId, param.OriginChartId, param.DisplayConfig); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
@@ -122,7 +122,7 @@ func CopyCustomChart(c *gin.Context) {
 
 // UpdateCustomChart 更新自定义图表,先删除图表配置再新增
 func UpdateCustomChart(c *gin.Context) {
-	var chartDto *models.CustomChartDto
+	var chartDto models.CustomChartDto
 	var chart *models.CustomChart
 	var err error
 	if err = c.ShouldBindJSON(&chartDto); err != nil {
@@ -182,6 +182,25 @@ func GetCustomChart(c *gin.Context) {
 		return
 	}
 	middleware.ReturnSuccessData(c, chartDto)
+}
+
+// UpdateCustomChartName 更新图表名称
+func UpdateCustomChartName(c *gin.Context) {
+	var chartNameParam models.UpdateCustomChartNameParam
+	var err error
+	if err = c.ShouldBindJSON(&chartNameParam); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if strings.TrimSpace(chartNameParam.ChartId) == "" || strings.TrimSpace(chartNameParam.Name) == "" {
+		middleware.ReturnParamEmptyError(c, "chartId or name")
+		return
+	}
+	if err = db.UpdateCustomChartName(chartNameParam.ChartId, chartNameParam.Name, middleware.GetOperateUser(c)); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	middleware.ReturnSuccess(c)
 }
 
 // DeleteCustomChart 删除图表
