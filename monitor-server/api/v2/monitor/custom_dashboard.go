@@ -234,6 +234,7 @@ func UpdateCustomDashboard(c *gin.Context) {
 	var deleteChartRelIds []string
 	var insert, delete, permission bool
 	var actions []*db.Action
+	var nameMap = make(map[string]bool)
 	user := middleware.GetOperateUser(c)
 	now := time.Now().Format(models.DatetimeFormat)
 	if err = c.ShouldBindJSON(&param); err != nil {
@@ -255,6 +256,15 @@ func UpdateCustomDashboard(c *gin.Context) {
 	if !permission {
 		middleware.ReturnServerHandleError(c, fmt.Errorf("not has edit permission"))
 		return
+	}
+	if len(param.Charts) > 0 {
+		for _, chart := range param.Charts {
+			if nameMap[chart.Name] {
+				middleware.ReturnValidateError(c, fmt.Sprintf("chart name:%s repeat", chart.Name))
+				return
+			}
+			nameMap[chart.Name] = true
+		}
 	}
 	if hasChartRelList, err = db.QueryCustomDashboardChartRelListByDashboard(param.Id); err != nil {
 		middleware.ReturnServerHandleError(c, err)
