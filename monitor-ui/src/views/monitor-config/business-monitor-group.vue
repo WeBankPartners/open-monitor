@@ -41,7 +41,7 @@
       <PageTable :pageConfig="pageConfig">
         <div slot='tableExtend'>
           <div style="margin: 8px 4px">
-            <Button type="success" @click="addByCustom" ghost size="small">{{ $t('button.add') }}</Button>
+            <Button type="success" @click="addByCustom(pageConfig.table.isExtend.parentData)" ghost size="small">{{ $t('button.add') }}</Button>
             <Button type="primary" @click="addMetricConfig(pageConfig.table.isExtend.parentData)" ghost size="small">{{ $t('m_use_template') }}</Button>
           </div>
           <div style="margin:8px;">
@@ -1091,8 +1091,9 @@ export default {
       })
     },
     // 新增自定指标指标
-    addByCustom () {
+    addByCustom (item) {
       this.selectedTemp = 'customGuid'
+      this.parentGuid = item.guid
       this.okTempSelect()
     },
     okTempSelect () {
