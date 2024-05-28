@@ -278,12 +278,15 @@ func getChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.
 	param.Compare = &models.ChartQueryCompareParam{CompareFirstLegend: ""}
 	queryList = []*models.QueryMonitorData{}
 	var endpointList []*models.EndpointNewTable
+	var serviceGroupTag string
 	for _, dataConfig := range param.Data {
 		endpointList = []*models.EndpointNewTable{}
 		tmpMonitorType := dataConfig.EndpointType
 		metricLegend := "$custom"
+		customPromQL := dataConfig.PromQl
 		// check endpoint if is service group
 		if dataConfig.AppObject != "" {
+			serviceGroupTag = fmt.Sprintf("service_group=\"%s\"", dataConfig.AppObject)
 			endpointList, err = db.GetRecursiveEndpointByTypeNew(dataConfig.AppObject, dataConfig.EndpointType)
 			if err != nil {
 				err = fmt.Errorf("Try to get endpoints from object:%s fail,%s ", dataConfig.AppObject, err.Error())
@@ -342,7 +345,18 @@ func getChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.
 		}
 		if !queryAppendFlag {
 			for _, endpoint := range endpointList {
-				tmpPromQL := db.ReplacePromQlKeyword(dataConfig.PromQl, dataConfig.Metric, endpoint)
+				tmpPromQL := dataConfig.PromQl
+				if customPromQL != "" && serviceGroupTag != "" && strings.Contains(tmpPromQL, serviceGroupTag) {
+					tmpPromQL = strings.ReplaceAll(tmpPromQL, serviceGroupTag, serviceGroupTag+",instance=\"$address\"")
+					if strings.Contains(tmpPromQL, "service_group,") {
+						tmpPromQL = strings.ReplaceAll(tmpPromQL, "service_group,", "service_group,instance")
+					}
+					if strings.Contains(tmpPromQL, "service_group)") {
+						tmpPromQL = strings.ReplaceAll(tmpPromQL, "service_group)", "service_group,instance)")
+					}
+					log.Logger.Debug("build custom chart query", log.String("tmpPromQL", tmpPromQL))
+				}
+				tmpPromQL = db.ReplacePromQlKeyword(tmpPromQL, dataConfig.Metric, endpoint)
 				queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQL, Legend: metricLegend, Metric: []string{dataConfig.Metric}, Endpoint: []string{endpoint.Guid}, Step: endpoint.Step, Cluster: endpoint.Cluster, CustomDashboard: true})
 			}
 		}

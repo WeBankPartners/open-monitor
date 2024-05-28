@@ -53,9 +53,8 @@
                 v-if="addAndEditModal.isAdd"
                 @click="deleteItem('path', index)"
                 size="small"
-                style="background-color: #ff9900;border-color: #ff9900;"
                 type="error"
-                icon="md-close"
+                icon="md-trash"
               ></Button>
               <Tooltip :content="$t('tableKey.logPath')" :delay="1000">
                 <Input v-model="item.path" style="width: 620px" :placeholder="$t('tableKey.logPath')" />
@@ -66,7 +65,7 @@
             @click="addEmptyItem('path')"
             type="success"
             size="small"
-            style="background-color: #0080FF;border-color: #0080FF;width:650px"
+            style="width:650px"
             long
             >{{ $t('button.add') }}{{$t('tableKey.logPath')}}</Button
           >
@@ -81,9 +80,8 @@
               <Button
                 @click="deleteItem('relate', index)"
                 size="small"
-                style="background-color: #ff9900;border-color: #ff9900;"
                 type="error"
-                icon="md-close"
+                icon="md-trash"
               ></Button>
               <Tooltip :content="$t('m_business_object')" :delay="1000">
                 <Select v-model="item.target_endpoint" style="width: 310px" :placeholder="$t('m_business_object')">
@@ -101,7 +99,7 @@
             @click="addEmptyItem('relate')"
             type="success"
             size="small"
-            style="background-color: #0080FF;border-color: #0080FF;width:650px"
+            style="width:650px"
             long
             >{{$t('addStringMap')}}</Button
           >
