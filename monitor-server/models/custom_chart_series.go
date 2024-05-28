@@ -10,6 +10,8 @@ type CustomChartSeries struct {
 	Metric         string `json:"metric" xorm:"metric"`                  // 指标
 	ColorGroup     string `json:"colorGroup" xorm:"color_group"`         // 默认色系
 	PieDisplayTag  string `json:"pieDisplayTag" xorm:"pie_display_tag"`  // 饼图展示标签
+	EndpointType   string `json:"endpointType" xorm:"endpoint_type"`     // 对象类型
+	MetricType     string `json:"metricType" xorm:"metric_type"`         // 指标类型
 }
 
 type CustomChartSeriesDto struct {
@@ -19,6 +21,8 @@ type CustomChartSeriesDto struct {
 	MonitorType   string            `json:"monitorType" `  // 监控类型
 	ColorGroup    string            `json:"colorGroup" `   // 默认色系
 	PieDisplayTag string            `json:"pieDisplayTag"` // 饼图展示标签
+	EndpointType  string            `json:"endpointType"`  // 对象类型
+	MetricType    string            `json:"metricType"`    // 指标类型
 	Metric        string            `json:"metric"`        // 指标
 	Tags          []*TagDto         `json:"tags"`          // 标签
 	ColorConfig   []*ColorConfigDto `json:"series"`        // 颜色
