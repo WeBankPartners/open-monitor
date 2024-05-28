@@ -72,7 +72,7 @@
                         <Icon type="ios-add" size="24"></Icon>
                       </Button>
                       <Option v-for="metric in metricOptions" :value="metric.guid" :key="metric.guid">{{ metric.metric }}<span style="float:right">
-                          <Button icon="ios-trash" type="error" @click="deleteMetric(metric)" size="small" style="background-color:#ed4014"></Button>
+                          <Button icon="md-trash" type="error" @click="deleteMetric(metric)" size="small"></Button>
                         </span>
                       </Option>
                     </Select>
@@ -143,10 +143,10 @@
                       <Icon type="ios-add" size="24"></Icon>
                     </Button>
                     <Option v-for="panel in panelOptions" :value="panel.chart_group" :key="panel.chart_group">{{ panel.title }}<span style="float:right">
-                        <Button icon="ios-trash" @click="deletePanel(panel)" type="error" size="small" style="background-color:#ed4014"></Button>
+                        <Button icon="md-trash" @click="deletePanel(panel)" type="error" size="small"></Button>
                       </span>
                       <span style="float:right">
-                        <Button icon="ios-create-outline" @click="editPanel('panel', panel)" type="primary" size="small" style="background-color:#0080FF"></Button>
+                        <Button icon="md-create" @click="editPanel('panel', panel)" type="primary" size="small" style="background-color:#0080FF"></Button>
                       </span>
                     </Option>
                   </Select>
@@ -160,7 +160,7 @@
                       <Icon type="ios-add" size="24"></Icon>
                     </Button>
                     <Option v-for="graph in graphOptions" :value="graph.id" :key="graph.id">{{ graph.title }}<span style="float:right">
-                        <Button icon="ios-trash" type="error" @click="deleteGraph(graph)" size="small" style="background-color:#ed4014"></Button>
+                        <Button icon="md-trash" type="error" @click="deleteGraph(graph)" size="small"></Button>
                       </span>
                     </Option>
                   </Select>
