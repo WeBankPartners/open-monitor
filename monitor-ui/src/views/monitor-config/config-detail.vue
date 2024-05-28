@@ -186,7 +186,7 @@
           <Button
             @click.stop="onAddIconClick"
             :disabled="!isEditState"
-            type="primary"
+            type="success"
             size="small"
             class="mt-2"
             ghost
