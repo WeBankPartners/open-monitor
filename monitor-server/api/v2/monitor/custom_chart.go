@@ -226,8 +226,25 @@ func UpdateCustomChartName(c *gin.Context) {
 func QueryCustomChartNameExist(c *gin.Context) {
 	var err error
 	var list []*models.CustomChart
+	var chart *models.CustomChart
 	chartId := c.Query("chart_id")
 	name := c.Query("name")
+	if strings.TrimSpace(chartId) == "" || strings.TrimSpace(name) == "" {
+		middleware.ReturnParamEmptyError(c, "chart_id or name")
+		return
+	}
+	if chart, err = db.GetCustomChartById(chartId); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if chart == nil {
+		middleware.ReturnValidateError(c, "chart_id is invalid")
+		return
+	}
+	if chart.Public == 0 {
+		middleware.ReturnSuccessData(c, false)
+		return
+	}
 	if list, err = db.QueryCustomChartNameExist(name); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
