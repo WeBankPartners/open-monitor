@@ -419,9 +419,9 @@ func CopyCustomChart(dashboardId int, user, group, customChart string, displayCo
 		chart.AggStep, chart.Unit, chart.CreateUser, chart.UpdateUser, chart.CreateTime, chart.UpdateTime, chart.ChartTemplate, chart.PieType}})
 	for _, series := range chartSeriesList {
 		seriesId := guid.CreateGuid()
-		actions = append(actions, &Action{Sql: "insert into custom_chart_series values(?,?,?,?,?,?,?,?,?)", Param: []interface{}{
-			seriesId, newChartId, series.Endpoint, series.ServiceGroup, series.EndpointName, series.MonitorType, series.Metric, series.ColorGroup, series.PieDisplayTag,
-		}})
+		actions = append(actions, &Action{Sql: "insert into custom_chart_series values(?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+			seriesId, newChartId, series.Endpoint, series.ServiceGroup, series.EndpointName, series.MonitorType, series.Metric, series.ColorGroup,
+			series.PieDisplayTag, series.EndpointType, series.MetricType}})
 		if confArr, ok := configMap[series.Guid]; ok {
 			if len(confArr) > 0 {
 				for _, config := range confArr {
@@ -498,6 +498,8 @@ func CreateCustomChartDto(chartExtend *models.CustomChartExtend, configMap map[s
 				MonitorType:   series.MonitorType,
 				ColorGroup:    series.ColorGroup,
 				PieDisplayTag: series.PieDisplayTag,
+				EndpointType:  series.EndpointType,
+				MetricType:    series.MetricType,
 				Metric:        series.Metric,
 				Tags:          make([]*models.TagDto, 0),
 				ColorConfig:   make([]*models.ColorConfigDto, 0),
