@@ -223,6 +223,26 @@ func UpdateCustomChartName(c *gin.Context) {
 	middleware.ReturnSuccess(c)
 }
 
+func QueryCustomChartNameExist(c *gin.Context) {
+	var err error
+	var list []*models.CustomChart
+	chartId := c.Query("chart_id")
+	name := c.Query("name")
+	if list, err = db.QueryCustomChartNameExist(name); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if len(list) > 0 {
+		for _, chart := range list {
+			if chart.Guid != chartId {
+				middleware.ReturnSuccessData(c, true)
+				return
+			}
+		}
+	}
+	middleware.ReturnSuccessData(c, false)
+}
+
 // DeleteCustomChart 删除图表
 func DeleteCustomChart(c *gin.Context) {
 	var err error
