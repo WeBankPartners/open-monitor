@@ -9,19 +9,144 @@
         <Icon v-else @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-expand" />
       </div>
       <div :class="isfullscreen? 'modal-container-fullscreen':'modal-container-normal'">
-        <Form :label-width="120" inline>
-          <FormItem :label="$t('tableKey.name')">
-            <Tooltip :content="businessConfig.name" transfer :disabled="businessConfig.name === ''" max-width="200">
-              <Input v-model.trim="businessConfig.name" :disabled="view" maxlength="30" show-word-limit style="width:220px"></Input>
-              <span style="color: red">*</span>
-            </Tooltip>
-          </FormItem>
-          <FormItem :label="$t('m_metric_code')">
-            <Input v-model.trim="businessConfig.metric_prefix_code" maxlength="6" :disabled="!isAdd || view" show-word-limit style="width:220px"></Input>
-            <span style="color: red">*</span>
-          </FormItem>
-        </Form>
-        <Divider orientation="left" size="small">{{ $t('m_associated_template') }}</Divider>
+        <div class="w-header" slot="title">
+          <div class="title">
+            {{ $t('m_configuration_information') }}
+            <span class="underline"></span>
+          </div>
+        </div>
+        <Row>
+          <Col span="8">
+            <Form :label-width="120" inline>
+              <FormItem :label="$t('tableKey.name')">
+                <Tooltip :content="businessConfig.name" transfer :disabled="businessConfig.name === ''" max-width="200">
+                  <Input v-model.trim="businessConfig.name" :disabled="view" maxlength="30" show-word-limit style="width:210px"></Input>
+                  <span style="color: red">*</span>
+                </Tooltip>
+              </FormItem>
+              <FormItem :label="$t('m_metric_code')">
+                <Input v-model.trim="businessConfig.metric_prefix_code" maxlength="6" :disabled="!isAdd || view" show-word-limit style="width:210px"></Input>
+                <span style="color: red">*</span>
+              </FormItem>
+            </Form>
+          </Col>
+          <Col span="16" style="border-left: 2px solid rgb(232 234 236)">
+            <div style="padding: 0 8px">
+              <div>
+                <Row>
+                  <Col span="3" style="margin-top: 30px">
+                    <span style="color:#5cadff">{{ $t('m_service_code') }}</span>
+                  </Col>
+                  <Col span="20">
+                    <Row>
+                      <Col span="4">{{ $t('m_match_type') }}</Col>
+                      <Col span="6">
+                        <span style="color:red">*</span>
+                        {{ $t('m_source_value') }}</Col>
+                      <Col span="6">
+                        <span style="color:red">*</span>
+                        {{ $t('m_match_value') }}</Col>
+                      <Col span="2">
+                        {{ $t('field.type') }}</Col>
+                      <Col span="2"></Col>
+                    </Row>
+                    <Row v-for="(item, itemIndex) in businessConfig.code_string_map" :key="itemIndex" style="margin:6px 0">
+                      <Col span="4">
+                        <Select v-model="item.regulative" :disabled="view" style="width:90%">
+                          <Option :value="1" key="m_regular_match">{{ $t('m_regular_match') }}</Option>
+                          <Option :value="0" key="m_irregular_matching">{{ $t('m_irregular_matching') }}</Option>
+                        </Select>
+                      </Col>
+                      <Col span="6">
+                        <Input v-model.trim="item.source_value" :disabled="view" style="width:90%"></Input>
+                      </Col>
+                      <Col span="6">
+                        <Input v-model.trim="item.target_value" :disabled="view" style="width:90%"></Input>
+                      </Col>
+                      <Col span="2" offset="2">
+                        <Button
+                          type="error"
+                          ghost
+                          @click="deleteItem('code_string_map',itemIndex)"
+                          size="small"
+                          style="vertical-align: sub;cursor: pointer"
+                          icon="md-trash"
+                          :disabled="view"
+                        ></Button>
+                      </Col>
+                    </Row>
+                  </Col>
+                </Row>
+                <Row>
+                  <Col span="20" offset="3">
+                    <Row>
+                      <Col span="2" offset="18">
+                        <div style="cursor: pointer">
+                          <Button type="success" :disabled="view" ghost @click="addItem('code_string_map')" size="small" icon="md-add"></Button>
+                        </div>
+                        </Col>
+                    </Row>
+                  </Col>
+                </Row>
+              </div>
+              <div>
+                <Row>
+                  <Col span="3" style="margin-top: 12px">
+                    <span style="color:#5cadff">{{ $t('m_return_code') }}</span>
+                  </Col>
+                  <Col span="20">
+                    <Row v-for="(item, itemIndex) in businessConfig.retcode_string_map" :key="itemIndex" style="margin:6px 0">
+                      <Col span="4">
+                        <Select v-model="item.regulative" :disabled="view" style="width:90%">
+                          <Option :value="1" key="m_regular_match">{{ $t('m_regular_match') }}</Option>
+                          <Option :value="0" key="m_irregular_matching">{{ $t('m_irregular_matching') }}</Option>
+                        </Select>
+                      </Col>
+                      <Col span="6">
+                        <Input v-model.trim="item.source_value" :disabled="view" style="width:90%"></Input>
+                      </Col>
+                      <Col span="6">
+                        <Input v-model.trim="item.target_value" :disabled="view" style="width:90%"></Input>
+                      </Col>
+                      <Col span="2">
+                        <span style="line-height: 32px;">{{ $t('m_'+item.value_type) }}</span>
+                      </Col>
+                      <Col span="2">
+                        <Button
+                          type="error"
+                          ghost
+                          v-if="itemIndex!==0"
+                          @click="deleteItem('retcode_string_map',itemIndex)"
+                          size="small"
+                          :disabled="view"
+                          style="cursor: pointer"
+                          icon="md-trash"
+                        ></Button>
+                      </Col>
+                    </Row>
+                  </Col>
+                </Row>
+                <Row>
+                  <Col span="20" offset="3">
+                    <Row>
+                      <Col span="2" offset="18">
+                        <div style="cursor: pointer">
+                          <Button type="success" :disabled="view" ghost @click="addItem('retcode_string_map')" size="small" icon="md-add"></Button>
+                        </div>
+                        </Col>
+                    </Row>
+                  </Col>
+                </Row>
+              </div>
+            </div>
+          </Col>
+        </Row>
+        <div class="w-header" slot="title">
+          <div class="title">
+            {{ $t('m_associated_template') }}
+            <span class="underline"></span>
+          </div>
+        </div>
         <div>
           <StandardRegexDisplay 
             ref="standardRegexDisplayRef"
@@ -32,91 +157,6 @@
             v-if="configInfo.log_type==='json'"
             :prefixCode="businessConfig.metric_prefix_code"
             :configInfo="configInfo"></JsonRegexDisplay>
-        </div>
-        <div>
-          <Divider orientation="left" size="small">{{ $t('m_configuration_information') }}</Divider>
-          <span style="color:#5cadff">{{ $t('m_service_code') }}</span>
-          <div>
-            <Row>
-              <Col span="4">{{ $t('m_match_type') }}</Col>
-              <Col span="6">
-                <span style="color:red">*</span>
-                {{ $t('m_source_value_regular') }}</Col>
-              <Col span="6">
-                <span style="color:red">*</span>
-                {{ $t('m_match_value') }}</Col>
-            </Row>
-            <Row v-for="(item, itemIndex) in businessConfig.code_string_map" :key="itemIndex" style="margin:6px 0">
-              <Col span="4">
-                <Select v-model="item.regulative" :disabled="view" style="width:90%">
-                  <Option :value="1" key="m_regular_match">{{ $t('m_regular_match') }}</Option>
-                  <Option :value="0" key="m_irregular_matching">{{ $t('m_irregular_matching') }}</Option>
-                </Select>
-              </Col>
-              <Col span="6">
-                <Input v-model.trim="item.source_value" :disabled="view" style="width:90%"></Input>
-              </Col>
-              <Col span="6">
-                <Input v-model.trim="item.target_value" :disabled="view" style="width:90%"></Input>
-              </Col>
-              <Col span="2">
-                <Button
-                  type="error"
-                  ghost
-                  @click="deleteItem('code_string_map',itemIndex)"
-                  size="small"
-                  style="vertical-align: sub;cursor: pointer"
-                  icon="md-trash"
-                  :disabled="view"
-                ></Button>
-              </Col>
-            </Row>
-            <div style="text-align: right;margin-right: 8px;cursor: pointer">
-              <Button type="primary" :disabled="view" ghost @click="addItem('code_string_map')" size="small" icon="md-add"></Button>
-            </div>
-          </div>
-          <span style="color:#5cadff">{{ $t('m_return_code') }}</span>
-          <div>
-            <Row>
-              <Col span="4">{{ $t('m_match_type') }}</Col>
-              <Col span="6">
-                <span style="color:red">*</span>
-                {{ $t('m_source_value') }}</Col>
-              <Col span="6">
-                <span style="color:red">*</span>
-                {{ $t('m_match_value') }}</Col>
-            </Row>
-            <Row v-for="(item, itemIndex) in businessConfig.retcode_string_map" :key="itemIndex" style="margin:6px 0">
-              <Col span="4">
-                <Select v-model="item.regulative" :disabled="view" style="width:90%">
-                  <Option :value="1" key="m_regular_match">{{ $t('m_regular_match') }}</Option>
-                  <Option :value="0" key="m_irregular_matching">{{ $t('m_irregular_matching') }}</Option>
-                </Select>
-              </Col>
-              <Col span="6">
-                <Input v-model.trim="item.source_value" :disabled="view" style="width:90%"></Input>
-              </Col>
-              <Col span="6">
-                <Input v-model.trim="item.target_value" :disabled="view" style="width:90%"></Input>
-              </Col>
-              <Col span="6">
-                <span style="line-height: 32px;">{{ $t('m_'+item.value_type) }}</span>
-                <Button
-                  type="error"
-                  ghost
-                  v-if="itemIndex!==0"
-                  @click="deleteItem('retcode_string_map',itemIndex)"
-                  size="small"
-                  :disabled="view"
-                  style="margin-left:24px; cursor: pointer"
-                  icon="md-trash"
-                ></Button>
-              </Col>
-            </Row>
-            <div style="text-align: right;margin-right: 8px;cursor: pointer">
-              <Button type="primary" :disabled="view" ghost @click="addItem('retcode_string_map')" size="small" icon="md-add"></Button>
-            </div>
-          </div>
         </div>
       </div>
       <template #footer>
@@ -295,6 +335,27 @@ export default {
     margin-right: 28px;
     font-size: 18px;
     cursor: pointer;
+  }
+}
+
+.w-header {
+  display: flex;
+  align-items: center;
+  .title {
+    font-size: 16px;
+    font-weight: bold;
+    margin: 0 10px;
+    .underline {
+      display: block;
+      margin-top: -10px;
+      margin-left: -6px;
+      width: 100%;
+      padding: 0 6px;
+      height: 12px;
+      border-radius: 12px;
+      background-color: #c6eafe;
+      box-sizing: content-box;
+    }
   }
 }
 </style>
