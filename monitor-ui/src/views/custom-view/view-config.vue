@@ -8,7 +8,7 @@
           <template v-if="isEditPanal">
             <Input v-model.trim="panalName" style="width: 100px" type="text"></Input>
             <Icon class="panal-edit-icon" @click="savePanalEdit" type="md-checkmark" />
-            <Icon class="panal-edit-icon" @click="canclePanalEdit" type="md-close" />
+            <Icon class="panal-edit-icon" @click="canclePanalEdit" type="md-trash" />
           </template>
           <template v-else>
             <span> {{panalName}}</span>
@@ -88,7 +88,7 @@
             <span @click="selectGroup(item)" style="vertical-align: text-bottom;">
               {{ `${item}` }}
             </span>
-            <Icon v-if="permission === 'edit'" @click="removeGroup(item, index)" type="md-close" color="#ed4014" :size="20" />
+            <Icon v-if="permission === 'edit'" @click="removeGroup(item, index)" type="md-trash" color="#ed4014" :size="20" />
           </div>
           <span>
             <Button
@@ -96,7 +96,7 @@
               @click="addGroup"
               class="primary-btn"
               style="margin-top: -5px;"
-              type="primary"
+              type="success"
               shape="circle"
               icon="md-add"
             ></Button>
