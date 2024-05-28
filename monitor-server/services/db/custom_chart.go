@@ -391,7 +391,6 @@ func QueryCustomChartList(condition models.QueryChartParam, roles []string) (pag
 // CopyCustomChart 复制图表
 func CopyCustomChart(dashboardId int, user, group, customChart string, displayConfig interface{}) (err error) {
 	var chartSeriesList []*models.CustomChartSeries
-	var chartPermissionList []*models.CustomChartPermission
 	var configMap = make(map[string][]*models.CustomChartSeriesConfig)
 	var tagMap = make(map[string][]*models.CustomChartSeriesTag)
 	var tagValueMap = make(map[string][]*models.CustomChartSeriesTagValue)
@@ -406,9 +405,6 @@ func CopyCustomChart(dashboardId int, user, group, customChart string, displayCo
 	if err = x.SQL("select * from custom_chart_series where dashboard_chart = ?", customChart).Find(&chartSeriesList); err != nil {
 		return
 	}
-	if err = x.SQL("select * from custom_chart_permission where dashboard_chart = ?", customChart).Find(&chartPermissionList); err != nil {
-		return
-	}
 	if configMap, err = QueryAllChartSeriesConfig(); err != nil {
 		return
 	}
@@ -419,7 +415,7 @@ func CopyCustomChart(dashboardId int, user, group, customChart string, displayCo
 		return
 	}
 	actions = append(actions, &Action{Sql: "insert into custom_chart values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
-		newChartId, chart.SourceDashboard, chart.Public, chart.Name, chart.ChartType, chart.LineType, chart.Aggregate,
+		newChartId, dashboardId, 0, chart.Name + "(1)", chart.ChartType, chart.LineType, chart.Aggregate,
 		chart.AggStep, chart.Unit, chart.CreateUser, chart.UpdateUser, chart.CreateTime, chart.UpdateTime, chart.ChartTemplate, chart.PieType}})
 	for _, series := range chartSeriesList {
 		seriesId := guid.CreateGuid()
@@ -452,10 +448,6 @@ func CopyCustomChart(dashboardId int, user, group, customChart string, displayCo
 			}
 		}
 	}
-	for _, permission := range chartPermissionList {
-		actions = append(actions, &Action{Sql: "insert into custom_chart_permission values(?,?,?,?)", Param: []interface{}{
-			guid.CreateGuid(), newChartId, permission.RoleId, permission.Permission}})
-	}
 	actions = append(actions, &Action{Sql: "insert into custom_dashboard_chart_rel values(?,?,?,?,?,?,?,?,?)", Param: []interface{}{guid.CreateGuid(),
 		dashboardId, newChartId, group, string(byteConf), user, user, now, now}})
 	return Transaction(actions)
@@ -463,6 +455,11 @@ func CopyCustomChart(dashboardId int, user, group, customChart string, displayCo
 
 func UpdateCustomChartName(chartId, name, user string) (err error) {
 	_, err = x.Exec("update custom_chart set name = ?,update_user = ? where guid = ?", name, user, chartId)
+	return
+}
+
+func QueryCustomChartNameExist(name string) (list []*models.CustomChart, err error) {
+	err = x.SQL("select * from custom_chart where name = ? and public = 1", name).Find(&list)
 	return
 }
 
