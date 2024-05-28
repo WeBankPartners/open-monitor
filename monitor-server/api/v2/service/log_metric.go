@@ -641,13 +641,23 @@ func CreateLogMetricGroup(c *gin.Context) {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
+	prefixMap, queryErr := db.GetLogMetricMonitorMetricPrefixMap(param.LogMetricMonitorGuid)
+	if queryErr != nil {
+		middleware.ReturnHandleError(c, queryErr.Error(), queryErr)
+		return
+	}
+	if _, ok := prefixMap[param.MetricPrefixCode]; ok {
+		err := fmt.Errorf("Prefix: %s duplidate ", param.MetricPrefixCode)
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
 	err := db.CreateLogMetricGroup(&param, middleware.GetOperateUser(c))
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
 		err = syncLogMetricMonitorConfig(param.LogMetricMonitorGuid)
 		if err != nil {
-			middleware.ReturnHandleError(c, err.Error(), err)
+			middleware.ReturnError(c, 200, middleware.GetMessageMap(c).SaveDoneButSyncFail, err)
 		} else {
 			middleware.ReturnSuccess(c)
 		}
@@ -681,7 +691,7 @@ func UpdateLogMetricGroup(c *gin.Context) {
 	} else {
 		err = syncLogMetricMonitorConfig(param.LogMetricMonitorGuid)
 		if err != nil {
-			middleware.ReturnHandleError(c, err.Error(), err)
+			middleware.ReturnError(c, 200, middleware.GetMessageMap(c).SaveDoneButSyncFail, err)
 		} else {
 			middleware.ReturnSuccess(c)
 		}
@@ -737,13 +747,31 @@ func CreateLogMetricCustomGroup(c *gin.Context) {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
-	err := db.CreateLogMetricCustomGroup(&param, middleware.GetOperateUser(c))
+	param.ServiceGroup, param.MonitorType = db.GetLogMetricServiceGroup(param.LogMetricMonitor)
+	existMetricMap, err := db.GetServiceGroupMetricMap(param.ServiceGroup)
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	for _, v := range param.MetricList {
+		if _, existFlag := existMetricMap[v.Metric]; existFlag {
+			err = fmt.Errorf(middleware.GetMessageMap(c).MetricDuplicateError, v.Metric)
+			break
+		} else {
+			existMetricMap[v.Metric] = param.MonitorType
+		}
+	}
+	if err != nil {
+		middleware.ReturnError(c, 200, err.Error(), err)
+		return
+	}
+	err = db.CreateLogMetricCustomGroup(&param, middleware.GetOperateUser(c))
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
 		err = syncLogMetricMonitorConfig(param.LogMetricMonitor)
 		if err != nil {
-			middleware.ReturnHandleError(c, err.Error(), err)
+			middleware.ReturnError(c, 200, middleware.GetMessageMap(c).SaveDoneButSyncFail, err)
 		} else {
 			middleware.ReturnSuccess(c)
 		}
@@ -770,13 +798,31 @@ func UpdateLogMetricCustomGroup(c *gin.Context) {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
-	err := db.UpdateLogMetricCustomGroup(&param, middleware.GetOperateUser(c))
+	param.ServiceGroup, param.MonitorType = db.GetLogMetricServiceGroup(param.LogMetricMonitor)
+	existMetricMap, err := db.GetServiceGroupMetricMap(param.ServiceGroup)
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	for _, v := range param.MetricList {
+		if _, existFlag := existMetricMap[v.Metric]; existFlag {
+			err = fmt.Errorf(middleware.GetMessageMap(c).MetricDuplicateError, v.Metric)
+			break
+		} else {
+			existMetricMap[v.Metric] = param.MonitorType
+		}
+	}
+	if err != nil {
+		middleware.ReturnError(c, 200, err.Error(), err)
+		return
+	}
+	err = db.UpdateLogMetricCustomGroup(&param, middleware.GetOperateUser(c))
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
 		err = syncLogMetricMonitorConfig(param.LogMetricMonitor)
 		if err != nil {
-			middleware.ReturnHandleError(c, err.Error(), err)
+			middleware.ReturnError(c, 200, middleware.GetMessageMap(c).SaveDoneButSyncFail, err)
 		} else {
 			middleware.ReturnSuccess(c)
 		}
