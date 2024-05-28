@@ -187,7 +187,7 @@ func getUpdateServiceEndpointAction(serviceGroupGuid, nowTime string, endpoint [
 	guidList, _ := fetchGlobalServiceGroupParentGuidList(serviceGroupGuid)
 	for _, v := range guidList {
 		actions = append(actions, getCreateEndpointGroupByServiceAction(v, nowTime, endpoint)...)
-		actions = append(actions, &Action{Sql: "update service_group set update_time=? where guid=?",Param: []interface{}{nowTime,v}})
+		actions = append(actions, &Action{Sql: "update service_group set update_time=? where guid=?", Param: []interface{}{nowTime, v}})
 	}
 	return actions
 }
@@ -318,7 +318,7 @@ func MatchServicePanel(endpointGuid string) (result models.PanelModel, err error
 	if len(logMetricEndpointRel) > 0 {
 		for _, endpointRel := range logMetricEndpointRel {
 			logMetricMonitor := endpointRel.LogMetricMonitor
-			serviceGroup, _ := getLogMetricServiceGroup(logMetricMonitor)
+			serviceGroup, _ := GetLogMetricServiceGroup(logMetricMonitor)
 			for _, jsonConfig := range ListLogMetricJson(logMetricMonitor) {
 				for _, metricConfig := range jsonConfig.MetricList {
 					result.Charts = append(result.Charts, &models.ChartModel{Id: 0, Title: metricConfig.DisplayName, Endpoint: []string{endpointGuid}, Metric: []string{fmt.Sprintf("%s/key=%s,t_endpoint=%s,agg=%s,service_group=%s", models.LogMetricName, metricConfig.Metric, endpointGuid, metricConfig.AggType, serviceGroup)}})
@@ -344,9 +344,9 @@ func UpdateServiceConfigWithParent(serviceGroup string) {
 	}
 }
 
-func getServiceGroupEndpointWithType(monitorType string,serviceGroupList []string) (result []*models.EndpointNewTable) {
+func getServiceGroupEndpointWithType(monitorType string, serviceGroupList []string) (result []*models.EndpointNewTable) {
 	result = []*models.EndpointNewTable{}
-	x.SQL("select guid,name,ip,monitor_type from endpoint_new where monitor_type=? and guid in (select endpoint from endpoint_service_rel where service_group in ('"+strings.Join(serviceGroupList,"','")+"'))", monitorType).Find(&result)
+	x.SQL("select guid,name,ip,monitor_type from endpoint_new where monitor_type=? and guid in (select endpoint from endpoint_service_rel where service_group in ('"+strings.Join(serviceGroupList, "','")+"'))", monitorType).Find(&result)
 	return result
 }
 

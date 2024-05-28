@@ -12,7 +12,7 @@ import resourceLevel from "@/views/monitor-config/resource-level";
 import exporter from "@/views/monitor-config/exporter";
 import businessMonitor from "@/views/monitor-config/business-monitor";
 import logTemplate from "@/views/monitor-config/log-template";
-import metricConfig from "@/views/metric-config";
+import metricConfig from "@/views/metric-config/index";
 import groupBoard from "@/views/metric-config/group-board";
 import viewConfigIndex from "@/views/custom-view/view-config-index";
 import viewConfig from "@/views/custom-view/view-config";
