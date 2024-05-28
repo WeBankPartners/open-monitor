@@ -13,5 +13,6 @@
   "password_error": "Password is wrong.",
   "token_error": "Invalid session token",
   "token_authority_error": "Token authority validate fail",
-  "save_done_but_sync_fail": "Config save done but sync to agent fail"
+  "save_done_but_sync_fail": "Config save done but sync to agent fail",
+  "metric_duplicate_error": "Metric %s duplicate"
 }
