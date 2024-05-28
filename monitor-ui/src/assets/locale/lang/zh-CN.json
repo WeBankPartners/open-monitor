@@ -341,7 +341,7 @@
   "m_standard_regex": "标准正则",
   "m_custom_regex": "自定义正则",
   "m_noData": "暂无数据",
-  "m_view_associated": "查看关联层级对象",
+  "m_view_associated": "关联层级对象",
   "m_template": "模版",
   "m_log_example": "日志示例(一条)",
   "m_parameter_collection": "采集参数",
@@ -371,6 +371,7 @@
   "m_tag_mapping": "标签映射",
   "m_match_type": "匹配类型",
   "m_match_value": "映射值(字符、数字)",
+  "m_match_value_pure": "映射值",
   "m_expand_template": "展开模版",
   "m_hide_template": "收起模版",
   "m_associated_template": "关联模版",
@@ -441,5 +442,6 @@
   "m_group_board": "对象看板",
   "m_edit_meric": "编辑指标",
   "m_general_type": "通用类型",
-  "m_general_object": "通用对象"
+  "m_general_object": "通用对象",
+  "m_metric_name": "指标名"
 }
