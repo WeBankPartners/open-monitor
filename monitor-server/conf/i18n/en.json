@@ -13,6 +13,6 @@
   "password_error": "Password is wrong.",
   "token_error": "Invalid session token",
   "token_authority_error": "Token authority validate fail",
-  "save_done_but_sync_fail": "Config save done but sync to agent fail",
-  "metric_duplicate_error": "Metric %s duplicate"
+  "save_done_but_sync_fail": "Config Deploy Failed: Deployment to target object failed. Please ensure target object is available, then click [Save] to redeploy configuration.",
+  "metric_duplicate_error": "Save Failed. Duplicate indicator '%s' already exists under the current hierarchy object. Please modify and try again."
 }
