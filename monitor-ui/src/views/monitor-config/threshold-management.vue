@@ -1,62 +1,39 @@
 <template>
   <div class=" ">
-    <section>
-      <ul class="search-ul">
-        <li class="search-li">
-          <Select v-model="type" style="width:100px" @on-change="typeChange">
-            <Option v-for="item in typeList" :value="item.value" :key="item.value">{{ $t(item.label) }}</Option>
-          </Select>
-        </li>
-        <li class="search-li">
-          <Select
-            style="width:300px;"
-            v-model="targetId"
-            filterable
-            clearable 
-            remote
-            ref="select"
-            :remote-method="getTargrtList"
-            @on-change="search"
-            >
-            <Option v-for="(option, index) in targetOptions" :value="option.option_value" :key="index">
-              <TagShow :tagName="option.type" :index="index"></TagShow> 
-              {{option.option_text}}
-            </Option>
-          </Select>
-        </li>
-        <li class="search-li">
-          <button type="button" class="btn btn-sm btn-confirm-f"
-          :disabled="targetId === ''"
-          @click="search">
-            <i class="fa fa-search" ></i>
-            {{$t('button.search')}}
-          </button>
-          <template v-if="type !== 'endpoint' && targetId">
-            <Button
-              type="info"
-              class="btn-left"
-              @click="exportThreshold"
-            >
-              <img src="../../assets/img/export.png" class="btn-img" alt="" />
-              {{ $t('m_export') }}
-            </Button>
-            <div style="display: inline-block;margin-bottom: 3px;">
-              <Upload 
-                :action="uploadUrl" 
-                :show-upload-list="false"
-                :max-size="1000"
-                with-credentials
-                :headers="{'Authorization': token}"
-                :on-success="uploadSucess"
-                :on-error="uploadFailed">
-                  <Button type="primary" class="btn-left">
-                    <img src="../../assets/img/import.png" class="btn-img" alt="" />
-                    {{ $t('m_import') }}
-                  </Button>
-              </Upload>
-            </div>
-            <!-- <div style="display: inline-block;margin-bottom: 1px;vertical-align: bottom;line-height: 32px;"> 
-              <Upload 
+    <div style="display: flex;justify-content: space-between;margin-bottom: 8px">
+      <div>
+        <Select v-model="type" style="width:100px" @on-change="typeChange">
+          <Option v-for="item in typeList" :value="item.value" :key="item.value">{{ $t(item.label) }}</Option>
+        </Select>
+        <Select
+          style="width:300px;margin-left: 12px;"
+          v-model="targetId"
+          filterable
+          clearable 
+          remote
+          ref="select"
+          :remote-method="getTargrtList"
+          @on-change="search"
+          @on-clear="typeChange"
+          >
+          <Option v-for="(option, index) in targetOptions" :value="option.option_value" :key="index">
+            <TagShow :tagName="option.type" :index="index"></TagShow> 
+            {{option.option_text}}
+          </Option>
+        </Select>
+      </div>
+      <div>
+        <template v-if="type !== 'endpoint' && targetId">
+          <Button
+            type="info"
+            class="btn-left"
+            @click="exportThreshold"
+          >
+            <img src="../../assets/img/export.png" class="btn-img" alt="" />
+            {{ $t('m_export') }}
+          </Button>
+          <div style="display: inline-block;margin-bottom: 3px;">
+            <Upload 
               :action="uploadUrl" 
               :show-upload-list="false"
               :max-size="1000"
@@ -64,15 +41,16 @@
               :headers="{'Authorization': token}"
               :on-success="uploadSucess"
               :on-error="uploadFailed">
-                <Button icon="ios-cloud-upload-outline">{{$t('m_import')}}</Button>
-              </Upload>
-            </div>
-            <button type="button" class="btn-cancel-f" @click="exportThreshold">{{$t("m_export")}}</button> -->
-          </template>
-        </li>
-      </ul>
-    </section> 
-    <section v-show="showTargetManagement" style="margin-top: 16px;">
+                <Button type="primary" class="btn-left">
+                  <img src="../../assets/img/import.png" class="btn-img" alt="" />
+                  {{ $t('m_import') }}
+                </Button>
+            </Upload>
+          </div>
+        </template>
+      </div>
+    </div>
+    <div v-show="showTargetManagement" class="table-zone">
       <template v-for="(itemType, index) in thresholdTypes">
         <thresholdDetail 
           ref='thresholdDetail'
@@ -82,7 +60,7 @@
         >
         </thresholdDetail>
       </template>
-    </section>
+    </div>
   </div>
 </template>
 
@@ -169,6 +147,7 @@ export default {
       this.getTargrtList()
     },
     getTargrtList () {
+      this.$refs.select.queryProp = ''
       const api = `/monitor/api/v2/alarm/strategy/search?type=${this.type}&search=`
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', (responseData) => {
         this.targetOptions = responseData
@@ -195,15 +174,6 @@ export default {
   },
 }
 </script>
-
-<style scoped lang="less">
-.search-li {
-    display: inline-block;
-  }
-  .search-ul>li:not(:first-child) {
-    padding-left: 10px;
-  }
-</style>
 <style scoped lang="less">
   .is-danger {
     color: red;
@@ -241,5 +211,10 @@ export default {
   }
   .btn-left {
     margin-left: 8px;
+  }
+
+  .table-zone {
+    overflow: auto;
+    height: ~"calc(100vh - 180px)";
   }
 </style>
