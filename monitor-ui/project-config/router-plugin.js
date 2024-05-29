@@ -15,6 +15,8 @@ import logTemplate from "@/views/monitor-config/log-template";
 import metricConfig from "@/views/metric-config/index";
 import groupBoard from "@/views/metric-config/group-board";
 import viewConfigIndex from "@/views/custom-view/view-config-index";
+import chartList from "@/views/custom-view/chart-list";
+import boardIndex from "@/views/custom-view/index";
 import viewConfig from "@/views/custom-view/view-config";
 import editLineView from "@/views/custom-view/edit-line-view";
 import editPieView from "@/views/custom-view/edit-pie-view";
@@ -140,11 +142,28 @@ const router = [
     component: metricConfig
   },
   {
-    path: "/viewConfigIndex",
+    path: "viewConfigIndex",
     name: "viewConfigIndex",
     title: "自定义视图主页",
     meta: {},
-    component: viewConfigIndex
+    component: boardIndex,
+    redirect: "/viewConfigIndex/boardList",
+    children: [
+      {
+        path: "boardList",
+        name: "boardList",
+        title: "看板列表",
+        meta: {},
+        component: viewConfigIndex
+      },
+      {
+        path: "allChartList",
+        name: "allChartList",
+        title: "列表",
+        meta: {},
+        component: chartList
+      }
+    ]
   },
   {
     path: "/viewConfig",
