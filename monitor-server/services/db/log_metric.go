@@ -1525,9 +1525,9 @@ func getUpdateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, opera
 			actions = append(actions, &Action{Sql: "insert into log_metric_config(guid,log_metric_monitor,log_metric_group,log_param_name,metric,display_name,regular,step,agg_type,tag_config,create_user,create_time) values (?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
 				tmpMetricConfigGuid, existLogGroupData.LogMetricMonitor, param.Guid, inputMetricObj.LogParamName, inputMetricObj.Metric, inputMetricObj.DisplayName, inputMetricObj.Regular, inputMetricObj.Step, inputMetricObj.AggType, string(tmpTagListBytes), operator, nowTime,
 			}})
-			actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,log_metric_config,create_time,create_user,update_user) value (?,?,?,?,?,?,?,?,?,?,?)",
+			actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,log_metric_config,log_metric_group,create_time,create_user,update_user) value (?,?,?,?,?,?,?,?,?,?,?,?)",
 				Param: []interface{}{fmt.Sprintf("%s__%s", inputMetricObj.Metric, serviceGroup), inputMetricObj.Metric, monitorType, getLogMetricExprByAggType(inputMetricObj.Metric, inputMetricObj.AggType, serviceGroup,
-					inputMetricObj.TagConfigList), serviceGroup, models.MetricWorkspaceService, nowTime, tmpMetricConfigGuid, nowTime, operator, operator}})
+					inputMetricObj.TagConfigList), serviceGroup, models.MetricWorkspaceService, nowTime, tmpMetricConfigGuid, param.Guid, nowTime, operator, operator}})
 		} else {
 			actions = append(actions, &Action{Sql: "update log_metric_config set log_param_name=?,metric=?,display_name=?,regular=?,step=?,agg_type=?,tag_config=?,update_user=?,update_time=? where guid=?", Param: []interface{}{
 				inputMetricObj.LogParamName, inputMetricObj.Metric, inputMetricObj.DisplayName, inputMetricObj.Regular, inputMetricObj.Step, inputMetricObj.AggType, string(tmpTagListBytes), operator, nowTime, inputMetricObj.Guid,
@@ -1536,8 +1536,8 @@ func getUpdateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, opera
 				if existMetricObj.Metric != inputMetricObj.Metric || existMetricObj.AggType != inputMetricObj.AggType {
 					oldMetricGuid := fmt.Sprintf("%s__%s", existMetricObj.Metric, serviceGroup)
 					newMetricGuid := fmt.Sprintf("%s__%s", inputMetricObj.Metric, serviceGroup)
-					actions = append(actions, &Action{Sql: "update metric set guid=?,metric=?,prom_expr=?,update_user=?,update_time=? where guid=?",
-						Param: []interface{}{newMetricGuid, inputMetricObj.Metric, getLogMetricExprByAggType(inputMetricObj.Metric, inputMetricObj.AggType, serviceGroup, []string{}), operator, nowTime, oldMetricGuid}})
+					actions = append(actions, &Action{Sql: "update metric set guid=?,metric=?,prom_expr=?,update_user=?,update_time=?,log_metric_group=? where guid=?",
+						Param: []interface{}{newMetricGuid, inputMetricObj.Metric, getLogMetricExprByAggType(inputMetricObj.Metric, inputMetricObj.AggType, serviceGroup, []string{}), operator, nowTime, param.Guid, oldMetricGuid}})
 					var alarmStrategyTable []*models.AlarmStrategyTable
 					x.SQL("select guid,endpoint_group from alarm_strategy where metric=?", oldMetricGuid).Find(&alarmStrategyTable)
 					if len(alarmStrategyTable) > 0 {
@@ -1555,14 +1555,14 @@ func getUpdateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, opera
 
 func GetServiceGroupMetricMap(serviceGroup string) (existMetricMap map[string]string, err error) {
 	var metricRows []*models.MetricTable
-	err = x.SQL("select metric,monitor_type from metric where service_group=?", serviceGroup).Find(&metricRows)
+	err = x.SQL("select metric,monitor_type,log_metric_group from metric where service_group=?", serviceGroup).Find(&metricRows)
 	if err != nil {
 		err = fmt.Errorf("query metric table fail,%s ", err.Error())
 		return
 	}
 	existMetricMap = make(map[string]string)
 	for _, v := range metricRows {
-		existMetricMap[v.Metric] = v.MonitorType
+		existMetricMap[v.Metric] = v.LogMetricGroup
 	}
 	return
 }
