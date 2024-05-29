@@ -140,11 +140,30 @@ const router = [
     component: metricConfig
   },
   {
-    path: "/viewConfigIndex",
+    path: "viewConfigIndex",
     name: "viewConfigIndex",
     title: "自定义视图主页",
     meta: {},
-    component: viewConfigIndex
+    redirect: "/viewConfigIndex/boardList",
+    component: () => import("@/views/custom-view/index"),
+    children: [
+      {
+        path: "boardList",
+        name: "boardList",
+        title: "看板列表",
+        meta: {},
+        component: () =>
+          import("@/views/custom-view/view-config-index")
+      },
+      {
+        path: "allChartList",
+        name: "allChartList",
+        title: "列表",
+        meta: {},
+        component: () =>
+          import("@/views/custom-view/chart-list")
+      }
+    ]
   },
   {
     path: "/viewConfig",
