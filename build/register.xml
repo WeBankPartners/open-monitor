@@ -12,7 +12,7 @@
     <menus>
         <menu code='MONITOR_MAIN_DASHBOARD' cat='MONITORING' displayName="Monitor Dashboard" localDisplayName="对象视图">/endpointView</menu>
         <menu code='MONITOR_METRIC_CONFIG' cat='MONITORING' displayName="Metric Design" localDisplayName="指标设计">/metricConfig</menu>
-        <menu code='MONITOR_ALARM_CONFIG' cat='MONITORING' displayName="Monitor Config" localDisplayName="监控配置">/monitorConfigIndex/businessMonitor</menu>
+        <menu code='MONITOR_ALARM_CONFIG' cat='MONITORING' displayName="Monitor Config" localDisplayName="监控配置">/monitorConfigIndex/endpointManagement</menu>
         <menu code='MONITOR_ALARM_MANAGEMENT' cat='MONITORING' displayName="Alarm List" localDisplayName="告警列表">/alarmManagement</menu>
         <menu code='MONITOR_CUSTOM_DASHBOARD' cat='MONITORING' displayName="Custom Dashboard" localDisplayName="自定义视图">/viewConfigIndex</menu>
     </menus>
