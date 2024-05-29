@@ -40,14 +40,14 @@
                   </Col>
                   <Col span="5">
                     <!-- <Tooltip :content="$t('proc_callback_key')" :delay="1000"> -->
-                      <Select v-model="item.proc_callback_key" :disabled="!isEditState" @on-change="procCallbackKeyChange(item.proc_callback_key, tableIndex, index)" style="width:99%;" :placeholder="$t('proc_callback_key')">
+                      <Select v-model="item.proc_callback_key" clearable :disabled="!isEditState" @on-change="procCallbackKeyChange(item.proc_callback_key, tableIndex, index)" style="width:99%;" :placeholder="$t('proc_callback_key')">
                         <Option v-for="(flow, flowIndex) in flows" :key="flowIndex" :value="flow.procDefKey" :label="flow.procDefName + ' [' + flow.procDefVersion + ']'"><span>{{ flow.procDefName }} [{{ flow.procDefVersion }}]</span></Option>
                       </Select>
                     <!-- </Tooltip> -->
                   </Col>
                   <Col span="5">
                     <!-- <Tooltip :content="$t('m_callback_mode')" :delay="1000"> -->
-                      <Select v-model="item.proc_callback_mode" :disabled="!isEditState" style="width:99%" :placeholder="$t('m_callback_mode')">
+                      <Select v-model="item.proc_callback_mode" clearable :disabled="!isEditState" style="width:99%" :placeholder="$t('m_callback_mode')">
                         <Option v-for="item in callbackMode" :value="item.value" :key="item.value">{{ $t(item.label) }}</Option>
                       </Select>
                     <!-- </Tooltip> -->
@@ -55,7 +55,8 @@
                   <Col span="5">
                     <!-- <Tooltip :content="$t('tableKey.description')" :delay="1000"> -->
                       <Input 
-                        v-model="item.description" 
+                        v-model="item.description"
+                        clearable 
                         :disabled="!isEditState"
                         style="width:99%"
                         type="text" 
@@ -316,18 +317,19 @@
                 </Select>
               </Tooltip>
               <Tooltip :content="$t('proc_callback_key')" :delay="1000">
-                <Select v-model="item.proc_callback_key" :disabled="!isEditState" @on-change="procCallbackKeyChangeForm(item.proc_callback_key, index)" style="width: 160px" :placeholder="$t('proc_callback_key')">
+                <Select v-model="item.proc_callback_key" clearable :disabled="!isEditState" @on-change="procCallbackKeyChangeForm(item.proc_callback_key, index)" style="width: 160px" :placeholder="$t('proc_callback_key')">
                   <Option v-for="(flow, flowIndex) in flows" :key="flowIndex" :value="flow.procDefKey" :label="flow.procDefName + ' [' + flow.procDefVersion + ']'"><span>{{ flow.procDefName }} [{{ flow.procDefVersion }}]</span></Option>
                 </Select>
               </Tooltip>
               <Tooltip :content="$t('m_callback_mode')" :delay="1000">
-                <Select v-model="item.proc_callback_mode" :disabled="!isEditState" style="width: 100px" :placeholder="$t('m_callback_mode')">
+                <Select v-model="item.proc_callback_mode" clearable :disabled="!isEditState" style="width: 100px" :placeholder="$t('m_callback_mode')">
                   <Option v-for="item in callbackMode" :value="item.value" :key="item.value">{{ $t(item.label) }}</Option>
                 </Select>
               </Tooltip>
               <Tooltip :content="$t('tableKey.description')" :delay="1000">
                 <input 
-                  v-model="item.description" 
+                  v-model="item.description"
+                  clearable
                   :disabled="!isEditState"
                   style="width: 100px"
                   type="text" 
@@ -397,7 +399,7 @@ const initFormData = {
   priority: 'low', // 级别
   notify_enable: 1, // 告警发送
   notify_delay_second: 0, // 延时
-  active_window:  ['00:00','23:56'], // 告警时间段
+  active_window:  ['00:00','23:59'], // 告警时间段
   content: '', // 通知内容
   notify: [
     {
@@ -592,7 +594,7 @@ export default {
                           ))}
                       </Select>
                     </div>
-                  )) ) : "--" } 
+                  )) ) : '-' } 
               </div>
             )
           }
@@ -643,6 +645,25 @@ export default {
           }
         },
         {
+          title: this.$t('tableKey.s_last'),
+          key: 'lastValue',
+          align: 'left',
+          minWidth: 70,
+          render: (h, params) => {
+            return (
+              <Input
+                value={params.row.lastValue}
+                disabled={!this.isEditState}
+                maxlength="10"
+                on-on-change={v => {
+                  this.formData.conditions[params.index].lastValue = v.target.value
+                }}
+                clearable
+              />
+            )
+          }
+        },
+        {
           title: this.$t('m_time_unit'),
           key: 'lastSymbol',
           align: 'left',
@@ -665,25 +686,6 @@ export default {
                     </Option>
                   ))}
               </Select>
-            )
-          }
-        },
-        {
-          title: this.$t('tableKey.s_last'),
-          key: 'lastValue',
-          align: 'left',
-          minWidth: 70,
-          render: (h, params) => {
-            return (
-              <Input
-                value={params.row.lastValue}
-                disabled={!this.isEditState}
-                maxlength="10"
-                on-on-change={v => {
-                  this.formData.conditions[params.index].lastValue = v.target.value
-                }}
-                clearable
-              />
             )
           }
         },
@@ -715,7 +717,7 @@ export default {
         {
             title: this.$t('m_alarmName'),
             align: 'center',
-            width: 100,
+            width: 160,
             key: 'name'
         },
         {
@@ -734,7 +736,7 @@ export default {
           }
         },
         {
-          title: this.$t('tableKey.status'),
+          title: this.$t('m_notification'),
           key: 'notify_enable',
           align: 'center',
           width: 100,
@@ -767,7 +769,7 @@ export default {
                 <div>{this.$t('m_trigger_arrange')}: {params.row.notify[0].proc_callback_key}{params.row.notify[0].proc_callback_mode ? '(' + this.$t(find(this.callbackMode, {value: params.row.notify[0].proc_callback_mode}).label) + ')' : ""}</div>
                 <div>{this.$t('tableKey.description')}:{params.row.notify[0].description} </div>
               </div>
-            ) : <div>--</div>
+            ) : <div>-</div>
           }
         },
         {
@@ -777,18 +779,18 @@ export default {
           render: (h, params) => {
             return !isEmpty(params.row.notify) && params.row.notify.length > 1 ? (
               <div>
-                <div>{this.$t('m_notification_role')}:{params.row.notify[1].notify_roles} </div>
+                <div>{this.$t('m_notification_role')}:{params.row.notify[1].notify_roles.join(';')} </div>
                 <div>{this.$t('m_trigger_arrange')}: {params.row.notify[1].proc_callback_key}{params.row.notify[1].proc_callback_mode ? '(' + this.$t(find(this.callbackMode, {value: params.row.notify[1].proc_callback_mode}).label) + ')' : ""}</div>
                 <div>{this.$t('tableKey.description')}:{params.row.notify[1].description} </div>
               </div>
-            ) : <div>--</div>
+            ) : <div>-</div>
           }
         },
         {
           title: this.$t('tableKey.metricName'),
           key: 'metric',
           align: 'center',
-          width: 150
+          width: 250
         },
         {
           title: this.$t('field.threshold'),
@@ -811,7 +813,11 @@ export default {
             return (
               <div>
                 <Button size="small" class="mr-1"  type="primary" on-click={() => this.editAlarmItem(params.row, params)}>
-                  <Icon type="md-create" size="16"></Icon> 
+                  {
+                    this.type==='endpoint' ? 
+                    <Icon type="md-eye" size="16"></Icon> :
+                    <Icon type="md-create" size="16"></Icon> 
+                  }
                 </Button>
                 {
                   this.isEditState ? (
@@ -969,6 +975,7 @@ export default {
           this.modelConfig.isAdd = true
           this.modelConfig.modalTitle = 'button.add',
           this.formData = cloneDeep(initFormData);
+          this.formData.name = this.$t('m_alert') + new Date().getTime()
           await this.getInitialTags();
           this.formData.conditions[0].metric = this.modelConfig.metricList[0].guid; // 指标名
           this.formData.conditions[0].tags = cloneDeep(this.initialTags);
@@ -1179,6 +1186,9 @@ export default {
 </script>
 
 <style lang="less">
+.ivu-table-cell {
+  padding: 4px;
+}
 .ivu-table-wrapper {
   overflow: inherit;
 }
