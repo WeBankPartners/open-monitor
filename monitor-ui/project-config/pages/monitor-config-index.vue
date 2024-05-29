@@ -69,6 +69,13 @@ export default {
       }
     }
   },
+  mounted () {
+    if (this.$eventBusP) {
+      this.$eventBusP.$emit('expand-menu', this.expand)
+    } else {
+      this.$bus.$emit('expand-menu', this.expand)
+    }
+  },
   methods: {
     onMenuChange(val) {
         this.expand = val
