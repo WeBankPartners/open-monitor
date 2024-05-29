@@ -281,9 +281,10 @@ func UpdateCustomChart(chartDto models.CustomChartDto, user string) (err error) 
 	if len(chartDto.ChartSeries) > 0 {
 		for _, series := range chartDto.ChartSeries {
 			seriesId := guid.CreateGuid()
-			actions = append(actions, &Action{Sql: "insert into custom_chart_series values(?,?,?,?,?,?,?,?,?)", Param: []interface{}{
-				seriesId, chartDto.Id, series.Endpoint, series.ServiceGroup, series.EndpointName, series.MonitorType, series.Metric, series.ColorGroup, series.PieDisplayTag,
-			}})
+			actions = append(actions, &Action{Sql: "insert into custom_chart_series(guid,dashboard_chart,endpoint,service_group,endpoint_name,monitor_type," +
+				"metric,color_group,pie_display_tag,endpoint_type,metric_type,metric_guid) values(?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+				seriesId, chartDto.Id, series.Endpoint, series.ServiceGroup, series.EndpointName, series.MonitorType, series.Metric, series.ColorGroup,
+				series.PieDisplayTag, series.EndpointType, series.MetricType, series.MetricGuid}})
 			if len(series.Tags) > 0 {
 				for _, tag := range series.Tags {
 					tagId := guid.CreateGuid()
@@ -419,9 +420,9 @@ func CopyCustomChart(dashboardId int, user, group, customChart string, displayCo
 		chart.AggStep, chart.Unit, chart.CreateUser, chart.UpdateUser, chart.CreateTime, chart.UpdateTime, chart.ChartTemplate, chart.PieType}})
 	for _, series := range chartSeriesList {
 		seriesId := guid.CreateGuid()
-		actions = append(actions, &Action{Sql: "insert into custom_chart_series values(?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+		actions = append(actions, &Action{Sql: "insert into custom_chart_series values(?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
 			seriesId, newChartId, series.Endpoint, series.ServiceGroup, series.EndpointName, series.MonitorType, series.Metric, series.ColorGroup,
-			series.PieDisplayTag, series.EndpointType, series.MetricType}})
+			series.PieDisplayTag, series.EndpointType, series.MetricType, series.MetricGuid}})
 		if confArr, ok := configMap[series.Guid]; ok {
 			if len(confArr) > 0 {
 				for _, config := range confArr {
@@ -500,6 +501,7 @@ func CreateCustomChartDto(chartExtend *models.CustomChartExtend, configMap map[s
 				PieDisplayTag: series.PieDisplayTag,
 				EndpointType:  series.EndpointType,
 				MetricType:    series.MetricType,
+				MetricGuid:    series.MetricGuid,
 				Metric:        series.Metric,
 				Tags:          make([]*models.TagDto, 0),
 				ColorConfig:   make([]*models.ColorConfigDto, 0),
