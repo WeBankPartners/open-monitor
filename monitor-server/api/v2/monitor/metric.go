@@ -85,7 +85,7 @@ func ImportMetric(c *gin.Context) {
 		middleware.ReturnValidateError(c, "serviceGroup can not empty")
 		return
 	}
-	if err = db.MetricImport(serviceGroup, paramObj); err != nil {
+	if err = db.MetricImport(serviceGroup, middleware.GetOperateUser(c), paramObj); err != nil {
 		middleware.ReturnHandleError(c, "import metric fail", err)
 	} else {
 		middleware.ReturnSuccess(c)

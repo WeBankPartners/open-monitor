@@ -46,7 +46,7 @@ func CreateDbMetricMonitor(c *gin.Context) {
 	}
 	param.MetricSql = strings.TrimSpace(param.MetricSql)
 	param.MetricSql = strings.ReplaceAll(param.MetricSql, "\n", " ")
-	err := db.CreateDbMetric(&param)
+	err := db.CreateDbMetric(&param, middleware.GetOperateUser(c))
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
@@ -67,7 +67,7 @@ func UpdateDbMetricMonitor(c *gin.Context) {
 	}
 	param.MetricSql = strings.TrimSpace(param.MetricSql)
 	param.MetricSql = strings.ReplaceAll(param.MetricSql, "\n", " ")
-	err := db.UpdateDbMetric(&param)
+	err := db.UpdateDbMetric(&param, middleware.GetOperateUser(c))
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
