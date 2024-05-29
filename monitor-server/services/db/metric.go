@@ -43,21 +43,23 @@ func MetricList(id string, endpointType, serviceGroup string) (result []*models.
 	return
 }
 
-func MetricCreate(param []*models.MetricTable) error {
+func MetricCreate(param []*models.MetricTable, operator string) error {
 	var actions []*Action
 	nowTime := time.Now().Format(models.DatetimeFormat)
 	for _, metric := range param {
 		//actions = append(actions, &Action{Sql: "insert into prom_metric(metric,metric_type,prom_ql) value (?,?,?)", Param: []interface{}{metric.Metric, metric.MetricType, metric.PromQl}})
 		if metric.ServiceGroup != "" {
-			actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time) value (?,?,?,?,?,?,?)", Param: []interface{}{fmt.Sprintf("%s__%s", metric.Metric, metric.MonitorType), metric.Metric, metric.MonitorType, metric.PromExpr, metric.ServiceGroup, metric.Workspace, nowTime}})
+			actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,create_time,create_user,update_user) value (?,?,?,?,?,?,?,?,?,?)",
+				Param: []interface{}{fmt.Sprintf("%s__%s", metric.Metric, metric.MonitorType), metric.Metric, metric.MonitorType, metric.PromExpr, metric.ServiceGroup, metric.Workspace, nowTime, nowTime, operator, operator}})
 		} else {
-			actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,update_time) value (?,?,?,?,?)", Param: []interface{}{fmt.Sprintf("%s__%s", metric.Metric, metric.MonitorType), metric.Metric, metric.MonitorType, metric.PromExpr, nowTime}})
+			actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,update_time,create_time,create_user,update_user) value (?,?,?,?,?,?,?,?)",
+				Param: []interface{}{fmt.Sprintf("%s__%s", metric.Metric, metric.MonitorType), metric.Metric, metric.MonitorType, metric.PromExpr, nowTime, nowTime, operator, operator}})
 		}
 	}
 	return Transaction(actions)
 }
 
-func MetricUpdate(param []*models.MetricTable) (err error) {
+func MetricUpdate(param []*models.MetricTable, operator string) (err error) {
 	var actions []*Action
 	nowTime := time.Now().Format(models.DatetimeFormat)
 	var metricGuidList []string
@@ -67,9 +69,9 @@ func MetricUpdate(param []*models.MetricTable) (err error) {
 			break
 		}
 		if metric.ServiceGroup != "" {
-			actions = append(actions, &Action{Sql: "update metric set prom_expr=?,service_group=?,workspace=?,update_time=? where guid=?", Param: []interface{}{metric.PromExpr, metric.ServiceGroup, metric.Workspace, nowTime, metric.Guid}})
+			actions = append(actions, &Action{Sql: "update metric set prom_expr=?,service_group=?,workspace=?,update_user=?,update_time=? where guid=?", Param: []interface{}{metric.PromExpr, metric.ServiceGroup, metric.Workspace, operator, nowTime, metric.Guid}})
 		} else {
-			actions = append(actions, &Action{Sql: "update metric set prom_expr=?,update_time=? where guid=?", Param: []interface{}{metric.PromExpr, nowTime, metric.Guid}})
+			actions = append(actions, &Action{Sql: "update metric set prom_expr=?,update_user=?,update_time=? where guid=?", Param: []interface{}{metric.PromExpr, operator, nowTime, metric.Guid}})
 		}
 		metricGuidList = append(metricGuidList, metric.Guid)
 	}
@@ -93,13 +95,13 @@ func MetricUpdate(param []*models.MetricTable) (err error) {
 	return err
 }
 
-func getMetricUpdateAction(oldGuid string, newMetricObj *models.MetricTable) (actions []*Action) {
+func getMetricUpdateAction(oldGuid, operator string, newMetricObj *models.MetricTable) (actions []*Action) {
 	actions = []*Action{}
 	if newMetricObj.Guid != oldGuid {
-		actions = append(actions, &Action{Sql: "update metric set guid=?,metric=?,monitor_type=?,prom_expr=?,update_time=? where guid=?", Param: []interface{}{newMetricObj.Guid, newMetricObj.Metric, newMetricObj.MonitorType, newMetricObj.PromExpr, newMetricObj.UpdateTime, oldGuid}})
+		actions = append(actions, &Action{Sql: "update metric set guid=?,metric=?,monitor_type=?,prom_expr=?,update_user=?,update_time=? where guid=?", Param: []interface{}{newMetricObj.Guid, newMetricObj.Metric, newMetricObj.MonitorType, newMetricObj.PromExpr, operator, newMetricObj.UpdateTime, oldGuid}})
 		actions = append(actions, &Action{Sql: "update alarm_strategy set metric=? where metric=?", Param: []interface{}{newMetricObj.Guid, oldGuid}})
 	} else {
-		actions = append(actions, &Action{Sql: "update metric set metric=?,monitor_type=?,prom_expr=?,update_time=? where guid=?", Param: []interface{}{newMetricObj.Metric, newMetricObj.MonitorType, newMetricObj.PromExpr, newMetricObj.UpdateTime, oldGuid}})
+		actions = append(actions, &Action{Sql: "update metric set metric=?,monitor_type=?,prom_expr=?,update_user=?,update_time=? where guid=?", Param: []interface{}{newMetricObj.Metric, newMetricObj.MonitorType, newMetricObj.PromExpr, operator, newMetricObj.UpdateTime, oldGuid}})
 	}
 	return actions
 }
@@ -168,6 +170,7 @@ func MetricListNew(guid, monitorType, serviceGroup, onlyService string) (result 
 		}
 	}
 	result = []*models.MetricTable{}
+	baseSql = baseSql + " order by update_time desc"
 	err = x.SQL(baseSql, params...).Find(&result)
 	if err != nil {
 		return
@@ -191,7 +194,7 @@ func MetricListNew(guid, monitorType, serviceGroup, onlyService string) (result 
 	return
 }
 
-func MetricImport(serviceGroup string, inputMetrics []*models.MetricTable) (err error) {
+func MetricImport(serviceGroup, operator string, inputMetrics []*models.MetricTable) (err error) {
 	existMetrics, getExistErr := MetricListNew("", inputMetrics[0].MonitorType, serviceGroup, "Y")
 	if getExistErr != nil {
 		return fmt.Errorf("get serviceGroup:%s exist metric list fail,%s ", serviceGroup, getExistErr.Error())
@@ -222,9 +225,10 @@ func MetricImport(serviceGroup string, inputMetrics []*models.MetricTable) (err 
 			if v, b := strategyMap[matchMetric.Guid]; b {
 				affectEndpointGroupList = append(affectEndpointGroupList, v)
 			}
-			actions = append(actions, &Action{Sql: "update metric set prom_expr=?,workspace=?,update_time=? where guid=?", Param: []interface{}{inputMetric.PromExpr, inputMetric.Workspace, nowTime, matchMetric.Guid}})
+			actions = append(actions, &Action{Sql: "update metric set prom_expr=?,workspace=?,update_user=?,update_time=? where guid=?", Param: []interface{}{inputMetric.PromExpr, inputMetric.Workspace, operator, nowTime, matchMetric.Guid}})
 		} else {
-			actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time) value (?,?,?,?,?,?,?)", Param: []interface{}{inputMetric.Guid, inputMetric.Metric, inputMetric.MonitorType, inputMetric.PromExpr, serviceGroup, inputMetric.Workspace, nowTime}})
+			actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,create_time,create_user,update_user) value (?,?,?,?,?,?,?,?,?,?)",
+				Param: []interface{}{inputMetric.Guid, inputMetric.Metric, inputMetric.MonitorType, inputMetric.PromExpr, serviceGroup, inputMetric.Workspace, nowTime, nowTime, operator, operator}})
 		}
 	}
 	for _, existMetric := range existMetrics {
