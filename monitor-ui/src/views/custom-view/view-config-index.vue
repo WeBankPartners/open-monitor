@@ -113,14 +113,11 @@
                 <div class="card-divider"></div>
                 <div class="card-content-footer">
                   <template v-if="item.permission === 'mgmt'">
-                    <Button size="small"  type="primary" @click.stop="goToPanal(item, 'edit')">
-                      <Icon type="md-create" />
+                    <Button size="small" icon="md-create" type="primary" @click.stop="goToPanal(item, 'edit')">
                     </Button>
-                    <Button size="small"  type="warning" @click.stop="editBoardAuth(item)">
-                      <Icon type="md-person" />
+                    <Button size="small" icon="md-person" type="warning" @click.stop="editBoardAuth(item)">
                     </Button>
-                    <Button size="small" type="error" @click.stop="deleteConfirmModal(item)">
-                      <Icon type="md-trash" />
+                    <Button size="small" icon="md-trash" type="error" @click.stop="deleteConfirmModal(item)">
                     </Button>
                   </template>
                 </div>
