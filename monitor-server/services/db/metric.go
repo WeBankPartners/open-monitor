@@ -188,7 +188,12 @@ func MetricListNew(guid, monitorType, serviceGroup, onlyService string) (result 
 				metric.LogMetricGroupName = name
 			}
 		} else {
-			metric.MetricType = string(models.MetricTypeCustom)
+			// 业务配置类型 兜底
+			if strings.TrimSpace(metric.LogMetricConfig) != "" || strings.TrimSpace(metric.LogMetricTemplate) != "" {
+				metric.MetricType = string(models.MetricTypeBusiness)
+			} else {
+				metric.MetricType = string(models.MetricTypeCustom)
+			}
 		}
 	}
 	return
