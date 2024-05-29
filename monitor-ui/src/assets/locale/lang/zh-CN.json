@@ -178,8 +178,8 @@
   "metricConfigTipstwo": "2、点击 '查询' 可查看当前对象及指标下监控视图；",
   "metricConfigTipsthree": "3、使用 '新增指标' 增加指标项，并在点击 '保存修改' 后将配置保存；",
   "delConfirm": {
-    "title": "删除确认",
-    "tip": "即将被删除",
+    "title": "确认删除",
+    "tip": "删除数据将无法恢复,确认执行? ",
     "button": "删除"
   },
   "closeConfirm": {
@@ -443,5 +443,7 @@
   "m_edit_meric": "编辑指标",
   "m_general_type": "通用类型",
   "m_general_object": "通用对象",
-  "m_metric_name": "指标名"
+  "m_metric_name": "指标名",
+  "m_confirm": "确认",
+  "m_no_matching": "无匹配结果"
 }
