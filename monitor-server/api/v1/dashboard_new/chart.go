@@ -86,6 +86,11 @@ func GetChartData(c *gin.Context) {
 	if param.Aggregate == "" {
 		param.Aggregate = "avg"
 	}
+	for _, v := range param.Data {
+		if v.MonitorType != "" {
+			v.EndpointType = v.MonitorType
+		}
+	}
 	var err error
 	var queryList []*models.QueryMonitorData
 	var result = models.EChartOption{Legend: []string{}, Series: []*models.SerialModel{}}
