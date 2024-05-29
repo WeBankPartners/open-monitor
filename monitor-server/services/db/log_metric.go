@@ -491,23 +491,26 @@ func getCreateLogMetricConfigAction(param *models.LogMetricConfigObj, nowTime, o
 }
 
 func getLogMetricExprByAggType(metric, aggType, serviceGroup string, tagList []string) (result string) {
-	var tagString string
+	var tagString, tagFilterString string
 	if len(tagList) > 0 {
 		tagString = "," + strings.Join(tagList, ",")
+		for _, v := range tagList {
+			tagFilterString += fmt.Sprintf(",%s=\"$t_%s\"", v, v)
+		}
 	}
 	switch aggType {
 	case "sum":
-		result = fmt.Sprintf("sum(%s{key=\"%s\",agg=\"%s\",service_group=\"%s\"}) by (key,agg,service_group%s)", models.LogMetricName, metric, aggType, serviceGroup, tagString)
+		result = fmt.Sprintf("sum(%s{key=\"%s\",agg=\"%s\",service_group=\"%s\"%s}) by (key,agg,service_group%s)", models.LogMetricName, metric, aggType, serviceGroup, tagFilterString, tagString)
 	case "count":
-		result = fmt.Sprintf("sum(%s{key=\"%s\",agg=\"%s\",service_group=\"%s\"}) by (key,agg,service_group%s)", models.LogMetricName, metric, aggType, serviceGroup, tagString)
+		result = fmt.Sprintf("sum(%s{key=\"%s\",agg=\"%s\",service_group=\"%s\"%s}) by (key,agg,service_group%s)", models.LogMetricName, metric, aggType, serviceGroup, tagFilterString, tagString)
 	case "max":
-		result = fmt.Sprintf("max(%s{key=\"%s\",agg=\"%s\",service_group=\"%s\"}) by (key,agg,service_group%s)", models.LogMetricName, metric, aggType, serviceGroup, tagString)
+		result = fmt.Sprintf("max(%s{key=\"%s\",agg=\"%s\",service_group=\"%s\"%s}) by (key,agg,service_group%s)", models.LogMetricName, metric, aggType, serviceGroup, tagFilterString, tagString)
 	case "min":
-		result = fmt.Sprintf("min(%s{key=\"%s\",agg=\"%s\",service_group=\"%s\"}) by (key,agg,service_group%s)", models.LogMetricName, metric, aggType, serviceGroup, tagString)
+		result = fmt.Sprintf("min(%s{key=\"%s\",agg=\"%s\",service_group=\"%s\"%s}) by (key,agg,service_group%s)", models.LogMetricName, metric, aggType, serviceGroup, tagFilterString, tagString)
 	case "avg":
-		result = fmt.Sprintf("sum(%s{key=\"%s\",agg=\"sum\",service_group=\"%s\"}) by (key,service_group%s)/sum(%s{key=\"%s\",agg=\"count\",service_group=\"%s\"}) by (key,service_group%s) > 0 or (0*sum(%s{key=\"%s\",agg=\"sum\",service_group=\"%s\"}) by (key,service_group%s))", models.LogMetricName, metric, serviceGroup, tagString, models.LogMetricName, metric, serviceGroup, tagString, models.LogMetricName, metric, serviceGroup, tagString)
+		result = fmt.Sprintf("sum(%s{key=\"%s\",agg=\"sum\",service_group=\"%s\"%s}) by (key,service_group%s)/sum(%s{key=\"%s\",agg=\"count\",service_group=\"%s\"%s}) by (key,service_group%s) > 0 or (0*sum(%s{key=\"%s\",agg=\"sum\",service_group=\"%s\"%s}) by (key,service_group%s))", models.LogMetricName, metric, serviceGroup, tagFilterString, tagString, models.LogMetricName, metric, serviceGroup, tagFilterString, tagString, models.LogMetricName, metric, serviceGroup, tagFilterString, tagString)
 	default:
-		result = fmt.Sprintf("%s{key=\"%s\",agg=\"%s\",service_group=\"%s\"}", models.LogMetricName, metric, aggType, serviceGroup)
+		result = fmt.Sprintf("%s{key=\"%s\",agg=\"%s\",service_group=\"%s\"%s}", models.LogMetricName, metric, aggType, serviceGroup, tagFilterString)
 	}
 	return result
 }
