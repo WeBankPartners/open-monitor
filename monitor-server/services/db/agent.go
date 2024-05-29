@@ -341,7 +341,7 @@ func SearchRecursivePanel(search string) []*m.OptionModel {
 	x.SQL(sql, search).Find(&prt)
 	for _, v := range prt {
 		//options = append(options, &m.OptionModel{Id:-1, OptionValue:fmt.Sprintf("%s:sys", v.Guid), OptionText:v.DisplayName})
-		options = append(options, &m.OptionModel{Id: -1, OptionValue: v.Guid, OptionText: v.DisplayName, OptionType: "sys", OptionTypeName: v.ObjType})
+		options = append(options, &m.OptionModel{Id: -1, OptionValue: v.Guid, OptionText: v.DisplayName, OptionType: "sys", OptionTypeName: v.ObjType, AppObject: v.Guid})
 	}
 	return options
 }
