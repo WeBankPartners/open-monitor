@@ -170,6 +170,7 @@ func MetricListNew(guid, monitorType, serviceGroup, onlyService string) (result 
 		}
 	}
 	result = []*models.MetricTable{}
+	baseSql = baseSql + " order by update_time desc"
 	err = x.SQL(baseSql, params...).Find(&result)
 	if err != nil {
 		return
