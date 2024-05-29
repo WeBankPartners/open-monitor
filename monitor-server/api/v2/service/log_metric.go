@@ -142,7 +142,7 @@ func CreateLogMetricJson(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	err = db.CreateLogMetricJson(&param)
+	err = db.CreateLogMetricJson(&param, middleware.GetOperateUser(c))
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
@@ -172,7 +172,7 @@ func UpdateLogMetricJson(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	err = db.UpdateLogMetricJson(&param)
+	err = db.UpdateLogMetricJson(&param, middleware.GetOperateUser(c))
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
@@ -228,7 +228,7 @@ func CreateLogMetricConfig(c *gin.Context) {
 		middleware.ReturnValidateError(c, "regular illegal")
 		return
 	}
-	err := db.CreateLogMetricConfig(&param)
+	err := db.CreateLogMetricConfig(&param, middleware.GetOperateUser(c))
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
@@ -255,7 +255,7 @@ func UpdateLogMetricConfig(c *gin.Context) {
 		middleware.ReturnValidateError(c, "regular illegal")
 		return
 	}
-	err := db.UpdateLogMetricConfig(&param)
+	err := db.UpdateLogMetricConfig(&param, middleware.GetOperateUser(c))
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
@@ -443,7 +443,7 @@ func ImportLogMetricExcel(c *gin.Context) {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
-	if err = db.ImportLogMetricExcel(logMonitorGuid, logMetricConfigList); err != nil {
+	if err = db.ImportLogMetricExcel(logMonitorGuid, middleware.GetOperateUser(c), logMetricConfigList); err != nil {
 		middleware.ReturnHandleError(c, "import log metric from excel data fail", err)
 	} else {
 		middleware.ReturnSuccess(c)
