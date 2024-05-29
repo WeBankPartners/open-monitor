@@ -105,29 +105,6 @@ export default {
       },
       columnsForParameterCollection: [
         {
-          title: this.$t('field.displayName'),
-          key: 'display_name',
-          renderHeader: () => {
-            return (
-              <span>
-                <span style="color:red">*</span>
-                <span>{this.$t('field.displayName')}</span>
-              </span>
-            )
-          },
-          render: (h, params) => {
-            return (
-              <Input
-                value={params.row.display_name}
-                disabled={this.view}
-                onInput={v => {
-                  this.changeVal('param_list', params.index, 'display_name', v)
-                }}
-              />
-            )
-          }
-        },
-        {
           title: this.$t('m_parameter_key'),
           key: 'name',
           renderHeader: () => {
@@ -191,6 +168,12 @@ export default {
             )
           },
           key: 'demo_match_value',
+          render: (h, params) => {
+            const demo_match_value = params.row.demo_match_value
+            return (
+              <span style={demo_match_value?'':'color:#c5c8ce'}>{demo_match_value || this.$t('m_no_matching')}</span>
+            )
+          }
         },
         {
           title: this.$t('m_match_value_pure'),
@@ -227,9 +210,9 @@ export default {
                   type="error"
                   style="margin-right:5px;"
                   disabled={this.view}
-                  icon="md-trash"
                   onClick={() => this.deleteAction('param_list', params.index)}
                 >
+                  <Icon type="md-trash" size="16"></Icon>
                 </Button>
               </div>
             )
@@ -237,29 +220,6 @@ export default {
         }
       ],
       columnsForComputeMetrics: [
-        {
-          title: this.$t('field.displayName'),
-          key: 'display_name',
-          renderHeader: () => {
-            return (
-              <span>
-                <span style="color:red">*</span>
-                <span>{this.$t('field.displayName')}</span>
-              </span>
-            )
-          },
-          render: (h, params) => {
-            return (
-              <Input
-                value={params.row.display_name}
-                disabled={this.view}
-                onInput={v => {
-                  this.changeVal('metric_list', params.index, 'display_name', v)
-                }}
-              />
-            )
-          }
-        },
         {
           title: this.$t('m_metric_key'),
           key: 'metric',
@@ -411,9 +371,9 @@ export default {
                   type="error"
                   style="margin-right:5px;"
                   disabled={this.view}
-                  icon="md-trash"
                   onClick={() => this.deleteAction('metric_list', params.index)}
                 >
+                  <Icon type="md-trash" size="16"></Icon>
                 </Button>
               </div>
             )
@@ -487,7 +447,7 @@ export default {
         return true
       }
       const is_param_list_empty = tmpData.param_list.some((element) => {
-        return element.name === '' || element.display_name === '' || element.regular === ''
+        return element.name === '' || element.regular === ''
       })
       if (is_param_list_empty) {
         this.$Message.warning(`${this.$t('m_parameter_collection')}: ${this.$t('m_fields_cannot_be_empty')}`)
@@ -515,7 +475,7 @@ export default {
       }
 
       const is_metric_list_empty = tmpData.metric_list.some((element) => {
-        return element.display_name === '' || element.metric === '' || element.log_param_name === '' || element.agg_type === ''
+        return element.metric === '' || element.log_param_name === '' || element.agg_type === ''
       })
       if (is_metric_list_empty) {
         this.$Message.warning(`${this.$t('m_compute_metrics')}: ${this.$t('m_fields_cannot_be_empty')}`)
