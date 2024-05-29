@@ -7,7 +7,7 @@
           <span class="underline"></span>
         </div>
         <div>
-          <div style="display: inline-block;position: relative;bottom: 50px;right: 30px;">
+          <div style="display: inline-block;position: relative;bottom: 50px;right: 42px;">
             <Button
               type="info"
               class="btn-left"
@@ -40,11 +40,11 @@
 
       <PageTable :pageConfig="pageConfig">
         <div slot='tableExtend'>
-          <div style="margin: 8px 4px">
-            <Button type="success" @click="addByCustom(pageConfig.table.isExtend.parentData)" ghost size="small">{{ $t('button.add') }}</Button>
+          <div style="margin: 8px 4px 0;">
+            <Button type="success" @click="addByCustom(pageConfig.table.isExtend.parentData)" ghost size="small" style="margin: 0 12px;">{{ $t('button.add') }}</Button>
             <Button type="primary" @click="addMetricConfig(pageConfig.table.isExtend.parentData)" ghost size="small">{{ $t('m_use_template') }}</Button>
           </div>
-          <div style="margin:8px;">
+          <div>
             <extendTable :detailConfig="pageConfig.table.isExtend.detailConfig"></extendTable>
           </div>
         </div>
@@ -622,7 +622,12 @@ export default {
         {label: 'mysql', value: 'mysql'}
       ],
       isShowGroupMetricUpload: false,
-      groupMetricId: ''
+      groupMetricId: '',
+      typeToName: { // 模版枚举
+        custom: this.$t('m_custom_regex'),
+        regular: this.$t('m_standard_regex'),
+        json: this.$t('m_standard_json'),
+      }
     }
   },
   computed: {
@@ -876,7 +881,10 @@ export default {
     reloadMetricData (guid) {
       const path = `${this.$root.apiCenter.getLogMetricByPath}/${guid}`
       this.$root.$httpRequestEntrance.httpRequestEntrance("GET", path, {}, (responseData) => {
-        this.pageConfig.table.isExtend.detailConfig[0].data = responseData.metric_groups
+        this.pageConfig.table.isExtend.detailConfig[0].data = responseData.metric_groups.map(group => {
+        group.log_type_display = this.typeToName[group.log_type]
+        return group
+      })
       })
     },
     singleAddF (rowData) {
@@ -889,12 +897,7 @@ export default {
     getExtendInfo(item){
       item.metric_groups.forEach(xx => xx.pId = item.guid)
       this.pageConfig.table.isExtend.detailConfig[0].data = item.metric_groups.map(group => {
-        const typeToName = {
-          custom: this.$t('m_custom_regex'),
-          regular: this.$t('m_standard_regex'),
-          json: this.$t('m_standard_json'),
-        }
-        group.log_type_display = typeToName[group.log_type]
+        group.log_type_display = this.typeToName[group.log_type]
         return group
       })
       this.pageConfig.table.isExtend.parentData = item
