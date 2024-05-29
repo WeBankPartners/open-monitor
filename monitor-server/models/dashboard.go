@@ -33,6 +33,7 @@ type OptionModel struct {
 	Active         bool   `json:"active"`
 	OptionType     string `json:"type"`
 	OptionTypeName string `json:"option_type_name"`
+	AppObject      string `json:"app_object"`
 }
 
 type ButtonModel struct {
@@ -250,6 +251,7 @@ type ChartQueryConfigObj struct {
 	PromQl       string `json:"prom_ql"`
 	AppObject    string `json:"app_object"`
 	EndpointType string `json:"endpoint_type"`
+	MonitorType  string `json:"monitor_type"`
 }
 
 type ChartQueryCompareParam struct {
