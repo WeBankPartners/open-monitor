@@ -179,7 +179,7 @@
   "metricConfigTipsthree": "3. Click 'Add metric' button to config the metric, then click Save button to save the configuration.",
   "delConfirm": {
     "title": "Delete confirmation",
-    "tip": "Will be deleted soon ?",
+    "tip": "Deleting data cannot be undone, confirm to proceed?",
     "button": "Delete"
   },
   "closeConfirm": {
@@ -444,5 +444,7 @@
   "m_edit_meric": "Edit Metric",
   "m_general_type": "Common Type",
   "m_general_object": "Common Object",
-  "m_metric_name": "Metric Name"
+  "m_metric_name": "Metric Name",
+  "m_confirm": "Confirm",
+  "m_no_matching": "No matching results"
 }
