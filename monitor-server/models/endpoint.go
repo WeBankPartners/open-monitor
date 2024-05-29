@@ -57,7 +57,10 @@ type MetricTable struct {
 	TagOwner           string `json:"tag_owner" xorm:"tag_owner"`
 	ServiceGroup       string `json:"service_group" xorm:"service_group"`
 	Workspace          string `json:"workspace" xorm:"workspace"`
+	CreateTime         string `json:"create_time" xorm:"create_time"`
 	UpdateTime         string `json:"update_time" xorm:"update_time"`
+	CreateUser         string `json:"create_user" xorm:"create_user"`
+	UpdateUser         string `json:"update_user" xorm:"update_user"`
 	LogMetricConfig    string `json:"log_metric_config" xorm:"log_metric_config"`
 	LogMetricTemplate  string `json:"log_metric_template" xorm:"log_metric_template"`
 	LogMetricGroup     string `json:"log_metric_group" xorm:"log_metric_group"`
