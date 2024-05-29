@@ -119,7 +119,7 @@ func GetAddCustomDashboardChartRelSQL(chartRelList []*models.CustomDashboardChar
 	var actions []*Action
 	if len(chartRelList) > 0 {
 		for _, rel := range chartRelList {
-			actions = append(actions, &Action{Sql: "insert into custom_dashboard_chart_rel values(?,?,?,?,?,?,?,?,?)", Param: []interface{}{rel.Guid,
+			actions = append(actions, &Action{Sql: "insert into custom_dashboard_chart_rel(guid,custom_dashboard,dashboard_chart,group,display_config,create_user,updated_user,create_time,update_time) values(?,?,?,?,?,?,?,?,?)", Param: []interface{}{rel.Guid,
 				rel.CustomDashboard, rel.DashboardChart, rel.Group, rel.DisplayConfig, rel.CreateUser, rel.UpdateUser, rel.CreateTime, rel.UpdateTime}})
 		}
 	}
@@ -186,7 +186,7 @@ func GetInsertCustomChartPermissionSQL(permissionList []*models.CustomChartPermi
 	var actions []*Action
 	if len(permissionList) > 0 {
 		for _, permission := range permissionList {
-			actions = append(actions, &Action{Sql: "insert into custom_chart_permission values (?,?,?,?)",
+			actions = append(actions, &Action{Sql: "insert into custom_chart_permission(guid,dashboard_chart,role_id,permission) values (?,?,?,?)",
 				Param: []interface{}{permission.Guid, permission.DashboardChart, permission.RoleId, permission.Permission}})
 		}
 	}
@@ -288,7 +288,7 @@ func UpdateCustomChart(chartDto models.CustomChartDto, user string) (err error) 
 			if len(series.Tags) > 0 {
 				for _, tag := range series.Tags {
 					tagId := guid.CreateGuid()
-					actions = append(actions, &Action{Sql: "insert into custom_chart_series_tag values(?,?,?)", Param: []interface{}{
+					actions = append(actions, &Action{Sql: "insert into custom_chart_series_tag(guid,dashboard_chart_config,name) values(?,?,?)", Param: []interface{}{
 						tagId, seriesId, tag.TagName}})
 					if len(tag.TagValue) > 0 {
 						for _, tagValue := range tag.TagValue {
@@ -304,7 +304,7 @@ func UpdateCustomChart(chartDto models.CustomChartDto, user string) (err error) 
 						start := strings.LastIndex(colorConfig.SeriesName, "{")
 						tags = colorConfig.SeriesName[start+1 : len(colorConfig.SeriesName)-1]
 					}
-					actions = append(actions, &Action{Sql: "insert into custom_chart_series_config values(?,?,?,?,?)", Param: []interface{}{
+					actions = append(actions, &Action{Sql: "insert into custom_chart_series_config(guid,dashboard_chart_config,tags,color,series_name) values(?,?,?,?,?)", Param: []interface{}{
 						guid.CreateGuid(), seriesId, tags, colorConfig.Color, colorConfig.SeriesName,
 					}})
 				}
@@ -335,10 +335,10 @@ func AddCustomChart(param models.AddCustomChartParam, user string) (err error) {
 		UpdateTime:      now,
 	}
 	displayConfig, _ = json.Marshal(param.DisplayConfig)
-	actions = append(actions, &Action{Sql: "insert into custom_chart values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+	actions = append(actions, &Action{Sql: "insert into custom_chart(guid,source_dashboard,public,name,chart_type,line_type,aggregate,agg_step,unit,create_user,update_user,create_time,update_time,chart_template,pie_type) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
 		chart.Guid, chart.SourceDashboard, chart.Public, chart.Name, chart.ChartType, chart.LineType, chart.Aggregate,
 		chart.AggStep, chart.Unit, chart.CreateUser, chart.UpdateUser, chart.CreateTime, chart.UpdateTime, chart.ChartTemplate, chart.PieType}})
-	actions = append(actions, &Action{Sql: "insert into custom_dashboard_chart_rel values(?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+	actions = append(actions, &Action{Sql: "insert into custom_dashboard_chart_rel(guid,custom_dashboard,dashboard_chart,group,display_config,create_user,updated_user,create_time,update_time) values(?,?,?,?,?,?,?,?,?)", Param: []interface{}{
 		guid.CreateGuid(), param.DashboardId, chart.Guid, param.Group, string(displayConfig), user, user, now, now}})
 	return Transaction(actions)
 }
@@ -415,18 +415,18 @@ func CopyCustomChart(dashboardId int, user, group, customChart string, displayCo
 	if tagValueMap, err = QueryAllChartSeriesTagValue(); err != nil {
 		return
 	}
-	actions = append(actions, &Action{Sql: "insert into custom_chart values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+	actions = append(actions, &Action{Sql: "insert into custom_chart(guid,source_dashboard,public,name,chart_type,line_type,aggregate,agg_step,unit,create_user,update_user,create_time,update_time,chart_template,pie_type) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
 		newChartId, dashboardId, 0, chart.Name + "(1)", chart.ChartType, chart.LineType, chart.Aggregate,
 		chart.AggStep, chart.Unit, chart.CreateUser, chart.UpdateUser, chart.CreateTime, chart.UpdateTime, chart.ChartTemplate, chart.PieType}})
 	for _, series := range chartSeriesList {
 		seriesId := guid.CreateGuid()
-		actions = append(actions, &Action{Sql: "insert into custom_chart_series values(?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+		actions = append(actions, &Action{Sql: "insert into custom_chart_series(guid,dashboard_chart,endpoint,service_group,endpoint_name,monitor_type,metric,color_group,pie_display_tag,endpoint_type,metric_type,metric_guid)values(?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
 			seriesId, newChartId, series.Endpoint, series.ServiceGroup, series.EndpointName, series.MonitorType, series.Metric, series.ColorGroup,
 			series.PieDisplayTag, series.EndpointType, series.MetricType, series.MetricGuid}})
 		if confArr, ok := configMap[series.Guid]; ok {
 			if len(confArr) > 0 {
 				for _, config := range confArr {
-					actions = append(actions, &Action{Sql: "insert into custom_chart_series_config values(?,?,?,?,?)", Param: []interface{}{
+					actions = append(actions, &Action{Sql: "insert into custom_chart_series_config(guid,dashboard_chart_config,tags,color,series_name) values(?,?,?,?,?)", Param: []interface{}{
 						guid.CreateGuid(), seriesId, config.Tags, config.Color, config.SeriesName,
 					}})
 				}
@@ -436,7 +436,7 @@ func CopyCustomChart(dashboardId int, user, group, customChart string, displayCo
 			if len(tagArr) > 0 {
 				for _, tag := range tagArr {
 					newTagId := guid.CreateGuid()
-					actions = append(actions, &Action{Sql: "insert into custom_chart_series_tag values(?,?,?)", Param: []interface{}{
+					actions = append(actions, &Action{Sql: "insert into custom_chart_series_tag(guid,dashboard_chart_config,name) values(?,?,?)", Param: []interface{}{
 						newTagId, seriesId, tag.Name}})
 					if tagValueArr, ok2 := tagValueMap[tag.Guid]; ok2 {
 						if len(tagValueArr) > 0 {
@@ -449,7 +449,7 @@ func CopyCustomChart(dashboardId int, user, group, customChart string, displayCo
 			}
 		}
 	}
-	actions = append(actions, &Action{Sql: "insert into custom_dashboard_chart_rel values(?,?,?,?,?,?,?,?,?)", Param: []interface{}{guid.CreateGuid(),
+	actions = append(actions, &Action{Sql: "insert into custom_dashboard_chart_rel(guid,custom_dashboard,dashboard_chart,group,display_config,create_user,updated_user,create_time,update_time) values(?,?,?,?,?,?,?,?,?)", Param: []interface{}{guid.CreateGuid(),
 		dashboardId, newChartId, group, string(byteConf), user, user, now, now}})
 	return Transaction(actions)
 }
