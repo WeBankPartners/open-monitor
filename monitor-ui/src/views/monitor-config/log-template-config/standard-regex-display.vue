@@ -224,6 +224,12 @@ export default {
             )
           },
           key: 'demo_match_value',
+          render: (h, params) => {
+            const demo_match_value = params.row.demo_match_value
+            return (
+              <span style={demo_match_value?'':'color:#c5c8ce'}>{demo_match_value || this.$t('m_no_matching')}</span>
+            )
+          }
         },
       ],
       columnsForComputeMetrics: [

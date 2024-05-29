@@ -27,6 +27,10 @@ window.addOptions({
 })
 
 const implicitRoute = {
+  'monitorConfigIndex/endpointManagement': {
+    parentBreadcrumb: {'zh-CN': '对象', 'en-US': 'Object'},
+    childBreadcrumb: { 'zh-CN': '对象', 'en-US': 'Object' }
+  },
   'monitorConfigIndex/groupManagement': {
     parentBreadcrumb: {'zh-CN': '对象', 'en-US': 'Object'},
     childBreadcrumb: { 'zh-CN': '对象组', 'en-US': 'Object Group' }
@@ -48,7 +52,7 @@ const implicitRoute = {
     childBreadcrumb: { 'zh-CN': '采集器', 'en-US': 'Collector'}
   },
   'monitorConfigIndex/businessMonitor': {
-    parentBreadcrumb: {'zh-CN': '指标', 'en-US': 'quota'},
+    parentBreadcrumb: {'zh-CN': '指标123', 'en-US': 'quota'},
     childBreadcrumb: { 'zh-CN': '业务配置', 'en-US': 'Business Configuration' }
   },
   'monitorConfigIndex/logTemplate': {
