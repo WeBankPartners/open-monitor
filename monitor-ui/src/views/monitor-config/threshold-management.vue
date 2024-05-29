@@ -140,7 +140,10 @@ export default {
       this.$Message.success(this.$t('tips.success'))
     },
     uploadFailed (error, file) {
-      this.$Message.warning(file.message)
+      this.$Message.warning({
+          content: file.message,
+          duration: 5
+      })
     },
     typeChange () {
       this.clearTargrt()
