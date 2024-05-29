@@ -33,6 +33,7 @@ type OptionModel struct {
 	Active         bool   `json:"active"`
 	OptionType     string `json:"type"`
 	OptionTypeName string `json:"option_type_name"`
+	AppObject      string `json:"app_object"`
 }
 
 type ButtonModel struct {
