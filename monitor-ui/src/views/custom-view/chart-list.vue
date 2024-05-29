@@ -243,13 +243,13 @@ export default {
                 return (params.row.permission === 'mgmt' ? 
                     (<div >
                         <Button size="small" class="mr-1"  type="primary" on-click={() => this.editSingleChart(params.row)}>
-                            <Icon type="md-create" />
+                            <Icon type="md-create" size="16"></Icon>
                         </Button>
-                        <Button size="small"  type="warning" on-click={() => this.editSingleRoles(params.row)}>
-                            <Icon type="md-person" />
+                        <Button size="small" type="warning" on-click={() => this.editSingleRoles(params.row)}>
+                            <Icon type="md-person" size="16"></Icon>
                         </Button>
                         <Button size="small" type="error" on-click={() => this.showConfirmModal(params.row)}>
-                            <Icon type="md-trash" />
+                            <Icon type="md-trash" size="16"></Icon>
                         </Button>
                     </div>) : <div>--</div>
                 )
