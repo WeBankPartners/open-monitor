@@ -104,6 +104,7 @@ func GetCustomChartSeries(customChartGuid string) (series []*models.CustomChartS
 			PieDisplayTag: row.PieDisplayTag,
 			EndpointType:  row.EndpointType,
 			MetricType:    row.MetricType,
+			MetricGuid:    row.MetricGuid,
 			Metric:        row.Metric,
 			Tags:          []*models.TagDto{},
 			ColorConfig:   nil,
