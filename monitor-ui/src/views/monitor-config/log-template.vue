@@ -45,7 +45,6 @@
               <div class="w-header" slot="title">
                 <div class="title">
                   {{ item.name }}
-                  <!-- {{ roleData.manageRoleDisplay }} -->
                   <span class="underline"></span>
                 </div>
                 <Icon
@@ -205,10 +204,10 @@ export default {
                   <Button
                     size="small"
                     type="error"
-                    icon="md-trash"
                     onClick={() => this.removeAction(params.row)}
                     style="margin-right:5px;"
                   >
+                    <Icon type="md-trash" size="16"></Icon>
                   </Button>
                 </Tooltip>
               </div>
