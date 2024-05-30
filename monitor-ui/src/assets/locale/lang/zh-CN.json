@@ -445,5 +445,7 @@
   "m_general_object": "通用对象",
   "m_metric_name": "指标名",
   "m_confirm": "确认",
-  "m_no_matching": "无匹配结果"
+  "m_no_matching": "无匹配结果",
+  "m_notification": "通知",
+  "m_alert": "告警"
 }
