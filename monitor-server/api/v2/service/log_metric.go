@@ -805,9 +805,11 @@ func UpdateLogMetricCustomGroup(c *gin.Context) {
 		return
 	}
 	for _, v := range param.MetricList {
-		if _, existFlag := existMetricMap[v.Metric]; existFlag {
-			err = fmt.Errorf(middleware.GetMessageMap(c).MetricDuplicateError, v.Metric)
-			break
+		if existLogMetricGroup, existFlag := existMetricMap[v.Metric]; existFlag {
+			if existLogMetricGroup != "" && existLogMetricGroup != param.Guid {
+				err = fmt.Errorf(middleware.GetMessageMap(c).MetricDuplicateError, v.Metric)
+				break
+			}
 		} else {
 			existMetricMap[v.Metric] = param.MonitorType
 		}
