@@ -268,8 +268,8 @@ func UpdateCustomChart(chartDto models.CustomChartDto, user string) (err error) 
 	var actions, subActions []*Action
 	now := time.Now().Format(models.DatetimeFormat)
 	actions = append(actions, &Action{Sql: "update custom_chart set name =?,chart_type=?,line_type=?,pie_type=?,aggregate=?," +
-		"agg_step=?,unit=?,update_user=?,update_time=? where guid=?", Param: []interface{}{chartDto.Name, chartDto.ChartType,
-		chartDto.LineType, chartDto.PieType, chartDto.Aggregate, chartDto.AggStep, chartDto.Unit, user, now, chartDto.Id}})
+		"agg_step=?,unit=?,update_user=?,update_time=?,chart_template = ? where guid=?", Param: []interface{}{chartDto.Name, chartDto.ChartType,
+		chartDto.LineType, chartDto.PieType, chartDto.Aggregate, chartDto.AggStep, chartDto.Unit, user, now, chartDto.ChartTemplate, chartDto.Id}})
 	// 先删除图表配置
 	if subActions, err = DeleteCustomChartConfigSQL(chartDto.Id); err != nil {
 		return
