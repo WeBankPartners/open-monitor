@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -421,6 +422,13 @@ func QueryLogKeywordData() (result map[string]float64, err error) {
 }
 
 func QueryPromSeries(procQL string) (result []map[string]string, err error) {
+	if strings.Contains(procQL, "$") {
+		re, _ := regexp.Compile("=\"[\\$]+[^\"]+\"")
+		fetchTag := re.FindAll([]byte(procQL), -1)
+		for _, vv := range fetchTag {
+			procQL = strings.Replace(procQL, string(vv), "=~\".*\"", -1)
+		}
+	}
 	requestUrl, urlParseErr := url.Parse(fmt.Sprintf("http://%s/api/v1/query", promDS.Host))
 	if urlParseErr != nil {
 		return result, fmt.Errorf("Url parse fail,%s ", urlParseErr.Error())
