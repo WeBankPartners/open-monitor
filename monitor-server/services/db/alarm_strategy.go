@@ -689,7 +689,11 @@ func buildRuleFileContentNew(ruleFileName, guidExpr, addressExpr, ipExpr string,
 			for _, tagObj := range strategy.Tags {
 				tagSourceString := "$t_" + tagObj.TagName
 				if strings.Contains(strategy.MetricExpr, tagSourceString) {
-					strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\""+tagSourceString+"\"", "=~\""+strings.Join(tagObj.TagValue, "|")+"\"", -1)
+					if len(tagObj.TagValue) == 0 {
+						strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\""+tagSourceString+"\"", "=~\".*\"", -1)
+					} else {
+						strategy.MetricExpr = strings.Replace(strategy.MetricExpr, "=\""+tagSourceString+"\"", "=~\""+strings.Join(tagObj.TagValue, "|")+"\"", -1)
+					}
 				}
 			}
 		}
