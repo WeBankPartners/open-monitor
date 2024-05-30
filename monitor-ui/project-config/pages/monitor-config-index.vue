@@ -44,7 +44,7 @@ export default {
             },
             {
                 title: this.$t('menu.alert'),
-                icon: 'md-alert',
+                icon: 'md-warning',
                 name: '3',
                 children: [
                     { title: this.$t('m_metric_threshold'), path: '/monitorConfigIndex/thresholdManagement', name: '3-1' },
