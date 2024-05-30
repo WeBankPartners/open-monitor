@@ -446,5 +446,7 @@
   "m_general_object": "Common Object",
   "m_metric_name": "Metric Name",
   "m_confirm": "Confirm",
-  "m_no_matching": "No matching results"
+  "m_no_matching": "No matching results",
+  "m_notification": "Notification",
+  "m_alert": "Alert"
 }
