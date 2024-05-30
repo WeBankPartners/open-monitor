@@ -111,6 +111,7 @@ func GetChartData(c *gin.Context) {
 		middleware.ReturnSuccessData(c, result)
 		return
 	}
+	log.Logger.Debug("chartData param", log.JsonObj("param", param))
 	// query from prometheus
 	err = getChartQueryData(queryList, &param, &result)
 	if err != nil {
@@ -276,6 +277,7 @@ func chartCompare(param *models.ChartQueryParam) error {
 	param.Compare.CompareSecondEndTimestamp = secondEndTime.Unix()
 	param.Compare.CompareFirstLegend = fmt.Sprintf("%s_%s", param.Compare.CompareFirstStart, param.Compare.CompareFirstEnd)
 	param.Compare.CompareSubTime = param.Compare.CompareSecondStartTimestamp - param.Start
+	param.Compare.CompareSecondLegend = fmt.Sprintf("%s_%s", param.Compare.CompareSecondStart, param.Compare.CompareSecondEnd)
 	return nil
 }
 
@@ -377,7 +379,7 @@ func getChartQueryData(queryList []*models.QueryMonitorData, param *models.Chart
 		archiveQueryFlag = true
 	}
 	for _, query := range queryList {
-		log.Logger.Debug("Query param", log.StringList("endpoint", query.Endpoint), log.StringList("metric", query.Metric), log.Int64("start", query.Start), log.Int64("end", query.End), log.String("promQl", query.PromQ))
+		log.Logger.Debug("Query param", log.JsonObj("param", query))
 		if query.Cluster != "" && query.Cluster != "default" {
 			query.Cluster = db.GetClusterAddress(query.Cluster)
 		}
