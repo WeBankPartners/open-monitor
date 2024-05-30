@@ -37,56 +37,60 @@
 
 <script>
 export default {
-    props: {
-        menuList: Array
+  props: {
+    menuList: Array,
+    openNames: Array,
+    defaultMenu: String
+  },
+  data () {
+    return {
+      scrollTop: 0,
+      expand: true,
+      activeName: ''
+    }
+  },
+  created () {
+    this.menuList.forEach(i => {
+    for (let j of i.children) {
+      if (j.path === this.$route.fullPath) {
+        this.activeName = j.name
+        // this.openNames = [i.name]
+      }
+    }
+    })
+  },
+  mounted () {
+    if (this.$eventBusP) {
+      this.$eventBusP.$emit('expand-menu', this.expand)
+    } else {
+      this.$bus.$emit('expand-menu', this.expand)
+    }
+    window.addEventListener('scroll', this.getScrollTop)
+    if (!this.activeName) {
+      this.activeName = this.defaultMenu
+    }
+  },
+  beforeDestroy () {
+    if (this.$eventBusP) {
+      this.$eventBusP.$emit('expand-menu', false)
+    }
+    window.removeEventListener('scroll', this.getScrollTop)
+  },
+  methods: {
+    getScrollTop () {
+      this.scrollTop = document.documentElement.scrollTop || document.body.scrollTop
     },
-    data () {
-        return {
-            scrollTop: 0,
-            expand: true,
-            activeName: '',
-            openNames: [],
-        }
-    },
-    created () {
-        this.menuList.forEach(i => {
-        for (let j of i.children) {
-            if (j.path === this.$route.fullPath) {
-                this.activeName = j.name
-                this.openNames = [i.name]
-            }
-        }
-        })
-    },
-    mounted () {
+    handleExpand () {
+      this.expand = !this.expand
       if (this.$eventBusP) {
         this.$eventBusP.$emit('expand-menu', this.expand)
-      } else {
-        this.$bus.$emit('expand-menu', this.expand)
       }
-      window.addEventListener('scroll', this.getScrollTop)
+      this.$emit('menuStatusChange', this.expand);
     },
-    beforeDestroy () {
-        if (this.$eventBusP) {
-            this.$eventBusP.$emit('expand-menu', false)
-        }
-        window.removeEventListener('scroll', this.getScrollTop)
-    },
-    methods: {
-        getScrollTop () {
-            this.scrollTop = document.documentElement.scrollTop || document.body.scrollTop
-        },
-        handleExpand () {
-            this.expand = !this.expand
-            if (this.$eventBusP) {
-                this.$eventBusP.$emit('expand-menu', this.expand)
-            }
-            this.$emit('menuStatusChange', this.expand);
-        },
-        handleSelectMenu (name) {
-            this.activeName = name
-        }
+    handleSelectMenu (name) {
+      this.activeName = name
     }
+  }
 }
 </script>
 
