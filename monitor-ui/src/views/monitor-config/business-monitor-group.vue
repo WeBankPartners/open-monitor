@@ -7,7 +7,7 @@
           <span class="underline"></span>
         </div>
         <div>
-          <div style="display: inline-block;position: relative;bottom: 50px;right: 42px;">
+          <div style="display: inline-block;position: relative;bottom: 48px;left: 66px;">
             <Button
               type="info"
               class="btn-left"
@@ -32,7 +32,7 @@
               </Upload>
             </div>
           </div>
-          <Button type="success" class="btn-right" size="small" @click="add">
+          <Button type="success" class="btn-right" @click="add">
             {{ $t('button.add') }}
           </Button>
         </div>
@@ -41,8 +41,8 @@
       <PageTable :pageConfig="pageConfig">
         <div slot='tableExtend'>
           <div style="margin: 8px 4px 0;">
-            <Button type="success" @click="addByCustom(pageConfig.table.isExtend.parentData)" ghost size="small" style="margin: 0 12px;">{{ $t('button.add') }}</Button>
-            <Button type="primary" @click="addMetricConfig(pageConfig.table.isExtend.parentData)" ghost size="small">{{ $t('m_use_template') }}</Button>
+            <Button type="success" @click="addByCustom(pageConfig.table.isExtend.parentData)" ghost style="margin: 0 12px;">{{ $t('button.add') }}</Button>
+            <Button type="primary" @click="addMetricConfig(pageConfig.table.isExtend.parentData)" ghost>{{ $t('m_use_template') }}</Button>
           </div>
           <div>
             <extendTable :detailConfig="pageConfig.table.isExtend.detailConfig"></extendTable>
@@ -50,7 +50,6 @@
         </div>
       </PageTable>
     </section>
-
     <Modal
       v-model="addAndEditModal.isShow"
       :title="addAndEditModal.isAdd ? $t('button.add') : $t('button.edit')"
@@ -329,7 +328,7 @@
           {{$t('m_db')}}
           <span class="underline"></span>
         </div>
-        <Button type="success" class="btn-right" size="small" @click="addDb" style="margin: 8px 0">
+        <Button type="success" class="btn-right" @click="addDb" style="margin: 8px 0">
           {{ $t('button.add') }}
         </Button>
       </div>
