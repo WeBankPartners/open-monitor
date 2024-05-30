@@ -98,13 +98,17 @@ func QueryMetricTagValue(c *gin.Context) {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
+	result := []*models.QueryMetricTagResultObj{}
+	if param.MetricId == "" {
+		middleware.ReturnSuccessData(c, result)
+		return
+	}
 	// 查指标有哪些标签
 	metricRow, err := db.GetSimpleMetric(param.MetricId)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
-	result := []*models.QueryMetricTagResultObj{}
 	var tagList []string
 	tagList, err = db.GetMetricTags(metricRow)
 	if err != nil {
