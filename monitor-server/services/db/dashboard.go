@@ -171,7 +171,7 @@ func GetPromMetric(endpoint []string, metric string) (error, string) {
 	return err, promQL
 }
 
-func ReplacePromQlKeyword(promQl, metric string, host *m.EndpointNewTable) string {
+func ReplacePromQlKeyword(promQl, metric string, host *m.EndpointNewTable, tagList []*m.TagDto) string {
 	var tmpTag string
 	if strings.Contains(metric, "/") {
 		tmpTag = metric[strings.Index(metric, "/")+1:]
@@ -204,6 +204,18 @@ func ReplacePromQlKeyword(promQl, metric string, host *m.EndpointNewTable) strin
 	//if strings.Contains(promQl, "$k8s_cluster") {
 	//	promQl = strings.Replace(promQl, "$k8s_cluster", host.OsType, -1)
 	//}
+	if len(tagList) > 0 {
+		for _, tagObj := range tagList {
+			tagSourceString := "$t_" + tagObj.TagName
+			if strings.Contains(promQl, tagSourceString) {
+				if len(tagObj.TagValue) == 0 {
+					promQl = strings.Replace(promQl, "=\""+tagSourceString+"\"", "=~\".*\"", -1)
+				} else {
+					promQl = strings.Replace(promQl, "=\""+tagSourceString+"\"", "=~\""+strings.Join(tagObj.TagValue, "|")+"\"", -1)
+				}
+			}
+		}
+	}
 	if strings.Contains(promQl, "$") {
 		re, _ := regexp.Compile("=\"[\\$]+[^\"]+\"")
 		fetchTag := re.FindAll([]byte(promQl), -1)
