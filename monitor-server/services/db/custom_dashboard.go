@@ -106,7 +106,7 @@ func AddCustomDashboard(customDashboard *models.CustomDashboardTable, mgmtRoles,
 }
 
 func AddCustomDashboardChartRel(rel *models.CustomDashboardChartRel) (err error) {
-	_, err = x.Exec("insert into custom_dashboard_chart_rel(guid,custom_dashboard,dashboard_chart,group,display_config,create_user,updated_user,"+
+	_, err = x.Exec("insert into custom_dashboard_chart_rel(guid,custom_dashboard,dashboard_chart,`group`,display_config,create_user,updated_user,"+
 		"create_time,update_time) values(?,?,?,?,?,?,?,?,?)", rel.Guid, rel.CustomDashboard, rel.DashboardChart, rel.Group, rel.DisplayConfig, rel.CreateUser,
 		rel.UpdateUser, rel.CreateTime, rel.UpdateTime)
 	return
