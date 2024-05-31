@@ -94,8 +94,8 @@
             </th>
           </template>
           
-          <th style="width: 140px;font-size: 13px;" class="th-border-bottom c-dark" v-if="table.btn.length != 0"><div style="width:130px">{{$t('table.action')}}</div></th>
-          <th style="width: 151px;font-size: 13px;" class="th-border-bottom c-dark handleSty" v-if="table.btn.length != 0 && table.handleFloat">{{$t('table.action')}}</th>
+          <th style="width: 140px;" class="th-border-bottom c-dark" v-if="table.btn.length != 0"><div style="width:130px">{{$t('table.action')}}</div></th>
+          <th style="width: 151px;" class="th-border-bottom c-dark handleSty" v-if="table.btn.length != 0 && table.handleFloat">{{$t('table.action')}}</th>
         </tr>
         </thead>
         <tbody>
@@ -234,7 +234,7 @@
               </template> -->
               <!-- </div> -->
             <!-- </td> -->
-            <td class="td-center td-operation handleSty c-dark" v-if="table.btn.length != 0 && table.handleFloat" style="padding:10px 0px">
+            <td class="td-center td-operation handleSty c-dark" v-if="table.btn.length != 0 && table.handleFloat" style="padding:9px 0px">
               <div style="width: 151px;padding-left: 8px;height: 21px;">
               <template v-if="operationsFormat(value, tableDataIndex)">   
               </template>
@@ -1106,7 +1106,7 @@
   //   background-color: rgb(235, 237, 238);
   // }
   .btn-operation {
-    font-size: 14px;
+    font-size: 12px;
     color: @color-blue;
     line-height: 20px;
     cursor: pointer;
@@ -1170,7 +1170,7 @@
   float: left;
 }
 .bgc{
-  background-color: #fafafa !important;
+  // background-color: #fafafa !important;
 }
 .active{
   .ivu-icon{
