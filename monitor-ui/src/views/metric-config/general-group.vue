@@ -2,8 +2,9 @@
   <div ref="maxheight" class="monitor-general-group">
     <Row>
       <Col :span="8">
+        <!--对象类型-->
         <span style="font-size: 14px;">
-          {{$t('field.type')}}：
+          {{$t('tableKey.endpoint_type')}}：
         </span>
         <Select filterable v-model="monitorType" @on-change="changeMonitorType" style="width:300px">
           <Option v-for="(i, index) in monitorTypeOptions" :value="i" :key="index">{{ i }}</Option>
@@ -12,7 +13,13 @@
       <Col :span="16">
         <div class="btn-group">
           <!--导出-->
-          <Button @click.stop="exportData">{{$t("m_export")}}{{$t("m_metric")}}</Button>
+          <Button
+            type="info"
+            @click.stop="exportData"
+          >
+            <img src="@/assets/img/export.png" alt="" style="width:16px;" />
+            {{ $t("m_export") }}
+          </Button>
           <!--导入-->
           <Upload 
           :action="uploadUrl" 
@@ -22,7 +29,10 @@
           :headers="{'Authorization': token}"
           :on-success="uploadSucess"
           :on-error="uploadFailed">
-            <Button icon="ios-cloud-upload-outline">{{$t('m_import')}}{{$t("m_metric")}}</Button>
+            <Button type="primary">
+              <img src="@/assets/img/import.png" alt="" style="width:16px;" />
+              {{ $t('m_import') }}
+            </Button>
           </Upload>
           <!--新增-->
           <Button type="success" @click="handleAdd">{{ $t('button.add') }}</Button>
@@ -64,7 +74,7 @@ export default {
   data () {
     return {
       token: null,
-      monitorType: 'process',
+      monitorType: '',
       serviceGroup: '',
       monitorTypeOptions: [],
       maxHeight: 500,
@@ -98,7 +108,23 @@ export default {
               { label: this.$t('m_customize'), value: 'custom', color: '#b886f8' }
             ]
             const find = typeList.find(item => item.value === params.row.metric_type) || {}
-            return <Tag size="medium" color={find.color}>{find.label || '-'}</Tag>
+            return <Tag size="medium" type="border" color={find.color}>{find.label || '-'}</Tag>
+          }
+        },
+        {
+          title: this.$t('m_updatedBy'), // 更新人
+          key: 'update_user',
+          minWidth: 150,
+          render: (h, params) => {
+            return <span>{params.row.update_user || '-'}</span>
+          }
+        },
+        {
+          title: this.$t('m_update_time'), // 更新时间
+          key: 'update_time',
+          minWidth: 150,
+          render: (h, params) => {
+            return <span>{params.row.update_time || '-'}</span>
           }
         },
         {
@@ -170,7 +196,6 @@ export default {
   },
   mounted () {
     this.getMonitorType()
-    this.getList()
     this.token = (window.request ? 'Bearer ' + getPlatFormToken() : getToken())|| null
     const clientHeight = document.documentElement.clientHeight
     this.maxHeight = clientHeight - this.$refs.maxheight.getBoundingClientRect().top - 100
@@ -188,7 +213,9 @@ export default {
     },
     getMonitorType () {
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.getEndpointType, '', (responseData) => {
-        this.monitorTypeOptions = responseData
+        this.monitorTypeOptions = responseData || []
+        this.monitorType = this.monitorTypeOptions[0]
+        this.getList()
       }, {isNeedloading: false})
     },
     changeMonitorType () {
