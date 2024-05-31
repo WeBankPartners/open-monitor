@@ -2,7 +2,7 @@
   <div>
     <Drawer
       v-model="drawerVisible"
-      width="720"
+      width="820"
       :mask-closable="false"
       :lock-scroll="true"
       @on-close="handleCancel"
@@ -15,11 +15,11 @@
       <div class="content" :style="{ maxHeight: maxHeight + 'px' }">
         <Form :label-width="100" label-position="left">
           <!--名称-->
-          <FormItem :label="$t('tableKey.name')">
+          <FormItem :label="$t('tableKey.name')" required>
             <Input :disabled="operator === 'edit'" v-model="metricConfigData.metric"></Input>
           </FormItem>
           <!--作用域-->
-          <FormItem :label="$t('m_scope')">
+          <FormItem :label="$t('m_scope')" required>
             <Select v-model="workspace" @on-change="changeWorkspace">
               <Option v-if="serviceGroup" value="all_object">{{ $t('m_all_object') }}</Option>
               <Option value="any_object">{{ $t('m_any_object') }}</Option>
@@ -55,12 +55,12 @@
             </template>
           </FormItem>
           <!--表达式-->
-          <FormItem :label="$t('field.metric')">
+          <FormItem :label="$t('field.metric')" required>
             <Input v-model="metricConfigData.prom_expr" type="textarea" :rows="5" style="margin:5px 0;" />
           </FormItem>
           <!--预览对象-->
           <FormItem :label="$t('m_preview') + $t('m_endpoint')">
-            <Select filterable clearable v-model="metricConfigData.endpoint" @on-change="handleEndPointChange" style="width:300px">
+            <Select filterable clearable v-model="metricConfigData.endpoint" @on-change="handleEndPointChange">
               <Option v-for="item in endpointOptions" :value="item.guid" :key="item.guid">{{ item.guid }}</Option>
             </Select>
           </FormItem>
@@ -292,6 +292,15 @@ export default {
       )
     },
     handleSubmit () {
+      if (!this.metricConfigData.metric) {
+        return this.$Message.error(this.$t('tableKey.name') + this.$t('tips.required'))
+      }
+      if (!this.workspace) {
+        return this.$Message.error(this.$t('m_scope') + this.$t('tips.required'))
+      }
+      if (!this.metricConfigData.prom_expr) {
+        return this.$Message.error(this.$t('field.metric') + this.$t('tips.required'))
+      }
       const type = !this.metricConfigData.guid ? 'POST' : 'PUT'
       this.metricConfigData.monitor_type = this.monitorType
       this.metricConfigData.service_group = this.serviceGroup
