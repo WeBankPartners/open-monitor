@@ -314,12 +314,13 @@ func UpdateCustomChart(chartDto models.CustomChartDto, user string) (err error) 
 	return Transaction(actions)
 }
 
-func AddCustomChart(param models.AddCustomChartParam, user string) (err error) {
+func AddCustomChart(param models.AddCustomChartParam, user string) (id string, err error) {
 	var actions []*Action
 	var displayConfig []byte
+	id = guid.CreateGuid()
 	now := time.Now().Format(models.DatetimeFormat)
 	chart := &models.CustomChart{
-		Guid:            guid.CreateGuid(),
+		Guid:            id,
 		SourceDashboard: param.DashboardId,
 		Name:            param.Name,
 		ChartTemplate:   param.ChartTemplate,
@@ -340,7 +341,8 @@ func AddCustomChart(param models.AddCustomChartParam, user string) (err error) {
 		chart.AggStep, chart.Unit, chart.CreateUser, chart.UpdateUser, chart.CreateTime, chart.UpdateTime, chart.ChartTemplate, chart.PieType}})
 	actions = append(actions, &Action{Sql: "insert into custom_dashboard_chart_rel(guid,custom_dashboard,dashboard_chart,group,display_config,create_user,updated_user,create_time,update_time) values(?,?,?,?,?,?,?,?,?)", Param: []interface{}{
 		guid.CreateGuid(), param.DashboardId, chart.Guid, param.Group, string(displayConfig), user, user, now, now}})
-	return Transaction(actions)
+	err = Transaction(actions)
+	return
 }
 
 func QueryCustomChartList(condition models.QueryChartParam, roles []string) (pageInfo models.PageInfo, list []*models.CustomChart, err error) {
