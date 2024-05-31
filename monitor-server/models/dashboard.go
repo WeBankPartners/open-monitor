@@ -229,7 +229,7 @@ type PieChartConfigObj struct {
 	PieMetricType         string    `form:"pie_metric_type" json:"pie_metric_type"`
 	PieAggType            string    `form:"pie_agg_type" json:"pie_agg_type"`
 	CustomChartGuid       string    `json:"custom_chart_guid"`
-	MonitorType           string    `json:"monitor_type"`
+	MonitorType           string    `json:"monitorType"`
 	Tags                  []*TagDto `json:"tags"` // 标签
 }
 
