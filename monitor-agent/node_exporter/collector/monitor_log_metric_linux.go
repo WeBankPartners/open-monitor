@@ -461,6 +461,7 @@ func (c *logMetricMonitorNeObj) update(input *logMetricMonitorNeObj) {
 	c.MetricConfig = newMetricConfigList
 	c.TargetEndpoint = input.TargetEndpoint
 	c.ServiceGroup = input.ServiceGroup
+	c.MetricGroupConfig = newMetricGroupList
 	c.Lock.Unlock()
 }
 
