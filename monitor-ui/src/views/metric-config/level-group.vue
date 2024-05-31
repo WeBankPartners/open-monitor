@@ -23,7 +23,13 @@
       </Col>
       <Col :span="16">
         <div class="btn-group">
-          <Button @click.stop="exportData">{{$t("m_export")}}{{$t("m_metric")}}</Button>
+          <Button
+            type="info"
+            @click.stop="exportData"
+          >
+            <img src="@/assets/img/export.png" alt="" style="width:16px;" />
+            {{ $t("m_export") }}
+          </Button>
           <Upload 
           :action="uploadUrl" 
           :show-upload-list="false"
@@ -32,7 +38,10 @@
           :headers="{'Authorization': token}"
           :on-success="uploadSucess"
           :on-error="uploadFailed">
-            <Button icon="ios-cloud-upload-outline">{{$t('m_import')}}{{$t("m_metric")}}</Button>
+            <Button type="primary">
+              <img src="@/assets/img/import.png" alt="" style="width:16px;" />
+              {{ $t('m_import') }}
+            </Button>
           </Upload>
           <Button type="success" @click="handleAdd">{{$t('button.add')}}</Button>
         </div>
@@ -106,15 +115,31 @@ export default {
               { label: this.$t('m_customize'), value: 'custom', color: '#b886f8' }
             ]
             const find = typeList.find(item => item.value === params.row.metric_type) || {}
-            return <Tag color={find.color} size="medium">{find.label || '-'}</Tag>
+            return <Tag color={find.color} type="border" size="medium">{find.label || '-'}</Tag>
           }
         },
         {
           title: this.$t('m_business_configuration'), // 业务配置
-          key: 'log_metric_template',
+          key: 'log_metric_group_name',
           minWidth: 150,
           render: (h, params) => {
-            return <span>{params.row.log_metric_template || '-'}</span>
+            return <span>{params.row.log_metric_group_name || '-'}</span>
+          }
+        },
+        {
+          title: this.$t('m_updatedBy'), // 更新人
+          key: 'update_user',
+          minWidth: 150,
+          render: (h, params) => {
+            return <span>{params.row.update_user || '-'}</span>
+          }
+        },
+        {
+          title: this.$t('m_update_time'), // 更新时间
+          key: 'update_time',
+          minWidth: 150,
+          render: (h, params) => {
+            return <span>{params.row.update_time || '-'}</span>
           }
         },
         {
