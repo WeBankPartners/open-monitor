@@ -298,6 +298,12 @@ func init() {
 		&handlerFuncObj{Url: "/chart/custom/permission", Method: http.MethodGet, HandlerFunc: monitor.GetSharedChartPermission},
 		&handlerFuncObj{Url: "/chart/manage/list", Method: http.MethodPost, HandlerFunc: monitor.QueryCustomChart},
 		&handlerFuncObj{Url: "/dashboard/data/sync", Method: http.MethodPost, HandlerFunc: monitor.SyncData},
+
+		// 远程读写
+		&handlerFuncObj{Url: "/config/remote/write", Method: http.MethodGet, HandlerFunc: config_new.RemoteWriteConfigList},
+		&handlerFuncObj{Url: "/config/remote/write", Method: http.MethodPost, HandlerFunc: config_new.RemoteWriteConfigCreate},
+		&handlerFuncObj{Url: "/config/remote/write", Method: http.MethodPut, HandlerFunc: config_new.RemoteWriteConfigUpdate},
+		&handlerFuncObj{Url: "/config/remote/write", Method: http.MethodDelete, HandlerFunc: config_new.RemoteWriteConfigDelete},
 	)
 }
 

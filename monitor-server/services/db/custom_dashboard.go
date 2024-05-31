@@ -106,9 +106,14 @@ func AddCustomDashboard(customDashboard *models.CustomDashboardTable, mgmtRoles,
 }
 
 func AddCustomDashboardChartRel(rel *models.CustomDashboardChartRel) (err error) {
-	_, err = x.Exec("insert into custom_dashboard_chart_rel(guid,custom_dashboard,dashboard_chart,group,display_config,create_user,updated_user,"+
+	_, err = x.Exec("insert into custom_dashboard_chart_rel(guid,custom_dashboard,dashboard_chart,`group`,display_config,create_user,updated_user,"+
 		"create_time,update_time) values(?,?,?,?,?,?,?,?,?)", rel.Guid, rel.CustomDashboard, rel.DashboardChart, rel.Group, rel.DisplayConfig, rel.CreateUser,
 		rel.UpdateUser, rel.CreateTime, rel.UpdateTime)
+	return
+}
+
+func QueryCustomDashboardPermissionByDashboard(dashboard int) (list []*models.CustomDashBoardRoleRel, err error) {
+	err = x.SQL("select * from custom_dashboard_role_rel where custom_dashboard_id = ?", dashboard).Find(&list)
 	return
 }
 
@@ -253,7 +258,7 @@ func SyncData() (err error) {
 				newChartId, dashboard.Id, 0, chart.PanalTitle, chart.ChartType, convertLineTypeIntToString(chart.LineType), chart.Aggregate,
 				chart.AggStep, chart.PanalUnit, dashboard.CreateUser, dashboard.CreateUser, now, now, ""}})
 			// 新增看板图表关系表
-			actions = append(actions, &Action{Sql: "insert into custom_dashboard_chart_rel(guid,custom_dashboard,dashboard_chart,group,display_config,create_user,updated_user,create_time,update_time) values(?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+			actions = append(actions, &Action{Sql: "insert into custom_dashboard_chart_rel(guid,custom_dashboard,dashboard_chart,`group`,display_config,create_user,updated_user,create_time,update_time) values(?,?,?,?,?,?,?,?,?)", Param: []interface{}{
 				guid.CreateGuid(), dashboard.Id, newChartId, group, displayConfig, dashboard.CreateUser, dashboard.CreateUser, now, now}})
 			if len(chart.Query) > 0 {
 				for _, series := range chart.Query {
