@@ -2,18 +2,20 @@
   <div>
     <template v-for="(tableItem, tableIndex) in totalPageConfig">
       <section :key="tableIndex + 'f'">
-        <Card>
+        <Card style="margin-bottom: 16px;">
           <div v-if="tableItem.endpoint_group"  class="w-header" slot="title">
             <div class="title">
               {{tableItem.display_name}}
               <span class="underline"></span>
             </div>
+            <Tag color="gold" v-if="tableItem.service_group===''">{{ $t('m_base_group') }}</Tag>
+            <Tag color="blue" v-else>{{ $t('field.resourceLevel') }}</Tag>
           </div>
           <span slot="extra" v-if="isEditState">
-            <Button type="success" size="small" @click="addAlarmItem(tableItem, tableIndex)">{{ $t('button.add') }}</Button>
-            <Button type="primary" size="small" @click="updateNotify(tableItem)">{{ $t('button.save') }}</Button>
+            <Button type="success" @click="addAlarmItem(tableItem, tableIndex)">{{ $t('button.add') }}</Button>
+            <Button type="primary" @click="updateNotify(tableItem)">{{ $t('button.save') }}</Button>
           </span>
-          <span>{{$t('m_alarm_list')}}</span>
+          <span style="font-weight: 700;">{{$t('m_alarm_list')}}</span>
           <Table
             size="small"
             :columns="alarmItemTableColumns"
@@ -22,14 +24,19 @@
           />
           <div class="alarm-tips" style="margin-top:16px">
             <span>{{$t('m_alarm_schedulingNotification')}}({{$t('m_all') + $t('menu.alert')}})</span>
-            <Alert style="width:60%;display: inline-block;margin-left: 12px;">{{$t('m_alarm_tips')}}</Alert>
+            <Tooltip :max-width="400" placement="right">
+              <p slot=content>
+                {{ $t('m_alarm_tips') }}
+              </p>
+              <Icon type="ios-help-circle-outline" />
+            </Tooltip>
           </div>
           <div>
             <template v-if="tableItem.notify.length > 0">
               <div v-for="(item, index) in tableItem.notify" :key="index + 'S'" style="margin: 4px 0">
                 <Row>
                   <Col span="2">
-                    <span style="float: right;margin-right: 8px;line-height: 32px;">{{$t(item.alarm_action)}}</span>
+                    <span style="margin-right: 8px;line-height: 32px;">{{$t(item.alarm_action)}}</span>
                   </Col>
                   <Col span="6" style="">
                     <!-- <Tooltip :content="$t('resourceLevel.role')" :delay="1000"> -->
@@ -206,15 +213,15 @@
     </ModalComponent>
     <!-- 新增告警列表 -->
     <Modal
-      :width="1100"
+      :width="1200"
       :fullscreen="isfullscreen"
       v-model="isShowAddEditModal">
       <div slot="header" class="custom-modal-header">
         <span>
           {{ (isEditState ? $t('button.add') : $t('button.edit')) + $t('m_metric_threshold') }}
         </span>
-        <Icon v-if="isfullscreen" @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-contract" />
-        <Icon v-else @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-expand" />
+        <!-- <Icon v-if="isfullscreen" @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-contract" />
+        <Icon v-else @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-expand" /> -->
       </div>
       <div class="extentClass">
         <div v-if="isModalShow" class="left-content">
@@ -393,6 +400,7 @@ import hasIn from 'lodash/hasIn';
 import isEmpty from 'lodash/isEmpty';
 import find from 'lodash/find';
 import Vue from 'vue';
+import TagShow from '@/components/Tag-show.vue'
 
 const initFormData = {
   name: '', // 告警名
@@ -554,9 +562,8 @@ export default {
               >
                 {this.modelConfig.metricList &&
                   this.modelConfig.metricList.map((i, index) => (
-                    <Option value={i.guid} key={i.metric + index}>
-                      {i.metric}
-                    </Option>
+                    <Option value={i.guid} key={i.metric + index} label={i.metric}>
+                      <TagShow tagName={i.metric_type} index={index}></TagShow>{i.metric}</Option>
                   ))}
               </Select>
             )
@@ -566,7 +573,7 @@ export default {
           title: this.$t('m_label_value'),
           key: 'tags',
           align: 'left',
-          width: 180,
+          width: 300,
           render: (h, params) => {
             return (
               <div>
@@ -575,7 +582,7 @@ export default {
                     <div class="tags-show" key={selectIndex + '' + JSON.stringify(i)}>
                       <span>{i.tagName}</span>
                       <Select
-                        style="maxWidth: 130px"
+                        style="maxWidth: 200px"
                         value={i.tagValue}
                         disabled={!this.isEditState}
                         on-on-change={v => {
@@ -629,7 +636,7 @@ export default {
           title: this.$t('field.threshold'),
           key: 'thresholdValue',
           align: 'left',
-          minWidth: 70,
+          width: 70,
           render: (h, params) => {
             return (
               <Input
@@ -648,7 +655,7 @@ export default {
           title: this.$t('tableKey.s_last'),
           key: 'lastValue',
           align: 'left',
-          minWidth: 70,
+          width: 70,
           render: (h, params) => {
             return (
               <Input
@@ -760,14 +767,21 @@ export default {
         {
           title: this.$t('firing'),
           key: 'firing',
+          width: 150,
           align: 'left',
           render: (h, params) => {
-            return !isEmpty(params.row.notify) ?
+            const { showBtn, result } = this.mgmtConfigDetail(params.row.notify[0])
+            return showBtn ?
             (
               <div>
-                <div>{this.$t('m_notification_role')}:{params.row.notify[0].notify_roles.join(';')} </div>
-                <div>{this.$t('m_trigger_arrange')}: {params.row.notify[0].proc_callback_key}{params.row.notify[0].proc_callback_mode ? '(' + this.$t(find(this.callbackMode, {value: params.row.notify[0].proc_callback_mode}).label) + ')' : ""}</div>
-                <div>{this.$t('tableKey.description')}:{params.row.notify[0].description} </div>
+                <Tooltip placement="right" max-width="400">
+                  <div slot="content" style="white-space: normal;">
+                    <p>{this.$t('m_notification_role')}: {result.role}</p>
+                    <p>{this.$t('m_trigger_arrange')}: {result.arrange}</p>
+                    <p>{this.$t('tableKey.description')}: {result.description}</p>
+                  </div>
+                  <Tag color="geekblue" style="cursor:pointer">{this.$t('m_config_view')}</Tag>
+                </Tooltip>
               </div>
             ) : <div>-</div>
           }
@@ -775,13 +789,21 @@ export default {
         {
           title: this.$t('ok'),
           key: 'ok',
+          width: 150,
           align: 'left',
           render: (h, params) => {
-            return !isEmpty(params.row.notify) && params.row.notify.length > 1 ? (
+            const { showBtn, result } = this.mgmtConfigDetail(params.row.notify[1])
+            return showBtn ?
+            (
               <div>
-                <div>{this.$t('m_notification_role')}:{params.row.notify[1].notify_roles.join(';')} </div>
-                <div>{this.$t('m_trigger_arrange')}: {params.row.notify[1].proc_callback_key}{params.row.notify[1].proc_callback_mode ? '(' + this.$t(find(this.callbackMode, {value: params.row.notify[1].proc_callback_mode}).label) + ')' : ""}</div>
-                <div>{this.$t('tableKey.description')}:{params.row.notify[1].description} </div>
+                <Tooltip placement="right" max-width="400">
+                  <div slot="content" style="white-space: normal;">
+                    <p>{this.$t('m_notification_role')}: {result.role}</p>
+                    <p>{this.$t('m_trigger_arrange')}: {result.arrange}</p>
+                    <p>{this.$t('tableKey.description')}: {result.description}</p>
+                  </div>
+                  <Tag color="geekblue" style="cursor:pointer">{this.$t('m_config_view')}</Tag>
+                </Tooltip>
               </div>
             ) : <div>-</div>
           }
@@ -790,7 +812,7 @@ export default {
           title: this.$t('tableKey.metricName'),
           key: 'metric',
           align: 'center',
-          width: 250
+          minWidth: 300
         },
         {
           title: this.$t('field.threshold'),
@@ -843,6 +865,20 @@ export default {
     }
   },
   methods: {
+    mgmtConfigDetail (val) {
+      let res = {
+        showBtn: true,
+        result: {
+          role: val.notify_roles.join(';'),
+          arrange: val.proc_callback_key + (val.proc_callback_mode ? '(' + this.$t(find(this.callbackMode, {value: val.proc_callback_mode}).label) + ')' : ''),
+          description: val.description || '-'
+        }
+      }
+      if (val.notify_roles.length === 0 || val.proc_callback_key === '' || val.proc_callback_mode === '') {
+        res.showBtn = false
+      }
+      return res
+    },
     getUpdateNotifyApi(data) {
       return this.type === 'service' 
         ? `/monitor/api/v2/alarm/endpoint_group/${data.endpoint_group}/notify/update`
@@ -1093,6 +1129,7 @@ export default {
       const api = '/monitor/api/v2/alarm/strategy/list' + `/${this.type}/` + targetId
       this.totalPageConfig = []
       this.request('GET', api, '', responseData => {
+        this.$emit('feedbackInfo', responseData.length === 0)
         const allConfigDetail = responseData;
         allConfigDetail.forEach((item, alarmIndex) => {
           let tempTableData = item.strategy.map(s => {
@@ -1104,6 +1141,7 @@ export default {
             tableData,
             endpoint_group: item.endpoint_group,
             display_name: item.display_name,
+            service_group: item.service_group,
             monitor_type: item.monitor_type,
             notify: item.notify,
             mergeSpanMap: this.mergeSpanMap
@@ -1181,6 +1219,10 @@ export default {
     isEditState() {
       return this.type !== 'endpoint'
     }
+  },
+  components: {
+    // eslint-disable-next-line vue/no-unused-components
+    TagShow
   }
 }
 </script>
@@ -1211,11 +1253,10 @@ export default {
 .tags-show {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: left;
 } 
 .tags-show > span {
   width: 70px;
-  overflow: scroll;
 }
 
 .tags-show .ivu-select-item.ivu-select-item-selected::after {
@@ -1230,7 +1271,9 @@ export default {
 .modal-dialog[data-v-0eaeaf66] {
   top: 10%;
 }
-
+.ivu-select-dropdown {
+  max-height: 300px !important;
+}
 </style>
 <style scoped lang="less">
   .use-underline-title {

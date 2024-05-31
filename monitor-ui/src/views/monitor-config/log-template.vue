@@ -62,7 +62,7 @@
                   style="cursor: pointer"
                 />
               </div>
-              <Button slot="extra" type="success" size="small" @click.prevent="addTemplate(item.log_type)">{{ $t('button.add') }}</Button>
+              <Button slot="extra" type="success" @click.prevent="addTemplate(item.log_type)">{{ $t('button.add') }}</Button>
               <div v-show="!hideRegex.includes(itemIndex)">
                 <Table
                   size="small"
