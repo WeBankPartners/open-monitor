@@ -487,6 +487,8 @@ type CustomDashboardDto struct {
 	Name           string            `json:"name"`
 	PanelGroupList []string          `json:"panelGroupList"`
 	Charts         []*CustomChartDto `json:"charts"`
+	MgmtRoles      []string          `json:"mgmtRoles"`
+	UseRoles       []string          `json:"useRoles"`
 }
 
 type AddCustomDashboardParam struct {
