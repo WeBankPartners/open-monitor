@@ -107,7 +107,7 @@ export default {
     display: inline-block;
   }
   .search-ul>li:not(:first-child) {
-    padding-left: 10px;
+    padding-left: 12px;
   }
 </style>
 <style scoped lang="less">

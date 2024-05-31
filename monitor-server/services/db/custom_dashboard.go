@@ -106,8 +106,14 @@ func AddCustomDashboard(customDashboard *models.CustomDashboardTable, mgmtRoles,
 }
 
 func AddCustomDashboardChartRel(rel *models.CustomDashboardChartRel) (err error) {
-	_, err = x.Exec("insert into custom_dashboard_chart_rel values(?,?,?,?,?,?,?,?,?)", rel.Guid, rel.CustomDashboard,
-		rel.DashboardChart, rel.Group, rel.DisplayConfig, rel.CreateUser, rel.UpdateUser, rel.CreateTime, rel.UpdateTime)
+	_, err = x.Exec("insert into custom_dashboard_chart_rel(guid,custom_dashboard,dashboard_chart,`group`,display_config,create_user,updated_user,"+
+		"create_time,update_time) values(?,?,?,?,?,?,?,?,?)", rel.Guid, rel.CustomDashboard, rel.DashboardChart, rel.Group, rel.DisplayConfig, rel.CreateUser,
+		rel.UpdateUser, rel.CreateTime, rel.UpdateTime)
+	return
+}
+
+func QueryCustomDashboardPermissionByDashboard(dashboard int) (list []*models.CustomDashBoardRoleRel, err error) {
+	err = x.SQL("select * from custom_dashboard_role_rel where custom_dashboard_id = ?", dashboard).Find(&list)
 	return
 }
 
@@ -252,14 +258,13 @@ func SyncData() (err error) {
 				newChartId, dashboard.Id, 0, chart.PanalTitle, chart.ChartType, convertLineTypeIntToString(chart.LineType), chart.Aggregate,
 				chart.AggStep, chart.PanalUnit, dashboard.CreateUser, dashboard.CreateUser, now, now, ""}})
 			// 新增看板图表关系表
-			actions = append(actions, &Action{Sql: "insert into custom_dashboard_chart_rel values(?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+			actions = append(actions, &Action{Sql: "insert into custom_dashboard_chart_rel(guid,custom_dashboard,dashboard_chart,`group`,display_config,create_user,updated_user,create_time,update_time) values(?,?,?,?,?,?,?,?,?)", Param: []interface{}{
 				guid.CreateGuid(), dashboard.Id, newChartId, group, displayConfig, dashboard.CreateUser, dashboard.CreateUser, now, now}})
 			if len(chart.Query) > 0 {
 				for _, series := range chart.Query {
 					seriesId := guid.CreateGuid()
-					actions = append(actions, &Action{Sql: "insert into custom_chart_series values(?,?,?,?,?,?,?,?,?)", Param: []interface{}{
-						seriesId, newChartId, series.Endpoint, series.AppObject, series.EndpointName, series.EndpointType, series.Metric, series.DefaultColor, "",
-					}})
+					actions = append(actions, &Action{Sql: "insert into custom_chart_series(guid,dashboard_chart,endpoint,service_group,endpoint_name,monitor_type,metric,color_group,pie_display_tag,endpoint_type,metric_type,metric_guid) values(?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
+						seriesId, newChartId, series.Endpoint, series.AppObject, series.EndpointName, series.EndpointType, series.Metric, series.DefaultColor, "", "", "", ""}})
 					if len(series.MetricToColor) > 0 {
 						for _, colorConfig := range series.MetricToColor {
 							tags := ""
@@ -267,7 +272,7 @@ func SyncData() (err error) {
 								start := strings.LastIndex(colorConfig.Metric, "{")
 								tags = colorConfig.Metric[start+1 : len(colorConfig.Metric)-1]
 							}
-							actions = append(actions, &Action{Sql: "insert into custom_chart_series_config values(?,?,?,?,?)", Param: []interface{}{
+							actions = append(actions, &Action{Sql: "insert into custom_chart_series_config(guid,dashboard_chart_config,tags,color,series_name) values(?,?,?,?,?)", Param: []interface{}{
 								guid.CreateGuid(), seriesId, tags, colorConfig.Color, colorConfig.Metric,
 							}})
 						}

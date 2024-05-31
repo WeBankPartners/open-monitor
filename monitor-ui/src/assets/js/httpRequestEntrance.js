@@ -95,7 +95,6 @@ function httpRequestEntrance (method, url, data, callback, customHttpConfig, err
       },0)
     }
     const { response } = err
-    console.log(response)
     if (response.status === 401 && err.config.url !== '/auth/v1/api/login') {
       let refreshToken = localStorage.getItem('monitor-refreshToken')
       if (refreshToken.length > 0) {

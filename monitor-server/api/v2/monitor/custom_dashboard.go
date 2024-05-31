@@ -111,12 +111,13 @@ func QueryCustomDashboardList(c *gin.Context) {
 func GetCustomDashboard(c *gin.Context) {
 	var err error
 	var customDashboard *models.CustomDashboardTable
-	var customDashboardDto = &models.CustomDashboardDto{}
+	var customDashboardDto = &models.CustomDashboardDto{UseRoles: []string{}, MgmtRoles: []string{}}
 	var customChartExtendList []*models.CustomChartExtend
 	var groupMap = make(map[string]bool)
 	var configMap = make(map[string][]*models.CustomChartSeriesConfig)
 	var tagMap = make(map[string][]*models.CustomChartSeriesTag)
 	var tagValueMap = make(map[string][]*models.CustomChartSeriesTagValue)
+	var boardRoleRelList []*models.CustomDashBoardRoleRel
 	id, _ := strconv.Atoi(c.Query("id"))
 	if id == 0 {
 		middleware.ReturnParamEmptyError(c, "id")
@@ -162,6 +163,19 @@ func GetCustomDashboard(c *gin.Context) {
 			}
 		}
 		customDashboardDto.PanelGroupList = db.TransformMapToArray(groupMap)
+	}
+	if boardRoleRelList, err = db.QueryCustomDashboardPermissionByDashboard(id); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if len(boardRoleRelList) > 0 {
+		for _, rel := range boardRoleRelList {
+			if rel.Permission == string(models.PermissionUse) {
+				customDashboardDto.UseRoles = append(customDashboardDto.UseRoles, rel.RoleId)
+			} else if rel.Permission == string(models.PermissionMgmt) {
+				customDashboardDto.MgmtRoles = append(customDashboardDto.MgmtRoles, rel.RoleId)
+			}
+		}
 	}
 	middleware.ReturnSuccessData(c, customDashboardDto)
 }
@@ -212,7 +226,7 @@ func DeleteCustomDashboard(c *gin.Context) {
 		middleware.ReturnParamTypeError(c, "id", "int")
 		return
 	}
-	if permission, err = CheckHasManagePermission(id, middleware.GetOperateUserRoles(c)); err != nil {
+	if permission, err = CheckHasDashboardManagePermission(id, middleware.GetOperateUserRoles(c), middleware.GetOperateUser(c)); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
@@ -234,6 +248,7 @@ func UpdateCustomDashboard(c *gin.Context) {
 	var deleteChartRelIds []string
 	var insert, delete, permission bool
 	var actions []*db.Action
+	var nameMap = make(map[string]bool)
 	user := middleware.GetOperateUser(c)
 	now := time.Now().Format(models.DatetimeFormat)
 	if err = c.ShouldBindJSON(&param); err != nil {
@@ -248,13 +263,22 @@ func UpdateCustomDashboard(c *gin.Context) {
 		middleware.ReturnParamEmptyError(c, "name")
 		return
 	}
-	if permission, err = CheckHasManagePermission(param.Id, middleware.GetOperateUserRoles(c)); err != nil {
+	if permission, err = CheckHasDashboardManagePermission(param.Id, middleware.GetOperateUserRoles(c), middleware.GetOperateUser(c)); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
 	if !permission {
 		middleware.ReturnServerHandleError(c, fmt.Errorf("not has edit permission"))
 		return
+	}
+	if len(param.Charts) > 0 {
+		for _, chart := range param.Charts {
+			if nameMap[chart.Name] {
+				middleware.ReturnValidateError(c, fmt.Sprintf("chart name:%s repeat", chart.Name))
+				return
+			}
+			nameMap[chart.Name] = true
+		}
 	}
 	if hasChartRelList, err = db.QueryCustomDashboardChartRelListByDashboard(param.Id); err != nil {
 		middleware.ReturnServerHandleError(c, err)
@@ -344,7 +368,7 @@ func UpdateCustomDashboardPermission(c *gin.Context) {
 		middleware.ReturnParamEmptyError(c, "useRoles is empty")
 		return
 	}
-	if permission, err = CheckHasManagePermission(param.Id, middleware.GetOperateUserRoles(c)); err != nil {
+	if permission, err = CheckHasDashboardManagePermission(param.Id, middleware.GetOperateUserRoles(c), middleware.GetOperateUser(c)); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
@@ -366,8 +390,9 @@ func UpdateCustomDashboardPermission(c *gin.Context) {
 	middleware.ReturnSuccess(c)
 }
 
-func CheckHasManagePermission(dashboard int, userRoles []string) (permission bool, err error) {
+func CheckHasDashboardManagePermission(dashboard int, userRoles []string, user string) (permission bool, err error) {
 	var permissionMap map[string]string
+	var customDashboard *models.CustomDashboardTable
 	if len(userRoles) == 0 {
 		return
 	}
@@ -382,6 +407,15 @@ func CheckHasManagePermission(dashboard int, userRoles []string) (permission boo
 		if v, ok := permissionMap[role]; ok && v == string(models.PermissionMgmt) {
 			permission = true
 			break
+		}
+	}
+	if !permission && user != "" {
+		if customDashboard, err = db.GetCustomDashboardById(dashboard); err != nil {
+			return
+		}
+		if customDashboard != nil && user == customDashboard.CreateUser {
+			permission = true
+			return
 		}
 	}
 	return
