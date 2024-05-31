@@ -106,7 +106,7 @@ export const colorList = {
   'pink': '#ffadd2',
   'magenta': '#eb2f96',
   'volcano': '#fa541c',
-  'orange': '#fff7e6'
+  'orange': '#e8c16d'
 }
 export const cycleOption = [
   {label: 'm_all', value: 'All'},
