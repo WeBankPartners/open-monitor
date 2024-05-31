@@ -3,7 +3,7 @@
     <div v-if="!noDataTip" :id="elId" class="echart" :style="chartInfo.style">
     </div>
     <div v-if="noDataTip" class="echart echart-no-data-tip">
-      <span>~~~No Data!~~~</span>
+      <span>{{this.$t('m_nodata_tips')}}</span>
     </div>
   </div>
 </template>
@@ -67,7 +67,8 @@ export default {
       params.forEach(p => {
         p.start = this.chartInfo.start
         p.end = this.chartInfo.end
-        p.time_second = this.chartInfo.time_second
+        p.time_second = this.chartInfo.time_second,
+        p.custom_chart_guid = this.chartInfo.elId
       });
       this.elId = this.chartInfo.elId
       this.$root.$httpRequestEntrance.httpRequestEntrance(
@@ -98,6 +99,10 @@ export default {
       text-align: center;
       vertical-align: middle;
       display: table-cell;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
     }
   }
 </style>
