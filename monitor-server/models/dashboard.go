@@ -33,6 +33,7 @@ type OptionModel struct {
 	Active         bool   `json:"active"`
 	OptionType     string `json:"type"`
 	OptionTypeName string `json:"option_type_name"`
+	AppObject      string `json:"app_object"`
 }
 
 type ButtonModel struct {
@@ -210,23 +211,26 @@ type ChartConfigObj struct {
 }
 
 type PieChartConfigObj struct {
-	Id                    int    `form:"id" json:"id"`
-	Title                 string `form:"title" json:"title"`
-	Endpoint              string `form:"endpoint" json:"endpoint"`
-	Metric                string `form:"metric" json:"metric"`
-	PromQl                string `form:"prom_ql" json:"prom_ql"`
-	Start                 int64  `form:"start" json:"start"`
-	End                   int64  `form:"end" json:"end"`
-	TimeSecond            int64  `form:"time_second" json:"time_second"`
-	Aggregate             string `form:"agg" json:"agg"`
-	CompareFirstStart     string `form:"compare_first_start" json:"compare_first_start"`
-	CompareFirstEnd       string `form:"compare_first_end" json:"compare_first_end"`
-	CompareSecondStart    string `form:"compare_second_start" json:"compare_second_start"`
-	CompareSecondEnd      string `form:"compare_second_end" json:"compare_second_end"`
-	AppObject             string `form:"app_object" json:"app_object"`
-	AppObjectEndpointType string `form:"app_object_endpoint_type" json:"app_object_endpoint_type"`
-	PieMetricType         string `form:"pie_metric_type" json:"pie_metric_type"`
-	PieAggType            string `form:"pie_agg_type" json:"pie_agg_type"`
+	Id                    int       `form:"id" json:"id"`
+	Title                 string    `form:"title" json:"title"`
+	Endpoint              string    `form:"endpoint" json:"endpoint"`
+	Metric                string    `form:"metric" json:"metric"`
+	PromQl                string    `form:"prom_ql" json:"prom_ql"`
+	Start                 int64     `form:"start" json:"start"`
+	End                   int64     `form:"end" json:"end"`
+	TimeSecond            int64     `form:"time_second" json:"time_second"`
+	Aggregate             string    `form:"agg" json:"agg"`
+	CompareFirstStart     string    `form:"compare_first_start" json:"compare_first_start"`
+	CompareFirstEnd       string    `form:"compare_first_end" json:"compare_first_end"`
+	CompareSecondStart    string    `form:"compare_second_start" json:"compare_second_start"`
+	CompareSecondEnd      string    `form:"compare_second_end" json:"compare_second_end"`
+	AppObject             string    `form:"app_object" json:"app_object"`
+	AppObjectEndpointType string    `form:"app_object_endpoint_type" json:"app_object_endpoint_type"`
+	PieMetricType         string    `form:"pie_metric_type" json:"pie_metric_type"`
+	PieAggType            string    `form:"pie_agg_type" json:"pie_agg_type"`
+	CustomChartGuid       string    `json:"custom_chart_guid"`
+	MonitorType           string    `json:"monitorType"`
+	Tags                  []*TagDto `json:"tags"` // 标签
 }
 
 type ChartQueryParam struct {
@@ -250,6 +254,7 @@ type ChartQueryConfigObj struct {
 	PromQl       string `json:"prom_ql"`
 	AppObject    string `json:"app_object"`
 	EndpointType string `json:"endpoint_type"`
+	MonitorType  string `json:"monitor_type"`
 }
 
 type ChartQueryCompareParam struct {
@@ -485,6 +490,8 @@ type CustomDashboardDto struct {
 	Name           string            `json:"name"`
 	PanelGroupList []string          `json:"panelGroupList"`
 	Charts         []*CustomChartDto `json:"charts"`
+	MgmtRoles      []string          `json:"mgmtRoles"`
+	UseRoles       []string          `json:"useRoles"`
 }
 
 type AddCustomDashboardParam struct {

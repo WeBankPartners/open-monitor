@@ -69,7 +69,15 @@ const routerP = [
   {
     path: "/monitorConfigIndex/groupBoard",
     name: "/monitorConfigIndex/groupBoard"
-  }
+  },
+  {
+    path: "/viewConfigIndex/allChartList",
+    name: "/viewConfigIndex/allChartList"
+  },
+  {
+    path: "/viewConfigIndex/boardList",
+    name: "/viewConfigIndex/boardList"
+  },
 ];
 
 export default routerP;

@@ -2,71 +2,75 @@
   <div>
     <template v-for="(tableItem, tableIndex) in totalPageConfig">
       <section :key="tableIndex + 'f'">
-        <div v-if="tableItem.endpoint_group" class="use-underline-title ml-4 mb-2">
-          {{tableItem.display_name}}
-          <span class="underline"></span>
-        </div>
-        <div>
-          <h5 class="ml-3 mt-1 mb-2" style="display:inline-block">{{$t('m_alarm_list')}}</h5>
-          <button v-if="isEditState" @click="addAlarmItem(tableItem, tableIndex)" type="button" class="btn btn-small success-btn ml-2 mb-2">
-            <i class="fa fa-plus"></i>
-            {{$t('button.add')}}
-          </button>
-        </div>
-        <Table
+        <Card style="margin-bottom: 16px;">
+          <div v-if="tableItem.endpoint_group"  class="w-header" slot="title">
+            <div class="title">
+              {{tableItem.display_name}}
+              <span class="underline"></span>
+            </div>
+            <Tag color="gold" v-if="tableItem.service_group===''">{{ $t('m_base_group') }}</Tag>
+            <Tag color="blue" v-else>{{ $t('field.resourceLevel') }}</Tag>
+          </div>
+          <span slot="extra" v-if="isEditState">
+            <Button type="success" @click="addAlarmItem(tableItem, tableIndex)">{{ $t('button.add') }}</Button>
+            <Button type="primary" @click="updateNotify(tableItem)">{{ $t('button.save') }}</Button>
+          </span>
+          <span style="font-weight: 700;">{{$t('m_alarm_list')}}</span>
+          <Table
             size="small"
             :columns="alarmItemTableColumns"
             :data="tableItem.tableData"
             :span-method="(e) => handleMergeSpan(e, tableIndex)"
           />
-        <section class="receiver-config">
-          <div style="margin: 16px 0">
-            <div class="alarm-tips">
-              <h5 class="ml-1 mr-2" style="display:inline-block">{{$t('m_alarm_schedulingNotification')}}({{$t('m_all') + $t('menu.alert')}})</h5>
-              <button v-if="isEditState" @click="updateNotify(tableItem)" class="btn btn-small success-btn">{{$t('button.save')}}</button>
-              <Alert class="ml-3">{{$t('m_alarm_tips')}}</Alert>
-            </div>
-            <div class="receiver-config-set" style="margin: 8px 0">
-              <template v-if="tableItem.notify.length > 0">
-                <div style="margin: 4px 0px;padding:8px 12px;">
-                  <template v-for="(item, index) in tableItem.notify">
-                    <p :key="index + 'S'">
-                      <span class="mr-2" style="font-size: 14px">{{$t(item.alarm_action)}}</span>
-                      <Tooltip :content="$t('resourceLevel.role')" :delay="1000">
-                        <Select v-model="item.notify_roles" :disabled="!isEditState" :max-tag-count="2" style="width: 200px" multiple filterable :placeholder="$t('field.role')">
-                          <Option v-for="item in allRole" :value="item.name" :key="item.value">{{ item.name }}</Option>
-                        </Select>
-                      </Tooltip>
-                      <Tooltip :content="$t('proc_callback_key')" :delay="1000">
-                        <Select v-model="item.proc_callback_key" :disabled="!isEditState" @on-change="procCallbackKeyChange(item.proc_callback_key, tableIndex, index)" style="width: 160px" :placeholder="$t('proc_callback_key')">
-                          <Option v-for="(flow, flowIndex) in flows" :key="flowIndex" :value="flow.procDefKey" :label="flow.procDefName + ' [' + flow.procDefVersion + ']'"><span>{{ flow.procDefName }} [{{ flow.procDefVersion }}]</span></Option>
-                        </Select>
-                      </Tooltip>
-                      <Tooltip :content="$t('m_callback_mode')" :delay="1000">
-                        <Select v-model="item.proc_callback_mode" :disabled="!isEditState" style="width: 200px" :placeholder="$t('m_callback_mode')">
-                          <Option v-for="item in callbackMode" :value="item.value" :key="item.value">{{ $t(item.label) }}</Option>
-                        </Select>
-                      </Tooltip>
-                      <Tooltip :content="$t('tableKey.description')" :delay="1000">
-                        <input 
-                          v-model="item.description" 
-                          :disabled="!isEditState"
-                          style="width: 200px"
-                          type="text" 
-                          maxlength="50"
-                          :placeholder="$t('tableKey.description')"
-                          class="form-control model-input search-input c-dark"/>
-                      </Tooltip>
-                    </p>
-                  </template>
-                </div>
-              </template>
-            </div>
+          <div class="alarm-tips" style="margin-top:16px">
+            <span>{{$t('m_alarm_schedulingNotification')}}({{$t('m_all') + $t('menu.alert')}})</span>
+            <Tooltip :max-width="400" placement="right">
+              <p slot=content>
+                {{ $t('m_alarm_tips') }}
+              </p>
+              <Icon type="ios-help-circle-outline" />
+            </Tooltip>
           </div>
-        </section>
-        <hr style="background: #dcdee2;" />
+          <div>
+            <template v-if="tableItem.notify.length > 0">
+              <div v-for="(item, index) in tableItem.notify" :key="index + 'S'" style="margin: 4px 0">
+                <Row>
+                  <Col span="2">
+                    <span style="margin-right: 8px;line-height: 32px;">{{$t(item.alarm_action)}}</span>
+                  </Col>
+                  <Col span="6" style="">
+                    <Select v-model="item.notify_roles" :disabled="!isEditState" :max-tag-count="2" style="width: 99%;" multiple filterable :placeholder="$t('field.role')">
+                      <Option v-for="item in allRole" :value="item.name" :key="item.value">{{ item.name }}</Option>
+                    </Select>
+                  </Col>
+                  <Col span="5">
+                    <Select v-model="item.proc_callback_key" clearable :disabled="!isEditState" @on-change="procCallbackKeyChange(item.proc_callback_key, tableIndex, index)" style="width:99%;" :placeholder="$t('proc_callback_key')">
+                      <Option v-for="(flow, flowIndex) in flows" :key="flowIndex" :value="flow.procDefKey" :label="flow.procDefName + ' [' + flow.procDefVersion + ']'"><span>{{ flow.procDefName }} [{{ flow.procDefVersion }}]</span></Option>
+                    </Select>
+                  </Col>
+                  <Col span="5">
+                    <Select v-model="item.proc_callback_mode" clearable :disabled="!isEditState" style="width:99%" :placeholder="$t('m_callback_mode')">
+                      <Option v-for="item in callbackMode" :value="item.value" :key="item.value">{{ $t(item.label) }}</Option>
+                    </Select>
+                  </Col>
+                  <Col span="5">
+                    <Input 
+                      v-model="item.description"
+                      clearable 
+                      :disabled="!isEditState"
+                      style="width:99%"
+                      type="text" 
+                      maxlength="50"
+                      :placeholder="$t('tableKey.description')"/>
+                  </Col>
+                </Row>
+              </div>
+            </template>
+          </div>
+        </Card>
       </section>
     </template>
+    <!-- 已废弃 -->
     <ModalComponent :modelConfig="modelConfig">
       <div slot="metricSelect" class="extentClass">  
         <div v-if="isModalShow" class="left-content">
@@ -81,27 +85,23 @@
             <FormItem :label="$t('tableKey.s_priority')" prop="priority">
                 <Select 
                   v-model="formData.priority"
-                  :disabled="!isEditState"
-                  filterable>
+                  :disabled="!isEditState">
                   <Option 
-                    v-for="item in modelConfig.priorityList" 
+                    v-for="item in modelConfig.priorityList"
                     :value="item.value" 
                     :key="item.value">
-                    {{ $t(item.label) }}
-                  </Option>
+                    {{ $t(item.label) }}</Option>
                 </Select>
             </FormItem>
             <FormItem :label="$t('tableKey.status')" prop="notify_enable">
                 <Select 
-                  filterable
                   :disabled="!isEditState"
                   v-model="formData.notify_enable" >
                   <Option 
                     v-for="item in modelConfig.notifyEnableOption" 
                     :value="item.value" 
                     :key="item.value">
-                    {{ item.label }}
-                  </Option>
+                    {{ item.label }}</Option>
                 </Select>
             </FormItem>
             <FormItem :label="$t('delay')" prop="notify_delay_second">
@@ -186,7 +186,7 @@
           <Button
             @click.stop="onAddIconClick"
             :disabled="!isEditState"
-            type="primary"
+            type="success"
             size="small"
             class="mt-2"
             ghost
@@ -199,9 +199,205 @@
         <Button style="float:right" @click="cancelModal">{{$t('button.cancel')}}</Button>
       </div>
     </ModalComponent>
+    <!-- 新增告警列表 -->
+    <Modal
+      :width="1200"
+      :fullscreen="isfullscreen"
+      v-model="isShowAddEditModal">
+      <div slot="header" class="custom-modal-header">
+        <span>
+          {{ (isEditState ? $t('button.add') : $t('button.edit')) + $t('m_metric_threshold') }}
+        </span>
+        <!-- <Icon v-if="isfullscreen" @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-contract" />
+        <Icon v-else @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-expand" /> -->
+      </div>
+      <div class="extentClass">
+        <div v-if="isModalShow" class="left-content">
+          <div class="use-underline-title mb-3">
+            {{$t('m_alarm_config')}}
+            <span class="underline"></span>
+          </div>
+          <Form ref="formData" :label-width="100">
+            <FormItem>
+              <span slot="label">
+                <span style="color:red">*</span>
+                {{ $t('m_alarmName') }}
+              </span>
+              <Input v-model="formData.name" :disabled="!isEditState" :maxlength="20" show-word-limit></Input>
+            </FormItem>
+            <FormItem>
+              <span slot="label">
+                <span style="color:red">*</span>
+                {{ $t('tableKey.s_priority') }}
+              </span>
+              <Select 
+                v-model="formData.priority"
+                :disabled="!isEditState">
+                <Option
+                  v-for="item in modelConfig.priorityList" 
+                  :value="item.value" 
+                  :key="item.value">
+                  {{ $t(item.label) }}
+                </Option>
+              </Select>
+            </FormItem>
+            <FormItem>
+              <span slot="label">
+                <span style="color:red">*</span>
+                {{ $t('tableKey.status') }}
+              </span>
+              <Select
+                :disabled="!isEditState"
+                v-model="formData.notify_enable" >
+                <Option 
+                  v-for="item in modelConfig.notifyEnableOption" 
+                  :value="item.value" 
+                  :key="item.value">
+                  {{ item.label }}
+                </Option>
+              </Select>
+            </FormItem>
+            <FormItem>
+              <span slot="label">
+                <span style="color:red">*</span>
+                {{ $t('delay') }}
+              </span>
+              <Select 
+                filterable 
+                :disabled="!isEditState"
+                v-model="formData.notify_delay_second">
+                <Option 
+                  v-for="item in modelConfig.notifyDelayOption" 
+                  :value="item.value" 
+                  :key="item.value">
+                  {{ item.label }}
+                </Option>
+              </Select>
+            </FormItem>
+            <FormItem :label="$t('m_active_window')" prop="active_window">
+              <span slot="label">
+                <span style="color:red">*</span>
+                {{ $t('m_active_window') }}
+              </span>
+              <TimePicker 
+                v-model="formData.active_window" 
+                :clearable="false" 
+                format="HH:mm" 
+                :disabled="!isEditState"
+                type="timerange" 
+                placement="bottom-end" 
+                style="width: 168px">
+              </TimePicker>
+            </FormItem>
+            <FormItem :label="$t('tableKey.content')" prop="content">
+              <Input 
+                type="textarea" 
+                :disabled="!isEditState"
+                v-model="formData.content"
+                :maxlength="200">
+              </Input>
+            </FormItem>
+            <span class='arrange-config-Title'>{{$t('m_alarm_schedulingNotification')}}({{$t('m_current_alarm')}})</span>
+            <div 
+              v-for="(item, index) in formData.notify"
+              :key="index + 'S'"
+              style="margin: 4px 0"
+              >
+              <!-- <span class="mr-1 mt-1" style="font-size: 12px">{{$t(item.alarm_action)}}</span>
+              <Tooltip :content="$t('resourceLevel.role')" :delay="1000">
+                <Select v-model="item.notify_roles" :disabled="!isEditState" :max-tag-count="2" style="width: 150px" multiple filterable :placeholder="$t('field.role')">
+                  <Option v-for="item in allRole" :value="item.name" :key="item.value">{{ item.name }}</Option>
+                </Select>
+              </Tooltip>
+              <Tooltip :content="$t('proc_callback_key')" :delay="1000">
+                <Select v-model="item.proc_callback_key" clearable :disabled="!isEditState" @on-change="procCallbackKeyChangeForm(item.proc_callback_key, index)" style="width: 160px" :placeholder="$t('proc_callback_key')">
+                  <Option v-for="(flow, flowIndex) in flows" :key="flowIndex" :value="flow.procDefKey" :label="flow.procDefName + ' [' + flow.procDefVersion + ']'"><span>{{ flow.procDefName }} [{{ flow.procDefVersion }}]</span></Option>
+                </Select>
+              </Tooltip>
+              <Tooltip :content="$t('m_callback_mode')" :delay="1000">
+                <Select v-model="item.proc_callback_mode" clearable :disabled="!isEditState" style="width: 100px" :placeholder="$t('m_callback_mode')">
+                  <Option v-for="item in callbackMode" :value="item.value" :key="item.value">{{ $t(item.label) }}</Option>
+                </Select>
+              </Tooltip>
+              <Tooltip :content="$t('tableKey.description')" :delay="1000">
+                <input 
+                  v-model="item.description"
+                  clearable
+                  :disabled="!isEditState"
+                  style="width: 100px"
+                  type="text" 
+                  maxlength="50"
+                  :placeholder="$t('tableKey.description')"
+                  class="form-control model-input search-input c-dark"/>
+              </Tooltip> -->
+              <Row>
+                <Col span="3">
+                  <span style="margin-right: 8px;line-height: 32px;">{{$t(item.alarm_action)}}</span>
+                </Col>
+                <Col span="6" style="">
+                  <Select v-model="item.notify_roles" :disabled="!isEditState" :max-tag-count="2" style="width: 99%;" multiple filterable :placeholder="$t('field.role')">
+                    <Option v-for="item in allRole" :value="item.name" :key="item.value">{{ item.name }}</Option>
+                  </Select>
+                </Col>
+                <Col span="5">
+                  <Select v-model="item.proc_callback_key" clearable :disabled="!isEditState" @on-change="procCallbackKeyChange(item.proc_callback_key, tableIndex, index)" style="width:99%;" :placeholder="$t('proc_callback_key')">
+                    <Option v-for="(flow, flowIndex) in flows" :key="flowIndex" :value="flow.procDefKey" :label="flow.procDefName + ' [' + flow.procDefVersion + ']'"><span>{{ flow.procDefName }} [{{ flow.procDefVersion }}]</span></Option>
+                  </Select>
+                </Col>
+                <Col span="5">
+                  <Select v-model="item.proc_callback_mode" clearable :disabled="!isEditState" style="width:99%" :placeholder="$t('m_callback_mode')">
+                    <Option v-for="item in callbackMode" :value="item.value" :key="item.value">{{ $t(item.label) }}</Option>
+                  </Select>
+                </Col>
+                <Col span="5">
+                  <Input 
+                    v-model="item.description"
+                    clearable 
+                    :disabled="!isEditState"
+                    style="width:99%"
+                    type="text" 
+                    maxlength="50"
+                    :placeholder="$t('tableKey.description')"/>
+                </Col>
+              </Row>
+            </div>
+          </Form>
+        </div>
+        <div class="right-content">
+          <div class="use-underline-title mb-3">
+            {{$t('field.metric')}}{{$t('field.threshold')}}
+            <span class="underline"></span>
+          </div>
+          <Table
+            style="width:100%;"
+            :border="false"
+            size="small"
+            :columns="metricItemTableColumns"
+            :data="formData.conditions"
+          />
+          <div>
+            <Button
+              @click.stop="onAddIconClick"
+              :disabled="!isEditState"
+              type="success"
+              size="small"
+              style="float:right;margin: 6px 12px;"
+              ghost
+              icon="md-add"
+            ></Button>
+          </div>
+        </div>
+      </div>
+      <div slot="footer">
+        <Button v-if="isEditState" class="modal-button-save" style="float:right" type="primary" @click="submitContent">{{$t('button.save')}}</Button>
+        <Button style="float:right" @click="cancelModal">{{$t('button.cancel')}}</Button>
+      </div>
+    </Modal>
+
     <Modal
       v-model="isShowWarningDelete"
       :title="$t('delConfirm.title')"
+      :ok-text="$t('m_confirm')"
       @on-ok="okDelRow"
       @on-cancel="cancleDelRow">
       <div class="modal-body" style="padding:30px">
@@ -220,13 +416,14 @@ import hasIn from 'lodash/hasIn';
 import isEmpty from 'lodash/isEmpty';
 import find from 'lodash/find';
 import Vue from 'vue';
+import TagShow from '@/components/Tag-show.vue'
 
 const initFormData = {
   name: '', // 告警名
   priority: 'low', // 级别
   notify_enable: 1, // 告警发送
   notify_delay_second: 0, // 延时
-  active_window:  ['00:00','23:56'], // 告警时间段
+  active_window:  ['00:00','23:59'], // 告警时间段
   content: '', // 通知内容
   notify: [
     {
@@ -345,18 +542,18 @@ export default {
         name: [
           {type: 'string', required: true, message: '请输入', trigger: 'blur' }
         ],
-        priority: [
-          {type: 'string', required: true, message: '请输入', trigger: 'blur' }
-        ],
-        notify_enable: [
-          {type: 'number', required: true, message: '请输入', trigger: 'blur' }
-        ],
-        notify_delay_second: [
-          {type: 'number', required: true, message: '请输入', trigger: 'blur' }
-        ],
-        active_window: [
-          {type: 'array', required: true, message: '请输入', trigger: 'blur' }
-        ]
+        // priority: [
+        //   {type: 'string', required: true, message: '请输入', trigger: 'blur' }
+        // ],
+        // notify_enable: [
+        //   {type: 'number', required: true, message: '请输入', trigger: 'blur' }
+        // ],
+        // notify_delay_second: [
+        //   {type: 'number', required: true, message: '请输入', trigger: 'blur' }
+        // ],
+        // active_window: [
+        //   {type: 'array', required: true, message: '请输入', trigger: 'blur' }
+        // ]
       },
       // 模态框中的表格
       metricItemTableColumns: [
@@ -381,9 +578,8 @@ export default {
               >
                 {this.modelConfig.metricList &&
                   this.modelConfig.metricList.map((i, index) => (
-                    <Option value={i.guid} key={i.metric + index}>
-                      {i.metric}
-                    </Option>
+                    <Option value={i.guid} key={i.metric + index} label={i.metric}>
+                      <TagShow tagName={i.metric_type} index={index}></TagShow>{i.metric}</Option>
                   ))}
               </Select>
             )
@@ -393,7 +589,7 @@ export default {
           title: this.$t('m_label_value'),
           key: 'tags',
           align: 'left',
-          width: 180,
+          width: 300,
           render: (h, params) => {
             return (
               <div>
@@ -402,7 +598,7 @@ export default {
                     <div class="tags-show" key={selectIndex + '' + JSON.stringify(i)}>
                       <span>{i.tagName}</span>
                       <Select
-                        style="maxWidth: 130px"
+                        style="maxWidth: 200px"
                         value={i.tagValue}
                         disabled={!this.isEditState}
                         on-on-change={v => {
@@ -421,7 +617,7 @@ export default {
                           ))}
                       </Select>
                     </div>
-                  )) ) : "--" } 
+                  )) ) : '-' } 
               </div>
             )
           }
@@ -456,7 +652,7 @@ export default {
           title: this.$t('field.threshold'),
           key: 'thresholdValue',
           align: 'left',
-          minWidth: 70,
+          width: 70,
           render: (h, params) => {
             return (
               <Input
@@ -465,6 +661,25 @@ export default {
                 maxlength="10"
                 on-on-change={v => {
                   this.formData.conditions[params.index].thresholdValue = v.target.value
+                }}
+                clearable
+              />
+            )
+          }
+        },
+        {
+          title: this.$t('tableKey.s_last'),
+          key: 'lastValue',
+          align: 'left',
+          width: 70,
+          render: (h, params) => {
+            return (
+              <Input
+                value={params.row.lastValue}
+                disabled={!this.isEditState}
+                maxlength="10"
+                on-on-change={v => {
+                  this.formData.conditions[params.index].lastValue = v.target.value
                 }}
                 clearable
               />
@@ -498,25 +713,6 @@ export default {
           }
         },
         {
-          title: this.$t('tableKey.s_last'),
-          key: 'lastValue',
-          align: 'left',
-          minWidth: 70,
-          render: (h, params) => {
-            return (
-              <Input
-                value={params.row.lastValue}
-                disabled={!this.isEditState}
-                maxlength="10"
-                on-on-change={v => {
-                  this.formData.conditions[params.index].lastValue = v.target.value
-                }}
-                clearable
-              />
-            )
-          }
-        },
-        {
           title: this.$t('table.action'),
           key: 'index',
           align: 'center',
@@ -531,8 +727,9 @@ export default {
                 type="error"
                 size="small"
                 ghost
-                icon="md-trash"
-              ></Button>
+              >
+                <Icon type="md-trash" size="16"></Icon>
+              </Button>
             )
           }
         }
@@ -541,10 +738,10 @@ export default {
       // 主页中的表格
       alarmItemTableColumns: [
         {
-            title: this.$t('m_alarmName'),
-            align: 'center',
-            width: 100,
-            key: 'name'
+          title: this.$t('m_alarmName'),
+          align: 'center',
+          width: 250,
+          key: 'name'
         },
         {
           title: this.$t('m_alarmPriority'),
@@ -562,7 +759,7 @@ export default {
           }
         },
         {
-          title: this.$t('tableKey.status'),
+          title: this.$t('m_notification'),
           key: 'notify_enable',
           align: 'center',
           width: 100,
@@ -578,45 +775,60 @@ export default {
           }
         },
         {
-            title: this.$t('field.relativeTime'),
-            width: 130,
-            align: 'center',
-            key: 'active_window'
+          title: this.$t('field.relativeTime'),
+          width: 130,
+          align: 'center',
+          key: 'active_window'
         },
         {
           title: this.$t('firing'),
           key: 'firing',
+          width: 150,
           align: 'left',
           render: (h, params) => {
-            return !isEmpty(params.row.notify) ?
+            const { showBtn, result } = this.mgmtConfigDetail(params.row.notify[0])
+            return showBtn ?
             (
               <div>
-                <div>{this.$t('m_notification_role')}:{params.row.notify[0].notify_roles.join(';')} </div>
-                <div>{this.$t('m_trigger_arrange')}: {params.row.notify[0].proc_callback_key}{params.row.notify[0].proc_callback_mode ? '(' + this.$t(find(this.callbackMode, {value: params.row.notify[0].proc_callback_mode}).label) + ')' : ""}</div>
-                <div>{this.$t('tableKey.description')}:{params.row.notify[0].description} </div>
+                <Tooltip placement="right" max-width="400">
+                  <div slot="content" style="white-space: normal;">
+                    <p>{this.$t('m_notification_role')}: {result.role}</p>
+                    <p>{this.$t('m_trigger_arrange')}: {result.arrange}</p>
+                    <p>{this.$t('tableKey.description')}: {result.description}</p>
+                  </div>
+                  <Tag color="geekblue" style="cursor:pointer">{this.$t('m_config_view')}</Tag>
+                </Tooltip>
               </div>
-            ) : <div>--</div>
+            ) : <div>-</div>
           }
         },
         {
           title: this.$t('ok'),
           key: 'ok',
+          width: 150,
           align: 'left',
           render: (h, params) => {
-            return !isEmpty(params.row.notify) && params.row.notify.length > 1 ? (
+            const { showBtn, result } = this.mgmtConfigDetail(params.row.notify[1])
+            return showBtn ?
+            (
               <div>
-                <div>{this.$t('m_notification_role')}:{params.row.notify[1].notify_roles} </div>
-                <div>{this.$t('m_trigger_arrange')}: {params.row.notify[1].proc_callback_key}{params.row.notify[1].proc_callback_mode ? '(' + this.$t(find(this.callbackMode, {value: params.row.notify[1].proc_callback_mode}).label) + ')' : ""}</div>
-                <div>{this.$t('tableKey.description')}:{params.row.notify[1].description} </div>
+                <Tooltip placement="right" max-width="400">
+                  <div slot="content" style="white-space: normal;">
+                    <p>{this.$t('m_notification_role')}: {result.role}</p>
+                    <p>{this.$t('m_trigger_arrange')}: {result.arrange}</p>
+                    <p>{this.$t('tableKey.description')}: {result.description}</p>
+                  </div>
+                  <Tag color="geekblue" style="cursor:pointer">{this.$t('m_config_view')}</Tag>
+                </Tooltip>
               </div>
-            ) : <div>--</div>
+            ) : <div>-</div>
           }
         },
         {
           title: this.$t('tableKey.metricName'),
           key: 'metric',
           align: 'center',
-          width: 150
+          minWidth: 300
         },
         {
           title: this.$t('field.threshold'),
@@ -639,12 +851,16 @@ export default {
             return (
               <div>
                 <Button size="small" class="mr-1"  type="primary" on-click={() => this.editAlarmItem(params.row, params)}>
-                  <Icon type="md-create" />
+                  {
+                    this.type==='endpoint' ? 
+                    <Icon type="md-eye" size="16"></Icon> :
+                    <Icon type="md-create" size="16"></Icon> 
+                  }
                 </Button>
                 {
                   this.isEditState ? (
                     <Button size="small" type="error" on-click={() => this.deleteConfirmModal(params.row)}>
-                      <Icon type="md-trash" />
+                      <Icon type="md-trash" size="16"></Icon>
                     </Button>
                   ) : null
                 }
@@ -658,10 +874,27 @@ export default {
       initialTags: [],
       initialTagOptions: {},
       isModalShow: false, // 为了解决select组件渲染出错问题,
-      currentAlarmListIndex: null // 解决告警名称重名校验
+      currentAlarmListIndex: null, // 解决告警名称重名校验
+
+      isShowAddEditModal: false, // 告警配置弹窗
+      isfullscreen: true,
     }
   },
   methods: {
+    mgmtConfigDetail (val) {
+      let res = {
+        showBtn: true,
+        result: {
+          role: val.notify_roles.join(';'),
+          arrange: val.proc_callback_key + (val.proc_callback_mode ? '(' + this.$t(find(this.callbackMode, {value: val.proc_callback_mode}).label) + ')' : ''),
+          description: val.description || '-'
+        }
+      }
+      if (val.notify_roles.length === 0 || val.proc_callback_key === '' || val.proc_callback_mode === '') {
+        res.showBtn = false
+      }
+      return res
+    },
     getUpdateNotifyApi(data) {
       return this.type === 'service' 
         ? `/monitor/api/v2/alarm/endpoint_group/${data.endpoint_group}/notify/update`
@@ -747,57 +980,60 @@ export default {
       })
     },
     async editAlarmItem (rowData, allParams) {
-        this.currentAlarmListIndex = rowData.alarmListIndex;
-        this.selectedData = rowData
-        const api = this.getMetricListPath(rowData);
-        this.request('GET', api, '', (responseData) => {
-            this.modelConfig.metricList = responseData;
-            this.modelConfig.isAdd = false
-            this.modelConfig.modalTitle = 'button.edit',
-            this.formData = cloneDeep(initFormData);
-            this.manageEditParams(this.formData, rowData);
-            this.formData.active_window = rowData.active_window === '' ? ['00:00', '23:59'] : rowData.active_window.split('-');
-            const conditions = this.formData.conditions;
-            conditions.length && conditions.forEach(async item => {
-                const thresholdsAndSymbols = this.getSymbolAndValue(item.condition);
-                const lastValueAndSymbol = this.getSymbolAndValue(item.last);
-                const tagOptions = await this.findTagsByMetric(item.metric); // 指标下拉option获取
-                if (isEmpty(item.tags) && !isEmpty(tagOptions)) {
-                    const tags = [];
-                    for(let key in tagOptions) {
-                        tags.push(
-                            {
-                                tagName: key,
-                                tagValue: []
-                            }
-                        )
-                    }
-                    Vue.set(item, 'tags', tags)
+      this.isfullscreen = true
+      this.currentAlarmListIndex = rowData.alarmListIndex;
+      this.selectedData = rowData
+      const api = this.getMetricListPath(rowData);
+      this.request('GET', api, '', (responseData) => {
+        this.modelConfig.metricList = responseData;
+        this.modelConfig.isAdd = false
+        this.modelConfig.modalTitle = 'button.edit',
+        this.formData = cloneDeep(initFormData);
+        this.manageEditParams(this.formData, rowData);
+        this.formData.active_window = rowData.active_window === '' ? ['00:00', '23:59'] : rowData.active_window.split('-');
+        const conditions = this.formData.conditions;
+        conditions.length && conditions.forEach(async item => {
+            const thresholdsAndSymbols = this.getSymbolAndValue(item.condition);
+            const lastValueAndSymbol = this.getSymbolAndValue(item.last);
+            const tagOptions = await this.findTagsByMetric(item.metric); // 指标下拉option获取
+            if (isEmpty(item.tags) && !isEmpty(tagOptions)) {
+                const tags = [];
+                for(let key in tagOptions) {
+                    tags.push(
+                        {
+                            tagName: key,
+                            tagValue: []
+                        }
+                    )
                 }
-                Vue.set(item, 'threshold', thresholdsAndSymbols.symbol)
-                Vue.set(item, 'thresholdValue', thresholdsAndSymbols.value)
-                Vue.set(item, 'lastSymbol', lastValueAndSymbol.symbol);
-                Vue.set(item, 'lastValue', lastValueAndSymbol.value);
-                Vue.set(item, 'tagOptions', tagOptions);
-            })
-            this.showAddEditModal();
+                Vue.set(item, 'tags', tags)
+            }
+            Vue.set(item, 'threshold', thresholdsAndSymbols.symbol)
+            Vue.set(item, 'thresholdValue', thresholdsAndSymbols.value)
+            Vue.set(item, 'lastSymbol', lastValueAndSymbol.symbol);
+            Vue.set(item, 'lastValue', lastValueAndSymbol.value);
+            Vue.set(item, 'tagOptions', tagOptions);
         })
+        this.showAddEditModal();
+      })
     },
     addAlarmItem (tableItem, index) {
-        this.currentAlarmListIndex = index;
-        this.selectedTableData = tableItem;
-        const api = this.getMetricListPath(tableItem);
-        this.request('GET', api, '', async responseData => {
-            this.modelConfig.metricList = responseData;
-            this.modelConfig.isAdd = true
-            this.modelConfig.modalTitle = 'button.add',
-            this.formData = cloneDeep(initFormData);
-            await this.getInitialTags();
-            this.formData.conditions[0].metric = this.modelConfig.metricList[0].guid; // 指标名
-            this.formData.conditions[0].tags = cloneDeep(this.initialTags);
-            this.formData.conditions[0].tagOptions = cloneDeep(this.initialTagOptions);
-            this.showAddEditModal();
-        })
+      this.isfullscreen = true
+      this.currentAlarmListIndex = index;
+      this.selectedTableData = tableItem;
+      const api = this.getMetricListPath(tableItem);
+      this.request('GET', api, '', async responseData => {
+          this.modelConfig.metricList = responseData;
+          this.modelConfig.isAdd = true
+          this.modelConfig.modalTitle = 'button.add',
+          this.formData = cloneDeep(initFormData);
+          this.formData.name = this.$t('m_alert') + new Date().getTime()
+          await this.getInitialTags();
+          this.formData.conditions[0].metric = this.modelConfig.metricList[0].guid; // 指标名
+          this.formData.conditions[0].tags = cloneDeep(this.initialTags);
+          this.formData.conditions[0].tagOptions = cloneDeep(this.initialTagOptions);
+          this.showAddEditModal();
+      })
     },
     getWorkFlow () {
       this.request('GET', '/monitor/api/v2/alarm/event/callback/list', '', (responseData) => {
@@ -849,42 +1085,37 @@ export default {
         return true
     },
     submitContent() {
-      this.$refs.formData.validate().then(result => {
-        if (!result) return
-        if (this.$root.$validate.isEmpty_reset(this.formData.content)) {
-          this.$Message.warning(this.$t('tableKey.content')+this.$t('tips.required'))
-          return
-        }
-        if (!this.validateConditions(this.formData.conditions)) {
-            return this.$Message.error(this.$t('m_metric_threshold') + this.$t('tips.emptyToSave'));
-        }
-        if (!this.validateDuplicateName(this.formData.name, this.selectedData.guid)) {
-            return this.$Message.error(this.$t('m_alarmName') + this.$t('m_cannot_be_repeated'));
-        }
-        let params = cloneDeep(this.formData);
-        const needMergeParams = {
-          endpoint_group: this.modelConfig.isAdd ? this.selectedTableData.endpoint_group : this.selectedData.endpoint_group,
-          guid: this.selectedData.guid,
-          active_window: params.active_window.join('-')
-        }
-        Object.assign(params, needMergeParams)
-        this.processConditions(params.conditions);
-        const requestMethod = this.modelConfig.isAdd ? "POST" : "PUT";
-        this.request(requestMethod, '/monitor/api/v2/alarm/strategy', params, () => {
-          this.$Message.success(this.$t('tips.success'));
-          this.closeAddEditModal();
-          this.getDetail(this.targetId, this.type)
-        })
+      if (this.formData.name.trim() === '') {
+        return this.$Message.error(this.$t('m_alarmName') + this.$t('tips.required'));
+      }
+      if (!this.validateConditions(this.formData.conditions)) {
+        return this.$Message.error(this.$t('m_metric_threshold') + this.$t('tips.emptyToSave'));
+      }
+      if (!this.validateDuplicateName(this.formData.name, this.selectedData.guid)) {
+        return this.$Message.error(this.$t('m_alarmName') + this.$t('m_cannot_be_repeated'));
+      }
+      let params = cloneDeep(this.formData);
+      const needMergeParams = {
+        endpoint_group: this.modelConfig.isAdd ? this.selectedTableData.endpoint_group : this.selectedData.endpoint_group,
+        guid: this.selectedData.guid,
+        active_window: params.active_window.join('-')
+      }
+      Object.assign(params, needMergeParams)
+      this.processConditions(params.conditions);
+      const requestMethod = this.modelConfig.isAdd ? "POST" : "PUT";
+      this.request(requestMethod, '/monitor/api/v2/alarm/strategy', params, () => {
+        this.$Message.success(this.$t('tips.success'));
+        this.closeAddEditModal()
+        this.getDetail(this.targetId, this.type)
       })
     },
     showAddEditModal() {
-      this.$root.JQ('#add_edit_Modal').modal('show');
+      this.isShowAddEditModal = true
       this.isModalShow = true;
     },
     closeAddEditModal() {
-      this.$root.JQ('#add_edit_Modal').modal('hide');
-      this.$refs.formData.resetFields();
-      this.isModalShow = false;
+      this.isShowAddEditModal = false
+      this.isModalShow = false
     },
     setMonitorType(monitorType){
       this.monitorType = monitorType;
@@ -914,6 +1145,7 @@ export default {
       const api = '/monitor/api/v2/alarm/strategy/list' + `/${this.type}/` + targetId
       this.totalPageConfig = []
       this.request('GET', api, '', responseData => {
+        this.$emit('feedbackInfo', responseData.length === 0)
         const allConfigDetail = responseData;
         allConfigDetail.forEach((item, alarmIndex) => {
           let tempTableData = item.strategy.map(s => {
@@ -925,6 +1157,7 @@ export default {
             tableData,
             endpoint_group: item.endpoint_group,
             display_name: item.display_name,
+            service_group: item.service_group,
             monitor_type: item.monitor_type,
             notify: item.notify,
             mergeSpanMap: this.mergeSpanMap
@@ -963,8 +1196,8 @@ export default {
       const api = '/monitor/api/v2/metric/tag/value-list';
       const params = {
         metricId,
-        endpoint: "",
-        serviceGroup: ""
+        endpoint: this.targetId,
+        serviceGroup: this.targetId
       }
       
       return new Promise(resolve => {
@@ -1002,16 +1235,23 @@ export default {
     isEditState() {
       return this.type !== 'endpoint'
     }
+  },
+  components: {
+    // eslint-disable-next-line vue/no-unused-components
+    TagShow
   }
 }
 </script>
 
 <style lang="less">
+.ivu-table-cell {
+  padding: 4px;
+}
 .ivu-table-wrapper {
   overflow: inherit;
 }
 .ivu-form-item {
-  margin-bottom: 10px;
+  margin-bottom: 0;
 }
 
 .right-content {
@@ -1029,11 +1269,10 @@ export default {
 .tags-show {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: left;
 } 
 .tags-show > span {
   width: 70px;
-  overflow: scroll;
 }
 
 .tags-show .ivu-select-item.ivu-select-item-selected::after {
@@ -1048,7 +1287,9 @@ export default {
 .modal-dialog[data-v-0eaeaf66] {
   top: 10%;
 }
-
+.ivu-select-dropdown {
+  max-height: 300px !important;
+}
 </style>
 <style scoped lang="less">
   .use-underline-title {
@@ -1161,5 +1402,40 @@ export default {
     color: #fff;
     background-color: #19be6b;
     border-color: #19be6b;
+  }
+
+
+  .w-header {
+    display: flex;
+    align-items: center;
+    .title {
+      font-size: 16px;
+      font-weight: bold;
+      margin: 0 10px;
+      .underline {
+        display: block;
+        margin-top: -10px;
+        margin-left: -6px;
+        width: 100%;
+        padding: 0 6px;
+        height: 12px;
+        border-radius: 12px;
+        background-color: #c6eafe;
+        box-sizing: content-box;
+      }
+    }
+  }
+
+  .custom-modal-header {
+    line-height: 20px;
+    font-size: 16px;
+    color: #17233d;
+    font-weight: 500;
+    .fullscreen-icon {
+      float: right;
+      margin-right: 28px;
+      font-size: 18px;
+      cursor: pointer;
+    }
   }
 </style>
