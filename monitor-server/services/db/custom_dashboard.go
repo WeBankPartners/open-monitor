@@ -112,6 +112,11 @@ func AddCustomDashboardChartRel(rel *models.CustomDashboardChartRel) (err error)
 	return
 }
 
+func QueryCustomDashboardPermissionByDashboard(dashboard int) (list []*models.CustomDashBoardRoleRel, err error) {
+	err = x.SQL("select * from custom_dashboard_role_rel where custom_dashboard_id = ?", dashboard).Find(&list)
+	return
+}
+
 func QueryCustomDashboardManagePermissionByDashboard(dashboard int) (hashMap map[string]string, err error) {
 	var list []*models.CustomDashBoardRoleRel
 	hashMap = make(map[string]string)
