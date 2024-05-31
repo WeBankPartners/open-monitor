@@ -869,6 +869,13 @@ func QueryEntityAlarmEvent(c *gin.Context) {
 			}
 		}
 	}
+	if value == "" {
+		result.Status = "OK"
+		result.Message = "Success"
+		result.Data = []*m.AlarmEventEntityObj{}
+		mid.ReturnData(c, result)
+		return
+	}
 	if strings.Contains(value, "-") {
 		// id-firing-notifyGuid-operator
 		tmpSplit := strings.Split(value, "-")
