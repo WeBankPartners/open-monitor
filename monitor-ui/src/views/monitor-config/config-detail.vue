@@ -39,37 +39,29 @@
                     <span style="margin-right: 8px;line-height: 32px;">{{$t(item.alarm_action)}}</span>
                   </Col>
                   <Col span="6" style="">
-                    <!-- <Tooltip :content="$t('resourceLevel.role')" :delay="1000"> -->
-                      <Select v-model="item.notify_roles" :disabled="!isEditState" :max-tag-count="2" style="width: 99%;" multiple filterable :placeholder="$t('field.role')">
-                        <Option v-for="item in allRole" :value="item.name" :key="item.value">{{ item.name }}</Option>
-                      </Select>
-                    <!-- </Tooltip> -->
+                    <Select v-model="item.notify_roles" :disabled="!isEditState" :max-tag-count="2" style="width: 99%;" multiple filterable :placeholder="$t('field.role')">
+                      <Option v-for="item in allRole" :value="item.name" :key="item.value">{{ item.name }}</Option>
+                    </Select>
                   </Col>
                   <Col span="5">
-                    <!-- <Tooltip :content="$t('proc_callback_key')" :delay="1000"> -->
-                      <Select v-model="item.proc_callback_key" clearable :disabled="!isEditState" @on-change="procCallbackKeyChange(item.proc_callback_key, tableIndex, index)" style="width:99%;" :placeholder="$t('proc_callback_key')">
-                        <Option v-for="(flow, flowIndex) in flows" :key="flowIndex" :value="flow.procDefKey" :label="flow.procDefName + ' [' + flow.procDefVersion + ']'"><span>{{ flow.procDefName }} [{{ flow.procDefVersion }}]</span></Option>
-                      </Select>
-                    <!-- </Tooltip> -->
+                    <Select v-model="item.proc_callback_key" clearable :disabled="!isEditState" @on-change="procCallbackKeyChange(item.proc_callback_key, tableIndex, index)" style="width:99%;" :placeholder="$t('proc_callback_key')">
+                      <Option v-for="(flow, flowIndex) in flows" :key="flowIndex" :value="flow.procDefKey" :label="flow.procDefName + ' [' + flow.procDefVersion + ']'"><span>{{ flow.procDefName }} [{{ flow.procDefVersion }}]</span></Option>
+                    </Select>
                   </Col>
                   <Col span="5">
-                    <!-- <Tooltip :content="$t('m_callback_mode')" :delay="1000"> -->
-                      <Select v-model="item.proc_callback_mode" clearable :disabled="!isEditState" style="width:99%" :placeholder="$t('m_callback_mode')">
-                        <Option v-for="item in callbackMode" :value="item.value" :key="item.value">{{ $t(item.label) }}</Option>
-                      </Select>
-                    <!-- </Tooltip> -->
+                    <Select v-model="item.proc_callback_mode" clearable :disabled="!isEditState" style="width:99%" :placeholder="$t('m_callback_mode')">
+                      <Option v-for="item in callbackMode" :value="item.value" :key="item.value">{{ $t(item.label) }}</Option>
+                    </Select>
                   </Col>
                   <Col span="5">
-                    <!-- <Tooltip :content="$t('tableKey.description')" :delay="1000"> -->
-                      <Input 
-                        v-model="item.description"
-                        clearable 
-                        :disabled="!isEditState"
-                        style="width:99%"
-                        type="text" 
-                        maxlength="50"
-                        :placeholder="$t('tableKey.description')"/>
-                    <!-- </Tooltip> -->
+                    <Input 
+                      v-model="item.description"
+                      clearable 
+                      :disabled="!isEditState"
+                      style="width:99%"
+                      type="text" 
+                      maxlength="50"
+                      :placeholder="$t('tableKey.description')"/>
                   </Col>
                 </Row>
               </div>
@@ -93,27 +85,23 @@
             <FormItem :label="$t('tableKey.s_priority')" prop="priority">
                 <Select 
                   v-model="formData.priority"
-                  :disabled="!isEditState"
-                  filterable>
+                  :disabled="!isEditState">
                   <Option 
-                    v-for="item in modelConfig.priorityList" 
+                    v-for="item in modelConfig.priorityList"
                     :value="item.value" 
                     :key="item.value">
-                    {{ $t(item.label) }}
-                  </Option>
+                    {{ $t(item.label) }}</Option>
                 </Select>
             </FormItem>
             <FormItem :label="$t('tableKey.status')" prop="notify_enable">
                 <Select 
-                  filterable
                   :disabled="!isEditState"
                   v-model="formData.notify_enable" >
                   <Option 
                     v-for="item in modelConfig.notifyEnableOption" 
                     :value="item.value" 
                     :key="item.value">
-                    {{ item.label }}
-                  </Option>
+                    {{ item.label }}</Option>
                 </Select>
             </FormItem>
             <FormItem :label="$t('delay')" prop="notify_delay_second">
@@ -235,7 +223,7 @@
                 <span style="color:red">*</span>
                 {{ $t('m_alarmName') }}
               </span>
-              <Input v-model="formData.name" :disabled="!isEditState" :maxlength="10"></Input>
+              <Input v-model="formData.name" :disabled="!isEditState" :maxlength="20" show-word-limit></Input>
             </FormItem>
             <FormItem>
               <span slot="label">
@@ -244,9 +232,8 @@
               </span>
               <Select 
                 v-model="formData.priority"
-                :disabled="!isEditState"
-                filterable>
-                <Option 
+                :disabled="!isEditState">
+                <Option
                   v-for="item in modelConfig.priorityList" 
                   :value="item.value" 
                   :key="item.value">
@@ -259,8 +246,7 @@
                 <span style="color:red">*</span>
                 {{ $t('tableKey.status') }}
               </span>
-              <Select 
-                filterable
+              <Select
                 :disabled="!isEditState"
                 v-model="formData.notify_enable" >
                 <Option 
@@ -315,9 +301,9 @@
             <div 
               v-for="(item, index) in formData.notify"
               :key="index + 'S'"
-              class="arrange-item"
+              style="margin: 4px 0"
               >
-              <span class="mr-1 mt-1" style="font-size: 12px">{{$t(item.alarm_action)}}</span>
+              <!-- <span class="mr-1 mt-1" style="font-size: 12px">{{$t(item.alarm_action)}}</span>
               <Tooltip :content="$t('resourceLevel.role')" :delay="1000">
                 <Select v-model="item.notify_roles" :disabled="!isEditState" :max-tag-count="2" style="width: 150px" multiple filterable :placeholder="$t('field.role')">
                   <Option v-for="item in allRole" :value="item.name" :key="item.value">{{ item.name }}</Option>
@@ -343,7 +329,37 @@
                   maxlength="50"
                   :placeholder="$t('tableKey.description')"
                   class="form-control model-input search-input c-dark"/>
-              </Tooltip>
+              </Tooltip> -->
+              <Row>
+                <Col span="3">
+                  <span style="margin-right: 8px;line-height: 32px;">{{$t(item.alarm_action)}}</span>
+                </Col>
+                <Col span="6" style="">
+                  <Select v-model="item.notify_roles" :disabled="!isEditState" :max-tag-count="2" style="width: 99%;" multiple filterable :placeholder="$t('field.role')">
+                    <Option v-for="item in allRole" :value="item.name" :key="item.value">{{ item.name }}</Option>
+                  </Select>
+                </Col>
+                <Col span="5">
+                  <Select v-model="item.proc_callback_key" clearable :disabled="!isEditState" @on-change="procCallbackKeyChange(item.proc_callback_key, tableIndex, index)" style="width:99%;" :placeholder="$t('proc_callback_key')">
+                    <Option v-for="(flow, flowIndex) in flows" :key="flowIndex" :value="flow.procDefKey" :label="flow.procDefName + ' [' + flow.procDefVersion + ']'"><span>{{ flow.procDefName }} [{{ flow.procDefVersion }}]</span></Option>
+                  </Select>
+                </Col>
+                <Col span="5">
+                  <Select v-model="item.proc_callback_mode" clearable :disabled="!isEditState" style="width:99%" :placeholder="$t('m_callback_mode')">
+                    <Option v-for="item in callbackMode" :value="item.value" :key="item.value">{{ $t(item.label) }}</Option>
+                  </Select>
+                </Col>
+                <Col span="5">
+                  <Input 
+                    v-model="item.description"
+                    clearable 
+                    :disabled="!isEditState"
+                    style="width:99%"
+                    type="text" 
+                    maxlength="50"
+                    :placeholder="$t('tableKey.description')"/>
+                </Col>
+              </Row>
             </div>
           </Form>
         </div>
@@ -722,10 +738,10 @@ export default {
       // 主页中的表格
       alarmItemTableColumns: [
         {
-            title: this.$t('m_alarmName'),
-            align: 'center',
-            width: 160,
-            key: 'name'
+          title: this.$t('m_alarmName'),
+          align: 'center',
+          width: 250,
+          key: 'name'
         },
         {
           title: this.$t('m_alarmPriority'),
@@ -759,10 +775,10 @@ export default {
           }
         },
         {
-            title: this.$t('field.relativeTime'),
-            width: 130,
-            align: 'center',
-            key: 'active_window'
+          title: this.$t('field.relativeTime'),
+          width: 130,
+          align: 'center',
+          key: 'active_window'
         },
         {
           title: this.$t('firing'),
