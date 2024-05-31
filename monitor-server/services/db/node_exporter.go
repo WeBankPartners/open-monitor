@@ -153,7 +153,11 @@ func transLogMetricConfigToJobNew(logMetricConfig []*models.LogMetricQueryObj, e
 					if groupMetric.AggType != "avg" && groupMetric.AggType != "count" && groupMetric.AggType != "sum" && groupMetric.AggType != "max" && groupMetric.AggType != "min" {
 						continue
 					}
-					tmpGroupMetricObj := models.LogMetricNeObj{Metric: groupMetric.Metric, LogParamName: groupMetric.LogParamName, AggType: groupMetric.AggType, Step: groupMetric.Step, TagConfig: []*models.LogMetricConfigTag{}}
+					tmpMetric := groupMetric.Metric
+					if v.MetricPrefixCode != "" {
+						tmpMetric = v.MetricPrefixCode + "_" + groupMetric.Metric
+					}
+					tmpGroupMetricObj := models.LogMetricNeObj{Metric: tmpMetric, LogParamName: groupMetric.LogParamName, AggType: groupMetric.AggType, Step: groupMetric.Step, TagConfig: []*models.LogMetricConfigTag{}}
 					for _, vv := range groupMetric.TagConfigList {
 						tmpGroupMetricObj.TagConfig = append(tmpGroupMetricObj.TagConfig, &models.LogMetricConfigTag{LogParamName: vv})
 					}

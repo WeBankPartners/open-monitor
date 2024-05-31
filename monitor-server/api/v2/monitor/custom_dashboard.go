@@ -111,12 +111,13 @@ func QueryCustomDashboardList(c *gin.Context) {
 func GetCustomDashboard(c *gin.Context) {
 	var err error
 	var customDashboard *models.CustomDashboardTable
-	var customDashboardDto = &models.CustomDashboardDto{}
+	var customDashboardDto = &models.CustomDashboardDto{UseRoles: []string{}, MgmtRoles: []string{}}
 	var customChartExtendList []*models.CustomChartExtend
 	var groupMap = make(map[string]bool)
 	var configMap = make(map[string][]*models.CustomChartSeriesConfig)
 	var tagMap = make(map[string][]*models.CustomChartSeriesTag)
 	var tagValueMap = make(map[string][]*models.CustomChartSeriesTagValue)
+	var boardRoleRelList []*models.CustomDashBoardRoleRel
 	id, _ := strconv.Atoi(c.Query("id"))
 	if id == 0 {
 		middleware.ReturnParamEmptyError(c, "id")
@@ -162,6 +163,19 @@ func GetCustomDashboard(c *gin.Context) {
 			}
 		}
 		customDashboardDto.PanelGroupList = db.TransformMapToArray(groupMap)
+	}
+	if boardRoleRelList, err = db.QueryCustomDashboardPermissionByDashboard(id); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if len(boardRoleRelList) > 0 {
+		for _, rel := range boardRoleRelList {
+			if rel.Permission == string(models.PermissionUse) {
+				customDashboardDto.UseRoles = append(customDashboardDto.UseRoles, rel.RoleId)
+			} else if rel.Permission == string(models.PermissionMgmt) {
+				customDashboardDto.MgmtRoles = append(customDashboardDto.MgmtRoles, rel.RoleId)
+			}
+		}
 	}
 	middleware.ReturnSuccessData(c, customDashboardDto)
 }
