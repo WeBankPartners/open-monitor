@@ -341,6 +341,29 @@ func GetPieChart(c *gin.Context) {
 
 func getPieData(paramConfig *m.PieChartConfigObj) (result []*m.QueryMonitorData, err error) {
 	result = []*m.QueryMonitorData{}
+	tagList := []*m.TagDto{}
+	if paramConfig.CustomChartGuid != "" {
+		//chartObj, getChartErr := db.GetCustomChartById(paramConfig.CustomChartGuid)
+		//if getChartErr != nil {
+		//	err = fmt.Errorf("get custom chart with guid:%s fail,%s ", paramConfig.CustomChartGuid, getChartErr.Error())
+		//	return
+		//}
+		chartSeries, getErr := db.GetCustomChartSeries(paramConfig.CustomChartGuid)
+		if getErr != nil {
+			err = getErr
+			return
+		}
+		if len(chartSeries) == 0 {
+			err = fmt.Errorf("Can not find chart serie with guid:%d ", paramConfig.CustomChartGuid)
+			return
+		}
+		seriesObj := chartSeries[0]
+		paramConfig.Metric = seriesObj.Metric
+		paramConfig.AppObject = seriesObj.ServiceGroup
+		paramConfig.Endpoint = seriesObj.Endpoint
+		paramConfig.AppObjectEndpointType = seriesObj.MonitorType
+		tagList = seriesObj.Tags
+	}
 	if paramConfig.Metric == "" {
 		err = fmt.Errorf("metric can not empty")
 		return
@@ -372,7 +395,7 @@ func getPieData(paramConfig *m.PieChartConfigObj) (result []*m.QueryMonitorData,
 	var queryStart, queryEnd int64
 	if paramConfig.PieAggType == "new" {
 		queryEnd = time.Now().Unix()
-		queryStart = queryEnd - 120
+		queryStart = queryEnd - 300
 	} else {
 		if paramConfig.Start > 0 && paramConfig.End > 0 {
 			queryEnd = paramConfig.End
@@ -397,7 +420,7 @@ func getPieData(paramConfig *m.PieChartConfigObj) (result []*m.QueryMonitorData,
 	}
 	promMap := make(map[string]bool)
 	for _, endpoint := range endpointList {
-		tmpPromQL := db.ReplacePromQlKeyword(paramConfig.PromQl, paramConfig.Metric, endpoint)
+		tmpPromQL := db.ReplacePromQlKeyword(paramConfig.PromQl, paramConfig.Metric, endpoint, tagList)
 		if _, b := promMap[tmpPromQL]; b {
 			continue
 		}
