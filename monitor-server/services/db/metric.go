@@ -237,10 +237,10 @@ func MetricImport(serviceGroup, operator string, inputMetrics []*models.MetricTa
 		}
 	}
 	for _, existMetric := range existMetrics {
-		deleteFlag := true
+		deleteFlag := false
 		for _, inputMetric := range inputMetrics {
 			if inputMetric.Metric == existMetric.Metric {
-				deleteFlag = false
+				deleteFlag = true
 				break
 			}
 		}
