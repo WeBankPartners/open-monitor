@@ -12,7 +12,7 @@
       <MenuItem name="endpointView">{{$t("menu.endpointView")}}</MenuItem>
       <!-- <MenuItem name="systemMonitoring">{{$t("menu.systemMonitoring")}}</MenuItem> -->
       <MenuItem name="metricConfig">{{$t("menu.metricConfiguration")}}</MenuItem>
-      <MenuItem name="viewConfigIndex">{{$t("menu.customViews")}}</MenuItem>
+      <MenuItem name="viewConfigIndex">{{$t("menu.screenConfiguration")}}</MenuItem>
     </Submenu>
     <MenuItem name="monitorConfigIndex">
       <i class="fa fa-gears" aria-hidden="true"></i>

@@ -31,9 +31,10 @@ export const readyToDraw = function(that, responseData, viewIndex, chartConfig, 
       if (item.endpoint.split('.').length >= 3) {
         isHostOrSys = true
       } 
-      metricEndpointColorInChartConfig[`${item.metric}:${item.endpoint}`] = item.defaultColor || ''
+      metricEndpointColorInChartConfig[`${item.metric}:${item.endpoint}`] = item.defaultColor || '#666699'
       metricSysColorInChartConfig[`${item.metric}`] = item.defaultColor || ''
       let nullColorIndex = []
+      item.metricToColor = item.metricToColor || [];
       item.metricToColor.forEach((m, mIndex) => {
         if (m.color === '') {
           nullColorIndex.push(mIndex)
@@ -74,7 +75,6 @@ export const readyToDraw = function(that, responseData, viewIndex, chartConfig, 
           keys.forEach(key => {
             if (item.name.startsWith(key)) {
               let color = generateAdjacentColors(metricSysColorInChartConfig[key], 1, 20 * (itemIndex*0.1) )
-
               metricToColor.push({
                 metric: item.name,
                 color: color[0]
@@ -89,7 +89,7 @@ export const readyToDraw = function(that, responseData, viewIndex, chartConfig, 
   
   const colorX = ['#33CCCC','#666699','#66CC66','#996633','#9999CC','#339933','#339966','#663333','#6666CC','#336699','#3399CC','#33CC66','#CC3333','#CC6666','#996699','#CC9933']
   let colorSet = []
-  for (let i=0;i<colorX.length;i++) {
+  for (let i=0; i < colorX.length; i++) {
     let tmpIndex = viewIndex*3 + i
     tmpIndex = tmpIndex%colorX.length
     colorSet.push(colorX[tmpIndex])
@@ -366,11 +366,14 @@ export const drawChart = function(that,config,userConfig, elId) {
       yAxisIndex: 'none'
     }
   }
-  
   // 绘制图表
   myChart.setOption(option)
   // 清空所有事件重新绑定
-  myChart.off()
+  myChart.off();
+  setTimeout(() => {
+    myChart.resize()
+  }, 100)
+  
   if (finalConfig.zoomCallback) {
     myChart.on('datazoom', function (params) {
       let startValue = null
