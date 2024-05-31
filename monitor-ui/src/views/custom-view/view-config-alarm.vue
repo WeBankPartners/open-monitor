@@ -11,17 +11,17 @@
           <div style="float:right">
             <Poptip trigger="hover">
               <div slot="title" style="white-space: normal;color: #2d8cf0">
-                <p>{{ $t('m_initiate_orchestration') }}: {{ data.notify_callback_name }}</p>
+                <p>{{ $t('m_initiate_orchestration') }}: {{ alarmItem.notify_callback_name }}</p>
               </div>
               <div slot="content" style="white-space: normal;padding:16px">
-                <p>{{ $t('tableKey.description') }}: {{ data.notify_message }}</p>
+                <p>{{ $t('tableKey.description') }}: {{ alarmItem.notify_message }}</p>
               </div>
               <Icon
                 type="ios-megaphone"
                 size="18"
                 class="fa-operate"
-                v-if="data.notify_id !==''"
-                @click="goToNotify(data)"
+                v-if="alarmItem.notify_id !==''"
+                @click="goToNotify(alarmItem)"
               />
             </Poptip>
             <Tooltip :content="$t('menu.endpointView')">
@@ -260,7 +260,7 @@ label {
   font-size: 18px;
 }
 .alarm-list {
-  height: ~"calc(100vh - 250px)";
+  height: ~"calc(100vh - 150px)";
   width: 100%;
   overflow-y: auto;
 }

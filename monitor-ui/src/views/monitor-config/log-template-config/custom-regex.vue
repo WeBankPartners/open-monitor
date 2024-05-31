@@ -16,8 +16,9 @@
       <div :class="isfullscreen? 'modal-container-fullscreen':'modal-container-normal'">
         <Row>
           <Col span="8">
+            <Divider orientation="left" size="small">{{ $t('m_configuration_information') }}</Divider>
             <Form :label-width="120">
-              <FormItem :label="$t('tableKey.name')">
+              <FormItem :label="$t('m_configuration_name')">
                 <Tooltip :content="configInfo.name" transfer :disabled="configInfo.name === ''" style="width: 100%;" max-width="200">
                   <Input
                     v-model="configInfo.name"
@@ -55,8 +56,10 @@
                   :data="configInfo.param_list"
                   width="100%"
                 ></Table>
-                <Button type="primary" :disabled="view" @click="addParameterCollection" ghost size="small" style="float:left;margin:12px">{{ $t('m_add_parameter_collection') }}</Button>
-                <Button type="primary" :disabled="configInfo.demo_log==='' || configInfo.param_list.length === 0 || view" @click="generateBackstageTrial" ghost size="small" style="float:right;margin:12px">{{ $t('m_match') }}</Button>
+                <div style="text-align: right;margin: 0 33px;">
+                  <Button type="primary" :disabled="configInfo.demo_log==='' || configInfo.param_list.length === 0 || view" @click="generateBackstageTrial" ghost size="small" style="margin:12px">{{ $t('m_match') }}</Button>
+                  <Button type="success" :disabled="view" @click="addParameterCollection" ghost size="small" icon="md-add"></Button>
+                </div>
               </div>
               <!-- 计算指标 -->
               <div>
@@ -68,7 +71,9 @@
                   :data="configInfo.metric_list"
                   width="100%"
                 ></Table>
-                <Button type="primary" :disabled="view" @click="addComputeMetrics" ghost size="small" style="float:left;margin:12px">{{ $t('m_add_compute_metrics') }}</Button>
+                <div style="text-align: right;margin: 0 24px;">
+                  <Button type="success" :disabled="view" @click="addComputeMetrics" ghost size="small" icon="md-add" style="margin: 12px;"></Button>
+                </div>
               </div>
             </div>
           </Col>
@@ -99,29 +104,6 @@ export default {
         param_list: []
       },
       columnsForParameterCollection: [
-        {
-          title: this.$t('field.displayName'),
-          key: 'display_name',
-          renderHeader: () => {
-            return (
-              <span>
-                <span style="color:red">*</span>
-                <span>{this.$t('field.displayName')}</span>
-              </span>
-            )
-          },
-          render: (h, params) => {
-            return (
-              <Input
-                value={params.row.display_name}
-                disabled={this.view}
-                onInput={v => {
-                  this.changeVal('param_list', params.index, 'display_name', v)
-                }}
-              />
-            )
-          }
-        },
         {
           title: this.$t('m_parameter_key'),
           key: 'name',
@@ -186,9 +168,15 @@ export default {
             )
           },
           key: 'demo_match_value',
+          render: (h, params) => {
+            const demo_match_value = params.row.demo_match_value
+            return (
+              <span style={demo_match_value?'':'color:#c5c8ce'}>{demo_match_value || this.$t('m_no_matching')}</span>
+            )
+          }
         },
         {
-          title: this.$t('m_tag_mapping'),
+          title: this.$t('m_match_value_pure'),
           ellipsis: true,
           tooltip: true,
           key: 'string_map',
@@ -199,11 +187,11 @@ export default {
                 <Input disabled style="width:80%" value={val}/>
                 <Button
                   size="small"
-                  type="success"
+                  type="primary"
                   disabled={this.view}
+                  icon="md-create"
                   onClick={() => this.editTagMapping(params.index)}
                 >
-                  <Icon type="ios-create-outline" size="16"></Icon>
                 </Button>
               </div>
             )
@@ -232,29 +220,6 @@ export default {
         }
       ],
       columnsForComputeMetrics: [
-        {
-          title: this.$t('field.displayName'),
-          key: 'display_name',
-          renderHeader: () => {
-            return (
-              <span>
-                <span style="color:red">*</span>
-                <span>{this.$t('field.displayName')}</span>
-              </span>
-            )
-          },
-          render: (h, params) => {
-            return (
-              <Input
-                value={params.row.display_name}
-                disabled={this.view}
-                onInput={v => {
-                  this.changeVal('metric_list', params.index, 'display_name', v)
-                }}
-              />
-            )
-          }
-        },
         {
           title: this.$t('m_metric_key'),
           key: 'metric',
@@ -482,7 +447,7 @@ export default {
         return true
       }
       const is_param_list_empty = tmpData.param_list.some((element) => {
-        return element.name === '' || element.display_name === '' || element.regular === ''
+        return element.name === '' || element.regular === ''
       })
       if (is_param_list_empty) {
         this.$Message.warning(`${this.$t('m_parameter_collection')}: ${this.$t('m_fields_cannot_be_empty')}`)
@@ -510,7 +475,7 @@ export default {
       }
 
       const is_metric_list_empty = tmpData.metric_list.some((element) => {
-        return element.display_name === '' || element.metric === '' || element.log_param_name === '' || element.agg_type === ''
+        return element.metric === '' || element.log_param_name === '' || element.agg_type === ''
       })
       if (is_metric_list_empty) {
         this.$Message.warning(`${this.$t('m_compute_metrics')}: ${this.$t('m_fields_cannot_be_empty')}`)
