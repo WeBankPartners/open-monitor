@@ -4,7 +4,7 @@
       <transition name="fade" mode="out-in">
         <router-view></router-view>
       </transition>
-      <BenchMenu :menuList="menuList" @menuStatusChange="onMenuChange"></BenchMenu>
+      <BenchMenu :menuList="menuList" @menuStatusChange="onMenuChange" :openNames="['1','2','3','4']" defaultMenu="1-1"></BenchMenu>
     </div>
   </div>
 </template>
@@ -44,7 +44,7 @@ export default {
             },
             {
                 title: this.$t('menu.alert'),
-                icon: 'md-alert',
+                icon: 'md-warning',
                 name: '3',
                 children: [
                     { title: this.$t('m_metric_threshold'), path: '/monitorConfigIndex/thresholdManagement', name: '3-1' },
@@ -67,6 +67,13 @@ export default {
       return {
         paddingLeft: this.expand ? '140px' : '0px'
       }
+    }
+  },
+  mounted () {
+    if (this.$eventBusP) {
+      this.$eventBusP.$emit('expand-menu', this.expand)
+    } else {
+      this.$bus.$emit('expand-menu', this.expand)
     }
   },
   methods: {
