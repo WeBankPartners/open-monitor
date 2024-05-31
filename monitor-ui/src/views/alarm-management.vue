@@ -1,7 +1,6 @@
 <template>
   <div>
     <div class="title-wrapper">
-      <Title :title="$t('menu.alert')"></Title>
       <div class="title-form">
         <ul>
           <li class="filter-li">
@@ -538,7 +537,6 @@ export default {
   margin-bottom: 24px;
 
   .title-form  {
-    margin-left: 21px;
     padding: 10px 18px;
     flex: auto;
     border-radius: 4px;
@@ -630,7 +628,7 @@ export default {
   .content-stats-container {
     width: 100%;
     display: flex;
-    margin: 12px 0;
+    // margin: 12px 0;
 
     .left {
       position: relative;
@@ -650,7 +648,8 @@ export default {
       overflow-x: auto;
 
       .alarm-card-container {
-        height: 740px;
+        // height: 740px;
+        height: ~"calc(100vh - 310px)";
         overflow-y: auto;
 
         &::-webkit-scrollbar {
