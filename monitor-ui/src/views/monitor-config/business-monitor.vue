@@ -25,35 +25,17 @@
             </Option>
           </Select>
         </li>
-        <!-- <li class="search-li">
-          <button type="button" class="btn btn-sm btn-confirm-f"
-          :disabled="targrtId === ''"
-          @click="search">
-            <i class="fa fa-search" ></i>
-            {{$t('button.search')}}
-          </button>
-        </li> -->
-        <!-- <li class="search-li" style="cursor: pointer;">
-          <span @click="openDoc">
-            <i 
+        <li class="search-li" style="cursor: pointer;">
+          <span style="font-size: 14px;" @click="openDoc">
+            <i
               class="fa fa-book" 
               aria-hidden="true" 
               style="font-size:20px;color:#58a0e6;vertical-align: middle;margin-left:20px">
             </i>
             {{$t('operationDoc')}}
           </span>
-        </li> -->
+        </li>
       </ul>
-      <div style="margin-top: 4px;">
-        <span @click="openDoc">
-          <i 
-            class="fa fa-book" 
-            aria-hidden="true" 
-            style="font-size:20px;color:#58a0e6;vertical-align: middle;margin-left:20px">
-          </i>
-          {{$t('operationDoc')}}
-        </span>
-      </div>
     </div> 
     <section v-show="showTargetManagement" style="margin-top: 16px;">
       <template v-if="type === 'group'">
@@ -131,7 +113,7 @@ export default {
     display: inline-block;
   }
   .search-ul>li:not(:first-child) {
-    padding-left: 10px;
+    padding-left: 12px;
   }
 </style>
 <style scoped lang="less">
