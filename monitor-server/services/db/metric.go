@@ -236,22 +236,6 @@ func MetricImport(serviceGroup, operator string, inputMetrics []*models.MetricTa
 				Param: []interface{}{inputMetric.Guid, inputMetric.Metric, inputMetric.MonitorType, inputMetric.PromExpr, serviceGroup, inputMetric.Workspace, nowTime, nowTime, operator, operator}})
 		}
 	}
-	for _, existMetric := range existMetrics {
-		deleteFlag := true
-		for _, inputMetric := range inputMetrics {
-			if inputMetric.Metric == existMetric.Metric {
-				deleteFlag = false
-				break
-			}
-		}
-		if deleteFlag {
-			if v, b := strategyMap[existMetric.Guid]; b {
-				affectEndpointGroupList = append(affectEndpointGroupList, v)
-				actions = append(actions, &Action{Sql: "delete from alarm_strategy where metric=?", Param: []interface{}{existMetric.Guid}})
-			}
-			actions = append(actions, &Action{Sql: "delete from metric where guid=?", Param: []interface{}{existMetric.Guid}})
-		}
-	}
 	log.Logger.Info("import metric", log.Int("actionLen", len(actions)))
 	if len(actions) > 0 {
 		if err = Transaction(actions); err != nil {

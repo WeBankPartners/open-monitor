@@ -228,6 +228,7 @@ type PieChartConfigObj struct {
 	AppObjectEndpointType string `form:"app_object_endpoint_type" json:"app_object_endpoint_type"`
 	PieMetricType         string `form:"pie_metric_type" json:"pie_metric_type"`
 	PieAggType            string `form:"pie_agg_type" json:"pie_agg_type"`
+	CustomChartGuid       string `json:"custom_chart_guid"`
 }
 
 type ChartQueryParam struct {
@@ -487,6 +488,8 @@ type CustomDashboardDto struct {
 	Name           string            `json:"name"`
 	PanelGroupList []string          `json:"panelGroupList"`
 	Charts         []*CustomChartDto `json:"charts"`
+	MgmtRoles      []string          `json:"mgmtRoles"`
+	UseRoles       []string          `json:"useRoles"`
 }
 
 type AddCustomDashboardParam struct {
