@@ -909,4 +909,11 @@ CREATE TABLE `alarm_condition_rel` (
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
 
 alter table alarm add column alarm_name varchar(64) default null comment '告警名称';
+CREATE TABLE `remote_write_config` (
+      `id` varchar(64) NOT NULL,
+      `address` varchar(255) NOT NULL,
+      `create_at` datetime DEFAULT NULL,
+      `update_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 #@v2.0.8.1-end@;
