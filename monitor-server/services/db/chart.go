@@ -102,8 +102,12 @@ func GetCustomChartSeries(customChartGuid string) (series []*models.CustomChartS
 			MonitorType:   row.MonitorType,
 			ColorGroup:    row.ColorGroup,
 			PieDisplayTag: row.PieDisplayTag,
+			EndpointType:  row.EndpointType,
+			MetricType:    row.MetricType,
+			MetricGuid:    row.MetricGuid,
 			Metric:        row.Metric,
 			Tags:          []*models.TagDto{},
+			ColorConfig:   nil,
 		}
 		tagNameList := []string{}
 		tagValueMap := make(map[string][]string)

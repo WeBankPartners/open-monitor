@@ -31,8 +31,8 @@
             ></Button>
           </Col>
         </Row>
-        <div style="text-align: right;margin-right: 8px;cursor: pointer">
-          <Button type="primary" ghost @click="addItem" size="small" icon="md-add"></Button>
+        <div style="text-align: right;margin-right: 9px;cursor: pointer">
+          <Button type="success" ghost @click="addItem" size="small" icon="md-add"></Button>
         </div>
       </div>
       <template #footer>
