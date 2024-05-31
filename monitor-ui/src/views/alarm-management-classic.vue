@@ -155,6 +155,7 @@ tr {
   }
   .render-content {
     overflow: scroll;
+    // word-wrap: break-word;
   }
 }
 
