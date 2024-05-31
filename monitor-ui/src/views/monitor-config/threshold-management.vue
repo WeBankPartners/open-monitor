@@ -50,6 +50,22 @@
         </template>
       </div>
     </div>
+    <div>
+      <div v-if="!targetId">
+        <Alert type="error">
+          <span>{{ $t('m_empty_tip_1') }}</span>
+          <span v-if="type==='service'">{{ $t('field.resourceLevel') }}</span>
+          <span v-if="type==='group'">{{ $t('field.group') }}</span>
+          <span v-if="type==='endpoint'">{{ $t('field.endpoint') }}</span>
+        </Alert>
+      </div>
+      <div v-if="targetId&&dataEmptyTip">
+        <Alert type="error">
+          <span v-if="type==='service'">{{ $t('m_empty_data_recrisive') }}</span>
+          <span v-if="type==='endpoint'">{{ $t('m_empty_data_endpoint') }}</span>
+        </Alert>
+      </div>
+    </div>
     <div v-show="showTargetManagement" class="table-zone">
       <template v-for="(itemType, index) in thresholdTypes">
         <thresholdDetail 
@@ -57,6 +73,7 @@
           v-if="type === itemType"
           :key=index
           :type=type
+          @feedbackInfo="feedbackInfo"
         >
         </thresholdDetail>
       </template>
@@ -84,7 +101,8 @@ export default {
       targetId: '',
       targetOptions: [],
       showTargetManagement: false,
-      thresholdTypes: ['group', 'endpoint', 'service']
+      thresholdTypes: ['group', 'endpoint', 'service'],
+      dataEmptyTip: false
     }
   },
   computed: {
@@ -100,6 +118,9 @@ export default {
     this.$root.$store.commit('changeTableExtendActive', -1)
   },
   methods: {
+    feedbackInfo (val) {
+      this.dataEmptyTip = val
+    },
     exportThreshold () {
       const api = `/monitor/api/v2/alarm/strategy/export/${this.type}/${this.targetId}`
       axios({

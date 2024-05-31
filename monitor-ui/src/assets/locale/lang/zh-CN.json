@@ -447,5 +447,9 @@
   "m_confirm": "确认",
   "m_no_matching": "无匹配结果",
   "m_notification": "通知",
-  "m_alert": "告警"
+  "m_alert": "告警",
+  "m_config_view": "查看配置",
+  "m_empty_tip_1": "请先选择查询的",
+  "m_empty_data_recrisive": "暂无数据(请先到[监控配置-对象层级对象-当前层级对象]添加关联对象,如有疑问请联系管理员)",
+  "m_empty_data_endpoint": "暂无数据(请先[监控配置-对象-对象组]把当前对象加入一个组,如有疑问请联系管理员)"
 }
