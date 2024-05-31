@@ -515,19 +515,22 @@ func getLogMetricExprByAggType(metric, aggType, serviceGroup string, tagList []s
 	return result
 }
 
-func getLogMetricRatePromExpr(metric, aggType, serviceGroup, sucRetCode string) (result string) {
+func getLogMetricRatePromExpr(metric, metricPrefix, aggType, serviceGroup, sucRetCode string) (result string) {
 	aggType = "count"
+	if metricPrefix != "" {
+		metricPrefix = metricPrefix + "_"
+	}
 	if metric == "req_suc_count" {
-		result = fmt.Sprintf("sum(%s{key=\"req_suc_count\",agg=\"%s\",service_group=\"%s\",retcode=\"%s\",code=\"$t_code\"}) by (key,agg,service_group,code,retcode)", models.LogMetricName, aggType, serviceGroup, sucRetCode)
+		result = fmt.Sprintf("sum(%s{key=\"%sreq_suc_count\",agg=\"%s\",service_group=\"%s\",retcode=\"%s\",code=\"$t_code\"}) by (key,agg,service_group,code,retcode)", models.LogMetricName, metricPrefix, aggType, serviceGroup, sucRetCode)
 		return
 	}
 	if metric == "req_suc_rate" {
-		result = fmt.Sprintf("100*((sum(%s{key=\"req_suc_count\",agg=\"%s\",service_group=\"%s\",retcode=\"%s\",code=\"$t_code\"}) by (service_group,code))/(sum(%s{key=\"req_count\",agg=\"%s\",service_group=\"%s\",code=\"$t_code\"}) by (service_group,code)) > 0 or vector(1))",
-			models.LogMetricName, aggType, serviceGroup, sucRetCode, models.LogMetricName, aggType, serviceGroup)
+		result = fmt.Sprintf("100*((sum(%s{key=\"%sreq_suc_count\",agg=\"%s\",service_group=\"%s\",retcode=\"%s\",code=\"$t_code\"}) by (service_group,code))/(sum(%s{key=\"%sreq_count\",agg=\"%s\",service_group=\"%s\",code=\"$t_code\"}) by (service_group,code)) > 0 or vector(1))",
+			models.LogMetricName, metricPrefix, aggType, serviceGroup, sucRetCode, models.LogMetricName, metricPrefix, aggType, serviceGroup)
 	}
 	if metric == "req_fail_rate" {
-		result = fmt.Sprintf("100-100*((sum(%s{key=\"req_suc_count\",agg=\"%s\",service_group=\"%s\",retcode=\"%s\",code=\"$t_code\"}) by (service_group,code))/(sum(%s{key=\"req_count\",agg=\"%s\",service_group=\"%s\",code=\"$t_code\"}) by (service_group,code)) > 0 or vector(1))",
-			models.LogMetricName, aggType, serviceGroup, sucRetCode, models.LogMetricName, aggType, serviceGroup)
+		result = fmt.Sprintf("100-100*((sum(%s{key=\"%sreq_suc_count\",agg=\"%s\",service_group=\"%s\",retcode=\"%s\",code=\"$t_code\"}) by (service_group,code))/(sum(%s{key=\"%sreq_count\",agg=\"%s\",service_group=\"%s\",code=\"$t_code\"}) by (service_group,code)) > 0 or vector(1))",
+			models.LogMetricName, metricPrefix, aggType, serviceGroup, sucRetCode, models.LogMetricName, metricPrefix, aggType, serviceGroup)
 	}
 	return
 }
@@ -1144,16 +1147,17 @@ func getCreateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, op
 	serviceGroup, monitorType := GetLogMetricServiceGroup(param.LogMetricMonitorGuid)
 	for _, v := range logMonitorTemplateObj.MetricList {
 		promExpr := ""
-		if v.Metric == "req_suc_count" || v.Metric == "req_suc_rate" || v.Metric == "req_fail_rate" {
-			promExpr = getLogMetricRatePromExpr(v.Metric, v.AggType, serviceGroup, sucRetCode)
-		} else {
-			promExpr = getLogMetricExprByAggType(v.Metric, v.AggType, serviceGroup, v.TagConfigList)
-		}
+		tmpMetricWithPrefix := v.Metric
 		if param.MetricPrefixCode != "" {
-			v.Metric = param.MetricPrefixCode + "_" + v.Metric
+			tmpMetricWithPrefix = param.MetricPrefixCode + "_" + v.Metric
+		}
+		if v.Metric == "req_suc_count" || v.Metric == "req_suc_rate" || v.Metric == "req_fail_rate" {
+			promExpr = getLogMetricRatePromExpr(v.Metric, param.MetricPrefixCode, v.AggType, serviceGroup, sucRetCode)
+		} else {
+			promExpr = getLogMetricExprByAggType(tmpMetricWithPrefix, v.AggType, serviceGroup, v.TagConfigList)
 		}
 		actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,log_metric_template,log_metric_group,create_time,create_user,update_user) value (?,?,?,?,?,?,?,?,?,?,?,?)",
-			Param: []interface{}{fmt.Sprintf("%s__%s", v.Metric, serviceGroup), v.Metric, monitorType, promExpr, serviceGroup, models.MetricWorkspaceService, nowTime, v.Guid, param.LogMetricGroupGuid, nowTime, operator, operator}})
+			Param: []interface{}{fmt.Sprintf("%s__%s", tmpMetricWithPrefix, serviceGroup), tmpMetricWithPrefix, monitorType, promExpr, serviceGroup, models.MetricWorkspaceService, nowTime, v.Guid, param.LogMetricGroupGuid, nowTime, operator, operator}})
 	}
 	return
 }
@@ -1221,13 +1225,17 @@ func getUpdateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, op
 		}
 		serviceGroup, _ := GetLogMetricServiceGroup(logMetricGroupObj.LogMetricMonitor)
 		for _, v := range logMonitorTemplateObj.MetricList {
-			if v.Metric == "req_suc_count" || v.Metric == "req_suc_rate" || v.Metric == "req_fail_rate" {
-				promExpr := getLogMetricRatePromExpr(v.Metric, v.AggType, serviceGroup, newSucRetCode)
-				if logMetricGroupObj.MetricPrefixCode != "" {
-					v.Metric = logMetricGroupObj.MetricPrefixCode + "_" + v.Metric
-				}
-				actions = append(actions, &Action{Sql: "update metric set prom_expr=?,update_time=?,update_user=? where guid=?", Param: []interface{}{promExpr, nowTime, operator, fmt.Sprintf("%s__%s", v.Metric, serviceGroup)}})
+			tmpMetricWithPrefix := v.Metric
+			if logMetricGroupObj.MetricPrefixCode != "" {
+				tmpMetricWithPrefix = logMetricGroupObj.MetricPrefixCode + "_" + v.Metric
 			}
+			promExpr := ""
+			if v.Metric == "req_suc_count" || v.Metric == "req_suc_rate" || v.Metric == "req_fail_rate" {
+				promExpr = getLogMetricRatePromExpr(v.Metric, logMetricGroupObj.MetricPrefixCode, v.AggType, serviceGroup, newSucRetCode)
+			} else {
+				promExpr = getLogMetricExprByAggType(tmpMetricWithPrefix, v.AggType, serviceGroup, v.TagConfigList)
+			}
+			actions = append(actions, &Action{Sql: "update metric set prom_expr=?,update_time=?,update_user=? where guid=?", Param: []interface{}{promExpr, nowTime, operator, fmt.Sprintf("%s__%s", tmpMetricWithPrefix, serviceGroup)}})
 		}
 	}
 	actions = append(actions, updateMapActions...)
@@ -1369,13 +1377,21 @@ func GetLogMetricCustomGroup(logMetricGroupGuid string) (result *models.LogMetri
 		result.ParamList = append(result.ParamList, &tmpParamObj)
 	}
 	var logMetricConfigRows []*models.LogMetricConfigTable
-	err = x.SQL("select * from log_metric_config where log_metric_group=?", logMetricGroupGuid).Find(&logMetricConfigRows)
+	logMetricConfigRows, err = getLogMetricConfigByMetricGroup(logMetricGroupGuid)
 	if err != nil {
-		return result, fmt.Errorf("Query table log_metric_param fail,%s ", err.Error())
+		return
 	}
 	for _, row := range logMetricConfigRows {
 		json.Unmarshal([]byte(row.TagConfig), &row.TagConfigList)
 		result.MetricList = append(result.MetricList, row)
+	}
+	return
+}
+
+func getLogMetricConfigByMetricGroup(logMetricGroupGuid string) (logMetricConfigRows []*models.LogMetricConfigTable, err error) {
+	err = x.SQL("select * from log_metric_config where log_metric_group=?", logMetricGroupGuid).Find(&logMetricConfigRows)
+	if err != nil {
+		err = fmt.Errorf("Query table log_metric_param fail,%s ", err.Error())
 	}
 	return
 }
@@ -1579,6 +1595,37 @@ func GetLogMetricMonitorMetricPrefixMap(logMetricMonitor string) (existPrefixMap
 	existPrefixMap = make(map[string]int)
 	for _, v := range queryResult {
 		existPrefixMap[v["metric_prefix_code"]] = 1
+	}
+	return
+}
+
+func GetLogMetricByLogMonitor(logMetricMonitor string) (result []*models.LogMetricConfigTable, err error) {
+	var logMetricGroupRows []*models.LogMetricGroup
+	err = x.SQL("select * from log_metric_group where log_metric_monitor=?", logMetricMonitor).Find(&logMetricGroupRows)
+	if err != nil {
+		err = fmt.Errorf("query log_metric_group table fail,%s ", err.Error())
+		return
+	}
+	for _, logMetricGroup := range logMetricGroupRows {
+		if logMetricGroup.LogMonitorTemplate != "" {
+			if logMetricTemplateRows, tmpErr := getLogMetricTemplateWithMonitor(logMetricGroup.LogMonitorTemplate); tmpErr != nil {
+				err = tmpErr
+				return
+			} else {
+				for _, logMetricTemplate := range logMetricTemplateRows {
+					result = append(result, &models.LogMetricConfigTable{Metric: fmt.Sprintf("%s_%s", logMetricGroup.MetricPrefixCode, logMetricTemplate.Metric), AggType: logMetricTemplate.AggType, DisplayName: logMetricTemplate.DisplayName})
+				}
+			}
+		} else {
+			if logMetricConfigRows, tmpErr := getLogMetricConfigByMetricGroup(logMetricGroup.Guid); tmpErr != nil {
+				err = tmpErr
+				return
+			} else {
+				for _, logMetricConfig := range logMetricConfigRows {
+					result = append(result, &models.LogMetricConfigTable{Metric: logMetricConfig.Metric, AggType: logMetricConfig.AggType, DisplayName: logMetricConfig.DisplayName})
+				}
+			}
+		}
 	}
 	return
 }
