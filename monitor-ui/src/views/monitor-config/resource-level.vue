@@ -1,8 +1,8 @@
 <template>
   <div class="">
-    <button class="btn-confirm-f btn-small" @click="addPanel">{{$t('resourceLevel.addPanel')}}</button>
+    <Button type="success" @click="addPanel">{{ $t('resourceLevel.addPanel') }}</Button>
     <i class="fa fa-refresh" aria-hidden="true" @click="getAllResource(false)" style="margin-right:16px"></i>
-    <Input v-model="searchParams.name" @on-enter="getAllResource(true)" :placeholder="$t('resourceLevel.level_search_name')" style="width: 300px;margin-right:8px" />
+    <Input v-model="searchParams.name" @on-change="getAllResource(true)" :placeholder="$t('resourceLevel.level_search_name')" style="width: 300px;margin-right:8px" />
     <span> OR</span>
     <Select
       v-model="searchParams.endpoint"
@@ -16,7 +16,7 @@
       >
       <Option v-for="item in allObject" :value="item.option_value" :key="item.option_value">{{ item.option_text }}</Option>
     </Select>
-    <button type="button" :disabled="disabledSearchBtn" class="btn btn-confirm-f" @click="getAllResource(true)">{{$t('button.search')}}</button>
+    <!-- <button type="button" :disabled="disabledSearchBtn" class="btn btn-confirm-f" @click="getAllResource(true)">{{$t('button.search')}}</button> -->
     
     <template v-if="extend">
       <recursive :recursiveViewConfig="resourceRecursive"></recursive>
