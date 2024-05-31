@@ -215,7 +215,7 @@ func getCustomChartConfig(param *models.ChartQueryParam, result *models.EChartOp
 		if db.CheckMetricIsServiceMetric(dataConfig.Metric, dataConfig.ServiceGroup) {
 			log.Logger.Debug("getChartConfigByCustom $app_metric")
 			legend = "$app_metric"
-			tmpPromQl = db.ReplacePromQlKeyword(tmpPromQl, dataConfig.Metric, &models.EndpointNewTable{})
+			tmpPromQl = db.ReplacePromQlKeyword(tmpPromQl, dataConfig.Metric, &models.EndpointNewTable{}, dataConfig.Tags)
 			queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQl, Legend: legend, Metric: []string{dataConfig.Metric}, Endpoint: []string{dataConfig.Endpoint}, CompareLegend: param.Compare.CompareFirstLegend, SameEndpoint: true, Step: param.Step, Cluster: "default"})
 		} else {
 			endpointList := []*models.EndpointNewTable{}
@@ -237,7 +237,7 @@ func getCustomChartConfig(param *models.ChartQueryParam, result *models.EChartOp
 				}
 			}
 			for _, endpoint := range endpointList {
-				tmpPromQL := db.ReplacePromQlKeyword(tmpPromQl, dataConfig.Metric, endpoint)
+				tmpPromQL := db.ReplacePromQlKeyword(tmpPromQl, dataConfig.Metric, endpoint, dataConfig.Tags)
 				queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQL, Legend: legend, Metric: []string{dataConfig.Metric}, Endpoint: []string{endpoint.Guid}, Step: endpoint.Step, Cluster: endpoint.Cluster, CustomDashboard: true})
 			}
 		}
@@ -342,7 +342,7 @@ func getChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.
 		}
 		queryAppendFlag := false
 		if len(endpointList) > 0 && metricLegend == "$app_metric" {
-			tmpPromQL := db.ReplacePromQlKeyword(dataConfig.PromQl, dataConfig.Metric, endpointList[0])
+			tmpPromQL := db.ReplacePromQlKeyword(dataConfig.PromQl, dataConfig.Metric, endpointList[0], []*models.TagDto{})
 			log.Logger.Debug("check prom is same", log.String("tmpPromQl", tmpPromQL), log.String("dataProm", dataConfig.PromQl))
 			if tmpPromQL == dataConfig.PromQl {
 				queryAppendFlag = true
@@ -363,7 +363,7 @@ func getChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.
 					}
 					log.Logger.Debug("build custom chart query", log.String("tmpPromQL", tmpPromQL))
 				}
-				tmpPromQL = db.ReplacePromQlKeyword(tmpPromQL, dataConfig.Metric, endpoint)
+				tmpPromQL = db.ReplacePromQlKeyword(tmpPromQL, dataConfig.Metric, endpoint, []*models.TagDto{})
 				queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQL, Legend: metricLegend, Metric: []string{dataConfig.Metric}, Endpoint: []string{endpoint.Guid}, Step: endpoint.Step, Cluster: endpoint.Cluster, CustomDashboard: true})
 			}
 		}

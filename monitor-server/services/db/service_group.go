@@ -327,6 +327,18 @@ func MatchServicePanel(endpointGuid string) (result models.PanelModel, err error
 			for _, metricConfig := range ListLogMetricConfig("", logMetricMonitor) {
 				result.Charts = append(result.Charts, &models.ChartModel{Id: 0, Title: metricConfig.DisplayName, Endpoint: []string{endpointGuid}, Metric: []string{fmt.Sprintf("%s/key=%s,t_endpoint=%s,agg=%s,service_group=%s", models.LogMetricName, metricConfig.Metric, endpointGuid, metricConfig.AggType, serviceGroup)}})
 			}
+			logGroupMetrics, tmpErr := GetLogMetricByLogMonitor(logMetricMonitor)
+			if tmpErr != nil {
+				err = tmpErr
+				return
+			}
+			for _, groupMetric := range logGroupMetrics {
+				tmpDisplayName := groupMetric.DisplayName
+				if tmpDisplayName == "" {
+					tmpDisplayName = groupMetric.Metric
+				}
+				result.Charts = append(result.Charts, &models.ChartModel{Id: 0, Title: tmpDisplayName, Endpoint: []string{endpointGuid}, Metric: []string{fmt.Sprintf("%s/key=%s,t_endpoint=%s,agg=%s,service_group=%s", models.LogMetricName, groupMetric.Metric, endpointGuid, groupMetric.AggType, serviceGroup)}})
+			}
 		}
 	}
 	var dbMetricMonitor []*models.DbMetricMonitorTable
