@@ -40,6 +40,7 @@ func GetSharedChartList(c *gin.Context) {
 func AddCustomChart(c *gin.Context) {
 	var err error
 	var param models.AddCustomChartParam
+	var id string
 	if err = c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
@@ -48,11 +49,11 @@ func AddCustomChart(c *gin.Context) {
 		middleware.ReturnParamEmptyError(c, "dashboardId")
 		return
 	}
-	if err = db.AddCustomChart(param, middleware.GetOperateUser(c)); err != nil {
+	if id, err = db.AddCustomChart(param, middleware.GetOperateUser(c)); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
-	middleware.ReturnSuccess(c)
+	middleware.ReturnSuccessData(c, id)
 }
 
 func CopyCustomChart(c *gin.Context) {
