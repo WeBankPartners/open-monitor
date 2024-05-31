@@ -1377,13 +1377,21 @@ func GetLogMetricCustomGroup(logMetricGroupGuid string) (result *models.LogMetri
 		result.ParamList = append(result.ParamList, &tmpParamObj)
 	}
 	var logMetricConfigRows []*models.LogMetricConfigTable
-	err = x.SQL("select * from log_metric_config where log_metric_group=?", logMetricGroupGuid).Find(&logMetricConfigRows)
+	logMetricConfigRows, err = getLogMetricConfigByMetricGroup(logMetricGroupGuid)
 	if err != nil {
-		return result, fmt.Errorf("Query table log_metric_param fail,%s ", err.Error())
+		return
 	}
 	for _, row := range logMetricConfigRows {
 		json.Unmarshal([]byte(row.TagConfig), &row.TagConfigList)
 		result.MetricList = append(result.MetricList, row)
+	}
+	return
+}
+
+func getLogMetricConfigByMetricGroup(logMetricGroupGuid string) (logMetricConfigRows []*models.LogMetricConfigTable, err error) {
+	err = x.SQL("select * from log_metric_config where log_metric_group=?", logMetricGroupGuid).Find(&logMetricConfigRows)
+	if err != nil {
+		err = fmt.Errorf("Query table log_metric_param fail,%s ", err.Error())
 	}
 	return
 }
@@ -1587,6 +1595,37 @@ func GetLogMetricMonitorMetricPrefixMap(logMetricMonitor string) (existPrefixMap
 	existPrefixMap = make(map[string]int)
 	for _, v := range queryResult {
 		existPrefixMap[v["metric_prefix_code"]] = 1
+	}
+	return
+}
+
+func GetLogMetricByLogMonitor(logMetricMonitor string) (result []*models.LogMetricConfigTable, err error) {
+	var logMetricGroupRows []*models.LogMetricGroup
+	err = x.SQL("select * from log_metric_group where log_metric_monitor=?", logMetricMonitor).Find(&logMetricGroupRows)
+	if err != nil {
+		err = fmt.Errorf("query log_metric_group table fail,%s ", err.Error())
+		return
+	}
+	for _, logMetricGroup := range logMetricGroupRows {
+		if logMetricGroup.LogMonitorTemplate != "" {
+			if logMetricTemplateRows, tmpErr := getLogMetricTemplateWithMonitor(logMetricGroup.LogMonitorTemplate); tmpErr != nil {
+				err = tmpErr
+				return
+			} else {
+				for _, logMetricTemplate := range logMetricTemplateRows {
+					result = append(result, &models.LogMetricConfigTable{Metric: fmt.Sprintf("%s_%s", logMetricGroup.MetricPrefixCode, logMetricTemplate.Metric), AggType: logMetricTemplate.AggType, DisplayName: logMetricTemplate.DisplayName})
+				}
+			}
+		} else {
+			if logMetricConfigRows, tmpErr := getLogMetricConfigByMetricGroup(logMetricGroup.Guid); tmpErr != nil {
+				err = tmpErr
+				return
+			} else {
+				for _, logMetricConfig := range logMetricConfigRows {
+					result = append(result, &models.LogMetricConfigTable{Metric: logMetricConfig.Metric, AggType: logMetricConfig.AggType, DisplayName: logMetricConfig.DisplayName})
+				}
+			}
+		}
 	}
 	return
 }
