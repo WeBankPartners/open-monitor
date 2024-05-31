@@ -448,5 +448,9 @@
   "m_confirm": "Confirm",
   "m_no_matching": "No matching results",
   "m_notification": "Notification",
-  "m_alert": "Alert"
+  "m_alert": "Alert",
+  "m_config_view": "Config View",
+  "m_empty_tip_1": "Please first select the ",
+  "m_empty_data_recrisive": "No Data Available (please go to [Monitor Config- Hierarchy Object - Current Hierarchy Object] to add associated objects first. Contact administrator for any questions",
+  "m_empty_data_endpoint": "No Data Available (please first add the current object to a group in [Monitor Config -Object - Object Group].  Contact administrator for any questions"
 }
