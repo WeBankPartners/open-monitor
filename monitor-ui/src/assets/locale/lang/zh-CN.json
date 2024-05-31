@@ -415,6 +415,7 @@
   "m_business_configuration": "业务配置",
   "m_business_log_template": "业务日志模板",
   "m_customize": "自定义",
+  "m_customize_board": "自定义看板",
   "m_metric_threshold": "指标阈值",
   "m_create": "新建",
   "m_list": "列表",
