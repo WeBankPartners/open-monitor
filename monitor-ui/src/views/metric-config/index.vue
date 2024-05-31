@@ -2,7 +2,7 @@
   <div class="monitor-metric-config">
     <Tabs v-model="activeName">
       <!--通用对象-->
-      <TabPane :label="$t('m_general_object')" name="1">
+      <TabPane :label="$t('m_general_type')" name="1">
       </TabPane>
       <!--层级对象-->
       <TabPane :label="$t('field.resourceLevel')" name="2">
