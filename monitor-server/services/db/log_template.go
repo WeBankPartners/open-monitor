@@ -279,6 +279,7 @@ func ImportLogMonitorTemplate(params []*models.LogMonitorTemplateDto, operator s
 	}
 	var actions []*Action
 	for _, inputParam := range params {
+		inputParam.Guid = ""
 		inputParam.Name = fmt.Sprintf("%s(1)", inputParam.Name)
 		if existLogMonitorTemplate, getErr := GetLogMonitorTemplateByName("", inputParam.Name); getErr != nil {
 			err = getErr
