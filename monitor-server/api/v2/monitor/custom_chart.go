@@ -45,7 +45,11 @@ func GetSharedChartList(c *gin.Context) {
 						newChartList = append(newChartList, chart)
 					}
 				}
+			} else {
+				newChartList = chartList
 			}
+		} else {
+			newChartList = chartList
 		}
 		if len(newChartList) > 0 {
 			for _, chart := range newChartList {
