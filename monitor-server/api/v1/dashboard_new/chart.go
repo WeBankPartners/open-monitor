@@ -291,6 +291,9 @@ func getChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.
 		tmpMonitorType := dataConfig.EndpointType
 		metricLegend := "$custom"
 		customPromQL := dataConfig.PromQl
+		if dataConfig.PromQl != "" {
+			metricLegend = "$custom_with_tag"
+		}
 		// check endpoint if is service group
 		if dataConfig.AppObject != "" {
 			serviceGroupTag = fmt.Sprintf("service_group=\"%s\"", dataConfig.AppObject)

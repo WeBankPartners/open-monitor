@@ -289,6 +289,18 @@ func GetSerialName(query *m.QueryMonitorData, tagMap map[string]string, dataLeng
 				tmpName = fmt.Sprintf("%s:%s", endpoint, metric)
 			}
 			tmpName = appendTagString(tmpName, tagMap, []string{})
+		} else if legend == "$custom_with_tag" {
+			if metricFirst {
+				tmpName = fmt.Sprintf("%s:%s", metric, endpoint)
+			} else {
+				tmpName = fmt.Sprintf("%s:%s", endpoint, metric)
+			}
+			tagKeyList := []string{}
+			for k, _ := range tagMap {
+				tagKeyList = append(tagKeyList, k)
+			}
+			sort.Strings(tagKeyList)
+			tmpName = appendTagString(tmpName, tagMap, tagKeyList)
 		}
 	}
 	if legend == "$metric" || legend == "$custom_metric" {
