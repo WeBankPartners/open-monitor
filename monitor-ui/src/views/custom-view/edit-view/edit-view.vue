@@ -581,7 +581,6 @@ export default {
       this.request('GET', '/monitor/api/v2/chart/custom', {
         chart_id: this.chartId
       }, res => {
-        debugger;
         for(let key in this.chartConfigForm) {
           this.chartConfigForm[key] = res[key]
         }
@@ -954,17 +953,13 @@ export default {
     },
     // 将数据拼好，请求数据并画图
     drawChartContent() {
-      debugger
       if (this.isPieChart) {
         const params = this.generateLineParamsData();
-        debugger
         this.request('POST', '/monitor/api/v1/dashboard/pie/chart', params,
           res => {
-            debugger
             drawPieChart(this, res)
         })
       } else {
-        debugger
         const params = {
           aggregate: this.chartConfigForm.aggregate || 'none',
           agg_step: this.chartConfigForm.agg_step || 60,
@@ -976,7 +971,6 @@ export default {
           unit: '',
           data: this.generateLineParamsData()
         }
-        debugger
         this.request('POST', '/monitor/api/v1/dashboard/chart', params,
           responseData => {
             responseData.yaxis.unit = this.chartConfigForm.unit;
