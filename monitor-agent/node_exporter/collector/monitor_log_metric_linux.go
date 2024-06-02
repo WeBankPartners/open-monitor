@@ -151,20 +151,23 @@ type logMetricStringMapNeObj struct {
 }
 
 type logMetricDisplayObj struct {
-	Metric       string            `json:"metric"`
-	Path         string            `json:"path"`
-	Agg          string            `json:"agg"`
-	TEndpoint    string            `json:"t_endpoint"`
-	ServiceGroup string            `json:"service_group"`
-	Tags         []string          `json:"tags"`
-	TagsString   string            `json:"tags_string"`
-	Value        float64           `json:"value"`
-	ValueObj     logMetricValueObj `json:"value_obj"`
-	Step         int64             `json:"step"`
-	Display      bool              `json:"display"`
-	UpdateTime   int64             `json:"update_time"`
-	Code         string            `json:"code"`
-	RetCode      string            `json:"ret_code"`
+	Id             string            `json:"id"`
+	Metric         string            `json:"metric"`
+	Path           string            `json:"path"`
+	Agg            string            `json:"agg"`
+	TEndpoint      string            `json:"t_endpoint"`
+	ServiceGroup   string            `json:"service_group"`
+	Tags           []string          `json:"tags"`
+	TagsString     string            `json:"tags_string"`
+	Value          float64           `json:"value"`
+	ValueObj       logMetricValueObj `json:"value_obj"`
+	Step           int64             `json:"step"`
+	Display        bool              `json:"display"` // 用来控制采集间隔,默认最小间隔10s,当间隔为30s时,通过display来控制30s才出现汇总一次数据
+	UpdateTime     int64             `json:"update_time"`
+	Code           string            `json:"code"`
+	RetCode        string            `json:"ret_code"`
+	LastActiveTime int64             `json:"last_active_time"`
+	ByAvgFlag      bool              `json:"by_avg_flag"`
 }
 
 type logMetricValueObj struct {
@@ -651,11 +654,16 @@ func calcLogMetricData() {
 		logMetricHttpLock.RUnlock()
 		return
 	}
+	nowTimeUnix := time.Now().Unix()
 	existMetricMap := make(map[string]*logMetricDisplayObj)
 	for _, displayObj := range logMetricMonitorMetrics {
-		existMetricMap[fmt.Sprintf("%s^%s^%s^%s", displayObj.Path, displayObj.Metric, displayObj.Agg, displayObj.TagsString)] = displayObj
+		// 如果一个小时内都没再出现过该数据，就剔除掉它
+		if displayObj.LastActiveTime > 0 && (displayObj.LastActiveTime+3600) < nowTimeUnix {
+			continue
+		}
+		existMetricMap[displayObj.Id] = displayObj
 	}
-	appendDisplayMap := make(map[string]int)
+	//appendDisplayMap := make(map[string]int)
 	valueCountMap := make(map[string]*logMetricDisplayObj)
 	for _, lmObj := range logMetricMonitorJobs {
 		for _, jsonObj := range lmObj.JsonConfig {
@@ -671,7 +679,7 @@ func calcLogMetricData() {
 			//	tmpTagsKey = strings.Split(jsonObj.Tags, ",")
 			//}
 			for _, metricConfig := range jsonObj.MetricConfig {
-				isMatchNewDataFlag := false
+				//isMatchNewDataFlag := false
 				for _, tmpMapData := range jsonDataList {
 					// Get metric tags
 					tmpTagsKey := []string{}
@@ -681,7 +689,7 @@ func calcLogMetricData() {
 					_, _, _, tmpTagString := getLogMetricJsonMapTags(tmpMapData, tmpTagsKey)
 					changedMapData := getLogMetricJsonMapValue(tmpMapData, metricConfig.StringMap)
 					if metricValueFloat, b := changedMapData[metricConfig.Key]; b {
-						isMatchNewDataFlag = true
+						//isMatchNewDataFlag = true
 						tmpMetricKey := fmt.Sprintf("%s^%s^%s^%s", lmObj.Path, metricConfig.Metric, metricConfig.AggType, tmpTagString)
 						if valueExistObj, keyExist := valueCountMap[tmpMetricKey]; keyExist {
 							valueExistObj.ValueObj.Sum += metricValueFloat
@@ -692,28 +700,29 @@ func calcLogMetricData() {
 							if valueExistObj.ValueObj.Min > metricValueFloat {
 								valueExistObj.ValueObj.Min = metricValueFloat
 							}
+							valueExistObj.LastActiveTime = nowTimeUnix
 						} else {
-							valueCountMap[tmpMetricKey] = &logMetricDisplayObj{Metric: metricConfig.Metric, Path: lmObj.Path, Agg: metricConfig.AggType, TEndpoint: lmObj.TargetEndpoint, ServiceGroup: lmObj.ServiceGroup, TagsString: tmpTagString, Step: metricConfig.Step, ValueObj: logMetricValueObj{Sum: metricValueFloat, Max: metricValueFloat, Min: metricValueFloat, Count: 1}}
+							valueCountMap[tmpMetricKey] = &logMetricDisplayObj{Id: tmpMetricKey, Metric: metricConfig.Metric, Path: lmObj.Path, Agg: metricConfig.AggType, TEndpoint: lmObj.TargetEndpoint, ServiceGroup: lmObj.ServiceGroup, TagsString: tmpTagString, Step: metricConfig.Step, ValueObj: logMetricValueObj{Sum: metricValueFloat, Max: metricValueFloat, Min: metricValueFloat, Count: 1}, LastActiveTime: nowTimeUnix}
 						}
 					}
 				}
-				if !isMatchNewDataFlag {
-					if metricConfig.AggType == "avg" {
-						appendDisplayMap[fmt.Sprintf("%s^%s^sum", lmObj.Path, metricConfig.Metric)] = 1
-						appendDisplayMap[fmt.Sprintf("%s^%s^count", lmObj.Path, metricConfig.Metric)] = 1
-					}
-					appendDisplayMap[fmt.Sprintf("%s^%s^%s", lmObj.Path, metricConfig.Metric, metricConfig.AggType)] = 1
-				}
+				//if !isMatchNewDataFlag {
+				//	if metricConfig.AggType == "avg" {
+				//		appendDisplayMap[fmt.Sprintf("%s^%s^sum", lmObj.Path, metricConfig.Metric)] = 1
+				//		appendDisplayMap[fmt.Sprintf("%s^%s^count", lmObj.Path, metricConfig.Metric)] = 1
+				//	}
+				//	appendDisplayMap[fmt.Sprintf("%s^%s^%s", lmObj.Path, metricConfig.Metric, metricConfig.AggType)] = 1
+				//}
 			}
 		}
 		for _, metricObj := range lmObj.MetricConfig {
 			dataLength := len(metricObj.DataChannel)
 			if dataLength == 0 {
-				if metricObj.AggType == "avg" {
-					appendDisplayMap[fmt.Sprintf("%s^%s^sum", lmObj.Path, metricObj.Metric)] = 1
-					appendDisplayMap[fmt.Sprintf("%s^%s^count", lmObj.Path, metricObj.Metric)] = 1
-				}
-				appendDisplayMap[fmt.Sprintf("%s^%s^%s", lmObj.Path, metricObj.Metric, metricObj.AggType)] = 1
+				//if metricObj.AggType == "avg" {
+				//	appendDisplayMap[fmt.Sprintf("%s^%s^sum", lmObj.Path, metricObj.Metric)] = 1
+				//	appendDisplayMap[fmt.Sprintf("%s^%s^count", lmObj.Path, metricObj.Metric)] = 1
+				//}
+				//appendDisplayMap[fmt.Sprintf("%s^%s^%s", lmObj.Path, metricObj.Metric, metricObj.AggType)] = 1
 				continue
 			}
 			//tmpMetricKey := fmt.Sprintf("%s^%s^%s^%s", lmObj.Path, metricObj.Metric, metricObj.AggType, "")
@@ -737,8 +746,9 @@ func calcLogMetricData() {
 					if valueExistObj.ValueObj.Min > metricValueFloat {
 						valueExistObj.ValueObj.Min = metricValueFloat
 					}
+					valueExistObj.LastActiveTime = nowTimeUnix
 				} else {
-					valueCountMap[tmpMetricKey] = &logMetricDisplayObj{Metric: metricObj.Metric, Path: lmObj.Path, Agg: metricObj.AggType, TEndpoint: lmObj.TargetEndpoint, ServiceGroup: lmObj.ServiceGroup, TagsString: tmpTagString, Step: metricObj.Step, ValueObj: logMetricValueObj{Sum: metricValueFloat, Max: metricValueFloat, Min: metricValueFloat, Count: 1}}
+					valueCountMap[tmpMetricKey] = &logMetricDisplayObj{Id: tmpMetricKey, Metric: metricObj.Metric, Path: lmObj.Path, Agg: metricObj.AggType, TEndpoint: lmObj.TargetEndpoint, ServiceGroup: lmObj.ServiceGroup, TagsString: tmpTagString, Step: metricObj.Step, ValueObj: logMetricValueObj{Sum: metricValueFloat, Max: metricValueFloat, Min: metricValueFloat, Count: 1}, LastActiveTime: nowTimeUnix}
 				}
 			}
 			//valueCountMap[tmpMetricKey] = &tmpMetricObj
@@ -751,20 +761,41 @@ func calcLogMetricData() {
 				tmpMapData := <-metricGroupObj.DataChannel
 				matchDataList = append(matchDataList, tmpMapData)
 			}
-			calcMetricGroupFunc(lmObj.Path, lmObj.TargetEndpoint, lmObj.ServiceGroup, matchDataList, metricGroupObj.MetricConfig, appendDisplayMap, valueCountMap)
+			calcMetricGroupFunc(lmObj.Path, lmObj.TargetEndpoint, lmObj.ServiceGroup, matchDataList, metricGroupObj.MetricConfig, valueCountMap)
 		}
 	}
-	if len(appendDisplayMap) > 0 {
-		for k, v := range existMetricMap {
-			tmpKey := fmt.Sprintf("%s^%s^%s", v.Path, v.Metric, v.Agg)
-			if _, b := appendDisplayMap[tmpKey]; b {
-				if v.Display {
-					v.ValueObj = logMetricValueObj{Sum: 0, Count: 0, Max: 0, Min: 0}
-				}
-				valueCountMap[k] = v
+	// appendDisplayMap是当数据上一次采集出现，但此次采集不出现，尝试把数据补个默认点上去，现在默认值是0
+	for k, v := range existMetricMap {
+		//level.Info(monitorLogger).Log("existMetricMap -> ", fmt.Sprintf("k:%s", k))
+		appendFlag := true
+		for id, _ := range valueCountMap {
+			if id == k {
+				appendFlag = false
+				break
 			}
 		}
+		//level.Info(monitorLogger).Log("existMetricMap append -> ", fmt.Sprintf("k:%s", k))
+		if appendFlag {
+			if v.ByAvgFlag {
+				continue
+			}
+			if v.Display {
+				v.ValueObj = logMetricValueObj{Sum: 0, Count: 0, Max: 0, Min: 0}
+			}
+			valueCountMap[k] = v
+		}
 	}
+	//if len(appendDisplayMap) > 0 {
+	//	for k, v := range existMetricMap {
+	//		tmpKey := fmt.Sprintf("%s^%s^%s^%s", v.Path, v.Metric, v.Agg, v.TagsString)
+	//		if _, b := appendDisplayMap[tmpKey]; b {
+	//			if v.Display {
+	//				v.ValueObj = logMetricValueObj{Sum: 0, Count: 0, Max: 0, Min: 0}
+	//			}
+	//			valueCountMap[k] = v
+	//		}
+	//	}
+	//}
 	tmpLogMetricMetrics := buildLogMetricDisplayMetrics(valueCountMap, existMetricMap)
 	logMetricHttpLock.RUnlock()
 	logMetricMonitorMetricLock.Lock()
@@ -796,9 +827,9 @@ func transMetricGroupData(input interface{}, stringMap []*logMetricStringMapNeOb
 	return output
 }
 
-func calcMetricGroupFunc(logPath, endpoint, serviceGroup string, dataList []map[string]interface{}, metricConfigList []*logMetricNeObj, appendDisplayMap map[string]int, valueCountMap map[string]*logMetricDisplayObj) {
+func calcMetricGroupFunc(logPath, endpoint, serviceGroup string, dataList []map[string]interface{}, metricConfigList []*logMetricNeObj, valueCountMap map[string]*logMetricDisplayObj) {
+	nowTimeUnix := time.Now().Unix()
 	for _, metricConfig := range metricConfigList {
-		isMatchNewDataFlag := false
 		for _, tmpMapData := range dataList {
 			// Get metric tags
 			tagsNameList := []string{}
@@ -807,9 +838,9 @@ func calcMetricGroupFunc(logPath, endpoint, serviceGroup string, dataList []map[
 			}
 			tmpCode, tmpRetCode, tmpOtherTag, tmpTagString := getLogMetricJsonMapTags(tmpMapData, tagsNameList)
 			level.Info(monitorLogger).Log("log_metric_group -> ", fmt.Sprintf("code:%s, retCode:%s, otherTag:%s, tagString:%s", tmpCode, tmpRetCode, tmpOtherTag, tmpTagString))
+			// 根据值类型尝试转换成数值
 			metricValueMap := getLogMetricJsonMapValue(tmpMapData, metricConfig.StringMap)
 			if metricValueFloat, b := metricValueMap[metricConfig.LogParamName]; b {
-				isMatchNewDataFlag = true
 				tmpMetricKey := fmt.Sprintf("%s^%s^%s^%s", logPath, metricConfig.Metric, metricConfig.AggType, tmpTagString)
 				if valueExistObj, keyExist := valueCountMap[tmpMetricKey]; keyExist {
 					valueExistObj.ValueObj.Sum += metricValueFloat
@@ -820,17 +851,11 @@ func calcMetricGroupFunc(logPath, endpoint, serviceGroup string, dataList []map[
 					if valueExistObj.ValueObj.Min > metricValueFloat {
 						valueExistObj.ValueObj.Min = metricValueFloat
 					}
+					valueExistObj.LastActiveTime = nowTimeUnix
 				} else {
-					valueCountMap[tmpMetricKey] = &logMetricDisplayObj{Metric: metricConfig.Metric, Path: logPath, Agg: metricConfig.AggType, TEndpoint: endpoint, ServiceGroup: serviceGroup, TagsString: tmpOtherTag, Step: metricConfig.Step, ValueObj: logMetricValueObj{Sum: metricValueFloat, Max: metricValueFloat, Min: metricValueFloat, Count: 1}, Code: tmpCode, RetCode: tmpRetCode}
+					valueCountMap[tmpMetricKey] = &logMetricDisplayObj{Id: tmpMetricKey, Metric: metricConfig.Metric, Path: logPath, Agg: metricConfig.AggType, TEndpoint: endpoint, ServiceGroup: serviceGroup, TagsString: tmpTagString, Step: metricConfig.Step, ValueObj: logMetricValueObj{Sum: metricValueFloat, Max: metricValueFloat, Min: metricValueFloat, Count: 1}, Code: tmpCode, RetCode: tmpRetCode, LastActiveTime: nowTimeUnix}
 				}
 			}
-		}
-		if !isMatchNewDataFlag {
-			if metricConfig.AggType == "avg" {
-				appendDisplayMap[fmt.Sprintf("%s^%s^sum", logPath, metricConfig.Metric)] = 1
-				appendDisplayMap[fmt.Sprintf("%s^%s^count", logPath, metricConfig.Metric)] = 1
-			}
-			appendDisplayMap[fmt.Sprintf("%s^%s^%s", logPath, metricConfig.Metric, metricConfig.AggType)] = 1
 		}
 	}
 }
@@ -891,9 +916,9 @@ func buildLogMetricDisplayMetrics(valueCountMap, existMetricMap map[string]*logM
 			} else {
 				v.Value = 0
 			}
-			tmpLogMetricMetrics = append(tmpLogMetricMetrics, &logMetricDisplayObj{Metric: v.Metric, Path: v.Path, Agg: "avg", TEndpoint: v.TEndpoint, ServiceGroup: v.ServiceGroup, Tags: v.Tags, TagsString: v.TagsString, Value: v.Value, Step: v.Step, Display: v.Display, UpdateTime: v.UpdateTime, Code: v.Code, RetCode: v.RetCode})
-			tmpLogMetricMetrics = append(tmpLogMetricMetrics, &logMetricDisplayObj{Metric: v.Metric, Path: v.Path, Agg: "sum", TEndpoint: v.TEndpoint, ServiceGroup: v.ServiceGroup, Tags: v.Tags, TagsString: v.TagsString, Value: v.ValueObj.Sum, Step: v.Step, Display: v.Display, UpdateTime: v.UpdateTime, Code: v.Code, RetCode: v.RetCode})
-			tmpLogMetricMetrics = append(tmpLogMetricMetrics, &logMetricDisplayObj{Metric: v.Metric, Path: v.Path, Agg: "count", TEndpoint: v.TEndpoint, ServiceGroup: v.ServiceGroup, Tags: v.Tags, TagsString: v.TagsString, Value: v.ValueObj.Count, Step: v.Step, Display: v.Display, UpdateTime: v.UpdateTime, Code: v.Code, RetCode: v.RetCode})
+			tmpLogMetricMetrics = append(tmpLogMetricMetrics, &logMetricDisplayObj{Id: fmt.Sprintf("%s^%s^%s^%s", v.Path, v.Metric, "avg", v.TagsString), ByAvgFlag: false, Metric: v.Metric, Path: v.Path, Agg: "avg", TEndpoint: v.TEndpoint, ServiceGroup: v.ServiceGroup, Tags: v.Tags, TagsString: v.TagsString, Value: v.Value, Step: v.Step, Display: v.Display, UpdateTime: v.UpdateTime, Code: v.Code, RetCode: v.RetCode, LastActiveTime: v.LastActiveTime})
+			tmpLogMetricMetrics = append(tmpLogMetricMetrics, &logMetricDisplayObj{Id: fmt.Sprintf("%s^%s^%s^%s", v.Path, v.Metric, "sum", v.TagsString), ByAvgFlag: true, Metric: v.Metric, Path: v.Path, Agg: "sum", TEndpoint: v.TEndpoint, ServiceGroup: v.ServiceGroup, Tags: v.Tags, TagsString: v.TagsString, Value: v.ValueObj.Sum, Step: v.Step, Display: v.Display, UpdateTime: v.UpdateTime, Code: v.Code, RetCode: v.RetCode, LastActiveTime: v.LastActiveTime})
+			tmpLogMetricMetrics = append(tmpLogMetricMetrics, &logMetricDisplayObj{Id: fmt.Sprintf("%s^%s^%s^%s", v.Path, v.Metric, "count", v.TagsString), ByAvgFlag: true, Metric: v.Metric, Path: v.Path, Agg: "count", TEndpoint: v.TEndpoint, ServiceGroup: v.ServiceGroup, Tags: v.Tags, TagsString: v.TagsString, Value: v.ValueObj.Count, Step: v.Step, Display: v.Display, UpdateTime: v.UpdateTime, Code: v.Code, RetCode: v.RetCode, LastActiveTime: v.LastActiveTime})
 		} else {
 			tmpLogMetricMetrics = append(tmpLogMetricMetrics, v)
 		}
