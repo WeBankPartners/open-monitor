@@ -68,9 +68,7 @@ func GetLogMonitorTemplate(logMonitorTemplateGuid string) (result *models.LogMon
 		result.ParamList = append(result.ParamList, row)
 	}
 	var logMetricRows []*models.LogMetricTemplate
-	err = x.SQL("select * from log_metric_template where log_monitor_template=?", logMonitorTemplateGuid).Find(&logMetricRows)
-	if err != nil {
-		err = fmt.Errorf("query log_metric_template table fail,%s ", err.Error())
+	if logMetricRows, err = getLogMetricTemplateWithMonitor(logMonitorTemplateGuid); err != nil {
 		return
 	}
 	for _, row := range logMetricRows {
@@ -82,6 +80,14 @@ func GetLogMonitorTemplate(logMonitorTemplateGuid string) (result *models.LogMon
 			}
 		}
 		result.MetricList = append(result.MetricList, row)
+	}
+	return
+}
+
+func getLogMetricTemplateWithMonitor(logMonitorTemplateGuid string) (logMetricRows []*models.LogMetricTemplate, err error) {
+	err = x.SQL("select * from log_metric_template where log_monitor_template=?", logMonitorTemplateGuid).Find(&logMetricRows)
+	if err != nil {
+		err = fmt.Errorf("query log_metric_template table fail,%s ", err.Error())
 	}
 	return
 }
