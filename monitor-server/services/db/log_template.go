@@ -130,6 +130,10 @@ func getCreateLogMonitorTemplateActions(param *models.LogMonitorTemplateDto, ope
 	}
 	logMetricGuidList := guid.CreateGuidList(len(param.MetricList))
 	for i, logMetricObj := range param.MetricList {
+		if logMetricObj.TagConfig == "" {
+			tmpTagConfigBytes, _ := json.Marshal(logMetricObj.TagConfigList)
+			logMetricObj.TagConfig = string(tmpTagConfigBytes)
+		}
 		actions = append(actions, &Action{Sql: "insert into log_metric_template(guid,log_monitor_template,log_param_name,metric,display_name,step,agg_type,tag_config,create_user,update_user,create_time,update_time) values (?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
 			"lmet_" + logMetricGuidList[i], param.Guid, logMetricObj.LogParamName, logMetricObj.Metric, logMetricObj.DisplayName, logMetricObj.Step, logMetricObj.AggType, logMetricObj.TagConfig, operator, operator, nowTime, nowTime,
 		}})
@@ -275,25 +279,37 @@ func ImportLogMonitorTemplate(params []*models.LogMonitorTemplateDto, operator s
 	}
 	var actions []*Action
 	for _, inputParam := range params {
-		addFlag := true
-		for _, existRow := range existTemplateRows {
-			if existRow.Guid == inputParam.Guid {
-				addFlag = false
-				break
-			}
+		inputParam.Name = fmt.Sprintf("%s(1)", inputParam.Name)
+		if existLogMonitorTemplate, getErr := GetLogMonitorTemplateByName("", inputParam.Name); getErr != nil {
+			err = getErr
+			return
+		} else if existLogMonitorTemplate != nil {
+			err = fmt.Errorf("log monitor template name:%s duplicate", inputParam.Name)
+			return
 		}
-		if addFlag {
-			tmpActions := getCreateLogMonitorTemplateActions(inputParam, operator)
-			actions = append(actions, tmpActions...)
-		} else {
-			tmpActions, tmpAffect, tmpErr := getUpdateLogMonitorTemplateActions(inputParam, operator)
-			if tmpErr != nil {
-				err = tmpErr
-				return
-			}
-			actions = append(actions, tmpActions...)
-			affectEndpoints = append(affectEndpoints, tmpAffect...)
-		}
+		calcResultBytes, _ := json.Marshal(inputParam.CalcResultObj)
+		inputParam.CalcResult = string(calcResultBytes)
+		tmpActions := getCreateLogMonitorTemplateActions(inputParam, operator)
+		actions = append(actions, tmpActions...)
+		//addFlag := true
+		//for _, existRow := range existTemplateRows {
+		//	if existRow.Guid == inputParam.Guid {
+		//		addFlag = false
+		//		break
+		//	}
+		//}
+		//if addFlag {
+		//	tmpActions := getCreateLogMonitorTemplateActions(inputParam, operator)
+		//	actions = append(actions, tmpActions...)
+		//} else {
+		//	tmpActions, tmpAffect, tmpErr := getUpdateLogMonitorTemplateActions(inputParam, operator)
+		//	if tmpErr != nil {
+		//		err = tmpErr
+		//		return
+		//	}
+		//	actions = append(actions, tmpActions...)
+		//	affectEndpoints = append(affectEndpoints, tmpAffect...)
+		//}
 	}
 	err = Transaction(actions)
 	if err == nil {
