@@ -146,6 +146,7 @@
             {{ $t('m_associated_template') }}
             <span class="underline"></span>
           </div>
+          <Button type="primary" @click="changeTemplateStatus" ghost size="small" >{{templeteStatus ? $t('m_hide_template'):$t('m_expand_template')}}</Button>
         </div>
         <div>
           <StandardRegexDisplay 
@@ -182,11 +183,13 @@ export default {
       configInfo: {
         log_type: ''
       },
-      businessConfig: {}
+      businessConfig: {},
+      templeteStatus: false
     }
   },
   methods: {
     loadPage (actionType, templateGuid, parentGuid, configGuid) {
+      this.templeteStatus = false
       this.isfullscreen = true
       this.parentGuid = parentGuid
       // actionType add/edit
@@ -230,6 +233,26 @@ export default {
       this.$refs.standardRegexDisplayRef && this.$refs.standardRegexDisplayRef.hideTemplate()
       this.$refs.jsonRegexDisplayRef && this.$refs.jsonRegexDisplayRef.hideTemplate()
       this.showModel = true
+    },
+    changeTemplateStatus () {
+      this.$refs.standardRegexDisplayRef && this.$refs.standardRegexDisplayRef.changeTemplateStatus()
+      this.$refs.jsonRegexDisplayRef && this.$refs.jsonRegexDisplayRef.changeTemplateStatus()
+      this.templeteStatus = this.getTemplateStatus() || false
+    },
+    getTemplateStatus () {
+      const displayRef = this.configInfo.log_type==='regular' ? 'standardRegexDisplayRef' : 'jsonRegexDisplayRef'
+      const res = this.$refs[displayRef] && this.$refs[displayRef].returnCurrentStatus()
+      console.log(res)
+      return res
+      // <StandardRegexDisplay 
+      //       ref="standardRegexDisplayRef"
+      //       v-if="configInfo.log_type==='regular'"
+      //       :prefixCode="businessConfig.metric_prefix_code"
+      //       :configInfo="configInfo"></StandardRegexDisplay>
+      //     <JsonRegexDisplay ref="jsonRegexDisplayRef"
+      //       v-if="configInfo.log_type==='json'"
+      //       :prefixCode="businessConfig.metric_prefix_code"
+      //       :configInfo="configInfo"></JsonRegexDisplay>
     },
     getTemplateDetail(guid) {
       const api = this.$root.apiCenter.getConfigDetailByGuid + guid
