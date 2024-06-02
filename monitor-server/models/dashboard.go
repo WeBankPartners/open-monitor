@@ -211,24 +211,26 @@ type ChartConfigObj struct {
 }
 
 type PieChartConfigObj struct {
-	Id                    int    `form:"id" json:"id"`
-	Title                 string `form:"title" json:"title"`
-	Endpoint              string `form:"endpoint" json:"endpoint"`
-	Metric                string `form:"metric" json:"metric"`
-	PromQl                string `form:"prom_ql" json:"prom_ql"`
-	Start                 int64  `form:"start" json:"start"`
-	End                   int64  `form:"end" json:"end"`
-	TimeSecond            int64  `form:"time_second" json:"time_second"`
-	Aggregate             string `form:"agg" json:"agg"`
-	CompareFirstStart     string `form:"compare_first_start" json:"compare_first_start"`
-	CompareFirstEnd       string `form:"compare_first_end" json:"compare_first_end"`
-	CompareSecondStart    string `form:"compare_second_start" json:"compare_second_start"`
-	CompareSecondEnd      string `form:"compare_second_end" json:"compare_second_end"`
-	AppObject             string `form:"app_object" json:"app_object"`
-	AppObjectEndpointType string `form:"app_object_endpoint_type" json:"app_object_endpoint_type"`
-	PieMetricType         string `form:"pie_metric_type" json:"pie_metric_type"`
-	PieAggType            string `form:"pie_agg_type" json:"pie_agg_type"`
-	CustomChartGuid       string `json:"custom_chart_guid"`
+	Id                    int       `form:"id" json:"id"`
+	Title                 string    `form:"title" json:"title"`
+	Endpoint              string    `form:"endpoint" json:"endpoint"`
+	Metric                string    `form:"metric" json:"metric"`
+	PromQl                string    `form:"prom_ql" json:"prom_ql"`
+	Start                 int64     `form:"start" json:"start"`
+	End                   int64     `form:"end" json:"end"`
+	TimeSecond            int64     `form:"time_second" json:"time_second"`
+	Aggregate             string    `form:"agg" json:"agg"`
+	CompareFirstStart     string    `form:"compare_first_start" json:"compare_first_start"`
+	CompareFirstEnd       string    `form:"compare_first_end" json:"compare_first_end"`
+	CompareSecondStart    string    `form:"compare_second_start" json:"compare_second_start"`
+	CompareSecondEnd      string    `form:"compare_second_end" json:"compare_second_end"`
+	AppObject             string    `form:"app_object" json:"app_object"`
+	AppObjectEndpointType string    `form:"app_object_endpoint_type" json:"app_object_endpoint_type"`
+	PieMetricType         string    `form:"pie_metric_type" json:"pie_metric_type"`
+	PieAggType            string    `form:"pie_agg_type" json:"pie_agg_type"`
+	CustomChartGuid       string    `json:"custom_chart_guid"`
+	MonitorType           string    `json:"monitorType"`
+	Tags                  []*TagDto `json:"tags"` // 标签
 }
 
 type ChartQueryParam struct {
