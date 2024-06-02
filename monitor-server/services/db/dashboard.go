@@ -882,7 +882,7 @@ func queryArchiveTables(endpoint, metric, tag, agg string, dateList []string, qu
 			if strings.Contains(err.Error(), "doesn't exist") {
 				log.Logger.Debug(fmt.Sprintf("Query archive table:archive_%s error,table doesn't exist", v))
 			} else {
-				log.Logger.Error(fmt.Sprintf("query archive table:archive_%s error", v), log.Error(err))
+				log.Logger.Info(fmt.Sprintf("query archive table:archive_%s error", v), log.Error(err))
 			}
 			continue
 		}

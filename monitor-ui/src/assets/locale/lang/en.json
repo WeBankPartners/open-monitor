@@ -247,7 +247,7 @@
   "m_saturday": "Saturday",
   "m_sunday": "Sunday",
   "m_collection_interval": "Collection Interval",
-  "m_reset_condition": "Reset Condition",
+  "m_reset_condition": "Clear",
   "m_configuration": "Configuration",
   "m_new_graph": "Add New Graph",
   "m_collected_data": "Collected Data",
@@ -471,5 +471,6 @@
   "m_show_type": "Show Type",
   "m_show_metric": "Show Metric",
   "m_update": "Update",
-  "m_nodata_tips": "Please configure the chart, click on the chart to directly enter the enlarged view"
+  "m_nodata_tips": "Please configure the chart, click on the chart to directly enter the enlarged view",
+  "m_modify": "Modify "
 }
