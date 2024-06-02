@@ -134,7 +134,6 @@
           <Select
             v-model="monitorType"
             filterable
-            clearable 
             ref="select"
             :placeholder="$t('m_type')"
             @on-change="searchMetricByType"
@@ -181,6 +180,23 @@ import TagShow from '@/components/Tag-show.vue'
 import AuthDialog from '@/components/auth.vue';
 import { readyToDraw, drawPieChart} from "@/assets/config/chart-rely";
 import { generateUuid } from "@/assets/js/utils"
+
+const initTableData = [
+    {
+      "endpoint": "",
+      "serviceGroup": "",
+      "endpointName": "",
+      "monitorType": "",
+      "colorGroup": "",
+      "pieDisplayTag": "",
+      "endpointType": "",
+      "metricType": "",
+      "metricGuid": "",
+      "metric": "",
+      "tags": [],
+      "series": []
+    }
+  ]
 
 export default {
   name: "",
@@ -594,6 +610,10 @@ export default {
           this.chartConfigForm[key] = res[key]
         }
         this.tableData = cloneDeep(res.chartSeries);
+
+        if (res.chartType === "pie" && isEmpty(this.tableData)) {
+          this.tableData = cloneDeep(initTableData)
+        }
         this.processRawTableData(this.tableData);
         this.drawChartContent();
       })
@@ -605,7 +625,7 @@ export default {
         item.tagOptions = await this.findTagsByMetric(item.metricGuid, item.endpoint, item.serviceGroup);
         Vue.set(item, 'tags', this.initTagsFromOptions(item.tagOptions, item.tags))
       }
-      if (this.isPieChart && initialData.length === 1) {
+      if (this.isPieChart && initialData.length === 1 && initialData[0].endpoint) {
         const selectedEndpointItem = find(cloneDeep(this.endpointOptions), {
           option_value: initialData[0].endpoint
         })
@@ -725,7 +745,7 @@ export default {
       const selectedItem = find(cloneDeep(this.endpointOptions), {
         option_value: value
       })
-      if (selectedItem && selectedItem.id === -1) {
+      if (selectedItem && !isEmpty(selectedItem)) {
         this.endpointName = selectedItem.option_text;
         this.endpointType = selectedItem.option_type_name;
         this.serviceGroup = selectedItem.app_object;
@@ -964,6 +984,7 @@ export default {
     drawChartContent() {
       if (this.isPieChart) {
         const params = this.generateLineParamsData();
+        if (!params.metric) return;
         this.request('POST', '/monitor/api/v1/dashboard/pie/chart', params,
           res => {
             drawPieChart(this, res)
@@ -980,6 +1001,7 @@ export default {
           unit: '',
           data: this.generateLineParamsData()
         }
+        if (isEmpty(params.data)) return
         this.request('POST', '/monitor/api/v1/dashboard/chart', params,
           responseData => {
             responseData.yaxis.unit = this.chartConfigForm.unit;
