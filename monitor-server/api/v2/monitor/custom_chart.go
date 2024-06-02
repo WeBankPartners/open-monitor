@@ -8,6 +8,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -15,23 +16,49 @@ import (
 // GetSharedChartList 获取可分享的图表列表
 func GetSharedChartList(c *gin.Context) {
 	var sharedResultMap = make(map[string][]*models.ChartSharedDto)
-	var chartList []*models.CustomChart
+	var chartList, newChartList []*models.CustomChart
+	var customChartList []*models.CustomChartExtend
 	var err error
+	var exist bool
+	dashboardId, _ := strconv.Atoi(c.Query("dashboard_id"))
 	if chartList, err = db.QueryAllPublicCustomChartList(middleware.GetOperateUserRoles(c)); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
 	if len(chartList) > 0 {
-		for _, chart := range chartList {
-			sharedDto := &models.ChartSharedDto{
-				Id:              chart.Guid,
-				SourceDashboard: chart.SourceDashboard,
-				Name:            chart.Name,
+		// 去掉看板里面 已有重复的图表
+		if dashboardId != 0 {
+			if customChartList, err = db.QueryCustomChartListByDashboard(dashboardId); err != nil {
+				middleware.ReturnServerHandleError(c, err)
+				return
 			}
-			if _, ok := sharedResultMap[chart.ChartType]; !ok {
-				sharedResultMap[chart.ChartType] = []*models.ChartSharedDto{}
+			if len(customChartList) > 0 {
+				for _, chart := range chartList {
+					exist = false
+					for _, customChart := range customChartList {
+						if chart.Guid == customChart.Guid {
+							exist = true
+							break
+						}
+					}
+					if !exist {
+						newChartList = append(newChartList, chart)
+					}
+				}
 			}
-			sharedResultMap[chart.ChartType] = append(sharedResultMap[chart.ChartType], sharedDto)
+		}
+		if len(newChartList) > 0 {
+			for _, chart := range newChartList {
+				sharedDto := &models.ChartSharedDto{
+					Id:              chart.Guid,
+					SourceDashboard: chart.SourceDashboard,
+					Name:            chart.Name,
+				}
+				if _, ok := sharedResultMap[chart.ChartType]; !ok {
+					sharedResultMap[chart.ChartType] = []*models.ChartSharedDto{}
+				}
+				sharedResultMap[chart.ChartType] = append(sharedResultMap[chart.ChartType], sharedDto)
+			}
 		}
 	}
 	middleware.ReturnSuccessData(c, sharedResultMap)
