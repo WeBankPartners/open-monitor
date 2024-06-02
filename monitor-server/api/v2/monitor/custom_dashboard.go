@@ -77,14 +77,14 @@ func QueryCustomDashboardList(c *gin.Context) {
 						if v, ok := displayNameRoleMap[roleRel.RoleId]; ok {
 							displayMgmtRoles = append(displayMgmtRoles, v)
 						}
+						if userRoleMap[roleRel.RoleId] {
+							permission = string(models.PermissionMgmt)
+						}
 					} else if roleRel.Permission == string(models.PermissionUse) {
 						useRoles = append(useRoles, roleRel.RoleId)
 						if v, ok := displayNameRoleMap[roleRel.RoleId]; ok {
 							displayUseRoles = append(displayUseRoles, v)
 						}
-					}
-					if userRoleMap[roleRel.RoleId] {
-						permission = string(models.PermissionMgmt)
 					}
 				}
 			}
@@ -360,7 +360,7 @@ func UpdateCustomDashboard(c *gin.Context) {
 func UpdateCustomDashboardPermission(c *gin.Context) {
 	var err error
 	var param models.UpdateCustomDashboardPermissionParam
-	var actions, deleteActions, subActions []*db.Action
+	var actions, deleteActions, subActions, updateActions []*db.Action
 	var permission bool
 	if err = c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnServerHandleError(c, err)
@@ -389,6 +389,8 @@ func UpdateCustomDashboardPermission(c *gin.Context) {
 	if len(subActions) > 0 {
 		actions = append(actions, subActions...)
 	}
+	updateActions = db.UpdateCustomDashboardTime(param.Id, middleware.GetOperateUser(c))
+	actions = append(actions, updateActions...)
 	if err = db.Transaction(actions); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
