@@ -238,7 +238,7 @@ func SyncData() (err error) {
 		}
 		now := time.Now().Format(models.DatetimeFormat)
 		for _, chart := range historyChartList {
-			newChartId := guid.CreateGuid()
+			newChartId := chart.ViewConfig.ID
 			group := ""
 			displayConfig := ""
 			if chart.ViewConfig != nil {
