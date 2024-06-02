@@ -3,7 +3,7 @@
     <Modal v-model="showModel" :title="$t('menu.configuration')" :mask-closable="false" :width="1100" :fullscreen="isfullscreen">
       <div slot="header" class="custom-modal-header">
         <span>
-          {{(view ? $t('button.view') : (isAdd ? $t('button.add') : $t('button.edit'))) + $t('menu.configuration')}}
+          {{(view ? $t('button.view') : (isAdd ? $t('button.add') : $t('m_modify'))) + $t('menu.configuration')}}
         </span>
         <Icon v-if="isfullscreen" @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-contract" />
         <Icon v-else @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-expand" />
@@ -17,15 +17,15 @@
         </div>
         <Row>
           <Col span="8">
-            <Form :label-width="120" inline>
+            <Form :label-width="120">
               <FormItem :label="$t('tableKey.name')">
-                <Tooltip :content="businessConfig.name" transfer :disabled="businessConfig.name === ''" max-width="200">
-                  <Input v-model.trim="businessConfig.name" :disabled="view" maxlength="30" show-word-limit style="width:210px"></Input>
+                <Tooltip :content="businessConfig.name" transfer :disabled="businessConfig.name === ''" max-width="200" style="width: 100%;">
+                  <Input v-model.trim="businessConfig.name" :disabled="view" maxlength="30" show-word-limit style="width:96%"></Input>
                   <span style="color: red">*</span>
                 </Tooltip>
               </FormItem>
               <FormItem :label="$t('m_metric_code')">
-                <Input v-model.trim="businessConfig.metric_prefix_code" maxlength="6" :disabled="!isAdd || view" show-word-limit style="width:210px"></Input>
+                <Input v-model.trim="businessConfig.metric_prefix_code" maxlength="6" :disabled="!isAdd || view" show-word-limit style="width:96%"></Input>
                 <span style="color: red">*</span>
               </FormItem>
             </Form>
@@ -204,11 +204,11 @@ export default {
           log_metric_monitor_guid: '',
           log_monitor_template_guid: '',
           code_string_map: [
-            // {
-            //   regulative: 0,
-            //   source_value: '',
-            //   target_value: ''
-            // }
+            {
+              regulative: 0,
+              source_value: '',
+              target_value: ''
+            }
           ],
           retcode_string_map: [
             {
