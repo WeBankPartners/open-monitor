@@ -185,14 +185,13 @@
             </grid-item>
           </grid-layout>
         </div>
+        <div class="view-config-alarm" v-if="showAlarm">
+          <ViewConfigAlarm ref="cutsomViewId"></ViewConfigAlarm>
+        </div>
       </div>
     </div>
     <Drawer title="View details" :width="zoneWidth" v-model="showMaxChart">
       <ViewChart ref="viewChart"></ViewChart>
-    </Drawer>
-
-    <Drawer title="Alarm Show" width="700" v-model="showAlarm">
-      <ViewConfigAlarm ref="cutsomViewId"></ViewConfigAlarm>
     </Drawer>
 
     <!-- 对于每个chart的抽屉详细信息 -->
@@ -434,11 +433,15 @@ export default {
     },
     openAlarmDisplay () {
       this.showAlarm = !this.showAlarm
-      this.$refs.cutsomViewId.getAlarm(this.cutsomViewId, this.viewCondition, this.permission);
+      nextTick(() => {
+        this.$refs.cutsomViewId.getAlarm(this.cutsomViewId, this.viewCondition, this.permission);
+        this.refreshNow = !this.refreshNow;
+      })
     },
     closeAlarmDisplay () {
       this.showAlarm = !this.showAlarm;
       this.$refs.cutsomViewId.clearAlarmInterval();
+      this.refreshNow = !this.refreshNow;
     },
     datePick (data) {
       this.viewCondition.dateRange = data
@@ -1084,7 +1087,7 @@ export default {
     content: "\E600";
   }
 
-  // .view-config-alarm {
-  //   width: 600px
-  // }
+  .view-config-alarm {
+    width: 700px
+  }
 </style>
