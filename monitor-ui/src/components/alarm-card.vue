@@ -1,8 +1,8 @@
 <template>
-  <Card style="margin-bottom: 15px">
+  <Card style="margin-bottom: 8px;" class="xxx">
     <template #title>
       <div
-        class="col-md-10"
+        class="col-md-9"
         style="padding: 0; color: #404144; font-size: 16px;display:flex;align-items:center;"
       >
         <img
@@ -39,12 +39,8 @@
         </div>
       </div>
       <div
-        class="col-md-2"
-        style="padding: 0; text-align: right; color: #7e8086"
+        style="padding: 0; text-align: right; color: #7e8086;width:200px"
       >
-        <Tooltip :content="$t('m_duplicate_alert_object')">
-          <Icon :size="18" class="copy-data" type="ios-copy-outline" @click="copyEndpoint(data)" />
-        </Tooltip>
         {{ data.start_string }}
       </div>
     </template>
@@ -52,6 +48,14 @@
       v-if="$attrs.button"
       style="position: absolute; top: 10px; right: 10px"
     >
+      <Tooltip :content="$t('menu.endpointView')">
+        <Icon
+          type="ios-copy-outline"
+          size="20"
+          class="fa-operate"
+          @click="copyEndpoint(data)"
+        />
+      </Tooltip>
       <Poptip trigger="hover">
         <div slot="title" style="white-space: normal;color: #2d8cf0">
           <p>{{ $t('m_initiate_orchestration') }}: {{ data.notify_callback_name }}</p>
@@ -244,7 +248,11 @@ export default {
   },
 };
 </script>
-
+<style lang="less">
+.ivu-card-head {
+  padding: 8px 16px !important;
+}
+</style>
 <style scoped lang="less">
 /deep/ .ivu-card-head {
   background: #f2f3f7;
@@ -263,7 +271,7 @@ li {
 .card-label {
   width: 80px;
   color: #7e8086;
-  font-size: 12px;
+  font-size: 14px;
   text-align: left;
 }
 .card-content {
