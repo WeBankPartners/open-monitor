@@ -68,9 +68,9 @@
         <div class="radio-group">
           <span class="ml-3 mr-3">{{$t('m_group_name')}}:</span>
           <div
-            :class="['radio-group-radio radio-group-optional', activeGroup === 'All' ? 'selected-radio' : 'is-not-selected-radio']"
+            :class="['radio-group-radio radio-group-optional', activeGroup === 'ALL' ? 'selected-radio' : 'is-not-selected-radio']"
           >
-            <span @click="selectGroup('All')" style="vertical-align: text-bottom;">{{$t('m_chart_all')}}</span>
+            <span @click="selectGroup('ALL')" style="vertical-align: text-bottom;">{{$t('m_chart_all')}}</span>
           </div>
           <div
             v-for="(item, index) in panel_group_list"
@@ -97,7 +97,7 @@
         </div>
 
         <!-- 图表新增 -->
-        <div class="chart-config-info">
+        <div class="chart-config-info" v-if="isEditStatus">
           <span class="fs-20 mr-3 ml-3">{{$t('m_graph')}}:</span>
           <Dropdown 
             v-for="(item, index) in allAddChartOptions"
@@ -146,7 +146,7 @@
               :key="index"
               @resize="resizeEvent"
               @resized="resizeEvent">
-              <template v-if="item.group === activeGroup || activeGroup === 'All'">
+              <template v-if="item.group === activeGroup || activeGroup === 'ALL'">
                 <div class="c-dark grid-content">
                   <div class="header-grid header-grid-name">
                     <span v-if="editChartId !== item.id">{{item.i}}</span>
@@ -202,7 +202,11 @@
     </Drawer>
 
     <!-- 对于每个chart的抽屉详细信息 -->
-    <Drawer :title="$t('placeholder.chartConfiguration')" :width="90" :mask-closable="false" v-model="showChartConfig">
+    <Drawer :title="$t('placeholder.chartConfiguration')" 
+      :width="90" 
+      :mask-closable="false" 
+      v-model="showChartConfig"
+      @on-close="closeChartInfoDrawer">
       <editView :chartId="setChartConfigId" v-if="showChartConfig"></editView>
     </Drawer>
     <Modal
@@ -301,7 +305,7 @@ export default {
       dataPick: dataPick,
       autoRefreshConfig: autoRefreshConfig,
       viewData: [],
-      activeGroup: 'All',
+      activeGroup: 'ALL',
       showGroupMgmt: false,
       panelGroupInfo: [], // 存放新增/编辑组时的panel信息
       groupName: '', // 新增及编辑时的组名称
@@ -362,7 +366,7 @@ export default {
   },
   computed: {
     tmpLayoutData() { // 缓存切换分组后数据
-      if (this.activeGroup === 'All') {
+      if (this.activeGroup === 'ALL') {
         return this.layoutData
       } else {
         return this.layoutData.filter(d => d.group === this.activeGroup)
@@ -376,7 +380,7 @@ export default {
     this.zoneWidth = window.screen.width * 0.65;
     this.getAllChartOptionList();
     this.getPannelList();
-    this.activeGroup = 'All';
+    this.activeGroup = 'ALL';
     this.getAllRolesOptions();
   },
   methods: {
@@ -390,7 +394,7 @@ export default {
           this.boardMgmtRoles = res.mgmtRoles;
           this.boardUseRoles = res.useRoles;
           this.panalName = res.name;
-          this.activeGroup = 'All';
+          this.activeGroup = 'ALL';
           this.panel_group_list = res.panelGroupList || [];
           this.viewData = res.charts || [];
           this.initPanals();
@@ -531,7 +535,7 @@ export default {
       return true
     },
     addItem() {
-      this.activeGroup = 'All'
+      this.activeGroup = 'ALL'
       generateUuid().then((elId)=>{
         const key = ((new Date()).valueOf()).toString().substring(10)
         let item = {
@@ -723,7 +727,7 @@ export default {
         }
       })
       this.savePanalEdit()
-      this.activeGroup = 'All'
+      this.activeGroup = 'ALL'
     },
     confirmGroupMgmt () {
       if (this.groupNameIndex === -1 && this.panel_group_list.includes(this.groupName)) {
@@ -779,11 +783,11 @@ export default {
         const addChartParams = {
           dashboardId: this.pannelId,
           name: name,
-          chartTemplate: "",
+          chartTemplate: "one",
           chartType: copyInfo.id,
           lineType: copyInfo.id === 'line' ? 'line' : "",
           pieType: copyInfo.id === 'pie' ? 'tag' : "",
-          aggregate: "none",
+          aggregate: "min",
           aggStep: 60,
           unit: '',
           group: this.activeGroup === 'ALL' ? "" : this.activeGroup,
@@ -805,11 +809,11 @@ export default {
         }
         this.layoutData.push(item);
 
-        nextTick(async () => {
-          await this.requestReturnPromise('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams());
-          this.getPannelList();
-          this.editGrid()
-          this.showChartConfig = true;
+        nextTick(() => {
+          this.request('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams(), res => {
+            this.getPannelList();
+            this.editGrid()
+          });
         })
       } else {
         const group = type === 'copy' ? '' : (this.activeGroup === 'ALL' ? "" : this.activeGroup);
@@ -969,8 +973,11 @@ export default {
       this.request('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams(), res => {
         this.$Message.success(this.$t('m_success'));
         this.getPannelList();
-        this.activeGroup = 'All';
+        this.activeGroup = 'ALL';
       });
+    },
+    closeChartInfoDrawer() {
+      this.getPannelList();
     }
   },
   components: {
