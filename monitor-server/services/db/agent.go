@@ -347,6 +347,16 @@ func SearchRecursivePanel(search string) []*m.OptionModel {
 }
 
 func ListRecursiveEndpointType(guid string) (result []string, err error) {
+	var endpointRows []*m.EndpointNewTable
+	err = x.SQL("select monitor_type from endpoint_new where guid=?", guid).Find(&endpointRows)
+	if err != nil {
+		err = fmt.Errorf("query endpoint table fail,%s ", err.Error())
+		return
+	}
+	if len(endpointRows) > 0 {
+		result = []string{endpointRows[0].MonitorType}
+		return
+	}
 	result = []string{}
 	resultMap := make(map[string]int)
 	for _, v := range getRecursiveEndpointList(guid) {
