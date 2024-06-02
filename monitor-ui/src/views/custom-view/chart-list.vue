@@ -113,6 +113,11 @@
             </div>
         </div>
     </Modal>
+
+    <Drawer :title="$t('placeholder.chartConfiguration')" :width="90" :mask-closable="false" v-model="isEditViewShow">
+        <editView :chartId="chartId" v-if="isEditViewShow"></editView>
+    </Drawer>
+    
   </div>
 </template>
 <script>
@@ -120,6 +125,7 @@ import debounce from 'lodash/debounce';
 import cloneDeep from 'lodash/cloneDeep'
 import isEmpty from 'lodash/isEmpty'
 import AuthDialog from '@/components/auth.vue'
+import EditView from '@/views/custom-view/edit-view/edit-view'
 
 const initSearchMap = {
     chartName: "",
@@ -160,14 +166,14 @@ export default {
             {
                 title: this.$t('m_id'),
                 align: 'center',
-                width: 140,
+                width: 150,
                 key: 'chartId'
             },
             {
                 title: this.$t('field.type'),
                 key: 'chartType',
                 align: 'center',
-                width: 100,
+                width: 90,
                 render: (h, params) => {
                     return (
                         <Button
@@ -198,7 +204,7 @@ export default {
             {
                 title: this.$t('m_manage_role'),
                 align: 'center',
-                width: 120,
+                width: 100,
                 key: 'mgmtRoles',
                 render: (h, params) => {
                     return (
@@ -242,7 +248,7 @@ export default {
                 render: (h, params) => {
                 return (params.row.permission === 'mgmt' ? 
                     (<div >
-                        <Button size="small" class="mr-1"  type="primary" on-click={() => this.editSingleChart(params.row)}>
+                        <Button size="small" class="mr-1"  type="primary" on-click={() => this.showEditView(params.row)}>
                             <Icon type="md-create" size="16"></Icon>
                         </Button>
                         <Button size="small" type="warning" on-click={() => this.editSingleRoles(params.row)}>
@@ -284,7 +290,9 @@ export default {
                 label: "m_area_chart",
                 buttonType: "error"
             }
-        }
+        },
+        chartId: "",
+        isEditViewShow: false
     }
   },
   mounted(){
@@ -340,13 +348,11 @@ export default {
     },
     resetSearchCondition() {
         this.searchMap = cloneDeep(initSearchMap);
+        this.getChartList()
     },
-    editSingleChart(panalItem) {
-        const params = {
-            permission: 'edit',
-            panalItem
-        }
-        this.$router.push({name:'viewConfig',params:params})
+    showEditView(item) {
+        this.chartId = item.chartId;
+        this.isEditViewShow = true;
     },
     editSingleRoles(item) {
         this.chartId = item.chartId
@@ -383,7 +389,8 @@ export default {
     }
   },
   components: {
-    AuthDialog
+    AuthDialog,
+    EditView
   }
 }
 </script>
