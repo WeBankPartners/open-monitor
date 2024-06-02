@@ -432,14 +432,14 @@ func QueryCustomChart(c *gin.Context) {
 						if v, ok := displayNameRoleMap[roleRel.RoleId]; ok {
 							displayMgmtRoles = append(displayMgmtRoles, v)
 						}
+						if userRoleMap[roleRel.RoleId] {
+							permission = string(models.PermissionMgmt)
+						}
 					} else if roleRel.Permission == string(models.PermissionUse) {
 						useRoles = append(useRoles, roleRel.RoleId)
 						if v, ok := displayNameRoleMap[roleRel.RoleId]; ok {
 							displayUseRoles = append(displayUseRoles, v)
 						}
-					}
-					if userRoleMap[roleRel.RoleId] {
-						permission = string(models.PermissionMgmt)
 					}
 				}
 			}

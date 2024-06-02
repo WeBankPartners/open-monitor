@@ -138,8 +138,14 @@ func DeleteCustomDashboardById(dashboard int) (err error) {
 	return Transaction(actions)
 }
 
+func UpdateCustomDashboardTime(dashboard int, operator string) []*Action {
+	var actions []*Action
+	actions = append(actions, &Action{Sql: "update custom_dashboard set update_at=?,update_user=? where id=?", Param: []interface{}{time.Now().Format(models.DatetimeFormat), operator, dashboard}})
+	return actions
+}
+
 func getQueryIdsByPermission(condition models.CustomDashboardQueryParam, roles []string) (strArr []string, err error) {
-	var ids []int
+	var ids, newIds []int
 	var sql = "select custom_dashboard_id from custom_dashboard_role_rel "
 	var params []interface{}
 	strArr = []string{}
@@ -149,12 +155,6 @@ func getQueryIdsByPermission(condition models.CustomDashboardQueryParam, roles [
 	roleFilterSql, roleFilterParam := createListParams(roles, "")
 	sql = sql + " where role_id  in (" + roleFilterSql + ")"
 	params = append(params, roleFilterParam...)
-
-	if len(condition.UseRoles) > 0 {
-		useRoleFilterSql, useRoleFilterParam := createListParams(condition.UseRoles, "")
-		sql = sql + " and (role_id  in (" + useRoleFilterSql + ") and permission = ?)"
-		params = append(append(params, useRoleFilterParam...), models.PermissionUse)
-	}
 
 	if len(condition.MgmtRoles) > 0 {
 		mgmtRoleFilterSql, mgmtRoleFilterParam := createListParams(condition.MgmtRoles, "")
@@ -168,8 +168,37 @@ func getQueryIdsByPermission(condition models.CustomDashboardQueryParam, roles [
 	if err = x.SQL(sql, params...).Find(&ids); err != nil {
 		return
 	}
-	if len(ids) > 0 {
-		strArr = TransformInToStrArray(ids)
+	if len(ids) == 0 {
+		strArr = []string{}
+		return
+	}
+
+	// 添加使用角色查询,需要用交集形式,可能存在当前用户没有这个使用角色,但是看板别的使用角色,这个看板也是需要被查询出来的
+	if len(condition.UseRoles) > 0 {
+		var newParams []interface{}
+		var dashboardIds []int
+		useRoleFilterSql, useRoleFilterParam := createListParams(condition.UseRoles, "")
+		newParams = append(append(newParams, useRoleFilterParam...), models.PermissionUse)
+		if err = x.SQL("select custom_dashboard_id from custom_dashboard_role_rel  where role_id  in ("+useRoleFilterSql+") and permission = ?", newParams...).Find(&dashboardIds); err != nil {
+			return
+		}
+		if len(dashboardIds) > 0 {
+			for _, id := range ids {
+				for _, dashboardId := range dashboardIds {
+					if id == dashboardId {
+						newIds = append(newIds, id)
+					}
+				}
+			}
+		} else {
+			newIds = ids
+		}
+	} else {
+		newIds = ids
+	}
+	if len(newIds) > 0 {
+		strArr = TransformInToStrArray(newIds)
+		strArr = filterRepeatIds(strArr)
 	}
 	return
 }
@@ -238,7 +267,7 @@ func SyncData() (err error) {
 		}
 		now := time.Now().Format(models.DatetimeFormat)
 		for _, chart := range historyChartList {
-			newChartId := guid.CreateGuid()
+			newChartId := chart.ViewConfig.ID
 			group := ""
 			displayConfig := ""
 			if chart.ViewConfig != nil {
