@@ -275,7 +275,6 @@ import ViewConfigAlarm from '@/views/custom-view/view-config-alarm'
 import ViewChart from '@/views/custom-view/view-chart'
 import EditView from '@/views/custom-view/edit-view/edit-view'
 import AuthDialog from '@/components/auth.vue';
-import { nextTick } from 'vue';
 export default {
   name: '',
   data() {
@@ -454,10 +453,10 @@ export default {
     },
     openAlarmDisplay () {
       this.showAlarm = !this.showAlarm
-      nextTick(() => {
+      setTimeout(() => {
         this.$refs.cutsomViewId.getAlarm(this.cutsomViewId, this.viewCondition, this.permission);
         this.refreshNow = !this.refreshNow;
-      })
+      }, 0)
     },
     closeAlarmDisplay () {
       this.showAlarm = !this.showAlarm;
@@ -809,12 +808,12 @@ export default {
         }
         this.layoutData.push(item);
 
-        nextTick(() => {
+        setTimeout(() => {
           this.request('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams(), res => {
             this.getPannelList();
             this.editGrid()
           });
-        })
+        }, 0)
       } else {
         const group = type === 'copy' ? '' : (this.activeGroup === 'ALL' ? "" : this.activeGroup);
         let item = {
@@ -827,7 +826,7 @@ export default {
           group
         }
         this.layoutData.push(item);
-        nextTick(async () => {
+        setTimeout(async () => {
           const copyParams = {
             dashboardId: this.pannelId,
             ref: type === 'copy' ? false : true,
@@ -846,7 +845,7 @@ export default {
           this.setChartConfigId = copyInfo.id;
           this.editGrid();
           this.getAllChartOptionList();
-        })
+        }, 0)
       }
     },
 
@@ -978,6 +977,9 @@ export default {
     },
     closeChartInfoDrawer() {
       this.getPannelList();
+      setTimeout(() => {
+        this.refreshNow = !this.refreshNow;
+      }, 500)
     }
   },
   components: {

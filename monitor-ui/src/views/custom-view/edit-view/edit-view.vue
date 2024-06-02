@@ -390,7 +390,9 @@ export default {
                 <Select
                   value={params.row.monitorType}
                   on-on-change={v => {
-                    Vue.set(this.tableData[params.index], 'monitorType', v)
+                    Vue.set(this.tableData[params.index], 'monitorType', v);
+                    this.monitorType = v;
+                    this.searchMetricByType()
                   }}
                   filterable
                   clearable
@@ -415,7 +417,8 @@ export default {
                 value={params.row.metric}
                 on-on-change={v => {
                   Vue.set(this.tableData[params.index], 'metric', v);
-                  this.debounceDrawChart();
+                  this.metric = v;
+                  this.addConfigurationInPie();
                 }}
                 filterable
                 clearable
@@ -723,16 +726,28 @@ export default {
         }
       )
     },
+    resetSearchItem(index) {
+      this.monitorType = '';
+      this.metric = '';
+      this.metricOptions = [];
+      this.monitorTypeOptions = [];
+      this.tableData[index].monitorType = '';
+      this.tableData[index].metric = ''
+    },
     searchTypeByEndpointInPie(value, index) {
+      this.resetSearchItem(index);
       const selectedItem = find(cloneDeep(this.endpointOptions), {
         option_value: value
       })
+      this.serviceGroup = selectedItem.app_object;
+      this.endpointName = selectedItem.option_text;
+      this.endpointType = selectedItem.option_type_name;
       this.request('GET', '/monitor/api/v1/dashboard/recursive/endpoint_type/list', {
         guid: selectedItem.option_value
       }, res => {
         this.monitorType = isEmpty(res) ? '' : res[0];
         Vue.set(this.tableData[index], 'monitorType', this.monitorType);
-        Vue.set(this.tableData[index], 'metric', []);
+        Vue.set(this.tableData[index], 'metric', '');
         this.metricOptions = [];
         this.monitorTypeOptions = res;
         this.searchMetricByType();
@@ -790,7 +805,7 @@ export default {
         title: '',
         unit: '',
         data: [{
-          app_object: this.endpointValue,
+          app_object: this.serviceGroup,
           chartType: this.chartConfigForm.chartType,
           endpoint: this.endpointValue,
           monitorType: this.monitorType,
@@ -818,6 +833,22 @@ export default {
           resolve(result)
         })
       })
+    },
+    async addConfigurationInPie() {
+      if (this.chartConfigForm.chartType === 'pie' && this.tableData.length === 1) {
+        const item = this.tableData[0];
+        const metricItem = find(this.metricOptions, {
+            metric: this.metric
+        })
+        item.metricGuid = metricItem.guid;
+        item.metricType = metricItem.metric_type;
+        item.tagOptions = await this.findTagsByMetric(metricItem.guid, this.endpointValue, this.serviceGroup)
+        item.tags = this.initTagsFromOptions(item.tagOptions, item.tags);
+        item.serviceGroup = this.serviceGroup;
+        item.endpointName = this.endpointName;
+        item.endpointType = this.endpointType;
+        this.debounceDrawChart();
+      }
     },
     async addConfiguration() {
       if (this.endpointValue && !isEmpty(this.metric)) {
@@ -960,7 +991,7 @@ export default {
     drawChartContent() {
       if (this.isPieChart) {
         const params = this.generateLineParamsData();
-        if (!params.metric) return;
+        if (!params[0].metric) return;
         this.request('POST', '/monitor/api/v1/dashboard/pie/chart', params,
           res => {
             drawPieChart(this, res)
