@@ -41,27 +41,27 @@ const implicitRoute = {
   },
   'monitorConfigIndex/logManagement': {
     parentBreadcrumb: {'zh-CN': '告警', 'en-US': 'Alarm'},
-    childBreadcrumb: { 'zh-CN': '关键字', 'en-US': 'Keywords' }
+    childBreadcrumb: { 'zh-CN': '关键字', 'en-US': 'Keyword' }
   },
   'monitorConfigIndex/resourceLevel': {
     parentBreadcrumb: {'zh-CN': '对象', 'en-US': 'Object'},
-    childBreadcrumb: { 'zh-CN': '层级对象', 'en-US': 'Hierarchy Object' }
+    childBreadcrumb: { 'zh-CN': '层级对象', 'en-US': 'Resource Level' }
   },
   'monitorConfigIndex/exporter': {
     parentBreadcrumb: {'zh-CN': '其他', 'en-US': 'Other'},
-    childBreadcrumb: { 'zh-CN': '采集器', 'en-US': 'Collector'}
+    childBreadcrumb: { 'zh-CN': '采集器', 'en-US': 'Exporter'}
   },
   'monitorConfigIndex/businessMonitor': {
-    parentBreadcrumb: {'zh-CN': '指标', 'en-US': 'quota'},
+    parentBreadcrumb: {'zh-CN': '指标', 'en-US': 'Quota'},
     childBreadcrumb: { 'zh-CN': '业务配置', 'en-US': 'Business Configuration' }
   },
   'monitorConfigIndex/logTemplate': {
-    parentBreadcrumb: {'zh-CN': '指标', 'en-US': 'quota'},
-    childBreadcrumb: { 'zh-CN': '业务日志模板', 'en-US': 'Business Log Template' }
+    parentBreadcrumb: {'zh-CN': '指标', 'en-US': 'Quota'},
+    childBreadcrumb: { 'zh-CN': '业务日志模板', 'en-US': 'Log Template' }
   },
   'monitorConfigIndex/metricConfig': {
-    parentBreadcrumb: {'zh-CN': '指标', 'en-US': 'quota'},
-    childBreadcrumb: { 'zh-CN': '自定义', 'en-US': 'customize' }
+    parentBreadcrumb: {'zh-CN': '指标', 'en-US': 'Quota'},
+    childBreadcrumb: { 'zh-CN': '自定义看板', 'en-US': 'customize Board' }
   },
   'monitorConfigIndex/groupBoard': {
     parentBreadcrumb: {'zh-CN': '对象', 'en-US': 'Object'},

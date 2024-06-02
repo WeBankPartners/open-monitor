@@ -26,8 +26,8 @@
           </Select>
         </li>
         <li class="search-li" style="cursor: pointer;">
-          <span @click="openDoc">
-            <i 
+          <span style="font-size: 14px;" @click="openDoc">
+            <i
               class="fa fa-book" 
               aria-hidden="true" 
               style="font-size:20px;color:#58a0e6;vertical-align: middle;margin-left:20px">
