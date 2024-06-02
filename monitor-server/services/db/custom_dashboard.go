@@ -292,8 +292,12 @@ func SyncData() (err error) {
 			if len(chart.Query) > 0 {
 				for _, series := range chart.Query {
 					seriesId := guid.CreateGuid()
+					monitorType := ""
+					if strings.TrimSpace(series.Endpoint) != "" {
+						x.SQL("select monitor_type from endpoint_new where guid=?", series.Endpoint).Find(&monitorType)
+					}
 					actions = append(actions, &Action{Sql: "insert into custom_chart_series(guid,dashboard_chart,endpoint,service_group,endpoint_name,monitor_type,metric,color_group,pie_display_tag,endpoint_type,metric_type,metric_guid) values(?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
-						seriesId, newChartId, series.Endpoint, series.AppObject, series.EndpointName, series.EndpointType, series.Metric, series.DefaultColor, "", "", "", ""}})
+						seriesId, newChartId, series.Endpoint, series.AppObject, series.EndpointName, monitorType, series.Metric, series.DefaultColor, "", series.EndpointType, "", ""}})
 					if len(series.MetricToColor) > 0 {
 						for _, colorConfig := range series.MetricToColor {
 							tags := ""

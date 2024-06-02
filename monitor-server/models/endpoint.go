@@ -67,3 +67,9 @@ type MetricTable struct {
 	MetricType         string `json:"metric_type" xorm:"-"`           // 指标类型
 	LogMetricGroupName string `json:"log_metric_group_name" xorm:"-"` // 配置的模版名
 }
+
+type MetricImportResultDto struct {
+	SuccessList []string `json:"success_list"` // 成功
+	FailList    []string `json:"fail_list"`    // 失败
+	Message     string   `json:"message"`      // 描述
+}
