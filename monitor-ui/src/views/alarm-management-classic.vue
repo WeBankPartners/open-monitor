@@ -1,6 +1,6 @@
 <template>
   <div class="classic-table">
-    <PageTable :pageConfig="pageConfig"></PageTable>
+    <Table :columns="columns" :data="tableData"></Table>
     <slot name="pagination"></slot>
     <Modal
       v-model="isShowWarning"
@@ -18,42 +18,133 @@
 </template>
 
 <script>
-  let tableEle = [
-    {title: 'm_alarmName', value: 'alarm_name', display: true},
-    {title: 'menu.configuration', value: 'strategyGroupsInfo', display: true, renderContent: true},
-    {title: 'field.endpoint', value: 'endpoint', display: true},
-    {title: 'alarmContent', value: 'content', display: true},
-    {title: 'tableKey.s_priority', value: 's_priority', display: true},
-    {title: 'field.metric', value: 'alarm_metric_list_join', display: true},
-    {title: 'field.threshold', value: 'alarm_detail', display: true, renderContent: true},
-    {title: 'tableKey.start', value: 'start_string', display: true},
-    {title: 'm_remark', value: 'custom_message', display: true},
-  ]
-  const btn = [
-    {btn_name: 'button.view', btn_func: 'goToEndpointView'},
-    {btn_name: 'm_remark', btn_func: 'remarkModal'},
-    {btn_name: 'close', btn_func: 'deleteConfirmModal'}
-  ]
-
+  const alarmLevelMap = {
+    low: {
+      label: "m_low",
+      buttonType: "blue"
+    },
+    medium: {
+      label: "m_medium",
+      buttonType: "warning"
+    },
+    high: {
+      label: "m_high",
+      buttonType: "error"
+    }
+  }
 import isEmpty from 'lodash/isEmpty';
 export default {
   name: '',
   data () {
     return {
-      pageConfig: {
-        CRUD: '',
-        table: {
-          selection: false,
-          tableData: [],
-          tableEle: tableEle,
-          // filterMoreBtn: 'filterMoreBtn',
-          primaryKey: 'id',
-          btn: btn,
-          pagination: this.pagination,
-          handleFloat:true,
+      columns: [
+        {
+          title: this.$t('m_alarmName'),
+          key: 'alarm_name'
         },
-        pagination: false
-      },
+        {
+          title: this.$t('menu.configuration'),
+          key: 'strategyGroupsInfo',
+          render: (h, params) => {
+            return (
+              <div domPropsInnerHTML={params.row.strategyGroupsInfo}></div>
+            )
+          }
+        },
+        {
+          title: this.$t('field.endpoint'),
+          key: 'endpoint'
+        },
+        {
+          title: this.$t('alarmContent'),
+          key: 'content'
+        },
+        {
+          title: this.$t('tableKey.s_priority'),
+          key: 's_priority',
+          width: 100,
+          render: (h, params) => {
+            return (
+              <Tooltip placement="right" max-width="400">
+                <Tag color={alarmLevelMap[params.row.s_priority].buttonType}>{this.$t(alarmLevelMap[params.row.s_priority].label)}</Tag>
+              </Tooltip>
+            )
+          }
+        },
+        {
+          title: this.$t('field.metric'),
+          key: 'alarm_metric_list_join'
+        },
+        {
+          title: this.$t('field.threshold'),
+          key: 'alarm_detail',
+          width: 200,
+          ellipsis: true,
+          tooltip: true,
+          render: (h, params) => {
+            return (
+              <Tooltip transfer={true} placement="bottom-start" max-width="300">
+                <div slot="content">
+                  <div domPropsInnerHTML={params.row.alarm_detail}></div>
+                </div>
+                <div domPropsInnerHTML={params.row.alarm_detail}></div>
+              </Tooltip>
+            )
+          }
+        },
+        {
+          title: this.$t('tableKey.start'),
+          key: 'start_string'
+        },
+        {
+          title: this.$t('m_remark'),
+          key: 'custom_message'
+        },
+        {
+          title: this.$t('table.action'),
+          key: 'action',
+          width: 200,
+          align: 'left',
+          fixed: 'right',
+          render: (h, params) => {
+            return (
+              <div style="text-align: left; cursor: pointer;display: inline-flex;">
+              <Tooltip content={this.$t('button.view')} placement="top" transfer={true}>
+                  <Button
+                    size="small"
+                    type="primary"
+                    onClick={() => this.goToEndpointView(params.row)}
+                    style="margin-right:5px;"
+                  >
+                    <Icon type="ios-stats" size="16"></Icon>
+                  </Button>
+                </Tooltip>
+                <Tooltip content={this.$t('close')} placement="top" transfer={true}>
+                  <Button
+                    size="small"
+                    type="error"
+                    onClick={() => this.deleteConfirmModal(params.row)}
+                    style="margin-right:5px;"
+                  >
+                    <Icon type="md-eye-off" size="16"></Icon>
+                  </Button>
+                </Tooltip>
+                <Tooltip content={this.$t('m_remark')} placement="top" transfer={true}>
+                  <Button
+                    size="small"
+                    type="warning"
+                    onClick={() => this.remarkModal(params.row)}
+                    style="margin-right:5px;"
+                  >
+                    <Icon type="md-pricetags" size="16"></Icon>
+                  </Button>
+                </Tooltip>
+              </div>
+            )
+          }
+        }
+      ],
+      tableData: [],
       isShowWarning: false,
       selectedData: '',
       strategyNameMaps: {
@@ -77,7 +168,7 @@ export default {
           }
 
           if (!isEmpty(item.alarm_metric_list)) {
-            item.alarm_metric_list_join = item.alarm_metric_list.join(';')
+            item.alarm_metric_list_join = item.alarm_metric_list.join(',')
           }
         });
       }
@@ -87,7 +178,7 @@ export default {
       this.timeForDataAchieve = new Date().toLocaleString()
       this.timeForDataAchieve = this.timeForDataAchieve.replace('上午', 'AM ')
       this.timeForDataAchieve = this.timeForDataAchieve.replace('下午', 'PM ')
-      this.pageConfig.table.tableData = this.changeResultData(resultData);
+      this.tableData = this.changeResultData(resultData)
     },
     goToEndpointView (alarmItem) {
       const endpointObject = {
@@ -119,7 +210,7 @@ export default {
       if (!alarmItem.is_custom) {
         params.custom = false
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.alarmManagement.close.api, params, () => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.alarmManagement.close.api, params, () => {
         this.$parent.$parent.$parent.getAlarm()
       })
     }
@@ -127,37 +218,3 @@ export default {
   components: {}
 }
 </script>
-
-<style scoped lang="less">
-.classic-table {
-  /deep/ .table {
-    .th-border-bottom {
-      border-top: 0;
-    }
-  }
-}
-</style>
-
-<style lang="less">
-tr {
-  position: relative;
-  .td-operation {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    right: 0;
-    display: flex;
-    align-items: center;
-  }
-
-  .c-dark.tdoverflow {
-    max-width: 172px!important;
-  }
-  .render-content {
-    overflow: scroll;
-    // word-wrap: break-word;
-  }
-}
-
-
-</style>

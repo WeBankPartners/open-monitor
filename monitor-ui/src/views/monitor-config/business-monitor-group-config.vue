@@ -242,17 +242,7 @@ export default {
     getTemplateStatus () {
       const displayRef = this.configInfo.log_type==='regular' ? 'standardRegexDisplayRef' : 'jsonRegexDisplayRef'
       const res = this.$refs[displayRef] && this.$refs[displayRef].returnCurrentStatus()
-      console.log(res)
       return res
-      // <StandardRegexDisplay 
-      //       ref="standardRegexDisplayRef"
-      //       v-if="configInfo.log_type==='regular'"
-      //       :prefixCode="businessConfig.metric_prefix_code"
-      //       :configInfo="configInfo"></StandardRegexDisplay>
-      //     <JsonRegexDisplay ref="jsonRegexDisplayRef"
-      //       v-if="configInfo.log_type==='json'"
-      //       :prefixCode="businessConfig.metric_prefix_code"
-      //       :configInfo="configInfo"></JsonRegexDisplay>
     },
     getTemplateDetail(guid) {
       const api = this.$root.apiCenter.getConfigDetailByGuid + guid
