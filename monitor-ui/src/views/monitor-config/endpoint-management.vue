@@ -15,11 +15,19 @@
   </ModalComponent>
   <Modal
     v-model="historyAlarmModel"
-    width="950"
+    width="1400"
     :mask-closable="false"
     :footer-hide="true"
+    :fullscreen="isfullscreen"
     :title="$t('button.historicalAlert')">
-    <Table height="400" width="930" :columns="historyAlarmPageConfig.table.tableEle" :data="historyAlarmPageConfig.table.tableData"></Table>
+    <div slot="header" class="custom-modal-header">
+      <span>
+        {{$t('alarmHistory')}}
+      </span>
+      <Icon v-if="isfullscreen" @click="fullscreenChange" class="fullscreen-icon" type="ios-contract" />
+      <Icon v-else @click="fullscreenChange" class="fullscreen-icon" type="ios-expand" />
+    </div>
+    <Table :columns="historyAlarmPageConfig.table.tableEle" :height="fullscreenTableHight" :data="historyAlarmPageConfig.table.tableData"></Table>
   </Modal>
   <ModalComponent :modelConfig="endpointRejectModel">
     <div slot="endpointReject">
@@ -283,6 +291,21 @@ let tableEle = [{
     }
   }
 ]
+const alarmLevelMap = {
+  low: {
+    label: "m_low",
+    buttonType: "blue"
+  },
+  medium: {
+    label: "m_medium",
+    buttonType: "warning"
+  },
+  high: {
+    label: "m_high",
+    buttonType: "error"
+  }
+}
+
 const btn = [{
     btn_name: 'button.thresholdManagement',
     btn_func: 'thresholdConfig'
@@ -333,6 +356,7 @@ export default {
   name: '',
   data() {
     return {
+      isfullscreen: false,
       isShowDataMonitor: false,
       dbEndpointId: '',
       dbMonitorData: [],
@@ -376,40 +400,70 @@ export default {
       historyAlarmPageConfig: {
         table: {
           tableData: [],
-          tableEle: [{
+          tableEle: [
+            {
+              title: this.$t('m_alarmName'),
+              key: 'alarm_name'
+            },
+            {
               title: this.$t('tableKey.status'),
               width: 80,
               key: 'status'
             },
             {
-              title: this.$t('tableKey.s_metric'),
-              width: 200,
-              key: 's_metric'
+              title: this.$t('menu.configuration'),
+              key: 'strategyGroupsInfo',
+              render: (h, params) => {
+                return (
+                  <div domPropsInnerHTML={params.row.strategyGroupsInfo}></div>
+                )
+              }
             },
             {
-              title: this.$t('tableKey.start_value'),
-              width: 120,
-              key: 'start_value'
+              title: this.$t('field.endpoint'),
+              key: 'endpoint'
             },
             {
-              title: this.$t('tableKey.s_cond'),
-              width: 90,
-              key: 's_cond'
-            },
-            {
-              title: this.$t('tableKey.s_last'),
-              width: 100,
-              key: 's_last'
+              title: this.$t('alarmContent'),
+              key: 'content'
             },
             {
               title: this.$t('tableKey.s_priority'),
-              width: 90,
-              key: 's_priority'
+              key: 's_priority',
+              width: 100,
+              render: (h, params) => {
+                return (
+                  <Tooltip placement="right" max-width="400">
+                    <Tag color={alarmLevelMap[params.row.s_priority].buttonType}>{this.$t(alarmLevelMap[params.row.s_priority].label)}</Tag>
+                  </Tooltip>
+                )
+              }
+            },
+            {
+              title: this.$t('field.metric'),
+              key: 'alarm_metric_list_join'
+            },
+            {
+              title: this.$t('field.threshold'),
+              key: 'alarm_detail',
+              width: 200,
+              ellipsis: true,
+              tooltip: true,
+              render: (h, params) => {
+                return (
+                  <Tooltip transfer={true} placement="bottom-start" max-width="300">
+                    <div slot="content">
+                      <div domPropsInnerHTML={params.row.alarm_detail}></div>
+                    </div>
+                    <div domPropsInnerHTML={params.row.alarm_detail}></div>
+                  </Tooltip>
+                )
+              }
             },
             {
               title: this.$t('tableKey.start'),
+              key: 'start_string',
               width: 120,
-              key: 'start_string'
             },
             {
               title: this.$t('tableKey.end'),
@@ -422,6 +476,10 @@ export default {
                 }
                 return h('span', res);
               }
+            },
+            {
+              title: this.$t('m_remark'),
+              key: 'custom_message'
             }
           ]
         }
@@ -594,6 +652,7 @@ export default {
         key: 'guid',
         value: null
       },
+      fullscreenTableHight: document.documentElement.clientHeight - 300,
     }
   },
   mounted() {
@@ -633,6 +692,14 @@ export default {
     }
   },
   methods: {
+    fullscreenChange () {
+      this.isfullscreen = !this.isfullscreen
+      if (this.isfullscreen) {
+        this.fullscreenTableHight = document.documentElement.clientHeight - 160
+      } else {
+        this.fullscreenTableHight = document.documentElement.clientHeight - 300
+      }
+    },
     changeIp (val) {
       const process = this.endpointRejectModel.ipOptions.find(i => i.ip === val)
       this.endpointRejectModel.addRow.step = process.step
@@ -918,6 +985,7 @@ export default {
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.alarm.history, params, (responseData) => {
         this.historyAlarmPageConfig.table.tableData = responseData[0].problem_list
       })
+      this.isfullscreen = false
       this.historyAlarmModel = true
     },
     endpointReject() {
@@ -1145,5 +1213,18 @@ export default {
 
 .fa-plus-square-o {
   color: @color-blue;
+}
+
+.custom-modal-header {
+  line-height: 20px;
+  font-size: 16px;
+  color: #17233d;
+  font-weight: 500;
+  .fullscreen-icon {
+    float: right;
+    margin-right: 28px;
+    font-size: 18px;
+    cursor: pointer;
+  }
 }
 </style>
