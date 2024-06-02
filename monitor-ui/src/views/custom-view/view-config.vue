@@ -182,7 +182,7 @@
                     </Tooltip>
                   </div>
                 </div>
-                <section style="height: 90%" @click="setChartType(item)">
+                <section style="height: 90%" @click="onChartBodyClick(item)">
                   <div v-for="(chartInfo,chartIndex) in item._activeCharts" :key="chartIndex">
                     <CustomChart v-if="['line','bar'].includes(chartInfo.chartType)" :refreshNow="refreshNow" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomChart>
                     <CustomPieChart v-if="chartInfo.chartType === 'pie'" :refreshNow="refreshNow" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomPieChart>
@@ -290,7 +290,7 @@ export default {
       isEditPanal: false,
       permission: this.$route.params.permission || 'edit',
       panalName: '',
-      pannelId: this.$route.params.pannelId || 29,
+      pannelId: this.$route.params.pannelId || 64,
       viewCondition: {
         timeTnterval: -3600,
         dateRange: ['', ''],
@@ -400,9 +400,12 @@ export default {
     },
     getAllChartOptionList() {
       this.request('GET', '/monitor/api/v2/chart/shared/list', {}, res => {
-        const copyChartsOptions = this.processChartOptions(res);
-        this.allAddChartOptions[1].options = copyChartsOptions;
-        this.allAddChartOptions[2].options = copyChartsOptions;
+        this.allAddChartOptions[1].options = this.processChartOptions(res);
+      });
+      this.request('GET', '/monitor/api/v2/chart/shared/list', {
+        dashboard_id: this.pannelId
+      }, res => {
+        this.allAddChartOptions[2].options = this.processChartOptions(res);
       })
     },
     processChartOptions(rawData) {
@@ -437,6 +440,13 @@ export default {
         }
       }
       return options
+    },
+    onChartBodyClick(item) {
+      if (this.isEditStatus) {
+        this.setChartType(item);
+      } else {
+        this.gridPlus(item);
+      }
     },
     openAlarmDisplay () {
       this.showAlarm = !this.showAlarm
@@ -589,6 +599,7 @@ export default {
       this.isShowWarning = false
     },
     async gridPlus(item) {
+      if (!this.isShowGridPlus(item)) return 
       const resViewData = await this.modifyLayoutData()
       this.showMaxChart = true
       const templateData = {
@@ -793,11 +804,11 @@ export default {
           id: `${this.setChartConfigId}`
         }
         this.layoutData.push(item);
-        this.editGrid()
 
         nextTick(async () => {
           await this.requestReturnPromise('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams());
           this.getPannelList();
+          this.editGrid()
           this.showChartConfig = true;
         })
       } else {
@@ -812,8 +823,6 @@ export default {
           group
         }
         this.layoutData.push(item);
-        this.editGrid()
-
         nextTick(async () => {
           const copyParams = {
             dashboardId: this.pannelId,
@@ -831,7 +840,8 @@ export default {
           await this.requestReturnPromise('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams());
           this.getPannelList();
           this.setChartConfigId = copyInfo.id;
-          this.showChartConfig = true
+          this.editGrid();
+          this.getAllChartOptionList();
         })
       }
     },
