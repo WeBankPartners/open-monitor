@@ -282,9 +282,9 @@ export default {
         method: ''
       },
       isEditPanal: false,
-      permission: this.$route.params.permission || 'view',
+      permission: this.$route.params.permission || 'edit',
       panalName: '',
-      pannelId: this.$route.params.pannelId,
+      pannelId: this.$route.params.pannelId || 49,
       viewCondition: {
         timeTnterval: -3600,
         dateRange: ['', ''],
@@ -434,11 +434,11 @@ export default {
     },
     openAlarmDisplay () {
       this.showAlarm = !this.showAlarm
-      this.$refs.cutsomViewId.getAlarm(this.cutsomViewId, this.viewCondition, this.permission)
+      this.$refs.cutsomViewId.getAlarm(this.cutsomViewId, this.viewCondition, this.permission);
     },
     closeAlarmDisplay () {
-      this.showAlarm = !this.showAlarm
-      this.$refs.cutsomViewId.clearAlarmInterval()
+      this.showAlarm = !this.showAlarm;
+      this.$refs.cutsomViewId.clearAlarmInterval();
     },
     datePick (data) {
       this.viewCondition.dateRange = data
@@ -763,14 +763,14 @@ export default {
               h:7,
             }
         }
-        const newChartId = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom', addChartParams);
+        this.setChartConfigId = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom', addChartParams);
         let item = {
           x:0,
           y:0,
           w:6,
           h:7,
           i: `${name}`,
-          id: `${newChartId}`
+          id: `${this.setChartConfigId}`
         }
         this.layoutData.push(item);
         this.editGrid()
@@ -778,7 +778,6 @@ export default {
         nextTick(async () => {
           await this.requestReturnPromise('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams());
           this.getPannelList();
-          this.setChartConfigId = newChartId;
           this.showChartConfig = true;
         })
       } else {
@@ -1051,11 +1050,6 @@ export default {
 .is-not-selected-radio {
   background: #fff
 }
-
-
-
-
-
 .primary-btn {
   color: #fff;
   background-color: #57a3f3;
@@ -1089,4 +1083,8 @@ export default {
   .i-icon-menu-fold:before {
     content: "\E600";
   }
+
+  // .view-config-alarm {
+  //   width: 600px
+  // }
 </style>
