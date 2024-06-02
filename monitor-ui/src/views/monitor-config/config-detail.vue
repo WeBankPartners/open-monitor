@@ -23,12 +23,12 @@
             :span-method="(e) => handleMergeSpan(e, tableIndex)"
           />
           <div class="alarm-tips" style="margin-top:16px">
-            <span>{{$t('m_alarm_schedulingNotification')}}({{$t('m_all') + $t('menu.alert')}})</span>
+            <span style="font-weight: 700;">{{$t('m_alarm_schedulingNotification')}}({{$t('m_all') + $t('menu.alert')}})</span>
             <Tooltip :max-width="400" placement="right">
               <p slot=content>
                 {{ $t('m_alarm_tips') }}
               </p>
-              <Icon type="ios-help-circle-outline" />
+              <Icon type="ios-help-circle-outline" style="margin-left:4px" />
             </Tooltip>
           </div>
           <div>
@@ -297,7 +297,17 @@
                 :maxlength="200">
               </Input>
             </FormItem>
-            <span class='arrange-config-Title'>{{$t('m_alarm_schedulingNotification')}}({{$t('m_current_alarm')}})</span>
+            <div style="margin:12px 0 8px">
+              <span style="font-weight: 700;">
+                {{$t('m_alarm_schedulingNotification')}}({{$t('m_current_alarm')}})
+              </span>
+              <Tooltip :max-width="400" placement="right">
+                <p slot=content>
+                  {{ $t('m_alarm_tips') }}
+                </p>
+                <Icon type="ios-help-circle-outline" style="margin-left:4px" />
+              </Tooltip>
+            </div>
             <div 
               v-for="(item, index) in formData.notify"
               :key="index + 'S'"
@@ -335,17 +345,17 @@
                   <span style="margin-right: 8px;line-height: 32px;">{{$t(item.alarm_action)}}</span>
                 </Col>
                 <Col span="6" style="">
-                  <Select v-model="item.notify_roles" :disabled="!isEditState" :max-tag-count="2" style="width: 99%;" multiple filterable :placeholder="$t('field.role')">
+                  <Select v-model="item.notify_roles" :disabled="!isEditState" :max-tag-count="1" style="width: 97%;" multiple filterable :placeholder="$t('field.role')">
                     <Option v-for="item in allRole" :value="item.name" :key="item.value">{{ item.name }}</Option>
                   </Select>
                 </Col>
                 <Col span="5">
-                  <Select v-model="item.proc_callback_key" clearable :disabled="!isEditState" @on-change="procCallbackKeyChange(item.proc_callback_key, tableIndex, index)" style="width:99%;" :placeholder="$t('proc_callback_key')">
+                  <Select v-model="item.proc_callback_key" clearable :disabled="!isEditState" @on-change="procCallbackKeyChange(item.proc_callback_key, tableIndex, index)" style="width:97%;" :placeholder="$t('proc_callback_key')">
                     <Option v-for="(flow, flowIndex) in flows" :key="flowIndex" :value="flow.procDefKey" :label="flow.procDefName + ' [' + flow.procDefVersion + ']'"><span>{{ flow.procDefName }} [{{ flow.procDefVersion }}]</span></Option>
                   </Select>
                 </Col>
                 <Col span="5">
-                  <Select v-model="item.proc_callback_mode" clearable :disabled="!isEditState" style="width:99%" :placeholder="$t('m_callback_mode')">
+                  <Select v-model="item.proc_callback_mode" clearable :disabled="!isEditState" style="width:97%" :placeholder="$t('m_callback_mode')">
                     <Option v-for="item in callbackMode" :value="item.value" :key="item.value">{{ $t(item.label) }}</Option>
                   </Select>
                 </Col>
@@ -354,7 +364,7 @@
                     v-model="item.description"
                     clearable 
                     :disabled="!isEditState"
-                    style="width:99%"
+                    style="width:97%"
                     type="text" 
                     maxlength="50"
                     :placeholder="$t('tableKey.description')"/>
@@ -457,7 +467,7 @@ const initFormData = {
 const alarmLevelMap = {
   low: {
     label: "m_low",
-    buttonType: "info"
+    buttonType: "blue"
   },
   medium: {
     label: "m_medium",
@@ -750,11 +760,9 @@ export default {
           width: 100,
           render: (h, params) => {
             return (
-              <Button
-                type={alarmLevelMap[params.row.priority].buttonType}
-                size="small"
-                ghost
-              >{this.$t(alarmLevelMap[params.row.priority].label)}</Button>
+              <Tooltip placement="right" max-width="400">
+                <Tag color={alarmLevelMap[params.row.priority].buttonType}>{this.$t(alarmLevelMap[params.row.priority].label)}</Tag>
+              </Tooltip>
             )
           }
         },
@@ -764,14 +772,10 @@ export default {
           align: 'center',
           width: 100,
           render: (h, params) => {
-            return (
-              <Button
-                type="success"
-                disabled={params.row.notify_enable === 0}
-                size="small"
-                ghost
-              >{this.$t(statusButtonLabelMap[params.row.notify_enable])}</Button>
-            )
+            const notify_enable = params.row.notify_enable === 0
+            return notify_enable ?
+              <Tag color="default">{this.$t(statusButtonLabelMap[params.row.notify_enable])}</Tag>
+              :<Tag color="success">{this.$t(statusButtonLabelMap[params.row.notify_enable])}</Tag>
           }
         },
         {
@@ -1313,12 +1317,6 @@ export default {
   .extentClass {
     display: flex;
     flex-direction: row;
-    .arrange-config-Title {
-      display: inline-block;
-      font-size: 14px;
-      color: #515a6e;
-      margin: 5px 0px 20px 2px;
-    }
     .arrange-item {
       display: flex;
       flex-direction: row;
