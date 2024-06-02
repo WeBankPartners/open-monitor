@@ -105,7 +105,7 @@ export default {
         {
           title: this.$t('m_parameter_key'),
           key: 'name',
-          width: 100
+          width: 140
         },
         {
           title: this.$t('m_extract_regular'),
@@ -150,7 +150,9 @@ export default {
           render: (h, params) => {
             const demo_match_value = params.row.demo_match_value
             return (
-              <span style={demo_match_value?'':'color:#c5c8ce'}>{demo_match_value || this.$t('m_no_matching')}</span>
+              <Tooltip content={demo_match_value} max-width="300" >
+                <span style={demo_match_value?'':'color:#c5c8ce'}>{demo_match_value || this.$t('m_no_matching')}</span>
+              </Tooltip>
             )
           }
         },
@@ -159,11 +161,12 @@ export default {
         {
           title: this.$t('field.displayName'),
           key: 'display_name',
-          width: 110
+          width: 120
         },
         {
           title: this.$t('m_metric_key'),
           key: 'metric',
+          width: 140
         },
         {
           title: this.$t('m_statistical_parameters'),
@@ -183,6 +186,14 @@ export default {
         {
           title: this.$t('m_computed_type'),
           key: 'agg_type',
+          render: (h, params) => {
+            const agg_type = params.row.agg_type
+            return (
+              <Tooltip content={agg_type} max-width="300" >
+                <span>{agg_type}</span>
+              </Tooltip>
+            )
+          }
         }
       ]
     }
@@ -351,13 +362,13 @@ export default {
     regRes (val)  {
       try {
         const reg = new RegExp(val, 'g')
-        let execRes = this.configInfo.demo_log.match(reg)
-        if (execRes && execRes.length > 0) {
-          return this.configInfo.demo_log.replace(execRes[0], "<span style='color:red'>" + execRes[0] + '</span>')
+        const match = reg.exec(this.configInfo.demo_log)
+        if (match) {
+          return this.configInfo.demo_log.replace(match[1], "<span style='color:red'>" + match[1] + '</span>')
         }
-        return ''
+        return `<span style='color:#c5c8ce'>${this.$t('m_no_matching')}</span>`
       } catch (err) {
-        return ''
+        return `<span style='color:#c5c8ce'>${this.$t('m_no_matching')}</span>`
       }
     },
     generateBackstageTrial () {
