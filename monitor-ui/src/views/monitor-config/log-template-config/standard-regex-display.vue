@@ -1,7 +1,7 @@
 <template>
   <Row>
     <Col span="8" style="border-right: 2px solid rgb(232 234 236)">
-      <Form :label-width="120">
+      <Form :label-width="120" style="margin-top:12px">
         <FormItem :label="$t('m_template_name')">
           <Tooltip :content="configInfo.name" transfer :disabled="configInfo.name === ''" style="width: 100%;" max-width="200">
             <Input
@@ -14,9 +14,9 @@
             <span style="color: red">*</span>
           </Tooltip>
         </FormItem>
-        <FormItem>
+        <!-- <FormItem>
           <Button type="primary" @click="showTemplate = !showTemplate" ghost size="small" style="bottom: 72px;right: 36px;position: relative;">{{showTemplate ? $t('m_hide_template'):$t('m_expand_template')}}</Button>
-        </FormItem>
+        </FormItem> -->
         <template v-if="showTemplate===true">
           <FormItem :label="$t('m_updatedBy')">
             {{ configInfo.update_user }}
@@ -293,6 +293,12 @@ export default {
     hideTemplate () {
       this.showTemplate = false
       this.isfullscreen = false
+    },
+    changeTemplateStatus () {
+      this.showTemplate = !this.showTemplate
+    },
+    returnCurrentStatus () {
+      return this.showTemplate
     }
   }
 }

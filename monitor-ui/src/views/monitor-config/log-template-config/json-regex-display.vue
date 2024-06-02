@@ -15,9 +15,9 @@
               <span style="color: red">*</span>
             </Tooltip>
           </FormItem>
-          <FormItem>
+          <!-- <FormItem>
             <Button type="primary" @click="showTemplate = !showTemplate" ghost size="small" >{{showTemplate ? $t('m_hide_template'):$t('m_expand_template')}}</Button>
-          </FormItem>
+          </FormItem> -->
           <template v-if="showTemplate===true" >
             <FormItem :label="$t('m_updatedBy')">
               {{ configInfo.update_user }}
@@ -223,6 +223,12 @@ export default {
     hideTemplate () {
       this.showTemplate = false
       this.isfullscreen = false
+    },
+    changeTemplateStatus () {
+      this.showTemplate = !this.showTemplate
+    },
+    returnCurrentStatus () {
+      return this.showTemplate
     }
   }
 }
