@@ -155,7 +155,7 @@
               {{option.metric}}
             </Option>
           </Select>
-          <Button @click="addConfiguration" type="primary">{{$t('m_add_configuration')}}</Button>
+          <Button :disabled="!endpointValue || !monitorType || metric.length === 0" @click="addConfiguration" type="primary">{{$t('m_add_configuration')}}</Button>
         </div>
       </div>
     </div>
@@ -793,7 +793,7 @@ export default {
           app_object: this.endpointValue,
           chartType: this.chartConfigForm.chartType,
           endpoint: this.endpointValue,
-          monitor_type: this.monitorType,
+          monitorType: this.monitorType,
           lineType: this.chartConfigForm.lineType,
           metric,
           metricToColor: []
@@ -806,29 +806,6 @@ export default {
         metricId,
         endpoint,
         serviceGroup
-      }
-
-      const a = {
-        aa: [
-          {
-            key: "111",
-            value: "111"
-          },
-          {
-            key: "222",
-            value: "222"
-          }
-        ],
-        bb: [
-          {
-            key: "333",
-            value: "333"
-          },
-          {
-            key: "444",
-            value: "444"
-          }
-        ]
       }
       return new Promise(resolve => {
         this.request('POST', api, params, responseData => {
@@ -847,7 +824,6 @@ export default {
         for(let i=0; i<this.metric.length; i++) {
           const basicParams = this.processBasicParams(this.metric[i]);
           const res = await this.requestReturnPromise('POST', '/monitor/api/v1/dashboard/chart', basicParams);
-
           const metricItem = find(this.metricOptions, {
             metric: this.metric[i]
           })
@@ -1114,6 +1090,7 @@ export default {
 
 .all-page {
   .content {
+    min-height: 80vh;
     .chart-config_view {
       display: flex;
       flex-direction: row;
