@@ -90,8 +90,8 @@
                 <div slot="title" class="panal-title">
                   <h5>{{ item.name }}</h5>
                   <div>
-                    <span>{{$t('m_updatedBy')}}: {{item.updateUser}}</span>
-                    <span>{{$t('m_update_time')}}: {{item.updateTime}}</span>
+                    <span>{{$t('m_update')}}: {{item.updateUser}}</span>
+                    <span>{{item.updateTime}}</span>
                   </div>
                 </div>
                 <div>
@@ -113,11 +113,14 @@
                 <div class="card-divider"></div>
                 <div class="card-content-footer">
                   <template v-if="item.permission === 'mgmt'">
-                    <Button size="small" icon="md-create" type="primary" @click.stop="goToPanal(item, 'edit')">
+                    <Button size="small" type="primary" @click.stop="goToPanal(item, 'edit')">
+                      <Icon type="md-create" />
                     </Button>
-                    <Button size="small" icon="md-person" type="warning" @click.stop="editBoardAuth(item)">
+                    <Button size="small" type="warning" @click.stop="editBoardAuth(item)">
+                      <Icon type="md-person" />
                     </Button>
-                    <Button size="small" icon="md-trash" type="error" @click.stop="deleteConfirmModal(item)">
+                    <Button size="small" type="error" @click.stop="deleteConfirmModal(item)">
+                      <Icon type="md-trash" />
                     </Button>
                   </template>
                 </div>
@@ -434,9 +437,10 @@ export default {
     goToPanal(panalItem, type) {
       const params = {
         permission: type,
-        panalItem
+        panalItem,
+        pannelId: panalItem.id
       }
-      this.$router.push({name:'viewConfig',params:params})
+      this.$router.push({name:'viewConfig',params})
     },
 
     onFilterConditionChange: debounce(function () {
