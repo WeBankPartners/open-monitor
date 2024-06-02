@@ -15,7 +15,7 @@
           </Tooltip>
         </FormItem>
         <FormItem>
-          <Button type="primary" @click="showTemplate = !showTemplate" ghost size="small" style="float:right;margin:12px">{{showTemplate ? $t('m_hide_template'):$t('m_expand_template')}}</Button>
+          <Button type="primary" @click="showTemplate = !showTemplate" ghost size="small" style="bottom: 72px;right: 36px;position: relative;">{{showTemplate ? $t('m_hide_template'):$t('m_expand_template')}}</Button>
         </FormItem>
         <template v-if="showTemplate===true">
           <FormItem :label="$t('m_updatedBy')">
@@ -183,10 +183,12 @@ export default {
         {
           title: this.$t('field.displayName'),
           key: 'display_name',
+          width: 120
         },
         {
           title: this.$t('m_parameter_key'),
           key: 'name',
+          width: 140
         },
         {
           title: this.$t('m_extract_regular'),
@@ -227,7 +229,9 @@ export default {
           render: (h, params) => {
             const demo_match_value = params.row.demo_match_value
             return (
-              <span style={demo_match_value?'':'color:#c5c8ce'}>{demo_match_value || this.$t('m_no_matching')}</span>
+              <Tooltip content={demo_match_value} max-width="300" >
+                <span style={demo_match_value?'':'color:#c5c8ce'}>{demo_match_value || this.$t('m_no_matching')}</span>
+              </Tooltip>
             )
           }
         },
@@ -236,10 +240,12 @@ export default {
         {
           title: this.$t('field.displayName'),
           key: 'display_name',
+          width: 120
         },
         {
           title: this.$t('m_metric_key'),
           key: 'metric',
+          width: 140,
           render: (h, params) => {
             return (
               <span>
@@ -266,6 +272,14 @@ export default {
         {
           title: this.$t('m_computed_type'),
           key: 'agg_type',
+          render: (h, params) => {
+            const agg_type = params.row.agg_type
+            return (
+              <Tooltip content={agg_type} max-width="300" >
+                <span>{agg_type}</span>
+              </Tooltip>
+            )
+          }
         }
       ]
     }
