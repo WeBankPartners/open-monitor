@@ -65,6 +65,12 @@ func ImportMetric(c *gin.Context) {
 		return
 	}
 	var paramObj []*models.MetricTable
+	var result = &models.MetricImportResultDto{
+		SuccessList: []string{},
+		FailList:    []string{},
+		Message:     "",
+	}
+	var nameList []string
 	b, err := ioutil.ReadAll(f)
 	defer f.Close()
 	if err != nil {
@@ -85,11 +91,16 @@ func ImportMetric(c *gin.Context) {
 		middleware.ReturnValidateError(c, "serviceGroup can not empty")
 		return
 	}
-	if err = db.MetricImport(serviceGroup, middleware.GetOperateUser(c), paramObj); err != nil {
-		middleware.ReturnHandleError(c, "import metric fail", err)
-	} else {
-		middleware.ReturnSuccess(c)
+	for _, obj := range paramObj {
+		nameList = append(nameList, obj.Metric)
 	}
+	if err = db.MetricImport(serviceGroup, middleware.GetOperateUser(c), paramObj); err != nil {
+		result.FailList = nameList
+		result.Message = err.Error()
+	} else {
+		result.SuccessList = nameList
+	}
+	middleware.ReturnSuccessData(c, result)
 }
 
 func QueryMetricTagValue(c *gin.Context) {
