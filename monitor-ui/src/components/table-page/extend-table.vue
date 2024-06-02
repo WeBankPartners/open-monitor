@@ -55,7 +55,7 @@
                     </Tooltip>
                   </div>
               </div>
-              <div v-if='key.btn' class="td-center td-operation">
+              <div v-if='key.btn' class="">
                 <div style="display:inline-block" v-for="(btn_val,btn_i) in key.btn" :key="btn_i">
                   <span :id="btn_val.btn_func"
                       v-if="!item.hide && btn_val.btn_name !='more' && !btn_val.render"
@@ -243,6 +243,8 @@
   padding: 10px;
   font-weight: 400;
   /*margin: 20px 0px;*/
+  background-color: #f2f2f2;
+  margin-left: 24px;
 }
 .colorblue {
   color: @color-blue;
@@ -292,6 +294,7 @@ h4 {
   white-space: nowrap;
   word-break: break-all;
   box-sizing: border-box;
+  padding: 1px 0;
   a {
     color: @color-blue;
   }
@@ -325,7 +328,7 @@ h4 {
   float: left;
 }
 .bgc{
-  background-color: #fafafa;
+  // background-color: #fafafa;
 }
 .active{
   .ivu-icon{
@@ -347,7 +350,7 @@ h4 {
 }
 .btn-operation {
     font-family: PingFangSC-Regular;
-    font-size: 14px;
+    font-size: 12px;
     color: @color-blue;
     line-height: 20px;
     /*padding-right: 4px;*/

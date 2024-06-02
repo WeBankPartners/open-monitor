@@ -40,9 +40,9 @@
 
       <PageTable :pageConfig="pageConfig">
         <div slot='tableExtend'>
-          <div style="margin: 8px 4px 0;">
-            <Button type="success" @click="addByCustom(pageConfig.table.isExtend.parentData)" ghost style="margin: 0 12px;">{{ $t('button.add') }}</Button>
-            <Button type="primary" @click="addMetricConfig(pageConfig.table.isExtend.parentData)" ghost>{{ $t('m_use_template') }}</Button>
+          <div style="margin: 12px 0;float: right;">
+            <Button type="success" @click="addByCustom(pageConfig.table.isExtend.parentData)" style="margin: 0 12px;">{{ $t('m_use_custom') }}</Button>
+            <Button type="success" @click="addMetricConfig(pageConfig.table.isExtend.parentData)">{{ $t('m_use_template') }}</Button>
           </div>
           <div>
             <extendTable :detailConfig="pageConfig.table.isExtend.detailConfig"></extendTable>
