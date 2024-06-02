@@ -108,6 +108,7 @@ type AlarmStrategyTable struct {
 	ActiveWindow      string `json:"active_window" xorm:"active_window"`
 	UpdateTime        string `json:"update_time" xorm:"update_time"`
 	Name              string `json:"name" xorm:"name"`
+	UpdateUser        string `json:"update_user" xorm:"update_user"`
 }
 
 type AlarmStrategyMetricObj struct {
@@ -128,6 +129,7 @@ type AlarmStrategyMetricObj struct {
 	ActiveWindow      string       `json:"active_window" xorm:"active_window"`
 	ConditionCrc      string       `json:"condition_crc"`
 	Tags              []*MetricTag `json:"tags"`
+	UpdateUser        string       `json:"update_user" xorm:"update_user"`
 }
 
 type GroupStrategyObj struct {
@@ -145,6 +147,8 @@ type GroupStrategyObj struct {
 	ActiveWindow      string                  `json:"active_window"`
 	NotifyList        []*NotifyObj            `json:"notify"`
 	Conditions        []*StrategyConditionObj `json:"conditions"`
+	UpdateTime        string                  `json:"update_time"`
+	UpdateUser        string                  `json:"update_user"`
 }
 
 type EndpointStrategyObj struct {
