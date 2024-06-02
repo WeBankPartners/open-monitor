@@ -230,8 +230,7 @@ export default {
   data() {
     return {
       isShowWarning: false,
-      dataList: [
-      ],
+      dataList: [],
       processConfigModel: {
         modalId: 'set_dashboard_modal',
         modalTitle: 'button.setDashboard',
@@ -278,12 +277,12 @@ export default {
           type: "string"
         }, 
         {
-          key: "mgmtRoles",
+          key: "displayMgmtRoles",
           label: "m_manage_role",
           type: "array"
         },
         {
-          key: "useRoles",
+          key: "displayUseRoles",
           label: "m_use_role",
           type: "array"
         },
@@ -548,9 +547,9 @@ li {
     height: 40px;
   }
   .card-content-array {
-    display: inline-block;
-    overflow: scroll;
-    white-space: nowrap
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
   }
 }
 
