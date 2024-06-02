@@ -50,7 +50,7 @@
           <div class="header-tools">
             <template v-if="isEditStatus">
               <!-- <button class="btn btn-sm btn-cancel-f" style="margin-right:60px" @click="addItem">{{$t('m_new_graph')}}</button> -->
-              <button class="btn btn-sm btn-confirm-f" @click="submitPanelInfo">{{$t('button.saveConfig')}}</button>
+              <button class="btn btn-sm btn-confirm-f" @click="savePanelInfo">{{$t('button.saveConfig')}}</button>
             </template> 
             
             <button v-if="!showAlarm" class="btn btn-sm btn-cancel-f" @click="openAlarmDisplay()">
@@ -102,7 +102,7 @@
           <Dropdown 
             v-for="(item, index) in allAddChartOptions"
             :key="index"
-            class="mr-3" 
+            class="mr-3 chart-option-menu" 
             @on-click="(info) => onAddChart(JSON.parse(info), item.type)">
             <a href="javascript:void(0)">
                 {{$t(item.name)}}
@@ -110,12 +110,12 @@
             </a>
             <template #list>
                 <DropdownMenu>
-                    <DropdownItem v-for="(item, key) in item.options"
-                      :name="JSON.stringify(item)" 
+                    <DropdownItem v-for="(option, key) in item.options"
+                      :name="JSON.stringify(option)" 
                       :key="key"
-                      :disabled="item.disabled">
-                      <Icon v-if="item.iconType" :type="item.iconType" />
-                      {{$t(item.name)}}
+                      :disabled="option.disabled">
+                      <Icon v-if="option.iconType" :type="option.iconType" />
+                      {{item.type === 'add' ? $t(option.name) : option.name}}
                     </DropdownItem>
                 </DropdownMenu>
             </template>
@@ -147,7 +147,7 @@
               @resize="resizeEvent"
               @resized="resizeEvent">
               <template v-if="item.group === activeGroup || activeGroup === 'All'">
-                <div class="c-dark" style="display:flex;padding:0 32px;">
+                <div class="c-dark grid-content">
                   <div class="header-grid header-grid-name">
                     <span v-if="editChartId !== item.id">{{item.i}}</span>
                     <Input v-else v-model="item.i" class="editChartId" autofocus style="width:100px" size="small" placeholder="" />
@@ -158,7 +158,14 @@
                   </div>
                   <div class="header-grid header-grid-tools">
                     <Button v-if="item.public" size="small" class="mr-1 references-button">{{$t('m_shallow_copy')}}</Button>
-                    <Select v-model="item.group" style="width:100px;" size="small" :disabled="permission !== 'edit'" clearable filterable :placeholder="$t('m_group_name')">
+                    <Select v-model="item.group" 
+                      style="width:100px;" 
+                      size="small" 
+                      :disabled="permission !== 'edit'" 
+                      clearable 
+                      filterable 
+                      :placeholder="$t('m_group_name')"
+                      @on-change="onSingleChartGroupChange">
                       <Option v-for="item in panel_group_list" :value="item" :key="item" style="float: left;">{{ item }}</Option>
                     </Select>
                     <Tooltip :content="$t('m_save_chart_library')" theme="light" transfer placement="top">
@@ -283,7 +290,7 @@ export default {
       isEditPanal: false,
       permission: this.$route.params.permission || 'edit',
       panalName: '',
-      pannelId: this.$route.params.pannelId || 49,
+      pannelId: this.$route.params.pannelId || 29,
       viewCondition: {
         timeTnterval: -3600,
         dateRange: ['', ''],
@@ -385,7 +392,7 @@ export default {
           this.panalName = res.name;
           this.activeGroup = 'All';
           this.panel_group_list = res.panelGroupList || [];
-          this.viewData = res.charts;
+          this.viewData = res.charts || [];
           this.initPanals();
           this.cutsomViewId = this.pannelId;
         }
@@ -402,19 +409,19 @@ export default {
       const options = [];
       const initialOption = {
         line: {
-          name: "m_line_chart_s",
+          name: "折线图",
           id: "line",
           iconType: "md-trending-up",
           disabled: true
         },
         pie: {
-          name: "m_pie_chart",
+          name: "饼图",
           id: "pie",
           iconType: "md-pie",
           disabled: true
         },
         bar: {
-          name: "m_bar_chart",
+          name: "柱状图",
           id: "bar",
           iconType: "ios-stats",
           disabled: true
@@ -508,7 +515,6 @@ export default {
       this.layoutData = tmpArr
     },
     isShowGridPlus (item) {
-      // 新增及饼图时屏蔽放大功能
       if (!item._activeCharts || item._activeCharts[0].chartType === 'pie') {
         return false
       }
@@ -617,24 +623,35 @@ export default {
     resizeEvent: function(i, newH, newW, newHPx, newWPx){
       resizeEvent(this, i, newH, newW, newHPx, newWPx)
     },
-    async submitPanelInfo() {
-      if (isEmpty(this.boardMgmtRoles) || isEmpty(this.boardUseRoles)) {
-        this.saveAuthType = 'board';
-        this.$refs.authDialog.startAuth(this.boardMgmtRoles, this.boardUseRoles, this.mgmtRolesOptions, this.userRolesOptions);
-      } else {
-        await this.requestReturnPromise('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams());
-        this.$Message.success(this.$t('tips.success'));
-      }
+    submitPanelInfo() {
+      return new Promise(resolve => {
+          if (isEmpty(this.boardMgmtRoles) || isEmpty(this.boardUseRoles)) {
+          this.saveAuthType = 'board';
+          this.$refs.authDialog.startAuth(this.boardMgmtRoles, this.boardUseRoles, this.mgmtRolesOptions, this.userRolesOptions);
+        } else {
+          this.request('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams(), res => {
+            resolve()
+          });
+        }
+      })
     },
+
+    async savePanelInfo() {
+      await this.submitPanelInfo();
+      this.$Message.success(this.$t('tips.success'));
+    },
+
     returnPreviousPage() {
       this.$router.push({name:'viewConfigIndex'})
     },
-    savePanalEdit () {
+    async savePanalEdit () {
       if (!this.panalName) {
         this.$Message.warning(this.$t('tips.required'))
         return
       }
-      this.submitPanelInfo()
+      await this.submitPanelInfo();
+      this.$Message.success(this.$t('tips.success'));
+      this.isEditPanal = false;
     },
     canclePanalEdit () {
       this.isEditPanal = false
@@ -857,6 +874,7 @@ export default {
         name: item.i
       })
       this.editChartId = null;
+      this.$Message.success(this.$t('tips.success'));
     },
     chartDuplicateNameCheck(chartId, chartName) {
       return new Promise(resolve => {
@@ -936,6 +954,13 @@ export default {
         this.$Message.success(this.$t('m_success'));
         this.getPannelList()
       })
+    },
+    onSingleChartGroupChange() {
+      this.request('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams(), res => {
+        this.$Message.success(this.$t('m_success'));
+        this.getPannelList();
+        this.activeGroup = 'All';
+      });
     }
   },
   components: {
@@ -961,6 +986,24 @@ export default {
 .references-button {
   background-color: #edf4fe;
   border-color: #b5d0fb;
+}
+
+.chart-option-menu {
+  .ivu-select-dropdown {
+    max-height: 100vh !important;
+  }
+}
+
+.grid-content {
+  display: flex;
+  padding: 0 32px;
+  font-size: 16px;
+}
+
+.header-grid-tools {
+  i {
+    font-size: 18px !important
+  }
 }
 
 </style>
