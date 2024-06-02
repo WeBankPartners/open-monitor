@@ -5,7 +5,7 @@
     </div>
     </div>
     <div v-if="noDataTip" class="echart echart-no-data-tip">
-      <span>~~~No Data!~~~</span>
+      <span>{{this.$t('m_nodata_tips')}}</span>
     </div>
   </div>
 </template>
@@ -41,12 +41,13 @@ export default {
     },
     refreshNow: {
       handler () {
-        this.getchartdata()
+        this.getchartdata();
       }
     }
   },
   mounted() {
-    this.getchartdata()
+    this.getchartdata();
+    this.isAutoRefresh();
     window.addEventListener("scroll", this.scrollHandle, true)
     window.addEventListener("visibilitychange", this.isTabActive, true)
   },
@@ -86,25 +87,29 @@ export default {
       clearInterval(this.interval)
       if (this.params.autoRefresh > 0 && this.params.dateRange[0] === '') {
         this.interval = setInterval(()=>{
-          this.getchartdata()
-        },this.params.autoRefresh*1000)
+          this.getchartdata();
+          this.isAutoRefresh()
+        },this.params.autoRefresh * 1000)
       }
     },
     getchartdata () {
       if (this.chartInfo.chartParams.data.length === 0) {
         return
       }
-      this.isAutoRefresh()
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.metricConfigView.api, this.chartInfo.chartParams, responseData => {
+      const params = {
+        ...this.chartInfo.chartParams,
+        custom_chart_guid: this.chartInfo.elId
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.metricConfigView.api, params, responseData => {
         if (responseData.legend.length === 0) {
           this.noDataTip = true
         } else {
           responseData.yaxis.unit =  this.chartInfo.panalUnit  
           this.elId = this.chartInfo.elId
           this.noDataTip = false
-          const chartConfig = {eye: false,clear: true,dataZoom:false, lineBarSwitch: true, chartType: this.chartInfo.chartType, params: this.chartInfo.chartParams}
+          const chartConfig = {eye: false,clear: true,dataZoom:false, lineBarSwitch: true, chartType: this.chartInfo.chartType, params: this.chartInfo.chartParams};
           this.$nextTick( () => {
-            readyToDraw(this,responseData, this.chartIndex, chartConfig)
+            readyToDraw(this, responseData, this.chartIndex, chartConfig)
             this.scrollHandle()
           })
         }
@@ -118,6 +123,7 @@ export default {
 
 <style scoped lang="less">
   .single-chart {
+    font-size: 14px;
     padding: 5px;
     .echart {
        border-radius: 4px;
@@ -126,6 +132,10 @@ export default {
       text-align: center;
       vertical-align: middle;
       display: table-cell;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
     }
   }
 </style>

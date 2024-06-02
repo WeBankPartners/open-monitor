@@ -340,8 +340,10 @@ func GetPieChart(c *gin.Context) {
 }
 
 func getPieData(paramConfig *m.PieChartConfigObj) (result []*m.QueryMonitorData, err error) {
+	if paramConfig.MonitorType != "" {
+		paramConfig.AppObjectEndpointType = paramConfig.MonitorType
+	}
 	result = []*m.QueryMonitorData{}
-	tagList := []*m.TagDto{}
 	if paramConfig.CustomChartGuid != "" {
 		//chartObj, getChartErr := db.GetCustomChartById(paramConfig.CustomChartGuid)
 		//if getChartErr != nil {
@@ -362,7 +364,7 @@ func getPieData(paramConfig *m.PieChartConfigObj) (result []*m.QueryMonitorData,
 		paramConfig.AppObject = seriesObj.ServiceGroup
 		paramConfig.Endpoint = seriesObj.Endpoint
 		paramConfig.AppObjectEndpointType = seriesObj.MonitorType
-		tagList = seriesObj.Tags
+		paramConfig.Tags = seriesObj.Tags
 	}
 	if paramConfig.Metric == "" {
 		err = fmt.Errorf("metric can not empty")
@@ -420,7 +422,7 @@ func getPieData(paramConfig *m.PieChartConfigObj) (result []*m.QueryMonitorData,
 	}
 	promMap := make(map[string]bool)
 	for _, endpoint := range endpointList {
-		tmpPromQL := db.ReplacePromQlKeyword(paramConfig.PromQl, paramConfig.Metric, endpoint, tagList)
+		tmpPromQL := db.ReplacePromQlKeyword(paramConfig.PromQl, paramConfig.Metric, endpoint, paramConfig.Tags)
 		if _, b := promMap[tmpPromQL]; b {
 			continue
 		}
