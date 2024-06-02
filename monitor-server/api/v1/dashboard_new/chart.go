@@ -359,7 +359,7 @@ func getChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.
 				if customPromQL != "" && serviceGroupTag != "" && strings.Contains(tmpPromQL, serviceGroupTag) {
 					tmpPromQL = strings.ReplaceAll(tmpPromQL, serviceGroupTag, serviceGroupTag+",instance=\"$address\"")
 					if strings.Contains(tmpPromQL, "service_group,") {
-						tmpPromQL = strings.ReplaceAll(tmpPromQL, "service_group,", "service_group,instance")
+						tmpPromQL = strings.ReplaceAll(tmpPromQL, "service_group,", "service_group,instance,")
 					}
 					if strings.Contains(tmpPromQL, "service_group)") {
 						tmpPromQL = strings.ReplaceAll(tmpPromQL, "service_group)", "service_group,instance)")
