@@ -27,6 +27,8 @@ func QueryAlarmStrategyByGroup(endpointGroup string) (result []*models.EndpointS
 	}
 	for _, v := range alarmStrategyTable {
 		tmpStrategyObj := models.GroupStrategyObj{Guid: v.Guid, Name: v.Name, EndpointGroup: v.EndpointGroup, Metric: v.Metric, MetricName: v.MetricName, Condition: v.Condition, Last: v.Last, Priority: v.Priority, Content: v.Content, NotifyEnable: v.NotifyEnable, NotifyDelaySecond: v.NotifyDelaySecond, ActiveWindow: v.ActiveWindow}
+		tmpStrategyObj.UpdateTime = v.UpdateTime
+		tmpStrategyObj.UpdateUser = v.UpdateUser
 		tmpStrategyObj.NotifyList = getNotifyList(v.Guid, "", "")
 		if tmpStrategyConditions, tmpErr := getStrategyConditions(v.Guid); tmpErr != nil {
 			err = tmpErr
@@ -138,19 +140,19 @@ func GetAlarmStrategy(strategyGuid, conditionCrc string) (result models.AlarmStr
 	return
 }
 
-func CreateAlarmStrategy(param *models.GroupStrategyObj) error {
+func CreateAlarmStrategy(param *models.GroupStrategyObj, operator string) error {
 	nowTime := time.Now().Format(models.DatetimeFormat)
-	actions, err := getCreateAlarmStrategyActions(param, nowTime)
+	actions, err := getCreateAlarmStrategyActions(param, nowTime, operator)
 	if err != nil {
 		return err
 	}
 	return Transaction(actions)
 }
 
-func getCreateAlarmStrategyActions(param *models.GroupStrategyObj, nowTime string) (actions []*Action, err error) {
+func getCreateAlarmStrategyActions(param *models.GroupStrategyObj, nowTime, operator string) (actions []*Action, err error) {
 	param.Guid = "strategy_" + guid.CreateGuid()
-	insertAction := Action{Sql: "insert into alarm_strategy(guid,name,endpoint_group,metric,`condition`,`last`,priority,content,notify_enable,notify_delay_second,active_window,update_time) value (?,?,?,?,?,?,?,?,?,?,?,?)"}
-	insertAction.Param = []interface{}{param.Guid, param.Name, param.EndpointGroup, param.Metric, param.Condition, param.Last, param.Priority, param.Content, param.NotifyEnable, param.NotifyDelaySecond, param.ActiveWindow, nowTime}
+	insertAction := Action{Sql: "insert into alarm_strategy(guid,name,endpoint_group,metric,`condition`,`last`,priority,content,notify_enable,notify_delay_second,active_window,update_time,update_user) value (?,?,?,?,?,?,?,?,?,?,?,?,?)"}
+	insertAction.Param = []interface{}{param.Guid, param.Name, param.EndpointGroup, param.Metric, param.Condition, param.Last, param.Priority, param.Content, param.NotifyEnable, param.NotifyDelaySecond, param.ActiveWindow, nowTime, operator}
 	actions = append(actions, &insertAction)
 	if len(param.NotifyList) > 0 {
 		for _, v := range param.NotifyList {
@@ -181,11 +183,11 @@ func ValidateAlarmStrategyName(param *models.GroupStrategyObj) (err error) {
 	return
 }
 
-func UpdateAlarmStrategy(param *models.GroupStrategyObj) error {
+func UpdateAlarmStrategy(param *models.GroupStrategyObj, operator string) error {
 	nowTime := time.Now().Format(models.DatetimeFormat)
 	var actions []*Action
-	updateAction := Action{Sql: "update alarm_strategy set name=?,priority=?,content=?,notify_enable=?,notify_delay_second=?,active_window=?,update_time=? where guid=?"}
-	updateAction.Param = []interface{}{param.Name, param.Priority, param.Content, param.NotifyEnable, param.NotifyDelaySecond, param.ActiveWindow, nowTime, param.Guid}
+	updateAction := Action{Sql: "update alarm_strategy set name=?,priority=?,content=?,notify_enable=?,notify_delay_second=?,active_window=?,update_time=?,update_user=? where guid=?"}
+	updateAction.Param = []interface{}{param.Name, param.Priority, param.Content, param.NotifyEnable, param.NotifyDelaySecond, param.ActiveWindow, nowTime, operator, param.Guid}
 	actions = append(actions, &updateAction)
 	for _, v := range param.NotifyList {
 		v.AlarmStrategy = param.Guid
@@ -1133,7 +1135,7 @@ func getRoleMail(roleList []string) (mailList []string) {
 	return
 }
 
-func ImportAlarmStrategy(queryType, inputGuid string, param []*models.EndpointStrategyObj) (err error) {
+func ImportAlarmStrategy(queryType, inputGuid string, param []*models.EndpointStrategyObj, operator string) (err error) {
 	if len(param) == 0 {
 		return fmt.Errorf("import content empty ")
 	}
@@ -1159,7 +1161,7 @@ func ImportAlarmStrategy(queryType, inputGuid string, param []*models.EndpointSt
 			return fmt.Errorf("can not find endpoint group with guid:%s ", inputGuid)
 		}
 		endpointGroupList = append(endpointGroupList, inputGuid)
-		tmpActions, tmpErr := getAlarmStrategyImportActions(inputGuid, "", endpointGroupTable[0].MonitorType, nowTime, param[0], metricMap)
+		tmpActions, tmpErr := getAlarmStrategyImportActions(inputGuid, "", endpointGroupTable[0].MonitorType, nowTime, operator, param[0], metricMap)
 		if tmpErr != nil {
 			return tmpErr
 		}
@@ -1184,7 +1186,7 @@ func ImportAlarmStrategy(queryType, inputGuid string, param []*models.EndpointSt
 				continue
 			}
 			endpointGroupList = append(endpointGroupList, v.EndpointGroup)
-			tmpActions, tmpErr := getAlarmStrategyImportActions(v.EndpointGroup, inputGuid, tmpMonitorType, nowTime, v, metricMap)
+			tmpActions, tmpErr := getAlarmStrategyImportActions(v.EndpointGroup, inputGuid, tmpMonitorType, nowTime, operator, v, metricMap)
 			if tmpErr != nil {
 				err = fmt.Errorf("handle endpointGroup:%s fail,%s ", v.EndpointGroup, tmpErr.Error())
 				break
@@ -1210,7 +1212,7 @@ func ImportAlarmStrategy(queryType, inputGuid string, param []*models.EndpointSt
 	return err
 }
 
-func getAlarmStrategyImportActions(endpointGroup, serviceGroup, monitorType, nowTime string, param *models.EndpointStrategyObj, metricMap map[string]*models.MetricTable) (actions []*Action, err error) {
+func getAlarmStrategyImportActions(endpointGroup, serviceGroup, monitorType, nowTime, operator string, param *models.EndpointStrategyObj, metricMap map[string]*models.MetricTable) (actions []*Action, err error) {
 	var existStrategyTable []*models.AlarmStrategyTable
 	err = x.SQL("select guid,metric from alarm_strategy where endpoint_group=?", endpointGroup).Find(&existStrategyTable)
 	if err != nil {
@@ -1250,7 +1252,7 @@ func getAlarmStrategyImportActions(endpointGroup, serviceGroup, monitorType, now
 				break
 			}
 		}
-		newAction, buildErr := getCreateAlarmStrategyActions(strategy, nowTime)
+		newAction, buildErr := getCreateAlarmStrategyActions(strategy, nowTime, operator)
 		if buildErr != nil {
 			err = buildErr
 			break
