@@ -239,7 +239,16 @@ export default {
             title: this.$t('m_endpoint'),
             align: 'center',
             width: 150,
-            key: 'endpointName'
+            render: (h, params) => {
+              return params.row.endpointType.length ?  (
+                <div class="table-config-endpoint">
+                  <TagShow tagName={params.row.endpointType} index={params.index} /> 
+                  {params.row.endpointName}
+                </div>
+              ) : (
+                <div>{params.row.endpointName}</div>
+              )
+            }
         },
         {
             title: this.$t('m_type'),
@@ -247,9 +256,9 @@ export default {
             width: 150,
             key: 'monitorType',
             render: (h, params) => {
-              return (
+              return params.row.monitorType ? (
                 <Button size="small">{params.row.monitorType}</Button>
-              )
+              ) : <span>--</span>
             }
         },
         {
@@ -260,8 +269,8 @@ export default {
           render: (h, params) => {
             return (
               <div class="indicator_color_system">
-                <Button size="small">{params.row.metric}</Button>
-                <div class="ml-2 mr-2">{params.row.metric}</div>
+                {params.row.metricType ? <TagShow tagName={params.row.metricType} index={params.index} /> : <span />}
+                <div class="metric-text ml-1 mr-1">{params.row.metric}</div>
                 <ColorPicker v-model={params.row.colorGroup} on-on-change={e => {
                   this.tableData[params.index].colorGroup = e
                 }}  />
@@ -581,7 +590,6 @@ export default {
       this.request('GET', '/monitor/api/v2/chart/custom', {
         chart_id: this.chartId
       }, res => {
-        debugger;
         for(let key in this.chartConfigForm) {
           this.chartConfigForm[key] = res[key]
         }
@@ -954,17 +962,13 @@ export default {
     },
     // 将数据拼好，请求数据并画图
     drawChartContent() {
-      debugger
       if (this.isPieChart) {
         const params = this.generateLineParamsData();
-        debugger
         this.request('POST', '/monitor/api/v1/dashboard/pie/chart', params,
           res => {
-            debugger
             drawPieChart(this, res)
         })
       } else {
-        debugger
         const params = {
           aggregate: this.chartConfigForm.aggregate || 'none',
           agg_step: this.chartConfigForm.agg_step || 60,
@@ -976,7 +980,6 @@ export default {
           unit: '',
           data: this.generateLineParamsData()
         }
-        debugger
         this.request('POST', '/monitor/api/v1/dashboard/chart', params,
           responseData => {
             responseData.yaxis.unit = this.chartConfigForm.unit;
@@ -1035,6 +1038,13 @@ export default {
   display: flex;
   flex-direction: row;
   align-items: center;
+  .metric-text {
+    min-width: 20% 
+  }
+}
+
+.table-config-endpoint {
+  display: flex;
 }
 
 .generate-lines {
@@ -1068,6 +1078,12 @@ export default {
 
 .ivu-table-wrapper {
   overflow: inherit;
+}
+
+.ivu-color-picker {
+  .ivu-icon.ivu-icon-ios-close::before {
+    content: "\f193"
+  }
 }
 
 </style>
