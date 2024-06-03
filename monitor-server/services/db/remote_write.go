@@ -77,9 +77,9 @@ func SyncRemoteWritePrometheusConfig() error {
 	for _, row := range remoteWriteConfigRows {
 		tmpConfigString := tplString + "\n"
 		tmpConfigString = strings.ReplaceAll(tmpConfigString, "{{remote_write_url}}", row.Address)
-		remoteWriteConfigString += tmpConfigString + "\n"
+		remoteWriteConfigString += tmpConfigString
 	}
-	promString = promString[:startIndex+11] + "\n" + remoteWriteConfigString + promString[endIndex:]
+	promString = promString[:startIndex+19] + "\n" + remoteWriteConfigString + promString[endIndex:]
 	err = ioutil.WriteFile("/app/monitor/prometheus/prometheus.yml", []byte(promString), 0644)
 	if err != nil {
 		err = fmt.Errorf("Write remote write config to prometheus fail,%s ", err.Error())
