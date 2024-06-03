@@ -58,6 +58,9 @@ func GetSharedChartList(c *gin.Context) {
 					SourceDashboard: chart.SourceDashboard,
 					Name:            chart.Name,
 				}
+				if strings.TrimSpace(chart.ChartType) == "" {
+					continue
+				}
 				if _, ok := sharedResultMap[chart.ChartType]; !ok {
 					sharedResultMap[chart.ChartType] = []*models.ChartSharedDto{}
 				}
