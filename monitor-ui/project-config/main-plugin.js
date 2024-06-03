@@ -86,6 +86,14 @@ const implicitRoute = {
   'alarmHistory': {
     parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
     childBreadcrumb: { 'zh-CN': '历史告警', 'en-US': 'History Alarm' }
+  },
+  'viewConfigIndex/boardList': {
+    parentBreadcrumb: {'zh-CN': '看板', 'en-US': 'Board'},
+    childBreadcrumb: { 'zh-CN': '列表', 'en-US': 'List' }
+  },
+  'viewConfigIndex/allChartList': {
+    parentBreadcrumb: {'zh-CN': '图表库', 'en-US': 'Chart Library'},
+    childBreadcrumb: { 'zh-CN': '列表', 'en-US': 'List' }
   }
 }
 window.addImplicitRoute(implicitRoute)

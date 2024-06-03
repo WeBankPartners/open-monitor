@@ -48,7 +48,7 @@
       v-if="$attrs.button"
       style="position: absolute; top: 10px; right: 10px"
     >
-      <Tooltip :content="$t('menu.endpointView')">
+      <Tooltip :content="$t('m_duplicate_alert_object')">
         <Icon
           type="ios-copy-outline"
           size="20"
