@@ -34,7 +34,7 @@
             </div>
             <div v-else>
               <FormItem :label="$t('m_name')" prop="name">
-                <Input v-model="chartConfigForm.name" clearable :maxlength="10"></Input>
+                <Input v-model="chartConfigForm.name" clearable :maxlength="20"></Input>
               </FormItem>
               <FormItem :label="$t('m_chart_template')" prop="chartTemplate">
                   <Select 
@@ -134,7 +134,6 @@
           <Select
             v-model="monitorType"
             filterable
-            clearable 
             ref="select"
             :placeholder="$t('m_type')"
             @on-change="searchMetricByType"
@@ -156,7 +155,7 @@
               {{option.metric}}
             </Option>
           </Select>
-          <Button @click="addConfiguration" type="primary">{{$t('m_add_configuration')}}</Button>
+          <Button :disabled="!endpointValue || !monitorType || metric.length === 0" @click="addConfiguration" type="primary">{{$t('m_add_configuration')}}</Button>
         </div>
       </div>
     </div>
@@ -181,6 +180,23 @@ import TagShow from '@/components/Tag-show.vue'
 import AuthDialog from '@/components/auth.vue';
 import { readyToDraw, drawPieChart} from "@/assets/config/chart-rely";
 import { generateUuid } from "@/assets/js/utils"
+
+const initTableData = [
+    {
+      "endpoint": "",
+      "serviceGroup": "",
+      "endpointName": "",
+      "monitorType": "",
+      "colorGroup": "",
+      "pieDisplayTag": "",
+      "endpointType": "",
+      "metricType": "",
+      "metricGuid": "",
+      "metric": "",
+      "tags": [],
+      "series": []
+    }
+  ]
 
 export default {
   name: "",
@@ -239,7 +255,16 @@ export default {
             title: this.$t('m_endpoint'),
             align: 'center',
             width: 150,
-            key: 'endpointName'
+            render: (h, params) => {
+              return params.row.endpointType.length ?  (
+                <div class="table-config-endpoint">
+                  <TagShow tagName={params.row.endpointType} index={params.index} /> 
+                  {params.row.endpointName}
+                </div>
+              ) : (
+                <div>{params.row.endpointName}</div>
+              )
+            }
         },
         {
             title: this.$t('m_type'),
@@ -247,9 +272,9 @@ export default {
             width: 150,
             key: 'monitorType',
             render: (h, params) => {
-              return (
+              return params.row.monitorType ? (
                 <Button size="small">{params.row.monitorType}</Button>
-              )
+              ) : <span>--</span>
             }
         },
         {
@@ -260,8 +285,8 @@ export default {
           render: (h, params) => {
             return (
               <div class="indicator_color_system">
-                <Button size="small">{params.row.metric}</Button>
-                <div class="ml-2 mr-2">{params.row.metric}</div>
+                {params.row.metricType ? <TagShow tagName={params.row.metricType} index={params.index} /> : <span />}
+                <div class="metric-text ml-1 mr-1">{params.row.metric}</div>
                 <ColorPicker v-model={params.row.colorGroup} on-on-change={e => {
                   this.tableData[params.index].colorGroup = e
                 }}  />
@@ -365,7 +390,9 @@ export default {
                 <Select
                   value={params.row.monitorType}
                   on-on-change={v => {
-                    Vue.set(this.tableData[params.index], 'monitorType', v)
+                    Vue.set(this.tableData[params.index], 'monitorType', v);
+                    this.monitorType = v;
+                    this.searchMetricByType()
                   }}
                   filterable
                   clearable
@@ -390,7 +417,8 @@ export default {
                 value={params.row.metric}
                 on-on-change={v => {
                   Vue.set(this.tableData[params.index], 'metric', v);
-                  this.debounceDrawChart();
+                  this.metric = v;
+                  this.addConfigurationInPie();
                 }}
                 filterable
                 clearable
@@ -581,11 +609,14 @@ export default {
       this.request('GET', '/monitor/api/v2/chart/custom', {
         chart_id: this.chartId
       }, res => {
-        debugger;
         for(let key in this.chartConfigForm) {
           this.chartConfigForm[key] = res[key]
         }
         this.tableData = cloneDeep(res.chartSeries);
+
+        if (res.chartType === "pie" && isEmpty(this.tableData)) {
+          this.tableData = cloneDeep(initTableData)
+        }
         this.processRawTableData(this.tableData);
         this.drawChartContent();
       })
@@ -597,7 +628,7 @@ export default {
         item.tagOptions = await this.findTagsByMetric(item.metricGuid, item.endpoint, item.serviceGroup);
         Vue.set(item, 'tags', this.initTagsFromOptions(item.tagOptions, item.tags))
       }
-      if (this.isPieChart && initialData.length === 1) {
+      if (this.isPieChart && initialData.length === 1 && initialData[0].endpoint) {
         const selectedEndpointItem = find(cloneDeep(this.endpointOptions), {
           option_value: initialData[0].endpoint
         })
@@ -695,16 +726,28 @@ export default {
         }
       )
     },
+    resetSearchItem(index) {
+      this.monitorType = '';
+      this.metric = '';
+      this.metricOptions = [];
+      this.monitorTypeOptions = [];
+      this.tableData[index].monitorType = '';
+      this.tableData[index].metric = ''
+    },
     searchTypeByEndpointInPie(value, index) {
+      this.resetSearchItem(index);
       const selectedItem = find(cloneDeep(this.endpointOptions), {
         option_value: value
       })
+      this.serviceGroup = selectedItem.app_object;
+      this.endpointName = selectedItem.option_text;
+      this.endpointType = selectedItem.option_type_name;
       this.request('GET', '/monitor/api/v1/dashboard/recursive/endpoint_type/list', {
         guid: selectedItem.option_value
       }, res => {
         this.monitorType = isEmpty(res) ? '' : res[0];
         Vue.set(this.tableData[index], 'monitorType', this.monitorType);
-        Vue.set(this.tableData[index], 'metric', []);
+        Vue.set(this.tableData[index], 'metric', '');
         this.metricOptions = [];
         this.monitorTypeOptions = res;
         this.searchMetricByType();
@@ -717,7 +760,7 @@ export default {
       const selectedItem = find(cloneDeep(this.endpointOptions), {
         option_value: value
       })
-      if (selectedItem && selectedItem.id === -1) {
+      if (selectedItem && !isEmpty(selectedItem)) {
         this.endpointName = selectedItem.option_text;
         this.endpointType = selectedItem.option_type_name;
         this.serviceGroup = selectedItem.app_object;
@@ -762,10 +805,10 @@ export default {
         title: '',
         unit: '',
         data: [{
-          app_object: this.endpointValue,
+          app_object: this.serviceGroup,
           chartType: this.chartConfigForm.chartType,
           endpoint: this.endpointValue,
-          monitor_type: this.monitorType,
+          monitorType: this.monitorType,
           lineType: this.chartConfigForm.lineType,
           metric,
           metricToColor: []
@@ -779,29 +822,6 @@ export default {
         endpoint,
         serviceGroup
       }
-
-      const a = {
-        aa: [
-          {
-            key: "111",
-            value: "111"
-          },
-          {
-            key: "222",
-            value: "222"
-          }
-        ],
-        bb: [
-          {
-            key: "333",
-            value: "333"
-          },
-          {
-            key: "444",
-            value: "444"
-          }
-        ]
-      }
       return new Promise(resolve => {
         this.request('POST', api, params, responseData => {
           let result = {}
@@ -814,12 +834,27 @@ export default {
         })
       })
     },
+    async addConfigurationInPie() {
+      if (this.chartConfigForm.chartType === 'pie' && this.tableData.length === 1) {
+        const item = this.tableData[0];
+        const metricItem = find(this.metricOptions, {
+            metric: this.metric
+        })
+        item.metricGuid = metricItem.guid;
+        item.metricType = metricItem.metric_type;
+        item.tagOptions = await this.findTagsByMetric(metricItem.guid, this.endpointValue, this.serviceGroup)
+        item.tags = this.initTagsFromOptions(item.tagOptions, item.tags);
+        item.serviceGroup = this.serviceGroup;
+        item.endpointName = this.endpointName;
+        item.endpointType = this.endpointType;
+        this.debounceDrawChart();
+      }
+    },
     async addConfiguration() {
       if (this.endpointValue && !isEmpty(this.metric)) {
         for(let i=0; i<this.metric.length; i++) {
           const basicParams = this.processBasicParams(this.metric[i]);
           const res = await this.requestReturnPromise('POST', '/monitor/api/v1/dashboard/chart', basicParams);
-
           const metricItem = find(this.metricOptions, {
             metric: this.metric[i]
           })
@@ -954,17 +989,14 @@ export default {
     },
     // 将数据拼好，请求数据并画图
     drawChartContent() {
-      debugger
       if (this.isPieChart) {
         const params = this.generateLineParamsData();
-        debugger
+        if (!params[0].metric) return;
         this.request('POST', '/monitor/api/v1/dashboard/pie/chart', params,
           res => {
-            debugger
             drawPieChart(this, res)
         })
       } else {
-        debugger
         const params = {
           aggregate: this.chartConfigForm.aggregate || 'none',
           agg_step: this.chartConfigForm.agg_step || 60,
@@ -976,7 +1008,7 @@ export default {
           unit: '',
           data: this.generateLineParamsData()
         }
-        debugger
+        if (isEmpty(params.data)) return
         this.request('POST', '/monitor/api/v1/dashboard/chart', params,
           responseData => {
             responseData.yaxis.unit = this.chartConfigForm.unit;
@@ -1035,6 +1067,13 @@ export default {
   display: flex;
   flex-direction: row;
   align-items: center;
+  .metric-text {
+    min-width: 20% 
+  }
+}
+
+.table-config-endpoint {
+  display: flex;
 }
 
 .generate-lines {
@@ -1070,12 +1109,19 @@ export default {
   overflow: inherit;
 }
 
+.ivu-color-picker {
+  .ivu-icon.ivu-icon-ios-close::before {
+    content: "\f193"
+  }
+}
+
 </style>
 
 <style scoped lang='less'>
 
 .all-page {
   .content {
+    min-height: 80vh;
     .chart-config_view {
       display: flex;
       flex-direction: row;
