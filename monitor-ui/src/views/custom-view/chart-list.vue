@@ -125,7 +125,7 @@ import debounce from 'lodash/debounce';
 import cloneDeep from 'lodash/cloneDeep'
 import isEmpty from 'lodash/isEmpty'
 import AuthDialog from '@/components/auth.vue'
-import EditView from '@/views/custom-view/edit-view/edit-view'
+import EditView from '@/views/custom-view/edit-view'
 
 const initSearchMap = {
     chartName: "",
@@ -173,14 +173,17 @@ export default {
                 title: this.$t('field.type'),
                 key: 'chartType',
                 align: 'center',
-                width: 90,
+                width: 100,
                 render: (h, params) => {
                     return (
-                        <Button
-                            type={this.chartTypeMap[params.row.chartType].buttonType}
-                            size="small"
-                            ghost
-                        >{this.$t(this.chartTypeMap[params.row.chartType].label)}</Button>
+                        params.row.chartType ? 
+                        (<Tag
+                            color={this.chartTypeMap[params.row.chartType].color}
+                            size="default"
+                        >{this.$t(this.chartTypeMap[params.row.chartType].label)}</Tag>) :
+                        (
+                            <div>-</div>
+                        )
                     )
                 }
             },
@@ -226,7 +229,6 @@ export default {
             {
                 title: this.$t('m_updatedBy'),
                 align: 'center',
-                width: 100,
                 key: 'updateUser'
             }, 
             {
@@ -244,6 +246,7 @@ export default {
             {
                 title: this.$t('table.action'),
                 key: 'index',
+                width: 170,
                 align: 'center',
                 render: (h, params) => {
                 return (params.row.permission === 'mgmt' ? 
@@ -257,7 +260,7 @@ export default {
                         <Button size="small" type="error" on-click={() => this.showConfirmModal(params.row)}>
                             <Icon type="md-trash" size="16"></Icon>
                         </Button>
-                    </div>) : <div>--</div>
+                    </div>) : <div>-</div>
                 )
                 }
             }
@@ -280,15 +283,15 @@ export default {
         chartTypeMap: {
             line: {
                 label: "m_line_chart_s",
-                buttonType: "warning"
+                color: "primary"
             },
             bar: {
                 label: "m_bar_chart",
-                buttonType: "info"
+                color: "success"
             },
-            area: {
-                label: "m_area_chart",
-                buttonType: "error"
+            pie: {
+                label: "m_pie_chart",
+                color: "cyan"
             }
         },
         chartId: "",
@@ -406,13 +409,13 @@ export default {
         margin-right: 10px;
     }
     .chart-search > div {
-        width: 100px;
+        width: 8%;
     }
     .chart-search > div:nth-child(4),
     .chart-search > div:nth-child(5),
     .chart-search > div:nth-child(6),
     .chart-search > div:nth-child(7) {
-        width: 180px
+        width: 15%
     }
 }
 .table-pagination {
