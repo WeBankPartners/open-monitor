@@ -93,6 +93,7 @@ func CopyCustomChart(c *gin.Context) {
 	var customDashboard *models.CustomDashboardTable
 	var chart *models.CustomChart
 	var displayConfig []byte
+	var newChartId string
 	user := middleware.GetOperateUser(c)
 	now := time.Now().Format(models.DatetimeFormat)
 	if err = c.ShouldBindJSON(&param); err != nil {
@@ -141,15 +142,16 @@ func CopyCustomChart(c *gin.Context) {
 			middleware.ReturnServerHandleError(c, err)
 			return
 		}
-		middleware.ReturnSuccess(c)
+		newChartId = param.OriginChartId
+		middleware.ReturnSuccessData(c, newChartId)
 		return
 	}
 	// 复制图表,copy 图表的所有数据并且与看板关联
-	if err = db.CopyCustomChart(param.DashboardId, middleware.GetOperateUser(c), param.Group, param.OriginChartId, param.DisplayConfig); err != nil {
+	if newChartId, err = db.CopyCustomChart(param.DashboardId, middleware.GetOperateUser(c), param.Group, param.OriginChartId, param.DisplayConfig); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
-	middleware.ReturnSuccess(c)
+	middleware.ReturnSuccessData(c, newChartId)
 }
 
 // UpdateCustomChart 更新自定义图表,先删除图表配置再新增
@@ -172,7 +174,7 @@ func UpdateCustomChart(c *gin.Context) {
 		return
 	}
 	if !permission {
-		middleware.ReturnServerHandleError(c, fmt.Errorf("not has deleted permission"))
+		middleware.ReturnServerHandleError(c, fmt.Errorf("no edit permission"))
 		return
 	}
 	if chart, err = db.GetCustomChartById(chartDto.Id); err != nil {
@@ -245,7 +247,7 @@ func UpdateCustomChartName(c *gin.Context) {
 		return
 	}
 	if !permission {
-		middleware.ReturnServerHandleError(c, fmt.Errorf("not has deleted permission"))
+		middleware.ReturnServerHandleError(c, fmt.Errorf("no delete permission"))
 		return
 	}
 	if err = db.UpdateCustomChartName(chartNameParam.ChartId, chartNameParam.Name, middleware.GetOperateUser(c)); err != nil {
@@ -307,7 +309,7 @@ func DeleteCustomChart(c *gin.Context) {
 		return
 	}
 	if !permission {
-		middleware.ReturnServerHandleError(c, fmt.Errorf("not has deleted permission"))
+		middleware.ReturnServerHandleError(c, fmt.Errorf("no delete permission"))
 		return
 	}
 	// 删除图表
@@ -338,7 +340,7 @@ func SharedCustomChart(c *gin.Context) {
 		return
 	}
 	if !permission {
-		middleware.ReturnServerHandleError(c, fmt.Errorf("not has edit permission"))
+		middleware.ReturnServerHandleError(c, fmt.Errorf("no edit permission"))
 		return
 	}
 	actions = append(actions, db.GetDeleteCustomChartPermissionSQL(param.ChartId)...)
