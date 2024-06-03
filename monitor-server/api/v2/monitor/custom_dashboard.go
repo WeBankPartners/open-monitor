@@ -389,7 +389,7 @@ func UpdateCustomDashboardPermission(c *gin.Context) {
 	if len(subActions) > 0 {
 		actions = append(actions, subActions...)
 	}
-	updateActions = db.UpdateCustomDashboardTime(param.Id, middleware.GetOperateUser(c))
+	updateActions = db.UpdateCustomDashboardTimeActions(param.Id, middleware.GetOperateUser(c))
 	actions = append(actions, updateActions...)
 	if err = db.Transaction(actions); err != nil {
 		middleware.ReturnServerHandleError(c, err)
