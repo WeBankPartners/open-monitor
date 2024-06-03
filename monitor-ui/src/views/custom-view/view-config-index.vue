@@ -165,7 +165,7 @@
         <template #content-top>
           <div v-if="isAddViewType" class="auth-dialog-content">
             <span class="mr-3">{{$t('m_name')}}:</span>
-            <Input style="width: 350px" v-model="addViewName"></Input>
+            <Input style="width: 350px" :maxlength="20" v-model="addViewName"></Input>
           </div>
         </template>
       </AuthDialog>
