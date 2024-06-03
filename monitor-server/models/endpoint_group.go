@@ -108,6 +108,7 @@ type AlarmStrategyTable struct {
 	ActiveWindow      string `json:"active_window" xorm:"active_window"`
 	UpdateTime        string `json:"update_time" xorm:"update_time"`
 	Name              string `json:"name" xorm:"name"`
+	UpdateUser        string `json:"update_user" xorm:"update_user"`
 }
 
 type AlarmStrategyMetricObj struct {
@@ -128,6 +129,7 @@ type AlarmStrategyMetricObj struct {
 	ActiveWindow      string       `json:"active_window" xorm:"active_window"`
 	ConditionCrc      string       `json:"condition_crc"`
 	Tags              []*MetricTag `json:"tags"`
+	UpdateUser        string       `json:"update_user" xorm:"update_user"`
 }
 
 type GroupStrategyObj struct {
@@ -145,6 +147,8 @@ type GroupStrategyObj struct {
 	ActiveWindow      string                  `json:"active_window"`
 	NotifyList        []*NotifyObj            `json:"notify"`
 	Conditions        []*StrategyConditionObj `json:"conditions"`
+	UpdateTime        string                  `json:"update_time"`
+	UpdateUser        string                  `json:"update_user"`
 }
 
 type EndpointStrategyObj struct {
@@ -193,10 +197,11 @@ type AlarmNotifyTable struct {
 }
 
 type StrategyConditionObj struct {
-	Metric    string       `json:"metric"`
-	Condition string       `json:"condition"`
-	Last      string       `json:"last"`
-	Tags      []*MetricTag `json:"tags"`
+	Metric     string       `json:"metric"`
+	MetricName string       `json:"metric_name"`
+	Condition  string       `json:"condition"`
+	Last       string       `json:"last"`
+	Tags       []*MetricTag `json:"tags"`
 }
 
 type MetricTag struct {
@@ -213,6 +218,16 @@ type AlarmStrategyMetric struct {
 	CrcHash       string    `json:"crc_hash" xorm:"crc_hash"`            // hash
 	CreateTime    time.Time `json:"createTime" xorm:"create_time"`       // 创建时间
 	UpdateTime    time.Time `json:"updateTime" xorm:"update_time"`       // 更新时间
+}
+
+type AlarmStrategyMetricQueryRow struct {
+	Guid          string `json:"guid" xorm:"guid"`                    // 唯一标识
+	AlarmStrategy string `json:"alarmStrategy" xorm:"alarm_strategy"` // 告警配置表
+	Metric        string `json:"metric" xorm:"metric"`                // 指标
+	Condition     string `json:"condition" xorm:"condition"`          // 条件
+	Last          string `json:"last" xorm:"last"`                    // 持续时间
+	CrcHash       string `json:"crc_hash" xorm:"crc_hash"`            // hash
+	MetricName    string `json:"metric_name" xorm:"metric_name"`
 }
 
 type AlarmStrategyTag struct {
