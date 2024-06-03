@@ -153,6 +153,7 @@ export default {
       clearInterval(this.interval)
     },
     getAlarm (id, viewCondition, permission) {
+      if (!String(id).length) return
       this.permission = permission
       this.cacheParams.id = id
       this.cacheParams.viewCondition = viewCondition
