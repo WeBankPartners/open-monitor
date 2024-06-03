@@ -7,83 +7,71 @@
           <TabPane :label="$t('m_can_edit')" name="mgmt"></TabPane>
         </Tabs>
       </Row>
-      <Row>
-        <Col span="3">
-          <Input
-            v-model="searchMap.name"
-            style="width: 90%"
-            type="text"
-            :placeholder="$t('m_name')"
-            clearable
-            @on-change="onFilterConditionChange"
-          />
-        </Col>
-        <Col span="3">
-          <Input
-            v-model="searchMap.id"
-            style="width: 90%"
-            type="text"
-            :placeholder="$t('m_id')"
-            clearable
-            @on-change="onFilterConditionChange"
-          >
-          </Input>
-        </Col>
-        <Col span="4">
-          <Select
-            v-model="searchMap.useRoles"
-            clearable
-            :max-tag-count="1"
-            filterable
-            multiple
-            :placeholder="$t('m_use_role')"
-            style="width: 90%"
-            @on-change="onFilterConditionChange"
-          >
-            <Option v-for="item in userRolesOptions" :value="item.name" :key="item.name">{{ item.display_name }}</Option>
-          </Select>
-        </Col>
-        <Col span="4">
-          <Select
-            v-model="searchMap.mgmtRoles"
-            clearable
-            filterable
-            :max-tag-count="1"
-            multiple
-            :placeholder="$t('m_manage_role')"
-            style="width: 90%"
-            @on-change="onFilterConditionChange"
-          >
-            <Option v-for="item in mgmtRolesOptions" :value="item.name" :key="item.name">{{ item.display_name }}</Option>
-          </Select>
-        </Col>
-        <Col span="4">
-          <Input
-            v-model="searchMap.updateUser"
-            style="width: 90%"
-            type="text"
-            :placeholder="$t('m_updatedBy')"
-            clearable
-            @on-change="onFilterConditionChange"
-          >
-          </Input>
-        </Col>
-        <Col span="3">
-          <Button @click="getViewList" type="primary">{{ $t('m_search') }}</Button>
-        </Col>
-        <div style="display:flex;float:right;">
-          <button class="btn btn-sm btn-confirm-f" @click="addBoardItem">
-            <i class="fa fa-plus"></i>{{$t('button.add')}}
-          </button>
-          <button class="btn btn-sm btn-cancel-f" @click="setDashboard">
-            {{$t('button.setDashboard')}}
-          </button>
-        </div>
-      </Row>
+      <div class="table-data-search">
+        <Input
+          v-model="searchMap.name"
+          class="mr-3"
+          type="text"
+          :placeholder="$t('m_name')"
+          clearable
+          @on-change="onFilterConditionChange"
+        />
+        <Input
+          v-model="searchMap.id"
+          class="mr-3"
+          type="text"
+          :placeholder="$t('m_id')"
+          clearable
+          @on-change="onFilterConditionChange"
+        >
+        </Input>
+        <Select
+          v-model="searchMap.useRoles"
+          class="mr-3"
+          clearable
+          :max-tag-count="1"
+          filterable
+          multiple
+          :placeholder="$t('m_use_role')"
+          style="width: 90%"
+          @on-change="onFilterConditionChange"
+        >
+          <Option v-for="item in userRolesOptions" :value="item.name" :key="item.name">{{ item.display_name }}</Option>
+        </Select>
+        <Select
+          v-model="searchMap.mgmtRoles"
+          class="mr-3"
+          clearable
+          filterable
+          :max-tag-count="1"
+          multiple
+          :placeholder="$t('m_manage_role')"
+          style="width: 90%"
+          @on-change="onFilterConditionChange"
+        >
+          <Option v-for="item in mgmtRolesOptions" :value="item.name" :key="item.name">{{ item.display_name }}</Option>
+        </Select>
+        <Input
+          v-model="searchMap.updateUser"
+          class="mr-3"
+          style="width: 90%"
+          type="text"
+          :placeholder="$t('m_updatedBy')"
+          clearable
+          @on-change="onFilterConditionChange"
+        >
+        </Input>
+        <Button class="mr-5" @click="getViewList" type="primary">{{ $t('m_search_info') }}</Button>
+        <Button type="success" @click="addBoardItem">{{$t('button.add')}}</Button>
+        <button class="ml-2 btn btn-sm btn-cancel-f" @click="setDashboard">
+          {{$t('button.setDashboard')}}
+        </button>
+      </div>
     </div>
 
     <div class="mt-3">
-      <section class="all-card-item">
+      <div v-if="!dataList || dataList.length === 0" class="no-card-tips">{{$t('m_noData')}}</div>
+      <section class="all-card-item" v-else>
           <template v-for="(item,index) in dataList">
             <div :key="index" class="panal-list" @click="goToPanal(item, 'view')">
               <Card>
@@ -100,13 +88,16 @@
                       <div v-if="keyItem.type === 'string'">
                         {{item[keyItem.key]}}
                       </div>
-                      <div class="card-content-array" v-if="keyItem.type === 'array'">
-                          <Tag 
-                            v-for="(tag, tagIndex) in item[keyItem.key]"
-                            :key="tagIndex"
-                            color="blue">
-                            {{tag}}
-                          </Tag>
+                      <div v-if="keyItem.type === 'array'">
+                        <div v-if="item[keyItem.key].length" class="card-content-array">
+                            <Tag 
+                              v-for="(tag, tagIndex) in item[keyItem.key]"
+                              :key="tagIndex"
+                              color="blue">
+                              {{tag}}
+                            </Tag>
+                        </div>
+                        <div v-else>-</div>
                       </div>
                   </div>
                 </div>
@@ -129,9 +120,9 @@
           </template>
       </section>
       <Page
-        style="float: right"
+        class="card-pagination"
         :total="pagination.totalRows"
-        @on-change="(e) => {pagination.currentPage = e; this.getViewList(e)}"
+        @on-change="(e) => {pagination.currentPage = e; this.getViewList()}"
         :current="pagination.currentPage"
         :page-size="pagination.pageSize"
         show-total
@@ -308,6 +299,8 @@ export default {
   },
   mounted(){
     this.pathMap = this.$root.apiCenter.template;
+    this.pagination.pageSize = 6;
+    this.pagination.currentPage = 1;
     this.getViewList()
     this.getAllRoles()
     if (this.$route.query.isCreate) {
@@ -408,10 +401,10 @@ export default {
         this.getViewList()
       })
     },
-    getViewList (page=1, pageSize=6) {
+    getViewList () {
       const params = Object.assign(cloneDeep(this.searchMap), {
-        pageSize,
-        startIndex: pageSize * (page - 1)
+        pageSize: this.pagination.pageSize,
+        startIndex: this.pagination.pageSize * (this.pagination.currentPage - 1)
       });
 
       if (!params.id || isNaN(Number(params.id))) {
@@ -574,5 +567,23 @@ li {
     font-family: SimSun;
     font-size: 14px;
     color: #ed4014;
+}
+
+.card-pagination {
+  position: fixed;
+  right: 100px;
+  bottom: 20px;
+}
+
+.no-card-tips {
+  display: flex;
+  justify-content: center;
+  height: 40%;
+  margin-top: 100px;
+  font-size: 20px;
+}
+.table-data-search {
+  display: flex;
+  justify-content: space-between;
 }
 </style>
