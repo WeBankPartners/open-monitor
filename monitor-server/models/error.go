@@ -25,4 +25,5 @@ type ErrorMessageObj struct {
 
 	SaveDoneButSyncFail  string `json:"save_done_but_sync_fail"`
 	MetricDuplicateError string `json:"metric_duplicate_error"`
+	MetricNotFound       string `json:"metric_not_found"`
 }
