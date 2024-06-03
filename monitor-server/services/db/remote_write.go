@@ -13,6 +13,14 @@ import (
 func RemoteWriteConfigList() (result []*models.RemoteWriteConfigTable, err error) {
 	result = []*models.RemoteWriteConfigTable{}
 	err = x.SQL("select * from remote_write_config").Find(&result)
+	if err != nil {
+		err = fmt.Errorf("query remote wirte config fail,%s ", err.Error())
+		return
+	}
+	for _, row := range result {
+		row.CreateTime = row.CreateAt.Format(models.DatetimeFormat)
+		row.UpdateTime = row.UpdateAt.Format(models.DatetimeFormat)
+	}
 	return
 }
 
