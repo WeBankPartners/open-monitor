@@ -138,10 +138,15 @@ func DeleteCustomDashboardById(dashboard int) (err error) {
 	return Transaction(actions)
 }
 
-func UpdateCustomDashboardTime(dashboard int, operator string) []*Action {
+func UpdateCustomDashboardTimeActions(dashboard int, operator string) []*Action {
 	var actions []*Action
 	actions = append(actions, &Action{Sql: "update custom_dashboard set update_at=?,update_user=? where id=?", Param: []interface{}{time.Now().Format(models.DatetimeFormat), operator, dashboard}})
 	return actions
+}
+
+func UpdateCustomDashboardTime(dashboard int, operator string) (err error) {
+	_, err = x.Exec("update custom_dashboard set update_at=?,update_user=? where id=?", time.Now().Format(models.DatetimeFormat), operator, dashboard)
+	return
 }
 
 func getQueryIdsByPermission(condition models.CustomDashboardQueryParam, roles []string) (strArr []string, err error) {
