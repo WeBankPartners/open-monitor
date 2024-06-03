@@ -471,5 +471,6 @@
   "m_show_metric": "展示标签",
   "m_update": "更新",
   "m_nodata_tips": "请配置图表，点击图表直接进入放大查看",
-  "m_modify": "修改"
+  "m_modify": "修改",
+  "m_search_info": "搜索"
 }
