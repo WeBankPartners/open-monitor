@@ -249,12 +249,13 @@ type ChartQueryParam struct {
 }
 
 type ChartQueryConfigObj struct {
-	Endpoint     string `json:"endpoint"`
-	Metric       string `json:"metric"`
-	PromQl       string `json:"prom_ql"`
-	AppObject    string `json:"app_object"`
-	EndpointType string `json:"endpoint_type"`
-	MonitorType  string `json:"monitorType"`
+	Endpoint     string    `json:"endpoint"`
+	Metric       string    `json:"metric"`
+	PromQl       string    `json:"prom_ql"`
+	AppObject    string    `json:"app_object"`
+	EndpointType string    `json:"endpoint_type"`
+	MonitorType  string    `json:"monitorType"`
+	Tags         []*TagDto `json:"tags"`
 }
 
 type ChartQueryCompareParam struct {
