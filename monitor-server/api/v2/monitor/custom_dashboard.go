@@ -237,7 +237,7 @@ func DeleteCustomDashboard(c *gin.Context) {
 		return
 	}
 	if !permission {
-		middleware.ReturnServerHandleError(c, fmt.Errorf("not has deleted permission"))
+		middleware.ReturnServerHandleError(c, fmt.Errorf("no delete permission"))
 	}
 	if err = db.DeleteCustomDashboardById(id); err != nil {
 		middleware.ReturnServerHandleError(c, err)
@@ -274,7 +274,7 @@ func UpdateCustomDashboard(c *gin.Context) {
 		return
 	}
 	if !permission {
-		middleware.ReturnServerHandleError(c, fmt.Errorf("not has edit permission"))
+		middleware.ReturnServerHandleError(c, fmt.Errorf("no edit permission"))
 		return
 	}
 	if len(param.Charts) > 0 {
