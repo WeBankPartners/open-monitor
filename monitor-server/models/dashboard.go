@@ -254,7 +254,7 @@ type ChartQueryConfigObj struct {
 	PromQl       string `json:"prom_ql"`
 	AppObject    string `json:"app_object"`
 	EndpointType string `json:"endpoint_type"`
-	MonitorType  string `json:"monitor_type"`
+	MonitorType  string `json:"monitorType"`
 }
 
 type ChartQueryCompareParam struct {
@@ -475,15 +475,17 @@ type CustomDashboardQueryParam struct {
 }
 
 type CustomDashboardResultDto struct {
-	Id         int      `json:"id"`
-	Name       string   `json:"name"`
-	MgmtRoles  []string `json:"mgmtRoles"`
-	UseRoles   []string `json:"useRoles"`
-	Permission string   `json:"permission"`
-	CreateUser string   `json:"createUser"`
-	UpdateUser string   `json:"updateUser"`
-	MainPage   []string `json:"mainPage"`
-	UpdateTime string   `json:"updateTime"`
+	Id               int      `json:"id"`
+	Name             string   `json:"name"`
+	MgmtRoles        []string `json:"mgmtRoles"`
+	DisplayMgmtRoles []string `json:"displayMgmtRoles"`
+	UseRoles         []string `json:"useRoles"`
+	DisplayUseRoles  []string `json:"displayUseRoles"`
+	Permission       string   `json:"permission"`
+	CreateUser       string   `json:"createUser"`
+	UpdateUser       string   `json:"updateUser"`
+	MainPage         []string `json:"mainPage"`
+	UpdateTime       string   `json:"updateTime"`
 }
 
 type CustomDashboardDto struct {
