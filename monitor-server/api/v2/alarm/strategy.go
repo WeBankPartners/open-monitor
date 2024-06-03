@@ -194,8 +194,14 @@ func ImportAlarmStrategy(c *gin.Context) {
 	}
 	queryType := c.Param("queryType")
 	guid := c.Param("guid")
-	err = db.ImportAlarmStrategy(queryType, guid, paramObj, middleware.GetOperateUser(c))
+	var metricNotFound []string
+	err, metricNotFound = db.ImportAlarmStrategy(queryType, guid, paramObj, middleware.GetOperateUser(c))
 	if err != nil {
+		if len(metricNotFound) > 0 {
+			err = fmt.Errorf(middleware.GetMessageMap(c).MetricNotFound, strings.Join(metricNotFound, ","))
+			middleware.ReturnHandleError(c, err.Error(), err)
+			return
+		}
 		middleware.ReturnHandleError(c, "import alarm strategy error:"+err.Error(), err)
 	} else {
 		middleware.ReturnSuccess(c)
