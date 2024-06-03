@@ -7,7 +7,13 @@
             {{this.$t('m_preview')}}
             <span class="underline"></span>
           </div>
-          <div :id="elId" class="echart" />
+          <div v-if="isChartDataError" class="echart error-chart">
+            {{this.$t('m_noData')}}
+          </div>
+          <div v-else>
+            <div :id="elId" class="echart" />
+          </div>
+          
         </div>
         
         <div class="chart-config">
@@ -17,6 +23,9 @@
           </div>
 
            <Form ref="formData" :model="chartConfigForm" :rules="ruleValidate" :label-width="100">
+            <FormItem :label="$t('m_name')" prop="name">
+              <Input v-model="chartConfigForm.name" clearable :maxlength="20"></Input>
+            </FormItem>
             <div v-if="isPieChart">
               <FormItem :label="$t('m_show_type')" prop="pieType">
                   <Select 
@@ -33,9 +42,6 @@
               </FormItem>
             </div>
             <div v-else>
-              <FormItem :label="$t('m_name')" prop="name">
-                <Input v-model="chartConfigForm.name" clearable :maxlength="20"></Input>
-              </FormItem>
               <FormItem :label="$t('m_chart_template')" prop="chartTemplate">
                   <Select 
                     v-model="chartConfigForm.chartTemplate"
@@ -95,7 +101,7 @@
                   </Select>
               </FormItem>
               <FormItem :label="$t('m_unit')" prop="unit">
-                  <Input v-model="chartConfigForm.unit" :maxlength="10" @on-change="onUnitChange"></Input>
+                  <Input v-model="chartConfigForm.unit" :maxlength="10"></Input>
               </FormItem>
             </div>
           </Form>
@@ -151,7 +157,7 @@
             :placeholder="$t('m_metric')"
             >
             <Option v-for="(option, index) in metricOptions" :value="option.metric" :label="option.metric" :key="index">
-              <TagShow :tagName="option.metric_type" :index="index"></TagShow> 
+              <Tag type="border" :color="metricTypeMap[option.metric_type].color">{{metricTypeMap[option.metric_type].label}}</Tag>
               {{option.metric}}
             </Option>
           </Select>
@@ -247,7 +253,7 @@ export default {
           width: 80,
           render: (h, params) => {
             return (
-                <Button size="small" icon="md-trash" type="error" disabled={this.tableData.length === 1} on-click={() => this.removeTableItem(params.index)} />
+                <Button size="small" icon="md-trash" type="error" on-click={() => this.removeTableItem(params.index)} />
             )
           }
         },
@@ -274,7 +280,7 @@ export default {
             render: (h, params) => {
               return params.row.monitorType ? (
                 <Button size="small">{params.row.monitorType}</Button>
-              ) : <span>--</span>
+              ) : <span>-</span>
             }
         },
         {
@@ -326,7 +332,7 @@ export default {
                           ))}
                       </Select>
                     </div>
-                  )) ) : "--" } 
+                  )) ) : "-" } 
               </div>
             )
           }
@@ -346,7 +352,7 @@ export default {
                         this.tableData[params.index].series[selectIndex].color = e
                       }}  />
                     </div>
-                  )) ) : "--" } 
+                  )) ) : "-" } 
               </div>
             )
           }
@@ -464,7 +470,7 @@ export default {
                           ))}
                       </Select>
                     </div>
-                  )) ) : "--" } 
+                  )) ) : "-" } 
               </div>
             )
           }
@@ -579,6 +585,20 @@ export default {
       lineTypeOption: {
         line: 1,
         area: 0
+      },
+      metricTypeMap: {
+        common: {
+          label: this.$t('m_general_type'),
+          color: '#2d8cf0'
+        },
+        business: {
+          label: this.$t('m_business_configuration'),
+          color: '#81b337'
+        },
+        custom: {
+          label: this.$t('m_customize'),
+          color: '#b886f8'
+        }
       }
     }
   },
@@ -592,6 +612,23 @@ export default {
       return this.isPieChart ?
         (this.chartConfigForm.pieType === 'value' ? pieChartConfigurationColumnNoValue : this.pieChartConfigurationColumns) 
         : this.lineChartConfigurationColumns
+    },
+    isChartDataError() {
+      return isEmpty(this.tableData)
+    }
+  },
+  watch: {
+    tableData: {
+      handler () {
+        this.debounceDrawChart()
+      },
+      deep: true
+    },
+    chartConfigForm: {
+      handler () {
+        this.debounceDrawChart()
+      },
+      deep: true
     }
   },
   created() {
@@ -847,7 +884,6 @@ export default {
         item.serviceGroup = this.serviceGroup;
         item.endpointName = this.endpointName;
         item.endpointType = this.endpointType;
-        this.debounceDrawChart();
       }
     },
     async addConfiguration() {
@@ -882,7 +918,6 @@ export default {
         this.metric = [];
         this.endpointValue = '';
         this.monitorType = '';
-        this.debounceDrawChart();
       }
     },
     onChartTemplateSelected(key) {
@@ -890,7 +925,6 @@ export default {
         key
       })
       Object.assign(this.chartConfigForm, template.value);
-      this.debounceDrawChart();
     },
     requestReturnPromise(method, api, params) {
       return new Promise(resolve => {
@@ -900,7 +934,7 @@ export default {
       })
     },
     removeTableItem(index) {
-      this.tableData.splice(index, 1)
+      this.$delete(this.tableData, index);
     },
     resetChartConfig() {
       this.getTableData()
@@ -918,18 +952,26 @@ export default {
         })
       })
     },
-    async saveChartConfig() {
+    async beforeSaveValid() {
       const validResult = await this.$refs.formData.validate();
-      const isDuplicateName = await this.chartDuplicateNameCheck(this.chartId, this.chartConfigForm.name)
-      if (validResult && !isDuplicateName) {
+      const isDuplicateName = await this.chartDuplicateNameCheck(this.chartId, this.chartConfigForm.name);
+      // const hasSetData = this.tableData.length > 0;
+      const hasSetData = this.tableData.length > 0 && this.tableData[0].metric && this.tableData[0].monitorType && this.tableData[0].endpoint
+      if (!hasSetData) {
+        this.$Message.error(this.$t('m_configuration') + this.$t('m_cannot_be_empty'));
+      }
+      return new Promise(resolve => {
+        resolve(validResult && !isDuplicateName && hasSetData)
+      })
+    },
+    async saveChartConfig() {
+      if (await this.beforeSaveValid()) {
         await this.submitChartConfig();
         this.$Message.success(this.$t('m_success'));
       }
     },
     async saveChartLibrary() {
-      const validResult = await this.$refs.formData.validate();
-      const isDuplicateName = await this.chartDuplicateNameCheck(this.chartId, this.chartConfigForm.name)
-      if (validResult && !isDuplicateName) {
+      if (await this.beforeSaveValid()) {
         await this.submitChartConfig();
         this.$refs.authDialog.startAuth(this.mgmtRoles, this.useRoles, this.mgmtRolesOptions, this.userRolesOptions);
       }
@@ -959,18 +1001,12 @@ export default {
         this.chartConfigForm.chartType = 'line';
       }
       this.resetChartTemplate();
-      this.debounceDrawChart();
     },
     onAggregateChange() {
       this.resetChartTemplate();
-      this.debounceDrawChart();
     },
     onAggStepChange() {
       this.resetChartTemplate();
-      this.debounceDrawChart();
-    },
-    onUnitChange() {
-      this.debounceDrawChart()
     },
     resetChartTemplate() {
       this.chartConfigForm.chartTemplate = 'one'
@@ -1135,6 +1171,11 @@ export default {
           width: 100%;
           height: 300px;
         } 
+        .error-chart {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        }
       }
     }
 
@@ -1166,9 +1207,6 @@ export default {
   }
 
 }
-
-
-
 
 .use-underline-title {
   display: inline-block;
