@@ -916,4 +916,5 @@ CREATE TABLE `remote_write_config` (
    `update_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
    PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+alter table alarm_strategy add column update_user varchar(64) default null;
 #@v2.0.8.1-end@;

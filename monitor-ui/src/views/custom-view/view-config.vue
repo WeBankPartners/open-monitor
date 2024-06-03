@@ -68,9 +68,9 @@
         <div class="radio-group">
           <span class="ml-3 mr-3">{{$t('m_group_name')}}:</span>
           <div
-            :class="['radio-group-radio radio-group-optional', activeGroup === 'All' ? 'selected-radio' : 'is-not-selected-radio']"
+            :class="['radio-group-radio radio-group-optional', activeGroup === 'ALL' ? 'selected-radio' : 'is-not-selected-radio']"
           >
-            <span @click="selectGroup('All')" style="vertical-align: text-bottom;">{{$t('m_chart_all')}}</span>
+            <span @click="selectGroup('ALL')" style="vertical-align: text-bottom;">{{$t('m_chart_all')}}</span>
           </div>
           <div
             v-for="(item, index) in panel_group_list"
@@ -97,7 +97,7 @@
         </div>
 
         <!-- 图表新增 -->
-        <div class="chart-config-info">
+        <div class="chart-config-info" v-if="isEditStatus">
           <span class="fs-20 mr-3 ml-3">{{$t('m_graph')}}:</span>
           <Dropdown 
             v-for="(item, index) in allAddChartOptions"
@@ -146,7 +146,7 @@
               :key="index"
               @resize="resizeEvent"
               @resized="resizeEvent">
-              <template v-if="item.group === activeGroup || activeGroup === 'All'">
+              <template v-if="item.group === activeGroup || activeGroup === 'ALL'">
                 <div class="c-dark grid-content">
                   <div class="header-grid header-grid-name">
                     <span v-if="editChartId !== item.id">{{item.i}}</span>
@@ -182,7 +182,7 @@
                     </Tooltip>
                   </div>
                 </div>
-                <section style="height: 90%" @click="setChartType(item)">
+                <section style="height: 90%" @click="onChartBodyClick(item)">
                   <div v-for="(chartInfo,chartIndex) in item._activeCharts" :key="chartIndex">
                     <CustomChart v-if="['line','bar'].includes(chartInfo.chartType)" :refreshNow="refreshNow" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomChart>
                     <CustomPieChart v-if="chartInfo.chartType === 'pie'" :refreshNow="refreshNow" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomPieChart>
@@ -202,7 +202,11 @@
     </Drawer>
 
     <!-- 对于每个chart的抽屉详细信息 -->
-    <Drawer :title="$t('placeholder.chartConfiguration')" :width="90" :mask-closable="false" v-model="showChartConfig">
+    <Drawer :title="$t('placeholder.chartConfiguration')" 
+      :width="90" 
+      :mask-closable="false" 
+      v-model="showChartConfig"
+      @on-close="closeChartInfoDrawer">
       <editView :chartId="setChartConfigId" v-if="showChartConfig"></editView>
     </Drawer>
     <Modal
@@ -271,7 +275,6 @@ import ViewConfigAlarm from '@/views/custom-view/view-config-alarm'
 import ViewChart from '@/views/custom-view/view-chart'
 import EditView from '@/views/custom-view/edit-view/edit-view'
 import AuthDialog from '@/components/auth.vue';
-import { nextTick } from 'vue';
 export default {
   name: '',
   data() {
@@ -290,7 +293,7 @@ export default {
       isEditPanal: false,
       permission: this.$route.params.permission || 'edit',
       panalName: '',
-      pannelId: this.$route.params.pannelId || 29,
+      pannelId: this.$route.params.pannelId || 64,
       viewCondition: {
         timeTnterval: -3600,
         dateRange: ['', ''],
@@ -301,7 +304,7 @@ export default {
       dataPick: dataPick,
       autoRefreshConfig: autoRefreshConfig,
       viewData: [],
-      activeGroup: 'All',
+      activeGroup: 'ALL',
       showGroupMgmt: false,
       panelGroupInfo: [], // 存放新增/编辑组时的panel信息
       groupName: '', // 新增及编辑时的组名称
@@ -362,7 +365,7 @@ export default {
   },
   computed: {
     tmpLayoutData() { // 缓存切换分组后数据
-      if (this.activeGroup === 'All') {
+      if (this.activeGroup === 'ALL') {
         return this.layoutData
       } else {
         return this.layoutData.filter(d => d.group === this.activeGroup)
@@ -376,7 +379,7 @@ export default {
     this.zoneWidth = window.screen.width * 0.65;
     this.getAllChartOptionList();
     this.getPannelList();
-    this.activeGroup = 'All';
+    this.activeGroup = 'ALL';
     this.getAllRolesOptions();
   },
   methods: {
@@ -390,7 +393,7 @@ export default {
           this.boardMgmtRoles = res.mgmtRoles;
           this.boardUseRoles = res.useRoles;
           this.panalName = res.name;
-          this.activeGroup = 'All';
+          this.activeGroup = 'ALL';
           this.panel_group_list = res.panelGroupList || [];
           this.viewData = res.charts || [];
           this.initPanals();
@@ -400,9 +403,12 @@ export default {
     },
     getAllChartOptionList() {
       this.request('GET', '/monitor/api/v2/chart/shared/list', {}, res => {
-        const copyChartsOptions = this.processChartOptions(res);
-        this.allAddChartOptions[1].options = copyChartsOptions;
-        this.allAddChartOptions[2].options = copyChartsOptions;
+        this.allAddChartOptions[1].options = this.processChartOptions(res);
+      });
+      this.request('GET', '/monitor/api/v2/chart/shared/list', {
+        dashboard_id: this.pannelId
+      }, res => {
+        this.allAddChartOptions[2].options = this.processChartOptions(res);
       })
     },
     processChartOptions(rawData) {
@@ -438,12 +444,19 @@ export default {
       }
       return options
     },
+    onChartBodyClick(item) {
+      if (this.isEditStatus) {
+        this.setChartType(item);
+      } else {
+        this.gridPlus(item);
+      }
+    },
     openAlarmDisplay () {
       this.showAlarm = !this.showAlarm
-      nextTick(() => {
+      setTimeout(() => {
         this.$refs.cutsomViewId.getAlarm(this.cutsomViewId, this.viewCondition, this.permission);
         this.refreshNow = !this.refreshNow;
-      })
+      }, 0)
     },
     closeAlarmDisplay () {
       this.showAlarm = !this.showAlarm;
@@ -521,7 +534,7 @@ export default {
       return true
     },
     addItem() {
-      this.activeGroup = 'All'
+      this.activeGroup = 'ALL'
       generateUuid().then((elId)=>{
         const key = ((new Date()).valueOf()).toString().substring(10)
         let item = {
@@ -589,6 +602,7 @@ export default {
       this.isShowWarning = false
     },
     async gridPlus(item) {
+      if (!this.isShowGridPlus(item)) return 
       const resViewData = await this.modifyLayoutData()
       this.showMaxChart = true
       const templateData = {
@@ -712,7 +726,7 @@ export default {
         }
       })
       this.savePanalEdit()
-      this.activeGroup = 'All'
+      this.activeGroup = 'ALL'
     },
     confirmGroupMgmt () {
       if (this.groupNameIndex === -1 && this.panel_group_list.includes(this.groupName)) {
@@ -768,11 +782,11 @@ export default {
         const addChartParams = {
           dashboardId: this.pannelId,
           name: name,
-          chartTemplate: "",
+          chartTemplate: "one",
           chartType: copyInfo.id,
           lineType: copyInfo.id === 'line' ? 'line' : "",
           pieType: copyInfo.id === 'pie' ? 'tag' : "",
-          aggregate: "none",
+          aggregate: "min",
           aggStep: 60,
           unit: '',
           group: this.activeGroup === 'ALL' ? "" : this.activeGroup,
@@ -793,13 +807,13 @@ export default {
           id: `${this.setChartConfigId}`
         }
         this.layoutData.push(item);
-        this.editGrid()
 
-        nextTick(async () => {
-          await this.requestReturnPromise('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams());
-          this.getPannelList();
-          this.showChartConfig = true;
-        })
+        setTimeout(() => {
+          this.request('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams(), res => {
+            this.getPannelList();
+            this.editGrid()
+          });
+        }, 0)
       } else {
         const group = type === 'copy' ? '' : (this.activeGroup === 'ALL' ? "" : this.activeGroup);
         let item = {
@@ -812,9 +826,7 @@ export default {
           group
         }
         this.layoutData.push(item);
-        this.editGrid()
-
-        nextTick(async () => {
+        setTimeout(async () => {
           const copyParams = {
             dashboardId: this.pannelId,
             ref: type === 'copy' ? false : true,
@@ -831,8 +843,9 @@ export default {
           await this.requestReturnPromise('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams());
           this.getPannelList();
           this.setChartConfigId = copyInfo.id;
-          this.showChartConfig = true
-        })
+          this.editGrid();
+          this.getAllChartOptionList();
+        }, 0)
       }
     },
 
@@ -959,8 +972,14 @@ export default {
       this.request('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams(), res => {
         this.$Message.success(this.$t('m_success'));
         this.getPannelList();
-        this.activeGroup = 'All';
+        this.activeGroup = 'ALL';
       });
+    },
+    closeChartInfoDrawer() {
+      this.getPannelList();
+      setTimeout(() => {
+        this.refreshNow = !this.refreshNow;
+      }, 500)
     }
   },
   components: {
