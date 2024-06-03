@@ -474,5 +474,6 @@
   "m_nodata_tips": "Please configure the chart, click on the chart to directly enter the enlarged view",
   "m_metric_deleteTips": "Are you sure to delete indicators? The indicator cannot be restored after it is deleted, and the monitoring Kanban and alarm list are affected. Exercise caution when performing this operation.",
   "m_metric_export_errorTips": "The import is complete. The import failed",
-  "m_modify": "Modify "
+  "m_modify": "Modify ",
+  "m_search_info": "Search"
 }
