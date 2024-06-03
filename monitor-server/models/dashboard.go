@@ -254,7 +254,7 @@ type ChartQueryConfigObj struct {
 	PromQl       string `json:"prom_ql"`
 	AppObject    string `json:"app_object"`
 	EndpointType string `json:"endpoint_type"`
-	MonitorType  string `json:"monitor_type"`
+	MonitorType  string `json:"monitorType"`
 }
 
 type ChartQueryCompareParam struct {
