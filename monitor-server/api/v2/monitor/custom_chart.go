@@ -235,6 +235,7 @@ func GetCustomChart(c *gin.Context) {
 func UpdateCustomChartName(c *gin.Context) {
 	var chartNameParam models.UpdateCustomChartNameParam
 	var permission bool
+	var chart *models.CustomChart
 	var err error
 	if err = c.ShouldBindJSON(&chartNameParam); err != nil {
 		middleware.ReturnServerHandleError(c, err)
@@ -244,16 +245,24 @@ func UpdateCustomChartName(c *gin.Context) {
 		middleware.ReturnParamEmptyError(c, "chartId or name")
 		return
 	}
+	if chart, err = db.GetCustomChartById(chartNameParam.ChartId); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if chart == nil {
+		middleware.ReturnValidateError(c, "chartId is invalid")
+		return
+	}
 	// 判断是否拥有删除权限
 	if permission, err = CheckHasChartManagePermission(chartNameParam.ChartId, middleware.GetOperateUser(c), middleware.GetOperateUserRoles(c)); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
 	if !permission {
-		middleware.ReturnServerHandleError(c, fmt.Errorf("no delete permission"))
+		middleware.ReturnServerHandleError(c, fmt.Errorf("no update permission"))
 		return
 	}
-	if err = db.UpdateCustomChartName(chartNameParam.ChartId, chartNameParam.Name, middleware.GetOperateUser(c)); err != nil {
+	if err = db.UpdateCustomChartName(chartNameParam.ChartId, chartNameParam.Name, middleware.GetOperateUser(c), chart.SourceDashboard); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}

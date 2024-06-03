@@ -461,9 +461,15 @@ func CopyCustomChart(dashboardId int, user, group, customChart string, displayCo
 	return
 }
 
-func UpdateCustomChartName(chartId, name, user string) (err error) {
-	_, err = x.Exec("update custom_chart set name = ?,update_user = ? where guid = ?", name, user, chartId)
-	return
+func UpdateCustomChartName(chartId, name, user string, sourceDashboard int) (err error) {
+	var actions []*Action
+	now := time.Now().Format(models.DatetimeFormat)
+	actions = append(actions, &Action{Sql: "update custom_chart set name = ?,update_user = ? where guid = ?", Param: []interface{}{name, user, chartId}})
+	// 更新源看板
+	if sourceDashboard != 0 {
+		actions = append(actions, &Action{Sql: "update custom_dashboard set update_user =?,update_at=? where id = ?", Param: []interface{}{user, now, sourceDashboard}})
+	}
+	return Transaction(actions)
 }
 
 func QueryCustomChartNameExist(name string) (list []*models.CustomChart, err error) {
