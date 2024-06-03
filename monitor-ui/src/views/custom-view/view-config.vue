@@ -169,7 +169,7 @@
                       <Option v-for="item in panel_group_list" :value="item" :key="item" style="float: left;">{{ item }}</Option>
                     </Select>
                     <Tooltip :content="$t('m_save_chart_library')" theme="light" transfer placement="top">
-                      <Icon v-if="!item.public" size="15" type="md-archive" @click="showChartAuthDialog(item)" />
+                      <Icon v-if="isEditStatus && !item.public" size="15" type="md-archive" @click="showChartAuthDialog(item)" />
                     </Tooltip>
                     <Tooltip :content="$t('button.chart.dataView')" theme="light" transfer placement="top">
                       <i class="fa fa-eye" style="font-size: 16px;" v-if="isShowGridPlus(item)" aria-hidden="true" @click="gridPlus(item)"></i>
@@ -273,7 +273,7 @@ import CustomChart from '@/components/custom-chart'
 import CustomPieChart from '@/components/custom-pie-chart'
 import ViewConfigAlarm from '@/views/custom-view/view-config-alarm'
 import ViewChart from '@/views/custom-view/view-chart'
-import EditView from '@/views/custom-view/edit-view/edit-view'
+import EditView from '@/views/custom-view/edit-view'
 import AuthDialog from '@/components/auth.vue';
 export default {
   name: '',
@@ -496,8 +496,9 @@ export default {
           unit: '',
           data: []
         }
-        item.chartSeries.forEach( _ => {
-          params.data.push(_)
+        item.chartSeries.forEach(item => {
+          item.defaultColor = item.colorGroup;
+          params.data.push(item)
         })
 
         let height = (parsedDisplayConfig.h + 1) * 30-8
