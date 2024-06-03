@@ -34,7 +34,7 @@
             </div>
             <div v-else>
               <FormItem :label="$t('m_name')" prop="name">
-                <Input v-model="chartConfigForm.name" clearable :maxlength="10"></Input>
+                <Input v-model="chartConfigForm.name" clearable :maxlength="20"></Input>
               </FormItem>
               <FormItem :label="$t('m_chart_template')" prop="chartTemplate">
                   <Select 
