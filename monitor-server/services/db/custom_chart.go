@@ -392,13 +392,13 @@ func QueryCustomChartList(condition models.QueryChartParam, roles []string) (pag
 }
 
 // CopyCustomChart 复制图表
-func CopyCustomChart(dashboardId int, user, group, customChart string, displayConfig interface{}) (err error) {
+func CopyCustomChart(dashboardId int, user, group, customChart string, displayConfig interface{}) (newChartId string, err error) {
 	var chartSeriesList []*models.CustomChartSeries
 	var configMap = make(map[string][]*models.CustomChartSeriesConfig)
 	var tagMap = make(map[string][]*models.CustomChartSeriesTag)
 	var tagValueMap = make(map[string][]*models.CustomChartSeriesTagValue)
 	var actions []*Action
-	newChartId := guid.CreateGuid()
+	newChartId = guid.CreateGuid()
 	chart := &models.CustomChart{}
 	byteConf, _ := json.Marshal(displayConfig)
 	now := time.Now().Format(models.DatetimeFormat)
@@ -453,7 +453,8 @@ func CopyCustomChart(dashboardId int, user, group, customChart string, displayCo
 	}
 	actions = append(actions, &Action{Sql: "insert into custom_dashboard_chart_rel(guid,custom_dashboard,dashboard_chart,`group`,display_config,create_user,updated_user,create_time,update_time) values(?,?,?,?,?,?,?,?,?)", Param: []interface{}{guid.CreateGuid(),
 		dashboardId, newChartId, group, string(byteConf), user, user, now, now}})
-	return Transaction(actions)
+	err = Transaction(actions)
+	return
 }
 
 func UpdateCustomChartName(chartId, name, user string) (err error) {
