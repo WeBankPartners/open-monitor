@@ -367,8 +367,8 @@ func getNotifyListDeleteAction(alarmStrategy, endpointGroup, serviceGroup string
 
 func getStrategyConditions(alarmStrategyGuid string) (conditions []*models.StrategyConditionObj, err error) {
 	conditions = []*models.StrategyConditionObj{}
-	var strategyMetricRows []*models.AlarmStrategyMetric
-	err = x.SQL("select * from alarm_strategy_metric where alarm_strategy=?", alarmStrategyGuid).Find(&strategyMetricRows)
+	var strategyMetricRows []*models.AlarmStrategyMetricQueryRow
+	err = x.SQL("select t1.guid,t1.alarm_strategy,t1.metric,t1.`condition`,t1.`last`,t2.metric as `metric_name` from alarm_strategy_metric t1 left join metric t2 on t1.metric=t2.guid where t1.alarm_strategy=?", alarmStrategyGuid).Find(&strategyMetricRows)
 	if err != nil {
 		err = fmt.Errorf("query alarm strategy metric with strategyGuid:%s fail,%s ", alarmStrategyGuid, err.Error())
 		return
@@ -397,7 +397,7 @@ func getStrategyConditions(alarmStrategyGuid string) (conditions []*models.Strat
 		}
 	}
 	for _, metricRow := range strategyMetricRows {
-		conditionRow := models.StrategyConditionObj{Metric: metricRow.Metric, Condition: metricRow.Condition, Last: metricRow.Last, Tags: []*models.MetricTag{}}
+		conditionRow := models.StrategyConditionObj{Metric: metricRow.Metric, Condition: metricRow.Condition, Last: metricRow.Last, Tags: []*models.MetricTag{}, MetricName: metricRow.MetricName}
 		for _, tagRow := range strategyTagRows {
 			if tagRow.AlarmStrategyMetric == metricRow.Guid {
 				tmpTag := models.MetricTag{TagName: tagRow.Name, TagValue: []string{}}
@@ -1135,42 +1135,49 @@ func getRoleMail(roleList []string) (mailList []string) {
 	return
 }
 
-func ImportAlarmStrategy(queryType, inputGuid string, param []*models.EndpointStrategyObj, operator string) (err error) {
+func ImportAlarmStrategy(queryType, inputGuid string, param []*models.EndpointStrategyObj, operator string) (err error, metricNotFound []string) {
 	if len(param) == 0 {
-		return fmt.Errorf("import content empty ")
+		err = fmt.Errorf("import content empty ")
+		return
 	}
 	var actions []*Action
 	var metricTable []*models.MetricTable
-	err = x.SQL("select guid,monitor_type,service_group from metric").Find(&metricTable)
+	err = x.SQL("select guid,metric,monitor_type,service_group from metric where service_group is null or service_group=?", inputGuid).Find(&metricTable)
 	if err != nil {
-		return fmt.Errorf("query metric table fail,%s ", err.Error())
+		err = fmt.Errorf("query metric table fail,%s ", err.Error())
+		return
 	}
 	var endpointGroupList []string
 	metricMap := make(map[string]*models.MetricTable)
 	for _, v := range metricTable {
-		metricMap[v.Guid] = v
+		metricMap[v.Metric] = v
 	}
 	nowTime := time.Now().Format(models.DatetimeFormat)
 	if queryType == "group" {
 		var endpointGroupTable []*models.EndpointGroupTable
 		err = x.SQL("select guid,monitor_type,service_group from endpoint_group where guid=?", inputGuid).Find(&endpointGroupTable)
 		if err != nil {
-			return fmt.Errorf("query endpoint group table fail,%s ", err.Error())
+			err = fmt.Errorf("query endpoint group table fail,%s ", err.Error())
+			return
 		}
 		if len(endpointGroupTable) == 0 {
-			return fmt.Errorf("can not find endpoint group with guid:%s ", inputGuid)
+			err = fmt.Errorf("can not find endpoint group with guid:%s ", inputGuid)
+			return
 		}
 		endpointGroupList = append(endpointGroupList, inputGuid)
-		tmpActions, tmpErr := getAlarmStrategyImportActions(inputGuid, "", endpointGroupTable[0].MonitorType, nowTime, operator, param[0], metricMap)
+		tmpActions, tmpErr, tmpMetricNotFound := getAlarmStrategyImportActions(inputGuid, "", endpointGroupTable[0].MonitorType, nowTime, operator, param[0], metricMap)
 		if tmpErr != nil {
-			return tmpErr
+			metricNotFound = tmpMetricNotFound
+			err = tmpErr
+			return
 		}
 		actions = append(actions, tmpActions...)
 	} else if queryType == "service" {
 		var endpointGroupTable []*models.EndpointGroupTable
 		err = x.SQL("select guid,monitor_type,service_group from endpoint_group where service_group=?", inputGuid).Find(&endpointGroupTable)
 		if err != nil {
-			return fmt.Errorf("query endpoint group table fail,%s ", err.Error())
+			err = fmt.Errorf("query endpoint group table fail,%s ", err.Error())
+			return
 		}
 		for _, v := range param {
 			tmpEndpointGroupExistFlag := false
@@ -1186,8 +1193,9 @@ func ImportAlarmStrategy(queryType, inputGuid string, param []*models.EndpointSt
 				continue
 			}
 			endpointGroupList = append(endpointGroupList, v.EndpointGroup)
-			tmpActions, tmpErr := getAlarmStrategyImportActions(v.EndpointGroup, inputGuid, tmpMonitorType, nowTime, operator, v, metricMap)
+			tmpActions, tmpErr, tmpMetricNotFound := getAlarmStrategyImportActions(v.EndpointGroup, inputGuid, tmpMonitorType, nowTime, operator, v, metricMap)
 			if tmpErr != nil {
+				metricNotFound = tmpMetricNotFound
 				err = fmt.Errorf("handle endpointGroup:%s fail,%s ", v.EndpointGroup, tmpErr.Error())
 				break
 			}
@@ -1198,7 +1206,8 @@ func ImportAlarmStrategy(queryType, inputGuid string, param []*models.EndpointSt
 		}
 	}
 	if len(actions) == 0 {
-		return fmt.Errorf("no alarm strategy match in exist data,do nothing ")
+		err = fmt.Errorf("no alarm strategy match in exist data,do nothing ")
+		return
 	}
 	err = Transaction(actions)
 	if err == nil {
@@ -1209,14 +1218,15 @@ func ImportAlarmStrategy(queryType, inputGuid string, param []*models.EndpointSt
 			}
 		}
 	}
-	return err
+	return
 }
 
-func getAlarmStrategyImportActions(endpointGroup, serviceGroup, monitorType, nowTime, operator string, param *models.EndpointStrategyObj, metricMap map[string]*models.MetricTable) (actions []*Action, err error) {
+func getAlarmStrategyImportActions(endpointGroup, serviceGroup, monitorType, nowTime, operator string, param *models.EndpointStrategyObj, metricMap map[string]*models.MetricTable) (actions []*Action, err error, metricNotFound []string) {
 	var existStrategyTable []*models.AlarmStrategyTable
 	err = x.SQL("select guid,metric from alarm_strategy where endpoint_group=?", endpointGroup).Find(&existStrategyTable)
 	if err != nil {
-		return actions, fmt.Errorf("query alarm strategy table fail,%s ", err.Error())
+		err = fmt.Errorf("query alarm strategy table fail,%s ", err.Error())
+		return
 	}
 	//existStrategyMap := make(map[string]int)
 	for _, v := range existStrategyTable {
@@ -1227,30 +1237,26 @@ func getAlarmStrategyImportActions(endpointGroup, serviceGroup, monitorType, now
 	}
 	for _, strategy := range param.Strategy {
 		// 检测策略上的指标在不在
-		strategyMetricList := []string{}
 		if len(strategy.Conditions) > 0 {
 			for _, v := range strategy.Conditions {
-				strategyMetricList = append(strategyMetricList, v.Metric)
-			}
-		} else {
-			strategyMetricList = append(strategyMetricList, strategy.Metric)
-		}
-		for _, metric := range strategyMetricList {
-			if fMetric, b := metricMap[metric]; b {
-				if fMetric.MonitorType != monitorType {
-					err = fmt.Errorf("Metric:%s is in type:%s ", metric, fMetric.MonitorType)
+				if fMetric, b := metricMap[v.MetricName]; b {
+					v.Metric = fMetric.Guid
+				} else {
+					metricNotFound = append(metricNotFound, v.MetricName)
+					err = fmt.Errorf("Metric:%s not found ", v.MetricName)
 					break
 				}
-				//if serviceGroup != "" {
-				//	if fMetric.ServiceGroup != serviceGroup {
-				//		err = fmt.Errorf("Metric:%s is in serviceGroup:%s ", metric, fMetric.ServiceGroup)
-				//		break
-				//	}
-				//}
-			} else {
-				err = fmt.Errorf("Metric:%s is not exist ", metric)
-				break
 			}
+		} else {
+			if fMetric, b := metricMap[strategy.MetricName]; b {
+				strategy.Metric = fMetric.Guid
+			} else {
+				metricNotFound = append(metricNotFound, strategy.MetricName)
+				err = fmt.Errorf("Metric:%s not found ", strategy.MetricName)
+			}
+		}
+		if err != nil {
+			return
 		}
 		newAction, buildErr := getCreateAlarmStrategyActions(strategy, nowTime, operator)
 		if buildErr != nil {
