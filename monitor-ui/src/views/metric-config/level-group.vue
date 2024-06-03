@@ -11,11 +11,8 @@
           v-model="serviceGroup"
           filterable 
           @on-change="changeServiceGroup"
-          remote
-          ref="select"
-          :remote-method="getRecursiveList"
-          >
-          <Option v-for="(option, index) in recursiveOptions" :value="option.guid" :key="index">
+        >
+          <Option v-for="(option, index) in recursiveOptions" :value="option.guid" :label="option.display_name" :key="index">
             <TagShow :tagName="option.type" :index="index"></TagShow> 
             {{option.display_name}}
           </Option>
@@ -47,16 +44,14 @@
         </div>
       </Col>
     </Row>
-    <Table size="small" :columns="tableColumns" :data="tableData" class="table" />
+    <Table size="small" :columns="tableColumns" :data="tableData" class="level-table" />
     <Modal
       v-model="deleteVisible"
       :title="$t('delConfirm.title')"
       @on-ok="submitDelete"
       @on-cancel="deleteVisible = false">
-      <div class="modal-body" style="padding:30px">
-        <div style="text-align:center">
-          <p style="color: red">{{$t('delConfirm.tip')}}</p>
-        </div>
+      <div class="modal-body" style="padding: 10px 20px">
+        <p style="color: red">{{ $t('m_metric_deleteTips') }}</p>
       </div>
     </Modal>
     <AddGroupDrawer
@@ -94,12 +89,12 @@ export default {
         {
           title: this.$t('field.metric'), // 指标
           key: 'metric',
-          minWidth: 150
+          width: 250
         },
         {
           title: this.$t('m_scope'), // 作用域
           key: 'workspace',
-          minWidth: 150,
+          width: 150,
           render: (h, params) => {
             return <Tag size="medium">{ this.workspaceMap[params.row.workspace] }</Tag>
           }
@@ -107,10 +102,10 @@ export default {
         {
           title: this.$t('field.type'), // 类型
           key: 'metric_type',
-          minWidth: 150,
+          width: 150,
           render: (h, params) => {
             const typeList = [
-              { label: this.$t('m_general_type'), value: 'common', color: '#2d8cf0' },
+              { label: this.$t('m_base_group'), value: 'common', color: '#2d8cf0' },
               { label: this.$t('m_business_configuration'), value: 'business', color: '#81b337' },
               { label: this.$t('m_customize'), value: 'custom', color: '#b886f8' }
             ]
@@ -119,25 +114,9 @@ export default {
           }
         },
         {
-          title: this.$t('m_business_configuration'), // 业务配置
-          key: 'log_metric_group_name',
-          minWidth: 150,
-          render: (h, params) => {
-            return <span>{params.row.log_metric_group_name || '-'}</span>
-          }
-        },
-        {
-          title: this.$t('m_updatedBy'), // 更新人
-          key: 'update_user',
-          minWidth: 150,
-          render: (h, params) => {
-            return <span>{params.row.update_user || '-'}</span>
-          }
-        },
-        {
           title: this.$t('m_update_time'), // 更新时间
           key: 'update_time',
-          minWidth: 150,
+          width: 150,
           render: (h, params) => {
             return <span>{params.row.update_time || '-'}</span>
           }
@@ -145,13 +124,29 @@ export default {
         {
           title: this.$t('tableKey.expr'), // 表达式
           key: 'prom_expr',
-          minWidth: 150,
+          minWidth: 250,
           render: (h, params) => {
             return (
               <Tooltip max-width="300" content={params.row.prom_expr} transfer>
                 <span class="eclipse">{params.row.prom_expr || '-'}</span>
               </Tooltip>
             )
+          }
+        },
+        {
+          title: this.$t('m_updatedBy'), // 更新人
+          key: 'update_user',
+          width: 150,
+          render: (h, params) => {
+            return <span>{params.row.update_user || '-'}</span>
+          }
+        },
+        {
+          title: this.$t('m_business_configuration'), // 业务配置
+          key: 'log_metric_group_name',
+          width: 200,
+          render: (h, params) => {
+            return <span>{params.row.log_metric_group_name || '-'}</span>
           }
         },
         {
@@ -289,9 +284,26 @@ export default {
         this.$Message.warning(this.$t('tips.failed'))
       })
     },
-    uploadSucess () {
-      this.$Message.success(this.$t('tips.success'))
-      this.getList()
+    uploadSucess (val) {
+      if (val.status === 'OK') {
+        if (val.data) {
+          if (val.data.fail_list.length > 0) {
+            this.$Notice.error({
+              duration: 0,
+              render: () => {
+                return <div>
+                  {this.$t('m_metric_export_errorTips')}
+                  <span style="color:red;">{val.data.fail_list.join('、')}</span>
+                  {this.$t('m_metric')}
+                </div>
+              }
+            })
+          } else {
+            this.$Message.success(this.$t('tips.success'))
+          }
+        }
+        this.getList()
+      }
     },
     uploadFailed (error, file) {
       this.$Message.warning(file.message)
@@ -332,16 +344,6 @@ export default {
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
   }
-  .table td, .table th {
-    vertical-align: center;
-    border-top: none;
-  }
-  .table td {
-    padding: 6px 0;
-  }
-  .table th {
-    padding: 10px 0;
-  }
 }
 </style>
 <style lang="less" scoped>
@@ -351,7 +353,7 @@ export default {
     display: flex;
     justify-content: flex-end;
   }
-  .table {
+  .level-table {
     margin-top: 12px;
   }
 }
