@@ -50,7 +50,7 @@
           <div :id="elId" class="echart"  style="height:80vh"></div>
         </div>
         <div v-else class="echart echart-no-data-tip">
-          <span>~~~No Data!~~~</span>
+          <span>{{this.$t('m_noData')}}</span>
         </div>
       </div>
     </div>
@@ -162,7 +162,8 @@ export default {
           0 :Date.parse(this.viewCondition.dateRange[1].replace(/-/g, '/'))/1000,
         title: '',
         unit: '',
-        data: []
+        data: [],
+        custom_chart_guid: this.panalData.viewConfig.id
       }
       this.panalData.query.forEach(item => {
         params.data.push(item)
