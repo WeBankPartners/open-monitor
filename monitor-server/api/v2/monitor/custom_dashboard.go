@@ -34,7 +34,7 @@ func QueryCustomDashboardList(c *gin.Context) {
 	var list []*models.CustomDashboardTable
 	var roleRelList []*models.CustomDashBoardRoleRel
 	var mainDashBoardList []*models.MainDashboard
-	var mgmtRoles, useRoles, mainPages []string
+	var mgmtRoles, displayMgmtRoles, useRoles, displayUseRoles, mainPages []string
 	var displayNameRoleMap map[string]string
 	var userRoleMap map[string]bool
 	var permission string
@@ -58,6 +58,8 @@ func QueryCustomDashboardList(c *gin.Context) {
 		for _, dashboard := range list {
 			mgmtRoles = []string{}
 			useRoles = []string{}
+			displayMgmtRoles = []string{}
+			displayUseRoles = []string{}
 			mainPages = []string{}
 			permission = string(models.PermissionUse)
 			if roleRelList, err = db.QueryCustomDashboardRoleRelByCustomDashboard(dashboard.Id); err != nil {
@@ -71,16 +73,18 @@ func QueryCustomDashboardList(c *gin.Context) {
 			if len(roleRelList) > 0 {
 				for _, roleRel := range roleRelList {
 					if roleRel.Permission == string(models.PermissionMgmt) {
+						mgmtRoles = append(mgmtRoles, roleRel.RoleId)
 						if v, ok := displayNameRoleMap[roleRel.RoleId]; ok {
-							mgmtRoles = append(mgmtRoles, v)
+							displayMgmtRoles = append(displayMgmtRoles, v)
+						}
+						if userRoleMap[roleRel.RoleId] {
+							permission = string(models.PermissionMgmt)
 						}
 					} else if roleRel.Permission == string(models.PermissionUse) {
+						useRoles = append(useRoles, roleRel.RoleId)
 						if v, ok := displayNameRoleMap[roleRel.RoleId]; ok {
-							useRoles = append(useRoles, v)
+							displayUseRoles = append(displayUseRoles, v)
 						}
-					}
-					if userRoleMap[roleRel.RoleId] {
-						permission = string(models.PermissionMgmt)
 					}
 				}
 			}
@@ -92,15 +96,17 @@ func QueryCustomDashboardList(c *gin.Context) {
 				}
 			}
 			result := &models.CustomDashboardResultDto{
-				Id:         dashboard.Id,
-				Name:       dashboard.Name,
-				MgmtRoles:  mgmtRoles,
-				UseRoles:   useRoles,
-				Permission: permission,
-				CreateUser: dashboard.CreateUser,
-				UpdateUser: dashboard.UpdateUser,
-				UpdateTime: dashboard.UpdateAt.Format(models.DatetimeFormat),
-				MainPage:   mainPages,
+				Id:               dashboard.Id,
+				Name:             dashboard.Name,
+				MgmtRoles:        mgmtRoles,
+				DisplayMgmtRoles: displayMgmtRoles,
+				UseRoles:         useRoles,
+				DisplayUseRoles:  displayUseRoles,
+				Permission:       permission,
+				CreateUser:       dashboard.CreateUser,
+				UpdateUser:       dashboard.UpdateUser,
+				UpdateTime:       dashboard.UpdateAt.Format(models.DatetimeFormat),
+				MainPage:         mainPages,
 			}
 			rowsData = append(rowsData, result)
 		}
@@ -231,7 +237,7 @@ func DeleteCustomDashboard(c *gin.Context) {
 		return
 	}
 	if !permission {
-		middleware.ReturnServerHandleError(c, fmt.Errorf("not has deleted permission"))
+		middleware.ReturnServerHandleError(c, fmt.Errorf("no delete permission"))
 	}
 	if err = db.DeleteCustomDashboardById(id); err != nil {
 		middleware.ReturnServerHandleError(c, err)
@@ -268,7 +274,7 @@ func UpdateCustomDashboard(c *gin.Context) {
 		return
 	}
 	if !permission {
-		middleware.ReturnServerHandleError(c, fmt.Errorf("not has edit permission"))
+		middleware.ReturnServerHandleError(c, fmt.Errorf("no edit permission"))
 		return
 	}
 	if len(param.Charts) > 0 {
@@ -354,7 +360,7 @@ func UpdateCustomDashboard(c *gin.Context) {
 func UpdateCustomDashboardPermission(c *gin.Context) {
 	var err error
 	var param models.UpdateCustomDashboardPermissionParam
-	var actions, deleteActions, subActions []*db.Action
+	var actions, deleteActions, subActions, updateActions []*db.Action
 	var permission bool
 	if err = c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnServerHandleError(c, err)
@@ -383,6 +389,8 @@ func UpdateCustomDashboardPermission(c *gin.Context) {
 	if len(subActions) > 0 {
 		actions = append(actions, subActions...)
 	}
+	updateActions = db.UpdateCustomDashboardTimeActions(param.Id, middleware.GetOperateUser(c))
+	actions = append(actions, updateActions...)
 	if err = db.Transaction(actions); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return

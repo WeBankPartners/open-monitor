@@ -29,6 +29,7 @@ func InitPrometheusDatasource() {
 var PieLegendBlackName = []string{"job", "instance", "__name__", "e_guid"}
 
 func PrometheusData(query *m.QueryMonitorData) []*m.SerialModel {
+	log.Logger.Debug("prometheus data query", log.JsonObj("queryParam", query))
 	serials := []*m.SerialModel{}
 	urlParams := url.Values{}
 	hostAddress := promDS.Host
@@ -79,6 +80,7 @@ func PrometheusData(query *m.QueryMonitorData) []*m.SerialModel {
 		log.Logger.Error("Http request body read fail", log.Error(err))
 		return serials
 	}
+	log.Logger.Debug("prometheus data result", log.String("response", string(body)))
 	if res.StatusCode/100 != 2 {
 		log.Logger.Warn("Request fail with bad status", log.String("status", res.Status))
 		return serials
@@ -289,6 +291,18 @@ func GetSerialName(query *m.QueryMonitorData, tagMap map[string]string, dataLeng
 				tmpName = fmt.Sprintf("%s:%s", endpoint, metric)
 			}
 			tmpName = appendTagString(tmpName, tagMap, []string{})
+		} else if legend == "$custom_with_tag" {
+			if metricFirst {
+				tmpName = fmt.Sprintf("%s:%s", metric, endpoint)
+			} else {
+				tmpName = fmt.Sprintf("%s:%s", endpoint, metric)
+			}
+			tagKeyList := []string{}
+			for k, _ := range tagMap {
+				tagKeyList = append(tagKeyList, k)
+			}
+			sort.Strings(tagKeyList)
+			tmpName = appendTagString(tmpName, tagMap, tagKeyList)
 		}
 	}
 	if legend == "$metric" || legend == "$custom_metric" {
