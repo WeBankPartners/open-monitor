@@ -22,6 +22,7 @@ COPY build/stop.sh $BASE_HOME/
 COPY build/conf/prometheus.yml $PROMETHEUS_HOME/
 COPY build/conf/kubernetes_prometheus.tpl $PROMETHEUS_HOME/
 COPY build/conf/snmp_prometheus.tpl $PROMETHEUS_HOME/
+COPY build/conf/remote_write_prometheus.tpl $PROMETHEUS_HOME/
 COPY build/conf/prometheus.yml $PROMETHEUS_HOME/prometheus_tpl.yml
 COPY build/conf/sd_file $PROMETHEUS_HOME/sd_file
 COPY build/conf/alertmanager.yml $ALERTMANAGER_HOME/

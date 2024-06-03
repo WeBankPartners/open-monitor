@@ -1539,6 +1539,7 @@ func getUpdateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, opera
 	}
 	for i, inputMetricObj := range param.MetricList {
 		tmpTagListBytes, _ := json.Marshal(inputMetricObj.TagConfigList)
+		inputMetricObj.TagConfig = string(tmpTagListBytes)
 		if inputMetricObj.Guid == "" {
 			tmpMetricConfigGuid := "lmc_" + metricGuidList[i]
 			actions = append(actions, &Action{Sql: "insert into log_metric_config(guid,log_metric_monitor,log_metric_group,log_param_name,metric,display_name,regular,step,agg_type,tag_config,create_user,create_time) values (?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
@@ -1552,7 +1553,7 @@ func getUpdateLogMetricCustomGroupActions(param *models.LogMetricGroupObj, opera
 				inputMetricObj.LogParamName, inputMetricObj.Metric, inputMetricObj.DisplayName, inputMetricObj.Regular, inputMetricObj.Step, inputMetricObj.AggType, string(tmpTagListBytes), operator, nowTime, inputMetricObj.Guid,
 			}})
 			if existMetricObj, ok := existMetricDataMap[inputMetricObj.Guid]; ok {
-				if existMetricObj.Metric != inputMetricObj.Metric || existMetricObj.AggType != inputMetricObj.AggType {
+				if existMetricObj.Metric != inputMetricObj.Metric || existMetricObj.AggType != inputMetricObj.AggType || existMetricObj.LogParamName != inputMetricObj.LogParamName || existMetricObj.TagConfig != inputMetricObj.TagConfig {
 					oldMetricGuid := fmt.Sprintf("%s__%s", existMetricObj.Metric, serviceGroup)
 					newMetricGuid := fmt.Sprintf("%s__%s", inputMetricObj.Metric, serviceGroup)
 					actions = append(actions, &Action{Sql: "update metric set guid=?,metric=?,prom_expr=?,update_user=?,update_time=?,log_metric_group=? where guid=?",

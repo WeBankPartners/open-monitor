@@ -1,0 +1,1 @@
+  - url: '{{remote_write_url}}'

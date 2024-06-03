@@ -247,7 +247,7 @@
   "m_saturday": "Saturday",
   "m_sunday": "Sunday",
   "m_collection_interval": "Collection Interval",
-  "m_reset_condition": "Reset Condition",
+  "m_reset_condition": "Clear",
   "m_configuration": "Configuration",
   "m_new_graph": "Add New Graph",
   "m_collected_data": "Collected Data",
@@ -473,5 +473,6 @@
   "m_update": "Update",
   "m_nodata_tips": "Please configure the chart, click on the chart to directly enter the enlarged view",
   "m_metric_deleteTips": "Are you sure to delete indicators? The indicator cannot be restored after it is deleted, and the monitoring Kanban and alarm list are affected. Exercise caution when performing this operation.",
-  "m_metric_export_errorTips": "The import is complete. The import failed"
+  "m_metric_export_errorTips": "The import is complete. The import failed",
+  "m_modify": "Modify "
 }

@@ -65,7 +65,7 @@ func CreateAlarmStrategy(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	err := db.CreateAlarmStrategy(&param)
+	err := db.CreateAlarmStrategy(&param, middleware.GetOperateUser(c))
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
@@ -101,7 +101,7 @@ func UpdateAlarmStrategy(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	err := db.UpdateAlarmStrategy(&param)
+	err := db.UpdateAlarmStrategy(&param, middleware.GetOperateUser(c))
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
@@ -194,8 +194,14 @@ func ImportAlarmStrategy(c *gin.Context) {
 	}
 	queryType := c.Param("queryType")
 	guid := c.Param("guid")
-	err = db.ImportAlarmStrategy(queryType, guid, paramObj)
+	var metricNotFound []string
+	err, metricNotFound = db.ImportAlarmStrategy(queryType, guid, paramObj, middleware.GetOperateUser(c))
 	if err != nil {
+		if len(metricNotFound) > 0 {
+			err = fmt.Errorf(middleware.GetMessageMap(c).MetricNotFound, strings.Join(metricNotFound, ","))
+			middleware.ReturnHandleError(c, err.Error(), err)
+			return
+		}
 		middleware.ReturnHandleError(c, "import alarm strategy error:"+err.Error(), err)
 	} else {
 		middleware.ReturnSuccess(c)
