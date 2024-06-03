@@ -185,7 +185,7 @@ func UpdateCustomChart(c *gin.Context) {
 		middleware.ReturnValidateError(c, "id is invalid")
 		return
 	}
-	if err = db.UpdateCustomChart(chartDto, middleware.GetOperateUser(c)); err != nil {
+	if err = db.UpdateCustomChart(chartDto, middleware.GetOperateUser(c), chart.SourceDashboard); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
