@@ -8,6 +8,7 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -15,23 +16,56 @@ import (
 // GetSharedChartList 获取可分享的图表列表
 func GetSharedChartList(c *gin.Context) {
 	var sharedResultMap = make(map[string][]*models.ChartSharedDto)
-	var chartList []*models.CustomChart
+	var chartList, newChartList []*models.CustomChart
+	var customChartList []*models.CustomChartExtend
 	var err error
+	var exist bool
+	dashboardId, _ := strconv.Atoi(c.Query("dashboard_id"))
 	if chartList, err = db.QueryAllPublicCustomChartList(middleware.GetOperateUserRoles(c)); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
 	if len(chartList) > 0 {
-		for _, chart := range chartList {
-			sharedDto := &models.ChartSharedDto{
-				Id:              chart.Guid,
-				SourceDashboard: chart.SourceDashboard,
-				Name:            chart.Name,
+		// 去掉看板里面 已有重复的图表
+		if dashboardId != 0 {
+			if customChartList, err = db.QueryCustomChartListByDashboard(dashboardId); err != nil {
+				middleware.ReturnServerHandleError(c, err)
+				return
 			}
-			if _, ok := sharedResultMap[chart.ChartType]; !ok {
-				sharedResultMap[chart.ChartType] = []*models.ChartSharedDto{}
+			if len(customChartList) > 0 {
+				for _, chart := range chartList {
+					exist = false
+					for _, customChart := range customChartList {
+						if chart.Guid == customChart.Guid {
+							exist = true
+							break
+						}
+					}
+					if !exist {
+						newChartList = append(newChartList, chart)
+					}
+				}
+			} else {
+				newChartList = chartList
 			}
-			sharedResultMap[chart.ChartType] = append(sharedResultMap[chart.ChartType], sharedDto)
+		} else {
+			newChartList = chartList
+		}
+		if len(newChartList) > 0 {
+			for _, chart := range newChartList {
+				sharedDto := &models.ChartSharedDto{
+					Id:              chart.Guid,
+					SourceDashboard: chart.SourceDashboard,
+					Name:            chart.Name,
+				}
+				if strings.TrimSpace(chart.ChartType) == "" {
+					continue
+				}
+				if _, ok := sharedResultMap[chart.ChartType]; !ok {
+					sharedResultMap[chart.ChartType] = []*models.ChartSharedDto{}
+				}
+				sharedResultMap[chart.ChartType] = append(sharedResultMap[chart.ChartType], sharedDto)
+			}
 		}
 	}
 	middleware.ReturnSuccessData(c, sharedResultMap)
@@ -62,6 +96,7 @@ func CopyCustomChart(c *gin.Context) {
 	var customDashboard *models.CustomDashboardTable
 	var chart *models.CustomChart
 	var displayConfig []byte
+	var newChartId string
 	user := middleware.GetOperateUser(c)
 	now := time.Now().Format(models.DatetimeFormat)
 	if err = c.ShouldBindJSON(&param); err != nil {
@@ -110,15 +145,20 @@ func CopyCustomChart(c *gin.Context) {
 			middleware.ReturnServerHandleError(c, err)
 			return
 		}
-		middleware.ReturnSuccess(c)
+		if err = db.UpdateCustomDashboardTime(param.DashboardId, user); err != nil {
+			middleware.ReturnServerHandleError(c, err)
+			return
+		}
+		newChartId = param.OriginChartId
+		middleware.ReturnSuccessData(c, newChartId)
 		return
 	}
 	// 复制图表,copy 图表的所有数据并且与看板关联
-	if err = db.CopyCustomChart(param.DashboardId, middleware.GetOperateUser(c), param.Group, param.OriginChartId, param.DisplayConfig); err != nil {
+	if newChartId, err = db.CopyCustomChart(param.DashboardId, middleware.GetOperateUser(c), param.Group, param.OriginChartId, param.DisplayConfig); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
-	middleware.ReturnSuccess(c)
+	middleware.ReturnSuccessData(c, newChartId)
 }
 
 // UpdateCustomChart 更新自定义图表,先删除图表配置再新增
@@ -141,7 +181,7 @@ func UpdateCustomChart(c *gin.Context) {
 		return
 	}
 	if !permission {
-		middleware.ReturnServerHandleError(c, fmt.Errorf("not has deleted permission"))
+		middleware.ReturnServerHandleError(c, fmt.Errorf("no edit permission"))
 		return
 	}
 	if chart, err = db.GetCustomChartById(chartDto.Id); err != nil {
@@ -152,7 +192,7 @@ func UpdateCustomChart(c *gin.Context) {
 		middleware.ReturnValidateError(c, "id is invalid")
 		return
 	}
-	if err = db.UpdateCustomChart(chartDto, middleware.GetOperateUser(c)); err != nil {
+	if err = db.UpdateCustomChart(chartDto, middleware.GetOperateUser(c), chart.SourceDashboard); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
@@ -199,6 +239,7 @@ func GetCustomChart(c *gin.Context) {
 func UpdateCustomChartName(c *gin.Context) {
 	var chartNameParam models.UpdateCustomChartNameParam
 	var permission bool
+	var chart *models.CustomChart
 	var err error
 	if err = c.ShouldBindJSON(&chartNameParam); err != nil {
 		middleware.ReturnServerHandleError(c, err)
@@ -208,16 +249,24 @@ func UpdateCustomChartName(c *gin.Context) {
 		middleware.ReturnParamEmptyError(c, "chartId or name")
 		return
 	}
+	if chart, err = db.GetCustomChartById(chartNameParam.ChartId); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if chart == nil {
+		middleware.ReturnValidateError(c, "chartId is invalid")
+		return
+	}
 	// 判断是否拥有删除权限
 	if permission, err = CheckHasChartManagePermission(chartNameParam.ChartId, middleware.GetOperateUser(c), middleware.GetOperateUserRoles(c)); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
 	if !permission {
-		middleware.ReturnServerHandleError(c, fmt.Errorf("not has deleted permission"))
+		middleware.ReturnServerHandleError(c, fmt.Errorf("no update permission"))
 		return
 	}
-	if err = db.UpdateCustomChartName(chartNameParam.ChartId, chartNameParam.Name, middleware.GetOperateUser(c)); err != nil {
+	if err = db.UpdateCustomChartName(chartNameParam.ChartId, chartNameParam.Name, middleware.GetOperateUser(c), chart.SourceDashboard); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
@@ -276,7 +325,7 @@ func DeleteCustomChart(c *gin.Context) {
 		return
 	}
 	if !permission {
-		middleware.ReturnServerHandleError(c, fmt.Errorf("not has deleted permission"))
+		middleware.ReturnServerHandleError(c, fmt.Errorf("no delete permission"))
 		return
 	}
 	// 删除图表
@@ -307,7 +356,7 @@ func SharedCustomChart(c *gin.Context) {
 		return
 	}
 	if !permission {
-		middleware.ReturnServerHandleError(c, fmt.Errorf("not has edit permission"))
+		middleware.ReturnServerHandleError(c, fmt.Errorf("no edit permission"))
 		return
 	}
 	actions = append(actions, db.GetDeleteCustomChartPermissionSQL(param.ChartId)...)
@@ -432,14 +481,14 @@ func QueryCustomChart(c *gin.Context) {
 						if v, ok := displayNameRoleMap[roleRel.RoleId]; ok {
 							displayMgmtRoles = append(displayMgmtRoles, v)
 						}
+						if userRoleMap[roleRel.RoleId] {
+							permission = string(models.PermissionMgmt)
+						}
 					} else if roleRel.Permission == string(models.PermissionUse) {
 						useRoles = append(useRoles, roleRel.RoleId)
 						if v, ok := displayNameRoleMap[roleRel.RoleId]; ok {
 							displayUseRoles = append(displayUseRoles, v)
 						}
-					}
-					if userRoleMap[roleRel.RoleId] {
-						permission = string(models.PermissionMgmt)
 					}
 				}
 			}

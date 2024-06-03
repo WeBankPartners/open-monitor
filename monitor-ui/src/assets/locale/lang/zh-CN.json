@@ -127,7 +127,7 @@
   "table": {
     "more": "更多",
     "action": "操作",
-    "noDataTip": "当前查询条件尚无数据"
+    "noDataTip": "暂无数据"
   },
   "tableKey": {
     "endpoint": "对象",
@@ -247,7 +247,7 @@
   "m_saturday": "周六",
   "m_sunday": "周日",
   "m_collection_interval": "采集间隔",
-  "m_reset_condition": "重置条件",
+  "m_reset_condition": "清空",
   "m_configuration": "配置",
   "m_new_graph": "新增图表",
   "m_collected_data": "采集数据",
@@ -472,5 +472,7 @@
   "m_update": "更新",
   "m_nodata_tips": "请配置图表，点击图表直接进入放大查看",
   "m_metric_deleteTips": "确认删除指标？指标删除之后无法还原，会影响监控看板和告警列表，请谨慎操作。",
-  "m_metric_export_errorTips": "导入结束，导入失败"
+  "m_metric_export_errorTips": "导入结束，导入失败",
+  "m_modify": "修改",
+  "m_search_info": "搜索"
 }

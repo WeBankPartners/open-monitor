@@ -112,3 +112,5 @@ alter table custom_chart_series add column pie_display_tag varchar(64)  default 
 alter table custom_chart_series add column endpoint_type varchar(64)  default NULL COMMENT '对象类型';
 alter table custom_chart_series add column metric_type varchar(64)  default NULL COMMENT '指标类型';
 alter table custom_chart_series add column metric_guid varchar(64)  default NULL COMMENT '指标Id';
+
+update custom_dashboard_role_rel set role_id= (select name from role where id = role_id) where role_id in (select id from role)
