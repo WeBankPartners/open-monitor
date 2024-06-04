@@ -169,7 +169,7 @@
                       <Option v-for="item in panel_group_list" :value="item" :key="item" style="float: left;">{{ item }}</Option>
                     </Select>
                     <Tooltip :content="$t('m_save_chart_library')" theme="light" transfer placement="top">
-                      <Icon v-if="!item.public" size="15" type="md-archive" @click="showChartAuthDialog(item)" />
+                      <Icon v-if="isEditStatus && !item.public" size="15" type="md-archive" @click="showChartAuthDialog(item)" />
                     </Tooltip>
                     <Tooltip :content="$t('button.chart.dataView')" theme="light" transfer placement="top">
                       <i class="fa fa-eye" style="font-size: 16px;" v-if="isShowGridPlus(item)" aria-hidden="true" @click="gridPlus(item)"></i>
@@ -273,7 +273,7 @@ import CustomChart from '@/components/custom-chart'
 import CustomPieChart from '@/components/custom-pie-chart'
 import ViewConfigAlarm from '@/views/custom-view/view-config-alarm'
 import ViewChart from '@/views/custom-view/view-chart'
-import EditView from '@/views/custom-view/edit-view/edit-view'
+import EditView from '@/views/custom-view/edit-view'
 import AuthDialog from '@/components/auth.vue';
 export default {
   name: '',
@@ -496,8 +496,9 @@ export default {
           unit: '',
           data: []
         }
-        item.chartSeries.forEach( _ => {
-          params.data.push(_)
+        item.chartSeries.forEach(item => {
+          item.defaultColor = item.colorGroup;
+          params.data.push(item)
         })
 
         let height = (parsedDisplayConfig.h + 1) * 30-8
@@ -556,8 +557,8 @@ export default {
         // this.$root.JQ('#set_chart_type_Modal').modal('show')
       } else {
         this.activeChartType = find._activeCharts[0].chartType
-        this.chartType = find._activeCharts[0].chartType
-        this.editGrid(item)
+        this.chartType = find._activeCharts[0].chartType;
+        this.showChartConfig = true;
       }
     },
     choiceChartType (activeChartType) {
@@ -574,19 +575,6 @@ export default {
         this.$Message.warning('请先设置图标类型！')
         return
       }
-      this.editGrid()
-    },
-    editGrid(item) {
-      this.modifyLayoutData().then((resViewData)=>{
-        let parentRouteData = this.editData
-        this.parentRouteData = parentRouteData
-        if (['line','bar'].includes(this.activeChartType)) {
-          this.chartType = 'line'
-        } else {
-          this.chartType = 'pie'
-        }
-        this.showChartConfig = true
-      })
     },
     removeGrid(item) {
       this.isShowWarning = true
@@ -654,7 +642,6 @@ export default {
       await this.submitPanelInfo();
       this.$Message.success(this.$t('tips.success'));
     },
-
     returnPreviousPage() {
       this.$router.push({name:'viewConfigIndex'})
     },
@@ -811,39 +798,41 @@ export default {
         setTimeout(() => {
           this.request('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams(), res => {
             this.getPannelList();
-            this.editGrid()
+            this.showChartConfig = true;
           });
         }, 0)
       } else {
         const group = type === 'copy' ? '' : (this.activeGroup === 'ALL' ? "" : this.activeGroup);
+        const copyParams = {
+          dashboardId: this.pannelId,
+          ref: type === 'copy' ? false : true,
+          originChartId: copyInfo.id,
+          group,
+          displayConfig: {
+            x:0,
+            y:0,
+            w:6,
+            h:7,
+          }
+        }
+        const chartId = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/copy', copyParams);
         let item = {
           x:0,
           y:0,
           w:6,
           h:7,
           i: '',
-          id: `${copyInfo.id}`, 
+          id: `${chartId}`, 
           group
         }
         this.layoutData.push(item);
         setTimeout(async () => {
-          const copyParams = {
-            dashboardId: this.pannelId,
-            ref: type === 'copy' ? false : true,
-            originChartId: copyInfo.id,
-            group,
-            displayConfig: {
-              x:0,
-              y:0,
-              w:6,
-              h:7,
-            }
-          }
-          await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/copy', copyParams);
           await this.requestReturnPromise('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams());
           this.getPannelList();
-          this.setChartConfigId = copyInfo.id;
-          this.editGrid();
+          this.setChartConfigId = chartId;
+          if (type === 'copy') {
+            this.showChartConfig = true;
+          }
           this.getAllChartOptionList();
         }, 0)
       }

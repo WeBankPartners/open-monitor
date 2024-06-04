@@ -82,14 +82,14 @@
                     <span>{{item.updateTime}}</span>
                   </div>
                 </div>
-                <div>
+                <div class="all-card-item-content mb-1">
                   <div class="card-content mb-1" v-for="(keyItem, index) in cardContentList" :key="index"> 
                       <span style="min-width: 80px">{{$t(keyItem.label)}}: </span>
                       <div v-if="keyItem.type === 'string'">
                         {{item[keyItem.key]}}
                       </div>
                       <div v-if="keyItem.type === 'array'">
-                        <div v-if="item[keyItem.key].length" class="card-content-array">
+                        <div v-if="item[keyItem.key].length" :class="['card-content-array', item[keyItem.key].length >=3  ? 'exceed-content' : '']">
                             <Tag 
                               v-for="(tag, tagIndex) in item[keyItem.key]"
                               :key="tagIndex"
@@ -165,7 +165,7 @@
         <template #content-top>
           <div v-if="isAddViewType" class="auth-dialog-content">
             <span class="mr-3">{{$t('m_name')}}:</span>
-            <Input style="width: 350px" v-model="addViewName"></Input>
+            <Input style="width: 350px" :maxlength="20" v-model="addViewName"></Input>
           </div>
         </template>
       </AuthDialog>
@@ -215,7 +215,6 @@ import debounce from 'lodash/debounce';
 import cloneDeep from 'lodash/cloneDeep'
 import isEmpty from 'lodash/isEmpty'
 import AuthDialog from '@/components/auth.vue'
-import { nextTick } from 'vue';
 export default {
   name: '',
   data() {
@@ -286,7 +285,7 @@ export default {
       pagination: {
         totalRows: 100,
         currentPage: 2,
-        pageSize: 6
+        pageSize: 16
       },
       mgmtRoles: [],
       userRoles: [],
@@ -299,7 +298,7 @@ export default {
   },
   mounted(){
     this.pathMap = this.$root.apiCenter.template;
-    this.pagination.pageSize = 6;
+    this.pagination.pageSize = 16;
     this.pagination.currentPage = 1;
     this.getViewList()
     this.getAllRoles()
@@ -440,14 +439,16 @@ export default {
     }, 300),
 
     saveTemplate(mgmtRoles, useRoles) {
+      if (this.isAddViewType && !this.addViewName ) {
+        this.$nextTick(() => {
+          this.$Message.success(this.$t('m_name') + this.$t('m_cannot_be_empty'))
+          this.$refs.authDialog.flowRoleManageModal = true
+        })
+        return
+      }
       this.mgmtRoles = mgmtRoles;
       this.userRoles = useRoles;
       this.submitData()
-      if (this.isAddViewType && !this.addViewName ) {
-        nextTick(() => {
-          this.$refs.authDialog.flowRoleManageModal = true
-        })
-      }
     },
     submitData() {
       const params = {
@@ -511,10 +512,16 @@ li {
 .all-card-item {
   display: flex;
   flex-wrap: wrap;
+  .all-card-item-content {
+    min-height: 160px;
+    height: 160px;
+  }
 }
+
+
 .panal-list {
   margin: 8px;
-  width: 390px;
+  width: 22%;
   min-height: 240px;
   display: inline-block;
   .panal-title {
@@ -540,9 +547,20 @@ li {
     height: 40px;
   }
   .card-content-array {
+    position: relative;
     display: flex;
     flex-wrap: wrap;
     width: 100%;
+    max-height: 52px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .exceed-content::after {
+    content: '...';
+    font-size: 20px;
+    position: absolute;
+    bottom: 0px;
+    right: 50px;
   }
 }
 
