@@ -479,5 +479,6 @@
   "m_metric_deleteTips": "Are you sure to delete indicators? The indicator cannot be restored after it is deleted, and the monitoring Kanban and alarm list are affected. Exercise caution when performing this operation.",
   "m_metric_export_errorTips": "The import is complete. The import failed",
   "m_modify": "Modify ",
-  "m_search_info": "Search"
+  "m_search_info": "Search",
+  "m_add_chart_library": "Please add the chart library first."
 }
