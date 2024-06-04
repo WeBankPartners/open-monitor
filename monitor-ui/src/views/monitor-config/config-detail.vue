@@ -589,7 +589,7 @@ export default {
                 {this.modelConfig.metricList &&
                   this.modelConfig.metricList.map((i, index) => (
                     <Option value={i.guid} key={i.metric + index} label={i.metric}>
-                      <TagShow tagName={i.metric_type} index={index}></TagShow>{i.metric}</Option>
+                      <TagShow list={this.modelConfig.metricList} name="metric_type" tagName={i.metric_type} index={index}></TagShow>{i.metric}</Option>
                   ))}
               </Select>
             )
