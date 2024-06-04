@@ -57,17 +57,17 @@ export default {
         },
         {
           title: this.$t('alarmContent'),
-          key: 'content'
+          key: 'content',
+          ellipsis: true,
+          tooltip: true
         },
         {
           title: this.$t('tableKey.s_priority'),
           key: 's_priority',
-          width: 100,
+          width: 90,
           render: (h, params) => {
             return (
-              <Tooltip placement="right" max-width="400">
-                <Tag color={alarmLevelMap[params.row.s_priority].buttonType}>{this.$t(alarmLevelMap[params.row.s_priority].label)}</Tag>
-              </Tooltip>
+              <Tag color={alarmLevelMap[params.row.s_priority].buttonType}>{this.$t(alarmLevelMap[params.row.s_priority].label)}</Tag>
             )
           }
         },
@@ -78,9 +78,7 @@ export default {
         {
           title: this.$t('field.threshold'),
           key: 'alarm_detail',
-          width: 200,
-          ellipsis: true,
-          tooltip: true,
+          width: 300,
           render: (h, params) => {
             return (
               <Tooltip transfer={true} placement="bottom-start" max-width="300">
@@ -94,16 +92,23 @@ export default {
         },
         {
           title: this.$t('tableKey.start'),
-          key: 'start_string'
+          key: 'start_string',
+          width: 170,
         },
         {
           title: this.$t('m_remark'),
-          key: 'custom_message'
+          key: 'custom_message',
+          width: 120,
+          render: (h, params) => {
+            return(
+              <div>{params.row.custom_message || '-'}</div>
+            )
+          }
         },
         {
           title: this.$t('table.action'),
           key: 'action',
-          width: 200,
+          width: 160,
           align: 'left',
           fixed: 'right',
           render: (h, params) => {
