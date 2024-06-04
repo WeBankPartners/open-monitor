@@ -587,7 +587,7 @@ func GetChartSeriesColor(c *gin.Context) {
 		}
 	}
 	// 增加实时查chart合并series
-	queryChartParam := models.ChartQueryParam{TimeSecond: -1800, Aggregate: "none", Data: []*models.ChartQueryConfigObj{{
+	queryChartParam := models.ChartQueryParam{Start: time.Now().Unix() - 1800, End: time.Now().Unix(), Aggregate: "none", Step: 10, Data: []*models.ChartQueryConfigObj{{
 		Endpoint:     param.Endpoint,
 		Metric:       param.Metric,
 		AppObject:    param.ServiceGroup,
