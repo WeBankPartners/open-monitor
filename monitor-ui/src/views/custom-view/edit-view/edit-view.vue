@@ -126,7 +126,7 @@
             @on-change="searchTypeByEndpoint"
             >
             <Option v-for="(option, index) in endpointOptions" :value="option.option_value" :label="option.option_text" :key="index">
-              <TagShow :tagName="option.option_type_name" :index="index"></TagShow> 
+              <TagShow :list="endpointOptions" name="option_type_name" :tagName="option.option_type_name" :index="index"></TagShow> 
               {{option.option_text}}
             </Option>
           </Select>
@@ -151,7 +151,7 @@
             :placeholder="$t('m_metric')"
             >
             <Option v-for="(option, index) in metricOptions" :value="option.metric" :label="option.metric" :key="index">
-              <TagShow :tagName="option.metric_type" :index="index"></TagShow> 
+              <TagShow :list="metricOptions" name="metric_type" :tagName="option.metric_type" :index="index"></TagShow> 
               {{option.metric}}
             </Option>
           </Select>
@@ -258,7 +258,7 @@ export default {
             render: (h, params) => {
               return params.row.endpointType.length ?  (
                 <div class="table-config-endpoint">
-                  <TagShow tagName={params.row.endpointType} index={params.index} /> 
+                  <TagShow list={this.tableData} name="endpointType" tagName={params.row.endpointType} index={params.index} /> 
                   {params.row.endpointName}
                 </div>
               ) : (
@@ -285,7 +285,7 @@ export default {
           render: (h, params) => {
             return (
               <div class="indicator_color_system">
-                {params.row.metricType ? <TagShow tagName={params.row.metricType} index={params.index} /> : <span />}
+                {params.row.metricType ? <TagShow list={this.tableData} name="metricType" tagName={params.row.metricType} index={params.index} /> : <span />}
                 <div class="metric-text ml-1 mr-1">{params.row.metric}</div>
                 <ColorPicker v-model={params.row.colorGroup} on-on-change={e => {
                   this.tableData[params.index].colorGroup = e
@@ -372,7 +372,7 @@ export default {
                 >
                   {this.endpointOptions.map((option, index) => (
                     <Option class="select-options-change" value={option.option_value} label={option.option_text} key={index}>
-                      <TagShow tagName={option.option_type_name} index={index}></TagShow> 
+                      <TagShow list={this.endpointOptions} name="option_type_name" tagName={option.option_type_name} index={index}></TagShow> 
                       {option.option_text}
                     </Option>
                     ))}
@@ -425,7 +425,7 @@ export default {
               >
                 {this.metricOptions.map((option, index) => (
                   <Option class="select-options-change" value={option.metric} label={option.metric} key={index}>
-                    <TagShow tagName={option.metric_type} index={index} /> 
+                    <TagShow list={this.metricOptions} name="metric_type" tagName={option.metric_type} index={index} /> 
                     {option.metric}
                   </Option>
 

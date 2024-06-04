@@ -13,7 +13,7 @@
           @on-change="changeServiceGroup"
         >
           <Option v-for="(option, index) in recursiveOptions" :value="option.guid" :label="option.display_name" :key="index">
-            <TagShow :tagName="option.type" :index="index"></TagShow> 
+            <TagShow :list="recursiveOptions" name="type" :tagName="option.type" :index="index"></TagShow> 
             {{option.display_name}}
           </Option>
         </Select>
@@ -114,14 +114,6 @@ export default {
           }
         },
         {
-          title: this.$t('m_update_time'), // 更新时间
-          key: 'update_time',
-          width: 150,
-          render: (h, params) => {
-            return <span>{params.row.update_time || '-'}</span>
-          }
-        },
-        {
           title: this.$t('tableKey.expr'), // 表达式
           key: 'prom_expr',
           minWidth: 250,
@@ -131,6 +123,14 @@ export default {
                 <span class="eclipse">{params.row.prom_expr || '-'}</span>
               </Tooltip>
             )
+          }
+        },
+        {
+          title: this.$t('m_update_time'), // 更新时间
+          key: 'update_time',
+          width: 150,
+          render: (h, params) => {
+            return <span>{params.row.update_time || '-'}</span>
           }
         },
         {
