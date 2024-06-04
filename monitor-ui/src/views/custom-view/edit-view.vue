@@ -150,24 +150,42 @@
           </Select>
 
           <Select
-            v-model="metric"
+            v-model="metricGuid"
             filterable
             clearable 
-            multiple
             :placeholder="$t('m_metric')"
+            @on-change="searchTagOptions"
             >
             <Option v-for="(option, index) in metricOptions" :value="option.guid" :label="option.metric" :key="index">
               <Tag type="border" :color="metricTypeMap[option.metric_type].color">{{metricTypeMap[option.metric_type].label}}</Tag>
               {{option.metric}}
             </Option>
           </Select>
-          <Button :disabled="!endpointValue || !monitorType || metric.length === 0" @click="addConfiguration" type="primary">{{$t('m_add_configuration')}}</Button>
+          <div v-if="chartAddTags.length" class="add-tag-configuration">
+            <div v-for="(tag, index) in chartAddTags" :key="index" class="mb-1">
+                <span class="mr-1">{{tag.tagName}}</span>
+                <Select
+                  v-model="chartAddTags[index].tagValue"
+                  style="maxWidth: 130px"
+                  filterable
+                  multiple
+                  clearable
+                >
+                  <Option v-for="(option, key) in chartAddTagOptions[tag.tagName]" :key="key" :value="option.value">
+                    {{option.key}}
+                  </Option>
+                </Select>
+              </div>
+          </div>
+          <div v-else></div>
+
+          <Button :disabled="!endpointValue || !monitorType || !metricGuid" @click="addConfiguration" type="primary">{{$t('m_add_configuration')}}</Button>
         </div>
       </div>
     </div>
     <div class="config-footer">
       <Button class="mr-4" @click="resetChartConfig">{{$t('m_reset')}}</Button>
-      <Button class="save-chart-library mr-4" v-if="!isNotSaveChartLibraryButtonShow" :disabled="chartPublic" @click="saveChartLibrary" :type="chartPublic ? '' : 'primary'">{{$t('m_save_chart_library')}}</Button>
+      <Button class="save-chart-library mr-4" v-if="!isNotSaveChartLibraryButtonShow" :disabled="chartPublic" @click="saveChartLibrary" :type="chartPublic ? 'default' : 'primary'">{{$t('m_save_chart_library')}}</Button>
       <Button class="mr-4" type="primary" @click="saveChartConfig">{{$t('m_save')}}</Button>
     </div>
     <AuthDialog ref="authDialog" :useRolesRequired="true" @sendAuth="saveChartAuth" />
@@ -516,7 +534,7 @@ export default {
       endpointOptions: [],
       monitorType: "",
       monitorTypeOptions: [],
-      metric: [],
+      metricGuid: '',
       metricOptions: [],
       chartTemplateOptions: [
         {
@@ -605,7 +623,9 @@ export default {
           color: '#b886f8'
         }
       },
-      chartPublic: false
+      chartPublic: false,
+      chartAddTagOptions: {},
+      chartAddTags: []
     }
   },
   computed: {
@@ -776,7 +796,7 @@ export default {
     },
     resetSearchItem(index) {
       this.monitorType = '';
-      this.metric = '';
+      this.metricGuid = '';
       this.metricOptions = [];
       this.monitorTypeOptions = [];
       this.tableData[index].monitorType = '';
@@ -805,7 +825,7 @@ export default {
     },
     searchTypeByEndpoint(value) {
       this.monitorType = '';
-      this.metric = [];
+      this.metricGuid = '';
       this.metricOptions = [];
       this.monitorTypeOptions = [];
       const selectedItem = find(cloneDeep(this.endpointOptions), {
@@ -826,7 +846,7 @@ export default {
       }
     },
     searchMetricByType() {
-      this.metric = [];
+      this.metricGuid = '';
       this.metricOptions = [];
       if (!this.endpointValue || !this.monitorType) return
       this.request('GET', '/monitor/api/v2/monitor/metric/list', {
@@ -868,6 +888,10 @@ export default {
         }]
       }
     },
+    async searchTagOptions() {
+      this.chartAddTagOptions = await this.findTagsByMetric(this.metricGuid, this.endpointValue, this.serviceGroup);
+      this.chartAddTags = this.initTagsFromOptions(this.chartAddTagOptions);
+    }, 
     findTagsByMetric(metricId, endpoint, serviceGroup) {
       const api = '/monitor/api/v2/metric/tag/value-list';
       const params = {
@@ -894,7 +918,6 @@ export default {
             guid: metricGuid
         })
         item.metricGuid = metricItem.guid;
-        this.metric = metricItem.metric;
         Vue.set(item, 'metric', metricItem.metric);
         item.metricType = metricItem.metric_type;
         item.tagOptions = await this.findTagsByMetric(metricItem.guid, this.endpointValue, this.serviceGroup)
@@ -905,40 +928,41 @@ export default {
       }
     },
     async addConfiguration() {
-      if (this.endpointValue && !isEmpty(this.metric)) {
-        for(let i=0; i<this.metric.length; i++) {
-          const metricItem = find(this.metricOptions, {
-            guid: this.metric[i]
-          })
-          const basicParams = this.processBasicParams(metricItem.metric);
-          const res = await this.requestReturnPromise('POST', '/monitor/api/v1/dashboard/chart', basicParams);
-          // 这里this.metric是存的guid
-          
-          const tagOptions = await this.findTagsByMetric(metricItem.guid, this.endpointValue, this.serviceGroup)
-          this.tableData.push({
-            endpoint: this.endpointValue,
-            serviceGroup: this.serviceGroup,
-            endpointName: this.endpointName,
-            endpointType: this.endpointType,
-            metricGuid: metricItem.guid,
-            metricType: metricItem.metric_type,
-            monitorType: this.monitorType,
-            colorGroup: "",
-            pieDisplayTag: "",
-            metric: metricItem.metric,
-            tags: this.initTagsFromOptions(tagOptions),
-            series: res.legend.map(item => {
-              return {
-                seriesName: item,
-                color: ''
-              }
-            }),
-            tagOptions 
-          }) 
-        }
-        this.metric = [];
+      if (this.endpointValue && this.metricGuid) {
+        const metricItem = find(this.metricOptions, {
+          guid: this.metricGuid
+        })
+        const basicParams = this.processBasicParams(metricItem.metric);
+        const res = await this.requestReturnPromise('POST', '/monitor/api/v1/dashboard/chart', basicParams);
+        // 这里this.metric是存的guid
+        
+        // const tagOptions = await this.findTagsByMetric(metricItem.guid, this.endpointValue, this.serviceGroup)
+        this.tableData.push({
+          endpoint: this.endpointValue,
+          serviceGroup: this.serviceGroup,
+          endpointName: this.endpointName,
+          endpointType: this.endpointType,
+          metricGuid: metricItem.guid,
+          metricType: metricItem.metric_type,
+          monitorType: this.monitorType,
+          colorGroup: "",
+          pieDisplayTag: "",
+          metric: metricItem.metric,
+          tags: this.chartAddTags,
+          // tags: this.initTagsFromOptions(tagOptions),
+          series: res.legend.map(item => {
+            return {
+              seriesName: item,
+              color: ''
+            }
+          }),
+          tagOptions: this.chartAddTagOptions
+        }) 
+        this.metricGuid = '';
         this.endpointValue = '';
         this.monitorType = '';
+        this.chartAddTagOptions = {};
+        this.chartAddTags = [];
       }
     },
     onChartTemplateSelected(key) {
@@ -1128,7 +1152,7 @@ export default {
 }
 
 .add-data-configuration > div {
-  width: 25%;
+  width: 20%;
 }
 
 .save-chart-library.ivu-btn-primary {
@@ -1227,10 +1251,16 @@ export default {
         flex-direction: row;
         flex-wrap: nowrap;
         justify-content: space-between;
+        align-items: center;
         margin-top: 15px;
         padding: 20px;
-        width: 60%;
+        width: 80%;
         background-color: #efefef;
+        .add-tag-configuration {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+        }
       }
     } 
 
