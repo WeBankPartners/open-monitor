@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -307,6 +308,28 @@ func GetMetricTags(metricRow *models.MetricTable) (tags []string, err error) {
 			}
 		}
 		return
+	}
+	tagParamList := getPromTagParamList(metricRow.PromExpr)
+	for _, v := range tagParamList {
+		if strings.HasPrefix(v, "$t_") {
+			tags = append(tags, v[3:])
+		}
+	}
+	return
+}
+
+func getPromTagParamList(promQl string) (tagList []string) {
+	if strings.Contains(promQl, "$") {
+		re, _ := regexp.Compile("=\"[\\$]+[^\"]+\"")
+		fetchTag := re.FindAll([]byte(promQl), -1)
+		for _, vv := range fetchTag {
+			tmpV := string(vv)
+			if len(tmpV) < 3 {
+				continue
+			}
+			tmpV = tmpV[2 : len(tmpV)-1]
+			tagList = append(tagList, tmpV)
+		}
 	}
 	return
 }
