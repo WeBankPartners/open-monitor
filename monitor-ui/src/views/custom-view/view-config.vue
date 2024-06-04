@@ -498,6 +498,15 @@ export default {
         }
         item.chartSeries.forEach(item => {
           item.defaultColor = item.colorGroup;
+          if (item.series && !isEmpty(item.series)) {
+            item.metricToColor = cloneDeep(item.series).map(one => {
+              one.metric = one.seriesName;
+              delete one.seriesName
+              return one
+            })
+          } else {
+            item.metricToColor = []
+          }
           params.data.push(item)
         })
 
@@ -773,7 +782,7 @@ export default {
           chartType: copyInfo.id,
           lineType: copyInfo.id === 'line' ? 'line' : "",
           pieType: copyInfo.id === 'pie' ? 'tag' : "",
-          aggregate: "min",
+          aggregate: "none",
           aggStep: 60,
           unit: '',
           group: this.activeGroup === 'ALL' ? "" : this.activeGroup,
