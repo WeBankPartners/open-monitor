@@ -94,8 +94,7 @@ func ImportMetric(c *gin.Context) {
 	for _, obj := range paramObj {
 		nameList = append(nameList, obj.Metric)
 	}
-	if err = db.MetricImport(serviceGroup, middleware.GetOperateUser(c), paramObj); err != nil {
-		result.FailList = nameList
+	if result.FailList, err = db.MetricImport(serviceGroup, middleware.GetOperateUser(c), paramObj); err != nil {
 		result.Message = err.Error()
 	} else {
 		result.SuccessList = nameList
