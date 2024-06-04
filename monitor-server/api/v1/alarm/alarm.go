@@ -758,12 +758,20 @@ func TestNotifyAlarm(c *gin.Context) {
 }
 
 func GetCustomDashboardAlarm(c *gin.Context) {
-	customDashboardId, _ := strconv.Atoi(c.Query("id"))
+	var param m.QueryProblemAlarmDto
+	if err := c.ShouldBindJSON(&param); err != nil {
+		mid.ReturnValidateError(c, err.Error())
+		return
+	}
+	if param.Page == nil {
+		param.Page = &m.PageInfo{StartIndex: 0, PageSize: 0}
+	}
+	customDashboardId, _ := strconv.Atoi(c.Param("customDashboardId"))
 	if customDashboardId <= 0 {
 		mid.ReturnParamEmptyError(c, "id")
 		return
 	}
-	err, result := db.GetCustomDashboardAlarms(customDashboardId)
+	err, result := db.GetCustomDashboardAlarms(customDashboardId, param.Page)
 	if err != nil {
 		mid.ReturnHandleError(c, err.Error(), err)
 	} else {
