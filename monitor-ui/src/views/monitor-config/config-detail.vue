@@ -1199,9 +1199,7 @@ export default {
     findTagsByMetric(metricId) {
       const api = '/monitor/api/v2/metric/tag/value-list';
       const params = {
-        metricId,
-        endpoint: this.targetId,
-        serviceGroup: this.targetId
+        metricId
       }
       
       return new Promise(resolve => {
