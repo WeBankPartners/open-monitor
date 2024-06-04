@@ -52,7 +52,7 @@
       v-model="modelParams.isShow">
       <div slot="header" class="custom-modal-header">
         <span>
-          {{ (modelParams.isAdd ? $t('button.add') : $t('button.edit')) + $t('m_proxy_collector') }}
+          {{ (modelParams.isAdd ? $t('button.add') : $t('button.edit')) }}
         </span>
       </div>
       <div>
