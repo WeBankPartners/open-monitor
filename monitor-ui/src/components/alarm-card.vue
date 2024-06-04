@@ -2,7 +2,6 @@
   <Card style="margin-bottom: 8px;" class="xxx">
     <template #title>
       <div
-        class="col-md-9"
         style="padding: 0; color: #404144; font-size: 16px;display:flex;align-items:center;"
       >
         <img
@@ -38,12 +37,13 @@
           <span v-else v-html="data.content"></span>
         </div>
       </div>
-      <div
-        style="padding: 0; text-align: right; color: #7e8086;width:200px"
-      >
-        {{ data.start_string }}
-      </div>
     </template>
+    <div
+      slot="extra"
+      style="padding: 0; color: #7e8086;"
+    >
+      {{ data.start_string }}
+    </div>
     <div
       v-if="$attrs.button"
       style="position: absolute; top: 10px; right: 10px"

@@ -343,32 +343,32 @@ func getChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.
 				}
 			}
 		}
-		queryAppendFlag := false
+		//queryAppendFlag := false
 		if len(endpointList) > 0 && metricLegend == "$app_metric" {
-			tmpPromQL := db.ReplacePromQlKeyword(dataConfig.PromQl, dataConfig.Metric, endpointList[0], []*models.TagDto{})
-			log.Logger.Debug("check prom is same", log.String("tmpPromQl", tmpPromQL), log.String("dataProm", dataConfig.PromQl))
-			if tmpPromQL == dataConfig.PromQl {
-				queryAppendFlag = true
-				log.Logger.Debug("prom is same")
-				queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQL, Legend: metricLegend, Metric: []string{dataConfig.Metric}, Endpoint: []string{endpointList[0].Guid}, Step: endpointList[0].Step, Cluster: endpointList[0].Cluster, CustomDashboard: true})
-			}
+			tmpPromQL := db.ReplacePromQlKeyword(dataConfig.PromQl, dataConfig.Metric, endpointList[0], dataConfig.Tags)
+			queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQL, Legend: metricLegend, Metric: []string{dataConfig.Metric}, Endpoint: []string{endpointList[0].Guid}, Step: endpointList[0].Step, Cluster: endpointList[0].Cluster, CustomDashboard: true})
+			continue
+			//log.Logger.Debug("check prom is same", log.String("tmpPromQl", tmpPromQL), log.String("dataProm", dataConfig.PromQl))
+			//if tmpPromQL == dataConfig.PromQl {
+			//	queryAppendFlag = true
+			//	log.Logger.Debug("prom is same")
+			//	queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQL, Legend: metricLegend, Metric: []string{dataConfig.Metric}, Endpoint: []string{endpointList[0].Guid}, Step: endpointList[0].Step, Cluster: endpointList[0].Cluster, CustomDashboard: true})
+			//}
 		}
-		if !queryAppendFlag {
-			for _, endpoint := range endpointList {
-				tmpPromQL := dataConfig.PromQl
-				if customPromQL != "" && serviceGroupTag != "" && strings.Contains(tmpPromQL, serviceGroupTag) {
-					tmpPromQL = strings.ReplaceAll(tmpPromQL, serviceGroupTag, serviceGroupTag+",instance=\"$address\"")
-					if strings.Contains(tmpPromQL, "service_group,") {
-						tmpPromQL = strings.ReplaceAll(tmpPromQL, "service_group,", "service_group,instance,")
-					}
-					if strings.Contains(tmpPromQL, "service_group)") {
-						tmpPromQL = strings.ReplaceAll(tmpPromQL, "service_group)", "service_group,instance)")
-					}
-					log.Logger.Debug("build custom chart query", log.String("tmpPromQL", tmpPromQL))
+		for _, endpoint := range endpointList {
+			tmpPromQL := dataConfig.PromQl
+			if customPromQL != "" && serviceGroupTag != "" && strings.Contains(tmpPromQL, serviceGroupTag) {
+				tmpPromQL = strings.ReplaceAll(tmpPromQL, serviceGroupTag, serviceGroupTag+",instance=\"$address\"")
+				if strings.Contains(tmpPromQL, "service_group,") {
+					tmpPromQL = strings.ReplaceAll(tmpPromQL, "service_group,", "service_group,instance,")
 				}
-				tmpPromQL = db.ReplacePromQlKeyword(tmpPromQL, dataConfig.Metric, endpoint, []*models.TagDto{})
-				queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQL, Legend: metricLegend, Metric: []string{dataConfig.Metric}, Endpoint: []string{endpoint.Guid}, Step: endpoint.Step, Cluster: endpoint.Cluster, CustomDashboard: true})
+				if strings.Contains(tmpPromQL, "service_group)") {
+					tmpPromQL = strings.ReplaceAll(tmpPromQL, "service_group)", "service_group,instance)")
+				}
+				log.Logger.Debug("build custom chart query", log.String("tmpPromQL", tmpPromQL))
 			}
+			tmpPromQL = db.ReplacePromQlKeyword(tmpPromQL, dataConfig.Metric, endpoint, dataConfig.Tags)
+			queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQL, Legend: metricLegend, Metric: []string{dataConfig.Metric}, Endpoint: []string{endpoint.Guid}, Step: endpoint.Step, Cluster: endpoint.Cluster, CustomDashboard: true})
 		}
 	}
 	return
