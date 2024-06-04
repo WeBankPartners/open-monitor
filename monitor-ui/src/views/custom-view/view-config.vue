@@ -458,7 +458,7 @@ export default {
       return options
     },
     onChartBodyClick(item) {
-      if (this.isEditStatus) {
+      if (this.isEditStatus && !this.noAllowChartChange(item)) {
         this.setChartType(item);
       } else {
         this.gridPlus(item);
