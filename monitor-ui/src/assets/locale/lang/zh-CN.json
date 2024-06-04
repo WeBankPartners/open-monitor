@@ -416,7 +416,7 @@
   "m_business_configuration": "业务配置",
   "m_business_log_template": "业务日志模板",
   "m_customize": "自定义",
-  "m_customize_board": "自定义看板",
+  "m_customize_board": "自定义",
   "m_metric_threshold": "指标阈值",
   "m_create": "新建",
   "m_list": "列表",
@@ -472,5 +472,9 @@
   "m_update": "更新",
   "m_nodata_tips": "请配置图表，点击图表直接进入放大查看",
   "m_modify": "修改",
-  "m_search_info": "搜索"
+  "m_search_info": "搜索",
+  "m_remote_sync": "远程同步",
+  "m_proxy_collector": "代理采集器",
+  "m_http_server": "Http地址",
+  "m_example": "示例"
 }
