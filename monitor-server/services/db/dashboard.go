@@ -190,7 +190,9 @@ func ReplacePromQlKeyword(promQl, metric string, host *m.EndpointNewTable, tagLi
 			}
 			promQl = strings.ReplaceAll(promQl, "\"$address\"", fmt.Sprintf("\"$address\"%s", tagAppendString))
 		}
-		promQl = strings.Replace(promQl, "$address", host.AgentAddress, -1)
+		if host.AgentAddress != ".*" {
+			promQl = strings.Replace(promQl, "$address", host.AgentAddress, -1)
+		}
 	}
 	if strings.Contains(promQl, `$guid`) {
 		promQl = strings.Replace(promQl, "$guid", host.Guid, -1)
