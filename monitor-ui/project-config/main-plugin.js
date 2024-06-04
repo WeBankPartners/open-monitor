@@ -51,6 +51,10 @@ const implicitRoute = {
     parentBreadcrumb: {'zh-CN': '其他', 'en-US': 'Other'},
     childBreadcrumb: { 'zh-CN': '采集器', 'en-US': 'Exporter'}
   },
+  'monitorConfigIndex/remoteSync': {
+    parentBreadcrumb: {'zh-CN': '其他', 'en-US': 'Other'},
+    childBreadcrumb: { 'zh-CN': '远程同步', 'en-US': 'Remote Sync'}
+  },
   'monitorConfigIndex/businessMonitor': {
     parentBreadcrumb: {'zh-CN': '指标', 'en-US': 'Quota'},
     childBreadcrumb: { 'zh-CN': '业务配置', 'en-US': 'Business Configuration' }
@@ -61,7 +65,7 @@ const implicitRoute = {
   },
   'monitorConfigIndex/metricConfig': {
     parentBreadcrumb: {'zh-CN': '指标', 'en-US': 'Quota'},
-    childBreadcrumb: { 'zh-CN': '自定义', 'en-US': 'customize' }
+    childBreadcrumb: { 'zh-CN': '自定义', 'en-US': 'Customize' }
   },
   'monitorConfigIndex/groupBoard': {
     parentBreadcrumb: {'zh-CN': '对象', 'en-US': 'Object'},

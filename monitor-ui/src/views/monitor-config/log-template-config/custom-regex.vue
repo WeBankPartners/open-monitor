@@ -628,7 +628,7 @@ export default {
   overflow: auto;
 }
 .modal-container-fullscreen {
-  height: ~"calc(100vh - 100px)";
+  height: ~"calc(100vh - 150px)";
   overflow: auto;
 }
 .custom-modal-header {
