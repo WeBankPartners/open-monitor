@@ -418,7 +418,7 @@
   "m_business_configuration": "Business Configuration",
   "m_business_log_template": "Log Template",
   "m_customize": "Customize",
-  "m_customize_board": "Customize Board",
+  "m_customize_board": "Customize",
   "m_metric_threshold": "Metric Threshold",
   "m_create": "Create",
   "m_list": "List",
@@ -472,5 +472,9 @@
   "m_show_metric": "Show Metric",
   "m_update": "Update",
   "m_nodata_tips": "Please configure the chart, click on the chart to directly enter the enlarged view",
-  "m_modify": "Modify "
+  "m_modify": "Modify ",
+  "m_remote_sync": "Remote Sync",
+  "m_proxy_collector": " Proxy Collector",
+  "m_http_server": "Http Server",
+  "m_example": "Example"
 }
