@@ -25,13 +25,19 @@
           style="margin-right: 8px; cursor: pointer"
           @click="addParams('priority', data.s_priority)"
         />
-        <div v-if="data.alarm_name">{{data.alarm_name}}
-          <img
-              class="filter-icon-flex"
-              @click="addParams('alarm_name', data.alarm_name)"
-              src="../assets/img/icon_filter.png"
-            />
-        </div>
+        <template v-if="data.alarm_name">
+          <Tooltip :content=data.alarm_name max-width="300" >
+            <div class="custom-title">
+              {{data.alarm_name}}
+              <img
+                  v-if="!$attrs.hideFilter"
+                  class="filter-icon-flex"
+                  @click="addParams('alarm_name', data.alarm_name)"
+                  src="../assets/img/icon_filter.png"
+                />
+            </div>
+          </Tooltip>
+        </template>
         <div v-else>
           <span v-if="data.is_custom" v-html="data.title"></span>
           <span v-else v-html="data.content"></span>
@@ -120,6 +126,7 @@
               </Tooltip>
             </div>
             <img
+              v-if="!$attrs.hideFilter"
               class="filter-icon-flex"
               @click="addParams('endpoint', data.endpoint)"
               src="../assets/img/icon_filter.png"
@@ -133,6 +140,7 @@
            <div class="mr-2" v-for="(metric, index) in data.alarm_metric_list" :key=index>
             {{ metric }}
             <img
+              v-if="!$attrs.hideFilter"
               class="filter-icon"
               @click="addParams('metric', metric)"
               src="../assets/img/icon_filter.png"
@@ -312,5 +320,11 @@ li {
 .copy-data {
   font-size: 16px;
   cursor: pointer
+}
+.custom-title {
+  max-width: 400px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 </style>

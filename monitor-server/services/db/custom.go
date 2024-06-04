@@ -1,7 +1,6 @@
 package db
 
 import (
-	"encoding/json"
 	"fmt"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"strconv"
@@ -146,36 +145,55 @@ func SaveCustomeDashboardRole(param m.CustomDashboardRoleDto) error {
 	return Transaction(actions)
 }
 
-func GetCustomDashboardAlarms(id int) (err error, result m.AlarmProblemQueryResult) {
+func GetCustomDashboardAlarms(id int, page *m.PageInfo) (err error, result m.AlarmProblemQueryResult) {
 	result = m.AlarmProblemQueryResult{High: 0, Mid: 0, Low: 0, Data: []*m.AlarmProblemQuery{}}
-	customQuery := &m.CustomDashboardObj{}
-	customQuery, err = GetCustomDashboard(id)
-	if err != nil || customQuery.Cfg == "" {
-		return err, result
-	}
-	var customConfig []*m.CustomDashboardConfigObj
-	err = json.Unmarshal([]byte(customQuery.Cfg), &customConfig)
+	//customQuery := &m.CustomDashboardObj{}
+	var customChartSeriesRows []*m.CustomChartSeries
+	err = x.SQL("select dashboard_chart,endpoint,service_group,monitor_type,metric from custom_chart_series where dashboard_chart in (select dashboard_chart from custom_dashboard_chart_rel where custom_dashboard=?)", id).Find(&customChartSeriesRows)
 	if err != nil {
-		return fmt.Errorf("json unmarshal dashboard config fail,%s", err.Error()), result
+		err = fmt.Errorf("query chart series fail,%s ", err.Error())
+		return
 	}
 	var endpointList []string
-	for _, v := range customConfig {
-		for _, vv := range v.Query {
-			if vv.AppObject != "" {
-				endpointList = append(endpointList, "sg__"+vv.AppObject)
-				serviceGuidList, _ := fetchGlobalServiceGroupChildGuidList(vv.AppObject)
-				serviceGroupEndpoint := getServiceGroupEndpointWithType(vv.EndpointType, serviceGuidList)
-				for _, sgEndpoint := range serviceGroupEndpoint {
-					endpointList = append(endpointList, sgEndpoint.Guid)
-				}
-			} else {
-				endpointList = append(endpointList, vv.Endpoint)
+	for _, row := range customChartSeriesRows {
+		if row.ServiceGroup != "" {
+			endpointList = append(endpointList, "sg__"+row.ServiceGroup)
+			serviceGuidList, _ := fetchGlobalServiceGroupChildGuidList(row.ServiceGroup)
+			serviceGroupEndpoint := getServiceGroupEndpointWithType(row.MonitorType, serviceGuidList)
+			for _, sgEndpoint := range serviceGroupEndpoint {
+				endpointList = append(endpointList, sgEndpoint.Guid)
 			}
+		} else {
+			endpointList = append(endpointList, row.Endpoint)
 		}
 	}
+	//customQuery, err = GetCustomDashboard(id)
+	//if err != nil || customQuery.Cfg == "" {
+	//	return err, result
+	//}
+	//var customConfig []*m.CustomDashboardConfigObj
+	//err = json.Unmarshal([]byte(customQuery.Cfg), &customConfig)
+	//if err != nil {
+	//	return fmt.Errorf("json unmarshal dashboard config fail,%s", err.Error()), result
+	//}
+	//var endpointList []string
+	//for _, v := range customConfig {
+	//	for _, vv := range v.Query {
+	//		if vv.AppObject != "" {
+	//			endpointList = append(endpointList, "sg__"+vv.AppObject)
+	//			serviceGuidList, _ := fetchGlobalServiceGroupChildGuidList(vv.AppObject)
+	//			serviceGroupEndpoint := getServiceGroupEndpointWithType(vv.EndpointType, serviceGuidList)
+	//			for _, sgEndpoint := range serviceGroupEndpoint {
+	//				endpointList = append(endpointList, sgEndpoint.Guid)
+	//			}
+	//		} else {
+	//			endpointList = append(endpointList, vv.Endpoint)
+	//		}
+	//	}
+	//}
 	if len(endpointList) > 0 {
 		sql := "SELECT * FROM alarm WHERE status='firing' AND endpoint IN ('" + strings.Join(endpointList, "','") + "') ORDER BY id DESC"
-		err, result = QueryAlarmBySql(sql, []interface{}{}, m.CustomAlarmQueryParam{Enable: false}, &m.PageInfo{})
+		err, result = QueryAlarmBySql(sql, []interface{}{}, m.CustomAlarmQueryParam{Enable: false}, page)
 	}
 	return err, result
 }
