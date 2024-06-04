@@ -20,7 +20,7 @@
             @on-clear="typeChange"
             >
             <Option v-for="(option, index) in targetOptions" :value="option.guid" :key="index">
-              <TagShow :tagName="option.type" :index="index"></TagShow> 
+              <TagShow :list="targetOptions" name="type" :tagName="option.type" :index="index"></TagShow> 
               {{option.display_name}}
             </Option>
           </Select>
