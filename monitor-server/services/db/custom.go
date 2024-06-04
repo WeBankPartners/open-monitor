@@ -145,7 +145,7 @@ func SaveCustomeDashboardRole(param m.CustomDashboardRoleDto) error {
 	return Transaction(actions)
 }
 
-func GetCustomDashboardAlarms(id int) (err error, result m.AlarmProblemQueryResult) {
+func GetCustomDashboardAlarms(id int, page *m.PageInfo) (err error, result m.AlarmProblemQueryResult) {
 	result = m.AlarmProblemQueryResult{High: 0, Mid: 0, Low: 0, Data: []*m.AlarmProblemQuery{}}
 	//customQuery := &m.CustomDashboardObj{}
 	var customChartSeriesRows []*m.CustomChartSeries
@@ -193,7 +193,7 @@ func GetCustomDashboardAlarms(id int) (err error, result m.AlarmProblemQueryResu
 	//}
 	if len(endpointList) > 0 {
 		sql := "SELECT * FROM alarm WHERE status='firing' AND endpoint IN ('" + strings.Join(endpointList, "','") + "') ORDER BY id DESC"
-		err, result = QueryAlarmBySql(sql, []interface{}{}, m.CustomAlarmQueryParam{Enable: false}, &m.PageInfo{})
+		err, result = QueryAlarmBySql(sql, []interface{}{}, m.CustomAlarmQueryParam{Enable: false}, page)
 	}
 	return err, result
 }
