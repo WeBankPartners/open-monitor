@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
 	"io/ioutil"
@@ -12,30 +13,32 @@ import (
 func RemoteWriteConfigList() (result []*models.RemoteWriteConfigTable, err error) {
 	result = []*models.RemoteWriteConfigTable{}
 	err = x.SQL("select * from remote_write_config").Find(&result)
+	if err != nil {
+		err = fmt.Errorf("query remote wirte config fail,%s ", err.Error())
+		return
+	}
+	for _, row := range result {
+		row.CreateTime = row.CreateAt.Format(models.DatetimeFormat)
+		row.UpdateTime = row.UpdateAt.Format(models.DatetimeFormat)
+	}
 	return
 }
 
-func RemoteWriteConfigCreate(input models.RemoteWriteConfigTable) error {
-	_, err := x.Exec("insert into remote_write_config(id,address,create_at) value (?,?,?)", input.Id, input.Address, time.Now())
+func RemoteWriteConfigCreate(input models.RemoteWriteConfigTable, operator string) error {
+	_, err := x.Exec("insert into remote_write_config(id,address,create_at,create_user) value (?,?,?,?)", input.Id, input.Address, time.Now(), operator)
 	if err != nil {
 		return fmt.Errorf("Insert database fail,%s ", err.Error())
 	}
-	err = SyncRemoteWritePrometheusConfig()
-	if err != nil {
-		return fmt.Errorf("Sync prometheus config fail,%s ", err.Error())
-	}
+	CallSyncWritePrometheusConfig()
 	return nil
 }
 
-func RemoteWriteConfigUpdate(input models.RemoteWriteConfigTable) error {
-	_, err := x.Exec("update remote_write_config set address=? where id=?", input.Address, input.Id)
+func RemoteWriteConfigUpdate(input models.RemoteWriteConfigTable, operator string) error {
+	_, err := x.Exec("update remote_write_config set address=?,update_user=? where id=?", input.Address, operator, input.Id)
 	if err != nil {
 		return fmt.Errorf("Update database fail,%s ", err.Error())
 	}
-	err = SyncRemoteWritePrometheusConfig()
-	if err != nil {
-		return fmt.Errorf("Sync prometheus config fail,%s ", err.Error())
-	}
+	CallSyncWritePrometheusConfig()
 	return nil
 }
 
@@ -44,11 +47,19 @@ func RemoteWriteConfigDelete(id string) error {
 	if err != nil {
 		return fmt.Errorf("Update database fail,%s ", err.Error())
 	}
-	err = SyncRemoteWritePrometheusConfig()
-	if err != nil {
-		return fmt.Errorf("Sync prometheus config fail,%s ", err.Error())
-	}
+	CallSyncWritePrometheusConfig()
 	return nil
+}
+
+func CallSyncWritePrometheusConfig() {
+	go func() {
+		err := SyncRemoteWritePrometheusConfig()
+		if err != nil {
+			log.Logger.Error("SyncRemoteWritePrometheusConfig", log.Error(err))
+		} else {
+			log.Logger.Info("SyncRemoteWritePrometheusConfig done")
+		}
+	}()
 }
 
 func SyncRemoteWritePrometheusConfig() error {
