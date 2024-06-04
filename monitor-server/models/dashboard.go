@@ -504,9 +504,10 @@ type AddCustomDashboardParam struct {
 }
 
 type UpdateCustomDashboardParam struct {
-	Id     int               `json:"id"`
-	Name   string            `json:"name"`
-	Charts []*CustomChartDto `json:"charts"`
+	Id          int               `json:"id"`
+	Name        string            `json:"name"`
+	Charts      []*CustomChartDto `json:"charts"`
+	PanelGroups []string          `json:"panelGroups"`
 }
 
 type UpdateCustomDashboardPermissionParam struct {
