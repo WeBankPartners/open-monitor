@@ -4,7 +4,7 @@
       <transition name="fade" mode="out-in">
         <router-view></router-view>
       </transition>
-      <BenchMenu :menuList="menuList" @menuStatusChange="onMenuChange" :openNames="['1','2','3','4']" defaultMenu="1-1"></BenchMenu>
+      <BenchMenu :menuList="menuList" :openNames="['1','2','3','4']" defaultMenu="1-1"></BenchMenu>
     </div>
   </div>
 </template>
@@ -72,15 +72,15 @@ export default {
   },
   mounted () {
     if (this.$eventBusP) {
-      this.$eventBusP.$emit('expand-menu', this.expand)
+      this.$eventBusP.$on('expand-menu', val => {
+        this.expand = val
+      })
     } else {
-      this.$bus.$emit('expand-menu', this.expand)
+      this.$bus.$on('expand-menu', val => {
+        this.expand = val
+      })
     }
   },
-  methods: {
-    onMenuChange(val) {
-        this.expand = val
-    }
-  }
+  methods: {}
 }
 </script>
