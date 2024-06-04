@@ -1,7 +1,7 @@
 <template>
   <div>
     <Row>
-      <Col span="8" style="max-height: 510px;overflow: auto;">
+      <Col span="8" :style="{ height: showTemplate ? '' : '510px' }" style="overflow: auto;">
         <Form :label-width="120" style="margin-top:12px">
           <FormItem :label="$t('m_template_name')">
             <Tooltip :content="configInfo.name" transfer :disabled="configInfo.name === ''" style="width: 100%;" max-width="200">
@@ -211,7 +211,8 @@ export default {
           }
         }
       ],
-      generateBackstageTrialWarning: false
+      generateBackstageTrialWarning: false,
+      fullScreenHeight: '100px'
     }
   },
   props: {

@@ -910,11 +910,13 @@ CREATE TABLE `alarm_condition_rel` (
 
 alter table alarm add column alarm_name varchar(64) default null comment '告警名称';
 CREATE TABLE `remote_write_config` (
-      `id` varchar(64) NOT NULL,
-      `address` varchar(255) NOT NULL,
-      `create_at` datetime DEFAULT NULL,
-      `update_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      PRIMARY KEY (`id`)
+   `id` varchar(64) NOT NULL,
+   `address` varchar(255) NOT NULL,
+   `create_user` varchar(64) DEFAULT NULL,
+   `update_user` varchar(64) DEFAULT NULL,
+   `create_at` datetime DEFAULT NULL,
+   `update_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 alter table alarm_strategy add column update_user varchar(64) default null;
 #@v2.0.8.1-end@;
