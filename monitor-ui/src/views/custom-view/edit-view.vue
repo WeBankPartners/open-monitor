@@ -422,7 +422,8 @@ export default {
               <Select
                 value={params.row.metricGuid}
                 on-on-change={v => {
-                    this.addConfigurationInPie(v);
+                    this.addConfigurationInPie(v)
+                    Vue.set(this.tableData[params.index], 'pieDisplayTag', '');
                 }}
                 filterable
                 clearable
@@ -480,25 +481,30 @@ export default {
           align: 'center',
           width: 200,
           render: (h, params) => {
-            const options = [];
+            const options = []
             for(let key in params.row.tagOptions) {
               options.push(key)
             }
             return (
-              <Select
-                value={params.row.pieDisplayTag}
-                on-on-change={v => {
-                  Vue.set(this.tableData[params.index], 'pieDisplayTag', v)
-                }}
-                filterable
-                clearable
-              >
-                {options.map((item, index) => (
-                  <Option value={item} label={item} key={index}>
-                    {item}
-                  </Option>
-                ))}
-              </Select>
+              <div>
+                {
+                  isEmpty(params.row.tags) ? '-' : 
+                  <Select
+                    value={params.row.pieDisplayTag}
+                    on-on-change={v => {
+                      Vue.set(this.tableData[params.index], 'pieDisplayTag', v)
+                    }}
+                    filterable
+                    clearable
+                  >
+                    {options.map((item, index) => (
+                      <Option value={item} label={item} key={index}>
+                        {item}
+                      </Option>
+                    ))}
+                  </Select>
+                }
+              </div>
             )
           }
         },
@@ -1152,7 +1158,6 @@ export default {
 } 
 .tags-show > span {
   width: 70px;
-  overflow: scroll;
 }
 
 .tags-show .ivu-select-item.ivu-select-item-selected::after {
