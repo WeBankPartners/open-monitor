@@ -277,6 +277,7 @@ func QueryCustomChartNameExist(c *gin.Context) {
 	var err error
 	var list []*models.CustomChart
 	var chart *models.CustomChart
+	var customChartExtendList []*models.CustomChartExtend
 	chartId := c.Query("chart_id")
 	name := c.Query("name")
 	if strings.TrimSpace(chartId) == "" || strings.TrimSpace(name) == "" {
@@ -292,6 +293,21 @@ func QueryCustomChartNameExist(c *gin.Context) {
 		return
 	}
 	if chart.Public == 0 {
+		// 没有存入到图表库的图表,在源看板中图表不能重复
+		if chart.SourceDashboard != 0 {
+			if customChartExtendList, err = db.QueryCustomChartListByDashboard(chart.SourceDashboard); err != nil {
+				middleware.ReturnServerHandleError(c, err)
+				return
+			}
+			if len(customChartExtendList) > 0 {
+				for _, extend := range customChartExtendList {
+					if extend.Guid != chart.Guid && extend.Name == chart.Name {
+						middleware.ReturnSuccessData(c, true)
+						return
+					}
+				}
+			}
+		}
 		middleware.ReturnSuccessData(c, false)
 		return
 	}
