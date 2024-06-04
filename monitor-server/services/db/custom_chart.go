@@ -161,9 +161,9 @@ func GetUpdateCustomDashboardChartRelSQL(chartRelList []*models.CustomDashboardC
 	return actions
 }
 
-func GetUpdateCustomDashboardSQL(name, user string, id int) []*Action {
+func GetUpdateCustomDashboardSQL(name, panelGroups, user string, id int) []*Action {
 	var actions []*Action
-	actions = append(actions, &Action{Sql: "update custom_dashboard set name=?,update_user=?,update_at=? where id =?", Param: []interface{}{name, user, time.Now().Format(models.DatetimeFormat), id}})
+	actions = append(actions, &Action{Sql: "update custom_dashboard set name=?,update_user=?,update_at=?,panel_groups=? where id =?", Param: []interface{}{name, user, time.Now().Format(models.DatetimeFormat), panelGroups, id}})
 	return actions
 }
 
@@ -404,6 +404,7 @@ func CopyCustomChart(dashboardId int, user, group, customChart string, displayCo
 	var tagMap = make(map[string][]*models.CustomChartSeriesTag)
 	var tagValueMap = make(map[string][]*models.CustomChartSeriesTagValue)
 	var actions []*Action
+	var chartName string
 	newChartId = guid.CreateGuid()
 	chart := &models.CustomChart{}
 	byteConf, _ := json.Marshal(displayConfig)
@@ -423,8 +424,9 @@ func CopyCustomChart(dashboardId int, user, group, customChart string, displayCo
 	if tagValueMap, err = QueryAllChartSeriesTagValue(); err != nil {
 		return
 	}
+	chartName = getNewChartName(chart.Name)
 	actions = append(actions, &Action{Sql: "insert into custom_chart(guid,source_dashboard,public,name,chart_type,line_type,aggregate,agg_step,unit,create_user,update_user,create_time,update_time,chart_template,pie_type) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
-		newChartId, dashboardId, 0, chart.Name + "-" + time.Now().Format("060102150405"), chart.ChartType, chart.LineType, chart.Aggregate,
+		newChartId, dashboardId, 0, chartName, chart.ChartType, chart.LineType, chart.Aggregate,
 		chart.AggStep, chart.Unit, user, user, now, now, chart.ChartTemplate, chart.PieType}})
 	for _, series := range chartSeriesList {
 		seriesId := guid.CreateGuid()
@@ -462,6 +464,18 @@ func CopyCustomChart(dashboardId int, user, group, customChart string, displayCo
 	actions = append(actions, &Action{Sql: "update custom_dashboard set update_at=?,update_user=? where id=?", Param: []interface{}{now, user, dashboardId}})
 	err = Transaction(actions)
 	return
+}
+
+func getNewChartName(name string) string {
+	if strings.TrimSpace(name) != "" {
+		start := strings.LastIndex(name, "-")
+		suffix := name[start+1:]
+		if len(suffix) == 12 {
+			name = name[:start] + "-" + time.Now().Format("060102150405")
+		}
+		return name
+	}
+	return time.Now().Format("060102150405")
 }
 
 func UpdateCustomChartName(chartId, name, user string, sourceDashboard int) (err error) {
