@@ -31,7 +31,7 @@ export const readyToDraw = function(that, responseData, viewIndex, chartConfig, 
       if (item.endpoint.split('.').length >= 3) {
         isHostOrSys = true
       } 
-      metricEndpointColorInChartConfig[`${item.metric}:${item.endpoint}`] = item.defaultColor || '#666699'
+      metricEndpointColorInChartConfig[`${item.metric}:${item.endpoint}`] = item.defaultColor || ''
       metricSysColorInChartConfig[`${item.metric}`] = item.defaultColor || ''
       let nullColorIndex = []
       item.metricToColor = item.metricToColor || [];
@@ -73,7 +73,7 @@ export const readyToDraw = function(that, responseData, viewIndex, chartConfig, 
         if (findIndex === -1) {
           const keys = Object.keys(metricSysColorInChartConfig)
           keys.forEach(key => {
-            if (item.name.startsWith(key)) {
+            if (item.name.includes(key)) {
               let color = generateAdjacentColors(metricSysColorInChartConfig[key], 1, 20 * (itemIndex*0.1) )
               metricToColor.push({
                 metric: item.name,
@@ -83,7 +83,6 @@ export const readyToDraw = function(that, responseData, viewIndex, chartConfig, 
           })
         }
       })
-      console.log(metricToColor)
     }
   }
   
