@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/WeBankPartners/go-common-lib/guid"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"sort"
 	"strings"
 	"time"
 )
@@ -507,6 +508,7 @@ func CreateCustomChartDto(chartExtend *models.CustomChartExtend, configMap map[s
 			seriesConfigList = []*models.CustomChartSeriesConfig{}
 			chartSeriesTagList = []*models.CustomChartSeriesTag{}
 			customChartSeriesDto := &models.CustomChartSeriesDto{
+				Guid:          series.Guid,
 				Endpoint:      series.Endpoint,
 				ServiceGroup:  series.ServiceGroup,
 				EndpointName:  series.EndpointName,
@@ -547,6 +549,9 @@ func CreateCustomChartDto(chartExtend *models.CustomChartExtend, configMap map[s
 				}
 			}
 			chart.ChartSeries = append(chart.ChartSeries, customChartSeriesDto)
+		}
+		if len(chart.ChartSeries) > 0 {
+			sort.Sort(models.CustomChartSeriesDtoSort(chart.ChartSeries))
 		}
 	}
 	return
