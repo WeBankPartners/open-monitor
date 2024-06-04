@@ -103,3 +103,8 @@ func (s PromMapSort) String() string {
 	}
 	return name
 }
+
+type PromSeriesResponse struct {
+	Status string              `json:"status"`
+	Data   []map[string]string `json:"data"`
+}
