@@ -6,82 +6,12 @@
       <Tag color="error"><span style="font-size:14px">{{$t('m_high')}}:{{this.high}}</span></Tag>
     </div>
     <div class="alarm-list">
-      <template v-for="(alarmItem, alarmIndex) in resultData">
-        <section :key="alarmIndex" class="alarm-item c-dark-exclude-color" :class="'alarm-item-border-'+ alarmItem.s_priority">
-          <div style="float:right">
-            <Poptip trigger="hover">
-              <div slot="title" style="white-space: normal;color: #2d8cf0">
-                <p>{{ $t('m_initiate_orchestration') }}: {{ alarmItem.notify_callback_name }}</p>
-              </div>
-              <div slot="content" style="white-space: normal;padding:16px">
-                <p>{{ $t('tableKey.description') }}: {{ alarmItem.notify_message }}</p>
-              </div>
-              <Icon
-                type="ios-megaphone"
-                size="18"
-                class="fa-operate"
-                v-if="alarmItem.notify_id !==''"
-                @click="goToNotify(alarmItem)"
-              />
-            </Poptip>
-            <Tooltip :content="$t('menu.endpointView')">
-              <Icon type="ios-stats" size="18" class="fa-operate" v-if="!alarmItem.is_custom" @click="goToEndpointView(alarmItem)"/>
-            </Tooltip>
-            <Tooltip :content="$t('close')">
-              <Icon type="ios-eye-off" size="18" class="fa-operate" v-if="permission === 'edit'" @click="deleteConfirmModal(alarmItem)"/>
-            </Tooltip>
-            <Tooltip :content="$t('m_remark')">
-              <Icon type="ios-pricetags-outline" size="18" class="fa-operate" slot="" v-if="permission === 'edit'" @click="remarkModal(alarmItem)" />
-            </Tooltip>
-          </div>
-          <ul>
-            <li>
-              <label class="alarm-item-label">{{$t('field.endpoint')}}:</label>
-              <Tag type="border" color="primary">{{alarmItem.endpoint}}</Tag>
-            </li>
-            <li v-if="!alarmItem.is_custom">
-              <label class="alarm-item-label">{{$t('field.metric')}}:</label>
-              <Tag type="border" color="primary">{{alarmItem.s_metric}}</Tag>
-            </li>
-            <li>
-              <label class="alarm-item-label">{{$t('tableKey.s_priority')}}:</label>
-              <Tag type="border" color="primary">{{alarmItem.s_priority}}</Tag>
-            </li>
-            <li v-if="!alarmItem.is_custom && alarmItem.tags">
-              <label class="alarm-item-label">{{$t('tableKey.tags')}}:</label>
-              <Tag type="border" v-for="(t,tIndex) in alarmItem.tags.split('^')" :key="tIndex" color="cyan">{{t}}</Tag>
-            </li>
-            <li v-if="alarmItem.custom_message">
-              <label class="alarm-item-label">{{$t('m_remark')}}:</label>
-              <Tooltip max-width="300">
-                <div style="border: 1px solid #2d8cf0;padding:2px;border-radius:4px; color: #2d8cf0">
-                {{alarmItem.custom_message.length > 60 ? alarmItem.custom_message.substring(0,60) + '...' : alarmItem.custom_message}}
-                </div>
-                <div slot="content" style="white-space: normal;">
-                  <p>{{alarmItem.custom_message}}</p>
-                </div>
-              </Tooltip>
-            </li>
-            <li>
-              <label class="alarm-item-label">{{$t('tableKey.start')}}:</label><span>{{alarmItem.start_string}}</span>
-            </li>
-            <li>
-              <label class="alarm-item-label">{{$t('details')}}:</label>
-              <span>
-                <Tag color="default">{{$t('tableKey.start_value')}}:{{alarmItem.start_value}}</Tag>
-                <Tag color="default" v-if="alarmItem.s_cond">{{$t('tableKey.threshold')}}:{{alarmItem.s_cond}}</Tag>
-                <Tag color="default" v-if="alarmItem.s_last">{{$t('tableKey.s_last')}}:{{alarmItem.s_last}}</Tag>
-                <Tag color="default" v-if="alarmItem.path">{{$t('tableKey.path')}}:{{alarmItem.path}}</Tag>
-                <Tag color="default" v-if="alarmItem.keyword">{{$t('tableKey.keyword')}}:{{alarmItem.keyword}}</Tag>
-              </span>
-            </li>
-            <li>
-              <label class="alarm-item-label" style="vertical-align: top;">{{$t('alarmContent')}}:</label>
-              <div class="col-md-9" style="display: inline-block;padding:0" v-html="alarmItem.content"></div>
-            </li>
-          </ul>
-        </section>
-      </template>
+      <section class="alarm-card-container">
+        <alarm-card v-for="(item, alarmIndex) in resultData" :key="alarmIndex" :data="item" :button="false" :hideFilter="true"></alarm-card>
+      </section>
+      <div style="margin: 4px 0; text-align:right">
+        <Page :total="paginationInfo.total" @on-change="pageIndexChange" @on-page-size-change="pageSizeChange" show-elevator show-sizer show-total />
+      </div>
     </div>
     <Modal
       v-model="isShowWarning"
@@ -99,8 +29,12 @@
 </template>
 
 <script>
+import AlarmCard from "@/components/alarm-card.vue"
 export default {
   name: '',
+  components: {
+    AlarmCard
+  },
   data() {
     return {
       cutsomViewId: null,
@@ -129,6 +63,11 @@ export default {
       cacheParams: {
         id: '',
         viewCondition: ''
+      },
+      paginationInfo: {
+        total: 0,
+        startIndex: 1,
+        pageSize: 10
       }
     }
   },
@@ -164,13 +103,25 @@ export default {
 
     },
     getAlarmdata (id) {
-      const parmas = {id}
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', '/monitor/api/v1/dashboard/custom/alarm/list', parmas, (responseData) => {
+      const url = `/monitor/api/v1/dashboard/custom/alarm/list/${id}`
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', url, {page: this.paginationInfo}, (responseData) => {
+        this.paginationInfo.total = responseData.page.totalRows
+        this.paginationInfo.startIndex = responseData.page.startIndex
+        this.paginationInfo.pageSize = responseData.page.pageSize
         this.resultData = responseData.data
         this.low = responseData.low
         this.mid = responseData.mid
         this.high = responseData.high
       }, {isNeedloading: false})
+    },
+    pageIndexChange(pageIndex) {
+      this.paginationInfo.startIndex = pageIndex
+      this.getAlarmdata(this.cacheParams.id)
+    },
+    pageSizeChange(pageSize) {
+      this.paginationInfo.startIndex = 1
+      this.paginationInfo.pageSize = pageSize
+      this.getAlarmdata(this.cacheParams.id)
     },
     goToEndpointView (alarmItem) {
       const endpointObject = {
@@ -228,8 +179,7 @@ export default {
         this.$root.JQ('#remark_Modal').modal('hide')
       })
     }
-  },
-  components: {},
+  }
 }
 </script>
 
@@ -257,11 +207,11 @@ label {
 }
 .alarm-total {
   // float: right;
-  margin-left: 8px;
   font-size: 18px;
+  margin-bottom: 8px;
 }
 .alarm-list {
-  height: ~"calc(100vh - 150px)";
+  // height: ~"calc(100vh - 150px)";
   width: 100%;
   overflow-y: auto;
 }
