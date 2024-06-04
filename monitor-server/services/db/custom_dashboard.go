@@ -28,8 +28,7 @@ func QueryCustomDashboardList(condition models.CustomDashboardQueryParam, roles 
 		sql = sql + " and name like '%" + condition.Name + "%'"
 	}
 	if condition.UpdateUser != "" {
-		sql = sql + " and update_user = ?"
-		params = append(params, condition.UpdateUser)
+		sql = sql + " and update_user like '%" + condition.UpdateUser + "%'"
 	}
 	sql = sql + " and id in (" + strings.Join(ids, ",") + ")"
 	sql = sql + " order by update_at desc "

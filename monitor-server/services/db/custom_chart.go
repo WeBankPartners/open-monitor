@@ -378,8 +378,7 @@ func QueryCustomChartList(condition models.QueryChartParam, roles []string) (pag
 		params = append(params, condition.SourceDashboard)
 	}
 	if condition.UpdateUser != "" {
-		sql = sql + " and update_user = ?"
-		params = append(params, condition.UpdateUser)
+		sql = sql + " and update_user like '%" + condition.UpdateUser + "%'"
 	}
 	if condition.UpdatedTimeStart != "" && condition.UpdatedTimeEnd != "" {
 		sql = sql + " and update_time >= ? and update_time <= ?"
