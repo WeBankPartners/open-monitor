@@ -101,7 +101,7 @@ func GetChartData(c *gin.Context) {
 		queryList, err = GetCustomChartConfig(&param, &result)
 	} else {
 		// handle custom chart
-		queryList, err = getChartConfigByCustom(&param)
+		queryList, err = GetChartConfigByCustom(&param)
 	}
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
@@ -281,7 +281,7 @@ func chartCompare(param *models.ChartQueryParam) error {
 	return nil
 }
 
-func getChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.QueryMonitorData, err error) {
+func GetChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.QueryMonitorData, err error) {
 	param.Compare = &models.ChartQueryCompareParam{CompareFirstLegend: ""}
 	queryList = []*models.QueryMonitorData{}
 	var endpointList []*models.EndpointNewTable
