@@ -472,6 +472,8 @@ func getNewChartName(name string) string {
 		suffix := name[start+1:]
 		if len(suffix) == 12 {
 			name = name[:start] + "-" + time.Now().Format("060102150405")
+		} else {
+			name = name + "-" + time.Now().Format("060102150405")
 		}
 		return name
 	}
