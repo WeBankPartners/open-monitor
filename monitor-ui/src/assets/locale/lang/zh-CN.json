@@ -478,5 +478,6 @@
   "m_remote_sync": "远程同步",
   "m_proxy_collector": "代理采集器",
   "m_http_server": "Http地址",
-  "m_example": "示例"
+  "m_example": "示例",
+  "m_basic_group": "基础组"
 }
