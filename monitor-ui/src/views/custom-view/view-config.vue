@@ -70,7 +70,7 @@
           <div
             :class="['radio-group-radio radio-group-optional', activeGroup === 'ALL' ? 'selected-radio' : 'is-not-selected-radio']"
           >
-            <span @click="selectGroup('ALL')" style="vertical-align: text-bottom;">{{$t('m_chart_all')}}</span>
+            <span @click="selectGroup('ALL')">{{$t('m_chart_all')}}</span>
           </div>
           <div
             v-for="(item, index) in panel_group_list"
@@ -78,7 +78,7 @@
             :class="['radio-group-radio radio-group-optional', item === activeGroup ? 'selected-radio' : 'is-not-selected-radio']"
           >
             <Icon v-if="isEditStatus" class="mr-2" @click="editGroup(item, index)" type="md-create" color="#2d8cf0" :size="15" />
-            <span @click="selectGroup(item)" style="vertical-align: text-bottom;">
+            <span @click="selectGroup(item)">
               {{ `${item}` }}
             </span>
             <Icon v-if="isEditStatus" class="ml-2" @click="removeGroup(item, index)" type="md-close" color="#ed4014" :size="15" />
@@ -150,7 +150,7 @@
                 <div class="c-dark grid-content">
                   <div class="header-grid header-grid-name">
                     <span v-if="editChartId !== item.id">{{item.i}}</span>
-                    <Input v-else v-model="item.i" class="editChartId" autofocus style="width:100px" size="small" placeholder="" />
+                    <Input v-else v-model="item.i" class="editChartId" autofocus :maxlength="12" show-word-limit style="width:200px" size="small" placeholder="" />
                     <Tooltip :content="$t('placeholder.editTitle')" theme="light" transfer placement="top">
                       <i v-if="isEditStatus && editChartId !== item.id && !noAllowChartChange(item)" class="fa fa-pencil-square" style="font-size: 16px;" @click="editChartId = item.id" aria-hidden="true"></i>
                       <Icon v-if="editChartId === item.id" size="16" type="md-checkmark" @click="onChartTitleChange(item)" />
@@ -226,19 +226,21 @@
       <div>
         <Form :label-width="90">
           <FormItem :label="$t('m_group_chart_name')">
-            <Input v-model="groupName" placeholder="" style="width: 300px" />
+            <Input v-model="groupName" placeholder="" style="width: 100%" :maxlength="20" show-word-limit />
+          </FormItem>
+          <FormItem :label="$t('m_use_charts')">
+            <Row v-if="panelGroupInfo.length > 0">
+              <Col span="12" v-for="panel in panelGroupInfo" :key="panel.name">
+                <Checkbox v-model="panel.setGroup" :disabled="panel.hasGroup"
+                  >{{ panel.label }}</Checkbox
+                >
+              </Col>
+            </Row>
+            <span v-else>
+              {{ $t('m_noData') }}
+            </span>
           </FormItem>
         </Form>
-      </div>
-      <div style="display: flex" class="ml-4">
-        <div style="width: 100px">{{$t('m_use_charts')}}</div>
-        <Row>
-          <Col span="12" v-for="panel in panelGroupInfo" :key="panel.name">
-            <Checkbox v-model="panel.setGroup" :disabled="panel.hasGroup"
-              >{{ panel.label }}</Checkbox
-            >
-          </Col>
-        </Row>
       </div>
       <template #footer>
         <Button @click="showGroupMgmt = false">{{ $t('button.cancel') }}</Button>
@@ -1026,6 +1028,9 @@ export default {
 </style>
 
 <style scoped lang="less">
+/deep/ .ivu-form-item {
+  margin-bottom: 0;
+}
 .header-title {
   display: flex;
   align-items: center;
