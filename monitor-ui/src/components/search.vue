@@ -209,8 +209,12 @@ export default {
           start: this.dateRange[0] ===''? '':Date.parse(this.dateRange[0].replace(/-/g, '/'))/1000,
           end: this.dateRange[1] ===''? '':Date.parse(this.dateRange[1].replace(/-/g, '/'))/1000,
           guid: this.endpointObject.option_value,
+          compare_first_start: this.compareFirstDate[0],
+          compare_first_end: this.compareFirstDate[1],
+          compare_second_start: this.compareSecondDate[0],
+          compare_second_end: this.compareSecondDate[1],
           sys: true
-        }  
+        }
         this.$parent.manageCharts({}, params)
         return
       }
@@ -235,6 +239,8 @@ export default {
       },{isNeedloading: false})
     },
     YoY(status) {
+      this.compareFirstDate = ['', '']
+      this.compareSecondDate = ['', '']
       if (status) {
         this.disableTime = true
         this.$root.$eventBus.$emit('clearSingleChartInterval')
