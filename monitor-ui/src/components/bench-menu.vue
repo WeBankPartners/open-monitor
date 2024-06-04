@@ -89,7 +89,7 @@ export default {
       // this.$emit('menuStatusChange', this.expand);
     },
     handleSelectMenu (name) {
-      this.activeName = name
+      // this.activeName = name
     }
   }
 }
