@@ -134,6 +134,9 @@ func QueryMetricTagValue(c *gin.Context) {
 	if param.Endpoint != "" {
 		endpointObj, _ = db.GetEndpointNew(&models.EndpointNewTable{Guid: param.Endpoint})
 	}
+	if endpointObj.AgentAddress == "" {
+		endpointObj.AgentAddress = ".*"
+	}
 	metricRow.PromExpr = db.ReplacePromQlKeyword(metricRow.PromExpr, "", &endpointObj, []*models.TagDto{})
 	// 查标签值
 	seriesMapList, getSeriesErr := datasource.QueryPromSeries(metricRow.PromExpr)
