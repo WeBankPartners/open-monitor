@@ -773,9 +773,9 @@ export default {
           width: 100,
           render: (h, params) => {
             const notify_enable = params.row.notify_enable === 0
-            return notify_enable ?
-              <Tag color="default">{this.$t(statusButtonLabelMap[params.row.notify_enable])}</Tag>
-              :<Tag color="success">{this.$t(statusButtonLabelMap[params.row.notify_enable])}</Tag>
+              return (
+                <Tag color={notify_enable ? "default" : "success"}>{this.$t(statusButtonLabelMap[params.row.notify_enable])}</Tag>
+              )
           }
         },
         {

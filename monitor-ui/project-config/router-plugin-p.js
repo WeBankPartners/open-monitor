@@ -55,6 +55,10 @@ const routerP = [
     name: "/monitorConfigIndex/exporter"
   },
   {
+    path: "/monitorConfigIndex/remoteSync",
+    name: "/monitorConfigIndex/remoteSync"
+  },
+  {
     path: "/monitorConfigIndex/businessMonitor",
     name: "/monitorConfigIndex/businessMonitor"
   },
