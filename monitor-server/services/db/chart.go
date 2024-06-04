@@ -77,8 +77,23 @@ func GetPromQLByMetric(metric, monitorType, serviceGroup string) (result string,
 	} else {
 		err = x.SQL("select * from metric where metric=?", metric).Find(&metricTable)
 	}
+	if err != nil {
+		err = fmt.Errorf("query metric table fail,%s ", err.Error())
+		return
+	}
 	if len(metricTable) > 0 {
 		result = metricTable[0].PromExpr
+	} else {
+		if monitorType == "process" {
+			err = x.SQL("select * from metric where metric=? and monitor_type=? and service_group is null", metric, monitorType).Find(&metricTable)
+			if err != nil {
+				err = fmt.Errorf("query metric table fail,%s ", err.Error())
+				return
+			}
+			if len(metricTable) > 0 {
+				result = metricTable[0].PromExpr
+			}
+		}
 	}
 	return
 }
