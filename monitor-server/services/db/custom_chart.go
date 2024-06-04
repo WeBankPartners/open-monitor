@@ -423,7 +423,7 @@ func CopyCustomChart(dashboardId int, user, group, customChart string, displayCo
 	}
 	actions = append(actions, &Action{Sql: "insert into custom_chart(guid,source_dashboard,public,name,chart_type,line_type,aggregate,agg_step,unit,create_user,update_user,create_time,update_time,chart_template,pie_type) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
 		newChartId, dashboardId, 0, chart.Name + "(1)", chart.ChartType, chart.LineType, chart.Aggregate,
-		chart.AggStep, chart.Unit, chart.CreateUser, chart.UpdateUser, chart.CreateTime, chart.UpdateTime, chart.ChartTemplate, chart.PieType}})
+		chart.AggStep, chart.Unit, user, user, now, now, chart.ChartTemplate, chart.PieType}})
 	for _, series := range chartSeriesList {
 		seriesId := guid.CreateGuid()
 		actions = append(actions, &Action{Sql: "insert into custom_chart_series(guid,dashboard_chart,endpoint,service_group,endpoint_name,monitor_type,metric,color_group,pie_display_tag,endpoint_type,metric_type,metric_guid)values(?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
@@ -457,6 +457,7 @@ func CopyCustomChart(dashboardId int, user, group, customChart string, displayCo
 	}
 	actions = append(actions, &Action{Sql: "insert into custom_dashboard_chart_rel(guid,custom_dashboard,dashboard_chart,`group`,display_config,create_user,updated_user,create_time,update_time) values(?,?,?,?,?,?,?,?,?)", Param: []interface{}{guid.CreateGuid(),
 		dashboardId, newChartId, group, string(byteConf), user, user, now, now}})
+	actions = append(actions, &Action{Sql: "update custom_dashboard set update_at=?,update_user=? where id=?", Param: []interface{}{now, user, dashboardId}})
 	err = Transaction(actions)
 	return
 }
