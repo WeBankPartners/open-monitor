@@ -301,7 +301,7 @@ func QueryCustomChartNameExist(c *gin.Context) {
 			}
 			if len(customChartExtendList) > 0 {
 				for _, extend := range customChartExtendList {
-					if extend.Guid != chart.Guid && extend.Name == chart.Name {
+					if extend.Guid != chart.Guid && extend.Name == name {
 						middleware.ReturnSuccessData(c, true)
 						return
 					}
