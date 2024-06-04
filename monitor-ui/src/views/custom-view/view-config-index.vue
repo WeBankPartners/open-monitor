@@ -167,7 +167,7 @@
         <template #content-top>
           <div v-if="isAddViewType" class="auth-dialog-content">
             <span class="mr-3">{{$t('m_name')}}:</span>
-            <Input style="width: 350px" :maxlength="20" show-word-limit v-model="addViewName"></Input>
+            <Input style="width:calc(100% - 60px);" :maxlength="20" show-word-limit v-model="addViewName"></Input>
           </div>
         </template>
       </AuthDialog>
@@ -479,8 +479,11 @@ export default {
         params.id = this.boardId;
         path = '/monitor/api/v2/dashboard/custom/permission'
       }
-      this.request('POST', path, params, () => {
+      this.request('POST', path, params, (val) => {
         this.getViewList();
+        if (this.isAddViewType) {
+          this.goToPanal(val, 'edit')
+        }
       })
     }
   },
