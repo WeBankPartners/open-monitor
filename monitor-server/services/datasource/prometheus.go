@@ -10,7 +10,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -100,6 +99,9 @@ func PrometheusData(query *m.QueryMonitorData) []*m.SerialModel {
 		return serials
 	}
 	for _, otr := range data.Data.Result {
+		if len(otr.Metric) == 0 {
+			continue
+		}
 		var serial m.SerialModel
 		serial.Type = "line"
 		serial.Name = GetSerialName(query, otr.Metric, len(data.Data.Result), query.CustomDashboard)
@@ -314,15 +316,15 @@ func GetSerialName(query *m.QueryMonitorData, tagMap map[string]string, dataLeng
 		if serviceGroup, b := tagMap["service_group"]; b {
 			if serviceGroupName, bb := m.GlobalSGDisplayNameMap[serviceGroup]; bb {
 				if metricFirst {
-					tmpName = fmt.Sprintf("%s:%s", tagMap["key"], serviceGroupName)
+					tmpName = fmt.Sprintf("%s:%s", metric, serviceGroupName)
 				} else {
-					tmpName = fmt.Sprintf("%s:%s", serviceGroupName, tagMap["key"])
+					tmpName = fmt.Sprintf("%s:%s", serviceGroupName, metric)
 				}
 			} else {
 				if metricFirst {
-					tmpName = fmt.Sprintf("%s:%s", tagMap["key"], serviceGroup)
+					tmpName = fmt.Sprintf("%s:%s", metric, serviceGroup)
 				} else {
-					tmpName = fmt.Sprintf("%s:%s", serviceGroup, tagMap["key"])
+					tmpName = fmt.Sprintf("%s:%s", serviceGroup, metric)
 				}
 			}
 			tmpName = appendTagString(tmpName, tagMap, []string{"code", "retcode", "t_endpoint", "instance"})
@@ -435,22 +437,21 @@ func QueryLogKeywordData() (result map[string]float64, err error) {
 	return
 }
 
-func QueryPromSeries(procQL string) (result []map[string]string, err error) {
-	if strings.Contains(procQL, "$") {
-		re, _ := regexp.Compile("=\"[\\$]+[^\"]+\"")
-		fetchTag := re.FindAll([]byte(procQL), -1)
-		for _, vv := range fetchTag {
-			procQL = strings.Replace(procQL, string(vv), "=~\".*\"", -1)
-		}
-	}
-	requestUrl, urlParseErr := url.Parse(fmt.Sprintf("http://%s/api/v1/query", promDS.Host))
+func QueryPromSeries(promQL string) (result []map[string]string, err error) {
+	//if strings.Contains(promQL, "$") {
+	//	re, _ := regexp.Compile("=\"[\\$]+[^\"]+\"")
+	//	fetchTag := re.FindAll([]byte(promQL), -1)
+	//	for _, vv := range fetchTag {
+	//		promQL = strings.Replace(promQL, string(vv), "=~\".*\"", -1)
+	//	}
+	//}
+	promQL = getPromQlMainExpr(promQL)
+	requestUrl, urlParseErr := url.Parse(fmt.Sprintf("http://%s/api/v1/series", promDS.Host))
 	if urlParseErr != nil {
 		return result, fmt.Errorf("Url parse fail,%s ", urlParseErr.Error())
 	}
-	nowTime := time.Now().Unix()
 	urlParams := url.Values{}
-	urlParams.Set("time", strconv.FormatInt(nowTime, 10))
-	urlParams.Set("query", procQL)
+	urlParams.Set("match[]", promQL)
 	requestUrl.RawQuery = urlParams.Encode()
 	req, _ := http.NewRequest(http.MethodGet, requestUrl.String(), nil)
 	req.Header.Set("Content-Type", "application/json")
@@ -467,7 +468,7 @@ func QueryPromSeries(procQL string) (result []map[string]string, err error) {
 	if res.StatusCode/100 != 2 {
 		return result, fmt.Errorf("Request fail with bad status:%d ", res.StatusCode)
 	}
-	var data m.PrometheusResponse
+	var data m.PromSeriesResponse
 	err = json.Unmarshal(body, &data)
 	if err != nil {
 		return result, fmt.Errorf("Json unmarshal response fail,%s ", err.Error())
@@ -475,8 +476,19 @@ func QueryPromSeries(procQL string) (result []map[string]string, err error) {
 	if data.Status != "success" {
 		return result, fmt.Errorf("Query prometheus data fail,status:%s ", data.Status)
 	}
-	for _, otr := range data.Data.Result {
-		result = append(result, otr.Metric)
+	result = data.Data
+	return
+}
+
+func getPromQlMainExpr(input string) (output string) {
+	if rightIndex := strings.Index(input, "}"); rightIndex > 0 {
+		input = input[:rightIndex+1]
+		if leftIndex := strings.LastIndex(input, "("); leftIndex > 0 {
+			input = input[leftIndex+1:]
+		}
+		output = input
+	} else {
+		output = input
 	}
 	return
 }
