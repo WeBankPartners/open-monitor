@@ -424,7 +424,7 @@ func CopyCustomChart(dashboardId int, user, group, customChart string, displayCo
 		return
 	}
 	actions = append(actions, &Action{Sql: "insert into custom_chart(guid,source_dashboard,public,name,chart_type,line_type,aggregate,agg_step,unit,create_user,update_user,create_time,update_time,chart_template,pie_type) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
-		newChartId, dashboardId, 0, chart.Name + "(1)", chart.ChartType, chart.LineType, chart.Aggregate,
+		newChartId, dashboardId, 0, chart.Name + "-" + time.Now().Format("060102150405"), chart.ChartType, chart.LineType, chart.Aggregate,
 		chart.AggStep, chart.Unit, user, user, now, now, chart.ChartTemplate, chart.PieType}})
 	for _, series := range chartSeriesList {
 		seriesId := guid.CreateGuid()
