@@ -10,6 +10,7 @@ import thresholdManagement from "@/views/monitor-config/threshold-management";
 import logManagement from "@/views/monitor-config/log-management";
 import resourceLevel from "@/views/monitor-config/resource-level";
 import exporter from "@/views/monitor-config/exporter";
+import remoteSync from "@/views/monitor-config/remote-sync";
 import businessMonitor from "@/views/monitor-config/business-monitor";
 import logTemplate from "@/views/monitor-config/log-template";
 import metricConfig from "@/views/metric-config/index";
@@ -103,6 +104,13 @@ const router = [
         title: "exporter",
         meta: {},
         component: exporter
+      },
+      {
+        path: "remoteSync",
+        name: "remoteSync",
+        title: "remoteSync",
+        meta: {},
+        component: remoteSync
       },
       {
         path: "businessMonitor",
