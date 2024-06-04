@@ -17,7 +17,7 @@
           @on-clear="typeChange"
           >
           <Option v-for="(option, index) in targetOptions" :value="option.option_value" :key="index">
-            <TagShow :tagName="option.type" :index="index"></TagShow> 
+            <TagShow :list="targetOptions" name="type" :tagName="option.type" :index="index"></TagShow> 
             {{option.option_text}}
           </Option>
         </Select>

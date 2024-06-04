@@ -14,7 +14,7 @@
           :remote-method="getEndpointList"
           >
           <Option v-for="(option, index) in endpointList" :value="option.option_value" :key="index">
-            <TagShow :tagName="option.option_type_name" :index="index"></TagShow> 
+            <TagShow :list="endpointList" name="option_type_name" :tagName="option.option_type_name" :index="index"></TagShow> 
             {{option.option_text}}
           </Option>
           <Option value="moreTips" disabled>{{$t('tips.requestMoreData')}}</Option>
