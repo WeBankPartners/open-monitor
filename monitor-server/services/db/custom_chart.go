@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/WeBankPartners/go-common-lib/guid"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"sort"
 	"strings"
 	"time"
 )
@@ -266,6 +267,7 @@ func DeleteCustomDashboardChart(chartId string) (err error) {
 
 func UpdateCustomChart(chartDto models.CustomChartDto, user string, sourceDashboard int) (err error) {
 	var actions, subActions []*Action
+	var seriesIdList []string
 	now := time.Now().Format(models.DatetimeFormat)
 	actions = append(actions, &Action{Sql: "update custom_chart set name =?,chart_type=?,line_type=?,pie_type=?,aggregate=?," +
 		"agg_step=?,unit=?,update_user=?,update_time=?,chart_template = ? where guid=?", Param: []interface{}{chartDto.Name, chartDto.ChartType,
@@ -283,8 +285,9 @@ func UpdateCustomChart(chartDto models.CustomChartDto, user string, sourceDashbo
 	}
 	// 新增图表配置
 	if len(chartDto.ChartSeries) > 0 {
-		for _, series := range chartDto.ChartSeries {
-			seriesId := guid.CreateGuid()
+		seriesIdList = guid.CreateGuidList(len(chartDto.ChartSeries))
+		for i, series := range chartDto.ChartSeries {
+			seriesId := seriesIdList[i]
 			actions = append(actions, &Action{Sql: "insert into custom_chart_series(guid,dashboard_chart,endpoint,service_group,endpoint_name,monitor_type," +
 				"metric,color_group,pie_display_tag,endpoint_type,metric_type,metric_guid) values(?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
 				seriesId, chartDto.Id, series.Endpoint, series.ServiceGroup, series.EndpointName, series.MonitorType, series.Metric, series.ColorGroup,
@@ -375,8 +378,7 @@ func QueryCustomChartList(condition models.QueryChartParam, roles []string) (pag
 		params = append(params, condition.SourceDashboard)
 	}
 	if condition.UpdateUser != "" {
-		sql = sql + " and update_user = ?"
-		params = append(params, condition.UpdateUser)
+		sql = sql + " and update_user like '%" + condition.UpdateUser + "%'"
 	}
 	if condition.UpdatedTimeStart != "" && condition.UpdatedTimeEnd != "" {
 		sql = sql + " and update_time >= ? and update_time <= ?"
@@ -507,6 +509,7 @@ func CreateCustomChartDto(chartExtend *models.CustomChartExtend, configMap map[s
 			seriesConfigList = []*models.CustomChartSeriesConfig{}
 			chartSeriesTagList = []*models.CustomChartSeriesTag{}
 			customChartSeriesDto := &models.CustomChartSeriesDto{
+				Guid:          series.Guid,
 				Endpoint:      series.Endpoint,
 				ServiceGroup:  series.ServiceGroup,
 				EndpointName:  series.EndpointName,
@@ -547,6 +550,9 @@ func CreateCustomChartDto(chartExtend *models.CustomChartExtend, configMap map[s
 				}
 			}
 			chart.ChartSeries = append(chart.ChartSeries, customChartSeriesDto)
+		}
+		if len(chart.ChartSeries) > 0 {
+			sort.Sort(models.CustomChartSeriesDtoSort(chart.ChartSeries))
 		}
 	}
 	return
