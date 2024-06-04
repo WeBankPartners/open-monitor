@@ -116,6 +116,14 @@ const router = new Router({
                 import("@/views/monitor-config/exporter")
             },
             {
+              path: "remoteSync",
+              name: "remoteSync",
+              title: "remoteSync",
+              meta: {},
+              component: () =>
+                import("@/views/monitor-config/remote-sync")
+            },
+            {
               path: "businessMonitor",
               name: "businessMonitor",
               title: "businessMonitor",
@@ -288,7 +296,7 @@ const router = new Router({
 
 router.beforeEach((to, from, next) => {
   if (['login', 'callCustomViewExternal'].includes(to.name)) {
-    next()
+  next()
     return
   }
   if (!getToken()&& !['login', 'register', 'endpointViewExternalCall', 'callCustomViewExternal'].includes(to.name)) {
