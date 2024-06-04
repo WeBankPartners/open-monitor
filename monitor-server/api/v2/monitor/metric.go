@@ -130,6 +130,11 @@ func QueryMetricTagValue(c *gin.Context) {
 		middleware.ReturnSuccessData(c, result)
 		return
 	}
+	var endpointObj models.EndpointNewTable
+	if param.Endpoint != "" {
+		endpointObj, _ = db.GetEndpointNew(&models.EndpointNewTable{Guid: param.Endpoint})
+	}
+	metricRow.PromExpr = db.ReplacePromQlKeyword(metricRow.PromExpr, "", &endpointObj, []*models.TagDto{})
 	// 查标签值
 	seriesMapList, getSeriesErr := datasource.QueryPromSeries(metricRow.PromExpr)
 	if getSeriesErr != nil {
