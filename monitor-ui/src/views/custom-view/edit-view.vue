@@ -156,7 +156,7 @@
             multiple
             :placeholder="$t('m_metric')"
             >
-            <Option v-for="(option, index) in metricOptions" :value="option.metric" :label="option.metric" :key="index">
+            <Option v-for="(option, index) in metricOptions" :value="option.guid" :label="option.metric" :key="index">
               <Tag type="border" :color="metricTypeMap[option.metric_type].color">{{metricTypeMap[option.metric_type].label}}</Tag>
               {{option.metric}}
             </Option>
@@ -167,7 +167,7 @@
     </div>
     <div class="config-footer">
       <Button class="mr-4" @click="resetChartConfig">{{$t('m_reset')}}</Button>
-      <Button class="save-chart-library mr-4" @click="saveChartLibrary" type="primary">{{$t('m_save_chart_library')}}</Button>
+      <Button class="save-chart-library mr-4" :disabled="chartPublic" @click="saveChartLibrary" type="primary">{{$t('m_save_chart_library')}}</Button>
       <Button class="mr-4" type="primary" @click="saveChartConfig">{{$t('m_save')}}</Button>
     </div>
     <AuthDialog ref="authDialog" :useRolesRequired="true" @sendAuth="saveChartAuth" />
@@ -291,7 +291,7 @@ export default {
           render: (h, params) => {
             return (
               <div class="indicator_color_system">
-                {params.row.metricType ? <TagShow list={this.tableData} name="metricType" tagName={params.row.metricType} index={params.index} /> : <span />}
+                {params.row.metricType ? <Tag type="border" color={this.metricTypeMap[params.row.metricType].color}>{this.metricTypeMap[params.row.metricType].label}</Tag> : <span/>}
                 <div class="metric-text ml-1 mr-1">{params.row.metric}</div>
                 <ColorPicker v-model={params.row.colorGroup} on-on-change={e => {
                   this.tableData[params.index].colorGroup = e
@@ -414,24 +414,23 @@ export default {
         },
         {
           title: this.$t('m_metric'),
-          key: 'metric',
+          key: 'metricGuid',
           align: 'center',
           width: 250,
           render: (h, params) => {
             return (
               <Select
-                value={params.row.metric}
+                value={params.row.metricGuid}
                 on-on-change={v => {
-                  Vue.set(this.tableData[params.index], 'metric', v);
-                  this.metric = v;
-                  this.addConfigurationInPie();
+                    this.addConfigurationInPie(v);
                 }}
                 filterable
                 clearable
               >
                 {this.metricOptions.map((option, index) => (
-                  <Option class="select-options-change" value={option.metric} label={option.metric} key={index}>
-                    <TagShow list={this.metricOptions} name="metric_type" tagName={option.metric_type} index={index} /> 
+                  <Option class="select-options-change" value={option.guid} label={option.metric} key={index}>
+                    <Tag type="border" color={this.metricTypeMap[option.metric_type].color}>{this.metricTypeMap[option.metric_type].label}</Tag>
+                    
                     {option.metric}
                   </Option>
 
@@ -588,7 +587,7 @@ export default {
       },
       metricTypeMap: {
         common: {
-          label: this.$t('m_general_type'),
+          label: this.$t('m_basic_group'),
           color: '#2d8cf0'
         },
         business: {
@@ -599,7 +598,8 @@ export default {
           label: this.$t('m_customize'),
           color: '#b886f8'
         }
-      }
+      },
+      chartPublic: false
     }
   },
   computed: {
@@ -646,6 +646,8 @@ export default {
       this.request('GET', '/monitor/api/v2/chart/custom', {
         chart_id: this.chartId
       }, res => {
+        // public是true的时候，是引用态， public为false的时候，为非引用态
+        this.chartPublic = res.public;
         for(let key in this.chartConfigForm) {
           this.chartConfigForm[key] = res[key]
         }
@@ -663,7 +665,7 @@ export default {
       for(let i=0; i < initialData.length; i++) {
         const item = initialData[i];
         item.tagOptions = await this.findTagsByMetric(item.metricGuid, item.endpoint, item.serviceGroup);
-        Vue.set(item, 'tags', this.initTagsFromOptions(item.tagOptions, item.tags))
+        Vue.set(item, 'tags', this.initTagsFromOptions(item.tagOptions, item.tags));
       }
       if (this.isPieChart && initialData.length === 1 && initialData[0].endpoint) {
         const selectedEndpointItem = find(cloneDeep(this.endpointOptions), {
@@ -769,7 +771,8 @@ export default {
       this.metricOptions = [];
       this.monitorTypeOptions = [];
       this.tableData[index].monitorType = '';
-      this.tableData[index].metric = ''
+      this.tableData[index].metric = '';
+      this.tableData[index].metricGuid = '';
     },
     searchTypeByEndpointInPie(value, index) {
       this.resetSearchItem(index);
@@ -871,13 +874,15 @@ export default {
         })
       })
     },
-    async addConfigurationInPie() {
+    async addConfigurationInPie(metricGuid) {
       if (this.chartConfigForm.chartType === 'pie' && this.tableData.length === 1) {
         const item = this.tableData[0];
         const metricItem = find(this.metricOptions, {
-            metric: this.metric
+            guid: metricGuid
         })
         item.metricGuid = metricItem.guid;
+        this.metric = metricItem.metric;
+        Vue.set(item, 'metric', metricItem.metric);
         item.metricType = metricItem.metric_type;
         item.tagOptions = await this.findTagsByMetric(metricItem.guid, this.endpointValue, this.serviceGroup)
         item.tags = this.initTagsFromOptions(item.tagOptions, item.tags);
@@ -889,22 +894,25 @@ export default {
     async addConfiguration() {
       if (this.endpointValue && !isEmpty(this.metric)) {
         for(let i=0; i<this.metric.length; i++) {
-          const basicParams = this.processBasicParams(this.metric[i]);
-          const res = await this.requestReturnPromise('POST', '/monitor/api/v1/dashboard/chart', basicParams);
           const metricItem = find(this.metricOptions, {
-            metric: this.metric[i]
+            guid: this.metric[i]
           })
+          const basicParams = this.processBasicParams(metricItem.metric);
+          const res = await this.requestReturnPromise('POST', '/monitor/api/v1/dashboard/chart', basicParams);
+          // 这里this.metric是存的guid
+          
           const tagOptions = await this.findTagsByMetric(metricItem.guid, this.endpointValue, this.serviceGroup)
           this.tableData.push({
             endpoint: this.endpointValue,
             serviceGroup: this.serviceGroup,
             endpointName: this.endpointName,
             endpointType: this.endpointType,
+            metricGuid: metricItem.guid,
             metricType: metricItem.metric_type,
             monitorType: this.monitorType,
             colorGroup: "",
             pieDisplayTag: "",
-            metric: this.metric[i],
+            metric: metricItem.metric,
             tags: this.initTagsFromOptions(tagOptions),
             series: res.legend.map(item => {
               return {
@@ -1063,9 +1071,20 @@ export default {
       const data = cloneDeep(this.tableData).map(item => {
         item.app_object = item.serviceGroup;
         item.defaultColor = item.colorGroup;
+
+        if (item.series && !isEmpty(item.series)) {
+          item.metricToColor = cloneDeep(item.series).map(one => {
+            one.metric = one.seriesName;
+            delete one.seriesName
+            return one
+          })
+        } else {
+          item.metricToColor = []
+        }
+
         delete item.colorGroup;
         delete item.tags;
-        delete item.series;
+        // delete item.series;
         delete item.tagOptions
         return item
       })
