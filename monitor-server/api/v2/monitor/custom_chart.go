@@ -145,6 +145,10 @@ func CopyCustomChart(c *gin.Context) {
 			middleware.ReturnServerHandleError(c, err)
 			return
 		}
+		if err = db.UpdateCustomDashboardTime(param.DashboardId, user); err != nil {
+			middleware.ReturnServerHandleError(c, err)
+			return
+		}
 		newChartId = param.OriginChartId
 		middleware.ReturnSuccessData(c, newChartId)
 		return
