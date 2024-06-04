@@ -232,6 +232,6 @@
     "deleteLogMetricGroup": "/monitor/api/v2/service/log_metric/log_metric_group/",
     "getLogMetricConfig": "/monitor/api/v2/service/log_metric/log_metric_group/",
     "customLogMetricConfig": "/monitor/api/v2/service/log_metric/custom/log_metric_group",
-    "getAffectServiceGroupByGuid": "/monitor/api/v2/service/log_metric/affect_service_group/"
-
+    "getAffectServiceGroupByGuid": "/monitor/api/v2/service/log_metric/affect_service_group/",
+    "remoteWrite": "/monitor/api/v2/config/remote/write"
 }
