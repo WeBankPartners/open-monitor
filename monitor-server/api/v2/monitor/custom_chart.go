@@ -595,7 +595,7 @@ func GetChartSeriesColor(c *gin.Context) {
 		Tags:        param.Tags,
 	}}}
 	var querySeriesResult = models.EChartOption{Legend: []string{}, Series: []*models.SerialModel{}}
-	querySeriesConfigList, buildQueryConfigErr := dashboard_new.GetCustomChartConfig(&queryChartParam, &querySeriesResult)
+	querySeriesConfigList, buildQueryConfigErr := dashboard_new.GetChartConfigByCustom(&queryChartParam)
 	if buildQueryConfigErr != nil {
 		middleware.ReturnServerHandleError(c, buildQueryConfigErr)
 		return
