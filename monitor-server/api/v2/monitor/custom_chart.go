@@ -588,11 +588,12 @@ func GetChartSeriesColor(c *gin.Context) {
 	}
 	// 增加实时查chart合并series
 	queryChartParam := models.ChartQueryParam{TimeSecond: -1800, Aggregate: "none", Data: []*models.ChartQueryConfigObj{{
-		Endpoint:    param.Endpoint,
-		Metric:      param.Metric,
-		AppObject:   param.ServiceGroup,
-		MonitorType: param.MonitorType,
-		Tags:        param.Tags,
+		Endpoint:     param.Endpoint,
+		Metric:       param.Metric,
+		AppObject:    param.ServiceGroup,
+		MonitorType:  param.MonitorType,
+		EndpointType: param.MonitorType,
+		Tags:         param.Tags,
 	}}}
 	var querySeriesResult = models.EChartOption{Legend: []string{}, Series: []*models.SerialModel{}}
 	querySeriesConfigList, buildQueryConfigErr := dashboard_new.GetChartConfigByCustom(&queryChartParam)
