@@ -216,7 +216,7 @@ func getCustomChartConfig(param *models.ChartQueryParam, result *models.EChartOp
 			log.Logger.Debug("getChartConfigByCustom $app_metric")
 			legend = "$app_metric"
 			tmpPromQl = db.ReplacePromQlKeyword(tmpPromQl, dataConfig.Metric, &models.EndpointNewTable{}, dataConfig.Tags)
-			queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQl, Legend: legend, Metric: []string{dataConfig.Metric}, Endpoint: []string{dataConfig.Endpoint}, CompareLegend: param.Compare.CompareFirstLegend, SameEndpoint: true, Step: param.Step, Cluster: "default"})
+			queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQl, Legend: legend, Metric: []string{dataConfig.Metric}, Endpoint: []string{dataConfig.Endpoint}, CompareLegend: param.Compare.CompareFirstLegend, SameEndpoint: true, Step: param.Step, Cluster: "default", CustomDashboard: true})
 		} else {
 			endpointList := []*models.EndpointNewTable{}
 			if dataConfig.ServiceGroup == "" {
