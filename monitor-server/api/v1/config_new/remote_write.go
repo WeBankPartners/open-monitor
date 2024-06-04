@@ -26,7 +26,7 @@ func RemoteWriteConfigCreate(c *gin.Context) {
 		middleware.ReturnValidateError(c, "Param id is illegal")
 		return
 	}
-	err := db.RemoteWriteConfigCreate(param)
+	err := db.RemoteWriteConfigCreate(param, middleware.GetOperateUser(c))
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
@@ -40,7 +40,7 @@ func RemoteWriteConfigUpdate(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	err := db.RemoteWriteConfigUpdate(param)
+	err := db.RemoteWriteConfigUpdate(param, middleware.GetOperateUser(c))
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
