@@ -86,7 +86,7 @@
                     </Option>
                   </Select>
               </FormItem>
-              <FormItem :label="$t('m_refresh_time')" prop="aggStep">
+              <FormItem v-if="chartConfigForm.aggStep" :label="$t('m_refresh_time')" prop="aggStep">
                   <Select 
                     filterable
                     v-model="chartConfigForm.aggStep"
@@ -144,7 +144,7 @@
             :placeholder="$t('m_type')"
             @on-change="searchMetricByType"
             >
-            <Option v-for="item in monitorTypeOptions" :value="item" :key="item">
+            <Option v-for="item in monitorTypeOptions" :value="item" :label="item" :key="item">
               {{item}}
             </Option>
           </Select>
@@ -167,7 +167,7 @@
     </div>
     <div class="config-footer">
       <Button class="mr-4" @click="resetChartConfig">{{$t('m_reset')}}</Button>
-      <Button class="save-chart-library mr-4" :disabled="chartPublic" @click="saveChartLibrary" type="primary">{{$t('m_save_chart_library')}}</Button>
+      <Button class="save-chart-library mr-4" v-if="!isNotSaveChartLibraryButtonShow" :disabled="chartPublic" @click="saveChartLibrary" :type="chartPublic ? '' : 'primary'">{{$t('m_save_chart_library')}}</Button>
       <Button class="mr-4" type="primary" @click="saveChartConfig">{{$t('m_save')}}</Button>
     </div>
     <AuthDialog ref="authDialog" :useRolesRequired="true" @sendAuth="saveChartAuth" />
@@ -241,7 +241,7 @@ export default {
           {type: 'string', required: true, message: '请输入', trigger: 'blur' }
         ],
         aggStep: [
-          {type: 'number', required: true, message: '请输入', trigger: 'blur' }
+          {type: 'number', required: false, message: '请输入', trigger: 'blur' }
         ],
       },
       tableData: [],
@@ -422,7 +422,8 @@ export default {
               <Select
                 value={params.row.metricGuid}
                 on-on-change={v => {
-                    this.addConfigurationInPie(v);
+                    this.addConfigurationInPie(v)
+                    Vue.set(this.tableData[params.index], 'pieDisplayTag', '');
                 }}
                 filterable
                 clearable
@@ -480,25 +481,30 @@ export default {
           align: 'center',
           width: 200,
           render: (h, params) => {
-            const options = [];
+            const options = []
             for(let key in params.row.tagOptions) {
               options.push(key)
             }
             return (
-              <Select
-                value={params.row.pieDisplayTag}
-                on-on-change={v => {
-                  Vue.set(this.tableData[params.index], 'pieDisplayTag', v)
-                }}
-                filterable
-                clearable
-              >
-                {options.map((item, index) => (
-                  <Option value={item} label={item} key={index}>
-                    {item}
-                  </Option>
-                ))}
-              </Select>
+              <div>
+                {
+                  isEmpty(params.row.tags) ? '-' : 
+                  <Select
+                    value={params.row.pieDisplayTag}
+                    on-on-change={v => {
+                      Vue.set(this.tableData[params.index], 'pieDisplayTag', v)
+                    }}
+                    filterable
+                    clearable
+                  >
+                    {options.map((item, index) => (
+                      <Option value={item} label={item} key={index}>
+                        {item}
+                      </Option>
+                    ))}
+                  </Select>
+                }
+              </div>
             )
           }
         },
@@ -517,8 +523,8 @@ export default {
           label: this.$t('m_customize'),
           key: 'one',
           value: {
-            'aggregate': 'min',
-            'aggStep': 60,
+            'aggregate': 'none',
+            'aggStep': null,
             'chartType': 'line',
             'lineType': 'line'
           }
@@ -561,7 +567,7 @@ export default {
         {label: '1800S', value: 1800},
         {label: '3600S', value: 3600}
       ],
-      aggregateOptions: ['min', 'max', 'avg', 'p95', 'sum', 'none', 'avg_nonzero'],
+      aggregateOptions: ['none', 'min', 'max', 'avg', 'p95', 'sum', 'avg_nonzero'],
       lineTypeOptions: [
         {label: this.$t('m_line_chart'), value: 'line'},
         {label: this.$t('m_bar_chart'), value: 'bar'},
@@ -615,6 +621,9 @@ export default {
     },
     isChartDataError() {
       return isEmpty(this.tableData)
+    },
+    isNotSaveChartLibraryButtonShow() {
+      return this.chartPublic && this.$route.path === '/viewConfigIndex/allChartList'
     }
   },
   watch: {
@@ -797,6 +806,8 @@ export default {
     searchTypeByEndpoint(value) {
       this.monitorType = '';
       this.metric = [];
+      this.metricOptions = [];
+      this.monitorTypeOptions = [];
       const selectedItem = find(cloneDeep(this.endpointOptions), {
         option_value: value
       })
@@ -815,6 +826,8 @@ export default {
       }
     },
     searchMetricByType() {
+      this.metric = [];
+      this.metricOptions = [];
       if (!this.endpointValue || !this.monitorType) return
       this.request('GET', '/monitor/api/v2/monitor/metric/list', {
         monitorType: this.monitorType,
@@ -949,6 +962,10 @@ export default {
     },
     chartDuplicateNameCheck(chartId, chartName) {
       return new Promise(resolve => {
+        if (!chartName) {
+          resolve(true)
+          return
+        }
         this.request('GET', '/monitor/api/v2/chart/custom/name/exist', {
           chart_id: chartId,
           name: chartName
@@ -1028,7 +1045,8 @@ export default {
         mgmtRoles,
         useRoles
       }, () => {
-        this.$Message.success(this.$t('m_success'))
+        this.$Message.success(this.$t('m_success'));
+        this.chartPublic = true;
       })
     },
     // 将数据拼好，请求数据并画图
@@ -1152,7 +1170,6 @@ export default {
 } 
 .tags-show > span {
   width: 70px;
-  overflow: scroll;
 }
 
 .tags-show .ivu-select-item.ivu-select-item-selected::after {

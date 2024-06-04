@@ -470,7 +470,7 @@
   "m_show_type": "展示类型",
   "m_show_metric": "展示标签",
   "m_update": "更新",
-  "m_nodata_tips": "请配置图表，点击图表直接进入放大查看",
+  "m_nodata_tips": "请配置图表",
   "m_metric_deleteTips": "确认删除指标？指标删除之后无法还原，会影响监控看板和告警列表，请谨慎操作。",
   "m_metric_export_errorTips": "导入结束，导入失败",
   "m_modify": "修改",
