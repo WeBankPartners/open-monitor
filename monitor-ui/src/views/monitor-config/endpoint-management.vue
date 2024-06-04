@@ -265,6 +265,7 @@
 <script>
 import DataMonitor from '@/views/monitor-config/data-monitor'
 import { cycleOption, collectionInterval } from '@/assets/config/common-config'
+import isEmpty from 'lodash/isEmpty'
 import {
   interceptParams
 } from '@/assets/js/utils'
@@ -433,9 +434,7 @@ export default {
               width: 100,
               render: (h, params) => {
                 return (
-                  <Tooltip placement="right" max-width="400">
-                    <Tag color={alarmLevelMap[params.row.s_priority].buttonType}>{this.$t(alarmLevelMap[params.row.s_priority].label)}</Tag>
-                  </Tooltip>
+                  <Tag color={alarmLevelMap[params.row.s_priority].buttonType}>{this.$t(alarmLevelMap[params.row.s_priority].label)}</Tag>
                 )
               }
             },
@@ -479,8 +478,14 @@ export default {
             },
             {
               title: this.$t('m_remark'),
-              key: 'custom_message'
-            }
+              key: 'custom_message',
+              width: 120,
+              render: (h, params) => {
+                return(
+                  <div>{params.row.custom_message || '-'}</div>
+                )
+              }
+            },
           ]
         }
       },
@@ -653,6 +658,10 @@ export default {
         value: null
       },
       fullscreenTableHight: document.documentElement.clientHeight - 300,
+      strategyNameMaps: {
+        "endpointGroup": "m_base_group",
+        "serviceGroup": "field.resourceLevel"
+      }
     }
   },
   mounted() {
@@ -983,10 +992,28 @@ export default {
         id: rowData.id
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.alarm.history, params, (responseData) => {
-        this.historyAlarmPageConfig.table.tableData = responseData[0].problem_list
+        this.historyAlarmPageConfig.table.tableData = this.changeResultData(responseData[0].problem_list)
       })
       this.isfullscreen = false
       this.historyAlarmModel = true
+    },
+    changeResultData(dataList) {
+      if (dataList && !isEmpty(dataList)) {
+        dataList.forEach(item => {
+          item.strategyGroupsInfo = '-';
+          item.alarm_metric_list_join = '-';
+          if (!isEmpty(item.strategy_groups)) {
+            item.strategyGroupsInfo = item.strategy_groups.reduce((res, cur)=> {
+              return res + this.$t(this.strategyNameMaps[cur.type]) + ':' + cur.name + '<br/> '
+            }, '')
+          }
+
+          if (!isEmpty(item.alarm_metric_list)) {
+            item.alarm_metric_list_join = item.alarm_metric_list.join(',')
+          }
+        });
+      }
+      return dataList
     },
     endpointReject() {
       this.endpointRejectModel.isAdd = true
