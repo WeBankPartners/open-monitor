@@ -1,5 +1,7 @@
 package models
 
+import "strings"
+
 type CustomChartSeries struct {
 	Guid           string `json:"guid" xorm:"'guid' pk"`
 	DashboardChart string `json:"dashboardChart" xorm:"dashboard_chart"` // 所属看板图表
@@ -16,6 +18,7 @@ type CustomChartSeries struct {
 }
 
 type CustomChartSeriesDto struct {
+	Guid          string            `json:"-"`
 	Endpoint      string            `json:"endpoint"`      // 监控对象
 	ServiceGroup  string            `json:"serviceGroup"`  // 层级对象
 	EndpointName  string            `json:"endpointName" ` // 层级对象
@@ -38,4 +41,18 @@ type TagDto struct {
 type ColorConfigDto struct {
 	SeriesName string `json:"seriesName"`
 	Color      string `json:"color"`
+}
+
+type CustomChartSeriesDtoSort []*CustomChartSeriesDto
+
+func (s CustomChartSeriesDtoSort) Len() int {
+	return len(s)
+}
+
+func (s CustomChartSeriesDtoSort) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}
+
+func (s CustomChartSeriesDtoSort) Less(i, j int) bool {
+	return strings.Compare(s[i].Guid, s[j].Guid) < 0
 }
