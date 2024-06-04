@@ -57,7 +57,7 @@ func init() {
 		&handlerFuncObj{Url: "/dashboard/custom/endpoint/get", Method: http.MethodGet, HandlerFunc: dashboard.GetEndpointsByIp},
 		&handlerFuncObj{Url: "/dashboard/custom/role/get", Method: http.MethodGet, HandlerFunc: dashboard.GetCustomDashboardRole},
 		&handlerFuncObj{Url: "/dashboard/custom/role/save", Method: http.MethodPost, HandlerFunc: dashboard.SaveCustomDashboardRole},
-		&handlerFuncObj{Url: "/dashboard/custom/alarm/list", Method: http.MethodGet, HandlerFunc: alarm.GetCustomDashboardAlarm},
+		&handlerFuncObj{Url: "/dashboard/custom/alarm/list/:customDashboardId", Method: http.MethodPost, HandlerFunc: alarm.GetCustomDashboardAlarm},
 		&handlerFuncObj{Url: "/dashboard/config/metric/list", Method: http.MethodGet, HandlerFunc: dashboard.GetPromMetric},
 		// 层级对象
 		&handlerFuncObj{Url: "/dashboard/system/add", Method: http.MethodPost, HandlerFunc: agent.ExportPanelAdd},
