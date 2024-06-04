@@ -61,7 +61,7 @@
                 :placeholder="$t('m_manage_role')"
                 @on-change="onFilterConditionChange"
             >
-                <Option v-for="item in mgmtRolesOptions" :value="item.name" :key="item.name">{{ item.display_name }}</Option>
+                <Option v-for="item in userRolesOptions" :value="item.name" :key="item.name">{{ item.display_name }}</Option>
             </Select>
             <Select
                 v-model="searchMap.useRoles"
