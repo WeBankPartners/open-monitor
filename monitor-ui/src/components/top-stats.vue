@@ -13,7 +13,7 @@
         :type="stat.type"
         :title="stat.title"
         :total="stat.total"
-        :value="$attrs.noData ? '--' : stat.value"
+        :value="$attrs.noData ? '-' : stat.value"
         :icon="stat.icon"
       />
     </div>

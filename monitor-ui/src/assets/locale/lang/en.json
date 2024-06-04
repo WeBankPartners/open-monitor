@@ -471,7 +471,7 @@
   "m_show_type": "Show Type",
   "m_show_metric": "Show Metric",
   "m_update": "Update",
-  "m_nodata_tips": "Please configure the chart, click on the chart to directly enter the enlarged view",
+  "m_nodata_tips": "Please configure the chart",
   "m_remote_sync": "Remote Sync",
   "m_proxy_collector": " Proxy Collector",
   "m_http_server": "Http Server",
