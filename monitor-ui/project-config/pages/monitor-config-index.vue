@@ -56,7 +56,8 @@ export default {
                 icon: 'ios-more',
                 name: '4',
                 children: [
-                    { title: this.$t('m_field_exporter'), path: '/monitorConfigIndex/exporter', name: '4-1' },
+                  { title: this.$t('m_field_exporter'), path: '/monitorConfigIndex/exporter', name: '4-1' },
+                  { title: this.$t('m_remote_sync'), path: '/monitorConfigIndex/remoteSync', name: '4-2' },
                 ]
             }
         ]
