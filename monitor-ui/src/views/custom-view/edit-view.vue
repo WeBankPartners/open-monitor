@@ -1074,7 +1074,7 @@ export default {
         this.request('POST', '/monitor/api/v1/dashboard/chart', params,
           responseData => {
             responseData.yaxis.unit = this.chartConfigForm.unit;
-            readyToDraw(this, responseData, 1, { eye: false, lineBarSwitch: true, chartType: this.chartConfigForm.chartType, params: params})
+            readyToDraw(this, responseData, 1, {eye: false, lineBarSwitch: true, chartType: this.chartConfigForm.chartType, params: params})
           }
         )
       }

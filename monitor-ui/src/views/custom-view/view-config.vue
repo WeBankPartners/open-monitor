@@ -1,21 +1,17 @@
 <template>
   <div>
     <div>
-      <div class="header-title">
-        <Icon size="22" type="md-arrow-back" class="icon" @click="returnPreviousPage" />
-        <h4>{{$t('menu.screenConfiguration')}}</h4>
-      </div>
       <header>
         <div class="header-name">
-          <i class="fa fa-th-large fa-18 mr-2" aria-hidden="true"></i>
+          <Icon size="22" class="arrow-back" type="md-arrow-back" @click="returnPreviousPage" />
           <template v-if="isEditPanal">
-            <Input v-model.trim="panalName" style="width: 100px" type="text"></Input>
-            <Icon class="panal-edit-icon" @click="savePanalEdit" type="md-checkmark" />
-            <Icon class="panal-edit-icon" @click="canclePanalEdit" type="md-trash" />
+            <Input v-model.trim="panalName" style="width: 300px" type="text" :maxlength="30" show-word-limit></Input>
+            <Icon class="panal-edit-icon" color="#2d8cf0" @click="savePanalEdit" type="md-checkmark" />
+            <Icon class="panal-edit-icon" color="red" @click="canclePanalEdit" type="md-trash" />
           </template>
           <template v-else>
             <h5 class="d-inline-block"> {{panalName}}</h5>
-            <Icon class="panal-edit-icon" @click="isEditPanal=true" v-if="isEditStatus" type="md-create" />
+            <Icon class="panal-edit-icon" color="#2d8cf0"  @click="isEditPanal=true" v-if="isEditStatus" type="md-create" />
           </template>
         </div>
         <div class="search-container">
@@ -104,12 +100,12 @@
             :key="index"
             class="mr-3 chart-option-menu" 
             @on-click="(info) => onAddChart(JSON.parse(info), item.type)">
-            <a href="javascript:void(0)">
+            <Button :type="item.colorType">
                 {{$t(item.name)}}
                 <Icon type="ios-arrow-down"></Icon>
-            </a>
+            </Button>
             <template #list>
-                <DropdownMenu>
+                <DropdownMenu v-if="item.options.length>0">
                     <DropdownItem v-for="(option, key) in item.options"
                       :name="JSON.stringify(option)" 
                       :key="key"
@@ -118,13 +114,18 @@
                       {{item.type === 'add' ? $t(option.name) : option.name}}
                     </DropdownItem>
                 </DropdownMenu>
+                <DropdownMenu v-else>
+                    <DropdownItem>
+                      {{ $t('m_add_chart_library') }}
+                    </DropdownItem>
+                </DropdownMenu>
             </template>
           </Dropdown>
         </div>
       </div>
 
       <!-- 图表展示区域 -->
-      <div style="display:flex">
+      <div v-if="tmpLayoutData.length>0" style="display:flex">
         <div class="grid-style">
           <grid-layout 
           :layout.sync="tmpLayoutData"
@@ -196,6 +197,9 @@
           <ViewConfigAlarm ref="cutsomViewId"></ViewConfigAlarm>
         </div>
       </div>
+      <div v-else class="no-data">
+        {{ $t('m_noData') }}
+      </div>
     </div>
     <Drawer title="View details" :width="zoneWidth" v-model="showMaxChart">
       <ViewChart ref="viewChart"></ViewChart>
@@ -232,7 +236,11 @@
             <Row v-if="panelGroupInfo.length > 0">
               <Col span="12" v-for="panel in panelGroupInfo" :key="panel.name">
                 <Checkbox v-model="panel.setGroup" :disabled="panel.hasGroup"
-                  >{{ panel.label }}</Checkbox
+                  >
+                  <Tooltip :content="panel.label">
+                    <div class="ellipsis-text">{{ panel.label }}</div>
+                  </Tooltip>
+                  </Checkbox
                 >
               </Col>
             </Row>
@@ -326,6 +334,7 @@ export default {
         {
           name: 'button.add',
           type: 'add',
+          colorType: 'success',
           options: [
             {
               name: "m_line_chart_s",
@@ -342,11 +351,13 @@ export default {
         {
           name: 'm_copy',
           type: 'copy',
+          colorType: 'success',
           options: []
         },
         {
           name: 'm_shallow_copy',
           type: 'shallowCopy',
+          colorType: 'success',
           options: []
         }
       ],
@@ -392,6 +403,7 @@ export default {
         if(isEmpty(res)) {
           this.$router.push({path:'viewConfigIndex'})
         } else {
+          console.log(33, res)
           this.boardMgmtRoles = res.mgmtRoles;
           this.boardUseRoles = res.useRoles;
           this.panalName = res.name;
@@ -638,10 +650,12 @@ export default {
     },
     submitPanelInfo() {
       return new Promise(resolve => {
-          if (isEmpty(this.boardMgmtRoles) || isEmpty(this.boardUseRoles)) {
+        if (isEmpty(this.boardMgmtRoles) || isEmpty(this.boardUseRoles)) {
+          console.log(1.1)
           this.saveAuthType = 'board';
           this.$refs.authDialog.startAuth(this.boardMgmtRoles, this.boardUseRoles, this.mgmtRolesOptions, this.userRolesOptions);
         } else {
+          console.log(1.2, this.processPannelParams())
           this.request('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams(), res => {
             resolve()
           });
@@ -661,6 +675,7 @@ export default {
         this.$Message.warning(this.$t('tips.required'))
         return
       }
+      console.log(123)
       await this.submitPanelInfo();
       this.$Message.success(this.$t('tips.success'));
       this.isEditPanal = false;
@@ -867,7 +882,8 @@ export default {
       return {
         id: this.pannelId,
         name: this.panalName,
-        charts
+        charts,
+        panelGroupList: this.panel_group_list
       }
     },
 
@@ -1031,22 +1047,17 @@ export default {
 /deep/ .ivu-form-item {
   margin-bottom: 0;
 }
-.header-title {
-  display: flex;
-  align-items: center;
-  margin-left: 15px;
-  .icon {
-    cursor: pointer;
-    width: 28px;
-    height: 24px;
-    color: #fff;
-    border-radius: 2px;
-    background: #2d8cf0;
-    margin-right: 20px;
-    margin-bottom: 10px;
-  }
-}
 
+.arrow-back {
+  cursor: pointer;
+  width: 28px;
+  height: 24px;
+  color: #fff;
+  border-radius: 2px;
+  background: #2d8cf0;
+  margin-right: 12px;
+  margin-bottom: 10px;
+}
 .header-name {
   font-size: 16px; 
   margin-left: 15px;
@@ -1154,5 +1165,21 @@ export default {
 
   .view-config-alarm {
     width: 700px
+  }
+
+  .no-data {
+    text-align: center;
+    margin: 32px;
+    font-size: 14px;
+    color: gray;
+  }
+
+  .ellipsis-text {
+    width: 170px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: inline-block;
+    vertical-align: bottom;
   }
 </style>
