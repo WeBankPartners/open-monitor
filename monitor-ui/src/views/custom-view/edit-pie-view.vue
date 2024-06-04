@@ -60,7 +60,7 @@
                       :value="option.option_value"
                       :key="index"
                     >
-                      <TagShow :tagName="option.option_type_name" :index="index"></TagShow>{{option.option_text}}</Option>
+                      <TagShow :list="options" name="option_type_name" :tagName="option.option_type_name" :index="index"></TagShow>{{option.option_text}}</Option>
                     <Option value="moreTips" disabled>{{$t('tips.requestMoreData')}}</Option>
                   </Select>
                 </div>

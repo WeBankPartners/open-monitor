@@ -110,14 +110,6 @@ export default {
           }
         },
         {
-          title: this.$t('m_update_time'), // 更新时间
-          key: 'update_time',
-          width: 160,
-          render: (h, params) => {
-            return <span>{params.row.update_time || '-'}</span>
-          }
-        },
-        {
           title: this.$t('tableKey.expr'), // 表达式
           key: 'prom_expr',
           minWidth: 400,
@@ -127,6 +119,14 @@ export default {
                 <span class="eclipse">{params.row.prom_expr || '-'}</span>
               </Tooltip>
             )
+          }
+        },
+        {
+          title: this.$t('m_update_time'), // 更新时间
+          key: 'update_time',
+          width: 160,
+          render: (h, params) => {
+            return <span>{params.row.update_time || '-'}</span>
           }
         },
         {
