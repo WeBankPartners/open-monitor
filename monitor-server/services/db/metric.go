@@ -200,14 +200,16 @@ func MetricListNew(guid, monitorType, serviceGroup, onlyService string) (result 
 	return
 }
 
-func MetricImport(serviceGroup, operator string, inputMetrics []*models.MetricTable) (err error) {
+func MetricImport(serviceGroup, operator string, inputMetrics []*models.MetricTable) ([]string, error) {
+	var failList []string
+	var err error
 	existMetrics, getExistErr := MetricListNew("", inputMetrics[0].MonitorType, serviceGroup, "Y")
 	if getExistErr != nil {
-		return fmt.Errorf("get serviceGroup:%s exist metric list fail,%s ", serviceGroup, getExistErr.Error())
+		return failList, fmt.Errorf("get serviceGroup:%s exist metric list fail,%s ", serviceGroup, getExistErr.Error())
 	}
 	var alarmStrategyRows []*models.AlarmStrategyTable
 	if err = x.SQL("select endpoint_group,metric from alarm_strategy").Find(&alarmStrategyRows); err != nil {
-		return fmt.Errorf("query alarm strategy fail,%s ", err.Error())
+		return failList, fmt.Errorf("query alarm strategy fail,%s ", err.Error())
 	}
 	oldServerGroup := inputMetrics[0].ServiceGroup
 	strategyMap := make(map[string]string)
@@ -215,7 +217,6 @@ func MetricImport(serviceGroup, operator string, inputMetrics []*models.MetricTa
 		strategyMap[v.Metric] = v.EndpointGroup
 	}
 	var actions []*Action
-	var affectEndpointGroupList []string
 	nowTime := time.Now().Format(models.DatetimeFormat)
 	for _, inputMetric := range inputMetrics {
 		inputMetric.Guid = fmt.Sprintf("%s__%s", inputMetric.Metric, serviceGroup)
@@ -226,12 +227,21 @@ func MetricImport(serviceGroup, operator string, inputMetrics []*models.MetricTa
 				break
 			}
 		}
+		if matchMetric.Guid != "" {
+			// 指标重复后,指标名_1,如果还是重复,记录在失败列表
+			inputMetric.Metric = inputMetric.Metric + "_1"
+			inputMetric.Guid = fmt.Sprintf("%s__%s", inputMetric.Metric, serviceGroup)
+			matchMetric = &models.MetricTable{}
+			for _, existMetric := range existMetrics {
+				if existMetric.Guid == inputMetric.Guid {
+					matchMetric = existMetric
+					break
+				}
+			}
+		}
 		inputMetric.PromExpr = strings.ReplaceAll(inputMetric.PromExpr, oldServerGroup, serviceGroup)
 		if matchMetric.Guid != "" {
-			if v, b := strategyMap[matchMetric.Guid]; b {
-				affectEndpointGroupList = append(affectEndpointGroupList, v)
-			}
-			actions = append(actions, &Action{Sql: "update metric set prom_expr=?,workspace=?,update_user=?,update_time=? where guid=?", Param: []interface{}{inputMetric.PromExpr, inputMetric.Workspace, operator, nowTime, matchMetric.Guid}})
+			failList = append(failList, inputMetric.Metric)
 		} else {
 			actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,create_time,create_user,update_user) value (?,?,?,?,?,?,?,?,?,?)",
 				Param: []interface{}{inputMetric.Guid, inputMetric.Metric, inputMetric.MonitorType, inputMetric.PromExpr, serviceGroup, inputMetric.Workspace, nowTime, nowTime, operator, operator}})
@@ -240,22 +250,10 @@ func MetricImport(serviceGroup, operator string, inputMetrics []*models.MetricTa
 	log.Logger.Info("import metric", log.Int("actionLen", len(actions)))
 	if len(actions) > 0 {
 		if err = Transaction(actions); err != nil {
-			return fmt.Errorf("import metric fail with exec database,%s ", err.Error())
+			return failList, fmt.Errorf("import metric fail with exec database,%s ", err.Error())
 		}
 	}
-	if len(affectEndpointGroupList) > 0 {
-		egMap := make(map[string]int)
-		for _, v := range affectEndpointGroupList {
-			if _, b := egMap[v]; b {
-				continue
-			}
-			egMap[v] = 1
-			if tmpErr := SyncPrometheusRuleFile(v, false); tmpErr != nil {
-				log.Logger.Error("sync prometheus endpoint group fail", log.Error(tmpErr))
-			}
-		}
-	}
-	return
+	return failList, nil
 }
 
 func GetSimpleMetric(metricId string) (metricRow *models.MetricTable, err error) {

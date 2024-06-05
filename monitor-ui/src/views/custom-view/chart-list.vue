@@ -61,7 +61,7 @@
                 :placeholder="$t('m_manage_role')"
                 @on-change="onFilterConditionChange"
             >
-                <Option v-for="item in mgmtRolesOptions" :value="item.name" :key="item.name">{{ item.display_name }}</Option>
+                <Option v-for="item in userRolesOptions" :value="item.name" :key="item.name">{{ item.display_name }}</Option>
             </Select>
             <Select
                 v-model="searchMap.useRoles"
@@ -83,7 +83,7 @@
             >
             </Input>
         </div>
-        <Button @click="getChartList" type="primary">{{ $t('m_search') }}</Button>
+        <!-- <Button @click="getChartList" type="primary">{{ $t('m_search') }}</Button> -->
         <Button @click="resetSearchCondition">{{ $t('m_reset') }}</Button>
     </div>
     <Table
@@ -158,9 +158,9 @@ export default {
         dashboardOptions: [],
         chartListColumns: [
             {
-                title: this.$t('m_alarmName'),
+                title: this.$t('m_graph_name'),
                 align: 'center',
-                width: 100,
+                minWidth: 200,
                 key: 'chartName'
             },
             {
@@ -196,7 +196,7 @@ export default {
             {
                 title: this.$t('m_use_dashboard'),
                 align: 'center',
-                width: 120,
+                minWidth: 250,
                 key: 'useDashboard',
                 render: (h, params) => {
                     return (
@@ -207,7 +207,7 @@ export default {
             {
                 title: this.$t('m_manage_role'),
                 align: 'center',
-                width: 100,
+                width: 160,
                 key: 'mgmtRoles',
                 render: (h, params) => {
                     return (
@@ -218,7 +218,7 @@ export default {
             {
                 title: this.$t('m_use_role'),
                 align: 'center',
-                width: 150,
+                minWidth: 300,
                 key: 'useRoles',
                 render: (h, params) => {
                     return (
@@ -229,25 +229,27 @@ export default {
             {
                 title: this.$t('m_updatedBy'),
                 align: 'center',
+                width: 120,
                 key: 'updateUser'
             }, 
             {
                 title: this.$t('m_update_time'),
                 align: 'center',
-                width: 100,
+                width: 160,
                 key: 'updatedTime'
             },
             {
                 title: this.$t('m_create_time'),
                 align: 'center',
-                width: 100,
+                width: 160,
                 key: 'createdTime'
             },
             {
                 title: this.$t('table.action'),
                 key: 'index',
-                width: 170,
+                width: 160,
                 align: 'center',
+                fixed: 'right',
                 render: (h, params) => {
                 return (params.row.permission === 'mgmt' ? 
                     (<div >
@@ -402,7 +404,7 @@ export default {
 .chart-list-header {
     display: flex;
     .chart-search {
-        width:90%;
+        width:100%;
         display: flex;
         flex-wrap: wrap; 
         justify-content: space-between;
