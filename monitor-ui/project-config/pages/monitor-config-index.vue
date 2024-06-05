@@ -1,10 +1,10 @@
 <template>
-  <div id="workbench">
+  <div id="monitor">
     <div :style="benchStyle">
       <transition name="fade" mode="out-in">
         <router-view></router-view>
       </transition>
-      <BenchMenu :menuList="menuList" :openNames="['1','2','3','4']" defaultMenu="1-1"></BenchMenu>
+      <BenchMenu :menuList="menuList"></BenchMenu>
     </div>
   </div>
 </template>
