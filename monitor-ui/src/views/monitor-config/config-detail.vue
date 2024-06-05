@@ -313,33 +313,6 @@
               :key="index + 'S'"
               style="margin: 4px 0"
               >
-              <!-- <span class="mr-1 mt-1" style="font-size: 12px">{{$t(item.alarm_action)}}</span>
-              <Tooltip :content="$t('resourceLevel.role')" :delay="1000">
-                <Select v-model="item.notify_roles" :disabled="!isEditState" :max-tag-count="2" style="width: 150px" multiple filterable :placeholder="$t('field.role')">
-                  <Option v-for="item in allRole" :value="item.name" :key="item.value">{{ item.name }}</Option>
-                </Select>
-              </Tooltip>
-              <Tooltip :content="$t('proc_callback_key')" :delay="1000">
-                <Select v-model="item.proc_callback_key" clearable :disabled="!isEditState" @on-change="procCallbackKeyChangeForm(item.proc_callback_key, index)" style="width: 160px" :placeholder="$t('proc_callback_key')">
-                  <Option v-for="(flow, flowIndex) in flows" :key="flowIndex" :value="flow.procDefKey" :label="flow.procDefName + ' [' + flow.procDefVersion + ']'"><span>{{ flow.procDefName }} [{{ flow.procDefVersion }}]</span></Option>
-                </Select>
-              </Tooltip>
-              <Tooltip :content="$t('m_callback_mode')" :delay="1000">
-                <Select v-model="item.proc_callback_mode" clearable :disabled="!isEditState" style="width: 100px" :placeholder="$t('m_callback_mode')">
-                  <Option v-for="item in callbackMode" :value="item.value" :key="item.value">{{ $t(item.label) }}</Option>
-                </Select>
-              </Tooltip>
-              <Tooltip :content="$t('tableKey.description')" :delay="1000">
-                <input 
-                  v-model="item.description"
-                  clearable
-                  :disabled="!isEditState"
-                  style="width: 100px"
-                  type="text" 
-                  maxlength="50"
-                  :placeholder="$t('tableKey.description')"
-                  class="form-control model-input search-input c-dark"/>
-              </Tooltip> -->
               <Row>
                 <Col span="3">
                   <span style="margin-right: 8px;line-height: 32px;">{{$t(item.alarm_action)}}</span>
@@ -350,7 +323,7 @@
                   </Select>
                 </Col>
                 <Col span="5">
-                  <Select v-model="item.proc_callback_key" clearable :disabled="!isEditState" @on-change="procCallbackKeyChange(item.proc_callback_key, tableIndex, index)" style="width:97%;" :placeholder="$t('proc_callback_key')">
+                  <Select v-model="item.proc_callback_key" clearable :disabled="!isEditState" @on-change="procCallbackKeyChangeForm(item.proc_callback_key, index)" style="width:97%;" :placeholder="$t('proc_callback_key')">
                     <Option v-for="(flow, flowIndex) in flows" :key="flowIndex" :value="flow.procDefKey" :label="flow.procDefName + ' [' + flow.procDefVersion + ']'"><span>{{ flow.procDefName }} [{{ flow.procDefVersion }}]</span></Option>
                   </Select>
                 </Col>
