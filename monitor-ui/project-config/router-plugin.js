@@ -170,15 +170,15 @@ const router = [
         title: "列表",
         meta: {},
         component: chartList
+      },
+      {
+        path: "/viewConfig",
+        name: "viewConfig",
+        title: "自定义视图",
+        meta: {},
+        component: viewConfig
       }
     ]
-  },
-  {
-    path: "/viewConfig",
-    name: "viewConfig",
-    title: "自定义视图",
-    meta: {},
-    component: viewConfig
   },
   {
     path: "/editLineView",
