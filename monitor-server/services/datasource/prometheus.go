@@ -327,7 +327,9 @@ func GetSerialName(query *m.QueryMonitorData, tagMap map[string]string, dataLeng
 					tmpName = fmt.Sprintf("%s:%s", serviceGroup, metric)
 				}
 			}
-			tmpName = appendTagString(tmpName, tagMap, []string{"code", "retcode", "t_endpoint", "instance"})
+			tmpTagList := query.Tags
+			tmpTagList = append(tmpTagList, "t_endpoint", "instance")
+			tmpName = appendTagString(tmpName, tagMap, tmpTagList)
 		} else {
 			tmpName = metric
 		}
