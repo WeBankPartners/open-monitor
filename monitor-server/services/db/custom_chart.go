@@ -665,3 +665,10 @@ func convertIntArrToStr(ids []int) []string {
 	}
 	return arr
 }
+
+func GetChartSeriesConfig(customChartSeriesGuid string) (result []*models.CustomChartSeriesConfig, err error) {
+	if err = x.SQL("select * from custom_chart_series_config where dashboard_chart_config=?", customChartSeriesGuid).Find(&result); err != nil {
+		err = fmt.Errorf("query custom chart series config table fail,%s ", err.Error())
+	}
+	return
+}
