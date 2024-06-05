@@ -267,7 +267,7 @@ export default {
         {
           title: this.$t('table.action'),
           key: 'index',
-          align: 'center',
+          
           width: 80,
           render: (h, params) => {
             return (
@@ -277,7 +277,7 @@ export default {
         },
         {
             title: this.$t('m_endpoint'),
-            align: 'center',
+            
             width: 150,
             render: (h, params) => {
               return params.row.endpointType.length ?  (
@@ -292,7 +292,7 @@ export default {
         },
         {
             title: this.$t('m_type'),
-            align: 'center',
+            
             width: 150,
             key: 'monitorType',
             render: (h, params) => {
@@ -304,7 +304,7 @@ export default {
         {
           title: this.$t('m_indicator_color_system'),
           key: 'metric',
-          align: 'center',
+          
           width: 300,
           render: (h, params) => {
             return (
@@ -321,7 +321,7 @@ export default {
         {
           title: this.$t('m_label_value'),
           key: 'labelValue',
-          align: 'center',
+          
           width: 250,
           render: (h, params) => {
             this.joinTagValuesToOptions(params.row.tags, params.row.tagOptions, params.index);
@@ -359,7 +359,7 @@ export default {
         {
           title: this.$t('m_generate_lines'),
           key: 'series',
-          align: 'center',
+          
           render: (h, params) => {
             return (
               <div>
@@ -380,7 +380,7 @@ export default {
       pieChartConfigurationColumns: [
         {
             title: this.$t('m_endpoint'),
-            align: 'center',
+            
             width: 300,
             key: 'endpointName',
             render: (h, params) => {
@@ -407,7 +407,7 @@ export default {
         },
         {
             title: this.$t('m_type'),
-            align: 'center',
+            
             width: 150,
             key: 'monitorType',
             render: (h, params) => {
@@ -434,7 +434,7 @@ export default {
         {
           title: this.$t('m_metric'),
           key: 'metricGuid',
-          align: 'center',
+          
           width: 250,
           render: (h, params) => {
             return (
@@ -462,7 +462,7 @@ export default {
         {
           title: this.$t('m_label_value'),
           key: 'labelValue',
-          align: 'center',
+          
           render: (h, params) => {
             this.joinTagValuesToOptions(params.row.tags, params.row.tagOptions, params.index);
             return (
@@ -497,7 +497,7 @@ export default {
         {
           title: this.$t('m_show_metric'),
           key: 'metric',
-          align: 'center',
+          
           width: 200,
           render: (h, params) => {
             const options = []
