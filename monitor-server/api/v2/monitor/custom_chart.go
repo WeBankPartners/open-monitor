@@ -295,7 +295,7 @@ func QueryCustomChartNameExist(c *gin.Context) {
 		middleware.ReturnValidateError(c, "chart_id is invalid")
 		return
 	}
-	if chart.Public == 0 && public != 0 {
+	if chart.Public == 0 && public == 0 {
 		// 没有存入到图表库的图表,在源看板中图表不能重复
 		if chart.SourceDashboard != 0 {
 			if customChartExtendList, err = db.QueryCustomChartListByDashboard(chart.SourceDashboard); err != nil {
