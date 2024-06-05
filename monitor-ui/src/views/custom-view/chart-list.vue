@@ -159,20 +159,17 @@ export default {
         chartListColumns: [
             {
                 title: this.$t('m_graph_name'),
-                align: 'center',
                 minWidth: 200,
                 key: 'chartName'
             },
             {
                 title: this.$t('m_id'),
-                align: 'center',
                 width: 150,
                 key: 'chartId'
             },
             {
                 title: this.$t('field.type'),
                 key: 'chartType',
-                align: 'center',
                 width: 100,
                 render: (h, params) => {
                     return (
@@ -189,24 +186,24 @@ export default {
             },
             {
                 title: this.$t('m_source_dashboard'),
-                align: 'center',
                 width: 130,
-                key: 'sourceDashboard'
+                key: 'sourceDashboard',
+                render: (h, params) => {
+                    return <span>{params.row.sourceDashboard || '-'}</span>
+                }
             },
             {
                 title: this.$t('m_use_dashboard'),
-                align: 'center',
                 minWidth: 250,
                 key: 'useDashboard',
                 render: (h, params) => {
                     return (
-                        <span>{params.row.useDashboard.join(';')}</span>
+                        <span>{params.row.useDashboard.join(';') || '-'}</span>
                     )
                 }
             },
             {
                 title: this.$t('m_manage_role'),
-                align: 'center',
                 width: 160,
                 key: 'mgmtRoles',
                 render: (h, params) => {
@@ -217,7 +214,6 @@ export default {
             },
             {
                 title: this.$t('m_use_role'),
-                align: 'center',
                 minWidth: 300,
                 key: 'useRoles',
                 render: (h, params) => {
@@ -228,32 +224,38 @@ export default {
             },
             {
                 title: this.$t('m_updatedBy'),
-                align: 'center',
                 width: 120,
-                key: 'updateUser'
+                key: 'updateUser',
+                render: (h, params) => {
+                    return <span>{params.row.updateUser || '-'}</span>
+                }
             }, 
             {
                 title: this.$t('m_update_time'),
-                align: 'center',
                 width: 160,
-                key: 'updatedTime'
+                key: 'updatedTime',
+                render: (h, params) => {
+                    return <span>{params.row.updatedTime || '-'}</span>
+                }
             },
             {
                 title: this.$t('m_create_time'),
-                align: 'center',
                 width: 160,
-                key: 'createdTime'
+                key: 'createdTime',
+                render: (h, params) => {
+                    return <span>{params.row.createdTime || '-'}</span>
+                }
             },
             {
                 title: this.$t('table.action'),
                 key: 'index',
-                width: 160,
+                width: 150,
                 align: 'center',
                 fixed: 'right',
                 render: (h, params) => {
                 return (params.row.permission === 'mgmt' ? 
-                    (<div >
-                        <Button size="small" class="mr-1"  type="primary" on-click={() => this.showEditView(params.row)}>
+                    (<div style="display:flex;justify-content:space-around;">
+                        <Button size="small" type="primary" on-click={() => this.showEditView(params.row)}>
                             <Icon type="md-create" size="16"></Icon>
                         </Button>
                         <Button size="small" type="warning" on-click={() => this.editSingleRoles(params.row)}>

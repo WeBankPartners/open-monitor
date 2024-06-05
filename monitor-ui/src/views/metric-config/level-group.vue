@@ -50,7 +50,7 @@
       :title="$t('delConfirm.title')"
       @on-ok="submitDelete"
       @on-cancel="deleteVisible = false">
-      <div class="modal-body" style="padding: 10px 20px">
+      <div class="modal-body" style="padding:10px 20px;">
         <p style="color: red">{{ $t('m_metric_deleteTips') }}</p>
       </div>
     </Modal>
@@ -287,7 +287,7 @@ export default {
     uploadSucess (val) {
       if (val.status === 'OK') {
         if (val.data) {
-          if (val.data.fail_list.length > 0) {
+          if (Array.isArray(val.data.fail_list.length) && val.data.fail_list.length > 0) {
             this.$Notice.error({
               duration: 0,
               render: () => {
