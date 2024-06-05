@@ -83,7 +83,6 @@
             <Button
               v-if="isEditStatus"
               @click="addGroupItem"
-              class="primary-btn"
               style="margin-top: -5px;"
               type="success"
               shape="circle"
@@ -1128,11 +1127,6 @@ export default {
 
 .is-not-selected-radio {
   background: #fff
-}
-.primary-btn {
-  color: #fff;
-  background-color: #57a3f3;
-  border-color: #57a3f3;
 }
 
 .grid-style {
