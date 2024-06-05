@@ -229,6 +229,9 @@ func ListMainPageRole(roleList []string) (err error, result []*m.MainPageRoleQue
 		return
 	}
 	for _, role := range roleList {
+		if _, ok := displayNameRoleMap[role]; !ok {
+			continue
+		}
 		var dashboardIds []int
 		mainPageId = 0
 		for _, dashboard := range mainDashboardList {
