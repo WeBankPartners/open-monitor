@@ -290,8 +290,13 @@ func GetMetricTags(metricRow *models.MetricTable) (tags []string, err error) {
 		if len(logMetricConfigRows) > 0 {
 			tagConfigString := logMetricConfigRows[0].TagConfig
 			if tagConfigString != "" && tagConfigString != "null" && tagConfigString != "[]" {
-				if err = json.Unmarshal([]byte(logMetricConfigRows[0].TagConfig), &tags); err != nil {
+				var tmpTagList []string
+				if err = json.Unmarshal([]byte(logMetricConfigRows[0].TagConfig), &tmpTagList); err != nil {
 					err = fmt.Errorf("json unmarshal tag config: %s fail,%s ", tagConfigString, err.Error())
+					return
+				}
+				if len(tmpTagList) > 0 {
+					tags = []string{"tags"}
 				}
 			}
 		}
@@ -308,6 +313,7 @@ func GetMetricTags(metricRow *models.MetricTable) (tags []string, err error) {
 			if tagConfigString != "" && tagConfigString != "null" && tagConfigString != "[]" {
 				if err = json.Unmarshal([]byte(logMetricTemplateRows[0].TagConfig), &tags); err != nil {
 					err = fmt.Errorf("json unmarshal tag config: %s fail,%s ", tagConfigString, err.Error())
+					return
 				}
 			}
 		}
