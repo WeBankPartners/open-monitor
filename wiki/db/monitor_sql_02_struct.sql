@@ -112,8 +112,8 @@ alter table custom_chart_series add column pie_display_tag varchar(64)  default 
 alter table custom_chart_series add column endpoint_type varchar(64)  default NULL COMMENT '对象类型';
 alter table custom_chart_series add column metric_type varchar(64)  default NULL COMMENT '指标类型';
 alter table custom_chart_series add column metric_guid varchar(64)  default NULL COMMENT '指标Id';
-alter table custom_dashboard add column time_range int(11)  default 0 COMMENT '时间段';
-alter table custom_dashboard add column refresh_week int(5)  default 0 COMMENT '定时刷新';
+alter table custom_dashboard add column time_range int(11)  default -3600 COMMENT '时间段';
+alter table custom_dashboard add column refresh_week int(5)  default 10 COMMENT '定时刷新';
 
 update custom_dashboard_role_rel set role_id= (select name from role where id = role_id) where role_id in (select id from role);
 insert into main_dashboard (guid,role_id,custom_dashboard)(select uuid(),name,main_dashboard from `role` where main_dashboard > 0 and name!='' and main_dashboard in (select id from custom_dashboard));
