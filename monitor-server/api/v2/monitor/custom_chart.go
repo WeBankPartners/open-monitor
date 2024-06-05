@@ -280,6 +280,8 @@ func QueryCustomChartNameExist(c *gin.Context) {
 	var customChartExtendList []*models.CustomChartExtend
 	chartId := c.Query("chart_id")
 	name := c.Query("name")
+	// public 表示是否是存入图表库操作,是存入图表库则需要查询图表库里面是否有重名
+	public, _ := strconv.Atoi(c.Query("public"))
 	if strings.TrimSpace(chartId) == "" || strings.TrimSpace(name) == "" {
 		middleware.ReturnParamEmptyError(c, "chart_id or name")
 		return
@@ -292,7 +294,7 @@ func QueryCustomChartNameExist(c *gin.Context) {
 		middleware.ReturnValidateError(c, "chart_id is invalid")
 		return
 	}
-	if chart.Public == 0 {
+	if chart.Public == 0 && public != 0 {
 		// 没有存入到图表库的图表,在源看板中图表不能重复
 		if chart.SourceDashboard != 0 {
 			if customChartExtendList, err = db.QueryCustomChartListByDashboard(chart.SourceDashboard); err != nil {
