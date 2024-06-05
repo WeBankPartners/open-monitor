@@ -147,42 +147,46 @@
               @resize="resizeEvent"
               @resized="resizeEvent">
               <template v-if="item.group === activeGroup || activeGroup === 'ALL'">
-                <div class="c-dark grid-content">
+                <div class="c-dark grid-content" @click="onChartBodyClick(item)">
                   <div class="header-grid header-grid-name">
                     <span v-if="editChartId !== item.id">{{item.i}}</span>
-                    <Input v-else v-model="item.i" class="editChartId" autofocus :maxlength="12" show-word-limit style="width:200px" size="small" placeholder="" />
+                    <span  v-else @click.stop="">
+                      <Input v-model="item.i" class="editChartId" autofocus :maxlength="12" show-word-limit style="width:200px" size="small" placeholder="" />
+                    </span>
                     <Tooltip :content="$t('placeholder.editTitle')" theme="light" transfer placement="top">
-                      <i v-if="isEditStatus && editChartId !== item.id && !noAllowChartChange(item)" class="fa fa-pencil-square" style="font-size: 16px;" @click="editChartId = item.id" aria-hidden="true"></i>
-                      <Icon v-if="editChartId === item.id" size="16" type="md-checkmark" @click="onChartTitleChange(item)" />
+                      <i v-if="isEditStatus && editChartId !== item.id && !noAllowChartChange(item)" class="fa fa-pencil-square" style="font-size: 16px;" @click.stop="editChartId = item.id" aria-hidden="true"></i>
+                      <Icon v-if="editChartId === item.id" size="16" type="md-checkmark" @click.stop="onChartTitleChange(item)" />
                     </Tooltip>
                   </div>
                   <div class="header-grid header-grid-tools">
                     <Button v-if="item.public" size="small" class="mr-1 references-button">{{$t('m_shallow_copy')}}</Button>
-                    <Select v-model="item.group" 
-                      style="width:100px;" 
-                      size="small" 
-                      :disabled="permission !== 'edit'" 
-                      clearable 
-                      filterable 
-                      :placeholder="$t('m_group_name')"
-                      @on-change="onSingleChartGroupChange">
-                      <Option v-for="item in panel_group_list" :value="item" :key="item" style="float: left;">{{ item }}</Option>
-                    </Select>
+                    <span @click.stop="">
+                      <Select v-model="item.group" 
+                        style="width:100px;" 
+                        size="small" 
+                        :disabled="permission !== 'edit'" 
+                        clearable 
+                        filterable 
+                        :placeholder="$t('m_group_name')"
+                        @on-change="onSingleChartGroupChange">
+                        <Option v-for="item in panel_group_list" :value="item" :key="item" style="float: left;">{{ item }}</Option>
+                      </Select>
+                    </span>
                     <Tooltip :content="$t('m_save_chart_library')" theme="light" transfer placement="top">
-                      <Icon v-if="isEditStatus && !item.public" size="15" type="md-archive" @click="showChartAuthDialog(item)" />
+                      <Icon v-if="isEditStatus && !item.public" size="15" type="md-archive" @click.stop="showChartAuthDialog(item)" />
                     </Tooltip>
                     <Tooltip :content="$t('button.chart.dataView')" theme="light" transfer placement="top">
-                      <i class="fa fa-eye" style="font-size: 16px;" v-if="isShowGridPlus(item)" aria-hidden="true" @click="gridPlus(item)"></i>
+                      <i class="fa fa-eye" style="font-size: 16px;" v-if="isShowGridPlus(item)" aria-hidden="true" @click.stop="gridPlus(item)"></i>
                     </Tooltip>
                     <Tooltip :content="$t('placeholder.chartConfiguration')" theme="light" transfer placement="top">
-                      <i class="fa fa-cog" style="font-size: 16px;" v-if="isEditStatus && !noAllowChartChange(item)" @click="setChartType(item)" aria-hidden="true"></i>
+                      <i class="fa fa-cog" style="font-size: 16px;" v-if="isEditStatus && !noAllowChartChange(item)" @click.stop="setChartType(item)" aria-hidden="true"></i>
                     </Tooltip>
                     <Tooltip :content="$t('placeholder.deleteChart')" theme="light" transfer placement="top">
-                      <i class="fa fa-trash" style="font-size: 16px;color:red" v-if="isEditStatus" @click="removeGrid(item)" aria-hidden="true"></i>
+                      <i class="fa fa-trash" style="font-size: 16px;color:red" v-if="isEditStatus" @click.stop="removeGrid(item)" aria-hidden="true"></i>
                     </Tooltip>
                   </div>
                 </div>
-                <section style="height: 90%" @click="onChartBodyClick(item)">
+                <section style="height: 90%">
                   <div v-for="(chartInfo,chartIndex) in item._activeCharts" :key="chartIndex">
                     <CustomChart v-if="['line','bar'].includes(chartInfo.chartType)" :refreshNow="refreshNow" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomChart>
                     <CustomPieChart v-if="chartInfo.chartType === 'pie'" :refreshNow="refreshNow" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomPieChart>
@@ -395,7 +399,7 @@ export default {
     this.getAllRolesOptions();
   },
   methods: {
-    getPannelList() {
+    getPannelList(activeGroup='ALL') {
       this.request('GET', '/monitor/api/v2/dashboard/custom', {
         id: this.pannelId
       }, res => {
@@ -405,7 +409,7 @@ export default {
           this.boardMgmtRoles = res.mgmtRoles;
           this.boardUseRoles = res.useRoles;
           this.panalName = res.name;
-          this.activeGroup = 'ALL';
+          this.activeGroup = activeGroup;
           this.panel_group_list = res.panelGroupList || [];
           this.viewData = res.charts || [];
           this.initPanals();
@@ -987,8 +991,8 @@ export default {
     onSingleChartGroupChange() {
       this.request('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams(), res => {
         this.$Message.success(this.$t('m_success'));
-        this.getPannelList();
-        this.activeGroup = 'ALL';
+        this.getPannelList(this.activeGroup);
+        // this.activeGroup = 'ALL';
       });
     },
     closeChartInfoDrawer() {
