@@ -168,7 +168,11 @@ func GetCustomDashboard(c *gin.Context) {
 				customDashboardDto.Charts = append(customDashboardDto.Charts, chart)
 			}
 		}
-		customDashboardDto.PanelGroupList = db.TransformMapToArray(groupMap)
+		if strings.TrimSpace(customDashboard.PanelGroups) == "" {
+			customDashboardDto.PanelGroupList = db.TransformMapToArray(groupMap)
+		} else {
+			customDashboardDto.PanelGroupList = strings.Split(customDashboard.PanelGroups, ",")
+		}
 	}
 	if boardRoleRelList, err = db.QueryCustomDashboardPermissionByDashboard(id); err != nil {
 		middleware.ReturnServerHandleError(c, err)
@@ -190,6 +194,7 @@ func GetCustomDashboard(c *gin.Context) {
 func AddCustomDashboard(c *gin.Context) {
 	var err error
 	var param models.AddCustomDashboardParam
+	var dashboardId int64
 	if err = c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
@@ -215,11 +220,12 @@ func AddCustomDashboard(c *gin.Context) {
 		CreateAt:   now,
 		UpdateAt:   now,
 	}
-	if err = db.AddCustomDashboard(dashboard, param.MgmtRoles, param.UseRoles); err != nil {
+	if dashboardId, err = db.AddCustomDashboard(dashboard, param.MgmtRoles, param.UseRoles); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}
-	middleware.ReturnSuccess(c)
+	dashboard.Id = int(dashboardId)
+	middleware.ReturnSuccessData(c, dashboard)
 }
 
 // DeleteCustomDashboard 删除自定义看板
@@ -255,6 +261,7 @@ func UpdateCustomDashboard(c *gin.Context) {
 	var insert, delete, permission bool
 	var actions []*db.Action
 	var nameMap = make(map[string]bool)
+	var panelGroups string
 	user := middleware.GetOperateUser(c)
 	now := time.Now().Format(models.DatetimeFormat)
 	if err = c.ShouldBindJSON(&param); err != nil {
@@ -348,7 +355,10 @@ func UpdateCustomDashboard(c *gin.Context) {
 	if len(deleteChartRelIds) > 0 {
 		actions = append(actions, db.GetDeleteCustomDashboardChartRelSQL(deleteChartRelIds)...)
 	}
-	actions = append(actions, db.GetUpdateCustomDashboardSQL(param.Name, middleware.GetOperateUser(c), param.Id)...)
+	if len(param.PanelGroups) > 0 {
+		panelGroups = strings.Join(param.PanelGroups, ",")
+	}
+	actions = append(actions, db.GetUpdateCustomDashboardSQL(param.Name, panelGroups, middleware.GetOperateUser(c), param.Id)...)
 	if err = db.Transaction(actions); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
