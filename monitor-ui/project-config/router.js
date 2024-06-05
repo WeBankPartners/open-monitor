@@ -219,15 +219,15 @@ const router = new Router({
               meta: {},
               component: () =>
                 import("@/views/custom-view/chart-list")
+            },
+            {
+              path: "viewConfig",
+              name: "viewConfig",
+              title: "自定义视图",
+              meta: {},
+              component: () => import("@/views/custom-view/view-config")
             }
           ]
-        },
-        {
-          path: "viewConfig",
-          name: "viewConfig",
-          title: "自定义视图",
-          meta: {},
-          component: () => import("@/views/custom-view/view-config")
         },
         {
           path: "editLineView",
