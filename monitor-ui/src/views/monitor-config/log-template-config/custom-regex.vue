@@ -547,13 +547,13 @@ export default {
         this.$Message.warning(`${this.$t('m_log_example')}${this.$t('m_cannot_be_empty')}`)
         return
       }
-      const hasDuplicatesParamList = this.configInfo.param_list.some((element, index) => {
+      {/* const hasDuplicatesParamList = this.configInfo.param_list.some((element, index) => {
         return this.configInfo.param_list.findIndex((item) => item.name === element.name) !== index
       })
       if (hasDuplicatesParamList) {
         this.$Message.warning(`${this.$t('m_parameter_key')}${this.$t('m_cannot_be_repeated')}`)
         return true
-      }
+      } */}
       const params = {
         demo_log: this.configInfo.demo_log,
         param_list: this.configInfo.param_list
