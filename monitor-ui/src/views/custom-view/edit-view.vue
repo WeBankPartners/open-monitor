@@ -23,7 +23,7 @@
           </div>
 
            <Form ref="formData" :model="chartConfigForm" :rules="ruleValidate" :label-width="100">
-            <FormItem :label="$t('m_name')" prop="name">
+            <FormItem :label="$t('m_graph_name')" prop="name">
               <Input v-model="chartConfigForm.name" clearable :maxlength="30"></Input>
             </FormItem>
             <div v-if="isPieChart">
@@ -86,7 +86,7 @@
                     </Option>
                   </Select>
               </FormItem>
-              <FormItem v-if="chartConfigForm.chartTemplate !== 'one'" :label="$t('m_refresh_time')" prop="aggStep">
+              <FormItem v-if="chartConfigForm.chartTemplate !== 'one'" :label="$t('m_calculation_period')" prop="aggStep">
                   <Select 
                     filterable
                     v-model="chartConfigForm.aggStep"
