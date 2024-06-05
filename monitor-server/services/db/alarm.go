@@ -400,7 +400,7 @@ func GetEndpointsByGrp(grpId int) (error, []*m.EndpointTable) {
 	return err, result
 }
 
-func GetAlarms(query m.AlarmTable, limit int, extLogMonitor, extOpenAlarm bool) (error, m.AlarmProblemList) {
+func GetAlarms(query m.AlarmTable, limit int, extLogMonitor, extOpenAlarm bool, endpointFilterList []string) (error, m.AlarmProblemList) {
 	var result []*m.AlarmProblemQuery
 	var whereSql string
 	var params []interface{}
@@ -413,8 +413,12 @@ func GetAlarms(query m.AlarmTable, limit int, extLogMonitor, extOpenAlarm bool) 
 		params = append(params, query.StrategyId)
 	}
 	if query.Endpoint != "" {
-		whereSql += " and endpoint=? "
-		params = append(params, query.Endpoint)
+		endpointFilterList = append(endpointFilterList, query.Endpoint)
+	}
+	if len(endpointFilterList) > 0 {
+		endpointFilterSql, endpointFilterParam := createListParams(endpointFilterList, "")
+		whereSql += " and endpoint in (" + endpointFilterSql + ") "
+		params = append(params, endpointFilterParam...)
 	}
 	if query.SMetric != "" {
 		whereSql += " and s_metric like ? "
