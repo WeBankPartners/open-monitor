@@ -101,7 +101,7 @@ func GetChartData(c *gin.Context) {
 		queryList, err = GetCustomChartConfig(&param, &result)
 	} else {
 		// handle custom chart
-		queryList, err = getChartConfigByCustom(&param)
+		queryList, err = GetChartConfigByCustom(&param)
 	}
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
@@ -207,16 +207,22 @@ func GetCustomChartConfig(param *models.ChartQueryParam, result *models.EChartOp
 	queryList = []*models.QueryMonitorData{}
 	legend := "$custom"
 	for _, dataConfig := range chartSeries {
+		log.Logger.Debug("chart series display config", log.JsonObj("dataConfig", dataConfig))
 		tmpPromQl := ""
 		tmpPromQl, err = db.GetPromQLByMetric(dataConfig.Metric, dataConfig.MonitorType, dataConfig.ServiceGroup)
 		if err != nil {
 			break
 		}
-		if db.CheckMetricIsServiceMetric(dataConfig.Metric, dataConfig.ServiceGroup) {
+		isServiceMetric, tmpTags, tmpErr := db.CheckMetricIsServiceMetric(dataConfig.Metric, dataConfig.ServiceGroup)
+		if tmpErr != nil {
+			err = tmpErr
+			return
+		}
+		if isServiceMetric {
 			log.Logger.Debug("getChartConfigByCustom $app_metric")
 			legend = "$app_metric"
 			tmpPromQl = db.ReplacePromQlKeyword(tmpPromQl, dataConfig.Metric, &models.EndpointNewTable{}, dataConfig.Tags)
-			queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQl, Legend: legend, Metric: []string{dataConfig.Metric}, Endpoint: []string{dataConfig.Endpoint}, CompareLegend: param.Compare.CompareFirstLegend, SameEndpoint: true, Step: param.Step, Cluster: "default", CustomDashboard: true})
+			queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQl, Legend: legend, Metric: []string{dataConfig.Metric}, Endpoint: []string{dataConfig.Endpoint}, CompareLegend: param.Compare.CompareFirstLegend, SameEndpoint: true, Step: param.Step, Cluster: "default", CustomDashboard: true, Tags: tmpTags})
 		} else {
 			endpointList := []*models.EndpointNewTable{}
 			if dataConfig.ServiceGroup == "" {
@@ -281,7 +287,7 @@ func chartCompare(param *models.ChartQueryParam) error {
 	return nil
 }
 
-func getChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.QueryMonitorData, err error) {
+func GetChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.QueryMonitorData, err error) {
 	param.Compare = &models.ChartQueryCompareParam{CompareFirstLegend: ""}
 	queryList = []*models.QueryMonitorData{}
 	var endpointList []*models.EndpointNewTable
@@ -294,6 +300,7 @@ func getChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.
 		if dataConfig.PromQl != "" {
 			metricLegend = "$custom_with_tag"
 		}
+		serviceTags := []string{}
 		// check endpoint if is service group
 		if dataConfig.AppObject != "" {
 			serviceGroupTag = fmt.Sprintf("service_group=\"%s\"", dataConfig.AppObject)
@@ -307,7 +314,13 @@ func getChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.
 			}
 			param.Data[0].Endpoint = endpointList[0].Guid
 			log.Logger.Debug("getChartConfigByCustom", log.String("app", dataConfig.AppObject), log.String("metric", dataConfig.Metric))
-			if db.CheckMetricIsServiceMetric(dataConfig.Metric, dataConfig.AppObject) {
+			isServiceMetric, tmpTags, tmpErr := db.CheckMetricIsServiceMetric(dataConfig.Metric, dataConfig.AppObject)
+			if tmpErr != nil {
+				err = tmpErr
+				return
+			}
+			if isServiceMetric {
+				serviceTags = tmpTags
 				log.Logger.Debug("getChartConfigByCustom $app_metric")
 				metricLegend = "$app_metric"
 			}
@@ -346,7 +359,7 @@ func getChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.
 		//queryAppendFlag := false
 		if len(endpointList) > 0 && metricLegend == "$app_metric" {
 			tmpPromQL := db.ReplacePromQlKeyword(dataConfig.PromQl, dataConfig.Metric, endpointList[0], dataConfig.Tags)
-			queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQL, Legend: metricLegend, Metric: []string{dataConfig.Metric}, Endpoint: []string{endpointList[0].Guid}, Step: endpointList[0].Step, Cluster: endpointList[0].Cluster, CustomDashboard: true})
+			queryList = append(queryList, &models.QueryMonitorData{Start: param.Start, End: param.End, PromQ: tmpPromQL, Legend: metricLegend, Metric: []string{dataConfig.Metric}, Endpoint: []string{endpointList[0].Guid}, Step: endpointList[0].Step, Cluster: endpointList[0].Cluster, CustomDashboard: true, Tags: serviceTags})
 			continue
 			//log.Logger.Debug("check prom is same", log.String("tmpPromQl", tmpPromQL), log.String("dataProm", dataConfig.PromQl))
 			//if tmpPromQL == dataConfig.PromQl {

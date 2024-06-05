@@ -336,6 +336,7 @@ export default {
                         value={i.tagValue}
                         on-on-change={v => {
                           Vue.set(this.tableData[params.index].tags[selectIndex], 'tagValue', v)
+                          this.updateAllColorLine(params.index);
                         }}
                         filterable
                         multiple
@@ -365,7 +366,7 @@ export default {
                 {!isEmpty(params.row.series) ?
                   (params.row.series.map((item, selectIndex) => (
                     <div class="generate-lines">
-                      <div class="series-name mr-2">{item.seriesName}</div>
+                      <div class="series-name mr-2">{item.new ? 'new_' + item.seriesName : item.seriesName}</div>
                       <ColorPicker v-model={item.color} on-on-change={e => {
                         this.tableData[params.index].series[selectIndex].color = e
                       }}  />
@@ -868,24 +869,14 @@ export default {
       return options
     },
 
-    processBasicParams(metric) {
+    processBasicParams(metric, endpoint, serviceGroup, monitorType, tags, chartSeriesGuid = '') {
       return {
-        aggregate: 'none',
-        agg_step: 60,
-        time_second: -1800,
-        start: 0,
-        end: 0,
-        title: '',
-        unit: '',
-        data: [{
-          app_object: this.serviceGroup,
-          chartType: this.chartConfigForm.chartType,
-          endpoint: this.endpointValue,
-          monitorType: this.monitorType,
-          lineType: this.chartConfigForm.lineType,
-          metric,
-          metricToColor: []
-        }]
+        metric,
+        endpoint,
+        serviceGroup,
+        monitorType,
+        tags,
+        chartSeriesGuid
       }
     },
     async searchTagOptions() {
@@ -932,11 +923,9 @@ export default {
         const metricItem = find(this.metricOptions, {
           guid: this.metricGuid
         })
-        const basicParams = this.processBasicParams(metricItem.metric);
-        const res = await this.requestReturnPromise('POST', '/monitor/api/v1/dashboard/chart', basicParams);
-        // 这里this.metric是存的guid
+        const basicParams = this.processBasicParams(metricItem.metric, this.endpointValue, this.serviceGroup, this.monitorType, this.chartAddTags, '');
+        const series = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams);
         
-        // const tagOptions = await this.findTagsByMetric(metricItem.guid, this.endpointValue, this.serviceGroup)
         this.tableData.push({
           endpoint: this.endpointValue,
           serviceGroup: this.serviceGroup,
@@ -949,13 +938,7 @@ export default {
           pieDisplayTag: "",
           metric: metricItem.metric,
           tags: this.chartAddTags,
-          // tags: this.initTagsFromOptions(tagOptions),
-          series: res.legend.map(item => {
-            return {
-              seriesName: item,
-              color: ''
-            }
-          }),
+          series,
           tagOptions: this.chartAddTagOptions
         }) 
         this.metricGuid = '';
@@ -984,18 +967,22 @@ export default {
     resetChartConfig() {
       this.getTableData()
     },
-    chartDuplicateNameCheck(chartId, chartName) {
+    chartDuplicateNameCheck(chartId, chartName, isPublic = 0) {
       return new Promise(resolve => {
         if (!chartName) {
           resolve(true)
           return
         }
-        this.request('GET', '/monitor/api/v2/chart/custom/name/exist', {
+        const params = {
           chart_id: chartId,
           name: chartName
-        }, res => {
+        }
+        if (isPublic) {
+          params.public = 1 // 是否存入图表库，1表示是
+        }
+        this.request('GET', '/monitor/api/v2/chart/custom/name/exist', params, res => {
           if (res) {
-            this.$Message.error(this.$t('m_graph_name') + this.$t('m_cannot_be_repeated'))
+            this.$Message.error(isPublic ? (this.$t('m_chart_library') + this.$t('m_name') + this.$t('m_cannot_be_repeated')) : (this.$t('m_graph_name') + this.$t('m_cannot_be_repeated')));
           }
           resolve(res)
         })
@@ -1017,11 +1004,15 @@ export default {
       if (await this.beforeSaveValid()) {
         await this.submitChartConfig();
         this.$Message.success(this.$t('m_success'));
+        this.$parent.$parent.showChartConfig = false;
+        this.$parent.$parent.closeChartInfoDrawer();
       }
     },
     async saveChartLibrary() {
       if (await this.beforeSaveValid()) {
         await this.submitChartConfig();
+        const isDuplicateRefName = await this.chartDuplicateNameCheck(this.chartId, this.chartConfigForm.name, 1);
+        if (isDuplicateRefName) return;
         this.$refs.authDialog.startAuth(this.mgmtRoles, this.useRoles, this.mgmtRolesOptions, this.userRolesOptions);
       }
     },
@@ -1125,12 +1116,17 @@ export default {
         }
 
         delete item.colorGroup;
-        delete item.tags;
-        // delete item.series;
         delete item.tagOptions
         return item
       })
       return data
+    },
+
+    async updateAllColorLine(index) {
+      const item = this.tableData[index];
+      const basicParams = this.processBasicParams(item.metric, item.endpoint, item.serviceGroup, item.monitorType, item.tags, item.chartSeriesGuid);
+      const series = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams);
+      this.tableData[index].series = series;
     }
   },
   components: {

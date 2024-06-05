@@ -139,6 +139,8 @@ func GetCustomDashboard(c *gin.Context) {
 		return
 	}
 	customDashboardDto.Name = customDashboard.Name
+	customDashboardDto.TimeRange = customDashboard.TimeRange
+	customDashboardDto.RefreshWeek = customDashboard.RefreshWeek
 	if customChartExtendList, err = db.QueryCustomChartListByDashboard(customDashboard.Id); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
@@ -358,7 +360,7 @@ func UpdateCustomDashboard(c *gin.Context) {
 	if len(param.PanelGroups) > 0 {
 		panelGroups = strings.Join(param.PanelGroups, ",")
 	}
-	actions = append(actions, db.GetUpdateCustomDashboardSQL(param.Name, panelGroups, middleware.GetOperateUser(c), param.Id)...)
+	actions = append(actions, db.GetUpdateCustomDashboardSQL(param.Name, panelGroups, middleware.GetOperateUser(c), param.TimeRange, param.RefreshWeek, param.Id)...)
 	if err = db.Transaction(actions); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
