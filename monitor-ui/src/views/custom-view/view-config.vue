@@ -151,11 +151,7 @@
                   <div class="header-grid header-grid-name">
                     <span v-if="editChartId !== item.id">{{item.i}}</span>
                     <span  v-else @click.stop="">
-<<<<<<< HEAD
-                      <Input v-model.trim="item.i" class="editChartId" autofocus :maxlength="30" show-word-limit style="width:200px" size="small" placeholder="" />
-=======
-                      <Input v-model="item.i" class="editChartId" autofocus :maxlength="30" show-word-limit style="width:200px" size="small" placeholder="" />
->>>>>>> 0093cbda5ce9d78c3018ca99570a34124ee9a83a
+                      <Input v-model.trim="item.i" class="editChartId" autofocus :maxlength="30" show-word-limit style="width:200px" size="small" placeholder="" />             
                     </span>
                     <Tooltip :content="$t('placeholder.editTitle')" theme="light" transfer placement="top">
                       <i v-if="isEditStatus && editChartId !== item.id && !noAllowChartChange(item)" class="fa fa-pencil-square" style="font-size: 16px;" @click.stop="editChartId = item.id" aria-hidden="true"></i>
