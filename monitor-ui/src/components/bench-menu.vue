@@ -6,8 +6,7 @@
       top: scrollTop > 50 ? '0px' : 50 - scrollTop + 'px'
     }"
   >
-  <!-- v-show="expand" -->
-    <div style="height:100%;">
+    <div v-show="expand" style="height:100%;">
       <Menu
         @on-select="handleSelectMenu"
         theme="dark"
@@ -61,20 +60,22 @@ export default {
     })
   },
   mounted () {
-    // if (this.$eventBusP) {
-    //   this.$eventBusP.$emit('expand-menu', this.expand)
-    // } else {
-    //   this.$bus.$emit('expand-menu', this.expand)
-    // }
+    if (this.$eventBusP) {
+      this.$eventBusP.$emit('expand-menu', this.expand)
+    } else {
+      this.$bus.$emit('expand-menu', this.expand)
+    }
     window.addEventListener('scroll', this.getScrollTop)
     if (!this.activeName) {
       this.activeName = this.defaultMenu
     }
   },
   beforeDestroy () {
-    // if (this.$eventBusP) {
-    //   this.$eventBusP.$emit('expand-menu', false)
-    // }
+    if (this.$eventBusP) {
+      this.$eventBusP.$emit('expand-menu', false)
+    } else {
+      this.$bus.$emit('expand-menu', false)
+    }
     window.removeEventListener('scroll', this.getScrollTop)
   },
   methods: {
@@ -83,10 +84,11 @@ export default {
     },
     handleExpand () {
       this.expand = !this.expand
-      // if (this.$eventBusP) {
-      //   this.$eventBusP.$emit('expand-menu', this.expand)
-      // }
-      // this.$emit('menuStatusChange', this.expand);
+      if (this.$eventBusP) {
+        this.$eventBusP.$emit('expand-menu', this.expand)
+      } else {
+        this.$bus.$emit('expand-menu', this.expand)
+      }
     },
     handleSelectMenu (name) {
       // this.activeName = name
@@ -165,7 +167,7 @@ export default {
   }
   .expand {
     position: absolute;
-    top: calc(50% - 14px);
+    top: calc(50% - 10px);
     cursor: pointer;
   }
 }
