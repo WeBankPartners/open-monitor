@@ -243,8 +243,14 @@ func MetricImport(serviceGroup, operator string, inputMetrics []*models.MetricTa
 		if matchMetric.Guid != "" {
 			failList = append(failList, inputMetric.Metric)
 		} else {
-			actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,create_time,create_user,update_user) value (?,?,?,?,?,?,?,?,?,?)",
-				Param: []interface{}{inputMetric.Guid, inputMetric.Metric, inputMetric.MonitorType, inputMetric.PromExpr, serviceGroup, inputMetric.Workspace, nowTime, nowTime, operator, operator}})
+			var tempMetric string
+			x.SQL("select metric from metric where guid = ?", inputMetric.Guid).Get(&tempMetric)
+			if tempMetric != "" {
+				failList = append(failList, tempMetric)
+			} else {
+				actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,create_time,create_user,update_user) value (?,?,?,?,?,?,?,?,?,?)",
+					Param: []interface{}{inputMetric.Guid, inputMetric.Metric, inputMetric.MonitorType, inputMetric.PromExpr, serviceGroup, inputMetric.Workspace, nowTime, nowTime, operator, operator}})
+			}
 		}
 	}
 	log.Logger.Info("import metric", log.Int("actionLen", len(actions)))
@@ -284,8 +290,13 @@ func GetMetricTags(metricRow *models.MetricTable) (tags []string, err error) {
 		if len(logMetricConfigRows) > 0 {
 			tagConfigString := logMetricConfigRows[0].TagConfig
 			if tagConfigString != "" && tagConfigString != "null" && tagConfigString != "[]" {
-				if err = json.Unmarshal([]byte(logMetricConfigRows[0].TagConfig), &tags); err != nil {
+				var tmpTagList []string
+				if err = json.Unmarshal([]byte(logMetricConfigRows[0].TagConfig), &tmpTagList); err != nil {
 					err = fmt.Errorf("json unmarshal tag config: %s fail,%s ", tagConfigString, err.Error())
+					return
+				}
+				if len(tmpTagList) > 0 {
+					tags = []string{"tags"}
 				}
 			}
 		}
@@ -302,6 +313,7 @@ func GetMetricTags(metricRow *models.MetricTable) (tags []string, err error) {
 			if tagConfigString != "" && tagConfigString != "null" && tagConfigString != "[]" {
 				if err = json.Unmarshal([]byte(logMetricTemplateRows[0].TagConfig), &tags); err != nil {
 					err = fmt.Errorf("json unmarshal tag config: %s fail,%s ", tagConfigString, err.Error())
+					return
 				}
 			}
 		}
