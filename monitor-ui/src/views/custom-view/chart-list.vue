@@ -159,20 +159,20 @@ export default {
         chartListColumns: [
             {
                 title: this.$t('m_graph_name'),
-                align: 'center',
+                
                 minWidth: 200,
                 key: 'chartName'
             },
             {
                 title: this.$t('m_id'),
-                align: 'center',
+                
                 width: 150,
                 key: 'chartId'
             },
             {
                 title: this.$t('field.type'),
                 key: 'chartType',
-                align: 'center',
+                
                 width: 100,
                 render: (h, params) => {
                     return (
@@ -189,13 +189,13 @@ export default {
             },
             {
                 title: this.$t('m_source_dashboard'),
-                align: 'center',
+                
                 width: 130,
                 key: 'sourceDashboard'
             },
             {
                 title: this.$t('m_use_dashboard'),
-                align: 'center',
+                
                 minWidth: 250,
                 key: 'useDashboard',
                 render: (h, params) => {
@@ -206,7 +206,7 @@ export default {
             },
             {
                 title: this.$t('m_manage_role'),
-                align: 'center',
+                
                 width: 160,
                 key: 'mgmtRoles',
                 render: (h, params) => {
@@ -217,7 +217,7 @@ export default {
             },
             {
                 title: this.$t('m_use_role'),
-                align: 'center',
+                
                 minWidth: 300,
                 key: 'useRoles',
                 render: (h, params) => {
@@ -228,19 +228,19 @@ export default {
             },
             {
                 title: this.$t('m_updatedBy'),
-                align: 'center',
+                
                 width: 120,
                 key: 'updateUser'
             }, 
             {
                 title: this.$t('m_update_time'),
-                align: 'center',
+                
                 width: 160,
                 key: 'updatedTime'
             },
             {
                 title: this.$t('m_create_time'),
-                align: 'center',
+                
                 width: 160,
                 key: 'createdTime'
             },
@@ -248,7 +248,7 @@ export default {
                 title: this.$t('table.action'),
                 key: 'index',
                 width: 160,
-                align: 'center',
+                
                 fixed: 'right',
                 render: (h, params) => {
                 return (params.row.permission === 'mgmt' ? 
