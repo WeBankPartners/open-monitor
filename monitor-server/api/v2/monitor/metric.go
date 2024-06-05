@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
@@ -127,6 +128,7 @@ func QueryMetricTagValue(c *gin.Context) {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
+	log.Logger.Debug("QueryMetricTagValue", log.StringList("tagList", tagList))
 	if len(tagList) == 0 {
 		middleware.ReturnSuccessData(c, result)
 		return
