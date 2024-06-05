@@ -116,4 +116,4 @@ alter table custom_dashboard add column time_range int(11)  default 0 COMMENT '�
 alter table custom_dashboard add column refresh_week int(5)  default 0 COMMENT '定时刷新';
 
 update custom_dashboard_role_rel set role_id= (select name from role where id = role_id) where role_id in (select id from role);
-insert into main_dashboard (guid,role_id,custom_dashboard)(select uuid(),name,main_dashboard from `role` where main_dashboard > 0 and name!='');
+insert into main_dashboard (guid,role_id,custom_dashboard)(select uuid(),name,main_dashboard from `role` where main_dashboard > 0 and name!='' and main_dashboard in (select id from custom_dashboard));
