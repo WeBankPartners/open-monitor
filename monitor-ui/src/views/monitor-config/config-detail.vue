@@ -820,9 +820,25 @@ export default {
           width: 100
         },
         {
+          title: this.$t('m_update_time'), // 更新时间
+          key: 'update_time',
+          width: 160,
+          render: (h, params) => {
+            return <span>{params.row.update_time || '-'}</span>
+          }
+        },
+        {
+          title: this.$t('m_updatedBy'), // 更新人
+          key: 'update_user',
+          width: 160,
+          render: (h, params) => {
+            return <span>{params.row.update_user || '-'}</span>
+          }
+        },
+        {
           title: this.$t('table.action'),
           key: 'index',
-          
+          fixed: 'right',
           width: 150,
           render: (h, params) => {
             return (
@@ -1056,7 +1072,7 @@ export default {
         for(let i=0; i<currentTableList.length; i++) {
             const item = currentTableList[i];
             if (item.guid !== guid && item.name === alarmName) {
-                return false
+              return false
             }
         }
         return true
