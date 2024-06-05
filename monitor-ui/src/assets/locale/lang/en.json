@@ -259,6 +259,7 @@
   "m_display_group": "Display Group",
   "m_graph": "Graph",
   "m_graph_name": "Graph Name",
+  "m_graph_type": "Graph Type",
   "m_search": "Search",
   "m_field_exporter": "Exporter",
   "m_proxy_exporter": "Proxy Exporter",
@@ -480,5 +481,6 @@
   "m_metric_export_errorTips": "The import is complete. The import failed",
   "m_modify": "Modify ",
   "m_search_info": "Search",
-  "m_add_chart_library": "Please add the chart library first."
+  "m_add_chart_library": "Please add the chart library first.",
+  "m_calculation_period": "Calculation Period"
 }
