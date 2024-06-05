@@ -191,7 +191,10 @@ export default {
                 title: this.$t('m_source_dashboard'),
                 
                 width: 130,
-                key: 'sourceDashboard'
+                key: 'sourceDashboard',
+                render: (h, params) => {
+                    return <span>{params.row.sourceDashboard || '-'}</span>
+                }
             },
             {
                 title: this.$t('m_use_dashboard'),
@@ -200,7 +203,7 @@ export default {
                 key: 'useDashboard',
                 render: (h, params) => {
                     return (
-                        <span>{params.row.useDashboard.join(';')}</span>
+                        <span>{params.row.useDashboard.join(';') || '-'}</span>
                     )
                 }
             },
@@ -230,19 +233,28 @@ export default {
                 title: this.$t('m_updatedBy'),
                 
                 width: 120,
-                key: 'updateUser'
+                key: 'updateUser',
+                render: (h, params) => {
+                    return <span>{params.row.updateUser || '-'}</span>
+                }
             }, 
             {
                 title: this.$t('m_update_time'),
                 
                 width: 160,
-                key: 'updatedTime'
+                key: 'updatedTime',
+                render: (h, params) => {
+                    return <span>{params.row.updatedTime || '-'}</span>
+                }
             },
             {
                 title: this.$t('m_create_time'),
                 
                 width: 160,
-                key: 'createdTime'
+                key: 'createdTime',
+                render: (h, params) => {
+                    return <span>{params.row.createdTime || '-'}</span>
+                }
             },
             {
                 title: this.$t('table.action'),
@@ -252,8 +264,8 @@ export default {
                 fixed: 'right',
                 render: (h, params) => {
                 return (params.row.permission === 'mgmt' ? 
-                    (<div >
-                        <Button size="small" class="mr-1"  type="primary" on-click={() => this.showEditView(params.row)}>
+                    (<div style="display:flex;justify-content:space-around;">
+                        <Button size="small" type="primary" on-click={() => this.showEditView(params.row)}>
                             <Icon type="md-create" size="16"></Icon>
                         </Button>
                         <Button size="small" type="warning" on-click={() => this.editSingleRoles(params.row)}>
