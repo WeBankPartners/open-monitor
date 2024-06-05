@@ -77,10 +77,9 @@ func GetCustomDashboardById(id int) (customDashboard *models.CustomDashboardTabl
 	return
 }
 
-func AddCustomDashboard(customDashboard *models.CustomDashboardTable, mgmtRoles, useRoles []string) (err error) {
+func AddCustomDashboard(customDashboard *models.CustomDashboardTable, mgmtRoles, useRoles []string) (insertId int64, err error) {
 	var actions []*Action
 	var result sql.Result
-	var insertId int64
 	result, err = x.Exec("insert into custom_dashboard(name,create_user,update_user,create_at,update_at) values(?,?,?,?,?)", customDashboard.Name, customDashboard.CreateUser, customDashboard.UpdateUser, customDashboard.CreateAt.Format(models.DatetimeFormat),
 		customDashboard.UpdateAt.Format(models.DatetimeFormat))
 	if err != nil {
@@ -101,7 +100,8 @@ func AddCustomDashboard(customDashboard *models.CustomDashboardTable, mgmtRoles,
 				Param: []interface{}{insertId, models.PermissionUse, role}})
 		}
 	}
-	return Transaction(actions)
+	err = Transaction(actions)
+	return
 }
 
 func AddCustomDashboardChartRel(rel *models.CustomDashboardChartRel) (err error) {
