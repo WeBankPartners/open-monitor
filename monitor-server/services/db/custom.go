@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/WeBankPartners/go-common-lib/guid"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
-	"strconv"
 	"strings"
 )
 
@@ -200,34 +199,39 @@ func GetCustomDashboardAlarms(id int, page *m.PageInfo) (err error, result m.Ala
 }
 
 func ListMainPageRole(user string, roleList []string) (err error, result []*m.MainPageRoleQuery) {
-	var customDashboards []*m.CustomDashboardQuery
-	roleString := strings.Join(roleList, "','")
-	sql := `SELECT * FROM (
-		SELECT DISTINCT t1.id,t1.name,t1.panels_group,t1.cfg,t1.main,t1.create_user,t1.update_user,t1.create_at,t1.update_at,t2.permission FROM custom_dashboard t1 LEFT JOIN custom_dashboard_role_rel t2 ON t1.id=t2.custom_dashboard_id LEFT JOIN role t3 ON t2.role_id=t3.id WHERE t1.create_user<>'` + user + `' and t3.name IN ('` + roleString + `')
-		UNION
-		SELECT id,name,panels_group,cfg,main,create_user,update_user,create_at,update_at,'mgmt' FROM custom_dashboard WHERE create_user='` + user + `'
-		) t ORDER BY t.name`
-	err = x.SQL(sql).Find(&customDashboards)
-	if err != nil {
-		return err, result
+	var displayNameRoleMap map[string]string
+	var mainDashboardList []*m.MainDashboard
+	var mainPageId int
+	var customDashboardNameMap map[int]string
+	result = []*m.MainPageRoleQuery{}
+	if len(roleList) == 0 {
+		return
 	}
-	customDashboards = distinctCustomDashboard(customDashboards)
-	var options []*m.OptionModel
-	options = append(options, &m.OptionModel{Id: 0, OptionValue: "0", OptionText: "null"})
-	for _, v := range customDashboards {
-		options = append(options, &m.OptionModel{Id: v.Id, OptionValue: strconv.Itoa(v.Id), OptionText: v.Name})
+	if customDashboardNameMap, err = QueryAllCustomDashboardNameMap(); err != nil {
+		return
 	}
-	var roleTables []*m.RoleTable
-	x.SQL("SELECT * FROM role WHERE name IN ('" + roleString + "')").Find(&roleTables)
-	for _, v := range roleTables {
-		var tmpMainName string
-		for _, vv := range options {
-			if v.MainDashboard == vv.Id {
-				tmpMainName = vv.OptionText
+	if displayNameRoleMap, err = QueryAllRoleDisplayNameMap(); err != nil {
+		return
+	}
+	if err = x.SQL("select * main_dashboard").Find(&mainDashboardList); err != nil {
+		return
+	}
+	for _, role := range roleList {
+		mainPageId = 0
+		for _, dashboard := range mainDashboardList {
+			if dashboard.RoleId == role {
+				mainPageId = *dashboard.CustomDashboard
 				break
 			}
 		}
-		result = append(result, &m.MainPageRoleQuery{RoleName: v.Name, MainPageId: v.MainDashboard, MainPageName: tmpMainName, Options: options})
+		mainPageRole := &m.MainPageRoleQuery{
+			RoleName:        role,
+			DisplayRoleName: displayNameRoleMap[role],
+			MainPageId:      mainPageId,
+			MainPageName:    customDashboardNameMap[mainPageId],
+			Options:         nil,
+		}
+		result = append(result, mainPageRole)
 	}
 	return err, result
 }
@@ -239,7 +243,9 @@ func UpdateMainPageRole(param []m.MainPageRoleQuery) error {
 	}
 	var idList = guid.CreateGuidList(len(param))
 	for i, v := range param {
-		actions = append(actions, &Action{Sql: "insert into main_dashboard(guid,role_id,custom_dashboard) values(?,?,?)", Param: []interface{}{idList[i], v.RoleName, v.MainPageId}})
+		if v.MainPageId > 0 {
+			actions = append(actions, &Action{Sql: "insert into main_dashboard(guid,role_id,custom_dashboard) values(?,?,?)", Param: []interface{}{idList[i], v.RoleName, v.MainPageId}})
+		}
 	}
 	return Transaction(actions)
 }
