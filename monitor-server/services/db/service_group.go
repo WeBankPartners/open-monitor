@@ -738,11 +738,21 @@ func getUpdateServiceGroupNotifyRoles(serviceGroup string, roleList []string) (a
 	return actions
 }
 
-func CheckMetricIsServiceMetric(metric, serviceGroup string) bool {
+func CheckMetricIsServiceMetric(metric, serviceGroup string) (ok bool, tags []string, err error) {
 	serviceGroupGuidList, _ := fetchGlobalServiceGroupChildGuidList(serviceGroup)
-	queryRows, _ := x.QueryString("select guid from metric where metric=? and service_group in ('"+strings.Join(serviceGroupGuidList, "','")+"')", metric)
-	if len(queryRows) > 0 {
-		return true
+	var metricRows []*models.MetricTable
+	err = x.SQL("select * from metric where metric=? and service_group in ('"+strings.Join(serviceGroupGuidList, "','")+"')", metric).Find(&metricRows)
+	if err != nil {
+		err = fmt.Errorf("query metric table fail,%s ", err.Error())
+		return
 	}
-	return false
+	if len(metricRows) > 0 {
+		tags, err = GetMetricTags(metricRows[0])
+		if err != nil {
+			return
+		}
+		ok = true
+		return
+	}
+	return
 }

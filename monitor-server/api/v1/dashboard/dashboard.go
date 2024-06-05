@@ -680,7 +680,7 @@ func ListMainPageRole(c *gin.Context) {
 			roleList = append(roleList, v.Name)
 		}
 	}
-	err, result := db.ListMainPageRole(user, roleList)
+	err, result := db.ListMainPageRole(roleList)
 	if err != nil {
 		mid.ReturnHandleError(c, err.Error(), err)
 	} else {
@@ -693,16 +693,16 @@ func ListMainPageRole(c *gin.Context) {
 
 func UpdateMainPage(c *gin.Context) {
 	var param []m.MainPageRoleQuery
-	if err := c.ShouldBindJSON(&param); err == nil {
-		err := db.UpdateMainPageRole(param)
-		if err != nil {
-			mid.ReturnHandleError(c, err.Error(), err)
-			return
-		}
-		mid.ReturnSuccess(c)
-	} else {
+	var err error
+	if err = c.ShouldBindJSON(&param); err != nil {
 		mid.ReturnValidateError(c, err.Error())
+		return
 	}
+	if err = db.UpdateMainPageRole(param); err != nil {
+		mid.ReturnServerHandleError(c, err)
+		return
+	}
+	mid.ReturnSuccess(c)
 }
 
 func GetEndpointsByIp(c *gin.Context) {
