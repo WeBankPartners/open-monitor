@@ -24,7 +24,7 @@
 
            <Form ref="formData" :model="chartConfigForm" :rules="ruleValidate" :label-width="100">
             <FormItem :label="$t('m_name')" prop="name">
-              <Input v-model="chartConfigForm.name" clearable :maxlength="20"></Input>
+              <Input v-model="chartConfigForm.name" clearable :maxlength="30"></Input>
             </FormItem>
             <div v-if="isPieChart">
               <FormItem :label="$t('m_show_type')" prop="pieType">
