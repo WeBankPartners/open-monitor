@@ -75,11 +75,11 @@
         <Col v-for="(item,index) in dataList" :span="8" :key="index" class="panal-list">
           <Card>
             <div slot="title" class="panal-title">
-              <div class="panal-title-name">{{ item.name }}</div>
-              <div class="panal-title-update">
+              <span class="panal-title-name">{{ item.name }}</span>
+              <span class="panal-title-update">
                 <span>{{$t('m_updatedBy')}}: {{item.updateUser}}</span>
                 <span class="mt-1">{{item.updateTime}}</span>
-              </div>
+              </span>
             </div>
             <div class="all-card-item-content mb-1">
               <div class="card-content mb-1" v-for="(keyItem, index) in cardContentList" :key="index"> 
@@ -88,14 +88,8 @@
                     {{item[keyItem.key]}}
                   </div>
                   <div v-if="keyItem.type === 'array'">
-                    <div v-if="item[keyItem.key].length" :class="['card-content-array']">
+                    <div v-if="item[keyItem.key].length" class="card-content-array">
                       <ScrollTag :list="item[keyItem.key]"></ScrollTag>
-                      <!-- <Tag 
-                        v-for="(tag, tagIndex) in item[keyItem.key]"
-                        :key="tagIndex"
-                        color="blue">
-                        {{tag}}
-                      </Tag> -->
                     </div>
                     <div v-else>-</div>
                   </div>
@@ -103,7 +97,7 @@
             </div>
             <div class="card-divider"></div>
             <div class="card-content-footer">
-              <Button size="small" type="default" @click="goToPanal(item, 'view')">
+              <Button size="small" type="info" @click="goToPanal(item, 'view')">
                 <Icon type="md-eye" />
               </Button>
               <template v-if="item.permission === 'mgmt'">
@@ -167,7 +161,7 @@
         <template #content-top>
           <div v-if="isAddViewType" class="auth-dialog-content">
             <span class="mr-3">{{$t('m_name')}}:</span>
-            <Input style="width:calc(100% - 60px);" :maxlength="20" show-word-limit v-model="addViewName"></Input>
+            <Input style="width:calc(100% - 60px);" :maxlength="30" show-word-limit v-model.trim="addViewName"></Input>
           </div>
         </template>
       </AuthDialog>
@@ -202,7 +196,7 @@
         :title="$t('delConfirm.title')"
         @on-ok="onDeleteConfirm"
         @on-cancel="onCancelDelete">
-        <div class="modal-body" style="padding:30px">
+        <div class="modal-body" style="padding:10px 20px;">
           <div style="text-align:center">
             <p style="color: red">{{$t('delConfirm.tip')}}</p>
           </div>
@@ -456,7 +450,7 @@ export default {
     saveTemplate(mgmtRoles, useRoles) {
       if (this.isAddViewType && !this.addViewName ) {
         this.$nextTick(() => {
-          this.$Message.success(this.$t('m_name') + this.$t('m_cannot_be_empty'))
+          this.$Message.warning(this.$t('m_name') + this.$t('m_cannot_be_empty'))
           this.$refs.authDialog.flowRoleManageModal = true
         })
         return
@@ -502,7 +496,10 @@ export default {
 .panal-list {
   .ivu-card-body {
     padding-bottom: 5px
-  } 
+  }
+  .ivu-card-head {
+    padding: 12px;
+  }
 }
 
 </style>
@@ -554,15 +551,18 @@ li {
     flex-direction: row;
     justify-content: space-between;
     color: @blue-2;
-    height: 26px;
+    height: 32px;
     &-name {
-      font-size: 16px;
+      font-size: 15px;
       flex: 1;
-      text-overflow: ellipsis;
       overflow: hidden;
-      white-space: nowrap;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
     }
     &-update {
+      display: flex;
+      flex-direction: column;
       width: 130px;
       font-size: 13px;
     }
@@ -588,6 +588,7 @@ li {
     flex-wrap: wrap;
     width: 100%;
     max-height: 52px;
+    margin-top: 2px;
   }
   .exceed-content::after {
     content: '...';
@@ -631,8 +632,9 @@ li {
   display: flex;
   justify-content: center;
   height: 40%;
-  margin-top: 100px;
-  font-size: 20px;
+  margin-top: 200px;
+  font-size: 14px;
+  color: #515a6e;
 }
 .table-data-search {
   display: flex;

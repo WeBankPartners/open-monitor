@@ -229,6 +229,9 @@ func ListMainPageRole(roleList []string) (err error, result []*m.MainPageRoleQue
 		return
 	}
 	for _, role := range roleList {
+		if _, ok := displayNameRoleMap[role]; !ok {
+			continue
+		}
 		var dashboardIds []int
 		mainPageId = 0
 		for _, dashboard := range mainDashboardList {
@@ -245,14 +248,19 @@ func ListMainPageRole(roleList []string) (err error, result []*m.MainPageRoleQue
 			Options:         []*m.OptionModel{},
 		}
 		if dashboardIds = dashboardRelMap[role]; len(dashboardIds) > 0 {
+			idMap := make(map[int]bool)
 			for _, id := range ids {
 				for _, dashboardId := range dashboardIds {
 					if id == dashboardId {
-						mainPageRole.Options = append(mainPageRole.Options, &m.OptionModel{
-							Id:          dashboardId,
-							OptionValue: strconv.Itoa(dashboardId),
-							OptionText:  customDashboardNameMap[dashboardId],
-						})
+						if _, ok := idMap[id]; !ok {
+							idMap[id] = true
+							mainPageRole.Options = append(mainPageRole.Options, &m.OptionModel{
+								Id:          dashboardId,
+								OptionValue: strconv.Itoa(dashboardId),
+								OptionText:  customDashboardNameMap[dashboardId],
+							})
+						}
+						break
 					}
 				}
 			}
