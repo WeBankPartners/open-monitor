@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/WeBankPartners/go-common-lib/guid"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"strconv"
 	"strings"
 )
 
@@ -198,11 +199,15 @@ func GetCustomDashboardAlarms(id int, page *m.PageInfo) (err error, result m.Ala
 	return err, result
 }
 
-func ListMainPageRole(user string, roleList []string) (err error, result []*m.MainPageRoleQuery) {
+func ListMainPageRole(roleList []string) (err error, result []*m.MainPageRoleQuery) {
 	var displayNameRoleMap map[string]string
 	var mainDashboardList []*m.MainDashboard
 	var mainPageId int
-	var customDashboardNameMap map[int]string
+	var customDashboardNameMap = make(map[int]string)
+	var dashboardRelMap = make(map[string][]int)
+	var sql = "select custom_dashboard_id from custom_dashboard_role_rel "
+	var params []interface{}
+	var ids []int
 	result = []*m.MainPageRoleQuery{}
 	if len(roleList) == 0 {
 		return
@@ -216,7 +221,17 @@ func ListMainPageRole(user string, roleList []string) (err error, result []*m.Ma
 	if err = x.SQL("select * main_dashboard").Find(&mainDashboardList); err != nil {
 		return
 	}
+	if dashboardRelMap, err = QueryCustomDashboardRoleRelMap(); err != nil {
+		return
+	}
+	roleFilterSql, roleFilterParam := createListParams(roleList, "")
+	sql = sql + " where role_id  in (" + roleFilterSql + ")"
+	if err = x.SQL(sql, params...).Find(&ids); err != nil {
+		return
+	}
+	params = append(params, roleFilterParam...)
 	for _, role := range roleList {
+		var dashboardIds []int
 		mainPageId = 0
 		for _, dashboard := range mainDashboardList {
 			if dashboard.RoleId == role {
@@ -229,7 +244,20 @@ func ListMainPageRole(user string, roleList []string) (err error, result []*m.Ma
 			DisplayRoleName: displayNameRoleMap[role],
 			MainPageId:      mainPageId,
 			MainPageName:    customDashboardNameMap[mainPageId],
-			Options:         nil,
+			Options:         []*m.OptionModel{},
+		}
+		if dashboardIds = dashboardRelMap[role]; len(dashboardIds) > 0 {
+			for _, id := range ids {
+				for _, dashboardId := range dashboardIds {
+					if id == dashboardId {
+						mainPageRole.Options = append(mainPageRole.Options, &m.OptionModel{
+							Id:          dashboardId,
+							OptionValue: strconv.Itoa(dashboardId),
+							OptionText:  customDashboardNameMap[dashboardId],
+						})
+					}
+				}
+			}
 		}
 		result = append(result, mainPageRole)
 	}

@@ -680,7 +680,7 @@ func ListMainPageRole(c *gin.Context) {
 			roleList = append(roleList, v.Name)
 		}
 	}
-	err, result := db.ListMainPageRole(user, roleList)
+	err, result := db.ListMainPageRole(roleList)
 	if err != nil {
 		mid.ReturnHandleError(c, err.Error(), err)
 	} else {
