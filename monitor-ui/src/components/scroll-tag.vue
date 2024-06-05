@@ -27,11 +27,12 @@ export default {
 
 <style lang="less" scoped>
 .monitor-scroll-list {
-  max-height: 52px;
+  max-height: 57px;
   padding-right: 0px;
   display: flex;
   flex-wrap: wrap;
   margin-bottom: -5px;
+  overflow-y: hidden;
   .tag {
     width: fit-content;
     padding: 2px 5px;
