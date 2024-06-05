@@ -357,6 +357,8 @@ type CustomDashboardTable struct {
 	CreateAt    time.Time `json:"create_at"`
 	UpdateAt    time.Time `json:"update_at"`
 	PanelGroups string    `json:"panel_groups"`
+	TimeRange   int       `json:"time_range"`   //时间范围
+	RefreshWeek int       `json:"refresh_week"` // 刷新周期
 }
 
 type CustomDashboardObj struct {
@@ -381,10 +383,11 @@ type CustomDashboardQuery struct {
 }
 
 type MainPageRoleQuery struct {
-	RoleName     string         `json:"role_name"`
-	MainPageId   int            `json:"main_page_id"`
-	MainPageName string         `json:"main_page_name"`
-	Options      []*OptionModel `json:"options"`
+	RoleName        string         `json:"role_name"`
+	DisplayRoleName string         `json:"display_role_name"`
+	MainPageId      int            `json:"main_page_id"`
+	MainPageName    string         `json:"main_page_name"`
+	Options         []*OptionModel `json:"options"`
 }
 
 type UpdateChartTitleParam struct {
@@ -495,6 +498,8 @@ type CustomDashboardDto struct {
 	Charts         []*CustomChartDto `json:"charts"`
 	MgmtRoles      []string          `json:"mgmtRoles"`
 	UseRoles       []string          `json:"useRoles"`
+	TimeRange      int               `json:"timeRange"`   //时间范围
+	RefreshWeek    int               `json:"refreshWeek"` // 刷新周期
 }
 
 type AddCustomDashboardParam struct {
@@ -506,6 +511,8 @@ type AddCustomDashboardParam struct {
 type UpdateCustomDashboardParam struct {
 	Id          int               `json:"id"`
 	Name        string            `json:"name"`
+	TimeRange   int               `json:"timeRange"`   //时间范围
+	RefreshWeek int               `json:"refreshWeek"` // 刷新周期
 	Charts      []*CustomChartDto `json:"charts"`
 	PanelGroups []string          `json:"panelGroups"`
 }
