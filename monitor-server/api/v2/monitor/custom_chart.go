@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/WeBankPartners/go-common-lib/guid"
+	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/dashboard_new"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
@@ -565,4 +566,54 @@ func CheckHasChartManagePermission(chartId, user string, userRoles []string) (pe
 		}
 	}
 	return
+}
+
+func GetChartSeriesColor(c *gin.Context) {
+	var param models.GetChartSeriesColorParam
+	if err := c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	result := []*models.ColorConfigDto{}
+	existSeriesMap := make(map[string]int)
+	// 查已保存的series颜色配置
+	if param.ChartSeriesGuid != "" {
+		configSeriesRows, getErr := db.GetChartSeriesConfig(param.ChartSeriesGuid)
+		if getErr != nil {
+			middleware.ReturnServerHandleError(c, getErr)
+			return
+		}
+		for _, row := range configSeriesRows {
+			result = append(result, &models.ColorConfigDto{SeriesName: row.SeriesName, New: false, Color: row.Color})
+			existSeriesMap[row.SeriesName] = 1
+		}
+	}
+	// 增加实时查chart合并series
+	queryChartParam := models.ChartQueryParam{Start: time.Now().Unix() - 1800, End: time.Now().Unix(), Aggregate: "none", Step: 10, Data: []*models.ChartQueryConfigObj{{
+		Endpoint:     param.Endpoint,
+		Metric:       param.Metric,
+		AppObject:    param.ServiceGroup,
+		MonitorType:  param.MonitorType,
+		EndpointType: param.MonitorType,
+		Tags:         param.Tags,
+	}}}
+	var querySeriesResult = models.EChartOption{Legend: []string{}, Series: []*models.SerialModel{}}
+	querySeriesConfigList, buildQueryConfigErr := dashboard_new.GetChartConfigByCustom(&queryChartParam)
+	if buildQueryConfigErr != nil {
+		middleware.ReturnServerHandleError(c, buildQueryConfigErr)
+		return
+	}
+	err := dashboard_new.GetChartQueryData(querySeriesConfigList, &queryChartParam, &querySeriesResult)
+	if err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	for _, v := range querySeriesResult.Legend {
+		if _, b := existSeriesMap[v]; b {
+			continue
+		}
+		result = append(result, &models.ColorConfigDto{SeriesName: v, New: true})
+		existSeriesMap[v] = 1
+	}
+	middleware.ReturnSuccessData(c, result)
 }
