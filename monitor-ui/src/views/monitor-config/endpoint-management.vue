@@ -295,15 +295,15 @@ let tableEle = [{
 const alarmLevelMap = {
   low: {
     label: "m_low",
-    buttonType: "blue"
+    buttonType: "green"
   },
   medium: {
     label: "m_medium",
-    buttonType: "warning"
+    buttonType: "gold"
   },
   high: {
     label: "m_high",
-    buttonType: "error"
+    buttonType: "red"
   }
 }
 
