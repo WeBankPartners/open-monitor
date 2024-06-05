@@ -1423,4 +1423,8 @@ export default {
       cursor: pointer;
     }
   }
+
+/deep/ .ivu-card-extra {
+  top: 6px;
+}
 </style>
