@@ -206,7 +206,6 @@ func ListMainPageRole(roleList []string) (err error, result []*m.MainPageRoleQue
 	var customDashboardNameMap = make(map[int]string)
 	var dashboardRelMap = make(map[string][]int)
 	var sql = "select custom_dashboard_id from custom_dashboard_role_rel "
-	var params []interface{}
 	var ids []int
 	result = []*m.MainPageRoleQuery{}
 	if len(roleList) == 0 {
@@ -218,7 +217,7 @@ func ListMainPageRole(roleList []string) (err error, result []*m.MainPageRoleQue
 	if displayNameRoleMap, err = QueryAllRoleDisplayNameMap(); err != nil {
 		return
 	}
-	if err = x.SQL("select * main_dashboard").Find(&mainDashboardList); err != nil {
+	if err = x.SQL("select * from main_dashboard").Find(&mainDashboardList); err != nil {
 		return
 	}
 	if dashboardRelMap, err = QueryCustomDashboardRoleRelMap(); err != nil {
@@ -226,10 +225,9 @@ func ListMainPageRole(roleList []string) (err error, result []*m.MainPageRoleQue
 	}
 	roleFilterSql, roleFilterParam := createListParams(roleList, "")
 	sql = sql + " where role_id  in (" + roleFilterSql + ")"
-	if err = x.SQL(sql, params...).Find(&ids); err != nil {
+	if err = x.SQL(sql, roleFilterParam...).Find(&ids); err != nil {
 		return
 	}
-	params = append(params, roleFilterParam...)
 	for _, role := range roleList {
 		var dashboardIds []int
 		mainPageId = 0
