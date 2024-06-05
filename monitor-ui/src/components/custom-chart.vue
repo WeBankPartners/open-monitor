@@ -35,7 +35,8 @@ export default {
   watch: {
     params: {
       handler () {
-        this.getchartdata()
+        this.isAutoRefresh();
+        this.getchartdata();
       },
       deep: true
     },
