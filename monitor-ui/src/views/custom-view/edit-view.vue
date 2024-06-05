@@ -115,6 +115,7 @@
         </div>
 
         <Table
+          class="config-table"
           size="small"
           style="width:100%;"
           :border="false"
@@ -152,6 +153,7 @@
 
           <Select
             v-model="metricGuid"
+            class="metric-guid-select"
             filterable
             clearable 
             :placeholder="$t('m_metric')"
@@ -282,7 +284,7 @@ export default {
               return params.row.endpointType.length ?  (
                 <div class="table-config-endpoint">
                   <TagShow class="table-endpoint-tag" list={this.tableData} name="endpointType" tagName={params.row.endpointType} index={params.index} /> 
-                  {params.row.endpointName}
+                  <span class="table-endpoint-text">{params.row.endpointName}</span>
                 </div>
               ) : (
                 <div>{params.row.endpointName}</div>
@@ -1186,19 +1188,32 @@ export default {
   }
 }
 
+.config-table {
+  .ivu-table-cell {
+    padding-left: 0px;
+    padding-right: 0px
+  }
+}
+
 .table-config-endpoint {
   display: flex;
   align-items: center;
   .table-endpoint-tag {
-    width: 155px
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-width: 65px;
   }
 }
 
 .generate-lines {
   display: flex;
   flex-direction: row;
+  justify-content: flex-start;
   .series-name {
-    width: 85%
+    max-width: 85%;
+    overflow: hidden;
+
   }
   .new-line-tag {
     width: 30px
@@ -1232,6 +1247,14 @@ export default {
 .ivu-color-picker {
   .ivu-icon.ivu-icon-ios-close::before {
     content: "\f193"
+  }
+}
+
+.metric-guid-select {
+  .ivu-select-item {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
   }
 }
 
