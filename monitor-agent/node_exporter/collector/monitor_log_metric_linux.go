@@ -658,7 +658,7 @@ func calcLogMetricData() {
 	existMetricMap := make(map[string]*logMetricDisplayObj)
 	for _, displayObj := range logMetricMonitorMetrics {
 		// 如果一个小时内都没再出现过该数据，就剔除掉它
-		if displayObj.LastActiveTime > 0 && (displayObj.LastActiveTime+3600) < nowTimeUnix {
+		if displayObj.LastActiveTime > 0 && (displayObj.LastActiveTime+86400) < nowTimeUnix {
 			continue
 		}
 		existMetricMap[displayObj.Id] = displayObj
