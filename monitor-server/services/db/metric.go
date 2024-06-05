@@ -243,8 +243,14 @@ func MetricImport(serviceGroup, operator string, inputMetrics []*models.MetricTa
 		if matchMetric.Guid != "" {
 			failList = append(failList, inputMetric.Metric)
 		} else {
-			actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,create_time,create_user,update_user) value (?,?,?,?,?,?,?,?,?,?)",
-				Param: []interface{}{inputMetric.Guid, inputMetric.Metric, inputMetric.MonitorType, inputMetric.PromExpr, serviceGroup, inputMetric.Workspace, nowTime, nowTime, operator, operator}})
+			var tempMetric string
+			x.SQL("select metric from metric where guid = ?", inputMetric.Guid).Get(&tempMetric)
+			if tempMetric != "" {
+				failList = append(failList, tempMetric)
+			} else {
+				actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,create_time,create_user,update_user) value (?,?,?,?,?,?,?,?,?,?)",
+					Param: []interface{}{inputMetric.Guid, inputMetric.Metric, inputMetric.MonitorType, inputMetric.PromExpr, serviceGroup, inputMetric.Workspace, nowTime, nowTime, operator, operator}})
+			}
 		}
 	}
 	log.Logger.Info("import metric", log.Int("actionLen", len(actions)))
