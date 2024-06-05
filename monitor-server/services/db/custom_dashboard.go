@@ -46,6 +46,23 @@ func QueryAllCustomDashboard() (list []*models.SimpleCustomDashboardDto, err err
 	return
 }
 
+func QueryCustomDashboardRoleRelMap() (dashboardRelMap map[string][]int, err error) {
+	var list []*models.CustomDashBoardRoleRel
+	dashboardRelMap = make(map[string][]int)
+	if err = x.SQL("select role_id,custom_dashboard_id from custom_dashboard_role_rel where permission = ?", models.PermissionUse).Find(&list); err != nil {
+		return
+	}
+	if len(list) > 0 {
+		for _, dashboardRoleRel := range list {
+			if _, ok := dashboardRelMap[dashboardRoleRel.RoleId]; !ok {
+				dashboardRelMap[dashboardRoleRel.RoleId] = []int{}
+			}
+			dashboardRelMap[dashboardRoleRel.RoleId] = append(dashboardRelMap[dashboardRoleRel.RoleId], dashboardRoleRel.CustomDashboard)
+		}
+	}
+	return
+}
+
 func QueryAllCustomDashboardNameMap() (resultMap map[int]string, err error) {
 	var list []*models.SimpleCustomDashboardDto
 	resultMap = make(map[int]string)
