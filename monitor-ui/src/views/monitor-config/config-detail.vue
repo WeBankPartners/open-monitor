@@ -440,15 +440,15 @@ const initFormData = {
 const alarmLevelMap = {
   low: {
     label: "m_low",
-    buttonType: "blue"
+    buttonType: "green"
   },
   medium: {
     label: "m_medium",
-    buttonType: "warning"
+    buttonType: "gold"
   },
   high: {
     label: "m_high",
-    buttonType: "error"
+    buttonType: "red"
   }
 }
 
@@ -698,7 +698,7 @@ export default {
         {
           title: this.$t('table.action'),
           key: 'index',
-          align: 'center',
+          
           width: 50,
           render: (h, params) => {
             return (
@@ -722,14 +722,14 @@ export default {
       alarmItemTableColumns: [
         {
           title: this.$t('m_alarmName'),
-          align: 'center',
+          
           width: 250,
           key: 'name'
         },
         {
           title: this.$t('m_alarmPriority'),
           key: 'priority',
-          align: 'center',
+          
           width: 100,
           render: (h, params) => {
             return (
@@ -742,19 +742,19 @@ export default {
         {
           title: this.$t('m_notification'),
           key: 'notify_enable',
-          align: 'center',
+          
           width: 100,
           render: (h, params) => {
             const notify_enable = params.row.notify_enable === 0
               return (
-                <Tag color={notify_enable ? "default" : "success"}>{this.$t(statusButtonLabelMap[params.row.notify_enable])}</Tag>
+                <Tag color={notify_enable ? "default" : "green"}>{this.$t(statusButtonLabelMap[params.row.notify_enable])}</Tag>
               )
           }
         },
         {
           title: this.$t('field.relativeTime'),
           width: 130,
-          align: 'center',
+          
           key: 'active_window'
         },
         {
@@ -804,25 +804,25 @@ export default {
         {
           title: this.$t('tableKey.metricName'),
           key: 'metric',
-          align: 'center',
+          
           minWidth: 300
         },
         {
           title: this.$t('field.threshold'),
           key: 'condition',
-          align: 'center',
+          
           width: 100
         },
         {
           title: this.$t('tableKey.s_last'),
           key: 'last',
-          align: 'center',
+          
           width: 100
         },
         {
           title: this.$t('table.action'),
           key: 'index',
-          align: 'center',
+          
           width: 150,
           render: (h, params) => {
             return (
