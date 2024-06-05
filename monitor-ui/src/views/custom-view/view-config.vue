@@ -906,14 +906,22 @@ export default {
       this.editChartId = null;
       this.$Message.success(this.$t('tips.success'));
     },
-    chartDuplicateNameCheck(chartId, chartName) {
+    chartDuplicateNameCheck(chartId, chartName, isPublic = 0) {
       return new Promise(resolve => {
-        this.request('GET', '/monitor/api/v2/chart/custom/name/exist', {
+        if (!chartName) {
+          resolve(true)
+          return
+        }
+        const params = {
           chart_id: chartId,
           name: chartName
-        }, res => {
+        }
+        if (isPublic) {
+          params.public = 1 // 是否存入图表库，1表示是
+        }
+        this.request('GET', '/monitor/api/v2/chart/custom/name/exist', params, res => {
           if (res) {
-            this.$Message.error(this.$t('m_graph_name') + this.$t('m_cannot_be_repeated'))
+            this.$Message.error(isPublic ? (this.$t('m_chart_library') + this.$t('m_name') + this.$t('m_cannot_be_repeated')) : (this.$t('m_graph_name') + this.$t('m_cannot_be_repeated')));
           }
           resolve(res)
         })
@@ -923,8 +931,9 @@ export default {
       return item.public === true && item.sourceDashboard !== this.pannelId
     }, 
     async showChartAuthDialog(item) {
-      this.setChartConfigId = item.id
+      this.setChartConfigId = item.id;
       this.chartAuthDialogShow = true;
+      if (await this.chartDuplicateNameCheck(item.id, item.i, 1)) return
       await this.getSingleChartAuth();
       this.saveAuthType = 'chart';
       this.$refs.authDialog.startAuth(this.mgmtRoles, this.useRoles, this.mgmtRolesOptions, this.userRolesOptions);
