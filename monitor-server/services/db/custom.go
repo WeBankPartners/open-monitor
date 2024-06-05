@@ -252,7 +252,7 @@ func ListMainPageRole(roleList []string) (err error, result []*m.MainPageRoleQue
 			for _, id := range ids {
 				for _, dashboardId := range dashboardIds {
 					if id == dashboardId {
-						if _, ok := idMap[id]; !ok {
+						if _, ok := idMap[id]; !ok && customDashboardNameMap[dashboardId] != "" {
 							idMap[id] = true
 							mainPageRole.Options = append(mainPageRole.Options, &m.OptionModel{
 								Id:          dashboardId,
