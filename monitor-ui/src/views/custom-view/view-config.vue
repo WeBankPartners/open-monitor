@@ -92,7 +92,7 @@
         </div>
 
         <!-- 图表新增 -->
-        <div class="chart-config-info" v-if="isEditStatus">
+        <div class="chart-config-info" v-if="isEditStatus" @click="getAllChartOptionList">
           <span class="fs-20 mr-3 ml-3">{{$t('m_graph')}}:</span>
           <Dropdown 
             v-for="(item, index) in allAddChartOptions"
@@ -835,9 +835,20 @@ export default {
           i: `${name}`,
           id: `${this.setChartConfigId}`
         }
+
+        if (this.layoutData.length) {
+          let lastItem = this.layoutData[this.layoutData.length - 1];
+          if (lastItem.x <= 6 && lastItem.w <= 6) {
+            let popItem = this.layoutData.pop();
+            popItem.x = 6;
+            this.layoutData.push(popItem)
+          } 
+          this.layoutData.push(item);
+        }
+
+
         this.layoutData.push(item);
         
-
         setTimeout(() => {
           this.request('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams(), res => {
             this.getPannelList();
