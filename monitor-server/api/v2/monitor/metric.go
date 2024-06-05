@@ -95,8 +95,10 @@ func ImportMetric(c *gin.Context) {
 		nameList = append(nameList, obj.Metric)
 	}
 	if result.FailList, err = db.MetricImport(serviceGroup, middleware.GetOperateUser(c), paramObj); err != nil {
-		result.Message = err.Error()
-	} else {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if len(result.FailList) == 0 {
 		result.SuccessList = nameList
 	}
 	middleware.ReturnSuccessData(c, result)
