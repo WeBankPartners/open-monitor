@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+	"github.com/WeBankPartners/go-common-lib/guid"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"strconv"
 	"strings"
@@ -233,14 +234,12 @@ func ListMainPageRole(user string, roleList []string) (err error, result []*m.Ma
 
 func UpdateMainPageRole(param []m.MainPageRoleQuery) error {
 	var actions []*Action
-	for _, v := range param {
-		var tmpAction Action
-		var tmpParam []interface{}
-		tmpAction.Sql = "UPDATE role SET main_dashboard=? WHERE name=?"
-		tmpParam = append(tmpParam, v.MainPageId)
-		tmpParam = append(tmpParam, v.RoleName)
-		tmpAction.Param = tmpParam
-		actions = append(actions, &tmpAction)
+	if len(param) > 0 {
+		actions = append(actions, &Action{Sql: "delete from main_dashboard"})
+	}
+	var idList = guid.CreateGuidList(len(param))
+	for i, v := range param {
+		actions = append(actions, &Action{Sql: "insert into main_dashboard(guid,role_id,custom_dashboard) values(?,?,?)", Param: []interface{}{idList[i], v.RoleName, v.MainPageId}})
 	}
 	return Transaction(actions)
 }
