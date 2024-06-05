@@ -402,7 +402,6 @@ export default {
         if(isEmpty(res)) {
           this.$router.push({path:'viewConfigIndex'})
         } else {
-          console.log(33, res)
           this.boardMgmtRoles = res.mgmtRoles;
           this.boardUseRoles = res.useRoles;
           this.panalName = res.name;
@@ -458,7 +457,7 @@ export default {
       return options
     },
     onChartBodyClick(item) {
-      if (this.isEditStatus) {
+      if (this.isEditStatus && !this.noAllowChartChange(item)) {
         this.setChartType(item);
       } else {
         this.gridPlus(item);
@@ -607,6 +606,7 @@ export default {
       remove(params.charts, {id: this.deleteConfirm.id});
       await this.requestReturnPromise('PUT', '/monitor/api/v2/dashboard/custom', params);
       this.getPannelList();
+      this.getAllChartOptionList();
     },
     cancel () {
       this.isShowWarning = false
@@ -819,6 +819,7 @@ export default {
           id: `${this.setChartConfigId}`
         }
         this.layoutData.push(item);
+        
 
         setTimeout(() => {
           this.request('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams(), res => {
@@ -882,7 +883,7 @@ export default {
         id: this.pannelId,
         name: this.panalName,
         charts,
-        panelGroupList: this.panel_group_list
+        panelGroups: this.panel_group_list
       }
     },
 

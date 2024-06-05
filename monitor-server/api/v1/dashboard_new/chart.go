@@ -98,10 +98,10 @@ func GetChartData(c *gin.Context) {
 		// handle dashboard chart with config
 		queryList, err = getChartConfigByChartId(&param, &result)
 	} else if param.CustomChartGuid != "" {
-		queryList, err = getCustomChartConfig(&param, &result)
+		queryList, err = GetCustomChartConfig(&param, &result)
 	} else {
 		// handle custom chart
-		queryList, err = getChartConfigByCustom(&param)
+		queryList, err = GetChartConfigByCustom(&param)
 	}
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
@@ -113,7 +113,7 @@ func GetChartData(c *gin.Context) {
 	}
 	log.Logger.Debug("chartData param", log.JsonObj("param", param))
 	// query from prometheus
-	err = getChartQueryData(queryList, &param, &result)
+	err = GetChartQueryData(queryList, &param, &result)
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
@@ -182,7 +182,7 @@ func getChartConfigByChartId(param *models.ChartQueryParam, result *models.EChar
 	return
 }
 
-func getCustomChartConfig(param *models.ChartQueryParam, result *models.EChartOption) (queryList []*models.QueryMonitorData, err error) {
+func GetCustomChartConfig(param *models.ChartQueryParam, result *models.EChartOption) (queryList []*models.QueryMonitorData, err error) {
 	chartObj, getChartErr := db.GetCustomChartById(param.CustomChartGuid)
 	if getChartErr != nil {
 		err = fmt.Errorf("get custom chart with guid:%s fail,%s ", param.CustomChartGuid, getChartErr.Error())
@@ -281,7 +281,7 @@ func chartCompare(param *models.ChartQueryParam) error {
 	return nil
 }
 
-func getChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.QueryMonitorData, err error) {
+func GetChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.QueryMonitorData, err error) {
 	param.Compare = &models.ChartQueryCompareParam{CompareFirstLegend: ""}
 	queryList = []*models.QueryMonitorData{}
 	var endpointList []*models.EndpointNewTable
@@ -374,7 +374,7 @@ func getChartConfigByCustom(param *models.ChartQueryParam) (queryList []*models.
 	return
 }
 
-func getChartQueryData(queryList []*models.QueryMonitorData, param *models.ChartQueryParam, result *models.EChartOption) error {
+func GetChartQueryData(queryList []*models.QueryMonitorData, param *models.ChartQueryParam, result *models.EChartOption) error {
 	serials := []*models.SerialModel{}
 	var err error
 	archiveQueryFlag := false
