@@ -49,7 +49,7 @@
           style="width: 90%"
           @on-change="onFilterConditionChange"
         >
-          <Option v-for="item in mgmtRolesOptions" :value="item.name" :key="item.name">{{ item.display_name }}</Option>
+          <Option v-for="item in userRolesOptions" :value="item.name" :key="item.name">{{ item.display_name }}</Option>
         </Select>
         <Input
           v-model="searchMap.updateUser"
@@ -61,7 +61,7 @@
           @on-change="onFilterConditionChange"
         >
         </Input>
-        <Button class="mr-5" @click="getViewList" type="primary">{{ $t('m_search_info') }}</Button>
+        <Button class="mr-5" @click="handleReset" type="default">{{ $t('m_reset') }}</Button>
         <Button type="success" @click="addBoardItem">{{$t('button.add')}}</Button>
         <button class="ml-2 btn btn-sm btn-cancel-f" @click="setDashboard">
           {{$t('button.setDashboard')}}
@@ -71,54 +71,56 @@
 
     <div class="mt-3">
       <div v-if="!dataList || dataList.length === 0" class="no-card-tips">{{$t('m_noData')}}</div>
-      <section class="all-card-item" v-else>
-          <template v-for="(item,index) in dataList">
-            <div :key="index" class="panal-list" @click="goToPanal(item, 'view')">
-              <Card>
-                <div slot="title" class="panal-title">
-                  <h5>{{ item.name }}</h5>
-                  <div>
-                    <span>{{$t('m_update')}}: {{item.updateUser}}</span>
-                    <span>{{item.updateTime}}</span>
-                  </div>
-                </div>
-                <div class="all-card-item-content mb-1">
-                  <div class="card-content mb-1" v-for="(keyItem, index) in cardContentList" :key="index"> 
-                      <span style="min-width: 80px">{{$t(keyItem.label)}}: </span>
-                      <div v-if="keyItem.type === 'string'">
-                        {{item[keyItem.key]}}
-                      </div>
-                      <div v-if="keyItem.type === 'array'">
-                        <div v-if="item[keyItem.key].length" :class="['card-content-array', item[keyItem.key].length >=3  ? 'exceed-content' : '']">
-                            <Tag 
-                              v-for="(tag, tagIndex) in item[keyItem.key]"
-                              :key="tagIndex"
-                              color="blue">
-                              {{tag}}
-                            </Tag>
-                        </div>
-                        <div v-else>-</div>
-                      </div>
-                  </div>
-                </div>
-                <div class="card-divider"></div>
-                <div class="card-content-footer">
-                  <template v-if="item.permission === 'mgmt'">
-                    <Button size="small" type="primary" @click.stop="goToPanal(item, 'edit')">
-                      <Icon type="md-create" />
-                    </Button>
-                    <Button size="small" type="warning" @click.stop="editBoardAuth(item)">
-                      <Icon type="md-person" />
-                    </Button>
-                    <Button size="small" type="error" @click.stop="deleteConfirmModal(item)">
-                      <Icon type="md-trash" />
-                    </Button>
-                  </template>
-                </div>
-              </Card>
+      <Row class="all-card-item" :gutter="15" v-else>
+        <Col v-for="(item,index) in dataList" :span="8" :key="index" class="panal-list">
+          <Card>
+            <div slot="title" class="panal-title">
+              <div class="panal-title-name">{{ item.name }}</div>
+              <div class="panal-title-update">
+                <span>{{$t('m_updatedBy')}}: {{item.updateUser}}</span>
+                <span class="mt-1">{{item.updateTime}}</span>
+              </div>
             </div>
-          </template>
-      </section>
+            <div class="all-card-item-content mb-1">
+              <div class="card-content mb-1" v-for="(keyItem, index) in cardContentList" :key="index"> 
+                  <span style="min-width: 80px">{{$t(keyItem.label)}}: </span>
+                  <div v-if="keyItem.type === 'string'">
+                    {{item[keyItem.key]}}
+                  </div>
+                  <div v-if="keyItem.type === 'array'">
+                    <div v-if="item[keyItem.key].length" :class="['card-content-array']">
+                      <ScrollTag :list="item[keyItem.key]"></ScrollTag>
+                      <!-- <Tag 
+                        v-for="(tag, tagIndex) in item[keyItem.key]"
+                        :key="tagIndex"
+                        color="blue">
+                        {{tag}}
+                      </Tag> -->
+                    </div>
+                    <div v-else>-</div>
+                  </div>
+              </div>
+            </div>
+            <div class="card-divider"></div>
+            <div class="card-content-footer">
+              <Button size="small" type="default" @click="goToPanal(item, 'view')">
+                <Icon type="md-eye" />
+              </Button>
+              <template v-if="item.permission === 'mgmt'">
+                <Button size="small" type="primary" @click.stop="goToPanal(item, 'edit')">
+                  <Icon type="md-create" />
+                </Button>
+                <Button size="small" type="warning" @click.stop="editBoardAuth(item)">
+                  <Icon type="md-person" />
+                </Button>
+                <Button size="small" type="error" @click.stop="deleteConfirmModal(item)">
+                  <Icon type="md-trash" />
+                </Button>
+              </template>
+            </div>
+          </Card>
+        </Col>
+      </Row>
       <Page
         class="card-pagination"
         :total="pagination.totalRows"
@@ -165,7 +167,7 @@
         <template #content-top>
           <div v-if="isAddViewType" class="auth-dialog-content">
             <span class="mr-3">{{$t('m_name')}}:</span>
-            <Input style="width: 350px" :maxlength="20" v-model="addViewName"></Input>
+            <Input style="width:calc(100% - 60px);" :maxlength="20" show-word-limit v-model="addViewName"></Input>
           </div>
         </template>
       </AuthDialog>
@@ -215,6 +217,7 @@ import debounce from 'lodash/debounce';
 import cloneDeep from 'lodash/cloneDeep'
 import isEmpty from 'lodash/isEmpty'
 import AuthDialog from '@/components/auth.vue'
+import ScrollTag from '@/components/scroll-tag.vue'
 export default {
   name: '',
   data() {
@@ -309,6 +312,18 @@ export default {
     }
   },
   methods: {
+    handleReset () {
+      const resetObj = {
+        name: "",
+        id: "",
+        useRoles: [],
+        mgmtRoles: [],
+        updateUser: ""
+      }
+      this.searchMap = Object.assign({}, this.searchMap, resetObj)
+      this.pagination.currentPage = 1;
+      this.getViewList()
+    },
     deleteAuth (index) {
       this.authorizationModel.result.splice(index, 1)
     },
@@ -464,13 +479,17 @@ export default {
         params.id = this.boardId;
         path = '/monitor/api/v2/dashboard/custom/permission'
       }
-      this.request('POST', path, params, () => {
+      this.request('POST', path, params, (val) => {
         this.getViewList();
+        if (this.isAddViewType) {
+          this.goToPanal(val, 'edit')
+        }
       })
     }
   },
   components: {
-    AuthDialog
+    AuthDialog,
+    ScrollTag
   }
 }
 </script>
@@ -515,13 +534,19 @@ li {
   .all-card-item-content {
     min-height: 160px;
     height: 160px;
+    .detail-eye {
+      position: absolute;
+      right: 20px;
+      top: 60px;
+      cursor: pointer;
+      color: #2d8cf0;
+    }
   }
 }
 
 
 .panal-list {
-  margin: 8px;
-  width: 22%;
+  margin-bottom: 15px;
   min-height: 240px;
   display: inline-block;
   .panal-title {
@@ -530,6 +555,17 @@ li {
     justify-content: space-between;
     color: @blue-2;
     height: 26px;
+    &-name {
+      font-size: 16px;
+      flex: 1;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    &-update {
+      width: 130px;
+      font-size: 13px;
+    }
   }
   .panal-title > div {
     display: flex;
@@ -552,15 +588,13 @@ li {
     flex-wrap: wrap;
     width: 100%;
     max-height: 52px;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
   .exceed-content::after {
     content: '...';
     font-size: 20px;
     position: absolute;
     bottom: 0px;
-    right: 50px;
+    right: 0px;
   }
 }
 
@@ -589,7 +623,7 @@ li {
 
 .card-pagination {
   position: fixed;
-  right: 100px;
+  right: 20px;
   bottom: 20px;
 }
 
