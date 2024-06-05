@@ -46,6 +46,20 @@ func QueryAllCustomDashboard() (list []*models.SimpleCustomDashboardDto, err err
 	return
 }
 
+func QueryAllCustomDashboardNameMap() (resultMap map[int]string, err error) {
+	var list []*models.SimpleCustomDashboardDto
+	resultMap = make(map[int]string)
+	if err = x.SQL("select id,name from custom_dashboard").Find(&list); err != nil {
+		return
+	}
+	if len(list) > 0 {
+		for _, dto := range list {
+			resultMap[dto.Id] = dto.Name
+		}
+	}
+	return
+}
+
 func QueryCustomDashboardRoleRelByCustomDashboard(dashboardId int) (list []*models.CustomDashBoardRoleRel, err error) {
 	err = x.SQL("select * from custom_dashboard_role_rel where custom_dashboard_id = ?", dashboardId).Find(&list)
 	return
