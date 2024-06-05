@@ -675,7 +675,7 @@ func GetMainCustomDashboard(roleList []string) (err error, result []*m.CustomDas
 		return
 	}
 	roleFilterSql, roleFilterParam := createListParams(roleList, "")
-	sql := "SELECT custom_dashboard FROM main_dashboard WHERE role_id in (" + roleFilterSql + ")"
+	sql := "SELECT custom_dashboard FROM main_dashboard WHERE role_id in (" + roleFilterSql + ") order by guid asc"
 	if err = x.SQL(sql, roleFilterParam...).Find(&ids); err != nil {
 		return
 	}
