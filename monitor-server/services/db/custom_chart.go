@@ -161,9 +161,10 @@ func GetUpdateCustomDashboardChartRelSQL(chartRelList []*models.CustomDashboardC
 	return actions
 }
 
-func GetUpdateCustomDashboardSQL(name, panelGroups, user string, id int) []*Action {
+func GetUpdateCustomDashboardSQL(name, panelGroups, user string, timeRange, refreshWeek, id int) []*Action {
 	var actions []*Action
-	actions = append(actions, &Action{Sql: "update custom_dashboard set name=?,update_user=?,update_at=?,panel_groups=? where id =?", Param: []interface{}{name, user, time.Now().Format(models.DatetimeFormat), panelGroups, id}})
+	actions = append(actions, &Action{Sql: "update custom_dashboard set name=?,update_user=?,update_at=?,panel_groups=?,time_range=?,refresh_week=? where id =?",
+		Param: []interface{}{name, user, time.Now().Format(models.DatetimeFormat), panelGroups, timeRange, refreshWeek, id}})
 	return actions
 }
 
@@ -664,4 +665,11 @@ func convertIntArrToStr(ids []int) []string {
 		arr = append(arr, fmt.Sprintf("%d", id))
 	}
 	return arr
+}
+
+func GetChartSeriesConfig(customChartSeriesGuid string) (result []*models.CustomChartSeriesConfig, err error) {
+	if err = x.SQL("select * from custom_chart_series_config where dashboard_chart_config=?", customChartSeriesGuid).Find(&result); err != nil {
+		err = fmt.Errorf("query custom chart series config table fail,%s ", err.Error())
+	}
+	return
 }

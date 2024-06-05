@@ -93,6 +93,7 @@ export default {
       }
     },
     getchartdata () {
+      this.noDataTip = true
       if (this.chartInfo.chartParams.data.length === 0) {
         return
       }
