@@ -1,6 +1,6 @@
 <template>
   <div>
-     <view-config v-if="viewId" :boardId="viewId" />
+     <view-config v-if="viewId" permissionType='view' :boardId="viewId" />
   </div>
 </template>
 
