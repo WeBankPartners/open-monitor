@@ -153,7 +153,7 @@ export default {
           title: this.$t('table.action'),
           key: 'action',
           width: 100,
-          align: 'center',
+          
           fixed: 'right',
           render: (h, params) => {
             return (
