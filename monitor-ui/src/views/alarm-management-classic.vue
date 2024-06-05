@@ -18,20 +18,20 @@
 </template>
 
 <script>
-  const alarmLevelMap = {
-    low: {
-      label: "m_low",
-      buttonType: "blue"
-    },
-    medium: {
-      label: "m_medium",
-      buttonType: "warning"
-    },
-    high: {
-      label: "m_high",
-      buttonType: "error"
-    }
+const alarmLevelMap = {
+  low: {
+    label: "m_low",
+    buttonType: "green"
+  },
+  medium: {
+    label: "m_medium",
+    buttonType: "gold"
+  },
+  high: {
+    label: "m_high",
+    buttonType: "red"
   }
+}
 import isEmpty from 'lodash/isEmpty';
 export default {
   name: '',
