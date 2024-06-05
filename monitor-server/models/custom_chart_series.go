@@ -18,7 +18,7 @@ type CustomChartSeries struct {
 }
 
 type CustomChartSeriesDto struct {
-	Guid          string            `json:"-"`
+	Guid          string            `json:"chartSeriesGuid"`
 	Endpoint      string            `json:"endpoint"`      // 监控对象
 	ServiceGroup  string            `json:"serviceGroup"`  // 层级对象
 	EndpointName  string            `json:"endpointName" ` // 层级对象
@@ -41,6 +41,7 @@ type TagDto struct {
 type ColorConfigDto struct {
 	SeriesName string `json:"seriesName"`
 	Color      string `json:"color"`
+	New        bool   `json:"new"`
 }
 
 type CustomChartSeriesDtoSort []*CustomChartSeriesDto
@@ -55,4 +56,13 @@ func (s CustomChartSeriesDtoSort) Swap(i, j int) {
 
 func (s CustomChartSeriesDtoSort) Less(i, j int) bool {
 	return strings.Compare(s[i].Guid, s[j].Guid) < 0
+}
+
+type GetChartSeriesColorParam struct {
+	ChartSeriesGuid string    `json:"chartSeriesGuid"`
+	Endpoint        string    `json:"endpoint" binding:"required"`
+	Metric          string    `json:"metric" binding:"required"`
+	ServiceGroup    string    `json:"serviceGroup"`
+	MonitorType     string    `json:"monitorType"`
+	Tags            []*TagDto `json:"tags"`
 }

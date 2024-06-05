@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/WeBankPartners/go-common-lib/guid"
+	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/dashboard_new"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
@@ -280,6 +281,8 @@ func QueryCustomChartNameExist(c *gin.Context) {
 	var customChartExtendList []*models.CustomChartExtend
 	chartId := c.Query("chart_id")
 	name := c.Query("name")
+	// public 表示是否是存入图表库操作,是存入图表库则需要查询图表库里面是否有重名
+	public, _ := strconv.Atoi(c.Query("public"))
 	if strings.TrimSpace(chartId) == "" || strings.TrimSpace(name) == "" {
 		middleware.ReturnParamEmptyError(c, "chart_id or name")
 		return
@@ -292,7 +295,7 @@ func QueryCustomChartNameExist(c *gin.Context) {
 		middleware.ReturnValidateError(c, "chart_id is invalid")
 		return
 	}
-	if chart.Public == 0 {
+	if chart.Public == 0 && public == 0 {
 		// 没有存入到图表库的图表,在源看板中图表不能重复
 		if chart.SourceDashboard != 0 {
 			if customChartExtendList, err = db.QueryCustomChartListByDashboard(chart.SourceDashboard); err != nil {
@@ -563,4 +566,55 @@ func CheckHasChartManagePermission(chartId, user string, userRoles []string) (pe
 		}
 	}
 	return
+}
+
+func GetChartSeriesColor(c *gin.Context) {
+	var param models.GetChartSeriesColorParam
+	if err := c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	result := []*models.ColorConfigDto{}
+	// 增加实时查chart合并series
+	queryChartParam := models.ChartQueryParam{Start: time.Now().Unix() - 1800, End: time.Now().Unix(), Aggregate: "none", Step: 10, Data: []*models.ChartQueryConfigObj{{
+		Endpoint:     param.Endpoint,
+		Metric:       param.Metric,
+		AppObject:    param.ServiceGroup,
+		MonitorType:  param.MonitorType,
+		EndpointType: param.MonitorType,
+		Tags:         param.Tags,
+	}}}
+	var querySeriesResult = models.EChartOption{Legend: []string{}, Series: []*models.SerialModel{}}
+	querySeriesConfigList, buildQueryConfigErr := dashboard_new.GetChartConfigByCustom(&queryChartParam)
+	if buildQueryConfigErr != nil {
+		middleware.ReturnServerHandleError(c, buildQueryConfigErr)
+		return
+	}
+	err := dashboard_new.GetChartQueryData(querySeriesConfigList, &queryChartParam, &querySeriesResult)
+	if err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	for _, v := range querySeriesResult.Legend {
+		result = append(result, &models.ColorConfigDto{SeriesName: v, New: true})
+	}
+	existSeriesMap := make(map[string]string)
+	// 查已保存的series颜色配置
+	if param.ChartSeriesGuid != "" {
+		configSeriesRows, getErr := db.GetChartSeriesConfig(param.ChartSeriesGuid)
+		if getErr != nil {
+			middleware.ReturnServerHandleError(c, getErr)
+			return
+		}
+		for _, row := range configSeriesRows {
+			existSeriesMap[row.SeriesName] = row.Color
+		}
+		for _, v := range result {
+			if color, ok := existSeriesMap[v.SeriesName]; ok {
+				v.New = false
+				v.Color = color
+			}
+		}
+	}
+	middleware.ReturnSuccessData(c, result)
 }
