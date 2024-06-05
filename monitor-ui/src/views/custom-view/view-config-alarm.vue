@@ -1,13 +1,18 @@
 <template>
   <div class=" ">
+    <section style="margin-left:8px;margin-bottom:10px" class="c-dark-exclude-color">
+      <template v-for="(filterItem, filterIndex) in filtersForShow">
+        <Tag color="success" type="border" closable @on-close="clearFiltersForShow" :key="filterIndex">{{filterItem.key}}：{{filterItem.value}}</Tag>
+      </template>
+    </section>
     <div class="alarm-total">
-      <Tag color="success"><span style="font-size:14px">{{$t('m_low')}}:{{this.low}}</span></Tag>
-      <Tag color="warning"><span style="font-size:14px">{{$t('m_medium')}}:{{this.mid}}</span></Tag>
-      <Tag color="error"><span style="font-size:14px">{{$t('m_high')}}:{{this.high}}</span></Tag>
+      <Button type="success" @click="addParams('low')" size="small"><span style="font-size:14px">{{$t('m_low')}}:{{this.low}}</span></Button>
+      <Button type="warning" @click="addParams('middle')" size="small"><span style="font-size:14px">{{$t('m_medium')}}:{{this.mid}}</span></Button>
+      <Button type="error" @click="addParams('high')" size="small"><span style="font-size:14px">{{$t('m_high')}}:{{this.high}}</span></Button>
     </div>
     <div class="alarm-list">
       <section class="alarm-card-container">
-        <alarm-card v-for="(item, alarmIndex) in resultData" :key="alarmIndex" :data="item" :button="false" :hideFilter="true"></alarm-card>
+        <alarm-card v-for="(item, alarmIndex) in resultData" :key="alarmIndex" :data="item" :button="true" :hideFilter="true"></alarm-card>
       </section>
       <div style="margin: 4px 0; text-align:right">
         <Page :total="paginationInfo.total" @on-change="pageIndexChange" @on-page-size-change="pageSizeChange" show-elevator show-sizer show-total />
@@ -60,6 +65,7 @@ export default {
           is_custom: false
         }
       },
+      filtersForShow: [], // 缓存级别过滤
       cacheParams: {
         id: '',
         viewCondition: ''
@@ -104,7 +110,11 @@ export default {
     },
     getAlarmdata (id) {
       const url = `/monitor/api/v1/dashboard/custom/alarm/list/${id}`
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', url, {page: this.paginationInfo}, (responseData) => {
+      let params = {
+        page: this.paginationInfo,
+        priority: this.filtersForShow.length === 1 ? this.filtersForShow[0].value : undefined
+      }
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', url, params, (responseData) => {
         this.paginationInfo.total = responseData.page.totalRows
         this.paginationInfo.startIndex = responseData.page.startIndex
         this.paginationInfo.pageSize = responseData.page.pageSize
@@ -113,6 +123,17 @@ export default {
         this.mid = responseData.mid
         this.high = responseData.high
       }, {isNeedloading: false})
+    },
+    addParams (type) {
+      this.filtersForShow = [{
+        key: 'priority',
+        value: type
+      }]
+      this.getAlarmdata(this.cacheParams.id)
+    },
+    clearFiltersForShow () {
+      this.filtersForShow = []
+      this.getAlarmdata(this.cacheParams.id)
     },
     pageIndexChange(pageIndex) {
       this.paginationInfo.startIndex = pageIndex
