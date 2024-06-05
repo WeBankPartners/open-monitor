@@ -161,9 +161,10 @@ func GetUpdateCustomDashboardChartRelSQL(chartRelList []*models.CustomDashboardC
 	return actions
 }
 
-func GetUpdateCustomDashboardSQL(name, panelGroups, user string, id int) []*Action {
+func GetUpdateCustomDashboardSQL(name, panelGroups, user string, timeRange, refreshWeek, id int) []*Action {
 	var actions []*Action
-	actions = append(actions, &Action{Sql: "update custom_dashboard set name=?,update_user=?,update_at=?,panel_groups=? where id =?", Param: []interface{}{name, user, time.Now().Format(models.DatetimeFormat), panelGroups, id}})
+	actions = append(actions, &Action{Sql: "update custom_dashboard set name=?,update_user=?,update_at=?,panel_groups=?,time_range=?,refresh_week=? where id =?",
+		Param: []interface{}{name, user, time.Now().Format(models.DatetimeFormat), panelGroups, timeRange, refreshWeek, id}})
 	return actions
 }
 
