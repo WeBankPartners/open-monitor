@@ -918,6 +918,14 @@ export default {
         item.endpointType = this.endpointType;
       }
     },
+    getRandomColor() {
+      var letters = '0123456789ABCDEF';
+      var color = '#';
+      for (var i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+      }
+      return color;
+    },
     async addConfiguration() {
       if (this.endpointValue && this.metricGuid) {
         const metricItem = find(this.metricOptions, {
@@ -925,7 +933,6 @@ export default {
         })
         const basicParams = this.processBasicParams(metricItem.metric, this.endpointValue, this.serviceGroup, this.monitorType, this.chartAddTags, '');
         const series = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams);
-        
         this.tableData.push({
           endpoint: this.endpointValue,
           serviceGroup: this.serviceGroup,
@@ -934,11 +941,14 @@ export default {
           metricGuid: metricItem.guid,
           metricType: metricItem.metric_type,
           monitorType: this.monitorType,
-          colorGroup: "",
+          colorGroup: "#2D8CF0",
           pieDisplayTag: "",
           metric: metricItem.metric,
           tags: this.chartAddTags,
-          series,
+          series: series.map(item => {
+            item.color = this.getRandomColor();
+            return item
+          }),
           tagOptions: this.chartAddTagOptions
         }) 
         this.metricGuid = '';
