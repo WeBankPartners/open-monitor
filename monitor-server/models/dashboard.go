@@ -498,8 +498,8 @@ type CustomDashboardDto struct {
 	Charts         []*CustomChartDto `json:"charts"`
 	MgmtRoles      []string          `json:"mgmtRoles"`
 	UseRoles       []string          `json:"useRoles"`
-	TimeRange      int               `json:"time_range"`   //时间范围
-	RefreshWeek    int               `json:"refresh_week"` // 刷新周期
+	TimeRange      int               `json:"timeRange"`   //时间范围
+	RefreshWeek    int               `json:"refreshWeek"` // 刷新周期
 }
 
 type AddCustomDashboardParam struct {
@@ -511,8 +511,8 @@ type AddCustomDashboardParam struct {
 type UpdateCustomDashboardParam struct {
 	Id          int               `json:"id"`
 	Name        string            `json:"name"`
-	TimeRange   int               `json:"time_range"`   //时间范围
-	RefreshWeek int               `json:"refresh_week"` // 刷新周期
+	TimeRange   int               `json:"timeRange"`   //时间范围
+	RefreshWeek int               `json:"refreshWeek"` // 刷新周期
 	Charts      []*CustomChartDto `json:"charts"`
 	PanelGroups []string          `json:"panelGroups"`
 }
