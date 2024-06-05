@@ -290,6 +290,16 @@ import EditView from '@/views/custom-view/edit-view'
 import AuthDialog from '@/components/auth.vue';
 export default {
   name: '',
+  props: {
+    boardId: {
+      type: Number,
+      default: null
+    },
+    permissionType: {
+      type: String,
+      default: 'view'
+    }
+  },
   data() {
     return {
       isShowDeleteGroupWarning: false,
@@ -304,9 +314,9 @@ export default {
         method: ''
       },
       isEditPanal: false,
-      permission: this.$route.params.permission || 'edit',
+      permission: this.permissionType || this.$route.params.permission,
       panalName: '',
-      pannelId: this.$route.params.pannelId || 64,
+      pannelId: this.boardId || this.$route.params.pannelId,
       viewCondition: {
         timeTnterval: -3600,
         dateRange: ['', ''],
@@ -391,7 +401,10 @@ export default {
       return this.permission === 'edit'
     },
   },
-  created () {
+  mounted () {
+    if (!this.pannelId) {
+      return this.$router.push({path: '/viewConfigIndex/boardList'})
+    }
     this.zoneWidth = window.screen.width * 0.65;
     this.getAllChartOptionList();
     this.getPannelList();
@@ -406,6 +419,9 @@ export default {
         if(isEmpty(res)) {
           this.$router.push({path:'viewConfigIndex'})
         } else {
+          this.viewCondition.timeTnterval = res.timeRange || -3600;
+          this.viewCondition.autoRefresh = res.refreshWeek || 10;
+
           this.boardMgmtRoles = res.mgmtRoles;
           this.boardUseRoles = res.useRoles;
           this.panalName = res.name;
@@ -654,11 +670,9 @@ export default {
     submitPanelInfo() {
       return new Promise(resolve => {
         if (isEmpty(this.boardMgmtRoles) || isEmpty(this.boardUseRoles)) {
-          console.log(1.1)
           this.saveAuthType = 'board';
           this.$refs.authDialog.startAuth(this.boardMgmtRoles, this.boardUseRoles, this.mgmtRolesOptions, this.userRolesOptions);
         } else {
-          console.log(1.2, this.processPannelParams())
           this.request('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams(), res => {
             resolve()
           });
@@ -678,7 +692,6 @@ export default {
         this.$Message.warning(this.$t('tips.required'))
         return
       }
-      console.log(123)
       await this.submitPanelInfo();
       this.$Message.success(this.$t('tips.success'));
       this.isEditPanal = false;
@@ -887,7 +900,9 @@ export default {
         id: this.pannelId,
         name: this.panalName,
         charts,
-        panelGroups: this.panel_group_list
+        panelGroups: this.panel_group_list,
+        timeRange: this.viewCondition.timeTnterval,
+        refreshWeek: this.viewCondition.autoRefresh
       }
     },
 
