@@ -24,7 +24,7 @@
 
            <Form ref="formData" :model="chartConfigForm" :rules="ruleValidate" :label-width="100">
             <FormItem :label="$t('m_name')" prop="name">
-              <Input v-model="chartConfigForm.name" clearable :maxlength="30"></Input>
+              <Input v-model.trim="chartConfigForm.name" :maxlength="30" show-word-limit></Input>
             </FormItem>
             <div v-if="isPieChart">
               <FormItem :label="$t('m_show_type')" prop="pieType">
@@ -244,7 +244,7 @@ export default {
       },
       ruleValidate: {
         name: [
-          {type: 'string', required: true, message: '请输入', trigger: 'blur' }
+          {type: 'string', required: true, message: '请输入名称', trigger: 'blur' }
         ],
         chartTemplate: [
           {type: 'string', required: true, message: '请输入', trigger: 'change' }
@@ -267,7 +267,6 @@ export default {
         {
           title: this.$t('table.action'),
           key: 'index',
-          align: 'center',
           width: 80,
           render: (h, params) => {
             return (
@@ -277,8 +276,7 @@ export default {
         },
         {
             title: this.$t('m_endpoint'),
-            align: 'center',
-            width: 150,
+            minWidth: 150,
             render: (h, params) => {
               return params.row.endpointType.length ?  (
                 <div class="table-config-endpoint">
@@ -292,8 +290,7 @@ export default {
         },
         {
             title: this.$t('m_type'),
-            align: 'center',
-            width: 150,
+            minWidth: 150,
             key: 'monitorType',
             render: (h, params) => {
               return params.row.monitorType ? (
@@ -304,8 +301,7 @@ export default {
         {
           title: this.$t('m_indicator_color_system'),
           key: 'metric',
-          align: 'center',
-          width: 300,
+          minWidth: 350,
           render: (h, params) => {
             return (
               <div class="indicator_color_system">
@@ -321,8 +317,7 @@ export default {
         {
           title: this.$t('m_label_value'),
           key: 'labelValue',
-          align: 'center',
-          width: 250,
+          minWidth: 250,
           render: (h, params) => {
             this.joinTagValuesToOptions(params.row.tags, params.row.tagOptions, params.index);
             return (
@@ -359,7 +354,7 @@ export default {
         {
           title: this.$t('m_generate_lines'),
           key: 'series',
-          align: 'center',
+          minWidth: 250,
           render: (h, params) => {
             return (
               <div>
@@ -380,8 +375,7 @@ export default {
       pieChartConfigurationColumns: [
         {
             title: this.$t('m_endpoint'),
-            align: 'center',
-            width: 300,
+            minWidth: 200,
             key: 'endpointName',
             render: (h, params) => {
               return (
@@ -407,8 +401,7 @@ export default {
         },
         {
             title: this.$t('m_type'),
-            align: 'center',
-            width: 150,
+            minWidth: 150,
             key: 'monitorType',
             render: (h, params) => {
               return (
@@ -434,8 +427,7 @@ export default {
         {
           title: this.$t('m_metric'),
           key: 'metricGuid',
-          align: 'center',
-          width: 250,
+          minWidth: 250,
           render: (h, params) => {
             return (
               <Select
@@ -462,7 +454,7 @@ export default {
         {
           title: this.$t('m_label_value'),
           key: 'labelValue',
-          align: 'center',
+          minWidth: 200,
           render: (h, params) => {
             this.joinTagValuesToOptions(params.row.tags, params.row.tagOptions, params.index);
             return (
@@ -497,8 +489,7 @@ export default {
         {
           title: this.$t('m_show_metric'),
           key: 'metric',
-          align: 'center',
-          width: 200,
+          width: 250,
           render: (h, params) => {
             const options = []
             for(let key in params.row.tagOptions) {
@@ -1150,10 +1141,10 @@ export default {
 <style lang="less">
 .chart-config {
   .ivu-form-item {
-    margin-bottom: 10px;
+    margin-bottom: 10px !important;
   }
-  .ivu-select.ivu-select-single.ivu-select-default {
-    width: 250px
+  .ivu-form-item-error-tip {
+    padding-top: 2px;
   }
 }
 
@@ -1171,7 +1162,7 @@ export default {
   flex-direction: row;
   align-items: center;
   .metric-text {
-    min-width: 20% 
+    max-width: 200px;
   }
 }
 
@@ -1243,6 +1234,9 @@ export default {
           align-items: center;
         }
       }
+      .chart-config {
+        width: 30%;
+      }
     }
 
     .data-config {
@@ -1260,7 +1254,7 @@ export default {
         align-items: center;
         margin-top: 15px;
         padding: 20px;
-        width: 80%;
+        width: 100%;
         background-color: #efefef;
         .add-tag-configuration {
           display: flex;
