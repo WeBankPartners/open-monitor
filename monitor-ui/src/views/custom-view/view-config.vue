@@ -297,7 +297,7 @@ export default {
     },
     permissionType: {
       type: String,
-      default: 'view'
+      default: ''
     }
   },
   data() {
