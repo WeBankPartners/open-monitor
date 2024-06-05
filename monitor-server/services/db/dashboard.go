@@ -669,21 +669,25 @@ func GetEndpointMetricByEndpointType(endpointType string) (err error, result []*
 
 func GetMainCustomDashboard(roleList []string) (err error, result []*m.CustomDashboardTable) {
 	result = []*m.CustomDashboardTable{}
-	var queryRows []*m.CustomDashboardTable
-	sql := "SELECT t2.* FROM role t1 LEFT JOIN custom_dashboard t2 ON t1.main_dashboard=t2.id WHERE t1.name IN ('" + strings.Join(roleList, "','") + "') and t1.main_dashboard>0"
-	log.Logger.Debug("Get main dashboard", log.String("sql", sql))
-	err = x.SQL(sql).Find(&queryRows)
-	if len(queryRows) > 0 {
-		existMap := make(map[int]int)
-		for _, v := range queryRows {
-			if _, b := existMap[v.Id]; b {
-				continue
+	var ids []int
+	var idMap = make(map[int]bool)
+	if len(roleList) == 0 {
+		return
+	}
+	roleFilterSql, roleFilterParam := createListParams(roleList, "")
+	sql := "SELECT custom_dashboard FROM main_dashboard WHERE role_id in (" + roleFilterSql + ")"
+	if err = x.SQL(sql, roleFilterParam...).Find(&ids); err != nil {
+		return
+	}
+	if len(ids) > 0 {
+		for _, id := range ids {
+			if _, ok := idMap[id]; !ok {
+				idMap[id] = true
+				result = append(result, &m.CustomDashboardTable{Id: id})
 			}
-			existMap[v.Id] = 1
-			result = append(result, v)
 		}
 	}
-	return err, result
+	return
 }
 
 func GetEndpointsByIp(ipList []string, exportType string) (err error, endpoints []m.EndpointTable) {
