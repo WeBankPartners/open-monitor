@@ -39,14 +39,15 @@
 export default {
   props: {
     menuList: Array,
-    openNames: Array,
-    defaultMenu: String
+    // openNames: Array,
+    // defaultMenu: String
   },
   data () {
     return {
       scrollTop: 0,
       expand: true,
-      activeName: ''
+      activeName: '',
+      openNames: []
     }
   },
   created () {
@@ -54,21 +55,21 @@ export default {
     for (let j of i.children) {
       if (j.path === this.$route.fullPath) {
         this.activeName = j.name
-        // this.openNames = [i.name]
+        this.openNames = [i.name]
       }
     }
     })
   },
   mounted () {
     if (this.$eventBusP) {
-      this.$eventBusP.$emit('expand-menu', this.expand)
+      this.$eventBusP.$emit('expand-menu', true)
     } else {
-      this.$bus.$emit('expand-menu', this.expand)
+      this.$bus.$emit('expand-menu', true)
     }
     window.addEventListener('scroll', this.getScrollTop)
-    if (!this.activeName) {
-      this.activeName = this.defaultMenu
-    }
+    // if (!this.activeName) {
+    //   this.activeName = this.defaultMenu
+    // }
   },
   beforeDestroy () {
     if (this.$eventBusP) {
@@ -91,7 +92,7 @@ export default {
       }
     },
     handleSelectMenu (name) {
-      // this.activeName = name
+      this.activeName = name
     }
   }
 }
