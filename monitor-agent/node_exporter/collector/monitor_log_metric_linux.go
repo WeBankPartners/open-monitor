@@ -242,7 +242,6 @@ func (c *logMetricMonitorNeObj) startHandleTailData() {
 					}
 					if allMatchFlag {
 						//fetchParamValueMapByte, _ := json.Marshal(fetchParamValueMap)
-						//level.Info(monitorLogger).Log("log_json_group -> add valueMap", string(fetchParamValueMapByte))
 						metricGroup.DataChannel <- fetchParamValueMap
 					}
 				}
@@ -403,6 +402,7 @@ func (c *logMetricMonitorNeObj) new(input *logMetricMonitorNeObj) {
 		initLogMetricNeObj(metricObj)
 		c.MetricConfig = append(c.MetricConfig, metricObj)
 	}
+	c.MetricGroupConfig = []*logMetricGroupNeObj{}
 	for _, metricGroupObj := range input.MetricGroupConfig {
 		initLogMetricGroupNeObj(metricGroupObj)
 		c.MetricGroupConfig = append(c.MetricGroupConfig, metricGroupObj)
@@ -465,6 +465,7 @@ func (c *logMetricMonitorNeObj) update(input *logMetricMonitorNeObj) {
 	c.TargetEndpoint = input.TargetEndpoint
 	c.ServiceGroup = input.ServiceGroup
 	c.MetricGroupConfig = newMetricGroupList
+	level.Info(monitorLogger).Log("MetricGroupConfig: ", fmt.Sprintf("len:%d", len(c.MetricGroupConfig)))
 	c.Lock.Unlock()
 }
 
@@ -582,7 +583,7 @@ func LogMetricMonitorHandleAction(requestParamBuff []byte) error {
 	for _, logMetricMonitorJob := range logMetricMonitorJobs {
 		delFlag := true
 		for _, paramObj := range param {
-			if paramObj.Path == logMetricMonitorJob.Path {
+			if paramObj.Path == logMetricMonitorJob.Path && paramObj.ServiceGroup == logMetricMonitorJob.ServiceGroup {
 				delFlag = false
 				// update config
 				logMetricMonitorJob.update(paramObj)
@@ -599,7 +600,7 @@ func LogMetricMonitorHandleAction(requestParamBuff []byte) error {
 	for _, paramObj := range param {
 		addFlag := true
 		for _, logMetricMonitorJob := range logMetricMonitorJobs {
-			if logMetricMonitorJob.Path == paramObj.Path {
+			if logMetricMonitorJob.Path == paramObj.Path && logMetricMonitorJob.ServiceGroup == paramObj.ServiceGroup {
 				addFlag = false
 				break
 			}
@@ -608,7 +609,7 @@ func LogMetricMonitorHandleAction(requestParamBuff []byte) error {
 			continue
 		}
 		// add config
-		newLogMetricObj := logMetricMonitorNeObj{Path: paramObj.Path, Lock: new(sync.RWMutex)}
+		newLogMetricObj := logMetricMonitorNeObj{Path: paramObj.Path, ServiceGroup: paramObj.ServiceGroup, Lock: new(sync.RWMutex)}
 		newLogMetricObj.new(paramObj)
 		tmpLogMetricObjJobs = append(tmpLogMetricObjJobs, &newLogMetricObj)
 	}
@@ -836,8 +837,8 @@ func calcMetricGroupFunc(logPath, endpoint, serviceGroup string, dataList []map[
 			for _, tmpJsonTagItem := range metricConfig.TagConfig {
 				tagsNameList = append(tagsNameList, tmpJsonTagItem.LogParamName)
 			}
-			tmpCode, tmpRetCode, tmpOtherTag, tmpTagString := getLogMetricJsonMapTags(tmpMapData, tagsNameList)
-			level.Info(monitorLogger).Log("log_metric_group -> ", fmt.Sprintf("code:%s, retCode:%s, otherTag:%s, tagString:%s", tmpCode, tmpRetCode, tmpOtherTag, tmpTagString))
+			tmpCode, tmpRetCode, _, tmpTagString := getLogMetricJsonMapTags(tmpMapData, tagsNameList)
+			//level.Info(monitorLogger).Log("log_metric_group -> ", fmt.Sprintf("code:%s, retCode:%s, otherTag:%s, tagString:%s", tmpCode, tmpRetCode, tmpOtherTag, tmpTagString))
 			// 根据值类型尝试转换成数值
 			metricValueMap := getLogMetricJsonMapValue(tmpMapData, metricConfig.StringMap)
 			if metricValueFloat, b := metricValueMap[metricConfig.LogParamName]; b {
