@@ -113,7 +113,7 @@ func GetPromMetric(endpoint []string, metric string) (error, string) {
 		tmpTag = metric[strings.Index(metric, "/")+1:]
 	}
 	var query []*m.MetricTable
-	err := x.SQL("SELECT * FROM metric WHERE metric=?", tmpMetric).Find(&query)
+	err := x.SQL("SELECT * FROM metric WHERE metric=? and service_group is null", tmpMetric).Find(&query)
 	if err != nil {
 		log.Logger.Error("Query metric fail", log.Error(err))
 	}
