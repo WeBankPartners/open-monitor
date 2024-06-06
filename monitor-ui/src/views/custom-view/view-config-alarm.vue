@@ -1,6 +1,6 @@
 <template>
-  <div class=" ">
-    <section style="margin-left:8px;margin-bottom:10px" class="c-dark-exclude-color">
+  <div class="width: 700px">
+    <section style="margin: 10px 2px 2px" class="c-dark-exclude-color">
       <template v-for="(filterItem, filterIndex) in filtersForShow">
         <Tag color="success" type="border" closable @on-close="clearFiltersForShow" :key="filterIndex">{{filterItem.key}}：{{filterItem.value}}</Tag>
       </template>
@@ -109,12 +109,12 @@ export default {
 
     },
     getAlarmdata (id) {
-      const url = `/monitor/api/v1/dashboard/custom/alarm/list/${id}`
       let params = {
+        customDashboardId: id,
         page: this.paginationInfo,
         priority: this.filtersForShow.length === 1 ? this.filtersForShow[0].value : undefined
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', url, params, (responseData) => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/alarm/problem/page', params, (responseData) => {
         this.paginationInfo.total = responseData.page.totalRows
         this.paginationInfo.startIndex = responseData.page.startIndex
         this.paginationInfo.pageSize = responseData.page.pageSize
@@ -180,7 +180,7 @@ export default {
       if (!alarmItem.is_custom) {
         params.custom = false
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.alarmManagement.close.api, params, () => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.alarmManagement.close.api, params, () => {
         // this.$root.$eventBus.$emit('hideConfirmModal')
         this.getAlarm(this.cacheParams.id, this.cacheParams.viewCondition)
       })
@@ -232,8 +232,8 @@ label {
   margin-bottom: 8px;
 }
 .alarm-list {
-  // height: ~"calc(100vh - 150px)";
-  width: 100%;
+  // height: ~"calc(100vh - 150px)"
+  width: 700px;
   overflow-y: auto;
 }
 .alarm-item {
