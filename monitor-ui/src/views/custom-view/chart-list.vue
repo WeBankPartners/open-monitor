@@ -115,7 +115,7 @@
     </Modal>
 
     <Drawer :title="$t('placeholder.chartConfiguration')" :width="90" @on-close="closeChartInfoDrawer" :mask-closable="false" v-model="showChartConfig">
-        <editView :chartId="chartId" v-if="showChartConfig"></editView>
+        <editView :chartId="chartId" :operator="operator" v-if="showChartConfig"></editView>
     </Drawer>
     
   </div>
@@ -274,7 +274,11 @@ export default {
                         <Button size="small" type="error" on-click={() => this.showConfirmModal(params.row)}>
                             <Icon type="md-trash" size="16"></Icon>
                         </Button>
-                    </div>) : <div>-</div>
+                    </div>) : (<div>
+                        <Button size="small" type="info" on-click={() => this.showDetail(params.row)}>
+                            <Icon type="md-eye" size="16"></Icon>
+                        </Button>
+                    </div>)
                 )
                 }
             }
@@ -309,7 +313,8 @@ export default {
             }
         },
         chartId: "",
-        showChartConfig: false
+        showChartConfig: false,
+        operator: '', // edit or view
     }
   },
   mounted(){
@@ -368,6 +373,12 @@ export default {
         this.getChartList()
     },
     showEditView(item) {
+        this.operator = 'edit'
+        this.chartId = item.chartId;
+        this.showChartConfig = true;
+    },
+    showDetail(item) {
+        this.operator = 'view'
         this.chartId = item.chartId;
         this.showChartConfig = true;
     },
