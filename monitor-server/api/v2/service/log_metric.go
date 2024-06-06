@@ -633,11 +633,12 @@ func CreateLogMetricGroup(c *gin.Context) {
 	}
 	param.Name = strings.TrimSpace(param.Name)
 	if err := db.ValidateLogMetricGroupName("", param.Name, param.LogMetricMonitorGuid); err != nil {
+		err = fmt.Errorf(middleware.GetMessageMap(c).LogGroupNameDuplicateError, param.Name)
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
 	if middleware.IsIllegalDisplayName(param.Name) {
-		err := fmt.Errorf("name:%s illegal", param.Name)
+		err := fmt.Errorf(middleware.GetMessageMap(c).LogGroupNameIllegalError, param.Name)
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
@@ -677,11 +678,12 @@ func UpdateLogMetricGroup(c *gin.Context) {
 	}
 	param.Name = strings.TrimSpace(param.Name)
 	if err := db.ValidateLogMetricGroupName(param.LogMetricGroupGuid, param.Name, param.LogMetricMonitorGuid); err != nil {
+		err = fmt.Errorf(middleware.GetMessageMap(c).LogGroupNameDuplicateError, param.Name)
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
 	if middleware.IsIllegalDisplayName(param.Name) {
-		err := fmt.Errorf("name:%s illegal", param.Name)
+		err := fmt.Errorf(middleware.GetMessageMap(c).LogGroupNameIllegalError, param.Name)
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
@@ -739,11 +741,12 @@ func CreateLogMetricCustomGroup(c *gin.Context) {
 		return
 	}
 	if err := db.ValidateLogMetricGroupName(param.Guid, param.Name, param.LogMetricMonitor); err != nil {
+		err = fmt.Errorf(middleware.GetMessageMap(c).LogGroupNameDuplicateError, param.Name)
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
 	if middleware.IsIllegalDisplayName(param.Name) {
-		err := fmt.Errorf("name:%s illegal", param.Name)
+		err := fmt.Errorf(middleware.GetMessageMap(c).LogGroupNameIllegalError, param.Name)
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
@@ -790,11 +793,12 @@ func UpdateLogMetricCustomGroup(c *gin.Context) {
 		return
 	}
 	if err := db.ValidateLogMetricGroupName(param.Guid, param.Name, param.LogMetricMonitor); err != nil {
+		err = fmt.Errorf(middleware.GetMessageMap(c).LogGroupNameDuplicateError, param.Name)
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
 	if middleware.IsIllegalDisplayName(param.Name) {
-		err := fmt.Errorf("name:%s illegal", param.Name)
+		err := fmt.Errorf(middleware.GetMessageMap(c).LogGroupNameIllegalError, param.Name)
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
