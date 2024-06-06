@@ -482,5 +482,8 @@
   "m_modify": "Modify ",
   "m_search_info": "Search",
   "m_add_chart_library": "Please add the chart library first.",
-  "m_calculation_period": "Calculation Period"
+  "m_calculation_period": "Calculation Period",
+  "m_custom_dashboard": "Custom Dashboard",
+  "m_please_select": "Please select ",
+  "m_dashboard_for_role": " dashboard for role"
 }
