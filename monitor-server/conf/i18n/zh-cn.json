@@ -15,5 +15,6 @@
   "token_authority_error": "鉴权失败，权限不足",
   "save_done_but_sync_fail": "配置下发失败:下发配置到目标对象失败，请先确认目标对象可用,确认后重新点击[保存]下发配置",
   "metric_duplicate_error": "保存失败,当前层级对象下已有重名指标%s,请修改之后重试",
-  "metric_not_found": "导入失败，指标: %s 不存在"
+  "metric_not_found": "导入失败，指标: %s 不存在",
+  "strategy_name_import_duplicate_error": "导入失败，名称: %s 重复"
 }

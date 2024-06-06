@@ -267,8 +267,7 @@ export default {
               display_name: this.$t('m_success_rate'),
               agg_type: '100*{req_suc_count}/{req_count}',
               tag_config: [
-                'code',
-                'retcode'
+                'code'
               ]
             },
             {
@@ -277,8 +276,7 @@ export default {
               display_name: this.$t('m_failure_rate'),
               agg_type: '100-100*{req_suc_count}/{req_count}',
               tag_config: [
-                'code',
-                'retcode'
+                'code'
               ]
             },
             {

@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"github.com/WeBankPartners/go-common-lib/guid"
 	"github.com/WeBankPartners/open-monitor/monitor-server/api/v1/dashboard_new"
+	"github.com/WeBankPartners/open-monitor/monitor-server/common"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
@@ -120,6 +122,11 @@ func CopyCustomChart(c *gin.Context) {
 		middleware.ReturnValidateError(c, "dashboardId is invalid")
 		return
 	}
+	defer common.ExceptionStack(func(e interface{}, err interface{}) {
+		retErr := fmt.Errorf("%v", err)
+		middleware.ReturnServerHandleError(c, retErr)
+		log.Logger.Error(e.(string))
+	})
 	if chart, err = db.GetCustomChartById(param.OriginChartId); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
@@ -155,7 +162,7 @@ func CopyCustomChart(c *gin.Context) {
 		return
 	}
 	// 复制图表,copy 图表的所有数据并且与看板关联
-	if newChartId, err = db.CopyCustomChart(param.DashboardId, middleware.GetOperateUser(c), param.Group, param.OriginChartId, param.DisplayConfig); err != nil {
+	if newChartId, err = db.CopyCustomChart(param.DashboardId, middleware.GetOperateUser(c), param.Group, chart, param.DisplayConfig); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
 	}

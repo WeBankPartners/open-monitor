@@ -45,16 +45,12 @@
 
           <div class="header-tools">
             <template v-if="isEditStatus">
-              <!-- <button class="btn btn-sm btn-cancel-f" style="margin-right:60px" @click="addItem">{{$t('m_new_graph')}}</button> -->
-              <button class="btn btn-sm btn-confirm-f" @click="savePanelInfo">{{$t('button.saveConfig')}}</button>
+              <Button type="primary" @click="savePanelInfo">{{$t('button.saveConfig')}}</Button>
             </template> 
-            
-            <button v-if="!showAlarm" class="btn btn-sm btn-cancel-f" @click="openAlarmDisplay()">
-              <i style="font-size: 18px;color: #0080FF;" class="fa fa-eye-slash" aria-hidden="true"></i>
-            </button>
-            <button v-else class="btn btn-sm btn-cancel-f" @click="closeAlarmDisplay()">
-              <i style="font-size: 18px;color: #0080FF;" class="fa fa-eye" aria-hidden="true"></i>
-            </button>
+
+            <Button type="info" @click="showAlarm?closeAlarmDisplay():openAlarmDisplay()">
+              <Icon :type="showAlarm?'md-eye-off':'md-eye'" size="20"></Icon>
+            </Button>
           </div>
         </div>
       </header>
@@ -92,32 +88,33 @@
         </div>
 
         <!-- 图表新增 -->
-        <div class="chart-config-info" v-if="isEditStatus" @click="getAllChartOptionList">
+        <div class="chart-config-info" v-if="isEditStatus" @mouseover="debounceGetAllChartOptionList" @click="getAllChartOptionList">
           <span class="fs-20 mr-3 ml-3">{{$t('m_graph')}}:</span>
           <Dropdown 
+            placement="bottom-start"
             v-for="(item, index) in allAddChartOptions"
             :key="index"
-            class="mr-3 chart-option-menu" 
+            class="chart-option-menu" 
             @on-click="(info) => onAddChart(JSON.parse(info), item.type)">
             <Button :type="item.colorType">
                 {{$t(item.name)}}
                 <Icon type="ios-arrow-down"></Icon>
             </Button>
             <template #list>
-                <DropdownMenu v-if="item.options.length>0">
-                    <DropdownItem v-for="(option, key) in item.options"
-                      :name="JSON.stringify(option)" 
-                      :key="key"
-                      :disabled="option.disabled">
-                      <Icon v-if="option.iconType" :type="option.iconType" />
-                      {{item.type === 'add' ? $t(option.name) : option.name}}
-                    </DropdownItem>
-                </DropdownMenu>
-                <DropdownMenu v-else>
-                    <DropdownItem>
-                      {{ $t('m_add_chart_library') }}
-                    </DropdownItem>
-                </DropdownMenu>
+              <DropdownMenu v-if="item.options.length>0">
+                <DropdownItem v-for="(option, key) in item.options"
+                  :name="JSON.stringify(option)" 
+                  :key="key"
+                  :disabled="option.disabled">
+                  <Icon v-if="option.iconType" :type="option.iconType" />
+                  {{item.type === 'add' ? $t(option.name) : option.name}}
+                </DropdownItem>
+              </DropdownMenu>
+              <DropdownMenu v-else>
+                <DropdownItem>
+                  {{ $t('m_add_chart_library') }}
+                </DropdownItem>
+              </DropdownMenu>
             </template>
           </Dropdown>
         </div>
@@ -151,7 +148,7 @@
                   <div class="header-grid header-grid-name">
                     <span v-if="editChartId !== item.id">{{item.i}}</span>
                     <span  v-else @click.stop="">
-                      <Input v-model.trim="item.i" class="editChartId" autofocus :maxlength="30" show-word-limit style="width:200px" size="small" placeholder="" />             
+                      <Input v-model.trim="item.i" class="editChartId" autofocus :maxlength="30" @on-blur="onChartTitleChange(item)" show-word-limit style="width:200px" size="small" placeholder="" />             
                     </span>
                     <Tooltip :content="$t('placeholder.editTitle')" theme="light" transfer placement="top">
                       <i v-if="isEditStatus && editChartId !== item.id && !noAllowChartChange(item)" class="fa fa-pencil-square" style="font-size: 16px;" @click.stop="editChartId = item.id" aria-hidden="true"></i>
@@ -278,6 +275,7 @@
 import isEmpty from 'lodash/isEmpty';
 import remove from 'lodash/remove';
 import cloneDeep from 'lodash/cloneDeep';
+import debounce from 'lodash/debounce';
 import {generateUuid} from '@/assets/js/utils'
 import {dataPick, autoRefreshConfig} from '@/assets/config/common-config'
 import {resizeEvent} from '@/assets/js/gridUtils.ts'
@@ -443,6 +441,9 @@ export default {
         this.allAddChartOptions[2].options = this.processChartOptions(res);
       })
     },
+    debounceGetAllChartOptionList: debounce(function() {
+      this.getAllChartOptionList()
+    }, 500),
     processChartOptions(rawData) {
       const options = [];
       const initialOption = {
@@ -835,7 +836,6 @@ export default {
           i: `${name}`,
           id: `${this.setChartConfigId}`
         }
-
         if (this.layoutData.length) {
           let lastItem = this.layoutData[this.layoutData.length - 1];
           if (lastItem.x <= 6 && lastItem.w <= 6) {
@@ -843,12 +843,8 @@ export default {
             popItem.x = 6;
             this.layoutData.push(popItem)
           } 
-          this.layoutData.push(item);
         }
-
-
         this.layoutData.push(item);
-        
         setTimeout(() => {
           this.request('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams(), res => {
             this.getPannelList();
@@ -1198,7 +1194,7 @@ export default {
   }
 
   .view-config-alarm {
-    width: 700px
+    // width: 700px
   }
 
   .no-data {
