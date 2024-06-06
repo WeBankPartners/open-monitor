@@ -257,7 +257,7 @@
   "m_acquisition_configuration": "采集配置",
   "m_display_group": "展示分组",
   "m_graph": "图表",
-  "m_graph_name": "图表名",
+  "m_graph_name": "图表名称",
   "m_graph_type": "图表类型",
   "m_search": "查询",
   "m_field_exporter": "采集器",
@@ -483,6 +483,8 @@
   "m_basic_group": "基础组",
   "m_add_chart_library": "请先添加图表库",
   "m_new": "新",
-  "m_calculation_period": "计算周期"
-  
+  "m_calculation_period": "计算周期",
+  "m_custom_dashboard": "自定义看板",
+  "m_please_select": "请选择",
+  "m_dashboard_for_role": "该角色的看板"
 }
