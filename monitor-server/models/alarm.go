@@ -464,11 +464,12 @@ type LogMonitorTags struct {
 }
 
 type QueryProblemAlarmDto struct {
-	Endpoint  string    `json:"endpoint"`
-	Metric    string    `json:"metric"`
-	Priority  string    `json:"priority"`
-	Page      *PageInfo `json:"page"`
-	AlarmName string    `json:"alarm_name"`
+	Endpoint          string    `json:"endpoint"`
+	Metric            string    `json:"metric"`
+	Priority          string    `json:"priority"`
+	Page              *PageInfo `json:"page"`
+	AlarmName         string    `json:"alarm_name"`
+	CustomDashboardId int       `json:"custom_dashboard_id"`
 }
 
 type QueryHistoryAlarmParam struct {

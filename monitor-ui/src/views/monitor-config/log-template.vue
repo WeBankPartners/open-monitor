@@ -385,4 +385,8 @@ export default {
   max-height: ~"calc(100vh - 200px)";
   overflow: auto;
 }
+
+/deep/ .ivu-card-extra {
+  top: 6px;
+}
 </style>
