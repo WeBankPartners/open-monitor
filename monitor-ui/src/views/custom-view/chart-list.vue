@@ -114,7 +114,7 @@
         </div>
     </Modal>
 
-    <Drawer :title="$t('placeholder.chartConfiguration')" :width="90" @on-close="closeChartInfoDrawer" :mask-closable="false" v-model="showChartConfig">
+    <Drawer :title="$t('placeholder.chartConfiguration')" :width="100" @on-close="closeChartInfoDrawer" :mask-closable="false" v-model="showChartConfig">
         <editView :chartId="chartId" :operator="operator" v-if="showChartConfig"></editView>
     </Drawer>
     
