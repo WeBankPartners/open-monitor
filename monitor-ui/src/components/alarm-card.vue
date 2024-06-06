@@ -62,11 +62,11 @@
           @click="copyEndpoint(data)"
         />
       </Tooltip>
-      <Poptip trigger="hover">
+      <Poptip trigger="hover" transfer>
         <div slot="title" style="white-space: normal;color: #2d8cf0">
           <p>{{ $t('m_initiate_orchestration') }}: {{ data.notify_callback_name }}</p>
         </div>
-        <div slot="content" style="white-space: normal;padding:16px">
+        <div slot="content" style="white-space: normal;padding:12px">
           <p>{{ $t('tableKey.description') }}: {{ data.notify_message }}</p>
         </div>
         <img v-if="data.notify_id !==''" @click="goToNotify(data)" style="vertical-align: super;padding:3px 8px;cursor:pointer" src="../assets/img/icon_start_flow.png" />
