@@ -449,3 +449,18 @@ func SyncData(c *gin.Context) {
 	}
 	middleware.ReturnSuccess(c)
 }
+
+// UnBindChart 解除图表绑定,看板不删除,私有图表删除
+func UnBindChart(c *gin.Context) {
+	dashboardId, _ := strconv.Atoi(c.Query("dashboard_id"))
+	if dashboardId == 0 {
+		middleware.ReturnValidateError(c, "dashboard_id is invalid")
+		return
+	}
+	err := db.UnBindChart(dashboardId)
+	if err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	middleware.ReturnSuccess(c)
+}
