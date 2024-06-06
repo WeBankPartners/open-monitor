@@ -79,7 +79,7 @@ func PrometheusData(query *m.QueryMonitorData) []*m.SerialModel {
 		log.Logger.Error("Http request body read fail", log.Error(err))
 		return serials
 	}
-	log.Logger.Debug("prometheus data result", log.String("response", string(body)))
+	//log.Logger.Debug("prometheus data result", log.String("response", string(body)))
 	if res.StatusCode/100 != 2 {
 		log.Logger.Warn("Request fail with bad status", log.String("status", res.Status))
 		return serials
