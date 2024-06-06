@@ -1185,13 +1185,13 @@ export default {
       this.closeAddEditModal();
     },
     handleMergeSpan ({ row, rowIndex, columnIndex }, index) {
-      if ([6,7,8].includes(columnIndex)) return;
+      if ([6,7,8,11].includes(columnIndex)) return;
       const mergeSpanMap = this.totalPageConfig[index].mergeSpanMap;
       const spanMap = mergeSpanMap[row.guid];
       if (rowIndex === spanMap.startRowIndex) {
         return [spanMap.colSpan,1]
       }
-      if (rowIndex !== spanMap.startRowIndex && (columnIndex <= 5 || columnIndex === 9)) {
+      if (rowIndex !== spanMap.startRowIndex && (columnIndex <= 5 || [9,10,11].includes(columnIndex))) {
         return [0,0]
       }
     },
