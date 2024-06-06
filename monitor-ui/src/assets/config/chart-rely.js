@@ -404,7 +404,7 @@ export const drawPieChart = function(that, responseData) {
         // orient: 'vertical',
         // top: 'middle',
         type: 'scroll',
-        bottom: 5,
+        bottom: 0,
         left: 'center',
         data: responseData.legend
     },
@@ -412,7 +412,7 @@ export const drawPieChart = function(that, responseData) {
         {
             type: 'pie',
             radius: '65%',
-            center: ['50%', '50%'],
+            center: ['50%', '40%'],
             selectedMode: 'single',
             data: responseData.data,
             emphasis: {
