@@ -184,14 +184,20 @@
           </div>
           <div style="width: 250px" v-else></div>
 
-          <Button class="add-configuration-button" :disabled="!endpointValue || !monitorType || !metricGuid" @click="addConfiguration" type="primary">{{$t('m_add_configuration')}}</Button>
+          <Button
+            v-if="operator !== 'view'"
+            class="add-configuration-button"
+            :disabled="!endpointValue || !monitorType || !metricGuid"
+            @click="addConfiguration"
+            type="primary"
+          >{{$t('m_add_configuration')}}</Button>
         </div>
       </div>
     </div>
-    <div class="config-footer">
+    <div v-if="operator !== 'view'" class="config-footer">
       <Button class="mr-4" @click="resetChartConfig">{{$t('m_reset')}}</Button>
       <Button class="save-chart-library mr-4" v-if="!isNotSaveChartLibraryButtonShow" :disabled="chartPublic" @click="saveChartLibrary" :type="chartPublic ? 'default' : 'primary'">{{$t('m_save_chart_library')}}</Button>
-      <Button class="mr-4" type="primary" @click="saveChartConfig">{{$t('m_save')}}</Button>
+      <Button type="primary" @click="saveChartConfig">{{$t('m_save')}}</Button>
     </div>
     <AuthDialog ref="authDialog" :useRolesRequired="true" @sendAuth="saveChartAuth" />
   </div>
@@ -231,7 +237,8 @@ const initTableData = [
 export default {
   name: "",
   props: {
-    chartId: String
+    chartId: String,
+    operator: String
   },
   data() {
     return {
@@ -272,7 +279,7 @@ export default {
       lineChartConfigurationColumns: [
         {
             title: this.$t('m_endpoint'),
-            width: 200,
+            width: 280,
             render: (h, params) => {
               return params.row.endpointType.length ?  (
                 <div class="table-config-endpoint">
@@ -297,7 +304,7 @@ export default {
         {
           title: this.$t('m_indicator_color_system'),
           key: 'metric',
-          width: 250,
+          width: 380,
           render: (h, params) => {
             return (
               <div class="indicator_color_system">
@@ -313,6 +320,7 @@ export default {
         {
           title: this.$t('m_label_value'),
           key: 'labelValue',
+          width: 320,
           render: (h, params) => {
             this.joinTagValuesToOptions(params.row.tags, params.row.tagOptions, params.index);
             return (
@@ -349,7 +357,7 @@ export default {
         {
           title: this.$t('m_generate_lines'),
           key: 'series',
-          width: 400,
+          minWidth: 350,
           render: (h, params) => {
             return (
               <div>
@@ -371,6 +379,8 @@ export default {
           title: this.$t('table.action'),
           key: 'index',
           width: 80,
+          align: 'center',
+          fixed: 'right',
           render: (h, params) => {
             return (
                 <Button class="ml-3" size="small" icon="md-trash" type="error" on-click={() => this.removeTableItem(params.index)} />
@@ -1351,7 +1361,7 @@ export default {
     height: 50px;
     margin-top: 30px;
     bottom: 0px;
-    width: 100%;
+    width: 90%;
     background-color: #fff;
     opacity: 1;
     z-index: 100000;
