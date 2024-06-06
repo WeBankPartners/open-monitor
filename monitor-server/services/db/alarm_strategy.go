@@ -1083,13 +1083,23 @@ func notifyMailAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleOb
 	if err != nil {
 		return err
 	}
+	alarmDetailList := []*models.AlarmDetailData{}
+	if strings.HasPrefix(alarmObj.EndpointTags, "ac_") {
+		alarmDetailList, err = GetAlarmDetailList(strings.Split(alarmObj.EndpointTags, ","))
+		if err != nil {
+			return err
+		}
+	} else {
+		alarmDetailList = append(alarmDetailList, &models.AlarmDetailData{Metric: alarmObj.SMetric, Cond: alarmObj.SCond, Last: alarmObj.SLast, Start: alarmObj.Start, StartValue: alarmObj.StartValue, End: alarmObj.End, EndValue: alarmObj.EndValue, Tags: alarmObj.Tags})
+	}
+	alarmObj.AlarmDetail = buildAlarmDetailData(alarmDetailList, "\r\n")
 	subject, content := getNotifyMessage(alarmObj)
 	return mailSender.Send(subject, content, toAddress)
 }
 
 func getNotifyMessage(alarmObj *models.AlarmHandleObj) (subject, content string) {
 	subject = fmt.Sprintf("[%s][%s] Endpoint:%s Metric:%s", alarmObj.Status, alarmObj.SPriority, alarmObj.Endpoint, alarmObj.SMetric)
-	content = fmt.Sprintf("Endpoint:%s \r\nStatus:%s\r\nMetric:%s\r\nEvent:%.3f%s\r\nLast:%s\r\nPriority:%s\r\nNote:%s\r\nTime:%s", alarmObj.Endpoint, alarmObj.Status, alarmObj.SMetric, alarmObj.StartValue, alarmObj.SCond, alarmObj.SLast, alarmObj.SPriority, alarmObj.Content, time.Now().Format(models.DatetimeFormat))
+	content = fmt.Sprintf("Endpoint:%s \r\nStatus:%s\r\nMetric:%s\r\nEvent:%.3f%s\r\nLast:%s\r\nPriority:%s\r\nNote:%s\r\nTime:%s\r\nDetail:%s", alarmObj.Endpoint, alarmObj.Status, alarmObj.SMetric, alarmObj.StartValue, alarmObj.SCond, alarmObj.SLast, alarmObj.SPriority, alarmObj.Content, time.Now().Format(models.DatetimeFormat), alarmObj.AlarmDetail)
 	return
 }
 
