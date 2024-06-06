@@ -55,7 +55,7 @@
                     </Option>
                   </Select>
               </FormItem>
-              <FormItem :label="$t('m_type')" prop="lineType">
+              <FormItem :label="$t('m_graph_type')" prop="lineType">
                   <Select 
                     filterable
                     v-model="chartConfigForm.lineType"
@@ -108,7 +108,7 @@
 
       <div class="data-config">
         <div class="use-underline-title mb-2">
-          {{this.$t('m_data_configuration')}}
+          {{this.$t('menu.metricConfiguration')}}
           <span class="underline"></span>
         </div>
 
@@ -180,7 +180,7 @@
           </div>
           <div v-else></div>
 
-          <Button :disabled="!endpointValue || !monitorType || !metricGuid" @click="addConfiguration" type="primary">{{$t('m_add_configuration')}}</Button>
+          <Button :disabled="!endpointValue || !monitorType || !metricGuid" @click="addConfiguration" type="success">{{$t('m_add_configuration')}}</Button>
         </div>
       </div>
     </div>
@@ -276,7 +276,7 @@ export default {
           }
         },
         {
-            title: this.$t('m_endpoint'),
+            title: this.$t('m_endpoint')+'/'+this.$t('field.resourceLevel'),
             minWidth: 220,
             render: (h, params) => {
               return params.row.endpointType.length ?  (
@@ -290,7 +290,7 @@ export default {
             }
         },
         {
-            title: this.$t('m_type'),
+            title: this.$t('tableKey.endpoint_type'),
             minWidth: 150,
             key: 'monitorType',
             render: (h, params) => {
