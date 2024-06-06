@@ -1,6 +1,10 @@
 <template>
   <div>
-     <view-config v-if="viewId" permissionType='view' :boardId="viewId" />
+     <view-config 
+      v-if="viewId" 
+      permissionType='view' 
+      :boardId="viewId"
+      pageType="link" />
   </div>
 </template>
 
