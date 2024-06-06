@@ -57,7 +57,7 @@
                     </Option>
                   </Select>
               </FormItem>
-              <FormItem :label="$t('m_type')" prop="lineType">
+              <FormItem :label="$t('m_graph_type')" prop="lineType">
                   <Select 
                     filterable
                     v-model="chartConfigForm.lineType"

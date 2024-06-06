@@ -541,11 +541,16 @@ export default {
       // 模态框中的表格
       metricItemTableColumns: [
         {
-          title: this.$t('tableKey.metricName'),
+          title: this.$t('tableKey.metricName123'),
           key: 'metric',
           align: 'left',
           minWidth: 150,
           render: (h, params) => {
+            const typeList = [
+              { label: this.$t('m_base_group'), value: 'common', color: '#2d8cf0' },
+              { label: this.$t('m_business_configuration'), value: 'business', color: '#81b337' },
+              { label: this.$t('m_customize'), value: 'custom', color: '#b886f8' }
+            ]
             return (
               <Select
                 value={params.row.metric}
@@ -560,10 +565,15 @@ export default {
                 clearable
               >
                 {this.modelConfig.metricList &&
-                  this.modelConfig.metricList.map((i, index) => (
-                    <Option value={i.guid} key={i.metric + index} label={i.metric}>
-                      <TagShow list={this.modelConfig.metricList} name="metric_type" tagName={i.metric_type} index={index}></TagShow>{i.metric}</Option>
-                  ))}
+                  this.modelConfig.metricList.map((i, index) => {
+                    const find = typeList.find(item => item.value === i.metric_type) || {}
+                    return ( 
+                      <Option value={i.guid} key={i.metric + index} label={i.metric}>
+                        <Tag size="medium" type="border" color={find.color}>{find.label || '-'}</Tag>
+                        {i.metric}
+                      </Option>
+                    )
+                  })}
               </Select>
             )
           }
@@ -1241,9 +1251,6 @@ export default {
 .ivu-table-wrapper {
   overflow: inherit;
 }
-.ivu-form-item {
-  margin-bottom: 0;
-}
 
 .right-content {
   .ivu-table-cell {
@@ -1283,6 +1290,9 @@ export default {
 }
 </style>
 <style scoped lang="less">
+  /deep/ .ivu-form-item {
+    margin-bottom: 0;
+  }
   .use-underline-title {
     display: inline-block;
     font-size: 16px;
