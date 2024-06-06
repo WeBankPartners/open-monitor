@@ -170,11 +170,11 @@ func GetCustomDashboard(c *gin.Context) {
 				customDashboardDto.Charts = append(customDashboardDto.Charts, chart)
 			}
 		}
-		if strings.TrimSpace(customDashboard.PanelGroups) == "" {
-			customDashboardDto.PanelGroupList = db.TransformMapToArray(groupMap)
-		} else {
-			customDashboardDto.PanelGroupList = strings.Split(customDashboard.PanelGroups, ",")
-		}
+	}
+	if strings.TrimSpace(customDashboard.PanelGroups) == "" {
+		customDashboardDto.PanelGroupList = db.TransformMapToArray(groupMap)
+	} else {
+		customDashboardDto.PanelGroupList = strings.Split(customDashboard.PanelGroups, ",")
 	}
 	if boardRoleRelList, err = db.QueryCustomDashboardPermissionByDashboard(id); err != nil {
 		middleware.ReturnServerHandleError(c, err)
