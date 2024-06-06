@@ -13,9 +13,7 @@
           <div v-else>
             <div :id="elId" class="echart" />
           </div>
-          
         </div>
-        
         <div class="chart-config">
           <div class="use-underline-title ml-4 mb-2">
             {{this.$t('m_chart_configuration')}}
@@ -86,7 +84,7 @@
                     </Option>
                   </Select>
               </FormItem>
-              <FormItem v-if="chartConfigForm.chartTemplate !== 'one'" :label="$t('m_calculation_period')" prop="aggStep">
+              <FormItem v-if="chartConfigForm.aggregate !== 'none'" :label="$t('m_calculation_period')" prop="aggStep">
                   <Select 
                     filterable
                     v-model="chartConfigForm.aggStep"
@@ -681,6 +679,9 @@ export default {
         for(let key in this.chartConfigForm) {
           this.chartConfigForm[key] = res[key]
         }
+        if (!this.chartConfigForm.chartTemplate) {
+          this.chartConfigForm.chartTemplate = 'one';
+        }
         this.tableData = cloneDeep(res.chartSeries);
 
         if (res.chartType === "pie" && isEmpty(this.tableData)) {
@@ -949,7 +950,7 @@ export default {
           metricGuid: metricItem.guid,
           metricType: metricItem.metric_type,
           monitorType: this.monitorType,
-          colorGroup: "#2D8CF0",
+          colorGroup: this.getRandomColor(),
           pieDisplayTag: "",
           metric: metricItem.metric,
           tags: this.chartAddTags,
@@ -1146,7 +1147,11 @@ export default {
       const item = this.tableData[index];
       const basicParams = this.processBasicParams(item.metric, item.endpoint, item.serviceGroup, item.monitorType, item.tags, item.chartSeriesGuid);
       const series = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams);
-      this.tableData[index].series = series;
+      
+      this.tableData[index].series = series.map(item => {
+        item.color = this.getRandomColor();
+        return item
+      })
     }
   },
   components: {
