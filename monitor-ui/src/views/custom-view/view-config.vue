@@ -20,15 +20,12 @@
           <div>
             <div class="search-zone">
               <span class="params-title">{{$t('field.relativeTime')}}：</span>
-              <Select filterable v-model="viewCondition.timeTnterval" :disabled="disableTime" style="width:80px"  @on-change="initPanals">
+              <!-- <Select filterable v-model="viewCondition.timeTnterval" :disabled="disableTime" style="width:80px"  @on-change="initPanals">
                 <Option v-for="item in dataPick" :value="item.value" :key="item.value">{{ item.label }}</Option>
-              </Select>
-            </div>
-            <div class="search-zone ml-2">
-              <span class="params-title">{{$t('placeholder.refresh')}}：</span>
-              <Select filterable clearable v-model="viewCondition.autoRefresh" :disabled="disableTime" style="width:100px" @on-change="initPanals" :placeholder="$t('placeholder.refresh')">
-                <Option v-for="item in autoRefreshConfig" :value="item.value" :key="item.value">{{ item.label }}</Option>
-              </Select>
+              </Select> -->
+              <RadioGroup @on-change="initPanals" v-model="viewCondition.timeTnterval" type="button" size="small">
+                <Radio v-for="(item, idx) in dataPick" :label="item.value" :key="idx" :disabled="disableTime">{{ item.label }}</Radio>
+              </RadioGroup>
             </div>
             <div class="search-zone ml-2">
               <span class="params-title">{{$t('field.timeInterval')}}：</span>
@@ -42,6 +39,12 @@
                 :placeholder="$t('placeholder.datePicker')" 
                 style="width: 320px">
               </DatePicker>
+            </div>
+            <div class="search-zone ml-2">
+              <span class="params-title">{{$t('placeholder.refresh')}}：</span>
+              <Select filterable clearable v-model="viewCondition.autoRefresh" :disabled="disableTime" style="width:100px" @on-change="initPanals" :placeholder="$t('placeholder.refresh')">
+                <Option v-for="item in autoRefreshConfig" :value="item.value" :key="item.value">{{ item.label }}</Option>
+              </Select>
             </div>
           </div>
 
