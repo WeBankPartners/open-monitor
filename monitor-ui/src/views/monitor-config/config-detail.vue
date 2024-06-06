@@ -541,7 +541,7 @@ export default {
       // 模态框中的表格
       metricItemTableColumns: [
         {
-          title: this.$t('tableKey.metricName123'),
+          title: this.$t('tableKey.metricName'),
           key: 'metric',
           align: 'left',
           minWidth: 150,
