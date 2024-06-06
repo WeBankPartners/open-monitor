@@ -993,7 +993,18 @@ func getNotifyEventMessage(notifyGuid string, alarm models.AlarmTable) (result m
 		notifyObj = models.NotifyTable{}
 	}
 	result = models.AlarmEntityObj{}
-	result.Subject, result.Content = getNotifyMessage(&models.AlarmHandleObj{AlarmTable: alarm})
+	alarmDetailList := []*models.AlarmDetailData{}
+	if strings.HasPrefix(alarm.EndpointTags, "ac_") {
+		alarmDetailList, err = GetAlarmDetailList(strings.Split(alarm.EndpointTags, ","))
+		if err != nil {
+			log.Logger.Error("get alarm detail list fail", log.Error(err))
+		}
+	} else {
+		alarmDetailList = append(alarmDetailList, &models.AlarmDetailData{Metric: alarm.SMetric, Cond: alarm.SCond, Last: alarm.SLast, Start: alarm.Start, StartValue: alarm.StartValue, End: alarm.End, EndValue: alarm.EndValue, Tags: alarm.Tags})
+	}
+	alarmObj := models.AlarmHandleObj{AlarmTable: alarm}
+	alarmObj.AlarmDetail = buildAlarmDetailData(alarmDetailList, "\r\n")
+	result.Subject, result.Content = getNotifyMessage(&alarmObj)
 	var roles []*models.RoleNewTable
 	if notifyObj.ServiceGroup != "" {
 		x.SQL("select guid,email from role_new where guid in (select `role` from service_group_role_rel where service_group=?)", notifyObj.ServiceGroup).Find(&roles)
@@ -1099,7 +1110,11 @@ func notifyMailAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleOb
 
 func getNotifyMessage(alarmObj *models.AlarmHandleObj) (subject, content string) {
 	subject = fmt.Sprintf("[%s][%s] Endpoint:%s Metric:%s", alarmObj.Status, alarmObj.SPriority, alarmObj.Endpoint, alarmObj.SMetric)
-	content = fmt.Sprintf("Endpoint:%s \r\nStatus:%s\r\nMetric:%s\r\nEvent:%.3f%s\r\nLast:%s\r\nPriority:%s\r\nNote:%s\r\nTime:%s\r\nDetail:%s", alarmObj.Endpoint, alarmObj.Status, alarmObj.SMetric, alarmObj.StartValue, alarmObj.SCond, alarmObj.SLast, alarmObj.SPriority, alarmObj.Content, time.Now().Format(models.DatetimeFormat), alarmObj.AlarmDetail)
+	if strings.HasPrefix(alarmObj.EndpointTags, "ac_") {
+		content = fmt.Sprintf("Endpoint:%s \r\nStatus:%s\r\nMetric:%s\r\nPriority:%s\r\nNote:%s\r\nTime:%s\r\nDetail:\r\n%s", alarmObj.Endpoint, alarmObj.Status, alarmObj.SMetric, alarmObj.SPriority, alarmObj.Content, time.Now().Format(models.DatetimeFormat), alarmObj.AlarmDetail)
+	} else {
+		content = fmt.Sprintf("Endpoint:%s \r\nStatus:%s\r\nMetric:%s\r\nEvent:%.3f%s\r\nLast:%s\r\nPriority:%s\r\nNote:%s\r\nTime:%s\r\nDetail:\r\n%s", alarmObj.Endpoint, alarmObj.Status, alarmObj.SMetric, alarmObj.StartValue, alarmObj.SCond, alarmObj.SLast, alarmObj.SPriority, alarmObj.Content, time.Now().Format(models.DatetimeFormat), alarmObj.AlarmDetail)
+	}
 	return
 }
 
