@@ -928,3 +928,18 @@ func QueryEntityAlarmEvent(c *gin.Context) {
 	}
 	mid.ReturnData(c, result)
 }
+
+func UpdateEntityAlarm(c *gin.Context) {
+	var param []map[string]interface{}
+	var result m.AlarmEventUpdateResponse
+	data, _ := ioutil.ReadAll(c.Request.Body)
+	c.Request.Body.Close()
+	err := json.Unmarshal(data, &param)
+	if err != nil {
+		result.Status = "ERROR"
+		result.Message = fmt.Sprintf("Request body json unmarshal failed: %v", err)
+		mid.ReturnData(c, result)
+		return
+	}
+
+}

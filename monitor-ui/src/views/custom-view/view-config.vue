@@ -3,16 +3,18 @@
     <div>
       <header>
         <div class="header-name">
-          <Icon size="22" class="arrow-back" type="md-arrow-back" @click="returnPreviousPage" />
-          <template v-if="isEditPanal">
-            <Input v-model.trim="panalName" style="width: 300px" type="text" :maxlength="30" show-word-limit></Input>
-            <Icon class="panal-edit-icon" color="#2d8cf0" @click="savePanalEdit" type="md-checkmark" />
-            <Icon class="panal-edit-icon" color="red" @click="canclePanalEdit" type="md-trash" />
-          </template>
-          <template v-else>
-            <h5 class="d-inline-block"> {{panalName}}</h5>
-            <Icon class="panal-edit-icon" color="#2d8cf0"  @click="isEditPanal=true" v-if="isEditStatus" type="md-create" />
-          </template>
+          <div v-if="pageType !== 'dashboard'">
+            <Icon v-if="pageType !== 'link'" size="22" class="arrow-back" type="md-arrow-back" @click="returnPreviousPage" />
+            <template v-if="isEditPanal">
+              <Input v-model.trim="panalName" style="width: 300px" type="text" :maxlength="30" show-word-limit></Input>
+              <Icon class="panal-edit-icon" color="#2d8cf0" @click="savePanalEdit" type="md-checkmark" />
+              <Icon class="panal-edit-icon" color="red" @click="canclePanalEdit" type="md-trash" />
+            </template>
+            <template v-else>
+              <h5 class="d-inline-block"> {{panalName}}</h5>
+              <Icon class="panal-edit-icon" color="#2d8cf0"  @click="isEditPanal=true" v-if="isEditStatus" type="md-create" />
+            </template>
+          </div>
         </div>
         <div class="search-container">
           <div>
@@ -134,6 +136,7 @@
           :use-css-transforms="true"
           >
             <grid-item v-for="(item,index) in tmpLayoutData"
+              style="cursor: auto;"
               class="c-dark"
               :x="item.x"
               :y="item.y"
@@ -183,7 +186,7 @@
                     </Tooltip>
                   </div>
                 </div>
-                <section style="height: 90%">
+                <section style="height: 90%;">
                   <div v-for="(chartInfo,chartIndex) in item._activeCharts" :key="chartIndex">
                     <CustomChart v-if="['line','bar'].includes(chartInfo.chartType)" :refreshNow="refreshNow" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomChart>
                     <CustomPieChart v-if="chartInfo.chartType === 'pie'" :refreshNow="refreshNow" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomPieChart>
@@ -207,7 +210,7 @@
 
     <!-- 对于每个chart的抽屉详细信息 -->
     <Drawer :title="$t('placeholder.chartConfiguration')" 
-      :width="90" 
+      :width="100" 
       :mask-closable="false" 
       v-model="showChartConfig"
       @on-close="closeChartInfoDrawer">
@@ -294,6 +297,10 @@ export default {
       default: null
     },
     permissionType: {
+      type: String,
+      default: ''
+    },
+    pageType: {
       type: String,
       default: ''
     }
@@ -625,6 +632,9 @@ export default {
     async confirmRemoveGrid () {
       const params = this.processPannelParams()
       remove(params.charts, {id: this.deleteConfirm.id});
+      if (!isEmpty(params.charts)) {
+        params.charts[params.charts.length -1].displayConfig.x = 0
+      }
       await this.requestReturnPromise('PUT', '/monitor/api/v2/dashboard/custom', params);
       this.getPannelList();
       this.getAllChartOptionList();
