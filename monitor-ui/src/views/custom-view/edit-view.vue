@@ -23,7 +23,7 @@
           </div>
 
            <Form ref="formData" :model="chartConfigForm" :rules="ruleValidate" :label-width="100">
-            <FormItem :label="$t('m_name')" prop="name">
+            <FormItem :label="$t('m_graph_name')" prop="name">
               <Input v-model.trim="chartConfigForm.name" :maxlength="30" show-word-limit></Input>
             </FormItem>
             <div v-if="isPieChart">
@@ -86,7 +86,7 @@
                     </Option>
                   </Select>
               </FormItem>
-              <FormItem v-if="chartConfigForm.chartTemplate !== 'one'" :label="$t('m_refresh_time')" prop="aggStep">
+              <FormItem v-if="chartConfigForm.chartTemplate !== 'one'" :label="$t('m_calculation_period')" prop="aggStep">
                   <Select 
                     filterable
                     v-model="chartConfigForm.aggStep"
@@ -115,6 +115,7 @@
         </div>
 
         <Table
+          class="config-table"
           size="small"
           style="width:100%;"
           :border="false"
@@ -152,6 +153,7 @@
 
           <Select
             v-model="metricGuid"
+            class="metric-guid-select"
             filterable
             clearable 
             :placeholder="$t('m_metric')"
@@ -167,7 +169,7 @@
                 <span class="mr-1">{{tag.tagName}}</span>
                 <Select
                   v-model="chartAddTags[index].tagValue"
-                  style="maxWidth: 130px"
+                  style="max-width:130px"
                   filterable
                   multiple
                   clearable
@@ -282,7 +284,7 @@ export default {
               return params.row.endpointType.length ?  (
                 <div class="table-config-endpoint">
                   <TagShow class="table-endpoint-tag" list={this.tableData} name="endpointType" tagName={params.row.endpointType} index={params.index} /> 
-                  {params.row.endpointName}
+                  <span class="table-endpoint-text">{params.row.endpointName}</span>
                 </div>
               ) : (
                 <div>{params.row.endpointName}</div>
@@ -1187,20 +1189,33 @@ export default {
   }
 }
 
+.config-table {
+  .ivu-table-cell {
+    padding-left: 0px;
+    padding-right: 0px
+  }
+}
+
 .table-config-endpoint {
   display: flex;
   align-items: center;
   .table-endpoint-tag {
     width: fit-content;
     padding: 0 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
 }
 
 .generate-lines {
   display: flex;
   flex-direction: row;
+  justify-content: flex-start;
   .series-name {
-    width: 85%
+    max-width: 85%;
+    overflow: hidden;
+
   }
   .new-line-tag {
     width: 30px
@@ -1233,6 +1248,14 @@ export default {
 .ivu-color-picker {
   .ivu-icon.ivu-icon-ios-close::before {
     content: "\f193"
+  }
+}
+
+.metric-guid-select {
+  .ivu-select-item {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
   }
 }
 
