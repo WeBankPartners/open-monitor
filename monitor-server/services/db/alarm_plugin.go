@@ -42,11 +42,7 @@ func PluginCloseAlarmAction(input *models.PluginCloseAlarmRequestObj) (result *m
 	//_, err = x.Exec("UPDATE alarm SET status='closed',close_msg=?,custom_message=?,close_user='system',end=NOW() WHERE id=?", input.Message, input.Message, alarmId)
 	endpointTags := queryRows[0]["endpoint_tags"]
 	if strings.HasPrefix(endpointTags, "ac_") {
-		for _, conditionGuid := range strings.Split(endpointTags, ",") {
-			if strings.HasPrefix(conditionGuid, "ac_") {
-				actions = append(actions, &Action{Sql: "UPDATE alarm_condition SET STATUS='closed',end=NOW() WHERE guid=?", Param: []interface{}{conditionGuid}})
-			}
-		}
+		actions = append(actions, &Action{Sql: "UPDATE alarm_condition SET STATUS='closed',end=NOW() WHERE guid in (select alarm_condition from alarm_condition_rel where alarm=?)", Param: []interface{}{alarmId}})
 	}
 	err = Transaction(actions)
 	return
