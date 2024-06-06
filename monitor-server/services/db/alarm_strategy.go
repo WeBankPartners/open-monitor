@@ -995,7 +995,7 @@ func getNotifyEventMessage(notifyGuid string, alarm models.AlarmTable) (result m
 	result = models.AlarmEntityObj{}
 	alarmDetailList := []*models.AlarmDetailData{}
 	if strings.HasPrefix(alarm.EndpointTags, "ac_") {
-		alarmDetailList, err = GetAlarmDetailList(strings.Split(alarm.EndpointTags, ","))
+		alarmDetailList, err = GetAlarmDetailList(alarm.Id)
 		if err != nil {
 			log.Logger.Error("get alarm detail list fail", log.Error(err))
 		}
@@ -1096,7 +1096,7 @@ func notifyMailAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleOb
 	}
 	alarmDetailList := []*models.AlarmDetailData{}
 	if strings.HasPrefix(alarmObj.EndpointTags, "ac_") {
-		alarmDetailList, err = GetAlarmDetailList(strings.Split(alarmObj.EndpointTags, ","))
+		alarmDetailList, err = GetAlarmDetailList(alarmObj.Id)
 		if err != nil {
 			return err
 		}
