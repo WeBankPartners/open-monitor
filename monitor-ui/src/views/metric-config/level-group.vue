@@ -153,7 +153,7 @@ export default {
           title: this.$t('table.action'),
           key: 'action',
           width: 100,
-          align: 'center',
+          
           fixed: 'right',
           render: (h, params) => {
             return (
@@ -287,14 +287,13 @@ export default {
     uploadSucess (val) {
       if (val.status === 'OK') {
         if (val.data) {
-          if (Array.isArray(val.data.fail_list.length) && val.data.fail_list.length > 0) {
+          if (Array.isArray(val.data.fail_list) && val.data.fail_list.length > 0) {
             this.$Notice.error({
               duration: 0,
               render: () => {
                 return <div>
                   {this.$t('m_metric_export_errorTips')}
-                  <span style="color:red;">{val.data.fail_list.join('、')}</span>
-                  {this.$t('m_metric')}
+                  <span style="color:red;"> {val.data.fail_list.join('、')}</span>
                 </div>
               }
             })
