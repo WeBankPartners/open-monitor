@@ -399,7 +399,7 @@ func QueryCustomChartList(condition models.QueryChartParam, roles []string) (pag
 }
 
 // CopyCustomChart 复制图表
-func CopyCustomChart(dashboardId int, user, group, customChart string, displayConfig interface{}) (newChartId string, err error) {
+func CopyCustomChart(dashboardId int, user, group string, chart *models.CustomChart, displayConfig interface{}) (newChartId string, err error) {
 	var chartSeriesList []*models.CustomChartSeries
 	var configMap = make(map[string][]*models.CustomChartSeriesConfig)
 	var tagMap = make(map[string][]*models.CustomChartSeriesTag)
@@ -407,14 +407,13 @@ func CopyCustomChart(dashboardId int, user, group, customChart string, displayCo
 	var actions []*Action
 	var chartName string
 	newChartId = guid.CreateGuid()
-	chart := &models.CustomChart{}
 	byteConf, _ := json.Marshal(displayConfig)
 	now := time.Now().Format(models.DatetimeFormat)
-	if _, err = x.SQL("select * from custom_chart where guid = ?", customChart).Get(chart); err != nil {
+	if err = x.SQL("select * from custom_chart_series where dashboard_chart = ?", chart.Guid).Find(&chartSeriesList); err != nil {
 		return
 	}
-	if err = x.SQL("select * from custom_chart_series where dashboard_chart = ?", customChart).Find(&chartSeriesList); err != nil {
-		return
+	if len(chartSeriesList) == 0 {
+		chartSeriesList = []*models.CustomChartSeries{}
 	}
 	if configMap, err = QueryAllChartSeriesConfig(); err != nil {
 		return
@@ -468,17 +467,23 @@ func CopyCustomChart(dashboardId int, user, group, customChart string, displayCo
 }
 
 func getNewChartName(name string) string {
+	var layout = "060102150405"
 	if strings.TrimSpace(name) != "" {
 		start := strings.LastIndex(name, "-")
+		if start == -1 {
+			// 没有匹配到 - ,直接拼接时间搓
+			name = name + "-" + time.Now().Format(layout)
+			return name
+		}
 		suffix := name[start+1:]
-		if len(suffix) == 12 {
+		if len(suffix) == 12 && start > 0 {
 			name = name[:start] + "-" + time.Now().Format("060102150405")
 		} else {
-			name = name + "-" + time.Now().Format("060102150405")
+			name = name + "-" + time.Now().Format(layout)
 		}
 		return name
 	}
-	return time.Now().Format("060102150405")
+	return time.Now().Format(layout)
 }
 
 func UpdateCustomChartName(chartId, name, user string, sourceDashboard int) (err error) {
