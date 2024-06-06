@@ -13,15 +13,15 @@
       <Col :span="16">
         <div class="btn-group">
           <!--导出-->
-          <Button
+          <!-- <Button
             type="info"
             @click.stop="exportData"
           >
             <img src="@/assets/img/export.png" alt="" style="width:16px;" />
             {{ $t("m_export") }}
-          </Button>
+          </Button> -->
           <!--导入-->
-          <Upload 
+          <!-- <Upload 
           :action="uploadUrl" 
           :show-upload-list="false"
           :max-size="1000"
@@ -33,7 +33,7 @@
               <img src="@/assets/img/import.png" alt="" style="width:16px;" />
               {{ $t('m_import') }}
             </Button>
-          </Upload>
+          </Upload> -->
           <!--新增-->
           <Button type="success" @click="handleAdd">{{ $t('button.add') }}</Button>
         </div>
