@@ -57,7 +57,7 @@ export default {
 .metrics-bar {
   position: absolute;
   // top: 732px;
-  top: ~"calc(100vh - 300px)";
+  top: ~"calc(100% - 120px)";
   width: 750px;
   height: 31px;
   background: #ffffff;
