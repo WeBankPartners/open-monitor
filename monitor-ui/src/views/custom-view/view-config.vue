@@ -134,6 +134,7 @@
           :use-css-transforms="true"
           >
             <grid-item v-for="(item,index) in tmpLayoutData"
+              style="cursor: auto;"
               class="c-dark"
               :x="item.x"
               :y="item.y"
@@ -183,7 +184,7 @@
                     </Tooltip>
                   </div>
                 </div>
-                <section style="height: 90%">
+                <section style="height: 90%;">
                   <div v-for="(chartInfo,chartIndex) in item._activeCharts" :key="chartIndex">
                     <CustomChart v-if="['line','bar'].includes(chartInfo.chartType)" :refreshNow="refreshNow" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomChart>
                     <CustomPieChart v-if="chartInfo.chartType === 'pie'" :refreshNow="refreshNow" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomPieChart>
