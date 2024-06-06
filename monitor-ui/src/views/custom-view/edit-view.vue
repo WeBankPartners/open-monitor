@@ -126,6 +126,8 @@
             v-model="endpointValue"
             filterable
             clearable 
+            class="mr-3"
+            style="width: 150px"
             ref="select"
             :placeholder="$t('m_endpoint')"
             @on-query-change="(e) => {this.getEndpointSearch = e; this.debounceGetEndpointList()}"
@@ -140,7 +142,8 @@
           <Select
             v-model="monitorType"
             filterable
-            ref="select"
+            class="mr-3"
+            style="width: 150px"
             :placeholder="$t('m_type')"
             @on-change="searchMetricByType"
             >
@@ -153,6 +156,7 @@
             v-model="metricGuid"
             class="metric-guid-select"
             filterable
+            style="width: 250px"
             clearable 
             :placeholder="$t('m_metric')"
             @on-change="searchTagOptions"
@@ -178,9 +182,9 @@
                 </Select>
               </div>
           </div>
-          <div v-else></div>
+          <div style="width: 250px" v-else></div>
 
-          <Button :disabled="!endpointValue || !monitorType || !metricGuid" @click="addConfiguration" type="success">{{$t('m_add_configuration')}}</Button>
+          <Button class="add-configuration-button" :disabled="!endpointValue || !monitorType || !metricGuid" @click="addConfiguration" type="primary">{{$t('m_add_configuration')}}</Button>
         </div>
       </div>
     </div>
@@ -205,6 +209,7 @@ import TagShow from '@/components/Tag-show.vue'
 import AuthDialog from '@/components/auth.vue';
 import { readyToDraw, drawPieChart} from "@/assets/config/chart-rely";
 import { generateUuid } from "@/assets/js/utils"
+import { generateAdjacentColors } from '@/assets/config/random-color'
 
 const initTableData = [
     {
@@ -266,18 +271,8 @@ export default {
       tableData: [],
       lineChartConfigurationColumns: [
         {
-          title: this.$t('table.action'),
-          key: 'index',
-          width: 80,
-          render: (h, params) => {
-            return (
-                <Button size="small" icon="md-trash" type="error" on-click={() => this.removeTableItem(params.index)} />
-            )
-          }
-        },
-        {
-            title: this.$t('m_endpoint')+'/'+this.$t('field.resourceLevel'),
-            minWidth: 220,
+            title: this.$t('m_endpoint'),
+            width: 200,
             render: (h, params) => {
               return params.row.endpointType.length ?  (
                 <div class="table-config-endpoint">
@@ -290,8 +285,8 @@ export default {
             }
         },
         {
-            title: this.$t('tableKey.endpoint_type'),
-            minWidth: 150,
+            title: this.$t('m_type'),
+            width: 150,
             key: 'monitorType',
             render: (h, params) => {
               return params.row.monitorType ? (
@@ -302,7 +297,7 @@ export default {
         {
           title: this.$t('m_indicator_color_system'),
           key: 'metric',
-          minWidth: 350,
+          width: 250,
           render: (h, params) => {
             return (
               <div class="indicator_color_system">
@@ -318,7 +313,6 @@ export default {
         {
           title: this.$t('m_label_value'),
           key: 'labelValue',
-          minWidth: 300,
           render: (h, params) => {
             this.joinTagValuesToOptions(params.row.tags, params.row.tagOptions, params.index);
             return (
@@ -355,7 +349,7 @@ export default {
         {
           title: this.$t('m_generate_lines'),
           key: 'series',
-          minWidth: 350,
+          width: 400,
           render: (h, params) => {
             return (
               <div>
@@ -370,6 +364,16 @@ export default {
                     </div>
                   )) ) : "-" } 
               </div>
+            )
+          }
+        },
+        {
+          title: this.$t('table.action'),
+          key: 'index',
+          width: 80,
+          render: (h, params) => {
+            return (
+                <Button class="ml-3" size="small" icon="md-trash" type="error" on-click={() => this.removeTableItem(params.index)} />
             )
           }
         }
@@ -550,7 +554,7 @@ export default {
           value: {
             'aggregate': 'sum',
             'aggStep': 60,
-            'chartType': 'line',
+            'chartType': 'bar',
             'lineType': 'bar'
           }
         },
@@ -664,10 +668,12 @@ export default {
     })
   },
   mounted() {
-    this.debounceGetEndpointList();
+    this.getEndpointList();
     this.getAllRolesOptions();
     this.getSingleChartAuth();
-    this.getTableData();
+    setTimeout(() => {
+      this.getTableData();
+    }, 100)
   },
   methods: {
     getTableData() {
@@ -942,7 +948,8 @@ export default {
         })
         const basicParams = this.processBasicParams(metricItem.metric, this.endpointValue, this.serviceGroup, this.monitorType, this.chartAddTags, '');
         const series = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams);
-        this.tableData.push({
+        const colorGroup = this.getRandomColor();
+        let item = {
           endpoint: this.endpointValue,
           serviceGroup: this.serviceGroup,
           endpointName: this.endpointName,
@@ -950,16 +957,18 @@ export default {
           metricGuid: metricItem.guid,
           metricType: metricItem.metric_type,
           monitorType: this.monitorType,
-          colorGroup: this.getRandomColor(),
+          colorGroup,
           pieDisplayTag: "",
           metric: metricItem.metric,
           tags: this.chartAddTags,
-          series: series.map(item => {
-            item.color = this.getRandomColor();
-            return item
-          }),
           tagOptions: this.chartAddTagOptions
-        }) 
+        }
+
+        item.series = series.map((line, index) => {
+          line.color = generateAdjacentColors(colorGroup, 1, 35 * (index - 0.3))[0]
+          return line
+        });
+        this.tableData.push(item);
         this.metricGuid = '';
         this.endpointValue = '';
         this.monitorType = '';
@@ -1095,11 +1104,13 @@ export default {
             drawPieChart(this, res)
         })
       } else {
+
         const params = {
           aggregate: this.chartConfigForm.aggregate || 'none',
-          agg_step: this.chartConfigForm.agg_step || 60,
-          time_second: -1800,
+          agg_step: this.chartConfigForm.aggStep || 60,
+          chartType: this.chartConfigForm.chartType || 'line',
           lineType: this.lineTypeOption[this.chartConfigForm.lineType],
+          time_second: -1800,
           start: 0,
           end: 0,
           title: '',
@@ -1135,7 +1146,6 @@ export default {
         } else {
           item.metricToColor = []
         }
-
         delete item.colorGroup;
         delete item.tagOptions
         return item
@@ -1147,9 +1157,8 @@ export default {
       const item = this.tableData[index];
       const basicParams = this.processBasicParams(item.metric, item.endpoint, item.serviceGroup, item.monitorType, item.tags, item.chartSeriesGuid);
       const series = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams);
-      
       this.tableData[index].series = series.map(item => {
-        item.color = this.getRandomColor();
+        item.color = item.color || this.getRandomColor();
         return item
       })
     }
@@ -1172,9 +1181,9 @@ export default {
   }
 }
 
-.add-data-configuration > div {
-  width: 20%;
-}
+// .add-data-configuration > div {
+//   width: 20%;
+// }
 
 .save-chart-library.ivu-btn-primary {
   background-color: #b088f1;
@@ -1190,22 +1199,26 @@ export default {
     padding: 0 10px;
   }
   .metric-text {
+    // width: 40px;
     max-width: 200px;
   }
 }
 
 .config-table {
-  .ivu-table-cell {
-    padding-left: 0px;
-    padding-right: 0px
-  }
+  // .ivu-table-cell {
+  //   padding-left: 0px;
+  //   padding-right: 0px
+  // }
 }
 
 .table-config-endpoint {
   display: flex;
   align-items: center;
+  .diy-tag {
+    width: 105px;
+  }
   .table-endpoint-tag {
-    width: fit-content;
+    width: 105px;
     padding: 0 10px;
     display: flex;
     justify-content: center;
@@ -1216,6 +1229,7 @@ export default {
 .generate-lines {
   display: flex;
   flex-direction: row;
+  align-items: center;
   justify-content: flex-start;
   .series-name {
     max-width: 85%;
@@ -1223,7 +1237,7 @@ export default {
 
   }
   .new-line-tag {
-    width: 30px
+    width: fit-content
   }
 }
 
@@ -1234,6 +1248,7 @@ export default {
 
 .tags-show {
   display: flex;
+  justify-content: flex-start;
   align-items: center;
   margin-bottom: 5px;
 } 
@@ -1271,6 +1286,7 @@ export default {
 .all-page {
   .content {
     min-height: 80vh;
+    margin-bottom: 50px;
     .chart-config_view {
       display: flex;
       flex-direction: row;
@@ -1303,29 +1319,42 @@ export default {
         width: 66px
       }
       .add-data-configuration {
+        // position: relative;
         display: flex;
         flex-direction: row;
         flex-wrap: nowrap;
-        justify-content: space-between;
+        justify-content: flex-start;
         align-items: center;
         margin-top: 15px;
         padding: 20px;
         width: 100%;
         background-color: #efefef;
         .add-tag-configuration {
+          width: 250px;
           display: flex;
           flex-direction: column;
           align-items: flex-end;
+          margin-left: 20px
+        }
+        .add-configuration-button {
+          margin-left: auto;
         }
       }
     } 
 
   }
   .config-footer {
+    position: fixed;
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-top: 30px
+    height: 50px;
+    margin-top: 30px;
+    bottom: 0px;
+    width: 100%;
+    background-color: #fff;
+    opacity: 1;
+    z-index: 100000;
   }
 
 }
