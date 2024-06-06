@@ -494,7 +494,7 @@ func GetAlarmEventEntityData(alarmId int) (result *m.AlarmEventEntityObj, err er
 		result.Endpoint = alarmObj.Endpoint
 		alarmDetailList := []*m.AlarmDetailData{}
 		if strings.HasPrefix(alarmObj.EndpointTags, "ac_") {
-			alarmDetailList, err = GetAlarmDetailList(strings.Split(alarmObj.EndpointTags, ","))
+			alarmDetailList, err = GetAlarmDetailList(alarmId)
 			if err != nil {
 				return
 			}
