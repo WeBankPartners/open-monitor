@@ -1,6 +1,7 @@
 package db
 
 import (
+	"crypto/sha256"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -522,7 +523,7 @@ func GetAlarms(query m.AlarmTable, limit int, extLogMonitor, extOpenAlarm bool, 
 		}
 		alarmDetailList := []*m.AlarmDetailData{}
 		if strings.HasPrefix(v.EndpointTags, "ac_") {
-			alarmDetailList, err = GetAlarmDetailList(strings.Split(v.EndpointTags, ","))
+			alarmDetailList, err = GetAlarmDetailList(v.Id)
 			if err != nil {
 				return err, result
 			}
@@ -952,11 +953,7 @@ func CloseAlarm(param m.AlarmCloseParam) (err error) {
 			actions = append(actions, &Action{Sql: "update log_keyword_alarm set status='closed',updated_time=NOW() WHERE alarm_id=?", Param: []interface{}{v.Id}})
 		}
 		if strings.HasPrefix(v.EndpointTags, "ac_") {
-			for _, conditionGuid := range strings.Split(v.EndpointTags, ",") {
-				if strings.HasPrefix(conditionGuid, "ac_") {
-					actions = append(actions, &Action{Sql: "UPDATE alarm_condition SET STATUS='closed',end=NOW() WHERE guid=?", Param: []interface{}{conditionGuid}})
-				}
-			}
+			actions = append(actions, &Action{Sql: "UPDATE alarm_condition SET STATUS='closed',end=NOW() WHERE guid in (select alarm_condition from alarm_condition_rel where alarm=?)", Param: []interface{}{v.Id}})
 		}
 	}
 	if len(actions) > 0 {
@@ -1390,7 +1387,7 @@ func QueryAlarmBySql(sql string, params []interface{}, customQueryParam m.Custom
 		endpointList = append(endpointList, v.Endpoint)
 		alarmDetailList := []*m.AlarmDetailData{}
 		if strings.HasPrefix(v.EndpointTags, "ac_") {
-			alarmDetailList, err = GetAlarmDetailList(strings.Split(v.EndpointTags, ","))
+			alarmDetailList, err = GetAlarmDetailList(v.Id)
 			if err != nil {
 				return err, result
 			}
@@ -1630,12 +1627,20 @@ func UpdateAlarmWithConditions(alarmConditionObj *m.AlarmHandleObj) (alarmRow *m
 	alarmCrcMap := make(map[string]int)
 	alarmCrcMap[alarmConditionObj.AlarmConditionCrcHash] = 1
 	var alarmConditionRows []*m.AlarmCondition
-	err = x.SQL("select guid,status,metric,crc_hash from alarm_condition where crc_hash in ('"+strings.Join(configCrcList, "','")+"') and alarm_strategy=? and endpoint=? and status='firing'", alarmConditionObj.AlarmStrategy, alarmConditionObj.Endpoint).Find(&alarmConditionRows)
+	err = x.SQL("select guid,status,metric,crc_hash,tags from alarm_condition where crc_hash in ('"+strings.Join(configCrcList, "','")+"') and alarm_strategy=? and endpoint=? and status='firing'", alarmConditionObj.AlarmStrategy, alarmConditionObj.Endpoint).Find(&alarmConditionRows)
 	if err != nil {
 		err = fmt.Errorf("query alarm condition table fail,%s ", err.Error())
 		return
 	}
 	for _, row := range alarmConditionRows {
+		if row.CrcHash == alarmConditionObj.AlarmConditionCrcHash {
+			// 相同crc策略
+			if row.Tags != alarmConditionObj.Tags {
+				// 不同标签
+				err = fmt.Errorf("same crc alarm:%s is firing,ignore this:%s ", row.Tags, alarmConditionObj.Tags)
+				return
+			}
+		}
 		alarmCrcMap[row.CrcHash] = 1
 		conditionGuidList = append(conditionGuidList, row.Guid)
 		conditionMetricList = append(conditionMetricList, row.Metric)
@@ -1693,6 +1698,7 @@ func UpdateAlarmWithConditions(alarmConditionObj *m.AlarmHandleObj) (alarmRow *m
 			alarmRow.Endpoint = alarmConditionObj.Endpoint
 			alarmRow.Status = alarmConditionObj.Status
 			alarmRow.SMetric = strings.Join(conditionMetricList, ",")
+			alarmRow.Tags = strings.Join(conditionMetricList, ",")
 			alarmRow.SCond = strategyMetricRows[0].Condition
 			alarmRow.SLast = strategyMetricRows[0].Last
 			alarmRow.SPriority = alarmStrategyObj.Priority
@@ -1702,6 +1708,7 @@ func UpdateAlarmWithConditions(alarmConditionObj *m.AlarmHandleObj) (alarmRow *m
 			alarmRow.AlarmStrategy = alarmConditionObj.AlarmStrategy
 			alarmRow.AlarmName = alarmStrategyObj.Name
 			alarmRow.EndpointTags = strings.Join(conditionGuidList, ",")
+			alarmRow.EndpointTags = fmt.Sprintf("ac_%x", sha256.Sum256([]byte(strings.Join(conditionGuidList, ","))))
 			alarmRow.NotifyEnable = alarmConditionObj.NotifyEnable
 			alarmRow.NotifyId = alarmConditionObj.NotifyId
 			alarmRow.NotifyDelay = alarmConditionObj.NotifyDelay
@@ -1728,13 +1735,10 @@ func UpdateAlarmWithConditions(alarmConditionObj *m.AlarmHandleObj) (alarmRow *m
 	return
 }
 
-func GetAlarmDetailList(alarmConditionGuidList []string) (alarmDetailList []*m.AlarmDetailData, err error) {
+func GetAlarmDetailList(alarmId int) (alarmDetailList []*m.AlarmDetailData, err error) {
 	alarmDetailList = []*m.AlarmDetailData{}
-	if len(alarmConditionGuidList) == 0 {
-		return
-	}
-	filterSql, filterParam := createListParams(alarmConditionGuidList, "")
-	err = x.SQL("select t1.metric,t1.cond,t1.`last`,t1.`start`,t1.start_value,t1.`end`,t1.end_value,t1.tags,t2.metric as 'metric_name' from alarm_condition t1 left join metric t2 on t1.metric=t2.guid where t1.guid in ("+filterSql+")", filterParam...).Find(&alarmDetailList)
+	//filterSql, filterParam := createListParams(alarmConditionGuidList, "")
+	err = x.SQL("select t1.metric,t1.cond,t1.`last`,t1.`start`,t1.start_value,t1.`end`,t1.end_value,t1.tags,t2.metric as 'metric_name' from alarm_condition t1 left join metric t2 on t1.metric=t2.guid where t1.guid in (select alarm_condition from alarm_condition_rel where alarm=?)", alarmId).Find(&alarmDetailList)
 	if err != nil {
 		err = fmt.Errorf("GetAlarmDetailList -> query alarm condition table fail,%s ", err.Error())
 		return
