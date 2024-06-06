@@ -256,8 +256,14 @@ func ListMainPageRole(roleList []string) (err error, result []*m.MainPageRoleQue
 
 func UpdateMainPageRole(param []m.MainPageRoleQuery) error {
 	var actions []*Action
+	var roleIds []string
 	if len(param) > 0 {
-		actions = append(actions, &Action{Sql: "delete from main_dashboard"})
+		// 先删除提交角色数据,然后新增有效数据
+		for _, v := range param {
+			roleIds = append(roleIds, v.RoleName)
+		}
+		roleFilterSql, roleFilterParam := createListParams(roleIds, "")
+		actions = append(actions, &Action{Sql: "delete from main_dashboard  where role_id  in (" + roleFilterSql + ")", Param: roleFilterParam})
 	}
 	var idList = guid.CreateGuidList(len(param))
 	for i, v := range param {
