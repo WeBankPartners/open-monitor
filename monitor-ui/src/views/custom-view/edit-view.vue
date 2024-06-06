@@ -279,7 +279,7 @@ export default {
         },
         {
             title: this.$t('m_endpoint'),
-            minWidth: 150,
+            minWidth: 220,
             render: (h, params) => {
               return params.row.endpointType.length ?  (
                 <div class="table-config-endpoint">
@@ -320,7 +320,7 @@ export default {
         {
           title: this.$t('m_label_value'),
           key: 'labelValue',
-          minWidth: 250,
+          minWidth: 300,
           render: (h, params) => {
             this.joinTagValuesToOptions(params.row.tags, params.row.tagOptions, params.index);
             return (
@@ -330,7 +330,7 @@ export default {
                     <div class="tags-show" key={selectIndex + '' + JSON.stringify(i)}>
                       <span>{i.tagName}</span>
                       <Select
-                        style="maxWidth: 130px"
+                        style="maxWidth: 200px"
                         value={i.tagValue}
                         on-on-change={v => {
                           Vue.set(this.tableData[params.index].tags[selectIndex], 'tagValue', v)
@@ -357,7 +357,7 @@ export default {
         {
           title: this.$t('m_generate_lines'),
           key: 'series',
-          minWidth: 250,
+          minWidth: 350,
           render: (h, params) => {
             return (
               <div>
@@ -379,7 +379,7 @@ export default {
       pieChartConfigurationColumns: [
         {
             title: this.$t('m_endpoint'),
-            minWidth: 200,
+            minWidth: 220,
             key: 'endpointName',
             render: (h, params) => {
               return (
@@ -461,7 +461,7 @@ export default {
         {
           title: this.$t('m_label_value'),
           key: 'labelValue',
-          minWidth: 200,
+          minWidth: 350,
           render: (h, params) => {
             this.joinTagValuesToOptions(params.row.tags, params.row.tagOptions, params.index);
             return (
@@ -1181,7 +1181,8 @@ export default {
   flex-direction: row;
   align-items: center;
   .indicator_system_tag {
-    width: 75px
+    width: fit-content;
+    padding: 0 10px;
   }
   .metric-text {
     max-width: 200px;
@@ -1199,10 +1200,11 @@ export default {
   display: flex;
   align-items: center;
   .table-endpoint-tag {
+    width: fit-content;
+    padding: 0 10px;
     display: flex;
     justify-content: center;
     align-items: center;
-    min-width: 65px;
   }
 }
 
@@ -1228,7 +1230,6 @@ export default {
 .tags-show {
   display: flex;
   align-items: center;
-  justify-content: center;
   margin-bottom: 5px;
 } 
 .tags-show > span {
