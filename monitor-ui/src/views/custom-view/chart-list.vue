@@ -114,8 +114,8 @@
         </div>
     </Modal>
 
-    <Drawer :title="$t('placeholder.chartConfiguration')" :width="90" :mask-closable="false" v-model="isEditViewShow">
-        <editView :chartId="chartId" v-if="isEditViewShow"></editView>
+    <Drawer :title="$t('placeholder.chartConfiguration')" :width="90" @on-close="closeChartInfoDrawer" :mask-closable="false" v-model="showChartConfig">
+        <editView :chartId="chartId" v-if="showChartConfig"></editView>
     </Drawer>
     
   </div>
@@ -159,17 +159,20 @@ export default {
         chartListColumns: [
             {
                 title: this.$t('m_graph_name'),
+                
                 minWidth: 200,
                 key: 'chartName'
             },
             {
                 title: this.$t('m_id'),
+                
                 width: 150,
                 key: 'chartId'
             },
             {
                 title: this.$t('field.type'),
                 key: 'chartType',
+                
                 width: 100,
                 render: (h, params) => {
                     return (
@@ -186,6 +189,7 @@ export default {
             },
             {
                 title: this.$t('m_source_dashboard'),
+                
                 width: 130,
                 key: 'sourceDashboard',
                 render: (h, params) => {
@@ -194,6 +198,7 @@ export default {
             },
             {
                 title: this.$t('m_use_dashboard'),
+                
                 minWidth: 250,
                 key: 'useDashboard',
                 render: (h, params) => {
@@ -204,6 +209,7 @@ export default {
             },
             {
                 title: this.$t('m_manage_role'),
+                
                 width: 160,
                 key: 'mgmtRoles',
                 render: (h, params) => {
@@ -214,6 +220,7 @@ export default {
             },
             {
                 title: this.$t('m_use_role'),
+                
                 minWidth: 300,
                 key: 'useRoles',
                 render: (h, params) => {
@@ -224,6 +231,7 @@ export default {
             },
             {
                 title: this.$t('m_updatedBy'),
+                
                 width: 120,
                 key: 'updateUser',
                 render: (h, params) => {
@@ -232,6 +240,7 @@ export default {
             }, 
             {
                 title: this.$t('m_update_time'),
+                
                 width: 160,
                 key: 'updatedTime',
                 render: (h, params) => {
@@ -240,6 +249,7 @@ export default {
             },
             {
                 title: this.$t('m_create_time'),
+                
                 width: 160,
                 key: 'createdTime',
                 render: (h, params) => {
@@ -249,8 +259,8 @@ export default {
             {
                 title: this.$t('table.action'),
                 key: 'index',
-                width: 150,
-                align: 'center',
+                width: 160,
+                
                 fixed: 'right',
                 render: (h, params) => {
                 return (params.row.permission === 'mgmt' ? 
@@ -299,7 +309,7 @@ export default {
             }
         },
         chartId: "",
-        isEditViewShow: false
+        showChartConfig: false
     }
   },
   mounted(){
@@ -359,7 +369,7 @@ export default {
     },
     showEditView(item) {
         this.chartId = item.chartId;
-        this.isEditViewShow = true;
+        this.showChartConfig = true;
     },
     editSingleRoles(item) {
         this.chartId = item.chartId
@@ -393,6 +403,9 @@ export default {
     },
     onCancelDelete() {
         this.isShowWarning = false;
+    },
+    closeChartInfoDrawer() {
+        this.getChartList();
     }
   },
   components: {

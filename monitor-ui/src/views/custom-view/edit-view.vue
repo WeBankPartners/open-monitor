@@ -23,8 +23,8 @@
           </div>
 
            <Form ref="formData" :model="chartConfigForm" :rules="ruleValidate" :label-width="100">
-            <FormItem :label="$t('m_name')" prop="name">
-              <Input v-model="chartConfigForm.name" clearable :maxlength="30"></Input>
+            <FormItem :label="$t('m_graph_name')" prop="name">
+              <Input v-model.trim="chartConfigForm.name" :maxlength="30" show-word-limit></Input>
             </FormItem>
             <div v-if="isPieChart">
               <FormItem :label="$t('m_show_type')" prop="pieType">
@@ -86,7 +86,7 @@
                     </Option>
                   </Select>
               </FormItem>
-              <FormItem v-if="chartConfigForm.aggStep" :label="$t('m_refresh_time')" prop="aggStep">
+              <FormItem v-if="chartConfigForm.chartTemplate !== 'one'" :label="$t('m_calculation_period')" prop="aggStep">
                   <Select 
                     filterable
                     v-model="chartConfigForm.aggStep"
@@ -115,6 +115,7 @@
         </div>
 
         <Table
+          class="config-table"
           size="small"
           style="width:100%;"
           :border="false"
@@ -129,6 +130,7 @@
             clearable 
             ref="select"
             :placeholder="$t('m_endpoint')"
+            @on-query-change="(e) => {this.getEndpointSearch = e; this.debounceGetEndpointList()}"
             @on-change="searchTypeByEndpoint"
             >
             <Option v-for="(option, index) in endpointOptions" :value="option.option_value" :label="option.option_text" :key="index">
@@ -151,6 +153,7 @@
 
           <Select
             v-model="metricGuid"
+            class="metric-guid-select"
             filterable
             clearable 
             :placeholder="$t('m_metric')"
@@ -166,7 +169,7 @@
                 <span class="mr-1">{{tag.tagName}}</span>
                 <Select
                   v-model="chartAddTags[index].tagValue"
-                  style="maxWidth: 130px"
+                  style="max-width:130px"
                   filterable
                   multiple
                   clearable
@@ -244,7 +247,7 @@ export default {
       },
       ruleValidate: {
         name: [
-          {type: 'string', required: true, message: '请输入', trigger: 'blur' }
+          {type: 'string', required: true, message: '请输入名称', trigger: 'blur' }
         ],
         chartTemplate: [
           {type: 'string', required: true, message: '请输入', trigger: 'change' }
@@ -267,7 +270,6 @@ export default {
         {
           title: this.$t('table.action'),
           key: 'index',
-          align: 'center',
           width: 80,
           render: (h, params) => {
             return (
@@ -277,13 +279,12 @@ export default {
         },
         {
             title: this.$t('m_endpoint'),
-            align: 'center',
-            width: 150,
+            minWidth: 150,
             render: (h, params) => {
               return params.row.endpointType.length ?  (
                 <div class="table-config-endpoint">
-                  <TagShow list={this.tableData} name="endpointType" tagName={params.row.endpointType} index={params.index} /> 
-                  {params.row.endpointName}
+                  <TagShow class="table-endpoint-tag" list={this.tableData} name="endpointType" tagName={params.row.endpointType} index={params.index} /> 
+                  <span class="table-endpoint-text">{params.row.endpointName}</span>
                 </div>
               ) : (
                 <div>{params.row.endpointName}</div>
@@ -292,8 +293,7 @@ export default {
         },
         {
             title: this.$t('m_type'),
-            align: 'center',
-            width: 150,
+            minWidth: 150,
             key: 'monitorType',
             render: (h, params) => {
               return params.row.monitorType ? (
@@ -304,12 +304,11 @@ export default {
         {
           title: this.$t('m_indicator_color_system'),
           key: 'metric',
-          align: 'center',
-          width: 300,
+          minWidth: 350,
           render: (h, params) => {
             return (
               <div class="indicator_color_system">
-                {params.row.metricType ? <Tag type="border" color={this.metricTypeMap[params.row.metricType].color}>{this.metricTypeMap[params.row.metricType].label}</Tag> : <span/>}
+                {params.row.metricType ? <Tag class="indicator_system_tag" type="border" color={this.metricTypeMap[params.row.metricType].color}>{this.metricTypeMap[params.row.metricType].label}</Tag> : <span/>}
                 <div class="metric-text ml-1 mr-1">{params.row.metric}</div>
                 <ColorPicker v-model={params.row.colorGroup} on-on-change={e => {
                   this.tableData[params.index].colorGroup = e
@@ -321,8 +320,7 @@ export default {
         {
           title: this.$t('m_label_value'),
           key: 'labelValue',
-          align: 'center',
-          width: 250,
+          minWidth: 250,
           render: (h, params) => {
             this.joinTagValuesToOptions(params.row.tags, params.row.tagOptions, params.index);
             return (
@@ -359,14 +357,15 @@ export default {
         {
           title: this.$t('m_generate_lines'),
           key: 'series',
-          align: 'center',
+          minWidth: 250,
           render: (h, params) => {
             return (
               <div>
                 {!isEmpty(params.row.series) ?
                   (params.row.series.map((item, selectIndex) => (
                     <div class="generate-lines">
-                      <div class="series-name mr-2">{item.new ? 'new_' + item.seriesName : item.seriesName}</div>
+                      {item.new ? <Tag class="new-line-tag" color="error">{this.$t('m_new')}</Tag> : <span/>}
+                      <div class="series-name mr-2">{item.seriesName}</div>
                       <ColorPicker v-model={item.color} on-on-change={e => {
                         this.tableData[params.index].series[selectIndex].color = e
                       }}  />
@@ -380,8 +379,7 @@ export default {
       pieChartConfigurationColumns: [
         {
             title: this.$t('m_endpoint'),
-            align: 'center',
-            width: 300,
+            minWidth: 200,
             key: 'endpointName',
             render: (h, params) => {
               return (
@@ -391,6 +389,10 @@ export default {
                     Vue.set(this.tableData[params.index], 'endpoint', v);
                     this.endpointValue = v;
                     this.searchTypeByEndpointInPie(v, params.index)
+                  }}
+                  on-on-query-change={e => {
+                    this.getEndpointSearch = e; 
+                    this.debounceGetEndpointList()
                   }}
                   filterable
                   clearable
@@ -407,8 +409,7 @@ export default {
         },
         {
             title: this.$t('m_type'),
-            align: 'center',
-            width: 150,
+            minWidth: 150,
             key: 'monitorType',
             render: (h, params) => {
               return (
@@ -434,8 +435,7 @@ export default {
         {
           title: this.$t('m_metric'),
           key: 'metricGuid',
-          align: 'center',
-          width: 250,
+          minWidth: 250,
           render: (h, params) => {
             return (
               <Select
@@ -450,7 +450,6 @@ export default {
                 {this.metricOptions.map((option, index) => (
                   <Option class="select-options-change" value={option.guid} label={option.metric} key={index}>
                     <Tag type="border" color={this.metricTypeMap[option.metric_type].color}>{this.metricTypeMap[option.metric_type].label}</Tag>
-                    
                     {option.metric}
                   </Option>
 
@@ -462,7 +461,7 @@ export default {
         {
           title: this.$t('m_label_value'),
           key: 'labelValue',
-          align: 'center',
+          minWidth: 200,
           render: (h, params) => {
             this.joinTagValuesToOptions(params.row.tags, params.row.tagOptions, params.index);
             return (
@@ -497,8 +496,7 @@ export default {
         {
           title: this.$t('m_show_metric'),
           key: 'metric',
-          align: 'center',
-          width: 200,
+          width: 250,
           render: (h, params) => {
             const options = []
             for(let key in params.row.tagOptions) {
@@ -626,7 +624,8 @@ export default {
       },
       chartPublic: false,
       chartAddTagOptions: {},
-      chartAddTags: []
+      chartAddTags: [],
+      getEndpointSearch: ''
     }
   },
   computed: {
@@ -667,9 +666,10 @@ export default {
     })
   },
   mounted() {
-    this.getEndpointList();
+    this.debounceGetEndpointList();
     this.getAllRolesOptions();
     this.getSingleChartAuth();
+    this.getTableData();
   },
   methods: {
     getTableData() {
@@ -783,15 +783,23 @@ export default {
       }
       return tags
     },
+
+    debounceGetEndpointList: debounce(function() {
+      this.getEndpointList()
+    }, 300),
+
     getEndpointList() {
+      let search = '.'
+      if (this.getEndpointSearch) {
+        search = this.getEndpointSearch
+      }
       let params = {
-        search: '.',
+        search,
         page: 1,
         size: 10000
       }
       this.request('GET', '/monitor/api/v1/dashboard/search', params, res => {
           this.endpointOptions = res;
-          this.getTableData();
         }
       )
     },
@@ -956,6 +964,8 @@ export default {
         this.monitorType = '';
         this.chartAddTagOptions = {};
         this.chartAddTags = [];
+        this.getEndpointSearch = '';
+        this.debounceGetEndpointList();
       }
     },
     onChartTemplateSelected(key) {
@@ -1150,10 +1160,10 @@ export default {
 <style lang="less">
 .chart-config {
   .ivu-form-item {
-    margin-bottom: 10px;
+    margin-bottom: 10px !important;
   }
-  .ivu-select.ivu-select-single.ivu-select-default {
-    width: 250px
+  .ivu-form-item-error-tip {
+    padding-top: 2px;
   }
 }
 
@@ -1170,20 +1180,43 @@ export default {
   display: flex;
   flex-direction: row;
   align-items: center;
+  .indicator_system_tag {
+    width: 75px
+  }
   .metric-text {
-    min-width: 20% 
+    max-width: 200px;
+  }
+}
+
+.config-table {
+  .ivu-table-cell {
+    padding-left: 0px;
+    padding-right: 0px
   }
 }
 
 .table-config-endpoint {
   display: flex;
+  align-items: center;
+  .table-endpoint-tag {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-width: 65px;
+  }
 }
 
 .generate-lines {
   display: flex;
   flex-direction: row;
+  justify-content: flex-start;
   .series-name {
-    width: 85%
+    max-width: 85%;
+    overflow: hidden;
+
+  }
+  .new-line-tag {
+    width: 30px
   }
 }
 
@@ -1217,6 +1250,14 @@ export default {
   }
 }
 
+.metric-guid-select {
+  .ivu-select-item {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+  }
+}
+
 </style>
 
 <style scoped lang='less'>
@@ -1243,6 +1284,9 @@ export default {
           align-items: center;
         }
       }
+      .chart-config {
+        width: 30%;
+      }
     }
 
     .data-config {
@@ -1260,7 +1304,7 @@ export default {
         align-items: center;
         margin-top: 15px;
         padding: 20px;
-        width: 80%;
+        width: 100%;
         background-color: #efefef;
         .add-tag-configuration {
           display: flex;
