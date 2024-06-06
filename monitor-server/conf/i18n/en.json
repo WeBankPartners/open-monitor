@@ -15,5 +15,6 @@
   "token_authority_error": "Token authority validate fail",
   "save_done_but_sync_fail": "Config Deploy Failed: Deployment to target object failed. Please ensure target object is available, then click [Save] to redeploy configuration.",
   "metric_duplicate_error": "Save Failed. Duplicate indicator '%s' already exists under the current hierarchy object. Please modify and try again.",
-  "metric_not_found": "Import Failed,Metric: %s not found"
+  "metric_not_found": "Import Failed,Metric: %s not found",
+  "strategy_name_import_duplicate_error": "Import Failed,Name: %s duplicate"
 }
