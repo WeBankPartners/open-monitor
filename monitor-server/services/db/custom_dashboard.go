@@ -164,6 +164,8 @@ func DeleteCustomDashboardById(dashboard int) (err error) {
 	actions = append(actions, &Action{Sql: "delete from main_dashboard where custom_dashboard = ?", Param: []interface{}{dashboard}})
 	actions = append(actions, &Action{Sql: "delete from custom_dashboard_role_rel where custom_dashboard_id = ?", Param: []interface{}{dashboard}})
 	actions = append(actions, &Action{Sql: "delete from custom_dashboard_chart_rel where custom_dashboard = ?", Param: []interface{}{dashboard}})
+	// 删除以该看板为源看板,并且还没有公开的图表
+	actions = append(actions, &Action{Sql: "delete from custom_chart where source_dashboard = ? and public = 0", Param: []interface{}{dashboard}})
 	actions = append(actions, &Action{Sql: "delete from custom_dashboard WHERE id=?", Param: []interface{}{dashboard}})
 	return Transaction(actions)
 }
@@ -329,11 +331,14 @@ func SyncData() (err error) {
 					seriesId := guid.CreateGuid()
 					monitorType := ""
 					if strings.TrimSpace(series.Endpoint) != "" {
-						x.SQL("select monitor_type from endpoint_new where guid=?", series.Endpoint).Find(&monitorType)
+						x.SQL("select monitor_type from endpoint_new where guid=?", series.Endpoint).Get(&monitorType)
 					}
 					if monitorType == "" {
 						// 数据兜底
 						monitorType = series.EndpointType
+					}
+					if series.EndpointName == "" {
+						x.SQL("select display_name from service_group where guid=?", series.AppObject).Get(&series.EndpointName)
 					}
 					actions = append(actions, &Action{Sql: "insert into custom_chart_series(guid,dashboard_chart,endpoint,service_group,endpoint_name,monitor_type,metric,color_group,pie_display_tag,endpoint_type,metric_type,metric_guid) values(?,?,?,?,?,?,?,?,?,?,?,?)", Param: []interface{}{
 						seriesId, newChartId, series.Endpoint, series.AppObject, series.EndpointName, monitorType, series.Metric, series.DefaultColor, "", series.EndpointType, "", ""}})
@@ -369,4 +374,24 @@ func convertLineTypeIntToString(lineType int) string {
 		return "bar"
 	}
 	return ""
+}
+
+func UnBindChart(dashboard int) (err error) {
+	_, err = x.Exec("delete from custom_chart_series_config  where dashboard_chart_config  in(select guid from custom_chart_series ccs where dashboard_chart  in(select guid from custom_chart where source_dashboard =? and public = 0 ))", dashboard)
+	if err != nil {
+		return err
+	}
+	_, err = x.Exec("delete from custom_chart_series  where dashboard_chart  in(select guid from custom_chart where source_dashboard =? and public = 0)", dashboard)
+	if err != nil {
+		return err
+	}
+	_, err = x.Exec("delete from custom_dashboard_chart_rel where custom_dashboard =?", dashboard)
+	if err != nil {
+		return err
+	}
+	_, err = x.Exec("delete from custom_chart where source_dashboard =? and public = 0", dashboard)
+	if err != nil {
+		return err
+	}
+	return
 }
