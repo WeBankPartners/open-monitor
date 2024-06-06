@@ -81,7 +81,7 @@ func GetCustomDashboard(id int) (result *m.CustomDashboardObj, err error) {
 		return
 	}
 	var customRows []*m.CustomDashboardTable
-	err = x.SQL("SELECT * FROM custom_dashboard WHERE id=?", id).Find(&customRows)
+	err = x.SQL("SELECT id,name,panels_group,create_user,update_user,panel_groups,time_range,refresh_week FROM custom_dashboard WHERE id=?", id).Find(&customRows)
 	if err != nil {
 		err = fmt.Errorf("query custom dashboard table fail,%s ", err.Error())
 		return
