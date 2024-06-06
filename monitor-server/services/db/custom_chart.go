@@ -467,17 +467,23 @@ func CopyCustomChart(dashboardId int, user, group string, chart *models.CustomCh
 }
 
 func getNewChartName(name string) string {
+	var layout = "060102150405"
 	if strings.TrimSpace(name) != "" {
 		start := strings.LastIndex(name, "-")
+		if start == -1 {
+			// 没有匹配到 - ,直接拼接时间搓
+			name = name + "-" + time.Now().Format(layout)
+			return name
+		}
 		suffix := name[start+1:]
-		if len(suffix) == 12 {
+		if len(suffix) == 12 && start > 0 {
 			name = name[:start] + "-" + time.Now().Format("060102150405")
 		} else {
-			name = name + "-" + time.Now().Format("060102150405")
+			name = name + "-" + time.Now().Format(layout)
 		}
 		return name
 	}
-	return time.Now().Format("060102150405")
+	return time.Now().Format(layout)
 }
 
 func UpdateCustomChartName(chartId, name, user string, sourceDashboard int) (err error) {
