@@ -194,11 +194,16 @@ func ImportAlarmStrategy(c *gin.Context) {
 	}
 	queryType := c.Param("queryType")
 	guid := c.Param("guid")
-	var metricNotFound []string
-	err, metricNotFound = db.ImportAlarmStrategy(queryType, guid, paramObj, middleware.GetOperateUser(c))
+	var metricNotFound, nameDuplicate []string
+	err, metricNotFound, nameDuplicate = db.ImportAlarmStrategy(queryType, guid, paramObj, middleware.GetOperateUser(c))
 	if err != nil {
 		if len(metricNotFound) > 0 {
 			err = fmt.Errorf(middleware.GetMessageMap(c).MetricNotFound, strings.Join(metricNotFound, ","))
+			middleware.ReturnHandleError(c, err.Error(), err)
+			return
+		}
+		if len(nameDuplicate) > 0 {
+			err = fmt.Errorf(middleware.GetMessageMap(c).StrategyNameImportDuplicateError, strings.Join(nameDuplicate, ","))
 			middleware.ReturnHandleError(c, err.Error(), err)
 			return
 		}
