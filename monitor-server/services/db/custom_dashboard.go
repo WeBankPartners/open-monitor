@@ -104,7 +104,7 @@ func QueryAllRoleDisplayNameMap() (roleMap map[string]string, err error) {
 
 func GetCustomDashboardById(id int) (customDashboard *models.CustomDashboardTable, err error) {
 	customDashboard = &models.CustomDashboardTable{}
-	_, err = x.SQL("select * from custom_dashboard where id = ?", id).Get(customDashboard)
+	_, err = x.SQL("select id,name,create_user,update_user,panel_groups,time_range,refresh_week from custom_dashboard where id = ?", id).Get(customDashboard)
 	return
 }
 
@@ -165,7 +165,13 @@ func DeleteCustomDashboardById(dashboard int) (err error) {
 	actions = append(actions, &Action{Sql: "delete from custom_dashboard_role_rel where custom_dashboard_id = ?", Param: []interface{}{dashboard}})
 	actions = append(actions, &Action{Sql: "delete from custom_dashboard_chart_rel where custom_dashboard = ?", Param: []interface{}{dashboard}})
 	// 删除以该看板为源看板,并且还没有公开的图表
+	actions = append(actions, &Action{Sql: "delete from custom_chart_series_config  where dashboard_chart_config  in(select guid from custom_chart_series  where dashboard_chart  in(select guid from custom_chart where source_dashboard =? and public = 0))", Param: []interface{}{dashboard}})
+	actions = append(actions, &Action{Sql: "delete from custom_chart_series_tagvalue where dashboard_chart_tag in(select guid from custom_chart_series_tag  where dashboard_chart_config  in(select guid from custom_chart_series  where dashboard_chart  in(select guid from custom_chart where source_dashboard =? and public = 0)))", Param: []interface{}{dashboard}})
+	actions = append(actions, &Action{Sql: "delete from custom_chart_series_tag  where dashboard_chart_config  in(select guid from custom_chart_series  where dashboard_chart  in(select guid from custom_chart where source_dashboard =? and public = 0))", Param: []interface{}{dashboard}})
+	actions = append(actions, &Action{Sql: "delete from custom_chart_series  where dashboard_chart  in(select guid from custom_chart where source_dashboard =? and public = 0)", Param: []interface{}{dashboard}})
+	actions = append(actions, &Action{Sql: "delete from custom_chart_permission where dashboard_chart in(select guid from custom_chart where source_dashboard =? and public = 0)", Param: []interface{}{dashboard}})
 	actions = append(actions, &Action{Sql: "delete from custom_chart where source_dashboard = ? and public = 0", Param: []interface{}{dashboard}})
+
 	actions = append(actions, &Action{Sql: "delete from custom_dashboard WHERE id=?", Param: []interface{}{dashboard}})
 	return Transaction(actions)
 }
@@ -385,7 +391,7 @@ func UnBindChart(dashboard int) (err error) {
 	if err != nil {
 		return err
 	}
-	_, err = x.Exec("delete from custom_dashboard_chart_rel where custom_dashboard =?", dashboard)
+	_, err = x.Exec("delete from custom_dashboard_chart_rel where custom_dashboard =? and dashboard_chart in (select guid from custom_chart where source_dashboard =? and public = 0)", dashboard, dashboard)
 	if err != nil {
 		return err
 	}

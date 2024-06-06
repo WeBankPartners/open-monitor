@@ -166,24 +166,24 @@
         </template>
       </AuthDialog>
       <ModalComponent :modelConfig="processConfigModel">
-        <div slot="processConfig" style="max-height: 500px;overflow-y: scroll;">
+        <div slot="processConfig" style="max-height: 500px;overflow-y: scroll;padding: 0 12px;">
           <section>
             <div style="display: flex;">
               <div class="port-title">
                 <span>{{$t('tableKey.role')}}:</span>
               </div>
               <div class="port-title">
-                <span>{{$t('menu.customViews')}}:</span>
+                <span>{{$t('m_custom_dashboard')}}:</span>
               </div>
             </div>
           </section>
           <section v-for="(pl, plIndex) in processConfigModel.dashboardConfig" :key="plIndex">
             <div class="port-config">
               <div style="width: 40%">
-                <label>{{pl.role_name}}：</label>
+                <label>{{pl.display_role_name}}：</label>
               </div>
               <div style="width: 55%">
-                <Select filterable clearable v-model="pl.main_page_id" style="width:200px" :placeholder="$t('placeholder.refresh')">
+                <Select filterable clearable v-model="pl.main_page_id" style="width:200px" :placeholder="$t('m_please_select') + $t('m_dashboard_for_role')">
                   <Option v-for="item in pl.options" :value="item.id" :key="item.id">{{ item.option_text }}</Option>
                 </Select>
               </div>
@@ -336,6 +336,7 @@ export default {
       this.request('POST','/monitor/api/v1/dashboard/custom/main/set', params, () => {
         this.$Message.success(this.$t('tips.success'))
         this.$root.JQ('#set_dashboard_modal').modal('hide')
+        this.getViewList()
       })
     },
     authorization (item) {
@@ -414,7 +415,6 @@ export default {
         pageSize: this.pagination.pageSize,
         startIndex: this.pagination.pageSize * (this.pagination.currentPage - 1)
       });
-
       if (!params.id || isNaN(Number(params.id))) {
         params.id = 0
       } else {
@@ -511,7 +511,7 @@ export default {
 .port-title {
   width: 40%;
   font-size: 14px;
-  padding: 2px 0 2px 4px;
+  // padding: 2px 0 2px 4px;
   // border: 1px solid @blue-2;
 }
 

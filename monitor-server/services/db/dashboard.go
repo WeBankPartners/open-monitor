@@ -113,7 +113,7 @@ func GetPromMetric(endpoint []string, metric string) (error, string) {
 		tmpTag = metric[strings.Index(metric, "/")+1:]
 	}
 	var query []*m.MetricTable
-	err := x.SQL("SELECT * FROM metric WHERE metric=?", tmpMetric).Find(&query)
+	err := x.SQL("SELECT * FROM metric WHERE metric=? and service_group is null", tmpMetric).Find(&query)
 	if err != nil {
 		log.Logger.Error("Query metric fail", log.Error(err))
 	}
@@ -674,6 +674,15 @@ func GetMainCustomDashboard(roleList []string) (err error, result []*m.CustomDas
 	if len(roleList) == 0 {
 		return
 	}
+	var customDashboardRows []*m.CustomDashboardTable
+	err = x.SQL("select id,name from custom_dashboard").Find(&customDashboardRows)
+	if err != nil {
+		return
+	}
+	dashboardIdNameMap := make(map[int]string)
+	for _, row := range customDashboardRows {
+		dashboardIdNameMap[row.Id] = row.Name
+	}
 	roleFilterSql, roleFilterParam := createListParams(roleList, "")
 	sql := "SELECT custom_dashboard FROM main_dashboard WHERE role_id in (" + roleFilterSql + ") order by guid asc"
 	if err = x.SQL(sql, roleFilterParam...).Find(&ids); err != nil {
@@ -683,7 +692,7 @@ func GetMainCustomDashboard(roleList []string) (err error, result []*m.CustomDas
 		for _, id := range ids {
 			if _, ok := idMap[id]; !ok {
 				idMap[id] = true
-				result = append(result, &m.CustomDashboardTable{Id: id})
+				result = append(result, &m.CustomDashboardTable{Id: id, Name: dashboardIdNameMap[id]})
 			}
 		}
 	}
