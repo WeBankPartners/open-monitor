@@ -485,5 +485,8 @@
   "m_calculation_period": "Calculation Period",
   "m_custom_dashboard": "Custom Dashboard",
   "m_please_select": "Please Select",
-  "m_dashboard_for_role": " Dashboard For Role"
+  "m_dashboard_for_role": " Dashboard For Role",
+  "m_layer_endpoint": "Layer Endpoint",
+  "m_endpoint_type": "Endpoint Type",
+  "m_add": "Add"
 }

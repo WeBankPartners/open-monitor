@@ -189,7 +189,7 @@
             class="add-configuration-button"
             :disabled="!endpointValue || !monitorType || !metricGuid"
             @click="addConfiguration"
-            type="primary"
+            type="success"
           >{{$t('m_add_configuration')}}</Button>
         </div>
       </div>
@@ -292,7 +292,7 @@ export default {
             }
         },
         {
-            title: this.$t('m_type'),
+            title: this.$t('m_endpoint_type'),
             width: 150,
             key: 'monitorType',
             render: (h, params) => {
@@ -719,6 +719,8 @@ export default {
           option_value: initialData[0].endpoint
         })
         this.endpointValue = initialData[0].endpoint;
+        this.serviceGroup = selectedEndpointItem.app_object
+
         this.request('GET', '/monitor/api/v1/dashboard/recursive/endpoint_type/list', {
           guid: selectedEndpointItem.option_value
         }, res => {
