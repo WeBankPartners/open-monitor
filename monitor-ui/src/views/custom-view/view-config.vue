@@ -45,16 +45,12 @@
 
           <div class="header-tools">
             <template v-if="isEditStatus">
-              <!-- <button class="btn btn-sm btn-cancel-f" style="margin-right:60px" @click="addItem">{{$t('m_new_graph')}}</button> -->
-              <button class="btn btn-sm btn-confirm-f" @click="savePanelInfo">{{$t('button.saveConfig')}}</button>
+              <Button type="primary" @click="savePanelInfo">{{$t('button.saveConfig')}}</Button>
             </template> 
-            
-            <button v-if="!showAlarm" class="btn btn-sm btn-cancel-f" @click="openAlarmDisplay()">
-              <i style="font-size: 18px;color: #0080FF;" class="fa fa-eye-slash" aria-hidden="true"></i>
-            </button>
-            <button v-else class="btn btn-sm btn-cancel-f" @click="closeAlarmDisplay()">
-              <i style="font-size: 18px;color: #0080FF;" class="fa fa-eye" aria-hidden="true"></i>
-            </button>
+
+            <Button type="info" @click="showAlarm?closeAlarmDisplay():openAlarmDisplay()">
+              <Icon :type="showAlarm?'md-eye-off':'md-eye'" size="20"></Icon>
+            </Button>
           </div>
         </div>
       </header>
@@ -1187,7 +1183,7 @@ export default {
   }
 
   .view-config-alarm {
-    width: 700px
+    // width: 700px
   }
 
   .no-data {
