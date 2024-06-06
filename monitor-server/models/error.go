@@ -27,4 +27,6 @@ type ErrorMessageObj struct {
 	MetricDuplicateError             string `json:"metric_duplicate_error"`
 	MetricNotFound                   string `json:"metric_not_found"`
 	StrategyNameImportDuplicateError string `json:"strategy_name_import_duplicate_error"`
+	LogGroupNameDuplicateError       string `json:"log_group_name_duplicate_error"`
+	LogGroupNameIllegalError         string `json:"log_group_name_illegal_error"`
 }
