@@ -88,7 +88,7 @@
         </div>
 
         <!-- 图表新增 -->
-        <div class="chart-config-info" v-if="isEditStatus">
+        <div class="chart-config-info" v-if="isEditStatus" @mouseover="debounceGetAllChartOptionList" @click="getAllChartOptionList">
           <span class="fs-20 mr-3 ml-3">{{$t('m_graph')}}:</span>
           <Dropdown 
             v-for="(item, index) in allAddChartOptions"
@@ -274,6 +274,7 @@
 import isEmpty from 'lodash/isEmpty';
 import remove from 'lodash/remove';
 import cloneDeep from 'lodash/cloneDeep';
+import debounce from 'lodash/debounce';
 import {generateUuid} from '@/assets/js/utils'
 import {dataPick, autoRefreshConfig} from '@/assets/config/common-config'
 import {resizeEvent} from '@/assets/js/gridUtils.ts'
@@ -439,6 +440,9 @@ export default {
         this.allAddChartOptions[2].options = this.processChartOptions(res);
       })
     },
+    debounceGetAllChartOptionList: debounce(function() {
+      this.getAllChartOptionList()
+    }, 500),
     processChartOptions(rawData) {
       const options = [];
       const initialOption = {
@@ -831,9 +835,15 @@ export default {
           i: `${name}`,
           id: `${this.setChartConfigId}`
         }
+        if (this.layoutData.length) {
+          let lastItem = this.layoutData[this.layoutData.length - 1];
+          if (lastItem.x <= 6 && lastItem.w <= 6) {
+            let popItem = this.layoutData.pop();
+            popItem.x = 6;
+            this.layoutData.push(popItem)
+          } 
+        }
         this.layoutData.push(item);
-        
-
         setTimeout(() => {
           this.request('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams(), res => {
             this.getPannelList();
