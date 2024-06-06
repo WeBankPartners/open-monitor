@@ -23,7 +23,8 @@ type ErrorMessageObj struct {
 	TokenError          string `json:"token_error"`
 	TokenAuthorityError string `json:"token_authority_error"`
 
-	SaveDoneButSyncFail  string `json:"save_done_but_sync_fail"`
-	MetricDuplicateError string `json:"metric_duplicate_error"`
-	MetricNotFound       string `json:"metric_not_found"`
+	SaveDoneButSyncFail              string `json:"save_done_but_sync_fail"`
+	MetricDuplicateError             string `json:"metric_duplicate_error"`
+	MetricNotFound                   string `json:"metric_not_found"`
+	StrategyNameImportDuplicateError string `json:"strategy_name_import_duplicate_error"`
 }
