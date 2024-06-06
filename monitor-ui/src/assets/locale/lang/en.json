@@ -259,6 +259,7 @@
   "m_display_group": "Display Group",
   "m_graph": "Graph",
   "m_graph_name": "Graph Name",
+  "m_graph_type": "Graph Type",
   "m_search": "Search",
   "m_field_exporter": "Exporter",
   "m_proxy_exporter": "Proxy Exporter",
@@ -477,8 +478,9 @@
   "m_http_server": "Http Server",
   "m_example": "Example",
   "m_metric_deleteTips": "Are you sure to delete indicators? The indicator cannot be restored after it is deleted, and the monitoring Kanban and alarm list are affected. Exercise caution when performing this operation.",
-  "m_metric_export_errorTips": "The import is complete. The import failed",
+  "m_metric_export_errorTips": "Import failed: conflicting indicators for",
   "m_modify": "Modify ",
   "m_search_info": "Search",
-  "m_add_chart_library": "Please add the chart library first."
+  "m_add_chart_library": "Please add the chart library first.",
+  "m_calculation_period": "Calculation Period"
 }
