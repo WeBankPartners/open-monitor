@@ -13,9 +13,7 @@
           <div v-else>
             <div :id="elId" class="echart" />
           </div>
-          
         </div>
-        
         <div class="chart-config">
           <div class="use-underline-title ml-4 mb-2">
             {{this.$t('m_chart_configuration')}}
@@ -86,7 +84,7 @@
                     </Option>
                   </Select>
               </FormItem>
-              <FormItem v-if="chartConfigForm.chartTemplate !== 'one'" :label="$t('m_calculation_period')" prop="aggStep">
+              <FormItem v-if="chartConfigForm.aggregate !== 'none'" :label="$t('m_calculation_period')" prop="aggStep">
                   <Select 
                     filterable
                     v-model="chartConfigForm.aggStep"
@@ -115,6 +113,7 @@
         </div>
 
         <Table
+          class="config-table"
           size="small"
           style="width:100%;"
           :border="false"
@@ -152,6 +151,7 @@
 
           <Select
             v-model="metricGuid"
+            class="metric-guid-select"
             filterable
             clearable 
             :placeholder="$t('m_metric')"
@@ -277,12 +277,12 @@ export default {
         },
         {
             title: this.$t('m_endpoint'),
-            minWidth: 150,
+            minWidth: 220,
             render: (h, params) => {
               return params.row.endpointType.length ?  (
                 <div class="table-config-endpoint">
                   <TagShow class="table-endpoint-tag" list={this.tableData} name="endpointType" tagName={params.row.endpointType} index={params.index} /> 
-                  {params.row.endpointName}
+                  <span class="table-endpoint-text">{params.row.endpointName}</span>
                 </div>
               ) : (
                 <div>{params.row.endpointName}</div>
@@ -318,7 +318,7 @@ export default {
         {
           title: this.$t('m_label_value'),
           key: 'labelValue',
-          minWidth: 250,
+          minWidth: 300,
           render: (h, params) => {
             this.joinTagValuesToOptions(params.row.tags, params.row.tagOptions, params.index);
             return (
@@ -328,7 +328,7 @@ export default {
                     <div class="tags-show" key={selectIndex + '' + JSON.stringify(i)}>
                       <span>{i.tagName}</span>
                       <Select
-                        style="maxWidth: 130px"
+                        style="maxWidth: 200px"
                         value={i.tagValue}
                         on-on-change={v => {
                           Vue.set(this.tableData[params.index].tags[selectIndex], 'tagValue', v)
@@ -355,7 +355,7 @@ export default {
         {
           title: this.$t('m_generate_lines'),
           key: 'series',
-          minWidth: 250,
+          minWidth: 350,
           render: (h, params) => {
             return (
               <div>
@@ -377,7 +377,7 @@ export default {
       pieChartConfigurationColumns: [
         {
             title: this.$t('m_endpoint'),
-            minWidth: 200,
+            minWidth: 220,
             key: 'endpointName',
             render: (h, params) => {
               return (
@@ -459,7 +459,7 @@ export default {
         {
           title: this.$t('m_label_value'),
           key: 'labelValue',
-          minWidth: 200,
+          minWidth: 350,
           render: (h, params) => {
             this.joinTagValuesToOptions(params.row.tags, params.row.tagOptions, params.index);
             return (
@@ -678,6 +678,9 @@ export default {
         this.chartPublic = res.public;
         for(let key in this.chartConfigForm) {
           this.chartConfigForm[key] = res[key]
+        }
+        if (!this.chartConfigForm.chartTemplate) {
+          this.chartConfigForm.chartTemplate = 'one';
         }
         this.tableData = cloneDeep(res.chartSeries);
 
@@ -947,7 +950,7 @@ export default {
           metricGuid: metricItem.guid,
           metricType: metricItem.metric_type,
           monitorType: this.monitorType,
-          colorGroup: "#2D8CF0",
+          colorGroup: this.getRandomColor(),
           pieDisplayTag: "",
           metric: metricItem.metric,
           tags: this.chartAddTags,
@@ -1144,7 +1147,11 @@ export default {
       const item = this.tableData[index];
       const basicParams = this.processBasicParams(item.metric, item.endpoint, item.serviceGroup, item.monitorType, item.tags, item.chartSeriesGuid);
       const series = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams);
-      this.tableData[index].series = series;
+      
+      this.tableData[index].series = series.map(item => {
+        item.color = this.getRandomColor();
+        return item
+      })
     }
   },
   components: {
@@ -1179,10 +1186,18 @@ export default {
   flex-direction: row;
   align-items: center;
   .indicator_system_tag {
-    width: 75px
+    width: fit-content;
+    padding: 0 10px;
   }
   .metric-text {
     max-width: 200px;
+  }
+}
+
+.config-table {
+  .ivu-table-cell {
+    padding-left: 0px;
+    padding-right: 0px
   }
 }
 
@@ -1190,15 +1205,22 @@ export default {
   display: flex;
   align-items: center;
   .table-endpoint-tag {
-    width: 155px
+    width: fit-content;
+    padding: 0 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
 }
 
 .generate-lines {
   display: flex;
   flex-direction: row;
+  justify-content: flex-start;
   .series-name {
-    width: 85%
+    max-width: 85%;
+    overflow: hidden;
+
   }
   .new-line-tag {
     width: 30px
@@ -1213,7 +1235,6 @@ export default {
 .tags-show {
   display: flex;
   align-items: center;
-  justify-content: center;
   margin-bottom: 5px;
 } 
 .tags-show > span {
@@ -1232,6 +1253,14 @@ export default {
 .ivu-color-picker {
   .ivu-icon.ivu-icon-ios-close::before {
     content: "\f193"
+  }
+}
+
+.metric-guid-select {
+  .ivu-select-item {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
   }
 }
 
