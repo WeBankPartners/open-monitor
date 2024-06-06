@@ -114,8 +114,8 @@
         </div>
     </Modal>
 
-    <Drawer :title="$t('placeholder.chartConfiguration')" :width="90" :mask-closable="false" v-model="isEditViewShow">
-        <editView :chartId="chartId" v-if="isEditViewShow"></editView>
+    <Drawer :title="$t('placeholder.chartConfiguration')" :width="90" @on-close="closeChartInfoDrawer" :mask-closable="false" v-model="showChartConfig">
+        <editView :chartId="chartId" v-if="showChartConfig"></editView>
     </Drawer>
     
   </div>
@@ -309,7 +309,7 @@ export default {
             }
         },
         chartId: "",
-        isEditViewShow: false
+        showChartConfig: false
     }
   },
   mounted(){
@@ -369,7 +369,7 @@ export default {
     },
     showEditView(item) {
         this.chartId = item.chartId;
-        this.isEditViewShow = true;
+        this.showChartConfig = true;
     },
     editSingleRoles(item) {
         this.chartId = item.chartId
@@ -403,6 +403,9 @@ export default {
     },
     onCancelDelete() {
         this.isShowWarning = false;
+    },
+    closeChartInfoDrawer() {
+        this.getChartList();
     }
   },
   components: {

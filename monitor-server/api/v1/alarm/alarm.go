@@ -413,7 +413,7 @@ func getEndpointHistoryAlarm(endpointGuid string, startTime, endTime time.Time) 
 		return fmt.Errorf("EndpointGuid:%s fetch endpoint fail, %s ", endpointGuid, err.Error()), data
 	}
 	query := m.AlarmTable{Endpoint: endpointObj.Guid, Start: startTime, End: endTime}
-	err, data = db.GetAlarms(query, 0, true, false)
+	err, data = db.GetAlarms(query, 0, true, false, []string{})
 	return err, data
 }
 
@@ -469,7 +469,7 @@ func GetProblemAlarm(c *gin.Context) {
 			}
 		}
 	}
-	err, data := db.GetAlarms(query, 0, true, true)
+	err, data := db.GetAlarms(query, 0, true, true, []string{})
 	if err != nil {
 		mid.ReturnQueryTableError(c, "alarm", err)
 		return
@@ -481,7 +481,7 @@ func QueryProblemAlarm(c *gin.Context) {
 	var param m.QueryProblemAlarmDto
 	if err := c.ShouldBindJSON(&param); err == nil {
 		query := m.AlarmTable{Status: "firing", Endpoint: param.Endpoint, SMetric: param.Metric, SPriority: param.Priority}
-		err, data := db.GetAlarms(query, 0, true, true)
+		err, data := db.GetAlarms(query, 0, true, true, []string{})
 		if err != nil {
 			mid.ReturnQueryTableError(c, "alarm", err)
 			return
@@ -531,7 +531,16 @@ func QueryProblemAlarmByPage(c *gin.Context) {
 		param.Page = &m.PageInfo{StartIndex: 0, PageSize: 0}
 	}
 	query := m.AlarmTable{Status: "firing", Endpoint: param.Endpoint, SMetric: param.Metric, SPriority: param.Priority, AlarmName: param.AlarmName}
-	err, data := db.GetAlarms(query, 0, true, true)
+	var endpointList []string
+	var err error
+	if param.CustomDashboardId > 0 {
+		endpointList, err = db.GetCustomDashboardEndpointList(param.CustomDashboardId)
+		if err != nil {
+			mid.ReturnHandleError(c, err.Error(), err)
+			return
+		}
+	}
+	err, data := db.GetAlarms(query, 0, true, true, endpointList)
 	if err != nil {
 		mid.ReturnQueryTableError(c, "alarm", err)
 		return
