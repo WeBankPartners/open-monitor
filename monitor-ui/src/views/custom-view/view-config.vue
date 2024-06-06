@@ -91,29 +91,30 @@
         <div class="chart-config-info" v-if="isEditStatus" @mouseover="debounceGetAllChartOptionList" @click="getAllChartOptionList">
           <span class="fs-20 mr-3 ml-3">{{$t('m_graph')}}:</span>
           <Dropdown 
+            placement="bottom-start"
             v-for="(item, index) in allAddChartOptions"
             :key="index"
-            class="mr-3 chart-option-menu" 
+            class="chart-option-menu" 
             @on-click="(info) => onAddChart(JSON.parse(info), item.type)">
             <Button :type="item.colorType">
                 {{$t(item.name)}}
                 <Icon type="ios-arrow-down"></Icon>
             </Button>
             <template #list>
-                <DropdownMenu v-if="item.options.length>0">
-                    <DropdownItem v-for="(option, key) in item.options"
-                      :name="JSON.stringify(option)" 
-                      :key="key"
-                      :disabled="option.disabled">
-                      <Icon v-if="option.iconType" :type="option.iconType" />
-                      {{item.type === 'add' ? $t(option.name) : option.name}}
-                    </DropdownItem>
-                </DropdownMenu>
-                <DropdownMenu v-else>
-                    <DropdownItem>
-                      {{ $t('m_add_chart_library') }}
-                    </DropdownItem>
-                </DropdownMenu>
+              <DropdownMenu v-if="item.options.length>0">
+                <DropdownItem v-for="(option, key) in item.options"
+                  :name="JSON.stringify(option)" 
+                  :key="key"
+                  :disabled="option.disabled">
+                  <Icon v-if="option.iconType" :type="option.iconType" />
+                  {{item.type === 'add' ? $t(option.name) : option.name}}
+                </DropdownItem>
+              </DropdownMenu>
+              <DropdownMenu v-else>
+                <DropdownItem>
+                  {{ $t('m_add_chart_library') }}
+                </DropdownItem>
+              </DropdownMenu>
             </template>
           </Dropdown>
         </div>
@@ -147,7 +148,7 @@
                   <div class="header-grid header-grid-name">
                     <span v-if="editChartId !== item.id">{{item.i}}</span>
                     <span  v-else @click.stop="">
-                      <Input v-model.trim="item.i" class="editChartId" autofocus :maxlength="30" show-word-limit style="width:200px" size="small" placeholder="" />             
+                      <Input v-model.trim="item.i" class="editChartId" autofocus :maxlength="30" @on-blur="onChartTitleChange(item)" show-word-limit style="width:200px" size="small" placeholder="" />             
                     </span>
                     <Tooltip :content="$t('placeholder.editTitle')" theme="light" transfer placement="top">
                       <i v-if="isEditStatus && editChartId !== item.id && !noAllowChartChange(item)" class="fa fa-pencil-square" style="font-size: 16px;" @click.stop="editChartId = item.id" aria-hidden="true"></i>
