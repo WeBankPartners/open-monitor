@@ -1,10 +1,10 @@
 <template>
   <div class="single-chart">
-    <div v-if="!noDataTip">
+    <div v-show="!noDataTip">
       <div :id="elId" class="echart" :style="chartInfo.style">
     </div>
     </div>
-    <div v-if="noDataTip" class="echart echart-no-data-tip">
+    <div v-show="noDataTip" class="echart echart-no-data-tip">
       <span>{{this.$t('m_nodata_tips')}}</span>
     </div>
   </div>
@@ -94,8 +94,9 @@ export default {
       }
     },
     getchartdata () {
-      this.noDataTip = true
+      this.noDataTip = false
       if (this.chartInfo.chartParams.data.length === 0) {
+        this.noDataTip = true
         return
       }
       const params = {
