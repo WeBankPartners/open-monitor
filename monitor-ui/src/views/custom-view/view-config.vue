@@ -154,11 +154,12 @@
                   <div class="header-grid header-grid-name">
                     <span v-if="editChartId !== item.id">{{item.i}}</span>
                     <span  v-else @click.stop="">
-                      <Input v-model.trim="item.i" class="editChartId" autofocus :maxlength="30" @on-blur="onChartTitleChange(item)" show-word-limit style="width:200px" size="small" placeholder="" />             
+                      <Input v-model.trim="item.i" class="editChartId" autofocus :maxlength="30" show-word-limit style="width:200px" size="small" placeholder="" />             
                     </span>
                     <Tooltip :content="$t('placeholder.editTitle')" theme="light" transfer placement="top">
-                      <i v-if="isEditStatus && editChartId !== item.id && !noAllowChartChange(item)" class="fa fa-pencil-square" style="font-size: 16px;" @click.stop="editChartId = item.id" aria-hidden="true"></i>
-                      <Icon v-if="editChartId === item.id" size="16" type="md-checkmark" @click.stop="onChartTitleChange(item)" />
+                      <i v-if="isEditStatus && editChartId !== item.id && !noAllowChartChange(item)" class="fa fa-pencil-square" style="font-size: 16px;" @click.stop="startEditTitle(item)" aria-hidden="true"></i>
+                      <Icon v-if="editChartId === item.id" size="20" type="md-checkmark" @click.stop="onChartTitleChange(item)" />
+                      <Icon v-if="editChartId === item.id" size="20" type="md-close" @click.stop="cancelEditTitle(item)" />
                     </Tooltip>
                   </div>
                   <div class="header-grid header-grid-tools">
@@ -394,7 +395,8 @@ export default {
       mgmtRolesOptions: [], 
       userRolesOptions: [],
       boardMgmtRoles: [],
-      boardUseRoles: []
+      boardUseRoles: [],
+      initTitle: ''
     }
   },
   computed: {
@@ -932,6 +934,16 @@ export default {
             resolve(res)
           })
       })
+    },
+    
+    startEditTitle(item) {
+      this.initTitle = item.i
+      this.editChartId = item.id
+    },
+
+    cancelEditTitle(item) {
+      item.i = this.initTitle
+      this.editChartId = null
     },
 
     async onChartTitleChange(item) {
