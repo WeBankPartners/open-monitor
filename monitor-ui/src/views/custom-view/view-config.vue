@@ -93,7 +93,7 @@
         </div>
 
         <!-- 图表新增 -->
-        <div class="chart-config-info" v-if="isEditStatus" @mouseover="debounceGetAllChartOptionList" @click="getAllChartOptionList">
+        <div class="chart-config-info" v-if="isEditStatus" @mousemove="debounceGetAllChartOptionList" @click="getAllChartOptionList">
           <span class="fs-20 mr-3 ml-3">{{$t('m_graph')}}:</span>
           <Dropdown 
             placement="bottom-start"
