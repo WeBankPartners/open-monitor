@@ -282,7 +282,7 @@ export default {
       pagination: {
         totalRows: 100,
         currentPage: 2,
-        pageSize: 16
+        pageSize: 18
       },
       mgmtRoles: [],
       userRoles: [],
@@ -295,7 +295,7 @@ export default {
   },
   mounted(){
     this.pathMap = this.$root.apiCenter.template;
-    this.pagination.pageSize = 16;
+    this.pagination.pageSize = 18;
     this.pagination.currentPage = 1;
     this.getViewList()
     this.getAllRoles()
@@ -555,9 +555,12 @@ li {
     &-name {
       font-size: 15px;
       flex: 1;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
       overflow: hidden;
       text-overflow: ellipsis;
-      -webkit-line-clamp: 2;
+      word-break: break-all;
       padding-right: 5px;
     }
     &-update {
