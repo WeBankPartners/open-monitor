@@ -93,6 +93,7 @@ type AlarmHandleObj struct {
 	MultipleConditionFlag bool   `json:"multiple_condition_flag"`
 	AlarmConditionCrcHash string `json:"alarm_condition_crc_hash"`
 	CurIndex              int    `json:"cur_index"`
+	AlarmDetail           string `json:"alarm_detail"`
 }
 
 type AlarmProblemQuery struct {
