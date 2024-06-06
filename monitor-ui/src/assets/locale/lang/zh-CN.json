@@ -486,5 +486,8 @@
   "m_calculation_period": "计算周期",
   "m_custom_dashboard": "自定义看板",
   "m_please_select": "请选择",
-  "m_dashboard_for_role": "该角色的看板"
+  "m_dashboard_for_role": "该角色的看板",
+  "m_layer_endpoint": "对象/层级对象",
+  "m_endpoint_type": "对象类型",
+  "m_add": "新增"
 }
