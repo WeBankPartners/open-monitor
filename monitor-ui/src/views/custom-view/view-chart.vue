@@ -11,7 +11,7 @@
           </div>
           <div class="search-zone">
             <span class="params-title">{{$t('placeholder.refresh')}}：</span>
-            <Select v-model="viewCondition.autoRefresh" :disabled="disableTime" style="width:100px" @on-change="initPanal" :placeholder="$t('placeholder.refresh')">
+            <Select v-model="viewCondition.autoRefresh" :disabled="disableTime" style="width:100px" @on-change="refreshInterval" :placeholder="$t('placeholder.refresh')">
               <Option v-for="item in autoRefreshConfig" :value="item.value" :key="item.value">{{ item.label }}</Option>
             </Select>
           </div>
@@ -116,6 +116,7 @@ export default {
   },
   methods: {
     initChart (params) {
+      this.params = params;
       if (!this.$root.$validate.isEmpty_reset(params.templateData.cfg)) {
         this.viewData = JSON.parse(params.templateData.cfg);
         this.viewData.forEach((itemx) => {
@@ -123,6 +124,9 @@ export default {
             this.panalData = itemx
             this.initPanal()
             if (this.viewCondition.autoRefresh > 0) {
+              if (this.interval) {
+                clearInterval(this.interval)
+              }
               this.interval = setInterval(()=>{
                 this.initPanal()
               },this.viewCondition.autoRefresh*1000)
@@ -131,6 +135,9 @@ export default {
           }
         });
       }
+    },
+    refreshInterval() {
+      this.initChart(this.params);
     },
     datePick (data) {
       this.viewCondition.dateRange = data
@@ -145,6 +152,9 @@ export default {
       }
       this.initPanal()
     },
+
+
+
     initPanal() {
       this.panalTitle = this.panalData.panalTitle;
       this.panalUnit = this.panalData.panalUnit;

@@ -13,9 +13,7 @@
           <div v-else>
             <div :id="elId" class="echart" />
           </div>
-          
         </div>
-        
         <div class="chart-config">
           <div class="use-underline-title ml-4 mb-2">
             {{this.$t('m_chart_configuration')}}
@@ -57,7 +55,7 @@
                     </Option>
                   </Select>
               </FormItem>
-              <FormItem :label="$t('m_type')" prop="lineType">
+              <FormItem :label="$t('m_graph_type')" prop="lineType">
                   <Select 
                     filterable
                     v-model="chartConfigForm.lineType"
@@ -86,7 +84,7 @@
                     </Option>
                   </Select>
               </FormItem>
-              <FormItem v-if="chartConfigForm.chartTemplate !== 'one'" :label="$t('m_calculation_period')" prop="aggStep">
+              <FormItem v-if="chartConfigForm.aggregate !== 'none'" :label="$t('m_calculation_period')" prop="aggStep">
                   <Select 
                     filterable
                     v-model="chartConfigForm.aggStep"
@@ -110,7 +108,7 @@
 
       <div class="data-config">
         <div class="use-underline-title mb-2">
-          {{this.$t('m_data_configuration')}}
+          {{this.$t('menu.metricConfiguration')}}
           <span class="underline"></span>
         </div>
 
@@ -182,7 +180,7 @@
           </div>
           <div v-else></div>
 
-          <Button :disabled="!endpointValue || !monitorType || !metricGuid" @click="addConfiguration" type="primary">{{$t('m_add_configuration')}}</Button>
+          <Button :disabled="!endpointValue || !monitorType || !metricGuid" @click="addConfiguration" type="success">{{$t('m_add_configuration')}}</Button>
         </div>
       </div>
     </div>
@@ -278,7 +276,7 @@ export default {
           }
         },
         {
-            title: this.$t('m_endpoint'),
+            title: this.$t('m_endpoint')+'/'+this.$t('field.resourceLevel'),
             minWidth: 220,
             render: (h, params) => {
               return params.row.endpointType.length ?  (
@@ -292,7 +290,7 @@ export default {
             }
         },
         {
-            title: this.$t('m_type'),
+            title: this.$t('tableKey.endpoint_type'),
             minWidth: 150,
             key: 'monitorType',
             render: (h, params) => {
@@ -681,6 +679,9 @@ export default {
         for(let key in this.chartConfigForm) {
           this.chartConfigForm[key] = res[key]
         }
+        if (!this.chartConfigForm.chartTemplate) {
+          this.chartConfigForm.chartTemplate = 'one';
+        }
         this.tableData = cloneDeep(res.chartSeries);
 
         if (res.chartType === "pie" && isEmpty(this.tableData)) {
@@ -949,7 +950,7 @@ export default {
           metricGuid: metricItem.guid,
           metricType: metricItem.metric_type,
           monitorType: this.monitorType,
-          colorGroup: "#2D8CF0",
+          colorGroup: this.getRandomColor(),
           pieDisplayTag: "",
           metric: metricItem.metric,
           tags: this.chartAddTags,
@@ -1146,7 +1147,11 @@ export default {
       const item = this.tableData[index];
       const basicParams = this.processBasicParams(item.metric, item.endpoint, item.serviceGroup, item.monitorType, item.tags, item.chartSeriesGuid);
       const series = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/series/config', basicParams);
-      this.tableData[index].series = series;
+      
+      this.tableData[index].series = series.map(item => {
+        item.color = this.getRandomColor();
+        return item
+      })
     }
   },
   components: {
