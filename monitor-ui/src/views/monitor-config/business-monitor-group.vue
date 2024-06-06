@@ -894,10 +894,13 @@ export default {
       this.ruleModelConfig.isShow = true
     },
     getExtendInfo(item){
-      item.metric_groups.forEach(xx => xx.pId = item.guid)
-      this.pageConfig.table.isExtend.detailConfig[0].data = item.metric_groups.map(group => {
-        group.log_type_display = this.typeToName[group.log_type]
-        return group
+      const path = `${this.$root.apiCenter.getLogMetricByPath}/${item.guid}`
+      this.$root.$httpRequestEntrance.httpRequestEntrance("GET", path, {}, (responseData) => {
+        this.pageConfig.table.isExtend.detailConfig[0].data = responseData.metric_groups.map(group => {
+          group.log_type_display = this.typeToName[group.log_type]
+          return group
+        })
+        this.pageConfig.table.isExtend.parentData = item
       })
       this.pageConfig.table.isExtend.parentData = item
     },
