@@ -11,7 +11,12 @@
           <p slot="title">
             {{dash.name}}
           </p>
-          <view-config v-if="dash.id" permissionType='view' :boardId="dash.id" />
+          <view-config 
+            v-if="dash.id" 
+            permissionType='view' 
+            :boardId="dash.id"
+            pageType="dashboard"
+           />
         </Card>
       </template>
     </section>
