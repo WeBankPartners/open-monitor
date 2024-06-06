@@ -127,7 +127,7 @@
             filterable
             clearable 
             class="mr-3"
-            style="width: 150px"
+            style="width: 260px"
             ref="select"
             :placeholder="$t('m_endpoint')"
             @on-query-change="(e) => {this.getEndpointSearch = e; this.debounceGetEndpointList()}"
@@ -156,7 +156,7 @@
             v-model="metricGuid"
             class="metric-guid-select"
             filterable
-            style="width: 250px"
+            style="width: 300px"
             clearable 
             :placeholder="$t('m_metric')"
             @on-change="searchTagOptions"
@@ -279,7 +279,7 @@ export default {
       lineChartConfigurationColumns: [
         {
             title: this.$t('m_endpoint'),
-            width: 280,
+            width: 300,
             render: (h, params) => {
               return params.row.endpointType.length ?  (
                 <div class="table-config-endpoint">
@@ -304,7 +304,7 @@ export default {
         {
           title: this.$t('m_indicator_color_system'),
           key: 'metric',
-          width: 380,
+          width: 400,
           render: (h, params) => {
             return (
               <div class="indicator_color_system">
@@ -1210,7 +1210,7 @@ export default {
   }
   .metric-text {
     // width: 40px;
-    max-width: 200px;
+    max-width: 220px;
   }
 }
 
@@ -1361,7 +1361,7 @@ export default {
     height: 50px;
     margin-top: 30px;
     bottom: 0px;
-    width: 90%;
+    width: 100%;
     background-color: #fff;
     opacity: 1;
     z-index: 100000;
