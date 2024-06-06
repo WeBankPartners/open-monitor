@@ -124,12 +124,12 @@ export default {
             this.panalData = itemx
             this.initPanal()
             if (this.viewCondition.autoRefresh > 0) {
-              if (this.interval) {
-                clearInterval(this.interval)
-              }
+              clearInterval(this.interval)
               this.interval = setInterval(()=>{
                 this.initPanal()
               },this.viewCondition.autoRefresh*1000)
+            } else {
+              clearInterval(this.interval)
             }
             return;
           }
