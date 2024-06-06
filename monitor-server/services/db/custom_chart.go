@@ -489,7 +489,7 @@ func getNewChartName(name string) string {
 func UpdateCustomChartName(chartId, name, user string, sourceDashboard int) (err error) {
 	var actions []*Action
 	now := time.Now().Format(models.DatetimeFormat)
-	actions = append(actions, &Action{Sql: "update custom_chart set name = ?,update_user = ? where guid = ?", Param: []interface{}{name, user, chartId}})
+	actions = append(actions, &Action{Sql: "update custom_chart set name = ?,update_user = ?,update_time=? where guid = ?", Param: []interface{}{name, user, now, chartId}})
 	// 更新源看板
 	if sourceDashboard != 0 {
 		actions = append(actions, &Action{Sql: "update custom_dashboard set update_user =?,update_at=? where id = ?", Param: []interface{}{user, now, sourceDashboard}})
