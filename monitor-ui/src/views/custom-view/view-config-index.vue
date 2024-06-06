@@ -551,14 +551,14 @@ li {
     flex-direction: row;
     justify-content: space-between;
     color: @blue-2;
-    height: 32px;
+    height: 30px;
     &-name {
       font-size: 15px;
       flex: 1;
       overflow: hidden;
       text-overflow: ellipsis;
-      display: -webkit-box;
       -webkit-line-clamp: 2;
+      padding-right: 5px;
     }
     &-update {
       display: flex;
