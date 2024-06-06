@@ -1083,13 +1083,23 @@ func notifyMailAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleOb
 	if err != nil {
 		return err
 	}
+	alarmDetailList := []*models.AlarmDetailData{}
+	if strings.HasPrefix(alarmObj.EndpointTags, "ac_") {
+		alarmDetailList, err = GetAlarmDetailList(strings.Split(alarmObj.EndpointTags, ","))
+		if err != nil {
+			return err
+		}
+	} else {
+		alarmDetailList = append(alarmDetailList, &models.AlarmDetailData{Metric: alarmObj.SMetric, Cond: alarmObj.SCond, Last: alarmObj.SLast, Start: alarmObj.Start, StartValue: alarmObj.StartValue, End: alarmObj.End, EndValue: alarmObj.EndValue, Tags: alarmObj.Tags})
+	}
+	alarmObj.AlarmDetail = buildAlarmDetailData(alarmDetailList, "\r\n")
 	subject, content := getNotifyMessage(alarmObj)
 	return mailSender.Send(subject, content, toAddress)
 }
 
 func getNotifyMessage(alarmObj *models.AlarmHandleObj) (subject, content string) {
 	subject = fmt.Sprintf("[%s][%s] Endpoint:%s Metric:%s", alarmObj.Status, alarmObj.SPriority, alarmObj.Endpoint, alarmObj.SMetric)
-	content = fmt.Sprintf("Endpoint:%s \r\nStatus:%s\r\nMetric:%s\r\nEvent:%.3f%s\r\nLast:%s\r\nPriority:%s\r\nNote:%s\r\nTime:%s", alarmObj.Endpoint, alarmObj.Status, alarmObj.SMetric, alarmObj.StartValue, alarmObj.SCond, alarmObj.SLast, alarmObj.SPriority, alarmObj.Content, time.Now().Format(models.DatetimeFormat))
+	content = fmt.Sprintf("Endpoint:%s \r\nStatus:%s\r\nMetric:%s\r\nEvent:%.3f%s\r\nLast:%s\r\nPriority:%s\r\nNote:%s\r\nTime:%s\r\nDetail:%s", alarmObj.Endpoint, alarmObj.Status, alarmObj.SMetric, alarmObj.StartValue, alarmObj.SCond, alarmObj.SLast, alarmObj.SPriority, alarmObj.Content, time.Now().Format(models.DatetimeFormat), alarmObj.AlarmDetail)
 	return
 }
 
@@ -1135,7 +1145,7 @@ func getRoleMail(roleList []string) (mailList []string) {
 	return
 }
 
-func ImportAlarmStrategy(queryType, inputGuid string, param []*models.EndpointStrategyObj, operator string) (err error, metricNotFound []string) {
+func ImportAlarmStrategy(queryType, inputGuid string, param []*models.EndpointStrategyObj, operator string) (err error, metricNotFound, nameDuplicate []string) {
 	if len(param) == 0 {
 		err = fmt.Errorf("import content empty ")
 		return
@@ -1152,6 +1162,7 @@ func ImportAlarmStrategy(queryType, inputGuid string, param []*models.EndpointSt
 	for _, v := range metricTable {
 		metricMap[v.Metric] = v
 	}
+	log.Logger.Info("ImportAlarmStrategy", log.String("inputGuid", inputGuid), log.JsonObj("metricMap", metricMap))
 	nowTime := time.Now().Format(models.DatetimeFormat)
 	if queryType == "group" {
 		var endpointGroupTable []*models.EndpointGroupTable
@@ -1165,9 +1176,10 @@ func ImportAlarmStrategy(queryType, inputGuid string, param []*models.EndpointSt
 			return
 		}
 		endpointGroupList = append(endpointGroupList, inputGuid)
-		tmpActions, tmpErr, tmpMetricNotFound := getAlarmStrategyImportActions(inputGuid, "", endpointGroupTable[0].MonitorType, nowTime, operator, param[0], metricMap)
+		tmpActions, tmpErr, tmpMetricNotFound, tmpNameDuplicate := getAlarmStrategyImportActions(inputGuid, "", endpointGroupTable[0].MonitorType, nowTime, operator, param[0], metricMap)
 		if tmpErr != nil {
 			metricNotFound = tmpMetricNotFound
+			nameDuplicate = tmpNameDuplicate
 			err = tmpErr
 			return
 		}
@@ -1180,22 +1192,22 @@ func ImportAlarmStrategy(queryType, inputGuid string, param []*models.EndpointSt
 			return
 		}
 		for _, v := range param {
-			tmpEndpointGroupExistFlag := false
-			tmpMonitorType := ""
+			tmpMatchEndpointGroup := ""
 			for _, vv := range endpointGroupTable {
-				if v.EndpointGroup == vv.Guid {
-					tmpEndpointGroupExistFlag = true
-					tmpMonitorType = vv.MonitorType
+				if vv.MonitorType == v.MonitorType {
+					tmpMatchEndpointGroup = vv.Guid
 					break
 				}
 			}
-			if !tmpEndpointGroupExistFlag {
-				continue
+			if tmpMatchEndpointGroup == "" {
+				err = fmt.Errorf("ServiceGroup:%s can not find monitorType:%s ", inputGuid, v.MonitorType)
+				return
 			}
-			endpointGroupList = append(endpointGroupList, v.EndpointGroup)
-			tmpActions, tmpErr, tmpMetricNotFound := getAlarmStrategyImportActions(v.EndpointGroup, inputGuid, tmpMonitorType, nowTime, operator, v, metricMap)
+			endpointGroupList = append(endpointGroupList, tmpMatchEndpointGroup)
+			tmpActions, tmpErr, tmpMetricNotFound, tmpNameDuplicate := getAlarmStrategyImportActions(tmpMatchEndpointGroup, inputGuid, v.MonitorType, nowTime, operator, v, metricMap)
 			if tmpErr != nil {
 				metricNotFound = tmpMetricNotFound
+				nameDuplicate = tmpNameDuplicate
 				err = fmt.Errorf("handle endpointGroup:%s fail,%s ", v.EndpointGroup, tmpErr.Error())
 				break
 			}
@@ -1221,38 +1233,61 @@ func ImportAlarmStrategy(queryType, inputGuid string, param []*models.EndpointSt
 	return
 }
 
-func getAlarmStrategyImportActions(endpointGroup, serviceGroup, monitorType, nowTime, operator string, param *models.EndpointStrategyObj, metricMap map[string]*models.MetricTable) (actions []*Action, err error, metricNotFound []string) {
+func getAlarmStrategyImportActions(endpointGroup, serviceGroup, monitorType, nowTime, operator string, param *models.EndpointStrategyObj, metricMap map[string]*models.MetricTable) (actions []*Action, err error, metricNotFound, nameDuplicate []string) {
 	var existStrategyTable []*models.AlarmStrategyTable
-	err = x.SQL("select guid,metric from alarm_strategy where endpoint_group=?", endpointGroup).Find(&existStrategyTable)
+	err = x.SQL("select guid,name,metric from alarm_strategy where endpoint_group=?", endpointGroup).Find(&existStrategyTable)
 	if err != nil {
 		err = fmt.Errorf("query alarm strategy table fail,%s ", err.Error())
 		return
 	}
-	//existStrategyMap := make(map[string]int)
+	existNameMap := make(map[string]string)
 	for _, v := range existStrategyTable {
-		actions = append(actions, getNotifyListDeleteAction(v.Guid, "", "")...)
-		actions = append(actions, getStrategyConditionDeleteAction(v.Guid)...)
-		actions = append(actions, &Action{Sql: "delete from alarm_strategy where guid=?", Param: []interface{}{v.Guid}})
-		//existStrategyMap[v.Guid] = 1
+		existNameMap[v.Name] = v.Guid
 	}
+	//for _, v := range existStrategyTable {
+	//	actions = append(actions, getNotifyListDeleteAction(v.Guid, "", "")...)
+	//	actions = append(actions, getStrategyConditionDeleteAction(v.Guid)...)
+	//	actions = append(actions, &Action{Sql: "delete from alarm_strategy where guid=?", Param: []interface{}{v.Guid}})
+	//}
 	for _, strategy := range param.Strategy {
+		strategy.EndpointGroup = endpointGroup
+		if _, ok := existNameMap[strategy.Name]; ok {
+			strategy.Name = strategy.Name + "_1"
+			if _, doubleCheck := existNameMap[strategy.Name]; doubleCheck {
+				err = fmt.Errorf("name: %s duplicate", strategy.Name)
+				nameDuplicate = append(nameDuplicate, strategy.Name)
+				return
+			}
+		}
 		// 检测策略上的指标在不在
 		if len(strategy.Conditions) > 0 {
 			for _, v := range strategy.Conditions {
-				if fMetric, b := metricMap[v.MetricName]; b {
+				tmpMetricName := v.MetricName
+				if tmpMetricName == "" {
+					if metricSplitIndex := strings.LastIndex(v.Metric, "__"); metricSplitIndex > 0 {
+						tmpMetricName = v.Metric[:metricSplitIndex]
+					}
+				}
+				if fMetric, b := metricMap[tmpMetricName]; b {
 					v.Metric = fMetric.Guid
 				} else {
-					metricNotFound = append(metricNotFound, v.MetricName)
-					err = fmt.Errorf("Metric:%s not found ", v.MetricName)
+					metricNotFound = append(metricNotFound, tmpMetricName)
+					err = fmt.Errorf("Metric:%s not found ", tmpMetricName)
 					break
 				}
 			}
 		} else {
-			if fMetric, b := metricMap[strategy.MetricName]; b {
+			tmpMetricName := strategy.MetricName
+			if tmpMetricName == "" {
+				if metricSplitIndex := strings.LastIndex(strategy.Metric, "__"); metricSplitIndex > 0 {
+					tmpMetricName = strategy.Metric[:metricSplitIndex]
+				}
+			}
+			if fMetric, b := metricMap[tmpMetricName]; b {
 				strategy.Metric = fMetric.Guid
 			} else {
-				metricNotFound = append(metricNotFound, strategy.MetricName)
-				err = fmt.Errorf("Metric:%s not found ", strategy.MetricName)
+				metricNotFound = append(metricNotFound, tmpMetricName)
+				err = fmt.Errorf("Metric:%s not found ", tmpMetricName)
 			}
 		}
 		if err != nil {
