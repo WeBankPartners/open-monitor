@@ -92,7 +92,7 @@
         </div>
 
         <!-- 图表新增 -->
-        <div class="chart-config-info" v-if="isEditStatus">
+        <div class="chart-config-info" v-if="isEditStatus" @click="getAllChartOptionList">
           <span class="fs-20 mr-3 ml-3">{{$t('m_graph')}}:</span>
           <Dropdown 
             v-for="(item, index) in allAddChartOptions"
@@ -151,7 +151,7 @@
                   <div class="header-grid header-grid-name">
                     <span v-if="editChartId !== item.id">{{item.i}}</span>
                     <span  v-else @click.stop="">
-                      <Input v-model="item.i" class="editChartId" autofocus :maxlength="12" show-word-limit style="width:200px" size="small" placeholder="" />
+                      <Input v-model.trim="item.i" class="editChartId" autofocus :maxlength="30" show-word-limit style="width:200px" size="small" placeholder="" />             
                     </span>
                     <Tooltip :content="$t('placeholder.editTitle')" theme="light" transfer placement="top">
                       <i v-if="isEditStatus && editChartId !== item.id && !noAllowChartChange(item)" class="fa fa-pencil-square" style="font-size: 16px;" @click.stop="editChartId = item.id" aria-hidden="true"></i>
@@ -835,9 +835,20 @@ export default {
           i: `${name}`,
           id: `${this.setChartConfigId}`
         }
+
+        if (this.layoutData.length) {
+          let lastItem = this.layoutData[this.layoutData.length - 1];
+          if (lastItem.x <= 6 && lastItem.w <= 6) {
+            let popItem = this.layoutData.pop();
+            popItem.x = 6;
+            this.layoutData.push(popItem)
+          } 
+          this.layoutData.push(item);
+        }
+
+
         this.layoutData.push(item);
         
-
         setTimeout(() => {
           this.request('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams(), res => {
             this.getPannelList();

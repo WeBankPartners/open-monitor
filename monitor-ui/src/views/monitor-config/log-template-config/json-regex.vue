@@ -317,7 +317,8 @@ export default {
               display_name: this.$t('m_success_volume'),
               agg_type: 'count',
               tag_config: [
-                'code'
+                'code',
+                'retcode'
               ]
             },
             {
@@ -326,7 +327,8 @@ export default {
               display_name: this.$t('m_success_rate'),
               agg_type: '100*{req_suc_count}/{req_count}',
               tag_config: [
-                'code'
+                'code',
+                'retcode'
               ]
             },
             {

@@ -366,12 +366,13 @@ export const drawChart = function(that,config,userConfig, elId) {
     }
   }
   // 绘制图表
+  myChart.clear();
   myChart.setOption(option)
   // 清空所有事件重新绑定
   myChart.off();
   setTimeout(() => {
     myChart.resize()
-  }, 100)
+  }, 200)
   
   if (finalConfig.zoomCallback) {
     myChart.on('datazoom', function (params) {
