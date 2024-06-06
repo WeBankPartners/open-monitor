@@ -165,7 +165,13 @@ func DeleteCustomDashboardById(dashboard int) (err error) {
 	actions = append(actions, &Action{Sql: "delete from custom_dashboard_role_rel where custom_dashboard_id = ?", Param: []interface{}{dashboard}})
 	actions = append(actions, &Action{Sql: "delete from custom_dashboard_chart_rel where custom_dashboard = ?", Param: []interface{}{dashboard}})
 	// 删除以该看板为源看板,并且还没有公开的图表
+	actions = append(actions, &Action{Sql: "delete from custom_chart_series_config  where dashboard_chart_config  in(select guid from custom_chart_series  where dashboard_chart  in(select guid from custom_chart where source_dashboard =? and public = 0))", Param: []interface{}{dashboard}})
+	actions = append(actions, &Action{Sql: "delete from custom_chart_series_tagvalue where dashboard_chart_tag in (select guid from custom_chart_series_tag  where dashboard_chart_config  in(select guid from custom_chart_series  where dashboard_chart  in(select guid from custom_chart where source_dashboard =? and public = 0)))", Param: []interface{}{dashboard}})
+	actions = append(actions, &Action{Sql: "delete from custom_chart_series_tag  where dashboard_chart_config  in(select guid from custom_chart_series  where dashboard_chart  in(select guid from custom_chart where source_dashboard =? and public = 0))", Param: []interface{}{dashboard}})
+	actions = append(actions, &Action{Sql: "delete from custom_chart_series  where dashboard_chart  in(select guid from custom_chart where source_dashboard =? and public = 0)", Param: []interface{}{dashboard}})
 	actions = append(actions, &Action{Sql: "delete from custom_chart where source_dashboard = ? and public = 0", Param: []interface{}{dashboard}})
+	actions = append(actions, &Action{Sql: "delete from custom_chart_permission where dashboard_chart = in(select guid from custom_chart where source_dashboard =? and public = 0)", Param: []interface{}{dashboard}})
+
 	actions = append(actions, &Action{Sql: "delete from custom_dashboard WHERE id=?", Param: []interface{}{dashboard}})
 	return Transaction(actions)
 }
