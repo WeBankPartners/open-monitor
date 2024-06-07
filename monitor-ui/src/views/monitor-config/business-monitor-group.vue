@@ -705,7 +705,6 @@ export default {
       })
     },
     editDbItem (rowData) {
-      console.log(rowData)
       this.getEndpoint(rowData.monitor_type, 'mysql')
       this.dbModelConfig.addRow = JSON.parse(JSON.stringify(rowData))
       this.dbModelConfig.isAdd = false
