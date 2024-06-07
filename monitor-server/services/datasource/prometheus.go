@@ -155,10 +155,11 @@ func CheckPrometheusQL(promQl string) error {
 
 func buildPieData(query *m.QueryMonitorData, dataList []m.PrometheusResult) {
 	pieData := m.EChartPie{}
-	aggByValue := false
-	if query.PieAggType == "new" || query.PieAggType == "value" {
-		aggByValue = true
+	useNewValue := true
+	if query.PieAggType != "new" {
+		useNewValue = false
 	}
+	//log.Logger.Debug("buildPieData", log.String("pieAggType", query.PieAggType), log.JsonObj("dataList", dataList))
 	for _, otr := range dataList {
 		var tmpNameList []string
 		for k, v := range otr.Metric {
@@ -194,11 +195,12 @@ func buildPieData(query *m.QueryMonitorData, dataList []m.PrometheusResult) {
 		pieObj := m.EChartPieObj{}
 		pieObj.Name = strings.Join(tmpNameList, ",")
 		pieObj.NameList = tmpNameList
+		log.Logger.Debug("pieData", log.String("pieName", pieObj.Name), log.StringList("tmpNameList", tmpNameList))
 		if pieObj.Name == "" {
 			pieObj.Name = query.Endpoint[0] + "__" + query.Metric[0]
 		}
 		if len(otr.Values) > 0 {
-			if aggByValue {
+			if useNewValue {
 				// 取最新值
 				pieObj.Value, _ = strconv.ParseFloat(otr.Values[len(otr.Values)-1][1].(string), 64)
 				pieObj.Value, _ = strconv.ParseFloat(fmt.Sprintf("%.3f", pieObj.Value), 64)
@@ -224,31 +226,30 @@ func buildPieData(query *m.QueryMonitorData, dataList []m.PrometheusResult) {
 		pieData.Legend = append(pieData.Legend, pieObj.Name)
 		pieData.Data = append(pieData.Data, &pieObj)
 	}
-	if !aggByValue {
-		if query.PieDisplayTag != "" {
-			displayPieData := m.EChartPie{}
-			dataValueMap := make(map[string]float64)
-			for _, dataObj := range pieData.Data {
-				matchTagKey := ""
-				for _, v := range dataObj.NameList {
-					if strings.HasPrefix(v, query.PieDisplayTag+"=") {
-						matchTagKey = v
-						break
-					}
-				}
-				if existValue, ok := dataValueMap[matchTagKey]; ok {
-					dataValueMap[matchTagKey] = existValue + dataObj.Value
-				} else {
-					displayPieData.Legend = append(displayPieData.Legend, matchTagKey)
-					dataValueMap[matchTagKey] = dataObj.Value
+	if query.PieDisplayTag != "" {
+		log.Logger.Debug("start build pie display tag value", log.String("PieDisplayTag", query.PieDisplayTag))
+		displayPieData := m.EChartPie{Title: pieData.Title}
+		dataValueMap := make(map[string]float64)
+		for _, dataObj := range pieData.Data {
+			matchTagKey := ""
+			for _, v := range dataObj.NameList {
+				if strings.HasPrefix(v, query.PieDisplayTag+"=") {
+					matchTagKey = v
+					break
 				}
 			}
-			for _, legend := range displayPieData.Legend {
-				tmpPieObj := m.EChartPieObj{Name: legend, Value: dataValueMap[legend]}
-				displayPieData.Data = append(displayPieData.Data, &tmpPieObj)
+			if existValue, ok := dataValueMap[matchTagKey]; ok {
+				dataValueMap[matchTagKey] = existValue + dataObj.Value
+			} else {
+				displayPieData.Legend = append(displayPieData.Legend, matchTagKey)
+				dataValueMap[matchTagKey] = dataObj.Value
 			}
-			pieData = displayPieData
 		}
+		for _, legend := range displayPieData.Legend {
+			tmpPieObj := m.EChartPieObj{Name: legend, Value: dataValueMap[legend]}
+			displayPieData.Data = append(displayPieData.Data, &tmpPieObj)
+		}
+		pieData = displayPieData
 	}
 	query.PieData = pieData
 }
