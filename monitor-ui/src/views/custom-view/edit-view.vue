@@ -129,7 +129,7 @@
             class="mr-3"
             style="width: 260px"
             ref="select"
-            :placeholder="$t('m_endpoint')"
+            :placeholder="$t('m_layer_endpoint')"
             @on-query-change="(e) => {this.getEndpointSearch = e; this.debounceGetEndpointList()}"
             @on-change="searchTypeByEndpoint"
             >
@@ -144,7 +144,7 @@
             filterable
             class="mr-3"
             style="width: 150px"
-            :placeholder="$t('m_type')"
+            :placeholder="$t('m_endpoint_type')"
             @on-change="searchMetricByType"
             >
             <Option v-for="item in monitorTypeOptions" :value="item" :label="item" :key="item">
@@ -190,7 +190,7 @@
             :disabled="!endpointValue || !monitorType || !metricGuid"
             @click="addConfiguration"
             type="success"
-          >{{$t('m_add_configuration')}}</Button>
+          >{{$t('button.add')}}</Button>
         </div>
       </div>
     </div>
@@ -278,7 +278,7 @@ export default {
       tableData: [],
       lineChartConfigurationColumns: [
         {
-            title: this.$t('m_endpoint'),
+            title: this.$t('m_layer_endpoint'),
             width: 300,
             render: (h, params) => {
               return params.row.endpointType.length ?  (
