@@ -383,7 +383,7 @@ export default {
           fixed: 'right',
           render: (h, params) => {
             return (
-                <Button class="ml-3" size="small" icon="md-trash" type="error" on-click={() => this.removeTableItem(params.index)} />
+                <Button disabled={this.operator === 'view'} class="ml-3" size="small" icon="md-trash" type="error" on-click={() => this.removeTableItem(params.index)} />
             )
           }
         }
@@ -1114,6 +1114,7 @@ export default {
     drawChartContent() {
       if (this.isPieChart) {
         const params = this.generateLineParamsData();
+        params[0].pieType = this.chartConfigForm.pieType;
         if (!params[0].metric) return;
         this.request('POST', '/monitor/api/v1/dashboard/pie/chart', params,
           res => {
