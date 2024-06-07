@@ -291,7 +291,7 @@ func GetPieChart(c *gin.Context) {
 		return
 	}
 	var queryResultList []*m.QueryMonitorData
-	var resultPieData m.EChartPie
+	resultPieData := m.EChartPie{}
 	for _, paramObj := range paramConfig {
 		tmpQueryResult, tmpErr := getPieData(paramObj)
 		if tmpErr != nil {
@@ -304,38 +304,35 @@ func GetPieChart(c *gin.Context) {
 		mid.ReturnHandleError(c, err.Error(), err)
 		return
 	}
-	pieMap := make(map[string]*m.EChartPieObj)
-	var legendList, newLegendList []string
+	//pieMap := make(map[string]*m.EChartPieObj)
+	//var legendList, newLegendList []string
 	for _, v := range queryResultList {
-		for i, tmpLegend := range v.PieData.Legend {
-			if existData, ok := pieMap[tmpLegend]; ok {
-				if v.PieAggType == "new" {
-					v.PieAggType = "avg"
-				}
-				existData.SourceValue = append(existData.SourceValue, v.PieData.Data[i].SourceValue...)
-				existData.Value = m.CalcData(existData.SourceValue, v.PieAggType)
-			} else {
-				pieMap[tmpLegend] = v.PieData.Data[i]
-				legendList = append(legendList, tmpLegend)
-			}
-		}
-		//resultPieData.Legend = append(resultPieData.Legend, v.PieData.Legend...)
-		//resultPieData.Data = append(resultPieData.Data, v.PieData.Data...)
-	}
-	for _, legend := range legendList {
-		if v, b := pieMap[legend]; b {
-			if v.Value <= 0 {
-				continue
-			}
-			newLegendList = append(newLegendList, legend)
-			v.SourceValue = []float64{}
-			resultPieData.Data = append(resultPieData.Data, v)
-		}
-		//} else {
-		//	resultPieData.Data = append(resultPieData.Data, &m.EChartPieObj{Name: legend, Value: 0})
+		//for i, tmpLegend := range v.PieData.Legend {
+		//	if existData, ok := pieMap[tmpLegend]; ok {
+		//		if v.PieAggType == "new" {
+		//			v.PieAggType = "avg"
+		//		}
+		//		existData.SourceValue = append(existData.SourceValue, v.PieData.Data[i].SourceValue...)
+		//		existData.Value = m.CalcData(existData.SourceValue, v.PieAggType)
+		//	} else {
+		//		pieMap[tmpLegend] = v.PieData.Data[i]
+		//		legendList = append(legendList, tmpLegend)
+		//	}
 		//}
+		resultPieData.Legend = append(resultPieData.Legend, v.PieData.Legend...)
+		resultPieData.Data = append(resultPieData.Data, v.PieData.Data...)
 	}
-	resultPieData.Legend = newLegendList
+	//for _, legend := range legendList {
+	//	if v, b := pieMap[legend]; b {
+	//		if v.Value <= 0 {
+	//			continue
+	//		}
+	//		newLegendList = append(newLegendList, legend)
+	//		v.SourceValue = []float64{}
+	//		resultPieData.Data = append(resultPieData.Data, v)
+	//	}
+	//}
+	//resultPieData.Legend = newLegendList
 	mid.ReturnSuccessData(c, resultPieData)
 }
 
@@ -344,8 +341,9 @@ func getPieData(paramConfig *m.PieChartConfigObj) (result []*m.QueryMonitorData,
 		paramConfig.AppObjectEndpointType = paramConfig.MonitorType
 	}
 	if paramConfig.PieType != "" {
-		paramConfig.PieAggType = paramConfig.PieType
+		paramConfig.PieMetricType = paramConfig.PieType
 	}
+	//paramConfig.PieAggType = "new"
 	result = []*m.QueryMonitorData{}
 	var tagNameList []string
 	if paramConfig.CustomChartGuid != "" {
@@ -360,7 +358,7 @@ func getPieData(paramConfig *m.PieChartConfigObj) (result []*m.QueryMonitorData,
 			return
 		}
 		if customChartObj != nil {
-			paramConfig.PieAggType = customChartObj.PieType
+			paramConfig.PieMetricType = customChartObj.PieType
 		}
 		chartSeries, getSeriesErr := db.GetCustomChartSeries(paramConfig.CustomChartGuid)
 		if getSeriesErr != nil {
@@ -379,6 +377,7 @@ func getPieData(paramConfig *m.PieChartConfigObj) (result []*m.QueryMonitorData,
 		paramConfig.Tags = seriesObj.Tags
 		paramConfig.PieDisplayTag = seriesObj.PieDisplayTag
 	}
+	log.Logger.Debug("pie paramConfig", log.JsonObj("paramConfig", paramConfig))
 	for _, v := range paramConfig.Tags {
 		tagNameList = append(tagNameList, v.TagName)
 	}
@@ -449,6 +448,7 @@ func getPieData(paramConfig *m.PieChartConfigObj) (result []*m.QueryMonitorData,
 		if len(result) == 0 {
 			return
 		}
+		result[0].ChartType = "line"
 		serialList := ds.PrometheusData(result[0])
 		if len(serialList) > 0 {
 			valueMap := make(map[float64]int)
