@@ -363,6 +363,7 @@
   "m_request_volume": "Request Volume",
   "m_success_rate": "Success Rate",
   "m_failure_rate": "Failure Rate",
+  "m_failure_volume": "Failure Volume",
   "m_average_time": "Average Time",
   "m_max_costtime": "Maximum Time",
   "m_is_start_match": "Start Matching",
