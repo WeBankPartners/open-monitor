@@ -61,7 +61,9 @@ func GetDbMetric(dbMetricGuid string) (result models.DbMetricMonitorObj, err err
 }
 
 func CreateDbMetric(param *models.DbMetricMonitorObj, operator string) error {
-	param.Step = 10
+	if param.Step < 10 || param.Step > 600 {
+		param.Step = 10
+	}
 	nowTime := time.Now().Format(models.DatetimeFormat)
 	param.Guid = guid.CreateGuid()
 	var actions []*Action
@@ -87,7 +89,9 @@ func getDbMetricExpr(metric, serviceGroup string) (result string) {
 }
 
 func UpdateDbMetric(param *models.DbMetricMonitorObj, operator string) error {
-	param.Step = 10
+	if param.Step < 10 || param.Step > 600 {
+		param.Step = 10
+	}
 	var dbMetricTable []*models.DbMetricMonitorTable
 	x.SQL("select * from db_metric_monitor where guid=?", param.Guid).Find(&dbMetricTable)
 	if len(dbMetricTable) == 0 {

@@ -631,7 +631,7 @@ func UpdateAlarms(alarms []*m.AlarmHandleObj) []*m.AlarmHandleObj {
 		if v.MultipleConditionFlag {
 			alarmObj, updateConditionAlarmErr := UpdateAlarmWithConditions(v)
 			if updateConditionAlarmErr != nil {
-				log.Logger.Error("Update alarm condition fail", log.JsonObj("alarm", v), log.Error(cErr))
+				log.Logger.Error("Update alarm condition fail", log.JsonObj("alarm", v), log.Error(updateConditionAlarmErr))
 			} else if alarmObj != nil {
 				successAlarms = append(successAlarms, alarmObj)
 			}
@@ -1681,13 +1681,13 @@ func UpdateAlarmWithConditions(alarmConditionObj *m.AlarmHandleObj) (alarmRow *m
 			session.Close()
 		}()
 		_, err = session.Exec("INSERT INTO alarm_condition(guid,alarm_strategy,endpoint,status,metric,expr,cond,`last`,priority,crc_hash,tags,start_value,`start`,unique_hash) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-			alarmConditionObj.AlarmConditionGuid, alarmConditionObj.AlarmStrategy, alarmConditionObj.Endpoint, alarmConditionObj.Status, alarmConditionObj.SMetric, alarmConditionObj.SExpr, alarmConditionObj.SCond, alarmConditionObj.SLast, alarmConditionObj.SPriority, alarmConditionObj.AlarmConditionCrcHash, alarmConditionObj.Tags, alarmConditionObj.StartValue, alarmConditionObj.Start.Format(m.DatetimeFormat), alarmConditionObj.EndpointTags)
+			alarmConditionObj.AlarmConditionGuid, alarmConditionObj.AlarmStrategy, alarmConditionObj.Endpoint, alarmConditionObj.Status, alarmConditionObj.SMetric, alarmConditionObj.SExpr, alarmConditionObj.SCond, alarmConditionObj.SLast, alarmConditionObj.SPriority, alarmConditionObj.AlarmConditionCrcHash, alarmConditionObj.Tags, alarmConditionObj.StartValue, time.Now().Format(m.DatetimeFormat), alarmConditionObj.EndpointTags)
 		if err != nil {
 			err = fmt.Errorf("insert alarm_condition fail,%s ", err.Error())
 			return
 		}
 		log.Logger.Debug("UpdateAlarmWithConditions", log.JsonObj("alarmCrcMap", alarmCrcMap), log.StringList("configCrcList", configCrcList))
-		if len(alarmCrcMap) == len(configCrcList) {
+		if len(alarmCrcMap) >= len(configCrcList) {
 			// 如果条件都满足
 			alarmStrategyObj, getStrategyErr := GetSimpleAlarmStrategy(alarmConditionObj.AlarmStrategy)
 			if getStrategyErr != nil {
