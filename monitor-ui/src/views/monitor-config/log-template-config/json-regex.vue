@@ -332,6 +332,16 @@ export default {
             },
             {
               log_param_name: 'code',
+              metric: 'req_fail_count',
+              display_name: this.$t('m_failure_volume'),
+              agg_type: 'count',
+              tag_config: [
+                'code',
+                'retcode'
+              ]
+            },
+            {
+              log_param_name: 'code',
               metric: 'req_fail_rate',
               display_name: this.$t('m_failure_rate'),
               agg_type: '100-100*{req_suc_count}/{req_count}',
