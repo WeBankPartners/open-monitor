@@ -155,6 +155,10 @@ func CheckPrometheusQL(promQl string) error {
 
 func buildPieData(query *m.QueryMonitorData, dataList []m.PrometheusResult) {
 	pieData := m.EChartPie{}
+	aggByValue := false
+	if query.PieAggType == "new" || query.PieAggType == "value" {
+		aggByValue = true
+	}
 	for _, otr := range dataList {
 		var tmpNameList []string
 		for k, v := range otr.Metric {
@@ -169,6 +173,18 @@ func buildPieData(query *m.QueryMonitorData, dataList []m.PrometheusResult) {
 			if ignoreFlag {
 				continue
 			}
+			if len(query.Tags) > 0 {
+				legalFlag := false
+				for _, legalTag := range query.Tags {
+					if legalTag == k {
+						legalFlag = true
+						break
+					}
+				}
+				if !legalFlag {
+					continue
+				}
+			}
 			tmpName := v
 			if k != "tags" {
 				tmpName = fmt.Sprintf("%s=%s", k, v)
@@ -177,11 +193,12 @@ func buildPieData(query *m.QueryMonitorData, dataList []m.PrometheusResult) {
 		}
 		pieObj := m.EChartPieObj{}
 		pieObj.Name = strings.Join(tmpNameList, ",")
+		pieObj.NameList = tmpNameList
 		if pieObj.Name == "" {
 			pieObj.Name = query.Endpoint[0] + "__" + query.Metric[0]
 		}
 		if len(otr.Values) > 0 {
-			if query.PieAggType == "new" {
+			if aggByValue {
 				// 取最新值
 				pieObj.Value, _ = strconv.ParseFloat(otr.Values[len(otr.Values)-1][1].(string), 64)
 				pieObj.Value, _ = strconv.ParseFloat(fmt.Sprintf("%.3f", pieObj.Value), 64)
@@ -206,6 +223,32 @@ func buildPieData(query *m.QueryMonitorData, dataList []m.PrometheusResult) {
 		//log.Logger.Info("buildPidData otr append", log.String("name", pieObj.Name))
 		pieData.Legend = append(pieData.Legend, pieObj.Name)
 		pieData.Data = append(pieData.Data, &pieObj)
+	}
+	if !aggByValue {
+		if query.PieDisplayTag != "" {
+			displayPieData := m.EChartPie{}
+			dataValueMap := make(map[string]float64)
+			for _, dataObj := range pieData.Data {
+				matchTagKey := ""
+				for _, v := range dataObj.NameList {
+					if strings.HasPrefix(v, query.PieDisplayTag+"=") {
+						matchTagKey = v
+						break
+					}
+				}
+				if existValue, ok := dataValueMap[matchTagKey]; ok {
+					dataValueMap[matchTagKey] = existValue + dataObj.Value
+				} else {
+					displayPieData.Legend = append(displayPieData.Legend, matchTagKey)
+					dataValueMap[matchTagKey] = dataObj.Value
+				}
+			}
+			for _, legend := range displayPieData.Legend {
+				tmpPieObj := m.EChartPieObj{Name: legend, Value: dataValueMap[legend]}
+				displayPieData.Data = append(displayPieData.Data, &tmpPieObj)
+			}
+			pieData = displayPieData
+		}
 	}
 	query.PieData = pieData
 }
