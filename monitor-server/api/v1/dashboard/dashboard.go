@@ -343,16 +343,28 @@ func getPieData(paramConfig *m.PieChartConfigObj) (result []*m.QueryMonitorData,
 	if paramConfig.MonitorType != "" {
 		paramConfig.AppObjectEndpointType = paramConfig.MonitorType
 	}
+	if paramConfig.PieType != "" {
+		paramConfig.PieAggType = paramConfig.PieType
+	}
 	result = []*m.QueryMonitorData{}
+	var tagNameList []string
 	if paramConfig.CustomChartGuid != "" {
 		//chartObj, getChartErr := db.GetCustomChartById(paramConfig.CustomChartGuid)
 		//if getChartErr != nil {
 		//	err = fmt.Errorf("get custom chart with guid:%s fail,%s ", paramConfig.CustomChartGuid, getChartErr.Error())
 		//	return
 		//}
-		chartSeries, getErr := db.GetCustomChartSeries(paramConfig.CustomChartGuid)
-		if getErr != nil {
-			err = getErr
+		customChartObj, getChartErr := db.GetCustomChartById(paramConfig.CustomChartGuid)
+		if getChartErr != nil {
+			err = getChartErr
+			return
+		}
+		if customChartObj != nil {
+			paramConfig.PieAggType = customChartObj.PieType
+		}
+		chartSeries, getSeriesErr := db.GetCustomChartSeries(paramConfig.CustomChartGuid)
+		if getSeriesErr != nil {
+			err = getSeriesErr
 			return
 		}
 		if len(chartSeries) == 0 {
@@ -365,6 +377,10 @@ func getPieData(paramConfig *m.PieChartConfigObj) (result []*m.QueryMonitorData,
 		paramConfig.Endpoint = seriesObj.Endpoint
 		paramConfig.AppObjectEndpointType = seriesObj.MonitorType
 		paramConfig.Tags = seriesObj.Tags
+		paramConfig.PieDisplayTag = seriesObj.PieDisplayTag
+	}
+	for _, v := range paramConfig.Tags {
+		tagNameList = append(tagNameList, v.TagName)
 	}
 	if paramConfig.Metric == "" {
 		err = fmt.Errorf("metric can not empty")
@@ -427,7 +443,7 @@ func getPieData(paramConfig *m.PieChartConfigObj) (result []*m.QueryMonitorData,
 			continue
 		}
 		promMap[tmpPromQL] = true
-		result = append(result, &m.QueryMonitorData{ChartType: "pie", Start: queryStart, End: queryEnd, PromQ: tmpPromQL, Legend: "", Metric: []string{paramConfig.Metric}, Endpoint: []string{endpoint.Guid}, Step: endpoint.Step, Cluster: endpoint.Cluster, PieMetricType: paramConfig.PieMetricType, PieAggType: paramConfig.PieAggType})
+		result = append(result, &m.QueryMonitorData{ChartType: "pie", Start: queryStart, End: queryEnd, PromQ: tmpPromQL, Legend: "", Metric: []string{paramConfig.Metric}, Endpoint: []string{endpoint.Guid}, Step: endpoint.Step, Cluster: endpoint.Cluster, PieMetricType: paramConfig.PieMetricType, PieAggType: paramConfig.PieAggType, Tags: tagNameList, PieDisplayTag: paramConfig.PieDisplayTag})
 	}
 	if paramConfig.PieMetricType == "value" {
 		if len(result) == 0 {
