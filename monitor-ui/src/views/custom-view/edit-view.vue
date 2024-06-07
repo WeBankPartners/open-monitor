@@ -429,6 +429,7 @@ export default {
                   value={params.row.monitorType}
                   on-on-change={v => {
                     Vue.set(this.tableData[params.index], 'monitorType', v);
+                    Vue.set(this.tableData[params.index], 'metricGuid', '');
                     this.monitorType = v;
                     this.searchMetricByType()
                   }}
@@ -678,15 +679,13 @@ export default {
     })
   },
   mounted() {
-    this.getEndpointList();
     this.getAllRolesOptions();
     this.getSingleChartAuth();
-    setTimeout(() => {
-      this.getTableData();
-    }, 100)
+    this.getTableData();
   },
   methods: {
-    getTableData() {
+    async getTableData() {
+      await this.getEndpointList();
       this.request('GET', '/monitor/api/v2/chart/custom', {
         chart_id: this.chartId
       }, res => {
@@ -803,24 +802,27 @@ export default {
       return tags
     },
 
-    debounceGetEndpointList: debounce(function() {
-      this.getEndpointList()
+    debounceGetEndpointList: debounce(async function() {
+      await this.getEndpointList();
     }, 300),
 
     getEndpointList() {
-      let search = '.'
-      if (this.getEndpointSearch) {
-        search = this.getEndpointSearch
-      }
-      let params = {
-        search,
-        page: 1,
-        size: 10000
-      }
-      this.request('GET', '/monitor/api/v1/dashboard/search', params, res => {
-          this.endpointOptions = res;
+      return new Promise(resolve => {
+        let search = '.'
+        if (this.getEndpointSearch) {
+          search = this.getEndpointSearch
         }
-      )
+        let params = {
+          search,
+          page: 1,
+          size: 10000
+        }
+        this.request('GET', '/monitor/api/v1/dashboard/search', params, res => {
+            this.endpointOptions = res;
+            resolve(res)
+          }
+        )
+      })
     },
     resetSearchItem(index) {
       this.monitorType = '';
@@ -836,6 +838,7 @@ export default {
       const selectedItem = find(cloneDeep(this.endpointOptions), {
         option_value: value
       })
+      if (!selectedItem) return
       this.serviceGroup = selectedItem.app_object;
       this.endpointName = selectedItem.option_text;
       this.endpointType = selectedItem.option_type_name;
@@ -935,6 +938,7 @@ export default {
         const metricItem = find(this.metricOptions, {
             guid: metricGuid
         })
+        if (!metricItem) return
         item.metricGuid = metricItem.guid;
         Vue.set(item, 'metric', metricItem.metric);
         item.metricType = metricItem.metric_type;
