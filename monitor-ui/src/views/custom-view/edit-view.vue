@@ -383,7 +383,7 @@ export default {
           fixed: 'right',
           render: (h, params) => {
             return (
-                <Button class="ml-3" size="small" icon="md-trash" type="error" on-click={() => this.removeTableItem(params.index)} />
+                <Button disabled={this.operator === 'view'} class="ml-3" size="small" icon="md-trash" type="error" on-click={() => this.removeTableItem(params.index)} />
             )
           }
         }
