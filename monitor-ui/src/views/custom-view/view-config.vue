@@ -658,7 +658,7 @@ export default {
       const templateData = {
         cfg: JSON.stringify(resViewData)
       }
-      this.$refs.viewChart.initChart({templateData, panal:item})
+      this.$refs.viewChart.initChart({templateData, panal:item, viewCondition: this.viewCondition})
     },
     async modifyLayoutData() {
       var resViewData = []
