@@ -524,6 +524,10 @@ func getLogMetricRatePromExpr(metric, metricPrefix, aggType, serviceGroup, sucRe
 		result = fmt.Sprintf("sum(%s{key=\"%sreq_suc_count\",agg=\"%s\",service_group=\"%s\",retcode=\"%s\",code=\"$t_code\"}) by (key,agg,service_group,code,retcode)", models.LogMetricName, metricPrefix, aggType, serviceGroup, sucRetCode)
 		return
 	}
+	if metric == "req_fail_count" {
+		result = fmt.Sprintf("sum(%s{key=\"%sreq_suc_count\",agg=\"%s\",service_group=\"%s\",retcode!=\"%s\",code=\"$t_code\"}) by (key,agg,service_group,code,retcode)", models.LogMetricName, metricPrefix, aggType, serviceGroup, sucRetCode)
+		return
+	}
 	if metric == "req_suc_rate" {
 		//result = fmt.Sprintf("100*((sum(%s{key=\"%sreq_suc_count\",agg=\"%s\",service_group=\"%s\",retcode=\"%s\",code=\"$t_code\"}) by (service_group,code))/(sum(%s{key=\"%sreq_count\",agg=\"%s\",service_group=\"%s\",code=\"$t_code\"}) by (service_group,code)) > 0 or vector(1))",
 		//	models.LogMetricName, metricPrefix, aggType, serviceGroup, sucRetCode, models.LogMetricName, metricPrefix, aggType, serviceGroup)
@@ -1156,7 +1160,7 @@ func getCreateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, op
 		if param.MetricPrefixCode != "" {
 			tmpMetricWithPrefix = param.MetricPrefixCode + "_" + v.Metric
 		}
-		if v.Metric == "req_suc_count" || v.Metric == "req_suc_rate" || v.Metric == "req_fail_rate" {
+		if v.Metric == "req_suc_count" || v.Metric == "req_fail_count" || v.Metric == "req_suc_rate" || v.Metric == "req_fail_rate" {
 			promExpr = getLogMetricRatePromExpr(v.Metric, param.MetricPrefixCode, v.AggType, serviceGroup, sucRetCode)
 		} else {
 			promExpr = getLogMetricExprByAggType(tmpMetricWithPrefix, v.AggType, serviceGroup, v.TagConfigList)
@@ -1235,7 +1239,7 @@ func getUpdateLogMetricGroupActions(param *models.LogMetricGroupWithTemplate, op
 				tmpMetricWithPrefix = logMetricGroupObj.MetricPrefixCode + "_" + v.Metric
 			}
 			promExpr := ""
-			if v.Metric == "req_suc_count" || v.Metric == "req_suc_rate" || v.Metric == "req_fail_rate" {
+			if v.Metric == "req_suc_count" || v.Metric == "req_fail_count" || v.Metric == "req_suc_rate" || v.Metric == "req_fail_rate" {
 				promExpr = getLogMetricRatePromExpr(v.Metric, logMetricGroupObj.MetricPrefixCode, v.AggType, serviceGroup, newSucRetCode)
 			} else {
 				promExpr = getLogMetricExprByAggType(tmpMetricWithPrefix, v.AggType, serviceGroup, v.TagConfigList)
@@ -1305,11 +1309,18 @@ func getDeleteLogMetricGroupActions(logMetricGroupGuid string) (actions []*Actio
 func getDeleteLogMetricActions(metric, serviceGroup string) (actions []*Action, affectEndpointGroup []string) {
 	alarmMetricGuid := fmt.Sprintf("%s__%s", metric, serviceGroup)
 	var alarmStrategyTable []*models.AlarmStrategyTable
-	x.SQL("select guid,endpoint_group from alarm_strategy where metric=?", alarmMetricGuid).Find(&alarmStrategyTable)
+	x.SQL("select t1.guid,t1.endpoint_group,t2.guid as `condition` from alarm_strategy t1 left join alarm_strategy_metric t2 on t1.guid=t2.alarm_strategy where (t1.metric=? or t2.metric=?)", alarmMetricGuid, alarmMetricGuid).Find(&alarmStrategyTable)
 	for _, v := range alarmStrategyTable {
 		affectEndpointGroup = append(affectEndpointGroup, v.EndpointGroup)
 	}
-	actions = append(actions, &Action{Sql: "delete from alarm_strategy where metric=?", Param: []interface{}{alarmMetricGuid}})
+	for _, row := range alarmStrategyTable {
+		if row.Condition == "" {
+			actions = append(actions, &Action{Sql: "delete from alarm_strategy where guid=?", Param: []interface{}{row.Guid}})
+		} else {
+			actions = append(actions, &Action{Sql: "delete from alarm_strategy_metric where guid=?", Param: []interface{}{row.Condition}})
+		}
+	}
+	actions = append(actions, &Action{Sql: "delete from custom_chart_series where metric=? and service_group=?", Param: []interface{}{metric, serviceGroup}})
 	actions = append(actions, &Action{Sql: "delete from metric where guid=?", Param: []interface{}{alarmMetricGuid}})
 	return
 }
