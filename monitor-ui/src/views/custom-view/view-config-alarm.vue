@@ -7,7 +7,7 @@
     </section>
     <div class="alarm-total">
       <Button type="success" @click="addParams('low')" size="small"><span style="font-size:14px">{{$t('m_low')}}:{{this.low}}</span></Button>
-      <Button type="warning" @click="addParams('middle')" size="small"><span style="font-size:14px">{{$t('m_medium')}}:{{this.mid}}</span></Button>
+      <Button type="warning" @click="addParams('medium')" size="small"><span style="font-size:14px">{{$t('m_medium')}}:{{this.mid}}</span></Button>
       <Button type="error" @click="addParams('high')" size="small"><span style="font-size:14px">{{$t('m_high')}}:{{this.high}}</span></Button>
     </div>
     <div class="alarm-list">
