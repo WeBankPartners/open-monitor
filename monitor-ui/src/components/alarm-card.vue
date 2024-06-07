@@ -90,9 +90,10 @@
       </Tooltip>
       <Tooltip :content="$t('m_remark')">
         <Icon
-          type="ios-pricetags-outline"
+          type="ios-pricetags"
           size="18"
           class="fa-operate"
+          :color="data.custom_message!==''?'#2d8cf0':''"
           @click="remarkModal(data)"
         />
       </Tooltip>
