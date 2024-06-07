@@ -154,12 +154,14 @@
             <Option v-for="item in customMetricsModelConfig.notifyEnableOption" :value="item.value" :key="item.value">{{ item.label }}</Option>
           </Select>
         </div>
-      
         <div class="marginbottom params-each">
-          <label class="col-md-2 label-name">{{$t('m_content')}}:</label>
+          <label class="col-md-2 label-name">{{$t('m_alarmName')}}:</label>
+          <Input v-model="customMetricsModelConfig.addRow.name" style="width: 375px"/>
+        </div>
+        <div class="marginbottom params-each">
+          <label class="col-md-2 label-name">{{$t('alarmContent')}}:</label>
           <Input type="textarea" v-model="customMetricsModelConfig.addRow.content" style="width: 375px"/>
         </div>
-
       </div>
     </ModalComponent>
   </div>
@@ -280,7 +282,8 @@ export default {
           regulative: 0,
           notify_enable: 1,
           priority: 'low',
-          content: ''
+          content: '',
+          name: ''
         },
         priorityList: priorityList,
         notifyEnableOption: [
