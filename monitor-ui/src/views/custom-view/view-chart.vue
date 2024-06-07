@@ -106,7 +106,11 @@ export default {
         Vue.set(this.viewCondition, key, cloneDeep(params.viewCondition[key]))
       }
       if (params.templateData.cfg) {
-        this.panalData = JSON.parse(params.templateData.cfg)[0];
+        this.panalDataList = JSON.parse(params.templateData.cfg);
+        const temp = this.panalDataList.filter(item => {
+          return item.viewConfig.id === params.panal.id
+        })
+        this.panalData = temp[0]
         Vue.set(this.viewCondition, 'agg', this.panalData.aggregate)
         this.initPanal();
         this.scheduledRequest();
