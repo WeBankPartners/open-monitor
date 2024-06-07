@@ -398,7 +398,7 @@ func ImportLogMetric(c *gin.Context) {
 		}
 	}
 	if err = db.ImportLogMetric(&paramObj, middleware.GetOperateUser(c)); err != nil {
-		middleware.ReturnHandleError(c, "import log metric fail", err)
+		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
 		middleware.ReturnSuccess(c)
 	}

@@ -330,3 +330,17 @@ func distinctStringList(input []string) (output []string) {
 	}
 	return
 }
+
+func GetLogTemplateGuidByName(name string) (logTemplateGuid string, err error) {
+	queryResult, queryErr := x.QueryString("select guid from log_monitor_template where name=?", name)
+	if queryErr != nil {
+		err = fmt.Errorf("query log template by name:%s fail,%s ", name, err.Error())
+		return
+	}
+	if len(queryResult) == 0 {
+		err = fmt.Errorf("can not find template with name:%s ", name)
+		return
+	}
+	logTemplateGuid = queryResult[0]["guid"]
+	return
+}
