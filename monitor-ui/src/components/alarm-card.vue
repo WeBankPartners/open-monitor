@@ -103,8 +103,11 @@
         <div class="card-content">
           <div style="display:flex;align-items:center;width:100%;">
             <div class="ellipsis">
-              <Tooltip :content="data.content">
-                {{ data.content || '-' }}
+              <Tooltip :content="data.content" :max-width="300">
+                <div slot="content">
+                  <div v-html="data.content || '-'"></div>  
+                </div>
+                <div v-html="data.content || '-'" class="ellipsis-text" style="width: 450px;"></div>
               </Tooltip>
             </div>
           </div>
@@ -121,7 +124,7 @@
         <div class="card-content">
           <div style="display:flex;align-items:center;width:100%;">
             <div class="ellipsis">
-              <Tooltip :content="data.endpoint">
+              <Tooltip :content="data.endpoint" :max-width="300">
                 {{ data.endpoint }}
               </Tooltip>
             </div>
@@ -256,16 +259,12 @@ export default {
   },
 };
 </script>
-<style lang="less">
-.ivu-card-head {
-  padding: 8px 16px !important;
-}
-</style>
 <style scoped lang="less">
 /deep/ .ivu-card-head {
   background: #f2f3f7;
   display: flex;
   align-items: center;
+  padding: 8px 16px !important;
 }
 
 /deep/ .ivu-card-body {
@@ -311,20 +310,21 @@ li {
   font-size: 16px;
   cursor: pointer;
 }
-.ellipsis {
-  max-width: ~"calc(100% - 120px)";
-  text-overflow: ellipsis;
+.ellipsis-text {
   overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
+}
+.ellipsis {
+  &:extend(.ellipsis-text);
+  max-width: ~"calc(100% - 120px)";
 }
 .copy-data {
   font-size: 16px;
   cursor: pointer
 }
 .custom-title {
+  &:extend(.ellipsis-text);
   max-width: 400px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 </style>
