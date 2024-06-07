@@ -363,6 +363,7 @@
   "m_request_volume": "请求量",
   "m_success_rate": "成功率",
   "m_failure_rate": "失败率",
+  "m_failure_volume": "失败量",
   "m_average_time": "平均耗时",
   "m_max_costtime": "最大耗时",
   "m_is_start_match": "是否执行匹配",
