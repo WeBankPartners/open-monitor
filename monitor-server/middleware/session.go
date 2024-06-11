@@ -77,6 +77,10 @@ func SaveSession(session m.Session) (isOk bool, sId string) {
 	return isOk, sId
 }
 
+func GetOperateUserRoles(c *gin.Context) []string {
+	return c.GetStringSlice("operatorRoles")
+}
+
 func GetOperateUser(c *gin.Context) string {
 	operator := c.GetString("operatorName")
 	if operator != "" {

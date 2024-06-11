@@ -9,19 +9,19 @@ import (
 )
 
 func ListEndpointGroup(c *gin.Context) {
-	page,_ := strconv.Atoi(c.Query("page"))
-	size,_ := strconv.Atoi(c.Query("size"))
+	page, _ := strconv.Atoi(c.Query("page"))
+	size, _ := strconv.Atoi(c.Query("size"))
 	search := c.Query("search")
 	param := models.QueryRequestParam{}
 	if size > 0 {
 		param.Paging = true
-		param.Pageable = &models.PageInfo{PageSize: size,StartIndex: page-1}
+		param.Pageable = &models.PageInfo{PageSize: size, StartIndex: page - 1}
 	}
 	if search != "" {
-		param.Filters = []*models.QueryRequestFilterObj{{Name: "guid",Operator: "like",Value: search}}
+		param.Filters = []*models.QueryRequestFilterObj{{Name: "guid", Operator: "like", Value: search}}
 	}
 	pageInfo, rowData, err := db.ListEndpointGroup(&param)
-	returnData := models.TableData{Data: rowData,Page: page,Size: size,Num: pageInfo.TotalRows}
+	returnData := models.TableData{Data: rowData, Page: page, Size: size, Num: pageInfo.TotalRows}
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
@@ -90,7 +90,7 @@ func UpdateGroupEndpoint(c *gin.Context) {
 		err = db.SyncPrometheusRuleFile(param.GroupGuid, false)
 		if err != nil {
 			middleware.ReturnHandleError(c, err.Error(), err)
-		}else {
+		} else {
 			middleware.ReturnSuccess(c)
 		}
 	}
