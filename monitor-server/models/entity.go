@@ -95,12 +95,21 @@ type AlarmEventEntity struct {
 }
 
 type AlarmEventEntityObj struct {
-	Id          string `json:"id"`
-	DisplayName string `json:"displayName"`
-	Handler     string `json:"handler"`
-	HandleRole  string `json:"handleRole"`
-	Content     string `json:"content"`
-	Priority    string `json:"priority"`
-	Message     string `json:"message"`
-	StartTime   string `json:"startTime"`
+	Id            string `json:"id"`
+	DisplayName   string `json:"displayName"`
+	Handler       string `json:"handler"`
+	HandleRole    string `json:"handleRole"`
+	Content       string `json:"content"`
+	Priority      string `json:"priority"`
+	Message       string `json:"message"`
+	StartTime     string `json:"startTime"`
+	Endpoint      string `json:"endpoint"`
+	Detail        string `json:"detail"`
+	NotifyEventId string `json:"notifyEventId"`
+}
+
+type AlarmEventUpdateResponse struct {
+	Status  string                   `json:"status"`
+	Message string                   `json:"message"`
+	Data    []map[string]interface{} `json:"data"`
 }

@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware"
+	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
+	"github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
@@ -64,6 +66,12 @@ func ImportMetric(c *gin.Context) {
 		return
 	}
 	var paramObj []*models.MetricTable
+	var result = &models.MetricImportResultDto{
+		SuccessList: []string{},
+		FailList:    []string{},
+		Message:     "",
+	}
+	var nameList []string
 	b, err := ioutil.ReadAll(f)
 	defer f.Close()
 	if err != nil {
@@ -84,9 +92,81 @@ func ImportMetric(c *gin.Context) {
 		middleware.ReturnValidateError(c, "serviceGroup can not empty")
 		return
 	}
-	if err = db.MetricImport(serviceGroup, paramObj); err != nil {
-		middleware.ReturnHandleError(c, "import metric fail", err)
-	} else {
-		middleware.ReturnSuccess(c)
+	for _, obj := range paramObj {
+		nameList = append(nameList, obj.Metric)
 	}
+	if result.FailList, err = db.MetricImport(serviceGroup, middleware.GetOperateUser(c), paramObj); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if len(result.FailList) == 0 {
+		result.SuccessList = nameList
+	}
+	middleware.ReturnSuccessData(c, result)
+}
+
+func QueryMetricTagValue(c *gin.Context) {
+	var param models.QueryMetricTagParam
+	if err := c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	result := []*models.QueryMetricTagResultObj{}
+	if param.MetricId == "" {
+		middleware.ReturnSuccessData(c, result)
+		return
+	}
+	// 查指标有哪些标签
+	metricRow, err := db.GetSimpleMetric(param.MetricId)
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	var tagList []string
+	tagList, err = db.GetMetricTags(metricRow)
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	log.Logger.Debug("QueryMetricTagValue", log.StringList("tagList", tagList))
+	if len(tagList) == 0 {
+		middleware.ReturnSuccessData(c, result)
+		return
+	}
+	var endpointObj models.EndpointNewTable
+	if param.Endpoint != "" {
+		endpointObj, _ = db.GetEndpointNew(&models.EndpointNewTable{Guid: param.Endpoint})
+	}
+	if endpointObj.AgentAddress == "" {
+		endpointObj.AgentAddress = ".*"
+	}
+	metricRow.PromExpr = db.ReplacePromQlKeyword(metricRow.PromExpr, "", &endpointObj, []*models.TagDto{})
+	// 查标签值
+	seriesMapList, getSeriesErr := datasource.QueryPromSeries(metricRow.PromExpr)
+	if getSeriesErr != nil {
+		err = fmt.Errorf("query prom series fail,%s ", getSeriesErr)
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	for _, v := range tagList {
+		tmpValueList := []string{}
+		tmpValueDistinctMap := make(map[string]int)
+		for _, seriesMap := range seriesMapList {
+			if seriesMap == nil {
+				continue
+			}
+			if tmpTagValue, ok := seriesMap[v]; ok {
+				if _, existFlag := tmpValueDistinctMap[tmpTagValue]; !existFlag {
+					tmpValueList = append(tmpValueList, tmpTagValue)
+					tmpValueDistinctMap[tmpTagValue] = 1
+				}
+			}
+		}
+		valueObjList := []*models.MetricTagValueObj{}
+		for _, tmpValue := range tmpValueList {
+			valueObjList = append(valueObjList, &models.MetricTagValueObj{Key: tmpValue, Value: tmpValue})
+		}
+		result = append(result, &models.QueryMetricTagResultObj{Tag: v, Values: valueObjList})
+	}
+	middleware.ReturnSuccessData(c, result)
 }

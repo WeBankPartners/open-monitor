@@ -78,7 +78,7 @@ const router = new Router({
             {
               path: "groupManagement",
               name: "groupManagement",
-              title: "组管理",
+              title: "对象组",
               meta: {},
               component: () =>
                 import("@/views/monitor-config/group-management")
@@ -116,12 +116,41 @@ const router = new Router({
                 import("@/views/monitor-config/exporter")
             },
             {
+              path: "remoteSync",
+              name: "remoteSync",
+              title: "remoteSync",
+              meta: {},
+              component: () =>
+                import("@/views/monitor-config/remote-sync")
+            },
+            {
               path: "businessMonitor",
               name: "businessMonitor",
               title: "businessMonitor",
               meta: {},
               component: () =>
                 import("@/views/monitor-config/business-monitor")
+            },
+            {
+              path: "logTemplate",
+              name: "logTemplate",
+              title: "日志模版",
+              meta: {},
+              component: () => import("@/views/monitor-config/log-template")
+            },
+            {
+              path: "metricConfig",
+              name: "metricConfig",
+              title: "metricConfig",
+              meta: {},
+              component: () => import("@/views/metric-config/index")
+            },
+            {
+              path: "groupBoard",
+              name: "groupBoard",
+              title: "对象看板",
+              meta: {},
+              component: () => import("@/views/metric-config/group-board")
             }
           ]
         },
@@ -172,15 +201,33 @@ const router = new Router({
           name: "viewConfigIndex",
           title: "自定义视图主页",
           meta: {},
-          component: () =>
-            import("@/views/custom-view/view-config-index")
-        },
-        {
-          path: "viewConfig",
-          name: "viewConfig",
-          title: "自定义视图",
-          meta: {},
-          component: () => import("@/views/custom-view/view-config")
+          redirect: "/viewConfigIndex/boardList",
+          component: () => import("@/views/custom-view/index"),
+          children: [
+            {
+              path: "boardList",
+              name: "boardList",
+              title: "看板列表",
+              meta: {},
+              component: () =>
+                import("@/views/custom-view/view-config-index")
+            },
+            {
+              path: "allChartList",
+              name: "allChartList",
+              title: "列表",
+              meta: {},
+              component: () =>
+                import("@/views/custom-view/chart-list")
+            },
+            {
+              path: "viewConfig",
+              name: "viewConfig",
+              title: "自定义视图",
+              meta: {},
+              component: () => import("@/views/custom-view/view-config")
+            }
+          ]
         },
         {
           path: "editLineView",
@@ -249,7 +296,7 @@ const router = new Router({
 
 router.beforeEach((to, from, next) => {
   if (['login', 'callCustomViewExternal'].includes(to.name)) {
-    next()
+  next()
     return
   }
   if (!getToken()&& !['login', 'register', 'endpointViewExternalCall', 'callCustomViewExternal'].includes(to.name)) {

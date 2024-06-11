@@ -1,9 +1,9 @@
 <template>
   <div class="single-chart">
-    <div v-if="!noDataTip" :id="elId" class="echart" :style="chartInfo.style">
+    <div v-show="!noDataTip" :id="elId" class="echart" :style="chartInfo.style">
     </div>
-    <div v-if="noDataTip" class="echart echart-no-data-tip">
-      <span>~~~No Data!~~~</span>
+    <div v-show="noDataTip" class="echart echart-no-data-tip">
+      <span>{{this.$t('m_nodata_tips')}}</span>
     </div>
   </div>
 </template>
@@ -33,7 +33,7 @@ export default {
   watch: {
     params: {
       handler () {
-        this.getchartdata()
+        this.isAutoRefresh()
       },
       deep: true
     },
@@ -59,7 +59,9 @@ export default {
       }
     },
     getchartdata () {
+      this.noDataTip = false
       if (this.chartInfo.chartParams.data.length === 0) {
+        this.noDataTip = true
         return
       }
       this.isAutoRefresh()
@@ -67,7 +69,8 @@ export default {
       params.forEach(p => {
         p.start = this.chartInfo.start
         p.end = this.chartInfo.end
-        p.time_second = this.chartInfo.time_second
+        p.time_second = this.chartInfo.time_second,
+        p.custom_chart_guid = this.chartInfo.elId
       });
       this.elId = this.chartInfo.elId
       this.$root.$httpRequestEntrance.httpRequestEntrance(
@@ -98,6 +101,10 @@ export default {
       text-align: center;
       vertical-align: middle;
       display: table-cell;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
     }
   }
 </style>

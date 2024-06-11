@@ -57,7 +57,7 @@ func init() {
 		&handlerFuncObj{Url: "/dashboard/custom/endpoint/get", Method: http.MethodGet, HandlerFunc: dashboard.GetEndpointsByIp},
 		&handlerFuncObj{Url: "/dashboard/custom/role/get", Method: http.MethodGet, HandlerFunc: dashboard.GetCustomDashboardRole},
 		&handlerFuncObj{Url: "/dashboard/custom/role/save", Method: http.MethodPost, HandlerFunc: dashboard.SaveCustomDashboardRole},
-		&handlerFuncObj{Url: "/dashboard/custom/alarm/list", Method: http.MethodGet, HandlerFunc: alarm.GetCustomDashboardAlarm},
+		&handlerFuncObj{Url: "/dashboard/custom/alarm/list/:customDashboardId", Method: http.MethodPost, HandlerFunc: alarm.GetCustomDashboardAlarm},
 		&handlerFuncObj{Url: "/dashboard/config/metric/list", Method: http.MethodGet, HandlerFunc: dashboard.GetPromMetric},
 		// 层级对象
 		&handlerFuncObj{Url: "/dashboard/system/add", Method: http.MethodPost, HandlerFunc: agent.ExportPanelAdd},
@@ -171,6 +171,7 @@ func init() {
 		&handlerFuncObj{Url: "/user/list", Method: http.MethodGet, HandlerFunc: user.ListUser},
 		&handlerFuncObj{Url: "/user/role/update", Method: http.MethodPost, HandlerFunc: user.UpdateRole},
 		&handlerFuncObj{Url: "/user/role/list", Method: http.MethodGet, HandlerFunc: user.ListRole},
+		&handlerFuncObj{Url: "/user/manage_role/list", Method: http.MethodGet, HandlerFunc: user.ListManageRole},
 		&handlerFuncObj{Url: "/user/role/user/update", Method: http.MethodPost, HandlerFunc: user.UpdateRoleUser},
 	)
 	// Export plugin interface
@@ -256,6 +257,55 @@ func init() {
 		&handlerFuncObj{Url: "/monitor/endpoint/update", Method: http.MethodPut, HandlerFunc: monitor.UpdateEndpoint},
 		&handlerFuncObj{Url: "/monitor/metric/export", Method: http.MethodGet, HandlerFunc: monitor.ExportMetric},
 		&handlerFuncObj{Url: "/monitor/metric/import", Method: http.MethodPost, HandlerFunc: monitor.ImportMetric},
+		// log monitor template
+		&handlerFuncObj{Url: "/service/log_metric/log_monitor_template/list", Method: http.MethodPost, HandlerFunc: service.ListLogMonitorTemplate},
+		&handlerFuncObj{Url: "/service/log_metric/log_monitor_template/:logMonitorTemplateGuid", Method: http.MethodGet, HandlerFunc: service.GetLogMonitorTemplate},
+		&handlerFuncObj{Url: "/service/log_metric/log_monitor_template", Method: http.MethodPost, HandlerFunc: service.CreateLogMonitorTemplate},
+		&handlerFuncObj{Url: "/service/log_metric/log_monitor_template", Method: http.MethodPut, HandlerFunc: service.UpdateLogMonitorTemplate},
+		&handlerFuncObj{Url: "/service/log_metric/log_monitor_template/:logMonitorTemplateGuid", Method: http.MethodDelete, HandlerFunc: service.DeleteLogMonitorTemplate},
+		&handlerFuncObj{Url: "/service/log_metric/affect_service_group/:logMonitorTemplateGuid", Method: http.MethodGet, HandlerFunc: service.GetLogMonitorTemplateServiceGroup},
+		&handlerFuncObj{Url: "/service/log_metric/regexp/match", Method: http.MethodPost, HandlerFunc: service.CheckLogMonitorRegExpMatch},
+		&handlerFuncObj{Url: "/service/log_metric/log_monitor_template/export", Method: http.MethodPost, HandlerFunc: service.LogMonitorTemplateExport},
+		&handlerFuncObj{Url: "/service/log_metric/log_monitor_template/import", Method: http.MethodPost, HandlerFunc: service.LogMonitorTemplateImport},
+
+		&handlerFuncObj{Url: "/service/log_metric/log_metric_group/:logMetricGroupGuid", Method: http.MethodGet, HandlerFunc: service.GetLogMetricGroup},
+		&handlerFuncObj{Url: "/service/log_metric/log_metric_group", Method: http.MethodPost, HandlerFunc: service.CreateLogMetricGroup},
+		&handlerFuncObj{Url: "/service/log_metric/log_metric_group", Method: http.MethodPut, HandlerFunc: service.UpdateLogMetricGroup},
+		&handlerFuncObj{Url: "/service/log_metric/log_metric_group/:logMetricGroupGuid", Method: http.MethodDelete, HandlerFunc: service.DeleteLogMetricGroup},
+		&handlerFuncObj{Url: "/service/log_metric/custom/log_metric_group/:logMetricGroupGuid", Method: http.MethodGet, HandlerFunc: service.GetLogMetricCustomGroup},
+		&handlerFuncObj{Url: "/service/log_metric/custom/log_metric_group", Method: http.MethodPost, HandlerFunc: service.CreateLogMetricCustomGroup},
+		&handlerFuncObj{Url: "/service/log_metric/custom/log_metric_group", Method: http.MethodPut, HandlerFunc: service.UpdateLogMetricCustomGroup},
+		// 标签
+		&handlerFuncObj{Url: "/metric/tag/value-list", Method: http.MethodPost, HandlerFunc: monitor.QueryMetricTagValue},
+
+		//自定义视图
+		&handlerFuncObj{Url: "/dashboard/all", Method: http.MethodGet, HandlerFunc: monitor.GetAllCustomDashboardList},
+		&handlerFuncObj{Url: "/dashboard/custom/list", Method: http.MethodPost, HandlerFunc: monitor.QueryCustomDashboardList},
+		&handlerFuncObj{Url: "/dashboard/custom", Method: http.MethodGet, HandlerFunc: monitor.GetCustomDashboard},
+		&handlerFuncObj{Url: "/dashboard/custom", Method: http.MethodPost, HandlerFunc: monitor.AddCustomDashboard},
+		&handlerFuncObj{Url: "/dashboard/custom", Method: http.MethodPut, HandlerFunc: monitor.UpdateCustomDashboard},
+		&handlerFuncObj{Url: "/dashboard/custom/permission", Method: http.MethodPost, HandlerFunc: monitor.UpdateCustomDashboardPermission},
+		&handlerFuncObj{Url: "/dashboard/custom", Method: http.MethodDelete, HandlerFunc: monitor.DeleteCustomDashboard},
+		&handlerFuncObj{Url: "/chart/shared/list", Method: http.MethodGet, HandlerFunc: monitor.GetSharedChartList},
+		&handlerFuncObj{Url: "/chart/custom", Method: http.MethodPost, HandlerFunc: monitor.AddCustomChart},
+		&handlerFuncObj{Url: "/chart/custom/copy", Method: http.MethodPost, HandlerFunc: monitor.CopyCustomChart},
+		&handlerFuncObj{Url: "/chart/custom", Method: http.MethodPut, HandlerFunc: monitor.UpdateCustomChart},
+		&handlerFuncObj{Url: "/chart/custom/name", Method: http.MethodPut, HandlerFunc: monitor.UpdateCustomChartName},
+		&handlerFuncObj{Url: "/chart/custom/name/exist", Method: http.MethodGet, HandlerFunc: monitor.QueryCustomChartNameExist},
+		&handlerFuncObj{Url: "/chart/custom", Method: http.MethodGet, HandlerFunc: monitor.GetCustomChart},
+		&handlerFuncObj{Url: "/chart/custom", Method: http.MethodDelete, HandlerFunc: monitor.DeleteCustomChart},
+		&handlerFuncObj{Url: "/chart/custom/permission", Method: http.MethodPost, HandlerFunc: monitor.SharedCustomChart},
+		&handlerFuncObj{Url: "/chart/custom/permission", Method: http.MethodGet, HandlerFunc: monitor.GetSharedChartPermission},
+		&handlerFuncObj{Url: "/chart/manage/list", Method: http.MethodPost, HandlerFunc: monitor.QueryCustomChart},
+		&handlerFuncObj{Url: "/dashboard/data/sync", Method: http.MethodPost, HandlerFunc: monitor.SyncData},
+		&handlerFuncObj{Url: "/dashboard/chart/unbind", Method: http.MethodDelete, HandlerFunc: monitor.UnBindChart},
+		&handlerFuncObj{Url: "/chart/custom/series/config", Method: http.MethodPost, HandlerFunc: monitor.GetChartSeriesColor},
+
+		// 远程读写
+		&handlerFuncObj{Url: "/config/remote/write", Method: http.MethodGet, HandlerFunc: config_new.RemoteWriteConfigList},
+		&handlerFuncObj{Url: "/config/remote/write", Method: http.MethodPost, HandlerFunc: config_new.RemoteWriteConfigCreate},
+		&handlerFuncObj{Url: "/config/remote/write", Method: http.MethodPut, HandlerFunc: config_new.RemoteWriteConfigUpdate},
+		&handlerFuncObj{Url: "/config/remote/write", Method: http.MethodDelete, HandlerFunc: config_new.RemoteWriteConfigDelete},
 	)
 }
 
@@ -306,6 +356,7 @@ func InitHttpServer() {
 		entityApi.POST("/alarm/query", alarm.QueryEntityAlarm)
 		entityApi.POST("/alarm/close", alarmv2.PluginCloseAlarm)
 		entityApi.POST("/alarm_event/query", alarm.QueryEntityAlarmEvent)
+		entityApi.POST("/alarm_event/update", alarm.UpdateEntityAlarm)
 	}
 	// register handler func with auth
 	authRouter := r.Group(urlPrefix+"/api/v1", user.AuthRequired())
