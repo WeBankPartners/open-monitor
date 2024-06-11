@@ -351,9 +351,14 @@
           <FormItem label="SQL">
             <Input v-model="dbModelConfig.addRow.metric_sql" type="textarea" style="width:520px" />
           </FormItem>
-          <FormItem :label="$t('field.type')">
+          <FormItem :label="$t('field.type')" style="margin-top: 12px;">
             <Select v-model="dbModelConfig.addRow.monitor_type" @on-change="getEndpoint(dbModelConfig.addRow.monitor_type, 'mysql')" style="width: 520px">
               <Option v-for="type in monitorTypeOptions" :key="type.value" :value="type.label">{{type.label}}</Option>
+            </Select>
+          </FormItem>
+          <FormItem :label="$t('m_collection_interval')">
+            <Select v-model="dbModelConfig.addRow.step" style="width: 520px" transfer>
+              <Option v-for="item in stepOptions" :key="item" :value="item">{{item}}S</Option>
             </Select>
           </FormItem>
         </Form>
@@ -610,6 +615,7 @@ export default {
           metric: '',
           display_name: '',
           monitor_type: '',
+          step: 10,
           endpoint_rel: []
         }
       },
@@ -620,6 +626,7 @@ export default {
         {label: 'http', value: 'http'},
         {label: 'mysql', value: 'mysql'}
       ],
+      stepOptions: [10, 30, 60, 300, 600],
       isShowGroupMetricUpload: false,
       groupMetricId: '',
       typeToName: { // 模版枚举
