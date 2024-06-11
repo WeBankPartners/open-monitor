@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -55,13 +56,22 @@ func CreateAlarmStrategy(c *gin.Context) {
 	} else {
 		param.ActiveWindow = models.DefaultActiveWindow
 	}
-	err := db.CreateAlarmStrategy(&param)
+	param.Name = strings.TrimSpace(param.Name)
+	if err := validateStrategyCondition(param.Conditions); err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	if err := db.ValidateAlarmStrategyName(&param); err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	err := db.CreateAlarmStrategy(&param, middleware.GetOperateUser(c))
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
 		err = db.SyncPrometheusRuleFile(param.EndpointGroup, false)
 		if err != nil {
-			middleware.ReturnHandleError(c, err.Error(), err)
+			middleware.ReturnError(c, 200, middleware.GetMessageMap(c).SaveDoneButSyncFail, err)
 		} else {
 			middleware.ReturnSuccess(c)
 		}
@@ -82,17 +92,36 @@ func UpdateAlarmStrategy(c *gin.Context) {
 	} else {
 		param.ActiveWindow = models.DefaultActiveWindow
 	}
-	err := db.UpdateAlarmStrategy(&param)
+	param.Name = strings.TrimSpace(param.Name)
+	if err := validateStrategyCondition(param.Conditions); err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	if err := db.ValidateAlarmStrategyName(&param); err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	err := db.UpdateAlarmStrategy(&param, middleware.GetOperateUser(c))
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
 		err = db.SyncPrometheusRuleFile(param.EndpointGroup, false)
 		if err != nil {
-			middleware.ReturnHandleError(c, err.Error(), err)
+			middleware.ReturnError(c, 200, middleware.GetMessageMap(c).SaveDoneButSyncFail, err)
 		} else {
 			middleware.ReturnSuccess(c)
 		}
 	}
+}
+
+func validateStrategyCondition(strategyList []*models.StrategyConditionObj) (err error) {
+	for _, v := range strategyList {
+		if !middleware.IsIllegalCond(v.Condition) || !middleware.IsIllegalLast(v.Last) {
+			err = fmt.Errorf("condition: %s or last: %s illegal", v.Condition, v.Last)
+			return
+		}
+	}
+	return
 }
 
 func DeleteAlarmStrategy(c *gin.Context) {
@@ -165,8 +194,19 @@ func ImportAlarmStrategy(c *gin.Context) {
 	}
 	queryType := c.Param("queryType")
 	guid := c.Param("guid")
-	err = db.ImportAlarmStrategy(queryType, guid, paramObj)
+	var metricNotFound, nameDuplicate []string
+	err, metricNotFound, nameDuplicate = db.ImportAlarmStrategy(queryType, guid, paramObj, middleware.GetOperateUser(c))
 	if err != nil {
+		if len(metricNotFound) > 0 {
+			err = fmt.Errorf(middleware.GetMessageMap(c).MetricNotFound, strings.Join(metricNotFound, ","))
+			middleware.ReturnHandleError(c, err.Error(), err)
+			return
+		}
+		if len(nameDuplicate) > 0 {
+			err = fmt.Errorf(middleware.GetMessageMap(c).StrategyNameImportDuplicateError, strings.Join(nameDuplicate, ","))
+			middleware.ReturnHandleError(c, err.Error(), err)
+			return
+		}
 		middleware.ReturnHandleError(c, "import alarm strategy error:"+err.Error(), err)
 	} else {
 		middleware.ReturnSuccess(c)

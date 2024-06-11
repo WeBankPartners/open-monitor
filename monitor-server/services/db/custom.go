@@ -1,8 +1,8 @@
 package db
 
 import (
-	"encoding/json"
 	"fmt"
+	"github.com/WeBankPartners/go-common-lib/guid"
 	m "github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"strconv"
 	"strings"
@@ -23,7 +23,7 @@ func ListCustomDashboard(user string, coreToken m.CoreJwtToken) (err error, resu
 	}
 	roleString := strings.Join(roleList, "','")
 	sql = `SELECT * FROM (
-		SELECT DISTINCT t1.id,t1.name,t1.panels_group,t1.cfg,t1.main,t1.create_user,t1.update_user,t1.create_at,t1.update_at,t2.permission,t1.panel_groups FROM custom_dashboard t1 LEFT JOIN rel_role_custom_dashboard t2 ON t1.id=t2.custom_dashboard_id LEFT JOIN role t3 ON t2.role_id=t3.id WHERE t1.create_user<>'` + user + `' and t3.name IN ('` + roleString + `')
+		SELECT DISTINCT t1.id,t1.name,t1.panels_group,t1.cfg,t1.main,t1.create_user,t1.update_user,t1.create_at,t1.update_at,t2.permission,t1.panel_groups FROM custom_dashboard t1 LEFT JOIN custom_dashboard_role_rel t2 ON t1.id=t2.custom_dashboard_id LEFT JOIN role t3 ON t2.role_id=t3.id WHERE t1.create_user<>'` + user + `' and t3.name IN ('` + roleString + `')
 		UNION
 		SELECT id,name,panels_group,cfg,main,create_user,update_user,create_at,update_at,'mgmt',panel_groups FROM custom_dashboard WHERE create_user='` + user + `'
 		) t ORDER BY t.name`
@@ -81,7 +81,7 @@ func GetCustomDashboard(id int) (result *m.CustomDashboardObj, err error) {
 		return
 	}
 	var customRows []*m.CustomDashboardTable
-	err = x.SQL("SELECT * FROM custom_dashboard WHERE id=?", id).Find(&customRows)
+	err = x.SQL("SELECT id,name,panels_group,create_user,update_user,panel_groups,time_range,refresh_week FROM custom_dashboard WHERE id=?", id).Find(&customRows)
 	if err != nil {
 		err = fmt.Errorf("query custom dashboard table fail,%s ", err.Error())
 		return
@@ -127,7 +127,7 @@ func DeleteCustomDashboard(query *m.CustomDashboardTable) error {
 
 func GetCustomDashboardRole(id int) (err error, result []*m.CustomDashboardRoleObj) {
 	var roleTables []*m.CustomerDashboardRoleQuery
-	err = x.SQL("SELECT DISTINCT t1.id,t1.name,t1.display_name,t2.permission FROM role t1 LEFT JOIN rel_role_custom_dashboard t2 ON t1.id=t2.role_id WHERE t2.custom_dashboard_id=?", id).Find(&roleTables)
+	err = x.SQL("SELECT DISTINCT t1.id,t1.name,t1.display_name,t2.permission FROM role t1 LEFT JOIN custom_dashboard_role_rel t2 ON t1.id=t2.role_id WHERE t2.custom_dashboard_id=?", id).Find(&roleTables)
 	for _, v := range roleTables {
 		result = append(result, &m.CustomDashboardRoleObj{RoleId: v.Id, Permission: v.Permission})
 	}
@@ -136,93 +136,140 @@ func GetCustomDashboardRole(id int) (err error, result []*m.CustomDashboardRoleO
 
 func SaveCustomeDashboardRole(param m.CustomDashboardRoleDto) error {
 	var actions []*Action
-	actions = append(actions, &Action{Sql: "DELETE FROM rel_role_custom_dashboard WHERE custom_dashboard_id=?", Param: []interface{}{param.DashboardId}})
+	actions = append(actions, &Action{Sql: "DELETE FROM custom_dashboard_role_rel WHERE custom_dashboard_id=?", Param: []interface{}{param.DashboardId}})
 	for _, v := range param.PermissionList {
 		if v.Permission != "use" && v.Permission != "mgmt" {
 			continue
 		}
-		actions = append(actions, &Action{Sql: "INSERT INTO rel_role_custom_dashboard(role_id,custom_dashboard_id,permission) VALUE (?,?,?)", Param: []interface{}{v.RoleId, param.DashboardId, v.Permission}})
+		actions = append(actions, &Action{Sql: "INSERT INTO custom_dashboard_role_rel(role_id,custom_dashboard_id,permission) VALUE (?,?,?)", Param: []interface{}{v.RoleId, param.DashboardId, v.Permission}})
 	}
 	return Transaction(actions)
 }
 
-func GetCustomDashboardAlarms(id int) (err error, result m.AlarmProblemQueryResult) {
-	result = m.AlarmProblemQueryResult{High: 0, Mid: 0, Low: 0, Data: []*m.AlarmProblemQuery{}}
-	customQuery := &m.CustomDashboardObj{}
-	customQuery, err = GetCustomDashboard(id)
-	if err != nil || customQuery.Cfg == "" {
-		return err, result
-	}
-	var customConfig []*m.CustomDashboardConfigObj
-	err = json.Unmarshal([]byte(customQuery.Cfg), &customConfig)
+func GetCustomDashboardEndpointList(customDashboardId int) (endpointList []string, err error) {
+	var customChartSeriesRows []*m.CustomChartSeries
+	err = x.SQL("select dashboard_chart,endpoint,service_group,monitor_type,metric from custom_chart_series where dashboard_chart in (select dashboard_chart from custom_dashboard_chart_rel where custom_dashboard=?)", customDashboardId).Find(&customChartSeriesRows)
 	if err != nil {
-		return fmt.Errorf("json unmarshal dashboard config fail,%s", err.Error()), result
+		err = fmt.Errorf("query chart series fail,%s ", err.Error())
+		return
 	}
-	var endpointList []string
-	for _, v := range customConfig {
-		for _, vv := range v.Query {
-			if vv.AppObject != "" {
-				endpointList = append(endpointList, "sg__"+vv.AppObject)
-				serviceGuidList, _ := fetchGlobalServiceGroupChildGuidList(vv.AppObject)
-				serviceGroupEndpoint := getServiceGroupEndpointWithType(vv.EndpointType, serviceGuidList)
-				for _, sgEndpoint := range serviceGroupEndpoint {
-					endpointList = append(endpointList, sgEndpoint.Guid)
-				}
-			} else {
-				endpointList = append(endpointList, vv.Endpoint)
+	for _, row := range customChartSeriesRows {
+		if row.ServiceGroup != "" {
+			endpointList = append(endpointList, "sg__"+row.ServiceGroup)
+			serviceGuidList, _ := fetchGlobalServiceGroupChildGuidList(row.ServiceGroup)
+			serviceGroupEndpoint := getServiceGroupEndpointWithType(row.MonitorType, serviceGuidList)
+			for _, sgEndpoint := range serviceGroupEndpoint {
+				endpointList = append(endpointList, sgEndpoint.Guid)
 			}
+		} else {
+			endpointList = append(endpointList, row.Endpoint)
 		}
+	}
+	return
+}
+
+func GetCustomDashboardAlarms(id int, page *m.PageInfo) (err error, result m.AlarmProblemQueryResult) {
+	result = m.AlarmProblemQueryResult{High: 0, Mid: 0, Low: 0, Data: []*m.AlarmProblemQuery{}}
+	//customQuery := &m.CustomDashboardObj{}
+	var endpointList []string
+	endpointList, err = GetCustomDashboardEndpointList(id)
+	if err != nil {
+		return
 	}
 	if len(endpointList) > 0 {
 		sql := "SELECT * FROM alarm WHERE status='firing' AND endpoint IN ('" + strings.Join(endpointList, "','") + "') ORDER BY id DESC"
-		err, result = QueryAlarmBySql(sql, []interface{}{}, m.CustomAlarmQueryParam{Enable: false}, &m.PageInfo{})
+		err, result = QueryAlarmBySql(sql, []interface{}{}, m.CustomAlarmQueryParam{Enable: false}, page)
 	}
 	return err, result
 }
 
-func ListMainPageRole(user string, roleList []string) (err error, result []*m.MainPageRoleQuery) {
-	var customDashboards []*m.CustomDashboardQuery
-	roleString := strings.Join(roleList, "','")
-	sql := `SELECT * FROM (
-		SELECT DISTINCT t1.id,t1.name,t1.panels_group,t1.cfg,t1.main,t1.create_user,t1.update_user,t1.create_at,t1.update_at,t2.permission FROM custom_dashboard t1 LEFT JOIN rel_role_custom_dashboard t2 ON t1.id=t2.custom_dashboard_id LEFT JOIN role t3 ON t2.role_id=t3.id WHERE t1.create_user<>'` + user + `' and t3.name IN ('` + roleString + `')
-		UNION
-		SELECT id,name,panels_group,cfg,main,create_user,update_user,create_at,update_at,'mgmt' FROM custom_dashboard WHERE create_user='` + user + `'
-		) t ORDER BY t.name`
-	err = x.SQL(sql).Find(&customDashboards)
-	if err != nil {
-		return err, result
+func ListMainPageRole(roleList []string) (err error, result []*m.MainPageRoleQuery) {
+	var displayNameRoleMap map[string]string
+	var mainDashboardList []*m.MainDashboard
+	var mainPageId int
+	var customDashboardNameMap = make(map[int]string)
+	var dashboardRelMap = make(map[string][]int)
+	var sql = "select custom_dashboard_id from custom_dashboard_role_rel "
+	var ids []int
+	result = []*m.MainPageRoleQuery{}
+	if len(roleList) == 0 {
+		return
 	}
-	customDashboards = distinctCustomDashboard(customDashboards)
-	var options []*m.OptionModel
-	options = append(options, &m.OptionModel{Id: 0, OptionValue: "0", OptionText: "null"})
-	for _, v := range customDashboards {
-		options = append(options, &m.OptionModel{Id: v.Id, OptionValue: strconv.Itoa(v.Id), OptionText: v.Name})
+	if customDashboardNameMap, err = QueryAllCustomDashboardNameMap(); err != nil {
+		return
 	}
-	var roleTables []*m.RoleTable
-	x.SQL("SELECT * FROM role WHERE name IN ('" + roleString + "')").Find(&roleTables)
-	for _, v := range roleTables {
-		var tmpMainName string
-		for _, vv := range options {
-			if v.MainDashboard == vv.Id {
-				tmpMainName = vv.OptionText
+	if displayNameRoleMap, err = QueryAllRoleDisplayNameMap(); err != nil {
+		return
+	}
+	if err = x.SQL("select * from main_dashboard").Find(&mainDashboardList); err != nil {
+		return
+	}
+	if dashboardRelMap, err = QueryCustomDashboardRoleRelMap(); err != nil {
+		return
+	}
+	roleFilterSql, roleFilterParam := createListParams(roleList, "")
+	sql = sql + " where role_id  in (" + roleFilterSql + ")"
+	if err = x.SQL(sql, roleFilterParam...).Find(&ids); err != nil {
+		return
+	}
+	for _, role := range roleList {
+		if _, ok := displayNameRoleMap[role]; !ok {
+			continue
+		}
+		var dashboardIds []int
+		mainPageId = 0
+		for _, dashboard := range mainDashboardList {
+			if dashboard.RoleId == role {
+				mainPageId = *dashboard.CustomDashboard
 				break
 			}
 		}
-		result = append(result, &m.MainPageRoleQuery{RoleName: v.Name, MainPageId: v.MainDashboard, MainPageName: tmpMainName, Options: options})
+		mainPageRole := &m.MainPageRoleQuery{
+			RoleName:        role,
+			DisplayRoleName: displayNameRoleMap[role],
+			MainPageId:      mainPageId,
+			MainPageName:    customDashboardNameMap[mainPageId],
+			Options:         []*m.OptionModel{},
+		}
+		if dashboardIds = dashboardRelMap[role]; len(dashboardIds) > 0 {
+			idMap := make(map[int]bool)
+			for _, id := range ids {
+				for _, dashboardId := range dashboardIds {
+					if id == dashboardId {
+						if _, ok := idMap[id]; !ok && customDashboardNameMap[dashboardId] != "" {
+							idMap[id] = true
+							mainPageRole.Options = append(mainPageRole.Options, &m.OptionModel{
+								Id:          dashboardId,
+								OptionValue: strconv.Itoa(dashboardId),
+								OptionText:  customDashboardNameMap[dashboardId],
+							})
+						}
+						break
+					}
+				}
+			}
+		}
+		result = append(result, mainPageRole)
 	}
 	return err, result
 }
 
 func UpdateMainPageRole(param []m.MainPageRoleQuery) error {
 	var actions []*Action
-	for _, v := range param {
-		var tmpAction Action
-		var tmpParam []interface{}
-		tmpAction.Sql = "UPDATE role SET main_dashboard=? WHERE name=?"
-		tmpParam = append(tmpParam, v.MainPageId)
-		tmpParam = append(tmpParam, v.RoleName)
-		tmpAction.Param = tmpParam
-		actions = append(actions, &tmpAction)
+	var roleIds []string
+	if len(param) > 0 {
+		// 先删除提交角色数据,然后新增有效数据
+		for _, v := range param {
+			roleIds = append(roleIds, v.RoleName)
+		}
+		roleFilterSql, roleFilterParam := createListParams(roleIds, "")
+		actions = append(actions, &Action{Sql: "delete from main_dashboard  where role_id  in (" + roleFilterSql + ")", Param: roleFilterParam})
+	}
+	var idList = guid.CreateGuidList(len(param))
+	for i, v := range param {
+		if v.MainPageId > 0 {
+			actions = append(actions, &Action{Sql: "insert into main_dashboard(guid,role_id,custom_dashboard) values(?,?,?)", Param: []interface{}{idList[i], v.RoleName, v.MainPageId}})
+		}
 	}
 	return Transaction(actions)
 }

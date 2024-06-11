@@ -734,3 +734,309 @@ CREATE TABLE `alarm_notify` (
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 #@v2.0.6.10-end@;
+
+#@v2.0.7.1-begin@;
+CREATE TABLE `log_monitor_template` (
+    `guid` varchar(64) NOT NULL COMMENT '唯一标识',
+    `name` varchar(255) NOT NULL COMMENT '名称',
+    `log_type` varchar(32) NOT NULL COMMENT '日志类型->json(json格式) | regular(通用正则格式)',
+    `json_regular` varchar(255) NOT NULL COMMENT '提取json正则',
+    `demo_log` text DEFAULT NULL COMMENT '样例日志',
+    `calc_result` text DEFAULT NULL COMMENT '试算结果',
+    `create_user` varchar(32) DEFAULT NULL COMMENT '创建人',
+    `update_user` varchar(32) DEFAULT NULL COMMENT '更新人',
+    `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+    `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+    PRIMARY KEY (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `log_monitor_template_role` (
+     `guid` varchar(64) NOT NULL COMMENT '唯一标识',
+     `log_monitor_template` varchar(64) NOT NULL COMMENT '业务监控模版',
+     `role` varchar(64) NOT NULL COMMENT '角色',
+     `permission` varchar(32) DEFAULT NULL COMMENT '权限->USE(使用) | MGMT(管理)',
+     PRIMARY KEY (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `log_param_template` (
+      `guid` varchar(64) NOT NULL COMMENT '唯一标识',
+      `log_monitor_template` varchar(64) NOT NULL COMMENT '业务监控模版',
+      `name` varchar(64) NOT NULL COMMENT '名称',
+      `display_name` varchar(255) DEFAULT NULL COMMENT '指标显示名',
+      `json_key` varchar(64) DEFAULT NULL COMMENT 'json的key',
+      `regular` varchar(255) DEFAULT NULL COMMENT '正则',
+      `demo_match_value` varchar(255) DEFAULT NULL COMMENT '匹配结果',
+      `create_user` varchar(32) DEFAULT NULL COMMENT '创建人',
+      `update_user` varchar(32) DEFAULT NULL COMMENT '更新人',
+      `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+      `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+      PRIMARY KEY (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `log_metric_template` (
+   `guid` varchar(64) NOT NULL COMMENT '唯一标识',
+   `log_monitor_template` varchar(64) NOT NULL COMMENT '业务监控模版',
+   `log_param_name` varchar(64) DEFAULT NULL COMMENT '日志参数名',
+   `metric` varchar(64) NOT NULL COMMENT '指标',
+   `display_name` varchar(255) DEFAULT NULL COMMENT '指标显示名',
+   `step` int(11) DEFAULT 10 COMMENT '间隔',
+   `agg_type` varchar(16) DEFAULT 'agg' COMMENT '聚合类型',
+   `tag_config` text DEFAULT NULL COMMENT '标签配置',
+   `create_user` varchar(32) DEFAULT NULL COMMENT '创建人',
+   `update_user` varchar(32) DEFAULT NULL COMMENT '更新人',
+   `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+   `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+   PRIMARY KEY (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `log_metric_group` (
+    `guid` varchar(64) NOT NULL COMMENT '唯一标识',
+    `name` varchar(64) NOT NULL COMMENT '名称',
+    `log_type` varchar(32) NOT NULL COMMENT '日志类型->json(json格式) | regular(通用正则格式) | custom(自定义)',
+    `log_metric_monitor` varchar(64) NOT NULL COMMENT '业务日志监控',
+    `log_monitor_template` varchar(64) DEFAULT NULL COMMENT '引用模版',
+    `demo_log` text DEFAULT NULL COMMENT '样例日志',
+    `calc_result` text DEFAULT NULL COMMENT '试算结果',
+    `create_user` varchar(32) DEFAULT NULL COMMENT '创建人',
+    `update_user` varchar(32) DEFAULT NULL COMMENT '更新人',
+    `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+    `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+    PRIMARY KEY (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `log_metric_param` (
+    `guid` varchar(64) NOT NULL COMMENT '唯一标识',
+    `name` varchar(64) NOT NULL COMMENT '名称',
+    `display_name` varchar(255) DEFAULT NULL COMMENT '参数名',
+    `log_metric_group` varchar(64) NOT NULL COMMENT '业务指标组',
+    `regular` varchar(255) DEFAULT NULL COMMENT '提取正则',
+    `demo_match_value` varchar(255) DEFAULT NULL COMMENT '匹配结果',
+    `create_user` varchar(32) DEFAULT NULL COMMENT '创建人',
+    `update_user` varchar(32) DEFAULT NULL COMMENT '更新人',
+    `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+    `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+    PRIMARY KEY (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+alter table log_metric_monitor add column `create_user` varchar(32) DEFAULT NULL COMMENT '创建人';
+alter table log_metric_monitor add column `update_user` varchar(32) DEFAULT NULL COMMENT '更新人';
+alter table log_metric_monitor add column `create_time` datetime DEFAULT NULL COMMENT '创建时间';
+alter table log_metric_monitor modify column `update_time` datetime DEFAULT NULL COMMENT '更新时间';
+
+alter table log_metric_config add column `log_metric_group` varchar(64) DEFAULT NULL COMMENT '业务指标组';
+alter table log_metric_config add column `log_param_name` varchar(64) DEFAULT NULL COMMENT '日志参数名';
+alter table log_metric_config add column `create_user` varchar(32) DEFAULT NULL COMMENT '创建人';
+alter table log_metric_config add column `update_user` varchar(32) DEFAULT NULL COMMENT '更新人';
+alter table log_metric_config add column `create_time` datetime DEFAULT NULL COMMENT '创建时间';
+
+alter table log_metric_string_map add column `log_metric_group` varchar(64) DEFAULT NULL COMMENT '业务指标组';
+alter table log_metric_string_map add column `log_param_name` varchar(64) DEFAULT NULL COMMENT '日志参数名';
+alter table log_metric_string_map add column `value_type` varchar(64) DEFAULT NULL COMMENT '值的类型,成功失败等';
+
+insert into log_metric_group(guid,name,log_type,log_metric_monitor,create_user,create_time,update_user,update_time) select concat('lmg_',guid),display_name,'custom',log_metric_monitor,'old_data',now(),'old_data',now() from log_metric_config where log_metric_json is null;
+insert into log_metric_param(guid,name,display_name,log_metric_group,regular,create_user,create_time) select concat('lmp_',guid),metric,display_name,concat('lmg_',guid),regular,'old_data',now() from log_metric_config where log_metric_json is null;
+update log_metric_config set log_metric_group=concat('lmg_',guid),log_param_name=metric,update_user='old_data' where log_metric_group is null and log_metric_json is null;
+ALTER TABLE log_metric_string_map DROP FOREIGN KEY log_monitor_string_config;
+alter table log_metric_group add column metric_prefix_code varchar(64) default null comment '指标前缀';
+#@v2.0.7.1-end@;
+
+#@v2.0.8.1-begin@;
+CREATE TABLE `alarm_strategy_metric` (
+     `guid` varchar(64) NOT null COMMENT '唯一标识',
+     `alarm_strategy` varchar(64) NOT NULL COMMENT '告警配置表',
+     `metric` varchar(128) NOT NULL COMMENT '指标',
+     `condition` varchar(32) NOT NULL COMMENT '条件',
+     `last` varchar(16) NOT NULL COMMENT '持续时间',
+     `crc_hash` varchar(64) DEFAULT NULL COMMENT 'hash',
+     `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+     `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+     PRIMARY KEY (`guid`),
+     KEY `idx__strategy_metric__metric` (`metric`),
+     CONSTRAINT `fk__strategy_metric__alarm_strategy` FOREIGN KEY (`alarm_strategy`) REFERENCES `alarm_strategy` (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `alarm_strategy_tag` (
+      `guid` varchar(64) NOT NULL COMMENT '唯一标识',
+      `alarm_strategy_metric` varchar(64) NOT NULL COMMENT '告警配置指标',
+      `name` varchar(64) NOT NULL COMMENT '标签名',
+      PRIMARY KEY (`guid`),
+      CONSTRAINT `fk__strategy_tag__metric` FOREIGN KEY (`alarm_strategy_metric`) REFERENCES `alarm_strategy_metric` (`guid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `alarm_strategy_tag_value` (
+        `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+        `alarm_strategy_tag` varchar(64) NOT NULL COMMENT '告警配置标签值',
+        `value` varchar(255) DEFAULT NULL COMMENT '标签值',
+        PRIMARY KEY (`id`),
+        CONSTRAINT `fk__strategy_tag_value__tag` FOREIGN KEY (`alarm_strategy_tag`) REFERENCES `alarm_strategy_tag` (`guid`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
+alter table alarm_strategy add column name varchar(128) default null comment '名称';
+alter table rel_role_custom_dashboard rename to custom_dashboard_role_rel;
+alter table custom_dashboard modify column `name` varchar(255) NOT NULL;
+alter table metric add column log_metric_config varchar(64) default null;
+alter table metric add column log_metric_template varchar(64) default null;
+update alarm_strategy set name=substring_index(metric,'__',1) where name is null;
+
+CREATE TABLE `alarm_condition` (
+       `guid` varchar(64) NOT NULL COMMENT '唯一标识',
+       `alarm_strategy` varchar(64) DEFAULT NULL COMMENT '告警配置表',
+       `endpoint` varchar(255) NOT NULL COMMENT '监控对象',
+       `status` varchar(20) NOT NULL COMMENT '状态',
+       `metric` varchar(255) NOT NULL COMMENT '指标',
+       `expr` varchar(500) NOT NULL COMMENT '指标表达式',
+       `cond` varchar(50) NOT NULL COMMENT '条件',
+       `last` varchar(50) NOT NULL COMMENT '持续时间',
+       `priority` varchar(50) NOT NULL COMMENT '级别',
+       `crc_hash` varchar(64) DEFAULT NULL COMMENT '告警配置hash',
+       `tags` varchar(1024) DEFAULT NULL COMMENT '告警标签',
+       `start_value` double DEFAULT NULL COMMENT '异常值',
+       `start` datetime DEFAULT NULL COMMENT '异常时间',
+       `end_value` double DEFAULT NULL COMMENT '恢复值',
+       `end` datetime DEFAULT NULL COMMENT '恢复时间',
+       `unique_hash` varchar(64) DEFAULT NULL COMMENT '告警唯一hash',
+       PRIMARY KEY (`guid`),
+       UNIQUE KEY `alarm_condition_unique_idx` (`unique_hash`),
+       KEY `alarm_condition_endpoint_idx` (`endpoint`),
+       KEY `alarm_condition_metric_idx` (`metric`),
+       KEY `alarm_condition_status_idx` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `alarm_condition_rel` (
+       `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+       `alarm` int(11) unsigned NOT NULL COMMENT '告警id',
+       `alarm_condition` varchar(64) DEFAULT NULL COMMENT '条件id',
+       PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
+
+alter table alarm add column alarm_name varchar(64) default null comment '告警名称';
+CREATE TABLE `remote_write_config` (
+   `id` varchar(64) NOT NULL,
+   `address` varchar(255) NOT NULL,
+   `create_user` varchar(64) DEFAULT NULL,
+   `update_user` varchar(64) DEFAULT NULL,
+   `create_at` datetime DEFAULT NULL,
+   `update_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+   PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+alter table alarm_strategy add column update_user varchar(64) default null;
+
+DROP TABLE IF EXISTS `main_dashboard`;
+
+CREATE TABLE IF NOT EXISTS `main_dashboard` (
+    `guid` varchar(64) NOT NULL,
+    `role_id` varchar(64) NOT NULL,
+    `custom_dashboard` int(11)  unsigned not null COMMENT '首页看板表',
+    PRIMARY KEY (`guid`),
+    CONSTRAINT `fore_main_dashboard_custom_dashboard` FOREIGN KEY (`custom_dashboard`) REFERENCES `custom_dashboard` (`id`)
+)ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '首页看板表';
+
+DROP TABLE IF EXISTS `custom_chart`;
+CREATE TABLE IF NOT EXISTS `custom_chart` (
+    `guid` varchar(64) NOT NULL,
+    `source_dashboard` int(11) NOT NULL COMMENT '源看板',
+    `public` tinyint(1) default 0 COMMENT '是否公共',
+    `name` varchar(255) default null COMMENT '图表名称',
+    `chart_type` varchar(32) not null COMMENT '曲线图/饼图,line//pie',
+    `line_type` varchar(32) not null COMMENT '折线/柱状/面积,line/bar/area',
+    `aggregate` varchar(32) not null COMMENT '聚合类型',
+    `agg_step` int(11) default 0  COMMENT '聚合间隔',
+    `unit` varchar(32) default null COMMENT '单位',
+    `create_user` varchar(64)  default null COMMENT '创建人',
+    `update_user` varchar(64) default null COMMENT '更新人',
+    `create_time` datetime  default null COMMENT '创建时间',
+    `update_time` datetime  default null COMMENT '更新时间',
+    `chart_template` varchar(100)  default null COMMENT '图表模板',
+    PRIMARY KEY (`guid`)
+)ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '自定义看板图表表';
+
+
+DROP TABLE IF EXISTS `custom_dashboard_chart_rel`;
+CREATE TABLE IF NOT EXISTS `custom_dashboard_chart_rel` (
+    `guid` varchar(64) NOT NULL,
+    `custom_dashboard` int(11) unsigned NOT NULL COMMENT '所属看板',
+    `dashboard_chart` varchar(64)  not null COMMENT '所属看板图表',
+    `group` varchar(64)  null COMMENT '所属分组',
+    `display_config` text  null COMMENT '视图位置与长宽',
+    `create_user` varchar(64)  null COMMENT '创建人',
+    `updated_user` varchar(64)  null COMMENT '更新人',
+    `create_time` datetime  null COMMENT '创建时间',
+    `update_time` datetime  null COMMENT '更新时间',
+    PRIMARY KEY (`guid`),
+    CONSTRAINT `fore_custom_dashboard_chart_rel_custom_dashboard` FOREIGN KEY (`custom_dashboard`) REFERENCES `custom_dashboard` (`id`),
+    CONSTRAINT `fore_custom_dashboard_chart_rel_dashboard_chart` FOREIGN KEY (`dashboard_chart`) REFERENCES `custom_chart` (`guid`)
+)ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '自定义看板图表关系表';
+
+DROP TABLE IF EXISTS `custom_chart_series`;
+CREATE TABLE IF NOT EXISTS `custom_chart_series` (
+    `guid` varchar(64) NOT NULL,
+    `dashboard_chart` varchar(64) NOT NULL COMMENT '所属看板图表',
+    `endpoint` varchar(255) NOT NULL COMMENT '监控对象',
+    `service_group` varchar(64) NULL COMMENT '层级对象',
+    `endpoint_name` varchar(255) NULL COMMENT '层级对象',
+    `monitor_type` varchar(32) NULL COMMENT '监控类型',
+    `metric` varchar(128) NULL COMMENT '指标',
+    `color_group` varchar(32) NULL COMMENT '默认色系',
+    PRIMARY KEY (`guid`),
+    CONSTRAINT `fore_custom_chart_series_dashboard_chart` FOREIGN KEY (`dashboard_chart`) REFERENCES `custom_chart` (`guid`)
+)ENGINE= InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '自定义看板图表关系表';
+
+
+DROP TABLE IF EXISTS `custom_chart_permission`;
+CREATE TABLE IF NOT EXISTS `custom_chart_permission` (
+    `guid` varchar(64) NOT NULL,
+    `dashboard_chart` varchar(64) NOT NULL COMMENT '所属看板图表',
+    `role_id` varchar(64) NOT NULL COMMENT '角色名',
+    `permission` varchar(32)  NULL COMMENT '权限,mgmt/use',
+    PRIMARY KEY (`guid`),
+    CONSTRAINT `fore_custom_chart_permission_dashboard_chart` FOREIGN KEY (`dashboard_chart`) REFERENCES `custom_chart` (`guid`)
+)ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '公共图表权限表';
+
+
+DROP TABLE IF EXISTS `custom_chart_series_config`;
+CREATE TABLE IF NOT EXISTS `custom_chart_series_config` (
+    `guid` varchar(64) NOT NULL,
+    `dashboard_chart_config` varchar(64) NOT NULL COMMENT '图表配置表',
+    `tags` text  NULL COMMENT '标签',
+    `color` varchar(32)  NULL COMMENT '颜色',
+    `series_name` varchar(255)  NULL COMMENT '指标+对象+标签值',
+    PRIMARY KEY (`guid`),
+    CONSTRAINT `fore_custom_chart_series_config_dashboard_chart_config` FOREIGN KEY (`dashboard_chart_config`) REFERENCES `custom_chart_series` (`guid`)
+)ENGINE= InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '自定义图表配置表';
+
+DROP TABLE IF EXISTS `custom_chart_series_tag`;
+CREATE TABLE IF NOT EXISTS `custom_chart_series_tag` (
+    `guid` varchar(64) NOT NULL,
+    `dashboard_chart_config` varchar(64) NOT NULL COMMENT '图表配置表',
+    `name` varchar(64)  NOT NULL COMMENT '标签名',
+    PRIMARY KEY (`guid`),
+    CONSTRAINT `fore_custom_chart_series_tag_dashboard_chart_config` FOREIGN KEY (`dashboard_chart_config`) REFERENCES `custom_chart_series` (`guid`)
+)ENGINE = InnoDB DEFAULT CHARSET =utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '自定义图表标签配置表';
+
+
+DROP TABLE IF EXISTS `custom_chart_series_tagvalue`;
+CREATE TABLE IF NOT EXISTS `custom_chart_series_tagvalue` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `dashboard_chart_tag` varchar(64) NOT NULL COMMENT '所属图表标签',
+    `value` varchar(255)  NULL COMMENT '标签值',
+    PRIMARY KEY (`id`),
+    CONSTRAINT `fore_custom_chart_series_tagvalue_dashboard_chart_tag` FOREIGN KEY (`dashboard_chart_tag`) REFERENCES `custom_chart_series_tag` (`guid`)
+)ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '自定义图表标签值配置表';
+
+
+alter table custom_dashboard_role_rel MODIFY role_id varchar(64)  NOT NULL COMMENT '角色id';
+alter table metric add column log_metric_group varchar(64)  default NULL COMMENT '业务日志指标组配置Id';
+alter table metric add column create_time varchar(64)  default NULL COMMENT '创建时间';
+alter table metric add column create_user varchar(64)  default NULL COMMENT '创建人';
+alter table metric add column update_user varchar(64)  default NULL COMMENT '更新人';
+alter table custom_chart add column pie_type varchar(32)  default NULL COMMENT '饼图类型';
+alter table custom_chart_series add column pie_display_tag varchar(64)  default NULL COMMENT '饼图展示标签';
+alter table custom_chart_series add column endpoint_type varchar(64)  default NULL COMMENT '对象类型';
+alter table custom_chart_series add column metric_type varchar(64)  default NULL COMMENT '指标类型';
+alter table custom_chart_series add column metric_guid varchar(64)  default NULL COMMENT '指标Id';
+alter table custom_dashboard add column time_range int(11)  default -3600 COMMENT '时间段';
+alter table custom_dashboard add column refresh_week int(5)  default 10 COMMENT '定时刷新';
+
+update custom_dashboard_role_rel set role_id= (select name from role where id = role_id) where role_id in (select id from role);
+insert into main_dashboard (guid,role_id,custom_dashboard)(select uuid(),name,main_dashboard from `role` where main_dashboard > 0 and name!='' and main_dashboard in (select id from custom_dashboard));
+alter table log_keyword_config add column name varchar(64) default null;
+#@v2.0.8.1-end@;

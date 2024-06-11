@@ -15,11 +15,19 @@
   </ModalComponent>
   <Modal
     v-model="historyAlarmModel"
-    width="950"
+    width="1400"
     :mask-closable="false"
     :footer-hide="true"
+    :fullscreen="isfullscreen"
     :title="$t('button.historicalAlert')">
-    <Table height="400" width="930" :columns="historyAlarmPageConfig.table.tableEle" :data="historyAlarmPageConfig.table.tableData"></Table>
+    <div slot="header" class="custom-modal-header">
+      <span>
+        {{$t('alarmHistory')}}
+      </span>
+      <Icon v-if="isfullscreen" @click="fullscreenChange" class="fullscreen-icon" type="ios-contract" />
+      <Icon v-else @click="fullscreenChange" class="fullscreen-icon" type="ios-expand" />
+    </div>
+    <Table :columns="historyAlarmPageConfig.table.tableEle" :height="fullscreenTableHight" :data="historyAlarmPageConfig.table.tableData"></Table>
   </Modal>
   <ModalComponent :modelConfig="endpointRejectModel">
     <div slot="endpointReject">
@@ -33,7 +41,7 @@
       </div>
       <div v-if="endpointRejectModel.supportStep" class="marginbottom params-each">
         <label class="col-md-2 label-name">{{$t('m_collection_interval')}}:</label>
-        <Select filterable clearable v-model="endpointRejectModel.addRow.step" style="width:338px" :disabled="['ping','telnet','http','process'].includes(endpointRejectModel.addRow.type)">
+        <Select filterable clearable v-model="endpointRejectModel.addRow.step" style="width:338px" :disabled="['mysql','host','ping','telnet','http','process'].includes(endpointRejectModel.addRow.type)">
           <Option v-for="item in endpointRejectModel.stepOptions" :value="item.value" :key="item.value">
             {{item.label}}
           </Option>
@@ -218,9 +226,8 @@
             <Button
               @click="deleteMaintenanceWindow(index)"
               size="small"
-              style="background-color: #ff9900;border-color: #ff9900;"
               type="error"
-              icon="md-close"
+              icon="md-trash"
             ></Button>
             <TimePicker format="HH:mm" type="timerange" v-model="item.time_list" :clearable="false" style="width: 200px"></TimePicker>
             <Select v-model="item.weekday" multiple filterable style="width:200px">
@@ -234,7 +241,6 @@
           @click="addEmptyMaintenanceWindow"
           type="success"
           size="small"
-          style="background-color: #0080FF;border-color: #0080FF;"
           long
           >{{ $t('button.add') }}</Button
         >
@@ -259,6 +265,7 @@
 <script>
 import DataMonitor from '@/views/monitor-config/data-monitor'
 import { cycleOption, collectionInterval } from '@/assets/config/common-config'
+import isEmpty from 'lodash/isEmpty'
 import {
   interceptParams
 } from '@/assets/js/utils'
@@ -285,6 +292,21 @@ let tableEle = [{
     }
   }
 ]
+const alarmLevelMap = {
+  low: {
+    label: "m_low",
+    buttonType: "green"
+  },
+  medium: {
+    label: "m_medium",
+    buttonType: "gold"
+  },
+  high: {
+    label: "m_high",
+    buttonType: "red"
+  }
+}
+
 const btn = [{
     btn_name: 'button.thresholdManagement',
     btn_func: 'thresholdConfig'
@@ -303,7 +325,8 @@ const btn = [{
   },
   {
     btn_name: 'button.remove',
-    btn_func: 'deleteConfirmModal'
+    btn_func: 'deleteConfirmModal',
+    color: 'red'
   },
   {
     btn_name: 'button.logConfiguration',
@@ -334,6 +357,7 @@ export default {
   name: '',
   data() {
     return {
+      isfullscreen: false,
       isShowDataMonitor: false,
       dbEndpointId: '',
       dbMonitorData: [],
@@ -377,40 +401,68 @@ export default {
       historyAlarmPageConfig: {
         table: {
           tableData: [],
-          tableEle: [{
+          tableEle: [
+            {
+              title: this.$t('m_alarmName'),
+              key: 'alarm_name'
+            },
+            {
               title: this.$t('tableKey.status'),
               width: 80,
               key: 'status'
             },
             {
-              title: this.$t('tableKey.s_metric'),
-              width: 200,
-              key: 's_metric'
+              title: this.$t('menu.configuration'),
+              key: 'strategyGroupsInfo',
+              render: (h, params) => {
+                return (
+                  <div domPropsInnerHTML={params.row.strategyGroupsInfo}></div>
+                )
+              }
             },
             {
-              title: this.$t('tableKey.start_value'),
-              width: 120,
-              key: 'start_value'
+              title: this.$t('field.endpoint'),
+              key: 'endpoint'
             },
             {
-              title: this.$t('tableKey.s_cond'),
-              width: 90,
-              key: 's_cond'
-            },
-            {
-              title: this.$t('tableKey.s_last'),
-              width: 100,
-              key: 's_last'
+              title: this.$t('alarmContent'),
+              key: 'content'
             },
             {
               title: this.$t('tableKey.s_priority'),
-              width: 90,
-              key: 's_priority'
+              key: 's_priority',
+              width: 100,
+              render: (h, params) => {
+                return (
+                  <Tag color={alarmLevelMap[params.row.s_priority].buttonType}>{this.$t(alarmLevelMap[params.row.s_priority].label)}</Tag>
+                )
+              }
+            },
+            {
+              title: this.$t('field.metric'),
+              key: 'alarm_metric_list_join'
+            },
+            {
+              title: this.$t('field.threshold'),
+              key: 'alarm_detail',
+              width: 200,
+              ellipsis: true,
+              tooltip: true,
+              render: (h, params) => {
+                return (
+                  <Tooltip transfer={true} placement="bottom-start" max-width="300">
+                    <div slot="content">
+                      <div domPropsInnerHTML={params.row.alarm_detail}></div>
+                    </div>
+                    <div domPropsInnerHTML={params.row.alarm_detail}></div>
+                  </Tooltip>
+                )
+              }
             },
             {
               title: this.$t('tableKey.start'),
+              key: 'start_string',
               width: 120,
-              key: 'start_string'
             },
             {
               title: this.$t('tableKey.end'),
@@ -423,7 +475,17 @@ export default {
                 }
                 return h('span', res);
               }
-            }
+            },
+            {
+              title: this.$t('m_remark'),
+              key: 'custom_message',
+              width: 120,
+              render: (h, params) => {
+                return(
+                  <div>{params.row.custom_message || '-'}</div>
+                )
+              }
+            },
           ]
         }
       },
@@ -595,6 +657,11 @@ export default {
         key: 'guid',
         value: null
       },
+      fullscreenTableHight: document.documentElement.clientHeight - 300,
+      strategyNameMaps: {
+        "endpointGroup": "m_base_group",
+        "serviceGroup": "field.resourceLevel"
+      }
     }
   },
   mounted() {
@@ -634,6 +701,14 @@ export default {
     }
   },
   methods: {
+    fullscreenChange () {
+      this.isfullscreen = !this.isfullscreen
+      if (this.isfullscreen) {
+        this.fullscreenTableHight = document.documentElement.clientHeight - 160
+      } else {
+        this.fullscreenTableHight = document.documentElement.clientHeight - 300
+      }
+    },
     changeIp (val) {
       const process = this.endpointRejectModel.ipOptions.find(i => i.ip === val)
       this.endpointRejectModel.addRow.step = process.step
@@ -741,6 +816,7 @@ export default {
         data: this.maintenanceWindowModel.result
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.endpointManagement.maintenanceWindow.update, params, () => {
+        this.$Message.success(this.$t('tips.success'))
         this.$root.JQ('#maintenance_window_model').modal('hide')
       })
     },
@@ -916,9 +992,28 @@ export default {
         id: rowData.id
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.alarm.history, params, (responseData) => {
-        this.historyAlarmPageConfig.table.tableData = responseData[0].problem_list
+        this.historyAlarmPageConfig.table.tableData = this.changeResultData(responseData[0].problem_list)
       })
+      this.isfullscreen = false
       this.historyAlarmModel = true
+    },
+    changeResultData(dataList) {
+      if (dataList && !isEmpty(dataList)) {
+        dataList.forEach(item => {
+          item.strategyGroupsInfo = '-';
+          item.alarm_metric_list_join = '-';
+          if (!isEmpty(item.strategy_groups)) {
+            item.strategyGroupsInfo = item.strategy_groups.reduce((res, cur)=> {
+              return res + this.$t(this.strategyNameMaps[cur.type]) + ':' + cur.name + '<br/> '
+            }, '')
+          }
+
+          if (!isEmpty(item.alarm_metric_list)) {
+            item.alarm_metric_list_join = item.alarm_metric_list.join(',')
+          }
+        });
+      }
+      return dataList
     },
     endpointReject() {
       this.endpointRejectModel.isAdd = true
@@ -1145,5 +1240,18 @@ export default {
 
 .fa-plus-square-o {
   color: @color-blue;
+}
+
+.custom-modal-header {
+  line-height: 20px;
+  font-size: 16px;
+  color: #17233d;
+  font-weight: 500;
+  .fullscreen-icon {
+    float: right;
+    margin-right: 28px;
+    font-size: 18px;
+    cursor: pointer;
+  }
 }
 </style>

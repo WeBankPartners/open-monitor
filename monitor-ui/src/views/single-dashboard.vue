@@ -25,6 +25,7 @@
             type="datetimerange" 
             :value="viewCondition.dateRange" 
             format="yyyy-MM-dd HH:mm:ss" 
+            split-panels
             placement="bottom-start" 
             @on-change="datePick" 
             :placeholder="$t('placeholder.datePicker')" 
@@ -56,11 +57,9 @@
             class="radio-group-radio radio-group-optional"
             :style="item === activeGroup ? 'background: rgba(129, 179, 55, 0.6)' : 'background: #fff'"
           >
-            <Icon v-if="permission === 'edit'" @click="editGroup(item, index)" type="md-create" color="#2d8cf0" :size="20" />
             <span @click="selectGroup(item)" style="vertical-align: text-bottom;">
               {{ `${item}` }}
             </span>
-            <Icon v-if="permission === 'edit'" @click="removeGroup(item, index)" type="md-close" color="#ed4014" :size="20" />
           </div>
         </div>
       </div>
@@ -128,7 +127,7 @@ export default {
       viewCondition: {
         timeTnterval: -3600,
         dateRange: ['', ''],
-        autoRefresh: 5,
+        autoRefresh: 10,
       },
       disableTime: false,
       dataPick: dataPick,
