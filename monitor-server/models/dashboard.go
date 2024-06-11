@@ -33,6 +33,7 @@ type OptionModel struct {
 	Active         bool   `json:"active"`
 	OptionType     string `json:"type"`
 	OptionTypeName string `json:"option_type_name"`
+	AppObject      string `json:"app_object"`
 }
 
 type ButtonModel struct {
@@ -127,6 +128,7 @@ type EChartPieObj struct {
 	Name        string    `json:"name"`
 	Value       float64   `json:"value"`
 	SourceValue []float64 `json:"-"`
+	NameList    []string  `json:"-"`
 }
 
 type Chart struct {
@@ -210,45 +212,53 @@ type ChartConfigObj struct {
 }
 
 type PieChartConfigObj struct {
-	Id                    int    `form:"id" json:"id"`
-	Title                 string `form:"title" json:"title"`
-	Endpoint              string `form:"endpoint" json:"endpoint"`
-	Metric                string `form:"metric" json:"metric"`
-	PromQl                string `form:"prom_ql" json:"prom_ql"`
-	Start                 int64  `form:"start" json:"start"`
-	End                   int64  `form:"end" json:"end"`
-	TimeSecond            int64  `form:"time_second" json:"time_second"`
-	Aggregate             string `form:"agg" json:"agg"`
-	CompareFirstStart     string `form:"compare_first_start" json:"compare_first_start"`
-	CompareFirstEnd       string `form:"compare_first_end" json:"compare_first_end"`
-	CompareSecondStart    string `form:"compare_second_start" json:"compare_second_start"`
-	CompareSecondEnd      string `form:"compare_second_end" json:"compare_second_end"`
-	AppObject             string `form:"app_object" json:"app_object"`
-	AppObjectEndpointType string `form:"app_object_endpoint_type" json:"app_object_endpoint_type"`
-	PieMetricType         string `form:"pie_metric_type" json:"pie_metric_type"`
-	PieAggType            string `form:"pie_agg_type" json:"pie_agg_type"`
+	Id                    int       `form:"id" json:"id"`
+	Title                 string    `form:"title" json:"title"`
+	Endpoint              string    `form:"endpoint" json:"endpoint"`
+	Metric                string    `form:"metric" json:"metric"`
+	PromQl                string    `form:"prom_ql" json:"prom_ql"`
+	Start                 int64     `form:"start" json:"start"`
+	End                   int64     `form:"end" json:"end"`
+	TimeSecond            int64     `form:"time_second" json:"time_second"`
+	Aggregate             string    `form:"agg" json:"agg"`
+	CompareFirstStart     string    `form:"compare_first_start" json:"compare_first_start"`
+	CompareFirstEnd       string    `form:"compare_first_end" json:"compare_first_end"`
+	CompareSecondStart    string    `form:"compare_second_start" json:"compare_second_start"`
+	CompareSecondEnd      string    `form:"compare_second_end" json:"compare_second_end"`
+	AppObject             string    `form:"app_object" json:"app_object"`
+	AppObjectEndpointType string    `form:"app_object_endpoint_type" json:"app_object_endpoint_type"`
+	PieMetricType         string    `form:"pie_metric_type" json:"pie_metric_type"`
+	PieAggType            string    `form:"pie_agg_type" json:"pie_agg_type"`
+	CustomChartGuid       string    `json:"custom_chart_guid"`
+	MonitorType           string    `json:"monitorType"`
+	Tags                  []*TagDto `json:"tags"` // 标签
+	PieDisplayTag         string    `json:"pieDisplayTag"`
+	PieType               string    `json:"pieType"`
 }
 
 type ChartQueryParam struct {
-	ChartId    int                     `json:"chart_id"`
-	Title      string                  `json:"title"`
-	Unit       string                  `json:"unit"`
-	Start      int64                   `json:"start"`
-	End        int64                   `json:"end"`
-	TimeSecond int64                   `json:"time_second"`
-	Aggregate  string                  `json:"aggregate"`
-	AggStep    int64                   `json:"agg_step"`
-	Step       int                     `json:"step"`
-	Data       []*ChartQueryConfigObj  `json:"data"`
-	Compare    *ChartQueryCompareParam `json:"compare"`
+	ChartId         int                     `json:"chart_id"`
+	Title           string                  `json:"title"`
+	Unit            string                  `json:"unit"`
+	Start           int64                   `json:"start"`
+	End             int64                   `json:"end"`
+	TimeSecond      int64                   `json:"time_second"`
+	Aggregate       string                  `json:"aggregate"`
+	AggStep         int64                   `json:"agg_step"`
+	Step            int                     `json:"step"`
+	Data            []*ChartQueryConfigObj  `json:"data"`
+	Compare         *ChartQueryCompareParam `json:"compare"`
+	CustomChartGuid string                  `json:"custom_chart_guid"`
 }
 
 type ChartQueryConfigObj struct {
-	Endpoint     string `json:"endpoint"`
-	Metric       string `json:"metric"`
-	PromQl       string `json:"prom_ql"`
-	AppObject    string `json:"app_object"`
-	EndpointType string `json:"endpoint_type"`
+	Endpoint     string    `json:"endpoint"`
+	Metric       string    `json:"metric"`
+	PromQl       string    `json:"prom_ql"`
+	AppObject    string    `json:"app_object"`
+	EndpointType string    `json:"endpoint_type"`
+	MonitorType  string    `json:"monitorType"`
+	Tags         []*TagDto `json:"tags"`
 }
 
 type ChartQueryCompareParam struct {
@@ -350,6 +360,8 @@ type CustomDashboardTable struct {
 	CreateAt    time.Time `json:"create_at"`
 	UpdateAt    time.Time `json:"update_at"`
 	PanelGroups string    `json:"panel_groups"`
+	TimeRange   int       `json:"time_range"`   //时间范围
+	RefreshWeek int       `json:"refresh_week"` // 刷新周期
 }
 
 type CustomDashboardObj struct {
@@ -374,10 +386,11 @@ type CustomDashboardQuery struct {
 }
 
 type MainPageRoleQuery struct {
-	RoleName     string         `json:"role_name"`
-	MainPageId   int            `json:"main_page_id"`
-	MainPageName string         `json:"main_page_name"`
-	Options      []*OptionModel `json:"options"`
+	RoleName        string         `json:"role_name"`
+	DisplayRoleName string         `json:"display_role_name"`
+	MainPageId      int            `json:"main_page_id"`
+	MainPageName    string         `json:"main_page_name"`
+	Options         []*OptionModel `json:"options"`
 }
 
 type UpdateChartTitleParam struct {
@@ -455,4 +468,65 @@ type GetEndpointMetricParam struct {
 	MonitorType  string `json:"monitor_type" binding:"required"`
 	ServiceGroup string `json:"service_group"`
 	Workspace    string `json:"workspace"`
+}
+
+type CustomDashboardQueryParam struct {
+	Id         int      `json:"id"`
+	Name       string   `json:"name"`
+	MgmtRoles  []string `json:"mgmtRoles"`
+	UseRoles   []string `json:"useRoles"`
+	UpdateUser string   `json:"updateUser"`
+	Permission string   `json:"permission"` //  MGMT 表示管理权限
+	StartIndex int      `json:"startIndex"`
+	PageSize   int      `json:"pageSize"`
+}
+
+type CustomDashboardResultDto struct {
+	Id               int      `json:"id"`
+	Name             string   `json:"name"`
+	MgmtRoles        []string `json:"mgmtRoles"`
+	DisplayMgmtRoles []string `json:"displayMgmtRoles"`
+	UseRoles         []string `json:"useRoles"`
+	DisplayUseRoles  []string `json:"displayUseRoles"`
+	Permission       string   `json:"permission"`
+	CreateUser       string   `json:"createUser"`
+	UpdateUser       string   `json:"updateUser"`
+	MainPage         []string `json:"mainPage"`
+	UpdateTime       string   `json:"updateTime"`
+}
+
+type CustomDashboardDto struct {
+	Name           string            `json:"name"`
+	PanelGroupList []string          `json:"panelGroupList"`
+	Charts         []*CustomChartDto `json:"charts"`
+	MgmtRoles      []string          `json:"mgmtRoles"`
+	UseRoles       []string          `json:"useRoles"`
+	TimeRange      int               `json:"timeRange"`   //时间范围
+	RefreshWeek    int               `json:"refreshWeek"` // 刷新周期
+}
+
+type AddCustomDashboardParam struct {
+	Name      string   `json:"name"`
+	MgmtRoles []string `json:"mgmtRoles"`
+	UseRoles  []string `json:"useRoles"`
+}
+
+type UpdateCustomDashboardParam struct {
+	Id          int               `json:"id"`
+	Name        string            `json:"name"`
+	TimeRange   int               `json:"timeRange"`   //时间范围
+	RefreshWeek int               `json:"refreshWeek"` // 刷新周期
+	Charts      []*CustomChartDto `json:"charts"`
+	PanelGroups []string          `json:"panelGroups"`
+}
+
+type UpdateCustomDashboardPermissionParam struct {
+	Id        int      `json:"id"`
+	MgmtRoles []string `json:"mgmtRoles"`
+	UseRoles  []string `json:"useRoles"`
+}
+
+type SimpleCustomDashboardDto struct {
+	Id   int    `json:"id"`
+	Name string `json:"name"`
 }

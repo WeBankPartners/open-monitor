@@ -27,29 +27,49 @@ window.addOptions({
 })
 
 const implicitRoute = {
+  'monitorConfigIndex/endpointManagement': {
+    parentBreadcrumb: {'zh-CN': '对象', 'en-US': 'Object'},
+    childBreadcrumb: { 'zh-CN': '对象', 'en-US': 'Endpoint' }
+  },
   'monitorConfigIndex/groupManagement': {
-    parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
-    childBreadcrumb: { 'zh-CN': '组管理', 'en-US': 'Group' }
+    parentBreadcrumb: {'zh-CN': '对象', 'en-US': 'Object'},
+    childBreadcrumb: { 'zh-CN': '对象组', 'en-US': 'Object Group' }
   },
   'monitorConfigIndex/thresholdManagement': {
-    parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
-    childBreadcrumb: { 'zh-CN': '阀值', 'en-US': 'Threshold' }
+    parentBreadcrumb: {'zh-CN': '告警', 'en-US': 'Alarm'},
+    childBreadcrumb: { 'zh-CN': '指标阈值', 'en-US': 'Metric Threshold' }
   },
   'monitorConfigIndex/logManagement': {
-    parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
-    childBreadcrumb: { 'zh-CN': '关键字', 'en-US': 'Log' }
+    parentBreadcrumb: {'zh-CN': '告警', 'en-US': 'Alarm'},
+    childBreadcrumb: { 'zh-CN': '关键字', 'en-US': 'Keyword' }
   },
   'monitorConfigIndex/resourceLevel': {
-    parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
+    parentBreadcrumb: {'zh-CN': '对象', 'en-US': 'Object'},
     childBreadcrumb: { 'zh-CN': '层级对象', 'en-US': 'Resource Level' }
   },
   'monitorConfigIndex/exporter': {
-    parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
+    parentBreadcrumb: {'zh-CN': '其他', 'en-US': 'Other'},
     childBreadcrumb: { 'zh-CN': '采集器', 'en-US': 'Exporter'}
   },
+  'monitorConfigIndex/remoteSync': {
+    parentBreadcrumb: {'zh-CN': '其他', 'en-US': 'Other'},
+    childBreadcrumb: { 'zh-CN': '远程同步', 'en-US': 'Remote Sync'}
+  },
   'monitorConfigIndex/businessMonitor': {
-    parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
-    childBreadcrumb: { 'zh-CN': '业务监控', 'en-US': 'Business Monitor' }
+    parentBreadcrumb: {'zh-CN': '指标', 'en-US': 'Quota'},
+    childBreadcrumb: { 'zh-CN': '业务配置', 'en-US': 'Business Configuration' }
+  },
+  'monitorConfigIndex/logTemplate': {
+    parentBreadcrumb: {'zh-CN': '指标', 'en-US': 'Quota'},
+    childBreadcrumb: { 'zh-CN': '业务日志模板', 'en-US': 'Log Template' }
+  },
+  'monitorConfigIndex/metricConfig': {
+    parentBreadcrumb: {'zh-CN': '指标', 'en-US': 'Quota'},
+    childBreadcrumb: { 'zh-CN': '自定义', 'en-US': 'Customize' }
+  },
+  'monitorConfigIndex/groupBoard': {
+    parentBreadcrumb: {'zh-CN': '对象', 'en-US': 'Object'},
+    childBreadcrumb: { 'zh-CN': '对象看板', 'en-US': 'Object Board' }
   },
   'viewConfig': {
     parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
@@ -70,6 +90,14 @@ const implicitRoute = {
   'alarmHistory': {
     parentBreadcrumb: {'zh-CN': '监控', 'en-US': 'Monitor'},
     childBreadcrumb: { 'zh-CN': '历史告警', 'en-US': 'History Alarm' }
+  },
+  'viewConfigIndex/boardList': {
+    parentBreadcrumb: {'zh-CN': '看板', 'en-US': 'Board'},
+    childBreadcrumb: { 'zh-CN': '列表', 'en-US': 'List' }
+  },
+  'viewConfigIndex/allChartList': {
+    parentBreadcrumb: {'zh-CN': '图表库', 'en-US': 'Chart Library'},
+    childBreadcrumb: { 'zh-CN': '列表', 'en-US': 'List' }
   }
 }
 window.addImplicitRoute(implicitRoute)
@@ -87,7 +115,13 @@ import DelConfirm from '@/components/del-confirm/index.js'
 window.use(DelConfirm)
 
 import Dashboard from '@/views/dashboard'
-window.addHomepageComponent && window.addHomepageComponent({name:()=>{return window.vm.$t('menu.homepageName')},component: Dashboard})
+window.addHomepageComponent && window.addHomepageComponent({
+  code: 'MONITORING',
+  name: () => {
+    return window.vm.$t('menu.homepageName')
+  },
+  component: Dashboard
+})
 
 window.component('tdSlot', {
   render(createElement) {

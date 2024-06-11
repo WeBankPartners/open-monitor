@@ -1,41 +1,51 @@
 <template>
   <div class=" ">
     <section v-if="showManagement" style="margin-top: 16px;">
-      <Tag color="blue">{{$t('m_log_file')}}</Tag>
-      <button @click="add" type="button" class="btn btn-small success-btn" style="padding: 0 10px">
-        <i class="fa fa-plus"></i>
-        {{$t('button.add')}}
-      </button>
-      
-      <button type="button" style="margin-left:16px" class="btn-cancel-f" @click="exportData">{{$t("m_export")}}</button>
-      <div style="display: inline-block;margin-bottom: 3px;"> 
-        <Upload 
-        :action="uploadUrl" 
-        :show-upload-list="false"
-        :max-size="1000"
-        with-credentials
-        :headers="{'Authorization': token}"
-        :on-success="uploadSucess"
-        :on-error="uploadFailed">
-          <Button icon="ios-cloud-upload-outline">{{$t('m_import')}}</Button>
-        </Upload>
+      <div class="w-header" slot="title" style="display: flex;justify-content: space-between; margin-bottom: 12px;">
+        <div class="title">
+          {{$t('m_log_file')}}
+          <span class="underline"></span>
+        </div>
+        <div>
+          <div style="display: inline-block;position: relative;bottom: 48px;left: 66px;">
+            <Button
+              type="info"
+              class="btn-left"
+              @click="exportData"
+            >
+              <img src="../../assets/img/export.png" class="btn-img" alt="" />
+              {{ $t('m_export') }}
+            </Button>
+            <div style="display: inline-block;margin-bottom: 3px;">
+              <Upload 
+                :action="uploadUrl" 
+                :show-upload-list="false"
+                :max-size="1000"
+                with-credentials
+                :headers="{'Authorization': token}"
+                :on-success="uploadSucess"
+                :on-error="uploadFailed">
+                  <Button type="primary" class="btn-left">
+                    <img src="../../assets/img/import.png" class="btn-img" alt="" />
+                    {{ $t('m_import') }}
+                  </Button>
+              </Upload>
+            </div>
+          </div>
+          <Button type="success" class="btn-right" @click="add">
+            {{ $t('button.add') }}
+          </Button>
+        </div>
       </div>
 
       <PageTable :pageConfig="pageConfig">
         <div slot='tableExtend'>
-          <div style="margin:8px;border:1px solid #2db7f5">
-            <button @click="singleAddF(pageConfig.table.isExtend.parentData)" type="button" style="margin-top:8px;padding: 0 10px" class="btn btn-small success-btn">
-              <i class="fa fa-plus"></i>
-              {{$t('m_add_json_regular')}}
-            </button>
-            <extendTable :detailConfig="pageConfig.table.isExtend.detailConfig"></extendTable>
+          <div style="margin: 12px 0;float: right;">
+            <Button type="success" @click="addByCustom(pageConfig.table.isExtend.parentData)" style="margin: 0 12px;">{{ $t('m_use_custom') }}</Button>
+            <Button type="success" @click="addMetricConfig(pageConfig.table.isExtend.parentData)">{{ $t('m_use_template') }}</Button>
           </div>
-          <div style="margin:8px;border:1px solid #19be6b">
-            <button @click="addCustomMetric(pageConfig.table.isCustomMetricExtend.parentData)" type="button" style="margin-top:8px;padding: 0 10px" class="btn btn-small success-btn">
-              <i class="fa fa-plus"></i>
-              {{$t('m_add_metric_regular')}}
-            </button>
-            <extendTable :detailConfig="pageConfig.table.isCustomMetricExtend.detailConfig"></extendTable>
+          <div>
+            <extendTable :detailConfig="pageConfig.table.isExtend.detailConfig"></extendTable>
           </div>
         </div>
       </PageTable>
@@ -53,27 +63,26 @@
             <Option v-for="type in monitorTypeOptions" :key="type.value" :value="type.label">{{type.label}}</Option>
           </Select>
         </div>
-        <div v-if="addAndEditModal.isAdd" style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;width:680px">
+        <div v-if="addAndEditModal.isAdd" style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;width:680px;text-align: center;">
           <template v-for="(item, index) in addAndEditModal.pathOptions">
             <p :key="index + 5">
+              <Tooltip :content="$t('tableKey.logPath')" :delay="1000">
+                <Input v-model="item.path" style="width: 620px" :placeholder="$t('tableKey.logPath')" />
+              </Tooltip>
               <Button
                 v-if="addAndEditModal.isAdd"
                 @click="deleteItem('path', index)"
                 size="small"
-                style="background-color: #ff9900;border-color: #ff9900;"
                 type="error"
-                icon="md-close"
+                icon="md-trash"
               ></Button>
-              <Tooltip :content="$t('tableKey.logPath')" :delay="1000">
-                <Input v-model="item.path" style="width: 620px" :placeholder="$t('tableKey.logPath')" />
-              </Tooltip>
             </p>
           </template>
           <Button
             @click="addEmptyItem('path')"
             type="success"
             size="small"
-            style="background-color: #0080FF;border-color: #0080FF;width:650px"
+            style="width:650px"
             long
             >{{ $t('button.add') }}{{$t('tableKey.logPath')}}</Button
           >
@@ -82,16 +91,9 @@
           <span>{{$t('tableKey.path')}}:</span>
           <Input style="width: 640px" v-model="addAndEditModal.dataConfig.log_path" />
         </div>
-        <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;width:680px">
+        <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;width:680px;text-align: center;">
           <template v-for="(item, index) in addAndEditModal.dataConfig.endpoint_rel">
             <p :key="index + 'c'">
-              <Button
-                @click="deleteItem('relate', index)"
-                size="small"
-                style="background-color: #ff9900;border-color: #ff9900;"
-                type="error"
-                icon="md-close"
-              ></Button>
               <Tooltip :content="$t('m_type_object')" :delay="1000">
                 <Select v-model="item.target_endpoint" style="width: 310px" :placeholder="$t('m_type_object')">
                   <Option v-for="type in targetEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
@@ -102,13 +104,19 @@
                   <Option v-for="type in sourceEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
                 </Select>
               </Tooltip>
+              <Button
+                @click="deleteItem('relate', index)"
+                size="small"
+                type="error"
+                icon="md-trash"
+              ></Button>
             </p>
           </template>
           <Button
             @click="addEmptyItem('relate')"
             type="success"
             size="small"
-            style="background-color: #0080FF;border-color: #0080FF;width:650px"
+            style="width:650px"
             long
             >{{$t('addStringMap')}}</Button
           >
@@ -139,13 +147,6 @@
         <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;">
           <template v-for="(item, index) in ruleModelConfig.addRow.metric_list">
             <p :key="index + 3">
-              <Button
-                @click="deleteItem('metric_list', index)"
-                size="small"
-                style="background-color: #ff9900;border-color: #ff9900;"
-                type="error"
-                icon="md-close"
-              ></Button>
               <Tooltip :content="$t('m_key')" :delay="1000">
                 <Input v-model="item.json_key" style="width: 190px" :placeholder="$t('m_key') + ' e.g:[.*][.*]'" />
               </Tooltip>
@@ -162,17 +163,16 @@
               <Tooltip :content="$t('field.displayName')" :delay="1000">
                 <Input v-model="item.display_name" style="width: 160px" :placeholder="$t('field.displayName')" />
               </Tooltip>
+              <Button
+                @click="deleteItem('metric_list', index)"
+                size="small"
+                type="error"
+                icon="md-trash"
+              ></Button>
             </p>
             <div :key="index + 1" style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;text-align: end;">
               <template v-for="(stringMapItem, stringMapIndex) in item.string_map">
                 <p :key="stringMapIndex + 2">
-                  <Button
-                    @click="deleteItem('string_map', index)"
-                    size="small"
-                    style="background-color: #ff9900;border-color: #ff9900;"
-                    type="error"
-                    icon="md-close"
-                  ></Button>
                   <Tooltip :content="$t('tableKey.regular')" :delay="1000">
                     <Select v-model="stringMapItem.regulative" filterable clearable style="width:230px">
                       <Option v-for="regulation in regulationOption" :value="regulation.value" :key="regulation.value">{{
@@ -186,28 +186,29 @@
                   <Tooltip :content="$t('m_source_value')" :delay="1000">
                     <Input v-model="stringMapItem.source_value" style="width: 230px" :placeholder="$t('m_source_value')" />
                   </Tooltip>
+                  <Button
+                    @click="deleteItem('string_map', index)"
+                    size="small"
+                    type="error"
+                    icon="md-trash"
+                  ></Button>
                 </p>
               </template>
               <Button
                 @click="addEmptyItem('string_map', index)"
                 type="success"
                 size="small"
-                style="background-color: #19be6b;border-color: #19be6b;"
                 >{{ $t('addStringMap') }}</Button
               >
             </div>
-            
-
-
             <Divider :key="index + 'Q'" />
           </template>
           <Button
             @click="addEmptyItem('metric_list')"
             type="success"
             size="small"
-            style="background-color: #0080FF;border-color: #0080FF;"
             long
-            >{{ $t('addMetricConfig') }}</Button
+            >{{ $t('addMetricConfig') }}123</Button
           >
         </div>
       </div>
@@ -224,7 +225,7 @@
       @on-cancel="cancel">
       <div class="modal-body" style="padding:30px">
         <div style="text-align:center">
-          <p style="color: red">{{$t('delConfirm.tip')}}</p>
+          <p style="color: red">{{$t('delConfirm.tip')}}: {{ selectedData.log_path || ''}}</p>
         </div>
       </div>
     </Modal>
@@ -236,7 +237,7 @@
       @on-cancel="cancleDelRow">
       <div class="modal-body" style="padding:30px">
         <div style="text-align:center">
-          <p style="color: red">{{$t('delConfirm.tip')}}</p>
+          <p style="color: red">{{$t('delConfirm.tip')}}: {{ selectedData.name || selectedData.display_name || '' }}</p>
         </div>
       </div>
     </Modal>
@@ -260,13 +261,6 @@
           <div style="margin: 4px 12px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
             <template v-for="(item, index) in customMetricsModelConfig.addRow.string_map">
               <p :key="index">
-                <Button
-                  @click="deleteCustomMetric('string_map', index)"
-                  size="small"
-                  style="background-color: #ff9900;border-color: #ff9900;"
-                  type="error"
-                  icon="md-close"
-                ></Button>
                 <Tooltip :content="$t('tableKey.regular')" :delay="1000">
                   <Select v-model="item.regulative" filterable clearable style="width:150px">
                     <Option v-for="regulation in regulationOption" :value="regulation.value" :key="regulation.value">{{
@@ -280,13 +274,18 @@
                 <Tooltip :content="$t('m_source_value')" :delay="1000">
                   <Input v-model="item.source_value" style="width: 250px" :placeholder="$t('m_source_value')" />
                 </Tooltip>
+                <Button
+                  @click="deleteCustomMetric('string_map', index)"
+                  size="small"
+                  type="error"
+                  icon="md-trash"
+                ></Button>
               </p>
             </template>
             <Button
               @click="addCustomMetricEmpty('string_map')"
               type="success"
               size="small"
-              style="background-color: #0080FF;border-color: #0080FF;"
               long
               >{{ $t('addStringMap') }}</Button
             >
@@ -297,26 +296,24 @@
           <div style="margin: 4px 12px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
             <template v-for="(item, index) in customMetricsModelConfig.addRow.tag_config">
               <p :key="index">
-                <Button
-                  @click="deleteCustomMetric('tag_config', index)"
-                  size="small"
-                  style="background-color: #ff9900;border-color: #ff9900;"
-                  type="error"
-                  icon="md-close"
-                ></Button>
                 <Tooltip :content="$t('tableKey.tags')" :delay="1000">
                   <Input v-model="item.key" style="width: 250px" :placeholder="$t('tableKey.tags')" />
                 </Tooltip>
                 <Tooltip :content="$t('tableKey.regular')" :delay="1000">
                   <Input v-model="item.regular" style="width: 400px" :placeholder="$t('tableKey.regular')" />
                 </Tooltip>
+                <Button
+                  @click="deleteCustomMetric('tag_config', index)"
+                  size="small"
+                  type="error"
+                  icon="md-trash"
+                ></Button>
               </p>
             </template>
             <Button
               @click="addCustomMetricEmpty('tag_config')"
               type="success"
               size="small"
-              style="background-color: #0080FF;border-color: #0080FF;"
               long
               >{{ $t('m_add_tags') }}</Button
             >
@@ -326,12 +323,16 @@
     </ModalComponent>
     <!-- DB config -->
     <section v-if="showManagement" style="margin-top: 16px;">
-      <Tag color="blue">{{$t('m_db')}}</Tag>
-      <button @click="addDb" type="button" class="btn btn-small success-btn" style="padding: 0 10px">
-        <i class="fa fa-plus"></i>
-        {{$t('button.add')}}
-      </button>
-      <PageTable :pageConfig="pageDbConfig"></PageTable>
+      <div class="w-header" slot="title" style="display: flex;justify-content: space-between;">
+        <div class="title">
+          {{$t('m_db')}}
+          <span class="underline"></span>
+        </div>
+        <Button type="success" class="btn-right" @click="addDb" style="margin: 8px 0">
+          {{ $t('button.add') }}
+        </Button>
+      </div>
+      <PageTable :pageConfig="pageDbConfig" style="margin-top:8px"></PageTable>
     </section>
     <Modal
       v-model="dbModelConfig.isShow"
@@ -350,22 +351,20 @@
           <FormItem label="SQL">
             <Input v-model="dbModelConfig.addRow.metric_sql" type="textarea" style="width:520px" />
           </FormItem>
-          <FormItem :label="$t('field.type')">
+          <FormItem :label="$t('field.type')" style="margin-top: 12px;">
             <Select v-model="dbModelConfig.addRow.monitor_type" @on-change="getEndpoint(dbModelConfig.addRow.monitor_type, 'mysql')" style="width: 520px">
               <Option v-for="type in monitorTypeOptions" :key="type.value" :value="type.label">{{type.label}}</Option>
             </Select>
           </FormItem>
+          <FormItem :label="$t('m_collection_interval')">
+            <Select v-model="dbModelConfig.addRow.step" style="width: 520px" transfer>
+              <Option v-for="item in stepOptions" :key="item" :value="item">{{item}}S</Option>
+            </Select>
+          </FormItem>
         </Form>
-        <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
+        <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;text-align: center;">
           <template v-for="(item, index) in dbModelConfig.addRow.endpoint_rel">
             <p :key="index + 'S'">
-              <Button
-                @click="deleteItem('endpoint_rel', index)"
-                size="small"
-                style="background-color: #ff9900;border-color: #ff9900;"
-                type="error"
-                icon="md-close"
-              ></Button>
               <Tooltip :content="$t('m_db')" :delay="1000">
                 <Select v-model="item.target_endpoint" style="width: 290px" :placeholder="$t('m_target_value')">
                   <Option v-for="type in targetEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
@@ -376,14 +375,20 @@
                   <Option v-for="type in sourceEndpoints" :key="type.guid" :value="type.guid">{{type.display_name}}</Option>
                 </Select>
               </Tooltip>
+              <Button
+                @click="deleteItem('endpoint_rel', index)"
+                size="small"
+                type="error"
+                icon="md-trash"
+              ></Button>
             </p>
           </template>
           <Button
             @click="addEmptyItem('endpoint_rel')"
             type="success"
             size="small"
-            style="background-color: #0080FF;border-color: #0080FF;"
             long
+            style="width:610px"
             >{{ $t('addMetricConfig') }}</Button
           >
         </div>
@@ -416,6 +421,31 @@
         </div>
       </div>
     </Modal>
+
+    <!-- 新增指标配置 -->
+    <Modal v-model="showTemplateSelect" :title="$t('m_select_template')" :mask-closable="false">
+      <Form :label-width="120">
+        <FormItem :label="$t('m_log_template')">
+          <Select style="width: 80%" v-model="selectedTemp" filterable ref="selectRef" @on-open-change="clearQuery">
+            <OptionGroup :label="$t('m_standard_json')">
+              <Option v-for="item in templateList.json_list" :value="item.guid" :key="item.guid">{{ item.name }}</Option>
+            </OptionGroup>
+            <OptionGroup :label="$t('m_standard_regex')">
+              <Option v-for="item in templateList.regular_list" :value="item.guid" :key="item.guid">{{ item.name }}</Option>
+            </OptionGroup>
+            <!-- <OptionGroup :label="$t('m_custom_regex')">
+              <Option value="customGuid" key="customGuid">{{ $t('m_custom_regex')}}</Option>
+            </OptionGroup> -->
+          </Select>
+        </FormItem>
+      </Form>
+      <template #footer>
+        <Button @click="showTemplateSelect = false">{{ $t('button.cancel') }}</Button>
+        <Button @click="okTempSelect" :disabled="selectedTemp === ''" type="primary">{{ $t('button.confirm') }}</Button>
+      </template>
+    </Modal>
+    <CustomRegex ref="customRegexRef" @reloadMetricData="reloadMetricData"></CustomRegex>
+    <BusinessMonitorGroupConfig ref="businessMonitorGroupConfigRef" @reloadMetricData="reloadMetricData"></BusinessMonitorGroupConfig>
   </div>
 </template>
 
@@ -423,6 +453,8 @@
 import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
 import {baseURL_config} from '@/assets/js/baseURL'
 import RegTest from '@/components/reg-test'
+import CustomRegex from '@/views/monitor-config/log-template-config/custom-regex.vue'
+import BusinessMonitorGroupConfig from '@/views/monitor-config/business-monitor-group-config.vue'
 import extendTable from '@/components/table-page/extend-table'
 import axios from 'axios'
 let tableEle = [
@@ -431,23 +463,30 @@ let tableEle = [
 ]
 const btn = [
   {btn_name: 'button.edit', btn_func: 'editF'},
-  {btn_name: 'button.remove', btn_func: 'deleteConfirmModal'},
-  {btn_name: 'm_import', btn_func: 'importConfig'},
+  {btn_name: 'button.remove', btn_func: 'deleteConfirmModal', color: 'red'},
+  // {btn_name: 'm_import', btn_func: 'importConfig'}
 ]
 
 let tableDbEle = [
-  {title: 'field.displayName', value: 'display_name', display: true},
-  {title: 'field.metric', value: 'metric', display: true},
+  {title: 'm_metric_name', value: 'display_name', display: true},
+  {title: 'm_metric_key', value: 'metric', display: true},
   {title: 'field.type', value: 'monitor_type', display: true}
 ]
 const btnDb = [
   {btn_name: 'button.edit', btn_func: 'editDbItem'},
-  {btn_name: 'button.remove', btn_func: 'deleteDbConfirmModal'}
+  {btn_name: 'button.remove', btn_func: 'deleteDbConfirmModal', color: 'red'}
 ]
 export default {
   name: '',
   data () {
     return {
+      showTemplateSelect: false,
+      selectedTemp: '', // 新增选中的模版
+      parentGuid: '', // 新增在该数据下
+      templateList: {
+        json_list: [],
+        regular_list: []
+      },
       token: null,
       MODALHEIGHT: 300,
       isShowWarning: false,
@@ -471,32 +510,14 @@ export default {
               isExtendF: true,
               title: '',
               config: [
-                {title: 'tableKey.regular', value: 'json_regular', display: true},
-                {title: 'tableKey.tags', value: 'tags', display: true},
+                {title: 'm_configuration_name', value: 'name', display: true},
+                {title: 'm_associated_template', value: 'log_monitor_template_name', display: true},
+                {title: 'm_metric_config_type', value: 'log_type_display', display: true},
+                {title: 'm_updatedBy', value: 'update_user', display: true},
+                {title: 'title.updateTime', value: 'update_time', display: true},
                 {title: 'table.action',btn:[
                   {btn_name: 'button.edit', btn_func: 'editRuleItem'},
-                  {btn_name: 'button.remove', btn_func: 'delRuleconfirmModal'}
-                ]}
-              ],
-              data: [1],
-              scales: ['25%', '20%', '15%', '20%', '20%']
-            }]
-          },
-          isCustomMetricExtend: {
-            parentData: null,
-            func: 'getExtendInfo',
-            data: {},
-            slot: 'rulesTableExtend',
-            detailConfig: [{
-              isExtendF: true,
-              title: '',
-              config: [
-                {title: 'tableKey.regular', value: 'regular', display: true},
-                {title: 'field.metric', value: 'metric', display: true},
-                {title: 'field.aggType', value: 'agg_type', display: true},
-                {title: 'table.action',btn:[
-                  {btn_name: 'button.edit', btn_func: 'editCustomMetricItem'},
-                  {btn_name: 'button.remove', btn_func: 'delCustomMetricConfirmModal'}
+                  {btn_name: 'button.remove', btn_func: 'delRuleconfirmModal', color: 'red'}
                 ]}
               ],
               data: [1],
@@ -510,7 +531,7 @@ export default {
         isAdd: false,
         dataConfig: {
           service_group: '',
-          log_path: [],
+          log_path: '',
           monitor_type: '',
           endpoint_rel: []
         },
@@ -536,7 +557,7 @@ export default {
         },
         aggOption: ['sum', 'avg', 'count', 'max', 'min']
       },
-      selectedData: null,
+      selectedData: {},
       selectedIndex: null,
       isShowWarningDelete: false,
       deleteType: '',
@@ -594,6 +615,7 @@ export default {
           metric: '',
           display_name: '',
           monitor_type: '',
+          step: 10,
           endpoint_rel: []
         }
       },
@@ -604,8 +626,14 @@ export default {
         {label: 'http', value: 'http'},
         {label: 'mysql', value: 'mysql'}
       ],
+      stepOptions: [10, 30, 60, 300, 600],
       isShowGroupMetricUpload: false,
-      groupMetricId: ''
+      groupMetricId: '',
+      typeToName: { // 模版枚举
+        custom: this.$t('m_custom_regex'),
+        regular: this.$t('m_standard_regex'),
+        json: this.$t('m_standard_json'),
+      }
     }
   },
   computed: {
@@ -747,7 +775,7 @@ export default {
       }
       this.customMetricsModelConfig.addRow[type].push({
         source_value: '',
-        regulative: 1,
+        regulative: 0,
         target_value: ''
       })
     },
@@ -787,10 +815,16 @@ export default {
       this.deleteType = 'custom_metrics'
     },
     editRuleItem (rowData) {
-      this.cancelReg()
-      this.ruleModelConfig.isAdd = false
-      this.ruleModelConfig.addRow = JSON.parse(JSON.stringify(rowData))
-      this.ruleModelConfig.isShow = true
+      // this.cancelReg()
+      // this.ruleModelConfig.isAdd = false
+      // this.ruleModelConfig.addRow = JSON.parse(JSON.stringify(rowData))
+      // this.ruleModelConfig.isShow = true
+
+      if (rowData.log_type === 'custom') {
+        this.$refs.customRegexRef.loadPage('edit', '', rowData.log_metric_monitor, rowData.guid)
+      } else {
+        this.$refs.businessMonitorGroupConfigRef.loadPage('edit', rowData.log_monitor_template, rowData.log_metric_monitor, rowData.guid)
+      }
     },
     deleteDbConfirmModal (rowData) {
       this.selectedData = rowData
@@ -823,7 +857,7 @@ export default {
       this.isShowWarningDelete = false
     },
     delRuleItem (rowData) {
-      const api = this.$root.apiCenter.logMetricJson + '/' + rowData.guid
+      const api = this.$root.apiCenter.deleteLogMetricGroup + rowData.guid
       this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', api, '', () => {
         this.$Message.success(this.$t('tips.success'))
         this.isShowWarningDelete = false
@@ -853,8 +887,10 @@ export default {
     reloadMetricData (guid) {
       const path = `${this.$root.apiCenter.getLogMetricByPath}/${guid}`
       this.$root.$httpRequestEntrance.httpRequestEntrance("GET", path, {}, (responseData) => {
-        this.pageConfig.table.isExtend.detailConfig[0].data = responseData.json_config_list
-        this.pageConfig.table.isCustomMetricExtend.detailConfig[0].data = responseData.metric_config_list
+        this.pageConfig.table.isExtend.detailConfig[0].data = responseData.metric_groups.map(group => {
+        group.log_type_display = this.typeToName[group.log_type]
+        return group
+      })
       })
     },
     singleAddF (rowData) {
@@ -865,13 +901,15 @@ export default {
       this.ruleModelConfig.isShow = true
     },
     getExtendInfo(item){
-      item.json_config_list.forEach(xx => xx.pId = item.guid)
-      this.pageConfig.table.isExtend.detailConfig[0].data = item.json_config_list
+      const path = `${this.$root.apiCenter.getLogMetricByPath}/${item.guid}`
+      this.$root.$httpRequestEntrance.httpRequestEntrance("GET", path, {}, (responseData) => {
+        this.pageConfig.table.isExtend.detailConfig[0].data = responseData.metric_groups.map(group => {
+          group.log_type_display = this.typeToName[group.log_type]
+          return group
+        })
+        this.pageConfig.table.isExtend.parentData = item
+      })
       this.pageConfig.table.isExtend.parentData = item
-
-      item.metric_config_list.forEach(xx => xx.pId = item.guid)
-      this.pageConfig.table.isCustomMetricExtend.detailConfig[0].data = item.metric_config_list
-      this.pageConfig.table.isCustomMetricExtend.parentData = item
     },
     deleteConfirmModal (rowData) {
       this.selectedData = rowData
@@ -965,7 +1003,7 @@ export default {
         case 'string_map': {
           this.ruleModelConfig.addRow.metric_list[index][type].push({
             source_value: '',
-            regulative: 1,
+            regulative: 0,
             target_value: ''
           })
           break
@@ -1053,11 +1091,43 @@ export default {
         this.$root.$store.commit('changeTableExtendActive', -1)
       }, {isNeedloading:true})
       this.getDbDetail(targrtId)
-    }
+    },
+    // 新增指标配置--开始
+    addMetricConfig (item) {
+      this.parentGuid = item.guid
+      this.selectedTemp = ''
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.logTemplateTableData, {}, (resp) => {
+        this.templateList.json_list = resp.json_list
+        this.templateList.regular_list = resp.regular_list
+        this.showTemplateSelect = true
+      })
+    },
+    // 新增自定指标指标
+    addByCustom (item) {
+      this.selectedTemp = 'customGuid'
+      this.parentGuid = item.guid
+      this.okTempSelect()
+    },
+    okTempSelect () {
+      this.showTemplateSelect = false
+      if (this.selectedTemp === 'customGuid') {
+        this.$refs.customRegexRef.loadPage('add', '', this.parentGuid, '')
+      } else {
+        const tmpList = this.templateList.json_list.concat(this.templateList.regular_list);
+        const findTarget = tmpList.find(tmp => tmp.guid === this.selectedTemp)
+        this.$refs.businessMonitorGroupConfigRef.loadPage('add', findTarget.guid, this.parentGuid, '')
+      }
+    },
+    clearQuery () {
+      this.$refs.selectRef.query = ''
+    },
+    // 新增指标配置--结束
   },
   components: {
     extendTable,
-    RegTest
+    RegTest,
+    CustomRegex,
+    BusinessMonitorGroupConfig
   },
 }
 </script>
@@ -1070,5 +1140,32 @@ export default {
   color: #fff;
   background-color: #19be6b;
   border-color: #19be6b;
+}
+.btn-img {
+  width: 16px;
+  vertical-align: middle;
+}
+.btn-left {
+  margin-left: 8px;
+}
+.w-header {
+  display: flex;
+  align-items: center;
+  .title {
+    font-size: 16px;
+    font-weight: bold;
+    margin: 0 10px;
+    .underline {
+      display: block;
+      margin-top: -10px;
+      margin-left: -6px;
+      width: 100%;
+      padding: 0 6px;
+      height: 12px;
+      border-radius: 12px;
+      background-color: #c6eafe;
+      box-sizing: content-box;
+    }
+  }
 }
 </style>
