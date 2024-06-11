@@ -22,6 +22,8 @@ type QueryMonitorData struct {
 	CustomDashboard  bool      `json:"custom_dashboard"`
 	PieMetricType    string    `json:"pie_metric_type"`
 	PieAggType       string    `json:"pie_agg_type"`
+	Tags             []string  `json:"tags"`
+	PieDisplayTag    string    `json:"pie_display_tag"`
 }
 
 type PrometheusParam struct {
@@ -102,4 +104,9 @@ func (s PromMapSort) String() string {
 		name = fmt.Sprintf("%s{%s}", name, tags)
 	}
 	return name
+}
+
+type PromSeriesResponse struct {
+	Status string              `json:"status"`
+	Data   []map[string]string `json:"data"`
 }

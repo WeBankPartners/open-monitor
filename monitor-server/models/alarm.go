@@ -1,6 +1,8 @@
 package models
 
-import "time"
+import (
+	"time"
+)
 
 type GrpTable struct {
 	Id           int       `json:"id"`
@@ -66,6 +68,7 @@ type AlarmTable struct {
 	EndpointTags  string    `json:"endpoint_tags"`
 	AlarmStrategy string    `json:"alarm_strategy"`
 	NotifyId      string    `json:"notify_id"`
+	AlarmName     string    `json:"alarm_name"`
 }
 
 type SortAlarmList []*AlarmTable
@@ -84,45 +87,54 @@ func (a SortAlarmList) Swap(i, j int) {
 
 type AlarmHandleObj struct {
 	AlarmTable
-	NotifyEnable int `json:"notify_enable"`
-	NotifyDelay  int `json:"notify_delay"`
+	NotifyEnable          int    `json:"notify_enable"`
+	NotifyDelay           int    `json:"notify_delay"`
+	AlarmConditionGuid    string `json:"alarm_condition_guid"`
+	MultipleConditionFlag bool   `json:"multiple_condition_flag"`
+	AlarmConditionCrcHash string `json:"alarm_condition_crc_hash"`
+	CurIndex              int    `json:"cur_index"`
+	AlarmDetail           string `json:"alarm_detail"`
 }
 
 type AlarmProblemQuery struct {
-	Id                 int       `json:"id"`
-	StrategyId         int       `json:"strategy_id"`
-	Endpoint           string    `json:"endpoint"`
-	Status             string    `json:"status"`
-	SMetric            string    `json:"s_metric"`
-	SExpr              string    `json:"s_expr"`
-	SCond              string    `json:"s_cond"`
-	SLast              string    `json:"s_last"`
-	SPriority          string    `json:"s_priority"`
-	Content            string    `json:"content"`
-	Tags               string    `json:"tags"`
-	StartValue         float64   `json:"start_value"`
-	Start              time.Time `json:"start"`
-	StartString        string    `json:"start_string"`
-	EndValue           float64   `json:"end_value"`
-	End                time.Time `json:"end"`
-	EndString          string    `json:"end_string"`
-	IsLogMonitor       bool      `json:"is_log_monitor"`
-	Path               string    `json:"path"`
-	Keyword            string    `json:"keyword"`
-	IsCustom           bool      `json:"is_custom"`
-	CloseType          string    `json:"close_type"`
-	CloseMsg           string    `json:"close_msg"`
-	CloseUser          string    `json:"close_user"`
-	CustomMessage      string    `json:"custom_message"`
-	EndpointTags       string    `json:"endpoint_tags"`
-	AlarmStrategy      string    `json:"alarm_strategy"`
-	Title              string    `json:"title"`
-	SystemId           string    `json:"system_id"`
-	NotifyId           string    `json:"notify_id"`
-	NotifyMessage      string    `json:"notify_message"`
-	NotifyCallbackName string    `json:"notify_callback_name"`
-	NotifyStatus       string    `json:"notify_status"`
-	AlarmObjName       string    `json:"alarm_obj_name"`
+	Id                 int                   `json:"id"`
+	StrategyId         int                   `json:"strategy_id"`
+	Endpoint           string                `json:"endpoint"`
+	Status             string                `json:"status"`
+	SMetric            string                `json:"s_metric"`
+	SExpr              string                `json:"s_expr"`
+	SCond              string                `json:"s_cond"`
+	SLast              string                `json:"s_last"`
+	SPriority          string                `json:"s_priority"`
+	Content            string                `json:"content"`
+	Tags               string                `json:"tags"`
+	StartValue         float64               `json:"start_value"`
+	Start              time.Time             `json:"start"`
+	StartString        string                `json:"start_string"`
+	EndValue           float64               `json:"end_value"`
+	End                time.Time             `json:"end"`
+	EndString          string                `json:"end_string"`
+	IsLogMonitor       bool                  `json:"is_log_monitor"`
+	Path               string                `json:"path"`
+	Keyword            string                `json:"keyword"`
+	IsCustom           bool                  `json:"is_custom"`
+	CloseType          string                `json:"close_type"`
+	CloseMsg           string                `json:"close_msg"`
+	CloseUser          string                `json:"close_user"`
+	CustomMessage      string                `json:"custom_message"`
+	EndpointTags       string                `json:"endpoint_tags"`
+	AlarmStrategy      string                `json:"alarm_strategy"`
+	Title              string                `json:"title"`
+	SystemId           string                `json:"system_id"`
+	NotifyId           string                `json:"notify_id"`
+	NotifyMessage      string                `json:"notify_message"`
+	NotifyCallbackName string                `json:"notify_callback_name"`
+	NotifyStatus       string                `json:"notify_status"`
+	AlarmObjName       string                `json:"alarm_obj_name"`
+	AlarmName          string                `json:"alarm_name"`
+	AlarmDetail        string                `json:"alarm_detail"`
+	AlarmMetricList    []string              `json:"alarm_metric_list"`
+	StrategyGroups     []*AlarmStrategyGroup `json:"strategy_groups"`
 }
 
 type UpdateAlarmCustomMessageDto struct {
@@ -453,10 +465,12 @@ type LogMonitorTags struct {
 }
 
 type QueryProblemAlarmDto struct {
-	Endpoint string    `json:"endpoint"`
-	Metric   string    `json:"metric"`
-	Priority string    `json:"priority"`
-	Page     *PageInfo `json:"page"`
+	Endpoint          string    `json:"endpoint"`
+	Metric            string    `json:"metric"`
+	Priority          string    `json:"priority"`
+	Page              *PageInfo `json:"page"`
+	AlarmName         string    `json:"alarm_name"`
+	CustomDashboardId int       `json:"custom_dashboard_id"`
 }
 
 type QueryHistoryAlarmParam struct {
@@ -555,4 +569,53 @@ type AlarmCloseParam struct {
 	Custom   bool   `json:"custom"`
 	Metric   string `json:"metric"`
 	Priority string `json:"priority"`
+}
+
+type AlarmCondition struct {
+	Guid          string    `json:"guid" xorm:"guid"`                    // 唯一标识
+	AlarmStrategy string    `json:"alarmStrategy" xorm:"alarm_strategy"` // 告警配置表
+	Endpoint      string    `json:"endpoint" xorm:"endpoint"`            // 监控对象
+	Status        string    `json:"status" xorm:"status"`                // 状态
+	Metric        string    `json:"metric" xorm:"metric"`                // 指标
+	Expr          string    `json:"expr" xorm:"expr"`                    // 指标表达式
+	Cond          string    `json:"cond" xorm:"cond"`                    // 条件
+	Last          string    `json:"last" xorm:"last"`                    // 持续时间
+	Priority      string    `json:"priority" xorm:"priority"`            // 级别
+	CrcHash       string    `json:"crcHash" xorm:"crc_hash"`             // 告警配置hash
+	Tags          string    `json:"tags" xorm:"tags"`                    // 告警标签
+	StartValue    float64   `json:"startValue" xorm:"start_value"`       // 异常值
+	Start         time.Time `json:"start" xorm:"start"`                  // 异常时间
+	EndValue      float64   `json:"endValue" xorm:"end_value"`           // 恢复值
+	End           time.Time `json:"end" xorm:"end"`                      // 恢复时间
+	UniqueHash    string    `json:"uniqueHash" xorm:"unique_hash"`       // 告警唯一hash
+	Key           int       `json:"key" xorm:"key"`
+}
+
+type AlarmConditionRel struct {
+	Id             int    `json:"id" xorm:"id"`
+	Alarm          int    `json:"alarm" xorm:"alarm"`                    // 告警id
+	AlarmCondition string `json:"alarmCondition" xorm:"alarm_condition"` // 条件id
+}
+
+type AlarmDetailData struct {
+	Metric     string    `json:"metric" xorm:"metric"`          // 指标
+	Cond       string    `json:"cond" xorm:"cond"`              // 条件
+	Last       string    `json:"last" xorm:"last"`              // 持续时间
+	StartValue float64   `json:"startValue" xorm:"start_value"` // 异常值
+	Start      time.Time `json:"start" xorm:"start"`            // 异常时间
+	EndValue   float64   `json:"endValue" xorm:"end_value"`     // 恢复值
+	End        time.Time `json:"end" xorm:"end"`                // 恢复时间
+	MetricName string    `json:"metric_name" xorm:"metric_name"`
+	Tags       string    `json:"tags" xorm:"tags"`
+}
+
+type AlarmStrategyGroup struct {
+	Type string `json:"type"`
+	Name string `json:"name"`
+}
+
+type StrategyGroupRow struct {
+	Guid          string `xorm:"guid"`
+	EndpointGroup string `xorm:"endpoint_group"`
+	ServiceGroup  string `xorm:"service_group"`
 }
