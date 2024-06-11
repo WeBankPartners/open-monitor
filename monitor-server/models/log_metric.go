@@ -195,6 +195,8 @@ type LogMetricGroupWithTemplate struct {
 	CodeStringMap          []*LogMetricStringMapTable `json:"code_string_map"`
 	RetCodeStringMap       []*LogMetricStringMapTable `json:"retcode_string_map"`
 	MetricPrefixCode       string                     `json:"metric_prefix_code"`
+	ServiceGroup           string                     `json:"service_group"`
+	MonitorType            string                     `json:"monitor_type"`
 }
 
 type LogMetricGroupNeObj struct {
