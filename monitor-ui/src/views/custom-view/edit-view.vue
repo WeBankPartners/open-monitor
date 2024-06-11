@@ -105,13 +105,13 @@
           </Form>
         </div>
       </div>
-
       <div class="data-config">
-        <div class="use-underline-title mb-2">
-          {{this.$t('menu.metricConfiguration')}}
-          <span class="underline"></span>
+        <div class="w-header" slot="title">
+          <div class="title">
+            {{this.$t('menu.metricConfiguration')}}
+            <span class="underline"></span>
+          </div>
         </div>
-
         <Table
           class="config-table"
           size="small"
@@ -129,7 +129,7 @@
             class="mr-3"
             style="width: 260px"
             ref="select"
-            :placeholder="$t('m_endpoint')"
+            :placeholder="$t('m_layer_endpoint')"
             @on-query-change="(e) => {this.getEndpointSearch = e; this.debounceGetEndpointList()}"
             @on-change="searchTypeByEndpoint"
             >
@@ -144,7 +144,7 @@
             filterable
             class="mr-3"
             style="width: 150px"
-            :placeholder="$t('m_type')"
+            :placeholder="$t('m_endpoint_type')"
             @on-change="searchMetricByType"
             >
             <Option v-for="item in monitorTypeOptions" :value="item" :label="item" :key="item">
@@ -190,7 +190,7 @@
             :disabled="!endpointValue || !monitorType || !metricGuid"
             @click="addConfiguration"
             type="success"
-          >{{$t('m_add_configuration')}}</Button>
+          >{{$t('button.add')}}</Button>
         </div>
       </div>
     </div>
@@ -278,7 +278,7 @@ export default {
       tableData: [],
       lineChartConfigurationColumns: [
         {
-            title: this.$t('m_endpoint'),
+            title: this.$t('m_layer_endpoint'),
             width: 300,
             render: (h, params) => {
               return params.row.endpointType.length ?  (
@@ -383,7 +383,7 @@ export default {
           fixed: 'right',
           render: (h, params) => {
             return (
-                <Button class="ml-3" size="small" icon="md-trash" type="error" on-click={() => this.removeTableItem(params.index)} />
+                <Button disabled={this.operator === 'view'} class="ml-3" size="small" icon="md-trash" type="error" on-click={() => this.removeTableItem(params.index)} />
             )
           }
         }
@@ -429,6 +429,7 @@ export default {
                   value={params.row.monitorType}
                   on-on-change={v => {
                     Vue.set(this.tableData[params.index], 'monitorType', v);
+                    Vue.set(this.tableData[params.index], 'metricGuid', '');
                     this.monitorType = v;
                     this.searchMetricByType()
                   }}
@@ -678,15 +679,13 @@ export default {
     })
   },
   mounted() {
-    this.getEndpointList();
     this.getAllRolesOptions();
     this.getSingleChartAuth();
-    setTimeout(() => {
-      this.getTableData();
-    }, 100)
+    this.getTableData();
   },
   methods: {
-    getTableData() {
+    async getTableData() {
+      await this.getEndpointList();
       this.request('GET', '/monitor/api/v2/chart/custom', {
         chart_id: this.chartId
       }, res => {
@@ -803,24 +802,27 @@ export default {
       return tags
     },
 
-    debounceGetEndpointList: debounce(function() {
-      this.getEndpointList()
+    debounceGetEndpointList: debounce(async function() {
+      await this.getEndpointList();
     }, 300),
 
     getEndpointList() {
-      let search = '.'
-      if (this.getEndpointSearch) {
-        search = this.getEndpointSearch
-      }
-      let params = {
-        search,
-        page: 1,
-        size: 10000
-      }
-      this.request('GET', '/monitor/api/v1/dashboard/search', params, res => {
-          this.endpointOptions = res;
+      return new Promise(resolve => {
+        let search = '.'
+        if (this.getEndpointSearch) {
+          search = this.getEndpointSearch
         }
-      )
+        let params = {
+          search,
+          page: 1,
+          size: 10000
+        }
+        this.request('GET', '/monitor/api/v1/dashboard/search', params, res => {
+            this.endpointOptions = res;
+            resolve(res)
+          }
+        )
+      })
     },
     resetSearchItem(index) {
       this.monitorType = '';
@@ -836,6 +838,7 @@ export default {
       const selectedItem = find(cloneDeep(this.endpointOptions), {
         option_value: value
       })
+      if (!selectedItem) return
       this.serviceGroup = selectedItem.app_object;
       this.endpointName = selectedItem.option_text;
       this.endpointType = selectedItem.option_type_name;
@@ -935,6 +938,7 @@ export default {
         const metricItem = find(this.metricOptions, {
             guid: metricGuid
         })
+        if (!metricItem) return
         item.metricGuid = metricItem.guid;
         Vue.set(item, 'metric', metricItem.metric);
         item.metricType = metricItem.metric_type;
@@ -1110,6 +1114,7 @@ export default {
     drawChartContent() {
       if (this.isPieChart) {
         const params = this.generateLineParamsData();
+        params[0].pieType = this.chartConfigForm.pieType;
         if (!params[0].metric) return;
         this.request('POST', '/monitor/api/v1/dashboard/pie/chart', params,
           res => {
@@ -1390,6 +1395,25 @@ export default {
   }
 }
 
-
+.w-header {
+  display: flex;
+  align-items: center;
+  .title {
+    font-size: 16px;
+    font-weight: bold;
+    margin: 0 10px;
+    .underline {
+      display: block;
+      margin-top: -10px;
+      margin-left: -6px;
+      width: 100%;
+      padding: 0 6px;
+      height: 12px;
+      border-radius: 12px;
+      background-color: #c6eafe;
+      box-sizing: content-box;
+    }
+  }
+}
 </style>
 

@@ -128,6 +128,7 @@ type EChartPieObj struct {
 	Name        string    `json:"name"`
 	Value       float64   `json:"value"`
 	SourceValue []float64 `json:"-"`
+	NameList    []string  `json:"-"`
 }
 
 type Chart struct {
@@ -231,6 +232,8 @@ type PieChartConfigObj struct {
 	CustomChartGuid       string    `json:"custom_chart_guid"`
 	MonitorType           string    `json:"monitorType"`
 	Tags                  []*TagDto `json:"tags"` // 标签
+	PieDisplayTag         string    `json:"pieDisplayTag"`
+	PieType               string    `json:"pieType"`
 }
 
 type ChartQueryParam struct {

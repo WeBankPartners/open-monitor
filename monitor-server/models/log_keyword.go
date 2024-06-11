@@ -19,6 +19,7 @@ type LogKeywordConfigTable struct {
 	Priority          string `json:"priority"`
 	UpdateTime        string `json:"update_time"`
 	Content           string `json:"content"`
+	Name              string `json:"name"`
 }
 
 type LogKeywordEndpointRelTable struct {
@@ -86,6 +87,7 @@ type LogKeywordCronJobQuery struct {
 	TargetEndpoint string `xorm:"target_endpoint"`
 	AgentAddress   string `xorm:"agent_address"`
 	Content        string `xorm:"content"`
+	Name           string `xorm:"name"`
 }
 
 type LogKeywordRowsHttpDto struct {

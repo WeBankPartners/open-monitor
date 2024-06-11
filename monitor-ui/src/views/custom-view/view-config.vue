@@ -150,9 +150,9 @@
               @resize="resizeEvent"
               @resized="resizeEvent">
               <template v-if="item.group === activeGroup || activeGroup === 'ALL'">
-                <div class="c-dark grid-content" @click="onChartBodyClick(item)">
+                <div class="c-dark grid-content">
                   <div class="header-grid header-grid-name">
-                    <span v-if="editChartId !== item.id">{{item.i}}</span>
+                    <span @click="onChartBodyClick(item)" v-if="editChartId !== item.id">{{item.i}}</span>
                     <span  v-else @click.stop="">
                       <Input v-model.trim="item.i" class="editChartId" autofocus :maxlength="30" show-word-limit style="width:200px" size="small" placeholder="" />             
                     </span>
@@ -493,7 +493,11 @@ export default {
       if (this.isEditStatus && !this.noAllowChartChange(item)) {
         this.setChartType(item);
       } else {
-        this.gridPlus(item);
+        if (!this.isEditStatus) {
+          this.gridPlus(item);
+        } else {
+          this.$Message.warning('暂无编辑权限！')
+        }
       }
     },
     openAlarmDisplay () {
@@ -654,7 +658,7 @@ export default {
       const templateData = {
         cfg: JSON.stringify(resViewData)
       }
-      this.$refs.viewChart.initChart({templateData, panal:item})
+      this.$refs.viewChart.initChart({templateData, panal:item, viewCondition: this.viewCondition})
     },
     async modifyLayoutData() {
       var resViewData = []
