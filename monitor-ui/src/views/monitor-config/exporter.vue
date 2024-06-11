@@ -35,7 +35,7 @@
         </div>
       </Card>
     </Card>
-    <Card :key="'k8s'" :bordered="true" :dis-hover="true" style="margin-top: 10px">
+    <Card :key="'snmp'" :bordered="true" :dis-hover="true" style="margin-top: 10px">
       <p slot="title">SNMP</p>
       <template v-for="item in snmpList">
         <Card style="width:20%;display:inline-block;margin:16px;" :key="'snmp_'+item.id">
@@ -171,12 +171,21 @@ export default {
             v_validate: 'required:true',
             disabled: false,
             type: 'select'
-          }
+          },
+          {
+            label: 'm_modules',
+            value: 'modules',
+            placeholder: 'if_mib',
+            v_validate: 'required:true',
+            disabled: false,
+            type: 'text'
+          },
         ],
         addRow: {
           id: null,
           address: null,
-          scrape_interval: null
+          scrape_interval: null,
+          modules: 'if_mib'
         },
         v_select_configs: {
             scrape_interval: collectionInterval
@@ -261,6 +270,7 @@ export default {
       this.modelItemConfig.addRow.id = null
       this.modelItemConfig.addRow.address = null
       this.modelItemConfig.addRow.scrape_interval = 10
+      this.modelItemConfig.addRow.modules = 'if_mib'
       this.$root.JQ('#item_Modal').modal('show')
     },
     editItem (item) {
@@ -269,6 +279,8 @@ export default {
       this.modelItemConfig.addRow.id = item.id
       this.modelItemConfig.addRow.address = item.address
       this.modelItemConfig.addRow.scrape_interval = item.scrape_interval
+      this.modelItemConfig.addRow.modules = item.modules
+      
       this.$root.JQ('#item_Modal').modal('show')
     },
     deleteItem (params) {

@@ -67,7 +67,7 @@
     {btn_name: 'field.endpoint', btn_func: 'editEndpoints'},
     // {btn_name: 'field.threshold', btn_func: 'thresholdConfig'},
     {btn_name: 'button.edit', btn_func: 'editF'},
-    {btn_name: 'button.remove', btn_func: 'deleteConfirmModal'},
+    {btn_name: 'button.remove', btn_func: 'deleteConfirmModal', color: 'red'},
     // {btn_name: 'field.log', btn_func: 'logManagement'},
     {btn_name: 'button.authorize', btn_func: 'authorizeF'}
   ]
