@@ -19,7 +19,7 @@
             @on-change="search"
             >
             <Option v-for="(option, index) in targetOptions" :value="option.guid" :key="index">
-              <TagShow :tagName="option.type" :index="index"></TagShow> 
+              <TagShow :list="targetOptions" name="type" :tagName="option.type" :index="index"></TagShow> 
               {{option.display_name}}
             </Option>
           </Select>
@@ -107,7 +107,7 @@ export default {
     display: inline-block;
   }
   .search-ul>li:not(:first-child) {
-    padding-left: 10px;
+    padding-left: 12px;
   }
 </style>
 <style scoped lang="less">

@@ -53,9 +53,8 @@
                 v-if="addAndEditModal.isAdd"
                 @click="deleteItem('path', index)"
                 size="small"
-                style="background-color: #ff9900;border-color: #ff9900;"
                 type="error"
-                icon="md-close"
+                icon="md-trash"
               ></Button>
               <Tooltip :content="$t('tableKey.logPath')" :delay="1000">
                 <Input v-model="item.path" style="width: 620px" :placeholder="$t('tableKey.logPath')" />
@@ -66,7 +65,7 @@
             @click="addEmptyItem('path')"
             type="success"
             size="small"
-            style="background-color: #0080FF;border-color: #0080FF;width:650px"
+            style="width:650px"
             long
             >{{ $t('button.add') }}{{$t('tableKey.logPath')}}</Button
           >
@@ -81,9 +80,8 @@
               <Button
                 @click="deleteItem('relate', index)"
                 size="small"
-                style="background-color: #ff9900;border-color: #ff9900;"
                 type="error"
-                icon="md-close"
+                icon="md-trash"
               ></Button>
               <Tooltip :content="$t('m_business_object')" :delay="1000">
                 <Select v-model="item.target_endpoint" style="width: 310px" :placeholder="$t('m_business_object')">
@@ -101,7 +99,7 @@
             @click="addEmptyItem('relate')"
             type="success"
             size="small"
-            style="background-color: #0080FF;border-color: #0080FF;width:650px"
+            style="width:650px"
             long
             >{{$t('addStringMap')}}</Button
           >
@@ -156,12 +154,14 @@
             <Option v-for="item in customMetricsModelConfig.notifyEnableOption" :value="item.value" :key="item.value">{{ item.label }}</Option>
           </Select>
         </div>
-      
         <div class="marginbottom params-each">
-          <label class="col-md-2 label-name">{{$t('m_content')}}:</label>
+          <label class="col-md-2 label-name">{{$t('m_alarmName')}}:</label>
+          <Input v-model="customMetricsModelConfig.addRow.name" style="width: 375px"/>
+        </div>
+        <div class="marginbottom params-each">
+          <label class="col-md-2 label-name">{{$t('alarmContent')}}:</label>
           <Input type="textarea" v-model="customMetricsModelConfig.addRow.content" style="width: 375px"/>
         </div>
-
       </div>
     </ModalComponent>
   </div>
@@ -179,7 +179,7 @@ let tableEle = [
 ]
 const btn = [
   {btn_name: 'button.edit', btn_func: 'editF'},
-  {btn_name: 'button.remove', btn_func: 'deleteConfirmModal'}
+  {btn_name: 'button.remove', btn_func: 'deleteConfirmModal', color: 'red'}
 ]
 
 export default {
@@ -214,7 +214,7 @@ export default {
                 {title: 'tableKey.tags', value: 'tags', display: true},
                 {title: 'table.action',btn:[
                   {btn_name: 'button.edit', btn_func: 'editRuleItem'},
-                  {btn_name: 'button.remove', btn_func: 'delRuleconfirmModal'}
+                  {btn_name: 'button.remove', btn_func: 'delRuleconfirmModal', color: 'red'}
                 ]}
               ],
               data: [1],
@@ -236,7 +236,7 @@ export default {
                 {title: 'm_regular', value: 'regulative', display: true},
                 {title: 'table.action',btn:[
                   {btn_name: 'button.edit', btn_func: 'editCustomMetricItem'},
-                  {btn_name: 'button.remove', btn_func: 'delCustomMetricConfirmModal'}
+                  {btn_name: 'button.remove', btn_func: 'delCustomMetricConfirmModal', color: 'red'}
                 ]}
               ],
               data: [1],
@@ -282,7 +282,8 @@ export default {
           regulative: 0,
           notify_enable: 1,
           priority: 'low',
-          content: ''
+          content: '',
+          name: ''
         },
         priorityList: priorityList,
         notifyEnableOption: [
@@ -377,7 +378,7 @@ export default {
       }
       this.customMetricsModelConfig.addRow[type].push({
         source_value: '',
-        regulative: 1,
+        regulative: 0,
         target_value: ''
       })
     },

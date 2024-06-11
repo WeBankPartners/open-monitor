@@ -113,7 +113,7 @@ func GetPromMetric(endpoint []string, metric string) (error, string) {
 		tmpTag = metric[strings.Index(metric, "/")+1:]
 	}
 	var query []*m.MetricTable
-	err := x.SQL("SELECT * FROM metric WHERE metric=?", tmpMetric).Find(&query)
+	err := x.SQL("SELECT * FROM metric WHERE metric=? and service_group is null", tmpMetric).Find(&query)
 	if err != nil {
 		log.Logger.Error("Query metric fail", log.Error(err))
 	}
@@ -171,7 +171,7 @@ func GetPromMetric(endpoint []string, metric string) (error, string) {
 	return err, promQL
 }
 
-func ReplacePromQlKeyword(promQl, metric string, host *m.EndpointNewTable) string {
+func ReplacePromQlKeyword(promQl, metric string, host *m.EndpointNewTable, tagList []*m.TagDto) string {
 	var tmpTag string
 	if strings.Contains(metric, "/") {
 		tmpTag = metric[strings.Index(metric, "/")+1:]
@@ -190,7 +190,9 @@ func ReplacePromQlKeyword(promQl, metric string, host *m.EndpointNewTable) strin
 			}
 			promQl = strings.ReplaceAll(promQl, "\"$address\"", fmt.Sprintf("\"$address\"%s", tagAppendString))
 		}
-		promQl = strings.Replace(promQl, "$address", host.AgentAddress, -1)
+		if host.AgentAddress != ".*" {
+			promQl = strings.Replace(promQl, "$address", host.AgentAddress, -1)
+		}
 	}
 	if strings.Contains(promQl, `$guid`) {
 		promQl = strings.Replace(promQl, "$guid", host.Guid, -1)
@@ -204,6 +206,18 @@ func ReplacePromQlKeyword(promQl, metric string, host *m.EndpointNewTable) strin
 	//if strings.Contains(promQl, "$k8s_cluster") {
 	//	promQl = strings.Replace(promQl, "$k8s_cluster", host.OsType, -1)
 	//}
+	if len(tagList) > 0 {
+		for _, tagObj := range tagList {
+			tagSourceString := "$t_" + tagObj.TagName
+			if strings.Contains(promQl, tagSourceString) {
+				if len(tagObj.TagValue) == 0 {
+					promQl = strings.Replace(promQl, "=\""+tagSourceString+"\"", "=~\".*\"", -1)
+				} else {
+					promQl = strings.Replace(promQl, "=\""+tagSourceString+"\"", "=~\""+strings.Join(tagObj.TagValue, "|")+"\"", -1)
+				}
+			}
+		}
+	}
 	if strings.Contains(promQl, "$") {
 		re, _ := regexp.Compile("=\"[\\$]+[^\"]+\"")
 		fetchTag := re.FindAll([]byte(promQl), -1)
@@ -655,21 +669,34 @@ func GetEndpointMetricByEndpointType(endpointType string) (err error, result []*
 
 func GetMainCustomDashboard(roleList []string) (err error, result []*m.CustomDashboardTable) {
 	result = []*m.CustomDashboardTable{}
-	var queryRows []*m.CustomDashboardTable
-	sql := "SELECT t2.* FROM role t1 LEFT JOIN custom_dashboard t2 ON t1.main_dashboard=t2.id WHERE t1.name IN ('" + strings.Join(roleList, "','") + "') and t1.main_dashboard>0"
-	log.Logger.Debug("Get main dashboard", log.String("sql", sql))
-	err = x.SQL(sql).Find(&queryRows)
-	if len(queryRows) > 0 {
-		existMap := make(map[int]int)
-		for _, v := range queryRows {
-			if _, b := existMap[v.Id]; b {
-				continue
+	var ids []int
+	var idMap = make(map[int]bool)
+	if len(roleList) == 0 {
+		return
+	}
+	var customDashboardRows []*m.CustomDashboardTable
+	err = x.SQL("select id,name from custom_dashboard").Find(&customDashboardRows)
+	if err != nil {
+		return
+	}
+	dashboardIdNameMap := make(map[int]string)
+	for _, row := range customDashboardRows {
+		dashboardIdNameMap[row.Id] = row.Name
+	}
+	roleFilterSql, roleFilterParam := createListParams(roleList, "")
+	sql := "SELECT custom_dashboard FROM main_dashboard WHERE role_id in (" + roleFilterSql + ") order by guid asc"
+	if err = x.SQL(sql, roleFilterParam...).Find(&ids); err != nil {
+		return
+	}
+	if len(ids) > 0 {
+		for _, id := range ids {
+			if _, ok := idMap[id]; !ok {
+				idMap[id] = true
+				result = append(result, &m.CustomDashboardTable{Id: id, Name: dashboardIdNameMap[id]})
 			}
-			existMap[v.Id] = 1
-			result = append(result, v)
 		}
 	}
-	return err, result
+	return
 }
 
 func GetEndpointsByIp(ipList []string, exportType string) (err error, endpoints []m.EndpointTable) {
@@ -870,7 +897,7 @@ func queryArchiveTables(endpoint, metric, tag, agg string, dateList []string, qu
 			if strings.Contains(err.Error(), "doesn't exist") {
 				log.Logger.Debug(fmt.Sprintf("Query archive table:archive_%s error,table doesn't exist", v))
 			} else {
-				log.Logger.Error(fmt.Sprintf("query archive table:archive_%s error", v), log.Error(err))
+				log.Logger.Info(fmt.Sprintf("query archive table:archive_%s error", v), log.Error(err))
 			}
 			continue
 		}
