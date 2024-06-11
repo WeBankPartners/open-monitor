@@ -1,40 +1,39 @@
 <template>
   <div class=" ">
-    <section>
-      <ul class="search-ul">
-        <li class="search-li">
-          <Select v-model="type" style="width:100px" @on-change="typeChange">
-            <Option v-for="item in typeList" :value="item.value" :key="item.value">{{ $t(item.label) }}</Option>
-          </Select>
-        </li>
-        <li class="search-li">
-          <Select
-            style="width:300px;"
-            v-model="targrtId"
-            filterable
-            clearable 
-            remote
-            ref="select"
-            :remote-method="getTargrtList"
-            @on-change="search"
-            >
-            <Option v-for="(option, index) in targetOptions" :value="option.option_value" :key="index">
-              <TagShow :tagName="option.type" :index="index"></TagShow> 
-              {{option.option_text}}
-            </Option>
-          </Select>
-        </li>
-        <li class="search-li">
-          <button type="button" class="btn btn-sm btn-confirm-f"
-          :disabled="targrtId === ''"
-          @click="search">
-            <i class="fa fa-search" ></i>
-            {{$t('button.search')}}
-          </button>
-          <template v-if="type !== 'endpoint' && targrtId">
-            <button type="button" class="btn-cancel-f" @click="exportThreshold">{{$t("button.export")}}</button>
-            <div style="display: inline-block;margin-bottom: 1px;vertical-align: bottom;line-height: 32px;"> 
-              <Upload 
+    <div style="display: flex;justify-content: space-between;margin-bottom: 8px">
+      <div>
+        <Select v-model="type" style="width:100px" @on-change="typeChange">
+          <Option v-for="item in typeList" :value="item.value" :key="item.value">{{ $t(item.label) }}</Option>
+        </Select>
+        <Select
+          style="width:300px;margin-left: 12px;"
+          v-model="targetId"
+          filterable
+          clearable 
+          remote
+          ref="select"
+          :remote-method="getTargrtList"
+          @on-change="search"
+          @on-clear="typeChange"
+          >
+          <Option v-for="(option, index) in targetOptions" :value="option.option_value" :key="index">
+            <TagShow :list="targetOptions" name="type" :tagName="option.type" :index="index"></TagShow> 
+            {{option.option_text}}
+          </Option>
+        </Select>
+      </div>
+      <div>
+        <template v-if="type !== 'endpoint' && targetId">
+          <Button
+            type="info"
+            class="btn-left"
+            @click="exportThreshold"
+          >
+            <img src="../../assets/img/export.png" class="btn-img" alt="" />
+            {{ $t('m_export') }}
+          </Button>
+          <div style="display: inline-block;margin-bottom: 3px;">
+            <Upload 
               :action="uploadUrl" 
               :show-upload-list="false"
               :max-size="1000"
@@ -42,32 +41,49 @@
               :headers="{'Authorization': token}"
               :on-success="uploadSucess"
               :on-error="uploadFailed">
-                <Button icon="ios-cloud-upload-outline">{{$t('button.upload')}}</Button>
-              </Upload>
-            </div>
-          </template>
-        </li>
-      </ul>
-    </section> 
-    <section v-show="showTargetManagement" style="margin-top: 16px;">
-      <template v-if="type === 'group'">
-        <groupManagement ref="group"></groupManagement>
+                <Button type="primary" class="btn-left">
+                  <img src="../../assets/img/import.png" class="btn-img" alt="" />
+                  {{ $t('m_import') }}
+                </Button>
+            </Upload>
+          </div>
+        </template>
+      </div>
+    </div>
+    <div>
+      <div v-if="!targetId">
+        <Alert type="error">
+          <span>{{ $t('m_empty_tip_1') }}</span>
+          <span v-if="type==='service'">{{ $t('field.resourceLevel') }}</span>
+          <span v-if="type==='group'">{{ $t('field.group') }}</span>
+          <span v-if="type==='endpoint'">{{ $t('field.endpoint') }}</span>
+        </Alert>
+      </div>
+      <div v-if="targetId&&dataEmptyTip">
+        <Alert type="error">
+          <span v-if="type==='service'">{{ $t('m_empty_data_recrisive') }}</span>
+          <span v-if="type==='endpoint'">{{ $t('m_empty_data_endpoint') }}</span>
+        </Alert>
+      </div>
+    </div>
+    <div v-show="showTargetManagement" class="table-zone">
+      <template v-for="(itemType, index) in thresholdTypes">
+        <thresholdDetail 
+          ref='thresholdDetail'
+          v-if="type === itemType"
+          :key=index
+          :type=type
+          @feedbackInfo="feedbackInfo"
+        >
+        </thresholdDetail>
       </template>
-      <template v-if="type === 'endpoint'">
-        <endpointManagement ref="endpoint"></endpointManagement>
-      </template>
-      <template v-if="type === 'service'">
-        <serviceManagement ref="service"></serviceManagement>
-      </template>
-    </section>
+    </div>
   </div>
 </template>
 
 <script>
 import { getToken, getPlatFormToken } from '@/assets/js/cookies.ts'
-import endpointManagement from './threshold-management-endpoint.vue'
-import groupManagement from './threshold-management-group.vue'
-import serviceManagement from './threshold-management-service.vue'
+import thresholdDetail from './config-detail.vue'
 import TagShow from '@/components/Tag-show.vue'
 import {baseURL_config} from '@/assets/js/baseURL'
 import axios from 'axios'
@@ -82,14 +98,16 @@ export default {
         {label: 'field.group', value: 'group'},
         {label: 'field.endpoint', value: 'endpoint'}
       ],
-      targrtId: '',
+      targetId: '',
       targetOptions: [],
-      showTargetManagement: false
+      showTargetManagement: false,
+      thresholdTypes: ['group', 'endpoint', 'service'],
+      dataEmptyTip: false
     }
   },
   computed: {
     uploadUrl: function() {
-      return baseURL_config + `/monitor/api/v2/alarm/strategy/import/${this.type}/${this.targrtId}`
+      return baseURL_config + `/monitor/api/v2/alarm/strategy/import/${this.type}/${this.targetId}`
     }
   },
   async mounted () {
@@ -100,8 +118,11 @@ export default {
     this.$root.$store.commit('changeTableExtendActive', -1)
   },
   methods: {
+    feedbackInfo (val) {
+      this.dataEmptyTip = val
+    },
     exportThreshold () {
-      const api = `/monitor/api/v2/alarm/strategy/export/${this.type}/${this.targrtId}`
+      const api = `/monitor/api/v2/alarm/strategy/export/${this.type}/${this.targetId}`
       axios({
         method: 'GET',
         url: api,
@@ -140,13 +161,17 @@ export default {
       this.$Message.success(this.$t('tips.success'))
     },
     uploadFailed (error, file) {
-      this.$Message.warning(file.message)
+      this.$Message.warning({
+          content: file.message,
+          duration: 5
+      })
     },
     typeChange () {
       this.clearTargrt()
       this.getTargrtList()
     },
     getTargrtList () {
+      this.$refs.select.queryProp = ''
       const api = `/monitor/api/v2/alarm/strategy/search?type=${this.type}&search=`
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', (responseData) => {
         this.targetOptions = responseData
@@ -154,35 +179,25 @@ export default {
     },
     clearTargrt () {
       this.targetOptions = []
-      this.targrtId = ''
+      this.targetId = ''
       this.showTargetManagement = false
       this.$refs.select.query = ''
     },
     search () {
-      if (this.targrtId) {
+      if (this.targetId) {
         this.showTargetManagement = true
-        const find = this.targetOptions.find(item => item.option_value === this.targrtId)
-        this.$refs[this.type].getDetail(this.targrtId, find.type)
+        const find = this.targetOptions.find(item => item.option_value === this.targetId)
+        this.$refs.thresholdDetail[0].setMonitorType(find.type);
+        this.$refs.thresholdDetail[0].getDetail(this.targetId);
       }
     }
   },
   components: {
-    endpointManagement,
-    groupManagement,
-    serviceManagement,
-    TagShow
+    TagShow,
+    thresholdDetail
   },
 }
 </script>
-
-<style scoped lang="less">
-.search-li {
-    display: inline-block;
-  }
-  .search-ul>li:not(:first-child) {
-    padding-left: 10px;
-  }
-</style>
 <style scoped lang="less">
   .is-danger {
     color: red;
@@ -213,5 +228,17 @@ export default {
     cursor: auto;
     width: 55px;
     text-align: center;
-  } 
+  }
+  .btn-img {
+    width: 16px;
+    vertical-align: middle;
+  }
+  .btn-left {
+    margin-left: 8px;
+  }
+
+  .table-zone {
+    overflow: auto;
+    height: ~"calc(100vh - 180px)";
+  }
 </style>

@@ -1,109 +1,132 @@
 <template>
   <div>
-    <div class=" ">
-      <Title :title="$t('menu.templateManagement')"></Title>
+    <div>
       <header>
         <div class="header-name">
-          <i class="fa fa-th-large fa-18" aria-hidden="true"></i>
-          <template v-if="isEditPanal">
-            <Input v-model.trim="panalName" style="width: 100px" type="text"></Input>
-            <Icon class="panal-edit-icon" @click="savePanalEdit" type="md-checkmark" />
-            <Icon class="panal-edit-icon" @click="canclePanalEdit" type="md-close" />
-          </template>
-          <template v-else>
-            <span> {{panalName}}</span>
-            <Icon class="panal-edit-icon" @click="isEditPanal=true" v-if="permission === 'edit'" type="md-create" />
-          </template>
+          <div v-if="pageType !== 'dashboard'">
+            <Icon v-if="pageType !== 'link'" size="22" class="arrow-back" type="md-arrow-back" @click="returnPreviousPage" />
+            <template v-if="isEditPanal">
+              <Input v-model.trim="panalName" style="width: 300px" type="text" :maxlength="30" show-word-limit></Input>
+              <Icon class="panal-edit-icon" color="#2d8cf0" @click="savePanalEdit" type="md-checkmark" />
+              <Icon class="panal-edit-icon" color="red" @click="canclePanalEdit" type="md-trash" />
+            </template>
+            <template v-else>
+              <h5 class="d-inline-block"> {{panalName}}</h5>
+              <Icon class="panal-edit-icon" color="#2d8cf0"  @click="isEditPanal=true" v-if="isEditStatus" type="md-create" />
+            </template>
+          </div>
         </div>
         <div class="search-container">
           <div>
             <div class="search-zone">
               <span class="params-title">{{$t('field.relativeTime')}}：</span>
-              <Select filterable v-model="viewCondition.timeTnterval" :disabled="disableTime" style="width:80px"  @on-change="initPanals">
+              <!-- <Select filterable v-model="viewCondition.timeTnterval" :disabled="disableTime" style="width:80px"  @on-change="initPanals">
                 <Option v-for="item in dataPick" :value="item.value" :key="item.value">{{ item.label }}</Option>
-              </Select>
+              </Select> -->
+              <RadioGroup @on-change="initPanals" v-model="viewCondition.timeTnterval" type="button" size="small">
+                <Radio v-for="(item, idx) in dataPick" :label="item.value" :key="idx" :disabled="disableTime">{{ item.label }}</Radio>
+              </RadioGroup>
             </div>
-            <div class="search-zone">
-              <span class="params-title">{{$t('placeholder.refresh')}}：</span>
-              <Select filterable clearable v-model="viewCondition.autoRefresh" :disabled="disableTime" style="width:100px" @on-change="initPanals" :placeholder="$t('placeholder.refresh')">
-                <Option v-for="item in autoRefreshConfig" :value="item.value" :key="item.value">{{ item.label }}</Option>
-              </Select>
-            </div>
-            <div class="search-zone">
+            <div class="search-zone ml-2">
               <span class="params-title">{{$t('field.timeInterval')}}：</span>
               <DatePicker 
                 type="datetimerange" 
                 :value="viewCondition.dateRange" 
                 format="yyyy-MM-dd HH:mm:ss" 
                 placement="bottom-start" 
+                split-panels
                 @on-change="datePick" 
                 :placeholder="$t('placeholder.datePicker')" 
                 style="width: 320px">
               </DatePicker>
             </div>
-            <!-- <div class="search-zone">
-              <span class="params-title">{{$t('field.aggType')}}：</span>
-              <RadioGroup v-model="viewCondition.agg" @on-change="initPanals" size="small" type="button">
-                <Radio disabled label="min">Min</Radio>
-                <Radio disabled label="max">Max</Radio>
-                <Radio disabled label="avg">Average </Radio>
-                <Radio disabled label="p95">P95</Radio>
-                <Radio disabled label="sum">Sum</Radio>
-                <Radio disabled label="none">Original</Radio>
-              </RadioGroup>
-            </div> -->
+            <div class="search-zone ml-2">
+              <span class="params-title">{{$t('placeholder.refresh')}}：</span>
+              <Select filterable clearable v-model="viewCondition.autoRefresh" :disabled="disableTime" style="width:100px" @on-change="initPanals" :placeholder="$t('placeholder.refresh')">
+                <Option v-for="item in autoRefreshConfig" :value="item.value" :key="item.value">{{ item.label }}</Option>
+              </Select>
+            </div>
           </div>
 
           <div class="header-tools">
-            <template v-if="permission === 'edit'">
-              <button class="btn btn-sm btn-cancel-f" style="margin-right:60px" @click="addItem">{{$t('m_new_graph')}}</button>
-              <button class="btn btn-sm btn-confirm-f" @click="saveEdit">{{$t('button.saveConfig')}}</button>
+            <template v-if="isEditStatus">
+              <Button type="primary" @click="savePanelInfo">{{$t('button.saveConfig')}}</Button>
             </template> 
-            
-            <button class="btn btn-sm btn-cancel-f" @click="goBack()">{{$t('button.back')}}</button>
-            <button v-if="!showAlarm" class="btn btn-sm btn-cancel-f" @click="openAlarmDisplay()">
-              <i style="font-size: 18px;color: #0080FF;" class="fa fa-eye-slash" aria-hidden="true"></i>
-            </button>
-            <button v-else class="btn btn-sm btn-cancel-f" @click="closeAlarmDisplay()">
-              <i style="font-size: 18px;color: #0080FF;" class="fa fa-eye" aria-hidden="true"></i>
-            </button>
+
+            <Button type="info" @click="showAlarm?closeAlarmDisplay():openAlarmDisplay()">
+              <Icon :type="showAlarm?'md-eye-off':'md-eye'" size="20"></Icon>
+            </Button>
           </div>
         </div>
       </header>
+
+      <!-- 分组 -->
       <div>
         <div class="radio-group">
+          <span class="ml-3 mr-3">{{$t('m_group_name')}}:</span>
           <div
-            class="radio-group-radio radio-group-optional"
-            :style="activeGroup === 'All' ? 'background: rgba(129, 179, 55, 0.6)' : 'background: #fff'"
+            :class="['radio-group-radio radio-group-optional', activeGroup === 'ALL' ? 'selected-radio' : 'is-not-selected-radio']"
           >
-            <span @click="selectGroup('All')" style="vertical-align: text-bottom;">All</span>
+            <span @click="selectGroup('ALL')">{{$t('m_chart_all')}}</span>
           </div>
           <div
             v-for="(item, index) in panel_group_list"
             :key="index"
-            class="radio-group-radio radio-group-optional"
-            :style="item === activeGroup ? 'background: rgba(129, 179, 55, 0.6)' : 'background: #fff'"
+            :class="['radio-group-radio radio-group-optional', item === activeGroup ? 'selected-radio' : 'is-not-selected-radio']"
           >
-            <Icon v-if="permission === 'edit'" @click="editGroup(item, index)" type="md-create" color="#2d8cf0" :size="20" />
-            <span @click="selectGroup(item)" style="vertical-align: text-bottom;">
+            <Icon v-if="isEditStatus" class="mr-2" @click="editGroup(item, index)" type="md-create" color="#2d8cf0" :size="15" />
+            <span @click="selectGroup(item)">
               {{ `${item}` }}
             </span>
-            <Icon v-if="permission === 'edit'" @click="removeGroup(item, index)" type="md-close" color="#ed4014" :size="20" />
+            <Icon v-if="isEditStatus" class="ml-2" @click="removeGroup(item, index)" type="md-close" color="#ed4014" :size="15" />
           </div>
           <span>
             <Button
-              v-if="permission === 'edit'"
-              @click="addGroup"
-              class="primary-btn"
+              v-if="isEditStatus"
+              @click="addGroupItem"
               style="margin-top: -5px;"
-              type="primary"
+              type="success"
               shape="circle"
               icon="md-add"
             ></Button>
           </span>
         </div>
+
+        <!-- 图表新增 -->
+        <div class="chart-config-info" v-if="isEditStatus" @mousemove="debounceGetAllChartOptionList" @click="getAllChartOptionList">
+          <span class="fs-20 mr-3 ml-3">{{$t('m_graph')}}:</span>
+          <Dropdown 
+            placement="bottom-start"
+            v-for="(item, index) in allAddChartOptions"
+            :key="index"
+            class="chart-option-menu" 
+            @on-click="(info) => onAddChart(JSON.parse(info), item.type)">
+            <Button :type="item.colorType">
+                {{$t(item.name)}}
+                <Icon type="ios-arrow-down"></Icon>
+            </Button>
+            <template #list>
+              <DropdownMenu v-if="item.options.length>0">
+                <DropdownItem v-for="(option, key) in item.options"
+                  :name="JSON.stringify(option)" 
+                  :key="key"
+                  :disabled="option.disabled">
+                  <Icon v-if="option.iconType" :type="option.iconType" />
+                  {{item.type === 'add' ? $t(option.name) : option.name}}
+                </DropdownItem>
+              </DropdownMenu>
+              <DropdownMenu v-else>
+                <DropdownItem>
+                  {{ $t('m_add_chart_library') }}
+                </DropdownItem>
+              </DropdownMenu>
+            </template>
+          </Dropdown>
+        </div>
       </div>
-      <div style="display:flex">
+
+      <!-- 图表展示区域 -->
+      <div v-if="tmpLayoutData.length>0" style="display:flex">
         <div class="grid-style">
           <grid-layout 
           :layout.sync="tmpLayoutData"
@@ -116,6 +139,7 @@
           :use-css-transforms="true"
           >
             <grid-item v-for="(item,index) in tmpLayoutData"
+              style="cursor: auto;"
               class="c-dark"
               :x="item.x"
               :y="item.y"
@@ -125,31 +149,48 @@
               :key="index"
               @resize="resizeEvent"
               @resized="resizeEvent">
-              <template v-if="item.group === activeGroup ||activeGroup === 'All' ">
-                <div class="c-dark" style="display:flex;padding:0 32px;">
+              <template v-if="item.group === activeGroup || activeGroup === 'ALL'">
+                <div class="c-dark grid-content">
                   <div class="header-grid header-grid-name">
-                    <span v-if="editChartId !== item.id">{{item.i}}</span>
-                    <Input v-else v-model="item.i" class="editChartId" style="width:100px" @on-blur="editChartId = null" size="small" placeholder="" />
+                    <span @click="onChartBodyClick(item)" v-if="editChartId !== item.id">{{item.i}}</span>
+                    <span  v-else @click.stop="">
+                      <Input v-model.trim="item.i" class="editChartId" autofocus :maxlength="30" show-word-limit style="width:200px" size="small" placeholder="" />             
+                    </span>
                     <Tooltip :content="$t('placeholder.editTitle')" theme="light" transfer placement="top">
-                      <i class="fa fa-pencil-square" style="font-size: 16px;" v-if="permission === 'edit'" @click="editChartId = item.id" aria-hidden="true"></i>
+                      <i v-if="isEditStatus && editChartId !== item.id && !noAllowChartChange(item)" class="fa fa-pencil-square" style="font-size: 16px;" @click.stop="startEditTitle(item)" aria-hidden="true"></i>
+                      <Icon v-if="editChartId === item.id" size="20" type="md-checkmark" @click.stop="onChartTitleChange(item)" />
+                      <Icon v-if="editChartId === item.id" size="20" type="md-close" @click.stop="cancelEditTitle(item)" />
                     </Tooltip>
                   </div>
                   <div class="header-grid header-grid-tools">
-                    <Select v-model="item.group" style="width:100px;" size="small" :disabled="permission !== 'edit'" clearable filterable :placeholder="$t('m_group_name')">
-                      <Option v-for="item in panel_group_list" :value="item" :key="item" style="float: left;">{{ item }}</Option>
-                    </Select>
+                    <Button v-if="item.public" size="small" class="mr-1 references-button">{{$t('m_shallow_copy')}}</Button>
+                    <span @click.stop="">
+                      <Select v-model="item.group" 
+                        style="width:100px;" 
+                        size="small" 
+                        :disabled="permission !== 'edit'" 
+                        clearable 
+                        filterable 
+                        :placeholder="$t('m_group_name')"
+                        @on-change="onSingleChartGroupChange">
+                        <Option v-for="item in panel_group_list" :value="item" :key="item" style="float: left;">{{ item }}</Option>
+                      </Select>
+                    </span>
+                    <Tooltip :content="$t('m_save_chart_library')" theme="light" transfer placement="top">
+                      <Icon v-if="isEditStatus && !item.public" size="15" type="md-archive" @click.stop="showChartAuthDialog(item)" />
+                    </Tooltip>
                     <Tooltip :content="$t('button.chart.dataView')" theme="light" transfer placement="top">
-                      <i class="fa fa-eye" style="font-size: 16px;" v-if="isShowGridPlus(item)" aria-hidden="true" @click="gridPlus(item)"></i>
+                      <i class="fa fa-eye" style="font-size: 16px;" v-if="isShowGridPlus(item)" aria-hidden="true" @click.stop="gridPlus(item)"></i>
                     </Tooltip>
                     <Tooltip :content="$t('placeholder.chartConfiguration')" theme="light" transfer placement="top">
-                      <i class="fa fa-cog" style="font-size: 16px;" v-if="permission === 'edit'" @click="setChartType(item)" aria-hidden="true"></i>
+                      <i class="fa fa-cog" style="font-size: 16px;" v-if="isEditStatus && !noAllowChartChange(item)" @click.stop="setChartType(item)" aria-hidden="true"></i>
                     </Tooltip>
                     <Tooltip :content="$t('placeholder.deleteChart')" theme="light" transfer placement="top">
-                      <i class="fa fa-trash" style="font-size: 16px;color:red" v-if="permission === 'edit'" @click="removeGrid(item)" aria-hidden="true"></i>
+                      <i class="fa fa-trash" style="font-size: 16px;color:red" v-if="isEditStatus" @click.stop="removeGrid(item)" aria-hidden="true"></i>
                     </Tooltip>
                   </div>
                 </div>
-                <section>
+                <section style="height: 90%;">
                   <div v-for="(chartInfo,chartIndex) in item._activeCharts" :key="chartIndex">
                     <CustomChart v-if="['line','bar'].includes(chartInfo.chartType)" :refreshNow="refreshNow" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomChart>
                     <CustomPieChart v-if="chartInfo.chartType === 'pie'" :refreshNow="refreshNow" :chartInfo="chartInfo" :chartIndex="index" :params="viewCondition"></CustomPieChart>
@@ -159,26 +200,26 @@
             </grid-item>
           </grid-layout>
         </div>
-        <div v-show="showAlarm" class="alarm-style">
+        <div class="view-config-alarm" v-if="showAlarm">
           <ViewConfigAlarm ref="cutsomViewId"></ViewConfigAlarm>
         </div>
+      </div>
+      <div v-else class="no-data">
+        {{ $t('m_noData') }}
       </div>
     </div>
     <Drawer title="View details" :width="zoneWidth" v-model="showMaxChart">
       <ViewChart ref="viewChart"></ViewChart>
     </Drawer>
-    <Drawer :title="$t('placeholder.chartConfiguration')" :width="zoneWidth" :mask-closable="false" v-model="showChartConfig">
-      <editPieView v-if="chartType === 'pie' && showChartConfig" ref="editPieView" :panel_group_list="panel_group_list" :activeGridConfig="activeGridConfig" :parentRouteData="parentRouteData"></editPieView>
-      <editLineView v-if="chartType !== 'pie' && showChartConfig" ref="editLineView" :panel_group_list="panel_group_list" :activeGridConfig="activeGridConfig" :parentRouteData="parentRouteData"></editLineView>
+
+    <!-- 对于每个chart的抽屉详细信息 -->
+    <Drawer :title="$t('placeholder.chartConfiguration')" 
+      :width="100" 
+      :mask-closable="false" 
+      v-model="showChartConfig"
+      @on-close="closeChartInfoDrawer">
+      <editView :chartId="setChartConfigId" v-if="showChartConfig"></editView>
     </Drawer>
-    <ModalComponent :modelConfig="setChartTypeModel">
-      <div slot="setChartType">
-        <div style="display:flex;justify-content:center">
-          <i @dblclick="dblChartType('bar')" @click="choiceChartType('bar')" :class="['fa', 'fa-line-chart', activeChartType==='bar' ? 'active-tag': '']" aria-hidden="true"></i>
-          <i @dblclick="dblChartType('pie')" @click="choiceChartType('pie')" :class="['fa', 'fa-pie-chart', activeChartType==='pie' ? 'active-tag': '']" aria-hidden="true"></i>
-        </div>
-      </div>
-    </ModalComponent>
     <Modal
       v-model="isShowWarning"
       :title="$t('delConfirm.title')"
@@ -191,27 +232,34 @@
       </div>
     </Modal>
 
-    <Modal v-model="showGroupMgmt" :title="$t('m_group_mgmt')" :mask-closable="false">
-      <div style="margin: 40px 0 60px 0">
-        <Form :label-width="100">
-          <FormItem :label="$t('m_group_name')">
-            <Input v-model="groupName" placeholder="" style="width: 300px" />
+    <!-- 分组新增 -->
+    <Modal v-model="showGroupMgmt" :title="$t('m_edit_screen_group')" :mask-closable="false">
+      <div>
+        <Form :label-width="90">
+          <FormItem :label="$t('m_group_chart_name')">
+            <Input v-model="groupName" placeholder="" style="width: 100%" :maxlength="20" show-word-limit />
+          </FormItem>
+          <FormItem :label="$t('m_use_charts')">
+            <Row v-if="panelGroupInfo.length > 0">
+              <Col span="12" v-for="panel in panelGroupInfo" :key="panel.name">
+                <Checkbox v-model="panel.setGroup" :disabled="panel.hasGroup"
+                  >
+                  <Tooltip :content="panel.label">
+                    <div class="ellipsis-text">{{ panel.label }}</div>
+                  </Tooltip>
+                  </Checkbox
+                >
+              </Col>
+            </Row>
+            <span v-else>
+              {{ $t('m_noData') }}
+            </span>
           </FormItem>
         </Form>
       </div>
-      <Divider style="margin-top:40px">{{ $t('m_add_chart_to_group') }}</Divider>
-      <div>
-        <Row>
-          <Col span="12" v-for="panel in panelGroupInfo" :key="panel.name">
-            <Checkbox v-model="panel.setGroup" :disabled="panel.hasGroup"
-              >{{ panel.label }}</Checkbox
-            >
-          </Col>
-        </Row>
-      </div>
       <template #footer>
         <Button @click="showGroupMgmt = false">{{ $t('button.cancel') }}</Button>
-        <Button @click="confirmGroupMgmt" :disabled="!groupName" type="primary" class="primary-btn">{{ $t('button.save') }}</Button>
+        <Button @click="confirmGroupMgmt" :disabled="!groupName" type="primary">{{ $t('button.save') }}</Button>
       </template>
     </Modal>
     <!-- 删除组 -->
@@ -226,38 +274,15 @@
         </div>
       </div>
     </Modal>
+    <AuthDialog ref="authDialog" :useRolesRequired="true" @sendAuth="saveChartOrDashboardAuth" />
   </div>
 </template>
-<style lang="less" scoped>
-  .grid-style {
-    width: 100%;
-    display: inline-block;
-  }
-  .alarm-style {
-    width: 800px;
-    display: inline-block;
-  }
-  .fa-line-chart, .fa-pie-chart {
-    cursor: pointer;
-    font-size: 36px;
-    padding: 24px 48px;
-    border: 1px solid @gray-d;
-    margin: 8px;
-    border-radius: 4px;
-  }
-  .fa-line-chart:hover, .fa-pie-chart:hover {
-    box-shadow: 0 1px 8px @gray-d;
-    border-color: @blue-2;
-  }
-  .active-tag {
-    color: @blue-2;
-    border-color: @blue-2;
-  } 
-  .i-icon-menu-fold:before {
-    content: "\E600";
-  }
-</style>
+
 <script>
+import isEmpty from 'lodash/isEmpty';
+import remove from 'lodash/remove';
+import cloneDeep from 'lodash/cloneDeep';
+import debounce from 'lodash/debounce';
 import {generateUuid} from '@/assets/js/utils'
 import {dataPick, autoRefreshConfig} from '@/assets/config/common-config'
 import {resizeEvent} from '@/assets/js/gridUtils.ts'
@@ -266,10 +291,24 @@ import CustomChart from '@/components/custom-chart'
 import CustomPieChart from '@/components/custom-pie-chart'
 import ViewConfigAlarm from '@/views/custom-view/view-config-alarm'
 import ViewChart from '@/views/custom-view/view-chart'
-import editLineView from '@/views/custom-view/edit-line-view'
-import editPieView from '@/views/custom-view/edit-pie-view'
+import EditView from '@/views/custom-view/edit-view'
+import AuthDialog from '@/components/auth.vue';
 export default {
   name: '',
+  props: {
+    boardId: {
+      type: Number,
+      default: null
+    },
+    permissionType: {
+      type: String,
+      default: ''
+    },
+    pageType: {
+      type: String,
+      default: ''
+    }
+  },
   data() {
     return {
       isShowDeleteGroupWarning: false,
@@ -284,94 +323,194 @@ export default {
         method: ''
       },
       isEditPanal: false,
-      permission: '',
-      panalName: this.$route.params.panalItem.name,
+      permission: this.permissionType || this.$route.params.permission,
+      panalName: '',
+      pannelId: this.boardId || this.$route.params.pannelId,
       viewCondition: {
         timeTnterval: -3600,
         dateRange: ['', ''],
-        autoRefresh: 5,
+        autoRefresh: 10,
         agg: 'none' // 聚合类型
       },
       disableTime: false,
       dataPick: dataPick,
       autoRefreshConfig: autoRefreshConfig,
       viewData: [],
-      activeGroup: 'All',
+      activeGroup: 'ALL',
       showGroupMgmt: false,
       panelGroupInfo: [], // 存放新增/编辑组时的panel信息
       groupName: '', // 新增及编辑时的组名称
       groupNameIndex: -1, // 编辑时的组序号
       panel_group_list: [], // 存放视图拥有的组信息
-      layoutData: [
-        //   {'x':0,'y':0,'w':2,'h':2,'i':'0'},
-        //   {'x':1,'y':1,'w':2,'h':2,'i':'1'},
-      ],
+      layoutData: [],
       editChartId: null,
-      setChartTypeModel: {
-        modalId: 'set_chart_type_Modal',
-        modalTitle: 'button.add',
-        isAdd: true,
-        config: [
-          {name:'setChartType',type:'slot'}
-        ],
-        addRow: {
-          type: null
-        },
-        modalFooter: [
-          {name: '确定', Func: 'confirmChartType'}
-        ]
-      },
       activeGridConfig: null,
       activeChartType: 'bar',
-
       showAlarm: false, // 显示告警信息
       cutsomViewId: null,
-
       showMaxChart: false,
       zoneWidth: '800',
       showChartConfig: false,
-      chartType: ''
+      chartType: '',
+      allAddChartOptions: [
+        {
+          name: 'button.add',
+          type: 'add',
+          colorType: 'success',
+          options: [
+            {
+              name: "m_line_chart_s",
+              id: "line",
+              iconType: "md-trending-up"
+            },
+            {
+              name: "m_pie_chart",
+              id: "pie",
+              iconType: "md-pie"
+            }
+          ],
+        },
+        {
+          name: 'm_copy',
+          type: 'copy',
+          colorType: 'success',
+          options: []
+        },
+        {
+          name: 'm_shallow_copy',
+          type: 'shallowCopy',
+          colorType: 'success',
+          options: []
+        }
+      ],
+      request: this.$root.$httpRequestEntrance.httpRequestEntrance,
+      lineTypeOption: {
+        line: 1,
+        area: 0
+      },
+      setChartConfigId: '',
+      chartAuthDialogShow: false,
+      mgmtRoles: [],
+      useRoles: [],
+      mgmtRolesOptions: [], 
+      userRolesOptions: [],
+      boardMgmtRoles: [],
+      boardUseRoles: [],
+      initTitle: ''
     }
   },
   computed: {
     tmpLayoutData() { // 缓存切换分组后数据
-      if (this.activeGroup === 'All') {
+      if (this.activeGroup === 'ALL') {
         return this.layoutData
       } else {
         return this.layoutData.filter(d => d.group === this.activeGroup)
       }
+    },
+    isEditStatus() {
+      return this.permission === 'edit'
+    },
+  },
+  mounted () {
+    if (!this.pannelId) {
+      return this.$router.push({path: '/viewConfigIndex/boardList'})
     }
-  },
-  created () {
-    this.zoneWidth = window.screen.width * 0.65
-  },
-  mounted() {
-    this.reloadPanal(this.$route.params.panalItem)
+    this.zoneWidth = window.screen.width * 0.65;
+    this.getAllChartOptionList();
+    this.getPannelList();
+    this.activeGroup = 'ALL';
+    this.getAllRolesOptions();
   },
   methods: {
-    reloadPanal (params) {
-      this.permission = this.$route.params.permission
-      this.editData = params
-      if(this.$root.$validate.isEmpty_reset(params)) {
-        this.$router.push({path:'viewConfigIndex'})
+    getPannelList(activeGroup='ALL') {
+      this.request('GET', '/monitor/api/v2/dashboard/custom', {
+        id: this.pannelId
+      }, res => {
+        if(isEmpty(res)) {
+          this.$router.push({path:'viewConfigIndex'})
+        } else {
+          this.viewCondition.timeTnterval = res.timeRange || -3600;
+          this.viewCondition.autoRefresh = res.refreshWeek || 10;
+
+          this.boardMgmtRoles = res.mgmtRoles;
+          this.boardUseRoles = res.useRoles;
+          this.panalName = res.name;
+          this.activeGroup = activeGroup;
+          this.panel_group_list = res.panelGroupList || [];
+          this.viewData = res.charts || [];
+          this.initPanals();
+          this.cutsomViewId = this.pannelId;
+        }
+      })
+    },
+    getAllChartOptionList() {
+      this.request('GET', '/monitor/api/v2/chart/shared/list', {}, res => {
+        this.allAddChartOptions[1].options = this.processChartOptions(res);
+      });
+      this.request('GET', '/monitor/api/v2/chart/shared/list', {
+        dashboard_id: this.pannelId
+      }, res => {
+        this.allAddChartOptions[2].options = this.processChartOptions(res);
+      })
+    },
+    debounceGetAllChartOptionList: debounce(function() {
+      this.getAllChartOptionList()
+    }, 500),
+    processChartOptions(rawData) {
+      const options = [];
+      const initialOption = {
+        line: {
+          name: "折线图",
+          id: "line",
+          iconType: "md-trending-up",
+          disabled: true
+        },
+        pie: {
+          name: "饼图",
+          id: "pie",
+          iconType: "md-pie",
+          disabled: true
+        },
+        bar: {
+          name: "柱状图",
+          id: "bar",
+          iconType: "ios-stats",
+          disabled: true
+        }
+      }
+
+      for(let key in rawData) {
+        options.push(initialOption[key]);
+        if (!isEmpty(rawData[key])) {
+          rawData[key].forEach(item => {
+            options.push(Object.assign({disabled: false}, item))
+          })
+        }
+      }
+      return options
+    },
+    onChartBodyClick(item) {
+      if (this.isEditStatus && !this.noAllowChartChange(item)) {
+        this.setChartType(item);
       } else {
-        this.activeGroup = 'All'
-        this.panel_group_list = params.panel_group_list || []
-        if (!this.$root.$validate.isEmpty_reset(params.cfg)) {
-          this.viewData = JSON.parse(params.cfg)
-          this.initPanals()
-          this.cutsomViewId = params.id
-          // this.$refs.cutsomViewId.getAlarm(this.cutsomViewId, this.viewCondition)
+        if (!this.isEditStatus) {
+          this.gridPlus(item);
+        } else {
+          this.$Message.warning('暂无编辑权限！')
         }
       }
     },
     openAlarmDisplay () {
       this.showAlarm = !this.showAlarm
-      this.$refs.cutsomViewId.getAlarm(this.cutsomViewId, this.viewCondition, this.permission)
+      setTimeout(() => {
+        this.$refs.cutsomViewId.getAlarm(this.cutsomViewId, this.viewCondition, this.permission);
+        this.refreshNow = !this.refreshNow;
+      }, 0)
     },
     closeAlarmDisplay () {
-      this.showAlarm = !this.showAlarm
-      this.$refs.cutsomViewId.clearAlarmInterval()
+      this.showAlarm = !this.showAlarm;
+      this.$refs.cutsomViewId.clearAlarmInterval();
+      this.refreshNow = !this.refreshNow;
     },
     datePick (data) {
       this.viewCondition.dateRange = data
@@ -392,12 +531,13 @@ export default {
       return timestamp
     },
     initPanals () {
-      let tmp = []
+      let tmpArr = []
       this.viewData.forEach((item) => {
+        const parsedDisplayConfig = JSON.parse(item.displayConfig);
         let params = {
           aggregate: item.aggregate,
-          agg_step: item.agg_step,
-          lineType: item.lineType,
+          agg_step: item.aggStep,
+          lineType: this.lineTypeOption[item.lineType],
           time_second: this.viewCondition.timeTnterval,
           start: this.dateToTimestamp(this.viewCondition.dateRange[0]),
           end: this.dateToTimestamp(this.viewCondition.dateRange[1]),
@@ -405,38 +545,55 @@ export default {
           unit: '',
           data: []
         }
-        item.query.forEach( _ => {
-          params.data.push(_)
+        item.chartSeries.forEach(item => {
+          item.defaultColor = item.colorGroup;
+          if (item.series && !isEmpty(item.series)) {
+            item.metricToColor = cloneDeep(item.series).map(one => {
+              one.metric = one.seriesName;
+              delete one.seriesName
+              return one
+            })
+          } else {
+            item.metricToColor = []
+          }
+          params.data.push(item)
         })
-        let height = (item.viewConfig.h+1) * 30-8
+
+        let height = (parsedDisplayConfig.h + 1) * 30-8
         let _activeCharts = []
         _activeCharts.push({
           style: `height:${height}px;`,
-          panalUnit: item.panalUnit,
-          elId: item.viewConfig.id,
+          panalUnit: item.unit,
+          elId: item.id,
           chartParams: params,
           chartType: item.chartType,
           aggregate: item.aggregate,
-          agg_step: item.agg_step,
-          lineType: item.lineType,
+          agg_step: item.aggStep,
+          lineType: this.lineTypeOption[item.lineType],
           time_second: this.viewCondition.timeTnterval,
           start: this.dateToTimestamp(this.viewCondition.dateRange[0]),
           end: this.dateToTimestamp(this.viewCondition.dateRange[1])                                  
         })
-        item.viewConfig._activeCharts = _activeCharts
-        tmp.push(item.viewConfig)
+        tmpArr.push({
+          _activeCharts,
+          ...parsedDisplayConfig,
+          i: item.name,
+          id: item.id,
+          group: item.group,
+          public: item.public,
+          sourceDashboard: item.sourceDashboard
+        })
       })
-      this.layoutData = tmp
+      this.layoutData = tmpArr
     },
     isShowGridPlus (item) {
-      // 新增及饼图时屏蔽放大功能
       if (!item._activeCharts || item._activeCharts[0].chartType === 'pie') {
         return false
       }
       return true
     },
     addItem() {
-      this.activeGroup = 'All'
+      this.activeGroup = 'ALL'
       generateUuid().then((elId)=>{
         const key = ((new Date()).valueOf()).toString().substring(10)
         let item = {
@@ -451,14 +608,15 @@ export default {
       })
     },
     setChartType (item) {
+      this.setChartConfigId = item.id;
       const find = this.layoutData.find(i => i.id === item.id)
       this.activeGridConfig = find
       if (!find._activeCharts) {
-        this.$root.JQ('#set_chart_type_Modal').modal('show')
+        // this.$root.JQ('#set_chart_type_Modal').modal('show')
       } else {
         this.activeChartType = find._activeCharts[0].chartType
-        this.chartType = find._activeCharts[0].chartType
-        this.editGrid(item)
+        this.chartType = find._activeCharts[0].chartType;
+        this.showChartConfig = true;
       }
     },
     choiceChartType (activeChartType) {
@@ -475,61 +633,32 @@ export default {
         this.$Message.warning('请先设置图标类型！')
         return
       }
-      this.$root.JQ('#set_chart_type_Modal').modal('hide')
-      this.editGrid()
     },
-    editGrid(item) {
-      this.modifyLayoutData().then((resViewData)=>{
-        let parentRouteData = this.editData
-        const cfg = JSON.parse(parentRouteData.cfg)
-        parentRouteData.cfg = JSON.parse(parentRouteData.cfg)
-        const oriConfig = JSON.parse(JSON.stringify(cfg))
-        let aggregate = 'none'
-        let agg_step = 60
-        if (item) {
-          const find = oriConfig.find(xItem => xItem.viewConfig.id === item.id)
-          if (find) {
-            aggregate = find.aggregate || 'none'
-            agg_step = find.agg_step || 60
-          }
-          let findEditData = parentRouteData.cfg.find(xItem => xItem.viewConfig.id === item.id)
-          findEditData.aggregate = aggregate
-          findEditData.agg_step = agg_step
-        } else {
-          parentRouteData.cfg = resViewData
-        }
-        parentRouteData.cfg = JSON.stringify(parentRouteData.cfg)
-        this.parentRouteData = parentRouteData
-        if (['line','bar'].includes(this.activeChartType)) {
-          this.chartType = 'line'
-          // this.$refs.editLineView.initChart({templateData: parentRouteData, panal:this.activeGridConfig})
-        } else {
-          this.chartType = 'pie'
-          // this.$refs.editPieView.initChart({templateData: parentRouteData, panal:this.activeGridConfig})
-        }
-        this.showChartConfig = true
-      })
-    },
-    removeGrid(itemxxx) {
+    removeGrid(item) {
       this.isShowWarning = true
-      this.deleteConfirm.id = itemxxx.id
+      this.deleteConfirm.id = item.id
     },
-    confirmRemoveGrid () {
-      this.layoutData.forEach((item,index) => {
-        if (item.id ===  this.deleteConfirm.id) {
-          this.layoutData.splice(index,1)
-        }
-      })
+    async confirmRemoveGrid () {
+      const params = this.processPannelParams()
+      remove(params.charts, {id: this.deleteConfirm.id});
+      if (!isEmpty(params.charts)) {
+        params.charts[params.charts.length -1].displayConfig.x = 0
+      }
+      await this.requestReturnPromise('PUT', '/monitor/api/v2/dashboard/custom', params);
+      this.getPannelList();
+      this.getAllChartOptionList();
     },
     cancel () {
       this.isShowWarning = false
     },
     async gridPlus(item) {
+      if (!this.isShowGridPlus(item)) return 
       const resViewData = await this.modifyLayoutData()
-      let parentRouteData = this.editData
-      parentRouteData.cfg = JSON.stringify(resViewData)
       this.showMaxChart = true
-      this.$refs.viewChart.initChart({templateData: parentRouteData, panal:item, parentData: this.editData})
+      const templateData = {
+        cfg: JSON.stringify(resViewData)
+      }
+      this.$refs.viewChart.initChart({templateData, panal:item, viewCondition: this.viewCondition})
     },
     async modifyLayoutData() {
       var resViewData = []
@@ -541,15 +670,14 @@ export default {
           query: [],
           viewConfig: layoutDataItem
         }
-
         this.viewData.forEach((i) =>{
-          if (layoutDataItem.id === i.viewConfig.id) {
-            temp.panalUnit = i.panalUnit
-            temp.query = i.query
+          if (layoutDataItem.id === i.id) {
+            temp.panalUnit = i.unit
+            temp.query = i.chartSeries
             temp.chartType = i.chartType
             temp.aggregate = i.aggregate
-            temp.agg_step = i.agg_step
-            temp.lineType = i.lineType
+            temp.agg_step = i.aggStep
+            temp.lineType = this.lineTypeOption[i.lineType]
           }
         })
         resViewData.push(temp)
@@ -559,44 +687,34 @@ export default {
     resizeEvent: function(i, newH, newW, newHPx, newWPx){
       resizeEvent(this, i, newH, newW, newHPx, newWPx)
     },
-    saveEdit() {
-      let res = []
-      this.layoutData.forEach((layoutDataItem) =>{
-        this.viewData.forEach((i) =>{
-          if (layoutDataItem.id === i.viewConfig.id) {
-            res.push({
-              panalTitle: i.panalTitle,
-              panalUnit: i.panalUnit,
-              query: i.query,
-              chartType: i.chartType,
-              aggregate: i.aggregate,
-              agg_step: i.agg_step,
-              lineType: i.lineType,
-              viewConfig: layoutDataItem
-            })
-          }
-        })
-      })
-      let params = {
-        name: this.panalName,
-        id: this.editData.id,
-        panel_group_list: this.panel_group_list || [],
-        cfg: JSON.stringify(res)
-      }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.template.save, params, () => {
-        this.isEditPanal = false
-        this.$Message.success(this.$t('tips.success'))
+    submitPanelInfo() {
+      return new Promise(resolve => {
+        if (isEmpty(this.boardMgmtRoles) || isEmpty(this.boardUseRoles)) {
+          this.saveAuthType = 'board';
+          this.$refs.authDialog.startAuth(this.boardMgmtRoles, this.boardUseRoles, this.mgmtRolesOptions, this.userRolesOptions);
+        } else {
+          this.request('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams(), res => {
+            resolve()
+          });
+        }
       })
     },
-    goBack () {
+
+    async savePanelInfo() {
+      await this.submitPanelInfo();
+      this.$Message.success(this.$t('tips.success'));
+    },
+    returnPreviousPage() {
       this.$router.push({name:'viewConfigIndex'})
     },
-    savePanalEdit () {
+    async savePanalEdit () {
       if (!this.panalName) {
         this.$Message.warning(this.$t('tips.required'))
         return
       }
-      this.saveEdit()
+      await this.submitPanelInfo();
+      this.$Message.success(this.$t('tips.success'));
+      this.isEditPanal = false;
     },
     canclePanalEdit () {
       this.isEditPanal = false
@@ -610,7 +728,7 @@ export default {
         this.refreshNow = false
       })
     },
-    addGroup () {
+    addGroupItem () {
       this.groupName = ''
       this.groupNameIndex = -1
       this.getPanelGroupInfo('')
@@ -657,7 +775,7 @@ export default {
         }
       })
       this.savePanalEdit()
-      this.activeGroup = 'All'
+      this.activeGroup = 'ALL'
     },
     confirmGroupMgmt () {
       if (this.groupNameIndex === -1 && this.panel_group_list.includes(this.groupName)) {
@@ -692,7 +810,257 @@ export default {
       this.savePanalEdit()
       this.activeGroup = this.groupName
     },
-    //#endregion
+
+    processInitialChartName() {
+      let allName = [];
+      if (!isEmpty(this.layoutData)) {
+        allName = this.layoutData.map(item => {
+          if (!isNaN(Number(item.i))) {
+            return Number(item.i)
+          } else {
+            return 10000
+          }
+        })
+        return Math.max(...allName) + 1 + ''
+      }
+      return '10000'
+    },
+    async onAddChart(copyInfo, type) {
+      if (type === 'add') {
+        const name = this.processInitialChartName();
+        const addChartParams = {
+          dashboardId: this.pannelId,
+          name: name,
+          chartTemplate: "one",
+          chartType: copyInfo.id,
+          lineType: copyInfo.id === 'line' ? 'line' : "",
+          pieType: copyInfo.id === 'pie' ? 'tag' : "",
+          aggregate: "none",
+          aggStep: 60,
+          unit: '',
+          group: this.activeGroup === 'ALL' ? "" : this.activeGroup,
+          displayConfig: {
+              x:0,
+              y:0,
+              w:6,
+              h:7,
+            }
+        }
+        this.setChartConfigId = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom', addChartParams);
+        let item = {
+          x:0,
+          y:0,
+          w:6,
+          h:7,
+          i: `${name}`,
+          id: `${this.setChartConfigId}`
+        }
+        if (this.layoutData.length) {
+          let lastItem = this.layoutData[this.layoutData.length - 1];
+          if (lastItem.x <= 6 && lastItem.w <= 6) {
+            let popItem = this.layoutData.pop();
+            popItem.x = 6;
+            this.layoutData.push(popItem)
+          } 
+        }
+        this.layoutData.push(item);
+        setTimeout(() => {
+          this.request('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams(), res => {
+            this.getPannelList();
+            this.showChartConfig = true;
+          });
+        }, 0)
+      } else {
+        const group = type === 'copy' ? '' : (this.activeGroup === 'ALL' ? "" : this.activeGroup);
+        const copyParams = {
+          dashboardId: this.pannelId,
+          ref: type === 'copy' ? false : true,
+          originChartId: copyInfo.id,
+          group,
+          displayConfig: {
+            x:0,
+            y:0,
+            w:6,
+            h:7,
+          }
+        }
+        const chartId = await this.requestReturnPromise('POST', '/monitor/api/v2/chart/custom/copy', copyParams);
+        let item = {
+          x:0,
+          y:0,
+          w:6,
+          h:7,
+          i: '',
+          id: `${chartId}`, 
+          group
+        }
+        this.layoutData.push(item);
+        setTimeout(async () => {
+          await this.requestReturnPromise('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams());
+          this.getPannelList();
+          this.setChartConfigId = chartId;
+          if (type === 'copy') {
+            this.showChartConfig = true;
+          }
+          this.getAllChartOptionList();
+        }, 0)
+      }
+    },
+
+    processPannelParams() {
+      const charts = [];
+      this.layoutData.forEach(item =>{
+        charts.push({
+          id: item.id,
+          group: item.group,
+          name: item.i,
+          displayConfig: {
+            x: item.x,
+            y: item.y,
+            w: item.w,
+            h: item.h
+          }
+        })
+      })
+      return {
+        id: this.pannelId,
+        name: this.panalName,
+        charts,
+        panelGroups: this.panel_group_list,
+        timeRange: this.viewCondition.timeTnterval,
+        refreshWeek: this.viewCondition.autoRefresh
+      }
+    },
+
+    requestReturnPromise(method, api, params) {
+      return new Promise(resolve => {
+        this.request(method, api, params, res => {
+            resolve(res)
+          })
+      })
+    },
+    
+    startEditTitle(item) {
+      this.initTitle = item.i
+      this.editChartId = item.id
+    },
+
+    cancelEditTitle(item) {
+      item.i = this.initTitle
+      this.editChartId = null
+    },
+
+    async onChartTitleChange(item) {
+      const isDuplicateName = await this.chartDuplicateNameCheck(item.id, item.i);
+      if (isDuplicateName) return
+      await this.requestReturnPromise('PUT', '/monitor/api/v2/chart/custom/name', {
+        chartId: item.id,
+        name: item.i
+      })
+      this.editChartId = null;
+      this.$Message.success(this.$t('tips.success'));
+    },
+    chartDuplicateNameCheck(chartId, chartName, isPublic = 0) {
+      return new Promise(resolve => {
+        if (!chartName) {
+          resolve(true)
+          return
+        }
+        const params = {
+          chart_id: chartId,
+          name: chartName
+        }
+        if (isPublic) {
+          params.public = 1 // 是否存入图表库，1表示是
+        }
+        this.request('GET', '/monitor/api/v2/chart/custom/name/exist', params, res => {
+          if (res) {
+            this.$Message.error(isPublic ? (this.$t('m_chart_library') + this.$t('m_name') + this.$t('m_cannot_be_repeated')) : (this.$t('m_graph_name') + this.$t('m_cannot_be_repeated')));
+          }
+          resolve(res)
+        })
+      })
+    },
+    noAllowChartChange(item) {
+      return item.public === true && item.sourceDashboard !== this.pannelId
+    }, 
+    async showChartAuthDialog(item) {
+      this.setChartConfigId = item.id;
+      this.chartAuthDialogShow = true;
+      if (await this.chartDuplicateNameCheck(item.id, item.i, 1)) return
+      await this.getSingleChartAuth();
+      this.saveAuthType = 'chart';
+      this.$refs.authDialog.startAuth(this.mgmtRoles, this.useRoles, this.mgmtRolesOptions, this.userRolesOptions);
+    },
+    getSingleChartAuth() {
+      return new Promise(resolve => {
+        this.request('GET','/monitor/api/v2/chart/custom/permission', {
+          chart_id: this.setChartConfigId
+        }, res => {
+          this.mgmtRoles = res.mgmtRoles;
+          this.useRoles = res.useRoles;
+          resolve()
+        })
+      })
+    },
+    getAllRolesOptions () {
+      const params = {
+        page: 1,
+        size: 1000
+      }
+      this.request('GET','/monitor/api/v1/user/role/list', params, res => {
+        this.userRolesOptions = this.processRolesList(res.data)
+      })
+      this.request('GET', '/monitor/api/v1/user/manage_role/list', {}, res => {
+        this.mgmtRolesOptions = this.processRolesList(res);
+      })
+    },
+    processRolesList(list = []) {
+      if (isEmpty(list)) return [];
+      const resArr = cloneDeep(list).map(item => {
+        return {
+          ...item,
+          key: item.name,
+          label: item.displayName || item.display_name
+        }
+      })
+      return resArr
+    },
+    saveChartOrDashboardAuth(mgmtRoles, useRoles) {
+      let path = ''
+      const params = {
+        mgmtRoles,
+        useRoles
+      }
+      if (this.saveAuthType === 'chart') {
+        this.mgmtRoles = mgmtRoles;
+        this.useRoles = useRoles;
+        path = '/monitor/api/v2/chart/custom/permission';
+        params.chartId = this.setChartConfigId
+      } else {
+        this.boardMgmtRoles = mgmtRoles;
+        this.boardUseRoles = useRoles;
+        path = '/monitor/api/v2/dashboard/custom/permission';
+        params.id = this.pannelId
+      }
+      this.request('POST', path, params, () => {
+        this.$Message.success(this.$t('m_success'));
+        this.getPannelList()
+      })
+    },
+    onSingleChartGroupChange() {
+      this.request('PUT', '/monitor/api/v2/dashboard/custom', this.processPannelParams(), res => {
+        this.$Message.success(this.$t('m_success'));
+        this.getPannelList(this.activeGroup);
+        // this.activeGroup = 'ALL';
+      });
+    },
+    closeChartInfoDrawer() {
+      this.getPannelList();
+      setTimeout(() => {
+        this.refreshNow = !this.refreshNow;
+      }, 500)
+    }
   },
   components: {
     GridLayout: VueGridLayout.GridLayout,
@@ -701,19 +1069,67 @@ export default {
     CustomPieChart,
     ViewConfigAlarm,
     ViewChart,
-    editPieView,
-    editLineView
+    EditView,
+    AuthDialog
   },
 }
 </script>
 
+<style lang="less">
+.chart-config-info {
+  .ivu-dropdown-item-disabled {
+    color: inherit
+  }
+}
+
+.references-button {
+  background-color: #edf4fe;
+  border-color: #b5d0fb;
+}
+
+.chart-option-menu {
+  .ivu-select-dropdown {
+    max-height: 100vh !important;
+  }
+}
+
+.grid-content {
+  display: flex;
+  padding: 0 32px;
+  font-size: 16px;
+}
+
+.header-grid-tools {
+  i {
+    font-size: 18px !important
+  }
+}
+
+</style>
+
 <style scoped lang="less">
-.panal-edit-icon {
-  margin-left:4px;
-  padding: 4px;
+/deep/ .ivu-form-item {
+  margin-bottom: 0;
+}
+
+.arrow-back {
+  cursor: pointer;
+  width: 28px;
+  height: 24px;
+  color: #fff;
+  border-radius: 2px;
+  background: #2d8cf0;
+  margin-right: 12px;
+  margin-bottom: 10px;
 }
 .header-name {
   font-size: 16px; 
+  margin-left: 15px;
+}
+
+.panal-edit-icon {
+  margin-left:4px;
+  padding: 4px;
 }
 .search-container {
   display: flex;
@@ -749,8 +1165,13 @@ export default {
 }
 
 .radio-group {
+  font-size: 14px;
   margin-bottom: 15px;
 }
+.chart-config-info {
+  font-size: 14px;
+}
+
 .radio-group-radio {
   padding: 5px 15px;
   border-radius: 32px;
@@ -764,9 +1185,60 @@ export default {
   border: 1px solid #81b337;
   color: #81b337;
 }
-.primary-btn {
-  color: #fff;
-  background-color: #57a3f3;
-  border-color: #57a3f3;
+
+.selected-radio {
+  background-color: rgba(129, 179, 55, 0.6)
 }
+
+.is-not-selected-radio {
+  background: #fff
+}
+
+.grid-style {
+    width: 100%;
+    display: inline-block;
+  }
+  .alarm-style {
+    width: 800px;
+    display: inline-block;
+  }
+  .fa-line-chart, .fa-pie-chart {
+    cursor: pointer;
+    font-size: 36px;
+    padding: 24px 48px;
+    border: 1px solid @gray-d;
+    margin: 8px;
+    border-radius: 4px;
+  }
+  .fa-line-chart:hover, .fa-pie-chart:hover {
+    box-shadow: 0 1px 8px @gray-d;
+    border-color: @blue-2;
+  }
+  .active-tag {
+    color: @blue-2;
+    border-color: @blue-2;
+  } 
+  .i-icon-menu-fold:before {
+    content: "\E600";
+  }
+
+  .view-config-alarm {
+    // width: 700px
+  }
+
+  .no-data {
+    text-align: center;
+    margin: 32px;
+    font-size: 14px;
+    color: gray;
+  }
+
+  .ellipsis-text {
+    width: 170px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: inline-block;
+    vertical-align: bottom;
+  }
 </style>

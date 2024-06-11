@@ -93,7 +93,7 @@
             :remote-method="getAllObject"
             >
             <Option v-for="(item, index) in allObject" :value="item.option_value" :key="item.option_value">
-              <TagShow :tagName="item.type" :index="index"></TagShow> 
+              <TagShow :list="allObject" name="type" :tagName="item.type" :index="index"></TagShow> 
               {{ item.option_text }}</Option>
           </Select>
           <Button @click="addObjectItem">{{$t('button.add')}}</Button>
@@ -212,7 +212,6 @@
           @click="getDeleteData"
           :disabled="!confirmModal.check"
           type="warning"
-          style="background-color: #0080FF;border-color: #0080FF;"
           >{{ $t('button.confirm') }}</Button
         >
       </div>

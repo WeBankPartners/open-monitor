@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
 	"net/http"
+	"sort"
 	"strings"
 	"time"
 )
@@ -141,7 +142,7 @@ func CreateLogMetricJson(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	err = db.CreateLogMetricJson(&param)
+	err = db.CreateLogMetricJson(&param, middleware.GetOperateUser(c))
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
@@ -171,7 +172,7 @@ func UpdateLogMetricJson(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	err = db.UpdateLogMetricJson(&param)
+	err = db.UpdateLogMetricJson(&param, middleware.GetOperateUser(c))
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
@@ -227,7 +228,7 @@ func CreateLogMetricConfig(c *gin.Context) {
 		middleware.ReturnValidateError(c, "regular illegal")
 		return
 	}
-	err := db.CreateLogMetricConfig(&param)
+	err := db.CreateLogMetricConfig(&param, middleware.GetOperateUser(c))
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
@@ -254,7 +255,7 @@ func UpdateLogMetricConfig(c *gin.Context) {
 		middleware.ReturnValidateError(c, "regular illegal")
 		return
 	}
-	err := db.UpdateLogMetricConfig(&param)
+	err := db.UpdateLogMetricConfig(&param, middleware.GetOperateUser(c))
 	if err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
@@ -309,7 +310,19 @@ func CheckRegExpMatch(c *gin.Context) {
 		middleware.ReturnValidateError(c, err.Error())
 		return
 	}
-	result := db.CheckRegExpMatchPCRE(param)
+	result := models.CheckRegExpResult{}
+	var matchString string
+	result.MatchText, matchString = db.CheckRegExpMatchPCRE(param)
+	if strings.HasPrefix(matchString, "{") {
+		resultJsonMap := make(map[string]interface{})
+		if unmarshalErr := json.Unmarshal([]byte(matchString), &resultJsonMap); unmarshalErr == nil {
+			result.JsonObj = resultJsonMap
+			for k, _ := range resultJsonMap {
+				result.JsonKeyList = append(result.JsonKeyList, k)
+			}
+			sort.Strings(result.JsonKeyList)
+		}
+	}
 	middleware.ReturnSuccessData(c, result)
 }
 
@@ -380,9 +393,12 @@ func ImportLogMetric(c *gin.Context) {
 				logMetric.ServiceGroup = serviceGroup
 			}
 		}
+		for _, metricGroup := range logMonitor.MetricGroups {
+			metricGroup.ServiceGroup = serviceGroup
+		}
 	}
-	if err = db.ImportLogMetric(&paramObj); err != nil {
-		middleware.ReturnHandleError(c, "import log metric fail", err)
+	if err = db.ImportLogMetric(&paramObj, middleware.GetOperateUser(c)); err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
 		middleware.ReturnSuccess(c)
 	}
@@ -427,8 +443,474 @@ func ImportLogMetricExcel(c *gin.Context) {
 		middleware.ReturnHandleError(c, err.Error(), err)
 		return
 	}
-	if err = db.ImportLogMetricExcel(logMonitorGuid, logMetricConfigList); err != nil {
+	if err = db.ImportLogMetricExcel(logMonitorGuid, middleware.GetOperateUser(c), logMetricConfigList); err != nil {
 		middleware.ReturnHandleError(c, "import log metric from excel data fail", err)
+	} else {
+		middleware.ReturnSuccess(c)
+	}
+}
+
+func ListLogMonitorTemplate(c *gin.Context) {
+	var param models.LogMonitorTemplateListParam
+	if err := c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	result, err := db.ListLogMonitorTemplate(&param, middleware.GetOperateUserRoles(c))
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+	} else {
+		middleware.ReturnSuccessData(c, result)
+	}
+}
+
+func GetLogMonitorTemplate(c *gin.Context) {
+	logMonitorTemplateGuid := c.Param("logMonitorTemplateGuid")
+	result, err := db.GetLogMonitorTemplate(logMonitorTemplateGuid)
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+	} else {
+		middleware.ReturnSuccessData(c, result)
+	}
+}
+
+func CreateLogMonitorTemplate(c *gin.Context) {
+	var param models.LogMonitorTemplateDto
+	if err := c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	err := validateLogMonitorTemplateParam(&param)
+	if err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	err = db.CreateLogMonitorTemplate(&param, middleware.GetOperateUser(c))
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+	} else {
+		middleware.ReturnSuccess(c)
+	}
+}
+
+func validateLogMonitorTemplateParam(param *models.LogMonitorTemplateDto) (err error) {
+	if param.LogType != models.LogMonitorJsonType && param.LogType != models.LogMonitorRegularType {
+		err = fmt.Errorf("param json type illegal")
+		return
+	}
+	if param.CalcResultObj == nil {
+		err = fmt.Errorf("calc result can not empty")
+		return
+	}
+	param.Name = strings.TrimSpace(param.Name)
+	if existLogMonitorTemplate, getErr := db.GetLogMonitorTemplateByName(param.Guid, param.Name); getErr != nil {
+		err = getErr
+		return
+	} else if existLogMonitorTemplate != nil {
+		err = fmt.Errorf("log monitor template name:%s duplicate", param.Name)
+		return
+	}
+	calcResultBytes, _ := json.Marshal(param.CalcResultObj)
+	param.CalcResult = string(calcResultBytes)
+	if len(param.CalcResult) > 50000 {
+		err = fmt.Errorf("calc result too long")
+		return
+	}
+	for _, v := range param.ParamList {
+		if middleware.IsIllegalDisplayName(v.DisplayName) {
+			err = fmt.Errorf("log param display name:%s illegal", v.DisplayName)
+			return
+		}
+		if param.LogType == "json" && middleware.IsIllegalNameNew(v.JsonKey) {
+			err = fmt.Errorf("log param jsonKey:%s illegal", v.JsonKey)
+			return
+		}
+		if param.LogType == "regular" && v.Regular == "" {
+			err = fmt.Errorf("log param regular can not empty ")
+			return
+		}
+	}
+	for _, v := range param.MetricList {
+		if middleware.IsIllegalMetric(v.Metric) {
+			err = fmt.Errorf("metric : %s illegal", v.Metric)
+			return
+		}
+		if middleware.IsIllegalDisplayName(v.DisplayName) {
+			err = fmt.Errorf("metric: %s metric displayName: %s illegal", v.Metric, v.DisplayName)
+			return
+		}
+		tagConfigByte, _ := json.Marshal(v.TagConfigList)
+		v.TagConfig = string(tagConfigByte)
+		if v.LogParamName == "" {
+			err = fmt.Errorf("metric: %s log param name can not empty", v.Metric)
+			return
+		}
+		//if v.AggType != "avg" && v.AggType != "max" && v.AggType != "min" && v.AggType != "sum" && v.AggType != "count" {
+		//	err = fmt.Errorf("metric: %s  aggType: %s illegal", v.Metric, v.AggType)
+		//	return
+		//}
+		if v.Step == 0 {
+			v.Step = 10
+		}
+	}
+	return
+}
+
+func UpdateLogMonitorTemplate(c *gin.Context) {
+	var param models.LogMonitorTemplateDto
+	if err := c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	err := validateLogMonitorTemplateParam(&param)
+	if err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	var affectEndpoints []string
+	affectEndpoints, err = db.UpdateLogMonitorTemplate(&param, middleware.GetOperateUser(c))
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+	} else {
+		err = syncLogMetricNodeExporterConfig(affectEndpoints)
+		if err != nil {
+			middleware.ReturnHandleError(c, err.Error(), err)
+		} else {
+			middleware.ReturnSuccess(c)
+		}
+	}
+}
+
+func DeleteLogMonitorTemplate(c *gin.Context) {
+	logMonitorTemplateGuid := c.Param("logMonitorTemplateGuid")
+	err := db.DeleteLogMonitorTemplate(logMonitorTemplateGuid)
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+	} else {
+		middleware.ReturnSuccess(c)
+	}
+}
+
+func CheckLogMonitorRegExpMatch(c *gin.Context) {
+	var param models.LogMonitorRegMatchParam
+	if err := c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	result := []*models.LogParamTemplateObj{}
+	for _, v := range param.ParamList {
+		_, v.DemoMatchValue = db.CheckRegExpMatchPCRE(models.CheckRegExpParam{RegString: v.Regular, TestContext: param.DemoLog})
+		result = append(result, v)
+	}
+	middleware.ReturnSuccessData(c, result)
+}
+
+func GetLogMetricGroup(c *gin.Context) {
+	logMetricGroupGuid := c.Param("logMetricGroupGuid")
+	result, err := db.GetLogMetricGroup(logMetricGroupGuid)
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+	} else {
+		middleware.ReturnSuccessData(c, result)
+	}
+}
+
+func CreateLogMetricGroup(c *gin.Context) {
+	var param models.LogMetricGroupWithTemplate
+	if err := c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	if param.LogMetricMonitorGuid == "" || param.LogMonitorTemplateGuid == "" {
+		err := fmt.Errorf("LogMetricMonitorGuid and LogMonitorTemplateGuid can not empty")
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	if middleware.IsIllegalMetricPrefixCode(param.MetricPrefixCode) {
+		err := fmt.Errorf("param MetricPrefixCode validate fail")
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	param.Name = strings.TrimSpace(param.Name)
+	if err := db.ValidateLogMetricGroupName("", param.Name, param.LogMetricMonitorGuid); err != nil {
+		err = fmt.Errorf(middleware.GetMessageMap(c).LogGroupNameDuplicateError, param.Name)
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	if middleware.IsIllegalDisplayName(param.Name) {
+		err := fmt.Errorf(middleware.GetMessageMap(c).LogGroupNameIllegalError, param.Name)
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	prefixMap, queryErr := db.GetLogMetricMonitorMetricPrefixMap(param.LogMetricMonitorGuid)
+	if queryErr != nil {
+		middleware.ReturnHandleError(c, queryErr.Error(), queryErr)
+		return
+	}
+	if _, ok := prefixMap[param.MetricPrefixCode]; ok {
+		err := fmt.Errorf("Prefix: %s duplidate ", param.MetricPrefixCode)
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	err := db.CreateLogMetricGroup(&param, middleware.GetOperateUser(c))
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+	} else {
+		err = syncLogMetricMonitorConfig(param.LogMetricMonitorGuid)
+		if err != nil {
+			middleware.ReturnError(c, 200, middleware.GetMessageMap(c).SaveDoneButSyncFail, err)
+		} else {
+			middleware.ReturnSuccess(c)
+		}
+	}
+}
+
+func UpdateLogMetricGroup(c *gin.Context) {
+	var param models.LogMetricGroupWithTemplate
+	if err := c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	if param.LogMetricGroupGuid == "" || param.LogMetricMonitorGuid == "" {
+		err := fmt.Errorf("LogMetricGroupGuid and LogMetricMonitorGuid can not empty")
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	param.Name = strings.TrimSpace(param.Name)
+	if err := db.ValidateLogMetricGroupName(param.LogMetricGroupGuid, param.Name, param.LogMetricMonitorGuid); err != nil {
+		err = fmt.Errorf(middleware.GetMessageMap(c).LogGroupNameDuplicateError, param.Name)
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	if middleware.IsIllegalDisplayName(param.Name) {
+		err := fmt.Errorf(middleware.GetMessageMap(c).LogGroupNameIllegalError, param.Name)
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	err := db.UpdateLogMetricGroup(&param, middleware.GetOperateUser(c))
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+	} else {
+		err = syncLogMetricMonitorConfig(param.LogMetricMonitorGuid)
+		if err != nil {
+			middleware.ReturnError(c, 200, middleware.GetMessageMap(c).SaveDoneButSyncFail, err)
+		} else {
+			middleware.ReturnSuccess(c)
+		}
+	}
+}
+
+func DeleteLogMetricGroup(c *gin.Context) {
+	logMetricGroupGuid := c.Param("logMetricGroupGuid")
+	logMetricMonitor, err := db.DeleteLogMetricGroup(logMetricGroupGuid)
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+	} else {
+		if logMetricMonitor != "" {
+			err = syncLogMetricMonitorConfig(logMetricMonitor)
+			if err != nil {
+				middleware.ReturnHandleError(c, err.Error(), err)
+			} else {
+				middleware.ReturnSuccess(c)
+			}
+		} else {
+			middleware.ReturnSuccess(c)
+		}
+	}
+}
+
+func GetLogMetricCustomGroup(c *gin.Context) {
+	logMetricGroupGuid := c.Param("logMetricGroupGuid")
+	result, err := db.GetLogMetricCustomGroup(logMetricGroupGuid)
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+	} else {
+		middleware.ReturnSuccessData(c, result)
+	}
+}
+
+func CreateLogMetricCustomGroup(c *gin.Context) {
+	var param models.LogMetricGroupObj
+	if err := c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	if param.LogMetricMonitor == "" {
+		err := fmt.Errorf("LogMetricMonitor can not empty")
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	if err := db.ValidateLogMetricGroupName(param.Guid, param.Name, param.LogMetricMonitor); err != nil {
+		err = fmt.Errorf(middleware.GetMessageMap(c).LogGroupNameDuplicateError, param.Name)
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	if middleware.IsIllegalDisplayName(param.Name) {
+		err := fmt.Errorf(middleware.GetMessageMap(c).LogGroupNameIllegalError, param.Name)
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	param.ServiceGroup, param.MonitorType = db.GetLogMetricServiceGroup(param.LogMetricMonitor)
+	existMetricMap, err := db.GetServiceGroupMetricMap(param.ServiceGroup)
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	for _, v := range param.MetricList {
+		if _, existFlag := existMetricMap[v.Metric]; existFlag {
+			err = fmt.Errorf(middleware.GetMessageMap(c).MetricDuplicateError, v.Metric)
+			break
+		} else {
+			existMetricMap[v.Metric] = param.MonitorType
+		}
+	}
+	if err != nil {
+		middleware.ReturnError(c, 200, err.Error(), err)
+		return
+	}
+	err = db.CreateLogMetricCustomGroup(&param, middleware.GetOperateUser(c))
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+	} else {
+		err = syncLogMetricMonitorConfig(param.LogMetricMonitor)
+		if err != nil {
+			middleware.ReturnError(c, 200, middleware.GetMessageMap(c).SaveDoneButSyncFail, err)
+		} else {
+			middleware.ReturnSuccess(c)
+		}
+	}
+}
+
+func UpdateLogMetricCustomGroup(c *gin.Context) {
+	var param models.LogMetricGroupObj
+	if err := c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	if param.Guid == "" {
+		err := fmt.Errorf("guid can not empty")
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	if err := db.ValidateLogMetricGroupName(param.Guid, param.Name, param.LogMetricMonitor); err != nil {
+		err = fmt.Errorf(middleware.GetMessageMap(c).LogGroupNameDuplicateError, param.Name)
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	if middleware.IsIllegalDisplayName(param.Name) {
+		err := fmt.Errorf(middleware.GetMessageMap(c).LogGroupNameIllegalError, param.Name)
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	param.ServiceGroup, param.MonitorType = db.GetLogMetricServiceGroup(param.LogMetricMonitor)
+	existMetricMap, err := db.GetServiceGroupMetricMap(param.ServiceGroup)
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	for _, v := range param.MetricList {
+		if existLogMetricGroup, existFlag := existMetricMap[v.Metric]; existFlag {
+			if existLogMetricGroup != "" && existLogMetricGroup != param.Guid {
+				err = fmt.Errorf(middleware.GetMessageMap(c).MetricDuplicateError, v.Metric)
+				break
+			}
+		} else {
+			existMetricMap[v.Metric] = param.MonitorType
+		}
+	}
+	if err != nil {
+		middleware.ReturnError(c, 200, err.Error(), err)
+		return
+	}
+	err = db.UpdateLogMetricCustomGroup(&param, middleware.GetOperateUser(c))
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+	} else {
+		err = syncLogMetricMonitorConfig(param.LogMetricMonitor)
+		if err != nil {
+			middleware.ReturnError(c, 200, middleware.GetMessageMap(c).SaveDoneButSyncFail, err)
+		} else {
+			middleware.ReturnSuccess(c)
+		}
+	}
+}
+
+func GetLogMonitorTemplateServiceGroup(c *gin.Context) {
+	logMonitorTemplateGuid := c.Param("logMonitorTemplateGuid")
+	result, err := db.GetLogMonitorTemplateServiceGroup(logMonitorTemplateGuid)
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+	} else {
+		middleware.ReturnSuccessData(c, result)
+	}
+}
+
+func LogMonitorTemplateExport(c *gin.Context) {
+	var param models.LogTemplateExportParam
+	if err := c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	var err error
+	if len(param.GuidList) == 0 {
+		err = fmt.Errorf("param empty")
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	resultData := []*models.LogMonitorTemplateDto{}
+	for _, v := range param.GuidList {
+		templateObj, tmpErr := db.GetLogMonitorTemplate(v)
+		if tmpErr != nil {
+			err = tmpErr
+			break
+		}
+		resultData = append(resultData, templateObj)
+	}
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	b, marshalErr := json.Marshal(resultData)
+	if marshalErr != nil {
+		middleware.ReturnHandleError(c, "export log metric fail, json marshal object error", marshalErr)
+		return
+	}
+	c.Writer.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=%s_%s.json", "log_template_config_", time.Now().Format("20060102150405")))
+	c.Data(http.StatusOK, "application/octet-stream", b)
+}
+
+func LogMonitorTemplateImport(c *gin.Context) {
+	file, err := c.FormFile("file")
+	if err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	f, err := file.Open()
+	if err != nil {
+		middleware.ReturnHandleError(c, "file open error ", err)
+		return
+	}
+	var paramObj []*models.LogMonitorTemplateDto
+	b, err := ioutil.ReadAll(f)
+	defer f.Close()
+	if err != nil {
+		middleware.ReturnHandleError(c, "read content fail error ", err)
+		return
+	}
+	err = json.Unmarshal(b, &paramObj)
+	if err != nil {
+		middleware.ReturnHandleError(c, "json unmarshal fail error ", err)
+		return
+	}
+	var affectEndpoints []string
+	affectEndpoints, err = db.ImportLogMonitorTemplate(paramObj, middleware.GetOperateUser(c))
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
+		return
+	}
+	err = syncLogMetricNodeExporterConfig(affectEndpoints)
+	if err != nil {
+		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
 		middleware.ReturnSuccess(c)
 	}
