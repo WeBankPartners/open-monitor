@@ -10,9 +10,14 @@ import thresholdManagement from "@/views/monitor-config/threshold-management";
 import logManagement from "@/views/monitor-config/log-management";
 import resourceLevel from "@/views/monitor-config/resource-level";
 import exporter from "@/views/monitor-config/exporter";
+import remoteSync from "@/views/monitor-config/remote-sync";
 import businessMonitor from "@/views/monitor-config/business-monitor";
-import metricConfig from "@/views/metric-config";
+import logTemplate from "@/views/monitor-config/log-template";
+import metricConfig from "@/views/metric-config/index";
+import groupBoard from "@/views/metric-config/group-board";
 import viewConfigIndex from "@/views/custom-view/view-config-index";
+import chartList from "@/views/custom-view/chart-list";
+import boardIndex from "@/views/custom-view/index";
 import viewConfig from "@/views/custom-view/view-config";
 import editLineView from "@/views/custom-view/edit-line-view";
 import editPieView from "@/views/custom-view/edit-pie-view";
@@ -101,11 +106,39 @@ const router = [
         component: exporter
       },
       {
+        path: "remoteSync",
+        name: "remoteSync",
+        title: "remoteSync",
+        meta: {},
+        component: remoteSync
+      },
+      {
         path: "businessMonitor",
         name: "businessMonitor",
         title: "businessMonitor",
         meta: {},
         component: businessMonitor
+      },
+      {
+        path: "logTemplate",
+        name: "logTemplate",
+        title: "日志模版",
+        meta: {},
+        component: logTemplate
+      },
+      {
+        path: "metricConfig",
+        name: "metricConfig",
+        title: "metricConfig",
+        meta: {},
+        component: metricConfig
+      },
+      {
+        path: "groupBoard",
+        name: "groupBoard",
+        title: "对象看板",
+        meta: {},
+        component: groupBoard
       }
     ]
   },
@@ -117,18 +150,35 @@ const router = [
     component: metricConfig
   },
   {
-    path: "/viewConfigIndex",
+    path: "viewConfigIndex",
     name: "viewConfigIndex",
     title: "自定义视图主页",
     meta: {},
-    component: viewConfigIndex
-  },
-  {
-    path: "/viewConfig",
-    name: "viewConfig",
-    title: "自定义视图",
-    meta: {},
-    component: viewConfig
+    component: boardIndex,
+    redirect: "/viewConfigIndex/boardList",
+    children: [
+      {
+        path: "boardList",
+        name: "boardList",
+        title: "看板列表",
+        meta: {},
+        component: viewConfigIndex
+      },
+      {
+        path: "allChartList",
+        name: "allChartList",
+        title: "列表",
+        meta: {},
+        component: chartList
+      },
+      {
+        path: "/viewConfig",
+        name: "viewConfig",
+        title: "自定义视图",
+        meta: {},
+        component: viewConfig
+      }
+    ]
   },
   {
     path: "/editLineView",
