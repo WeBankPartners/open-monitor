@@ -37,7 +37,7 @@ let tableEle = [
 const btn = [
     {btn_name: 'button.edit', btn_func: 'editF'},
     {btn_name: 'button.authorization', btn_func: 'authorizationF'},
-    {btn_name: 'button.remove', btn_func: 'deleteConfirmModal'}
+    {btn_name: 'button.remove', btn_func: 'deleteConfirmModal', color: 'red'}
   ]
 export default {
   name: '',
