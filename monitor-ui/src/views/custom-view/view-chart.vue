@@ -56,8 +56,9 @@
     </div>
   </div>
 </template>
-
 <script>
+import Vue from 'vue';
+import cloneDeep from 'lodash/cloneDeep';
 import { generateUuid } from "@/assets/js/utils";
 import { readyToDraw } from "@/assets/config/chart-rely"
 import {dataPick, autoRefreshConfig} from '@/assets/config/common-config'
@@ -71,7 +72,6 @@ export default {
         autoRefresh: 10,
         agg: 'none'
       },
-      disableTime: false,
       dataPick: dataPick,
       autoRefreshConfig: autoRefreshConfig,
 
@@ -82,7 +82,8 @@ export default {
       noDataTip: false,
       panalTitle: '',
       panalUnit: '',
-      interval: null
+      interval: null,
+      allParams: null
     };
   },
   created() {
@@ -90,71 +91,56 @@ export default {
       this.elId = `id_${elId}`;
     });
   },
-  mounted() {
-    // if (this.$root.$validate.isEmpty_reset(this.$route.params)) {
-    //   this.$router.push({ path: "viewConfig" });
-    // } else {
-    //   if (!this.$root.$validate.isEmpty_reset(this.$route.params.templateData.cfg)) {
-    //     this.viewData = JSON.parse(this.$route.params.templateData.cfg);
-    //     this.viewData.forEach((itemx) => {
-    //       if (itemx.viewConfig.id === this.$route.params.panal.id) {
-    //         this.panalData = itemx
-    //         this.initPanal()
-    //         if (this.viewCondition.autoRefresh > 0) {
-    //           this.interval = setInterval(()=>{
-    //             this.initPanal()
-    //           },this.viewCondition.autoRefresh*1000)
-    //         }
-    //         return;
-    //       }
-    //     });
-    //   }
-    // }
-  },
   destroyed () {
     clearInterval(this.interval)
   },
+  computed: {
+    disableTime() {
+      return this.viewCondition.dateRange[0] !== '' && this.viewCondition.dateRange[1] !== ''
+    }
+  },
   methods: {
     initChart (params) {
-      this.params = params;
-      if (!this.$root.$validate.isEmpty_reset(params.templateData.cfg)) {
-        this.viewData = JSON.parse(params.templateData.cfg);
-        this.viewData.forEach((itemx) => {
-          if (itemx.viewConfig.id === params.panal.id) {
-            this.panalData = itemx
-            this.initPanal()
-            if (this.viewCondition.autoRefresh > 0) {
-              clearInterval(this.interval)
-              this.interval = setInterval(()=>{
-                this.initPanal()
-              },this.viewCondition.autoRefresh*1000)
-            } else {
-              clearInterval(this.interval)
-            }
-            return;
-          }
-        });
+      this.allParams = params;
+      for(let key in this.viewCondition) {
+        Vue.set(this.viewCondition, key, cloneDeep(params.viewCondition[key]))
+      }
+      if (params.templateData.cfg) {
+        this.panalDataList = JSON.parse(params.templateData.cfg);
+        const temp = this.panalDataList.filter(item => {
+          return item.viewConfig.id === params.panal.id
+        })
+        this.panalData = temp[0]
+        Vue.set(this.viewCondition, 'agg', this.panalData.aggregate)
+        this.initPanal();
+        this.scheduledRequest();
+      }
+    },
+    scheduledRequest() {
+      if (this.viewCondition.autoRefresh > 0) {
+        clearInterval(this.interval)
+        this.interval = setInterval(()=>{
+          this.initPanal()
+        },this.viewCondition.autoRefresh*1000)
+      } else {
+        clearInterval(this.interval)
       }
     },
     refreshInterval() {
-      this.initChart(this.params);
+      this.initPanal();
+      this.scheduledRequest();
     },
     datePick (data) {
       this.viewCondition.dateRange = data
-      this.disableTime = false
       if (this.viewCondition.dateRange[0] && this.viewCondition.dateRange[1]) {
         if (this.viewCondition.dateRange[0] === this.viewCondition.dateRange[1]) {
           this.viewCondition.dateRange[1] = this.viewCondition.dateRange[1].replace('00:00:00', '23:59:59')
         }
-        this.disableTime = true
         this.viewCondition.autoRefresh = 0
         clearInterval(this.interval)
       }
       this.initPanal()
     },
-
-
-
     initPanal() {
       this.panalTitle = this.panalData.panalTitle;
       this.panalUnit = this.panalData.panalUnit;
@@ -164,7 +150,7 @@ export default {
       }
       let params = {
         aggregate: this.viewCondition.agg,
-        agg_step: this.viewCondition.agg_step,
+        agg_step: this.panalData.agg_step,
         time_second: this.viewCondition.timeTnterval,
         start: this.viewCondition.dateRange[0] ===''? 
           0 :Date.parse(this.viewCondition.dateRange[0].replace(/-/g, '/'))/1000,

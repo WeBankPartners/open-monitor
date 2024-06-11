@@ -122,6 +122,7 @@ export default {
                 disabled={this.view}
                 onInput={v => {
                   this.changeVal('param_list', params.index, 'name', v)
+                  this.paramKeyChange()
                 }}
               />
             )
@@ -406,32 +407,30 @@ export default {
           log_type: 'custom',
           demo_log: '',
           param_list: [
-            // {
-            //   guid: '',
-            //   name: '',
-            //   display_name: '',
-            //   json_key: '',
-            //   regular: '',
-            //   demo_match_value: '',
-            //   string_map: [
-            //     {
-            //       regulative: 1,  //匹配类型： 0 是非正则，1是正则
-            //       source_value: '', // 源值
-            //       target_value: '', // 映射值
-            //     }
-            //   ]
-            // }
+            {
+              guid: '',
+              name: '',
+              display_name: '',
+              json_key: '',
+              regular: '',
+              demo_match_value: '',
+              string_map: [
+                {
+                  regulative: 0,  //匹配类型： 0 是非正则，1是正则
+                  source_value: '', // 源值
+                  target_value: '', // 映射值
+                }
+              ]
+            }
           ],
           metric_list: [
-            // {
-            //   log_param_name: 'code',
-            //   metric: 'req_count',
-            //   display_name: this.$t('m_request_volume'),
-            //   agg_type: 'count',
-            //   tag_config: [
-            //     'code'
-            //   ]
-            // }
+            {
+              log_param_name: '',
+              metric: '',
+              display_name: '',
+              agg_type: '',
+              tag_config: []
+            }
           ]
         }
         this.configInfo.log_metric_monitor = parentGuid
@@ -491,6 +490,19 @@ export default {
         return true
       }
       return false
+    },
+    // 更新筛选标签中的值
+    paramKeyChange () {
+      const paramsNameArray = this.configInfo.param_list.map(p => p.name)
+      this.configInfo.metric_list.forEach(metric => {
+        let tmpTag = []
+        metric.tag_config.forEach(tag => {
+          if (paramsNameArray.includes(tag)) {
+            tmpTag.push(tag)
+          }
+        })
+        metric.tag_config = tmpTag
+      })
     },
     saveConfig () {
       let tmpData = JSON.parse(JSON.stringify(this.configInfo))
