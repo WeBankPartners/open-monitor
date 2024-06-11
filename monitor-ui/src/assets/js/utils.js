@@ -28,11 +28,54 @@ function guid() {
  * @param {Int} maxLen (最大长度)
  */
 export function interceptParams(value = '', maxLen = 20) {
-    if (validate.isEmpty_reset(value)) {
-      return ''
-    }
-    if (value.length > maxLen) {
-      return value.substring(0,maxLen) + '...'
-    }
-    return value
+  if (validate.isEmpty_reset(value)) {
+    return ''
   }
+  if (value.length > maxLen) {
+    return value.substring(0,maxLen) + '...'
+  }
+  return value
+}
+
+export function debounce (fn, delay = 500) {
+  let timer = null
+  return function () {
+    const args = arguments
+    if (timer) {
+      clearTimeout(timer)
+    }
+    timer = setTimeout(() => {
+      fn.apply(this, [...args])
+    }, delay)
+  }
+}
+
+// 截流函数
+export const throttle = (fn, delay) => {
+  let timer = null
+  let that = this
+  return args => {
+    if (timer) return
+    timer = setTimeout(() => {
+      fn.apply(that, args)
+      timer = null
+    }, delay)
+  }
+}
+
+// 深拷贝
+export const deepClone = obj => {
+  let objClone = Array.isArray(obj) ? [] : {}
+  if (obj && typeof obj === 'object') {
+    for (let key in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        if (obj[key] && typeof obj[key] === 'object') {
+          objClone[key] = deepClone(obj[key])
+        } else {
+          objClone[key] = obj[key]
+        }
+      }
+    }
+  }
+  return objClone
+}

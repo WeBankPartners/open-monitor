@@ -1,6 +1,6 @@
 <template>
   <div class="classic-table">
-    <PageTable :pageConfig="pageConfig"></PageTable>
+    <Table :columns="columns" :data="tableData"></Table>
     <slot name="pagination"></slot>
     <Modal
       v-model="isShowWarning"
@@ -18,53 +18,172 @@
 </template>
 
 <script>
-  let tableEle = [
-    {title: 'field.endpoint', value: 'endpoint', display: true},
-    {title: 'alarmContent', value: 'content', display: true},
-    {title: 'tableKey.s_priority', value: 's_priority', display: true},
-    {title: 'tableKey.start', value: 'start_string', display: true},
-    {title: 'field.metric', value: 's_metric', display: true},
-    {title: 'tableKey.tags', value: 'tags', display: true},
-    {title: 'tableKey.start_value', value: 'start_value', display: true},
-    {title: 'tableKey.threshold', value: 's_cond', display: true},
-    {title: 'tableKey.s_last', value: 's_last', display: true},
-    {title: 'm_remark', value: 'custom_message', display: true}
-  ]
-  const btn = [
-    {btn_name: 'button.view', btn_func: 'goToEndpointView'},
-    {btn_name: 'm_remark', btn_func: 'remarkModal'},
-    {btn_name: 'close', btn_func: 'deleteConfirmModal'}
-  ]
+const alarmLevelMap = {
+  low: {
+    label: "m_low",
+    buttonType: "green"
+  },
+  medium: {
+    label: "m_medium",
+    buttonType: "gold"
+  },
+  high: {
+    label: "m_high",
+    buttonType: "red"
+  }
+}
+import isEmpty from 'lodash/isEmpty';
 export default {
   name: '',
   data () {
     return {
-      pageConfig: {
-        CRUD: '',
-        table: {
-          selection: false,
-          tableData: [],
-          tableEle: tableEle,
-          // filterMoreBtn: 'filterMoreBtn',
-          primaryKey: 'id',
-          btn: btn,
-          pagination: this.pagination,
-          handleFloat:true,
+      columns: [
+        {
+          title: this.$t('m_alarmName'),
+          key: 'alarm_name'
         },
-        pagination: false
-      },
+        {
+          title: this.$t('menu.configuration'),
+          key: 'strategyGroupsInfo',
+          render: (h, params) => {
+            return (
+              <div domPropsInnerHTML={params.row.strategyGroupsInfo}></div>
+            )
+          }
+        },
+        {
+          title: this.$t('field.endpoint'),
+          key: 'endpoint'
+        },
+        {
+          title: this.$t('alarmContent'),
+          key: 'content',
+          ellipsis: true,
+          tooltip: true
+        },
+        {
+          title: this.$t('tableKey.s_priority'),
+          key: 's_priority',
+          width: 90,
+          render: (h, params) => {
+            return (
+              <Tag color={alarmLevelMap[params.row.s_priority].buttonType}>{this.$t(alarmLevelMap[params.row.s_priority].label)}</Tag>
+            )
+          }
+        },
+        {
+          title: this.$t('field.metric'),
+          key: 'alarm_metric_list_join'
+        },
+        {
+          title: this.$t('field.threshold'),
+          key: 'alarm_detail',
+          width: 300,
+          render: (h, params) => {
+            return (
+              <Tooltip transfer={true} placement="bottom-start" max-width="300">
+                <div slot="content">
+                  <div domPropsInnerHTML={params.row.alarm_detail}></div>
+                </div>
+                <div domPropsInnerHTML={params.row.alarm_detail}></div>
+              </Tooltip>
+            )
+          }
+        },
+        {
+          title: this.$t('tableKey.start'),
+          key: 'start_string',
+          width: 170,
+        },
+        {
+          title: this.$t('m_remark'),
+          key: 'custom_message',
+          width: 120,
+          render: (h, params) => {
+            return(
+              <div>{params.row.custom_message || '-'}</div>
+            )
+          }
+        },
+        {
+          title: this.$t('table.action'),
+          key: 'action',
+          width: 160,
+          align: 'left',
+          fixed: 'right',
+          render: (h, params) => {
+            return (
+              <div style="text-align: left; cursor: pointer;display: inline-flex;">
+              <Tooltip content={this.$t('button.view')} placement="top" transfer={true}>
+                  <Button
+                    size="small"
+                    type="primary"
+                    onClick={() => this.goToEndpointView(params.row)}
+                    style="margin-right:5px;"
+                  >
+                    <Icon type="ios-stats" size="16"></Icon>
+                  </Button>
+                </Tooltip>
+                <Tooltip content={this.$t('close')} placement="top" transfer={true}>
+                  <Button
+                    size="small"
+                    type="error"
+                    onClick={() => this.deleteConfirmModal(params.row)}
+                    style="margin-right:5px;"
+                  >
+                    <Icon type="md-eye-off" size="16"></Icon>
+                  </Button>
+                </Tooltip>
+                <Tooltip content={this.$t('m_remark')} placement="top" transfer={true}>
+                  <Button
+                    size="small"
+                    type="warning"
+                    onClick={() => this.remarkModal(params.row)}
+                    style="margin-right:5px;"
+                  >
+                    <Icon type="md-pricetags" size="16"></Icon>
+                  </Button>
+                </Tooltip>
+              </div>
+            )
+          }
+        }
+      ],
+      tableData: [],
       isShowWarning: false,
-      selectedData: ''
+      selectedData: '',
+      strategyNameMaps: {
+        "endpointGroup": "m_base_group",
+        "serviceGroup": "field.resourceLevel"
+      }
     }
   },
   mounted(){
   },
   methods: {
+    changeResultData(dataList) {
+      if (dataList && !isEmpty(dataList)) {
+        dataList.forEach(item => {
+          item.strategyGroupsInfo = '-';
+          item.alarm_metric_list_join = '-';
+          if (!isEmpty(item.strategy_groups)) {
+            item.strategyGroupsInfo = item.strategy_groups.reduce((res, cur)=> {
+              return res + this.$t(this.strategyNameMaps[cur.type]) + ':' + cur.name + '<br/> '
+            }, '')
+          }
+
+          if (!isEmpty(item.alarm_metric_list)) {
+            item.alarm_metric_list_join = item.alarm_metric_list.join(',')
+          }
+        });
+      }
+      return dataList
+    },
     getAlarm(resultData) {
       this.timeForDataAchieve = new Date().toLocaleString()
       this.timeForDataAchieve = this.timeForDataAchieve.replace('上午', 'AM ')
       this.timeForDataAchieve = this.timeForDataAchieve.replace('下午', 'PM ')
-      this.pageConfig.table.tableData = resultData
+      this.tableData = this.changeResultData(resultData)
     },
     goToEndpointView (alarmItem) {
       const endpointObject = {
@@ -96,7 +215,7 @@ export default {
       if (!alarmItem.is_custom) {
         params.custom = false
       }
-      this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.alarmManagement.close.api, params, () => {
+      this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.alarmManagement.close.api, params, () => {
         this.$parent.$parent.$parent.getAlarm()
       })
     }
@@ -104,13 +223,3 @@ export default {
   components: {}
 }
 </script>
-
-<style scoped lang="less">
-.classic-table {
-  /deep/ .table {
-    .th-border-bottom {
-      border-top: 0;
-    }
-  }
-}
-</style>

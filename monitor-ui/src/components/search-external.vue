@@ -19,7 +19,7 @@
       </li>
       <li class="search-li"  style="margin-left:20px">
         <span class="params-title">{{$t('field.timeInterval')}}：</span>
-        <DatePicker type="datetimerange" :value="dateRange" format="yyyy-MM-dd HH:mm:ss" placement="bottom-start" @on-change="datePick" :placeholder="$t('placeholder.datePicker')" style="width: 320px"></DatePicker>
+        <DatePicker type="datetimerange" :value="dateRange" split-panels format="yyyy-MM-dd HH:mm:ss" placement="bottom-start" @on-change="datePick" :placeholder="$t('placeholder.datePicker')" style="width: 320px"></DatePicker>
       </li> 
    </ul>
   </div>
@@ -161,7 +161,7 @@ export default {
     display: inline-block;
   }
   .search-ul>li:not(:first-child) {
-    padding-left: 10px;
+    padding-left: 12px;
   }
   .params-title {
     font-size: 13px;
