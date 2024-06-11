@@ -9,7 +9,7 @@ import (
 	"net/http"
 )
 
-func PluginCloseAlarm(c *gin.Context)  {
+func PluginCloseAlarm(c *gin.Context) {
 	response := models.PluginCloseAlarmResp{ResultCode: "0", ResultMessage: "success", Results: models.PluginCloseAlarmOutput{}}
 	var err error
 	defer func() {
