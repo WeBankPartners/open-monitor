@@ -1,7 +1,7 @@
 <template>
   <div class="diy-tag" 
-    :style="{color:colorList[choiceColor(tagName, index)] + ' !important',
-            borderColor: colorList[choiceColor(tagName, index)] + ' !important'}">
+    :style="{color:colorList[getGroupColor(tagName)] + ' !important',
+            borderColor: colorList[getGroupColor(tagName)] + ' !important'}">
     {{tagName}}
   </div>
 </template>
@@ -24,22 +24,45 @@ export default {
     tagName: {
       default: '',
       type: String
+    },
+    list: {
+      type: Array,
+      default: () => []
+    },
+    name: {
+      type: String,
+      default: ''
     }
   },
   methods: {
-    choiceColor (type,index) {
-      if (endpointTag[type]) {
-        return endpointTag[type]
-      }
-      let color = ''
-      if (Object.keys(this.cacheColor).includes(type)) {
-        color = this.cacheColor[type]
-      } else {
-        color = randomColor[index]
-        this.cacheColor[type] = randomColor[index]
-      }
-      return color
-    },
+    // choiceColor (type,index) {
+    //   if (endpointTag[type]) {
+    //     return endpointTag[type]
+    //   }
+    //   let color = ''
+    //   if (Object.keys(this.cacheColor).includes(type)) {
+    //     color = this.cacheColor[type]
+    //   } else {
+    //     color = randomColor[index]
+    //     this.cacheColor[type] = randomColor[index]
+    //   }
+    //   return color
+    // },
+    getGroupColor (type) {
+      const colorMap = new Map()
+      let count = 0
+      this.list.forEach(item => {
+        if (!colorMap.has(item[this.name])) {
+          colorMap.set(item[this.name], randomColor[count])
+          if (count < randomColor.length - 1) {
+            count ++
+          } else {
+            count = 0
+          }
+        }
+      })
+      return colorMap.get(type)
+    }
   }
 }
 </script>

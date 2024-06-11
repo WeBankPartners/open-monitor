@@ -2,17 +2,16 @@
   <div class=" ">
     <section v-if="showManagement" style="margin-top: 16px;">
       <div v-for="table in totalData" :key="table.guid">
-        <Tag color="blue">{{table.tableData.display_name}}</Tag>
+        <Tag size="medium" color="blue" style="margin: 8px 0">{{$t('field.resourceLevel')}}：{{table.tableData.display_name}}</Tag>
         <PageTable :pageConfig="table.tableConfig">
           <div slot='tableExtend'>
             <div style="margin:8px;border:1px solid #2db7f5">
-              <Tag type="border" color="primary">{{$t('m_json_regular')}}</Tag>
               <extendTable :detailConfig="table.tableConfig.table.isExtend.detailConfig"></extendTable>
             </div>
-            <div style="margin:8px;border:1px solid #19be6b">
+            <!-- <div style="margin:8px;border:1px solid #19be6b">
               <Tag type="border" color="success">{{$t('m_metric_regular')}}</Tag>
               <extendTable :detailConfig="table.tableConfig.table.isCustomMetricExtend.detailConfig"></extendTable>
-            </div>
+            </div> -->
           </div>
         </PageTable>
       </div>
@@ -115,7 +114,7 @@
     </ModalComponent>
     <!-- DB config -->
     <section v-if="showDbManagement" style="margin-top: 16px;">
-      <Tag color="blue">{{$t('m_db')}}</Tag>
+      <Tag size="medium" color="blue">{{$t('m_db')}}</Tag>
       <PageTable :pageConfig="pageDbConfig"></PageTable>
     </section>
     <Modal
@@ -202,10 +201,14 @@
         <Button @click="addAndEditModal.isShow = false">{{$t('button.cancel')}}</Button>
       </div>
     </Modal>
+    <CustomRegex ref="customRegexRef"></CustomRegex>
+    <BusinessMonitorGroupConfig ref="businessMonitorGroupConfigRef"></BusinessMonitorGroupConfig>
   </div>
 </template>
 
 <script>
+import CustomRegex from '@/views/monitor-config/log-template-config/custom-regex.vue'
+import BusinessMonitorGroupConfig from '@/views/monitor-config/business-monitor-group-config.vue'
 import extendTable from '@/components/table-page/extend-table'
 let tableEle = [
   {title: 'tableKey.logPath', value: 'log_path', display: true},
@@ -397,13 +400,18 @@ export default {
       this.$root.JQ('#custom_metrics').modal('show')
     },
     editRuleItem (rowData) {
-      this.ruleModelConfig.isAdd = false
-      this.ruleModelConfig.addRow = JSON.parse(JSON.stringify(rowData))
-      this.ruleModelConfig.isShow = true
+      // this.ruleModelConfig.isAdd = false
+      // this.ruleModelConfig.addRow = JSON.parse(JSON.stringify(rowData))
+      // this.ruleModelConfig.isShow = true
+      if (rowData.log_type === 'custom') {
+        this.$refs.customRegexRef.loadPage('view', '', rowData.log_metric_monitor, rowData.guid)
+      } else {
+        this.$refs.businessMonitorGroupConfigRef.loadPage('view', rowData.log_monitor_template, rowData.log_metric_monitor, rowData.guid)
+      }
     },
-    getExtendInfo(item){
+    getExtendInfo (item) {
       const guid = item.guid
-      // eslint-disable-next-line no-redeclare
+      // // eslint-disable-next-line no-redeclare
       let index = null
       this.totalData.forEach((td, tdIndex) => {
         const res = td.tableData.config.findIndex(x => x.guid === guid)
@@ -411,13 +419,17 @@ export default {
           index = tdIndex
         }
       })
-      item.json_config_list.forEach(xx => xx.pId = item.guid)
-      this.totalData[index].tableConfig.table.isExtend.detailConfig[0].data = item.json_config_list
+      item.metric_groups.forEach(xx => xx.pId = item.guid)
+      this.totalData[index].tableConfig.table.isExtend.detailConfig[0].data = item.metric_groups.map(group => {
+        const typeToName = {
+          custom: this.$t('m_custom_regex'),
+          regular: this.$t('m_standard_regex'),
+          json: this.$t('m_standard_json'),
+        }
+        group.log_type_display = typeToName[group.log_type]
+        return group
+      })
       this.totalData[index].tableConfig.table.isExtend.parentData = item
-
-      item.metric_config_list.forEach(xx => xx.pId = item.guid)
-      this.totalData[index].tableConfig.table.isCustomMetricExtend.detailConfig[0].data = item.metric_config_list
-      this.totalData[index].tableConfig.table.isCustomMetricExtend.parentData = item
     },
     getDetail (targrtId) {
       this.showManagement = false
@@ -449,8 +461,11 @@ export default {
                   isExtendF: true,
                   title: '',
                   config: [
-                    {title: 'tableKey.regular', value: 'json_regular', display: true},
-                    {title: 'tableKey.tags', value: 'tags', display: true},
+                    {title: 'm_configuration_name', value: 'name', display: true},
+                    {title: 'm_associated_template', value: 'log_monitor_template_name', display: true},
+                    {title: 'm_metric_config_type', value: 'log_type_display', display: true},
+                    {title: 'm_updatedBy', value: 'update_user', display: true},
+                    {title: 'title.updateTime', value: 'update_time', display: true},
                     {title: 'table.action',btn:[
                       {btn_name: 'button.view', btn_func: 'editRuleItem'}
                     ]}
@@ -458,27 +473,27 @@ export default {
                   data: [1],
                   scales: ['25%', '20%', '15%', '20%', '20%']
                 }]
-              },
-              isCustomMetricExtend: {
-                parentData: null,
-                func: 'getExtendInfo',
-                data: {},
-                slot: 'rulesTableExtend',
-                detailConfig: [{
-                  isExtendF: true,
-                  title: '',
-                  config: [
-                    {title: 'tableKey.regular', value: 'regular', display: true},
-                    {title: 'field.metric', value: 'metric', display: true},
-                    {title: 'field.aggType', value: 'agg_type', display: true},
-                    {title: 'table.action',btn:[
-                      {btn_name: 'button.view', btn_func: 'editCustomMetricItem'}
-                    ]}
-                  ],
-                  data: [1],
-                  scales: ['25%', '20%', '15%', '20%', '20%']
-                }]
               }
+              // isCustomMetricExtend: {
+              //   parentData: null,
+              //   func: 'getExtendInfo',
+              //   data: {},
+              //   slot: 'rulesTableExtend',
+              //   detailConfig: [{
+              //     isExtendF: true,
+              //     title: '',
+              //     config: [
+              //       {title: 'tableKey.regular', value: 'regular', display: true},
+              //       {title: 'field.metric', value: 'metric', display: true},
+              //       {title: 'field.aggType', value: 'agg_type', display: true},
+              //       {title: 'table.action',btn:[
+              //         {btn_name: 'button.view', btn_func: 'editCustomMetricItem'}
+              //       ]}
+              //     ],
+              //     data: [1],
+              //     scales: ['25%', '20%', '15%', '20%', '20%']
+              //   }]
+              // }
             }
           }
           return tmp
@@ -492,7 +507,9 @@ export default {
     this.MODALHEIGHT = document.body.scrollHeight - 300
   },
   components: {
-    extendTable
+    extendTable,
+    CustomRegex,
+    BusinessMonitorGroupConfig
   }
 }
 </script>

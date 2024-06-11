@@ -29,3 +29,18 @@ var (
 	LogParamIgnorePath    = []string{"/dashboard/newchart", "/dashboard/pie/chart", "/problem/query", "/problem/history"}
 	DashboardIgnoreTagKey = []string{"job", "__name__"}
 )
+
+type Permission string
+
+const (
+	PermissionMgmt Permission = "mgmt" //管理权限
+	PermissionUse  Permission = "use"  //使用权限
+)
+
+type MetricType string
+
+const (
+	MetricTypeCommon   MetricType = "common"   //通用类型
+	MetricTypeBusiness MetricType = "business" //业务配置
+	MetricTypeCustom   MetricType = "custom"   // 自定义
+)

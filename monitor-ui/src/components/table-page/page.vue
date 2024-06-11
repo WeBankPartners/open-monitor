@@ -116,7 +116,7 @@
 
   .page-table {
     background-color: white;
-    padding: 20px;
+    // padding: 20px;
   }
   /*分页样式*/
   .paging {

@@ -94,8 +94,8 @@
             </th>
           </template>
           
-          <th style="width: 140px;font-size: 13px;" class="th-border-bottom c-dark" v-if="table.btn.length != 0"><div style="width:130px">{{$t('table.action')}}</div></th>
-          <th style="width: 151px;font-size: 13px;" class="th-border-bottom c-dark handleSty" v-if="table.btn.length != 0 && table.handleFloat">{{$t('table.action')}}</th>
+          <th style="width: 140px;" class="th-border-bottom c-dark" v-if="table.btn.length != 0"><div style="width:130px">{{$t('table.action')}}</div></th>
+          <th style="width: 151px;" class="th-border-bottom c-dark handleSty" v-if="table.btn.length != 0 && table.handleFloat">{{$t('table.action')}}</th>
         </tr>
         </thead>
         <tbody>
@@ -133,7 +133,7 @@
                   </div>
                 </Tooltip>
                 <!-- 显示省略且未自己配置tip情况下，自动添加tip,tip内容为整体内容 -->
-                <Tooltip v-if="ellipsis(value, val) && !val.toolTips" :content="renderValue(value, val)" class="cell" :delay=1000  placement='bottom-start'>
+                <Tooltip v-if="ellipsis(value, val) && !val.toolTips && !val.renderContent" :content="renderValue(value, val)" class="cell" :delay=1000  placement='bottom-start'>
                   <a @click="shadow(value, val)" v-if="'shadow' in val" class="extend-shadow poplableSty">{{renderValue(value, val)}}</a>
                   <span v-if="!('shadow' in val)" class="poplableSty">{{renderValue(value, val)}}</span>
                   <div slot="content">
@@ -187,13 +187,16 @@
                   </span>
 
                 </div>
+                <template v-if="val.renderContent">
+                  <div class="render-content" v-html="renderValue(value, val)"></div>
+                </template>
              </td>
             </template>
             
 
             <!--操作区--开始-->
-            <td class="td-center td-operation c-dark" v-if="table.btn.length != 0">
-              <div style="width:140px">
+            <!-- <td class="td-center td-operation c-dark" v-if="table.btn.length != 0"> -->
+              <!-- <div style="width:140px"> -->
               <!-- <template v-for="(btn_val,btn_i) in table.btn">
                 <span :id="btn_val.btn_func" :key="btn_i"
                       v-if="btn_val.btn_name !='more' && !btn_val.render"
@@ -229,9 +232,9 @@
                   </div>
                 </Poptip>
               </template> -->
-              </div>
-            </td>
-            <td class="td-center td-operation handleSty c-dark" v-if="table.btn.length != 0 && table.handleFloat" style="padding:10px 0px">
+              <!-- </div> -->
+            <!-- </td> -->
+            <td class="td-center td-operation handleSty c-dark" v-if="table.btn.length != 0 && table.handleFloat" style="padding:9px 0px">
               <div style="width: 151px;padding-left: 8px;height: 21px;">
               <template v-if="operationsFormat(value, tableDataIndex)">   
               </template>
@@ -240,12 +243,14 @@
                   <span :id="btn_val.btn_func" :key="btn_i"
                         v-if="!btn_val.render"
                         class="btn-operation"
+                        :style="{color: btn_val.color}"
                         @click="goToOpe(btn_val,value)">
                     {{$t(btn_val.btn_name)}}
                   </span>
                   <span :id="btn_val.btn_func" :key="btn_i + '2'"
                         v-if="btn_val.render"
                         class="btn-operation"
+                        :style="{color: btn_val.color}"
                         @click="goToOpe(btn_val,value)">
                         {{renderValue(value, btn_val)}}
                   </span>
@@ -282,7 +287,7 @@
                   <div slot="content" class="ui-ul-list" v-if="isShowMoreBtnTip">
                     <ul v-if="showMoreNumber === tableDataIndex">
                       <template v-for="(btn, moreIndex) in table.tableData[tableDataIndex]._operatons">
-                        <li class="filters-li" :key="moreIndex" v-if="moreIndex != 0" @click="goToOpe(btn,value)">{{$t(btn.btn_name)}}</li>
+                        <li class="filters-li" :key="moreIndex" v-if="moreIndex != 0" @click="goToOpe(btn,value)" :style="{color: btn.color}">{{$t(btn.btn_name)}}</li>
                       </template>
                       <li v-if="isNoActions" style="color: red" @click="noActions">无可用操作</li>
                     </ul>
@@ -1101,7 +1106,7 @@
   //   background-color: rgb(235, 237, 238);
   // }
   .btn-operation {
-    font-size: 14px;
+    font-size: 12px;
     color: @color-blue;
     line-height: 20px;
     cursor: pointer;
@@ -1165,7 +1170,7 @@
   float: left;
 }
 .bgc{
-  background-color: #fafafa !important;
+  // background-color: #fafafa !important;
 }
 .active{
   .ivu-icon{
