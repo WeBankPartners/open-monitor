@@ -1,5 +1,12 @@
 package models
 
+import "time"
+
+const (
+	LogMonitorJsonType    = "json"
+	LogMonitorRegularType = "regular"
+)
+
 type LogMetricMonitorTable struct {
 	Guid         string `json:"guid" xorm:"guid"`
 	ServiceGroup string `json:"service_group" xorm:"service_group"`
@@ -11,29 +18,41 @@ type LogMetricMonitorTable struct {
 
 type LogMetricJsonTable struct {
 	Guid             string `json:"guid" xorm:"guid"`
+	Name             string `json:"name" xorm:"name"`
 	LogMetricMonitor string `json:"log_metric_monitor" xorm:"log_metric_monitor"`
 	JsonRegular      string `json:"json_regular" xorm:"json_regular"`
 	Tags             string `json:"tags" xorm:"tags"`
 	UpdateTime       string `json:"update_time" xorm:"update_time"`
+	DemoLog          string `json:"demo_log" xorm:"demo_log"`
+	CalcResult       string `json:"calc_result" xorm:"calc_result"`
 }
 
 type LogMetricConfigTable struct {
-	Guid             string `json:"guid" xorm:"guid"`
-	LogMetricMonitor string `json:"log_metric_monitor" xorm:"log_metric_monitor"`
-	LogMetricJson    string `json:"log_metric_json" xorm:"log_metric_json"`
-	Metric           string `json:"metric" xorm:"metric"`
-	DisplayName      string `json:"display_name" xorm:"display_name"`
-	JsonKey          string `json:"json_key" xorm:"json_key"`
-	Regular          string `json:"regular" xorm:"regular"`
-	AggType          string `json:"agg_type" xorm:"agg_type"`
-	Step             int64  `json:"step" xorm:"step"`
-	TagConfig        string `json:"tag_config" xorm:"tag_config"`
-	UpdateTime       string `json:"update_time" xorm:"update_time"`
+	Guid             string    `json:"guid" xorm:"guid"`
+	LogMetricMonitor string    `json:"log_metric_monitor" xorm:"log_metric_monitor"`
+	LogMetricGroup   string    `json:"log_metric_group" xorm:"log_metric_group"`
+	LogParamName     string    `json:"log_param_name" xorm:"log_param_name"`
+	LogMetricJson    string    `json:"log_metric_json" xorm:"log_metric_json"`
+	Metric           string    `json:"metric" xorm:"metric"`
+	DisplayName      string    `json:"display_name" xorm:"display_name"`
+	JsonKey          string    `json:"json_key" xorm:"json_key"`
+	Regular          string    `json:"regular" xorm:"regular"`
+	AggType          string    `json:"agg_type" xorm:"agg_type"`
+	Step             int64     `json:"step" xorm:"step"`
+	TagConfig        string    `json:"-" xorm:"tag_config"`
+	TagConfigList    []string  `json:"tag_config" xorm:"-"`
+	CreateUser       string    `json:"create_user" xorm:"create_user"`
+	UpdateUser       string    `json:"update_user" xorm:"update_user"`
+	CreateTime       time.Time `json:"create_time" xorm:"create_time"`
+	UpdateTime       time.Time `json:"update_time" xorm:"update_time"`
 }
 
 type LogMetricStringMapTable struct {
 	Guid            string `json:"guid" xorm:"guid"`
 	LogMetricConfig string `json:"log_metric_config" xorm:"log_metric_config"`
+	LogMetricGroup  string `json:"log_metric_group" xorm:"log_metric_group"`
+	LogParamName    string `json:"log_param_name" xorm:"log_param_name"`
+	ValueType       string `json:"value_type" xorm:"value_type"`
 	SourceValue     string `json:"source_value" xorm:"source_value"`
 	Regulative      int    `json:"regulative" xorm:"regulative"`
 	TargetValue     string `json:"target_value" xorm:"target_value"`
@@ -61,14 +80,19 @@ type LogMetricMonitorObj struct {
 	JsonConfigList   []*LogMetricJsonObj          `json:"json_config_list"`
 	MetricConfigList []*LogMetricConfigObj        `json:"metric_config_list"`
 	EndpointRel      []*LogMetricEndpointRelTable `json:"endpoint_rel"`
+	MetricGroups     []*LogMetricGroupObj         `json:"metric_groups"`
 }
 
 type LogMetricJsonObj struct {
-	Guid             string                `json:"guid" xorm:"guid"`
-	LogMetricMonitor string                `json:"log_metric_monitor" xorm:"log_metric_monitor"`
-	JsonRegular      string                `json:"json_regular" xorm:"json_regular"`
-	Tags             string                `json:"tags" xorm:"tags"`
-	MetricList       []*LogMetricConfigObj `json:"metric_list"`
+	Guid                   string                `json:"guid" xorm:"guid"`
+	Name                   string                `json:"name" xorm:"name"`
+	LogMetricMonitor       string                `json:"log_metric_monitor" xorm:"log_metric_monitor"`
+	JsonRegular            string                `json:"json_regular" xorm:"json_regular"`
+	Tags                   string                `json:"tags" xorm:"tags"`
+	MetricList             []*LogMetricConfigObj `json:"metric_list"`
+	DemoLog                string                `json:"log_sample" xorm:"demo_log"`
+	CalcResult             string                `json:"calc_result" xorm:"calc_result"`
+	TrialCalculationResult []string              `json:"trialCalculationResult"`
 }
 
 type LogMetricConfigObj struct {
@@ -85,11 +109,13 @@ type LogMetricConfigObj struct {
 	ServiceGroup     string                     `json:"service_group"`
 	MonitorType      string                     `json:"monitor_type"`
 	TagConfig        []*LogMetricConfigTag      `json:"tag_config" xorm:"tag_config"`
+	JsonTagList      []string                   `json:"json_tag_list"`
 }
 
 type LogMetricConfigTag struct {
-	Key     string `json:"key"`
-	Regular string `json:"regular"`
+	Key          string `json:"key"`
+	Regular      string `json:"regular"`
+	LogParamName string `json:"log_param_name"`
 }
 
 type LogMetricMonitorCreateDto struct {
@@ -106,11 +132,12 @@ type LogMetricNodeExporterResponse struct {
 }
 
 type LogMetricMonitorNeObj struct {
-	Path           string                `json:"path"`
-	TargetEndpoint string                `json:"target_endpoint"`
-	ServiceGroup   string                `json:"service_group"`
-	JsonConfig     []*LogMetricJsonNeObj `json:"config"`
-	MetricConfig   []*LogMetricNeObj     `json:"custom"`
+	Path              string                 `json:"path"`
+	TargetEndpoint    string                 `json:"target_endpoint"`
+	ServiceGroup      string                 `json:"service_group"`
+	JsonConfig        []*LogMetricJsonNeObj  `json:"config"`
+	MetricConfig      []*LogMetricNeObj      `json:"custom"`
+	MetricGroupConfig []*LogMetricGroupNeObj `json:"metric_group_config"`
 }
 
 type LogMetricJsonNeObj struct {
@@ -128,6 +155,7 @@ type LogMetricNeObj struct {
 	Step         int64                      `json:"step"`
 	StringMap    []*LogMetricStringMapNeObj `json:"string_map"`
 	TagConfig    []*LogMetricConfigTag      `json:"tag_config"`
+	LogParamName string                     `json:"log_param_name"`
 }
 
 type LogMetricStringMapNeObj struct {
@@ -141,4 +169,47 @@ type LogMetricStringMapNeObj struct {
 type CheckRegExpParam struct {
 	RegString   string `json:"reg_string" binding:"required"`
 	TestContext string `json:"test_context" binding:"required"`
+}
+
+type CheckRegExpResult struct {
+	MatchText   string                 `json:"match_text"`
+	JsonKeyList []string               `json:"json_key_list"`
+	JsonObj     map[string]interface{} `json:"json_obj"`
+}
+
+type LogMetricGroupObj struct {
+	LogMetricGroup
+	LogMonitorTemplateName string                  `json:"log_monitor_template_name"`
+	ServiceGroup           string                  `json:"service_group"`
+	MonitorType            string                  `json:"monitor_type"`
+	JsonRegular            string                  `json:"json_regular"`
+	ParamList              []*LogMetricParamObj    `json:"param_list"`
+	MetricList             []*LogMetricConfigTable `json:"metric_list"`
+}
+
+type LogMetricGroupWithTemplate struct {
+	Name                   string                     `json:"name"`
+	LogMetricMonitorGuid   string                     `json:"log_metric_monitor_guid"`
+	LogMetricGroupGuid     string                     `json:"log_metric_group_guid"`
+	LogMonitorTemplateGuid string                     `json:"log_monitor_template_guid"`
+	CodeStringMap          []*LogMetricStringMapTable `json:"code_string_map"`
+	RetCodeStringMap       []*LogMetricStringMapTable `json:"retcode_string_map"`
+	MetricPrefixCode       string                     `json:"metric_prefix_code"`
+	ServiceGroup           string                     `json:"service_group"`
+	MonitorType            string                     `json:"monitor_type"`
+}
+
+type LogMetricGroupNeObj struct {
+	LogMetricGroup string                 `json:"log_metric_group"`
+	LogType        string                 `json:"log_type"`
+	JsonRegular    string                 `json:"json_regular"`
+	ParamList      []*LogMetricParamNeObj `json:"param_list"`
+	MetricConfig   []*LogMetricNeObj      `json:"custom"`
+}
+
+type LogMetricParamNeObj struct {
+	Name      string                     `json:"name"`
+	JsonKey   string                     `json:"json_key"`
+	Regular   string                     `json:"regular"`
+	StringMap []*LogMetricStringMapNeObj `json:"string_map"`
 }

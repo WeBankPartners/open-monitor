@@ -5,3 +5,7 @@
   .ivu-poptip-popper  .ivu-poptip-arrow {
     display: none;
   }
+
+  .ivu-select-dropdown {
+    max-height: 400px !important;
+  }

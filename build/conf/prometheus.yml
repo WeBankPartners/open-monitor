@@ -85,3 +85,8 @@ scrape_configs:
 #Snmp scrape configuration
 #Snmp_start
 #Snmp_end
+
+#Remote write configuration
+remote_write:
+#Remote_write_start
+#Remote_write_end
