@@ -1,11 +1,15 @@
 <template>
   <div>
-    <CallCustomViewExternalPanel ref="callCustomViewExternalPanelRef"  :id="viewId"></CallCustomViewExternalPanel>
+     <view-config 
+      v-if="viewId" 
+      permissionType='view' 
+      :boardId="viewId"
+      pageType="link" />
   </div>
 </template>
 
 <script>
-import CallCustomViewExternalPanel from '@/views/call-custom-view-external-panel'
+import ViewConfig from '@/views/custom-view/view-config'
 import { setLocalstorage } from '@/assets/js/localStorage.js'
 export default {
   name: '',
@@ -19,7 +23,6 @@ export default {
     const query = this.$route.query
     this.paramsCheck(query)
     // this.refreshToken()
-    this.$refs.callCustomViewExternalPanelRef.getDashData(this.viewId)
   },
   methods: {
     paramsCheck (query) {
@@ -44,7 +47,6 @@ export default {
         // 处理获取到的数据
         if (data.status === 'OK') {
           setLocalstorage(data.data)
-          this.$refs.callCustomViewExternalPanelRef.getDashData(this.viewId)
         }
       })
       .catch(error => {
@@ -54,7 +56,7 @@ export default {
     }
   },
   components: {
-    CallCustomViewExternalPanel
+    ViewConfig
   },
 }
 </script>

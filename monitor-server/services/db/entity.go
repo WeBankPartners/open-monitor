@@ -473,7 +473,7 @@ func getSmsAlarmContent(alarm *m.AlarmTable) string {
 func GetAlarmEventEntityData(alarmId int) (result *m.AlarmEventEntityObj, err error) {
 	result = &m.AlarmEventEntityObj{}
 	var alarmRows []*m.AlarmTable
-	err = x.SQL("select endpoint,status,s_metric,s_cond,s_last,s_priority,content,`start` from alarm where id=?", alarmId).Find(&alarmRows)
+	err = x.SQL("select endpoint,status,s_metric,s_cond,s_last,s_priority,content,`start`,tags,endpoint_tags,alarm_name from alarm where id=?", alarmId).Find(&alarmRows)
 	if err != nil {
 		err = fmt.Errorf("query alarm table fail,%s ", err.Error())
 		return
@@ -483,9 +483,25 @@ func GetAlarmEventEntityData(alarmId int) (result *m.AlarmEventEntityObj, err er
 		result.Content = alarmObj.Content
 		result.Priority = alarmObj.SPriority
 		result.StartTime = alarmObj.Start.Format(m.DatetimeFormat)
-		result.DisplayName = fmt.Sprintf("%d-%s-%s", alarmId, alarmObj.Endpoint, alarmObj.SMetric)
-		alarmObjBytes, _ := json.Marshal(alarmObj)
-		result.Message = string(alarmObjBytes)
+		if alarmObj.AlarmName == "" {
+			alarmObj.AlarmName = alarmObj.Content
+		}
+		if len(alarmObj.AlarmName) > 50 {
+			alarmObj.AlarmName = alarmObj.AlarmName[:50]
+		}
+		result.DisplayName = fmt.Sprintf("%d-%s", alarmId, alarmObj.AlarmName)
+		result.Message = alarmObj.Content
+		result.Endpoint = alarmObj.Endpoint
+		alarmDetailList := []*m.AlarmDetailData{}
+		if strings.HasPrefix(alarmObj.EndpointTags, "ac_") {
+			alarmDetailList, err = GetAlarmDetailList(alarmId)
+			if err != nil {
+				return
+			}
+		} else {
+			alarmDetailList = append(alarmDetailList, &m.AlarmDetailData{Metric: alarmObj.SMetric, Cond: alarmObj.SCond, Last: alarmObj.SLast, Start: alarmObj.Start, StartValue: alarmObj.StartValue, End: alarmObj.End, EndValue: alarmObj.EndValue, Tags: alarmObj.Tags})
+		}
+		result.Detail = buildAlarmDetailData(alarmDetailList, "\n")
 	}
 	return
 }

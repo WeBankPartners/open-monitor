@@ -35,11 +35,16 @@ func AcceptAlert(c *gin.Context) {
 			log.Logger.Warn("Accept alert handle fail", log.Error(tmpErr))
 			continue
 		}
+		log.Logger.Debug("build alarm result", log.JsonObj("alarm", tmpAlarm))
 		alarms = append(alarms, &tmpAlarm)
 	}
 	alarms = db.UpdateAlarms(alarms)
 	var treeventSendObj m.EventTreeventNotifyDto
 	for _, v := range alarms {
+		log.Logger.Debug("update alarm result", log.JsonObj("alarm", v))
+		if v.AlarmConditionGuid != "" {
+			continue
+		}
 		treeventSendObj.Data = append(treeventSendObj.Data, &m.EventTreeventNodeParam{EventId: fmt.Sprintf("%d", v.Id), Status: v.Status, Endpoint: v.Endpoint, StartUnix: v.Start.Unix(), Message: fmt.Sprintf("%s \n %s \n %.3f %s", v.Endpoint, v.SMetric, v.StartValue, v.SCond)})
 		if v.NotifyEnable == 0 {
 			continue
@@ -63,13 +68,24 @@ func buildNewAlarm(param *m.AMRespAlert, nowTime time.Time) (alarm m.AlarmHandle
 	if len(summaryList) <= 3 {
 		return alarm, fmt.Errorf("summary:%s illegal ", param.Annotations["summary"])
 	}
+	var strategyGuid, conditionCrc, alarmConditionGuid string
 	var strategyObj m.AlarmStrategyMetricObj
-	if param.Labels["strategy_guid"] != "" {
-		strategyObj, err = db.GetAlarmStrategy(param.Labels["strategy_guid"])
+	var multipleConditionFlag bool
+	var strategyConditions []*m.AlarmStrategyMetricWithExpr
+	strategyGuid = param.Labels["strategy_guid"]
+	conditionCrc = param.Labels["condition_crc"]
+	log.Logger.Debug("start build alarm data", log.String("strategyGuid", strategyGuid), log.String("conditionCrc", conditionCrc))
+	alarm.AlarmConditionCrcHash = conditionCrc
+	if strategyGuid != "" {
+		strategyObj, strategyConditions, err = db.GetAlarmStrategy(strategyGuid, conditionCrc)
 		if err != nil {
-			return alarm, fmt.Errorf("Try to get alarm strategy with strategy_guid:%s fail,%s ", param.Labels["strategy_guid"], err.Error())
+			return alarm, fmt.Errorf("Try to get alarm strategy with strategy_guid:%s fail,%s ", strategyGuid, err.Error())
 		}
-		log.Logger.Debug("getNewAlarmWithStrategyGuid", log.String("query guid", strategyObj.Guid))
+		log.Logger.Debug("getNewAlarmWithStrategyGuid", log.JsonObj("strategyObj", strategyObj), log.JsonObj("conditions", strategyConditions))
+		if len(strategyConditions) > 1 {
+			multipleConditionFlag = true
+			alarm.MultipleConditionFlag = true
+		}
 	}
 	var endpointObj m.EndpointNewTable
 	endpointObj, err = getNewAlarmEndpoint(param, &strategyObj)
@@ -77,16 +93,17 @@ func buildNewAlarm(param *m.AMRespAlert, nowTime time.Time) (alarm m.AlarmHandle
 		return
 	}
 	alarm.Endpoint = endpointObj.Guid
+	alarm.AlarmName = strategyObj.Name
 	var alertValue float64
 	alertValue, _ = strconv.ParseFloat(summaryList[len(summaryList)-1], 64)
 	alertValue, _ = strconv.ParseFloat(fmt.Sprintf("%.3f", alertValue), 64)
-	if param.Labels["strategy_id"] == "" && param.Labels["strategy_guid"] == "" {
+	if param.Labels["strategy_id"] == "" && strategyGuid == "" {
 		return alarm, fmt.Errorf("labels strategy_id and strategy_guid is empty ")
 	}
 	existAlarm := m.AlarmTable{}
-	log.Logger.Debug("accept strategy_guid", log.String("strategy_guid", param.Labels["strategy_guid"]))
-	if param.Labels["strategy_guid"] != "" {
-		existAlarm, err = getNewAlarmWithStrategyGuid(&alarm, param, &endpointObj, &strategyObj)
+	log.Logger.Debug("accept strategy_guid", log.String("strategy_guid", strategyGuid))
+	if strategyGuid != "" {
+		existAlarm, alarmConditionGuid, err = getNewAlarmWithStrategyGuid(&alarm, param, &endpointObj, &strategyObj, multipleConditionFlag)
 	} else if param.Labels["strategy_id"] == "up" {
 		if endpointObj.MonitorType != "host" {
 			return alarm, fmt.Errorf("Up alarm break,endpoint:%s export type illegal ", endpointObj.Guid)
@@ -95,7 +112,10 @@ func buildNewAlarm(param *m.AMRespAlert, nowTime time.Time) (alarm m.AlarmHandle
 	} else {
 		existAlarm, err = getNewAlarmWithStrategyId(&alarm, param, &endpointObj)
 	}
-	log.Logger.Debug("exist alarm", log.JsonObj("existAlarm", existAlarm))
+	if err != nil {
+		return
+	}
+	log.Logger.Debug("exist alarm", log.JsonObj("existAlarm", existAlarm), log.String("alarmConditionGuid", alarmConditionGuid), log.JsonObj("alarm", alarm))
 	alarm.Status = param.Status
 	operation := "add"
 	if existAlarm.Status != "" {
@@ -128,6 +148,7 @@ func buildNewAlarm(param *m.AMRespAlert, nowTime time.Time) (alarm m.AlarmHandle
 		alarm.Status = "ok"
 		alarm.EndValue = alertValue
 		alarm.End = nowTime
+		alarm.AlarmConditionGuid = alarmConditionGuid
 	} else if operation == "add" {
 		if !checkIsInActiveWindow(strategyObj.ActiveWindow) {
 			return alarm, fmt.Errorf("Alarm:%s not in active window:%s ", strategyObj.Guid, strategyObj.ActiveWindow)
@@ -245,9 +266,9 @@ func getNewAlarmTags(param *m.AMRespAlert) (tagString string, err error) {
 	return
 }
 
-func getNewAlarmWithStrategyGuid(alarm *m.AlarmHandleObj, param *m.AMRespAlert, endpointObj *m.EndpointNewTable, strategyObj *m.AlarmStrategyMetricObj) (existAlarm m.AlarmTable, err error) {
+func getNewAlarmWithStrategyGuid(alarm *m.AlarmHandleObj, param *m.AMRespAlert, endpointObj *m.EndpointNewTable, strategyObj *m.AlarmStrategyMetricObj, multipleConditionFlag bool) (existAlarm m.AlarmTable, alarmConditionGuid string, err error) {
 	existAlarm = m.AlarmTable{}
-	log.Logger.Info("getNewAlarmWithStrategyGuid", log.String("query guid", strategyObj.Guid))
+	log.Logger.Debug("getNewAlarmWithStrategyGuid", log.JsonObj("strategyObj", strategyObj))
 	alarm.AlarmStrategy = strategyObj.Guid
 	alarm.SMetric = strategyObj.MetricName
 	alarm.SExpr = strategyObj.MetricExpr
@@ -262,6 +283,10 @@ func getNewAlarmWithStrategyGuid(alarm *m.AlarmHandleObj, param *m.AMRespAlert, 
 			err = fmt.Errorf("Ignore check alive alarm,is self instance host,ip:%s ", endpointObj.Ip)
 			return
 		}
+	}
+	if multipleConditionFlag {
+		existAlarm, alarmConditionGuid, err = db.GetExistAlarmCondition(alarm.Endpoint, strategyObj.Guid, strategyObj.ConditionCrc, alarm.Tags)
+		return
 	}
 	existAlarmQuery := m.AlarmTable{Endpoint: alarm.Endpoint, Tags: alarm.Tags, AlarmStrategy: alarm.AlarmStrategy}
 	existAlarm, _ = db.GetAlarmObj(&existAlarmQuery)
@@ -365,7 +390,7 @@ func GetHistoryAlarm(c *gin.Context) {
 			return
 		}
 	}
-	var returnData []*m.AlarmHistoryReturnData
+	returnData := []*m.AlarmHistoryReturnData{}
 	for _, endpointGuid := range ids {
 		tmpErr, tmpData := getEndpointHistoryAlarm(endpointGuid, startTime, endTime)
 		if tmpErr != nil {
@@ -388,7 +413,7 @@ func getEndpointHistoryAlarm(endpointGuid string, startTime, endTime time.Time) 
 		return fmt.Errorf("EndpointGuid:%s fetch endpoint fail, %s ", endpointGuid, err.Error()), data
 	}
 	query := m.AlarmTable{Endpoint: endpointObj.Guid, Start: startTime, End: endTime}
-	err, data = db.GetAlarms(query, 0, true, false)
+	err, data = db.GetAlarms(query, 0, true, false, []string{})
 	return err, data
 }
 
@@ -444,7 +469,7 @@ func GetProblemAlarm(c *gin.Context) {
 			}
 		}
 	}
-	err, data := db.GetAlarms(query, 0, true, true)
+	err, data := db.GetAlarms(query, 0, true, true, []string{})
 	if err != nil {
 		mid.ReturnQueryTableError(c, "alarm", err)
 		return
@@ -456,7 +481,7 @@ func QueryProblemAlarm(c *gin.Context) {
 	var param m.QueryProblemAlarmDto
 	if err := c.ShouldBindJSON(&param); err == nil {
 		query := m.AlarmTable{Status: "firing", Endpoint: param.Endpoint, SMetric: param.Metric, SPriority: param.Priority}
-		err, data := db.GetAlarms(query, 0, true, true)
+		err, data := db.GetAlarms(query, 0, true, true, []string{})
 		if err != nil {
 			mid.ReturnQueryTableError(c, "alarm", err)
 			return
@@ -505,8 +530,17 @@ func QueryProblemAlarmByPage(c *gin.Context) {
 	if param.Page == nil {
 		param.Page = &m.PageInfo{StartIndex: 0, PageSize: 0}
 	}
-	query := m.AlarmTable{Status: "firing", Endpoint: param.Endpoint, SMetric: param.Metric, SPriority: param.Priority}
-	err, data := db.GetAlarms(query, 0, true, true)
+	query := m.AlarmTable{Status: "firing", Endpoint: param.Endpoint, SMetric: param.Metric, SPriority: param.Priority, AlarmName: param.AlarmName}
+	var endpointList []string
+	var err error
+	if param.CustomDashboardId > 0 {
+		endpointList, err = db.GetCustomDashboardEndpointList(param.CustomDashboardId)
+		if err != nil {
+			mid.ReturnHandleError(c, err.Error(), err)
+			return
+		}
+	}
+	err, data := db.GetAlarms(query, 0, true, true, endpointList)
 	if err != nil {
 		mid.ReturnQueryTableError(c, "alarm", err)
 		return
@@ -524,11 +558,22 @@ func QueryProblemAlarmByPage(c *gin.Context) {
 		if v.SPriority == "low" {
 			lowCount += 1
 		}
-		tmpMetricLevel := fmt.Sprintf("%s^%s", v.SMetric, v.SPriority)
-		if _, b := metricMap[tmpMetricLevel]; b {
-			metricMap[tmpMetricLevel] += 1
+		if len(v.AlarmMetricList) > 0 {
+			for _, subMetric := range v.AlarmMetricList {
+				tmpMetricLevel := fmt.Sprintf("%s^%s", subMetric, v.SPriority)
+				if _, b := metricMap[tmpMetricLevel]; b {
+					metricMap[tmpMetricLevel] += 1
+				} else {
+					metricMap[tmpMetricLevel] = 1
+				}
+			}
 		} else {
-			metricMap[tmpMetricLevel] = 1
+			tmpMetricLevel := fmt.Sprintf("%s^%s", v.SMetric, v.SPriority)
+			if _, b := metricMap[tmpMetricLevel]; b {
+				metricMap[tmpMetricLevel] += 1
+			} else {
+				metricMap[tmpMetricLevel] = 1
+			}
 		}
 	}
 	if len(data) == 0 {
@@ -722,12 +767,20 @@ func TestNotifyAlarm(c *gin.Context) {
 }
 
 func GetCustomDashboardAlarm(c *gin.Context) {
-	customDashboardId, _ := strconv.Atoi(c.Query("id"))
+	var param m.QueryProblemAlarmDto
+	if err := c.ShouldBindJSON(&param); err != nil {
+		mid.ReturnValidateError(c, err.Error())
+		return
+	}
+	if param.Page == nil {
+		param.Page = &m.PageInfo{StartIndex: 0, PageSize: 0}
+	}
+	customDashboardId, _ := strconv.Atoi(c.Param("customDashboardId"))
 	if customDashboardId <= 0 {
 		mid.ReturnParamEmptyError(c, "id")
 		return
 	}
-	err, result := db.GetCustomDashboardAlarms(customDashboardId)
+	err, result := db.GetCustomDashboardAlarms(customDashboardId, param.Page)
 	if err != nil {
 		mid.ReturnHandleError(c, err.Error(), err)
 	} else {
@@ -833,6 +886,13 @@ func QueryEntityAlarmEvent(c *gin.Context) {
 			}
 		}
 	}
+	if value == "" {
+		result.Status = "OK"
+		result.Message = "Success"
+		result.Data = []*m.AlarmEventEntityObj{}
+		mid.ReturnData(c, result)
+		return
+	}
 	if strings.Contains(value, "-") {
 		// id-firing-notifyGuid-operator
 		tmpSplit := strings.Split(value, "-")
@@ -867,4 +927,19 @@ func QueryEntityAlarmEvent(c *gin.Context) {
 		result.Data = append(result.Data, resultData)
 	}
 	mid.ReturnData(c, result)
+}
+
+func UpdateEntityAlarm(c *gin.Context) {
+	var param []map[string]interface{}
+	var result m.AlarmEventUpdateResponse
+	data, _ := ioutil.ReadAll(c.Request.Body)
+	c.Request.Body.Close()
+	err := json.Unmarshal(data, &param)
+	if err != nil {
+		result.Status = "ERROR"
+		result.Message = fmt.Sprintf("Request body json unmarshal failed: %v", err)
+		mid.ReturnData(c, result)
+		return
+	}
+
 }
