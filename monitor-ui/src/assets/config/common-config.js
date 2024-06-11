@@ -12,13 +12,13 @@ export const dataPick = [
     label: '3h'
   },
   {
-    value: -21600,
-    label: '6h'
-  },
-  {
     value: -43200,
     label: '12h'
   },
+  {
+    value: -86400,
+    label: '24h'
+  }
 ];
 
 export const autoRefreshConfig = [
@@ -106,7 +106,7 @@ export const colorList = {
   'pink': '#ffadd2',
   'magenta': '#eb2f96',
   'volcano': '#fa541c',
-  'orange': '#fff7e6'
+  'orange': '#e8c16d'
 }
 export const cycleOption = [
   {label: 'm_all', value: 'All'},
