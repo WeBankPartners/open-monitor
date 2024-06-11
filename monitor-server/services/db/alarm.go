@@ -1,9 +1,11 @@
 package db
 
 import (
+	"crypto/sha256"
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"github.com/WeBankPartners/go-common-lib/guid"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/other"
 	"io/ioutil"
 	"net/http"
@@ -399,7 +401,7 @@ func GetEndpointsByGrp(grpId int) (error, []*m.EndpointTable) {
 	return err, result
 }
 
-func GetAlarms(query m.AlarmTable, limit int, extLogMonitor, extOpenAlarm bool) (error, m.AlarmProblemList) {
+func GetAlarms(query m.AlarmTable, limit int, extLogMonitor, extOpenAlarm bool, endpointFilterList []string) (error, m.AlarmProblemList) {
 	var result []*m.AlarmProblemQuery
 	var whereSql string
 	var params []interface{}
@@ -412,12 +414,20 @@ func GetAlarms(query m.AlarmTable, limit int, extLogMonitor, extOpenAlarm bool) 
 		params = append(params, query.StrategyId)
 	}
 	if query.Endpoint != "" {
-		whereSql += " and endpoint=? "
-		params = append(params, query.Endpoint)
+		endpointFilterList = append(endpointFilterList, query.Endpoint)
+	}
+	if len(endpointFilterList) > 0 {
+		endpointFilterSql, endpointFilterParam := createListParams(endpointFilterList, "")
+		whereSql += " and endpoint in (" + endpointFilterSql + ") "
+		params = append(params, endpointFilterParam...)
 	}
 	if query.SMetric != "" {
-		whereSql += " and s_metric=? "
-		params = append(params, query.SMetric)
+		whereSql += " and s_metric like ? "
+		params = append(params, fmt.Sprintf("%%%s%%", query.SMetric))
+	}
+	if query.AlarmName != "" {
+		whereSql += " and (alarm_name=? or content=?) "
+		params = append(params, query.AlarmName, query.AlarmName)
 	}
 	if query.SCond != "" {
 		whereSql += " and s_cond=? "
@@ -454,10 +464,15 @@ func GetAlarms(query m.AlarmTable, limit int, extLogMonitor, extOpenAlarm bool) 
 		log.Logger.Error("Get alarms fail", log.Error(err))
 		return err, result
 	}
-	var notifyIdList, alarmIdList []string
+	var notifyIdList, alarmIdList, alarmStrategyList, endpointList []string
 	for _, v := range result {
 		v.StartString = v.Start.Format(m.DatetimeFormat)
 		v.EndString = v.End.Format(m.DatetimeFormat)
+		if v.AlarmName == "" {
+			v.AlarmName = v.Content
+		}
+		alarmStrategyList = append(alarmStrategyList, v.AlarmStrategy)
+		endpointList = append(endpointList, v.Endpoint)
 		if v.SMetric == "log_monitor" {
 			v.IsLogMonitor = true
 			if v.EndValue > 0 {
@@ -506,11 +521,27 @@ func GetAlarms(query m.AlarmTable, limit int, extLogMonitor, extOpenAlarm bool) 
 		if v.Id > 0 {
 			alarmIdList = append(alarmIdList, fmt.Sprintf("%d", v.Id))
 		}
+		alarmDetailList := []*m.AlarmDetailData{}
+		if strings.HasPrefix(v.EndpointTags, "ac_") {
+			alarmDetailList, err = GetAlarmDetailList(v.Id)
+			if err != nil {
+				return err, result
+			}
+			for _, alarmDetail := range alarmDetailList {
+				v.AlarmMetricList = append(v.AlarmMetricList, alarmDetail.Metric)
+			}
+		} else {
+			alarmDetailList = append(alarmDetailList, &m.AlarmDetailData{Metric: v.SMetric, Cond: v.SCond, Last: v.SLast, Start: v.Start, StartValue: v.StartValue, End: v.End, EndValue: v.EndValue, Tags: v.Tags})
+			v.AlarmMetricList = []string{v.SMetric}
+		}
+		v.AlarmDetail = buildAlarmDetailData(alarmDetailList, "<br/>")
 	}
-	if query.SMetric == "" || query.SMetric == "custom" {
-		if extOpenAlarm {
-			for _, v := range GetOpenAlarm(m.CustomAlarmQueryParam{Enable: true, Status: "problem", Start: "", End: "", Level: query.SPriority}) {
-				result = append(result, v)
+	if query.AlarmName == "" {
+		if query.SMetric == "" || query.SMetric == "custom" {
+			if extOpenAlarm {
+				for _, v := range GetOpenAlarm(m.CustomAlarmQueryParam{Enable: true, Status: "problem", Start: "", End: "", Level: query.SPriority}) {
+					result = append(result, v)
+				}
 			}
 		}
 	}
@@ -559,6 +590,29 @@ func GetAlarms(query m.AlarmTable, limit int, extLogMonitor, extOpenAlarm bool) 
 			v.AlarmObjName = fmt.Sprintf("%d-%s-%s", v.Id, v.Endpoint, v.SMetric)
 		}
 	}
+	if len(alarmStrategyList) > 0 {
+		strategyGroupMap, endpointServiceMap, matchErr := matchAlarmGroups(alarmStrategyList, endpointList)
+		if matchErr != nil {
+			log.Logger.Error("try to match alarm groups fail", log.Error(matchErr))
+		} else {
+			for _, v := range sortResult {
+				tmpStrategyGroups := []*m.AlarmStrategyGroup{}
+				if strategyRow, ok := strategyGroupMap[v.AlarmStrategy]; ok {
+					if strategyRow.ServiceGroup == "" {
+						tmpStrategyGroups = append(tmpStrategyGroups, &m.AlarmStrategyGroup{Name: strategyRow.EndpointGroup, Type: "endpointGroup"})
+						if endpointServiceList, endpointOk := endpointServiceMap[v.Endpoint]; endpointOk {
+							for _, endpointServiceRelRow := range endpointServiceList {
+								tmpStrategyGroups = append(tmpStrategyGroups, &m.AlarmStrategyGroup{Name: endpointServiceRelRow.ServiceGroup, Type: "serviceGroup"})
+							}
+						}
+					} else {
+						tmpStrategyGroups = append(tmpStrategyGroups, &m.AlarmStrategyGroup{Name: strategyRow.ServiceGroup, Type: "serviceGroup"})
+					}
+				}
+				v.StrategyGroups = tmpStrategyGroups
+			}
+		}
+	}
 	return err, sortResult
 }
 
@@ -574,27 +628,36 @@ func UpdateAlarms(alarms []*m.AlarmHandleObj) []*m.AlarmHandleObj {
 		var cErr error
 		var execResult sql.Result
 		calcAlarmUniqueFlag(&v.AlarmTable)
-		if v.Id > 0 {
-			action.Sql = "UPDATE alarm SET status=?,end_value=?,end=? WHERE id=? AND status='firing'"
-			execResult, cErr = x.Exec(action.Sql, v.Status, v.EndValue, v.End.Format(m.DatetimeFormat), v.Id)
+		if v.MultipleConditionFlag {
+			alarmObj, updateConditionAlarmErr := UpdateAlarmWithConditions(v)
+			if updateConditionAlarmErr != nil {
+				log.Logger.Error("Update alarm condition fail", log.JsonObj("alarm", v), log.Error(updateConditionAlarmErr))
+			} else if alarmObj != nil {
+				successAlarms = append(successAlarms, alarmObj)
+			}
 		} else {
-			action.Sql = "INSERT INTO alarm(strategy_id,endpoint,status,s_metric,s_expr,s_cond,s_last,s_priority,content,start_value,start,tags,endpoint_tags,alarm_strategy) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
-			execResult, cErr = x.Exec(action.Sql, v.StrategyId, v.Endpoint, v.Status, v.SMetric, v.SExpr, v.SCond, v.SLast, v.SPriority, v.Content, v.StartValue, v.Start.Format(m.DatetimeFormat), v.Tags, v.EndpointTags, v.AlarmStrategy)
-		}
-		if cErr != nil {
-			log.Logger.Error("Update alarm fail", log.Error(cErr))
-		} else {
-			rowAffected, _ = execResult.RowsAffected()
-			if rowAffected > 0 {
-				if v.Id <= 0 {
-					lastInsertId, _ := execResult.LastInsertId()
-					if lastInsertId > 0 {
-						v.Id = int(lastInsertId)
-					}
-				}
-				successAlarms = append(successAlarms, v)
+			if v.Id > 0 {
+				action.Sql = "UPDATE alarm SET status=?,end_value=?,end=? WHERE id=? AND status='firing'"
+				execResult, cErr = x.Exec(action.Sql, v.Status, v.EndValue, v.End.Format(m.DatetimeFormat), v.Id)
 			} else {
-				log.Logger.Warn("Update alarm done but not any rows affected")
+				action.Sql = "INSERT INTO alarm(strategy_id,endpoint,status,s_metric,s_expr,s_cond,s_last,s_priority,content,start_value,start,tags,endpoint_tags,alarm_strategy,alarm_name) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+				execResult, cErr = x.Exec(action.Sql, v.StrategyId, v.Endpoint, v.Status, v.SMetric, v.SExpr, v.SCond, v.SLast, v.SPriority, v.Content, v.StartValue, v.Start.Format(m.DatetimeFormat), v.Tags, v.EndpointTags, v.AlarmStrategy, v.AlarmName)
+			}
+			if cErr != nil {
+				log.Logger.Error("Update alarm fail", log.JsonObj("alarm", v), log.Error(cErr))
+			} else {
+				rowAffected, _ = execResult.RowsAffected()
+				if rowAffected > 0 {
+					if v.Id <= 0 {
+						lastInsertId, _ := execResult.LastInsertId()
+						if lastInsertId > 0 {
+							v.Id = int(lastInsertId)
+						}
+					}
+					successAlarms = append(successAlarms, v)
+				} else {
+					log.Logger.Warn("Update alarm done but not any rows affected", log.JsonObj("alarm", v))
+				}
 			}
 		}
 	}
@@ -873,11 +936,11 @@ func getLastFromExpr(expr string) string {
 func CloseAlarm(param m.AlarmCloseParam) (err error) {
 	var alarmRows []*m.AlarmTable
 	if param.Priority != "" {
-		err = x.SQL("select id,s_metric from alarm WHERE status='firing' and s_priority=?", param.Priority).Find(&alarmRows)
+		err = x.SQL("select id,s_metric,endpoint_tags from alarm WHERE status='firing' and s_priority=?", param.Priority).Find(&alarmRows)
 	} else if param.Metric != "" {
-		err = x.SQL("select id,s_metric from alarm WHERE status='firing' and s_metric=?", param.Metric).Find(&alarmRows)
+		err = x.SQL("select id,s_metric,endpoint_tags from alarm WHERE status='firing' and s_metric=?", param.Metric).Find(&alarmRows)
 	} else {
-		err = x.SQL("select id,s_metric from alarm WHERE id=?", param.Id).Find(&alarmRows)
+		err = x.SQL("select id,s_metric,endpoint_tags from alarm WHERE id=?", param.Id).Find(&alarmRows)
 	}
 	if err != nil {
 		err = fmt.Errorf("query alarm table fail,%s ", err.Error())
@@ -888,6 +951,9 @@ func CloseAlarm(param m.AlarmCloseParam) (err error) {
 		actions = append(actions, &Action{Sql: "UPDATE alarm SET STATUS='closed',end=NOW() WHERE id=?", Param: []interface{}{v.Id}})
 		if v.SMetric == "log_monitor" {
 			actions = append(actions, &Action{Sql: "update log_keyword_alarm set status='closed',updated_time=NOW() WHERE alarm_id=?", Param: []interface{}{v.Id}})
+		}
+		if strings.HasPrefix(v.EndpointTags, "ac_") {
+			actions = append(actions, &Action{Sql: "UPDATE alarm_condition SET STATUS='closed',end=NOW() WHERE guid in (select alarm_condition from alarm_condition_rel where alarm=?)", Param: []interface{}{v.Id}})
 		}
 	}
 	if len(actions) > 0 {
@@ -1312,6 +1378,51 @@ func QueryAlarmBySql(sql string, params []interface{}, customQueryParam m.Custom
 	} else {
 		result.Data = alarmQuery
 	}
+	var alarmStrategyList, endpointList []string
+	for _, v := range result.Data {
+		if v.AlarmName == "" {
+			v.AlarmName = v.Content
+		}
+		alarmStrategyList = append(alarmStrategyList, v.AlarmStrategy)
+		endpointList = append(endpointList, v.Endpoint)
+		alarmDetailList := []*m.AlarmDetailData{}
+		if strings.HasPrefix(v.EndpointTags, "ac_") {
+			alarmDetailList, err = GetAlarmDetailList(v.Id)
+			if err != nil {
+				return err, result
+			}
+			for _, alarmDetail := range alarmDetailList {
+				v.AlarmMetricList = append(v.AlarmMetricList, alarmDetail.Metric)
+			}
+		} else {
+			alarmDetailList = append(alarmDetailList, &m.AlarmDetailData{Metric: v.SMetric, Cond: v.SCond, Last: v.SLast, Start: v.Start, StartValue: v.StartValue, End: v.End, EndValue: v.EndValue, Tags: v.Tags})
+			v.AlarmMetricList = []string{v.SMetric}
+		}
+		v.AlarmDetail = buildAlarmDetailData(alarmDetailList, "<br/>")
+	}
+	if len(alarmStrategyList) > 0 {
+		strategyGroupMap, endpointServiceMap, matchErr := matchAlarmGroups(alarmStrategyList, endpointList)
+		if matchErr != nil {
+			log.Logger.Error("try to match alarm groups fail", log.Error(matchErr))
+		} else {
+			for _, v := range result.Data {
+				tmpStrategyGroups := []*m.AlarmStrategyGroup{}
+				if strategyRow, ok := strategyGroupMap[v.AlarmStrategy]; ok {
+					if strategyRow.ServiceGroup == "" {
+						tmpStrategyGroups = append(tmpStrategyGroups, &m.AlarmStrategyGroup{Name: strategyRow.EndpointGroup, Type: "endpointGroup"})
+						if endpointServiceList, endpointOk := endpointServiceMap[v.Endpoint]; endpointOk {
+							for _, endpointServiceRelRow := range endpointServiceList {
+								tmpStrategyGroups = append(tmpStrategyGroups, &m.AlarmStrategyGroup{Name: endpointServiceRelRow.ServiceGroup, Type: "serviceGroup"})
+							}
+						}
+					} else {
+						tmpStrategyGroups = append(tmpStrategyGroups, &m.AlarmStrategyGroup{Name: strategyRow.ServiceGroup, Type: "serviceGroup"})
+					}
+				}
+				v.StrategyGroups = tmpStrategyGroups
+			}
+		}
+	}
 	return err, result
 }
 
@@ -1485,6 +1596,210 @@ func ManualNotifyAlarm(alarmId int, operator string) (err error) {
 			alarmObj.Id, notifyObj.Guid, alarmObj.Endpoint, alarmObj.SMetric, "created", notifyObj.ProcCallbackKey, notifyObj.ProcCallbackName, notifyObj.Description, operator, time.Now())
 		if err != nil {
 			err = fmt.Errorf("notify event write db alarm notify record fail,%s ", err.Error())
+		}
+	}
+	return
+}
+
+func UpdateAlarmWithConditions(alarmConditionObj *m.AlarmHandleObj) (alarmRow *m.AlarmHandleObj, err error) {
+	var actions []*Action
+	var strategyMetricRows []*m.AlarmStrategyMetric
+	err = x.SQL("select guid,alarm_strategy,metric,`condition`,`last`,crc_hash from alarm_strategy_metric where alarm_strategy=?", alarmConditionObj.AlarmStrategy).Find(&strategyMetricRows)
+	if err != nil {
+		err = fmt.Errorf("query alarm strategy metric table fail,%s ", err.Error())
+		return
+	}
+	if len(strategyMetricRows) == 0 {
+		err = fmt.Errorf("alarm strategy:%s condition metric query with empty data", alarmConditionObj.AlarmStrategy)
+		return
+	}
+	var configCrcList, conditionGuidList, conditionMetricList []string
+	var crcIndex int
+	for i, row := range strategyMetricRows {
+		configCrcList = append(configCrcList, row.CrcHash)
+		if row.CrcHash == alarmConditionObj.AlarmConditionCrcHash {
+			crcIndex = i
+		}
+	}
+	if crcIndex > 0 {
+		time.Sleep(time.Duration(crcIndex) * time.Second)
+	}
+	alarmCrcMap := make(map[string]int)
+	alarmCrcMap[alarmConditionObj.AlarmConditionCrcHash] = 1
+	var alarmConditionRows []*m.AlarmCondition
+	err = x.SQL("select guid,status,metric,crc_hash,tags from alarm_condition where crc_hash in ('"+strings.Join(configCrcList, "','")+"') and alarm_strategy=? and endpoint=? and status='firing'", alarmConditionObj.AlarmStrategy, alarmConditionObj.Endpoint).Find(&alarmConditionRows)
+	if err != nil {
+		err = fmt.Errorf("query alarm condition table fail,%s ", err.Error())
+		return
+	}
+	for _, row := range alarmConditionRows {
+		if row.CrcHash == alarmConditionObj.AlarmConditionCrcHash {
+			// 相同crc策略
+			if row.Tags != alarmConditionObj.Tags {
+				// 不同标签
+				err = fmt.Errorf("same crc alarm:%s is firing,ignore this:%s ", row.Tags, alarmConditionObj.Tags)
+				return
+			}
+		}
+		alarmCrcMap[row.CrcHash] = 1
+		conditionGuidList = append(conditionGuidList, row.Guid)
+		conditionMetricList = append(conditionMetricList, row.Metric)
+	}
+	if alarmConditionObj.AlarmConditionGuid != "" {
+		var alarmConditionRelRows []*m.AlarmConditionRel
+		err = x.SQL("select alarm,alarm_condition from alarm_condition_rel where alarm_condition=? and alarm in (select id from alarm where status='firing' and alarm_strategy=?)", alarmConditionObj.AlarmConditionGuid, alarmConditionObj.AlarmStrategy).Find(&alarmConditionRelRows)
+		if err != nil {
+			err = fmt.Errorf("query alarm condition ref fail,%s ", err.Error())
+			return
+		}
+		actions = append(actions, &Action{Sql: "UPDATE alarm_condition SET status=?,end_value=?,end=? WHERE guid=? AND status='firing'", Param: []interface{}{
+			alarmConditionObj.Status, alarmConditionObj.EndValue, alarmConditionObj.End.Format(m.DatetimeFormat), alarmConditionObj.AlarmConditionGuid,
+		}})
+		if len(alarmConditionRelRows) > 0 {
+			// 有要一起关闭的alarm
+			for _, alarmConditionRef := range alarmConditionRelRows {
+				actions = append(actions, &Action{Sql: "UPDATE alarm SET status=?,end_value=?,end=? WHERE id=? AND status='firing'", Param: []interface{}{
+					alarmConditionObj.Status, alarmConditionObj.EndValue, alarmConditionObj.End.Format(m.DatetimeFormat), alarmConditionRef.Alarm,
+				}})
+			}
+		}
+		err = Transaction(actions)
+	} else {
+		alarmConditionObj.AlarmConditionGuid = "ac_" + guid.CreateGuid()
+		conditionGuidList = append(conditionGuidList, alarmConditionObj.AlarmConditionGuid)
+		conditionMetricList = append(conditionMetricList, alarmConditionObj.SMetric)
+		sort.Strings(conditionGuidList)
+		sort.Strings(conditionMetricList)
+		session := x.NewSession()
+		session.Begin()
+		defer func() {
+			if err != nil {
+				session.Rollback()
+			} else {
+				session.Commit()
+			}
+			session.Close()
+		}()
+		_, err = session.Exec("INSERT INTO alarm_condition(guid,alarm_strategy,endpoint,status,metric,expr,cond,`last`,priority,crc_hash,tags,start_value,`start`,unique_hash) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+			alarmConditionObj.AlarmConditionGuid, alarmConditionObj.AlarmStrategy, alarmConditionObj.Endpoint, alarmConditionObj.Status, alarmConditionObj.SMetric, alarmConditionObj.SExpr, alarmConditionObj.SCond, alarmConditionObj.SLast, alarmConditionObj.SPriority, alarmConditionObj.AlarmConditionCrcHash, alarmConditionObj.Tags, alarmConditionObj.StartValue, time.Now().Format(m.DatetimeFormat), alarmConditionObj.EndpointTags)
+		if err != nil {
+			err = fmt.Errorf("insert alarm_condition fail,%s ", err.Error())
+			return
+		}
+		log.Logger.Debug("UpdateAlarmWithConditions", log.JsonObj("alarmCrcMap", alarmCrcMap), log.StringList("configCrcList", configCrcList))
+		if len(alarmCrcMap) >= len(configCrcList) {
+			// 如果条件都满足
+			alarmStrategyObj, getStrategyErr := GetSimpleAlarmStrategy(alarmConditionObj.AlarmStrategy)
+			if getStrategyErr != nil {
+				err = getStrategyErr
+				return
+			}
+			alarmRow = &m.AlarmHandleObj{}
+			alarmRow.Endpoint = alarmConditionObj.Endpoint
+			alarmRow.Status = alarmConditionObj.Status
+			alarmRow.SMetric = strings.Join(conditionMetricList, ",")
+			alarmRow.Tags = strings.Join(conditionMetricList, ",")
+			alarmRow.SCond = strategyMetricRows[0].Condition
+			alarmRow.SLast = strategyMetricRows[0].Last
+			alarmRow.SPriority = alarmStrategyObj.Priority
+			alarmRow.Content = alarmStrategyObj.Content
+			alarmRow.StartValue = alarmConditionObj.StartValue
+			alarmRow.Start = alarmConditionObj.Start
+			alarmRow.AlarmStrategy = alarmConditionObj.AlarmStrategy
+			alarmRow.AlarmName = alarmStrategyObj.Name
+			alarmRow.EndpointTags = strings.Join(conditionGuidList, ",")
+			alarmRow.EndpointTags = fmt.Sprintf("ac_%x", sha256.Sum256([]byte(strings.Join(conditionGuidList, ","))))
+			alarmRow.NotifyEnable = alarmConditionObj.NotifyEnable
+			alarmRow.NotifyId = alarmConditionObj.NotifyId
+			alarmRow.NotifyDelay = alarmConditionObj.NotifyDelay
+			insertAlarmResult, insertErr := session.Exec("INSERT INTO alarm (endpoint,status,s_metric,s_expr,s_cond,s_last,s_priority,content,tags,start_value,`start`,endpoint_tags,alarm_strategy,alarm_name) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+				alarmRow.Endpoint, alarmRow.Status, alarmRow.SMetric, alarmRow.SExpr, alarmRow.SCond, alarmRow.SLast, alarmRow.SPriority, alarmRow.Content, alarmRow.Tags, alarmRow.StartValue, alarmRow.Start, alarmRow.EndpointTags, alarmRow.AlarmStrategy, alarmRow.AlarmName)
+			if insertErr != nil {
+				err = fmt.Errorf("insert alarm fail,%s ", insertErr.Error())
+				return
+			}
+			alarmInsertId, _ := insertAlarmResult.LastInsertId()
+			if alarmInsertId <= 0 {
+				err = fmt.Errorf("insert alarm fail with get last insert id fail")
+				return
+			}
+			alarmRow.Id = int(alarmInsertId)
+			for _, conditionGuid := range conditionGuidList {
+				_, err = session.Exec("insert into alarm_condition_rel(alarm,alarm_condition) values (?,?)", alarmInsertId, conditionGuid)
+				if err != nil {
+					return
+				}
+			}
+		}
+	}
+	return
+}
+
+func GetAlarmDetailList(alarmId int) (alarmDetailList []*m.AlarmDetailData, err error) {
+	alarmDetailList = []*m.AlarmDetailData{}
+	//filterSql, filterParam := createListParams(alarmConditionGuidList, "")
+	err = x.SQL("select t1.metric,t1.cond,t1.`last`,t1.`start`,t1.start_value,t1.`end`,t1.end_value,t1.tags,t2.metric as 'metric_name' from alarm_condition t1 left join metric t2 on t1.metric=t2.guid where t1.guid in (select alarm_condition from alarm_condition_rel where alarm=?)", alarmId).Find(&alarmDetailList)
+	if err != nil {
+		err = fmt.Errorf("GetAlarmDetailList -> query alarm condition table fail,%s ", err.Error())
+		return
+	}
+	return
+}
+
+func buildAlarmDetailData(inputList []*m.AlarmDetailData, splitChar string) string {
+	stringList := []string{}
+	for _, v := range inputList {
+		if v != nil {
+			tagList := []string{}
+			for _, tagV := range strings.Split(v.Tags, "^") {
+				if strings.HasPrefix(tagV, "e_guid:") || strings.HasPrefix(tagV, "guid:") || strings.HasPrefix(tagV, "agg:") || strings.HasPrefix(tagV, "key:") || strings.HasPrefix(tagV, "condition_crc:") {
+					continue
+				}
+				if firstSplitIndex := strings.Index(tagV, ":"); firstSplitIndex > 0 {
+					tagV = tagV[:firstSplitIndex] + "=" + tagV[firstSplitIndex+1:]
+					tagList = append(tagList, tagV)
+				}
+			}
+			if len(tagList) > 0 {
+				stringList = append(stringList, fmt.Sprintf("Metric:%s Tag:[%s] %s Value:%.3f Duration:%s", v.Metric, strings.Join(tagList, ","), v.Cond, v.StartValue, v.Last))
+			} else {
+				stringList = append(stringList, fmt.Sprintf("Metric:%s %s Value:%.3f Duration:%s", v.Metric, v.Cond, v.StartValue, v.Last))
+			}
+		}
+	}
+	return strings.Join(stringList, splitChar)
+}
+
+func matchAlarmGroups(alarmStrategyList, endpointList []string) (strategyGroupMap map[string]*m.StrategyGroupRow, endpointServiceMap map[string][]*m.EndpointServiceRelTable, err error) {
+	if len(alarmStrategyList) == 0 {
+		return
+	}
+	var strategyGroupRows []*m.StrategyGroupRow
+	strategyFilter, strategyParams := createListParams(alarmStrategyList, "")
+	err = x.SQL("select t1.guid,t1.endpoint_group,t2.service_group from alarm_strategy t1 left join endpoint_group t2 on t1.endpoint_group=t2.guid where t1.guid in ("+strategyFilter+")", strategyParams...).Find(&strategyGroupRows)
+	if err != nil {
+		err = fmt.Errorf("matchAlarmGroups -> query alarm strategy table fail,%s ", err.Error())
+		return
+	}
+	endpointServiceRelRows := []*m.EndpointServiceRelTable{}
+	if len(endpointList) > 0 {
+		endpointFilter, endpointParams := createListParams(endpointList, "")
+		err = x.SQL("select endpoint,t2.display_name as service_group from endpoint_service_rel t1 left join service_group t2 on t1.service_group=t2.guid where t1.endpoint in ("+endpointFilter+")", endpointParams...).Find(&endpointServiceRelRows)
+		if err != nil {
+			err = fmt.Errorf("matchAlarmGroups -> query alarm endpoint service rel table fail,%s ", err.Error())
+			return
+		}
+	}
+	strategyGroupMap = make(map[string]*m.StrategyGroupRow)
+	endpointServiceMap = make(map[string][]*m.EndpointServiceRelTable)
+	for _, row := range strategyGroupRows {
+		strategyGroupMap[row.Guid] = row
+	}
+	for _, row := range endpointServiceRelRows {
+		if existList, ok := endpointServiceMap[row.Endpoint]; ok {
+			endpointServiceMap[row.Endpoint] = append(existList, row)
+		} else {
+			endpointServiceMap[row.Endpoint] = []*m.EndpointServiceRelTable{row}
 		}
 	}
 	return

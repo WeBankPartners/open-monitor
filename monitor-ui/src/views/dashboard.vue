@@ -11,7 +11,12 @@
           <p slot="title">
             {{dash.name}}
           </p>
-          <SingleDashboard :id="dash.id"></SingleDashboard>
+          <view-config 
+            v-if="dash.id" 
+            permissionType='view' 
+            :boardId="dash.id"
+            pageType="dashboard"
+           />
         </Card>
       </template>
     </section>
@@ -19,7 +24,7 @@
 </template>
 
 <script>
-import SingleDashboard from '@/views/single-dashboard'
+import ViewConfig from '@/views/custom-view/view-config'
 export default {
   name: '',
   data() {
@@ -103,7 +108,7 @@ export default {
     }
   },
   components: {
-    SingleDashboard
+    ViewConfig
   },
 }
 </script>

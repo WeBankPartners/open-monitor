@@ -91,6 +91,9 @@ func GetGroupEndpointNotify(endpointGroupGuid string) (result []*models.NotifyOb
 func UpdateGroupEndpointNotify(endpointGroupGuid string, param []*models.NotifyObj) error {
 	for _, v := range param {
 		v.EndpointGroup = endpointGroupGuid
+		if v.ProcCallbackKey != "" && v.ProcCallbackName == "" {
+			return fmt.Errorf("procCallbackName can not empty with key:%s ", v.ProcCallbackKey)
+		}
 	}
 	//actions := getNotifyListDeleteAction("", endpointGroupGuid, "")
 	//actions = append(actions, getNotifyListInsertAction(param)...)

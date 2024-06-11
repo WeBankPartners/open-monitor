@@ -17,19 +17,19 @@ type requestPanelObj struct {
 }
 
 type panelRequestObj struct {
-	ConfirmToken      string `json:"confirmToken"`
-	CallbackParameter string `json:"callbackParameter"`
-	Guid              string `json:"guid"`
-	DisplayName       string `json:"display_name"`
-	Parent            string `json:"parent"`
+	ConfirmToken      string      `json:"confirmToken"`
+	CallbackParameter string      `json:"callbackParameter"`
+	Guid              string      `json:"guid"`
+	DisplayName       string      `json:"display_name"`
+	Parent            string      `json:"parent"`
 	Endpoint          interface{} `json:"endpoint"`
-	Email             string `json:"email"`
-	Phone             string `json:"phone"`
+	Email             string      `json:"email"`
+	Phone             string      `json:"phone"`
 	Role              interface{} `json:"role"`
-	FiringCallback    string `json:"firing_callback"`
-	RecoverCallback   string `json:"recover_callback"`
-	Type              string `json:"type"`
-	DeleteAll         string `json:"delete_all"`
+	FiringCallback    string      `json:"firing_callback"`
+	RecoverCallback   string      `json:"recover_callback"`
+	Type              string      `json:"type"`
+	DeleteAll         string      `json:"delete_all"`
 }
 
 func ExportPanelAdd(c *gin.Context) {
@@ -102,7 +102,7 @@ func ExportPanelAdd(c *gin.Context) {
 				successFlag = "1"
 				continue
 			}
-			err := db.UpdateRecursivePanel(m.PanelRecursiveTable{Guid: v.Guid, DisplayName: v.DisplayName, Parent: strings.Join(tmpParent, "^"), Endpoint: strings.Join(endpointStringList, "^"), Email: v.Email, Phone: v.Phone, Role: strings.Join(inputRoleList,","), FiringCallbackKey: v.FiringCallback, RecoverCallbackKey: v.RecoverCallback, ObjType: v.Type})
+			err := db.UpdateRecursivePanel(m.PanelRecursiveTable{Guid: v.Guid, DisplayName: v.DisplayName, Parent: strings.Join(tmpParent, "^"), Endpoint: strings.Join(endpointStringList, "^"), Email: v.Email, Phone: v.Phone, Role: strings.Join(inputRoleList, ","), FiringCallbackKey: v.FiringCallback, RecoverCallbackKey: v.RecoverCallback, ObjType: v.Type})
 			if err != nil {
 				tmpMessage = fmt.Sprintf(mid.GetMessageMap(c).UpdateTableError, "recursive_panel")
 				errorMessage = tmpMessage
@@ -169,7 +169,7 @@ func ExportPanelDelete(c *gin.Context) {
 		errorMessage := "Done"
 		for _, v := range param.Inputs {
 			var tmpMessage string
-			affectList,affectErr := db.GetDeleteServiceGroupAffectList(v.Guid)
+			affectList, affectErr := db.GetDeleteServiceGroupAffectList(v.Guid)
 			if affectErr != nil {
 				tmpMessage = fmt.Sprintf("Try to get affect object list fail,%s ", affectErr.Error())
 			}

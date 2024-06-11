@@ -112,7 +112,8 @@ const btn = [
   },
   {
     btn_name: 'button.remove',
-    btn_func: 'removeDbmonitor'
+    btn_func: 'removeDbmonitor',
+    color: 'red'
   }
 ]
 export default {
