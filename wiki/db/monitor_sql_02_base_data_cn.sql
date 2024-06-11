@@ -1038,4 +1038,5 @@ alter table custom_dashboard add column refresh_week int(5)  default 10 COMMENT 
 
 update custom_dashboard_role_rel set role_id= (select name from role where id = role_id) where role_id in (select id from role);
 insert into main_dashboard (guid,role_id,custom_dashboard)(select uuid(),name,main_dashboard from `role` where main_dashboard > 0 and name!='' and main_dashboard in (select id from custom_dashboard));
+alter table log_keyword_config add column name varchar(64) default null;
 #@v2.0.8.1-end@;

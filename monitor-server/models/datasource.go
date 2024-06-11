@@ -23,6 +23,7 @@ type QueryMonitorData struct {
 	PieMetricType    string    `json:"pie_metric_type"`
 	PieAggType       string    `json:"pie_agg_type"`
 	Tags             []string  `json:"tags"`
+	PieDisplayTag    string    `json:"pie_display_tag"`
 }
 
 type PrometheusParam struct {
