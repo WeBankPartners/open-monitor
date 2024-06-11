@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/WeBankPartners/go-common-lib/cipher"
 	"github.com/toolkits/file"
 	"io/ioutil"
@@ -206,6 +207,7 @@ var (
 	AlarmMailEnable      bool
 	AgentManagerRemoteIp string
 	NotifyTreeventEnable bool
+	PrometheusArchiveDay string
 )
 
 func Config() *GlobalConfig {
@@ -290,6 +292,12 @@ func InitConfig(cfg string) {
 		log.Printf("Init core token fail,coreUrl & subSystemCode & subSystemKey can not empty")
 	}
 	SmsParamMaxLength, _ = strconv.Atoi(os.Getenv("MONITOR_SMS_PARAM_LENGTH"))
+	prometheusArchiveDayNum, _ := strconv.Atoi(os.Getenv("MONITOR_PROMETHEUS_ARCHIVE_DAY"))
+	if prometheusArchiveDayNum > 0 {
+		PrometheusArchiveDay = fmt.Sprintf("%dd", prometheusArchiveDayNum)
+	} else {
+		PrometheusArchiveDay = "30d"
+	}
 	initLocalTimeZone()
 }
 

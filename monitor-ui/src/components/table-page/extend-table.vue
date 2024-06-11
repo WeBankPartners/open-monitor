@@ -42,7 +42,7 @@
                     <!-- 不显示省略情况下 -->
                     <div class="cell" v-if="!key.toolTips && !ellipsis(item[key.value])">
                       <a @click="shadow(item, key)" v-if="'shadow' in key">{{item[key.value]}}</a>
-                      <span v-if="!('shadow' in key) && !key.isIcon"> {{item[key.value]}}</span>
+                      <span v-if="!('shadow' in key) && !key.isIcon"> {{item[key.value] || '-'}}</span>
                       <span v-if="!('shadow' in key) && key.isIcon" :class="[item[key.value] ? colorgreen : colorred]"><i class="fa fa-circle"></i></span>
                     </div>
                     <!-- 显示省略且未自己配置tip情况下，自动添加tip,tip内容为整体内容 -->
@@ -55,23 +55,26 @@
                     </Tooltip>
                   </div>
               </div>
-              <div v-if='key.btn' class="td-center td-operation">
+              <div v-if='key.btn' class="">
                 <div style="display:inline-block" v-for="(btn_val,btn_i) in key.btn" :key="btn_i">
                   <span :id="btn_val.btn_func"
                       v-if="!item.hide && btn_val.btn_name !='more' && !btn_val.render"
                       class="btn-operation"
+                      :style="{color: btn_val.color}"
                       @click="goToOpe(btn_val,item,index,indexx)">
                     {{$t(btn_val.btn_name)}}
                   </span>
                   <span :id="btn_val.btn_func"
                       v-if="item.hide && btn_val.btn_name !='more' && !btn_val.render && !item.hide[btn_i]"
                       class="btn-operation"
+                      :style="{color: btn_val.color}"
                       @click="goToOpe(btn_val,item,index,indexx)">
                     {{$t(btn_val.btn_name)}}
                   </span>
                 <span :id="btn_val.btn_func"
                       v-if="btn_val.btn_name !='more' && btn_val.render"
                       class="btn-operation"
+                      :style="{color: btn_val.color}"
                       @click="goToOpe(btn_val,item,index,indexx)">
                       {{renderValue(item, btn_val)}}
                 </span>
@@ -93,7 +96,7 @@
                   <div slot="content" class="ui-ul-list">
                     <ul v-if="showMoreNumber === index">
                       <template v-for="(btn, moreIndex) in btn_val.more" >
-                        <li @click="goToOpe(btn,item,index,indexx)" :key="moreIndex">{{$t(btn_val.btn_name)}}</li>
+                        <li @click="goToOpe(btn,item,index,indexx)" :key="moreIndex" :style="{color: btn.color}">{{$t(btn_val.btn_name)}}</li>
                       </template>
                     </ul>
                   </div>
@@ -240,6 +243,8 @@
   padding: 10px;
   font-weight: 400;
   /*margin: 20px 0px;*/
+  background-color: #f2f2f2;
+  margin-left: 24px;
 }
 .colorblue {
   color: @color-blue;
@@ -257,7 +262,7 @@
   margin-bottom: 10px;
 }
 .table th {
-  text-align: center;
+  text-align: left;
   vertical-align: middle;
 }
 .table td {
@@ -266,7 +271,7 @@
   font-size: 12px;
   color: #333333;
   letter-spacing: 0.7px;
-  text-align: center;
+  text-align: left;
   vertical-align: middle;
   padding: 2px 6px;
 }
@@ -289,6 +294,7 @@ h4 {
   white-space: nowrap;
   word-break: break-all;
   box-sizing: border-box;
+  padding: 1px 0;
   a {
     color: @color-blue;
   }
@@ -322,7 +328,7 @@ h4 {
   float: left;
 }
 .bgc{
-  background-color: #fafafa;
+  // background-color: #fafafa;
 }
 .active{
   .ivu-icon{
@@ -336,14 +342,15 @@ h4 {
   position: absolute;
 }
 .td-operation {
-    button {
-      margin-top: 3px;
-      font-size: .2rem;
-    }
+  text-align: left;
+  button {
+    margin-top: 3px;
+    font-size: .2rem;
   }
+}
 .btn-operation {
     font-family: PingFangSC-Regular;
-    font-size: 14px;
+    font-size: 12px;
     color: @color-blue;
     line-height: 20px;
     /*padding-right: 4px;*/
@@ -372,7 +379,7 @@ h4 {
     line-height: 20px;
   }
   .styleEX th{
-    padding: 0.25rem;
+    padding: 0.25rem 0;
   }
   .styleEX{
   thead {

@@ -524,7 +524,7 @@ export default {
   .content-stats-container {
     width: 100%;
     display: flex;
-    margin: 12px 0;
+    // margin: 12px 0;
 
     .left {
       position: relative;

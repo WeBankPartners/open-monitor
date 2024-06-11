@@ -341,12 +341,22 @@ func SearchRecursivePanel(search string) []*m.OptionModel {
 	x.SQL(sql, search).Find(&prt)
 	for _, v := range prt {
 		//options = append(options, &m.OptionModel{Id:-1, OptionValue:fmt.Sprintf("%s:sys", v.Guid), OptionText:v.DisplayName})
-		options = append(options, &m.OptionModel{Id: -1, OptionValue: v.Guid, OptionText: v.DisplayName, OptionType: "sys", OptionTypeName: v.ObjType})
+		options = append(options, &m.OptionModel{Id: -1, OptionValue: v.Guid, OptionText: v.DisplayName, OptionType: "sys", OptionTypeName: v.ObjType, AppObject: v.Guid})
 	}
 	return options
 }
 
 func ListRecursiveEndpointType(guid string) (result []string, err error) {
+	var endpointRows []*m.EndpointNewTable
+	err = x.SQL("select monitor_type from endpoint_new where guid=?", guid).Find(&endpointRows)
+	if err != nil {
+		err = fmt.Errorf("query endpoint table fail,%s ", err.Error())
+		return
+	}
+	if len(endpointRows) > 0 {
+		result = []string{endpointRows[0].MonitorType}
+		return
+	}
 	result = []string{}
 	resultMap := make(map[string]int)
 	for _, v := range getRecursiveEndpointList(guid) {
@@ -627,7 +637,7 @@ func GetPingExporterSource() []*m.PingExportSourceObj {
 		}
 	}
 	var endpointHttpTable []*m.EndpointHttpTable
-	x.SQL("SELECT t1.* FROM endpoint_http t1 join endpoint t2 on t1.endpoint_guid=t2.guid where t2.address_agent=''").Find(&endpointHttpTable)
+	x.SQL("SELECT t1.id,t1.endpoint_guid,t1.`method`,t1.url FROM endpoint_http t1 join endpoint t2 on t1.endpoint_guid=t2.guid where t2.address_agent=''").Find(&endpointHttpTable)
 	if len(endpointHttpTable) > 0 {
 		for _, v := range endpointHttpTable {
 			tmpUrl := fmt.Sprintf("%s_%s", strings.ToUpper(v.Method), v.Url)
