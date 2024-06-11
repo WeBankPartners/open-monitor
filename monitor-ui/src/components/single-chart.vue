@@ -73,7 +73,12 @@ export default {
         title: this.chartInfo.title,
         unit: '',
         chart_id: this.chartInfo.id,
-        compare: {},
+        compare: {
+          compare_first_start: this.params.compare_first_start,
+          compare_first_end: this.params.compare_first_end,
+          compare_second_start: this.params.compare_second_start,
+          compare_second_end: this.params.compare_second_end
+        },
         data: []
       }
       if (this.params.sys) {
@@ -103,7 +108,7 @@ export default {
         })
       }
       this.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.metricConfigView.api, params, responseData => {
-        const chartConfig = {clear: true,editTitle: true}
+        const chartConfig = {clear: false,editTitle: false}
         responseData.metric = this.chartInfo.metric[0]
         readyToDraw(this,responseData, this.chartIndex, chartConfig)
       }, { isNeedloading: false })
