@@ -19,8 +19,8 @@
         {{apiRes}}
       </FormItem>
       <FormItem style="text-align: right">
-        <Button size="small" @click="cancelReg">{{$t('button.cancel')}}</Button>
-        <Button size="small" @click="saveReg" type="info">{{$t('button.save')}}</Button>
+        <Button size="small" @click="cancelReg">{{$t('m_button_cancel')}}</Button>
+        <Button size="small" @click="saveReg" type="info">{{$t('m_button_save')}}</Button>
       </FormItem>
     </Form>
   </div>

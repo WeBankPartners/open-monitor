@@ -28,7 +28,7 @@ export default {
                 children: [
                     { title: this.$t('m_endpoint'), path: '/monitorConfigIndex/endpointManagement', name: '1-1' },
                     { title: this.$t('m_object_group'), path: '/monitorConfigIndex/groupManagement', name: '1-2' },
-                    { title: this.$t('field.resourceLevel'), path: '/monitorConfigIndex/resourceLevel', name: '1-3' },
+                    { title: this.$t('m_field_resourceLevel'), path: '/monitorConfigIndex/resourceLevel', name: '1-3' },
                     { title: this.$t('m_group_board'), path: '/monitorConfigIndex/groupBoard', name: '1-4' }
                 ]
             },
@@ -43,12 +43,12 @@ export default {
                 ]
             },
             {
-                title: this.$t('menu.alert'),
+                title: this.$t('m_menu_alert'),
                 icon: 'md-warning',
                 name: '3',
                 children: [
                     { title: this.$t('m_metric_threshold'), path: '/monitorConfigIndex/thresholdManagement', name: '3-1' },
-                    { title: this.$t('field.log'), path: '/monitorConfigIndex/logManagement', name: '3-2' }
+                    { title: this.$t('m_field_log'), path: '/monitorConfigIndex/logManagement', name: '3-2' }
                 ]
             },
             {
