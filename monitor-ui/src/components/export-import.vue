@@ -120,11 +120,11 @@ export default {
         }
       })
       .catch(() => {
-        this.$Message.warning(this.$t('tips.failed'))
+        this.$Message.warning(this.$t('m_tips_failed'))
       })
     },
     uploadSucess (callback) {
-      this.$Message.success(this.$t('tips.success'))
+      this.$Message.success(this.$t('m_tips_success'))
       this.$emit('successCallBack')
     },
     uploadFailed (error, file) {

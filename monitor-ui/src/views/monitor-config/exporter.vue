@@ -9,15 +9,15 @@
             {{cluster.cluster_name.split(':')[0]}}
           </p>
           <a href="#" slot="extra" @click.prevent="editCluster(cluster)">
-            {{$t('button.edit')}}
+            {{$t('m_button_edit')}}
           </a>
           <a href="#" slot="extra" @click.prevent="deleteCluster({id: cluster.id, name: cluster.cluster_name})" style="color:red">
-            {{$t('button.remove')}}
+            {{$t('m_button_remove')}}
           </a>
           <ul>
             <li style="margin:8px;list-style: none;">
               <div style="width:30%;display:inline-block;font-size:16px;font-weight: 500;">
-              {{$t('field.ip')}}:
+              {{$t('m_field_ip')}}:
               </div>
               <div style="width:30%;display:inline-block;">
                 {{cluster.api_server}}
@@ -43,15 +43,15 @@
             {{item.id}}
           </p>
           <a href="#" slot="extra" @click.prevent="editItem(item)">
-            {{$t('button.edit')}}
+            {{$t('m_button_edit')}}
           </a>
           <a href="#" slot="extra" @click.prevent="deleteItem({id: item.id})" style="color:red">
-            {{$t('button.remove')}}
+            {{$t('m_button_remove')}}
           </a>
           <ul>
             <li style="margin:8px;list-style: none;">
               <div style="width:30%;display:inline-block;font-size:16px;font-weight: 500;">
-              {{$t('field.ip')}}:
+              {{$t('m_field_ip')}}:
               </div>
               <div style="width:30%;display:inline-block;">
                 {{item.address}}
@@ -73,13 +73,13 @@
     <ModalComponent :modelConfig="modelItemConfig"></ModalComponent>
     <Modal 
       v-model="isShowWarning" 
-      :title="$t('delConfirm.title')"
+      :title="$t('m_delConfirm_title')"
       :mask-closable="false"
       @on-ok="ok" 
       @on-cancel="cancel">
       <div class="modal-body" style="padding:30px">
         <div style="text-align:center">
-          <p style="color: red">{{selectedData.name || selectedData.id}}{{$t('delConfirm.tip')}}</p>
+          <p style="color: red">{{selectedData.name || selectedData.id}}{{$t('m_delConfirm_tip')}}</p>
         </div>
       </div>
     </Modal>
@@ -103,23 +103,23 @@ export default {
             {
             label: 'clusterName',
             value: 'cluster_name',
-            placeholder: 'tips.required',
+            placeholder: 'm_tips_required',
             v_validate: 'required:true',
             disabled: false,
             type: 'text'
           },
           {
-            label: 'field.ip',
+            label: 'm_field_ip',
             value: 'ip',
-            placeholder: 'tips.required',
+            placeholder: 'm_tips_required',
             v_validate: 'required:true|isIP',
             disabled: false,
             type: 'text'
           },
           {
-            label: 'field.port',
+            label: 'm_field_port',
             value: 'port',
-            placeholder: 'tips.required',
+            placeholder: 'm_tips_required',
             v_validate: 'required:true',
             disabled: false,
             type: 'text'
@@ -127,7 +127,7 @@ export default {
           {
             label: 'token',
             value: 'token',
-            placeholder: 'tips.required',
+            placeholder: 'm_tips_required',
             v_validate: 'required:true',
             disabled: false,
             type: 'textarea',
@@ -148,15 +148,15 @@ export default {
         saveFunc: 'saveItem',
         config: [
             {
-            label: 'field.id',
+            label: 'm_field_id',
             value: 'id',
-            placeholder: 'tips.required',
+            placeholder: 'm_tips_required',
             v_validate: 'required:true',
             disabled: true,
             type: 'text'
           },
           {
-            label: 'field.address',
+            label: 'm_field_address',
             value: 'address',
             placeholder: 'exporter_address_placeholder',
             v_validate: 'required:true',
@@ -167,7 +167,7 @@ export default {
             label: 'm_collection_interval',
             value: 'scrape_interval',
             option: 'scrape_interval',
-            placeholder: 'tips.required',
+            placeholder: 'm_tips_required',
             v_validate: 'required:true',
             disabled: false,
             type: 'select'
