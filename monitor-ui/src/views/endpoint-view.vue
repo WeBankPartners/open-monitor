@@ -1,6 +1,6 @@
 <template>
   <div class="page" id="endpointView">
-    <Title :title="$t('menu.endpointView')"></Title>
+    <Title :title="$t('m_menu_endpointView')"></Title>
     <Search ref="search" />
     <Charts v-if="showCharts" :charts='charts' @refreshConfig="refreshConfig" ref="parentCharts" />
     <div v-if="recursiveViewConfig.length && showRecursive">
@@ -14,7 +14,7 @@
       width="1200"
       :mask-closable="false"
       :footer-hide="true"
-      :title="$t('button.historicalAlert')">
+      :title="$t('m_button_historicalAlert')">
       <Table height="500" row-key="id" :columns="historyAlarmPageConfig.table.tableEle" :data="historyAlarmPageConfig.table.tableData"></Table>
     </Modal>
   </div>
@@ -44,7 +44,7 @@ export default {
           tableData: [],
           tableEle: [
             {
-              title: this.$t('tableKey.endpoint'),
+              title: this.$t('m_tableKey_endpoint'),
               width: 220,
               key: 'endpoint',
               tree: true
@@ -55,13 +55,13 @@ export default {
               key: 'alarm_name'
             },
             {
-              title: this.$t('tableKey.status'),
+              title: this.$t('m_tableKey_status'),
               width: 80,
               key: 'status'
             },
 
             {
-              title: this.$t('menu.configuration'),
+              title: this.$t('m_menu_configuration'),
               width: 120,
               key: 'strategyGroupsInfo'
             },
@@ -71,17 +71,17 @@ export default {
               width: 150
             },
             {
-              title: this.$t('tableKey.s_priority'), 
+              title: this.$t('m_tableKey_s_priority'), 
               key: 's_priority', 
               width: 80
             },
             { 
-              title: this.$t('tableKey.start'), 
+              title: this.$t('m_tableKey_start'), 
               key: 'start_string', 
               width: 100
             },
             {
-              title: this.$t('tableKey.end'),
+              title: this.$t('m_tableKey_end'),
               key: 'end_string',
               width: 120,
               render: (h, params) => {
@@ -105,7 +105,7 @@ export default {
               }
             },
             { 
-              title: this.$t('field.threshold'), 
+              title: this.$t('m_field_threshold'), 
               key: 'alarm_detail', 
               width: 200,
               renderContent: true
@@ -116,7 +116,7 @@ export default {
       },
       strategyNameMaps: {
         "endpointGroup": "m_base_group",
-        "serviceGroup": "field.resourceLevel"
+        "serviceGroup": "m_field_resourceLevel"
       }
     }
   },

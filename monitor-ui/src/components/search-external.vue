@@ -2,24 +2,24 @@
   <div class="" style="display:inline-block">
    <ul class="search-ul">
       <li class="search-li">
-        <span class="params-title">{{$t('field.endpoint')}}：</span>
+        <span class="params-title">{{$t('m_field_endpoint')}}：</span>
         <Tag color="blue">{{endpointObject.option_value}}</Tag>
       </li>
       <li class="search-li">
-        <span class="params-title">{{$t('field.relativeTime')}}：</span>
+        <span class="params-title">{{$t('m_field_relativeTime')}}：</span>
         <Select filterable v-model="timeTnterval" :disabled="disableTime" style="width:80px" @on-change="getChartsConfig">
           <Option v-for="item in dataPick" :value="item.value" :key="item.value">{{ item.label }}</Option>
         </Select>
       </li>
       <li class="search-li">
-        <span class="params-title">{{$t('placeholder.refresh')}}：</span>
-        <Select filterable clearable v-model="autoRefresh" :disabled="disableTime" style="width:100px" @on-change="getChartsConfig" :placeholder="$t('placeholder.refresh')">
+        <span class="params-title">{{$t('m_placeholder_refresh')}}：</span>
+        <Select filterable clearable v-model="autoRefresh" :disabled="disableTime" style="width:100px" @on-change="getChartsConfig" :placeholder="$t('m_placeholder_refresh')">
           <Option v-for="item in autoRefreshConfig" :value="item.value" :key="item.value">{{ item.label }}</Option>
         </Select>
       </li>
       <li class="search-li"  style="margin-left:20px">
-        <span class="params-title">{{$t('field.timeInterval')}}：</span>
-        <DatePicker type="datetimerange" :value="dateRange" split-panels format="yyyy-MM-dd HH:mm:ss" placement="bottom-start" @on-change="datePick" :placeholder="$t('placeholder.datePicker')" style="width: 320px"></DatePicker>
+        <span class="params-title">{{$t('m_field_timeInterval')}}：</span>
+        <DatePicker type="datetimerange" :value="dateRange" split-panels format="yyyy-MM-dd HH:mm:ss" placement="bottom-start" @on-change="datePick" :placeholder="$t('m_placeholder_datePicker')" style="width: 320px"></DatePicker>
       </li> 
    </ul>
   </div>
