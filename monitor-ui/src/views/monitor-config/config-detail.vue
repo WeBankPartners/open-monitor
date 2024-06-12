@@ -89,6 +89,7 @@
                   <Option 
                     v-for="item in modelConfig.priorityList"
                     :value="item.value" 
+                    :label="item.label"
                     :key="item.value">
                     {{ $t(item.label) }}</Option>
                 </Select>
@@ -100,6 +101,7 @@
                   <Option 
                     v-for="item in modelConfig.notifyEnableOption" 
                     :value="item.value" 
+                    :label="item.label"
                     :key="item.value">
                     {{ item.label }}</Option>
                 </Select>
