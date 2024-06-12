@@ -4,7 +4,7 @@
       <Col :span="8">
         <!--层级对象-->
         <span style="font-size: 14px;">
-          {{$t('field.resourceLevel')}}:
+          {{$t('m_field_resourceLevel')}}:
         </span>
         <Select
           style="width:300px;"
@@ -47,7 +47,7 @@
     <Table size="small" :columns="tableColumns" :data="tableData" class="level-table" />
     <Modal
       v-model="deleteVisible"
-      :title="$t('delConfirm.title')"
+      :title="$t('m_delConfirm_title')"
       @on-ok="submitDelete"
       @on-cancel="deleteVisible = false">
       <div class="modal-body" style="padding:10px 20px;">
@@ -100,7 +100,7 @@ export default {
           }
         },
         {
-          title: this.$t('field.type'), // 类型
+          title: this.$t('m_field_type'), // 类型
           key: 'metric_type',
           width: 150,
           render: (h, params) => {
@@ -114,7 +114,7 @@ export default {
           }
         },
         {
-          title: this.$t('tableKey.expr'), // 表达式
+          title: this.$t('m_tableKey_expr'), // 表达式
           key: 'prom_expr',
           minWidth: 250,
           render: (h, params) => {
@@ -150,7 +150,7 @@ export default {
           }
         },
         {
-          title: this.$t('table.action'),
+          title: this.$t('m_table_action'),
           key: 'action',
           width: 100,
           
@@ -160,7 +160,7 @@ export default {
               <div style="display:flex;justify-content:center;">
                 {
                   /* 编辑 */
-                  <Tooltip content={this.$t('button.edit')} placement="bottom" transfer>
+                  <Tooltip content={this.$t('m_button_edit')} placement="bottom" transfer>
                     <Button
                       size="small"
                       type="primary"
@@ -175,7 +175,7 @@ export default {
                 }
                 {
                   /* 删除 */
-                  <Tooltip content={this.$t('button.remove')} placement="bottom" transfer>
+                  <Tooltip content={this.$t('m_button_remove')} placement="bottom" transfer>
                     <Button
                       size="small"
                       type="error"
@@ -281,7 +281,7 @@ export default {
         }
       })
       .catch(() => {
-        this.$Message.warning(this.$t('tips.failed'))
+        this.$Message.warning(this.$t('m_tips_failed'))
       })
     },
     uploadSucess (val) {
@@ -298,7 +298,7 @@ export default {
               }
             })
           } else {
-            this.$Message.success(this.$t('tips.success'))
+            this.$Message.success(this.$t('m_tips_success'))
           }
         }
         this.getList()
@@ -326,7 +326,7 @@ export default {
         `${this.$root.apiCenter.metricManagement}?id=${this.row.guid}`,
         '',
         () => {
-          this.$Message.success(this.$t('tips.success'))
+          this.$Message.success(this.$t('m_tips_success'))
           this.getList()
         })
     }
