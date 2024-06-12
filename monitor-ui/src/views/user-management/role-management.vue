@@ -5,7 +5,7 @@
     <ModalComponent :modelConfig="authorizationModel">
       <div slot="authorization">  
         <div class="marginbottom params-each">
-          <label class="col-md-2 label-name">{{$t('field.endpoint')}}:</label>
+          <label class="col-md-2 label-name">{{$t('m_field_endpoint')}}:</label>
           <Select v-model="authorizationModel.addRow.user" multiple filterable style="width:338px">
               <Option v-for="item in authorizationModel.userList" :value="item.id" :key="item.name">
               {{item.display_name}}({{item.name}})</Option>
@@ -15,12 +15,12 @@
     </ModalComponent>
     <Modal
       v-model="isShowWarning"
-      :title="$t('delConfirm.title')"
+      :title="$t('m_delConfirm_title')"
       @on-ok="ok"
       @on-cancel="cancel">
       <div class="modal-body" style="padding:30px">
         <div style="text-align:center">
-          <p style="color: red">{{$t('delConfirm.tip')}}</p>
+          <p style="color: red">{{$t('m_delConfirm_tip')}}</p>
         </div>
       </div>
     </Modal>
@@ -29,15 +29,15 @@
 
 <script>
 let tableEle = [
-  {title: 'tableKey.name', value: 'name', display: true},
-  {title: 'tableKey.nickname', value: 'display_name', display: true},
-  {title: 'tableKey.email', value: 'email', display: true},
-  {title: 'tableKey.activeDate', value: 'created_string', display: true}
+  {title: 'm_tableKey_name', value: 'name', display: true},
+  {title: 'm_tableKey_nickname', value: 'display_name', display: true},
+  {title: 'm_tableKey_email', value: 'email', display: true},
+  {title: 'm_tableKey_activeDate', value: 'created_string', display: true}
 ]
 const btn = [
-    {btn_name: 'button.edit', btn_func: 'editF'},
-    {btn_name: 'button.authorization', btn_func: 'authorizationF'},
-    {btn_name: 'button.remove', btn_func: 'deleteConfirmModal', color: 'red'}
+    {btn_name: 'm_button_edit', btn_func: 'editF'},
+    {btn_name: 'm_button_authorization', btn_func: 'authorizationF'},
+    {btn_name: 'm_button_remove', btn_func: 'deleteConfirmModal', color: 'red'}
   ]
 export default {
   name: '',
@@ -49,9 +49,9 @@ export default {
         CRUD: this.$root.apiCenter.setup.role.get,
         researchConfig: {
           input_conditions: [
-            {value: 'search', type: 'input', placeholder: 'placeholder.input', style: ''}],
+            {value: 'search', type: 'input', placeholder: 'm_placeholder_input', style: ''}],
           btn_group: [
-            {btn_name: 'button.search', btn_func: 'search', class: 'btn-confirm-f', btn_icon: 'fa fa-search'},
+            {btn_name: 'm_button_search', btn_func: 'search', class: 'btn-confirm-f', btn_icon: 'fa fa-search'},
             {btn_name: 'button.add', btn_func: 'addRole', class: 'btn-cancel-f', btn_icon: 'fa fa-plus'}
           ],
           filters: {
@@ -83,9 +83,9 @@ export default {
         modalTitle: 'button.add',
         isAdd: true,
         config: [
-          {label: 'tableKey.name', value: 'name', placeholder: 'tips.required', v_validate: 'required:true', disabled: false, type: 'text'},
-          {label: 'tableKey.nickname', value: 'display_name', placeholder: 'tips.required', v_validate: 'required:true', disabled: false, type: 'text'},
-          {label: 'tableKey.email', value: 'email', placeholder: 'tips.required', v_validate: 'required:true|noEmail', disabled: false, type: 'text'}
+          {label: 'm_tableKey_name', value: 'name', placeholder: 'm_tips_required', v_validate: 'required:true', disabled: false, type: 'text'},
+          {label: 'm_tableKey_nickname', value: 'display_name', placeholder: 'm_tips_required', v_validate: 'required:true', disabled: false, type: 'text'},
+          {label: 'm_tableKey_email', value: 'email', placeholder: 'm_tips_required', v_validate: 'required:true|noEmail', disabled: false, type: 'text'}
         ],
         addRow: { // [通用]-保存用户新增、编辑时数据
           name: null,
@@ -95,7 +95,7 @@ export default {
       },
       authorizationModel: {
         modalId: 'authorization_model',
-        modalTitle: 'button.authorization',
+        modalTitle: 'm_button_authorization',
         isAdd: true,
         saveFunc: 'authorizationSave',
         config: [
@@ -124,7 +124,7 @@ export default {
       let params = JSON.parse(JSON.stringify(this.modelConfig.addRow))
       params.operation = 'add'
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.setup.role.update, params, () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         this.$root.JQ('#add_role_Modal').modal('hide')
         this.initData(this.pageConfig.CRUD, this.pageConfig)
       })
@@ -141,7 +141,7 @@ export default {
       params.operation = 'update'
       params.role_id = this.id
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.setup.role.update, params, () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         this.$root.JQ('#add_role_Modal').modal('hide')
         this.initData(this.pageConfig.CRUD, this.pageConfig)
       })
@@ -168,7 +168,7 @@ export default {
       let params = {role_id: rowData.id, operation: 'delete' }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.setup.role.update, params, () => {
         // this.$root.$eventBus.$emit('hideConfirmModal')
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         this.initData(this.pageConfig.CRUD, this.pageConfig)
       })
     },
@@ -193,7 +193,7 @@ export default {
         user_id: this.authorizationModel.addRow.user
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.setup.role.authorization, params, () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         this.$root.JQ('#authorization_model').modal('hide')
       })
     } 
