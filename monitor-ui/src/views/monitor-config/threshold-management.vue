@@ -16,7 +16,10 @@
           @on-change="search"
           @on-clear="typeChange"
           >
-          <Option v-for="(option, index) in targetOptions" :value="option.option_value" :key="index">
+          <Option v-for="(option, index) in targetOptions" 
+            :value="option.option_value" 
+            :label="option.option_text"
+            :key="index">
             <TagShow :list="targetOptions" name="type" :tagName="option.type" :index="index"></TagShow> 
             {{option.option_text}}
           </Option>

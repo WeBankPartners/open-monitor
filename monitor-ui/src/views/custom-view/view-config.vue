@@ -722,11 +722,8 @@ export default {
     },
     //#region 组管理
     selectGroup (item) {
-      this.activeGroup = item
-      this.refreshNow = true
-      this.$nextTick(() => {
-        this.refreshNow = false
-      })
+      this.activeGroup = item;
+      this.getPannelList(this.activeGroup);
     },
     addGroupItem () {
       this.groupName = ''
