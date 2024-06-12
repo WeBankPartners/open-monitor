@@ -64,7 +64,7 @@
         <Button class="mr-5" @click="handleReset" type="default">{{ $t('m_reset') }}</Button>
         <Button type="success" @click="addBoardItem">{{$t('button.add')}}</Button>
         <button class="ml-2 btn btn-sm btn-cancel-f" @click="setDashboard">
-          {{$t('button.setDashboard')}}
+          {{$t('m_button_setDashboard')}}
         </button>
       </div>
     </div>
@@ -170,7 +170,7 @@
           <section>
             <div style="display: flex;">
               <div class="port-title">
-                <span>{{$t('tableKey.role')}}:</span>
+                <span>{{$t('m_tableKey_role')}}:</span>
               </div>
               <div class="port-title">
                 <span>{{$t('m_custom_dashboard')}}:</span>
@@ -193,12 +193,12 @@
       </ModalComponent>
       <Modal
         v-model="isShowWarning"
-        :title="$t('delConfirm.title')"
+        :title="$t('m_delConfirm_title')"
         @on-ok="onDeleteConfirm"
         @on-cancel="onCancelDelete">
         <div class="modal-body" style="padding:10px 20px;">
           <div style="text-align:center">
-            <p style="color: red">{{$t('delConfirm.tip')}}</p>
+            <p style="color: red">{{$t('m_delConfirm_tip')}}</p>
           </div>
         </div>
       </Modal>
@@ -220,7 +220,7 @@ export default {
       dataList: [],
       processConfigModel: {
         modalId: 'set_dashboard_modal',
-        modalTitle: 'button.setDashboard',
+        modalTitle: 'm_button_setDashboard',
         isAdd: true,
         saveFunc: 'processConfigSave',
         config: [{
@@ -234,7 +234,7 @@ export default {
       },
       authorizationModel: {
         modalId: 'authorization_model',
-        modalTitle: 'button.authorization',
+        modalTitle: 'm_button_authorization',
         isAdd: true,
         saveFunc: 'authorizationSave',
         config: [
@@ -334,7 +334,7 @@ export default {
         })
       })
       this.request('POST','/monitor/api/v1/dashboard/custom/main/set', params, () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         this.$root.JQ('#set_dashboard_modal').modal('hide')
         this.getViewList()
       })
@@ -355,7 +355,7 @@ export default {
         permission_list: this.authorizationModel.result
       }
       this.request('POST', '/monitor/api/v1/dashboard/custom/role/save', params, () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         this.$root.JQ('#authorization_model').modal('hide')
       })
     },
@@ -406,7 +406,7 @@ export default {
     removeTemplate (item) {
       let params = {id: item.id}
       this.request('DELETE',this.pathMap.deleteV2, params, () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         this.getViewList()
       })
     },

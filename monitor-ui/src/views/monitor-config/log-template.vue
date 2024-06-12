@@ -17,7 +17,7 @@
           @on-change="getTemplateList"
         ></Input>
         <span style="margin-top: 8px;margin-left: 24px;">
-          <Button @click="getTemplateList" type="primary" style="background-color: #2d8cf0;">{{ $t('button.search') }}</Button>
+          <Button @click="getTemplateList" type="primary" style="background-color: #2d8cf0;">{{ $t('m_button_search') }}</Button>
           <Button @click="handleReset" style="margin-left: 5px">{{ $t('m_reset_condition') }}</Button>
         </span>
       </div>
@@ -90,7 +90,7 @@
     <!-- 删除组 -->
     <Modal
       v-model="isShowDeleteWarning"
-      :title="$t('delConfirm.title')"
+      :title="$t('m_delConfirm_title')"
       @on-ok="confirmDeleteTemplate"
       @on-cancel="isShowDeleteWarning = false">
       <div class="modal-body" style="padding:30px">
@@ -104,15 +104,15 @@
       v-model="showServiceGroup"
       :fullscreen="isfullscreen"
       footer-hide
-      :title="$t('field.resourceLevel')">
+      :title="$t('m_field_resourceLevel')">
       <div slot="header" class="custom-modal-header">
         <span>
-          {{$t('field.resourceLevel')}}
+          {{$t('m_field_resourceLevel')}}
         </span>
         <Icon v-if="isfullscreen" @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-contract" />
         <Icon v-else @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-expand" />
       </div>
-      <Input v-model="filterServiceGroup" :placeholder="$t('field.resourceLevel') + $t('tableKey.name')" style="margin-bottom: 12px;"></Input>
+      <Input v-model="filterServiceGroup" :placeholder="$t('m_field_resourceLevel') + $t('m_tableKey_name')" style="margin-bottom: 12px;"></Input>
       <div  :class="isfullscreen? 'modal-container-fullscreen':'modal-container-normal'">
         <template v-if="serviceGroup.length > 0">
           <Tag size="large" v-for="(item, index) in serviceGroup.filter(data => data.display_name.includes(filterServiceGroup))" :key="index">{{ item.display_name }}</Tag>
@@ -168,11 +168,11 @@ export default {
           key: 'update_user',
         },
         {
-          title: this.$t('title.updateTime'),
+          title: this.$t('m_title_updateTime'),
           key: 'update_time',
         },
         {
-          title: this.$t('table.action'),
+          title: this.$t('m_table_action'),
           key: 'action',
           width: 200,
           align: 'left',
@@ -180,7 +180,7 @@ export default {
           render: (h, params) => {
             return (
               <div style="text-align: left; cursor: pointer;display: inline-flex;">
-              <Tooltip content={this.$t('button.edit')} placement="top" transfer={true}>
+              <Tooltip content={this.$t('m_button_edit')} placement="top" transfer={true}>
                   <Button
                     size="small"
                     type="primary"
@@ -200,7 +200,7 @@ export default {
                     <Icon type="md-cube" size="16"></Icon>
                   </Button>
                 </Tooltip>
-                <Tooltip content={this.$t('button.remove')} placement="top" transfer={true}>
+                <Tooltip content={this.$t('m_button_remove')} placement="top" transfer={true}>
                   <Button
                     size="small"
                     type="error"
@@ -290,7 +290,7 @@ export default {
     confirmDeleteTemplate () {
       let api = this.$root.apiCenter.deleteLogTemplate + this.toBeDeletedGuid
       this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', api, {}, () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         this.getTemplateList()
       })
     },

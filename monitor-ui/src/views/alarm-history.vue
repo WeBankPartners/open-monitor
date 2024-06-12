@@ -31,7 +31,7 @@
           <li class="filter-li">
             <button class="btn btn-sm btn-confirm-f" @click="getAlarm">
               <i class="fa fa-search"></i>
-              {{ $t("button.search") }}
+              {{ $t("m_button_search") }}
             </button>
           </li>
           <li class="filter-li" v-if="filtersForShow.length">
