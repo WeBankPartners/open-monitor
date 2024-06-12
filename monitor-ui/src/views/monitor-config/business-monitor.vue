@@ -19,7 +19,10 @@
             @on-change="search"
             @on-clear="typeChange"
             >
-            <Option v-for="(option, index) in targetOptions" :value="option.guid" :key="index">
+            <Option v-for="(option, index) in targetOptions" 
+              :value="option.guid" 
+              :key="index"
+              :label="option.display_name">
               <TagShow :list="targetOptions" name="type" :tagName="option.type" :index="index"></TagShow> 
               {{option.display_name}}
             </Option>
@@ -58,8 +61,8 @@ export default {
     return {
       type: 'group',
       typeList: [
-        {label: this.$t('field.resourceLevel'), value: 'group'},
-        {label: this.$t('tableKey.endpoint'), value: 'endpoint'}
+        {label: this.$t('m_field_resourceLevel'), value: 'group'},
+        {label: this.$t('m_tableKey_endpoint'), value: 'endpoint'}
       ],
       targrtId: '',
       targetOptions: [],
