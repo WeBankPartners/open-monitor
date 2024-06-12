@@ -855,6 +855,10 @@ export default {
 
     },
     searchTypeByEndpoint(value) {
+      setTimeout(() => {
+        this.getEndpointSearch = ''; 
+        this.debounceGetEndpointList()
+      }, 0)
       this.monitorType = '';
       this.metricGuid = '';
       this.metricOptions = [];
