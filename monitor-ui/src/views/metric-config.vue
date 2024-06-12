@@ -1,6 +1,6 @@
 <template>
   <div class="">
-    <Title :title="$t('title.metricConfiguration')"></Title>
+    <Title :title="$t('m_title_metricConfiguration')"></Title>
     <div style="margin-bottom:24px;">
       <!-- 信息提示去 -->
       <div class="page-notice" :class="'page-notice-'+noticeConfig.type">
@@ -13,7 +13,7 @@
         <div style="display:flex;margin-bottom:24px">
           <div style="margin-right:16px">
             <span style="font-size: 14px;">
-              {{$t('field.type')}}:
+              {{$t('m_field_type')}}:
             </span>
             <Select filterable v-model="monitorType" @on-clear="clearEndpointType" @on-change="changeEndpointType" style="width:300px">
               <Option v-for="type in monitorTypeOptions" :value="type" :key="type">{{ type }}</Option>
@@ -22,7 +22,7 @@
 
           <div style="margin-right:16px">
             <span style="font-size: 14px;">
-              {{$t('field.resourceLevel')}}:
+              {{$t('m_field_resourceLevel')}}:
             </span>
             <Select
               style="width:300px;"
@@ -42,13 +42,13 @@
             </Select>
           </div>
           <div>
-            <button class="btn btn-sm btn-confirm-f" @click="configMetric">{{$t('button.search')}}</button>
+            <button class="btn btn-sm btn-confirm-f" @click="configMetric">{{$t('m_button_search')}}</button>
           </div>
         </div>
         <!-- 操作区 -->
         <div v-if="showConfigTab || isAddMetric">
           <Tabs value="name1">
-            <TabPane :label="$t('title.metricConfiguration')" name="name1">
+            <TabPane :label="$t('m_title_metricConfiguration')" name="name1">
               <div style="min-height:300px">
                 <div style="text-align:right;margin-bottom:16px">
                   <button class="btn-cancel-f" @click.stop="exportData">{{$t("m_export")}}{{$t("m_metric")}}</button>
@@ -79,7 +79,7 @@
                   </FormItem>
                   <template v-if="metricId!== '' || hideMetricZone">
                     <Divider />
-                    <FormItem v-if="isAddMetric" :label="$t('tableKey.name')">
+                    <FormItem v-if="isAddMetric" :label="$t('m_tableKey_name')">
                       <Input v-model="metricConfigData.metric"></Input>
                     </FormItem>
                     <FormItem :label="$t('m_scope')">
@@ -129,7 +129,7 @@
               
               <div style="text-align: right;margin-top:24px">
                 <button :disabled="metricConfigData.prom_expr === ''" class="btn btn-sm btn-cancel-f" @click="preview('acquisitionConfiguration')">{{$t('m_preview')}}</button>
-                <button class="btn btn-sm btn-confirm-f" @click="saveMetric">{{$t('button.saveConfig')}}</button>
+                <button class="btn btn-sm btn-confirm-f" @click="saveMetric">{{$t('m_button_saveConfig')}}</button>
               </div>
             </TabPane>
             <TabPane :label="$t('m_display_group')" name="name2" v-if="!isAddMetric">
@@ -171,12 +171,12 @@
                       <FormItem :label="$t('m_graph_name')">
                         <Input v-model="graphConfig.graphName" style="width: 300px"></Input>
                       </FormItem>
-                      <FormItem :label="$t('field.unit')">
+                      <FormItem :label="$t('m_field_unit')">
                         <Input v-model="graphConfig.unit"  style="width: 300px" />
                       </FormItem>
                     </div>
                     <div>
-                      <FormItem :label="$t('field.legend')">
+                      <FormItem :label="$t('m_field_legend')">
                         <Select filterable clearable allow-create v-model="graphConfig.legend" @on-create="handleCreateLegend" :placeholder="$t('m_legend_tips')" style="width: 300px">
                           <Option v-for="item in legendOptions" :value="item.value" :key="item.value">{{ item.label }}</Option>
                         </Select>
@@ -195,7 +195,7 @@
                   </div>
                   <div style="text-align: right;margin-top:24px">
                     <button :disabled="graphConfig.metric.length === 0" class="btn btn-sm btn-cancel-f" @click="preview('displayGroup')">{{$t('m_preview')}}</button>
-                    <button class="btn btn-sm btn-confirm-f" @click="saveGraphMetric">{{$t('button.saveConfig')}}</button>
+                    <button class="btn btn-sm btn-confirm-f" @click="saveGraphMetric">{{$t('m_button_saveConfig')}}</button>
                   </div>
                 </div>
               </div>
@@ -221,9 +221,9 @@
             :mask-closable="false"
             @on-ok="saveTitle"
             @on-cancel="titleManagement.title = ''"
-            :title="titleManagement.isAdd ? $t('button.add') : $t('button.edit')">
+            :title="titleManagement.isAdd ? $t('button.add') : $t('m_button_edit')">
             <Form :label-width="80">
-              <FormItem :label="$t('field.title')">
+              <FormItem :label="$t('m_field_title')">
                 <Input v-model="titleManagement.title"/>
               </FormItem>
             </Form>
@@ -233,12 +233,12 @@
     </div>
     <Modal
       v-model="isShowWarning"
-      :title="$t('delConfirm.title')"
+      :title="$t('m_delConfirm_title')"
       @on-ok="ok"
       @on-cancel="cancel">
       <div class="modal-body" style="padding:30px">
         <div style="text-align:center">
-          <p style="color: red">{{$t('delConfirm.tip')}}</p>
+          <p style="color: red">{{$t('m_delConfirm_tip')}}</p>
         </div>
       </div>
     </Modal>
@@ -391,11 +391,11 @@ export default {
         }
       })
       .catch(() => {
-        this.$Message.warning(this.$t('tips.failed'))
+        this.$Message.warning(this.$t('m_tips_failed'))
       });
     },
     uploadSucess () {
-      this.$Message.success(this.$t('tips.success'))
+      this.$Message.success(this.$t('m_tips_success'))
       this.getMetricOptions()
     },
     uploadFailed (error, file) {
@@ -487,7 +487,7 @@ export default {
     },
     removeMetric (id) {
       this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', this.$root.apiCenter.metricManagement + '?id=' + id, '', () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         this.metricId = ''
         this.showConfigTab = false
       })
@@ -539,7 +539,7 @@ export default {
     },
     removePanel (id) {
       this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', this.$root.apiCenter.addPanel + '?ids=' + id, '', () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         this.selectdPanel = ''
         this.$root.$eventBus.$emit('hideConfirmModal')
       })
@@ -576,7 +576,7 @@ export default {
     },
     removeGraph (id) {
       this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', this.$root.apiCenter.getGraph + '?ids=' + id, '', () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         this.selectMetrc = ''
       })
     },
@@ -588,7 +588,7 @@ export default {
             service_group: this.serviceGroup
           }
           this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.addPanel + '/' + this.monitorType, [params], () => {
-            this.$Message.success(this.$t('tips.success'))
+            this.$Message.success(this.$t('m_tips_success'))
           })
         } else {
           let params = {
@@ -597,7 +597,7 @@ export default {
             service_group: this.serviceGroup
           }
           this.$root.$httpRequestEntrance.httpRequestEntrance('PUT', this.$root.apiCenter.addPanel, [params], () => {
-            this.$Message.success(this.$t('tips.success'))
+            this.$Message.success(this.$t('m_tips_success'))
           })
         }
         this.selectdPanel = ''
@@ -612,7 +612,7 @@ export default {
         metric_type: this.monitorType
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.savePanel, [params], () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
       })
     },
     saveGraphMetric () {
@@ -626,12 +626,12 @@ export default {
       }
       if (this.selectdGraph) {
         this.$root.$httpRequestEntrance.httpRequestEntrance('PUT', this.$root.apiCenter.getGraph, [params], () => {
-          this.$Message.success(this.$t('tips.success'))
+          this.$Message.success(this.$t('m_tips_success'))
         })
       } else {
         delete params.id
         this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.getGraph, [params], () => {
-          this.$Message.success(this.$t('tips.success'))
+          this.$Message.success(this.$t('m_tips_success'))
         })
       }
     },
@@ -750,7 +750,7 @@ export default {
       this.metricConfigData.service_group = this.serviceGroup
       this.metricConfigData.workspace = this.workspace
       this.$root.$httpRequestEntrance.httpRequestEntrance(type, this.$root.apiCenter.metricManagement, [this.metricConfigData], () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         // this.showConfigTab = false
         // this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.metricManagement, {monitorType: this.monitorType, service_group: this.serviceGroup}, (res) => {
         //   this.metricOptions = res

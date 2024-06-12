@@ -22,7 +22,7 @@
         </div>
         <div class="tool-save">
           <div class="condition">
-            <Tooltip :content="$t('field.aggType')" :delay="1000">
+            <Tooltip :content="$t('m_field_aggType')" :delay="1000">
               <Select filterable  class="select-option" v-model="templateQuery.aggregate" style="width:100px" @on-change="switchChartType">
                 <Option
                   v-for="(type) in ['min', 'max', 'avg', 'p95', 'sum', 'none', 'avg_nonzero']"
@@ -33,7 +33,7 @@
             </Tooltip>
           </div>
           <div class="condition" v-if="templateQuery.aggregate !== 'none'">
-            <Tooltip :content="$t('field.aggStep')" :delay="1000">
+            <Tooltip :content="$t('m_field_aggStep')" :delay="1000">
               <Select filterable  class="select-option" v-model="templateQuery.agg_step" style="width:120px" @on-change="switchChartType">
                 <Option
                   v-for="agg in aggStepOptions"
@@ -65,8 +65,8 @@
               </Select>
             </Tooltip>
           </div>
-          <button class="btn btn-sm btn-confirm-f" @click="saveConfig">{{$t('button.saveConfig')}}</button>
-          <button class="btn btn-sm btn-cancel-f" @click="goback()">{{$t('button.cancel')}}</button>
+          <button class="btn btn-sm btn-confirm-f" @click="saveConfig">{{$t('m_button_saveConfig')}}</button>
+          <button class="btn btn-sm btn-cancel-f" @click="goback()">{{$t('m_button_cancel')}}</button>
         </div>
       </div>
       <div>
@@ -79,13 +79,13 @@
                 closable
                 @click.native="editQueryParams(query, queryIndex)"
                 @on-close="removeQuery(queryIndex)"
-              >{{$t('field.endpoint')}}：{{query.endpointName || query.endpoint}}; {{$t('field.metric')}}：{{query.metric}}</Tag>
+              >{{$t('m_field_endpoint')}}：{{query.endpointName || query.endpoint}}; {{$t('field.metric')}}：{{query.metric}}</Tag>
             </div>
             <div v-if="fixSelect" class="condition-zone">
               <ul>
                 <!--对象-->
                 <li>
-                  <div class="condition condition-title c-black-gray">{{$t('field.endpoint')}}</div>
+                  <div class="condition condition-title c-black-gray">{{$t('m_field_endpoint')}}</div>
                   <div class="condition">
                     <Select
                       style="width:300px"
@@ -105,13 +105,13 @@
                         :key="index"
                       >
                         <TagShow :list="options" name="option_type_name" :tagName="option.option_type_name" :index="index"></TagShow>{{option.option_text}}</Option>
-                      <Option value="moreTips" disabled>{{$t('tips.requestMoreData')}}</Option>
+                      <Option value="moreTips" disabled>{{$t('m_tips_requestMoreData')}}</Option>
                     </Select>
                   </div>
                 </li>
                 <!--类型-->
                 <li v-if="showRecursiveType">
-                  <div class="condition condition-title c-black-gray">{{$t('field.type')}}</div>
+                  <div class="condition condition-title c-black-gray">{{$t('m_field_type')}}</div>
                   <div class="condition">
                     <Select
                       v-model="templateQuery.endpoint_type"
@@ -186,11 +186,11 @@
                 </li>
                 <!--单位-->
                 <li>
-                  <div class="condition condition-title">{{$t('field.unit')}}</div>
+                  <div class="condition condition-title">{{$t('m_field_unit')}}</div>
                   <div class="condition">
                     <Input v-model="panalUnit" placeholder="" style="width: 300px" />
                   </div>
-                  <button class="btn btn-cancel-f" @click="addQuery()">{{$t('button.addConfig')}}</button>
+                  <button class="btn btn-cancel-f" @click="addQuery()">{{$t('m_button_addConfig')}}</button>
                   <button class="btn btn-cancel-f" @click="clearParams">{{$t('m_clear')}}</button>
                 </li>
               </ul>
@@ -680,7 +680,7 @@ export default {
     metricSelectOpen(metric) {
       if (this.$root.$validate.isEmpty_reset(metric)) {
         this.$Message.warning(
-          this.$t("tableKey.s_metric") + this.$t("tips.required")
+          this.$t("m_tableKey_s_metric") + this.$t("m_tips_required")
         )
       } else {
         let params = { monitorType: this.showRecursiveType ? this.templateQuery.endpoint_type : this.endpointType, serviceGroup: this.showRecursiveType ? this.templateQuery.endpoint : '' }
@@ -779,7 +779,7 @@ export default {
         this.$root.apiCenter.template.save,
         this.params,
         () => {
-          this.$Message.success(this.$t("tips.success"))
+          this.$Message.success(this.$t("m_tips_success"))
           this.$parent.$parent.showChartConfig = false
           this.$parent.$parent.reloadPanal(this.params)
         }

@@ -2,25 +2,25 @@
   <div>
     <section v-if="isPlugin">
       <div style="margin: 100px 0;text-align: center;font-size:14px">
-        {{$t('tips.dashboardEmpty')}}
+        {{$t('m_tips_dashboardEmpty')}}
       </div>
     </section>
     <section v-else>
       <header>
         <div class="search-zone">
-          <span class="params-title">{{$t('field.relativeTime')}}：</span>
+          <span class="params-title">{{$t('m_field_relativeTime')}}：</span>
           <Select filterable v-model="viewCondition.timeTnterval" :disabled="disableTime" style="width:80px"  @on-change="initPanals">
             <Option v-for="item in dataPick" :value="item.value" :key="item.value">{{ item.label }}</Option>
           </Select>
         </div>
         <div class="search-zone">
-          <span class="params-title">{{$t('placeholder.refresh')}}：</span>
-          <Select filterable clearable v-model="viewCondition.autoRefresh" :disabled="disableTime" style="width:100px" @on-change="initPanals" :placeholder="$t('placeholder.refresh')">
+          <span class="params-title">{{$t('m_placeholder_refresh')}}：</span>
+          <Select filterable clearable v-model="viewCondition.autoRefresh" :disabled="disableTime" style="width:100px" @on-change="initPanals" :placeholder="$t('m_placeholder_refresh')">
             <Option v-for="item in autoRefreshConfig" :value="item.value" :key="item.value">{{ item.label }}</Option>
           </Select>
         </div>
         <div class="search-zone">
-          <span class="params-title">{{$t('field.timeInterval')}}：</span>
+          <span class="params-title">{{$t('m_field_timeInterval')}}：</span>
           <DatePicker 
             type="datetimerange" 
             :value="viewCondition.dateRange" 
@@ -28,7 +28,7 @@
             split-panels
             placement="bottom-start" 
             @on-change="datePick" 
-            :placeholder="$t('placeholder.datePicker')" 
+            :placeholder="$t('m_placeholder_datePicker')" 
             style="width: 320px">
           </DatePicker>
         </div>
