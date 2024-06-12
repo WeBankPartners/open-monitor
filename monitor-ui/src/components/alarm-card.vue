@@ -67,11 +67,11 @@
           <p>{{ $t('m_initiate_orchestration') }}: {{ data.notify_callback_name }}</p>
         </div>
         <div slot="content" style="white-space: normal;padding:12px">
-          <p>{{ $t('tableKey.description') }}: {{ data.notify_message }}</p>
+          <p>{{ $t('m_tableKey_description') }}: {{ data.notify_message }}</p>
         </div>
         <img v-if="data.notify_id !==''" @click="goToNotify(data)" style="vertical-align: super;padding:3px 8px;cursor:pointer" src="../assets/img/icon_start_flow.png" />
       </Poptip>
-      <Tooltip :content="$t('menu.endpointView')">
+      <Tooltip :content="$t('m_menu_endpointView')">
         <Icon
           type="ios-stats"
           size="18"
@@ -90,16 +90,17 @@
       </Tooltip>
       <Tooltip :content="$t('m_remark')">
         <Icon
-          type="ios-pricetags-outline"
+          type="ios-pricetags"
           size="18"
           class="fa-operate"
+          :color="data.custom_message!==''?'#2d8cf0':''"
           @click="remarkModal(data)"
         />
       </Tooltip>
     </div>
     <ul>
       <li>
-        <label class="card-label" v-html="$t('tableKey.content')"></label>
+        <label class="card-label" v-html="$t('m_tableKey_content')"></label>
         <div class="card-content">
           <div style="display:flex;align-items:center;width:100%;">
             <div class="ellipsis">
@@ -114,13 +115,13 @@
         </div>
       </li>
       <li v-if="data.system_id">
-        <label class="card-label" v-html="$t('tableKey.system_id')"></label>
+        <label class="card-label" v-html="$t('m_tableKey_system_id')"></label>
         <div class="card-content">
           {{ data.system_id }}
         </div>
       </li>
       <li>
-        <label class="card-label" v-html="$t('field.endpoint')"></label>
+        <label class="card-label" v-html="$t('m_field_endpoint')"></label>
         <div class="card-content">
           <div style="display:flex;align-items:center;width:100%;">
             <div class="ellipsis">
@@ -161,7 +162,7 @@
       </li>
 
       <li>
-        <label class="card-label" v-html="$t('tableKey.threshold')"></label>
+        <label class="card-label" v-html="$t('m_tableKey_threshold')"></label>
         <div class="card-content">
           <span v-html="data.alarm_detail"></span>
         </div>
@@ -198,7 +199,7 @@ export default {
       test: "system_id:5006 <br/> title:bdphdp010001: JournalNode10分钟之内ops次数大于10000 <br/> object: <br/> info:bdphdp010001在2022.05.16-00:14:14触发JournalNode10分钟之内ops次数大于10000 <br/> 【告警主机】 ***REMOVED***[bdphdp010001] <br/> 【告警集群】 international_cluster <br/> 【附加信息】 请联系值班人:[admin]，资源池[admin]",
       strategyNameMaps: {
         "endpointGroup": "m_base_group",
-        "serviceGroup": "field.resourceLevel"
+        "serviceGroup": "m_field_resourceLevel"
       }
     }
   },
@@ -215,9 +216,9 @@ export default {
     },
     goToNotify (item) {
       if (item.notify_status === 'notStart') {
-        this.startFlowTip = `${this.$t('button.confirm')} ${this.$t('m_initiate_orchestration')}: [${item.notify_callback_name}]`
+        this.startFlowTip = `${this.$t('m_button_confirm')} ${this.$t('m_initiate_orchestration')}: [${item.notify_callback_name}]`
       } else if (item.notify_status === 'started') {
-        this.startFlowTip = `${this.$t('m_already_initiated')}，${this.$t('button.confirm')} ${this.$t('m_reinitiate_orchestration')}: 【${item.notify_callback_name}】`
+        this.startFlowTip = `${this.$t('m_already_initiated')}，${this.$t('m_button_confirm')} ${this.$t('m_reinitiate_orchestration')}: 【${item.notify_callback_name}】`
       }
       this.alertId = item.id
       this.isShowStartFlow = true
@@ -227,7 +228,7 @@ export default {
         id: this.alertId
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.startNotify, params, () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
       },{isNeedloading: false})
     },
     deleteConfirmModal(rowData, isBatch) {
