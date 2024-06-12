@@ -5,7 +5,7 @@
         <div>
           <FormItem :label="$t('m_field_type')">
             <Select filterable v-model="monitorType" @on-clear="clearEndpointType" @on-change="changeEndpointType" style="width:300px">
-              <Option v-for="type in monitorTypeOptions" :value="type" :key="type">{{ type }}</Option>
+              <Option v-for="type in monitorTypeOptions" :value="type" :label="type" :key="type">{{ type }}</Option>
             </Select>
           </FormItem>
         </div>
@@ -51,12 +51,12 @@
         <div>
           <FormItem :label="$t('m_field_legend')">
             <Select filterable clearable allow-create v-model="graphConfig.legend" @on-create="handleCreateLegend" :placeholder="$t('m_legend_tips')" style="width: 300px">
-              <Option v-for="item in legendOptions" :value="item.value" :key="item.value">{{ item.label }}</Option>
+              <Option v-for="item in legendOptions" :value="item.value" :label="item.label" :key="item.value">{{ item.label }}</Option>
             </Select>
           </FormItem>
           <FormItem :label="$t('field.metric')">
             <Select v-model="graphConfig.metric" filterable multiple clearable style="width:300px">
-              <Option v-for="(metric, index) in metricOptions" :value="metric.metric" :key="metric.metric + index">{{ metric.metric }}</Option>
+              <Option v-for="(metric, index) in metricOptions" :value="metric.metric" :label="metric.metric" :key="metric.metric + index">{{ metric.metric }}</Option>
             </Select>
           </FormItem>
         </div>
@@ -80,7 +80,7 @@
       <Form :label-width="80">
         <FormItem :label="$t('m_endpoint')">
           <Select filterable clearable v-model="metricConfigData.endpoint" style="width:300px">
-            <Option v-for="item in endpointOptions" :value="item.guid" :key="item.guid">{{ item.guid }}</Option>
+            <Option v-for="item in endpointOptions" :value="item.guid" :label="item.guid" :key="item.guid">{{ item.guid }}</Option>
           </Select>
         </FormItem>
       </Form>

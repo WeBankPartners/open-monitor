@@ -18,7 +18,7 @@
             :remote-method="getTargrtList"
             @on-change="search"
             >
-            <Option v-for="(option, index) in targetOptions" :value="option.guid" :key="index">
+            <Option v-for="(option, index) in targetOptions" :value="option.guid" :label="option.display_name" :key="index">
               <TagShow :list="targetOptions" name="type" :tagName="option.type" :index="index"></TagShow> 
               {{option.display_name}}
             </Option>
