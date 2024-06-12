@@ -108,7 +108,7 @@
       <div class="data-config">
         <div class="w-header" slot="title">
           <div class="title">
-            {{this.$t('menu.metricConfiguration')}}
+            {{this.$t('m_menu_metricConfiguration')}}
             <span class="underline"></span>
           </div>
         </div>
@@ -376,7 +376,7 @@ export default {
           }
         },
         {
-          title: this.$t('table.action'),
+          title: this.$t('m_table_action'),
           key: 'index',
           width: 80,
           align: 'center',

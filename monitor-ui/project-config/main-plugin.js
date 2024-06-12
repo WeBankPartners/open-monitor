@@ -118,7 +118,7 @@ import Dashboard from '@/views/dashboard'
 window.addHomepageComponent && window.addHomepageComponent({
   code: 'MONITORING',
   name: () => {
-    return window.vm.$t('menu.homepageName')
+    return window.vm.$t('m_menu_homepageName')
   },
   component: Dashboard
 })

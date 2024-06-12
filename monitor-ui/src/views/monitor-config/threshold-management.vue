@@ -54,9 +54,9 @@
       <div v-if="!targetId">
         <Alert type="error">
           <span>{{ $t('m_empty_tip_1') }}</span>
-          <span v-if="type==='service'">{{ $t('field.resourceLevel') }}</span>
-          <span v-if="type==='group'">{{ $t('field.group') }}</span>
-          <span v-if="type==='endpoint'">{{ $t('field.endpoint') }}</span>
+          <span v-if="type==='service'">{{ $t('m_field_resourceLevel') }}</span>
+          <span v-if="type==='group'">{{ $t('m_field_group') }}</span>
+          <span v-if="type==='endpoint'">{{ $t('m_field_endpoint') }}</span>
         </Alert>
       </div>
       <div v-if="targetId&&dataEmptyTip">
@@ -94,9 +94,9 @@ export default {
       token: null,
       type: 'service',
       typeList: [
-        {label: 'field.resourceLevel', value: 'service'},
-        {label: 'field.group', value: 'group'},
-        {label: 'field.endpoint', value: 'endpoint'}
+        {label: 'm_field_resourceLevel', value: 'service'},
+        {label: 'm_field_group', value: 'group'},
+        {label: 'm_field_endpoint', value: 'endpoint'}
       ],
       targetId: '',
       targetOptions: [],
@@ -154,11 +154,11 @@ export default {
         }
       })
       .catch(() => {
-        this.$Message.warning(this.$t('tips.failed'))
+        this.$Message.warning(this.$t('m_tips_failed'))
       });
     },
     uploadSucess () {
-      this.$Message.success(this.$t('tips.success'))
+      this.$Message.success(this.$t('m_tips_success'))
     },
     uploadFailed (error, file) {
       this.$Message.warning({

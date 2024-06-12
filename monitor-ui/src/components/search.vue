@@ -17,7 +17,7 @@
             <TagShow :list="endpointList" name="option_type_name" :tagName="option.option_type_name" :index="index"></TagShow> 
             {{option.option_text}}
           </Option>
-          <Option value="moreTips" disabled>{{$t('tips.requestMoreData')}}</Option>
+          <Option value="moreTips" disabled>{{$t('m_tips_requestMoreData')}}</Option>
         </Select>
       </li>
       <template v-if="!is_mom_yoy">
@@ -27,37 +27,37 @@
           </Select>
         </li>
         <li class="search-li">
-          <Select filterable clearable v-model="autoRefresh" :disabled="disableTime" style="width:100px" @on-change="getChartsConfig" :placeholder="$t('placeholder.refresh')">
+          <Select filterable clearable v-model="autoRefresh" :disabled="disableTime" style="width:100px" @on-change="getChartsConfig" :placeholder="$t('m_placeholder_refresh')">
             <Option v-for="item in autoRefreshConfig" :value="item.value" :key="item.value">{{ item.label }}</Option>
           </Select>
         </li>
         <li class="search-li">
-          <DatePicker type="datetimerange" :value="dateRange" split-panels @on-change="datePick" format="yyyy-MM-dd HH:mm:ss" placement="bottom-start"  :placeholder="$t('placeholder.datePicker')" style="width: 320px"></DatePicker>
+          <DatePicker type="datetimerange" :value="dateRange" split-panels @on-change="datePick" format="yyyy-MM-dd HH:mm:ss" placement="bottom-start"  :placeholder="$t('m_placeholder_datePicker')" style="width: 320px"></DatePicker>
         </li>
       </template>
       <template v-else>
         <li class="search-li">
-          <DatePicker type="datetimerange" :value="compareFirstDate" split-panels @on-change="pickFirstDate" format="yyyy-MM-dd" placement="bottom-start" :placeholder="$t('placeholder.datePicker')" style="width: 250px"></DatePicker>
+          <DatePicker type="datetimerange" :value="compareFirstDate" split-panels @on-change="pickFirstDate" format="yyyy-MM-dd" placement="bottom-start" :placeholder="$t('m_placeholder_datePicker')" style="width: 250px"></DatePicker>
         </li>
         <li class="search-li">
-          <DatePicker type="datetimerange" :value="compareSecondDate" split-panels @on-change="pickSecondDate" format="yyyy-MM-dd" placement="bottom-start" :placeholder="$t('placeholder.comparedDatePicker')" style="width: 250px"></DatePicker>
+          <DatePicker type="datetimerange" :value="compareSecondDate" split-panels @on-change="pickSecondDate" format="yyyy-MM-dd" placement="bottom-start" :placeholder="$t('m_placeholder_comparedDatePicker')" style="width: 250px"></DatePicker>
         </li>
       </template>
       <li class="search-li">
-        <Checkbox v-model="is_mom_yoy" @on-change="YoY">{{$t('button.MoM')}}</Checkbox>
+        <Checkbox v-model="is_mom_yoy" @on-change="YoY">{{$t('m_button_MoM')}}</Checkbox>
       </li>
       <li class="search-li">
         <button type="button" class="btn btn-sm btn-confirm-f"
           @click="getChartsConfig()">
           <i class="fa fa-search" ></i>
-          {{$t('button.search')}}
+          {{$t('m_button_search')}}
         </button>
       </li>
       <li class="search-li">
-        <button type="button" v-if="isShow&&endpointObject.id !== -1" @click="changeRoute" class="btn btn-sm btn-cancel-f btn-jump">{{$t('button.endpointManagement')}}</button>
+        <button type="button" v-if="isShow&&endpointObject.id !== -1" @click="changeRoute" class="btn btn-sm btn-cancel-f btn-jump">{{$t('m_button_endpointManagement')}}</button>
       </li>
       <li class="search-li">
-        <button type="button" v-if="isShow" @click="historyAlarm" class="btn btn-sm btn-cancel-f btn-jump">{{$t('button.historicalAlert')}}</button>
+        <button type="button" v-if="isShow" @click="historyAlarm" class="btn btn-sm btn-cancel-f btn-jump">{{$t('m_button_historicalAlert')}}</button>
       </li>
    </ul>
   </div>
@@ -196,7 +196,7 @@ export default {
       }
       if (this.is_mom_yoy) {
         if (this.compareFirstDate[0] === '' || this.compareSecondDate[0] === '') {
-          this.$Message.warning(this.$t('tips.selectDate'))
+          this.$Message.warning(this.$t('m_tips_selectDate'))
           return
         }
       }
