@@ -12,12 +12,12 @@
     </section>
     <Modal
       v-model="addAndEditModal.isShow"
-      :title="$t('button.view')"
+      :title="$t('m_button_view')"
       :width="730"
       >
       <div :style="{ 'max-height': MODALHEIGHT + 'px', overflow: 'auto' }">
         <div>
-          <span>{{$t('field.type')}}:</span>
+          <span>{{$t('m_field_type')}}:</span>
           <Select v-model="addAndEditModal.dataConfig.monitor_type" disabled @on-change="getEndpoint(addAndEditModal.dataConfig.monitor_type, 'host')" style="width: 640px">
             <Option v-for="type in monitorTypeOptions" :key="type.value" :value="type.label">{{type.label}}</Option>
           </Select>
@@ -25,14 +25,14 @@
         <div v-if="addAndEditModal.isAdd" disabled style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;width:680px">
           <template v-for="(item, index) in addAndEditModal.pathOptions">
             <p :key="index + 5">
-              <Tooltip :content="$t('tableKey.logPath')" :delay="1000">
-                <Input v-model="item.path" style="width: 620px" :placeholder="$t('tableKey.logPath')" />
+              <Tooltip :content="$t('m_tableKey_logPath')" :delay="1000">
+                <Input v-model="item.path" style="width: 620px" :placeholder="$t('m_tableKey_logPath')" />
               </Tooltip>
             </p>
           </template>
         </div>
         <div v-else style="margin: 8px 0">
-          <span>{{$t('tableKey.path')}}:</span>
+          <span>{{$t('m_tableKey_path')}}:</span>
           <Input style="width: 640px" disabled v-model="addAndEditModal.dataConfig.log_path" />
         </div>
         <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;width:680px">
@@ -53,7 +53,7 @@
         </div>
       </div>
       <div slot="footer">
-        <Button @click="cancelAddAndEdit">{{$t('button.cancel')}}</Button>
+        <Button @click="cancelAddAndEdit">{{$t('m_button_cancel')}}</Button>
       </div>
     </Modal>
     <ModalComponent :modelConfig="customMetricsModelConfig">
@@ -67,7 +67,7 @@
           </Select>
         </div>
         <div class="marginbottom params-each">
-          <label class="col-md-2 label-name">{{$t('tableKey.s_priority')}}:</label>
+          <label class="col-md-2 label-name">{{$t('m_tableKey_s_priority')}}:</label>
           <Select filterable clearable disabled v-model="customMetricsModelConfig.addRow.priority" style="width:375px">
             <Option v-for="item in customMetricsModelConfig.priorityList" :value="item.value" :key="item.value">{{ $t(item.label) }}</Option>
           </Select>
@@ -80,7 +80,7 @@
         </div>
       </div>
       <div slot="btn">
-        <Button style="float:right" @click="cancelModal">{{$t('button.cancel')}}</Button>
+        <Button style="float:right" @click="cancelModal">{{$t('m_button_cancel')}}</Button>
       </div>
     </ModalComponent>
   </div>
@@ -90,11 +90,11 @@
 import {priorityList} from '@/assets/config/common-config.js'
 import extendTable from '@/components/table-page/extend-table'
 let tableEle = [
-  {title: 'tableKey.logPath', value: 'log_path', display: true},
-  {title: 'field.type', value: 'monitor_type', display: true},
+  {title: 'm_tableKey_logPath', value: 'log_path', display: true},
+  {title: 'm_field_type', value: 'monitor_type', display: true},
 ]
 const btn = [
-  {btn_name: 'button.view', btn_func: 'editF'}
+  {btn_name: 'm_button_view', btn_func: 'editF'}
 ]
 
 export default {
@@ -123,11 +123,11 @@ export default {
               isExtendF: true,
               title: '',
               config: [
-                {title: 'tableKey.regular', value: 'json_regular', display: true},
+                {title: 'm_tableKey_regular', value: 'json_regular', display: true},
                 {title: 'm_collection_interval', value: 'step', display: true},
-                {title: 'tableKey.tags', value: 'tags', display: true},
-                {title: 'table.action',btn:[
-                  {btn_name: 'button.edit', btn_func: 'editRuleItem'}
+                {title: 'm_tableKey_tags', value: 'tags', display: true},
+                {title: 'm_table_action',btn:[
+                  {btn_name: 'm_button_edit', btn_func: 'editRuleItem'}
                 ]}
               ],
               data: [1],
@@ -143,12 +143,12 @@ export default {
               isExtendF: true,
               title: '',
               config: [
-                {title: 'field.log', value: 'keyword', display: true},
+                {title: 'm_field_log', value: 'keyword', display: true},
                 {title: 'sendAlarm', value: 'notify_enable', display: true},
-                {title: 'tableKey.s_priority', value: 'priority', display: true},
+                {title: 'm_tableKey_s_priority', value: 'priority', display: true},
                 {title: 'm_regular', value: 'regulative', display: true},
-                {title: 'table.action',btn:[
-                  {btn_name: 'button.view', btn_func: 'editCustomMetricItem'},
+                {title: 'm_table_action',btn:[
+                  {btn_name: 'm_button_view', btn_func: 'editCustomMetricItem'},
                 ]}
               ],
               data: [1],
@@ -182,11 +182,11 @@ export default {
         modalId: 'custom_metrics',
         isAdd: true,
         modalStyle: 'min-width:550px',
-        modalTitle: 'field.log',
+        modalTitle: 'm_field_log',
         saveFunc: 'saveCustomMetric',
         noBtn: true,
         config: [
-          {label: 'tableKey.keyword', value: 'keyword', placeholder: '', disabled: true, type: 'text'},
+          {label: 'm_tableKey_keyword', value: 'keyword', placeholder: '', disabled: true, type: 'text'},
           {name:'ruleConfig',type:'slot'},
           {name:'btn',type:'slot'}
         ],
@@ -263,7 +263,7 @@ export default {
       params.log_keyword_monitor = this.activeData.guid
       const requestType = this.customMetricsModelConfig.isAdd ? 'POST' : 'PUT'
       this.$root.$httpRequestEntrance.httpRequestEntrance(requestType, '/monitor/api/v2/service/log_keyword/log_keyword_config', params, () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         this.$root.JQ('#custom_metrics').modal('hide')
         this.getDetail(this.targrtId)
       })
@@ -287,7 +287,7 @@ export default {
     delCustomMericsItem (rowData) {
       const api = '/monitor/api/v2/service/log_keyword/log_keyword_config/' + rowData.guid
       this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', api, '', () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         this.getDetail(this.targrtId)
       })
     },
@@ -312,7 +312,7 @@ export default {
     delF (rowData) {
       const api = '/monitor/api/v2/service/log_keyword/log_keyword_monitor' + '/' + rowData.guid
       this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', api, '', () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         this.getDetail(this.targrtId)
       })
     },
@@ -324,7 +324,7 @@ export default {
         params.log_path = this.addAndEditModal.pathOptions.map(p => p.path)
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance(methodType, '/monitor/api/v2/service/log_keyword/log_keyword_monitor', params, () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         this.addAndEditModal.isShow = false
         this.getDetail(this.targrtId)
       }, {isNeedloading:false})
