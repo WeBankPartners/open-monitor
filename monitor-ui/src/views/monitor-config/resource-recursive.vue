@@ -92,7 +92,7 @@
             :placeholder="$t('requestMoreData')"
             :remote-method="getAllObject"
             >
-            <Option v-for="(item, index) in allObject" :value="item.option_value" :key="item.option_value">
+            <Option v-for="(item, index) in allObject" :value="item.option_value" :label="item.option_text" :key="item.option_value">
               <TagShow :list="allObject" name="type" :tagName="item.type" :index="index"></TagShow> 
               {{ item.option_text }}</Option>
           </Select>
