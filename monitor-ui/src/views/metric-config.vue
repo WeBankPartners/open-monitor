@@ -35,7 +35,7 @@
               ref="select"
               :remote-method="getRecursiveList"
               >
-              <Option v-for="(option, index) in recursiveOptions" :value="option.guid" :key="index">
+              <Option v-for="(option, index) in recursiveOptions" :value="option.guid" :label="option.display_name" :key="index">
                 <TagShow :list="recursiveOptions" name="type" :tagName="option.type" :index="index"></TagShow> 
                 {{option.display_name}}
               </Option>
