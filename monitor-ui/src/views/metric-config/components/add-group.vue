@@ -9,13 +9,13 @@
       class="monitor-add-group"
     >
       <div slot="header" class="w-header">
-        <div class="title">{{ operator === 'add' ? $t('button.addMetric') : $t('m_edit_meric') }}<span class="underline"></span></div>
+        <div class="title">{{ operator === 'add' ? $t('m_button_addMetric') : $t('m_edit_meric') }}<span class="underline"></span></div>
         <slot name="sub-title"></slot>
       </div>
       <div class="content" :style="{ maxHeight: maxHeight + 'px' }">
         <Form :label-width="100" label-position="left">
           <!--名称-->
-          <FormItem :label="$t('tableKey.name')" required>
+          <FormItem :label="$t('m_tableKey_name')" required>
             <Input :disabled="operator === 'edit'" v-model="metricConfigData.metric"></Input>
           </FormItem>
           <!--作用域-->
@@ -70,8 +70,8 @@
         </Form>
       </div>
       <div class="drawer-footer">
-        <Button style="margin-right: 8px" @click="handleCancel">{{ $t('button.cancel') }}</Button>
-        <Button type="primary" class="primary" @click="handleSubmit">{{ $t('button.save') }}</Button>
+        <Button style="margin-right: 8px" @click="handleCancel">{{ $t('m_button_cancel') }}</Button>
+        <Button type="primary" class="primary" @click="handleSubmit">{{ $t('m_button_save') }}</Button>
       </div>
     </Drawer>
   </div>
@@ -295,13 +295,13 @@ export default {
     },
     handleSubmit () {
       if (!this.metricConfigData.metric) {
-        return this.$Message.error(this.$t('tableKey.name') + this.$t('tips.required'))
+        return this.$Message.error(this.$t('m_tableKey_name') + this.$t('m_tips_required'))
       }
       if (!this.workspace) {
-        return this.$Message.error(this.$t('m_scope') + this.$t('tips.required'))
+        return this.$Message.error(this.$t('m_scope') + this.$t('m_tips_required'))
       }
       if (!this.metricConfigData.prom_expr) {
-        return this.$Message.error(this.$t('field.metric') + this.$t('tips.required'))
+        return this.$Message.error(this.$t('field.metric') + this.$t('m_tips_required'))
       }
       const type = !this.metricConfigData.guid ? 'POST' : 'PUT'
       this.metricConfigData.monitor_type = this.monitorType
@@ -312,7 +312,7 @@ export default {
         this.$root.apiCenter.metricManagement,
         [this.metricConfigData],
         () => {
-          this.$Message.success(this.$t('tips.success'))
+          this.$Message.success(this.$t('m_tips_success'))
           this.$emit('update:visible', false)
           this.$emit('fetchList')
         })

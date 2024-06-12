@@ -14,7 +14,7 @@
                 <p>{{ $t('m_initiate_orchestration') }}: {{ alarmItem.notify_callback_name }}</p>
               </div>
               <div slot="content" style="white-space: normal;padding:16px">
-                <p>{{ $t('tableKey.description') }}: {{ alarmItem.notify_message }}</p>
+                <p>{{ $t('m_tableKey_description') }}: {{ alarmItem.notify_message }}</p>
               </div>
               <Icon
                 type="ios-megaphone"
@@ -24,7 +24,7 @@
                 @click="goToNotify(alarmItem)"
               />
             </Poptip>
-            <Tooltip :content="$t('menu.endpointView')">
+            <Tooltip :content="$t('m_menu_endpointView')">
               <Icon type="ios-stats" size="18" class="fa-operate" v-if="!alarmItem.is_custom" @click="goToEndpointView(alarmItem)"/>
             </Tooltip>
             <Tooltip :content="$t('close')">
@@ -36,7 +36,7 @@
           </div>
           <ul>
             <li>
-              <label class="alarm-item-label">{{$t('field.endpoint')}}:</label>
+              <label class="alarm-item-label">{{$t('m_field_endpoint')}}:</label>
               <Tag type="border" color="primary">{{alarmItem.endpoint}}</Tag>
             </li>
             <li v-if="!alarmItem.is_custom">
@@ -44,11 +44,11 @@
               <Tag type="border" color="primary">{{alarmItem.s_metric}}</Tag>
             </li>
             <li>
-              <label class="alarm-item-label">{{$t('tableKey.s_priority')}}:</label>
+              <label class="alarm-item-label">{{$t('m_tableKey_s_priority')}}:</label>
               <Tag type="border" color="primary">{{alarmItem.s_priority}}</Tag>
             </li>
             <li v-if="!alarmItem.is_custom && alarmItem.tags">
-              <label class="alarm-item-label">{{$t('tableKey.tags')}}:</label>
+              <label class="alarm-item-label">{{$t('m_tableKey_tags')}}:</label>
               <Tag type="border" v-for="(t,tIndex) in alarmItem.tags.split('^')" :key="tIndex" color="cyan">{{t}}</Tag>
             </li>
             <li v-if="alarmItem.custom_message">
@@ -63,16 +63,16 @@
               </Tooltip>
             </li>
             <li>
-              <label class="alarm-item-label">{{$t('tableKey.start')}}:</label><span>{{alarmItem.start_string}}</span>
+              <label class="alarm-item-label">{{$t('m_tableKey_start')}}:</label><span>{{alarmItem.start_string}}</span>
             </li>
             <li>
               <label class="alarm-item-label">{{$t('details')}}:</label>
               <span>
-                <Tag color="default">{{$t('tableKey.start_value')}}:{{alarmItem.start_value}}</Tag>
-                <Tag color="default" v-if="alarmItem.s_cond">{{$t('tableKey.threshold')}}:{{alarmItem.s_cond}}</Tag>
-                <Tag color="default" v-if="alarmItem.s_last">{{$t('tableKey.s_last')}}:{{alarmItem.s_last}}</Tag>
-                <Tag color="default" v-if="alarmItem.path">{{$t('tableKey.path')}}:{{alarmItem.path}}</Tag>
-                <Tag color="default" v-if="alarmItem.keyword">{{$t('tableKey.keyword')}}:{{alarmItem.keyword}}</Tag>
+                <Tag color="default">{{$t('m_tableKey_start_value')}}:{{alarmItem.start_value}}</Tag>
+                <Tag color="default" v-if="alarmItem.s_cond">{{$t('m_tableKey_threshold')}}:{{alarmItem.s_cond}}</Tag>
+                <Tag color="default" v-if="alarmItem.s_last">{{$t('m_tableKey_s_last')}}:{{alarmItem.s_last}}</Tag>
+                <Tag color="default" v-if="alarmItem.path">{{$t('m_tableKey_path')}}:{{alarmItem.path}}</Tag>
+                <Tag color="default" v-if="alarmItem.keyword">{{$t('m_tableKey_keyword')}}:{{alarmItem.keyword}}</Tag>
               </span>
             </li>
             <li>
@@ -85,12 +85,12 @@
     </div>
     <Modal
       v-model="isShowWarning"
-      :title="$t('closeConfirm.title')"
+      :title="$t('m_closeConfirm_title')"
       @on-ok="ok"
       @on-cancel="cancel">
       <div class="modal-body" style="padding:30px">
         <div style="text-align:center">
-          <p style="color: red">{{$t('closeConfirm.tip')}}</p>
+          <p style="color: red">{{$t('m_closeConfirm_tip')}}</p>
         </div>
       </div>
     </Modal>
@@ -187,7 +187,7 @@ export default {
         id: item.id
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.startNotify, params, () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
       },{isNeedloading: false})
     },
     deleteConfirmModal (rowData) {
@@ -223,7 +223,7 @@ export default {
     },
     remarkAlarm () {
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.remarkAlarm, this.modelConfig.addRow, () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         this.getAlarm(this.cacheParams.id, this.cacheParams.viewCondition)
         this.$root.JQ('#remark_Modal').modal('hide')
       })
