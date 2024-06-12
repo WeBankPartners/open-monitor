@@ -1,8 +1,8 @@
 <template>
   <div class="">
-    <Button type="success" @click="addPanel">{{ $t('resourceLevel.addPanel') }}</Button>
+    <Button type="success" @click="addPanel">{{ $t('m_resourceLevel_addPanel') }}</Button>
     <i class="fa fa-refresh" aria-hidden="true" @click="getAllResource(false)" style="margin-right:16px"></i>
-    <Input v-model="searchParams.name" @on-change="getAllResource(true)" :placeholder="$t('resourceLevel.level_search_name')" style="width: 300px;margin-right:8px" />
+    <Input v-model="searchParams.name" @on-change="getAllResource(true)" :placeholder="$t('m_resourceLevel_level_search_name')" style="width: 300px;margin-right:8px" />
     <span> OR</span>
     <Select
       v-model="searchParams.endpoint"
@@ -11,12 +11,12 @@
       clearable
       ref="selectObject"
       @on-change="clearObject"
-       :placeholder="$t('resourceLevel.level_search_endpoint')"
+       :placeholder="$t('m_resourceLevel_level_search_endpoint')"
       :remote-method="getAllObject"
       >
       <Option v-for="item in allObject" :value="item.option_value" :key="item.option_value">{{ item.option_text }}</Option>
     </Select>
-    <!-- <button type="button" :disabled="disabledSearchBtn" class="btn btn-confirm-f" @click="getAllResource(true)">{{$t('button.search')}}</button> -->
+    <!-- <button type="button" :disabled="disabledSearchBtn" class="btn btn-confirm-f" @click="getAllResource(true)">{{$t('m_button_search')}}</button> -->
     
     <template v-if="extend">
       <recursive :recursiveViewConfig="resourceRecursive"></recursive>
@@ -59,9 +59,9 @@ export default {
         modalTitle: 'button.add',
         isAdd: true,
         config: [
-          {label: 'field.guid', value: 'guid', placeholder: 'tips.required', v_validate: 'required:true', disabled: false, type: 'text'},
-          {label: 'field.displayName', value: 'display_name', placeholder: 'tips.required', v_validate: 'required:true', disabled: false, type: 'text'},
-          {label: 'field.type', value: 'type', placeholder: 'tips.required', v_validate: 'required:true', disabled: false, type: 'text'}
+          {label: 'm_field_guid', value: 'guid', placeholder: 'm_tips_required', v_validate: 'required:true', disabled: false, type: 'text'},
+          {label: 'm_field_displayName', value: 'display_name', placeholder: 'm_tips_required', v_validate: 'required:true', disabled: false, type: 'text'},
+          {label: 'm_field_type', value: 'type', placeholder: 'm_tips_required', v_validate: 'required:true', disabled: false, type: 'text'}
         ],
         addRow: { // [通用]-保存用户新增、编辑时数据
           guid: null,
@@ -131,7 +131,7 @@ export default {
     addPost () {
       const params = this.modelConfig.addRow
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/alarm/org/panel/add', params, () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         this.$root.JQ('#add_panel_Modal').modal('hide')
         this.getAllResource()
       })
