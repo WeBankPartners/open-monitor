@@ -13,7 +13,7 @@
           @on-open-change="getEndpointList('.')"
           :remote-method="getEndpointList"
           >
-          <Option v-for="(option, index) in endpointList" :value="option.option_value" :key="index">
+          <Option v-for="(option, index) in endpointList" :value="option.option_value" :label="option.option_text" :key="index">
             <TagShow :list="endpointList" name="option_type_name" :tagName="option.option_type_name" :index="index"></TagShow> 
             {{option.option_text}}
           </Option>

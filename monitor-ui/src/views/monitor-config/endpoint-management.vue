@@ -42,7 +42,7 @@
       <div v-if="endpointRejectModel.supportStep" class="marginbottom params-each">
         <label class="col-md-2 label-name">{{$t('m_collection_interval')}}:</label>
         <Select filterable clearable v-model="endpointRejectModel.addRow.step" style="width:338px" :disabled="['mysql','host','ping','telnet','http','process'].includes(endpointRejectModel.addRow.type)">
-          <Option v-for="item in endpointRejectModel.stepOptions" :value="item.value" :key="item.value">
+          <Option v-for="item in endpointRejectModel.stepOptions" :value="item.value" :label="item.label" :key="item.value">
             {{item.label}}
           </Option>
         </Select>
