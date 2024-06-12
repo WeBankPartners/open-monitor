@@ -19,7 +19,10 @@
             @on-change="search"
             @on-clear="typeChange"
             >
-            <Option v-for="(option, index) in targetOptions" :value="option.guid" :key="index">
+            <Option v-for="(option, index) in targetOptions" 
+              :value="option.guid" 
+              :key="index"
+              :label="option.display_name">
               <TagShow :list="targetOptions" name="type" :tagName="option.type" :index="index"></TagShow> 
               {{option.display_name}}
             </Option>
