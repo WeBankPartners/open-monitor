@@ -2,7 +2,7 @@
   <div>
     <section v-if="isPlugin">
       <div style="margin: 100px 0;text-align: center;font-size:14px">
-        {{$t('tips.dashboardEmpty')}}
+        {{$t('m_tips_dashboardEmpty')}}
       </div>
     </section>
     <section v-else>
