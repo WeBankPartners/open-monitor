@@ -20,14 +20,14 @@
           </FormItem>
           <!--作用域-->
           <FormItem :label="$t('m_scope')" required>
-            <Select v-model="workspace" @on-change="changeWorkspace">
+            <Select v-model="workspace" :disabled="metricConfigData.metric_type === 'business'" @on-change="changeWorkspace">
               <Option v-if="serviceGroup" value="all_object">{{ $t('m_all_object') }}</Option>
               <Option value="any_object">{{ $t('m_any_object') }}</Option>
             </Select>
           </FormItem>
           <!--推荐配置-->
           <FormItem :label="$t('m_recommend')">
-            <Select v-model="templatePl" clearable @on-clear="clearTemplatePl" @on-change="changeTemplatePl">
+            <Select v-model="templatePl" :disabled="metricConfigData.metric_type === 'business'" clearable @on-clear="clearTemplatePl" @on-change="changeTemplatePl">
               <Option v-for="item in metricTemplate" :value="item.prom_expr" :key="item.prom_expr">{{ item.name }}</Option>
             </Select>
           </FormItem>
@@ -39,6 +39,7 @@
                 v-model="param.value"
                 @on-open-change="getCollectedMetric"
                 @on-change="changeCollectedMetric(param)"
+                :disabled="metricConfigData.metric_type === 'business'"
                 filterable
                 :key="param.label"
                 :placeholder="param.label"
@@ -56,7 +57,7 @@
           </FormItem>
           <!--表达式-->
           <FormItem :label="$t('field.metric')" required>
-            <Input v-model="metricConfigData.prom_expr" type="textarea" :rows="5" style="margin:5px 0;" />
+            <Input v-model="metricConfigData.prom_expr" :disabled="metricConfigData.metric_type === 'business'" type="textarea" :rows="5" style="margin:5px 0;" />
           </FormItem>
           <!--预览对象-->
           <FormItem :label="$t('m_preview') + $t('m_endpoint')">
@@ -97,6 +98,7 @@ export default {
       type: Object,
       default: () => {}
     },
+    // add添加，edit编辑
     operator: {
       type: String,
       default: 'add'
