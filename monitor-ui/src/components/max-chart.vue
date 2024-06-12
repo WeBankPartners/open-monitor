@@ -4,28 +4,28 @@
         <div class="condition-zone">
           <ul>
             <li>
-              <div class="condition condition-title c-black-gray">{{$t('button.MoM')}}</div>
+              <div class="condition condition-title c-black-gray">{{$t('m_button_MoM')}}</div>
               <div class="condition">
-                <Checkbox v-model="is_mom_yoy" @on-change="YoY">{{$t('button.MoM')}}</Checkbox>
+                <Checkbox v-model="is_mom_yoy" @on-change="YoY">{{$t('m_button_MoM')}}</Checkbox>
               </div>
             </li>
             <template v-if="is_mom_yoy">
               <li>
-                <div class="condition condition-title c-black-gray">{{$t('field.timeInterval')}}</div>
+                <div class="condition condition-title c-black-gray">{{$t('m_field_timeInterval')}}</div>
                 <div class="condition">
-                  <DatePicker type="daterange" split-panels :value="chartCondition.compareFirstDate" placement="bottom-start" @on-change="pickFirstDate" :placeholder="$t('placeholder.datePicker')" style="width: 200px"></DatePicker>
+                  <DatePicker type="daterange" split-panels :value="chartCondition.compareFirstDate" placement="bottom-start" @on-change="pickFirstDate" :placeholder="$t('m_placeholder_datePicker')" style="width: 200px"></DatePicker>
                 </div>
               </li>
               <li>
-                <div class="condition condition-title c-black-gray">{{$t('field.comparedTimeInterval')}}</div>
+                <div class="condition condition-title c-black-gray">{{$t('m_field_comparedTimeInterval')}}</div>
                 <div class="condition">
-                  <DatePicker type="daterange" :value="chartCondition.compareSecondDate" split-panels placement="bottom-start" @on-change="pickSecondDate" :placeholder="$t('placeholder.comparedDatePicker')" style="width: 200px"></DatePicker>
+                  <DatePicker type="daterange" :value="chartCondition.compareSecondDate" split-panels placement="bottom-start" @on-change="pickSecondDate" :placeholder="$t('m_placeholder_comparedDatePicker')" style="width: 200px"></DatePicker>
                 </div>
               </li>
             </template>
             <template v-else>
               <li>
-                <div class="condition condition-title c-black-gray">{{$t('field.relativeTime')}}</div>
+                <div class="condition condition-title c-black-gray">{{$t('m_field_relativeTime')}}</div>
                 <div class="condition">
                   <RadioGroup v-model="chartCondition.timeTnterval" size="small" type="button">
                     <Radio label="-1800">30m</Radio>
@@ -35,13 +35,13 @@
                 </div>
               </li>
               <li>
-                <div class="condition condition-title c-black-gray">{{$t('field.timeInterval')}}</div>
+                <div class="condition condition-title c-black-gray">{{$t('m_field_timeInterval')}}</div>
                 <div class="condition">
-                  <DatePicker type="daterange" :value="chartCondition.dateRange" split-panels placement="bottom-start" @on-change="datePick" :placeholder="$t('placeholder.datePicker')" style="width: 200px"></DatePicker>
+                  <DatePicker type="daterange" :value="chartCondition.dateRange" split-panels placement="bottom-start" @on-change="datePick" :placeholder="$t('m_placeholder_datePicker')" style="width: 200px"></DatePicker>
                 </div>
               </li>
               <li>
-                <div class="condition condition-title c-black-gray">{{$t('field.aggType')}}</div>
+                <div class="condition condition-title c-black-gray">{{$t('m_field_aggType')}}</div>
                 <div class="condition">
                   <RadioGroup v-model="chartCondition.agg" size="small" type="button">
                     <Radio label="min">Min</Radio>

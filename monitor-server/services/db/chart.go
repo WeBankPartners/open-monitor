@@ -111,6 +111,12 @@ func GetCustomChartSeries(customChartGuid string) (series []*models.CustomChartS
 		err = fmt.Errorf("query custom_chart_tag_value fail,%s ", err.Error())
 		return
 	}
+	var tagRows []*models.CustomChartSeriesTag
+	err = x.SQL("select * from custom_chart_series_tag where dashboard_chart_config in (select guid from custom_chart_series where dashboard_chart=?)", customChartGuid).Find(&tagRows)
+	if err != nil {
+		err = fmt.Errorf("query custom_chart_tag fail,%s ", err.Error())
+		return
+	}
 	for _, row := range seriesRows {
 		tmpSerieObj := models.CustomChartSeriesDto{
 			Endpoint:      row.Endpoint,
@@ -127,19 +133,26 @@ func GetCustomChartSeries(customChartGuid string) (series []*models.CustomChartS
 			ColorConfig:   nil,
 		}
 		tagNameList := []string{}
+		for _, tagName := range tagRows {
+			tagNameList = append(tagNameList, tagName.Name)
+		}
 		tagValueMap := make(map[string][]string)
 		for _, tvRow := range tagValueRows {
 			if tvRow.ChartGuid == row.Guid {
 				if existValueList, ok := tagValueMap[tvRow.Name]; ok {
 					tagValueMap[tvRow.Name] = append(existValueList, tvRow.Value)
 				} else {
-					tagNameList = append(tagNameList, tvRow.Name)
+					//tagNameList = append(tagNameList, tvRow.Name)
 					tagValueMap[tvRow.Name] = []string{tvRow.Value}
 				}
 			}
 		}
 		for _, tagName := range tagNameList {
-			tmpSerieObj.Tags = append(tmpSerieObj.Tags, &models.TagDto{TagName: tagName, TagValue: tagValueMap[tagName]})
+			tmpValueList := []string{}
+			if existTagList, ok := tagValueMap[tagName]; ok {
+				tmpValueList = existTagList
+			}
+			tmpSerieObj.Tags = append(tmpSerieObj.Tags, &models.TagDto{TagName: tagName, TagValue: tmpValueList})
 		}
 		series = append(series, &tmpSerieObj)
 	}
