@@ -1,6 +1,6 @@
 <template>
   <div class="page" id="endpointView">
-    <Title :title="$t('menu.endpointView')"></Title>
+    <Title :title="$t('m_menu_endpointView')"></Title>
     <SearchExternal ref="search" />
     <Charts v-if="showCharts" :charts='charts' ref="parentCharts" />
     <div v-if="recursiveViewConfig.length && showRecursive">
