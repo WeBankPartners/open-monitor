@@ -315,6 +315,8 @@ func UpdateCustomDashboard(c *gin.Context) {
 					Guid:          chartRel.Guid,
 					Group:         chart.Group,
 					DisplayConfig: string(displayConfig),
+					UpdateUser:    user,
+					UpdateTime:    now,
 				})
 				insert = false
 				break
