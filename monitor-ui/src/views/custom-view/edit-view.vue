@@ -105,13 +105,13 @@
           </Form>
         </div>
       </div>
-
       <div class="data-config">
-        <div class="use-underline-title mb-2">
-          {{this.$t('menu.metricConfiguration')}}
-          <span class="underline"></span>
+        <div class="w-header" slot="title">
+          <div class="title">
+            {{this.$t('m_menu_metricConfiguration')}}
+            <span class="underline"></span>
+          </div>
         </div>
-
         <Table
           class="config-table"
           size="small"
@@ -376,7 +376,7 @@ export default {
           }
         },
         {
-          title: this.$t('table.action'),
+          title: this.$t('m_table_action'),
           key: 'index',
           width: 80,
           align: 'center',
@@ -855,6 +855,10 @@ export default {
 
     },
     searchTypeByEndpoint(value) {
+      setTimeout(() => {
+        this.getEndpointSearch = ''; 
+        this.debounceGetEndpointList()
+      }, 0)
       this.monitorType = '';
       this.metricGuid = '';
       this.metricOptions = [];
@@ -1395,6 +1399,25 @@ export default {
   }
 }
 
-
+.w-header {
+  display: flex;
+  align-items: center;
+  .title {
+    font-size: 16px;
+    font-weight: bold;
+    margin: 0 10px;
+    .underline {
+      display: block;
+      margin-top: -10px;
+      margin-left: -6px;
+      width: 100%;
+      padding: 0 6px;
+      height: 12px;
+      border-radius: 12px;
+      background-color: #c6eafe;
+      box-sizing: content-box;
+    }
+  }
+}
 </style>
 
