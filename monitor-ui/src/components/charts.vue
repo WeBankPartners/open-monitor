@@ -41,11 +41,11 @@ export default {
       editChartConfig: null,
       modelConfig: {
         modalId: 'edit_Modal',
-        modalTitle: 'button.chart.editTitle',
+        modalTitle: 'm_button_chart_editTitle',
         saveFunc: 'titleSave',
         isAdd: true,
         config: [
-          {label: 'tableKey.name', value: 'name', placeholder: 'tips.inputRequired', v_validate: 'required:true|min:2|max:60', disabled: false, type: 'text'}
+          {label: 'm_tableKey_name', value: 'name', placeholder: 'm_tips_inputRequired', v_validate: 'required:true|min:2|max:60', disabled: false, type: 'text'}
         ],
         addRow: { // [通用]-保存用户新增、编辑时数据
           name: null
