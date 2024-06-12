@@ -20,7 +20,7 @@
                 <span>{{$t('button.add')}}</span>
               </label>
               <label v-else>
-                <span>{{$t('button.edit')}}</span>
+                <span>{{$t('m_button_edit')}}</span>
                 <span style="color: red;">
                   {{interceptParams()}}
                 </span>】
@@ -140,18 +140,18 @@
                 </Poptip>
 
                 <label v-show="veeErrors.has(item.value) && isHide(item.hide)" class="col-md-7 help is-danger">{{$t(item.label)}} {{veeErrors.first(item.value)}}</label>
-                <label v-if="(item.type === 'select' || item.type === 'multiSelect' || item.type === 'textarea') && item.isError" class="col-md-7 help is-danger">{{$t(item.label)}} {{$t('tips.required')}}</label>
+                <label v-if="(item.type === 'select' || item.type === 'multiSelect' || item.type === 'textarea') && item.isError" class="col-md-7 help is-danger">{{$t(item.label)}} {{$t('m_tips_required')}}</label>
               </div>
             </form>
           </div>
           <template v-if="!modelConfig.noBtn">
             <div class="model-footer-f c-dark" v-if="!modelConfig.modalFooter">
-              <button type="button" class="btn-cancel-f" data-dismiss="modal">{{$t('button.cancel')}}</button>
-              <button v-if="!modelConfig.saveFunc" @click="save(modelConfig.isAdd)" type="button" class="btn-confirm-f">{{$t('button.save')}}</button>
-              <button v-if="modelConfig.saveFunc" @click="customFunc(modelConfig.saveFunc)" type="button" class="btn-confirm-f">{{$t('button.save')}}</button>
+              <button type="button" class="btn-cancel-f" data-dismiss="modal">{{$t('m_button_cancel')}}</button>
+              <button v-if="!modelConfig.saveFunc" @click="save(modelConfig.isAdd)" type="button" class="btn-confirm-f">{{$t('m_button_save')}}</button>
+              <button v-if="modelConfig.saveFunc" @click="customFunc(modelConfig.saveFunc)" type="button" class="btn-confirm-f">{{$t('m_button_save')}}</button>
             </div>
             <div class="model-footer-f c-dark" v-if="modelConfig.modalFooter">
-              <button type="button" class="btn-cancel-f" data-dismiss="modal">{{$t('button.cancel')}}</button>
+              <button type="button" class="btn-cancel-f" data-dismiss="modal">{{$t('m_button_cancel')}}</button>
               <template v-for="(item, index) in modelConfig.modalFooter">
               <button  @click="customFunc(item.Func)" type="button" class="btn-confirm-f" v-if='item.name' :key="index">{{item.name}}</button>
               </template>
