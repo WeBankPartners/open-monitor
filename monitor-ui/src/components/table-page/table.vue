@@ -94,8 +94,8 @@
             </th>
           </template>
           
-          <th style="width: 140px;" class="th-border-bottom c-dark" v-if="table.btn.length != 0"><div style="width:130px">{{$t('table.action')}}</div></th>
-          <th style="width: 151px;" class="th-border-bottom c-dark handleSty" v-if="table.btn.length != 0 && table.handleFloat">{{$t('table.action')}}</th>
+          <th style="width: 140px;" class="th-border-bottom c-dark" v-if="table.btn.length != 0"><div style="width:130px">{{$t('m_table_action')}}</div></th>
+          <th style="width: 151px;" class="th-border-bottom c-dark handleSty" v-if="table.btn.length != 0 && table.handleFloat">{{$t('m_table_action')}}</th>
         </tr>
         </thead>
         <tbody>
@@ -279,7 +279,7 @@
                   <div class="batch-operation">
                     <div class="btn-group" role="group" @mouseover="btnMore(tableDataIndex)">
                     <span class="btn-operation">
-                      {{$t('table.more')}}
+                      {{$t('m_table_more')}}
                       <Icon type="chevron-down"></Icon>
                     </span>
                     </div>
@@ -309,13 +309,13 @@
             </tr>
         </template>
          <tr v-if="table.tableData.length<1" class='nodataSty c-dark'>
-           <td :colspan='tdNumber' v-if='!table.noDataTip'>{{$t('table.noDataTip')}}</td>
+           <td :colspan='tdNumber' v-if='!table.noDataTip'>{{$t('m_table_noDataTip')}}</td>
            <td :colspan='tdNumber' v-if='table.noDataTip'>
              <template v-if='typeof table.noDataTip === "string"'>
-              <span>{{$t('table.noDataTip')}},您可以</span><span v-html="table.noDataTip">{{table.noDataTip}}</span>
+              <span>{{$t('m_table_noDataTip')}},您可以</span><span v-html="table.noDataTip">{{table.noDataTip}}</span>
              </template>
              <template v-if='typeof table.noDataTip === "object"'>
-               <span>{{$t('table.noDataTip')}},您可以</span><a @click="goToConfig(table.noDataTip)">{{table.noDataTip.linkword}}</a>{{table.noDataTip.name}}
+               <span>{{$t('m_table_noDataTip')}},您可以</span><a @click="goToConfig(table.noDataTip)">{{table.noDataTip.linkword}}</a>{{table.noDataTip.name}}
              </template>
            </td>
         </tr>
