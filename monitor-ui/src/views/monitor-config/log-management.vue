@@ -18,7 +18,7 @@
             :remote-method="getTargrtList"
             @on-change="search"
             >
-            <Option v-for="(option, index) in targetOptions" :value="option.guid" :key="index">
+            <Option v-for="(option, index) in targetOptions" :value="option.guid" :label="option.display_name" :key="index">
               <TagShow :list="targetOptions" name="type" :tagName="option.type" :index="index"></TagShow> 
               {{option.display_name}}
             </Option>
@@ -29,7 +29,7 @@
           :disabled="targrtId === ''"
           @click="search">
             <i class="fa fa-search" ></i>
-            {{$t('button.search')}}
+            {{$t('m_button_search')}}
           </button>
         </li>
       </ul>
@@ -55,8 +55,8 @@ export default {
     return {
       type: 'group',
       typeList: [
-        {label: this.$t('field.resourceLevel'), value: 'group'},
-        {label: this.$t('tableKey.endpoint'), value: 'endpoint'}
+        {label: this.$t('m_field_resourceLevel'), value: 'group'},
+        {label: this.$t('m_tableKey_endpoint'), value: 'endpoint'}
       ],
       targrtId: '',
       targetOptions: [],

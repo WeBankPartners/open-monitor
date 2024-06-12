@@ -52,13 +52,13 @@
     </section>
     <Modal
       v-model="addAndEditModal.isShow"
-      :title="addAndEditModal.isAdd ? $t('button.add') : $t('button.edit')"
+      :title="addAndEditModal.isAdd ? $t('button.add') : $t('m_button_edit')"
       :mask-closable="false"
       :width="730"
       >
       <div :style="{ 'max-height': MODALHEIGHT + 'px', overflow: 'auto' }">
         <div>
-          <span>{{$t('field.type')}}:</span>
+          <span>{{$t('m_field_type')}}:</span>
           <Select v-model="addAndEditModal.dataConfig.monitor_type" @on-change="getEndpoint(addAndEditModal.dataConfig.monitor_type, 'host')" style="width: 640px">
             <Option v-for="type in monitorTypeOptions" :key="type.value" :value="type.label">{{type.label}}</Option>
           </Select>
@@ -66,8 +66,8 @@
         <div v-if="addAndEditModal.isAdd" style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;width:680px;text-align: center;">
           <template v-for="(item, index) in addAndEditModal.pathOptions">
             <p :key="index + 5">
-              <Tooltip :content="$t('tableKey.logPath')" :delay="1000">
-                <Input v-model="item.path" style="width: 620px" :placeholder="$t('tableKey.logPath')" />
+              <Tooltip :content="$t('m_tableKey_logPath')" :delay="1000">
+                <Input v-model="item.path" style="width: 620px" :placeholder="$t('m_tableKey_logPath')" />
               </Tooltip>
               <Button
                 v-if="addAndEditModal.isAdd"
@@ -84,11 +84,11 @@
             size="small"
             style="width:650px"
             long
-            >{{ $t('button.add') }}{{$t('tableKey.logPath')}}</Button
+            >{{ $t('button.add') }}{{$t('m_tableKey_logPath')}}</Button
           >
         </div>
         <div v-else style="margin: 8px 0">
-          <span>{{$t('tableKey.path')}}:</span>
+          <span>{{$t('m_tableKey_path')}}:</span>
           <Input style="width: 640px" v-model="addAndEditModal.dataConfig.log_path" />
         </div>
         <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;width:680px;text-align: center;">
@@ -123,8 +123,8 @@
         </div>
       </div>
       <div slot="footer">
-        <Button @click="cancelAddAndEdit">{{$t('button.cancel')}}</Button>
-        <Button @click="okAddAndEdit" type="primary">{{$t('button.save')}}</Button>
+        <Button @click="cancelAddAndEdit">{{$t('m_button_cancel')}}</Button>
+        <Button @click="okAddAndEdit" type="primary">{{$t('m_button_save')}}</Button>
       </div>
     </Modal>
     <Modal
@@ -135,12 +135,12 @@
       >
       <div :style="{ 'max-height': MODALHEIGHT + 'px', overflow: 'auto' }">
         <Form :label-width="100">
-          <FormItem :label="$t('tableKey.tags')">
+          <FormItem :label="$t('m_tableKey_tags')">
             <Input v-model="ruleModelConfig.addRow.tags" style="width:100%" />
           </FormItem>
-          <FormItem :label="$t('tableKey.regular')">
+          <FormItem :label="$t('m_tableKey_regular')">
             <Input type="textarea" v-model="ruleModelConfig.addRow.json_regular" style="width: 580px"/>
-            <Button v-if="!showRegConfig" @click="showRegConfig = !showRegConfig">{{$t('menu.configuration')}}</Button>
+            <Button v-if="!showRegConfig" @click="showRegConfig = !showRegConfig">{{$t('m_menu_configuration')}}</Button>
           </FormItem>
         </Form>
         <RegTest v-if="showRegConfig" @updateReg="updateReg" @cancelReg="cancelReg"></RegTest>
@@ -153,15 +153,15 @@
               <Tooltip :content="$t('field.metric') + ' , e.g:code'" :delay="1000">
                 <Input v-model="item.metric" style="width: 190px" :placeholder="$t('field.metric') + ' , e.g:code'" />
               </Tooltip>
-              <Tooltip :content="$t('field.aggType')" :delay="1000">
+              <Tooltip :content="$t('m_field_aggType')" :delay="1000">
                 <Select v-model="item.agg_type" filterable clearable style="width:100px">
                   <Option v-for="agg in ruleModelConfig.aggOption" :value="agg" :key="agg">{{
                     agg
                   }}</Option>
                 </Select>
               </Tooltip>
-              <Tooltip :content="$t('field.displayName')" :delay="1000">
-                <Input v-model="item.display_name" style="width: 160px" :placeholder="$t('field.displayName')" />
+              <Tooltip :content="$t('m_field_displayName')" :delay="1000">
+                <Input v-model="item.display_name" style="width: 160px" :placeholder="$t('m_field_displayName')" />
               </Tooltip>
               <Button
                 @click="deleteItem('metric_list', index)"
@@ -173,7 +173,7 @@
             <div :key="index + 1" style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;text-align: end;">
               <template v-for="(stringMapItem, stringMapIndex) in item.string_map">
                 <p :key="stringMapIndex + 2">
-                  <Tooltip :content="$t('tableKey.regular')" :delay="1000">
+                  <Tooltip :content="$t('m_tableKey_regular')" :delay="1000">
                     <Select v-model="stringMapItem.regulative" filterable clearable style="width:230px">
                       <Option v-for="regulation in regulationOption" :value="regulation.value" :key="regulation.value">{{
                         regulation.label
@@ -213,44 +213,44 @@
         </div>
       </div>
       <div slot="footer">
-        <Button @click="cancelRule">{{$t('button.cancel')}}</Button>
-        <Button @click="saveRule" type="primary">{{$t('button.save')}}</Button>
+        <Button @click="cancelRule">{{$t('m_button_cancel')}}</Button>
+        <Button @click="saveRule" type="primary">{{$t('m_button_save')}}</Button>
       </div>
     </Modal>
     <Modal
       v-model="isShowWarning"
-      :title="$t('delConfirm.title')"
+      :title="$t('m_delConfirm_title')"
       :mask-closable="false"
       @on-ok="ok"
       @on-cancel="cancel">
       <div class="modal-body" style="padding:30px">
         <div style="text-align:center">
-          <p style="color: red">{{$t('delConfirm.tip')}}: {{ selectedData.log_path || ''}}</p>
+          <p style="color: red">{{$t('m_delConfirm_tip')}}: {{ selectedData.log_path || ''}}</p>
         </div>
       </div>
     </Modal>
     <Modal
       v-model="isShowWarningDelete"
-      :title="$t('delConfirm.title')"
+      :title="$t('m_delConfirm_title')"
       :mask-closable="false"
       @on-ok="okDelRow"
       @on-cancel="cancleDelRow">
       <div class="modal-body" style="padding:30px">
         <div style="text-align:center">
-          <p style="color: red">{{$t('delConfirm.tip')}}: {{ selectedData.name || selectedData.display_name || '' }}</p>
+          <p style="color: red">{{$t('m_delConfirm_tip')}}: {{ selectedData.name || selectedData.display_name || '' }}</p>
         </div>
       </div>
     </Modal>
     <ModalComponent :modelConfig="customMetricsModelConfig">
       <div slot="ruleConfig" class="extentClass">
         <div class="marginbottom params-each">
-          <label class="col-md-2 label-name">{{$t('tableKey.regular')}}:</label>
+          <label class="col-md-2 label-name">{{$t('m_tableKey_regular')}}:</label>
           <Input style="width: 70%" type="textarea" v-model="customMetricsModelConfig.addRow.regular" />
-          <Button v-if="!showCustomRegConfig" size="small" @click="showCustomRegConfig = !showCustomRegConfig">{{$t('menu.configuration')}}</Button>
+          <Button v-if="!showCustomRegConfig" size="small" @click="showCustomRegConfig = !showCustomRegConfig">{{$t('m_menu_configuration')}}</Button>
         </div>
         <RegTest v-if="showCustomRegConfig" @updateReg="updateCustomReg" @cancelReg="cancelCustomReg"></RegTest>
         <div class="marginbottom params-each">
-          <label class="col-md-2 label-name">{{$t('field.aggType')}}:</label>
+          <label class="col-md-2 label-name">{{$t('m_field_aggType')}}:</label>
           <Select v-model="customMetricsModelConfig.addRow.agg_type" filterable clearable style="width:510px">
             <Option v-for="agg in customMetricsModelConfig.slotConfig.aggOption" :value="agg" :key="agg">{{
               agg
@@ -261,7 +261,7 @@
           <div style="margin: 4px 12px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
             <template v-for="(item, index) in customMetricsModelConfig.addRow.string_map">
               <p :key="index">
-                <Tooltip :content="$t('tableKey.regular')" :delay="1000">
+                <Tooltip :content="$t('m_tableKey_regular')" :delay="1000">
                   <Select v-model="item.regulative" filterable clearable style="width:150px">
                     <Option v-for="regulation in regulationOption" :value="regulation.value" :key="regulation.value">{{
                       regulation.label
@@ -296,11 +296,11 @@
           <div style="margin: 4px 12px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
             <template v-for="(item, index) in customMetricsModelConfig.addRow.tag_config">
               <p :key="index">
-                <Tooltip :content="$t('tableKey.tags')" :delay="1000">
-                  <Input v-model="item.key" style="width: 250px" :placeholder="$t('tableKey.tags')" />
+                <Tooltip :content="$t('m_tableKey_tags')" :delay="1000">
+                  <Input v-model="item.key" style="width: 250px" :placeholder="$t('m_tableKey_tags')" />
                 </Tooltip>
-                <Tooltip :content="$t('tableKey.regular')" :delay="1000">
-                  <Input v-model="item.regular" style="width: 400px" :placeholder="$t('tableKey.regular')" />
+                <Tooltip :content="$t('m_tableKey_regular')" :delay="1000">
+                  <Input v-model="item.regular" style="width: 400px" :placeholder="$t('m_tableKey_regular')" />
                 </Tooltip>
                 <Button
                   @click="deleteCustomMetric('tag_config', index)"
@@ -342,7 +342,7 @@
       >
       <div :style="{ 'max-height': MODALHEIGHT + 'px', overflow: 'auto' }">
         <Form :label-width="100">
-          <FormItem :label="$t('field.displayName')">
+          <FormItem :label="$t('m_field_displayName')">
             <Input v-model="dbModelConfig.addRow.display_name" style="width:520px"/>
           </FormItem>
           <FormItem :label="$t('field.metric')">
@@ -351,9 +351,14 @@
           <FormItem label="SQL">
             <Input v-model="dbModelConfig.addRow.metric_sql" type="textarea" style="width:520px" />
           </FormItem>
-          <FormItem :label="$t('field.type')">
+          <FormItem :label="$t('m_field_type')" style="margin-top: 12px;">
             <Select v-model="dbModelConfig.addRow.monitor_type" @on-change="getEndpoint(dbModelConfig.addRow.monitor_type, 'mysql')" style="width: 520px">
               <Option v-for="type in monitorTypeOptions" :key="type.value" :value="type.label">{{type.label}}</Option>
+            </Select>
+          </FormItem>
+          <FormItem :label="$t('m_collection_interval')">
+            <Select v-model="dbModelConfig.addRow.step" style="width: 520px" transfer>
+              <Option v-for="item in stepOptions" :key="item" :value="item">{{item}}S</Option>
             </Select>
           </FormItem>
         </Form>
@@ -389,8 +394,8 @@
         </div>
       </div>
       <div slot="footer">
-        <Button @click="cancelDb">{{$t('button.cancel')}}</Button>
-        <Button @click="saveDb" type="primary">{{$t('button.save')}}</Button>
+        <Button @click="cancelDb">{{$t('m_button_cancel')}}</Button>
+        <Button @click="saveDb" type="primary">{{$t('m_button_save')}}</Button>
       </div>
     </Modal>
 
@@ -435,8 +440,8 @@
         </FormItem>
       </Form>
       <template #footer>
-        <Button @click="showTemplateSelect = false">{{ $t('button.cancel') }}</Button>
-        <Button @click="okTempSelect" :disabled="selectedTemp === ''" type="primary">{{ $t('button.confirm') }}</Button>
+        <Button @click="showTemplateSelect = false">{{ $t('m_button_cancel') }}</Button>
+        <Button @click="okTempSelect" :disabled="selectedTemp === ''" type="primary">{{ $t('m_button_confirm') }}</Button>
       </template>
     </Modal>
     <CustomRegex ref="customRegexRef" @reloadMetricData="reloadMetricData"></CustomRegex>
@@ -453,23 +458,23 @@ import BusinessMonitorGroupConfig from '@/views/monitor-config/business-monitor-
 import extendTable from '@/components/table-page/extend-table'
 import axios from 'axios'
 let tableEle = [
-  {title: 'tableKey.logPath', value: 'log_path', display: true},
-  {title: 'field.type', value: 'monitor_type', display: true},
+  {title: 'm_tableKey_logPath', value: 'log_path', display: true},
+  {title: 'm_field_type', value: 'monitor_type', display: true},
 ]
 const btn = [
-  {btn_name: 'button.edit', btn_func: 'editF'},
-  {btn_name: 'button.remove', btn_func: 'deleteConfirmModal', color: 'red'},
+  {btn_name: 'm_button_edit', btn_func: 'editF'},
+  {btn_name: 'm_button_remove', btn_func: 'deleteConfirmModal', color: 'red'},
   // {btn_name: 'm_import', btn_func: 'importConfig'}
 ]
 
 let tableDbEle = [
   {title: 'm_metric_name', value: 'display_name', display: true},
   {title: 'm_metric_key', value: 'metric', display: true},
-  {title: 'field.type', value: 'monitor_type', display: true}
+  {title: 'm_field_type', value: 'monitor_type', display: true}
 ]
 const btnDb = [
-  {btn_name: 'button.edit', btn_func: 'editDbItem'},
-  {btn_name: 'button.remove', btn_func: 'deleteDbConfirmModal', color: 'red'}
+  {btn_name: 'm_button_edit', btn_func: 'editDbItem'},
+  {btn_name: 'm_button_remove', btn_func: 'deleteDbConfirmModal', color: 'red'}
 ]
 export default {
   name: '',
@@ -509,10 +514,10 @@ export default {
                 {title: 'm_associated_template', value: 'log_monitor_template_name', display: true},
                 {title: 'm_metric_config_type', value: 'log_type_display', display: true},
                 {title: 'm_updatedBy', value: 'update_user', display: true},
-                {title: 'title.updateTime', value: 'update_time', display: true},
-                {title: 'table.action',btn:[
-                  {btn_name: 'button.edit', btn_func: 'editRuleItem'},
-                  {btn_name: 'button.remove', btn_func: 'delRuleconfirmModal', color: 'red'}
+                {title: 'm_title_updateTime', value: 'update_time', display: true},
+                {title: 'm_table_action',btn:[
+                  {btn_name: 'm_button_edit', btn_func: 'editRuleItem'},
+                  {btn_name: 'm_button_remove', btn_func: 'delRuleconfirmModal', color: 'red'}
                 ]}
               ],
               data: [1],
@@ -565,8 +570,8 @@ export default {
         saveFunc: 'saveCustomMetric',
         config: [
           {label: 'field.metric', value: 'metric', placeholder: '', disabled: false, type: 'text', max: 50},
-          {label: 'field.displayName', value: 'display_name', placeholder: '', disabled: false, type: 'text'},
-          // {label: 'tableKey.regular', value: 'regular', placeholder: 'tips.required', v_validate: 'required:true', disabled: false, type: 'text'},
+          {label: 'm_field_displayName', value: 'display_name', placeholder: '', disabled: false, type: 'text'},
+          // {label: 'm_tableKey_regular', value: 'regular', placeholder: 'm_tips_required', v_validate: 'required:true', disabled: false, type: 'text'},
           {name:'ruleConfig',type:'slot'}
         ],
         addRow: { // [通用]-保存用户新增、编辑时数据
@@ -610,6 +615,7 @@ export default {
           metric: '',
           display_name: '',
           monitor_type: '',
+          step: 10,
           endpoint_rel: []
         }
       },
@@ -620,6 +626,7 @@ export default {
         {label: 'http', value: 'http'},
         {label: 'mysql', value: 'mysql'}
       ],
+      stepOptions: [10, 30, 60, 300, 600],
       isShowGroupMetricUpload: false,
       groupMetricId: '',
       typeToName: { // 模版枚举
@@ -679,11 +686,11 @@ export default {
         }
       })
       .catch(() => {
-        this.$Message.warning(this.$t('tips.failed'))
+        this.$Message.warning(this.$t('m_tips_failed'))
       });
     },
     uploadSucess () {
-      this.$Message.success(this.$t('tips.success'))
+      this.$Message.success(this.$t('m_tips_success'))
       this.getDetail(this.targrtId)
     },
     uploadFailed (error, file) {
@@ -693,7 +700,7 @@ export default {
     delDbItem (rowData) {
       const api = this.$root.apiCenter.saveTargetDb + '/' + rowData.guid
       this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', api, '', () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         this.getDetail(this.targrtId)
       })
     },
@@ -711,7 +718,7 @@ export default {
       this.dbModelConfig.addRow.service_group = this.targrtId
       const requestType = this.dbModelConfig.isAdd ? 'POST' : 'PUT'
       this.$root.$httpRequestEntrance.httpRequestEntrance(requestType, this.$root.apiCenter.saveTargetDb, this.dbModelConfig.addRow, () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         this.dbModelConfig.isShow = false
         this.getDbDetail(this.targrtId)
       }, {isNeedloading:false})
@@ -789,7 +796,7 @@ export default {
       }
       const requestType = this.customMetricsModelConfig.isAdd ? 'POST' : 'PUT'
       this.$root.$httpRequestEntrance.httpRequestEntrance(requestType, this.$root.apiCenter.logMetricReg, params, () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         this.$root.JQ('#custom_metrics').modal('hide')
         this.reloadMetricData(this.activeData.log_metric_monitor || this.activeData.guid)
         // this.getDetail(this.targrtId)
@@ -841,7 +848,7 @@ export default {
     delCustomMericsItem (rowData) {
       const api = this.$root.apiCenter.logMetricReg + '/' + rowData.guid
       this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', api, '', () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         // this.getDetail(this.targrtId)
         this.reloadMetricData(rowData.log_metric_monitor)
       })
@@ -852,7 +859,7 @@ export default {
     delRuleItem (rowData) {
       const api = this.$root.apiCenter.deleteLogMetricGroup + rowData.guid
       this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', api, '', () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         this.isShowWarningDelete = false
         this.reloadMetricData(rowData.log_metric_monitor)
         // this.getDetail(this.targrtId)
@@ -871,7 +878,7 @@ export default {
       this.ruleModelConfig.addRow.log_metric_monitor = this.activeData.guid
       const requestType = this.ruleModelConfig.isAdd ? 'POST' : 'PUT'
       this.$root.$httpRequestEntrance.httpRequestEntrance(requestType, this.$root.apiCenter.logMetricJson, this.ruleModelConfig.addRow, () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         this.ruleModelConfig.isShow = false
         this.reloadMetricData(this.activeData.guid || this.ruleModelConfig.addRow.pId)
         // this.getDetail(this.targrtId)
@@ -917,7 +924,7 @@ export default {
     delF (rowData) {
       const api = this.$root.apiCenter.deletePath + '/' + rowData.guid
       this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', api, '', () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         this.getDetail(this.targrtId)
       })
     },
@@ -929,7 +936,7 @@ export default {
         params.log_path = this.addAndEditModal.pathOptions.map(p => p.path)
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance(methodType, this.$root.apiCenter.logMetricMonitor, params, () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         this.addAndEditModal.isShow = false
         this.getDetail(this.targrtId)
       }, {isNeedloading:false})

@@ -13,18 +13,18 @@
           @on-open-change="getEndpointList('.')"
           :remote-method="getEndpointList"
           >
-          <Option v-for="(option, index) in endpointList" :value="option.option_value" :key="index">
+          <Option v-for="(option, index) in endpointList" :value="option.option_value" :label="option.option_text" :key="index">
             <TagShow :list="endpointList" name="option_type_name" :tagName="option.option_type_name" :index="index"></TagShow> 
             {{option.option_text}}
           </Option>
-          <Option value="moreTips" disabled>{{$t('tips.requestMoreData')}}</Option>
+          <Option value="moreTips" disabled>{{$t('m_tips_requestMoreData')}}</Option>
         </Select>
       </li>
       <li class="search-li">
         <button type="button" class="btn btn-sm btn-confirm-f"
           @click="routerChange">
           <i class="fa fa-search" ></i>
-          {{$t('button.search')}}
+          {{$t('m_button_search')}}
         </button>
       </li>
     </ul>
