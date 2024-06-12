@@ -27,7 +27,7 @@
                 v-model="searchMap.chartType"
                 clearable
                 filterable
-                :placeholder="$t('field.type')"
+                :placeholder="$t('m_field_type')"
                 @on-change="onFilterConditionChange"
             >
                 <Option v-for="item in chartTypeOptionList" :value="item.value" :key="item.value">{{ $t(item.name) }}</Option>
@@ -104,17 +104,17 @@
     <AuthDialog ref="authDialog" :useRolesRequired="true" @sendAuth="saveAuth" />
     <Modal
         v-model="isShowWarning"
-        :title="$t('delConfirm.title')"
+        :title="$t('m_delConfirm_title')"
         @on-ok="onDeleteConfirm"
         @on-cancel="onCancelDelete">
         <div class="modal-body" style="padding:30px">
             <div style="text-align:center">
-            <p style="color: red">{{$t('delConfirm.tip')}}</p>
+            <p style="color: red">{{$t('m_delConfirm_tip')}}</p>
             </div>
         </div>
     </Modal>
 
-    <Drawer :title="$t('placeholder.chartConfiguration')" :width="100" @on-close="closeChartInfoDrawer" :mask-closable="false" v-model="showChartConfig">
+    <Drawer :title="$t('m_placeholder_chartConfiguration')" :width="100" @on-close="closeChartInfoDrawer" :mask-closable="false" v-model="showChartConfig">
         <editView :chartId="chartId" :operator="operator" v-if="showChartConfig"></editView>
     </Drawer>
     
@@ -170,7 +170,7 @@ export default {
                 key: 'chartId'
             },
             {
-                title: this.$t('field.type'),
+                title: this.$t('m_field_type'),
                 key: 'chartType',
                 
                 width: 100,
@@ -257,7 +257,7 @@ export default {
                 }
             },
             {
-                title: this.$t('table.action'),
+                title: this.$t('m_table_action'),
                 key: 'index',
                 width: 160,
                 

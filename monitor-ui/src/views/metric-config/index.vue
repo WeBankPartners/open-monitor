@@ -5,7 +5,7 @@
       <TabPane :label="$t('m_base_group')" name="1">
       </TabPane>
       <!--层级对象-->
-      <TabPane :label="$t('field.resourceLevel')" name="2">
+      <TabPane :label="$t('m_field_resourceLevel')" name="2">
       </TabPane>
     </Tabs>
     <GeneralGroup v-if="activeName === '1'"></GeneralGroup>
