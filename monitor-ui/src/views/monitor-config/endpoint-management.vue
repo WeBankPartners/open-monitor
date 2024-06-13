@@ -4,7 +4,7 @@
   <ModalComponent :modelConfig="modelConfig">
     <div slot="advancedConfig" class="extentClass">
       <div class="marginbottom params-each">
-        <label class="col-md-2 label-name">{{$t('field.endpoint')}}:</label>
+        <label class="col-md-2 label-name">{{$t('m_field_endpoint')}}:</label>
         <Select v-model="modelConfig.slotConfig.resourceSelected" multiple filterable style="width:300px">
           <Option v-for="item in modelConfig.slotConfig.resourceOption" :value="item.id" :key="item.id">
             {{ item.guid }}
@@ -19,7 +19,7 @@
     :mask-closable="false"
     :footer-hide="true"
     :fullscreen="isfullscreen"
-    :title="$t('button.historicalAlert')">
+    :title="$t('m_button_historicalAlert')">
     <div slot="header" class="custom-modal-header">
       <span>
         {{$t('alarmHistory')}}
@@ -32,9 +32,9 @@
   <ModalComponent :modelConfig="endpointRejectModel">
     <div slot="endpointReject">
       <div class="marginbottom params-each">
-        <label class="col-md-2 label-name">{{$t('field.type')}}:</label>
+        <label class="col-md-2 label-name">{{$t('m_field_type')}}:</label>
         <Select filterable clearable :disabled="!endpointRejectModel.isAdd" v-model="endpointRejectModel.addRow.type" style="width:338px" @on-change="typeChange">
-          <Option v-for="item in endpointRejectModel.endpointType" :value="item.value" :key="item.value">
+          <Option v-for="item in endpointRejectModel.endpointType" :label="item.label" :value="item.value" :key="item.value">
             {{item.label}}
           </Option>
         </Select>
@@ -42,30 +42,30 @@
       <div v-if="endpointRejectModel.supportStep" class="marginbottom params-each">
         <label class="col-md-2 label-name">{{$t('m_collection_interval')}}:</label>
         <Select filterable clearable v-model="endpointRejectModel.addRow.step" style="width:338px" :disabled="['mysql','host','ping','telnet','http','process'].includes(endpointRejectModel.addRow.type)">
-          <Option v-for="item in endpointRejectModel.stepOptions" :value="item.value" :key="item.value">
+          <Option v-for="item in endpointRejectModel.stepOptions" :value="item.value" :label="item.label" :key="item.value">
             {{item.label}}
           </Option>
         </Select>
       </div>
       <div class="marginbottom params-each" v-if="!(['host','windows'].includes(endpointRejectModel.addRow.type))">
-        <label class="col-md-2 label-name">{{$t('field.instance')}}:</label>
+        <label class="col-md-2 label-name">{{$t('m_field_instance')}}:</label>
         <input v-validate="'required'" :disabled="!endpointRejectModel.isAdd" v-model="endpointRejectModel.addRow.name" name="name" :class="{ 'red-border': veeErrors.has('name') }" type="text" class="col-md-7 form-control model-input c-dark" />
         <label class="required-tip">*</label>
         <label v-show="veeErrors.has('name')" class="is-danger">{{ veeErrors.first('name')}}</label>
       </div>
       <div class="marginbottom params-each" v-if="['mysql','redis','java','nginx'].includes(endpointRejectModel.addRow.type)">
-        <label class="col-md-2 label-name">{{$t('button.trusteeship')}}:</label>
+        <label class="col-md-2 label-name">{{$t('m_button_trusteeship')}}:</label>
         <Checkbox v-model="endpointRejectModel.addRow.agent_manager"></Checkbox>
       </div>
       <section v-if="['mysql','redis','java','nginx'].includes(endpointRejectModel.addRow.type) && endpointRejectModel.addRow.agent_manager">
         <div v-if="['mysql','java','nginx'].includes(endpointRejectModel.addRow.type)" class="marginbottom params-each">
-          <label class="col-md-2 label-name">{{$t('button.username')}}:</label>
+          <label class="col-md-2 label-name">{{$t('m_button_username')}}:</label>
           <input v-validate="'required'" v-model="endpointRejectModel.addRow.user" name="user" :class="{ 'red-border': veeErrors.has('user') }" type="text" class="col-md-7 form-control model-input c-dark" />
           <label class="required-tip">*</label>
           <label v-show="veeErrors.has('user')" class="is-danger">{{ veeErrors.first('user')}}</label>
         </div>
         <div class="marginbottom params-each">
-          <label class="col-md-2 label-name">{{$t('button.password')}}:</label>
+          <label class="col-md-2 label-name">{{$t('m_button_password')}}:</label>
           <input v-validate="'required'" v-model="endpointRejectModel.addRow.password" name="password" :class="{ 'red-border': veeErrors.has('password') }" type="text" class="col-md-7 form-control model-input c-dark" />
           <label class="required-tip">*</label>
           <label v-show="veeErrors.has('password')" class="is-danger">{{ veeErrors.first('password')}}</label>
@@ -92,7 +92,7 @@
         <label v-show="veeErrors.has('exporter_type')" class="is-danger">{{ veeErrors.first('exporter_type')}}</label>
       </div>
       <div class="marginbottom params-each" v-if="!(['ping','http', 'snmp', 'process'].includes(endpointRejectModel.addRow.type))">
-        <label class="col-md-2 label-name">{{$t('button.port')}}:</label>
+        <label class="col-md-2 label-name">{{$t('m_button_port')}}:</label>
         <input v-validate="'required|isNumber'" v-model="endpointRejectModel.addRow.port" name="port" :class="{ 'red-border': veeErrors.has('port') }" type="text" class="col-md-7 form-control model-input c-dark" />
         <label class="required-tip">*</label>
         <label v-show="veeErrors.has('port')" class="is-danger">{{ veeErrors.first('port')}}</label>
@@ -121,13 +121,13 @@
       </template>
       <template>
         <div v-if="endpointRejectModel.addRow.type !== 'process'">
-          <label class="col-md-2 label-name">{{$t('field.ip')}}:</label>
-          <input v-validate="'required'" :placeholder="$t('field.ip')" v-model="endpointRejectModel.addRow.ip" name="ip" :class="{ 'red-border': veeErrors.has('ip') }" type="text" class="col-md-7 form-control model-input c-dark" />
+          <label class="col-md-2 label-name">{{$t('m_field_ip')}}:</label>
+          <input v-validate="'required'" :placeholder="$t('m_field_ip')" v-model="endpointRejectModel.addRow.ip" name="ip" :class="{ 'red-border': veeErrors.has('ip') }" type="text" class="col-md-7 form-control model-input c-dark" />
           <label class="required-tip">*</label>
           <label v-show="veeErrors.has('ip')" class="is-danger">{{ veeErrors.first('ip')}}</label>
         </div>
         <div v-else>
-          <label class="col-md-2 label-name">{{$t('field.ip')}}:</label>
+          <label class="col-md-2 label-name">{{$t('m_field_ip')}}:</label>
           <Select filterable v-model="endpointRejectModel.addRow.ip" @on-change="changeIp" style="width:338px">
             <Option v-for="item in endpointRejectModel.ipOptions" :value="item.ip" :key="item.guid">
               {{item.guid}}
@@ -141,7 +141,7 @@
     <div slot="processConfig">
       <div class="marginbottom params-each">
         <div style="color:#fa7821">
-          <span>{{$t('button.processConfiguration_tip1')}}</span>
+          <span>{{$t('m_button_processConfiguration_tip1')}}</span>
         </div>
       </div>
       <section>
@@ -182,10 +182,10 @@
       <section>
         <div style="display: flex;">
           <div class="port-title">
-            <span>{{$t('field.port')}}:</span>
+            <span>{{$t('m_field_port')}}:</span>
           </div>
           <div class="port-title">
-            <span>{{$t('tableKey.description')}}:</span>
+            <span>{{$t('m_tableKey_description')}}:</span>
           </div>
         </div>
       </section>
@@ -205,16 +205,16 @@
     </div>
   </ModalComponent>
   <Modal v-model="isShowWarning" 
-    :title="$t('delConfirm.title')"
+    :title="$t('m_delConfirm_title')"
     @on-ok="ok" 
     @on-cancel="cancel">
     <div class="modal-body" style="padding:30px">
       <div style="text-align:center">
-        <p style="color: red">{{$t('delConfirm.tip')}}</p>
+        <p style="color: red">{{$t('m_delConfirm_tip')}}</p>
       </div>
     </div>
   </Modal>
-  <Modal v-model="isShowDataMonitor" :title="$t('button.dataMonitoring')" :styles="{top: '100px',width: '1000px'}" footer-hide>
+  <Modal v-model="isShowDataMonitor" :title="$t('m_button_dataMonitoring')" :styles="{top: '100px',width: '1000px'}" footer-hide>
     <DataMonitor :endpointId="dbEndpointId" ref="dataMonitor"></DataMonitor>
   </Modal>
 
@@ -270,13 +270,13 @@ import {
   interceptParams
 } from '@/assets/js/utils'
 let tableEle = [{
-    title: 'tableKey.endpoint',
+    title: 'm_tableKey_endpoint',
     value: 'guid',
     style: 'width:300px',
     display: true
   },
   {
-    title: 'tableKey.group',
+    title: 'm_tableKey_group',
     display: true,
     tags: {
       // style: 'width: 300px;'
@@ -308,44 +308,44 @@ const alarmLevelMap = {
 }
 
 const btn = [{
-    btn_name: 'button.thresholdManagement',
+    btn_name: 'm_button_thresholdManagement',
     btn_func: 'thresholdConfig'
   },
   {
-    btn_name: 'button.edit',
+    btn_name: 'm_button_edit',
     btn_func: 'editF'
   },
   {
-    btn_name: 'button.historicalAlert',
+    btn_name: 'm_button_historicalAlert',
     btn_func: 'historyAlarm'
   },
   {
-    btn_name: 'field.group',
+    btn_name: 'm_field_group',
     btn_func: 'groupManagement'
   },
   {
-    btn_name: 'button.remove',
+    btn_name: 'm_button_remove',
     btn_func: 'deleteConfirmModal',
     color: 'red'
   },
   {
-    btn_name: 'button.logConfiguration',
+    btn_name: 'm_button_logConfiguration',
     btn_func: 'logManagement'
   },
   {
-    btn_name: 'button.portConfiguration',
+    btn_name: 'm_button_portConfiguration',
     btn_func: 'portManagement'
   },
   {
-    btn_name: 'button.processConfiguration',
+    btn_name: 'm_button_processConfiguration',
     btn_func: 'processManagement'
   },
   {
-    btn_name: 'button.businessConfiguration',
+    btn_name: 'm_button_businessConfiguration',
     btn_func: 'businessManagement'
   },
   {
-    btn_name: 'button.dataMonitoring',
+    btn_name: 'm_button_dataMonitoring',
     btn_func: 'dataMonitor'
   },
   {
@@ -369,11 +369,11 @@ export default {
           input_conditions: [{
             value: 'search',
             type: 'input',
-            placeholder: 'placeholder.input',
+            placeholder: 'm_placeholder_input',
             style: ''
           }],
           btn_group: [{
-            btn_name: 'button.search',
+            btn_name: 'm_button_search',
             btn_func: 'search',
             class: 'btn-confirm-f',
             btn_icon: 'fa fa-search'
@@ -407,12 +407,12 @@ export default {
               key: 'alarm_name'
             },
             {
-              title: this.$t('tableKey.status'),
+              title: this.$t('m_tableKey_status'),
               width: 80,
               key: 'status'
             },
             {
-              title: this.$t('menu.configuration'),
+              title: this.$t('m_menu_configuration'),
               key: 'strategyGroupsInfo',
               render: (h, params) => {
                 return (
@@ -421,7 +421,7 @@ export default {
               }
             },
             {
-              title: this.$t('field.endpoint'),
+              title: this.$t('m_field_endpoint'),
               key: 'endpoint'
             },
             {
@@ -429,7 +429,7 @@ export default {
               key: 'content'
             },
             {
-              title: this.$t('tableKey.s_priority'),
+              title: this.$t('m_tableKey_s_priority'),
               key: 's_priority',
               width: 100,
               render: (h, params) => {
@@ -443,7 +443,7 @@ export default {
               key: 'alarm_metric_list_join'
             },
             {
-              title: this.$t('field.threshold'),
+              title: this.$t('m_field_threshold'),
               key: 'alarm_detail',
               width: 200,
               ellipsis: true,
@@ -460,12 +460,12 @@ export default {
               }
             },
             {
-              title: this.$t('tableKey.start'),
+              title: this.$t('m_tableKey_start'),
               key: 'start_string',
               width: 120,
             },
             {
-              title: this.$t('tableKey.end'),
+              title: this.$t('m_tableKey_end'),
               key: 'end_string',
               width: 120,
               render: (h, params) => {
@@ -509,7 +509,7 @@ export default {
       historyAlarmModel: false,
       portModel: {
         modalId: 'port_Modal',
-        modalTitle: 'button.portConfiguration',
+        modalTitle: 'm_button_portConfiguration',
         saveFunc: 'portSave',
         isAdd: true,
         config: [{
@@ -520,7 +520,7 @@ export default {
       },
       endpointRejectModel: {
         modalId: 'endpoint_reject_model',
-        modalTitle: this.$t('field.endpoint'),
+        modalTitle: this.$t('m_field_endpoint'),
         supportStep: true,
         isAdd: true,
         saveFunc: 'endpointRejectSave',
@@ -528,7 +528,7 @@ export default {
             name: 'endpointReject',
             type: 'slot'
           },
-          {label: 'field.proxy_exporter', value: 'proxy_exporter', option: 'proxy_exporter', hide: true, disabled: false, type: 'select'}
+          {label: 'm_field_proxy_exporter', value: 'proxy_exporter', option: 'proxy_exporter', hide: true, disabled: false, type: 'select'}
         ],
         addRow: {
           name: '',
@@ -605,7 +605,7 @@ export default {
       },
       processConfigModel: {
         modalId: 'process_config_model',
-        modalTitle: 'button.processConfiguration',
+        modalTitle: 'm_button_processConfiguration',
         isAdd: true,
         saveFunc: 'processConfigSave',
         config: [{
@@ -638,7 +638,7 @@ export default {
       groupMsg: {},
       groupModel: {
         modalId: 'group_modal',
-        modalTitle: 'tableKey.endpoint',
+        modalTitle: 'm_tableKey_endpoint',
         saveFunc: 'managementEndpoint',
         modalStyle: 'min-width:900px',
         isAdd: true,
@@ -660,7 +660,7 @@ export default {
       fullscreenTableHight: document.documentElement.clientHeight - 300,
       strategyNameMaps: {
         "endpointGroup": "m_base_group",
-        "serviceGroup": "field.resourceLevel"
+        "serviceGroup": "m_field_resourceLevel"
       }
     }
   },
@@ -782,7 +782,7 @@ export default {
         group_ids: this.groupModel.group.map(Number)
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.endpointManagement.groupUpdate, params, () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         this.$root.JQ('#group_modal').modal('hide')
         this.initData(this.pageConfig.CRUD, this.pageConfig)
       })
@@ -816,7 +816,7 @@ export default {
         data: this.maintenanceWindowModel.result
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.endpointManagement.maintenanceWindow.update, params, () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         this.$root.JQ('#maintenance_window_model').modal('hide')
       })
     },
@@ -935,7 +935,7 @@ export default {
         operation: 'add'
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.endpointManagement.update.api, params, () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         this.$root.JQ('#add_object_Modal').modal('hide')
         this.initData(this.pageConfig.CRUD, this.pageConfig)
       })
@@ -964,7 +964,7 @@ export default {
       }
       let url = this.$root.apiCenter.endpointManagement.deregister.api
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', url, params, () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         this.initData(this.pageConfig.CRUD, this.pageConfig)
       })
     },
@@ -1040,7 +1040,7 @@ export default {
         this.$root.$httpRequestEntrance.httpRequestEntrance(methodType, api, params, () => {
           this.$root.$validate.emptyJson(this.endpointRejectModel.addRow)
           this.$root.JQ('#endpoint_reject_model').modal('hide')
-          this.$Message.success(this.$t('tips.success'))
+          this.$Message.success(this.$t('m_tips_success'))
           this.initData(this.pageConfig.CRUD, this.pageConfig)
         })
       })
@@ -1068,7 +1068,7 @@ export default {
         return !t.process_name
       })
       if (emptyPath) {
-        this.$Message.warning(this.$t('tableKey.name') + this.$t('tips.required'))
+        this.$Message.warning(this.$t('m_tableKey_name') + this.$t('m_tips_required'))
         return
       }
       const params = {
@@ -1077,7 +1077,7 @@ export default {
         check: true
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/alarm/process/update', params, () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
       })
       this.$root.JQ('#process_config_model').modal('hide')
     },
@@ -1086,7 +1086,7 @@ export default {
         return !t.process_name
       })
       if (emptyPath) {
-        this.$Message.warning(this.$t('tableKey.name') + this.$t('tips.required'))
+        this.$Message.warning(this.$t('m_tableKey_name') + this.$t('m_tips_required'))
         return
       }
       this.processConfigModel.process_list.push({
@@ -1107,7 +1107,7 @@ export default {
         return !t.path
       })
       if (emptyPath) {
-        this.$Message.warning(this.$t('tableKey.path') + this.$t('tips.required'))
+        this.$Message.warning(this.$t('m_tableKey_path') + this.$t('m_tips_required'))
         return
       }
       this.businessConfigModel.pathMsg.push({
@@ -1139,7 +1139,7 @@ export default {
         return !t.port === true
       })
       if (emptyPort) {
-        this.$Message.warning(this.$t('field.port') + this.$t('tips.required'))
+        this.$Message.warning(this.$t('m_field_port') + this.$t('m_tips_required'))
         return
       }
       this.portModel.portMsg.push({
@@ -1165,7 +1165,7 @@ export default {
         config: temp
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/agent/endpoint/telnet/update', params, () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         this.$root.JQ('#port_Modal').modal('hide')
       })
     }
