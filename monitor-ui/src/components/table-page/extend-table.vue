@@ -88,7 +88,7 @@
                   <div class="batch-operation" v-if="btn_val.btn_name ==='more'">
                     <div class="btn-group" role="group" @mouseover="btnMore(index)">
                     <span class="btn-operation">
-                      {{$t('table.more')}}
+                      {{$t('m_table_more')}}
                       <Icon type="chevron-down"></Icon>
                     </span>
                     </div>

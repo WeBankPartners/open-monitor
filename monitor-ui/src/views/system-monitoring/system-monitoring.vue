@@ -3,7 +3,7 @@
       <header>
         <div style="display:flex;justify-content:space-between; font-size:16px;padding:8px 16px">
             <div class="header-name">
-                <span>{{$t('tableKey.systemName')}}:</span>
+                <span>{{$t('m_tableKey_systemName')}}:</span>
                 <span> {{sysConfig.systemName}}</span>
             </div>
             <div class="header-tools"> 
@@ -40,7 +40,7 @@
             <span>{{item.i}}</span>
           </div>
           <div class="header-grid header-grid-tools"> 
-            <Tooltip :content="$t('placeholder.viewChart')" placement="top">
+            <Tooltip :content="$t('m_placeholder_viewChart')" placement="top">
               <i class="fa fa-eye" aria-hidden="true" @click="gridPlus(item)"></i>
             </Tooltip>
           </div>

@@ -4,13 +4,13 @@
     <slot name="pagination"></slot>
     <Modal
       v-model="isShowWarning"
-      :title="$t('closeConfirm.title')"
+      :title="$t('m_closeConfirm_title')"
       :mask-closable="false"
       @on-ok="ok"
       @on-cancel="cancel">
       <div class="modal-body" style="padding:30px">
         <div style="text-align:center">
-          <p style="color: red">{{$t('closeConfirm.tip')}}</p>
+          <p style="color: red">{{$t('m_closeConfirm_tip')}}</p>
         </div>
       </div>
     </Modal>
@@ -43,7 +43,7 @@ export default {
           key: 'alarm_name'
         },
         {
-          title: this.$t('menu.configuration'),
+          title: this.$t('m_menu_configuration'),
           key: 'strategyGroupsInfo',
           render: (h, params) => {
             return (
@@ -52,7 +52,7 @@ export default {
           }
         },
         {
-          title: this.$t('field.endpoint'),
+          title: this.$t('m_field_endpoint'),
           key: 'endpoint'
         },
         {
@@ -62,7 +62,7 @@ export default {
           tooltip: true
         },
         {
-          title: this.$t('tableKey.s_priority'),
+          title: this.$t('m_tableKey_s_priority'),
           key: 's_priority',
           width: 90,
           render: (h, params) => {
@@ -76,7 +76,7 @@ export default {
           key: 'alarm_metric_list_join'
         },
         {
-          title: this.$t('field.threshold'),
+          title: this.$t('m_field_threshold'),
           key: 'alarm_detail',
           width: 300,
           render: (h, params) => {
@@ -91,7 +91,7 @@ export default {
           }
         },
         {
-          title: this.$t('tableKey.start'),
+          title: this.$t('m_tableKey_start'),
           key: 'start_string',
           width: 170,
         },
@@ -106,7 +106,7 @@ export default {
           }
         },
         {
-          title: this.$t('table.action'),
+          title: this.$t('m_table_action'),
           key: 'action',
           width: 160,
           align: 'left',
@@ -114,7 +114,7 @@ export default {
           render: (h, params) => {
             return (
               <div style="text-align: left; cursor: pointer;display: inline-flex;">
-              <Tooltip content={this.$t('button.view')} placement="top" transfer={true}>
+              <Tooltip content={this.$t('m_button_view')} placement="top" transfer={true}>
                   <Button
                     size="small"
                     type="primary"
@@ -154,7 +154,7 @@ export default {
       selectedData: '',
       strategyNameMaps: {
         "endpointGroup": "m_base_group",
-        "serviceGroup": "field.resourceLevel"
+        "serviceGroup": "m_field_resourceLevel"
       }
     }
   },
