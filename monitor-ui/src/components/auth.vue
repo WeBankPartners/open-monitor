@@ -27,7 +27,7 @@
         ></Transfer>
       </div>
         <div slot="footer">
-            <Button type="primary" :disabled="disabled" @click="confirmRole">{{ $t('button.confirm') }}</Button>
+            <Button type="primary" :disabled="disabled" @click="confirmRole">{{ $t('m_button_confirm') }}</Button>
         </div>
     </Modal>
   </div>

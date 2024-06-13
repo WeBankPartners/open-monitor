@@ -52,7 +52,7 @@
       v-model="modelParams.isShow">
       <div slot="header" class="custom-modal-header">
         <span>
-          {{ (modelParams.isAdd ? $t('button.add') : $t('button.edit')) }}
+          {{ (modelParams.isAdd ? $t('button.add') : $t('m_button_edit')) }}
         </span>
       </div>
       <div>
@@ -74,19 +74,19 @@
         </Form>
       </div>
       <div slot="footer">
-        <Button :disabled="modelParams.params.id.trim()===''||modelParams.params.address.trim()===''" type="primary" @click="saveModal">{{$t('button.save')}}</Button>
-        <Button @click="cancelModal">{{$t('button.cancel')}}</Button>
+        <Button :disabled="modelParams.params.id.trim()===''||modelParams.params.address.trim()===''" type="primary" @click="saveModal">{{$t('m_button_save')}}</Button>
+        <Button @click="cancelModal">{{$t('m_button_cancel')}}</Button>
     </div>
     </Modal>
 
     <Modal
       v-model="isShowWarning"
-      :title="$t('delConfirm.title')"
+      :title="$t('m_delConfirm_title')"
       @on-ok="onDeleteConfirm"
       @on-cancel="onCancelDelete">
       <div class="modal-body" style="padding:30px">
         <div style="text-align:center">
-          <p style="color: red">{{$t('delConfirm.tip')}}</p>
+          <p style="color: red">{{$t('m_delConfirm_tip')}}</p>
         </div>
       </div>
     </Modal>
@@ -142,7 +142,7 @@ export default {
     },
     onDeleteConfirm () {
       this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', this.$root.apiCenter.remoteWrite, this.selectedData, () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         this.getList()
       })
     },
@@ -151,7 +151,7 @@ export default {
     },
     saveModal () {
       this.$root.$httpRequestEntrance.httpRequestEntrance(this.modelParams.isAdd ? 'POST' : 'PUT', this.$root.apiCenter.remoteWrite, this.modelParams.params, (resp) => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         this.cancelModal()
         this.getList()
       })
