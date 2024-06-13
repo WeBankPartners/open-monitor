@@ -65,13 +65,14 @@ func ImportMetric(c *gin.Context) {
 		middleware.ReturnHandleError(c, "file open error ", err)
 		return
 	}
-	var paramObj []*models.MetricTable
+	var paramObj, newParamObj []*models.MetricTable
+	var metricMap = make(map[string]bool)
 	var result = &models.MetricImportResultDto{
 		SuccessList: []string{},
 		FailList:    []string{},
 		Message:     "",
 	}
-	var nameList []string
+	var nameList, subFaiList []string
 	b, err := ioutil.ReadAll(f)
 	defer f.Close()
 	if err != nil {
@@ -93,11 +94,20 @@ func ImportMetric(c *gin.Context) {
 		return
 	}
 	for _, obj := range paramObj {
-		nameList = append(nameList, obj.Metric)
+		if !metricMap[obj.Metric] {
+			newParamObj = append(newParamObj, obj)
+			nameList = append(nameList, obj.Metric)
+		} else {
+			result.FailList = append(result.FailList, obj.Metric)
+			metricMap[obj.Metric] = true
+		}
 	}
-	if result.FailList, err = db.MetricImport(serviceGroup, middleware.GetOperateUser(c), paramObj); err != nil {
+	if subFaiList, err = db.MetricImport(serviceGroup, middleware.GetOperateUser(c), newParamObj); err != nil {
 		middleware.ReturnServerHandleError(c, err)
 		return
+	}
+	if len(subFaiList) > 0 {
+		result.FailList = append(result.FailList, subFaiList...)
 	}
 	if len(result.FailList) == 0 {
 		result.SuccessList = nameList
