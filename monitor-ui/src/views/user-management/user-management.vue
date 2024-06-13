@@ -6,12 +6,12 @@
 
 <script>
 let tableEle = [
-  {title: 'tableKey.name', value: 'name', display: true},
-  {title: 'tableKey.nickname', value: 'display_name', display: true},
-  {title: 'tableKey.email', value: 'email', display: true},
-  {title: 'tableKey.phone', value: 'phone', display: true}, 
+  {title: 'm_tableKey_name', value: 'name', display: true},
+  {title: 'm_tableKey_nickname', value: 'display_name', display: true},
+  {title: 'm_tableKey_email', value: 'email', display: true},
+  {title: 'm_tableKey_phone', value: 'phone', display: true}, 
   {
-    title: 'tableKey.role',
+    title: 'm_tableKey_role',
     display: true,
     tags: {style: 'width: 300px;'},
     'render': (item) => {
@@ -23,7 +23,7 @@ let tableEle = [
       }
     }
   },
-  {title: 'tableKey.activeDate', value: 'created_string', display: true}
+  {title: 'm_tableKey_activeDate', value: 'created_string', display: true}
 ]
 export default {
   name: '',
@@ -33,9 +33,9 @@ export default {
         CRUD: this.$root.apiCenter.setup.userManagement.get,
         researchConfig: {
           input_conditions: [
-            {value: 'search', type: 'input', placeholder: 'placeholder.input', style: ''}],
+            {value: 'search', type: 'input', placeholder: 'm_placeholder_input', style: ''}],
           btn_group: [
-            {btn_name: 'button.search', btn_func: 'search', class: 'btn-confirm-f', btn_icon: 'fa fa-search'}
+            {btn_name: 'm_button_search', btn_func: 'search', class: 'btn-confirm-f', btn_icon: 'fa fa-search'}
           ],
           filters: {
             search: ''

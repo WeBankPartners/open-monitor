@@ -2,7 +2,7 @@
   <div class="user-information-modify">
     <ul style=""> 
       <li>
-        <label for="">{{$t('tableKey.name')}}：</label>
+        <label for="">{{$t('m_tableKey_name')}}：</label>
         <span>{{userInfo.name}}</span>
       </li>
       <li v-for="(info, infoKey) in infoConfig" :key="infoKey">
@@ -15,28 +15,28 @@
         <template v-if="activeKey === 'new_password'">
           <input v-model="userInfo.new_password" type="text" class="form-control model-input">
           <input v-model="userInfo.re_new_password" type="text" class="form-control model-input">
-          <button type="button" class="btn-confirm-f">{{$t('button.confirm')}}</button>
+          <button type="button" class="btn-confirm-f">{{$t('m_button_confirm')}}</button>
         </template>
         <span v-else>{{userInfo.new_password}} <i @click="activeKey = 'new_password'" class="fa fa-pencil-square-o" aria-hidden="true"></i></span>
       </li> -->
       <template v-if="activeKey === 'new_password'">
         <li>
-          <label for="">{{$t('button.password')}}：</label>
+          <label for="">{{$t('m_button_password')}}：</label>
           <input v-model="userInfo.new_password" type="text" class="form-control model-input">
         </li>
         <li>
-          <label for="">{{$t('button.rePassword')}}：</label>
+          <label for="">{{$t('m_button_rePassword')}}：</label>
           <input v-model="userInfo.re_new_password" type="text" class="form-control model-input">
-          <button type="button" class="btn-confirm-f" @click="confirmPassword">{{$t('button.rePassword')}}</button>
-          <button type="button" class="btn-cancel-f" @click="abandonModify">{{$t('button.cancel')}}</button>
+          <button type="button" class="btn-confirm-f" @click="confirmPassword">{{$t('m_button_rePassword')}}</button>
+          <button type="button" class="btn-cancel-f" @click="abandonModify">{{$t('m_button_cancel')}}</button>
         </li> 
       </template>
       <li v-else>
-        <label for="">{{$t('button.password')}}：</label>
+        <label for="">{{$t('m_button_password')}}：</label>
         <span>{{userInfo.new_password}} <i @click="activeKey = 'new_password';userInfo.new_password=''" class="fa fa-pencil-square-o" aria-hidden="true"></i></span>
       </li>
       <li>
-        <label for="">{{$t('tableKey.activeDate')}}：</label>
+        <label for="">{{$t('m_tableKey_activeDate')}}：</label>
         <span>{{userInfo.created_string}}</span>
       </li>
     </ul>
@@ -49,9 +49,9 @@ export default {
   data() {
     return {
       infoConfig: [
-        { label: 'tableKey.nickname', key: 'display_name' },
-        { label: 'tableKey.email', key: 'email' },
-        { label: 'tableKey.phone', key: 'phone' },
+        { label: 'm_tableKey_nickname', key: 'display_name' },
+        { label: 'm_tableKey_email', key: 'email' },
+        { label: 'm_tableKey_phone', key: 'phone' },
         // { label: 'tableKey.password', key: 'new_password' },
       ],
       activeKey: null,
@@ -87,7 +87,7 @@ export default {
       }
       this.userInfo.new_password = '**********'
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.setup.userInformation.update, params, () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         this.userInformation()
       })
     },
@@ -95,7 +95,7 @@ export default {
       if (this.userInfo.new_password.trim() === this.userInfo.re_new_password.trim()) {
         this.saveInfo('new_password')
       } else {
-        this.$Message.success(this.$t('tips.failed'))
+        this.$Message.success(this.$t('m_tips_failed'))
       }
     },
     abandonModify () {
