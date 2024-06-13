@@ -20,12 +20,12 @@
     </div>
     <Modal
       v-model="isShowWarning"
-      :title="$t('closeConfirm.title')"
+      :title="$t('m_closeConfirm_title')"
       @on-ok="ok"
       @on-cancel="cancel">
       <div class="modal-body" style="padding:30px">
         <div style="text-align:center">
-          <p style="color: red">{{$t('closeConfirm.tip')}}</p>
+          <p style="color: red">{{$t('m_closeConfirm_tip')}}</p>
         </div>
       </div>
     </Modal>
@@ -159,7 +159,7 @@ export default {
         id: item.id
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.startNotify, params, () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
       },{isNeedloading: false})
     },
     deleteConfirmModal (rowData) {
@@ -195,7 +195,7 @@ export default {
     },
     remarkAlarm () {
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.remarkAlarm, this.modelConfig.addRow, () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         this.getAlarm(this.cacheParams.id, this.cacheParams.viewCondition)
         this.$root.JQ('#remark_Modal').modal('hide')
       })
