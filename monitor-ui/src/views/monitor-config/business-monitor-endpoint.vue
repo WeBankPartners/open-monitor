@@ -2,7 +2,7 @@
   <div class=" ">
     <section v-if="showManagement" style="margin-top: 16px;">
       <div v-for="table in totalData" :key="table.guid">
-        <Tag size="medium" color="blue" style="margin: 8px 0">{{$t('field.resourceLevel')}}：{{table.tableData.display_name}}</Tag>
+        <Tag size="medium" color="blue" style="margin: 8px 0">{{$t('m_field_resourceLevel')}}：{{table.tableData.display_name}}</Tag>
         <PageTable :pageConfig="table.tableConfig">
           <div slot='tableExtend'>
             <div style="margin:8px;border:1px solid #2db7f5">
@@ -24,10 +24,10 @@
       >
       <div :style="{ 'max-height': MODALHEIGHT + 'px', overflow: 'auto' }">
         <Form :label-width="100">
-          <FormItem :label="$t('tableKey.regular')">
+          <FormItem :label="$t('m_tableKey_regular')">
             <Input disabled v-model="ruleModelConfig.addRow.json_regular" style="width:100%"/>
           </FormItem>
-          <FormItem :label="$t('tableKey.tags')">
+          <FormItem :label="$t('m_tableKey_tags')">
             <Input disabled v-model="ruleModelConfig.addRow.tags" style="width:100%" />
           </FormItem>
         </Form>
@@ -40,21 +40,21 @@
               <Tooltip :content="$t('field.metric')" :delay="1000">
                 <Input disabled v-model="item.metric" style="width: 190px" :placeholder="$t('field.metric') + ' , e.g:code'" />
               </Tooltip>
-              <Tooltip :content="$t('field.aggType')" :delay="1000">
+              <Tooltip :content="$t('m_field_aggType')" :delay="1000">
                 <Select disabled v-model="item.agg_type" filterable clearable style="width:190px">
                   <Option v-for="agg in ruleModelConfig.aggOption" :value="agg" :key="agg">{{
                     agg
                   }}</Option>
                 </Select>
               </Tooltip>
-              <Tooltip :content="$t('tableKey.description')" :delay="1000">
-                <Input disabled v-model="item.display_name" style="width: 160px" :placeholder="$t('tableKey.description')" />
+              <Tooltip :content="$t('m_tableKey_description')" :delay="1000">
+                <Input disabled v-model="item.display_name" style="width: 160px" :placeholder="$t('m_tableKey_description')" />
               </Tooltip>
             </p>
             <div v-if="item.string_map.length > 0" :key="index + 1" style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;">
               <template v-for="(stringMapItem, stringMapIndex) in item.string_map">
                 <p :key="stringMapIndex + 2" style="text-align: center;">
-                  <Tooltip :content="$t('tableKey.regular')" :delay="1000">
+                  <Tooltip :content="$t('m_tableKey_regular')" :delay="1000">
                     <Select disabled v-model="stringMapItem.regulative" filterable clearable style="width:120px">
                       <Option v-for="regulation in regulationOption" :value="regulation.value" :key="regulation.value">{{
                         regulation.label
@@ -75,13 +75,13 @@
         </div>
       </div>
       <div slot="footer">
-        <Button @click="ruleModelConfig.isShow=false">{{$t('button.cancel')}}</Button>
+        <Button @click="ruleModelConfig.isShow=false">{{$t('m_button_cancel')}}</Button>
       </div>
     </Modal>
     <ModalComponent :modelConfig="customMetricsModelConfig">
       <div slot="ruleConfig" class="extentClass">
         <div class="marginbottom params-each">
-          <label class="col-md-2 label-name">{{$t('field.aggType')}}:</label>
+          <label class="col-md-2 label-name">{{$t('m_field_aggType')}}:</label>
           <Select disabled v-model="customMetricsModelConfig.addRow.agg_type" filterable clearable style="width:375px">
             <Option v-for="agg in customMetricsModelConfig.slotConfig.aggOption" :value="agg" :key="agg">{{
               agg
@@ -92,7 +92,7 @@
           <div style="margin: 4px 12px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px">
             <template v-for="(item, index) in customMetricsModelConfig.addRow.string_map">
               <p :key="index" style="text-align: center;">
-                <Tooltip :content="$t('tableKey.regular')" :delay="1000">
+                <Tooltip :content="$t('m_tableKey_regular')" :delay="1000">
                   <Select disabled v-model="item.regulative" filterable clearable style="width:150px">
                     <Option v-for="regulation in regulationOption" :value="regulation.value" :key="regulation.value">{{
                       regulation.label
@@ -109,7 +109,7 @@
             </template>
           </div>
         </div>
-        <Button style="float:right" @click="cancelModal">{{$t('button.cancel')}}</Button>
+        <Button style="float:right" @click="cancelModal">{{$t('m_button_cancel')}}</Button>
       </div>
     </ModalComponent>
     <!-- DB config -->
@@ -126,7 +126,7 @@
       >
       <div :style="{ 'max-height': MODALHEIGHT + 'px', overflow: 'auto' }">
         <Form :label-width="100">
-          <FormItem :label="$t('field.displayName')">
+          <FormItem :label="$t('m_field_displayName')">
             <Input disabled v-model="dbModelConfig.addRow.display_name" style="width:520px"/>
           </FormItem>
           <FormItem :label="$t('field.metric')">
@@ -135,7 +135,7 @@
           <FormItem label="SQL">
             <Input disabled v-model="dbModelConfig.addRow.metric_sql" type="textarea" style="width:520px" />
           </FormItem>
-          <FormItem :label="$t('field.type')">
+          <FormItem :label="$t('m_field_type')">
             <Select disabled v-model="dbModelConfig.addRow.monitor_type" @on-change="getEndpoint(dbModelConfig.addRow.monitor_type, 'mysql')" style="width: 520px">
               <Option v-for="type in monitorTypeOptions" :key="type.value" :value="type.label">{{type.label}}</Option>
             </Select>
@@ -163,19 +163,19 @@
     </Modal>
     <Modal
       v-model="addAndEditModal.isShow"
-      :title="$t('button.view')"
+      :title="$t('m_button_view')"
       :mask-closable="false"
       :width="720"
       >
       <div :style="{ 'max-height': MODALHEIGHT + 'px', overflow: 'auto' }">
         <div>
-          <span>{{$t('field.type')}}:</span>
+          <span>{{$t('m_field_type')}}:</span>
           <Select v-model="addAndEditModal.dataConfig.monitor_type" disabled style="width: 640px">
             <Option v-for="type in monitorTypeOptions" :key="type.value" :value="type.label">{{type.label}}</Option>
           </Select>
         </div>
         <div style="margin: 8px 0">
-          <span>{{$t('tableKey.path')}}:</span>
+          <span>{{$t('m_tableKey_path')}}:</span>
           <Input style="width: 640px" disabled v-model="addAndEditModal.dataConfig.log_path" />
         </div>
         <div style="margin: 4px 0px;padding:8px 12px;border:1px solid #dcdee2;border-radius:4px;text-align:center">
@@ -198,7 +198,7 @@
         </div>
       </div>
       <div slot="footer">
-        <Button @click="addAndEditModal.isShow = false">{{$t('button.cancel')}}</Button>
+        <Button @click="addAndEditModal.isShow = false">{{$t('m_button_cancel')}}</Button>
       </div>
     </Modal>
     <CustomRegex ref="customRegexRef"></CustomRegex>
@@ -211,19 +211,19 @@ import CustomRegex from '@/views/monitor-config/log-template-config/custom-regex
 import BusinessMonitorGroupConfig from '@/views/monitor-config/business-monitor-group-config.vue'
 import extendTable from '@/components/table-page/extend-table'
 let tableEle = [
-  {title: 'tableKey.logPath', value: 'log_path', display: true},
-  {title: 'field.type', value: 'monitor_type', display: true},
+  {title: 'm_tableKey_logPath', value: 'log_path', display: true},
+  {title: 'm_field_type', value: 'monitor_type', display: true},
 ]
 const btn = [
-  {btn_name: 'button.view', btn_func: 'editF'},
+  {btn_name: 'm_button_view', btn_func: 'editF'},
 ]
 let tableDbEle = [
-  {title: 'field.displayName', value: 'display_name', display: true},
+  {title: 'm_field_displayName', value: 'display_name', display: true},
   {title: 'field.metric', value: 'metric', display: true},
-  {title: 'field.type', value: 'monitor_type', display: true}
+  {title: 'm_field_type', value: 'monitor_type', display: true}
 ]
 const btnDb = [
-  {btn_name: 'button.view', btn_func: 'editDbItem'}
+  {btn_name: 'm_button_view', btn_func: 'editDbItem'}
 ]
 export default {
   name: '',
@@ -255,8 +255,8 @@ export default {
         noBtn: true,
         config: [
           {label: 'field.metric', value: 'metric', placeholder: '', disabled: true, type: 'text'},
-          {label: 'tableKey.description', value: 'display_name', placeholder: '', disabled: true, type: 'text'},
-          {label: 'tableKey.regular', value: 'regular', placeholder: 'tips.required', v_validate: 'required:true', disabled: true, type: 'text'},
+          {label: 'm_tableKey_description', value: 'display_name', placeholder: '', disabled: true, type: 'text'},
+          {label: 'm_tableKey_regular', value: 'regular', placeholder: 'm_tips_required', v_validate: 'required:true', disabled: true, type: 'text'},
           {name:'ruleConfig',type:'slot'}
         ],
         addRow: { // [通用]-保存用户新增、编辑时数据
@@ -465,9 +465,9 @@ export default {
                     {title: 'm_associated_template', value: 'log_monitor_template_name', display: true},
                     {title: 'm_metric_config_type', value: 'log_type_display', display: true},
                     {title: 'm_updatedBy', value: 'update_user', display: true},
-                    {title: 'title.updateTime', value: 'update_time', display: true},
-                    {title: 'table.action',btn:[
-                      {btn_name: 'button.view', btn_func: 'editRuleItem'}
+                    {title: 'm_title_updateTime', value: 'update_time', display: true},
+                    {title: 'm_table_action',btn:[
+                      {btn_name: 'm_button_view', btn_func: 'editRuleItem'}
                     ]}
                   ],
                   data: [1],
@@ -483,11 +483,11 @@ export default {
               //     isExtendF: true,
               //     title: '',
               //     config: [
-              //       {title: 'tableKey.regular', value: 'regular', display: true},
+              //       {title: 'm_tableKey_regular', value: 'regular', display: true},
               //       {title: 'field.metric', value: 'metric', display: true},
-              //       {title: 'field.aggType', value: 'agg_type', display: true},
-              //       {title: 'table.action',btn:[
-              //         {btn_name: 'button.view', btn_func: 'editCustomMetricItem'}
+              //       {title: 'm_field_aggType', value: 'agg_type', display: true},
+              //       {title: 'm_table_action',btn:[
+              //         {btn_name: 'm_button_view', btn_func: 'editCustomMetricItem'}
               //       ]}
               //     ],
               //     data: [1],

@@ -9,25 +9,25 @@
       class="monitor-add-group"
     >
       <div slot="header" class="w-header">
-        <div class="title">{{ operator === 'add' ? $t('button.addMetric') : $t('m_edit_meric') }}<span class="underline"></span></div>
+        <div class="title">{{ operator === 'add' ? $t('m_button_addMetric') : $t('m_edit_meric') }}<span class="underline"></span></div>
         <slot name="sub-title"></slot>
       </div>
       <div class="content" :style="{ maxHeight: maxHeight + 'px' }">
         <Form :label-width="100" label-position="left">
           <!--名称-->
-          <FormItem :label="$t('tableKey.name')" required>
+          <FormItem :label="$t('m_tableKey_name')" required>
             <Input :disabled="operator === 'edit'" v-model="metricConfigData.metric"></Input>
           </FormItem>
           <!--作用域-->
           <FormItem :label="$t('m_scope')" required>
-            <Select v-model="workspace" @on-change="changeWorkspace">
+            <Select v-model="workspace" :disabled="metricConfigData.metric_type === 'business'" @on-change="changeWorkspace">
               <Option v-if="serviceGroup" value="all_object">{{ $t('m_all_object') }}</Option>
               <Option value="any_object">{{ $t('m_any_object') }}</Option>
             </Select>
           </FormItem>
           <!--推荐配置-->
           <FormItem :label="$t('m_recommend')">
-            <Select v-model="templatePl" clearable @on-clear="clearTemplatePl" @on-change="changeTemplatePl">
+            <Select v-model="templatePl" :disabled="metricConfigData.metric_type === 'business'" clearable @on-clear="clearTemplatePl" @on-change="changeTemplatePl">
               <Option v-for="item in metricTemplate" :value="item.prom_expr" :key="item.prom_expr">{{ item.name }}</Option>
             </Select>
           </FormItem>
@@ -39,6 +39,7 @@
                 v-model="param.value"
                 @on-open-change="getCollectedMetric"
                 @on-change="changeCollectedMetric(param)"
+                :disabled="metricConfigData.metric_type === 'business'"
                 filterable
                 :key="param.label"
                 :placeholder="param.label"
@@ -56,7 +57,7 @@
           </FormItem>
           <!--表达式-->
           <FormItem :label="$t('field.metric')" required>
-            <Input v-model="metricConfigData.prom_expr" type="textarea" :rows="5" style="margin:5px 0;" />
+            <Input v-model="metricConfigData.prom_expr" :disabled="metricConfigData.metric_type === 'business'" type="textarea" :rows="5" style="margin:5px 0;" />
           </FormItem>
           <!--预览对象-->
           <FormItem :label="$t('m_preview') + $t('m_endpoint')">
@@ -69,8 +70,8 @@
         </Form>
       </div>
       <div class="drawer-footer">
-        <Button style="margin-right: 8px" @click="handleCancel">{{ $t('button.cancel') }}</Button>
-        <Button type="primary" class="primary" @click="handleSubmit">{{ $t('button.save') }}</Button>
+        <Button style="margin-right: 8px" @click="handleCancel">{{ $t('m_button_cancel') }}</Button>
+        <Button type="primary" class="primary" @click="handleSubmit">{{ $t('m_button_save') }}</Button>
       </div>
     </Drawer>
   </div>
@@ -97,6 +98,7 @@ export default {
       type: Object,
       default: () => {}
     },
+    // add添加，edit编辑
     operator: {
       type: String,
       default: 'add'
@@ -293,13 +295,13 @@ export default {
     },
     handleSubmit () {
       if (!this.metricConfigData.metric) {
-        return this.$Message.error(this.$t('tableKey.name') + this.$t('tips.required'))
+        return this.$Message.error(this.$t('m_tableKey_name') + this.$t('m_tips_required'))
       }
       if (!this.workspace) {
-        return this.$Message.error(this.$t('m_scope') + this.$t('tips.required'))
+        return this.$Message.error(this.$t('m_scope') + this.$t('m_tips_required'))
       }
       if (!this.metricConfigData.prom_expr) {
-        return this.$Message.error(this.$t('field.metric') + this.$t('tips.required'))
+        return this.$Message.error(this.$t('field.metric') + this.$t('m_tips_required'))
       }
       const type = !this.metricConfigData.guid ? 'POST' : 'PUT'
       this.metricConfigData.monitor_type = this.monitorType
@@ -310,7 +312,7 @@ export default {
         this.$root.apiCenter.metricManagement,
         [this.metricConfigData],
         () => {
-          this.$Message.success(this.$t('tips.success'))
+          this.$Message.success(this.$t('m_tips_success'))
           this.$emit('update:visible', false)
           this.$emit('fetchList')
         })
