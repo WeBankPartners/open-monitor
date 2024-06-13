@@ -5,7 +5,7 @@
         <div class="header-name">
         </div>
         <div class="header-tools"> 
-          <button class="btn btn-sm btn-confirm-f" @click="goBack()">{{$t('button.back')}}</button>
+          <button class="btn btn-sm btn-confirm-f" @click="goBack()">{{$t('m_button_back')}}</button>
         </div>
       </div>
     </header>

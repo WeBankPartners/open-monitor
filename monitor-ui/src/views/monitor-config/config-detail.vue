@@ -9,11 +9,11 @@
               <span class="underline"></span>
             </div>
             <Tag color="gold" v-if="tableItem.service_group===''">{{ $t('m_base_group') }}</Tag>
-            <Tag color="blue" v-else>{{ $t('field.resourceLevel') }}</Tag>
+            <Tag color="blue" v-else>{{ $t('m_field_resourceLevel') }}</Tag>
           </div>
           <span slot="extra" v-if="isEditState">
             <Button type="success" @click="addAlarmItem(tableItem, tableIndex)">{{ $t('button.add') }}</Button>
-            <Button type="primary" @click="updateNotify(tableItem)">{{ $t('button.save') }}</Button>
+            <Button type="primary" @click="updateNotify(tableItem)">{{ $t('m_button_save') }}</Button>
           </span>
           <span style="font-weight: 700;">{{$t('m_alarm_list')}}</span>
           <Table
@@ -23,7 +23,7 @@
             :span-method="(e) => handleMergeSpan(e, tableIndex)"
           />
           <div class="alarm-tips" style="margin-top:16px">
-            <span style="font-weight: 700;">{{$t('m_alarm_schedulingNotification')}}({{$t('m_all') + $t('menu.alert')}})</span>
+            <span style="font-weight: 700;">{{$t('m_alarm_schedulingNotification')}}({{$t('m_all') + $t('m_menu_alert')}})</span>
             <Tooltip :max-width="400" placement="right">
               <p slot=content>
                 {{ $t('m_alarm_tips') }}
@@ -39,7 +39,7 @@
                     <span style="margin-right: 8px;line-height: 32px;">{{$t(item.alarm_action)}}</span>
                   </Col>
                   <Col span="6" style="">
-                    <Select v-model="item.notify_roles" :disabled="!isEditState" :max-tag-count="2" style="width: 99%;" multiple filterable :placeholder="$t('field.role')">
+                    <Select v-model="item.notify_roles" :disabled="!isEditState" :max-tag-count="2" style="width: 99%;" multiple filterable :placeholder="$t('m_field_role')">
                       <Option v-for="item in allRole" :value="item.name" :key="item.value">{{ item.name }}</Option>
                     </Select>
                   </Col>
@@ -61,7 +61,7 @@
                       style="width:99%"
                       type="text" 
                       maxlength="50"
-                      :placeholder="$t('tableKey.description')"/>
+                      :placeholder="$t('m_tableKey_description')"/>
                   </Col>
                 </Row>
               </div>
@@ -82,24 +82,26 @@
             <FormItem :label="$t('m_alarmName')" prop="name">
                 <Input v-model="formData.name" :disabled="!isEditState" :maxlength="10"></Input>
             </FormItem>
-            <FormItem :label="$t('tableKey.s_priority')" prop="priority">
+            <FormItem :label="$t('m_tableKey_s_priority')" prop="priority">
                 <Select 
                   v-model="formData.priority"
                   :disabled="!isEditState">
                   <Option 
                     v-for="item in modelConfig.priorityList"
                     :value="item.value" 
+                    :label="item.label"
                     :key="item.value">
                     {{ $t(item.label) }}</Option>
                 </Select>
             </FormItem>
-            <FormItem :label="$t('tableKey.status')" prop="notify_enable">
+            <FormItem :label="$t('m_tableKey_status')" prop="notify_enable">
                 <Select 
                   :disabled="!isEditState"
                   v-model="formData.notify_enable" >
                   <Option 
                     v-for="item in modelConfig.notifyEnableOption" 
                     :value="item.value" 
+                    :label="item.label"
                     :key="item.value">
                     {{ item.label }}</Option>
                 </Select>
@@ -128,7 +130,7 @@
                   style="width: 168px">
                 </TimePicker>
             </FormItem>
-            <FormItem :label="$t('tableKey.content')" prop="content">
+            <FormItem :label="$t('m_tableKey_content')" prop="content">
                 <Input 
                   type="textarea" 
                   :disabled="!isEditState"
@@ -143,8 +145,8 @@
               class="arrange-item"
               >
               <span class="mr-1 mt-1" style="font-size: 12px">{{$t(item.alarm_action)}}</span>
-              <Tooltip :content="$t('resourceLevel.role')" :delay="1000">
-                <Select v-model="item.notify_roles" :disabled="!isEditState" :max-tag-count="2" style="width: 150px" multiple filterable :placeholder="$t('field.role')">
+              <Tooltip :content="$t('m_resourceLevel_role')" :delay="1000">
+                <Select v-model="item.notify_roles" :disabled="!isEditState" :max-tag-count="2" style="width: 150px" multiple filterable :placeholder="$t('m_field_role')">
                   <Option v-for="item in allRole" :value="item.name" :key="item.value">{{ item.name }}</Option>
                 </Select>
               </Tooltip>
@@ -158,14 +160,14 @@
                   <Option v-for="item in callbackMode" :value="item.value" :key="item.value">{{ $t(item.label) }}</Option>
                 </Select>
               </Tooltip>
-              <Tooltip :content="$t('tableKey.description')" :delay="1000">
+              <Tooltip :content="$t('m_tableKey_description')" :delay="1000">
                 <input 
                   v-model="item.description" 
                   :disabled="!isEditState"
                   style="width: 100px"
                   type="text" 
                   maxlength="50"
-                  :placeholder="$t('tableKey.description')"
+                  :placeholder="$t('m_tableKey_description')"
                   class="form-control model-input search-input c-dark"/>
               </Tooltip>
             </div>
@@ -173,7 +175,7 @@
         </div>
         <div class="right-content">
           <div class="use-underline-title mb-3">
-            {{$t('field.metric')}}{{$t('field.threshold')}}
+            {{$t('field.metric')}}{{$t('m_field_threshold')}}
             <span class="underline"></span>
           </div>
           <Table
@@ -195,8 +197,8 @@
         </div>
       </div>
       <div slot="btn">
-        <Button v-if="isEditState" class="modal-button-save" style="float:right" type="primary" @click="submitContent">{{$t('button.save')}}</Button>
-        <Button style="float:right" @click="cancelModal">{{$t('button.cancel')}}</Button>
+        <Button v-if="isEditState" class="modal-button-save" style="float:right" type="primary" @click="submitContent">{{$t('m_button_save')}}</Button>
+        <Button style="float:right" @click="cancelModal">{{$t('m_button_cancel')}}</Button>
       </div>
     </ModalComponent>
     <!-- 新增告警列表 -->
@@ -206,7 +208,7 @@
       v-model="isShowAddEditModal">
       <div slot="header" class="custom-modal-header">
         <span>
-          {{ (isEditState ? $t('button.add') : $t('button.edit')) + $t('m_metric_threshold') }}
+          {{ (isEditState ? $t('button.add') : $t('m_button_edit')) + $t('m_metric_threshold') }}
         </span>
         <!-- <Icon v-if="isfullscreen" @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-contract" />
         <Icon v-else @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-expand" /> -->
@@ -228,7 +230,7 @@
             <FormItem>
               <span slot="label">
                 <span style="color:red">*</span>
-                {{ $t('tableKey.s_priority') }}
+                {{ $t('m_tableKey_s_priority') }}
               </span>
               <Select 
                 v-model="formData.priority"
@@ -244,7 +246,7 @@
             <FormItem>
               <span slot="label">
                 <span style="color:red">*</span>
-                {{ $t('tableKey.status') }}
+                {{ $t('m_tableKey_status') }}
               </span>
               <Select
                 :disabled="!isEditState"
@@ -289,7 +291,7 @@
                 style="width: 168px">
               </TimePicker>
             </FormItem>
-            <FormItem :label="$t('tableKey.content')" prop="content">
+            <FormItem :label="$t('m_tableKey_content')" prop="content">
               <Input 
                 type="textarea" 
                 :disabled="!isEditState"
@@ -318,7 +320,7 @@
                   <span style="margin-right: 8px;line-height: 32px;">{{$t(item.alarm_action)}}</span>
                 </Col>
                 <Col span="6" style="">
-                  <Select v-model="item.notify_roles" :disabled="!isEditState" :max-tag-count="1" style="width: 97%;" multiple filterable :placeholder="$t('field.role')">
+                  <Select v-model="item.notify_roles" :disabled="!isEditState" :max-tag-count="1" style="width: 97%;" multiple filterable :placeholder="$t('m_field_role')">
                     <Option v-for="item in allRole" :value="item.name" :key="item.value">{{ item.name }}</Option>
                   </Select>
                 </Col>
@@ -340,7 +342,7 @@
                     style="width:97%"
                     type="text" 
                     maxlength="50"
-                    :placeholder="$t('tableKey.description')"/>
+                    :placeholder="$t('m_tableKey_description')"/>
                 </Col>
               </Row>
             </div>
@@ -348,7 +350,7 @@
         </div>
         <div class="right-content">
           <div class="use-underline-title mb-3">
-            {{$t('field.metric')}}{{$t('field.threshold')}}
+            {{$t('field.metric')}}{{$t('m_field_threshold')}}
             <span class="underline"></span>
           </div>
           <Table
@@ -372,20 +374,20 @@
         </div>
       </div>
       <div slot="footer">
-        <Button v-if="isEditState" class="modal-button-save" style="float:right" type="primary" @click="submitContent">{{$t('button.save')}}</Button>
-        <Button style="float:right" @click="cancelModal">{{$t('button.cancel')}}</Button>
+        <Button v-if="isEditState" class="modal-button-save" style="float:right" type="primary" @click="submitContent">{{$t('m_button_save')}}</Button>
+        <Button style="float:right" @click="cancelModal">{{$t('m_button_cancel')}}</Button>
       </div>
     </Modal>
 
     <Modal
       v-model="isShowWarningDelete"
-      :title="$t('delConfirm.title')"
+      :title="$t('m_delConfirm_title')"
       :ok-text="$t('m_confirm')"
       @on-ok="okDelRow"
       @on-cancel="cancleDelRow">
       <div class="modal-body" style="padding:30px">
         <div style="text-align:center">
-          <p style="color: red">{{$t('delConfirm.tip')}}</p>
+          <p style="color: red">{{$t('m_delConfirm_tip')}}</p>
         </div>
       </div>
     </Modal>
@@ -541,7 +543,7 @@ export default {
       // 模态框中的表格
       metricItemTableColumns: [
         {
-          title: this.$t('tableKey.metricName'),
+          title: this.$t('m_tableKey_metricName'),
           key: 'metric',
           align: 'left',
           minWidth: 150,
@@ -642,7 +644,7 @@ export default {
           }
         },
         {
-          title: this.$t('field.threshold'),
+          title: this.$t('m_field_threshold'),
           key: 'thresholdValue',
           align: 'left',
           width: 70,
@@ -661,7 +663,7 @@ export default {
           }
         },
         {
-          title: this.$t('tableKey.s_last'),
+          title: this.$t('m_tableKey_s_last'),
           key: 'lastValue',
           align: 'left',
           width: 70,
@@ -706,7 +708,7 @@ export default {
           }
         },
         {
-          title: this.$t('table.action'),
+          title: this.$t('m_table_action'),
           key: 'index',
           
           width: 50,
@@ -762,7 +764,7 @@ export default {
           }
         },
         {
-          title: this.$t('field.relativeTime'),
+          title: this.$t('m_field_relativeTime'),
           width: 130,
           
           key: 'active_window'
@@ -781,7 +783,7 @@ export default {
                   <div slot="content" style="white-space: normal;">
                     <p>{this.$t('m_notification_role')}: {result.role}</p>
                     <p>{this.$t('m_trigger_arrange')}: {result.arrange}</p>
-                    <p>{this.$t('tableKey.description')}: {result.description}</p>
+                    <p>{this.$t('m_tableKey_description')}: {result.description}</p>
                   </div>
                   <Tag color="geekblue" style="cursor:pointer">{this.$t('m_config_view')}</Tag>
                 </Tooltip>
@@ -803,7 +805,7 @@ export default {
                   <div slot="content" style="white-space: normal;">
                     <p>{this.$t('m_notification_role')}: {result.role}</p>
                     <p>{this.$t('m_trigger_arrange')}: {result.arrange}</p>
-                    <p>{this.$t('tableKey.description')}: {result.description}</p>
+                    <p>{this.$t('m_tableKey_description')}: {result.description}</p>
                   </div>
                   <Tag color="geekblue" style="cursor:pointer">{this.$t('m_config_view')}</Tag>
                 </Tooltip>
@@ -812,19 +814,19 @@ export default {
           }
         },
         {
-          title: this.$t('tableKey.metricName'),
+          title: this.$t('m_tableKey_metricName'),
           key: 'metric',
           
           minWidth: 300
         },
         {
-          title: this.$t('field.threshold'),
+          title: this.$t('m_field_threshold'),
           key: 'condition',
           
           width: 100
         },
         {
-          title: this.$t('tableKey.s_last'),
+          title: this.$t('m_tableKey_s_last'),
           key: 'last',
           
           width: 100
@@ -846,7 +848,7 @@ export default {
           }
         },
         {
-          title: this.$t('table.action'),
+          title: this.$t('m_table_action'),
           key: 'index',
           fixed: 'right',
           width: 150,
@@ -906,7 +908,7 @@ export default {
     updateNotify (tableData) {
       const api = this.getUpdateNotifyApi(tableData);
       this.request('POST', api, tableData.notify, () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         this.getDetail(this.targetId, this.type)
       })
     },
@@ -929,7 +931,7 @@ export default {
     deleteAlarmItem (rowData) {
       const api = `/monitor/api/v2/alarm/strategy/${rowData.guid}`
       this.request('DELETE', api, '', () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         this.getDetail(this.targetId, this.type)
       })
     },
@@ -990,7 +992,7 @@ export default {
       this.request('GET', api, '', (responseData) => {
         this.modelConfig.metricList = responseData;
         this.modelConfig.isAdd = false
-        this.modelConfig.modalTitle = 'button.edit',
+        this.modelConfig.modalTitle = 'm_button_edit',
         this.formData = cloneDeep(initFormData);
         this.manageEditParams(this.formData, rowData);
         this.formData.active_window = rowData.active_window === '' ? ['00:00', '23:59'] : rowData.active_window.split('-');
@@ -1089,10 +1091,10 @@ export default {
     },
     submitContent() {
       if (this.formData.name.trim() === '') {
-        return this.$Message.error(this.$t('m_alarmName') + this.$t('tips.required'));
+        return this.$Message.error(this.$t('m_alarmName') + this.$t('m_tips_required'));
       }
       if (!this.validateConditions(this.formData.conditions)) {
-        return this.$Message.error(this.$t('m_metric_threshold') + this.$t('tips.emptyToSave'));
+        return this.$Message.error(this.$t('m_metric_threshold') + this.$t('m_tips_emptyToSave'));
       }
       if (!this.validateDuplicateName(this.formData.name, this.selectedData.guid)) {
         return this.$Message.error(this.$t('m_alarmName') + this.$t('m_cannot_be_repeated'));
@@ -1107,7 +1109,7 @@ export default {
       this.processConditions(params.conditions);
       const requestMethod = this.modelConfig.isAdd ? "POST" : "PUT";
       this.request(requestMethod, '/monitor/api/v2/alarm/strategy', params, () => {
-        this.$Message.success(this.$t('tips.success'));
+        this.$Message.success(this.$t('m_tips_success'));
         this.closeAddEditModal()
         this.getDetail(this.targetId, this.type)
       })
