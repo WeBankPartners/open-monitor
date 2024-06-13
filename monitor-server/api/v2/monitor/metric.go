@@ -95,11 +95,11 @@ func ImportMetric(c *gin.Context) {
 	}
 	for _, obj := range paramObj {
 		if !metricMap[obj.Metric] {
+			metricMap[obj.Metric] = true
 			newParamObj = append(newParamObj, obj)
 			nameList = append(nameList, obj.Metric)
 		} else {
 			result.FailList = append(result.FailList, obj.Metric)
-			metricMap[obj.Metric] = true
 		}
 	}
 	if subFaiList, err = db.MetricImport(serviceGroup, middleware.GetOperateUser(c), newParamObj); err != nil {
