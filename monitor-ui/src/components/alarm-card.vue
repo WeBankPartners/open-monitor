@@ -237,12 +237,13 @@ export default {
       this.$parent.isShowWarning = true;
     },
     remarkModal(item) {
-      this.$parent.modelConfig.addRow = {
-        id: item.id,
-        message: item.custom_message,
-        is_custom: false,
-      };
-      this.$root.JQ("#remark_Modal").modal("show");
+      this.$emit('openRemarkModal', item)
+      // this.$parent.modelConfig.addRow = {
+      //   id: item.id,
+      //   message: item.custom_message,
+      //   is_custom: false,
+      // };
+      // this.$root.JQ("#remark_Modal").modal("show");
     },
     addParams(key, value) {
       this.$parent.filters[key] = value;
