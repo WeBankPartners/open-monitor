@@ -1040,4 +1040,5 @@ insert into main_dashboard (guid,role_id,custom_dashboard)(select uuid(),name,ma
 alter table log_keyword_config add column name varchar(64) default null;
 alter table log_metric_template modify `agg_type` varchar(255) DEFAULT 'agg' COMMENT '聚合类型';
 alter table log_metric_string_map modify `log_metric_config` varchar(64) DEFAULT null;
+alter table alarm modify column s_expr varchar(4096) default null;
 #@v2.0.8.1-end@;
