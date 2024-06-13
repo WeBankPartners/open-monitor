@@ -1,9 +1,9 @@
 <template>
   <div>
-    <Modal v-model="showModel" :title="$t('menu.configuration')" :mask-closable="false" :width="1100" :fullscreen="isfullscreen">
+    <Modal v-model="showModel" :title="$t('m_menu_configuration')" :mask-closable="false" :width="1100" :fullscreen="isfullscreen">
       <div slot="header" class="custom-modal-header">
         <span>
-          {{(view ? $t('button.view') : (isAdd ? $t('button.add') : $t('m_modify'))) + $t('menu.configuration')}}
+          {{(view ? $t('m_button_view') : (isAdd ? $t('button.add') : $t('m_modify'))) + $t('m_menu_configuration')}}
         </span>
         <Icon v-if="isfullscreen" @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-contract" />
         <Icon v-else @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-expand" />
@@ -18,7 +18,7 @@
         <Row>
           <Col span="8">
             <Form :label-width="120">
-              <FormItem :label="$t('tableKey.name')">
+              <FormItem :label="$t('m_tableKey_name')">
                 <Tooltip :content="businessConfig.name" transfer :disabled="businessConfig.name === ''" max-width="200" style="width: 100%;">
                   <Input v-model.trim="businessConfig.name" :disabled="view" maxlength="30" show-word-limit style="width:96%"></Input>
                   <span style="color: red">*</span>
@@ -47,7 +47,7 @@
                         <span style="color:red">*</span>
                         {{ $t('m_match_value') }}</Col>
                       <Col span="2">
-                        {{ $t('field.type') }}</Col>
+                        {{ $t('m_field_type') }}</Col>
                       <Col span="2"></Col>
                     </Row>
                     <Row v-for="(item, itemIndex) in businessConfig.code_string_map" :key="itemIndex" style="margin:6px 0">
@@ -161,8 +161,8 @@
         </div>
       </div>
       <template #footer>
-        <Button @click="showModel=false">{{ $t('button.cancel') }}</Button>
-        <Button :disabled="view" @click="saveConfig" type="primary">{{ $t('button.save') }}</Button>
+        <Button @click="showModel=false">{{ $t('m_button_cancel') }}</Button>
+        <Button :disabled="view" @click="saveConfig" type="primary">{{ $t('m_button_save') }}</Button>
       </template>
     </Modal>
   </div>
@@ -258,7 +258,7 @@ export default {
     },
     paramsValidate (tmpData) {
       if (tmpData.name === '') {
-        this.$Message.warning(`${this.$t('tableKey.name')}: ${this.$t('m_cannot_be_empty')}`)
+        this.$Message.warning(`${this.$t('m_tableKey_name')}: ${this.$t('m_cannot_be_empty')}`)
         return true
       }
       if (tmpData.metric_prefix_code === '') {
@@ -300,7 +300,7 @@ export default {
       // delete tmpData.update_time
       let methodType = this.isAdd ? 'POST' : 'PUT'
       this.$root.$httpRequestEntrance.httpRequestEntrance(methodType, this.$root.apiCenter.logMetricGroup, tmpData, () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         this.showModel = false
         this.$emit('reloadMetricData', this.parentGuid)
       })

@@ -23,17 +23,17 @@
   <Modal
    v-model="db_add_Modal"
    :mask-closable="false"
-    :title="$t('button.dataMonitoring')" 
+    :title="$t('m_button_dataMonitoring')" 
     @on-ok="addDbConfig"
     @on-cancel="cancelAddDbConfig"
   >
     <Form :model="activeSysPanal" :label-width="80">
-      <FormItem :label="$t('field.resourceLevel')">
+      <FormItem :label="$t('m_field_resourceLevel')">
         <Select filterable clearable v-model="newPanalName" style="width:400px">
           <Option v-for="item in panalNameList" :value="item.option_value" :key="item.option_value">{{ item.option_text }}</Option>
         </Select>
       </FormItem>
-      <FormItem :label="$t('tableKey.name')">
+      <FormItem :label="$t('m_tableKey_name')">
         <Input v-model="activeSysPanal.name" placeholder="" style="width:400px"></Input>
       </FormItem>
       <FormItem label="sql">
@@ -44,17 +44,17 @@
   <Modal
    v-model="db_edit_Modal"
    :mask-closable="false"
-    :title="$t('button.dataMonitoring')" 
+    :title="$t('m_button_dataMonitoring')" 
     @on-ok="editDbConfig"
     @on-cancel="cancelEditDbConfig"
   >
     <Form :model="activeSysPanal" :label-width="80">
-      <FormItem :label="$t('field.resourceLevel')">
+      <FormItem :label="$t('m_field_resourceLevel')">
         <Select filterable clearable v-model="newPanalName" style="width:400px">
           <Option v-for="item in panalNameList" :value="item.option_value" :key="item.option_value">{{ item.option_text }}</Option>
         </Select>
       </FormItem>
-      <FormItem :label="$t('tableKey.name')">
+      <FormItem :label="$t('m_tableKey_name')">
         <Input v-model="activeSysPanal.name" placeholder=""></Input>
       </FormItem>
       <FormItem label="sql">
@@ -63,18 +63,18 @@
     </Form>
   </Modal>
   <Modal v-model="isShowWarning" 
-    :title="$t('delConfirm.title')"
+    :title="$t('m_delConfirm_title')"
     @on-ok="ok" 
     @on-cancel="cancel">
     <div class="modal-body" style="padding:30px">
       <div style="text-align:center">
-        <p style="color: red">{{$t('delConfirm.tip')}}</p>
+        <p style="color: red">{{$t('m_delConfirm_tip')}}</p>
       </div>
     </div>
   </Modal>
   <Modal
     v-model="isShowChangePanalName"
-    :title="$t('button.edit')"
+    :title="$t('m_button_edit')"
     @on-ok="changePanalName">
     <Select filterable clearable v-model="newPanalName" style="width:400px">
         <Option v-for="item in panalNameList" :value="item.option_value" :key="item.option_value">{{ item.option_text }}</Option>
@@ -85,12 +85,12 @@
 
 <script>
 let tableEle = [{
-    title: 'tableKey.endpoint',
+    title: 'm_tableKey_endpoint',
     value: 'endpoint_guid',
     display: true
   },
   {
-    title: 'tableKey.name',
+    title: 'm_tableKey_name',
     value: 'name',
     display: true
   },
@@ -100,18 +100,18 @@ let tableEle = [{
     display: true
   },
   {
-    title: 'field.resourceLevel',
+    title: 'm_field_resourceLevel',
     value: 'sys_panel',
     display: true
   }
 ]
 const btn = [
   {
-    btn_name: 'button.edit',
+    btn_name: 'm_button_edit',
     btn_func: 'editDbMonitor'
   },
   {
-    btn_name: 'button.remove',
+    btn_name: 'm_button_remove',
     btn_func: 'removeDbmonitor',
     color: 'red'
   }

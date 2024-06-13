@@ -1,6 +1,6 @@
 <template>
   <div class=" ">
-     <Title :title="$t('title.setUp')"></Title>
+     <Title :title="$t('m_title_setUp')"></Title>
     <section>
       <Tabs :value="activeTab" @on-click="changeTab"> 
         <template v-for="(tabItem, tabIndex) in tabs">
@@ -20,9 +20,9 @@ export default {
     return {
       activeTab: '/userConfigIndex/userInformationModify',
       tabs: [
-        {label: 'field.personalInformation', path:'/userConfigIndex/userInformationModify'},
-        {label: 'field.userManagement', path:'/userConfigIndex/userManagement'},
-        {label: 'field.roleManagement', path:'/userConfigIndex/roleManagement'}
+        {label: 'm_field_personalInformation', path:'/userConfigIndex/userInformationModify'},
+        {label: 'm_field_userManagement', path:'/userConfigIndex/userManagement'},
+        {label: 'm_field_roleManagement', path:'/userConfigIndex/roleManagement'}
       ]
     }
   },

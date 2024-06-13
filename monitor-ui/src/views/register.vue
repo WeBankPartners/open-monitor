@@ -101,7 +101,7 @@ export default {
             }
           })
           .catch(() => {
-            this.$Message.warning(this.$t('tips.failed'))
+            this.$Message.warning(this.$t('m_tips_failed'))
           });
         }
       })

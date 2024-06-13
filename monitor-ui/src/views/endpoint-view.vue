@@ -1,6 +1,6 @@
 <template>
   <div class="page" id="endpointView">
-    <Title :title="$t('menu.endpointView')"></Title>
+    <Title :title="$t('m_menu_endpointView')"></Title>
     <Search ref="search" />
     <Charts v-if="showCharts" :charts='charts' @refreshConfig="refreshConfig" ref="parentCharts" />
     <div v-if="recursiveViewConfig.length && showRecursive">
@@ -72,7 +72,7 @@ export default {
               key: 'alarm_name'
             },
             {
-              title: this.$t('tableKey.status'),
+              title: this.$t('m_tableKey_status'),
               width: 80,
               key: 'status'
             },
@@ -130,7 +130,7 @@ export default {
               width: 120,
             },
             {
-              title: this.$t('tableKey.end'),
+              title: this.$t('m_tableKey_end'),
               key: 'end_string',
               width: 120,
               render: (h, params) => {
@@ -156,7 +156,7 @@ export default {
       },
       strategyNameMaps: {
         "endpointGroup": "m_base_group",
-        "serviceGroup": "field.resourceLevel"
+        "serviceGroup": "m_field_resourceLevel"
       }
     }
   },
