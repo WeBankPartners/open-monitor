@@ -19,7 +19,7 @@
         <div class="search-container">
           <div>
             <div class="search-zone">
-              <span class="params-title">{{$t('field.relativeTime')}}：</span>
+              <span class="params-title">{{$t('m_field_relativeTime')}}：</span>
               <!-- <Select filterable v-model="viewCondition.timeTnterval" :disabled="disableTime" style="width:80px"  @on-change="initPanals">
                 <Option v-for="item in dataPick" :value="item.value" :key="item.value">{{ item.label }}</Option>
               </Select> -->
@@ -28,7 +28,7 @@
               </RadioGroup>
             </div>
             <div class="search-zone ml-2">
-              <span class="params-title">{{$t('field.timeInterval')}}：</span>
+              <span class="params-title">{{$t('m_field_timeInterval')}}：</span>
               <DatePicker 
                 type="datetimerange" 
                 :value="viewCondition.dateRange" 
@@ -36,13 +36,13 @@
                 placement="bottom-start" 
                 split-panels
                 @on-change="datePick" 
-                :placeholder="$t('placeholder.datePicker')" 
+                :placeholder="$t('m_placeholder_datePicker')" 
                 style="width: 320px">
               </DatePicker>
             </div>
             <div class="search-zone ml-2">
-              <span class="params-title">{{$t('placeholder.refresh')}}：</span>
-              <Select filterable clearable v-model="viewCondition.autoRefresh" :disabled="disableTime" style="width:100px" @on-change="initPanals" :placeholder="$t('placeholder.refresh')">
+              <span class="params-title">{{$t('m_placeholder_refresh')}}：</span>
+              <Select filterable clearable v-model="viewCondition.autoRefresh" :disabled="disableTime" style="width:100px" @on-change="initPanals" :placeholder="$t('m_placeholder_refresh')">
                 <Option v-for="item in autoRefreshConfig" :value="item.value" :key="item.value">{{ item.label }}</Option>
               </Select>
             </div>
@@ -50,7 +50,7 @@
 
           <div class="header-tools">
             <template v-if="isEditStatus">
-              <Button type="primary" @click="savePanelInfo">{{$t('button.saveConfig')}}</Button>
+              <Button type="primary" @click="savePanelInfo">{{$t('m_button_saveConfig')}}</Button>
             </template> 
 
             <Button type="info" @click="showAlarm?closeAlarmDisplay():openAlarmDisplay()">
@@ -156,7 +156,7 @@
                     <span  v-else @click.stop="">
                       <Input v-model.trim="item.i" class="editChartId" autofocus :maxlength="30" show-word-limit style="width:200px" size="small" placeholder="" />             
                     </span>
-                    <Tooltip :content="$t('placeholder.editTitle')" theme="light" transfer placement="top">
+                    <Tooltip :content="$t('m_placeholder_editTitle')" theme="light" transfer placement="top">
                       <i v-if="isEditStatus && editChartId !== item.id && !noAllowChartChange(item)" class="fa fa-pencil-square" style="font-size: 16px;" @click.stop="startEditTitle(item)" aria-hidden="true"></i>
                       <Icon v-if="editChartId === item.id" size="20" type="md-checkmark" @click.stop="onChartTitleChange(item)" />
                       <Icon v-if="editChartId === item.id" size="20" type="md-close" @click.stop="cancelEditTitle(item)" />
@@ -179,13 +179,13 @@
                     <Tooltip :content="$t('m_save_chart_library')" theme="light" transfer placement="top">
                       <Icon v-if="isEditStatus && !item.public" size="15" type="md-archive" @click.stop="showChartAuthDialog(item)" />
                     </Tooltip>
-                    <Tooltip :content="$t('button.chart.dataView')" theme="light" transfer placement="top">
+                    <Tooltip :content="$t('m_button_chart_dataView')" theme="light" transfer placement="top">
                       <i class="fa fa-eye" style="font-size: 16px;" v-if="isShowGridPlus(item)" aria-hidden="true" @click.stop="gridPlus(item)"></i>
                     </Tooltip>
-                    <Tooltip :content="$t('placeholder.chartConfiguration')" theme="light" transfer placement="top">
+                    <Tooltip :content="$t('m_placeholder_chartConfiguration')" theme="light" transfer placement="top">
                       <i class="fa fa-cog" style="font-size: 16px;" v-if="isEditStatus && !noAllowChartChange(item)" @click.stop="setChartType(item)" aria-hidden="true"></i>
                     </Tooltip>
-                    <Tooltip :content="$t('placeholder.deleteChart')" theme="light" transfer placement="top">
+                    <Tooltip :content="$t('m_placeholder_deleteChart')" theme="light" transfer placement="top">
                       <i class="fa fa-trash" style="font-size: 16px;color:red" v-if="isEditStatus" @click.stop="removeGrid(item)" aria-hidden="true"></i>
                     </Tooltip>
                   </div>
@@ -213,7 +213,7 @@
     </Drawer>
 
     <!-- 对于每个chart的抽屉详细信息 -->
-    <Drawer :title="$t('placeholder.chartConfiguration')" 
+    <Drawer :title="$t('m_placeholder_chartConfiguration')" 
       :width="100" 
       :mask-closable="false" 
       v-model="showChartConfig"
@@ -222,12 +222,12 @@
     </Drawer>
     <Modal
       v-model="isShowWarning"
-      :title="$t('delConfirm.title')"
+      :title="$t('m_delConfirm_title')"
       @on-ok="confirmRemoveGrid"
       @on-cancel="cancel">
       <div class="modal-body" style="padding:30px">
         <div style="text-align:center">
-          <p style="color: red">{{$t('delConfirm.tip')}}</p>
+          <p style="color: red">{{$t('m_delConfirm_tip')}}</p>
         </div>
       </div>
     </Modal>
@@ -258,14 +258,14 @@
         </Form>
       </div>
       <template #footer>
-        <Button @click="showGroupMgmt = false">{{ $t('button.cancel') }}</Button>
-        <Button @click="confirmGroupMgmt" :disabled="!groupName" type="primary">{{ $t('button.save') }}</Button>
+        <Button @click="showGroupMgmt = false">{{ $t('m_button_cancel') }}</Button>
+        <Button @click="confirmGroupMgmt" :disabled="!groupName" type="primary">{{ $t('m_button_save') }}</Button>
       </template>
     </Modal>
     <!-- 删除组 -->
     <Modal
       v-model="isShowDeleteGroupWarning"
-      :title="$t('delConfirm.title')"
+      :title="$t('m_delConfirm_title')"
       @on-ok="confirmDeleteGroup"
       @on-cancel="isShowDeleteGroupWarning = false">
       <div class="modal-body" style="padding:30px">
@@ -702,18 +702,18 @@ export default {
 
     async savePanelInfo() {
       await this.submitPanelInfo();
-      this.$Message.success(this.$t('tips.success'));
+      this.$Message.success(this.$t('m_tips_success'));
     },
     returnPreviousPage() {
       this.$router.push({name:'viewConfigIndex'})
     },
     async savePanalEdit () {
       if (!this.panalName) {
-        this.$Message.warning(this.$t('tips.required'))
+        this.$Message.warning(this.$t('m_tips_required'))
         return
       }
       await this.submitPanelInfo();
-      this.$Message.success(this.$t('tips.success'));
+      this.$Message.success(this.$t('m_tips_success'));
       this.isEditPanal = false;
     },
     canclePanalEdit () {
@@ -722,11 +722,8 @@ export default {
     },
     //#region 组管理
     selectGroup (item) {
-      this.activeGroup = item
-      this.refreshNow = true
-      this.$nextTick(() => {
-        this.refreshNow = false
-      })
+      this.activeGroup = item;
+      this.getPannelList(this.activeGroup);
     },
     addGroupItem () {
       this.groupName = ''
@@ -958,7 +955,7 @@ export default {
         name: item.i
       })
       this.editChartId = null;
-      this.$Message.success(this.$t('tips.success'));
+      this.$Message.success(this.$t('m_tips_success'));
     },
     chartDuplicateNameCheck(chartId, chartName, isPublic = 0) {
       return new Promise(resolve => {
