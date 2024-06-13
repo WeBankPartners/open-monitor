@@ -1,7 +1,7 @@
 <template>
   <div>
     <div style="margin-top: 12px;">
-      <!-- <Title :title="$t('menu.templateManagement')"></Title> -->
+      <!-- <Title :title="$t('m_menu_templateManagement')"></Title> -->
       <header>
         <div class="header-name">
           <i class="fa fa-th-large fa-18" aria-hidden="true"></i>
@@ -10,19 +10,19 @@
         <div class="search-container">
           <div>
             <div class="search-zone">
-              <span class="params-title">{{$t('field.relativeTime')}}：</span>
+              <span class="params-title">{{$t('m_field_relativeTime')}}：</span>
               <Select filterable v-model="viewCondition.timeTnterval" :disabled="disableTime" style="width:80px"  @on-change="initPanals">
                 <Option v-for="item in dataPick" :value="item.value" :key="item.value">{{ item.label }}</Option>
               </Select>
             </div>
             <div class="search-zone">
-              <span class="params-title">{{$t('placeholder.refresh')}}：</span>
-              <Select filterable clearable v-model="viewCondition.autoRefresh" :disabled="disableTime" style="width:100px" @on-change="initPanals" :placeholder="$t('placeholder.refresh')">
+              <span class="params-title">{{$t('m_placeholder_refresh')}}：</span>
+              <Select filterable clearable v-model="viewCondition.autoRefresh" :disabled="disableTime" style="width:100px" @on-change="initPanals" :placeholder="$t('m_placeholder_refresh')">
                 <Option v-for="item in autoRefreshConfig" :value="item.value" :key="item.value">{{ item.label }}</Option>
               </Select>
             </div>
             <div class="search-zone">
-              <span class="params-title">{{$t('field.timeInterval')}}：</span>
+              <span class="params-title">{{$t('m_field_timeInterval')}}：</span>
               <DatePicker 
                 type="datetimerange" 
                 :value="viewCondition.dateRange" 
@@ -30,12 +30,12 @@
                 split-panels
                 placement="bottom-start" 
                 @on-change="datePick" 
-                :placeholder="$t('placeholder.datePicker')" 
+                :placeholder="$t('m_placeholder_datePicker')" 
                 style="width: 320px">
               </DatePicker>
             </div>
             <!-- <div class="search-zone">
-              <span class="params-title">{{$t('field.aggType')}}：</span>
+              <span class="params-title">{{$t('m_field_aggType')}}：</span>
               <RadioGroup v-model="viewCondition.agg" @on-change="initPanals" size="small" type="button">
                 <Radio disabled label="min">Min</Radio>
                 <Radio disabled label="max">Max</Radio>
@@ -108,7 +108,7 @@
                   <Select v-model="item.group" style="width:100px;" disabled size="small" clearable filterable :placeholder="$t('m_group_name')">
                     <Option v-for="item in panel_group_list" :value="item" :key="item" style="float: left;">{{ item }}</Option>
                   </Select>
-                  <Tooltip :content="$t('button.chart.dataView')" theme="light" transfer placement="top">
+                  <Tooltip :content="$t('m_button_chart_dataView')" theme="light" transfer placement="top">
                     <i class="fa fa-eye" style="font-size: 16px;" v-if="isShowGridPlus(item)" aria-hidden="true" @click="gridPlus(item)"></i>
                   </Tooltip>
                 </div>
@@ -130,7 +130,7 @@
     <Drawer title="View details" :width="zoneWidth" v-model="showMaxChart">
       <ViewChart ref="viewChart"></ViewChart>
     </Drawer>
-    <Drawer :title="$t('placeholder.chartConfiguration')" :width="zoneWidth" :mask-closable="false" v-model="showChartConfig">
+    <Drawer :title="$t('m_placeholder_chartConfiguration')" :width="zoneWidth" :mask-closable="false" v-model="showChartConfig">
       <editPieView v-if="chartType === 'pie' && showChartConfig" ref="editPieView" :activeGridConfig="activeGridConfig" :parentRouteData="parentRouteData"></editPieView>
       <editLineView v-if="chartType !== 'pie' && showChartConfig" ref="editLineView" :activeGridConfig="activeGridConfig" :parentRouteData="parentRouteData"></editLineView>
     </Drawer>
@@ -144,12 +144,12 @@
     </ModalComponent>
     <Modal
       v-model="isShowWarning"
-      :title="$t('delConfirm.title')"
+      :title="$t('m_delConfirm_title')"
       @on-ok="confirmRemoveGrid"
       @on-cancel="cancel">
       <div class="modal-body" style="padding:30px">
         <div style="text-align:center">
-          <p style="color: red">{{$t('delConfirm.tip')}}</p>
+          <p style="color: red">{{$t('m_delConfirm_tip')}}</p>
         </div>
       </div>
     </Modal>
@@ -172,8 +172,8 @@
         </Row>
       </div>
       <template #footer>
-        <Button @click="showGroupMgmt = false">{{ $t('button.cancel') }}</Button>
-        <Button @click="confirmGroupMgmt" :disabled="!groupName" type="primary" class="primary-btn">{{ $t('button.save') }}</Button>
+        <Button @click="showGroupMgmt = false">{{ $t('m_button_cancel') }}</Button>
+        <Button @click="confirmGroupMgmt" :disabled="!groupName" type="primary" class="primary-btn">{{ $t('m_button_save') }}</Button>
       </template>
     </Modal>
   </div>
@@ -531,7 +531,7 @@ export default {
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST',this.$root.apiCenter.template.save, params, () => {
         this.isEditPanal = false
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
       })
     },
     goBack () {
@@ -539,7 +539,7 @@ export default {
     },
     savePanalEdit () {
       if (!this.panalName) {
-        this.$Message.warning(this.$t('tips.required'))
+        this.$Message.warning(this.$t('m_tips_required'))
         return
       }
       this.saveEdit()

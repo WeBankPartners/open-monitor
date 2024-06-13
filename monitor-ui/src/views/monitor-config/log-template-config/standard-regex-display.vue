@@ -21,7 +21,7 @@
           <FormItem :label="$t('m_updatedBy')">
             {{ configInfo.update_user }}
           </FormItem>
-          <FormItem :label="$t('title.updateTime')">
+          <FormItem :label="$t('m_title_updateTime')">
             {{ configInfo.update_time }}
           </FormItem>
         </template>
@@ -34,7 +34,7 @@
             disabled
           />
           <div v-if="isParmasChanged && configInfo.demo_log.length === 0" style="color: red">
-            {{ $t('m_log_example') }} {{ $t('tips.required') }}
+            {{ $t('m_log_example') }} {{ $t('m_tips_required') }}
           </div>
         </FormItem>
       </Form>
@@ -181,7 +181,7 @@ export default {
       // },
       columnsForParameterCollection: [
         {
-          title: this.$t('field.displayName'),
+          title: this.$t('m_field_displayName'),
           key: 'display_name',
           width: 120
         },
@@ -238,7 +238,7 @@ export default {
       ],
       columnsForComputeMetrics: [
         {
-          title: this.$t('field.displayName'),
+          title: this.$t('m_field_displayName'),
           key: 'display_name',
           width: 120
         },
