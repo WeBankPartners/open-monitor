@@ -4,7 +4,7 @@
       <div class="title-form">
         <ul>
           <li class="filter-li">
-            <span class="label">{{$t('title.updateTime')}}：</span>{{timeForDataAchieve}}
+            <span class="label">{{$t('m_title_updateTime')}}：</span>{{timeForDataAchieve}}
           </li>
           <li class="filter-li">
             <span class="label">{{$t('alarmStatistics')}}：</span>
@@ -72,13 +72,13 @@
     </ClassicAlarm>
     <Modal
       v-model="isShowWarning"
-      :title="$t('closeConfirm.title')"
+      :title="$t('m_closeConfirm_title')"
       :mask-closable="false"
       @on-ok="ok"
       @on-cancel="cancel">
       <div class="modal-body" style="padding:30px">
         <div style="text-align:center">
-          <p style="color: red">{{$t('closeConfirm.tip')}}</p>
+          <p style="color: red">{{$t('m_closeConfirm_tip')}}</p>
         </div>
       </div>
     </Modal>
@@ -307,7 +307,7 @@ export default {
     },
     remarkAlarm () {
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.apiCenter.remarkAlarm, this.modelConfig.addRow, () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         this.getAlarm()
         this.$root.JQ('#remark_Modal').modal('hide')
       })

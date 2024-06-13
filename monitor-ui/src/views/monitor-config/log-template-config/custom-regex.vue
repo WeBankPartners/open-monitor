@@ -8,7 +8,7 @@
     >
       <div slot="header" class="custom-modal-header">
         <span>
-          {{(view ? $t('button.view') : (isAdd ? $t('button.add') : $t('button.edit'))) + $t('m_custom_regex')}}
+          {{(view ? $t('m_button_view') : (isAdd ? $t('button.add') : $t('m_button_edit'))) + $t('m_custom_regex')}}
         </span>
         <Icon v-if="isfullscreen" @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-contract" />
         <Icon v-else @click="isfullscreen = !isfullscreen" class="fullscreen-icon" type="ios-expand" />
@@ -39,7 +39,7 @@
                   :disabled="view"
                 />
                 <div v-if="isParmasChanged && configInfo.demo_log.length === 0" style="color: red">
-                  {{ $t('m_log_example') }} {{ $t('tips.required') }}
+                  {{ $t('m_log_example') }} {{ $t('m_tips_required') }}
                 </div>
               </FormItem>
             </Form>
@@ -80,8 +80,8 @@
         </Row>
       </div>
       <div slot="footer">
-        <Button @click="showModal = false">{{ $t('button.cancel') }}</Button>
-        <Button :disabled="view" @click="saveConfig" type="primary">{{ $t('button.save') }}</Button>
+        <Button @click="showModal = false">{{ $t('m_button_cancel') }}</Button>
+        <Button :disabled="view" @click="saveConfig" type="primary">{{ $t('m_button_save') }}</Button>
       </div>
     </Modal>
     <TagMapConfig ref="tagMapConfigRef" @setTagMap="setTagMap"></TagMapConfig>
@@ -201,7 +201,7 @@ export default {
           }
         },
         {
-          title: this.$t('table.action'),
+          title: this.$t('m_table_action'),
           key: 'action',
           width: 80,
           align: 'left',
@@ -362,7 +362,7 @@ export default {
           }
         },
         {
-          title: this.$t('table.action'),
+          title: this.$t('m_table_action'),
           key: 'action',
           width: 80,
           align: 'left',
@@ -440,7 +440,7 @@ export default {
     },
     paramsValidate (tmpData) {
       if (tmpData.name === '') {
-        this.$Message.warning(`${this.$t('tableKey.name')}${this.$t('m_cannot_be_empty')}`)
+        this.$Message.warning(`${this.$t('m_tableKey_name')}${this.$t('m_cannot_be_empty')}`)
         return true
       }
       if (tmpData.param_list.length === 0) {
@@ -513,7 +513,7 @@ export default {
       delete tmpData.update_time
       let methodType = this.isAdd ? 'POST' : 'PUT'
       this.$root.$httpRequestEntrance.httpRequestEntrance(methodType, this.$root.apiCenter.customLogMetricConfig, tmpData, () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         this.showModal = false
         this.$emit('reloadMetricData', this.parentGuid)
       })

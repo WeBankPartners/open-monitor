@@ -36,8 +36,8 @@
         </div>
       </div>
       <template #footer>
-        <Button @click="showModel = false">{{ $t('button.cancel') }}</Button>
-        <Button @click="okSelect" type="primary">{{ $t('button.confirm') }}</Button>
+        <Button @click="showModel = false">{{ $t('m_button_cancel') }}</Button>
+        <Button @click="okSelect" type="primary">{{ $t('m_button_confirm') }}</Button>
       </template>
     </Modal>
   </div>
