@@ -2,25 +2,25 @@
   <Menu mode="horizontal" :theme="theme1" :active-name="activeName" @on-select="menuChange">
     <div class="logo" @click="routerChange">
       <img src="../assets/logo.png" />
-      <span>{{$t('menu.systemName')}}</span>
+      <span>{{$t('m_menu_systemName')}}</span>
     </div>
     <Submenu name>
       <template slot="title">
         <i class="fa fa-line-chart" aria-hidden="true"></i>
-        {{$t("menu.view")}}
+        {{$t("m_menu_view")}}
       </template>
-      <MenuItem name="endpointView">{{$t("menu.endpointView")}}</MenuItem>
-      <!-- <MenuItem name="systemMonitoring">{{$t("menu.systemMonitoring")}}</MenuItem> -->
-      <MenuItem name="metricConfig">{{$t("menu.metricConfiguration")}}</MenuItem>
-      <MenuItem name="viewConfigIndex">{{$t("menu.screenConfiguration")}}</MenuItem>
+      <MenuItem name="endpointView">{{$t("m_menu_endpointView")}}</MenuItem>
+      <!-- <MenuItem name="systemMonitoring">{{$t("m_menu_systemMonitoring")}}</MenuItem> -->
+      <MenuItem name="metricConfig">{{$t("m_menu_metricConfiguration")}}</MenuItem>
+      <MenuItem name="viewConfigIndex">{{$t("m_menu_screenConfiguration")}}</MenuItem>
     </Submenu>
     <MenuItem name="monitorConfigIndex">
       <i class="fa fa-gears" aria-hidden="true"></i>
-      {{$t("menu.configuration")}}
+      {{$t("m_menu_configuration")}}
     </MenuItem>
     <MenuItem name="alarmManagement">
       <i class="fa fa-bell" aria-hidden="true"></i>
-      {{$t("menu.alert")}}
+      {{$t("m_menu_alert")}}
     </MenuItem>
     <div>
     </div>
@@ -34,13 +34,13 @@
         <DropdownMenu slot="list">
           <DropdownItem style="width:110px">
             <span @click="changeTheme">
-              <a>{{$t('title.theme')}}:</a>
+              <a>{{$t('m_title_theme')}}:</a>
               <div class="set-theme" :style="{background: !defaultTheme? 'white':'black'}" ></div>
             </span>
           </DropdownItem>
           <DropdownItem style="width:110px">
             <span @click="setUp">
-              <a>{{$t('title.setUp')}}:</a>
+              <a>{{$t('m_title_setUp')}}:</a>
               <div class="set-theme">
                 <i class="fa fa-cog" aria-hidden="true"></i>
               </div>
@@ -48,7 +48,7 @@
           </DropdownItem>
           <DropdownItem style="width:110px;">
             <span @click="logout">
-              <a>{{$t('button.Logout')}}:</a>
+              <a>{{$t('m_button_Logout')}}:</a>
               <div class="set-theme">
                 <i class="fa fa-sign-out" aria-hidden="true"></i>
               </div>
