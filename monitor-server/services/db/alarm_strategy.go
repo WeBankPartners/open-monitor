@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/WeBankPartners/go-common-lib/guid"
-	"github.com/WeBankPartners/go-common-lib/smtp"
+	"github.com/WeBankPartners/open-monitor/monitor-server/common/smtp"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/prom"
@@ -1087,8 +1087,12 @@ func notifyMailAction(notify *models.NotifyTable, alarmObj *models.AlarmHandleOb
 		return err
 	}
 	mailSender := smtp.MailSender{SenderName: mailConfig.SenderName, SenderMail: mailConfig.SenderMail, AuthServer: mailConfig.AuthServer, AuthPassword: mailConfig.AuthPassword}
-	if mailConfig.SSL == "Y" {
+	mailConfig.SSL = strings.ToLower(mailConfig.SSL)
+	if mailConfig.SSL == "y" {
 		mailSender.SSL = true
+	} else if mailConfig.SSL == "starttls" {
+		mailSender.SSL = true
+		mailSender.ByStartTLS = true
 	}
 	err = mailSender.Init()
 	if err != nil {
