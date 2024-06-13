@@ -162,6 +162,7 @@ export default {
     },
     uploadSucess () {
       this.$Message.success(this.$t('m_tips_success'))
+      this.search()
     },
     uploadFailed (error, file) {
       this.$Message.warning({
