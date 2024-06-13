@@ -12,7 +12,7 @@
     </div>
     <div class="alarm-list">
       <section class="alarm-card-container">
-        <alarm-card v-for="(item, alarmIndex) in resultData" :key="alarmIndex" :data="item" :button="true" :hideFilter="true"></alarm-card>
+        <alarm-card v-for="(item, alarmIndex) in resultData" @openRemarkModal="remarkModal" :key="alarmIndex" :data="item" :button="true" :hideFilter="true"></alarm-card>
       </section>
       <div style="margin: 4px 0; text-align:right">
         <Page :total="paginationInfo.total" @on-change="pageIndexChange" @on-page-size-change="pageSizeChange" show-elevator show-sizer show-total />
