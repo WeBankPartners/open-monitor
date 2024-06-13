@@ -11,11 +11,19 @@
     </Drawer>
     <Modal
       v-model="historyAlarmModel"
-      width="1200"
+      width="1400"
       :mask-closable="false"
       :footer-hide="true"
-      :title="$t('m_button_historicalAlert')">
-      <Table height="500" row-key="id" :columns="historyAlarmPageConfig.table.tableEle" :data="historyAlarmPageConfig.table.tableData"></Table>
+      :fullscreen="isfullscreen"
+      :title="$t('button.historicalAlert')">
+      <div slot="header" class="custom-modal-header">
+        <span>
+          {{$t('alarmHistory')}}
+        </span>
+        <Icon v-if="isfullscreen" @click="fullscreenChange" class="fullscreen-icon" type="ios-contract" />
+        <Icon v-else @click="fullscreenChange" class="fullscreen-icon" type="ios-expand" />
+      </div>
+      <Table :columns="historyAlarmPageConfig.table.tableEle" :height="fullscreenTableHight" :data="historyAlarmPageConfig.table.tableData"></Table>
     </Modal>
   </div>
 </template>
@@ -25,6 +33,20 @@ import Search from '@/components/search'
 import Charts from '@/components/charts'
 import Recursive from '@/views/recursive-view/recursive'
 import MaxChart from '@/components/max-chart'
+const alarmLevelMap = {
+  low: {
+    label: "m_low",
+    buttonType: "green"
+  },
+  medium: {
+    label: "m_medium",
+    buttonType: "gold"
+  },
+  high: {
+    label: "m_high",
+    buttonType: "red"
+  }
+}
 export default {
   name: 'endpoint-view',
   data() {
@@ -39,19 +61,14 @@ export default {
       showMaxChart: false,
       zoneWidth: '800',
       historyAlarmModel: false,
+      isfullscreen: false,
+      fullscreenTableHight: document.documentElement.clientHeight - 300,
       historyAlarmPageConfig: {
         table: {
           tableData: [],
           tableEle: [
             {
-              title: this.$t('m_tableKey_endpoint'),
-              width: 220,
-              key: 'endpoint',
-              tree: true
-            },
-            {
-              title: this.$t('m_alarmName'), 
-              width: 100,
+              title: this.$t('m_alarmName'),
               key: 'alarm_name'
             },
             {
@@ -59,26 +76,58 @@ export default {
               width: 80,
               key: 'status'
             },
-
             {
-              title: this.$t('m_menu_configuration'),
+              title: this.$t('menu.configuration'),
+              key: 'strategyGroupsInfo',
+              render: (h, params) => {
+                return (
+                  <div domPropsInnerHTML={params.row.strategyGroupsInfo}></div>
+                )
+              }
+            },
+            {
+              title: this.$t('field.endpoint'),
+              key: 'endpoint'
+            },
+            {
+              title: this.$t('alarmContent'),
+              key: 'content'
+            },
+            {
+              title: this.$t('tableKey.s_priority'),
+              key: 's_priority',
+              width: 100,
+              render: (h, params) => {
+                return (
+                  <Tag color={alarmLevelMap[params.row.s_priority].buttonType}>{this.$t(alarmLevelMap[params.row.s_priority].label)}</Tag>
+                )
+              }
+            },
+            {
+              title: this.$t('field.metric'),
+              key: 'alarm_metric_list_join'
+            },
+            {
+              title: this.$t('field.threshold'),
+              key: 'alarm_detail',
+              width: 200,
+              ellipsis: true,
+              tooltip: true,
+              render: (h, params) => {
+                return (
+                  <Tooltip transfer={true} placement="bottom-start" max-width="300">
+                    <div slot="content">
+                      <div domPropsInnerHTML={params.row.alarm_detail}></div>
+                    </div>
+                    <div domPropsInnerHTML={params.row.alarm_detail}></div>
+                  </Tooltip>
+                )
+              }
+            },
+            {
+              title: this.$t('tableKey.start'),
+              key: 'start_string',
               width: 120,
-              key: 'strategyGroupsInfo'
-            },
-            {
-              title: this.$t('alarmContent'), 
-              key: 'content',
-              width: 150
-            },
-            {
-              title: this.$t('m_tableKey_s_priority'), 
-              key: 's_priority', 
-              width: 80
-            },
-            { 
-              title: this.$t('m_tableKey_start'), 
-              key: 'start_string', 
-              width: 100
             },
             {
               title: this.$t('m_tableKey_end'),
@@ -93,26 +142,17 @@ export default {
               }
             },
             {
-              title: this.$t('field.metric'), 
-              key: 'alarm_metric_list', 
-              width: 150,
+              title: this.$t('m_remark'),
+              key: 'custom_message',
+              width: 120,
               render: (h, params) => {
-                let res = '-'
-                if (!isEmpty(params.row.alarm_metric_list)) {
-                  res = params.row.alarm_metric_list.join(';')
-                }
-                return h('span', res);
+                return(
+                  <div>{params.row.custom_message || '-'}</div>
+                )
               }
             },
-            { 
-              title: this.$t('m_field_threshold'), 
-              key: 'alarm_detail', 
-              width: 200,
-              renderContent: true
-            }
-          ],
-          btn: [],
-        },
+          ]
+        }
       },
       strategyNameMaps: {
         "endpointGroup": "m_base_group",
@@ -175,34 +215,44 @@ export default {
       this.showMaxChart = true
       this.$refs.maxChart.getChartData(data)
     },
-    historyAlarm(endpointObject) {
+    //#region 历史告警
+    historyAlarm(rowData) {
       let params = {
-        id: endpointObject.id,
-        guid: endpointObject.option_value
+        id: rowData.id
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', this.$root.apiCenter.alarm.history, params, (responseData) => {
-        responseData.forEach((item) => {
-          item.children = item.problem_list
-          item.id = item.endpoint + '--'
-          if (endpointObject.id !== -1) {
-            item._showChildren = true
-          }
-          if (!isEmpty(item.children)) {
-            item.children.forEach(child => {
-              child.strategyGroupsInfo = '-'
-              if (!isEmpty(child.strategy_groups)) {
-                child.strategyGroupsInfo = item.strategy_groups.reduce((res, cur)=> {
-                  return res + this.$t(this.strategyNameMaps[cur.type]) + ':' + cur.name + '; '
-                }, '')
-              }
-            })
-          }
-          return item
-        })
-        this.historyAlarmPageConfig.table.tableData = responseData
+        this.historyAlarmPageConfig.table.tableData = this.changeResultData(responseData[0].problem_list)
       })
+      this.isfullscreen = false
       this.historyAlarmModel = true
-    }
+    },
+    changeResultData(dataList) {
+      if (dataList && !isEmpty(dataList)) {
+        dataList.forEach(item => {
+          item.strategyGroupsInfo = '-';
+          item.alarm_metric_list_join = '-';
+          if (!isEmpty(item.strategy_groups)) {
+            item.strategyGroupsInfo = item.strategy_groups.reduce((res, cur)=> {
+              return res + this.$t(this.strategyNameMaps[cur.type]) + ':' + cur.name + '<br/> '
+            }, '')
+          }
+
+          if (!isEmpty(item.alarm_metric_list)) {
+            item.alarm_metric_list_join = item.alarm_metric_list.join(',')
+          }
+        });
+      }
+      return dataList
+    },
+    fullscreenChange () {
+      this.isfullscreen = !this.isfullscreen
+      if (this.isfullscreen) {
+        this.fullscreenTableHight = document.documentElement.clientHeight - 160
+      } else {
+        this.fullscreenTableHight = document.documentElement.clientHeight - 300
+      }
+    },
+    //#endregion
   },
   components: {
     Search,
