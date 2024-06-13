@@ -13,7 +13,7 @@
 
       <div class="tool-save">
         <div class="condition" style="text-align: left">
-          <Tooltip :content="$t('field.type')" :delay="1000">
+          <Tooltip :content="$t('m_field_type')" :delay="1000">
             <Select v-model="templateQuery.pie_metric_type"
               style="width:160px"
                @on-change="switchType"
@@ -23,9 +23,9 @@
             </Select>
           </Tooltip>
         </div>
-        <button class="btn btn-sm btn-confirm-f" @click="saveConfig">{{$t('button.saveConfig')}}</button>
-        <!-- <button class="btn btn-sm btn-cancel-f" @click="goback()">{{$t('button.back')}}</button> -->
-        <button class="btn btn-sm btn-cancel-f" @click="goback()">{{$t('button.cancel')}}</button>
+        <button class="btn btn-sm btn-confirm-f" @click="saveConfig">{{$t('m_button_saveConfig')}}</button>
+        <!-- <button class="btn btn-sm btn-cancel-f" @click="goback()">{{$t('m_button_back')}}</button> -->
+        <button class="btn btn-sm btn-cancel-f" @click="goback()">{{$t('m_button_cancel')}}</button>
       </div>
       <div>
         <section class="zone-config-operation">
@@ -37,12 +37,12 @@
               closable
               @click.native="test(query, queryIndex)"
               @on-close="removeQuery(queryIndex)"
-            >{{$t('field.endpoint')}}：{{query.endpoint}}; {{$t('field.metric')}}：{{query.metric}}</Tag>
+            >{{$t('m_field_endpoint')}}：{{query.endpoint}}; {{$t('field.metric')}}：{{query.metric}}</Tag>
           </div>
           <div class="condition-zone">
             <ul>
               <li>
-                <div class="condition condition-title c-black-gray">{{$t('field.endpoint')}}</div>
+                <div class="condition condition-title c-black-gray">{{$t('m_field_endpoint')}}</div>
                 <div class="condition">
                   <Select
                     style="width:300px"
@@ -61,12 +61,12 @@
                       :key="index"
                     >
                       <TagShow :list="options" name="option_type_name" :tagName="option.option_type_name" :index="index"></TagShow>{{option.option_text}}</Option>
-                    <Option value="moreTips" disabled>{{$t('tips.requestMoreData')}}</Option>
+                    <Option value="moreTips" disabled>{{$t('m_tips_requestMoreData')}}</Option>
                   </Select>
                 </div>
               </li>
               <li v-if="showRecursiveType">
-                <div class="condition condition-title c-black-gray">{{$t('field.type')}}</div>
+                <div class="condition condition-title c-black-gray">{{$t('m_field_type')}}</div>
                   <div class="condition">
                     <Select
                       v-model="templateQuery.app_object_endpoint_type"
@@ -101,7 +101,7 @@
                     >{{ item.metric }}</Option>
                   </Select>
                 </div>
-                <button class="btn btn-cancel-f" @click="addQuery">{{$t('button.addConfig')}}</button>
+                <button class="btn btn-cancel-f" @click="addQuery">{{$t('m_button_addConfig')}}</button>
               </li>
             </ul>
           </div>
@@ -333,7 +333,7 @@ export default {
     metricSelectOpen(metric) {
       if (this.$root.$validate.isEmpty_reset(metric)) {
         this.$Message.warning(
-          this.$t("tableKey.s_metric") + this.$t("tips.required")
+          this.$t("m_tableKey_s_metric") + this.$t("m_tips_required")
         )
       } else {
         let params = { monitorType: this.showRecursiveType ? this.templateQuery.app_object_endpoint_type : this.endpointType, serviceGroup: this.showRecursiveType ? this.templateQuery.endpoint : '' }
@@ -355,7 +355,7 @@ export default {
         this.$root.apiCenter.template.save,
         this.params,
         () => {
-          this.$Message.success(this.$t("tips.success"))
+          this.$Message.success(this.$t("m_tips_success"))
           this.$parent.$parent.showChartConfig = false
           this.$parent.$parent.reloadPanal(this.params)
         }

@@ -9,10 +9,10 @@
               <Tag :color="choiceColor(item.type)" class="tag-width">{{item.type}}</Tag>
             </div>
             <div>
-              <!-- <button class="btn-cancel-f btn-small" @click="alarmReceivers(item)">{{$t('button.receiversConfiguration')}}</button> -->
-              <button class="btn-cancel-f btn-small" @click="associatedRole(item)">{{$t('resourceLevel.addAssociatedRole')}}</button>
-              <button class="btn-cancel-f btn-small" @click="associatedObject(item)">{{$t('resourceLevel.addAssociatedObject')}}</button>
-              <button class="btn-cancel-f btn-small" v-if="isPlugin" @click="alarmCallback(item)">{{$t('resourceLevel.alarmCallback')}}</button>
+              <!-- <button class="btn-cancel-f btn-small" @click="alarmReceivers(item)">{{$t('m_button_receiversConfiguration')}}</button> -->
+              <button class="btn-cancel-f btn-small" @click="associatedRole(item)">{{$t('m_resourceLevel_addAssociatedRole')}}</button>
+              <button class="btn-cancel-f btn-small" @click="associatedObject(item)">{{$t('m_resourceLevel_addAssociatedObject')}}</button>
+              <button class="btn-cancel-f btn-small" v-if="isPlugin" @click="alarmCallback(item)">{{$t('m_resourceLevel_alarmCallback')}}</button>
               <i class="fa fa-plus" aria-hidden="true" @click="addPanel(item)"> </i>
               <i class="fa fa-pencil" @click="editPanal(item)" aria-hidden="true"></i>
               <i class="fa fa-trash-o" style="color:red" @click="deleteConfirmModal(item)" aria-hidden="true"></i>
@@ -38,21 +38,21 @@
       label-colon
       v-model="isEditPanal"
       :mask-closable="false"
-      :title="$t('resourceLevel.levelMsg')">
+      :title="$t('m_resourceLevel_levelMsg')">
       <Form :model="currentData" label-position="left" :label-width="60">
-        <FormItem :label="$t('field.guid')">
+        <FormItem :label="$t('m_field_guid')">
             <Input v-model="currentData.guid" :disabled="!isAdd"></Input>
         </FormItem>
-        <FormItem :label="$t('field.displayName')">
+        <FormItem :label="$t('m_field_displayName')">
             <Input v-model="currentData.display_name"></Input>
         </FormItem>
-        <FormItem :label="$t('field.type')">
+        <FormItem :label="$t('m_field_type')">
             <Input v-model="currentData.type"></Input>
         </FormItem>
       </Form>
       <div slot="footer">
-        <button class="btn-cancel-f" @click="isEditPanal = false">{{$t('button.cancel')}}</button>
-        <button class="btn-confirm-f" @click="savePanal">{{$t('button.save')}}</button>
+        <button class="btn-cancel-f" @click="isEditPanal = false">{{$t('m_button_cancel')}}</button>
+        <button class="btn-confirm-f" @click="savePanal">{{$t('m_button_save')}}</button>
       </div>
     </Modal>
     <!-- 关联角色 -->
@@ -60,17 +60,17 @@
       label-colon
       v-model="isAssociatedRole"
       :mask-closable="false"
-      :title="$t('resourceLevel.associatedRole')">
+      :title="$t('m_resourceLevel_associatedRole')">
       <Form :model="currentData" label-position="left" :label-width="60">
-        <FormItem :label="$t('resourceLevel.role')">
+        <FormItem :label="$t('m_resourceLevel_role')">
           <Select v-model="selectedRole" multiple filterable>
             <Option v-for="item in allRole" :value="item.value" :key="item.value">{{ item.name }}</Option>
           </Select>
         </FormItem>
       </Form>
       <div slot="footer">
-        <button class="btn-cancel-f" @click="isAssociatedRole = false">{{$t('button.cancel')}}</button>
-        <button class="btn-confirm-f" @click="saveAssociatedRole">{{$t('button.save')}}</button>
+        <button class="btn-cancel-f" @click="isAssociatedRole = false">{{$t('m_button_cancel')}}</button>
+        <button class="btn-confirm-f" @click="saveAssociatedRole">{{$t('m_button_save')}}</button>
       </div>
     </Modal>
 
@@ -80,7 +80,7 @@
       v-model="isAssociatedObject"
       :mask-closable="false"
       :width="550"
-      :title="$t('resourceLevel.associatedObject')">
+      :title="$t('m_resourceLevel_associatedObject')">
       <Form :model="currentData" label-position="right" label-colon :label-width="100">
         <FormItem :label="$t('m_add_object')">
           <Select
@@ -92,7 +92,7 @@
             :placeholder="$t('requestMoreData')"
             :remote-method="getAllObject"
             >
-            <Option v-for="(item, index) in allObject" :value="item.option_value" :key="item.option_value">
+            <Option v-for="(item, index) in allObject" :value="item.option_value" :label="item.option_text" :key="item.option_value">
               <TagShow :list="allObject" name="type" :tagName="item.type" :index="index"></TagShow> 
               {{ item.option_text }}</Option>
           </Select>
@@ -118,8 +118,8 @@
         </FormItem>
       </Form>
       <div slot="footer">
-        <button class="btn-cancel-f" @click="isAssociatedObject = false">{{$t('button.cancel')}}</button>
-        <button class="btn-confirm-f" @click="saveAssociatedObject">{{$t('button.save')}}</button>
+        <button class="btn-cancel-f" @click="isAssociatedObject = false">{{$t('m_button_cancel')}}</button>
+        <button class="btn-confirm-f" @click="saveAssociatedObject">{{$t('m_button_save')}}</button>
       </div>
     </Modal>
     <!-- 告警回调 -->
@@ -127,22 +127,22 @@
       label-colon
       v-model="isAlarmCallback"
       :mask-closable="false"
-      :title="$t('resourceLevel.alarmCallback')">
+      :title="$t('m_resourceLevel_alarmCallback')">
       <Form label-position="left" :label-width="80">
-        <FormItem :label="$t('resourceLevel.alarmFiring')">
+        <FormItem :label="$t('m_resourceLevel_alarmFiring')">
           <Select v-model="selectedFiring" filterable clearable>
             <Option v-for="item in allFiring" :value="item.option_text" :key="item.option_text+'ab'">{{ item.option_text }}</Option>
           </Select>
         </FormItem>
-        <FormItem :label="$t('resourceLevel.alarmRecover')">
+        <FormItem :label="$t('m_resourceLevel_alarmRecover')">
           <Select v-model="selectedRecover" filterable clearable>
             <Option v-for="item in allRecover" :value="item.option_text" :key="item.option_text+'cd'">{{ item.option_text }}</Option>
           </Select>
         </FormItem>
       </Form>
       <div slot="footer">
-        <button class="btn-cancel-f" @click="isAlarmCallback = false">{{$t('button.cancel')}}</button>
-        <button class="btn-confirm-f" @click="saveAlarmCallback">{{$t('button.save')}}</button>
+        <button class="btn-cancel-f" @click="isAlarmCallback = false">{{$t('m_button_cancel')}}</button>
+        <button class="btn-confirm-f" @click="saveAlarmCallback">{{$t('m_button_save')}}</button>
       </div>
     </Modal>
     <!-- 告警接收人 -->
@@ -150,9 +150,9 @@
       label-colon
       v-model="isAlarmReceivers"
       :mask-closable="false"
-      :title="$t('button.receivers')">
+      :title="$t('m_button_receivers')">
         <div>
-          <label style="width:110px">{{$t('button.receiversSelect')}}:</label>
+          <label style="width:110px">{{$t('m_button_receiversSelect')}}:</label>
           <Select v-model="selectRole" multiple filterable style="width:280px">
               <Option v-for="item in roleList" :value="item.id" :key="item.id">
               {{item.display_name}}</Option>
@@ -160,17 +160,17 @@
           <button class="btn-cancel-f" @click="addSelectReceivers">{{$t('button.add')}}</button>
         </div>
         <div style="margin: 8px 0">
-          <label style="width:110px">{{$t('button.receiversInput')}}:</label>
+          <label style="width:110px">{{$t('m_button_receiversInput')}}:</label>
           <input 
             v-model="inputRole" 
             type="text" 
-            :placeholder="$t('button.receiversInputTip')"
+            :placeholder="$t('m_button_receiversInputTip')"
             class="form-control search-input c-dark"/>
           <button class="btn-cancel-f" @click="addInputReceivers">{{$t('button.add')}}</button>
         </div>
       <div slot="footer">
-        <button class="btn-cancel-f" @click="isAlarmReceivers = false">{{$t('button.cancel')}}</button>
-        <button class="btn-confirm-f" @click="saveAlarmReceivers">{{$t('button.save')}}</button>
+        <button class="btn-cancel-f" @click="isAlarmReceivers = false">{{$t('m_button_cancel')}}</button>
+        <button class="btn-confirm-f" @click="saveAlarmReceivers">{{$t('m_button_save')}}</button>
       </div>
       <template>
         <Tag 
@@ -186,19 +186,19 @@
     </Modal>
     <!-- <Modal
       v-model="isShowWarning"
-      :title="$t('delConfirm.title')"
+      :title="$t('m_delConfirm_title')"
       @on-ok="ok"
       @on-cancel="cancel">
       <div class="modal-body" style="padding:30px">
         <div style="text-align:center">
-          <p style="color: red">{{$t('delConfirm.tip')}}</p>
+          <p style="color: red">{{$t('m_delConfirm_tip')}}</p>
         </div>
       </div>
     </Modal> -->
     <Modal v-model="confirmModal.isShowConfirmModal" width="900">
       <div>
         <Icon :size="28" :color="'#f90'" type="md-help-circle" />
-        <span class="confirm-msg">{{ $t('delConfirm.title') }}</span>
+        <span class="confirm-msg">{{ $t('m_delConfirm_title') }}</span>
       </div>
       <div>
         <p style="margin-left: 10px;margin-top: 22px;">{{ $t(this.confirmModal.message) }}</p>
@@ -207,18 +207,18 @@
         <span style="color:#ed4014;float: left;text-align:left">
           <Checkbox v-model="confirmModal.check">{{ $t('dangerous_confirm_tip') }}</Checkbox>
         </span>
-        <Button @click="cancelConfirmModal">{{$t('button.cancel')}}</Button>
+        <Button @click="cancelConfirmModal">{{$t('m_button_cancel')}}</Button>
         <Button
           @click="getDeleteData"
           :disabled="!confirmModal.check"
           type="warning"
-          >{{ $t('button.confirm') }}</Button
+          >{{ $t('m_button_confirm') }}</Button
         >
       </div>
     </Modal>
     <Modal
       v-model="doubleConfirm.isShow"
-      :title="$t('delConfirm.title')"
+      :title="$t('m_delConfirm_title')"
       @on-ok="ok"
       @on-cancel="cancel">
       <div class="modal-body" style="padding:10px">
@@ -420,7 +420,7 @@ export default {
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.resourceLevel.updateReceivers, params, () => {
         this.isAlarmReceivers = false
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
       })
     },
     guid() {
@@ -520,7 +520,7 @@ export default {
         params.parent = this.parentPanal
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', api, params, () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         this.isEditPanal = false
         this.$root.$eventBus.$emit('updateResource', '')
       })
@@ -555,7 +555,7 @@ export default {
         "role_id": this.selectedRole
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/alarm/org/role/update', params, () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         this.isAssociatedRole = false
       })
     },
@@ -592,7 +592,7 @@ export default {
         "endpoint": this.selectedObject.map(item => item.option_value)
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/alarm/org/endpoint/update', params, () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         this.isAssociatedObject = false
       })
     },
@@ -631,7 +631,7 @@ export default {
         recover_callback_key: selectedRecover_choiced.option_value
       }
       this.$root.$httpRequestEntrance.httpRequestEntrance('POST', '/monitor/api/v1/alarm/org/callback/update', params, () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         this.isAlarmCallback = false
       })
     }
