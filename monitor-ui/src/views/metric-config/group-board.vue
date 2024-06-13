@@ -3,9 +3,9 @@
     <div style="margin-right:16px;display:inline-block;">
       <Form :label-width="100" inline>
         <div>
-          <FormItem :label="$t('field.type')">
+          <FormItem :label="$t('m_field_type')">
             <Select filterable v-model="monitorType" @on-clear="clearEndpointType" @on-change="changeEndpointType" style="width:300px">
-              <Option v-for="type in monitorTypeOptions" :value="type" :key="type">{{ type }}</Option>
+              <Option v-for="type in monitorTypeOptions" :value="type" :label="type" :key="type">{{ type }}</Option>
             </Select>
           </FormItem>
         </div>
@@ -44,19 +44,19 @@
           <FormItem :label="$t('m_graph_name')">
             <Input v-model="graphConfig.graphName" style="width: 300px"></Input>
           </FormItem>
-          <FormItem :label="$t('field.unit')">
+          <FormItem :label="$t('m_field_unit')">
             <Input v-model="graphConfig.unit"  style="width: 300px" />
           </FormItem>
         </div>
         <div>
-          <FormItem :label="$t('field.legend')">
+          <FormItem :label="$t('m_field_legend')">
             <Select filterable clearable allow-create v-model="graphConfig.legend" @on-create="handleCreateLegend" :placeholder="$t('m_legend_tips')" style="width: 300px">
-              <Option v-for="item in legendOptions" :value="item.value" :key="item.value">{{ item.label }}</Option>
+              <Option v-for="item in legendOptions" :value="item.value" :label="item.label" :key="item.value">{{ item.label }}</Option>
             </Select>
           </FormItem>
           <FormItem :label="$t('field.metric')">
             <Select v-model="graphConfig.metric" filterable multiple clearable style="width:300px">
-              <Option v-for="(metric, index) in metricOptions" :value="metric.metric" :key="metric.metric + index">{{ metric.metric }}</Option>
+              <Option v-for="(metric, index) in metricOptions" :value="metric.metric" :label="metric.metric" :key="metric.metric + index">{{ metric.metric }}</Option>
             </Select>
           </FormItem>
         </div>
@@ -68,7 +68,7 @@
       </div>
       <div style="width:900px;text-align:center;margin-top:24px">
         <button :disabled="graphConfig.metric.length === 0" class="btn btn-sm btn-cancel-f" @click="preview('displayGroup')">{{$t('m_preview')}}</button>
-        <button class="btn btn-sm btn-confirm-f" @click="saveGraphMetric">{{$t('button.saveConfig')}}</button>
+        <button class="btn btn-sm btn-confirm-f" @click="saveGraphMetric">{{$t('m_button_saveConfig')}}</button>
       </div>
     </div>
     <Modal
@@ -80,7 +80,7 @@
       <Form :label-width="80">
         <FormItem :label="$t('m_endpoint')">
           <Select filterable clearable v-model="metricConfigData.endpoint" style="width:300px">
-            <Option v-for="item in endpointOptions" :value="item.guid" :key="item.guid">{{ item.guid }}</Option>
+            <Option v-for="item in endpointOptions" :value="item.guid" :label="item.guid" :key="item.guid">{{ item.guid }}</Option>
           </Select>
         </FormItem>
       </Form>
@@ -90,21 +90,21 @@
       :mask-closable="false"
       @on-ok="saveTitle"
       @on-cancel="titleManagement.title = ''"
-      :title="titleManagement.isAdd ? $t('button.add') : $t('button.edit')">
+      :title="titleManagement.isAdd ? $t('button.add') : $t('m_button_edit')">
       <Form :label-width="80">
-        <FormItem :label="$t('field.title')">
+        <FormItem :label="$t('m_field_title')">
           <Input v-model="titleManagement.title"/>
         </FormItem>
       </Form>
     </Modal>
     <Modal
       v-model="isShowWarning"
-      :title="$t('delConfirm.title')"
+      :title="$t('m_delConfirm_title')"
       @on-ok="ok"
       @on-cancel="cancel">
       <div class="modal-body" style="padding:30px">
         <div style="text-align:center">
-          <p style="color: red">{{$t('delConfirm.tip')}}</p>
+          <p style="color: red">{{$t('m_delConfirm_tip')}}</p>
         </div>
       </div>
     </Modal>
@@ -245,7 +245,7 @@ export default {
     },
     removePanel (id) {
       this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', this.$root.apiCenter.addPanel + '?ids=' + id, '', () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         this.selectdPanel = ''
         this.$root.$eventBus.$emit('hideConfirmModal')
       })
@@ -282,7 +282,7 @@ export default {
     },
     removeGraph (id) {
       this.$root.$httpRequestEntrance.httpRequestEntrance('DELETE', this.$root.apiCenter.getGraph + '?ids=' + id, '', () => {
-        this.$Message.success(this.$t('tips.success'))
+        this.$Message.success(this.$t('m_tips_success'))
         this.selectMetrc = ''
       })
     },
@@ -294,7 +294,7 @@ export default {
             service_group: this.serviceGroup
           }
           this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.addPanel + '/' + this.monitorType, [params], () => {
-            this.$Message.success(this.$t('tips.success'))
+            this.$Message.success(this.$t('m_tips_success'))
           })
         } else {
           let params = {
@@ -303,7 +303,7 @@ export default {
             service_group: this.serviceGroup
           }
           this.$root.$httpRequestEntrance.httpRequestEntrance('PUT', this.$root.apiCenter.addPanel, [params], () => {
-            this.$Message.success(this.$t('tips.success'))
+            this.$Message.success(this.$t('m_tips_success'))
           })
         }
         this.selectdPanel = ''
@@ -320,12 +320,12 @@ export default {
       }
       if (this.selectdGraph) {
         this.$root.$httpRequestEntrance.httpRequestEntrance('PUT', this.$root.apiCenter.getGraph, [params], () => {
-          this.$Message.success(this.$t('tips.success'))
+          this.$Message.success(this.$t('m_tips_success'))
         })
       } else {
         delete params.id
         this.$root.$httpRequestEntrance.httpRequestEntrance('POST', this.$root.apiCenter.getGraph, [params], () => {
-          this.$Message.success(this.$t('tips.success'))
+          this.$Message.success(this.$t('m_tips_success'))
         })
       }
     },

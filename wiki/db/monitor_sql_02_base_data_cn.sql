@@ -920,7 +920,6 @@ CREATE TABLE `remote_write_config` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 alter table alarm_strategy add column update_user varchar(64) default null;
 
-DROP TABLE IF EXISTS `main_dashboard`;
 
 CREATE TABLE IF NOT EXISTS `main_dashboard` (
                                                 `guid` varchar(64) NOT NULL,
@@ -930,7 +929,7 @@ CREATE TABLE IF NOT EXISTS `main_dashboard` (
     CONSTRAINT `fore_main_dashboard_custom_dashboard` FOREIGN KEY (`custom_dashboard`) REFERENCES `custom_dashboard` (`id`)
     )ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '首页看板表';
 
-DROP TABLE IF EXISTS `custom_chart`;
+
 CREATE TABLE IF NOT EXISTS `custom_chart` (
                                               `guid` varchar(64) NOT NULL,
     `source_dashboard` int(11) NOT NULL COMMENT '源看板',
@@ -950,7 +949,7 @@ CREATE TABLE IF NOT EXISTS `custom_chart` (
     )ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '自定义看板图表表';
 
 
-DROP TABLE IF EXISTS `custom_dashboard_chart_rel`;
+
 CREATE TABLE IF NOT EXISTS `custom_dashboard_chart_rel` (
                                                             `guid` varchar(64) NOT NULL,
     `custom_dashboard` int(11) unsigned NOT NULL COMMENT '所属看板',
@@ -966,7 +965,7 @@ CREATE TABLE IF NOT EXISTS `custom_dashboard_chart_rel` (
     CONSTRAINT `fore_custom_dashboard_chart_rel_dashboard_chart` FOREIGN KEY (`dashboard_chart`) REFERENCES `custom_chart` (`guid`)
     )ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '自定义看板图表关系表';
 
-DROP TABLE IF EXISTS `custom_chart_series`;
+
 CREATE TABLE IF NOT EXISTS `custom_chart_series` (
                                                      `guid` varchar(64) NOT NULL,
     `dashboard_chart` varchar(64) NOT NULL COMMENT '所属看板图表',
@@ -981,7 +980,7 @@ CREATE TABLE IF NOT EXISTS `custom_chart_series` (
     )ENGINE= InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '自定义看板图表关系表';
 
 
-DROP TABLE IF EXISTS `custom_chart_permission`;
+
 CREATE TABLE IF NOT EXISTS `custom_chart_permission` (
                                                          `guid` varchar(64) NOT NULL,
     `dashboard_chart` varchar(64) NOT NULL COMMENT '所属看板图表',
@@ -992,7 +991,7 @@ CREATE TABLE IF NOT EXISTS `custom_chart_permission` (
     )ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '公共图表权限表';
 
 
-DROP TABLE IF EXISTS `custom_chart_series_config`;
+
 CREATE TABLE IF NOT EXISTS `custom_chart_series_config` (
                                                             `guid` varchar(64) NOT NULL,
     `dashboard_chart_config` varchar(64) NOT NULL COMMENT '图表配置表',
@@ -1003,7 +1002,7 @@ CREATE TABLE IF NOT EXISTS `custom_chart_series_config` (
     CONSTRAINT `fore_custom_chart_series_config_dashboard_chart_config` FOREIGN KEY (`dashboard_chart_config`) REFERENCES `custom_chart_series` (`guid`)
     )ENGINE= InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '自定义图表配置表';
 
-DROP TABLE IF EXISTS `custom_chart_series_tag`;
+
 CREATE TABLE IF NOT EXISTS `custom_chart_series_tag` (
                                                          `guid` varchar(64) NOT NULL,
     `dashboard_chart_config` varchar(64) NOT NULL COMMENT '图表配置表',
@@ -1013,7 +1012,7 @@ CREATE TABLE IF NOT EXISTS `custom_chart_series_tag` (
     )ENGINE = InnoDB DEFAULT CHARSET =utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '自定义图表标签配置表';
 
 
-DROP TABLE IF EXISTS `custom_chart_series_tagvalue`;
+
 CREATE TABLE IF NOT EXISTS `custom_chart_series_tagvalue` (
                                                               `id` int(11) NOT NULL AUTO_INCREMENT,
     `dashboard_chart_tag` varchar(64) NOT NULL COMMENT '所属图表标签',
