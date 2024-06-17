@@ -397,6 +397,9 @@ func ImportLogMetric(c *gin.Context) {
 			metricGroup.ServiceGroup = serviceGroup
 		}
 	}
+	for _, dbMonitor := range paramObj.DBConfig {
+		dbMonitor.ServiceGroup = serviceGroup
+	}
 	if err = db.ImportLogMetric(&paramObj, middleware.GetOperateUser(c)); err != nil {
 		middleware.ReturnHandleError(c, err.Error(), err)
 	} else {
