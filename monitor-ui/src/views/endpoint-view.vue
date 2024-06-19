@@ -268,4 +268,16 @@ export default {
 .btn-jump {
   margin-left: 10px;
 }
+.custom-modal-header {
+  line-height: 20px;
+  font-size: 16px;
+  color: #17233d;
+  font-weight: 500;
+  .fullscreen-icon {
+    float: right;
+    margin-right: 28px;
+    font-size: 18px;
+    cursor: pointer;
+  }
+}
 </style>
