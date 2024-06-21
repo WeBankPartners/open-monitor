@@ -530,3 +530,17 @@ type SimpleCustomDashboardDto struct {
 	Id   int    `json:"id"`
 	Name string `json:"name"`
 }
+
+type CustomDashboardExportParam struct {
+	Id       int      `json:"id"`
+	ChartIds []string `json:"chartIds"`
+}
+
+type CustomDashboardExportDto struct {
+	Id          int               `json:"id"`
+	Name        string            `json:"name"`
+	PanelGroups string            `json:"panelGroups"`
+	TimeRange   int               `json:"timeRange"`   //时间范围
+	RefreshWeek int               `json:"refreshWeek"` // 刷新周期
+	Charts      []*CustomChartDto `json:"charts"`      // 图表
+}
