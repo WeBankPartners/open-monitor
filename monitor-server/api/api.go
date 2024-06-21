@@ -80,6 +80,7 @@ func init() {
 		&handlerFuncObj{Url: "/dashboard/new/chart", Method: http.MethodPost, HandlerFunc: dashboard_new.ChartCreate},
 		&handlerFuncObj{Url: "/dashboard/new/chart", Method: http.MethodPut, HandlerFunc: dashboard_new.ChartUpdate},
 		&handlerFuncObj{Url: "/dashboard/new/chart", Method: http.MethodDelete, HandlerFunc: dashboard_new.ChartDelete},
+		&handlerFuncObj{Url: "/dashboard/new/comparison_metric", Method: http.MethodPost, HandlerFunc: monitor.AddComparisonMetric},
 	)
 	// Agent 对象管理
 	httpHandlerFuncList = append(httpHandlerFuncList,
@@ -286,6 +287,7 @@ func init() {
 		&handlerFuncObj{Url: "/dashboard/custom", Method: http.MethodPut, HandlerFunc: monitor.UpdateCustomDashboard},
 		&handlerFuncObj{Url: "/dashboard/custom/permission", Method: http.MethodPost, HandlerFunc: monitor.UpdateCustomDashboardPermission},
 		&handlerFuncObj{Url: "/dashboard/custom", Method: http.MethodDelete, HandlerFunc: monitor.DeleteCustomDashboard},
+		&handlerFuncObj{Url: "/dashboard/custom/export", Method: http.MethodPost, HandlerFunc: monitor.ExportCustomDashboard},
 		&handlerFuncObj{Url: "/chart/shared/list", Method: http.MethodGet, HandlerFunc: monitor.GetSharedChartList},
 		&handlerFuncObj{Url: "/chart/custom", Method: http.MethodPost, HandlerFunc: monitor.AddCustomChart},
 		&handlerFuncObj{Url: "/chart/custom/copy", Method: http.MethodPost, HandlerFunc: monitor.CopyCustomChart},

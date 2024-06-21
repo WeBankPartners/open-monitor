@@ -3,6 +3,7 @@ package monitor
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -465,4 +466,85 @@ func UnBindChart(c *gin.Context) {
 		return
 	}
 	middleware.ReturnSuccess(c)
+}
+
+// ExportCustomDashboard 看板导出
+func ExportCustomDashboard(c *gin.Context) {
+	var err error
+	var param models.CustomDashboardExportParam
+	var result *models.CustomDashboardExportDto
+	var customDashboard *models.CustomDashboardTable
+	var customChartExtendList []*models.CustomChartExtend
+	var configMap = make(map[string][]*models.CustomChartSeriesConfig)
+	var tagMap = make(map[string][]*models.CustomChartSeriesTag)
+	var tagValueMap = make(map[string][]*models.CustomChartSeriesTagValue)
+	var exportChartIdMap = make(map[string]bool)
+	if err = c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if param.Id == 0 {
+		middleware.ReturnParamEmptyError(c, "param id")
+		return
+	}
+	// 获取自定义看板
+	if customDashboard, err = db.GetCustomDashboardById(param.Id); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if customDashboard == nil || customDashboard.Id == 0 {
+		middleware.ReturnValidateError(c, "id is invalid")
+		return
+	}
+	if len(param.ChartIds) > 0 {
+		for _, id := range param.ChartIds {
+			exportChartIdMap[id] = true
+		}
+	}
+	result = &models.CustomDashboardExportDto{
+		Id:          customDashboard.Id,
+		Name:        customDashboard.Name,
+		PanelGroups: customDashboard.PanelGroups,
+		TimeRange:   customDashboard.TimeRange,
+		RefreshWeek: customDashboard.RefreshWeek,
+		Charts:      []*models.CustomChartDto{},
+	}
+	if customChartExtendList, err = db.QueryCustomChartListByDashboard(customDashboard.Id); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if configMap, err = db.QueryAllChartSeriesConfig(); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if tagMap, err = db.QueryAllChartSeriesTag(); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if tagValueMap, err = db.QueryAllChartSeriesTagValue(); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if len(customChartExtendList) > 0 {
+		for _, chartExtend := range customChartExtendList {
+			// 只导出指定图表数据
+			if exportChartIdMap[chartExtend.Guid] {
+				chart, err2 := db.CreateCustomChartDto(chartExtend, configMap, tagMap, tagValueMap)
+				if err2 != nil {
+					middleware.ReturnServerHandleError(c, err)
+					return
+				}
+				if chart != nil {
+					result.Charts = append(result.Charts, chart)
+				}
+			}
+		}
+	}
+	b, marshalErr := json.Marshal(result)
+	if marshalErr != nil {
+		middleware.ReturnHandleError(c, "export custom dashboard fail, json marshal object error", marshalErr)
+		return
+	}
+	c.Writer.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=%s_%s.json", result.Name, time.Now().Format("20060102150405")))
+	c.Data(http.StatusOK, "application/octet-stream", b)
 }
