@@ -1,6 +1,7 @@
 package monitor
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware"
@@ -9,8 +10,10 @@ import (
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/datasource"
 	"github.com/WeBankPartners/open-monitor/monitor-server/services/db"
 	"github.com/gin-gonic/gin"
+	"io"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -179,4 +182,81 @@ func QueryMetricTagValue(c *gin.Context) {
 		result = append(result, &models.QueryMetricTagResultObj{Tag: v, Values: valueObjList})
 	}
 	middleware.ReturnSuccessData(c, result)
+}
+
+// AddComparisonMetric 添加同环比监控配置
+func AddComparisonMetric(c *gin.Context) {
+	var param models.MetricComparisonDto
+	var metric *models.MetricTable
+	var err error
+	if err = c.ShouldBindJSON(&param); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if strings.TrimSpace(param.MetricId) == "" {
+		middleware.ReturnParamEmptyError(c, "metricId")
+		return
+	}
+	if strings.TrimSpace(param.ComparisonType) == "" || strings.TrimSpace(param.CalcType) == "" {
+		middleware.ReturnParamEmptyError(c, "comparisonType or calcType")
+		return
+	}
+	if metric, err = db.GetMetric(param.MetricId); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if metric == nil {
+		middleware.ReturnValidateError(c, "metricId is invalid")
+		return
+	}
+	if err = db.AddComparisonMetric(param, metric, middleware.GetOperateUser(c)); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if err = syncMetricComparisonData(); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	middleware.ReturnSuccess(c)
+}
+
+// syncMetricComparisonData 同步同环比指标数据
+func syncMetricComparisonData() (err error) {
+	var list []*models.MetricComparisonDto
+	var resByteArr []byte
+	var response models.Response
+	if list, err = db.GetComparisonMetricDtoList(); err != nil {
+		return
+	}
+	if len(list) > 0 {
+		param, _ := json.Marshal(list)
+		if resByteArr, err = HttpPost("http://127.0.0.1:8181/receive", param); err != nil {
+			return
+		}
+		if err = json.Unmarshal(resByteArr, &response); err != nil {
+			return
+		}
+		if response.Status != "OK" {
+			err = fmt.Errorf(response.Message)
+		}
+	}
+	return
+}
+
+// HttpPost Post请求
+func HttpPost(url string, postBytes []byte) (byteArr []byte, err error) {
+	req, reqErr := http.NewRequest(http.MethodPost, url, bytes.NewReader(postBytes))
+	if reqErr != nil {
+		err = fmt.Errorf("new http reqeust fail,%s ", reqErr.Error())
+		return
+	}
+	req.Header.Set("Content-Type", "application/json")
+	resp, respErr := http.DefaultClient.Do(req)
+	if respErr != nil {
+		err = fmt.Errorf("do http reqeust fail,%s ", respErr.Error())
+		return
+	}
+	byteArr, _ = io.ReadAll(resp.Body)
+	defer resp.Body.Close()
+	return
 }
