@@ -3,6 +3,7 @@ package db
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/WeBankPartners/go-common-lib/guid"
 	"github.com/WeBankPartners/open-monitor/monitor-server/middleware/log"
 	"github.com/WeBankPartners/open-monitor/monitor-server/models"
 	"regexp"
@@ -27,20 +28,6 @@ func MetricList(id string, endpointType, serviceGroup string) (result []*models.
 	}
 	result = []*models.PromMetricTable{}
 	err = x.SQL(baseSql, params...).Find(&result)
-	//if err != nil {
-	//	return
-	//}
-	// append service metric
-	//var logMetricTable []*models.LogMetricConfigTable
-	//x.SQL("select guid,metric,display_name,agg_type from log_metric_config where log_metric_monitor in (select guid from log_metric_monitor where monitor_type=?) or log_metric_json in (select guid from log_metric_json where log_metric_monitor in (select guid from log_metric_monitor where monitor_type=?))", endpointType, endpointType).Find(&logMetricTable)
-	//for _, v := range logMetricTable {
-	//	result = append(result, &models.PromMetricTable{Id: 0, MetricType: endpointType, Metric: v.Metric, PromQl: fmt.Sprintf("%s{key=\"%s\",agg=\"%s\",t_endpoint=\"$guid\"}", models.LogMetricName, v.Metric, v.AggType)})
-	//}
-	//var dbMetricTable []*models.DbMetricMonitorTable
-	//x.SQL("select guid,metric,display_name from db_metric_monitor where monitor_type=?", endpointType).Find(&dbMetricTable)
-	//for _, v := range dbMetricTable {
-	//	result = append(result, &models.PromMetricTable{Id: 0, MetricType: endpointType, Metric: v.Metric, PromQl: fmt.Sprintf("%s{key=\"%s\",t_endpoint=\"$guid\"}", models.DBMonitorMetricName, v.Metric)})
-	//}
 	return
 }
 
@@ -342,4 +329,33 @@ func getPromTagParamList(promQl string) (tagList []string) {
 		}
 	}
 	return
+}
+
+func GetMetric(id string) (metric *models.MetricTable, err error) {
+	metric = &models.MetricTable{}
+	_, err = x.SQL("select * from metric where guid=?", id).Get(metric)
+	return
+}
+
+func AddComparisonMetric(param models.MetricComparisonDto, metric *models.MetricTable, operator string) (err error) {
+	var actions []*Action
+	newMetricId := getComparisonMetricId(metric.Guid, param.ComparisonType, param.CalcMethod, param.CalcPeriod)
+	now := time.Now().Format(models.DatetimeFormat)
+	actions = append(actions, &Action{Sql: "insert into metric(guid,metric,monitor_type,prom_expr,service_group,workspace,update_time,create_time,create_user,update_user) values (?,?,?,?,?,?,?,?,?,?)",
+		Param: []interface{}{newMetricId, metric.Metric, metric.MetricType, newMetricId, metric.ServiceGroup, metric.Workspace, now, now, operator, operator}})
+	actions = append(actions, &Action{Sql: "insert into metric_comparison_exporter(guid,comparison_type,calc_type,calc_method,calc_period,metric_id,origin_metric_id,create_user,create_time) values(?,?,?,?,?,?,?,?,?)",
+		Param: []interface{}{guid.CreateGuid(), param.ComparisonType, param.CalcType, param.CalcMethod, param.CalcPeriod, newMetricId, metric.Guid, operator, now}})
+	return Transaction(actions)
+}
+
+func GetComparisonMetricDtoList() (list []*models.MetricComparisonDto, err error) {
+	err = x.SQL("select m.metric,m.prom_expr as origin_prom_expr,mc.guid as prom_expr,mc.comparison_type,mc.calc_type,mc.calc_method,mc.calc_period from metric m join metric_comparison_exporter mc on m.guid = mc.orgin_origin_metric_id").Find(&list)
+	return
+}
+
+func getComparisonMetricId(originMetricId, comparisonType, calcMethod, calcPeriod string) string {
+	if comparisonType == "" {
+		return ""
+	}
+	return originMetricId + "_" + comparisonType[0:1] + "_" + calcMethod + "_" + calcPeriod
 }
