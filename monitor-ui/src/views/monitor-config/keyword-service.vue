@@ -4,7 +4,7 @@
       <Tag color="blue">{{$t('m_log_file')}}</Tag>
       <button @click="add" type="button" class="btn btn-small success-btn" style="padding: 0 10px">
         <i class="fa fa-plus"></i>
-        {{$t('button.add')}}
+        {{$t('m_button_add')}}
       </button>
 
       <button type="button" style="margin-left:16px" class="btn-cancel-f" @click="exportData">{{$t("m_export")}}</button>
@@ -35,7 +35,7 @@
     </section>
     <Modal
       v-model="addAndEditModal.isShow"
-      :title="addAndEditModal.isAdd ? $t('button.add') : $t('')"
+      :title="addAndEditModal.isAdd ? $t('m_button_add') : $t('')"
       :mask-closable="false"
       :width="730"
       >
@@ -67,7 +67,7 @@
             size="small"
             style="width:650px"
             long
-            >{{ $t('button.add') }}{{$t('m_tableKey_logPath')}}</Button
+            >{{ $t('m_button_add') }}{{$t('m_tableKey_logPath')}}</Button
           >
         </div>
         <div v-else style="margin: 8px 0">
@@ -475,6 +475,7 @@ export default {
       this.addAndEditModal.dataConfig.endpoint_rel = []
       await this.getDefaultConfig(val, type)
       // get source Endpoint
+      // 这里不通点很大
       const sourceApi = this.$root.apiCenter.getEndpointsByType + '/' + this.targrtId + '/endpoint/' + type
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', sourceApi, '', (responseData) => {
         this.sourceEndpoints = responseData
@@ -528,6 +529,7 @@ export default {
       this.addAndEditModal.isShow = true
     },
     getDefaultConfig (val, type) {
+      // 这里不同点很大
       const api = `/monitor/api/v2/service/service_group/endpoint_rel?serviceGroup=${this.targrtId}&sourceType=${type}&targetType=${val}`
       this.$root.$httpRequestEntrance.httpRequestEntrance('GET', api, '', (responseData) => {
         const tmp = responseData.map(r => {

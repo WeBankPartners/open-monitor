@@ -39,7 +39,7 @@
       </Card>
       <Card style="margin: 8px;width: 390px;display: inline-block;vertical-align: top;height: 190px;">
         <p slot="title">
-          {{$t('button.add')}}
+          {{$t('m_button_add')}}
         </p>
         <div style="margin:32px;text-align:center">
           <Icon @click="addCard" type="md-add-circle" :size=32 style="cursor:pointer" :color="'#2d8cf0'" />
@@ -52,7 +52,7 @@
       v-model="modelParams.isShow">
       <div slot="header" class="custom-modal-header">
         <span>
-          {{ (modelParams.isAdd ? $t('button.add') : $t('m_button_edit')) }}
+          {{ (modelParams.isAdd ? $t('m_button_add') : $t('m_button_edit')) }}
         </span>
       </div>
       <div>
