@@ -563,6 +563,9 @@ func ImportCustomDashboard(c *gin.Context) {
 	var param *models.CustomDashboardExportDto
 	var customDashboard *models.CustomDashboardTable
 	var importRes *models.CustomDashboardImportRes
+	var customDashboardList []*models.CustomDashboardTable
+	var permissionMap map[string]bool
+	var hasPerm bool
 	rule, _ := c.GetPostForm("rule")
 	useRoles, _ := c.GetPostFormArray("useRoles")
 	mgmtRole, _ := c.GetPostForm("mgmtRoles")
@@ -598,6 +601,28 @@ func ImportCustomDashboard(c *gin.Context) {
 	if len(param.Charts) == 0 {
 		middleware.ReturnParamEmptyError(c, "import dashboard chart is empty")
 		return
+	}
+	// 判断操作人是否有覆盖看板权限
+	if customDashboardList, err = db.QueryCustomDashboardListByName(param.Name); err != nil {
+		return
+	}
+	if rule == string(models.ImportRuleCover) && len(customDashboardList) > 0 {
+		if permissionMap, err = db.GetDashboardPermissionMap(customDashboardList[0].Id, string(models.PermissionMgmt)); err != nil {
+			middleware.ReturnServerHandleError(c, err)
+			return
+		}
+		if len(permissionMap) == 0 {
+			permissionMap = make(map[string]bool)
+		}
+		for _, userRole := range middleware.GetOperateUserRoles(c) {
+			if permissionMap[userRole] {
+				hasPerm = true
+			}
+		}
+		if !hasPerm {
+			middleware.ReturnServerHandleError(c, fmt.Errorf("dashboard %s no edit permission", param.Name))
+			return
+		}
 	}
 	if customDashboard, importRes, err = db.ImportCustomDashboard(param, middleware.GetOperateUser(c), rule, mgmtRole, useRoles); err != nil {
 		middleware.ReturnServerHandleError(c, err)
