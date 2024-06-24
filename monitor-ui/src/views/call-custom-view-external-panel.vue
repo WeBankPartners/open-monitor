@@ -257,7 +257,7 @@ export default {
       editChartId: null,
       setChartTypeModel: {
         modalId: 'set_chart_type_Modal',
-        modalTitle: 'button.add',
+        modalTitle: 'm_button_add',
         isAdd: true,
         config: [
           {name:'setChartType',type:'slot'}
