@@ -44,3 +44,10 @@ const (
 	MetricTypeBusiness MetricType = "business" //业务配置
 	MetricTypeCustom   MetricType = "custom"   // 自定义
 )
+
+type ImportRule string
+
+const (
+	ImportRuleCover  ImportRule = "cover"
+	ImportRuleInsert ImportRule = "insert"
+)

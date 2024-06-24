@@ -114,6 +114,18 @@ func QueryCustomDashboardListByName(name string) (customDashboardList []*models.
 	return
 }
 
+func GetDashboardPermissionMap(dashboard int, permission string) (permissionMap map[string]bool, err error) {
+	var list []*models.CustomDashBoardRoleRel
+	permissionMap = make(map[string]bool)
+	err = x.SQL("select id from custom_dashboard_role_rel where custom_dashboard_id = ? and permission = ?", dashboard, permission).Find(&list)
+	if len(list) > 0 {
+		for _, perm := range list {
+			permissionMap[perm.RoleId] = true
+		}
+	}
+	return
+}
+
 func AddCustomDashboard(customDashboard *models.CustomDashboardTable, mgmtRoles, useRoles []string) (insertId int64, err error) {
 	var actions []*Action
 	var result sql.Result
@@ -388,7 +400,7 @@ func ImportCustomDashboard(param *models.CustomDashboardExportDto, operator, rul
 	}
 	if len(customDashboardList) > 0 {
 		// 根据rule 判断导入模式, 同名覆盖 or 同名新增
-		if rule == "cover" {
+		if rule == string(models.ImportRuleCover) {
 			historyDashboard := customDashboardList[0]
 			// 覆盖模式:删除以该看板为源看板,并且还没有公开的图表,删除看板的图表关联关系
 			actions = append(actions, &Action{Sql: "delete from custom_dashboard_chart_rel where custom_dashboard = ?", Param: []interface{}{historyDashboard.Id}})
@@ -398,7 +410,9 @@ func ImportCustomDashboard(param *models.CustomDashboardExportDto, operator, rul
 			actions = append(actions, &Action{Sql: "delete from custom_chart_series  where dashboard_chart  in(select guid from custom_chart where source_dashboard =? and public = 0)", Param: []interface{}{historyDashboard.Id}})
 			actions = append(actions, &Action{Sql: "delete from custom_chart_permission where dashboard_chart in(select guid from custom_chart where source_dashboard =? and public = 0)", Param: []interface{}{historyDashboard.Id}})
 			actions = append(actions, &Action{Sql: "delete from custom_chart where source_dashboard = ? and public = 0", Param: []interface{}{historyDashboard.Id}})
-			if subDashboardChartActions, importRes, err = handleDashboardChart(param, newDashboardId, operator, now, mgmtRole, useRoles); err != nil {
+			// 更新看板操作人和时间
+			actions = append(actions, &Action{Sql: "update custom_dashboard set update_at=?,update_user=? where id=?", Param: []interface{}{now, operator, historyDashboard.Id}})
+			if subDashboardChartActions, importRes, err = handleDashboardChart(param, int64(historyDashboard.Id), operator, now, mgmtRole, useRoles); err != nil {
 				return
 			}
 			if len(subDashboardChartActions) > 0 {
@@ -425,7 +439,8 @@ func ImportCustomDashboard(param *models.CustomDashboardExportDto, operator, rul
 		}
 	}
 	if newDashboardId == 0 {
-		result, err = x.Exec("insert into custom_dashboard(name,panel_groups,create_user,update_user,create_at,update_at) values(?,?,?,?,?,?)", param.Name, param.PanelGroups, operator, operator, now, now)
+		result, err = x.Exec("insert into custom_dashboard(name,panel_groups,create_user,update_user,create_at,update_at,time_range,refresh_week) values(?,?,?,?,?,?,?,?)",
+			param.Name, param.PanelGroups, operator, operator, now, now, param.TimeRange, param.RefreshWeek)
 		if err != nil {
 			return
 		}
@@ -459,8 +474,6 @@ func handleDashboardChart(param *models.CustomDashboardExportDto, newDashboardId
 	for _, chart := range param.Charts {
 		list = []*models.CustomChart{}
 		permissionList = []*models.CustomChartPermission{}
-		byteArr, _ := json.Marshal(chart.DisplayConfig)
-		displayConfig := string(byteArr)
 		newChartId := guid.CreateGuid()
 		// 如果图表公共,则去图表库中根据名称查询是否已有该图表,有的话添加看板的关联关系即可
 		if chart.Public {
@@ -470,7 +483,7 @@ func handleDashboardChart(param *models.CustomDashboardExportDto, newDashboardId
 			if len(list) > 0 {
 				// 新增看板图表关系表
 				actions = append(actions, &Action{Sql: "insert into custom_dashboard_chart_rel(guid,custom_dashboard,dashboard_chart,`group`,display_config,create_user,updated_user,create_time,update_time) values(?,?,?,?,?,?,?,?,?)", Param: []interface{}{
-					guid.CreateGuid(), newDashboardId, list[0].Guid, chart.Group, displayConfig, operator, operator, now, now}})
+					guid.CreateGuid(), newDashboardId, list[0].Guid, chart.Group, chart.DisplayConfig, operator, operator, now, now}})
 			}
 			continue
 		}
@@ -481,7 +494,7 @@ func handleDashboardChart(param *models.CustomDashboardExportDto, newDashboardId
 			chart.AggStep, chart.Unit, operator, operator, now, now, chart.ChartTemplate}})
 		// 新增看板图表关系表
 		actions = append(actions, &Action{Sql: "insert into custom_dashboard_chart_rel(guid,custom_dashboard,dashboard_chart,`group`,display_config,create_user,updated_user,create_time,update_time) values(?,?,?,?,?,?,?,?,?)", Param: []interface{}{
-			guid.CreateGuid(), newDashboardId, newChartId, chart.Group, displayConfig, operator, operator, now, now}})
+			guid.CreateGuid(), newDashboardId, newChartId, chart.Group, chart.DisplayConfig, operator, operator, now, now}})
 		// 新增图表权限
 		for _, useRole := range useRoles {
 			permissionList = append(permissionList, &models.CustomChartPermission{
