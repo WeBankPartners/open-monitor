@@ -544,3 +544,7 @@ type CustomDashboardExportDto struct {
 	RefreshWeek int               `json:"refreshWeek"` // 刷新周期
 	Charts      []*CustomChartDto `json:"charts"`      // 图表
 }
+
+type CustomDashboardImportRes struct {
+	ChartMap map[string][]string
+}

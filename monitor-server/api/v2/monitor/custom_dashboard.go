@@ -3,6 +3,7 @@ package monitor
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 	"strings"
@@ -197,6 +198,7 @@ func GetCustomDashboard(c *gin.Context) {
 func AddCustomDashboard(c *gin.Context) {
 	var err error
 	var param models.AddCustomDashboardParam
+	var customDashboardList []*models.CustomDashboardTable
 	var dashboardId int64
 	if err = c.ShouldBindJSON(&param); err != nil {
 		middleware.ReturnServerHandleError(c, err)
@@ -212,6 +214,15 @@ func AddCustomDashboard(c *gin.Context) {
 	}
 	if len(param.UseRoles) == 0 {
 		middleware.ReturnParamEmptyError(c, "useRoles")
+		return
+	}
+	// 查询名称是否重复
+	if customDashboardList, err = db.QueryCustomDashboardListByName(param.Name); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if len(customDashboardList) > 0 {
+		middleware.ReturnDashboardNameRepeatError(c)
 		return
 	}
 	now := time.Now()
@@ -265,6 +276,7 @@ func UpdateCustomDashboard(c *gin.Context) {
 	var actions []*db.Action
 	var nameMap = make(map[string]bool)
 	var panelGroups string
+	var customDashboardList []*models.CustomDashboardTable
 	user := middleware.GetOperateUser(c)
 	now := time.Now().Format(models.DatetimeFormat)
 	if err = c.ShouldBindJSON(&param); err != nil {
@@ -278,6 +290,19 @@ func UpdateCustomDashboard(c *gin.Context) {
 	if strings.TrimSpace(param.Name) == "" {
 		middleware.ReturnParamEmptyError(c, "name")
 		return
+	}
+	// 查询名称是否重复
+	if customDashboardList, err = db.QueryCustomDashboardListByName(param.Name); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if len(customDashboardList) > 0 {
+		for _, customDashboard := range customDashboardList {
+			if customDashboard.Id != param.Id {
+				middleware.ReturnDashboardNameRepeatError(c)
+				return
+			}
+		}
 	}
 	if permission, err = CheckHasDashboardManagePermission(param.Id, middleware.GetOperateUserRoles(c), middleware.GetOperateUser(c)); err != nil {
 		middleware.ReturnServerHandleError(c, err)
@@ -453,21 +478,6 @@ func SyncData(c *gin.Context) {
 	middleware.ReturnSuccess(c)
 }
 
-// UnBindChart 解除图表绑定,看板不删除,私有图表删除
-func UnBindChart(c *gin.Context) {
-	dashboardId, _ := strconv.Atoi(c.Query("dashboard_id"))
-	if dashboardId == 0 {
-		middleware.ReturnValidateError(c, "dashboard_id is invalid")
-		return
-	}
-	err := db.UnBindChart(dashboardId)
-	if err != nil {
-		middleware.ReturnServerHandleError(c, err)
-		return
-	}
-	middleware.ReturnSuccess(c)
-}
-
 // ExportCustomDashboard 看板导出
 func ExportCustomDashboard(c *gin.Context) {
 	var err error
@@ -547,4 +557,59 @@ func ExportCustomDashboard(c *gin.Context) {
 	}
 	c.Writer.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=%s_%s.json", result.Name, time.Now().Format("20060102150405")))
 	c.Data(http.StatusOK, "application/octet-stream", b)
+}
+
+func ImportCustomDashboard(c *gin.Context) {
+	var param *models.CustomDashboardExportDto
+	var customDashboard *models.CustomDashboardTable
+	var importRes *models.CustomDashboardImportRes
+	rule, _ := c.GetPostForm("rule")
+	useRoles, _ := c.GetPostFormArray("useRoles")
+	mgmtRole, _ := c.GetPostForm("mgmtRoles")
+	file, err := c.FormFile("file")
+	if rule == "" || len(useRoles) == 0 || mgmtRole == "" {
+		middleware.ReturnParamEmptyError(c, "rule or permission")
+		return
+	}
+	if err != nil {
+		middleware.ReturnValidateError(c, err.Error())
+		return
+	}
+	f, err := file.Open()
+	if err != nil {
+		middleware.ReturnHandleError(c, "file open error ", err)
+		return
+	}
+	b, err := ioutil.ReadAll(f)
+	defer f.Close()
+	if err != nil {
+		middleware.ReturnHandleError(c, "read content fail error ", err)
+		return
+	}
+	err = json.Unmarshal(b, &param)
+	if err != nil {
+		middleware.ReturnHandleError(c, "json unmarshal fail error ", err)
+		return
+	}
+	if param == nil || strings.TrimSpace(param.Name) == "" {
+		middleware.ReturnParamEmptyError(c, "import data is empty")
+		return
+	}
+	if len(param.Charts) == 0 {
+		middleware.ReturnParamEmptyError(c, "import dashboard chart is empty")
+		return
+	}
+	if customDashboard, importRes, err = db.ImportCustomDashboard(param, middleware.GetOperateUser(c), rule, mgmtRole, useRoles); err != nil {
+		middleware.ReturnServerHandleError(c, err)
+		return
+	}
+	if customDashboard != nil {
+		middleware.ReturnServerHandleError(c, fmt.Errorf(middleware.GetMessageMap(c).DashboardIdExistError))
+		return
+	}
+	if importRes != nil && len(importRes.ChartMap) > 0 {
+		middleware.ReturnSuccessData(c, importRes.ChartMap)
+		return
+	}
+	middleware.ReturnSuccess(c)
 }
