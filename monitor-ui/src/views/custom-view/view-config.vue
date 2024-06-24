@@ -354,7 +354,7 @@ export default {
       chartType: '',
       allAddChartOptions: [
         {
-          name: 'button.add',
+          name: 'm_button_add',
           type: 'add',
           colorType: 'success',
           options: [
@@ -585,6 +585,9 @@ export default {
         })
       })
       this.layoutData = tmpArr
+      setTimeout(() => {
+        this.refreshNow = !this.refreshNow;
+      }, 100)
     },
     isShowGridPlus (item) {
       if (!item._activeCharts || item._activeCharts[0].chartType === 'pie') {
