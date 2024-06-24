@@ -4,7 +4,7 @@
       <transition name="fade" mode="out-in">
         <router-view></router-view>
       </transition>
-      <BenchMenu :menuList="menuList"></BenchMenu>
+      <BenchMenu :menuList="menuList" />
     </div>
   </div>
 </template>
