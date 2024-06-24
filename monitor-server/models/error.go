@@ -29,4 +29,6 @@ type ErrorMessageObj struct {
 	StrategyNameImportDuplicateError string `json:"strategy_name_import_duplicate_error"`
 	LogGroupNameDuplicateError       string `json:"log_group_name_duplicate_error"`
 	LogGroupNameIllegalError         string `json:"log_group_name_illegal_error"`
+	DashboardNameRepeatError         string `json:"dashboard_name_repeat_error"`
+	DashboardIdExistError            string `json:"dashboard_id_exist_error"`
 }
